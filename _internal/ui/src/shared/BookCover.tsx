@@ -5,6 +5,7 @@ import { coverColor, coverLabel, coverStyle, splitTitle, type CoverImage } from 
 import { Vu } from "@/shared/ui";
 import { MotionRegion } from "./MotionRegion";
 
+import { Reveal } from "./MotionPresence";
 // Bìa vuông kiểu album sách nói. Hoạ tiết là các vòng sóng âm lan ra từ góc - thứ duy nhất sách TXT
 // "có" là giọng đọc, nên bìa vẽ giọng đọc.
 //
@@ -101,14 +102,12 @@ export function BookCover({
       </svg>
       <div className="relative flex h-full flex-col justify-between gap-1" style={{ padding: text.padding }}>
         {small ? (
-          label && (
-            <span
+          <Reveal when={label}><span
               className="m-auto font-bold leading-none tracking-tight"
               style={{ color: style.ink, fontSize: size === "xs" ? 12 : 17 }}
             >
               {titled || !badge ? coverLabel(title, part) : (badge.match(/\d+/)?.[0] ?? coverLabel(title, part))}
-            </span>
-          )
+            </span></Reveal>
         ) : (
           <>
             {/* Bìa lớn bị ép nhỏ (màn ngang: bìa trình phát ~55 px): chữ đã chạm sàn cỡ nên tên 3-4 dòng tràn khỏi bìa, cắt ngang dòng chữ

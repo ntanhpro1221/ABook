@@ -15,6 +15,7 @@ import type { ListenBook } from "./model";
 import { useSource } from "./source";
 import { useFadeScroller } from "@/shared/scrollFade";
 
+import { Reveal } from "../shared/MotionPresence";
 // Cuốn mở từ file dự án `.abookproj` (docs/EDITING.md, phase P3): xưởng đi theo cuốn (hay đang chờ), kèm vài bản chụp CHỈ ĐỌC của
 // các màn Studio để điện thoại / máy chưa cài Studio cho người ta xem mà không mở sổ dự án.
 
@@ -130,17 +131,12 @@ export function ProjectFileItems({ book, onViews }: { book: ListenBook; onViews:
   const toolchain = Boolean(book.capabilities?.toolchain);
   return (
     <>
-      {info.views.length > 0 && (
-        <DropdownMenu.Item onSelect={onViews} className={MENU_ITEM}>
-          <ClipboardList className="size-4" />{S.s_viec_cua_xuong_4471031f}</DropdownMenu.Item>
-      )}
-      {pending && info.built && (
-        <DropdownMenu.Item onSelect={() => navigate(`/studio/${info.built}`)} className={MENU_ITEM}>
-          <Hammer className="size-4" />{S.s_mo_xuong_da_dung_4a9a2211}</DropdownMenu.Item>
-      )}
+      <Reveal when={info.views.length > 0}><DropdownMenu.Item onSelect={onViews} className={MENU_ITEM}>
+          <ClipboardList className="size-4" />{S.s_viec_cua_xuong_4471031f}</DropdownMenu.Item></Reveal>
+      <Reveal when={pending && info.built}><DropdownMenu.Item onSelect={() => navigate(`/studio/${info.built}`)} className={MENU_ITEM}>
+          <Hammer className="size-4" />{S.s_mo_xuong_da_dung_4a9a2211}</DropdownMenu.Item></Reveal>
       {pending && !info.built && !toolchain && <NeedStudioItem title={S.s_dung_xuong_186ba1e1} phoneNote={S.s_can_cai_studio_file_nay_chi_mang_phan_nghe_a924b6b8} />}
-      {pending && !info.built && toolchain && (
-        <DropdownMenu.Item
+      <Reveal when={pending && !info.built && toolchain}><DropdownMenu.Item
           disabled={building}
           onSelect={() => void build()}
           className={cn(MENU_ITEM, "h-auto items-start py-2 data-[disabled]:opacity-60")}
@@ -150,8 +146,7 @@ export function ProjectFileItems({ book, onViews }: { book: ListenBook; onViews:
             <span className="block">{S.s_dung_xuong_186ba1e1}</span>
             <span className="block text-xs text-fg-3">{WORKSHOP_COST}</span>
           </span>
-        </DropdownMenu.Item>
-      )}
+        </DropdownMenu.Item></Reveal>
     </>
   );
 }
@@ -245,14 +240,14 @@ function WorkList({ data }: { data?: WorkSnapshot }) {
           {open.map((item) => (
             <li key={item.key} className="py-2">
               <p>{item.title}</p>
-              {item.problem && <p className="text-xs text-fg-3">{item.problem}</p>}
+              <Reveal when={item.problem}><p className="text-xs text-fg-3">{item.problem}</p></Reveal>
             </li>
           ))}
         </ul>
       ) : (
         <Empty>{rest.length ? S.s_khong_con_viec_nao_can_quyet_4cccb08f : S.s_may_khong_con_cho_nao_nghi_ngo_5bcb5676}</Empty>
       )}
-      {rest.length > 0 && <p className="mt-3 text-xs text-fg-3">{S.s_ngoai_ra_41b5d544}{rest.join(" · ")}.</p>}
+      <Reveal when={rest.length > 0}><p className="mt-3 text-xs text-fg-3">{S.s_ngoai_ra_41b5d544}{rest.join(" · ")}.</p></Reveal>
     </>
   );
 }

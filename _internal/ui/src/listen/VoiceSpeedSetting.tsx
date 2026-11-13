@@ -21,6 +21,7 @@ import {
   type VoiceSpeedVoice,
 } from "./voiceSpeed";
 
+import { Reveal } from "../shared/MotionPresence";
 /** Nơi cài đặt sống: máy tính hỏi máy chủ cục bộ, điện thoại hỏi plugin ReadAloud (android/SettingsScreen.tsx). Cùng hình trạng thái. */
 export interface VoiceSpeedBackend {
   status(): Promise<VoiceSpeedStatus>;
@@ -90,11 +91,9 @@ export function VoiceSpeedSetting({
           return (
             <li key={voice.id} className="flex flex-wrap items-center gap-x-3 gap-y-1 text-body-small text-pretty">
               <span className="min-w-0 flex-1">{voiceSpeedLine(voice, status.choice)}</span>
-              {needsFastDownload(voice) && (
-                <Button size="sm" variant="ghost" loading={downloading} disabled={working} onClick={() => void download(voice)}>
+              <Reveal when={needsFastDownload(voice)}><Button size="sm" variant="ghost" loading={downloading} disabled={working} onClick={() => void download(voice)}>
                   {S.s_tai_0_3463a4d8(formatSize(voice.fastBytes))}
-                </Button>
-              )}
+                </Button></Reveal>
             </li>
           );
         })}

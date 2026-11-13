@@ -6,7 +6,7 @@ import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { toast, toastDone } from "@/shared/toast";
 import { useBackLayer } from "@/shared/backStack";
 import { cn } from "@/shared/cn";
-import { AnimatedRows, MotionPresence } from "@/shared/MotionPresence";
+import { AnimatedRows, MotionPresence, Reveal } from "@/shared/MotionPresence";
 import { MotionRegion } from "@/shared/MotionRegion";
 import { studioNeed, syncsToComputer } from "@/shared/capabilities";
 import { holderName } from "@/shared/editsSync";
@@ -174,7 +174,7 @@ function WordView({ bookId, text, names, need, later, onWithdraw, onBack, initia
                 word === item ? "text-accent-text underline underline-offset-4" : "text-fg-2 hover:bg-hover",
               )}
             >
-              {waiting && <Clock className="size-3" />}
+              <Reveal when={waiting}><Clock className="size-3" /></Reveal>
               {item}
             </button>
           );

@@ -5,7 +5,7 @@ import { useState } from "react";
 import { toast } from "@/shared/toast";
 import { BOOK_STORAGE } from "@/shared/bookStorage";
 import { OnComputerOnly } from "@/shared/OnComputerOnly";
-import { MotionPresence } from "@/shared/MotionPresence";
+import { MotionPresence, Reveal } from "@/shared/MotionPresence";
 import { MotionRegion } from "@/shared/MotionRegion";
 import { DialogActions, Button, Dialog, IconButton } from "@/shared/ui";
 import { api } from "@/studio/api";
@@ -154,11 +154,9 @@ function SuggestionsBody({ bookId, suggestions }: { bookId: string; suggestions:
           disabled={toggle.isPending || listenOnly}
           onChange={(group, on) => toggle.mutate({ group, on })}
         />
-        {listenOnly && (
-          <p className="mt-2">
+        <Reveal when={listenOnly}><p className="mt-2">
             <OnComputerOnly verb={S.s_bo_dong_khoi_phan_doc_7b69e049} />
-          </p>
-        )}
+          </p></Reveal>
       </div>
     </>
   );
@@ -211,12 +209,10 @@ export function SuggestionsButton({ bookId, className }: { bookId: string; class
         ? <SlotFace aria-label={label} value={pending ? S.s_0_chua_ap_0ddead2d(pending) : S.s_xem_f6de0ffd} onClick={() => setOpen(true)} />
         : <IconButton label={label} icon={Lightbulb} size="sm" className={className} onClick={() => setOpen(true)} />}
       <Dialog footer={<DialogActions>
-          {pending > 0 && (
-            <Button variant="ghost" onClick={() => {
+          <Reveal when={pending > 0}><Button variant="ghost" onClick={() => {
               dismiss();
               setOpen(false);
-            }}>{S.s_bo_qua_goi_y_bccec2b3}</Button>
-          )}
+            }}>{S.s_bo_qua_goi_y_bccec2b3}</Button></Reveal>
           <Button variant="ghost" onClick={() => setOpen(false)}>{S.s_dong_5d54c2a1}</Button>
         </DialogActions>} open={open} onOpenChange={setOpen} title={S.s_goi_y_phan_doc_b268d95e}>
         <SuggestionsBody bookId={bookId} suggestions={suggestions} />

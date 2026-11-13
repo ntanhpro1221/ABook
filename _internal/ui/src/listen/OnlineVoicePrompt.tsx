@@ -12,6 +12,7 @@ import { useVoiceSample } from "./VoiceSettings";
 import { revealVoiceSettings } from "./voiceSettingsLink";
 import { useFadeScroller } from "@/shared/scrollFade";
 
+import { Reveal } from "../shared/MotionPresence";
 /** Hộp hỏi trước lần đầu đọc bằng giọng trực tuyến (onlineConsent.ts). Gắn một lần trong PlayerProvider - máy tính và điện thoại như nhau. */
 export function OnlineVoicePrompt() {
   const request = useSyncExternalStore(subscribeConsent, pendingConsent);
@@ -65,8 +66,7 @@ export function OnlineVoicePrompt() {
                     <span className="truncate">{spokenVoiceName(item.name)}</span>
                     <span className="shrink-0 text-xs font-normal text-fg-2">{item.online ? S.s_truc_tuyen_ada49667 : S.s_cua_may_f44ee5ca}{item.id === voice.id ? S.s_dang_chon_4851f502 : ""}</span>
                   </button>
-                  {source.readAloudSample && (
-                    <Button
+                  <Reveal when={source.readAloudSample}><Button
                       size="sm"
                       variant="ghost"
                       className="touch-row shrink-0"
@@ -76,8 +76,7 @@ export function OnlineVoicePrompt() {
                       aria-label={S.s_0_giong_1_85dee2ac(playing ? S.s_dung_11554138 : S.s_nghe_thu_fa024065, spokenVoiceName(item.name))}
                     >
                       {playing ? S.s_dung_11554138 : S.s_nghe_thu_fa024065}
-                    </Button>
-                  )}
+                    </Button></Reveal>
                 </div>
                 {sample.failed?.voice === item.id && <p className="px-3 pb-1 text-body-small text-danger text-pretty" role="alert">{sample.failed.message}</p>}
               </div>

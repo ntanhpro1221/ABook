@@ -7,6 +7,7 @@ import { cn } from "./cn";
 import { formatNumber } from "./format";
 import { useScrollFade } from "./scrollFade";
 
+import { Reveal } from "./MotionPresence";
 /** Một hàng của danh sách chương xem trước: tên (dòng đầu của chương nếu có), số chữ và số ký tự. Cùng hàng chữ với danh sách chương
  *  ở bước "Chọn các chương" của trình tạo sách Studio (studio/NewProjectScreen.tsx). */
 export interface PreviewChapter {
@@ -146,16 +147,16 @@ export function ChapterPreview({ chapters, className, titleFirst = false, choice
               ) : (
                 <div className="break-words text-sm font-medium">{title}</div>
               )}
-              {sub && <div className="break-words text-xs text-fg-2">{sub}</div>}
+              <Reveal when={sub}><div className="break-words text-xs text-fg-2">{sub}</div></Reveal>
               {chapter.matter ? (
                 <div className="text-xs text-fg-3">{chapter.matter}{S.s_co_ve_khong_phai_truyen_tich_neu_muon_nghe_e93a3b54}</div>
               ) : (
-                chapter.short && <div className="text-xs text-fg-3">{S.s_rat_ngan_co_the_la_bia_trang_ban_quyen_6d1fe6d0}</div>
+                <Reveal when={chapter.short}><div className="text-xs text-fg-3">{S.s_rat_ngan_co_the_la_bia_trang_ban_quyen_6d1fe6d0}</div></Reveal>
               )}
             </div>
             <div className="tabular-cell text-right text-xs text-fg-2">
               <div className="pt-[4px] leading-5">{formatNumber(chapter.words)}{S.s_chu_6117d040}</div>
-              {chapter.chars > 0 && <div className="text-fg-3">{formatNumber(chapter.chars)}{S.s_ky_tu_c7cc4ddf}</div>}
+              <Reveal when={chapter.chars > 0}><div className="text-fg-3">{formatNumber(chapter.chars)}{S.s_ky_tu_c7cc4ddf}</div></Reveal>
             </div>
           </div>
         );

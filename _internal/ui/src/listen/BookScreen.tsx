@@ -3,7 +3,7 @@ import { TickingValue } from "@/shared/TickingValue";
 import { ActionMenu } from "@/shared/ActionMenu";
 import { MotionRegion } from "@/shared/MotionRegion";
 import { Fold } from "@/shared/Collapse";
-import { AnimatedRows, LoadingCrossfade, MotionPresence } from "@/shared/MotionPresence";
+import { AnimatedRows, LoadingCrossfade, MotionPresence, Reveal } from "@/shared/MotionPresence";
 import * as DropdownMenu from "@/shared/DropdownMenu";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowRightLeft, AudioLines, BookOpen, BookOpenText, Check, CheckCheck, ChevronDown, CircleDashed, CloudDownload, FileDown, GitMerge, History, Hourglass, Laptop, Loader2, MoreHorizontal, Pause, Pencil, Play, Plus, RotateCcw, Save, Search, Share2, SlidersHorizontal, TextCursorInput, Trash2, UserRound } from "lucide-react";
@@ -265,22 +265,16 @@ function ChapterMenu({ chapter, done, renamable, actions }: { chapter: ListenCha
       <DropdownMenu.Trigger asChild>{button({})}</DropdownMenu.Trigger>
       <DropdownMenu.Portal>
         <DropdownMenu.Content collisionPadding={12} align="end" sideOffset={4} className="z-50 max-h-[var(--radix-dropdown-menu-content-available-height)] overflow-y-auto overscroll-contain min-w-52 rounded-cover border border-line bg-panel p-2 shadow-float">
-          {canPlay(chapter) && (
-            <DropdownMenu.Item onSelect={() => actions.play(chapter, 0)} className={MENU_ITEM}>
-              <Play className="size-4" />{S.s_nghe_tu_dau_chuong_d35ec3e0}</DropdownMenu.Item>
-          )}
+          <Reveal when={canPlay(chapter)}><DropdownMenu.Item onSelect={() => actions.play(chapter, 0)} className={MENU_ITEM}>
+              <Play className="size-4" />{S.s_nghe_tu_dau_chuong_d35ec3e0}</DropdownMenu.Item></Reveal>
           <DropdownMenu.Item onSelect={() => actions.read(chapter)} className={MENU_ITEM}>
             <BookOpen className="size-4" />{S.s_doc_chuong_nay_b70e10a7}</DropdownMenu.Item>
-          {canPlay(chapter) && (
-            <DropdownMenu.Item onSelect={() => actions.done(chapter.id, !done)} className={MENU_ITEM}>
+          <Reveal when={canPlay(chapter)}><DropdownMenu.Item onSelect={() => actions.done(chapter.id, !done)} className={MENU_ITEM}>
               {done ? <CircleDashed className="size-4" /> : <CheckCheck className="size-4" />}
               {done ? S.s_chua_nghe_2fbea4c8 : S.s_da_nghe_xong_d276b702}
-            </DropdownMenu.Item>
-          )}
-          {renamable && (
-            <DropdownMenu.Item onSelect={() => actions.rename(chapter)} className={MENU_ITEM}>
-              <TextCursorInput className="size-4" />{S.s_doi_ten_chuong_9fe7f4f4}</DropdownMenu.Item>
-          )}
+            </DropdownMenu.Item></Reveal>
+          <Reveal when={renamable}><DropdownMenu.Item onSelect={() => actions.rename(chapter)} className={MENU_ITEM}>
+              <TextCursorInput className="size-4" />{S.s_doi_ten_chuong_9fe7f4f4}</DropdownMenu.Item></Reveal>
         </DropdownMenu.Content>
       </DropdownMenu.Portal>
     </DropdownMenu.Root>
@@ -880,8 +874,7 @@ function RecordPicker({ book, dialog, setDialog }: { book: ListenBook; dialog: R
               onChange={(target) => setDialog((current) => (current ? { ...current, target } : current))}
             />
           )}
-          {dialog?.kind !== "delete" && dialog?.kind !== "move" && (
-            <input
+          <Reveal when={dialog?.kind !== "delete" && dialog?.kind !== "move"}><input
               id="record-name"
               data-autofocus
               autoFocus
@@ -891,8 +884,7 @@ function RecordPicker({ book, dialog, setDialog }: { book: ListenBook; dialog: R
               value={dialog?.name ?? ""}
               onChange={(event) => setDialog((current) => (current ? { ...current, name: event.target.value } : current))}
               className="touch-box h-10 rounded-control border border-line bg-panel px-3 text-sm outline-none focus:border-focus"
-            />
-          )}
+            /></Reveal>
 
         </form>
       </Dialog>
@@ -1120,7 +1112,7 @@ function BookPage({ extraActions, dangerActions, studioLink, notice, editing = {
         {/* Cuốn đang nạp: bấm bìa mở trình phát (DESIGN.md L3b). Lớp nút phủ lên bìa, nên bắt đầu / thôi nghe không dựng lại bìa. */}
         <div className={cn("press relative w-28 sm:row-span-2 sm:w-44", split && "w-48 sm:row-span-1 sm:w-48")}>
           <BookCover bookKey={book.id} title={book.title} part={book.series?.part} size="lg" image={book.cover} playing={listening && player.playing} className="aspect-[2/3] w-full" />
-          {listening && <button type="button" data-book-cover-open aria-label={S.s_mo_man_hinh_dang_nghe_2426b4ad} onClick={() => setExpanded(true)} className="absolute inset-0 rounded-cover" />}
+          <Reveal when={listening}><button type="button" data-book-cover-open aria-label={S.s_mo_man_hinh_dang_nghe_2426b4ad} onClick={() => setExpanded(true)} className="absolute inset-0 rounded-cover" /></Reveal>
         </div>
         <div className={cn("min-w-0", split && "mt-5")}>
           <h1 data-content-title="" className={cn(SCREEN_TITLE, "leading-tight")}>{displayTitle(book.title)}</h1>
@@ -1138,9 +1130,8 @@ function BookPage({ extraActions, dangerActions, studioLink, notice, editing = {
             />
           </p>
           {/* Tình trạng của cuốn: một dòng chữ nhỏ, không hộp, không viên thuốc màu. */}
-          {textOnly && <p className="mt-2 text-sm text-fg-2">{textBookLine(speaks)}</p>}
-          {!book.complete && !textOnly && (
-            <p className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-accent-text">
+          <Reveal when={textOnly}><p className="mt-2 text-sm text-fg-2">{textBookLine(speaks)}</p></Reveal>
+          <Reveal when={!book.complete && !textOnly}><p className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-accent-text">
               {book.producing && <Vu className="h-2.5" />}
               {book.producing
                 ? S.s_dang_thu_chuong_moi_tu_hien_khi_xong_123d0db2
@@ -1152,8 +1143,7 @@ function BookPage({ extraActions, dangerActions, studioLink, notice, editing = {
                       ? partialBookLine(book.chaptersAvailable, book.chaptersTotal)
                       : S.s_chua_du_chuong_dang_dung_thu_3653bcf7}
               {studioLink?.(book)}
-            </p>
-          )}
+            </p></Reveal>
           {book.missingFiles ? (
             <p className="mt-2 text-sm text-warning">
               {book.missingFiles}{S.s_chuong_mat_file_tren_may_nay_09492c4c}{book.stage === "text"
@@ -1161,15 +1151,13 @@ function BookPage({ extraActions, dangerActions, studioLink, notice, editing = {
                 : S.s_ban_hay_mo_lai_file_sach_abook_cua_cuon_na_4efff7a0}
             </p>
           ) : null}
-          {book.remote && !downloaded && (
-            // Biểu tượng cao đúng một dòng chữ: chữ xuống hai dòng thì biểu tượng vẫn thẳng dòng đầu, không trôi vào giữa.
-            <p className="mt-2 flex items-start gap-2 text-sm text-fg-2">
+          {/* Biểu tượng cao đúng một dòng chữ: chữ xuống hai dòng thì biểu tượng vẫn thẳng dòng đầu, không trôi vào giữa. */}
+          <Reveal when={book.remote && !downloaded}><p className="mt-2 flex items-start gap-2 text-sm text-fg-2">
               <span className="grid h-[1lh] shrink-0 place-items-center"><Laptop className="size-4" /></span>
               {typeof book.remote === "object"
                 ? S.s_nghe_thang_tu_0_chuong_nghe_toi_duoc_giu_l_a6a23b61(book.remote.computer || S.s_may_khac_95db1846)
                 : S.s_nghe_thang_tu_may_tinh_tai_ve_de_nghe_ca_k_44e792bc}
-            </p>
-          )}
+            </p></Reveal>
           {notice?.(book)}
           {syncs && <EditsSyncBanner book={book} />}
           <LocalEditsBanner book={book} />

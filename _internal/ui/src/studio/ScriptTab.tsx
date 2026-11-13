@@ -1,7 +1,7 @@
 import { S } from "../shared/strings.generated";
 import { MoreInfo } from "@/shared/SettingsNav";
 import { MotionRegion } from "@/shared/MotionRegion";
-import { MotionPresence } from "@/shared/MotionPresence";
+import { MotionPresence, Reveal } from "@/shared/MotionPresence";
 import { useListPresence, type PresentRow } from "@/shared/motion";
 import { Fold } from "@/shared/Collapse";
 import * as DropdownMenu from "@/shared/DropdownMenu";
@@ -753,7 +753,7 @@ function DeliveryChip({
         waiting && "text-fg-2",
       )}
     >
-      {waiting && <Clock className="size-3" />}
+      <Reveal when={waiting}><Clock className="size-3" /></Reveal>
       {text}
     </button>
   );
@@ -830,7 +830,7 @@ export function SpeakerMenu({
         <span className="min-w-0 flex-1 truncate">
           {current ? S.s_dung_la_0_32e8685a(person.label) : person.label}
         </span>
-        {current ? <Check className="size-4 shrink-0 text-success" /> : person.lines > 0 && <span className="shrink-0 text-xs text-fg-3">{formatNumber(person.lines)}</span>}
+        {current ? <Check className="size-4 shrink-0 text-success" /> : <Reveal when={person.lines > 0}><span className="shrink-0 text-xs text-fg-3">{formatNumber(person.lines)}</span></Reveal>}
       </button>
     );
   };
@@ -1575,7 +1575,7 @@ function ChapterMenu({ chapters, chapterId, narrow, onPick }: { chapters: Chapte
                 {/* Dấu chọn chung: luôn giữ chỗ, mờ vào / ra (ItemIndicator gắn / gỡ cứng). */}
                 <SelectionMark selected={chapter.chapterId === chapterId} />
                 <span className="min-w-0 flex-1 truncate">{chapterLabel(chapter)}</span>
-                {!narrow && <span className="shrink-0 text-xs text-fg-2">{chapterExtras(chapter)}</span>}
+                <Reveal when={!narrow}><span className="shrink-0 text-xs text-fg-2">{chapterExtras(chapter)}</span></Reveal>
               </DropdownMenu.RadioItem>
             ))}
           </DropdownMenu.RadioGroup>
@@ -1764,10 +1764,8 @@ export function ScriptTab({ bookId }: { bookId: string }) {
               </button>
             ),
           )}
-          {who && (
-            <button type="button" onClick={() => setWho(null)} className="inline-flex h-7 items-center gap-1 rounded-full px-2 text-xs font-medium text-accent-text hover:bg-hover">
-              <X className="size-3" />{S.s_xem_tat_ca_866753d5}</button>
-          )}
+          <Reveal when={who}><button type="button" onClick={() => setWho(null)} className="inline-flex h-7 items-center gap-1 rounded-full px-2 text-xs font-medium text-accent-text hover:bg-hover">
+              <X className="size-3" />{S.s_xem_tat_ca_866753d5}</button></Reveal>
         </MotionRegion>
       )}
       {data?.castReady && people.length > 0 && (

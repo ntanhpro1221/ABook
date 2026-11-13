@@ -1,6 +1,6 @@
 import { S } from "../shared/strings.generated";
 import { MotionRegion } from "@/shared/MotionRegion";
-import { AnimatedRows, MotionPresence } from "@/shared/MotionPresence";
+import { AnimatedRows, MotionPresence, Reveal } from "@/shared/MotionPresence";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { BookOpenCheck, Trash2 } from "lucide-react";
 import { useState } from "react";
@@ -83,7 +83,7 @@ export function SharedReadingsSettings() {
             <div className="flex items-center gap-3 py-2 text-sm">
               <span className="min-w-0 flex-1 truncate">
                 <span className="font-medium">{entry.surface}</span> <span className="text-fg-3">→</span> “{shownReading(entry.spokenForm)}”
-                {entry.from && <span className="text-xs text-fg-3">{S.s_tu_02926cd1}{entry.from}</span>}
+                <Reveal when={entry.from}><span className="text-xs text-fg-3">{S.s_tu_02926cd1}{entry.from}</span></Reveal>
               </span>
               <IconButton
                 label={S.s_bo_cach_doc_0_a883978b(entry.surface)}

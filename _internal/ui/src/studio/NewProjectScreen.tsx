@@ -2,7 +2,7 @@ import { S } from "../shared/strings.generated";
 import { MotionRegion } from "@/shared/MotionRegion";
 import { SectionHeading } from "@/shared/SectionHeading";
 import { DisclosureRow } from "@/shared/DisclosureRow";
-import { MotionPresence } from "@/shared/MotionPresence";
+import { MotionPresence, Reveal } from "@/shared/MotionPresence";
 import { useListPresence, type PresentRow } from "@/shared/motion";
 import { Collapse, Fold, useFold } from "@/shared/Collapse";
 import { MoreInfo } from "@/shared/SettingsNav";
@@ -558,7 +558,7 @@ export function SourceStep({
                       {/* Tên thư mục đứng trước: hai thư mục "Tập 1", "Tập 2" cùng một đường dẫn dài thì đuôi bị cắt nhìn y hệt nhau. */}
                       <span className="shrink-0 font-medium">{sourceName(folder)}</span>
                       {/* Tham chiếu của máy tính (Studio từ xa) không phải thứ để đọc: chỉ có tên. */}
-                      {!isSourceRef(folder) && <span className="min-w-0 truncate text-xs text-fg-3">{folder}</span>}
+                      <Reveal when={!isSourceRef(folder)}><span className="min-w-0 truncate text-xs text-fg-3">{folder}</span></Reveal>
                     </button>
                   ))}
                   {problem.subfolders.length > 8 && (
@@ -706,7 +706,7 @@ export function SourceStep({
                     </div>
                     <div className="tabular-cell text-right text-xs text-fg-2">
                       <div>{approx(file.words, file.estimated)}{S.s_chu_6117d040}</div>
-                      {file.chars > 0 && <div className="text-fg-3">{approx(file.chars, file.estimated)}{S.s_ky_tu_c7cc4ddf}</div>}
+                      <Reveal when={file.chars > 0}><div className="text-fg-3">{approx(file.chars, file.estimated)}{S.s_ky_tu_c7cc4ddf}</div></Reveal>
                     </div>
                     <button
                       type="button"
@@ -982,9 +982,7 @@ export function VoiceCard({
         <span className="mt-1 block text-xs text-fg-2">
           {voice.gender}{S.s_mien_8dcd7dbe}{voice.region} · {voice.style}
         </span>
-        {voice.recommended && (
-          <span className="mt-2 inline-block rounded-control bg-accent-soft px-2 py-px text-caption font-medium uppercase tracking-wide text-accent-text">{S.s_de_xuat_3a11f911}</span>
-        )}
+        <Reveal when={voice.recommended}><span className="mt-2 inline-block rounded-control bg-accent-soft px-2 py-px text-caption font-medium uppercase tracking-wide text-accent-text">{S.s_de_xuat_3a11f911}</span></Reveal>
       </button>
       <MotionRegion as="span" className="grid size-6 shrink-0 place-items-center" aria-hidden>
         {selected ? <span className="grid size-6 place-items-center text-accent-text"><Check className="size-3.5" strokeWidth={3} /></span> : <span />}
@@ -1306,10 +1304,8 @@ export function QualityStep({
                 selected ? "text-accent-text" : "text-fg",
               )}
             >
-              {option.value === "high_quality" && (
-                <span className="mb-2 inline-flex items-center gap-1 text-xs font-medium text-fg-2">
-                  <Sparkles className="size-3" />{S.s_nen_dung_6d30e4cd}</span>
-              )}
+              <Reveal when={option.value === "high_quality"}><span className="mb-2 inline-flex items-center gap-1 text-xs font-medium text-fg-2">
+                  <Sparkles className="size-3" />{S.s_nen_dung_6d30e4cd}</span></Reveal>
               <div className="flex items-center justify-between">
                 <span className="text-base font-medium">{option.title}</span>
                 <MotionRegion as="span" className="grid size-6 place-items-center" aria-hidden>{selected ? <span className="grid size-6 place-items-center text-accent-text"><Check className="size-3.5" strokeWidth={3} /></span> : <span />}</MotionRegion>

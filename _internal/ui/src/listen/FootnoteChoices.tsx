@@ -2,6 +2,7 @@ import { S } from "../shared/strings.generated";
 import { ChoiceRow } from "@/shared/ui";
 import { footnoteSummary, type FootnoteChoice, type FootnoteNotes, type FootnoteOffer } from "./textImport";
 
+import { Reveal } from "../shared/MotionPresence";
 // Chú thích trong sách nhập ("Thêm sách từ file…", bước xem trước): máy nói tìm thấy gì và ĐỀ XUẤT; mặc định giữ nguyên như file.
 // Đổi lựa chọn thì danh sách chương và chữ đổi theo (đọc lại file). Cùng chữ, cùng thứ tự với điện thoại (addbook/AddBookScreen.kt): "Bỏ số gọi", rồi
 // "Lời chú" chọn một trong Giữ nguyên / Cuối chương / Bỏ lời chú (một giá trị trong lõi, nên là nhóm chọn-một chứ không phải hai ô tích).
@@ -51,7 +52,7 @@ export function FootnoteChoices({
   return (
     <div className="mt-3 py-3" data-testid="footnote-choices">
       <p className="text-xs font-medium">{title}</p>
-      {example && <p className="mt-1 text-xs text-fg-2">{example}</p>}
+      <Reveal when={example}><p className="mt-1 text-xs text-fg-2">{example}</p></Reveal>
       <div className="mt-2 space-y-3">
         {offer.marks > 0 && (
           <Choice

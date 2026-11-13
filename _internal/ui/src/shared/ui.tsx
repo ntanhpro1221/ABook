@@ -10,7 +10,7 @@ import { markArrival, scrollMotion } from "@/shared/motion";
 import { revealedScroll, wheelScroll } from "@/shared/tabScroll";
 import { MotionRegion } from "./MotionRegion";
 import { installFocusModality } from "./focusModality";
-import { MotionPresence } from "./MotionPresence";
+import { MotionPresence, Reveal } from "./MotionPresence";
 import { SlidingIndicator } from "./SlidingIndicator";
 import { useBackLayer } from "./backStack";
 import { useMediaQuery } from "./media";
@@ -994,7 +994,7 @@ export function Stat({ label, value, hint }: { label: string; value: ReactNode; 
     <div className="min-w-0">
       <div className="text-xs font-medium text-fg-3">{label}</div>
       <div className="mt-1 truncate text-xl font-medium tracking-tight">{value}</div>
-      {hint && <div className="mt-1 truncate text-xs text-fg-2">{hint}</div>}
+      <Reveal when={hint}><div className="mt-1 truncate text-xs text-fg-2">{hint}</div></Reveal>
     </div>
   );
 }

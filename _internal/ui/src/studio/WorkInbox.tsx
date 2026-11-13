@@ -1,6 +1,6 @@
 import { S } from "../shared/strings.generated";
 import { MotionRegion } from "@/shared/MotionRegion";
-import { AnimatedRows, MotionPresence } from "@/shared/MotionPresence";
+import { AnimatedRows, MotionPresence, Reveal } from "@/shared/MotionPresence";
 import { Collapse } from "@/shared/Collapse";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { AudioLines, Check, Pause, Play, RotateCcw, Search, UserPlus } from "lucide-react";
@@ -213,9 +213,8 @@ function Example({ bookId, example, picked, onPick }: { bookId: string; example:
   const playing = clip.current === id;
   return (
     <li className={cn("flex items-start gap-2 text-sm transition-opacity duration-motion-fast", onPick && !picked && "opacity-60")}>
-      {onPick && (
-        // Ô 14 px: nhãn bọc nới vùng bấm ra 24 px (màn hẹp/cảm ứng cao 40 px) mà ô vẫn đứng đúng chỗ cũ (soát a31, 2.5.8).
-        <label className="touch-reach -mx-[4px] grid size-[24.5px] shrink-0 cursor-pointer place-items-center">
+      {/* Ô 14 px: nhãn bọc nới vùng bấm ra 24 px (màn hẹp/cảm ứng cao 40 px) mà ô vẫn đứng đúng chỗ cũ (soát a31, 2.5.8). */}
+      <Reveal when={onPick}><label className="touch-reach -mx-[4px] grid size-[24.5px] shrink-0 cursor-pointer place-items-center">
           <input
             type="checkbox"
             checked={picked}
@@ -223,8 +222,7 @@ function Example({ bookId, example, picked, onPick }: { bookId: string; example:
             aria-label={S.s_gom_cau_nay_0_544f2a6f(example.text)}
             className="size-4 accent-[var(--accent)]"
           />
-        </label>
-      )}
+        </label></Reveal>
       {example.hasAudio ? (
         <button
           type="button"
@@ -238,7 +236,7 @@ function Example({ bookId, example, picked, onPick }: { bookId: string; example:
         <span className="mt-1 size-[32px] shrink-0" aria-hidden />
       )}
       <div className="min-w-0">
-        {example.before && <p className="line-clamp-2 text-fg-3"><span className="sr-only">{S.s_cau_lien_truoc_3fdc0989}</span>{example.before}</p>}
+        <Reveal when={example.before}><p className="line-clamp-2 text-fg-3"><span className="sr-only">{S.s_cau_lien_truoc_3fdc0989}</span>{example.before}</p></Reveal>
         {/* Nhãn đứng NGAY TRÊN câu được hỏi (không phải trên câu trước mờ - dễ đọc nhầm là nhãn của câu ấy); vạch bên trái đánh dấu đúng câu đang hỏi
             khi có câu trước/sau làm ngữ cảnh. */}
         <div className={cn((example.before || example.after) && "border-l-2 border-accent pl-2")}>
@@ -246,7 +244,7 @@ function Example({ bookId, example, picked, onPick }: { bookId: string; example:
             {example.chapterTitle} · {example.seq === 0 ? S.s_tieu_de_chuong_4f8f59f4 : S.s_cau_0_7b7d4092(example.seq)}
             {example.speaker && S.s_may_gan_0_e3b67580(example.speaker)}
             {example.narration && S.s_loi_ke_d511b7eb}
-            {example.changes && <span className="font-medium text-accent-text">{S.s_se_doi_b8b363f7}</span>}
+            <Reveal when={example.changes}><span className="font-medium text-accent-text">{S.s_se_doi_b8b363f7}</span></Reveal>
             {!example.hasAudio && S.s_chua_thu_240643ef}
           </div>
           <p className={example.narration ? "text-fg-2" : "text-fg"}>
@@ -263,7 +261,7 @@ function Example({ bookId, example, picked, onPick }: { bookId: string; example:
               : example.text}
           </p>
         </div>
-        {example.after && <p className="line-clamp-2 text-fg-3"><span className="sr-only">{S.s_cau_lien_sau_e9238b3e}</span>{example.after}</p>}
+        <Reveal when={example.after}><p className="line-clamp-2 text-fg-3"><span className="sr-only">{S.s_cau_lien_sau_e9238b3e}</span>{example.after}</p></Reveal>
       </div>
     </li>
   );
@@ -362,13 +360,11 @@ function PronunciationFix({ bookId, item, onOpenNames }: { bookId: string; item:
   });
   return (
     <div className="mt-3">
-      {item.requested && (
-        <p className="mb-2 flex items-center gap-2 text-xs text-fg-2">
+      <Reveal when={item.requested}><p className="mb-2 flex items-center gap-2 text-xs text-fg-2">
           <Check className="size-3.5 text-success" />
           {/* "Giữ" cách máy đang đọc không đổi gì trong sách - không bảo bấm "Áp dụng thay đổi" (soát UX 29-09). */}
           {item.requested === item.current ? S.s_giu_0_khong_can_ap_dung_90d56536(item.requested) : S.s_da_ghi_0_1_ff5ca65e(item.requested, pending)}
-        </p>
-      )}
+        </p></Reveal>
       <form
         className="flex flex-wrap items-center gap-2"
         onSubmit={(event) => {
@@ -533,15 +529,13 @@ function SpeakerFix({
   const sample = everyChoice.map((choice) => choice.name ?? choice.label).find((text) => text && !GENERIC_PEOPLE.has(text) && !/^(Tất cả là|Giữ) /.test(text));
   return (
     <div className="mt-3">
-      {item.requested && (
-        <p className="mb-2 flex items-center gap-2 text-xs text-fg-2">
+      <Reveal when={item.requested}><p className="mb-2 flex items-center gap-2 text-xs text-fg-2">
           <Check className="size-3.5 text-success" />
           {/* Gộp tên là ở cấp TÊN cho cả cuốn và các phần sau, không phải "câu này của X" (soát UX 29-09). */}
           {item.kind === "alias"
             ? S.s_da_ghi_0_la_1_ca_cuon_va_cac_phan_sau_a67585e2(item.subject ?? item.current, midSentence(item.requested))
             : S.s_da_ghi_0_cua_1_2_efc7efdc((item.lines?.length ?? 1) > 1 ? S.s_0_cau_nay_eeb40df6(item.lines?.length) : S.s_cau_nay_c70feb8f, midSentence(item.requested), pending)}
-        </p>
-      )}
+        </p></Reveal>
       {item.allLines && item.lines && onScope && (
         <div className="mb-2 flex flex-wrap items-center gap-2 text-xs text-fg-2">
           <span>{S.s_doi_nguoi_noi_cho_214fb622}</span>
@@ -556,13 +550,11 @@ function SpeakerFix({
           />
         </div>
       )}
-      {item.allLines && item.lines && onScope && (
-        <p className="mb-2 text-xs text-fg-3">
+      <Reveal when={item.allLines && item.lines && onScope}><p className="mb-2 text-xs text-fg-3">
           {item.scopeLabels
             ? S.s_0_theo_chuong_1_theo_ca_sach_va_cac_phan_s_1dd980b1(item.scopeLabels[0], item.scopeLabels[1])
             : S.s_cau_xen_ke_chi_doi_cau_danh_dau_ca_chuoi_d_8b814b90}
-        </p>
-      )}
+        </p></Reveal>
       <div className="flex flex-wrap items-center gap-2" role="group" aria-label={`${KIND_LABEL[item.kind]}: ${decidedTitle(item) ?? item.title}`}>
         {shownChoices.map((choice, index) => (
           <span key={choice.value} className="inline-flex items-center">
@@ -580,22 +572,16 @@ function SpeakerFix({
             {choice.sampleId || choice.samplePreset ? <VoiceSample bookId={bookId} sampleId={choice.sampleId} samplePreset={choice.samplePreset} name={choice.name ?? choice.label} /> : null}
           </span>
         ))}
-        {item.currentValue && (
-          <DecisionButton data-choice size="sm" variant="ghost" disabled={busy} onClick={() => save.mutate({ speaker: item.currentValue! })}>
+        <Reveal when={item.currentValue}><DecisionButton data-choice size="sm" variant="ghost" disabled={busy} onClick={() => save.mutate({ speaker: item.currentValue! })}>
             {item.keepLabel ?? (item.kind === "unnamed" ? S.s_dung_la_vai_phu_7f821afe : S.s_giu_0_b8c06ffa(item.current))}
-          </DecisionButton>
-        )}
+          </DecisionButton></Reveal>
         {/* Vai phụ ngôi ba (lính gác) không phải ai trong danh sách - cả nhóm có thể là MỘT người mới, có giọng riêng. */}
-        {item.newPerson && (
-          <DecisionButton data-choice size="sm" variant="ghost" disabled={busy || none} onClick={() => save.mutate({ speaker: item.newPerson!, newGender: "unknown" })}>
+        <Reveal when={item.newPerson}><DecisionButton data-choice size="sm" variant="ghost" disabled={busy || none} onClick={() => save.mutate({ speaker: item.newPerson!, newGender: "unknown" })}>
             {item.newPersonLabel ?? S.s_tao_nhan_vat_18e9a09a}
-          </DecisionButton>
-        )}
-        {item.keepGroups && item.keepGroups.length > 0 && (
-          <DecisionButton data-choice size="sm" variant="ghost" disabled={busy} onClick={() => keepAll.mutate(keepRequests(item))}>
+          </DecisionButton></Reveal>
+        <Reveal when={item.keepGroups && item.keepGroups.length > 0}><DecisionButton data-choice size="sm" variant="ghost" disabled={busy} onClick={() => keepAll.mutate(keepRequests(item))}>
             {item.keepLabel ?? S.s_giu_nguyen_1b550a12}
-          </DecisionButton>
-        )}
+          </DecisionButton></Reveal>
         {/* Thẻ "một người hai tên" hỏi hai tên có phải một người - chọn người thứ ba lạc chủ đề (soát UX 29-09). */}
         {item.kind !== "alias" && (
           <Button size="sm" variant="ghost" icon={item.suggestedName || item.kind === "caller" ? undefined : UserPlus} aria-expanded={creating} className="text-fg-2 hover:text-fg" onClick={() => setCreating((value) => !value)}>
@@ -614,16 +600,14 @@ function SpeakerFix({
       </div>
       <Collapse open={creating}>
         <div className="mt-2 flex flex-wrap items-center gap-2">
-          {moreChoices.length > 0 && (
-            <div className="flex w-full flex-wrap items-center gap-2" role="group" aria-label={S.s_nhung_nguoi_khac_trong_sach_43124252}>
+          <Reveal when={moreChoices.length > 0}><div className="flex w-full flex-wrap items-center gap-2" role="group" aria-label={S.s_nhung_nguoi_khac_trong_sach_43124252}>
               {moreChoices.map((choice) => (
                 <Button key={choice.value} size="sm" variant="ghost" disabled={busy || none} onClick={() => save.mutate({ speaker: choice.value })}>
                   {choice.label}
                 </Button>
               ))}
               <span className="text-xs text-fg-3">{S.s_hay_dat_ten_mot_nguoi_moi_10597c08}</span>
-            </div>
-          )}
+            </div></Reveal>
           <input
             ref={nameInput}
             value={name}
@@ -695,13 +679,11 @@ function NarratorFix({ bookId, item }: { bookId: string; item: WorkItem }) {
   const typed = name.trim();
   return (
     <div className="mt-3">
-      {section.appliesNote && !(item.requested && item.redoOnly) && <p className="mb-2 text-xs text-fg-2">{section.appliesNote}</p>}
-      {item.requested && (
-        <p className="mb-2 flex items-center gap-2 text-xs text-fg-2">
+      <Reveal when={section.appliesNote && !(item.requested && item.redoOnly)}><p className="mb-2 text-xs text-fg-2">{section.appliesNote}</p></Reveal>
+      <Reveal when={item.requested}><p className="mb-2 flex items-center gap-2 text-xs text-fg-2">
           <Check className="size-3.5 text-success" />
           {item.redoOnly ? S.s_da_ghi_ap_khi_lam_lai_phan_tich_tu_dau_4ed021d7 : S.s_da_ghi_0_036988b1(item.requested)}
-        </p>
-      )}
+        </p></Reveal>
       <div className="flex flex-wrap items-center gap-2" role="group" aria-label={`${KIND_LABEL[item.kind]}: ${decidedTitle(item) ?? item.title}`}>
         <DecisionButton data-choice size="sm" variant="ghost" className={cn("border-b-2 rounded-none transition-colors", item.requested === buttons.accepted ? "border-accent" : "border-transparent")} disabled={save.isPending} onClick={() => save.mutate({ action: "accept" })}>
           {buttons.accept}
@@ -798,11 +780,9 @@ function VoiceFix({ bookId, item }: { bookId: string; item: WorkItem }) {
   });
   return (
     <div className="mt-3">
-      {item.requested && (
-        <p className="mb-2 flex items-center gap-2 text-xs text-fg-2">
+      <Reveal when={item.requested}><p className="mb-2 flex items-center gap-2 text-xs text-fg-2">
           <Check className="size-3.5 text-success" />{S.s_da_ghi_85094402}{item.requested} - {pending}.
-        </p>
-      )}
+        </p></Reveal>
       <div className="flex flex-wrap items-start gap-2" role="group" aria-label={S.s_chon_1171ca97}>
         {(item.voiceChoices ?? []).map((choice) => (
           <div key={`${choice.character}-${choice.label}`} className="flex flex-col items-start gap-1">
@@ -822,11 +802,10 @@ function VoiceFix({ bookId, item }: { bookId: string; item: WorkItem }) {
             >
               {choice.label}
             </DecisionButton>
-            {choice.note && <span className="px-1 text-caption text-fg-3">{choice.note}</span>}
+            <Reveal when={choice.note}><span className="px-1 text-caption text-fg-3">{choice.note}</span></Reveal>
           </div>
         ))}
-        {item.keepCharacters && item.keepCharacters.length > 0 && (
-          <DecisionButton data-choice
+        <Reveal when={item.keepCharacters && item.keepCharacters.length > 0}><DecisionButton data-choice
             size="sm"
             variant="ghost"
             disabled={save.isPending}
@@ -839,8 +818,7 @@ function VoiceFix({ bookId, item }: { bookId: string; item: WorkItem }) {
             }
           >
             {item.keepLabel ?? S.s_giu_nguyen_1b550a12}
-          </DecisionButton>
-        )}
+          </DecisionButton></Reveal>
       </div>
     </div>
   );

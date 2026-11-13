@@ -9,6 +9,7 @@ import { formatClock, licenseLabel, musicCreditText } from "../shared/format";
 import { labelOf, loadOf, useDownloads, useLibraryMeta, useSaveTracks, useTrackDetail, type TrackDetail } from "./library";
 import type { LibraryPreview } from "./preview";
 
+import { Reveal } from "../shared/MotionPresence";
 /** Năng lượng (arousal của danh mục, -1..1) thành 0-100 %. Cùng phép đổi: MusicLibrary.kt `energyPercent`, MusicLibrary.js. */
 export function energyPercent(arousal: number | undefined): number | null {
   if (typeof arousal !== "number" || !Number.isFinite(arousal)) return null;
@@ -117,7 +118,7 @@ function TrackBody({
             {load.kind === "loading" && load.percent !== null && <span data-motion-live>{load.percent} %</span>}
           </Button>
           <Button variant="ghost" icon={Library} onClick={() => playing.onOpenLibrary(track.title ?? "")}>{S.s_xem_trong_kho_2a139d05}</Button>
-          {playing.onSwap && <Button variant="ghost" icon={Shuffle} onClick={playing.onSwap}>{S.s_doi_bai_7b81488f}</Button>}
+          <Reveal when={playing.onSwap}><Button variant="ghost" icon={Shuffle} onClick={playing.onSwap}>{S.s_doi_bai_7b81488f}</Button></Reveal>
         </div>
       ) : (
       <div className="space-y-2">

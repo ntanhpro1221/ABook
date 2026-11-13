@@ -13,7 +13,7 @@ import { useMediaQuery } from "@/shared/media";
 import { useElementWidth } from "@/shared/elementWidth";
 import { widthAtLeast } from "@/shared/widthClass.generated";
 import { pageFocusKey, useLayoutChangeFade, usePageEnter, usePageFocus } from "@/shared/motion";
-import { AnimatedRows, MotionPresence } from "@/shared/MotionPresence";
+import { AnimatedRows, MotionPresence, Reveal } from "@/shared/MotionPresence";
 import { MotionRegion } from "@/shared/MotionRegion";
 import { APP_TITLE } from "@/shared/title";
 import { formatPercent } from "@/shared/format";
@@ -264,7 +264,7 @@ export function Shell({ children }: { children: ReactNode }) {
           {children}
         </main>
         {/* Màn "Đang nghe" phủ kín cột này: mọi thứ nằm dưới nó cũng ra khỏi cây trợ năng và Tab (inert), không chỉ khuất mắt. */}
-        {!remote && <div className="contents" inert={expanded}><RemoteBars /></div>}
+        <Reveal when={!remote}><div className="contents" inert={expanded}><RemoteBars /></div></Reveal>
         {!remote && <ThisPlayerReporter />}
         {/* Cửa sổ hẹp (trình duyệt điện thoại nghe thư viện máy tính, soát UX 29-09): thanh phát gọn như app Android -
             thanh đầy đủ ở 375px chồng các nút lên nhau; các nút phụ vẫn có ở màn "Đang nghe". */}

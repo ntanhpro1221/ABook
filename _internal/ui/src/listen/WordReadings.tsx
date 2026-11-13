@@ -25,6 +25,7 @@ import { OnComputerOnly } from "@/shared/OnComputerOnly";
 import { useAppInfo } from "@/studio/data";
 import { UNDO_MS } from "@/studio/decisions";
 
+import { Reveal } from "../shared/MotionPresence";
 // "Đọc từ này là…" (giữ / bấm chuột phải vào một chữ ở màn đọc của cuốn chỉ có chữ) và danh sách "Cách đọc tên" của hộp "Sửa sách": dạy
 // giọng đọc một từ hay một cụm chữ liền nhau cho cả cuốn. Chỉ giọng đọc đổi, chữ của sách giữ nguyên (listen/readings.ts).
 
@@ -109,11 +110,9 @@ function ReadingForm({ bookId, surface, current, aloud, onDone }: {
       <div className="flex flex-wrap items-center gap-2">
         <TryButton aloud={aloud} surface={surface} spoken={value} />
         <Button size="sm" variant="primary" type="submit" loading={save.isPending && Boolean(typed)} disabled={!typed || typed === current || typed === surface}>{S.s_luu_cho_ca_cuon_76b88dc9}</Button>
-        {current && (
-          <Button size="sm" variant="ghost" type="button" disabled={save.isPending} onClick={() => store("")}>{S.s_doc_nhu_trong_sach_4ff053c6}</Button>
-        )}
+        <Reveal when={current}><Button size="sm" variant="ghost" type="button" disabled={save.isPending} onClick={() => store("")}>{S.s_doc_nhu_trong_sach_4ff053c6}</Button></Reveal>
       </div>
-      {aloud.failed && <p role="status" className="text-xs text-danger text-pretty">{aloud.failed}</p>}
+      <Reveal when={aloud.failed}><p role="status" className="text-xs text-danger text-pretty">{aloud.failed}</p></Reveal>
     </form>
   );
 }
@@ -254,11 +253,9 @@ export function BookReadingsSection({ bookId }: { bookId: string }) {
               />
             )}
           </div>
-          {editing === item.surface && (
-            <div className="mt-2">
+          <Reveal when={editing === item.surface}><div className="mt-2">
               <ReadingForm bookId={bookId} surface={item.surface} current={item.spoken} aloud={aloud} onDone={() => setEditing(null)} />
-            </div>
-          )}
+            </div></Reveal>
         </li>
       ))}
       {aloud.failed && editing === null && <li className="px-3 py-2 text-xs text-danger">{aloud.failed}</li>}

@@ -58,6 +58,7 @@ import {
   type PickedItem,
 } from "./textImport";
 
+import { Reveal } from "../shared/MotionPresence";
 // "Thêm sách từ file…": EPUB / DOCX / PDF / thư mục TXT thành sách chỉ-có-chữ trong thư viện (docs/LISTEN_ANYTHING.md mục 1 và 2).
 // Ba bước trong một hộp: chọn → xem danh sách chương (và gợi ý của máy) → thêm. Máy tính và điện thoại dùng chung; chỗ khác nhau
 // (bộ chọn, ai đọc file) nằm ở `source.textImport`.
@@ -536,7 +537,7 @@ export function AddBookDialog({
   const label = queue && currentId !== null ? queueLabel(queue, currentId) : "";
   const rest = queue && currentId !== null ? waitingAfter(queue, currentId).length : 0;
   // Cuốn đã có: bỏ qua là việc chính, đứng cuối chân hộp ở cả hai nền tảng.
-  const skipAction = queue && <Button variant={known ? "primary" : "ghost"} disabled={busy !== null} onClick={skipCurrent}>{S.s_bo_cuon_nay_ba5f36fe}</Button>;
+  const skipAction = <Reveal when={queue}><Button variant={known ? "primary" : "ghost"} disabled={busy !== null} onClick={skipCurrent}>{S.s_bo_cuon_nay_ba5f36fe}</Button></Reveal>;
 
   return (
     <Dialog footer={queue && !preview ? (busy === null && (<DialogActions>
@@ -544,18 +545,14 @@ export function AddBookDialog({
             </DialogActions>)) : (!preview ? (null) : (<DialogActions data-add-book-actions>
             <Button variant="ghost" disabled={busy !== null} onClick={chooseAgain}>{S.s_chon_lai_834274af}</Button>
             {!known && skipAction}
-            {rest > 0 && (
-              <Button disabled={!title.trim() || nothingPicked || busy !== null} loading={busy === "adding"} onClick={() => void addAll()}>{S.s_them_phan_con_lai_45b70e44}</Button>
-            )}
+            <Reveal when={rest > 0}><Button disabled={!title.trim() || nothingPicked || busy !== null} loading={busy === "adding"} onClick={() => void addAll()}>{S.s_them_phan_con_lai_45b70e44}</Button></Reveal>
             {known ? (
               <>
                 <Button icon={Copy} loading={busy === "adding"} disabled={!title.trim() || nothingPicked || busy !== null} onClick={() => void add(true)}>
                   {existing ? S.s_them_ban_rieng_fe9759e4 : S.s_van_them_ban_moi_f4832361}
                 </Button>
                 {/* Trong hàng, "Mở cuốn đó" bỏ dở các cuốn sau: ở đó nút chính là "Bỏ cuốn này" (cuốn này đã có rồi). */}
-                {!queue && (
-                  <Button variant="primary" icon={BookOpen} disabled={busy !== null} onClick={() => openExisting(known.id)}>{S.s_mo_cuon_do_75ab80a2}</Button>
-                )}
+                <Reveal when={!queue}><Button variant="primary" icon={BookOpen} disabled={busy !== null} onClick={() => openExisting(known.id)}>{S.s_mo_cuon_do_75ab80a2}</Button></Reveal>
               </>
             ) : (
               <Button variant="primary" icon={BookPlus} loading={busy === "adding"} disabled={!title.trim() || nothingPicked || busy === "reading"} onClick={() => void add()}>{S.s_them_vao_thu_vien_cc27dafc}</Button>

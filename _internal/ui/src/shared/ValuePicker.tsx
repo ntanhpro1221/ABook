@@ -3,7 +3,7 @@ import { useEffect, useId, useLayoutEffect, useRef, useState, type KeyboardEvent
 import { S } from "./strings.generated";
 import { cn } from "./cn";
 import { feedback } from "./feedback";
-import { MotionPresence } from "./MotionPresence";
+import { MotionPresence, Reveal } from "./MotionPresence";
 import { announce } from "./ui";
 import { PAGE_STEPS, tickLabels, chipRows, chipIndex, formatNumber, fromFraction, isDetent, parseValue, quantize, stepValue, toFraction, type ValueSpec } from "./valuePickerLogic";
 
@@ -290,7 +290,7 @@ export function ValuePicker({
         <div className="flex min-h-5 items-center justify-between gap-3">
           <div className="min-w-0">
             <div className="text-sm font-medium text-pretty">{label}</div>
-            {hint && <div className="mt-1 text-xs leading-snug text-fg-2 [overflow-wrap:anywhere]">{hint}</div>}
+            <Reveal when={hint}><div className="mt-1 text-xs leading-snug text-fg-2 [overflow-wrap:anywhere]">{hint}</div></Reveal>
           </div>
           {valueField}
         </div>
@@ -384,8 +384,7 @@ export function ValuePicker({
         </div>
         {stepButton(1)}
       </div>
-      {!plan.aligned && spec.typical.length > 0 && (
-        <div className="mx-12"><BalancedChips label={label}>
+      <Reveal when={!plan.aligned && spec.typical.length > 0}><div className="mx-12"><BalancedChips label={label}>
           {spec.typical.map((typical, index) => (
             <button
               key={typical}
@@ -410,8 +409,7 @@ export function ValuePicker({
               <span data-value-chip-measure data-value-label className="inline-block">{(chipLabel ?? ((v: number) => formatNumber(spec, v)))(typical)}</span>
             </button>
           ))}
-        </BalancedChips></div>
-      )}
+        </BalancedChips></div></Reveal>
       {children}
     </div>
   );

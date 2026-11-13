@@ -19,6 +19,7 @@ import { AutoPickNote } from "@/studio/AutoPickNote";
 import { MusicModuleNotice } from "@/studio/MusicModuleNotice";
 import { MUSIC_CHANGED_ALL, MUSIC_CHANGED_EVENT } from "./musicBed";
 
+import { Reveal } from "../shared/MotionPresence";
 // "Nhạc của tôi" trên trang sửa sách (docs/MUSIC_IMPORT.md): nhạc bạn tự có làm nhạc nền. Nhập, xem, xoá ở đây; "Đổi bài" ở từng đoạn
 // nhạc của sách. Cùng JSON ở máy tính (server.py) và điện thoại (LocalStudio.kt, MusicStore.kt).
 
@@ -84,7 +85,7 @@ export function SwapTrack({
             <div className="truncate text-xs text-fg-2">
               {[item.creator, item.duration ? formatClock(item.duration) : ""].filter(Boolean).join(" · ")}
             </div>
-            {mineNote(item) && <div className="text-xs text-fg-2">{mineNote(item)}</div>}
+            <Reveal when={mineNote(item)}><div className="text-xs text-fg-2">{mineNote(item)}</div></Reveal>
           </div>
           <Button size="sm" variant="ghost" icon={Pin} disabled={busy} loading={choosing === item.link} onClick={() => onChoose(item.link)}>{S.s_chon_1171ca97}</Button>
         </li>
@@ -160,7 +161,7 @@ export function MyMusicSection() {
               <span className="min-w-0 flex-1 break-words">
                 <EighthNote className="mr-2 inline size-4 text-accent-text" />
                 {track.title}
-                {track.creator && <span className="text-fg-2"> · {track.creator}</span>}
+                <Reveal when={track.creator}><span className="text-fg-2"> · {track.creator}</span></Reveal>
                 {track.duration ? <span className="text-fg-2"> · {formatClock(track.duration)}</span> : null}
                 {/* Nhãn ngắn như tab Nhạc của dự án; công tắc Tự chọn chỉ ở máy tính (điện thoại không tự chọn). */}
                 <AutoPickNote track={track} canOverride={canImport && !hasNativeMusicImport()} onView={refresh} />

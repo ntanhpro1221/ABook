@@ -15,6 +15,7 @@ import type { ListenBook, ListenChapter, Script, ScriptSegment } from "./model";
 import { WordReadingDialog } from "./WordReadings";
 import { keepFocus } from "./menuSlot";
 
+import { Reveal } from "../shared/MotionPresence";
 // Chọn một câu của văn bản đọc theo rồi làm gì với nó - MỘT chỗ cho màn Đọc (ReaderScreen) và tab "Đọc theo" của màn "Đang nghe" (PlayerViews):
 // nghe từ câu ấy, chép, sửa cách đọc một từ (cuốn chỉ có chữ), sửa câu này (cuốn có audio). Giữ ngón tay / bấm chuột phải vào
 // một chữ mở thẳng việc sửa chữ ấy; loại sách không sửa được chữ thì chọn câu (thanh có "Chép" thay cho menu chép của hệ thống).
@@ -131,8 +132,7 @@ export function useSentenceMenu({
     selected !== null && script ? (
       <div ref={barBox} className="flex flex-col items-center gap-2">
         <div className="pointer-events-auto flex flex-wrap items-center justify-center gap-2 rounded-cover bg-panel p-1 shadow-float ring-1 ring-line">
-          {canListen && (
-            <button
+          <Reveal when={canListen}><button
               type="button"
               onClick={() => onListen(selected)}
               {...keepFocus}
@@ -140,8 +140,7 @@ export function useSentenceMenu({
             >
               <Play className="size-4" fill="currentColor" strokeWidth={0} /> <span className="sm:hidden">{S.s_nghe_tu_day_6a7ff4ab}</span>
               <span className="max-sm:hidden">{S.s_nghe_tu_cau_nay_f5bd1329}</span>
-            </button>
-          )}
+            </button></Reveal>
           {readingEdit && (
             <button
               type="button"

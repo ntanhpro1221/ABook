@@ -22,6 +22,7 @@ import {
 import { genderLabel, groupLabel, VOICE_GROUPS, voiceSections } from "./voiceGroups";
 import { spokenVoiceName } from "./onlineConsent";
 
+import { Reveal } from "../shared/MotionPresence";
 // Cài đặt › Giọng đọc (máy tính và điện thoại dùng chung): giọng mặc định của "Nghe ngay", nghe thử từng giọng, gợi ý giọng nam / nữ, câu nói
 // rõ chữ của sách đi đâu với từng nhóm giọng trực tuyến, và phần gập "Khoá riêng" (nhập khoá, Kiểm tra, Xoá) ở cuối. Mỗi nền tảng
 // đưa vào một `VoiceSettingsApi` (máy tính: máy chủ cục bộ abook/readaloud; điện thoại: plugin ReadAloud). Bộ nhớ bản đọc nằm ở Cài đặt › Nâng cao.
@@ -288,9 +289,8 @@ export function VoiceSettings({ api, deviceHint, modules }: { api: VoiceSettings
           return (
             <Fold key={provider} storageKey={`voice.provider.${provider}`} title={heading} summary={S.s_0_1_giong_2_8057303d(detail ? `${detail} · ` : "", list.length, current?.provider === provider ? S.s_dang_dung_b8df7fc3 : "")} bodyClassName="pb-3">
               {/* Thẻ tải giọng và dòng gợi ý đứng NGOÀI nhóm radio: nhóm giọng rỗng không được nhận phím của thẻ tốc độ nằm trong nó (soát a100 V1). */}
-              {!list.length && <p className={cn("text-pretty", "py-1 text-body-small text-fg-2")}>{deviceHint}</p>}
-              {list.length > 0 && (
-              <div
+              <Reveal when={!list.length}><p className={cn("text-pretty", "py-1 text-body-small text-fg-2")}>{deviceHint}</p></Reveal>
+              <Reveal when={list.length > 0}><div
                 role="radiogroup"
                 aria-label={groupLabel({ title: heading, detail })}
                 onKeyDown={radioGroupKeys(ids, current?.id ?? "", (id) => {
@@ -349,9 +349,8 @@ export function VoiceSettings({ api, deviceHint, modules }: { api: VoiceSettings
                   </ul>
                 </div>
               ))}
-              </div>
-              )}
-              {notice && list.length > 0 && <p className="mt-1 text-xs text-fg-2 text-pretty">{notice}</p>}
+              </div></Reveal>
+              <Reveal when={notice && list.length > 0}><p className="mt-1 text-xs text-fg-2 text-pretty">{notice}</p></Reveal>
             </Fold>
           );
         })}

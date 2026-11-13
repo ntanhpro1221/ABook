@@ -1,7 +1,7 @@
 import { S } from "../shared/strings.generated";
 import { MoreInfo } from "@/shared/SettingsNav";
 import { MotionRegion } from "@/shared/MotionRegion";
-import { AnimatedRows } from "@/shared/MotionPresence";
+import { AnimatedRows, Reveal } from "@/shared/MotionPresence";
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient, type InfiniteData } from "@tanstack/react-query";
 import { AlertTriangle, Check, Clock, Ear, FileText, ListMusic, Loader2, PenLine, Play, RotateCcw, ShieldCheck, Square, VolumeX } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
@@ -153,9 +153,7 @@ function SpokenEditor({
       <p className="mt-1 text-xs text-fg-3">{S.s_viet_cach_doc_thanh_tieng_de_trong_de_dung_0f9e441a}</p>
       <div className="mt-2 flex flex-wrap gap-2">
         <Button type="submit" size="sm" variant="primary" loading={busy} disabled={!value.trim() && !item.spoken}>{S.s_luu_e91f26c0}</Button>
-        {twins.length > 0 && (
-          <Button size="sm" variant="ghost" disabled={busy} onClick={() => void save([item, ...twins])}>{S.s_luu_8c00346c}{twins.length + 1}{S.s_cau_b07e1008}</Button>
-        )}
+        <Reveal when={twins.length > 0}><Button size="sm" variant="ghost" disabled={busy} onClick={() => void save([item, ...twins])}>{S.s_luu_8c00346c}{twins.length + 1}{S.s_cau_b07e1008}</Button></Reveal>
         <Button size="sm" variant="ghost" disabled={busy} onClick={() => onDone(null)}>{S.s_huy_96732485}</Button>
       </div>
     </form>
@@ -220,13 +218,11 @@ function Row({
         <p className="text-base leading-snug">{item.text}</p>
         <DotJoin className="mt-1 text-xs text-fg-2" parts={[<span key="reason" className={KIND_INK[item.kind]}>{item.reason}</span>, item.chapterTitle]} />
         {/* Máy nghe ra đúng chữ thì không có gì để so - chỉ hiện khi KHÁC câu (soát 25-10). */}
-        {item.heard && !sameText(item.heard, item.text) && (
-          <p className="mt-1 text-body-small leading-snug text-fg-2">
+        <Reveal when={item.heard && !sameText(item.heard, item.text)}><p className="mt-1 text-body-small leading-snug text-fg-2">
             <Ear className="mr-1 inline size-3.5 -translate-y-px" />{S.s_may_nghe_ra_31219589}{item.heard}”
             {item.similarity !== null && <span className="text-fg-3" title={matchPhrase(formatPercent(item.similarity))}> · {matchShort(formatPercent(item.similarity))}</span>}
-          </p>
-        )}
-        {!source && <p className="mt-1 text-xs text-fg-2">{unplayable}.</p>}
+          </p></Reveal>
+        <Reveal when={!source}><p className="mt-1 text-xs text-fg-2">{unplayable}.</p></Reveal>
         {item.pendingSpoken !== null ? (
           <p className="mt-1 flex items-start gap-2 text-xs text-fg-2">
             <Clock className="mt-px size-3.5 shrink-0" />
@@ -235,10 +231,8 @@ function Row({
             </span>
           </p>
         ) : (
-          item.spoken && (
-            <p className="mt-1 text-xs text-fg-2">{S.s_dang_doc_la_00f0085c}<span className="text-fg">{item.spoken}</span>
-            </p>
-          )
+          <Reveal when={item.spoken}><p className="mt-1 text-xs text-fg-2">{S.s_dang_doc_la_00f0085c}<span className="text-fg">{item.spoken}</span>
+            </p></Reveal>
         )}
         <MotionRegion>
         {editing ? (
@@ -271,15 +265,13 @@ function Row({
           Điện thoại: xuống dưới câu, thẳng mép chữ; máy tính: bên phải, nút cuối kéo lề -12 px để chữ thẳng mép phải nội dung. */}
       <div className="col-start-2 -ml-4 flex gap-1 sm:col-start-3 sm:row-start-1 sm:ml-0 sm:-mr-3">
         {/* Không có gì để nghe thì không phán "Ổn" được - chỉ còn thu lại (soát UX 29-09). */}
-        {source && (
-          <DecisionButton
+        <Reveal when={source}><DecisionButton
             variant="ghost"
             icon={Check}
             aria-pressed={item.verdict === "ok"}
             onClick={() => onVerdict(item.verdict === "ok" ? null : "ok")}
             className={item.verdict === "ok" ? "bg-success-soft text-success hover:bg-success-soft hover:text-success" : "text-accent-text hover:text-accent-text"}
-          >{S.s_on_cec6d53a}</DecisionButton>
-        )}
+          >{S.s_on_cec6d53a}</DecisionButton></Reveal>
         <DecisionButton
           variant="ghost"
           icon={RotateCcw}

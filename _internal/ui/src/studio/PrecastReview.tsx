@@ -1,7 +1,7 @@
 import { S } from "../shared/strings.generated";
 import { MoreInfo, SettingsRow } from "@/shared/SettingsNav";
 import { MotionRegion } from "@/shared/MotionRegion";
-import { MotionPresence } from "@/shared/MotionPresence";
+import { MotionPresence, Reveal } from "@/shared/MotionPresence";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Check, ClipboardCheck, MessageSquareQuote, SpellCheck, Users } from "lucide-react";
 import { useMemo, useRef } from "react";
@@ -237,12 +237,10 @@ export function PrecastReview({ book, step: stepParam, onStep: setStep, ...open 
                     onRename={open.onRename}
                     onGender={open.onGender}
                   />
-                  {twins.has(nameKey(person.displayName)) && person.lines > 0 && (
-                    <div className="flex flex-wrap items-center gap-x-2 gap-y-1 px-1 text-xs text-fg-2">
+                  <Reveal when={twins.has(nameKey(person.displayName)) && person.lines > 0}><div className="flex flex-wrap items-center gap-x-2 gap-y-1 px-1 text-xs text-fg-2">
                       <span>{S.s_cung_ten_voi_nguoi_khac_trong_sach_mot_ngu_e99f281d}</span>
                       <Button size="sm" variant="ghost" onClick={() => open.onMerge(person)}>{S.s_gop_vao_6221e312}</Button>
-                    </div>
-                  )}
+                    </div></Reveal>
                 </div>
               ))}
             </div>

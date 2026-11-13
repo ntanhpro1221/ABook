@@ -8,7 +8,7 @@ import { useId, useState, type ReactNode } from "react";
 import { useLocation, useNavigate } from "react-router";
 import { MotionRegion } from "./MotionRegion";
 import { ScreenHeader } from "./ScreenHeader";
-import { AnimatedRows } from "./MotionPresence";
+import { AnimatedRows, Reveal } from "./MotionPresence";
 import { cn } from "./cn";
 import { Collapse, useFold } from "./Collapse";
 import { SectionHeading } from "./SectionHeading";
@@ -115,7 +115,7 @@ export function SettingsRow({ label, hint, children }: { label: ReactNode; hint?
         <div className="text-body font-medium text-pretty">{label}</div>
         {hint && <div className="mt-1 text-xs leading-snug text-fg-2 [overflow-wrap:anywhere]">{hint}</div>}
       </MotionRegion>
-      {children !== undefined && <div className="settings-row-control min-w-0 max-w-full">{children}</div>}
+      <Reveal when={children !== undefined}><div className="settings-row-control min-w-0 max-w-full">{children}</div></Reveal>
     </div>
   );
 }

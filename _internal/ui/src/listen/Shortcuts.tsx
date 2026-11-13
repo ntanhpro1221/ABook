@@ -4,6 +4,7 @@ import { letterShortcutsOn, useLetterShortcuts } from "@/shared/letterShortcuts"
 import { MotionRegion } from "@/shared/MotionRegion";
 import { Dialog, Kbd } from "@/shared/ui";
 
+import { Reveal } from "../shared/MotionPresence";
 // Phím tắt của máy tính: MỘT danh sách cho Cài đặt › Phím tắt và cho hộp mở bằng phím "?" (hay nút "Phím tắt" ở màn Đang nghe).
 
 export const SHORTCUTS_EVENT = "abook:shortcuts";
@@ -46,15 +47,13 @@ export function ShortcutList({ remote = false, inSettings = false }: { remote?: 
           </div>
         ))}
       </dl>
-      {!(inSettings && letters) && (
-      <p className="mt-3 max-w-md text-body-small text-fg-2 text-pretty">
+      <Reveal when={!(inSettings && letters)}><p className="mt-3 max-w-md text-body-small text-fg-2 text-pretty">
         {letters
           ? remote
             ? S.s_phim_mot_chu_cai_m_va_j_k_19_o_r_o_studio_456e9e75
             : S.s_tat_phim_mot_chu_cai_o_cai_dat_giao_dien_dea67281
           : S.s_phim_mot_chu_cai_dang_tat_0_space_mui_ten_7e515535(remote || inSettings ? "" : S.s_bat_o_cai_dat_giao_dien_e4e0ca4b)}
-      </p>
-      )}
+      </p></Reveal>
     </MotionRegion>
   );
 }

@@ -1,4 +1,4 @@
-import { useRef, type ReactNode } from "react";
+import { cloneElement, useRef, type AnimationEvent, type ReactElement, type ReactNode } from "react";
 import { cn } from "./cn";
 import { MOTION, usePresence, useListPresence } from "./motion";
 
@@ -22,6 +22,30 @@ export function MotionPresence({ open, children, className, bodyClassName }: { o
   if (open) last.current = children;
   if (!presence.mounted) return null;
   return <div className={cn("motion-flow", className)}><Collapse open={open} appear className={bodyClassName}><div className="motion-panel" data-state={presence.state} inert={!open} aria-hidden={!open || undefined} onAnimationEnd={presence.onAnimationEnd}>{open ? children : last.current}</div></Collapse></div>;
+}
+
+type Revealable = ReactElement<{ className?: string; onAnimationEnd?: (event: AnimationEvent<HTMLElement>) => void }>;
+
+/** Hiện/ẩn MỘT phần tử mà không thêm lớp bọc (chữ trong dòng, biểu tượng, phần tử trong hàng flex): gắn `motion-panel` + data-state
+ *  vào chính phần tử ấy - phần tử DOM, biểu tượng lucide hay thành phần chuyển className/props xuống DOM (Button). Đóng là inert ngay,
+ *  giữ nội dung cuối tới hết hiệu ứng (giảm chuyển động: chỉ mờ ngắn). Có sẵn từ lúc dựng thì đứng yên, không hiện dần lần nữa. */
+export function Reveal({ when, children }: { when: unknown; children: Revealable }) {
+  const open = Boolean(when);
+  const presence = usePresence(open);
+  const last = useRef(children);
+  const moved = useRef(!open);
+  if (open) last.current = children;
+  else moved.current = true;
+  if (!presence.mounted) return null;
+  const child = open ? children : last.current;
+  if (!moved.current) return child;
+  return cloneElement(child, {
+    className: cn(child.props.className, "motion-panel"),
+    "data-state": presence.state,
+    // Chỉ thêm khi đóng: phần tử tự có aria-hidden (số đếm chỉ để nhìn) giữ nguyên lúc đang hiện.
+    ...(open ? {} : { inert: true, "aria-hidden": true }),
+    onAnimationEnd: presence.onAnimationEnd,
+  } as Record<string, unknown>);
 }
 
 /** Khung chờ cũ mờ ra đè trên nội dung đang hiện vào; không dựng nội dung thật hai lần, không trì hoãn tương tác.

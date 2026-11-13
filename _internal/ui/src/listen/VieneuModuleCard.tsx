@@ -37,6 +37,7 @@ import {
   type VoiceUse,
 } from "./vieneuModule";
 
+import { Reveal } from "../shared/MotionPresence";
 const ONLINE_VOICE = "edge:vi-VN-HoaiMyNeural";
 
 /** Nơi mô-đun sống: máy tính hỏi máy chủ cục bộ (`desktopVieneu`, `desktopSupertonic`), điện thoại hỏi plugin ReadAloud (android/SettingsScreen.tsx).
@@ -91,7 +92,7 @@ export function LocalVoiceModules({
   const { advice, preselectSupertonic } = moduleAdvice(vieneuStatus, supertonicStatus);
   return (
     <Fold storageKey="voice.modules" title={S.s_bo_giong_75b79178} summary={moduleActivity(vieneuStatus, supertonicStatus)} bodyClassName="space-y-5 pb-3">
-      {advice && <p className="max-w-xl text-body-small text-fg-2 text-pretty">{advice}</p>}
+      <Reveal when={advice}><p className="max-w-xl text-body-small text-fg-2 text-pretty">{advice}</p></Reveal>
       <div id="vieneu-module" className="scroll-mt-4">
         <VieneuModuleCard backend={vieneu} onChanged={onChanged} />
       </div>
@@ -266,20 +267,16 @@ export function VieneuModuleCard({
                 <span className="min-w-0 flex-1">
                   <span id={`${id}-name`} className="flex flex-wrap items-center gap-x-2 text-sm font-medium">
                     {choice.label}
-                    {choice.recommended && !choice.installed && (
-                      <span className="rounded-full bg-accent-soft px-2 py-1 text-caption font-medium text-accent-text">{S.s_khuyen_dung_b1d3dec8}</span>
-                    )}
+                    <Reveal when={choice.recommended && !choice.installed}><span className="rounded-full bg-accent-soft px-2 py-1 text-caption font-medium text-accent-text">{S.s_khuyen_dung_b1d3dec8}</span></Reveal>
                   </span>
                   <span id={`${id}-detail`} className="mt-1 block text-body-small text-fg-2 text-pretty">{choice.detail}</span>
                 </span>
                 <span data-motion-live id={`${id}-size`} className="shrink-0 text-xs text-fg-2">
                   {choice.installed ? S.s_da_co_7610f1dd : (downloading ? (sizes.current[choice.id] ?? choice.bytes) : choice.bytes) > 0 ? formatSize(downloading ? (sizes.current[choice.id] ?? choice.bytes) : choice.bytes) : S.s_da_co_san_90ac4add}
                 </span>
-                {choice.removable && backend.remove && canPick && (
-                  <Button size="sm" variant="ghost" className="settings-edge-action -my-1 shrink-0" loading={busy} onClick={(event) => { event.preventDefault(); if (choice.installed) ask(choice.id, choice.label); else void remove(choice.id); }}>
+                <Reveal when={choice.removable && backend.remove && canPick}><Button size="sm" variant="ghost" className="settings-edge-action -my-1 shrink-0" loading={busy} onClick={(event) => { event.preventDefault(); if (choice.installed) ask(choice.id, choice.label); else void remove(choice.id); }}>
                     {choice.installed ? S.s_go_giong_2f8014a9 : S.s_xoa_phan_da_tai_9f9ae26f}
-                  </Button>
-                )}
+                  </Button></Reveal>
               </label>
             </li>
           );

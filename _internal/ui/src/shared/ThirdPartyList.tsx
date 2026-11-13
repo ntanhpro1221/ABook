@@ -3,6 +3,7 @@ import { MotionRegion } from "./MotionRegion";
 import { useEffect, useState } from "react";
 import { loadThirdParty, parseThirdParty, type ThirdPartySection } from "./thirdParty";
 
+import { Reveal } from "./MotionPresence";
 /** Chữ đậm `**...**` và mã `` `...` `` của Markdown; còn lại để nguyên. */
 function Inline({ text }: { text: string }) {
   return (
@@ -26,7 +27,7 @@ export function ThirdPartySections({ sections }: { sections: ThirdPartySection[]
     <div className="space-y-4 text-body-small leading-relaxed text-fg-2">
       {sections.map((section, index) => (
         <section key={index}>
-          {section.title && <h3 className="mb-1 text-sm font-medium text-fg"><Inline text={section.title} /></h3>}
+          <Reveal when={section.title}><h3 className="mb-1 text-sm font-medium text-fg"><Inline text={section.title} /></h3></Reveal>
           <ul className="space-y-1">
             {section.items.map((item, itemIndex) => (
               <li key={itemIndex} className={item.bullet ? "ml-4 list-disc" : undefined}>

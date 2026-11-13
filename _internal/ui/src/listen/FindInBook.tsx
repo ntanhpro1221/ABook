@@ -13,6 +13,7 @@ import { usePlayer } from "./player";
 import { chapterScriptQuery, chapterTexts, useSource } from "./source";
 import { useFadeScroller } from "@/shared/scrollFade";
 
+import { Reveal } from "../shared/MotionPresence";
 // "Tìm trong sách": gõ một chữ / một câu, bấm một kết quả là mở màn đọc đúng câu ấy (`?at=` - ReaderScreen); đang nghe cuốn này thì nghe tiếp từ câu đó.
 // Máy tính và điện thoại dùng chung; chữ lấy qua nguồn dữ liệu (bookSearch.ts), nên sách nói, sách chỉ-chữ và sách nghe thẳng từ máy khác đều tìm được.
 
@@ -28,7 +29,7 @@ function Excerpt({ snippet }: { snippet: Snippet }) {
   return (
     <>
       {snippet.before}
-      {snippet.match && <mark className="rounded-control bg-accent-soft px-1 font-medium text-accent-text">{snippet.match}</mark>}
+      <Reveal when={snippet.match}><mark className="rounded-control bg-accent-soft px-1 font-medium text-accent-text">{snippet.match}</mark></Reveal>
       {snippet.after}
     </>
   );

@@ -31,6 +31,7 @@ import {
   type PlaylistView,
 } from "./playlistBed";
 
+import { Reveal } from "../shared/MotionPresence";
 // "Nhạc nền" của sách chỉ có chữ (playlistBed.ts): chọn ở menu của sách và ở trình phát - cùng một lựa chọn, lưu vào phần sửa của
 // sách nên đi theo sách. Máy tính hỏi máy chủ, điện thoại hỏi lõi native qua cùng đường (android/localStudio.ts).
 
@@ -156,11 +157,11 @@ export function PlaylistOptionLabel({ option, chosen }: { option: PlaylistOption
         <span className="block text-pretty">{option.label}</span>
         {/* Mô tả luôn chừa chỗ hai dòng (đơn vị lh nên chữ hệ thống to thì chỗ chừa to theo; dòng thứ ba vẫn mở thêm, không cắt chữ): mô tả
             ngắn / dài xuống dòng khác nhau không làm các dòng của danh sách cao thấp khác nhau (59 / 48 dp - soát 25-10 V3). */}
-        {option.description && <span className="block min-h-[2lh] text-pretty text-xs font-normal text-fg-3">{option.description}</span>}
+        <Reveal when={option.description}><span className="block min-h-[2lh] text-pretty text-xs font-normal text-fg-3">{option.description}</span></Reveal>
       </span>
       {/* Gợi ý là chữ phụ: nhường chỗ (xuống dòng) cho tên lựa chọn - "Nhạc của tôi" từng gãy thành hai dòng cạnh "chưa có bài nào" (luật
           label-wrapped-beside-note). */}
-      {option.hint && <span className="min-w-0 max-w-[45%] text-right text-pretty text-xs font-normal text-fg-2">{option.hint}</span>}
+      <Reveal when={option.hint}><span className="min-w-0 max-w-[45%] text-right text-pretty text-xs font-normal text-fg-2">{option.hint}</span></Reveal>
     </>
   );
 }
@@ -194,12 +195,10 @@ export function PlaylistSubmenu({ bookId }: { bookId: string }) {
         </DropdownMenu.Item>
       ))}
       </MotionRegion>
-      {canImport && (
-        <DropdownMenu.Item onSelect={() => void addMusic()} className={cn(MENU_ITEM, "h-auto min-h-9 py-2")}>
+      <Reveal when={canImport}><DropdownMenu.Item onSelect={() => void addMusic()} className={cn(MENU_ITEM, "h-auto min-h-9 py-2")}>
           <Plus className="size-4 shrink-0" />
           {ADD_MUSIC_LABEL}
-        </DropdownMenu.Item>
-      )}
+        </DropdownMenu.Item></Reveal>
       <MotionRegion motionKey={[loading, loadFailed]}>{loading ? <ContentSkeleton count={2} label={S.s_dang_tai_danh_sach_831ab748} className="p-2" /> : loadFailed ? <InlineError message={S.s_ban_hay_thu_tai_lai_danh_sach_nhac_c3976285} onRetry={retry} /> : null}</MotionRegion>
       {/* Chữ nhỏ chỉ khi có điều cần biết (mất mạng lần đầu thì lý do) - như bản điện thoại, không nhắc suông. */}
       <MotionRegion motionKey={error}>{error ? <p data-menu-note className="px-2 pb-1 pt-2 text-xs text-fg-2">{error}</p> : null}</MotionRegion>

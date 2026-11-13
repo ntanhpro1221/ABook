@@ -12,6 +12,7 @@ import { useMediaQuery } from "@/shared/media";
 import { Skeleton } from "@/shared/ui";
 import { api, type BookSummary } from "./api";
 
+import { Reveal } from "../shared/MotionPresence";
 // Ảnh bìa thật cho một cuốn (webui/covers.py): chọn file, kéo thả ảnh vào bìa, hoặc dán (Ctrl+V) khi đang ở trang
 // sách. Máy chủ tự thu nhỏ và tính màu; ảnh đi theo sách sang điện thoại, màn hình khoá và file MP3 xuất ra.
 
@@ -130,8 +131,7 @@ export function CoverEditor({ book }: { book: BookSummary & { cover?: CoverImage
         >
           <Globe className="size-4" />
         </button>
-        {book.cover && (
-          <button
+        <Reveal when={book.cover}><button
             type="button"
             disabled={busy}
             onClick={() => remove.mutate()}
@@ -140,8 +140,7 @@ export function CoverEditor({ book }: { book: BookSummary & { cover?: CoverImage
             className="touch-box grid size-8 place-items-center rounded-control text-fg-2 hover:bg-hover hover:text-fg disabled:opacity-50"
           >
             <Trash2 className="size-4" />
-          </button>
-        )}
+          </button></Reveal>
       </div>
       <p className="text-xs text-fg-3 max-sm:hidden">{S.s_keo_hoac_dan_anh_71bf1343}</p>
       <CoverSearchDialog

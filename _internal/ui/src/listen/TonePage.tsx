@@ -13,6 +13,7 @@ import { changeTone, getTones, useTones } from './audioFx';
 import { signedNumber } from './labels';
 import { BUILTIN_TONES, type ToneLibrary } from './tonePresets';
 
+import { Reveal } from "../shared/MotionPresence";
 /** Việc chữ của trang (Lưu, Đổi tên, Tạo âm sắc): chữ nhấn, ô chạm 48 - như TextAction của Android, TextLink accent của Qt. */
 const LINK='flex min-h-12 items-center text-sm font-medium text-accent-text hover:underline';
 // Xoá: chữ màu nguy hiểm, không hổ phách như Đổi tên / Nhân bản cạnh nó (soát 10-11 L13).
@@ -66,7 +67,7 @@ export function TonePage({onBack,leaveGuard}:{onBack:()=>void;leaveGuard?:ToneLe
         <span aria-hidden className={`grid size-5 shrink-0 place-items-center rounded-full ring-2 ring-inset transition-colors duration-motion-fast ${chosen?'ring-accent':'ring-fg-2'}`}><span className={`size-2.5 rounded-full bg-accent transition-transform duration-motion-fast ${chosen?'scale-100':'scale-0'}`}/></span>
         <span className="min-w-0 flex-1 break-words">{p.name}</span><ToneThumb bands={p.bands} chosen={chosen}/>
       </button>
-      {mine&&<button type="button" aria-label={S.s_them_tuy_chon_cho_0_82a2cf4d(p.name)} aria-expanded={menu===p.id} className="-mr-3 flex size-12 shrink-0 items-center justify-center rounded-control text-fg-2 hover:text-fg" onClick={()=>setMenu(menu===p.id?null:p.id)}><MoreHorizontal className="size-5"/></button>}
+      <Reveal when={mine}><button type="button" aria-label={S.s_them_tuy_chon_cho_0_82a2cf4d(p.name)} aria-expanded={menu===p.id} className="-mr-3 flex size-12 shrink-0 items-center justify-center rounded-control text-fg-2 hover:text-fg" onClick={()=>setMenu(menu===p.id?null:p.id)}><MoreHorizontal className="size-5"/></button></Reveal>
     </div>
     {mine&&<Collapse open={menu===p.id}><div className="flex flex-wrap gap-x-6 pb-1 pl-8">
       <button type="button" className={LINK} onClick={()=>form(p.name,{id:p.id})}>{S.s_doi_ten_a2a0dc70}</button>
@@ -75,9 +76,9 @@ export function TonePage({onBack,leaveGuard}:{onBack:()=>void;leaveGuard?:ToneLe
     </div></Collapse>}
   </div>;};
   return <div ref={page} data-tone-page className="flex min-w-0 flex-col">
-    {!inSheet&&<div className="flex min-h-12 items-center"><BackButton label={S.s_quay_lai_6d793582} onClick={()=>leave(onBack)}/><p className="font-medium">{S.s_am_sac_8c2f4e1a}</p></div>}
+    <Reveal when={!inSheet}><div className="flex min-h-12 items-center"><BackButton label={S.s_quay_lai_6d793582} onClick={()=>leave(onBack)}/><p className="font-medium">{S.s_am_sac_8c2f4e1a}</p></div></Reveal>
     <div className="flex min-h-12 items-center justify-between gap-3"><p className="min-w-0 font-medium" aria-live="polite">{lib.name}</p>
-      {(current.id==='draft'||lib.dirty)&&<button type="button" className={LINK} onClick={()=>form(suggest(),{})}>{S.s_tone_save}</button>}</div>
+      <Reveal when={current.id==='draft'||lib.dirty}><button type="button" className={LINK} onClick={()=>form(suggest(),{})}>{S.s_tone_save}</button></Reveal></div>
     <svg viewBox="0 0 300 80" preserveAspectRatio="none" role="img" aria-label={S.s_am_sac_8c2f4e1a} className="box-content h-20 w-full rounded-control border border-line py-3 text-accent">
       <path d="M0 40H300" stroke="var(--line)" strokeDasharray="4 4" vectorEffect="non-scaling-stroke"/>
       <path d={tonePath(current.bands,300,80,2)} fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" vectorEffect="non-scaling-stroke"/>
@@ -98,7 +99,7 @@ export function TonePage({onBack,leaveGuard}:{onBack:()=>void;leaveGuard?:ToneLe
     <div role="radiogroup" aria-label={S.s_tone_mine}>{lib.data.mine.map(p=>row(p,true))}</div>
     <button type="button" data-tone-add className={`${LINK} gap-3`} onClick={()=>form(suggest(),{})}><Plus aria-hidden className="size-5"/>{S.s_tone_add}</button>
     <label className="mt-2 flex min-h-12 items-center justify-between gap-3 text-sm">{S.s_copy_0aedb2b2cf2b}<Switch label={S.s_copy_0aedb2b2cf2b} checked={lib.scoped} onCheckedChange={value=>run(l=>l.scope(value))}/></label>
-    {asking&&<div className="flex flex-col gap-2 rounded-control border border-line p-3" role="group" aria-label={S.s_tone_leave}><p>{S.s_tone_leave}</p><Button onClick={()=>{if(run(l=>l.save(l.preset?.name??suggest(),true)))finish();}}>{S.s_tone_overwrite}</Button><Button onClick={()=>form(suggest(),{leave:true})}>{S.s_tone_new}</Button><Button variant="ghost" onClick={()=>{if(run(l=>l.discard()))finish();}}>{S.s_tone_discard}</Button></div>}
+    <Reveal when={asking}><div className="flex flex-col gap-2 rounded-control border border-line p-3" role="group" aria-label={S.s_tone_leave}><p>{S.s_tone_leave}</p><Button onClick={()=>{if(run(l=>l.save(l.preset?.name??suggest(),true)))finish();}}>{S.s_tone_overwrite}</Button><Button onClick={()=>form(suggest(),{leave:true})}>{S.s_tone_new}</Button><Button variant="ghost" onClick={()=>{if(run(l=>l.discard()))finish();}}>{S.s_tone_discard}</Button></div></Reveal>
     {naming&&<form className="flex flex-col gap-2 border-t border-line py-3" onSubmit={e=>{e.preventDefault();const kind=naming;if(run(l=>{if(kind.duplicate)l.duplicate(kind.id!,name);else if(kind.id)l.rename(kind.id,name);else l.save(name);})){setNaming(null);if(kind.leave)finish();}}}><label className="text-sm">{S.s_tone_name}<input autoFocus maxLength={80} value={name} onChange={e=>setName(e.target.value)} className="mt-2 min-h-12 w-full rounded-control border border-line bg-panel px-3 text-fg"/></label><Button type="submit" disabled={!name.trim()}>{S.s_luu_e91f26c0}</Button><Button type="button" variant="ghost" onClick={()=>setNaming(null)}>{S.s_tone_back}</Button></form>}
   </div>;
 }

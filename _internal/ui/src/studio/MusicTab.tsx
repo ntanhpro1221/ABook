@@ -4,7 +4,7 @@ import { SectionHeading } from "@/shared/SectionHeading";
 import { useBackLayer } from "@/shared/backStack";
 import { SettingsRow } from "@/shared/SettingsNav";
 import { Switch } from "@/desktop/Switch";
-import { AnimatedRows, MotionPresence } from "@/shared/MotionPresence";
+import { AnimatedRows, MotionPresence, Reveal } from "@/shared/MotionPresence";
 import { Fold, Collapse } from "@/shared/Collapse";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -205,17 +205,15 @@ function TrackRow({
       <span className="min-w-0 flex-1 break-words">
         <EighthNote className="mr-2 inline size-4 text-fg-2" />
         {item.title || S.s_bai_nhac_5d07657e}
-        {item.creator && <span className="text-fg-2"> · {item.creator}</span>}
+        <Reveal when={item.creator}><span className="text-fg-2"> · {item.creator}</span></Reveal>
         {item.duration ? <span className="text-fg-2"> · {formatClock(item.duration)}</span> : null}
-        {note && <span className="block text-xs text-fg-2">{note}</span>}
+        <Reveal when={note}><span className="block text-xs text-fg-2">{note}</span></Reveal>
       </span>
       <span className="flex shrink-0 gap-1">
-        {canPreview && (
-          <Button size="sm" variant="ghost" icon={previewing === item.link ? Square : Play} aria-pressed={previewing === item.link}
+        <Reveal when={canPreview}><Button size="sm" variant="ghost" icon={previewing === item.link ? Square : Play} aria-pressed={previewing === item.link}
             onClick={() => onPreview(item.link)}>
             {previewing === item.link ? S.s_dung_nghe_f20939be : S.s_nghe_thu_fa024065}
-          </Button>
-        )}
+          </Button></Reveal>
         <Button size="sm" variant="ghost" icon={Pin} disabled={busy} loading={choosing === item.link}
           onClick={() => onChoose(item.link)}>
           {choosing === item.link ? S.s_dang_doi_b4190199 : S.s_chon_1171ca97}
@@ -383,10 +381,8 @@ function SceneMenu({
           <DropdownMenu.Item onSelect={onSilence} className={MENU_ITEM}>
             <VolumeX className="size-4" /> {scene.silenced ? S.s_bat_nhac_doan_nay_57d716ef : S.s_tat_nhac_doan_nay_8fb1136b}
           </DropdownMenu.Item>
-          {scene.pinned && (
-            <DropdownMenu.Item onSelect={onUnpin} className={MENU_ITEM}>
-              <PinOff className="size-4" />{S.s_bo_ghim_034b5c81}</DropdownMenu.Item>
-          )}
+          <Reveal when={scene.pinned}><DropdownMenu.Item onSelect={onUnpin} className={MENU_ITEM}>
+              <PinOff className="size-4" />{S.s_bo_ghim_034b5c81}</DropdownMenu.Item></Reveal>
           {onBan && (
             <>
               <DropdownMenu.Separator className="my-1 h-px bg-line" />
@@ -597,8 +593,7 @@ export function MusicTab({ bookId, chapterTitle }: { bookId: string; chapterTitl
                     </span>
                     <span className="w-32 shrink-0">
                       {moodOf(scene, taxonomy.emotions)}
-                      {(scene.moodSource === "llm" || scene.moodSource === "chapter" || scene.moodSource === "student") && (
-                        <span
+                      <Reveal when={scene.moodSource === "llm" || scene.moodSource === "chapter" || scene.moodSource === "student"}><span
                           className="ml-2 rounded-control bg-sunken px-1 py-1 text-xs text-fg-2"
                           title={
                             scene.moodSource === "student"
@@ -607,8 +602,7 @@ export function MusicTab({ bookId, chapterTitle }: { bookId: string; chapterTitl
                                 ? S.s_ai_da_doc_ca_doan_nay_de_cham_khong_khi_ro_e5ef84d5
                                 : S.s_ai_da_doc_ca_doan_nay_de_cham_khong_khi_61bd9b9d
                           }
-                        >{S.s_ai_11fb682b}</span>
-                      )}
+                        >{S.s_ai_11fb682b}</span></Reveal>
                     </span>
                     <span className="min-w-0 basis-full break-words sm:flex-1 sm:basis-0">
                       {follows ? (
@@ -618,13 +612,9 @@ export function MusicTab({ bookId, chapterTitle }: { bookId: string; chapterTitl
                           <EighthNote className="mr-2 inline size-4 text-accent-text" />
                           {track?.title ?? S.s_bai_nhac_5d07657e}
                           {track?.creator && <span className="text-fg-2"> · {track.creator}</span>}
-                          {track?.source === "local" && (
-                            <span className="ml-2 rounded-control bg-sunken px-2 py-1 text-xs text-fg-2">{S.s_nhac_cua_toi_f65b7ac6}</span>
-                          )}
-                          {scene.pinned && <Pin className="ml-2 inline size-3.5 text-fg-2" aria-label={S.s_da_ghim_f1645be7} />}
-                          {scene.pinUnavailable && (
-                            <span className="block text-xs text-warning">{S.s_bai_ban_ghim_khong_con_tren_may_nay_doan_d_09b8894e}</span>
-                          )}
+                          <Reveal when={track?.source === "local"}><span className="ml-2 rounded-control bg-sunken px-2 py-1 text-xs text-fg-2">{S.s_nhac_cua_toi_f65b7ac6}</span></Reveal>
+                          <Reveal when={scene.pinned}><Pin className="ml-2 inline size-3.5 text-fg-2" aria-label={S.s_da_ghim_f1645be7} /></Reveal>
+                          <Reveal when={scene.pinUnavailable}><span className="block text-xs text-warning">{S.s_bai_ban_ghim_khong_con_tren_may_nay_doan_d_09b8894e}</span></Reveal>
                         </>
                       ) : (
                         <span className="text-fg-2">{scene.silenced ? S.s_im_lang_ban_chon_356a628b : S.s_im_lang_khong_bai_nao_du_hop_6881c83f}</span>
@@ -636,7 +626,7 @@ export function MusicTab({ bookId, chapterTitle }: { bookId: string; chapterTitl
                         onClick={(event) => { swapTrigger.current = event.currentTarget; setSwapping(swapping === scene.key ? null : scene.key); }}>
                         {swap.text}
                       </Button>
-                      {follows && <span aria-hidden className="size-8 shrink-0 max-sm:hidden" />}
+                      <Reveal when={follows}><span aria-hidden className="size-8 shrink-0 max-sm:hidden" /></Reveal>
                       {!follows && <SceneMenu
                         scene={scene}
                         disabled={change.isPending}

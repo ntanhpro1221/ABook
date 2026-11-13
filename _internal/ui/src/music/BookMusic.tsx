@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Download } from "lucide-react";
 import { useState } from "react";
 import { formatSize } from "../shared/format";
-import { MotionPresence } from "../shared/MotionPresence";
+import { MotionPresence, Reveal } from "../shared/MotionPresence";
 import { SectionHeading } from "../shared/SectionHeading";
 import { S } from "../shared/strings.generated";
 import { Button } from "../shared/ui";
@@ -42,11 +42,9 @@ export function BookMusic({ bookId }: { bookId: string }) {
       <section aria-labelledby="book-music" className="mt-8 space-y-3">
         <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
           <SectionHeading id="book-music">{S.s_nhac_trong_sach_9070d53a}</SectionHeading>
-          {unsaved.length > 0 && (
-            <Button size="sm" icon={Download} loading={save.isPending} onClick={() => save.mutate(unsaved.map((track) => track.link))}>
+          <Reveal when={unsaved.length > 0}><Button size="sm" icon={Download} loading={save.isPending} onClick={() => save.mutate(unsaved.map((track) => track.link))}>
               {S.s_luu_tat_ca_0_e16e7860(formatSize(data?.missingBytes ?? 0))}
-            </Button>
-          )}
+            </Button></Reveal>
         </div>
         <ul>
           {tracks.map((track) => (

@@ -1,7 +1,7 @@
 import { S } from "../shared/strings.generated";
 import { TickingValue } from "@/shared/TickingValue";
 import { MotionRegion } from "@/shared/MotionRegion";
-import { MotionPresence } from "@/shared/MotionPresence";
+import { MotionPresence, Reveal } from "@/shared/MotionPresence";
 import * as DropdownMenu from "@/shared/DropdownMenu";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Cast, Laptop, Loader2, MonitorSmartphone, MonitorSpeaker, Pause, Play, RefreshCw, Smartphone, Speaker, Tv, X } from "lucide-react";
@@ -490,8 +490,8 @@ export function HandOffButton({ className }: { className?: string }) {
             <DropdownMenu.Item key={target.device} onSelect={() => handOff(target)} className={MENU_ITEM}>
               <DeviceIcon kind={target.kind} className="size-4 shrink-0 text-fg-2" />
               <span className="min-w-0 flex-1 truncate">{target.name}</span>
-              {protocolLabel(target) && <span className="shrink-0 text-xs text-fg-3">{protocolLabel(target)}</span>}
-              {target.bookId && target.playing && <span className="shrink-0 text-xs text-fg-3">{S.s_dang_phat_e3baf7da}</span>}
+              <Reveal when={protocolLabel(target)}><span className="shrink-0 text-xs text-fg-3">{protocolLabel(target)}</span></Reveal>
+              <Reveal when={target.bookId && target.playing}><span className="shrink-0 text-xs text-fg-3">{S.s_dang_phat_e3baf7da}</span></Reveal>
             </DropdownMenu.Item>
           ))}
         </MotionRegion></DropdownMenu.Content>

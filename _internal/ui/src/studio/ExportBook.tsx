@@ -1,6 +1,6 @@
 import { S } from "../shared/strings.generated";
 import { MotionRegion } from "@/shared/MotionRegion";
-import { AnimatedRows, MotionPresence } from "@/shared/MotionPresence";
+import { AnimatedRows, MotionPresence, Reveal } from "@/shared/MotionPresence";
 import { SlidingIndicator } from "@/shared/SlidingIndicator";
 import { useMotionState } from "@/shared/motion";
 import { AlertTriangle, BookAudio, CheckCircle2, FileAudio, FolderArchive, FolderDown, FolderOpen, RefreshCw } from "lucide-react";
@@ -299,12 +299,10 @@ export function ExportDialog({
           description: (
             <div className="flex flex-col gap-1">
               <span>{shown.summary}</span>
-              {shown.detail && (
-                <details className="text-xs">
+              <Reveal when={shown.detail}><details className="text-xs">
                   <summary className="cursor-pointer select-none">{S.s_chi_tiet_e762d926}</summary>
                   <p className="mt-1 select-text break-words font-mono">{shown.detail}</p>
-                </details>
-              )}
+                </details></Reveal>
             </div>
           ),
         });
@@ -357,14 +355,10 @@ export function ExportDialog({
   const layoutValues: Layout[] = ["single", "perPart"];
   return (
     <Dialog footer={busy ? (<DialogActions>
-            {packing && (
-              <Button variant="ghost" disabled={cancelling} onClick={cancelPacking}>{S.s_huy_xuat_ca425e96}</Button>
-            )}
+            <Reveal when={packing}><Button variant="ghost" disabled={cancelling} onClick={cancelPacking}>{S.s_huy_xuat_ca425e96}</Button></Reveal>
             <Button variant="ghost" onClick={() => handleOpenChange(false)}>{S.s_dong_cu_de_chay_9a342df0}</Button>
           </DialogActions>) : (finished ? (<DialogActions>
-            {!info?.remote && (
-              <Button variant="ghost" icon={FolderOpen} onClick={() => revealFolder(finished.folder)}>{S.s_mo_thu_muc_4bf5b127}</Button>
-            )}
+            <Reveal when={!info?.remote}><Button variant="ghost" icon={FolderOpen} onClick={() => revealFolder(finished.folder)}>{S.s_mo_thu_muc_4bf5b127}</Button></Reveal>
             <Button variant="primary" onClick={() => handleOpenChange(false)}>{S.s_xong_a6f4543a}</Button>
           </DialogActions>) : (<DialogActions>
         <Button variant="ghost" onClick={() => handleOpenChange(false)}>{S.s_thoi_e68f9e88}</Button>
@@ -540,7 +534,7 @@ export function ExportDialog({
         {(item) => <div className="space-y-2 pt-2">
           <p className="break-all">{item.target} · {item.changed.length}{S.s_chuong_da_doi_a6114cc0}</p>
           <Button size="sm" variant="ghost" onClick={() => { setKind(item.kind as Kind); setScope("part"); setChangedOnly(item.kind === "mp3"); }}>{item.kind === "m4b" ? S.s_xuat_lai_m4b_07ad2a50 : item.kind === "mp3" ? S.s_xuat_chuong_doi_7eb1033d : S.s_xuat_file_sach_02b848a2}</Button>
-          {item.kind === "m4b" && <p>{S.s_m4b_gop_ca_cuon_ban_can_dung_lai_ca_file_v_6adad4ec}</p>}
+          <Reveal when={item.kind === "m4b"}><p>{S.s_m4b_gop_ca_cuon_ban_can_dung_lai_ca_file_v_6adad4ec}</p></Reveal>
         </div>}
         </AnimatedRows>
         </div>

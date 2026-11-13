@@ -4,6 +4,7 @@ import type { ButtonHTMLAttributes, ReactNode, Ref } from "react";
 import { cn } from "./cn";
 import { MotionRegion } from "./MotionRegion";
 
+import { Reveal } from "./MotionPresence";
 /** Một hàng cho cả đi tới và gập mở: mũi tên luôn neo mép phải của cột. Mũi tên phải chỉ cho hàng mở trang con; hàng gập mở tại chỗ
  *  (`expanded` có giá trị) mang mũi tên xuống, lật lên khi mở - không ai đọc nhầm câu trợ giúp thành một trang nữa. */
 export function DisclosureRow({ title, summary, icon, expanded, controls, onClick, to, replace, state, current, section, className, ref, ...rest }: Omit<ButtonHTMLAttributes<HTMLButtonElement>, "title"> & {
@@ -12,7 +13,7 @@ export function DisclosureRow({ title, summary, icon, expanded, controls, onClic
 }) {
   const Chevron = expanded === undefined ? ChevronRight : ChevronDown;
   const body = <>
-    {icon && <span className={cn("shrink-0", current ? "text-fg" : "text-fg-2")} aria-hidden>{icon}</span>}
+    <Reveal when={icon}><span className={cn("shrink-0", current ? "text-fg" : "text-fg-2")} aria-hidden>{icon}</span></Reveal>
     <span className="min-w-0 flex-1">
       <span data-section-title={section ? "" : undefined} className={cn(section ? "block section-title [overflow-wrap:anywhere]" : "block text-base [overflow-wrap:anywhere]", !section && (current ? "font-medium" : "font-medium"))}>{title}</span>
       <MotionRegion as="span" className="block text-sm font-normal text-fg-2" motionKey={typeof summary === "string" || typeof summary === "number" ? summary : undefined}>{summary}</MotionRegion>

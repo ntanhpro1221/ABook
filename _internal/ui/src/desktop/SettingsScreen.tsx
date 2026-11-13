@@ -1,7 +1,7 @@
 import { S } from "../shared/strings.generated";
 import { DisclosureRow } from "@/shared/DisclosureRow";
 import { MotionRegion } from "@/shared/MotionRegion";
-import { MotionPresence } from "@/shared/MotionPresence";
+import { MotionPresence, Reveal } from "@/shared/MotionPresence";
 import { SleepSchedule } from "./SleepSchedule";
 import { ValuePicker } from "@/shared/ValuePicker";
 import { VALUE_SPECS, secondsLabel } from "@/shared/valuePickerLogic";
@@ -145,7 +145,7 @@ function UpdateRow({ update, current }: { update: { version: string; notes: stri
       <p className="text-sm">
         <span className="font-medium">{S.s_abook_76b9d6fa}{update.version}</span>{S.s_da_co_d8cfc81f}{current ? S.s_dang_dung_0_a310b1d2(current) : ""}
       </p>
-      {update.notes && <p className="mt-2 whitespace-pre-line text-body-small leading-relaxed text-fg-2 text-pretty">{update.notes}</p>}
+      <Reveal when={update.notes}><p className="mt-2 whitespace-pre-line text-body-small leading-relaxed text-fg-2 text-pretty">{update.notes}</p></Reveal>
       <Button className="mt-3" icon={Download} disabled={busy} onClick={() => void install()}>
         {busy ? S.s_dang_tai_ban_moi_ee824efa : S.s_cap_nhat_abook_66fb9f08}
       </Button>
@@ -418,9 +418,7 @@ export function AdvancedGroup({ info }: { info: AppInfo | undefined }) {
               <FolderOpen className="size-4 shrink-0" />
               <span className="truncate" title={preferences?.libraryRoot}>{preferences?.libraryRoot}</span>
             </div>
-            {info?.dialogs && (
-              <Button size="sm" variant="ghost" className={cn("settings-edge-action touch-row", WRAP_LABEL)} onClick={() => void changeLibrary()}>{S.s_doi_thu_muc_b5c84428}</Button>
-            )}
+            <Reveal when={info?.dialogs}><Button size="sm" variant="ghost" className={cn("settings-edge-action touch-row", WRAP_LABEL)} onClick={() => void changeLibrary()}>{S.s_doi_thu_muc_b5c84428}</Button></Reveal>
           </div>
         </SettingsBlock>
       </MotionPresence>

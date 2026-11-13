@@ -2,7 +2,7 @@ import { S } from "../shared/strings.generated";
 import { ValuePicker } from "@/shared/ValuePicker";
 import { VALUE_SPECS, formatNumber, quantize } from "@/shared/valuePickerLogic";
 import { MotionRegion } from "@/shared/MotionRegion";
-import { LoadingCrossfade, MotionPresence } from "@/shared/MotionPresence";
+import { LoadingCrossfade, MotionPresence, Reveal } from "@/shared/MotionPresence";
 import * as Popover from "@radix-ui/react-popover";
 import { ArrowRight, BookOpenText, SkipBack, SkipForward, Headphones, Search, Type } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState, type KeyboardEvent as ReactKeyboardEvent, type TouchEvent as ReactTouchEvent, type WheelEvent as ReactWheelEvent } from "react";
@@ -347,13 +347,11 @@ export function ReaderScreen(edit: SentenceEditing) {
       <IconButton label={S.s_chuong_truoc_4750f9e9} icon={SkipBack} disabled={index <= 0} onClick={() => go(-1)} className={TOUCH} />
       <IconButton label={S.s_tim_trong_sach_de3ccc5f} icon={Search} onClick={() => setFinding(true)} className={TOUCH} />
       {/* Một nhãn cố định: nút luôn nghe từ chỗ đang thấy trên màn (hay nghe tiếp câu đang nghe dở nếu nó còn trên màn). */}
-      {canListen && (
-        // Thanh rộng ~345 px với nhãn: màn dưới 380 px (hay chữ hệ thống 130 % trên máy 360 px) chỉ còn icon - nhãn vẫn đọc cho trình đọc màn hình.
-        // Chữ hệ thống phóng to (textZoom Android không đổi bề rộng màn) thì nút này co, nhãn cắt "…" - các nút khác đứng yên trong thanh.
-        <Button size="sm" variant="primary" icon={Headphones} onMouseDown={(event) => event.preventDefault()} onClick={listenHere} className="mx-1 min-w-0 max-sm:h-11 max-[379px]:px-3">
+      {/* Thanh rộng ~345 px với nhãn: màn dưới 380 px (hay chữ hệ thống 130 % trên máy 360 px) chỉ còn icon - nhãn vẫn đọc cho trình đọc màn hình. */}
+      {/* Chữ hệ thống phóng to (textZoom Android không đổi bề rộng màn) thì nút này co, nhãn cắt "…" - các nút khác đứng yên trong thanh. */}
+      <Reveal when={canListen}><Button size="sm" variant="primary" icon={Headphones} onMouseDown={(event) => event.preventDefault()} onClick={listenHere} className="mx-1 min-w-0 max-sm:h-11 max-[379px]:px-3">
           <span className="min-w-0 truncate max-[379px]:sr-only">{S.s_nghe_tu_day_6a7ff4ab}</span>
-        </Button>
-      )}
+        </Button></Reveal>
       <Popover.Root>
         <Popover.Trigger asChild>
           <button type="button" aria-label={S.s_co_chu_va_gian_dong_7dfe48ac} className={cn("grid size-9 shrink-0 place-items-center rounded-control text-fg-2 hover:bg-hover hover:text-fg", TOUCH)}>

@@ -11,6 +11,7 @@ import { api } from "./api";
 import { refreshAfterDecision, UNDO_MS, undoAction } from "./decisions";
 import { voiceToUse } from "./MergePeople";
 
+import { Reveal } from "../shared/MotionPresence";
 // Tab Nhân vật: "Đổi tên" và "Đổi giới tính" của một người.
 // - Đổi tên chỉ là cái tên trên màn hình (POST /characters/rename -> names.json): không đổi giọng hay audio, có hiệu lực ngay.
 // - Đổi giới tính đi đúng đường của thẻ "Nam hay nữ" (POST /voice): một thay đổi chờ "Áp dụng thay đổi", hoàn tác được.
@@ -53,9 +54,7 @@ export function RenamePersonDialog({
   const name = person ? cleanName(person.displayName) : "";
   return (
     <Dialog footer={<DialogActions>
-          {person?.originalName && (
-            <Button type="button" variant="ghost" disabled={busy} onClick={() => void save("")}>{S.s_ve_ten_goc_643cd2e0}</Button>
-          )}
+          <Reveal when={person?.originalName}><Button type="button" variant="ghost" disabled={busy} onClick={() => void save("")}>{S.s_ve_ten_goc_643cd2e0}</Button></Reveal>
           <Button type="button" variant="ghost" onClick={onClose}>{S.s_thoi_e68f9e88}</Button>
           <Button type="submit" form={dialogForm1} variant="primary" loading={busy} disabled={!value.trim()}>{S.s_luu_e91f26c0}</Button>
         </DialogActions>}

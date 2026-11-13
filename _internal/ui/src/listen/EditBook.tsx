@@ -29,6 +29,7 @@ import { useSource } from "./source";
 import { BookReadingsSection } from "./WordReadings";
 import { useFadeScroller } from "@/shared/scrollFade";
 
+import { Reveal } from "../shared/MotionPresence";
 // Sửa sách "áp ngay" ngay trên trang nghe (docs/EDITING.md): tên sách, tác giả, bìa, tên nhân vật, tên chương, nhạc nền. Cùng một bộ
 // màn hình cho máy tính và điện thoại - lệnh đi tới `/api/books/<mã>/...`; máy tính là server Python, điện thoại là lõi native
 // (android/localStudio.ts) trả cùng JSON. Cuốn có xưởng (dự án) ghi vào các file riêng của dự án, cuốn nhập từ file ghi vào
@@ -210,9 +211,7 @@ export function MusicSection({ book }: { book: ListenBook }) {
                 </div>
               </div>
               <span className="flex shrink-0 gap-1">
-                {cue.pinned && (
-                  <Button size="sm" variant="ghost" disabled={change.isPending} onClick={() => change.mutate({ pins: { [cue.key]: null } })}>{S.s_ve_bai_goc_dc6a21f6}</Button>
-                )}
+                <Reveal when={cue.pinned}><Button size="sm" variant="ghost" disabled={change.isPending} onClick={() => change.mutate({ pins: { [cue.key]: null } })}>{S.s_ve_bai_goc_dc6a21f6}</Button></Reveal>
                 <Button
                   size="sm"
                   variant="ghost"
@@ -257,8 +256,8 @@ function Section({ title, hint, children, fold }: { title: string; hint?: string
   return (
     <section className="border-t border-line pt-4 first:border-t-0 first:pt-0">
       <SectionHeading as="h3">{title}</SectionHeading>
-      {hint && <p className="mb-2 text-xs text-fg-2">{hint}</p>}
-      {children && <div className={hint ? undefined : "mt-2"}>{children}</div>}
+      <Reveal when={hint}><p className="mb-2 text-xs text-fg-2">{hint}</p></Reveal>
+      <Reveal when={children}><div className={hint ? undefined : "mt-2"}>{children}</div></Reveal>
     </section>
   );
 }
@@ -272,8 +271,8 @@ function FoldedSection({ title, hint, children, storageKey }: { title: string; h
         <DisclosureRow section title={title} expanded={open} controls={id} onClick={() => setOpen(!open)} />
       </h3>
       <Collapse open={open} id={id}>
-        {hint && <p className="mb-2 text-xs text-fg-2">{hint}</p>}
-        {children && <div className={hint ? undefined : "mt-2"}>{children}</div>}
+        <Reveal when={hint}><p className="mb-2 text-xs text-fg-2">{hint}</p></Reveal>
+        <Reveal when={children}><div className={hint ? undefined : "mt-2"}>{children}</div></Reveal>
       </Collapse>
     </section>
   );
@@ -439,9 +438,7 @@ export function EditBookDialog({
                 {book.cover ? S.s_doi_anh_bia_7889ff91 : S.s_chon_anh_bia_207ac182}
               </Button>
               <Button ref={searchOpener} variant="ghost" className="justify-start text-left" icon={Globe} disabled={busy} onClick={() => setSearching(true)}>{S.s_tim_bia_34025664}</Button>
-              {book.cover && (
-                <Button variant="ghost" className="justify-start text-left" icon={Trash2} disabled={busy} onClick={() => removeCover.mutate()}>{S.s_bo_anh_bia_696c6692}</Button>
-              )}
+              <Reveal when={book.cover}><Button variant="ghost" className="justify-start text-left" icon={Trash2} disabled={busy} onClick={() => removeCover.mutate()}>{S.s_bo_anh_bia_696c6692}</Button></Reveal>
               {setCover.isPending && (
                 <ContentSkeleton count={1} label={S.s_dang_dat_anh_bia_f4a60e45} />
               )}
@@ -453,9 +450,7 @@ export function EditBookDialog({
           {workshop ? (
             <div className="flex flex-wrap items-center gap-3 text-sm text-fg-2">
               <span>{S.s_cuon_nay_co_xuong_nhac_nen_chinh_day_du_ch_b296f56d}</span>
-              {onOpenStudio && (
-                <Button size="sm" variant="ghost" icon={EighthNote} onClick={onOpenStudio}>{S.s_mo_tab_nhac_nen_117e60f2}</Button>
-              )}
+              <Reveal when={onOpenStudio}><Button size="sm" variant="ghost" icon={EighthNote} onClick={onOpenStudio}>{S.s_mo_tab_nhac_nen_117e60f2}</Button></Reveal>
             </div>
           ) : (
             <MusicSection book={book} />
@@ -555,8 +550,7 @@ export function RenameChapterDialog({ book, chapter, onClose }: { book: ListenBo
             className="mt-1 h-9 w-full rounded-control border border-line bg-bg px-3 text-sm outline-none focus-visible:border-focus"
           />
         </label>
-        {!single && (
-          <label className="block text-sm">
+        <Reveal when={!single}><label className="block text-sm">
             <span className="text-fg-2">{S.s_ten_c8b17259}</span>
             <input
               value={name}
@@ -564,8 +558,7 @@ export function RenameChapterDialog({ book, chapter, onClose }: { book: ListenBo
               onChange={(event) => setName(event.target.value)}
               className="mt-1 h-9 w-full rounded-control border border-line bg-bg px-3 text-sm outline-none focus-visible:border-focus"
             />
-          </label>
-        )}
+          </label></Reveal>
 
       </form>
     </Dialog>
@@ -681,7 +674,7 @@ export function SaveAsDialog({
           <MotionRegion as="span" motionKey={folder ?? ""} className="min-w-0 truncate text-fg-2">{folder ?? S.s_mac_dinh_thu_muc_da_xuat_65fabfd2}</MotionRegion>
         </div>
       )}
-      {pickFolder && <p className="mt-2 text-xs text-fg-3">{S.s_da_co_file_cung_ten_trong_thu_muc_ay_thi_f_ca6cb2a9}</p>}
+      <Reveal when={pickFolder}><p className="mt-2 text-xs text-fg-3">{S.s_da_co_file_cung_ten_trong_thu_muc_ay_thi_f_ca6cb2a9}</p></Reveal>
 
     </Dialog>
   );

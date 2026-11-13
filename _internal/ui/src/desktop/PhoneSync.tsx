@@ -14,6 +14,7 @@ import { useListPresence } from "@/shared/motion";
 import { formatDate, formatRelative } from "@/shared/format";
 import { SYNC_SWITCH_LABEL } from "@/shared/syncSwitch";
 
+import { Reveal } from "../shared/MotionPresence";
 // Hợp đồng với server (webui/server.py: sync_view). Máy chủ đồng bộ chỉ chạy khi người dùng bật; mã ghép nối chỉ
 // có khi người dùng bấm "Ghép thiết bị mới", sống 5 phút, dùng một lần, sai 5 lần là bị huỷ. Cùng mã ghép cả điện
 // thoại lẫn trình duyệt của Studio từ xa (webui/remote_studio.py).
@@ -342,15 +343,13 @@ export function PhoneSync() {
                       <div data-motion-live className="text-xs text-fg-2">{S.s_ket_noi_lan_cuoi_1ffb25d2}{formatRelative(device.lastSeen)}{S.s_ghep_ngay_04227336}{formatDate(device.pairedAt)}
                       </div>
                     </div>
-                    {sync.remoteStudio && (
-                      <label className="flex shrink-0 cursor-pointer items-center gap-2 text-xs text-fg-2">{S.s_dieu_khien_san_xuat_a7babdec}<Switch
+                    <Reveal when={sync.remoteStudio}><label className="flex shrink-0 cursor-pointer items-center gap-2 text-xs text-fg-2">{S.s_dieu_khien_san_xuat_a7babdec}<Switch
                           label={S.s_dieu_khien_san_xuat_tu_0_99c2c38a(device.name)}
                           checked={Boolean(device.studio)}
                           disabled={deviceStudio.isPending}
                           onCheckedChange={(enabled) => deviceStudio.mutate({ id: device.id, enabled })}
                         />
-                      </label>
-                    )}
+                      </label></Reveal>
                     <Button size="sm" variant="ghost" onClick={() => setRenaming({ id: device.id, draft: device.name })}>{S.s_doi_ten_a2a0dc70}</Button>
                     <Button size="sm" variant="ghost" onClick={() => setRemoving(device)}>{S.s_bo_ghep_64f921f9}</Button>
                   </Fold>

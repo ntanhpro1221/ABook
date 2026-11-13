@@ -1,7 +1,7 @@
 import { S } from "../shared/strings.generated";
 import { TickingValue } from "@/shared/TickingValue";
 import { MotionRegion } from "@/shared/MotionRegion";
-import { AnimatedRows, MotionPresence } from "@/shared/MotionPresence";
+import { AnimatedRows, MotionPresence, Reveal } from "@/shared/MotionPresence";
 import * as DropdownMenu from "@/shared/DropdownMenu";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Clapperboard, FolderOpen, History, MoreHorizontal, Plus, RotateCw } from "lucide-react";
@@ -144,7 +144,7 @@ function ProjectRowBody({ book }: { book: BookSummary }) {
             <span className="text-xs text-fg-2">
               {detail}
               {/* Sách "Hoàn tất" mà còn việc của mình: nói ngay trên dòng (soát UX a6 01-10 - nhìn danh sách không biết cuốn nào cần mình). */}
-              {needs.length > 0 && <span className="font-medium text-warning"> · {needs.join(" · ")}</span>}
+              <Reveal when={needs.length > 0}><span className="font-medium text-warning"> · {needs.join(" · ")}</span></Reveal>
             </span>
           ) : (
             <>

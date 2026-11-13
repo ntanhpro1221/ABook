@@ -9,7 +9,7 @@ import { MyMusicSection } from "../listen/MyMusic";
 import { cn } from "../shared/cn";
 import { DotJoin } from "../shared/DotJoin";
 import { formatClock, formatSize } from "../shared/format";
-import { MotionPresence } from "../shared/MotionPresence";
+import { MotionPresence, Reveal } from "../shared/MotionPresence";
 import { ScreenHeader } from "../shared/ScreenHeader";
 import { S } from "../shared/strings.generated";
 import { Button, ContentSkeleton, EmptyState, IconButton, InlineError, SelectionMark, Tabs, TabsContent, TabsList, TabsPanels, TabsTrigger } from "../shared/ui";
@@ -160,7 +160,7 @@ function Library({ preview, use, ban, busy }: { preview: LibraryPreview; use?: (
   const tracks = data?.tracks ?? [];
   return (
     <div className="space-y-4">
-      {!online && <p role="status" className="flex items-center gap-2 text-sm text-fg-2"><CircleAlert aria-hidden className="size-4" />{S.s_mat_mang_chi_nghe_thu_duoc_bai_da_tai_cab0d6f8}</p>}
+      <Reveal when={!online}><p role="status" className="flex items-center gap-2 text-sm text-fg-2"><CircleAlert aria-hidden className="size-4" />{S.s_mat_mang_chi_nghe_thu_duoc_bai_da_tai_cab0d6f8}</p></Reveal>
       <label className="relative block">
         <span className="sr-only">{S.s_tim_trong_kho_nhac_b9972ac9}</span>
         <Search aria-hidden className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-fg-2" />
@@ -188,10 +188,10 @@ function Library({ preview, use, ban, busy }: { preview: LibraryPreview; use?: (
         <p className="flex items-center gap-2 text-sm text-fg-2" aria-live="polite">
           {S.s_0_bai_1e392237(data?.count ?? 0)}
           {data && data.saved.count > 0 && <span>· {S.s_da_tai_0_bai_1_3cac202f(data.saved.count, formatSize(data.saved.bytes))}</span>}
-          {isFetching && <Loader2 aria-hidden className="size-3.5 animate-spin" />}
+          <Reveal when={isFetching}><Loader2 aria-hidden className="size-3.5 animate-spin" /></Reveal>
         </p>
         <div className="flex items-center gap-2">
-          {filtering(filters) && <Button size="sm" onClick={() => setFilters(NO_FILTERS)}>{S.s_bo_loc_74de0064}</Button>}
+          <Reveal when={filtering(filters)}><Button size="sm" onClick={() => setFilters(NO_FILTERS)}>{S.s_bo_loc_74de0064}</Button></Reveal>
           {playlist && data && data.missingBytes > 0 && (
             <Button size="sm" variant="primary" icon={Download} loading={save.isPending} disabled={!online}
               onClick={() => save.mutate(tracks.filter((track) => !track.downloaded).map((track) => track.link))}>

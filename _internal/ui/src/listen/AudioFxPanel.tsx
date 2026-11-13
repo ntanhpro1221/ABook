@@ -12,6 +12,7 @@ import { Collapse } from '@/shared/Collapse';
 import { signedNumber } from './labels';
 import { resetAudioFx, setAudioFx, useAudioFx, voiceLevel, withVoiceLevel, audioBookOnly, setAudioBookOnly, useTones } from './audioFx';
 
+import { Reveal } from "../shared/MotionPresence";
 /** Trang Âm thanh (DESIGN.md "Âm thanh khi nghe"), cùng thứ tự với Android / Qt: Giọng đọc 0-200 % (100 % = gốc) → Nhạc nền (`music`, ngay dưới) →
  *  Âm sắc một hàng cuộn ngang (dải tần chỉ khi Tự chỉnh) → Mono, Cân bằng, Bỏ khoảng lặng → Riêng sách này → Cao độ ở cuối → Về mặc định (mọi thứ, áp ngay). */
 export function AudioFxPanel({setVolume,music,leaveGuard}:{setVolume:(value:number)=>void;music?:ReactNode;leaveGuard?:ToneLeaveGuard}) {
@@ -24,8 +25,8 @@ export function AudioFxPanel({setVolume,music,leaveGuard}:{setVolume:(value:numb
     {toneOpen?<TonePage onBack={()=>setToneOpen(false)} leaveGuard={leaveGuard}/>:<>
     <FxSlider label={S.s_giong_doc_11f2548d} spec={VALUE_SPECS.voice} value={Math.round(voice)} suffix="%" onChange={v=>{const next=withVoiceLevel(v/100);setVolume(next.volume);update({boost:next.boost});}}/>
     {/* Dòng Nhạc nền là dòng menu (có lề 8 px và biểu tượng): trong tấm Âm thanh (không phải hộp nổi) chữ phải thẳng cột với Giọng đọc, Âm sắc, Mono - bỏ lề và biểu tượng đầu dòng. */}
-    {music&&<div className="min-w-0 [&_[data-player-menu-row]]:px-0 [&_[data-player-menu-row]_svg]:!-ml-1 [[data-radix-popper-content-wrapper]_&_[data-player-menu-row]]:w-[calc(100%+0.5rem)]">{music}</div>}
-    <button type="button" aria-label={S.s_am_sac_8c2f4e1a} className="flex min-h-12 items-center justify-between gap-3 py-2 text-sm" onClick={()=>setToneOpen(true)} data-tone-open><span>{S.s_am_sac_8c2f4e1a}</span><span className="min-w-0 max-w-[60%] break-words text-right text-fg-2">{tones.name}{tones.scoped&&<small className="block">{S.s_copy_0aedb2b2cf2b}</small>}</span></button>
+    <Reveal when={music}><div className="min-w-0 [&_[data-player-menu-row]]:px-0 [&_[data-player-menu-row]_svg]:!-ml-1 [[data-radix-popper-content-wrapper]_&_[data-player-menu-row]]:w-[calc(100%+0.5rem)]">{music}</div></Reveal>
+    <button type="button" aria-label={S.s_am_sac_8c2f4e1a} className="flex min-h-12 items-center justify-between gap-3 py-2 text-sm" onClick={()=>setToneOpen(true)} data-tone-open><span>{S.s_am_sac_8c2f4e1a}</span><span className="min-w-0 max-w-[60%] break-words text-right text-fg-2">{tones.name}<Reveal when={tones.scoped}><small className="block">{S.s_copy_0aedb2b2cf2b}</small></Reveal></span></button>
     <FxSwitch label={S.s_copy_6f00156cec07} checked={fx.mono} onChange={mono=>update({mono})}/>
     <FxSlider label={S.s_can_bang_8b88211d} spec={VALUE_SPECS.balance} value={Math.round(fx.balance*100)} format={formatBalance} onChange={v=>update({balance:v/100})}/>
     <FxSwitch label={S.s_copy_289e1cff4cbc} checked={fx.skipSilence} onChange={skipSilence=>update({skipSilence})}/>

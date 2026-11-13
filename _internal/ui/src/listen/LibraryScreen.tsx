@@ -1,6 +1,6 @@
 import { S } from "../shared/strings.generated";
 import { TickingValue } from "@/shared/TickingValue";
-import { MotionPresence } from "@/shared/MotionPresence";
+import { MotionPresence, Reveal } from "@/shared/MotionPresence";
 import { MotionRegion } from "@/shared/MotionRegion";
 import { ScreenHeader } from "@/shared/ScreenHeader";
 import { useRowFade } from "@/shared/scrollFade";
@@ -427,7 +427,7 @@ const SeriesTile = memo(function SeriesTile({ item, twins, phone }: { item: Retu
     <span className="mt-3 flex flex-col">
       <TileName drawn={!item.items[0].cover?.url}>{item.label}</TileName>
       <span data-tile-sub="" className={cn("flex h-[1rem] items-center gap-1 text-xs leading-4 text-fg-2", item.items[0].cover?.url ? "order-2 mt-1" : "order-1")}>
-        {item.items.some(book => book.remote) && <Laptop role="img" aria-label={S.s_co_sach_tren_may_khac_3b7cdd88} className="size-3 shrink-0" />}
+        <Reveal when={item.items.some(book => book.remote)}><Laptop role="img" aria-label={S.s_co_sach_tren_may_khac_3b7cdd88} className="size-3 shrink-0" /></Reveal>
         <span className="min-w-0 truncate">{item.items.length}{S.s_tap_269b0b3d}</span></span>
     </span>
   </button>;

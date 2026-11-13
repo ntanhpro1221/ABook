@@ -2,7 +2,7 @@ import { S } from "../shared/strings.generated";
 import { MoreInfo } from "@/shared/SettingsNav";
 import { MotionRegion } from "@/shared/MotionRegion";
 import { SectionHeading } from "@/shared/SectionHeading";
-import { AnimatedRows, MotionPresence } from "@/shared/MotionPresence";
+import { AnimatedRows, MotionPresence, Reveal } from "@/shared/MotionPresence";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Check, Link2, RotateCcw, Smartphone, X } from "lucide-react";
 import { useState } from "react";
@@ -200,7 +200,7 @@ export function PhoneEdits({ bookId }: { bookId: string }) {
                   <div className="flex items-start gap-3 py-2 text-sm">
                     <span className="min-w-0 flex-1 text-pretty">
                       {item.label}
-                      {item.chapter && <span className="text-fg-3"> · {item.chapter}</span>}
+                      <Reveal when={item.chapter}><span className="text-fg-3"> · {item.chapter}</span></Reveal>
                     </span>
                     <IconButton size="sm" icon={RotateCcw} label={S.s_khoi_phuc_viec_nay_8da3e2a8} className="-my-2 -mr-2" disabled={busy !== null} onClick={() => void decide("restore", device, item)} />
                   </div>

@@ -16,6 +16,7 @@ import { wordAtPoint } from "./wordTap";
 import { sentenceIndexAt, splitPieces, usableWords, wordIndexAt, type WordSpan } from "./words";
 import { sentenceOutline, type InkLine } from './readingInk';
 
+import { Reveal } from "../shared/MotionPresence";
 // Văn bản chương đi cùng giọng đọc - MỘT chỗ cho màn đọc (ReaderScreen) và tab "Đọc theo" của trình phát (PlayerViews): câu đang nghe sáng lên,
 // chữ đang đọc sáng đậm hơn, bấm một chữ là nghe từ đúng chữ ấy, khung tự cuộn theo giọng (luật ở follow.ts), bàn phím đi qua các câu bằng mũi
 // tên (một điểm dừng Tab cho cả văn bản, không phải mỗi chữ một điểm) và Enter là nghe từ câu ấy. Câu là chữ thường trong đoạn <p>, không phải
@@ -511,7 +512,7 @@ const Paragraph = memo(function Paragraph({
     document.fonts?.ready.then(measure);
     return () => observer?.disconnect();
   }, [playing, paragraph]);
-  const ink = outline && <svg aria-hidden data-sentence-ink data-underlay className="pointer-events-none absolute inset-0 -z-10 size-full overflow-visible"><path d={outline} fill="var(--read-along)" /></svg>;
+  const ink = <Reveal when={outline}><svg aria-hidden data-sentence-ink data-underlay className="pointer-events-none absolute inset-0 -z-10 size-full overflow-visible"><path d={outline} fill="var(--read-along)" /></svg></Reveal>;
   const sentence = (index: number, segment: ScriptSegment) => ({
     "data-index": index,
     "data-sentence": "",

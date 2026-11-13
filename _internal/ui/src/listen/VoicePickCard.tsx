@@ -8,6 +8,7 @@ import { api } from "@/studio/api";
 import { forgetVoices, watchVoiceModule } from "./readAloudVoice";
 import { engineName, pickHeadline, pickMethod, rowBadge, rowNumbers, type VoicePickStatus } from "./voicePick";
 
+import { Reveal } from "../shared/MotionPresence";
 /** Máy tính dùng HTTP; điện thoại có thẻ native cùng luật trong ui/voice/VoicePickCard.kt. */
 export interface VoicePickBackend {
   status(): Promise<VoicePickStatus>;
@@ -76,17 +77,13 @@ export function VoicePickCard({ backend = desktopVoicePick, modulesBusy = false 
                 <span className="min-w-0 flex-1">
                   <span className="flex flex-wrap items-center gap-x-2 text-sm font-medium">
                     {engineName(row.engine)}
-                    {badge && (
-                      <span className={isChosen ? "rounded-full bg-accent-soft px-2 py-1 text-caption font-medium text-accent-text" : "text-caption font-medium text-fg-3"}>
+                    <Reveal when={badge}><span className={isChosen ? "rounded-full bg-accent-soft px-2 py-1 text-caption font-medium text-accent-text" : "text-caption font-medium text-fg-3"}>
                         {badge}
-                      </span>
-                    )}
+                      </span></Reveal>
                   </span>
                   <span data-motion-live className="mt-1 block text-body-small text-fg-2 text-pretty">{rowNumbers(row, status.liveRtf)}</span>
                 </span>
-                {!isChosen && !measuring && (
-                  <Button size="sm" variant="ghost" className="settings-edge-action -my-1 shrink-0" loading={busy} onClick={() => void run(() => backend.choose(row.engine))}>{S.s_dung_giong_nay_903b57aa}</Button>
-                )}
+                <Reveal when={!isChosen && !measuring}><Button size="sm" variant="ghost" className="settings-edge-action -my-1 shrink-0" loading={busy} onClick={() => void run(() => backend.choose(row.engine))}>{S.s_dung_giong_nay_903b57aa}</Button></Reveal>
               </li>
             );
           })}

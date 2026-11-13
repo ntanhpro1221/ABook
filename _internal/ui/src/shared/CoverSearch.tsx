@@ -9,6 +9,7 @@ import { Button, ContentSkeleton, Dialog, EmptyState, InlineError } from "@/shar
 import { api, ApiError } from "@/studio/api";
 import { useFadeScroller } from "./scrollFade";
 
+import { Reveal } from "./MotionPresence";
 /** Tên nguồn bìa như người đọc biết (máy chủ trả tên hàm: "google_books"). */
 const PROVIDER_NAMES: Record<string, string> = { itunes: "iTunes", open_library: S.s_open_library_11e9037f, google_books: S.s_google_books_8a341a41 };
 
@@ -151,11 +152,9 @@ export function CoverSearchPanel({
                     className="size-full object-cover"
                     onError={() => setBroken((now) => new Set(now).add(found.thumb))}
                   />
-                  {choose.isPending && choose.variables?.url === found.url && (
-                    <div className="absolute inset-0 grid place-items-center bg-cover-overlay text-cover-ink">
+                  <Reveal when={choose.isPending && choose.variables?.url === found.url}><div className="absolute inset-0 grid place-items-center bg-cover-overlay text-cover-ink">
                       <Loader2 className="size-5 animate-spin" />
-                    </div>
-                  )}
+                    </div></Reveal>
                 </div>
                 <div className="mt-2 line-clamp-2 text-xs font-medium">{found.title}</div>
                 <div className="truncate text-caption text-fg-3">{found.provider}</div>

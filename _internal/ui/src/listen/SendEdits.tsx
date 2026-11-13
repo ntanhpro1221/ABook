@@ -16,6 +16,7 @@ import { refreshAfterEdit } from "./EditBook";
 import type { EditsNotice, ListenBook } from "./model";
 import { useSource } from "./source";
 
+import { Reveal } from "../shared/MotionPresence";
 // Cuốn tải từ máy tính (điện thoại): sửa xong thì phần sửa gửi về máy tính - tự động khi tới được máy tính, hoặc bấm "Gửi về máy
 // tính" (docs/EDITING.md, P2b). Chữ nói tình trạng ở shared/editsSync.ts.
 
@@ -61,7 +62,7 @@ export function SendEditsItem({ book }: { book: ListenBook }) {
       <MotionRegion as="span" className="mt-1 inline-grid shrink-0 place-items-center">{busy ? <Loader2 className="size-4 animate-spin" /> : <Send className="size-4" />}</MotionRegion>
       <span className="min-w-0">
         <span className="block">{busy ? S.s_dang_gui_dd6f95be : S.s_gui_ve_0_50e46c2d(where)}</span>
-        {!busy && !pending && <span className="block text-xs text-fg-3">{S.s_chua_co_thay_doi_nao_cho_gui_3f3fce11}</span>}
+        <Reveal when={!busy && !pending}><span className="block text-xs text-fg-3">{S.s_chua_co_thay_doi_nao_cho_gui_3f3fce11}</span></Reveal>
       </span>
     </DropdownMenu.Item>
   );

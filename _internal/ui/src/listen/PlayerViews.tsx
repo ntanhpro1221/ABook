@@ -7,7 +7,7 @@ import { BackButton } from "@/shared/ScreenHeader";
 import { SheetPageDepth, SheetPages, useSheetPage, useSheetPageStack } from './sheetPages';
 import { SlidersHorizontal } from 'lucide-react';
 import { SlidingIndicator } from "@/shared/SlidingIndicator";
-import { MotionPresence } from "@/shared/MotionPresence";
+import { MotionPresence, Reveal } from "@/shared/MotionPresence";
 import { Collapse } from "@/shared/Collapse";
 import * as Popover from "@radix-ui/react-popover";
 import { coverColor, coverStyle } from "@/shared/cover";
@@ -169,7 +169,7 @@ function SeekBar({ large = false }: { large?: boolean }) {
   };
   return (
     <div className={cn("w-full", large ? "space-y-2" : "flex items-center gap-3")}>
-      {!large && <span className="w-12 shrink-0 text-right text-xs text-fg-2"><TickingValue>{formatClock(clamped)}</TickingValue></span>}
+      <Reveal when={!large}><span className="w-12 shrink-0 text-right text-xs text-fg-2"><TickingValue>{formatClock(clamped)}</TickingValue></span></Reveal>
       <Slider.Root
         className={cn("group relative flex touch-none select-none items-center", large ? "h-5 w-full" : cn("h-4 flex-1", SLIDER_REACH))}
         min={0}
@@ -411,7 +411,7 @@ export function MenuShell({
       className={cn(look === "action" ? ACTION_BUTTON : look === "row"
         ? MENU_ROW
         : "inline-flex h-9 min-w-9 shrink-0 items-center justify-center gap-1 whitespace-nowrap rounded-control px-2 text-body-small font-medium transition-colors hover:bg-hover max-sm:h-[48px] max-sm:min-w-[48px]", look !== "row" && actionTone(active))}>
-      {look === "row" && <span className="flex min-w-0 flex-1 items-center gap-3">{RowIcon && <RowIcon className="size-4 shrink-0 text-fg-2" />}<span className="truncate">{caption}</span></span>}
+      <Reveal when={look === "row"}><span className="flex min-w-0 flex-1 items-center gap-3">{RowIcon && <RowIcon className="size-4 shrink-0 text-fg-2" />}<span className="truncate">{caption}</span></span></Reveal>
       <MotionRegion as="span" motionKey={triggerKey} className={cn(look === "action" ? ACTION_GLYPH : "inline-flex items-center gap-1", look === "row" && cn("min-w-0 text-xs font-medium", actionTone(active)))}>{trigger}</MotionRegion>
       {look === "action" && <MotionRegion as="span" className={ACTION_LABEL} motionKey={typeof caption === "string" ? caption.replace(/\d+/g, "#") : undefined}>{caption}</MotionRegion>}
     </button>;
@@ -470,7 +470,7 @@ export function MenuShell({
           <InPlayerMenu.Provider value>{children}</InPlayerMenu.Provider>
           {/* Nút đặc của bảng đứng thẳng mép chữ (px-2) như các nút trong bảng; chỉ nền dòng mới tràn ra mép p-1.5. Cách dòng trên 10,5 px
               (pt-2 + pb-1 của dòng ấy) như khoảng giữa các khối khác của bảng. */}
-          {footer && <div className="px-2 pt-2">{footer}</div>}
+          <Reveal when={footer}><div className="px-2 pt-2">{footer}</div></Reveal>
         </Popover.Content>
       </Popover.Portal>
     </Popover.Root>
@@ -508,9 +508,7 @@ export function SpeedMenu({ look = "chip" }: { look?: MenuLook }) {
           announce(S.s_da_chon_toc_do_doc_0_529f4319(speedLabel(speed)));
         }}
       />
-      {!COARSE && (
-        <p className="px-2 pb-1 pt-2 text-xs text-fg-2">{S.s_phim_c24b0b03}<kbd className="font-medium">[</kbd>{S.s_va_79e3d3b1}<kbd className="font-medium">]</kbd>{S.s_de_giam_tang_f47777c5}</p>
-      )}
+      <Reveal when={!COARSE}><p className="px-2 pb-1 pt-2 text-xs text-fg-2">{S.s_phim_c24b0b03}<kbd className="font-medium">[</kbd>{S.s_va_79e3d3b1}<kbd className="font-medium">]</kbd>{S.s_de_giam_tang_f47777c5}</p></Reveal>
     </MenuShell>
   );
 }
@@ -750,11 +748,11 @@ export function VoiceMenu({ scope = "bar", look = "chip" }: { scope?: VoiceMenuS
             {/* Nhãn HOA chỉ tên nhóm (≤ 3 chữ, DESIGN 5.5); phần mô tả cùng hàng, chữ thường 12 px. */}
             <div className="flex flex-wrap items-baseline justify-between gap-x-2 px-2 pb-1 pt-1">
               <span className="label-section text-fg-3">{group.title}</span>
-              {group.detail && <span className="text-xs text-fg-3">{group.detail}</span>}
+              <Reveal when={group.detail}><span className="text-xs text-fg-3">{group.detail}</span></Reveal>
             </div>
             {voiceSections(group.voices).map((section) => (
               <div key={section.label ?? ""}>
-                {section.label && <div className="px-2 pb-1 pt-1 text-xs font-medium text-fg-2">{section.label}</div>}
+                <Reveal when={section.label}><div className="px-2 pb-1 pt-1 text-xs font-medium text-fg-2">{section.label}</div></Reveal>
                 {section.voices.map(({ voice, shown }) => {
                   const selected = voice.id === current?.id;
                   const playing = sample.playing === voice.id;
@@ -784,11 +782,10 @@ export function VoiceMenu({ scope = "bar", look = "chip" }: { scope?: VoiceMenuS
                           <SelectionMark selected={selected} />
                           {/* Tên giọng xuống dòng, không cắt "…": menu 252 px từng còn "An (Windo…" - chọn mà không đọc đủ tên (luật choice-label-truncated). */}
                           <span className="min-w-0 text-pretty [overflow-wrap:anywhere]">{shown}</span>
-                          {genderLabel(voice.gender) && <span className="shrink-0 text-xs font-normal text-fg-2">{genderLabel(voice.gender)}</span>}
+                          <Reveal when={genderLabel(voice.gender)}><span className="shrink-0 text-xs font-normal text-fg-2">{genderLabel(voice.gender)}</span></Reveal>
                         </button>
                       </Popover.Close>
-                      {source.readAloudSample && (
-                        <button
+                      <Reveal when={source.readAloudSample}><button
                           type="button"
                           data-arrow-side
                           data-voice-try
@@ -801,8 +798,7 @@ export function VoiceMenu({ scope = "bar", look = "chip" }: { scope?: VoiceMenuS
                             {sample.loading === voice.id ? <Loader2 className="size-3.5 animate-spin" /> : playing ? <Square className="size-3.5" /> : <Play className="size-3.5" />}
                             {playing ? S.s_dung_11554138 : S.s_nghe_thu_fa024065}
                           </MotionRegion>
-                        </button>
-                      )}
+                        </button></Reveal>
                     </div>
                   );
                 })}
@@ -1314,8 +1310,7 @@ function MusicCreditLine() {
       </button>
       <Collapse open={open} className="mx-auto mt-1 max-w-sm break-words text-left">
           <p>{musicCreditText(musicCredit)}</p>
-          {musicCredit.license && (
-            <p>{S.s_giay_phep_de087bac}{" "}
+          <Reveal when={musicCredit.license}><p>{S.s_giay_phep_de087bac}{" "}
               {musicCredit.licenseUrl ? (
                 <a href={musicCredit.licenseUrl} target="_blank" rel="noreferrer" onClick={(event) => openExternal(musicCredit.licenseUrl!, event)} className="underline">
                   {licenseLabel(musicCredit.license, musicCredit.licenseUrl)}
@@ -1323,14 +1318,11 @@ function MusicCreditLine() {
               ) : (
                 licenseLabel(musicCredit.license)
               )}
-            </p>
-          )}
-          {musicNeedsModifiedNote(musicCredit.license) && <p>{MUSIC_MODIFIED_NOTE}</p>}
-          {musicCredit.landing && (
-            <p>
+            </p></Reveal>
+          <Reveal when={musicNeedsModifiedNote(musicCredit.license)}><p>{MUSIC_MODIFIED_NOTE}</p></Reveal>
+          <Reveal when={musicCredit.landing}><p>
               <a href={musicCredit.landing} target="_blank" rel="noreferrer" onClick={(event) => openExternal(musicCredit.landing!, event)} className="underline">{S.s_trang_cua_bai_nhac_50968bde}</a>
-            </p>
-          )}
+            </p></Reveal>
         </Collapse>
     </div>
   );
@@ -1426,8 +1418,7 @@ function PlayerAlert({ className, overlay = false, compact = false }: { classNam
             </button>
           )}
           <button type="button" onClick={retry} {...keepFocus} className={button}>{S.s_thu_lai_c58d068c}</button>
-          {stuck && Boolean(voices?.length) && (
-            <button
+          <Reveal when={stuck && Boolean(voices?.length)}><button
               type="button"
               onClick={() => {
                 if (compact) {
@@ -1439,8 +1430,7 @@ function PlayerAlert({ className, overlay = false, compact = false }: { classNam
               }}
               {...keepFocus}
               className={button}
-            >{S.s_chon_giong_khac_d31cfe89}</button>
-          )}
+            >{S.s_chon_giong_khac_d31cfe89}</button></Reveal>
           {stuck && !local && <VieneuDownload button={S.s_tai_giong_vieneu_94c86884} onOpenSettings={() => openVoiceSettings("vieneu-module")} />}
         </div>
         {/* Gạt đi tới lần lỗi mới: khối này nằm trên mọi màn, người đang làm việc khác (Cài đặt, Thư viện) không bị nó đè mãi. */}
@@ -2443,12 +2433,10 @@ export function NowPlaying({ mobile = false, stacked = mobile, actions, edit }: 
       {fill && stacked && <Sheet open={open && showPanel} onOpenChange={setShowPanel} title={S.s_chuong_2d157977} className={panel === "chapters" ? "chapter-sheet" : undefined}>
         <div className="h-[55dvh] min-h-0">{panelBody}</div>
       </Sheet>}
-      {fill && !stacked && (
-        <div className="flex min-w-0 flex-1 flex-col">
+      <Reveal when={fill && !stacked}><div className="flex min-w-0 flex-1 flex-col">
           <div className="@container flex h-14 shrink-0 items-center overflow-hidden border-b border-line px-3 sm:px-6">{panelTabs}</div>
           <div className="min-h-0 flex-1">{panelBody}</div>
-        </div>
-      )}
+        </div></Reveal>
     </MotionRegion>
   );
 }

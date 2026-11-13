@@ -22,6 +22,7 @@ import { useVoiceTry } from "./VoiceTry";
 import { byGender, rerecordText, type GenderFilter, type Rerecord } from "./voiceTryText";
 import { useFadeScroller } from "@/shared/scrollFade";
 
+import { Reveal } from "../shared/MotionPresence";
 // "Đổi giọng" một nhân vật (webui/voice_picker.py): mọi giọng dùng được cho nhân vật, nghe thử từng giọng, giọng đang dùng,
 // giọng máy gợi ý cho từng giới, và ai đang dùng giọng ấy cùng mấy chương. Chọn xong đi đúng đường của thẻ "Nam hay nữ"
 // (POST /voice): dây chuyền áp ở ranh giới chương kế tiếp; hai người chung preset nghe cùng giọng,
@@ -329,13 +330,9 @@ export function VoicePicker({
                   <div className="flex flex-wrap items-center gap-2">
                     <SelectionMark selected={voice.current} /><span className={cn("font-medium", voice.current ? "text-accent-text" : voice.takenBy?.length && "text-fg-2")}>{voice.name}</span>
                     {/* Viên "Đang dùng" chỉ khi nút bên phải là "Giữ giọng này"; còn lại nút đã nói đúng chữ ấy (soát 25-10: nói hai lần một hàng). */}
-                    {voice.current && data.pending && <span className="rounded-full bg-panel px-2 py-px text-caption font-medium text-accent-text">{S.s_dang_dung_275ca289}</span>}
-                    {voice.pending && !voice.current && (
-                      <span className="rounded-full bg-warning-soft px-2 py-px text-caption font-medium text-warning">{S.s_cho_ap_dung_77a52853}</span>
-                    )}
-                    {voice.suggested && !voice.current && !voice.pending && (
-                      <span className="rounded-full bg-info-soft px-2 py-px text-caption font-medium text-info">{S.s_may_goi_y_1e7f4cfa}</span>
-                    )}
+                    <Reveal when={voice.current && data.pending}><span className="rounded-full bg-panel px-2 py-px text-caption font-medium text-accent-text">{S.s_dang_dung_275ca289}</span></Reveal>
+                    <Reveal when={voice.pending && !voice.current}><span className="rounded-full bg-warning-soft px-2 py-px text-caption font-medium text-warning">{S.s_cho_ap_dung_77a52853}</span></Reveal>
+                    <Reveal when={voice.suggested && !voice.current && !voice.pending}><span className="rounded-full bg-info-soft px-2 py-px text-caption font-medium text-info">{S.s_may_goi_y_1e7f4cfa}</span></Reveal>
                   </div>
                   <div className={cn("mt-1 text-xs", voice.sharedWith.length && !voice.takenBy?.length ? "text-warning" : "text-fg-2")}>
                     {voiceMeta(voice, shown === "all")}

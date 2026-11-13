@@ -12,6 +12,7 @@ import { useVoiceTry } from "./VoiceTry";
 import { estimateText, type VoiceRequest } from "./voiceTryText";
 import { useFadeScroller } from "@/shared/scrollFade";
 
+import { Reveal } from "../shared/MotionPresence";
 // "Áp dụng N thay đổi" mở hộp này thay vì chạy ngay (soát UX a6 01-10: bấm là chạy, không nói sẽ thu lại gì, hết bao lâu; số
 // trên nút còn lệch với "chờ áp dụng" ở Việc cần duyệt vì sửa ở Kịch bản / đổi giọng không được liệt kê ở đâu). Máy chủ
 // (store.pending_details) liệt kê đủ từng thay đổi bằng lời, số câu ĐÃ THU sẽ thu lại, ở chương nào, và thời gian ước theo
@@ -86,14 +87,12 @@ export function PendingList({
             <Icon className="mt-line-icon size-4 shrink-0 text-fg-3" />
             <span className="min-w-0 flex-1 text-pretty">
               {item.label}
-              {item.chapter && <span className="text-fg-3"> · {item.chapter}</span>}
-              {item.from && <span className="text-fg-3">{S.s_tu_02926cd1}{item.from}</span>}
+              <Reveal when={item.chapter}><span className="text-fg-3"> · {item.chapter}</span></Reveal>
+              <Reveal when={item.from}><span className="text-fg-3">{S.s_tu_02926cd1}{item.from}</span></Reveal>
             </span>
-            {showLines && (
-              <span className="shrink-0 pt-1 text-xs text-fg-3">
+            <Reveal when={showLines}><span className="shrink-0 pt-1 text-xs text-fg-3">
                 {item.lines ? S.s_0_cau_thu_lai_372ad9c3(formatNumber(item.lines)) : S.s_chua_thu_khong_ton_gi_d0da00cf}
-              </span>
-            )}
+              </span></Reveal>
             {extra && <span className="-my-1 shrink-0">{extra(item)}</span>}
             <IconButton
               size="sm"
@@ -159,16 +158,14 @@ export function ApplyChangesDialog({
         <Button variant="ghost" onClick={() => onOpenChange(false)}>
           {running ? S.s_dong_5d54c2a1 : S.s_de_sau_9be0a7ab}
         </Button>
-        {!running && (
-          <Button
+        <Reveal when={!running}><Button
             variant="primary"
             icon={RefreshCw}
             onClick={() => {
               onOpenChange(false);
               onApply();
             }}
-          >{S.s_ap_dung_ff631576}</Button>
-        )}
+          >{S.s_ap_dung_ff631576}</Button></Reveal>
       </DialogActions>}
       open={open}
       onOpenChange={onOpenChange}

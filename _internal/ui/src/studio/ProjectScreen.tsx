@@ -4,7 +4,7 @@ import { MotionRegion } from "@/shared/MotionRegion";
 import { Fold } from "@/shared/Collapse";
 import { MoreInfo } from "@/shared/SettingsNav";
 import { DotJoin } from "@/shared/DotJoin";
-import { LoadingCrossfade, MotionPresence } from "@/shared/MotionPresence";
+import { LoadingCrossfade, MotionPresence, Reveal } from "@/shared/MotionPresence";
 import {
   AlertTriangle,
   ArrowLeft,
@@ -195,9 +195,7 @@ function StartError({ book }: { book: BookSummary }) {
     <div role="alert" className="mt-3 flex flex-wrap items-start gap-2 py-3 text-sm text-danger">
       <CircleAlert className="mt-line-icon size-4 shrink-0" />
       <span className="min-w-0 flex-1">{S.s_chua_khoi_dong_duoc_41fc29a4}{book.startError}</span>
-      {!book.starting && !book.running && (
-        <Button variant="ghost" size="sm" icon={RotateCcw} loading={start.isPending} onClick={() => start.mutate(book.id)}>{S.s_thu_lai_c58d068c}</Button>
-      )}
+      <Reveal when={!book.starting && !book.running}><Button variant="ghost" size="sm" icon={RotateCcw} loading={start.isPending} onClick={() => start.mutate(book.id)}>{S.s_thu_lai_c58d068c}</Button></Reveal>
     </div>
   );
 }
@@ -213,12 +211,10 @@ function LastError({ raw, redo = false }: { raw: string; redo?: boolean }) {
         <p>
           {shown.summary} {shown.hint}
         </p>
-        {shown.detail && (
-          <details className="mt-1 text-xs">
+        <Reveal when={shown.detail}><details className="mt-1 text-xs">
             <summary className="cursor-pointer select-none">{S.s_chi_tiet_e762d926}</summary>
             <p className="mt-1 select-text break-words font-mono">{shown.detail}</p>
-          </details>
-        )}
+          </details></Reveal>
       </div>
     </div>
   );
@@ -620,15 +616,13 @@ export function ProjectMenu({ book, rename = true, className, children }: { book
             {/* Truyện dài làm nhiều đợt: phần mới giữ giọng, cách đọc tên, ghim của phần này (continuation.py). Dự án chưa
                 phân tích câu nào thì không có gì để mang theo - mờ kèm lý do thay vì dẫn tới một phần mới trống (soát UX 29-09). */}
             {/* Dự án hỏng (`broken`) không có `segments` và không có gì để mang theo: chỉ còn xoá. */}
-            {!book.broken && (
-              <DropdownMenu.Item
+            <Reveal when={!book.broken}><DropdownMenu.Item
                 disabled={!analyzed}
                 onSelect={() => navigate(`/studio/new?continue=${book.id}`)}
                 className={cn(MENU_ITEM, "data-[disabled]:opacity-50")}
               >
                 <BookPlus className="size-4" />{S.s_lam_tiep_cuon_nay_c6fc93ac}{!analyzed && <span className="ml-auto pl-3 text-xs text-fg-3">{S.s_chay_phan_nay_truoc_73213667}</span>}
-              </DropdownMenu.Item>
-            )}
+              </DropdownMenu.Item></Reveal>
             <DropdownMenu.Separator className="my-1 h-px bg-line" />
             {remote ? (
               <div className="px-2 py-2">
@@ -887,10 +881,8 @@ function ChapterMenu({ book, chapter, onPlay }: { book: BookSummary; chapter: Ch
         </DropdownMenu.Trigger>
         <DropdownMenu.Portal>
           <DropdownMenu.Content collisionPadding={12} align="end" sideOffset={4} className="z-50 max-h-[var(--radix-dropdown-menu-content-available-height)] overflow-y-auto overscroll-contain min-w-56 rounded-cover border border-line bg-panel p-2 shadow-float">
-            {chapter.playable && (
-              <DropdownMenu.Item onSelect={onPlay} className={MENU_ITEM}>
-                <Play className="size-4" />{S.s_nghe_chuong_a61f17fb}</DropdownMenu.Item>
-            )}
+            <Reveal when={chapter.playable}><DropdownMenu.Item onSelect={onPlay} className={MENU_ITEM}>
+                <Play className="size-4" />{S.s_nghe_chuong_a61f17fb}</DropdownMenu.Item></Reveal>
             <DropdownMenu.Item
               onSelect={() => setParams({ tab: "script", chapter: String(chapter.id) })}
               className={MENU_ITEM}
@@ -1223,7 +1215,7 @@ export function ProjectTabBar({ tab, onTab, precast, counts }: {
           <DropdownMenu.Content collisionPadding={12} align="start" sideOffset={4} className="z-50 max-h-[var(--radix-dropdown-menu-content-available-height)] min-w-52 overflow-y-auto overscroll-contain rounded-cover border border-line bg-panel p-2 shadow-float">
             {more.map((key) => (
               <DropdownMenu.Item key={key} onSelect={() => onTab(key)} className={MENU_ITEM}>
-                <span className="grid size-4 place-items-center" aria-hidden>{key === tab && <Check className="size-4 text-accent-text" />}</span>
+                <span className="grid size-4 place-items-center" aria-hidden><Reveal when={key === tab}><Check className="size-4 text-accent-text" /></Reveal></span>
                 {TAB_LABEL[key]}
                 {counts[key] ? <span className="ml-auto pl-3 text-xs text-fg-2">{counts[key]}</span> : null}
               </DropdownMenu.Item>
@@ -1347,15 +1339,13 @@ export function ProjectScreen() {
     <div className="motion-reveal page-x mx-auto max-w-[1180px] pb-16">
       {/* Nút ← chung của màn con (ScreenHeader) đứng riêng một hàng: tên dự án nằm cạnh bìa bên dưới. */}
       <ScreenHeader back={{ label: S.s_ve_studio_349a48c4, onClick: () => navigate("/studio") }} />
-      {failure === "stale" && !isListenOnly(error) && (
-        <div role="status" className="mt-4 flex flex-wrap items-center gap-2 py-3 text-sm">
+      <Reveal when={failure === "stale" && !isListenOnly(error)}><div role="status" className="mt-4 flex flex-wrap items-center gap-2 py-3 text-sm">
           <CircleAlert className="size-4 shrink-0 text-warning" />
           <span className="min-w-0 flex-1 text-pretty">
             {isOffline(error) ? S.s_mat_ket_noi_toi_abook_dang_thu_lai_3ea0ae2f : S.s_chua_tai_lai_duoc_sach_0_dang_thu_lai_cf6589ed(failureText(error))}
           </span>
           <Button size="sm" variant="ghost" loading={isFetching} onClick={() => void refetch()}>{S.s_thu_lai_c58d068c}</Button>
-        </div>
-      )}
+        </div></Reveal>
       {/* Màn hẹp (điện thoại): bìa nhỏ cạnh tên sách, hàng nút nằm dưới cả hai (soát UX a8 05-10: bìa to + tên + 3 hàng nút
           chiếm ~590 px, tab bắt đầu ở cuối màn). Từ sm trở lên: bìa bên trái, tên và nút bên phải. `contents` làm cột phải biến
           mất khỏi lưới ở màn hẹp để hàng nút tự chiếm cả hai cột mà vẫn chỉ có một bản của các nút. */}
@@ -1381,12 +1371,10 @@ export function ProjectScreen() {
         <PrecastBanner book={book} onOpen={() => setParams({ tab: "precast" })} />
       )}
 
-      {sideError && failure !== "stale" && (
-        <div role="status" className="mt-4 flex gap-2 py-3 text-sm">
+      <Reveal when={sideError && failure !== "stale"}><div role="status" className="mt-4 flex gap-2 py-3 text-sm">
           <CircleAlert className="mt-line-icon size-4 shrink-0 text-warning" />
           <span className="text-pretty">{S.s_chua_tai_duoc_d5533c6e}{sideError}{S.s_tu_thu_lai_hoac_lam_moi_trang_6d8c2223}</span>
-        </div>
-      )}
+        </div></Reveal>
       <Tabs value={tab} onValueChange={(value) => setParams({ tab: value }, { replace: true })} className="mt-8">
         <ProjectTabBar
           tab={tab}
@@ -1396,10 +1384,8 @@ export function ProjectScreen() {
           counts={{ chapters: chapters.length, precast: precastKeys?.size || undefined, work: workCount || undefined, review: reviewCount || undefined }}
         />
         <TabsPanels value={tab}>
-        {from && FROM_LABEL[from] && tab !== from && (
-          <button type="button" onClick={back} className="touch-hit mt-4 inline-flex items-center gap-2 text-sm text-fg-2 hover:text-fg">
-            <ArrowLeft className="ink-start size-4" />{S.s_ve_man_truoc_3be95078}</button>
-        )}
+        <Reveal when={from && FROM_LABEL[from] && tab !== from}><button type="button" onClick={back} className="touch-hit mt-4 inline-flex items-center gap-2 text-sm text-fg-2 hover:text-fg">
+            <ArrowLeft className="ink-start size-4" />{S.s_ve_man_truoc_3be95078}</button></Reveal>
         <TabsContent value="chapters">
           <ChapterList book={book} chapters={chapters} />
         </TabsContent>
