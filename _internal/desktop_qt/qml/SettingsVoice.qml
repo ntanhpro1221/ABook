@@ -181,7 +181,7 @@ Column {
                             readonly property var ids: VoiceLogic.orderedIds(list)
                             readonly property string tabId: ids.indexOf(root.current ? root.current.id : "") >= 0 ? root.current.id : (ids.length ? ids[0] : "")
                             readonly property string notice: modelData.provider === "edge" ? VoiceLogic.ONLINE_NOTICE : (list.length ? VoiceLogic.onlineNotice(list[0]) : "")
-                            width: parent.width
+                            width: parent ? parent.width : 0
                             gap: 20
                             show: root.voices !== null && (list.length > 0 || modelData.provider === "device")
                             VoiceFold {
@@ -304,7 +304,7 @@ Column {
                                         model: providerIds
                                         ProviderKey {
                                             required property string pid
-                                            width: parent.width
+                                            width: parent ? parent.width : 0
                                             info: root.providers.find(item => item.id === pid) || ({limits: {}})
                                             onChanged: root.load()
                                         }

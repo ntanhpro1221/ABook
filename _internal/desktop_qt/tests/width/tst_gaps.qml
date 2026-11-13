@@ -427,7 +427,7 @@ Item {
             verify(/^CoverButton(_|\()/.test(String(play)), String(play))
             compare(play.width, 44); compare(play.height, 44)
             const corner = play.mapToItem(cell, play.width, play.height)
-            compare(corner.x, cell.coverWidth - 10); compare(corner.y, cell.coverHeight - 10)
+            compare(corner.x, cell.coverWidth - 12); compare(corner.y, cell.coverHeight - 12)
             const shadow = play.children.filter(child => /^Shadow(_|\()/.test(String(child)))[0]
             verify(shadow !== undefined); compare(shadow.kind, "card")
             const plate = play.children.filter(child => child.color !== undefined && Qt.colorEqual(child.color, Theme.panel))[0]

@@ -256,7 +256,7 @@ Item {
             loadAt(1, 0)
             const row = rowOf(page, 3)
             const more = one(row, "chapterMore")
-            compare(more.Accessible.name, "Tuỳ chọn Chương 3 · Tên 3")
+            compare(more.Accessible.name, "Thêm tuỳ chọn: Chương 3 · Tên 3")
             verify(more.visible)
             compare(more.opacity, 0)           // chỉ hiện khi rê chuột vào hàng
             mouseMove(row, 40, row.height / 2)
@@ -631,7 +631,7 @@ Item {
             Api.toast("Đã lưu file sách\nChưa có thay đổi nào - file giống bản gốc.", {duration: 8000, action: {label: "Mở thư mục", run: function() { ran++ }}})
             tryVerify(function() { return toast.t === 1 })
             compare(one(toast, "toastTitle").text, "Đã lưu file sách")
-            compare(one(toast, "toastDescription").text, "Chưa có thay đổi nào - file giống bản gốc.")
+            compare(one(toast, "toastDescription").text, TextWrap.pretty("Chưa có thay đổi nào - file giống bản gốc."))
             compare(toast.duration, 8000)
             const action = one(toast, "toastAction")
             verify(shown(action))
@@ -688,7 +688,9 @@ Item {
             verify(description.lineCount > 1)
             verify(description.contentWidth <= description.width + 1)
             const action = one(toast, "toastAction")
-            verify(description.parent.x + description.parent.width <= action.x, "chữ không chạy dưới nút")
+            const textRight = description.mapToItem(toast, description.width, 0).x
+            const actionLeft = action.mapToItem(toast, 0, 0).x
+            verify(textRight <= actionLeft, "chữ không chạy dưới nút")
             verify(toast.height >= description.y + description.height + 28, "thẻ cao theo chữ")
         }
         function test_templateUndoAndSaveAsFolderUseToastAction() {

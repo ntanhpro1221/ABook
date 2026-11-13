@@ -141,7 +141,7 @@ Item {
         function test_waitingBookSaysMachineIsBusy() {
             server = waitingBook()
             openCast()
-            compare(child(rowOf("Hạ Vy"), "castPending").text, "Đang chờ máy làm sách: giọng Hương")
+            compare(child(rowOf("Hạ Vy"), "castPending").text, "Chờ máy làm sách: giọng Hương")
             verify(!child(rowOf("Lan"), "castVoiceButton").visible)       // đổi giọng cần xưởng
             verify(!child(rowOf("Tuấn"), "castUnmerge").visible)
             verify(!findChild(page, "castNarratorPending").visible)

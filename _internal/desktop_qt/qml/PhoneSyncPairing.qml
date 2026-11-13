@@ -46,7 +46,7 @@ Column {
                     Text {
                         id: instruction
                         width: parent.width
-                        text: TextWrap.keepDots(S.s_tren_may_kia_cai_dat_thiet_bi_chon_3c0003fa + (root.sync.name || "") + S.s_nhap_ma_84cf2ece)
+                        text: TextWrap.pretty(S.s_tren_may_kia_cai_dat_thiet_bi_chon_3c0003fa + (root.sync.name || "") + S.s_nhap_ma_84cf2ece)
                         color: Theme.text2
                         wrapMode: Text.WrapAtWordBoundaryOrAnywhere
                         font.pixelSize: 14

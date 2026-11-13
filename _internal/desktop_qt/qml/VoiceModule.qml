@@ -182,7 +182,7 @@ Item {
                     readonly property bool editable: root.canPick && !choice.installed
                     readonly property real size: choice.installed ? -1 : (root.downloading ? (root.sizes[choice.id] !== undefined ? root.sizes[choice.id] : choice.bytes) : choice.bytes)
                     readonly property bool removable: Boolean(choice.removable) && root.canPick
-                    width: parent.width
+                    width: parent ? parent.width : 0
                     height: rowColumn.height
                     Column {
                         id: rowColumn

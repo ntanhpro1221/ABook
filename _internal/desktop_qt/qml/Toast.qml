@@ -106,7 +106,7 @@ Item {
                         id: descriptionText
                         objectName: "toastDescription"
                         width: parent.width
-                        text: root.displayedDescription
+                        text: TextWrap.pretty(root.displayedDescription)
                         color: Theme.text2
                         wrapMode: Text.WrapAtWordBoundaryOrAnywhere
                         font.pixelSize: 14

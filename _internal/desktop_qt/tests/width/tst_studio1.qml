@@ -191,7 +191,7 @@ Item {
             compare(one(one(page, "projectsEmpty"), "emptyTitle").text, "Chưa có dự án")
             compare(one(page, "newProjectEmpty").text, "Dự án mới")
             verify(!shown(one(page, "newProject")))
-            verify(!shown(one(page, "projectsSkeleton")))
+            tryVerify(function() { return !shown(one(page, "projectsSkeleton")) })
             both("projects_empty", page)
             // lỗi mạng: lời nói thẳng + Thử lại
             DesktopApi.delayed = false
@@ -207,7 +207,7 @@ Item {
             reply("GET /api/library", library([], {rootMissing: true, root: "E:\\Sách của tôi"}))
             page.studioStore.loadLibrary()
             tryVerify(function() { return shown(one(page, "projectsMissing")) })
-            compare(one(one(page, "projectsMissing"), "emptyTitle").text, "Không thấy “Sách của tôi”")
+            compare(one(one(page, "projectsMissing"), "emptyTitle").text, "Không thấy thư mục thư viện “Sách của tôi”")
             verify(hasText(page, "Chọn thư mục"))
         }
         function test_newProjectButtonOpensTheBuilder() {

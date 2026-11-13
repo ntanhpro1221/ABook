@@ -3,6 +3,7 @@ import QtQuick
 import QtQuick.Controls.Basic as C
 import ABook
 import "VoiceLogic.js" as VoiceLogic
+import "TextWrap.js" as TextWrap
 
 // Khung khoá riêng của một nhà cung cấp giọng (KeyCard của listen/VoiceSettings.tsx): đầu DisclosureRow (tên + "Dùng được · N giọng" / "Chưa dùng được"),
 // gập sẵn (đã có khoá thì mở sẵn); thân: giới hạn miễn phí + cách tô chữ, "Nhận khoá", ô khoá (ẩn chữ) + vùng (Azure) + Lưu / Kiểm tra / Xoá khoá,
@@ -114,7 +115,7 @@ Item {
             Text {
                 width: parent.width
                 topPadding: 4
-                text: (root.info.limits.free || "") + ". " + (root.info.limits.timings === "exact" ? S.s_to_dung_tung_chu_dang_doc_b0692da6 : S.s_to_tung_chu_dang_doc_theo_uoc_luong_b0de406b)
+                text: TextWrap.pretty((root.info.limits.free || "") + ". " + (root.info.limits.timings === "exact" ? S.s_to_dung_tung_chu_dang_doc_b0692da6 : S.s_to_tung_chu_dang_doc_theo_uoc_luong_b0de406b))
                 color: Theme.text2
                 wrapMode: Text.WrapAtWordBoundaryOrAnywhere
                 font.pixelSize: 14

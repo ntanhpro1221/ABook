@@ -13,6 +13,7 @@ Hai luật đọc nguồn, chạy trong qt_pytests (trước mọi QtTest):
 from __future__ import annotations
 
 import re
+import importlib.util
 from pathlib import Path
 
 QT = Path(__file__).resolve().parents[1] / "desktop_qt"
@@ -88,6 +89,31 @@ def singleton_reads_outside_module(qt: Path = QT) -> list[str]:
 
 def test_theme_members_exist():
     assert unknown_theme_members() == []
+
+
+def test_runtime_audit_rejects_detached_parent_even_with_passing_totals(tmp_path, capsys):
+    """The parity3 errors come from detached Repeater delegates, not singleton lookup.
+
+    A source/module check cannot prove parent lifetime. The runtime gate must reject
+    these warnings even when every QML test assertion passes, and count locations once.
+    """
+    spec = importlib.util.spec_from_file_location("qt_result_context_audit", QT / "tools/check_test_results.py")
+    audit = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(audit)
+    clean = "Totals: 1 passed, 0 failed, 0 skipped, 0 blacklisted\n"
+    warnings = [
+        f"QWARN : Context::destroy() file:///D:/app/desktop_qt/qml/{file}:{line}:29: TypeError: Cannot read property 'width' of null\n"
+        for file, line in (("SettingsVoice.qml", 184), ("SettingsVoice.qml", 307), ("VoiceModule.qml", 185), ("VoiceSpeed.qml", 75))
+    ]
+    log = tmp_path / "qt-context.txt"
+    log.write_text(clean + "".join(warnings) + warnings[0], encoding="utf-8")
+    assert not audit.check(log)
+    output = capsys.readouterr().out
+    assert "TEST_TOTALS 1 passed, 0 failed" in output
+    assert "QML_TYPE_ERROR 4;" in output
+    log.write_text(clean, encoding="utf-8")
+    assert audit.check(log)
+    assert "QML_TYPE_ERROR 0;" in capsys.readouterr().out
 
 
 def test_standalone_qml_reads_no_module_singleton():

@@ -376,7 +376,7 @@ Item {
             compare(one(page, "readingSurface").text, "")
             tryVerify(function() { return all(page, "removeReading").length === 3 })
             const rows = all(page, "removeReading")
-            compare(rows[0].tip, "Bỏ “Nasdell” khỏi cách đọc chung")
+            compare(rows[0].tip, "Bỏ cách đọc “Nasdell”")
             rows[0].clicked()
             const removal = requestsOf("POST", "/api/readings")[1]
             compare(removal.body.surface, "Nasdell")

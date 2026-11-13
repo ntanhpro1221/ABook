@@ -5,5 +5,5 @@ import ABook
 FormField {
     topPadding: 8
     bottomPadding: 8
-    implicitHeight: Math.max(32, contentHeight + 12)
+    implicitHeight: Math.max(32, contentHeight + topPadding + bottomPadding)
 }

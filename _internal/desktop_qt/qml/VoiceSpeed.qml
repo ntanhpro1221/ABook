@@ -72,7 +72,7 @@ VoiceFold {
                     required property int index
                     readonly property var voice: root.status.voices[index] || ({})
                     readonly property bool wants: VoiceLogic.needsFastDownload(voice)
-                    width: parent.width
+                    width: parent ? parent.width : 0
                     height: Math.max(sentence.height, download.visible ? download.implicitHeight : 0)
                     Text {
                         id: sentence
