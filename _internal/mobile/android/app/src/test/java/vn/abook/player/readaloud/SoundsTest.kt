@@ -10,6 +10,15 @@ import vn.abook.player.vieneu.VieneuUnits
  * tests/test_readaloud_sounds.py; các khúc đọc cả đoạn nằm trong fixture dùng chung (VieneuParityTest). Chữ hiện và số chữ không đổi.
  */
 class SoundsTest {
+    @Test fun realSyllablesAreNeverStretched() {
+        for (word in listOf("cứu", "hưu", "lưu", "mưu", "bưu", "cừu", "tửu", "ưu", "hữu", "cựu",
+            "soóc", "moóc", "goòng", "voọc", "boong", "xoong", "khuỷu", "hươu", "rượu")) {
+            for (text in listOf(word, word.uppercase(), word.replaceFirstChar { it.uppercase() })) {
+                assertEquals(text, null, Shouts.stretchReading(text))
+            }
+        }
+        assertEquals("Hãy cứu tôi với!", said("Hãy cứu tôi với!").joinToString(" "))
+    }
     private fun said(text: String, origin: String? = null): List<String> {
         val toks = VieneuUnits.tokens(text)
         val out = VieneuUnits.spokenTokens(toks, origin)
@@ -154,7 +163,7 @@ class SoundsTest {
     fun aWordStretchedInSeveralPlacesIsCollectedWhenItMakesOneSyllable() {
         assertEquals("chào… ò", Shouts.stretchReading("Cccchhhhàaaaaaoooo"))
         assertEquals("sáng…", Shouts.stretchReading("sssssáaaannnngggg"))
-        assertNull(Shouts.stretchReading("Bbbbbuuuuuôooiiii"))
+        assertEquals("buôi… i", Shouts.stretchReading("Bbbbbuuuuuôooiiii"))
     }
 
     @Test

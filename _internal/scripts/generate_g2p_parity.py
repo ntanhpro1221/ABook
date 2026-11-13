@@ -12,6 +12,7 @@ import hashlib
 import importlib.metadata
 import json
 import sys
+import unicodedata
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -96,10 +97,23 @@ def private_cases(source: Path, context: Path):
     return result
 
 
+def stretch_cases():
+    """Synthetic cries: every Vietnamese vowel/tone plus mixed and short runs."""
+    tokens = ["đââââââyy", "Eeeê", "Gìì", "Gaààoo", "Piiim", "hẵẵng", "bậập", "ớớ", "ừừ"]
+    for vowel in "aăâeêioôơuưy":
+        for tone in "\u0300\u0301\u0303\u0309\u0323":
+            char = unicodedata.normalize('NFC', unicodedata.normalize('NFD', vowel) + tone)
+            tokens.append('b' + char * 4 + 'n' if vowel in 'ăâ' else 't' + char * 4 if vowel == 'y' else char * 4)
+            if vowel in 'ăây':
+                tokens.append(char * 4)
+    tokens += [unicodedata.normalize('NFD', token) for token in tokens[:9]]
+    tokens += ["Ưư", "Êii", "Ồồ", "Hãy cứu tôi với!", "hưu", "lưu", "mưu", "bưu", "cừu", "tửu", "ưu", "hữu", "cựu",
+               "soóc", "moóc", "goòng", "voọc", "boong", "xoong", "khuỷu", "hươu", "rượu"]
+    return [case(f"stretch:{i:03d}", "marked_stretch", token, None, {}, Rulings()) for i, token in enumerate(tokens)]
+
+
 def payload(cases):
-    # No quality-implementation hash: it changes with unrelated locked files
-    # (audio_io.py) and went stale unnoticed. tests/test_g2p_desktop_parity.py
-    # instead regenerates the cases from the current desktop code on every run.
+    # Regenerate from current desktop code instead of storing the unrelated quality hash.
     return {
         "sea_g2p": importlib.metadata.version("sea-g2p"),
         "comparison": "exact UTF-8 phonemes; no stress, tone, whitespace or punctuation folding",
@@ -135,6 +149,7 @@ def main():
     if args.private_out and args.private_out.resolve().is_relative_to(ROOT.parent):
         parser.error("private calibration output must be outside the repository")
     write(args.public_out, public_cases(), check=args.check)
+    write(args.public_out.with_name("stretches_parity.json"), stretch_cases(), check=args.check)
     if args.private_out:
         write(args.private_out, private_cases(args.calibration_source, args.calibration_context), check=args.check)
 

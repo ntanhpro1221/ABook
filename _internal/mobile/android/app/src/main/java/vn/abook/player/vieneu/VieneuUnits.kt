@@ -955,6 +955,7 @@ object VieneuUnits {
         val toks = tokens(text)
         val tags = mutableListOf<String>()
         if (origin in Names.ORIGINS && spokenTokens(toks, origin) != spokenTokens(toks)) tags.add(origin!!)
+        if (toks.any { Shouts.stretchReading(Names.splitToken(it).second) != null }) tags.add("shouts2")
         if (directEnglish) {
             tags.add("direct-en${EnglishPolicy.VERSION}")
             tags.add(vn.abook.player.readaloud.JapanesePolicy.NAMESPACE)

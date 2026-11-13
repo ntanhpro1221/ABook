@@ -94,6 +94,8 @@ class G2pGateParityTest {
     @Test fun allPublicTokensMatchDesktopExactly() = compare(File("../../../tests/data/g2pgate/desktop_parity.json"),
         JSONArray(File("../../../tests/data/g2pgate/tokens.json").readText(Charsets.UTF_8)).length(), "tokens")
 
+    @Test fun allMarkedStretchesMatchDesktopExactly() = compare(File("../../../tests/data/g2pgate/stretches_parity.json"), 115, "stretches")
+
     @Test fun all442PrivateCalibrationRowsMatchDesktopExactly() {
         val path = System.getenv("ABOOK_G2P_CALIBRATION_FIXTURE")
         assumeTrue("Private calibration fixture is optional; generate outside repository", path != null)

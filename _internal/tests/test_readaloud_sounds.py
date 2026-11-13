@@ -223,7 +223,7 @@ def test_a_laugh_or_an_interjection_is_read_as_sounds(token: str, reading: str) 
 def test_a_word_stretched_in_several_places_is_collected_when_it_makes_one_syllable() -> None:
     assert shouts.stretch_reading("Cccchhhhàaaaaaoooo") == "chào… ò"
     assert shouts.stretch_reading("sssssáaaannnngggg") == "sáng…"
-    assert shouts.stretch_reading("Bbbbbuuuuuôooiiii") is None, "gộp ra không phải âm tiết: giữ nguyên"
+    assert shouts.stretch_reading("Bbbbbuuuuuôooiiii") == "buôi… i", "ô/o is one vowel stretch"
 
 
 @pytest.mark.parametrize("text, said", [

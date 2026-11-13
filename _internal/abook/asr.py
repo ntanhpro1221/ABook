@@ -129,6 +129,7 @@ ANCHOR_COMPARISON_NORMALIZED_EXACT = "normalized_exact"
 ANCHOR_COMPARISON_DIACRITIC_FOLDED_EXACT = "diacritic_folded_exact"
 ANCHOR_COMPARISON_VIETNAMESE_PHONEME_EXACT = "vietnamese_phoneme_exact"
 ANCHOR_COMPARISON_COMPONENT_PHONEMES = "component_phonemes"
+ANCHOR_COMPARISON_REGIONAL_PHONEMES = "regional_name_phonemes_exact"
 # Every exact form above compares Whisper's *spelling* to a Vietnamese transliteration, and
 # those two can never agree on a name Whisper recognises: it writes "Kaiser" where the anchor
 # holds "cai-dờ", and "Arthur" where the anchor holds "A-thờ". Same sound, different letters,
@@ -231,6 +232,56 @@ def _vietnamese_phonemes(token: str) -> str:
         phonemes = ""
     _PHONEME_CACHE[token] = phonemes
     return phonemes
+
+
+# Region rules from pending_patches/patch_a_northern_voice_does_not_say_tr.py
+# and the 2026-11-12 hand18 root-cause replay (asrfail_rootcause.md, 2.2/4.1b).
+# These are comparison spellings, never text sent to the voice. Unknown regions
+# gain no consonant mergers. Southern r/z stays separate from d/gi/j/y.
+_NORTH_INITIALS = (("tr", "ch"), ("gi", "z"), ("r", "z"), ("d", "z"), ("s", "x"))
+_TONE_DIACRITICS = frozenset("\u0300\u0301\u0303\u0309\u0323")
+
+
+def _ordinary_alias_key(word: str, voice_region: str = "") -> str:
+    """Only tone and known dialect spellings; retain vowel quality and codas."""
+    word = unicodedata.normalize("NFC", "".join(
+        c for c in unicodedata.normalize("NFD", word) if c not in _TONE_DIACRITICS
+    ))
+    folds = _NORTH_INITIALS if voice_region == "Bắc" else (("gi", "z"), ("d", "z")) if voice_region == "Nam" else ()
+    for written, folded in folds:
+        if word.startswith(written) and not (written == "gi" and len(word) == 2):
+            word = folded + word[len(written):]
+            break
+    # Only a sole vowel y is an alternate spelling of i (lý/lí, kỳ/kì).
+    # The glides in tay/tai, hay/hai and tuy/tui are different rhymes.
+    return re.sub(r"^([^aăâeêioôơuưy]*)y$", r"\1i", word)
+
+
+def _name_spelling_key(word: str, voice_region: str) -> str:
+    """Whisper Latin spellings of names, conditioned on the reading voice."""
+    if voice_region not in {"Bắc", "Nam"}:
+        return word
+    word = _diacritic_folded_token(word.lower())
+    for written, folded in (("tch", "ch"), ("sh", "s"), ("ts", "ch"), ("f", "ph")):
+        word = word.replace(written, folded)
+    word = re.sub(r"w(?=[ae])", "o", word).replace("w", "u")
+    # At a syllable onset y/j represents Southern d/gi. Vowel y is i.
+    if voice_region == "Nam" and word.startswith("y"):
+        word = "d" + word[1:]
+    # A syllabic gi retains its nucleus, including inside joined name parts.
+    word = re.sub(r"gi(?![aeouy])", "di", word)
+    for written, folded in ((("gi", "d"), ("j", "d"), ("z", "r")) if voice_region == "Nam"
+                            else (("tr", "ch"), ("gi", "d"), ("j", "d"), ("z", "d"), ("r", "d"), ("s", "x"))):
+        word = word.replace(written, folded)
+    word = re.sub(r"^([^aeiouy]*)y$", r"\1i", word)
+    return re.sub(r"([bcdghklmnpqrstvx])\1+", r"\1", _fold_vietnamese_k_to_c(word))
+
+
+def _name_phonemes(word: str, voice_region: str) -> str:
+    from .readaloud.phoneme_policy import repair_syllabic_gi
+
+    word = _name_spelling_key(word, voice_region)
+    return repair_syllabic_gi(word, _vietnamese_phonemes(word))
 
 
 # Whisper writes a number as a digit; the book writes it as a word. "thứ mười" against
@@ -339,7 +390,7 @@ def fold_number_units(text: str) -> str:
     return UNIT_NUMBER_PATTERN.sub(_unit, HOUR_MINUTE_PATTERN.sub(_hour_minute, text))
 
 
-def normalize_transcript(text: str) -> str:
+def normalize_transcript(text: str, *, preserve_d_stroke: bool = False) -> str:
     # VieNeu frontend controls carry no spoken words. Keep their contents and
     # every ordinary word; acronym anchors still align each occurrence normally.
     text = re.sub(r"</?en>", "", text)
@@ -350,10 +401,18 @@ def normalize_transcript(text: str) -> str:
         lambda match: re.sub(r"\D", "", match.group()),
         text,
     )
-    text = text.casefold().replace("đ", "d")
+    text = text.casefold()
+    if not preserve_d_stroke:
+        text = text.replace("đ", "d")
     text = re.sub(r"[^0-9a-zà-ỹ\s]", " ", text)
     text = re.sub(r"\s+", " ", text).strip()
     return _fold_number_digits(text)
+
+
+def _normalize_anchor_transcript(text: str) -> str:
+    # Name/ordinary alias comparisons must distinguish đ from d/r/gi.
+    # Sentence metrics retain their established normalization and phonemes.
+    return normalize_transcript(text, preserve_d_stroke=True)
 
 
 def _json_safe_anchor_value(value: Any) -> Any:
@@ -376,16 +435,26 @@ def _diacritic_folded_token(token: str) -> str:
     )
 
 
+def _plain_folded_token(token: str) -> str:
+    """Diacritic-folded comparison as before đ was kept: đ drops its stroke too.
+
+    Only the plain folded path uses this. Regional and component phonemes keep đ
+    apart, so a Northern r/gi/z never reaches a name spelt with đ.
+    """
+    return _diacritic_folded_token(token).replace("đ", "d")
+
+
 def _locked_name_anchor_forms(
     anchor: Mapping[str, Any],
+    voice_region: str = "",
 ) -> list[tuple[str, tuple[str, ...], str]]:
-    spoken_tokens = tuple(normalize_transcript(str(anchor.get("spoken_form", ""))).split())
+    spoken_tokens = tuple(_normalize_anchor_transcript(str(anchor.get("spoken_form", ""))).split())
     surface = str(anchor.get("surface", "")).strip()
     if not surface:
         surface = str(anchor.get("normalized_surface", "")).strip()
-    surface_tokens = tuple(normalize_transcript(surface).split())
+    surface_tokens = tuple(_normalize_anchor_transcript(surface).split())
     folded_spoken_tokens = tuple(
-        _diacritic_folded_token(token)
+        _plain_folded_token(token)
         for token in spoken_tokens
     )
     phoneme_spoken_tokens = tuple(_vietnamese_phonemes(token) for token in spoken_tokens)
@@ -415,9 +484,14 @@ def _locked_name_anchor_forms(
             ANCHOR_COMPARISON_VIETNAMESE_PHONEME_EXACT,
         ),
     ]
+    # The extra path repairs syllabic gi even without a known voice region.
+    # Keep the original phoneme path: adding an alias must not revoke a pass.
+    regional = tuple(_name_phonemes(token, voice_region) for token in spoken_tokens)
+    if regional and all(regional):
+        candidates.append(("spoken_form", regional, ANCHOR_COMPARISON_REGIONAL_PHONEMES))
     canonical = str(anchor.get("canonical_spoken_form", ""))
     if anchor.get("asr_alias_only") and canonical and canonical != str(anchor.get("spoken_form", "")):
-        candidates.extend(_locked_name_anchor_forms({"surface": "", "spoken_form": canonical}))
+        candidates.extend(_locked_name_anchor_forms({"surface": "", "spoken_form": canonical}, voice_region))
     forms: list[tuple[str, tuple[str, ...], str]] = []
     seen: set[tuple[tuple[str, ...], str]] = set()
     for kind, tokens, comparison_mode in candidates:
@@ -479,7 +553,7 @@ def _locked_name_anchor_components(
 
 def _anchor_component_key(value: str) -> str:
     """One name part reduced to bare letters, so only the sounds are left to disagree."""
-    folded = _diacritic_folded_token(normalize_transcript(str(value)))
+    folded = _diacritic_folded_token(_normalize_anchor_transcript(str(value)))
     return "".join(character for character in folded if character.isalnum())
 
 
@@ -520,6 +594,7 @@ def _anchor_component_sounds_right(
     spoken_syllables: Sequence[str],
     source_component: str,
     span: str,
+    voice_region: str = "",
 ) -> bool:
     """Does this stretch of transcript sound like this part of the name?
 
@@ -559,6 +634,32 @@ def _anchor_component_sounds_right(
     for pieces in _anchor_component_splits(span, len(expected)):
         if _anchor_component_phonemes(pieces) == expected:
             return True
+        # Inside a romanized name, Latin d can spell the locked Vietnamese đ
+        # (Mi-đô / Mido). Restore that stop only at the corresponding syllable;
+        # r/gi/z never become đ, and ordinary words never enter this comparison.
+        restored = tuple(
+            "đ" + piece[1:] if syllable.startswith("đ") and piece.startswith("d") else piece
+            for syllable, piece in zip(spoken_syllables, pieces)
+        )
+        if restored != tuple(pieces):
+            if _anchor_component_phonemes(restored) == expected:
+                return True
+            if voice_region in {"Bắc", "Nam"} and tuple(
+                _name_phonemes(part, voice_region) for part in restored
+            ) == tuple(_name_phonemes(part, voice_region) for part in spoken_syllables):
+                return True
+    if voice_region in {"Bắc", "Nam"}:
+        # Joined spellings also cover a doubled boundary consonant: Sat-ta/sata.
+        # Compare the spoken form, not arbitrary edits to a foreign source name.
+        joined = "".join(_anchor_component_key(part) for part in spoken_syllables)
+        if _name_spelling_key(joined, voice_region) == _name_spelling_key(span, voice_region):
+            return True
+        regional_expected = tuple(_name_phonemes(_anchor_component_key(part), voice_region) for part in spoken_syllables)
+        if all(regional_expected):
+            for pieces in _anchor_component_splits(span, len(regional_expected)):
+                sounds = tuple(_name_phonemes(part, voice_region) for part in pieces)
+                if sounds == regional_expected:
+                    return True
     return False
 
 
@@ -568,6 +669,7 @@ def _locked_name_anchor_component_match(
     *,
     blocked_tokens: frozenset[int] | set[int] | None = None,
     from_token: int = 0,
+    voice_region: str = "",
 ) -> dict[str, Any] | None:
     """Does the transcript carry every part of this name, judged by sound rather than spelling?
 
@@ -621,7 +723,7 @@ def _locked_name_anchor_component_match(
                     break
                 span += tokens[end_index]
                 if _anchor_component_sounds_right(
-                    spoken_syllables, source_component, span
+                    spoken_syllables, source_component, span, voice_region
                 ):
                     matched_end = end_index + 1
                     break
@@ -671,18 +773,18 @@ def _locked_name_anchor_token_span(
     ):
         return "invalid_spoken_span"
 
-    normalized_spoken_form = normalize_transcript(
+    normalized_spoken_form = _normalize_anchor_transcript(
         str(anchor.get("spoken_form", ""))
     )
-    normalized_span = normalize_transcript(
+    normalized_span = _normalize_anchor_transcript(
         expected_spoken_text[spoken_start:spoken_end]
     )
     if not normalized_spoken_form or normalized_span != normalized_spoken_form:
         return "spoken_span_text_mismatch"
 
-    prefix_tokens = normalize_transcript(expected_spoken_text[:spoken_start]).split()
+    prefix_tokens = _normalize_anchor_transcript(expected_spoken_text[:spoken_start]).split()
     span_tokens = normalized_span.split()
-    suffix_tokens = normalize_transcript(expected_spoken_text[spoken_end:]).split()
+    suffix_tokens = _normalize_anchor_transcript(expected_spoken_text[spoken_end:]).split()
     if prefix_tokens + span_tokens + suffix_tokens != expected_tokens:
         return "spoken_span_token_boundary_mismatch"
     return len(prefix_tokens), len(prefix_tokens) + len(span_tokens)
@@ -692,8 +794,9 @@ def _build_locked_name_alignment_units(
     expected_spoken_text: str,
     anchors: list[dict[str, Any]],
     repeat_count: int,
+    voice_region: str = "",
 ) -> tuple[list[dict[str, Any]], dict[tuple[int, int], str]]:
-    expected_tokens = normalize_transcript(expected_spoken_text).split()
+    expected_tokens = _normalize_anchor_transcript(expected_spoken_text).split()
     base_units: list[dict[str, Any]] = []
     invalid_anchor_indexes: dict[int, str] = {}
     cursor = 0
@@ -718,7 +821,7 @@ def _build_locked_name_alignment_units(
             {
                 "kind": "anchor",
                 "anchor_index": anchor_index,
-                "forms": _locked_name_anchor_forms(anchor),
+                "forms": _locked_name_anchor_forms(anchor, voice_region),
             }
         )
         cursor = anchor_end
@@ -747,6 +850,7 @@ def _build_locked_name_alignment_units(
 def _minimum_cost_locked_name_alignment(
     units: list[dict[str, Any]],
     transcript_tokens: list[str],
+    voice_region: str = "",
 ) -> tuple[tuple[int, int, int, int], list[dict[str, Any]]]:
     """Align semantic expected units to tokens while preserving ordinary context.
 
@@ -847,11 +951,12 @@ def _minimum_cost_locked_name_alignment(
                 matched_tokens = tuple(transcript_tokens[transcript_index:form_end])
                 if comparison_mode == ANCHOR_COMPARISON_DIACRITIC_FOLDED_EXACT:
                     comparison_tokens = tuple(
-                        _diacritic_folded_token(token) for token in matched_tokens
+                        _plain_folded_token(token) for token in matched_tokens
                     )
-                elif comparison_mode == ANCHOR_COMPARISON_VIETNAMESE_PHONEME_EXACT:
+                elif comparison_mode in {ANCHOR_COMPARISON_VIETNAMESE_PHONEME_EXACT, ANCHOR_COMPARISON_REGIONAL_PHONEMES}:
                     comparison_tokens = tuple(
-                        _vietnamese_phonemes(token) for token in matched_tokens
+                        (_name_phonemes(token, voice_region) if comparison_mode == ANCHOR_COMPARISON_REGIONAL_PHONEMES
+                         else _vietnamese_phonemes(token)) for token in matched_tokens
                     )
                     if not all(comparison_tokens):
                         continue
@@ -905,6 +1010,7 @@ def _canonical_locked_name_metrics(
     rescued_spans: dict[tuple[int, int], tuple[int, int]] | None = None,
     *,
     fold_tone: bool = True,
+    ordinary_alias_region: str | None = None,
 ) -> tuple[float, float, float]:
     """Sentence metrics with each locked name folded into one placeholder on both sides.
 
@@ -986,6 +1092,12 @@ def _canonical_locked_name_metrics(
     if transcript_cursor != len(transcript_tokens):
         raise RuntimeError("Locked-name canonical alignment did not consume transcript")
 
+    if ordinary_alias_region is not None:
+        return _sequence_metrics(
+            [_ordinary_alias_key(token, ordinary_alias_region) for token in expected_tokens],
+            [_ordinary_alias_key(token, ordinary_alias_region) for token in actual_tokens],
+        )
+
     # Fold tone here too, for the same reason the ordinary metrics do: a tone difference
     # on the words around a name says nothing about whether the take was good. Taking the
     # better of the two readings keeps the fold from ever failing something plain
@@ -1047,6 +1159,7 @@ def adjudicate_locked_name_anchors(
     *,
     min_similarity: float | None = None,
     max_wer: float | None = None,
+    voice_region: str = "",
 ) -> dict[str, Any]:
     """Apply mandatory name rules and optional source/voice spelling alternatives.
 
@@ -1056,18 +1169,28 @@ def adjudicate_locked_name_anchors(
     """
     result = _adjudicate_locked_name_anchors(
         expected_spoken_text, asr_result, anchors, repeat_count,
-        min_similarity=min_similarity, max_wer=max_wer,
+        min_similarity=min_similarity, max_wer=max_wer, voice_region=voice_region,
     )
     if any(anchor.get("asr_alias_only") for anchor in anchors):
         required = [anchor for anchor in anchors if not anchor.get("asr_alias_only")]
         original = _adjudicate_locked_name_anchors(
             expected_spoken_text, asr_result, required, repeat_count,
-            min_similarity=min_similarity, max_wer=max_wer,
+            min_similarity=min_similarity, max_wer=max_wer, voice_region=voice_region,
         )
         if original.get("verdict") == ASR_PASS and result.get("verdict") != ASR_PASS:
             evidence = result.get(LOCKED_NAME_ANCHOR_METRICS_KEY)
             result = dict(original)
             result["spelling_alias_evidence"] = evidence
+    if voice_region and result.get("verdict") != ASR_PASS:
+        # Adding a regional spelling path may change an alignment tie. It must
+        # never revoke a pass obtained without that additional path.
+        legacy = adjudicate_locked_name_anchors(
+            expected_spoken_text, asr_result, anchors, repeat_count,
+            min_similarity=min_similarity, max_wer=max_wer,
+        )
+        if legacy.get("verdict") == ASR_PASS:
+            result = dict(legacy)
+            result["regional_name_evidence"] = {"voice_region": voice_region, "kept_unfolded_pass": True}
     return result
 
 
@@ -1079,6 +1202,7 @@ def _adjudicate_locked_name_anchors(
     *,
     min_similarity: float | None = None,
     max_wer: float | None = None,
+    voice_region: str = "",
 ) -> dict[str, Any]:
     """Require exact locked-name forms in an ASR transcript without fuzzy aliases.
 
@@ -1094,9 +1218,9 @@ def _adjudicate_locked_name_anchors(
         raise ValueError("repeat_count must be a positive integer")
 
     result = dict(asr_result)
-    normalized_transcript = normalize_transcript(str(result.get("transcript", "")))
+    normalized_transcript = _normalize_anchor_transcript(str(result.get("transcript", "")))
     transcript_tokens = normalized_transcript.split()
-    normalized_expected = normalize_transcript(expected_spoken_text)
+    normalized_expected = _normalize_anchor_transcript(expected_spoken_text)
     safe_anchors = [
         {
             str(key): _json_safe_anchor_value(value)
@@ -1141,10 +1265,12 @@ def _adjudicate_locked_name_anchors(
         expected_spoken_text,
         safe_anchors,
         repeat_count,
+        voice_region,
     )
     alignment_score, operations = _minimum_cost_locked_name_alignment(
         units,
         transcript_tokens,
+        voice_region,
     )
     anchor_operations = {
         (operation["repeat_index"], operation["anchor_index"]): operation
@@ -1185,7 +1311,7 @@ def _adjudicate_locked_name_anchors(
             )
     for repeat_index in range(repeat_count):
         for anchor_index, anchor in enumerate(safe_anchors):
-            forms = _locked_name_anchor_forms(anchor)
+            forms = _locked_name_anchor_forms(anchor, voice_region)
             occurrence = (repeat_index, anchor_index)
             operation = anchor_operations.get(occurrence)
             anchor_evidence = {
@@ -1193,6 +1319,7 @@ def _adjudicate_locked_name_anchors(
                 "repeat_index": repeat_index,
                 "required_order": len(evidence),
                 "anchor_index": anchor_index,
+                "voice_region": voice_region,
                 "accepted_forms": [
                     {
                         "kind": kind,
@@ -1230,6 +1357,7 @@ def _adjudicate_locked_name_anchors(
                     transcript_tokens,
                     blocked_tokens=claimed_tokens,
                     from_token=component_cursor,
+                    voice_region=voice_region,
                 )
                 if component_match is not None and component_match["passed"]:
                     component_cursor = max(
@@ -1324,11 +1452,11 @@ def _adjudicate_locked_name_anchors(
             max_wer=float(max_wer),
         )
         if any(anchor.get("asr_alias_only") for anchor in safe_anchors):
-            _plain_sim, _plain_cer, plain_wer = _canonical_locked_name_metrics(
+            _alias_sim, _alias_cer, alias_wer = _canonical_locked_name_metrics(
                 units, operations, transcript_tokens, len(safe_anchors), rescued_spans,
-                fold_tone=False,
+                ordinary_alias_region=voice_region,
             )
-            canonical_threshold_passed = bool(canonical_threshold_passed and plain_wer == 0.0)
+            canonical_threshold_passed = bool(canonical_threshold_passed and alias_wer == 0.0)
         # A repeated stretch is not a name problem: removing the name spans cannot excuse it,
         # so neither the promotion below nor the review exemption may stand on it.
         if result.get(ASR_REPEATED_CONTENT_KEY):
@@ -1457,6 +1585,7 @@ def adjudicate_collapsed_repeated_short(
     requested_repeat_count: int,
     min_similarity: float,
     max_wer: float,
+    voice_region: str = "",
 ) -> dict[str, Any] | None:
     """Re-adjudicate a decoder-collapsed repeat as one exact spoken copy.
 
@@ -1516,6 +1645,7 @@ def adjudicate_collapsed_repeated_short(
         repeat_count=1,
         min_similarity=min_similarity,
         max_wer=max_wer,
+        voice_region=voice_region,
     )
     anchor_metrics = collapsed.get(LOCKED_NAME_ANCHOR_METRICS_KEY)
     if not isinstance(anchor_metrics, dict) or anchor_metrics.get("adjudicated") is not True:

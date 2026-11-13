@@ -1,0 +1,2422 @@
+{
+  "sea_g2p": "0.10.0",
+  "quality_hash": "28c0a261a30bb3e0ffa3f684aaf4546ea1c5424ea502bb6431d957275c3851a0",
+  "comparison": "exact UTF-8 phonemes; no stress, tone, whitespace or punctuation folding",
+  "cases": [
+    {
+      "id": "stretch:000",
+      "class": "marked_stretch",
+      "text": "đââââââyy",
+      "origin": null,
+      "readings": {},
+      "book_names": false,
+      "rulings": {
+        "names": [],
+        "foreign": []
+      },
+      "units": [
+        {
+          "pieces": [
+            "đây…"
+          ],
+          "phonemes": "ɗˈəɪ."
+        }
+      ],
+      "phonemes": "ɗˈəɪ."
+    },
+    {
+      "id": "stretch:001",
+      "class": "marked_stretch",
+      "text": "Eeeê",
+      "origin": null,
+      "readings": {},
+      "book_names": false,
+      "rulings": {
+        "names": [],
+        "foreign": []
+      },
+      "units": [
+        {
+          "pieces": [
+            "ê… ê"
+          ],
+          "phonemes": "ˈe, ˈe."
+        }
+      ],
+      "phonemes": "ˈe, ˈe."
+    },
+    {
+      "id": "stretch:002",
+      "class": "marked_stretch",
+      "text": "Gìì",
+      "origin": null,
+      "readings": {},
+      "book_names": false,
+      "rulings": {
+        "names": [],
+        "foreign": []
+      },
+      "units": [
+        {
+          "pieces": [
+            "gì… ì"
+          ],
+          "phonemes": "zˈi2, ˈi2."
+        }
+      ],
+      "phonemes": "zˈi2, ˈi2."
+    },
+    {
+      "id": "stretch:003",
+      "class": "marked_stretch",
+      "text": "Gaààoo",
+      "origin": null,
+      "readings": {},
+      "book_names": false,
+      "rulings": {
+        "names": [],
+        "foreign": []
+      },
+      "units": [
+        {
+          "pieces": [
+            "gào… ò"
+          ],
+          "phonemes": "ɣˈaː2w, ˈɔ2."
+        }
+      ],
+      "phonemes": "ɣˈaː2w, ˈɔ2."
+    },
+    {
+      "id": "stretch:004",
+      "class": "marked_stretch",
+      "text": "Piiim",
+      "origin": null,
+      "readings": {},
+      "book_names": false,
+      "rulings": {
+        "names": [],
+        "foreign": []
+      },
+      "units": [
+        {
+          "pieces": [
+            "pim… i"
+          ],
+          "phonemes": "pˈim, ˈi."
+        }
+      ],
+      "phonemes": "pˈim, ˈi."
+    },
+    {
+      "id": "stretch:005",
+      "class": "marked_stretch",
+      "text": "hẵẵng",
+      "origin": null,
+      "readings": {},
+      "book_names": false,
+      "rulings": {
+        "names": [],
+        "foreign": []
+      },
+      "units": [
+        {
+          "pieces": [
+            "hẵng…"
+          ],
+          "phonemes": "hˈa5ŋ."
+        }
+      ],
+      "phonemes": "hˈa5ŋ."
+    },
+    {
+      "id": "stretch:006",
+      "class": "marked_stretch",
+      "text": "bậập",
+      "origin": null,
+      "readings": {},
+      "book_names": false,
+      "rulings": {
+        "names": [],
+        "foreign": []
+      },
+      "units": [
+        {
+          "pieces": [
+            "bập…"
+          ],
+          "phonemes": "bˈə6p."
+        }
+      ],
+      "phonemes": "bˈə6p."
+    },
+    {
+      "id": "stretch:007",
+      "class": "marked_stretch",
+      "text": "ớớ",
+      "origin": null,
+      "readings": {},
+      "book_names": false,
+      "rulings": {
+        "names": [],
+        "foreign": []
+      },
+      "units": [
+        {
+          "pieces": [
+            "ớ… ớ"
+          ],
+          "phonemes": "ˈəːɜ, ˈəːɜ."
+        }
+      ],
+      "phonemes": "ˈəːɜ, ˈəːɜ."
+    },
+    {
+      "id": "stretch:008",
+      "class": "marked_stretch",
+      "text": "ừừ",
+      "origin": null,
+      "readings": {},
+      "book_names": false,
+      "rulings": {
+        "names": [],
+        "foreign": []
+      },
+      "units": [
+        {
+          "pieces": [
+            "ừ… ừ"
+          ],
+          "phonemes": "ˈy2, ˈy2."
+        }
+      ],
+      "phonemes": "ˈy2, ˈy2."
+    },
+    {
+      "id": "stretch:009",
+      "class": "marked_stretch",
+      "text": "àààà",
+      "origin": null,
+      "readings": {},
+      "book_names": false,
+      "rulings": {
+        "names": [],
+        "foreign": []
+      },
+      "units": [
+        {
+          "pieces": [
+            "à… à"
+          ],
+          "phonemes": "ˈaː2, ˈaː2."
+        }
+      ],
+      "phonemes": "ˈaː2, ˈaː2."
+    },
+    {
+      "id": "stretch:010",
+      "class": "marked_stretch",
+      "text": "áááá",
+      "origin": null,
+      "readings": {},
+      "book_names": false,
+      "rulings": {
+        "names": [],
+        "foreign": []
+      },
+      "units": [
+        {
+          "pieces": [
+            "á… á"
+          ],
+          "phonemes": "ˈaːɜ, ˈaːɜ."
+        }
+      ],
+      "phonemes": "ˈaːɜ, ˈaːɜ."
+    },
+    {
+      "id": "stretch:011",
+      "class": "marked_stretch",
+      "text": "ãããã",
+      "origin": null,
+      "readings": {},
+      "book_names": false,
+      "rulings": {
+        "names": [],
+        "foreign": []
+      },
+      "units": [
+        {
+          "pieces": [
+            "ã… ã"
+          ],
+          "phonemes": "ˈaː5, ˈaː5."
+        }
+      ],
+      "phonemes": "ˈaː5, ˈaː5."
+    },
+    {
+      "id": "stretch:012",
+      "class": "marked_stretch",
+      "text": "ảảảả",
+      "origin": null,
+      "readings": {},
+      "book_names": false,
+      "rulings": {
+        "names": [],
+        "foreign": []
+      },
+      "units": [
+        {
+          "pieces": [
+            "ả… ả"
+          ],
+          "phonemes": "ˈaː4, ˈaː4."
+        }
+      ],
+      "phonemes": "ˈaː4, ˈaː4."
+    },
+    {
+      "id": "stretch:013",
+      "class": "marked_stretch",
+      "text": "ạạạạ",
+      "origin": null,
+      "readings": {},
+      "book_names": false,
+      "rulings": {
+        "names": [],
+        "foreign": []
+      },
+      "units": [
+        {
+          "pieces": [
+            "ạ… ạ"
+          ],
+          "phonemes": "ˈaː6, ˈaː6."
+        }
+      ],
+      "phonemes": "ˈaː6, ˈaː6."
+    },
+    {
+      "id": "stretch:014",
+      "class": "marked_stretch",
+      "text": "bằằằằn",
+      "origin": null,
+      "readings": {},
+      "book_names": false,
+      "rulings": {
+        "names": [],
+        "foreign": []
+      },
+      "units": [
+        {
+          "pieces": [
+            "bằn…"
+          ],
+          "phonemes": "bˈa2n."
+        }
+      ],
+      "phonemes": "bˈa2n."
+    },
+    {
+      "id": "stretch:015",
+      "class": "marked_stretch",
+      "text": "ằằằằ",
+      "origin": null,
+      "readings": {},
+      "book_names": false,
+      "rulings": {
+        "names": [],
+        "foreign": []
+      },
+      "units": [
+        {
+          "pieces": [
+            "à… à"
+          ],
+          "phonemes": "ˈaː2, ˈaː2."
+        }
+      ],
+      "phonemes": "ˈaː2, ˈaː2."
+    },
+    {
+      "id": "stretch:016",
+      "class": "marked_stretch",
+      "text": "bắắắắn",
+      "origin": null,
+      "readings": {},
+      "book_names": false,
+      "rulings": {
+        "names": [],
+        "foreign": []
+      },
+      "units": [
+        {
+          "pieces": [
+            "bắn…"
+          ],
+          "phonemes": "bˈaɜn."
+        }
+      ],
+      "phonemes": "bˈaɜn."
+    },
+    {
+      "id": "stretch:017",
+      "class": "marked_stretch",
+      "text": "ắắắắ",
+      "origin": null,
+      "readings": {},
+      "book_names": false,
+      "rulings": {
+        "names": [],
+        "foreign": []
+      },
+      "units": [
+        {
+          "pieces": [
+            "á… á"
+          ],
+          "phonemes": "ˈaːɜ, ˈaːɜ."
+        }
+      ],
+      "phonemes": "ˈaːɜ, ˈaːɜ."
+    },
+    {
+      "id": "stretch:018",
+      "class": "marked_stretch",
+      "text": "bẵẵẵẵn",
+      "origin": null,
+      "readings": {},
+      "book_names": false,
+      "rulings": {
+        "names": [],
+        "foreign": []
+      },
+      "units": [
+        {
+          "pieces": [
+            "bẵn…"
+          ],
+          "phonemes": "bˈa5n."
+        }
+      ],
+      "phonemes": "bˈa5n."
+    },
+    {
+      "id": "stretch:019",
+      "class": "marked_stretch",
+      "text": "ẵẵẵẵ",
+      "origin": null,
+      "readings": {},
+      "book_names": false,
+      "rulings": {
+        "names": [],
+        "foreign": []
+      },
+      "units": [
+        {
+          "pieces": [
+            "ã… ã"
+          ],
+          "phonemes": "ˈaː5, ˈaː5."
+        }
+      ],
+      "phonemes": "ˈaː5, ˈaː5."
+    },
+    {
+      "id": "stretch:020",
+      "class": "marked_stretch",
+      "text": "bẳẳẳẳn",
+      "origin": null,
+      "readings": {},
+      "book_names": false,
+      "rulings": {
+        "names": [],
+        "foreign": []
+      },
+      "units": [
+        {
+          "pieces": [
+            "bẳn…"
+          ],
+          "phonemes": "bˈa4n."
+        }
+      ],
+      "phonemes": "bˈa4n."
+    },
+    {
+      "id": "stretch:021",
+      "class": "marked_stretch",
+      "text": "ẳẳẳẳ",
+      "origin": null,
+      "readings": {},
+      "book_names": false,
+      "rulings": {
+        "names": [],
+        "foreign": []
+      },
+      "units": [
+        {
+          "pieces": [
+            "ả… ả"
+          ],
+          "phonemes": "ˈaː4, ˈaː4."
+        }
+      ],
+      "phonemes": "ˈaː4, ˈaː4."
+    },
+    {
+      "id": "stretch:022",
+      "class": "marked_stretch",
+      "text": "bặặặặn",
+      "origin": null,
+      "readings": {},
+      "book_names": false,
+      "rulings": {
+        "names": [],
+        "foreign": []
+      },
+      "units": [
+        {
+          "pieces": [
+            "bặn…"
+          ],
+          "phonemes": "bˈa6n."
+        }
+      ],
+      "phonemes": "bˈa6n."
+    },
+    {
+      "id": "stretch:023",
+      "class": "marked_stretch",
+      "text": "ặặặặ",
+      "origin": null,
+      "readings": {},
+      "book_names": false,
+      "rulings": {
+        "names": [],
+        "foreign": []
+      },
+      "units": [
+        {
+          "pieces": [
+            "ạ… ạ"
+          ],
+          "phonemes": "ˈaː6, ˈaː6."
+        }
+      ],
+      "phonemes": "ˈaː6, ˈaː6."
+    },
+    {
+      "id": "stretch:024",
+      "class": "marked_stretch",
+      "text": "bầầầần",
+      "origin": null,
+      "readings": {},
+      "book_names": false,
+      "rulings": {
+        "names": [],
+        "foreign": []
+      },
+      "units": [
+        {
+          "pieces": [
+            "bần…"
+          ],
+          "phonemes": "bˈə2n."
+        }
+      ],
+      "phonemes": "bˈə2n."
+    },
+    {
+      "id": "stretch:025",
+      "class": "marked_stretch",
+      "text": "ầầầầ",
+      "origin": null,
+      "readings": {},
+      "book_names": false,
+      "rulings": {
+        "names": [],
+        "foreign": []
+      },
+      "units": [
+        {
+          "pieces": [
+            "ờ… ờ"
+          ],
+          "phonemes": "ˈəː2, ˈəː2."
+        }
+      ],
+      "phonemes": "ˈəː2, ˈəː2."
+    },
+    {
+      "id": "stretch:026",
+      "class": "marked_stretch",
+      "text": "bấấấấn",
+      "origin": null,
+      "readings": {},
+      "book_names": false,
+      "rulings": {
+        "names": [],
+        "foreign": []
+      },
+      "units": [
+        {
+          "pieces": [
+            "bấn…"
+          ],
+          "phonemes": "bˈəɜn."
+        }
+      ],
+      "phonemes": "bˈəɜn."
+    },
+    {
+      "id": "stretch:027",
+      "class": "marked_stretch",
+      "text": "ấấấấ",
+      "origin": null,
+      "readings": {},
+      "book_names": false,
+      "rulings": {
+        "names": [],
+        "foreign": []
+      },
+      "units": [
+        {
+          "pieces": [
+            "ớ… ớ"
+          ],
+          "phonemes": "ˈəːɜ, ˈəːɜ."
+        }
+      ],
+      "phonemes": "ˈəːɜ, ˈəːɜ."
+    },
+    {
+      "id": "stretch:028",
+      "class": "marked_stretch",
+      "text": "bẫẫẫẫn",
+      "origin": null,
+      "readings": {},
+      "book_names": false,
+      "rulings": {
+        "names": [],
+        "foreign": []
+      },
+      "units": [
+        {
+          "pieces": [
+            "bẫn…"
+          ],
+          "phonemes": "bˈə5n."
+        }
+      ],
+      "phonemes": "bˈə5n."
+    },
+    {
+      "id": "stretch:029",
+      "class": "marked_stretch",
+      "text": "ẫẫẫẫ",
+      "origin": null,
+      "readings": {},
+      "book_names": false,
+      "rulings": {
+        "names": [],
+        "foreign": []
+      },
+      "units": [
+        {
+          "pieces": [
+            "ỡ… ỡ"
+          ],
+          "phonemes": "ˈəː5, ˈəː5."
+        }
+      ],
+      "phonemes": "ˈəː5, ˈəː5."
+    },
+    {
+      "id": "stretch:030",
+      "class": "marked_stretch",
+      "text": "bẩẩẩẩn",
+      "origin": null,
+      "readings": {},
+      "book_names": false,
+      "rulings": {
+        "names": [],
+        "foreign": []
+      },
+      "units": [
+        {
+          "pieces": [
+            "bẩn…"
+          ],
+          "phonemes": "bˈə4n."
+        }
+      ],
+      "phonemes": "bˈə4n."
+    },
+    {
+      "id": "stretch:031",
+      "class": "marked_stretch",
+      "text": "ẩẩẩẩ",
+      "origin": null,
+      "readings": {},
+      "book_names": false,
+      "rulings": {
+        "names": [],
+        "foreign": []
+      },
+      "units": [
+        {
+          "pieces": [
+            "ở… ở"
+          ],
+          "phonemes": "ˈəː4, ˈəː4."
+        }
+      ],
+      "phonemes": "ˈəː4, ˈəː4."
+    },
+    {
+      "id": "stretch:032",
+      "class": "marked_stretch",
+      "text": "bậậậận",
+      "origin": null,
+      "readings": {},
+      "book_names": false,
+      "rulings": {
+        "names": [],
+        "foreign": []
+      },
+      "units": [
+        {
+          "pieces": [
+            "bận…"
+          ],
+          "phonemes": "bˈə6n."
+        }
+      ],
+      "phonemes": "bˈə6n."
+    },
+    {
+      "id": "stretch:033",
+      "class": "marked_stretch",
+      "text": "ậậậậ",
+      "origin": null,
+      "readings": {},
+      "book_names": false,
+      "rulings": {
+        "names": [],
+        "foreign": []
+      },
+      "units": [
+        {
+          "pieces": [
+            "ợ… ợ"
+          ],
+          "phonemes": "ˈəː6, ˈəː6."
+        }
+      ],
+      "phonemes": "ˈəː6, ˈəː6."
+    },
+    {
+      "id": "stretch:034",
+      "class": "marked_stretch",
+      "text": "èèèè",
+      "origin": null,
+      "readings": {},
+      "book_names": false,
+      "rulings": {
+        "names": [],
+        "foreign": []
+      },
+      "units": [
+        {
+          "pieces": [
+            "è… è"
+          ],
+          "phonemes": "ˈɛ2, ˈɛ2."
+        }
+      ],
+      "phonemes": "ˈɛ2, ˈɛ2."
+    },
+    {
+      "id": "stretch:035",
+      "class": "marked_stretch",
+      "text": "éééé",
+      "origin": null,
+      "readings": {},
+      "book_names": false,
+      "rulings": {
+        "names": [],
+        "foreign": []
+      },
+      "units": [
+        {
+          "pieces": [
+            "é… é"
+          ],
+          "phonemes": "ˈɛɜ, ˈɛɜ."
+        }
+      ],
+      "phonemes": "ˈɛɜ, ˈɛɜ."
+    },
+    {
+      "id": "stretch:036",
+      "class": "marked_stretch",
+      "text": "ẽẽẽẽ",
+      "origin": null,
+      "readings": {},
+      "book_names": false,
+      "rulings": {
+        "names": [],
+        "foreign": []
+      },
+      "units": [
+        {
+          "pieces": [
+            "ẽ… ẽ"
+          ],
+          "phonemes": "ˈɛ5, ˈɛ5."
+        }
+      ],
+      "phonemes": "ˈɛ5, ˈɛ5."
+    },
+    {
+      "id": "stretch:037",
+      "class": "marked_stretch",
+      "text": "ẻẻẻẻ",
+      "origin": null,
+      "readings": {},
+      "book_names": false,
+      "rulings": {
+        "names": [],
+        "foreign": []
+      },
+      "units": [
+        {
+          "pieces": [
+            "ẻ… ẻ"
+          ],
+          "phonemes": "ˈɛ4, ˈɛ4."
+        }
+      ],
+      "phonemes": "ˈɛ4, ˈɛ4."
+    },
+    {
+      "id": "stretch:038",
+      "class": "marked_stretch",
+      "text": "ẹẹẹẹ",
+      "origin": null,
+      "readings": {},
+      "book_names": false,
+      "rulings": {
+        "names": [],
+        "foreign": []
+      },
+      "units": [
+        {
+          "pieces": [
+            "ẹ… ẹ"
+          ],
+          "phonemes": "ˈɛ6, ˈɛ6."
+        }
+      ],
+      "phonemes": "ˈɛ6, ˈɛ6."
+    },
+    {
+      "id": "stretch:039",
+      "class": "marked_stretch",
+      "text": "ềềềề",
+      "origin": null,
+      "readings": {},
+      "book_names": false,
+      "rulings": {
+        "names": [],
+        "foreign": []
+      },
+      "units": [
+        {
+          "pieces": [
+            "ề… ề"
+          ],
+          "phonemes": "ˈe2, ˈe2."
+        }
+      ],
+      "phonemes": "ˈe2, ˈe2."
+    },
+    {
+      "id": "stretch:040",
+      "class": "marked_stretch",
+      "text": "ếếếế",
+      "origin": null,
+      "readings": {},
+      "book_names": false,
+      "rulings": {
+        "names": [],
+        "foreign": []
+      },
+      "units": [
+        {
+          "pieces": [
+            "ế… ế"
+          ],
+          "phonemes": "ˈeɜ, ˈeɜ."
+        }
+      ],
+      "phonemes": "ˈeɜ, ˈeɜ."
+    },
+    {
+      "id": "stretch:041",
+      "class": "marked_stretch",
+      "text": "ễễễễ",
+      "origin": null,
+      "readings": {},
+      "book_names": false,
+      "rulings": {
+        "names": [],
+        "foreign": []
+      },
+      "units": [
+        {
+          "pieces": [
+            "ễ… ễ"
+          ],
+          "phonemes": "ˈe5, ˈe5."
+        }
+      ],
+      "phonemes": "ˈe5, ˈe5."
+    },
+    {
+      "id": "stretch:042",
+      "class": "marked_stretch",
+      "text": "ểểểể",
+      "origin": null,
+      "readings": {},
+      "book_names": false,
+      "rulings": {
+        "names": [],
+        "foreign": []
+      },
+      "units": [
+        {
+          "pieces": [
+            "ể… ể"
+          ],
+          "phonemes": "ˈe4, ˈe4."
+        }
+      ],
+      "phonemes": "ˈe4, ˈe4."
+    },
+    {
+      "id": "stretch:043",
+      "class": "marked_stretch",
+      "text": "ệệệệ",
+      "origin": null,
+      "readings": {},
+      "book_names": false,
+      "rulings": {
+        "names": [],
+        "foreign": []
+      },
+      "units": [
+        {
+          "pieces": [
+            "ệ… ệ"
+          ],
+          "phonemes": "ˈe6, ˈe6."
+        }
+      ],
+      "phonemes": "ˈe6, ˈe6."
+    },
+    {
+      "id": "stretch:044",
+      "class": "marked_stretch",
+      "text": "ìììì",
+      "origin": null,
+      "readings": {},
+      "book_names": false,
+      "rulings": {
+        "names": [],
+        "foreign": []
+      },
+      "units": [
+        {
+          "pieces": [
+            "ì… ì"
+          ],
+          "phonemes": "ˈi2, ˈi2."
+        }
+      ],
+      "phonemes": "ˈi2, ˈi2."
+    },
+    {
+      "id": "stretch:045",
+      "class": "marked_stretch",
+      "text": "íííí",
+      "origin": null,
+      "readings": {},
+      "book_names": false,
+      "rulings": {
+        "names": [],
+        "foreign": []
+      },
+      "units": [
+        {
+          "pieces": [
+            "í… í"
+          ],
+          "phonemes": "ˈiɜ, ˈiɜ."
+        }
+      ],
+      "phonemes": "ˈiɜ, ˈiɜ."
+    },
+    {
+      "id": "stretch:046",
+      "class": "marked_stretch",
+      "text": "ĩĩĩĩ",
+      "origin": null,
+      "readings": {},
+      "book_names": false,
+      "rulings": {
+        "names": [],
+        "foreign": []
+      },
+      "units": [
+        {
+          "pieces": [
+            "ĩ… ĩ"
+          ],
+          "phonemes": "ˈi5, ˈi5."
+        }
+      ],
+      "phonemes": "ˈi5, ˈi5."
+    },
+    {
+      "id": "stretch:047",
+      "class": "marked_stretch",
+      "text": "ỉỉỉỉ",
+      "origin": null,
+      "readings": {},
+      "book_names": false,
+      "rulings": {
+        "names": [],
+        "foreign": []
+      },
+      "units": [
+        {
+          "pieces": [
+            "ỉ… ỉ"
+          ],
+          "phonemes": "ˈi4, ˈi4."
+        }
+      ],
+      "phonemes": "ˈi4, ˈi4."
+    },
+    {
+      "id": "stretch:048",
+      "class": "marked_stretch",
+      "text": "ịịịị",
+      "origin": null,
+      "readings": {},
+      "book_names": false,
+      "rulings": {
+        "names": [],
+        "foreign": []
+      },
+      "units": [
+        {
+          "pieces": [
+            "ị… ị"
+          ],
+          "phonemes": "ˈi6, ˈi6."
+        }
+      ],
+      "phonemes": "ˈi6, ˈi6."
+    },
+    {
+      "id": "stretch:049",
+      "class": "marked_stretch",
+      "text": "òòòò",
+      "origin": null,
+      "readings": {},
+      "book_names": false,
+      "rulings": {
+        "names": [],
+        "foreign": []
+      },
+      "units": [
+        {
+          "pieces": [
+            "ò… ò"
+          ],
+          "phonemes": "ˈɔ2, ˈɔ2."
+        }
+      ],
+      "phonemes": "ˈɔ2, ˈɔ2."
+    },
+    {
+      "id": "stretch:050",
+      "class": "marked_stretch",
+      "text": "óóóó",
+      "origin": null,
+      "readings": {},
+      "book_names": false,
+      "rulings": {
+        "names": [],
+        "foreign": []
+      },
+      "units": [
+        {
+          "pieces": [
+            "ó… ó"
+          ],
+          "phonemes": "ˈɔɜ, ˈɔɜ."
+        }
+      ],
+      "phonemes": "ˈɔɜ, ˈɔɜ."
+    },
+    {
+      "id": "stretch:051",
+      "class": "marked_stretch",
+      "text": "õõõõ",
+      "origin": null,
+      "readings": {},
+      "book_names": false,
+      "rulings": {
+        "names": [],
+        "foreign": []
+      },
+      "units": [
+        {
+          "pieces": [
+            "õ… õ"
+          ],
+          "phonemes": "ˈɔ5, ˈɔ5."
+        }
+      ],
+      "phonemes": "ˈɔ5, ˈɔ5."
+    },
+    {
+      "id": "stretch:052",
+      "class": "marked_stretch",
+      "text": "ỏỏỏỏ",
+      "origin": null,
+      "readings": {},
+      "book_names": false,
+      "rulings": {
+        "names": [],
+        "foreign": []
+      },
+      "units": [
+        {
+          "pieces": [
+            "ỏ… ỏ"
+          ],
+          "phonemes": "ˈɔ4, ˈɔ4."
+        }
+      ],
+      "phonemes": "ˈɔ4, ˈɔ4."
+    },
+    {
+      "id": "stretch:053",
+      "class": "marked_stretch",
+      "text": "ọọọọ",
+      "origin": null,
+      "readings": {},
+      "book_names": false,
+      "rulings": {
+        "names": [],
+        "foreign": []
+      },
+      "units": [
+        {
+          "pieces": [
+            "ọ… ọ"
+          ],
+          "phonemes": "ˈɔ6, ˈɔ6."
+        }
+      ],
+      "phonemes": "ˈɔ6, ˈɔ6."
+    },
+    {
+      "id": "stretch:054",
+      "class": "marked_stretch",
+      "text": "ồồồồ",
+      "origin": null,
+      "readings": {},
+      "book_names": false,
+      "rulings": {
+        "names": [],
+        "foreign": []
+      },
+      "units": [
+        {
+          "pieces": [
+            "ồ… ồ"
+          ],
+          "phonemes": "ˈo2, ˈo2."
+        }
+      ],
+      "phonemes": "ˈo2, ˈo2."
+    },
+    {
+      "id": "stretch:055",
+      "class": "marked_stretch",
+      "text": "ốốốố",
+      "origin": null,
+      "readings": {},
+      "book_names": false,
+      "rulings": {
+        "names": [],
+        "foreign": []
+      },
+      "units": [
+        {
+          "pieces": [
+            "ố… ố"
+          ],
+          "phonemes": "ˈoɜ, ˈoɜ."
+        }
+      ],
+      "phonemes": "ˈoɜ, ˈoɜ."
+    },
+    {
+      "id": "stretch:056",
+      "class": "marked_stretch",
+      "text": "ỗỗỗỗ",
+      "origin": null,
+      "readings": {},
+      "book_names": false,
+      "rulings": {
+        "names": [],
+        "foreign": []
+      },
+      "units": [
+        {
+          "pieces": [
+            "ỗ… ỗ"
+          ],
+          "phonemes": "ˈo5, ˈo5."
+        }
+      ],
+      "phonemes": "ˈo5, ˈo5."
+    },
+    {
+      "id": "stretch:057",
+      "class": "marked_stretch",
+      "text": "ổổổổ",
+      "origin": null,
+      "readings": {},
+      "book_names": false,
+      "rulings": {
+        "names": [],
+        "foreign": []
+      },
+      "units": [
+        {
+          "pieces": [
+            "ổ… ổ"
+          ],
+          "phonemes": "ˈo4, ˈo4."
+        }
+      ],
+      "phonemes": "ˈo4, ˈo4."
+    },
+    {
+      "id": "stretch:058",
+      "class": "marked_stretch",
+      "text": "ộộộộ",
+      "origin": null,
+      "readings": {},
+      "book_names": false,
+      "rulings": {
+        "names": [],
+        "foreign": []
+      },
+      "units": [
+        {
+          "pieces": [
+            "ộ… ộ"
+          ],
+          "phonemes": "ˈo6, ˈo6."
+        }
+      ],
+      "phonemes": "ˈo6, ˈo6."
+    },
+    {
+      "id": "stretch:059",
+      "class": "marked_stretch",
+      "text": "ờờờờ",
+      "origin": null,
+      "readings": {},
+      "book_names": false,
+      "rulings": {
+        "names": [],
+        "foreign": []
+      },
+      "units": [
+        {
+          "pieces": [
+            "ờ… ờ"
+          ],
+          "phonemes": "ˈəː2, ˈəː2."
+        }
+      ],
+      "phonemes": "ˈəː2, ˈəː2."
+    },
+    {
+      "id": "stretch:060",
+      "class": "marked_stretch",
+      "text": "ớớớớ",
+      "origin": null,
+      "readings": {},
+      "book_names": false,
+      "rulings": {
+        "names": [],
+        "foreign": []
+      },
+      "units": [
+        {
+          "pieces": [
+            "ớ… ớ"
+          ],
+          "phonemes": "ˈəːɜ, ˈəːɜ."
+        }
+      ],
+      "phonemes": "ˈəːɜ, ˈəːɜ."
+    },
+    {
+      "id": "stretch:061",
+      "class": "marked_stretch",
+      "text": "ỡỡỡỡ",
+      "origin": null,
+      "readings": {},
+      "book_names": false,
+      "rulings": {
+        "names": [],
+        "foreign": []
+      },
+      "units": [
+        {
+          "pieces": [
+            "ỡ… ỡ"
+          ],
+          "phonemes": "ˈəː5, ˈəː5."
+        }
+      ],
+      "phonemes": "ˈəː5, ˈəː5."
+    },
+    {
+      "id": "stretch:062",
+      "class": "marked_stretch",
+      "text": "ởởởở",
+      "origin": null,
+      "readings": {},
+      "book_names": false,
+      "rulings": {
+        "names": [],
+        "foreign": []
+      },
+      "units": [
+        {
+          "pieces": [
+            "ở… ở"
+          ],
+          "phonemes": "ˈəː4, ˈəː4."
+        }
+      ],
+      "phonemes": "ˈəː4, ˈəː4."
+    },
+    {
+      "id": "stretch:063",
+      "class": "marked_stretch",
+      "text": "ợợợợ",
+      "origin": null,
+      "readings": {},
+      "book_names": false,
+      "rulings": {
+        "names": [],
+        "foreign": []
+      },
+      "units": [
+        {
+          "pieces": [
+            "ợ… ợ"
+          ],
+          "phonemes": "ˈəː6, ˈəː6."
+        }
+      ],
+      "phonemes": "ˈəː6, ˈəː6."
+    },
+    {
+      "id": "stretch:064",
+      "class": "marked_stretch",
+      "text": "ùùùù",
+      "origin": null,
+      "readings": {},
+      "book_names": false,
+      "rulings": {
+        "names": [],
+        "foreign": []
+      },
+      "units": [
+        {
+          "pieces": [
+            "ù… ù"
+          ],
+          "phonemes": "ˈu2, ˈu2."
+        }
+      ],
+      "phonemes": "ˈu2, ˈu2."
+    },
+    {
+      "id": "stretch:065",
+      "class": "marked_stretch",
+      "text": "úúúú",
+      "origin": null,
+      "readings": {},
+      "book_names": false,
+      "rulings": {
+        "names": [],
+        "foreign": []
+      },
+      "units": [
+        {
+          "pieces": [
+            "ú… ú"
+          ],
+          "phonemes": "ˈuɜ, ˈuɜ."
+        }
+      ],
+      "phonemes": "ˈuɜ, ˈuɜ."
+    },
+    {
+      "id": "stretch:066",
+      "class": "marked_stretch",
+      "text": "ũũũũ",
+      "origin": null,
+      "readings": {},
+      "book_names": false,
+      "rulings": {
+        "names": [],
+        "foreign": []
+      },
+      "units": [
+        {
+          "pieces": [
+            "ũ… ũ"
+          ],
+          "phonemes": "ˈu5, ˈu5."
+        }
+      ],
+      "phonemes": "ˈu5, ˈu5."
+    },
+    {
+      "id": "stretch:067",
+      "class": "marked_stretch",
+      "text": "ủủủủ",
+      "origin": null,
+      "readings": {},
+      "book_names": false,
+      "rulings": {
+        "names": [],
+        "foreign": []
+      },
+      "units": [
+        {
+          "pieces": [
+            "ủ… ủ"
+          ],
+          "phonemes": "ˈu4, ˈu4."
+        }
+      ],
+      "phonemes": "ˈu4, ˈu4."
+    },
+    {
+      "id": "stretch:068",
+      "class": "marked_stretch",
+      "text": "ụụụụ",
+      "origin": null,
+      "readings": {},
+      "book_names": false,
+      "rulings": {
+        "names": [],
+        "foreign": []
+      },
+      "units": [
+        {
+          "pieces": [
+            "ụ… ụ"
+          ],
+          "phonemes": "ˈu6, ˈu6."
+        }
+      ],
+      "phonemes": "ˈu6, ˈu6."
+    },
+    {
+      "id": "stretch:069",
+      "class": "marked_stretch",
+      "text": "ừừừừ",
+      "origin": null,
+      "readings": {},
+      "book_names": false,
+      "rulings": {
+        "names": [],
+        "foreign": []
+      },
+      "units": [
+        {
+          "pieces": [
+            "ừ… ừ"
+          ],
+          "phonemes": "ˈy2, ˈy2."
+        }
+      ],
+      "phonemes": "ˈy2, ˈy2."
+    },
+    {
+      "id": "stretch:070",
+      "class": "marked_stretch",
+      "text": "ứứứứ",
+      "origin": null,
+      "readings": {},
+      "book_names": false,
+      "rulings": {
+        "names": [],
+        "foreign": []
+      },
+      "units": [
+        {
+          "pieces": [
+            "ứ… ứ"
+          ],
+          "phonemes": "ˈyɜ, ˈyɜ."
+        }
+      ],
+      "phonemes": "ˈyɜ, ˈyɜ."
+    },
+    {
+      "id": "stretch:071",
+      "class": "marked_stretch",
+      "text": "ữữữữ",
+      "origin": null,
+      "readings": {},
+      "book_names": false,
+      "rulings": {
+        "names": [],
+        "foreign": []
+      },
+      "units": [
+        {
+          "pieces": [
+            "ữ… ữ"
+          ],
+          "phonemes": "ˈy5, ˈy5."
+        }
+      ],
+      "phonemes": "ˈy5, ˈy5."
+    },
+    {
+      "id": "stretch:072",
+      "class": "marked_stretch",
+      "text": "ửửửử",
+      "origin": null,
+      "readings": {},
+      "book_names": false,
+      "rulings": {
+        "names": [],
+        "foreign": []
+      },
+      "units": [
+        {
+          "pieces": [
+            "ử… ử"
+          ],
+          "phonemes": "ˈy4, ˈy4."
+        }
+      ],
+      "phonemes": "ˈy4, ˈy4."
+    },
+    {
+      "id": "stretch:073",
+      "class": "marked_stretch",
+      "text": "ựựựự",
+      "origin": null,
+      "readings": {},
+      "book_names": false,
+      "rulings": {
+        "names": [],
+        "foreign": []
+      },
+      "units": [
+        {
+          "pieces": [
+            "ự… ự"
+          ],
+          "phonemes": "ˈy6, ˈy6."
+        }
+      ],
+      "phonemes": "ˈy6, ˈy6."
+    },
+    {
+      "id": "stretch:074",
+      "class": "marked_stretch",
+      "text": "tỳỳỳỳ",
+      "origin": null,
+      "readings": {},
+      "book_names": false,
+      "rulings": {
+        "names": [],
+        "foreign": []
+      },
+      "units": [
+        {
+          "pieces": [
+            "tỳ…"
+          ],
+          "phonemes": "t̪ˈi2."
+        }
+      ],
+      "phonemes": "t̪ˈi2."
+    },
+    {
+      "id": "stretch:075",
+      "class": "marked_stretch",
+      "text": "ỳỳỳỳ",
+      "origin": null,
+      "readings": {},
+      "book_names": false,
+      "rulings": {
+        "names": [],
+        "foreign": []
+      },
+      "units": [
+        {
+          "pieces": [
+            "ì… ì"
+          ],
+          "phonemes": "ˈi2, ˈi2."
+        }
+      ],
+      "phonemes": "ˈi2, ˈi2."
+    },
+    {
+      "id": "stretch:076",
+      "class": "marked_stretch",
+      "text": "týýýý",
+      "origin": null,
+      "readings": {},
+      "book_names": false,
+      "rulings": {
+        "names": [],
+        "foreign": []
+      },
+      "units": [
+        {
+          "pieces": [
+            "tý…"
+          ],
+          "phonemes": "t̪ˈiɜ."
+        }
+      ],
+      "phonemes": "t̪ˈiɜ."
+    },
+    {
+      "id": "stretch:077",
+      "class": "marked_stretch",
+      "text": "ýýýý",
+      "origin": null,
+      "readings": {},
+      "book_names": false,
+      "rulings": {
+        "names": [],
+        "foreign": []
+      },
+      "units": [
+        {
+          "pieces": [
+            "í… í"
+          ],
+          "phonemes": "ˈiɜ, ˈiɜ."
+        }
+      ],
+      "phonemes": "ˈiɜ, ˈiɜ."
+    },
+    {
+      "id": "stretch:078",
+      "class": "marked_stretch",
+      "text": "tỹỹỹỹ",
+      "origin": null,
+      "readings": {},
+      "book_names": false,
+      "rulings": {
+        "names": [],
+        "foreign": []
+      },
+      "units": [
+        {
+          "pieces": [
+            "tỹ…"
+          ],
+          "phonemes": "t̪ˈi5."
+        }
+      ],
+      "phonemes": "t̪ˈi5."
+    },
+    {
+      "id": "stretch:079",
+      "class": "marked_stretch",
+      "text": "ỹỹỹỹ",
+      "origin": null,
+      "readings": {},
+      "book_names": false,
+      "rulings": {
+        "names": [],
+        "foreign": []
+      },
+      "units": [
+        {
+          "pieces": [
+            "ĩ… ĩ"
+          ],
+          "phonemes": "ˈi5, ˈi5."
+        }
+      ],
+      "phonemes": "ˈi5, ˈi5."
+    },
+    {
+      "id": "stretch:080",
+      "class": "marked_stretch",
+      "text": "tỷỷỷỷ",
+      "origin": null,
+      "readings": {},
+      "book_names": false,
+      "rulings": {
+        "names": [],
+        "foreign": []
+      },
+      "units": [
+        {
+          "pieces": [
+            "tỷ…"
+          ],
+          "phonemes": "t̪ˈi4."
+        }
+      ],
+      "phonemes": "t̪ˈi4."
+    },
+    {
+      "id": "stretch:081",
+      "class": "marked_stretch",
+      "text": "ỷỷỷỷ",
+      "origin": null,
+      "readings": {},
+      "book_names": false,
+      "rulings": {
+        "names": [],
+        "foreign": []
+      },
+      "units": [
+        {
+          "pieces": [
+            "ỉ… ỉ"
+          ],
+          "phonemes": "ˈi4, ˈi4."
+        }
+      ],
+      "phonemes": "ˈi4, ˈi4."
+    },
+    {
+      "id": "stretch:082",
+      "class": "marked_stretch",
+      "text": "tỵỵỵỵ",
+      "origin": null,
+      "readings": {},
+      "book_names": false,
+      "rulings": {
+        "names": [],
+        "foreign": []
+      },
+      "units": [
+        {
+          "pieces": [
+            "tỵ…"
+          ],
+          "phonemes": "t̪ˈi6."
+        }
+      ],
+      "phonemes": "t̪ˈi6."
+    },
+    {
+      "id": "stretch:083",
+      "class": "marked_stretch",
+      "text": "ỵỵỵỵ",
+      "origin": null,
+      "readings": {},
+      "book_names": false,
+      "rulings": {
+        "names": [],
+        "foreign": []
+      },
+      "units": [
+        {
+          "pieces": [
+            "ị… ị"
+          ],
+          "phonemes": "ˈi6, ˈi6."
+        }
+      ],
+      "phonemes": "ˈi6, ˈi6."
+    },
+    {
+      "id": "stretch:084",
+      "class": "marked_stretch",
+      "text": "đââââââyy",
+      "origin": null,
+      "readings": {},
+      "book_names": false,
+      "rulings": {
+        "names": [],
+        "foreign": []
+      },
+      "units": [
+        {
+          "pieces": [
+            "đây…"
+          ],
+          "phonemes": "ɗˈəɪ."
+        }
+      ],
+      "phonemes": "ɗˈəɪ."
+    },
+    {
+      "id": "stretch:085",
+      "class": "marked_stretch",
+      "text": "Eeeê",
+      "origin": null,
+      "readings": {},
+      "book_names": false,
+      "rulings": {
+        "names": [],
+        "foreign": []
+      },
+      "units": [
+        {
+          "pieces": [
+            "e… ê"
+          ],
+          "phonemes": "ˈɛ, ˈe."
+        }
+      ],
+      "phonemes": "ˈɛ, ˈe."
+    },
+    {
+      "id": "stretch:086",
+      "class": "marked_stretch",
+      "text": "Gìì",
+      "origin": null,
+      "readings": {},
+      "book_names": false,
+      "rulings": {
+        "names": [],
+        "foreign": []
+      },
+      "units": [
+        {
+          "pieces": [
+            "gì… ì̀"
+          ],
+          "phonemes": "zˈi2, ˈi2."
+        }
+      ],
+      "phonemes": "zˈi2, ˈi2."
+    },
+    {
+      "id": "stretch:087",
+      "class": "marked_stretch",
+      "text": "Gaààoo",
+      "origin": null,
+      "readings": {},
+      "book_names": false,
+      "rulings": {
+        "names": [],
+        "foreign": []
+      },
+      "units": [
+        {
+          "pieces": [
+            "gào… ò"
+          ],
+          "phonemes": "ɣˈaː2w, ˈɔ2."
+        }
+      ],
+      "phonemes": "ɣˈaː2w, ˈɔ2."
+    },
+    {
+      "id": "stretch:088",
+      "class": "marked_stretch",
+      "text": "Piiim",
+      "origin": null,
+      "readings": {},
+      "book_names": false,
+      "rulings": {
+        "names": [],
+        "foreign": []
+      },
+      "units": [
+        {
+          "pieces": [
+            "pim… i"
+          ],
+          "phonemes": "pˈim, ˈi."
+        }
+      ],
+      "phonemes": "pˈim, ˈi."
+    },
+    {
+      "id": "stretch:089",
+      "class": "marked_stretch",
+      "text": "hẵẵng",
+      "origin": null,
+      "readings": {},
+      "book_names": false,
+      "rulings": {
+        "names": [],
+        "foreign": []
+      },
+      "units": [
+        {
+          "pieces": [
+            "hẵng…"
+          ],
+          "phonemes": "hˈa5ŋ."
+        }
+      ],
+      "phonemes": "hˈa5ŋ."
+    },
+    {
+      "id": "stretch:090",
+      "class": "marked_stretch",
+      "text": "bậập",
+      "origin": null,
+      "readings": {},
+      "book_names": false,
+      "rulings": {
+        "names": [],
+        "foreign": []
+      },
+      "units": [
+        {
+          "pieces": [
+            "bập…"
+          ],
+          "phonemes": "bˈə6p."
+        }
+      ],
+      "phonemes": "bˈə6p."
+    },
+    {
+      "id": "stretch:091",
+      "class": "marked_stretch",
+      "text": "ớớ",
+      "origin": null,
+      "readings": {},
+      "book_names": false,
+      "rulings": {
+        "names": [],
+        "foreign": []
+      },
+      "units": [
+        {
+          "pieces": [
+            "ớớ"
+          ],
+          "phonemes": "ˈəːɜˈəːɜ."
+        }
+      ],
+      "phonemes": "ˈəːɜˈəːɜ."
+    },
+    {
+      "id": "stretch:092",
+      "class": "marked_stretch",
+      "text": "ừừ",
+      "origin": null,
+      "readings": {},
+      "book_names": false,
+      "rulings": {
+        "names": [],
+        "foreign": []
+      },
+      "units": [
+        {
+          "pieces": [
+            "ừừ"
+          ],
+          "phonemes": "ˈy2ˈy2."
+        }
+      ],
+      "phonemes": "ˈy2ˈy2."
+    },
+    {
+      "id": "stretch:093",
+      "class": "marked_stretch",
+      "text": "Ưư",
+      "origin": null,
+      "readings": {},
+      "book_names": false,
+      "rulings": {
+        "names": [],
+        "foreign": []
+      },
+      "units": [
+        {
+          "pieces": [
+            "ư… ư"
+          ],
+          "phonemes": "ˈy, ˈy."
+        }
+      ],
+      "phonemes": "ˈy, ˈy."
+    },
+    {
+      "id": "stretch:094",
+      "class": "marked_stretch",
+      "text": "Êii",
+      "origin": null,
+      "readings": {},
+      "book_names": false,
+      "rulings": {
+        "names": [],
+        "foreign": []
+      },
+      "units": [
+        {
+          "pieces": [
+            "ê… i"
+          ],
+          "phonemes": "ˈe, ˈi."
+        }
+      ],
+      "phonemes": "ˈe, ˈi."
+    },
+    {
+      "id": "stretch:095",
+      "class": "marked_stretch",
+      "text": "Ồồ",
+      "origin": null,
+      "readings": {},
+      "book_names": false,
+      "rulings": {
+        "names": [],
+        "foreign": []
+      },
+      "units": [
+        {
+          "pieces": [
+            "ồ… ồ"
+          ],
+          "phonemes": "ˈo2, ˈo2."
+        }
+      ],
+      "phonemes": "ˈo2, ˈo2."
+    },
+    {
+      "id": "stretch:096",
+      "class": "marked_stretch",
+      "text": "Hãy cứu tôi với!",
+      "origin": null,
+      "readings": {},
+      "book_names": false,
+      "rulings": {
+        "names": [],
+        "foreign": []
+      },
+      "units": [
+        {
+          "pieces": [
+            "Hãy cứu tôi với!"
+          ],
+          "phonemes": "hˈa5j kˈiɜw t̪ˈoj vˌəːɜj!"
+        }
+      ],
+      "phonemes": "hˈa5j kˈiɜw t̪ˈoj vˌəːɜj!"
+    },
+    {
+      "id": "stretch:097",
+      "class": "marked_stretch",
+      "text": "hưu",
+      "origin": null,
+      "readings": {},
+      "book_names": false,
+      "rulings": {
+        "names": [],
+        "foreign": []
+      },
+      "units": [
+        {
+          "pieces": [
+            "hưu"
+          ],
+          "phonemes": "hˈiw."
+        }
+      ],
+      "phonemes": "hˈiw."
+    },
+    {
+      "id": "stretch:098",
+      "class": "marked_stretch",
+      "text": "lưu",
+      "origin": null,
+      "readings": {},
+      "book_names": false,
+      "rulings": {
+        "names": [],
+        "foreign": []
+      },
+      "units": [
+        {
+          "pieces": [
+            "lưu"
+          ],
+          "phonemes": "lˈiw."
+        }
+      ],
+      "phonemes": "lˈiw."
+    },
+    {
+      "id": "stretch:099",
+      "class": "marked_stretch",
+      "text": "mưu",
+      "origin": null,
+      "readings": {},
+      "book_names": false,
+      "rulings": {
+        "names": [],
+        "foreign": []
+      },
+      "units": [
+        {
+          "pieces": [
+            "mưu"
+          ],
+          "phonemes": "mˈiw."
+        }
+      ],
+      "phonemes": "mˈiw."
+    },
+    {
+      "id": "stretch:100",
+      "class": "marked_stretch",
+      "text": "bưu",
+      "origin": null,
+      "readings": {},
+      "book_names": false,
+      "rulings": {
+        "names": [],
+        "foreign": []
+      },
+      "units": [
+        {
+          "pieces": [
+            "bưu"
+          ],
+          "phonemes": "bˈiw."
+        }
+      ],
+      "phonemes": "bˈiw."
+    },
+    {
+      "id": "stretch:101",
+      "class": "marked_stretch",
+      "text": "cừu",
+      "origin": null,
+      "readings": {},
+      "book_names": false,
+      "rulings": {
+        "names": [],
+        "foreign": []
+      },
+      "units": [
+        {
+          "pieces": [
+            "cừu"
+          ],
+          "phonemes": "kˈi2w."
+        }
+      ],
+      "phonemes": "kˈi2w."
+    },
+    {
+      "id": "stretch:102",
+      "class": "marked_stretch",
+      "text": "tửu",
+      "origin": null,
+      "readings": {},
+      "book_names": false,
+      "rulings": {
+        "names": [],
+        "foreign": []
+      },
+      "units": [
+        {
+          "pieces": [
+            "tửu"
+          ],
+          "phonemes": "t̪ˈi4w."
+        }
+      ],
+      "phonemes": "t̪ˈi4w."
+    },
+    {
+      "id": "stretch:103",
+      "class": "marked_stretch",
+      "text": "ưu",
+      "origin": null,
+      "readings": {},
+      "book_names": false,
+      "rulings": {
+        "names": [],
+        "foreign": []
+      },
+      "units": [
+        {
+          "pieces": [
+            "ưu"
+          ],
+          "phonemes": "ˈiw."
+        }
+      ],
+      "phonemes": "ˈiw."
+    },
+    {
+      "id": "stretch:104",
+      "class": "marked_stretch",
+      "text": "hữu",
+      "origin": null,
+      "readings": {},
+      "book_names": false,
+      "rulings": {
+        "names": [],
+        "foreign": []
+      },
+      "units": [
+        {
+          "pieces": [
+            "hữu"
+          ],
+          "phonemes": "hˈi5w."
+        }
+      ],
+      "phonemes": "hˈi5w."
+    },
+    {
+      "id": "stretch:105",
+      "class": "marked_stretch",
+      "text": "cựu",
+      "origin": null,
+      "readings": {},
+      "book_names": false,
+      "rulings": {
+        "names": [],
+        "foreign": []
+      },
+      "units": [
+        {
+          "pieces": [
+            "cựu"
+          ],
+          "phonemes": "kˈi6w."
+        }
+      ],
+      "phonemes": "kˈi6w."
+    },
+    {
+      "id": "stretch:106",
+      "class": "marked_stretch",
+      "text": "soóc",
+      "origin": null,
+      "readings": {},
+      "book_names": false,
+      "rulings": {
+        "names": [],
+        "foreign": []
+      },
+      "units": [
+        {
+          "pieces": [
+            "soóc"
+          ],
+          "phonemes": "swˈɔɜk."
+        }
+      ],
+      "phonemes": "swˈɔɜk."
+    },
+    {
+      "id": "stretch:107",
+      "class": "marked_stretch",
+      "text": "moóc",
+      "origin": null,
+      "readings": {},
+      "book_names": false,
+      "rulings": {
+        "names": [],
+        "foreign": []
+      },
+      "units": [
+        {
+          "pieces": [
+            "moóc"
+          ],
+          "phonemes": "mwˈɔɜk."
+        }
+      ],
+      "phonemes": "mwˈɔɜk."
+    },
+    {
+      "id": "stretch:108",
+      "class": "marked_stretch",
+      "text": "goòng",
+      "origin": null,
+      "readings": {},
+      "book_names": false,
+      "rulings": {
+        "names": [],
+        "foreign": []
+      },
+      "units": [
+        {
+          "pieces": [
+            "goòng"
+          ],
+          "phonemes": "ɣwˈɔ2ŋ."
+        }
+      ],
+      "phonemes": "ɣwˈɔ2ŋ."
+    },
+    {
+      "id": "stretch:109",
+      "class": "marked_stretch",
+      "text": "voọc",
+      "origin": null,
+      "readings": {},
+      "book_names": false,
+      "rulings": {
+        "names": [],
+        "foreign": []
+      },
+      "units": [
+        {
+          "pieces": [
+            "voọc"
+          ],
+          "phonemes": "vwˈɔ6k."
+        }
+      ],
+      "phonemes": "vwˈɔ6k."
+    },
+    {
+      "id": "stretch:110",
+      "class": "marked_stretch",
+      "text": "boong",
+      "origin": null,
+      "readings": {},
+      "book_names": false,
+      "rulings": {
+        "names": [],
+        "foreign": []
+      },
+      "units": [
+        {
+          "pieces": [
+            "boong"
+          ],
+          "phonemes": "bˈɔŋ."
+        }
+      ],
+      "phonemes": "bˈɔŋ."
+    },
+    {
+      "id": "stretch:111",
+      "class": "marked_stretch",
+      "text": "xoong",
+      "origin": null,
+      "readings": {},
+      "book_names": false,
+      "rulings": {
+        "names": [],
+        "foreign": []
+      },
+      "units": [
+        {
+          "pieces": [
+            "xoong"
+          ],
+          "phonemes": "sˈɔŋ."
+        }
+      ],
+      "phonemes": "sˈɔŋ."
+    },
+    {
+      "id": "stretch:112",
+      "class": "marked_stretch",
+      "text": "khuỷu",
+      "origin": null,
+      "readings": {},
+      "book_names": false,
+      "rulings": {
+        "names": [],
+        "foreign": []
+      },
+      "units": [
+        {
+          "pieces": [
+            "khuỷu"
+          ],
+          "phonemes": "xwˈi4w."
+        }
+      ],
+      "phonemes": "xwˈi4w."
+    },
+    {
+      "id": "stretch:113",
+      "class": "marked_stretch",
+      "text": "hươu",
+      "origin": null,
+      "readings": {},
+      "book_names": false,
+      "rulings": {
+        "names": [],
+        "foreign": []
+      },
+      "units": [
+        {
+          "pieces": [
+            "hươu"
+          ],
+          "phonemes": "hˈyəw."
+        }
+      ],
+      "phonemes": "hˈyəw."
+    },
+    {
+      "id": "stretch:114",
+      "class": "marked_stretch",
+      "text": "rượu",
+      "origin": null,
+      "readings": {},
+      "book_names": false,
+      "rulings": {
+        "names": [],
+        "foreign": []
+      },
+      "units": [
+        {
+          "pieces": [
+            "rượu"
+          ],
+          "phonemes": "ɹˈyə6w."
+        }
+      ],
+      "phonemes": "ɹˈyə6w."
+    }
+  ]
+}

@@ -43,3 +43,12 @@ Set ABOOK_REQUIRE_G2P_PARITY=1, ABOOK_SEA_G2P_LIB and ABOOK_SEA_G2P_DICT before
 running G2pGateParityTest. Missing required native inputs must fail the release gate.
 Historical parity measurements in TEST_REPORT predate this repair and do not
 validate the repaired frontend; see its repair section for current results.
+
+`stretches_parity.json` adds 115 synthetic cries and lexical regressions: all Vietnamese vowels
+and five written tones, short-vowel codas, bare short-vowel cries, decomposed
+Unicode, and ordinary syllables such as cứu/lưu/soóc/goòng that must stay intact.
+`generate_g2p_parity.py` generates/checks it alongside the 744-token
+fixture. `G2pGateParityTest.allMarkedStretchesMatchDesktopExactly` checks the same
+exact phonemes and unit boundaries through the phone JNI pipeline. Bare ă/â/y
+cries use sustainable a/ơ/i with their written tone, rather than letter names.
+This is frontend parity on CPU; no regenerated speech or acoustic gain is claimed.

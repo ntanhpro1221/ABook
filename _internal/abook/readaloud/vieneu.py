@@ -1112,6 +1112,8 @@ def reading_tag(text: str, origin: str | None, speaks_english: bool = True, *, d
     plain = spoken_tokens(toks)
     named = spoken_tokens(toks, origin) if origin in names.ORIGINS else plain
     tags = [origin] if named != plain else []
+    if any(shouts.stretch_reading(names.split_token(token)[1]) for token in toks):
+        tags.append("shouts2")
     if not speaks_english and spoken_tokens(toks, origin, False) != named:
         tags.append(f"en{names.ENGLISH_READING}")
     if direct_english:

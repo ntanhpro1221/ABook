@@ -988,6 +988,20 @@ class TTSCoordinator:
             "voice_profile_id": int(profile["id"]),
         }
 
+    def voice_region_for_row(self, row: Any) -> str:
+        """Region of the effective locked voice, including narrator thoughts."""
+        from .voice_catalog import engine_voice, preset_by_name
+
+        profile = self._voice_profile_for_row(row)
+        engine = str(_row_value(profile, "engine", "vieneu"))
+        preset = str(_row_value(profile, "preset_name", ""))
+        if engine != "vieneu":
+            return str((engine_voice(preset, engine) or {}).get("region", ""))
+        try:
+            return str(preset_by_name(preset)["region"])
+        except ValueError:
+            return ""
+
     def forget_pronunciations(self) -> None:
         """Đọc lại bảng cách đọc ở lần dựng chuỗi nói kế tiếp.
 

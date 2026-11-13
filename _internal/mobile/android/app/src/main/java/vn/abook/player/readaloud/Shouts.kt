@@ -4,6 +4,7 @@ import java.text.Normalizer
 import java.util.Locale
 import java.util.concurrent.ConcurrentHashMap
 import vn.abook.player.VietnameseReading
+import vn.abook.player.VietnameseSyllable
 import vn.abook.player.BuildConfig
 import org.json.JSONObject
 
@@ -144,16 +145,32 @@ object Shouts {
     }
 
     private fun runs(chars: List<Char>): List<Pair<Int, Int>> {
-        val bases = chars.map { plain(it) }
+        if (VietnameseSyllable.validSyllable(chars.joinToString(""))) return emptyList()
+        val bases = chars.map { vowelFamily(it) }
+        val marked = chars.any { it.code >= 128 && plain(it).singleOrNull() in VOWELS }
+        val longRun = RUN.findAll(bases.joinToString("")).any { it.value.length >= MIN_RUN }
         val out = ArrayList<Pair<Int, Int>>()
         var start = 0
         for (index in 1..bases.size) {
             if (index == bases.size || bases[index] != bases[start]) {
-                if (index - start >= MIN_RUN) out.add(start to index)
+                val same = chars.subList(start, index).map(::plain).toSet().size == 1
+                val minimum = if (bases[start] in listOf("a", "e", "i", "o", "u", "y", "ư") &&
+                    (marked || longRun) && (same || index - start >= MIN_RUN)) 2 else MIN_RUN
+                if (index - start >= minimum) out.add(start to index)
                 start = index
             }
         }
         return out
+    }
+
+    /** A stretched vowel keeps its quality and tone, including a marked trailing letter. */
+    private fun vowelFamily(char: Char): String = if (plain(char) == "ư") "ư" else
+        Normalizer.normalize(char.toString(), Normalizer.Form.NFD)
+            .firstOrNull { Character.getType(it) != Character.NON_SPACING_MARK.toInt() }?.toString() ?: char.toString()
+
+    private fun runChar(chars: List<Char>): String {
+        val letter = chars.firstOrNull { plain(it) != vowelFamily(it) }?.let { plain(it) } ?: plain(chars.first())
+        return Normalizer.normalize(Normalizer.normalize(letter, Normalizer.Form.NFD) + tone(chars.joinToString("")), Normalizer.Form.NFC)
     }
 
     private fun upper(text: String) = text.any { it.isUpperCase() } && text.none { it.isLowerCase() }
@@ -164,11 +181,17 @@ object Shouts {
      */
     private fun collapsed(chars: List<Char>, runs: List<Pair<Int, Int>>): String? {
         if (runs.size < 2) return null
-        val keep = BooleanArray(chars.size) { true }
-        for ((start, end) in runs) for (index in start + 1 until end) keep[index] = false
-        val base = chars.indices.filter { keep[it] }.joinToString("") { chars[it].toString() }
+        val pieces = ArrayList<String>()
+        var cursor = 0
+        for ((start, end) in runs) {
+            pieces.add(chars.subList(cursor, start).joinToString(""))
+            pieces.add(runChar(chars.subList(start, end)))
+            cursor = end
+        }
+        pieces.add(chars.subList(cursor, chars.size).joinToString(""))
+        val base = pieces.joinToString("")
         if (!VietnameseReading.isSyllable(base)) return null
-        val letter = plain(chars[runs.last().first])
+        val letter = plain(runChar(chars.subList(runs.last().first, runs.last().second)).single())
         val append = if (runs.last().second == chars.size && letter.singleOrNull() in STANDALONE)
             Normalizer.normalize(Normalizer.normalize(letter, Normalizer.Form.NFD) + tone(base), Normalizer.Form.NFC) else ""
         return "$base…" + if (append.isNotEmpty()) " ${Names.loneSyllable(append)}" else ""
@@ -211,8 +234,16 @@ object Shouts {
         if (pair) runs = listOf(chars.size - 2 to chars.size)
         if (runs.size != 1) return collapsed(chars, runs)
         val (start, end) = runs[0]
-        val letter = plain(chars[start])
-        val one = (chars.subList(0, start) + chars[start] + chars.subList(end, chars.size)).joinToString("")
+        var stretched = runChar(chars.subList(start, end))
+        var letter = plain(stretched.single())
+        if (start == 0 && end == chars.size && letter in listOf("ă", "â", "y")) {
+            letter = mapOf("ă" to "a", "â" to "ơ", "y" to "i").getValue(letter)
+            stretched = Normalizer.normalize(Normalizer.normalize(letter, Normalizer.Form.NFD) + tone(stretched), Normalizer.Form.NFC)
+        }
+        val one = chars.subList(0, start).joinToString("") + stretched + chars.subList(end, chars.size).joinToString("")
+        if (one.length > 1 && one.all { plain(it).singleOrNull() in STANDALONE } && !VietnameseSyllable.validSyllable(one)) {
+            return one.map { Names.loneSyllable(it.toString()) }.joinToString("… ")
+        }
         var base = DEDUPED[dedupe(one)]
         var append = if (base == "a" || base == "ô" || base == "ê") base else ""
         if (base == null) {

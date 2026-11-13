@@ -186,6 +186,14 @@ Không đổi sang phân tích cuốn chiếu nếu người dùng chưa thay đ
   Mọi cách đọc khóa (kể cả nguồn analysis/listener) và phép TN đổi chữ mang thêm alias theo occurrence:
   spelling nguồn, cách đọc khóa và chuỗi thực gửi giọng. Alias mới không hạ một pass theo luật cũ;
   chỉ cứu mismatch khi các token thường còn nguyên, không dùng việc khớp tên để tha lỗi từ khác.
+  "Còn nguyên" cho alias cho phép lệch thanh và đúng cặp phương ngữ theo giọng khóa, vẫn giữ nguyên
+  chất nguyên âm/phụ âm cuối, thứ tự và số token. So tên thêm cách viết Latin của Whisper theo
+  `voice_profile -> voice_catalog.region`: Bắc r/d/gi/z, Nam r/z tách d/gi/j/y; vùng chưa biết không
+  nhận thêm phép gấp vùng. Phép gấp chỉ thêm đường khớp tên, không thay `_segmental_phonemes` của câu.
+  Chỉ y là nguyên âm đơn mới gấp i; neo giữ đ riêng khỏi d/r/gi qua `_normalize_anchor_transcript`;
+  riêng đường `diacritic_folded_exact` gấp đ->d như cũ (`_plain_folded_token`), đường vùng/thành phần thì không.
+  `repair_syllabic_gi` chỉ thêm đường so tên, không đổi cách đo câu. Giữ `spelling_alias_evidence` trong
+  bằng chứng decode kể cả khi hàm bọc giữ PASS cũ; dữ liệu này không đổi phán quyết.
   Alias chỉ truy vết, không tự bảo vệ chữ khỏi TN và làm thay đổi chuỗi nói cũ. Luật anchor tiếng Anh
   bắt buộc và quyền review khi không khớp vẫn giữ nguyên.
   WAV clarity chỉ được commit `verified` khi beam và greedy đều `pass`. Repair round phải nằm trong signal checkpoint
@@ -196,6 +204,10 @@ Không đổi sang phân tích cuốn chiếu nếu người dùng chưa thay đ
   trên đúng checksum incumbent và giữ nguyên audio incumbent.
 - Vocalization cực ngắn/kéo dài phải được chuẩn hóa thành âm tiết tiếng Việt ổn định. Output chạm đúng trần frame
   của VieNeu phải đi tiếp qua signal/Whisper validation, không được tự động coi là audio sai chỉ từ sample count.
+  Không gộp chữ đã qua `vietnamese_syllable.valid_syllable` (cứu/lưu/soóc/goòng). Chuỗi kéo dài a/ă/â,
+  e/ê, o/ô/ơ giữ chữ có mũ/móc và thanh; ư không gộp với u. Cặp hai nguyên âm phải giống nhau sau bỏ
+  thanh mới được gộp trước G2P. Tiếng kêu chỉ có ă/â/y dùng a/ơ/i để đọc được,
+  giữ thanh. Python/Kotlin cùng ca parity JNI; namespace clip `shouts2`. Chữ truyện hiển thị không đổi.
   Nếu endpoint vẫn còn hoạt động ở đúng trần thì phải repair kể cả Whisper nhận đúng; không fade/cắt waveform để lách.
 - Câu một hoặc hai từ có tối đa tám ký tự đọc được phải dùng ngân sách cực ngắn 24 frame. Nếu câu đó đã chạm
   trần frame rồi bị Whisper xác nhận lệch hoặc endpoint còn hoạt động, repair tiếp theo phải giảm xuống 12 frame để

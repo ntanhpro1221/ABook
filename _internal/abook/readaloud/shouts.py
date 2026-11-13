@@ -177,15 +177,40 @@ def _letters(core: str) -> list[str] | None:
 
 
 def _runs(chars: list[str]) -> list[tuple[int, int]]:
-    bases = [_plain(char) for char in chars]
+    from ..vietnamese_syllable import valid_syllable
+
+    # Real syllables (cứu, lưu, soóc, goòng) are never stretched cries.
+    if valid_syllable("".join(chars)):
+        return []
+    bases = [_vowel_family(char) for char in chars]
+    marked = any(not char.isascii() and _plain(char) in VOWELS for char in chars)
+    long_run = any(len(match.group()) >= MIN_RUN for match in re.finditer(r"(.)\1+", "".join(bases)))
     runs: list[tuple[int, int]] = []
     start = 0
     for index in range(1, len(bases) + 1):
         if index == len(bases) or bases[index] != bases[start]:
-            if index - start >= MIN_RUN:
+            # Pairs must have the same vowel quality after removing tone.
+            # Longer cries may mix e/ê etc.; ư always stays separate from u.
+            same = len({_plain(c) for c in chars[start:index]}) == 1
+            minimum = 2 if (bases[start] in "aeiouyư" and (marked or long_run)
+                            and (same or index - start >= MIN_RUN)) else MIN_RUN
+            if index - start >= minimum:
                 runs.append((start, index))
             start = index
     return runs
+
+
+def _vowel_family(char: str) -> str:
+    """Long runs share a/ă/â, e/ê, o/ô/ơ; keep ư separate from u."""
+    if _plain(char) == "ư":
+        return "ư"
+    return next((c for c in unicodedata.normalize("NFD", char) if not unicodedata.combining(c)), char)
+
+
+def _run_char(chars: list[str]) -> str:
+    """Retain the written vowel quality and tone, even after an unmarked lead."""
+    letter = next((_plain(c) for c in chars if _plain(c) != _vowel_family(c)), _plain(chars[0]))
+    return unicodedata.normalize("NFC", unicodedata.normalize("NFD", letter) + _tone("".join(chars)))
 
 
 def _basic_reading(core: str) -> str | None:
@@ -212,8 +237,21 @@ def _basic_reading(core: str) -> str | None:
     if len(runs) != 1:
         return _collapsed(chars, runs)
     start, end = runs[0]
-    letter = _plain(chars[start])
-    one = "".join(chars[:start] + [chars[start]] + chars[end:])  # chuỗi kéo gộp thành một chữ
+    stretched = _run_char(chars[start:end])
+    letter = _plain(stretched)
+    if start == 0 and end == len(chars) and letter in "ăây":
+        # A short vowel cannot stand alone in Vietnamese. For a bare cry use
+        # its sustainable vowel (ă/a, â/ơ, y/i), retaining the written tone;
+        # sending a bare â to G2P would spell "a circumflex" again.
+        letter = {"ă": "a", "â": "ơ", "y": "i"}[letter]
+        stretched = unicodedata.normalize("NFC", unicodedata.normalize("NFD", letter) + _tone(stretched))
+    one = "".join(chars[:start] + [stretched] + chars[end:])
+    from ..vietnamese_syllable import valid_syllable
+
+    if len(one) > 1 and all(_plain(c) in STANDALONE for c in one) and not valid_syllable(one):
+        # A vowel-only cry may not form a Vietnamese rhyme (Êii -> ê… i).
+        # Say its sustainable vowels separately instead of spelling an invalid êi.
+        return "… ".join(names.lone_syllable(c) for c in one)
     base = _DEDUPED.get(dedupe(one))
     append = base if base in ("a", "ô", "ê") else ""
     if base is None:
@@ -272,14 +310,17 @@ def _collapsed(chars: list[str], runs: list[tuple[int, int]]) -> str | None:
 
     if len(runs) < 2:
         return None
-    keep = [True] * len(chars)
+    pieces: list[str] = []
+    cursor = 0
     for start, end in runs:
-        for index in range(start + 1, end):
-            keep[index] = False
-    base = "".join(char for char, kept in zip(chars, keep) if kept)
+        pieces.extend(chars[cursor:start])
+        pieces.append(_run_char(chars[start:end]))
+        cursor = end
+    pieces.extend(chars[cursor:])
+    base = "".join(pieces)
     if not is_vietnamese_syllable(base):
         return None
-    letter = _plain(chars[runs[-1][0]])
+    letter = _plain(_run_char(chars[runs[-1][0]:runs[-1][1]]))
     append = unicodedata.normalize("NFC", unicodedata.normalize("NFD", letter) + _tone(base)) if runs[-1][1] == len(chars) and letter in STANDALONE else ""
     return f"{base}…" + (f" {names.lone_syllable(append)}" if append else "")
 

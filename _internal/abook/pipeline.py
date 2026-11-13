@@ -1566,6 +1566,7 @@ class BookPipeline:
             SPLIT_MAX_CHARS_FIELD: signal.get(SPLIT_MAX_CHARS_FIELD),
             "split_parts": signal.get("split_parts", []),
             LOCKED_NAME_ANCHOR_METRICS_KEY: anchor_metrics,
+            "spelling_alias_evidence": result.get("spelling_alias_evidence"),
             "failure_codes": anchor_failure_codes,
         }
         for field in HA_VOCALIZATION_PROVENANCE_FIELDS:
@@ -5886,6 +5887,7 @@ class BookPipeline:
         evidence_sink: list[dict[str, Any]] | None = None,
     ) -> dict[str, Any]:
         expected_text, locked_name_anchors = self._spoken_text_and_anchors(item)
+        voice_region = self.tts.voice_region_for_row(item) if hasattr(self.tts, "voice_region_for_row") else ""
         wav_path = Path(str(item["wav_path"]))
         direct = verifier.verify(
             expected_text,
@@ -5898,6 +5900,7 @@ class BookPipeline:
             locked_name_anchors,
             min_similarity=float(self.settings["asr"]["min_similarity"]),
             max_wer=float(self.settings["asr"]["max_wer"]),
+            voice_region=voice_region,
         )
         repeated: dict[str, Any] | None = None
         collapsed_repeated: dict[str, Any] | None = None
@@ -5918,6 +5921,7 @@ class BookPipeline:
                 repeat_count=SHORT_CONTEXT_REPEAT_COUNT,
                 min_similarity=float(self.settings["asr"]["min_similarity"]),
                 max_wer=float(self.settings["asr"]["max_wer"]),
+                voice_region=voice_region,
             )
             if _asr_verdict(repeated) == ASR_PASS:
                 selected = repeated
@@ -5930,6 +5934,7 @@ class BookPipeline:
                     requested_repeat_count=SHORT_CONTEXT_REPEAT_COUNT,
                     min_similarity=float(self.settings["asr"]["min_similarity"]),
                     max_wer=float(self.settings["asr"]["max_wer"]),
+                    voice_region=voice_region,
                 )
                 if (
                     collapsed_repeated is not None
