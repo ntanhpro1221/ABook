@@ -410,7 +410,9 @@ def _numbers(out: list[str], toks: list[str] | None = None) -> None:
         if not _number_unit(plain, index):
             token = re.sub(r"(?<![\w.,])[1-9]\d{0,2}(?:\.\d{3})+(?!\w|[.,]\d)",
                            lambda m: integer_reading(m.group().replace(".", "")), token)
-        token = re.sub(r"(?<![\w.,])(?:\d+\.\d{1,2}|0\.\d+)(?!\d|[.,]\d)",
+        # Two dotted groups that cannot be a date (day.month needs two short
+        # groups) nor a thousands group are a decimal: "10.0001", "1234.567".
+        token = re.sub(r"(?<![\w.,])(?:\d+\.\d{1,2}|0\.\d+|\d+\.\d{4,}|\d{4,}\.\d{3})(?!\d|[.,]\d)",
                        lambda m: m.group().replace(".", ","), token)
         # Do not delegate bare integers to sea-g2p's sentence-language guess.
         # Only a number standing alone is a count; dates, codes, money,
@@ -784,6 +786,11 @@ def _spoken_tokens(toks: list[str], origin: str | None = None, speaks_english: b
     từ / tên Anh được Việt hoá thành âm tiết ("Rose" -> "Râu-dơ"). Với MỌI cuốn và giọng: thán từ kéo dài ("Aaaa" -> "a… a", `shouts`), viết tắt toàn hoa đọc tên chữ cái
     ("HP" -> "hát pê", `abbreviations`), hậu tố gọi nối gạch ("Ariel-sama" -> "Ariel-xa-ma", `names.honorific_reading`). Cách đọc riêng
     người nghe đặt cho cuốn (`readings`, readings.py) thắng mọi bước trên. Sau cùng `reading_marks` sửa "~", nghìn kiểu Anh, <ngoặc nhọn>, " / "."""
+    undotted = _dotted_initials(toks)
+    if undotted != toks:
+        said = _spoken_tokens(undotted, origin, speaks_english, readings, direct_english=direct_english)
+        book_readings.apply_tokens(toks, said, readings)
+        return said
     prepared, owners = shouts.presentation_tokens(toks)
     if prepared != toks:
         said = _spoken_tokens(prepared, origin, speaks_english, readings, direct_english=direct_english)
@@ -901,8 +908,26 @@ def _typographic_honorific(token: str, origin: str | None) -> str:
     return before + plain + after if names.honorific_reading(plain, origin) else token
 
 
+_DOTTED_INITIALS = re.compile(r"([" + re.escape(OPENERS + FRAMES_OPEN) + r"]*)((?:[A-ZĐ]\.)+[A-ZĐ])(\.?)([" + re.escape(CLOSERS + FRAMES_CLOSE + PUNCT_MARKS) + r"]*)")
+
+
+def _dotted_initials(toks: list[str]) -> list[str]:
+    """"S.T.A.R.S", "U.S.A.", "A.I." are read as the same initials without dots. A final dot stays only where it can end
+    the sentence: before nothing, before a capital, and not when other punctuation follows ("K.O., liền" -> "KO, liền")."""
+    out = list(toks)
+    for index, token in enumerate(toks):
+        match = _DOTTED_INITIALS.fullmatch(token)
+        if not match:
+            continue
+        before, letters, dot, after = match.groups()
+        following = toks[index + 1].lstrip(OPENERS + FRAMES_OPEN) if index + 1 < len(toks) else ""
+        ends = dot and not any(c in PUNCT_MARKS for c in after) and (not following or following[:1].isupper())
+        out[index] = before + letters.replace(".", "") + ("." if ends else "") + after
+    return out
+
+
 def _enumeration_abbreviations(toks: list[str], out: list[str]) -> None:
-    """The Vietnamese enumeration abbreviation; never guess dotted initials or identifiers."""
+    """The Vietnamese enumeration abbreviation; dotted initials ("V.V.") and identifiers are never the enumeration."""
     for index, token in enumerate(toks):
         if out[index] != token:
             continue
@@ -960,10 +985,16 @@ def _groups(toks: list[str], first: int, last: int, marks: str, said: list[str] 
     """Các khoảng chữ hiện kết thúc ở chữ có dấu `marks`. `said` (chữ đem đọc): chữ hiện hết câu mà chữ đọc đã thành dấu phẩy ("Tôi..." trước "tôi không biết", `_ellipses`) không cắt câu."""
     out, start = [], first
     for index in range(first, last + 1):
-        if (_ends(toks[index], marks) and not (said is not None and said[index].rstrip(CLOSERS).endswith(","))) or index == last:
+        if (_ends(toks[index], marks) and not (said is not None and _no_end(toks[index], said[index]))) or index == last:
             out.append((start, index))
             start = index + 1
     return out
+
+
+def _no_end(token: str, said: str) -> bool:
+    """A shown sentence end that is not one when spoken: "Tôi..." read with a comma, or the dot of initials inside a sentence ("A.I. mới")."""
+    spoken = said.rstrip(CLOSERS)
+    return spoken.endswith(",") or bool(_DOTTED_INITIALS.fullmatch(token)) and not spoken.endswith(tuple(SENTENCE_END))
 
 
 def _length(toks: list[str], first: int, last: int) -> int:

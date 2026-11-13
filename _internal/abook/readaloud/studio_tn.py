@@ -19,7 +19,7 @@ _LEXICAL_PUNCTUATION = tuple(re.compile(pattern) for pattern in (
     r'[\w.+-]+@[\w-]+(?:\.[\w-]+)+',
     r'(?<!\w)(?:[A-Za-z]\.){2,}(?:[A-Za-z](?!\w))?',
     r'(?<![\w.])[vV]\.v\.?(?![\w.])',
-    r'(?<!\w)[A-Z]+(?:\.[A-Z]+)+\.?(?![\w.])',
+    r'(?<!\w)[A-ZĐ]+(?:\.[A-ZĐ]+)+\.?(?![\w.])',
     r'(?<![\w.])(?:[A-Za-z0-9_-]+\.)+[A-Za-z0-9_-]*\d[A-Za-z0-9_-]*(?![\w.])',
     r'(?<![\w.])(?:[A-Za-z0-9-]+\.)+[a-z]{2,63}(?!\w)',
     r'(?<![\w.])(?:[A-Za-z0-9-]+\.)+(?i:com|org|net|edu|gov|io|co|vn|jp|uk|ai|dev|app|info|me|tv)(?!\w)',

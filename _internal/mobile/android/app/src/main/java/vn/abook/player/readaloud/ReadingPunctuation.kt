@@ -8,7 +8,7 @@ object ReadingPunctuation {
         Regex("""[\p{L}\p{N}_.+-]+@[\p{L}\p{N}_-]+(?:\.[\p{L}\p{N}_-]+)+"""),
         Regex("""(?<![\p{L}\p{N}_])(?:[A-Za-z]\.){2,}(?:[A-Za-z](?![\p{L}\p{N}_]))?"""),
         Regex("""(?<![\p{L}\p{N}_.])[vV]\.v\.?(?![\p{L}\p{N}_.])"""),
-        Regex("""(?<![\p{L}\p{N}_])[A-Z]+(?:\.[A-Z]+)+\.?(?![\p{L}\p{N}_.])"""),
+        Regex("""(?<![\p{L}\p{N}_])[A-ZĐ]+(?:\.[A-ZĐ]+)+\.?(?![\p{L}\p{N}_.])"""),
         Regex("""(?<![\p{L}\p{N}_.])(?:[A-Za-z0-9_-]+\.)+[A-Za-z0-9_-]*\p{Nd}[A-Za-z0-9_-]*(?![\p{L}\p{N}_.])"""),
         Regex("""(?<![\p{L}\p{N}_.])(?:[A-Za-z0-9-]+\.)+[a-z]{2,63}(?![\p{L}\p{N}_])"""),
         Regex("""(?<![\p{L}\p{N}_.])(?:[A-Za-z0-9-]+\.)+(?i:com|org|net|edu|gov|io|co|vn|jp|uk|ai|dev|app|info|me|tv)(?![\p{L}\p{N}_])"""),

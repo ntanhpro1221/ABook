@@ -392,7 +392,8 @@ object VieneuUnits {
                     integerReading(it.value.replace(".", ""))
                 }
             }
-            token = Regex("""(?<![$W.,])(?:[0-9]+\.[0-9]{1,2}|0\.[0-9]+)(?![0-9]|[.,][0-9])""").replace(token) { it.value.replace('.', ',') }
+            // Two dotted groups that cannot be a date (day.month needs two short groups) nor a thousands group are a decimal: "10.0001", "1234.567".
+            token = Regex("""(?<![$W.,])(?:[0-9]+\.[0-9]{1,2}|0\.[0-9]+|[0-9]+\.[0-9]{4,}|[0-9]{4,}\.[0-9]{3})(?![0-9]|[.,][0-9])""").replace(token) { it.value.replace('.', ',') }
             // Only a number standing alone is a count; dates, codes, money, brackets and comparisons keep their digits.
             if (bareNumber(plain, index)) {
                 token = Regex("""(?<![$W.,/:])[0-9]+(?![$W]|[.,/:][0-9])""").replace(token) { countReading(it.value) }
@@ -740,6 +741,18 @@ object VieneuUnits {
         return if (Names.honorificReading(plain, origin) != null) before + plain + after else token
     }
 
+    private val DOTTED_INITIALS = Regex("([" + Regex.escape(OPENERS + FRAMES_OPEN) + "]*)((?:[A-ZĐ]\\.)+[A-ZĐ])(\\.?)([" + Regex.escape(CLOSERS + FRAMES_CLOSE + PUNCT_MARKS) + "]*)")
+
+    /** "S.T.A.R.S", "U.S.A.", "A.I." are read as the same initials without dots. A final dot stays only where it can end the sentence: before nothing,
+     *  before a capital, and not when other punctuation follows ("K.O., liền" -> "KO, liền") - `_dotted_initials`. */
+    private fun dottedInitials(toks: List<String>): List<String> = toks.mapIndexed { index, token ->
+        val match = DOTTED_INITIALS.matchEntire(token) ?: return@mapIndexed token
+        val (before, letters, dot, after) = match.destructured
+        val following = toks.getOrNull(index + 1)?.trimStart { it in OPENERS + FRAMES_OPEN }.orEmpty()
+        val ends = dot.isNotEmpty() && after.none { it in PUNCT_MARKS } && (following.isEmpty() || following[0].isUpperCase())
+        before + letters.replace(".", "") + (if (ends) "." else "") + after
+    }
+
     private fun enumerationAbbreviations(toks: List<String>, out: MutableList<String>) {
         for ((index, token) in toks.withIndex()) {
             if (out[index] != token) continue
@@ -867,6 +880,12 @@ object VieneuUnits {
     }
 
     private fun readSeparatedTokens(toks: List<String>, origin: String?, readings: Map<String, String>?, directEnglish: Boolean): List<String> {
+        val undotted = dottedInitials(toks)
+        if (undotted != toks) {
+            val said = readSeparatedTokens(undotted, origin, readings, directEnglish).toMutableList()
+            Readings.applyTokens(toks, said, readings)
+            return said
+        }
         val (prepared, owners) = Shouts.presentationTokens(toks)
         if (prepared != toks) {
             val said = readSeparatedTokens(prepared, origin, readings, directEnglish)
@@ -953,12 +972,18 @@ object VieneuUnits {
         val out = ArrayList<IntArray>()
         var start = first
         for (index in first..last) {
-            if ((ends(toks[index], marks) && !(said != null && said[index].trimEnd { it in CLOSERS }.endsWith(","))) || index == last) {
+            if ((ends(toks[index], marks) && !(said != null && noEnd(toks[index], said[index]))) || index == last) {
                 out.add(intArrayOf(start, index))
                 start = index + 1
             }
         }
         return out
+    }
+
+    /** A shown sentence end that is not one when spoken: "Tôi..." read with a comma, or the dot of initials inside a sentence ("A.I. mới") - `_no_end`. */
+    private fun noEnd(token: String, said: String): Boolean {
+        val spoken = said.trimEnd { it in CLOSERS }
+        return spoken.endsWith(",") || DOTTED_INITIALS.matches(token) && spoken.lastOrNull()?.let { it in SENTENCE_END } != true
     }
 
     internal fun length(toks: List<String>, first: Int, last: Int): Int =
