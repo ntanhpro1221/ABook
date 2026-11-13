@@ -39,8 +39,7 @@ def test_the_web_list_names_only_real_routes():
 
 @pytest.mark.parametrize("other", [QT, PHONE], ids=["qt", "phone"])
 def test_every_platform_waits_long_on_the_same_routes(other: Path):
-    if not other.exists():
-        pytest.skip(f"{other.name} chưa có ở nhánh này")
+    assert other.exists(), f"{other.name} must exist"
     assert long_work(other) == long_work(WEB)
 
 

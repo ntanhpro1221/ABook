@@ -28,8 +28,7 @@ def _guard(guard: Path, tmp_path: Path, target: Path) -> int:
 @pytest.mark.parametrize("guard", GUARDS, ids=["tauri", "qt"])
 @pytest.mark.parametrize("depth", ["top", "deep"])
 def test_a_junction_inside_the_target_preserves_it(tmp_path: Path, guard: Path, depth: str):
-    if not guard.exists():
-        pytest.skip(f"{guard.relative_to(ROOT)} chưa có ở nhánh này")
+    assert guard.exists(), f"{guard.relative_to(ROOT)} must exist"
     import _winapi
     outside = tmp_path / "outside"
     outside.mkdir()

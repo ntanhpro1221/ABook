@@ -97,6 +97,7 @@ testpaths = ["tests", "scripts/tap_audit", "mobile/android/scripts/test_phone_fr
 addopts = "-q"
 xfail_strict = true
 empty_parameter_set_mark = "fail_at_collect"
+markers = ["browser: real Edge integration, run in the dedicated sheet-geometry gate row"]
 
 [tool.ruff]
 line-length = 110

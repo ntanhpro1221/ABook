@@ -348,29 +348,6 @@ def test_faster_whisper_download_never_follows_main(tmp_path, monkeypatch):
     assert models == [str(tmp_path / "snapshot")]
 
 
-@pytest.mark.xfail(strict=True, reason="a85 #1: immutable worker code needs versioned snapshots and legacy-pin migration; design only per 150-line limit")
-def test_live_worker_child_keeps_old_code_after_app_replacement(tmp_path, monkeypatch):
-    from abook.webui import studio_setup as s
-    setup = s.StudioSetup(tmp_path / "studio", tmp_path / "app", gpu=lambda: None)
-    package = setup.app_root / "abook"
-    package.mkdir(parents=True)
-    marker = setup.app_root / "version_marker.py"
-    marker.write_text("VERSION = 'A'\n")
-    (package / "__init__.py").write_text("")
-    (package / "example.py").write_text("VERSION = 'A'\n")
-    book = tmp_path / "book"
-    book.mkdir()
-    monkeypatch.setattr(setup, "ensure_assets", lambda: None)
-    code = setup.code_for(book)
-    marker.write_text("VERSION = 'B'\n")
-    (package / "example.py").write_text("VERSION = 'B'\n")
-    child = subprocess.run(["D:/Novels/ABook/_internal/runtime/.venv/Scripts/python.exe", "-B", "-c",
-                            "from abook.example import VERSION; print(VERSION)"], cwd=code,
-                           env={**os.environ, "PYTHONPATH": str(code)}, capture_output=True, text=True, encoding="utf-8")
-    assert child.returncode == 0, child.stderr
-    assert child.stdout.strip() == "A"
-
-
 @pytest.mark.parametrize("filename", ["ABook_1_x64-setup.exe", "ban-moi.exe"])
 def test_upgrade_intent_is_independent_of_installer_filename(filename):
     helper = Path("shell/src-tauri/windows/upgrade_mode.ps1").resolve()

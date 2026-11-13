@@ -119,7 +119,7 @@ def test_one_tap_downloads_every_missing_part_with_one_total_and_stamps_their_pi
     music_module.join(10)
     done = music_module.status()
     assert done["state"] == "ready" and done["error"] == "" and done["total"] == 0, done
-    assert _all_downloads(machine).count("ffmpeg") == 0 or True
+    assert _all_downloads(machine).count("bộ đọc nhạc (ffmpeg)") == 1
     assert len(machine.calls) == 1 + len(music_module.WHEELS) + len(music_student.PACKAGE_FILES["onnx"])
     stamp = music_module._read_stamp()
     assert stamp == {"ffmpeg": ffmpeg_setup.pin(), "libs": music_module.libs_pin(), "model": music_student.model_pin("onnx")}

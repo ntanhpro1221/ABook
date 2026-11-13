@@ -57,10 +57,12 @@ def main():
     root = Path(__file__).resolve().parents[3]
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--edge')
+    parser.add_argument('--task-dir', type=Path, default=root, help='isolated task root containing _internal/ui')
     parser.add_argument('--output', type=Path)
     parser.add_argument('--inject-fault', action='store_true')
     parser.add_argument('--no-build', action='store_true', help='use gallery already built from this tree')
     args = parser.parse_args()
+    root = args.task_dir.resolve()
     try:
         edge = find_edge(args.edge)
     except FileNotFoundError as exc:

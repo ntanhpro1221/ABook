@@ -150,7 +150,9 @@ def test_quiet_take_edges_pass():
     audio = .12*np.sin(2*np.pi*230*t)
     audio[:sr//20] = 0
     audio[-sr//20:] = 0
-    validate_audio_array(audio, 'Một câu thử.', settings, sr)
+    validated, metrics = validate_audio_array(audio, 'Một câu thử.', settings, sr)
+    assert np.array_equal(validated, audio)
+    assert metrics['onset_rms'] == 0 and metrics['offset_rms'] == 0
 
 
 def test_active_edge_uses_existing_pipeline_seed_retry(tmp_path, monkeypatch):

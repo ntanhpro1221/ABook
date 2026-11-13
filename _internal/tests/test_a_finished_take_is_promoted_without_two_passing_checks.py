@@ -42,8 +42,7 @@ def _eligible_candidate(db: ProjectDB, segment: sqlite3.Row) -> sqlite3.Row:
     policy_hash = str(db.current_quality_policy()["policy_hash"])
     candidate = db.find_finished_take_over_a_cut_off_incumbent(int(segment["id"]), policy_hash)
     assert candidate is not None, "fixture phải còn ứng viên đủ bốn điều kiện"
-    if not Path(str(candidate["wav_path"])).is_file():
-        pytest.skip("wav của ứng viên không còn trên đĩa (project lô 9 đã bị xoá?)")
+    assert Path(str(candidate["wav_path"])).is_file(), "synthetic candidate fixture must create its WAV"
     return candidate
 
 

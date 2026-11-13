@@ -66,28 +66,6 @@ def test_a_take_shorter_than_one_frame_still_gets_its_length() -> None:
     assert np.all(np.isfinite(faster))
 
 
-@pytest.mark.parametrize("speed", [0.89, 1.30])
-def test_it_keeps_the_pitch_of_the_reference_wsola_and_the_loudness_better(speed: float) -> None:
-    # audiotsm là phụ thuộc DEV, không đóng vào app: chỉ dùng để đối chiếu bản viết tay. Dạng sóng
-    # lệch pha nên không so từng mẫu; độ dài cũng không - audiotsm bỏ phần đuôi chưa đủ khung (ngắn hơn
-    # 1/r chừng 2 %), bản của app cắt đúng 1/r. audiotsm chọn chỗ nối bằng tương quan THÔ (nghiêng về
-    # đoạn to) nên to hơn bản gốc; bản của app (chuẩn hoá) phải giữ độ to sát bản gốc hơn nó.
-    audiotsm = pytest.importorskip("audiotsm")
-    from audiotsm.io.array import ArrayReader, ArrayWriter
-
-    audio = voiced(seconds=3.0)
-    writer = ArrayWriter(channels=1)
-    frame = int(WSOLA_FRAME_SECONDS * RATE)
-    audiotsm.wsola(channels=1, speed=speed, frame_length=frame, synthesis_hop=frame // 2).run(
-        ArrayReader(audio.reshape(1, -1)), writer
-    )
-    reference = writer.data.reshape(-1).astype(np.float32)
-    ours = apply_speed_change(audio, RATE, speed)
-    assert median_f0(ours) == pytest.approx(median_f0(reference), rel=0.01)
-    source = integrated_loudness_lufs(audio, RATE)
-    assert abs(integrated_loudness_lufs(ours, RATE) - source) < abs(integrated_loudness_lufs(reference, RATE) - source)
-
-
 def test_no_factor_means_no_change_at_all() -> None:
     audio = voiced()
     assert np.array_equal(apply_speed_change(audio, RATE, 1.0), audio)

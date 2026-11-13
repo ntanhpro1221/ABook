@@ -1,5 +1,6 @@
 """Real Edge integration wrapper, including the negative control; no models/GPU."""
 import json
+import os
 from pathlib import Path
 import subprocess
 import sys
@@ -8,21 +9,23 @@ import pytest
 
 from run_sheetgeo import find_edge
 
+pytestmark = pytest.mark.browser
+
 
 @pytest.fixture(scope='module')
 def edge():
     try:
         return find_edge()
     except FileNotFoundError as exc:
-        pytest.skip(str(exc))
+        pytest.fail(str(exc))
 
 
 @pytest.mark.parametrize('injected', [False, True], ids=['real-app', 'push-content-fault'])
 def test_real_player_geometry(edge, injected):
-    root = Path(__file__).resolve().parents[3]
+    root = Path(os.environ.get('ABOOK_SHEETGEO_ROOT', str(Path(__file__).resolve().parents[3])))
     output = root / ('sheetgeo-pytest-fault.json' if injected else 'sheetgeo-pytest.json')
     command = [sys.executable, '-X', 'utf8', str(Path(__file__).with_name('run_sheetgeo.py')),
-               '--edge', edge, '--output', str(output)]
+               '--edge', edge, '--output', str(output), '--task-dir', str(root)]
     if injected:
         command.extend(['--no-build', '--inject-fault'])
     completed = subprocess.run(command, cwd=root, capture_output=True, text=True, encoding='utf-8', errors="replace", timeout=900)
