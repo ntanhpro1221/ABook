@@ -22,12 +22,15 @@ class NotificationCloseTest {
 
     @After fun cleanup() {
         runCatching { service.destroy() }
+        assertTrue(Playback.flushSaves(TestTime.ms(5_000)))
         Playback.player = null
     }
 
     /** Thẻ media Android 13+ / ColorOS chỉ vẽ năm ô: lùi · phát · tới + HAI nút đầu phần mở rộng - Đóng phải là một trong hai nút ấy. */
     @Test fun closeIsTheFirstExtraButtonWithItsOwnIcon() {
-        val buttons = service.create().get().buttons()
+        val running = service.create().get()
+        running.initialization.get(TestTime.seconds(5), java.util.concurrent.TimeUnit.SECONDS)
+        val buttons = running.buttons()
         assertEquals(CommandButton.ICON_SKIP_BACK_15, buttons[0].icon)
         assertEquals(CommandButton.ICON_SKIP_FORWARD_15, buttons[1].icon)
         assertEquals(listOf(PlaybackService.CLOSE, PlaybackService.PREVIOUS_CHAPTER, PlaybackService.NEXT_CHAPTER),
@@ -40,6 +43,7 @@ class NotificationCloseTest {
     @Test fun closeStopsPlaybackEmptiesTheQueueAndStopsTheService() {
         BookEditsFixtures.useStoreRoot(BookEditsFixtures.tempDir("notification-close"))
         val running = service.create().get()
+        running.initialization.get(TestTime.seconds(5), java.util.concurrent.TimeUnit.SECONDS)
         val player = Playback.player!!
         player.setMediaItems(listOf(MediaItem.Builder().setMediaId("ch1").setUri("file:///nothing.mp3").build()))
         player.playWhenReady = true

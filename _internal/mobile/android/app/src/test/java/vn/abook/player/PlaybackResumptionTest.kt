@@ -24,6 +24,7 @@ class PlaybackResumptionTest {
 
     @Before fun setup() {
         service = controller.create().get()
+        service.initialization.get(TestTime.seconds(5), TimeUnit.SECONDS)
         assertTrue(Playback.flushSaves(TestTime.ms(5_000)))
         BookEditsFixtures.useStoreRoot(BookEditsFixtures.tempDir("playback-resumption"))
         BookEditsFixtures.copyBase(File(Store.root, "books/resume-book"))
@@ -35,6 +36,7 @@ class PlaybackResumptionTest {
 
     @After fun cleanup() {
         controller.destroy()
+        assertTrue(Playback.flushSaves(TestTime.ms(5_000)))
         Playback::class.java.getDeclaredField("pending").also { it.isAccessible = true }.set(Playback, null)
         Playback.player = null
     }

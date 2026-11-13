@@ -26,6 +26,9 @@ import vn.abook.player.ui.NativeActivity
  */
 class PlayerWidget : AppWidgetProvider() {
     companion object {
+        private val widgetIo = java.util.concurrent.Executors.newSingleThreadExecutor { task ->
+            Thread(task, "abook-widget").apply { isDaemon = true }
+        }
         const val ACTION_TOGGLE = "vn.abook.widget.TOGGLE"
         const val ACTION_BACK = "vn.abook.widget.BACK"
         const val ACTION_FORWARD = "vn.abook.widget.FORWARD"
@@ -57,14 +60,13 @@ class PlayerWidget : AppWidgetProvider() {
             val sleep: String,
             val sleepOn: Boolean,
             val sleepAvailable: Boolean = false,
+            val bookId: String? = null,
         )
 
         /** Trạng thái để vẽ: đang phát thì lấy từ lõi phát, không thì lấy cuốn nghe gần nhất trên máy. */
-        private fun current(context: Context): View {
+        private fun current(context: Context, state: JSONObject?): View {
             Store.init(context)
-            val exo = Playback.player
-            if (exo != null && Playback.bookId.isNotEmpty()) {
-                val state = Playback.state()
+            if (state != null) {
                 val sleep = state.getJSONObject("sleep")
                 val sleepText = when (sleep.optString("mode")) {
                     "minutes" -> "${Math.ceil(sleep.optDouble("remaining") / 60).toInt()}′"
@@ -73,9 +75,9 @@ class PlayerWidget : AppWidgetProvider() {
                 }
                 val duration = state.optDouble("duration")
                 return View(
-                    Playback.bookTitle, state.optString("chapterTitle"),
+                    state.optString("bookTitle"), state.optString("chapterTitle"),
                     if (duration > 0) state.optDouble("position") / duration else 0.0,
-                    state.optBoolean("playing"), sleepText, sleep.optString("mode") != "off", true,
+                    state.optBoolean("playing"), sleepText, sleep.optString("mode") != "off", true, state.optString("bookId"),
                 )
             }
             val recent = Playback.lastListened() ?: return View(S.s_abook_1c37d334, S.s_chua_nghe_sach_nao_595a4141, 0.0, false, "", false)
@@ -87,7 +89,7 @@ class PlayerWidget : AppWidgetProvider() {
                 ?: 0.0
             return View(
                 manifest.optString("title"), chapter?.optString("fullTitle") ?: "",
-                if (duration > 0) last.optDouble("seconds") / duration else 0.0, false, "", false,
+                if (duration > 0) last.optDouble("seconds") / duration else 0.0, false, "", false, bookId = manifest.optString("id"),
             )
         }
 
@@ -102,7 +104,7 @@ class PlayerWidget : AppWidgetProvider() {
 
         private fun build(context: Context, layout: Int, view: View): RemoteViews {
             val views = RemoteViews(context.packageName, layout)
-            val cover = Artwork.cover(view.book, Playback.bookId.ifEmpty { null })
+            val cover = Artwork.cover(view.book, view.bookId)
             views.setImageViewBitmap(R.id.widget_cover, BitmapFactory.decodeByteArray(cover, 0, cover.size))
             views.setTextViewText(R.id.widget_chapter, view.chapter.ifBlank { view.book })
             views.setImageViewResource(R.id.widget_toggle, if (view.playing) R.drawable.ic_widget_pause else R.drawable.ic_widget_play)
@@ -127,8 +129,17 @@ class PlayerWidget : AppWidgetProvider() {
             return views
         }
 
-        fun render(context: Context, manager: AppWidgetManager, ids: IntArray) {
-            val view = current(context)
+        fun render(context: Context, manager: AppWidgetManager, ids: IntArray, finished: () -> Unit = {}) = Playback.onMain {
+            val app = context.applicationContext
+            val state = if (Playback.player != null && Playback.bookId.isNotEmpty()) Playback.state() else null
+            widgetIo.execute {
+                try { renderSnapshot(app, manager, ids, current(app, state)) }
+                catch (error: Exception) { AppLog.w("PlayerWidget", S.s_chua_nghe_sach_nao_f2635716, error) }
+                finally { finished() }
+            }
+        }
+
+        private fun renderSnapshot(context: Context, manager: AppWidgetManager, ids: IntArray, view: View) {
             val views = if (Build.VERSION.SDK_INT >= 31) {
                 RemoteViews(
                     mapOf(
@@ -157,12 +168,33 @@ class PlayerWidget : AppWidgetProvider() {
         render(context, manager, intArrayOf(id))
 
     override fun onReceive(context: Context, intent: Intent) {
-        super.onReceive(context, intent)
         val action = intent.action ?: return
+        if (action == AppWidgetManager.ACTION_APPWIDGET_UPDATE || action == AppWidgetManager.ACTION_APPWIDGET_OPTIONS_CHANGED) {
+            val pending = goAsync()
+            val manager = AppWidgetManager.getInstance(context)
+            val ids = if (action == AppWidgetManager.ACTION_APPWIDGET_UPDATE) intent.getIntArrayExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS) ?: intArrayOf()
+                else intArrayOf(intent.getIntExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID))
+            render(context, manager, ids) { pending.finish() }
+            return
+        }
+        super.onReceive(context, intent)
         if (action !in setOf(ACTION_TOGGLE, ACTION_BACK, ACTION_FORWARD, ACTION_SLEEP)) return
-        Playback.init(context)
-        if (action == ACTION_SLEEP && Playback.bookId.isEmpty()) { refresh(context); return }
         val pending = goAsync()
+        val app = context.applicationContext
+        val ready = Playback.initAsync(app)
+        ready.addListener({ Playback.onMain {
+            try {
+                ready.get() // the completion listener runs only after initialization has finished
+                if (action == ACTION_SLEEP && Playback.bookId.isEmpty()) { refresh(app); pending.finish() }
+                else connect(app, action) { pending.finish() }
+            } catch (error: Exception) {
+                AppLog.w("PlayerWidget", S.s_chua_nghe_sach_nao_f2635716, error)
+                pending.finish()
+            }
+        } }, MoreExecutors.directExecutor())
+    }
+
+    private fun connect(context: Context, action: String, finish: () -> Unit) {
         // Kết nối tới dịch vụ phát (khởi động nó nếu chưa chạy) rồi mới ra lệnh.
         // Context của BroadcastReceiver không được bind service (ReceiverCallNotAllowedException - app văng khi bấm nút widget):
         // dựng MediaController / SessionToken bằng applicationContext.
@@ -193,7 +225,7 @@ class PlayerWidget : AppWidgetProvider() {
                     AppLog.w("PlayerWidget", S.s_chua_nghe_sach_nao_f2635716, error)
                 } finally {
                 MediaController.releaseFuture(future)
-                pending.finish()
+                finish()
                 }
             }
         }, MoreExecutors.directExecutor())

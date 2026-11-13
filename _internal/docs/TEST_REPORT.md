@@ -2332,3 +2332,46 @@ Popover note alignment only uses visible choices from the same menu body.
 A nested/hidden-menu fixture accepts correctly aligned bodies and still catches
 an injected 8 px note offset in both themes and viewport sizes. No rule tolerance
 or release failure list was relaxed. Full release verification remains pending.
+
+### fix168and: durable Android playback teardown
+
+PlaybackService destruction no longer drains the place/disk queues on the main
+looper. Close and teardown sync only a small final-place journal independent of
+Store's monitor, then drain both queues on a process-owned executor with one
+timeout. A timeout leaves writes running. Cold Store initialization replays the
+journal before publishing root. Local writer/sequence tokens make recovery
+idempotent and prevent an old undeleted journal from rewinding a newer cursor;
+those tokens are excluded from state sync payloads. Deleted/moved profiles are
+not resurrected.
+
+Service/widget initialization, widget library/artwork work, tone commits, rate
+writes, record mutation/reload and held-record checks now run off main. Player
+snapshots and prepared-queue installation remain on main; late record reloads
+cannot reopen a book after Close or a newer load. Media3 commands are lazy so
+reading service state does not eagerly construct Android objects.
+
+The focused JVM/Robolectric sweep passed 40 tests. With Store held and both
+writers blocked, onDestroy returned in 9 ms and the final cursor was already
+journaled; both queues completed after the lock was released. Cold service
+create/destroy returned in 8 ms. A shared 100 ms flush budget measured 101 ms,
+and its writes still completed afterward. These are controlled Windows JVM
+measurements, not Android-device latency claims. Cold-recovery, deleted-profile,
+stale-journal, Close, initialization, tone/rate, record-switch and resumption
+regressions are included. Final full-module XML and pytest totals are recorded
+in result.md and PROGRESS.md.
+
+The complete app testDebugUnitTest run passed: **442 suites, 3734 tests =
+3719 passed / 0 failures / 0 errors / 15 skipped**. Fresh suite timestamps are
+2026-11-13T11:39:28.284Z through 11:44:44.255Z; wall time was 6m55s. No exclusions
+or skips were introduced. Earlier full-run source-scan, lazy-initialization,
+pairing-fixture, cache-expectation, caption-spacing and fixture-drain failures
+were corrected and included in this final run.
+
+Related pytest: **74 passed / 0 failed / 0 errors / 0 skipped**, invoked with
+`-q -rf` across Android debug-ID, listening-record/reliability/write, and both
+leak-scanner modules. Actual progress markers and collected node IDs both total
+74, with zero FAILED summary lines. LF/control audit checked all 33 changed/new
+files without findings; git diff --check passed.
+
+Quality implementation hash before/after is unchanged:
+`dbb460d54ae91c9da882d7a565bac191c47919913818ff93eb19292016243e64`.

@@ -22,6 +22,7 @@ class ListenPrefsRangesTest {
     private fun numberKeys() = numbers.keys().asSequence().filter { it != "_" }.toList()
 
     @Before fun setup() {
+        assertTrue(DiskWrites.flush(TestTime.ms(5_000)))
         Handler.reset()
         BookEditsFixtures.useStoreRoot(BookEditsFixtures.tempDir("listen-prefs-ranges"))
         reset()
@@ -29,6 +30,7 @@ class ListenPrefsRangesTest {
 
     @After fun cleanup() {
         reset()
+        assertTrue(DiskWrites.flush(TestTime.ms(5_000)))
         Handler.reset()
     }
 

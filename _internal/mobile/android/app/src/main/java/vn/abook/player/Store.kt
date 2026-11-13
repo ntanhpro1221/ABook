@@ -38,6 +38,7 @@ object Store {
         val stale = recoverStaging()
         recoverRekeys()
         BookSave.recover(OldSaves.dir(filesDir))
+        FinalPlace.recover(File(filesDir, "library"))
         stale
     }
 
@@ -423,7 +424,7 @@ object Store {
     private const val DEFAULT_RECORD_NAME = S.s_mac_dinh_9a1af367
     private val RECORD_ID = Regex("r-[0-9a-f]{16}")
     private val SYNC_KEYS = listOf("record", "recordName", "nameAt", "activeAt", "movedAt", "book", "records", "active", "activeState",
-        "deleted", "deletedRecords", "nameRev", "activeRev", "movedRev")
+        "deleted", "deletedRecords", "nameRev", "activeRev", "movedRev", "_localPlace")
 
     /** Name / move / active choice: a revision of the records.json clock (ListeningRevision.metaItems; a118 bug 5). The wall-clock
      *  `nameAt`/`activeAt`/`movedAt` still go out for 0.4.133 peers and only decide when one side has no revision. */
@@ -522,6 +523,7 @@ object Store {
             .put("nameAt", meta?.optDouble("nameAt", 0.0) ?: 0.0).put("activeAt", chosenAt)
             .put("movedAt", meta?.optDouble("movedAt", 0.0) ?: 0.0)
             .put("deletedRecords", book.getJSONObject("deleted"))
+        body.remove("_localPlace") // local journal ordering must never travel to another device
         withRevs(body, meta, "nameRev", "movedRev")
         return if (record == active) withRevs(body, book.getJSONObject("links").optJSONObject(bookId), "activeRev") else body
     }
@@ -1066,9 +1068,18 @@ object Store {
      * vừa đổi hồ sơ đang dùng; hồ sơ không còn thuộc cuốn này (xoá, chuyển sách) thì bỏ lần lưu. null: hồ sơ đang dùng.
      */
     @Synchronized
-    fun progress(id: String, chapterId: Int, seconds: Double, duration: Double, anchor: JSONObject? = null, recordId: String? = null): JSONObject {
+    fun progress(id: String, chapterId: Int, seconds: Double, duration: Double, anchor: JSONObject? = null, recordId: String? = null,
+                 localCheckpoint: JSONObject? = null): JSONObject {
         val target = if (recordId == null) activeRecord(id) else recordId.takeIf { ownsRecord(id, it) } ?: return state(id)
         val state = recordState(target)
+        if (localCheckpoint != null) {
+            val previous = state.optJSONObject("_localPlace")
+            // Crash after committing the record but before deleting its journal is an idempotent replay.
+            // A journal whose deletion failed must not rewind a newer checkpoint from the same writer either.
+            if (previous != null && previous.optString("writer") == localCheckpoint.getString("writer") &&
+                previous.optLong("sequence") >= localCheckpoint.getLong("sequence")) return state
+            state.put("_localPlace", JSONObject(localCheckpoint.toString()))
+        }
         val at = now()
         val rev = ListeningRevision.advance(state, revisionNode())
         state.put("last", JSONObject().put("chapterId", chapterId).put("seconds", seconds).put("at", at).put("rev", rev))

@@ -124,4 +124,13 @@ class PlaybackIoOffMainTest {
         assertTrue("keepScript read book.json on the main looper",
             returnsWhileDiskIsBusy { Streaming.keepScript(context, "io-book", 1L) })
     }
+
+    @Test fun bothRateEntryPointsReturnWhileTheStoreIsBusyAndSaveInOrder() {
+        assertTrue("rate change waited for Store", returnsWhileDiskIsBusy {
+            Playback.setRate(1.25)
+            Playback.onRateChanged(1.5f)
+        })
+        assertTrue(Playback.flushSaves(TestTime.ms(5_000)))
+        assertEquals(1.5, Store.state("io-book").getDouble("rate"), 0.001)
+    }
 }

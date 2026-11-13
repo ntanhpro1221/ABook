@@ -43,7 +43,7 @@ internal class OrderedCheckpoint<T>(private val executor: Executor, private val 
     }
 
     /**
-     * Waits until every snapshot offered before the call is written (service teardown, tests). Never call it while
+     * Waits until every snapshot offered before the call is written (background callers, tests). Never call on main or while
      * holding [writeLock]: the writer needs that monitor. Returns false when [timeoutMs] passes first.
      */
     fun flush(timeoutMs: Long): Boolean {

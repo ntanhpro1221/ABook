@@ -60,12 +60,15 @@ class PlaybackService : MediaLibraryService() {
     private val libraryIo = Executors.newSingleThreadExecutor { Thread(it, "abook-library").apply { isDaemon = true } }
     private val playerLooper = Executor { task -> Playback.onMain { task.run() } }
     private var destroyed = false
+    internal lateinit var initialization: ListenableFuture<Unit>
+        private set
 
     /** Read library, artwork and file stamps off the player looper; apply the prepared result on that looper. */
     private fun <T, R> libraryTask(read: () -> T, apply: (T) -> R): ListenableFuture<R> {
         val result = SettableFuture.create<R>()
         libraryIo.execute {
             try {
+                initialization.get() // background only; never hold the player looper during cold recovery
                 val value = read()
                 playerLooper.execute {
                     if (!result.isCancelled) {
@@ -176,7 +179,7 @@ class PlaybackService : MediaLibraryService() {
         super.onCreate()
         instance = this
         AppLog.i("PlaybackService", S.s_dich_vu_phat_bat_da10337c)
-        Playback.init(this)
+        initialization = Playback.initAsync(this)
         ListenerActivity.start(this)
         Playback.addListener(sleepButtons)
         val renderers = object : DefaultRenderersFactory(this) {
@@ -584,9 +587,8 @@ class PlaybackService : MediaLibraryService() {
         libraryIo.shutdown()
         AppLog.i("PlaybackService", S.s_dich_vu_phat_tat_a884c3ae)
         Playback.removeListener(sleepButtons)
-        Playback.saveNow()
-        // The process may go right after this: the last place must be on disk, not only handed to the writer.
-        Playback.flushSaves()
+        // Persist just the final place independently of Store; drain the queues off main.
+        Playback.saveBeforeServiceDestroy()
         session?.run {
             player.release()
             release()

@@ -81,7 +81,9 @@ object StateSync {
     fun pushSoon(context: Context, bookId: String, force: Boolean, only: String? = null) {
         if (!force && SystemClock.elapsedRealtime() - lastPushMs < WHILE_PLAYING_MS) return
         lastPushMs = SystemClock.elapsedRealtime()
-        io.execute { runCatching { pushNow(context, bookId, only) } }
+        io.execute { runCatching {
+            if (only == null || Store.holds(bookId, only)) pushNow(context, bookId, only)
+        } }
     }
 }
 

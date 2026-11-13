@@ -248,6 +248,21 @@ object Playback {
 
     private var initializedContext: Context? = null
 
+    private val startupIo = java.util.concurrent.Executors.newSingleThreadExecutor { task ->
+        Thread(task, "abook-init").apply { isDaemon = true }
+    }
+
+    /** Service/receiver entry points must not wait for Store recovery, preferences or another initializer on main. */
+    internal fun initAsync(context: Context): com.google.common.util.concurrent.ListenableFuture<Unit> {
+        val application = context.applicationContext
+        val ready = com.google.common.util.concurrent.SettableFuture.create<Unit>()
+        startupIo.execute {
+            try { init(application); ready.set(Unit) } catch (error: Exception) { ready.setException(error) }
+        }
+        return ready
+    }
+
+    @androidx.annotation.WorkerThread
     @Synchronized
     fun init(context: Context) {
         val application = context.applicationContext
@@ -471,7 +486,7 @@ object Playback {
     var fadeLevel = 1f
         private set
 
-    fun applyVolume(fade: Float = fadeLevel) {
+    fun applyVolume(fade: Float = fadeLevel) = onMain {
         fadeLevel = fade
         player?.volume = fade * ReadAloud.gainFactor() * AudioFx.current.volume.toFloat()
         MusicBed.setSleepFade(fade * AudioFx.current.volume.toFloat())
@@ -524,6 +539,7 @@ object Playback {
     /** Nạp một cuốn: cả danh sách chương vào hàng đợi, bắt đầu ở chương/giây đã chọn. */
     fun load(id: String, title: String, narratorName: String, items: List<Chapter>, startChapterId: Int, startSeconds: Double, rate: Double, autoplay: Boolean = true,
              prepared: PreparedBook? = null) {
+        reloadSequence++
         touched()
         val exo = player ?: return
         pending = null
@@ -579,6 +595,7 @@ object Playback {
      */
     fun adopt(id: String, title: String, narratorName: String, items: List<Chapter>, startChapterId: Int, startSeconds: Double, rate: Double,
               prepared: PreparedBook? = null) {
+        reloadSequence++
         touched()
         saveNow()
         closeSession()
@@ -645,8 +662,10 @@ object Playback {
 
     /** Native dismissal after a book leaves the library. Clear the actual Media3 queue and all read-aloud work. Main thread. */
     fun closeBook() {
+        reloadSequence++
         pause()
-        saveNow()
+        // Close clears bookId before Service.onDestroy; journal the place while it is still addressable.
+        saveBeforeServiceDestroy()
         closeSession()
         SleepTimer.cancel()
         main.removeCallbacks(reconnect)
@@ -746,8 +765,18 @@ object Playback {
         touched()
         AudioFx.update(AudioFx.current.copy(speed = rate))
         player?.let { applySpeed(it, rate) }
-        if (bookId.isNotEmpty()) Store.setRate(bookId, rate, recordId.ifEmpty { null })
+        saveRate(rate)
         emit("rate")
+    }
+
+    private fun saveRate(rate: Double) {
+        val book = bookId.takeIf { it.isNotEmpty() } ?: return
+        val record = recordId.ifEmpty { null }
+        DiskWrites.post("ABookSave") {
+            runCatching { Store.setRate(book, rate, record) }.onFailure {
+                AppLog.w("ABookSave", S.s_khong_luu_duoc_toc_do_d116f1e4, it)
+            }
+        }
     }
 
     // ---- sự kiện từ ExoPlayer ------------------------------------------------------------------------------
@@ -831,7 +860,7 @@ object Playback {
         if (speed == knownSpeed) return
         knownSpeed = speed
         if (kotlin.math.abs(AudioFx.current.speed - speed.toDouble()) > 1e-6) AudioFx.update(AudioFx.current.copy(speed = speed.toDouble()))
-        if (bookId.isNotEmpty()) runCatching { Store.setRate(bookId, speed.toDouble(), recordId.ifEmpty { null }) }.onFailure { AppLog.w("ABookSave", S.s_khong_luu_duoc_toc_do_d116f1e4, it) }
+        saveRate(speed.toDouble())
         emit("rateChanged")
     }
 
@@ -924,25 +953,50 @@ object Playback {
         })
     }
 
-    /**
-     * Đổi hồ sơ nghe của cuốn đang nạp (chọn hồ sơ khác, nghe lại từ đầu bằng hồ sơ mới, xoá hồ sơ đang dùng): chỗ đang
-     * nghe và phiên nghe ghi vào hồ sơ CŨ, đổi, rồi nạp lại đúng chỗ của hồ sơ mới ở trạng thái dừng. Cả lượt chạy trên
-     * luồng chính và `bookId` rỗng trong lúc đổi, nên lần lưu muộn nào (sự kiện dừng của ExoPlayer) cũng không rơi sang
-     * hồ sơ mới. Cuốn không nạp thì chỉ việc đổi.
-     */
+    private val recordChanges = Any()
+    private val recordIo = java.util.concurrent.Executors.newSingleThreadExecutor { task ->
+        Thread(task, "abook-record").apply { isDaemon = true }
+    }
+    private var reloadSequence = 0L
+    private data class Reload(val sequence: Long, val id: String, val record: String, val title: String, val narrator: String,
+                              val chapters: List<Chapter>, val player: ExoPlayer)
+
+    /** Background caller owns the Store mutation. Main only pauses/captures and installs the prepared queue. */
+    @androidx.annotation.WorkerThread
     fun <T> switchRecord(id: String, change: () -> T): T {
-        val exo = player
-        if (exo == null || id.isEmpty() || bookId != id) return change()
-        val playing = exo.isPlaying
-        pause()
-        if (playing || moved()) saveNow()
-        closeSession()
-        return reloadAfter(id, change)
+        synchronized(recordChanges) {
+            val capture = java.util.concurrent.FutureTask {
+                val exo = player
+                if (exo == null || id.isEmpty() || bookId != id) null else {
+                    pause()
+                    saveBeforeServiceDestroy()
+                    closeSession()
+                    detachForReload(id)
+                }
+            }
+            onMain { capture.run() }
+            val reload = capture.get(10, java.util.concurrent.TimeUnit.SECONDS)
+            if (reload != null && !flushSaves()) {
+                // No mutation ran. Keep the existing queue's exact cursor instead of reloading stale disk state.
+                onMain {
+                    if (player === reload.player && bookId.isEmpty() && reloadSequence == reload.sequence) {
+                        bookId = reload.id
+                        recordId = reload.record
+                        emit("record")
+                    }
+                }
+                error(SAVE_FAILED)
+            }
+            try {
+                return change()
+            } finally {
+                if (reload != null) restoreAfterReload(reload)
+            }
+        }
     }
 
     /** Đẩy chỗ nghe của ĐÚNG hồ sơ phiên phát đang giữ lên máy giữ sách (không phải hồ sơ đang dùng); hồ sơ đã mất thì không đẩy gì. */
     private fun pushHeld(force: Boolean, book: String = bookId, record: String = recordId) {
-        if (record.isNotEmpty() && !Store.holds(book, record)) return
         StateSync.pushSoon(appContext, book, force, record.ifEmpty { null })
     }
 
@@ -958,8 +1012,7 @@ object Playback {
             if (bookId != id || recordId !in ids) return@onMain
             pause()
             sessionFrom = null
-            reloadAfter(id) { }
-            emit("record")
+            reloadAfter(id)
         }
     }
 
@@ -967,23 +1020,36 @@ object Playback {
      *  mới, không lưu gì - chỗ của hồ sơ cũ đã lưu lúc dừng, lưu bây giờ là ghi nó vào hồ sơ mới. */
     fun follow(id: String) {
         if (player == null || bookId != id || player?.isPlaying == true) return
-        reloadAfter(id) { }
-        emit("record")
+        reloadAfter(id)
     }
 
-    private fun <T> reloadAfter(id: String, change: () -> T): T {
-        val items = chapters
-        val title = bookTitle
-        val narratorName = narrator
+    private fun detachForReload(id: String): Reload? {
+        val exo = player ?: return null
+        val reload = Reload(++reloadSequence, id, recordId, bookTitle, narrator, chapters, exo)
         bookId = ""
         recordId = ""
-        try {
-            return change()
-        } finally {
-            val state = Store.state(id)
-            val last = state.optJSONObject("last")?.takeIf { last -> items.any { it.id == last.optInt("chapterId") } }
-            load(id, title, narratorName, items, last?.optInt("chapterId") ?: items.firstOrNull()?.id ?: 0,
-                last?.optDouble("seconds") ?: 0.0, state.optDouble("rate", 1.0), autoplay = false)
+        return reload
+    }
+
+    private fun reloadAfter(id: String) {
+        val reload = detachForReload(id) ?: return
+        recordIo.execute {
+            runCatching { restoreAfterReload(reload) }.onFailure { AppLog.w("ABookSave", "Could not reload listening record", it) }
+        }
+    }
+
+    /** Store/artwork reads stay on the caller's background thread. A newer book/service always wins. */
+    private fun restoreAfterReload(reload: Reload) {
+        val state = Store.state(reload.id)
+        val items = reload.chapters
+        val last = state.optJSONObject("last")?.takeIf { last -> items.any { it.id == last.optInt("chapterId") } }
+        val prepared = prepareBook(reload.id, reload.title, reload.narrator, items)
+        onMain {
+            if (player === reload.player && bookId.isEmpty() && reloadSequence == reload.sequence) {
+                load(reload.id, reload.title, reload.narrator, items, last?.optInt("chapterId") ?: items.firstOrNull()?.id ?: 0,
+                    last?.optDouble("seconds") ?: 0.0, state.optDouble("rate", 1.0), autoplay = false, prepared = prepared)
+                emit("record")
+            }
         }
     }
 
@@ -1002,6 +1068,7 @@ object Playback {
     private data class PlaceCheckpoint(val sequence: Long, val book: String, val record: String?, val chapter: Int,
         val position: Long, val duration: Double, val anchor: String?) {
         var written = false
+        var journal: File? = null
     }
 
     private val checkpoints = OrderedCheckpoint<PlaceCheckpoint>(java.util.concurrent.Executors.newSingleThreadExecutor { task ->
@@ -1011,9 +1078,10 @@ object Playback {
         // while already holding it, so there must be no second lock ahead of Store.
         if (place.record == null || Store.holds(place.book, place.record)) {
             Store.progress(place.book, place.chapter, place.position / 1000.0, place.duration,
-                place.anchor?.let(::JSONObject), place.record)
+                place.anchor?.let(::JSONObject), place.record, localCheckpoint = FinalPlace.token(place.sequence))
             place.written = true
         }
+        place.journal?.let(FinalPlace::retire)
     }
 
     /** Read ExoPlayer and the reading anchor only on main; the worker receives an owned snapshot. */
@@ -1056,7 +1124,7 @@ object Playback {
      * Lưu chỗ nghe. Snapshot đọc trên luồng chính rồi giao cho luồng ghi `abook-place` - luồng chính không chờ đĩa; các lần lưu sự kiện ghi đúng thứ tự,
      * mới hơn mọi nhịp định kỳ đang chờ. Lỗi ghi (Store.progress: ghi file, sync, đổi tên) không văng bộ phát (soát a77 #4): chỗ cũ còn nguyên (ghi nguyên tử), ghi logcat,
      * báo bạn MỘT lần ("saveFailed"); `savedPlace` không đổi nên lần lưu kế tự thử lại. [then] chạy trên luồng chính sau khi lần ghi này xong (không có gì để lưu: chạy ngay).
-     * Dịch vụ tắt thì [flushSaves] chờ hàng ghi cạn.
+     * Service teardown uses [saveBeforeServiceDestroy]; only background callers may [flushSaves].
      */
     fun saveNow(then: (() -> Unit)? = null) {
         val place = placeCheckpoint() ?: return run { then?.invoke() }
@@ -1066,9 +1134,35 @@ object Playback {
         } }
     }
 
-    /** Chờ mọi lần lưu đã giao ghi xong - chỗ nghe, rồi hẹn giờ / phiên nghe / nhật ký đêm ([DiskWrites]) (dịch vụ phát tắt, test). Không gọi khi đang giữ khoá Store. */
-    fun flushSaves(timeoutMs: Long = 2_000): Boolean = (checkpoints.flush(timeoutMs) and DiskWrites.flush(timeoutMs)).also { done ->
-        if (!done) AppLog.w("ABookSave", "chỗ nghe chưa ghi xong sau $timeoutMs ms")
+    private val saveFinisher = java.util.concurrent.Executors.newSingleThreadExecutor { task ->
+        Thread(task, "abook-save-finish").apply { isDaemon = true }
+    }
+
+    /** Capture before releasing ExoPlayer. The small synced journal never takes Store's monitor.
+     * Queue ownership is process-wide, so destroying this service cannot cancel its writes.
+     * If the process is killed first, Store.init replays the journal on the next cold open.
+     */
+    internal fun saveBeforeServiceDestroy() {
+        val place = placeCheckpoint()
+        if (place != null) {
+            runCatching {
+                place.journal = FinalPlace.persist(Store.root, place.sequence, place.book, place.record,
+                    place.chapter, place.position, place.duration, place.anchor)
+            }.onFailure { saved(place, Result.failure(it)) }
+            checkpoints.immediate(place) { snapshot, result -> onMain { saved(snapshot, result) } }
+        }
+        saveFinisher.execute { flushSaves() }
+    }
+
+    /** Background only, without Store held. Both queues share one timeout; timeout never cancels writes. */
+    @androidx.annotation.WorkerThread
+    fun flushSaves(timeoutMs: Long = 2_000): Boolean {
+        val deadline = System.nanoTime() + timeoutMs * 1_000_000
+        val placesDone = checkpoints.flush(timeoutMs)
+        val remainingMs = ((deadline - System.nanoTime()) / 1_000_000).coerceAtLeast(0)
+        return (DiskWrites.flush(remainingMs) and placesDone).also { done ->
+            if (!done) AppLog.w("ABookSave", "chỗ nghe chưa ghi xong sau $timeoutMs ms")
+        }
     }
 
     fun chaptersJson(): JSONArray = JSONArray().also { array ->

@@ -7,6 +7,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Before
+import org.junit.After
 import org.junit.Test
 
 /**
@@ -15,18 +16,20 @@ import org.junit.Test
  */
 class PairingWordsTest {
     private val words = BookEditsFixtures.obj("pairing_words.json")
+    private lateinit var identity: PairingTestIdentity
+    @After fun cleanup() { identity.close() }
     @Before
     fun setUp() {
+        identity = PairingTestIdentity()
         val root = BookEditsFixtures.tempDir("abook-pairing-words")
         BookEditsFixtures.useStoreRoot(root)
         LibraryServer::class.java.getDeclaredField("devicesFile").apply { isAccessible = true }.set(LibraryServer, File(root, "share.json"))
         LibraryServer.cancelPairing()
-        LibraryServer::class.java.getDeclaredField("fingerprint").apply { isAccessible = true }.set(LibraryServer, "ab".repeat(32))
     }
 
     private fun tryCode(code: String): Pair<Int, String> {
         val out = ByteArrayOutputStream()
-        val body = JSONObject().put("code", code).put("fingerprint", LibraryServer.fingerprint).put("device", "Máy thử").toString().toByteArray()
+        val body = JSONObject().put("code", code).put("device", "Máy thử").put("fingerprint", identity.fingerprint).toString().toByteArray()
         LibraryServer.route(LibraryServer.Request("POST", "/sync/v1/pair", emptyMap(), body), out)
         val raw = String(out.toByteArray(), Charsets.UTF_8)
         return raw.substringAfter(" ").substringBefore(" ").toInt() to JSONObject(raw.substringAfter("\r\n\r\n")).optString("error")

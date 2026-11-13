@@ -2,9 +2,6 @@ package vn.abook.player
 
 import android.content.Context
 import org.json.JSONArray
-import java.util.concurrent.ExecutionException
-import java.util.concurrent.FutureTask
-import java.util.concurrent.TimeUnit
 
 /**
  * Hồ sơ nghe của một cuốn (độc lập với sách, app giữ liên kết - [Store]) - việc của giao diện (`ui.data.LibraryRepo`). Mỗi hàm đổi xong trả [Change]: danh sách hồ sơ mới + việc báo máy tính ([Change.push], chạy ở luồng nền sau khi đã trả lời người nghe).
@@ -28,14 +25,7 @@ object ListeningRecords {
 
     /** Đổi hồ sơ của một cuốn: cuốn đang nạp trong trình phát thì qua Playback trên luồng chính (trình phát theo sang hồ sơ mới), cuốn khác thì đổi thẳng. */
     private fun switching(id: String, change: () -> JSONArray): JSONArray {
-        if (Playback.bookId != id) return change()
-        val task = FutureTask { Playback.switchRecord(id, change) }
-        Playback.onMain { task.run() }
-        return try {
-            task.get(10, TimeUnit.SECONDS)
-        } catch (error: ExecutionException) {
-            throw error.cause ?: error
-        }
+        return Playback.switchRecord(id, change)
     }
 
     /** Hồ sơ mới (nghe từ đầu), thành hồ sơ đang dùng; hồ sơ cũ giữ nguyên. */

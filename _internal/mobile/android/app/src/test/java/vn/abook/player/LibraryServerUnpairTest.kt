@@ -5,6 +5,7 @@ import java.io.File
 import org.json.JSONObject
 import org.junit.Assert.assertEquals
 import org.junit.Before
+import org.junit.After
 import org.junit.Test
 
 /**
@@ -13,13 +14,16 @@ import org.junit.Test
  */
 class LibraryServerUnpairTest {
     private lateinit var root: File
+    private lateinit var identity: PairingTestIdentity
+
+    @After fun cleanup() { identity.close() }
 
     @Before
     fun setUp() {
+        identity = PairingTestIdentity()
         root = BookEditsFixtures.tempDir("abook-server-unpair")
         BookEditsFixtures.useStoreRoot(root)
         LibraryServer::class.java.getDeclaredField("devicesFile").apply { isAccessible = true }.set(LibraryServer, File(root, "share.json"))
-        LibraryServer::class.java.getDeclaredField("fingerprint").apply { isAccessible = true }.set(LibraryServer, "ab".repeat(32))
     }
 
     private fun call(method: String, path: String, body: JSONObject = JSONObject(), token: String = ""): Pair<Int, JSONObject> {
@@ -32,7 +36,8 @@ class LibraryServerUnpairTest {
 
     private fun pair(id: String): String {
         val code = LibraryServer.startPairing().getString("code")
-        val (status, reply) = call("POST", "/sync/v1/pair", JSONObject().put("code", code).put("fingerprint", LibraryServer.fingerprint).put("device", "Máy B").apply { if (id.isNotEmpty()) put("id", id) })
+        val (status, reply) = call("POST", "/sync/v1/pair", JSONObject().put("code", code).put("device", "Máy B")
+            .put("fingerprint", identity.fingerprint).apply { if (id.isNotEmpty()) put("id", id) })
         assertEquals(200, status)
         return reply.getString("token")
     }
@@ -53,5 +58,13 @@ class LibraryServerUnpairTest {
         assertEquals(200, call("POST", "/sync/v1/unpair", token = token).first)
         assertEquals(0, LibraryServer.devices().length())
         assertEquals(401, call("GET", "/sync/v1/library", token = token).first)
+    }
+
+    @Test fun aMissingOrWrongFingerprintCannotPairEvenWithTheRightCode() {
+        val code = LibraryServer.startPairing().getString("code")
+        val body = JSONObject().put("code", code).put("device", "Test peer")
+        assertEquals(403, call("POST", "/sync/v1/pair", body).first)
+        assertEquals(403, call("POST", "/sync/v1/pair", body.put("fingerprint", "ff".repeat(32))).first)
+        assertEquals(200, call("POST", "/sync/v1/pair", body.put("fingerprint", identity.fingerprint)).first)
     }
 }

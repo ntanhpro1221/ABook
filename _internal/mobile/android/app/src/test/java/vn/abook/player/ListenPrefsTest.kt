@@ -37,6 +37,7 @@ class ListenPrefsTest {
     }
 
     @Before fun setup() {
+        assertTrue(DiskWrites.flush(TestTime.ms(5_000)))
         Handler.reset()
         BookEditsFixtures.useStoreRoot(BookEditsFixtures.tempDir("listen-prefs"))
         defaults()

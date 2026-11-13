@@ -24,6 +24,7 @@ class ForegroundGraceTest {
 
     @After fun cleanup() {
         runCatching { service.destroy() }
+        assertTrue(Playback.flushSaves(TestTime.ms(5_000)))
         Playback.player = null
     }
 
@@ -38,6 +39,7 @@ class ForegroundGraceTest {
     @Test fun refusedForegroundPausesInsteadOfPlayingWithoutAForegroundService() {
         BookEditsFixtures.useStoreRoot(BookEditsFixtures.tempDir("foreground-refused"))
         val running = service.create().get()
+        running.initialization.get(TestTime.seconds(5), java.util.concurrent.TimeUnit.SECONDS)
         val player = Playback.player!!
         player.setMediaItems(listOf(MediaItem.Builder().setMediaId("ch1").setUri("file:///nothing.mp3").build()))
         player.playWhenReady = true

@@ -14,8 +14,14 @@ class ExternalRateTest {
     private val events = mutableListOf<JSONObject>()
     private val listener: (JSONObject) -> Unit = { events += it }
     private fun field(name: String) = Playback::class.java.getDeclaredField(name).also { it.isAccessible = true }
-    private fun storedRate() = Store.state("rate-book").optDouble("rate", 1.0)
-    private fun stamp() = Store.state("rate-book").optDouble("rateAt", 0.0)
+    private fun storedRate(): Double {
+        assertTrue(DiskWrites.flush(TestTime.ms(5_000)))
+        return Store.state("rate-book").optDouble("rate", 1.0)
+    }
+    private fun stamp(): Double {
+        assertTrue(DiskWrites.flush(TestTime.ms(5_000)))
+        return Store.state("rate-book").optDouble("rateAt", 0.0)
+    }
 
     @Before fun setup() {
         Handler.reset()
@@ -27,6 +33,7 @@ class ExternalRateTest {
     }
 
     @After fun cleanup() {
+        assertTrue(DiskWrites.flush(TestTime.ms(5_000)))
         Playback.removeListener(listener)
         field("bookId").set(Playback, "")
         Playback.player = null

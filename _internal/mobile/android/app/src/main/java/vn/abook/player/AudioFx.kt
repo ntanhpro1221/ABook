@@ -31,7 +31,9 @@ object AudioFx {
     fun changeTone(change: (ToneLibrary) -> Unit) {
         val next = ToneLibrary.read(tones.json()).also { it.book = bookId }
         change(next)
-        check(prefs?.edit()?.putString("tones", next.json().toString())?.commit() != false)
+        val preferences = prefs
+        val snapshot = next.json().toString()
+        DiskWrites.post("AudioFx") { check(preferences?.edit()?.putString("tones", snapshot)?.commit() != false) }
         tones = next
         toneRevision.value++
         applyTone()
@@ -92,7 +94,7 @@ object AudioFx {
             .put("silenceDb", s.silenceDb).put("silenceSeconds", s.silenceSeconds).put("keepSeconds", s.keepSeconds)
         prefs?.edit()?.putString(if (scoped.value) "book:$bookId" else "shared", o.toString())?.apply()
         main.removeCallbacks(applyParameters)
-        if (settleMs > 0) main.postDelayed(applyParameters, settleMs) else applyParameters.run()
+        if (settleMs > 0) main.postDelayed(applyParameters, settleMs) else Playback.onMain { applyParameters.run() }
         Playback.applyVolume()
     }
     /** Everything the audio sheet sets goes back to default at once (speed belongs to its own sheet) and is heard right away. */

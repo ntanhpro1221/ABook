@@ -29,7 +29,8 @@ internal object DiskWrites {
         }
     }
 
-    /** Chờ mọi việc đã giao ghi xong (đọc lại file vừa ghi, dịch vụ tắt, test). Không gọi trên luồng chính hay khi đang giữ khoá Store. false khi quá [timeoutMs]. */
+    /** Background reads/tests only. Never call on main or while holding Store. A timeout does not cancel writes. */
+    @androidx.annotation.WorkerThread
     fun flush(timeoutMs: Long = 2_000): Boolean {
         val deadline = System.nanoTime() + timeoutMs * 1_000_000
         synchronized(lock) {
