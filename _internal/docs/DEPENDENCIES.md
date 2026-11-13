@@ -3,6 +3,25 @@
 File này là trách nhiệm thường trực của người dev project, không phải một lần rà soát. Mỗi phiên bản
 phải kiểm lại bảng dưới và ghi kết quả vào `VERSIONS.md`.
 
+## 0.4.168 — measured runtime declarations
+
+The release records the packages installed in the shared Studio runtime. The
+upstream review below records proposed development pins; those versions were
+not all installed. No packages were installed, removed or changed for this release.
+
+| Package | Installed and declared |
+|---|---|
+| CTranslate2 / faster-whisper | 4.8.2 / 1.2.1 |
+| Brotli / setuptools | 1.2.0 / 78.1.0 |
+| PySide6, Addons, Essentials and shiboken6 | 6.11.2 |
+| pytest / ruff / cryptography | 9.1.1 / 0.16.10 / 50.0.0 |
+
+`pyproject.toml`, `uv.lock` and the 99-package Studio requirements closure agree
+with installed metadata. The release tests check the actual installed versions;
+the runtime quality contract also records and checks both ASR packages. Changing
+a wheel remains a separate pipeline change requiring validation. The embedded
+Python 3.14 listener requirements describe a separate environment.
+
 ## 06-11 — rà upstream trên nhánh dev
 
 Rà upstream tiếp trong ngày trên `dev/upstream`: PySide6 6.11.3, pytest 9.2.0, ruff 0.17.4;

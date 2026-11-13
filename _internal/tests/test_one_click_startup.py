@@ -126,7 +126,7 @@ def test_one_click_startup_contract() -> None:
     )
     project = tomllib.loads((INTERNAL_ROOT / "pyproject.toml").read_text(encoding="utf-8"))
     assert project["project"]["dependencies"] == [
-        "PySide6==6.11.3",
+        "PySide6==6.11.2",
         "requests==2.34.2",
         "psutil==7.2.2",
         "numpy==2.4.6",
@@ -136,7 +136,7 @@ def test_one_click_startup_contract() -> None:
         "imageio-ffmpeg==0.6.0",
         "openai-whisper==20250625",
         "faster-whisper==1.2.1",
-        "ctranslate2==4.8.3",
+        "ctranslate2==4.8.2",
         "torch==2.11.0",
         "torchaudio==2.11.0",
         "torchvision==0.26.0",
