@@ -856,7 +856,7 @@ Nhãn ngắn (<= 6 chữ) không có (theo khoá lỏng) ở phía kia - kể c�
 - `Huỷ xuất` | `Huỷ xuất?` (`native/studio/StudioExport.kt:312`, `native/studio/StudioExport.kt:313`)
 - `Hồ sơ nghe` | `Hồ sơ nghe:` (`native/screens/BookRecords.kt:106`, `native/screens/BookTabs.kt:142`)
 - `Lùi 15 giây` | `Lùi {} giây` (`native/nowplaying/NowPlayingScreen.kt:235`, `native/pip/PipParams.kt:49`)
-- `Lưu thay đổi` | `Lưu thay đổi?` (`native/nowplaying/TonePage.kt:133`, `native/screens/BookSheets.kt:199`)
+- `Lưu thay đổi` | `Lưu thay đổi?` (`native/nowplaying/TonePage.kt:132`, `native/screens/BookSheets.kt:199`)
 - `Mở Cài đặt` | `Mở cài đặt` (`native/data/SettingsRepo.kt:133`, `native/devices/CompanionSurfaces.kt:153` (+2))
 - `Nữ` | `nữ` (`native/data/ListenExtras.kt:352`, `native/data/ListenExtras.kt:398` (+3))
 - `Thử không được` | `Thử không được.` (`native/voice/VoicePickCard.kt:66`, `native/voice/VoiceState.kt:216`)
@@ -864,7 +864,7 @@ Nhãn ngắn (<= 6 chữ) không có (theo khoá lỏng) ở phía kia - kể c�
 - `Xoá khoá` | `Xoá khoá?` (`native/voice/VoiceSheets.kt:266`, `native/voice/VoiceSheets.kt:290` (+1))
 - `Xoá nhật ký` | `Xoá nhật ký?` (`native/screens/SettingsAdvanced.kt:109`, `native/screens/SettingsAdvanced.kt:143`)
 - `Xoá phần đã tải` | `Xoá phần đã tải?` (`native/components/Confirm.kt:96`, `native/voice/VoiceSheets.kt:101` (+2))
-- `250 Hz` | `80 Hz` (`native/nowplaying/TonePage.kt:85`)
+- `250 Hz` | `80 Hz` (`native/nowplaying/TonePage.kt:84`)
 ## e. Cặp màn web <-> native (luật cứng, scripts/ui_parity_pairs.json)
 
 Trong một cặp, mỗi nhãn ngắn phải có ở cả hai phía (khoá lỏng) trừ khi nằm trong `allow` (nền tảng bắt buộc khác, có lý do) hay `missing` (tính năng / phần màn chỉ có ở một phía - Lead xếp lịch). Cột lệch phải bằng 0 thì `--check` mới qua. Cột "chờ Lead" (`wording_for_lead`) là chữ khác nhau cho cùng một việc, chưa chọn chuẩn: TẠM, mục nào có ở đó là nợ.
