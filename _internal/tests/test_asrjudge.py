@@ -331,3 +331,30 @@ def test_romaji_path_needs_a_hyphenated_transliteration():
     # Per syllable: Fuze -> Phu-de cannot stand for Phu-gi-e.
     assert not asr._romaji_component_sounds_right(('Phu', 'gi', 'e'), ['fuze'], 'Bắc')
     assert asr._romaji_component_sounds_right(('Phu', 'ghi', 'e'), ['fugie'], 'Bắc')
+
+
+@pytest.mark.parametrize("heard", ['Fuze', 'fuze', 'Fu ze'])
+@pytest.mark.parametrize("region", ['Bắc', 'Nam'])
+def test_joined_regional_spelling_cannot_drop_a_syllable(heard, region):
+    # Joined, gi+e reads as the one syllable "gie": Fuze would stand for Phu-gi-e.
+    assert not asr._regional_syllables_match(('Phu', 'gi', 'e'), heard.replace(' ', '').lower(), region)
+    result = adjudicate('Anh Phu-gi-e đến.', f'Anh {heard} đến.', form='Phu-gi-e', surface='Fugie',
+                        region=region, alias=False)
+    assert result['verdict'] != asr.ASR_PASS
+
+
+def test_shizai_does_not_stand_for_xi_gi_ai():
+    # nhung:465: joined keys made Shizai (Xi-dai) equal Xi-gi-ai (Xi-di-ai).
+    assert not asr._regional_syllables_match(('Xi', 'gi', 'ai'), 'shizai', 'Bắc')
+    result = adjudicate('Của Xi-gi-ai và.', 'Của Shizai và.', form='Xi-gi-ai', surface='CGI',
+                        region='Bắc', alias=False)
+    assert result['verdict'] != asr.ASR_PASS
+
+
+def test_glued_regional_spelling_is_cut_per_syllable():
+    assert asr._regional_syllables_match(('Sát', 'ta'), 'sata', 'Nam')  # shared boundary consonant
+    assert asr._regional_syllables_match(('Phu', 'gi', 'e'), 'fugie', 'Bắc')
+    # One glued romaji token still reads per syllable: Hinohaza (Nam z as r).
+    result = adjudicate('Cuối cùng, chỉ còn lại Hi-nô-ha-ra.', 'Cuối cùng, chỉ còn lại Hinohaza.',
+                        form='Hi-nô-ha-ra', surface='Hinohara', region='Nam', alias=False)
+    assert result['verdict'] == asr.ASR_PASS

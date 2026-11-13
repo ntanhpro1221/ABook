@@ -1,6 +1,6 @@
 {
   "sea_g2p": "0.10.0",
-  "quality_hash": "9a153d8f18c77c28e29fac0e1e8bcba7755beedcb25aaa077cd50d4cb018f049",
+  "quality_hash": "bd4ca0fda67c27e92764f940855ae4abaed5b4396f23e284fa6152bffdbc685f",
   "comparison": "exact UTF-8 phonemes; no stress, tone, whitespace or punctuation folding",
   "cases": [
     {

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import functools
 import gc
 import math
 import re
@@ -665,6 +666,41 @@ def _romaji_component_sounds_right(
     return expected in heard
 
 
+def _regional_syllables_match(spoken_syllables: Sequence[str], span: str, voice_region: str) -> bool:
+    """Cut `span` into one piece per spoken syllable, each equal under the regional key.
+
+    Whisper may glue a name into one token ("sata" for Sat-ta), so the cut is searched, but
+    every locked syllable must own a piece of its own. Comparing the joined keys instead let
+    "Fuze" stand for Phu-gi-e: joined, gi+e reads as the single syllable "gie" and the
+    syllabic gi - a whole syllable - vanished. The only letters a piece may leave out are a
+    coda repeated as the next syllable's onset (Sat-ta/sata), so no nucleus is ever lost.
+    """
+    expected = [_name_spelling_key(_anchor_component_letters(part), voice_region) for part in spoken_syllables]
+    if not expected or not all(expected):
+        return False
+    accepted: list[set[str]] = []
+    for index, key in enumerate(expected):
+        forms = {key}
+        coda = re.search(r"[^aăâeêioôơuưy]+$", key)
+        if coda and index + 1 < len(expected) and expected[index + 1].startswith(coda.group()):
+            onset = key[:coda.start()]
+            if re.search(r"[aăâeêioôơuưy]", onset):
+                forms.add(onset)
+        accepted.append(forms)
+
+    @functools.lru_cache(maxsize=None)
+    def matches(index: int, start: int) -> bool:
+        if index == len(expected):
+            return start == len(span)
+        remaining = len(expected) - index - 1
+        for end in range(start + 1, len(span) - remaining + 1):
+            if _name_spelling_key(span[start:end], voice_region) in accepted[index] and matches(index + 1, end):
+                return True
+        return False
+
+    return matches(0, 0)
+
+
 def _anchor_component_sounds_right(
     spoken_syllables: Sequence[str],
     source_component: str,
@@ -742,10 +778,8 @@ def _anchor_component_sounds_right(
             ) == tuple(_name_phonemes(_anchor_component_letters(part), voice_region) for part in spoken_syllables):
                 return True
     if voice_region in {"Bắc", "Nam"}:
-        # Joined spellings also cover a doubled boundary consonant: Sat-ta/sata.
         # Compare the spoken form, not arbitrary edits to a foreign source name.
-        joined = "".join(_anchor_component_letters(part) for part in spoken_syllables)
-        if _name_spelling_key(joined, voice_region) == _name_spelling_key(span, voice_region):
+        if _regional_syllables_match(spoken_syllables, span, voice_region):
             return True
         regional_expected = tuple(_name_phonemes(_anchor_component_letters(part), voice_region) for part in spoken_syllables)
         if all(regional_expected):
