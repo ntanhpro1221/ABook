@@ -89,7 +89,7 @@ WindowLayer {
             width: Math.min(640, panel.width - 48 - 44 - 16 + 17)     // chừa nút ✕ (mực ✕ thẳng mép nội dung bên phải)
             spacing: 4
             Text { width: parent.width; text: TextWrap.pretty(root.title); color: Theme.text; wrapMode: Text.Wrap; font.pixelSize: Theme.sizeSection; font.weight: Theme.weightBold }
-            Text { width: parent.width; text: root.description; Reveal { shown: target.text !== "" } color: Theme.text2; wrapMode: Text.Wrap; font.pixelSize: Theme.sizeBodySmall }
+            Text { id: textItem; width: parent.width; text: root.description; Reveal { shown: textItem.text !== "" } color: Theme.text2; wrapMode: Text.Wrap; font.pixelSize: Theme.sizeBodySmall }
         }
         IconButton {
             id: closeButton

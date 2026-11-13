@@ -31,9 +31,9 @@ Item {
             font.pixelSize: root.labelSize
             font.weight: Theme.weightMedium
         }
-        Text {
+        Text { id: textItem;
             width: parent.width
-            Reveal { shown: target.text !== "" }
+            Reveal { shown: textItem.text !== "" }
             text: root.hint
             textFormat: root.hintRich ? Text.RichText : Text.PlainText
             color: root.hintColor

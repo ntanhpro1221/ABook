@@ -23,6 +23,6 @@ Popover {
                 onClicked: OutputDevices.select(modelData.id)
             }
         }
-        Text { objectName: "outputError"; width: parent.width; Reveal { shown: target.text !== "" } text: OutputDevices.error; wrapMode: Text.Wrap; color: Theme.danger; font.pixelSize: Theme.sizeCaption }
+        Text { id: outputError; objectName: "outputError"; width: parent.width; Reveal { shown: outputError.text !== "" } text: OutputDevices.error; wrapMode: Text.Wrap; color: Theme.danger; font.pixelSize: Theme.sizeCaption }
     }
 }

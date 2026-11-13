@@ -33,7 +33,7 @@ Item {
         anchors.verticalCenter: parent.verticalCenter
         spacing: 4
         Text { width: parent.width; text: root.label; color: Theme.text; wrapMode: Text.Wrap; font.pixelSize: 16; font.weight: Theme.weightMedium }
-        Text { width: parent.width; text: root.hint; Reveal { shown: target.text !== "" } color: root.hintColor; wrapMode: Text.WrapAtWordBoundaryOrAnywhere; font.pixelSize: Theme.sizeCaption; lineHeight: 1.25 }
+        Text { id: textItem; width: parent.width; text: root.hint; Reveal { shown: textItem.text !== "" } color: root.hintColor; wrapMode: Text.WrapAtWordBoundaryOrAnywhere; font.pixelSize: Theme.sizeCaption; lineHeight: 1.25 }
     }
     Item {
         id: control

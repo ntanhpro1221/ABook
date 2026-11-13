@@ -88,10 +88,10 @@ Column {
         }
     }
 
-    component Section_: Text {
+    component Section_: Text { id: textItem;
         property bool shown: true
         property color tone: Theme.text2
-        Reveal { shown: target.shown }
+        Reveal { shown: textItem.shown }
         width: parent.width
         height: shown ? implicitHeight + 10 : 0
         leftPadding: 8

@@ -87,8 +87,8 @@ Column {
                 onClicked: root.menu = root.menu === row.preset.id ? "" : row.preset.id
             }
         }
-        Item {
-            width: parent.width; height: root.menu === row.preset.id ? actions.implicitHeight : 0; clip: true; Reveal { shown: row.mine && target.height > 0 }
+        Item { id: itemItem;
+            width: parent.width; height: root.menu === row.preset.id ? actions.implicitHeight : 0; clip: true; Reveal { shown: row.mine && itemItem.height > 0 }
             Behavior on height { NumberAnimation { duration: Theme.motionFast } }
             Flow {
                 id: actions; x: 32; width: parent.width - x; spacing: Theme.s24

@@ -18,7 +18,7 @@ Column {
     readonly property var unsaved: tracks.filter(track => !track.saved)
     readonly property bool busy: !!(downloads && downloads.active && Object.keys(downloads.active).length)
     readonly property string previewing: Clip.current.indexOf("library:") === 0 ? Clip.current.slice(8) : ""
-    Reveal { shown: target.tracks.length > 0 }
+    Reveal { shown: root.tracks.length > 0 }
     height: visible ? implicitHeight : 0
     spacing: Theme.s8
 

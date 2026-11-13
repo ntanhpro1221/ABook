@@ -36,9 +36,9 @@ Flow {
             TapHandler { enabled: autoSwitch.enabled; onTapped: autoSwitch.clicked() }
         }
     }
-    Text {
+    Text { id: autoPickNote;
         objectName: "autoPickNote"
-        Reveal { shown: !root.canPick && target.text !== "" }
+        Reveal { shown: !root.canPick && autoPickNote.text !== "" }
         text: root.note
         color: Theme.text2
         wrapMode: Text.WrapAtWordBoundaryOrAnywhere

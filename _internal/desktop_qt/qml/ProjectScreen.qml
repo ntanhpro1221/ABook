@@ -423,9 +423,9 @@ FocusScope {
                                     anchors.verticalCenter: parent.verticalCenter
                                 }
                             }
-                            ClockLabel {
+                            ClockLabel { id: projectProgressNote;
                                 objectName: "projectProgressNote"
-                                Reveal { shown: target.text !== "" }
+                                Reveal { shown: projectProgressNote.text !== "" }
                                 width: Math.min(implicitWidth, parent.width)
                                 height: Math.max(22, implicitHeight)
                                 verticalAlignment: Text.AlignVCenter
@@ -496,7 +496,7 @@ FocusScope {
                                 id: problem
                                 objectName: "projectProblem"
                                 readonly property var shown: root.book ? Logic.bookProblem(root.book, !!(root.store.info && root.store.info.studio), false) : null
-                                Reveal { shown: target.shown !== null }
+                                Reveal { shown: problem.shown !== null }
                                 width: parent.width
                                 spacing: 4
                                 Text { width: parent.width; text: problem.shown ? problem.shown.summary : ""; color: Theme.danger; wrapMode: Text.Wrap; font.pixelSize: Theme.sizeBodySmall; font.weight: Theme.weightMedium }
@@ -735,7 +735,7 @@ FocusScope {
             EmptyState {
                 id: emptyBlock
                 objectName: "tabEmpty"
-                Reveal { target: emptyBlock; shown: target.parent.chaptersEmpty || target.parent.activityEmpty }
+                Reveal { target: emptyBlock; shown: emptyBlock.parent.chaptersEmpty || emptyBlock.parent.activityEmpty }
                 x: 8
                 y: backWrap.height
                 width: root.contentW
@@ -747,7 +747,7 @@ FocusScope {
             Text {
                 id: placeholderText
                 objectName: "tabPlaceholder"
-                Reveal { shown: target.parent.placeholder }
+                Reveal { shown: placeholderText.parent.placeholder }
                 x: 8; y: backWrap.height + 32
                 width: root.contentW
                 text: parent.notReady ? Precast.NOT_READY : Logic.tabPlaceholder(root.shownTab)
@@ -828,7 +828,7 @@ FocusScope {
         SmoothWheel { flick: list }
     }
     ScrollEdges { target: list; color: Theme.bg; x: list.x; y: list.y; width: list.width; height: list.height; Reveal { shown: list.visible }}
-    Scrollbar { target: list; Reveal { shown: list.visible && scrollable && opacity > 0 }}
+    Scrollbar { target: list; visible: list.visible && scrollable && opacity > 0}
 
     // ---- menu ----
     ProjectMenu {

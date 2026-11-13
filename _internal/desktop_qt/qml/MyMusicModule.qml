@@ -57,10 +57,10 @@ Column {
             width: parent.width
             open: root.showModule
             spacing: 8
-            ClockLabel {
+            ClockLabel { id: clockLabelItem;
                 width: parent.width
                 text: root.label
-                Reveal { shown: target.text !== "" }
+                Reveal { shown: clockLabelItem.text !== "" }
                 color: root.failed ? Theme.danger : Theme.text2
                 wrapMode: Text.WrapAtWordBoundaryOrAnywhere
                 font.pixelSize: Theme.sizeCaption

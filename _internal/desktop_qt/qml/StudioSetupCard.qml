@@ -172,13 +172,13 @@ Item {
                             Icon {
                                 id: spinner
                                 anchors.centerIn: parent
-                                Reveal { shown: !modelData.done && target.parent.parent.activeStep }
+                                Reveal { shown: !modelData.done && spinner.parent.parent.activeStep }
                                 name: "loader-circle"; size: 16; color: Theme.accentText
                                 RotationAnimator on rotation { running: spinner.visible && Nav.uiVisible && !Theme.reduceMotion; from: 0; to: 360; duration: Theme.spinMs; loops: Animation.Infinite }
                             }
-                            Rectangle {
+                            Rectangle { id: rectangleItem;
                                 anchors.centerIn: parent
-                                Reveal { shown: !modelData.done && !target.parent.parent.activeStep }
+                                Reveal { shown: !modelData.done && !rectangleItem.parent.parent.activeStep }
                                 width: 16; height: 16; radius: width / 2
                                 color: "transparent"; border.width: 1; border.color: Theme.controlLine
                             }

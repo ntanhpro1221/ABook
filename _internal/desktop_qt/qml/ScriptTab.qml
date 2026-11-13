@@ -417,10 +417,10 @@ Item {
                     }
                 }
                 // Chương kể ngôi thứ nhất: máy gán nhầm câu của người khác cho "tôi" nhiều nhất - mời soát riêng câu của người kể trước
-                Item {
+                Item { id: scriptFirstPerson;
                     objectName: "scriptFirstPerson"
                     readonly property var first: root.script ? root.script.firstPerson : null
-                    Reveal { shown: !!root.script && root.script.castReady && !!target.first && !!target.first.chip && root.who !== target.first.chip }
+                    Reveal { shown: !!root.script && root.script.castReady && !!scriptFirstPerson.first && !!scriptFirstPerson.first.chip && root.who !== scriptFirstPerson.first.chip }
                     width: parent.width
                     height: visible ? firstFlow.height + 12 : 0
                     Flow {
@@ -504,7 +504,7 @@ Item {
                 Column {
                     id: lines
                     objectName: "scriptLines"
-                    Reveal { shown: target.height > topPadding }
+                    Reveal { shown: lines.height > lines.topPadding }
                     width: parent.width
                     topPadding: 12
                     Keys.onPressed: event => root.onKey(event)
@@ -700,8 +700,8 @@ Item {
                         onClicked: root.go(root.script.next)
                     }
                 }
-                Text {
-                    Reveal { shown: root.narrow && !!root.entry && target.text !== "" }
+                Text { id: textItem;
+                    Reveal { shown: root.narrow && !!root.entry && textItem.text !== "" }
                     width: toolbar.width
                     text: root.entry ? Script.chapterExtras(root.entry) : ""
                     color: Theme.text3

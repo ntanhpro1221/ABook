@@ -84,9 +84,9 @@ Item {
                 font.pixelSize: Theme.sizeBodySmall
                 font.weight: Theme.weightMedium
             }
-            Text {
+            Text { id: projectSubtitle;
                 objectName: "projectSubtitle"
-                Reveal { shown: target.text !== "" }
+                Reveal { shown: projectSubtitle.text !== "" }
                 width: parent.width
                 text: Logic.rowSubtitle(root.book)
                 color: Theme.text2

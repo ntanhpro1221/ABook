@@ -79,7 +79,7 @@ Item {
                 }
                 Text {
                     id: gender
-                    Reveal { shown: target.text !== "" }
+                    Reveal { shown: gender.text !== "" }
                     x: name.x + name.width + 10
                     anchors.verticalCenter: parent.verticalCenter
                     text: VoiceLogic.genderLabel(root.voice.gender)

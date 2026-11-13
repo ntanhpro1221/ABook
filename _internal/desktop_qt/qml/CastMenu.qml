@@ -23,9 +23,9 @@ Popover {
         readonly property bool canMerge: Boolean(root.caps.merge) && p.lines > 0
         readonly property bool canGender: Boolean(root.caps.gender) && Boolean(p.voice) && p.lines > 0
         height: Theme.buttonHeight * ((canMerge ? 1 : 0) + (root.caps.rename ? 1 : 0) + (canGender ? 1 : 0))
-        MenuRow {
+        MenuRow { id: castMerge;
             objectName: "castMerge"
-            Reveal { shown: target.parent.canMerge }
+            Reveal { shown: castMerge.parent.canMerge }
             width: parent.width; icon: "git-merge"; text: S.s_gop_vao_nguoi_khac_2e03b64e
             onClicked: { root.close(); root.picked("merge", parent.p) }
         }
@@ -35,9 +35,9 @@ Popover {
             width: parent.width; icon: "text-cursor-input"; text: S.s_doi_ten_a2a0dc70
             onClicked: { root.close(); root.picked("rename", parent.p) }
         }
-        MenuRow {
+        MenuRow { id: castGender;
             objectName: "castGender"
-            Reveal { shown: target.parent.canGender }
+            Reveal { shown: castGender.parent.canGender }
             width: parent.width; icon: "user-round"; text: S.s_doi_gioi_tinh_8fde2c62
             onClicked: { root.close(); root.picked("gender", parent.p) }
         }

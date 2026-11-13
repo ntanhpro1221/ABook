@@ -69,17 +69,17 @@ Column {
                     y: 8
                     width: parent.width - 24 - pin.width - 12
                     Text { width: parent.width; text: TextWrap.keepDots(row.modelData.title); color: Theme.text; wrapMode: Text.WrapAtWordBoundaryOrAnywhere; font.pixelSize: Theme.sizeBodySmall }
-                    Text {
+                    Text { id: textItem;
                         width: parent.width
-                        Reveal { shown: target.text !== "" }
+                        Reveal { shown: textItem.text !== "" }
                         text: [row.modelData.creator, row.modelData.duration ? Logic.formatClock(row.modelData.duration) : ""].filter(part => !!part).join("\u00a0·\u00a0")   // tick-ok: độ dài cố định của bài
                         color: Theme.text2
                         wrapMode: Text.WrapAtWordBoundaryOrAnywhere
                         font.pixelSize: Theme.sizeCaption
                     }
-                    Text {
+                    Text { id: textItem2;
                         width: parent.width
-                        Reveal { shown: target.text !== "" }
+                        Reveal { shown: textItem2.text !== "" }
                         text: Music.mineNote(row.modelData)
                         color: Theme.text2
                         wrapMode: Text.WrapAtWordBoundaryOrAnywhere

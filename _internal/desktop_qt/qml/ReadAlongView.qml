@@ -47,7 +47,7 @@ Item {
     Text {
         id: hint; objectName: "readerHint"
         x: Theme.s24; y: Theme.s12; width: parent.width - 2 * Theme.s24
-        Reveal { shown: ReadAlong.status === "ready" && target.text !== "" }
+        Reveal { shown: ReadAlong.status === "ready" && hint.text !== "" }
         text: Labels.readerHint(Player.speaking, Api.voiceList.length > 0, ReadAlong.timed, root.tapped)
         wrapMode: Text.Wrap; color: root.surface.fg2; font.pixelSize: Theme.sizeCaption
         z: 2

@@ -37,9 +37,9 @@ Item {
             font.weight: Theme.weightMedium
             textFormat: Text.PlainText
         }
-        Text {
+        Text { id: textItem;
             width: parent.width
-            Reveal { shown: target.text !== "" }
+            Reveal { shown: textItem.text !== "" }
             text: root.help
             color: Theme.text2
             wrapMode: Text.WrapAtWordBoundaryOrAnywhere

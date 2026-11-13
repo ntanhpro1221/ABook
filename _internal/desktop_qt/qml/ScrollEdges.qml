@@ -6,7 +6,7 @@ Item {
     id: root
     required property Flickable target
     property color color: Theme.bg      // nền dưới khung cuộn (hộp thoại: Theme.panel)
-    Rectangle {
+    Rectangle { id: scrollFadeTop;
         objectName: "scrollFadeTop"
         width: parent.width
         height: Theme.s16
@@ -16,7 +16,7 @@ Item {
             GradientStop { position: 1; color: Qt.alpha(root.color, 0) }
         }
     }
-    Rectangle {
+    Rectangle { id: scrollFadeBottom;
         objectName: "scrollFadeBottom"
         anchors.bottom: parent.bottom
         width: parent.width

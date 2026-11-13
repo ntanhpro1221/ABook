@@ -427,7 +427,7 @@ Column {
     // 4. Lựa chọn đặc biệt (con do chỗ dùng đặt vào).
     Column {
         id: specialSlot
-        Reveal { shown: children.length > 0 }
+        Reveal { shown: specialSlot.children.length > 0 }
         width: root.width
         spacing: Theme.s4
     }

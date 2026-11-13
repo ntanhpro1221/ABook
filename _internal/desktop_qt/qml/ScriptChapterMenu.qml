@@ -72,7 +72,7 @@ Popover {
                     }
                     Text {
                         id: extras
-                        Reveal { shown: !root.narrow && target.text !== "" }
+                        Reveal { shown: !root.narrow && extras.text !== "" }
                         anchors.right: parent.right
                         width: Math.min(implicitWidth, parent.width / 2)
                         text: S.chapterExtras(row.modelData)

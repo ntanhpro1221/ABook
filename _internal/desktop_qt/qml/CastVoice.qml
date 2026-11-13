@@ -344,10 +344,10 @@ CastModal {
                                             font.weight: Theme.weightMedium
                                         }
                                     }
-                                    Text {
+                                    Text { id: textItem;
                                         width: parent.width
                                         text: Logic.voiceMeta(row.voice, root.shownGender === "all")
-                                        Reveal { shown: target.text !== "" }
+                                        Reveal { shown: textItem.text !== "" }
                                         color: (row.voice.sharedWith || []).length && !(row.voice.takenBy || []).length ? Theme.warning : Theme.text2
                                         wrapMode: Text.WrapAtWordBoundaryOrAnywhere
                                         font.pixelSize: Theme.sizeCaption

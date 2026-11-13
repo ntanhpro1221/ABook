@@ -285,17 +285,17 @@ Item {
                 width: parent.width; icon: "book-open"; text: S.s_doc_chuong_nay_5d5272d3
                 onClicked: { chapterMenu.close(); reader.begin(root.book.bookId, parent.c.chapterId) }
             }
-            MenuRow {
+            MenuRow { id: chapterFromStart;
                 objectName: "chapterFromStart"
-                Reveal { shown: Boolean(target.parent.c.playable) }
+                Reveal { shown: Boolean(chapterFromStart.parent.c.playable) }
                 width: parent.width
                 icon: "play"
                 text: S.s_nghe_tu_dau_chuong_06c66bfc
                 onClicked: { chapterMenu.close(); Player.open(root.book.bookId, parent.c.chapterId, 0, true) }
             }
-            MenuRow {
+            MenuRow { id: chapterDone;
                 objectName: "chapterDone"
-                Reveal { shown: Boolean(target.parent.c.playable) }
+                Reveal { shown: Boolean(chapterDone.parent.c.playable) }
                 width: parent.width
                 icon: parent.c.done ? "circle-dashed" : "check-check"
                 text: parent.c.done ? S.s_chua_nghe_2fbea4c8 : S.s_da_nghe_xong_d276b702
@@ -385,10 +385,10 @@ Item {
                     font.pixelSize: Theme.sizeBody
                 }
                 // Mỗi cụm giữa hai "·" là một khối: Flow chỉ xuống hàng giữa hai khối ("5 giờ 45 phút" không gãy), khối dài hơn cả hàng mới gãy bên trong (FlowDetail).
-                Flow {
+                Flow { id: bookMeta;
                     objectName: "bookMeta"
                     readonly property var parts: BookText.metaParts(root.book.detail, root.book.chapters > 0 ? root.book.chapters + S.s_chuong_9e6a01dc : "")
-                    Reveal { shown: target.parts.length > 0 }
+                    Reveal { shown: bookMeta.parts.length > 0 }
                     width: parent.width
                     spacing: Theme.s4
                     Repeater {
@@ -401,9 +401,9 @@ Item {
                     }
                 }
                 // Tình trạng của cuốn: một dòng chữ nhỏ (chỉ có chữ / chưa đủ chương), không hộp, không viên thuốc màu.
-                Text {
+                Text { id: bookStatusLine;
                     objectName: "bookStatusLine"
-                    Reveal { shown: target.text !== "" }
+                    Reveal { shown: bookStatusLine.text !== "" }
                     width: parent.width
                     text: root.loaded ? BookText.statusLine(root.fullBook, root.speaks) : ""
                     color: root.textOnly ? Theme.text2 : Theme.accentText

@@ -73,10 +73,10 @@ Item {
         }
     }
     // Gạch chân của mục đang chọn: trượt (x, bề ngang) khi đổi mục; giảm chuyển động thì nhảy, chỉ mờ.
-    Rectangle {
+    Rectangle { id: rectangleItem;
         // repeater.count trong biểu thức: tính lại khi các mục vừa dựng xong (itemAt không báo đổi)
         readonly property Item target: repeater.count > 0 && root.currentIndex >= 0 ? repeater.itemAt(root.currentIndex) : null
-        Reveal { shown: target.target !== null }
+        Reveal { shown: rectangleItem.target !== null }
         x: target ? target.x : 0
         y: target ? target.y + target.height - height : 0
         width: target ? target.width : 0

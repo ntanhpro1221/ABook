@@ -79,11 +79,11 @@ Item {
         }
     }
     // Gạch chân của hàng đang chọn: trượt giữa các hàng; giảm chuyển động thì nhảy
-    Rectangle {
+    Rectangle { id: exportKindLine;
         // rows.count trong biểu thức: tính lại khi các hàng vừa dựng xong (itemAt không báo đổi)
         readonly property Item target: rows.count > 0 ? rows.itemAt(root.selectedIndex) : null
         objectName: "exportKindLine"
-        Reveal { shown: target.target !== null }
+        Reveal { shown: exportKindLine.target !== null }
         x: 0
         y: target ? target.y + target.height - height - (target.last ? 0 : 1) : 0
         width: root.width

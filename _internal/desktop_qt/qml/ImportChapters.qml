@@ -153,12 +153,12 @@ Item {
                                     font.weight: Theme.weightMedium
                                     Behavior on color { ColorAnimation { duration: Theme.motionFast } }
                                 }
-                                Icon {
+                                Icon { id: iconItem;
                                     // đọc width + contentWidth/Height để binding tính lại khi chữ gãy dòng theo bề rộng mới (chỉ length thì bút ở chỗ cũ,
                                     // đè lên dòng dưới - Lead soát 0.4.151, máy dò IconText)
                                     readonly property rect end: titleText.width + titleText.contentWidth + titleText.contentHeight >= 0
                                                                 ? titleText.positionToRectangle(titleText.length) : Qt.rect(0, 0, 0, 0)
-                                    Reveal { shown: root.inside(row.y + 8 + target.end.y, 14) }
+                                    Reveal { shown: root.inside(row.y + 8 + iconItem.end.y, 14) }
                                     x: end.x + 6
                                     y: end.y + (end.height - 12) / 2 + 1
                                     name: "pencil"
@@ -199,9 +199,9 @@ Item {
                             font.pixelSize: Theme.sizeCaption
                             textFormat: Text.PlainText
                         }
-                        Text {
+                        Text { id: textItem;
                             width: parent.width
-                            Reveal { shown: target.text !== "" }
+                            Reveal { shown: textItem.text !== "" }
                             text: row.chapter.matter ? row.chapter.matter + S.s_co_ve_khong_phai_truyen_tich_neu_muon_nghe_e93a3b54 : (row.chapter.short ? S.s_rat_ngan_co_the_la_bia_trang_ban_quyen_6d1fe6d0 : "")
                             color: Theme.text3
                             wrapMode: Text.WrapAtWordBoundaryOrAnywhere

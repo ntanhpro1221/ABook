@@ -162,9 +162,9 @@ Item {
                                     font.pixelSize: Theme.sizeBody
                                     font.weight: Theme.weightMedium
                                 }
-                                Text {
+                                Text { id: castNarratorPending;
                                     objectName: "castNarratorPending"
-                                    Reveal { shown: Boolean(root.caps.voice) && target.text !== "" }
+                                    Reveal { shown: Boolean(root.caps.voice) && castNarratorPending.text !== "" }
                                     width: parent.width
                                     text: Logic.narratorPending(root.narrator)
                                     color: Theme.accentText

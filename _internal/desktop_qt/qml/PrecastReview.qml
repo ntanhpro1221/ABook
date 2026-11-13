@@ -214,7 +214,7 @@ FocusScope {
                                 }
                                 Text {
                                     id: countText
-                                    Reveal { shown: target.text !== "" }
+                                    Reveal { shown: countText.text !== "" }
                                     width: parent.width
                                     text: root.counts[button.modelData] || ""
                                     color: Theme.text2
@@ -398,7 +398,7 @@ FocusScope {
             id: twin
             property var person: ({})
             readonly property bool shown: Boolean(root.twins[Cast.cleanName(person.displayName).toLowerCase()]) && person.lines > 0
-            Reveal { shown: target.shown }
+            Reveal { shown: twin.shown }
             height: shown ? implicitHeight : 0
             spacing: 8
             leftPadding: 4

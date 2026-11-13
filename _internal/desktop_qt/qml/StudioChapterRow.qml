@@ -89,9 +89,9 @@ Item {
             font.pixelSize: Theme.sizeBodySmall
             font.weight: Theme.weightMedium
         }
-        Text {
+        Text { id: chapterSubtitle;
             objectName: "chapterSubtitle"
-            Reveal { shown: target.text !== "" }
+            Reveal { shown: chapterSubtitle.text !== "" }
             width: parent.width
             text: TextWrap.keepDots(root.errorLine !== "" ? "" : (root.chapter.subtitle || ""))
             color: Theme.text2

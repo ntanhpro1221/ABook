@@ -54,10 +54,10 @@ Column {
     Prose { topPadding: 4; text: S.s_giong_doc_loi_dan_nhan_vat_duoc_trao_giong_6dd30d7a }
 
     // Mở "Kể bằng “tôi”?"
-    Item {
+    Item { id: itemItem;
         width: parent.width
         height: !root.askOpen ? 12 + ask.height : 0
-        Reveal { shown: target.height > 0 }
+        Reveal { shown: itemItem.height > 0 }
         TextLink { id: ask; objectName: "newFirstPersonOpen"; y: 12; text: S.s_ke_bang_toi_521f80f7; accent: true; enabled: !(root.form && root.form.hintLoading); opacity: enabled ? 1 : 0.6; onClicked: root.opened = true }
     }
     // “Tôi” là ai?

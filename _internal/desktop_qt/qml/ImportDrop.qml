@@ -10,7 +10,7 @@ Item {
     property bool shown: false
     property real reveal: shown ? 1 : 0
     objectName: "importDrop"
-    Reveal { shown: target.reveal > 0 }
+    Reveal { shown: root.reveal > 0 }
     enabled: false
     Behavior on reveal {
         NumberAnimation {
