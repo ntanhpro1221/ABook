@@ -67,7 +67,14 @@ def _level_probe(word: str, g2p: Callable[[str], str]) -> str | None:
     phone = g2p(marked).strip()
     if len(phone.split()) != 1 or "ɜ" not in phone:
         return None
-    return phone.replace("ɜ", "")
+    probe = phone.replace("ɜ", "")
+    plain = g2p(word).strip()
+    # Preserve sea-g2p's native level-tone marker and stress when it already
+    # emits the Vietnamese syllable. The probe only disambiguates English.
+    segmental = lambda value: re.sub("[1ˈˌ]", "", value)
+    if len(plain.split()) == 1 and segmental(plain) == segmental(probe):
+        return plain
+    return probe
 
 
 def restore_generated_syllables(

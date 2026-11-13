@@ -120,12 +120,12 @@
     "reason": "Pre-existing public regression fixture; exact bytes only, changes require renewed privacy review"
   },
   "_internal/tests/fixtures/vieneu/android/text.json": {
-    "sha256": "c1f03a0e1cc23e63532f360c73dc425d348df0cb2a96d15404c86ac828f30cf7",
-    "reason": "Pre-existing public regression fixture; exact bytes only, changes require renewed privacy review"
+    "sha256": "0821a8d7c676bf7416866393b5fbd6c597697c374f614da6e3bfa4b6bb1a2faf",
+    "reason": "Synthetic sentences authored in scripts/vieneu_android_fixtures.py; native level/stress correction, generated text/token IDs only"
   },
   "_internal/tests/fixtures/vieneu/android/tokens.json": {
-    "sha256": "ab8373c5739e749c55f3c7a7fd363e1b2e4e2377429bf18bb02d565b6f7acbfb",
-    "reason": "Pre-existing public regression fixture; exact bytes only, changes require renewed privacy review"
+    "sha256": "5725bc88c551c2305e6ef06b957506f7a6332873dd330a571c34792ba271e074",
+    "reason": "Synthetic sentences authored in scripts/vieneu_android_fixtures.py; native level/stress correction, generated text/token IDs only"
   },
   "_internal/tests/fixtures/word_timing/truth.json": {
     "sha256": "f9a934b804626c628e5c6341490748601959faeab655a8e10f3fffadae9b76b2",

@@ -22,7 +22,11 @@ object PhonemePolicy {
         if ((word.startsWith("gi") || word.startsWith("qu")) && vowels.size >= 2 && pos == vowels[0]) pos = vowels[1]
         val marked = word.take(pos) + Normalizer.normalize(word[pos] + "\u0301", Normalizer.Form.NFC) + word.drop(pos + 1)
         val phone = g2p(marked).trim()
-        return if (phone.split(Regex("\\s+")).size == 1 && 'ɜ' in phone) phone.replace("ɜ", "") else null
+        if (phone.split(Regex("\\s+")).size != 1 || 'ɜ' !in phone) return null
+        val probe = phone.replace("ɜ", "")
+        val plain = g2p(word).trim()
+        fun segmental(value: String) = value.replace(Regex("[1ˈˌ]"), "")
+        return if (plain.split(Regex("\\s+")).size == 1 && segmental(plain) == segmental(probe)) plain else probe
     }
 
     /** Generated Vietnamese syllables must survive the phonemizer's language detection. */
