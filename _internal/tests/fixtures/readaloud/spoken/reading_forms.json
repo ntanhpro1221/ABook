@@ -1645,6 +1645,36 @@
    "id": "tnfix_english_keep-1",
    "text": "The boss is here.",
    "said": "The boss is here."
+  },
+  {
+   "id": "tnfix_decimal_zero-1",
+   "text": "Xác suất chỉ 0.0007% thôi.",
+   "said": "Xác suất chỉ 0,0007% thôi."
+  },
+  {
+   "id": "tnfix_decimal_zero-2",
+   "text": "Mất 0.004 giây.",
+   "said": "Mất 0,004 giây."
+  },
+  {
+   "id": "tnfix_count_letter-1",
+   "text": "Lần thứ N rồi đấy.",
+   "said": "Lần thứ en rồi đấy."
+  },
+  {
+   "id": "tnfix_count_letter-2",
+   "text": "Đã nhắc N lần.",
+   "said": "Đã nhắc en lần."
+  },
+  {
+   "id": "tnfix_count_letter_keep-1",
+   "text": "Một lá N và một lá R.",
+   "said": "Một lá N và một lá R."
+  },
+  {
+   "id": "tnfix_decimal_zero_keep-1",
+   "text": "Bản 0.0.3 ra rồi.",
+   "said": "Bản 0.0.3 ra rồi."
   }
  ]
 }

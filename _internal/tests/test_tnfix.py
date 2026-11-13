@@ -52,7 +52,8 @@ def test_real_words_are_never_stretched(word):
     assert studio_tn(f"Từ {word} này.", None, True)[0] == f"Từ {word} này."
 
 
-@pytest.mark.parametrize(("code", "said"), [("M2", "em hai"), ("M60", "em sáu mươi"), ("M500", "em năm trăm"), ("MP9", "em pê chín"), ("M82A1", "em tám mươi hai a một"), ("SS2", "ét ét hai")])
+@pytest.mark.parametrize(("code", "said"), [("M2", "em hai"), ("M60", "em sáu mươi"), ("M500", "em năm trăm"), ("MP9", "em pê chín"), ("M82A1", "em tám mươi hai a một"), ("SS2", "ét ét hai"),
+                                           ("R18", "e-rờ mười tám"), ("L115A3", "e-lờ một trăm mười lăm a ba")])
 def test_uppercase_model_codes(code, said):
     assert studio_tn(f"Thử {code} nhé.", None, True, direct_english=True)[0] == f"Thử {said} nhé."
 
@@ -132,3 +133,35 @@ def test_quotation_marks_after_a_lone_letter_stay(source):
 
     assert separate_digit_quotes(source) == source
 
+
+
+@pytest.mark.parametrize(("source", "expected"), [
+    ("Chỉ 0.0003% thôi.", "Chỉ 0,0003% thôi."),
+    ("Mất 0.006 giây.", "Mất 0,006 giây."),
+    ("Bản 0.0.2 nhé.", "Bản 0.0.2 nhé."),
+    ("Giá 4.200 đồng.", "Giá bốn nghìn hai trăm đồng."),
+])
+def test_a_leading_zero_group_is_a_decimal(source, expected):
+    assert studio_tn(source, None, True, direct_english=True)[0] == expected
+
+
+@pytest.mark.parametrize(("source", "direct", "plain"), [
+    ("Lần thứ N rồi.", "Lần thứ <en>N</en> rồi.", "Lần thứ en rồi."),
+    ("Nhắc N lần rồi.", "Nhắc <en>N</en> lần rồi.", "Nhắc en lần rồi."),
+    ("Chọn lá N đi.", "Chọn lá N đi.", "Chọn lá N đi."),
+    ("Thứ R lần này.", "Thứ R lần này.", "Thứ R lần này."),
+])
+def test_n_as_an_unspecified_count(source, direct, plain):
+    assert studio_tn(source, None, True, direct_english=True)[0] == direct
+    assert studio_tn(source, None, True)[0] == plain
+
+
+@pytest.mark.parametrize(("source", "expected"), [
+    ("Cậu là loli-con hả?", "Cậu là lô-li con hả?"),
+    ("Đánh Boss Cuối Cùng đi.", "Đánh bót Cuối Cùng đi."),
+    ("Gặp Boss Taylor ở đây.", "Gặp Boss Taylor ở đây."),
+    ("Một bro-con thật sự.", "Một bro-con thật sự."),
+    ("Trang web-based thôi.", "Trang web-based thôi."),
+])
+def test_loanwords_beside_vietnamese_words(source, expected):
+    assert studio_tn(source, None, True, direct_english=True)[0] == expected
