@@ -17,6 +17,18 @@ Item {
             Reveal { id: controller; objectName: "controller"; shown: row.expanded }
         }
     }
+    Component {
+        id: holder
+        Item {
+            width: 200; height: 60
+            Rectangle {
+                id: inner
+                property bool expanded: true
+                width: 120; height: 40
+                Reveal { objectName: "controller"; shown: inner.expanded }
+            }
+        }
+    }
     TestCase {
         name: "RevealLifetime"
         when: windowShown
@@ -55,6 +67,34 @@ Item {
             verify(control.progress >= middle && control.progress < 1, "reverse the current fade")
             tryCompare(control, "progress", 1)
             verify(row.visible && row.enabled)
+        }
+        function test_leaves_the_visual_tree() {
+            const row = createTemporaryObject(sample, host)
+            const control = findChild(row, "controller")
+            verify(control, "still reachable as a QObject child")
+            compare(row.children.length, 0, "children[0] and positioners see only what the caller wrote")
+            compare(control.target, row)
+            row.expanded = false
+            tryCompare(row, "visible", false)
+            row.expanded = true
+            tryCompare(control, "progress", 1)
+            verify(row.visible && row.enabled)
+        }
+        function test_disabled_parent_does_not_stick() {
+            const box = createTemporaryObject(holder, host, {enabled: false})
+            const row = box.children[0]
+            row.expanded = false
+            tryCompare(row, "visible", false)
+            row.expanded = true
+            box.enabled = true
+            tryCompare(findChild(row, "controller"), "progress", 1)
+            verify(row.enabled, "an ancestor's disabled state is not saved as the item's own")
+            box.enabled = false
+            row.expanded = false
+            box.enabled = true
+            verify(!row.enabled, "closing still blocks input once the ancestor is enabled again")
+            row.expanded = true
+            verify(row.enabled)
         }
         function test_starts_hidden_without_flash() {
             const row = createTemporaryObject(sample, host, {expanded: false})
