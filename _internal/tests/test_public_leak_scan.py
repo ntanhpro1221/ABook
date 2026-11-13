@@ -71,3 +71,26 @@ def test_empty_inventory_fails_and_missing_corpus_is_explicit(tmp_path, monkeypa
 def test_public_git_files_contain_no_private_machine_or_session_path():
     findings = [name for name in scan.tracked() if scan.private_file(scan.REPO / name)]
     assert findings == [], findings
+
+
+def test_reviewed_bytes_must_match_and_corpus_overlap_cannot_be_waived(tmp_path, monkeypatch):
+    name = "synthetic.json"
+    path = tmp_path / name
+    content = '"' + " ".join(["kəː"] * 8) + '"'
+    path.write_text(content, encoding="utf-8")
+    monkeypatch.setattr(scan, "tracked", lambda _: [name])
+    monkeypatch.setattr(scan, "load_reviewed", lambda: {
+        name: {"sha256": scan.digest(path), "reason": "Synthetic phoneme test for hash validation"},
+    })
+    pinned = scan.load_reviewed()
+    monkeypatch.setattr(scan, "load_reviewed", lambda: pinned)
+    result = scan.audit(tmp_path, corpus=False)
+    assert result["waived"] == 1 and result["findings"] == []
+    path.write_text(content + " ", encoding="utf-8")
+    assert scan.audit(tmp_path, corpus=False)["findings"]
+    path.write_text(content, encoding="utf-8")
+    monkeypatch.setattr(scan, "corpus_overlap", lambda *a, **k: [
+        {"path": name, "rule": f"shares>={scan.SHINGLE}words", "where": "synthetic", "count": 1},
+    ])
+    result = scan.audit(tmp_path, corpus=tmp_path)
+    assert [r["rule"] for r in result["findings"]] == [f"shares>={scan.SHINGLE}words"]
