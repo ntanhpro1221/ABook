@@ -1,0 +1,214 @@
+{
+  "_doc": "Exceptions and remaining-work lists for scripts/ui_parity_rules.py (L1-L10). Every exception carries a reason. `remaining` lists are ratchets: a count may only go down, and must be lowered here when a fix lands.",
+  "L1": {
+    "screens": [
+      {
+        "id": "library",
+        "qt": [
+          "desktop_qt/qml/LibraryScreen.qml",
+          "desktop_qt/qml/BookCell.qml",
+          "desktop_qt/qml/LibraryContinue.qml"
+        ],
+        "android": [
+          "mobile/android/app/src/main/java/vn/abook/player/ui/screens/LibraryScreen.kt",
+          "mobile/android/app/src/main/java/vn/abook/player/ui/screens/LibraryChrome.kt",
+          "mobile/android/app/src/main/java/vn/abook/player/ui/screens/LibrarySheets.kt"
+        ],
+        "web_desktop": [
+          "ui/src/desktop/App.tsx"
+        ],
+        "web_phone": [
+          "ui/src/listen/LibraryScreen.tsx"
+        ]
+      },
+      {
+        "id": "book",
+        "qt": [
+          "desktop_qt/qml/BookPage.qml",
+          "desktop_qt/qml/CastList.qml",
+          "desktop_qt/qml/HistoryList.qml",
+          "desktop_qt/qml/ChapterList.qml",
+          "desktop_qt/qml/ChapterRow.qml"
+        ],
+        "android": [
+          "mobile/android/app/src/main/java/vn/abook/player/ui/screens/BookScreen.kt",
+          "mobile/android/app/src/main/java/vn/abook/player/ui/screens/BookTabs.kt",
+          "mobile/android/app/src/main/java/vn/abook/player/ui/screens/BookSheets.kt"
+        ]
+      },
+      {
+        "id": "player",
+        "qt": [
+          "desktop_qt/qml/NowPlaying.qml",
+          "desktop_qt/qml/PlayerBar.qml",
+          "desktop_qt/qml/MiniPlayer.qml",
+          "desktop_qt/qml/SeekBar.qml",
+          "desktop_qt/qml/ChaptersPopover.qml",
+          "desktop_qt/qml/PlayerVoicePopover.qml",
+          "desktop_qt/qml/SpeedPopover.qml",
+          "desktop_qt/qml/TonePage.qml"
+        ],
+        "android": [
+          "mobile/android/app/src/main/java/vn/abook/player/ui/nowplaying/NowPlayingScreen.kt",
+          "mobile/android/app/src/main/java/vn/abook/player/ui/nowplaying/PlayerSheets.kt",
+          "mobile/android/app/src/main/java/vn/abook/player/ui/player/MiniPlayer.kt",
+          "mobile/android/app/src/main/java/vn/abook/player/ui/nowplaying/TonePage.kt"
+        ]
+      },
+      {
+        "id": "settings",
+        "qt": [
+          "desktop_qt/qml/SettingsScreen.qml",
+          "desktop_qt/qml/Settings*.qml",
+          "desktop_qt/qml/DisclosureRow.qml"
+        ],
+        "android": [
+          "mobile/android/app/src/main/java/vn/abook/player/ui/screens/Settings*.kt"
+        ]
+      },
+      {
+        "id": "add-book",
+        "qt": [
+          "desktop_qt/qml/AddBook.qml",
+          "desktop_qt/qml/Import*.qml"
+        ],
+        "android": [
+          "mobile/android/app/src/main/java/vn/abook/player/ui/addbook/*.kt"
+        ]
+      },
+      {
+        "id": "notices",
+        "qt": [
+          "desktop_qt/qml/Toast.qml",
+          "desktop_qt/qml/ToastStack.qml"
+        ],
+        "android": [
+          "mobile/android/app/src/main/java/vn/abook/player/ui/components/UndoBar.kt"
+        ]
+      },
+      {
+        "id": "devices",
+        "qt": [
+          "desktop_qt/qml/PhoneSync*.qml",
+          "desktop_qt/qml/OtherComputers*.qml",
+          "desktop_qt/qml/Devices*.qml"
+        ],
+        "android": [
+          "mobile/android/app/src/main/java/vn/abook/player/ui/devices/*.kt"
+        ]
+      }
+    ],
+    "allow": [
+      {
+        "a": "Đổi tên chương…",
+        "b": "Đã đổi tên chương: {0}",
+        "reason": "a menu row and the toast after it, not two wordings of one label (the Qt '…' suffix itself is UI_PARITY_QT.md section e)"
+      }
+    ],
+    "_doc": "Paired screens compared directly: Qt <-> Android and web desktop <-> web phone. A one-sided text that nearly equals a one-sided text of the other side is the same task written two ways. `allow`: a pair that only looks alike (a, b = the two texts), with a reason."
+  },
+  "L2": {
+    "allow": [
+      {
+        "task": "Tên bảng \"…\" của trình phát",
+        "text": "Tuỳ chọn",
+        "reason": "the ban is for the name of the player's '…' sheet; New project's 'Tuỳ chọn' is the heading of its optional settings section (web NewProjectScreen.tsx, Qt NewProjectScreen.qml), not a '…' button"
+      },
+      {
+        "task": "Mã ghép đang hiện",
+        "text": "còn {}",
+        "reason": "the ban is a countdown under a pairing code; the uses are an export job's time left ('còn 3 phút', bookFileExport.ts / labels.ts / ExportModel.kt), the same words on all three"
+      },
+      {
+        "task": "Dung lượng (một dòng)",
+        "text": "{} · còn trống {}",
+        "reason": "the ban is a bare size before '· còn trống'; the template's first slot is always 'Sách {cỡ}' or 'Chưa có sách' (format.ts storageSummary = DevicesModel.kt Storage.line), i.e. the chosen wording"
+      }
+    ],
+    "_doc": "Dictionary 'Thay cho' items that only look like a used text: (task, text) with a reason. A row-specific ban that hits an unrelated task goes here, never a whole row."
+  },
+  "L3": {
+    "web_only": [
+      {
+        "key": "select-chevron",
+        "reason": "CSS data-URI image for the native <select> arrow; Qt and Compose draw the lucide chevron icon"
+      },
+      {
+        "key": "shadow",
+        "reason": "CSS box-shadow list; Qt Shadow.qml and Compose elevation draw their own shadow from the same layer role"
+      },
+      {
+        "key": "shadow-lg",
+        "reason": "CSS box-shadow list, as `shadow`"
+      }
+    ],
+    "allow": [
+      {
+        "file": "desktop_qt/qml/CaptionButton.qml",
+        "match": "*",
+        "reason": "Windows title-bar close button: the system's own red (#c42b1c / pressed #a82419) with white glyph, as every Windows app; not an ABook colour"
+      },
+      {
+        "file": "desktop_qt/qml/NowPlaying.qml",
+        "match": "Qt.rgba(",
+        "reason": "interpolates between two Theme colours frame by frame during the mini <-> full morph (no fixed colour)"
+      },
+      {
+        "file": "desktop_qt/qml/ReadAlongView.qml",
+        "match": "Qt.alpha(",
+        "reason": "reading-surface tokens: Theme.read accent at the surface's own along/word percentages (web color-mix of the same tokens)"
+      },
+      {
+        "file": "desktop_qt/qml/ReadAlongView.qml",
+        "match": "Qt.rgba(",
+        "reason": "edge fade from the reading surface's background token to its transparent self"
+      },
+      {
+        "file": "desktop_qt/qml/ScrollEdges.qml",
+        "match": "Qt.alpha(",
+        "reason": "edge fade from the host's background token to transparent"
+      },
+      {
+        "file": "desktop_qt/qml/ScriptRow.qml",
+        "match": "Qt.alpha(",
+        "reason": "Theme.warning at 60 % / 25 %: the web's `ring-warning/60` / `ring-warning/25` on the same marked row"
+      },
+      {
+        "file": "desktop_qt/qml/Sidebar.qml",
+        "match": "*",
+        "reason": "shadow cast by the sidebar (web `shadow` token is a CSS box-shadow list, web-only); Qt draws the same soft edge as a gradient"
+      },
+      {
+        "file": "mobile/android/app/src/main/java/vn/abook/player/ui/components/ScrollFade.kt",
+        "match": "Color.Black",
+        "reason": "alpha mask (DstIn): only the alpha channel is used, no colour reaches the screen"
+      },
+      {
+        "file": "mobile/android/app/src/main/java/vn/abook/player/ui/player/MiniPlayer.kt",
+        "match": "Color.Black",
+        "reason": "shadow above the floating mini player (web `shadow` is CSS, web-only); drawn as a gradient"
+      }
+    ],
+    "_doc": "Colour tokens: every tokens.json colour reaches Theme.qml and Tokens.kt except `web_only`. QML/Kotlin UI files use Theme.* / Abook.colors.*; `allow` = (file, exact match) with a reason."
+  },
+  "L4": {
+    "allow": [],
+    "remaining": {}
+  },
+  "L5": {
+    "components": []
+  },
+  "L6": {
+    "uses": []
+  },
+  "L7": {
+    "fixed": [],
+    "remaining": {}
+  },
+  "L9": {
+    "allow": []
+  },
+  "L10": {
+    "controls": []
+  }
+}
