@@ -17,6 +17,11 @@ Item {
     property string title: ""
     property string description: ""
     property var action: null
+    // Keep outgoing content while Collapse fades it away on replacement.
+    property string displayedDescription: ""
+    property var displayedAction: null
+    onDescriptionChanged: if (description !== "") displayedDescription = description
+    onActionChanged: if (action !== null) displayedAction = action
     property int duration: defaultDuration
     property real t: shown ? 1 : 0
     width: 356
@@ -78,10 +83,10 @@ Item {
             y: 14
             width: card.width - 32 - close.width - 12
             // Như sonner: nút ở bên phải, chữ xuống dòng bên trái (chữ không bao giờ bị cắt; từ dài không ngắt được thì ngắt giữa từ)
-            height: Math.max(texts.height, actionButton.visible ? actionButton.height : 0)
+            height: Math.max(texts.height, actionPresence.height)
             Column {
                 id: texts
-                width: body.width - (actionButton.visible ? actionButton.width + 12 : 0)
+                width: body.width - (actionPresence.visible ? actionPresence.width + 12 : 0)
                 y: Math.max(0, (body.height - height) / 2)
                 spacing: 4
                 Text {
@@ -94,47 +99,55 @@ Item {
                     font.pixelSize: 14
                     font.weight: Theme.weightMedium
                 }
-                Text {
-                    id: descriptionText
-                    objectName: "toastDescription"
-                    visible: root.description !== ""
+                Collapse {
                     width: parent.width
-                    text: root.description
-                    color: Theme.text2
-                    wrapMode: Text.WrapAtWordBoundaryOrAnywhere
-                    font.pixelSize: 14
-                }
-            }
-            Interactive {
-                id: actionButton
-                objectName: "toastAction"
-                visible: root.action !== null
-                x: body.width - width
-                y: (body.height - height) / 2
-                implicitWidth: actionLabel.implicitWidth + 16
-                implicitHeight: Math.max(24, actionLabel.implicitHeight + 6)
-                Accessible.role: Accessible.Button
-                Accessible.name: actionLabel.text
-                onClicked: Api.runNoticeAction(root.slot)
-                Rectangle {
-                    anchors.fill: parent
-                    radius: Theme.radiusControl
-                    color: Theme.accent
-                    Rectangle {
-                        anchors.fill: parent
-                        radius: parent.radius
-                        color: Theme.pressInk
-                        opacity: actionButton.pressed ? Theme.pressShade : actionButton.hovered ? 0.04 : 0
-                        Behavior on opacity { NumberAnimation { duration: Theme.motionFast } }
+                    open: root.description !== ""
+                    Text {
+                        id: descriptionText
+                        objectName: "toastDescription"
+                        width: parent.width
+                        text: root.displayedDescription
+                        color: Theme.text2
+                        wrapMode: Text.WrapAtWordBoundaryOrAnywhere
+                        font.pixelSize: 14
                     }
                 }
-                Text {
-                    id: actionLabel
-                    anchors.centerIn: parent
-                    text: root.action ? root.action.label : ""
-                    color: Theme.accentInk
-                    font.pixelSize: 12
-                    font.weight: Theme.weightBold
+            }
+            Collapse {
+                id: actionPresence
+                open: root.action !== null
+                width: actionButton.implicitWidth
+                x: body.width - width
+                y: (body.height - height) / 2
+                Interactive {
+                    id: actionButton
+                    objectName: "toastAction"
+                    width: parent.width
+                    implicitWidth: actionLabel.implicitWidth + 16
+                    implicitHeight: Math.max(24, actionLabel.implicitHeight + 6)
+                    Accessible.role: Accessible.Button
+                    Accessible.name: actionLabel.text
+                    onClicked: Api.runNoticeAction(root.slot)
+                    Rectangle {
+                        anchors.fill: parent
+                        radius: Theme.radiusControl
+                        color: Theme.accent
+                        Rectangle {
+                            anchors.fill: parent
+                            radius: parent.radius
+                            color: Theme.pressInk
+                            opacity: actionButton.pressed ? Theme.pressShade : actionButton.hovered ? 0.04 : 0
+                            Behavior on opacity { NumberAnimation { duration: Theme.motionFast } }
+                        }
+                    }
+                    Text {
+                        id: actionLabel
+                        anchors.centerIn: parent
+                        text: root.displayedAction ? root.displayedAction.label : ""
+                        color: Theme.accentInk
+                        font.pixelSize: 12
+                        font.weight: Theme.weightBold
+                    }
                 }
             }
         }

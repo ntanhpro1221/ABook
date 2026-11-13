@@ -440,12 +440,15 @@ FocusScope {
         visible: opacity > 0
         Behavior on opacity { NumberAnimation { duration: Theme.motionMedium } }
         // Thư viện trống (EmptyLibrary của desktop/App.tsx): ô icon tai nghe, một câu + một nút chính "Thêm sách"; các lối khác cùng kiểu chữ-có-icon ở hàng dưới
-        Rectangle {
-            anchors.horizontalCenter: parent.horizontalCenter
-            visible: !root.failed && !root.libraryError
-            width: 56; height: 56; radius: Theme.radiusCover
-            color: Theme.accentSoft
-            Icon { anchors.centerIn: parent; name: "headphones"; size: 28; color: Theme.accentText }
+        Collapse {
+            width: parent.width
+            open: !root.failed && !root.libraryError
+            Rectangle {
+                anchors.horizontalCenter: parent.horizontalCenter
+                width: 56; height: 56; radius: Theme.radiusCover
+                color: Theme.accentSoft
+                Icon { anchors.centerIn: parent; name: "headphones"; size: 28; color: Theme.accentText }
+            }
         }
         Text {
             anchors.horizontalCenter: parent.horizontalCenter
@@ -463,27 +466,34 @@ FocusScope {
             color: Theme.text2
             font.pixelSize: Theme.sizeBodySmall
         }
-        Button {
-            anchors.horizontalCenter: parent.horizontalCenter
-            visible: root.failed || root.libraryError
-            text: S.s_thu_lai_c58d068c
-            onClicked: root.failed ? Backend.restart() : Backend.refreshLibrary()
+        Collapse {
+            width: parent.width; open: root.failed || root.libraryError
+            Button {
+                anchors.horizontalCenter: parent.horizontalCenter
+                text: S.s_thu_lai_c58d068c
+                onClicked: root.failed ? Backend.restart() : Backend.refreshLibrary()
+            }
         }
-        Button {
-            objectName: "emptyAdd"
-            anchors.horizontalCenter: parent.horizontalCenter
-            visible: !root.failed && !root.libraryError
-            text: S.s_them_sach_2a9d3708
-            icon: "plus"
-            size: "lg"
-            onClicked: root.addRequested([])
+        Collapse {
+            width: parent.width; open: !root.failed && !root.libraryError
+            Button {
+                objectName: "emptyAdd"
+                anchors.horizontalCenter: parent.horizontalCenter
+                text: S.s_them_sach_2a9d3708
+                icon: "plus"
+                size: "lg"
+                onClicked: root.addRequested([])
+            }
         }
-        Row {
-            anchors.horizontalCenter: parent.horizontalCenter
-            visible: !root.failed && !root.libraryError
-            spacing: 4
-            Button { objectName: "emptyStudio"; text: S.s_tao_sach_noi_ab873c7a; icon: "clapperboard"; kind: "ghost"; onClicked: root.studioRequested() }
-            Button { objectName: "emptyOpenFile"; text: root.fileOpening ? S.s_dang_mo_4a027b81 : S.s_mo_file_sach_d826dd00; icon: "file-audio"; kind: "ghost"; enabled: !root.fileOpening; onClicked: root.openFileRequested() }
+        Collapse {
+            width: parent.width
+            open: !root.failed && !root.libraryError
+            Row {
+                anchors.horizontalCenter: parent.horizontalCenter
+                spacing: 4
+                Button { objectName: "emptyStudio"; text: S.s_tao_sach_noi_ab873c7a; icon: "clapperboard"; kind: "ghost"; onClicked: root.studioRequested() }
+                Button { objectName: "emptyOpenFile"; text: root.fileOpening ? S.s_dang_mo_4a027b81 : S.s_mo_file_sach_d826dd00; icon: "file-audio"; kind: "ghost"; enabled: !root.fileOpening; onClicked: root.openFileRequested() }
+            }
         }
     }
 
@@ -497,7 +507,7 @@ FocusScope {
         visible: opacity > 0
         Behavior on opacity { NumberAnimation { duration: Theme.motionMedium } }
         icon: "search"
-        title: root.query ? S.s_khong_tim_thay_sach_nao_khop_1c1f4c16 + root.query + "”" : S.s_khong_co_sach_o_day_9b24f539
+        title: root.query ? S.s_khong_thay_7dda2441 + root.query + "”" : S.s_chua_co_sach_30843cb2
         text: root.query ? S.s_thu_ten_sach_hoac_tac_gia_khac_65849efa : root.filter === "listening" ? S.s_chua_nghe_do_cuon_nao_chon_mot_cuon_de_bat_eac6b96e : root.filter === "finished" ? S.s_chua_co_cuon_nao_nghe_xong_8d430580 : S.s_cuon_nao_cung_da_duoc_nghe_it_nhat_mot_doa_dfabac48
     }
     Component.onCompleted: { root.shownSections = root.sections; const saved = Api.store("abook-library-sort"); if (root.sortOptions.some(o => o.value === saved)) root.sortOrder = saved; list.forceActiveFocus() }

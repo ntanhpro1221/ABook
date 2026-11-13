@@ -743,7 +743,7 @@ export function VoiceMenu({ scope = "bar", look = "chip" }: { scope?: VoiceMenuS
       width="w-80 max-w-[calc(100vw-1.5rem)]"
     ><MotionRegion>
       <MenuNote title={S.s_giong_doc_11f2548d}>{S.s_nho_rieng_cho_cuon_nay_cc7f277b}</MenuNote>
-      {/* Cùng nhóm, cùng tên giọng với Cài đặt › Giọng đọc; S.s_thu_77e1c0d9 dùng cùng cách nghe thử. */}
+      {/* Cùng nhóm, cùng tên giọng với Cài đặt › Giọng đọc; S.s_nghe_thu_fa024065 dùng cùng cách nghe thử. */}
       <ScrollHint className={cn("min-h-0 flex-1 overflow-y-auto", MENU_LIST)}>
         {groupedVoices(voices).map((group) => (
           <div key={group.provider} role="group" aria-label={groupLabel(group)} className="mb-2">
@@ -793,13 +793,13 @@ export function VoiceMenu({ scope = "bar", look = "chip" }: { scope?: VoiceMenuS
                           data-arrow-side
                           data-voice-try
                           onClick={() => (playing ? sample.stop() : void sample.play(voice.id))}
-                          aria-label={S.s_0_giong_1_85dee2ac(playing ? S.s_dung_11554138 : S.s_thu_77e1c0d9, voice.name)}
+                          aria-label={S.s_0_giong_1_85dee2ac(playing ? S.s_dung_11554138 : S.s_nghe_thu_fa024065, voice.name)}
                           className="touch-box inline-flex h-9 shrink-0 items-center gap-1 rounded-control px-2 text-xs font-medium text-fg-2 hover:bg-hover hover:text-fg max-sm:h-[48px]"
                         >
                           {/* Vùng riêng cho nhãn: nghe thử chỉ mờ qua nút này, không mờ lại cả menu giọng. */}
                           <MotionRegion as="span" className="inline-flex items-center gap-1">
                             {sample.loading === voice.id ? <Loader2 className="size-3.5 animate-spin" /> : playing ? <Square className="size-3.5" /> : <Play className="size-3.5" />}
-                            {playing ? S.s_dung_11554138 : S.s_thu_77e1c0d9}
+                            {playing ? S.s_dung_11554138 : S.s_nghe_thu_fa024065}
                           </MotionRegion>
                         </button>
                       )}

@@ -17,7 +17,7 @@ Item {
     visible: reveal > 0
     Behavior on reveal {
         NumberAnimation {
-            duration: Theme.reduceMotion ? Theme.motionFast : (root.open ? Theme.motionMedium : Theme.motionMediumOut)
+            duration: Theme.reduceMotion ? Theme.motionReduced : (root.open ? Theme.motionMedium : Theme.motionMediumOut)
             easing.type: Easing.BezierSpline
             easing.bezierCurve: root.open ? Theme.easeStandard : Theme.easeAccelerate
         }

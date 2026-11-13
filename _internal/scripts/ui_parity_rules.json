@@ -353,7 +353,63 @@
     ]
   },
   "L7": {
-    "fixed": [],
+    "fixed": [
+      {
+        "file": "desktop_qt/qml/NowPlaying.qml",
+        "match": "visible: Player.atEnd",
+        "what": "end-of-book actions"
+      },
+      {
+        "file": "desktop_qt/qml/LibraryScreen.qml",
+        "match": "visible: root.failed || root.libraryError",
+        "what": "retry empty library"
+      },
+      {
+        "file": "desktop_qt/qml/MusicTrackDetail.qml",
+        "match": "Button { visible: root.playing",
+        "what": "track actions"
+      },
+      {
+        "file": "desktop_qt/qml/Toast.qml",
+        "match": "visible: root.description",
+        "what": "notice description"
+      },
+      {
+        "file": "mobile/android/app/src/main/java/vn/abook/player/ui/nowplaying/NowPlayingScreen.kt",
+        "match": "if (state.error.isNotBlank() && !dismissed)",
+        "what": "player error"
+      },
+      {
+        "file": "mobile/android/app/src/main/java/vn/abook/player/ui/nowplaying/PlayerSheets.kt",
+        "match": "if (sampling != null) TextAction",
+        "what": "voice sample"
+      },
+      {
+        "file": "desktop_qt/qml/LibraryScreen.qml",
+        "match": "visible: !root.failed && !root.libraryError",
+        "what": "empty-library add actions"
+      },
+      {
+        "file": "desktop_qt/qml/MusicTrackDetail.qml",
+        "match": "visible: root.picking",
+        "what": "track selection action"
+      },
+      {
+        "file": "desktop_qt/qml/Toast.qml",
+        "match": "visible: root.action",
+        "what": "notice action"
+      },
+      {
+        "file": "mobile/android/app/src/main/java/vn/abook/player/ui/nowplaying/PlayerSheets.kt",
+        "match": "if (window.voiceSettings != null) SheetRow",
+        "what": "add voice action"
+      },
+      {
+        "file": "mobile/android/app/src/main/java/vn/abook/player/ui/nowplaying/PlayerSheets.kt",
+        "match": "if (prepare != null && PrepareText.canPrepare(state.voiceId)) PrepareBlock",
+        "what": "voice preparation"
+      }
+    ],
     "remaining": {
       "desktop_qt/qml/AddBook.qml": 3,
       "desktop_qt/qml/AdvancedUpdate.qml": 1,
@@ -408,7 +464,6 @@
       "desktop_qt/qml/ImportDrop.qml": 1,
       "desktop_qt/qml/ImportSkeleton.qml": 2,
       "desktop_qt/qml/Interactive.qml": 1,
-      "desktop_qt/qml/LibraryScreen.qml": 3,
       "desktop_qt/qml/LookKbd.qml": 2,
       "desktop_qt/qml/LookShortcuts.qml": 1,
       "desktop_qt/qml/Main.qml": 4,
@@ -417,7 +472,7 @@
       "desktop_qt/qml/MusicBookSection.qml": 2,
       "desktop_qt/qml/MusicCredit.qml": 3,
       "desktop_qt/qml/MusicScreen.qml": 10,
-      "desktop_qt/qml/MusicTrackDetail.qml": 14,
+      "desktop_qt/qml/MusicTrackDetail.qml": 7,
       "desktop_qt/qml/MusicTrackRow.qml": 1,
       "desktop_qt/qml/MyMusicModule.qml": 4,
       "desktop_qt/qml/MyMusicTrack.qml": 3,
@@ -434,7 +489,7 @@
       "desktop_qt/qml/NewTemplateBar.qml": 11,
       "desktop_qt/qml/NewVoice.qml": 5,
       "desktop_qt/qml/NewVolumes.qml": 5,
-      "desktop_qt/qml/NowPlaying.qml": 6,
+      "desktop_qt/qml/NowPlaying.qml": 5,
       "desktop_qt/qml/OtherComputers.qml": 1,
       "desktop_qt/qml/OtherComputersBluetooth.qml": 1,
       "desktop_qt/qml/OtherComputersRow.qml": 7,
@@ -497,7 +552,7 @@
       "desktop_qt/qml/StudioSetupNotice.qml": 3,
       "desktop_qt/qml/TabLabel.qml": 2,
       "desktop_qt/qml/ThirdPartyText.qml": 3,
-      "desktop_qt/qml/Toast.qml": 3,
+      "desktop_qt/qml/Toast.qml": 1,
       "desktop_qt/qml/TonePage.qml": 5,
       "desktop_qt/qml/TryNote.qml": 1,
       "desktop_qt/qml/ValuePicker.qml": 12,
@@ -527,6 +582,7 @@
       "mobile/android/app/src/main/java/vn/abook/player/ui/editbook/EditBookScreen.kt": 4,
       "mobile/android/app/src/main/java/vn/abook/player/ui/export/ExportModel.kt": 1,
       "mobile/android/app/src/main/java/vn/abook/player/ui/export/ExportScreen.kt": 2,
+      "mobile/android/app/src/main/java/vn/abook/player/ui/motion/ReducedMotion.kt": 1,
       "mobile/android/app/src/main/java/vn/abook/player/ui/music/MusicPanel.kt": 6,
       "mobile/android/app/src/main/java/vn/abook/player/ui/music/library/MusicEntry.kt": 1,
       "mobile/android/app/src/main/java/vn/abook/player/ui/music/library/MusicScreen.kt": 4,
@@ -534,9 +590,9 @@
       "mobile/android/app/src/main/java/vn/abook/player/ui/music/library/TrackSheet.kt": 8,
       "mobile/android/app/src/main/java/vn/abook/player/ui/nowplaying/AudioFxPage.kt": 2,
       "mobile/android/app/src/main/java/vn/abook/player/ui/nowplaying/EndNotice.kt": 2,
-      "mobile/android/app/src/main/java/vn/abook/player/ui/nowplaying/NowPlayingScreen.kt": 3,
+      "mobile/android/app/src/main/java/vn/abook/player/ui/nowplaying/NowPlayingScreen.kt": 2,
       "mobile/android/app/src/main/java/vn/abook/player/ui/nowplaying/PlayerAlert.kt": 1,
-      "mobile/android/app/src/main/java/vn/abook/player/ui/nowplaying/PlayerSheets.kt": 7,
+      "mobile/android/app/src/main/java/vn/abook/player/ui/nowplaying/PlayerSheets.kt": 4,
       "mobile/android/app/src/main/java/vn/abook/player/ui/nowplaying/PlayerVisuals.kt": 2,
       "mobile/android/app/src/main/java/vn/abook/player/ui/pip/PipContent.kt": 2,
       "mobile/android/app/src/main/java/vn/abook/player/ui/screens/BookPeople.kt": 5,
@@ -777,6 +833,35 @@
             ],
             "forbid": [
               "Color.hsv"
+            ]
+          }
+        }
+      },
+      {
+        "id": "voice-preview-wording",
+        "at": {
+          "web": {
+            "file": "ui/src/listen/PlayerViews.tsx",
+            "require": [
+              "S.s_nghe_thu_fa024065"
+            ],
+            "forbid": [
+              "S.s_thu_77e1c0d9"
+            ]
+          },
+          "android": {
+            "file": "mobile/android/app/src/main/java/vn/abook/player/ui/nowplaying/PlayerSheets.kt",
+            "require": [
+              "S.s_nghe_thu_fa024065"
+            ],
+            "forbid": [
+              "S.s_thu_77e1c0d9"
+            ]
+          },
+          "qt": {
+            "file": "desktop_qt/qml/VoiceRow.qml",
+            "require": [
+              "S.s_nghe_thu_fa024065"
             ]
           }
         }

@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.WindowInsets
 import vn.abook.player.ui.components.gestureSafe
 import vn.abook.player.ui.components.ClockLabel
+import vn.abook.player.ui.components.Reveal
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
@@ -246,7 +247,9 @@ private fun NowPlayingBody(
             // Gạt lời báo đi tới lần lỗi mới (web: "Đóng lời báo"): người đang làm việc khác không bị nó đè mãi.
             val errorOpen = state.error.isNotBlank() && window.shown
             var dismissed by remember(state.error, errorOpen) { mutableStateOf(false) }
-            if (state.error.isNotBlank() && !dismissed) PlayerAlert(state, model, window, Modifier.playerReveal(windowProgress), onDismiss = { dismissed = true })
+            Reveal(state.error.isNotBlank() && !dismissed) {
+                PlayerAlert(state, model, window, Modifier.playerReveal(windowProgress), onDismiss = { dismissed = true })
+            }
         }
         // Cột phải mở bằng bề ngang: 0 -> (cả phần còn lại sau cột trái và khe 32 dp). Đọc ở pha đo, không recompose theo từng khung.
         val sideT = animateFloatAsState(if (split) 1f else 0f, tween(MotionMs.MEDIUM, easing = Motion.Standard), label = "now-playing-split")

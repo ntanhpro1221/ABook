@@ -220,7 +220,7 @@ private fun BookProgressLine(state: NowPlayingState, model: NowPlayingModel) {
 }
 
 /**
- * Danh sách giọng của tấm S.s_giong_doc_11f2548d (web: VoiceMenu): chọn một giọng, S.s_thu_77e1c0d9 nghe mẫu từng giọng (đang nghe thì thành S.s_dung_11554138; mẫu hỏng thì một dòng lý do),
+ * Danh sách giọng của tấm S.s_giong_doc_11f2548d (web: VoiceMenu): chọn một giọng, S.s_nghe_thu_fa024065 nghe mẫu từng giọng (đang nghe thì thành S.s_dung_11554138; mẫu hỏng thì một dòng lý do),
  * S.s_them_giong_15d3a618 tới Cài đặt > Giọng đọc, và khi danh sách dài hơn khung thì một viên nhắc S.s_keo_xuong_con_giong_khac_d4bb507b ở đáy (mờ đi khi đã cuộn tới cuối).
  */
 @Composable
@@ -243,15 +243,15 @@ private fun VoiceList(state: NowPlayingState, model: NowPlayingModel, window: No
                                 model.setVoice(voice.id); window.closeSheet()
                             }
                         }
-                        if (sampling != null) TextAction(if (playing) S.s_dung_11554138 else S.s_thu_77e1c0d9, {
-                            if (playing) sampling.stopSample() else sampling.play(voice.id)
-                        }, "voice_try_${voice.id}", Modifier.semantics { contentDescription = (if (playing) S.s_dung_11554138 else S.s_thu_77e1c0d9) + S.s_giong_ded5e045 + voice.name })
+                        Reveal(sampling != null) { TextAction(if (playing) S.s_dung_11554138 else S.s_nghe_thu_fa024065, {
+                            if (playing) sampling?.stopSample() else sampling?.play(voice.id)
+                        }, "voice_try_${voice.id}", Modifier.semantics { contentDescription = (if (playing) S.s_dung_11554138 else S.s_nghe_thu_fa024065) + S.s_giong_ded5e045 + voice.name }) }
                     }
                 }
                 item(key = "add-voices") {
-                    if (window.voiceSettings != null) SheetRow(S.s_them_giong_15d3a618, "", role = Role.Button) {
+                    Reveal(window.voiceSettings != null) { SheetRow(S.s_them_giong_15d3a618, "", role = Role.Button) {
                         window.closeSheet(); window.voiceSettings?.invoke()
-                    }
+                    } }
                 }
             }
             BasicText(S.s_keo_xuong_con_giong_khac_d4bb507b, Modifier.align(Alignment.BottomCenter).padding(bottom = Dim.s8).graphicsLayer { alpha = hint; translationY = (1f - hint) * 8.dp.toPx() }
@@ -261,7 +261,7 @@ private fun VoiceList(state: NowPlayingState, model: NowPlayingModel, window: No
         sample.failed?.let { BasicText(it.message, style = Abook.type.caption.copy(color = Abook.colors.danger), modifier = Modifier.padding(top = Dim.s8).testTag("voice_sample_failed")) }
         // S.s_copy_7d00f642cba3 chỉ có với giọng tải về đọc trên máy (chậm hơn tốc độ nghe trên máy yếu).
         val prepare = model.prepare
-        if (prepare != null && PrepareText.canPrepare(state.voiceId)) PrepareBlock(state, prepare)
+        Reveal(prepare != null && PrepareText.canPrepare(state.voiceId)) { prepare?.let { PrepareBlock(state, it) } }
     }
 }
 

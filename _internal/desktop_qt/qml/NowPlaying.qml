@@ -333,27 +333,33 @@ Item {
                             text: root.currentBook.producing ? S.s_chuong_tiep_theo_se_nghe_duoc_khi_may_lam_2d887378 : S.s_cac_chuong_sau_chua_co_audio_44723dd5
                             color: Theme.text2; wrapMode: Text.Wrap; font.pixelSize: Theme.sizeCaption
                         }
-                        Button {
-                            anchors.horizontalCenter: parent.horizontalCenter
-                            visible: Player.atEnd === "finished"
-                            kind: "text"
-                            text: Player.error !== "" ? S.s_thu_lai_c58d068c : S.s_nghe_lai_tu_dau_e251d632
-                            onClicked: Player.error !== "" ? Player.retry() : Player.restart()
+                        Collapse {
+                            width: parent.width; open: Player.atEnd === "finished"
+                            Button {
+                                anchors.horizontalCenter: parent.horizontalCenter
+                                kind: "text"
+                                text: Player.error !== "" ? S.s_thu_lai_c58d068c : S.s_nghe_lai_tu_dau_e251d632
+                                onClicked: Player.error !== "" ? Player.retry() : Player.restart()
+                            }
                         }
-                        Button {
-                            objectName: "nowNextVolume"
-                            anchors.horizontalCenter: parent.horizontalCenter
-                            visible: Player.atEnd === "finished" && !!root.nextVolume
-                            kind: "ghost"; text: S.s_nghe_tiep_403b90a5
-                            tip: root.nextVolume ? root.nextVolume.title : ""
-                            onClicked: Player.playBook(root.nextVolume.bookId)
+                        Collapse {
+                            width: parent.width; open: Player.atEnd === "finished" && !!root.nextVolume
+                            Button {
+                                objectName: "nowNextVolume"
+                                anchors.horizontalCenter: parent.horizontalCenter
+                                kind: "ghost"; text: S.s_nghe_tiep_403b90a5
+                                tip: root.nextVolume ? root.nextVolume.title : ""
+                                onClicked: Player.playBook(root.nextVolume.bookId)
+                            }
                         }
-                        Button {
-                            objectName: "nowOtherBooks"
-                            anchors.horizontalCenter: parent.horizontalCenter
-                            visible: Player.atEnd === "finished"
-                            kind: "ghost"; text: S.s_nghe_cuon_khac_cc5cf8a7
-                            onClicked: recommendations.show()
+                        Collapse {
+                            width: parent.width; open: Player.atEnd === "finished"
+                            Button {
+                                objectName: "nowOtherBooks"
+                                anchors.horizontalCenter: parent.horizontalCenter
+                                kind: "ghost"; text: S.s_nghe_cuon_khac_cc5cf8a7
+                                onClicked: recommendations.show()
+                            }
                         }
                     }
                     PlayerFade { width: parent.width }

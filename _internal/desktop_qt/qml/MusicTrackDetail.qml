@@ -84,21 +84,28 @@ Modal {
                 onActivated: root.load.kind === "loading" ? root.cancelDownload() : root.load.kind === "done" ? root.unsave() : root.save()
             }
         }
-        Flow {
-            visible: !!root.detail && (root.picking || root.playing)
+        Collapse {
             width: parent.width
-            spacing: Theme.s8
-            Button { visible: root.picking; objectName: "musicDetailUse"; text: S.s_dung_7927ca4e; kind: "ghost"; onActivated: root.use() }
-            Button {
-                visible: root.playing
-                objectName: "musicDetailSave"
-                text: root.detail && root.detail.saved ? S.s_bo_luu_2fd51455 : S.s_luu_e91f26c0
-                kind: root.detail && root.detail.saved ? "ghost" : "primary"
-                onActivated: root.detail && root.detail.saved ? root.unsave() : root.save()
+            open: !!root.detail && (root.picking || root.playing)
+            Flow {
+                width: parent.width
+                spacing: Theme.s8
+                Collapse { width: musicUse.implicitWidth; open: root.picking; Button { id: musicUse; objectName: "musicDetailUse"; text: S.s_dung_7927ca4e; kind: "ghost"; onActivated: root.use() } }
+                Collapse {
+                    width: musicSave.implicitWidth
+                    open: root.playing
+                    Button {
+                        id: musicSave
+                        objectName: "musicDetailSave"
+                        text: root.detail && root.detail.saved ? S.s_bo_luu_2fd51455 : S.s_luu_e91f26c0
+                        kind: root.detail && root.detail.saved ? "ghost" : "primary"
+                        onActivated: root.detail && root.detail.saved ? root.unsave() : root.save()
+                    }
+                }
+                Collapse { width: musicView.implicitWidth; open: root.playing; Button { id: musicView; text: S.s_xem_trong_kho_2a139d05; kind: "ghost"; onActivated: root.openLibrary(root.detail ? root.detail.title || "" : "") } }
+                Collapse { width: musicSwap.implicitWidth; open: root.playing && !!root.context; Button { id: musicSwap; text: S.s_doi_bai_7b81488f; kind: "ghost"; onActivated: root.swap() } }
+                Collapse { width: musicBan.implicitWidth; open: root.picking; Button { id: musicBan; text: S.s_khong_tu_chon_02ae1742; kind: "ghost"; onActivated: root.ban() } }
             }
-            Button { visible: root.playing; text: S.s_xem_trong_kho_2a139d05; kind: "ghost"; onActivated: root.openLibrary(root.detail ? root.detail.title || "" : "") }
-            Button { visible: root.playing && !!root.context; text: S.s_doi_bai_7b81488f; kind: "ghost"; onActivated: root.swap() }
-            Button { visible: root.picking; text: S.s_khong_tu_chon_bai_nay_ab3af35f; kind: "ghost"; onActivated: root.ban() }
         }
         // Vì sao bài này
         Column {
