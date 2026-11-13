@@ -176,8 +176,9 @@ def checks(confirm_hash: str | None = None) -> list[Check]:
         Check("sheet-geometry", py("-m", "pytest", str(ROOT / "scripts/tap_audit/test_sheetgeo.py"),
               "-o", "addopts=", "-q", "-rfs"), timeout=1800, parser="pytest"),
         Check("typecheck", [node, "node_modules/typescript/bin/tsc", "-p", "tsconfig.json"], ui, 180),
-        Check("vitest", [node, "node_modules/vitest/vitest.mjs", "run", "--no-cache", "--configLoader", "runner", "--reporter", "verbose"],
-              ui, 900, "vitest"),
+        Check("vitest", [node, "node_modules/vitest/vitest.mjs", "run", "--no-cache", "--configLoader", "runner", "--reporter", "verbose",
+                         "--maxWorkers", os.environ.get("ABOOK_GATE_VITEST_WORKERS", "2")],
+              ui, 1800, "vitest"),
         Check("android-unit", worker_command("android-unit"), timeout=900, parser="json"),
         Check("android-snapshots", worker_command("android-snapshots"), timeout=900, parser="json"),
         Check("ui-parity", py("scripts/ui_parity.py", "--check")),
@@ -283,12 +284,11 @@ def require(ok: bool, detail: str) -> None:
 
 
 def android_host_inputs() -> dict[str, str]:
-    library = Path(os.environ.get("ABOOK_SEA_G2P_LIB", str(ROOT / "mobile/sea_g2p_jni/target/release/abook_sea_g2p.dll")))
-    dictionary = Path(os.environ.get("ABOOK_SEA_G2P_DICT", str(Path(sys.prefix) / "Lib/site-packages/sea_g2p/sea_g2p.bin")))
-    require(library.is_file() and library.stat().st_size > 0, "required host sea_g2p library missing; set ABOOK_SEA_G2P_LIB")
-    require(dictionary.is_file() and dictionary.stat().st_size > 0, "required host sea_g2p dictionary missing; set ABOOK_SEA_G2P_DICT")
-    return {"ABOOK_SEA_G2P_LIB": str(library.resolve()), "ABOOK_SEA_G2P_DICT": str(dictionary.resolve()),
-            "ABOOK_REQUIRE_G2P_PARITY": "1"}
+    inputs = g2p_parity_env()
+    for key in ("ABOOK_SEA_G2P_LIB", "ABOOK_SEA_G2P_DICT"):
+        path = Path(inputs[key])
+        require(path.is_file() and path.stat().st_size > 0, f"Required G2P parity input absent: {key}={path} (host sea_g2p)")
+    return inputs
 
 
 def snapshot_baseline() -> dict[str, str]:
@@ -578,12 +578,13 @@ def qt_tests() -> dict:
     command_file = ROOT / "runtime/release_gate" / ("qt-" + stamp) / "qt-tests.cmd"
     command_file.parent.mkdir(parents=True, exist_ok=True)
     build = qt / "build"
+    build_jobs = max(1, min(4, int(os.environ.get("CMAKE_BUILD_PARALLEL_LEVEL", "4"))))
     commands = ["@echo off", f'call "{vcvars}" >nul', "if errorlevel 1 exit /b 1",
                 f'set "PATH={qt_root / "bin"};{cmake_bin};{ninja_bin};%PATH%"',
                 f'"{sys.executable}" -X utf8 "{qt / "tools/drop_stale_cmake_cache.py"}" "{build}"',
                 "if errorlevel 1 exit /b 1",
                 f'cmake -S "{qt}" -B "{build}" -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="{qt_root};{qwk_root / "inst"}" -DCMAKE_MAKE_PROGRAM="{ninja_bin / "ninja.exe"}"',
-                "if errorlevel 1 exit /b 1", 'cmake --build "' + str(build) + '" --parallel 4 --target ABookDesk_qmltyperegistration ' + " ".join(Path(t.replace("\\", "/")).stem for t in targets),
+                "if errorlevel 1 exit /b 1", 'cmake --build "' + str(build) + '" --parallel ' + str(build_jobs) + ' --target ABookDesk_qmltyperegistration ' + " ".join(Path(t.replace("\\", "/")).stem for t in targets),
                 "exit /b %errorlevel%"]
     command_file.write_bytes(("\r\n".join(commands) + "\r\n").encode("utf-8"))
     built = run_process(["cmd", "/d", "/c", str(command_file)], qt, 800)

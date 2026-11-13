@@ -138,7 +138,7 @@ def _tampered(tmp_path: Path, sql: str, *params) -> Path:
     ("UPDATE chapters SET input_path = ? WHERE id = 2", UNC),
     ("UPDATE chapters SET input_path = ? WHERE id = 2", r"C:\Windows\win.ini"),
     ("UPDATE chapters SET input_path = ? WHERE id = 2", r"..\..\ngoai_du_an\1.txt"),
-    ("UPDATE chapters SET output_mp3 = ? WHERE id = 1", r"C:\Users\Public\Documents\ngoai_du_an.mp3"),
+    ("UPDATE chapters SET output_mp3 = ? WHERE id = 1", r"C:\Public\Documents\ngoai_du_an.mp3"),
     ("UPDATE chapters SET output_mp3 = ? WHERE id = 1", "//attacker.example/s/x.mp3"),
     ("UPDATE segments SET wav_path = ? WHERE id = 3", r"\\attacker.example\s\x.wav"),
 ])
@@ -243,7 +243,7 @@ def _pipeline(root: Path):
     return fake, BookPipeline
 
 
-@pytest.mark.parametrize("value", [UNC, r"C:\Users\Public\ngoai_du_an.mp3", r"{root}\..\ngoai_du_an.mp3", "x.mp3"])
+@pytest.mark.parametrize("value", [UNC, r"C:\Public\ngoai_du_an.mp3", r"{root}\..\ngoai_du_an.mp3", "x.mp3"])
 def test_the_pipeline_never_writes_a_chapter_outside_the_book(tmp_path: Path, value: str, no_network_io) -> None:
     fake, _ = _pipeline(tmp_path)
     with pytest.raises(RuntimeError, match="ngoài thư mục sách"):

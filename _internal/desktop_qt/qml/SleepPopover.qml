@@ -82,7 +82,8 @@ Popover {
             adjustValue: function(value) { root.draftMinutes = value; if (Player.sleepKind === "minutes") Player.setSleep("minutes", value) }
             Button {
                 objectName: "sleepConfirm"
-                visible: Player.sleepKind !== "minutes"
+                id: sleepConfirm
+                Reveal { target: sleepConfirm; shown: Player.sleepKind !== "minutes" }
                 text: S.s_xong_a6f4543a
                 kind: "text"
                 onClicked: { Feedback.play("toggle"); Player.setSleep("minutes", root.draftMinutes); root.close() }

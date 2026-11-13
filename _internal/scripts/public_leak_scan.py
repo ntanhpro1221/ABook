@@ -317,7 +317,7 @@ def audit(repo: Path = REPO, corpus: Path | None | bool = True, workdir: Path | 
         corpus_status = "bỏ qua kiểm Corpus: không thấy thư mục Corpus cục bộ (ABOOK_CORPUS)"
     else:
         work = workdir or (repo / "_internal/runtime/release_gate/public-leak")
-        findings += corpus_overlap(sources, root, work)
+        findings += corpus_overlap(sources, root, work, workers=max(1, int(os.environ.get("ABOOK_LEAK_WORKERS", "3"))))
         corpus_status = f"đã kiểm Corpus: {root}"
     stale = sorted(set(reviewed) - set(names))
     blocking = []

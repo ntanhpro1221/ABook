@@ -284,7 +284,7 @@ def own_users() -> list[str]:
 
 
 def home_path_re(users: list[str]) -> re.Pattern | None:
-    """``C:/Users/<me>`` (either slash, doubled or not), ``/c/Users/<me>`` or ``/home/<me>``: write
+    """``drive:/Users/<me>`` (either slash, doubled or not), ``/c/Users/<me>`` or ``/home/<me>``: write
     ``%LOCALAPPDATA%``, ``Path.home()``, ``tempfile.gettempdir()`` or a relative path instead."""
     if not users:
         return None

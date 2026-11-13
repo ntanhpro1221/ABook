@@ -1144,7 +1144,7 @@ function SleepPicker({
         }}
       >
         {sleep.kind !== "minutes" && <Popover.Close asChild><button type="button" disabled={disabled} data-sleep-confirm
-          className="h-12 w-full rounded-control text-right text-sm font-semibold text-accent-text"
+          className="h-12 w-full rounded-control text-right text-sm font-medium text-accent-text"
           onClick={() => onSet({kind: "minutes", minutes: draftMinutes})}>{S.s_xong_a6f4543a}</button></Popover.Close>}
         <SleepChapterChoice sleep={sleep} disabled={disabled} counts={chapterCounts} onSet={onSet} />
       </ValuePicker>

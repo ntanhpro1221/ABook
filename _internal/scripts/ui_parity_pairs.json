@@ -651,11 +651,6 @@
       ],
       "allow": [
         {
-          "side": "native",
-          "label": "Mã ghép nối",
-          "reason": "same words as web 'Mã ghép nối: {}' (PhoneSync.tsx:161), which appends the value in one template"
-        },
-        {
           "side": "web",
           "label": "Mã ghép nối: {}",
           "reason": "same words as native 'Mã ghép nối' (PairScreen.kt:185); web appends the value in one template"
@@ -729,11 +724,6 @@
           "side": "web",
           "label": "Sách trên máy khác",
           "reason": "computer only: summary of the 'Ghép máy' fold in Other computers (listen to another computer's library); the phone pairs from Thiết bị, and uses the same words as the library's remote-series mark (library-book pair)"
-        },
-        {
-          "side": "web",
-          "label": "Đối chiếu vân tay",
-          "reason": "computer only: hover hint on the 64-character fingerprint line of the phone pairing dialog; the phone reads its own fingerprint from the pairing screen text"
         }
       ],
       "missing": [
@@ -1173,11 +1163,6 @@
         },
         {
           "side": "native",
-          "match": "^bạn\\ hãy\\ thử\\ lại$",
-          "reason": "điện thoại: câu thay khi lỗi của lõi không có chữ; máy tính luôn có lời của máy chủ trong toast"
-        },
-        {
-          "side": "native",
           "match": "^(máy\\ này\\ chưa\\ lấy\\ chữ\\ pdf\\ trực\\ tiếp\\ được\\.\\ bạn\\ hãy\\ chọn\\ epub,\\ docx\\ hoặc\\ txt|pdf\\ quá\\ nhiều\\ trang\\.\\ bạn\\ hãy\\ chia\\ file\\ rồi\\ thử\\ lại|pdf\\ có\\ quá\\ nhiều\\ chữ\\.\\ bạn\\ hãy\\ chia\\ file\\ rồi\\ thử\\ lại)$",
           "reason": "điện thoại đọc chữ PDF bằng PdfRenderer của Android (cần API 35, giới hạn trang / chữ trên máy); máy tính đọc PDF bằng lõi Python"
         },
@@ -1304,11 +1289,6 @@
         {
           "side": "web",
           "label": "Đã hiểu",
-          "reason": "Desktop only: EditsNoticesBanner calls /api/books/.../edits-notices directly for Studio peer edits; androidSource.toListenBook never supplies editsNotices and LocalStudio has no notices route. Native undo for actual phone edits is in BookPeople/BookNotes (library-book)."
-        },
-        {
-          "side": "web",
-          "label": "Chưa làm được",
           "reason": "Desktop only: EditsNoticesBanner calls /api/books/.../edits-notices directly for Studio peer edits; androidSource.toListenBook never supplies editsNotices and LocalStudio has no notices route. Native undo for actual phone edits is in BookPeople/BookNotes (library-book)."
         },
         {

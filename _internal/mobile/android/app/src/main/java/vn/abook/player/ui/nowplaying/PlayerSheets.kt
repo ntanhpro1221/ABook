@@ -154,7 +154,7 @@ fun PlayerSheets(state: NowPlayingState, model: NowPlayingModel, window: NowPlay
                                 if (minutesNow) setMinutes(minutes.toInt())
                             },
                             special = {
-                                if (!minutesNow) TextAction(S.s_xong_a6f4543a, { setMinutes(draftMinutes); window.closeSheet() }, "sleep_confirm", align = Alignment.CenterEnd)
+                                Reveal(!minutesNow) { TextAction(S.s_xong_a6f4543a, { setMinutes(draftMinutes); window.closeSheet() }, "sleep_confirm", align = Alignment.CenterEnd) }
                                 SleepChapterChoice(state.sleep) { count -> model.setSleep(SleepKind.Chapter, count) }
                             },
                         )

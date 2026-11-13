@@ -26,9 +26,9 @@
       "missing_labels": 78
     },
     "devices": {
-      "allow_entries": 14,
+      "allow_entries": 15,
       "missing_entries": 31,
-      "allowed_labels": 17,
+      "allowed_labels": 18,
       "missing_labels": 162
     },
     "voice": {
@@ -53,7 +53,7 @@
       "allow_entries": 7,
       "missing_entries": 8,
       "allowed_labels": 28,
-      "missing_labels": 43
+      "missing_labels": 44
     },
     "music": {
       "allow_entries": 5,

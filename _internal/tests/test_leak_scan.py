@@ -108,12 +108,12 @@ def test_home_folder_of_the_user_running_the_scan_is_found(monkeypatch):
     monkeypatch.setattr(leak_scan.socket, "getaddrinfo", lambda *a: [])
     backslash = chr(92)
     findings = leak_scan.scan_machine([("a.py", "\n".join([
-        f"EXE = 'C:/Users/{user}/AppData/Local/Programs/x.exe'",
+        "EXE = 'C:" + f"/Users/{user}/AppData/Local/Programs/x.exe'",
         f"SCRATCH = r'C:{backslash}Users{backslash}{user}{backslash}AppData'",
         f"cd /c/Users/{user.lower()}/Novels",
         f"ls /home/{user}",
-        f"C:/Users/{user}2/elsewhere is someone else",
-        "C:/Users/someone/AppData is not this user",
+        "C:" + f"/Users/{user}2/elsewhere is someone else",
+        "C:" + "/Users/someone/AppData is not this user",
         "%LOCALAPPDATA%/Programs/x.exe",
     ]))])
     assert [n for _, n, _, _ in findings] == [1, 2, 3, 4]

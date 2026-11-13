@@ -337,7 +337,7 @@ Column {
                     // Toast biến mất sau vài giây; lý do không ghép được ở lại dưới ô địa chỉ cho tới lần thử kế (soát UX a17).
                     Column {
                         width: parent.width
-                        visible: root.confirmation !== null
+                        Reveal { shown: root.confirmation !== null }
                         spacing: 8
                         HintText { width: parent.width; text: S.s_pair_fingerprint_label + (root.confirmation ? root.confirmation.short : "") }
                         HintText { width: parent.width; text: S.s_pair_fingerprint_help }
