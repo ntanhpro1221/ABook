@@ -2116,3 +2116,49 @@ frame/tokenizer snapshots are regenerated from these exact phonemes.
 - `$.frames[37].phonemes`: `hˈaː ɹˈu t̪ˈo kˈun, kˈi ˈəw kˈo sˈaːn ɗˌaː5 ɗˌeɜn. zˈaː mˈaː t̪ˈo!` -> `hˈaː ɹˈu t̪ˈo kˈun, kˈi ˈə1w kˈo sˈaːn ɗˌaː5 ɗˌeɜn. zˈaː mˈaː t̪ˈo!` (native Vietnamese stress/level marker retained; derived frames follow).
 - `$.frames[38].cap`: `360` -> `362` (native Vietnamese stress/level marker retained; derived frames follow).
 - `$.frames[38].phonemes`: `hˈaː ɹˈu t̪ˈo kˈun, kˈi ˈəw kˈo sˈaːn ɗˌaː5 ɗˌeɜn. zˈaː mˈaː t̪ˈo! kˈeɪt hˈɔ4j mˈaɪk, kˌɔ2n ɹˈoʊz vˌaː2 hˈaː nˈaː tˌi2 kˈyə2j. ˈæn, ˈɛmə vˌaː2 ɹˈi kˈaː kˈu5ŋ ˈəː4 ɗˈɔɜ.` -> `hˈaː ɹˈu t̪ˈo kˈun, kˈi ˈə1w kˈo sˈaːn ɗˌaː5 ɗˌeɜn. zˈaː mˈaː t̪ˈo! kˈeɪt hˈɔ4j mˈaɪk, kˌɔ2n ɹˈoʊz vˌaː2 hˈaː nˈaː tˌi2 kˈyə2j. ˈæn, ˈɛmə vˌaː2 ɹˈi kˈaː kˈu5ŋ ˈəː4 ɗˈɔɜ.` (native Vietnamese stress/level marker retained; derived frames follow).
+
+### Findings 3-9
+
+- 3 (0282f1295): roster rulings apply by token position, not by spelling, on
+  desktop and phone. "An nói: I want an apple." keeps English `æn` for the
+  article and `ˈaːn` for the name; "I can not do it, Can." keeps `kˈæn` for the
+  modal verb (`tests/test_g2p_ruling_positions.py`, Kotlin
+  `GeneratedSyllablesTest`).
+- 4 (1108b646f): Studio text normalization runs inside the book rulings, so the
+  same sentence reads like Reader/phone (`tests/test_g2p_studio_rulings.py`).
+- 5 (25a3691fe): generated-syllable corrections align with each Studio chunk and
+  emotion-tag fragment; a line over 256 characters is tested
+  (`tests/test_g2p_studio_chunks.py`).
+- 6 (4020e4055): legacy Ð becomes Đ in unaccented and NFD syllables; gate tokens
+  Ði, Ðang, Ðan, Ðông added (`tests/test_g2p_legacy_d.py`).
+- 7 (f889e98d3): G2pGateParityTest passes `BookReadings` with rulings; Kotlin
+  unit tests for `levelProbe`, `restoreGeneratedSyllables` and
+  `ruledVietnameseWords` run without JNI; release_gate sets the parity
+  variables and fails before Gradle when an input is missing
+  (`tests/test_g2p_release_inputs.py`).
+- 9 (ae71dc701): the gate oracle (`tests/g2pgate_dictionary.py`) reads native
+  entries from sea-g2p's SEAP dictionary and uses only tone variants the
+  dictionary attests; it shares no code with `_level_probe`. Spellings without
+  an attested syllable (Mylene, Rhasa, Fitts, Magali, Celestina heads) get no
+  Vietnamese target. Level-tone p/t/c/ch syllables are invalid Vietnamese: the
+  probe and the oracle both refuse them. 39 expected entries changed; each keeps
+  sea-g2p's level-tone 1 or stress, or drops a fabricated target. The gate
+  runner and the parity generator use production-shaped rulings (roster names
+  within the table only); still zero gate failures.
+- 8 (0ec5f5f15): `tests/test_g2p_desktop_parity.py` regenerates the public cases
+  and compares them with `desktop_parity.json` (it failed on the stale snapshot
+  before regeneration). The fixture no longer carries a `quality_hash`: the hash
+  recorded in the integ168 entry above (`d73a53de…`) was already stale at
+  `0118ef100` (`663ab9eb…`, audio_io.py). Regeneration changed 34 cases in
+  level-tone 1/stress only and the rulings field of 117; no segmental phonemes.
+
+Quality implementation hash (69 entries, read from code): `6398020de`
+`bfbf90f9…`, old `dev/integ168` tip `663ab9eb…`, this branch after finding 9
+`5cec934fcc5fd76da4125ad26cf6fa232d84c30cb832446ebe3684542b79d76b`. The branch
+changes locked files (phoneme_policy, vieneu, tts, english_policy) and must wait
+for runs to finish before reaching production.
+
+The 442-row private replay was not run: the external judge1 `clips.json`
+named by `G2PGATE_CALIBRATION_SOURCE` is not on this machine; the test reports
+SKIPPED with that reason. The private context itself is committed only in the
+private Corpus repository.
