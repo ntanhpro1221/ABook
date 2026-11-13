@@ -21,7 +21,8 @@ class SnapshotPathRulesTest {
     private fun offences(lines: List<String>): List<String> {
         val code = lines.mapIndexed { index, raw -> index + 1 to raw }.filter { (_, raw) ->
             val trimmed = raw.trimStart()
-            !(trimmed.startsWith("//") || trimmed.startsWith("*") || trimmed.startsWith("/*") || trimmed.startsWith("import ") || trimmed.startsWith("fun "))
+            val captureDeclaration = Regex("""^(?:public\s+|internal\s+|private\s+)?fun\s+[\w.<>]+\.`?captureRoboImage`?\s*\(""").containsMatchIn(trimmed)
+            !(trimmed.startsWith("//") || trimmed.startsWith("*") || trimmed.startsWith("/*") || trimmed.startsWith("import ") || captureDeclaration)
         }
         val out = mutableListOf<String>()
         for ((number, raw) in code) {
@@ -68,6 +69,7 @@ class SnapshotPathRulesTest {
         assertEquals(0, offences(listOf("""// captureRoboImage("build/shots/x.png")""", """import com.github.takahirom.roborazzi.captureRoboImage""")).size)
         assertEquals(0, offences(listOf("""val image = File(cacheDir, "cover.png")""")).size)
         assertEquals(0, offences(listOf("""fun android.graphics.Bitmap.captureRoboImage(""")).size)
+        assertEquals(1, offences(listOf("""fun shot() = bitmap.captureRoboImage("build/shots/n.png")""")).size)
         val path = """val golden = File("build/icon_probe/negative/widget.png")"""
         val verify = """changed.captureRoboImage(golden.path, options.copy(taskType = RoborazziTaskType.Verify))"""
         assertEquals(1, offences(listOf(path, verify)).size)
