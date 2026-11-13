@@ -15,6 +15,8 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 - Continuing a book asks you to choose its source files again. Pairing a new computer checks its certificate before sending a manual pairing code.
 - Make menus, expanding sections and changing content move consistently across desktop, web and Android, including reduced motion. Keep shorter labels and clearer sleep timer choices.
 - Record the runtime versions actually used to make books and detect changes to the installed speech recognition packages.
+- Preserve dotted dates, times and fractional zeros, and keep chosen name readings beside numbers and units. Improve attribution of speakers described by appearance.
+- Keep Android playback shutdown responsive while saving the final listening position. Fix overlapping expanding panels and match the reading dock to the page background.
 
 ## [0.4.167] - 2026-11-12
 

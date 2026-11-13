@@ -4,6 +4,7 @@ import json
 import sys
 import tempfile
 import subprocess
+import os
 import re
 import html
 from pathlib import Path
@@ -57,7 +58,9 @@ def findings():
                 found.add((path.relative_to(ROOT).as_posix(), text))
     with tempfile.TemporaryDirectory(prefix='abook-ui-copy-') as folder:
         output = Path(folder)/'web.json'
-        subprocess.run(['node', str(ROOT/'ui/scripts/ui_copy_ast.mjs'), str(output)], cwd=ROOT/'ui', check=True)
+        subprocess.run(['node', str(ROOT/'ui/scripts/ui_copy_ast.mjs'), str(output)], cwd=ROOT/'ui', check=True,
+                       stdout=sys.stdout, stderr=sys.stderr,
+                       creationflags=subprocess.CREATE_NO_WINDOW if os.name == 'nt' else 0)
         found.update(tuple(row) for row in json.loads(output.read_text(encoding='utf-8')))
     return sorted(found)
 

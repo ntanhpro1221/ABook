@@ -626,7 +626,7 @@ def qt_tests() -> dict:
                 "if errorlevel 1 exit /b 1", 'cmake --build "' + str(build) + '" --parallel ' + str(build_jobs) + ' --target ABookDesk_qmltyperegistration ' + " ".join(Path(t.replace("\\", "/")).stem for t in targets),
                 "exit /b %errorlevel%"]
     command_file.write_bytes(("\r\n".join(commands) + "\r\n").encode("utf-8"))
-    built = run_process(["cmd", "/d", "/c", str(command_file)], qt, 800)
+    built = run_process([str(command_file)], qt, 800)
     print(built.output)
     require(built.returncode == 0 and not built.timed_out, "Qt: configure/build lỗi hoặc timeout")
     validator = load_module(qt / "tools/check_test_results.py", "gate_qt_results")
@@ -746,7 +746,9 @@ def directory_link(link: Path, target: Path) -> None:
     """Only create new links inside the private gate workspace."""
     require(not link.exists(), "private link already exists: " + str(link))
     if os.name == "nt":
-        result = run_process(["cmd", "/d", "/c", "mklink", "/J", str(link), str(target)], link.parent, 30)
+        quote = lambda value: "'" + str(value).replace("'", "''") + "'"
+        command = f"New-Item -ItemType Junction -Path {quote(link)} -Target {quote(target)} -ErrorAction Stop | Out-Null"
+        result = run_process(["powershell", "-NoProfile", "-NonInteractive", "-Command", command], link.parent, 30)
         require(result.returncode == 0, "cannot create private junction: " + result.output)
     else:
         link.symlink_to(target, target_is_directory=True)

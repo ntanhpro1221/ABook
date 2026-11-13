@@ -237,8 +237,8 @@ def artifacts(version: str) -> list[str]:
 
 def _run(command: list[str], cwd: Path, env: dict[str, str] | None = None, low: bool = False) -> None:
     print("$", " ".join(command), f"  (ở {cwd})", flush=True)
-    flags = BELOW_NORMAL if low and os.name == "nt" else 0
-    subprocess.run(command, cwd=cwd, env=env, check=True, creationflags=flags)
+    flags = (subprocess.CREATE_NO_WINDOW | (BELOW_NORMAL if low else 0)) if os.name == "nt" else 0
+    subprocess.run(command, cwd=cwd, env=env, check=True, stdout=sys.stdout, stderr=sys.stderr, creationflags=flags)
 
 
 def _tool(name: str) -> str:
@@ -323,7 +323,7 @@ def build(version: str, out: Path) -> None:
     out.mkdir(parents=True, exist_ok=True)
     # Bộ cài Qt (docs/QT_INSTALLER.md Q7): test Qt, đóng gói, smoke bản đóng gói, test_installer (cài, cập nhật thật N -> N+1,
     # ca tham số bộ cập nhật Tauri, gỡ), ký .sig rồi kiểm bằng khoá công khai, ghi latest.json - một đường, không cờ chọn vỏ.
-    _run(["cmd", "/c", str(ROOT / "desktop_qt/build.bat"), "installer"], ROOT, dict(os.environ, ABOOK_PYTHON=sys.executable), low=True)
+    _run([str(ROOT / "desktop_qt/build.bat"), "installer"], ROOT, dict(os.environ, ABOOK_PYTHON=sys.executable), low=True)
     nsis = ROOT / "desktop_qt/build/installer"
     for name in (f"ABook_{version}_x64-setup.exe", f"ABook_{version}_x64-setup.exe.sig", "latest.json"):
         assert (nsis / name).is_file(), f"bộ cài thiếu {name}"

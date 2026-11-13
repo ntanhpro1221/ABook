@@ -1,5 +1,11 @@
 # Test report
 
+## 13-11-2026 — final review-branch integration preflight
+
+- Integrated all completed review fixes, generic attribution through its noun-phrase guard, background tools and the reading-dock surface. Combined dotted-number rules with the shared Vietnamese letter classes on both Python and Kotlin. Preserved the reviewed share-screen geometry and isolated TLS test identity.
+- Focused CPU preflight with inherited HF_HUB_OFFLINE=1 and TRANSFORMERS_OFFLINE=1: **592 passed, zero failures**, covering runtime pins, NFC/direct English, TN, G2P occurrence parity, generic descriptors, Compose layout scanning and release tooling. This is not the full release gate.
+- Release/build preparation now supplies CREATE_NO_WINDOW to child tools and passes log handles explicitly. Regression cases cover normal and below-normal Windows tool launches; explicit cmd launchers were removed from the release entry points. Android's sound-policy assertion follows cache rule 20.
+
 ## 13-11-2026 — integ168c full-gate repairs
 
 - The first full release-gate attempt passed CPU pytest: **13,065 passed, 17 skipped, 2 deselected**, with no failed cases. The attempt remained red in browser geometry, Android unit/snapshot checks and three web progress-label expectations; it was stopped after the static gallery, retaining the evidence. This is not release approval.

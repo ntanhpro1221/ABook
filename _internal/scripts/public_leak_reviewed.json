@@ -32,7 +32,7 @@
     "reason": "README.md: all flagged strings match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
   },
   "_internal/AGENTS.md": {
-    "sha256": "6b3e37ba50ef059d8f1e1b3ded6dc907f4248de2a6db1597b7b67371540390d1",
+    "sha256": "471aa78ddda73f1c853f7d555927dc1a2f85d840cb43439b1c4cf9abfba2a4b0",
     "reason": "Developer workflow instructions covering containment, production boundaries and quality gates."
   },
   "_internal/abook/aliases.py": {
@@ -40,11 +40,11 @@
     "reason": "abook/aliases.py: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
   },
   "_internal/abook/analysis.py": {
-    "sha256": "f81aeb52f110eb8c3c99bfd8178621529a12034aa66620b2eed01d56d5dbd7d9",
+    "sha256": "12e20a6dca2778d707da89972513fd202a5aac649fed8bc242bfeecb4038bd50",
     "reason": "abook/analysis.py: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
   },
   "_internal/abook/asr.py": {
-    "sha256": "7b1b93c1accbc09a58f3b53ddf25f4a14957e7846cbde115cb9e9beb6f03201e",
+    "sha256": "98ca81ab9aef886d045c8efb051fc21b7fb9e354352c5dc01242377a33ada32e",
     "reason": "abook/asr.py: all flagged strings match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
   },
   "_internal/abook/assets/word_break_tokenizer.json.gz": {
@@ -64,7 +64,7 @@
     "reason": "abook/book_levels.py: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
   },
   "_internal/abook/book_paths.py": {
-    "sha256": "fd35be2e81e189d6089ef079620570ad99c9f86de9a7fafc799dbf19c4595b85",
+    "sha256": "b4b191bd16bfd00360065e524cfd569b6d5cccaeaf3b0885f3c0797fc74dacbd",
     "reason": "Containment API documentation for untrusted stored source, audio and artifact paths."
   },
   "_internal/abook/bracket_rule.py": {
@@ -76,11 +76,11 @@
     "reason": "abook/character_registry.py: all flagged strings match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
   },
   "_internal/abook/continuation.py": {
-    "sha256": "e13ab714356ff577f837963e44fcabeccb54a0a663d7477b642a0e6a7e47a8de",
+    "sha256": "d70a625fc159f8b31f6b29ce640cf66b293b8d1be0564cc75e0e4e09455fe269",
     "reason": "abook/continuation.py: all flagged strings match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
   },
   "_internal/abook/database.py": {
-    "sha256": "a25727255edb2c2c51eb5b965970ec4288e3012aaaa3239839e6c850b68c61a7",
+    "sha256": "8a443d9ed549db31ebb2be522cb0829058d81cb7fe33267be696251c76e17a30",
     "reason": "abook/database.py: all flagged strings match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
   },
   "_internal/abook/desktop.py": {
@@ -96,7 +96,7 @@
     "reason": "abook/english_vi.py: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
   },
   "_internal/abook/first_person.py": {
-    "sha256": "52cfd922c25e88ab9f214abbe4639829ea0e872eec3ebb3b9e5a29a9aa75cc3e",
+    "sha256": "aec6b6c12b16399db353dd6405ac4cdc3310191a94b3041b4ea6c05a7ec1315a",
     "reason": "abook/first_person.py: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
   },
   "_internal/abook/importers.py": {
@@ -112,7 +112,7 @@
     "reason": "abook/listener_overrides.py: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
   },
   "_internal/abook/name_snap.py": {
-    "sha256": "699546262ee49a58dd0a0b4a78707f21be2c471ff08ff6e1a7a2b17645bdd85f",
+    "sha256": "69be04bbdf26e442ea5124bc91de279e4c808299b66ac09a151727ea7d6ad733",
     "reason": "abook/name_snap.py: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
   },
   "_internal/abook/names.py": {
@@ -128,7 +128,7 @@
     "reason": "abook/netconnect.py: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
   },
   "_internal/abook/pipeline.py": {
-    "sha256": "a8c0426a5f6f2aeaf25dddfdff47f8e31f0dab9bc841257211413dca7c890b3a",
+    "sha256": "d4f0d409fc7d5bc0cdc5dcce406950e500e632a4dea558ca57336d4d73d7137c",
     "reason": "Pipeline path-validation docstring describing project containment before filesystem access."
   },
   "_internal/abook/power_source.py": {
@@ -152,7 +152,7 @@
     "reason": "abook/readaloud/byok.py: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
   },
   "_internal/abook/readaloud/cache.py": {
-    "sha256": "5575be7db54587e825194fd420881681c89ecd809c3d413898b2a5f5340da8c9",
+    "sha256": "5578b5b54191a55e20fcfb0a57a62091e57e6a5a30c4e3d8e2ed0a97f64d542f",
     "reason": "_internal/abook/readaloud/cache.py: inherited cache API documentation; the shared rule counter now invalidates pre-0.4.168 audio, with no new narrative strings."
   },
   "_internal/abook/readaloud/edge.py": {
@@ -248,15 +248,15 @@
     "reason": "abook/readaloud/supertonic.py: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
   },
   "_internal/abook/readaloud/symbols.py": {
-    "sha256": "040890e4049b99345440f0e0672ceb4421362209493b575e613f7e3a60e36328",
+    "sha256": "a4701271859532c902c11aae83740b08e93a452cee85c87158bbc3c21eb3de69",
     "reason": "abook/readaloud/symbols.py: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
   },
   "_internal/abook/readaloud/vieneu.py": {
-    "sha256": "37520306f9f40e28c610108f98d1824d1e90548728a43cb1c37ec2010c50b283",
+    "sha256": "8123728e9d7c1e4054844fde396586591161f81063b67cc18725986a5e0fd7c1",
     "reason": "abook/readaloud/vieneu.py: all flagged strings match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
   },
   "_internal/abook/readaloud/vieneu_engine.py": {
-    "sha256": "b0c57be6d90f532d7d50240d41dafb57f19b0b0bc388cd7db9683a4e5dd6a024",
+    "sha256": "319a7912363f2fcf2bfbf981f6a179ec60293b602c93aee99201c480b5cdf12c",
     "reason": "abook/readaloud/vieneu_engine.py: all flagged strings match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
   },
   "_internal/abook/readaloud/vieneu_gguf.py": {
@@ -280,7 +280,7 @@
     "reason": "abook/romanization.py: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
   },
   "_internal/abook/runtime_contract.py": {
-    "sha256": "d45fc4de585eb25f666c943d89a9fbb56e82c71bd7c3d6eed60f815a3cff710f",
+    "sha256": "eaf50abec34c5a309fac3fa41ec8e65ae56b90bed1fd6c9201f6342dd5a5df9f",
     "reason": "abook/runtime_contract.py: all flagged strings match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
   },
   "_internal/abook/speaker_logprobs.py": {
@@ -304,11 +304,11 @@
     "reason": "abook/teller_voice.py: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
   },
   "_internal/abook/text_processing.py": {
-    "sha256": "61b28415634cb8005081d5d30735183714df6cbe6715b446d389430050d694f5",
+    "sha256": "31ad93250dcd656dbfb2662b1bc734d25074f806ff6c97e24c2c860fb2de8016",
     "reason": "abook/text_processing.py: all flagged documentation matches scrubbed 0.4.167; the added NFC operation changes source normalization, with no new narrative strings."
   },
   "_internal/abook/tts.py": {
-    "sha256": "3e9bd63116922a3d650e00ee4883023bcc580e57d0000d3cad8eb4873219588c",
+    "sha256": "c9504ddec4d673fb504ee44c0d82f94e275aadbea3445b8f9bd10f7cea6f5407",
     "reason": "abook/tts.py: all flagged strings match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
   },
   "_internal/abook/vietnamese_syllable.py": {
@@ -396,7 +396,7 @@
     "reason": "abook/webui/ffmpeg_setup.py: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
   },
   "_internal/abook/webui/fingerprints.py": {
-    "sha256": "802670772a6a3be4516636a07d1c3da24eb6983d46fb67ccd8f610faff5737b6",
+    "sha256": "7a7162d3021eedd751c16359f6792c811950c63b4e888479f59f30298a785288",
     "reason": "abook/webui/fingerprints.py: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
   },
   "_internal/abook/webui/gcast.py": {
@@ -608,7 +608,7 @@
     "reason": "abook/webui/spelling.py: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
   },
   "_internal/abook/webui/store.py": {
-    "sha256": "a33859eaafe946ce353028f5cefe6b1f79f30dca1259c876cadb8989ac6e565f",
+    "sha256": "a6124e9acd2f7880a139b1c363021e032e9d092b16f239729e615ce4bda396a2",
     "reason": "abook/webui/store.py: all flagged strings match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
   },
   "_internal/abook/webui/studio_setup.py": {
@@ -680,7 +680,7 @@
     "reason": "abook/webui/word_timing.py: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
   },
   "_internal/abook/webui/work_items.py": {
-    "sha256": "59b4ff57a65e5c5e5176c8268d56f16a181d3a5e7eeaec6da359a2a8c31a3428",
+    "sha256": "da645f029f445ad3740d2e85c40327670403104d5369dca91b33af0f77928072",
     "reason": "abook/webui/work_items.py: all flagged strings match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
   },
   "_internal/abook/webui/workshop.py": {
@@ -904,7 +904,7 @@
     "reason": "docs/BOUNDARY_6_AND_THE_DRIVER_MORNING.md: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
   },
   "_internal/docs/CHANGELOG.md": {
-    "sha256": "20107b350130f1b9990a33d4887016ec37be8475e5f83b8c9d2af24ec0a9970d",
+    "sha256": "c01964f9356e6f45022fc34d53f2914a6d86828d56af437cf2667b6f490810c8",
     "reason": "docs/CHANGELOG.md: all flagged strings match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
   },
   "_internal/docs/CHILD_VOICE_TRANSFORM.md": {
@@ -1072,7 +1072,7 @@
     "reason": "Production interruption instructions and continuity limits; operational guidance rather than book text."
   },
   "_internal/docs/TEST_REPORT.md": {
-    "sha256": "a56b03b2c8c09701605ee723f995e28ceb25565bd1f1d3ba1415d343e659eb05",
+    "sha256": "4cf292d382c9c6cf818650312a585c0b4e3753973990c283a491063bbe588a54",
     "reason": "_internal/docs/TEST_REPORT.md: reviewed integration-only layout, generated parity inventory or pinned asset URL edits; existing scrubbed prose preserved."
   },
   "_internal/docs/TEXT_NORMALIZATION.md": {
@@ -1108,7 +1108,7 @@
     "reason": "docs/UI.md: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
   },
   "_internal/docs/UI_PARITY.md": {
-    "sha256": "2eb8003ff1aeaba90509bd56593942a8c8767626b8406cc033797b8356646da6",
+    "sha256": "37b04e9283f31c6b1376dd305146b4ace9b0467afe55988d995e9949cb4b8763",
     "reason": "_internal/docs/UI_PARITY.md: reviewed integration-only layout, generated parity inventory or pinned asset URL edits; existing scrubbed prose preserved."
   },
   "_internal/docs/UI_PARITY_QT.md": {
@@ -1212,7 +1212,7 @@
     "reason": "mobile/android/app/src/main/java/vn/abook/player/BookFileImport.kt: all flagged strings match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
   },
   "_internal/mobile/android/app/src/main/java/vn/abook/player/ListeningRecords.kt": {
-    "sha256": "915df59d01509eaaa4e82a4c7e29789dc681ef3edc9a9b333b9ae91f5d65ab76",
+    "sha256": "750aba1663e24c00d9248a3230f08c742234dbb0f66ab8f4b8f7984e421fa39d",
     "reason": "mobile/android/app/src/main/java/vn/abook/player/ListeningRecords.kt: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
   },
   "_internal/mobile/android/app/src/main/java/vn/abook/player/LoopSeam.kt": {
@@ -1272,7 +1272,7 @@
     "reason": "mobile/android/app/src/main/java/vn/abook/player/readaloud/Abbreviations.kt: all flagged strings match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
   },
   "_internal/mobile/android/app/src/main/java/vn/abook/player/readaloud/ClipCache.kt": {
-    "sha256": "63c7ecf34b17eca1d34a987bc678171a9c90623cf55a8c4a81030fdbf8b8a857",
+    "sha256": "feddfcfe471e9548fc7e1cce8bc472810b94ca0e4039cfeac8bc837237243f61",
     "reason": "_internal/mobile/android/app/src/main/java/vn/abook/player/readaloud/ClipCache.kt: inherited cache API documentation; the shared rule counter now invalidates pre-0.4.168 audio, with no new narrative strings."
   },
   "_internal/mobile/android/app/src/main/java/vn/abook/player/readaloud/ClipRetry.kt": {
@@ -1316,7 +1316,7 @@
     "reason": "mobile/android/app/src/main/java/vn/abook/player/readaloud/StalledClips.kt: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
   },
   "_internal/mobile/android/app/src/main/java/vn/abook/player/readaloud/Symbols.kt": {
-    "sha256": "4b9fbae7bc4e49193f5c297978524901167e85b1c85e02e1cc2b0a28f838b1c5",
+    "sha256": "af94924146d04907d0d243080fc374ef871edb04c945632508a3d508705e97cd",
     "reason": "mobile/android/app/src/main/java/vn/abook/player/readaloud/Symbols.kt: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
   },
   "_internal/mobile/android/app/src/main/java/vn/abook/player/ui/NativeActivity.kt": {
@@ -1332,11 +1332,11 @@
     "reason": "mobile/android/app/src/main/java/vn/abook/player/ui/components/WrapText.kt: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
   },
   "_internal/mobile/android/app/src/main/java/vn/abook/player/ui/nowplaying/PlayerSheets.kt": {
-    "sha256": "17efe8f7219cfa30a536b9947f7264c1a8a5b2d841d41d9def2f18e1f893efd0",
+    "sha256": "8bf83b214e85634b777ed5573b825673c6c1a48f590c2494e442f1d7de206c5b",
     "reason": "mobile/android/app/src/main/java/vn/abook/player/ui/nowplaying/PlayerSheets.kt: all flagged strings match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
   },
   "_internal/mobile/android/app/src/main/java/vn/abook/player/ui/nowplaying/ReadAlongPane.kt": {
-    "sha256": "427a5f1614de9a988982b8557e8edb7b0120c7421d27455f17ee5330fbc337ef",
+    "sha256": "4de52d2e0b722c4247c115e5fa9a29827a2d0fd33b4aad2e38113b714872d74a",
     "reason": "mobile/android/app/src/main/java/vn/abook/player/ui/nowplaying/ReadAlongPane.kt: all flagged strings match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
   },
   "_internal/mobile/android/app/src/main/java/vn/abook/player/ui/screens/LibraryChrome.kt": {
@@ -1344,7 +1344,7 @@
     "reason": "mobile/android/app/src/main/java/vn/abook/player/ui/screens/LibraryChrome.kt: all flagged strings match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
   },
   "_internal/mobile/android/app/src/main/java/vn/abook/player/ui/screens/SettingsGroups.kt": {
-    "sha256": "f315041a8c19aeeb7789c9d632aec553a6aae226eaac03eb8c43cd95d249f474",
+    "sha256": "b2e5032477fc4e46aaaf8ec77b642df1798ae8e39533405cca304898d002d4ab",
     "reason": "mobile/android/app/src/main/java/vn/abook/player/ui/screens/SettingsGroups.kt: all flagged strings match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
   },
   "_internal/mobile/android/app/src/main/java/vn/abook/player/ui/screens/SettingsScreen.kt": {
@@ -1568,11 +1568,11 @@
     "reason": "scripts/heartbeat_daemon.py: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
   },
   "_internal/scripts/heartbeat_event.py": {
-    "sha256": "c6802b37f2a5abad9082ae6db63377e531fd6575a9798726d97a72117e439292",
+    "sha256": "88c800a89b99a295f4a975519fdb27ab4d0dca3ce82b73ba21934eeb5e82ceab",
     "reason": "scripts/heartbeat_event.py: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
   },
   "_internal/scripts/heartbeat_tick.py": {
-    "sha256": "8b46204d849744d6ff9c951ecb09106dbf291b479713c17d1446d46b74d49976",
+    "sha256": "9f6c54baa070e811a97eed83eecd5f2c89dc85d14f022a6c77a1f7838fb5b724",
     "reason": "scripts/heartbeat_tick.py: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
   },
   "_internal/scripts/heartbeat_timeout.py": {
@@ -1632,7 +1632,7 @@
     "reason": "scripts/measure_a_number_with_a_unit.py: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
   },
   "_internal/scripts/measure_a_phantom_by_its_own_chapter.py": {
-    "sha256": "2a9c17840110dd185db3bf97e5a96e931386583fb9a3fef15080d9ed3ebebf7e",
+    "sha256": "ec28937dda984c3804a438806f15866784d0188530fdfcfdd15bb6861b255c1d",
     "reason": "scripts/measure_a_phantom_by_its_own_chapter.py: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
   },
   "_internal/scripts/measure_a_silence_capped_pace.py": {
@@ -1720,7 +1720,7 @@
     "reason": "scripts/model_eval/analysis/lnx_table.py: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
   },
   "_internal/scripts/model_eval/analysis_only.py": {
-    "sha256": "c0ba990e5fc2500e3c05004d13913282697f1778098101746124442dce5a59a6",
+    "sha256": "e2d2068b2d60bbb3859c1455bf9091f10333993cf0877434bb2a0310e7cf1544",
     "reason": "scripts/model_eval/analysis_only.py: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
   },
   "_internal/scripts/model_eval/build_training_set.py": {
@@ -1864,7 +1864,7 @@
     "reason": "scripts/model_eval/quote_scorer/make_folds.py: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
   },
   "_internal/scripts/model_eval/quote_scorer/narrator_raw.py": {
-    "sha256": "6bba9b77ac52dec1d776bafb0e49b12bebdd3049881f09780cce0dda410c5a43",
+    "sha256": "203b7f8a50aa38d959dcb6a5da4f8f6151b6a518eace132c96be540e9ac40c3b",
     "reason": "scripts/model_eval/quote_scorer/narrator_raw.py: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
   },
   "_internal/scripts/model_eval/quote_scorer/pseudo_label.py": {
@@ -1920,7 +1920,7 @@
     "reason": "scripts/music_loop_fixtures.py: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
   },
   "_internal/scripts/music_n0_fixtures.py": {
-    "sha256": "508a940137cfb2d46ef282b176e606d5ccd041a4cc622108a655e89a48a826be",
+    "sha256": "1fa054c7de655384541afc507d8e54a7ac2e2793b6faab9ca8b5b12c0cbddc7d",
     "reason": "scripts/music_n0_fixtures.py: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
   },
   "_internal/scripts/name_is_read_the_same_way.py": {
@@ -2308,11 +2308,11 @@
     "reason": "scripts/publish_model.py: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
   },
   "_internal/scripts/release.py": {
-    "sha256": "cb0ffd2b10ac8b558e2fa3794992754bad687c3b1b8d816766f6fe1e8a3af1d8",
+    "sha256": "7c223b345bcb5e1d985d450df34eb43e1442f3548a7004a599b2f54a6c8af7df",
     "reason": "scripts/release.py: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
   },
   "_internal/scripts/release_gate.py": {
-    "sha256": "68da0f7f2661171de479bcd783314577178388c2732181c50c0eeff2ef1d2e08",
+    "sha256": "12794e696f281fa0e3bffd129185593aee3a3580dd9fb7e369a403af2078d45e",
     "reason": "scripts/release_gate.py: all flagged strings match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
   },
   "_internal/scripts/report_castrules.py": {
@@ -2328,7 +2328,7 @@
     "reason": "scripts/resync_spoken_text.py: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
   },
   "_internal/scripts/run_detached.py": {
-    "sha256": "485a82ecd938bea532c1edc1f76813f5099ee21a3ec66c8f6d3e08046f60f9f5",
+    "sha256": "f62caf55a153597f3089a19b3909d246689c40869c1d15790ca6c48ef077aadc",
     "reason": "scripts/run_detached.py: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
   },
   "_internal/scripts/seed_chain.py": {
@@ -2672,7 +2672,7 @@
     "reason": "tests/fixtures/music/n0/chapters_main.json: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
   },
   "_internal/tests/fixtures/music/n0/segmenter_cases.json": {
-    "sha256": "119801a624118da254adf2b19a9aacd9172c8fe206dbe1c57bcf095dd9579774",
+    "sha256": "e33f87feab28ad7d69d05028c280932f5bda467e284e444b9f14107cfab657ab",
     "reason": "tests/fixtures/music/n0/segmenter_cases.json: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
   },
   "_internal/tests/fixtures/music_library/cases.json": {
@@ -2708,7 +2708,7 @@
     "reason": "tests/fixtures/readaloud/phoneme_delivery/cases.json: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
   },
   "_internal/tests/fixtures/readaloud/real_names/cases.json": {
-    "sha256": "e0632c8b26a3253d63056526fced9908c234e0d412dc3723b593a66d4bffdc2e",
+    "sha256": "005b114bce54028a9a5cc12008e7ba6eaada8558de0420c2f2424859356556d3",
     "reason": "tests/fixtures/readaloud/real_names/cases.json: all flagged strings match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
   },
   "_internal/tests/fixtures/readaloud/shared_vietnamese/cases.json": {
@@ -2716,7 +2716,7 @@
     "reason": "tests/fixtures/readaloud/shared_vietnamese/cases.json: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
   },
   "_internal/tests/fixtures/readaloud/spoken/reading_forms.json": {
-    "sha256": "55c4d2eb37dd7d4c9c2f6dd2ba50728d18b46d36048a6f54ba2a2b75f9a88b46",
+    "sha256": "dca1ab309080e3b583488adfcd3c4bfb3ccf74472616f0b40250bbfdb196590e",
     "reason": "tests/fixtures/readaloud/spoken/reading_forms.json: all flagged strings match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
   },
   "_internal/tests/fixtures/readaloud/spread/README.md": {
@@ -2784,7 +2784,7 @@
     "reason": "tests/fixtures/vieneu/android/clips.json: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
   },
   "_internal/tests/fixtures/vieneu/android/text.json": {
-    "sha256": "aafce739272c65f7a6e16a4c0274d9f6cf70677b42b4cf15ed8f95b7bbd099b4",
+    "sha256": "d3c6fa5a1e69f5025741f78a6b3f6738fc90868e2dd8ebbbce9eaa085cfad937",
     "reason": "Generated desktop/phone contract from self-written numeric, hesitation, honorific and phonetic test sentences; source cases inspected after integration."
   },
   "_internal/tests/fixtures/vieneu/android/tokens.json": {
@@ -2924,7 +2924,7 @@
     "reason": "tests/test_a_chapter_can_have_its_own_narrator.py: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
   },
   "_internal/tests/test_a_dash_led_line_in_a_quoted_chapter.py": {
-    "sha256": "c2146ebabc3377c2690b5e5db4eb20593b42e9569fb1ebe9b13f8a8bc4666072",
+    "sha256": "89b92df8344d5eb1fba3f1fcdf38525f7c08a610a2d06b615fb1c62a80e077b2",
     "reason": "tests/test_a_dash_led_line_in_a_quoted_chapter.py: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
   },
   "_internal/tests/test_a_dash_line_is_a_new_turn_across_batches.py": {
@@ -3644,7 +3644,7 @@
     "reason": "tests/test_offline_guard_names.py: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
   },
   "_internal/tests/test_one_line_never_removes_a_chapter.py": {
-    "sha256": "f99bf7fbb00cf1c0a2b64ee1788f33081f6c509ba628d30fa4947da509afc88e",
+    "sha256": "6da3ea45059408e4bbdb252970b0e093301425f737062203b42c0568d7b661a0",
     "reason": "tests/test_one_line_never_removes_a_chapter.py: all flagged strings match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
   },
   "_internal/tests/test_one_person_one_voice.py": {
@@ -3700,7 +3700,7 @@
     "reason": "tests/test_pin_the_book_cast.py: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
   },
   "_internal/tests/test_pipeline_mock.py": {
-    "sha256": "95ef3efccdd83e565144de9a2732fd9d13963437493a6a7b9b807cdeefce608c",
+    "sha256": "c25117e9f251e47ee06cb74960f51139998e5a3d21c5e1f27b8b0f82609547ff",
     "reason": "tests/test_pipeline_mock.py: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
   },
   "_internal/tests/test_pool_counts_its_own_ram.py": {
@@ -3712,7 +3712,7 @@
     "reason": "tests/test_pool_vram_shortage_is_not_permanent.py: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
   },
   "_internal/tests/test_portable_model_paths.py": {
-    "sha256": "d454c06ea76d2f642f088b8caafc73193fdce5b441ccfbe59cd62a3f6e01ba60",
+    "sha256": "31a1c550f720f68e2d0a1345155382680ba5ec7f881282a02c3b1b52abf345e4",
     "reason": "tests/test_portable_model_paths.py: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
   },
   "_internal/tests/test_power_guard.py": {
@@ -3792,7 +3792,7 @@
     "reason": "tests/test_qt_tabular_digits.py: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
   },
   "_internal/tests/test_quality_policy.py": {
-    "sha256": "c36de1643eeeea478485a019ce336e39cb6b9a907bdcb875f303270656e67c4c",
+    "sha256": "2764cea64c6221c87a4cbfa153f57338074ca5fd040d7ac9e0345f8430b3fa2e",
     "reason": "tests/test_quality_policy.py: all flagged strings match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
   },
   "_internal/tests/test_rate_impossible_is_the_same_family.py": {
@@ -3820,7 +3820,7 @@
     "reason": "tests/test_readaloud_local_stream.py: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
   },
   "_internal/tests/test_readaloud_reading_forms.py": {
-    "sha256": "3fd4d1b9c947b8c2bb71cc04a66125ff661bb3ce1e28f7243cb63a97413df155",
+    "sha256": "9483af6659526c2c5d0d63724a0639de69f96407fd05e6480b7c44a92e74085d",
     "reason": "tests/test_readaloud_reading_forms.py: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
   },
   "_internal/tests/test_readaloud_readings.py": {
@@ -3840,7 +3840,7 @@
     "reason": "tests/test_readaloud_supertonic.py: all flagged strings match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
   },
   "_internal/tests/test_readaloud_symbols.py": {
-    "sha256": "88865fc6b1e4e856c9771c535cbc6df744ee2184e72cfd344c0209791eb9c91b",
+    "sha256": "d0485c03db4f587e34fdce83c354241b5c7de6a61a43970dceb95e9ee734401e",
     "reason": "tests/test_readaloud_symbols.py: all flagged strings match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
   },
   "_internal/tests/test_readaloud_truepeak.py": {
@@ -3940,7 +3940,7 @@
     "reason": "tests/test_ship_only_recasts_that_help.py: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
   },
   "_internal/tests/test_shipping_without_a_listener.py": {
-    "sha256": "6dbf2250352b8734d5eb0448d39796733babfc4998047d9e00e41bd14d8c8ea2",
+    "sha256": "b1b253f8aa5f2538bafe0f1da9eff867c870181ecd4cb06a893bcb92c39bc8f4",
     "reason": "tests/test_shipping_without_a_listener.py: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
   },
   "_internal/tests/test_source_spellings.py": {
@@ -4052,7 +4052,7 @@
     "reason": "tests/test_text_books.py: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
   },
   "_internal/tests/test_text_processing_safety.py": {
-    "sha256": "386018a2cfa2b83b24828535b643c4c8fad9c97f89ed6823778fbad884e0207a",
+    "sha256": "cced4ab886d65cf7ed842575022aa3b2cc0f50a535e5667f51a5d08953128277",
     "reason": "tests/test_text_processing_safety.py: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
   },
   "_internal/tests/test_the_book_counts_against_its_own_source.py": {
@@ -4232,11 +4232,11 @@
     "reason": "tests/test_word_timing.py: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
   },
   "_internal/tests/test_work_items.py": {
-    "sha256": "0efea7138e87ec918b622db707f8db4c1327f6a86735ff7573c1390ad68d037a",
+    "sha256": "5eaf9012aadbb54259de6cb53812235571c152b8fed60c12bda5e8782e527a92",
     "reason": "tests/test_work_items.py: all flagged strings match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
   },
   "_internal/tests/test_work_items_at_scale.py": {
-    "sha256": "038150285735cd937434efb42e2dba3a13f45e38b140daa3eb00807824204594",
+    "sha256": "86558b263b1be6bbbe59ca9724f4fb48dadeac22e9ec324ed294ce24382993bc",
     "reason": "tests/test_work_items_at_scale.py: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
   },
   "_internal/tests/test_work_items_speaker_suggestions.py": {
@@ -4284,7 +4284,7 @@
     "reason": "ui/src/gallery/README.md: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
   },
   "_internal/ui/src/listen/PlayerViews.tsx": {
-    "sha256": "adab9476b565cf7d44312f25dd915365ce58688ca06e9113d8b817ed8882ff90",
+    "sha256": "fb295d90c337156817aa3ff4739f2b7aee7c9d6a204b537f43678d9f8d9e221a",
     "reason": "_internal/ui/src/listen/PlayerViews.tsx: reviewed integration-only layout, generated parity inventory or pinned asset URL edits; existing scrubbed prose preserved."
   },
   "_internal/ui/src/listen/liveClip.ts": {
@@ -4362,5 +4362,13 @@
   "result.md": {
     "sha256": "43d21ec8771298a812570b200d5e3e492651f9c0c1a06dc0f905ea9e41d45922",
     "reason": "Imported parity3 engineering report containing test totals, component repair descriptions and structural motion exemptions."
+  },
+  "_internal/abook/vietnamese_letters.py": {
+    "sha256": "b5c1b946b9456f7cac9dbc34d995a1d56fe592e623ffd56662d760c864875e44",
+    "reason": "Vietnamese regex-letter contract documentation explains case mixing in Unicode code-point ranges; no narrative example beyond individual letters and words."
+  },
+  "_internal/tests/test_vietnamese_letters.py": {
+    "sha256": "2d9b17e43d1c40d38115bccbc0d0a5db6edc463d6f0e752e102a411c126c9a00",
+    "reason": "Shared Vietnamese letter-class regression documentation describes uppercase/lowercase code points and synthetic test provenance, not narrative text."
   }
 }

@@ -138,6 +138,18 @@ def _fake_build(monkeypatch, tmp_path: Path, files: dict[str, str]) -> list[list
     return calls
 
 
+@pytest.mark.parametrize("low", [False, True])
+def test_release_tools_never_allocate_a_windows_console(monkeypatch, tmp_path, low):
+    from types import SimpleNamespace
+
+    calls = []
+    monkeypatch.setattr(release, "os", SimpleNamespace(name="nt"))
+    monkeypatch.setattr(release.subprocess, "run", lambda *args, **kwargs: calls.append(kwargs))
+    release._run(["tool.exe"], tmp_path, low=low)
+    expected = release.subprocess.CREATE_NO_WINDOW | (release.BELOW_NORMAL if low else 0)
+    assert calls[0]["creationflags"] == expected
+
+
 def _installer_files(version="9.9.9", signature="sig-of-9.9.9", manifest_signature=None) -> dict[str, str]:
     manifest = {"version": version, "platforms": {"windows-x86_64": {"signature": manifest_signature or signature}}}
     return {"ABook_9.9.9_x64-setup.exe": "MZ", "ABook_9.9.9_x64-setup.exe.sig": signature + "\n", "latest.json": json.dumps(manifest)}
@@ -147,7 +159,7 @@ def test_build_makes_the_windows_installer_with_the_qt_build_only(monkeypatch, t
     calls = _fake_build(monkeypatch, tmp_path, _installer_files())
     with pytest.raises(_InstallerBuilt):
         release.build("9.9.9", tmp_path / "out")
-    assert calls[0] == ["cmd", "/c", str(tmp_path / "desktop_qt/build.bat"), "installer"]
+    assert calls[0] == [str(tmp_path / "desktop_qt/build.bat"), "installer"]
     assert not any("build_windows_app" in part or "tauri" in part.lower() for call in calls for part in call)
     assert sorted(path.name for path in (tmp_path / "out").iterdir()) == sorted(_installer_files())
 
