@@ -82,8 +82,24 @@ def pronoun_ai(toks: list[str], index: int) -> bool:
 
 
 def contextual_letters(core: str, toks: list[str], index: int) -> bool:
+    if core.casefold() in {"n", "r"}:
+        if core not in {"N", "R"}:
+            return False
+        before, _, after = split_token(toks[index])
+        if any(c.isalnum() for c in before + after):
+            return False
+        nearby = toks[max(0, index - 3):index] + toks[index + 1:index + 4]
+        if any(split_token(t)[1] in {"SR", "SSR", "UR"} for t in nearby):
+            return True
     cues = POLICY["contextual_letter_names"].get(core.casefold(), [])
     return any(split_token(t)[1].casefold() in cues for t in toks[max(0, index - 3):index])
+
+
+def read_rank_letters(toks: list[str], out: list[str]) -> None:
+    for index, token in enumerate(toks):
+        before, core, after = split_token(token)
+        if out[index] == token and core in POLICY["rank_letter_readings"] and contextual_letters(core, toks, index):
+            out[index] = before + POLICY["rank_letter_readings"][core] + after
 
 
 def spelled(core: str) -> str | None:

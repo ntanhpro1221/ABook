@@ -910,6 +910,7 @@ def _read_words(toks: list[str], out: list[str], origin: str | None, speaks_engl
     shouts.read_shouts(pieces, said, origin)
     vocalized = {index for before, after, index in zip(before_sounds, said, owner) if before != after}
     _roman_numbers(pieces, said)
+    abbreviations.read_rank_letters(pieces, said)
     abbreviations.read_levels(pieces, said, speaks_english)
     abbreviations.read_vietnamese_titles(pieces, said)
     abbreviations.read_titles(pieces, said, speaks_english)

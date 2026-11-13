@@ -670,6 +670,7 @@ object VieneuUnits {
         Shouts.readShouts(pieces, said, origin)
         val vocalized = said.indices.filter { beforeSounds[it] != said[it] }.map { owner[it] }.toSet()
         romanNumbers(pieces, said)
+        Abbreviations.readRankLetters(pieces, said)
         Abbreviations.readLevels(pieces, said)
         Abbreviations.readVietnameseTitles(pieces, said)
         Abbreviations.readTitles(pieces, said)

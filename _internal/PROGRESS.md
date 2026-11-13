@@ -26,3 +26,8 @@
 - Added bounded uppercase model-code readings, including alternating letter/number groups, to Python/Kotlin.
 - Run after the symbol rules so contextual multiplication `X3` retains its meaning.
 - Synthetic shared code cases plus existing multiplier controls: focused pytest 324 passed, zero FAILED.
+
+## Card ranks
+- Shared policy now recognizes standalone N/R after card/rank cues and beside SR/SSR/UR; mixed letter-number tokens retain code ownership.
+- Plain-text voices use en/a; direct English uses the existing English-letter route as SR/SSR do.
+- Synthetic shared rank cases and focused pytest: 331 passed, zero FAILED.

@@ -1405,6 +1405,21 @@
    "id": "tnfix_code-5",
    "text": "Thử M82A1 nhé.",
    "said": "Thử em tám mươi hai a một nhé."
+  },
+  {
+   "id": "tnfix_rank-1",
+   "text": "Thẻ N yếu hơn thẻ R.",
+   "said": "Thẻ en yếu hơn thẻ a."
+  },
+  {
+   "id": "tnfix_rank-2",
+   "text": "N, R, SR, SSR, UR.",
+   "said": "en, a, ét e-rờ, ét ét e-rờ, u e-rờ."
+  },
+  {
+   "id": "tnfix_rank-3",
+   "text": "Thẻ R18 ở đây.",
+   "said": "Thẻ e-rờ mười tám ở đây."
   }
  ]
 }

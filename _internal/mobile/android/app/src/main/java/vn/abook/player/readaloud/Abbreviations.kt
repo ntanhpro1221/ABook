@@ -49,9 +49,25 @@ object Abbreviations {
     }
 
     fun contextualLetters(core: String, toks: List<String>, index: Int): Boolean {
+        if (core.lowercase(Locale.ROOT) in setOf("n", "r")) {
+            if (core !in setOf("N", "R")) return false
+            val (before, _, after) = Names.splitToken(toks[index])
+            if ((before + after).any { it.isLetterOrDigit() }) return false
+            val nearby = toks.subList(maxOf(0, index - 3), index) + toks.subList(index + 1, minOf(toks.size, index + 4))
+            if (nearby.any { Names.splitToken(it).second in setOf("SR", "SSR", "UR") }) return true
+        }
         val cues = policy.getJSONObject("contextual_letter_names").optJSONArray(core.lowercase(java.util.Locale.ROOT)) ?: return false
         val previous = toks.subList(maxOf(0, index - 3), index).map { Names.splitToken(it).second.lowercase(java.util.Locale.ROOT) }
         return (0 until cues.length()).any { cues.getString(it) in previous }
+    }
+
+    fun readRankLetters(toks: List<String>, out: MutableList<String>) {
+        val readings = policy.getJSONObject("rank_letter_readings")
+        for ((index, token) in toks.withIndex()) {
+            val (before, core, after) = Names.splitToken(token)
+            if (out[index] == token && readings.has(core) && contextualLetters(core, toks, index))
+                out[index] = before + readings.getString(core) + after
+        }
     }
     private val SPELLED_ENGLISH = "abc ceo cia dna exp fbi hiv ibm nba usa".split(" ").toSet()
     private val SHOUT_WORDS = "no oh ah eh uh um ha ho yo hi he we me my up so to of or on ya ye go do if in is an by at".split(" ").toSet()

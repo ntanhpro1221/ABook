@@ -53,3 +53,16 @@ def test_real_words_are_never_stretched(word):
 @pytest.mark.parametrize(("code", "said"), [("M2", "em hai"), ("M60", "em sáu mươi"), ("M500", "em năm trăm"), ("MP9", "em pê chín"), ("M82A1", "em tám mươi hai a một")])
 def test_uppercase_model_codes(code, said):
     assert studio_tn(f"Thử {code} nhé.", None, True, direct_english=True)[0] == f"Thử {said} nhé."
+
+
+@pytest.mark.parametrize(("source", "expected"), [
+    ("Thẻ N yếu hơn thẻ R.", "Thẻ en yếu hơn thẻ a."),
+    ("N, R, SR, SSR, UR.", "en, a, ét e-rờ, ét ét e-rờ, u e-rờ."),
+    ("Thẻ R18 ở đây.", "Thẻ e-rờ mười tám ở đây."),
+])
+def test_rank_letters(source, expected):
+    assert studio_tn(source, None, True)[0] == expected
+
+
+def test_rank_letters_use_the_direct_english_route():
+    assert studio_tn("Thẻ N và R.", None, True, direct_english=True)[0] == "Thẻ <en>N</en> và <en>R</en>."

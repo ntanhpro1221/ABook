@@ -50,8 +50,11 @@
   "case_sensitive_abbreviations": ["ai"],
   "pronoun_following": ["đó", "đây", "nào", "đâu", "vậy", "ơi"],
   "contextual_letter_names": {
-    "ktx": ["tàu", "hỏa", "ga", "train", "railway"]
+    "ktx": ["tàu", "hỏa", "ga", "train", "railway"],
+    "n": ["thẻ", "cấp", "hạng", "rank", "rarity"],
+    "r": ["thẻ", "cấp", "hạng", "rank", "rarity"]
   },
+  "rank_letter_readings": {"N": "en", "R": "a"},
   "english_letter_words": {"Z": "zed"},
   "vietnamese_letter_names": ["K"],
   "english_voice_keeps": ["app", "check", "code", "comment", "hack", "hacker", "post", "share"],
