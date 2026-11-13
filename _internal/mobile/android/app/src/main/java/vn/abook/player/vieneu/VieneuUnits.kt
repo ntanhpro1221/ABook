@@ -385,7 +385,28 @@ object VieneuUnits {
             if (original.none { it.isDigit() }) continue
             val mode = if (RANGE.containsMatchIn(original)) rangeMode(plain, index) else ""
             out[index] = GOLD_G.replace(RANGE.replace(original) { m -> range(m, if (original.getOrNull(m.range.last + 1) == '=' || (m.range.first > 0 && original[m.range.first - 1] == '=')) "minus" else mode) }, " giê")
+            var token = out[index]
+            token = Regex("""(?<![$W.,])[0-9]{1,3}(?:\.[0-9]{3})+(?![0-9]|[.,][0-9])""").replace(token) {
+                integerReading(it.value.replace(".", ""))
+            }
+            token = Regex("""(?<![$W.,])[0-9]+\.[0-9]{1,2}(?![0-9]|[.,][0-9])""").replace(token) { it.value.replace('.', ',') }
+            out[index] = Regex("""(?<![$W.,/:])[0-9]+(?![$W]|[.,/:][0-9])""").replace(token) { integerReading(it.value) }
         }
+    }
+
+    /** Bare integers use Vietnamese even in an English sentence; no fixed-width integer limit. */
+    internal fun integerReading(digits: String): String {
+        if (digits.startsWith("0")) return digits.map { DIGITS[it - '0'].ifEmpty { "không" } }.joinToString(" ")
+        val groups = digits.reversed().chunked(3).map { it.reversed() }.reversed()
+        return groups.mapIndexedNotNull { index, group ->
+            val value = group.toInt()
+            if (value == 0) return@mapIndexedNotNull null
+            val power = groups.size - index - 1
+            var said = vietnameseNumber(value)
+            if (index > 0 && value < 100) said = "không trăm " + (if (value < 10) "lẻ " else "") + said
+            val scales = listOf("", "nghìn", "triệu")[power % 3] + " tỷ".repeat(power / 3)
+            listOf(said, scales.trim()).filter { it.isNotEmpty() }.joinToString(" ")
+        }.joinToString(" ")
     }
 
     /** Text smileys (":3", ":))", ">:)", "<3", "-_-", "orz") cannot be read: they go, the punctuation after them stays - `_emoticons`. */
@@ -748,7 +769,7 @@ object VieneuUnits {
             val suffix = when { right.startsWith("G") -> 1; right.startsWith("pt") -> 2; else -> 0 }
             val gold = suffix > 0 && right.drop(suffix).all { it in CLOSERS || it in PUNCT_MARKS }
             val bounded = token.getOrNull(match.range.first - 1)?.isLetterOrDigit() != true && (token.getOrNull(match.range.last + 1)?.isLetterOrDigit() != true || gold)
-            if (bounded && (gold || match.value.count { it == ',' } > 1 || context(index))) {
+            if (bounded) {
                 val digits = match.value.replace(",", "")
                 if (digits.length >= 7) match.value.replace(",", ".") + (if (right.startsWith(".")) " " else "") else digits
             } else match.value

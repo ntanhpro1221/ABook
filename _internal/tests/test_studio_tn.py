@@ -19,7 +19,7 @@ from abook.tts import TTSCoordinator
     ("Anh HP ơi", "Anh hát pê ơi"),
     ("Aaaa! Đau quá", "a… a! Đau quá"),
     ("Ariel-sama đến rồi", "Ariel-xa-ma đến rồi"),
-    ("Giá 1,000 người", "Giá 1000 người"),
+    ("Giá 1,000 người", "Giá một nghìn người"),
     ("a ~ b", "a, b"),
     ("  Chương IV  ", "  Chương bốn  "),
 ])

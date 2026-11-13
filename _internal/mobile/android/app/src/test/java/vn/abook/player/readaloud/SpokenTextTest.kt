@@ -88,7 +88,7 @@ class SpokenTextTest {
         val voice = FakeEdge()
         val text = "Haaah, HP 1,500 và Otsuki-san."
         val clip = voice.synthesize(text, File.createTempFile("edge", ".mp3"), "ja", null)
-        assertEquals("ha… a, hát pê 1500 và ô-xu-ki-xan.", voice.heard.single())
+        assertEquals("ha… a, hát pê một nghìn năm trăm và ô-xu-ki-xan.", voice.heard.single())
         assertEquals(text.split(" ").size, clip.words.size)
         assertEquals(Span(0, 550), clip.words[0])
         assertTrue(clip.words.zipWithNext().all { (a, b) -> a.start <= a.end && a.end <= b.start })

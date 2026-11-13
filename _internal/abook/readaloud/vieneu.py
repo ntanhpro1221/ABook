@@ -404,6 +404,35 @@ def _numbers(out: list[str], toks: list[str] | None = None) -> None:
             continue
         mode = _range_mode(plain, index) if RANGE.search(token) else ""
         out[index] = GOLD_G.sub(" giê", RANGE.sub(lambda match: _range(match, "minus" if "=" in (token[match.end():match.end() + 1], token[match.start() - 1:match.start()]) else mode), token))
+        token = out[index]
+        # A final sentence dot is not another thousands separator.
+        token = re.sub(r"(?<![\w.,])\d{1,3}(?:\.\d{3})+(?!\d|[.,]\d)",
+                       lambda m: integer_reading(m.group().replace(".", "")), token)
+        token = re.sub(r"(?<![\w.,])\d+\.\d{1,2}(?!\d|[.,]\d)",
+                       lambda m: m.group().replace(".", ","), token)
+        # Do not delegate bare integers to sea-g2p's sentence-language guess.
+        out[index] = re.sub(r"(?<![\w.,/:])\d+(?!\w|[.,/:]\d)",
+                            lambda m: integer_reading(m.group()), token)
+
+
+def integer_reading(digits: str) -> str:
+    """Read an unbounded integer without depending on the sentence language."""
+    if digits.startswith("0"):
+        return " ".join(_DIGITS[int(c)] or "không" for c in digits)
+    groups = [digits[max(0, end - 3):end] for end in range(len(digits), 0, -3)][::-1]
+    words = []
+    for index, group in enumerate(groups):
+        value = int(group)
+        if not value:
+            continue
+        power = len(groups) - index - 1
+        said = vietnamese_number(value)
+        if index and value < 100:
+            said = "không trăm " + ("lẻ " if value < 10 else "") + said
+        scale = ("", "nghìn", "triệu")[power % 3]
+        scale = " ".join(filter(None, [scale, *("tỷ" for _ in range(power // 3))]))
+        words.append(" ".join(filter(None, [said, scale])))
+    return " ".join(words)
 
 
 def _emoticons(out: list[str]) -> None:
@@ -652,7 +681,7 @@ def _thousands(out: list[str], toks: list[str] | None = None) -> None:
             left, right = token[:match.start()], token[match.end():]
             gold = bool(re.fullmatch(r"(?:G|pt)[" + re.escape(CLOSERS + PUNCT_MARKS) + r"]*", right))
             bounded = not left[-1:].isalnum() and (not right[:1].isalnum() or gold)
-            if not bounded or not (gold or match.group().count(",") > 1 or context(index)):
+            if not bounded:
                 return match.group()
             digits = match.group().replace(",", "")
             if len(digits) >= 7:

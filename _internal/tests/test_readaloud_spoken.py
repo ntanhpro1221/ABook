@@ -53,7 +53,7 @@ def test_a_normalising_voice_gets_the_text_the_local_voices_get_and_one_highligh
     service = ReadAloud(tmp_path, [provider])
     text = "Haaah, HP 1,500 và Tanaka-san."
     clip = service.clip("fake:ngoc", text, origin="ja")
-    assert provider.calls[-1] == ("ngoc", "ha… a, hát pê 1500 và Ta-na-ca-xan."), "chữ đã chuẩn hoá, nối bằng một dấu cách"
+    assert provider.calls[-1] == ("ngoc", "ha… a, hát pê một nghìn năm trăm và Ta-na-ca-xan."), "chữ đã chuẩn hoá, nối bằng một dấu cách"
     words = clip["words"]
     assert len(words) == len(tokens(text))
     assert all(a[0] <= a[1] <= b[0] <= b[1] <= clip["duration_ms"] for a, b in zip(words, words[1:]))
