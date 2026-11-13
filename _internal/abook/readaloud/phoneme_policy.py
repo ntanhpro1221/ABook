@@ -84,6 +84,8 @@ def restore_generated_syllables(
     g2p: Callable[[str], str],
     source: str | None = None,
     rulings: Rulings | None = None,
+    *,
+    cursor: list[int] | None = None,
 ) -> str:
     """Generated Vietnamese name syllables must not be reclassified English.
 
@@ -119,15 +121,23 @@ def restore_generated_syllables(
     tokens, phones = given.split(), phonemes.split()
     if len(tokens) != len(phones):
         return phonemes
-    aligned = len(rendered) == len(tokens) and all(
-        w == t.replace("<en>", "").replace("</en>", "").strip(_WORD_EDGE).lower()
-        for w, t in zip(rendered, tokens)
-    )
+    normalized = [t.replace("<en>", "").replace("</en>", "").strip(_WORD_EDGE).lower() for t in tokens]
+    offset = 0
+    if cursor is not None:
+        # Studio supplies successive chunks (and cue fragments) of one spelling.
+        # Consume each occurrence once; never apply a name's positions globally.
+        offset = next((i for i in range(cursor[0], len(rendered) - len(tokens) + 1)
+                       if rendered[i:i + len(tokens)] == normalized), -1)
+        aligned = offset >= 0
+        if aligned:
+            cursor[0] = offset + len(tokens)
+    else:
+        aligned = rendered == normalized
     inside = False
     for index, token in enumerate(tokens):
         inside = inside or "<en>" in token
         word = token.strip(_WORD_EDGE)
-        if not inside and aligned and index in (ruled_positions | generated_positions):
+        if not inside and aligned and index + offset in (ruled_positions | generated_positions):
             probe = _level_probe(word, g2p)
             if probe:
                 core = phones[index].rstrip(_PHONEME_MARKS)
@@ -327,7 +337,9 @@ def sentence_case(text: str, source: str | None = None, rulings: "Rulings | None
     """Remember `capitalised(text, source)` and the book's rulings for a frontend that only hands over normalized chunks (Studio)."""
     previous = getattr(_case, "capitals", frozenset()), getattr(_case, "rulings", None), getattr(_case, "named", frozenset())
     spelling = getattr(_case, 'spelling', None)
+    cursor = getattr(_case, 'spelling_cursor', None)
     _case.spelling = (text, source)
+    _case.spelling_cursor = [0]
     _case.capitals, _case.rulings = capitalised(text, source), rulings
     _case.named = written_names(text, source) & rulings.foreign if rulings else frozenset()
     try:
@@ -335,11 +347,17 @@ def sentence_case(text: str, source: str | None = None, rulings: "Rulings | None
     finally:
         _case.capitals, _case.rulings, _case.named = previous
         _case.spelling = spelling
+        _case.spelling_cursor = cursor
 
 
 def remembered_spelling(fallback: str) -> tuple[str, str | None]:
     """Pre-normalization generated syllable boundaries for Studio's second pass."""
     return getattr(_case, 'spelling', None) or (fallback, None)
+
+
+def remembered_spelling_cursor() -> list[int] | None:
+    """Ordered fragment alignment, scoped to the current Studio sentence."""
+    return getattr(_case, 'spelling_cursor', None)
 
 
 @contextmanager
