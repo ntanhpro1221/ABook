@@ -591,7 +591,8 @@ def web_scan_file(path: Path, scan: Scan) -> None:
                         if icon not in TRANSIENT_ICONS:
                             scan.pairs.append(Pair("web", file, el.line, label, icon, f"prop:{name}"))
         # <Foo className="size-4" /> cạnh chữ cùng cha, hay icon duy nhất trong nút có aria-label.
-        kids = el.children
+        # <Reveal> (shared/MotionPresence) only animates its one child: an icon inside it still sits beside the parent's text.
+        kids = [kid for c in el.children for kid in (c[1].children if c[0] == "el" and c[1].tag == "Reveal" else [c])]
         for index, child in enumerate(kids):
             if child[0] != "el" or child[1].tag not in icons:
                 continue

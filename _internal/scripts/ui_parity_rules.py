@@ -8,6 +8,7 @@ asserts they are empty and that each rule bites a planted violation.
 
 Run: python -X utf8 scripts/ui_parity_rules.py          (print every problem)
      python -X utf8 scripts/ui_parity_rules.py --counts (current counts of the ratchet lists, to lower the JSON after a fix)
+     python -X utf8 scripts/ui_parity_rules.py --instant [--all] (L7 table by platform/category; --all also lists proved-safe sites)
 """
 from __future__ import annotations
 
@@ -411,37 +412,17 @@ def l6_motion_tokens() -> list[str]:
 
 
 # ---------------------------------------------------------------------------------------------------------------- L7 hard show / hide
-QT_VISIBLE = re.compile(r"\bvisible:\s*(?!opacity\b|.*\bopacity\s*>|true\b|false\b|parent\.visible|root\.visible\b)([^;}\n]+)")
-KT_IF = re.compile(r"^\s*(?:\}\s*else\s+)?if \((.*)\)\s*([A-Z]\w*)\(")
-WEB_AND = re.compile(r"\{[^{}]*&&\s*\(?\s*<([A-Za-z][\w.]*)")
-KT_NOT_UI = {"Modifier", "Color", "S", "Dim", "Spacer", "String", "Log", "Feedback", "BackHandler", "LaunchedEffect", "DisposableEffect",
-             "Arrangement", "Alignment", "Offset", "Size", "Rect", "Text", "Uri", "Intent", "File", "Pair", "Triple", "IntOffset", "Dp"}
-WEB_OK = {"MotionPresence", "Collapse", "MotionRegion", "Popover.Close"}
+def instant_rows() -> list[dict]:
+    """Every show/hide site on the three platforms with its category (scripts/ui_instant.py): "a-*" is a hard toggle the user
+    sees, "b-*" is proved safe by a general structural rule (never a per-line exception)."""
+    ui_instant = _module(Path(__file__).with_name("ui_instant.py"))
+    rel_ = lambda p: rel(p)
+    return (ui_instant.qt_classify(qt_files(), rel_) + ui_instant.web_classify(web_files(), rel_)
+            + ui_instant.kt_classify(and_files(), rel_))
 
 
 def instant_hits() -> list[tuple[str, int, str]]:
-    out = []
-    for path in qt_files():
-        src = lines(path)
-        for i, line in enumerate(src):
-            m = QT_VISIBLE.search(line)
-            if not m:
-                continue
-            win = "\n".join(src[max(0, i - 6): i + 8])
-            if "Behavior on opacity" in win or ("opacity:" in win and "opacity: 1" not in win) or "Collapse" in win:
-                continue
-            out.append((rel(path), i + 1, line.strip()[:90]))
-    for path in and_files():
-        for i, line in enumerate(lines(path)):
-            m = KT_IF.search(line)
-            if m and m.group(2) not in KT_NOT_UI:
-                out.append((rel(path), i + 1, line.strip()[:90]))
-    for path in web_files():
-        for i, line in enumerate(lines(path)):
-            for m in WEB_AND.finditer(line):
-                if m.group(1) not in WEB_OK:
-                    out.append((rel(path), i + 1, line.strip()[:90]))
-    return out
+    return [(r["path"], r["line"], r["text"]) for r in instant_rows() if r["category"].startswith("a")]
 
 
 def l7_instant() -> list[str]:
@@ -453,6 +434,8 @@ def l7_instant() -> list[str]:
         for i, line in enumerate(lines(ROOT / item["file"]), 1):
             if item["match"] in line and not line.lstrip().startswith("//"):
                 problems.append(f"L7 {item['file']}:{i} đã sửa ({item['what']}) mà lại hiện/ẩn cứng: {line.strip()}")
+    ui_instant = _module(Path(__file__).with_name("ui_instant.py"))
+    problems += [f"L7 {p}" for p in ui_instant.qt_reveal_targets(qt_files(), rel)]
     per = Counter(path for path, _i, _l in hits)
     return problems + _ratchet("L7", per, cfg["remaining"], "chỗ hiện/ẩn cứng")
 
@@ -611,10 +594,14 @@ def counts() -> dict:
 
 def main(argv: list[str]) -> int:
     if "--instant" in argv:
-        hits = instant_hits()
-        print(f"L7: {len(hits)} ứng viên (heuristic; chưa phải lỗi đã xác nhận)")
-        for path, i, line in hits:
-            print(f"{path}:{i}: {line}")
+        rows = instant_rows()
+        table = Counter((r["platform"], r["category"]) for r in rows)
+        print(f"L7: {sum(1 for r in rows if r['category'].startswith('a'))} chỗ hiện/ẩn cứng (a) / {len(rows)} chỗ hiện/ẩn")
+        for (platform, category), n in sorted(table.items()):
+            print(f"  {platform:8} {category:22} {n}")
+        for r in rows:
+            if r["category"].startswith("a") or "--all" in argv:
+                print(f"{r['path']}:{r['line']}: [{r['category']}] {r['text']}" + (f"  ({r['reason']})" if "--all" in argv else ""))
         return 0
     if "--counts" in argv:
         print(json.dumps(counts(), ensure_ascii=False, indent=2))

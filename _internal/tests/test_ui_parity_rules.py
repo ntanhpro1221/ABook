@@ -70,6 +70,7 @@ Item {
 }
 """
 KT = """package vn.abook.player.ui
+@Composable fun PlayerAlert(text: String) {}
 fun Lib() {
     BasicText(S.s_b)
     BasicText(S.s_h, Modifier.padding(top = 2.dp))
@@ -142,6 +143,78 @@ def test_l7_confirmed_repairs_cannot_be_hidden_by_a_nearby_animation(planted):
     path = planted.ROOT / "desktop_qt/qml/Lib.qml"
     path.write_text('Item {\n    Button { visible: root.ready }\n    Collapse { open: root.other }\n}', encoding="utf-8")
     assert any("confirmed repair" in p for p in planted.l7_instant())
+
+
+def _categories(planted):
+    return {(r["path"].rsplit("/", 1)[-1], r["line"]): r["category"] for r in planted.instant_rows()}
+
+
+def test_l7_proves_safe_qt_sites_by_structure_not_by_line(planted):
+    (planted.ROOT / "desktop_qt/qml/Lib.qml").write_text("""import QtQuick
+Item {
+    id: root
+    readonly property bool wide: width >= 720
+    property real shown: 0
+    Behavior on shown { NumberAnimation {} }
+    Text { id: probe; visible: false }
+    Rectangle { visible: opacity > 0; opacity: root.ready ? 1 : 0; Behavior on opacity { NumberAnimation {} } }
+    Item { visible: shown > 0 }
+    Text { visible: root.wide }
+    Item { height: root.grow; visible: root.grow > 0 }
+    Rectangle { visible: root.ready }
+    Rectangle { Reveal { shown: root.ready } }
+}
+""", encoding="utf-8")
+    got = _categories(planted)
+    assert got[("Lib.qml", 7)] == "b-constant" and got[("Lib.qml", 8)] == "b-follows-opacity"
+    assert got[("Lib.qml", 9)] == "b-animated-clock" and got[("Lib.qml", 10)] == "b-responsive"
+    assert got[("Lib.qml", 11)] == "b-zero-size"
+    assert got[("Lib.qml", 12)] == "a-hard"  # a fade elsewhere in the file proves nothing about this row
+    assert ("Lib.qml", 13) not in got  # Reveal is the repair, not a site
+
+
+def test_l7_reveal_inside_a_default_property_holder_must_name_its_target(planted):
+    qml = planted.ROOT / "desktop_qt/qml"
+    (qml / "Card.qml").write_text("import QtQuick\nItem { default property alias content: body.data; Column { id: body } }\n", encoding="utf-8")
+    (qml / "Lib.qml").write_text("import QtQuick\nItem {\n    Card { Reveal { shown: root.a } }\n    Card { id: c; Reveal { target: c; shown: root.a } }\n}\n",
+                                 encoding="utf-8")
+    problems = [p for p in planted.l7_instant() if "target" in p]
+    assert len(problems) == 1 and "Lib.qml:3" in problems[0], problems
+
+
+def test_l7_proves_safe_web_and_android_sites_by_rule(planted):
+    (planted.ROOT / "ui/src/listen/Lib.tsx").write_text("""export function Host() { return null; }
+export function Lib({ a, b }: { a: boolean; b: boolean }) {
+  const narrow = useMediaQuery("(max-width: 600px)");
+  return <div>
+    <MotionRegion>{a && <p>x</p>}</MotionRegion>
+    <MotionRegion motionKey={b}>{a && <p>y</p>}</MotionRegion>
+    {a && <span className="sr-only">z</span>}
+    {a && <Host />}
+    {narrow && <p>n</p>}
+    {b && <p>hard</p>}
+    <Reveal when={b}><p>fixed</p></Reveal>
+  </div>;
+}
+""", encoding="utf-8")
+    (planted.ROOT / "mobile/android/app/src/main/java/vn/abook/player/ui/Lib.kt").write_text("""package vn.abook.player.ui
+@Composable fun Note(text: String) {}
+@Composable fun Lib(ready: Boolean) {
+    if (ready) Triple(1, 2, 3)
+    AnimatedVisibility(ready) {
+        if (ready) Note("a")
+    }
+    if (ready) Note("b") else Note("c")
+    if (ready) Note("d")
+    Reveal(ready) { Note("e") }
+}
+""", encoding="utf-8")
+    got = _categories(planted)
+    assert got[("Lib.tsx", 5)] == "b-parent-motion" and got[("Lib.tsx", 6)] == "a-hard"  # keyed on another value
+    assert got[("Lib.tsx", 7)] == "b-not-visible" and got[("Lib.tsx", 8)] == "b-not-visible"
+    assert got[("Lib.tsx", 9)] == "b-responsive" and got[("Lib.tsx", 10)] == "a-hard" and ("Lib.tsx", 11) not in got
+    assert got[("Lib.kt", 4)] == "b-not-ui" and got[("Lib.kt", 6)] == "b-parent-motion"
+    assert got[("Lib.kt", 8)] == "a-swap" and got[("Lib.kt", 9)] == "a-hard" and ("Lib.kt", 10) not in got
 
 
 def test_l8_bites_an_ellipsis_button_with_the_wrong_name(planted):
