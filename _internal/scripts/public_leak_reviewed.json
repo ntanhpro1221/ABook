@@ -2312,7 +2312,7 @@
     "reason": "scripts/release.py: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
   },
   "_internal/scripts/release_gate.py": {
-    "sha256": "d511336ec45304a946bb8b52b1428cc856f3e0c74d1158a23c809a321de26922",
+    "sha256": "02c5dd70b944ca4ca56ec967d26adf9d1c979bbfb13897decb5482a3db387237",
     "reason": "scripts/release_gate.py: all flagged strings match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
   },
   "_internal/scripts/report_castrules.py": {

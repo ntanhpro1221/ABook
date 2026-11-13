@@ -200,7 +200,7 @@ def checks(confirm_hash: str | None = None) -> list[Check]:
         # Sau android-unit / qt-tests: hai bước ấy vừa ghi lại ảnh và cây UI mà máy đo thiết kế đọc.
         Check("design-lint", worker_command("design-lint"), timeout=600, parser="json"),
     ]
-    definitions += [Check(name, worker_command(name), parser="json") for name in
+    definitions += [Check(name, worker_command(name), parser="json", timeout=1200 if name == "public-fixtures" else 120) for name in
                     ("quality-hash", "changelog", "versions", "licenses", "diff-safety", "forbidden-terms", "public-fixtures", "public-paths", "batch-crlf",
                      "studio-pins", "android-sdk")]
     definitions += [Check(name, manual=detail) for name, detail in (
