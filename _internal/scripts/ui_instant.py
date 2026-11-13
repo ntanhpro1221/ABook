@@ -134,6 +134,45 @@ class QtProject:
                 return False
         return True
 
+    def swapped(self, file: str) -> set[str]:
+        """Properties of this file that are only ever written inside `slide.change(function() { ... })`, where `slide` is a
+        shared transition component (it defines `change()` and animates): the old and new state cross-fade as a whole."""
+        source, clean, objects = self.sources[file], self.clean[file], self.objects[file]
+        slides = set()
+        for obj in objects:
+            own = self.clean.get(obj['type'], '')
+            if re.search(r'\bfunction\s+change\s*\(', own) and re.search(r'\b(?:Behavior|NumberAnimation|Animation)\b', own):
+                m = re.search(r'\bid\s*:\s*(\w+)', mask(direct_source(source, obj, objects)))
+                if m:
+                    slides.add(m[1])
+        if not slides:
+            return set()
+        inside = []
+        for m in re.finditer(r'(?<![.\w])(' + '|'.join(slides) + r')\.change\s*\(', clean):
+            inside.append((m.end(), _balanced(clean, m.end() - 1)))
+        out = set()
+        for m in re.finditer(r'(?<![.\w])(?:root\.)?([a-zA-Z_]\w*)\s*=(?![=>])', clean):
+            out.add(m[1])
+        for name in list(out):
+            writes = [w.start() for w in re.finditer(r'(?<![.\w])(?:root\.)?' + name + r'\s*=(?![=>])', clean)]
+            if not all(any(a <= w < b for a, b in inside) for w in writes) or name not in self.decls.get(file, {}):
+                out.discard(name)
+        return out
+
+    def follows_swap(self, file: str, expression: str, depth: int = 2) -> bool:
+        """True when the expression reads (directly or through this file's own declarations) a property swapped by a shared
+        transition component: the whole region changes inside that transition, so the item never pops on its own."""
+        swapped = self.swapped(file)
+        if not swapped:
+            return False
+        names = set(re.findall(r'(?<![.\w])(?:root\.)?([a-zA-Z_]\w*)(?!\s*\()', mask(expression)))
+        if names & swapped:
+            return True
+        if depth:
+            decls = self.decls.get(file, {})
+            return any(self.follows_swap(file, decls[n], depth - 1) for n in names if n in decls)
+        return False
+
     def responsive(self, file: str, expression: str, seen: frozenset = frozenset()) -> bool:
         """True when every name in the expression is derived from a width/height (the layout follows the window size)."""
         names = [n for n in re.findall(r'(?<![.\w])(?:root\.)?([a-zA-Z_]\w*)(?!\s*\()', mask(expression))
@@ -185,7 +224,17 @@ def _qt_reason(project, name, source, obj, objects, expression, animated):
         return 'b-constant', 'constant: never toggles while shown'
     if set(project.chain(obj['type'])) & NATIVE:
         return 'b-native-window', 'native window: the operating system shows and hides it'
-    if re.search(r'(?<!\w)(?:\w+\.)?opacity\s*>', clean_expr) and 'opacity' in animated:
+    top = next((o for o in objects if o['parent'] is None and o['type']), None)
+    if top and set(project.chain(top['type'])) & NATIVE:
+        top_id = re.search(r'\bid\s*:\s*(\w+)', mask(direct_source(source, top, objects)))
+        state = re.compile(r'(?<![.\w])(?:visible|visibility|active|windowState)\b')
+        reads = re.findall(r'(?<![.\w])' + top_id[1] + r'\.(\w+)', clean_expr) if top_id else []
+        decls = project.decls.get(name, {})
+        if reads and any(state.fullmatch(r) or state.search(mask(decls.get(r, ''))) for r in reads):
+            return 'b-native-window', 'follows the native window\'s own state (shown, minimized, window mode)'
+    # The opacity may be animated here or by the item's own component (Scrollbar: Behavior on opacity in Scrollbar.qml).
+    own = set().union(*(_animated(project.clean.get(t, '')) for t in project.chain(obj['type'])))
+    if re.search(r'(?<!\w)(?:\w+\.)?opacity\s*>', clean_expr) and 'opacity' in animated | own:
         return 'b-follows-opacity', 'visibility follows an animated opacity'
     for clock in re.finditer(r'(?<![.\w])(?:[a-zA-Z_]\w*\.)*([a-zA-Z_]\w*)\s*(?:>|<|>=|<=)\s*\d', clean_expr):
         if clock[1] in animated and clock[1] != 'opacity':
@@ -211,6 +260,8 @@ def _qt_reason(project, name, source, obj, objects, expression, animated):
         return 'b-transition-layer', 'the item itself slides with an animated transform'
     if project.configured(name, expression):
         return 'b-constant', 'per-instance setting that nothing changes after creation'
+    if project.follows_swap(name, expression):
+        return 'b-transition-swap', 'its state changes inside a shared transition (ContentSlide.change): the region slides as a whole'
     if project.responsive(name, expression):
         return 'b-responsive', 'layout follows the window size'
     return 'a-hard', 'direct conditional with no transition on this object'
