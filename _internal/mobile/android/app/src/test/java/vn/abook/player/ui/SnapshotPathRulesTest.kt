@@ -7,7 +7,7 @@ import java.io.File
 
 /**
  * Ảnh chụp Roborazzi chỉ có hai chỗ ở: ảnh chuẩn trong `src/test/snapshots/` (verifyRoborazziDebug so với đó), hoặc ảnh dò xét ở
- * `build/icon_probe/` được ghi cứng bằng `RoborazziTaskType.Record` nên không bao giờ tham gia so. Một ảnh ra chỗ khác (từng là `build/shots/`)
+ * `build/icon_probe/` được ghi cứng bằng `RoborazziTaskType.Record` hoặc đối chứng Verify nằm ngay trong assertThrows(AssertionError). Một ảnh ra chỗ khác (từng là `build/shots/`)
  * làm verify báo "original file ... was not found" ở mọi lần chạy; luật này bắt ngay trong test thường thay vì đợi verify.
  */
 class SnapshotPathRulesTest {
@@ -21,7 +21,7 @@ class SnapshotPathRulesTest {
     private fun offences(lines: List<String>): List<String> {
         val code = lines.mapIndexed { index, raw -> index + 1 to raw }.filter { (_, raw) ->
             val trimmed = raw.trimStart()
-            !(trimmed.startsWith("//") || trimmed.startsWith("*") || trimmed.startsWith("/*") || trimmed.startsWith("import "))
+            !(trimmed.startsWith("//") || trimmed.startsWith("*") || trimmed.startsWith("/*") || trimmed.startsWith("import ") || trimmed.startsWith("fun "))
         }
         val out = mutableListOf<String>()
         for ((number, raw) in code) {
@@ -33,7 +33,8 @@ class SnapshotPathRulesTest {
                 out += "dòng $number: không đọc được đường dẫn ảnh (${raw.trim()}); dùng chuỗi hoặc `val` cùng file"
                 continue
             }
-            val ok = baseline in pathLine || (probe in pathLine && "RoborazziTaskType.Record" in raw)
+            val expectedMismatch = "RoborazziTaskType.Verify" in raw && lines.getOrNull(number - 2)?.trim() == "assertThrows(AssertionError::class.java) {"
+            val ok = baseline in pathLine || (probe in pathLine && ("RoborazziTaskType.Record" in raw || expectedMismatch))
             if (!ok) out += "dòng $number: ${raw.trim()} (ảnh phải ở $baseline, hoặc $probe kèm RoborazziTaskType.Record trên chính dòng gọi)"
         }
         return out
@@ -66,5 +67,11 @@ class SnapshotPathRulesTest {
         )
         assertEquals(0, offences(listOf("""// captureRoboImage("build/shots/x.png")""", """import com.github.takahirom.roborazzi.captureRoboImage""")).size)
         assertEquals(0, offences(listOf("""val image = File(cacheDir, "cover.png")""")).size)
+        assertEquals(0, offences(listOf("""fun android.graphics.Bitmap.captureRoboImage(""")).size)
+        val path = """val golden = File("build/icon_probe/negative/widget.png")"""
+        val verify = """changed.captureRoboImage(golden.path, options.copy(taskType = RoborazziTaskType.Verify))"""
+        assertEquals(1, offences(listOf(path, verify)).size)
+        assertEquals(0, offences(listOf(path, "assertThrows(AssertionError::class.java) {", verify)).size)
+        assertEquals(1, offences(listOf(path.replace("icon_probe", "shots"), "assertThrows(AssertionError::class.java) {", verify)).size)
     }
 }

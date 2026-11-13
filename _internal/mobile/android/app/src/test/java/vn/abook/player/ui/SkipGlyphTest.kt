@@ -83,8 +83,7 @@ class SkipGlyphTest {
 
     @Test
     fun changedWidgetPixelsFailVerificationWithoutReplacingTheGolden() {
-        val directory = File("build/widget-negative-control").apply { mkdirs() }
-        val golden = File(directory, "widget.png")
+        val golden = File("build/icon_probe/widget-negative-control/widget.png").apply { parentFile!!.mkdirs() }
         val baseline = Bitmap.createBitmap(84, 84, Bitmap.Config.ARGB_8888).apply { eraseColor(Color.BLACK) }
         golden.outputStream().use { baseline.compress(Bitmap.CompressFormat.PNG, 100, it) }
         val before = golden.readBytes()
