@@ -2,6 +2,7 @@ package vn.abook.player
 
 import android.os.Handler
 import androidx.media3.common.MediaItem
+import org.json.JSONObject
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -41,6 +42,9 @@ class PlaybackIoOffMainTest {
     }
 
     @After fun cleanup() {
+        SleepTimer.cancel()
+        assertTrue(Playback.flushSaves(TestTime.ms(5_000)))
+        field("sessionFrom").set(Playback, null)
         field("bookId").set(Playback, "")
         field("chapters").set(Playback, emptyList<Playback.Chapter>())
         field("savedPlace").set(Playback, null)
@@ -84,6 +88,35 @@ class PlaybackIoOffMainTest {
         voice.position = 900_000
         assertTrue("pause on the main looper waited for Store", returnsWhileDiskIsBusy { Playback.onPlayingChanged(false) })
         assertEquals(900.0, savedSeconds(), 0.001)
+    }
+
+    @Test fun aPauseWithATimerAnOpenSessionAndANightDoesNotWaitForDisk() {
+        val record = Store.activeRecord("io-book")
+        field("recordId").set(Playback, record)
+        val now = System.currentTimeMillis()
+        SleepTimer.restore(JSONObject().put("source", "manual").put("bookId", "io-book").put("recordId", record)
+            .put("minutes", 30).put("remainingMs", 20 * 60_000L).put("savedAt", now), now)
+        field("sessionFrom").set(Playback, JSONObject().put("chapterId", 1).put("seconds", 800.0))
+        field("sessionBook").set(Playback, "io-book")
+        field("sessionRecord").set(Playback, record)
+        field("sessionStartMs").setLong(Playback, now - 25_000L)
+        field("sessionMarkMs").setLong(Playback, now - 25_000L)
+        field("sessionListenedMs").setLong(Playback, 0L)
+        Bedtime.timerSet(30)
+        assertTrue(Playback.flushSaves(TestTime.ms(5_000)))
+        voice.position = 900_000L
+        assertTrue("pause with timer/session waited for Store", returnsWhileDiskIsBusy {
+            Bedtime.interaction("pause")
+            Playback.onPlayingChanged(false)
+        })
+        assertEquals(900.0, savedSeconds(), 0.001)
+        val sessions = Store.state("io-book").getJSONArray("sessions")
+        assertEquals(1, sessions.length())
+        assertTrue(sessions.getJSONObject(0).getDouble("listened") >= 20.0)
+        val prefs = JSONObject(java.io.File(Store.root, "listen-prefs.json").readText())
+        assertEquals(20 * 60_000L, prefs.getJSONObject("timer").getLong("remainingMs"))
+        val events = Bedtime.all().single().getJSONArray("events")
+        assertEquals("pause", events.getJSONObject(events.length() - 1).getString("action"))
     }
 
     @Test fun aChapterTransitionDoesNotReadTheManifestOnTheCaller() {

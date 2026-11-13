@@ -244,6 +244,7 @@ object SleepTimer {
     }
 
     private fun turnOff() {
+        if (mode != Mode.OFF) Bedtime.timerOff()
         mode = Mode.OFF
         automaticReason = ""
         stoppedAtMs = 0L

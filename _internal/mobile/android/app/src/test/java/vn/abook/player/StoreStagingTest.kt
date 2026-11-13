@@ -62,4 +62,11 @@ class StoreStagingTest {
         assertTrue("bản đang giải (mới) không bị đụng", fresh.isDirectory && fresh !in stale)
         assertEquals(listOf("b2", "c3"), Store.bookIds().sorted())
     }
+
+    @Test fun aRetiredDeletedBookIsSweptAndNeverRestored() {
+        val gone = book(".a1.123.gone", "Deleted", ageMs = 2 * Store.STAGING_MAX_AGE_MS)
+        assertEquals(listOf(gone), Store.recoverStaging())
+        assertFalse(File(root, "books/a1").exists())
+        assertTrue(Store.bookIds().isEmpty())
+    }
 }

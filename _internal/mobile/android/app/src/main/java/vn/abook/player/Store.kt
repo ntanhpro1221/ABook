@@ -88,12 +88,12 @@ object Store {
     fun bookFolders(): List<File> =
         File(workingRoot, "books").listFiles()?.filter { it.isDirectory && !it.name.startsWith(".") } ?: emptyList()
 
-    private val STAGING = Regex("""\.(.+)\.\d+\.(part|old)""")
+    private val STAGING = Regex("""\.(.+)\.\d+\.(part|old|gone)""")
     const val STAGING_MAX_AGE_MS = 60 * 60 * 1000L
 
     /**
      * Thư mục tạm của BookFileImport còn lại sau một lần bị cắt: bản cũ (`.old`) mà bản chính vắng - cắt giữa hai lần đổi tên
-     * của `replace` - thì đổi tên trả lại; còn lại, cũ hơn [STAGING_MAX_AGE_MS], là thứ phải xoá (trả về để xoá ở nền).
+     * của `replace` - thì đổi tên trả lại; còn lại (cả sách đã xoá hẳn `.gone` của [deleteBook]), cũ hơn [STAGING_MAX_AGE_MS], là thứ phải xoá (trả về để xoá ở nền).
      */
     @Synchronized
     fun recoverStaging(now: Long = System.currentTimeMillis()): List<File> {
@@ -1172,11 +1172,23 @@ object Store {
         return dir
     }
 
-    /** Xoá HẲN ngay (không hoàn tác): thư mục sách + dòng của nó trong sổ `prints.json`. Giao diện đi qua [holdBook]. */
-    @Synchronized
+    /**
+     * Xoá HẲN ngay (không hoàn tác): thư mục sách + dòng của nó trong sổ `prints.json`. Giao diện đi qua [holdBook]. Dưới khoá chỉ đổi tên thư mục sang
+     * `.<mã>.<số>.gone` (sách biến mất ngay, một bước); xoá các file sau khi nhả khoá - lõi phát không đứng chờ (soát Android 12-11 mục 3). Bị cắt giữa
+     * chừng: [recoverStaging] dọn `.gone`, không bao giờ trả về.
+     */
     fun deleteBook(id: String) {
-        deletableBookDir(id).deleteRecursively()
+        retireBook(id)?.deleteRecursively()
+    }
+
+    @Synchronized
+    private fun retireBook(id: String): File? {
+        val dir = deletableBookDir(id)
+        if (!dir.exists()) { forgetPrints(id); return null }
+        val gone = File(dir.parentFile, ".$id.${System.nanoTime()}.gone")
+        check(dir.renameTo(gone)) { S.s_chua_xoa_duoc_b872fff6 }
         forgetPrints(id)
+        return gone
     }
 
     private fun forgetPrints(id: String) {
@@ -1187,29 +1199,33 @@ object Store {
         }
     }
 
+    private val trashLock = Any()
+
     /**
      * "Xoá khỏi điện thoại" có "Hoàn tác" ([TrashPending]): đưa thư mục sách vào chỗ chờ, trả mã hoàn tác. Thư mục không đổi tên
      * được (hiếm: cùng filesDir) thì xoá hẳn như trước và trả null - giao diện khi ấy không hứa "Hoàn tác". Dữ liệu đi theo sách
      * (`prints.json`) giữ nguyên tới lúc xoá hẳn để Hoàn tác trả đủ.
      */
-    @Synchronized
-    fun holdBook(id: String): String? {
-        val dir = deletableBookDir(id)
-        if (dir.isDirectory) trash().hold(dir, id)?.let { return it }
-        deleteBook(id)
-        return null
-    }
+    fun holdBook(id: String): String? { return synchronized(trashLock) {
+        val retired = synchronized(this) {
+            val dir = deletableBookDir(id)
+            if (dir.isDirectory) trash().hold(dir, id)?.let { return it }
+            retireBook(id)
+        }
+        retired?.deleteRecursively()
+        null
+    } }
 
     /** Hoàn tác một lần xoá: cuốn về đúng chỗ cũ. [TrashPending.NotPending] khi mã lạ / quá hạn, [TrashPending.Occupied] khi chỗ cũ bị chiếm. */
-    @Synchronized
-    fun undoBook(token: String): JSONObject = trash().restore(token)
+    fun undoBook(token: String): JSONObject = synchronized(trashLock) { synchronized(this) { trash().restore(token) } }
 
     /** Xoá hẳn những cuốn đã hết hạn Hoàn tác (`everything`: mọi cuốn đang chờ - lúc app mở). Trả số cuốn còn chờ. */
-    @Synchronized
-    fun sweepTrash(everything: Boolean = false): Int = trash().sweep(everything) { meta ->
-        val id = meta.optString("id")
-        // Cuốn cùng mã vừa được tải lại thì sổ ấy là của cuốn mới.
-        if (id.isNotEmpty() && !bookDir(id).exists()) forgetPrints(id)
+    fun sweepTrash(everything: Boolean = false): Int = synchronized(trashLock) {
+        trash().sweep(everything) { meta -> synchronized(this) {
+            val id = meta.optString("id")
+            // Only metadata needs Store's monitor; recursive trash cleanup runs outside it.
+            if (id.isNotEmpty() && !bookDir(id).exists()) forgetPrints(id)
+        } }
     }
 
     private fun trash() = TrashPending(workingRoot)

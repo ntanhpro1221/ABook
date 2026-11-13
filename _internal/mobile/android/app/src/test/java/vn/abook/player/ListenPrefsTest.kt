@@ -42,6 +42,7 @@ class ListenPrefsTest {
     }
 
     @After fun cleanup() {
+        assertTrue(DiskWrites.flush(TestTime.ms(5_000)))
         defaults()
         Handler.reset()
     }
@@ -134,9 +135,19 @@ class ListenPrefsTest {
         sleep("runningSinceMs").setLong(SleepTimer, 0L) // đang tạm dừng: đồng hồ đứng
         SleepTimer.persist(now)
         defaults()
-        ListenPrefs.load(now + 3 * 3_600_000L) // dậy 3 giờ sau
+        ListenPrefs.load(now + 10 * 60_000L) // still within the paused timer lifetime
         assertEquals(SleepTimer.Mode.MINUTES, SleepTimer.mode)
         assertEquals(12 * 60.0, SleepTimer.describe(now).getDouble("remaining"), 1.0)
+    }
+
+    @Test fun orderedTimerAndPreferenceWritesKeepTheNewestValues() {
+        ListenPrefs.saveTimer(JSONObject().put("minutes", 30))
+        ListenPrefs.apply(JSONObject().put("sleepExtendMinutes", 15))
+        ListenPrefs.saveTimer(null)
+        assertTrue(DiskWrites.flush(TestTime.ms(5_000)))
+        val saved = JSONObject(java.io.File(Store.root, "listen-prefs.json").readText())
+        assertFalse(saved.has("timer"))
+        assertEquals(15, saved.getInt("sleepExtendMinutes"))
     }
 
     @Test fun cancellingTheTimerForgetsItToo() {

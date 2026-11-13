@@ -51,6 +51,13 @@
 - Vitest: **11/11 passed** in `ReviewQueue.test.tsx`, `reviewActions140.dom.test.tsx` and `reviewText.test.ts`; dependencies installed from the lock with lifecycle scripts disabled. Kotlin `WorkLogicTest` was updated but **not run** on battery. UI parity checks passed after regeneration.
 - Quality implementation list read from code: **69 entries**. Before edits: `663ab9eb4a3f752b57e13644a89f0567d82f18922f8923cc85cf1ca3c948d270`; on resuming this interrupted task: `2a281956a23ec9c927f78e2582ee8df626600e0d8e198282ab6d21302b8c830b`; final: `a05d7f28188f4154f51c9b2e04e9c8539fa5c361f42f11250b0fead2a234161f`. Changes are confined to `dev/rejtake`; no push or production-worktree access.
 
+## 12-11-2026 — andfix Android playback and sleep review (battery mode)
+
+- Continued from `31dc98b4b` and `8a92c581d`. Timer/preferences, listening sessions and night snapshots now use an ordered background writer. Import replacement and permanent/trash book cleanup release Store's monitor before recursive deletion.
+- Nights close on timer expiry/cancellation, keep a bounded event list and reject further daytime checkpoints. Explicitly setting a timer may reopen the same recent night.
+- Added/extended `PlaybackIoOffMainTest`, `ListenPrefsTest`, `StoreStagingTest`, `BedtimeLifecycleTest`. Kotlin/Qt tests have NOT been run: battery constraint prohibits Gradle/build/emulator/ADB. Existing paused-timer persistence test now checks the new 30-minute lifetime.
+- Quality implementation hash at resume: `71563e9c1a2ecee91b3be33d3300e0f529f3af7ceb77d7c0e18b6ee800489d9d` (matches the initial recorded hash).
+
 ## 11-11-2026 — Verify Android references after the integ167 UI merges
 
 - Audited all 63 original snapshot mismatches and the five images previously blocked by Java heap OOM against source history. The four root tabs (including Music), the intentional auto-rewind removal, picker controls/chapter count, measured/indeterminate progress, cover-flight ownership, sized cover cache and design1 styles remain. No production UI change was needed. Recorded 83 updated references and one separate 130% filter reference; viewed every changed region at native resolution. The external mergeui2 report has the per-image provenance and SHA-256 evidence.

@@ -236,7 +236,10 @@ object Playback {
             .put("listened", sessionListenedMs / 1000.0)
             .put("from", from)
             .put("to", place())
-        runCatching { Store.addSession(sessionBook, session, sessionRecord.ifEmpty { null }) }
+        // Ghi cả file hồ sơ (tới 200 phiên, fsync, khoá Store) trên luồng ghi nền: lần dừng không chờ đĩa (soát Android 12-11 mục 3).
+        val book = sessionBook
+        val record = sessionRecord.ifEmpty { null }
+        DiskWrites.post("ABookSession") { Store.addSession(book, session, record) }
     }
 
     fun touched() {
@@ -1060,8 +1063,8 @@ object Playback {
         } }
     }
 
-    /** Chờ mọi lần lưu đã giao ghi xong (dịch vụ phát tắt, test). Không gọi khi đang giữ khoá Store. */
-    fun flushSaves(timeoutMs: Long = 2_000): Boolean = checkpoints.flush(timeoutMs).also { done ->
+    /** Chờ mọi lần lưu đã giao ghi xong - chỗ nghe, rồi hẹn giờ / phiên nghe / nhật ký đêm ([DiskWrites]) (dịch vụ phát tắt, test). Không gọi khi đang giữ khoá Store. */
+    fun flushSaves(timeoutMs: Long = 2_000): Boolean = (checkpoints.flush(timeoutMs) and DiskWrites.flush(timeoutMs)).also { done ->
         if (!done) AppLog.w("ABookSave", "chỗ nghe chưa ghi xong sau $timeoutMs ms")
     }
 

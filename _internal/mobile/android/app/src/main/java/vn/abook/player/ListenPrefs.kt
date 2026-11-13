@@ -110,7 +110,11 @@ object ListenPrefs {
     /** Nhớ các trường native có trong `json` (gộp vào bản đã lưu). Không ghi được thì chỉ ghi logcat: tuỳ chọn vẫn áp cho phiên này. */
     private fun remember(json: JSONObject) {
         if (KEYS.none(json::has)) return
-        update { stored -> for (key in KEYS) if (json.has(key)) stored.put(key, json.get(key)) }
+        val snapshot = JSONObject(json.toString())
+        val target = file()
+        DiskWrites.post("ABookPrefs") {
+            update(target) { stored -> for (key in KEYS) if (snapshot.has(key)) stored.put(key, snapshot.get(key)) }
+        }
     }
 
     /**
@@ -118,18 +122,30 @@ object ListenPrefs {
      * (so `settingsStamp`). Chưa có file: `{}`.
      */
     fun stored(): JSONObject {
+        DiskWrites.flush()
         val saved = try { Store.readJson(file()) } catch (error: Exception) { null } ?: return JSONObject()
         return JSONObject().also { out -> for (key in KEYS) if (saved.has(key)) out.put(key, saved.get(key)) }
     }
 
-    /** Hẹn giờ ngủ đang chạy (hay null = không còn): ghi vào cùng file. */
-    fun saveTimer(timer: JSONObject?) = update { stored -> if (timer == null) stored.remove("timer") else stored.put("timer", timer) }
+    /**
+     * Hẹn giờ ngủ đang chạy (hay null = không còn): ghi vào cùng file, trên luồng ghi nền [DiskWrites] - người gọi ([SleepTimer.persist]) ở luồng chính,
+     * mỗi lần phát / dừng. Giao bản của riêng lần ghi này (`timer` không được sửa sau khi giao); các lần ghi theo đúng thứ tự gọi.
+     */
+    fun saveTimer(timer: JSONObject?) {
+        val target = file()
+        val snapshot = timer?.let { JSONObject(it.toString()) }
+        DiskWrites.post("ABookPrefs") {
+            update(target) { stored -> if (snapshot == null) stored.remove("timer") else stored.put("timer", snapshot) }
+        }
+    }
 
-    private fun update(change: (JSONObject) -> Unit) {
+    /** Đọc - sửa - ghi cả file dưới khoá riêng: hẹn giờ (luồng ghi nền) và tuỳ chọn ([remember]) không ghi đè phần của nhau. */
+    @Synchronized
+    private fun update(target: File, change: (JSONObject) -> Unit) {
         try {
-            val stored = Store.readJson(file()) ?: JSONObject()
+            val stored = Store.readJson(target) ?: JSONObject()
             change(stored)
-            Store.writeAtomic(file(), stored.toString())
+            Store.writeAtomic(target, stored.toString())
         } catch (error: Exception) {
             AppLog.w("ABookPrefs", S.s_khong_ghi_duoc_tuy_chon_nghe_b308cbb4, error)
         }
@@ -143,6 +159,7 @@ object ListenPrefs {
     }
 
     fun load(now: Long = System.currentTimeMillis()) {
+        DiskWrites.flush() // đọc sau mọi lần ghi hẹn giờ đã giao
         val stored = try { Store.readJson(file()) } catch (error: Exception) { null }
         if (stored != null) apply(stored, startup = true)
         SleepTimer.restore(stored?.optJSONObject("timer"), now)

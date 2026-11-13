@@ -743,16 +743,23 @@ object BookFileImport {
         return size to digest.digest().joinToString("") { "%02x".format(it) }
     }
 
-    private fun replace(books: File, staging: File, target: File, id: String) = synchronized(Store) {
-        if (!target.exists()) {
-            if (!staging.renameTo(target)) throw Refused(S.s_chua_ghi_duoc_sach_vao_thu_vien_d7027fbf)
-            return@synchronized
-        }
-        val retired = File(books, ".$id.${System.nanoTime()}.old")
-        if (!target.renameTo(retired)) throw Refused(S.s_chua_thay_duoc_ban_cu_cua_sach_ea78585e)
-        if (!staging.renameTo(target)) {
-            retired.renameTo(target)
-            throw Refused(S.s_chua_ghi_duoc_sach_vao_thu_vien_d7027fbf)
+    /**
+     * Đổi bản mới vào chỗ bản cũ dưới khoá Store (hai lần đổi tên), rồi mới xoá bản cũ - NGOÀI khoá: xoá hàng trăm file mp3 trong lúc giữ khoá thì mọi lần
+     * ghi của lõi phát (chỗ nghe, bấm dừng trên tai nghe) đứng chờ (soát Android 12-11 mục 3). Bị cắt trước khi xoá xong: [Store.recoverStaging] dọn `.old` cũ.
+     */
+    private fun replace(books: File, staging: File, target: File, id: String) {
+        val retired = synchronized(Store) {
+            if (!target.exists()) {
+                if (!staging.renameTo(target)) throw Refused(S.s_chua_ghi_duoc_sach_vao_thu_vien_d7027fbf)
+                return
+            }
+            val retired = File(books, ".$id.${System.nanoTime()}.old")
+            if (!target.renameTo(retired)) throw Refused(S.s_chua_thay_duoc_ban_cu_cua_sach_ea78585e)
+            if (!staging.renameTo(target)) {
+                retired.renameTo(target)
+                throw Refused(S.s_chua_ghi_duoc_sach_vao_thu_vien_d7027fbf)
+            }
+            retired
         }
         retired.deleteRecursively()
     }
