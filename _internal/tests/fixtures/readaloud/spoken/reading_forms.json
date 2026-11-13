@@ -639,7 +639,7 @@
   {
    "id": "bigint_keep-19",
    "text": "Có 1.1234567 người.",
-   "said": "Có 1.1234567 người."
+   "said": "Có 1,1234567 người."
   },
   {
    "id": "bigint_keep-20",
@@ -994,7 +994,7 @@
   {
    "id": "enumeration_keep-4",
    "text": "Dùng V.V. nhé.",
-   "said": "Dùng V.V. nhé."
+   "said": "Dùng vê vê nhé."
   },
   {
    "id": "enumeration_keep-5",
@@ -1009,12 +1009,12 @@
   {
    "id": "enumeration_keep-7",
    "text": "Dùng B.F. nhé.",
-   "said": "Dùng B.F. nhé."
+   "said": "Dùng bê ép nhé."
   },
   {
    "id": "enumeration_keep-8",
    "text": "Dùng V.L. nhé.",
-   "said": "Dùng V.L. nhé."
+   "said": "Dùng vê e-lờ nhé."
   },
   {
    "id": "honorific_hyphen-1",
@@ -1675,6 +1675,51 @@
    "id": "tnfix_decimal_zero_keep-1",
    "text": "Bản 0.0.3 ra rồi.",
    "said": "Bản 0.0.3 ra rồi."
+  },
+  {
+   "id": "tnfix_decimal_long-1",
+   "text": "Sai số chỉ 20.0005 thôi.",
+   "said": "Sai số chỉ 20,0005 thôi."
+  },
+  {
+   "id": "tnfix_decimal_long-2",
+   "text": "Hằng số là 2.71828 nhé.",
+   "said": "Hằng số là 2,71828 nhé."
+  },
+  {
+   "id": "tnfix_decimal_long-3",
+   "text": "Mã 5678.123 kìa.",
+   "said": "Mã 5678,123 kìa."
+  },
+  {
+   "id": "tnfix_decimal_long_keep-1",
+   "text": "Ngày 15.8.2025 có mưa.",
+   "said": "Ngày 15.8.2025 có mưa."
+  },
+  {
+   "id": "tnfix_dotted_initials-1",
+   "text": "Nhóm P.Q.R tới rồi.",
+   "said": "Nhóm pê quy e-rờ tới rồi."
+  },
+  {
+   "id": "tnfix_dotted_initials-2",
+   "text": "Hệ thống B.C. mới chạy.",
+   "said": "Hệ thống bê xê mới chạy."
+  },
+  {
+   "id": "tnfix_dotted_initials-3",
+   "text": "Một cú K.D., rồi ngã.",
+   "said": "Một cú ca đê, rồi ngã."
+  },
+  {
+   "id": "tnfix_dotted_initials_keep-1",
+   "text": "Anh ấy về X.Y.Z. Rồi đi.",
+   "said": "Anh ấy về ích i-dài dét. Rồi đi."
+  },
+  {
+   "id": "tnfix_dotted_initials_keep-2",
+   "text": "Tôi biết v.v. rồi.",
+   "said": "Tôi biết vân vân. rồi."
   }
  ]
 }

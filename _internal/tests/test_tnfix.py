@@ -165,3 +165,37 @@ def test_n_as_an_unspecified_count(source, direct, plain):
 ])
 def test_loanwords_beside_vietnamese_words(source, expected):
     assert studio_tn(source, None, True, direct_english=True)[0] == expected
+
+
+@pytest.mark.parametrize(("source", "expected"), [
+    ("Sai số 30.0002 thôi.", "Sai số 30,0002 thôi."),
+    ("Chiều dài 4321.765 nhé.", "Chiều dài 4321,765 nhé."),
+    ("Hằng số 1.41421 đây.", "Hằng số 1,41421 đây."),
+    ("Ngày 21.9.2027 nhé.", "Ngày 21.9.2027 nhé."),
+    ("Đi 7.400 km.", "Đi 7.400 km."),
+    ("Giá 6.300 đồng.", "Giá sáu nghìn ba trăm đồng."),
+])
+def test_a_long_group_after_the_dot_is_a_decimal_not_a_date(source, expected):
+    assert studio_tn(source, None, True, direct_english=True)[0] == expected
+
+
+@pytest.mark.parametrize(("source", "expected"), [
+    ("Đội P.Q.R.S đến.", "Đội <en>P Q R S</en> đến."),
+    ("Đội PQRS đến.", "Đội <en>P Q R S</en> đến."),
+    ("Họ về X.Y.Z rồi.", "Họ về <en>X Y zed</en> rồi."),
+    ("Họ sống ở X.Y.Z.", "Họ sống ở <en>X Y zed</en>."),
+    ("Họ về X.Y.Z. Rồi đi.", "Họ về <en>X Y zed</en>. Rồi đi."),
+    ("Hệ B.C. mới chạy.", "Hệ <en>B C</en> mới chạy."),
+    ("Một cú K.D., rồi ngã.", "Một cú <en>K D</en>, rồi ngã."),
+    ("Nhóm (P.Q.R), đến.", "Nhóm (<en>P Q R</en>), đến."),
+    ("Ví dụ v.v. thôi.", "Ví dụ vân vân. thôi."),
+])
+def test_dotted_initials_read_like_initials_without_dots(source, expected):
+    assert studio_tn(source, None, True, direct_english=True)[0] == expected
+
+
+def test_the_dot_of_initials_cuts_only_a_real_sentence():
+    from abook.readaloud import vieneu
+
+    _toks, units = vieneu.units("Hệ B.C. mới chạy. Họ về X.Y.Z. Rồi đi.", 256)
+    assert [unit.pieces for unit in units] == [["Hệ bê xê mới chạy.", "Họ về ích i-dài dét.", "Rồi đi."]]
