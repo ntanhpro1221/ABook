@@ -162,7 +162,7 @@ public:
     int sleepChapters() const { return m_sleep.kind == Sleep::Chapter ? std::max(1, m_sleep.minutes) : 0; }
     int lastSleepMinutes() const { return m_lastSleepMinutes; }
     int sleepExtendMinutes() const;
-    int sleepPausedExpiresMinutes() const { return int(kSleepPausedExpiresMs / 60'000); }
+    int sleepPausedExpiresMinutes() const { return int(PlayerLogic::kSleepPausedExpiresMs / 60'000); }
     QString sleepStoppedText() const;
     bool fading() const { return m_fading; }
     QString error() const { return m_error; }
