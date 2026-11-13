@@ -640,7 +640,8 @@ def keep_vieneu_final_mark() -> None:
         out = repair_syllabic_gi(value, out)
         spelling, source = remembered_spelling(text)
         out = restore_generated_syllables(spelling, given(), out, phonemize_text._get_g2p().convert, source, remembered_rulings(),
-                                          cursor=remembered_spelling_cursor())
+                                          cursor=remembered_spelling_cursor(),
+                                          normalize=lambda text: phonemize_text._get_pipeline().normalizer.normalize(text, punc_norm=False))
         if punc_norm and out.endswith(".") and ("?" in value or "!" in value):
             written = original_phonemize(value, False).rstrip()
             if written.endswith(("?", "!")):

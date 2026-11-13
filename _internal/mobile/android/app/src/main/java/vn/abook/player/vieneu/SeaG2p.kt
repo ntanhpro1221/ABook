@@ -75,7 +75,8 @@ class SeaG2p(library: File, dictionary: File) : AutoCloseable {
         phonemes = PhonemePolicy.foreignNames(given, raw, phonemes, ::g2p, named)  // "Dan" of a Western roster: "đan" /ɗaːn/, not /zaːn/
         phonemes = PhonemePolicy.repairLevelTone(given, phonemes)
         phonemes = PhonemePolicy.repairSyllabicGi(text, phonemes)
-        phonemes = PhonemePolicy.restoreGeneratedSyllables(shown, given, phonemes, ::g2p, source, rulings)
+        phonemes = PhonemePolicy.restoreGeneratedSyllables(shown, given, phonemes, ::g2p, source, rulings,
+            normalize = { normalize(it, false) })
         if (phonemes.endsWith(".") && (text.contains('?') || text.contains('!'))) {
             val written = g2p(normalize(text, false)).trimEnd()
             if (written.endsWith("?") || written.endsWith("!")) phonemes = phonemes.dropLast(1) + written.last()

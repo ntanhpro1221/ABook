@@ -32,34 +32,81 @@ object PhonemePolicy {
 
     /** Generated Vietnamese syllables must survive the phonemizer's language detection. */
     fun restoreGeneratedSyllables(spoken: String, given: String, phonemes: String, g2p: (String) -> String,
-                                  source: String? = null, rulings: Rulings? = null): String {
+                                  source: String? = null, rulings: Rulings? = null,
+                                  cursor: IntArray? = null, normalize: ((String) -> String)? = null): String {
         val eligible = ruledVietnameseWords(spoken, source, rulings)
         val rendered = mutableListOf<String>()
-        val generatedPositions = mutableSetOf<Int>()
-        val ruledPositions = mutableSetOf<Int>()
-        val runs = Regex("<en>.*?</en>|\\S+").findAll(spoken).map { it.value }.toList()
+        val positions = mutableSetOf<Int>()
+        val runs = Regex("<en>.*?</en>|\\S+").findAll(spoken).toList()
+        val starts = Regex("\\S+").findAll(spoken).map { it.range.first }.toList()
         val original = source?.trim()?.split(Regex("\\s+")) ?: emptyList()
         val singleRendering = original.size == 1 && !spoken.equals(source, ignoreCase = true)
-        for ((index, run) in runs.withIndex()) {
+        fun keys(value: String) = value.trim().split(Regex("\\s+")).map {
+            it.replace("<en>", "").replace("</en>", "").trim(*WORD_EDGE.toCharArray()).lowercase(Locale.ROOT)
+        }.filter { it.isNotEmpty() }
+        fun render(value: String): List<String> {
+            if (normalize != null) {
+                // VieNeu normalizes each spoken fragment, never the cue itself.
+                val words = mutableListOf<String>()
+                var end = 0
+                for (cue in cueToken.findAll(value)) {
+                    val part = value.substring(end, cue.range.first)
+                    if (part.isNotBlank()) words.addAll(keys(respellRareRimes(normalize(part))))
+                    words.addAll(keys(cue.value))
+                    end = cue.range.last + 1
+                }
+                val part = value.substring(end)
+                if (part.isNotBlank()) words.addAll(keys(respellRareRimes(normalize(part))))
+                return words
+            }
+            val clean = value.replace("<en>", "").replace("</en>", "").lowercase(Locale.ROOT)
+            return Regex("[\\p{L}\\p{N}_]+(?:['’][\\p{L}\\p{N}_]+)*").findAll(clean).map { respellRareRimes(it.value.trimEnd('_')) }.toList()
+        }
+        // Keep number/unit expressions together in gaps; carry only adjudicated
+        // occurrences through normalization and verify the whole result below.
+        var end = 0
+        for ((index, match) in runs.withIndex()) {
+            val run = match.value
             val clean = run.replace("<en>", "").replace("</en>", "").lowercase(Locale.ROOT)
             val syllables = Regex("[\\p{L}\\p{N}_]+(?:['’][\\p{L}\\p{N}_]+)*").findAll(clean).map { it.value }.toList()
             val changed = '-' in run || singleRendering || (original.size == runs.size && !run.equals(original[index], ignoreCase = true))
             val generated = changed && "<en>" !in run && syllables.isNotEmpty() && syllables.all { EnglishPolicy.vietnamese(it.trimEnd('_')) }
-            if (generated) generatedPositions.addAll(rendered.size until rendered.size + syllables.size)
-            if (index in eligible) ruledPositions.addAll(rendered.size until rendered.size + syllables.size)
-            rendered.addAll(syllables.map { respellRareRimes(it.trimEnd('_')) })
+            // eligible counts whitespace tokens, including every word of <en>.
+            val position = starts.indexOfLast { it <= match.range.first }
+            if ("<en>" in run || !(generated || position in eligible)) continue
+            rendered.addAll(render(spoken.substring(end, match.range.first)))
+            val words = render(run)
+            val expected = syllables.map { respellRareRimes(it.trimEnd('_')) }
+            if (words == expected) positions.addAll(rendered.size until rendered.size + words.size)
+            rendered.addAll(words)
+            end = match.range.last + 1
         }
-        val tokens = given.trim().split(Regex("\\s+"))
-        val phones = phonemes.trim().split(Regex("\\s+")).toMutableList()
+        if (end == 0) return phonemes
+        rendered.addAll(render(spoken.substring(end)))
+        if (normalize != null && rendered != render(spoken)) return phonemes  // Context changed: never guess.
+        val tokens = given.trim().split(Regex("\\s+")).filter { it.isNotEmpty() }
+        val phones = phonemes.trim().split(Regex("\\s+")).filter { it.isNotEmpty() }.toMutableList()
         if (tokens.size != phones.size) return phonemes
-        val aligned = rendered.size == tokens.size && rendered.zip(tokens).all { (w, t) ->
-            w == t.replace("<en>", "").replace("</en>", "").trim(*WORD_EDGE.toCharArray()).lowercase(Locale.ROOT)
+        val slots = tokens.indices.filter { keys(tokens[it]).isNotEmpty() }
+        val normalized = keys(given)
+        val offset: Int
+        val aligned: Boolean
+        if (cursor != null) {
+            offset = (cursor[0]..rendered.size - normalized.size).firstOrNull {
+                rendered.subList(it, it + normalized.size) == normalized
+            } ?: -1
+            aligned = offset >= 0
+            if (aligned) cursor[0] = offset + normalized.size
+        } else {
+            offset = 0
+            aligned = rendered == normalized
         }
+        val claimed = if (aligned) slots.indices.filter { it + offset in positions }.map { slots[it] }.toSet() else emptySet()
         var inside = false
         for ((index, token) in tokens.withIndex()) {
             inside = inside || "<en>" in token
             val word = token.trim(*WORD_EDGE.toCharArray())
-            if (!inside && aligned && (index in ruledPositions || index in generatedPositions)) levelProbe(word, g2p)?.let { probe ->
+            if (!inside && aligned && index in claimed) levelProbe(word, g2p)?.let { probe ->
                 val core = phones[index].trimEnd(*PHONEME_MARKS.toCharArray())
                 phones[index] = probe + phones[index].drop(core.length)
             }
@@ -101,6 +148,7 @@ object PhonemePolicy {
     private const val W = "\\p{L}\\p{N}_"
     private val spaces = Regex("\\s+")
     private val token = Regex("(<en>.*?</en>)|([$W]+(?:['’][$W]+)*)|([^$W\\s\\p{Z}])", RegexOption.IGNORE_CASE)
+    private val cueToken = Regex("<\\|emotion_\\d+\\|>|\\[(?:chuckle|cười|cuoi|sigh|thở dài|tho dai|clear throat|hắng giọng|hang giong)\\]", RegexOption.IGNORE_CASE)
     private val capital = Regex("(?<![$W'’<>/])[A-Z][A-Za-z]*(?![$W'’])")
     private val letterRun = Regex("\\p{L}+")
     private val sentence = Regex("[^.!?…;:\\n\"“”«»「」『』]+")  // a quoted shout is a sentence of its own

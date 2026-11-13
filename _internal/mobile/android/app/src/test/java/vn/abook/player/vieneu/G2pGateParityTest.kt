@@ -96,6 +96,13 @@ class G2pGateParityTest {
 
     @Test fun allMarkedStretchesMatchDesktopExactly() = compare(File("../../../tests/data/g2pgate/stretches_parity.json"), 115, "stretches")
 
+    @Test fun authoredNormalizedOccurrencesMatchDesktopExactly() {
+        val path = System.getenv("ABOOK_G2P_OCCURRENCE_FIXTURE")
+        G2pTestInputs.requireOrSkip("Generate authored occurrence parity outside the repository", path != null && File(path).isFile)
+        val rows = JSONArray(File("../../../tests/fixtures/readaloud/normalized_occurrences.json").readText(Charsets.UTF_8))
+        compare(File(path!!), rows.length(), "occurrences")
+    }
+
     @Test fun all442PrivateCalibrationRowsMatchDesktopExactly() {
         val path = System.getenv("ABOOK_G2P_CALIBRATION_FIXTURE")
         assumeTrue("Private calibration fixture is optional; generate outside repository", path != null)

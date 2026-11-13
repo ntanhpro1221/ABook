@@ -335,7 +335,7 @@ def validate_snapshot_proofs(directory: Path, baseline: dict[str, str]) -> dict:
 
 
 def require_phoneme_suites_ran(results: Path) -> None:
-    required = {"SeaG2pParityTest", "PhonemePolicyTest", "RealNamesTest", "EnglishDirectFrontendTest"}
+    required = {"SeaG2pParityTest", "PhonemePolicyTest", "RealNamesTest", "EnglishDirectFrontendTest", "NormalizedOccurrenceTest"}
     seen = set()
     for path in results.glob("**/TEST-*.xml"):
         suite = ET.parse(path).getroot()
@@ -369,7 +369,16 @@ def worker(name: str, confirm_hash: str | None = None) -> dict:
             path.unlink()
         task = ":app:verifyRoborazziDebug" if baseline is not None else ":app:testDebugUnitTest"
         command = [str(android / "gradlew.bat"), "--no-daemon", task, "--rerun-tasks", "-Proborazzi.test.record=false"]
-        execution = run_process(command, android, 840, inputs)
+        # Generate sentence phones from this desktop build outside the checkout;
+        # the native contract consumes them in this same verification run.
+        from scripts.generate_g2p_parity import occurrence_cases, write
+
+        with tempfile.TemporaryDirectory(prefix="abook-g2p-occurrences-") as scratch:
+            fixture = Path(scratch) / "occurrences.json"
+            require(not fixture.resolve().is_relative_to(REPO.resolve()), "Sentence phonemes must stay outside the checkout")
+            write(fixture, occurrence_cases())
+            inputs["ABOOK_G2P_OCCURRENCE_FIXTURE"] = str(fixture)
+            execution = run_process(command, android, 840, inputs)
         print(execution.output, end="")
         counts = parse_gradle(results)
         require_phoneme_suites_ran(results)

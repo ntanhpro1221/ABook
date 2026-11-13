@@ -75,6 +75,13 @@ def public_cases():
     return result
 
 
+def occurrence_cases():
+    """Authored contexts; full sentence phones are written only outside Git."""
+    rows = load(ROOT / "tests/fixtures/readaloud/normalized_occurrences.json")
+    return [case(row["id"], "normalized_occurrence", row["text"], row.get("origin"), {},
+                 Rulings(names=set(row["names"]))) for row in rows]
+
+
 def private_cases(source: Path, context: Path):
     clips = {c["id"]: c for c in load(source)}
     rows = load(context)
@@ -137,6 +144,7 @@ def main():
     parser.add_argument("--public-out", type=Path, default=DATA / "desktop_parity.json")
     parser.add_argument("--calibration-source", type=Path)
     parser.add_argument("--private-out", type=Path)
+    parser.add_argument("--occurrence-out", type=Path, help="authored occurrence parity output outside the repository")
     parser.add_argument("--calibration-context", type=Path, default=Path("D:/Novels/ABook/Corpus/g2pgate/calibration_context.json"))
     parser.add_argument(
         "--check", action="store_true", help="verify existing fixtures without rewriting them"
@@ -148,10 +156,14 @@ def main():
         parser.error("private calibration inputs must be outside the repository")
     if args.private_out and args.private_out.resolve().is_relative_to(ROOT.parent):
         parser.error("private calibration output must be outside the repository")
+    if args.occurrence_out and args.occurrence_out.resolve().is_relative_to(ROOT.parent):
+        parser.error("sentence phonemes must stay outside the repository")
     write(args.public_out, public_cases(), check=args.check)
     write(args.public_out.with_name("stretches_parity.json"), stretch_cases(), check=args.check)
     if args.private_out:
         write(args.private_out, private_cases(args.calibration_source, args.calibration_context), check=args.check)
+    if args.occurrence_out:
+        write(args.occurrence_out, occurrence_cases(), check=args.check)
 
 
 if __name__ == "__main__":

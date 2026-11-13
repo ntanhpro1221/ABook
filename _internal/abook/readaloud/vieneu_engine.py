@@ -368,7 +368,8 @@ def phonemize(sentences: Sequence[str], source: str | None = None, rulings: Any 
     phonemes = foreign_names(given, raw, phonemes, pipeline.g2p.convert, named)  # "Dan" của danh sách nhân vật Tây: "đan" /ɗaːn/, không /zaːn/
     phonemes = repair_level_tone(given, phonemes)
     phonemes = repair_syllabic_gi(text, phonemes)
-    phonemes = restore_generated_syllables(shown, given, phonemes, pipeline.g2p.convert, source, rulings)
+    phonemes = restore_generated_syllables(shown, given, phonemes, pipeline.g2p.convert, source, rulings,
+                                          normalize=lambda value: pipeline.normalizer.normalize(value, punc_norm=False))
     if phonemes.endswith(".") and ("?" in text or "!" in text):
         written = _sea().run(text, punc_norm=False).rstrip()  # dấu cuối thật của khúc, chưa bị ép
         if written.endswith(("?", "!")):

@@ -4,6 +4,7 @@ from __future__ import annotations
 import re
 import threading
 import unicodedata
+from bisect import bisect_right
 from contextlib import contextmanager
 from functools import lru_cache
 from typing import Callable, Iterator
@@ -17,6 +18,7 @@ _SYLLABIC_O = re.compile(r"o[.,!?;:…]*")
 _LETTER_O = re.compile(r"ˈo([.,!?;:…]*)")
 # sea-g2p's own tokens (src/g2p/mod.rs RE_TOKEN): an <en> span, a word, one punctuation mark.
 _TOKEN = re.compile(r"(<en>.*?</en>)|(\w+(?:['’]\w+)*)|([^\w\s])", re.IGNORECASE)
+_CUE = re.compile(r"(<\|emotion_\d+\|>|\[(?:chuckle|cười|cuoi|sigh|thở dài|tho dai|clear throat|hắng giọng|hang giong)\])", re.IGNORECASE)
 _CAPITAL = re.compile(r"(?<![\w'’<>/])[A-Z][A-Za-z]*(?![\w'’])")
 _LETTER_RUN = re.compile(r"[^\W\d_]+")
 _SENTENCE = re.compile(r"[^.!?…;:\n\"“”«»「」『』]+")  # a quoted shout is a sentence of its own
@@ -88,6 +90,7 @@ def restore_generated_syllables(
     rulings: Rulings | None = None,
     *,
     cursor: list[int] | None = None,
+    normalize: Callable[[str], str] | None = None,
 ) -> str:
     """Generated Vietnamese name syllables must not be reclassified English.
 
@@ -98,13 +101,31 @@ def restore_generated_syllables(
     from ..analysis import is_vietnamese_syllable
 
     eligible = ruled_vietnamese_words(spoken, source, rulings)
-    rendered = []
-    generated_positions = set()
-    ruled_positions = set()
-    runs = re.findall(r"<en>.*?</en>|[^\s]+", spoken)
+    rendered: list[str] = []
+    positions: set[int] = set()
+    runs = list(re.finditer(r"<en>.*?</en>|[^\s]+", spoken))
+    starts = [m.start() for m in re.finditer(r"\S+", spoken)]
     original = source.split() if source else []
     single_rendering = len(original) == 1 and spoken.casefold() != source.casefold()
-    for index, run in enumerate(runs):
+
+    def keys(value: str) -> list[str]:
+        return [key for t in value.split()
+                if (key := t.replace("<en>", "").replace("</en>", "").strip(_WORD_EDGE).lower())]
+
+    def render(value: str) -> list[str]:
+        if normalize is not None:
+            # VieNeu normalizes each spoken fragment, never the cue itself.
+            return [word for part in _CUE.split(value) if part.strip()
+                    for word in keys(part if _CUE.fullmatch(part) else respell_rare_rimes(normalize(part)))]
+        clean = value.replace("<en>", "").replace("</en>", "").lower()
+        return [respell_rare_rimes(w.rstrip("_")) for w in re.findall(r"\w+(?:['’]\w+)*", clean)]
+
+    # Partition at the adjudicated occurrences, leaving number/unit expressions
+    # together in each gap. Carry positions through the real normalizer, then
+    # require the partition to reproduce its whole-text output before using it.
+    end = 0
+    for index, match in enumerate(runs):
+        run = match.group()
         syllables = re.findall(r"\w+(?:['’]\w+)*", run.replace("<en>", "").replace("</en>", "").lower())
         generated = "-" in run or single_rendering or (
             len(original) == len(runs) and run.casefold() != original[index].casefold()
@@ -115,31 +136,44 @@ def restore_generated_syllables(
             and bool(syllables)
             and all(is_vietnamese_syllable(w.rstrip("_")) for w in syllables)
         )
-        if generated:
-            generated_positions.update(range(len(rendered), len(rendered) + len(syllables)))
-        if index in eligible:
-            ruled_positions.update(range(len(rendered), len(rendered) + len(syllables)))
-        rendered.extend(respell_rare_rimes(w.rstrip("_")) for w in syllables)
+        # eligible uses whitespace positions; an <en> span can occupy several.
+        position = bisect_right(starts, match.start()) - 1
+        if "<en>" in run or not (generated or position in eligible):
+            continue
+        rendered.extend(render(spoken[end:match.start()]))
+        words = render(run)
+        expected = [respell_rare_rimes(w.rstrip("_")) for w in syllables]
+        if words == expected:
+            positions.update(range(len(rendered), len(rendered) + len(words)))
+        rendered.extend(words)
+        end = match.end()
+    if not end:
+        return phonemes
+    rendered.extend(render(spoken[end:]))
+    if normalize is not None and rendered != render(spoken):
+        return phonemes  # splitting changed normalization context: never guess
     tokens, phones = given.split(), phonemes.split()
     if len(tokens) != len(phones):
         return phonemes
-    normalized = [t.replace("<en>", "").replace("</en>", "").strip(_WORD_EDGE).lower() for t in tokens]
+    slots = [i for i, token in enumerate(tokens) if keys(token)]
+    normalized = keys(given)
     offset = 0
     if cursor is not None:
         # Studio supplies successive chunks (and cue fragments) of one spelling.
         # Consume each occurrence once; never apply a name's positions globally.
-        offset = next((i for i in range(cursor[0], len(rendered) - len(tokens) + 1)
-                       if rendered[i:i + len(tokens)] == normalized), -1)
+        offset = next((i for i in range(cursor[0], len(rendered) - len(normalized) + 1)
+                       if rendered[i:i + len(normalized)] == normalized), -1)
         aligned = offset >= 0
         if aligned:
-            cursor[0] = offset + len(tokens)
+            cursor[0] = offset + len(normalized)
     else:
         aligned = rendered == normalized
+    claimed = {slots[i] for i in range(len(slots)) if i + offset in positions} if aligned else set()
     inside = False
     for index, token in enumerate(tokens):
         inside = inside or "<en>" in token
         word = token.strip(_WORD_EDGE)
-        if not inside and aligned and index + offset in (ruled_positions | generated_positions):
+        if not inside and aligned and index in claimed:
             probe = _level_probe(word, g2p)
             if probe:
                 core = phones[index].rstrip(_PHONEME_MARKS)

@@ -461,7 +461,7 @@ def test_snapshot_checks_require_all_goldens_and_unmodified_verified_images(tmp_
 
 
 def test_phoneme_suite_skip_and_absence_cannot_be_hidden_by_other_android_passes(tmp_path):
-    names = ("SeaG2pParityTest", "PhonemePolicyTest", "RealNamesTest", "EnglishDirectFrontendTest")
+    names = ("SeaG2pParityTest", "PhonemePolicyTest", "RealNamesTest", "EnglishDirectFrontendTest", "NormalizedOccurrenceTest")
     for name in names:
         (tmp_path / ("TEST-" + name + ".xml")).write_text(
             f'<testsuite name="vn.abook.player.vieneu.{name}"><testcase name="real"/></testsuite>', encoding="utf-8")
@@ -473,6 +473,33 @@ def test_phoneme_suite_skip_and_absence_cannot_be_hidden_by_other_android_passes
     path.rename(path.with_suffix(".absent"))
     with pytest.raises(ValueError, match="missing phoneme"):
         gate.require_phoneme_suites_ran(tmp_path)
+
+
+def test_android_gate_generates_occurrence_parity_for_its_native_run(tmp_path, monkeypatch):
+    from scripts.generate_g2p_parity import load
+
+    monkeypatch.setattr(gate, "ROOT", tmp_path)
+    monkeypatch.setattr(gate, "android_host_inputs", lambda: {})
+    results = tmp_path / "mobile/android/app/build/test-results/testDebugUnitTest"
+    inputs = []
+
+    def run(command, cwd, timeout, extra_env):
+        fixture = Path(extra_env["ABOOK_G2P_OCCURRENCE_FIXTURE"])
+        assert fixture.is_file() and not fixture.is_relative_to(gate.REPO)
+        cases = load(fixture)["cases"]
+        assert len(cases) == 12
+        assert {case["id"] for case in cases} >= {"before-unit", "tag-middle", "bare-number"}
+        assert all(case["units"] and case["phonemes"] for case in cases)
+        inputs.append(fixture)
+        results.mkdir(parents=True)
+        for name in ("SeaG2pParityTest", "PhonemePolicyTest", "RealNamesTest", "EnglishDirectFrontendTest", "NormalizedOccurrenceTest"):
+            (results / f"TEST-{name}.xml").write_text(
+                f'<testsuite name="{name}" tests="1" failures="0" errors="0"><testcase name="real"/></testsuite>', encoding="utf8")
+        return gate.Execution(0, "")
+
+    monkeypatch.setattr(gate, "run_process", run)
+    assert gate.worker("android-unit")["status"] == "PASS"
+    assert len(inputs) == 1 and not inputs[0].exists()
 
 
 def test_vitest_unhandled_errors_block_even_when_all_tests_pass(tmp_path):

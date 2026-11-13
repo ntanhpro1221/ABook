@@ -1,0 +1,14 @@
+[
+  {"id": "before-unit", "text": "Ben đi 12 km.", "names": ["ben"], "word": "ben", "count": 1},
+  {"id": "between-units", "text": "Đi 12 km, Ben mua 3 kg gạo.", "names": ["ben"], "word": "ben", "count": 1},
+  {"id": "after-unit", "text": "Qua 12 km thì gặp Ben.", "names": ["ben"], "word": "ben", "count": 1},
+  {"id": "bare-number", "text": "Ben cất 12 cây bút rồi gọi Ben.", "names": ["ben"], "word": "ben", "count": 2},
+  {"id": "english-first", "text": "I can not do it, Can đi 12 km.", "names": ["can"], "word": "can", "count": 1, "english": "can"},
+  {"id": "english-last", "text": "Can đi 12 km, I can not do it.", "names": ["can"], "word": "can", "count": 1, "english": "can"},
+  {"id": "tag-first", "text": "CPU báo Can đi 12 km, I can not do it.", "names": ["can"], "word": "can", "count": 1, "english": "can"},
+  {"id": "tag-middle", "text": "Can đi 12 km, CPU báo I can not do it, Can về.", "names": ["can"], "word": "can", "count": 2, "english": "can"},
+  {"id": "tag-last", "text": "Đi 12 km, Can đọc CPU, I can not do it.", "names": ["can"], "word": "can", "count": 1, "english": "can"},
+  {"id": "article", "text": "An đi 12 km, I want an apple.", "names": ["an"], "word": "an", "count": 1, "english": "an"},
+  {"id": "generated", "text": "Tengu đi 12 km rồi mua 3 kg gạo.", "names": [], "word": "ten", "count": 1, "origin": "ja"},
+  {"id": "decimal-unit", "text": "Ben đi 1,5 km rồi gọi Ben.", "names": ["ben"], "word": "ben", "count": 2}
+]

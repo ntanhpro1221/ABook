@@ -316,7 +316,10 @@ Không đổi sang phân tích cuốn chiếu nếu người dùng chưa thay đ
   Gate chữ `tests/test_g2pgate.py` giữ token/tên thật và mã băm sách; câu nguồn hiệu chỉnh phải ở ngoài repo.
   Khi lớp/ngôn ngữ đã được cuốn xác nhận, cách đọc ấy phải sống qua cả lớp chữ và lượt sea-g2p thứ hai.
   Sửa âm tiết phiên âm chỉ lấy âm Việt từ chính sea-g2p (thử dấu sắc hợp lệ rồi bỏ đúng thanh thử), không tự tạo IPA;
-  chỉ sửa đúng vị trí âm tiết đã sinh, không lan sang từ Anh trùng chữ. Namespace hiện tại `direct-en8`.
+  chỉ sửa đúng vị trí âm tiết đã sinh, không lan sang từ Anh trùng chữ. Ruling theo occurrence phải mang vị trí qua
+  normalizer số/đơn vị; các khoảng giữa tên chuẩn hoá cùng nhau, cue giữ ranh giới fragment. Chỉ dùng ánh xạ khi
+  khớp chuỗi chuẩn hoá đầy đủ và chunk đang đọc, tiêu thụ occurrence theo thứ tự. Thẻ Anh nhiều từ vẫn đếm từng
+  vị trí whitespace khi tra ruling. Namespace hiện tại `direct-en9`.
 - Mọi normalized speaker name dùng đúng một character và một voice profile trên toàn sách; cùng tên không được
   đổi preset theo chapter, cảm xúc hoặc khi resume. Không hợp nhất hai tên khác nhau vì đổi tên/thân phận/chuyển sinh.
   Chỉ gom các DẠNG VIẾT của cùng một tên (`character_registry.canonical_speaker_names`, một hàm dùng chung cho dây

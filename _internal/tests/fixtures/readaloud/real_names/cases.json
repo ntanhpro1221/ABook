@@ -7,19 +7,19 @@
    "sharedWords": {"version": 2, "contexts": {}, "names": [], "foreign": ["dan"], "readings": {"Ji-eun": "Gi-ưn", "Woo": "U"}},
    "proven": {"HYUN": "Hi-un", "WOO": "Woo", "YUKI": "Giu-ki"},
    "cases": [
-    {"text": "Ji-eun gật đầu.", "said": "Gi-ưn gật đầu.", "phonemes": "zˈi ˈən ɣˈə6t̪ ɗˈə2w.", "tag": "ja+direct-en8+jp-fallback6"},
-    {"text": "Hyun Woo nhìn Ji-eun rồi cười.", "said": "Hi-un U nhìn Gi-ưn rồi cười.", "phonemes": "hˈi ˈun ˈu ɲˈi2n zˈi ˈən ɹˈo2j kˈyə2j.", "tag": "ja+direct-en8+jp-fallback6"},
-    {"text": "Chờ đã, Heizaemon!", "said": "Chờ đã, Hây-da-e-môn!", "phonemes": "tʃˈəː2 ɗˌaː5, hˈəɪ zˈaː ˈɛ mˈon!", "tag": "ja+direct-en8+jp-fallback6"},
-    {"text": "Pa-pa nhìn Heizaemon.", "said": "Pa-pa nhìn Hây-da-e-môn.", "phonemes": "pˈaː pˈaː ɲˈi2n hˈəɪ zˈaː ˈɛ mˈon.", "tag": "ja+direct-en8+jp-fallback6"},
-    {"text": "Rồi Dan cười.", "said": "Rồi Dan cười.", "phonemes": "ɹˈo2j ɗˈaːn kˈyə2j.", "tag": "direct-en8+jp-fallback6"},
-    {"text": "Dan! Heizaemon và Yuki đang chờ.", "said": "Dan! Hây-da-e-môn và Giu-ki đang chờ.", "phonemes": "ɗˈaːn! hˈəɪ zˈaː ˈɛ mˈon vˌaː2 zˈu kˈi ɗˌaːŋ tʃˈəː2.", "tag": "ja+direct-en8+jp-fallback6"},
-    {"text": "Rồi Dan hỏi Ji-eun: điện thoại hết pin à?", "said": "Rồi Dan hỏi Gi-ưn: điện thoại hết pin à?", "phonemes": "ɹˈo2j ɗˈaːn hˈɔ4j zˈi ˈən, ɗˈiɛ6n twˈaː6j hˈeɜt̪ pˈin ˈaː2?", "tag": "ja+direct-en8+jp-fallback6"},
-    {"text": "Nước trong veo, Yuki thả con boa xuống rồi thay pin.", "said": "Nước trong veo, Giu-ki thả con boa xuống rồi thay pin.", "phonemes": "nˈyəɜc tʃˈɔŋ vˈɛw, zˈu kˈi tˈaː4 kˌɔn bwˈaː sˈuəɜŋ ɹˈo2j tˈaj pˈin.", "tag": "ja+direct-en8+jp-fallback6"},
-    {"text": "Ji-eun tải APP hạng K về máy.", "said": "Gi-ưn tải app hạng K về máy.", "phonemes": "zˈi ˈən t̪ˈaː4j ˈæp hˈaː6ŋ kˈaː vˈe2 mˈaɜj.", "tag": "ja+direct-en8+jp-fallback6"},
-    {"text": "Hạng K! Heizaemon mở APP.", "said": "Hạng K! Hây-da-e-môn mở app.", "phonemes": "hˈaː6ŋ kˈaː! hˈəɪ zˈaː ˈɛ mˈon mˈəː4 ˈæp.", "tag": "ja+direct-en8+jp-fallback6"},
-    {"text": "YUKI! Heizaemon gọi lớn.", "said": "Giu-ki! Hây-da-e-môn gọi lớn.", "phonemes": "zˈu kˈi! hˈəɪ zˈaː ˈɛ mˈon ɣˈɔ6j lˈəːɜn.", "tag": "ja+direct-en8+jp-fallback6"},
-    {"text": "“HYUN WOO! Ji-eun đâu rồi?”", "said": "“Hi-un U! Gi-ưn đâu rồi?”", "phonemes": "hˈi ˈun ˈu! zˈi ˈən ɗˈə1w ɹˈo2j?", "tag": "ja+direct-en8+jp-fallback6"},
-    {"text": "Rồi Dan, Heizaemon và YUKI mở APP hạng K xem cục pin.", "said": "Rồi Dan, Hây-da-e-môn và Giu-ki mở app hạng K xem cục pin.", "phonemes": "ɹˈo2j ɗˈaːn, hˈəɪ zˈaː ˈɛ mˈon vˌaː2 zˈu kˈi mˈəː4 ˈæp hˈaː6ŋ kˈaː sˈɛm kˈu6c pˈin.", "tag": "ja+direct-en8+jp-fallback6"}
+    {"text": "Ji-eun gật đầu.", "said": "Gi-ưn gật đầu.", "phonemes": "zˈi ˈən ɣˈə6t̪ ɗˈə2w.", "tag": "ja+direct-en9+jp-fallback6"},
+    {"text": "Hyun Woo nhìn Ji-eun rồi cười.", "said": "Hi-un U nhìn Gi-ưn rồi cười.", "phonemes": "hˈi ˈun ˈu ɲˈi2n zˈi ˈən ɹˈo2j kˈyə2j.", "tag": "ja+direct-en9+jp-fallback6"},
+    {"text": "Chờ đã, Heizaemon!", "said": "Chờ đã, Hây-da-e-môn!", "phonemes": "tʃˈəː2 ɗˌaː5, hˈəɪ zˈaː ˈɛ mˈon!", "tag": "ja+direct-en9+jp-fallback6"},
+    {"text": "Pa-pa nhìn Heizaemon.", "said": "Pa-pa nhìn Hây-da-e-môn.", "phonemes": "pˈaː pˈaː ɲˈi2n hˈəɪ zˈaː ˈɛ mˈon.", "tag": "ja+direct-en9+jp-fallback6"},
+    {"text": "Rồi Dan cười.", "said": "Rồi Dan cười.", "phonemes": "ɹˈo2j ɗˈaːn kˈyə2j.", "tag": "direct-en9+jp-fallback6"},
+    {"text": "Dan! Heizaemon và Yuki đang chờ.", "said": "Dan! Hây-da-e-môn và Giu-ki đang chờ.", "phonemes": "ɗˈaːn! hˈəɪ zˈaː ˈɛ mˈon vˌaː2 zˈu kˈi ɗˌaːŋ tʃˈəː2.", "tag": "ja+direct-en9+jp-fallback6"},
+    {"text": "Rồi Dan hỏi Ji-eun: điện thoại hết pin à?", "said": "Rồi Dan hỏi Gi-ưn: điện thoại hết pin à?", "phonemes": "ɹˈo2j ɗˈaːn hˈɔ4j zˈi ˈən, ɗˈiɛ6n twˈaː6j hˈeɜt̪ pˈin ˈaː2?", "tag": "ja+direct-en9+jp-fallback6"},
+    {"text": "Nước trong veo, Yuki thả con boa xuống rồi thay pin.", "said": "Nước trong veo, Giu-ki thả con boa xuống rồi thay pin.", "phonemes": "nˈyəɜc tʃˈɔŋ vˈɛw, zˈu kˈi tˈaː4 kˌɔn bwˈaː sˈuəɜŋ ɹˈo2j tˈaj pˈin.", "tag": "ja+direct-en9+jp-fallback6"},
+    {"text": "Ji-eun tải APP hạng K về máy.", "said": "Gi-ưn tải app hạng K về máy.", "phonemes": "zˈi ˈən t̪ˈaː4j ˈæp hˈaː6ŋ kˈaː vˈe2 mˈaɜj.", "tag": "ja+direct-en9+jp-fallback6"},
+    {"text": "Hạng K! Heizaemon mở APP.", "said": "Hạng K! Hây-da-e-môn mở app.", "phonemes": "hˈaː6ŋ kˈaː! hˈəɪ zˈaː ˈɛ mˈon mˈəː4 ˈæp.", "tag": "ja+direct-en9+jp-fallback6"},
+    {"text": "YUKI! Heizaemon gọi lớn.", "said": "Giu-ki! Hây-da-e-môn gọi lớn.", "phonemes": "zˈu kˈi! hˈəɪ zˈaː ˈɛ mˈon ɣˈɔ6j lˈəːɜn.", "tag": "ja+direct-en9+jp-fallback6"},
+    {"text": "“HYUN WOO! Ji-eun đâu rồi?”", "said": "“Hi-un U! Gi-ưn đâu rồi?”", "phonemes": "hˈi ˈun ˈu! zˈi ˈən ɗˈə1w ɹˈo2j?", "tag": "ja+direct-en9+jp-fallback6"},
+    {"text": "Rồi Dan, Heizaemon và YUKI mở APP hạng K xem cục pin.", "said": "Rồi Dan, Hây-da-e-môn và Giu-ki mở app hạng K xem cục pin.", "phonemes": "ɹˈo2j ɗˈaːn, hˈəɪ zˈaː ˈɛ mˈon vˌaː2 zˈu kˈi mˈəː4 ˈæp hˈaː6ŋ kˈaː sˈɛm kˈu6c pˈin.", "tag": "ja+direct-en9+jp-fallback6"}
    ]
   },
   {
@@ -27,17 +27,17 @@
    "sharedWords": {"version": 2, "contexts": {}, "names": [], "foreign": ["dan"], "readings": {"Heizaemon": "Hây-da-e-môn"}},
    "proven": {},
    "cases": [
-    {"text": "Ji-eun gật đầu.", "said": "Gi-ưn gật đầu.", "phonemes": "zˈi ˈən ɣˈə6t̪ ɗˈə2w.", "tag": "ko+direct-en8+jp-fallback6"},
-    {"text": "Hyun Woo nhìn Ji-eun rồi cười.", "said": "Hi-un U nhìn Gi-ưn rồi cười.", "phonemes": "hˈi ˈun ˈu ɲˈi2n zˈi ˈən ɹˈo2j kˈyə2j.", "tag": "ko+direct-en8+jp-fallback6"},
-    {"text": "Chờ đã, Heizaemon!", "said": "Chờ đã, Hây-da-e-môn!", "phonemes": "tʃˈəː2 ɗˌaː5, hˈəɪ zˈaː ˈɛ mˈon!", "tag": "direct-en8+jp-fallback6"},
-    {"text": "Pa-pa nhìn Heizaemon.", "said": "Pa-pa nhìn Hây-da-e-môn.", "phonemes": "pˈaː pˈaː ɲˈi2n hˈəɪ zˈaː ˈɛ mˈon.", "tag": "direct-en8+jp-fallback6"},
-    {"text": "Rồi Dan cười.", "said": "Rồi Dan cười.", "phonemes": "ɹˈo2j ɗˈaːn kˈyə2j.", "tag": "direct-en8+jp-fallback6"},
-    {"text": "Dan! Heizaemon và Yuki đang chờ.", "said": "Dan! Hây-da-e-môn và Giu-ki đang chờ.", "phonemes": "ɗˈaːn! hˈəɪ zˈaː ˈɛ mˈon vˌaː2 zˈu kˈi ɗˌaːŋ tʃˈəː2.", "tag": "ko+direct-en8+jp-fallback6"},
-    {"text": "Rồi Dan hỏi Ji-eun: điện thoại hết pin à?", "said": "Rồi Dan hỏi Gi-ưn: điện thoại hết pin à?", "phonemes": "ɹˈo2j ɗˈaːn hˈɔ4j zˈi ˈən, ɗˈiɛ6n twˈaː6j hˈeɜt̪ pˈin ˈaː2?", "tag": "ko+direct-en8+jp-fallback6"},
-    {"text": "Nước trong veo, Yuki thả con boa xuống rồi thay pin.", "said": "Nước trong veo, Giu-ki thả con boa xuống rồi thay pin.", "phonemes": "nˈyəɜc tʃˈɔŋ vˈɛw, zˈu kˈi tˈaː4 kˌɔn bwˈaː sˈuəɜŋ ɹˈo2j tˈaj pˈin.", "tag": "ko+direct-en8+jp-fallback6"},
-    {"text": "Ji-eun tải APP hạng K về máy.", "said": "Gi-ưn tải app hạng K về máy.", "phonemes": "zˈi ˈən t̪ˈaː4j ˈæp hˈaː6ŋ kˈaː vˈe2 mˈaɜj.", "tag": "ko+direct-en8+jp-fallback6"},
-    {"text": "Hạng K! Heizaemon mở APP.", "said": "Hạng K! Hây-da-e-môn mở app.", "phonemes": "hˈaː6ŋ kˈaː! hˈəɪ zˈaː ˈɛ mˈon mˈəː4 ˈæp.", "tag": "direct-en8+jp-fallback6"},
-    {"text": "Rồi Dan, Hyun Woo và Yuki mở APP hạng K xem cục pin.", "said": "Rồi Dan, Hi-un U và Giu-ki mở app hạng K xem cục pin.", "phonemes": "ɹˈo2j ɗˈaːn, hˈi ˈun ˈu vˌaː2 zˈu kˈi mˈəː4 ˈæp hˈaː6ŋ kˈaː sˈɛm kˈu6c pˈin.", "tag": "ko+direct-en8+jp-fallback6"}
+    {"text": "Ji-eun gật đầu.", "said": "Gi-ưn gật đầu.", "phonemes": "zˈi ˈən ɣˈə6t̪ ɗˈə2w.", "tag": "ko+direct-en9+jp-fallback6"},
+    {"text": "Hyun Woo nhìn Ji-eun rồi cười.", "said": "Hi-un U nhìn Gi-ưn rồi cười.", "phonemes": "hˈi ˈun ˈu ɲˈi2n zˈi ˈən ɹˈo2j kˈyə2j.", "tag": "ko+direct-en9+jp-fallback6"},
+    {"text": "Chờ đã, Heizaemon!", "said": "Chờ đã, Hây-da-e-môn!", "phonemes": "tʃˈəː2 ɗˌaː5, hˈəɪ zˈaː ˈɛ mˈon!", "tag": "direct-en9+jp-fallback6"},
+    {"text": "Pa-pa nhìn Heizaemon.", "said": "Pa-pa nhìn Hây-da-e-môn.", "phonemes": "pˈaː pˈaː ɲˈi2n hˈəɪ zˈaː ˈɛ mˈon.", "tag": "direct-en9+jp-fallback6"},
+    {"text": "Rồi Dan cười.", "said": "Rồi Dan cười.", "phonemes": "ɹˈo2j ɗˈaːn kˈyə2j.", "tag": "direct-en9+jp-fallback6"},
+    {"text": "Dan! Heizaemon và Yuki đang chờ.", "said": "Dan! Hây-da-e-môn và Giu-ki đang chờ.", "phonemes": "ɗˈaːn! hˈəɪ zˈaː ˈɛ mˈon vˌaː2 zˈu kˈi ɗˌaːŋ tʃˈəː2.", "tag": "ko+direct-en9+jp-fallback6"},
+    {"text": "Rồi Dan hỏi Ji-eun: điện thoại hết pin à?", "said": "Rồi Dan hỏi Gi-ưn: điện thoại hết pin à?", "phonemes": "ɹˈo2j ɗˈaːn hˈɔ4j zˈi ˈən, ɗˈiɛ6n twˈaː6j hˈeɜt̪ pˈin ˈaː2?", "tag": "ko+direct-en9+jp-fallback6"},
+    {"text": "Nước trong veo, Yuki thả con boa xuống rồi thay pin.", "said": "Nước trong veo, Giu-ki thả con boa xuống rồi thay pin.", "phonemes": "nˈyəɜc tʃˈɔŋ vˈɛw, zˈu kˈi tˈaː4 kˌɔn bwˈaː sˈuəɜŋ ɹˈo2j tˈaj pˈin.", "tag": "ko+direct-en9+jp-fallback6"},
+    {"text": "Ji-eun tải APP hạng K về máy.", "said": "Gi-ưn tải app hạng K về máy.", "phonemes": "zˈi ˈən t̪ˈaː4j ˈæp hˈaː6ŋ kˈaː vˈe2 mˈaɜj.", "tag": "ko+direct-en9+jp-fallback6"},
+    {"text": "Hạng K! Heizaemon mở APP.", "said": "Hạng K! Hây-da-e-môn mở app.", "phonemes": "hˈaː6ŋ kˈaː! hˈəɪ zˈaː ˈɛ mˈon mˈəː4 ˈæp.", "tag": "direct-en9+jp-fallback6"},
+    {"text": "Rồi Dan, Hyun Woo và Yuki mở APP hạng K xem cục pin.", "said": "Rồi Dan, Hi-un U và Giu-ki mở app hạng K xem cục pin.", "phonemes": "ɹˈo2j ɗˈaːn, hˈi ˈun ˈu vˌaː2 zˈu kˈi mˈəː4 ˈæp hˈaː6ŋ kˈaː sˈɛm kˈu6c pˈin.", "tag": "ko+direct-en9+jp-fallback6"}
    ]
   },
   {
@@ -45,17 +45,17 @@
    "sharedWords": {"version": 2, "contexts": {}, "names": [], "foreign": ["dan"], "readings": {"Heizaemon": "Hây-da-e-môn", "Hyun": "Hi-un", "Ji-eun": "Gi-ưn", "Woo": "U", "Yuki": "Giu-ki"}},
    "proven": {},
    "cases": [
-    {"text": "Ji-eun gật đầu.", "said": "Gi-ưn gật đầu.", "phonemes": "zˈi ˈən ɣˈə6t̪ ɗˈə2w.", "tag": "direct-en8+jp-fallback6"},
-    {"text": "Hyun Woo nhìn Ji-eun rồi cười.", "said": "Hi-un U nhìn Gi-ưn rồi cười.", "phonemes": "hˈi ˈun ˈu ɲˈi2n zˈi ˈən ɹˈo2j kˈyə2j.", "tag": "direct-en8+jp-fallback6"},
-    {"text": "Chờ đã, Heizaemon!", "said": "Chờ đã, Hây-da-e-môn!", "phonemes": "tʃˈəː2 ɗˌaː5, hˈəɪ zˈaː ˈɛ mˈon!", "tag": "direct-en8+jp-fallback6"},
-    {"text": "Pa-pa nhìn Heizaemon.", "said": "Pa-pa nhìn Hây-da-e-môn.", "phonemes": "pˈaː pˈaː ɲˈi2n hˈəɪ zˈaː ˈɛ mˈon.", "tag": "direct-en8+jp-fallback6"},
-    {"text": "Rồi Dan cười.", "said": "Rồi Dan cười.", "phonemes": "ɹˈo2j ɗˈaːn kˈyə2j.", "tag": "direct-en8+jp-fallback6"},
-    {"text": "Dan! Heizaemon và Yuki đang chờ.", "said": "Dan! Hây-da-e-môn và Giu-ki đang chờ.", "phonemes": "ɗˈaːn! hˈəɪ zˈaː ˈɛ mˈon vˌaː2 zˈu kˈi ɗˌaːŋ tʃˈəː2.", "tag": "direct-en8+jp-fallback6"},
-    {"text": "Rồi Dan hỏi Ji-eun: điện thoại hết pin à?", "said": "Rồi Dan hỏi Gi-ưn: điện thoại hết pin à?", "phonemes": "ɹˈo2j ɗˈaːn hˈɔ4j zˈi ˈən, ɗˈiɛ6n twˈaː6j hˈeɜt̪ pˈin ˈaː2?", "tag": "direct-en8+jp-fallback6"},
-    {"text": "Nước trong veo, Yuki thả con boa xuống rồi thay pin.", "said": "Nước trong veo, Giu-ki thả con boa xuống rồi thay pin.", "phonemes": "nˈyəɜc tʃˈɔŋ vˈɛw, zˈu kˈi tˈaː4 kˌɔn bwˈaː sˈuəɜŋ ɹˈo2j tˈaj pˈin.", "tag": "direct-en8+jp-fallback6"},
-    {"text": "Ji-eun tải APP hạng K về máy.", "said": "Gi-ưn tải app hạng K về máy.", "phonemes": "zˈi ˈən t̪ˈaː4j ˈæp hˈaː6ŋ kˈaː vˈe2 mˈaɜj.", "tag": "direct-en8+jp-fallback6"},
-    {"text": "Hạng K! Heizaemon mở APP.", "said": "Hạng K! Hây-da-e-môn mở app.", "phonemes": "hˈaː6ŋ kˈaː! hˈəɪ zˈaː ˈɛ mˈon mˈəː4 ˈæp.", "tag": "direct-en8+jp-fallback6"},
-    {"text": "Rồi Dan, Hyun Woo và Yuki mở APP hạng K xem cục pin.", "said": "Rồi Dan, Hi-un U và Giu-ki mở app hạng K xem cục pin.", "phonemes": "ɹˈo2j ɗˈaːn, hˈi ˈun ˈu vˌaː2 zˈu kˈi mˈəː4 ˈæp hˈaː6ŋ kˈaː sˈɛm kˈu6c pˈin.", "tag": "direct-en8+jp-fallback6"}
+    {"text": "Ji-eun gật đầu.", "said": "Gi-ưn gật đầu.", "phonemes": "zˈi ˈən ɣˈə6t̪ ɗˈə2w.", "tag": "direct-en9+jp-fallback6"},
+    {"text": "Hyun Woo nhìn Ji-eun rồi cười.", "said": "Hi-un U nhìn Gi-ưn rồi cười.", "phonemes": "hˈi ˈun ˈu ɲˈi2n zˈi ˈən ɹˈo2j kˈyə2j.", "tag": "direct-en9+jp-fallback6"},
+    {"text": "Chờ đã, Heizaemon!", "said": "Chờ đã, Hây-da-e-môn!", "phonemes": "tʃˈəː2 ɗˌaː5, hˈəɪ zˈaː ˈɛ mˈon!", "tag": "direct-en9+jp-fallback6"},
+    {"text": "Pa-pa nhìn Heizaemon.", "said": "Pa-pa nhìn Hây-da-e-môn.", "phonemes": "pˈaː pˈaː ɲˈi2n hˈəɪ zˈaː ˈɛ mˈon.", "tag": "direct-en9+jp-fallback6"},
+    {"text": "Rồi Dan cười.", "said": "Rồi Dan cười.", "phonemes": "ɹˈo2j ɗˈaːn kˈyə2j.", "tag": "direct-en9+jp-fallback6"},
+    {"text": "Dan! Heizaemon và Yuki đang chờ.", "said": "Dan! Hây-da-e-môn và Giu-ki đang chờ.", "phonemes": "ɗˈaːn! hˈəɪ zˈaː ˈɛ mˈon vˌaː2 zˈu kˈi ɗˌaːŋ tʃˈəː2.", "tag": "direct-en9+jp-fallback6"},
+    {"text": "Rồi Dan hỏi Ji-eun: điện thoại hết pin à?", "said": "Rồi Dan hỏi Gi-ưn: điện thoại hết pin à?", "phonemes": "ɹˈo2j ɗˈaːn hˈɔ4j zˈi ˈən, ɗˈiɛ6n twˈaː6j hˈeɜt̪ pˈin ˈaː2?", "tag": "direct-en9+jp-fallback6"},
+    {"text": "Nước trong veo, Yuki thả con boa xuống rồi thay pin.", "said": "Nước trong veo, Giu-ki thả con boa xuống rồi thay pin.", "phonemes": "nˈyəɜc tʃˈɔŋ vˈɛw, zˈu kˈi tˈaː4 kˌɔn bwˈaː sˈuəɜŋ ɹˈo2j tˈaj pˈin.", "tag": "direct-en9+jp-fallback6"},
+    {"text": "Ji-eun tải APP hạng K về máy.", "said": "Gi-ưn tải app hạng K về máy.", "phonemes": "zˈi ˈən t̪ˈaː4j ˈæp hˈaː6ŋ kˈaː vˈe2 mˈaɜj.", "tag": "direct-en9+jp-fallback6"},
+    {"text": "Hạng K! Heizaemon mở APP.", "said": "Hạng K! Hây-da-e-môn mở app.", "phonemes": "hˈaː6ŋ kˈaː! hˈəɪ zˈaː ˈɛ mˈon mˈəː4 ˈæp.", "tag": "direct-en9+jp-fallback6"},
+    {"text": "Rồi Dan, Hyun Woo và Yuki mở APP hạng K xem cục pin.", "said": "Rồi Dan, Hi-un U và Giu-ki mở app hạng K xem cục pin.", "phonemes": "ɹˈo2j ɗˈaːn, hˈi ˈun ˈu vˌaː2 zˈu kˈi mˈəː4 ˈæp hˈaː6ŋ kˈaː sˈɛm kˈu6c pˈin.", "tag": "direct-en9+jp-fallback6"}
    ]
   }
  ]
