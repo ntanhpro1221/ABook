@@ -201,7 +201,7 @@ Item {
             const page = openBook(analysing(), [])
             compare(one(page, "projectBar").Accessible.name, "Tiến độ cả sách")
             compare(one(page, "projectBar").size, "xs")
-            tryCompare(one(page, "projectProgressNote"), "text", "đang ước tính thời gian…")
+            tryCompare(one(page, "projectProgressNote"), "text", "đang ước tính thời gian")
             setBook(page, analysing({eta: {phase: "analysis", seconds: 3600}}))
             tryCompare(one(page, "projectProgressNote"), "text", "pha phân tích còn khoảng 1 giờ")
             setBook(page, analysing({stopping: true}))

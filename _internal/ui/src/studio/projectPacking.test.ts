@@ -9,7 +9,7 @@ describe("packView", () => {
 
   it("gom chương: nói số chương, thanh nằm trong phần của pha", () => {
     const view = packView({ state: "running", phase: "listen", done: 100, total: 400 });
-    expect(view.title).toBe("Đang đóng gói (100/400 chương)…");
+    expect(view.title).toBe("Đang đóng gói (100/400 chương)");
     expect(view.fraction).toBeGreaterThan(0.02);
     expect(view.fraction).toBeLessThan(0.38);
   });

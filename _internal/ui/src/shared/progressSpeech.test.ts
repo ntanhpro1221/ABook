@@ -34,7 +34,7 @@ describe("jobView: lời đọc của thông báo đang xuất", () => {
   it("đồng hồ chạy (đã 0:05 -> 0:06) không đổi lời đọc", () => {
     const at = (elapsed: number) => loading(jobView({ state: "running", elapsed }, 10));
     expect(at(5).description).not.toBe(at(6).description);
-    expect(at(5).spoken).toBe("Đang đóng gói sách…");
+    expect(at(5).spoken).toBe("Đang đóng gói sách");
     expect(at(6).spoken).toBe(at(5).spoken);
   });
 

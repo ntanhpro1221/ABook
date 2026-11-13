@@ -1353,7 +1353,7 @@ function TrackSubtitle({ look }: { look: "bar" | "screen" | "reading" }) {
   const { track, purpose, atEnd, playing, buffering } = usePlayer();
   const speaking = useSpeaking();
   const openBook = useOpenTrackBook(track?.bookId);
-  // Đệm một nhịp giữa câu (~1 giây) không được làm dòng này nháy S.s_dang_chuan_bi_giong_doc_25f86ccf rồi mất: chỉ nói khi chờ thật sự lâu (soát UX a9).
+  // Đệm một nhịp giữa câu (~1 giây) không được làm dòng này nháy S.s_dang_chuan_bi_giong_doc_69f1b51a rồi mất: chỉ nói khi chờ thật sự lâu (soát UX a9).
   const preparing = useAfter(speaking && playing && buffering, PREPARING_VOICE_AFTER_MS);
   if (!track) return <MotionRegion />;
   return (
@@ -1527,7 +1527,7 @@ function FollowRecord() {
 
 // ---- Menu "…" của trình phát -----------------------------------------------------------------------------
 
-/** Khung danh sách trong menu nổi: tràn hết lề p-2 của bảng để nền chọn của dòng đứng cùng chỗ với nút cấp bảng (S.s_them_giong_bbe0caf9) và chữ dòng
+/** Khung danh sách trong menu nổi: tràn hết lề p-2 của bảng để nền chọn của dòng đứng cùng chỗ với nút cấp bảng (S.s_them_giong_15d3a618) và chữ dòng
  *  (px-2) thẳng chữ ghi chú của bảng; còn 5,25 px cho khung tiêu điểm. Bảng trượt điện thoại đặt lại lề theo lớp p-1 (styles.css). */
 const MENU_LIST = "p-1 -mx-2 px-2";
 /** Dòng lựa chọn có dấu ✓ / + đầu dòng (danh sách nhạc, mức nhạc): MỘT cấu trúc, kèm `data-sheet-choice` - bảng trượt điện thoại chuẩn hoá icon 20 px,

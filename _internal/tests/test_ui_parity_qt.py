@@ -35,6 +35,16 @@ def test_ui_parity_qt_doc_uses_lf_and_keeps_markers():
     assert text.count(tool.BEGIN) == 1 and text.count(tool.END) == 1
 
 
+def test_qt_end_ellipsis_is_a_hard_rule_even_for_status_and_placeholder_copy():
+    tool = _tool()
+    qt = tool.QtScan()
+    qt.items = [tool.Item("qt", "Example.qml", i, text, "text") for i, text in enumerate(
+        ("Loading…", "Save as...", "Find…", "…", "Ready"), 1)]
+    findings = tool.ellipsis_findings(qt)
+    assert len(findings) == 3
+    assert all(any(label in p for p in findings) for label in ("Loading…", "Save as...", "Find…"))
+
+
 def test_ui_parity_qt_is_deterministic():
     tool = _tool()
     assert tool.render_body() == tool.render_body()

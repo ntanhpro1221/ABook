@@ -166,7 +166,7 @@ export function ProgressNote({ text, spoken, fraction, label }: { text: string; 
   );
 }
 
-const STOPPING = { title: S.s_dang_dung_2fb8aa7c, note: S.s_phan_da_lam_duoc_giu_3dfe2e42 };
+const STOPPING = { title: S.s_dang_dung_9b35aeb5, note: S.s_phan_da_lam_duoc_giu_3dfe2e42 };
 /** Lời "Đang dừng…" của kiểu xuất này (M4B: không giữ gì - `ExportCopy.stopping`). */
 const stoppingNote = (copy: ExportCopy) => copy.stopping ?? STOPPING.note;
 

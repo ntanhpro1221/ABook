@@ -28,7 +28,7 @@ Popover {
                 }
             }
         }
-        Button { width: parent.width; wrap: true; text: S.s_them_giong_bbe0caf9; icon: "plus"; kind: "ghost"; onClicked: { root.close(); root.settingsRequested() } }
+        Button { width: parent.width; wrap: true; text: S.s_them_giong_15d3a618; icon: "plus"; kind: "ghost"; onClicked: { root.close(); root.settingsRequested() } }
     }
     PlayerConsent { id: consent; parent: root.parent }
 }

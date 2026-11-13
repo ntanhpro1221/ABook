@@ -106,7 +106,7 @@ describe("mô-đun Phân tích nhạc", () => {
     expect(moduleLabel(status())).toBe("Máy tự chọn nhạc hợp từng đoạn.");
     expect(moduleLabel(status())).not.toContain(formatSize(92_000_000));
     expect(moduleLabel(status({ state: "downloading", done: 30, total: 60 }))).toContain("50%");
-    expect(moduleLabel(status({ state: "downloading", done: 30, total: 60, retrying: true }))).toBe("Mạng chập chờn - đang thử lại… (Phân tích nhạc, 50%)");
+    expect(moduleLabel(status({ state: "downloading", done: 30, total: 60, retrying: true }))).toBe("Mạng chập chờn - đang thử lại (Phân tích nhạc, 50%)");
     expect(modulePercent(status({ done: 5, total: 0 }))).toBe(0);
     expect(modulePercent(status({ done: 99, total: 60 }))).toBe(100);
   });

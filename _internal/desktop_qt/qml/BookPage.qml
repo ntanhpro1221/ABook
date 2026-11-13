@@ -306,7 +306,7 @@ Item {
                 Reveal { shown: root.canRename }
                 width: parent.width
                 icon: "text-cursor-input"
-                text: S.s_doi_ten_chuong_bb06ca82
+                text: S.s_doi_ten_chuong_4c534649
                 onClicked: {
                     chapterMenu.close()
                     const c = parent.c

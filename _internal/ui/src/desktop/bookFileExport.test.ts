@@ -51,7 +51,7 @@ describe("jobView", () => {
   const done: ExportJob = { state: "done", id: "a", finishedAgo: 5, result: { folder: "D:/Sách/Đã xuất", file: "D:/Sách/Đã xuất/Truyện.abook", size: 5 * 1048576 } };
 
   it("shows the time passed while packing, with the chapter count only when it is known", () => {
-    expect(jobView({ state: "running", elapsed: 75 }, 4)).toEqual({ kind: "loading", title: "Đang đóng gói sách…", description: "4 chương · đã 1:15", spoken: "Đang đóng gói sách…" });
+    expect(jobView({ state: "running", elapsed: 75 }, 4)).toEqual({ kind: "loading", title: "Đang đóng gói sách", description: "4 chương · đã 1:15", spoken: "Đang đóng gói sách" });
     expect(jobView({ state: "running", elapsed: 75 })).toMatchObject({ kind: "loading", description: "đã 1:15" });
   });
 
@@ -59,7 +59,7 @@ describe("jobView", () => {
     expect(jobView(done)).toEqual({ kind: "success", title: "Đã xuất file sách", description: "Truyện.abook · 5 MB", place: "D:/Sách/Đã xuất/Truyện.abook" });
     expect(jobView({ state: "done", result: { folder: "D:/Sách/Bộ", parts: [{}, {}] } })).toMatchObject({ description: "Bộ · 2 file", place: "D:/Sách/Bộ" });
     // Sách nói MP3: thư mục tên sách + số file + cỡ; đường dài của Windows không bày cả ra thông báo.
-    const mp3 = { folder: "C:\\Users\\An\\Audiobooks\\Đã xuất\\Bến sông mùa lũ", files: 6, size: 3 * 1048576 };
+    const mp3 = { folder: "C:\\Profiles\\An\\Audiobooks\\Đã xuất\\Bến sông mùa lũ", files: 6, size: 3 * 1048576 };
     expect(jobView({ state: "done", result: mp3 })).toMatchObject({ description: "Bến sông mùa lũ · 6 file · 3 MB", place: mp3.folder });
   });
 
@@ -69,7 +69,7 @@ describe("jobView", () => {
 
   it("says which chapter a long book is at, then the bytes written, and that a cancelled export left no file", () => {
     const at = (phase: string, done: number, total: number) => jobView({ state: "running", elapsed: 42, phase, done, total } as ExportJob, 3000);
-    expect(at("listen", 120, 3000)).toMatchObject({ kind: "loading", title: "Đang đóng gói (120/3000 chương)…", description: "đã 0:42" });
+    expect(at("listen", 120, 3000)).toMatchObject({ kind: "loading", title: "Đang đóng gói (120/3000 chương)", description: "đã 0:42" });
     expect(at("listen", 120, 3000)).toMatchObject({ progress: expect.closeTo(0.02 + 0.83 * (120 / 3000)) });
     expect(at("write", 50 * 1048576, 200 * 1048576)).toMatchObject({ title: "Đang đóng gói (50 MB/200 MB)…" });
     expect(at("write", 1, 1)).toMatchObject({ progress: 1 });
@@ -200,7 +200,7 @@ describe("M4B export", () => {
   });
 
   it("speaks with its own words while running, when done and when failing", () => {
-    expect(jobView({ state: "running", elapsed: 5 }, 2, false, M4B_COPY)).toMatchObject({ kind: "loading", title: "Đang làm file M4B…" });
+    expect(jobView({ state: "running", elapsed: 5 }, 2, false, M4B_COPY)).toMatchObject({ kind: "loading", title: "Đang làm file M4B" });
     expect(jobView(m4b(6, 6), 0, false, M4B_COPY)).toEqual({ kind: "success", title: "Đã xuất M4B", description: "Truyện.m4b · 3 MB", place: "D:/x/Truyện.m4b" });
     expect(jobView({ state: "error", error: "x" }, 0, false, M4B_COPY)).toMatchObject({ title: "Chưa xuất được M4B" });
     expect(lastExportHint({ state: "running" }, M4B_COPY)).toBe("Đang làm file M4B - xem thông báo ở góc màn hình");
@@ -218,7 +218,7 @@ describe("M4B export", () => {
 describe("MP3 export", () => {
   it("shows chapter progress with a bar, and the music download before it", () => {
     const view = jobView({ state: "running", elapsed: 5, phase: "chapters", chapter: 3, chapters: 12 }, 0, false, MP3_COPY);
-    expect(view).toMatchObject({ kind: "loading", title: "Đang xuất MP3…", description: "Đang ghi chương 3/12" });
+    expect(view).toMatchObject({ kind: "loading", title: "Đang xuất MP3", description: "Đang ghi chương 3/12" });
     expect((view as { progress?: number }).progress).toBeCloseTo(2 / 12);
     expect(jobView({ state: "running", elapsed: 2, phase: "music-fetch", done: 0, total: 2 }, 0, false, MP3_COPY)).toMatchObject({ description: "Đang tải nhạc nền 1/2 bài" });
   });
@@ -249,7 +249,7 @@ describe("MP3 export", () => {
 describe("project file export (.abookproj)", () => {
   it("shows the pack phase and a bar while running, in the listener's words", () => {
     const view = jobView({ state: "running", elapsed: 12, phase: "listen", done: 100, total: 400 }, 0, false, PROJECT_FILE_COPY);
-    expect(view).toMatchObject({ kind: "loading", title: "Đang đóng gói (100/400 chương)…", description: "đã 0:12" });
+    expect(view).toMatchObject({ kind: "loading", title: "Đang đóng gói (100/400 chương)", description: "đã 0:12" });
     expect((view as { progress?: number }).progress).toBeGreaterThan(0);
     expect(jobView({ state: "running", elapsed: 1, phase: "prepare" }, 0, false, PROJECT_FILE_COPY)).toEqual({ kind: "loading", title: "Đang đóng gói…", description: "đã 0:01", spoken: "Đang đóng gói…" });
   });

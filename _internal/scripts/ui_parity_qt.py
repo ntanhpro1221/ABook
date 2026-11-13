@@ -1099,14 +1099,21 @@ def render_doc(current: str | None) -> str:
     return HEAD + body
 
 
+def ellipsis_findings(qt: QtScan) -> list[str]:
+    """Qt has the same hard end-ellipsis rule as web, including status and placeholder copy."""
+    return sorted({f"{i.file}:{i.line}: trailing ellipsis in UI copy: {i.text}"
+                   for i in qt.items if re.search(r"\w", i.text) and re.search(r"(?:…|\.\.\.)$", i.text.strip())})
+
+
 def main(argv: list[str]) -> int:
     current = DOC.read_bytes().decode("utf-8") if DOC.is_file() else None
     text = render_doc(current)
-    problems = mode_switch_findings()[1] + action_findings(web_scan(), qt_scan())
+    qt = qt_scan()
+    problems = mode_switch_findings()[1] + action_findings(web_scan(), qt) + ellipsis_findings(qt)
     if '| CHƯA GIẢI THÍCH |' in text:
         problems.append('cặp chữ mới chưa được giải thích trong ui_strings/qt_wording_review.json')
     for problem in problems:
-        print(f"công tắc chế độ Đang nghe lệch giữa các nền: {problem}", file=sys.stderr)
+        print(f"Qt parity: {problem}", file=sys.stderr)
     if "--check" in argv:
         if current != text:
             print(f"{DOC} không còn khớp mã nguồn - chạy scripts/ui_parity_qt.py", file=sys.stderr)

@@ -125,8 +125,8 @@ Item {
             const finished = findChild(scene(), "menuFinished")
             compare(create.text, "Hồ sơ mới")
             compare(move.text, "Chuyển hồ sơ")
-            compare(rename.text, "Đổi tên hồ sơ…")
-            compare(del.text, "Xoá hồ sơ…")
+            compare(rename.text, "Đổi tên hồ sơ")
+            compare(del.text, "Xoá hồ sơ")
             compare(finished.text, "Đã nghe xong")
             verify(del.danger && !create.danger && !rename.danger && !move.danger)
             // thứ tự: Hồ sơ mới, Chuyển, Đổi tên, rồi "Đã nghe xong", Xoá nằm dưới cùng sau vạch ngăn
@@ -163,9 +163,9 @@ Item {
             verify(all(choices[0], "recordChoiceLine")[0].text.indexOf("Chương 2\u00a0·\u00a01:15\u00a0·\u00a0nghe gần nhất ") === 0)
             compare(all(choices[1], "recordChoiceLine")[0].text, "chưa nghe")
             compare(findChild(scene(), "recordAction.create").text, "Hồ sơ mới")
-            compare(findChild(scene(), "recordAction.rename").text, "Đổi tên hồ sơ này…")
-            compare(findChild(scene(), "recordAction.move").text, "Chuyển sang cuốn khác…")
-            compare(findChild(scene(), "recordAction.delete").text, "Xoá hồ sơ này…")
+            compare(findChild(scene(), "recordAction.rename").text, "Đổi tên hồ sơ này")
+            compare(findChild(scene(), "recordAction.move").text, "Chuyển sang cuốn khác")
+            compare(findChild(scene(), "recordAction.delete").text, "Xoá hồ sơ này")
             verify(findChild(scene(), "recordAction.delete").danger)
             compare(Nav.layers.length, 1)
             shot("records_menu_many", host)
@@ -261,7 +261,7 @@ Item {
             const picker = findChild(dialogs, "recordTarget")
             tryVerify(function() { return picker.visible })
             compare(picker.options.map(o => o.label).join("|"), "Cuốn khác|Cuốn thứ ba")      // không có chính cuốn này
-            compare(picker.placeholder, "Chọn cuốn…")
+            compare(picker.placeholder, "Chọn cuốn")
             compare(calls("GET", "/api/listen/library").length, 1)
             verify(!confirm().enabled)                                    // chưa chọn cuốn nhận
             picker.picked("other")
@@ -287,7 +287,7 @@ Item {
             findChild(scene(), "recordRow.move").clicked()
             waitDialogOpen()
             verify(findChild(dialogs, "recordLoading").visible)
-            compare(findChild(dialogs, "recordLoading").text, "Đang mở thư viện…")
+            compare(findChild(dialogs, "recordLoading").text, "Đang mở thư viện")
             verify(!findChild(dialogs, "recordNoOthers").visible)
             verify(!confirm().enabled)
             DesktopApi.delayed = false

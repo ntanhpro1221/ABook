@@ -26,7 +26,7 @@ export interface ExportCopy {
 
 /** File sách (.abook): việc nền có pha + "chương X/N" (webui/server.py `post_bookfile_job`, bookfile.pack). */
 export const BOOK_FILE_COPY: ExportCopy = {
-  busy: S.s_dang_dong_goi_sach_c372ab53,
+  busy: S.s_dang_dong_goi_sach_ac7bab85,
   done: S.s_da_xuat_file_sach_242afa05,
   failed: S.s_chua_xuat_duoc_file_sach_43236ec7,
   stopped: S.s_da_dung_xuat_ab8ac9d1,
@@ -35,7 +35,7 @@ export const BOOK_FILE_COPY: ExportCopy = {
 };
 /** M4B: việc nền có Huỷ ở mọi pha (tải nhạc nền, trộn, ghép - webui/server.py `post_m4b_job_cancel`); huỷ thì không còn gì trên đĩa. */
 export const M4B_COPY: ExportCopy = {
-  busy: S.s_dang_lam_file_m4b_01a34d3b,
+  busy: S.s_dang_lam_file_m4b_4a95b4ac,
   done: S.s_da_xuat_m4b_76947b3a,
   failed: S.s_chua_xuat_duoc_m4b_5a39de4c,
   stopped: S.s_da_dung_xuat_ab8ac9d1,
@@ -44,7 +44,7 @@ export const M4B_COPY: ExportCopy = {
 };
 /** Thư mục MP3 (Studio, menu Thư viện): việc nền có "chương i/N" và Huỷ ở mọi pha (webui/server.py `post_mp3_job`); huỷ thì thư mục dở bị xoá. */
 export const MP3_COPY: ExportCopy = {
-  busy: S.s_dang_xuat_mp3_1f5f6554,
+  busy: S.s_dang_xuat_mp3_99b61b74,
   done: S.s_da_xuat_mp3_c93fc100,
   failed: S.s_chua_xuat_duoc_mp3_1550e65a,
   stopped: S.s_da_dung_xuat_ab8ac9d1,
@@ -160,7 +160,7 @@ function reportedProgress(job: ExportJob): { fraction: number; text: string; spo
     const fraction = done / job.total;
     return { fraction, text: S.s_dang_tai_nhac_nen_0_1_bai_2a186c13(Math.min(done + 1, job.total), job.total), spoken: spokenProgress(S.s_dang_tai_nhac_nen_0b8c4795, fraction) };
   }
-  if (job.phase === "peaks") return { fraction: 1, text: S.s_dang_kiem_dinh_am_9eff0113, spoken: S.s_dang_kiem_dinh_am_fddf3cc5 };
+  if (job.phase === "peaks") return { fraction: 1, text: S.s_dang_kiem_dinh_am_fddf3cc5, spoken: S.s_dang_kiem_dinh_am_fddf3cc5 };
   // Lượt mã hoá lại chạy lại từng chương (pha "encode" / "music" báo chương) - vẫn nói vì sao.
   const again = job.peakOver ? S.s_ma_hoa_lai_vi_0_chuong_vuot_dinh_luot_1_04047057(job.peakOver, job.peakRound ?? 1) : "";
   if (job.phase === "reencode") return { fraction: 1, text: again, spoken: again };
@@ -180,7 +180,7 @@ function reportedProgress(job: ExportJob): { fraction: number; text: string; spo
   }
   const parts = [where, `${job.percent ?? 0}%`];
   if (job.waiting === "listening") parts.push(S.s_nhuong_cho_chuong_dang_nghe_93babd54);
-  else if (job.waiting === "network") parts.push(S.s_dang_cho_mang_d15a22d3);
+  else if (job.waiting === "network") parts.push(S.s_dang_cho_mang_4e41560e);
   else if (job.secondsLeft != null) parts.push(S.s_con_0_46699fed(spokenDuration(job.secondsLeft)));
   const fraction = (job.percent ?? 0) / 100;
   const spoken =

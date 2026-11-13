@@ -95,7 +95,7 @@ Modal {
                     objectName: "recordLoading"
                     Reveal { shown: root.library === "loading" }
                     width: parent.width
-                    text: S.s_dang_mo_thu_vien_95914f2d
+                    text: S.s_dang_mo_thu_vien_0faed631
                     color: Theme.text2
                     wrapMode: Text.Wrap
                     font.pixelSize: Theme.sizeBodySmall
@@ -115,7 +115,7 @@ Modal {
                     Reveal { shown: root.library === "ready" && root.options.length > 0 }
                     width: parent.width
                     label: S.s_chuyen_sang_cuon_ffe90248
-                    placeholder: S.s_chon_cuon_300c901b
+                    placeholder: S.s_chon_cuon_34833868
                     options: root.options
                     value: root.dialog && root.dialog.target ? root.dialog.target.id : ""
                     onPicked: value => root.setTarget(value)

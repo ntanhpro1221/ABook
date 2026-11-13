@@ -151,11 +151,11 @@ Item {
             compare(put.length, 1)
             compare(put[0].body.image, "data:image/png;base64,abc")
             compare(Api.notice, "Đã đặt ảnh bìa")
-            compare(findChild(dialog, "editPickCover").text, "Đổi ảnh bìa…")
+            compare(findChild(dialog, "editPickCover").text, "Đổi ảnh bìa")
             dialog.removeCover()
             compare(calls("DELETE", "/api/books/b1/cover").length, 1)
             compare(Api.notice, "Đã bỏ ảnh bìa - sách dùng bìa vẽ từ tên")
-            compare(findChild(dialog, "editPickCover").text, "Chọn ảnh bìa…")
+            compare(findChild(dialog, "editPickCover").text, "Chọn ảnh bìa")
         }
         function test_coverSearchDefaultQueryAndChoose() {
             server.title = "Throne of Magical Arcana\u00a0·\u00a0Tập 16"

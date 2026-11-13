@@ -16,9 +16,9 @@ var KINDS = [
 ]
 // [tiêu đề hộp chọn thư mục, đang làm, lỗi]
 var SAVING = {
-    mp3: [S.s_chon_noi_luu_2965936c, S.s_dang_xuat_mp3_1f5f6554, S.s_chua_xuat_duoc_mp3_1550e65a],
-    abook: [S.s_chon_noi_luu_2965936c, S.s_dang_dong_goi_sach_c372ab53, S.s_chua_xuat_duoc_file_sach_43236ec7],
-    m4b: [S.s_chon_noi_luu_2965936c, S.s_dang_lam_file_m4b_01a34d3b, S.s_chua_xuat_duoc_m4b_5a39de4c],
+    mp3: [S.s_chon_noi_luu_2965936c, S.s_dang_xuat_mp3_99b61b74, S.s_chua_xuat_duoc_mp3_1550e65a],
+    abook: [S.s_chon_noi_luu_2965936c, S.s_dang_dong_goi_sach_ac7bab85, S.s_chua_xuat_duoc_file_sach_43236ec7],
+    m4b: [S.s_chon_noi_luu_2965936c, S.s_dang_lam_file_m4b_4a95b4ac, S.s_chua_xuat_duoc_m4b_5a39de4c],
     abookproj: [S.s_chon_noi_luu_2965936c, S.s_dang_dong_goi_du_an_59bb0a50, S.s_chua_goi_duoc_du_an_fd3612d5]
 }
 /** Thẻ nhớ / USB định dạng FAT32 không chứa nổi file lớn hơn 4 GiB. */
@@ -55,7 +55,7 @@ function packView(job, spans) {
     const done = Math.min(job.done || 0, total)
     const inner = total > 0 ? done / total : 0
     const fraction = span[0] + (span[1] - span[0]) * inner
-    if (job.phase === "listen" && total > 0) return {title: base + " (" + done + "/" + total + S.s_chuong_5b5fda54, fraction: fraction}
+    if (job.phase === "listen" && total > 0) return {title: base + " (" + done + "/" + total + S.s_chuong_be1b3067, fraction: fraction}
     if ((job.phase === "hash" || job.phase === "write") && total > 0) return {title: base + " (" + Size.formatSize(done) + "/" + Size.formatSize(total) + ")…", fraction: fraction}
     return {title: base + "…", fraction: job.phase === "prepare" ? null : span[0]}
 }
@@ -186,9 +186,9 @@ function finishedOf(kind, result, opts) {
 }
 
 // ---- việc nền (MP3, M4B): bookFileExport.ts jobView ----
-var MP3_COPY = {busy: S.s_dang_xuat_mp3_1f5f6554, done: S.s_da_xuat_mp3_c93fc100, failed: S.s_chua_xuat_duoc_mp3_1550e65a, stopped: S.s_da_dung_xuat_ab8ac9d1, stoppedNote: S.s_cac_chuong_da_ghi_do_duoc_xoa_55c0187f,
+var MP3_COPY = {busy: S.s_dang_xuat_mp3_99b61b74, done: S.s_da_xuat_mp3_c93fc100, failed: S.s_chua_xuat_duoc_mp3_1550e65a, stopped: S.s_da_dung_xuat_ab8ac9d1, stoppedNote: S.s_cac_chuong_da_ghi_do_duoc_xoa_55c0187f,
                 stopping: S.s_dung_ngay_sau_buoc_dang_lam_thu_muc_mp3_do_47cdbf95}
-var M4B_COPY = {busy: S.s_dang_lam_file_m4b_01a34d3b, done: S.s_da_xuat_m4b_76947b3a, failed: S.s_chua_xuat_duoc_m4b_5a39de4c, stopped: S.s_da_dung_xuat_ab8ac9d1, stoppedNote: S.s_chua_co_file_m4b_nao_duoc_ghi_341f690c,
+var M4B_COPY = {busy: S.s_dang_lam_file_m4b_4a95b4ac, done: S.s_da_xuat_m4b_76947b3a, failed: S.s_chua_xuat_duoc_m4b_5a39de4c, stopped: S.s_da_dung_xuat_ab8ac9d1, stoppedNote: S.s_chua_co_file_m4b_nao_duoc_ghi_341f690c,
                 stopping: S.s_dung_ngay_sau_buoc_dang_lam_khong_ghi_file_52bd285a}
 function copyOf(kind) { return kind === "m4b" ? M4B_COPY : MP3_COPY }
 
@@ -199,7 +199,7 @@ function reportedProgress(job) {
         const done = job.done || 0
         return {fraction: done / job.total, text: S.s_dang_tai_nhac_nen_1c775caa + Math.min(done + 1, job.total) + "/" + job.total + S.s_bai_43a258fa}
     }
-    if (job.phase === "peaks") return {fraction: 1, text: S.s_dang_kiem_dinh_am_9eff0113}
+    if (job.phase === "peaks") return {fraction: 1, text: S.s_dang_kiem_dinh_am_fddf3cc5}
     const again = job.peakOver ? S.s_ma_hoa_lai_vi_05c99ac8 + job.peakOver + S.s_chuong_vuot_dinh_luot_28b6d6b9 + (job.peakRound || 1) + ")" : ""
     if (job.phase === "reencode") return {fraction: 1, text: again}
     if (job.chapter === undefined || !job.chapters) return null
@@ -212,7 +212,7 @@ function reportedProgress(job) {
     }
     const parts = [where, (job.percent || 0) + "%"]
     if (job.waiting === "listening") parts.push(S.s_nhuong_cho_chuong_dang_nghe_93babd54)
-    else if (job.waiting === "network") parts.push(S.s_dang_cho_mang_d15a22d3)
+    else if (job.waiting === "network") parts.push(S.s_dang_cho_mang_4e41560e)
     else if (job.secondsLeft !== undefined && job.secondsLeft !== null) parts.push(S.s_con_c697bae9 + spokenDuration(job.secondsLeft))
     return {fraction: (job.percent || 0) / 100, text: parts.join("\u00a0·\u00a0")}
 }
@@ -255,7 +255,7 @@ function wordTimingsNote(data) {
     const lines = data && data.lines || 0, aligned = data && data.words || 0
     const finished = Boolean(data && data.state === "done" && data.file)
     let note = S.s_them_chu_sang_theo_giong_doc_chay_nen_vai_161ec74e
-    if (data && data.state === "running") note = S.s_dang_them_chu_sang_bad58d03 + (data.total ? Math.round(((data.done || 0) / data.total) * 100) : 0) + "%"
+    if (data && data.state === "running") note = S.s_dang_them_chu_sang_0_7874b215(data.total ? Math.round(((data.done || 0) / data.total) * 100) : 0)
     else if (data && data.state === "error") note = data.error || S.s_chua_them_duoc_chu_sang_a019d5cb
     else if (finished) note = S.s_xong_file_sach_cua_du_an_da_duoc_lam_lai_k_a150d813
     else if (lines > 0) note = Studio.formatNumber(aligned) + "/" + Studio.formatNumber(lines) + S.s_cau_da_co_chu_sang_theo_giong_doc_b229c30a
@@ -342,7 +342,7 @@ function busyView(kind, job, ctx) {
         if (shown.fraction !== null) fraction = shown.fraction
     }
     const downloading = ctx.downloading && ctx.downloading.total > 0 ? ctx.downloading : null
-    if (downloading) { title = S.s_dang_tai_nhac_nen_a3480994 + downloading.done + "/" + downloading.total + ")…"; fraction = -1 }
+    if (downloading) { title = S.s_dang_tai_nhac_nen_a3480994 + downloading.done + "/" + downloading.total + ")"; fraction = -1 }
     if (ctx.cancelling) title = S.s_dang_huy_c25a0214
     const lead = downloading ? S.s_tai_nhac_con_thieu_d1ac2c2f : ctx.countText ? ctx.countText + "; " : ""
     return {title: title, note: lead + S.s_dong_hop_van_xuat_nen_va_bao_khi_xong_604904f6, fraction: fraction}

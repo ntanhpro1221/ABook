@@ -109,7 +109,7 @@ describe("jobView for the audiobook", () => {
 
   it("says it is waiting for the network instead of a time left", () => {
     const view = jobView(running({ phase: "voice", chapter: 3, chapters: 12, percent: 25, secondsLeft: 600, waiting: "network" }), 12, false, AUDIOBOOK_COPY);
-    expect(view.kind === "loading" && view.description).toBe("Chương 3/12 · 25% · Đang chờ mạng…");
+    expect(view.kind === "loading" && view.description).toBe("Chương 3/12 · 25% · Đang chờ mạng");
     expect(view.kind === "loading" && view.spoken).toMatch(/chờ mạng/);
   });
 

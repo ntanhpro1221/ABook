@@ -1228,6 +1228,7 @@ def diff_kind(a: str, b: str) -> str:
 # Giai đoạn 2: luật cứng. Cặp màn web <-> native (ui_parity_pairs.json), bảng việc -> icon (docs/UI_PARITY.md), luật chữ (dấu thanh, dấu ba chấm).
 
 PAIRS = ROOT / "scripts" / "ui_parity_pairs.json"
+LIMITS = ROOT / "scripts" / "ui_parity_limits.json"
 ICON_TABLE_BEGIN = "<!-- ui_parity:icons -->"
 ICON_TABLE_END = "<!-- ui_parity:icons:end -->"
 # Chữ giả / mẫu của thư viện mẫu và dữ liệu thử không phải chữ giao diện (có trích sách thật): không quét luật chữ.
@@ -1306,6 +1307,7 @@ def pair_diff(web: Scan, native: Scan, spec: dict) -> dict:
         return None
 
     allow, missing = spec.get("allow", []), spec.get("missing", [])
+    used_allow, used_missing = set(), set()
     deferred = spec.get("deferred", [])
     wording = spec.get("wording_for_lead", [])  # TẠM: cùng việc mà hai phía viết khác nhau, chờ Lead chọn chữ chuẩn (xoá mục khi đã sửa một phía)
     result = {"id": spec["id"], "web_files": wf, "native_files": nf, "web_labels": len(w), "native_labels": len(n), "web_only": [], "native_only": [],
@@ -1316,17 +1318,36 @@ def pair_diff(web: Scan, native: Scan, spec: dict) -> dict:
         for key in sorted(mine):
             if key in other:
                 continue
-            if listed(side, key, mine[key][0], allow):
+            if entry := listed(side, key, mine[key][0], allow):
+                used_allow.add(id(entry))
                 result["allowed"].append((side, mine[key][0]))
             elif listed(side, key, mine[key][0], wording):
                 result["wording"].append((side, mine[key][0]))
-            elif listed(side, key, mine[key][0], missing):
+            elif entry := listed(side, key, mine[key][0], missing):
+                used_missing.add(id(entry))
                 result["missing"].append((side, mine[key][0]))
             elif listed(side, key, mine[key][0], deferred):
                 result["deferred"].append((side, mine[key][0]))
             else:
                 result[f"{side}_only"].append(mine[key][0])
+    result["unused_exemptions"] = [{"kind": kind, "index": index, "entry": entry}
+        for kind, entries, used in (("allow", allow, used_allow), ("missing", missing, used_missing))
+        for index, entry in enumerate(entries) if id(entry) not in used]
     return result
+
+
+def exemption_findings(spec: dict, diff: dict, limits: dict) -> list[str]:
+    """Fixed per-pair ceilings cover both entries and labels swallowed by broad patterns."""
+    pair = spec["id"]
+    if pair not in limits:
+        return [f"[{pair}] missing exemption ceiling"]
+    counts = {"allow_entries": len(spec.get("allow", [])), "missing_entries": len(spec.get("missing", [])),
+              "allowed_labels": len(diff["allowed"]), "missing_labels": len(diff["missing"])}
+    problems = [f"[{pair}] {key}={value} exceeds ceiling {limits[pair].get(key, -1)}"
+                for key, value in counts.items() if value > limits[pair].get(key, -1)]
+    problems += [f"[{pair}] unused {row['kind']} exemption #{row['index']}: {row['entry']}"
+                 for row in diff["unused_exemptions"]]
+    return problems
 
 
 def icon_table() -> list[tuple[str, str]]:
@@ -1439,8 +1460,10 @@ def section_e(web: Scan, native: Scan) -> list[str]:
 def hard_checks(web: Scan, native: Scan) -> list[str]:
     """Mọi lỗi của luật cứng (rỗng = qua)."""
     problems: list[str] = []
+    limits = json.loads(LIMITS.read_text(encoding="utf-8"))["pairs"]
     for spec in pair_specs():
         d = pair_diff(web, native, spec)
+        problems += exemption_findings(spec, d, limits)
         problems += [f"[{d['id']}] chỉ có ở web: \"{i.text}\" ({i.file.replace(WEB_ROOT, '')}:{i.line})" for i in d["web_only"]]
         problems += [f"[{d['id']}] chỉ có ở native: \"{i.text}\" ({i.file.replace(NATIVE_ROOT, 'native/')}:{i.line})" for i in d["native_only"]]
     problems += [f"[icon] {v}" for v in icon_violations(web, native)]

@@ -73,7 +73,7 @@ Column {
             Reveal { shown: root.namesLink }
             size: "sm"
             kind: "ghost"
-            text: S.s_moi_cach_doc_ten_85347e60
+            text: S.s_moi_cach_doc_ten_5d01fa0c
             onClicked: root.openNames(root.item.surface || "")
         }
     }

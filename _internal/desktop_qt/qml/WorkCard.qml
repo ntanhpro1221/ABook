@@ -227,7 +227,7 @@ Item {
                         y: 12
                         size: "sm"
                         kind: "ghost"
-                        text: S.s_chon_giong_khac_8cd635ac
+                        text: S.s_chon_giong_khac_d31cfe89
                         onClicked: root.pickVoice(root.item.pickVoice)
                     }
                 }
@@ -351,7 +351,7 @@ Item {
                 size: "sm"
                 kind: "ghost"
                 enabled: !root.loadingMore
-                text: root.loadingMore ? S.s_dang_tai_42d77f3a : W.moreText(root.examples.length, root.page.total)
+                text: root.loadingMore ? S.s_dang_tai_465b1987 : W.moreText(root.examples.length, root.page.total)
                 onClicked: root.loadMore()
             }
         }

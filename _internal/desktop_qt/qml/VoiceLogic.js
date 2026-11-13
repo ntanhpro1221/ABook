@@ -248,7 +248,7 @@ function moduleLabel(status, copy) {
     if (status.state === "error") return status.error
     if (status.state === "downloading")
         return status.retrying ? RETRYING_NOTE + " (" + mid + ", " + percent(status) + "%)" : S.s_dang_tai_4568372a + mid + " (" + Size.formatSize(status.total) + ") " + percent(status) + "%"
-    if (status.benchmarking) return Object.keys(status.benchmark || {}).length === 0 ? S.s_dang_thu_giong_vua_tai_tren_may_nay_vai_gi_2bdb3c97 : S.s_dang_do_lai_toc_do_tren_may_nay_vai_giay_c82d10d7
+    if (status.benchmarking) return Object.keys(status.benchmark || {}).length === 0 ? S.s_dang_thu_giong_vua_tai_tren_may_nay_vai_gi_1b19cd1b : S.s_dang_do_lai_toc_do_tren_may_nay_vai_giay_c7a38eb7
     if (status.state === "unsupported") return status.reason ? S.s_may_nay_chua_dung_duoc_7b938f54 + mid + ": " + status.reason + "." : S.s_may_nay_chua_dung_duoc_7b938f54 + mid + "."
     if (status.restart) return copy.name + S.s_da_cap_nhat_mo_lai_abook_de_dung_ban_moi_f196ad36
     const cancelled = status.cancelled ? CANCELLED_NOTE + " " : ""

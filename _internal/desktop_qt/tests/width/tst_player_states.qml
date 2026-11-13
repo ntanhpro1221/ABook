@@ -83,7 +83,7 @@ Item {
             wait(400) // fixed: proves absence of the preparation hint before its delay
             verify(!subtitle.delayed)
             tryCompare(subtitle, "delayed", true, 2000)
-            compare(findChild(subtitle, "playerSubtitleText").text, "Đang chuẩn bị giọng đọc…")
+            compare(findChild(subtitle, "playerSubtitleText").text, "Đang chuẩn bị giọng đọc")
             Nav.uiVisible = false; compare(subtitle.delayed, false)
             WidthNet.buffering(false); Nav.uiVisible = true
             Player.review("width", 1); Player.pause(); compare(Player.purpose, "review")

@@ -67,7 +67,7 @@ StudioConfirm {
         objectName: "applyLoading"
         width: parent.width
         open: root.data === null
-        Text { width: parent.width; text: S.s_dang_xem_cac_thay_doi_3038d753; color: Theme.text2; wrapMode: Text.Wrap; font.pixelSize: Theme.sizeBodySmall }
+        Text { width: parent.width; text: S.s_dang_xem_cac_thay_doi_765915d5; color: Theme.text2; wrapMode: Text.Wrap; font.pixelSize: Theme.sizeBodySmall }
     }
     Collapse {
         objectName: "applyBody"

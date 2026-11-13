@@ -70,9 +70,9 @@ const KINDS: { value: Kind; title: string; detail: string; icon: typeof FolderDo
 ];
 
 const SAVING: Record<Kind, [string, string, string]> = {
-  mp3: [S.s_chon_noi_luu_2965936c, S.s_dang_xuat_mp3_1f5f6554, S.s_chua_xuat_duoc_mp3_1550e65a],
-  abook: [S.s_chon_noi_luu_2965936c, S.s_dang_dong_goi_sach_c372ab53, S.s_chua_xuat_duoc_file_sach_43236ec7],
-  m4b: [S.s_chon_noi_luu_2965936c, S.s_dang_lam_file_m4b_01a34d3b, S.s_chua_xuat_duoc_m4b_5a39de4c],
+  mp3: [S.s_chon_noi_luu_2965936c, S.s_dang_xuat_mp3_99b61b74, S.s_chua_xuat_duoc_mp3_1550e65a],
+  abook: [S.s_chon_noi_luu_2965936c, S.s_dang_dong_goi_sach_ac7bab85, S.s_chua_xuat_duoc_file_sach_43236ec7],
+  m4b: [S.s_chon_noi_luu_2965936c, S.s_dang_lam_file_m4b_4a95b4ac, S.s_chua_xuat_duoc_m4b_5a39de4c],
   abookproj: [S.s_chon_noi_luu_2965936c, S.s_dang_dong_goi_du_an_59bb0a50, S.s_chua_goi_duoc_du_an_fd3612d5],
 };
 

@@ -142,7 +142,7 @@ Column {
             size: "sm"
             kind: "ghost"
             icon: "search"
-            text: S.s_tim_nguoi_khac_ebe0232b
+            text: S.s_tim_nguoi_khac_ce406b45
             onClicked: root.openScript(root.item.examples[0].chapterId, root.item.lines[0].stableId, true)
         }
         // Thẻ nhóm chỉ in vài câu làm ví dụ: đọc đủ ngữ cảnh ở tab Kịch bản trước khi quyết, mở đúng chương, tại câu đầu của nhóm

@@ -24,7 +24,7 @@ Item {
         size: "sm"
         kind: "ghost"
         icon: "check"
-        text: S.s_giu_d3777f80 + root.keepable.length + S.s_the_539c2ef4
+        text: S.s_giu_d3777f80 + root.keepable.length + S.s_the_5d800d1c
         onClicked: root.open()
     }
     function open() {

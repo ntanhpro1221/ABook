@@ -330,7 +330,7 @@ function primaryButton(book, busy) {
     const held = Boolean(book.precast && book.precast.held)
     const table = {
         starting: {label: S.s_dang_khoi_dong_e7a9b0e5, busy: true},
-        stopping: {label: S.s_dang_dung_2fb8aa7c, busy: true},
+        stopping: {label: S.s_dang_dung_9b35aeb5, busy: true},
         unpause: {label: held ? S.s_thu_am_db588c2e : S.s_tiep_tuc_87a7ae88, icon: held ? "mic-vocal" : "play", busy: Boolean(busy.pause)},
         pause: {label: S.s_tam_dung_67635815, icon: "pause", busy: Boolean(busy.pause)},
         start: {label: S.s_bat_dau_b3cacc46, icon: "wand-sparkles", busy: Boolean(busy.start)},
@@ -377,7 +377,7 @@ function progressNote(book) {
     if (book.stopping) return S.s_dang_dung_cd5f369b
     if (book.paused) return book.precast && book.precast.held ? S.s_cho_ban_duyet_roi_bam_thu_am_5f91fe4f : ""
     const eta = etaOf(book)
-    return eta !== null ? eta : live ? S.s_dang_uoc_tinh_thoi_gian_b3820c56 : ""
+    return eta !== null ? eta : live ? S.s_dang_uoc_tinh_thoi_gian_6e128147 : ""
 }
 // Trạng thái ba bước Phân tích truyện / Phân vai / Thu âm và kiểm tra: done | active | paused | pending
 function stepStates(book) {
@@ -443,12 +443,12 @@ function actionExtras(book, opts) {
     const live = Boolean(book.running)
     const out = []
     if (book.chapters.completed > 0 && kind !== "listen") out.push(item("listen", "headphones", S.s_nghe_trong_thu_vien_c0d6771a))
-    if (asksBeforeResume(book) && !live && !book.starting && !book.queuePosition) out.push(item("resumeAnyway", "play", S.s_van_tiep_tuc_0f792959))
-    if (live && !book.stopping) out.push(item("stop", "square", S.s_dung_385b27c6))
+    if (asksBeforeResume(book) && !live && !book.starting && !book.queuePosition) out.push(item("resumeAnyway", "play", S.s_van_tiep_tuc_8ba2321f))
+    if (live && !book.stopping) out.push(item("stop", "square", S.s_dung_11554138))
     if (live && book.pendingChanges) out.push(item("apply", "refresh-cw", book.pendingChanges + S.s_thay_doi_cho_ap_e4e2c5a3))
     if (book.queuePosition) out.push(item("leaveQueue", "square", S.s_bo_xep_hang_e797cd68))
     if (book.phase === "idle" && !live && !book.queuePosition) out.push(item("redo", "sliders-horizontal", S.s_sua_thiet_lap_96fa3435))
-    if (book.chapters.completed > 0) out.push(item("export", "folder-down", S.s_xuat_e9ca2198))
+    if (book.chapters.completed > 0) out.push(item("export", "folder-down", S.s_xuat_b2ebc56b))
     if (opts.next > 0) out.push(item("addChapters", "book-plus", S.s_them_3f5e8c43 + opts.next + S.s_chuong_9e6a01dc))
     if (!opts.remote) out.push(item("reveal", "folder-open", S.s_mo_thu_muc_4bf5b127))
     out.push(item("details", "info", S.s_chi_tiet_e762d926))
@@ -460,20 +460,20 @@ function projectMenu(book, opts) {
     const out = []
     const extras = opts.extras || []
     if (extras.length) { for (const e of extras) out.push(e); out.push(separator()) }
-    if (opts.rename !== false) out.push(item("rename", "text-cursor-input", S.s_doi_ten_4cea1fd0))
+    if (opts.rename !== false) out.push(item("rename", "text-cursor-input", S.s_doi_ten_a2a0dc70))
     if (!book.broken) {
         const analyzed = ((book.segments && book.segments.analyzed) || 0) > 0
         out.push(item("continueBook", "book-plus", S.s_lam_tiep_cuon_nay_18bbf3cc, {disabled: !analyzed, hint: analyzed ? "" : S.s_chay_phan_nay_truoc_73213667}))
     }
     out.push(separator())
     if (opts.remote) out.push(item("onComputer", "monitor", onComputerLine(S.s_xoa_du_an_6b9e7c0b, opts.computer || S.s_may_tinh_8eafc226), {disabled: true}))
-    else out.push(item("delete", "trash-2", S.s_xoa_du_an_3b65e276, {danger: true}))
+    else out.push(item("delete", "trash-2", S.s_xoa_du_an_6b9e7c0b, {danger: true}))
     return out
 }
 function rowMenu(book, local, computer) {
     const extras = []
     if (book.broken) {
-        if (book.backup) extras.push(item("restore", "history", S.s_khoi_phuc_ban_sao_d4b986fb))
+        if (book.backup) extras.push(item("restore", "history", S.s_khoi_phuc_ban_sao_6b7c7c6e))
         extras.push(item("reveal", "folder-open", S.s_mo_thu_muc_4bf5b127))
         return projectMenu(book, {rename: false, extras: extras, remote: !local, computer: computer})
     }
@@ -563,7 +563,7 @@ function metaLine(book, warn) {
 }
 // Dải báo khi lần hỏi gần nhất hỏng mà vẫn còn bản cũ của sách
 function staleLine(status, text) {
-    return status === 0 ? S.s_mat_ket_noi_toi_abook_dang_thu_lai_07419d77 : S.s_chua_tai_lai_duoc_sach_01a64552 + failureText(status, text) + S.s_dang_thu_lai_20eefc5d
+    return status === 0 ? S.s_mat_ket_noi_toi_abook_dang_thu_lai_3ea0ae2f : S.s_chua_tai_lai_duoc_sach_01a64552 + failureText(status, text) + S.s_dang_thu_lai_20eefc5d
 }
 // Lỗi của lần làm sách cho người nghe: {summary, hint, detail} hay null. `studio`: máy này có Studio.
 function bookProblem(book, studio, studioLostModel) {

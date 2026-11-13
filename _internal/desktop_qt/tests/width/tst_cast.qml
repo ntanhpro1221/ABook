@@ -229,7 +229,7 @@ Item {
             verify(findChild(page, "castMerge").visible)
             verify(findChild(page, "castRename").visible)
             verify(findChild(page, "castGender").visible)
-            compare(findChild(page, "castMerge").text, "Gộp vào người khác…")
+            compare(findChild(page, "castMerge").text, "Gộp vào người khác")
             compare(findChild(page, "castRename").text, "Đổi tên")
             compare(findChild(page, "castGender").text, "Đổi giới tính")
             compare(Nav.layers.length, 1)               // bảng nổi là một lớp Back

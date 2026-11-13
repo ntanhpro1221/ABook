@@ -129,7 +129,7 @@ function count(value) { return Queue.formatNumber(value) }
 function findStatus(query, progress, shown) {
     if (!String(query).trim()) return S.s_go_chu_hay_cau_can_tim_khong_can_go_dau_ho_d1bb2734
     if (!foldedQuery(query)) return S.s_go_it_nhat_090904c8 + MIN_QUERY + S.s_ky_tu_3eb5266e
-    if (!progress) return S.s_dang_tim_430a5477
+    if (!progress) return S.s_dang_tim_58376830
     const failed = progress.failed > 0 ? " " + count(progress.failed) + S.s_chuong_chua_doc_duoc_nen_chua_tim_trong_do_1040b0f3 : ""
     if (!progress.done) return S.s_dang_tim_da_xem_8f303989 + count(progress.scanned) + "/" + count(progress.chapters) + S.s_chuong_thay_c2cdfd57 + count(progress.total) + S.s_cho_72c89a7f
     if (progress.total === 0) return S.s_khong_thay_7dda2441 + String(query).trim() + S.s_trong_sach_cda74863 + failed

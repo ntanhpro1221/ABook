@@ -414,7 +414,7 @@ FocusScope {
                 objectName: "precastTwinMerge"
                 size: "sm"
                 kind: "ghost"
-                text: S.s_gop_vao_8d886bd3
+                text: S.s_gop_vao_6221e312
                 onClicked: root.personRequest("merge", twin.person)
             }
         }

@@ -14,7 +14,7 @@ Modal {
     property string kind: ""                // đặt ở begin(): ChoiceRow chỉ vẽ gạch chân khi chỉ số đổi sau lúc dựng
     property string folder: ""
     property bool saving: false
-    title: S.s_luu_thanh_d9ea985e
+    title: S.s_luu_thanh_13374e92
     description: S.s_luu_cuon_nay_kem_nhung_thay_doi_cua_ban_th_ab80dd34
 
     function begin(data) {
@@ -78,7 +78,7 @@ Modal {
         Flow {
             width: parent.width
             spacing: 8
-            Button { text: S.s_chon_thu_muc_ce975e93; kind: "ghost"; size: "sm"; onClicked: folders.open() }
+            Button { text: S.s_chon_thu_muc_1fe47e38; kind: "ghost"; size: "sm"; onClicked: folders.open() }
             Text {
                 width: Math.min(implicitWidth, parent.width)
                 height: 40

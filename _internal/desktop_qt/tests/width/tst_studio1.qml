@@ -301,7 +301,7 @@ Item {
             verify(one(page, "primaryButton").busy)
             reply("GET /api/books/wait", detail(book("wait", {phase: "analysis", running: true, canPause: true, stopping: true}), []))
             page.studioStore.loadBook()
-            tryVerify(function() { return one(page, "primaryButton").text === "Đang dừng…" })
+            tryVerify(function() { return one(page, "primaryButton").text === "Đang dừng" })
             verify(!one(page, "primaryButton").enabled || one(page, "primaryButton").busy)
         }
         function test_pauseCallsPauseNeverStop() {
@@ -509,7 +509,7 @@ Item {
             reply("GET /api/books/done", {status: 0, data: null})
             page.studioStore.loadBook()
             tryVerify(function() { return shown(one(page, "projectStale")) })
-            verify(hasText(page, "Mất kết nối tới ABook, đang thử lại…"))
+            verify(hasText(page, "Mất kết nối tới ABook, đang thử lại"))
             verify(shown(one(page, "primaryButton")), "vẫn giữ trang với bản cũ")
         }
         function test_bookPollingFollowsLiveness() {

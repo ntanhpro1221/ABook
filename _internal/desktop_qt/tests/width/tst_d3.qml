@@ -268,7 +268,7 @@ Item {
             verify(menu.open)
             compare(one(page, "chapterFromStart").text, "Nghe từ đầu chương")
             compare(one(page, "chapterDone").text, "Đã nghe xong")
-            compare(one(page, "chapterRename").text, "Đổi tên chương…")
+            compare(one(page, "chapterRename").text, "Đổi tên chương")
             compare(one(page, "chapterRename").icon, "text-cursor-input")
             compare(one(page, "chapterDone").icon, "check-check")
             verify(row.menuOpen)

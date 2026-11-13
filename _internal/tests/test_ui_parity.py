@@ -1,6 +1,6 @@
 """docs/UI_PARITY.md (bảng lệch chữ / icon giữa web và native) phải khớp mã nguồn - sinh bằng scripts/ui_parity.py.
 
-Giai đoạn này chỉ kiểm file sinh ra còn mới; BẢN THÂN chỗ lệch (chữ khác nhau, icon khác nhau) được báo cáo trong file chứ không làm test hỏng.
+Generated docs, label/icon contracts and exemption ceilings are enforced by --check.
 """
 import importlib.util
 import json
@@ -173,6 +173,11 @@ def _synthetic(tool, monkeypatch, tmp_path, web_label, native_label, spec_extra=
     monkeypatch.setattr(tool, "KT", kt_dir.parent)
     monkeypatch.setattr(tool, "KT_CORE", kt_dir.parent.parent)
     monkeypatch.setattr(tool, "PAIRS", pairs)
+    limits = tmp_path / "limits.json"
+    limits.write_text(json.dumps({"pairs": {"synthetic": {
+        "allow_entries": len(spec.get("allow", [])), "missing_entries": len(spec.get("missing", [])),
+        "allowed_labels": 2, "missing_labels": 2}}}), encoding="utf-8")
+    monkeypatch.setattr(tool, "LIMITS", limits)
     monkeypatch.setattr(tool, "rel", lambda path: path.relative_to(tmp_path).as_posix())
     monkeypatch.setattr(tool, "icon_wrappers", lambda: {})
     monkeypatch.setattr(tool, "glyph_icons", lambda: {})
@@ -191,6 +196,29 @@ def test_detector_passes_when_both_sides_say_the_same(monkeypatch, tmp_path):
     tool = _tool()
     web, native = _synthetic(tool, monkeypatch, tmp_path, "Thêm sách", "Thêm sách")
     assert tool.hard_checks(web, native) == []
+
+
+def test_unused_exemptions_and_growth_in_broad_matches_are_blocked(monkeypatch, tmp_path):
+    tool = _tool()
+    spec = {"allow": [{"side": "web", "match": ".*", "reason": "fixture"}],
+            "missing": [{"side": "web", "label": "Unused", "reason": "fixture"}]}
+    web, native = _synthetic(tool, monkeypatch, tmp_path, "Thêm sách", "Mở sách", spec_extra=spec)
+    spec = tool.pair_specs()[0]
+    diff = tool.pair_diff(web, native, spec)
+    ceiling = {"synthetic": {"allow_entries": 1, "missing_entries": 1, "allowed_labels": 0, "missing_labels": 0}}
+    problems = tool.exemption_findings(spec, diff, ceiling)
+    assert any("allowed_labels=1 exceeds ceiling 0" in p for p in problems)
+    assert any("unused missing exemption" in p for p in problems)
+    spec["missing"].append({"side": "native", "match": ".*", "reason": "fixture"})
+    assert any("missing_entries=2 exceeds ceiling 1" in p for p in tool.exemption_findings(spec, diff, ceiling))
+
+
+def test_current_exemption_counts_never_exceed_the_pinned_pair_ceilings():
+    tool = _tool()
+    web, native = tool.web_scan(), tool.native_scan()
+    limits = json.loads(tool.LIMITS.read_text(encoding="utf-8"))["pairs"]
+    assert set(limits) == {s["id"] for s in tool.pair_specs()}
+    assert not [p for spec in tool.pair_specs() for p in tool.exemption_findings(spec, tool.pair_diff(web, native, spec), limits)]
 
 
 def test_detector_pairs_are_checked_both_ways_unless_only_says_otherwise(monkeypatch, tmp_path):
@@ -215,7 +243,9 @@ def test_listed_label_is_excused_only_on_its_own_side(kind, monkeypatch, tmp_pat
     # Mục khai nhầm phía không che được nhãn của phía kia.
     wrong = [{"side": "web", "label": "Xoá khỏi điện thoại", "reason": "test"}, {"side": "native", "label": "Xoá khỏi thư viện", "reason": "test"}]
     web, native = _synthetic(tool, monkeypatch, tmp_path / "wrong", "Xoá khỏi thư viện", "Xoá khỏi điện thoại", {kind: wrong})
-    assert len(tool.hard_checks(web, native)) == 2
+    problems = tool.hard_checks(web, native)
+    assert len([p for p in problems if "chỉ có ở" in p]) == 2
+    assert len([p for p in problems if "unused" in p]) == (2 if kind in {"allow", "missing"} else 0)
 
 
 def test_every_native_screen_file_belongs_to_a_checked_pair():

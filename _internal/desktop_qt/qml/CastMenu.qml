@@ -26,7 +26,7 @@ Popover {
         MenuRow { id: castMerge;
             objectName: "castMerge"
             Reveal { shown: castMerge.parent.canMerge }
-            width: parent.width; icon: "git-merge"; text: S.s_gop_vao_nguoi_khac_2e03b64e
+            width: parent.width; icon: "git-merge"; text: S.s_gop_vao_nguoi_khac_8f5c461d
             onClicked: { root.close(); root.picked("merge", parent.p) }
         }
         MenuRow {

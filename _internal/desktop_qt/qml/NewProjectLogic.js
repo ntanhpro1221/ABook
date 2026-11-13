@@ -46,7 +46,7 @@ function sourcesKey(paths) { return paths.join("\n") }
 function scanIsCurrent(scanned, paths) { return paths.length === 0 ? true : Boolean(scanned) && scanned.key === sourcesKey(paths) }
 /** Nút cuối trình tạo: chờ khi còn đọc nguồn (nói rõ), khoá khi thiếu tên sách hay máy không làm được. */
 function createGate(title, reading, unfit) {
-    return {disabled: reading || !String(title).trim() || unfit, reading: reading, label: reading ? S.s_dang_doc_nguon_9a3908c6 : ""}
+    return {disabled: reading || !String(title).trim() || unfit, reading: reading, label: reading ? S.s_dang_doc_nguon_86787498 : ""}
 }
 
 /** Lỗi quét: nguồn không đọc được -> {text, subfolders}. */

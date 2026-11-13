@@ -25,7 +25,7 @@ Column {
         id: bookLabel
         objectName: "playerSubtitleText"; width: parent.width; wrapMode: Text.Wrap
         horizontalAlignment: root.horizontalAlignment
-        text: TextWrap.keepDots(root.delayed ? S.s_dang_chuan_bi_giong_doc_25f86ccf : Player.atEnd === "caughtUp" ? S.s_da_nghe_het_phan_da_co_1aa0a8e0 : Player.bookTitle + (root.chevron ? "\u00a0›" : ""))
+        text: TextWrap.keepDots(root.delayed ? S.s_dang_chuan_bi_giong_doc_69f1b51a : Player.atEnd === "caughtUp" ? S.s_da_nghe_het_phan_da_co_1aa0a8e0 : Player.bookTitle + (root.chevron ? "\u00a0›" : ""))
         color: bookLink.hovered ? Theme.text : Theme.text2; font.pixelSize: Theme.sizeCaption
         font.underline: bookLink.hovered
         Interactive {

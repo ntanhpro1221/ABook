@@ -99,7 +99,7 @@ Item {
         function test_statusTexts() {
             compare(Find.findStatus("", null, 0), "Gõ chữ hay câu cần tìm - không cần gõ dấu, hoa hay thường đều được.")
             compare(Find.findStatus("a", null, 0), "Gõ ít nhất 2 ký tự.")
-            compare(Find.findStatus("an", null, 0), "Đang tìm…")
+            compare(Find.findStatus("an", null, 0), "Đang tìm")
             compare(Find.findStatus("an", {hits: [], total: 1234, scanned: 3, chapters: 1200, failed: 0, done: false}, 0), "Đang tìm… đã xem 3/1.200 chương, thấy 1.234 chỗ.")
             compare(Find.findStatus(" Lan ", {hits: [], total: 0, scanned: 2, chapters: 2, failed: 0, done: true}, 0), "Không thấy “Lan” trong sách.")
             compare(Find.snippetHtml({before: "a<b", match: "c&d", after: ""}, "#fff", "#000"), "a&lt;b<span style=\"background-color:#fff;color:#000;font-weight:600\">c&amp;d</span>")

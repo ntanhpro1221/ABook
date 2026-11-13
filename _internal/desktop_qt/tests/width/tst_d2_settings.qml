@@ -49,7 +49,7 @@ Item {
             Platform.reset()
             Api.bind(DesktopApi, Theme)
             Api.preferences = {theme: "system", autoMusic: true, sleepExtendMinutes: 10, sleepFadeSeconds: 30,
-                sleepSchedule: null, readingSurface: "auto", touchSounds: true, letterShortcuts: true, libraryRoot: "C:\\Users\\An\\Audiobooks"}
+                sleepSchedule: null, readingSurface: "auto", touchSounds: true, letterShortcuts: true, libraryRoot: "C:\\Profiles\\An\\Audiobooks"}
             Api.info = {version: "0.4.147", dialogs: true}
             Api.loaded = true
             Api.saving = false
@@ -389,7 +389,7 @@ Item {
             card.install()
             compare(Api.notice, "Đang tải ABook 0.4.148 - app sẽ tự mở lại")
             verify(card.installing)
-            verify(hasText(card, "Đang tải bản mới…"))
+            verify(hasText(card, "Đang tải bản mới"))
             card.failed()
             verify(!card.installing)
         }
@@ -402,7 +402,7 @@ Item {
             card.check()
             compare(count("POST", "/api/app/check-update"), 1)
             verify(card.checking)
-            verify(hasText(card, "Đang kiểm tra…"))
+            verify(hasText(card, "Đang kiểm tra"))
             card.heard({state: "latest"})
             verify(!card.checking)
             compare(card.line.text, "ABook 0.4.147 là bản mới nhất.")
@@ -668,7 +668,7 @@ Item {
                 ready()
                 shot("settings_advanced_long_path", narrow)
                 narrow.destroy()
-                Api.preferences = Object.assign({}, Api.preferences, {libraryRoot: "C:\\Users\\An\\Audiobooks"})
+                Api.preferences = Object.assign({}, Api.preferences, {libraryRoot: "C:\\Profiles\\An\\Audiobooks"})
                 Platform.reset()
             })
         }

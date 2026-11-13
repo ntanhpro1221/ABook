@@ -58,7 +58,7 @@ SettingsItem {
             objectName: "readingsFilter"
             width: parent.width
             label: S.s_tim_cach_doc_690f3c7e
-            placeholderText: S.s_tim_ten_f777d5ea
+            placeholderText: S.s_tim_ten_260c6baf
             fill: Theme.panel
             onTextChanged: { root.filter = text; root.shown = 12 }
         }

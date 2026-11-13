@@ -236,7 +236,7 @@ Modal {
                                 spacing: 4
                                 Button {
                                     objectName: "editPickCover"
-                                    text: root.book.cover ? S.s_doi_anh_bia_178aa3bf : S.s_chon_anh_bia_a6c0a477
+                                    text: root.book.cover ? S.s_doi_anh_bia_7889ff91 : S.s_chon_anh_bia_207ac182
                                     icon: "image-plus"
                                     kind: "ghost"
                                     enabled: !root.busy
@@ -245,7 +245,7 @@ Modal {
                                 Button {
                                     id: findCover
                                     objectName: "editFindCover"
-                                    text: S.s_tim_bia_6db18516
+                                    text: S.s_tim_bia_34025664
                                     icon: "globe"
                                     kind: "ghost"
                                     enabled: !root.busy
@@ -336,7 +336,7 @@ Modal {
                                     id: revertButton
                                     objectName: "editRevert"
                                     x: -14
-                                    text: S.s_bo_moi_thay_doi_bf843dbb
+                                    text: S.s_bo_moi_thay_doi_ad999cde
                                     kind: "ghost"
                                     onClicked: root.askRevert()
                                 }

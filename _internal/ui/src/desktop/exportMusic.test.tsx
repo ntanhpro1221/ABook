@@ -74,7 +74,7 @@ describe("progress and result of an export with music", () => {
   });
 
   it("says when the m4b is checked for peaks and why it is encoded again", () => {
-    expect(jobView(running({ phase: "peaks", peakRound: 0, peakOver: 0 }), 4, false, M4B_COPY)).toMatchObject({ kind: "loading", description: "Đang kiểm đỉnh âm…" });
+    expect(jobView(running({ phase: "peaks", peakRound: 0, peakOver: 0 }), 4, false, M4B_COPY)).toMatchObject({ kind: "loading", description: "Đang kiểm đỉnh âm" });
     expect(jobView(running({ phase: "reencode", peakRound: 2, peakOver: 3 }), 4, false, M4B_COPY))
       .toMatchObject({ description: "Mã hoá lại vì 3 chương vượt đỉnh (lượt 2)" });
     const again = jobView(running({ phase: "music", chapter: 2, chapters: 4, peakRound: 1, peakOver: 1 }), 4, false, M4B_COPY);

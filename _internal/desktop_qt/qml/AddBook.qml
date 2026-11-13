@@ -547,7 +547,7 @@ Modal {
                     spacing: 8
                     Button {
                         objectName: "importPickFile"
-                        text: root.busy === "reading" ? S.s_dang_doc_97b38b9f : S.s_chon_file_sach_1f25282c
+                        text: root.busy === "reading" ? S.s_dang_doc_1b09d2d9 : S.s_chon_file_sach_1f25282c
                         icon: "file-text"
                         busy: root.busy === "reading"
                         enabled: root.busy === ""

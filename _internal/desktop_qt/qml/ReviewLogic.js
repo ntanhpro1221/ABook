@@ -57,7 +57,7 @@ function emptyText(filter, unrecorded) {
 }
 function minorCount(counts) { return ((counts && counts.name) || 0) + ((counts && counts.text) || 0) }
 function redoLine(count) { return count + S.s_chuong_cho_thu_lai_sua_chu_o_kich_ban_11e7f43e }
-function loadMoreText(remaining, busy) { return busy ? S.s_dang_tai_42d77f3a : S.s_tai_tiep_u00a0_u00a0con_0ebab88c + (remaining || 0) + S.s_cau_b07e1008 }
+function loadMoreText(remaining, busy) { return busy ? S.s_dang_tai_465b1987 : S.s_tai_tiep_u00a0_u00a0con_0ebab88c + (remaining || 0) + S.s_cau_b07e1008 }
 function spokenSaved(count) { return count > 1 ? S.s_da_ghi_cach_doc_cho_4566132d + count + S.s_cau_b07e1008 : S.s_da_ghi_cach_doc_cau_nay_0db96b25 }
 
 // ---- previewText.ts ----

@@ -497,7 +497,7 @@ Item {
             compare(DesktopApi.folders[0].title, "Chọn nơi lưu")
             compare(calls("POST", base + "/bookfile-job")[0].body, {target: "D:/Đã xuất", series: false})
             stepJob("bookfile-job", {state: "running", phase: "listen", done: 1, total: 3})
-            tryVerify(function() { return has(dlg, "exportBar") && one(dlg, "exportBusyTitle").text === "Đang đóng gói (1/3 chương)…" }, 4000)
+            tryVerify(function() { return has(dlg, "exportBar") && one(dlg, "exportBusyTitle").text === "Đang đóng gói (1/3 chương)" }, 4000)
             stepJob("bookfile-job", {state: "done", result: {file: "D:\\Đã xuất\\Cuốn a.abook", folder: "D:\\Đã xuất", size: 5000000}})
             tryCompare(dlg, "phase", "finished", 4000)
             compare(one(dlg, "exportDoneTitle").text, "Đã xuất file sách")
@@ -556,7 +556,7 @@ Item {
             tryCompare(dlg, "phase", "busy", 3000)
             one(dlg, "confirm_cancel").clicked()
             tryVerify(function() { return calls("POST", base + "/mp3-job/cancel").length === 1 }, 3000)
-            tryVerify(function() { return one(dlg, "exportBusyTitle").text === "Đang huỷ…" || dlg.phase === "form" }, 3000)
+            tryVerify(function() { return one(dlg, "exportBusyTitle").text === "Đang huỷ" || dlg.phase === "form" }, 3000)
             tryCompare(dlg, "phase", "form", 4000)
             tryVerify(function() { return Api.notice === "Đã dừng xuất" }, 3000)
         }

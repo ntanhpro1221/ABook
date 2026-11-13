@@ -78,7 +78,7 @@ Column {
         width: parent.width
         Reveal { shown: root.showSave }
         height: root.showSave ? implicitHeight : 0
-        text: S.s_luu_thanh_d9ea985e
+        text: S.s_luu_thanh_13374e92
         icon: "file-down"
         onClicked: root.saveAsRequested()
     }

@@ -48,8 +48,8 @@ CastModal {
             id: search
             objectName: "mergeSearch"
             width: parent.width
-            label: S.s_tim_nguoi_trong_truyen_d2aee069
-            placeholderText: S.s_tim_nguoi_trong_truyen_d2aee069
+            label: S.s_tim_nguoi_trong_truyen_a1507054
+            placeholderText: S.s_tim_nguoi_trong_truyen_a1507054
             onTextChanged: root.query = text
         }
         // Danh sách người nhận; dài thì cuộn trong khung 256 như web (max-h-64)

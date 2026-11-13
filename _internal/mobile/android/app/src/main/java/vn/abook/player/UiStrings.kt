@@ -2,6 +2,7 @@
 package vn.abook.player
 
 internal object S {
+    fun s_ghi_nen_chua_xong_0_9b2f61d4(p0: Any?): String = "Ghi nền chưa xong: " + p0.toString()
     const val s_pair_fingerprint_label = "Mã nhận máy: "
     const val s_pair_fingerprint_help = "Bạn so mã nhận máy với mã trên máy kia rồi bấm “Đúng, ghép”."
     const val s_pair_fingerprint_confirm = "Đúng, ghép"

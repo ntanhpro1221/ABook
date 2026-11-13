@@ -27,7 +27,7 @@ Column {
         objectName: "speakerSearch"
         width: parent.width
         label: S.s_tim_nguoi_noi_70e3871e
-        placeholderText: S.s_tim_nguoi_khac_trong_truyen_e6ee499c
+        placeholderText: S.s_tim_nguoi_khac_trong_truyen_35bd0d1a
         activeFocusOnTab: !root.embedded
         onAccepted: if (root.found.length) root.picked(root.found[0])
     }

@@ -77,7 +77,7 @@ Column {
                 id: saveButton
                 objectName: "newTemplateSave"
                 Reveal { shown: !root.saving }
-                text: S.s_luu_thanh_mau_bd20c55a
+                text: S.s_luu_thanh_mau_3b28bc8b
                 icon: "bookmark-plus"
                 kind: "ghost"
                 size: "sm"

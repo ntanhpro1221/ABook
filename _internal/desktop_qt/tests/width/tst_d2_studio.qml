@@ -28,7 +28,7 @@ Item {
         }
         function installedStatus() {
             return {installed: true, outdated: [], running: false, step: null, steps: [], progress: null, detail: "", error: null,
-                    gpu: {name: "NVIDIA GeForce RTX 3060", memory: 12 * 1073741824}, root: "C:\\Users\\Linh\\AppData\\Local\\ABook\\Studio"}
+                    gpu: {name: "NVIDIA GeForce RTX 3060", memory: 12 * 1073741824}, root: "C:\\Profiles\\Linh\\AppData\\Local\\ABook\\Studio"}
         }
         function freshStatus(extra) {
             return Object.assign({installed: false, outdated: [], running: false, step: null, steps: [], progress: null, detail: "", error: null,
@@ -138,7 +138,7 @@ Item {
         function test_installedRowAndUninstallConfirm() {
             const page = make()
             verify(has(page, "Đã cài\u00a0·\u00a0NVIDIA GeForce RTX 3060"))
-            verify(has(page, "C:\\Users\\Linh\\AppData\\Local\\ABook\\Studio"))
+            verify(has(page, "C:\\Profiles\\Linh\\AppData\\Local\\ABook\\Studio"))
             const remove = one(page, "studioRemove")
             compare(remove.text, "Gỡ Studio")
             remove.clicked()
@@ -242,7 +242,7 @@ Item {
             Platform.setSetting("fold.settings.studio.new-book", "1")
             const page = make()
             verify(has(page, "Mẫu sách mới"))
-            verify(has(page, "Ở Tạo sách, chọn “Lưu thành mẫu…” để dùng lại."))
+            verify(has(page, "Ở Tạo sách, chọn “Lưu thành mẫu” để dùng lại."))
             verify(has(page, "Mai\u00a0·\u00a0Chất lượng cao\u00a0·\u00a0bắt đầu ngay"))
             verify(has(page, "Giọng máy đề xuất\u00a0·\u00a0Nhanh\u00a0·\u00a0chờ bấm bắt đầu\u00a0·\u00a0chờ bạn duyệt trước khi thu"))
             compare(all(page, "renameTemplate").length, 3)
@@ -389,7 +389,7 @@ Item {
             store.entries = []
             for (let i = 0; i < 10; ++i) store.entries.push({surface: "Tên" + i, spokenForm: "tên " + i, addedAt: i, from: ""})
             const page = make()
-            verify(has(page, "Tìm tên…") || all(page, "readingsFilter").length === 1)
+            verify(has(page, "Tìm tên") || all(page, "readingsFilter").length === 1)
             one(page, "readingsFilter").text = "Tên7"
             tryVerify(function() { return all(page, "removeReading").length === 1 })
             DesktopApi.responses["POST /api/readings"] = {status: 400, data: {message: "Từ này đã có"}}

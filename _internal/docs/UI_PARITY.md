@@ -165,7 +165,7 @@ Một việc - một cách viết, cho web (máy tính + điện thoại), nativ
 
 <!-- ui_parity:begin (SINH TỰ ĐỘNG bởi scripts/ui_parity.py - không sửa tay, chạy lại script) -->
 
-Quét: web 6446 chữ (3079 khác nhau), 361 cặp nhãn-icon; native 2045 chữ (1549 khác nhau), 82 cặp nhãn-icon. Nhãn so theo khoá lỏng (hạ chữ, dấu thanh một kiểu, `...` = `…`, bỏ dấu câu cuối).
+Quét: web 6445 chữ (3079 khác nhau), 361 cặp nhãn-icon; native 2045 chữ (1549 khác nhau), 82 cặp nhãn-icon. Nhãn so theo khoá lỏng (hạ chữ, dấu thanh một kiểu, `...` = `…`, bỏ dấu câu cuối).
 
 ## a. Gợi ý gần chữ, đối chiếu với giao ước màn
 
@@ -286,7 +286,7 @@ Quét: web 6446 chữ (3079 khác nhau), 361 cặp nhãn-icon; native 2045 chữ
 | Thêm chữ này | Thêm chữ sáng | 0.80 | `native/studio/StudioNew.kt:293` ~ `studio/WordTimings.tsx:54` | shared-labels: chữ có bản khớp trong màn đã ghép; nhãn gần giống ở cột kia không phải cặp thao tác được xác nhận; studio.missing: phone's new-project flow (upload a file or paste text to the computer's Studio); the computer's NewProjectScreen is a larger flow with its own sentences - not compared sentence by sentence | studio: chữ có bản khớp trong màn đã ghép; nhãn gần giống ở cột kia không phải cặp thao tác được xác nhận |
 | Vẫn tải | Đang tải {} | 0.80 | `native/music/library/MusicScreen.kt:358` (+1) ~ `listen/VieneuModuleCard.tsx:245` (+1) | shared-labels: chữ có bản khớp trong màn đã ghép; nhãn gần giống ở cột kia không phải cặp thao tác được xác nhận; music-library.allow: phone only: ask before downloading over mobile data (Playlists.holdsDownloadOnMetered); a computer has no metered network | voice.allow: Desktop moduleStatusAnnouncement only (aria-live status); Android module rows show the same download with size and progress and Compose announces the row, without this duplicate live-region fragment. |
 | Xuất lại | Xuất lại M4B | 0.80 | `native/export/ExportScreen.kt:365` (+1) ~ `studio/ExportBook.tsx:536` | shared-labels: chữ có bản khớp trong màn đã ghép; nhãn gần giống ở cột kia không phải cặp thao tác được xác nhận; export.allow: native export screen / menu hint states: web reports the same steps through toasts built from ExportCopy ('Đang đóng gói…', 'Đã xuất MP3', 'Đang xuất · 45%') and has no screen with these rows | studio: chữ có bản khớp trong màn đã ghép; nhãn gần giống ở cột kia không phải cặp thao tác được xác nhận |
-| Đang dùng ở {} đoạn | Đang đóng gói dự án… | 0.80 | `native/studio/MusicTab.kt:260` ~ `desktop/bookFileExport.ts:56` (+1) | shared-labels: chữ có bản khớp trong màn đã ghép; nhãn gần giống ở cột kia không phải cặp thao tác được xác nhận; studio.allow: web lists the track's use in a different sentence (MusicTab) | studio: chữ có bản khớp trong màn đã ghép; nhãn gần giống ở cột kia không phải cặp thao tác được xác nhận; export.missing: book-file and project packaging export (.abook / .abookproj) of the computer; the phone saves through 'Lưu thay đổi' / 'Lưu thành' (library-book pair) |
+| Đang dùng ở {} đoạn | Đang đóng gói dự án | 0.80 | `native/studio/MusicTab.kt:260` ~ `desktop/bookFileExport.ts:56` (+1) | shared-labels: chữ có bản khớp trong màn đã ghép; nhãn gần giống ở cột kia không phải cặp thao tác được xác nhận; studio.allow: web lists the track's use in a different sentence (MusicTab) | studio: chữ có bản khớp trong màn đã ghép; nhãn gần giống ở cột kia không phải cặp thao tác được xác nhận; export.missing: book-file and project packaging export (.abook / .abookproj) of the computer; the phone saves through 'Lưu thay đổi' / 'Lưu thành' (library-book pair) |
 | Đang lấy giọng | Đã ghi | 0.80 · icon | `native/screens/SettingsVoice.kt:294` ~ `studio/ScriptTab.tsx:1139` (+2) | shared-labels: chữ có bản khớp trong màn đã ghép; nhãn gần giống ở cột kia không phải cặp thao tác được xác nhận; voice.missing: web shows a spinner in the button, no busy word | studio: chữ có bản khớp trong màn đã ghép; nhãn gần giống ở cột kia không phải cặp thao tác được xác nhận |
 | Đang tạo sách | Đưa vào sách: {} | 0.80 | `native/studio/StudioNew.kt:326` ~ `shared/ChapterPreview.tsx:94` (+1) | shared-labels: chữ có bản khớp trong màn đã ghép; nhãn gần giống ở cột kia không phải cặp thao tác được xác nhận; studio.allow: new-project flow: native shows its own progress / error lines on one screen; web NewProjectScreen words the same steps through upload.ts ('Đang gửi 3/12 file · …', 'Đã gửi … file') | studio: chữ có bản khớp trong màn đã ghép; nhãn gần giống ở cột kia không phải cặp thao tác được xác nhận |
 | Đang đo. | Đang chờ {} | 0.80 | `native/screens/SettingsAdvanced.kt:71` ~ `desktop/Shell.tsx:121` | shared-labels: chữ có bản khớp trong màn đã ghép; nhãn gần giống ở cột kia không phải cặp thao tác được xác nhận; settings.missing: web shows a skeleton (DESIGN §2: đang tải = khung xám) where native writes a loading line | studio: chữ có bản khớp trong màn đã ghép; nhãn gần giống ở cột kia không phải cặp thao tác được xác nhận |
@@ -764,7 +764,7 @@ Nhãn ngắn (<= 6 chữ) không có (theo khoá lỏng) ở phía kia - kể c�
 
 ## d. Chữ hoa, dấu câu, `…` và `...`, dấu thanh, số
 
-**d1. Cùng nhãn (theo khoá lỏng) nhưng khác nguyên văn giữa hai phía** (32):
+**d1. Cùng nhãn (theo khoá lỏng) nhưng khác nguyên văn giữa hai phía** (29):
 
 | web | native | khác ở | nơi |
 |---|---|---|---|
@@ -789,14 +789,11 @@ Nhãn ngắn (<= 6 chữ) không có (theo khoá lỏng) ở phía kia - kể c�
 | {}: lùi {} giây | {}: lùi 15 giây | dấu thanh / ký tự | `desktop/RemotePhone.tsx:248` ~ `native/devices/CompanionSurfaces.kt:91` |
 | {}: tới {} giây | {}: tới 15 giây | dấu thanh / ký tự | `desktop/RemotePhone.tsx:263` ~ `native/devices/CompanionSurfaces.kt:98` |
 | đang chuẩn bị | Đang chuẩn bị | chữ hoa | `listen/LibraryScreen.tsx:339` (+1) ~ `native/export/ExportModel.kt:276` |
-| Đang chờ mạng… | Đang chờ mạng | dấu câu cuối | `desktop/bookFileExport.ts:183` ~ `native/export/ExportModel.kt:259` |
 | đang làm | Đang làm | chữ hoa | `studio/StudioSetup.tsx:256` ~ `native/studio/StudioText.kt:56` |
-| Đang làm file M4B… | Đang làm file M4B | dấu câu cuối | `desktop/bookFileExport.ts:38` (+1) ~ `native/export/ExportModel.kt:293` |
 | Đang làm sách nói… | Đang làm sách nói | dấu câu cuối | `desktop/listenExport.ts:14` ~ `native/export/ExportModel.kt:287` (+1) |
 | đang phát | Đang phát | chữ hoa | `desktop/RemotePhone.tsx:494` ~ `native/devices/CompanionSurfaces.kt:81` (+1) |
 | Đang tính độ dài… | Đang tính độ dài | dấu câu cuối | `desktop/AudiobookDialog.tsx:130` ~ `native/export/ExportScreen.kt:224` |
 | đang xuất | Đang xuất | chữ hoa | `shared/diagnostics.ts:48` ~ `native/export/ExportModel.kt:392` |
-| Đang đóng gói sách… | Đang đóng gói sách | dấu câu cuối | `desktop/bookFileExport.ts:29` (+1) ~ `native/studio/StudioExport.kt:305` |
 | Đã nghe hết các câu trong danh sách | Đã nghe hết các câu trong danh sách. | dấu câu cuối | `studio/ReviewQueue.tsx:315` ~ `native/studio/WorkText.kt:106` |
 | Địa chỉ: | Địa chỉ | dấu câu cuối | `desktop/PhoneSync.tsx:155` ~ `native/devices/ShareScreen.kt:73` |
 | Đọc là: | Đọc là | dấu câu cuối | `listen/WordReadings.tsx:230` (+4) ~ `native/studio/StudioScript.kt:254` |
@@ -805,23 +802,23 @@ Nhãn ngắn (<= 6 chữ) không có (theo khoá lỏng) ở phía kia - kể c�
 
 | kiểu | web | native |
 |---|---|---|
-| dấu ba chấm ASCII `...` | 6 / 6446 | 0 / 2045 |
-| dấu ba chấm `…` | 37 / 6446 | 0 / 2045 |
-| kết thúc bằng dấu chấm `.` | 1092 / 6446 | 388 / 2045 |
-| kết thúc bằng `!` | 0 / 6446 | 0 / 2045 |
-| kết thúc bằng `:` | 90 / 6446 | 6 / 2045 |
-| dấu thanh kiểu cũ `oà oá uý` | 484 / 6446 | 189 / 2045 |
-| dấu thanh kiểu mới `òa óa úy` | 1 / 6446 | 0 / 2045 |
-| số thập phân dấu phẩy `1,5` | 2 / 6446 | 0 / 2045 |
-| số thập phân dấu chấm `1.5` | 0 / 6446 | 0 / 2045 |
-| nhân bằng `×` | 0 / 6446 | 0 / 2045 |
-| nhân bằng `x` sau số | 0 / 6446 | 0 / 2045 |
-| ngăn cách `·` | 146 / 6446 | 34 / 2045 |
-| ngăn cách ` - ` | 274 / 6446 | 82 / 2045 |
-| gạch dài `—`/`–` | 17 / 6446 | 2 / 2045 |
-| giờ `1:30` hay `1 giờ 30` | 0 / 6446 | 2 / 2045 |
-| dấu `%` dính số | 0 / 6446 | 1 / 2045 |
-| dấu `%` cách số | 0 / 6446 | 0 / 2045 |
+| dấu ba chấm ASCII `...` | 6 / 6445 | 0 / 2045 |
+| dấu ba chấm `…` | 20 / 6445 | 0 / 2045 |
+| kết thúc bằng dấu chấm `.` | 1092 / 6445 | 388 / 2045 |
+| kết thúc bằng `!` | 0 / 6445 | 0 / 2045 |
+| kết thúc bằng `:` | 90 / 6445 | 6 / 2045 |
+| dấu thanh kiểu cũ `oà oá uý` | 484 / 6445 | 189 / 2045 |
+| dấu thanh kiểu mới `òa óa úy` | 1 / 6445 | 0 / 2045 |
+| số thập phân dấu phẩy `1,5` | 2 / 6445 | 0 / 2045 |
+| số thập phân dấu chấm `1.5` | 0 / 6445 | 0 / 2045 |
+| nhân bằng `×` | 0 / 6445 | 0 / 2045 |
+| nhân bằng `x` sau số | 0 / 6445 | 0 / 2045 |
+| ngăn cách `·` | 146 / 6445 | 34 / 2045 |
+| ngăn cách ` - ` | 274 / 6445 | 82 / 2045 |
+| gạch dài `—`/`–` | 17 / 6445 | 2 / 2045 |
+| giờ `1:30` hay `1 giờ 30` | 0 / 6445 | 2 / 2045 |
+| dấu `%` dính số | 0 / 6445 | 1 / 2045 |
+| dấu `%` cách số | 0 / 6445 | 0 / 2045 |
 
 **d3. Nhãn ngắn bắt đầu bằng chữ thường** (web 141, native 0); 15 đầu mỗi phía:
 
@@ -833,7 +830,7 @@ Nhãn ngắn (<= 6 chữ) không có (theo khoá lỏng) ở phía kia - kể c�
 - web: Chữ của cả cuốn được gửi tới {} để đọc, bằng khóa của bạn -… (`desktop/listenExport.ts:86`)
 - native: (không có)
 
-**d4. web: cùng nhãn nhưng viết khác nhau trong chính phía này** (58); 15 đầu:
+**d4. web: cùng nhãn nhưng viết khác nhau trong chính phía này** (57); 15 đầu:
 
 - `Ai nghĩ câu này` | `Ai nghĩ câu này?` (`listen/LineWishes.tsx:397`, `listen/LineWishes.tsx:452` (+2))
 - `Ai nói câu này` | `Ai nói câu này?` (`listen/LineWishes.tsx:397`, `listen/LineWishes.tsx:452` (+4))
@@ -910,7 +907,7 @@ Thiếu thật ở web - `add-edit-book`: Chưa mở được file; File không 
 
 Thiếu thật ở web - `studio`: Bài bạn đã ghim vẫn được giữ. Máy tính …; Bước {}/{}; Bạn chưa xem câu nào.; Bản thu hỏng; Bấm “Sách mới” để làm sách nói từ một f…; Bật “Cho phép điều khiển sản xuất” trên…; Bắt đầu ngay; Bỏ chương không muốn đọc. Tên chương sử…; Bỏ hết; Chưa có bản thu để nghe; Chưa có chương nào; Chưa có tệp nào; Chương này chưa có câu nào.; Chương {} sẽ được thu lại khi bạn áp dụ…; Chỉ câu lệch nhiều; Chỉ sửa chữ đem đọc; sách giữ nguyên ch…; Chọn file truyện; máy tính đọc ra chươn…; Chọn lại nhạc cho cả cuốn?; Chọn thể loại; Chọn tệp; Chờ gộp vào {}; Chờ lượt {}, tự chạy khi cuốn trước xon…; Chữ dán.txt; Chữ lệch nhiều; Chữ lệch nhẹ; Cuốn này chưa có tên nào cần chốt cách …; Cách đọc mới; Câu này đã đổi, bạn xem lại.; Còn lại; Còn {} câu chưa xem; Cần ffmpeg để ghép âm thanh. Bạn tải nó…; Dài; Dán chữ; Dán chữ truyện vào đây; Dòng nên bỏ khỏi phần đọc; Dữ liệu máy gửi không hợp lệ; bạn hãy t…; File này gộp nhiều chương. Máy tính tác…; Giọng bạn chọn đang chờ vào sách.; Giọng {} đang chờ vào sách.; Giới này chưa có giọng nào
 
-Thiếu thật ở native - `export`: Chưa có file dự án nào được ghi.; Chưa có file M4B nào được ghi.; Chưa có file sách nào được ghi.; Chưa gói được dự án; Chưa tải được công cụ; Chưa xuất được file sách; Cập nhật công cụ; Dự án; File sách; Ghép âm thanh; Kiểu file; Lần xuất gần nhất: {}; Thiếu công cụ ghép; Tải công cụ; Tải công cụ ghép âm thanh; Xuất file sách; Đang tải công cụ; Đang đóng gói dự án…; Đang đóng gói sách…; Đã gói dự án; Đã xuất file sách; Đã xuất vào máy tính; Đã xuất vào máy tính {}; Để sau
+Thiếu thật ở native - `export`: Chưa có file dự án nào được ghi.; Chưa có file M4B nào được ghi.; Chưa có file sách nào được ghi.; Chưa gói được dự án; Chưa tải được công cụ; Chưa xuất được file sách; Cập nhật công cụ; Dự án; File sách; Ghép âm thanh; Kiểu file; Lần xuất gần nhất: {}; Thiếu công cụ ghép; Tải công cụ; Tải công cụ ghép âm thanh; Xuất file sách; Đang tải công cụ; Đang đóng gói dự án; Đang đóng gói sách; Đã gói dự án; Đã xuất file sách; Đã xuất vào máy tính; Đã xuất vào máy tính {}; Để sau
 
 Thiếu thật ở web - `export`: Bản MP3 bạn xuất trước đây có {} chương…; Cho ABook chạy nền; Chỉ {} chương đổi; Chọn thư mục để lưu trước; Cuốn dài: nên cắm sạc trong lúc làm - t…; Các chương chưa làm xong sẽ không có tr…; Còn mới; Có chương đã đổi; Có nhạc nền thì mỗi chương là file .m4a…; Cả cuốn; Giọng đọc của máy; Gửi; Lúc làm cần khoảng {} trống trong điện …; Máy chưa có giọng đọc nào - tải giọng ở…; Mở; Trong trang mở ra: Pin → bật “Cho phép …; Trong trang mở ra: Pin → chọn “Không hạ…; Trong trang mở ra: Pin → chọn “Không hạ…; Trong trang mở ra: Tiết kiệm pin → chọn…; Việc chạy nền: bạn có thể rời màn này, …
 

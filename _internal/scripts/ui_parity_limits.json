@@ -1,0 +1,139 @@
+{
+  "baseline": "8823bf7a1",
+  "pairs": {
+    "now-playing": {
+      "allow_entries": 17,
+      "missing_entries": 5,
+      "allowed_labels": 32,
+      "missing_labels": 6
+    },
+    "shared-labels": {
+      "allow_entries": 5,
+      "missing_entries": 0,
+      "allowed_labels": 7,
+      "missing_labels": 0
+    },
+    "library-book": {
+      "allow_entries": 18,
+      "missing_entries": 8,
+      "allowed_labels": 64,
+      "missing_labels": 10
+    },
+    "settings": {
+      "allow_entries": 15,
+      "missing_entries": 16,
+      "allowed_labels": 21,
+      "missing_labels": 78
+    },
+    "devices": {
+      "allow_entries": 14,
+      "missing_entries": 31,
+      "allowed_labels": 17,
+      "missing_labels": 162
+    },
+    "voice": {
+      "allow_entries": 14,
+      "missing_entries": 12,
+      "allowed_labels": 26,
+      "missing_labels": 24
+    },
+    "add-edit-book": {
+      "allow_entries": 43,
+      "missing_entries": 2,
+      "allowed_labels": 62,
+      "missing_labels": 4
+    },
+    "studio": {
+      "allow_entries": 13,
+      "missing_entries": 3,
+      "allowed_labels": 59,
+      "missing_labels": 90
+    },
+    "export": {
+      "allow_entries": 7,
+      "missing_entries": 8,
+      "allowed_labels": 28,
+      "missing_labels": 43
+    },
+    "music": {
+      "allow_entries": 5,
+      "missing_entries": 4,
+      "allowed_labels": 9,
+      "missing_labels": 8
+    },
+    "music-library": {
+      "allow_entries": 6,
+      "missing_entries": 1,
+      "allowed_labels": 7,
+      "missing_labels": 1
+    }
+  },
+  "original_counts": {
+    "now-playing": {
+      "allow_entries": 18,
+      "missing_entries": 7,
+      "allowed_labels": 32,
+      "missing_labels": 6
+    },
+    "shared-labels": {
+      "allow_entries": 5,
+      "missing_entries": 0,
+      "allowed_labels": 7,
+      "missing_labels": 0
+    },
+    "library-book": {
+      "allow_entries": 19,
+      "missing_entries": 11,
+      "allowed_labels": 64,
+      "missing_labels": 10
+    },
+    "settings": {
+      "allow_entries": 18,
+      "missing_entries": 17,
+      "allowed_labels": 21,
+      "missing_labels": 78
+    },
+    "devices": {
+      "allow_entries": 16,
+      "missing_entries": 31,
+      "allowed_labels": 17,
+      "missing_labels": 162
+    },
+    "voice": {
+      "allow_entries": 14,
+      "missing_entries": 22,
+      "allowed_labels": 26,
+      "missing_labels": 24
+    },
+    "add-edit-book": {
+      "allow_entries": 52,
+      "missing_entries": 14,
+      "allowed_labels": 62,
+      "missing_labels": 4
+    },
+    "studio": {
+      "allow_entries": 13,
+      "missing_entries": 3,
+      "allowed_labels": 59,
+      "missing_labels": 90
+    },
+    "export": {
+      "allow_entries": 7,
+      "missing_entries": 8,
+      "allowed_labels": 28,
+      "missing_labels": 43
+    },
+    "music": {
+      "allow_entries": 7,
+      "missing_entries": 4,
+      "allowed_labels": 9,
+      "missing_labels": 8
+    },
+    "music-library": {
+      "allow_entries": 6,
+      "missing_entries": 1,
+      "allowed_labels": 7,
+      "missing_labels": 1
+    }
+  }
+}

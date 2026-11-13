@@ -121,7 +121,7 @@ Item {
                     size: "sm"
                     kind: root.armed ? "danger" : "ghost"
                     icon: "trash"
-                    text: root.busy ? S.s_dang_go_063a61fd : root.armed ? S.s_xac_nhan_go_80920dda : S.s_go_studio_832e6f10
+                    text: root.busy ? S.s_dang_go_eadfa314 : root.armed ? S.s_xac_nhan_go_80920dda : S.s_go_studio_832e6f10
                     enabled: !root.busy
                     onClicked: root.remove()
                 }

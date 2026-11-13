@@ -92,7 +92,7 @@ Item {
                     }
                     Item { width: 1; height: 12 }
                     Button {
-                        text: root.installing ? S.s_dang_tai_ban_moi_2c868c00 : S.s_cap_nhat_abook_66fb9f08
+                        text: root.installing ? S.s_dang_tai_ban_moi_ee824efa : S.s_cap_nhat_abook_66fb9f08
                         icon: "download"; kind: "ghost"
                         enabled: !root.installing
                         onClicked: root.install()
@@ -114,7 +114,7 @@ Item {
                     implicitHeight: checkButton.implicitHeight
                     Button {
                         id: checkButton
-                        text: root.checking ? S.s_dang_kiem_tra_0726ac0c : S.s_kiem_tra_ban_moi_f66eda92
+                        text: root.checking ? S.s_dang_kiem_tra_424c43e3 : S.s_kiem_tra_ban_moi_f66eda92
                         kind: "ghost"; size: "sm"
                         enabled: !root.checking
                         onClicked: root.check()

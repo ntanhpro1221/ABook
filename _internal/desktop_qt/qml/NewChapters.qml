@@ -102,7 +102,7 @@ Column {
             Button {
                 objectName: "newAddCancel"
                 Reveal { shown: root.browser && Boolean(root.uploading) }
-                text: root.form && root.form.stopping ? S.s_dang_dung_2fb8aa7c : S.s_huy_gui_4d53a582
+                text: root.form && root.form.stopping ? S.s_dang_dung_9b35aeb5 : S.s_huy_gui_4d53a582
                 kind: "ghost"
                 size: "sm"
                 enabled: !(root.form && root.form.stopping)

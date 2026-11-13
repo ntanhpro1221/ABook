@@ -492,7 +492,7 @@ FocusScope {
                 anchors.horizontalCenter: parent.horizontalCenter
                 spacing: 4
                 Button { objectName: "emptyStudio"; text: S.s_tao_sach_noi_ab873c7a; icon: "clapperboard"; kind: "ghost"; onClicked: root.studioRequested() }
-                Button { objectName: "emptyOpenFile"; text: root.fileOpening ? S.s_dang_mo_4a027b81 : S.s_mo_file_sach_d826dd00; icon: "file-audio"; kind: "ghost"; enabled: !root.fileOpening; onClicked: root.openFileRequested() }
+                Button { objectName: "emptyOpenFile"; text: root.fileOpening ? S.s_dang_mo_98235c77 : S.s_mo_file_sach_d826dd00; icon: "file-audio"; kind: "ghost"; enabled: !root.fileOpening; onClicked: root.openFileRequested() }
             }
         }
     }

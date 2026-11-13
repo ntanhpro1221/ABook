@@ -11,7 +11,7 @@ Interactive {
     ringRadius: size / 2
     enabled: Player.loaded
     opacity: enabled ? 1 : 0.4
-    tip: Player.playing ? (Player.buffering ? (Player.speaking ? S.s_dang_chuan_bi_giong_doc_25f86ccf : S.s_dang_tai_am_thanh_e59cf158) : S.s_tam_dung_space_c826d0e6) : S.s_phat_space_7207d81e
+    tip: Player.playing ? (Player.buffering ? (Player.speaking ? S.s_dang_chuan_bi_giong_doc_69f1b51a : S.s_dang_tai_am_thanh_6c7cb62f) : S.s_tam_dung_space_c826d0e6) : S.s_phat_space_7207d81e
     Accessible.role: Accessible.Button
     Accessible.name: tip
     onClicked: Player.toggle()

@@ -408,7 +408,7 @@ Item {
         objectName: "removeConfirm." + root.copy.key
         parent: root.Window.window ? root.Window.window.contentItem : root
         title: S.s_go_3b2e5a10 + root.askLabel + S.s_khoi_may_nay_4869a7b9
-        description: root.asking && root.asking.use === undefined ? S.s_dang_xem_cuon_nao_con_dung_giong_nay_5b75d605 : VoiceLogic.removeAsk(root.asking ? root.asking.use : null)
+        description: root.asking && root.asking.use === undefined ? S.s_dang_xem_cuon_nao_con_dung_giong_nay_1a2d4fa1 : VoiceLogic.removeAsk(root.asking ? root.asking.use : null)
         onClosed: root.asking = null
         footer: [
             Flow {

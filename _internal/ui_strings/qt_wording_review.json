@@ -223,9 +223,9 @@
   },
   {
     "screen": "Studio xuất và áp dụng",
-    "qt": "Đang thêm chữ sáng…",
+    "qt": "Đang thêm chữ sáng… {}",
     "web": "Đang thêm chữ sáng… {}%",
-    "reason": "Same word-timing progress; Qt places the percentage in its separate steady clock value."
+    "reason": "Same catalog key as web (s_dang_them_chu_sang_0); the Qt reader renders the slotted call as {} without the catalog's percent sign."
   },
   {
     "screen": "Studio xuất và áp dụng",

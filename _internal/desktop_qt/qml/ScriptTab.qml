@@ -719,7 +719,7 @@ Item {
                         leftPadding: 32
                         rightPadding: findCount.width + 16
                         label: S.s_tim_chu_trong_chuong_nay_75ba2c08
-                        placeholderText: S.s_tim_chu_trong_chuong_ca34cb89
+                        placeholderText: S.s_tim_chu_trong_chuong_3a69db97
                         escapeLocal: text !== ""
                         onTextChanged: { root.findText = text; root.findAt = 0 }
                         onEscaped: text = ""

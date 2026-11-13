@@ -52,7 +52,7 @@ Interactive {
             clip: true
             Text {
                 anchors.verticalCenter: parent.verticalCenter
-                text: root.failed ? S.s_gap_loi_32d9771f : (root.starting ? S.s_dang_mo_4a027b81 : S.s_san_sang_d654065d)
+                text: root.failed ? S.s_gap_loi_32d9771f : (root.starting ? S.s_dang_mo_98235c77 : S.s_san_sang_d654065d)
                 color: Theme.text2
                 font.pixelSize: Theme.sizeBodySmall
             }

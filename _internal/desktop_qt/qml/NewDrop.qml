@@ -79,7 +79,7 @@ Item {
                 horizontalAlignment: Text.AlignHCenter
                 font.pixelSize: Theme.sizeBody
                 font.weight: Theme.weightMedium
-                text: root.form && root.form.scanning ? S.s_dang_doc_cac_chuong_fe5fd08f
+                text: root.form && root.form.scanning ? S.s_dang_doc_cac_chuong_ec75d38e
                     : root.browser ? S.s_chon_hay_keo_tha_vao_day_cac_chuong_cua_tr_77883a5f
                     : S.s_chon_hay_keo_tha_vao_day_thu_muc_truyen_ha_978b59fe
             }
@@ -127,7 +127,7 @@ Item {
                         id: cancelUpload
                         objectName: "newUploadCancel"
                         x: (parent.width - width) / 2
-                        text: root.form && root.form.stopping ? S.s_dang_dung_2fb8aa7c : S.s_huy_gui_4d53a582
+                        text: root.form && root.form.stopping ? S.s_dang_dung_9b35aeb5 : S.s_huy_gui_4d53a582
                         kind: "ghost"
                         size: "sm"
                         enabled: !(root.form && root.form.stopping)

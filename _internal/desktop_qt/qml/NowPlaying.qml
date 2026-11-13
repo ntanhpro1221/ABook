@@ -614,7 +614,7 @@ Item {
             MenuRow { objectName: "nowOutput"; width: parent.width; text: S.s_phat_tren_681e16e1; icon: "cast"; onClicked: { more.close(); output.show() } }
             MenuRow { objectName: "nowHistory"; width: parent.width; text: S.s_ve_cho_vua_nghe_8da3c710; icon: "undo-2"; Reveal { shown: Player.canGoBack } onClicked: { more.close(); Player.goBack() } }
             MenuRow { objectName: "nowKeys"; width: parent.width; text: S.s_phim_tat_7baaed2f; icon: "keyboard"; onClicked: { more.close(); shortcuts.show() } }
-            MenuRow { objectName: "nowAddVoice"; width: parent.width; text: S.s_them_giong_bbe0caf9; icon: "plus"; onClicked: { more.close(); root.settingsRequested("voice") } }
+            MenuRow { objectName: "nowAddVoice"; width: parent.width; text: S.s_them_giong_15d3a618; icon: "plus"; onClicked: { more.close(); root.settingsRequested("voice") } }
             MenuRow { objectName: "nowSuggestionsButton"; width: parent.width; text: S.s_goi_y_doc_346ac8be; icon: "lightbulb"; Reveal { shown: suggestions.groups.length > 0 } onClicked: { more.close(); suggestions.show() } }
             // Như Android / web: trang của cuốn đang nghe, ngay trước Cửa sổ mini.
             MenuRow { objectName: "nowBookPage"; width: parent.width; text: S.s_trang_sach_2b6c8e51; icon: "book-open"; Reveal { shown: Player.bookId !== "" } onClicked: { more.close(); root.bookRequested() } }
