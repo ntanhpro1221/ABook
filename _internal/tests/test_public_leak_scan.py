@@ -24,6 +24,22 @@ def test_sentence_cannot_be_hidden_in_a_json_array(tmp_path):
     assert scan.inspect("sample.json", path)
 
 
+def test_multiline_and_implicit_python_literal_joining_are_checked(tmp_path):
+    path = tmp_path / "sample.py"
+    path.write_text('value = ("' + " ".join(["kəː"] * 4) + ' "\n"' + " ".join(["kəː"] * 4) + '")', encoding="utf-8")
+    assert scan.inspect("tests/test_multiline.py", path)
+    path.write_text(('thử ' * 20) + '\n' + ('thử ' * 20), encoding="utf-8")
+    assert scan.inspect("docs/long.md", path)
+
+
+def test_binary_metadata_and_utf16_paths_are_not_exempt(tmp_path):
+    path = tmp_path / "metadata.bin"
+    value = "C:" + "/Users/Example"
+    for data in (b"\0metadata" + value.encode(), value.encode("utf-16")):
+        path.write_bytes(data)
+        assert scan.private_file(path)
+
+
 @pytest.mark.parametrize("slash", ["/", "\\", "\\\\"])
 def test_private_path_signatures_have_no_exceptions(slash):
     assert scan.private_path("C:" + slash + "Users" + slash + "Example")
@@ -50,3 +66,8 @@ def test_empty_inventory_fails_and_missing_corpus_is_explicit(tmp_path, monkeypa
     monkeypatch.setattr(scan, "tracked", lambda _: ["safe.txt"])
     result = scan.audit(tmp_path, corpus=False)
     assert result["files"] == 1 and "bỏ qua kiểm Corpus" in result["corpus"]
+
+
+def test_public_git_files_contain_no_private_machine_or_session_path():
+    findings = [name for name in scan.tracked() if scan.private_file(scan.REPO / name)]
+    assert findings == [], findings

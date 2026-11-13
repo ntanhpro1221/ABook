@@ -18,9 +18,7 @@ Chỉ chạy `--apply` khi máy rảnh.
 import sys, pathlib, shutil, re, tempfile
 
 SRC = pathlib.Path(r'D:\Novels\Tools\Text')
-SCRATCH = pathlib.Path(tempfile.gettempdir(), 'claude',
-                       r'D--Novels-ABook\eba3e3d6-08dd-4ad9-8ba0-dc9003c54c4a'
-                       r'\scratchpad\quotefix_test')
+SCRATCH = pathlib.Path(tempfile.mkdtemp(prefix='abook-quotefix-'))
 
 # (file, dong 1-based, kieu, moc)
 #   'prefix'  -> them " o dau dong
@@ -75,9 +73,6 @@ if apply:
     run(SRC)
     target = SRC
 else:
-    if SCRATCH.exists():
-        shutil.rmtree(SCRATCH)
-    SCRATCH.mkdir(parents=True)
     for f in SRC.glob('*.txt'):
         shutil.copy2(f, SCRATCH / f.name)
     print('THU NGHIEM tren ban sao', SCRATCH)

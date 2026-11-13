@@ -491,7 +491,7 @@ def test_malformed_and_cross_site_requests_are_refused(studio) -> None:
 def test_head_keeps_the_connection_in_step_and_private_preferences_stay_home(studio) -> None:
     app, _project = studio
     app.set_remote_studio(True)
-    app.preferences.update({"recents": ["C:/Users/ai-do/Sach"]})
+    app.preferences.update({"recents": ["C:/Profiles/ai-do/Sach"]})
     port = app.sync_server.port
     cookie = _paired_cookie(app)
     connection = tls.PinnedHTTPSConnection("127.0.0.1", port, expected=None, timeout=10)

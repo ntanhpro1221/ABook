@@ -80,7 +80,7 @@ def build_project(path: Path, entries: dict[str, bytes], *, workshop: str = "pre
     files = {name: sha(data) for name, data in entries.items()}
     files.update(files_extra or {})
     manifest = {"format": "abookproj", "version": version, "createdAt": "2026-01-01T00:00:00+00:00", "producer": "x",
-                "title": title, "workshop": workshop, "projectRoot": "C:/Users/friend/ABook/proj", "sources": [],
+                "title": title, "workshop": workshop, "projectRoot": "C:/Profiles/friend/ABook/proj", "sources": [],
                 "missingSources": [], "aliases": {}, "files": files}
     with zipfile.ZipFile(path, "w") as archive:
         archive.writestr(zipfile.ZipInfo("mimetype"), PROJECT_MIME)
@@ -122,7 +122,7 @@ def build_pending_project(path: Path, entries: dict[str, bytes], book: dict[str,
     raw = json.dumps(book).encode("utf-8")
     everything = {**entries, **(extra or {}), "book.json": raw}
     manifest = {"format": "abookproj", "version": 3, "createdAt": "2026-01-01T00:00:00+00:00", "producer": "x", "title": "Dự án thử",
-                "workshop": "pending", "projectRoot": "C:/Users/friend/ABook/proj", "sources": [], "missingSources": [],
+                "workshop": "pending", "projectRoot": "C:/Profiles/friend/ABook/proj", "sources": [], "missingSources": [],
                 "aliases": {}, "files": {name: sha(data) for name, data in everything.items()}}
     with zipfile.ZipFile(path, "w") as archive:
         archive.writestr(zipfile.ZipInfo("mimetype"), PROJECT_MIME)

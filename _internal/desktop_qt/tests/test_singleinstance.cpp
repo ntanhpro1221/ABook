@@ -95,10 +95,10 @@ private slots:
 
     void namesDependOnUserAndDataFolder() {
         const QString sid = QStringLiteral("S-1-5-21-1-2-3-1001");
-        const QString a = SingleInstance::nameFor(sid, QStringLiteral("C:\\Users\\a\\AppData\\Local"));
-        QCOMPARE(SingleInstance::nameFor(sid, QStringLiteral("c:/users/A/AppData/Local/")), a);
+        const QString a = SingleInstance::nameFor(sid, QStringLiteral("C:\\Profiles\\a\\AppData\\Local"));
+        QCOMPARE(SingleInstance::nameFor(sid, QStringLiteral("c:/profiles/A/AppData/Local/")), a);
         QVERIFY(SingleInstance::nameFor(sid, QStringLiteral("C:\\Temp\\abook-inst\\local")) != a);
-        QVERIFY(SingleInstance::nameFor(QStringLiteral("S-1-5-21-1-2-3-1002"), QStringLiteral("C:\\Users\\a\\AppData\\Local")) != a);
+        QVERIFY(SingleInstance::nameFor(QStringLiteral("S-1-5-21-1-2-3-1002"), QStringLiteral("C:\\Profiles\\a\\AppData\\Local")) != a);
         QVERIFY(a.startsWith(QStringLiteral("ABookDesk-")));
         QVERIFY(SingleInstance::defaultName().startsWith(QStringLiteral("ABookDesk-")));
     }

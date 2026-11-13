@@ -16,7 +16,7 @@ from abook.webui.server import App
     'apiKey=short', 'secret=x', 'password=x', 'code=123456', 'pair 123456',
     'Authorization: Bearer private-token-123456789',
     '/c/' + 'ab' * 16 + '.mp3', 'ab' * 32,
-    r'C:\Users\Alice\Private\novel.txt',
+    r'C:\Profiles\Alice\Private\novel.txt',
     '/storage/emulated/0/Books/private.mp3', '/data/user/0/com.app/files/key.txt',
     'content://com.provider/private/book.mp3',
     '192.168.123.9', '2001:db8::1234', '::1', '::ffff:192.168.1.1',
@@ -34,7 +34,7 @@ def test_private_values_are_removed_but_error_and_stack_survive(private):
 def test_actual_own_diagnostics_scrubs_all_metadata_and_log_strings(tmp_path):
     secret = 'fixture-private-bearer-123456789'
     fingerprint = 'ab' * 32
-    private_path = r'C:\Users\Alice\Private\novel.txt'
+    private_path = r'C:\Profiles\Alice\Private\novel.txt'
     ip = '192.168.123.9'
     log = tmp_path / 'logs'
     log.mkdir()
@@ -89,7 +89,7 @@ def test_phone_report_is_scrubbed_at_the_shared_network_boundary(monkeypatch):
         'addresses': [{'address': '127.0.0.1:12345', 'lastSuccess': 0}]}))
     monkeypatch.setattr(remote_books, '_request', lambda *args, **kwargs: json.dumps({
         'playback': {'error': 'IllegalStateException: Bearer private-token-123456789'},
-        'exitReasons': [{'description': r'C:\Users\Alice\Private\novel.txt', 'trace': 'connect 2001:db8::1'}],
+        'exitReasons': [{'description': r'C:\Profiles\Alice\Private\novel.txt', 'trace': 'connect 2001:db8::1'}],
         'sync': {'error': '"code":"123456"'}, 'secret': 'private-plain-value',
     }).encode())
     report = remote_books.diagnostics('paired-device')

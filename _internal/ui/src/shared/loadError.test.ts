@@ -15,7 +15,7 @@ describe("failedEmpty", () => {
 
 describe("folderName", () => {
   it("chỉ tên thư mục cuối, không cả đường dẫn (có tên tài khoản Windows)", () => {
-    expect(folderName("C:\\Users\\An\\Sách nói\\")).toBe("Sách nói");
+    expect(folderName("C:\\Profiles\\An\\Sách nói\\")).toBe("Sách nói");
     expect(folderName("/home/an/Audiobooks")).toBe("Audiobooks");
   });
 });

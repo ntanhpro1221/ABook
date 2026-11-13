@@ -12,7 +12,7 @@ import org.junit.Test
 class DiagnosticsPrivacyTest {
     private val azure = "0123456789abcdef0123456789abcdef"
     private val bearer = "private-token-123456789"
-    private val path = "C:\\Users\\Alice\\Private\\novel.txt"
+    private val path = "C:\\Profiles\\Alice\\Private\\novel.txt"
     private val stack = "    at vn.abook.Playback.play(Playback.kt:306)"
 
     @Test fun bridge_keys_pair_codes_cast_urls_and_private_addresses_are_scrubbed() {

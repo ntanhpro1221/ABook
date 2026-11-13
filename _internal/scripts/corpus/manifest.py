@@ -32,7 +32,7 @@ SOURCES = {
     "Nise Seiken Monogatari": "D:/Novels/Tools/Text Nise Seiken Monogatari",
     "Two Childhood Friends Who Have the Strongest Power Kick Each Other in the Dungeon With All Their Might": "D:/Novels/Tools",
     "Đã bảo là cùng nhau tự sát, cớ sao lại thành sống chung": "D:/Novels/Tools",
-    "Yamiyo no Hotaru": "Thùng rác C: (%USERPROFILE%/Novels/Tools/Text, xoá 04-04-2026)",
+    "Yamiyo no Hotaru": "Thùng rác C: (private source folder, xoá 04-04-2026)",
     "Hướng dẫn sinh tồn trong học viện": "Thùng rác D: (D:/Novels/Tools/Text, xoá 22-08-2026)",
     "Nageki no Bourei wa Intai Shitai": "Thùng rác D: (Text_Tmp Nageki no Bourei wa Intai Shitai, xoá 13-09-2026)",
     "Năng lực bá đạo của tôi trong game tử thần là những thiếu nữ xinh đẹp": "Thùng rác D: (xoá 25-07-2026)",

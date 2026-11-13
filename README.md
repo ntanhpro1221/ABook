@@ -161,7 +161,7 @@ Dây chuyền cũng chạy không cần giao diện, từ thư mục `_internal`
 ```powershell
 .\runtime\.venv\Scripts\python.exe -m abook.cli create `
   --source-dir "D:\Books\Truyen" --range 000..099 `
-  --output-root "C:\Users\<user>\Audiobooks" --title "Tên sách" `
+  --output-root "D:\Audiobooks" --title "Tên sách" `
   --profile high_quality --start --json
 
 .\runtime\.venv\Scripts\python.exe -m abook.cli status "<project-root>" --json

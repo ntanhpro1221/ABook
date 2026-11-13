@@ -132,14 +132,16 @@ def test_voice_files_are_made_once_from_the_preset(tmp_path: Path) -> None:
     assert other != first and b"\r" not in (first / "ref_codes.txt").read_bytes()
 
 
-# Thư mục chứa bản tải audio.cpp (vieneu_gguf/dl) và venv vieneu 3.8.3 (vieneu383/.venv) để so; không đặt thì bỏ qua.
-HERE = Path(os.environ.get("ABOOK_VIENEU_GGUF_REFERENCE") or "_unset_vieneu_gguf_reference_")
-HF_VOICES = HERE / "vieneu_gguf" / "dl" / "model" / "voices"
-PRESETS = HERE / "vieneu383" / ".venv" / "Lib" / "site-packages" / "vieneu" / "assets" / "voices_v3_turbo.json"
-
-
-@pytest.mark.skipif(not (HF_VOICES.is_dir() and PRESETS.is_file()), reason="máy không có file giọng của audio.cpp để so")
 def test_voice_files_equal_the_ones_audiocpp_ships(tmp_path: Path) -> None:
+    import os
+
+    voices = os.environ.get("ABOOK_AUDIOCPP_VOICES")
+    presets_file = os.environ.get("ABOOK_VIENEU383_PRESETS")
+    if not voices or not presets_file:
+        pytest.skip("external voice comparison requires ABOOK_AUDIOCPP_VOICES and ABOOK_VIENEU383_PRESETS")
+    HF_VOICES, PRESETS = Path(voices), Path(presets_file)
+    assert HF_VOICES.is_dir(), "ABOOK_AUDIOCPP_VOICES must be a directory"
+    assert PRESETS.is_file(), "ABOOK_VIENEU383_PRESETS must be a file"
     presets = json.loads(PRESETS.read_bytes().decode("utf-8"))["presets"]
     shipped = {"duc_tri": "Đức Trí", "kim_thanh": "Kim Thanh", "my_duyen": "Mỹ Duyên", "truc_ly": "Trúc Ly"}
     files = GgufFiles(tmp_path / "s.exe", tmp_path / "m.gguf", tmp_path / "work")

@@ -85,7 +85,7 @@ def _give_the_book_real_sources(project: Path, story: Path) -> None:
 
 
 def test_the_path_filter_keeps_what_a_device_must_send_back_and_drops_the_rest() -> None:
-    assert is_local_path("C:\\Users\\ai-do\\Sach") and is_local_path("D:/Sach") and is_local_path("\\\\may\\share")
+    assert is_local_path("C:\\Profiles\\ai-do\\Sach") and is_local_path("D:/Sach") and is_local_path("\\\\may\\share")
     assert not is_local_path("Sach.abook") and not is_local_path("/media/books/x")
     cleaned = without_local_paths({"libraryRoot": "C:\\a", "libraryRootSeen": "C:\\a", "folder": "C:\\a\\x", "file": "C:\\a\\x\\Sach.abook",
                                    "result": {"file": "C:\\a\\Sach.m4b", "folder": "C:\\a", "size": 3},

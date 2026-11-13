@@ -10,6 +10,7 @@ Chạy từ _internal: runtime/.venv/Scripts/python.exe -X utf8 scripts/public_l
 from __future__ import annotations
 
 import argparse
+import ast
 from concurrent.futures import ProcessPoolExecutor
 import hashlib
 import io
@@ -64,10 +65,15 @@ def is_fixture(relative: str) -> bool:
 
 
 def private_path(text: str) -> bool:
-    normalized = re.sub(r"[\\/]+", "/", text).lower()
+    normalized = re.sub(r"[\\/]+", "/", text.replace("\0", "")).lower()
     # Assemble the signatures so the detector's source is subject to the same empty exception list.
     return ("c:" + "/users/" in normalized
             or "/".join(("appdata", "local", "temp", "claude")) in normalized)
+
+
+def private_file(path: Path) -> bool:
+    # Include binary metadata and UTF-16 ASCII signatures, as well as members of archives.
+    return private_path(path.read_bytes().decode("utf-8", "ignore")) or any(private_path(text) for _, text in texts(path))
 
 
 def texts(path: Path) -> list[tuple[str, str]]:
@@ -91,6 +97,8 @@ def texts(path: Path) -> list[tuple[str, str]]:
         except (zipfile.BadZipFile, OSError, RuntimeError):
             return []
         return found
+    if data.startswith((b"\xff\xfe", b"\xfe\xff")):
+        return [("", data.decode("utf-16", "replace"))]
     if b"\0" in data[:8192]:
         return []
     try:
@@ -101,6 +109,14 @@ def texts(path: Path) -> list[tuple[str, str]]:
 
 def strings_of(relative: str, text: str) -> list[tuple[str, str]]:
     """Các chuỗi để soi: giá trị chuỗi JSON, hay chuỗi trong code, hay từng dòng."""
+    if relative.lower().endswith(".py"):
+        try:
+            return [(f"line {node.lineno}", node.value) for node in ast.walk(ast.parse(text))
+                    if isinstance(node, ast.Constant) and isinstance(node.value, str)]
+        except SyntaxError:
+            pass  # Malformed source still receives the conservative textual scan below.
+    if relative.lower().endswith((".md", ".rst", ".txt")):
+        return [(f"paragraph {i}", block) for i, block in enumerate(re.split(r"\n\s*\n", text), 1)]
     if relative.lower().endswith((".json", ".jsonl")) or text.lstrip()[:1] in {"{", "["}:
         values: list[tuple[str, str]] = []
 
@@ -128,6 +144,8 @@ def strings_of(relative: str, text: str) -> list[tuple[str, str]]:
         except ValueError:
             pass
     found = []
+    for match in re.finditer(r'"""(.*?)"""|`([^`]+)`', text, re.S):
+        found.append((f"line {text[:match.start()].count(chr(10)) + 1}", match.group(1) or match.group(2)))
     for number, line in enumerate(text.splitlines(), 1):
         literals = [a or b for a, b in STRING_LITERAL.findall(line)]
         found += [(f"line {number}", item) for item in literals] or [(f"line {number}", line)]
@@ -151,10 +169,9 @@ def long_vietnamese(value: str) -> bool:
 def inspect(relative: str, path: Path) -> list[dict]:
     """Một dòng cho mỗi (file, luật): số chỗ và chỗ đầu tiên, không kèm nội dung."""
     found: dict[str, dict] = {}
-    fixture = is_fixture(relative)
     for member, text in texts(path):
         for where, value in strings_of(member or relative, text):
-            rule = "ipa>=8" if ipa_run(value) else "long-vietnamese" if fixture and long_vietnamese(value) else ""
+            rule = "ipa>=8" if ipa_run(value) else "long-vietnamese" if long_vietnamese(value) else ""
             if rule:
                 entry = found.setdefault(rule, {"path": relative, "rule": rule, "count": 0,
                                                 "where": f"{member}:{where}" if member else where})
@@ -293,6 +310,8 @@ def audit(repo: Path = REPO, corpus: Path | None | bool = True, workdir: Path | 
         chunks = [text for _, text in texts(path)]
         if chunks:
             sources[relative] = chunks
+    if not sources:
+        raise ValueError("public-leak: no readable text files were inspected")
     root = corpus_root() if corpus is True else (corpus or None)
     if root is None:
         corpus_status = "bỏ qua kiểm Corpus: không thấy thư mục Corpus cục bộ (ABOOK_CORPUS)"
