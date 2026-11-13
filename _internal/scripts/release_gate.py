@@ -109,7 +109,17 @@ def safe_env() -> dict[str, str]:
     env["PYTHONPATH"] = str(ROOT)
     env["ABOOK_TEST_PYTHON"] = sys.executable
     env["JAVA_HOME"] = os.environ.get("JAVA_HOME") or "C:/Program Files/Android/Android Studio/jbr"
+    env.update(g2p_parity_env())
     return env
+
+
+def g2p_parity_env() -> dict[str, str]:
+    spec = importlib.util.find_spec("sea_g2p")
+    dictionary = Path(spec.origin).parent / "sea_g2p.bin" if spec and spec.origin else ROOT / "runtime/missing-sea-g2p.bin"
+    library = ROOT / "mobile/sea_g2p_jni/target/release" / ("abook_sea_g2p.dll" if os.name == "nt" else "libabook_sea_g2p.so")
+    return {"ABOOK_REQUIRE_G2P_PARITY": "1",
+            "ABOOK_SEA_G2P_DICT": str(Path(os.environ.get("ABOOK_SEA_G2P_DICT", str(dictionary))).resolve()),
+            "ABOOK_SEA_G2P_LIB": str(Path(os.environ.get("ABOOK_SEA_G2P_LIB", str(library))).resolve())}
 
 
 def run_process(command: list[str], cwd: Path, timeout: float) -> Execution:
@@ -234,6 +244,9 @@ def require(ok: bool, detail: str) -> None:
 def worker(name: str) -> dict:
     """Kiểm thuần nguồn cũng chạy trong subprocess để có deadline như bộ test."""
     if name == "android-unit":
+        inputs = g2p_parity_env()
+        for key in ("ABOOK_SEA_G2P_LIB", "ABOOK_SEA_G2P_DICT"):
+            require(Path(inputs[key]).is_file(), f"Required G2P parity input absent: {key}={inputs[key]}; build host JNI / supply dictionary")
         results = ROOT / "mobile/android/app/build/test-results/testDebugUnitTest"
         # Xoá riêng XML cũ trong worktree, không bao giờ dùng kết quả của lần trước.
         for path in results.glob("**/TEST-*.xml"):

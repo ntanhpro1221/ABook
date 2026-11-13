@@ -10,7 +10,7 @@ import vn.abook.player.readaloud.Names
 /** Corrections after sea-g2p normalization, shared with readaloud/phoneme_policy.py. */
 object PhonemePolicy {
     /** Same sac probe as phoneme_policy._level_probe; only sea-g2p Vietnamese phones. */
-    private fun levelProbe(word: String, g2p: (String) -> String): String? {
+    internal fun levelProbe(word: String, g2p: (String) -> String): String? {
         fun nfd(c: Char) = Normalizer.normalize(c.toString(), Normalizer.Form.NFD)
         if (Normalizer.normalize(word, Normalizer.Form.NFD).any { it in "\u0300\u0301\u0309\u0303\u0323" }) return null
         val vowels = word.indices.filter { nfd(word[it])[0] in "aeiouy" }

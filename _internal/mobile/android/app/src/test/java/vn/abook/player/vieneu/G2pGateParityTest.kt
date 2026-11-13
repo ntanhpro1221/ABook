@@ -7,12 +7,13 @@ import org.junit.Assert.assertTrue
 import org.junit.Assume.assumeTrue
 import org.junit.Test
 import vn.abook.player.readaloud.JapanesePolicy
+import vn.abook.player.readaloud.BookReadings
 import java.io.File
 
 /** Exact desktop/phone contract. Build JNI with prepare_sea_g2p_android.py first.
  * ABOOK_REQUIRE_G2P_PARITY=1 makes absent native inputs an error in CI.
- * Private calibration input/output stays outside the checkout; reports contain
- * IDs, phones and isolated changed spellings, never source sentences.
+ * Private calibration input/output and reports stay outside the checkout:
+ * sentence phones can reveal their original sentence.
  */
 class G2pGateParityTest {
     private fun strings(array: JSONArray) = (0 until array.length()).map(array::getString)
@@ -44,7 +45,7 @@ class G2pGateParityTest {
                 val rulings = PhonemePolicy.Rulings(
                     names = strings(given.getJSONArray("names")).toSet(),
                     foreign = strings(given.getJSONArray("foreign")).toSet())
-                val (shown, units) = VieneuUnits.units(text, 256, origin, readings, directEnglish = true)
+                val (shown, units) = VieneuUnits.units(text, 256, origin, BookReadings(readings, rulings), directEnglish = true)
                 val actualUnits = units.map { g2p.phonemize(it.pieces, it.text(shown), rulings) }
                 val actual = actualUnits.joinToString(" ")
                 val wantUnits = row.getJSONArray("units")
@@ -82,17 +83,22 @@ class G2pGateParityTest {
             summary.put(cls, JSONObject().put("n", c[0]).put("mismatches", c[1]).put("spelling_differences", c[2]))
         }
         System.getenv("ABOOK_G2P_PARITY_REPORT")?.let { path ->
+            if (suffix == "calibration") assertTrue("Private parity report must stay outside public checkout",
+                !File(path).canonicalFile.toPath().startsWith(File("../../../..").canonicalFile.toPath()))
             File("$path.$suffix.json").writeText(JSONObject().put("classes", summary).put("results", results).toString(2), Charsets.UTF_8)
         }
         println("Exact G2P parity ($suffix): $summary")
         assertEquals("Exact phoneme mismatches by class: $summary", 0, counts.values.sumOf { it[1] })
     }
 
-    @Test fun all744PublicTokensMatchDesktopExactly() = compare(File("../../../tests/data/g2pgate/desktop_parity.json"), 744, "tokens")
+    @Test fun allPublicTokensMatchDesktopExactly() = compare(File("../../../tests/data/g2pgate/desktop_parity.json"),
+        JSONArray(File("../../../tests/data/g2pgate/tokens.json").readText(Charsets.UTF_8)).length(), "tokens")
 
     @Test fun all442PrivateCalibrationRowsMatchDesktopExactly() {
         val path = System.getenv("ABOOK_G2P_CALIBRATION_FIXTURE")
         assumeTrue("Private calibration fixture is optional; generate outside repository", path != null)
+        assertTrue("Private calibration fixture must stay outside public checkout",
+            !File(path!!).canonicalFile.toPath().startsWith(File("../../../..").canonicalFile.toPath()))
         compare(File(path!!), 442, "calibration")
     }
 }
