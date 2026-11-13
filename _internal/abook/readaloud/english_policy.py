@@ -241,6 +241,7 @@ def keeps_word(core: str, origin: str | None) -> bool:
 def reading(core: str, origin: str | None) -> tuple[str, str] | None:
     from .abbreviations import standard_reading
 
+    core = unicodedata.normalize("NFC", core)
     # These need the occurrence's sentence; never lock a context-free default.
     if (core.casefold() in POLICY["contextual_abbreviations"] or core.casefold() in POLICY["contextual_letter_names"]
             or core.casefold() in POLICY["case_sensitive_abbreviations"]):

@@ -19,6 +19,7 @@ import json
 import os
 import re
 import threading
+import unicodedata
 from functools import lru_cache
 from itertools import islice
 from pathlib import Path
@@ -83,6 +84,7 @@ def english_words() -> frozenset[str]:
 
 def split_token(token: str) -> tuple[str, str, str]:
     """(dấu câu đầu, lõi từ chữ cái đầu tới chữ cái cuối, dấu câu cuối)."""
+    token = unicodedata.normalize("NFC", token)
     start, end = 0, len(token)
     while start < end and not token[start].isalpha():
         start += 1

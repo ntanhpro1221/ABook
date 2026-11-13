@@ -758,6 +758,12 @@ def spoken_tokens(toks: list[str], origin: str | None = None, speaks_english: bo
     """Read punctuation-separated words while retaining one result per displayed token."""
     from .studio_tn import reading_punctuation
 
+    # Normalize before punctuation/word rules inspect combining marks or compare
+    # Vietnamese spellings. Displayed text and token ownership remain unchanged.
+    toks = [unicodedata.normalize("NFC", token) for token in toks]
+    if readings:
+        readings = {unicodedata.normalize("NFC", surface): unicodedata.normalize("NFC", spoken)
+                    for surface, spoken in readings.items()}
     parts: list[str] = []
     owners: list[int] = []
     for index, token in enumerate(toks):

@@ -101,6 +101,35 @@ def test_critical_dependency_checks_import_modules_and_lock_utmos_source(monkeyp
     }
 
 
+@pytest.mark.parametrize("name", ["ctranslate2", "faster-whisper", "brotli"])
+def test_installed_asr_and_support_version_drift_is_rejected(monkeypatch, name):
+    expected = runtime_contract.CRITICAL_RUNTIME_DISTRIBUTIONS[name][1]
+    monkeypatch.setattr(runtime_contract.importlib.metadata, "distribution", lambda _: FakeDistribution("0.0.0"))
+    monkeypatch.setattr(runtime_contract.importlib, "import_module", lambda _: SimpleNamespace(__file__="fake.py"))
+    check = runtime_contract.critical_dependency_checks()[name]
+    assert check["ok"] is False
+    assert f"expected {expected}" in check["detail"]
+
+
+def test_installed_packages_match_the_release_lock():
+    """Read real metadata: a matching declaration alone cannot certify the venv."""
+    import importlib.metadata
+    import tomllib
+
+    lock = tomllib.loads((Path(__file__).resolve().parents[1] / "uv.lock").read_text(encoding="utf-8"))
+    drift = {}
+    for package in lock["package"]:
+        if "registry" not in package["source"]:
+            continue
+        try:
+            actual = importlib.metadata.version(package["name"])
+        except importlib.metadata.PackageNotFoundError:
+            actual = "missing"
+        if actual != package["version"]:
+            drift[package["name"]] = (package["version"], actual)
+    assert not drift, f"release lock and installed runtime disagree: {drift}"
+
+
 def test_perceptual_cache_marker_requires_locked_revision_and_checkpoint_hash(
     tmp_path,
     monkeypatch,

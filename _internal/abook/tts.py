@@ -6,6 +6,7 @@ import math
 import os
 import random
 import re
+import unicodedata
 from functools import lru_cache
 from pathlib import Path
 from typing import Any, Callable
@@ -1014,6 +1015,12 @@ class TTSCoordinator:
         if self._pronunciation_pattern is None:
             minimum = float(self.settings["analysis"].get("low_confidence_threshold", 0.58))
             pronunciations = self.db.list_pronunciations(minimum)
+            pronunciations = [
+                {key: unicodedata.normalize("NFC", value)
+                 if key in {"surface", "normalized_surface", "spoken_form"} and isinstance(value, str) else value
+                 for key, value in dict(item).items()}
+                for item in pronunciations
+            ]
             from .studio_names import japanese_pronunciations
 
             pronunciations = japanese_pronunciations(pronunciations, self._origin_of_book(), self._book_name_readings())
@@ -1335,6 +1342,7 @@ class TTSCoordinator:
         # `spoken_symbols_to_words` would turn a reference mark pasted into listener_text
         # into the words "note one"; it is not speech in any form.
         raw = INLINE_REFERENCE_MARKER_PATTERN.sub("", str(_row_value(row, "listener_text", "") or row["text"]))
+        raw = unicodedata.normalize("NFC", raw)
         # Recognize URL/email before symbol TN replaces their punctuation. Explicit
         # book readings still match their complete surface before inserting spaces.
         protected = [match.span() for pattern in (self._exact_pronunciation_pattern, self._pronunciation_pattern)

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import unicodedata
 from pathlib import Path
 
 import pytest
@@ -15,6 +16,30 @@ from abook.tts import TTSCoordinator
 
 FIXTURE = Path(__file__).parent / "fixtures/readaloud/english_direct/cases.json"
 CASES = json.loads(FIXTURE.read_text(encoding="utf-8"))["cases"]
+
+
+@pytest.mark.parametrize("text", ["Tôi kiểm GPS.", "Cô gái tên Y.", "Bản hot này hay."])
+def test_decomposed_input_has_the_same_reading_at_reader_and_studio_boundaries(tmp_path, text):
+    decomposed = unicodedata.normalize("NFD", text)
+    assert names.split_token(decomposed.split()[0]) == names.split_token(text.split()[0])
+    assert vieneu.spoken_tokens(decomposed.split(), direct_english=True) == vieneu.spoken_tokens(text.split(), direct_english=True)
+    db = ProjectDB(tmp_path / "project.sqlite3")
+    tts = TTSCoordinator(build_settings(), db, lambda _: None)
+    row = {"text": decomposed}
+    assert tts.spoken_text_with_anchors(row) == tts.spoken_text_with_anchors({"text": text})
+    assert row["text"] == decomposed
+
+
+def test_decomposed_listener_readings_match_normalized_source_and_anchor_offsets(tmp_path):
+    db = ProjectDB(tmp_path / "project.sqlite3")
+    db.upsert_pronunciation(surface=unicodedata.normalize("NFD", "Hà Vy"), normalized_surface="hà vy",
+                            spoken_form=unicodedata.normalize("NFD", "Lan Anh"), confidence=1,
+                            source="listener_choice", locked=True)
+    tts = TTSCoordinator(build_settings(), db, lambda _: None)
+    text, anchors = tts.spoken_text_with_anchors({"text": unicodedata.normalize("NFD", "Hà Vy vẽ.")})
+    assert text == "Lan Anh vẽ."
+    assert len(anchors) == 1
+    assert text[anchors[0]["spoken_start"]:anchors[0]["spoken_end"]] == "Lan Anh"
 
 
 @pytest.mark.parametrize("case", CASES, ids=lambda case: case["text"])

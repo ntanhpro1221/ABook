@@ -56,6 +56,31 @@ _CALLS = 0
 _BY_TEST: dict[str, float] = {}
 _CURRENT_TEST = ""
 
+# Paths and explicit integration inputs belong to the test runner. Application
+# switches belong to each test and must not inherit a developer's Studio setup.
+_RUNNER_ENV = {
+    "ABOOK_RUNTIME", "ABOOK_CORPUS", "ABOOK_PREFERENCES", "ABOOK_NET_TESTS",
+    "ABOOK_REQUIRE_G2P_PARITY", "ABOOK_SEA_G2P_DICT", "ABOOK_SEA_G2P_LIB",
+    "ABOOK_AUDIOCPP_VOICES", "ABOOK_VIENEU383_PRESETS", "ABOOK_VIENEU_GGUF_REFERENCE",
+    "ABOOK_SUPERTONIC_MODEL", "ABOOK_WORD_ALIGN_TEST_DIR", "ABOOK_PQ_EVAL_ROOT",
+    "ABOOK_MUSIC_STUDENT_DIR", "ABOOK_MUSIC_STUDENT_BACKEND",
+    "HF_HOME", "HF_HUB_CACHE", "HF_DATASETS_CACHE", "HF_ASSETS_CACHE",
+}
+_TEST_ENV_DEFAULTS = {name: "0" for name in (
+    "ABOOK_WORD_TIMING", "ABOOK_PRECAST_WATCH", "ABOOK_CAST_DISCOVERY",
+    "ABOOK_MUSIC_STUDENT_DOWNLOAD", "ABOOK_FFMPEG_DOWNLOAD",
+    "ABOOK_VIENEU_DOWNLOAD", "ABOOK_SUPERTONIC_DOWNLOAD",
+)}
+
+
+@pytest.fixture(autouse=True)
+def _isolated_application_environment(monkeypatch: pytest.MonkeyPatch) -> None:
+    for name in tuple(os.environ):
+        if name.startswith(("HF_", "TRANSFORMERS_", "ABOOK_")) and name not in _RUNNER_ENV and not name.startswith("ABOOK_TEST_"):
+            monkeypatch.delenv(name, raising=False)
+    for name, value in _TEST_ENV_DEFAULTS.items():
+        monkeypatch.setenv(name, value)
+
 
 @pytest.fixture
 def refused_tcp_port():
@@ -115,14 +140,15 @@ def _app_data_in_a_temporary_folder(tmp_path_factory: pytest.TempPathFactory) ->
     """Dữ liệu của app mà test không tự chỉ chỗ - nhất là khoá mã sách (webui/library.book_id: `book_ids.key` cạnh
     preferences.json, tạo lần đầu cần tới) - nằm trong thư mục tạm của phiên test, không bao giờ ở %LOCALAPPDATA%/ABook
     thật của người chạy test. Test tự đặt biến này (monkeypatch) thì theo test."""
-    if os.environ.get("ABOOK_PREFERENCES"):
-        yield
-        return
+    previous = os.environ.get("ABOOK_PREFERENCES")
     os.environ["ABOOK_PREFERENCES"] = str(tmp_path_factory.mktemp("app-data") / "preferences.json")
     try:
         yield
     finally:
-        os.environ.pop("ABOOK_PREFERENCES", None)
+        if previous is None:
+            os.environ.pop("ABOOK_PREFERENCES", None)
+        else:
+            os.environ["ABOOK_PREFERENCES"] = previous
 
 
 @pytest.fixture(autouse=True, scope="session")

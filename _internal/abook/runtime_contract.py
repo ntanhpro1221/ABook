@@ -132,6 +132,10 @@ CRITICAL_RUNTIME_DISTRIBUTIONS: dict[str, tuple[str, str]] = {
     # 220 Hz on 3.3.0 against 257 Hz on 3.8.1 with identical weights. So `pip install -U
     # vieneu` mid-book would silently re-cast the rest of the chapters.
     "vieneu": ("vieneu", "3.8.3"),
+    # Both engines and their installed versions belong to the book's ASR provenance.
+    "ctranslate2": ("ctranslate2", "4.8.2"),
+    "faster-whisper": ("faster_whisper", "1.2.1"),
+    "brotli": ("brotli", "1.2.0"),
     # Same silent class: sea-g2p decides the pronunciation of locked names.
     "sea-g2p": ("sea_g2p", "0.10.0"),
 }

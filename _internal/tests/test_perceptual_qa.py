@@ -204,11 +204,16 @@ def test_enabled_model_without_configuration_never_implicitly_downloads(tmp_path
     assert calls == []
 
 
-def test_model_load_is_offline_and_environment_is_restored(tmp_path: Path, monkeypatch) -> None:
+@pytest.mark.parametrize("previous_transformers", [None, "0", "1"])
+def test_model_load_is_offline_and_environment_is_restored(tmp_path: Path, monkeypatch, previous_transformers) -> None:
     checkpoint = tmp_path / "model.pth"
     checkpoint.touch()
     observed: dict[str, str | None] = {}
     monkeypatch.setenv("HF_HUB_OFFLINE", "previous")
+    if previous_transformers is None:
+        monkeypatch.delenv("TRANSFORMERS_OFFLINE", raising=False)
+    else:
+        monkeypatch.setenv("TRANSFORMERS_OFFLINE", previous_transformers)
 
     def factory(**_kwargs):
         observed["hf"] = os.environ.get("HF_HUB_OFFLINE")
@@ -224,7 +229,7 @@ def test_model_load_is_offline_and_environment_is_restored(tmp_path: Path, monke
     assert verifier.load() is True
     assert observed == {"hf": "1", "transformers": "1"}
     assert os.environ["HF_HUB_OFFLINE"] == "previous"
-    assert "TRANSFORMERS_OFFLINE" not in os.environ
+    assert os.environ.get("TRANSFORMERS_OFFLINE") == previous_transformers
 
 
 def test_model_load_supplies_noninteractive_streams_for_detached_pythonw(
