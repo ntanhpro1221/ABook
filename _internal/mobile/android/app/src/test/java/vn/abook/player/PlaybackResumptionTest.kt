@@ -27,6 +27,7 @@ class PlaybackResumptionTest {
         assertTrue(Playback.flushSaves(TestTime.ms(5_000)))
         BookEditsFixtures.useStoreRoot(BookEditsFixtures.tempDir("playback-resumption"))
         BookEditsFixtures.copyBase(File(Store.root, "books/resume-book"))
+        assertTrue(Store.rewriteManifest("resume-book") { it.put("id", "resume-book") })
         Store.progress("resume-book", 1, 7.5, 12.2)
         Playback.player = voice.player
         Playback::class.java.getDeclaredField("bookId").also { it.isAccessible = true }.set(Playback, "")
