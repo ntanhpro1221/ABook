@@ -355,19 +355,22 @@ def common_loanword(core: str, toks: list[str], index: int) -> bool:
     return True
 
 
-def loanword_compound(core: str, toks: list[str], index: int) -> str | None:
+def loanword_compound(core: str, toks: list[str], index: int, speaks_english: bool = False) -> str | None:
     """Reading of a hyphen compound of a common-noun loanword and Vietnamese syllables ("loli-con" -> "lô-li con"), None otherwise:
-    a part that is neither ("web-based", "e-mail") leaves the whole word to the other rules."""
-    from ..analysis import is_vietnamese_syllable
+    a part that is neither ("web-based", "level-up": "up" is not a Vietnamese spelling) leaves the whole word to the other rules, and so does
+    a part an English-speaking voice keeps in English (`ENGLISH_VOICE_KEEPS`: "check-in")."""
+    from ..vietnamese_syllable import valid_syllable
 
     parts = core.split("-")
     if len(parts) < 2 or core.lower() in LOANWORDS or not all(part.isalpha() for part in parts):
         return None
     said = []
     for part in parts:
+        if speaks_english and part.lower() in ENGLISH_VOICE_KEEPS:
+            return None
         if part.lower() in LOANWORDS and common_loanword(part, toks, index):
             said.append(LOANWORDS[part.lower()])
-        elif len(part) > 1 and is_vietnamese_syllable(part.lower()):
+        elif len(part) > 1 and valid_syllable(part.lower()):
             said.append(part)
         else:
             return None
@@ -395,7 +398,7 @@ def read_loanwords(toks: list[str], out: list[str], *, shouted: bool = False, sp
 
             out[index] = before + LETTERS[compound[1].lower()] + " " + LOANWORDS[compound[2].lower()] + after
             continue
-        compound_reading = loanword_compound(core, toks, index)
+        compound_reading = loanword_compound(core, toks, index, speaks_english)
         if compound_reading:
             if english is None:
                 from .english_policy import loanword_english

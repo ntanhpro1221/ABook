@@ -3,6 +3,7 @@ package vn.abook.player.readaloud
 import java.util.Locale
 import java.util.concurrent.ConcurrentHashMap
 import vn.abook.player.VietnameseReading
+import vn.abook.player.VietnameseSyllable
 
 /**
  * Tên Nhật / Hàn trong "Nghe ngay": đọc bằng luật phiên âm ([Romanization]) thay vì âm tiếng Anh của sea-g2p - bản Kotlin y hệt `abook/readaloud/names.py`
@@ -296,15 +297,17 @@ object Names {
     }
 
     /** Cách đọc của từ ghép gạch giữa một từ mượn viết như danh từ chung và âm tiết Việt ("loli-con" -> "lô-li con"), null khi không phải: một phần không là cả hai
-     *  ("web-based", "e-mail") để nguyên cả chữ cho luật khác - `loanword_compound`. */
+     *  ("web-based", "level-up": "up" không phải chính tả Việt) để nguyên cả chữ cho luật khác; phần mà giọng nói tiếng Anh giữ chữ Anh ([ENGLISH_VOICE_KEEPS]:
+     *  "check-in") cũng vậy - giọng Android duy nhất nói được tiếng Anh - `loanword_compound`. */
     fun loanwordCompound(core: String, toks: List<String>, index: Int): String? {
         val parts = core.split("-")
         if (parts.size < 2 || lower(core) in LOANWORDS || !parts.all { part -> part.isNotEmpty() && part.all { it.isLetter() } }) return null
         val said = mutableListOf<String>()
         for (part in parts) {
+            if (lower(part) in ENGLISH_VOICE_KEEPS) return null
             said += when {
                 lower(part) in LOANWORDS && commonLoanword(part, toks, index) -> LOANWORDS.getValue(lower(part))
-                part.length > 1 && VietnameseReading.isSyllable(lower(part)) -> part
+                part.length > 1 && VietnameseSyllable.validSyllable(lower(part)) -> part
                 else -> return null
             }
         }
