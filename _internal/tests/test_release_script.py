@@ -195,3 +195,69 @@ def test_build_stops_before_the_long_qt_build_when_gradle_cannot_find_the_androi
     (android / "local.properties").unlink()
     monkeypatch.setenv("ANDROID_HOME", str(sdk))
     release.check_android_sdk()
+
+
+def _mapping(map_id: str, body: bytes = b"Original -> a:\n") -> bytes:
+    import hashlib
+
+    return (b"# compiler: R8\n# pg_map_id: " + map_id.encode() + b"\n# pg_map_hash: SHA-256 "
+            + hashlib.sha256(body).hexdigest().encode() + b"\n" + body)
+
+
+def _fake_full_build(monkeypatch, tmp_path: Path, apk_id: str | None, mapping: bytes | None) -> Path:
+    """build() đến hết với _run giả: Qt ghi bộ cài, gradle ghi APK (dex mang pg-map-id) và có thể cả mapping R8."""
+    import zipfile
+
+    archive = tmp_path / "private/releases/android"
+    monkeypatch.setattr(release, "MAPPING_ARCHIVE", archive)
+    monkeypatch.setattr(release, "ROOT", tmp_path)
+    monkeypatch.setattr(release, "current_version", lambda *_: "9.9.9")
+    monkeypatch.setattr(release, "_apk_certificate", lambda _: release.APK_CERT_SHA256)
+    for name in ("check_android_sdk", "check_studio_assets_pinned", "check_word_align_pinned", "check_speaker_model_pinned"):
+        monkeypatch.setattr(release, name, lambda: None)
+    (tmp_path / "docs").mkdir(parents=True)
+    (tmp_path / "LICENSE").write_text("license", encoding="utf-8")
+    (tmp_path / "docs/THIRD_PARTY.md").write_text("third party", encoding="utf-8")
+
+    def run(command, cwd, env=None, low=False):
+        if not command[0].endswith("gradlew.bat"):
+            built = tmp_path / "desktop_qt/build/installer"
+            built.mkdir(parents=True, exist_ok=True)
+            for name, text in _installer_files().items():
+                (built / name).write_text(text, encoding="utf-8")
+            return
+        apk = tmp_path / "mobile/android/app/build/outputs/apk/release/app-release.apk"
+        apk.parent.mkdir(parents=True, exist_ok=True)
+        with zipfile.ZipFile(apk, "w") as package:
+            package.writestr("classes.dex", b"dex\0" + (f'{{"pg-map-id":"{apk_id}"}}'.encode() if apk_id else b""))
+        if mapping is not None:
+            built = tmp_path / "mobile/android/app/build/outputs/mapping/release/mapping.txt"
+            built.parent.mkdir(parents=True, exist_ok=True)
+            built.write_bytes(mapping)
+    monkeypatch.setattr(release, "_run", run)
+    return archive / "9.9.9/mapping.txt"
+
+
+def test_build_archives_the_private_r8_mapping_of_the_apk_it_built(monkeypatch, tmp_path: Path) -> None:
+    """0.4.168: build không lưu mapping R8, verify hỏng tới khi Lead chép tay - build phải tự lưu, đúng mapping của APK này."""
+    mapping = _mapping("abc123")
+    archived = _fake_full_build(monkeypatch, tmp_path, "abc123", mapping)
+    release.build("9.9.9", tmp_path / "out")
+    assert archived.read_bytes() == mapping
+    assert not list(archived.parent.glob("*.partial"))
+    assert sorted(path.name for path in (tmp_path / "out").iterdir()) == sorted(release.artifacts("9.9.9"))
+    release._verify_mapping("9.9.9", tmp_path / "out/ABook_9.9.9.apk")  # đúng phép kiểm `verify` chạy sau phát hành
+
+
+@pytest.mark.parametrize("apk_id, mapping, why", [
+    ("abc123", None, "không ra mapping R8"),
+    ("abc124", _mapping("abc123"), "khác build APK"),
+    (None, _mapping("abc123"), "khác build APK"),
+    ("abc123", _mapping("abc123") + b"changed", "sai hash nội dung"),
+])
+def test_build_fails_loudly_without_the_mapping_of_this_apk(monkeypatch, tmp_path: Path, apk_id, mapping, why) -> None:
+    archived = _fake_full_build(monkeypatch, tmp_path, apk_id, mapping)
+    with pytest.raises(AssertionError, match=why):
+        release.build("9.9.9", tmp_path / "out")
+    assert not archived.exists()
+    assert not (tmp_path / "out/LICENSE").exists()  # dừng trước khi báo đủ file phát hành

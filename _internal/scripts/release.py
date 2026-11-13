@@ -52,9 +52,12 @@ def _sha256(path: Path) -> str:
         return hashlib.file_digest(source, "sha256").hexdigest()
 
 
-def _verify_mapping(version: str, apk: Path) -> None:
-    mapping = MAPPING_ARCHIVE / version / "mapping.txt"
-    assert mapping.is_file(), f"thiếu mapping R8 riêng tư: {mapping}"
+def _built_mapping() -> Path:
+    return ROOT / "mobile/android/app/build/outputs/mapping/release/mapping.txt"
+
+
+def _mapping_identity(mapping: Path) -> bytes:
+    """pg_map_id của một mapping R8, sau khi kiểm thân file khớp pg_map_hash R8 ghi ở đầu."""
     # R8 hashes the mapping body after pg_map_hash; the APK records this build's pg-map-id.
     with mapping.open("rb") as source:
         header = b""
@@ -67,13 +70,41 @@ def _verify_mapping(version: str, apk: Path) -> None:
         digest = re.search(rb"(?m)^# pg_map_hash: SHA-256 ([0-9a-f]{64})\r?$", header)
         assert identity and digest, "mapping R8 thiếu build id/hash"
         assert hashlib.file_digest(source, "sha256").hexdigest() == digest[1].decode(), "mapping R8 sai hash nội dung"
+    return identity[1]
+
+
+def _apk_map_ids(apk: Path) -> set[bytes]:
     with zipfile.ZipFile(apk) as package:
-        ids = {match for name in package.namelist() if re.fullmatch(r"classes\d*\.dex", name)
-               for match in re.findall(rb'"pg-map-id":"([0-9a-f]+)"', package.read(name))}
-    assert ids == {identity[1]}, "mapping R8 khác build APK phát hành"
-    built = ROOT / "mobile/android/app/build/outputs/mapping/release/mapping.txt"
+        return {match for name in package.namelist() if re.fullmatch(r"classes\d*\.dex", name)
+                for match in re.findall(rb'"pg-map-id":"([0-9a-f]+)"', package.read(name))}
+
+
+def _verify_mapping(version: str, apk: Path) -> None:
+    mapping = MAPPING_ARCHIVE / version / "mapping.txt"
+    assert mapping.is_file(), f"thiếu mapping R8 riêng tư: {mapping}"
+    identity = _mapping_identity(mapping)
+    assert _apk_map_ids(apk) == {identity}, "mapping R8 khác build APK phát hành"
+    built = _built_mapping()
     if built.is_file():
         assert _sha256(built) == _sha256(mapping), "mapping R8 riêng tư khác file build"
+
+
+def archive_mapping(version: str, apk: Path) -> Path:
+    """Lưu mapping R8 của APK vừa dựng vào kho riêng tư (MAPPING_ARCHIVE/<bản>/mapping.txt) - verify đòi file này.
+
+    0.4.168: build không chép, verify hỏng tới khi chép tay. Mapping phải là của đúng APK này (pg_map_id trong dex), không thì
+    dừng: thiếu nó thì không giải mã được stack trace của bản phát hành."""
+    built = _built_mapping()
+    assert built.is_file(), f"gradle không ra mapping R8: {built} - không lưu được mapping của APK phát hành"
+    assert _apk_map_ids(apk) == {_mapping_identity(built)}, "mapping R8 vừa dựng khác build APK (dựng lại APK)"
+    target = MAPPING_ARCHIVE / version / "mapping.txt"
+    target.parent.mkdir(parents=True, exist_ok=True)
+    partial = target.with_name(target.name + ".partial")
+    shutil.copyfile(built, partial)
+    os.replace(partial, target)
+    _verify_mapping(version, apk)
+    print(f"đã lưu mapping R8 riêng tư: {target}", flush=True)
+    return target
 
 
 def verify(version: str, out: Path, commit: str | None = None) -> None:
@@ -341,6 +372,7 @@ def build(version: str, out: Path) -> None:
     shutil.copy2(apk, out / f"ABook_{version}.apk")
     certificate = _apk_certificate(out / f"ABook_{version}.apk")
     assert certificate == APK_CERT_SHA256, f"APK ký bằng chứng chỉ lạ {certificate} - điện thoại sẽ không cài đè được"
+    archive_mapping(version, out / f"ABook_{version}.apk")
 
     shutil.copy2(ROOT / "LICENSE", out / "LICENSE")
     shutil.copy2(ROOT / "docs/THIRD_PARTY.md", out / "THIRD_PARTY.md")
