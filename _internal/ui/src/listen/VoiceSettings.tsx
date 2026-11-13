@@ -1,3 +1,4 @@
+import { Presence } from "../shared/MotionPresence";
 import { S } from "../shared/strings.generated";
 import { DisclosureRow } from "@/shared/DisclosureRow";
 import { MotionRegion } from "@/shared/MotionRegion";
@@ -300,7 +301,7 @@ export function VoiceSettings({ api, deviceHint, modules }: { api: VoiceSettings
               >
               {voiceSections(list).map((section) => (
                 <div key={section.label ?? ""}>
-                  {section.label && <div className="mb-1 mt-2 text-body-small font-medium text-fg-2">{section.label}</div>}
+                  {<Presence>{section.label && <div className="mb-1 mt-2 text-body-small font-medium text-fg-2">{section.label}</div>}</Presence>}
                   <ul className="divide-y divide-line">
                     {section.voices.map(({ voice, shown }) => {
                       const selected = voice.id === current?.id;
@@ -323,8 +324,8 @@ export function VoiceSettings({ api, deviceHint, modules }: { api: VoiceSettings
                               <SelectionMark selected={selected} className="ink-start [--icon-w:17.5px] size-5" />
                             </span>
                             <span className="min-w-0 text-pretty text-sm font-medium [overflow-wrap:anywhere]">{shown}</span>
-                            {genderLabel(voice.gender) && <span className="shrink-0 text-xs text-fg-2">{genderLabel(voice.gender)}</span>}
-                            {selected && <span className="shrink-0 text-xs text-accent-text">{S.s_mac_dinh_9a1af367}</span>}
+                            {<Presence>{genderLabel(voice.gender) && <span className="shrink-0 text-xs text-fg-2">{genderLabel(voice.gender)}</span>}</Presence>}
+                            {<Presence>{selected && <span className="shrink-0 text-xs text-accent-text">{S.s_mac_dinh_9a1af367}</span>}</Presence>}
                           </button>
                           <Button
                             size="sm"
@@ -340,9 +341,9 @@ export function VoiceSettings({ api, deviceHint, modules }: { api: VoiceSettings
                           </Button>
                           </div>
                           {/* Lỗi nghe thử nằm ngay dưới hàng giọng vừa bấm, không ở cuối cả nhóm. */}
-                          {sample.failed?.voice === voice.id && (
+                          {<Presence>{sample.failed?.voice === voice.id && (
                             <p className="mt-1 text-body-small text-danger text-pretty" role="alert">{sample.failed.message}</p>
-                          )}
+                          )}</Presence>}
                         </li>
                       );
                     })}

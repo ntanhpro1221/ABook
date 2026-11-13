@@ -1,3 +1,4 @@
+import { Presence } from "../shared/MotionPresence";
 import { S } from "../shared/strings.generated";
 import { MotionRegion } from "@/shared/MotionRegion";
 import { useBackLayer } from "@/shared/backStack";
@@ -229,7 +230,7 @@ export function MusicSection({ book }: { book: ListenBook }) {
                 </Button>
               </span>
             </div>
-            {swapping === cue.key && (
+            {<Presence>{swapping === cue.key && (
               <SwapTrack
                 bookId={book.id}
                 cueKey={cue.key}
@@ -237,11 +238,11 @@ export function MusicSection({ book }: { book: ListenBook }) {
                 choosing={choosing}
                 onChoose={(link) => change.mutate({ pins: { [cue.key]: link }, ...(cue.silenced ? { silence: { [cue.key]: false } } : {}) })}
               />
-            )}
+            )}</Presence>}
             {/* Cuối "Đổi bài": cả kho nhạc ở chế độ chọn cho đúng đoạn này ("Dùng" ghim bài như "Chọn" ở trên). */}
-            {swapping === cue.key && (
+            {<Presence>{swapping === cue.key && (
               <BrowseLibraryLink bookId={book.id} scene={cue.key} className="px-3" />
-            )}
+            )}</Presence>}
           </li>
         ))}
       </ul>
@@ -407,7 +408,7 @@ export function EditBookDialog({
           </form>
         </Section>
         {/* Chỉ sách chữ (nhập từ file): sách Studio không có chỗ áp tác giả, sửa ở máy khác rồi gửi về là mất (fold_edits bỏ qua). */}
-        {book.stage === "text" && !workshop && (
+        {<Presence>{book.stage === "text" && !workshop && (
           <Section title={S.s_tac_gia_0ec4731b}>
             <form
               className="flex gap-2"
@@ -427,7 +428,7 @@ export function EditBookDialog({
               <Button type="submit" variant="primary" className="touch-box h-10 min-h-10 max-sm:min-h-[48px] pointer-coarse:min-h-[48px]" loading={changeAuthor.isPending} disabled={!authorSaveable(author, book.author)}>{S.s_luu_tac_gia_cd5c8008}</Button>
             </form>
           </Section>
-        )}
+        )}</Presence>}
         <Section title={S.s_anh_bia_f224644d}>
           {/* flex-wrap: ở 375 px cột nút (rộng ~190 px) không vừa cạnh bìa 112 px - xuống dưới bìa thay vì tràn khỏi hộp (soát UX a17). */}
           <div className="flex flex-wrap items-start gap-x-4 gap-y-3">
@@ -439,13 +440,13 @@ export function EditBookDialog({
               </Button>
               <Button ref={searchOpener} variant="ghost" className="justify-start text-left" icon={Globe} disabled={busy} onClick={() => setSearching(true)}>{S.s_tim_bia_34025664}</Button>
               <Reveal when={book.cover}><Button variant="ghost" className="justify-start text-left" icon={Trash2} disabled={busy} onClick={() => removeCover.mutate()}>{S.s_bo_anh_bia_696c6692}</Button></Reveal>
-              {setCover.isPending && (
+              {<Presence>{setCover.isPending && (
                 <ContentSkeleton count={1} label={S.s_dang_dat_anh_bia_f4a60e45} />
-              )}
+              )}</Presence>}
             </div>
           </div>
         </Section>
-        {book.stage !== "text" && (
+        {<Presence>{book.stage !== "text" && (
         <Section title={S.s_nhac_nen_271fb292} fold="edit-book.music">
           {workshop ? (
             <div className="flex flex-wrap items-center gap-3 text-sm text-fg-2">
@@ -456,17 +457,17 @@ export function EditBookDialog({
             <MusicSection book={book} />
           )}
         </Section>
-        )}
+        )}</Presence>}
         <Section
           title={book.stage === "text" ? S.s_ten_chuong_9edb6c28 : S.s_ten_rieng_8a9cd50f}
           hint={book.stage === "text" ? S.s_bam_o_dong_chuong_de_doi_ten_chuong_d2fb9984 : S.s_bam_o_dong_chuong_de_doi_ten_chuong_o_tab_733e1523}
         />
-        {book.stage === "text" && !workshop && (
+        {<Presence>{book.stage === "text" && !workshop && (
           <Section title={S.s_cach_doc_ten_1c46e75d} hint={S.s_day_cach_doc_tu_thuong_la_ten_rieng_chu_gi_69023eb0} fold="edit-book.readings">
             <BookReadingsSection bookId={book.id} />
           </Section>
-        )}
-        {!workshop && (book.edits ?? 0) > 0 && (
+        )}</Presence>}
+        {<Presence>{!workshop && (book.edits ?? 0) > 0 && (
           <Section title={S.s_bo_moi_thay_doi_0_af6c6828(book.edits)} hint={S.s_sach_tro_ve_dung_nhu_nguoi_lam_sach_da_don_f3a48d43}>
             {confirmRevert ? (
               <div ref={revertBox} className="flex gap-2">
@@ -477,7 +478,7 @@ export function EditBookDialog({
               <Button ref={revertButton} variant="ghost" className="-ml-4" onClick={() => setConfirmRevert(true)}>{S.s_bo_moi_thay_doi_ad999cde}</Button>
             )}
           </Section>
-        )}
+        )}</Presence>}
       </div>
     )}</MotionRegion>
     <input
@@ -668,12 +669,12 @@ export function SaveAsDialog({
         <p className="mt-3 text-sm text-fg-2">{S.s_sach_nghe_mo_duoc_bang_abook_tren_may_tinh_ef9eba65}{book.wishes ? S.s_cung_0_viec_dang_cho_may_lam_sach_chua_lam_4b0db6d4(book.wishes) : ""}.
         </p>
       )}
-      {pickFolder && (
+      {<Presence>{pickFolder && (
         <div className="mt-3 flex items-center gap-2 text-sm">
           <Button variant="ghost" size="sm" onClick={() => void pickFolder().then((picked) => picked && setFolder(picked))}>{S.s_chon_thu_muc_1fe47e38}</Button>
           <MotionRegion as="span" motionKey={folder ?? ""} className="min-w-0 truncate text-fg-2">{folder ?? S.s_mac_dinh_thu_muc_da_xuat_65fabfd2}</MotionRegion>
         </div>
-      )}
+      )}</Presence>}
       <Reveal when={pickFolder}><p className="mt-2 text-xs text-fg-3">{S.s_da_co_file_cung_ten_trong_thu_muc_ay_thi_f_ca6cb2a9}</p></Reveal>
 
     </Dialog>

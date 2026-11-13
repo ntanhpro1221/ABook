@@ -1,5 +1,8 @@
 package vn.abook.player.ui.nowplaying
 
+import vn.abook.player.ui.motion.SwapContent
+import vn.abook.player.ui.motion.ContentLayout
+
 import vn.abook.player.S
 
 import vn.abook.player.ui.components.gestureBarPadding
@@ -120,22 +123,24 @@ fun PlayerSheets(state: NowPlayingState, model: NowPlayingModel, window: NowPlay
                             model.setSleep(SleepKind.Minutes, minutes)
                         }
                         // Đang hẹn: còn bao lâu + S.s_copy_4a2a3696181b / S.s_tat_hen_gio_fc8af231. Chưa hẹn mà vừa tắt tiếng (chưa quá 30 phút): mời bật lại đúng mức cũ.
-                        if (active) {
-                            RowHint(SleepText.heading(state.sleep.kind))
-                            SleepClock(state.sleep, model.position)
-                            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(Dim.s16)) {
-                                TextAction(SleepText.extendLabel(SleepText.extendMinutes(state.sleep, options)), { model.extendSleep(); window.closeSheet() }, "sleep_extend", align = Alignment.CenterStart)
-                                TextAction(S.s_tat_hen_gio_fc8af231, { model.setSleep(SleepKind.Off); window.closeSheet() }, "sleep_off", align = Alignment.CenterStart, danger = true)
-                            }
-                        } else {
-                            val now = remember(window.sheetOpen) { System.currentTimeMillis() }
-                            Reveal(SleepText.recentlyStopped(state.sleep, now)) {
-                                BasicText(SleepText.stoppedAt(state.sleep.stoppedAtMs), style = Abook.type.body, modifier = Modifier.testTag("sleep_stopped"))
-                                TextAction(SleepText.restart(window.lastSleepMinutes), {
-                                    model.setSleep(SleepKind.Minutes, window.lastSleepMinutes); window.closeSheet()
-                                }, "sleep_again", align = Alignment.CenterStart)
-                            }
-                        }
+                                SwapContent(active, contentKey = { active -> active }, layout = ContentLayout.Column) { active ->
+                                    if (active) {
+                                        RowHint(SleepText.heading(state.sleep.kind))
+                                        SleepClock(state.sleep, model.position)
+                                        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(Dim.s16)) {
+                                            TextAction(SleepText.extendLabel(SleepText.extendMinutes(state.sleep, options)), { model.extendSleep(); window.closeSheet() }, "sleep_extend", align = Alignment.CenterStart)
+                                            TextAction(S.s_tat_hen_gio_fc8af231, { model.setSleep(SleepKind.Off); window.closeSheet() }, "sleep_off", align = Alignment.CenterStart, danger = true)
+                                        }
+                                    } else {
+                                        val now = remember(window.sheetOpen) { System.currentTimeMillis() }
+                                        Reveal(SleepText.recentlyStopped(state.sleep, now)) {
+                                            BasicText(SleepText.stoppedAt(state.sleep.stoppedAtMs), style = Abook.type.body, modifier = Modifier.testTag("sleep_stopped"))
+                                            TextAction(SleepText.restart(window.lastSleepMinutes), {
+                                                model.setSleep(SleepKind.Minutes, window.lastSleepMinutes); window.closeSheet()
+                                            }, "sleep_again", align = Alignment.CenterStart)
+                                        }
+                                    }
+                                }
                         RowHint(SleepText.gridHeading(active), Modifier.padding(top = Dim.s8))
                         // Bộ chọn giá trị (DESIGN mục 6, chủ sách 09-11): chip tiêu biểu + chọn tự do 1-240 phút; hàng riêng dưới là "Hết chương này" / "Hết N chương".
                         val minutesNow = state.sleep.kind == SleepKind.Minutes
@@ -183,10 +188,12 @@ fun PlayerSheets(state: NowPlayingState, model: NowPlayingModel, window: NowPlay
                         Reveal(state.readAlongAvailable) { Box(Modifier.semantics { contentDescription = S.s_co_chu_va_gian_dong_7dfe48ac }) {
                             SheetRow(S.s_co_chu_d7b231e3, window.look.summary, LucidePaths.CAPTIONS, tag = "more_look") { deeper(PlayerSheet.Look) }
                         } }
-                        if (window.otherPlayers != null) SheetRow(S.s_phat_tren_681e16e1, S.s_chon_1171ca97, LucidePaths.CAST, tag = "more_devices") {
-                            window.closeSheet()
-                            window.otherPlayers?.invoke()
-                        }
+                                SwapContent(window.otherPlayers, contentKey = { otherPlayers -> otherPlayers != null }, layout = ContentLayout.Column) { otherPlayers ->
+                                    if (otherPlayers != null) SheetRow(S.s_phat_tren_681e16e1, S.s_chon_1171ca97, LucidePaths.CAST, tag = "more_devices") {
+                                        window.closeSheet()
+                                        otherPlayers()
+                                    }
+                                }
                         window.bookPage?.let { open -> SheetRow(S.s_trang_sach_2b6c8e51, "", LucidePaths.BOOK_OPEN, tag = "more_book") { window.closeSheet(); open() } }
                         // Cửa sổ mini ở cuối (rời khỏi hàng nút chính của trình phát): mở được cả khi đang dừng.
                         window.miniWindow?.let { enter -> SheetRow(S.s_cua_so_mini_65edeb9b, "", LucidePaths.PICTURE_IN_PICTURE_2, tag = "more_mini") { window.closeSheet(); enter() } }
@@ -196,8 +203,10 @@ fun PlayerSheets(state: NowPlayingState, model: NowPlayingModel, window: NowPlay
                     PlayerSheet.Audio -> AudioFxPage(music, state.bookId, openMusic = { deeper(PlayerSheet.Music) }, openTone = { deeper(PlayerSheet.Tone) })
                     PlayerSheet.Tone -> TonePage(onBack = ::pop, leaveGuard = { toneGuard = it })
                     PlayerSheet.Voice -> {
-                        if (state.voices.isEmpty()) BasicText(S.s_may_nay_chua_co_giong_doc_3449f846, style = Abook.type.bodySmall)
-                        else VoiceList(state, model, window)
+                                SwapContent(state, contentKey = { state -> state.voices.isEmpty() }, layout = ContentLayout.Column) { state ->
+                                    if (state.voices.isEmpty()) BasicText(S.s_may_nay_chua_co_giong_doc_3449f846, style = Abook.type.bodySmall)
+                                    else VoiceList(state, model, window)
+                                }
                     }
                 } } }
             }
@@ -317,9 +326,11 @@ private fun SheetRow(label: String, value: String, icon: String? = null, enabled
     Row(Modifier.fillMaxWidth().heightIn(min = Dim.s48).then(if (enabled) Modifier.pressable(role = role, onClick = onClick) else Modifier)
         .semantics { if (!enabled) disabled() }.then(if (tag != null) Modifier.testTag(tag) else Modifier).padding(vertical = 8.dp),
         verticalAlignment = Alignment.CenterVertically) {
-        if (icon != null) {
-            LucideIcon(icon, Abook.colors.text, Modifier.testTag("sheet_row_icon"))
-            Spacer(Modifier.width(Dim.s16))
+        SwapContent(icon, contentKey = { icon -> icon != null }, layout = ContentLayout.Row) { icon ->
+            if (icon != null) {
+                LucideIcon(icon, Abook.colors.text, Modifier.testTag("sheet_row_icon"))
+                Spacer(Modifier.width(Dim.s16))
+            }
         }
         BasicText(label, Modifier.weight(1f), style = Abook.type.body)
         Spacer(Modifier.width(12.dp))

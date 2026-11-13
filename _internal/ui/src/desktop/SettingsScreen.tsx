@@ -1,3 +1,4 @@
+import { Presence } from "../shared/MotionPresence";
 import { S } from "../shared/strings.generated";
 import { DisclosureRow } from "@/shared/DisclosureRow";
 import { MotionRegion } from "@/shared/MotionRegion";
@@ -184,7 +185,7 @@ function UpdateCheck({ current }: { current: string }) {
   return (
     <SettingsRow
       label={current ? S.s_abook_0_555fc57e(current) : S.s_ban_moi_422f08ca}
-      hint={<MotionRegion as="span" motionKey={line?.text ?? ""}>{line && <span className={cn(line.tone === "error" && "text-danger")} role="status">{line.text}</span>}</MotionRegion>}
+      hint={<MotionRegion as="span" motionKey={line?.text ?? ""}>{<Presence>{line && <span className={cn(line.tone === "error" && "text-danger")} role="status">{line.text}</span>}</Presence>}</MotionRegion>}
     >
       <Button size="sm" variant="ghost" disabled={checking} onClick={() => void check()}>
         {checking ? S.s_dang_kiem_tra_424c43e3 : S.s_kiem_tra_ban_moi_f66eda92}
@@ -201,7 +202,7 @@ function ThirdPartyButton() {
     <>
       <DisclosureRow title={S.s_thanh_phan_su_dung_46f70f05} onClick={() => setOpen(true)} />
       <Dialog open={open} onOpenChange={setOpen} title={S.s_thanh_phan_su_dung_46f70f05} width="max-w-[560px]">
-        <div ref={scrollFade.ref} style={scrollFade.style} className="mt-3 max-h-[65vh] select-text overflow-y-auto pr-1">{open && <ThirdPartyList />}</div>
+        <div ref={scrollFade.ref} style={scrollFade.style} className="mt-3 max-h-[65vh] select-text overflow-y-auto pr-1">{<Presence>{open && <ThirdPartyList />}</Presence>}</div>
       </Dialog>
     </>
   );
@@ -292,7 +293,7 @@ function LookGroup({ remote, touchOnly }: { remote: boolean; touchOnly: boolean 
   const { data: preferences, update } = usePreferences();
   return (
     <>
-      {!remote && (
+      {<Presence>{!remote && (
         <SettingsBlock>
           <SettingsRow label={S.s_mau_bf45a510}>
             <ChoiceRow label={S.s_mau_bf45a510} value={preferences?.theme ?? "system"} onChange={(theme) => update({ theme })} options={[...THEMES]} />
@@ -315,9 +316,9 @@ function LookGroup({ remote, touchOnly }: { remote: boolean; touchOnly: boolean 
             />
           </SettingsRow>
         </SettingsBlock>
-      )}
+      )}</Presence>}
       {/* Phím tắt vô nghĩa trên màn chỉ có cảm ứng (điện thoại, máy tính bảng không bàn phím): ẩn cả khối. */}
-      {!touchOnly && (
+      {<Presence>{!touchOnly && (
         <SettingsBlock title={S.s_phim_tat_7baaed2f} id="shortcuts">
           <SettingsRow label={<span id="letter-shortcuts-name">{S.s_phim_tat_chu_f1e88b8a}</span>} hint={<span id="letter-shortcuts-hint">{LETTER_SHORTCUTS_HINT}</span>}>
             {/* Công tắc này lưu ở máy tính (PUT /api/preferences không qua Studio từ xa): ở xa thì nói đổi ở đâu thay vì để nó bấm ra 403 im lặng. */}
@@ -337,7 +338,7 @@ function LookGroup({ remote, touchOnly }: { remote: boolean; touchOnly: boolean 
             <ShortcutList remote={remote} inSettings />
           </div>
         </SettingsBlock>
-      )}
+      )}</Presence>}
     </>
   );
 }
@@ -422,23 +423,23 @@ export function AdvancedGroup({ info }: { info: AppInfo | undefined }) {
           </div>
         </SettingsBlock>
       </MotionPresence>
-      {!remote && (info?.update || info?.canCheckUpdate) && (
+      {<Presence>{!remote && (info?.update || info?.canCheckUpdate) && (
         <SettingsBlock title={S.s_cap_nhat_5293d03c} id="update">
           <MotionRegion>{info.update ? <UpdateRow update={info.update} current={info.version} /> : <UpdateCheck current={info.version} />}</MotionRegion>
         </SettingsBlock>
-      )}
-      {!remote && (
+      )}</Presence>}
+      {<Presence>{!remote && (
         <SettingsBlock title={S.s_bo_nho_e3d4d2b2}>
           <ReadAloudStorage api={{ usage: () => httpSource.readAloudCacheTotal!(), clear: () => httpSource.readAloudCacheClearAll!() }} />
         </SettingsBlock>
-      )}
-      {!remote && (
+      )}</Presence>}
+      {<Presence>{!remote && (
         <SettingsBlock title={S.s_chan_doan_906791d5} id="diagnostics" fold="advanced.diagnostics">
           <div className="py-4">
             <OwnDiagnostics />
           </div>
         </SettingsBlock>
-      )}
+      )}</Presence>}
       <SettingsBlock title={S.s_gioi_thieu_0c84d33f} id="about" fold="advanced.about">
         <div className="space-y-3 py-4">
           <p className="text-sm text-fg-2">{S.s_abook_76b9d6fa}{info?.version}{S.s_nghe_sach_tieng_viet_va_lam_sach_noi_63eff2aa}</p>
@@ -500,10 +501,10 @@ export function SettingsScreen() {
   const active = isSettingsGroup(group) && groups.includes(group) ? group : null;
   const notices = (
     <>
-      {info?.remote && <RemoteNote listenOnly={Boolean(info.listenOnly)} />}
-      <MotionPresence open={Boolean(info?.update && !info.remote && !wide)}>{info?.update && !info.remote && !wide && (
+      {<Presence>{info?.remote && <RemoteNote listenOnly={Boolean(info.listenOnly)} />}</Presence>}
+      <MotionPresence open={Boolean(info?.update && !info.remote && !wide)}>{<Presence>{info?.update && !info.remote && !wide && (
         <DisclosureRow to={settingsPath("advanced")} className="mt-4" title={S.s_co_abook_0_6e3b5a77(info.update.version)} icon={<Download className="size-5 text-accent-text" />} />
-      )}</MotionPresence>
+      )}</Presence>}</MotionPresence>
     </>
   );
   if (wide) {

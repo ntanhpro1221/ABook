@@ -1,5 +1,8 @@
 package vn.abook.player.ui.voice
 
+import vn.abook.player.ui.motion.SwapContent
+import vn.abook.player.ui.motion.ContentLayout
+
 import vn.abook.player.S
 
 import androidx.compose.foundation.layout.Column
@@ -43,6 +46,8 @@ fun KeysScreen(voice: VoiceState, sheets: SheetHost, onBack: () -> Unit, modifie
             InlineProblem(if (ui.failed && !ui.loaded) S.s_chua_doc_duoc_cac_khoa_87b08dca else "", voice::loadKeys, "keys_problem")
         }
     }
-    if (embedded) Column(modifier.fillMaxWidth().testTag("keys_screen"), content = content)
-    else SettingsPage(S.s_khoa_truc_tuyen_b32d4988, onBack, "keys_screen", modifier, content)
+    SwapContent(embedded, contentKey = { embedded -> embedded }, layout = ContentLayout.Box) { embedded ->
+        if (embedded) Column(modifier.fillMaxWidth().testTag("keys_screen"), content = content)
+        else SettingsPage(S.s_khoa_truc_tuyen_b32d4988, onBack, "keys_screen", modifier, content)
+    }
 }

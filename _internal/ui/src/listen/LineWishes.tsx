@@ -1,3 +1,4 @@
+import { Presence } from "../shared/MotionPresence";
 import { S } from "../shared/strings.generated";
 import { withViewTransition } from "@/shared/motion";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -201,11 +202,11 @@ function WordView({ bookId, text, names, need, later, onWithdraw, onBack, initia
             )}
           </MotionRegion>
           <MotionPresence open={Boolean(reach && reach.surface === word)}>
-            {reach && (
+            {<Presence>{reach && (
               <p className={cn("mb-2 text-xs", reach.blocked ? "text-warning" : "text-fg-2")} data-reading-reach>
                 {reachSummary(reach, later)}
               </p>
-            )}
+            )}</Presence>}
           </MotionPresence>
           {word && <EditReading
             key={word}
@@ -396,12 +397,12 @@ export function LineWishDialog({
   const title = view === "speaker" ? (line?.kind === "thought" ? S.s_ai_nghi_cau_nay_1d5dd20c : S.s_ai_noi_cau_nay_39d97e95) : view === "delivery" ? S.s_cach_doc_cau_nay_d8d0b9f1 : view === "word" ? S.s_doc_tu_nay_la_00b9f99e : S.s_sua_cau_nay_a82aec43;
   return (
     <Dialog open={segment !== undefined} onOpenChange={(open) => !open && close()} width="max-w-md" title={title}>
-      {line && (
+      {<Presence>{line && (
         <div ref={scrollFade.ref} style={scrollFade.style} className="max-h-[68dvh] space-y-3 overflow-y-auto overscroll-contain pr-1">
           <LineQuote line={line} />
-          {!identified && (
+          {<Presence>{!identified && (
             <p className="py-2 text-sm text-fg-2">{S.s_file_sach_nay_lam_bang_abook_ban_cu_nen_ch_45df1722}</p>
-          )}
+          )}</Presence>}
           {/* Đổi bước (menu câu <-> Ai nói / Cách đọc / Sửa một từ): bước mới trượt vào như đổi trang - từ phải khi đi sâu, từ trái khi về menu. */}
           <div key={view} className={cn("space-y-3", moved && "motion-step")} data-direction={view === "menu" ? "back" : undefined}>
           {view === "menu" && (
@@ -415,7 +416,7 @@ export function LineWishDialog({
                     {(item) => (
                       <div className="flex items-center gap-2 pb-1 text-fg-2">
                         <span className="min-w-0 flex-1 text-pretty">{item.text}</span>
-                        {item.name && (
+                        {<Presence>{item.name && (
                           <button
                             type="button"
                             onClick={() => {
@@ -425,7 +426,7 @@ export function LineWishDialog({
                             aria-label={S.s_sua_cach_doc_0_339e93f2(item.name.surface)}
                             className="inline-flex shrink-0 items-center gap-1 rounded-control px-2 py-1 text-xs font-medium text-accent-text hover:bg-hover"
                           >{S.s_sua_d4e07603}</button>
-                        )}
+                        )}</Presence>}
                         {item.held ? (
                           <span className="shrink-0 text-xs text-fg-3">{S.s_da_o_2ec587c0}{holder ?? S.s_may_tinh_8eafc226}</span>
                         ) : (
@@ -494,7 +495,7 @@ export function LineWishDialog({
               <Button size="sm" variant="ghost" icon={ChevronLeft} onClick={() => goView("menu")}>{S.s_quay_lai_6d793582}</Button>
             </>
           )}
-          {view === "word" && (
+          {<Presence>{view === "word" && (
             <WordView
               key={`${segmentIndex}:${pickedWord ?? heldWord}`}
               initial={pickedWord ?? heldWord}
@@ -509,10 +510,10 @@ export function LineWishDialog({
                 goView("menu");
               }}
             />
-          )}
+          )}</Presence>}
           </div>
         </div>
-      )}
+      )}</Presence>}
     </Dialog>
   );
 }

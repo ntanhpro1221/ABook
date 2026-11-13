@@ -1,5 +1,8 @@
 package vn.abook.player.ui.screens
 
+import vn.abook.player.ui.motion.SwapContent
+import vn.abook.player.ui.motion.ContentLayout
+
 import vn.abook.player.S
 
 import androidx.activity.compose.BackHandler
@@ -247,9 +250,10 @@ fun SearchBox(ui: LibraryUiState, modifier: Modifier = Modifier) {
         ) {
             SearchIcon(if (ui.searchOpen) colors.text else colors.text2)
         }
-        if (ui.searchOpen) {
-            BasicTextField(
-                value = ui.query,
+        SwapContent(ui.searchOpen, ui.query, contentKey = { searchOpen, _ -> searchOpen }, layout = ContentLayout.Row, modifier = Modifier.weight(1f)) { searchOpen, query ->
+            if (searchOpen) {
+                BasicTextField(
+                value = query,
                 onValueChange = ui::updateQuery,
                 modifier = Modifier.weight(1f).focusRequester(focus).testTag("search_field"),
                 singleLine = true,
@@ -259,16 +263,17 @@ fun SearchBox(ui: LibraryUiState, modifier: Modifier = Modifier) {
                 keyboardActions = KeyboardActions(onSearch = { keyboard?.hide() }),
                 decorationBox = { inner ->
                     Box(contentAlignment = Alignment.CenterStart) {
-                        Reveal(ui.query.isEmpty()) { BasicText(S.s_ten_sach_tac_gia_giong_a003bb13, style = Abook.type.body.copy(color = colors.text3)) }
+                        Reveal(query.isEmpty()) { BasicText(S.s_ten_sach_tac_gia_giong_a003bb13, style = Abook.type.body.copy(color = colors.text3)) }
                         inner()
                     }
                 },
-            )
-            Box(
+                )
+                Box(
                 Modifier.size(Dim.touch).pressable { ui.clearOrClose() }.semantics { contentDescription = if (ui.query.isNotEmpty()) S.s_xoa_o_tim_0bafa7ad else S.s_dong_o_tim_1ba06fdf }.testTag("search_close"),
                 contentAlignment = Alignment.Center,
-            ) {
-                CloseIcon(colors.text2, size = 18.dp)
+                ) {
+                    CloseIcon(colors.text2, size = 18.dp)
+                }
             }
         }
     }

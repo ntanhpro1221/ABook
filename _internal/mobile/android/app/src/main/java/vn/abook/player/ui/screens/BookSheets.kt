@@ -1,5 +1,8 @@
 package vn.abook.player.ui.screens
 
+import vn.abook.player.ui.motion.SwapContent
+import vn.abook.player.ui.motion.ContentLayout
+
 import vn.abook.player.S
 
 import vn.abook.player.ui.components.ClockLabel
@@ -170,10 +173,12 @@ private fun MenuActions(
         Spacer(Modifier.height(Dim.s8))
         // Một hồ sơ thì không có chip "Hồ sơ nghe": các việc với hồ sơ duy nhất nằm ở đây (web: singleRecordActions); xoá hồ sơ ở cuối, cạnh xoá sách.
         val onlyRecord = detail?.records?.takeIf { it.size == 1 }
-        if (onlyRecord != null) {
-            MenuRow(S.s_ho_so_moi_5dfda9aa, tag = "menu_record_create", onClick = { onRecord(RecordAction.Create) }) { ink -> PlusIcon(ink) }
-            MenuRow(S.s_chuyen_ho_so_a1c66184, tag = "menu_record_move", onClick = { onRecord(RecordAction.Move) }) { ink -> ArrowRightLeftIcon(ink) }
-            MenuRow(S.s_doi_ten_ho_so_92440dab, tag = "menu_record_rename", onClick = { onRecord(RecordAction.Rename) }) { ink -> TextCursorInputIcon(ink) }
+        SwapContent(onlyRecord, contentKey = { onlyRecord -> onlyRecord != null }, layout = ContentLayout.Column) { onlyRecord ->
+            if (onlyRecord != null) {
+                MenuRow(S.s_ho_so_moi_5dfda9aa, tag = "menu_record_create", onClick = { onRecord(RecordAction.Create) }) { ink -> PlusIcon(ink) }
+                MenuRow(S.s_chuyen_ho_so_a1c66184, tag = "menu_record_move", onClick = { onRecord(RecordAction.Move) }) { ink -> ArrowRightLeftIcon(ink) }
+                MenuRow(S.s_doi_ten_ho_so_92440dab, tag = "menu_record_rename", onClick = { onRecord(RecordAction.Rename) }) { ink -> TextCursorInputIcon(ink) }
+            }
         }
         if (!book.textOnly) {
             val finished = book.progress.finished
@@ -188,27 +193,31 @@ private fun MenuActions(
         MenuRow(S.s_giong_va_loi_doc_450320f6, "menu_studio_edit", unavailable = true,
             hint = if (book.remote != null) S.s_sua_o_may_goc_1a65caf0 else S.s_lam_o_studio_tren_may_tinh_c89f87a5) { ink -> PencilIcon(ink) }
         // Cuốn mở từ file / làm trên máy lưu được thành file sách kèm thay đổi của bạn (web: Lưu thay đổi, Lưu thành). "Lưu thay đổi" chỉ bấm được khi có gì để lưu.
-        if (detail?.canShare == true) {
-            MenuRow(
+        SwapContent(detail, contentKey = { detail -> detail?.canShare == true }, layout = ContentLayout.Column) { detail ->
+            if (detail?.canShare == true) {
+                MenuRow(
                 S.s_luu_thay_doi_48ee3bfe, tag = "menu_save", unavailable = detail.unsaved == 0 || save.busy,
                 hint = if (save.busy) S.s_dang_luu_e93f245d else null, onClick = save::saveKept,
-            ) { ink -> SaveIcon(ink) }
-            MenuRow(S.s_luu_thanh_13374e92, tag = "menu_save_as", onClick = onSaveAs) { ink -> ExportIcon(ink) }
+                ) { ink -> SaveIcon(ink) }
+                MenuRow(S.s_luu_thanh_13374e92, tag = "menu_save_as", onClick = onSaveAs) { ink -> ExportIcon(ink) }
+            }
         }
-        if (detail?.canShare == true) {
-            MenuRow(if (sharing) S.s_dang_dong_file_sach_6d7ee4ad else S.s_chia_se_8811b78c, tag = "menu_share", onClick = {
-                if (sharing) return@MenuRow
-                sharing = true
-                scope.launch {
-                    val chooser = source.share(book.id)
-                    sharing = false
-                    problem = if (chooser == null) S.s_chua_chia_se_duoc_sach_9b8501da else ""
-                    if (chooser != null) {
-                        dismiss()
-                        context.startActivity(chooser)
+        SwapContent(detail, contentKey = { detail -> detail?.canShare == true }, layout = ContentLayout.Column) { detail ->
+            if (detail?.canShare == true) {
+                MenuRow(if (sharing) S.s_dang_dong_file_sach_6d7ee4ad else S.s_chia_se_8811b78c, tag = "menu_share", onClick = {
+                    if (sharing) return@MenuRow
+                    sharing = true
+                    scope.launch {
+                        val chooser = source.share(book.id)
+                        sharing = false
+                        problem = if (chooser == null) S.s_chua_chia_se_duoc_sach_9b8501da else ""
+                        if (chooser != null) {
+                            dismiss()
+                            context.startActivity(chooser)
+                        }
                     }
-                }
-            }) { ink -> ShareIcon(ink) }
+                }) { ink -> ShareIcon(ink) }
+            }
         }
         // Có chữ để đọc theo (chương audio có kịch bản, hay sách chỉ có chữ) thì bấm được; sách chưa có chương nào nghe được thì mờ đi, không hứa gì.
         MenuRow(S.s_doc_theo_df342819, tag = "menu_read", unavailable = !book.canReadAlong, onClick = {
@@ -226,32 +235,36 @@ private fun MenuActions(
         // Như web: sách có tiếng có hai hàng "Xuất MP3" / "Xuất M4B", sách chỉ có chữ có một hàng "Xuất sách nói" - mỗi hàng đúng icon của web.
         // Cuốn chưa có gì để xuất thì mờ đi, không hứa gì.
         val exportHint by actions.exportHint(book.id).collectAsState()
-        if (book.textOnly) {
-            MenuRow(
+        SwapContent(book, contentKey = { book -> book.textOnly }, layout = ContentLayout.Column) { book ->
+            if (book.textOnly) {
+                MenuRow(
                 S.s_xuat_sach_noi_219fb12a, tag = "menu_export", hint = exportHint, unavailable = book.chaptersTotal == 0,
                 onClick = {
                     dismiss()
                     actions.export(book, null)
                 },
-            ) { ink -> HeadphonesIcon(ink) }
-        } else {
-            MenuRow(
+                ) { ink -> HeadphonesIcon(ink) }
+            } else {
+                MenuRow(
                 S.s_xuat_mp3_60946614, tag = "menu_export_mp3", hint = exportHint, unavailable = book.chaptersAvailable == 0,
                 onClick = {
                     dismiss()
                     actions.export(book, ExportFormat.Mp3)
                 },
-            ) { ink -> FolderDownIcon(ink) }
-            MenuRow(
+                ) { ink -> FolderDownIcon(ink) }
+                MenuRow(
                 S.s_xuat_m4b_4a708187, tag = "menu_export_m4b", hint = exportHint, unavailable = book.chaptersAvailable == 0,
                 onClick = {
                     dismiss()
                     actions.export(book, ExportFormat.M4b)
                 },
-            ) { ink -> BookAudioIcon(ink) }
+                ) { ink -> BookAudioIcon(ink) }
+            }
         }
         Box(Modifier.fillMaxWidth().padding(vertical = Dim.s8).height(1.dp).background(colors.line))
-        if (onlyRecord != null) MenuRow(S.s_xoa_ho_so_38a06d83, tag = "menu_record_delete", danger = true, onClick = { onRecord(RecordAction.Delete) }) { ink -> TrashIcon(ink) }
+        SwapContent(onlyRecord, contentKey = { onlyRecord -> onlyRecord != null }, layout = ContentLayout.Column) { onlyRecord ->
+            if (onlyRecord != null) MenuRow(S.s_xoa_ho_so_38a06d83, tag = "menu_record_delete", danger = true, onClick = { onRecord(RecordAction.Delete) }) { ink -> TrashIcon(ink) }
+        }
         // Cỡ về sau khi tấm đã mở: dòng phụ hiện dần tại chỗ (web: "Chiếm 148 MB" bên phải hàng).
         var bytes by remember { mutableStateOf<Long?>(null) }
         LaunchedEffect(book.id) { bytes = source.bytes(book.id) }
@@ -281,22 +294,26 @@ fun ChapterSheet(book: ListenBook, chapter: ChapterLine, source: BookSource, onL
         BasicText(chapter.title, style = Abook.type.sectionTitle)
         RowHint(book.title)
         Spacer(Modifier.height(Dim.s8))
-        if (chapter.playable) {
-            MenuRow(S.s_nghe_tu_dau_chuong_06c66bfc, tag = "chapter_from_start", onClick = {
-                dismiss()
-                onListenFromStart()
-            }) { ink -> PlayPauseGlyph(false, ink, 20.dp) }
-            MenuRow(if (chapter.done) S.s_chua_nghe_2fbea4c8 else S.s_da_nghe_xong_d276b702, tag = "chapter_done", onClick = {
-                scope.launch {
-                    source.setChapterDone(book.id, chapter.id, !chapter.done)
+        SwapContent(chapter, contentKey = { chapter -> chapter.playable }, layout = ContentLayout.Column) { chapter ->
+            if (chapter.playable) {
+                MenuRow(S.s_nghe_tu_dau_chuong_06c66bfc, tag = "chapter_from_start", onClick = {
                     dismiss()
-                }
-            }) { ink -> if (chapter.done) DashedCircleIcon(ink) else CheckIcon(ink) }
-        } else {
-            BasicText(S.s_chuong_nay_chua_co_audio_53a41b55, style = Abook.type.body.copy(color = colors.text2), modifier = Modifier.padding(vertical = Dim.s12))
+                    onListenFromStart()
+                }) { ink -> PlayPauseGlyph(false, ink, 20.dp) }
+                MenuRow(if (chapter.done) S.s_chua_nghe_2fbea4c8 else S.s_da_nghe_xong_d276b702, tag = "chapter_done", onClick = {
+                    scope.launch {
+                        source.setChapterDone(book.id, chapter.id, !chapter.done)
+                        dismiss()
+                    }
+                }) { ink -> if (chapter.done) DashedCircleIcon(ink) else CheckIcon(ink) }
+            } else {
+                BasicText(S.s_chuong_nay_chua_co_audio_53a41b55, style = Abook.type.body.copy(color = colors.text2), modifier = Modifier.padding(vertical = Dim.s12))
+            }
         }
         // Sách nghe thẳng từ máy khác thì tên chương sửa ở máy giữ sách (web: canEditLayer).
-        if (book.remote == null) MenuRow(S.s_doi_ten_chuong_4c534649, tag = "chapter_rename", onClick = { renaming = true }) { ink -> TextCursorInputIcon(ink) }
+        SwapContent(book, contentKey = { book -> book.remote == null }, layout = ContentLayout.Column) { book ->
+            if (book.remote == null) MenuRow(S.s_doi_ten_chuong_4c534649, tag = "chapter_rename", onClick = { renaming = true }) { ink -> TextCursorInputIcon(ink) }
+        }
     }
 }
 

@@ -1,5 +1,8 @@
 package vn.abook.player.ui.screens
 
+import vn.abook.player.ui.motion.SwapContent
+import vn.abook.player.ui.motion.ContentLayout
+
 import vn.abook.player.S
 
 import vn.abook.player.ui.components.ClockLabel
@@ -192,11 +195,13 @@ private fun LibraryGrid(
                 if (recap != null) item(key = "recap", span = { GridItemSpan(maxLineSpan) }, contentType = "recap") { recap(books) }
                 if (tiles.isEmpty()) {
                     item(key = "none", span = { GridItemSpan(maxLineSpan) }, contentType = "none") {
-                        if (books.isEmpty()) Column {
-                            BasicText(S.s_chua_co_sach_30843cb2, style = Abook.type.sectionTitle)
-                            RowHint(S.s_them_sach_cua_ban_de_bat_dau_nghe_ac868e6f)
-                            actions.connect?.let { TextAction(S.s_noi_may_ebc41ba4, it, "library_connect", align = Alignment.CenterStart) }
-                        } else NoMatch(ui.query.trim(), filter)
+                            SwapContent(books, contentKey = { books -> books.isEmpty() }, layout = ContentLayout.Box) { books ->
+                                if (books.isEmpty()) Column {
+                                    BasicText(S.s_chua_co_sach_30843cb2, style = Abook.type.sectionTitle)
+                                    RowHint(S.s_them_sach_cua_ban_de_bat_dau_nghe_ac868e6f)
+                                    actions.connect?.let { TextAction(S.s_noi_may_ebc41ba4, it, "library_connect", align = Alignment.CenterStart) }
+                                } else NoMatch(ui.query.trim(), filter)
+                            }
                     }
                 } else {
                     items(tiles, key = { it.item.key }, contentType = { if (it.item is ShelfTile.Series) "series" else "single" }) { tile ->
@@ -265,10 +270,14 @@ private fun BookTile(
     ) {
         Box(Modifier.fillMaxWidth().bookCoverSource(lead.id).clip(BookCoverShape).then(if (active) Modifier.testTag("library_cover") else Modifier)) {
             BookCover(lead.cover, title, if (series != null) null else lead.part, covers, cell, Modifier.fillMaxWidth())
-            if (series != null) {
-                CoverChip("${series.books.size} ${series.unit}", Modifier.align(Alignment.BottomStart).padding(Dim.s4).padding(bottom = 4.dp))
-            } else if (single?.badge != null && !(drawn && CoverArt.splitTitle(title, lead.part).second.isNotEmpty())) {
-                CoverChip(single.badge, Modifier.align(Alignment.BottomStart).padding(Dim.s4).padding(bottom = 4.dp))
+            SwapContent(series, contentKey = { series -> series != null }, layout = ContentLayout.Box, modifier = Modifier.align(Alignment.BottomStart)) { series ->
+                if (series != null) {
+                    CoverChip("${series.books.size} ${series.unit}", Modifier.padding(Dim.s4).padding(bottom = 4.dp))
+                } else SwapContent(single, drawn, title, lead, contentKey = { single, drawn, title, lead -> single?.badge != null && !(drawn && CoverArt.splitTitle(title, lead.part).second.isNotEmpty()) }, layout = ContentLayout.Box) { single, drawn, title, lead ->
+                    if (single?.badge != null && !(drawn && CoverArt.splitTitle(title, lead.part).second.isNotEmpty())) {
+                        CoverChip(single.badge, Modifier.padding(Dim.s4).padding(bottom = 4.dp))
+                    }
+                }
             }
             val fraction = if (series == null) lead.progress.fraction else 0f
             if (ProgressFill.of(fraction) > 0f && fraction < 0.995f) {
@@ -299,11 +308,13 @@ private fun BookTile(
             BasicText(title, Modifier.fillMaxWidth().testTag("tile_title"), style = Abook.type.label, minLines = 2, maxLines = 2, overflow = TextOverflow.Ellipsis)
         }
         val line: @Composable () -> Unit = {
-            // cắt-có-chủ-ý: dòng phụ một dòng (tác giả / tình trạng), phần đầu là thứ quan trọng.
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(Dim.s4)) {
-                if (remote) RemoteIcon(Abook.colors.text3, Modifier.semantics {
-                    contentDescription = if (series != null) S.s_co_sach_tren_may_khac_3b7cdd88 else ListenLogic.remotePlace(lead)
-                }, size = 12.dp)
+                SwapContent(remote, contentKey = { remote -> remote }, layout = ContentLayout.Row) { remote ->
+                    if (remote) RemoteIcon(Abook.colors.text3, Modifier.semantics {
+                        contentDescription = if (series != null) S.s_co_sach_tren_may_khac_3b7cdd88 else ListenLogic.remotePlace(lead)
+                    }, size = 12.dp)
+                }
+                // cắt-có-chủ-ý: dòng phụ một dòng (tác giả / tình trạng), phần đầu là thứ quan trọng.
                 BasicText(sub, Modifier.weight(1f).testTag("tile_sub"), style = Abook.type.caption, maxLines = 1, overflow = TextOverflow.Ellipsis)
             }
         }

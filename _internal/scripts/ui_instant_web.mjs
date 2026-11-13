@@ -68,6 +68,11 @@ function reason(node, element, ancestors) {
       break;
     }
     if (owner.type !== 'JSXElement') continue;
+    if (tagName(owner.openingElement.name) === 'Presence') {
+      const children = owner.children.filter(child => child.type !== 'JSXText' || child.value.trim());
+      if (children.length === 1 && children[0].type === 'JSXExpressionContainer' && unwrap(children[0].expression) === node)
+        return ['b-retained-presence', 'Presence directly owns this conditional value and retains its last tree through exit'];
+    }
     if (tagName(owner.openingElement.name) !== 'MotionRegion') continue;
     // A keyed region deliberately ignores children outside its key - unless the key is the very value the condition reads.
     const key = attr(owner, 'motionKey')?.value?.expression;

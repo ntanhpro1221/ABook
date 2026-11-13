@@ -299,17 +299,18 @@ def web_classify(paths: list[Path], rel) -> list[dict]:
 
 # ------------------------------------------------------------------------------------------------------------------------ Android
 KT_IF = re.compile(r'(?<![\w.])if\s*\(')
-KT_COMPOSE = {'Box', 'Column', 'Row', 'BasicText', 'Text', 'Image', 'Icon', 'Spacer', 'LazyColumn', 'LazyRow', 'Canvas', 'Surface',
+KT_COMPOSE = {'Box', 'Column', 'Row', 'BasicText', 'Text', 'Image', 'Icon', 'Spacer', 'LazyColumn', 'LazyRow', 'Canvas', 'Surface', 'AnimatedContent',
               'BasicTextField', 'Layout', 'FlowRow', 'FlowColumn', 'LazyVerticalGrid', 'HorizontalPager', 'VerticalPager',
               'SelectionContainer', 'Popup', 'Dialog', 'DropdownMenu', 'CircularProgressIndicator', 'LinearProgressIndicator'}
-KT_MOTION = {'AnimatedVisibility', 'AnimatedContent', 'Crossfade', 'Reveal'}
+KT_MOTION = {'AnimatedVisibility', 'AnimatedContent', 'Crossfade', 'Reveal', 'SwapContent'}
 
 
 def kt_composables(paths: list[Path]) -> set[str]:
     names = set(KT_COMPOSE)
     for p in paths:
-        names |= set(re.findall(r'@Composable\s+(?:(?:private|internal|public|inline)\s+)*fun\s+(?:[\w.<>, ]+\.)?(\w+)\s*\(',
-                                p.read_text(encoding='utf-8')))
+        source = p.read_text(encoding='utf-8')
+        names |= set(re.findall(r'@Composable\s+(?:(?:private|internal|public|inline)\s+)*fun\s+(?:<[^>\n]+>\s*)?(?:[\w.<>, ]+\.)?(\w+)\s*\(', source))
+        names |= {alias for original, alias in re.findall(r'\bimport\s+[\w.]+\.(\w+)\s+as\s+(\w+)', source) if original in names}
     return names
 
 
@@ -323,6 +324,27 @@ def _balanced(clean: str, start: int, open_: str = '(', close: str = ')') -> int
             if depth == 0:
                 return i + 1
     return len(clean)
+
+
+def _kt_cleared_snapshot(clean: str, body: str, condition: str) -> bool:
+    image = re.fullmatch(r'\s*(\w+)\s*!=\s*null\s*', condition)
+    if not image or not re.search(r'\bdrawImage\(\s*' + re.escape(image[1]) + r'\s*\)', body):
+        return False
+    for circle in re.finditer(r'\bdrawCircle\s*\(', body):
+        end = _balanced(body, circle.end() - 1)
+        args = body[circle.end():end - 1]
+        if 'BlendMode.Clear' not in args:
+            continue
+        radius = re.search(r',\s*(\w+)\s*\*\s*(?:\w+\.)*(\w+)\.value\s*,', args)
+        if not radius:
+            continue
+        extent, clock = radius.groups()
+        far = re.search(r'\bval\s+' + re.escape(extent) + r'\s*=\s*hypot\([^\n]*size\.width[^\n]*size\.height', body)
+        animated = re.search(r'\bval\s+' + re.escape(clock) + r'\s*=\s*Animatable\(', clean)
+        complete = re.search(r'\b' + re.escape(clock) + r'\.animateTo\(1f\s*,', clean)
+        if far and animated and complete:
+            return True
+    return False
 
 
 def kt_classify(paths: list[Path], rel, all_paths: list[Path] | None = None) -> list[dict]:
@@ -343,7 +365,7 @@ def kt_classify(paths: list[Path], rel, all_paths: list[Path] | None = None) -> 
             if re.search(r'(?:=|return|->|\(|,)\s*$', prefix):
                 continue
             row = dict(path=rel(path), line=source.count('\n', 0, m.start()) + 1,
-                       text=source[line_start:source.find('\n', m.start())].strip()[:90], platform='android', object=target)
+                       offset=m.start(), text=source[line_start:source.find('\n', m.start())].strip()[:90], platform='android', object=target)
             body_end = cond_end + len(after[0])
             if after[1]:
                 body_end = _balanced(clean, cond_end + after.start(1), '{', '}')
@@ -351,11 +373,24 @@ def kt_classify(paths: list[Path], rel, all_paths: list[Path] | None = None) -> 
                 body_end = _balanced(clean, cond_end + after.end() - 1, *(('(', ')') if after[0].rstrip()[-1] == '(' else ('{', '}')))
             swap = re.match(r'\s*else\b', clean[body_end:])
             body = clean[cond_end:body_end]
-            if target not in composables:
+            condition = clean[m.end():cond_end - 1]
+            native = re.fullmatch(r'\s*(\w+)\s*', condition)
+            native_decl = re.search(r'\bval\s+' + re.escape(native[1]) + r'\s*=\s*(\w+)\?\.active\s*==\s*true', clean) if native else None
+            if native_decl and re.search(r'\b' + re.escape(native_decl[1]) + r'\s*:\s*PipControl\??', clean):
+                row['category'], row['reason'] = 'b-native-window', 'follows PipControl.active: Android owns the picture-in-picture window transition'
+            elif re.fullmatch(r'\s*(?:\w+\.)*rememberReducedMotion\(\)\s*', condition) and target in {'ReducedFade', 'ReducedSwap'}:
+                row['category'], row['reason'] = 'b-motion-policy', 'selects the shared reduced fade implementation; both paths animate the same content'
+            elif target == 'FoundationText' and re.search(r'\bimport\s+androidx\.compose\.foundation\.text\.BasicText\s+as\s+FoundationText', source) and re.search(r'\bval\s+separated\s*=\s*remember\(shaped\)\s*\{\s*hasSeparator\(shaped\)', clean) and condition.strip() == '!separated':
+                row['category'], row['reason'] = 'b-text-shaping', 'same BasicText surface: plain shaping fast path versus annotated separator ink; no UI node is toggled'
+            elif target in {'LaunchedEffect', 'DisposableEffect', 'SideEffect'}:
+                row['category'], row['reason'] = 'b-not-ui', f'`{target}` is an effect host: no visible UI node'
+            elif target not in composables:
                 row['category'], row['reason'] = 'b-not-ui', f'`{target}` is not a composable: no node appears or disappears'
             elif re.search(r'graphicsLayer\s*\{[^}]*\balpha\s*=\s*[A-Za-z_]', body):
                 row['category'], row['reason'] = 'b-transition-layer', 'the node fades itself (graphicsLayer alpha from an animated value)'
-            elif _kt_inside_motion(clean, m.start(), clean[m.end():cond_end - 1]):
+            elif _kt_cleared_snapshot(clean, body, condition):
+                row['category'], row['reason'] = 'b-animated-mask', 'snapshot is erased by an Animatable clear circle covering the surface before bitmap release'
+            elif _kt_inside_motion(clean, m.start(), source[m.end():cond_end - 1], source):
                 row['category'], row['reason'] = 'b-parent-motion', 'inside an animated container that owns this content'
             else:
                 row['category'], row['reason'] = ('a-swap' if swap else 'a-hard'), ('content swap without crossfade' if swap else 'direct conditional')
@@ -363,7 +398,7 @@ def kt_classify(paths: list[Path], rel, all_paths: list[Path] | None = None) -> 
     return rows
 
 
-def _kt_inside_motion(clean: str, offset: int, condition: str) -> bool:
+def _kt_inside_motion(clean: str, offset: int, condition: str, source: str | None = None) -> bool:
     """Directly inside the content lambda of an animated container that owns THIS condition: AnimatedVisibility(same condition),
     or AnimatedContent/Crossfade whose lambda parameter the condition reads. An unrelated parent animation proves nothing."""
     depth = 0
@@ -375,26 +410,37 @@ def _kt_inside_motion(clean: str, offset: int, condition: str) -> bool:
             depth += 1
         elif c == '{':
             if depth == 0:
-                head = clean[max(0, i - 300):i]
+                head_start = max(0, i - 2000)
+                head = clean[head_start:i]
                 if re.search(r'\bfun\s+\w+\s*\([^)]*\)\s*(?::\s*\w+\s*)?$', head):
                     return False
                 tail = head.rstrip()
                 args = ''
+                original_args = ''
                 if tail.endswith(')'):
                     depth_ = 0
                     for j in range(len(tail) - 1, -1, -1):
                         depth_ += {')': 1, '(': -1}.get(tail[j], 0)
                         if depth_ == 0:
+                            original_args = (source or clean)[head_start + j + 1:head_start + len(tail) - 1]
                             args, tail = tail[j + 1:-1], tail[:j].rstrip()
                             break
                 call = re.search(r'([A-Z]\w*)$', tail)
                 if call and call[1] in KT_MOTION:
                     args = args.split(',')[0].strip()
-                    params = re.match(r'\s*(\w+)\s*->', clean[i + 1:i + 80])
+                    params = re.match(r'\s*(\w+(?:\s*,\s*\w+)*)\s*->', clean[i + 1:i + 160])
                     reads = params[1] if params else 'it'
+                    if call[1] == 'SwapContent':
+                        key = re.search(r'\bcontentKey\s*=\s*\{\s*([\w, ]+)\s*->\s*(.*?)\s*\}', original_args, re.S)
+                        if not key:
+                            return False
+                        expression = key[2]
+                        for bound, held in zip(key[1].split(','), reads.split(',')):
+                            expression = re.sub(r'(?<![.\w])' + re.escape(bound.strip()) + r'\b', held.strip(), expression)
+                        return re.sub(r'\s+', '', expression) == re.sub(r'\s+', '', condition)
                     if call[1] == 'AnimatedVisibility' or call[1] == 'Reveal':
                         return re.sub(r'\s+', '', args.removeprefix('visible').lstrip(' =')) == re.sub(r'\s+', '', condition)
-                    return bool(re.search(r'(?<![.\w])' + reads + r'\b', condition))
+                    return any(re.search(r'(?<![.\w])' + name.strip() + r'\b', condition) for name in reads.split(','))
             else:
                 depth -= 1
     return False

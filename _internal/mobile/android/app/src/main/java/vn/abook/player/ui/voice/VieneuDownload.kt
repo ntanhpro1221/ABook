@@ -1,5 +1,8 @@
 package vn.abook.player.ui.voice
 
+import vn.abook.player.ui.motion.SwapContent
+import vn.abook.player.ui.motion.ContentLayout
+
 import vn.abook.player.S
 
 import vn.abook.player.ui.components.ClockLabel
@@ -62,18 +65,24 @@ fun VieneuDownload(voice: VoiceState, button: String, openSettings: () -> Unit, 
                 else -> null
             }
             Column(Modifier.fillMaxWidth()) {
-                if (downloading) {
-                    Row(Modifier.fillMaxWidth().semantics { contentDescription = S.s_dang_tai_giong_vieneu_ba98a3a0 }, verticalAlignment = Alignment.CenterVertically) {
-                        Column(Modifier.weight(1f)) { DownloadBar(voice.progress(kind)) }
-                        Spacer(Modifier.width(Dim.s12))
-                        TextAction(S.s_huy_96732485, { voice.cancel(kind) }, "vieneu_cancel")
+                SwapContent(downloading, contentKey = { downloading -> downloading }, layout = ContentLayout.Column) { downloading ->
+                    if (downloading) {
+                        Row(Modifier.fillMaxWidth().semantics { contentDescription = S.s_dang_tai_giong_vieneu_ba98a3a0 }, verticalAlignment = Alignment.CenterVertically) {
+                            Column(Modifier.weight(1f)) { DownloadBar(voice.progress(kind)) }
+                            Spacer(Modifier.width(Dim.s12))
+                            TextAction(S.s_huy_96732485, { voice.cancel(kind) }, "vieneu_cancel")
+                        }
                     }
                 }
                 Reveal(failed) {
                     BasicText(S.s_chua_tai_duoc_giong_vieneu_7fd2908f, style = Abook.type.bodySmall.copy(color = Abook.colors.danger), modifier = Modifier.padding(top = Dim.s4))
                 }
-                if (note != null) ClockLabel(note, style = Abook.type.bodySmall.copy(color = if (failed) Abook.colors.danger else Abook.colors.text2), modifier = Modifier.padding(top = Dim.s4).testTag("vieneu_note"))
-                if (metered != null) BasicText(metered, style = Abook.type.bodySmall.copy(color = Abook.colors.text2), modifier = Modifier.padding(top = Dim.s4))
+                SwapContent(note, contentKey = { note -> note != null }, layout = ContentLayout.Column) { note ->
+                    if (note != null) ClockLabel(note, style = Abook.type.bodySmall.copy(color = if (failed) Abook.colors.danger else Abook.colors.text2), modifier = Modifier.padding(top = Dim.s4).testTag("vieneu_note"))
+                }
+                SwapContent(metered, contentKey = { metered -> metered != null }, layout = ContentLayout.Column) { metered ->
+                    if (metered != null) BasicText(metered, style = Abook.type.bodySmall.copy(color = Abook.colors.text2), modifier = Modifier.padding(top = Dim.s4))
+                }
                 Spacer(Modifier.height(Dim.s4))
                 FlowRow(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(Dim.s12)) {
                     Reveal(!downloading && !unsupported && offer.missing.isNotEmpty()) {

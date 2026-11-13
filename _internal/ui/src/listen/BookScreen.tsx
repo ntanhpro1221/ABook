@@ -1,3 +1,4 @@
+import { hasPresentContent, Presence } from "../shared/MotionPresence";
 import { S } from "../shared/strings.generated";
 import { TickingValue } from "@/shared/TickingValue";
 import { ActionMenu } from "@/shared/ActionMenu";
@@ -779,7 +780,7 @@ function RecordPicker({ book, dialog, setDialog }: { book: ListenBook; dialog: R
   };
   return (
     <>
-      {records.length > 1 && (
+      {<Presence>{records.length > 1 && (
       <DropdownMenu.Root>
         <DropdownMenu.Trigger asChild>
           <button
@@ -827,7 +828,7 @@ function RecordPicker({ book, dialog, setDialog }: { book: ListenBook; dialog: R
           </DropdownMenu.Content>
         </DropdownMenu.Portal>
       </DropdownMenu.Root>
-      )}
+      )}</Presence>}
       <Dialog footer={<DialogActions>
             <Button type="button" variant="ghost" onClick={() => setDialog(null)}>{S.s_huy_96732485}</Button>
             <Button
@@ -867,13 +868,13 @@ function RecordPicker({ book, dialog, setDialog }: { book: ListenBook; dialog: R
           }}
           className="flex flex-col gap-4"
         >
-          {dialog?.kind === "move" && (
+          {<Presence>{dialog?.kind === "move" && (
             <MoveTarget
               book={book}
               value={dialog.target?.id ?? ""}
               onChange={(target) => setDialog((current) => (current ? { ...current, target } : current))}
             />
-          )}
+          )}</Presence>}
           <Reveal when={dialog?.kind !== "delete" && dialog?.kind !== "move"}><input
               id="record-name"
               data-autofocus
@@ -1033,7 +1034,7 @@ function BookPage({ extraActions, dangerActions, studioLink, notice, editing = {
     finishedToggle: !textOnly,
     edit: editing !== false && editable,
     platform: editing !== false && !remoteEdit,
-    extra: extra || danger,
+    extra: hasPresentContent(extra) || hasPresentContent(danger),
   });
   const listening = player.track?.bookId === book.id;
   const heard = book.progress.heardSeconds;
@@ -1132,7 +1133,7 @@ function BookPage({ extraActions, dangerActions, studioLink, notice, editing = {
           {/* Tình trạng của cuốn: một dòng chữ nhỏ, không hộp, không viên thuốc màu. */}
           <Reveal when={textOnly}><p className="mt-2 text-sm text-fg-2">{textBookLine(speaks)}</p></Reveal>
           <Reveal when={!book.complete && !textOnly}><p className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-accent-text">
-              {book.producing && <Vu className="h-2.5" />}
+              {<Presence>{book.producing && <Vu className="h-2.5" />}</Presence>}
               {book.producing
                 ? S.s_dang_thu_chuong_moi_tu_hien_khi_xong_123d0db2
                 : book.remote
@@ -1159,10 +1160,10 @@ function BookPage({ extraActions, dangerActions, studioLink, notice, editing = {
                 : S.s_nghe_thang_tu_may_tinh_tai_ve_de_nghe_ca_k_44e792bc}
             </p></Reveal>
           {notice?.(book)}
-          {syncs && <EditsSyncBanner book={book} />}
+          {<Presence>{syncs && <EditsSyncBanner book={book} />}</Presence>}
           <LocalEditsBanner book={book} />
           <EditsNoticesBanner book={book} />
-          {textOnly && editable && <BookSuggestions book={book} />}
+          {<Presence>{textOnly && editable && <BookSuggestions book={book} />}</Presence>}
           <div className="mt-4 max-w-md">
             {!textOnly && (
               <>
@@ -1256,7 +1257,7 @@ function BookPage({ extraActions, dangerActions, studioLink, notice, editing = {
                   {editing !== false && !remoteEdit && <ProjectFileItems book={book} onViews={() => setViewsOpen(true)} />}
                   {editing !== false && !remoteEdit && <TextBookItems book={book} />}
                   {extra}
-                  {(source.records || danger) && <DropdownMenu.Separator className="my-2 h-px bg-line" />}
+                  {(source.records || hasPresentContent(danger)) && <DropdownMenu.Separator className="my-2 h-px bg-line" />}
                   {source.records && singleRecordActions(book).filter(action => action.danger).map(action => <Fragment key={action.key}>
                     <DropdownMenu.Item onSelect={() => setRecordDialog(action.dialog)} className={cn(MENU_ITEM, "text-danger")}>
                       <action.icon className="size-4" /> {action.label}
@@ -1273,7 +1274,7 @@ function BookPage({ extraActions, dangerActions, studioLink, notice, editing = {
         <TabsList label={S.s_muc_cua_sach_37e9b664}>
           <TabsTrigger value="chapters" count={chapters.length}>{S.s_chuong_2d157977}</TabsTrigger>
           <TabsTrigger value="history">{S.s_lich_su_0a235708}</TabsTrigger>
-          {!textOnly && <TabsTrigger value="cast">{S.s_nhan_vat_d4940c17}</TabsTrigger>}
+          {<Presence>{!textOnly && <TabsTrigger value="cast">{S.s_nhan_vat_d4940c17}</TabsTrigger>}</Presence>}
         </TabsList>
         {/* Hai cột: hàng tab đứng yên ở đầu cột phải, chỉ phần bên dưới cuộn. */}
         {/* -mx-4 px-4 pt-1: khung cuộn cắt mọi thứ tràn ra ngoài nó - nền rê chuột (-inset-x-3) và vòng tiêu điểm (4) của hàng mở/gập và của chính

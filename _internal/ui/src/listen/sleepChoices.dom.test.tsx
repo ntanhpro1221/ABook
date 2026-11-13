@@ -102,11 +102,12 @@ it("chip trùng giá trị đang hẹn sáng; đang hẹn hết chương thì ch
   for (const button of [...chips(), chapterChoice()]) {
     const selected = button.getAttribute("aria-pressed") === "true";
     expect(button.querySelector(".lucide-check")).toBeNull(); // ô hẹp: dấu tích đẩy chữ lệch tâm (soát 141), ô chọn chỉ đổi chữ
-    const label = button.querySelector("[data-value-label], span") ?? button;
+    // Chip text inherits selection ink from its button; the editable count has its own span.
+    const label = button.hasAttribute("data-value-display") ? button.querySelector("span")! : button;
     expect(label.classList.contains("text-accent-text")).toBe(false);
     if (selected) {
       expect(label.classList.contains("text-fg")).toBe(true);
-      expect(label.classList.contains("font-semibold")).toBe(true);
+      expect(label.classList.contains("font-medium")).toBe(true);
     }
   }
 });

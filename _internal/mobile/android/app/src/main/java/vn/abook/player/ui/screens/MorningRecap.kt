@@ -1,5 +1,8 @@
 package vn.abook.player.ui.screens
 
+import vn.abook.player.ui.motion.SwapContent
+import vn.abook.player.ui.motion.ContentLayout
+
 import vn.abook.player.S
 
 import vn.abook.player.ui.data.dotJoin
@@ -89,7 +92,9 @@ fun MorningRecap(night: NightState, books: List<ListenBook>, play: (bookId: Stri
             for (marker in markers) MarkerRow(marker, lines[marker.chapterId].orEmpty()) { resume(marker.chapterId, marker.seconds) }
             Spacer(Modifier.size(Dim.s8))
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(Dim.s12)) {
-                if (suggested != null) PrimaryButton(S.s_nghe_tu_day_6a7ff4ab, { resume(suggested.chapterId, suggested.seconds) }, Modifier.weight(1f).testTag("recap_resume"))
+                SwapContent(suggested, contentKey = { suggested -> suggested != null }, layout = ContentLayout.Row, modifier = Modifier.weight(1f)) { suggested ->
+                    if (suggested != null) PrimaryButton(S.s_nghe_tu_day_6a7ff4ab, { resume(suggested.chapterId, suggested.seconds) }, Modifier.fillMaxWidth().testTag("recap_resume"))
+                }
                 Reveal(lines.values.any { paragraphs -> paragraphs.any { it.timed } }) {
                     TextAction(if (scrubbing) S.s_thu_gon_1f6bf2c3 else S.s_tim_dung_cau_4bfb13c3, { scrubbing = !scrubbing }, "recap_scrub_toggle")
                 }

@@ -33,7 +33,7 @@ it.each(["/", "/book/a", "/music", "/studio/new", "/settings/devices"])("bốn �
   const active = path.startsWith("/music") ? "Nhạc" : path.startsWith("/studio") ? "Studio" : path.startsWith("/settings") ? "Cài đặt" : "Thư viện";
   expect(links.filter(link => link.getAttribute("aria-current") === "page").map(link => link.textContent)).toEqual([active]);
   // Điều hướng: nền trung tính + chữ đậm thường, không dấu tích (dấu tích là của danh sách chọn).
-  expect(links.find(link => link.textContent === active)?.className).toContain("bg-hover font-semibold text-fg");
+  expect(links.find(link => link.textContent === active)?.className).toContain("bg-hover font-medium text-fg");
   expect(host.querySelector("aside svg.lucide-check, nav svg.lucide-check")).toBeNull();
   expect(host.querySelector(".bg-accent-soft")).toBeNull();
   expect(host.textContent).not.toMatch(/Nghe|Dự án|Tạo sách nói/);

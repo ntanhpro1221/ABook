@@ -1,3 +1,4 @@
+import { Presence } from "../shared/MotionPresence";
 import { S } from "../shared/strings.generated";
 import { MoreInfo, SettingsRow } from "@/shared/SettingsNav";
 import { MotionRegion } from "@/shared/MotionRegion";
@@ -213,7 +214,7 @@ export function PrecastReview({ book, step: stepParam, onStep: setStep, ...open 
                 </MotionRegion>
                 <span className="min-w-0">
                   <span className={cn("block text-sm font-medium leading-tight", active ? "text-fg" : "text-fg-2")}>{STEP_TITLE[value]}</span>
-                  {counts[value] && <span className="block truncate text-xs text-fg-2">{counts[value]}</span>}
+                  {<Presence>{counts[value] && <span className="block truncate text-xs text-fg-2">{counts[value]}</span>}</Presence>}
                 </span>
               </button>
             </li>

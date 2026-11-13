@@ -1,5 +1,8 @@
 package vn.abook.player.ui.devices
 
+import vn.abook.player.ui.motion.SwapContent
+import vn.abook.player.ui.motion.ContentLayout
+
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -18,16 +21,22 @@ internal fun DeviceSettingsContent(
     trailing: (@Composable () -> Unit)? = null,
     content: @Composable ColumnScope.() -> Unit,
 ) {
-    if (embedded) {
-        Column(Modifier.fillMaxWidth().testTag(tag)) {
-            if (trailing != null) Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) { trailing() }
-            content()
-            if (footer != null) Column(Modifier.fillMaxWidth().padding(vertical = Dim.s12), content = footer)
-        }
-    } else {
-        BookForm(title, onBack, tag, footer, trailing) {
-            val scroll = rememberScrollState()
-            Column(Modifier.fillMaxSize().fadeEdges(scroll).verticalScroll(scroll), content = content)
+    SwapContent(embedded, contentKey = { embedded -> embedded }, layout = ContentLayout.Box) { embedded ->
+        if (embedded) {
+            Column(Modifier.fillMaxWidth().testTag(tag)) {
+                SwapContent(trailing, contentKey = { trailing -> trailing != null }, layout = ContentLayout.Column) { trailing ->
+                    if (trailing != null) Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) { trailing() }
+                }
+                content()
+                SwapContent(footer, contentKey = { footer -> footer != null }, layout = ContentLayout.Column) { footer ->
+                    if (footer != null) Column(Modifier.fillMaxWidth().padding(vertical = Dim.s12), content = footer)
+                }
+            }
+        } else {
+            BookForm(title, onBack, tag, footer, trailing) {
+                val scroll = rememberScrollState()
+                Column(Modifier.fillMaxSize().fadeEdges(scroll).verticalScroll(scroll), content = content)
+            }
         }
     }
 }

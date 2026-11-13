@@ -1,5 +1,7 @@
+import { Presence } from "../shared/MotionPresence";
 import { Ban, Bookmark, BookmarkCheck, Check, Download, ExternalLink, Library, Loader2, Play, Shuffle, Square, Trash2, X } from "lucide-react";
-import type { ReactNode } from "react";
+import type { HTMLAttributes, ReactNode } from "react";
+import { cn } from "../shared/cn";
 import { openExternal } from "../shared/openExternal";
 import { SectionHeading } from "../shared/SectionHeading";
 import { S } from "../shared/strings.generated";
@@ -31,9 +33,9 @@ function Bar({ label, value, tone = "accent" }: { label: ReactNode; value: numbe
   );
 }
 
-function Fact({ label, children }: { label: string; children: ReactNode }) {
+function Fact({ label, children, className, ...props }: HTMLAttributes<HTMLDivElement> & { label: string; children: ReactNode }) {
   return (
-    <div className="flex items-baseline justify-between gap-4 py-2 text-sm">
+    <div {...props} className={cn("flex items-baseline justify-between gap-4 py-2 text-sm", className)}>
       <dt className="shrink-0 text-fg-2">{label}</dt>
       <dd className="min-w-0 text-right [overflow-wrap:anywhere]">{children}</dd>
     </div>
@@ -115,7 +117,7 @@ function TrackBody({
           <Button variant="primary" icon={track.saved ? BookmarkCheck : Bookmark} aria-pressed={track.saved} loading={save.isPending || unsave.isPending}
             onClick={() => (track.saved ? unsave.mutate([track.link]) : save.mutate([track.link]))}>
             {track.saved ? S.s_bo_luu_2fd51455 : S.s_luu_e91f26c0}
-            {load.kind === "loading" && load.percent !== null && <span data-motion-live>{load.percent} %</span>}
+            {<Presence>{load.kind === "loading" && load.percent !== null && <span data-motion-live>{load.percent} %</span>}</Presence>}
           </Button>
           <Button variant="ghost" icon={Library} onClick={() => playing.onOpenLibrary(track.title ?? "")}>{S.s_xem_trong_kho_2a139d05}</Button>
           <Reveal when={playing.onSwap}><Button variant="ghost" icon={Shuffle} onClick={playing.onSwap}>{S.s_doi_bai_7b81488f}</Button></Reveal>
@@ -138,11 +140,11 @@ function TrackBody({
             {load.kind === "failed" ? S.s_tai_tiep_1efbd854 : S.s_tai_ve_9b5bdb44}
           </Button>
         )} />
-        {onUse && <Button icon={Check} loading={busy} onClick={() => onUse(track.link)}>{S.s_dung_7927ca4e}</Button>}
-        {onBan && <Button icon={Ban} onClick={() => onBan(track.link)}>{S.s_khong_tu_chon_02ae1742}</Button>}
+        {<Presence>{onUse && <Button icon={Check} loading={busy} onClick={() => onUse(track.link)}>{S.s_dung_7927ca4e}</Button>}</Presence>}
+        {<Presence>{onBan && <Button icon={Ban} onClick={() => onBan(track.link)}>{S.s_khong_tu_chon_02ae1742}</Button>}</Presence>}
       </div>
       )}
-      {track.why && track.why.matches.length > 0 && (
+      {<Presence>{track.why && track.why.matches.length > 0 && (
         <section aria-labelledby="track-why">
           <SectionHeading as="h3" id="track-why">{S.s_vi_sao_bai_nay_f681e004}</SectionHeading>
           <p className="text-sm text-fg-2">{S.s_doan_va_bai_cung_0_music(labelOf(emotions, track.why.matches[0].id))}</p>
@@ -162,7 +164,7 @@ function TrackBody({
             ))}
           </ul>
         </section>
-      )}
+      )}</Presence>}
       <section aria-labelledby="track-emotions">
         <SectionHeading as="h3" id="track-emotions">{S.s_cam_xuc_05c1aee0}</SectionHeading>
         <div className="mt-3 space-y-2">
@@ -172,19 +174,19 @@ function TrackBody({
       <section aria-labelledby="track-info">
       <SectionHeading as="h3" id="track-info">{S.s_thong_tin_4aa16c92}</SectionHeading>
       <dl>
-        {energy !== null && <Fact label={S.s_nang_luong_1b9cc9af}>{energy} %</Fact>}
-        {typeof track.bpm === "number" && track.bpm > 0 && <Fact label={S.s_nhip_8a75919d}>{S.s_0_nhip_phut_3c154e09(Math.round(track.bpm))}</Fact>}
-        {track.style && <Fact label={S.s_phong_cach_d80ae8d9}>{labelOf(styles, track.style)}</Fact>}
-        {typeof track.duration === "number" && <Fact label={S.s_do_dai_5e055f59}>{formatClock(track.duration)}</Fact>}
-        {(track.vocals ?? 0) >= 0.5 && <Fact label={S.s_co_loi_4b381f10}><Check aria-hidden className="ml-auto size-4" /></Fact>}
-        {license && <Fact label={S.s_giay_phep_b609ade1}>{license}</Fact>}
-        {track.playlists.length > 0 && <Fact label={S.s_co_trong_1312af9f}><DotJoin parts={track.playlists.map((item) => item.name)} /></Fact>}
-        {credit && <Fact label={S.s_ghi_cong_9c291f64}>{credit}</Fact>}
-        {track.landing && <Fact label={S.s_nguon_c76d57b3}>
+        <Reveal when={energy !== null}><Fact label={S.s_nang_luong_1b9cc9af}>{energy} %</Fact></Reveal>
+        <Reveal when={typeof track.bpm === "number" && track.bpm > 0}><Fact label={S.s_nhip_8a75919d}>{typeof track.bpm === "number" ? S.s_0_nhip_phut_3c154e09(Math.round(track.bpm)) : null}</Fact></Reveal>
+        <Reveal when={track.style}><Fact label={S.s_phong_cach_d80ae8d9}>{track.style ? labelOf(styles, track.style) : null}</Fact></Reveal>
+        <Reveal when={typeof track.duration === "number"}><Fact label={S.s_do_dai_5e055f59}>{typeof track.duration === "number" ? formatClock(track.duration) : null}</Fact></Reveal>
+        <Reveal when={(track.vocals ?? 0) >= 0.5}><Fact label={S.s_co_loi_4b381f10}><Check aria-hidden className="ml-auto size-4" /></Fact></Reveal>
+        <Reveal when={license}><Fact label={S.s_giay_phep_b609ade1}>{license}</Fact></Reveal>
+        <Reveal when={track.playlists.length > 0}><Fact label={S.s_co_trong_1312af9f}><DotJoin parts={track.playlists.map((item) => item.name)} /></Fact></Reveal>
+        <Reveal when={credit}><Fact label={S.s_ghi_cong_9c291f64}>{credit}</Fact></Reveal>
+        <Reveal when={track.landing}><Fact label={S.s_nguon_c76d57b3}>
             <a href={track.landing} target="_blank" rel="noreferrer" onClick={(event) => openExternal(track.landing!, event)} className="inline-flex items-center gap-2 text-sm font-medium text-accent-text">
               <ExternalLink aria-hidden className="size-4" />{S.s_mo_trang_nguon_af980960}
             </a>
-        </Fact>}
+        </Fact></Reveal>
       </dl>
       </section>
     </div>

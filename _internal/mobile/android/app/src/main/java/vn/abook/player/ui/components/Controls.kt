@@ -1,5 +1,8 @@
 package vn.abook.player.ui.components
 
+import vn.abook.player.ui.motion.SwapContent
+import vn.abook.player.ui.motion.ContentLayout
+
 import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.graphics.drawscope.translate
 import androidx.compose.animation.core.Animatable
@@ -221,6 +224,8 @@ fun DownloadRing(percent: Int?, label: String, modifier: Modifier = Modifier) {
             drawArc(colors.line, 0f, 360f, false, style = stroke)
             drawArc(colors.accent, -90f, (percent ?: 12) * 3.6f, false, style = stroke)
         }
-        if (percent != null) ClockLabel("$percent %", style = Abook.type.caption.copy(color = colors.text2))
+        SwapContent(percent, contentKey = { percent -> percent != null }, layout = ContentLayout.Box) { percent ->
+            if (percent != null) ClockLabel("$percent %", style = Abook.type.caption.copy(color = colors.text2))
+        }
     }
 }

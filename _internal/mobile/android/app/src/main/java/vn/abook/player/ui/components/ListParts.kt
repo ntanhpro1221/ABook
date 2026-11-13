@@ -1,5 +1,8 @@
 package vn.abook.player.ui.components
 
+import vn.abook.player.ui.motion.SwapContent
+import vn.abook.player.ui.motion.ContentLayout
+
 import vn.abook.player.S
 
 import androidx.compose.animation.AnimatedVisibility
@@ -91,7 +94,9 @@ fun PageHeader(title: String, onBack: () -> Unit, modifier: Modifier = Modifier,
 @Composable
 fun ListSection(title: String? = null, modifier: Modifier = Modifier, first: Boolean = false, content: @Composable ColumnScope.() -> Unit) {
     Column(modifier.fillMaxWidth()) {
-        if (title != null) SectionTitle(title, first) else Spacer(Modifier.height(if (first) Dim.s16 else Dim.sectionGap))
+        SwapContent(title, contentKey = { title -> title != null }, layout = ContentLayout.Column) { title ->
+            if (title != null) SectionTitle(title, first) else Spacer(Modifier.height(if (first) Dim.s16 else Dim.sectionGap))
+        }
         content()
     }
 }
@@ -115,9 +120,11 @@ fun RowLine(modifier: Modifier = Modifier, start: Dp = 0.dp) {
 private fun RowLabel(label: String, hint: String?, modifier: Modifier = Modifier) {
     Column(modifier) {
         BasicText(label, style = Abook.type.bodyStrong)
-        if (hint != null) {
-            Spacer(Modifier.height(2.dp))
-            RowHint(hint)
+        SwapContent(hint, contentKey = { hint -> hint != null }, layout = ContentLayout.Column) { hint ->
+            if (hint != null) {
+                Spacer(Modifier.height(2.dp))
+                RowHint(hint)
+            }
         }
     }
 }
@@ -126,7 +133,9 @@ private fun RowLabel(label: String, hint: String?, modifier: Modifier = Modifier
 @Composable
 fun RowHint(text: String, modifier: Modifier = Modifier, color: Color = Abook.colors.text2, ticking: Boolean = false) {
     val style = Abook.type.bodySmall.copy(color = color)
-    if (ticking) ClockLabel(text, modifier, style) else BasicText(text, style = style, modifier = modifier)
+    SwapContent(ticking, contentKey = { ticking -> ticking }, layout = ContentLayout.Box) { ticking ->
+        if (ticking) ClockLabel(text, modifier, style) else BasicText(text, style = style, modifier = modifier)
+    }
 }
 
 /** Hàng có tên bên trái, điều khiển / giá trị bên phải (canh giữa hàng). Cao tối thiểu 56. */
@@ -142,9 +151,11 @@ fun ListRow(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         RowLabel(label, hint, Modifier.weight(1f))
-        if (trailing != null) {
-            Spacer(Modifier.width(Dim.s16))
-            trailing()
+        SwapContent(trailing, contentKey = { trailing -> trailing != null }, layout = ContentLayout.Row) { trailing ->
+            if (trailing != null) {
+                Spacer(Modifier.width(Dim.s16))
+                trailing()
+            }
         }
     }
 }
@@ -267,7 +278,9 @@ fun Fold(
         ) {
             Column(Modifier.weight(1f).padding(vertical = Dim.s4)) {
                 BasicText(title, style = Abook.type.sectionTitle)
-                if (summary != null) RowHint(summary, Modifier.testTag("${tag}_summary"))
+                SwapContent(summary, contentKey = { summary -> summary != null }, layout = ContentLayout.Column) { summary ->
+                    if (summary != null) RowHint(summary, Modifier.testTag("${tag}_summary"))
+                }
             }
             Spacer(Modifier.width(Dim.s12))
             ChevronIcon(Abook.colors.text3, turn = { turn })
@@ -344,26 +357,34 @@ fun ListItem(
             .then(if (tag != null) Modifier.testTag(tag) else Modifier),
     ) {
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.Top) {
-            if (leading != null) {
-                Box(Modifier.width(leadingWidth).onFirstLine()) { Box(Modifier.testTag("row_leading")) { leading() } }
-                Spacer(Modifier.width(leadingGap))
+            SwapContent(leading, contentKey = { leading -> leading != null }, layout = ContentLayout.Row) { leading ->
+                if (leading != null) {
+                    Box(Modifier.width(leadingWidth).onFirstLine()) { Box(Modifier.testTag("row_leading")) { leading() } }
+                    Spacer(Modifier.width(leadingGap))
+                }
             }
             Column(Modifier.weight(1f).heightIn(min = if (below != null) 0.dp else 56.dp).padding(top = RowPad, bottom = if (below != null) 0.dp else RowPad)) {
                 BasicText(title, style = titleStyle.copy(color = titleColor), modifier = Modifier.testTag("row_title"))
-                if (hint != null) {
-                    Spacer(Modifier.height(2.dp))
-                    RowHint(hint, Modifier.testTag("row_hint"), hintColor, ticking = tickingHint)
+                SwapContent(hint, contentKey = { hint -> hint != null }, layout = ContentLayout.Column) { hint ->
+                    if (hint != null) {
+                        Spacer(Modifier.height(2.dp))
+                        RowHint(hint, Modifier.testTag("row_hint"), hintColor, ticking = tickingHint)
+                    }
                 }
             }
-            if (trailing != null || chevron) {
-                Spacer(Modifier.width(Dim.s12))
-                Box(Modifier.onFirstLine(), contentAlignment = Alignment.CenterEnd) {
-                    Box(Modifier.testTag("row_trailing")) { if (trailing != null) trailing() else ChevronIcon(Abook.colors.text3) }
+            SwapContent(trailing, chevron, contentKey = { trailing, chevron -> trailing != null || chevron }, layout = ContentLayout.Row) { trailing, chevron ->
+                if (trailing != null || chevron) {
+                    Spacer(Modifier.width(Dim.s12))
+                    Box(Modifier.onFirstLine(), contentAlignment = Alignment.CenterEnd) {
+                        Box(Modifier.testTag("row_trailing")) { if (trailing != null) trailing() else ChevronIcon(Abook.colors.text3) }
+                    }
                 }
             }
         }
         // Phần dưới (thanh tiến độ) chạy từ cột chữ tới mép phải của hàng, qua cả cột hành động: cùng bề ngang với đường kẻ dưới hàng.
-        if (below != null) Column(Modifier.fillMaxWidth().testTag("row_below").padding(start = if (leading != null) leadingWidth + leadingGap else 0.dp, bottom = RowPad)) { below() }
+        SwapContent(below, contentKey = { below -> below != null }, layout = ContentLayout.Column) { below ->
+            if (below != null) Column(Modifier.fillMaxWidth().testTag("row_below").padding(start = if (leading != null) leadingWidth + leadingGap else 0.dp, bottom = RowPad)) { below() }
+        }
     }
 }
 
@@ -421,7 +442,9 @@ fun LinearProgress(modifier: Modifier = Modifier.height(6.dp), ink: Color = Aboo
 @Composable
 fun Caption(text: String, modifier: Modifier = Modifier, color: Color = Abook.colors.text2, ticking: Boolean = false) {
     val style = Abook.type.caption.copy(color = color)
-    if (ticking) ClockLabel(text, modifier, style) else BasicText(text, style = style, modifier = modifier)
+    SwapContent(ticking, contentKey = { ticking -> ticking }, layout = ContentLayout.Box) { ticking ->
+        if (ticking) ClockLabel(text, modifier, style) else BasicText(text, style = style, modifier = modifier)
+    }
 }
 
 /** Lỗi tại chỗ: một câu màu nguy hiểm, kèm "Thử lại" ở mép phải khi có việc để làm lại; mở / khép chiều cao kèm trượt. */
@@ -433,9 +456,11 @@ fun InlineProblem(message: String, onRetry: (() -> Unit)? = null, tag: String = 
     Reveal(message.isNotEmpty()) {
         Row(modifier.fillMaxWidth().testTag(tag), verticalAlignment = Alignment.Top) {
             BasicText(shown, style = Abook.type.bodySmall.copy(color = Abook.colors.danger), modifier = Modifier.weight(1f).padding(top = if (onRetry != null) 14.dp else Dim.s8, bottom = if (onRetry != null) 13.dp else Dim.s8))
-            if (onRetry != null) {
-                Spacer(Modifier.width(Dim.s12))
-                TextAction(S.s_thu_lai_c58d068c, onRetry, "$tag-retry")
+            SwapContent(onRetry, contentKey = { onRetry -> onRetry != null }, layout = ContentLayout.Row) { onRetry ->
+                if (onRetry != null) {
+                    Spacer(Modifier.width(Dim.s12))
+                    TextAction(S.s_thu_lai_c58d068c, onRetry, "$tag-retry")
+                }
             }
         }
     }
@@ -484,12 +509,16 @@ fun MenuRow(
         Spacer(Modifier.width(Dim.s12))
         Column(Modifier.weight(1f).then(if (value != null) Modifier.alignByBaseline() else Modifier)) {
             BasicText(label, style = Abook.type.body.copy(color = if (unavailable) colors.text2 else ink), modifier = Modifier.testTag("row_title"))
-            if (hint != null) RowHint(hint, Modifier.padding(top = 4.dp).testTag("${tag}_hint"), colors.text2)
+            SwapContent(hint, contentKey = { hint -> hint != null }, layout = ContentLayout.Column) { hint ->
+                if (hint != null) RowHint(hint, Modifier.padding(top = 4.dp).testTag("${tag}_hint"), colors.text2)
+            }
         }
-        if (value != null) {
-            Spacer(Modifier.width(Dim.s12))
-            // Cùng cỡ chữ phụ với giá trị ở hàng của tấm trình phát; chung đường chân chữ với tên, dài thì xuống dòng.
-            BasicText(value, Modifier.widthIn(max = 160.dp).alignByBaseline().testTag("${tag}_value"), Abook.type.bodySmall.copy(color = colors.text2))
+        SwapContent(value, contentKey = { value -> value != null }, layout = ContentLayout.Row) { value ->
+            if (value != null) {
+                Spacer(Modifier.width(Dim.s12))
+                // Cùng cỡ chữ phụ với giá trị ở hàng của tấm trình phát; chung đường chân chữ với tên, dài thì xuống dòng.
+                BasicText(value, Modifier.widthIn(max = 160.dp).alignByBaseline().testTag("${tag}_value"), Abook.type.bodySmall.copy(color = colors.text2))
+            }
         }
     }
 }

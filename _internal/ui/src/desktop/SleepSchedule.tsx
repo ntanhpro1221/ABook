@@ -1,3 +1,4 @@
+import { Presence } from "../shared/MotionPresence";
 import { S } from "../shared/strings.generated";
 import { useState } from "react";
 import { toast } from "@/shared/toast";
@@ -36,12 +37,12 @@ export function SleepSchedule() {
       <Switch id="sleep-schedule" label={S.s_lich_dem_5f61612f} checked={Boolean(schedule)} ariaDisabled={!data || draft !== null} onCheckedChange={(on) => change(on ? DEFAULT_SCHEDULE : null)} />
     </SettingsRow>
     <MotionPresence open={Boolean(schedule)}>
-      {schedule && <div className="flex flex-wrap items-center gap-2 py-3 text-sm">
+      {<Presence>{schedule && <div className="flex flex-wrap items-center gap-2 py-3 text-sm">
         <TimeSelect ariaDisabled={draft !== null} label={S.s_tu_c2634aaa} value={schedule.from} onChange={(from) => change({ ...schedule, from })} />
         <span className="text-fg-2">{S.s_den_80b69c87}</span>
         <TimeSelect ariaDisabled={draft !== null} label={S.s_den_4f14ac22} value={schedule.to} onChange={(to) => change({ ...schedule, to })} />
-      </div>}
-      {schedule && <ValuePicker
+      </div>}</Presence>}
+      {<Presence>{schedule && <ValuePicker
         dense
         className="pb-3"
         spec={VALUE_SPECS.scheduleMinutes}
@@ -50,7 +51,7 @@ export function SleepSchedule() {
         label={S.s_hen_244e495e}
         format={(minutes) => S.s_0_phut_2596d212(minutes)}
         onChange={(minutes) => change({ ...schedule, minutes })}
-      />}
+      />}</Presence>}
     </MotionPresence>
   </>;
 }

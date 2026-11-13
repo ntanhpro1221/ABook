@@ -1,3 +1,4 @@
+import { Presence } from "./MotionPresence";
 import { S } from "./strings.generated";
 import * as DialogPrimitive from "@radix-ui/react-dialog";
 import * as TabsPrimitive from "@radix-ui/react-tabs";
@@ -10,7 +11,7 @@ import { markArrival, scrollMotion } from "@/shared/motion";
 import { revealedScroll, wheelScroll } from "@/shared/tabScroll";
 import { MotionRegion } from "./MotionRegion";
 import { installFocusModality } from "./focusModality";
-import { MotionPresence, Reveal } from "./MotionPresence";
+import { hasPresentContent, MotionPresence, Reveal, usePresent } from "./MotionPresence";
 import { SlidingIndicator } from "./SlidingIndicator";
 import { useBackLayer } from "./backStack";
 import { useMediaQuery } from "./media";
@@ -633,7 +634,7 @@ function useArrivalOnOpen(open: boolean) {
 }
 
 export function Dialog({
-  open,
+  open: requestedOpen,
   onOpenChange,
   title,
   description,
@@ -649,6 +650,7 @@ export function Dialog({
   width?: string;
   footer?: ReactNode;
 }) {
+  const open = usePresent() && requestedOpen;
   useArrivalOnOpen(open);
   // Nhớ phần tử đang giữ con trỏ lúc hộp mở (trước khi Radix chuyển con trỏ vào hộp) để trả về khi đóng.
   const opener = useRef<Element | null>(null);
@@ -728,7 +730,7 @@ export function Dialog({
 
 /** Chân hộp tách khỏi thân cuộn: nút luôn thấy; một bố cục cho mỗi nền tảng. */
 function SurfaceFooter({ children }: { children?: ReactNode }) {
-  return <MotionPresence open={Boolean(children)} className="surface-footer shrink-0" bodyClassName="border-t border-line pt-4 mt-4">{children}</MotionPresence>;
+  return <MotionPresence open={hasPresentContent(children)} className="surface-footer shrink-0" bodyClassName="border-t border-line pt-4 mt-4">{children}</MotionPresence>;
 }
 
 export function DialogActions({ children, className, ...props }: HTMLAttributes<HTMLElement>) {
@@ -738,7 +740,7 @@ export function DialogActions({ children, className, ...props }: HTMLAttributes<
 /** Tấm trượt từ đáy màn điện thoại, thay cho bảng nổi neo vào một nút nhỏ: trên màn hẹp bảng nổi bị ép sát mép và phải
  *  cuộn trong khung thấp (soát UX 29-09, bảng cách đọc câu ở tab Kịch bản). `trigger` là nút mở (asChild). */
 export function Sheet({
-  open,
+  open: requestedOpen,
   onOpenChange,
   title,
   trigger,
@@ -765,6 +767,7 @@ export function Sheet({
   onKeyDown?: React.KeyboardEventHandler<HTMLDivElement>;
   className?: string;
 }) {
+  const open = usePresent() && requestedOpen;
   useArrivalOnOpen(open);
   const lastContent = useRef({ title, children, description, footer, leading });
   if (open) lastContent.current = { title, children, description, footer, leading };
@@ -813,7 +816,7 @@ export function Sheet({
   useLayoutEffect(() => { if (open) opener.current = lastFocus; }, [open]);
   return (
     <DialogPrimitive.Root open={open} onOpenChange={onOpenChange}>
-      {trigger && <DialogPrimitive.Trigger asChild>{trigger}</DialogPrimitive.Trigger>}
+      {<Presence>{trigger && <DialogPrimitive.Trigger asChild>{trigger}</DialogPrimitive.Trigger>}</Presence>}
       <DialogPrimitive.Portal>
         <DialogPrimitive.Overlay inert={!open} style={open ? undefined : CLOSING} className="motion-scrim fixed inset-0 z-40 bg-scrim" />
         <DialogPrimitive.Content
@@ -861,7 +864,7 @@ export function Sheet({
               <span className="h-[4px] w-[40px] rounded-full bg-line-strong" aria-hidden />
             </button>
           </DialogPrimitive.Close>
-          <MotionRegion className="flex min-w-0 items-center" motionKey={Boolean(shown.leading)}>
+          <MotionRegion className="flex min-w-0 items-center" motionKey={hasPresentContent(shown.leading)}>
             {shown.leading}
             <DialogPrimitive.Title data-surface-title className="min-w-0 text-lg font-bold">
               <MotionRegion as="span" className="block" motionKey={typeof shown.title === "string" || typeof shown.title === "number" ? shown.title : undefined}>{shown.title}</MotionRegion>
@@ -1183,7 +1186,7 @@ export function FilterRow<T extends string>({
     <div ref={setRow} style={fade} role="radiogroup" aria-label={label} onKeyDown={radioGroupKeys(values, value, onChange)} className={cn("relative flex max-w-full overflow-x-auto [scrollbar-width:none]", className)}>
       <SlidingIndicator variant="line" />
       {options.map((option, index) => [
-        index > 0 && <RowGap key={`gap-${option.value}`} />,
+        <Presence key={`gap-${option.value}`}>{index > 0 && <RowGap />}</Presence>,
         <button
           key={option.value}
           type="button"

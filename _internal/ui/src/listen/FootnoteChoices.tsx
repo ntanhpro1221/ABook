@@ -1,3 +1,4 @@
+import { Presence } from "../shared/MotionPresence";
 import { S } from "../shared/strings.generated";
 import { ChoiceRow } from "@/shared/ui";
 import { footnoteSummary, type FootnoteChoice, type FootnoteNotes, type FootnoteOffer } from "./textImport";
@@ -54,7 +55,7 @@ export function FootnoteChoices({
       <p className="text-xs font-medium">{title}</p>
       <Reveal when={example}><p className="mt-1 text-xs text-fg-2">{example}</p></Reveal>
       <div className="mt-2 space-y-3">
-        {offer.marks > 0 && (
+        {<Presence>{offer.marks > 0 && (
           <Choice
             checked={value.hideMarks}
             disabled={disabled}
@@ -62,7 +63,7 @@ export function FootnoteChoices({
             label={S.s_bo_so_goi_b8d25593}
             help={S.s_0_so_goi_trong_chu_bo_cac_con_so_nhu_2_hay_10ac572b(offer.marks)}
           />
-        )}
+        )}</Presence>}
         {/* ChoiceRow không có trạng thái tắt: lúc đang đọc lại file, cả nhóm mờ đi và không nhận chạm / phím (như ô tích bên trên). */}
         <div inert={disabled} className={disabled ? "opacity-60" : undefined}>
           <p className="text-sm font-medium">{S.s_loi_chu_eca33b1a}</p>

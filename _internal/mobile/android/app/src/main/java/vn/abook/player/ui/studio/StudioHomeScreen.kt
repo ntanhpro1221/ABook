@@ -1,5 +1,8 @@
 package vn.abook.player.ui.studio
 
+import vn.abook.player.ui.motion.SwapContent
+import vn.abook.player.ui.motion.ContentLayout
+
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.PaddingValues
@@ -83,18 +86,22 @@ fun StudioHomeScreen(state: StudioHomeState, onBack: () -> Unit, onOpen: (Studio
             }
         }
     }
-    if (embeddedHeader != null) {
-        Column(Modifier.fillMaxSize().testTag("studio_home")) {
-            embeddedHeader()
-            if (onNew != null && !blocked && books != null) vn.abook.player.ui.components.TextAction(StudioNewText.TITLE, onNew, "studio_new")
-            Column(Modifier.weight(1f), content = content)
-        }
-    } else {
-        BookForm(
+    SwapContent(embeddedHeader, contentKey = { embeddedHeader -> embeddedHeader != null }, layout = ContentLayout.Box) { embeddedHeader ->
+        if (embeddedHeader != null) {
+            Column(Modifier.fillMaxSize().testTag("studio_home")) {
+                embeddedHeader()
+                SwapContent(onNew, blocked, books, contentKey = { onNew, blocked, books -> onNew != null && !blocked && books != null }, layout = ContentLayout.Column) { onNew, blocked, books ->
+                    if (onNew != null && !blocked && books != null) vn.abook.player.ui.components.TextAction(StudioNewText.TITLE, onNew, "studio_new")
+                }
+                Column(Modifier.weight(1f), content = content)
+            }
+        } else {
+            BookForm(
             StudioText.TITLE, onBack, "studio_home",
             footer = if (onNew != null && !blocked && books != null) ({ PrimaryButton(StudioNewText.TITLE, onNew, Modifier.fillMaxWidth().testTag("studio_new")) }) else null,
             content = content,
-        )
+            )
+        }
     }
 }
 

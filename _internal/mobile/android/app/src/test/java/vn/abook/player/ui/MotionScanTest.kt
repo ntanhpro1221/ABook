@@ -16,6 +16,8 @@ class MotionScanTest {
         assertTrue("quét được quá ít file: ${files.size}", files.size >= 8)
         val findings = files.flatMap { MotionScan.scan(it.name, it.readText()) }
         assertEquals(findings.joinToString("\n") { "${it.file}:${it.line} ${it.why}" }, emptyList<MotionScan.Finding>(), findings)
+        val unguarded = MotionScan.unguardedReducedCalls(files.associate { it.path to it.readText() })
+        assertEquals(unguarded.joinToString("\n"), emptyList<MotionScan.Finding>(), unguarded)
     }
 
     @Test
@@ -56,6 +58,27 @@ class MotionScanTest {
     @Test
     fun `comments are ignored`() {
         assertEquals(emptyList<MotionScan.Finding>(), MotionScan.scan("t.kt", "// không dùng fadeIn() hay Crossfade(\n/* fadeOut() */ val x = 1"))
+    }
+
+    @Test
+    fun `reduced fade requires the fixed clock and guarded callers`() {
+        val helper = "fun ShortFade() { withContext(FadeDurationScale) { alpha.animateTo(0f, tween(MotionMs.REDUCED_FADE_MS)) }; Modifier.graphicsLayer { alpha = state.value } }"
+        assertTrue(MotionScan.scan("helper.kt", helper).isEmpty())
+        assertTrue(MotionScan.scan("helper.kt", helper.replace("withContext(FadeDurationScale)", "launch")).isNotEmpty())
+        assertTrue(MotionScan.unguardedReducedCalls(mapOf("helper.kt" to helper, "host.kt" to "if (rememberReducedMotion()) { ShortFade() }")).isEmpty())
+        assertEquals(1, MotionScan.unguardedReducedCalls(mapOf("helper.kt" to helper, "host.kt" to "ShortFade()")).size)
+        assertEquals(1, MotionScan.unguardedReducedCalls(mapOf("helper.kt" to helper, "host.kt" to "if (!rememberReducedMotion()) { ShortFade() }")).size)
+        // A surface that selects normal/reduced motion internally is not a reduced-only helper.
+        val surface = "fun Surface() { val reduced = rememberReducedMotion(); if (reduced) { withContext(FadeDurationScale) { alpha.animateTo(1f, tween(MotionMs.REDUCED_FADE_MS)) } } else normalMotion() }"
+        assertTrue(MotionScan.reducedFadeScopes(surface).isEmpty())
+        assertTrue(MotionScan.unguardedReducedCalls(mapOf("surface.kt" to surface, "host.kt" to "Surface()")).isEmpty())
+    }
+
+    @Test
+    fun `skeleton clock exemption does not hide an unrelated alpha`() {
+        val pulse = "val opacity by transition.animateFloat(initialValue = 1f, targetValue = MotionMs.SKELETON_LOW, animationSpec = infiniteRepeatable(tween(MotionMs.SKELETON_PERIOD_MS / 2), RepeatMode.Reverse)); graphicsLayer { alpha = opacity }"
+        assertTrue(MotionScan.scan("pulse.kt", pulse).isEmpty())
+        assertTrue(MotionScan.scan("pulse.kt", pulse.replace("alpha = opacity", "alpha = unrelated")).isNotEmpty())
     }
 
     @Test

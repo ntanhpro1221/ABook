@@ -1,5 +1,8 @@
 package vn.abook.player.ui.studio
 
+import vn.abook.player.ui.motion.SwapContent
+import vn.abook.player.ui.motion.ContentLayout
+
 import vn.abook.player.S
 
 import vn.abook.player.ui.data.dotJoin
@@ -78,18 +81,20 @@ fun StudioNewScreen(state: StudioNewState, onBack: () -> Unit, onCreated: (Strin
         StudioNewText.TITLE, { if (state.step == NewStep.Source) onBack() else state.back() }, "studio_new",
         footer = if (session.listenOnly) null else ({ NewFooter(state) }),
     ) {
-        if (session.listenOnly) {
-            PermissionCard(session.name, session::retry)
-        } else {
-            Column(Modifier.fillMaxWidth().padding(top = Dim.s4)) {
-                RowHint(dotJoin(StudioNewText.stepOf(state.step), state.step.label), Modifier.testTag("studio_new_step"))
-                StageProgress { StudioNewLogic.stepFraction(state.step) }
-            }
-            SheetPages(state.step, { it.ordinal }, "studio_new_pages") { shown ->
-                when (shown) {
-                    NewStep.Source -> SourceStep(state, { picker.launch(arrayOf("*/*")) })
-                    NewStep.Chapters -> ChaptersStep(state)
-                    NewStep.Start -> StartStep(state)
+        SwapContent(session.listenOnly, contentKey = { listenOnly -> listenOnly }, layout = ContentLayout.Column) { listenOnly ->
+            if (listenOnly) {
+                PermissionCard(session.name, session::retry)
+            } else {
+                Column(Modifier.fillMaxWidth().padding(top = Dim.s4)) {
+                    RowHint(dotJoin(StudioNewText.stepOf(state.step), state.step.label), Modifier.testTag("studio_new_step"))
+                    StageProgress { StudioNewLogic.stepFraction(state.step) }
+                }
+                SheetPages(state.step, { it.ordinal }, "studio_new_pages") { shown ->
+                    when (shown) {
+                        NewStep.Source -> SourceStep(state, { picker.launch(arrayOf("*/*")) })
+                        NewStep.Chapters -> ChaptersStep(state)
+                        NewStep.Start -> StartStep(state)
+                    }
                 }
             }
         }
@@ -203,9 +208,11 @@ private fun ChaptersStep(state: StudioNewState) {
                 RowHint(StudioNewText.CHAPTERS_LEAD)
                 RowHint(StudioNewLogic.totals(state.kept), Modifier.padding(top = Dim.s4).testTag("studio_new_totals"), Abook.colors.text)
                 for (line in scan?.errors.orEmpty() + scan?.notes.orEmpty()) Caption(line, Modifier.padding(top = Dim.s4).testTag("studio_new_scan_note"))
-                if (scan != null && scan.existing.isNotEmpty()) {
-                    BasicText(StudioNewText.EXISTING, style = Abook.type.bodyStrong, modifier = Modifier.padding(top = Dim.s12).testTag("studio_new_existing"))
-                    for (book in scan.existing) RowHint(dotJoin(book.title, book.statusLabel))
+                SwapContent(scan, contentKey = { scan -> scan != null && scan.existing.isNotEmpty() }, layout = ContentLayout.Column) { scan ->
+                    if (scan != null && scan.existing.isNotEmpty()) {
+                        BasicText(StudioNewText.EXISTING, style = Abook.type.bodyStrong, modifier = Modifier.padding(top = Dim.s12).testTag("studio_new_existing"))
+                        for (book in scan.existing) RowHint(dotJoin(book.title, book.statusLabel))
+                    }
                 }
             }
         }
@@ -252,7 +259,9 @@ private fun StartStep(state: StudioNewState) {
             Column(Modifier.fillMaxWidth().padding(top = Dim.s12)) {
                 BookField(StudioNewText.FIRST_PERSON, state.firstPerson, state::editFirstPerson, "studio_new_first_person", placeholder = StudioNewText.FIRST_PERSON_PLACEHOLDER)
                 RowHint(StudioNewText.FIRST_PERSON_HINT, Modifier.padding(top = Dim.s4))
-                if (hint != null) MoreInfo(S.s_may_doan_0f0472f0, StudioNewText.firstPersonGuess(hint), "studio_new_guess")
+                SwapContent(hint, contentKey = { hint -> hint != null }, layout = ContentLayout.Column) { hint ->
+                    if (hint != null) MoreInfo(S.s_may_doan_0f0472f0, StudioNewText.firstPersonGuess(hint), "studio_new_guess")
+                }
                 Reveal(hint != null && hint.suggestions.isNotEmpty() && state.firstPerson.isBlank()) {
                     Column(Modifier.fillMaxWidth()) {
                         for (name in hint?.suggestions.orEmpty().take(4)) {

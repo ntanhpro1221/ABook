@@ -1,5 +1,8 @@
 package vn.abook.player.ui.studio
 
+import vn.abook.player.ui.motion.SwapContent
+import vn.abook.player.ui.motion.ContentLayout
+
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -178,19 +181,23 @@ private fun JobBlock(state: StudioProjectState, kind: StudioExportKind, job: Stu
 @Composable
 private fun ExportFooter(state: StudioProjectState, sheets: SheetHost) {
     val export = state.export
-    val job = export.job
+    // This footer can now recompose independently of the page's animation host.
+    val jobs by export.poll.collectAsState()
+    val job = jobs.data?.takeIf { it.kind == export.kind }?.job
     val book = state.poll.collectAsState().value.data?.book
     Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(Dim.s8)) {
         InlineProblem(export.problem, null, "studio_export_footer_problem")
-        if (job?.running == true) {
-            TextAction(
+        SwapContent(job, contentKey = { job -> job?.running == true }, layout = ContentLayout.Column) { job ->
+            if (job?.running == true) {
+                TextAction(
                 if (export.stopping) StudioExportText.STOPPING else StudioExportText.CANCEL,
                 { if (!export.stopping) sheets.show { dismiss -> CancelSheet(export, dismiss) } }, "studio_export_cancel", Modifier.fillMaxWidth(), align = Alignment.Center,
-            )
-        } else {
-            val again = StudioExportLogic.shown(job) && job?.state != "idle"
-            val ok = book != null && StudioExportLogic.canExport(export.kind, book) && !export.starting && !StudioExportLogic.needsFfmpeg(export.kind, export.musicOn, export.options)
-            PrimaryButton(if (again) StudioExportText.RETRY else StudioExportText.EXPORT, export::start, Modifier.fillMaxWidth().testTag("studio_export_start"), enabled = ok)
+                )
+            } else {
+                val again = StudioExportLogic.shown(job) && job?.state != "idle"
+                val ok = book != null && StudioExportLogic.canExport(export.kind, book) && !export.starting && !StudioExportLogic.needsFfmpeg(export.kind, export.musicOn, export.options)
+                PrimaryButton(if (again) StudioExportText.RETRY else StudioExportText.EXPORT, export::start, Modifier.fillMaxWidth().testTag("studio_export_start"), enabled = ok)
+            }
         }
     }
 }

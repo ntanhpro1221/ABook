@@ -1,5 +1,8 @@
 package vn.abook.player.ui.export
 
+import vn.abook.player.ui.motion.SwapContent
+import vn.abook.player.ui.motion.ContentLayout
+
 import vn.abook.player.S
 
 import vn.abook.player.ui.components.ClockLabel
@@ -203,13 +206,15 @@ private fun VoiceBlock(ui: ExportUi) {
     val plan = ui.plan
     Column(Modifier.fillMaxWidth()) {
         RowLine()
-        if (voice != null) {
-            ListItem(S.s_giong_doc_11f2548d, Modifier, null, "export_voice", hint = S.s_0_giong_dang_chon_cho_cuon_nay_doi_o_trinh_bc47c66f(voice.caption), titleStyle = Abook.type.bodyStrong)
-        } else Reveal(ui.voiceChecked) {
-            BasicText(
+        SwapContent(voice, contentKey = { voice -> voice != null }, layout = ContentLayout.Column) { voice ->
+            if (voice != null) {
+                ListItem(S.s_giong_doc_11f2548d, Modifier, null, "export_voice", hint = S.s_0_giong_dang_chon_cho_cuon_nay_doi_o_trinh_bc47c66f(voice.caption), titleStyle = Abook.type.bodyStrong)
+            } else Reveal(ui.voiceChecked) {
+                BasicText(
                 S.s_may_chua_co_giong_doc_nao_tai_giong_o_cai_aa7e4957,
                 style = Abook.type.bodySmall.copy(color = Abook.colors.danger), modifier = Modifier.padding(vertical = Dim.s12).testTag("export_no_voice"),
-            )
+                )
+            }
         }
         Note(ui.planError, "export_plan_error", Abook.colors.danger)
         Note(
@@ -285,7 +290,9 @@ internal fun ProgressLine(progress: State<ExportProgress>, folder: String?) {
             current.text, style = Abook.type.body,
             modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite; contentDescription = current.spoken }.testTag("export_progress_text"),
         )
-        if (folder != null) BasicText(S.s_vao_0_55d7d040(folder), style = Abook.type.caption.copy(color = Abook.colors.text2), modifier = Modifier.padding(top = 4.dp).testTag("export_progress_folder"))
+        SwapContent(folder, contentKey = { folder -> folder != null }, layout = ContentLayout.Column) { folder ->
+            if (folder != null) BasicText(S.s_vao_0_55d7d040(folder), style = Abook.type.caption.copy(color = Abook.colors.text2), modifier = Modifier.padding(top = 4.dp).testTag("export_progress_folder"))
+        }
         val known by remember { derivedStateOf { progress.value.fraction != null } }
         StageProgress(known) { progress.value.fraction ?: 0f }
     }
@@ -368,10 +375,12 @@ private fun Footer(book: ListenBook, ui: ExportUi, exports: ExportState, running
 @Composable
 private fun DoneButtons(book: ListenBook, done: ExportPhase.Done, exports: ExportState) {
     val uri = done.result.uri ?: return
-    if (done.result.kind == ExportKind.Mp3) {
-        PrimaryButton(S.s_mo_thu_muc_4bf5b127, { exports.openFolder(book.id, uri, done.result.folder) }, Modifier.fillMaxWidth().testTag("export_open_folder"))
-    } else {
-        PrimaryButton(S.s_mo_741bd2c2, { exports.openFile(book.id, uri) }, Modifier.fillMaxWidth().testTag("export_open"))
-        TextAction(S.s_gui_0564dcf3, { exports.share(book.id, uri, book.title) }, "export_share", Modifier.fillMaxWidth(), align = Alignment.Center)
+    SwapContent(done, contentKey = { done -> done.result.kind == ExportKind.Mp3 }, layout = ContentLayout.Column) { done ->
+        if (done.result.kind == ExportKind.Mp3) {
+            PrimaryButton(S.s_mo_thu_muc_4bf5b127, { exports.openFolder(book.id, uri, done.result.folder) }, Modifier.fillMaxWidth().testTag("export_open_folder"))
+        } else {
+            PrimaryButton(S.s_mo_741bd2c2, { exports.openFile(book.id, uri) }, Modifier.fillMaxWidth().testTag("export_open"))
+            TextAction(S.s_gui_0564dcf3, { exports.share(book.id, uri, book.title) }, "export_share", Modifier.fillMaxWidth(), align = Alignment.Center)
+        }
     }
 }

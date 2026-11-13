@@ -41,8 +41,11 @@ it.each(["rows", "cards", "covers"] as const)("skeleton %s có nhãn tải và k
 
 it("khung chờ nhịp 1,6 giây và giữ quy tắc giảm chuyển động", () => {
   const css = readFileSync(`${cwd()}/src/styles.css`, "utf8");
-  expect(css).toContain("state-skeleton-pulse 1.6s");
-  expect(css).toContain("50% { opacity: .6; }");
+  const tokens = readFileSync(`${cwd()}/src/shared/tokens.generated.css`, "utf8");
+  expect(css).toContain("state-skeleton-pulse var(--skeleton-period-ms)");
+  expect(css).toContain("50% { opacity: var(--skeleton-low); }");
+  expect(tokens).toContain("--skeleton-period-ms: 1600ms;");
+  expect(tokens).toContain("--skeleton-low: 0.6;");
   expect(css).toContain(".motion-skeleton { animation: fade-in var(--motion-fast) linear backwards !important; }");
 });
 

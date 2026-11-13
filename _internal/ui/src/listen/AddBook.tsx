@@ -1,3 +1,4 @@
+import { Presence } from "../shared/MotionPresence";
 import { S } from "../shared/strings.generated";
 import { MotionRegion } from "@/shared/MotionRegion";
 import { feedback } from "@/shared/feedback";
@@ -540,9 +541,9 @@ export function AddBookDialog({
   const skipAction = <Reveal when={queue}><Button variant={known ? "primary" : "ghost"} disabled={busy !== null} onClick={skipCurrent}>{S.s_bo_cuon_nay_ba5f36fe}</Button></Reveal>;
 
   return (
-    <Dialog footer={queue && !preview ? (busy === null && (<DialogActions>
+    <Dialog footer={queue && !preview ? (<Presence>{busy === null && (<DialogActions>
               <Button variant="primary" onClick={() => close(false)}>{S.s_xong_a6f4543a}</Button>
-            </DialogActions>)) : (!preview ? (null) : (<DialogActions data-add-book-actions>
+            </DialogActions>)}</Presence>) : (!preview ? (null) : (<DialogActions data-add-book-actions>
             <Button variant="ghost" disabled={busy !== null} onClick={chooseAgain}>{S.s_chon_lai_834274af}</Button>
             {!known && skipAction}
             <Reveal when={rest > 0}><Button disabled={!title.trim() || nothingPicked || busy !== null} loading={busy === "adding"} onClick={() => void addAll()}>{S.s_them_phan_con_lai_45b70e44}</Button></Reveal>

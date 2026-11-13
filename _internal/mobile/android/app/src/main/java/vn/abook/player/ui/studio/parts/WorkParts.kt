@@ -1,5 +1,8 @@
 package vn.abook.player.ui.studio.parts
 
+import vn.abook.player.ui.motion.SwapContent
+import vn.abook.player.ui.motion.ContentLayout
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -73,7 +76,9 @@ fun ClipProblem(clip: ClipState, modifier: Modifier = Modifier, tag: String = "s
 fun ClipButton(clipId: String, clip: ClipState, onClick: () -> Unit, tag: String, modifier: Modifier = Modifier) {
     val active = clip.playing == clipId || clip.loading == clipId
     IconAction(if (active) WorkText.STOP else WorkText.PLAY, onClick, tag, modifier) {
-        if (active) StopIcon(Abook.colors.accentText) else PlayIcon(Abook.colors.accentText)
+        SwapContent(active, contentKey = { active -> active }, layout = ContentLayout.Box) { active ->
+            if (active) StopIcon(Abook.colors.accentText) else PlayIcon(Abook.colors.accentText)
+        }
     }
 }
 
@@ -88,7 +93,11 @@ fun UndoStrip(message: String, onUndo: (() -> Unit)?, onClose: (() -> Unit)?, ta
         verticalAlignment = Alignment.CenterVertically,
     ) {
         BasicText(message, style = Abook.type.bodySmall, modifier = Modifier.weight(1f).padding(vertical = Dim.s12).testTag("${tag}_text"))
-        if (onUndo != null) TextAction(WorkText.UNDO, onUndo, "${tag}_undo") else if (onClose != null) TextAction(WorkText.CLOSE, onClose, "${tag}_close")
+        SwapContent(onUndo, contentKey = { onUndo -> onUndo != null }, layout = ContentLayout.Row) { onUndo ->
+            if (onUndo != null) TextAction(WorkText.UNDO, onUndo, "${tag}_undo") else SwapContent(onClose, contentKey = { onClose -> onClose != null }, layout = ContentLayout.Row) { onClose ->
+                if (onClose != null) TextAction(WorkText.CLOSE, onClose, "${tag}_close")
+            }
+        }
     }
 }
 
@@ -114,20 +123,24 @@ fun DecisionStrip(decisions: StudioDecisions, modifier: Modifier = Modifier) {
 @Composable
 fun AnswerButton(label: String, onClick: () -> Unit, tag: String, modifier: Modifier = Modifier, primary: Boolean = false, hint: String? = null, enabled: Boolean = true) {
     Column(modifier.fillMaxWidth()) {
-        if (primary) {
-            PrimaryButton(label, onClick, Modifier.fillMaxWidth().testTag(tag), enabled)
-        } else {
-            Box(
+        SwapContent(primary, contentKey = { primary -> primary }, layout = ContentLayout.Column) { primary ->
+            if (primary) {
+                PrimaryButton(label, onClick, Modifier.fillMaxWidth().testTag(tag), enabled)
+            } else {
+                Box(
                 Modifier.fillMaxWidth().heightIn(min = Dim.s48)
                     .then(if (enabled) Modifier.pressable(onClick = onClick) else Modifier.semantics { disabled() })
                     .insetSurface(Abook.colors)
                     .padding(horizontal = Dim.s16, vertical = Dim.s12).testTag(tag),
                 contentAlignment = Alignment.Center,
-            ) {
-                BasicText(label, style = Abook.type.bodyStrong.copy(color = if (enabled) Abook.colors.text else Abook.colors.text3))
+                ) {
+                    BasicText(label, style = Abook.type.bodyStrong.copy(color = if (enabled) Abook.colors.text else Abook.colors.text3))
+                }
             }
         }
-        if (hint != null) RowHint(hint, Modifier.padding(top = Dim.s4, start = Dim.s4))
+        SwapContent(hint, contentKey = { hint -> hint != null }, layout = ContentLayout.Column) { hint ->
+            if (hint != null) RowHint(hint, Modifier.padding(top = Dim.s4, start = Dim.s4))
+        }
     }
 }
 
@@ -156,11 +169,13 @@ fun LineSample(example: WorkExample, clip: ClipState, clipId: String, onPlay: ((
             val who = if (!example.narration && example.speaker.isNotEmpty()) " · ${example.speaker}" else ""
             Caption("${example.chapterTitle}$who", Modifier.padding(top = Dim.s4), colors.text3)
         }
-        if (onPlay != null) {
-            Spacer(Modifier.width(Dim.s4))
-            ClipButton(clipId, clip, onPlay, "${tag}_play")
-        } else {
-            Spacer(Modifier.width(Dim.s12))
+        SwapContent(onPlay, contentKey = { onPlay -> onPlay != null }, layout = ContentLayout.Row) { onPlay ->
+            if (onPlay != null) {
+                Spacer(Modifier.width(Dim.s4))
+                ClipButton(clipId, clip, onPlay, "${tag}_play")
+            } else {
+                Spacer(Modifier.width(Dim.s12))
+            }
         }
     }
 }

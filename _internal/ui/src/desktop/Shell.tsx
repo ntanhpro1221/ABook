@@ -1,3 +1,4 @@
+import { Presence } from "../shared/MotionPresence";
 import { S } from "../shared/strings.generated";
 import { Clapperboard, Clock, Download, Library, ListMusic, PanelLeftClose, PanelLeftOpen, Pause, Settings } from "lucide-react";
 import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
@@ -247,13 +248,13 @@ export function Shell({ children }: { children: ReactNode }) {
   return (
     <div ref={shell} className={cn("flex h-full", chrome && "desktop-chrome-shell")}>
       {/* Người dùng bàn phím: Tab đầu tiên tới đây (trước cả thanh cửa sổ), bỏ qua thanh bên để vào thẳng nội dung. Màn "Đang nghe" mở thì nội dung bên dưới bị khoá (inert) - không hiện. */}
-      {!expanded && (
+      {<Presence>{!expanded && (
         <button
           type="button"
           onClick={() => main.current?.focus()}
           className="fixed left-[calc(env(safe-area-inset-left)+0.75rem)] top-[calc(env(safe-area-inset-top)+0.75rem)] z-[60] -translate-y-[200%] rounded-control bg-accent px-4 py-2 text-sm font-medium text-accent-ink shadow-float transition-transform duration-motion-fast focus:translate-y-0"
         >{S.s_toi_noi_dung_501e7d8d}</button>
-      )}
+      )}</Presence>}
       <TitleBar toggle={<IconButton size="sm" label={collapsed ? S.s_mo_rong_ctrl_b_5f11a976 : S.s_thu_gon_ctrl_b_931db193} icon={collapsed ? PanelLeftOpen : PanelLeftClose} onClick={toggleSidebar} />} />
       <ShortcutsHost remote={remote} />
       <DesktopSidebar listenOnly={listenOnly} collapsed={Boolean(chrome && collapsed)} />

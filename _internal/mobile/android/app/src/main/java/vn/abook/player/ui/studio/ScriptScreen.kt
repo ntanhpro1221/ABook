@@ -1,5 +1,8 @@
 package vn.abook.player.ui.studio
 
+import vn.abook.player.ui.motion.SwapContent
+import vn.abook.player.ui.motion.ContentLayout
+
 import vn.abook.player.S
 
 import vn.abook.player.ui.data.dotJoined
@@ -96,9 +99,13 @@ private fun ScriptBody(state: StudioScriptState, contents: ScriptContents, scrip
                     summary = entry?.let(ScriptLogic::extras),
                 )
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                    if (script?.previous != null) TextAction(ScriptText.PREVIOUS, { state.open(script.previous) }, "studio_script_previous", align = Alignment.CenterStart)
-                    else Spacer(Modifier)
-                    if (script?.next != null) TextAction(ScriptText.NEXT, { state.open(script.next) }, "studio_script_next")
+                    SwapContent(script, contentKey = { script -> script?.previous != null }, layout = ContentLayout.Row) { script ->
+                        if (script?.previous != null) TextAction(ScriptText.PREVIOUS, { state.open(script.previous) }, "studio_script_previous", align = Alignment.CenterStart)
+                        else Spacer(Modifier)
+                    }
+                    SwapContent(script, contentKey = { script -> script?.next != null }, layout = ContentLayout.Row) { script ->
+                        if (script?.next != null) TextAction(ScriptText.NEXT, { state.open(script.next) }, "studio_script_next")
+                    }
                 }
                 DisclosureRow(filterName(state.filter, script), { sheets.show { dismiss -> FilterSheet(state, script, dismiss) } }, "studio_script_filter")
                 InlineProblem(state.error?.let { StudioText.failure(it) }.orEmpty(), state::retry, "studio_script_stale")
@@ -131,12 +138,14 @@ private fun LineRow(state: StudioScriptState, script: ChapterScript, row: ShownL
         Row(Modifier.fillMaxWidth().padding(top = Dim.s12), verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.weight(1f)) {
                 val label = ScriptLogic.speakerLabel(line).ifEmpty { ScriptText.NARRATION }
-                if (line.editable && !row.context) {
-                    TextAction(label, { sheets.show { dismiss -> PeopleSheet(state, script, line, dismiss) } }, "studio_line_who_${line.stableId}", align = Alignment.CenterStart)
-                } else {
-                    // Cùng chiều cao với nhãn có nút (TextAction: [Dim.s48]): hàng người kể (không sửa được) không chật hơn hàng thoại.
-                    Box(Modifier.heightIn(min = Dim.s48), contentAlignment = Alignment.CenterStart) {
-                        BasicText(label, style = Abook.type.label, modifier = Modifier.testTag("studio_line_who_${line.stableId}"))
+                SwapContent(line, row, contentKey = { line, row -> line.editable && !row.context }, layout = ContentLayout.Column) { line, row ->
+                    if (line.editable && !row.context) {
+                        TextAction(label, { sheets.show { dismiss -> PeopleSheet(state, script, line, dismiss) } }, "studio_line_who_${line.stableId}", align = Alignment.CenterStart)
+                    } else {
+                        // Cùng chiều cao với nhãn có nút (TextAction: [Dim.s48]): hàng người kể (không sửa được) không chật hơn hàng thoại.
+                        Box(Modifier.heightIn(min = Dim.s48), contentAlignment = Alignment.CenterStart) {
+                            BasicText(label, style = Abook.type.label, modifier = Modifier.testTag("studio_line_who_${line.stableId}"))
+                        }
                     }
                 }
                 val pending = line.wish?.state == "pending"
@@ -150,10 +159,16 @@ private fun LineRow(state: StudioScriptState, script: ChapterScript, row: ShownL
             RowHint("${ScriptText.READ_AS}: $spoken", Modifier.padding(top = Dim.s4).testTag("studio_line_spoken_${line.stableId}"))
         }
         val hint = line.hint
-        if (hint != null && !row.context) RowHint(ScriptText.suggest(hint.note, hint.suggest), Modifier.padding(top = Dim.s4).testTag("studio_line_hint_${line.stableId}"), Abook.colors.accentText)
-        if (editing) SpokenEditor(state, line) { onEdit(false) }
-        else if (line.editable && !row.context) TextAction(ScriptText.SPOKEN, { onEdit(true) }, "studio_line_edit_${line.stableId}", align = Alignment.CenterStart)
-        else Spacer(Modifier.height(Dim.s16))  // hàng không có nút "Chữ đem đọc" vẫn chừa chỗ cuối như hàng có nút
+        SwapContent(hint, row, contentKey = { hint, row -> hint != null && !row.context }, layout = ContentLayout.Column) { hint, row ->
+            if (hint != null && !row.context) RowHint(ScriptText.suggest(hint.note, hint.suggest), Modifier.padding(top = Dim.s4).testTag("studio_line_hint_${line.stableId}"), Abook.colors.accentText)
+        }
+        SwapContent(editing, contentKey = { editing -> editing }, layout = ContentLayout.Column) { editing ->
+            if (editing) SpokenEditor(state, line) { onEdit(false) }
+            else SwapContent(line, row, contentKey = { line, row -> line.editable && !row.context }, layout = ContentLayout.Column) { line, row ->
+                if (line.editable && !row.context) TextAction(ScriptText.SPOKEN, { onEdit(true) }, "studio_line_edit_${line.stableId}", align = Alignment.CenterStart)
+                else Spacer(Modifier.height(Dim.s16))
+            }
+        }  // hàng không có nút "Chữ đem đọc" vẫn chừa chỗ cuối như hàng có nút
         RowLine()
     }
 }

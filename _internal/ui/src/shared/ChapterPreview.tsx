@@ -1,3 +1,4 @@
+import { Presence } from "./MotionPresence";
 import { S } from "./strings.generated";
 import { MotionRegion } from "@/shared/MotionRegion";
 import { useBackLayer } from "./backStack";
@@ -87,7 +88,7 @@ export function ChapterPreview({ chapters, className, titleFirst = false, choice
               choice ? "grid-cols-[20px_auto_minmax(0,1fr)_64px] sm:grid-cols-[20px_auto_minmax(0,1fr)_90px]" : "grid-cols-[auto_minmax(0,1fr)_90px]",
             )}
           >
-            {choice && (
+            {<Presence>{choice && (
               // Ô chọn 14 px: nhãn bao ngoài nới vùng chạm lên 40 px ở màn hẹp / cảm ứng (touch-hit), bấm vào vùng nới cũng tích / bỏ tích.
               <label className="touch-hit mt-[0px] grid size-5 place-items-center">
                 <input
@@ -99,7 +100,7 @@ export function ChapterPreview({ chapters, className, titleFirst = false, choice
                   className="size-4 accent-[var(--accent)]"
                 />
               </label>
-            )}
+            )}</Presence>}
             {/* Cột số rộng đúng số chữ số của số lớn nhất, canh phải: khoảng tới ô chọn và tới tên chương như nhau ở mọi hàng (cột 36 px canh
                 trái để "1" cách tên 34 px mà cách ô chọn 12 px). */}
             <span className="tabular-cell text-right text-xs leading-5 pt-[4px] text-fg-2" style={{ width: `${digits}ch` }}>{position + 1}</span>

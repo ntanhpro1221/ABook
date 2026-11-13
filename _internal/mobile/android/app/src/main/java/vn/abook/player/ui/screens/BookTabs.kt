@@ -1,5 +1,8 @@
 package vn.abook.player.ui.screens
 
+import vn.abook.player.ui.motion.SwapContent
+import vn.abook.player.ui.motion.ContentLayout
+
 import vn.abook.player.ui.components.skeletonPulse
 import vn.abook.player.ui.components.skeletonPulse
 import vn.abook.player.S
@@ -173,9 +176,11 @@ fun EmptyNote(title: String, body: String, modifier: Modifier = Modifier, tag: S
         BasicText(title, style = Abook.type.bodyStrong.copy(textAlign = TextAlign.Center))
         Spacer(Modifier.height(Dim.s4))
         BasicText(body, style = Abook.type.bodySmall.copy(textAlign = TextAlign.Center))
-        if (action != null) {
-            Spacer(Modifier.height(Dim.s16))
-            action()
+        SwapContent(action, contentKey = { action -> action != null }, layout = ContentLayout.Column) { action ->
+            if (action != null) {
+                Spacer(Modifier.height(Dim.s16))
+                action()
+            }
         }
     }
 }
@@ -418,7 +423,9 @@ private fun SampleButton(active: Boolean, label: String, onClick: () -> Unit) {
         Modifier.size(Dim.touch).pressable(onClick = onClick).semantics { contentDescription = if (active) S.s_dung_nghe_thu_41a2925b else label }.testTag("person_sample"),
         contentAlignment = Alignment.Center,
     ) {
-        if (active) StopIcon(colors.accentText, size = 14.dp) else PlayIcon(colors.text2, size = 14.dp)
+        SwapContent(active, contentKey = { active -> active }, layout = ContentLayout.Box) { active ->
+            if (active) StopIcon(colors.accentText, size = 14.dp) else PlayIcon(colors.text2, size = 14.dp)
+        }
     }
 }
 

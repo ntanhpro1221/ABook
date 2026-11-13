@@ -1,3 +1,4 @@
+import { Presence } from "./MotionPresence";
 // Đầu màn dùng chung mọi màn gốc và màn con, cả điện thoại lẫn máy tính (soát 25-10: chân chữ tiêu đề Thư viện / Studio / Cài đặt
 // điện thoại 54 / 46 / 40, máy tính 28-32 px tuỳ màn, ba kiểu nút quay lại). Một chỗ quyết đệm trên, cỡ tiêu đề, hàng tiêu đề, dòng phụ,
 // nút ← và khe nút phải - đổi tab đáy thì tiêu đề đứng yên, màn con có tiêu đề cùng chân chữ với màn gốc.
@@ -36,12 +37,12 @@ export function ScreenHeader({ title, back, subtitle, subtitleKey, actions, clas
           không bóp tiêu đề thành hai dòng ở màn hẹp: tiêu đề giữ một dòng, nút xuống dưới (soát UX 05-10). */}
       <div className="flex min-h-[48px] flex-wrap items-center justify-between gap-x-4 gap-y-3 sm:min-h-[40px]">
         <Reveal when={back || title !== undefined}><div className={cn("flex items-center", back ? "min-w-0 flex-1" : "shrink-0")}>
-            {back && <BackButton label={back.label} onClick={back.onClick} />}
-            {title !== undefined && (
+            {<Presence>{back && <BackButton label={back.label} onClick={back.onClick} />}</Presence>}
+            {<Presence>{title !== undefined && (
               <h1 data-screen-title={back ? "child" : "root"} className={cn(SCREEN_TITLE, "leading-[32px] sm:leading-[40px]", back ? "min-w-0 [overflow-wrap:anywhere]" : "whitespace-nowrap")}>
                 {title}
               </h1>
-            )}
+            )}</Presence>}
           </div></Reveal>
         {actions}
       </div>

@@ -70,7 +70,7 @@ it("điện thoại: trang con thay tiêu đề tấm, ← lùi từng trang và
   await act(() => root.render(<MenuShell label="Thêm tuỳ chọn" trigger="…"><button>Hẹn giờ</button><MenuShell label="Âm thanh" caption="Âm thanh" trigger="Tắt" look="row"><Audio /></MenuShell></MenuShell>));
   await act(() => document.querySelector<HTMLButtonElement>('[aria-label="Thêm tuỳ chọn"]')!.click()); await wait();
   const title = () => document.querySelector("[data-surface-title]")!.textContent;
-  const back = () => document.querySelector<HTMLButtonElement>('[role="dialog"] .back-button');
+  const back = () => [...document.querySelectorAll<HTMLButtonElement>('[role="dialog"] .back-button')].find(button => !button.closest("[inert]")) ?? null;
   const shown = (text: string) => { const el = Array.from(document.querySelectorAll<HTMLElement>("button, p")).find(e => e.textContent === text); return Boolean(el && !el.closest("[hidden]")); };
   expect(title()).toBe("Thêm tuỳ chọn");
   expect(back()).toBeNull();

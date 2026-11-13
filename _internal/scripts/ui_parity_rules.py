@@ -417,8 +417,11 @@ def instant_rows() -> list[dict]:
     sees, "b-*" is proved safe by a general structural rule (never a per-line exception)."""
     ui_instant = _module(Path(__file__).with_name("ui_instant.py"))
     rel_ = lambda p: rel(p)
+    # Theme helpers contain real UI (the reveal snapshot); only generated tokens
+    # are excluded. The colour/scale scanners have a different reason to skip theme/.
+    android = sorted(set(and_files()) | {p for p in (ROOT / AND / "theme").glob("*.kt") if p.name != "Tokens.kt"})
     return (ui_instant.qt_classify(qt_files(), rel_) + ui_instant.web_classify(web_files(), rel_)
-            + ui_instant.kt_classify(and_files(), rel_))
+            + ui_instant.kt_classify(android, rel_))
 
 
 def instant_hits() -> list[tuple[str, int, str]]:

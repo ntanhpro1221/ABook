@@ -1,5 +1,8 @@
 package vn.abook.player.ui.pip
 
+import vn.abook.player.ui.motion.SwapContent
+import vn.abook.player.ui.motion.ContentLayout
+
 import vn.abook.player.ui.theme.coverOverlay
 import vn.abook.player.ui.theme.coverInk
 import androidx.compose.foundation.Image
@@ -73,14 +76,16 @@ fun PipContent(player: PlayerState, position: () -> Long, covers: CoverLoader, m
         val plan = remember(player.bookTitle, player.chapterTitle, coverShowsTitle, titleStyle, chapterStyle, density, constraints.maxWidth, constraints.maxHeight) {
             planPipText(player.bookTitle, player.chapterTitle, coverShowsTitle, titleStyle, chapterStyle, measurer, density, constraints.maxWidth, constraints.maxHeight)
         }
-        if (plan.showBook || plan.showChapter) {
-            Column(
-                Modifier.align(Alignment.BottomStart).fillMaxWidth().then(if (plan.full) Modifier.fillMaxHeight() else Modifier).background(Brush.verticalGradient(listOf(Color.Transparent, colors.coverOverlay)))
+        SwapContent(plan, contentKey = { plan -> plan.showBook || plan.showChapter }, layout = ContentLayout.Box, modifier = Modifier.align(Alignment.BottomStart).fillMaxWidth()) { plan ->
+            if (plan.showBook || plan.showChapter) {
+                Column(
+                Modifier.fillMaxWidth().then(if (plan.full) Modifier.fillMaxHeight() else Modifier).background(Brush.verticalGradient(listOf(Color.Transparent, colors.coverOverlay)))
                     .padding(start = Dim.s12, end = Dim.s12, top = if (plan.full) Dim.s8 else Dim.s24, bottom = PROGRESS_HEIGHT + Dim.s8),
                 verticalArrangement = Arrangement.spacedBy(Dim.s4, if (plan.full) Alignment.Bottom else Alignment.Top),
-            ) {
-                Reveal(plan.showBook) { BasicText(player.bookTitle, Modifier.testTag("pip_book_title"), style = titleStyle) }
-                Reveal(plan.showChapter) { BasicText(player.chapterTitle, Modifier.testTag("pip_chapter_title"), style = chapterStyle) }
+                ) {
+                    Reveal(plan.showBook) { BasicText(player.bookTitle, Modifier.testTag("pip_book_title"), style = titleStyle) }
+                    Reveal(plan.showChapter) { BasicText(player.chapterTitle, Modifier.testTag("pip_chapter_title"), style = chapterStyle) }
+                }
             }
         }
         Box(
@@ -118,14 +123,16 @@ internal fun planPipText(
 @Composable
 private fun PipCover(player: PlayerState, covers: CoverLoader, maxWidthPx: Int, modifier: Modifier) {
     val ref = player.cover
-    if (ref == null) {
-        GeneratedCover(player.bookTitle, null, with(LocalDensity.current) { maxWidthPx.toDp() }, modifier)
-        return
+    SwapContent(ref, contentKey = { ref -> ref == null }, layout = ContentLayout.Box) { ref ->
+        if (ref == null) {
+            GeneratedCover(player.bookTitle, null, with(LocalDensity.current) { maxWidthPx.toDp() }, modifier)
+        } else {
+            val key = remember(ref.path, ref.stamp, maxWidthPx) { covers.key(ref.path, ref.stamp, maxWidthPx, maxWidthPx * 3 / 2) }
+            val image = remember(key) { mutableStateOf(covers.peek(key)) }
+            if (image.value == null) LaunchedEffect(key) { image.value = covers.load(key, ref.path, maxWidthPx, maxWidthPx * 3 / 2) }
+            image.value?.let { Image(it, null, modifier, contentScale = ContentScale.Crop) }
+        }
     }
-    val key = remember(ref.path, ref.stamp, maxWidthPx) { covers.key(ref.path, ref.stamp, maxWidthPx, maxWidthPx * 3 / 2) }
-    val image = remember(key) { mutableStateOf(covers.peek(key)) }
-    if (image.value == null) LaunchedEffect(key) { image.value = covers.load(key, ref.path, maxWidthPx, maxWidthPx * 3 / 2) }
-    image.value?.let { Image(it, null, modifier, contentScale = ContentScale.Crop) }
 }
 
 private val PROGRESS_HEIGHT = 3.dp
@@ -134,4 +141,3 @@ private val PROGRESS_HEIGHT = 3.dp
 
 /** Tên chương là chữ phụ so với tên sách (như `Theme.text2` ở bản máy tính). */
 private const val CHAPTER_ALPHA = 0.78f
-

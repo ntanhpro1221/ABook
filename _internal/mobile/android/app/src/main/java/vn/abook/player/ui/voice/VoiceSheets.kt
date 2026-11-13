@@ -1,5 +1,8 @@
 package vn.abook.player.ui.voice
 
+import vn.abook.player.ui.motion.SwapContent
+import vn.abook.player.ui.motion.ContentLayout
+
 import vn.abook.player.S
 
 import vn.abook.player.formatSize
@@ -79,10 +82,14 @@ private fun ModuleActions(kind: ModuleKind, choice: ModuleChoice, status: Module
     val bench = status?.benchmark?.get(choice.id)
     Column(Modifier.fillMaxWidth()) {
         BasicText(VoiceText.choiceTitle(choice), style = Abook.type.sectionTitle)
-        if (bench != null && status != null) Caption(VoiceText.benchmark(choice.id, bench, status.slowRtf), Modifier.padding(top = Dim.s4).testTag("module_benchmark"))
+        SwapContent(bench, status, contentKey = { bench, status -> bench != null && status != null }, layout = ContentLayout.Column) { bench, status ->
+            if (bench != null && status != null) Caption(VoiceText.benchmark(choice.id, bench, status.slowRtf), Modifier.padding(top = Dim.s4).testTag("module_benchmark"))
+        }
         Spacer(Modifier.height(Dim.s8))
-        if (choice.installed && status?.state == ModuleState.Outdated) {
-            MenuRow(S.s_cap_nhat_0_618a3fa3(formatSize(status.outdatedBytes)), "module_update", onClick = { voice.download(kind, null); dismiss() }) { ink -> DownloadIcon(ink) }
+        SwapContent(choice, status, contentKey = { choice, status -> choice.installed && status?.state == ModuleState.Outdated }, layout = ContentLayout.Column) { choice, status ->
+            if (choice.installed && status?.state == ModuleState.Outdated) {
+                MenuRow(S.s_cap_nhat_0_618a3fa3(formatSize(status.outdatedBytes)), "module_update", onClick = { voice.download(kind, null); dismiss() }) { ink -> DownloadIcon(ink) }
+            }
         }
         Reveal(choice.installed) {
             MenuRow(

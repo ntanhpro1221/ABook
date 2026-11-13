@@ -217,6 +217,69 @@ export function Lib({ a, b }: { a: boolean; b: boolean }) {
     assert got[("Lib.kt", 8)] == "a-swap" and got[("Lib.kt", 9)] == "a-hard" and ("Lib.kt", 10) not in got
 
 
+def test_l7_retained_presence_and_snapshot_swaps(planted):
+    (planted.ROOT / "ui/src/listen/Lib.tsx").write_text("""export function Lib({item}) {
+  return <><Presence>{item && <Custom value={item.name} />}</Presence>
+    {item && <Custom value={item.name} />}
+    <Presence><div>{item && <Custom value={item.name} />}</div></Presence></>;
+}
+""", encoding="utf-8")
+    (planted.ROOT / "mobile/android/app/src/main/java/vn/abook/player/ui/Lib.kt").write_text("""package vn.abook.player.ui
+@Composable fun Note(text: String) {}
+@Composable fun Lib(value: String?, other: Boolean) {
+    SwapContent(value, other, contentKey = { value, other -> value != null && other }) { value, other ->
+        if (value != null && other) Note(value)
+        if (other) Note("unrelated to this branch key")
+    }
+    if (value != null) Note(value)
+}
+""", encoding="utf-8")
+    got = _categories(planted)
+    assert got[("Lib.tsx", 2)] == "b-retained-presence"
+    assert got[("Lib.tsx", 3)] == "a-hard"
+    assert got[("Lib.tsx", 4)] == "a-hard"  # an always-present div cannot observe its own conditional descendant
+    assert got[("Lib.kt", 5)] == "b-parent-motion"
+    assert got[("Lib.kt", 6)] == "a-hard"
+    assert got[("Lib.kt", 8)] == "a-hard"
+
+
+def test_l7_snapshot_mask_must_erase_the_surface_on_a_real_clock(planted):
+    path = planted.ROOT / "mobile/android/app/src/main/java/vn/abook/player/ui/Lib.kt"
+    source = """package vn.abook.player.ui
+@Composable fun Lib(image: ImageBitmap?) {
+    val progress = Animatable(0f)
+    LaunchedEffect(Unit) { progress.animateTo(1f, Motion.ThemeReveal) }
+    if (image != null) {
+        Box(Modifier.drawBehind {
+            drawImage(image)
+            val far = hypot(size.width, size.height)
+            drawCircle(Color.Black, far * progress.value, center, blendMode = BlendMode.Clear)
+        })
+    }
+}
+"""
+    path.write_text(source, encoding="utf-8")
+    assert _categories(planted)[("Lib.kt", 5)] == "b-animated-mask"
+    path.write_text(source.replace("animateTo(1f", "animateTo(0f"), encoding="utf-8")
+    assert _categories(planted)[("Lib.kt", 5)] == "a-hard"
+    path.write_text(source.replace("BlendMode.Clear", "BlendMode.SrcOver"), encoding="utf-8")
+    assert _categories(planted)[("Lib.kt", 5)] == "a-hard"
+
+
+def test_l7_reduced_policy_requires_the_positive_guard(planted):
+    path = planted.ROOT / "mobile/android/app/src/main/java/vn/abook/player/ui/Lib.kt"
+    path.write_text("""package vn.abook.player.ui
+@Composable fun ReducedFade(value: Boolean) {}
+@Composable fun Lib(ready: Boolean) {
+    if (rememberReducedMotion()) { ReducedFade(ready) }
+    if (!rememberReducedMotion()) { ReducedFade(ready) }
+}
+""", encoding="utf-8")
+    got = _categories(planted)
+    assert got[("Lib.kt", 4)] == "b-motion-policy"
+    assert got[("Lib.kt", 5)] == "a-hard"
+
+
 def test_l8_bites_an_ellipsis_button_with_the_wrong_name(planted):
     problems = planted.l8_ellipsis_names()
     assert any("Lib.qml" in p and "Tuỳ chọn {0}" in p for p in problems), problems

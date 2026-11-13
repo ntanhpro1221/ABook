@@ -1,3 +1,4 @@
+import { Presence } from "../shared/MotionPresence";
 import { S } from "../shared/strings.generated";
 import { MotionRegion } from "@/shared/MotionRegion";
 import { AnimatedRows, MotionPresence, Reveal } from "@/shared/MotionPresence";
@@ -403,9 +404,9 @@ function PronunciationFix({ bookId, item, onOpenNames }: { bookId: string; item:
           disabled={!typed || typed === item.current || typed === item.requested}
         >{S.s_doc_the_nay_b9d202fe}</Button>
         {/* Thẻ chỉ hỏi tên máy kém chắc; mọi tên khác (kể cả tên đã chọn) sửa ở tab Nhân vật, mục "Cách đọc tên". */}
-        {onOpenNames && (
+        {<Presence>{onOpenNames && (
           <Button size="sm" variant="ghost" type="button" className="text-fg-2 hover:text-fg" onClick={() => onOpenNames(item.surface ?? "")}>{S.s_moi_cach_doc_ten_5d01fa0c}</Button>
-        )}
+        )}</Presence>}
       </form>
       {tryIt.note}
       <ReadingProblem id={`${inputId}-problem`} problem={problem} suggestion={suggestion} onUse={use} />
@@ -536,7 +537,7 @@ function SpeakerFix({
             ? S.s_da_ghi_0_la_1_ca_cuon_va_cac_phan_sau_a67585e2(item.subject ?? item.current, midSentence(item.requested))
             : S.s_da_ghi_0_cua_1_2_efc7efdc((item.lines?.length ?? 1) > 1 ? S.s_0_cau_nay_eeb40df6(item.lines?.length) : S.s_cau_nay_c70feb8f, midSentence(item.requested), pending)}
         </p></Reveal>
-      {item.allLines && item.lines && onScope && (
+      {<Presence>{item.allLines && item.lines && onScope && (
         <div className="mb-2 flex flex-wrap items-center gap-2 text-xs text-fg-2">
           <span>{S.s_doi_nguoi_noi_cho_214fb622}</span>
           <ChoiceRow<Scope>
@@ -549,7 +550,7 @@ function SpeakerFix({
             ]}
           />
         </div>
-      )}
+      )}</Presence>}
       <Reveal when={item.allLines && item.lines && onScope}><p className="mb-2 text-xs text-fg-3">
           {item.scopeLabels
             ? S.s_0_theo_chuong_1_theo_ca_sach_va_cac_phan_s_1dd980b1(item.scopeLabels[0], item.scopeLabels[1])
@@ -583,20 +584,20 @@ function SpeakerFix({
             {item.keepLabel ?? S.s_giu_nguyen_1b550a12}
           </DecisionButton></Reveal>
         {/* Thẻ "một người hai tên" hỏi hai tên có phải một người - chọn người thứ ba lạc chủ đề (soát UX 29-09). */}
-        {item.kind !== "alias" && (
+        {<Presence>{item.kind !== "alias" && (
           <Button size="sm" variant="ghost" icon={item.suggestedName || item.kind === "caller" ? undefined : UserPlus} aria-expanded={creating} className="text-fg-2 hover:text-fg" onClick={() => setCreating((value) => !value)}>
             {item.suggestedName ? S.s_dat_ten_519d84a1 : S.s_nguoi_khac_36be042b}
           </Button>
-        )}
+        )}</Presence>}
         {/* Thẻ chỉ gợi vài người; tab Kịch bản tìm được mọi nhân vật trong sách - mở đúng câu này ở đó (soát UX 29-09). */}
-        {onOpenScript && item.lines?.length === 1 && item.examples?.[0] && (
+        {<Presence>{onOpenScript && item.lines?.length === 1 && item.examples?.[0] && (
           <Button size="sm" variant="ghost" icon={Search} className="text-fg-2 hover:text-fg" onClick={() => onOpenScript(item.examples![0].chapterId, item.lines![0].stableId)}>{S.s_tim_nguoi_khac_ce406b45}</Button>
-        )}
+        )}</Presence>}
         {/* Thẻ nhóm chỉ in vài câu làm ví dụ ("Hai người chung một tên" có thể 16 câu): đọc đủ ngữ cảnh ở tab Kịch bản trước khi
             quyết, mở đúng chương, tại câu đầu của nhóm. */}
-        {onOpenScript && (item.lines?.length ?? 0) > (item.examples?.length ?? 0) && item.examples?.[0] && (
+        {<Presence>{onOpenScript && (item.lines?.length ?? 0) > (item.examples?.length ?? 0) && item.examples?.[0] && (
           <Button size="sm" variant="ghost" icon={Search} className="text-fg-2 hover:text-fg" onClick={() => onOpenScript(item.examples![0].chapterId, item.lines![0].stableId, false)}>{S.s_xem_e7ed16f8}{item.lines!.length}{S.s_cau_b07e1008}</Button>
-        )}
+        )}</Presence>}
       </div>
       <Collapse open={creating}>
         <div className="mt-2 flex flex-wrap items-center gap-2">
@@ -951,9 +952,9 @@ function Card({ bookId, item, onOpenReview, onOpenScript, onOpenNames, onPickVoi
       )}
       {item.examples.length > 0 && (
         <MotionRegion motionKey={[scope, shownExamples.map(example => example.segmentId)]}><ul className="mt-3 space-y-2 border-t border-line pt-3">
-          {picked && item.lines && (
+          {<Presence>{picked && item.lines && (
             <li className="text-xs text-fg-2">{pickNote(picked.length, item.lines.length)}{S.s_bo_chon_cau_khong_phai_cua_nguoi_ay_c8d4e374}</li>
-          )}
+          )}</Presence>}
           {shownExamples.map((example) => (
             <Example
               key={example.segmentId}

@@ -1,3 +1,4 @@
+import { Presence } from "../shared/MotionPresence";
 import { S } from "../shared/strings.generated";
 import { MotionRegion } from "@/shared/MotionRegion";
 import { useListPresence } from "@/shared/motion";
@@ -93,7 +94,7 @@ export function PendingList({
             <Reveal when={showLines}><span className="shrink-0 pt-1 text-xs text-fg-3">
                 {item.lines ? S.s_0_cau_thu_lai_372ad9c3(formatNumber(item.lines)) : S.s_chua_thu_khong_ton_gi_d0da00cf}
               </span></Reveal>
-            {extra && <span className="-my-1 shrink-0">{extra(item)}</span>}
+            {<Presence>{extra && <span className="-my-1 shrink-0">{extra(item)}</span>}</Presence>}
             <IconButton
               size="sm"
               icon={X}

@@ -1,3 +1,4 @@
+import { Presence } from "../shared/MotionPresence";
 import { S } from "../shared/strings.generated";
 import { TickingValue } from "@/shared/TickingValue";
 import { MotionRegion } from "@/shared/MotionRegion";
@@ -411,7 +412,7 @@ export function MenuShell({
       className={cn(look === "action" ? ACTION_BUTTON : look === "row"
         ? MENU_ROW
         : "inline-flex h-9 min-w-9 shrink-0 items-center justify-center gap-1 whitespace-nowrap rounded-control px-2 text-body-small font-medium transition-colors hover:bg-hover max-sm:h-[48px] max-sm:min-w-[48px]", look !== "row" && actionTone(active))}>
-      <Reveal when={look === "row"}><span className="flex min-w-0 flex-1 items-center gap-3">{RowIcon && <RowIcon className="size-4 shrink-0 text-fg-2" />}<span className="truncate">{caption}</span></span></Reveal>
+      <Reveal when={look === "row"}><span className="flex min-w-0 flex-1 items-center gap-3">{<Presence>{RowIcon && <RowIcon className="size-4 shrink-0 text-fg-2" />}</Presence>}<span className="truncate">{caption}</span></span></Reveal>
       <MotionRegion as="span" motionKey={triggerKey} className={cn(look === "action" ? ACTION_GLYPH : "inline-flex items-center gap-1", look === "row" && cn("min-w-0 text-xs font-medium", actionTone(active)))}>{trigger}</MotionRegion>
       {look === "action" && <MotionRegion as="span" className={ACTION_LABEL} motionKey={typeof caption === "string" ? caption.replace(/\d+/g, "#") : undefined}>{caption}</MotionRegion>}
     </button>;
@@ -429,7 +430,7 @@ export function MenuShell({
   </Popover.Root>;
   if (phone) return <Popover.Root open={isOpen} onOpenChange={changeOpen}>
     <Sheet open={isOpen} onOpenChange={changeOpen} title={pages.top?.title ?? dialogLabel ?? label} trigger={button}
-      leading={pages.top && <BackButton label={S.s_quay_lai_6d793582} onClick={pages.top.back} />}
+      leading={<Presence>{pages.top && <BackButton label={S.s_quay_lai_6d793582} onClick={pages.top.back} />}</Presence>}
       focusSelector={focusSelector} onKeyDown={menuArrowKeys} footer={footer} className="player-sheet">
       <SheetPages.Provider value={pages.api}>
         {/* Danh sách gốc ẩn (không tháo: dòng đang mở giữ thân của trang) khi một trang có thân riêng đang mở; trượt sang như tấm con Android. */}
@@ -1090,7 +1091,7 @@ function SleepPicker({
           <SleepRing fraction={sleep.kind === "minutes" && sleep.minutes > 0 && left !== null ? left / (sleep.minutes * 60_000) : null}>
             <Moon className={look === "action" ? "size-5" : "size-4"} />
           </SleepRing>
-          {active && look === "chip" && <TickingValue>{sleepButtonLabel(sleep, now)}</TickingValue>}
+          {<Presence>{active && look === "chip" && <TickingValue>{sleepButtonLabel(sleep, now)}</TickingValue>}</Presence>}
         </>
       }
     ><MotionRegion>
@@ -1403,7 +1404,7 @@ function PlayerAlert({ className, overlay = false, compact = false }: { classNam
         {/* Lời báo + cụm nút xuống hàng khi hẹp; nút ✕ đứng riêng ở góc trên phải nên không thêm hàng nào và không bao giờ trôi xuống dưới cụm nút. */}
         <div className="flex min-w-0 flex-1 flex-wrap items-center gap-x-3 gap-y-2">
           <span className="min-w-0 flex-1 basis-[14rem]">{stuck && current ? (offline ? noOfflineMessage : unusableVoiceMessage)(spokenVoiceName(current.name)) : error}</span>
-          {stuck && local && track && (
+          {<Presence>{stuck && local && track && (
             <button
               type="button"
               onClick={() => {
@@ -1416,7 +1417,7 @@ function PlayerAlert({ className, overlay = false, compact = false }: { classNam
               className={button}
             >{S.s_doc_bang_f7f5f3b1}{voiceCaption(local)}
             </button>
-          )}
+          )}</Presence>}
           <button type="button" onClick={retry} {...keepFocus} className={button}>{S.s_thu_lai_c58d068c}</button>
           <Reveal when={stuck && Boolean(voices?.length)}><button
               type="button"
@@ -1431,7 +1432,7 @@ function PlayerAlert({ className, overlay = false, compact = false }: { classNam
               {...keepFocus}
               className={button}
             >{S.s_chon_giong_khac_d31cfe89}</button></Reveal>
-          {stuck && !local && <VieneuDownload button={S.s_tai_giong_vieneu_94c86884} onOpenSettings={() => openVoiceSettings("vieneu-module")} />}
+          {<Presence>{stuck && !local && <VieneuDownload button={S.s_tai_giong_vieneu_94c86884} onOpenSettings={() => openVoiceSettings("vieneu-module")} />}</Presence>}
         </div>
         {/* Gạt đi tới lần lỗi mới: khối này nằm trên mọi màn, người đang làm việc khác (Cài đặt, Thư viện) không bị nó đè mãi. */}
         <button
@@ -2129,9 +2130,9 @@ const NowPlayingColumn = memo(function NowPlayingColumn({
             <BookProgressLine className="mb-1 border-b border-line px-2 pb-2 pt-1" />
             <VoiceMenu scope="screen" look="row" />
             <MenuRow icon={BookOpen} onClick={() => { onCollapse(); if (location.pathname !== bookPage) navigate(bookPage); }}>{S.s_trang_sach_2b6c8e51}</MenuRow>
-            {canGoBack && <MenuRow icon={Undo2} onClick={goBack}>{S.s_ve_cho_vua_nghe_8da3c710}</MenuRow>}
+            {<Presence>{canGoBack && <MenuRow icon={Undo2} onClick={goBack}>{S.s_ve_cho_vua_nghe_8da3c710}</MenuRow>}</Presence>}
             {/* Máy có bàn phím: gợi ý phím tắt (cùng hộp với phím ?). Màn cảm ứng không có phím để gõ. */}
-            {!COARSE && <MenuRow icon={Keyboard} aria-keyshortcuts="?" onClick={openShortcuts}>{S.s_phim_tat_7baaed2f}</MenuRow>}
+            {<Presence>{!COARSE && <MenuRow icon={Keyboard} aria-keyshortcuts="?" onClick={openShortcuts}>{S.s_phim_tat_7baaed2f}</MenuRow>}</Presence>}
             <MenuSlot label={S.s_goi_y_doc_346ac8be} icon={Lightbulb}><SuggestionsButton bookId={track.bookId} className="max-sm:size-[48px]" /></MenuSlot>
             <MenuSlot label={S.s_phat_tren_681e16e1}>{actions}</MenuSlot>
           </MoreMenu>
@@ -2160,13 +2161,13 @@ const NowPlayingColumn = memo(function NowPlayingColumn({
             <div data-np="book" className={cn("mt-1 break-words text-fg-2", reading ? "truncate text-xs" : "text-sm")}>
               <TrackSubtitle look={reading ? "reading" : "screen"} />
             </div>
-            {!reading && <MusicCreditLine />}
+            {<Presence>{!reading && <MusicCreditLine />}</Presence>}
           </div>
         </div>
         {/* Chữ đọc theo: chỉ có ở điện thoại (máy tính: bảng bên phải), mở ra bằng mờ dần dưới tên. */}
-        {mobile && reading && (
+        {<Presence>{mobile && reading && (
           <div data-read-along className="motion-reveal mt-3 min-h-0 flex-1 overflow-hidden rounded-cover"><ReadAlong edit={edit} /></div>
-        )}
+        )}</Presence>}
       </div>
       <div className="mt-5 w-full">
         <SeekBar large />
@@ -2180,7 +2181,7 @@ const NowPlayingColumn = memo(function NowPlayingColumn({
       <div role="group" aria-label={S.s_dieu_khien_phu_bf325663} data-player-secondary className={cn("slot-row mt-5 items-start [--slot-start:1.742rlh] [--slot:1.9rlh]", mobile ? "[--slot-end:1.925rlh]" : "[--slot-end:1.859rlh]")}>
         <SpeedMenu look="action" />
         <SleepMenu look="action" />
-        {mobile && <ActionButton icon={ListOrdered} label={S.s_chuong_2d157977} aria-pressed={selected === "chapters"} active={selected === "chapters"} {...keepFocus} onClick={() => onToggle("chapters")} />}
+        {<Presence>{mobile && <ActionButton icon={ListOrdered} label={S.s_chuong_2d157977} aria-pressed={selected === "chapters"} active={selected === "chapters"} {...keepFocus} onClick={() => onToggle("chapters")} />}</Presence>}
       </div>
       {/* Đang nhỏ dần thì S.s_copy_920dc24f8105 đã nói thay - hai dòng cùng lúc ở chương rất ngắn đọc như mâu thuẫn. */}
       <MotionPresence open={sleep.kind === "chapter" && !fading}><p className="mt-2 text-center text-xs text-fg-2">{S.s_se_dung_khi_het_chuong_nay_9c1f8c30}</p></MotionPresence>
@@ -2429,10 +2430,10 @@ export function NowPlaying({ mobile = false, stacked = mobile, actions, edit }: 
       role="main"
       aria-label={S.s_dang_nghe_9310d8cf}
     >
-      {fill && <NowPlayingColumn player={player} mobile={stacked} plain={Boolean(plain)} actions={actions} selected={showPanel ? panel : null} onCollapse={collapse} onToggle={toggleStable} reading={reading} onReading={readingStable} edit={edit} />}
-      {fill && stacked && <Sheet open={open && showPanel} onOpenChange={setShowPanel} title={S.s_chuong_2d157977} className={panel === "chapters" ? "chapter-sheet" : undefined}>
+      {<Presence>{fill && <NowPlayingColumn player={player} mobile={stacked} plain={Boolean(plain)} actions={actions} selected={showPanel ? panel : null} onCollapse={collapse} onToggle={toggleStable} reading={reading} onReading={readingStable} edit={edit} />}</Presence>}
+      {<Presence>{fill && stacked && <Sheet open={open && showPanel} onOpenChange={setShowPanel} title={S.s_chuong_2d157977} className={panel === "chapters" ? "chapter-sheet" : undefined}>
         <div className="h-[55dvh] min-h-0">{panelBody}</div>
-      </Sheet>}
+      </Sheet>}</Presence>}
       <Reveal when={fill && !stacked}><div className="flex min-w-0 flex-1 flex-col">
           <div className="@container flex h-14 shrink-0 items-center overflow-hidden border-b border-line px-3 sm:px-6">{panelTabs}</div>
           <div className="min-h-0 flex-1">{panelBody}</div>

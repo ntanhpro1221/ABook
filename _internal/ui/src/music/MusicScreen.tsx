@@ -1,3 +1,4 @@
+import { Presence } from "../shared/MotionPresence";
 import * as DropdownMenu from "@/shared/DropdownMenu";
 import { useQueryClient } from "@tanstack/react-query";
 import { Check, ChevronDown, CircleAlert, Download, Loader2, Music2, Play, Search, Square, X } from "lucide-react";
@@ -97,7 +98,7 @@ function Saved({ preview, onBrowse }: { preview: LibraryPreview; onBrowse: () =>
     <div className="space-y-10">
       <section aria-label={S.s_da_luu_6379aeba} className="space-y-3">
         <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
-          {data && data.saved.count > 0 && <p className="text-sm text-fg-2">{S.s_da_tai_0_bai_1_3cac202f(data.saved.count, formatSize(data.saved.bytes))}</p>}
+          {<Presence>{data && data.saved.count > 0 && <p className="text-sm text-fg-2">{S.s_da_tai_0_bai_1_3cac202f(data.saved.count, formatSize(data.saved.bytes))}</p>}</Presence>}
         </div>
         {isLoading ? (
           <ContentSkeleton />
@@ -169,7 +170,7 @@ function Library({ preview, use, ban, busy }: { preview: LibraryPreview; use?: (
           aria-label={S.s_tim_trong_kho_nhac_b9972ac9}
           className="h-[44px] w-full rounded-control bg-sunken pl-10 pr-12 text-sm outline-none placeholder:text-fg-2 focus:ring-2 focus:ring-focus [&::-webkit-search-cancel-button]:hidden"
         />
-        {text && <IconButton size="sm" label={S.s_bo_loc_74de0064} icon={X} onClick={() => setText("")} className="absolute right-1.5 top-1/2 -translate-y-1/2" />}
+        {<Presence>{text && <IconButton size="sm" label={S.s_bo_loc_74de0064} icon={X} onClick={() => setText("")} className="absolute right-1.5 top-1/2 -translate-y-1/2" />}</Presence>}
       </label>
       <div role="group" aria-label={S.s_loc_kho_nhac_6c590fb5} className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1 [scrollbar-width:none]">
         <ChipMenu label={S.s_danh_sach_phat_26862e10} value={filters.playlist} onChange={(value) => set({ playlist: value })}
@@ -187,17 +188,17 @@ function Library({ preview, use, ban, busy }: { preview: LibraryPreview; use?: (
       <div className="flex min-h-10 flex-wrap items-center justify-between gap-x-4 gap-y-2">
         <p className="flex items-center gap-2 text-sm text-fg-2" aria-live="polite">
           {S.s_0_bai_1e392237(data?.count ?? 0)}
-          {data && data.saved.count > 0 && <span>· {S.s_da_tai_0_bai_1_3cac202f(data.saved.count, formatSize(data.saved.bytes))}</span>}
+          {<Presence>{data && data.saved.count > 0 && <span>· {S.s_da_tai_0_bai_1_3cac202f(data.saved.count, formatSize(data.saved.bytes))}</span>}</Presence>}
           <Reveal when={isFetching}><Loader2 aria-hidden className="size-3.5 animate-spin" /></Reveal>
         </p>
         <div className="flex items-center gap-2">
           <Reveal when={filtering(filters)}><Button size="sm" onClick={() => setFilters(NO_FILTERS)}>{S.s_bo_loc_74de0064}</Button></Reveal>
-          {playlist && data && data.missingBytes > 0 && (
+          {<Presence>{playlist && data && data.missingBytes > 0 && (
             <Button size="sm" variant="primary" icon={Download} loading={save.isPending} disabled={!online}
               onClick={() => save.mutate(tracks.filter((track) => !track.downloaded).map((track) => track.link))}>
               {S.s_tai_ca_danh_sach_0_63e52378(formatSize(data.missingBytes))}
             </Button>
-          )}
+          )}</Presence>}
         </div>
       </div>
       {isLoading ? (
@@ -307,7 +308,7 @@ export function TrackRow({
         <span className="line-clamp-2 text-sm font-medium">{title}</span>
         <DotJoin singleLine className="mt-1 text-xs text-fg-2" parts={[track.creator, typeof track.duration === "number" ? formatClock(track.duration) : null]} />
       </button>
-      {onUse && <Button size="sm" variant="primary" onClick={() => onUse(track.link)}>{S.s_dung_7927ca4e}</Button>}
+      {<Presence>{onUse && <Button size="sm" variant="primary" onClick={() => onUse(track.link)}>{S.s_dung_7927ca4e}</Button>}</Presence>}
       {load.kind === "loading" ? (
         <button type="button" aria-label={S.s_huy_tai_1a9ff73d} title={S.s_huy_tai_1a9ff73d} onClick={() => unsave.mutate([track.link])}
           className="press relative grid size-9 shrink-0 place-items-center rounded-control text-accent-text hover:bg-hover touch-reach">

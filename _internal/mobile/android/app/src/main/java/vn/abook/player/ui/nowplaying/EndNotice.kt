@@ -1,5 +1,8 @@
 package vn.abook.player.ui.nowplaying
 
+import vn.abook.player.ui.motion.SwapContent
+import vn.abook.player.ui.motion.ContentLayout
+
 import vn.abook.player.S
 
 import androidx.compose.foundation.layout.Arrangement
@@ -54,12 +57,14 @@ fun EndNotice(state: NowPlayingState, model: NowPlayingModel, window: NowPlaying
         Reveal(state.ended && state.whole) {
             Column(Modifier.fillMaxWidth().padding(top = Dim.s12).testTag("end_finished"), horizontalAlignment = Alignment.CenterHorizontally) {
                 val next = choices.next
-                if (next != null) {
-                    BasicText(PlayerText.ENDED_PART, style = Abook.type.bodySmall.copy(color = Abook.colors.text))
-                    TextAction(S.s_nghe_tiep_0_248b1487(PlayerEnd.nextLabel(next.title)), { model.listen(next.id) }, "end_next", align = Alignment.Center)
-                } else {
-                    BasicText(PlayerText.ENDED_BOOK, style = Abook.type.bodySmall.copy(color = Abook.colors.text))
-                    TextAction(S.s_nghe_lai_tu_dau_e251d632, model::restart, "end_restart", align = Alignment.Center)
+                SwapContent(next, contentKey = { next -> next != null }, layout = ContentLayout.Column) { next ->
+                    if (next != null) {
+                        BasicText(PlayerText.ENDED_PART, style = Abook.type.bodySmall.copy(color = Abook.colors.text))
+                        TextAction(S.s_nghe_tiep_0_248b1487(PlayerEnd.nextLabel(next.title)), { model.listen(next.id) }, "end_next", align = Alignment.Center)
+                    } else {
+                        BasicText(PlayerText.ENDED_BOOK, style = Abook.type.bodySmall.copy(color = Abook.colors.text))
+                        TextAction(S.s_nghe_lai_tu_dau_e251d632, model::restart, "end_restart", align = Alignment.Center)
+                    }
                 }
                 AfterTheEnd(choices.others, model, window)
             }
@@ -88,7 +93,9 @@ private fun AfterTheEnd(others: List<PlayerEnd.Pick>, model: NowPlayingModel, wi
                 }
             }
         }
-        if (window.toLibrary != null) TextAction(S.s_ve_thu_vien_7bb3f8c2, { window.toLibrary?.invoke() }, "end_library", align = Alignment.Center)
+        SwapContent(window.toLibrary, contentKey = { toLibrary -> toLibrary != null }, layout = ContentLayout.Column) { toLibrary ->
+            if (toLibrary != null) TextAction(S.s_ve_thu_vien_7bb3f8c2, toLibrary, "end_library", align = Alignment.Center)
+        }
     }
 }
 
@@ -110,10 +117,12 @@ fun PlayerNoteLine(model: NowPlayingModel, modifier: Modifier = Modifier) {
     if (shown != null) last[0] = shown
     Reveal(shown != null) {
         val text = last[0]
-        if (text != null) Row(modifier.fillMaxWidth().padding(top = Dim.s8).testTag("player_note"), verticalAlignment = Alignment.CenterVertically,
+        SwapContent(text, contentKey = { text -> text != null }, layout = ContentLayout.Box) { text ->
+            if (text != null) Row(modifier.fillMaxWidth().padding(top = Dim.s8).testTag("player_note"), verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(Dim.s12)) {
-            BasicText(text.text, Modifier.weight(1f), style = Abook.type.bodySmall.copy(color = Abook.colors.text))
-            text.action?.let { TextAction(it, model::noteAction, "player_note_action") }
+                BasicText(text.text, Modifier.weight(1f), style = Abook.type.bodySmall.copy(color = Abook.colors.text))
+                text.action?.let { TextAction(it, model::noteAction, "player_note_action") }
+            }
         }
     }
 }

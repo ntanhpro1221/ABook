@@ -1,3 +1,4 @@
+import { Presence } from "../shared/MotionPresence";
 import { S } from "../shared/strings.generated";
 import { TickingValue } from "@/shared/TickingValue";
 import { MotionRegion } from "@/shared/MotionRegion";
@@ -76,11 +77,11 @@ function BrokenRow({ book, local }: { book: BookSummary; local: boolean }) {
         {busy ? (
           <>
             <IconButton label={S.s_thu_lai_c58d068c} icon={RotateCw} onClick={() => void client.invalidateQueries({ queryKey: ["library"] })} />
-            {local && <IconButton label={S.s_mo_thu_muc_4bf5b127} icon={FolderOpen} onClick={() => reveal.mutate(book.id)} />}
+            {<Presence>{local && <IconButton label={S.s_mo_thu_muc_4bf5b127} icon={FolderOpen} onClick={() => reveal.mutate(book.id)} />}</Presence>}
           </>
         ) : local ? (
           <ProjectMenu book={book} rename={false}>
-            {book.backup && <MenuItem icon={History} onSelect={() => setAsking(true)}>{S.s_khoi_phuc_ban_sao_6b7c7c6e}</MenuItem>}
+            {<Presence>{book.backup && <MenuItem icon={History} onSelect={() => setAsking(true)}>{S.s_khoi_phuc_ban_sao_6b7c7c6e}</MenuItem>}</Presence>}
             <MenuItem icon={FolderOpen} onSelect={() => reveal.mutate(book.id)}>{S.s_mo_thu_muc_4bf5b127}</MenuItem>
           </ProjectMenu>
         ) : (

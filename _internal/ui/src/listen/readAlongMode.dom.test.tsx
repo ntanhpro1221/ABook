@@ -85,7 +85,8 @@ const press = async (element: Element) => {
 const screen = () => host.querySelector<HTMLElement>("section[role=main]")!;
 const mode = (value: "listen" | "read") => screen().querySelector<HTMLButtonElement>(`[data-player-mode] [data-mode="${value}"]`)!;
 const where = () => host.querySelector("[data-where]")!.textContent;
-const sentences = () => screen().querySelectorAll("[data-read-along] [data-sentence]").length;
+// Exit retains the old text for the fade; only the live tree is available to the listener.
+const sentences = () => [...screen().querySelectorAll("[data-read-along] [data-sentence]")].filter(node => !node.closest("[inert]")).length;
 
 it.each([{ mobile: true, stacked: true }, { mobile: false, stacked: true }])("khổ hẹp (mobile=$mobile): Đọc theo nằm TRONG Đang nghe, giữ điều khiển và đường dẫn", async (layout) => {
   await render(<NowPlaying {...layout} />);

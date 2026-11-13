@@ -1,5 +1,8 @@
 package vn.abook.player.ui.studio
 
+import vn.abook.player.ui.motion.SwapContent
+import vn.abook.player.ui.motion.ContentLayout
+
 import vn.abook.player.S
 
 import androidx.compose.animation.AnimatedContent
@@ -201,13 +204,15 @@ private fun SpeakerAnswers(item: WorkItem, state: StudioProjectState, sheets: Sh
     }
     shown.forEachIndexed { index, choice ->
         val primary = index == 0 && item.kind != WorkKind.Unnamed && item.suggested
-        if (choice.sampleId == null && choice.samplePreset == null) {
-            AnswerButton(choice.label, { pick(choice.value) }, "studio_choice_$index", primary = primary, enabled = !none)
-        } else {
-            // Nghe giọng người ấy ngay cạnh nút chọn (một câu đã thu của họ, như tab Nhân vật).
-            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                AnswerButton(choice.label, { pick(choice.value) }, "studio_choice_$index", Modifier.weight(1f), primary = primary, enabled = !none)
-                ClipButton(StudioWorkState.clipId(choice), clip, { work.playChoice(choice) }, "studio_choice_play_$index")
+        SwapContent(choice, contentKey = { choice -> choice.sampleId == null && choice.samplePreset == null }, layout = ContentLayout.Box) { choice ->
+            if (choice.sampleId == null && choice.samplePreset == null) {
+                AnswerButton(choice.label, { pick(choice.value) }, "studio_choice_$index", primary = primary, enabled = !none)
+            } else {
+                // Nghe giọng người ấy ngay cạnh nút chọn (một câu đã thu của họ, như tab Nhân vật).
+                Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                    AnswerButton(choice.label, { pick(choice.value) }, "studio_choice_$index", Modifier.weight(1f), primary = primary, enabled = !none)
+                    ClipButton(StudioWorkState.clipId(choice), clip, { work.playChoice(choice) }, "studio_choice_play_$index")
+                }
             }
         }
     }

@@ -1,3 +1,4 @@
+import { Presence } from "../shared/MotionPresence";
 import { S } from "../shared/strings.generated";
 import { Locate } from "lucide-react";
 import { feedback } from "@/shared/feedback";
@@ -552,9 +553,9 @@ const Paragraph = memo(function Paragraph({
       {ink}
       {paragraph.items.map(({ index, segment, showSpeaker }) => (
         <span key={index}>
-          {speakers && segment.speaker && showSpeaker && (
+          {<Presence>{speakers && segment.speaker && showSpeaker && (
             <SpeakerLabel speaker={segment.speaker} sentence={segment.text} />
-          )}
+          )}</Presence>}
           <span {...sentence(index, segment)}>
             {index === playing && litWords ? <LitWords text={segment.text} words={litWords} /> : segment.text}
             {after?.(segment)}

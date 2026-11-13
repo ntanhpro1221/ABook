@@ -1,5 +1,8 @@
 package vn.abook.player.ui.editbook
 
+import vn.abook.player.ui.motion.SwapContent
+import vn.abook.player.ui.motion.ContentLayout
+
 import vn.abook.player.S
 
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -223,23 +226,25 @@ fun EditChapterRoute(editor: BookEditor, chapterId: Long, onBack: () -> Unit) {
     val state by editor.state.collectAsState()
     val row = state.draft?.chapters?.firstOrNull { it.id == chapterId }
     BookForm(S.s_ten_chuong_9edb6c28, onBack, "edit_chapter_screen") {
-        if (row != null) Column(Modifier.fillMaxWidth().padding(top = Dim.s16)) {
-            val textOnly = state.saved?.textOnly == true
-            // Sách chữ: một tên. Sách nói: nhãn ("Chương 3") và tên riêng.
-            FieldGroup {
-                BookField(if (textOnly) null else S.s_nhan_58861f44, row.title, { value ->
-                    editor.change { it.copy(chapters = it.chapters.map { chapter -> if (chapter.id == chapterId) chapter.copy(title = value) else chapter }) }
-                }, "chapter_title", description = if (textOnly) S.s_ten_chuong_9edb6c28 else S.s_nhan_58861f44)
-                Reveal(!textOnly) {
-                    Spacer(Modifier.height(Dim.s16))
-                    BookField(S.s_ten_c8b17259, row.subtitle, { value ->
-                        editor.change { it.copy(chapters = it.chapters.map { chapter -> if (chapter.id == chapterId) chapter.copy(subtitle = value) else chapter }) }
-                    }, "chapter_subtitle")
-                }
-                InlineProblem(state.problem, editor::retry, "chapter_problem")
-                Reveal(row.renamed) {
-                    Spacer(Modifier.height(Dim.s16))
-                    RevertName(row.original, { editor.revertChapter(chapterId) })
+        SwapContent(row, contentKey = { row -> row != null }, layout = ContentLayout.Box) { row ->
+            if (row != null) Column(Modifier.fillMaxWidth().padding(top = Dim.s16)) {
+                val textOnly = state.saved?.textOnly == true
+                // Sách chữ: một tên. Sách nói: nhãn ("Chương 3") và tên riêng.
+                FieldGroup {
+                    BookField(if (textOnly) null else S.s_nhan_58861f44, row.title, { value ->
+                        editor.change { it.copy(chapters = it.chapters.map { chapter -> if (chapter.id == chapterId) chapter.copy(title = value) else chapter }) }
+                    }, "chapter_title", description = if (textOnly) S.s_ten_chuong_9edb6c28 else S.s_nhan_58861f44)
+                    Reveal(!textOnly) {
+                        Spacer(Modifier.height(Dim.s16))
+                        BookField(S.s_ten_c8b17259, row.subtitle, { value ->
+                            editor.change { it.copy(chapters = it.chapters.map { chapter -> if (chapter.id == chapterId) chapter.copy(subtitle = value) else chapter }) }
+                        }, "chapter_subtitle")
+                    }
+                    InlineProblem(state.problem, editor::retry, "chapter_problem")
+                    Reveal(row.renamed) {
+                        Spacer(Modifier.height(Dim.s16))
+                        RevertName(row.original, { editor.revertChapter(chapterId) })
+                    }
                 }
             }
         }

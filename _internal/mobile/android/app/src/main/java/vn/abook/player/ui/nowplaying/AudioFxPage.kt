@@ -1,5 +1,8 @@
 package vn.abook.player.ui.nowplaying
 
+import vn.abook.player.ui.motion.SwapContent
+import vn.abook.player.ui.motion.ContentLayout
+
 import vn.abook.player.S
 
 import androidx.compose.foundation.layout.*
@@ -42,7 +45,9 @@ fun AudioFxPage(music: MusicState? = null, bookId: String = "", openMusic: () ->
         FxSlider(S.s_giong_doc_11f2548d, ValueSpecs.voice, (fx.voiceLevel * 100).roundToInt().toDouble(), "audiofx_voice", { "${it.roundToInt()}%" }) {
             update(fx.withVoiceLevel(it / 100))
         }
-        if (music != null && bookId.isNotEmpty()) MusicBlock(music, bookId, openMusic)
+        SwapContent(music, bookId, contentKey = { music, bookId -> music != null && bookId.isNotEmpty() }, layout = ContentLayout.Column) { music, bookId ->
+            if (music != null && bookId.isNotEmpty()) MusicBlock(music, bookId, openMusic)
+        }
         val toneRevision by AudioFx.toneChanges.collectAsState()
         val tones = remember(toneRevision) { AudioFx.tones }
         ListRow(S.s_am_sac_8c2f4e1a, Modifier.pressable(onClick = openTone).testTag("audiofx_tones")) {

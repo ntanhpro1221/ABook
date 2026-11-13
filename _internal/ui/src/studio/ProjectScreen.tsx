@@ -1,3 +1,4 @@
+import { Presence } from "../shared/MotionPresence";
 import { S } from "../shared/strings.generated";
 import { TickingValue } from "@/shared/TickingValue";
 import { MotionRegion } from "@/shared/MotionRegion";
@@ -285,7 +286,7 @@ export function HeaderProgress({ book }: { book: BookSummary }) {
           <Progress value={book.progress.overall} running={running} tone={running ? "accent" : "muted"} size="xs" label={S.s_tien_do_ca_sach_25195f69} />
           <span className="w-10 shrink-0 text-right text-sm font-medium"><TickingValue>{formatPercent(book.progress.overall)}</TickingValue></span>
         </div>
-        {note && <TickingValue className="text-sm text-fg-2">{note}</TickingValue>}
+        {<Presence>{note && <TickingValue className="text-sm text-fg-2">{note}</TickingValue>}</Presence>}
       </div>
     </MotionPresence>
   );
@@ -612,7 +613,7 @@ export function ProjectMenu({ book, rename = true, className, children }: { book
                 <DropdownMenu.Separator className="my-1 h-px bg-line" />
               </>
             )}
-            {rename && <MenuItem icon={TextCursorInput} onSelect={() => setDialog("rename")}>{S.s_doi_ten_a2a0dc70}</MenuItem>}
+            {<Presence>{rename && <MenuItem icon={TextCursorInput} onSelect={() => setDialog("rename")}>{S.s_doi_ten_a2a0dc70}</MenuItem>}</Presence>}
             {/* Truyện dài làm nhiều đợt: phần mới giữ giọng, cách đọc tên, ghim của phần này (continuation.py). Dự án chưa
                 phân tích câu nào thì không có gì để mang theo - mờ kèm lý do thay vì dẫn tới một phần mới trống (soát UX 29-09). */}
             {/* Dự án hỏng (`broken`) không có `segments` và không có gì để mang theo: chỉ còn xoá. */}
@@ -621,7 +622,7 @@ export function ProjectMenu({ book, rename = true, className, children }: { book
                 onSelect={() => navigate(`/studio/new?continue=${book.id}`)}
                 className={cn(MENU_ITEM, "data-[disabled]:opacity-50")}
               >
-                <BookPlus className="size-4" />{S.s_lam_tiep_cuon_nay_c6fc93ac}{!analyzed && <span className="ml-auto pl-3 text-xs text-fg-3">{S.s_chay_phan_nay_truoc_73213667}</span>}
+                <BookPlus className="size-4" />{S.s_lam_tiep_cuon_nay_c6fc93ac}{<Presence>{!analyzed && <span className="ml-auto pl-3 text-xs text-fg-3">{S.s_chay_phan_nay_truoc_73213667}</span>}</Presence>}
               </DropdownMenu.Item></Reveal>
             <DropdownMenu.Separator className="my-1 h-px bg-line" />
             {remote ? (
@@ -635,7 +636,7 @@ export function ProjectMenu({ book, rename = true, className, children }: { book
         </DropdownMenu.Portal>
       </DropdownMenu.Root>
       <RenameDialog book={book} open={dialog === "rename"} onOpenChange={(open) => setDialog(open ? "rename" : null)} />
-      {!remote && <DeleteDialog book={book} open={dialog === "delete"} onOpenChange={(open) => setDialog(open ? "delete" : null)} />}
+      {<Presence>{!remote && <DeleteDialog book={book} open={dialog === "delete"} onOpenChange={(open) => setDialog(open ? "delete" : null)} />}</Presence>}
     </>
   );
 }
@@ -819,7 +820,7 @@ function PartLinks({ id }: { id: string }) {
   // Tự lấy dữ liệu nên tự mang chuyển động: dòng tới sau tiêu đề mở ra, không bật vào đẩy hàng nút và tab xuống.
   return (
     <MotionPresence open={parts.length >= 2 && Boolean(here)}>
-    {here && <p className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-fg-2">
+    {<Presence>{here && <p className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-fg-2">
       <span className="font-medium text-fg">{S.s_phan_a17569d5}{here.part}/{parts.length}
       </span>
       {parts
@@ -835,7 +836,7 @@ function PartLinks({ id }: { id: string }) {
             {part.part > here.part ? " →" : ""}
           </button>
         ))}
-    </p>}
+    </p>}</Presence>}
     </MotionPresence>
   );
 }
@@ -1364,12 +1365,12 @@ export function ProjectScreen() {
         </div>
       </header>
 
-      {book.phase !== "done" && <ProductionPanel book={book} />}
-      {book.phase === "done" && <StartError book={book} />}
+      {<Presence>{book.phase !== "done" && <ProductionPanel book={book} />}</Presence>}
+      {<Presence>{book.phase === "done" && <StartError book={book} />}</Presence>}
       {/* Phân tích xong mà chưa thu bao nhiêu: lối vào "Duyệt trước khi thu" đúng lúc sửa còn miễn phí. */}
-      {canReview(book) && tab !== "precast" && (book.precast?.held || book.chapters.completed === 0) && (
+      {<Presence>{canReview(book) && tab !== "precast" && (book.precast?.held || book.chapters.completed === 0) && (
         <PrecastBanner book={book} onOpen={() => setParams({ tab: "precast" })} />
-      )}
+      )}</Presence>}
 
       <Reveal when={sideError && failure !== "stale"}><div role="status" className="mt-4 flex gap-2 py-3 text-sm">
           <CircleAlert className="mt-line-icon size-4 shrink-0 text-warning" />

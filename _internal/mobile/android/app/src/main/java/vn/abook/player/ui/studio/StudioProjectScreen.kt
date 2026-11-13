@@ -1,5 +1,8 @@
 package vn.abook.player.ui.studio
 
+import vn.abook.player.ui.motion.SwapContent
+import vn.abook.player.ui.motion.ContentLayout
+
 import vn.abook.player.S
 
 import androidx.compose.animation.AnimatedContent
@@ -207,15 +210,17 @@ private fun PrimaryAction(book: StudioBook, kind: PrimaryKind?, busy: Boolean, o
     if (kind != null) last = kind
     Reveal(kind != null) {
         val shown = last
-        if (shown != null) AnimatedContent(
+        SwapContent(shown, contentKey = { shown -> shown != null }, layout = ContentLayout.Box) { shown ->
+            if (shown != null) AnimatedContent(
             targetState = shown,
             transitionSpec = {
                 slideInVertically(tween(MotionMs.FAST, easing = Motion.Decelerate)) { it / 2 } togetherWith
                     slideOutVertically(tween(MotionMs.FAST_OUT, easing = Motion.Accelerate)) { -it / 2 }
             },
             label = "studio_primary",
-        ) { target ->
-            PrimaryButton(StudioText.label(target, book), { onPick(target) }, Modifier.fillMaxWidth().testTag("studio_primary"), enabled = !busy && !StudioText.inert(target))
+            ) { target ->
+                PrimaryButton(StudioText.label(target, book), { onPick(target) }, Modifier.fillMaxWidth().testTag("studio_primary"), enabled = !busy && !StudioText.inert(target))
+            }
         }
     }
 }
@@ -272,9 +277,11 @@ private fun MoreSheet(book: StudioBook, kind: PrimaryKind?, state: StudioProject
             }
             MorePage.Stop -> ConfirmPage(StudioText.stopTitle(book), "studio_stop", StudioText.stopLines(book), "") {
                 // Tạm dừng luôn là lựa chọn đầu khi đang phân tích (AGENTS.md: dừng giữa phân tích là đổi cả quyển sách).
-                if (book.phase == "analysis" && book.paused == null && book.canPause) {
-                    PrimaryButton(S.s_tam_dung_67635815, { dismiss(); state.send(StudioCommand.Pause(true)) }, Modifier.fillMaxWidth().testTag("studio_stop_pause"))
-                    Spacer(Modifier.height(Dim.s8))
+                SwapContent(book, contentKey = { book -> book.phase == "analysis" && book.paused == null && book.canPause }, layout = ContentLayout.Column) { book ->
+                    if (book.phase == "analysis" && book.paused == null && book.canPause) {
+                        PrimaryButton(S.s_tam_dung_67635815, { dismiss(); state.send(StudioCommand.Pause(true)) }, Modifier.fillMaxWidth().testTag("studio_stop_pause"))
+                        Spacer(Modifier.height(Dim.s8))
+                    }
                 }
                 DangerButton(StudioText.stopConfirm(book), { dismiss(); state.send(StudioCommand.Stop) }, "studio_stop_confirm")
                 QuietButton(StudioText.stopKeep(book), dismiss, "studio_stop_keep")

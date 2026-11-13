@@ -194,9 +194,9 @@ class ListenExtrasTest {
         val asked = Cast.parse(
             cast(listOf(person("A", extra = { put("pendingVoice", JSONObject().put("preset", "x").put("label", "Mai Phương").put("gender", "Nam")) }), person("B", extra = { put("mergedInto", "Thanh_Bình") }))),
         )!!.characters
-        assertEquals("Đang chờ máy làm sách: giọng Mai Phương · nam", Cast.pendingLine(asked[0]))
+        assertEquals("Chờ máy làm sách: giọng Mai Phương · nam", Cast.pendingLine(asked[0]))
         assertNull(Cast.pendingLine(asked[1]))
-        assertEquals("Đang chờ máy làm sách: gộp vào Thanh Bình", Cast.mergeLine(asked[1]))
+        assertEquals("Chờ máy làm sách: gộp vào Thanh Bình", Cast.mergeLine(asked[1]))
         assertEquals(Gender.Male, Cast.shownGender(asked[0]))
         assertEquals("Mai Phương", Cast.voiceToUse(asked[0]))
     }

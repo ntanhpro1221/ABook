@@ -8,6 +8,7 @@ package vn.abook.player.ui
  */
 object MotionScan {
     data class Finding(val file: String, val line: Int, val why: String)
+    data class FadeScope(val name: String, val start: Int, val open: Int, val end: Int)
 
     private val geometry = Regex("""\b(slideIn|slideOut|scaleIn|scaleOut|expand|shrink)\w*\s*[({]""")
     private val fadeCall = Regex("""\bfade(In|Out)\s*\(""")
@@ -117,9 +118,54 @@ object MotionScan {
 
     private fun lineOf(text: String, at: Int) = text.substring(0, at).count { it == '\n' } + 1
 
+    /** These helpers keep a short fade even at system scale zero. Their callers
+     * are checked separately: every call must be inside a reduced-motion guard. */
+    fun reducedFadeScopes(source: String): List<FadeScope> {
+        val text = stripComments(source)
+        return Regex("""\bfun\s+(?:<[^>]+>\s*)?(\w+)\s*\(""").findAll(text).mapNotNull { declaration ->
+            val close = matchForward(text, text.indexOf('(', declaration.range.first), '(', ')')
+            val open = (close until text.length).firstOrNull { !text[it].isWhitespace() } ?: return@mapNotNull null
+            if (text[open] != '{') return@mapNotNull null
+            val end = matchForward(text, open, '{', '}')
+            val body = text.substring(open, end)
+            if (body.contains("withContext(FadeDurationScale)") && body.contains("tween(MotionMs.REDUCED_FADE_MS)") && !body.contains("rememberReducedMotion()"))
+                FadeScope(declaration.groupValues[1], declaration.range.first, open, end)
+            else null
+        }.toList()
+    }
+
+    fun unguardedReducedCalls(sources: Map<String, String>): List<Finding> {
+        val helpers = sources.values.flatMap { reducedFadeScopes(it) }.map { it.name }.toSet()
+        return sources.flatMap { (file, source) ->
+            val text = stripComments(source)
+            val declarations = reducedFadeScopes(source)
+            val guards = Regex("""\bif\s*\(\s*(?:\w+\.)*rememberReducedMotion\(\)\s*\)\s*\{""").findAll(text).map { guard ->
+                val open = text.indexOf('{', guard.range.first)
+                open until matchForward(text, open, '{', '}')
+            }.toList()
+            helpers.flatMap { name ->
+                Regex("""\b${Regex.escape(name)}\s*\(""").findAll(text).mapNotNull { call ->
+                    val at = call.range.first
+                    if (declarations.any { at in it.start until it.open } || guards.any { at in it }) null
+                    else Finding(file, lineOf(text, at), "$name must be called under rememberReducedMotion()")
+                }.toList()
+            }
+        }
+    }
+
+    private fun skeletonClock(text: String, before: Int, block: String): Boolean {
+        val value = Regex("""\balpha\s*=\s*(\w+)\s*\}""").find(block)?.groupValues?.get(1) ?: return false
+        val declaration = Regex("""\bval\s+${Regex.escape(value)}\s+by\s+\w+\.animateFloat\s*\(""").findAll(text.take(before)).lastOrNull() ?: return false
+        val open = text.indexOf('(', declaration.range.first)
+        val animation = text.substring(open, matchForward(text, open, '(', ')'))
+        return animation.contains("MotionMs.SKELETON_LOW") && animation.contains("MotionMs.SKELETON_PERIOD_MS") &&
+            animation.contains("infiniteRepeatable") && animation.contains("RepeatMode.Reverse")
+    }
+
     fun scan(file: String, source: String): List<Finding> {
         val text = stripComments(source)
         val found = ArrayList<Finding>()
+        val reduced = reducedFadeScopes(source)
         for (m in fadeCall.findAll(text)) {
             if (m.range.first > 0 && (isIdent(text[m.range.first - 1]))) continue
             if (!geometry.containsMatchIn(expressionAround(text, m.range.first))) {
@@ -138,7 +184,8 @@ object MotionScan {
             val open = text.indexOf('{', m.range.first)
             val block = text.substring(open, matchForward(text, open, '{', '}'))
             val alphaSet = Regex("""\balpha\s*=\s*(?![0-9.]+f?\s*(;|\n|\}))""").containsMatchIn(block)
-            if (alphaSet && !Regex("""\b(translation[XYZ]|scale[XY]|rotation[XYZ])\b""").containsMatchIn(block)) {
+            val policyFade = reduced.any { m.range.first in it.open until it.end } || skeletonClock(text, m.range.first, block)
+            if (alphaSet && !policyFade && !Regex("""\b(translation[XYZ]|scale[XY]|rotation[XYZ])\b""").containsMatchIn(block)) {
                 found += Finding(file, lineOf(text, m.range.first), "graphicsLayer chỉ đổi alpha")
             }
         }

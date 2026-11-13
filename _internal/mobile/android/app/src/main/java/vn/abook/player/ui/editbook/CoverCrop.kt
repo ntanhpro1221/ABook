@@ -1,5 +1,8 @@
 package vn.abook.player.ui.editbook
 
+import vn.abook.player.ui.motion.SwapContent
+import vn.abook.player.ui.motion.ContentLayout
+
 import vn.abook.player.S
 
 import android.content.Context
@@ -123,11 +126,15 @@ fun CoverCropRoute(editor: BookEditor, uri: String, onBack: () -> Unit) {
             }
         }, Modifier.fillMaxWidth().testTag("use_cover"), enabled = image != null && !committing)
     }, trailing = {
-        if (image != null) TextAction(S.s_dat_lai_51a46825, { choice = CropChoice() }, "crop_reset")
+        SwapContent(image, contentKey = { image -> image != null }, layout = ContentLayout.Box) { image ->
+            if (image != null) TextAction(S.s_dat_lai_51a46825, { choice = CropChoice() }, "crop_reset")
+        }
     }) {
-        if (image == null) {
-            Reveal(problem.isEmpty()) { Caption(S.s_dang_doc_anh_df6455cf, Modifier.padding(top = Dim.s16)) }
-        } else CropArea(image, choice) { choice = it }
+        SwapContent(image, contentKey = { image -> image == null }, layout = ContentLayout.Box) { image ->
+            if (image == null) {
+                Reveal(problem.isEmpty()) { Caption(S.s_dang_doc_anh_df6455cf, Modifier.padding(top = Dim.s16)) }
+            } else CropArea(image, choice) { choice = it }
+        }
     }
 }
 

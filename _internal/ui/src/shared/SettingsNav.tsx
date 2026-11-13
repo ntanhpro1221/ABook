@@ -1,3 +1,4 @@
+import { Presence } from "./MotionPresence";
 import { S } from "./strings.generated";
 import { DisclosureRow } from "./DisclosureRow";
 // Khung Cài đặt dùng chung hai nền (chủ app 23-10: "trong setting tôi như lạc vào một cái ma trận"): trang gốc là danh sách ngắn các nhóm
@@ -87,7 +88,7 @@ export function SettingsBlock({ title, id, children, className, fold }: { title?
   if (fold && title) return <FoldedBlock title={title} id={id} storageKey={fold} className={className}>{children}</FoldedBlock>;
   return (
     <section data-list-edges="settings-block" id={id} className={cn("settings-block mt-8", className)}>
-      {title && <SectionHeading>{title}</SectionHeading>}
+      {<Presence>{title && <SectionHeading>{title}</SectionHeading>}</Presence>}
       <div className="divide-y divide-line">{children}</div>
     </section>
   );

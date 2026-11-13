@@ -1,5 +1,8 @@
 package vn.abook.player.ui.shell
 
+import vn.abook.player.ui.motion.SwapContent
+import vn.abook.player.ui.motion.ContentLayout
+
 import androidx.activity.compose.PredictiveBackHandler
 import androidx.compose.animation.SharedTransitionLayout
 import vn.abook.player.ui.motion.LocalCoverOverlay
@@ -422,8 +425,10 @@ fun AppShell(
                         // Thanh báo đứng ngay trên thanh của khung (thanh tab ở gốc, thanh phát nhỏ ở màn con): chúng đã chừa vạch cử chỉ.
                         val covered = nav.stack.top?.destination?.ownsBottomBar() != true
                         CompositionLocalProvider(LocalBottomCovered provides covered) {
-                            if (deletions != null) vn.abook.player.ui.components.UndoBar(deletions,
-                                backEnabled = shell.sheets.current == null && !window.expanded, aboveNavigation = covered)
+                                SwapContent(deletions, contentKey = { deletions -> deletions != null }, layout = ContentLayout.Box) { deletions ->
+                                    if (deletions != null) vn.abook.player.ui.components.UndoBar(deletions,
+                                    backEnabled = shell.sheets.current == null && !window.expanded, aboveNavigation = covered)
+                                }
                             vn.abook.player.ui.screens.NotesBar(settings.repo.notes)
                         }
                     },
@@ -680,7 +685,9 @@ private fun MiniBarArea(shell: ShellState, player: PlayerState, repo: PlayerRepo
     val clock = repo.clock
     val position = remember(clock) { { clock.positionMs.value } }
     Column(Modifier.fillMaxWidth()) {
-        if (companion != null) vn.abook.player.ui.devices.OtherPlayersEntry(companion, shell.sheets, repo)
+        SwapContent(companion, contentKey = { companion -> companion != null }, layout = ContentLayout.Column) { companion ->
+            if (companion != null) vn.abook.player.ui.devices.OtherPlayersEntry(companion, shell.sheets, repo)
+        }
         // Keep the slot mounted before the first track, so first playback
         // reveals it instead of constructing an already fully visible bar.
         MiniPlayerSlot(visible = player.hasTrack || shell.window.expanded) {

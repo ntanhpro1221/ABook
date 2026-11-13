@@ -1,5 +1,8 @@
 package vn.abook.player.ui.studio
 
+import vn.abook.player.ui.motion.SwapContent
+import vn.abook.player.ui.motion.ContentLayout
+
 import vn.abook.player.S
 
 import vn.abook.player.ui.data.dotJoined
@@ -175,18 +178,22 @@ private val genderOptions = GenderFilter.entries.map { Option(it, it.label) }
 private fun VoiceBody(sheet: VoiceSheetState, choices: VoiceChoices, clip: ClipState, dismiss: () -> Unit) {
     val pending = choices.pending
     Column(Modifier.fillMaxWidth().padding(top = Dim.s8)) {
-        if (pending != null) {
-            RowHint(WorkText.voicePending(pending.name), Modifier.testTag("studio_voice_pending"))
-            TextAction(WorkText.VOICE_KEEP_CURRENT, { sheet.keepCurrent(); dismiss() }, "studio_voice_keep", Modifier.fillMaxWidth(), Alignment.CenterStart)
+        SwapContent(pending, contentKey = { pending -> pending != null }, layout = ContentLayout.Column) { pending ->
+            if (pending != null) {
+                RowHint(WorkText.voicePending(pending.name), Modifier.testTag("studio_voice_pending"))
+                TextAction(WorkText.VOICE_KEEP_CURRENT, { sheet.keepCurrent(); dismiss() }, "studio_voice_keep", Modifier.fillMaxWidth(), Alignment.CenterStart)
+            }
         }
         choices.rerecord?.let { RowHint(VoiceLogic.rerecordText(sheet.displayName, it), Modifier.testTag("studio_voice_rerecord")) }
         val crossing = sheet.crossing
-        if (crossing != null) {
-            Column(Modifier.fillMaxWidth().padding(top = Dim.s12).testTag("studio_voice_crossing"), verticalArrangement = Arrangement.spacedBy(Dim.s8)) {
-                RowHint(WorkText.voiceCross(sheet.displayName, crossing.gender, crossing.name))
-                SideBySide {
-                    AnswerButton(WorkText.VOICE_CROSS_YES, { if (sheet.answerCrossing(true)) dismiss() }, "studio_voice_cross_yes", Modifier.weight(1f), primary = true)
-                    AnswerButton(WorkText.VOICE_CROSS_NO, { sheet.answerCrossing(false) }, "studio_voice_cross_no", Modifier.weight(1f))
+        SwapContent(crossing, contentKey = { crossing -> crossing != null }, layout = ContentLayout.Column) { crossing ->
+            if (crossing != null) {
+                Column(Modifier.fillMaxWidth().padding(top = Dim.s12).testTag("studio_voice_crossing"), verticalArrangement = Arrangement.spacedBy(Dim.s8)) {
+                    RowHint(WorkText.voiceCross(sheet.displayName, crossing.gender, crossing.name))
+                    SideBySide {
+                        AnswerButton(WorkText.VOICE_CROSS_YES, { if (sheet.answerCrossing(true)) dismiss() }, "studio_voice_cross_yes", Modifier.weight(1f), primary = true)
+                        AnswerButton(WorkText.VOICE_CROSS_NO, { sheet.answerCrossing(false) }, "studio_voice_cross_no", Modifier.weight(1f))
+                    }
                 }
             }
         }
@@ -211,8 +218,10 @@ private fun VoiceBody(sheet: VoiceSheetState, choices: VoiceChoices, clip: ClipS
                 }
             }
         }
-        if (sheet.narrator) MoreInfo(S.s_tim_hieu_them_032fe408, WorkText.VOICE_NARRATOR_MORE, "studio_voice_narrator_more")
-        else MoreInfo(S.s_dung_chung_giong_ccea62a1, WorkText.VOICE_SHARED_MORE, "studio_voice_shared_more")
+        SwapContent(sheet.narrator, contentKey = { narrator -> narrator }, layout = ContentLayout.Column) { narrator ->
+            if (narrator) MoreInfo(S.s_tim_hieu_them_032fe408, WorkText.VOICE_NARRATOR_MORE, "studio_voice_narrator_more")
+            else MoreInfo(S.s_dung_chung_giong_ccea62a1, WorkText.VOICE_SHARED_MORE, "studio_voice_shared_more")
+        }
     }
 }
 

@@ -1,5 +1,8 @@
 package vn.abook.player.ui.screens
 
+import vn.abook.player.ui.motion.SwapContent
+import vn.abook.player.ui.motion.ContentLayout
+
 import vn.abook.player.S
 
 import androidx.activity.compose.BackHandler
@@ -203,10 +206,12 @@ private fun FormPage(
         ProblemLine(problem, "record_problem")
         Spacer(Modifier.height(Dim.s24))
         val label = Records.confirmLabel(action)
-        if (action == RecordAction.Delete) {
-            DangerButton(label, { submit() }, "record_confirm")
-        } else {
-            PrimaryButton(label, { submit() }, Modifier.fillMaxWidth().testTag("record_confirm"), enabled = ready)
+        SwapContent(action, contentKey = { action -> action == RecordAction.Delete }, layout = ContentLayout.Column) { action ->
+            if (action == RecordAction.Delete) {
+                DangerButton(label, { submit() }, "record_confirm")
+            } else {
+                PrimaryButton(label, { submit() }, Modifier.fillMaxWidth().testTag("record_confirm"), enabled = ready)
+            }
         }
         QuietButton(S.s_huy_96732485, onCancel, "record_cancel")
     }

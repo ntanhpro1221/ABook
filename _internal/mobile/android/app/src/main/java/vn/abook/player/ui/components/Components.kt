@@ -1,5 +1,8 @@
 package vn.abook.player.ui.components
 
+import vn.abook.player.ui.motion.SwapContent
+import vn.abook.player.ui.motion.ContentLayout
+
 import vn.abook.player.S
 
 import androidx.compose.ui.graphics.drawscope.translate
@@ -132,9 +135,13 @@ fun ScreenHeader(title: String, modifier: Modifier = Modifier, subtitle: String?
     Column(modifier.padding(top = Dim.s12, bottom = bottomGap)) {
         Box(Modifier.fillMaxWidth().height(Dim.s48), contentAlignment = Alignment.CenterStart) {
             BasicText(title, style = Abook.type.screenTitle)
-            if (trailing != null) Box(Modifier.align(Alignment.CenterEnd)) { trailing() }
+            SwapContent(trailing, contentKey = { trailing -> trailing != null }, layout = ContentLayout.Box, modifier = Modifier.align(Alignment.CenterEnd)) { trailing ->
+                if (trailing != null) Box { trailing() }
+            }
         }
-        if (subtitle != null) BasicText(subtitle, style = Abook.type.bodySmall)
+        SwapContent(subtitle, contentKey = { subtitle -> subtitle != null }, layout = ContentLayout.Column) { subtitle ->
+            if (subtitle != null) BasicText(subtitle, style = Abook.type.bodySmall)
+        }
     }
 }
 

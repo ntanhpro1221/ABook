@@ -1,3 +1,4 @@
+import { Presence } from "../shared/MotionPresence";
 import { S } from "../shared/strings.generated";
 import { MotionRegion } from "@/shared/MotionRegion";
 import { SectionHeading } from "@/shared/SectionHeading";
@@ -611,7 +612,7 @@ export function MusicTab({ bookId, chapterTitle }: { bookId: string; chapterTitl
                         <>
                           <EighthNote className="mr-2 inline size-4 text-accent-text" />
                           {track?.title ?? S.s_bai_nhac_5d07657e}
-                          {track?.creator && <span className="text-fg-2"> · {track.creator}</span>}
+                          {<Presence>{track?.creator && <span className="text-fg-2"> · {track.creator}</span>}</Presence>}
                           <Reveal when={track?.source === "local"}><span className="ml-2 rounded-control bg-sunken px-2 py-1 text-xs text-fg-2">{S.s_nhac_cua_toi_f65b7ac6}</span></Reveal>
                           <Reveal when={scene.pinned}><Pin className="ml-2 inline size-3.5 text-fg-2" aria-label={S.s_da_ghim_f1645be7} /></Reveal>
                           <Reveal when={scene.pinUnavailable}><span className="block text-xs text-warning">{S.s_bai_ban_ghim_khong_con_tren_may_nay_doan_d_09b8894e}</span></Reveal>
@@ -627,13 +628,13 @@ export function MusicTab({ bookId, chapterTitle }: { bookId: string; chapterTitl
                         {swap.text}
                       </Button>
                       <Reveal when={follows}><span aria-hidden className="size-8 shrink-0 max-sm:hidden" /></Reveal>
-                      {!follows && <SceneMenu
+                      {<Presence>{!follows && <SceneMenu
                         scene={scene}
                         disabled={change.isPending}
                         onSilence={() => change.mutate({ silence: { [scene.key]: !scene.silenced } })}
                         onUnpin={() => change.mutate({ pins: { [scene.key]: null } })}
                         onBan={scene.link ? () => ban(scene.link!, trackLabel(scene.link!, track)) : undefined}
-                      />}
+                      />}</Presence>}
                     </span>
                     <div ref={swapping === scene.key ? swapBox : undefined} className="basis-full"><Collapse open={swapping === scene.key} className="py-3 text-sm">
                       <MotionPresence open={swapping === scene.key}>

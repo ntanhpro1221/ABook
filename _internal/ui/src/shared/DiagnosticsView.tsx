@@ -1,3 +1,4 @@
+import { Presence } from "./MotionPresence";
 import { S } from "./strings.generated";
 import { useLayoutEffect, useRef } from "react";
 import { emptyLogNote, failureDetails, logLines, summaryRows, workProgressRows, type DiagnosticsReport } from "./diagnostics";
@@ -23,11 +24,11 @@ export function DiagnosticsView({ report }: { report: DiagnosticsReport }) {
             </div>
           ))}
         </dl></Reveal>
-      {errors.length > 0 && <MoreInfo label={S.s_chi_tiet_ky_thuat_f27eb5f6}>
+      {<Presence>{errors.length > 0 && <MoreInfo label={S.s_chi_tiet_ky_thuat_f27eb5f6}>
         <pre ref={scrollFade.ref} style={scrollFade.style} className="max-h-72 select-text overflow-auto whitespace-pre-wrap [overflow-wrap:anywhere]">{errors.map(row => `${row.label}: ${row.value}`).join("\n")}</pre>
-      </MoreInfo>}
+      </MoreInfo>}</Presence>}
       <LogBox title={S.s_nhat_ky_cua_abook_0_dong_9a189053(app.length)} lines={app} empty={emptyLogNote(report, "log")} open />
-      {(cat.length > 0 || report.logcat !== undefined) && <LogBox title={S.s_nhat_ky_he_thong_cua_app_0_dong_59b6a624(cat.length)} lines={cat} empty={emptyLogNote(report, "logcat")} />}
+      {<Presence>{(cat.length > 0 || report.logcat !== undefined) && <LogBox title={S.s_nhat_ky_he_thong_cua_app_0_dong_59b6a624(cat.length)} lines={cat} empty={emptyLogNote(report, "logcat")} />}</Presence>}
       <Reveal when={report.truncated}><p className="text-xs text-fg-3">{S.s_nhat_ky_dai_nen_da_cat_bot_phan_cu_nhat_ad1b7371}</p></Reveal>
     </div>
   );

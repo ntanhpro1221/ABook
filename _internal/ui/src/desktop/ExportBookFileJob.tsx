@@ -1,3 +1,4 @@
+import { Presence } from "../shared/MotionPresence";
 import { S } from "../shared/strings.generated";
 import { MotionRegion } from "@/shared/MotionRegion";
 import { Collapse } from "@/shared/Collapse";
@@ -192,8 +193,8 @@ function exportToast(kind: ExportToastKind, title: string, options: {
     className: described && description ? undefined : "toast-one-line",
     icon: null,
     description: described && description ? <MotionRegion>{description}</MotionRegion> : undefined,
-    action: <MotionRegion as="span" motionKey={options.action?.label ?? ""}>{options.action &&
-      <Button data-button="" size="sm" variant="primary" onClick={options.action.onClick}>{options.action.label}</Button>}
+    action: <MotionRegion as="span" motionKey={options.action?.label ?? ""}>{<Presence>{options.action &&
+      <Button data-button="" size="sm" variant="primary" onClick={options.action.onClick}>{options.action.label}</Button>}</Presence>}
     </MotionRegion>,
   });
 }

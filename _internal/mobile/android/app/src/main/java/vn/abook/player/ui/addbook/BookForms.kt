@@ -1,5 +1,8 @@
 package vn.abook.player.ui.addbook
 
+import vn.abook.player.ui.motion.SwapContent
+import vn.abook.player.ui.motion.ContentLayout
+
 import vn.abook.player.S
 
 import vn.abook.player.ui.components.gestureSafe
@@ -58,7 +61,9 @@ fun BookForm(
     ) {
         PageHeader(title, onBack, trailing = trailing)
         Column(Modifier.weight(1f), content = content)
-        if (footer != null) Column(Modifier.fillMaxWidth().padding(vertical = Dim.s12)) { footer() }
+        SwapContent(footer, contentKey = { footer -> footer != null }, layout = ContentLayout.Column) { footer ->
+            if (footer != null) Column(Modifier.fillMaxWidth().padding(vertical = Dim.s12)) { footer() }
+        }
     }
 }
 
@@ -95,9 +100,11 @@ fun BookField(
     val keyboardHeight = WindowInsets.ime.getBottom(LocalDensity.current)
     if (group != null) LaunchedEffect(value, focused, keyboardHeight) { if (focused) group.bringIntoView() }
     Column(Modifier.fillMaxWidth()) {
-        if (label != null) {
-            BasicText(label, style = Abook.type.bodySmall)
-            Spacer(Modifier.height(Dim.s8))
+        SwapContent(label, contentKey = { label -> label != null }, layout = ContentLayout.Column) { label ->
+            if (label != null) {
+                BasicText(label, style = Abook.type.bodySmall)
+                Spacer(Modifier.height(Dim.s8))
+            }
         }
         BasicTextField(
             value, onChange, enabled = enabled, textStyle = Abook.type.body,
@@ -112,7 +119,9 @@ fun BookField(
             decorationBox = { inner ->
                 val text: @Composable (Modifier) -> Unit = { box ->
                     Box(box) {
-                        if (value.isEmpty() && placeholder != null) BasicText(placeholder, style = Abook.type.body.copy(color = Abook.colors.text3))
+                        SwapContent(value, placeholder, contentKey = { value, placeholder -> value.isEmpty() && placeholder != null }, layout = ContentLayout.Box) { value, placeholder ->
+                            if (value.isEmpty() && placeholder != null) BasicText(placeholder, style = Abook.type.body.copy(color = Abook.colors.text3))
+                        }
                         inner()
                     }
                 }

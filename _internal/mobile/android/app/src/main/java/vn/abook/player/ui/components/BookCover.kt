@@ -1,5 +1,8 @@
 package vn.abook.player.ui.components
 
+import vn.abook.player.ui.motion.SwapContent
+import vn.abook.player.ui.motion.ContentLayout
+
 import vn.abook.player.ui.theme.coverTag
 import vn.abook.player.ui.theme.coverInk
 import androidx.compose.foundation.background
@@ -87,11 +90,13 @@ fun BookCover(
     }
     val shape = if (small) SmallShape else BookCoverShape
     val sunken = Abook.colors.bgSunken
-    if (path != null) {
-        Box(modifier.aspectRatio(2f / 3f).clip(shape).background(sunken).drawBehind { image.value?.let { drawCover(it) } })
-        return
+    SwapContent(path, contentKey = { path -> path != null }, layout = ContentLayout.Box, modifier = modifier.aspectRatio(2f / 3f).clip(shape)) { path ->
+        if (path != null) {
+            Box(Modifier.fillMaxSize().background(sunken).drawBehind { image.value?.let { drawCover(it) } })
+        } else {
+            GeneratedCover(title, part, width, Modifier.fillMaxSize(), small)
+        }
     }
-    GeneratedCover(title, part, width, modifier.aspectRatio(2f / 3f).clip(shape), small)
 }
 
 /**

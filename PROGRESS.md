@@ -79,3 +79,32 @@ Diagnose and repair Qt failures, then remaining web/Android presence transitions
 - qt_pytests in this build: **169 passed / 0 failed / 3 skipped**.
 - Dist checks: 0 dependency problems, 46 binary imports checked; SMOKE_OK (Main.qml loaded and drew its first frame without QML warnings).
 - Log: `C:/Users/NGDtuanh/AppData/Local/Temp/parity3-qtbuild-final.txt`.
+- Committed Qt repairs as **3fce94045** (`Fix Qt width failures and detached delegate bindings`), on top of 73473dfb2; no push.
+- Latest Android compilation passed again in 93 s. Runtime tests use a 512 MB Gradle coordinator plus one test JVM after compilation, preserving the four-heavy-process limit.
+
+## 10. Android focused rerun
+
+- 102 tests executed, 3 failures: the actual toggle accessibility name uses a different sentence shape than skip controls; the new reduced-helper detector incorrectly treated SheetLayer (which chooses normal/reduced internally) as a reduced-only helper.
+- The previous ValuePicker gap, overlapping export actions, Studio export polling, waiting copy and text-cut-comment failures are now green, as are both normal/reduced snapshot-retention tests.
+- Corrected the exact three remote-control name expectations independently. Reduced helper discovery excludes surfaces that choose their own motion policy; regression covers this distinction without exempting unguarded helper calls.
+- Queued full final Vitest on the frozen web sources; Android unit-test compilation and rerun follow that serialized resource slot.
+
+## 11. Final full web gate
+
+- Full Vitest on the latest web sources: **338 files, 3121 passed / 0 failed / 0 skipped**, 498.04 s.
+- Log: `C:/Users/NGDtuanh/AppData/Local/Temp/parity3-vitest-final.txt`.
+- Android test-only corrections are now compiling after the web process released the shared resource lease. No Qt or web implementation changes remain pending.
+
+## 12. Final static gates
+
+- Final tsc invocation: **0 errors**, log `parity3-tsc-last.txt`.
+- Final Python parity/context invocation: **38 passed**, log `parity3-rules-last.txt`; includes direct Presence ownership, exact SwapContent keys, mask completion, positive reduced guard and detached-parent runtime faults.
+- Complete final Gradle test run launched with **6.36 GiB** free, two existing heavy processes and one reserved test JVM. App/test compilation is already complete; coordinator heap is 512 MB.
+
+## 13. Final Android gate complete
+
+- `testDebugUnitTest`: **BUILD SUCCESSFUL**, 5m26s.
+- Fresh XML: **430 suites, 3688 tests = 3676 passed / 0 failed / 0 errors / 12 skipped**.
+- Suite timestamps all belong to this run: 2026-11-13T05:00:30.543Z through 05:04:54.187Z (UTC).
+- Log: `C:/Users/NGDtuanh/AppData/Local/Temp/parity3-gradle-final.txt`.
+- All eight first-run Android failures are resolved, including the five existing failures; no failure budget retained.

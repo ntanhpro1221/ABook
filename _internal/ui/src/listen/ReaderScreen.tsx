@@ -1,3 +1,4 @@
+import { Presence } from "../shared/MotionPresence";
 import { S } from "../shared/strings.generated";
 import { ValuePicker } from "@/shared/ValuePicker";
 import { VALUE_SPECS, formatNumber, quantize } from "@/shared/valuePickerLogic";
@@ -423,7 +424,7 @@ export function ReaderScreen(edit: SentenceEditing) {
             className="space-y-[0.9em]"
             after={menu.waitingMark}
           />
-          {index < chapters.length - 1 && (
+          {<Presence>{index < chapters.length - 1 && (
             <button
               type="button"
               onClick={() => go(1)}
@@ -435,7 +436,7 @@ export function ReaderScreen(edit: SentenceEditing) {
               </span>
               <ArrowRight className="ink-end size-5 text-fg-2 [--icon-w:17.5px]" />
             </button>
-          )}
+          )}</Presence>}
         </article>
         {/* Chữ mờ dần dưới thanh nổi thay vì lộ nửa dòng giữa thanh và trình phát nhỏ (soát T11); ẩn thanh thì cũng tắt dần. Phần đặc (66 % của 144 = 95 px)
             phủ hết thanh (đáy 24 + cao ~58) và khe trên nó: chữ không lộ qua hai góc bo của thanh (soát 140 V13). */}

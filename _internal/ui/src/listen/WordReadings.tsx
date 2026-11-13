@@ -1,3 +1,4 @@
+import { Presence } from "../shared/MotionPresence";
 import { S } from "../shared/strings.generated";
 import { MotionRegion } from "@/shared/MotionRegion";
 import { useBackLayer } from "@/shared/backStack";
@@ -229,16 +230,16 @@ export function BookReadingsSection({ bookId }: { bookId: string }) {
               <span className="text-fg-2">{S.s_doc_la_6f6aa509}</span>
               <span>“{item.spoken}”</span>
             </span>
-            {aloud.available && (
+            {<Presence>{aloud.available && (
               <IconButton
                 size="sm"
                 label={aloud.playing(item.surface, item.spoken) ? S.s_dung_nghe_thu_41a2925b : S.s_nghe_thu_0_65a85c4d(item.surface)}
                 icon={aloud.playing(item.surface, item.spoken) ? Pause : Volume2}
                 onClick={() => void aloud.play(item.surface, item.spoken)}
               />
-            )}
-            {!listenOnly && <IconButton size="sm" label={S.s_sua_cach_doc_0_683b998a(item.surface)} icon={Pencil} onClick={() => setEditing(editing === item.surface ? null : item.surface)} />}
-            {!listenOnly && (
+            )}</Presence>}
+            {<Presence>{!listenOnly && <IconButton size="sm" label={S.s_sua_cach_doc_0_683b998a(item.surface)} icon={Pencil} onClick={() => setEditing(editing === item.surface ? null : item.surface)} />}</Presence>}
+            {<Presence>{!listenOnly && (
               <IconButton
                 size="sm"
                 label={S.s_bo_cach_doc_0_c3b9bf0d(item.surface)}
@@ -251,7 +252,7 @@ export function BookReadingsSection({ bookId }: { bookId: string }) {
                   )
                 }
               />
-            )}
+            )}</Presence>}
           </div>
           <Reveal when={editing === item.surface}><div className="mt-2">
               <ReadingForm bookId={bookId} surface={item.surface} current={item.spoken} aloud={aloud} onDone={() => setEditing(null)} />

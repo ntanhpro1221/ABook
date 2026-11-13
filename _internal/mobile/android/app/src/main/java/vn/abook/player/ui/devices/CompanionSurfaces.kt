@@ -1,5 +1,8 @@
 package vn.abook.player.ui.devices
 
+import vn.abook.player.ui.motion.SwapContent
+import vn.abook.player.ui.motion.ContentLayout
+
 import vn.abook.player.S
 
 import androidx.activity.compose.BackHandler
@@ -158,11 +161,13 @@ fun StudioNotices(repo: CompanionRepo, askPermission: (() -> Unit) -> Unit, open
 @Composable
 private fun OtherPlayerIcon(remote: OtherPlayer) {
     val ink = Abook.colors.text2
-    if (remote.cast) CastIcon(ink) else when (remote.kind) {
-        "computer" -> LaptopIcon(ink)
-        "speaker" -> SpeakerIcon(ink)
-        "tv" -> TvIcon(ink)
-        "media" -> MonitorSpeakerIcon(ink)
-        else -> PhoneIcon(ink)
+    SwapContent(remote, contentKey = { remote -> remote.cast }, layout = ContentLayout.Box) { remote ->
+        if (remote.cast) CastIcon(ink) else when (remote.kind) {
+            "computer" -> LaptopIcon(ink)
+            "speaker" -> SpeakerIcon(ink)
+            "tv" -> TvIcon(ink)
+            "media" -> MonitorSpeakerIcon(ink)
+            else -> PhoneIcon(ink)
+        }
     }
 }

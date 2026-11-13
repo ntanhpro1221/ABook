@@ -1,5 +1,8 @@
 package vn.abook.player.ui.nowplaying
 
+import vn.abook.player.ui.motion.SwapContent
+import vn.abook.player.ui.motion.ContentLayout
+
 import vn.abook.player.S
 
 import androidx.compose.animation.animateColorAsState
@@ -104,18 +107,20 @@ fun PlayerCover(ref: CoverRef?, title: String, modifier: Modifier = Modifier, de
     // Decode at the final display-slot bound, never at intermediate shared-element sizes.
     val requestPx = playerCoverRequestPx(decodeSize)
     BoxWithConstraints(modifier.clip(BookCoverShape).background(Abook.colors.bgSunken), contentAlignment = Alignment.Center) {
-        if (ref == null) {
-            // Tên đã có ngay dưới bìa: chữ trên bìa tự vẽ chỉ để nhìn, trình đọc màn hình không đọc hai lần.
-            GeneratedCover(title, null, maxWidth, Modifier.fillMaxSize().clearAndSetSemantics {})
-            return@BoxWithConstraints
+        SwapContent(ref, contentKey = { ref -> ref == null }, layout = ContentLayout.Box) { ref ->
+            if (ref == null) {
+                // The title below the cover supplies its accessibility name.
+                GeneratedCover(title, null, maxWidth, Modifier.fillMaxSize().clearAndSetSemantics {})
+            } else {
+                val width = requestPx
+                val height = requestPx
+                val cacheKey = covers.key(ref.path, ref.stamp, width, height)
+                val bitmap by produceState<ImageBitmap?>(covers.peek(cacheKey), cacheKey) {
+                    value = covers.load(cacheKey, ref.path, width, height)
+                }
+                bitmap?.let { Image(it, title, Modifier.fillMaxSize(), contentScale = ContentScale.Crop) }
+            }
         }
-        val width = requestPx
-        val height = requestPx
-        val cacheKey = ref?.let { covers.key(it.path, it.stamp, width, height) }
-        val bitmap by produceState<ImageBitmap?>(cacheKey?.let(covers::peek), cacheKey) {
-            value = if (ref != null && cacheKey != null) covers.load(cacheKey, ref.path, width, height) else null
-        }
-        bitmap?.let { Image(it, title, Modifier.fillMaxSize(), contentScale = ContentScale.Crop) }
     }
 }
 
@@ -255,9 +260,13 @@ fun PlayerAction(label: String, glyph: String, onClick: () -> Unit, modifier: Mo
         .semantics { contentDescription = label }, horizontalAlignment = Alignment.CenterHorizontally) {
         // Ô trên cùng một chiều cao (= ô icon 28 dp) dù là icon hay chữ ("1×", "12:30"): nhãn dưới của cả hàng nằm trên cùng một đường.
         Box(Modifier.height(28.dp), contentAlignment = Alignment.Center) {
-            if (glyph == "◷" || glyph == "☷" || glyph == MINI_WINDOW_GLYPH) PlayerGlyph(glyph)
-            else if (clock) ClockLabel(glyph, style = Abook.type.sectionTitle)
-            else RollingLabel(glyph, style = Abook.type.sectionTitle)
+            SwapContent(glyph, contentKey = { glyph -> glyph == "◷" || glyph == "☷" || glyph == MINI_WINDOW_GLYPH }, layout = ContentLayout.Box) { glyph ->
+                if (glyph == "◷" || glyph == "☷" || glyph == MINI_WINDOW_GLYPH) PlayerGlyph(glyph)
+                else SwapContent(clock, contentKey = { clock -> clock }, layout = ContentLayout.Box) { clock ->
+                    if (clock) ClockLabel(glyph, style = Abook.type.sectionTitle)
+                    else RollingLabel(glyph, style = Abook.type.sectionTitle)
+                }
+            }
         }
         Spacer(Modifier.height(4.dp))
         RollingLabel(label, style = Abook.type.caption)
@@ -286,8 +295,10 @@ fun PlayerGlyph(glyph: String) {
         else -> null
     }
     Box(Modifier.size(28.dp), contentAlignment = Alignment.Center) {
-        if (data != null) LucideIcon(data, color, size = 24.dp)
-        else Canvas(Modifier.fillMaxSize()) { drawSkip(glyph == "15↷", color, path, skipNumber) }
+        SwapContent(data, contentKey = { data -> data != null }, layout = ContentLayout.Box) { data ->
+            if (data != null) LucideIcon(data, color, size = 24.dp)
+            else Canvas(Modifier.fillMaxSize()) { drawSkip(glyph == "15↷", color, path, skipNumber) }
+        }
     }
 }
 

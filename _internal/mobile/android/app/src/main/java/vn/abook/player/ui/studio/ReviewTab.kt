@@ -1,5 +1,8 @@
 package vn.abook.player.ui.studio
 
+import vn.abook.player.ui.motion.SwapContent
+import vn.abook.player.ui.motion.ContentLayout
+
 import vn.abook.player.S
 
 import vn.abook.player.ui.data.dotJoin
@@ -58,7 +61,9 @@ internal fun LazyListScope.reviewTab(review: StudioReviewState, data: ReviewData
     item("review_head", "review_head") {
         Column(Modifier.fillMaxWidth().then(slide).padding(top = Dim.s8).testTag("studio_review")) {
             ChoiceRow(ReviewFilter.entries, review.filter, { filter, _ -> review.pick(filter) }, Modifier.fillMaxWidth(), "studio_review_filter")
-            if (list != null) ReviewHeader(review, list, data)
+            SwapContent(list, contentKey = { list -> list != null }, layout = ContentLayout.Column) { list ->
+                if (list != null) ReviewHeader(review, list, data)
+            }
             InlineProblem(review.problem, null, "studio_review_problem")
             ElsewhereNote(review)
             InlineProblem(data.poll.error?.let { StudioText.failure(it) }.orEmpty(), review::refreshSoon, "studio_review_poll_problem")
@@ -107,10 +112,12 @@ private fun ReviewHeader(review: StudioReviewState, list: ReviewList, data: Revi
             )
         }
         val playable = data.items.count { review.clipOf(it) != null }
-        if (review.continuous) {
-            AnswerButton(WorkText.PLAY_ALL_STOP, review::stopContinuous, "studio_review_stop", Modifier.padding(top = Dim.s8))
-        } else Reveal(playable > 0) {
-            AnswerButton(WorkText.playAll(playable), review::startContinuous, "studio_review_play_all", Modifier.padding(top = Dim.s8), primary = true)
+        SwapContent(review.continuous, contentKey = { continuous -> continuous }, layout = ContentLayout.Column) { continuous ->
+            if (continuous) {
+                AnswerButton(WorkText.PLAY_ALL_STOP, review::stopContinuous, "studio_review_stop", Modifier.padding(top = Dim.s8))
+            } else Reveal(playable > 0) {
+                AnswerButton(WorkText.playAll(playable), review::startContinuous, "studio_review_play_all", Modifier.padding(top = Dim.s8), primary = true)
+            }
         }
         Reveal(review.finished && !review.continuous) { Caption(WorkText.PLAY_FINISHED, Modifier.padding(top = Dim.s8).testTag("studio_review_finished")) }
     }
@@ -158,13 +165,17 @@ private fun ReviewRow(item: ReviewItem, review: StudioReviewState, clip: ClipSta
                 Caption(dotJoin(WorkText.kind(item.kind), item.chapterTitle))
                 BasicText(item.text, style = Abook.type.body, modifier = Modifier.padding(top = Dim.s4).testTag("studio_review_text"))
             }
-            if (spec != null) ClipButton(ReviewLogic.clipId(item), clip, { review.play(item) }, "studio_review_play")
+            SwapContent(spec, contentKey = { spec -> spec != null }, layout = ContentLayout.Row) { spec ->
+                if (spec != null) ClipButton(ReviewLogic.clipId(item), clip, { review.play(item) }, "studio_review_play")
+            }
         }
         Reveal(item.reason.isNotEmpty()) { RowHint(item.reason, Modifier.padding(top = Dim.s4)) }
         val heard = heardLine(item)
         Reveal(heard.isNotEmpty()) { RowHint(heard, Modifier.padding(top = Dim.s4).testTag("studio_review_heard")) }
         item.pendingSpoken?.let { RowHint(S.s_se_doc_la_0_f26bc05e(it), Modifier.padding(top = Dim.s4)) }
-        if (spec == null) Caption(WorkText.NO_AUDIO, Modifier.padding(top = Dim.s8))
+        SwapContent(spec, contentKey = { spec -> spec == null }, layout = ContentLayout.Column) { spec ->
+            if (spec == null) Caption(WorkText.NO_AUDIO, Modifier.padding(top = Dim.s8))
+        }
         Spacer(Modifier.height(Dim.s8))
         SideBySide {
             AnswerButton(WorkText.OK, { review.judge(item, if (item.verdict == "ok") null else "ok") }, "studio_review_ok", Modifier.weight(1f), primary = item.verdict == "ok")

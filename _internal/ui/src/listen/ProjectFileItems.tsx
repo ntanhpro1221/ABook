@@ -1,3 +1,4 @@
+import { Presence } from "../shared/MotionPresence";
 import { S } from "../shared/strings.generated";
 import { MotionRegion } from "@/shared/MotionRegion";
 import * as DropdownMenu from "@/shared/DropdownMenu";
@@ -135,7 +136,7 @@ export function ProjectFileItems({ book, onViews }: { book: ListenBook; onViews:
           <ClipboardList className="size-4" />{S.s_viec_cua_xuong_4471031f}</DropdownMenu.Item></Reveal>
       <Reveal when={pending && info.built}><DropdownMenu.Item onSelect={() => navigate(`/studio/${info.built}`)} className={MENU_ITEM}>
           <Hammer className="size-4" />{S.s_mo_xuong_da_dung_4a9a2211}</DropdownMenu.Item></Reveal>
-      {pending && !info.built && !toolchain && <NeedStudioItem title={S.s_dung_xuong_186ba1e1} phoneNote={S.s_can_cai_studio_file_nay_chi_mang_phan_nghe_a924b6b8} />}
+      {<Presence>{pending && !info.built && !toolchain && <NeedStudioItem title={S.s_dung_xuong_186ba1e1} phoneNote={S.s_can_cai_studio_file_nay_chi_mang_phan_nghe_a924b6b8} />}</Presence>}
       <Reveal when={pending && !info.built && toolchain}><DropdownMenu.Item
           disabled={building}
           onSelect={() => void build()}
@@ -204,7 +205,7 @@ export function ProjectViewsDialog({ book, open, onOpenChange }: { book: ListenB
       title={S.s_viec_cua_xuong_bfea3878}
       description={S.s_anh_chup_luc_nguoi_lam_sach_dong_goi_file_bd6bbbbf}
     >
-      {available.length > 1 && <ChoiceRow<Tab> value={tab} onChange={setTab} label={S.s_man_47a0e3c8} options={available} />}
+      {<Presence>{available.length > 1 && <ChoiceRow<Tab> value={tab} onChange={setTab} label={S.s_man_47a0e3c8} options={available} />}</Presence>}
       {/* Khung chờ / lỗi / đổi màn: mờ qua (fadeThrough) theo khoá màn + pha tải, không đổi cứng trong hộp đang mở. */}
       <MotionRegion elementRef={scrollFade.ref} style={scrollFade.style} fadeThrough motionKey={[tab, isLoading, Boolean(error && !data)]} className="mt-3 max-h-[50vh] overflow-y-auto text-sm">
         {isLoading ? <ContentSkeleton label={S.s_dang_tai_viec_xuong_571590f2} /> : error && !data ? <InlineError message={S.s_ban_hay_thu_tai_lai_viec_cua_xuong_3c08f0cd} onRetry={() => void refetch()} /> : null}

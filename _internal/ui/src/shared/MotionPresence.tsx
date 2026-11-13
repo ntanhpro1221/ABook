@@ -1,6 +1,6 @@
-import { cloneElement, useRef, type AnimationEvent, type ReactElement, type ReactNode } from "react";
+import { cloneElement, createContext, Fragment, isValidElement, useContext, useLayoutEffect, useRef, type AnimationEvent, type ReactElement, type ReactNode } from "react";
 import { cn } from "./cn";
-import { MOTION, usePresence, useListPresence } from "./motion";
+import { EASE, MOTION, prefersReducedMotion, usePresence, useListPresence } from "./motion";
 
 /** Khớp animation-delay của .motion-loading-placeholder trong styles.css. */
 export const LOADING_PATIENCE = 200;
@@ -26,14 +26,61 @@ export function MotionPresence({ open, children, className, bodyClassName }: { o
 
 type Revealable = ReactElement<{ className?: string; onAnimationEnd?: (event: AnimationEvent<HTMLElement>) => void }>;
 
+const PresentContext = createContext(true);
+export const usePresent = () => useContext(PresentContext);
+
+/** Optional slots must test their current content, not the truthiness of a
+ * Presence element that intentionally survives after its child disappears. */
+export function hasPresentContent(value: ReactNode): boolean {
+  if (Array.isArray(value)) return value.some(hasPresentContent);
+  if (isValidElement<{ children?: ReactNode }>(value) && (value.type === Presence || value.type === Fragment)) return hasPresentContent(value.props.children);
+  return Boolean(value);
+}
+
+/** Retain the last rendered value through exit, including values narrowed by a conditional.
+ * The contents host keeps flex/grid layout and animates the actual DOM roots of custom
+ * components, so they need not forward animation props. Portals own their surface motion. */
+export function Presence({ children }: { children: ReactNode }) {
+  const parentOpen = usePresent();
+  const open = parentOpen && Boolean(children);
+  const presence = usePresence(open);
+  const last = useRef(children);
+  const host = useRef<HTMLSpanElement>(null);
+  const previous = useRef(open);
+  const initial = useRef(open);
+  if (open) last.current = children;
+  useLayoutEffect(() => {
+    if (previous.current === open) return;
+    previous.current = open;
+    const reduced = prefersReducedMotion();
+    const duration = reduced ? MOTION.fast : open ? MOTION.medium : MOTION.mediumOut;
+    const animations = Array.from(host.current?.children ?? []).map(element => {
+      const alpha = Number.parseFloat(getComputedStyle(element).opacity);
+      const opacity = Number.isFinite(alpha) ? alpha : 1;
+      return element.animate?.(
+        open
+          ? [{ opacity: 0, transform: reduced ? "none" : "translateY(8px)" }, { opacity, transform: "none" }]
+          : [{ opacity, transform: "none" }, { opacity: 0, transform: reduced ? "none" : "translateY(-8px)" }],
+        { duration, easing: open ? EASE.decelerate : EASE.accelerate, fill: open ? "backwards" : "forwards" },
+      );
+    });
+    return () => animations.forEach(animation => animation?.cancel());
+  }, [open]);
+  if (!presence.mounted) return null;
+  const child = open ? children : last.current;
+  // Native roots keep their HTML parent/child contract (ul/li, dl/dt, table rows).
+  if (isValidElement(child) && typeof child.type === "string") return <PresentContext.Provider value={open}><Reveal when={open} appear={!initial.current}>{child as Revealable}</Reveal></PresentContext.Provider>;
+  return <PresentContext.Provider value={open}><span ref={host} style={{ display: "contents" }} inert={!open} aria-hidden={!open || undefined}>{child}</span></PresentContext.Provider>;
+}
+
 /** Hiện/ẩn MỘT phần tử mà không thêm lớp bọc (chữ trong dòng, biểu tượng, phần tử trong hàng flex): gắn `motion-panel` + data-state
  *  vào chính phần tử ấy - phần tử DOM, biểu tượng lucide hay thành phần chuyển className/props xuống DOM (Button). Đóng là inert ngay,
  *  giữ nội dung cuối tới hết hiệu ứng (giảm chuyển động: chỉ mờ ngắn). Có sẵn từ lúc dựng thì đứng yên, không hiện dần lần nữa. */
-export function Reveal({ when, children }: { when: unknown; children: Revealable }) {
+export function Reveal({ when, children, appear = false }: { when: unknown; children: Revealable; appear?: boolean }) {
   const open = Boolean(when);
   const presence = usePresence(open);
   const last = useRef(children);
-  const moved = useRef(!open);
+  const moved = useRef(appear || !open);
   if (open) last.current = children;
   else moved.current = true;
   if (!presence.mounted) return null;
@@ -44,7 +91,10 @@ export function Reveal({ when, children }: { when: unknown; children: Revealable
     "data-state": presence.state,
     // Chỉ thêm khi đóng: phần tử tự có aria-hidden (số đếm chỉ để nhìn) giữ nguyên lúc đang hiện.
     ...(open ? {} : { inert: true, "aria-hidden": true }),
-    onAnimationEnd: presence.onAnimationEnd,
+    onAnimationEnd: (event: AnimationEvent<HTMLElement>) => {
+      child.props.onAnimationEnd?.(event);
+      presence.onAnimationEnd(event);
+    },
   } as Record<string, unknown>);
 }
 

@@ -1,5 +1,8 @@
 package vn.abook.player.ui.music.library
 
+import vn.abook.player.ui.motion.SwapContent
+import vn.abook.player.ui.motion.ContentLayout
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.horizontalScroll
@@ -113,14 +116,18 @@ fun MusicScreen(
         Column(Modifier.fillMaxSize()) {
             // Đầu màn cố định, danh sách cuộn nằm DƯỚI nó (không chạy dưới thanh trạng thái): chừa thanh trạng thái ở đây
             Column(Modifier.statusBarsPadding().padding(horizontal = Dim.margin)) {
-                if (pick != null || onBack != null) {
-                    PageHeader(if (pick != null) S.s_chon_bai_cho_doan_840afc40 else S.s_nhac_0e4413e9, onBack ?: {})
-                } else {
-                    ScreenHeader(S.s_nhac_0e4413e9, bottomGap = Dim.s8)
+                SwapContent(pick, onBack, contentKey = { pick, onBack -> pick != null || onBack != null }, layout = ContentLayout.Column) { pick, onBack ->
+                    if (pick != null || onBack != null) {
+                        PageHeader(if (pick != null) S.s_chon_bai_cho_doan_840afc40 else S.s_nhac_0e4413e9, onBack ?: {})
+                    } else {
+                        ScreenHeader(S.s_nhac_0e4413e9, bottomGap = Dim.s8)
+                    }
                 }
-                if (pick == null) {
-                    ScrollingTabs(MusicPart.entries, part, { part = it }, { it.label }, { it.tag }, "music_parts")
-                    Spacer(Modifier.height(Dim.s12))
+                SwapContent(pick, contentKey = { pick -> pick == null }, layout = ContentLayout.Column) { pick ->
+                    if (pick == null) {
+                        ScrollingTabs(MusicPart.entries, part, { part = it }, { it.label }, { it.tag }, "music_parts")
+                        Spacer(Modifier.height(Dim.s12))
+                    }
                 }
             }
             when {

@@ -1,5 +1,8 @@
 package vn.abook.player.ui.nowplaying
 
+import vn.abook.player.ui.motion.SwapContent
+import vn.abook.player.ui.motion.ContentLayout
+
 import vn.abook.player.S
 
 import androidx.compose.foundation.layout.windowInsetsPadding
@@ -124,8 +127,10 @@ private fun NowPlayingBody(
                 verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
                 GlyphButton(S.s_thu_nho_d7896922, "⌄", window::close, Modifier.testTag("collapse_player"))
                 // Đọc theo là một chế độ của chính cửa sổ này, nên công tắc chế độ nằm ở thanh trên của cửa sổ - không phải một nút hành động ở đáy.
-                if (state.readAlongAvailable && !split) PlayerModeSwitch(mode, setReading)
-                else BasicText(S.s_dang_nghe_8bb22da4, style = Abook.type.caption)
+                    SwapContent(state, split, contentKey = { state, split -> state.readAlongAvailable && !split }, layout = ContentLayout.Row) { state, split ->
+                        if (state.readAlongAvailable && !split) PlayerModeSwitch(mode, setReading)
+                        else BasicText(S.s_dang_nghe_8bb22da4, style = Abook.type.caption)
+                    }
                 GlyphButton(S.s_them_tuy_chon_a0b4bb6e, "⋯", { window.openSheet(PlayerSheet.More) }, Modifier.testTag("player_more"))
             }
             // Both modes occupy this same fixed weight. Transport is outside it and never changes coordinates.

@@ -1,3 +1,4 @@
+import { Presence } from "../shared/MotionPresence";
 import { S } from "../shared/strings.generated";
 import { MotionRegion } from "@/shared/MotionRegion";
 import { useBackLayer } from "@/shared/backStack";
@@ -78,7 +79,7 @@ export function OnlineVoicePrompt() {
                       {playing ? S.s_dung_11554138 : S.s_nghe_thu_fa024065}
                     </Button></Reveal>
                 </div>
-                {sample.failed?.voice === item.id && <p className="px-3 pb-1 text-body-small text-danger text-pretty" role="alert">{sample.failed.message}</p>}
+                {<Presence>{sample.failed?.voice === item.id && <p className="px-3 pb-1 text-body-small text-danger text-pretty" role="alert">{sample.failed.message}</p>}</Presence>}
               </div>
             );
           })}

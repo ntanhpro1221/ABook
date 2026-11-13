@@ -1,5 +1,8 @@
 package vn.abook.player.ui.nowplaying
 
+import vn.abook.player.ui.motion.SwapContent
+import vn.abook.player.ui.motion.ContentLayout
+
 import vn.abook.player.S
 
 import androidx.compose.foundation.layout.Arrangement
@@ -44,14 +47,18 @@ fun PlayerAlert(state: NowPlayingState, model: NowPlayingModel, window: NowPlayi
     Column(modifier.fillMaxWidth().padding(top = Dim.s8).testTag("player_alert")) {
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.Top) {
             BasicText(message, style = Abook.type.caption, modifier = Modifier.weight(1f).padding(top = Dim.s12).testTag("player_error"))
-            if (onDismiss != null) IconAction(S.s_dong_loi_bao_d13d19ff, onDismiss, "alert_dismiss") { CloseIcon(Abook.colors.text2) }
+            SwapContent(onDismiss, contentKey = { onDismiss -> onDismiss != null }, layout = ContentLayout.Row) { onDismiss ->
+                if (onDismiss != null) IconAction(S.s_dong_loi_bao_d13d19ff, onDismiss, "alert_dismiss") { CloseIcon(Abook.colors.text2) }
+            }
         }
         FlowRow(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(Dim.s12)) {
-            if (stuck && local != null) {
-                TextAction(S.s_doc_bang_f7f5f3b1 + VoiceStuck.caption(local), {
-                    model.setVoice(local.id)
-                    model.toggle()
-                }, "alert_use_local", align = Alignment.CenterStart)
+            SwapContent(stuck, local, contentKey = { stuck, local -> stuck && local != null }, layout = ContentLayout.Row) { stuck, local ->
+                if (stuck && local != null) {
+                    TextAction(S.s_doc_bang_f7f5f3b1 + VoiceStuck.caption(local), {
+                        model.setVoice(local.id)
+                        model.toggle()
+                    }, "alert_use_local", align = Alignment.CenterStart)
+                }
             }
             TextAction(S.s_thu_lai_c58d068c, model::toggle, "alert_retry", align = Alignment.CenterStart)
             Reveal(stuck && state.voices.isNotEmpty()) {
@@ -59,8 +66,10 @@ fun PlayerAlert(state: NowPlayingState, model: NowPlayingModel, window: NowPlayi
             }
         }
         val voice = model.voice
-        if (stuck && local == null && voice != null) {
-            VieneuDownload(voice, S.s_tai_giong_vieneu_94c86884, { window.voiceSettings?.invoke() })
+        SwapContent(stuck, local, voice, contentKey = { stuck, local, voice -> stuck && local == null && voice != null }, layout = ContentLayout.Column) { stuck, local, voice ->
+            if (stuck && local == null && voice != null) {
+                VieneuDownload(voice, S.s_tai_giong_vieneu_94c86884, { window.voiceSettings?.invoke() })
+            }
         }
     }
 }

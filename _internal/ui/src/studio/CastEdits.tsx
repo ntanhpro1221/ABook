@@ -1,3 +1,4 @@
+import { Presence } from "../shared/MotionPresence";
 import { S } from "../shared/strings.generated";
 import { MotionRegion } from "@/shared/MotionRegion";
 import { useQueryClient } from "@tanstack/react-query";
@@ -79,7 +80,7 @@ export function RenamePersonDialog({
           aria-label={S.s_ten_moi_cua_0_ac5dd137(name)}
           className="h-9 w-full rounded-control border border-line bg-bg px-3 text-sm outline-none focus-visible:border-focus"
         />
-        {person?.originalName && <p className="mt-2 text-xs text-fg-2">{S.s_ten_goc_893370ef}{cleanName(person.originalName)}</p>}
+        {<Presence>{person?.originalName && <p className="mt-2 text-xs text-fg-2">{S.s_ten_goc_893370ef}{cleanName(person.originalName)}</p>}</Presence>}
 
       </form>
     </Dialog>

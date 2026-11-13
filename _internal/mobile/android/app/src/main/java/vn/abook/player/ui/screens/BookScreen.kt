@@ -1,5 +1,8 @@
 package vn.abook.player.ui.screens
 
+import vn.abook.player.ui.motion.SwapContent
+import vn.abook.player.ui.motion.ContentLayout
+
 import vn.abook.player.ui.components.skeletonPulse
 import vn.abook.player.ui.components.skeletonPulse
 import vn.abook.player.S
@@ -494,16 +497,18 @@ private fun BookHead(
         ClusterLabel(BookPage.metaLine(book), style = Abook.type.bodySmall)
     }
     Column(Modifier.fillMaxWidth().testTag("book_head")) {
-        if (stacked) {
-            // Cột trái của hai cột: bìa lớn trên, tên và thông tin dưới (web: bìa w-48 xếp dọc).
-            FlyingBookCover(book, covers, StackedCoverWidth, Modifier.width(StackedCoverWidth).then(coverOpens).testTag("book_cover"))
-            Spacer(Modifier.height(Dim.s16))
-            Column(Modifier.fillMaxWidth(), content = info)
-        } else {
-            Row(Modifier.fillMaxWidth()) {
-                FlyingBookCover(book, covers, CoverWidth, Modifier.width(CoverWidth).then(coverOpens).testTag("book_cover"))
-                Spacer(Modifier.width(Dim.s16))
-                Column(Modifier.weight(1f), content = info)
+        SwapContent(stacked, contentKey = { stacked -> stacked }, layout = ContentLayout.Column) { stacked ->
+            if (stacked) {
+                // Cột trái của hai cột: bìa lớn trên, tên và thông tin dưới (web: bìa w-48 xếp dọc).
+                FlyingBookCover(book, covers, StackedCoverWidth, Modifier.width(StackedCoverWidth).then(coverOpens).testTag("book_cover"))
+                Spacer(Modifier.height(Dim.s16))
+                Column(Modifier.fillMaxWidth(), content = info)
+            } else {
+                Row(Modifier.fillMaxWidth()) {
+                    FlyingBookCover(book, covers, CoverWidth, Modifier.width(CoverWidth).then(coverOpens).testTag("book_cover"))
+                    Spacer(Modifier.width(Dim.s16))
+                    Column(Modifier.weight(1f), content = info)
+                }
             }
         }
         Reveal(!book.textOnly) {
@@ -521,9 +526,11 @@ private fun BookHead(
         }
         // Một hồ sơ thì không có chip: các việc với hồ sơ duy nhất nằm trong bảng "Thêm" (web: singleRecordActions).
         val active = if (records.size > 1) records.firstOrNull { it.active } else null
-        if (active != null) {
-            Spacer(Modifier.height(Dim.s12))
-            RecordChip(active, onRecords)
+        SwapContent(active, contentKey = { active -> active != null }, layout = ContentLayout.Column) { active ->
+            if (active != null) {
+                Spacer(Modifier.height(Dim.s12))
+                RecordChip(active, onRecords)
+            }
         }
     }
 }
@@ -640,8 +647,9 @@ private fun ListenButton(label: String, detail: String?, playing: Boolean, resta
             .background(colors.accent).padding(horizontal = Dim.s16).testTag("book_primary"),
         contentAlignment = Alignment.Center,
     ) {
-        if (animated) {
-            AnimatedContent(
+        SwapContent(animated, contentKey = { animated -> animated }, layout = ContentLayout.Box) { animated ->
+            if (animated) {
+                AnimatedContent(
                 targetState = label to detail,
                 transitionSpec = {
                     (slideInVertically(tween(MotionMs.MEDIUM, easing = Motion.Decelerate)) { it } togetherWith
@@ -650,9 +658,10 @@ private fun ListenButton(label: String, detail: String?, playing: Boolean, resta
                 },
                 contentAlignment = Alignment.Center,
                 label = "primary",
-            ) { (text, sub) -> ListenLabel(text, sub, playing, restart) }
-        } else {
-            ListenLabel(label, detail, playing, restart)
+                ) { (text, sub) -> ListenLabel(text, sub, playing, restart) }
+            } else {
+                ListenLabel(label, detail, playing, restart)
+            }
         }
     }
 }
@@ -664,13 +673,17 @@ private fun ListenLabel(text: String, sub: String?, playing: Boolean, restart: B
     val ink = Abook.type.bodyStrong.copy(color = colors.accentInk)
     Row(verticalAlignment = Alignment.CenterVertically) {
         Box(Modifier.size(Dim.s24), contentAlignment = Alignment.Center) {
-            if (restart) RestartIcon(colors.accentInk) else PlayPauseGlyph(playing, colors.accentInk, 22.dp)
+            SwapContent(restart, contentKey = { restart -> restart }, layout = ContentLayout.Box) { restart ->
+                if (restart) RestartIcon(colors.accentInk) else PlayPauseGlyph(playing, colors.accentInk, 22.dp)
+            }
         }
         Spacer(Modifier.width(Dim.s8))
         BasicText(text, style = ink, softWrap = false)
-        if (sub != null) {
-            // cắt-có-chủ-ý: tên chương sau động từ của nút chính; nút luôn một dòng cao 48, tên đầy đủ ở danh sách chương ngay dưới (DESIGN.md §7, soát 10-11 việc 3).
-            BasicText("\u00a0·\u00a0" + sub, Modifier.weight(1f, fill = false).testTag("book_primary_chapter"), style = ink, maxLines = 1, overflow = TextOverflow.Ellipsis)
+        SwapContent(sub, contentKey = { sub -> sub != null }, layout = ContentLayout.Row) { sub ->
+            if (sub != null) {
+                // cắt-có-chủ-ý: tên chương sau động từ của nút chính; nút luôn một dòng cao 48, tên đầy đủ ở danh sách chương ngay dưới (DESIGN.md §7, soát 10-11 việc 3).
+                BasicText("\u00a0·\u00a0" + sub, Modifier.weight(1f, fill = false).testTag("book_primary_chapter"), style = ink, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            }
         }
     }
 }
@@ -778,12 +791,13 @@ private fun ChapterRow(
                 RowHint(BookPage.chapterLine(chapter, producing), ticking = true)
                 Reveal(prepared) { PreparedMark() }
                 val partly = chapter.heard > 0f && chapter.heard < 1f
-                if (livePosition != null || partly) {
-                    Spacer(Modifier.height(6.dp))
-                    val accent = colors.accent
-                    val track = colors.line
-                    val stored = chapter.heard
-                    Box(
+                SwapContent(livePosition, partly, contentKey = { livePosition, partly -> livePosition != null || partly }, layout = ContentLayout.Column) { livePosition, partly ->
+                    if (livePosition != null || partly) {
+                        Spacer(Modifier.height(6.dp))
+                        val accent = colors.accent
+                        val track = colors.line
+                        val stored = chapter.heard
+                        Box(
                         Modifier.width(96.dp).height(3.dp).clip(CircleShape).drawBehind {
                             val fraction = if (livePosition != null && durationMs > 0) {
                                 (livePosition.positionMs.value.toFloat() / durationMs).coerceIn(0f, 1f)
@@ -793,7 +807,8 @@ private fun ChapterRow(
                             drawRect(track)
                             drawRect(accent, Offset.Zero, Size(size.width * fraction, size.height))
                         },
-                    )
+                        )
+                    }
                 }
             }
         }

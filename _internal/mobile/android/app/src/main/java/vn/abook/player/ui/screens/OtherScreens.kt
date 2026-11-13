@@ -1,5 +1,8 @@
 package vn.abook.player.ui.screens
 
+import vn.abook.player.ui.motion.SwapContent
+import vn.abook.player.ui.motion.ContentLayout
+
 import vn.abook.player.S
 import androidx.compose.ui.Modifier
 import androidx.compose.foundation.layout.*
@@ -42,10 +45,14 @@ fun StudioScreen(
         ScreenHeader(S.s_studio_0aa91af2)
         Reveal(computers.size >= 2) {
             val choices = computers.map { Option(it.key, it.name) }
-            if (choices.isNotEmpty()) ChoiceRow(choices, choices.firstOrNull { it.value == computer?.key } ?: choices.first(),
+            SwapContent(choices, contentKey = { choices -> choices.isNotEmpty() }, layout = ContentLayout.Column) { choices ->
+                if (choices.isNotEmpty()) ChoiceRow(choices, choices.firstOrNull { it.value == computer?.key } ?: choices.first(),
                 { choice, _ -> if (pickComputer != null) pickComputer(choice.value) else selected = choice.value }, tag = "studio_computer")
+            }
         }
-        if (computer != null && companion != null) StudioNotices(companion, askNotifications, openNotificationSettings)
+        SwapContent(computer, companion, contentKey = { computer, companion -> computer != null && companion != null }, layout = ContentLayout.Box) { computer, companion ->
+            if (computer != null && companion != null) StudioNotices(companion, askNotifications, openNotificationSettings)
+        }
     }
     Column(modifier.fillMaxSize().padding(top = top, start = Dim.margin, end = Dim.margin).testTag("studio_screen")) {
         if (computer != null && hub != null && !computer.listenOnly) {
@@ -57,12 +64,14 @@ fun StudioScreen(
             val scroll = rememberScrollState()
             Column(Modifier.fillMaxSize().fadeEdges(scroll, startInset = 0.dp).verticalScroll(scroll).padding(bottom = Dim.s24)) {
                 header()
-                if (computer == null) {
-                    RowHint(S.s_noi_may_tinh_de_lam_sach_noi_va_xem_tien_d_4b697ccc)
-                    TextAction(S.s_noi_may_tinh_2950692d, connect, "studio_connect")
-                } else {
-                    BasicText(DeviceText.studioBlocked(listOf(computer.name)), style = Abook.type.body.copy(color = Abook.colors.text2))
-                    TextAction(StudioText.RETRY, { devices?.loadStudio() }, "studio_retry")
+                SwapContent(computer, contentKey = { computer -> computer == null }, layout = ContentLayout.Column) { computer ->
+                    if (computer == null) {
+                        RowHint(S.s_noi_may_tinh_de_lam_sach_noi_va_xem_tien_d_4b697ccc)
+                        TextAction(S.s_noi_may_tinh_2950692d, connect, "studio_connect")
+                    } else {
+                        BasicText(DeviceText.studioBlocked(listOf(computer.name)), style = Abook.type.body.copy(color = Abook.colors.text2))
+                        TextAction(StudioText.RETRY, { devices?.loadStudio() }, "studio_retry")
+                    }
                 }
             }
         }

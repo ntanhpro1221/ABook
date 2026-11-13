@@ -1,5 +1,8 @@
 package vn.abook.player.ui.screens
 
+import vn.abook.player.ui.motion.SwapContent
+import vn.abook.player.ui.motion.ContentLayout
+
 import vn.abook.player.S
 
 import vn.abook.player.formatSize
@@ -87,8 +90,10 @@ fun AdvancedSettings(env: SettingsEnv, sheets: SheetHost, onBack: () -> Unit, mo
             env.devices?.let { StorageScreen(it, sheets, embedded = true, onBack = {}) }
             val bytes = cache
             ListRow(S.s_ban_doc_da_lam_776edb87, hint = AdvancedCopy.cache(bytes)) {
-                if (bytes != null && bytes > 0) {
-                    TextAction(S.s_don_ban_doc_5ae4774e, { sheets.show { dismiss -> ClearSheet(bytes, onClear = { repo.clearCache(); dismiss() }, dismiss) } }, "cache_clear")
+                SwapContent(bytes, contentKey = { bytes -> bytes != null && bytes > 0 }, layout = ContentLayout.Box) { bytes ->
+                    if (bytes != null && bytes > 0) {
+                        TextAction(S.s_don_ban_doc_5ae4774e, { sheets.show { dismiss -> ClearSheet(bytes, onClear = { repo.clearCache(); dismiss() }, dismiss) } }, "cache_clear")
+                    }
                 }
             }
             vn.abook.player.ui.components.MoreInfo(S.s_tim_hieu_them_032fe408, S.s_nghe_lai_doan_da_doc_xong_thi_khong_phai_c_05c920a7, "cache_more")

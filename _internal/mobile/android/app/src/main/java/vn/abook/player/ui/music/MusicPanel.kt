@@ -1,5 +1,8 @@
 package vn.abook.player.ui.music
 
+import vn.abook.player.ui.motion.SwapContent
+import vn.abook.player.ui.motion.ContentLayout
+
 import vn.abook.player.ui.music.library.inCatalog
 
 import vn.abook.player.S
@@ -113,8 +116,10 @@ fun MusicPanel(music: MusicState, bookId: String, player: PlayerMusic?, modifier
     Box(modifier.fillMaxWidth().testTag("music_panel_pages")) {
         SheetPages(cue?.key ?: "", { if (it.isEmpty()) 0 else 1 }, "music_pages") { shown ->
             val page = book?.cues?.firstOrNull { it.key == shown }
-            if (page == null) MainPage(music, ui, player, add) { key -> cueKey = key }
-            else CuePage(music, ui, page, add)
+            SwapContent(page, contentKey = { page -> page == null }, layout = ContentLayout.Box) { page ->
+                if (page == null) MainPage(music, ui, player, add) { key -> cueKey = key }
+                else CuePage(music, ui, page, add)
+            }
         }
     }
 }
@@ -150,16 +155,20 @@ private fun MainPage(music: MusicState, ui: BookMusicUi, player: PlayerMusic?, o
                 else -> Caption(MusicText.NONE, Modifier.padding(vertical = Dim.s12).testTag("music_none"))
             }
         }
-        if (book != null && book.kind != MusicKind.None) {
-            Reveal(MusicText.playing(book)) { LevelMeter(book.levelDb, enabled = !ui.busy, music::setLevel) }
-            InlineProblem(ui.problem, tag = "music_problem")
-            val note = MusicText.note(book, ui.menu, player)
-            var lastNote by remember { mutableStateOf(note) }
-            if (note.isNotEmpty()) lastNote = note
-            Reveal(note.isNotEmpty()) { Caption(lastNote, Modifier.padding(top = Dim.s12).testTag("music_note")) }
+        SwapContent(book, contentKey = { book -> book != null && book.kind != MusicKind.None }, layout = ContentLayout.Column) { book ->
+            if (book != null && book.kind != MusicKind.None) {
+                Reveal(MusicText.playing(book)) { LevelMeter(book.levelDb, enabled = !ui.busy, music::setLevel) }
+                InlineProblem(ui.problem, tag = "music_problem")
+                val note = MusicText.note(book, ui.menu, player)
+                var lastNote by remember { mutableStateOf(note) }
+                if (note.isNotEmpty()) lastNote = note
+                Reveal(note.isNotEmpty()) { Caption(lastNote, Modifier.padding(top = Dim.s12).testTag("music_note")) }
+            }
         }
         MusicCreditBlock(player?.credit, ui.bookId)
-        if (book != null && book.kind == MusicKind.Packaged && book.cues.isNotEmpty()) CueList(book, enabled = !ui.busy, onCue)
+        SwapContent(book, contentKey = { book -> book != null && book.kind == MusicKind.Packaged && book.cues.isNotEmpty() }, layout = ContentLayout.Column) { book ->
+            if (book != null && book.kind == MusicKind.Packaged && book.cues.isNotEmpty()) CueList(book, enabled = !ui.busy, onCue)
+        }
     }
 }
 
@@ -306,12 +315,14 @@ private fun SwapList(music: MusicState, ui: BookMusicUi, onAdd: () -> Unit) {
             }
             // Dòng cuối: cả Kho nhạc ở chế độ chọn cho đoạn này ("Dùng" ghim bài như "Chọn" ở trên)
             val entry = vn.abook.player.ui.music.library.LocalMusicEntry.current
-            if (entry != null && shown != 0) {
-                ListItem(
+            SwapContent(entry, shown, contentKey = { entry, shown -> entry != null && shown != 0 }, layout = ContentLayout.Column) { entry, shown ->
+                if (entry != null && shown != 0) {
+                    ListItem(
                     MusicText.OPEN_LIBRARY, Modifier, { entry.openPick(ui.bookId, ui.swapKey) }, "music_open_library",
                     titleColor = colors.accentText, chevron = true,
                     leading = { vn.abook.player.ui.components.LucideIcon(vn.abook.player.ui.components.LucidePaths.LIBRARY, colors.accentText) },
-                )
+                    )
+                }
             }
         }
     }
@@ -441,8 +452,10 @@ fun MusicCreditBlock(credit: MusicCredit?, bookId: String = "") {
                     BasicText(MusicText.creditText(shown), style = Abook.type.bodySmall)
                     if (shown.license.isNotEmpty() || shown.licenseUrl.isNotEmpty()) {
                         val label = MusicText.licenseLabel(shown.license, shown.licenseUrl)
-                        if (shown.licenseUrl.isNotEmpty()) ActionRow(S.s_giay_phep_b609ade1, label, { openUri(shown.licenseUrl) }, "music_license")
-                        else ListRow(S.s_giay_phep_b609ade1) { BasicText(label, style = Abook.type.bodySmall) }
+                        SwapContent(shown, contentKey = { shown -> shown.licenseUrl.isNotEmpty() }, layout = ContentLayout.Column) { shown ->
+                            if (shown.licenseUrl.isNotEmpty()) ActionRow(S.s_giay_phep_b609ade1, label, { openUri(shown.licenseUrl) }, "music_license")
+                            else ListRow(S.s_giay_phep_b609ade1) { BasicText(label, style = Abook.type.bodySmall) }
+                        }
                     }
                     Reveal(MusicText.needsModifiedNote(shown.license)) { Caption(MusicText.MODIFIED_NOTE, Modifier.padding(bottom = Dim.s8)) }
                     Reveal(shown.landing.isNotEmpty()) { ActionRow(S.s_trang_cua_bai_nhac_50968bde, S.s_mo_741bd2c2, { openUri(shown.landing) }, "music_landing") }

@@ -1,5 +1,8 @@
 package vn.abook.player.ui.screens
 
+import vn.abook.player.ui.motion.SwapContent
+import vn.abook.player.ui.motion.ContentLayout
+
 import vn.abook.player.S
 
 import vn.abook.player.ui.components.Option
@@ -261,11 +264,15 @@ fun DevicesSettings(devices: DevicesState?, sheets: SheetHost, onBack: () -> Uni
     SettingsPage(SettingsGroup.Devices.label, onBack, SettingsGroup.Devices.screenTag, modifier) {
         ListSection(first = true) {
             Fold(S.s_noi_may_tinh_2950692d, "devices_pair", summary = summary.pair) {
-                if (devices != null) PairScreen(devices, sheets, embedded = true, onBack = {})
+                SwapContent(devices, contentKey = { devices -> devices != null }, layout = ContentLayout.Box) { devices ->
+                    if (devices != null) PairScreen(devices, sheets, embedded = true, onBack = {})
+                }
             }
             RowLine()
             Fold(S.s_chia_se_thu_vien_940de671, "devices_share", summary = summary.sharing) {
-                if (devices != null) ShareScreen(devices, sheets, embedded = true, onBack = {})
+                SwapContent(devices, contentKey = { devices -> devices != null }, layout = ContentLayout.Box) { devices ->
+                    if (devices != null) ShareScreen(devices, sheets, embedded = true, onBack = {})
+                }
             }
             RowLine()
         }

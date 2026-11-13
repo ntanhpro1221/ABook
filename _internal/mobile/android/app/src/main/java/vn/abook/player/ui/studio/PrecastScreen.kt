@@ -1,5 +1,8 @@
 package vn.abook.player.ui.studio
 
+import vn.abook.player.ui.motion.SwapContent
+import vn.abook.player.ui.motion.ContentLayout
+
 import vn.abook.player.S
 
 import androidx.compose.foundation.layout.Arrangement
@@ -86,7 +89,9 @@ private fun PrecastBody(state: StudioProjectState, book: StudioBook, sheets: She
     val data = view.data
     if (data == null || work == null || cast == null) {
         val failure = view.error ?: workPoll.error ?: castPoll.error
-        if (failure == null) LoadingText() else InlineProblem(StudioText.failure(failure), state::refreshSoon, "studio_precast_problem")
+        SwapContent(failure, contentKey = { failure -> failure == null }, layout = ContentLayout.Box) { failure ->
+            if (failure == null) LoadingText() else InlineProblem(StudioText.failure(failure), state::refreshSoon, "studio_precast_problem")
+        }
         return
     }
     val hiding = state.decisions.hiding()
@@ -157,13 +162,17 @@ private fun PrecastBody(state: StudioProjectState, book: StudioBook, sheets: She
         }
         item("actions", "actions") {
             Column(Modifier.fillMaxWidth().padding(top = Dim.s24), verticalArrangement = Arrangement.spacedBy(Dim.s8), horizontalAlignment = Alignment.Start) {
-                if (step == PrecastStep.Done) {
-                    if (book.precastHeld) PrimaryButton(PrecastText.RECORD, { state.send(StudioCommand.Pause(false)); onBack() }, Modifier.fillMaxWidth().testTag("studio_precast_record"), enabled = !state.busy)
-                    else PrimaryButton(PrecastText.FINISH, onBack, Modifier.fillMaxWidth().testTag("studio_precast_finish"))
-                    QuietButton(PrecastText.BACK, onBack, "studio_precast_back")
-                } else {
-                    PrimaryButton(PrecastText.NEXT, precast::next, Modifier.fillMaxWidth().testTag("studio_precast_next"))
-                    QuietButton(PrecastText.SKIP, precast::next, "studio_precast_skip")
+                SwapContent(step, contentKey = { step -> step == PrecastStep.Done }, layout = ContentLayout.Column, spacing = Dim.s8) { step ->
+                    if (step == PrecastStep.Done) {
+                        SwapContent(book, contentKey = { book -> book.precastHeld }, layout = ContentLayout.Column) { book ->
+                            if (book.precastHeld) PrimaryButton(PrecastText.RECORD, { state.send(StudioCommand.Pause(false)); onBack() }, Modifier.fillMaxWidth().testTag("studio_precast_record"), enabled = !state.busy)
+                            else PrimaryButton(PrecastText.FINISH, onBack, Modifier.fillMaxWidth().testTag("studio_precast_finish"))
+                        }
+                        QuietButton(PrecastText.BACK, onBack, "studio_precast_back")
+                    } else {
+                        PrimaryButton(PrecastText.NEXT, precast::next, Modifier.fillMaxWidth().testTag("studio_precast_next"))
+                        QuietButton(PrecastText.SKIP, precast::next, "studio_precast_skip")
+                    }
                 }
                 InlineProblem(state.problem, state::retryLast, "studio_problem")
             }

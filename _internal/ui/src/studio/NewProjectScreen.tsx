@@ -1,3 +1,4 @@
+import { Presence } from "../shared/MotionPresence";
 import { S } from "../shared/strings.generated";
 import { MotionRegion } from "@/shared/MotionRegion";
 import { SectionHeading } from "@/shared/SectionHeading";
@@ -1812,7 +1813,7 @@ export function NewProjectScreen() {
   return (
     <div className="page-x mx-auto max-w-[920px] pb-16">
       <ScreenHeader back={{ label: S.s_ve_studio_349a48c4, onClick: () => navigate("/studio") }} title={<MotionRegion as="span">{draft.seed ? S.s_lam_tiep_cuon_nay_18bbf3cc : S.s_tao_sach_noi_ab873c7a}</MotionRegion>} />
-      <MotionPresence open={Boolean(draft.seed)}>{draft.seed && (
+      <MotionPresence open={Boolean(draft.seed)}>{<Presence>{draft.seed && (
         <SeedBanner
           seed={draft.seed}
           hasFiles={(rawScan?.files.length ?? 0) > 0}
@@ -1826,7 +1827,7 @@ export function NewProjectScreen() {
             });
           }}
         />
-      )}</MotionPresence>
+      )}</Presence>}</MotionPresence>
       <div className="mt-8">
           <StudioInstallNotice className="mb-6" />
           <SourceStep
@@ -1927,11 +1928,11 @@ export function NewProjectScreen() {
                     povOff={draft.povOff ?? []}
                     setPovOff={(povOff) => update({ povOff })}
                   />
-                  {scan && (
+                  {<Presence>{scan && (
                     <QualityStep profile={draft.profile} setProfile={(profile) => update({ profile })} words={scan.totals.words} chapters={scan.files.length}
                       analysisModel={draft.analysisModel ?? ""} setAnalysisModel={(analysisModel) => update({ analysisModel })} noStudio={noStudio} />
-                  )}
-                  {scan && (
+                  )}</Presence>}
+                  {<Presence>{scan && (
                     <ConfirmStep
                       title={title.trim()}
                       scan={scan}
@@ -1954,7 +1955,7 @@ export function NewProjectScreen() {
                       noStudio={noStudio}
                       unfit={unfit}
                     />
-                  )}
+                  )}</Presence>}
                 </div>
               </Collapse>
             </section>

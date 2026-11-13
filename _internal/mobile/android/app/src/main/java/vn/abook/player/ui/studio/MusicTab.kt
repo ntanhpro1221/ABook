@@ -1,5 +1,8 @@
 package vn.abook.player.ui.studio
 
+import vn.abook.player.ui.motion.SwapContent
+import vn.abook.player.ui.motion.ContentLayout
+
 import vn.abook.player.S
 
 import vn.abook.player.ui.data.dotJoined
@@ -233,7 +236,9 @@ private fun SceneRow(music: StudioMusicState, view: MusicView, scenes: List<Musi
                     else -> RowHint(if (scene.silenced) StudioMusicText.SILENT_CHOSEN else StudioMusicText.SILENT_AUTO, Modifier.padding(top = Dim.s4).testTag("studio_music_silent"))
                 }
             }
-            if (link != null && !follows) ClipButton(StudioMusicState.trackClip(link), clip, { music.playTrack(link) }, "studio_music_play_${scene.key}")
+            SwapContent(link, follows, contentKey = { link, follows -> link != null && !follows }, layout = ContentLayout.Row) { link, follows ->
+                if (link != null && !follows) ClipButton(StudioMusicState.trackClip(link), clip, { music.playTrack(link) }, "studio_music_play_${scene.key}")
+            }
         }
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(Dim.s8), verticalAlignment = Alignment.CenterVertically) {
             TextAction(MusicLogic.swapText(scene), { sheets.show { dismiss -> AlternativesSheet(music, scene, dismiss) } }, "studio_music_swap_${scene.key}", align = Alignment.CenterStart)

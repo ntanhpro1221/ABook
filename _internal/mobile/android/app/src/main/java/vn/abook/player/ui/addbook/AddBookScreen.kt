@@ -1,5 +1,8 @@
 package vn.abook.player.ui.addbook
 
+import vn.abook.player.ui.motion.SwapContent
+import vn.abook.player.ui.motion.ContentLayout
+
 import vn.abook.player.S
 import vn.abook.player.Work
 import vn.abook.player.WorkStep
@@ -139,22 +142,24 @@ fun AddBookScreen(
             }
         }
     }) {
-        if (state.items.isEmpty()) {
-            Column(Modifier.fillMaxWidth().padding(top = Dim.s16).testTag("add_empty")) {
-                BasicText(S.s_epub_docx_pdf_co_chu_txt_hoac_file_abook_c_cc969e7b, style = Abook.type.bodySmall)
-            }
-        } else {
-            val list = rememberLazyListState()
-            LazyColumn(Modifier.fillMaxSize().fadeEdges(list).testTag("import_queue"), state = list, contentPadding = PaddingValues(bottom = Dim.s16)) {
-                item("summary", "summary") {
-                    val summary = ImportLogic.summary(state.items)
-                    Reveal(summary.isNotEmpty()) { Caption(summary, Modifier.testTag("import_summary"), ticking = true) }
-                    Reveal(state.notice.isNotEmpty()) { Caption(state.notice) }
+        SwapContent(state, contentKey = { state -> state.items.isEmpty() }, layout = ContentLayout.Box) { state ->
+            if (state.items.isEmpty()) {
+                Column(Modifier.fillMaxWidth().padding(top = Dim.s16).testTag("add_empty")) {
+                    BasicText(S.s_epub_docx_pdf_co_chu_txt_hoac_file_abook_c_cc969e7b, style = Abook.type.bodySmall)
                 }
-                items(state.items, key = { it.id }, contentType = { "import" }) { item ->
-                    Column(Modifier.fillMaxWidth().animateItem(fadeInSpec = null, fadeOutSpec = null).animateContentSize().testTag("import_${item.id}")) {
-                        ImportRow(item, review, retry, openBook, progress)
-                        RowLine(start = 36.dp)
+            } else {
+                val list = rememberLazyListState()
+                LazyColumn(Modifier.fillMaxSize().fadeEdges(list).testTag("import_queue"), state = list, contentPadding = PaddingValues(bottom = Dim.s16)) {
+                    item("summary", "summary") {
+                        val summary = ImportLogic.summary(state.items)
+                        Reveal(summary.isNotEmpty()) { Caption(summary, Modifier.testTag("import_summary"), ticking = true) }
+                        Reveal(state.notice.isNotEmpty()) { Caption(state.notice) }
+                    }
+                    items(state.items, key = { it.id }, contentType = { "import" }) { item ->
+                        Column(Modifier.fillMaxWidth().animateItem(fadeInSpec = null, fadeOutSpec = null).animateContentSize().testTag("import_${item.id}")) {
+                            ImportRow(item, review, retry, openBook, progress)
+                            RowLine(start = 36.dp)
+                        }
                     }
                 }
             }
@@ -182,7 +187,9 @@ private fun ImportRow(
         tag = if (item.stage == ImportStage.Review) "review_${item.id}" else "open_${item.id}",
         hint = if (failed) item.problem.ifEmpty { item.stage.label } else if (working) ImportLogic.workLabel(work!!.value) else item.stage.label,
         hintColor = if (failed) colors.danger else colors.text2,
-        leading = { if (item.folder) FolderIcon(colors.text2) else FileIcon(colors.text2) },
+        leading = { SwapContent(item, contentKey = { item -> item.folder }, layout = ContentLayout.Box) { item ->
+            if (item.folder) FolderIcon(colors.text2) else FileIcon(colors.text2)
+        } },
         trailing = if (failed) ({ TextAction(S.s_thu_lai_c58d068c, { retry(item.id) }, "retry_${item.id}") }) else null,
         chevron = open != null,
         below = if (working) ({
@@ -199,8 +206,10 @@ fun ImportReviewRoute(queue: ImportQueue, itemId: Long, onBack: () -> Unit, open
     val state by queue.state.collectAsState()
     // Thêm xong thì lùi một lớp về hàng đợi, không để lại bản xem trước đã cũ.
     LaunchedEffect(state.currentId) { if (state.currentId != itemId) onBack() }
-    if (state.packageReview != null) PackageReviewScreen(state, onBack, queue::keepPackage, queue::add)
-    else ImportReviewScreen(state, onBack, queue::choose, queue::revise, queue::add, queue::skip, openChapter)
+    SwapContent(state, contentKey = { state -> state.packageReview != null }, layout = ContentLayout.Box) { state ->
+        if (state.packageReview != null) PackageReviewScreen(state, onBack, queue::keepPackage, queue::add)
+        else ImportReviewScreen(state, onBack, queue::choose, queue::revise, queue::add, queue::skip, openChapter)
+    }
 }
 
 /** Cách xử lý lời chú: loại trừ nhau trong lõi (`FootnoteChoice.notes` là MỘT giá trị "", "end" hay "drop"), nên là một hàng chọn-một. */
@@ -233,101 +242,111 @@ fun ImportReviewScreen(
     BookForm(title, onBack, "import_review_screen", footer = {
         InlineProblem(state.problem, tag = "import_problem")
         InlineProblem(if (preview != null && !ImportLogic.canAdd(preview, choice)) ImportLogic.NOTHING_PICKED else "", tag = "import_none_picked")
-        if (preview != null) PrimaryButton(
+        SwapContent(preview, contentKey = { preview -> preview != null }, layout = ContentLayout.Box) { preview ->
+            if (preview != null) PrimaryButton(
             when {
                 state.busy -> if (adding) S.s_dang_them_457edcc3 else S.s_dang_doc_1b09d2d9
                 known -> if (state.items.size == 1) S.s_mo_cuon_do_75ab80a2 else S.s_bo_cuon_nay_ba5f36fe
                 else -> S.s_them_vao_thu_vien_cc27dafc
             },
             add, Modifier.fillMaxWidth().testTag("confirm_import"), enabled = !state.busy && ImportLogic.canAdd(preview, choice),
-        )
+            )
+        }
     }) {
         val list = rememberLazyListState()
-        if (preview != null) LazyColumn(Modifier.fillMaxSize().fadeEdges(list).testTag("import_review"), state = list) {
-            item("metadata", "metadata") {
-                Column(Modifier.padding(top = Dim.s16)) {
-                    BookField(null, choice.title, { value -> choose { it.copy(title = value) } }, "import_title", !state.busy, S.s_ten_sach_d54846eb,
+        SwapContent(preview, contentKey = { preview -> preview != null }, layout = ContentLayout.Box) { preview ->
+            if (preview != null) LazyColumn(Modifier.fillMaxSize().fadeEdges(list).testTag("import_review"), state = list) {
+                item("metadata", "metadata") {
+                    Column(Modifier.padding(top = Dim.s16)) {
+                        BookField(null, choice.title, { value -> choose { it.copy(title = value) } }, "import_title", !state.busy, S.s_ten_sach_d54846eb,
                         placeholder = S.s_ten_hien_thi_trong_thu_vien_c48c7ac6)
-                    val meta = listOfNotNull(preview.author.takeIf { it.isNotEmpty() }, S.s_0_1_chuong_505874dc(choice.picked.size, preview.chapters.size))
-                    Spacer(Modifier.height(Dim.s8))
-                    BasicText(meta.dotJoined(), style = Abook.type.bodySmall, modifier = Modifier.testTag("import_meta"))
-                }
-            }
-            if (preview.existingId != null || preview.splitOffer > 0) item("options", "options") {
-                Column(Modifier.padding(top = Dim.sectionGap)) {
-                    if (preview.existingId != null) {
-                        Caption(if (preview.sameSource) S.s_da_them_tu_file_nay_roi_42fe4ad5 else S.s_cuon_nay_da_co_trong_thu_vien_2aae08e1)
-                        SwitchRow(if (preview.sameSource) S.s_van_them_ban_moi_f4832361 else S.s_them_ban_rieng_fe9759e4, choice.separate, { choose { it.copy(separate = !it.separate) } },
-                            "separate_copy", hint = if (preview.sameSource) S.s_ban_da_them_file_nay_thanh_0_1_chuong_68248830(preview.existingTitle, preview.existingChapters)
-                            else S.s_cuon_nay_da_co_trong_thu_vien_0_d8728110(preview.existingTitle))
+                        val meta = listOfNotNull(preview.author.takeIf { it.isNotEmpty() }, S.s_0_1_chuong_505874dc(choice.picked.size, preview.chapters.size))
+                        Spacer(Modifier.height(Dim.s8))
+                        BasicText(meta.dotJoined(), style = Abook.type.bodySmall, modifier = Modifier.testTag("import_meta"))
                     }
-                    if (preview.existingId != null && preview.splitOffer > 0) RowLine()
-                    Reveal(preview.splitOffer > 0) { SwitchRow(S.s_tach_chuong_2f1df570, choice.split, { revise { it.copy(split = !it.split) } },
-                        "split_chapters", hint = ImportLogic.splitHint(preview)) }
                 }
-            }
-            val groups = ImportLogic.groups(ImportLogic.forPicked(preview, choice))
-            if (groups.isNotEmpty()) {
-                item("suggestion_heading", "heading") { SectionTitle(S.s_goi_y_phan_doc_b268d95e) }
-                items(groups, key = { "suggestion_${it.line}" }, contentType = { "suggestion" }) { group ->
-                    Column {
-                        SwitchRow(S.s_bo_doc_dong_3e82a7fd, group.line in choice.skipped,
+                if (preview.existingId != null || preview.splitOffer > 0) item("options", "options") {
+                    Column(Modifier.padding(top = Dim.sectionGap)) {
+                        SwapContent(preview, contentKey = { preview -> preview.existingId != null }, layout = ContentLayout.Column) { preview ->
+                            if (preview.existingId != null) {
+                                Caption(if (preview.sameSource) S.s_da_them_tu_file_nay_roi_42fe4ad5 else S.s_cuon_nay_da_co_trong_thu_vien_2aae08e1)
+                                SwitchRow(if (preview.sameSource) S.s_van_them_ban_moi_f4832361 else S.s_them_ban_rieng_fe9759e4, choice.separate, { choose { it.copy(separate = !it.separate) } },
+                                "separate_copy", hint = if (preview.sameSource) S.s_ban_da_them_file_nay_thanh_0_1_chuong_68248830(preview.existingTitle, preview.existingChapters)
+                                else S.s_cuon_nay_da_co_trong_thu_vien_0_d8728110(preview.existingTitle))
+                            }
+                        }
+                        SwapContent(preview, contentKey = { preview -> preview.existingId != null && preview.splitOffer > 0 }, layout = ContentLayout.Column) { preview ->
+                            if (preview.existingId != null && preview.splitOffer > 0) RowLine()
+                        }
+                        Reveal(preview.splitOffer > 0) { SwitchRow(S.s_tach_chuong_2f1df570, choice.split, { revise { it.copy(split = !it.split) } },
+                            "split_chapters", hint = ImportLogic.splitHint(preview)) }
+                    }
+                }
+                val groups = ImportLogic.groups(ImportLogic.forPicked(preview, choice))
+                if (groups.isNotEmpty()) {
+                    item("suggestion_heading", "heading") { SectionTitle(S.s_goi_y_phan_doc_b268d95e) }
+                    items(groups, key = { "suggestion_${it.line}" }, contentType = { "suggestion" }) { group ->
+                        Column {
+                            SwitchRow(S.s_bo_doc_dong_3e82a7fd, group.line in choice.skipped,
                             { choose { it.copy(skipped = if (group.line in it.skipped) it.skipped - group.line else it.skipped + group.line) } },
                             "suggestion_${group.line}", hint = "“${group.line}” · ${ImportLogic.where(group.chapters)}")
-                        RowLine()
+                            RowLine()
+                        }
                     }
                 }
-            }
-            if (preview.footnoteCount > 0) item("footnotes", "footnotes") {
-                Column {
-                    SectionTitle(S.s_chu_thich_fc0aa279)
-                    Caption(S.s_0_chu_thich_trong_file_be2ecbf5(preview.footnoteCount), Modifier.testTag("footnote_count"))
-                    Reveal(preview.footnoteExample.isNotEmpty()) {
-                        Spacer(Modifier.height(Dim.s12))
-                        QuoteSample(preview.footnoteExample, Modifier.testTag("footnote_example"))
-                    }
-                    Spacer(Modifier.height(Dim.s8))
-                    Reveal(preview.footnoteMarks > 0) {
-                        SwitchRow(S.s_bo_so_goi_b8d25593, choice.hideMarks, { revise { it.copy(hideMarks = !it.hideMarks) } }, "hide_marks",
+                if (preview.footnoteCount > 0) item("footnotes", "footnotes") {
+                    Column {
+                        SectionTitle(S.s_chu_thich_fc0aa279)
+                        Caption(S.s_0_chu_thich_trong_file_be2ecbf5(preview.footnoteCount), Modifier.testTag("footnote_count"))
+                        Reveal(preview.footnoteExample.isNotEmpty()) {
+                            Spacer(Modifier.height(Dim.s12))
+                            QuoteSample(preview.footnoteExample, Modifier.testTag("footnote_example"))
+                        }
+                        Spacer(Modifier.height(Dim.s8))
+                        Reveal(preview.footnoteMarks > 0) {
+                            SwitchRow(S.s_bo_so_goi_b8d25593, choice.hideMarks, { revise { it.copy(hideMarks = !it.hideMarks) } }, "hide_marks",
                             hint = S.s_0_so_goi_trong_chu_bo_cac_con_so_nhu_2_hay_10ac572b(preview.footnoteMarks))
-                        RowLine()
-                    }
-                    ChoiceSetting(S.s_loi_chu_eca33b1a, NoteMode.entries, NoteMode.entries.first { it.code == choice.notes },
+                            RowLine()
+                        }
+                        ChoiceSetting(S.s_loi_chu_eca33b1a, NoteMode.entries, NoteMode.entries.first { it.code == choice.notes },
                         { mode, _ -> revise { it.copy(notes = mode.code) } }, "footnote_notes")
-                    // Cùng câu với web (FootnoteChoices.tsx): hàng chọn-một không có lời riêng cho từng lựa chọn nên một câu giải thích cả ba.
-                    Caption(S.s_ban_chon_giu_nguyen_de_giu_loi_chu_nhu_tro_fa013ff9, Modifier.padding(top = Dim.s4).testTag("footnote_notes_help"))
-                }
-            }
-            item("chapter_heading", "heading") {
-                // Nhiều chương: "Chọn hết" / "Bỏ chọn hết" ở cuối hàng tiêu đề (web: cạnh số chương đã tích).
-                if (preview.chapters.size > 1) {
-                    Row(Modifier.fillMaxWidth().padding(top = Dim.sectionGap).heightIn(min = Dim.s48), verticalAlignment = Alignment.CenterVertically) {
-                        BasicText(S.s_chuong_2d157977, style = Abook.type.sectionTitle, modifier = Modifier.weight(1f))
-                        TextAction(S.s_chon_het_9e8a7c2c, { choose { it.copy(picked = ImportLogic.all(preview)) } }, "pick_all_chapters")
-                        Spacer(Modifier.width(Dim.s16))
-                        TextAction(S.s_bo_chon_het_669fa50d, { choose { it.copy(picked = emptySet()) } }, "pick_no_chapters")
+                        // Cùng câu với web (FootnoteChoices.tsx): hàng chọn-một không có lời riêng cho từng lựa chọn nên một câu giải thích cả ba.
+                        Caption(S.s_ban_chon_giu_nguyen_de_giu_loi_chu_nhu_tro_fa013ff9, Modifier.padding(top = Dim.s4).testTag("footnote_notes_help"))
                     }
-                } else SectionTitle(S.s_chuong_2d157977)
-            }
-            items(preview.chapters, key = { "chapter_${it.index}" }, contentType = { "chapter" }) { row ->
-                val kept = row.index in choice.picked
-                val shown = choice.names[row.index]?.takeIf { it.isNotBlank() } ?: row.title
-                Column {
-                    ChapterPickRow(
+                }
+                item("chapter_heading", "heading") {
+                    // Nhiều chương: "Chọn hết" / "Bỏ chọn hết" ở cuối hàng tiêu đề (web: cạnh số chương đã tích).
+                    SwapContent(preview, contentKey = { preview -> preview.chapters.size > 1 }, layout = ContentLayout.Box) { preview ->
+                        if (preview.chapters.size > 1) {
+                            Row(Modifier.fillMaxWidth().padding(top = Dim.sectionGap).heightIn(min = Dim.s48), verticalAlignment = Alignment.CenterVertically) {
+                                BasicText(S.s_chuong_2d157977, style = Abook.type.sectionTitle, modifier = Modifier.weight(1f))
+                                TextAction(S.s_chon_het_9e8a7c2c, { choose { it.copy(picked = ImportLogic.all(preview)) } }, "pick_all_chapters")
+                                Spacer(Modifier.width(Dim.s16))
+                                TextAction(S.s_bo_chon_het_669fa50d, { choose { it.copy(picked = emptySet()) } }, "pick_no_chapters")
+                            }
+                        } else SectionTitle(S.s_chuong_2d157977)
+                    }
+                }
+                items(preview.chapters, key = { "chapter_${it.index}" }, contentType = { "chapter" }) { row ->
+                    val kept = row.index in choice.picked
+                    val shown = choice.names[row.index]?.takeIf { it.isNotBlank() } ?: row.title
+                    Column {
+                        ChapterPickRow(
                         title = shown, kept = kept,
                         hint = if (shown.trim() != row.title.trim()) row.title else row.note.takeIf { it.isNotEmpty() },
                         onKeep = { choose { it.copy(picked = if (row.index in it.picked) it.picked - row.index else it.picked + row.index) } },
                         onOpen = { openChapter(row.index) }, tag = "import_chapter_${row.index}", enabled = !state.busy,
-                    )
-                    RowLine(start = 56.dp)
+                        )
+                        RowLine(start = 56.dp)
+                    }
                 }
-            }
-            if (preview.notes.isNotEmpty()) item("notes_heading", "heading") { SectionTitle(S.s_dinh_dang_36b746b6) }
-            items(preview.notes.distinct(), key = { "note_$it" }, contentType = { "note" }) { note ->
-                Caption(note, Modifier.padding(top = Dim.s12))
-            }
-            if (!known) item("skip", "action") {
-                TextAction(S.s_bo_cuon_nay_ba5f36fe, skip, "skip_book", Modifier.padding(top = Dim.s24, bottom = Dim.s16).fillMaxWidth(), align = Alignment.CenterStart)
+                if (preview.notes.isNotEmpty()) item("notes_heading", "heading") { SectionTitle(S.s_dinh_dang_36b746b6) }
+                items(preview.notes.distinct(), key = { "note_$it" }, contentType = { "note" }) { note ->
+                    Caption(note, Modifier.padding(top = Dim.s12))
+                }
+                if (!known) item("skip", "action") {
+                    TextAction(S.s_bo_cuon_nay_ba5f36fe, skip, "skip_book", Modifier.padding(top = Dim.s24, bottom = Dim.s16).fillMaxWidth(), align = Alignment.CenterStart)
+                }
             }
         }
     }
@@ -366,12 +385,14 @@ fun ImportChapterRoute(queue: ImportQueue, index: Int, onBack: () -> Unit) {
 fun ImportChapterScreen(state: ImportState, index: Int, onBack: () -> Unit, choose: ((ImportChoices) -> ImportChoices) -> Unit) {
     val row = state.preview?.chapters?.firstOrNull { it.index == index }
     BookForm(S.s_ten_chuong_9edb6c28, onBack, "import_chapter_screen") {
-        if (row != null) Column(Modifier.fillMaxWidth().padding(top = Dim.s16)) {
-            val current = state.choices.names[index] ?: row.title
-            BookField(null, current, { value -> choose { it.copy(names = it.names + (index to value)) } }, "chapter_title", description = S.s_ten_chuong_9edb6c28)
-            Reveal(ImportLogic.renamed(current, row.title)) {
-                Spacer(Modifier.height(Dim.s16))
-                RevertName(row.title, { choose { it.copy(names = it.names - index) } })
+        SwapContent(row, contentKey = { row -> row != null }, layout = ContentLayout.Box) { row ->
+            if (row != null) Column(Modifier.fillMaxWidth().padding(top = Dim.s16)) {
+                val current = state.choices.names[index] ?: row.title
+                BookField(null, current, { value -> choose { it.copy(names = it.names + (index to value)) } }, "chapter_title", description = S.s_ten_chuong_9edb6c28)
+                Reveal(ImportLogic.renamed(current, row.title)) {
+                    Spacer(Modifier.height(Dim.s16))
+                    RevertName(row.title, { choose { it.copy(names = it.names - index) } })
+                }
             }
         }
     }

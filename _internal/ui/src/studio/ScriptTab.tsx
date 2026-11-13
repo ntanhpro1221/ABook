@@ -1,3 +1,4 @@
+import { Presence } from "../shared/MotionPresence";
 import { S } from "../shared/strings.generated";
 import { MoreInfo } from "@/shared/SettingsNav";
 import { MotionRegion } from "@/shared/MotionRegion";
@@ -1768,9 +1769,9 @@ export function ScriptTab({ bookId }: { bookId: string }) {
               <X className="size-3" />{S.s_xem_tat_ca_866753d5}</button></Reveal>
         </MotionRegion>
       )}
-      {data?.castReady && people.length > 0 && (
+      {<Presence>{data?.castReady && people.length > 0 && (
         <MoreInfo label={S.s_phim_tat_7baaed2f} className="hidden md:block">{S.s_ban_phim_829be77a}<Kbd>↑</Kbd> <Kbd>↓</Kbd>{S.s_chon_cau_34f48bfa}<Kbd>{S.s_shift_2e544a29}</Kbd>{S.s_chon_nhieu_e566ea07}<Kbd>1</Kbd>–<Kbd>{Math.min(HOTKEYS, people.length)}</Kbd>{S.s_gan_nguoi_theo_so_roi_sang_cau_ke_c48dc680}<Kbd>{S.s_enter_dc8659db}</Kbd>{S.s_danh_sach_fdc39a79}<Kbd>{S.s_p_5c62e091}</Kbd>{S.s_nghe_cau_86987114}<Kbd>{S.s_r_8c257489}</Kbd>{S.s_thu_lai_cau_4f35bcfb}<Kbd>/</Kbd>{S.s_tim_chu_9560d10a}<Kbd>{S.s_ctrl_e2ee2909}</Kbd>+<Kbd>{S.s_z_bbeebd87}</Kbd>{S.s_hoan_tac_53f9f6a9}</MoreInfo>
-      )}
+      )}</Presence>}
       </div>
       {!data ? (
         <div className="mt-4 space-y-2">
@@ -1786,13 +1787,13 @@ export function ScriptTab({ bookId }: { bookId: string }) {
           )}
           {/* Chương kể ngôi thứ nhất: máy gán nhầm câu của người khác cho "tôi" nhiều nhất (8B-v5 trên bộ LN: 97/276 câu gán cho
               người kể là sai) - mời soát riêng câu của người kể trước. */}
-          {data.castReady && data.firstPerson?.chip && who !== data.firstPerson.chip && (
+          {<Presence>{data.castReady && data.firstPerson?.chip && who !== data.firstPerson.chip && (
             <p className="mt-3 flex flex-wrap items-center gap-x-2 gap-y-1 text-body-small text-fg-2">
               <span className="text-pretty">{S.s_chuong_ke_ngoi_thu_nhat_may_hay_nham_cau_c_b15169be}</span>
               <Button size="sm" variant="ghost" onClick={() => setWho(data.firstPerson!.chip!)}>{S.s_soat_cau_cua_b1475472}{data.cast.find((person) => person.value === data.firstPerson!.chip)?.label ?? data.firstPerson.label}
               </Button>
             </p>
-          )}
+          )}</Presence>}
           <ChapterScriptView
             bookId={bookId}
             script={data}

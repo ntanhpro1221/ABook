@@ -1,5 +1,8 @@
 package vn.abook.player.ui.devices
 
+import vn.abook.player.ui.motion.SwapContent
+import vn.abook.player.ui.motion.ContentLayout
+
 import vn.abook.player.S
 
 import androidx.activity.compose.BackHandler
@@ -76,22 +79,26 @@ private fun DeviceActions(device: Paired, studio: StudioComputer?, state: Device
     Column(Modifier.fillMaxWidth()) {
         BasicText(device.name, style = Abook.type.sectionTitle)
         Spacer(Modifier.height(Dim.s8))
-        if (studio != null) {
-            MenuRow(if (opening) S.s_dang_mo_studio_3b7f5836 else S.s_mo_studio_84ec0a81, "device_studio", unavailable = studio.listenOnly,
+        SwapContent(studio, contentKey = { studio -> studio != null }, layout = ContentLayout.Column) { studio ->
+            if (studio != null) {
+                MenuRow(if (opening) S.s_dang_mo_studio_3b7f5836 else S.s_mo_studio_84ec0a81, "device_studio", unavailable = studio.listenOnly,
                 hint = if (studio.listenOnly) DeviceText.listenOnly(device.name) else null, onClick = {
-                if (opening) return@MenuRow
-                opening = true
-                scope.launch {
-                    val error = state.openStudio(device.key)
-                    opening = false
-                    problem = error.orEmpty()
-                    if (error == null) dismiss()
-                }
-            }) { ink -> LaptopIcon(ink) }
+                    if (opening) return@MenuRow
+                    opening = true
+                    scope.launch {
+                        val error = state.openStudio(device.key)
+                        opening = false
+                        problem = error.orEmpty()
+                        if (error == null) dismiss()
+                    }
+                }) { ink -> LaptopIcon(ink) }
+            }
         }
         MenuRow(S.s_lam_moi_b4c61340, "device_refresh", onClick = { state.refresh(); dismiss() }) { ink -> RefreshIcon(ink) }
-        if (device.reach is Reach.Unpaired || device.reach is Reach.Changed) {
-            MenuRow(S.s_ghep_lai_5d145ecf, "device_repair", onClick = { state.repair(device); dismiss() }) { ink -> LinkIcon(ink) }
+        SwapContent(device, contentKey = { device -> device.reach is Reach.Unpaired || device.reach is Reach.Changed }, layout = ContentLayout.Column) { device ->
+            if (device.reach is Reach.Unpaired || device.reach is Reach.Changed) {
+                MenuRow(S.s_ghep_lai_5d145ecf, "device_repair", onClick = { state.repair(device); dismiss() }) { ink -> LinkIcon(ink) }
+            }
         }
         Box(Modifier.fillMaxWidth().padding(vertical = Dim.s8).height(1.dp).background(colors.line))
         MenuRow(S.s_bo_ghep_64f921f9, "device_forget", danger = true, onClick = onForget) { ink -> UnplugIcon(ink) }
@@ -134,9 +141,11 @@ private fun ForgetPage(device: Paired, state: DevicesState, dismiss: () -> Unit,
         copy?.title ?: S.s_bo_ghep_0_e98b86ca(device.name), "forget_confirm",
         copy?.lines ?: listOf(S.s_sach_da_tai_van_nghe_duoc_muon_tai_them_th_1ca43dfc), problem,
     ) {
-        if (copy?.send != null) {
-            PrimaryButton(copy.send, { run(ForgetChoice.Send) }, Modifier.fillMaxWidth().testTag("forget_send"), enabled = !working)
-            Spacer(Modifier.height(Dim.s8))
+        SwapContent(copy, contentKey = { copy -> copy?.send != null }, layout = ContentLayout.Column) { copy ->
+            if (copy?.send != null) {
+                PrimaryButton(copy.send, { run(ForgetChoice.Send) }, Modifier.fillMaxWidth().testTag("forget_send"), enabled = !working)
+                Spacer(Modifier.height(Dim.s8))
+            }
         }
         DangerButton(if (working) S.s_dang_bo_ghep_f640bfd2 else copy?.discard ?: S.s_bo_ghep_64f921f9, { run(if (copy?.edited == true) ForgetChoice.Discard else ForgetChoice.Plain) }, "forget_yes")
         Spacer(Modifier.height(Dim.s8))

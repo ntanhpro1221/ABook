@@ -1,3 +1,4 @@
+import { Presence } from "../shared/MotionPresence";
 import { S } from "../shared/strings.generated";
 import { MoreInfo } from "@/shared/SettingsNav";
 import { MotionRegion } from "@/shared/MotionRegion";
@@ -220,7 +221,7 @@ function Row({
         {/* Máy nghe ra đúng chữ thì không có gì để so - chỉ hiện khi KHÁC câu (soát 25-10). */}
         <Reveal when={item.heard && !sameText(item.heard, item.text)}><p className="mt-1 text-body-small leading-snug text-fg-2">
             <Ear className="mr-1 inline size-3.5 -translate-y-px" />{S.s_may_nghe_ra_31219589}{item.heard}”
-            {item.similarity !== null && <span className="text-fg-3" title={matchPhrase(formatPercent(item.similarity))}> · {matchShort(formatPercent(item.similarity))}</span>}
+            {<Presence>{item.similarity !== null && <span className="text-fg-3" title={matchPhrase(formatPercent(item.similarity))}> · {matchShort(formatPercent(item.similarity))}</span>}</Presence>}
           </p></Reveal>
         <Reveal when={!source}><p className="mt-1 text-xs text-fg-2">{unplayable}.</p></Reveal>
         {item.pendingSpoken !== null ? (

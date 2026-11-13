@@ -1,5 +1,8 @@
 package vn.abook.player.ui.screens
 
+import vn.abook.player.ui.motion.SwapContent
+import vn.abook.player.ui.motion.ContentLayout
+
 import vn.abook.player.S
 
 import vn.abook.player.ui.components.RowLine
@@ -182,14 +185,16 @@ private fun GroupList(
                     chevron = !split,
                 )
             }
-            if (split) {
-                Box(
+            SwapContent(split, contentKey = { split -> split }, layout = ContentLayout.Column) { split ->
+                if (split) {
+                    Box(
                     Modifier.fillMaxWidth().clip(RoundedCornerShape(Dim.radiusControl))
                         .then(if (here) Modifier.background(Abook.colors.hover) else Modifier)
                         .padding(horizontal = Dim.s8).semantics { this.selected = here },
-                ) { row() }
-            } else {
-                row()
+                    ) { row() }
+                } else {
+                    row()
+                }
             }
         }
     }

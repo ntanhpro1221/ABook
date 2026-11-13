@@ -1,5 +1,8 @@
 package vn.abook.player.ui.nowplaying
 
+import vn.abook.player.ui.motion.SwapContent
+import vn.abook.player.ui.motion.ContentLayout
+
 import vn.abook.player.S
 
 import vn.abook.player.ui.components.ClockLabel
@@ -55,12 +58,14 @@ fun PrepareBlock(state: NowPlayingState, prepare: PrepareState, modifier: Modifi
         ClockLabel(label.ifEmpty { PrepareText.intro(state.voiceId) }, Modifier.padding(top = Dim.s8).testTag("prepare_label"), style = Abook.type.caption.copy(color = Abook.colors.text2))
         val estimate = plan?.takeIf { !working }?.let(PrepareText::planLabel).orEmpty()
         Reveal(estimate.isNotEmpty()) { BasicText(estimate, Modifier.padding(top = Dim.s4).testTag("prepare_plan"), style = Abook.type.caption.copy(color = Abook.colors.text2)) }
-        if (working) {
-            TextAction(S.s_dung_lam_truoc_632af923, prepare::cancel, "prepare_cancel", align = Alignment.CenterStart)
-        } else Reveal(upcoming.isNotEmpty()) {
-            TextAction(PrepareText.startLabel(upcoming.size), {
-                if (!busy) prepare.start(state.voiceId, state.bookId, ids, PrepareText.jobLabel(upcoming))
-            }, "prepare_start", align = Alignment.CenterStart)
+        SwapContent(working, contentKey = { working -> working }, layout = ContentLayout.Column) { working ->
+            if (working) {
+                TextAction(S.s_dung_lam_truoc_632af923, prepare::cancel, "prepare_cancel", align = Alignment.CenterStart)
+            } else Reveal(upcoming.isNotEmpty()) {
+                TextAction(PrepareText.startLabel(upcoming.size), {
+                    if (!busy) prepare.start(state.voiceId, state.bookId, ids, PrepareText.jobLabel(upcoming))
+                }, "prepare_start", align = Alignment.CenterStart)
+            }
         }
         failure?.let {
             BasicText(S.s_chua_lam_truoc_duoc_5dbf570b + it, Modifier.padding(bottom = Dim.s4).testTag("prepare_failed"), style = Abook.type.caption.copy(color = Abook.colors.danger))

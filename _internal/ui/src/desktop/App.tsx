@@ -1,3 +1,4 @@
+import { Presence } from "../shared/MotionPresence";
 import { S } from "../shared/strings.generated";
 import { MotionRegion } from "@/shared/MotionRegion";
 import { MotionPresence } from "@/shared/MotionPresence";
@@ -614,7 +615,7 @@ export function App() {
                     path="/book/:id"
                     element={
                       <BookScreen
-                        dangerActions={(book) => book.imported && !info.remote && !book.remote && <RemoveImportedMenuItem book={book} />}
+                        dangerActions={(book) => <Presence>{book.imported && !info.remote && !book.remote && <RemoveImportedMenuItem book={book} />}</Presence>}
                         extraActions={(book) =>
                           book.imported ? (
                             // Sách của máy khác (remote) thôi hiện khi gỡ máy ấy - không có gì để xoá ở đây; tải về máy được.
@@ -623,7 +624,7 @@ export function App() {
                             ) : (
                               <>
                                 {/* Sách chỉ có chữ (EPUB / TXT) thành sách nói: giọng của máy đọc cả cuốn rồi ghép file. */}
-                                {book.stage === "text" && <AudiobookMenuItem book={book} />}
+                                {<Presence>{book.stage === "text" && <AudiobookMenuItem book={book} />}</Presence>}
                                 {/* Sách nhận từ file `.abook` có audio: mang sang trình phát khác như trên điện thoại (soát a99 V4). */}
                                 {book.stage !== "text" && (
                                   <>

@@ -1,3 +1,4 @@
+import { Presence } from "../shared/MotionPresence";
 import { S } from "../shared/strings.generated";
 import { MotionRegion } from "@/shared/MotionRegion";
 import { MotionPresence } from "@/shared/MotionPresence";
@@ -192,7 +193,7 @@ export function MorningRecap({ className }: { className?: string }) {
                     {marker.chapterTitle}
                     <span className="whitespace-nowrap">{` · ${formatClock(marker.seconds)}`}</span>
                   </span>
-                  {sentence && <span className="mt-2 line-clamp-2 block text-sm italic leading-snug text-fg">“{unquoted(sentence)}”</span>}
+                  {<Presence>{sentence && <span className="mt-2 line-clamp-2 block text-sm italic leading-snug text-fg">“{unquoted(sentence)}”</span>}</Presence>}
                 </span>
               </button>
             </li>
@@ -227,7 +228,7 @@ export function MorningRecap({ className }: { className?: string }) {
               onClick={() => void resume(group.chapterId, segment.start ?? 0)}
               className="-mx-2 block w-[calc(100%+14px)] rounded-control px-2 py-3 text-left text-body leading-snug hover:bg-hover active:bg-hover"
             >
-              {segment.speaker && <SpeakerLabel speaker={segment.speaker} sentence={segment.text} />}
+              {<Presence>{segment.speaker && <SpeakerLabel speaker={segment.speaker} sentence={segment.text} />}</Presence>}
               {segment.text}
             </button>
             ))}

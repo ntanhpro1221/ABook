@@ -1,5 +1,8 @@
 package vn.abook.player.ui.nowplaying
 
+import vn.abook.player.ui.motion.SwapContent
+import vn.abook.player.ui.motion.ContentLayout
+
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
@@ -70,6 +73,7 @@ fun TonePage(onBack: () -> Unit, leaveGuard: (((() -> Unit) -> Unit)?) -> Unit =
     LaunchedEffect(pending, form) { if (pending != null || form != null) scroll.animateScrollTo(scroll.maxValue) }
     LaunchedEffect(undo) { if (undo != null) { scroll.animateScrollTo(scroll.maxValue); kotlinx.coroutines.delay(7000); undo = null } }
     fun finish() { if(AudioFx.tones.hasEdits){AudioFx.changeTone { it.prepareLeave() };return};val action=pending;pending=null;action?.invoke() }
+    fun closeForm() { form = null }
     Column(Modifier.fillMaxWidth().fadeEdges(scroll).verticalScroll(scroll).testTag("tone_page")) {
         Row(Modifier.fillMaxWidth().heightIn(min=Dim.s48),verticalAlignment=Alignment.CenterVertically) {
             BasicText(lib.name,style=Abook.type.bodyStrong,modifier=Modifier.weight(1f).semantics { liveRegion=LiveRegionMode.Polite })
@@ -124,22 +128,26 @@ fun TonePage(onBack: () -> Unit, leaveGuard: (((() -> Unit) -> Unit)?) -> Unit =
         }
         Spacer(Modifier.height(Dim.s8))
         SwitchRow(S.s_copy_0aedb2b2cf2b,lib.scoped,{enabled->AudioFx.changeTone { it.scope(enabled) }},"tone_scope")
-        if(pending!=null) {
-            BasicText(S.s_tone_leave,style=Abook.type.body)
-            TextAction(S.s_tone_overwrite,{AudioFx.changeTone { it.save(it.preset?.name?:suggest,true) };finish()},"tone_overwrite")
-            TextAction(S.s_tone_new,{name=suggest;afterName=true;form="save"},"tone_new")
-            TextAction(S.s_tone_discard,{AudioFx.changeTone { it.discard() };finish()},"tone_discard")
+        SwapContent(pending, contentKey = { pending -> pending!=null }, layout = ContentLayout.Column) { pending ->
+            if(pending!=null) {
+                BasicText(S.s_tone_leave,style=Abook.type.body)
+                TextAction(S.s_tone_overwrite,{AudioFx.changeTone { it.save(it.preset?.name?:suggest,true) };finish()},"tone_overwrite")
+                TextAction(S.s_tone_new,{name=suggest;afterName=true;form="save"},"tone_new")
+                TextAction(S.s_tone_discard,{AudioFx.changeTone { it.discard() };finish()},"tone_discard")
+            }
         }
-        if(form!=null) {
-            SheetField(name,{name=it.take(80)},S.s_tone_name,"tone_name")
-            Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.SpaceBetween) {
-                TextAction(S.s_tone_back,{form=null;afterName=false},"tone_cancel")
-                TextAction(S.s_luu_e91f26c0,{
-                    if(name.isNotBlank()) {
-                        AudioFx.changeTone { when(form){"rename"->it.rename(target,name);"duplicate"->it.duplicate(target,name);else->it.save(name)} }
-                        form=null;if(afterName){afterName=false;finish()}
-                    }
-                },"tone_confirm")
+        SwapContent(form, contentKey = { form -> form!=null }, layout = ContentLayout.Column) { form ->
+            if(form!=null) {
+                SheetField(name,{name=it.take(80)},S.s_tone_name,"tone_name")
+                Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.SpaceBetween) {
+                    TextAction(S.s_tone_back,{closeForm();afterName=false},"tone_cancel")
+                    TextAction(S.s_luu_e91f26c0,{
+                        if(name.isNotBlank()) {
+                            AudioFx.changeTone { when(form){"rename"->it.rename(target,name);"duplicate"->it.duplicate(target,name);else->it.save(name)} }
+                            closeForm();if(afterName){afterName=false;finish()}
+                        }
+                    },"tone_confirm")
+                }
             }
         }
         undo?.let { token->Row(Modifier.fillMaxWidth().background(Abook.colors.bg).padding(Dim.s8),verticalAlignment=Alignment.CenterVertically) {

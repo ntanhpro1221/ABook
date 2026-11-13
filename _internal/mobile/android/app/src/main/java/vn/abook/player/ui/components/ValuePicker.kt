@@ -1,5 +1,8 @@
 package vn.abook.player.ui.components
 
+import vn.abook.player.ui.motion.SwapContent
+import vn.abook.player.ui.motion.ContentLayout
+
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateFloatAsState
@@ -188,151 +191,157 @@ fun ValuePicker(
             ValueDisplay(format(shown), typing, dense, enabled, "$label: ${format(shown)}. ${S.s_cham_de_go_so_adc1d0d1}",
                 ValuePickerLogic.format(spec, shown), "${tag}_value", onStart = { if (stepperOnly && !current) commit(shown) else { clampNote = false; typing = true } }, onDone = ::finishTyping)
         }
-        if (stepperOnly) {
-            BasicText(label, Modifier.testTag("${tag}_section_label"), style = Abook.type.bodySmall.copy(color = colors.text2))
-            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                StepButton(-1, enabled && shown > spec.min, "${tag}_down", ::nudge, scope)
-                Box(Modifier.weight(1f).semantics { selected = current }, contentAlignment = Alignment.Center) { display() }
-                StepButton(1, enabled && shown < spec.max, "${tag}_up", ::nudge, scope)
-            }
-        } else {
-        if (dense) {
-            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                Column(Modifier.weight(1f)) {
-                    BasicText(label, style = Abook.type.bodySmall)
-                    if (hint != null) RowHint(hint)
-                }
-                display()
-            }
-        } else {
-            Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) { display() }
-        }
-        AnimatedVisibility(clampNote, enter = fadeIn(tween(MotionMs.MEDIUM)) + expandVertically(tween(MotionMs.MEDIUM)),
-            exit = fadeOut(tween(MotionMs.MEDIUM_OUT)) + shrinkVertically(tween(MotionMs.MEDIUM_OUT))) {
-            BasicText(range, Modifier.fillMaxWidth().testTag("${tag}_clamped"),
-                style = Abook.type.caption.copy(color = colors.text2, textAlign = if (dense) TextAlign.Start else TextAlign.Center))
-        }
-        // Labels are captions of the detents: each one centred under its own detent and inside the ruler (never under -/+).
-        // When they cannot fit without touching, the ruler draws no detents and the labels become balanced rows below it.
-        val labelStyle = if (dense) Abook.type.caption else Abook.type.bodySmall
-        val measurer = rememberTextMeasurer()
-        val labels = spec.typical.map(chipLabel)
-        val fractions = remember(spec) { spec.typical.map { ValuePickerLogic.toFraction(spec, it) } }
-        val selected = if (current) ValuePickerLogic.chipIndex(spec, shown) else -1
-        BoxWithConstraints(Modifier.fillMaxWidth()) {
-            val density = LocalDensity.current
-            val rulerWidth = (constraints.maxWidth - 2 * with(density) { Dim.s48.roundToPx() }).toDouble()
-            val widths = labels.map { measurer.measure(it, labelStyle.copy(fontWeight = FontWeight.Bold)).size.width.toDouble() }
-            val plan = with(density) { ValuePickerLogic.tickLabels(fractions, widths, rulerWidth, 8.dp.toPx().toDouble(), Dim.s4.toPx().toDouble()) }
-            val inset = plan.inset.toFloat()
-            fun at(x: Float) = (x - inset) / (rulerWidth.toFloat() - 2 * inset)
-            Column(Modifier.fillMaxWidth()) {
-                Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.Top) {
+        SwapContent(stepperOnly, contentKey = { stepperOnly -> stepperOnly }, layout = ContentLayout.Column, spacing = if (dense) 0.dp else Dim.s8) { stepperOnly ->
+            if (stepperOnly) {
+                BasicText(label, Modifier.testTag("${tag}_section_label"), style = Abook.type.bodySmall.copy(color = colors.text2))
+                Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                     StepButton(-1, enabled && shown > spec.min, "${tag}_down", ::nudge, scope)
-                    val fraction = ValuePickerLogic.toFraction(spec, shown).toFloat()
-                    val drawn by animateFloatAsState(fraction, if (moving != null) tween(0) else Motion.Expand, label = "ruler")
-                    Box(Modifier.weight(1f).height(if (!plan.aligned) Dim.s48 else if (dense) 56.dp else 64.dp)) {
-                        Box(Modifier.fillMaxWidth().height(Dim.s48).testTag("${tag}_ruler")
-                            .semantics {
-                                contentDescription = label
-                                stateDescription = format(shown)
-                                val steps = ((spec.max - spec.min) / spec.step).roundToInt() - 1
-                                progressBarRangeInfo = ProgressBarRangeInfo(shown.toFloat(), spec.min.toFloat()..spec.max.toFloat(), steps.coerceAtLeast(0))
-                                if (!enabled) disabled()
-                                setProgress { target -> if (enabled) { adjustValue(ValuePickerLogic.quantize(spec, target.toDouble())); true } else false }
-                            }
-                            .onKeyEvent { event ->
-                                if (!enabled || event.type != KeyEventType.KeyDown) return@onKeyEvent false
-                                val steps = when (event.key) {
-                                    Key.DirectionRight, Key.DirectionUp -> 1
-                                    Key.DirectionLeft, Key.DirectionDown -> -1
-                                    Key.PageUp -> ValuePickerLogic.PAGE_STEPS
-                                    Key.PageDown -> -ValuePickerLogic.PAGE_STEPS
-                                    Key.MoveHome -> { adjustValue(spec.min); return@onKeyEvent true }
-                                    Key.MoveEnd -> { adjustValue(spec.max); return@onKeyEvent true }
-                                    else -> return@onKeyEvent false
+                    Box(Modifier.weight(1f).semantics { selected = current }, contentAlignment = Alignment.Center) { display() }
+                    StepButton(1, enabled && shown < spec.max, "${tag}_up", ::nudge, scope)
+                }
+            } else {
+                SwapContent(dense, contentKey = { dense -> dense }, layout = ContentLayout.Column) { dense ->
+                    if (dense) {
+                        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                            Column(Modifier.weight(1f)) {
+                                BasicText(label, style = Abook.type.bodySmall)
+                                SwapContent(hint, contentKey = { hint -> hint != null }, layout = ContentLayout.Column) { hint ->
+                                    if (hint != null) RowHint(hint)
                                 }
-                                nudge(steps)
-                                true
                             }
-                            .focusable(enabled)
-                            .pointerInput(spec, enabled, inset) {
-                                if (enabled) detectTapGestures { offset -> drag(at(offset.x)); moving?.let(::adjustValue) }
-                            }
-                            .pointerInput(spec, enabled, inset) {
-                                if (enabled) detectHorizontalDragGestures(
+                            display()
+                        }
+                    } else {
+                        Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) { display() }
+                    }
+                }
+                AnimatedVisibility(clampNote, enter = fadeIn(tween(MotionMs.MEDIUM)) + expandVertically(tween(MotionMs.MEDIUM)),
+                exit = fadeOut(tween(MotionMs.MEDIUM_OUT)) + shrinkVertically(tween(MotionMs.MEDIUM_OUT))) {
+                    BasicText(range, Modifier.fillMaxWidth().testTag("${tag}_clamped"),
+                    style = Abook.type.caption.copy(color = colors.text2, textAlign = if (dense) TextAlign.Start else TextAlign.Center))
+                }
+                // Labels are captions of the detents: each one centred under its own detent and inside the ruler (never under -/+).
+                // When they cannot fit without touching, the ruler draws no detents and the labels become balanced rows below it.
+                val labelStyle = if (dense) Abook.type.caption else Abook.type.bodySmall
+                val measurer = rememberTextMeasurer()
+                val labels = spec.typical.map(chipLabel)
+                val fractions = remember(spec) { spec.typical.map { ValuePickerLogic.toFraction(spec, it) } }
+                val selected = if (current) ValuePickerLogic.chipIndex(spec, shown) else -1
+                BoxWithConstraints(Modifier.fillMaxWidth()) {
+                    val density = LocalDensity.current
+                    val rulerWidth = (constraints.maxWidth - 2 * with(density) { Dim.s48.roundToPx() }).toDouble()
+                    val widths = labels.map { measurer.measure(it, labelStyle.copy(fontWeight = FontWeight.Bold)).size.width.toDouble() }
+                    val plan = with(density) { ValuePickerLogic.tickLabels(fractions, widths, rulerWidth, 8.dp.toPx().toDouble(), Dim.s4.toPx().toDouble()) }
+                    val inset = plan.inset.toFloat()
+                    fun at(x: Float) = (x - inset) / (rulerWidth.toFloat() - 2 * inset)
+                    Column(Modifier.fillMaxWidth()) {
+                        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.Top) {
+                            StepButton(-1, enabled && shown > spec.min, "${tag}_down", ::nudge, scope)
+                            val fraction = ValuePickerLogic.toFraction(spec, shown).toFloat()
+                            val drawn by animateFloatAsState(fraction, if (moving != null) tween(0) else Motion.Expand, label = "ruler")
+                            Box(Modifier.weight(1f).height(if (!plan.aligned) Dim.s48 else if (dense) 56.dp else 64.dp)) {
+                                Box(Modifier.fillMaxWidth().height(Dim.s48).testTag("${tag}_ruler")
+                                .semantics {
+                                    contentDescription = label
+                                    stateDescription = format(shown)
+                                    val steps = ((spec.max - spec.min) / spec.step).roundToInt() - 1
+                                    progressBarRangeInfo = ProgressBarRangeInfo(shown.toFloat(), spec.min.toFloat()..spec.max.toFloat(), steps.coerceAtLeast(0))
+                                    if (!enabled) disabled()
+                                    setProgress { target -> if (enabled) { adjustValue(ValuePickerLogic.quantize(spec, target.toDouble())); true } else false }
+                                }
+                                .onKeyEvent { event ->
+                                    if (!enabled || event.type != KeyEventType.KeyDown) return@onKeyEvent false
+                                    val steps = when (event.key) {
+                                        Key.DirectionRight, Key.DirectionUp -> 1
+                                        Key.DirectionLeft, Key.DirectionDown -> -1
+                                        Key.PageUp -> ValuePickerLogic.PAGE_STEPS
+                                        Key.PageDown -> -ValuePickerLogic.PAGE_STEPS
+                                        Key.MoveHome -> { adjustValue(spec.min); return@onKeyEvent true }
+                                        Key.MoveEnd -> { adjustValue(spec.max); return@onKeyEvent true }
+                                        else -> return@onKeyEvent false
+                                    }
+                                    nudge(steps)
+                                    true
+                                }
+                                .focusable(enabled)
+                                .pointerInput(spec, enabled, inset) {
+                                    if (enabled) detectTapGestures { offset -> drag(at(offset.x)); moving?.let(::adjustValue) }
+                                }
+                                .pointerInput(spec, enabled, inset) {
+                                    if (enabled) detectHorizontalDragGestures(
                                     onDragStart = { offset -> drag(at(offset.x)) },
                                     onHorizontalDrag = { pointer, _ -> pointer.consume(); drag(at(pointer.position.x)) },
                                     onDragEnd = { moving?.let(::adjustValue) },
                                     onDragCancel = { moving = null },
-                                )
-                            }) {
-                            Canvas(Modifier.matchParentSize()) {
-                                val y = size.height / 2
-                                drawLine(colors.line, Offset(inset, y), Offset(size.width - inset, y), 3.dp.toPx(), StrokeCap.Round)
-                                drawLine(colors.accent, Offset(inset, y), Offset(inset + drawn * (size.width - 2 * inset), y), 3.dp.toPx(), StrokeCap.Round)
-                            }
-                            // Detents are real nodes so the label-under-detent rule is measured on the layout, not recomputed.
-                            if (plan.aligned) fractions.forEachIndexed { index, f ->
-                                Box(Modifier.offset { IntOffset((plan.centre(f, rulerWidth) - 1.dp.toPx()).roundToInt(), 19.dp.roundToPx()) }
-                                    .size(2.dp, 10.dp).background(colors.text2.copy(alpha = .6f), CircleShape).testTag("${tag}_tick_$index"))
-                            }
-                            Canvas(Modifier.matchParentSize()) {
-                                drawCircle(colors.accent, (if (moving != null) 9 else 7).dp.toPx(), Offset(inset + drawn * (size.width - 2 * inset), size.height / 2))
-                            }
-                        }
-                        if (plan.aligned) spec.typical.forEachIndexed { index, typical ->
-                            val chosen = index == selected
-                            val box = with(density) { maxOf(48.dp.toPx(), widths[index].toFloat()) }
-                            val left = (plan.centre(fractions[index], rulerWidth) - box / 2).toFloat()
-                            Box(Modifier.offset { IntOffset(left.roundToInt(), (if (dense) 8.dp else 16.dp).roundToPx()) }
-                                .size(with(density) { box.toDp() }, 48.dp)
-                                .pointerInput(spec, enabled, rulerWidth, inset) {
-                                    // Touch areas overlap where detents are close: a tap picks the detent nearest the finger.
-                                    if (enabled) detectTapGestures { offset ->
-                                        val x = left + offset.x
-                                        val nearest = spec.typical.indices.minBy { kotlin.math.abs(plan.centre(fractions[it], rulerWidth) - x) }
-                                        Feedback.play("toggle", view); clampNote = false; commit(spec.typical[nearest])
+                                    )
+                                }) {
+                                    Canvas(Modifier.matchParentSize()) {
+                                        val y = size.height / 2
+                                        drawLine(colors.line, Offset(inset, y), Offset(size.width - inset, y), 3.dp.toPx(), StrokeCap.Round)
+                                        drawLine(colors.accent, Offset(inset, y), Offset(inset + drawn * (size.width - 2 * inset), y), 3.dp.toPx(), StrokeCap.Round)
+                                    }
+                                    // Detents are real nodes so the label-under-detent rule is measured on the layout, not recomputed.
+                                    if (plan.aligned) fractions.forEachIndexed { index, f ->
+                                        Box(Modifier.offset { IntOffset((plan.centre(f, rulerWidth) - 1.dp.toPx()).roundToInt(), 19.dp.roundToPx()) }
+                                        .size(2.dp, 10.dp).background(colors.text2.copy(alpha = .6f), CircleShape).testTag("${tag}_tick_$index"))
+                                    }
+                                    Canvas(Modifier.matchParentSize()) {
+                                        drawCircle(colors.accent, (if (moving != null) 9 else 7).dp.toPx(), Offset(inset + drawn * (size.width - 2 * inset), size.height / 2))
                                     }
                                 }
-                                .pointerInput(spec, enabled, rulerWidth, inset) {
-                                    if (enabled) detectHorizontalDragGestures(onDragStart = { drag(at(left + it.x)) },
+                                if (plan.aligned) spec.typical.forEachIndexed { index, typical ->
+                                    val chosen = index == selected
+                                    val box = with(density) { maxOf(48.dp.toPx(), widths[index].toFloat()) }
+                                    val left = (plan.centre(fractions[index], rulerWidth) - box / 2).toFloat()
+                                    Box(Modifier.offset { IntOffset(left.roundToInt(), (if (dense) 8.dp else 16.dp).roundToPx()) }
+                                    .size(with(density) { box.toDp() }, 48.dp)
+                                    .pointerInput(spec, enabled, rulerWidth, inset) {
+                                        // Touch areas overlap where detents are close: a tap picks the detent nearest the finger.
+                                        if (enabled) detectTapGestures { offset ->
+                                            val x = left + offset.x
+                                            val nearest = spec.typical.indices.minBy { kotlin.math.abs(plan.centre(fractions[it], rulerWidth) - x) }
+                                            Feedback.play("toggle", view); clampNote = false; commit(spec.typical[nearest])
+                                        }
+                                    }
+                                    .pointerInput(spec, enabled, rulerWidth, inset) {
+                                        if (enabled) detectHorizontalDragGestures(onDragStart = { drag(at(left + it.x)) },
                                         onHorizontalDrag = { pointer, _ -> pointer.consume(); drag(at(left + pointer.position.x)) },
-                                        onDragEnd = { moving?.let(::commit) }, onDragCancel = { moving = null })
+                                        onDragEnd = { moving?.let(::adjustValue) }, onDragCancel = { moving = null })
+                                    }
+                                    .semantics {
+                                        role = Role.Button; this.selected = chosen; contentDescription = format(typical)
+                                        if (!enabled) disabled()
+                                        onClick { if (enabled) { commit(typical); true } else false }
+                                    }
+                                    .onKeyEvent { event ->
+                                        if (enabled && event.type == KeyEventType.KeyDown && event.key in listOf(Key.Enter, Key.NumPadEnter, Key.Spacebar)) {
+                                            commit(typical); true
+                                        } else false
+                                    }.focusable(enabled)
+                                    .testTag("${tag}_chip_${ValuePickerLogic.format(spec, typical)}")
+                                    .padding(top = 16.dp), contentAlignment = Alignment.Center) {
+                                        PickerLabel(labels[index], labelStyle, chosen, Modifier.testTag("${tag}_label_$index"))
+                                    }
                                 }
-                                .semantics {
-                                    role = Role.Button; this.selected = chosen; contentDescription = format(typical)
-                                    if (!enabled) disabled()
-                                    onClick { if (enabled) { commit(typical); true } else false }
-                                }
-                                .onKeyEvent { event ->
-                                    if (enabled && event.type == KeyEventType.KeyDown && event.key in listOf(Key.Enter, Key.NumPadEnter, Key.Spacebar)) {
-                                        commit(typical); true
-                                    } else false
-                                }.focusable(enabled)
-                                .testTag("${tag}_chip_${ValuePickerLogic.format(spec, typical)}")
-                                .padding(top = 16.dp), contentAlignment = Alignment.Center) {
-                                PickerLabel(labels[index], labelStyle, chosen, Modifier.testTag("${tag}_label_$index"))
                             }
+                            StepButton(1, enabled && shown < spec.max, "${tag}_up", ::nudge, scope)
                         }
-                    }
-                    StepButton(1, enabled && shown < spec.max, "${tag}_up", ::nudge, scope)
-                }
-                Reveal(!plan.aligned && spec.typical.isNotEmpty()) {
-                    BalancedPickerChips(Modifier.fillMaxWidth().padding(horizontal = Dim.s48).testTag("${tag}_chips")) {
-                        spec.typical.forEachIndexed { index, typical ->
-                            Box(Modifier.heightIn(min = Dim.s48).widthIn(min = Dim.s48)
-                                .then(if (enabled) Modifier.pressable { Feedback.play("toggle", view); clampNote = false; commit(typical) } else Modifier)
-                                .semantics { this.selected = index == selected; contentDescription = format(typical); if (!enabled) disabled() }
-                                .testTag("${tag}_chip_${ValuePickerLogic.format(spec, typical)}")
-                                .padding(horizontal = Dim.s4), contentAlignment = Alignment.Center) {
-                                PickerLabel(labels[index], labelStyle, index == selected, Modifier.testTag("${tag}_label_$index"))
+                        Reveal(!plan.aligned && spec.typical.isNotEmpty()) {
+                            BalancedPickerChips(Modifier.fillMaxWidth().padding(horizontal = Dim.s48).testTag("${tag}_chips")) {
+                                spec.typical.forEachIndexed { index, typical ->
+                                    Box(Modifier.heightIn(min = Dim.s48).widthIn(min = Dim.s48)
+                                    .then(if (enabled) Modifier.pressable { Feedback.play("toggle", view); clampNote = false; commit(typical) } else Modifier)
+                                    .semantics { this.selected = index == selected; contentDescription = format(typical); if (!enabled) disabled() }
+                                    .testTag("${tag}_chip_${ValuePickerLogic.format(spec, typical)}")
+                                    .padding(horizontal = Dim.s4), contentAlignment = Alignment.Center) {
+                                        PickerLabel(labels[index], labelStyle, index == selected, Modifier.testTag("${tag}_label_$index"))
+                                    }
+                                }
                             }
                         }
                     }
                 }
             }
-        }
         }
         special?.invoke()
     }
@@ -406,27 +415,29 @@ private fun ValueDisplay(text: String, typing: Boolean, dense: Boolean, enabled:
                          onStart: () -> Unit, onDone: (String?) -> Unit) {
     val colors = Abook.colors
     val style = if (dense) Abook.type.bodySmall.copy(color = colors.text2) else Abook.type.screenTitle
-    if (!typing) {
-        Box(Modifier.widthIn(min = 48.dp).heightIn(min = if (dense) 20.dp else Dim.s48).then(if (enabled) Modifier.pressable(onClick = onStart) else Modifier)
+    SwapContent(typing, contentKey = { typing -> !typing }, layout = ContentLayout.Box) { typing ->
+        if (!typing) {
+            Box(Modifier.widthIn(min = 48.dp).heightIn(min = if (dense) 20.dp else Dim.s48).then(if (enabled) Modifier.pressable(onClick = onStart) else Modifier)
             .semantics { contentDescription = description }.testTag(tag).padding(horizontal = Dim.s8), contentAlignment = Alignment.Center) {
-            BasicText(text, Modifier.testTag("${tag}_text"), style = style)
-        }
-        return
-    }
-    val focus = remember { FocusRequester() }
-    var field by remember { mutableStateOf(TextFieldValue(number, TextRange(0, number.length))) }
-    var focused by remember { mutableStateOf(false) }
-    LaunchedEffect(Unit) { focus.requestFocus() }
-    BasicTextField(
-        field, { field = it }, singleLine = true,
-        textStyle = style.copy(color = colors.text, textAlign = TextAlign.Center),
-        cursorBrush = SolidColor(colors.accentText),
-        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal, imeAction = ImeAction.Done),
-        keyboardActions = KeyboardActions(onDone = { onDone(field.text) }),
-        modifier = Modifier.widthIn(min = 96.dp, max = 160.dp).heightIn(min = Dim.s48).insetSurface(colors)
+                BasicText(text, Modifier.testTag("${tag}_text"), style = style)
+            }
+        } else {
+            val focus = remember { FocusRequester() }
+            var field by remember { mutableStateOf(TextFieldValue(number, TextRange(0, number.length))) }
+            var focused by remember { mutableStateOf(false) }
+            LaunchedEffect(Unit) { focus.requestFocus() }
+            BasicTextField(
+            field, { field = it }, singleLine = true,
+            textStyle = style.copy(color = colors.text, textAlign = TextAlign.Center),
+            cursorBrush = SolidColor(colors.accentText),
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal, imeAction = ImeAction.Done),
+            keyboardActions = KeyboardActions(onDone = { onDone(field.text) }),
+            modifier = Modifier.widthIn(min = 96.dp, max = 160.dp).heightIn(min = Dim.s48).insetSurface(colors)
             .focusRequester(focus)
             .onFocusChanged { state -> if (focused && !state.isFocused) onDone(field.text); focused = state.isFocused }
             .semantics { contentDescription = description }.testTag("${tag}_input")
             .padding(horizontal = Dim.s8, vertical = Dim.s8),
-    )
+            )
+        }
+    }
 }

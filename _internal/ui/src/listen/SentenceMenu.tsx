@@ -1,3 +1,4 @@
+import { Presence } from "../shared/MotionPresence";
 import { S } from "../shared/strings.generated";
 import { useBackLayer } from "@/shared/backStack";
 import { Copy, Pencil, Play, X } from "lucide-react";
@@ -141,7 +142,7 @@ export function useSentenceMenu({
               <Play className="size-4" fill="currentColor" strokeWidth={0} /> <span className="sm:hidden">{S.s_nghe_tu_day_6a7ff4ab}</span>
               <span className="max-sm:hidden">{S.s_nghe_tu_cau_nay_f5bd1329}</span>
             </button></Reveal>
-          {readingEdit && (
+          {<Presence>{readingEdit && (
             <button
               type="button"
               onClick={() => {
@@ -155,8 +156,8 @@ export function useSentenceMenu({
             >
               <Pencil className="size-4" /> <span className={BAR_LABEL}>{S.s_sua_cach_doc_d67b7a7b}</span>
             </button>
-          )}
-          {lineEdit && (
+          )}</Presence>}
+          {<Presence>{lineEdit && (
             <button
               type="button"
               disabled={lineEdit.mode === "blocked"}
@@ -170,7 +171,7 @@ export function useSentenceMenu({
             >
               <Pencil className="size-4" /> <span className={BAR_LABEL}>{lineEdit.mode === "studio" ? S.s_sua_trong_studio_4ba850ad : S.s_sua_cau_nay_a82aec43}</span>
             </button>
-          )}
+          )}</Presence>}
           <button type="button" onClick={() => copySentence(selected)} {...keepFocus} className={BAR_BUTTON}>
             <Copy className="size-4" /> <span className={BAR_LABEL}>{S.s_chep_cau_4456863f}</span>
           </button>
@@ -178,17 +179,17 @@ export function useSentenceMenu({
             <X className="size-4" />
           </button>
         </div>
-        {lineEdit?.mode === "blocked" && (
+        {<Presence>{lineEdit?.mode === "blocked" && (
           <p className="pointer-events-auto max-w-sm rounded-cover bg-panel px-3 py-2 text-center text-xs text-fg-2 shadow-float ring-1 ring-line">{S.s_sua_cau_nay_ce1728d3}{lineEdit.note}
           </p>
-        )}
+        )}</Presence>}
       </div>
     ) : null;
 
   const dialogs: ReactNode = (
     <>
-      {readingEdit && <WordReadingDialog bookId={bookId} word={readingWord} sentence={readingSentence} wordIndex={readingAt} onClose={() => setReadingWord(null)} />}
-      {lineEdit?.mode === "wish" && book && script && (
+      {<Presence>{readingEdit && <WordReadingDialog bookId={bookId} word={readingWord} sentence={readingSentence} wordIndex={readingAt} onClose={() => setReadingWord(null)} />}</Presence>}
+      {<Presence>{lineEdit?.mode === "wish" && book && script && (
         <LineWishDialog
           book={book}
           script={editingLine?.script ?? script}
@@ -200,7 +201,7 @@ export function useSentenceMenu({
             setWishWord(null);
           }}
         />
-      )}
+      )}</Presence>}
     </>
   );
 

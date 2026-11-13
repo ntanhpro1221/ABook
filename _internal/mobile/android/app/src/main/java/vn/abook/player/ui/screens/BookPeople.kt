@@ -1,5 +1,8 @@
 package vn.abook.player.ui.screens
 
+import vn.abook.player.ui.motion.SwapContent
+import vn.abook.player.ui.motion.ContentLayout
+
 import vn.abook.player.S
 
 import androidx.activity.compose.BackHandler
@@ -93,8 +96,10 @@ fun PersonSheet(
                 Spacer(Modifier.height(Dim.s8))
                 Reveal(person.lines > 0) { MenuRow(S.s_gop_vao_nguoi_khac_8f5c461d, tag = "person_merge", onClick = { page = PersonPage.Merge }) { ink -> GitMergeIcon(ink) } }
                 MenuRow(S.s_doi_ten_a2a0dc70, tag = "person_rename", onClick = { page = PersonPage.Rename }) { ink -> TextCursorInputIcon(ink) }
-                if (person.voice != null && person.lines > 0) {
-                    MenuRow(S.s_doi_gioi_tinh_8fde2c62, tag = "person_gender", onClick = { page = PersonPage.Gender }) { ink -> UserRoundIcon(ink) }
+                SwapContent(person, contentKey = { person -> person.voice != null && person.lines > 0 }, layout = ContentLayout.Column) { person ->
+                    if (person.voice != null && person.lines > 0) {
+                        MenuRow(S.s_doi_gioi_tinh_8fde2c62, tag = "person_gender", onClick = { page = PersonPage.Gender }) { ink -> UserRoundIcon(ink) }
+                    }
                 }
             }
             PersonPage.Rename -> RenamePage(bookId, person, source, notes, dismiss, onBack = { page = PersonPage.Menu })
@@ -139,7 +144,9 @@ private fun RenamePage(bookId: String, person: CastMember, source: BookSource, n
         ProblemLine(problem, "person_rename_problem")
         Spacer(Modifier.height(Dim.s24))
         PrimaryButton(if (busy) S.s_dang_luu_e93f245d else S.s_luu_e91f26c0, { if (value.isNotBlank()) save(value) }, Modifier.fillMaxWidth().testTag("person_rename_save"), enabled = value.isNotBlank() && !busy)
-        if (person.originalName != null) QuietButton(S.s_ve_ten_goc_643cd2e0, { save("") }, "person_rename_original")
+        SwapContent(person, contentKey = { person -> person.originalName != null }, layout = ContentLayout.Column) { person ->
+            if (person.originalName != null) QuietButton(S.s_ve_ten_goc_643cd2e0, { save("") }, "person_rename_original")
+        }
         QuietButton(S.s_thoi_e68f9e88, onBack, "person_rename_cancel")
     }
 }
@@ -224,23 +231,27 @@ private fun MergePage(bookId: String, person: CastMember, people: List<CastMembe
         Spacer(Modifier.height(Dim.s12))
         SheetField(query, { query = it }, S.s_tim_nguoi_trong_truyen_a1507054, "person_merge_search", leading = { SearchIcon(colors.text3) }, imeSearch = true)
         Spacer(Modifier.height(Dim.s8))
-        if (others.isEmpty()) {
-            BasicText(S.s_khong_co_ai_khop_0_d1bfb22a(query), style = Abook.type.bodySmall, modifier = Modifier.padding(vertical = Dim.s12))
-        } else {
-            val list = rememberLazyListState()
-            LazyColumn(Modifier.fillMaxWidth().heightIn(max = 256.dp).fadeEdges(list).testTag("person_merge_list"), state = list) {
-                items(others, key = { it.name }, contentType = { "target" }) { other ->
-                    PickRow(
+        SwapContent(others, contentKey = { others -> others.isEmpty() }, layout = ContentLayout.Column) { others ->
+            if (others.isEmpty()) {
+                BasicText(S.s_khong_co_ai_khop_0_d1bfb22a(query), style = Abook.type.bodySmall, modifier = Modifier.padding(vertical = Dim.s12))
+            } else {
+                val list = rememberLazyListState()
+                LazyColumn(Modifier.fillMaxWidth().heightIn(max = 256.dp).fadeEdges(list).testTag("person_merge_list"), state = list) {
+                    items(others, key = { it.name }, contentType = { "target" }) { other ->
+                        PickRow(
                         Cast.cleanName(other.displayName), Cast.mergeTargetLine(other, Cast.nameKey(other.displayName) in twins),
                         into?.name == other.name, { into = other }, "person_merge_${other.name}",
-                    )
+                        )
+                    }
                 }
             }
         }
         val target = into
-        if (target != null) {
-            Spacer(Modifier.height(Dim.s8))
-            BasicText(Cast.mergeSummary(person, target), style = Abook.type.bodySmall.copy(color = colors.text))
+        SwapContent(target, contentKey = { target -> target != null }, layout = ContentLayout.Column) { target ->
+            if (target != null) {
+                Spacer(Modifier.height(Dim.s8))
+                BasicText(Cast.mergeSummary(person, target), style = Abook.type.bodySmall.copy(color = colors.text))
+            }
         }
         ProblemLine(problem, "person_merge_problem")
         Spacer(Modifier.height(Dim.s24))
@@ -325,7 +336,9 @@ internal fun PickRow(title: String, hint: String?, selected: Boolean, onClick: (
                 title,
                 style = Abook.type.body.copy(color = if (selected) colors.accentText else colors.text, fontWeight = if (selected) FontWeight.Medium else FontWeight.Normal),
             )
-            if (hint != null) RowHint(hint, Modifier.padding(top = 4.dp), if (selected) colors.accentText else colors.text2)
+            SwapContent(hint, contentKey = { hint -> hint != null }, layout = ContentLayout.Column) { hint ->
+                if (hint != null) RowHint(hint, Modifier.padding(top = 4.dp), if (selected) colors.accentText else colors.text2)
+            }
         }
     }
 }

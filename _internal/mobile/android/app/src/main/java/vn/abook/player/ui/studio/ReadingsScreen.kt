@@ -1,5 +1,8 @@
 package vn.abook.player.ui.studio
 
+import vn.abook.player.ui.motion.SwapContent
+import vn.abook.player.ui.motion.ContentLayout
+
 import vn.abook.player.S
 
 import androidx.compose.foundation.layout.Column
@@ -136,8 +139,10 @@ private fun ReadingRow(state: StudioReadingsState, item: NameReading, clip: Clip
     val reach = if (fresh) state.reach else null
     Column(Modifier.fillMaxWidth().testTag("studio_reading_${item.surface}")) {
         Row(Modifier.fillMaxWidth().padding(top = Dim.s12), verticalAlignment = Alignment.Top) {
-            if (example != null && example.hasAudio) {
-                ClipButton(StudioReadingsState.sampleId(example), clip, { state.playSample(example) }, "studio_reading_play_${item.surface}")
+            SwapContent(example, contentKey = { example -> example != null && example.hasAudio }, layout = ContentLayout.Row) { example ->
+                if (example != null && example.hasAudio) {
+                    ClipButton(StudioReadingsState.sampleId(example), clip, { state.playSample(example) }, "studio_reading_play_${item.surface}")
+                }
             }
             Column(Modifier.weight(1f)) {
                 BasicText(
@@ -228,8 +233,10 @@ private fun ReadingEditor(state: StudioReadingsState, item: NameReading, fresh: 
         Reveal(heard.isNotEmpty()) { RowHint(heard, Modifier.padding(top = Dim.s4).testTag("studio_reading_heard")) }
         SwitchRow(ReadingsText.EVERYWHERE, everywhere, { everywhere = it }, "studio_reading_everywhere")
         Column(Modifier.fillMaxWidth().padding(top = Dim.s8), verticalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(Dim.s8)) {
-            if (trying) AnswerButton(ReadingsText.TRY_STOP, state::cancelTry, "studio_reading_cancel_try")
-            else AnswerButton(ReadingsText.TRY, ::tryIt, "studio_reading_try", enabled = !busy && typed.isNotEmpty())
+            SwapContent(trying, contentKey = { trying -> trying }, layout = ContentLayout.Column) { trying ->
+                if (trying) AnswerButton(ReadingsText.TRY_STOP, state::cancelTry, "studio_reading_cancel_try")
+                else AnswerButton(ReadingsText.TRY, ::tryIt, "studio_reading_try", enabled = !busy && typed.isNotEmpty())
+            }
             AnswerButton(ReadingsText.SAVE, { save(typed) }, "studio_reading_save", primary = true, enabled = !busy && typed.isNotEmpty() && !never && !unchanged)
             AnswerButton(ReadingsText.CANCEL, { state.cancelTry(); onDone() }, "studio_reading_close")
         }

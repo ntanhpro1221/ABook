@@ -1,3 +1,4 @@
+import { Presence } from "../shared/MotionPresence";
 import { S } from "../shared/strings.generated";
 import { TickingValue } from "@/shared/TickingValue";
 import { MotionPresence, Reveal } from "@/shared/MotionPresence";
@@ -431,7 +432,7 @@ const SeriesTile = memo(function SeriesTile({ item, twins, phone }: { item: Retu
         <span className="min-w-0 truncate">{item.items.length}{S.s_tap_269b0b3d}</span></span>
     </span>
   </button>;
-  const content = open && <Shelf books={item.items} badges={item.badges} twins={twins} />;
+  const content = <Presence>{open && <Shelf books={item.items} badges={item.badges} twins={twins} />}</Presence>;
   return <MotionRegion data-book-tile="" motionKey={[item.label, item.items.map(book => book.id), item.items[0].cover?.url, item.items.some(book => book.remote)]}>
     {phone ? <Sheet open={open} onOpenChange={setOpen} title={item.label} trigger={trigger}>
       <div className="pb-4 pt-4">{content}</div>
@@ -579,7 +580,7 @@ export function LibraryScreen({
           <div className="mt-8 flex items-center gap-2 sm:mt-12 sm:gap-4">
             <div ref={setFilterRow} style={filterFade} role="group" aria-label={S.s_loc_sach_bebccfba} className="relative flex min-w-0 flex-1 overflow-x-auto [scrollbar-width:none]">
               <SlidingIndicator variant="line" />
-              {LIBRARY_FILTER_OPTIONS.map((option, index) => [index > 0 && <RowGap key={`gap-${option.value}`} className="w-4" />, <button
+              {LIBRARY_FILTER_OPTIONS.map((option, index) => [<Presence key={`gap-${option.value}`}>{index > 0 && <RowGap className="w-4" />}</Presence>, <button
                 key={option.value} type="button" aria-label={option.value === "finished" ? S.s_nghe_xong_9480636e : option.label} aria-pressed={filter === option.value} onClick={() => setFilter(option.value)}
                 className={cn("touch-hit min-h-[44px] shrink-0 border-b-2 border-transparent text-xs font-medium transition-colors duration-motion-medium sm:text-sm", filter === option.value ? "text-fg" : "text-fg-2 hover:text-fg")}>
                 {option.label}
