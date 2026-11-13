@@ -40,9 +40,11 @@ def test_ordinary_dialect_folding_uses_the_voice_region(region, passed):
     ("Ri-ta", "Rita", "zita", "Bắc", True),
     ("Ri-ta", "Rita", "dita", "Nam", False),
     ("Ri-ta", "Rita", "dita", "Bắc", True),
-    ("Dô-na", "Dona", "yona", "Nam", False),
+    # Romaji "Yona" is read by the app's Japanese rule as Giô-na (o -> ô).
+    ("Dô-na", "Dona", "yona", "Nam", True),
     ("Dô-na", "Dona", "yôna", "Nam", True),
-    ("Dô-na", "Dona", "yona", "Bắc", False),
+    ("Dô-na", "Dona", "yona", "Bắc", True),
+    ("Dô-na", "Dona", "yuna", "Bắc", False),
     ("Sát-ta", "Shasta", "sata", "Nam", True),
     ("Pha-na", "Fana", "fana", "Nam", True),
     ("Oan", "Wan", "wan", "Nam", True),
@@ -52,7 +54,8 @@ def test_ordinary_dialect_folding_uses_the_voice_region(region, passed):
     ("Lu-si-en", "Lucien", "Lusienne", "Bắc", False),
     ("Xa-men", "Samael", "Sam Min", "Nam", False),
     ("Mi-đô", "Midou", "Mido", "Nam", True),
-    ("Rin-đô", "Rindou", "Jindo", "Bắc", False),
+    ("Rin-đô", "Rindou", "Jindo", "Bắc", True),
+    ("Rin-đô", "Rindou", "Jindu", "Bắc", False),
     ("Rin-đô", "Rindou", "Jinđô", "Bắc", True),
     ("i-ta-đa-ki-ma-xu", "Itadakimatsu", "Itadakimasu", "Bắc", True),
     ("Ra", "Raa", "đa", "Bắc", False),
@@ -282,3 +285,49 @@ def test_pipeline_persists_spelling_alias_evidence_without_changing_verdict(tmp_
     with pipeline.db.connect() as conn:
         stored = conn.execute("SELECT metrics_json FROM quality_checks WHERE stage='segment_asr_decode_v1' ORDER BY id DESC").fetchone()
     assert json.loads(stored[0])['spelling_alias_evidence'] == alias_evidence
+
+
+@pytest.mark.parametrize("spoken,form,surface,heard,region", [
+    ('Bạn của cậu à, Giô-si-cun?', 'Giô-si-cun', 'Yoshi-kun', 'Bạn của cậu A, Joshi Kun.', 'Bắc'),
+    ('Mừng cậu trở lại, Giô-xu-ke.', 'Giô-xu-ke', 'Yosuke', 'Mừng cậu trở lại! Josuke!', 'Bắc'),
+    ('Giô-xu-ke?', 'Giô-xu-ke', 'Yosuke', 'Zosuke', 'Bắc'),
+    ('Cuối cùng, chỉ còn lại Hi-nô-ha-ra.', 'Hi-nô-ha-ra', 'Hinohara', 'Cuối cùng, chỉ còn lại Hino Haza.', 'Nam'),
+    ('Đây là cách mà mình đã gặp Rin-đô.', 'Rin-đô', 'Rindou', 'Đây là cách mà mình đã gặp Jindo.', 'Bắc'),
+    ('Bạn của cậu à, Giô-si-cun?', 'Giô-si-cun', 'Yoshi-kun', 'Bạn của cậu à, Joshi Kun.', ''),
+])
+def test_romaji_read_by_the_japanese_rule_matches_the_transliteration(spoken, form, surface, heard, region):
+    result = adjudicate(spoken, heard, form=form, surface=surface, region=region, alias=False)
+    assert result['verdict'] == asr.ASR_PASS
+
+
+@pytest.mark.parametrize("form,heard,region", [
+    ('Giô-si', 'Jushi', 'Bắc'),          # Giu-si: u is not ô
+    ('Giô-si-cun', 'Joshi Kan', 'Bắc'),  # Can
+    ('Hi-nô-ha-ra', 'Hina Haza', 'Nam'),
+    ('Ha-rư', 'Hadu', 'Bắc'),
+    ('Giô-si-e', 'Josie', 'Nam'),        # no Japanese reading: stays as before
+])
+def test_romaji_with_a_different_vowel_still_fails(form, heard, region):
+    result = adjudicate(f'Anh {form} đến.', f'Anh {heard} đến.', form=form, surface='Unrelated',
+                        region=region, alias=False)
+    assert result['verdict'] != asr.ASR_PASS
+
+
+@pytest.mark.parametrize("heard", ['Há dù', 'Há du', 'ha du'])
+def test_vietnamese_tokens_never_take_the_romaji_path(heard):
+    # Marked or bare-syllable Vietnamese tokens keep asrjudge2's strict vowels.
+    assert not all(asr._romaji_token(token) for token in heard.split())
+    assert not asr._romaji_component_sounds_right(('Ha', 'rư'), heard.split(), 'Bắc')
+    result = adjudicate('“Ha-rư.”', heard, form='Ha-rư', surface='Haru', region='Bắc', alias=False)
+    assert result['verdict'] == asr.ASR_MISMATCH
+
+
+def test_romaji_path_needs_a_hyphenated_transliteration():
+    assert asr._romaji_component_sounds_right(('Giô', 'si'), ['joshi'], 'Bắc')
+    assert not asr._romaji_component_sounds_right(('Cun',), ['kun'], 'Bắc')
+    assert not asr._romaji_component_sounds_right(('Giô', 'si'), ['jóshi'], 'Bắc')
+    # The app reads romaji u as u, never ư (Haru -> Ha-ru).
+    assert not asr._romaji_component_sounds_right(('Ha', 'rư'), ['haru'], 'Bắc')
+    # Per syllable: Fuze -> Phu-de cannot stand for Phu-gi-e.
+    assert not asr._romaji_component_sounds_right(('Phu', 'gi', 'e'), ['fuze'], 'Bắc')
+    assert asr._romaji_component_sounds_right(('Phu', 'ghi', 'e'), ['fugie'], 'Bắc')

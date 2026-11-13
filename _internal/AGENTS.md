@@ -196,6 +196,12 @@ Không đổi sang phân tích cuốn chiếu nếu người dùng chưa thay đ
   Thành phần giữ chữ có dấu đến khi tách nhánh: chỉ nhánh component cũ được nhận bản bỏ toàn dấu.
   Không ghép một phép gấp phụ âm mới với lệch nguyên âm (Ha-rư/Há dù phải trượt); các tương đương
   Latin/Hán-Việt và phép bỏ dấu đã có trước 8c90dc47b vẫn giữ đường riêng.
+  Ngoại lệ duy nhất cho nguyên âm là romaji (asrjudge3): token chữ Latin trần, không phải
+  `valid_syllable` (không thanh/mũ/móc), so với thành phần tên phiên âm >= 2 âm tiết thì được đọc
+  bằng chính `romanization.romanized_reading(..., "ja")` (Joshi Kun -> Giô-si Cun; giọng Nam đọc
+  thêm z như r) rồi so TỪNG âm tiết với cách đọc khoá sau `_name_spelling_key`: nguyên âm phải
+  trùng hết. Luật app ra u/e (Haru -> Ha-ru) nên không tha Ha-rư/Phư/A-ca-nê; token có dấu
+  (Há dù) không bao giờ vào đường này; tên không có cách đọc Nhật (Josie) giữ như cũ.
   Nhánh component cũ gồm cả đ->d cùng bỏ dấu như integ168 (An-đê-ra-ban/Ande ra bàn,
   Phư-di-ê-đa/Phư Di Eda); đây là miễn trừ cũ, không đưa đ->d vào key vùng mới.
   `repair_syllabic_gi` chỉ thêm đường so tên, không đổi cách đo câu. Giữ `spelling_alias_evidence` trong

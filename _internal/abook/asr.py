@@ -605,6 +605,66 @@ def _anchor_component_splits(text: str, count: int) -> list[tuple[str, ...]]:
 _ANCHOR_COMPONENT_SPLIT_LIMIT = 512
 
 
+def _romaji_token(token: str) -> bool:
+    """Plain Latin letters that do not spell a Vietnamese syllable: Whisper's romaji.
+
+    Any tone, hat, breve or horn ("Há dù") makes the token Vietnamese, and so does a bare
+    syllable such as "ha" or "san"; those stay on the regional comparison, which never
+    forgives a vowel.
+    """
+    letters = "".join(c for c in token if c.isalnum())
+    return bool(letters) and letters.isascii() and letters.isalpha() and not valid_syllable(letters.lower())
+
+
+def _romaji_name_readings(token: str, voice_region: str) -> set[tuple[str, ...]]:
+    """Comparison keys of the app's own Japanese reading of one romaji token.
+
+    Whisper that hears a Japanese name correctly may write it in romaji ("Joshi Kun" for
+    Giô-si-cun). Reading the romaji with the same romaji->Vietnamese rule that locks names
+    (o -> ô, j -> gi, z -> d, ...) recovers the transliteration, which then has to equal the
+    locked one up to tone and the voice's regional consonants. A Southern voice's r is heard
+    as z (asrjudge2 Nam z/r), so for Nam that z is also read as the r it stands for.
+
+    Keys are per syllable: a joined comparison would let "Phu-de" stand for "Phu-gi-e",
+    dropping the nucleus of a syllabic gi.
+    """
+    from .romanization import romanized_reading
+
+    letters = "".join(c for c in token if c.isalnum()).lower()
+    variants = {letters}
+    if voice_region == "Nam":
+        variants.add(letters.replace("z", "r"))
+    keys: set[tuple[str, ...]] = set()
+    for variant in variants:
+        reading = romanized_reading(variant[:1].upper() + variant[1:], "ja")
+        if reading:
+            keys.add(tuple(
+                _name_spelling_key(_anchor_component_letters(part), voice_region)
+                for part in re.split(r"[-\s]+", reading) if part
+            ))
+    return keys
+
+
+def _romaji_component_sounds_right(
+    spoken_syllables: Sequence[str],
+    span_tokens: Sequence[str],
+    voice_region: str = "",
+) -> bool:
+    """A transliterated (hyphenated) name part against romaji tokens, vowels exact."""
+    if len(spoken_syllables) < 2 or not span_tokens or not all(_romaji_token(t) for t in span_tokens):
+        return False
+    expected = tuple(
+        _name_spelling_key(_anchor_component_letters(part), voice_region) for part in spoken_syllables
+    )
+    heard: set[tuple[str, ...]] = {()}
+    for token in span_tokens:
+        readings = _romaji_name_readings(token, voice_region)
+        if not readings:
+            return False
+        heard = {prefix + reading for prefix in heard for reading in readings}
+    return expected in heard
+
+
 def _anchor_component_sounds_right(
     spoken_syllables: Sequence[str],
     source_component: str,
@@ -757,6 +817,8 @@ def _locked_name_anchor_component_match(
                 span += tokens[end_index]
                 if _anchor_component_sounds_right(
                     spoken_syllables, source_component, span, voice_region
+                ) or _romaji_component_sounds_right(
+                    spoken_syllables, transcript_tokens[start_index:end_index + 1], voice_region
                 ):
                     matched_end = end_index + 1
                     break
