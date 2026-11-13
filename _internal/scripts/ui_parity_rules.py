@@ -255,7 +255,7 @@ def hand_colours() -> list[str]:
 
 
 # ---------------------------------------------------------------------------------------------------------------- L4 spacing / type scale / weight
-SPACE_OK = {0, 1, 4, 8, 12, 16, 20, 24, 32, 40, 48, 64}
+SPACE_OK = {0, 4, 8, 12, 16, 20, 24, 32, 40, 48, 64}
 TYPE_OK = {12, 14, 16, 18, 20, 24, 32}
 WEIGHT_OK = {400, 500, 700}
 TW_SPACE = re.compile(r"(?<![\w\-\[])-?(?:p|px|py|pt|pb|pl|pr|ps|pe|m|mx|my|mt|mb|ml|mr|ms|me|gap|gap-x|gap-y|space-x|space-y)-(\d+(?:\.\d+)?)(?![\w.%\]])")
@@ -522,7 +522,18 @@ def long_labels() -> dict[str, list[str]]:
         ctx = LABEL_CTX[plat]
         for path in files:
             src = lines(path)
-            for i, line in enumerate(src):
+            for i, original in enumerate(src):
+                if original.strip().startswith(("//", "*", "/*")):
+                    continue
+                # A description/input hint is not a control label, even on the same line as a Button.
+                line = re.sub(r'\b(?:placeholder|description|hint|help|detail|summary|error|message|body)(?:Text)?\s*(?:[:=]\s*\{?|=\s*)[^;}\n]*', '', original)
+                if plat == "qt" and not re.search(r'\b(?:text|label|title|name|tip)\s*:', line):
+                    continue
+                if plat == "qt" and re.search(r'\b(?:onClicked|function|notify|notice|showError)\b', line):
+                    continue
+                if plat == "web":
+                    # Handler bodies and tooltip descriptions can contain entire messages. Only the visible child or explicit label counts.
+                    line = re.sub(r'\bon\w+=\{.*?\}(?=\s+\w+=|>|\s*/>)', '', line)
                 here = ctx.search(line) or (plat == "qt" and i > 0 and ctx.search(src[i - 1] + src[max(0, i - 2)]))
                 if not here:
                     continue
@@ -552,6 +563,14 @@ def l10_control_pairs() -> list[str]:
         for plat, where in item["at"].items():
             path = ROOT / where["file"]
             text = path.read_text(encoding="utf-8")
+            for pattern in where.get("require", []):
+                if not re.search(pattern, text, re.S):
+                    problems.append(f"L10 [{item['id']}] {plat}: thiếu hợp đồng {pattern!r}")
+            for pattern in where.get("forbid", []):
+                if re.search(pattern, text, re.S):
+                    problems.append(f"L10 [{item['id']}] {plat}: còn hợp đồng cũ {pattern!r}")
+            if "key" not in where:
+                continue
             if where["key"] not in vi:
                 problems.append(f"L10 [{item['id']}] {plat}: khoá {where['key']} không có trong vi.json")
                 continue

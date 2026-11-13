@@ -147,3 +147,37 @@ def test_l9_bites_a_five_word_button(planted):
 def test_l10_bites_one_control_with_two_words(planted):
     problems = planted.l10_control_pairs()
     assert any("[marks]" in p and "chữ khác" in p for p in problems), problems
+
+
+def test_l5_bites_a_menu_using_the_sheet_radius(planted):
+    cfg = planted.config()
+    cfg["L5"]["components"] = [{"name": "menu", "role": "cover", "file": "ui/src/listen/Lib.tsx",
+                                "require": "rounded-cover", "forbid": ["rounded-sheet"]}]
+    planted.CONFIG.write_text(json.dumps(cfg), encoding="utf-8")
+    assert planted.l5_radius_roles()
+
+
+def test_l6_bites_missing_timings_and_a_hard_reduced_fade(planted):
+    token = planted.ROOT / "ui_design/tokens.json"
+    token.parent.mkdir()
+    token.write_text('{"timing": {}}', encoding="utf-8")
+    assert any("skeletonPeriodMs" in p for p in planted.l6_motion_tokens())
+    token.write_text(json.dumps({"timing": {k: 120 for k in (
+        "skeletonLow", "skeletonPeriodMs", "noticeMs", "undoMs", "reducedFadeMs", "indeterminateMs", "spinMs")}}), encoding="utf-8")
+    qml = planted.ROOT / "desktop_qt/qml/Lib.qml"
+    qml.write_text(qml.read_text(encoding="utf-8") + '\nBehavior on opacity { duration: Theme.reduceMotion ? 0 : 220 }', encoding="utf-8")
+    assert any("cắt cứng" in p for p in planted.l6_motion_tokens())
+
+
+def test_l9_ignores_input_hints_and_descriptions(planted):
+    path = planted.ROOT / "desktop_qt/qml/Lib.qml"
+    path.write_text('FormField { placeholder: S.s_g; description: S.s_g }', encoding="utf-8")
+    assert not any("Lib.qml" in str(p) for p in planted.long_labels().values())
+
+
+def test_l10_bites_a_control_with_wrong_geometry(planted):
+    cfg = planted.config()
+    cfg["L10"]["controls"] = [{"id": "toast-close", "at": {"qt": {
+        "file": "desktop_qt/qml/Lib.qml", "require": [r"x: card.width - width - 12"], "forbid": [r"x: -6"]}}}]
+    planted.CONFIG.write_text(json.dumps(cfg), encoding="utf-8")
+    assert any("toast-close" in p for p in planted.l10_control_pairs())

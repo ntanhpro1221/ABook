@@ -1,214 +1,818 @@
 {
-  "_doc": "Exceptions and remaining-work lists for scripts/ui_parity_rules.py (L1-L10). Every exception carries a reason. `remaining` lists are ratchets: a count may only go down, and must be lowered here when a fix lands.",
-  "L1": {
-    "screens": [
-      {
-        "id": "library",
-        "qt": [
-          "desktop_qt/qml/LibraryScreen.qml",
-          "desktop_qt/qml/BookCell.qml",
-          "desktop_qt/qml/LibraryContinue.qml"
-        ],
-        "android": [
-          "mobile/android/app/src/main/java/vn/abook/player/ui/screens/LibraryScreen.kt",
-          "mobile/android/app/src/main/java/vn/abook/player/ui/screens/LibraryChrome.kt",
-          "mobile/android/app/src/main/java/vn/abook/player/ui/screens/LibrarySheets.kt"
-        ],
-        "web_desktop": [
-          "ui/src/desktop/App.tsx"
-        ],
-        "web_phone": [
-          "ui/src/listen/LibraryScreen.tsx"
-        ]
-      },
-      {
-        "id": "book",
-        "qt": [
-          "desktop_qt/qml/BookPage.qml",
-          "desktop_qt/qml/CastList.qml",
-          "desktop_qt/qml/HistoryList.qml",
-          "desktop_qt/qml/ChapterList.qml",
-          "desktop_qt/qml/ChapterRow.qml"
-        ],
-        "android": [
-          "mobile/android/app/src/main/java/vn/abook/player/ui/screens/BookScreen.kt",
-          "mobile/android/app/src/main/java/vn/abook/player/ui/screens/BookTabs.kt",
-          "mobile/android/app/src/main/java/vn/abook/player/ui/screens/BookSheets.kt"
-        ]
-      },
-      {
-        "id": "player",
-        "qt": [
-          "desktop_qt/qml/NowPlaying.qml",
-          "desktop_qt/qml/PlayerBar.qml",
-          "desktop_qt/qml/MiniPlayer.qml",
-          "desktop_qt/qml/SeekBar.qml",
-          "desktop_qt/qml/ChaptersPopover.qml",
-          "desktop_qt/qml/PlayerVoicePopover.qml",
-          "desktop_qt/qml/SpeedPopover.qml",
-          "desktop_qt/qml/TonePage.qml"
-        ],
-        "android": [
-          "mobile/android/app/src/main/java/vn/abook/player/ui/nowplaying/NowPlayingScreen.kt",
-          "mobile/android/app/src/main/java/vn/abook/player/ui/nowplaying/PlayerSheets.kt",
-          "mobile/android/app/src/main/java/vn/abook/player/ui/player/MiniPlayer.kt",
-          "mobile/android/app/src/main/java/vn/abook/player/ui/nowplaying/TonePage.kt"
-        ]
-      },
-      {
-        "id": "settings",
-        "qt": [
-          "desktop_qt/qml/SettingsScreen.qml",
-          "desktop_qt/qml/Settings*.qml",
-          "desktop_qt/qml/DisclosureRow.qml"
-        ],
-        "android": [
-          "mobile/android/app/src/main/java/vn/abook/player/ui/screens/Settings*.kt"
-        ]
-      },
-      {
-        "id": "add-book",
-        "qt": [
-          "desktop_qt/qml/AddBook.qml",
-          "desktop_qt/qml/Import*.qml"
-        ],
-        "android": [
-          "mobile/android/app/src/main/java/vn/abook/player/ui/addbook/*.kt"
-        ]
-      },
-      {
-        "id": "notices",
-        "qt": [
-          "desktop_qt/qml/Toast.qml",
-          "desktop_qt/qml/ToastStack.qml"
-        ],
-        "android": [
-          "mobile/android/app/src/main/java/vn/abook/player/ui/components/UndoBar.kt"
-        ]
-      },
-      {
-        "id": "devices",
-        "qt": [
-          "desktop_qt/qml/PhoneSync*.qml",
-          "desktop_qt/qml/OtherComputers*.qml",
-          "desktop_qt/qml/Devices*.qml"
-        ],
-        "android": [
-          "mobile/android/app/src/main/java/vn/abook/player/ui/devices/*.kt"
-        ]
-      }
-    ],
-    "allow": [
-      {
-        "a": "Đổi tên chương…",
-        "b": "Đã đổi tên chương: {0}",
-        "reason": "a menu row and the toast after it, not two wordings of one label (the Qt '…' suffix itself is UI_PARITY_QT.md section e)"
-      }
-    ],
-    "_doc": "Paired screens compared directly: Qt <-> Android and web desktop <-> web phone. A one-sided text that nearly equals a one-sided text of the other side is the same task written two ways. `allow`: a pair that only looks alike (a, b = the two texts), with a reason."
-  },
-  "L2": {
-    "allow": [
-      {
-        "task": "Tên bảng \"…\" của trình phát",
-        "text": "Tuỳ chọn",
-        "reason": "the ban is for the name of the player's '…' sheet; New project's 'Tuỳ chọn' is the heading of its optional settings section (web NewProjectScreen.tsx, Qt NewProjectScreen.qml), not a '…' button"
-      },
-      {
-        "task": "Mã ghép đang hiện",
-        "text": "còn {}",
-        "reason": "the ban is a countdown under a pairing code; the uses are an export job's time left ('còn 3 phút', bookFileExport.ts / labels.ts / ExportModel.kt), the same words on all three"
-      },
-      {
-        "task": "Dung lượng (một dòng)",
-        "text": "{} · còn trống {}",
-        "reason": "the ban is a bare size before '· còn trống'; the template's first slot is always 'Sách {cỡ}' or 'Chưa có sách' (format.ts storageSummary = DevicesModel.kt Storage.line), i.e. the chosen wording"
-      }
-    ],
-    "_doc": "Dictionary 'Thay cho' items that only look like a used text: (task, text) with a reason. A row-specific ban that hits an unrelated task goes here, never a whole row."
-  },
-  "L3": {
-    "web_only": [
-      {
-        "key": "select-chevron",
-        "reason": "CSS data-URI image for the native <select> arrow; Qt and Compose draw the lucide chevron icon"
-      },
-      {
-        "key": "shadow",
-        "reason": "CSS box-shadow list; Qt Shadow.qml and Compose elevation draw their own shadow from the same layer role"
-      },
-      {
-        "key": "shadow-lg",
-        "reason": "CSS box-shadow list, as `shadow`"
-      }
-    ],
-    "allow": [
-      {
-        "file": "desktop_qt/qml/CaptionButton.qml",
-        "match": "*",
-        "reason": "Windows title-bar close button: the system's own red (#c42b1c / pressed #a82419) with white glyph, as every Windows app; not an ABook colour"
-      },
-      {
-        "file": "desktop_qt/qml/NowPlaying.qml",
-        "match": "Qt.rgba(",
-        "reason": "interpolates between two Theme colours frame by frame during the mini <-> full morph (no fixed colour)"
-      },
-      {
-        "file": "desktop_qt/qml/ReadAlongView.qml",
-        "match": "Qt.alpha(",
-        "reason": "reading-surface tokens: Theme.read accent at the surface's own along/word percentages (web color-mix of the same tokens)"
-      },
-      {
-        "file": "desktop_qt/qml/ReadAlongView.qml",
-        "match": "Qt.rgba(",
-        "reason": "edge fade from the reading surface's background token to its transparent self"
-      },
-      {
-        "file": "desktop_qt/qml/ScrollEdges.qml",
-        "match": "Qt.alpha(",
-        "reason": "edge fade from the host's background token to transparent"
-      },
-      {
-        "file": "desktop_qt/qml/ScriptRow.qml",
-        "match": "Qt.alpha(",
-        "reason": "Theme.warning at 60 % / 25 %: the web's `ring-warning/60` / `ring-warning/25` on the same marked row"
-      },
-      {
-        "file": "desktop_qt/qml/Sidebar.qml",
-        "match": "*",
-        "reason": "shadow cast by the sidebar (web `shadow` token is a CSS box-shadow list, web-only); Qt draws the same soft edge as a gradient"
-      },
-      {
-        "file": "mobile/android/app/src/main/java/vn/abook/player/ui/components/ScrollFade.kt",
-        "match": "Color.Black",
-        "reason": "alpha mask (DstIn): only the alpha channel is used, no colour reaches the screen"
-      },
-      {
-        "file": "mobile/android/app/src/main/java/vn/abook/player/ui/player/MiniPlayer.kt",
-        "match": "Color.Black",
-        "reason": "shadow above the floating mini player (web `shadow` is CSS, web-only); drawn as a gradient"
-      }
-    ],
-    "_doc": "Colour tokens: every tokens.json colour reaches Theme.qml and Tokens.kt except `web_only`. QML/Kotlin UI files use Theme.* / Abook.colors.*; `allow` = (file, exact match) with a reason."
-  },
-  "L4": {
-    "allow": [],
-    "remaining": {}
-  },
-  "L5": {
-    "components": []
-  },
-  "L6": {
-    "uses": []
-  },
-  "L7": {
-    "fixed": [],
-    "remaining": {}
-  },
-  "L9": {
-    "allow": []
-  },
-  "L10": {
-    "controls": []
-  }
+    "_doc":  "Exceptions and remaining-work lists for scripts/ui_parity_rules.py (L1-L10). Every exception carries a reason. `remaining` lists are ratchets: a count may only go down, and must be lowered here when a fix lands.",
+    "L1":  {
+               "screens":  [
+                               {
+                                   "id":  "library",
+                                   "qt":  [
+                                              "desktop_qt/qml/LibraryScreen.qml",
+                                              "desktop_qt/qml/BookCell.qml",
+                                              "desktop_qt/qml/LibraryContinue.qml"
+                                          ],
+                                   "android":  [
+                                                   "mobile/android/app/src/main/java/vn/abook/player/ui/screens/LibraryScreen.kt",
+                                                   "mobile/android/app/src/main/java/vn/abook/player/ui/screens/LibraryChrome.kt",
+                                                   "mobile/android/app/src/main/java/vn/abook/player/ui/screens/LibrarySheets.kt"
+                                               ],
+                                   "web_desktop":  [
+                                                       "ui/src/desktop/App.tsx"
+                                                   ],
+                                   "web_phone":  [
+                                                     "ui/src/listen/LibraryScreen.tsx"
+                                                 ]
+                               },
+                               {
+                                   "id":  "book",
+                                   "qt":  [
+                                              "desktop_qt/qml/BookPage.qml",
+                                              "desktop_qt/qml/CastList.qml",
+                                              "desktop_qt/qml/HistoryList.qml",
+                                              "desktop_qt/qml/ChapterList.qml",
+                                              "desktop_qt/qml/ChapterRow.qml"
+                                          ],
+                                   "android":  [
+                                                   "mobile/android/app/src/main/java/vn/abook/player/ui/screens/BookScreen.kt",
+                                                   "mobile/android/app/src/main/java/vn/abook/player/ui/screens/BookTabs.kt",
+                                                   "mobile/android/app/src/main/java/vn/abook/player/ui/screens/BookSheets.kt"
+                                               ]
+                               },
+                               {
+                                   "id":  "player",
+                                   "qt":  [
+                                              "desktop_qt/qml/NowPlaying.qml",
+                                              "desktop_qt/qml/PlayerBar.qml",
+                                              "desktop_qt/qml/MiniPlayer.qml",
+                                              "desktop_qt/qml/SeekBar.qml",
+                                              "desktop_qt/qml/ChaptersPopover.qml",
+                                              "desktop_qt/qml/PlayerVoicePopover.qml",
+                                              "desktop_qt/qml/SpeedPopover.qml",
+                                              "desktop_qt/qml/TonePage.qml"
+                                          ],
+                                   "android":  [
+                                                   "mobile/android/app/src/main/java/vn/abook/player/ui/nowplaying/NowPlayingScreen.kt",
+                                                   "mobile/android/app/src/main/java/vn/abook/player/ui/nowplaying/PlayerSheets.kt",
+                                                   "mobile/android/app/src/main/java/vn/abook/player/ui/player/MiniPlayer.kt",
+                                                   "mobile/android/app/src/main/java/vn/abook/player/ui/nowplaying/TonePage.kt"
+                                               ]
+                               },
+                               {
+                                   "id":  "settings",
+                                   "qt":  [
+                                              "desktop_qt/qml/SettingsScreen.qml",
+                                              "desktop_qt/qml/Settings*.qml",
+                                              "desktop_qt/qml/DisclosureRow.qml"
+                                          ],
+                                   "android":  [
+                                                   "mobile/android/app/src/main/java/vn/abook/player/ui/screens/Settings*.kt"
+                                               ]
+                               },
+                               {
+                                   "id":  "add-book",
+                                   "qt":  [
+                                              "desktop_qt/qml/AddBook.qml",
+                                              "desktop_qt/qml/Import*.qml"
+                                          ],
+                                   "android":  [
+                                                   "mobile/android/app/src/main/java/vn/abook/player/ui/addbook/*.kt"
+                                               ]
+                               },
+                               {
+                                   "id":  "notices",
+                                   "qt":  [
+                                              "desktop_qt/qml/Toast.qml",
+                                              "desktop_qt/qml/ToastStack.qml"
+                                          ],
+                                   "android":  [
+                                                   "mobile/android/app/src/main/java/vn/abook/player/ui/components/UndoBar.kt"
+                                               ]
+                               },
+                               {
+                                   "id":  "devices",
+                                   "qt":  [
+                                              "desktop_qt/qml/PhoneSync*.qml",
+                                              "desktop_qt/qml/OtherComputers*.qml",
+                                              "desktop_qt/qml/Devices*.qml"
+                                          ],
+                                   "android":  [
+                                                   "mobile/android/app/src/main/java/vn/abook/player/ui/devices/*.kt"
+                                               ]
+                               }
+                           ],
+               "allow":  [
+                             {
+                                 "a":  "Đổi tên chương…",
+                                 "b":  "Đã đổi tên chương: {0}",
+                                 "reason":  "a menu row and the toast after it, not two wordings of one label (the Qt \u0027…\u0027 suffix itself is UI_PARITY_QT.md section e)"
+                             }
+                         ],
+               "_doc":  "Paired screens compared directly: Qt \u003c-\u003e Android and web desktop \u003c-\u003e web phone. A one-sided text that nearly equals a one-sided text of the other side is the same task written two ways. `allow`: a pair that only looks alike (a, b = the two texts), with a reason."
+           },
+    "L2":  {
+               "allow":  [
+                             {
+                                 "task":  "Tên bảng \"…\" của trình phát",
+                                 "text":  "Tuỳ chọn",
+                                 "reason":  "the ban is for the name of the player\u0027s \u0027…\u0027 sheet; New project\u0027s \u0027Tuỳ chọn\u0027 is the heading of its optional settings section (web NewProjectScreen.tsx, Qt NewProjectScreen.qml), not a \u0027…\u0027 button"
+                             },
+                             {
+                                 "task":  "Mã ghép đang hiện",
+                                 "text":  "còn {}",
+                                 "reason":  "the ban is a countdown under a pairing code; the uses are an export job\u0027s time left (\u0027còn 3 phút\u0027, bookFileExport.ts / labels.ts / ExportModel.kt), the same words on all three"
+                             },
+                             {
+                                 "task":  "Dung lượng (một dòng)",
+                                 "text":  "{} · còn trống {}",
+                                 "reason":  "the ban is a bare size before \u0027· còn trống\u0027; the template\u0027s first slot is always \u0027Sách {cỡ}\u0027 or \u0027Chưa có sách\u0027 (format.ts storageSummary = DevicesModel.kt Storage.line), i.e. the chosen wording"
+                             }
+                         ],
+               "_doc":  "Dictionary \u0027Thay cho\u0027 items that only look like a used text: (task, text) with a reason. A row-specific ban that hits an unrelated task goes here, never a whole row."
+           },
+    "L3":  {
+               "web_only":  [
+                                {
+                                    "key":  "select-chevron",
+                                    "reason":  "CSS data-URI image for the native \u003cselect\u003e arrow; Qt and Compose draw the lucide chevron icon"
+                                },
+                                {
+                                    "key":  "shadow",
+                                    "reason":  "CSS box-shadow list; Qt Shadow.qml and Compose elevation draw their own shadow from the same layer role"
+                                },
+                                {
+                                    "key":  "shadow-lg",
+                                    "reason":  "CSS box-shadow list, as `shadow`"
+                                }
+                            ],
+               "allow":  [
+                             {
+                                 "file":  "desktop_qt/qml/CaptionButton.qml",
+                                 "match":  "*",
+                                 "reason":  "Windows title-bar close button: the system\u0027s own red (#c42b1c / pressed #a82419) with white glyph, as every Windows app; not an ABook colour"
+                             },
+                             {
+                                 "file":  "desktop_qt/qml/NowPlaying.qml",
+                                 "match":  "Qt.rgba(",
+                                 "reason":  "interpolates between two Theme colours frame by frame during the mini \u003c-\u003e full morph (no fixed colour)"
+                             },
+                             {
+                                 "file":  "desktop_qt/qml/ReadAlongView.qml",
+                                 "match":  "Qt.alpha(",
+                                 "reason":  "reading-surface tokens: Theme.read accent at the surface\u0027s own along/word percentages (web color-mix of the same tokens)"
+                             },
+                             {
+                                 "file":  "desktop_qt/qml/ReadAlongView.qml",
+                                 "match":  "Qt.rgba(",
+                                 "reason":  "edge fade from the reading surface\u0027s background token to its transparent self"
+                             },
+                             {
+                                 "file":  "desktop_qt/qml/ScrollEdges.qml",
+                                 "match":  "Qt.alpha(",
+                                 "reason":  "edge fade from the host\u0027s background token to transparent"
+                             },
+                             {
+                                 "file":  "desktop_qt/qml/ScriptRow.qml",
+                                 "match":  "Qt.alpha(",
+                                 "reason":  "Theme.warning at 60 % / 25 %: the web\u0027s `ring-warning/60` / `ring-warning/25` on the same marked row"
+                             },
+                             {
+                                 "file":  "desktop_qt/qml/Sidebar.qml",
+                                 "match":  "*",
+                                 "reason":  "shadow cast by the sidebar (web `shadow` token is a CSS box-shadow list, web-only); Qt draws the same soft edge as a gradient"
+                             },
+                             {
+                                 "file":  "mobile/android/app/src/main/java/vn/abook/player/ui/components/ScrollFade.kt",
+                                 "match":  "Color.Black",
+                                 "reason":  "alpha mask (DstIn): only the alpha channel is used, no colour reaches the screen"
+                             },
+                             {
+                                 "file":  "mobile/android/app/src/main/java/vn/abook/player/ui/player/MiniPlayer.kt",
+                                 "match":  "Color.Black",
+                                 "reason":  "shadow above the floating mini player (web `shadow` is CSS, web-only); drawn as a gradient"
+                             }
+                         ],
+               "_doc":  "Colour tokens: every tokens.json colour reaches Theme.qml and Tokens.kt except `web_only`. QML/Kotlin UI files use Theme.* / Abook.colors.*; `allow` = (file, exact match) with a reason."
+           },
+    "L4":  {
+               "allow":  [
+
+                         ],
+               "remaining":  {
+
+                             }
+           },
+    "L5":  {
+               "components":  [
+                                  {
+                                      "name":  "button",
+                                      "file":  "ui/src/shared/ui.tsx",
+                                      "role":  "control",
+                                      "require":  "lg: [^\\n]*rounded-control",
+                                      "forbid":  [
+                                                     "lg: [^\\n]*rounded-cover"
+                                                 ]
+                                  },
+                                  {
+                                      "name":  "menu",
+                                      "file":  "ui/src/shared/ActionMenu.tsx",
+                                      "role":  "cover",
+                                      "require":  "book-action-menu[^\\n]*rounded-cover",
+                                      "forbid":  [
+                                                     "book-action-menu[^\\n]*rounded-sheet"
+                                                 ]
+                                  },
+                                  {
+                                      "name":  "button",
+                                      "file":  "desktop_qt/qml/Button.qml",
+                                      "role":  "control",
+                                      "require":  "radius: Theme.radiusControl",
+                                      "forbid":  [
+                                                     "radius: root.size"
+                                                 ]
+                                  },
+                                  {
+                                      "name":  "field",
+                                      "file":  "desktop_qt/qml/FormField.qml",
+                                      "role":  "control",
+                                      "require":  "radius: Theme.radiusControl",
+                                      "forbid":  [
+
+                                                 ]
+                                  },
+                                  {
+                                      "name":  "menu",
+                                      "file":  "desktop_qt/qml/Popover.qml",
+                                      "role":  "cover",
+                                      "require":  "radius: Theme.radiusCover",
+                                      "forbid":  [
+
+                                                 ]
+                                  },
+                                  {
+                                      "name":  "dialog",
+                                      "file":  "desktop_qt/qml/Modal.qml",
+                                      "role":  "sheet",
+                                      "require":  "radius: Theme.radiusSheet",
+                                      "forbid":  [
+
+                                                 ]
+                                  },
+                                  {
+                                      "name":  "button",
+                                      "file":  "mobile/android/app/src/main/java/vn/abook/player/ui/components/Components.kt",
+                                      "role":  "control",
+                                      "require":  "RoundedCornerShape\\(Dim.radiusControl\\)",
+                                      "forbid":  [
+
+                                                 ]
+                                  },
+                                  {
+                                      "name":  "sheet",
+                                      "file":  "mobile/android/app/src/main/java/vn/abook/player/ui/components/Sheet.kt",
+                                      "role":  "sheet",
+                                      "require":  "Dim.radiusSheet",
+                                      "forbid":  [
+
+                                                 ]
+                                  },
+                                  {
+                                      "name":  "toast",
+                                      "file":  "desktop_qt/qml/Toast.qml",
+                                      "role":  "cover",
+                                      "require":  "radius: Theme.radiusCover",
+                                      "forbid":  [
+
+                                                 ]
+                                  }
+                              ]
+           },
+    "L6":  {
+               "uses":  [
+                            {
+                                "file":  "ui/src/styles.css",
+                                "what":  "skeleton/reduced motion",
+                                "require":  "skeleton-pulse var\\(--skeleton-period-ms\\)",
+                                "forbid":  [
+                                               "skeleton-pulse [\\d.]+s",
+                                               "--motion-(?:medium|slow): 1[46]0ms"
+                                           ]
+                            },
+                            {
+                                "file":  "ui/src/shared/trashUndo.ts",
+                                "what":  "undo duration",
+                                "require":  "UNDO_TOAST_MS = TIMING.undoMs",
+                                "forbid":  [
+
+                                           ]
+                            },
+                            {
+                                "file":  "ui/src/shared/toast.ts",
+                                "what":  "notice duration",
+                                "require":  "duration: TIMING.noticeMs",
+                                "forbid":  [
+
+                                           ]
+                            },
+                            {
+                                "file":  "desktop_qt/qml/Toast.qml",
+                                "what":  "notice duration",
+                                "require":  "defaultDuration: Theme.noticeMs",
+                                "forbid":  [
+
+                                           ]
+                            },
+                            {
+                                "file":  "desktop_qt/qml/StudioStore.qml",
+                                "what":  "undo duration",
+                                "require":  "Theme.undoMs",
+                                "forbid":  [
+                                               "28000"
+                                           ]
+                            },
+                            {
+                                "file":  "mobile/android/app/src/main/java/vn/abook/player/ui/data/UndoDelete.kt",
+                                "what":  "notice and undo duration",
+                                "require":  "MotionMs.NOTICE_MS",
+                                "forbid":  [
+                                               "delay\\(5_000\\)",
+                                               "WINDOW_MS = 28_000"
+                                           ]
+                            },
+                            {
+                                "file":  "mobile/android/app/src/main/java/vn/abook/player/ui/components/ListParts.kt",
+                                "what":  "indeterminate duration",
+                                "require":  "MotionMs.INDETERMINATE_MS",
+                                "forbid":  [
+                                               "INDETERMINATE_MS = 1400"
+                                           ]
+                            },
+                            {
+                                "file":  "desktop_qt/qml/StudioBar.qml",
+                                "what":  "indeterminate duration",
+                                "require":  "Theme.indeterminateMs",
+                                "forbid":  [
+                                               "duration: 1400"
+                                           ]
+                            },
+                            {
+                                "file":  "mobile/android/app/src/main/java/vn/abook/player/ui/motion/Motion.kt",
+                                "what":  "system reduced motion",
+                                "require":  "MotionMs.REDUCED_FADE_MS",
+                                "forbid":  [
+
+                                           ]
+                            },
+                            {
+                                "file":  "mobile/android/app/src/main/java/vn/abook/player/ui/components/SkeletonPulse.kt",
+                                "what":  "skeleton pulse",
+                                "require":  "MotionMs.SKELETON_PERIOD_MS",
+                                "forbid":  [
+
+                                           ]
+                            },
+                            {
+                                "file":  "desktop_qt/qml/PlayButton.qml",
+                                "what":  "busy spin duration",
+                                "require":  "Theme.spinMs",
+                                "forbid":  [
+                                               "duration: 900"
+                                           ]
+                            }
+                        ]
+           },
+    "L7":  {
+               "fixed":  [
+
+                         ],
+               "remaining":  {
+                                 "desktop_qt/qml/AddBook.qml":  3,
+                                 "desktop_qt/qml/AdvancedUpdate.qml":  1,
+                                 "desktop_qt/qml/AudioFxPanel.qml":  4,
+                                 "desktop_qt/qml/AutoPickLine.qml":  2,
+                                 "desktop_qt/qml/BookCell.qml":  2,
+                                 "desktop_qt/qml/BookMusicSettings.qml":  2,
+                                 "desktop_qt/qml/BookPage.qml":  18,
+                                 "desktop_qt/qml/Button.qml":  2,
+                                 "desktop_qt/qml/CastEngine.qml":  5,
+                                 "desktop_qt/qml/CastGender.qml":  3,
+                                 "desktop_qt/qml/CastList.qml":  5,
+                                 "desktop_qt/qml/CastMenu.qml":  3,
+                                 "desktop_qt/qml/CastMerge.qml":  1,
+                                 "desktop_qt/qml/CastPerson.qml":  8,
+                                 "desktop_qt/qml/CastRename.qml":  2,
+                                 "desktop_qt/qml/CastVoice.qml":  9,
+                                 "desktop_qt/qml/ChapterError.qml":  1,
+                                 "desktop_qt/qml/ChapterList.qml":  1,
+                                 "desktop_qt/qml/ChapterRow.qml":  8,
+                                 "desktop_qt/qml/ChoiceRow.qml":  1,
+                                 "desktop_qt/qml/Collapse.qml":  1,
+                                 "desktop_qt/qml/ConnectionPopover.qml":  1,
+                                 "desktop_qt/qml/ControlChip.qml":  1,
+                                 "desktop_qt/qml/CoverEditor.qml":  4,
+                                 "desktop_qt/qml/CoverView.qml":  2,
+                                 "desktop_qt/qml/DesktopTray.qml":  1,
+                                 "desktop_qt/qml/DevicesLogBox.qml":  1,
+                                 "desktop_qt/qml/DevicesRows.qml":  1,
+                                 "desktop_qt/qml/DevicesToggle.qml":  1,
+                                 "desktop_qt/qml/DevicesUnpair.qml":  1,
+                                 "desktop_qt/qml/DisclosureRow.qml":  1,
+                                 "desktop_qt/qml/DownloadRing.qml":  3,
+                                 "desktop_qt/qml/EditBook.qml":  2,
+                                 "desktop_qt/qml/EditBookItems.qml":  4,
+                                 "desktop_qt/qml/EditBookReadings.qml":  2,
+                                 "desktop_qt/qml/EditBookSection.qml":  1,
+                                 "desktop_qt/qml/EditBookSkeleton.qml":  1,
+                                 "desktop_qt/qml/EditBookSwap.qml":  2,
+                                 "desktop_qt/qml/EmptyState.qml":  1,
+                                 "desktop_qt/qml/ExportBook.qml":  2,
+                                 "desktop_qt/qml/ExportBusy.qml":  2,
+                                 "desktop_qt/qml/ExportDone.qml":  1,
+                                 "desktop_qt/qml/ExportKinds.qml":  1,
+                                 "desktop_qt/qml/FfmpegNeeded.qml":  5,
+                                 "desktop_qt/qml/FlowDetail.qml":  1,
+                                 "desktop_qt/qml/GeneratedCover.qml":  1,
+                                 "desktop_qt/qml/HistoryList.qml":  1,
+                                 "desktop_qt/qml/Icon.qml":  1,
+                                 "desktop_qt/qml/ImportChapters.qml":  7,
+                                 "desktop_qt/qml/ImportCheck.qml":  1,
+                                 "desktop_qt/qml/ImportDrop.qml":  1,
+                                 "desktop_qt/qml/ImportSkeleton.qml":  2,
+                                 "desktop_qt/qml/Interactive.qml":  1,
+                                 "desktop_qt/qml/LibraryScreen.qml":  3,
+                                 "desktop_qt/qml/LookKbd.qml":  2,
+                                 "desktop_qt/qml/LookShortcuts.qml":  1,
+                                 "desktop_qt/qml/Main.qml":  4,
+                                 "desktop_qt/qml/MenuRow.qml":  1,
+                                 "desktop_qt/qml/Modal.qml":  3,
+                                 "desktop_qt/qml/MusicBookSection.qml":  2,
+                                 "desktop_qt/qml/MusicCredit.qml":  3,
+                                 "desktop_qt/qml/MusicScreen.qml":  10,
+                                 "desktop_qt/qml/MusicTrackDetail.qml":  14,
+                                 "desktop_qt/qml/MusicTrackRow.qml":  1,
+                                 "desktop_qt/qml/MyMusicModule.qml":  4,
+                                 "desktop_qt/qml/MyMusicTrack.qml":  3,
+                                 "desktop_qt/qml/NameEdit.qml":  1,
+                                 "desktop_qt/qml/NameReadings.qml":  1,
+                                 "desktop_qt/qml/NameRow.qml":  1,
+                                 "desktop_qt/qml/NewChapters.qml":  7,
+                                 "desktop_qt/qml/NewConfirm.qml":  1,
+                                 "desktop_qt/qml/NewCredits.qml":  4,
+                                 "desktop_qt/qml/NewDrop.qml":  10,
+                                 "desktop_qt/qml/NewProjectScreen.qml":  1,
+                                 "desktop_qt/qml/NewQuality.qml":  1,
+                                 "desktop_qt/qml/NewSeedBanner.qml":  5,
+                                 "desktop_qt/qml/NewTemplateBar.qml":  11,
+                                 "desktop_qt/qml/NewVoice.qml":  5,
+                                 "desktop_qt/qml/NewVolumes.qml":  5,
+                                 "desktop_qt/qml/NowPlaying.qml":  6,
+                                 "desktop_qt/qml/OtherComputers.qml":  1,
+                                 "desktop_qt/qml/OtherComputersBluetooth.qml":  1,
+                                 "desktop_qt/qml/OtherComputersRow.qml":  7,
+                                 "desktop_qt/qml/OutputPopover.qml":  1,
+                                 "desktop_qt/qml/PendingRow.qml":  3,
+                                 "desktop_qt/qml/PhoneDiagnostics.qml":  6,
+                                 "desktop_qt/qml/PhoneEdits.qml":  1,
+                                 "desktop_qt/qml/PhoneSyncDevice.qml":  2,
+                                 "desktop_qt/qml/PhoneSyncPairing.qml":  4,
+                                 "desktop_qt/qml/PlayButton.qml":  1,
+                                 "desktop_qt/qml/PlayerAlert.qml":  3,
+                                 "desktop_qt/qml/PlayerBar.qml":  2,
+                                 "desktop_qt/qml/PlayerConsent.qml":  2,
+                                 "desktop_qt/qml/PlayerNotice.qml":  1,
+                                 "desktop_qt/qml/PlayerSubtitle.qml":  2,
+                                 "desktop_qt/qml/Popover.qml":  1,
+                                 "desktop_qt/qml/PrecastReview.qml":  3,
+                                 "desktop_qt/qml/ProjectRow.qml":  10,
+                                 "desktop_qt/qml/ProjectScreen.qml":  17,
+                                 "desktop_qt/qml/ProjectSteps.qml":  7,
+                                 "desktop_qt/qml/ProjectsScreen.qml":  8,
+                                 "desktop_qt/qml/ProviderKey.qml":  2,
+                                 "desktop_qt/qml/ReadAlongView.qml":  3,
+                                 "desktop_qt/qml/ReadingProblem.qml":  1,
+                                 "desktop_qt/qml/RecordDialogs.qml":  3,
+                                 "desktop_qt/qml/ReviewQueue.qml":  3,
+                                 "desktop_qt/qml/ReviewRow.qml":  8,
+                                 "desktop_qt/qml/ReviewSpoken.qml":  1,
+                                 "desktop_qt/qml/ScreenHeader.qml":  2,
+                                 "desktop_qt/qml/ScreenStack.qml":  2,
+                                 "desktop_qt/qml/ScriptChapterMenu.qml":  1,
+                                 "desktop_qt/qml/ScriptDelivery.qml":  6,
+                                 "desktop_qt/qml/ScriptRow.qml":  17,
+                                 "desktop_qt/qml/ScriptSpeakerMenu.qml":  5,
+                                 "desktop_qt/qml/ScriptTab.qml":  14,
+                                 "desktop_qt/qml/ScrollEdges.qml":  2,
+                                 "desktop_qt/qml/SectionBlock.qml":  2,
+                                 "desktop_qt/qml/SettingRow.qml":  2,
+                                 "desktop_qt/qml/SettingsAdvanced.qml":  2,
+                                 "desktop_qt/qml/SettingsItem.qml":  1,
+                                 "desktop_qt/qml/SettingsScreen.qml":  5,
+                                 "desktop_qt/qml/Sidebar.qml":  2,
+                                 "desktop_qt/qml/SkipGlyph.qml":  2,
+                                 "desktop_qt/qml/SleepPopover.qml":  1,
+                                 "desktop_qt/qml/SleepWindow.qml":  1,
+                                 "desktop_qt/qml/StatusPill.qml":  2,
+                                 "desktop_qt/qml/StudioChapterHead.qml":  3,
+                                 "desktop_qt/qml/StudioChapterRow.qml":  9,
+                                 "desktop_qt/qml/StudioConfirm.qml":  2,
+                                 "desktop_qt/qml/StudioMenuRow.qml":  1,
+                                 "desktop_qt/qml/StudioMusic.qml":  5,
+                                 "desktop_qt/qml/StudioMusicMoods.qml":  6,
+                                 "desktop_qt/qml/StudioMusicScene.qml":  10,
+                                 "desktop_qt/qml/StudioMusicSwap.qml":  3,
+                                 "desktop_qt/qml/StudioMusicTrackRow.qml":  2,
+                                 "desktop_qt/qml/StudioRows.qml":  1,
+                                 "desktop_qt/qml/StudioScreen.qml":  3,
+                                 "desktop_qt/qml/StudioSettings.qml":  1,
+                                 "desktop_qt/qml/StudioSetupCard.qml":  12,
+                                 "desktop_qt/qml/StudioSetupNotice.qml":  3,
+                                 "desktop_qt/qml/TabLabel.qml":  2,
+                                 "desktop_qt/qml/ThirdPartyText.qml":  3,
+                                 "desktop_qt/qml/Toast.qml":  3,
+                                 "desktop_qt/qml/TonePage.qml":  5,
+                                 "desktop_qt/qml/TryNote.qml":  1,
+                                 "desktop_qt/qml/ValuePicker.qml":  12,
+                                 "desktop_qt/qml/VoiceModule.qml":  5,
+                                 "desktop_qt/qml/VoiceRow.qml":  2,
+                                 "desktop_qt/qml/VoiceSpeed.qml":  1,
+                                 "desktop_qt/qml/WorkBulkKeep.qml":  1,
+                                 "desktop_qt/qml/WorkCard.qml":  7,
+                                 "desktop_qt/qml/WorkExample.qml":  4,
+                                 "desktop_qt/qml/WorkInbox.qml":  4,
+                                 "desktop_qt/qml/WorkPronunciation.qml":  1,
+                                 "desktop_qt/qml/WorkSpeaker.qml":  8,
+                                 "desktop_qt/qml/WorkVoice.qml":  2,
+                                 "mobile/android/app/src/main/java/vn/abook/player/ui/addbook/AddBookScreen.kt":  6,
+                                 "mobile/android/app/src/main/java/vn/abook/player/ui/addbook/BookForms.kt":  2,
+                                 "mobile/android/app/src/main/java/vn/abook/player/ui/components/Components.kt":  2,
+                                 "mobile/android/app/src/main/java/vn/abook/player/ui/components/Controls.kt":  1,
+                                 "mobile/android/app/src/main/java/vn/abook/player/ui/components/Insets.kt":  1,
+                                 "mobile/android/app/src/main/java/vn/abook/player/ui/components/ListParts.kt":  7,
+                                 "mobile/android/app/src/main/java/vn/abook/player/ui/components/ValuePicker.kt":  1,
+                                 "mobile/android/app/src/main/java/vn/abook/player/ui/devices/CompanionSurfaces.kt":  2,
+                                 "mobile/android/app/src/main/java/vn/abook/player/ui/devices/DeviceSettingsContent.kt":  2,
+                                 "mobile/android/app/src/main/java/vn/abook/player/ui/devices/PairScreen.kt":  1,
+                                 "mobile/android/app/src/main/java/vn/abook/player/ui/devices/ShareScreen.kt":  2,
+                                 "mobile/android/app/src/main/java/vn/abook/player/ui/devices/StorageScreen.kt":  1,
+                                 "mobile/android/app/src/main/java/vn/abook/player/ui/editbook/CoverCrop.kt":  2,
+                                 "mobile/android/app/src/main/java/vn/abook/player/ui/editbook/EditBookScreen.kt":  4,
+                                 "mobile/android/app/src/main/java/vn/abook/player/ui/export/ExportModel.kt":  1,
+                                 "mobile/android/app/src/main/java/vn/abook/player/ui/export/ExportScreen.kt":  2,
+                                 "mobile/android/app/src/main/java/vn/abook/player/ui/music/MusicPanel.kt":  6,
+                                 "mobile/android/app/src/main/java/vn/abook/player/ui/music/library/MusicEntry.kt":  1,
+                                 "mobile/android/app/src/main/java/vn/abook/player/ui/music/library/MusicScreen.kt":  4,
+                                 "mobile/android/app/src/main/java/vn/abook/player/ui/music/library/TrackRow.kt":  3,
+                                 "mobile/android/app/src/main/java/vn/abook/player/ui/music/library/TrackSheet.kt":  8,
+                                 "mobile/android/app/src/main/java/vn/abook/player/ui/nowplaying/AudioFxPage.kt":  2,
+                                 "mobile/android/app/src/main/java/vn/abook/player/ui/nowplaying/EndNotice.kt":  2,
+                                 "mobile/android/app/src/main/java/vn/abook/player/ui/nowplaying/NowPlayingScreen.kt":  3,
+                                 "mobile/android/app/src/main/java/vn/abook/player/ui/nowplaying/PlayerAlert.kt":  1,
+                                 "mobile/android/app/src/main/java/vn/abook/player/ui/nowplaying/PlayerSheets.kt":  7,
+                                 "mobile/android/app/src/main/java/vn/abook/player/ui/nowplaying/PlayerVisuals.kt":  2,
+                                 "mobile/android/app/src/main/java/vn/abook/player/ui/pip/PipContent.kt":  2,
+                                 "mobile/android/app/src/main/java/vn/abook/player/ui/screens/BookPeople.kt":  5,
+                                 "mobile/android/app/src/main/java/vn/abook/player/ui/screens/BookScreen.kt":  4,
+                                 "mobile/android/app/src/main/java/vn/abook/player/ui/screens/BookSheets.kt":  4,
+                                 "mobile/android/app/src/main/java/vn/abook/player/ui/screens/BookTabs.kt":  4,
+                                 "mobile/android/app/src/main/java/vn/abook/player/ui/screens/LibraryChrome.kt":  2,
+                                 "mobile/android/app/src/main/java/vn/abook/player/ui/screens/LibraryScreen.kt":  1,
+                                 "mobile/android/app/src/main/java/vn/abook/player/ui/screens/MorningRecap.kt":  1,
+                                 "mobile/android/app/src/main/java/vn/abook/player/ui/screens/OtherScreens.kt":  2,
+                                 "mobile/android/app/src/main/java/vn/abook/player/ui/screens/SettingsAdvanced.kt":  1,
+                                 "mobile/android/app/src/main/java/vn/abook/player/ui/screens/SettingsGroups.kt":  3,
+                                 "mobile/android/app/src/main/java/vn/abook/player/ui/screens/SettingsScreen.kt":  1,
+                                 "mobile/android/app/src/main/java/vn/abook/player/ui/shell/Shell.kt":  1,
+                                 "mobile/android/app/src/main/java/vn/abook/player/ui/studio/CastTab.kt":  6,
+                                 "mobile/android/app/src/main/java/vn/abook/player/ui/studio/MusicTab.kt":  10,
+                                 "mobile/android/app/src/main/java/vn/abook/player/ui/studio/PrecastScreen.kt":  5,
+                                 "mobile/android/app/src/main/java/vn/abook/player/ui/studio/ReadingsScreen.kt":  6,
+                                 "mobile/android/app/src/main/java/vn/abook/player/ui/studio/ReviewTab.kt":  8,
+                                 "mobile/android/app/src/main/java/vn/abook/player/ui/studio/ScriptScreen.kt":  5,
+                                 "mobile/android/app/src/main/java/vn/abook/player/ui/studio/StudioCover.kt":  1,
+                                 "mobile/android/app/src/main/java/vn/abook/player/ui/studio/StudioExportScreen.kt":  3,
+                                 "mobile/android/app/src/main/java/vn/abook/player/ui/studio/StudioNewScreen.kt":  2,
+                                 "mobile/android/app/src/main/java/vn/abook/player/ui/studio/StudioProjectScreen.kt":  4,
+                                 "mobile/android/app/src/main/java/vn/abook/player/ui/studio/WorkTab.kt":  9,
+                                 "mobile/android/app/src/main/java/vn/abook/player/ui/studio/parts/StudioParts.kt":  1,
+                                 "mobile/android/app/src/main/java/vn/abook/player/ui/studio/parts/WorkParts.kt":  5,
+                                 "mobile/android/app/src/main/java/vn/abook/player/ui/voice/KeysScreen.kt":  2,
+                                 "mobile/android/app/src/main/java/vn/abook/player/ui/voice/VieneuDownload.kt":  2,
+                                 "mobile/android/app/src/main/java/vn/abook/player/ui/voice/VoicePickCard.kt":  3,
+                                 "mobile/android/app/src/main/java/vn/abook/player/ui/voice/VoiceSheets.kt":  1,
+                                 "ui/src/desktop/App.tsx":  9,
+                                 "ui/src/desktop/AudiobookDialog.tsx":  3,
+                                 "ui/src/desktop/OtherComputers.tsx":  2,
+                                 "ui/src/desktop/PhoneDiagnostics.tsx":  1,
+                                 "ui/src/desktop/PhoneSync.tsx":  3,
+                                 "ui/src/desktop/RemoteDownload.tsx":  2,
+                                 "ui/src/desktop/RemotePhone.tsx":  3,
+                                 "ui/src/desktop/SettingsScreen.tsx":  4,
+                                 "ui/src/desktop/Shell.tsx":  2,
+                                 "ui/src/desktop/SleepSchedule.tsx":  2,
+                                 "ui/src/listen/AddBook.tsx":  7,
+                                 "ui/src/listen/AudioFxPanel.tsx":  2,
+                                 "ui/src/listen/BookScreen.tsx":  21,
+                                 "ui/src/listen/EditBook.tsx":  5,
+                                 "ui/src/listen/FindInBook.tsx":  1,
+                                 "ui/src/listen/FootnoteChoices.tsx":  1,
+                                 "ui/src/listen/LibraryScreen.tsx":  4,
+                                 "ui/src/listen/LineWishes.tsx":  2,
+                                 "ui/src/listen/MorningRecap.tsx":  2,
+                                 "ui/src/listen/MyMusic.tsx":  4,
+                                 "ui/src/listen/OnlineVoicePrompt.tsx":  1,
+                                 "ui/src/listen/PlayerViews.tsx":  32,
+                                 "ui/src/listen/PlaylistChoice.tsx":  2,
+                                 "ui/src/listen/ProjectFileItems.tsx":  7,
+                                 "ui/src/listen/ReadAloudStorage.tsx":  1,
+                                 "ui/src/listen/SendEdits.tsx":  1,
+                                 "ui/src/listen/SentenceMenu.tsx":  1,
+                                 "ui/src/listen/TonePage.tsx":  5,
+                                 "ui/src/listen/VieneuDownload.tsx":  3,
+                                 "ui/src/listen/VieneuModuleCard.tsx":  3,
+                                 "ui/src/listen/VoicePickCard.tsx":  2,
+                                 "ui/src/listen/VoiceSettings.tsx":  8,
+                                 "ui/src/listen/WordReadings.tsx":  4,
+                                 "ui/src/listen/menuSlot.tsx":  1,
+                                 "ui/src/music/MusicScreen.tsx":  7,
+                                 "ui/src/music/TrackSheet.tsx":  13,
+                                 "ui/src/shared/BookCover.tsx":  2,
+                                 "ui/src/shared/ChapterPreview.tsx":  2,
+                                 "ui/src/shared/DiagnosticsView.tsx":  3,
+                                 "ui/src/shared/DisclosureRow.tsx":  1,
+                                 "ui/src/shared/MotionPresence.tsx":  2,
+                                 "ui/src/shared/ScreenHeader.tsx":  1,
+                                 "ui/src/shared/SettingsNav.tsx":  3,
+                                 "ui/src/shared/ThirdPartyList.tsx":  1,
+                                 "ui/src/shared/ToastDetails.tsx":  1,
+                                 "ui/src/shared/ValuePicker.tsx":  1,
+                                 "ui/src/shared/ui.tsx":  5,
+                                 "ui/src/studio/ApplyChanges.tsx":  3,
+                                 "ui/src/studio/AutoPickNote.tsx":  1,
+                                 "ui/src/studio/CastEdits.tsx":  2,
+                                 "ui/src/studio/ChapterError.tsx":  1,
+                                 "ui/src/studio/ExportBook.tsx":  3,
+                                 "ui/src/studio/MusicModuleNotice.tsx":  3,
+                                 "ui/src/studio/MusicTab.tsx":  12,
+                                 "ui/src/studio/NameReadings.tsx":  5,
+                                 "ui/src/studio/NewProjectScreen.tsx":  8,
+                                 "ui/src/studio/PhoneEdits.tsx":  3,
+                                 "ui/src/studio/PrecastReview.tsx":  1,
+                                 "ui/src/studio/ProjectScreen.tsx":  18,
+                                 "ui/src/studio/ProjectsScreen.tsx":  5,
+                                 "ui/src/studio/ReviewQueue.tsx":  2,
+                                 "ui/src/studio/ScriptTab.tsx":  5,
+                                 "ui/src/studio/TemplateBar.tsx":  4,
+                                 "ui/src/studio/VoicePicker.tsx":  3,
+                                 "ui/src/studio/VolumeSplit.tsx":  1,
+                                 "ui/src/studio/WorkInbox.tsx":  7,
+                                 "ui/src/studio/sharedReadings.tsx":  2
+                             },
+               "_doc":  "Source candidates, not confirmed defects. Per-file ratchet starts at resume; repairs must lower these counts. Sleep timer work is owned by andfix."
+           },
+    "L9":  {
+               "allow":  [
+
+                         ]
+           },
+    "L10":  {
+                "controls":  [
+                                 {
+                                     "id":  "empty-library",
+                                     "at":  {
+                                                "qt":  {
+                                                           "file":  "desktop_qt/qml/LibraryScreen.qml",
+                                                           "key":  "s_chua_co_sach_30843cb2"
+                                                       },
+                                                "android":  {
+                                                                "file":  "mobile/android/app/src/main/java/vn/abook/player/ui/screens/LibraryScreen.kt",
+                                                                "key":  "s_chua_co_sach_30843cb2"
+                                                            },
+                                                "web":  {
+                                                            "file":  "ui/src/listen/LibraryScreen.tsx",
+                                                            "key":  "s_chua_co_sach_30843cb2"
+                                                        }
+                                            }
+                                 },
+                                 {
+                                     "id":  "footnote-refs",
+                                     "at":  {
+                                                "qt":  {
+                                                           "file":  "desktop_qt/qml/AddBook.qml",
+                                                           "key":  "s_bo_so_goi_b8d25593"
+                                                       },
+                                                "android":  {
+                                                                "file":  "mobile/android/app/src/main/java/vn/abook/player/ui/addbook/AddBookScreen.kt",
+                                                                "key":  "s_bo_so_goi_b8d25593"
+                                                            },
+                                                "web":  {
+                                                            "file":  "ui/src/listen/FootnoteChoices.tsx",
+                                                            "key":  "s_bo_so_goi_b8d25593"
+                                                        }
+                                            }
+                                 },
+                                 {
+                                     "id":  "footnote-placement",
+                                     "at":  {
+                                                "qt":  {
+                                                           "file":  "desktop_qt/qml/AddBook.qml",
+                                                           "key":  "s_cuoi_chuong_8e067450"
+                                                       },
+                                                "android":  {
+                                                                "file":  "mobile/android/app/src/main/java/vn/abook/player/ui/addbook/AddBookScreen.kt",
+                                                                "key":  "s_cuoi_chuong_8e067450"
+                                                            },
+                                                "web":  {
+                                                            "file":  "ui/src/listen/FootnoteChoices.tsx",
+                                                            "key":  "s_cuoi_chuong_8e067450"
+                                                        }
+                                            }
+                                 },
+                                 {
+                                     "id":  "skip-line",
+                                     "at":  {
+                                                "qt":  {
+                                                           "file":  "desktop_qt/qml/AddBook.qml",
+                                                           "key":  "s_bo_doc_dong_3e82a7fd"
+                                                       },
+                                                "android":  {
+                                                                "file":  "mobile/android/app/src/main/java/vn/abook/player/ui/addbook/AddBookScreen.kt",
+                                                                "key":  "s_bo_doc_dong_3e82a7fd"
+                                                            },
+                                                "web":  {
+                                                            "file":  "ui/src/listen/ReadingSuggestions.tsx",
+                                                            "key":  "s_bo_doc_dong_3e82a7fd"
+                                                        }
+                                            }
+                                 },
+                                 {
+                                     "id":  "toast-close",
+                                     "at":  {
+                                                "qt":  {
+                                                           "file":  "desktop_qt/qml/Toast.qml",
+                                                           "require":  [
+                                                                           "x: card.width - width - 12",
+                                                                           "y: 12"
+                                                                       ],
+                                                           "forbid":  [
+
+                                                                      ]
+                                                       }
+                                            }
+                                 },
+                                 {
+                                     "id":  "toast-action",
+                                     "at":  {
+                                                "android":  {
+                                                                "file":  "mobile/android/app/src/main/java/vn/abook/player/ui/components/UndoBar.kt",
+                                                                "require":  [
+                                                                                "PrimaryButton\\(S.s_hoan_tac",
+                                                                                "IconAction\\("
+                                                                            ],
+                                                                "forbid":  [
+                                                                               "TextAction\\(S.s_hoan_tac"
+                                                                           ]
+                                                            }
+                                            }
+                                 },
+                                 {
+                                     "id":  "settings-selection",
+                                     "at":  {
+                                                "android":  {
+                                                                "file":  "mobile/android/app/src/main/java/vn/abook/player/ui/screens/SettingsScreen.kt",
+                                                                "require":  [
+                                                                                "colors.hover"
+                                                                            ],
+                                                                "forbid":  [
+                                                                               "colors.accentSoft"
+                                                                           ]
+                                                            }
+                                            }
+                                 },
+                                 {
+                                     "id":  "settings-device-summary",
+                                     "at":  {
+                                                "android":  {
+                                                                "file":  "mobile/android/app/src/main/java/vn/abook/player/ui/screens/SettingsScreen.kt",
+                                                                "require":  [
+                                                                                "devicesSummary"
+                                                                            ],
+                                                                "forbid":  [
+                                                                               "S.s_noi_may_tinh_chia_se_thu_vien"
+                                                                           ]
+                                                            }
+                                            }
+                                 },
+                                 {
+                                     "id":  "avatar-oklch",
+                                     "at":  {
+                                                "android":  {
+                                                                "file":  "mobile/android/app/src/main/java/vn/abook/player/ui/screens/BookTabs.kt",
+                                                                "require":  [
+                                                                                "avatarColor\\(hue, dark"
+                                                                            ],
+                                                                "forbid":  [
+                                                                               "Color.hsv"
+                                                                           ]
+                                                            }
+                                            }
+                                 }
+                             ]
+            }
 }
