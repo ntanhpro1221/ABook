@@ -1291,12 +1291,29 @@ GENERIC_SPEECH_VERBS = (
 # từ trang phục/tóc đứng làm định ngữ ("cô gái tóc đỏ"). Nhãn giữ cả mô tả - hai người phụ nữ mặc khác nhau là hai NPC;
 # giới/tuổi vẫn tra theo tiền tố là nhãn chung.
 GENERIC_DESCRIPTOR_STARTERS = (
-    "mặc", "đội", "đeo", "khoác", "choàng", "quàng", "cầm", "xách", "ôm", "vác", "mang", "với",
+    "mặc", "đội", "đeo", "khoác", "choàng", "quàng", "cầm", "xách", "ôm", "vác", "mang",
     "đi giày", "đi dép", "đi ủng", "đi guốc",
     "áo", "váy", "quần", "mũ", "nón", "khăn", "tóc", "râu",
 )
-# "có" chỉ mở mô tả khi theo sau là danh từ; "có vẻ/có lẽ/có thể..." là trạng ngữ, không phải ngoại hình.
-GENERIC_DESCRIPTOR_HAS_NOT = ("vẻ", "lẽ", "thể", "chút", "phần", "ý", "khi", "lúc", "gì", "điều", "người", "tiếng", "việc")
+# Unlike wear/hold verbs, "có/với" do not establish an appearance phrase on their
+# own. Require a known appearance/accessory noun and only nominal modifiers.
+# Checking the noun alone would still admit "có mái tóc khiến khách nói". This
+# deliberately small grammar abstains on unfamiliar modifiers and voice clauses.
+GENERIC_APPEARANCE_NOUNS = (
+    "tóc", "mái tóc", "râu", "chòm râu", "bộ râu", "mắt", "đôi mắt", "cặp mắt",
+    "khuôn mặt", "gương mặt", "làn da", "nước da", "dáng người", "dáng vẻ", "vóc dáng", "thân hình",
+    "áo", "áo khoác", "áo choàng", "áo sơ mi", "váy", "quần", "mũ", "nón", "khăn",
+    "kính", "giày", "dép", "ủng", "guốc", "găng tay", "tạp dề", "thắt lưng",
+    "vòng cổ", "bông tai", "túi", "ba lô",
+)
+GENERIC_APPEARANCE_MODIFIERS = (
+    "bạc", "đen", "trắng", "đỏ", "xanh", "tím", "vàng", "nâu", "xám", "hồng", "cam",
+    "lục", "lam", "chàm", "biếc", "nhạt", "đậm", "sẫm", "bóng",
+    "dài", "ngắn", "xoăn", "thẳng", "bồng", "dày", "mỏng", "rậm", "thưa",
+    "tròn", "vuông", "rộng", "hẹp", "to", "lớn", "nhỏ", "cao", "thấp", "cũ", "sờn", "rách",
+    "gầy", "gầy gò", "mảnh mai", "thon thả", "vạm vỡ", "uy nghiêm", "trang nghiêm", "hồng hào", "tái", "sạm",
+    "vải", "lụa", "len", "da", "nhung", "gỗ", "kim loại", "gọng bạc", "gọng vàng",
+)
 # Từ cắt cụm mô tả: liên từ/quan hệ từ, trợ từ thời thể, đại từ, chỉ định từ. Một trong chúng nằm giữa nhãn và động từ nói
 # nghĩa là câu có chủ ngữ khác hay mệnh đề phụ ("người phụ nữ mặc áo mà anh ta nói" - người nói là "anh ta") nên không gán.
 GENERIC_DESCRIPTOR_STOPWORDS = (
@@ -1316,8 +1333,13 @@ _GENERIC_DESCRIPTOR_WORD = (
     rf"(?!(?:{_alternation(GENERIC_DESCRIPTOR_STOPWORDS + GENERIC_TAG_ADVERBS + GENERIC_SPEECH_VERBS)})(?!\w))"
     r"[^\W\d_]+"
 )
+_GENERIC_APPEARANCE_NOUN_PHRASE = (
+    rf"(?:một\s+)?(?:(?:chiếc|cái|bộ|đôi|cặp)\s+)?(?:{_alternation(GENERIC_APPEARANCE_NOUNS)})"
+    rf"(?:\s+(?:{_alternation(GENERIC_APPEARANCE_MODIFIERS)})){{0,{GENERIC_DESCRIPTOR_MAX_SYLLABLES - 2}}}"
+)
 _GENERIC_DESCRIPTOR = (
-    rf"(?i:(?:{_alternation(GENERIC_DESCRIPTOR_STARTERS)}|có(?!\s+(?:{_alternation(GENERIC_DESCRIPTOR_HAS_NOT)})(?!\w)))"
+    rf"(?i:(?:có|với)\s+{_GENERIC_APPEARANCE_NOUN_PHRASE}"
+    rf"|(?:{_alternation(GENERIC_DESCRIPTOR_STARTERS)})"
     rf"(?:\s+{_GENERIC_DESCRIPTOR_WORD}){{1,{GENERIC_DESCRIPTOR_MAX_SYLLABLES - 1}}})"
 )
 
