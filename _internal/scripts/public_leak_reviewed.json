@@ -152,8 +152,8 @@
     "reason": "abook/readaloud/byok.py: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
   },
   "_internal/abook/readaloud/cache.py": {
-    "sha256": "20f8260d351f62737915c51b33e1f36cbb5074608e915fe7ee77f05c8bf8bf82",
-    "reason": "abook/readaloud/cache.py: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
+    "sha256": "5575be7db54587e825194fd420881681c89ecd809c3d413898b2a5f5340da8c9",
+    "reason": "_internal/abook/readaloud/cache.py: inherited cache API documentation; the shared rule counter now invalidates pre-0.4.168 audio, with no new narrative strings."
   },
   "_internal/abook/readaloud/edge.py": {
     "sha256": "c686d6afc867d00d6212c8c64a09d91f74759300437d953796de3a540c094fd6",
@@ -1272,8 +1272,8 @@
     "reason": "mobile/android/app/src/main/java/vn/abook/player/readaloud/Abbreviations.kt: all flagged strings match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
   },
   "_internal/mobile/android/app/src/main/java/vn/abook/player/readaloud/ClipCache.kt": {
-    "sha256": "ed69500d71782954ac12a97606244bc28127e2a28a8486522eae69972b9b0199",
-    "reason": "mobile/android/app/src/main/java/vn/abook/player/readaloud/ClipCache.kt: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
+    "sha256": "63c7ecf34b17eca1d34a987bc678171a9c90623cf55a8c4a81030fdbf8b8a857",
+    "reason": "_internal/mobile/android/app/src/main/java/vn/abook/player/readaloud/ClipCache.kt: inherited cache API documentation; the shared rule counter now invalidates pre-0.4.168 audio, with no new narrative strings."
   },
   "_internal/mobile/android/app/src/main/java/vn/abook/player/readaloud/ClipRetry.kt": {
     "sha256": "6bd46f15491af5f983c412479a0d3d6d745848f8746553b2d8fa26a9db8337d2",

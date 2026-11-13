@@ -39,7 +39,8 @@ TYPES = {"mp3": "audio/mpeg", "wav": "audio/wav"}
 # `ClipCache.CACHE_RULES`. Một thay đổi luật đọc mà mô-đun của nó không có số riêng (romanization, shouts, vieneu units...) thì tăng số này, ở CẢ HAI nơi.
 # 18 = 17 + âm vị đổi mà không số nào khác đổi theo: bảng name_sounds (koeun: `unread` pin/veo/boa..., `level` toe/vin..., `foreign_onsets` "Dan" -> đ),
 # bảng điểm chữ trùng Việt / Anh (shared_words.json; phiên bản english_policy của nó trùng số 6 với loanwords), tên Nhật tự động đọc tách từng âm tiết.
-CACHE_RULES = 18
+# 19 invalidates clips made before the integrated numeric/loanword rules and NFC input boundaries.
+CACHE_RULES = 19
 
 
 def rules_version() -> str:
