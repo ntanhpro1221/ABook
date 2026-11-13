@@ -790,5 +790,81 @@
   "_internal/mobile/android/app/src/test/snapshots/devices_share_on_light.png": {
     "sha256": "08ea3cfb7f1f7091125e09a16f5191211a4285f39a8204f3fe2dab015f65857b",
     "reason": "Reviewed corrected devices_share_on_light.png: full synthetic SHA-256 fingerprint and pairing string wrap readably; instructions and paired devices remain separated, with scrolling for the lower device."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/book_records_light.png": {
+    "sha256": "22408a53a9b8ab73f23a1a9e622f44841e98b6a21575408125f01ceee76aa879",
+    "reason": "Reviewed book_records_light.png in late contact sheets 01-03: current typography and header spacing retain readable labels, separated actions, and centered icon/number shapes; no settled overlap."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/icon_sheet_dark.png": {
+    "sha256": "05b972d2b301dac115580abe1fc051552511ffcaa91edf085aafcab7224bfc37",
+    "reason": "Reviewed icon_sheet_dark.png in late contact sheets 01-03: current typography and header spacing retain readable labels, separated actions, and centered icon/number shapes; no settled overlap."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/link_np_book_dark.png": {
+    "sha256": "0292aa595f2b0a991df0630d2b1feae28a4eccda2e21e43f7de7721f3b70b155",
+    "reason": "Reviewed link_np_book_dark.png in late contact sheets 01-03: current typography and header spacing retain readable labels, separated actions, and centered icon/number shapes; no settled overlap."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/link_np_book_light.png": {
+    "sha256": "67db609a502a804b99a0b34b7eced475dca2acabaa3be2999695991905bdb3cc",
+    "reason": "Reviewed link_np_book_light.png in late contact sheets 01-03: current typography and header spacing retain readable labels, separated actions, and centered icon/number shapes; no settled overlap."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/music_book_menu_row_dark.png": {
+    "sha256": "dff6fd6522002efdb6165a11c0b06ec0ea67e0e202c3fc72e12c6aca8361f345",
+    "reason": "Reviewed music_book_menu_row_dark.png in late contact sheets 01-03: current typography and header spacing retain readable labels, separated actions, and centered icon/number shapes; no settled overlap."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/music_book_menu_row_light.png": {
+    "sha256": "392748aef91687ad180ed7f2e184b7ea96b4a4dfca0e32349fe877cf53ff54bd",
+    "reason": "Reviewed music_book_menu_row_light.png in late contact sheets 01-03: current typography and header spacing retain readable labels, separated actions, and centered icon/number shapes; no settled overlap."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/music_book_page_dark.png": {
+    "sha256": "be9fce5016d6f74d87f5f1d0730e96e14597827e07891f92bd95d484271beff8",
+    "reason": "Reviewed music_book_page_dark.png in late contact sheets 01-03: current typography and header spacing retain readable labels, separated actions, and centered icon/number shapes; no settled overlap."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/music_book_page_light.png": {
+    "sha256": "8810e38b0f32e30d6916fec591d1b661817795bf88ec8ff3f41d91f16f666cc8",
+    "reason": "Reviewed music_book_page_light.png in late contact sheets 01-03: current typography and header spacing retain readable labels, separated actions, and centered icon/number shapes; no settled overlap."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/music_cue_page_dark.png": {
+    "sha256": "ad5bc12fffc0e01132713c9dc8ee979e9be1ac0a783c0e259adabff244f5c265",
+    "reason": "Reviewed music_cue_page_dark.png in late contact sheets 01-03: current typography and header spacing retain readable labels, separated actions, and centered icon/number shapes; no settled overlap."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/music_cue_page_light.png": {
+    "sha256": "b06e8aba4448e539ad4594e9a4ffd3d71b43673bace33e9a552fe6146ade9ba4",
+    "reason": "Reviewed music_cue_page_light.png in late contact sheets 01-03: current typography and header spacing retain readable labels, separated actions, and centered icon/number shapes; no settled overlap."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/music_cue_swap_dark.png": {
+    "sha256": "f7081daf7b834574a4553a77dd7d2f5e2948deeeb430cfcf6158c1a7b074f1e0",
+    "reason": "Reviewed music_cue_swap_dark.png in late contact sheets 01-03: current typography and header spacing retain readable labels, separated actions, and centered icon/number shapes; no settled overlap."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/music_cue_swap_light.png": {
+    "sha256": "eab1cab88468091c167399efcac578b90d404647532b8c0e79248641be63f847",
+    "reason": "Reviewed music_cue_swap_light.png in late contact sheets 01-03: current typography and header spacing retain readable labels, separated actions, and centered icon/number shapes; no settled overlap."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/settings_logs_clear_sheet_light.png": {
+    "sha256": "d2742594acd287f4a2e2c76ff89a5a0c03116c16bc10304e6f35a7108797fb62",
+    "reason": "Reviewed settings_logs_clear_sheet_light.png in late contact sheets 01-03: current typography and header spacing retain readable labels, separated actions, and centered icon/number shapes; no settled overlap."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/settings_third_party_dark.png": {
+    "sha256": "72731b99df507a7a4ab7299f313d6f573f0efd4355647ed2fb1de46d121fdd5f",
+    "reason": "Reviewed settings_third_party_dark.png in late contact sheets 01-03: current typography and header spacing retain readable labels, separated actions, and centered icon/number shapes; no settled overlap."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/skip_glyph_back_dark.png": {
+    "sha256": "29bc1c98e4229d2e43bd6eab368d69b467cd036b33c20f3b120c633ebb76f5f3",
+    "reason": "Reviewed skip_glyph_back_dark.png in late contact sheets 01-03: current typography and header spacing retain readable labels, separated actions, and centered icon/number shapes; no settled overlap."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/skip_glyph_fwd_dark.png": {
+    "sha256": "8daedc59c01cc88e690c575bb9a6af5587e5d7fe0fa6a6d01082a4a93cb75dc8",
+    "reason": "Reviewed skip_glyph_fwd_dark.png in late contact sheets 01-03: current typography and header spacing retain readable labels, separated actions, and centered icon/number shapes; no settled overlap."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/skip_glyph_fwd_light.png": {
+    "sha256": "255082aa69c9bc7356843907e8b688f72bd2cad2658975c9ecb0fa8c64881ebf",
+    "reason": "Reviewed skip_glyph_fwd_light.png in late contact sheets 01-03: current typography and header spacing retain readable labels, separated actions, and centered icon/number shapes; no settled overlap."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/voice_key_verdict_light.png": {
+    "sha256": "bb62880b24191ea79275b0888933e147259c3dad106f87fa613ace3ffdfa7fef",
+    "reason": "Reviewed voice_key_verdict_light.png in late contact sheets 01-03: current typography and header spacing retain readable labels, separated actions, and centered icon/number shapes; no settled overlap."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/voice_module_remove_light.png": {
+    "sha256": "f8f94b0db4c06435fdb5b83ba4215622dae65746891442e548e3c848ca803bb9",
+    "reason": "Reviewed voice_module_remove_light.png in late contact sheets 01-03: current typography and header spacing retain readable labels, separated actions, and centered icon/number shapes; no settled overlap."
   }
 }
