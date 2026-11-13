@@ -242,11 +242,16 @@ _NORTH_INITIALS = (("tr", "ch"), ("gi", "z"), ("r", "z"), ("d", "z"), ("s", "x")
 _TONE_DIACRITICS = frozenset("\u0300\u0301\u0303\u0309\u0323")
 
 
-def _ordinary_alias_key(word: str, voice_region: str = "") -> str:
-    """Only tone and known dialect spellings; retain vowel quality and codas."""
-    word = unicodedata.normalize("NFC", "".join(
+def _tone_only_token(word: str) -> str:
+    """Drop tone marks while retaining vowel hats, breves and horns."""
+    return unicodedata.normalize("NFC", "".join(
         c for c in unicodedata.normalize("NFD", word) if c not in _TONE_DIACRITICS
     ))
+
+
+def _ordinary_alias_key(word: str, voice_region: str = "") -> str:
+    """Only tone and known dialect spellings; retain vowel quality and codas."""
+    word = _tone_only_token(word)
     folds = _NORTH_INITIALS if voice_region == "Bắc" else (("gi", "z"), ("d", "z")) if voice_region == "Nam" else ()
     for written, folded in folds:
         if word.startswith(written) and not (written == "gi" and len(word) == 2):
@@ -259,9 +264,9 @@ def _ordinary_alias_key(word: str, voice_region: str = "") -> str:
 
 def _name_spelling_key(word: str, voice_region: str) -> str:
     """Whisper Latin spellings of names, conditioned on the reading voice."""
+    word = _tone_only_token(word.lower())
     if voice_region not in {"Bắc", "Nam"}:
         return word
-    word = _diacritic_folded_token(word.lower())
     for written, folded in (("tch", "ch"), ("sh", "s"), ("ts", "ch"), ("f", "ph")):
         word = word.replace(written, folded)
     word = re.sub(r"w(?=[ae])", "o", word).replace("w", "u")
@@ -269,11 +274,11 @@ def _name_spelling_key(word: str, voice_region: str) -> str:
     if voice_region == "Nam" and word.startswith("y"):
         word = "d" + word[1:]
     # A syllabic gi retains its nucleus, including inside joined name parts.
-    word = re.sub(r"gi(?![aeouy])", "di", word)
+    word = re.sub(r"gi(?![aăâeêoôơuưy])", "di", word)
     for written, folded in ((("gi", "d"), ("j", "d"), ("z", "r")) if voice_region == "Nam"
                             else (("tr", "ch"), ("gi", "d"), ("j", "d"), ("z", "d"), ("r", "d"), ("s", "x"))):
         word = word.replace(written, folded)
-    word = re.sub(r"^([^aeiouy]*)y$", r"\1i", word)
+    word = re.sub(r"^([^aăâeêioôơuưy]*)y$", r"\1i", word)
     return re.sub(r"([bcdghklmnpqrstvx])\1+", r"\1", _fold_vietnamese_k_to_c(word))
 
 
@@ -281,7 +286,12 @@ def _name_phonemes(word: str, voice_region: str) -> str:
     from .readaloud.phoneme_policy import repair_syllabic_gi
 
     word = _name_spelling_key(word, voice_region)
-    return repair_syllabic_gi(word, _vietnamese_phonemes(word))
+    sounds = repair_syllabic_gi(word, _vietnamese_phonemes(word))
+    # G2P may itself erase a nucleus distinction in a foreign spelling. New
+    # regional matches must agree on the written vowels as well as the sounds.
+    # Legacy diacritic/component comparisons remain separate below.
+    vowels = "".join(c for c in word if c in "aăâeêioôơuưy")
+    return f"{sounds}|{vowels}" if sounds else ""
 
 
 # Whisper writes a number as a digit; the book writes it as a word. "thứ mười" against
@@ -557,6 +567,11 @@ def _anchor_component_key(value: str) -> str:
     return "".join(character for character in folded if character.isalnum())
 
 
+def _anchor_component_letters(value: str) -> str:
+    """Keep vowel quality until the regional comparison has examined it."""
+    return "".join(c for c in _normalize_anchor_transcript(str(value)) if c.isalnum())
+
+
 def _anchor_component_phonemes(parts: Sequence[str]) -> tuple[str, ...] | None:
     """Phoneme per syllable, or None when any syllable cannot be sounded out."""
     sounds = [_vietnamese_phonemes(_anchor_component_key(part)) for part in parts]
@@ -610,6 +625,9 @@ def _anchor_component_sounds_right(
     """
     if not span:
         return False
+    # Only the pre-existing component path receives bare letters. In particular,
+    # do not pass its folded u/o/a/e into the additional regional path.
+    legacy_span = _anchor_component_key(span)
     source_key = _anchor_component_key(source_component)
     # Sound alone is not quite enough, because the phonemiser is happy to drop letters that
     # do not change a sound: "enne" and "en" come out identical, so a locked "Lucien" would
@@ -621,19 +639,36 @@ def _anchor_component_sounds_right(
         len(source_key),
         sum(len(_anchor_component_key(part)) for part in spoken_syllables),
     )
-    if len(span) > longest_accepted:
+    if len(legacy_span) > longest_accepted:
         return False
     if source_key:
         source_sound = _vietnamese_phonemes(source_key)
-        span_sound = _vietnamese_phonemes(span)
+        span_sound = _vietnamese_phonemes(legacy_span)
         if source_sound and span_sound and source_sound == span_sound:
             return True
     expected = _anchor_component_phonemes(spoken_syllables)
     if expected is None:
         return False
-    for pieces in _anchor_component_splits(span, len(expected)):
+    for pieces in _anchor_component_splits(legacy_span, len(expected)):
         if _anchor_component_phonemes(pieces) == expected:
             return True
+    # Before 8c90dc47b, normalize_transcript also folded đ to d on the
+    # component path. Preserve that complete comparison, including its old
+    # diacritic folding, rather than mixing it with a new regional merger.
+    legacy_parts = tuple(_anchor_component_key(part).replace("đ", "d") for part in spoken_syllables)
+    if any("đ" in part.lower() for part in spoken_syllables) or "đ" in span or "đ" in source_key:
+        legacy_source = source_key.replace("đ", "d")
+        legacy_heard = legacy_span.replace("đ", "d")
+        legacy_sound = _vietnamese_phonemes(legacy_source) if legacy_source else ""
+        if legacy_sound and legacy_sound == _vietnamese_phonemes(legacy_heard):
+            return True
+        legacy_expected = _anchor_component_phonemes(legacy_parts)
+        if legacy_expected and any(
+            _anchor_component_phonemes(pieces) == legacy_expected
+            for pieces in _anchor_component_splits(legacy_heard, len(legacy_expected))
+        ):
+            return True
+    for pieces in _anchor_component_splits(span, len(expected)):
         # Inside a romanized name, Latin d can spell the locked Vietnamese đ
         # (Mi-đô / Mido). Restore that stop only at the corresponding syllable;
         # r/gi/z never become đ, and ordinary words never enter this comparison.
@@ -642,19 +677,17 @@ def _anchor_component_sounds_right(
             for syllable, piece in zip(spoken_syllables, pieces)
         )
         if restored != tuple(pieces):
-            if _anchor_component_phonemes(restored) == expected:
-                return True
-            if voice_region in {"Bắc", "Nam"} and tuple(
+            if tuple(
                 _name_phonemes(part, voice_region) for part in restored
-            ) == tuple(_name_phonemes(part, voice_region) for part in spoken_syllables):
+            ) == tuple(_name_phonemes(_anchor_component_letters(part), voice_region) for part in spoken_syllables):
                 return True
     if voice_region in {"Bắc", "Nam"}:
         # Joined spellings also cover a doubled boundary consonant: Sat-ta/sata.
         # Compare the spoken form, not arbitrary edits to a foreign source name.
-        joined = "".join(_anchor_component_key(part) for part in spoken_syllables)
+        joined = "".join(_anchor_component_letters(part) for part in spoken_syllables)
         if _name_spelling_key(joined, voice_region) == _name_spelling_key(span, voice_region):
             return True
-        regional_expected = tuple(_name_phonemes(_anchor_component_key(part), voice_region) for part in spoken_syllables)
+        regional_expected = tuple(_name_phonemes(_anchor_component_letters(part), voice_region) for part in spoken_syllables)
         if all(regional_expected):
             for pieces in _anchor_component_splits(span, len(regional_expected)):
                 sounds = tuple(_name_phonemes(part, voice_region) for part in pieces)
@@ -695,7 +728,7 @@ def _locked_name_anchor_component_match(
     components = _locked_name_anchor_components(anchor)
     if not components:
         return None
-    tokens = [_anchor_component_key(token) for token in transcript_tokens]
+    tokens = [_anchor_component_letters(token) for token in transcript_tokens]
     if not any(tokens):
         return None
     blocked = set(blocked_tokens or ())

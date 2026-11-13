@@ -40,7 +40,8 @@ def test_ordinary_dialect_folding_uses_the_voice_region(region, passed):
     ("Ri-ta", "Rita", "zita", "Bắc", True),
     ("Ri-ta", "Rita", "dita", "Nam", False),
     ("Ri-ta", "Rita", "dita", "Bắc", True),
-    ("Dô-na", "Dona", "yona", "Nam", True),
+    ("Dô-na", "Dona", "yona", "Nam", False),
+    ("Dô-na", "Dona", "yôna", "Nam", True),
     ("Dô-na", "Dona", "yona", "Bắc", False),
     ("Sát-ta", "Shasta", "sata", "Nam", True),
     ("Pha-na", "Fana", "fana", "Nam", True),
@@ -51,11 +52,13 @@ def test_ordinary_dialect_folding_uses_the_voice_region(region, passed):
     ("Lu-si-en", "Lucien", "Lusienne", "Bắc", False),
     ("Xa-men", "Samael", "Sam Min", "Nam", False),
     ("Mi-đô", "Midou", "Mido", "Nam", True),
-    ("Rin-đô", "Rindou", "Jindo", "Bắc", True),
+    ("Rin-đô", "Rindou", "Jindo", "Bắc", False),
+    ("Rin-đô", "Rindou", "Jinđô", "Bắc", True),
     ("i-ta-đa-ki-ma-xu", "Itadakimatsu", "Itadakimasu", "Bắc", True),
     ("Ra", "Raa", "đa", "Bắc", False),
     ("Đa", "Daa", "ra", "Bắc", False),
-    ("Đa", "Daa", "gia", "Bắc", False),
+    # The original integ168 component comparison already folded đ to d.
+    ("Đa", "Daa", "gia", "Bắc", True),
 ])
 def test_names_compare_exact_sounds_and_keep_region_boundaries(form, surface, heard, region, passed):
     spoken = f"Anh {form}."
@@ -67,6 +70,88 @@ def test_regional_folding_never_changes_sentence_phonemes():
     original = asr._segmental_phonemes('zita')
     adjudicate('Anh Ri-ta.', 'Anh zita.', form='Ri-ta', surface='Rita', region='Nam')
     assert asr._segmental_phonemes('zita') == original
+
+
+@pytest.mark.parametrize("left,right", [
+    ("rư", "du"), ("rơ", "do"), ("râ", "da"), ("rê", "de"),
+    ("riê", "di"), ("ră", "da"), ("rô", "do"),
+])
+@pytest.mark.parametrize("region", ["Bắc", "Nam", "Trung", ""])
+def test_additional_name_paths_keep_vowel_quality(left, right, region):
+    assert asr._name_spelling_key(left, region) != asr._name_spelling_key(right, region)
+    assert asr._name_phonemes(left, region) != asr._name_phonemes(right, region)
+    # Neither the token path nor the joined/component fallback may lose the
+    # vowel mark before applying a regional consonant merger.
+    for heard in (f"ha {right}", f"ha{right}"):
+        result = adjudicate(f"Ha-{left}.", heard, form=f"Ha-{left}",
+                            surface="Unrelated", region=region, alias=False)
+        assert result['verdict'] == asr.ASR_MISMATCH
+
+
+def test_haru_does_not_gain_a_northern_vowel_merger():
+    result = adjudicate('“Ha-rư.”', 'Há dù', form='Ha-rư', surface='Haru',
+                        region='Bắc', alias=False)
+    assert result['verdict'] == asr.ASR_MISMATCH
+    evidence = result[asr.LOCKED_NAME_ANCHOR_METRICS_KEY]
+    assert evidence['anchors'][0]['matched'] is False
+
+
+@pytest.mark.parametrize("heard", ["Ruki", "Zuki", "Ru ki", "Zu ki"])
+def test_yuki_northern_consonant_alias_keeps_the_same_vowel(heard):
+    result = adjudicate('“Giu-ki!”', heard, form='Giu-ki', surface='Yuki', region='Bắc')
+    assert result['verdict'] == asr.ASR_PASS
+
+
+def test_rita_vrataski_accepts_tone_and_northern_initials():
+    form = 'Ri-ta vờ-ra-ta-xờ-ki'
+    result = adjudicate(f'Không. Tôi còn lâu mới bằng được {form}.',
+                        'Không. Tôi còn lâu mới bằng được di ta vở ra ta sở kì.',
+                        form=form, surface='Rita Vrataski', region='Bắc', alias=False)
+    assert result['verdict'] == asr.ASR_PASS
+
+
+def test_rita_vrataski_southern_keeps_the_same_o_horn_vowel():
+    # Stripping every mark turned "sờ" into "so" (English /soʊ/) against
+    # "xờ" -> "xo" (/sɔ/). Retaining ơ on both sides compares the same vowel.
+    assert asr._anchor_component_sounds_right(
+        ('vờ', 'ra', 'ta', 'xờ', 'ki'), 'Vrataski', 'vờratasờkỳ', voice_region='Nam')
+    assert not asr._anchor_component_sounds_right(
+        ('vờ', 'ra', 'ta', 'xờ', 'ki'), 'Vrataski', 'voratasoky', voice_region='Nam')
+    form = 'Ri-ta vờ-ra-ta-xờ-ki'
+    result = adjudicate(f'0. Câu thử đã gỡ. 0.',
+                        '0. Câu thử đã gỡ. 0.',
+                        form=form, surface='Rita Vrataski', region='Nam', alias=False)
+    assert result['verdict'] == asr.ASR_PASS
+
+
+def test_component_regional_comparison_ignores_punctuation_without_losing_vowels():
+    result = adjudicate('Anh xa-mu-rai!', 'Anh Samu Zai!', form='xa-mu-rai!',
+                        surface='samurai!', region='Nam', alias=False)
+    assert result['verdict'] == asr.ASR_PASS
+
+
+@pytest.mark.parametrize("word", ['rứ', 'rớ', 'rấ', 'rế', 'riế', 'rắ', 'rố'])
+def test_regional_name_tone_removal_preserves_nfc_and_nfd_vowels(word):
+    expected = asr._name_phonemes(word, 'Bắc')
+    assert asr._name_phonemes(unicodedata.normalize('NFD', word), 'Bắc') == expected
+    assert asr._name_phonemes(word.upper(), 'Bắc') == expected
+
+
+def test_legacy_component_transliteration_still_accepts_mizuki():
+    result = adjudicate('Mi-dư-ki.', 'Mizuki', form='Mi-dư-ki', surface='Mizuki',
+                        region='Bắc', alias=False)
+    assert result['verdict'] == asr.ASR_PASS
+    assert asr._anchor_component_sounds_right(('Mi', 'dư', 'ki'), 'Mizuki', 'mizuki', 'Bắc')
+
+
+@pytest.mark.parametrize("form,surface,heard", [
+    ('An-đê-ra-ban', 'Alderaban', 'Ande ra bàn'),
+    ('Phư-di-ê-đa', 'Fujieda', 'Phư Di Eda'),
+])
+def test_original_component_d_stroke_and_diacritic_equivalence_survives(form, surface, heard):
+    result = adjudicate(f'Anh {form}.', f'Anh {heard}.', form=form,
+                        surface=surface, region='Bắc', alias=False)
+    assert result['verdict'] == asr.ASR_PASS
 
 
 @pytest.mark.parametrize("preset,expected", [("Đức Trí", "Nam"), ("Ngọc Linh", "Bắc"), ("unknown", "")])

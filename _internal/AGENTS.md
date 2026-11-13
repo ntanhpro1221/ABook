@@ -191,7 +191,13 @@ Không đổi sang phân tích cuốn chiếu nếu người dùng chưa thay đ
   `voice_profile -> voice_catalog.region`: Bắc r/d/gi/z, Nam r/z tách d/gi/j/y; vùng chưa biết không
   nhận thêm phép gấp vùng. Phép gấp chỉ thêm đường khớp tên, không thay `_segmental_phonemes` của câu.
   Chỉ y là nguyên âm đơn mới gấp i; neo giữ đ riêng khỏi d/r/gi qua `_normalize_anchor_transcript`;
-  riêng đường `diacritic_folded_exact` gấp đ->d như cũ (`_plain_folded_token`), đường vùng/thành phần thì không.
+  đường `diacritic_folded_exact` gấp đ->d như cũ (`_plain_folded_token`), key vùng mới thì không.
+  Đường so tên vùng chỉ bỏ thanh, giữ mũ/móc/breve và chuỗi nguyên âm kể cả khi G2P làm mất khác biệt.
+  Thành phần giữ chữ có dấu đến khi tách nhánh: chỉ nhánh component cũ được nhận bản bỏ toàn dấu.
+  Không ghép một phép gấp phụ âm mới với lệch nguyên âm (Ha-rư/Há dù phải trượt); các tương đương
+  Latin/Hán-Việt và phép bỏ dấu đã có trước 8c90dc47b vẫn giữ đường riêng.
+  Nhánh component cũ gồm cả đ->d cùng bỏ dấu như integ168 (An-đê-ra-ban/Ande ra bàn,
+  Phư-di-ê-đa/Phư Di Eda); đây là miễn trừ cũ, không đưa đ->d vào key vùng mới.
   `repair_syllabic_gi` chỉ thêm đường so tên, không đổi cách đo câu. Giữ `spelling_alias_evidence` trong
   bằng chứng decode kể cả khi hàm bọc giữ PASS cũ; dữ liệu này không đổi phán quyết.
   Alias chỉ truy vết, không tự bảo vệ chữ khỏi TN và làm thay đổi chuỗi nói cũ. Luật anchor tiếng Anh
