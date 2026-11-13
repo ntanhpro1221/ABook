@@ -41,16 +41,25 @@ from .asr_contract import (
 from .audio_io import (
     REPEATED_UTTERANCE_METRIC,
     REPEATED_UTTERANCE_THRESHOLD,
+    SIGNAL_EDGE_KEPT_FIELD,
+    SIGNAL_REJECTION_CLASS_CLIPPED,
+    SIGNAL_REJECTION_CLASS_EDGE,
+    SIGNAL_REJECTION_CLASS_UNKNOWN,
+    TTS_SIGNAL_EDGE_KEPT,
     AudioQualityError,
+    SignalRejectedTake,
     _segment_value,
     ChapterQualityError,
     assemble_chapter_atomic_with_metrics,
     chapter_review_flags_that_block,
     export_json_atomic,
     inspect_wav,
+    is_edge_kept_take,
+    rejected_take_path,
     is_short_utterance,
     merge_wav_parts_atomic,
     tempo_stretch_wav_atomic,
+    validate_audio_array,
     verify_mp3,
     write_playlist_atomic,
 )
@@ -208,6 +217,10 @@ HIGH_QUALITY_ALLOWED_SEGMENT_WARNINGS = frozenset(
         # (`ASR_INCONCLUSIVE`), same `repairable: False`, same `severe: False`; it was simply
         # left out when the timeline code was promoted from a bare string into this list.
         ASR_TRANSCRIPT_RATE_IMPOSSIBLE,
+        # An edge pop that ten reseeds and a split could not remove. The words are all
+        # there and ASR checked them; blocking the chapter would ask the owner to grade
+        # audio, which they never do. The line stays in the review queue ("signal").
+        TTS_SIGNAL_EDGE_KEPT,
     }
 )
 MACHINE_ACCEPTABLE_SEGMENT_WARNINGS = frozenset(
@@ -297,6 +310,11 @@ SPOKEN_TEXT_DRIFT_MESSAGE = (
 )
 SEGMENT_CANDIDATE_DIRECTORY = "candidates"
 TTS_SIGNAL_PROVENANCE_FIELDS = (
+    "signal_rejected",
+    "rejection_code",
+    "rejection_class",
+    "rejection_reason",
+    SIGNAL_EDGE_KEPT_FIELD,
     "word_break_gate",
     "tts_delivery_mode",
     ASR_CLARITY_REPAIR_ROUND_METRIC,
@@ -395,6 +413,10 @@ def _is_memory_pressure(error: BaseException) -> bool:
         seen.add(id(current))
         current = current.__cause__
     return False
+
+
+class RetainedTakeRejected(RuntimeError):
+    """The retained take is one the signal gate refused; it is not promoted while attempts remain."""
 
 
 class BookPipeline:
@@ -1426,6 +1448,8 @@ class BookPipeline:
             warnings.append("TTS_PACE_OUTLIER")
         if signal.get(GENERATION_CEILING_METRIC):
             warnings.append(GENERATION_CEILING_WARNING)
+        if signal.get(SIGNAL_EDGE_KEPT_FIELD):
+            warnings.append(TTS_SIGNAL_EDGE_KEPT)
         return tuple(warnings)
 
     @staticmethod
@@ -3175,6 +3199,9 @@ class BookPipeline:
             expected_text,
             self.settings,
             segment=row,
+            # Kept after every attempt for an edge pop: the same policy would replay the
+            # same attempts and keep the same take, so only the edge gate is waived.
+            check_edges=not is_edge_kept_take(self._segment_signal_provenance(dict(row)), self.quality_policy_hash),
             signal_measurements=measurements,
         )
         self._signal_cache.remember(wav_sha256, measurements)
@@ -4503,6 +4530,9 @@ class BookPipeline:
                     raise CriticalResourceStop(f"Hết bộ nhớ khi sinh candidate {row['stable_id']}: {exc}") from exc
                 if is_fatal_tts_error(exc):
                     raise RuntimeError(f"Fatal TTS engine failure: {exc}") from exc
+                if isinstance(exc, SignalRejectedTake):
+                    # A repair candidate is never kept refused: the segment keeps its own take.
+                    exc.path.unlink(missing_ok=True)
                 last_error = str(exc)
                 self.log(
                     f"TTS candidate {row['stable_id']} round {repair_round + 1} "
@@ -5006,7 +5036,7 @@ class BookPipeline:
         if selected is not None:
             try:
                 self._require_high_quality_take(selected)
-                self._accept_retained_take(row)
+                self._accept_retained_take(row, None)
                 self._finish_accepted_take(row, selected)
                 self._close_take_session(row, session)
                 return
@@ -5021,6 +5051,7 @@ class BookPipeline:
         retries = int(self.settings["tts"]["max_retries"])
         for attempt in range(retries):
             self._wait_pause_or_stop()
+            synthesized = False
             try:
                 seed_salt = f"{seed_salt_prefix}_{attempt}"
                 # Mỗi lần thử ghi file riêng: crash không được ghi đè bản đang có trong sổ.
@@ -5053,6 +5084,7 @@ class BookPipeline:
                     ))
 
                 output, checksum, metrics, seed = self._session_synthesis(row, session, seed_salt, synthesize)
+                synthesized = True
                 metrics["tts_delivery_mode"] = delivery_mode
                 if asr_repair_round is not None:
                     metrics[ASR_CLARITY_REPAIR_ROUND_METRIC] = int(asr_repair_round)
@@ -5062,11 +5094,13 @@ class BookPipeline:
                     context=self._word_break_context(metrics, seed_salt_prefix, repair_short_utterance,
                                                      delivery_mode, asr_repair_round),
                 )
+                checked = checksum
                 if (metrics.get("word_break_gate") or {}).get("fired"):
                     current = self.db.get_segment(int(row["id"]))
                     metrics = json.loads(str(current["signal_json"]))
+                    checked = str(current["wav_sha256"])
                 self._require_high_quality_take(metrics)
-                self._accept_retained_take(row)
+                self._accept_retained_take(row, checked)
                 self._finish_accepted_take(row, metrics)
                 self._close_take_session(row, session)
                 return
@@ -5077,7 +5111,10 @@ class BookPipeline:
                     # Synthesis already rode out its own shortages; one from anywhere else
                     # must not spend this attempt either. Stop here; the next run replays it.
                     raise CriticalResourceStop(f"Hết bộ nhớ khi xử lý {row['stable_id']}: {exc}") from exc
-                self._retain_rejected_output(row, output, str(exc), seed_salt, delivery_mode, asr_repair_round)
+                if not synthesized:
+                    # Only a refusal from synthesis itself; a take the later checks refused
+                    # was already ranked as what it is, not as a signal refusal.
+                    self._retain_rejected_output(row, output, exc, seed_salt, delivery_mode, asr_repair_round)
                 if is_fatal_tts_error(exc):
                     self.db.mark_failed(int(row["id"]), f"Fatal TTS engine failure: {exc}")
                     raise RuntimeError(f"Fatal TTS engine failure: {exc}") from exc
@@ -5122,55 +5159,55 @@ class BookPipeline:
                     repair_round=asr_repair_round,
                     policy_hash=self.quality_policy_hash,
                 )
-                split_provenance = (
-                    self._without_memory_pressure(f"chia nhỏ {row['stable_id']}", lambda: self._synthesize_split(
-                        row,
+                def synthesize_split():
+                    split_provenance = self._synthesize_split(
+                        row, output, delivery_mode=delivery_mode,
+                        seed_salt_prefix=split_seed_salt, split_strategy=split_strategy,
+                    ) or []
+                    valid, metrics, reason = inspect_wav(
                         output,
-                        delivery_mode=delivery_mode,
-                        seed_salt_prefix=split_seed_salt,
-                        split_strategy=split_strategy,
-                    ))
-                    or []
-                )
-                valid, metrics, reason = inspect_wav(
-                    output,
-                    spoken_text,
-                    self.settings,
-                    segment=row,
-                )
-                if not valid:
-                    raise AudioQualityError(reason)
-                metrics["tts_delivery_mode"] = delivery_mode
-                if asr_repair_round is not None:
-                    metrics[ASR_CLARITY_REPAIR_ROUND_METRIC] = int(asr_repair_round)
-                metrics["spoken_text_sha256"] = hashlib.sha256(
-                    spoken_text.encode("utf-8")
-                ).hexdigest()
-                metrics["split_checkpoint_seed"] = split_seed
-                metrics["split_seed_salt_prefix"] = split_seed_salt
-                metrics[SPLIT_STRATEGY_FIELD] = split_strategy
-                metrics[SPLIT_MAX_CHARS_FIELD] = split_max_chars
-                metrics["split_parts"] = split_provenance
-                if split_provenance:
-                    first_part = split_provenance[0]
-                    metrics["voice_profile_id"] = first_part.get("voice_profile_id")
-                    metrics[GENERATION_CEILING_METRIC] = float(
-                        any(part.get(GENERATION_CEILING_METRIC) for part in split_provenance)
+                        spoken_text,
+                        self.settings,
+                        segment=row,
                     )
-                    metrics[GENERATION_ENDPOINT_ACTIVE_METRIC] = float(
-                        any(
-                            part.get(GENERATION_CEILING_METRIC)
-                            and part.get(GENERATION_ENDPOINT_ACTIVE_METRIC)
-                            for part in split_provenance
+                    if not valid:
+                        raise AudioQualityError(reason)
+                    metrics["tts_delivery_mode"] = delivery_mode
+                    if asr_repair_round is not None:
+                        metrics[ASR_CLARITY_REPAIR_ROUND_METRIC] = int(asr_repair_round)
+                    metrics["spoken_text_sha256"] = hashlib.sha256(
+                        spoken_text.encode("utf-8")
+                    ).hexdigest()
+                    metrics["split_checkpoint_seed"] = split_seed
+                    metrics["split_seed_salt_prefix"] = split_seed_salt
+                    metrics[SPLIT_STRATEGY_FIELD] = split_strategy
+                    metrics[SPLIT_MAX_CHARS_FIELD] = split_max_chars
+                    metrics["split_parts"] = split_provenance
+                    if split_provenance:
+                        first_part = split_provenance[0]
+                        metrics["voice_profile_id"] = first_part.get("voice_profile_id")
+                        metrics[GENERATION_CEILING_METRIC] = float(
+                            any(part.get(GENERATION_CEILING_METRIC) for part in split_provenance)
                         )
-                    )
-                checksum = sha256_file(output)
+                        metrics[GENERATION_ENDPOINT_ACTIVE_METRIC] = float(
+                            any(
+                                part.get(GENERATION_CEILING_METRIC)
+                                and part.get(GENERATION_ENDPOINT_ACTIVE_METRIC)
+                                for part in split_provenance
+                            )
+                        )
+                    checksum = sha256_file(output)
+                    return output, checksum, metrics, split_seed
+
+                output, checksum, metrics, split_seed = self._session_synthesis(
+                    row, session, split_seed_salt, synthesize_split,
+                )
                 self._keep_usable_take(row, output, checksum, metrics, split_seed)
                 if self.settings.get("quality_profile") == "high_quality" and (
                     metrics.get("pace_outlier") or float(metrics.get(REPEATED_UTTERANCE_METRIC, 0.0) or 0.0) > REPEATED_UTTERANCE_THRESHOLD
                 ):
                     raise AudioQualityError("split take still requires quality review")
-                self._accept_retained_take(row)
+                self._accept_retained_take(row, checksum)
                 self._reset_tts_failure_streak()
                 self._close_take_session(row, session)
                 self.log(f"Đã cứu TTS segment {row['stable_id']} bằng cách chia nhỏ.")
@@ -5180,10 +5217,14 @@ class BookPipeline:
             except Exception as exc:  # noqa: BLE001
                 if _is_memory_pressure(exc):
                     raise CriticalResourceStop(f"Hết bộ nhớ khi chia nhỏ {row['stable_id']}: {exc}") from exc
-                self._retain_rejected_output(row, output, str(exc), f"{seed_salt_prefix}_split", delivery_mode, asr_repair_round)
+                # Nothing from a failed split is kept: a part is not the line, and the merged
+                # take failed the whole-line gate. The take retained above stays.
                 last_error = f"{last_error}; split={exc}"
 
-        self.db.mark_failed(int(row["id"]), last_error)
+        if self._keep_edge_rejected_take(row, chapter, last_error):
+            self._close_take_session(row, session)
+            return
+        self.db.mark_failed(int(row["id"]), last_error, warning_code=self._exhausted_warning_code(row))
         self._close_take_session(row, session)
         self.log(f"TTS segment {row['stable_id']} thất bại hoàn toàn: {last_error}")
         self.db.event(
@@ -5215,22 +5256,34 @@ class BookPipeline:
             return False
 
     @staticmethod
-    def _usable_take_rank(metrics: dict[str, Any], *, qa_failed: bool = False) -> tuple[int, float, float, float]:
-        """Bản tốt nhất có ít cờ tín hiệu/QA đã biết hơn, rồi ít lặp hơn; bằng nhau giữ bản trước."""
+    def _signal_rejection_tier(metrics: dict[str, Any]) -> int:
+        """0 passed the signal gate, 1 refused only at an edge, 2 clipped or refused for a reason unknown."""
+        if not metrics.get("signal_rejected"):
+            return 0
+        return 1 if metrics.get("rejection_class") == SIGNAL_REJECTION_CLASS_EDGE else 2
+
+    @staticmethod
+    def _usable_take_rank(metrics: dict[str, Any], *, qa_failed: bool = False) -> tuple[int, int, float, float, float]:
+        """Signal pass first, as a tier of its own; then fewer known flags, less repetition; ties keep the earlier take.
+
+        The tier comes before every flag because a refused take's soft measurements say nothing
+        about the refusal: a pass with a pace or word-break flag still beats any refused take.
+        """
         repeated = float(metrics.get(REPEATED_UTTERANCE_METRIC, 0.0) or 0.0)
+        tier = BookPipeline._signal_rejection_tier(metrics)
         flags = sum(bool(metrics.get(key)) for key in (
-            "pace_outlier",  GENERATION_CEILING_METRIC, "signal_rejected",
+            "pace_outlier",  GENERATION_CEILING_METRIC,
         )) + int(repeated > REPEATED_UTTERANCE_THRESHOLD) + int(qa_failed)
         gate = metrics.get("word_break_gate") or {}
         inconclusive = gate.get("status") == "inconclusive"
         flags += int(bool(gate.get("fired")) or inconclusive)
         if inconclusive:
-            return flags, repeated, float("inf"), float("inf")
+            return tier, flags, repeated, float("inf"), float("inf")
         if not gate.get("fired"):
-            return flags, repeated, 0., 0.
+            return tier, flags, repeated, 0., 0.
         # Only flagged boundaries: a long natural closure elsewhere says nothing about this take's breaks.
         flagged_gaps = [float(item["gap_ms"]) for item in gate.get("boundaries") or () if item.get("flagged")]
-        return flags, repeated, float(gate.get("flagged_words", 0)), max(flagged_gaps, default=0.)
+        return tier, flags, repeated, float(gate.get("flagged_words", 0)), max(flagged_gaps, default=0.)
 
     def _require_high_quality_take(self, metrics: dict[str, Any]) -> None:
         if self.settings.get("quality_profile") != "high_quality":
@@ -5312,6 +5365,34 @@ class BookPipeline:
                     continue
                 raise CriticalResourceStop(f"Hết bộ nhớ kéo dài khi {where}: {exc}") from exc
 
+    def _through_machine_faults(self, where: str, synthesize: Callable[[], Any]) -> Any:
+        """Run one synthesis; the machine's state may delay it but never spend an attempt.
+
+        The validators' verdict on the audio (an AudioQualityError they raise themselves,
+        without a cause) is the take's and is returned at once. An engine failure wrapped
+        with its cause - a transient CUDA error, a file a scanner holds - is retried on the
+        same seed; an OSError that persists stops the run at a checkpoint instead of being
+        filed as this seed's verdict.
+        """
+        failures = 0
+        while True:
+            try:
+                return self._without_memory_pressure(where, synthesize)
+            except (PipelineStopped, CriticalResourceStop):
+                raise
+            except Exception as exc:  # noqa: BLE001
+                if is_fatal_tts_error(exc):
+                    raise
+                if isinstance(exc, AudioQualityError) and exc.__cause__ is None:
+                    raise
+                failures += 1
+                time.sleep(min(8, 2**failures))
+                if failures < WORD_BREAK_RETRY_ENVIRONMENT_ATTEMPTS:
+                    continue
+                # Only a validator's uncaused AudioQualityError is a verdict. Persistent
+                # engine faults must also leave the reservation open for this same seed.
+                raise CriticalResourceStop(f"Không {where} được vì môi trường máy: {exc}") from exc
+
     def _take_session_key(self, row: Any) -> str:
         return f"{TAKE_SESSION_KIND}:{int(row['id'])}"
 
@@ -5355,8 +5436,32 @@ class BookPipeline:
         return session
 
     def _close_take_session(self, row: Any, session: dict[str, Any]) -> None:
+        current = self.db.get_segment(int(row["id"]))
+        kept = Path(str(current["wav_path"])).resolve() if current["wav_path"] else None
+        losers = {Path(str(record[key])).resolve() for record in session["attempts"].values()
+                  for key in ("path", "rejected_path") if record.get(key)}
+        losers.update(rejected_take_path(Path(str(record["path"]))).resolve()
+                      for record in session["attempts"].values() if record.get("path"))
+        referenced = set()
+        if losers:
+            paths = tuple(map(str, losers))
+            placeholders = ",".join("?" for _ in paths)
+            # Do not resolve every artifact path in the whole book for every line.
+            with self.db.connect() as conn:
+                referenced = {Path(str(item[0])).resolve() for item in conn.execute(
+                    f"SELECT path FROM artifacts WHERE path IN ({placeholders}) "
+                    f"UNION SELECT wav_path FROM segment_candidates WHERE wav_path IN ({placeholders}) "
+                    f"UNION SELECT wav_path FROM segments WHERE wav_path IN ({placeholders})",
+                    paths * 3,
+                )}
         session.update(state="closed", snapshot=None, attempts={})
         self._write_take_session(row, session)
+        # Closed first: a closed call never replays, so its losing takes are nobody's evidence.
+        for path in losers - {kept} - referenced:
+            try:
+                path.unlink(missing_ok=True)
+            except OSError as exc:
+                self.log(f"Không dọn được bản thử thua {path.name}: {exc}")
 
     def _session_attempt_path(self, row: Any, session: dict[str, Any], seed_salt: str, fresh: Path) -> Path:
         """Reserve this attempt's file and seed before synthesizing, so a replay writes the same file."""
@@ -5372,6 +5477,19 @@ class BookPipeline:
                            ) -> tuple[Path, str, dict[str, Any], int]:
         """One attempt's take: from the ledger when this call already made it, else synthesized."""
         record = session["attempts"][seed_salt]
+        rejected = record.get("rejected")
+        if rejected is not None:
+            path = Path(rejected["path"])
+            if path.is_file() and sha256_file(path) == rejected["sha256"]:
+                # A refused take the ledger kept: replay the refusal with its audio.
+                replay = SignalRejectedTake(
+                    record["error"], code=rejected["code"], rejection_class=rejected["class"], path=path,
+                    checksum=rejected["sha256"], metrics=copy.deepcopy(rejected["metrics"]))
+                replay.seed = int(rejected["seed"])
+                raise replay
+            # The kept copy is gone: synthesize the same seed again.
+            for key in ("error", "quality", "rejected", "rejected_path"):
+                record.pop(key, None)
         if "error" in record:
             # The engine's verdict on this seed is part of the book, like its audio.
             error_type = AudioQualityError if record["quality"] else RuntimeError
@@ -5381,12 +5499,17 @@ class BookPipeline:
             if path.is_file() and sha256_file(path) == record["sha256"]:
                 return path, record["sha256"], copy.deepcopy(record["metrics"]), int(record["seed"])
         try:
-            output, checksum, metrics, seed = self._without_memory_pressure(f"tổng hợp {row['stable_id']}", synthesize)
+            output, checksum, metrics, seed = self._through_machine_faults(f"tổng hợp {row['stable_id']}", synthesize)
         except (PipelineStopped, CriticalResourceStop):
             raise
         except Exception as exc:  # noqa: BLE001
             if not is_fatal_tts_error(exc):
                 record.update(error=str(exc), quality=isinstance(exc, AudioQualityError))
+                if isinstance(exc, SignalRejectedTake):
+                    record.update(rejected_path=str(exc.path), rejected=dict(
+                        path=str(exc.path), sha256=exc.checksum, metrics=copy.deepcopy(exc.metrics),
+                        seed=int(exc.seed if exc.seed is not None else self.tts.generation_seed(row, seed_salt)),
+                        code=exc.code, **{"class": exc.rejection_class}))
                 self._write_take_session(row, session)
             raise
         record.update(path=str(output), sha256=checksum, metrics=copy.deepcopy(metrics), seed=int(seed))
@@ -5396,38 +5519,15 @@ class BookPipeline:
     def _word_break_retake(self, row: Any, path: Path, metadata: dict[str, Any]) -> tuple[str, dict[str, Any], int]:
         """Synthesize the reserved seed; what the machine does to it must not change the book."""
         context = metadata["context"]
-        failures = 0
-        while True:
-            try:
-                # Memory shortages are ridden out by the same rule as every other take.
-                return self._without_memory_pressure(
-                    f"sinh lại {row['stable_id']}",
-                    lambda: self._synthesize_atomic_with_pronunciation_variant(
-                        row, path, pronunciation_delivery_variant=context["pronunciation_delivery_variant"],
-                        seed_salt=metadata["seed_salt"], repair_short_utterance=context["repair_short_utterance"],
-                        delivery_mode=context["delivery_mode"],
-                    ),
-                )
-            except (PipelineStopped, CriticalResourceStop):
-                raise
-            except Exception as exc:  # noqa: BLE001
-                if is_fatal_tts_error(exc):
-                    raise
-                # The engine wraps its own failures with a cause; without one this is
-                # the validators' verdict on the audio, the same on every replay.
-                if isinstance(exc, AudioQualityError) and exc.__cause__ is None:
-                    raise
-                failures += 1
-                time.sleep(min(8, 2**failures))
-                if failures < WORD_BREAK_RETRY_ENVIRONMENT_ATTEMPTS:
-                    continue
-                if isinstance(exc, OSError):
-                    # Never spend the budget on the machine's state: the reservation stays
-                    # and the next run replays this seed.
-                    raise CriticalResourceStop(
-                        f"Không sinh lại được {row['stable_id']} vì môi trường máy: {exc}"
-                    ) from exc
-                raise AudioQualityError(str(exc)) from exc
+        # Memory shortages and machine faults are ridden out by the same rule as every other take.
+        return self._through_machine_faults(
+            f"sinh lại {row['stable_id']}",
+            lambda: self._synthesize_atomic_with_pronunciation_variant(
+                row, path, pronunciation_delivery_variant=context["pronunciation_delivery_variant"],
+                seed_salt=metadata["seed_salt"], repair_short_utterance=context["repair_short_utterance"],
+                delivery_mode=context["delivery_mode"],
+            ),
+        )
 
     def _settle_word_break_retry(self, row: Any, key: str) -> dict[str, Any]:
         """Bring one reservation to its terminal state, by the same code from any entry point."""
@@ -5450,6 +5550,9 @@ class BookPipeline:
                     raise AudioQualityError("word-break retry changed engine input provenance: " + field)
             self._require_audible_take(path, checksum)
         except AudioQualityError as exc:
+            if isinstance(exc, SignalRejectedTake):
+                # The retry ledger records failure, never this refused audio.
+                exc.path.unlink(missing_ok=True)
             summary.update(retry_state="failed", error=str(exc))
             self.log(f"Sinh lại vì ngắt trong từ {row['stable_id']} chưa đạt: {exc}")
             self.db.finish_word_break_retry(key, result=dict(summary=summary))
@@ -5650,48 +5753,120 @@ class BookPipeline:
         )
         return True
 
-    def _accept_retained_take(self, row: Any) -> None:
+    def _accept_retained_take(self, row: Any, checked_sha256: str | None, *, exhausted: bool = False) -> None:
+        """Grant the signal pass to the retained take - the one just checked, never another.
+
+        `checked_sha256` is the take the caller's quality checks looked at. If the queue kept
+        a different (earlier) take, that one is checked here instead of inheriting a verdict
+        about other audio. A take the signal gate refused is never promoted while attempts
+        remain; once they are exhausted only an edge refusal is, as TTS_SIGNAL_EDGE_KEPT.
+        """
         current = self.db.get_segment(int(row["id"]))
         signal = json.loads(str(current["signal_json"]))
+        if signal.get("signal_rejected"):
+            if not exhausted or signal.get("rejection_class") != SIGNAL_REJECTION_CLASS_EDGE:
+                raise RetainedTakeRejected(
+                    f"retained take was refused by the signal gate: {signal.get('rejection_reason') or 'unknown'}"
+                )
+            signal[SIGNAL_EDGE_KEPT_FIELD] = True
+        if checked_sha256 is None or str(current["wav_sha256"]) != checked_sha256:
+            self._require_high_quality_take(signal)
         signal.pop("quality_pending", None)
         checkpoint = dict(wav_path=Path(str(current["wav_path"])), wav_sha256=str(current["wav_sha256"]),
                           duration=float(current["wav_duration"]), generation_seed=current["generation_seed"])
-        try:
-            self.db.mark_signal_passed(
-                int(row["id"]), **checkpoint, signal=signal,
-                warning_codes=self._signal_warning_codes(signal, split_recovery=SPLIT_STRATEGY_FIELD in signal),
-            )
-        except Exception as exc:
-            signal.update(signal_rejected=True, rejection_reason=str(exc))
-            self.db.checkpoint_usable_take(int(row["id"]), **checkpoint, signal=signal,
-                                           warning_codes=("TTS_SIGNAL_REJECTED",))
-            raise
+        self.db.mark_signal_passed(
+            int(row["id"]), **checkpoint, signal=signal,
+            warning_codes=self._signal_warning_codes(signal, split_recovery=SPLIT_STRATEGY_FIELD in signal),
+        )
 
-    def _retain_rejected_output(self, row: Any, output: Path, reason: str, salt: str,
-                                delivery: str, repair_round: int | None) -> None:
-        # Provider có thể đã ghi WAV rồi mới từ chối. Giữ file đó, không cấp phép QA cho nó.
-        if not output.is_file():
-            return
+    def _keep_edge_rejected_take(self, row: Any, chapter: Any, last_error: str) -> bool:
+        """Every attempt and the split are spent: publish an edge-refused take as a warning.
+
+        The words are all there - only the first or last 5 ms pop - and reseeding was the only
+        cure. It goes on to ASR like any take and ends `warning` / TTS_SIGNAL_EDGE_KEPT, never
+        `verified`; the chapter is not blocked and the line is listed for review.
+        """
+        current = self.db.get_segment(int(row["id"]))
+        signal = self._segment_signal_provenance(dict(current))
+        if (self._signal_rejection_tier(signal) != 1 or not self._has_real_audio(current)
+                or signal.get("generation_policy_hash") != self.quality_policy_hash):
+            return False
         try:
-            audio, rate = sf.read(output, dtype="float32", always_2d=True)
-            if not audio.size or rate <= 0 or not np.isfinite(audio).all() or not np.any(audio):
+            self._accept_retained_take(row, None, exhausted=True)
+        except (PipelineStopped, CriticalResourceStop):
+            raise
+        except Exception as exc:  # noqa: BLE001
+            self.log(f"Không giữ được bản bị chặn ở mép của {row['stable_id']}: {exc}")
+            return False
+        self._reset_tts_failure_streak()
+        self.log(f"TTS segment {row['stable_id']} giữ bản bị chặn ở mép sau khi cạn lượt; sẽ qua Whisper và ra cảnh báo.")
+        self.db.event(
+            "warning", "SEGMENT_SIGNAL_EDGE_KEPT",
+            f"Segment {row['stable_id']} kept an edge-refused take after all attempts",
+            {"error": last_error, "chapter": str(chapter["title"]), "reason": signal.get("rejection_reason")},
+        )
+        return True
+
+    def _exhausted_warning_code(self, row: Any) -> str:
+        signal = self._segment_signal_provenance(dict(self.db.get_segment(int(row["id"]))))
+        if not signal.get("signal_rejected"):
+            return "SEGMENT_FAILED"
+        if signal.get("rejection_class") == SIGNAL_REJECTION_CLASS_CLIPPED:
+            return "SEGMENT_FAILED|TTS_SIGNAL_CLIPPED"
+        return "SEGMENT_FAILED|TTS_SIGNAL_REJECTED"
+
+    def _retain_rejected_output(self, row: Any, output: Path, exc: BaseException, salt: str,
+                                delivery: str, repair_round: int | None) -> None:
+        """Keep a refused take's audio when it is still the whole reading; never pass it.
+
+        Only the signal gate's own retainable refusals (SignalRejectedTake: edge, clipping)
+        and a provider that wrote a canonical PCM_16 take before refusing it are kept. Pace,
+        repetition, engine and machine errors are not signal refusals and keep nothing.
+        """
+        try:
+            if isinstance(exc, SignalRejectedTake):
+                path, checksum, metrics = exc.path, exc.checksum, dict(exc.metrics)
+                if not path.is_file() or sha256_file(path) != checksum:
+                    return
+                seed = int(exc.seed) if exc.seed is not None else self.tts.generation_seed(row, salt)
+            elif type(exc) is AudioQualityError and exc.__cause__ is None and output.is_file():
+                path, checksum = output, sha256_file(output)
+                metrics = self._provider_rejected_metrics(row, output, str(exc))
+                if metrics is None:
+                    return
+                seed = self.tts.generation_seed(row, salt)
+            else:
                 return
-            checksum = sha256_file(output)
             if self.db.get_segment(int(row["id"]))["wav_sha256"] == checksum:
                 return
-            text = self.tts.spoken_text(row)
-            metrics: dict[str, Any] = {
-                "duration": len(audio) / rate, "signal_rejected": True, "rejection_reason": reason,
-                "tts_delivery_mode": delivery,
-                "spoken_text_sha256": hashlib.sha256(text.encode("utf-8")).hexdigest(),
-                "voice_profile_id": _segment_value(row, "voice_profile_id", None),
-                "pronunciation_delivery_variant": PRONUNCIATION_DELIVERY_LOCKED,
-            }
+            metrics["tts_delivery_mode"] = delivery
             if repair_round is not None:
                 metrics[ASR_CLARITY_REPAIR_ROUND_METRIC] = repair_round
-            self._keep_usable_take(row, output, checksum, metrics, self.tts.generation_seed(row, salt))
-        except (OSError, RuntimeError, ValueError, KeyError, TypeError) as exc:
-            self.log(f"Không giữ được WAV chưa đạt của {row['stable_id']}: {exc}")
+            self._keep_usable_take(row, path, checksum, metrics, seed)
+        except (OSError, RuntimeError, ValueError, KeyError, TypeError) as error:
+            self.log(f"Không giữ được WAV chưa đạt của {row['stable_id']}: {error}")
+
+    def _provider_rejected_metrics(self, row: Any, output: Path, reason: str) -> dict[str, Any] | None:
+        """Measurements of a take a provider wrote and then refused, if it is canonical speech."""
+        info = sf.info(output)
+        if (info.format != "WAV" or info.subtype != "PCM_16" or info.channels != 1
+                or int(info.samplerate) != int(self.settings["tts"]["sample_rate"])):
+            return None
+        audio, rate = sf.read(output, dtype="float32", always_2d=False)
+        text = self.tts.spoken_text(row)
+        try:
+            _, metrics = validate_audio_array(audio, text, self.settings, rate, segment=row,
+                                              check_edges=False, check_clipping=False)
+        except AudioQualityError:
+            return None
+        metrics.update(
+            signal_rejected=True, rejection_code="", rejection_class=SIGNAL_REJECTION_CLASS_UNKNOWN,
+            rejection_reason=reason,
+            spoken_text_sha256=hashlib.sha256(text.encode("utf-8")).hexdigest(),
+            voice_profile_id=_segment_value(row, "voice_profile_id", None),
+            pronunciation_delivery_variant=PRONUNCIATION_DELIVERY_LOCKED,
+        )
+        return metrics
 
     def _synthesize_split(
         self,
@@ -5818,6 +5993,7 @@ class BookPipeline:
         finally:
             for path in part_paths:
                 path.unlink(missing_ok=True)
+                rejected_take_path(path).unlink(missing_ok=True)
 
     def _spoken_text_and_anchors(
         self,

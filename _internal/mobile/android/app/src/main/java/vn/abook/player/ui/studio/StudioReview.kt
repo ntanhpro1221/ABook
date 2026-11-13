@@ -9,7 +9,7 @@ import vn.abook.player.StudioPaths
 
 /** Vì sao một câu cần nghe lại (webui/reviews.py): hỏng, chưa kiểm được, lệch nhiều / nhẹ về tên hay chữ. */
 enum class ReviewKind(val key: String) {
-    Failed("failed"), Unverified("unverified"), NameLow("name-low"), TextLow("text-low"), Name("name"), Text("text");
+    Failed("failed"), Unverified("unverified"), Signal("signal"), NameLow("name-low"), TextLow("text-low"), Name("name"), Text("text");
 
     companion object {
         fun of(key: String): ReviewKind = entries.firstOrNull { it.key == key } ?: Text

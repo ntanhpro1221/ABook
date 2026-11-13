@@ -182,7 +182,7 @@ def test_active_edge_uses_existing_pipeline_seed_retry(tmp_path, monkeypatch):
     p.tts = SimpleNamespace(generation_seed=lambda *a: 17, synthesize_atomic=synthesize)
     # Bài này chỉ kiểm vòng seed; checkpoint giữ bản thu có bài tích hợp dùng SQLite/WAV thật.
     p._keep_usable_take = lambda *a: None
-    p._accept_retained_take = lambda row: committed.append({'generation_seed': len(salts)})
+    p._accept_retained_take = lambda row, checked_sha256: committed.append({'generation_seed': len(salts)})
     p._resume_word_break_retry = lambda *a, **k: None
     p._begin_take_session = lambda *a, **k: {}
     p._session_attempt_path = lambda _row, _session, _salt, fresh: fresh

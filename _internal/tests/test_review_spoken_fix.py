@@ -61,3 +61,15 @@ def test_only_a_name_warning_is_called_a_name() -> None:
     assert _kind("warning", "ASR_MISMATCH_UNRESOLVED", 0.6) == "text-low"
     assert _kind("warning", "ASR_MISMATCH_UNRESOLVED", 0.9) == "text"
     assert {"name", "text"} == set(MINOR_KINDS)
+
+
+def test_an_edge_kept_take_is_its_own_kind_shown_by_default() -> None:
+    """rejtake: bản giữ lại vì tiếng bật ở mép sau mọi lần thu là loại "signal" - không lẫn vào "lệch ít" đang ẩn, kể cả khi
+    máy nghe khớp chữ gần trọn hay mã đi kèm mã khác."""
+    from abook.webui.reviews import KINDS, MINOR_KINDS, REASONS, _kind
+
+    assert _kind("warning", "TTS_SIGNAL_EDGE_KEPT", 0.98) == "signal"
+    assert _kind("warning", "ASR_MISMATCH_UNRESOLVED|TTS_SIGNAL_EDGE_KEPT", 0.5) == "signal"
+    assert _kind("failed", "SEGMENT_FAILED|TTS_SIGNAL_CLIPPED", None) == "failed"
+    assert "signal" in KINDS and "signal" not in MINOR_KINDS and REASONS["signal"]
+    assert KINDS.index("signal") < KINDS.index("name-low")

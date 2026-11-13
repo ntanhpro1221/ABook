@@ -1,10 +1,11 @@
 from __future__ import annotations
 
+import json
 from collections.abc import Callable
 from dataclasses import dataclass, field
 from pathlib import Path
 
-from .audio_io import inspect_wav, signal_metrics_cache_version, verify_mp3
+from .audio_io import inspect_wav, is_edge_kept_take, signal_metrics_cache_version, verify_mp3
 from .background_runner import BACKGROUND_DIRECTORY
 from .database import (
     SEGMENT_AUDIO_QUALITY_STAGE,
@@ -162,6 +163,7 @@ def recover_project(
     report.reset_in_progress = db.reset_in_progress_segments()
     report.stale_leases = db.clear_all_worker_leases()
     current_policy = db.current_quality_policy()
+    current_policy_hash = str(current_policy["policy_hash"]) if current_policy is not None else None
     if current_policy is not None:
         policy_hash = str(current_policy["policy_hash"])
         report.invalidated_candidates = db.reconcile_segment_candidate_artifacts(policy_hash)
@@ -227,8 +229,15 @@ def recover_project(
             if not checksum_required:
                 checksum_ok = True
             measurements = signal_cache.measurements_for(checksum)
+            try:
+                signal = json.loads(str(row["signal_json"] or "{}"))
+            except (TypeError, ValueError):
+                signal = {}
             signal_ok, _, _ = inspect_wav(
                 wav, str(row["text"]), settings, segment=row,
+                # An edge pop kept after every attempt under this policy would be kept again.
+                check_edges=not (checksum == str(row["wav_sha256"])
+                                 and is_edge_kept_take(signal, current_policy_hash)),
                 signal_measurements=measurements,
             )
             signal_cache.remember(checksum, measurements)

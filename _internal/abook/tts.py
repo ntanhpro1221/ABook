@@ -11,13 +11,13 @@ from pathlib import Path
 from typing import Any, Callable
 
 import numpy as np
-import soundfile as sf
 
 from .audio_io import (
     VIENEU_V3_FRAME_SECONDS,
     VOICE_BALANCE_FIELD,
     AudioQualityError,
     SegmentDurationPolicy,
+    SignalRejectedTake,
     atomic_write_wav,
     is_short_utterance,
     resample_audio,
@@ -1620,6 +1620,10 @@ class TTSCoordinator:
                         HA_VOCALIZATION_FINAL_SAMPLES_FIELD: final_samples,
                     }
                 )
+            # A take refused only at its edges or for clipping is written like a passing
+            # one (PCM_16, same gain and peak cap) beside `output`, and measured in full
+            # below, so the pipeline ranks it on real numbers. Fatal refusals keep nothing.
+            rejected: SignalRejectedTake | None = None
             try:
                 checksum, metrics = atomic_write_wav(
                     output,
@@ -1628,19 +1632,12 @@ class TTSCoordinator:
                     str(spoken_row["text"]),
                     self.settings,
                     segment=spoken_row,
+                    keep_rejected=True,
                 )
-            except AudioQualityError:
-                # Cổng tín hiệu có thể chặn trước khi ghi WAV. Giữ lời thật để nghe lại,
-                # nhưng vẫn ném lỗi để pipeline không cấp phép tín hiệu cho bản này.
-                samples = np.asarray(audio, dtype=np.float32)
-                if samples.size and np.isfinite(samples).all() and np.any(samples):
-                    output.parent.mkdir(parents=True, exist_ok=True)
-                    rejected = output.with_name(output.stem + ".rejected.part.wav")
-                    sf.write(rejected, samples, self.sample_rate, subtype="FLOAT")
-                    with rejected.open("rb+") as handle:
-                        os.fsync(handle.fileno())
-                    os.replace(rejected, output)
-                raise
+            except SignalRejectedTake as exc:
+                rejected = exc
+                checksum, metrics = exc.checksum, exc.metrics
+            measured_output = rejected.path if rejected is not None else output
             metrics["tts_delivery_mode"] = str(delivery_mode).strip().casefold()
             if japanese_audio_evidence and japanese_audio_evidence.get("status") != "not_applicable":
                 metrics["japanese_name_audio"] = japanese_audio_evidence
@@ -1685,10 +1682,13 @@ class TTSCoordinator:
                     return self.spoken_text(unit_row, pronunciation_delivery_variant=normalized_pronunciation_variant)
 
                 metrics[word_break.FIELD] = word_break.measure(
-                    output, voice_constants.key,
+                    measured_output, voice_constants.key,
                     str(_row_value(row, "listener_text", None) or row["text"]),
                     str(spoken_row["text"]), read_unit,
                 )
+            if rejected is not None:
+                rejected.seed = int(seed)
+                raise rejected
             return checksum, metrics, seed
         finally:
             # VieNeu's PyTorch backend may retain allocator cache after returning a NumPy waveform.

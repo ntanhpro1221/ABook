@@ -25,12 +25,13 @@ from typing import Any
 from . import listing_cache, store
 
 LOW_SIMILARITY = 0.8
-KINDS = ("failed", "unverified", "name-low", "text-low", "name", "text")
+KINDS = ("failed", "unverified", "signal", "name-low", "text-low", "name", "text")
 # Lệch ít (tên hay chữ thường): thường vẫn ổn - không vào hàng chờ trừ khi mở "cả câu lệch ít".
 MINOR_KINDS = ("name", "text")
 REASONS = {
     "failed": "Thu âm hỏng sau mọi lần thử - chương này chưa xuất được",
     "unverified": "Máy chưa kiểm được câu này — bạn nên nghe lại bằng tai.",
+    "signal": "Đầu hoặc cuối câu có tiếng bật, thu lại mọi lần vẫn còn; lời đọc đủ",
     "name-low": "Tên riêng đọc khác nhiều so với chữ viết",
     "name": "Tên riêng đọc hơi khác chữ viết - thường vẫn ổn",
     "text-low": "Máy nghe ra khác nhiều so với chữ viết",
@@ -39,6 +40,9 @@ REASONS = {
 # Mã cảnh báo nói lệch nằm ở TÊN RIÊNG (asr.py: Whisper viết tên ngoại bằng chữ Latin dù đọc đúng). Mã khác (lệch chữ thường
 # sau mọi lần sửa, nghe chưa tự nhiên...) không được gọi là "tên riêng" (soát UX a24: nhãn ấy gắn cả câu không có tên nào).
 _NAME_CODES = ("ASR_LOCKED_NAME_ANCHOR_MISMATCH", "ASR_LOCKED_NAME_ANCHOR_REVIEW")
+# Bản giữ lại sau mọi lần thu chỉ vì tiếng bật ở mép (pipeline `_keep_edge_rejected_take`): lời đủ, ASR đã kiểm, nhưng tai sẽ nghe
+# thấy - nên là loại riêng, hiện mặc định, không lẫn vào "lệch ít" (`MINOR_KINDS`) đang ẩn.
+_SIGNAL_EDGE_CODE = "TTS_SIGNAL_EDGE_KEPT"
 
 
 UNNAMED_LABEL = "Vai phụ không tên"
@@ -80,6 +84,8 @@ def _kind(status: str, code: str, similarity: float | None) -> str:
     if status == "failed":
         return "failed"
     codes = [part.strip() for part in code.split("|")]
+    if _SIGNAL_EDGE_CODE in codes:
+        return "signal"
     # Mã có thể ghép bằng `|` ("TTS_GENERATION_CEILING_REACHED|ASR_TRANSCRIPT_TIMELINE_IMPOSSIBLE"): mọi mã đều xét, không chỉ chuỗi đơn.
     if _unanswerable_codes().intersection(codes):
         return "unverified"

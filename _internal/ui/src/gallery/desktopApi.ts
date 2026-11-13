@@ -232,7 +232,7 @@ function reviewView(item: GalleryBook) {
     row(14, "name-low", "Tên “Khuê” nghe như “Khuyên”", "Chị Khuyên! Đèn trên tháp chuông… nó vừa sáng lên!", 0.82),
     row(20, "unverified", "Chưa kiểm được: bộ nghe thử chưa chạy tới câu này", "", null),
   ];
-  return { counts: { failed: 1, unverified: 1, "name-low": 1, "text-low": 0, name: 0, text: 0 }, pending: items.length, redoChapters: [], items, nextCursor: null, remaining: 0 };
+  return { counts: { failed: 1, unverified: 1, signal: 0, "name-low": 1, "text-low": 0, name: 0, text: 0 }, pending: items.length, redoChapters: [], items, nextCursor: null, remaining: 0 };
 }
 
 function voiceChoices(item: GalleryBook, character: string) {

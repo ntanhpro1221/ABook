@@ -7,13 +7,13 @@ import { WorkCards, type WorkItem } from "./WorkInbox";
 import type { BookSummary } from "./api";
 import { TooltipProvider } from "@/shared/ui";
 
-const mocks = vi.hoisted(() => ({ mutate: vi.fn(), toggle: vi.fn() }));
+const mocks = vi.hoisted(() => ({ mutate: vi.fn(), toggle: vi.fn(), kind: "failed", reason: "Cần kiểm tra" }));
 vi.mock("@tanstack/react-query", () => ({
   useQueryClient: () => ({}), useQuery: () => ({}),
   useMutation: () => ({ mutate: mocks.mutate }),
   useInfiniteQuery: () => ({ data: { pages: [{ pending: 1, counts: {}, redoChapters: [], items: [{
     stableId: "line", segmentId: 1, chapterId: 1, chapterTitle: "Chương 1", audioSha256: "sha", verdict: null,
-    pendingSpoken: null, text: "Câu cần nghe", textSha256: "text-sha", kind: "failed", playable: true, reason: "Cần kiểm tra",
+    pendingSpoken: null, text: "Câu cần nghe", textSha256: "text-sha", kind: mocks.kind, playable: true, reason: mocks.reason,
   }] }] } }),
 }));
 vi.mock("@/listen/clip", () => ({ useClip: () => ({ current: null, toggle: mocks.toggle }) }));
@@ -24,9 +24,18 @@ beforeEach(() => {
   (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
   vi.spyOn(HTMLElement.prototype, "animate").mockImplementation(() => ({ cancel: vi.fn(), onfinish: null, finished: Promise.resolve() }) as unknown as Animation);
   mocks.mutate.mockClear(); mocks.toggle.mockClear(); host = document.createElement("div"); document.body.append(host); root = createRoot(host);
+  mocks.kind = "failed"; mocks.reason = "Cần kiểm tra";
 });
 afterEach(async () => { await act(() => root.unmount()); document.body.replaceChildren(); vi.restoreAllMocks(); });
 const buttons = () => [...host.querySelectorAll<HTMLButtonElement>("button")];
+
+it("signal hiện mặc định với lý do chung từ máy thu và màu cảnh báo", async () => {
+  mocks.kind = "signal";
+  mocks.reason = "Đầu hoặc cuối câu có tiếng bật, thu lại mọi lần vẫn còn; lời đọc đủ";
+  await act(() => root.render(<ReviewQueue bookId="book" />));
+  expect(host.querySelector('[data-review-row="line"]')).not.toBeNull();
+  expect(host.querySelector("span.text-warning")?.textContent).toBe(mocks.reason);
+});
 
 it("vai phụ nhiều câu: đề xuất tên trong chương, chọn giới và mở giọng dùng cùng đường sửa", async () => {
   const voice = vi.fn();

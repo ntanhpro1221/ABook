@@ -117,6 +117,12 @@ CLASS_NOTES: dict[str, tuple[str, str, str]] = {
         "Bản thu là các mảnh nối liền, nên chỗ đáng ngờ nằm ở mối nối chứ không ở cách đọc.",
         "Nghe chỗ chuyển giữa các mệnh đề: có hụt hơi, cắt cụt hay lặp chữ ở mối nối không.",
     ),
+    "TTS_SIGNAL_EDGE_KEPT": (
+        "5 ms đầu hoặc cuối bản thu còn to (tiếng bật), mọi lần thu lại và cắt câu đều không hết.",
+        "Lời đọc đủ và máy đã nghe lại khớp chữ; trong log thật gieo lại gần như luôn chữa được, "
+        "nên câu tới được đây là ca hiếm. Vuốt mép 5-10 ms sẽ ăn mất phụ âm đầu (docs/ONSET_CLICK.md).",
+        "Nghe đúng đầu và cuối câu: có tiếng 'tóp' hay vào giữa sóng không.",
+    ),
     "PERCEPTUAL_NATURALNESS_REVIEW": (
         "Điểm tự nhiên của bản thu thấp hơn nền của chính giọng đó.",
         "Đây là chấm tương đối chứ không tuyệt đối - câu ngắn hoặc nhiều dấu câu thường bị "

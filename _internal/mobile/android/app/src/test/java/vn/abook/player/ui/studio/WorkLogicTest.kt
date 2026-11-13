@@ -260,6 +260,7 @@ class WorkLogicTest {
         assertEquals(listOf(1), page.redoChapters)
         val item = page.items.single()
         assertEquals(ReviewKind.NameLow, item.kind)
+        assertEquals(ReviewKind.Signal, ReviewKind.of("signal"))
         assertEquals(ChapterWindow(1.5, 3.0), item.chapterClip)
         assertEquals("ok", item.verdict)
         assertNull(page.nextCursor)

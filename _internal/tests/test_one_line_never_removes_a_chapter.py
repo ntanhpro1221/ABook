@@ -99,7 +99,7 @@ def test_take_order_and_crash_keep_incumbent_until_better_checkpoint(tmp_path):
         kept = pipeline.db.get_segment(row['id'])
         assert Path(kept['wav_path']).name == f'take{[0, 1, 1, 3][index]}.wav'
     kept = pipeline.db.get_segment(row['id'])
-    pipeline._accept_retained_take(row)
+    pipeline._accept_retained_take(row, kept['wav_sha256'])
     pipeline.db.mark_generating(row['id'], 999)
     reopened = ProjectDB(pipeline.db.path)
     reopened.reset_in_progress_segments()
@@ -125,7 +125,8 @@ def test_provider_rejecting_after_writing_audio_cannot_lose_the_take(tmp_path, m
     pipeline, chapter, row = _short_tts_pipeline(tmp_path, source_text='Một câu ngắn.')
     def reject(item, path, **kwargs):
         path.parent.mkdir(parents=True, exist_ok=True)
-        sf.write(path, .1 * np.sin(np.arange(24000) / 30), 24000)
+        rate = int(pipeline.settings['tts']['sample_rate'])
+        sf.write(path, .1 * np.sin(np.arange(rate) / 30), rate, subtype='PCM_16')
         raise AudioQualityError('provider rejected a decodable take')
     pipeline.tts = SimpleNamespace(generation_seed=lambda *a: 7, spoken_text=lambda r: r['text'], synthesize_atomic=reject,
                                    locked_voice_provenance=lambda r: {'voice_profile_id': r['voice_profile_id']})
@@ -135,6 +136,7 @@ def test_provider_rejecting_after_writing_audio_cannot_lose_the_take(tmp_path, m
     current = pipeline.db.get_segment(row['id'])
     assert current['status'] == 'failed' and 'provider rejected' in current['error']
     assert current['wav_sha256'] == sha256_file(Path(current['wav_path']))
+    assert json.loads(current['signal_json'])['rejection_class'] == 'unknown'
     assert json.loads(current['signal_json'])['signal_rejected']
 
 
@@ -323,11 +325,13 @@ def test_real_writer_rejection_keeps_only_decodable_non_silent_speech(tmp_path, 
     monkeypatch.setattr(pipeline_module.time, 'sleep', lambda _: None)
     pipeline._process_single_segment(row, chapter)
     kept = pipeline.db.get_segment(row['id'])
-    assert kept['status'] == 'failed' and kept['error']
     if signal == 'active_edge':
+        assert kept['status'] == 'signal_passed'
+        assert 'TTS_SIGNAL_EDGE_KEPT' in kept['warning_code']
         assert pipeline._has_real_audio(kept)
         assert json.loads(kept['signal_json'])['signal_rejected']
     else:
+        assert kept['status'] == 'failed' and kept['error']
         assert not kept['wav_sha256'] and not pipeline._has_real_audio(kept)
 
 

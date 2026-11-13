@@ -217,6 +217,44 @@ def _append_log(paths: BackgroundPaths, message: str) -> None:
     _append_line_safely(paths, paths.log, f"{_utc_now()} | {message}")
 
 
+# state.json is how the book page sees a live run; it is not a reason for the run to end.
+# A scanner, sync client or polling script can hold it far longer than the 0.6 s rename retry
+# (`io_utils._replace_with_retry`), and the supervisor used to answer by killing the worker -
+# mid-analysis, which makes a different book (AGENTS.md). Live writes back off for about
+# `STATE_WRITE_RETRY_SECONDS`, then give up on that one write; the next heartbeat writes again.
+STATE_WRITE_RETRY_SECONDS = 30.0
+STATE_WRITE_FIRST_DELAY_SECONDS = 0.1
+STATE_WRITE_MAX_DELAY_SECONDS = 5.0
+
+
+def _write_state_retrying(paths: BackgroundPaths, state: Mapping[str, Any]) -> None:
+    """Write state.json, backing off on OSError for about STATE_WRITE_RETRY_SECONDS; then raise."""
+    deadline = time.monotonic() + STATE_WRITE_RETRY_SECONDS
+    delay = STATE_WRITE_FIRST_DELAY_SECONDS
+    while True:
+        try:
+            atomic_write_json(paths.state, dict(state))
+            return
+        except OSError:
+            remaining = deadline - time.monotonic()
+            if remaining <= 0:
+                raise
+            time.sleep(min(delay, remaining))
+            delay = min(delay * 2, STATE_WRITE_MAX_DELAY_SECONDS)
+
+
+def _write_live_state(paths: BackgroundPaths, state: dict[str, Any]) -> bool:
+    """A state write while the worker runs: never raises, so it can never end the worker."""
+    try:
+        _write_state_retrying(paths, state)
+    except Exception as exc:  # noqa: BLE001 - bookkeeping cannot stop a live worker
+        state["state_write_lost"] = {"at": _utc_now(), "error": f"{type(exc).__name__}: {exc}"}
+        _append_log(paths, f"STATE_WRITE_FAILED {type(exc).__name__}: {exc}")
+        return False
+    state.pop("state_write_lost", None)
+    return True
+
+
 def _append_event(paths: BackgroundPaths, event: Mapping[str, Any]) -> None:
     payload = json.dumps(dict(event), ensure_ascii=False, separators=(",", ":"), default=str)
     _append_line_safely(paths, paths.events, payload)
@@ -1063,7 +1101,7 @@ def run_supervisor(
                 "detail": "background supervisor và worker đã xác minh project",
             }
         )
-        atomic_write_json(paths.state, state)
+        _write_live_state(paths, state)
         _write_handshake(paths, instance_id, "ready", "supervisor và worker đã khởi động")
         handshake_written = True
         _append_log(paths, f"READY supervisor_pid={supervisor_pid} worker_pid={worker.pid}")
@@ -1087,7 +1125,7 @@ def run_supervisor(
                         "detail": "đã chuyển stop request tới worker; đang chờ checkpoint sạch",
                     }
                 )
-                atomic_write_json(paths.state, state)
+                _write_live_state(paths, state)
                 _append_log(paths, "STOP_REQUEST forwarded to worker")
 
             # Tạm dừng giữ tiến trình sống: dây chuyền đứng ở checkpoint kế (pause_requested) và làm tiếp đúng chỗ ấy -
@@ -1097,8 +1135,12 @@ def run_supervisor(
                 battery_pause = battery.update(
                     power_source.on_battery(), time.monotonic(), time.time()
                 ) and power_source.pause_on_battery_enabled()
-                if not stop_requested and _hold_for_review(paths, state):
-                    _append_log(paths, "PRECAST_HOLD analysis done, waiting for review")
+                try:
+                    if not stop_requested and _hold_for_review(paths, state):
+                        _append_log(paths, "PRECAST_HOLD analysis done, waiting for review")
+                except OSError as exc:
+                    # Bookkeeping again: the hold is retried at the next power check.
+                    _append_log(paths, f"PRECAST_HOLD_WRITE_FAILED {type(exc).__name__}: {exc}")
             wanted = None if stop_requested else _pause_reason(
                 _pause_request(paths, instance_id), battery_pause, battery.last_plugged_wall
             )
@@ -1117,7 +1159,7 @@ def run_supervisor(
                 state.update(
                     {"pause_reason": wanted, "paused_at": _utc_now() if wanted else None, "updated_at": _utc_now()}
                 )
-                atomic_write_json(paths.state, state)
+                _write_live_state(paths, state)
                 _append_log(paths, f"PAUSE reason={wanted}" if wanted else "RESUME")
 
             try:
@@ -1134,7 +1176,7 @@ def run_supervisor(
                 event is not None and monotonic_now - last_state_write >= STATE_EVENT_FLUSH_SECONDS
             ):
                 state["updated_at"] = _utc_now()
-                atomic_write_json(paths.state, state)
+                _write_live_state(paths, state)
                 last_state_write = monotonic_now
                 next_heartbeat = monotonic_now + STATUS_HEARTBEAT_SECONDS
 
@@ -1167,7 +1209,7 @@ def run_supervisor(
                 "detail": detail,
             }
         )
-        atomic_write_json(paths.state, state)
+        _write_state_retrying(paths, state)
         _append_log(
             paths,
             f"SUPERVISOR_END state={terminal_state} worker_exit={worker_exit_code} exit={supervisor_exit_code}",

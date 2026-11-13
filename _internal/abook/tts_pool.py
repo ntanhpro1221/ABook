@@ -297,6 +297,12 @@ def _worker_job(payload: dict[str, Any]) -> dict[str, Any]:
             **payload.get("kwargs", {}),
         )
     except Exception as exc:  # noqa: BLE001 - carried to the parent verbatim
+        from .audio_io import SignalRejectedTake
+
+        if isinstance(exc, SignalRejectedTake):
+            # The parent never claims a failed prefetch; it re-synthesizes this seed itself
+            # and keeps its own copy. This one would only be an orphan beside the chunk.
+            exc.path.unlink(missing_ok=True)
         return {"stable_id": row.get("stable_id"), "error": f"{type(exc).__name__}: {exc}"}
     return {
         "stable_id": row.get("stable_id"),

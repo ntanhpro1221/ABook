@@ -22,7 +22,7 @@ from .audio_transform_contract import (
     POSTPROCESS_SOURCE_SAMPLES_FIELD,
     POSTPROCESS_TEMPO_FACTOR,
 )
-from .io_utils import atomic_write_text, ffmpeg_executable, run_hidden, sha256_file
+from .io_utils import _replace_with_retry, atomic_write_text, ffmpeg_executable, run_hidden, sha256_file
 from .text_processing import VIETNAMESE_UNITS, vietnamese_number_words
 from . import voice_balance
 
@@ -217,6 +217,65 @@ SEGMENT_EDGE_WINDOW_SECONDS = 0.005
 SEGMENT_EDGE_MAX_RMS = 0.05
 TTS_ACTIVE_ONSET = "TTS_ACTIVE_ONSET"
 TTS_ACTIVE_OFFSET = "TTS_ACTIVE_OFFSET"
+TTS_CLIPPING = "TTS_CLIPPING"
+# A signal-gate refusal that still holds the whole reading. An edge pop is cosmetic: the words
+# are all there and only a reseed can remove it (docs/ONSET_CLICK.md - fading 5-10 ms eats the
+# first consonant). Clipping is worse - the distortion is in the waveform - but it is still
+# speech. Every other refusal (empty, NaN, silent, too short/long, pace far outside the safe
+# band) is fatal: nothing worth keeping, so nothing is written.
+SIGNAL_EDGE_CODES = frozenset({TTS_ACTIVE_ONSET, TTS_ACTIVE_OFFSET})
+SIGNAL_REJECTION_CLASS_EDGE = "edge"
+SIGNAL_REJECTION_CLASS_CLIPPED = "clipped"
+SIGNAL_REJECTION_CLASS_UNKNOWN = "unknown"
+SIGNAL_EDGE_KEPT_FIELD = "signal_edge_kept"
+TTS_SIGNAL_EDGE_KEPT = "TTS_SIGNAL_EDGE_KEPT"
+
+
+class SignalRejectedTake(AudioQualityError):
+    """The signal gate refused this take, but a canonical PCM_16 copy of it is on disk.
+
+    The copy has the same format, gain and peak cap as a passing take and lives at `path`,
+    never at the caller's output path. `metrics` holds every measurement a passing take
+    would carry plus `signal_rejected`, `rejection_code`, `rejection_class` and
+    `rejection_reason`, so a later take is ranked against real numbers, not missing ones.
+    """
+
+    def __init__(self, message: str, *, code: str, rejection_class: str, path: Path,
+                 checksum: str, metrics: dict[str, Any]) -> None:
+        super().__init__(message)
+        self.code = code
+        self.rejection_class = rejection_class
+        self.path = path
+        self.checksum = checksum
+        self.metrics = metrics
+        self.seed: int | None = None  # the engine's seed, filled in by the coordinator
+
+
+def signal_rejection_code(message: str) -> str | None:
+    """The retainable gate code a validator message starts with, if any."""
+    head = str(message).split(":", 1)[0].strip()
+    return head if head in SIGNAL_EDGE_CODES or head == TTS_CLIPPING else None
+
+
+def rejected_take_path(path: Path) -> Path:
+    """Where a refused take is kept: beside the requested output, never over it."""
+    return path.with_name(path.stem + ".rejected" + path.suffix)
+
+
+def is_edge_kept_take(signal: Any, policy_hash: str | None) -> bool:
+    """A take kept, after every attempt, only for an edge pop - under this same policy.
+
+    Such a take is judged without the edge gate on resume: reseeding under the same policy
+    would replay the same attempts and end with the same take. Another policy re-judges it.
+    """
+    return bool(
+        isinstance(signal, dict)
+        and signal.get(SIGNAL_EDGE_KEPT_FIELD)
+        and signal.get("signal_rejected")
+        and signal.get("rejection_class") == SIGNAL_REJECTION_CLASS_EDGE
+        and policy_hash
+        and signal.get("generation_policy_hash") == policy_hash
+    )
 
 # What one pause costs, fitted on committed segments rather than chosen. Regressing
 # duration on (speakable characters, pause groups) over 4095 of them gives 0.060 s per
@@ -789,6 +848,7 @@ def validate_audio_array(
     segment: Any | None = None,
     *,
     check_edges: bool = True,
+    check_clipping: bool = True,
     signal_measurements: dict[str, float] | None = None,
 ) -> tuple[np.ndarray, dict[str, float]]:
     if sample_rate <= 0:
@@ -827,8 +887,8 @@ def validate_audio_array(
         raise AudioQualityError(f"audio unusually long: {metrics['duration']:.2f}s > {max_duration:.2f}s")
     if metrics["rms"] < float(settings["tts"]["min_rms"]):
         raise AudioQualityError(f"audio RMS too low: {metrics['rms']:.6f}")
-    if metrics["clipping_fraction"] > float(settings["tts"]["max_clipping_fraction"]):
-        raise AudioQualityError(f"audio clipping: {metrics['clipping_fraction']:.4%}")
+    if check_clipping and metrics["clipping_fraction"] > float(settings["tts"]["max_clipping_fraction"]):
+        raise AudioQualityError(f"{TTS_CLIPPING}: audio clipping {metrics['clipping_fraction']:.4%}")
     for metric, code in (("onset_rms", TTS_ACTIVE_ONSET), ("offset_rms", TTS_ACTIVE_OFFSET)):
         if check_edges and metrics[metric] > SEGMENT_EDGE_MAX_RMS:
             raise AudioQualityError(
@@ -981,6 +1041,7 @@ def inspect_wav(
     settings: dict[str, Any],
     segment: Any | None = None,
     *,
+    check_edges: bool = True,
     signal_measurements: dict[str, float] | None = None,
 ) -> tuple[bool, dict[str, float], str]:
     """Decode and validate a take against the current text and policy.
@@ -991,7 +1052,7 @@ def inspect_wav(
     try:
         audio, sample_rate = sf.read(path, dtype="float32", always_2d=False)
         _, metrics = validate_audio_array(
-            audio, text, settings, sample_rate, segment=segment,
+            audio, text, settings, sample_rate, segment=segment, check_edges=check_edges,
             signal_measurements=signal_measurements,
         )
         return True, metrics, "ok"
@@ -1007,33 +1068,120 @@ def atomic_write_wav(
     settings: dict[str, Any],
     segment: Any | None = None,
     already_leveled: bool = False,
+    *,
+    keep_rejected: bool = False,
 ) -> tuple[str, dict[str, float]]:
+    """Level, validate and atomically write one take as PCM_16.
+
+    With `keep_rejected`, a take the signal gate refuses only for its edges or for clipping
+    is still leveled and written exactly as a passing take would be - to
+    `rejected_take_path(path)`, with every measurement taken first - and the refusal is
+    raised as `SignalRejectedTake`. Fatal refusals write nothing.
+    """
     path.parent.mkdir(parents=True, exist_ok=True)
     temp = path.with_name(path.stem + ".part" + path.suffix)
     temp.unlink(missing_ok=True)
     # Edge thresholds were measured on stored (leveled) takes. Check format,
     # clipping and duration first; judge boundary amplitude after the locked gain.
-    array, _ = validate_audio_array(
-        audio, text, settings, sample_rate, segment=segment, check_edges=False,
-    )
+    rejection: AudioQualityError | None = None
+    try:
+        array, _ = validate_audio_array(
+            audio, text, settings, sample_rate, segment=segment, check_edges=False,
+        )
+    except AudioQualityError as exc:
+        if not keep_rejected or signal_rejection_code(str(exc)) != TTS_CLIPPING:
+            raise
+        rejection = exc
+        # Clipping is in the waveform already; every other gate must still pass.
+        array, _ = validate_audio_array(
+            audio, text, settings, sample_rate, segment=segment, check_edges=False, check_clipping=False,
+        )
     level_info: dict[str, float] = {}
     if segment is not None:
         array, level_info = level_segment(
             array, sample_rate, segment, settings, already_leveled=already_leveled
         )
-    array, _ = validate_audio_array(array, text, settings, sample_rate, segment=segment)
+    if rejection is None:
+        try:
+            array, _ = validate_audio_array(array, text, settings, sample_rate, segment=segment)
+        except AudioQualityError as exc:
+            if not keep_rejected or signal_rejection_code(str(exc)) not in SIGNAL_EDGE_CODES:
+                raise
+            rejection = exc
+    if rejection is not None:
+        raise _write_rejected_take(
+            rejected_take_path(path), array, sample_rate, text, settings, segment, level_info, rejection,
+        )
     sf.write(temp, array, sample_rate, subtype="PCM_16")
     # Windows rejects fsync on a read-only descriptor (WinError 9).
     with temp.open("rb+") as handle:
         os.fsync(handle.fileno())
-    valid, metrics, reason = inspect_wav(temp, text, settings, segment=segment)
-    if not valid:
+    try:
+        stored, stored_rate = sf.read(temp, dtype="float32", always_2d=False)
+        _, metrics = validate_audio_array(stored, text, settings, stored_rate, segment=segment)
+    except AudioQualityError as exc:
         temp.unlink(missing_ok=True)
-        raise AudioQualityError(f"temporary WAV failed validation: {reason}")
+        # Quantization can move an edge just over its threshold even when the float
+        # samples passed. This is still the same retainable signal verdict.
+        if keep_rejected and signal_rejection_code(str(exc)) in SIGNAL_EDGE_CODES:
+            raise _write_rejected_take(
+                rejected_take_path(path), array, sample_rate, text, settings, segment, level_info, exc,
+            )
+        raise AudioQualityError(f"temporary WAV failed validation: {exc}")
     checksum = sha256_file(temp)
-    os.replace(temp, path)
+    _replace_with_retry(temp, path)
     metrics.update(level_info)
     return checksum, metrics
+
+
+def _write_rejected_take(
+    path: Path,
+    array: np.ndarray,
+    sample_rate: int,
+    text: str,
+    settings: dict[str, Any],
+    segment: Any | None,
+    level_info: dict[str, float],
+    rejection: AudioQualityError,
+) -> AudioQualityError:
+    """Write a retainable refused take like a passing one; return the error to raise."""
+    code = signal_rejection_code(str(rejection)) or ""
+    rejection_class = (SIGNAL_REJECTION_CLASS_EDGE if code in SIGNAL_EDGE_CODES
+                       else SIGNAL_REJECTION_CLASS_CLIPPED)
+    # Every non-retainable gate, on the leveled samples exactly as stored. A fatal one here
+    # (the gain pushed RMS under the floor, say) keeps nothing.
+    try:
+        validate_audio_array(
+            array, text, settings, sample_rate, segment=segment, check_edges=False, check_clipping=False,
+        )
+    except AudioQualityError as exc:
+        return AudioQualityError(f"{rejection}; {exc}")
+    temp = path.with_name(path.stem + ".part" + path.suffix)
+    temp.unlink(missing_ok=True)
+    # Same quantizer as a passing take; the clip only matters for a clipped one.
+    sf.write(temp, np.clip(array, -1.0, 32767.0 / 32768.0), sample_rate, subtype="PCM_16")
+    with temp.open("rb+") as handle:
+        os.fsync(handle.fileno())
+    try:
+        stored, stored_rate = sf.read(temp, dtype="float32", always_2d=False)
+        _, metrics = validate_audio_array(
+            stored, text, settings, stored_rate, segment=segment, check_edges=False, check_clipping=False,
+        )
+    except AudioQualityError as exc:
+        temp.unlink(missing_ok=True)
+        return AudioQualityError(f"{rejection}; retained WAV failed validation: {exc}")
+    checksum = sha256_file(temp)
+    _replace_with_retry(temp, path)
+    metrics.update(level_info)
+    metrics.update(
+        signal_rejected=True,
+        rejection_code=code,
+        rejection_class=rejection_class,
+        rejection_reason=str(rejection),
+    )
+    return SignalRejectedTake(
+        str(rejection), code=code, rejection_class=rejection_class, path=path, checksum=checksum, metrics=metrics,
+    )
 
 
 def _inspect_pcm16_mono_wav(path: Path) -> tuple[np.ndarray, int, dict[str, float]]:

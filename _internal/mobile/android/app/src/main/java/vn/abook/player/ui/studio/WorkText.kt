@@ -134,6 +134,8 @@ object WorkText {
     fun kind(kind: ReviewKind): String = when (kind) {
         ReviewKind.Failed -> S.s_ban_thu_hong_0b08bea2
         ReviewKind.Unverified -> S.s_chua_kiem_duoc_d292aa64
+        // The shared server reason is already shown below, exactly as on the web.
+        ReviewKind.Signal -> ""
         ReviewKind.NameLow -> S.s_ten_doc_lech_nhieu_67f22a5b
         ReviewKind.TextLow -> S.s_chu_lech_nhieu_06623d45
         ReviewKind.Name -> S.s_ten_doc_lech_nhe_7acc69fa

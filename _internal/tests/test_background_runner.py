@@ -601,6 +601,28 @@ def test_supervisor_records_fake_worker_completion_without_book_pipeline(tmp_pat
     assert "SUPERVISOR_END state=completed" in tail_log(project, lines=20)
 
 
+def test_state_write_failure_cannot_kill_a_live_worker(tmp_path: Path, monkeypatch) -> None:
+    project = _make_project(tmp_path)
+    paths = BackgroundPaths.for_project(project)
+    original = background_runner.atomic_write_json
+    blocked, terminated = [], []
+
+    def locked_live_state(path, payload):
+        if path == paths.state and payload.get("state") in {"running", "stopping"}:
+            blocked.append(payload["state"])
+            raise PermissionError("scanner holds state.json")
+        return original(path, payload)
+
+    monkeypatch.setattr(background_runner, "atomic_write_json", locked_live_state)
+    monkeypatch.setattr(background_runner, "STATE_WRITE_RETRY_SECONDS", 0.0)
+    monkeypatch.setattr(background_runner, "terminate_process_tree", lambda *a, **k: terminated.append(a))
+    code = run_supervisor(project, "state-write-fault", worker_target=_fake_worker_success, poll_seconds=0.01)
+    assert blocked and code == 0
+    assert get_status(project).state == "completed"
+    assert terminated == []
+    assert "STATE_WRITE_FAILED PermissionError" in tail_log(project, lines=40)
+
+
 def test_supervisor_never_sends_ready_when_worker_bootstrap_fails(tmp_path: Path) -> None:
     project = _make_project(tmp_path)
     paths = BackgroundPaths.for_project(project)

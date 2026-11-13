@@ -25,7 +25,7 @@ import { matchPhrase, matchShort, notRecordedYet, shortcutHint, spokenEditLabel 
 // tới - sách đã xong thì nút "Áp dụng thay đổi" ở trang dự án. Lỗi đọc sai chữ/tên thì sửa ở tab Kịch bản, thu lại y chữ
 // không chữa được.
 
-type Kind = "failed" | "unverified" | "name-low" | "text-low" | "name" | "text";
+type Kind = "failed" | "unverified" | "signal" | "name-low" | "text-low" | "name" | "text";
 
 interface ReviewItem {
   segmentId: number;
@@ -75,6 +75,7 @@ interface ReviewView {
 const KIND_INK: Record<Kind, string> = {
   failed: "text-danger",
   unverified: "text-warning",
+  signal: "text-warning",
   "name-low": "text-fg-2",
   "text-low": "text-fg-2",
   name: "text-fg-2",

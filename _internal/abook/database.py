@@ -7775,6 +7775,13 @@ class ProjectDB:
     ) -> None:
         if not isinstance(signal, dict):
             raise ValueError("segment signal checkpoint must be a dictionary")
+        if signal.get("signal_rejected") and not (
+            signal.get("signal_edge_kept")
+            and signal.get("rejection_class") == "edge"
+            and "TTS_SIGNAL_EDGE_KEPT" in warning_codes
+        ):
+            # Only an edge refusal kept after every attempt passes on, and only as a warning.
+            raise ValueError("a take the signal gate refused cannot be marked signal-passed")
         with self.transaction() as conn:
             row = conn.execute(
                 "SELECT warning_code,text FROM segments WHERE id=?",
