@@ -159,7 +159,7 @@ export function PlaylistOptionLabel({ option, chosen }: { option: PlaylistOption
             ngắn / dài xuống dòng khác nhau không làm các dòng của danh sách cao thấp khác nhau (59 / 48 dp - soát 25-10 V3). */}
         <Reveal when={option.description}><span className="block min-h-[2lh] text-pretty text-xs font-normal text-fg-3">{option.description}</span></Reveal>
       </span>
-      {/* Gợi ý là chữ phụ: nhường chỗ (xuống dòng) cho tên lựa chọn - "Nhạc của tôi" từng gãy thành hai dòng cạnh "chưa có bài nào" (luật
+      {/* Gợi ý là chữ phụ: nhường chỗ (xuống dòng) cho tên lựa chọn - "Nhạc của tôi" từng gãy thành hai dòng cạnh "Chưa có bài nào" (luật
           label-wrapped-beside-note). */}
       <Reveal when={option.hint}><span className="min-w-0 max-w-[45%] text-right text-pretty text-xs font-normal text-fg-2">{option.hint}</span></Reveal>
     </>

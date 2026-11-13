@@ -86,6 +86,15 @@ private slots:
         QCOMPARE(call("loadOf", {track, QJSValue()}).property("kind").toString(), QStringLiteral("none"));
     }
 
+    void savedLineNeedsADownloadedSong() {
+        // formatSize(0) = "1 KB": 0 bài không được thành "Đã tải 0 bài · 1 KB" (cùng luật web savedSummary, Android savedSummaryText).
+        auto saved = [&](int count, double bytes) { return engine.toScriptValue(QVariantMap{{"count", count}, {"bytes", bytes}}); };
+        QVERIFY(!call("showsSavedSize", {saved(0, 0)}).toBool());
+        QVERIFY(!call("showsSavedSize", {saved(0, 512)}).toBool());
+        QVERIFY(!call("showsSavedSize", {QJSValue()}).toBool());
+        QVERIFY(call("showsSavedSize", {saved(1, 400)}).toBool());
+    }
+
     void energyPercentAndClock() {
         QCOMPARE(call("energyPercent", {-1.0}).toInt(), 0);
         QCOMPARE(call("energyPercent", {0.0}).toInt(), 50);

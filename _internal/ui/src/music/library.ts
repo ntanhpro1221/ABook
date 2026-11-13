@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect } from "react";
+import { formatSize } from "../shared/format";
 import { S } from "../shared/strings.generated";
 import { api } from "../studio/api";
 
@@ -42,6 +43,14 @@ export interface LibraryList {
   missingBytes: number;
   saved: { count: number; bytes: number };
   elapsedMs?: number;
+}
+
+/**
+ * Dòng "Đã tải X bài · Y" của phần Đã lưu; "" khi chưa tải bài nào (formatSize làm tròn lên 1 KB: 0 bài không được thành "0 bài · 1 KB").
+ * Cùng luật ở Android (LibraryState.kt savedSummaryText) và Qt (MusicLibraryLogic.js showsSavedSize).
+ */
+export function savedSummary(saved: { count: number; bytes: number } | undefined): string {
+  return saved && saved.count > 0 ? S.s_da_tai_0_bai_1_3cac202f(saved.count, formatSize(saved.bytes)) : "";
 }
 
 export interface Labelled {

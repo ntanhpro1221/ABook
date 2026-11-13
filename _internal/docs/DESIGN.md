@@ -339,6 +339,7 @@ giữ tên trong cột tối đa 640 px, thanh tua dùng phần rộng còn lạ
 - **Thanh phát thu nhỏ**: điện thoại = bìa · tên chương / tên sách · phát. Máy tính = trái bìa+tên; giữa lùi 15 · phát ·
   tới 15 + thanh tiến độ; phải tốc độ · âm lượng · "…" (hẹn giờ, phát trên thiết bị khác, nhạc nền, giọng...).
 - **Dòng phụ nhiều cụm** (`A · B · C`): cụm giữa hai "·" không gãy, chỉ xuống dòng ngay sau dấu; cụm dài hơn cả dòng mới được gãy bên trong. Điện thoại `keepClustersTogether` (ClusterLabel), web `DotJoin`, Qt `Flow` + `FlowDetail`; máy kiểm: TextWrapRulesTest, gallery_inspect `cluster-broken`, test_qt_layout_lints.py.
+- **Dòng tóm tắt của hàng** (giá trị dưới / cạnh tên hàng: "Hoài My", "Tắt", "Nhạc tự chọn", "Phiên bản 0.4.169") viết hoa chữ đầu trên cả ba nền. Dòng không có gì để nói thì không hiện (không "Đã tải 0 bài · 1 KB"). Máy kiểm: `scripts/ui_parity_rules.py` L11.
 - **Toast**: một dòng + tối đa một hành động, tự tắt, Back đóng.
   Thông báo luôn nằm dưới mặt điều khiển của mọi bảng / hộp / menu đang mở, kể cả trong chuyển động mở, đóng và đổi vị trí; không được che nút. Web dịch toast ra khoảng trống ngoài hộp, thiếu chỗ thì mờ dần; Android giữ lời báo trong dòng chảy dưới lớp nổi; Qt đặt toast dưới Modal / Popover. Giữ chuyển động ở mọi nền tảng, kể cả khi giảm chuyển động.
 

@@ -94,7 +94,7 @@ FocusScope {
         x: root.contentX; width: root.contentW
         title: root.picking ? S.s_chon_bai_cho_doan_840afc40 : S.s_nhac_0e4413e9
         showBack: root.picking
-        subtitle: root.part === 0 && root.savedList ? S.s_da_tai_0_bai_1_3cac202f(root.savedList.saved.count, Size.formatSize(root.savedList.saved.bytes)) : ""
+        subtitle: root.part === 0 && root.savedList && Logic.showsSavedSize(root.savedList.saved) ? S.s_da_tai_0_bai_1_3cac202f(root.savedList.saved.count, Size.formatSize(root.savedList.saved.bytes)) : ""
     }
     Column {
         id: controls

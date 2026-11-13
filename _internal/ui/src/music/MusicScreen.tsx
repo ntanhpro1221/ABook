@@ -17,7 +17,7 @@ import { Button, ContentSkeleton, EmptyState, IconButton, InlineError, Selection
 import { Windowed } from "../shared/Windowed";
 import { api } from "../studio/api";
 import {
-  filtering, LENGTH_OPTIONS, loadOf, NO_FILTERS, TEMPO_OPTIONS, useDownloads, useLibrary, useLibraryMeta, useSaveTracks,
+  filtering, LENGTH_OPTIONS, loadOf, NO_FILTERS, savedSummary, TEMPO_OPTIONS, useDownloads, useLibrary, useLibraryMeta, useSaveTracks,
   type DownloadState, type LibraryFilters, type LibraryTrack,
 } from "./library";
 import { useLibraryPreview, type LibraryPreview } from "./preview";
@@ -98,7 +98,7 @@ function Saved({ preview, onBrowse }: { preview: LibraryPreview; onBrowse: () =>
     <div className="space-y-10">
       <section aria-label={S.s_da_luu_6379aeba} className="space-y-3">
         <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
-          {<Presence>{data && data.saved.count > 0 && <p className="text-sm text-fg-2">{S.s_da_tai_0_bai_1_3cac202f(data.saved.count, formatSize(data.saved.bytes))}</p>}</Presence>}
+          {<Presence>{savedSummary(data?.saved) && <p className="text-sm text-fg-2">{savedSummary(data?.saved)}</p>}</Presence>}
         </div>
         {isLoading ? (
           <ContentSkeleton />
@@ -188,7 +188,7 @@ function Library({ preview, use, ban, busy }: { preview: LibraryPreview; use?: (
       <div className="flex min-h-10 flex-wrap items-center justify-between gap-x-4 gap-y-2">
         <p className="flex items-center gap-2 text-sm text-fg-2" aria-live="polite">
           {S.s_0_bai_1e392237(data?.count ?? 0)}
-          {<Presence>{data && data.saved.count > 0 && <span>· {S.s_da_tai_0_bai_1_3cac202f(data.saved.count, formatSize(data.saved.bytes))}</span>}</Presence>}
+          {<Presence>{savedSummary(data?.saved) && <span>· {savedSummary(data?.saved)}</span>}</Presence>}
           <Reveal when={isFetching}><Loader2 aria-hidden className="size-3.5 animate-spin" /></Reveal>
         </p>
         <div className="flex items-center gap-2">

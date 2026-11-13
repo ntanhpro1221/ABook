@@ -1,5 +1,5 @@
 {
-  "_doc": "Exceptions and remaining-work lists for scripts/ui_parity_rules.py (L1-L10). Every exception carries a reason. `remaining` lists are ratchets: a count may only go down, and must be lowered here when a fix lands.",
+  "_doc": "Exceptions and remaining-work lists for scripts/ui_parity_rules.py (L1-L11). Every exception carries a reason. `remaining` lists are ratchets: a count may only go down, and must be lowered here when a fix lands.",
   "L1": {
     "screens": [
       {
@@ -584,6 +584,71 @@
             ]
           }
         }
+      }
+    ]
+  },
+  "L11": {
+    "_doc": "Row summaries (the value line under a row title) start with a capital letter on web, Qt and Android. `producers` are the functions that build a settings row's summary, each must still exist; `arg` reads the n-th positional argument of every call instead (Android MusicOption hint). Every `summary`/`hint` argument or property in the UI sources is read too.",
+    "producers": [
+      {
+        "file": "mobile/android/app/src/main/java/vn/abook/player/ui/data/Settings.kt",
+        "start": "object SettingsSummary\\b"
+      },
+      {
+        "file": "mobile/android/app/src/main/java/vn/abook/player/ui/screens/SettingsScreen.kt",
+        "start": "private fun summary\\(group"
+      },
+      {
+        "file": "mobile/android/app/src/main/java/vn/abook/player/ui/devices/DevicesState.kt",
+        "start": "data class Summary\\("
+      },
+      {
+        "file": "mobile/android/app/src/main/java/vn/abook/player/ui/voice/VoiceModel.kt",
+        "start": "fun keySummary\\("
+      },
+      {
+        "file": "mobile/android/app/src/main/java/vn/abook/player/ui/voice/VoiceModel.kt",
+        "start": "fun musicSummary\\("
+      },
+      {
+        "file": "mobile/android/app/src/main/java/vn/abook/player/ui/music/MusicModel.kt",
+        "start": "\\bMusicOption\\(",
+        "arg": 2
+      },
+      {
+        "file": "mobile/android/app/src/main/java/vn/abook/player/ui/music/library/LibraryState.kt",
+        "start": "fun savedSummaryText\\("
+      },
+      {
+        "file": "ui/src/shared/settingsSummary.ts",
+        "start": "export function listenSummary\\("
+      },
+      {
+        "file": "ui/src/shared/settingsSummary.ts",
+        "start": "export function sleepSummary\\("
+      },
+      {
+        "file": "ui/src/shared/settingsSummary.ts",
+        "start": "export function themeSummary\\("
+      },
+      {
+        "file": "ui/src/desktop/SettingsScreen.tsx",
+        "start": "function useRows\\("
+      },
+      {
+        "file": "ui/src/music/library.ts",
+        "start": "export function savedSummary\\("
+      },
+      {
+        "file": "desktop_qt/qml/SettingsScreen.qml",
+        "start": "function summary\\(key\\)"
+      }
+    ],
+    "allow": [
+      {
+        "file": "mobile/android/app/src/main/java/vn/abook/player/ui/editbook/EditBookScreen.kt",
+        "key": "s_doc_la_0_328eec99",
+        "reason": "Continues the row title as one sentence (\"Haruto\" / \"đọc là “Ha-ru-tô”\"), word for word the web/Qt single line \"Haruto đọc là “Ha-ru-tô”\"; UI_PARITY requires the same words on both."
       }
     ]
   }

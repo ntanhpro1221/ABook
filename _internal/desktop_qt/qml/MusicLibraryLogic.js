@@ -19,6 +19,12 @@ function licenseLabel(code, url) {
     return /^by(-(nc|nd|sa))*$/i.test(raw) ? "CC " + raw.toUpperCase() : raw.toLowerCase() === "cc0" ? "CC0" : raw
 }
 
+// Dòng "Đã tải X bài · Y" của phần Đã lưu chỉ hiện khi đã tải ít nhất một bài: formatSize(0) làm tròn lên "1 KB", nên 0 bài từng
+// thành "Đã tải 0 bài · 1 KB". Cùng luật ở web (music/library.ts savedSummary) và Android (LibraryState.kt savedSummaryText).
+function showsSavedSize(saved) {
+    return !!saved && Number(saved.count) > 0
+}
+
 function noFilters() {
     return { q: "", playlist: "", style: "", emotion: "", tempo: "", length: "", downloaded: false }
 }

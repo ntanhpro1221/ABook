@@ -14,6 +14,13 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import vn.abook.player.MusicLibrary
 import vn.abook.player.S
+import vn.abook.player.formatSize
+
+/**
+ * Dòng "Đã tải X bài · Y" của phần Đã lưu; null khi chưa tải bài nào - formatSize làm tròn lên 1 KB, nên 0 bài từng hiện "0 bài · 1 KB".
+ * Cùng luật ở web (music/library.ts savedSummary) và Qt (MusicLibraryLogic.js showsSavedSize).
+ */
+fun savedSummaryText(count: Int, bytes: Long): String? = if (count > 0) S.s_da_tai_0_bai_1_3cac202f(count, formatSize(bytes)) else null
 
 /** Một nhãn của danh mục (phong cách / cảm xúc: mã + chữ tiếng Việt của `taxonomy`). */
 @Immutable
@@ -90,6 +97,7 @@ data class LibraryUi(
         val kept = savedTracks().filter { it.link in downloaded }
         return kept.size to kept.sumOf { it.bytes }
     }
+    fun savedSummary(): String? = savedOnDevice().let { (count, bytes) -> savedSummaryText(count, bytes) }
     fun missingBytes(tracks: List<MusicLibrary.Track>): Long = tracks.filter { it.link !in downloaded }.sumOf { it.bytes }
 }
 

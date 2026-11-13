@@ -1,4 +1,4 @@
-"""Ten cross-platform UI rules (L1-L10) for web, Qt and Android, read straight from the sources.
+"""Eleven cross-platform UI rules (L1-L11) for web, Qt and Android, read straight from the sources.
 
 docs/UI_PARITY.md keeps the shared dictionary and the existing web <-> native detectors; this file adds what they never compared:
 Qt <-> Android directly, the dictionary's "Thay cho" column, colour tokens, the spacing/type scale, component radius roles, motion
@@ -582,9 +582,119 @@ def l10_control_pairs() -> list[str]:
     return problems
 
 
+# --- L11: a row summary (the value line under a row title) starts with a capital, on all three platforms ---------------------------
+# 0.4.168 Android Settings: "Nghe · nhạc tự chọn" beside "Giọng · Hoài My", "Giao diện · Tự động", "Nâng cao · Phiên bản 0.4.168".
+SUMMARY_ARG = re.compile(r"\b(?:summary|hint)\s*(?:=(?![=>])|:(?!:))\s*")
+OPENERS, CLOSERS = "([{", ")]}"
+
+
+def summary_files() -> list[Path]:
+    web = [p for p in (ROOT / WEB).rglob("*") if p.suffix in (".ts", ".tsx")]
+    return sorted(p for p in web + qt_files() + qt_js_files() + and_files() if not _skip(p))
+
+
+def _expression(text: str, start: int) -> str:
+    """The argument/property value that starts at `start`: up to the first , ; ) ] } or line end outside brackets and strings."""
+    depth, quote, i = 0, "", start
+    while i < len(text):
+        c = text[i]
+        if quote:
+            if c == "\\":
+                i += 1
+            elif c == quote:
+                quote = ""
+        elif c in "\"'`":
+            quote = c
+        elif c in OPENERS:
+            depth += 1
+        elif c in CLOSERS:
+            if depth == 0:
+                break
+            depth -= 1
+        elif depth == 0 and c in ",;\n":
+            break
+        i += 1
+    return text[start:i]
+
+
+def _block(text: str, start: int) -> str:
+    """From `start` to the brace that closes the first { after it."""
+    depth, i = 0, text.index("{", start)
+    for j in range(i, len(text)):
+        depth += {"{": 1, "}": -1}.get(text[j], 0)
+        if depth == 0:
+            return text[start:j + 1]
+    return text[start:]
+
+
+def leading_keys(expression: str) -> list[str]:
+    """Catalog keys that can START the shown text: not a fragment after `+`, not a value inside another S call's arguments."""
+    blank = list(expression)
+    for match in KEY.finditer(expression):
+        end = match.end()
+        if end < len(expression) and expression[end] == "(":
+            close = end + len(_expression(expression, end + 1)) + 1
+            blank[end + 1:close] = " " * (close - end - 1)
+    flat = "".join(blank)
+    return [m.group(1) for m in KEY.finditer(flat) if not re.search(r"\+\s*$", flat[:m.start()])]
+
+
+def _sentence_case(value: str) -> bool:
+    first = next((c for c in re.sub(r"\{\d+\}", "", value) if not c.isspace()), "")
+    return not first.isalpha() or first.isupper() or value.lstrip().startswith("{")
+
+
+def l11_summary_case() -> list[str]:
+    cfg = config()["L11"]
+    vi = strings()
+    allowed = {(a["file"], a["key"]) for a in cfg["allow"]}
+    used: set[tuple[str, str]] = set()
+    sites: list[tuple[str, int, str]] = []
+    problems: list[str] = []
+    for path in summary_files():
+        text = path.read_text(encoding="utf-8", errors="replace")
+        for match in SUMMARY_ARG.finditer(text):
+            sites += [(rel(path), text.count("\n", 0, match.end()) + 1, key) for key in leading_keys(_expression(text, match.end()))]
+    for producer in cfg["producers"]:
+        path = ROOT / producer["file"]
+        text = path.read_text(encoding="utf-8") if path.is_file() else ""
+        found = re.search(producer["start"], text)
+        if not found:
+            problems.append(f"L11 {producer['file']}: không còn {producer['start']!r} - cập nhật L11.producers")
+            continue
+        if "arg" in producer:  # a positional hint: the n-th argument of every call
+            for call in re.finditer(producer["start"], text):
+                rest, args, at = text[call.end():], [], 0
+                while len(args) <= producer["arg"]:
+                    args.append(_expression(rest, at))
+                    at += len(args[-1])
+                    if at >= len(rest) or rest[at] != ",":
+                        break
+                    at += 1
+                if len(args) > producer["arg"]:
+                    line = text.count("\n", 0, call.end()) + 1
+                    sites += [(producer["file"], line, key) for key in leading_keys(args[producer["arg"]])]
+            continue
+        block = _block(text, found.start())
+        line = text.count("\n", 0, found.start()) + 1
+        for statement in re.split(r"\breturn\b|=>|->|\n", block):
+            sites += [(producer["file"], line, key) for key in leading_keys(statement)]
+    for file, line, key in sorted(set(sites)):
+        value = vi.get(key)
+        if value is None or _sentence_case(value):
+            continue
+        if (file, key) in allowed:
+            used.add((file, key))
+            continue
+        problems.append(f"L11 {file}:{line}: dòng tóm tắt bắt đầu bằng chữ thường {value!r} ({key}) - viết hoa chữ đầu như mọi dòng khác")
+    problems += [f"L11 allow thừa (đã hết vi phạm): {f} {k}" for f, k in sorted(allowed - used)]
+    return problems
+
+
 RULES = {
     "L1": l1_cross_platform, "L2": l2_banned_words, "L3": l3_tokens, "L4": l4_scale, "L5": l5_radius_roles,
     "L6": l6_motion_tokens, "L7": l7_instant, "L8": l8_ellipsis_names, "L9": l9_label_length, "L10": l10_control_pairs,
+    "L11": l11_summary_case,
 }
 
 

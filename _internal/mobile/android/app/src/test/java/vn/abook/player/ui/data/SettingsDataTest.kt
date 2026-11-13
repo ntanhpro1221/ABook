@@ -127,7 +127,7 @@ class SettingsDataTest {
 
     @Test
     fun `summaries and quarters`() {
-        assertEquals("nhạc tự chọn", SettingsSummary.listen(AppSettings.Default))
+        assertEquals("Nhạc tự chọn", SettingsSummary.listen(AppSettings.Default))
         assertEquals("Tắt", SettingsSummary.sleep(AppSettings.Default))
         assertEquals("Lịch đêm 22:00–06:00", SettingsSummary.sleep(AppSettings.Default.copy(schedule = SleepSchedule.Default)))
         assertEquals(96, Quarters.ALL.size)

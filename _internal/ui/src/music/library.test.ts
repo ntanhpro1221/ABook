@@ -2,7 +2,7 @@
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
-import { filtering, libraryQuery, loadOf, NO_FILTERS, type LibraryFilters } from "./library";
+import { filtering, libraryQuery, loadOf, NO_FILTERS, savedSummary, type LibraryFilters } from "./library";
 import { previewVolume, PREVIEW_LUFS } from "./preview";
 import { energyPercent, percent } from "./TrackSheet";
 
@@ -62,5 +62,19 @@ describe("Kho nhạc: trạng thái tải, phần trăm, nghe thử", () => {
     expect(previewVolume(PREVIEW_LUFS + 6)).toBeCloseTo(0.501, 3);
     expect(previewVolume(-30)).toBe(1); // bài nhỏ: không khuếch đại quá 1
     expect(previewVolume(undefined)).toBe(1);
+  });
+});
+
+describe("Kho nhạc: dòng Đã tải", () => {
+  // formatSize(0) = "1 KB" (làm tròn lên): 0 bài từng hiện "Đã tải 0 bài · 1 KB" trên điện thoại.
+  it("chưa tải bài nào thì không có dòng dung lượng", () => {
+    expect(savedSummary(undefined)).toBe("");
+    expect(savedSummary({ count: 0, bytes: 0 })).toBe("");
+    expect(savedSummary({ count: 0, bytes: 512 })).toBe("");
+  });
+
+  it("có bài đã tải thì nói số bài và dung lượng", () => {
+    expect(savedSummary({ count: 1, bytes: 400 })).toBe("Đã tải 1 bài · 1 KB");
+    expect(savedSummary({ count: 3, bytes: 5_000_000 })).toBe("Đã tải 3 bài · 4,8 MB");
   });
 });

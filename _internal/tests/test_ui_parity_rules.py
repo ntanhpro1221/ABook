@@ -1,9 +1,10 @@
-"""Ten cross-platform UI rules (scripts/ui_parity_rules.py): each holds on the real sources, and each bites a planted violation.
+"""Eleven cross-platform UI rules (scripts/ui_parity_rules.py): each holds on the real sources, and each bites a planted violation.
 
 Lead 12-11 (soát đồng nhất ba nền): one task, one word, one token, one shape on web, Qt and Android. The rules compare Qt with
 Android directly, read the dictionary's "Thay cho" column, demand every colour token on all three, keep spacing / type / weight on
 the scale, give each shared component one radius role, read motion timings from tokens, count hard show/hide (only down), name
-every "…" button "Thêm tuỳ chọn…", keep labels at four words and pin same-control pairs to one key.
+every "…" button "Thêm tuỳ chọn…", keep labels at four words, pin same-control pairs to one key and start every row
+summary with a capital (L11, 0.4.169).
 """
 import importlib.util
 import json
@@ -23,7 +24,7 @@ def _tool():
     return module
 
 
-@pytest.mark.parametrize("rule", ["L1", "L2", "L3", "L4", "L5", "L6", "L7", "L8", "L9", "L10"])
+@pytest.mark.parametrize("rule", ["L1", "L2", "L3", "L4", "L5", "L6", "L7", "L8", "L9", "L10", "L11"])
 def test_rule_holds_on_the_sources(rule):
     tool = _tool()
     problems = tool.RULES[rule]()
@@ -341,3 +342,33 @@ def test_l10_bites_a_control_with_wrong_geometry(planted):
         "file": "desktop_qt/qml/Lib.qml", "require": [r"x: card.width - width - 12"], "forbid": [r"x: -6"]}}}]
     planted.CONFIG.write_text(json.dumps(cfg), encoding="utf-8")
     assert any("toast-close" in p for p in planted.l10_control_pairs())
+
+
+def test_l11_bites_a_lowercase_row_summary_on_all_three_platforms(planted):
+    """0.4.168 Android Settings: "nhạc tự chọn" under "Nghe" while every other row summary starts with a capital."""
+    vi = dict(VI, s_low="nhạc tự chọn", s_up="Tự động", s_frag="đã tải ", s_count="{0} bài", s_inner="chưa rõ", s_wrap="Tóm tắt: {0}",
+              s_opt="đang tắt trong Cài đặt", s_kept="đọc là “{0}”")
+    (planted.ROOT / "ui_strings/vi.json").write_text(json.dumps({"strings": vi}, ensure_ascii=False), encoding="utf-8")
+    cfg = planted.config()
+    android = "mobile/android/app/src/main/java/vn/abook/player/ui/Lib.kt"
+    cfg["L11"] = {"producers": [{"file": "desktop_qt/qml/Lib.qml", "start": r"function summary\(key\)"},
+                                {"file": android, "start": r"\bOption\(", "arg": 2}],
+                  "allow": [{"file": android, "key": "s_kept", "reason": "continues the title"}]}
+    planted.CONFIG.write_text(json.dumps(cfg, ensure_ascii=False), encoding="utf-8")
+    (planted.ROOT / "desktop_qt/qml/Lib.qml").write_text(
+        'Item {\n    function summary(key) {\n        if (key === "a") return S.s_up\n        return ready ? S.s_low : S.s_count(2)\n    }\n'
+        '    Row { hint: S.s_up + n + S.s_frag }\n}\n', encoding="utf-8")
+    (planted.ROOT / android).write_text(
+        'fun Lib() {\n    Fold(S.s_a, "x", summary = if (on) S.s_wrap(S.s_inner) else S.s_up)\n    ListItem(t, hint = S.s_kept(x))\n'
+        '    add(Option(null, S.s_up, if (off) S.s_opt else auto))\n}\n', encoding="utf-8")
+    (planted.ROOT / "ui/src/listen/Lib.tsx").write_text('export const rows = [{ label: S.s_up, hint: S.s_frag + "x" }];\n', encoding="utf-8")
+    problems = planted.l11_summary_case()
+    found = {(p.split()[1].split(":")[0].rsplit("/", 1)[-1], p.split("(")[-1].split(")")[0]) for p in problems}
+    # Fragments after `+` and values inside another string's slot do not start the line; the allowed continuation is not reported.
+    assert found == {("Lib.qml", "s_low"), ("Lib.kt", "s_opt"), ("Lib.tsx", "s_frag")}, problems
+    cfg["L11"]["allow"].append({"file": android, "key": "s_up", "reason": "stale"})
+    planted.CONFIG.write_text(json.dumps(cfg, ensure_ascii=False), encoding="utf-8")
+    assert any("allow thừa" in p and "s_up" in p for p in planted.l11_summary_case())
+    cfg["L11"]["producers"][0]["start"] = r"function gone\("
+    planted.CONFIG.write_text(json.dumps(cfg, ensure_ascii=False), encoding="utf-8")
+    assert any("không còn" in p and "function gone" in p for p in planted.l11_summary_case())

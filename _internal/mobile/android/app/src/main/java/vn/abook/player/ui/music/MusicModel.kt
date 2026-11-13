@@ -248,7 +248,7 @@ object MusicText {
         if (menu?.scene == true) add(MusicOption(SCENE, SCENE_LABEL, description = S.s_may_tu_dung_doi_theo_tung_canh_cua_truyen_9b723646))
         for (item in menu?.playlists.orEmpty()) add(MusicOption(item.id, item.name, length(item.minutes), item.description))
         val mine = menu?.mine ?: 0
-        add(MusicOption(MINE, MINE_LABEL, if (mine > 0) S.s_0_bai_1e392237(mine) else S.s_chua_co_bai_nao_1911af5a, disabled = mine == 0))
+        add(MusicOption(MINE, MINE_LABEL, if (mine > 0) S.s_0_bai_1e392237(mine) else S.s_chua_co_bai_nao_c1c708be, disabled = mine == 0))
     }
 
     /** Lời dưới danh sách: chỉ khi có điều cần biết (lỗi, bài hỏng, tự chọn đang tắt) - không nhắc suông. */

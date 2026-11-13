@@ -32,6 +32,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -151,7 +152,10 @@ fun MusicScreen(
 @Composable
 private fun SavedPart(ui: LibraryUi, state: LibraryState, sheets: SheetHost, onMyMusic: (() -> Unit)?) {
     val tracks = ui.savedTracks()
-    val (count, bytes) = ui.savedOnDevice()
+    val summary = ui.savedSummary()
+    // Giữ dòng cuối khi bài tải cuối cùng bị bỏ: dòng thu lại với chữ cũ thay vì chớp trống.
+    val lastSummary = remember { mutableStateOf("") }
+    SideEffect { if (summary != null) lastSummary.value = summary }
     val list = rememberLazyListState()
     LazyColumn(
         Modifier.fillMaxSize().testTag("music_saved").fadeEdges(list),
@@ -159,7 +163,7 @@ private fun SavedPart(ui: LibraryUi, state: LibraryState, sheets: SheetHost, onM
         contentPadding = PaddingValues(start = Dim.margin, end = Dim.margin, bottom = navigationClearance() + Dim.s48 + Dim.s48),
     ) {
         item(key = "summary") {
-            Caption(S.s_da_tai_0_bai_1_3cac202f(count, formatSize(bytes)), Modifier.testTag("music_saved_summary").padding(bottom = Dim.s8))
+            Reveal(summary != null) { Caption(summary ?: lastSummary.value, Modifier.testTag("music_saved_summary").padding(bottom = Dim.s8)) }
             Reveal(!ui.online) { Caption(S.s_bai_da_tai_nghe_duoc_khi_khong_co_mang_ca12f3db, Modifier.padding(bottom = Dim.s8)) }
         }
         if (tracks.isEmpty()) {

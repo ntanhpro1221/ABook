@@ -435,7 +435,7 @@ export function playlistOptions(menu: PlaylistMenu | undefined, canImport = fals
     {
       id: MINE_PLAYLIST,
       label: S.s_nhac_cua_toi_f65b7ac6,
-      hint: menu?.mine ? S.s_0_bai_1e392237(menu.mine) : S.s_chua_co_bai_nao_1911af5a,
+      hint: menu?.mine ? S.s_0_bai_1e392237(menu.mine) : S.s_chua_co_bai_nao_c1c708be,
       description: menu?.mine ? undefined : emptyMineHint(canImport),
       disabled: !menu?.mine,
     },

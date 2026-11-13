@@ -11,7 +11,7 @@ icon `LucidePaths.js` sinh bởi `scripts/gen_lucide_icons.py --qml`. Bảng dư
 
 <!-- ui_parity_qt:begin (SINH TỰ ĐỘNG bởi scripts/ui_parity_qt.py - không sửa tay, chạy lại script) -->
 
-Quét: web máy tính 6055 chữ (2840 khác nhau), 352 cặp nhãn-icon; Qt 3522 chữ (2624 khác nhau), 290 cặp nhãn-icon (icon dùng ở 405 chỗ). Khoá so lỏng như UI_PARITY.md (hạ chữ, dấu thanh một kiểu, `...` = `…`, bỏ dấu câu cuối); phím tắt trong chú thích Qt (`Thu nhỏ (Esc)`) tách khỏi nhãn.
+Quét: web máy tính 6052 chữ (2840 khác nhau), 352 cặp nhãn-icon; Qt 3522 chữ (2624 khác nhau), 290 cặp nhãn-icon (icon dùng ở 405 chỗ). Khoá so lỏng như UI_PARITY.md (hạ chữ, dấu thanh một kiểu, `...` = `…`, bỏ dấu câu cuối); phím tắt trong chú thích Qt (`Thu nhỏ (Esc)`) tách khỏi nhãn.
 
 ## a. Cùng việc, khác chữ
 
@@ -164,7 +164,7 @@ Nhãn ngắn (<= 6 chữ). **Chỉ Qt**: không có ở web cùng màn; `*` = we
 ### Nhạc
 
 - chỉ Qt (1): Đang tải* (`qt/MusicTrackDetail.qml:60`)
-- chỉ web (4): Chưa tải được kho nhạc (`106`); Đang tải {} % (`316`); Chưa tải xong (`324`); Nhanh (`89`)
+- chỉ web (4): Chưa tải được kho nhạc (`106`); Đang tải {} % (`316`); Chưa tải xong (`324`); Nhanh (`98`)
 
 ### Thư viện
 

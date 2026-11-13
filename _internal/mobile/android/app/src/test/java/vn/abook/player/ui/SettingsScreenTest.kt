@@ -136,7 +136,7 @@ class SettingsScreenTest {
         showRoot()
         for (group in SettingsGroup.entries) rule.onNodeWithTag(group.tag).assertIsDisplayed()
         rule.onNodeWithText("Hoài My").assertIsDisplayed()
-        rule.onNodeWithText("nhạc tự chọn").assertIsDisplayed()
+        rule.onNodeWithText("Nhạc tự chọn").assertIsDisplayed()
         rule.onNodeWithText("Phiên bản 0.4.146").assertIsDisplayed()
         shot("settings_root_light")
         rule.onNodeWithTag("settings_sleep").performClick()
