@@ -66,3 +66,19 @@ def test_rank_letters(source, expected):
 
 def test_rank_letters_use_the_direct_english_route():
     assert studio_tn("Thẻ N và R.", None, True, direct_english=True)[0] == "Thẻ <en>N</en> và <en>R</en>."
+
+
+@pytest.mark.parametrize("source", ["n'", "o’", "a′", "Rock n' Roll"])
+def test_lone_letter_quotes_do_not_become_primes(source):
+    from abook.readaloud.studio_tn import separate_digit_quotes
+
+    result = separate_digit_quotes(source)
+    assert len(result) == len(source)
+    assert not any(c in result for c in "'’′")
+
+
+@pytest.mark.parametrize("source", ["don't", "I'm", "O'Brien", "l'amour"])
+def test_internal_apostrophes_are_lexical(source):
+    from abook.readaloud.studio_tn import separate_digit_quotes
+
+    assert separate_digit_quotes(source) == source

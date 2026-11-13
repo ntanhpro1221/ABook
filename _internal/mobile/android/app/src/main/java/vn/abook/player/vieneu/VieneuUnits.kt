@@ -880,7 +880,7 @@ object VieneuUnits {
         return out.map { word -> separateDigitQuotes(legacy.replace(Normalizer.normalize(word, Normalizer.Form.NFC)) { match ->
             val candidate = match.value.replace('Ð', 'Đ').replace('ð', 'đ')
             if (EnglishPolicy.vietnamese(candidate)) candidate else match.value
-        }) }
+        }).trimEnd() }
     }
 
     /** Same voice-only guard as studio_tn.separate_digit_quotes: adjacent primes are spoken as units by sea-g2p. */
@@ -894,7 +894,10 @@ object VieneuUnits {
         }.distinct()
         if (marks.isEmpty()) return text
         val group = "[" + Regex.escape(String(marks.toIntArray(), 0, marks.size)) + "]+"
-        return Regex("(?<=\\p{Nd})$group|$group(?=\\p{Nd})").replace(text) {
+        val separated = Regex("""(?<![$W])(\p{L})($group)(?![$W])""").replace(text) {
+            it.groupValues[1] + " ".repeat(it.groupValues[2].codePointCount(0, it.groupValues[2].length))
+        }
+        return Regex("(?<=\\p{Nd})$group|$group(?=\\p{Nd})").replace(separated) {
             " ".repeat(it.value.codePointCount(0, it.value.length))
         }
     }

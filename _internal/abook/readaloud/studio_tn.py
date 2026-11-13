@@ -89,6 +89,8 @@ def separate_digit_quotes(text: str) -> str:
     if not marks:
         return text
     group = "[" + re.escape(marks) + "]+"
+    text = re.sub(r"(?<!\w)([^\W\d_])(" + group + r")(?!\w)",
+                  lambda match: match[1] + " " * len(match[2]), text)
     return re.sub(r"(?<=\d)" + group + "|" + group + r"(?=\d)",
                   lambda match: " " * len(match.group()), text)
 

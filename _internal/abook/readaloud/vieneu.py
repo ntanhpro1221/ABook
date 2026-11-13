@@ -800,7 +800,7 @@ def _spoken_tokens(toks: list[str], origin: str | None = None, speaks_english: b
         if is_vietnamese_syllable(candidate.lower()):
             return candidate
         return word
-    return [separate_digit_quotes(legacy.sub(legacy_d, unicodedata.normalize('NFC', word))) for word in out]
+    return [separate_digit_quotes(legacy.sub(legacy_d, unicodedata.normalize('NFC', word))).rstrip() for word in out]
 
 
 def _roman_numbers(toks: list[str], out: list[str]) -> None:
