@@ -53,6 +53,17 @@ object Abbreviations {
             if (core !in setOf("N", "R")) return false
             val (before, _, after) = Names.splitToken(toks[index])
             if ((before + after).any { it.isLetterOrDigit() }) return false
+            // "thứ N", "N lần": N stands for an unspecified count and is said by its letter name.
+            val count = policy.getJSONObject("count_letter_cues").optJSONObject(core)
+            if (count != null) {
+                fun cue(at: Int, key: String): Boolean {
+                    if (at !in toks.indices) return false
+                    val word = Names.splitToken(toks[at]).second.lowercase(java.util.Locale.ROOT)
+                    val cues = count.getJSONArray(key)
+                    return (0 until cues.length()).any { cues.getString(it) == word }
+                }
+                if (cue(index - 1, "previous") || cue(index + 1, "next")) return true
+            }
             val nearby = toks.subList(maxOf(0, index - 3), index) + toks.subList(index + 1, minOf(toks.size, index + 4))
             if (nearby.any { Names.splitToken(it).second in setOf("SR", "SSR", "UR") }) return true
         }

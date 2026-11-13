@@ -55,6 +55,7 @@
     "r": ["thẻ", "cấp", "hạng", "rank", "rarity"]
   },
   "rank_letter_readings": {"N": "en", "R": "a"},
+  "count_letter_cues": {"N": {"previous": ["thứ"], "next": ["lần"]}},
   "english_letter_words": {"Z": "zed"},
   "vietnamese_letter_names": ["K"],
   "english_voice_keeps": ["app", "check", "code", "comment", "hack", "hacker", "post", "share"],

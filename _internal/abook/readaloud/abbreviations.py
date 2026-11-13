@@ -88,6 +88,11 @@ def contextual_letters(core: str, toks: list[str], index: int) -> bool:
         before, _, after = split_token(toks[index])
         if any(c.isalnum() for c in before + after):
             return False
+        # "thứ N", "N lần": N stands for an unspecified count and is said by its letter name.
+        count = POLICY["count_letter_cues"].get(core)
+        if count and ((index and split_token(toks[index - 1])[1].casefold() in count["previous"])
+                      or (index + 1 < len(toks) and split_token(toks[index + 1])[1].casefold() in count["next"])):
+            return True
         nearby = toks[max(0, index - 3):index] + toks[index + 1:index + 4]
         if any(split_token(t)[1] in {"SR", "SSR", "UR"} for t in nearby):
             return True
