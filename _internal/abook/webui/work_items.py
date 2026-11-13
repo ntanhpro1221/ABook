@@ -349,13 +349,15 @@ QUOTE_OPENERS = ("\"", "“", "『", "「", "«")
 QUOTE_CLOSERS = ("\"", "”", "』", "」", "»")
 
 
-def _folded_book(chapter_paths: list[str]) -> str:
+def _folded_book(chapter_paths: list[str], project_root: Path) -> str:
     """Cả cuốn (mọi .txt cùng thư mục với các chương, như character_registry._source_text), bỏ dấu, hạ chữ - giữ lại giữa
     các lần mở hộp "Việc cần duyệt" (bỏ dấu cả cuốn mất vài giây)."""
     from ..character_registry import fold_for_source_search
 
-    folders = sorted({Path(path).parent for path in chapter_paths if path and Path(path).parent.is_dir()})
-    files = [path for folder in folders for path in sorted(folder.glob("*.txt"))]
+    sources = [source for path in chapter_paths if (source := book_paths.safe_source(project_root, path)) is not None]
+    folders = sorted({path.parent for path in sources if path.parent.is_dir()})
+    files = [source for folder in folders for path in sorted(folder.glob("*.txt"))
+             if (source := book_paths.safe_source(project_root, path)) is not None]
     key = tuple((str(path), path.stat().st_mtime_ns, path.stat().st_size) for path in files)
     if key not in _BOOK_TEXT:
         _BOOK_TEXT.clear()
@@ -1426,7 +1428,7 @@ def work_items(project_root: Path, verdicts: dict[str, Any] | None = None) -> di
     #     tên ngắn nằm trong tên dài. Chỉ hỏi khi danh hiệu đứng sát ĐÚNG MỘT người (EPITHET_EVIDENCE lần trở lên) - sát
     #     nhiều người là chức vụ chung ("Giáo sư"). Gộp như thẻ trên: người ít câu về người nhiều câu.
     try:
-        folded_book = _folded_book(chapter_paths) if len(named) > 1 else ""
+        folded_book = _folded_book(chapter_paths, project_root) if len(named) > 1 else ""
     except OSError:
         folded_book = ""
     if folded_book:

@@ -3154,7 +3154,10 @@ def test_clarity_split_fallback_uses_distinct_round_seed_salts(
 
     def fake_split(_item, _output, **kwargs):
         split_prefixes.append(str(kwargs["seed_salt_prefix"]))
-        return []
+        rate = int(pipeline.settings["tts"]["sample_rate"])
+        _output.parent.mkdir(parents=True, exist_ok=True)
+        sf.write(_output, quiet_edges(.1 * np.sin(np.arange(2 * rate) / 30), rate), rate)
+        return [{"voice_profile_id": int(_item["voice_profile_id"])}]
 
     pipeline.tts = scripted.bind(pipeline.settings, pipeline.db)
     pipeline._synthesize_split = fake_split
@@ -3229,6 +3232,7 @@ def test_source_split_rejects_part_provenance_from_canonical_delivery(
 
     pipeline = BookPipeline.__new__(BookPipeline)
     pipeline.tts = SplitVariantDriftTTS()
+    pipeline.paths = SimpleNamespace(root=tmp_path)
     row = {
         "stable_id": "source-split",
         "text": " ".join(["Tracy đi qua hành lang rất dài"] * 10),
@@ -3274,6 +3278,7 @@ def test_split_rejects_part_seed_that_drifts_from_its_deterministic_salt(
 
     pipeline = BookPipeline.__new__(BookPipeline)
     pipeline.tts = SplitSeedDriftTTS()
+    pipeline.paths = SimpleNamespace(root=tmp_path)
     row = {
         "stable_id": "seed-drift-split",
         "text": " ".join(["Nội dung đủ dài để chia an toàn"] * 10),

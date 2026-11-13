@@ -257,7 +257,7 @@ def test_accept_checks_the_retained_take_not_the_one_just_measured(tmp_path):
     """The queue kept an earlier take: the high-quality gate must look at it, not at the new one."""
     pipeline, _chapter, row = _short_tts_pipeline(tmp_path, source_text="Một câu ngắn.")
     pipeline.settings["quality_profile"] = "high_quality"
-    path = tmp_path / "kept.wav"
+    path = pipeline.paths.root / "kept.wav"
     sf.write(path, _tone(1.2, int(pipeline.settings["tts"]["sample_rate"])), int(pipeline.settings["tts"]["sample_rate"]), subtype="PCM_16")
     pipeline.db.mark_generating(row["id"], 3)
     pipeline._keep_usable_take(row, path, sha256_file(path), {"duration": 1.2, "pace_outlier": 1.0}, 3)
@@ -303,7 +303,7 @@ def test_exhausted_clipped_take_stays_failed_with_audio(tmp_path):
 
 # 6 ------------------------------------------------------------------------------------------
 def test_non_signal_errors_are_not_labelled_signal_rejected(tmp_path):
-    outcomes = [("clean", {"pace_outlier": 1.0}), RuntimeError("engine hiccup"),
+    outcomes = [("clean", {"pace_outlier": 1.0}), _caused("engine input refused", ValueError("unsupported symbol")),
                 ("clean", {"pace_outlier": 1.0}), ("clean", {"pace_outlier": 1.0}), ("clean", {"pace_outlier": 1.0})]
     pipeline, chapter, row = _edge_pipeline(tmp_path, outcomes, profile="high_quality")
     pipeline._process_single_segment(row, chapter)
@@ -346,7 +346,7 @@ def test_ledger_replays_a_refused_take_with_its_audio(tmp_path):
     """A crash after a refused attempt: the replay must keep the same refused take, not lose it."""
     pipeline, chapter, row = _edge_pipeline(tmp_path, ["edge", RuntimeError("crash")])
     session = pipeline._begin_take_session(row, {"x": 1})
-    output = pipeline._session_attempt_path(row, session, "primary_0", tmp_path / "a.primary_0.wav")
+    output = pipeline._session_attempt_path(row, session, "primary_0", pipeline.paths.root / "a.primary_0.wav")
     calls = []
 
     def synthesize():
@@ -437,9 +437,8 @@ def test_named_machine_fault_without_a_cause_is_not_an_audio_verdict(tmp_path):
 
 @pytest.mark.parametrize("fault", [
     _caused("phonemizer: unsupported symbol", ValueError("unsupported symbol")),
-    RuntimeError("configured split changed the spoken text"),
-    KeyError("missing span"),
-], ids=["engine_wrapped", "split_invariant", "keyerror"])
+    _caused("no safe split", ValueError("no boundary")),
+], ids=["engine_wrapped", "split_refusal"])
 def test_persistent_deterministic_fault_is_the_take_verdict(tmp_path, fault):
     """Retried on the same seed, then filed as the take's verdict - never a stop of the whole book."""
     pipeline, _chapter, _row = _short_tts_pipeline(tmp_path)
@@ -527,7 +526,7 @@ def test_held_state_file_is_retried_later_from_after_the_failed_write(tmp_path, 
 def test_persistent_machine_fault_is_not_written_as_a_seed_verdict(tmp_path, fault):
     pipeline, _chapter, row = _edge_pipeline(tmp_path, [fault] * 3)
     session = pipeline._begin_take_session(row, {"test": "machine-fault"})
-    output = pipeline._session_attempt_path(row, session, "primary_0", tmp_path / "attempt.wav")
+    output = pipeline._session_attempt_path(row, session, "primary_0", pipeline.paths.root / "attempt.wav")
     with pytest.raises(pipeline_module.CriticalResourceStop):
         pipeline._session_synthesis(row, session, "primary_0", lambda: (
             output, *pipeline.tts.synthesize_atomic(row, output, seed_salt="primary_0")))
@@ -544,7 +543,7 @@ def test_deterministic_engine_fault_is_written_as_the_seed_verdict(tmp_path):
     fault = _caused("phonemizer: unsupported symbol", ValueError("unsupported symbol"))
     pipeline, _chapter, row = _edge_pipeline(tmp_path, [fault] * 3)
     session = pipeline._begin_take_session(row, {"test": "engine-fault"})
-    output = pipeline._session_attempt_path(row, session, "primary_0", tmp_path / "attempt.wav")
+    output = pipeline._session_attempt_path(row, session, "primary_0", pipeline.paths.root / "attempt.wav")
     with pytest.raises(AudioQualityError, match="phonemizer"):
         pipeline._session_synthesis(row, session, "primary_0", lambda: (
             output, *pipeline.tts.synthesize_atomic(row, output, seed_salt="primary_0")))
@@ -589,12 +588,12 @@ def test_deterministic_split_error_fails_the_line_instead_of_stopping_the_run(tm
 
     def split(*_a, **_k):
         calls.append(1)
-        raise RuntimeError("configured split changed the spoken text")
+        raise AudioQualityError("no safe split boundary")
 
     monkeypatch.setattr(pipeline, "_synthesize_split", split)
     pipeline._process_single_segment(row, chapter)
     assert pipeline.db.get_segment(row["id"])["status"] == "failed"
-    assert len(calls) == pipeline_module.WORD_BREAK_RETRY_ENVIRONMENT_ATTEMPTS
+    assert len(calls) == 1
     # Closed: a resume of this line starts a new call, it does not replay the split forever.
     session = json.loads(pipeline.db.artifact_by_key(pipeline._take_session_key(row))["metadata_json"])
     assert session["state"] == "closed"
@@ -683,7 +682,7 @@ def test_split_ledger_replays_after_crash_without_resynthesizing(tmp_path, monke
 def test_session_cleanup_preserves_artifact_references(tmp_path):
     pipeline, _chapter, row = _edge_pipeline(tmp_path, [])
     session = pipeline._begin_take_session(row, {"test": "cleanup"})
-    evidence, loser = tmp_path / "evidence.wav", tmp_path / "loser.wav"
+    evidence, loser = pipeline.paths.root / "evidence.wav", pipeline.paths.root / "loser.wav"
     evidence.write_bytes(b"artifact evidence")
     loser.write_bytes(b"unreferenced take")
     orphan = rejected_take_path(loser)

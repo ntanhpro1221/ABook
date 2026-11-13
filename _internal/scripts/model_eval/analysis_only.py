@@ -51,7 +51,7 @@ def segment(db: ProjectDB, settings: dict, log) -> int:
         if int(chapter["total_segments"]) > 0:
             continue
         warnings: list[str] = []
-        rows = load_and_segment_chapter(dict(chapter), max_chars=max_chars, warnings=warnings)
+        rows = load_and_segment_chapter(dict(chapter), max_chars=max_chars, project_root=db.path.parent, warnings=warnings)
         if not rows:
             raise RuntimeError(f"Chapter has no readable content: {chapter['input_path']}")
         db.replace_chapter_segments(int(chapter["id"]), rows)

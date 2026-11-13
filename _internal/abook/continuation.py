@@ -24,6 +24,7 @@ from __future__ import annotations
 import json
 import os
 import re
+import logging
 import sqlite3
 import time
 from collections import Counter
@@ -157,7 +158,19 @@ def previous_path(project: Path) -> Path | None:
     if not value:
         return None
     # Ghi tương đối với thư mục thư viện khi hai dự án cùng thư viện: dời cả thư viện vẫn nối được.
-    return (Path(value) if Path(value).is_absolute() else Path(project).resolve().parent / value).resolve()
+    path = Path(value)
+    library = Path(project).resolve().parent
+    if not path.is_absolute():
+        # The writer stores a sibling's name, never a relative directory traversal.
+        if path.name != value or value in {".", ".."} or book_paths.network(value):
+            logging.getLogger(__name__).warning("Ignoring unsafe continuation link: %s", value)
+            return None
+        path = library / value
+    candidate = book_paths.safe_inside(library, path)
+    if candidate is None or candidate.parent != library:
+        logging.getLogger(__name__).warning("Ignoring continuation outside the book library: %s", value)
+        return None
+    return candidate
 
 
 def previous_project(project: Path) -> Path | None:

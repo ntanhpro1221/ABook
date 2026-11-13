@@ -202,10 +202,14 @@ def run(tmp_path, monkeypatch, config, kind="none", salt="", *, clarity=False):
         )
         call = dict(CLARITY, delivery_mode=DELIVERY_CLARITY)
     install(pipeline, kind, salt)
+    interrupted = False
     try:
         pipeline._process_single_segment(row, chapter, **call)
     except (SystemExit, CriticalResourceStop):
-        # A kill, or a stop at a safe checkpoint when the shortage would not end.
+        interrupted = True
+    if interrupted:
+        # A new worker has no active exception from the dead worker. Resuming inside the
+        # handler would attach its old OOM as __context__ to unrelated new audio refusals.
         row = reopen(pipeline, row)
         resume_through_chapter_loop(pipeline, chapter)
     assert kind == "none" or not pipeline._fault_state["left"], f"{kind} {salt} never happened"
@@ -343,9 +347,12 @@ def run_candidate(tmp_path, monkeypatch, kind):
     row = pipeline.db.get_segment(int(row["id"]))
     candidate = pipeline._allocate_segment_candidate(row, 0, 2)
     install(pipeline, kind, CANDIDATE_SALT)
+    interrupted = False
     try:
         pipeline._process_segment_candidate(row, candidate, chapter)
     except CriticalResourceStop:
+        interrupted = True
+    if interrupted:
         row = reopen(pipeline, row)
         pipeline._process_segment_candidate(row, candidate, chapter)
     assert kind == "none" or not pipeline._fault_state["left"]
@@ -383,12 +390,15 @@ def candidate_run(tmp_path, monkeypatch, config, kind="none", salt=""):
     pipeline._salts.clear()
     candidate = pipeline._allocate_segment_candidate(row, 0, 2)
     install(pipeline, "none" if kind == "candidate_reserved" else kind, salt)
+    interrupted = False
     try:
         if kind == "candidate_reserved":
             pipeline._fault_state["left"] = 0
             raise SystemExit("candidate reserved")
         pipeline._process_segment_candidate(row, candidate, chapter)
     except (SystemExit, CriticalResourceStop):
+        interrupted = True
+    if interrupted:
         row = reopen(pipeline, row)
         pipeline._process_segment_candidate(row, candidate, chapter)
     assert kind == "none" or not pipeline._fault_state["left"], f"{kind} {salt} never happened"

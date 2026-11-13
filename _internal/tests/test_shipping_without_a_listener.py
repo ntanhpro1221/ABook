@@ -358,7 +358,7 @@ def _db_with_a_failed_segment(tmp_path: Path):
 
     chapter = db.list_chapters()[0]
     rows = load_and_segment_chapter(
-        dict(chapter), max_chars=int(settings["tts"]["max_segment_chars"])
+        dict(chapter), max_chars=int(settings["tts"]["max_segment_chars"]), project_root=db.path.parent
     )
     db.replace_chapter_segments(int(chapter["id"]), rows)
     with db.connect() as conn:

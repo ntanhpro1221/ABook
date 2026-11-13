@@ -101,7 +101,7 @@ def source_fingerprint(project: Path) -> str:
             return ""
         from .. import book_paths
 
-        path = book_paths.safe_source(project, raw if Path(raw).is_absolute() else project / raw)
+        path = book_paths.safe_source(project, raw)
         if path is None or not path.is_file():  # sổ trỏ ra chỗ không được đọc (book_paths): không chạm đĩa
             return ""
         values.append((index, describe(path)["sha256"]))

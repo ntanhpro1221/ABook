@@ -15,6 +15,7 @@ liên kết/junction.
 from __future__ import annotations
 
 import os
+import logging
 from pathlib import Path, PurePosixPath, PureWindowsPath
 from typing import Any
 
@@ -24,6 +25,7 @@ class UnsafeBookPath(ValueError):
     def __init__(self, value: Any = None) -> None:
         super().__init__("Sổ dự án có đường dẫn trỏ ra ngoài thư mục sách — app không đọc hay ghi file ở đó.")
         self.value = value
+        logging.getLogger(__name__).warning("Ignoring unsafe book path: %s", value)
 
 
 def network(value: Any) -> bool:

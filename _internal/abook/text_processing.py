@@ -5,6 +5,7 @@ import unicodedata
 from pathlib import Path
 from typing import Any
 
+from . import book_paths
 from .io_utils import decode_text_bytes, natural_key, sha256_bytes, sha256_file, sha256_text, slugify
 from .readaloud.symbols import unit_slash
 
@@ -1477,11 +1478,12 @@ def load_and_segment_chapter(
     chapter: dict[str, Any],
     max_chars: int,
     *,
+    project_root: Path,
     warnings: list[str] | None = None,
     drop_credits: bool = False,
     drop_tail_credits: bool = False,
 ) -> list[dict[str, Any]]:
-    source = Path(chapter["input_path"])
+    source = book_paths.chapter_source(project_root, chapter["input_path"])
     raw = source.read_bytes()
     expected_size = int(chapter["input_size"])
     expected_sha256 = str(chapter["input_sha256"])

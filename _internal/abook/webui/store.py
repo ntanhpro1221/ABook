@@ -394,6 +394,7 @@ class AudioLocator:
 
     def probe(self, path: Path) -> tuple[Path, bool]:
         """(`path.resolve()`, `path.is_file()`) - cho file thường chỉ tốn một `lstat`."""
+        path = book_paths.inside(self.project_root, path)
         if not path.name or ".." in path.parts or "." in path.parts:
             resolved = path.resolve()
             return resolved, resolved.is_file()
@@ -432,7 +433,10 @@ class AudioLocator:
             return None
         project_root = self.project_root
         path = Path(str(recorded_path))
-        candidate = path if path.is_absolute() else project_root / path
+        if book_paths.network(recorded_path) or not path.is_absolute():
+            book_paths.safe_inside(project_root, recorded_path)  # warn without probing the rejected path
+            return None
+        candidate = path
         # Chỉ hỏi đĩa khi đường nằm trong thư mục sách THEO CHỮ: sổ có thể do người khác viết, lstat một đường mạng (\máy\share)
         # là Windows đã nối SMB (book_paths). Đường ngoài (sách đã chuyển chỗ) đi nhánh tìm theo phần đuôi bên dưới.
         if book_paths.lexically_inside(project_root, candidate) or book_paths.lexically_inside(self.root, candidate):
@@ -450,7 +454,8 @@ class AudioLocator:
             if part not in ("work", "output") or ".." in parts[index:]:
                 continue
             candidate = project_root.joinpath(*parts[index:])
-            if not candidate.is_file():
+            candidate = book_paths.safe_inside(project_root, candidate)
+            if candidate is None or not candidate.is_file():
                 continue
             try:
                 found, _is_file = self.probe(candidate)

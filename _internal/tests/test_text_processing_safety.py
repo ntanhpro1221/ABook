@@ -56,7 +56,7 @@ def test_segmentation_rejects_same_size_source_mutation(tmp_path: Path) -> None:
     source.write_text("BBBB", encoding="utf-8")
 
     with pytest.raises(RuntimeError, match="changed while it was being loaded"):
-        load_and_segment_chapter(chapter, max_chars=340)
+        load_and_segment_chapter(chapter, max_chars=340, project_root=tmp_path)
 
 
 def test_output_filename_is_sanitized_and_bounded(tmp_path: Path) -> None:

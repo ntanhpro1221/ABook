@@ -23,6 +23,11 @@ from abook.voice_catalog import VOICE_PREVIEW_FILENAMES
 PRESET_NAME = "Phạm Tuyên"
 
 
+@pytest.fixture(autouse=True)
+def _synthetic_runtime(tmp_path, monkeypatch):
+    monkeypatch.setenv("ABOOK_RUNTIME", str(tmp_path))
+
+
 def _settings(
     checkpoint: Path | None,
     *,

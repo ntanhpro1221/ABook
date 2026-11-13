@@ -112,7 +112,8 @@ def test_the_batch_audio_locator_answers_exactly_like_one_lookup_at_a_time(tmp_p
     one_by_one = store.AudioLocator(book)
     many = store.AudioLocator(book, many=True)
     for case in cases:
-        expected = _reference_segment_audio(book, case)
+        # Stored paths must be absolute and local before any probe; old relative entries are refused.
+        expected = _reference_segment_audio(book, case) if case and Path(case).is_absolute() else None
         assert store.segment_audio(book, case) == expected, case
         assert one_by_one.find(case) == expected, case
         assert many.find(case) == expected, case

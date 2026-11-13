@@ -165,8 +165,9 @@ def test_chapter_loop_leaves_a_finished_failed_take_alone(tmp_path, monkeypatch)
 
 
 def _clean_take(pipeline, row, tmp_path):
-    checksum, metrics, seed = pipeline.tts.synthesize_atomic(row, tmp_path/"clean.wav", seed_salt="primary_0")
-    return tmp_path/"clean.wav", checksum, metrics, seed
+    path = pipeline.paths.root / "clean.wav"
+    checksum, metrics, seed = pipeline.tts.synthesize_atomic(row, path, seed_salt="primary_0")
+    return path, checksum, metrics, seed
 
 
 def test_crash_after_reservation_reruns_the_reserved_seed_after_reopen(tmp_path, monkeypatch):
@@ -373,9 +374,12 @@ def resume_through_chapter_loop(pipeline, chapter):
 def run_single(tmp_path, monkeypatch, config, point):
     pipeline, chapter, row, engine = seeded(tmp_path, monkeypatch, **config)
     install_fault(pipeline, point)
+    interrupted = False
     try:
         pipeline._process_single_segment(row, chapter)
     except SystemExit:
+        interrupted = True
+    if interrupted:
         row = reopen(pipeline, row)
         resume_through_chapter_loop(pipeline, chapter)
     assert point == "none" or not pipeline._fault_state["left"], "the fault never happened"
@@ -420,9 +424,12 @@ def run_candidate(tmp_path, monkeypatch, config, point):
     row = pipeline.db.get_segment(int(row["id"]))
     candidate = pipeline._allocate_segment_candidate(row, 0, 2)
     install_fault(pipeline, point)
+    interrupted = False
     try:
         pipeline._process_segment_candidate(row, candidate, chapter)
     except SystemExit:
+        interrupted = True
+    if interrupted:
         row = reopen(pipeline, row)
         pipeline._process_segment_candidate(row, candidate, chapter)
     # A first take that keeps its place never moves the candidate's seed: no restart to crash after.
@@ -486,8 +493,9 @@ def test_environment_failure_that_never_clears_stops_without_spending_the_budget
 
 
 @pytest.mark.parametrize("fault", ["signal", "wrapped_engine", "runtime"])
-def test_quality_verdict_is_final_and_replays_without_synthesis(tmp_path, monkeypatch, fault):
+def test_only_explicit_quality_verdicts_are_final_and_replayed(tmp_path, monkeypatch, fault):
     from abook.audio_io import AudioQualityError
+    from abook.pipeline import CriticalResourceStop
     pipeline, chapter, row, engine = seeded(tmp_path, monkeypatch, {"primary_0":"gap", RETRY_SALT:"clean"})
     real = pipeline.tts.synthesize_atomic
     calls = []
@@ -501,6 +509,15 @@ def test_quality_verdict_is_final_and_replays_without_synthesis(tmp_path, monkey
             raise AudioQualityError("TTS_ACTIVE_OFFSET")
         return real(*args, **kwargs)
     pipeline.tts.synthesize_atomic = refuse
+    if fault == "runtime":
+        with pytest.raises(CriticalResourceStop):
+            pipeline._process_single_segment(row, chapter)
+        assert reservation(pipeline)[0]["state"] == "reserved"
+        assert calls == [1], "an unclassified failure stops immediately without a verdict"
+        pipeline.tts.synthesize_atomic = real
+        pipeline._process_single_segment(pipeline.db.get_segment(int(row["id"])), chapter)
+        assert reservation(pipeline)[0]["state"] == "complete"
+        return
     pipeline._process_single_segment(row, chapter)
     current = pipeline.db.get_segment(int(row["id"]))
     gate = json.loads(current["signal_json"])[word_break.FIELD]

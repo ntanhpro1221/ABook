@@ -1,10 +1,12 @@
 from __future__ import annotations
 
 import hashlib
+import os
 import re
 from pathlib import Path
 from typing import Any
 
+from . import book_paths
 from .audio_transform_contract import (
     POSTPROCESS_ALGORITHM,
     POSTPROCESS_OUTPUT_CODEC,
@@ -171,9 +173,10 @@ def analysis_casting_implementation_hash() -> str:
     return implementation_files_hash(ANALYSIS_CASTING_IMPLEMENTATION_FILES)
 
 
-def external_file_hash(path_value: str) -> str:
-    path = Path(path_value).expanduser().resolve()
-    if not path.is_file():
+def external_file_hash(path_value: str, *, trusted_root: Path | None = None) -> str:
+    root = trusted_root if trusted_root is not None else Path(os.environ.get("ABOOK_RUNTIME", "runtime")).absolute()
+    path = book_paths.safe_inside(root, path_value)
+    if path is None or not path.is_file():
         return "MISSING"
     digest = hashlib.sha256()
     with path.open("rb") as handle:
@@ -205,7 +208,8 @@ def build_quality_policy(settings: dict[str, Any]) -> dict[str, Any]:
     return {
         "policy_version": QUALITY_POLICY_VERSION,
         "word_break_aligner": {
-            name: external_file_hash(str(aligner_folder / name)) if aligner_folder is not None else "MISSING"
+            name: external_file_hash(str(aligner_folder / name), trusted_root=aligner_folder)
+            if aligner_folder is not None else "MISSING"
             for name in word_timing.MODEL_FILES
         },
         "implementation_hash": quality_implementation_hash(),

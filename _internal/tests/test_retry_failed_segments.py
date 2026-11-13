@@ -30,7 +30,8 @@ def _project(tmp_path: Path):
     from abook.text_processing import load_and_segment_chapter
 
     chapter = db.list_chapters()[0]
-    rows = load_and_segment_chapter(dict(chapter), max_chars=int(settings["tts"]["max_segment_chars"]))
+    rows = load_and_segment_chapter(dict(chapter), max_chars=int(settings["tts"]["max_segment_chars"]),
+                                    project_root=db.path.parent)
     db.replace_chapter_segments(int(chapter["id"]), rows)
     return db, chapter
 

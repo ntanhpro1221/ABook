@@ -104,7 +104,7 @@ def test_a_pronunciation_card_has_lines_to_hear_and_shows_a_waiting_request(tmp_
 
     project = make_book(tmp_path)
     db = sqlite3.connect(project / "project.sqlite3")
-    db.execute("UPDATE segments SET wav_path='chunks/8.wav' WHERE id=8")
+    db.execute("UPDATE segments SET wav_path=? WHERE id=8", (str(project / "chunks" / "8.wav"),))
     db.commit()
     db.close()
     (project / "chunks").mkdir()
@@ -356,7 +356,8 @@ def test_a_turn_card_plays_the_lines_already_recorded(tmp_path: Path) -> None:
     """Soát UX a25 T1: thẻ "Lượt đối đáp" ghi "· chưa thu" cho câu đã thu - cặp câu đọc không có cột wav_path."""
     project = make_dialogue_book(tmp_path, first_person="ED ROSTAILER")
     db = sqlite3.connect(project / "project.sqlite3")
-    db.execute("UPDATE segments SET wav_path='chunks/' || stable_id || '.wav' WHERE stable_id IN ('s1', 's2')")
+    db.executemany("UPDATE segments SET wav_path=? WHERE stable_id=?",
+                   [(str(project / "chunks" / f"{stable_id}.wav"), stable_id) for stable_id in ("s1", "s2")])
     db.commit()
     db.close()
     (project / "chunks").mkdir()
@@ -564,8 +565,8 @@ def test_a_sample_line_is_playable_only_when_its_recording_exists(tmp_path: Path
     """Soát UX a8: nút ▶ của câu mẫu nào cũng 404 vì ví dụ mặc định "có audio" - nay hasAudio nói đúng thực tế."""
     project = make_book(tmp_path)
     db = sqlite3.connect(project / "project.sqlite3")
-    db.execute("UPDATE segments SET wav_path='chunks/4.wav' WHERE id=4")  # có đường dẫn nhưng file không còn
-    db.execute("UPDATE segments SET wav_path='chunks/5.wav' WHERE id=5")  # có file thật
+    db.execute("UPDATE segments SET wav_path=? WHERE id=4", (str(project / "chunks" / "4.wav"),))  # missing
+    db.execute("UPDATE segments SET wav_path=? WHERE id=5", (str(project / "chunks" / "5.wav"),))  # present
     db.commit()
     db.close()
     (project / "chunks").mkdir()
@@ -756,8 +757,8 @@ def test_a_book_not_yet_recorded_says_changing_a_voice_costs_nothing(tmp_path: P
                                                                              "đổi giọng, chưa thu nên không phải thu lại"}
 
     db = sqlite3.connect(project / "project.sqlite3")
-    db.execute("UPDATE segments SET wav_path='chunks/3.wav' WHERE id=3")  # một câu của Lucien đã thu
-    db.execute("UPDATE segments SET wav_path='chunks/4.wav' WHERE id=4")  # một trong hai câu của Áo choàng đen
+    db.execute("UPDATE segments SET wav_path=? WHERE id=3", (str(project / "chunks" / "3.wav"),))
+    db.execute("UPDATE segments SET wav_path=? WHERE id=4", (str(project / "chunks" / "4.wav"),))
     db.commit()
     db.close()
     cards = {item["kind"]: item for item in work_items(project)["items"]}

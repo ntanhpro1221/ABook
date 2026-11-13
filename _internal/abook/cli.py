@@ -500,10 +500,10 @@ def validate_project(project_root: Path | str, *, require_complete: bool = False
         checks["analysis_model_lock"] = False
         errors.append(str(exc))
 
-    recorded_root = Path(str(book["project_root"])).resolve()
-    checks["project_root"] = _normalize_path_key(recorded_root) == _normalize_path_key(paths.root)
+    recorded_root = book_paths.safe_inside(paths.root, book["project_root"])
+    checks["project_root"] = recorded_root is not None and _normalize_path_key(recorded_root) == _normalize_path_key(paths.root)
     if not checks["project_root"]:
-        errors.append(f"SQLite project_root points to {recorded_root}, expected {paths.root}")
+        errors.append(f"SQLite project_root points to {book['project_root']}, expected {paths.root}")
 
     chapters = db.list_chapters()
     checks["has_chapters"] = bool(chapters)

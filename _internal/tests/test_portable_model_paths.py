@@ -12,6 +12,7 @@ from pathlib import Path
 import pytest
 
 from abook.config import build_settings
+from abook.book_paths import UnsafeBookPath
 from abook.quality_policy import build_quality_policy, quality_policy_hash
 from abook.runtime_contract import relocated_model_path
 
@@ -26,11 +27,11 @@ def _runtime(root: Path) -> Path:
     return root
 
 
-def test_a_path_that_still_exists_is_used_as_stored(tmp_path: Path) -> None:
+def test_an_existing_old_model_path_never_authorizes_external_io(tmp_path: Path) -> None:
     old = _runtime(tmp_path / "Ebook Reader" / "runtime")
     new = _runtime(tmp_path / "ABook" / "runtime")
     stored = old / "models" / "utmosv2" / CHECKPOINT
-    assert relocated_model_path(str(stored), new) == stored
+    assert relocated_model_path(str(stored), new) == new / "models" / "utmosv2" / CHECKPOINT
 
 
 def test_a_moved_runtime_is_found_under_the_current_one(tmp_path: Path) -> None:
@@ -40,10 +41,15 @@ def test_a_moved_runtime_is_found_under_the_current_one(tmp_path: Path) -> None:
     assert relocated_model_path(r"D:\Novels\Ebook Reader\_internal\runtime\models\whisper", new) == new / "models" / "whisper"
 
 
-@pytest.mark.parametrize("stored", [r"D:\khong\co\gi\model.pth", r"D:\Novels\old\runtime\models\utmosv2\khac.pth"])
-def test_nothing_found_keeps_the_stored_path_so_callers_fail_closed(tmp_path: Path, stored: str) -> None:
+def test_an_external_path_without_a_model_suffix_is_refused(tmp_path: Path) -> None:
     new = _runtime(tmp_path / "runtime")
-    assert str(relocated_model_path(stored, new)) == str(Path(stored))
+    with pytest.raises(UnsafeBookPath):
+        relocated_model_path(r"D:\khong\co\gi\model.pth", new)
+
+
+def test_a_missing_model_still_stays_under_the_current_runtime(tmp_path: Path) -> None:
+    new = _runtime(tmp_path / "runtime")
+    assert relocated_model_path(r"D:\Novels\old\runtime\models\utmosv2\khac.pth", new) == new / "models" / "utmosv2" / "khac.pth"
 
 
 def test_the_policy_hash_of_a_book_survives_its_runtime_moving(tmp_path: Path, monkeypatch) -> None:

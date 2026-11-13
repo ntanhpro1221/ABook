@@ -143,14 +143,19 @@ def _pipeline_with_asr_evidence(tmp_path: Path) -> tuple[BookPipeline, object, o
         settings,
         "Perceptual pipeline",
     )
-    pipeline = BookPipeline(
-        paths=paths,
-        db=db,
-        settings=settings,
-        pause_requested=lambda: False,
-        stop_requested=lambda: False,
-        emit=lambda _kind, _payload: None,
-    )
+    import os
+    from unittest.mock import patch
+
+    # This helper owns a fake checkpoint, so its temporary folder is the trusted runtime.
+    with patch.dict(os.environ, {"ABOOK_RUNTIME": str(tmp_path)}):
+        pipeline = BookPipeline(
+            paths=paths,
+            db=db,
+            settings=settings,
+            pause_requested=lambda: False,
+            stop_requested=lambda: False,
+            emit=lambda _kind, _payload: None,
+        )
     pipeline._recover()
     pipeline._ensure_segments()
     chapter = db.list_chapters()[0]

@@ -923,7 +923,8 @@ class MainWindow(QMainWindow):
             locked_settings = json.loads(str(db.book()["settings_json"]))
         self.project_paths = paths
         self.db = db
-        self.files = [Path(str(row["input_path"])) for row in chapters]
+        self.files = [source for row in chapters
+                      if (source := book_paths.safe_source(paths.root, row["input_path"])) is not None]
         self.title_edit.setText(str(db.book()["title"]))
         self.output_edit.setText(str(paths.root.parent))
         self._apply_locked_settings(locked_settings)
@@ -1056,7 +1057,8 @@ class MainWindow(QMainWindow):
                 QTableWidgetItem(CHAPTER_STATUS_LABELS.get(status, status)),
             )
             output = str(row["output_mp3"])
-            published = str(row["status"]) == "completed" and Path(output).exists()
+            safe_output = book_paths.safe_inside(self.project_paths.root, output)
+            published = str(row["status"]) == "completed" and safe_output is not None and safe_output.exists()
             mp3_text = output if published else ""
             if not published and status == "verifying":
                 mp3_text = "Đang kiểm tra / ghép"
@@ -1186,8 +1188,8 @@ class MainWindow(QMainWindow):
         path_text = str(item.data(Qt.UserRole) or "").strip()
         if not path_text:
             return
-        path = Path(path_text)
-        if path.is_file():
+        path = book_paths.safe_inside(self.project_paths.root, path_text) if self.project_paths else None
+        if path is not None and path.is_file():
             QDesktopServices.openUrl(QUrl.fromLocalFile(str(path)))
 
     def _open_project_folder(self) -> None:

@@ -8,6 +8,7 @@ import os
 from pathlib import Path, PureWindowsPath
 from typing import Any, Iterable
 
+from . import book_paths
 
 SETUP_SCHEMA_VERSION = 2
 PERCEPTUAL_CACHE_SCHEMA_VERSION = 1
@@ -368,24 +369,31 @@ def relocated_model_path(value: str | Path, runtime_root: Path | None = None) ->
     same book when that runtime moves: the folder was renamed (`Ebook Reader` -> `ABook`,
     2026-09-28), or the project was packed into an `.abookproj` and opened where Studio is
     installed elsewhere. The stored string is never rewritten - it is part of the settings and
-    policy hashes - only where the file is looked for: the stored path when it exists, else the
-    same path under `models/` of the current runtime when THAT exists. Models are pinned by
+    policy hashes. Only paths under the current runtime are probed; an old absolute model
+    path supplies a suffix under this runtime's `models/`. Models are pinned by
     content (UTMOS by `UTMOS_CHECKPOINT_SHA256`, Whisper by the checksum in its download URL),
-    so finding the file elsewhere cannot change what is loaded. Nothing found: the stored path,
-    and callers fail closed exactly as before.
+    so finding the file elsewhere cannot change what is loaded. Missing models stay under
+    the current runtime and callers fail closed without probing the old path.
     """
-    stored = Path(str(value)).expanduser()
-    if stored.exists():
+    root = runtime_root if runtime_root is not None else Path(os.environ.get("ABOOK_RUNTIME", "runtime"))
+    root = root.expanduser().absolute()
+    # Settings are supplied by the book. Only the current runtime authorizes model I/O.
+    # Old absolute model paths are migration hints, never permission to probe the old disk.
+    if book_paths.network(value) or not Path(str(value)).is_absolute():
+        raise book_paths.UnsafeBookPath(value)
+    stored = book_paths.safe_inside(root, value)
+    if stored is not None:
         return stored
     text = str(value)
     parts = PureWindowsPath(text).parts if ("\\" in text or ":" in text) else Path(text).parts
     lowered = [part.lower() for part in parts]
     if "models" not in lowered:
-        return stored
+        raise book_paths.UnsafeBookPath(value)
     index = len(lowered) - 1 - lowered[::-1].index("models")
-    root = runtime_root if runtime_root is not None else Path(os.environ.get("ABOOK_RUNTIME", "runtime"))
-    candidate = root.expanduser().joinpath("models", *parts[index + 1 :])
-    return candidate if candidate.exists() else stored
+    suffix = parts[index + 1 :]
+    if any(part in {".", ".."} or ":" in part or "\\" in part or "/" in part for part in suffix):
+        raise book_paths.UnsafeBookPath(value)
+    return book_paths.inside(root, root.joinpath("models", *suffix))
 
 
 def perceptual_settings_check(
@@ -426,9 +434,11 @@ def perceptual_settings_check(
         runtime_root / "models" / "utmosv2" / UTMOS_CHECKPOINT_FILENAME
     ).resolve()
     checkpoint_value = str(perceptual.get("checkpoint_path", "")).strip()
-    configured_checkpoint = (
-        relocated_model_path(checkpoint_value, runtime_root).resolve() if checkpoint_value else None
-    )
+    try:
+        configured_checkpoint = relocated_model_path(checkpoint_value, runtime_root) if checkpoint_value else None
+    except book_paths.UnsafeBookPath:
+        configured_checkpoint = None
+        errors.append("perceptual_qa.checkpoint_path is outside the current runtime")
     if configured_checkpoint is None:
         errors.append("perceptual_qa.checkpoint_path is empty")
     elif _path_key(configured_checkpoint) != _path_key(expected_checkpoint):

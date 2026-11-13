@@ -17,6 +17,7 @@ import threading
 from pathlib import Path
 from typing import Any, Iterator
 
+from .. import book_paths
 from ..io_utils import atomic_write_bytes
 
 CHUNK = 1024 * 1024
@@ -87,7 +88,9 @@ class Fingerprints:
         for name, described in chapters.items():
             if not name.startswith("chapters/") or not isinstance(described, dict):
                 continue
-            candidate = folder / base_name(name)
+            candidate = book_paths.safe_inside(project_root, folder / base_name(name))
+            if candidate is None:
+                continue
             try:
                 if (candidate.is_file() and candidate.stat().st_size == int(described.get("size", -1))
                         and self.sha256(candidate) == described.get("sha256")):

@@ -56,6 +56,7 @@ def test_generated_tables_materialize_idempotently_and_split_without_cascading(t
         assert coordinator._spoken_row(materialized) == materialized
         pipeline = BookPipeline.__new__(BookPipeline)
         pipeline.settings = build_settings()
+        pipeline.paths = SimpleNamespace(root=tmp_path)
         pieces = []
         def synthesize(part, path, **kwargs):
             text, mapped = coordinator.spoken_text_with_anchors(part)
@@ -110,7 +111,7 @@ def test_take_order_and_crash_keep_incumbent_until_better_checkpoint(tmp_path):
 
 def test_crash_before_quality_decision_retains_audio_without_passing_it(tmp_path):
     pipeline, _, row = _short_tts_pipeline(tmp_path)
-    path = tmp_path / 'not-graded.wav'
+    path = pipeline.paths.root / 'not-graded.wav'
     sf.write(path, .1 * np.sin(np.arange(24000) / 30), 24000)
     pipeline._keep_usable_take(row, path, sha256_file(path), {'duration': 1}, 9)
     reopened = ProjectDB(pipeline.db.path)
