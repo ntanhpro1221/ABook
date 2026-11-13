@@ -5,6 +5,8 @@ import ABook
 Item {
     id: root
     property bool append: false
+    property string sourceHint: ""
+    property bool continuing: false
     signal picked(var paths, bool append)
     function chooseFiles(add) { append = add; DesktopApi.pickers = DesktopApi.pickers.concat([{kind: "files", add: add}]) }
     function chooseFolder() { append = false; DesktopApi.pickers = DesktopApi.pickers.concat([{kind: "folder", add: false}]) }

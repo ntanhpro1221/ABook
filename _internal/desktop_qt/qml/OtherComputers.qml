@@ -306,7 +306,7 @@ Column {
                         Column {
                             width: form.codeWidth
                             spacing: 4
-                            Text { width: parent.width; text: S.s_pair_code_or_string; color: Theme.text2; wrapMode: Text.Wrap; font.pixelSize: Theme.sizeCaption }
+                            Text { width: parent.width; text: TextWrap.pretty(S.s_pair_code_or_string); color: Theme.text2; wrapMode: Text.Wrap; font.pixelSize: Theme.sizeCaption }
                             FormField {
                                 id: codeField
                                 objectName: "codeField"

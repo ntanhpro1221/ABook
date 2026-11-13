@@ -1,6 +1,7 @@
 import QtQuick
 import QtTest
 import "../../qml/TextWrap.js" as TextWrap
+import "../../qml/UiStrings.js" as S
 import "VisualReady.js" as VisualReady
 import ABook
 
@@ -28,6 +29,7 @@ Item {
                 addresses: ["192.168.1.20", "100.101.102.103"], awayAddresses: ["100.101.102.103"],
                 pairing: null, pairingBlocked: false,
                 fingerprint: "AB12CD34EF56AB12CD34EF56AB12CD34EF56AB12CD34EF56AB12CD34EF56AB12",
+                fingerprintShort: "AB12 CD34 EF56 AB12",
                 devices: [
                     {id: "aa11", name: "Google Pixel 8", pairedAt: nowSeconds - 86400 * 20, lastSeen: nowSeconds - 120, studio: false},
                     {id: "bb22", name: "Samsung Galaxy Tab S9 của phòng khách nhà bác Tuấn", pairedAt: nowSeconds - 86400 * 3, lastSeen: nowSeconds - 7200, studio: true}],
@@ -45,7 +47,7 @@ Item {
             DesktopApi.responses = {
                 "GET /api/sync": function() { return {status: 200, data: server.sync} },
                 "POST /api/sync": function(body) { server.sync = Object.assign({}, server.sync, {enabled: body.enabled, wanted: body.enabled, devices: body.enabled ? server.sync.devices : []}); return {status: 200, data: server.sync} },
-                "POST /api/sync/pairing": function() { server.sync = Object.assign({}, server.sync, {pairing: {code: "483920", expiresAt: Date.now() / 1000 + 300}}); return {status: 200, data: server.sync} },
+                "POST /api/sync/pairing": function() { server.sync = Object.assign({}, server.sync, {pairing: {code: "483920", expiresAt: Date.now() / 1000 + 300, pairString: "483920-" + server.sync.fingerprint}}); return {status: 200, data: server.sync} },
                 "DELETE /api/sync/pairing": function() { server.sync = Object.assign({}, server.sync, {pairing: null}); return {status: 200, data: server.sync} },
                 "POST /api/sync/studio": function(body) { server.sync = Object.assign({}, server.sync, {remoteStudio: body.enabled}); return {status: 200, data: server.sync} },
                 "DELETE /api/sync/devices/aa11": function() { server.sync = Object.assign({}, server.sync, {devices: server.sync.devices.filter(d => d.id !== "aa11")}); return {status: 200, data: server.sync} },
@@ -165,7 +167,10 @@ Item {
             tryVerify(function() { return shown(page, "Trên máy kia: Cài đặt › Thiết bị › chọn NGDtuanh-PC › nhập mã.") })
             tryVerify(function() { return shown(page, "Đang hiện mã ghép") })
             tryVerify(function() { return shown(page, "Hết hạn sau 5:00") || shown(page, "Hết hạn sau 4:59") })
-            tryVerify(function() { return shown(page, "Vân tay: AB12CD34EF56AB12CD34EF56AB12CD34EF56AB12CD34EF56AB12CD34EF56AB12") })
+            tryVerify(function() {
+                return shown(page, S.s_pair_fingerprint_label + server.sync.fingerprintShort + "\n"
+                    + S.s_pair_fingerprint_help + "\n" + S.s_pair_string + server.sync.pairing.pairString)
+            })
             byText(page, "Huỷ mã").clicked()
             compare(request("DELETE", "/api/sync/pairing").length, 1)
             tryVerify(function() { return !byName(page, "pairingCode").visible })
@@ -342,13 +347,18 @@ Item {
             compare(connect.enabled, false)
             address.text = "192.168.1.77"
             code.text = "12a3-45678"
-            compare(code.text, "123456")
+            compare(code.text, "12a3-45678")
+            compare(connect.enabled, false)
+            compare(request("POST", "/api/computers").length, 0)
+            const pairString = "123456-" + "AB".repeat(32)
+            code.text = pairString
+            compare(code.text, pairString)
             compare(connect.enabled, true)
             connect.activated()
             const post = request("POST", "/api/computers")
             compare(post.length, 1)
             compare(post[0].body.address, "192.168.1.77")
-            compare(post[0].body.code, "123456")
+            compare(post[0].body.code, pairString)
             compare(Api.notice, "Đã ghép Laptop của bạn")
             compare(address.text, "")
             compare(code.text, "")
@@ -361,6 +371,29 @@ Item {
             compare(request("DELETE", "/api/computers/c0ffee000001").length, 1)
             compare(Api.notice, "Đã bỏ ghép Máy bàn phòng làm việc")
             compare(Nav.layers.length, 0)
+        }
+        function test_manualComputerCodeConfirmsTheFingerprint() {
+            install(baseSync(), [])
+            Platform.setSetting("fold.other-computers.pair", "1")
+            const fingerprint = "1A".repeat(32)
+            DesktopApi.responses["POST /api/computers"] = function(body) {
+                if (body.fingerprint !== fingerprint)
+                    return {status: 409, data: {confirm: {fingerprint: fingerprint, short: "1A1A 1A1A 1A1A 1A1A"}}}
+                server.computers = [computer()]
+                return {status: 200, data: {name: "NGDtuanh-PC", computers: server.computers}}
+            }
+            const page = make()
+            byName(page, "addressField").text = "192.168.1.77"
+            byName(page, "codeField").text = "123456"
+            byName(page, "connectComputer").activated()
+            compare(request("POST", "/api/computers").length, 1)
+            compare(request("POST", "/api/computers")[0].body.fingerprint, "")
+            compare(server.computers.length, 0)
+            tryVerify(function() { return byText(page, S.s_pair_fingerprint_confirm) !== null })
+            byText(page, S.s_pair_fingerprint_confirm).clicked()
+            compare(request("POST", "/api/computers").length, 2)
+            compare(request("POST", "/api/computers")[1].body.fingerprint, fingerprint)
+            compare(server.computers.length, 1)
         }
         function test_otherComputersUnpairAsksAndBackReturns() {
             install(baseSync(), [computer({fingerprint: ""})])
