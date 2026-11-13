@@ -841,8 +841,9 @@ object VieneuUnits {
             Readings.applyTokens(toks, out, readings)
         }
         val legacy = Regex("\\p{L}*[Ðð]\\p{L}*")
-        return out.map { word -> separateDigitQuotes(legacy.replace(word) { match ->
-            if (match.value.any { it !in "Ðð" && it.code > 127 }) match.value.replace('Ð', 'Đ').replace('ð', 'đ') else match.value
+        return out.map { word -> separateDigitQuotes(legacy.replace(Normalizer.normalize(word, Normalizer.Form.NFC)) { match ->
+            val candidate = match.value.replace('Ð', 'Đ').replace('ð', 'đ')
+            if (EnglishPolicy.vietnamese(candidate)) candidate else match.value
         }) }
     }
 

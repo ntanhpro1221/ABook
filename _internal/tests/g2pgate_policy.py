@@ -34,6 +34,7 @@ def normalized_phones(value: str) -> str:
 
 
 def words(value: str) -> list[str]:
+    value = unicodedata.normalize("NFC", value)
     value = re.sub(r"</?[a-z-]+>|\[note\d+\]", " ", value)
     return re.findall(r"[^\W\d_]+|\d+", value.lower())
 

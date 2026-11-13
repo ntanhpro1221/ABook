@@ -5350,5 +5350,33 @@
     "phones": [
       "mˈaː zˈɔj ɣˈaː"
     ]
+  },
+  {
+    "token": "Ði",
+    "class": "mixed",
+    "phones": [
+      "ɗˈi"
+    ]
+  },
+  {
+    "token": "Ðang",
+    "class": "mixed",
+    "phones": [
+      "ɗˈaːŋ"
+    ]
+  },
+  {
+    "token": "Ðan",
+    "class": "mixed",
+    "phones": [
+      "ɗˈaːn"
+    ]
+  },
+  {
+    "token": "Ðông",
+    "class": "mixed",
+    "phones": [
+      "ɗˈoŋ"
+    ]
   }
 ]

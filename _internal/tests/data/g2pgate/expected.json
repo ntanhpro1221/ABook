@@ -5350,5 +5350,33 @@
       "mˈaː zˈɔj ɣˈaː"
     ],
     "ambiguity": null
+  },
+  "mixed:Ði": {
+    "reading": "đi",
+    "phones": [
+      "ɗˈi"
+    ],
+    "ambiguity": null
+  },
+  "mixed:Ðang": {
+    "reading": "đang",
+    "phones": [
+      "ɗˈaːŋ"
+    ],
+    "ambiguity": null
+  },
+  "mixed:Ðan": {
+    "reading": "đan",
+    "phones": [
+      "ɗˈaːn"
+    ],
+    "ambiguity": null
+  },
+  "mixed:Ðông": {
+    "reading": "đông",
+    "phones": [
+      "ɗˈoŋ"
+    ],
+    "ambiguity": null
   }
 }
