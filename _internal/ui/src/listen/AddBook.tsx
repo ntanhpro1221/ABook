@@ -675,8 +675,7 @@ export function AddBookDialog({
           <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1 text-sm text-fg-2">
             <span>
               <span className="font-medium text-fg">
-                {totals.chapters}
-                {totals.chapters !== preview.chapters.length ? ` / ${preview.chapters.length}` : ""}{S.s_chuong_9e6a01dc}</span>{" "}
+                {`${totals.chapters}${totals.chapters !== preview.chapters.length ? ` / ${preview.chapters.length}` : ""}${S.s_chuong_9e6a01dc}`}</span>{" "}
               · {formatNumber(totals.words)}{S.s_chu_6117d040}</span>
             {preview.chapters.length > 1 && (
               <span className="flex gap-3 text-xs">

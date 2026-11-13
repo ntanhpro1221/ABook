@@ -332,12 +332,18 @@ export function inspectLayout({ all, texts, css, rect, union, visible, hidden, s
   }
   // Ghi chú và hàng lựa chọn của popover dùng cạnh đệm chung; ô dành cho dấu chọn vẫn chiếm chỗ khi ẩn.
   for (const surface of surfaces.filter((el) => !el.matches('.sheet-surface') && el.parentElement.matches('[data-radix-popper-content-wrapper]'))) {
-    const sb = rect(surface.getBoundingClientRect());
-    const choices = [...surface.querySelectorAll('button[aria-pressed],button[data-current-choice]')].filter((el) => css(el).textAlign === "left" && el.getBoundingClientRect().width > sb.width * 0.6);
-    const samples = choices.map((el) => ({ element: el, first: rect(el.getBoundingClientRect()), value: el.getBoundingClientRect().x + Number.parseFloat(css(el).paddingLeft) }));
-    const reference = majority(samples, 1);
-    if (reference) for (const t of inkTexts.filter((t) => surface.contains(t.element) && !t.control && Math.abs(t.first.x - reference.value) < 22))
-      edge(t.element, t.first, "left", reference.value, reference.first, surface, "popover-note-left");
+    // Collapsed submenus retain their DOM, and nested menu bodies may be indented.
+    // Only visible choices in the same body establish a note's content column.
+    const menuBody = (el) => el.closest('[data-player-menu-body]') ?? surface;
+    const bodies = [surface, ...surface.querySelectorAll('[data-player-menu-body]')];
+    for (const body of bodies) {
+      const width = body.getBoundingClientRect().width;
+      const choices = [...body.querySelectorAll('button[aria-pressed],button[data-current-choice]')].filter((el) => menuBody(el) === body && visible(el, rect(el.getBoundingClientRect())) && css(el).textAlign === "left" && el.getBoundingClientRect().width > width * 0.6);
+      const samples = choices.map((el) => ({ element: el, first: rect(el.getBoundingClientRect()), value: el.getBoundingClientRect().x + Number.parseFloat(css(el).paddingLeft) }));
+      const reference = majority(samples, 1);
+      if (reference) for (const t of inkTexts.filter((t) => body.contains(t.element) && menuBody(t.element) === body && !t.control && Math.abs(t.first.x - reference.value) < 22))
+        edge(t.element, t.first, "left", reference.value, reference.first, surface, "popover-note-left");
+    }
     // Điều khiển bên phải hàng menu chung cạnh với giá trị chữ.
     const rows = [...surface.querySelectorAll('[data-player-menu-row]')];
     const values = rows.flatMap((row) => {

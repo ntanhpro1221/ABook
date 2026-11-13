@@ -612,8 +612,8 @@
     "reason": "abook/webui/store.py: all flagged strings match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
   },
   "_internal/abook/webui/studio_setup.py": {
-    "sha256": "ee03df4fdff416ef7dd0b4e9b18758b15447028da4d88b763d69ed942bed0443",
-    "reason": "abook/webui/studio_setup.py: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
+    "sha256": "ae701e10a1cd19ce245c48f3043685ef41f92f30ed2e7715a6052d97656b037d",
+    "reason": "_internal/abook/webui/studio_setup.py: reviewed integration-only layout, generated parity inventory or pinned asset URL edits; existing scrubbed prose preserved."
   },
   "_internal/abook/webui/supertonic_module.py": {
     "sha256": "a7531265771b3dcc32f9c0dc23bb9dee8b4a8072a53e4951bc6a72e400acb34f",
@@ -1072,8 +1072,8 @@
     "reason": "Production interruption instructions and continuity limits; operational guidance rather than book text."
   },
   "_internal/docs/TEST_REPORT.md": {
-    "sha256": "5315e293dc2782deaacc368bb8de363bc6cd36ca5adeb9e04b9093ac643698eb",
-    "reason": "docs/TEST_REPORT.md: all flagged strings match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
+    "sha256": "bcc7065bf5b2c1333b7ff96e9a4c4a48e721fdeb9b7fb35614fb96f3ef198785",
+    "reason": "_internal/docs/TEST_REPORT.md: reviewed integration-only layout, generated parity inventory or pinned asset URL edits; existing scrubbed prose preserved."
   },
   "_internal/docs/TEXT_NORMALIZATION.md": {
     "sha256": "06b3499d392b6f6a990b026d4f665b520ca3c9257ce452c57a5e7fa92e8ec94b",
@@ -1108,12 +1108,12 @@
     "reason": "docs/UI.md: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
   },
   "_internal/docs/UI_PARITY.md": {
-    "sha256": "f140a26c8b4194677afe8ab824c2cf19c2bba3205023d7bb283c288841288db4",
-    "reason": "Generated inventory of interface labels, platform differences and reviewed copy rules."
+    "sha256": "15ede3bc8bf0db47fb97712666aaa33f13f9c2d73cc12e44ee33d2ec2c9cb0b1",
+    "reason": "_internal/docs/UI_PARITY.md: reviewed integration-only layout, generated parity inventory or pinned asset URL edits; existing scrubbed prose preserved."
   },
   "_internal/docs/UI_PARITY_QT.md": {
-    "sha256": "2436940392f0449582c871c67f4f7a2bbba03bf14db68cb5fa7102d7eaf199c0",
-    "reason": "Generated Qt interface inventory and exact operation contracts against web and Android."
+    "sha256": "3f80e909fc3eaa35b7b73320c046048387fe4f31473e49bc0ad18b34657beeba",
+    "reason": "_internal/docs/UI_PARITY_QT.md: reviewed integration-only layout, generated parity inventory or pinned asset URL edits; existing scrubbed prose preserved."
   },
   "_internal/docs/UI_PARITY_TRIAGE.md": {
     "sha256": "24f93291c2c48a672ae24b56afe4efb32faa60f2bd7e13f5893b2168b3cace18",
@@ -1940,8 +1940,8 @@
     "reason": "scripts/pace_retry_reachability.py: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
   },
   "_internal/scripts/pack_studio_assets.py": {
-    "sha256": "33a93fa4796315adc6c15151474c042d5cbd8148b0a8d6f64182fb80e901699a",
-    "reason": "scripts/pack_studio_assets.py: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
+    "sha256": "c5ab267adb9da631b8f8cf07a44ee261bee737d49eb4b3bf4aded1077eb87e30",
+    "reason": "_internal/scripts/pack_studio_assets.py: reviewed integration-only layout, generated parity inventory or pinned asset URL edits; existing scrubbed prose preserved."
   },
   "_internal/scripts/pack_word_align_model.py": {
     "sha256": "fa66e96183c0eacf440611b30f0db4e0b9b5c9e59a4fa18ba0df6a1152340eb2",
@@ -3988,8 +3988,8 @@
     "reason": "tests/test_studio_alerts.py: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
   },
   "_internal/tests/test_studio_assets.py": {
-    "sha256": "47ce5306be6c9d57bc679ecb663503a591848dc0e9dba755e3f16150bc7e962d",
-    "reason": "tests/test_studio_assets.py: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
+    "sha256": "11093fc3775dcaafde9fe49fddd8634a07d8fa33972c823abd1c59b4513e7417",
+    "reason": "_internal/tests/test_studio_assets.py: reviewed integration-only layout, generated parity inventory or pinned asset URL edits; existing scrubbed prose preserved."
   },
   "_internal/tests/test_studio_cast_labels.py": {
     "sha256": "882096315652a024754894a7fc8cab46e20938bc2b1f359148155aff43778ef9",
@@ -4284,8 +4284,8 @@
     "reason": "ui/src/gallery/README.md: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
   },
   "_internal/ui/src/listen/PlayerViews.tsx": {
-    "sha256": "d52679705084ad5a23c9b2f06ab09f2586b8970c248d4a06069047e308e36684",
-    "reason": "ui/src/listen/PlayerViews.tsx: all flagged strings match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
+    "sha256": "7af5947cba8030de32b909a42ef71f95e74b8ed545f8db3c405e6f2d1bc59615",
+    "reason": "_internal/ui/src/listen/PlayerViews.tsx: reviewed integration-only layout, generated parity inventory or pinned asset URL edits; existing scrubbed prose preserved."
   },
   "_internal/ui/src/listen/liveClip.ts": {
     "sha256": "382606e4304701b44ba31e9e27d1cb659ff37cd33e4d10e0abc6e41c812097e7",

@@ -1,0 +1,15 @@
+<!doctype html><html lang="en"><meta charset="utf-8"><style>
+*{box-sizing:border-box}body{margin:20px;font:14px Arial;background:white;color:#181818}
+[role=dialog]{width:300px;margin-bottom:20px;padding:8px;background:white;color:#181818}
+p{margin:0;padding:8px}button{display:block;width:100%;height:40px;padding:8px;text-align:left;background:transparent;border:0;font:inherit;color:inherit}
+.nested{margin-left:8px}.bad-note{padding-left:16px}
+</style>
+<div data-radix-popper-content-wrapper><div role="dialog" id="scoped">
+ <div data-player-menu-body><p>Outer options</p><button aria-pressed="true">First</button><button aria-pressed="false">Second</button>
+  <div data-player-menu-body class="nested"><p>Nested options</p><button aria-pressed="true">Third</button><button aria-pressed="false">Fourth</button></div>
+ </div>
+ <div hidden><button aria-pressed="true" style="margin-left:8px">Hidden one</button><button aria-pressed="false" style="margin-left:8px">Hidden two</button><button aria-pressed="false" style="margin-left:8px">Hidden three</button></div>
+</div></div>
+<div data-radix-popper-content-wrapper><div role="dialog" id="broken"><div data-player-menu-body>
+ <p class="bad-note">Misaligned note</p><button aria-pressed="true">First</button><button aria-pressed="false">Second</button>
+</div></div></div>

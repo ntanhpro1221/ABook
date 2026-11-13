@@ -419,13 +419,13 @@ export function MenuShell({
   if (inline && page) return <Popover.Root open={isOpen} onOpenChange={changeOpen}>
     <div ref={inlineRef} data-player-inline>{button}</div>
     {isOpen && page.slot && createPortal(<SheetPageDepth.Provider value={page.depth}>
-      <div ref={pageRef} id={sheetId} data-sheet-page hidden={page.contentDepth !== page.depth} className="pb-2">{children}{footer}</div>
+      <div ref={pageRef} id={sheetId} data-sheet-page data-player-menu-body hidden={page.contentDepth !== page.depth} className="pb-2">{children}{footer}</div>
     </SheetPageDepth.Provider>, page.slot)}
   </Popover.Root>;
   if (inline) return <Popover.Root open={isOpen} onOpenChange={changeOpen}>
     <div ref={inlineRef} data-player-inline>
       {button}
-      <Collapse open={isOpen} id={sheetId} className="pb-2 [&_[data-audio-fx]]:px-2">{children}{footer}</Collapse>
+      <Collapse open={isOpen} id={sheetId} className="pb-2 [&_[data-audio-fx]]:px-2"><div data-player-menu-body>{children}{footer}</div></Collapse>
     </div>
   </Popover.Root>;
   if (phone) return <Popover.Root open={isOpen} onOpenChange={changeOpen}>

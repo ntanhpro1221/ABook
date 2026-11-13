@@ -148,7 +148,7 @@ export function FindInBook({ book, open, onOpenChange }: { book: ListenBook; ope
             if (next < 0) search.current?.focus();
             else buttons[Math.min(next, buttons.length - 1)]?.focus();
           }}
-          className="rows-inset -mx-3 mt-2 max-h-[min(55dvh,28rem)] overflow-y-auto overscroll-contain px-2 py-2 [--rows-inset:calc(var(--spacing)*1.5)]"
+          className="rows-inset -mx-4 mt-2 max-h-[min(55dvh,28rem)] overflow-y-auto overscroll-contain px-2 py-2 [--rows-inset:calc(var(--spacing)*2)]"
         >
           {hits.map((hit) => (
             <li key={`${hit.chapterId}:${hit.sentence}`}>

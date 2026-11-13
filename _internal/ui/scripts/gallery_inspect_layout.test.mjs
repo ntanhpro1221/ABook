@@ -5,6 +5,15 @@ import { layoutFixtures } from "./gallery_inspect_layout_fixture.mjs";
 import { browserAvailable } from "./gallery_browser.mjs";
 import { normalizeRule } from "./gallery_inspect.mjs";
 
+it.skipIf(!browserAvailable)("measures visible choices within their own popover body and catches real note offsets", async () => {
+  for (const result of await layoutFixtures({ fixture: "popover-columns.html" })) {
+    const findings = result.findings.filter(f => f.metric === "popover-note-left");
+    expect(findings).toHaveLength(1);
+    expect(findings[0].selector).toContain("#broken >");
+    expect(findings[0].delta).toBeCloseTo(8);
+  }
+}, 60000);
+
 describe("đa số và nhịp giữa frame", () => {
   it("không đoán khi hai phía bằng nhau", () => {
     expect(createLayoutHelpers().majority([8, 8, 12, 12].map((value) => ({ value })), 1)).toBeNull();

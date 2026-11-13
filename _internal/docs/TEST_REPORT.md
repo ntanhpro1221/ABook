@@ -2279,3 +2279,14 @@ to dbb460d54ae91c9da882d7a565bac191c47919913818ff93eb19292016243e64.
 This is an isolated development pipeline change; no production project or
 running analysis was stopped or resumed. No acoustic quality claim follows
 from these text and mock-adapter checks.
+
+### 0.4.168 gallery integration follow-up
+
+Focused browser regressions: 38 passed. Semantic Tailwind text sizes now retain
+their independent foreground colors. Selected picker labels use the supported
+bold weight; chapter metadata shares the title baseline; long button labels
+remain centered; search dividers stay inside the content column.
+Popover note alignment only uses visible choices from the same menu body.
+A nested/hidden-menu fixture accepts correctly aligned bodies and still catches
+an injected 8 px note offset in both themes and viewport sizes. No rule tolerance
+or release failure list was relaxed. Full release verification remains pending.

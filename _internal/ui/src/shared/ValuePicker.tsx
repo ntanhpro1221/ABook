@@ -305,7 +305,7 @@ export function ValuePicker({
       <div className="flex items-start">
         {stepButton(-1)}
         <div ref={rulerHost} className={cn("relative min-w-0 flex-1", !plan.aligned ? "h-12" : dense ? "h-14" : "h-16")}>
-          {labels.map((text, i) => <span key={i} aria-hidden data-value-label-measure className={cn("pointer-events-none invisible absolute whitespace-nowrap font-medium ", dense ? "text-xs" : "text-sm")}>{text}</span>)}
+          {labels.map((text, i) => <span key={i} aria-hidden data-value-label-measure className={cn("pointer-events-none invisible absolute whitespace-nowrap font-bold ", dense ? "text-xs" : "text-sm")}>{text}</span>)}
           <div
           ref={track}
           id={rulerId}
@@ -378,7 +378,7 @@ export function ValuePicker({
           }}
           onPointerCancel={() => setMoving(null)}
           onClick={event => { if (event.detail === 0) { feedback("toggle"); setClampNote(false); commit(typical); } }}
-          className={cn("absolute flex h-12 min-w-12 -translate-x-1/2 items-center justify-center rounded-control pt-4 hover:bg-hover", dense ? "top-2 text-xs" : "top-4 text-sm", index === selected ? "font-medium text-fg" : "text-fg-2")}
+          className={cn("absolute flex h-12 min-w-12 -translate-x-1/2 items-center justify-center rounded-control pt-4 hover:bg-hover", dense ? "top-2 text-xs" : "top-4 text-sm", index === selected ? "font-bold text-fg" : "text-fg-2")}
           style={{left: `calc(${plan.inset}px + (100% - ${2 * plan.inset}px) * ${toFraction(spec, typical)})`}}
         ><span data-value-label>{labels[index]}</span></button>)}
         </div>
@@ -403,7 +403,7 @@ export function ValuePicker({
               className={cn(
                 "touch-row inline-flex items-center justify-center whitespace-nowrap rounded-control px-3 transition-colors duration-motion-medium hover:bg-hover disabled:opacity-40",
                 dense ? "h-7 text-xs" : "h-9 min-w-12 text-sm",
-                index === selected ? "font-medium text-fg" : "text-fg",
+                index === selected ? "font-bold text-fg" : "text-fg",
               )}
             >
               <span data-value-chip-measure data-value-label className="inline-block">{(chipLabel ?? ((v: number) => formatNumber(spec, v)))(typical)}</span>
