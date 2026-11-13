@@ -10,7 +10,7 @@ bản Kotlin của điện thoại (`SceneCues`, `SceneScenes`, `SceneChoose`, `
     case_*.json          mỗi file một "cuốn": chương (chữ + câu), lựa chọn (họ nhạc, thể loại, ghim, bỏ, im lặng, bài không dùng được) và kết quả Python
                          (`case_lite_*`: `student` true - kèm mục học sinh và V / E / T / confidence của từng đoạn)
     regex_cases.json     mỗi regex của cue_kind / hard_break / bracket_is_subhead / subhead_words / is_heading: ca khớp + không khớp, có chữ Việt có dấu
-    segmenter_cases.json chữ -> câu của segment_chapter_text (ngoặc kép, nội tâm, gạch thoại, dòng ngăn cảnh, ...)
+    segmenter_cases.json chữ -> câu của segment_chapter_text (ngoặc kép, nội tâm, gạch thoại, dòng ngăn cảnh, ...) kèm nhãn kind_hint
 
 Chữ và bài trong đây đều TỰ DỰNG (kho công khai): không có chữ truyện, không có link nhạc thật.
 Sinh lại (chỉ khi cố ý đổi luật):  runtime/.venv/Scripts/python.exe scripts/music_n0_fixtures.py
@@ -508,6 +508,9 @@ SEGMENTER_TEXTS = [
     "(Mình không nên nói ra.)\n\n(Hừm) Lan nghĩ.",
     "Lan đến.\n\n— Chào.\n\nHắn đã nhảy tránh được.\n\n-bởi vì hắn đã thấy trước.\n\n“Ừ.”",
     "“Một.”\n“Hai.”\n“Ba.”\n“Bốn.”\n“Năm.”\n“Sáu.”\n“Bảy.”\n“Tám.”\n“Chín.”\n“Mười.”\n-Hoặc không, vì hắn đã nhảy tránh được.\n- Hắn đã chạy vội về phía cổng.\nCô lùi lại.",
+    # Tên chủ ngữ mở bằng chữ hoa có dấu (vietnamese_letters): dòng gạch kể việc vẫn là lời kể, dòng gạch hỏi vẫn là thoại.
+    "“Một.”\n“Hai.”\n“Ba.”\n“Bốn.”\n“Năm.”\n“Sáu.”\n“Bảy.”\n“Tám.”\n“Chín.”\n“Mười.”\n- Ánh đã đứng chờ sẵn ở cổng làng.\n"
+    "- Ông đã hứa rồi mà?\nCô lùi lại.",
     "Hắn nói “không\n\nLan đáp “có” và “nữa\n\nHết rồi.",
     "Không ngoặc đóng: “mở rồi quên.\n\nĐoạn hai.\n\nĐoạn ba.\n\n“Đoạn bốn mở lại.” Xong.",
     "Dòng cuối là ***\n\n***",
@@ -527,7 +530,8 @@ def segmenter_cases() -> dict[str, Any]:
     for text in SEGMENTER_TEXTS:
         try:
             rows = text_processing.segment_chapter_text(7, text)
-            expected = [{"id": int(row["seq"]), "text": row["text"], "sceneBreak": bool(row["scene_break"])} for row in rows]
+            expected = [{"id": int(row["seq"]), "text": row["text"], "sceneBreak": bool(row["scene_break"]), "kind": row["kind_hint"]}
+                        for row in rows]
             item = {"text": text, "segments": expected}
         except RuntimeError as error:
             item = {"text": text, "error": str(error)[:60]}

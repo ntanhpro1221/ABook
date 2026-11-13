@@ -162,8 +162,18 @@ class SceneMusicTest {
                 assertEquals("$label - câu $at", want.getString("text"), rows[at].text)
                 assertEquals("$label - id $at", want.getInt("id"), rows[at].seq)
                 assertEquals("$label - cờ ngăn cảnh $at", want.getBoolean("sceneBreak"), rows[at].sceneBreak)
+                assertEquals("$label - nhãn $at", want.getString("kind"), rows[at].kindHint)
             }
         }
+    }
+
+    // Tên chủ ngữ mở bằng chữ hoa có dấu (VietnameseLetters) ở dòng gạch của chương viết thoại trong ngoặc kép: kể việc là lời kể.
+    @Test
+    fun a_dash_line_led_by_an_accented_name_is_narration() {
+        val talk = listOf("Một", "Hai", "Ba", "Bốn", "Năm", "Sáu", "Bảy", "Tám", "Chín", "Mười").joinToString("\n") { "“$it.”" }
+        val rows = SceneSegmenter.segment("$talk\n- Ánh đã đứng chờ sẵn ở cổng làng.\n- Ông đã hứa rồi mà?\nCô lùi lại.")
+        assertEquals("narration", rows.single { it.text == "- Ánh đã đứng chờ sẵn ở cổng làng." }.kindHint)
+        assertEquals("dialogue", rows.single { it.text == "- Ông đã hứa rồi mà?" }.kindHint)
     }
 
     // ---- đoạn + bài + mốc -------------------------------------------------------------------------------------------------------------------

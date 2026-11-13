@@ -3,7 +3,8 @@ package vn.abook.player
 import vn.abook.player.readaloud.Paragraphs
 
 /** Một câu do bộ tách của chương trả ra (`text_processing.segment_chapter_text`): thứ tự, đoạn nguồn và cờ dòng ngăn cảnh đứng sau câu. */
-class SegmentRow(val seq: Int, val paragraphIndex: Int, val text: String, var sceneBreak: Boolean = false)
+/** `kindHint`: nhãn lời kể / thoại / nội tâm của câu như `kind_hint` bên Python (so cùng bộ ví dụ dùng chung segmenter_cases.json). */
+class SegmentRow(val seq: Int, val paragraphIndex: Int, val text: String, var sceneBreak: Boolean = false, val kindHint: String = "narration")
 
 /**
  * Bản Kotlin của bộ tách câu `text_processing.segment_chapter_text` (khoá, chỉ đọc) cho đường nhạc theo cảnh: điện thoại không có bộ tách nào khác, mà
@@ -205,9 +206,9 @@ object SceneSegmenter {
     private fun walkParagraphs(paragraphs: List<String>, maxChars: Int, closeAt: Set<Int>, dialogueInQuotes: Boolean): Walk {
         val rows = ArrayList<SegmentRow>()
 
-        fun append(piece: String, paragraphIndex: Int) {
+        fun append(piece: String, hint: String, paragraphIndex: Int) {
             if (!Py.hasAlnum(piece)) return
-            for (chunk in splitLongText(Py.strip(piece), maxChars)) rows.add(SegmentRow(rows.size, paragraphIndex, chunk))
+            for (chunk in splitLongText(Py.strip(piece), maxChars)) rows.add(SegmentRow(rows.size, paragraphIndex, chunk, kindHint = hint))
         }
 
         var state: State? = null
@@ -240,7 +241,7 @@ object SceneSegmenter {
                     openedAt = paragraphIndex
                     ranOnUnmarked = false
                 }
-                for (piece in pieces) append(piece.text, paragraphIndex)
+                for (piece in pieces) append(piece.text, piece.hint, paragraphIndex)
             }
             if (state != null && paragraphIndex in closeAt) {
                 state = null

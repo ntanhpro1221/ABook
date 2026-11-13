@@ -6,22 +6,26 @@
     {
      "id": 0,
      "text": "Lan bước vào quán. Bà chủ nhìn cô.",
-     "sceneBreak": false
+     "sceneBreak": false,
+     "kind": "narration"
     },
     {
      "id": 1,
      "text": "Lan hỏi:",
-     "sceneBreak": false
+     "sceneBreak": false,
+     "kind": "narration"
     },
     {
      "id": 2,
      "text": "“Có phòng trống không?”",
-     "sceneBreak": false
+     "sceneBreak": false,
+     "kind": "dialogue"
     },
     {
      "id": 3,
      "text": "Bà chủ gật đầu.",
-     "sceneBreak": false
+     "sceneBreak": false,
+     "kind": "narration"
     }
    ]
   },
@@ -31,27 +35,32 @@
     {
      "id": 0,
      "text": "“Anh đi đâu đấy?”",
-     "sceneBreak": false
+     "sceneBreak": false,
+     "kind": "dialogue"
     },
     {
      "id": 1,
      "text": "Minh hỏi.",
-     "sceneBreak": false
+     "sceneBreak": false,
+     "kind": "narration"
     },
     {
      "id": 2,
      "text": "“Tôi đi chợ,”",
-     "sceneBreak": false
+     "sceneBreak": false,
+     "kind": "dialogue"
     },
     {
      "id": 3,
      "text": "Lan đáp.",
-     "sceneBreak": false
+     "sceneBreak": false,
+     "kind": "narration"
     },
     {
      "id": 4,
      "text": "“Về sớm nhé.”",
-     "sceneBreak": false
+     "sceneBreak": false,
+     "kind": "dialogue"
     }
    ]
   },
@@ -61,17 +70,20 @@
     {
      "id": 0,
      "text": "“Hôm nay trời đẹp quá!”",
-     "sceneBreak": false
+     "sceneBreak": false,
+     "kind": "dialogue"
     },
     {
      "id": 1,
      "text": "Cô nhìn ra cửa sổ,",
-     "sceneBreak": false
+     "sceneBreak": false,
+     "kind": "narration"
     },
     {
      "id": 2,
      "text": "“mà lòng vẫn nặng.”",
-     "sceneBreak": false
+     "sceneBreak": false,
+     "kind": "dialogue"
     }
    ]
   },
@@ -81,22 +93,26 @@
     {
      "id": 0,
      "text": "— Anh đi đâu đấy?",
-     "sceneBreak": false
+     "sceneBreak": false,
+     "kind": "dialogue"
     },
     {
      "id": 1,
      "text": "— Tôi đi chợ.",
-     "sceneBreak": false
+     "sceneBreak": false,
+     "kind": "dialogue"
     },
     {
      "id": 2,
      "text": "- Về sớm nhé.",
-     "sceneBreak": false
+     "sceneBreak": false,
+     "kind": "dialogue"
     },
     {
      "id": 3,
      "text": "–Ừ.",
-     "sceneBreak": false
+     "sceneBreak": false,
+     "kind": "dialogue"
     }
    ]
   },
@@ -106,17 +122,20 @@
     {
      "id": 0,
      "text": "Hắn bước vào. Hắn nhìn quanh.",
-     "sceneBreak": false
+     "sceneBreak": false,
+     "kind": "narration"
     },
     {
      "id": 1,
      "text": "- Có ai không?",
-     "sceneBreak": false
+     "sceneBreak": false,
+     "kind": "dialogue"
     },
     {
      "id": 2,
      "text": "Không ai đáp.",
-     "sceneBreak": false
+     "sceneBreak": false,
+     "kind": "narration"
     }
    ]
   },
@@ -126,12 +145,14 @@
     {
      "id": 0,
      "text": "‘Mình phải đi thôi,’",
-     "sceneBreak": false
+     "sceneBreak": false,
+     "kind": "thought"
     },
     {
      "id": 1,
      "text": "Lan nghĩ thầm. Rồi cô đứng dậy.",
-     "sceneBreak": false
+     "sceneBreak": false,
+     "kind": "narration"
     }
    ]
   },
@@ -141,12 +162,14 @@
     {
      "id": 0,
      "text": "'Chà, chắc mình phải chăm chỉ thêm thôi.'",
-     "sceneBreak": false
+     "sceneBreak": false,
+     "kind": "thought"
     },
     {
      "id": 1,
      "text": "Minh gõ cửa.",
-     "sceneBreak": false
+     "sceneBreak": false,
+     "kind": "narration"
     }
    ]
   },
@@ -156,7 +179,8 @@
     {
      "id": 0,
      "text": "Lan nói với Ma'at rằng I'm fine, rồi đi.",
-     "sceneBreak": false
+     "sceneBreak": false,
+     "kind": "narration"
     }
    ]
   },
@@ -166,17 +190,20 @@
     {
      "id": 0,
      "text": "“Nhớ mang theo bút.”",
-     "sceneBreak": false
+     "sceneBreak": false,
+     "kind": "dialogue"
     },
     {
      "id": 1,
      "text": "Minh gật đầu.",
-     "sceneBreak": false
+     "sceneBreak": false,
+     "kind": "narration"
     },
     {
      "id": 2,
      "text": "“Mai gặp lại.”",
-     "sceneBreak": false
+     "sceneBreak": false,
+     "kind": "dialogue"
     }
    ]
   },
@@ -186,12 +213,14 @@
     {
      "id": 0,
      "text": "『Hệ thống đã khởi động』",
-     "sceneBreak": false
+     "sceneBreak": false,
+     "kind": "dialogue"
     },
     {
      "id": 1,
      "text": "Lan mở mắt.",
-     "sceneBreak": false
+     "sceneBreak": false,
+     "kind": "narration"
     }
    ]
   },
@@ -201,17 +230,20 @@
     {
      "id": 0,
      "text": "[Bạn đã lên cấp.]",
-     "sceneBreak": false
+     "sceneBreak": false,
+     "kind": "dialogue"
     },
     {
      "id": 1,
      "text": "【Nhiệm vụ mới】",
-     "sceneBreak": false
+     "sceneBreak": false,
+     "kind": "dialogue"
     },
     {
      "id": 2,
      "text": "Lan đọc bảng thông báo.",
-     "sceneBreak": false
+     "sceneBreak": false,
+     "kind": "narration"
     }
    ]
   },
@@ -221,12 +253,14 @@
     {
      "id": 0,
      "text": "[Note: Mình dịch chương này hơi vội]",
-     "sceneBreak": false
+     "sceneBreak": false,
+     "kind": "narration"
     },
     {
      "id": 1,
      "text": "Lan tới nơi.",
-     "sceneBreak": false
+     "sceneBreak": false,
+     "kind": "narration"
     }
    ]
   },
@@ -236,27 +270,32 @@
     {
      "id": 0,
      "text": "[Tên Dài Của Bảng]",
-     "sceneBreak": false
+     "sceneBreak": false,
+     "kind": "narration"
     },
     {
      "id": 1,
      "text": "[Lớp A]",
-     "sceneBreak": false
+     "sceneBreak": false,
+     "kind": "narration"
     },
     {
      "id": 2,
      "text": "[Hmm]",
-     "sceneBreak": false
+     "sceneBreak": false,
+     "kind": "dialogue"
     },
     {
      "id": 3,
      "text": "[Kkkkk]",
-     "sceneBreak": false
+     "sceneBreak": false,
+     "kind": "dialogue"
     },
     {
      "id": 4,
      "text": "[Ôi!!]",
-     "sceneBreak": false
+     "sceneBreak": false,
+     "kind": "dialogue"
     }
    ]
   },
@@ -266,17 +305,20 @@
     {
      "id": 0,
      "text": "Gió thổi.",
-     "sceneBreak": true
+     "sceneBreak": true,
+     "kind": "narration"
     },
     {
      "id": 1,
      "text": "Trời tối.",
-     "sceneBreak": true
+     "sceneBreak": true,
+     "kind": "narration"
     },
     {
      "id": 2,
      "text": "Sáng hôm sau.",
-     "sceneBreak": false
+     "sceneBreak": false,
+     "kind": "narration"
     }
    ]
   },
@@ -286,17 +328,20 @@
     {
      "id": 0,
      "text": "Gió thổi.",
-     "sceneBreak": true
+     "sceneBreak": true,
+     "kind": "narration"
     },
     {
      "id": 1,
      "text": "Trời tối.",
-     "sceneBreak": true
+     "sceneBreak": true,
+     "kind": "narration"
     },
     {
      "id": 2,
      "text": "Trời sáng.",
-     "sceneBreak": false
+     "sceneBreak": false,
+     "kind": "narration"
     }
    ]
   },
@@ -306,7 +351,8 @@
     {
      "id": 0,
      "text": "Gió thổi.",
-     "sceneBreak": false
+     "sceneBreak": false,
+     "kind": "narration"
     }
    ]
   },
@@ -316,22 +362,26 @@
     {
      "id": 0,
      "text": "Gió thổi.",
-     "sceneBreak": true
+     "sceneBreak": true,
+     "kind": "narration"
     },
     {
      "id": 1,
      "text": "Trời tối.",
-     "sceneBreak": true
+     "sceneBreak": true,
+     "kind": "narration"
     },
     {
      "id": 2,
      "text": "Trời sáng.",
-     "sceneBreak": true
+     "sceneBreak": true,
+     "kind": "narration"
     },
     {
      "id": 3,
      "text": "Hết.",
-     "sceneBreak": false
+     "sceneBreak": false,
+     "kind": "narration"
     }
    ]
   },
@@ -341,12 +391,14 @@
     {
      "id": 0,
      "text": "Gió thổi.",
-     "sceneBreak": false
+     "sceneBreak": false,
+     "kind": "narration"
     },
     {
      "id": 1,
      "text": "Trời tối.",
-     "sceneBreak": false
+     "sceneBreak": false,
+     "kind": "narration"
     }
    ]
   },
@@ -356,27 +408,32 @@
     {
      "id": 0,
      "text": "Cô nói",
-     "sceneBreak": false
+     "sceneBreak": false,
+     "kind": "narration"
     },
     {
      "id": 1,
      "text": "“thợ săn”",
-     "sceneBreak": false
+     "sceneBreak": false,
+     "kind": "dialogue"
     },
     {
      "id": 2,
      "text": "rồi cười. Cả xưởng gọi tôi là",
-     "sceneBreak": false
+     "sceneBreak": false,
+     "kind": "narration"
     },
     {
      "id": 3,
      "text": "“đội trưởng,”",
-     "sceneBreak": false
+     "sceneBreak": false,
+     "kind": "dialogue"
     },
     {
      "id": 4,
      "text": "chỉ vì tôi giữ chìa khoá.",
-     "sceneBreak": false
+     "sceneBreak": false,
+     "kind": "narration"
     }
    ]
   },
@@ -386,7 +443,8 @@
     {
      "id": 0,
      "text": "Cô đọc “Cơ hội hoàn hảo”? Rồi lắc đầu.",
-     "sceneBreak": false
+     "sceneBreak": false,
+     "kind": "narration"
     }
    ]
   },
@@ -396,12 +454,14 @@
     {
      "id": 0,
      "text": "“Haha! “Cậu sẽ bị phạt” chứ gì? Cứ làm đi!”",
-     "sceneBreak": false
+     "sceneBreak": false,
+     "kind": "dialogue"
     },
     {
      "id": 1,
      "text": "Cô cười.",
-     "sceneBreak": false
+     "sceneBreak": false,
+     "kind": "narration"
     }
    ]
   },
@@ -411,17 +471,20 @@
     {
      "id": 0,
      "text": "“Một câu nói chưa đóng ngoặc.",
-     "sceneBreak": false
+     "sceneBreak": false,
+     "kind": "dialogue"
     },
     {
      "id": 1,
      "text": "Lan tiếp tục đi.",
-     "sceneBreak": false
+     "sceneBreak": false,
+     "kind": "narration"
     },
     {
      "id": 2,
      "text": "Minh quay lại.",
-     "sceneBreak": false
+     "sceneBreak": false,
+     "kind": "narration"
     }
    ]
   },
@@ -431,22 +494,26 @@
     {
      "id": 0,
      "text": "“Một câu nói dài",
-     "sceneBreak": false
+     "sceneBreak": false,
+     "kind": "dialogue"
     },
     {
      "id": 1,
      "text": "“Tiếp theo đây”",
-     "sceneBreak": false
+     "sceneBreak": false,
+     "kind": "dialogue"
     },
     {
      "id": 2,
      "text": "Lan đáp.",
-     "sceneBreak": false
+     "sceneBreak": false,
+     "kind": "narration"
     },
     {
      "id": 3,
      "text": "Cô đi.",
-     "sceneBreak": false
+     "sceneBreak": false,
+     "kind": "narration"
     }
    ]
   },
@@ -456,12 +523,14 @@
     {
      "id": 0,
      "text": "Lan nói:",
-     "sceneBreak": false
+     "sceneBreak": false,
+     "kind": "narration"
     },
     {
      "id": 1,
      "text": "“Đừng lo.\" rồi đi.",
-     "sceneBreak": false
+     "sceneBreak": false,
+     "kind": "dialogue"
     }
    ]
   },
@@ -471,22 +540,26 @@
     {
      "id": 0,
      "text": "\"Anh ơi\"",
-     "sceneBreak": false
+     "sceneBreak": false,
+     "kind": "dialogue"
     },
     {
      "id": 1,
      "text": "cô gọi.",
-     "sceneBreak": false
+     "sceneBreak": false,
+     "kind": "narration"
     },
     {
      "id": 2,
      "text": "\"Đợi em với\"",
-     "sceneBreak": false
+     "sceneBreak": false,
+     "kind": "dialogue"
     },
     {
      "id": 3,
      "text": "cô nói thêm.",
-     "sceneBreak": false
+     "sceneBreak": false,
+     "kind": "narration"
     }
    ]
   },
@@ -496,17 +569,20 @@
     {
      "id": 0,
      "text": "Một dòng có dấu",
-     "sceneBreak": false
+     "sceneBreak": false,
+     "kind": "narration"
     },
     {
      "id": 1,
      "text": "\" lẻ loi.",
-     "sceneBreak": false
+     "sceneBreak": false,
+     "kind": "dialogue"
     },
     {
      "id": 2,
      "text": "Dòng tiếp theo.",
-     "sceneBreak": false
+     "sceneBreak": false,
+     "kind": "narration"
     }
    ]
   },
@@ -516,22 +592,26 @@
     {
      "id": 0,
      "text": "Câu thứ nhất. Câu thứ hai. Câu thứ nhất. Câu thứ hai. Câu thứ nhất. Câu thứ hai. Câu thứ nhất. Câu thứ hai. Câu thứ nhất. Câu thứ hai. Câu thứ nhất. Câu thứ hai. Câu thứ nhất. Câu thứ hai. Câu thứ nhất. Câu thứ hai. Câu thứ nhất. Câu thứ hai. Câu thứ nhất. Câu thứ hai. Câu thứ nhất. Câu thứ hai. Câu thứ nhất. Câu thứ hai. Câu thứ nhất.",
-     "sceneBreak": false
+     "sceneBreak": false,
+     "kind": "narration"
     },
     {
      "id": 1,
      "text": "Câu thứ hai. Câu thứ nhất. Câu thứ hai. Câu thứ nhất. Câu thứ hai. Câu thứ nhất. Câu thứ hai. Câu thứ nhất. Câu thứ hai. Câu thứ nhất. Câu thứ hai. Câu thứ nhất. Câu thứ hai. Câu thứ nhất. Câu thứ hai. Câu thứ nhất. Câu thứ hai. Câu thứ nhất. Câu thứ hai. Câu thứ nhất. Câu thứ hai. Câu thứ nhất. Câu thứ hai. Câu thứ nhất. Câu thứ hai.",
-     "sceneBreak": false
+     "sceneBreak": false,
+     "kind": "narration"
     },
     {
      "id": 2,
      "text": "Câu thứ nhất. Câu thứ hai. Câu thứ nhất. Câu thứ hai. Câu thứ nhất. Câu thứ hai. Câu thứ nhất. Câu thứ hai. Câu thứ nhất. Câu thứ hai. Câu thứ nhất. Câu thứ hai. Câu thứ nhất. Câu thứ hai. Câu thứ nhất. Câu thứ hai. Câu thứ nhất. Câu thứ hai. Câu thứ nhất. Câu thứ hai. Câu thứ nhất. Câu thứ hai. Câu thứ nhất. Câu thứ hai. Câu thứ nhất.",
-     "sceneBreak": false
+     "sceneBreak": false,
+     "kind": "narration"
     },
     {
      "id": 3,
      "text": "Câu thứ hai. Câu thứ nhất. Câu thứ hai. Câu thứ nhất. Câu thứ hai.",
-     "sceneBreak": false
+     "sceneBreak": false,
+     "kind": "narration"
     }
    ]
   },
@@ -541,12 +621,14 @@
     {
      "id": 0,
      "text": "Một câu rất dài không có dấu chấm nào để cắt Một câu rất dài không có dấu chấm nào để cắt Một câu rất dài không có dấu chấm nào để cắt Một câu rất dài không có dấu chấm nào để cắt Một câu rất dài không có dấu chấm nào để cắt Một câu rất dài không có dấu chấm nào để cắt Một câu rất dài không có dấu chấm nào để cắt Một câu rất dài không có",
-     "sceneBreak": false
+     "sceneBreak": false,
+     "kind": "narration"
     },
     {
      "id": 1,
      "text": "dấu chấm nào để cắt Một câu rất dài không có dấu chấm nào để cắt Một câu rất dài không có dấu chấm nào để cắt Một câu rất dài không có dấu chấm nào để cắt Một câu rất dài không có dấu chấm nào để cắt kết thúc.",
-     "sceneBreak": false
+     "sceneBreak": false,
+     "kind": "narration"
     }
    ]
   },
@@ -556,17 +638,20 @@
     {
      "id": 0,
      "text": "Lan nói nhiều khoảng trắng.",
-     "sceneBreak": false
+     "sceneBreak": false,
+     "kind": "narration"
     },
     {
      "id": 1,
      "text": "Và nhiều dòng trống.",
-     "sceneBreak": false
+     "sceneBreak": false,
+     "kind": "narration"
     },
     {
      "id": 2,
      "text": "Hết.",
-     "sceneBreak": false
+     "sceneBreak": false,
+     "kind": "narration"
     }
    ]
   },
@@ -576,17 +661,20 @@
     {
      "id": 0,
      "text": "Đây là dòng một",
-     "sceneBreak": false
+     "sceneBreak": false,
+     "kind": "narration"
     },
     {
      "id": 1,
      "text": "đây là dòng hai bị bẻ",
-     "sceneBreak": false
+     "sceneBreak": false,
+     "kind": "narration"
     },
     {
      "id": 2,
      "text": "dòng ba.",
-     "sceneBreak": false
+     "sceneBreak": false,
+     "kind": "narration"
     }
    ]
   },
@@ -596,12 +684,14 @@
     {
      "id": 0,
      "text": "Dòng có chú thích và [note].",
-     "sceneBreak": false
+     "sceneBreak": false,
+     "kind": "narration"
     },
     {
      "id": 1,
      "text": "Hết.",
-     "sceneBreak": false
+     "sceneBreak": false,
+     "kind": "narration"
     }
    ]
   },
@@ -611,12 +701,14 @@
     {
      "id": 0,
      "text": "Zerowidthtext với ký tự ẩn.",
-     "sceneBreak": false
+     "sceneBreak": false,
+     "kind": "narration"
     },
     {
      "id": 1,
      "text": "Hết.",
-     "sceneBreak": false
+     "sceneBreak": false,
+     "kind": "narration"
     }
    ]
   },
@@ -626,22 +718,26 @@
     {
      "id": 0,
      "text": "NBSP giữa chữ.",
-     "sceneBreak": false
+     "sceneBreak": false,
+     "kind": "narration"
     },
     {
      "id": 1,
      "text": "Dòng",
-     "sceneBreak": false
+     "sceneBreak": false,
+     "kind": "narration"
     },
     {
      "id": 2,
      "text": "CRLF.",
-     "sceneBreak": false
+     "sceneBreak": false,
+     "kind": "narration"
     },
     {
      "id": 3,
      "text": "Hết.",
-     "sceneBreak": false
+     "sceneBreak": false,
+     "kind": "narration"
     }
    ]
   },
@@ -651,22 +747,26 @@
     {
      "id": 0,
      "text": "Dòng có",
-     "sceneBreak": false
+     "sceneBreak": false,
+     "kind": "narration"
     },
     {
      "id": 1,
      "text": "ngắt dòng Unicode",
-     "sceneBreak": false
+     "sceneBreak": false,
+     "kind": "narration"
     },
     {
      "id": 2,
      "text": "và",
-     "sceneBreak": false
+     "sceneBreak": false,
+     "kind": "narration"
     },
     {
      "id": 3,
      "text": "nữa.",
-     "sceneBreak": false
+     "sceneBreak": false,
+     "kind": "narration"
     }
    ]
   },
@@ -676,17 +776,20 @@
     {
      "id": 0,
      "text": "“Ừ.”",
-     "sceneBreak": false
+     "sceneBreak": false,
+     "kind": "dialogue"
     },
     {
      "id": 1,
      "text": "“Cô chắc chứ?”",
-     "sceneBreak": false
+     "sceneBreak": false,
+     "kind": "dialogue"
     },
     {
      "id": 2,
      "text": "“Chắc.”",
-     "sceneBreak": false
+     "sceneBreak": false,
+     "kind": "dialogue"
     }
    ]
   },
@@ -696,7 +799,8 @@
     {
      "id": 0,
      "text": "“a”, “b”, “c” là ba chữ.",
-     "sceneBreak": false
+     "sceneBreak": false,
+     "kind": "narration"
     }
    ]
   },
@@ -706,7 +810,8 @@
     {
      "id": 0,
      "text": "Anh đọc “Lan”.",
-     "sceneBreak": false
+     "sceneBreak": false,
+     "kind": "narration"
     }
    ]
   },
@@ -716,7 +821,8 @@
     {
      "id": 0,
      "text": "“Lan”. Rồi anh đi.",
-     "sceneBreak": false
+     "sceneBreak": false,
+     "kind": "narration"
     }
    ]
   },
@@ -726,7 +832,8 @@
     {
      "id": 0,
      "text": "Chương này có cả chữ Hán 北京 và emoji 🌸 trong câu 𠀋.",
-     "sceneBreak": false
+     "sceneBreak": false,
+     "kind": "narration"
     }
    ]
   },
@@ -736,12 +843,14 @@
     {
      "id": 0,
      "text": "(Mình không nên nói ra.)",
-     "sceneBreak": false
+     "sceneBreak": false,
+     "kind": "thought"
     },
     {
      "id": 1,
      "text": "(Hừm) Lan nghĩ.",
-     "sceneBreak": false
+     "sceneBreak": false,
+     "kind": "narration"
     }
    ]
   },
@@ -751,27 +860,32 @@
     {
      "id": 0,
      "text": "Lan đến.",
-     "sceneBreak": false
+     "sceneBreak": false,
+     "kind": "narration"
     },
     {
      "id": 1,
      "text": "— Chào.",
-     "sceneBreak": false
+     "sceneBreak": false,
+     "kind": "dialogue"
     },
     {
      "id": 2,
      "text": "Hắn đã nhảy tránh được.",
-     "sceneBreak": false
+     "sceneBreak": false,
+     "kind": "narration"
     },
     {
      "id": 3,
      "text": "-bởi vì hắn đã thấy trước.",
-     "sceneBreak": false
+     "sceneBreak": false,
+     "kind": "dialogue"
     },
     {
      "id": 4,
      "text": "“Ừ.”",
-     "sceneBreak": false
+     "sceneBreak": false,
+     "kind": "dialogue"
     }
    ]
   },
@@ -781,67 +895,163 @@
     {
      "id": 0,
      "text": "“Một.”",
-     "sceneBreak": false
+     "sceneBreak": false,
+     "kind": "dialogue"
     },
     {
      "id": 1,
      "text": "“Hai.”",
-     "sceneBreak": false
+     "sceneBreak": false,
+     "kind": "dialogue"
     },
     {
      "id": 2,
      "text": "“Ba.”",
-     "sceneBreak": false
+     "sceneBreak": false,
+     "kind": "dialogue"
     },
     {
      "id": 3,
      "text": "“Bốn.”",
-     "sceneBreak": false
+     "sceneBreak": false,
+     "kind": "dialogue"
     },
     {
      "id": 4,
      "text": "“Năm.”",
-     "sceneBreak": false
+     "sceneBreak": false,
+     "kind": "dialogue"
     },
     {
      "id": 5,
      "text": "“Sáu.”",
-     "sceneBreak": false
+     "sceneBreak": false,
+     "kind": "dialogue"
     },
     {
      "id": 6,
      "text": "“Bảy.”",
-     "sceneBreak": false
+     "sceneBreak": false,
+     "kind": "dialogue"
     },
     {
      "id": 7,
      "text": "“Tám.”",
-     "sceneBreak": false
+     "sceneBreak": false,
+     "kind": "dialogue"
     },
     {
      "id": 8,
      "text": "“Chín.”",
-     "sceneBreak": false
+     "sceneBreak": false,
+     "kind": "dialogue"
     },
     {
      "id": 9,
      "text": "“Mười.”",
-     "sceneBreak": false
+     "sceneBreak": false,
+     "kind": "dialogue"
     },
     {
      "id": 10,
      "text": "-Hoặc không, vì hắn đã nhảy tránh được.",
-     "sceneBreak": false
+     "sceneBreak": false,
+     "kind": "narration"
     },
     {
      "id": 11,
      "text": "- Hắn đã chạy vội về phía cổng.",
-     "sceneBreak": false
+     "sceneBreak": false,
+     "kind": "narration"
     },
     {
      "id": 12,
      "text": "Cô lùi lại.",
-     "sceneBreak": false
+     "sceneBreak": false,
+     "kind": "narration"
+    }
+   ]
+  },
+  {
+   "text": "“Một.”\n“Hai.”\n“Ba.”\n“Bốn.”\n“Năm.”\n“Sáu.”\n“Bảy.”\n“Tám.”\n“Chín.”\n“Mười.”\n- Ánh đã đứng chờ sẵn ở cổng làng.\n- Ông đã hứa rồi mà?\nCô lùi lại.",
+   "segments": [
+    {
+     "id": 0,
+     "text": "“Một.”",
+     "sceneBreak": false,
+     "kind": "dialogue"
+    },
+    {
+     "id": 1,
+     "text": "“Hai.”",
+     "sceneBreak": false,
+     "kind": "dialogue"
+    },
+    {
+     "id": 2,
+     "text": "“Ba.”",
+     "sceneBreak": false,
+     "kind": "dialogue"
+    },
+    {
+     "id": 3,
+     "text": "“Bốn.”",
+     "sceneBreak": false,
+     "kind": "dialogue"
+    },
+    {
+     "id": 4,
+     "text": "“Năm.”",
+     "sceneBreak": false,
+     "kind": "dialogue"
+    },
+    {
+     "id": 5,
+     "text": "“Sáu.”",
+     "sceneBreak": false,
+     "kind": "dialogue"
+    },
+    {
+     "id": 6,
+     "text": "“Bảy.”",
+     "sceneBreak": false,
+     "kind": "dialogue"
+    },
+    {
+     "id": 7,
+     "text": "“Tám.”",
+     "sceneBreak": false,
+     "kind": "dialogue"
+    },
+    {
+     "id": 8,
+     "text": "“Chín.”",
+     "sceneBreak": false,
+     "kind": "dialogue"
+    },
+    {
+     "id": 9,
+     "text": "“Mười.”",
+     "sceneBreak": false,
+     "kind": "dialogue"
+    },
+    {
+     "id": 10,
+     "text": "- Ánh đã đứng chờ sẵn ở cổng làng.",
+     "sceneBreak": false,
+     "kind": "narration"
+    },
+    {
+     "id": 11,
+     "text": "- Ông đã hứa rồi mà?",
+     "sceneBreak": false,
+     "kind": "dialogue"
+    },
+    {
+     "id": 12,
+     "text": "Cô lùi lại.",
+     "sceneBreak": false,
+     "kind": "narration"
     }
    ]
   },
@@ -851,37 +1061,44 @@
     {
      "id": 0,
      "text": "Hắn nói",
-     "sceneBreak": false
+     "sceneBreak": false,
+     "kind": "narration"
     },
     {
      "id": 1,
      "text": "“không",
-     "sceneBreak": false
+     "sceneBreak": false,
+     "kind": "dialogue"
     },
     {
      "id": 2,
      "text": "Lan đáp",
-     "sceneBreak": false
+     "sceneBreak": false,
+     "kind": "narration"
     },
     {
      "id": 3,
      "text": "“có”",
-     "sceneBreak": false
+     "sceneBreak": false,
+     "kind": "dialogue"
     },
     {
      "id": 4,
      "text": "và",
-     "sceneBreak": false
+     "sceneBreak": false,
+     "kind": "narration"
     },
     {
      "id": 5,
      "text": "“nữa",
-     "sceneBreak": false
+     "sceneBreak": false,
+     "kind": "dialogue"
     },
     {
      "id": 6,
      "text": "Hết rồi.",
-     "sceneBreak": false
+     "sceneBreak": false,
+     "kind": "narration"
     }
    ]
   },
@@ -891,32 +1108,38 @@
     {
      "id": 0,
      "text": "Không ngoặc đóng:",
-     "sceneBreak": false
+     "sceneBreak": false,
+     "kind": "narration"
     },
     {
      "id": 1,
      "text": "“mở rồi quên.",
-     "sceneBreak": false
+     "sceneBreak": false,
+     "kind": "dialogue"
     },
     {
      "id": 2,
      "text": "Đoạn hai.",
-     "sceneBreak": false
+     "sceneBreak": false,
+     "kind": "narration"
     },
     {
      "id": 3,
      "text": "Đoạn ba.",
-     "sceneBreak": false
+     "sceneBreak": false,
+     "kind": "narration"
     },
     {
      "id": 4,
      "text": "“Đoạn bốn mở lại.”",
-     "sceneBreak": false
+     "sceneBreak": false,
+     "kind": "dialogue"
     },
     {
      "id": 5,
      "text": "Xong.",
-     "sceneBreak": false
+     "sceneBreak": false,
+     "kind": "narration"
     }
    ]
   },
@@ -926,7 +1149,8 @@
     {
      "id": 0,
      "text": "Dòng cuối là ***",
-     "sceneBreak": false
+     "sceneBreak": false,
+     "kind": "narration"
     }
    ]
   },
@@ -936,27 +1160,32 @@
     {
      "id": 0,
      "text": "Lan thì thầm",
-     "sceneBreak": false
+     "sceneBreak": false,
+     "kind": "narration"
     },
     {
      "id": 1,
      "text": "‘đừng đi’",
-     "sceneBreak": false
+     "sceneBreak": false,
+     "kind": "thought"
     },
     {
      "id": 2,
      "text": "rồi",
-     "sceneBreak": false
+     "sceneBreak": false,
+     "kind": "narration"
     },
     {
      "id": 3,
      "text": "‘ở lại’",
-     "sceneBreak": false
+     "sceneBreak": false,
+     "kind": "thought"
     },
     {
      "id": 4,
      "text": "và khóc.",
-     "sceneBreak": false
+     "sceneBreak": false,
+     "kind": "narration"
     }
    ]
   },
@@ -966,17 +1195,20 @@
     {
      "id": 0,
      "text": "Gió “thổi”",
-     "sceneBreak": false
+     "sceneBreak": false,
+     "kind": "narration"
     },
     {
      "id": 1,
      "text": "‘mạnh’",
-     "sceneBreak": false
+     "sceneBreak": false,
+     "kind": "thought"
     },
     {
      "id": 2,
      "text": "và \"rất\" mạnh.",
-     "sceneBreak": false
+     "sceneBreak": false,
+     "kind": "narration"
     }
    ]
   },
@@ -986,7 +1218,8 @@
     {
      "id": 0,
      "text": "Hết chương. Ủng hộ mình tại momo 0123456789.",
-     "sceneBreak": false
+     "sceneBreak": false,
+     "kind": "narration"
     }
    ]
   },
@@ -996,12 +1229,14 @@
     {
      "id": 0,
      "text": "Dịch: NicK",
-     "sceneBreak": false
+     "sceneBreak": false,
+     "kind": "narration"
     },
     {
      "id": 1,
      "text": "Lan bước đi.",
-     "sceneBreak": false
+     "sceneBreak": false,
+     "kind": "narration"
     }
    ]
   },
@@ -1011,7 +1246,8 @@
     {
      "id": 0,
      "text": "Câu 1: abc, câu 2: def; câu 3! Câu 4? Câu 5… Câu 6.",
-     "sceneBreak": false
+     "sceneBreak": false,
+     "kind": "narration"
     }
    ]
   },
@@ -1025,17 +1261,20 @@
     {
      "id": 0,
      "text": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
-     "sceneBreak": false
+     "sceneBreak": false,
+     "kind": "narration"
     },
     {
      "id": 1,
      "text": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
-     "sceneBreak": false
+     "sceneBreak": false,
+     "kind": "narration"
     },
     {
      "id": 2,
      "text": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
-     "sceneBreak": false
+     "sceneBreak": false,
+     "kind": "narration"
     }
    ]
   },
@@ -1045,32 +1284,38 @@
     {
      "id": 0,
      "text": "Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời.",
-     "sceneBreak": false
+     "sceneBreak": false,
+     "kind": "narration"
     },
     {
      "id": 1,
      "text": "Lời. Lời.",
-     "sceneBreak": false
+     "sceneBreak": false,
+     "kind": "narration"
     },
     {
      "id": 2,
      "text": "Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời.",
-     "sceneBreak": false
+     "sceneBreak": false,
+     "kind": "narration"
     },
     {
      "id": 3,
      "text": "Lời. Lời.",
-     "sceneBreak": false
+     "sceneBreak": false,
+     "kind": "narration"
     },
     {
      "id": 4,
      "text": "Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời. Lời.",
-     "sceneBreak": false
+     "sceneBreak": false,
+     "kind": "narration"
     },
     {
      "id": 5,
      "text": "Lời. Lời.",
-     "sceneBreak": false
+     "sceneBreak": false,
+     "kind": "narration"
     }
    ]
   }
