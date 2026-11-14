@@ -288,12 +288,12 @@
     "reason": "Reviewed old/new export_running_light.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
   },
   "_internal/mobile/android/app/src/test/snapshots/gap1_library_remote_dark.png": {
-    "sha256": "628abd93e6bbc1aae006e26bd91c76a136b284cf39f45d8af83b8492e5c104fa",
-    "reason": "Reviewed old/new gap1_library_remote_dark.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+    "sha256": "f5beb9e76b2aee6b4a2c1b68ad6ef87a4583c03b2cb7aa5c5500d80150d08fd2",
+    "reason": "Visually reviewed tilename change: gap1_library_remote_dark.png; drawn-cover tiles now show the two-line title under the cover like photo tiles (owner 15-11). Old/new contact sheet inspected before adoption."
   },
   "_internal/mobile/android/app/src/test/snapshots/gap1_library_remote_light.png": {
-    "sha256": "cfada83a790063e2f295558284d6e96b1ff0ed5a30d33376d7b1ceac8cc19d78",
-    "reason": "Reviewed old/new gap1_library_remote_light.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+    "sha256": "115583f29f4434d17a2f88966978e97cae3cd735d27a3f164c775c355b564cc8",
+    "reason": "Visually reviewed tilename change: gap1_library_remote_light.png; drawn-cover tiles now show the two-line title under the cover like photo tiles (owner 15-11). Old/new contact sheet inspected before adoption."
   },
   "_internal/mobile/android/app/src/test/snapshots/gap1_remote_book_dark.png": {
     "sha256": "d7bcc14740363fada3ebcb5b53442598f19e86ab6515485a01c5a69c808c9a8c",
@@ -332,12 +332,12 @@
     "reason": "Reviewed old/new gap1_remote_sleep_light.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
   },
   "_internal/mobile/android/app/src/test/snapshots/gap1_undo_dark.png": {
-    "sha256": "bcfecc9028615347ae4b9833c88e132e7b71f252b5d057d2c7cd83c25c03f74c",
-    "reason": "Reviewed old/new gap1_undo_dark.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+    "sha256": "898a08ecabac76b9b4294668cd6fc7e86d83e744fae3acb347b88356ca04840f",
+    "reason": "Visually reviewed tilename change: gap1_undo_dark.png; drawn-cover tiles now show the two-line title under the cover like photo tiles (owner 15-11). Old/new contact sheet inspected before adoption."
   },
   "_internal/mobile/android/app/src/test/snapshots/gap1_undo_light.png": {
-    "sha256": "d0e168c61f18e6fca602a3a989fd5177a79e375f0ec04c611e968292ca02a9af",
-    "reason": "Reviewed old/new gap1_undo_light.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+    "sha256": "7fcbb3ac12607229ffb81fc5e6a55499d2bb3012f02ccdab2838a40e517bee35",
+    "reason": "Visually reviewed tilename change: gap1_undo_light.png; drawn-cover tiles now show the two-line title under the cover like photo tiles (owner 15-11). Old/new contact sheet inspected before adoption."
   },
   "_internal/mobile/android/app/src/test/snapshots/gap1b_device_kinds_dark.png": {
     "sha256": "8d4dd5f2836300440267f939881654b99705a83e19b8ad85cd290d27776d6d51",
@@ -348,20 +348,20 @@
     "reason": "Reviewed old/new gap1b_device_kinds_light.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
   },
   "_internal/mobile/android/app/src/test/snapshots/gap1b_shell_error_dark.png": {
-    "sha256": "67c99f6f49c88dfd1cf89b63d8e9466103edc18efe4a2f0738722e64c516ebdf",
-    "reason": "Visually reviewed late fix168reveal layout: gap1b_shell_error_dark.png; explicit vertical groups restore intended spacing and keep every visible control separate. Old/new contact sheet inspected before adoption."
+    "sha256": "99756c5d04af7583e6f438d12939d4ac03b96312329eabf2c7fa6b1ee410cd43",
+    "reason": "Visually reviewed tilename change: gap1b_shell_error_dark.png; drawn-cover tiles now show the two-line title under the cover like photo tiles (owner 15-11). Old/new contact sheet inspected before adoption."
   },
   "_internal/mobile/android/app/src/test/snapshots/gap1b_shell_error_light.png": {
-    "sha256": "556a7cb0e8dfe2e15696bb493a4c1fbc56f46910d496d6e466c9aeb1c4c0d1ba",
-    "reason": "Visually reviewed late fix168reveal layout: gap1b_shell_error_light.png; explicit vertical groups restore intended spacing and keep every visible control separate. Old/new contact sheet inspected before adoption."
+    "sha256": "db991db073dafd129d3af72f8ac0085621a13285c7ae5a0b2c45c7927a1472dd",
+    "reason": "Visually reviewed tilename change: gap1b_shell_error_light.png; drawn-cover tiles now show the two-line title under the cover like photo tiles (owner 15-11). Old/new contact sheet inspected before adoption."
   },
   "_internal/mobile/android/app/src/test/snapshots/gap1b_shell_undo_dark.png": {
-    "sha256": "b529e2fde79e5a23acda5da6d9d8a048addf46ae7942e6f150e301f7a72cf105",
-    "reason": "Reviewed old/new gap1b_shell_undo_dark.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+    "sha256": "0d21415269d5d6bec45109089390b00da21a93b8bfbe1c3c9d40354d22d35b13",
+    "reason": "Visually reviewed tilename change: gap1b_shell_undo_dark.png; drawn-cover tiles now show the two-line title under the cover like photo tiles (owner 15-11). Old/new contact sheet inspected before adoption."
   },
   "_internal/mobile/android/app/src/test/snapshots/gap1b_shell_undo_light.png": {
-    "sha256": "c73f288cf6a1be6d344b0a77cb285a3317732b89cdac640e0690f9a882c94ad3",
-    "reason": "Reviewed old/new gap1b_shell_undo_light.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+    "sha256": "476d78ea311ef05610d3876d60f7286da733f6365701d4b3ec0368ef1a6d7827",
+    "reason": "Visually reviewed tilename change: gap1b_shell_undo_light.png; drawn-cover tiles now show the two-line title under the cover like photo tiles (owner 15-11). Old/new contact sheet inspected before adoption."
   },
   "_internal/mobile/android/app/src/test/snapshots/gap1c_device_listen_only_dark.png": {
     "sha256": "9466fdb0f890c5b2c67e4465d2326e18c7c70c4ed3b5ec7442da1c0acf2327ba",
@@ -384,12 +384,12 @@
     "reason": "Reviewed old/new icon_sheet_light.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
   },
   "_internal/mobile/android/app/src/test/snapshots/library_30_dark.png": {
-    "sha256": "38c4b7229737bf5a43c572c0385570e6a7d8a8589405f2b2c491deabe37dcf49",
-    "reason": "Reviewed old/new library_30_dark.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+    "sha256": "ed9af9612b7692ecc88504aa7c64ae19616d6e234d684ce711cd9144ff6d6f87",
+    "reason": "Visually reviewed tilename change: library_30_dark.png; drawn-cover tiles now show the two-line title under the cover like photo tiles (owner 15-11). Old/new contact sheet inspected before adoption."
   },
   "_internal/mobile/android/app/src/test/snapshots/library_30_light.png": {
-    "sha256": "dc53861d2bc50780b2f50c0495092546e650a8788ccc5f46d3378f4524010991",
-    "reason": "Reviewed old/new library_30_light.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+    "sha256": "840d2b94d5ba37521bf7f39c072a2396a5a4741f9c2d6d5e8a842e27c1abb8f9",
+    "reason": "Visually reviewed tilename change: library_30_light.png; drawn-cover tiles now show the two-line title under the cover like photo tiles (owner 15-11). Old/new contact sheet inspected before adoption."
   },
   "_internal/mobile/android/app/src/test/snapshots/library_empty_dark.png": {
     "sha256": "8e23b654e6809ca028392f5018ddac7c045106c9e8d2a4c77c8aaac70b9a00db",
@@ -400,32 +400,32 @@
     "reason": "Reviewed old/new library_empty_light.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
   },
   "_internal/mobile/android/app/src/test/snapshots/library_filter_finished_light.png": {
-    "sha256": "bac540c33be6533adf10bd0c8f1ebf5cb6727bb83a04a3979386b550ffdd6da1",
-    "reason": "Reviewed old/new library_filter_finished_light.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+    "sha256": "2c961c0306278e26ab6912177170226b865b499a4010ff2935ea9811cd3ddadf",
+    "reason": "Visually reviewed tilename change: library_filter_finished_light.png; drawn-cover tiles now show the two-line title under the cover like photo tiles (owner 15-11). Old/new contact sheet inspected before adoption."
   },
   "_internal/mobile/android/app/src/test/snapshots/library_listening_light.png": {
-    "sha256": "bce51bfa78ff0a8639067fcf681b8945f6bce8169911dd1957a020fdf9ce1c03",
-    "reason": "Reviewed old/new library_listening_light.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+    "sha256": "f8e0498440f5a32e4ef4714b4806abd5f2cb66a6b47839ae26bf2b5c7b3b5318",
+    "reason": "Visually reviewed tilename change: library_listening_light.png; drawn-cover tiles now show the two-line title under the cover like photo tiles (owner 15-11). Old/new contact sheet inspected before adoption."
   },
   "_internal/mobile/android/app/src/test/snapshots/library_one_dark.png": {
-    "sha256": "6c9193df620adf9fcbd0b4f78e2a2590f6be6a793d7cf202e48cc20d4aa8d43e",
-    "reason": "Reviewed old/new library_one_dark.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+    "sha256": "d44b3d3d36027498c6a08bdee338ab12b61c11817e27bead926b0c4c3a0dfbab",
+    "reason": "Visually reviewed tilename change: library_one_dark.png; drawn-cover tiles now show the two-line title under the cover like photo tiles (owner 15-11). Old/new contact sheet inspected before adoption."
   },
   "_internal/mobile/android/app/src/test/snapshots/library_one_light.png": {
-    "sha256": "31c7f48c4784f570c904be2a7158ab0bbad403282916b4177402cf79264bb599",
-    "reason": "Reviewed old/new library_one_light.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+    "sha256": "3be5c9d6ebf24b20d6f5ef61da3e17875734a7fdbd8cf48cc2d3ca61f796dc96",
+    "reason": "Visually reviewed tilename change: library_one_light.png; drawn-cover tiles now show the two-line title under the cover like photo tiles (owner 15-11). Old/new contact sheet inspected before adoption."
   },
   "_internal/mobile/android/app/src/test/snapshots/library_search_light.png": {
-    "sha256": "7a2ea2e22faa19c8c51909b1f87d76eab01de7f0c3283682be162ee27b64ce73",
-    "reason": "Reviewed old/new library_search_light.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+    "sha256": "b6a854d0b6b19ad26c710a27efa2e89f7a23d7f5af23c988897ce32b31122930",
+    "reason": "Visually reviewed tilename change: library_search_light.png; drawn-cover tiles now show the two-line title under the cover like photo tiles (owner 15-11). Old/new contact sheet inspected before adoption."
   },
   "_internal/mobile/android/app/src/test/snapshots/library_series_sheet_light.png": {
-    "sha256": "97be8deb6564299e3a7c9173a1783c193db67fdb1d34baf43a831e811d7cc233",
-    "reason": "Reviewed old/new library_series_sheet_light.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+    "sha256": "3a278bb2fefdb00713c689c38aac15513401d354f09d45c506dc50560f516f1e",
+    "reason": "Visually reviewed tilename change: library_series_sheet_light.png; drawn-cover tiles now show the two-line title under the cover like photo tiles (owner 15-11). Old/new contact sheet inspected before adoption."
   },
   "_internal/mobile/android/app/src/test/snapshots/library_sort_menu_light.png": {
-    "sha256": "a657de811a636eb17fbb0c624a42a3983d4ac709ee4902e393b77a5789a1271d",
-    "reason": "Reviewed old/new library_sort_menu_light.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+    "sha256": "8d9a239c93a12984360f945faa5512024385f782346199d14494d3e7d562f117",
+    "reason": "Visually reviewed tilename change: library_sort_menu_light.png; drawn-cover tiles now show the two-line title under the cover like photo tiles (owner 15-11). Old/new contact sheet inspected before adoption."
   },
   "_internal/mobile/android/app/src/test/snapshots/link_book_mini_dark.png": {
     "sha256": "9a20e995ad4b9fcc47f55e3999c436665509edb6d50c0032f5bc6ce9ecb5f3f6",
@@ -652,20 +652,20 @@
     "reason": "Reviewed old/new shell_empty_light.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
   },
   "_internal/mobile/android/app/src/test/snapshots/shell_library_dark.png": {
-    "sha256": "06237cc64b70fb2016217c306a288d7a90b961267cf7af9237a9d745140b6b85",
-    "reason": "Reviewed old/new shell_library_dark.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+    "sha256": "fde615f76cce0aa9757a2c0fd48122ceb9d19822e24ab611f26aec1478625d3b",
+    "reason": "Visually reviewed tilename change: shell_library_dark.png; drawn-cover tiles now show the two-line title under the cover like photo tiles (owner 15-11). Old/new contact sheet inspected before adoption."
   },
   "_internal/mobile/android/app/src/test/snapshots/shell_library_light.png": {
-    "sha256": "b3e9f9bce6bbd117fabfa6cf7ce0e1f929e9ae6d95b247bb6bcfc68906943d75",
-    "reason": "Reviewed old/new shell_library_light.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+    "sha256": "839b59a95a1eddfbbf6c5cedce5ab39e0b1b1e4575714e00d9b6eb0870928ced",
+    "reason": "Visually reviewed tilename change: shell_library_light.png; drawn-cover tiles now show the two-line title under the cover like photo tiles (owner 15-11). Old/new contact sheet inspected before adoption."
   },
   "_internal/mobile/android/app/src/test/snapshots/shell_mini_library_light.png": {
-    "sha256": "25ccf401d3fb5f72a63ecf079487cd8b8c92076f9a7585dc689c50c4045b9531",
-    "reason": "Reviewed old/new shell_mini_library_light.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+    "sha256": "d400263d89d0aca968a6dab72f476f21f975fd73d4c00d1f0f5001b0e5f5bb8f",
+    "reason": "Visually reviewed tilename change: shell_mini_library_light.png; drawn-cover tiles now show the two-line title under the cover like photo tiles (owner 15-11). Old/new contact sheet inspected before adoption."
   },
   "_internal/mobile/android/app/src/test/snapshots/shell_mini_restored_light.png": {
-    "sha256": "88a7ba5c5c96dcba6e948a74ca286b7b85333e233dec3b6ef10056b64151c3f4",
-    "reason": "Reviewed old/new shell_mini_restored_light.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+    "sha256": "4e72378636f4ff6cc50b689cd99b583dfdb6a3274e792930435e3221e9885d2e",
+    "reason": "Visually reviewed tilename change: shell_mini_restored_light.png; drawn-cover tiles now show the two-line title under the cover like photo tiles (owner 15-11). Old/new contact sheet inspected before adoption."
   },
   "_internal/mobile/android/app/src/test/snapshots/shell_now_playing_mid_light.png": {
     "sha256": "a4eb97f58d3a7bda601a3dec463c9ff06fa060329cc01ba3958b0547eae3d951",

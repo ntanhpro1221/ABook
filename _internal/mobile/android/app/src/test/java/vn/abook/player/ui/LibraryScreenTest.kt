@@ -11,8 +11,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
-import androidx.compose.ui.test.captureToImage
-import androidx.compose.ui.graphics.toPixelMap
 import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.longClick
 import androidx.compose.ui.test.onAllNodesWithTag
@@ -76,13 +74,18 @@ class LibraryScreenTest {
         show(listOf(ListenBook("hello", "Hello, Hello and Hello", "Tác giả")))
         val title = rule.onNodeWithTag("tile_title", useUnmergedTree = true)
         title.assertIsDisplayed()
-        // Có mực thật (không alpha 0): ảnh của riêng ô tên phải có điểm khác màu nền.
-        val pixels = title.captureToImage().toPixelMap()
-        val inked = (0 until pixels.width).any { x -> (0 until pixels.height).any { y -> pixels[x, y].toArgb() != expectedBackground } }
+        val name = title.fetchSemanticsNode().boundsInRoot
+        // Có mực thật (không alpha 0): trong khung của tên trên ảnh màn hình phải có điểm khác màu nền.
+        val file = "build/icon_probe/drawn_cover_title.png"
+        rule.onRoot().captureRoboImage(file, roborazziOptions = RoborazziOptions(taskType = RoborazziTaskType.Record))
+        val bitmap = android.graphics.BitmapFactory.decodeFile(file)
+        val inked = (name.left.toInt() until name.right.toInt()).any { x ->
+            (name.top.toInt() until name.bottom.toInt()).any { y -> bitmap.getPixel(x, y) != expectedBackground }
+        }
+        bitmap.recycle()
         assertTrue("tên dưới bìa vẽ không có mực", inked)
         // Trình đọc màn hình: tên nằm trong cây semantics đã gộp (không bị clearAndSetSemantics).
         rule.onNodeWithText("Hello, Hello and Hello").assertExists()
-        val name = title.fetchSemanticsNode().boundsInRoot
         val sub = rule.onNodeWithTag("tile_sub", useUnmergedTree = true).fetchSemanticsNode().boundsInRoot
         assertTrue("tên ở trên dòng phụ như ô có ảnh", name.bottom <= sub.top + 0.5f)
     }
