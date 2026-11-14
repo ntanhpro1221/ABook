@@ -116,7 +116,7 @@ object StudioPaths {
     /** Các đường GHI của một sách mà Studio gọi (đúng tên `remote_studio.ALLOWED`); khoá lạ bị từ chối trước khi gửi. */
     val WRITES = setOf(
         "speaker", "line", "narrator-section", "voice", "voice/preview", "pronunciation", "pronunciation/preview", "pronunciation/check", "review", "pending-changes/withdraw",
-        "characters/rename", "characters/merge", "shared-readings", "music/rebuild", "music/download/cancel", "music/moods",
+        "characters/rename", "characters/merge", "cast-history/undo", "shared-readings", "music/rebuild", "music/download/cancel", "music/moods",
         "bookfile-job", "bookfile-job/cancel", "m4b-job", "m4b-job/cancel", "mp3-job", "mp3-job/cancel",
     )
 

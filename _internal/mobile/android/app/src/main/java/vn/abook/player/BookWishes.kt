@@ -19,9 +19,9 @@ import java.util.Locale
  * (đúng khoá, đúng kiểu, có trần số mục và độ dài, chữ phải đã sạch), sai một mục là từ chối cả file.
  */
 object BookWishes {
-    val SECTIONS = listOf("pronunciations", "speakers", "lines", "voices", "retakes")
+    val SECTIONS = listOf("pronunciations", "speakers", "lines", "voices", "retakes", "cast_undos")
     const val ALIASES = "aliases"
-    private val MAX_ENTRIES = mapOf("pronunciations" to 2000, "speakers" to 5000, "lines" to 2000, "voices" to 2000, "retakes" to 5000, ALIASES to 2000)
+    private val MAX_ENTRIES = mapOf("pronunciations" to 2000, "speakers" to 5000, "lines" to 2000, "voices" to 2000, "retakes" to 5000, "cast_undos" to 2000, ALIASES to 2000)
     private const val SURFACE_MAX = 80
     private const val SPOKEN_FORM_MAX = 120
     private const val SPEAKER_MAX = 200
@@ -41,6 +41,7 @@ object BookWishes {
         "lines" to setOf("text_sha256", "kind", "emotion", "intensity", "spoken", "requested_at"),
         "voices" to setOf("preset", "gender", "avoid", "requested_at"),
         "retakes" to setOf("text_sha256", "requested_at", "operation_id"),
+        "cast_undos" to setOf("original", "requested_at"),
     )
     private val REPLACEABLE = setOf("pronunciations", "speakers", "voices")
     private val LINE_KINDS = listOf("narration", "dialogue", "thought")
@@ -69,6 +70,7 @@ object BookWishes {
         "lines" to S.s_mot_y_muon_ve_cach_doc_cau_trong_phan_sua_8fe41ea6,
         "voices" to S.s_mot_y_muon_ve_giong_nhan_vat_trong_phan_su_387dcc80,
         "retakes" to S.s_mot_y_muon_thu_lai_cau_trong_phan_sua_khon_e3f57d29,
+        "cast_undos" to S.s_cast_history_bad_wish,
         ALIASES to S.s_mot_y_muon_gop_ten_trong_phan_sua_khong_ho_836324f5,
     )
 
@@ -111,6 +113,11 @@ object BookWishes {
         val out = JSONObject()
         out.put("requested_at", time(raw.opt("requested_at")) ?: throw bad)
         when (section) {
+            "cast_undos" -> {
+                val original = raw.opt("original")
+                if (original !is String || !Regex("[0-9a-f]{32}").matches(original) || key != CastHistory.undoId(original)) throw bad
+                out.put("original", original)
+            }
             "pronunciations" -> {
                 val surface = raw.opt("surface")
                 val spoken = raw.opt("spoken_form")
@@ -236,7 +243,7 @@ object BookWishes {
     fun count(wishes: JSONObject?): Int {
         if (wishes == null) return 0
         return (wishes.optJSONObject("pronunciations")?.length() ?: 0) + (wishes.optJSONObject("lines")?.length() ?: 0) +
-            (wishes.optJSONObject("voices")?.length() ?: 0) + clicks(wishes.optJSONObject("speakers")) + clicks(wishes.optJSONObject("retakes"))
+            (wishes.optJSONObject("voices")?.length() ?: 0) + clicks(wishes.optJSONObject("speakers")) + clicks(wishes.optJSONObject("retakes")) + (wishes.optJSONObject("cast_undos")?.length() ?: 0)
     }
 
     /** Số mục từng loại trong trần ([merge] kiểm sau khi hợp: file hợp ra mà [validate] từ chối thì người nghe mất sạch). */
@@ -592,6 +599,12 @@ object BookWishes {
         change(folder) { requestSpeakers(it, lines, shown, now, newGender) }
     }
 
+    fun requestMerge(folder: File, lines: List<Pair<String, String>>, source: String, target: String, now: Double, newGender: String = "") {
+        val from = BookEdits.cleanText(source, SPEAKER_MAX)
+        val to = BookEdits.cleanText(target, SPEAKER_MAX)
+        change(folder, aliases = { decideAlias(it, from, to, now) ?: it }) { requestSpeakers(it, lines, to, now, newGender) }
+    }
+
     fun requestLine(folder: File, stableId: String, textSha256: String, kind: String = "", emotion: String = "", intensity: Long? = null,
                     speaker: String = "", spoken: String? = null, now: Double) {
         val shown = BookEdits.cleanText(speaker, SPEAKER_MAX)
@@ -745,6 +758,16 @@ object BookWishes {
      * Cùng hình dạng với `store.pending_details` của dự án ({items, lines, chapters, seconds}) - từng ý muốn nói bằng lời, đủ để rút
      * đúng nó (`section`, `key`, `requestedAt`) - nhưng không có câu nào "đã thu" để đếm: cuốn này chưa thu lại gì.
      */
+    fun requestCastUndo(folder: File, original: String, at: Double): String {
+        val id = CastHistory.undoId(original)
+        change(folder) { wishes ->
+            val entries = entriesOf(wishes, "cast_undos")
+            if (!entries.has(id)) entries.put(id, JSONObject().put("original", original).put("requested_at", at))
+            wishes.put("cast_undos", entries)
+        }
+        return id
+    }
+
     fun pendingDetails(folder: File, book: JSONObject, wishes: JSONObject?): JSONObject {
         val out = JSONObject().put("items", JSONArray()).put("lines", 0).put("chapters", JSONArray()).put("seconds", 0.0)
         if (wishes == null || SECTIONS.none { (wishes.optJSONObject(it)?.length() ?: 0) > 0 }) return out
@@ -760,6 +783,10 @@ object BookWishes {
 
         fun sortedKeys(section: String): List<String> =
             wishes.optJSONObject(section)?.let { entries -> BookEdits.names(entries).sortedWith { a, b -> BookEdits.byCodePoints(a, b) } } ?: emptyList()
+
+        for (key in sortedKeys("cast_undos")) {
+            items.put(handle(JSONObject().put("kind", "speaker").put("label", S.s_cast_history_undo).put("lines", 0), "cast_undos", key, wishes.getJSONObject("cast_undos").getJSONObject(key)))
+        }
 
         for (key in sortedKeys("pronunciations")) {
             val entry = wishes.getJSONObject("pronunciations").getJSONObject(key)

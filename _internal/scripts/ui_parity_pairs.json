@@ -2,6 +2,13 @@
   "_doc": "Cặp màn web <-> native (ui_parity.py --check). `web`/`native`: file (glob, tương đối ui/src/ và mobile/.../ui/; `!` loại). `web_also`/`native_also`: file chỉ để ĐỐI CHIẾU chữ của phía kia (nhãn chung nằm ở file khác), chữ của chúng không bị đòi. `allow`: nhãn chỉ một phía vì nền tảng BẮT BUỘC khác (bàn phím / chuột, tên cho trình đọc màn hình, dữ liệu, câu nằm ở lõi ngoài ui/), ghi lý do. `missing`: tính năng hay phần màn chỉ có ở MỘT phía (side = phía có nhãn; Lead xếp lịch). `deferred`: nhóm màn chưa làm ở giai đoạn này. Mỗi mục: side + (label | match regex trên khoá lỏng | file glob) + reason. `only`: \"web\" hay \"native\" = chỉ đòi nhãn của phía ấy phải có ở phía kia (phía kia là bản đầy đủ hơn, vd Studio của máy tính). `wording_for_lead` (TẠM): cả hai phía của chữ khác nhau cho cùng một việc, chờ Lead chọn chữ chuẩn (docs/UI_PARITY.md 'Từ điển chữ chung'); chọn xong thì sửa một phía và xoá mục. Chữ khác nhau cho cùng một việc không được ghi vào allow / missing.",
   "pairs": [
     {
+      "id": "cast-history",
+      "web": ["studio/CastHistory.tsx"],
+      "native": ["studio/CastHistoryPanel.kt"],
+      "allow": [],
+      "missing": []
+    },
+    {
       "id": "now-playing",
       "web": [
         "listen/PlayerViews.tsx",

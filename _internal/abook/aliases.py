@@ -12,7 +12,6 @@ Máy chủ giao diện ghi file này (như overrides.json); dây chuyền chỉ 
 from __future__ import annotations
 
 import json
-import os
 import time
 import unicodedata
 from pathlib import Path
@@ -65,10 +64,9 @@ def added_at(project_root: Path) -> dict[str, float]:
 
 
 def _write(project_root: Path, entries: list[dict[str, Any]]) -> None:
-    target = Path(project_root) / FILE_NAME
-    temporary = target.with_name(f".{FILE_NAME}.tmp")
-    temporary.write_text(json.dumps({"version": 1, "aliases": entries}, ensure_ascii=False, indent=2), encoding="utf-8")
-    os.replace(temporary, target)
+    from .io_utils import atomic_write_json
+
+    atomic_write_json(Path(project_root) / FILE_NAME, {"version": 1, "aliases": entries})
 
 
 def decide(entries: list[dict[str, Any]], alias: str, person: str, now: float) -> list[dict[str, Any]] | None:

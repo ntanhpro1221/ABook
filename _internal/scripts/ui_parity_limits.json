@@ -1,6 +1,7 @@
 {
   "baseline": "8823bf7a1",
   "pairs": {
+    "cast-history": {"allow_entries": 0, "missing_entries": 0, "allowed_labels": 0, "missing_labels": 0},
     "now-playing": {
       "allow_entries": 17,
       "missing_entries": 5,

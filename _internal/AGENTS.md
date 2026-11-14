@@ -118,6 +118,7 @@ Không đổi sang phân tích cuốn chiếu nếu người dùng chưa thay đ
   Init Store/LibraryServer tuần tự dưới khoá, công bố root/context sau recovery; ghim filesDir canonical đầu tiên, thư mục khác thì log và bỏ qua.
 - Phán quyết nghe của Studio nằm trong `reviews.json`, gắn với `stable_id` và checksum bản thu `wav_sha256`; bản thu đổi thì
   phán quyết cũ vào lịch sử, không được che câu chưa nghe ở hàng nghe lại hoặc hộp việc. Không ghi phán quyết này vào SQLite.
+- Gộp/tách theo nhóm dùng operation ID và journal trong `overrides.json`; worker ghi before/after cùng receipt `CAST_OPERATION_COMMITTED_V1` trong một transaction SQLite. Undo là thao tác bù có CAS cả quyết định câu, wish mới và giọng/seed; alias chỉ đảo khi còn đúng owner. Event cũ không có before-state không phải lịch sử phục hồi. Gói sách chỉ mang projection và wish tham chiếu, không được tin before-state gửi từ máy khác.
 - Xuất `.abook` phải đối chiếu checksum của byte thực ghi trước khi công bố gói; nguồn đổi giữa băm và ghi thì báo lỗi và dọn
   file dở. Xuất cả bộ dùng cùng job nền có tiến độ/huỷ/nối lại như một cuốn; huỷ M4B phải thu hồi FFmpeg trước khi dọn file dở.
 - WAV/MP3 luôn ghi `.part`, validate + checksum rồi atomic replace.

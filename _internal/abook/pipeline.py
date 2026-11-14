@@ -1272,6 +1272,12 @@ class BookPipeline:
             chapters = [row for row in self.db.list_chapters() if int(row["id"]) in revisit]
 
     def _apply_listener_overrides(self) -> set[int]:
+        from .listener_overrides import edit_turn
+
+        with edit_turn(self.paths.root):
+            return self._apply_listener_overrides_locked()
+
+    def _apply_listener_overrides_locked(self) -> set[int]:
         """Áp những gì người nghe sửa trong Studio (`overrides.json`, xem listener_overrides.py): cách đọc tên, ai nói câu
         nào, giọng và giới của một nhân vật.
 
@@ -1353,7 +1359,15 @@ class BookPipeline:
                 + (f", đọc là {result['listener_text']!r}" if result.get("listener_text") else "")
                 + ("; thu lại." if result["reset"] else ".")
             )
-        for request in self._acknowledging("speakers", speaker_requests(overrides), lambda item: item["stable_id"], overrides, receipts):
+        from .cast_operations import apply_pending
+
+        if overrides.get("cast_operations"):
+            reset_chapters.update(apply_pending(self.db, self.paths.root, getattr(self, "settings", {}).get("voices", {})))
+        # Undo may have restored an older wish. Always acknowledge the current journal.
+        overrides = read_overrides(self.paths.root)
+        individual_speakers = [request for request in speaker_requests(overrides)
+                               if not overrides["speakers"][request["stable_id"]].get("operation_id")]
+        for request in self._acknowledging("speakers", individual_speakers, lambda item: item["stable_id"], overrides, receipts):
             stable_id, speaker = request["stable_id"], request["speaker"]
             result = self.db.apply_listener_speaker(
                 stable_id=stable_id,
@@ -1422,7 +1436,7 @@ class BookPipeline:
                 reset_chapters.add(int(result["chapter_id"]))
             self.log(f"Người nghe yêu cầu thu lại câu {result['stable_id']} (lần {result['retakes']}).")
         # Mục không đọc được thành yêu cầu (thiếu chữ, mã băm...) cũng là đã xét - không thì nút "Áp dụng" đếm chúng mãi.
-        for section in ("pronunciations", "speakers", "lines", "voices", "retakes"):
+        for section in ("pronunciations", "speakers", "lines", "voices", "retakes", "cast_undos"):
             entries = overrides.get(section)
             for key in (entries if isinstance(entries, dict) else ()):
                 self._acknowledge(section, str(key), overrides, receipts)

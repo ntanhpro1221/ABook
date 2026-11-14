@@ -78,6 +78,7 @@ LISTEN_ROUTES: tuple[tuple[str, re.Pattern[str]], ...] = tuple((method, re.compi
     ("GET", _MEDIA + r"/chapters/\d+"),
     ("GET", _MEDIA + r"/cover"),
     ("GET", _BOOK + r"/cast"),
+    ("GET", _BOOK + r"/cast-history"),
     ("GET", _BOOK + r"/chapters/\d+/script"),
     ("GET", _LISTEN + r"/chapters/\d+/text"),  # chữ của chương trong sách chỉ-chữ (textbook.py)
     # Trang sách chữ (listen/ReadingSuggestions.tsx, WordReadings.tsx): gợi ý bỏ dòng ghi công và danh sách "Cách đọc tên" của chính cuốn đang mở -
@@ -115,6 +116,7 @@ ALLOWED: tuple[tuple[str, re.Pattern[str]], ...] = LISTEN_ROUTES + tuple((method
     ("POST", _BOOK + r"/pending-changes/withdraw"),
     ("POST", _BOOK + r"/chapters/\d+/retake"),
     ("POST", _BOOK + r"/characters/merge"),
+    ("POST", _BOOK + r"/cast-history/undo"),
     ("POST", _BOOK + r"/characters/rename"),
     ("PUT", _BOOK + r"/chapters/\d+/title"),
     # Đổi tên / tác giả sách: chỉ nhận chữ, không mang đường dẫn nào (cùng loại với tên chương ở trên).

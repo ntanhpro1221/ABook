@@ -20,11 +20,42 @@ import os
 import re
 import sqlite3
 import tempfile
+import threading
+from contextlib import contextmanager
+from functools import wraps
 from pathlib import Path
 from typing import Any
 
 OVERRIDES_FILE = "overrides.json"
 OVERRIDES_VERSION = 1
+_EDIT_LOCAL = threading.local()
+
+
+@contextmanager
+def edit_turn(project_root: Path):
+    """Serialize UI and worker file writes across processes, with nested calls allowed."""
+    from .io_utils import file_lock, project_write_lock
+
+    key = str(Path(project_root).resolve())
+    with project_write_lock(project_root):
+        held = getattr(_EDIT_LOCAL, "held", set())
+        if key in held:
+            yield
+            return
+        with file_lock(Path(project_root) / "overrides.json"):
+            _EDIT_LOCAL.held = held | {key}
+            try:
+                yield
+            finally:
+                _EDIT_LOCAL.held = held
+
+
+def _editing(function):
+    @wraps(function)
+    def wrapped(project_root, *args, **kwargs):
+        with edit_turn(project_root):
+            return function(project_root, *args, **kwargs)
+    return wrapped
 
 # Lý do từ chối: mã ổn định cho máy, câu chữ cho người nằm ở giao diện (đổi câu chữ không được đổi hash chất lượng).
 MULTI_WORD = "multi_word"
@@ -523,6 +554,7 @@ def line_target(
     return target, None
 
 
+@_editing
 def request_pronunciation(project_root: Path, surface: str, spoken_form: str, *, now: float) -> None:
     """Giao diện gọi: ghi (hoặc thay) mong muốn cho một từ."""
     data = read_overrides(project_root)
@@ -551,6 +583,7 @@ def request_speaker(project_root: Path, stable_id: str, text_sha256: str, speake
     request_speakers(project_root, [(stable_id, text_sha256)], speaker, now=now, new_gender=new_gender)
 
 
+@_editing
 def request_speakers(project_root: Path, lines: list[tuple[str, str]], speaker: str, *, now: float,
                      new_gender: str = "") -> None:
     """Một người cho cả nhóm câu (mọi câu của một vai phụ không tên), trong MỘT lần ghi file: dây chuyền đọc file giữa
@@ -571,6 +604,7 @@ def request_speakers(project_root: Path, lines: list[tuple[str, str]], speaker: 
     _write(project_root, data)
 
 
+@_editing
 def request_line(project_root: Path, stable_id: str, text_sha256: str, *, kind: str = "", emotion: str = "",
                  intensity: int | None = None, speaker: str = "", spoken: str | None = None, now: float) -> None:
     """Giao diện gọi: ghi mong muốn về cách đọc một câu, và - khi câu từ lời kể thành lời thoại - người nói của nó, trong
@@ -626,6 +660,7 @@ def retake_requests(overrides: dict[str, Any]) -> list[dict[str, Any]]:
     return requests
 
 
+@_editing
 def request_retake(project_root: Path, stable_id: str, text_sha256: str, *, now: float) -> None:
     """Giao diện gọi: người nghe bấm "Cần thu lại" cho một câu."""
     data = read_overrides(project_root)
@@ -636,6 +671,7 @@ def request_retake(project_root: Path, stable_id: str, text_sha256: str, *, now:
     _write(project_root, data)
 
 
+@_editing
 def cancel_retake(project_root: Path, stable_id: str) -> None:
     """Người nghe bỏ phán quyết "Cần thu lại" trước khi dây chuyền kịp thu: bỏ yêu cầu. Đã thu rồi thì bản mới ở lại -
     bỏ một mục đã áp không đổi gì trong sách."""
@@ -653,6 +689,7 @@ def character_key(character: str) -> str:
     return " ".join(str(character).strip().casefold().split()).upper()
 
 
+@_editing
 def request_voice(project_root: Path, character: str, *, preset: str = "", gender: str = "", avoid: str = "",
                   now: float) -> None:
     """Giao diện gọi: ghi (hoặc thay) mong muốn về giọng/giới của một nhân vật."""
@@ -688,6 +725,7 @@ def requests_made_at(overrides: dict[str, Any], section: str, keys: list[str],
     return found
 
 
+@_editing
 def withdraw_requests(project_root: Path, section: str, keys: list[str], requested_at: float) -> list[str]:
     """Hoàn tác một quyết định vừa bấm trong hộp việc: yêu cầu của đúng lần bấm ấy (`requests_made_at`) nhường chỗ lại
     cho yêu cầu nó đã thay (`replaced`), hoặc biến mất nếu trước đó chưa có gì - trong MỘT lần ghi file. Trả các khoá đã
@@ -701,6 +739,15 @@ def withdraw_requests(project_root: Path, section: str, keys: list[str], request
         entries = {key: entry for key, entry in data[section].items() if key not in mine}
         entries.update({key: entry["replaced"] for key, entry in mine.items() if isinstance(entry.get("replaced"), dict)})
         data[section] = entries
+        if section == "speakers":
+            from .cast_operations import cancel_batches
+
+            cancel_batches(project_root, data, mine)
+        if section == "cast_undos":
+            for key in mine:
+                operation = (data.get("cast_operations") or {}).get(key)
+                if operation and not operation.get("finished"):
+                    operation["cancelled"] = True
         _write(project_root, data)
     return list(mine)
 

@@ -411,6 +411,7 @@ qt_add_qml_module(ABookDesk
         qml/CastEngine.qml
         qml/CastGender.qml
         qml/CastList.qml
+        qml/CastHistory.qml
         qml/CastLogic.js
         qml/CastMerge.qml
         qml/CastModal.qml

@@ -94,6 +94,9 @@ internal fun LazyListScope.castTab(cast: StudioCastState, data: CastData, state:
         }
         return
     }
+    item("cast_history", "history") {
+        CastHistoryPanel(loaded.history, cast.undoing, cast.historyProblem, !state.session.listenOnly, cast::undoCast, Modifier.then(slide))
+    }
     if (loaded.characters.isEmpty() && loaded.extras.isEmpty() && loaded.carried.isEmpty()) {
         item("cast_empty", "status") {
             Column(Modifier.fillMaxWidth().then(slide).padding(top = Dim.s24).testTag("studio_cast_empty")) {

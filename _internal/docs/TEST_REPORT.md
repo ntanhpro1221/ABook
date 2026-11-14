@@ -1,5 +1,15 @@
 # Test report
 
+## 15-11-2026 — durable cast history
+
+Cast merge and split batches now journal an operation ID before publishing aliases. The worker commits each batch and a versioned before/after receipt in the same SQLite transaction. Compensation compares current decisions, pending wishes, voice identity and seed before restoring a line. Aliases use independent ownership checks. Existing event rows are never treated as recovery snapshots; no schema changes or in-place conversion are involved.
+
+Original examples cover apply/undo/reopen, consecutive merges in both undo orders, a pre-existing wish, newer line/voice/retake decisions, changed IDs/hashes, failure immediately before the receipt, failure after commit, and cancellation interrupted before alias publication. A synthetic WAV check preserves the exact bytes and database evidence of unaffected lines. Package and sync cast projections agree, and duplicate portable undo wishes use the same compensation ID. No model or TTS quality claim is made.
+
+The shared reference fixture is `tests/fixtures/cast_history.json`. Web DOM, Qt Quick and Compose execute two actions from a closed history fold to the undo request. Native state tests also check the endpoint, duplicate taps, offline retry and listen-only refusal. History remains available after the source role disappears. Copy comes from the shared string source; the new parity pair has zero exemptions, and negative tests detect drift at each platform's own source site.
+
+Validation: 1,429 backend regression cases passed; the final cancellation refinement passed 75 relevant cases. Web passed typecheck and 19 Vitest cases. Qt passed 33 cast results and 4 history results, including setup/cleanup, offscreen against this tree's QML. The existing Qt test executable was copied from the design-audit build because the older executable lacked the UI-tree test utility; production C++ was unchanged. Gradle JVM/Compose tests and both release-gate parity workers passed. Operation counts exclude typing, scrolling and TTS time; no physical Android device or TTS run was used.
+
 ## 15-11-2026 — review effort and recording cost
 
 The inbox now orders applicable cards by upcoming chapter, affected lines per estimated action, tentative cue and stable key.

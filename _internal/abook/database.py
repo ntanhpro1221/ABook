@@ -8754,6 +8754,14 @@ class ProjectDB:
             )
         return details
 
+    def apply_listener_cast_operation(self, operation: dict[str, Any], overrides: dict[str, Any], *,
+                                      voices: dict[str, Any] | None = None) -> dict[str, Any]:
+        """Commit a cast batch and its full recovery receipt in one transaction."""
+        from .cast_operations import apply_operation
+
+        with self.transaction() as conn:
+            return apply_operation(self, conn, operation, overrides, voices or {})
+
     def apply_listener_speaker(
         self,
         *,

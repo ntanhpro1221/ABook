@@ -33,6 +33,31 @@ class StudioCastState(private val project: StudioProjectState, pause: suspend (L
     val poll: StateFlow<StudioPolling.Poll<Cast>> get() = poller.state
 
     val clip: StateFlow<ClipState>? get() = session.clips?.state
+    var historyProblem by mutableStateOf("")
+        private set
+    var undoing by mutableStateOf<String?>(null)
+        private set
+
+    fun undoCast(operationId: String) {
+        if (undoing != null || session.listenOnly) return
+        undoing = operationId
+        historyProblem = ""
+        session.scope.launch {
+            try {
+                session.source.write(session.computer, project.bookId, WorkStep("cast-history/undo", JSONObject().put("operationId", operationId)))
+                poller.refresh()
+                project.refreshSoon()
+            } catch (cancelled: CancellationException) {
+                throw cancelled
+            } catch (error: Throwable) {
+                val failure = StudioErrors.of(error)
+                session.note(failure)
+                historyProblem = StudioText.failure(failure)
+            } finally {
+                undoing = null
+            }
+        }
+    }
 
     suspend fun run() = poller.run()
 

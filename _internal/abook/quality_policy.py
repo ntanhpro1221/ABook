@@ -25,6 +25,7 @@ from .runtime_contract import (
 
 
 QUALITY_POLICY_VERSION = 2
+LISTENER_CAST_OPERATIONS = "atomic_cast_receipt_v1"
 HASH_CHUNK_BYTES = 1024 * 1024
 # One name for the stage, defined where the rows are written. Two spellings of the same
 # string means the writer and the reader can be bumped apart, and a chapter would then
@@ -83,6 +84,8 @@ QUALITY_IMPLEMENTATION_FILES = (
     "database.py",
     "english_vi.py",
     "listener_overrides.py",
+    "cast_operations.py",
+    "aliases.py",
     "models.py",
     "name_snap.py",
     "pipeline.py",
@@ -224,6 +227,7 @@ def build_quality_policy(settings: dict[str, Any]) -> dict[str, Any]:
         "settings_hash": settings_hash(settings),
         "runtime_dependencies": installed_dependency_provenance(),
         "algorithms": {
+            "listener_cast_operations": LISTENER_CAST_OPERATIONS,
             "text_parser": "spoken_token_invariant_v2",
             "casting": "canonical_identity_host_semantic_lock_director_ledger_v28",
             "speaker_pass": SPEAKER_PASS_ALGORITHM,

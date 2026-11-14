@@ -367,7 +367,7 @@ def test_the_producer_turns_wishes_into_requests_with_fresh_stamps_and_applies_n
     assert report == {"applied": 0, "skipped": 0, "music": False, "requests": 7}
     assert _dump_segments(db) == before, "yêu cầu chỉ được ghi, không áp vào sổ"
     data = listener_overrides.read_overrides(project)
-    stamps = {name: {key: entry["requested_at"] for key, entry in data[name].items()} for name in SECTIONS}
+    stamps = {name: {key: entry["requested_at"] for key, entry in (data.get(name) or {}).items()} for name in SECTIONS}
     assert all(stamp >= started for section in stamps.values() for stamp in section.values()), "đóng dấu lại giờ"
     assert stamps["speakers"][one[0]] == stamps["speakers"][two[0]] != stamps["speakers"][three[0]], "một lần bấm vẫn là một lần bấm"
     assert stamps["pronunciations"]["lucien"] < stamps["speakers"][one[0]] < stamps["speakers"][three[0]] < stamps["lines"][two[0]], "giữ thứ tự"

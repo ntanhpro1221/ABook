@@ -26,6 +26,7 @@ import { formatClock, formatLength, formatNumber, progressFill } from "@/shared/
 import { DialogActions, Select, SelectionMark, Button, Dialog, EmptyState, heardBarProps, IconButton, Progress, Skeleton, Tabs, TabsContent, TabsList, TabsPanels, TabsTrigger, Tooltip, Vu } from "@/shared/ui";
 import { GenderDialog, RenamePersonDialog } from "@/studio/CastEdits";
 import { MergeDialog } from "@/studio/MergePeople";
+import { CastHistory } from "@/studio/CastHistory";
 import { useClip } from "./clip";
 import { FindInBook } from "./FindInBook";
 import { canEditBook, EditBlockedItem, EditBookDialog, refreshAfterEdit, RenameChapterDialog, SaveAsDialog, StudioOnlyItem, useSaveBook, useShareBook } from "./EditBook";
@@ -539,7 +540,7 @@ export function CastList({ bookId, onPickVoice, onPickNarrator, onMerge, onUnmer
   const [later, setLater] = useState(false);
   const carriedPeople = onPickVoice ? (cast?.carried ?? []) : [];
   if (isLoading) return <MotionRegion as="div" className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">{Array.from({ length: 6 }, (_, index) => <Skeleton key={index} className="h-[84px] rounded-cover" />)}</MotionRegion>;
-  if (!cast || (!cast.characters.length && !cast.extras.length && !carriedPeople.length)) {
+  if (!cast || (!cast.characters.length && !cast.extras.length && !carriedPeople.length && !cast.castHistory?.items.length)) {
     return (
       <MotionRegion><EmptyState icon={AudioLines} title={S.s_chua_co_dan_nhan_vat_6f7729cd} className="mt-2">{S.s_dan_nhan_vat_hien_ra_khi_truyen_da_duoc_ph_dacb7364}</EmptyState></MotionRegion>
     );
@@ -565,6 +566,7 @@ export function CastList({ bookId, onPickVoice, onPickNarrator, onMerge, onUnmer
         {onPickNarrator && <IconButton label={S.s_doi_giong_nguoi_ke_c2afb757} icon={SlidersHorizontal} size="sm" onClick={onPickNarrator} />}
       </div>
       {narratorNote && <div className="mt-2 text-xs text-fg-2">{narratorNote}</div>}
+      <CastHistory key={bookId} bookId={bookId} history={cast.castHistory} editable={Boolean(onMerge || onUnmerge)} />
       <Fold storageKey={`book.${bookId}.cast`} title={S.s_vai_chinh_b84f4098} summary={S.s_0_nguoi_co_loi_thoai_1e48f89a(cast.characters.length)} defaultOpen={cast.characters.length <= 4} className="mt-4">
       {/* "Hiện / Ẩn chương sau": người của các chương sau mở / khép tại chỗ (hàng tự mờ khi đổi giọng - PersonRow là một vùng), không mờ cả tab. */}
       <div data-motion-live="">

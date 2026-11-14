@@ -190,7 +190,9 @@ def listening_layer(project_root: Path, music_track: Callable[[str], Path | None
     # Hỏi sổ theo từng chương suốt cả cuốn (căn chữ, chữ đọc theo, audio): giữ một kết nối mở cho mỗi lần mở sổ rẻ.
     with store.held_open(project_root):
         book = _packaged_book(project_root)
-        files: dict[str, Path | bytes] = {"cast.json": json_bytes(book_edits.shared_cast(store.recorded_cast(project_root)))}
+        from ..cast_operations import with_history
+
+        files: dict[str, Path | bytes] = {"cast.json": json_bytes(with_history(project_root, book_edits.shared_cast(store.recorded_cast(project_root))))}
         # Bằng chứng máy chỉ gồm số đo trên MP3; đi theo cuốn, không thêm bước người nghe.
         level_report = Path(project_root) / "output" / "reports" / "levelQa.json"
         if level_report.is_file():

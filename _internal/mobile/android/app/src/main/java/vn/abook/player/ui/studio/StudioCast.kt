@@ -41,7 +41,10 @@ data class CastNarrator(val voice: String, val lines: Int, val seconds: Double, 
 
 /** Lời đáp của `GET /api/books/<id>/cast`: người kể, nhân vật chính, vai phụ, và dàn mang từ phần trước. */
 @Immutable
-data class Cast(val narrator: CastNarrator, val characters: List<CastMember>, val extras: List<CastMember>, val carried: List<CastMember>)
+data class Cast(val narrator: CastNarrator, val characters: List<CastMember>, val extras: List<CastMember>, val carried: List<CastMember>, val history: List<CastHistoryItem> = emptyList())
+
+@Immutable
+data class CastHistoryItem(val operationId: String, val source: String, val target: String, val lines: Int, val conflicts: Int, val state: String, val aliasConflicts: Int = 0)
 
 /** Nhân vật mà bảng giọng đang mở cho. */
 @Immutable
@@ -143,6 +146,9 @@ internal object StudioCastJson {
             characters = json.optJSONArray("characters").objects().map(::member),
             extras = json.optJSONArray("extras").objects().map(::member),
             carried = json.optJSONArray("carried").objects().map(::member),
+            history = json.optJSONObject("castHistory")?.optJSONArray("items").objects().map {
+                CastHistoryItem(it.text("operationId"), it.text("source"), it.text("target"), it.optInt("lines"), it.optInt("conflicts"), it.text("state"), it.optInt("aliasConflicts"))
+            },
         )
     }
 

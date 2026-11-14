@@ -1,4 +1,5 @@
 module ABook
+CastHistory 1.0 ../../../../qml/CastHistory.qml
 WindowMode 1.0 ../../../../qml/WindowMode.qml
 MiniPlayer 1.0 ../../../../qml/MiniPlayer.qml
 TrayMenuModel 1.0 ../../../../qml/TrayMenuModel.qml

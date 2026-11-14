@@ -38,7 +38,7 @@ from pathlib import Path, PureWindowsPath
 from typing import Any, Callable, Iterable, Iterator, Protocol
 from urllib.parse import parse_qs, quote, unquote, urlsplit
 
-from .. import aliases, bracket_rule, continuation, importers, listener_overrides, power_source
+from .. import aliases, bracket_rule, cast_operations, continuation, importers, listener_overrides, power_source
 from ..io_utils import FileLockUnavailable, atomic_write_bytes, atomic_write_json, file_lock, project_write_lock
 from ..readaloud import azure as readaloud_azure
 from ..readaloud import keys as readaloud_keys
@@ -4156,7 +4156,7 @@ def _serialized_per_book(method: Callable[..., None]) -> Callable[..., None]:
         except ApiError:
             method(self, query, value, *rest)
             return
-        with project_write_lock(path):
+        with listener_overrides.edit_turn(path):
             try:
                 book_wishes.guard_overrides(path)
             except notices.Unreadable as error:
@@ -4661,7 +4661,7 @@ class Handler(BaseHTTPRequestHandler):
             requested_at = float(body.get("requestedAt") or 0)
         except (TypeError, ValueError):
             requested_at = 0.0
-        if section not in ("pronunciations", "speakers", "lines", "voices", "retakes") or not key or requested_at <= 0:
+        if section not in ("pronunciations", "speakers", "lines", "voices", "retakes", "cast_undos") or not key or requested_at <= 0:
             raise ApiError(HTTPStatus.BAD_REQUEST, "Thiếu thay đổi cần bỏ")
         group = ([str(item) for item in body.get("keys") or [] if isinstance(item, str)][:5000]
                  if section in store.BY_CLICK else [])
@@ -4714,6 +4714,19 @@ class Handler(BaseHTTPRequestHandler):
         target = str(body.get("into", "")).strip()[:200]
         if not source or not target or aliases.key(source) == aliases.key(target):
             raise ApiError(HTTPStatus.BAD_REQUEST, "Chọn hai người khác nhau")
+        operation = body.get("operationId")
+        if operation is not None:
+            try:
+                cast_operations.operation_id(operation)
+            except ValueError as error:
+                raise ApiError(HTTPStatus.BAD_REQUEST, "Mã thao tác không hợp lệ") from error
+            previous = (listener_overrides.read_overrides(path).get("cast_operations") or {}).get(operation)
+            if previous:
+                intent = previous["intent"]
+                if intent.get("source") != source or intent.get("target") != target:
+                    raise ApiError(HTTPStatus.CONFLICT, "Mã thao tác đã dùng cho lựa chọn khác")
+                self._send_json(HTTPStatus.OK, {"lines": len(intent["lines"]), "requestedAt": previous["requested_at"], "operationId": operation})
+                return
         if packages.is_package(path):
             # Cuốn không có xưởng: mọi câu nói của người này thành ý muốn "là lời của người kia" + bí danh, chờ Studio.
             index, cast = book_wishes.Lines(path), book_wishes.people(path)
@@ -4724,8 +4737,7 @@ class Handler(BaseHTTPRequestHandler):
             if problem is not None:
                 raise ApiError(HTTPStatus.BAD_REQUEST, SPEAKER_PROBLEMS.get(problem, "Không gộp được vào người này"))
             now = self.app.request_stamp()
-            book_wishes.request_speakers(path, found, target, now=now)
-            book_wishes.request_alias(path, source, target, now=now)
+            book_wishes.request_merge(path, found, source, target, now=now)
             self._send_json(HTTPStatus.OK, {"lines": len(found), "requestedAt": now})
             return
         with closing(store.connect(path)) as connection:
@@ -4741,9 +4753,9 @@ class Handler(BaseHTTPRequestHandler):
         if problem is not None:
             raise ApiError(HTTPStatus.BAD_REQUEST, SPEAKER_PROBLEMS.get(problem, "Không gộp được vào người này"))
         now = self.app.request_stamp()
-        listener_overrides.request_speakers(path, lines, target, now=now)
-        aliases.add(path, source, target, now=now)
-        self._send_json(HTTPStatus.OK, {"lines": len(lines), "requestedAt": now})
+        op = cast_operations.request_batch(path, lines, target, now=now, source=source,
+                                            op=body.get("operationId"))
+        self._send_json(HTTPStatus.OK, {"lines": len(lines), "requestedAt": now, "operationId": op})
 
     def _checked_name(self, path: Path, raw: Any, *, mine: str = "", allow_empty: bool = False) -> str:
         """Tên người nghe gõ cho một người (đổi tên, "Người mới…") sau phép kiểm của name_rules; `mine` = người đang được đổi tên (không tính là "người khác")."""
@@ -4812,7 +4824,30 @@ class Handler(BaseHTTPRequestHandler):
 
     def get_cast(self, _query: dict[str, list[str]], value: str) -> None:
         path = self.app._listenable(value)
-        self._send_json(HTTPStatus.OK, packages.cast(path) if packages.is_package(path) else store.cast(path))
+        cast = packages.cast(path) if packages.is_package(path) else store.cast(path)
+        history = cast_operations.history(path, package=packages.is_package(path))
+        if history["items"]:
+            cast["castHistory"] = history
+        self._send_json(HTTPStatus.OK, cast)
+
+    def get_cast_history(self, _query: dict[str, list[str]], value: str) -> None:
+        path = self.app._listenable(value)
+        self._send_json(HTTPStatus.OK, cast_operations.history(path, package=packages.is_package(path)))
+
+    @_serialized_per_book
+    def post_cast_undo(self, _query: dict[str, list[str]], value: str) -> None:
+        self.app._mutating()
+        path = self.app._editable(value)
+        original = str(self._body().get("operationId") or "")
+        history = cast_operations.history(path, package=packages.is_package(path))
+        if not any(item["operationId"] == original for item in history["items"]):
+            raise ApiError(HTTPStatus.CONFLICT, "Không có trạng thái trước; hãy tách thủ công.")
+        now = self.app.request_stamp()
+        if packages.is_package(path):
+            op = book_wishes.request_cast_undo(path, original, now=now)
+        else:
+            op = cast_operations.request_undo(path, original, now=now)
+        self._send_json(HTTPStatus.OK, {"operationId": op, "state": "pending"})
 
     def get_activity(self, query: dict[str, list[str]], value: str) -> None:
         technical = (query.get("technical") or ["0"])[0] == "1"
@@ -5903,18 +5938,26 @@ class Handler(BaseHTTPRequestHandler):
         # Khác với điều thật sự đang ghi thì báo lại để người nghe biết mình vừa ghi đè (soát UX a23 B19) - vẫn ghi, không bao giờ chặn.
         elsewhere = self._edited_elsewhere(path, lines, body.get("seen"))
         if package:
-            book_wishes.request_speakers(path, lines, speaker, now=now, new_gender=new_gender)
             alias = str(body.get("alias", "") or "").strip()[:200]
-            remembered = bool(alias) and book_wishes.request_alias(path, alias, speaker, now=now)
+            if alias:
+                book_wishes.request_merge(path, lines, alias, speaker, now=now, new_gender=new_gender)
+            else:
+                book_wishes.request_speakers(path, lines, speaker, now=now, new_gender=new_gender)
+            remembered = bool(alias)
             # `elsewhere` chỉ khi lệch: lời đáp thường giữ đúng hợp đồng với LocalStudio của điện thoại (test_book_edits).
             self._send_json(HTTPStatus.OK, {"lines": len(lines), "speaker": speaker, "new": bool(new_gender),
                                             "alias": remembered, "requestedAt": now, **({"elsewhere": elsewhere} if elsewhere else {})})
             return
-        listener_overrides.request_speakers(path, lines, speaker, now=now, new_gender=new_gender)
+        alias = str(body.get("alias", "") or "").strip()[:200]
+        if len(lines) > 1 or alias:
+            cast_operations.request_batch(path, lines, speaker, now=now, source=alias, new_gender=new_gender,
+                                           op=body.get("operationId"))
+        else:
+            listener_overrides.request_speakers(path, lines, speaker, now=now, new_gender=new_gender)
         # Thẻ "Một người hai tên": ngoài các câu này, ghi luôn cấp TÊN (aliases.py) - phần sau của cuốn tự hiểu.
         alias = str(body.get("alias", "") or "").strip()[:200]
         # Cùng mốc với các câu: hoàn tác lần bấm (`_withdraw`) bỏ luôn bí danh ghi đúng mốc ấy.
-        remembered = bool(alias) and aliases.add(path, alias, speaker, now=now)
+        remembered = bool(alias)
         # Thẻ 『』 với phạm vi "Cả cuốn": quy ước của cuốn (bracket_rule.py) - các phần sau tự áp trước khi phân vai.
         if body.get("bracketRule"):
             remembered = bracket_rule.save(path, speaker) or remembered
@@ -7280,6 +7323,8 @@ ROUTES: list[Route] = [
     ("POST", re.compile(r"/api/dialog/files"), Handler.post_pick_files),
     ("GET", re.compile(BOOK), Handler.get_book),
     ("GET", re.compile(BOOK + r"/cast"), Handler.get_cast),
+    ("GET", re.compile(BOOK + r"/cast-history"), Handler.get_cast_history),
+    ("POST", re.compile(BOOK + r"/cast-history/undo"), Handler.post_cast_undo),
     ("GET", re.compile(BOOK + r"/activity"), Handler.get_activity),
     ("GET", re.compile(BOOK + r"/pending-changes"), Handler.get_pending_changes),
     ("GET", re.compile(BOOK + r"/wishes"), Handler.get_wishes),

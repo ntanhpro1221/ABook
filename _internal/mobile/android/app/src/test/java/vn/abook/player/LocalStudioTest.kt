@@ -64,6 +64,27 @@ class LocalStudioTest {
 
     private fun call(method: String, suffix: String, body: JSONObject? = null) = LocalStudio.handle(method, "/api/books/$id$suffix", body)
 
+    @Test fun cast_history_route_persists_the_shared_undo_reference_once() {
+        val fixture = JSONObject(File("../../../tests/fixtures/cast_history.json").readText())
+        val file = File(dir, "cast.json")
+        val cast = JSONObject(file.readText()).put("castHistory", fixture.getJSONObject("history"))
+        file.writeText(cast.toString())
+        val originalBytes = file.readBytes()
+        val original = fixture.getString("original")
+        repeat(2) {
+            val (status, answer) = call("POST", "/cast-history/undo", JSONObject().put("operationId", original))
+            assertEquals(200, status)
+            assertEquals(fixture.getString("undoId"), (answer as JSONObject).getString("operationId"))
+        }
+        val entries = BookEdits.load(dir).getJSONObject("wishes").getJSONObject("cast_undos")
+        assertEquals(1, entries.length())
+        assertEquals(original, entries.getJSONObject(fixture.getString("undoId")).getString("original"))
+        val (status, answer) = call("GET", "/cast-history")
+        assertEquals(200, status)
+        assertEquals("pending", (answer as JSONObject).getJSONArray("items").getJSONObject(0).getString("state"))
+        assertArrayEquals(originalBytes, file.readBytes())
+    }
+
     private fun withoutVolatile(value: Any?, volatile: Set<String>): Any? = when (value) {
         is JSONObject -> JSONObject().also { out ->
             for (key in value.keys().asSequence().toList()) if (key !in volatile) out.put(key, withoutVolatile(value.opt(key), volatile))

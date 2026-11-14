@@ -71,6 +71,18 @@ Item {
         Column {
             id: column
             width: flick.width
+            Collapse {
+                width: parent.width
+                open: root.status === "ready" && (root.hasPeople || (root.cast && root.cast.castHistory && root.cast.castHistory.items.length > 0))
+                CastHistory {
+                    width: parent.width
+                    bookId: root.bookId
+                    history: root.cast && root.cast.castHistory ? root.cast.castHistory : ({items: []})
+                    store: root.store
+                    editable: root.caps.merge || root.caps.unmerge || false
+                    onChanged: root.load()
+                }
+            }
             // Đang tải: khung chờ đúng hình danh sách, nhịp mờ 0,6 <-> 1
             Collapse {
                 width: parent.width

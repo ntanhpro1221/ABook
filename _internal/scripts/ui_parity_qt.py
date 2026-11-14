@@ -62,6 +62,7 @@ QML_SKIP = {"BenchScenario.qml"}
 
 # Màn: (tên, file QML, nguồn web). Nguồn web = (file, tên hàm / hằng cấp trên cùng) - None là cả file.
 SCREENS: list[tuple[str, tuple[str, ...], tuple[tuple[str, tuple[str, ...] | None], ...]]] = [
+    ("Lịch sử phân vai", ("CastHistory.qml",), (("studio/CastHistory.tsx", None),)),
     ("Âm thanh", ("AudioFxPanel.qml", "AudioFxSlider.qml", "TonePage.qml"), (("listen/AudioFxPanel.tsx", None), ("listen/audioFx.ts", None), ("listen/TonePage.tsx", None))),
     ("Khay và cửa sổ mini", ("DesktopTray.qml", "TrayMenuModel.qml", "WindowMode.qml", "MiniPlayer.qml"), ()),
     ("Nhạc", ("MusicScreen.qml", "MusicTrackRow.qml", "MusicTrackDetail.qml", "MusicBookSection.qml", "MusicOpenRow.qml", "MusicLibraryLogic.js"),
@@ -1046,6 +1047,11 @@ def section_g(found, problems) -> list[str]:
 # These are operation contracts, not nearest-word matches from section a.
 # A native OS mini window has no browser counterpart; Qt and Android do.
 ACTION_CONTRACTS = (
+    *(("cast-history-" + str(index), label,
+       (("Web", "ui/src/studio/CastHistory.tsx", ""), ("Qt", "desktop_qt/qml/CastHistory.qml", ""),
+        ("Android", up.NATIVE_ROOT + "studio/CastHistoryPanel.kt", "")))
+      for index, label in enumerate(("Lịch sử", "Hoàn tác", "Chờ áp dụng", "Đã hoàn tác",
+                                     "Không có trạng thái trước; hãy tách thủ công.", "Giọng đọc chưa đổi; chờ thu lại."))),
     ("record-create", "Tạo và nghe", (("Qt", "desktop_qt/qml/RecordLogic.js", ""), ("Web", "ui/src/listen/BookScreen.tsx", ""), ("Android", up.NATIVE_ROOT + "data/ListenExtras.kt", ""))),
     ("record-delete", "Xoá hồ sơ", (("Qt", "desktop_qt/qml/RecordLogic.js", ""), ("Web", "ui/src/listen/BookScreen.tsx", ""), ("Android", up.NATIVE_ROOT + "data/ListenExtras.kt", ""))),
     ("record-move", "Chuyển", (("Qt", "desktop_qt/qml/RecordLogic.js", ""), ("Web", "ui/src/listen/BookScreen.tsx", ""), ("Android", up.NATIVE_ROOT + "data/ListenExtras.kt", ""))),

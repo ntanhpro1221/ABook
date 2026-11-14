@@ -350,7 +350,13 @@ export interface CastMember {
   mergedAt?: number | null;
 }
 
+export interface CastHistoryView {
+  items: { operationId: string; source: string; target: string; lines: number; conflicts: number; aliasConflicts?: number; state: "applied" | "pending" | "undone" }[];
+  manualOnly: boolean;
+}
+
 export interface Cast {
+  castHistory?: CastHistoryView;
   /** `pendingVoice`: giọng người kể người nghe đã chọn ở Studio mà dây chuyền chưa áp (store.cast). */
   narrator: { chapterVoices?: string[]; voice: string; lines: number; seconds: number; pendingVoice?: { preset: string; label?: string; gender: string } | null; /** Câu kể chờ thu lại theo sửa của người nghe. */ redo?: number };
   characters: CastMember[];

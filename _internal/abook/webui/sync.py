@@ -908,7 +908,9 @@ class SyncApp:
         if not store.is_project(project_root):
             return package_share.resolve_file(project_root, relative)
         if relative == "cast.json":
-            return json.dumps(book_edits.shared_cast(store.recorded_cast(project_root)), ensure_ascii=False).encode("utf-8")
+            from ..cast_operations import with_history
+
+            return json.dumps(with_history(project_root, book_edits.shared_cast(store.recorded_cast(project_root))), ensure_ascii=False).encode("utf-8")
         if relative == covers.COVER_FILE:
             return covers.cover_file(project_root)
         match = re.fullmatch(r"scripts/(\d+)\.json", relative)

@@ -197,7 +197,20 @@ object LocalStudio {
             "POST" to "/voice" -> ::voice
             "POST" to "/review" -> ::review
             "DELETE" to "/edits" -> { dir, _ -> BookEdits.clear(dir); JSONObject().put("applied", 0).put("waiting", 0) }
-            "GET" to "/cast" -> { dir, _ -> BookEdits.cast(dir, BookEdits.rawBook(dir)) }
+            "GET" to "/cast" -> { dir, _ ->
+                val cast = BookEdits.cast(dir, BookEdits.rawBook(dir))
+                val history = CastHistory.view(dir)
+                if ((history.optJSONArray("items")?.length() ?: 0) > 0) cast.put("castHistory", history)
+                cast
+            }
+            "GET" to "/cast-history" -> { dir, _ -> CastHistory.view(dir) }
+            "POST" to "/cast-history/undo" -> { dir, body ->
+                val original = field(body, "operationId")
+                val items = CastHistory.view(dir).optJSONArray("items") ?: JSONArray()
+                if ((0 until items.length()).none { items.optJSONObject(it)?.optString("operationId") == original }) throw Api(409, S.s_cast_history_manual)
+                val id = BookWishes.requestCastUndo(dir, original, now())
+                JSONObject().put("operationId", id).put("state", "pending")
+            }
             // Bản chụp chỉ đọc của xưởng trong file dự án (ProjectDocument.view, project_views.py): cùng JSON với đường của Studio.
             "GET" to "/work" -> { dir, _ -> projectView(dir, "work") }
             "GET" to "/casting" -> { dir, _ -> PackageScriptView.contents(dir) }
@@ -612,9 +625,10 @@ object LocalStudio {
         val at = now()
         // Máy/cửa sổ khác vừa sửa chính câu này khác điều giao diện đã thấy (`seen`): vẫn ghi, báo lại - chỉ khi lệch (server `_edited_elsewhere`).
         val elsewhere = speakerElsewhere(dir, lines, body.opt("seen"))
-        BookWishes.requestSpeakers(dir, lines, person, at, newGender)
         val alias = clip(orText(body, "alias"), 200)
-        val remembered = alias.isNotEmpty() && BookWishes.requestAlias(dir, alias, person, at)
+        if (alias.isNotEmpty()) BookWishes.requestMerge(dir, lines, alias, person, at, newGender)
+        else BookWishes.requestSpeakers(dir, lines, person, at, newGender)
+        val remembered = alias.isNotEmpty()
         return withElsewhere(JSONObject().put("lines", lines.size).put("speaker", person).put("new", newGender.isNotEmpty())
             .put("alias", remembered).put("requestedAt", at), elsewhere)
     }
@@ -767,8 +781,7 @@ object LocalStudio {
         val problem = BookWishes.speakerProblem(index, cast, found[0].first, found[0].second, target)
         if (problem != null) throw Api(400, SPEAKER_PROBLEMS[problem] ?: S.s_chua_gop_duoc_vao_nguoi_nay_287693ea)
         val at = now()
-        BookWishes.requestSpeakers(dir, found, target, at)
-        BookWishes.requestAlias(dir, source, target, at)
+        BookWishes.requestMerge(dir, found, source, target, at)
         return JSONObject().put("lines", found.size).put("requestedAt", at)
     }
 

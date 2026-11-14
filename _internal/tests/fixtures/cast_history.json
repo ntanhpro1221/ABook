@@ -1,0 +1,15 @@
+{
+  "original": "12345678123456781234567812345678",
+  "undoId": "a78fde3a88195147bfacc97d30d5766a",
+  "history": {
+    "items": [
+      {"operationId": "12345678123456781234567812345678", "source": "AN", "target": "MAI", "lines": 2, "conflicts": 0, "state": "applied"}
+    ],
+    "manualOnly": false
+  },
+  "wishes": {
+    "cast_undos": {
+      "a78fde3a88195147bfacc97d30d5766a": {"original": "12345678123456781234567812345678", "requested_at": 50.0}
+    }
+  }
+}

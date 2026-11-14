@@ -859,7 +859,7 @@ def pending_changes(project_root: Path, since: float) -> int:
     data = read_overrides(project_root)
     receipts = receipts_of(project_root)
     fresh: dict[str, dict[str, Any]] = {}
-    for section in ("pronunciations", "speakers", "lines", "voices", "retakes"):
+    for section in ("pronunciations", "speakers", "lines", "voices", "retakes", "cast_undos"):
         entries = data.get(section)
         chosen: dict[str, Any] = {}
         for key, entry in (entries.items() if isinstance(entries, dict) else ()):
@@ -1008,7 +1008,7 @@ def pending_details(project_root: Path, since: float) -> dict[str, Any]:
     data = read_overrides(project_root)
     receipts = receipts_of(project_root)
     fresh: dict[str, dict[str, Any]] = {}
-    for section in ("pronunciations", "speakers", "lines", "voices", "retakes"):
+    for section in ("pronunciations", "speakers", "lines", "voices", "retakes", "cast_undos"):
         entries = data.get(section)
         fresh[section] = {
             str(key): entry for key, entry in (entries.items() if isinstance(entries, dict) else ())
@@ -1034,6 +1034,9 @@ def pending_details(project_root: Path, since: float) -> dict[str, Any]:
 
     def who(raw: Any) -> str:
         return person_label(project_root, raw)
+
+    for key, entry in fresh["cast_undos"].items():
+        items.append({"kind": "speaker", "label": "Hoàn tác phân vai", "lines": 0, **handle("cast_undos", key, entry)})
 
     with closing(connect(project_root)) as connection:
         rows = connection.execute(

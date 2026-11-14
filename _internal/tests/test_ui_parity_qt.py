@@ -35,6 +35,19 @@ def test_ui_parity_qt_doc_uses_lf_and_keeps_markers():
     assert text.count(tool.BEGIN) == 1 and text.count(tool.END) == 1
 
 
+@pytest.mark.parametrize("side", ["Web", "Qt", "Android"])
+def test_cast_history_copy_drift_fails_even_after_report_regeneration(side):
+    tool = _tool()
+    scans = {"Web": tool.web_scan(), "Qt": tool.qt_scan(), "Android": tool.up.native_scan()}
+    scan = scans[side]
+    file = {"Web": "ui/src/studio/CastHistory.tsx", "Qt": "desktop_qt/qml/CastHistory.qml",
+            "Android": tool.up.NATIVE_ROOT + "studio/CastHistoryPanel.kt"}[side]
+    assert any(item.file == file and item.text == "Hoàn tác" for item in scan.items)
+    scan.items = [replace(item, text="Sai nhãn") if item.file == file and item.text == "Hoàn tác" else item for item in scan.items]
+    findings = tool.action_findings(scans["Web"], scans["Qt"], scans["Android"])
+    assert any("cast-history" in finding and side in finding for finding in findings)
+
+
 def test_qt_end_ellipsis_is_a_hard_rule_even_for_status_and_placeholder_copy():
     tool = _tool()
     qt = tool.QtScan()

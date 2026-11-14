@@ -39,10 +39,10 @@ from ..io_utils import atomic_write_json, project_write_lock
 from . import book_edits, humanize, notices, store
 from .book_edits import EditsError
 
-SECTIONS = ("pronunciations", "speakers", "lines", "voices", "retakes")
+SECTIONS = ("pronunciations", "speakers", "lines", "voices", "retakes", "cast_undos")
 ALIASES = "aliases"
 BY_CLICK = store.BY_CLICK  # speakers, retakes: một lần bấm ghi nhiều câu cùng một `requested_at` = một thay đổi
-MAX_ENTRIES = {"pronunciations": 2000, "speakers": 5000, "lines": 2000, "voices": 2000, "retakes": 5000, ALIASES: 2000}
+MAX_ENTRIES = {"pronunciations": 2000, "speakers": 5000, "lines": 2000, "voices": 2000, "retakes": 5000, "cast_undos": 2000, ALIASES: 2000}
 SURFACE_MAX = 80
 SPOKEN_FORM_MAX = 120
 SPEAKER_MAX = 200
@@ -58,6 +58,7 @@ _ENTRY_KEYS = {
     "lines": {"text_sha256", "kind", "emotion", "intensity", "spoken", "requested_at"},
     "voices": {"preset", "gender", "avoid", "requested_at"},
     "retakes": {"text_sha256", "requested_at", "operation_id"},
+    "cast_undos": {"original", "requested_at"},
 }
 _REPLACEABLE = {"pronunciations", "speakers", "voices"}  # các mục `_replacing` của listener_overrides giữ mong muốn cũ
 
@@ -68,6 +69,7 @@ _BAD_ENTRY = {
     "lines": "Một ý muốn về cách đọc câu trong phần sửa không hợp lệ.",
     "voices": "Một ý muốn về giọng nhân vật trong phần sửa không hợp lệ.",
     "retakes": "Một ý muốn thu lại câu trong phần sửa không hợp lệ.",
+    "cast_undos": "Một ý muốn hoàn tác trong phần sửa không hợp lệ.",
     ALIASES: "Một ý muốn gộp tên trong phần sửa không hợp lệ.",
 }
 TOO_MANY = book_edits.TOO_BIG
@@ -101,7 +103,14 @@ def _entry(section: str, key: Any, entry: Any, *, nested: bool = False) -> dict[
     if requested_at is None:
         raise bad
     out["requested_at"] = requested_at
-    if section == "pronunciations":
+    if section == "cast_undos":
+        from ..cast_operations import ID, undo_id
+
+        original = entry.get("original")
+        if not isinstance(original, str) or not ID.fullmatch(original) or key != undo_id(original):
+            raise bad
+        out["original"] = original
+    elif section == "pronunciations":
         surface, spoken = entry.get("surface"), entry.get("spoken_form")
         if not _text(surface, SURFACE_MAX) or len(surface.split()) != 1 or not _text(spoken, SPOKEN_FORM_MAX):
             raise bad
@@ -216,7 +225,7 @@ def count(wishes: dict[str, Any] | None) -> int:
     bấm (gán người nói cả nhóm, gộp tên, thu lại cả chương) tính là MỘT. Bí danh đi theo lần gộp nên không đếm riêng."""
     wishes = wishes or {}
     return (len(wishes.get("pronunciations") or {}) + len(wishes.get("lines") or {}) + len(wishes.get("voices") or {})
-            + _clicks(wishes.get("speakers")) + _clicks(wishes.get("retakes")))
+            + _clicks(wishes.get("speakers")) + _clicks(wishes.get("retakes")) + len(wishes.get("cast_undos") or {}))
 
 
 def fits(wishes: dict[str, Any]) -> bool:
@@ -515,6 +524,12 @@ def request_speakers(folder: Path, lines: list[tuple[str, str]], speaker: str, *
     _change(folder, lambda scratch: overrides.request_speakers(scratch, lines, speaker, now=now, new_gender=new_gender))
 
 
+def request_merge(folder: Path, lines: list[tuple[str, str]], source: str, target: str, *, now: float, new_gender: str = "") -> None:
+    source, target = book_edits.clean_text(source, SPEAKER_MAX), book_edits.clean_text(target, SPEAKER_MAX)
+    _change(folder, lambda scratch: overrides.request_speakers(scratch, lines, target, now=now, new_gender=new_gender),
+            aliases=lambda entries: alias_book.decide(entries, source, target, float(now)) or entries)
+
+
 def request_line(folder: Path, stable_id: str, text_sha256: str, *, kind: str = "", emotion: str = "",
                  intensity: int | None = None, speaker: str = "", spoken: str | None = None, now: float) -> None:
     speaker = book_edits.clean_text(speaker, SPEAKER_MAX)
@@ -559,6 +574,20 @@ def request_alias(folder: Path, alias: str, person: str, *, now: float) -> bool:
 
     _change(folder, lambda scratch: None, aliases=keep)
     return bool(wrote)
+
+
+def request_cast_undo(folder: Path, original: str, *, now: float) -> str:
+    from ..cast_operations import undo_id
+
+    op = undo_id(original)
+
+    def request(scratch: Path) -> None:
+        data = overrides.read_overrides(scratch)
+        data.setdefault("cast_undos", {}).setdefault(op, {"original": original, "requested_at": float(now)})
+        overrides._write(scratch, data)
+
+    _change(folder, request)
+    return op
 
 
 def made_at(folder: Path, section: str, keys: list[str], requested_at: float) -> dict[str, dict[str, Any]]:
@@ -686,6 +715,8 @@ def pending_details(folder: Path, wishes: dict[str, Any] | None) -> dict[str, An
         return {"section": section, "key": key, "requestedAt": float(entry.get("requested_at") or 0), **({"from": sender} if sender else {})}
 
     items: list[dict[str, Any]] = []
+    for key, entry in sorted((wishes.get("cast_undos") or {}).items()):
+        items.append({"kind": "speaker", "label": "Hoàn tác phân vai", "lines": 0, **handle("cast_undos", key, entry)})
     for key in sorted(wishes.get("pronunciations") or {}):
         entry = wishes["pronunciations"][key]
         items.append({"kind": "pronunciation", "label": store.label_pronunciation(entry["surface"], entry["spoken_form"]),
@@ -826,8 +857,19 @@ def _fold(project: Path, wishes: dict[str, Any], *, now: float, dropped: list[tu
             continue
         groups.setdefault((entry["requested_at"], entry["speaker"], new_gender), []).append((stable_id, entry["text_sha256"]))
         requests += 1
+    handled_aliases: set[float] = set()
     for (at, speaker, new_gender), members in groups.items():
-        overrides.request_speakers(project, members, speaker, now=stamps[at], new_gender=new_gender)
+        alias = next((item["alias"] for item in wishes.get(ALIASES) or []
+                      if item["at"] == at and alias_book.key(item["person"]) == alias_book.key(speaker)), "")
+        if len(members) > 1 or alias:
+            from .. import cast_operations
+
+            cast_operations.request_batch(project, members, speaker, now=stamps[at], source=alias, new_gender=new_gender,
+                                          op=cast_operations.import_id([at, speaker, new_gender, sorted(members), alias]))
+            if alias:
+                handled_aliases.add(at)
+        else:
+            overrides.request_speakers(project, members, speaker, now=stamps[at], new_gender=new_gender)
     for key in sorted(wishes.get("voices") or {}):
         entry = wishes["voices"][key]
         if store.voice_request_problem(project, key, preset=entry["preset"], gender=entry["gender"], avoid=entry["avoid"]) is not None:
@@ -842,7 +884,21 @@ def _fold(project: Path, wishes: dict[str, Any], *, now: float, dropped: list[tu
     requests += asked
     skipped += missed
     for item in sorted(wishes.get(ALIASES) or [], key=lambda item: item["at"]):
+        if item["at"] in handled_aliases:
+            continue
         alias_book.add(project, item["alias"], item["person"], now=stamps[item["at"]])
+    from .. import cast_operations
+
+    known = cast_operations.history(project)
+    proven = {item["operationId"] for item in known["items"]}
+    for key, entry in (wishes.get("cast_undos") or {}).items():
+        if entry["original"] not in proven:
+            skipped += 1
+            if dropped is not None:
+                dropped.append(("cast_undos", key))
+            continue
+        cast_operations.request_undo(project, entry["original"], now=stamps[entry["requested_at"]])
+        requests += 1
     return {"requests": requests, "skipped": skipped}
 
 

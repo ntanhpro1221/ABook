@@ -416,6 +416,13 @@ giữ tên trong cột tối đa 640 px, thanh tua dùng phần rộng còn lạ
 - Đọc SQLite chỉ đọc; UI ghi trạng thái mong muốn. Worker áp qua recovery ở ranh giới an toàn, chỉ thu lại câu bị đổi;
   không chờ người duyệt, không sửa văn bản truyện. Hai story gallery: `desktop/studio-work-role`, `desktop/studio-work-caller`.
 
+### Lịch sử phân vai
+
+- Tab Nhân vật có khối **Lịch sử**, dùng Fold chung trên web, Qt và Android. Nút **Hoàn tác** là nút chữ, không icon; dùng bo góc và chuyển động của điều khiển chung.
+- Mỗi hàng ghi trước → sau và số câu. Undo ghi yêu cầu mới, hiện **Chờ áp dụng** cùng câu **Giọng đọc chưa đổi; chờ thu lại.** Khi worker đã xử lý, hiện **Đã hoàn tác** và số câu/bí danh xung đột nếu có. Không ghi đè quyết định mới để đạt đủ số câu.
+- Không có before-state được chứng thực thì chỉ hướng dẫn tách thủ công. Lịch sử không phụ thuộc thông báo hoàn tác ngắn hạn; đóng/mở vẫn xem và yêu cầu được. Từ tab Nhân vật, mở Lịch sử rồi Hoàn tác là hai thao tác.
+- Chuỗi ở `ui_strings/vi.json`; cặp `cast-history` của máy dò web/Android không có ngoại lệ, máy dò Qt giữ nhãn chuẩn của cả ba nền.
+
 ## 8. Kiểm trước khi gộp một thay đổi giao diện
 
 Hồ sơ UI165: xem [review theo thao tác](UI_PARITY_TRIAGE.md). Các cặp gần chữ trong bảng parity là ứng viên; chỉ so nhãn khi đã xác định cùng control, hành động và trạng thái. Không dùng nhãn thông báo thay nhãn nút, hay lỗi tải thay lỗi dừng. Máy dò Qt có luật cứng cho tạo/xoá/chuyển hồ sơ nghe và mini Qt/Android; đối chứng đổi chữ, đổi icon hoặc mất control phải đỏ. Khác biệt web trình duyệt với cửa sổ mini hệ điều hành phải có lý do khả năng nền tảng, không viện dẫn shell Tauri đã bỏ.
