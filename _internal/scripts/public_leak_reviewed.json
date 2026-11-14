@@ -32,8 +32,8 @@
     "reason": "README.md: all flagged strings match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
   },
   "_internal/AGENTS.md": {
-    "sha256": "471aa78ddda73f1c853f7d555927dc1a2f85d840cb43439b1c4cf9abfba2a4b0",
-    "reason": "Developer workflow instructions covering containment, production boundaries and quality gates."
+    "sha256": "5b7d260641aa2aaabd2d6b6113b3502619919b442a7fe5faaae5c1d1a00f9d86",
+    "reason": "Developer workflow instructions covering containment, production boundaries and quality gates. Re-pinned for 0.4.169: its added lines were reviewed as engineering text, no story or phoneme strings."
   },
   "_internal/abook/aliases.py": {
     "sha256": "850df951a2c98e937583208b9c0c066721edc5a3c94bd82db3efd44a474345ff",
@@ -44,20 +44,20 @@
     "reason": "abook/analysis.py: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
   },
   "_internal/abook/asr.py": {
-    "sha256": "98ca81ab9aef886d045c8efb051fc21b7fb9e354352c5dc01242377a33ada32e",
-    "reason": "abook/asr.py: all flagged strings match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
+    "sha256": "b08e03078e19604c6f669b77672d405f8a2ef73d4d2d2df8ffee1824e064f4ee",
+    "reason": "abook/asr.py: all flagged strings match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data. Re-pinned for 0.4.169: its added lines were reviewed as engineering text, no story or phoneme strings."
   },
   "_internal/abook/assets/word_break_tokenizer.json.gz": {
     "sha256": "3263ec198258ac089428b68f53069340ed2ad88af60b82068c5d9ad9036d2bec",
     "reason": "abook/assets/word_break_tokenizer.json.gz: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
   },
   "_internal/abook/audio_io.py": {
-    "sha256": "410da8457b7a2fe4f71e7f059bbaf7046730ef7f170e7af0a413e916315715a9",
-    "reason": "abook/audio_io.py: all flagged strings match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
+    "sha256": "cfe5d8bc793d9cf9ae0d2457b6f11a5c4648efcd0cad716ab375ca6feab853e8",
+    "reason": "abook/audio_io.py: all flagged strings match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data. Re-pinned for 0.4.169: its added lines were reviewed as engineering text, no story or phoneme strings."
   },
   "_internal/abook/background_runner.py": {
-    "sha256": "f7c2c123d2cc256a2dfcebb041ee8ed0b34634339cd7368b7cb0e7e5262b4584",
-    "reason": "abook/background_runner.py: all flagged strings match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
+    "sha256": "5fa3396ec7ade5769dc46ae1941b1a371528f28b5978b23166e6543c6c1e3856",
+    "reason": "abook/background_runner.py: all flagged strings match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data. Re-pinned for 0.4.169: its added lines were reviewed as engineering text, no story or phoneme strings."
   },
   "_internal/abook/book_levels.py": {
     "sha256": "1445027731d11502150b8e8991918bab5cb2802d40c19283f6bb96e026e1c4a1",
@@ -80,8 +80,8 @@
     "reason": "abook/continuation.py: all flagged strings match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
   },
   "_internal/abook/database.py": {
-    "sha256": "8a443d9ed549db31ebb2be522cb0829058d81cb7fe33267be696251c76e17a30",
-    "reason": "abook/database.py: all flagged strings match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
+    "sha256": "7bc49a07005b50bff981bd19ae3ce4559fb5d7c73d1ab6168275a925a19937cc",
+    "reason": "abook/database.py: all flagged strings match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data. Re-pinned for 0.4.169: its added lines were reviewed as engineering text, no story or phoneme strings."
   },
   "_internal/abook/desktop.py": {
     "sha256": "9ff2ed0b209a47ef1ada5f086f4a3ec6082bf855e29d15da907361afb1e46934",
@@ -128,8 +128,8 @@
     "reason": "abook/netconnect.py: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
   },
   "_internal/abook/pipeline.py": {
-    "sha256": "d4f0d409fc7d5bc0cdc5dcce406950e500e632a4dea558ca57336d4d73d7137c",
-    "reason": "Pipeline path-validation docstring describing project containment before filesystem access."
+    "sha256": "1705f67f5cd7a81d8d0fc1f9a210348f30a11a44d9ebae5d3fdeeccc2fbde33d",
+    "reason": "Pipeline path-validation docstring describing project containment before filesystem access. Re-pinned for 0.4.169: its added lines were reviewed as engineering text, no story or phoneme strings."
   },
   "_internal/abook/power_source.py": {
     "sha256": "7ed6a8547664643593390f2821fb2a0103f6ddb7a15eba5ef088f645b0862645",
@@ -304,20 +304,20 @@
     "reason": "abook/teller_voice.py: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
   },
   "_internal/abook/text_processing.py": {
-    "sha256": "31ad93250dcd656dbfb2662b1bc734d25074f806ff6c97e24c2c860fb2de8016",
-    "reason": "abook/text_processing.py: all flagged documentation matches scrubbed 0.4.167; the added NFC operation changes source normalization, with no new narrative strings."
+    "sha256": "379603e72e67d6e5fbaf59945b088d0ddb2cc1b81ee0a7b92c0b16ed37ca1dd2",
+    "reason": "abook/text_processing.py: all flagged documentation matches scrubbed 0.4.167; the added NFC operation changes source normalization, with no new narrative strings. Re-pinned for 0.4.169: its added lines were reviewed as engineering text, no story or phoneme strings."
   },
   "_internal/abook/tts.py": {
-    "sha256": "c9504ddec4d673fb504ee44c0d82f94e275aadbea3445b8f9bd10f7cea6f5407",
-    "reason": "abook/tts.py: all flagged strings match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
+    "sha256": "c994a1516848a1cf5827f65e1e97f2743af1f4477d621ba0f7737dd65e133de5",
+    "reason": "abook/tts.py: all flagged strings match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data. Re-pinned for 0.4.169: its added lines were reviewed as engineering text, no story or phoneme strings."
   },
   "_internal/abook/vietnamese_syllable.py": {
     "sha256": "4f0da911f5c6494550dcb8284ac9d0b061877a52759cec844ce1a5e6cd7a528a",
     "reason": "abook/vietnamese_syllable.py: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
   },
   "_internal/abook/voice_balance.py": {
-    "sha256": "94743d53d73c35bed838c071df3eca027a1c33933d01eb5302b5821a4a8d3ac2",
-    "reason": "abook/voice_balance.py: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
+    "sha256": "e08ef2d03f433779620bdd32c3872a1193d7805d18199b47e871ba4fde0c67b2",
+    "reason": "abook/voice_balance.py: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data. Re-pinned for 0.4.169: its added lines were reviewed as engineering text, no story or phoneme strings."
   },
   "_internal/abook/webui/__main__.py": {
     "sha256": "1d4aac898212cda76d6609b380e74133b073d49261f0587957cfa34dbcbde26d",
@@ -596,8 +596,8 @@
     "reason": "abook/webui/route.py: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
   },
   "_internal/abook/webui/server.py": {
-    "sha256": "13f1080e492a370834684e0ebf8ace5f6e6d6a24cd63fda7ba181283d7bdc7f2",
-    "reason": "Server API docstrings for pairing confirmation, same-origin enforcement and uploaded source references."
+    "sha256": "5bc524c5d7ccf5cf03b429bac33fb34f51f16e2745d6c24d42ff6398a667d74d",
+    "reason": "Server API docstrings for pairing confirmation, same-origin enforcement and uploaded source references. Re-pinned for 0.4.169: its added lines were reviewed as engineering text, no story or phoneme strings."
   },
   "_internal/abook/webui/shared_readings.py": {
     "sha256": "99b69eb155d722b8a05db428ccf1adff2001a4936e9616437ccbf7edff97bd84",
@@ -748,8 +748,8 @@
     "reason": "desktop_qt/qml/StudioPanels.qml: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
   },
   "_internal/desktop_qt/qml/UiStrings.js": {
-    "sha256": "3eb2be22d7332cb291ea9523444574fbe1d270a71bb1be431ddad68b398c5607",
-    "reason": "desktop_qt/qml/UiStrings.js: all flagged strings match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
+    "sha256": "94a6d56b1dfd2b535ffc656ff6928cd4b0b853736352586abd8987096ae35e9d",
+    "reason": "desktop_qt/qml/UiStrings.js: all flagged strings match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data. Re-pinned for 0.4.169: its added lines were reviewed as engineering text, no story or phoneme strings."
   },
   "_internal/desktop_qt/qml/WorkStore.qml": {
     "sha256": "a9872325a1ce0998c74d889edd80e7ad7d4b444af511ad4474ad618b8d4beeaa",
@@ -904,8 +904,8 @@
     "reason": "docs/BOUNDARY_6_AND_THE_DRIVER_MORNING.md: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
   },
   "_internal/docs/CHANGELOG.md": {
-    "sha256": "c01964f9356e6f45022fc34d53f2914a6d86828d56af437cf2667b6f490810c8",
-    "reason": "docs/CHANGELOG.md: all flagged strings match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
+    "sha256": "1415456b61fdcc40db4b3b551e45adcd0f681c8a6476fd5741d8100fa808f24c",
+    "reason": "docs/CHANGELOG.md: all flagged strings match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data. Re-pinned for 0.4.169: its added lines were reviewed as engineering text, no story or phoneme strings."
   },
   "_internal/docs/CHILD_VOICE_TRANSFORM.md": {
     "sha256": "4c03cdd1a841928490dc9604b25c59d1fd1726c5cb4bc8938b6c87a34de8ba71",
@@ -916,8 +916,8 @@
     "reason": "docs/DEPENDENCIES.md: all flagged strings match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
   },
   "_internal/docs/DESIGN.md": {
-    "sha256": "8ef19624655e74b52266b06bf55f94cbb26e6a26dadff85c74b6a6fd33ac8d3b",
-    "reason": "Interface design specifications listing typography, spacing and platform component rules."
+    "sha256": "ded087a70c5f1600aea44099118dbd48169439b14b261a3bbdcacdb9a30ee53d",
+    "reason": "Interface design specifications listing typography, spacing and platform component rules. Re-pinned for 0.4.169: its added lines were reviewed as engineering text, no story or phoneme strings."
   },
   "_internal/docs/DESIGN_LINT.md": {
     "sha256": "22b9adaadc6beca5c49200097d137050579ca24d9281dc2abcdcea0acfd61cb9",
@@ -1072,8 +1072,8 @@
     "reason": "Production interruption instructions and continuity limits; operational guidance rather than book text."
   },
   "_internal/docs/TEST_REPORT.md": {
-    "sha256": "f82b8d5025fff35fe96ddd831f3f24426f65629fbe6fde1d7074ccdcbf728ad0",
-    "reason": "_internal/docs/TEST_REPORT.md: reviewed integration-only layout, generated parity inventory or pinned asset URL edits; existing scrubbed prose preserved."
+    "sha256": "777d57e4c99a1f35e6645b3f1eb4efc307f530bdffe817ebdac869d09cee160e",
+    "reason": "_internal/docs/TEST_REPORT.md: reviewed integration-only layout, generated parity inventory or pinned asset URL edits; existing scrubbed prose preserved. Re-pinned for 0.4.169: its added lines were reviewed as engineering text, no story or phoneme strings."
   },
   "_internal/docs/TEXT_NORMALIZATION.md": {
     "sha256": "06b3499d392b6f6a990b026d4f665b520ca3c9257ce452c57a5e7fa92e8ec94b",
@@ -1108,12 +1108,12 @@
     "reason": "docs/UI.md: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
   },
   "_internal/docs/UI_PARITY.md": {
-    "sha256": "37b04e9283f31c6b1376dd305146b4ace9b0467afe55988d995e9949cb4b8763",
-    "reason": "_internal/docs/UI_PARITY.md: reviewed integration-only layout, generated parity inventory or pinned asset URL edits; existing scrubbed prose preserved."
+    "sha256": "39041161e5c1c5290d57b18ad95c450c86984c08c2df8e59f4b7d119b5b74457",
+    "reason": "_internal/docs/UI_PARITY.md: reviewed integration-only layout, generated parity inventory or pinned asset URL edits; existing scrubbed prose preserved. Re-pinned for 0.4.169: its added lines were reviewed as engineering text, no story or phoneme strings."
   },
   "_internal/docs/UI_PARITY_QT.md": {
-    "sha256": "3f80e909fc3eaa35b7b73320c046048387fe4f31473e49bc0ad18b34657beeba",
-    "reason": "_internal/docs/UI_PARITY_QT.md: reviewed integration-only layout, generated parity inventory or pinned asset URL edits; existing scrubbed prose preserved."
+    "sha256": "2b6ad0f024163988b3b079d9bd2aa5506dc1fb862a8faee04dd4ed4cf4e392c8",
+    "reason": "_internal/docs/UI_PARITY_QT.md: reviewed integration-only layout, generated parity inventory or pinned asset URL edits; existing scrubbed prose preserved. Re-pinned for 0.4.169: its added lines were reviewed as engineering text, no story or phoneme strings."
   },
   "_internal/docs/UI_PARITY_TRIAGE.md": {
     "sha256": "24f93291c2c48a672ae24b56afe4efb32faa60f2bd7e13f5893b2168b3cace18",
@@ -1260,8 +1260,8 @@
     "reason": "mobile/android/app/src/main/java/vn/abook/player/SyncLink.kt: all flagged strings match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
   },
   "_internal/mobile/android/app/src/main/java/vn/abook/player/UiStrings.kt": {
-    "sha256": "9d6300ab84f70cb398fe1a73292cf7ba6bee8acd0cfe530676c86adfd61c9a5d",
-    "reason": "mobile/android/app/src/main/java/vn/abook/player/UiStrings.kt: all flagged strings match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
+    "sha256": "a96d1c1a90c38f8246ca28e4f470613c5acf77ce3bd9c515e4dfd0c152c5e420",
+    "reason": "mobile/android/app/src/main/java/vn/abook/player/UiStrings.kt: all flagged strings match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data. Re-pinned for 0.4.169: its added lines were reviewed as engineering text, no story or phoneme strings."
   },
   "_internal/mobile/android/app/src/main/java/vn/abook/player/net/FastConnect.kt": {
     "sha256": "b994369373798542df5e0bc40ed3fb2d66d207309c67107c53ade94bbe873f70",
@@ -2308,8 +2308,8 @@
     "reason": "scripts/publish_model.py: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
   },
   "_internal/scripts/release.py": {
-    "sha256": "7c223b345bcb5e1d985d450df34eb43e1442f3548a7004a599b2f54a6c8af7df",
-    "reason": "scripts/release.py: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
+    "sha256": "8a3e03aa9959ff6c3053432636aa9521dca9daedc48544200744b70f8c6fcd3c",
+    "reason": "scripts/release.py: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data. Re-pinned for 0.4.169: its added lines were reviewed as engineering text, no story or phoneme strings."
   },
   "_internal/scripts/release_gate.py": {
     "sha256": "12794e696f281fa0e3bffd129185593aee3a3580dd9fb7e369a403af2078d45e",
@@ -2396,8 +2396,8 @@
     "reason": "scripts/ui_parity_qt.py: all flagged strings match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
   },
   "_internal/scripts/ui_parity_rules.py": {
-    "sha256": "9b79b235714d5c7b76c9a3e4903dc0c8aa9e35b77e04e3e9ae6d14bf233cdd39",
-    "reason": "Technical descriptions of the shared UI copy, geometry and motion audit rules."
+    "sha256": "5a7275384899a9b6a3cbf712aa3401850a212229b0008f080f4eaced23deded3",
+    "reason": "Technical descriptions of the shared UI copy, geometry and motion audit rules. Re-pinned for 0.4.169: its added lines were reviewed as engineering text, no story or phoneme strings."
   },
   "_internal/scripts/vieneu_android_fixtures.py": {
     "sha256": "315110c250fdc4143ec83daa1f50cce48e38027e1b27ff4ec833499f48874fb2",
@@ -2884,8 +2884,8 @@
     "reason": "tests/test_a83_withdraw_when_paused.py: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
   },
   "_internal/tests/test_a88_stop_pause_states.py": {
-    "sha256": "10d35da802a57945c587acd2c4e2c0005066a8782c9541a48c491a9180936f65",
-    "reason": "tests/test_a88_stop_pause_states.py: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
+    "sha256": "0763e012bc94a949ca24cfd5641bf622f3d668db12d78997984a9c972ba6388a",
+    "reason": "tests/test_a88_stop_pause_states.py: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data. Re-pinned for 0.4.169: its added lines were reviewed as engineering text, no story or phoneme strings."
   },
   "_internal/tests/test_a90_retract_sent_wish.py": {
     "sha256": "386d4ca509f9d4bad60c4e6c96f524bd68c0974f9cf58ff48231381eb8852cb2",
@@ -4340,8 +4340,8 @@
     "reason": "ui/src/shared/scrollFadeRules.test.ts: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
   },
   "_internal/ui/src/shared/strings.generated.ts": {
-    "sha256": "eb52144d12b428998cc3a40a314614acca78cf04b319d6445f0a5ee482b61920",
-    "reason": "ui/src/shared/strings.generated.ts: all flagged strings match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
+    "sha256": "8bd4a44f0db1fcab5cbbbdfe352a958d02214f4f1dbddd17719aad00b41505aa",
+    "reason": "ui/src/shared/strings.generated.ts: all flagged strings match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data. Re-pinned for 0.4.169: its added lines were reviewed as engineering text, no story or phoneme strings."
   },
   "_internal/ui/src/studio/ProjectScreen.tsx": {
     "sha256": "b7403e71e29369203e0d6bd3e92552b13c99fb44c1d801016174f0f47ece4ae2",
@@ -4356,12 +4356,8 @@
     "reason": "ui/src/studio/liveRefresh.ts: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
   },
   "_internal/ui_strings/vi.json": {
-    "sha256": "b2864673310ab90187525e5452c50e91340c2e7290f44b07dae4fbe7f46a49a7",
-    "reason": "ui_strings/vi.json: all flagged strings match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
-  },
-  "result.md": {
-    "sha256": "43d21ec8771298a812570b200d5e3e492651f9c0c1a06dc0f905ea9e41d45922",
-    "reason": "Imported parity3 engineering report containing test totals, component repair descriptions and structural motion exemptions."
+    "sha256": "5b84d7a0d87e9d60e906be291cdc6879d2ccf0696b7ba9d8d5a6ff85b6bd734c",
+    "reason": "ui_strings/vi.json: all flagged strings match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data. Re-pinned for 0.4.169: its added lines were reviewed as engineering text, no story or phoneme strings."
   },
   "_internal/abook/vietnamese_letters.py": {
     "sha256": "b5c1b946b9456f7cac9dbc34d995a1d56fe592e623ffd56662d760c864875e44",
