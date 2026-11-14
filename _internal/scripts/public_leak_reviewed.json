@@ -32,11 +32,11 @@
     "reason": "README.md: all flagged strings match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
   },
   "_internal/AGENTS.md": {
-    "sha256": "db51e66d79c8b5404f103f7660056809449432cf7df69348d2418b8f835c5619",
-    "reason": "_internal/AGENTS.md: 0.4.170 integration retains the repeat-alias/F4 technical invariants from 0.4.169 and the exact existing contextual shingle approval.",
+    "sha256": "407b2617419df24e7fb1195a2ca0bdfbed20dae59b67d7f69f6ae119b214116c",
+    "reason": "_internal/AGENTS.md: technical contributor rules; added private index lifecycle invariants. The inherited approved Corpus shingle set is unchanged.",
     "corpus_review": {
       "classification": "i",
-      "file_sha256": "db51e66d79c8b5404f103f7660056809449432cf7df69348d2418b8f835c5619",
+      "file_sha256": "407b2617419df24e7fb1195a2ca0bdfbed20dae59b67d7f69f6ae119b214116c",
       "reason": "_internal/AGENTS.md: 0.4.170 integration retains the repeat-alias/F4 technical invariants from 0.4.169 and the exact existing contextual shingle approval. Only the inherited individual shingle hashes remain approved as category i.",
       "shingles": [
         "278c69d8d369f37e"
@@ -1205,8 +1205,8 @@
     "reason": "Production interruption instructions and continuity limits; operational guidance rather than book text."
   },
   "_internal/docs/TEST_REPORT.md": {
-    "sha256": "206cc22a90fe3e2cdee922b7596a35ba6f1056ed78f328a174af6111dbce6203",
-    "reason": "_internal/docs/TEST_REPORT.md: 0.4.170 integrates 0.4.169 results and records the source-cleanup validation requirements; engineering evidence only."
+    "sha256": "e3fc8e166089658a2108a258a4077576d27b502009fe66414d3b9dee2bef1f8f",
+    "reason": "_internal/docs/TEST_REPORT.md: technical test records with added original hash-index validation notes; no story excerpt or new Corpus approval."
   },
   "_internal/docs/TEXT_NORMALIZATION.md": {
     "sha256": "06b3499d392b6f6a990b026d4f665b520ca3c9257ce452c57a5e7fa92e8ec94b",

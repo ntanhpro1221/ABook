@@ -1,5 +1,23 @@
 # Test report
 
+## 14-11-2026 — incremental public Corpus index
+
+The scanner caches hash postings in private runtime storage.
+
+Warm scans validate metadata and shard checksums.
+
+Only changed or added chapters are hashed again.
+
+Deleted chapters are removed before book-frequency filtering.
+
+Cache corruption rebuilds the index; unreadable chapters fail.
+
+Atomic generations preserve the last complete manifest.
+
+Regression coverage uses generated original prose.
+
+Performance and final validation are recorded in the task report.
+
 ## 14-11-2026 — original examples and exact Corpus reviews
 
 Source excerpts replaced with original regression examples.

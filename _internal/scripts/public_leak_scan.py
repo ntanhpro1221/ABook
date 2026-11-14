@@ -182,6 +182,8 @@ def strings_of(relative: str, text: str) -> list[tuple[str, str]]:
 
 
 def ipa_run(value: str) -> bool:
+    if not IPA.search(value):
+        return False
     run = 0
     for token in re.split(r"[\s\-]+", value):
         run = run + 1 if IPA.search(token) else 0
@@ -191,14 +193,16 @@ def ipa_run(value: str) -> bool:
 
 
 def long_vietnamese(value: str) -> bool:
+    if not VI_MARK.search(value):
+        return False
     words = WORD.findall(value)
     return len(words) >= LONG_VI_WORDS and sum(bool(VI_MARK.search(w)) for w in words) >= len(words) // 4
 
 
-def inspect(relative: str, path: Path) -> list[dict]:
+def inspect(relative: str, path: Path, *, content: list[tuple[str, str]] | None = None) -> list[dict]:
     """Một dòng cho mỗi (file, luật): số chỗ và chỗ đầu tiên, không kèm nội dung."""
     found: dict[str, dict] = {}
-    for member, text in texts(path):
+    for member, text in texts(path) if content is None else content:
         for where, value in strings_of(member or relative, text):
             rule = "ipa>=8" if ipa_run(value) else "long-vietnamese" if long_vietnamese(value) else ""
             if rule:
@@ -277,7 +281,11 @@ def is_story_chapter(relative: Path) -> bool:
 
 def corpus_files(root: Path) -> list[Path]:
     found = []
-    for directory, subdirs, files in os.walk(root):
+
+    def fail(error):
+        raise error
+
+    for directory, subdirs, files in os.walk(root, onerror=fail):
         subdirs[:] = [d for d in subdirs if d.lower() not in CORPUS_TECHNICAL_DIRS
                      and not d.lower().endswith(".dist-info")
                      and (not d.startswith(("_", ".")) or (Path(directory) == root and d in {"_full", "_dup", "_gold"}))]
@@ -434,19 +442,22 @@ def _corpus_chunk(paths: list[str]) -> list[tuple[str, list[int]]]:
 
 
 def collect_corpus_matches(sources: dict[str, list[str]], root: Path, workdir: Path,
-                           workers: int = 3) -> tuple[dict[int, set[str]], list[tuple[str, list[int]]], int]:
-    """Intersect against every chapter; keep only matching hashes, never prose.
+                           workers: int = 3, *, use_cache: bool = True
+                           ) -> tuple[dict[int, set[str]], list[tuple[str, list[int]]], int]:
+    """Intersect public candidates with hash-only Corpus postings.
 
-    Computing document frequency only for public candidate hashes is equivalent
-    to filtering the complete private index, without materializing that index.
+    The uncached reference path remains available for equivalence checks.
     """
     names = sorted(sources)
     values_parts, owner_parts = [], []
+    word_cache: dict = {}
     for number, relative in enumerate(names):
         for chunk in sources[relative]:
-            values = np.unique(shingles(chunk))
+            values = np.unique(shingles(chunk, word_cache))
             values_parts.append(values)
             owner_parts.append(np.full(values.size, number, dtype=np.int32))
+            if len(word_cache) > 2_000_000:
+                word_cache.clear()
     if not values_parts:
         return {}, [], 0
     all_values = np.concatenate(values_parts)
@@ -455,28 +466,36 @@ def collect_corpus_matches(sources: dict[str, list[str]], root: Path, workdir: P
     index = np.unique(all_values)
     if not index.size:
         return {}, [], 0
-    workdir.mkdir(parents=True, exist_ok=True)
-    index_path = workdir / "repo_shingles.npy"
-    np.save(index_path, index)
-    files = [str(p) for p in corpus_files(root)]
-    if not files:
-        raise ValueError("Corpus exists but no readable source files were selected")
-    batches = [files[i:i + 200] for i in range(0, len(files), 200)]
-    matches = []
-    with windowless_workers(), ProcessPoolExecutor(max_workers=min(3, max(1, workers)), initializer=_load_index,
-                                                   initargs=(str(index_path),)) as pool:
-        for batch_number, hits in enumerate(pool.map(_corpus_chunk, batches), 1):
-            for corpus_file, common in hits:
-                matches.append((Path(corpus_file).relative_to(root).as_posix(), common))
-            if os.environ.get("ABOOK_LEAK_PROGRESS") == "1" and (batch_number % 50 == 0 or batch_number == len(batches)):
-                print(f"public-leak Corpus: {min(batch_number * 200, len(files))}/{len(files)} files",
-                      file=sys.stderr, flush=True)
+    if use_cache:
+        try:
+            from scripts.public_leak_index import collect
+        except ModuleNotFoundError:
+            from public_leak_index import collect
+        matches, file_count = collect(index, root, workdir, workers)
+    else:
+        workdir.mkdir(parents=True, exist_ok=True)
+        index_path = workdir / "repo_shingles.npy"
+        np.save(index_path, index)
+        files = [str(p) for p in corpus_files(root)]
+        if not files:
+            raise ValueError("Corpus exists but no readable source files were selected")
+        file_count = len(files)
+        batches = [files[i:i + 200] for i in range(0, len(files), 200)]
+        matches = []
+        with windowless_workers(), ProcessPoolExecutor(max_workers=min(3, max(1, workers)), initializer=_load_index,
+                                                       initargs=(str(index_path),)) as pool:
+            for batch_number, hits in enumerate(pool.map(_corpus_chunk, batches), 1):
+                for corpus_file, common in hits:
+                    matches.append((Path(corpus_file).relative_to(root).as_posix(), common))
+                if os.environ.get("ABOOK_LEAK_PROGRESS") == "1" and (batch_number % 50 == 0 or batch_number == len(batches)):
+                    print(f"public-leak Corpus: {min(batch_number * 200, len(files))}/{len(files)} files",
+                          file=sys.stderr, flush=True)
     matching_values = np.array(sorted({h for _, hashes in matches for h in hashes}), dtype=np.uint64)
     start = np.searchsorted(all_values, matching_values, side="left")
     stop = np.searchsorted(all_values, matching_values, side="right")
     owners = {int(h): {names[owner] for owner in all_owners[a:b].tolist()}
               for h, a, b in zip(matching_values, start, stop)}
-    return owners, matches, len(files)
+    return owners, matches, file_count
 
 
 def overlap_findings(owners: dict[int, set[str]], hits: list[tuple[str, list[int]]],
@@ -497,8 +516,9 @@ def overlap_findings(owners: dict[int, set[str]], hits: list[tuple[str, list[int
             for owner, found in sorted(matches.items())]
 
 
-def corpus_overlap(sources: dict[str, list[str]], root: Path, workdir: Path, workers: int = 3) -> list[dict]:
-    owners, hits, _ = collect_corpus_matches(sources, root, workdir, workers)
+def corpus_overlap(sources: dict[str, list[str]], root: Path, workdir: Path, workers: int = 3,
+                   *, use_cache: bool = True) -> list[dict]:
+    owners, hits, _ = collect_corpus_matches(sources, root, workdir, workers, use_cache=use_cache)
     return overlap_findings(owners, hits)
 
 
@@ -572,8 +592,9 @@ def audit(repo: Path = REPO, corpus: Path | None | bool = True, workdir: Path | 
     sources: dict[str, list[str]] = {}
     for relative in names:
         path = repo / relative
-        findings += inspect(relative, path)
-        chunks = [text for _, text in texts(path)]
+        content = texts(path)
+        findings += inspect(relative, path, content=content)
+        chunks = [text for _, text in content]
         if chunks:
             sources[relative] = chunks
     if not sources:
