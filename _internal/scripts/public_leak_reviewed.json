@@ -32,11 +32,11 @@
     "reason": "README.md: all flagged strings match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
   },
   "_internal/AGENTS.md": {
-    "sha256": "0b684df8090abad34c37871601b843644cb50908b93ded85dba416a86e2d8894",
-    "reason": "_internal/AGENTS.md: technical contributor rules; added private index lifecycle invariants. The inherited approved Corpus shingle set is unchanged. _internal/AGENTS.md: tnfix172 exact changed bytes reviewed; authored technical documentation or synthetic normalization expectations. Existing individual category-i shingles were rechecked as identical public word sequences against 0964e4cd2. No new Corpus shingle is approved.",
+    "sha256": "0a0274999ce7afd3237d4e93abef0259f8fb8d2eee91a485b695cd07e3dae266",
+    "reason": "_internal/AGENTS.md: technical contributor rules; added private index lifecycle invariants. The inherited approved Corpus shingle set is unchanged. _internal/AGENTS.md: tnfix172 exact changed bytes reviewed; authored technical documentation or synthetic normalization expectations. Existing individual category-i shingles were rechecked as identical public word sequences against 0964e4cd2. No new Corpus shingle is approved. Integration 0.4.172: byte pins refreshed for combined technical notes and existing normalization tests; no new Corpus shingle approval.",
     "corpus_review": {
       "classification": "i",
-      "file_sha256": "0b684df8090abad34c37871601b843644cb50908b93ded85dba416a86e2d8894",
+      "file_sha256": "0a0274999ce7afd3237d4e93abef0259f8fb8d2eee91a485b695cd07e3dae266",
       "reason": "_internal/AGENTS.md: each listed shingle retains its prior Lead-approved category-i classification. Exact public eight-word sequences are unchanged against 0964e4cd2; changes concern only TN behavior, expectations or technical notes. Byte pins expired and were individually re-reviewed.",
       "shingles": [
         "278c69d8d369f37e"
@@ -978,11 +978,11 @@
     "reason": "docs/BOUNDARY_6_AND_THE_DRIVER_MORNING.md: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
   },
   "_internal/docs/CHANGELOG.md": {
-    "sha256": "a2843178d5f8f910beff4bf7a1dec72e842e5edcd606c3fb397911da53def70e",
-    "reason": "_internal/docs/CHANGELOG.md: 0.4.171 technical release notes, ignored-tracked implementation and test description; existing individual shingle approvals unchanged. _internal/docs/CHANGELOG.md: tnfix172 exact changed bytes reviewed; authored technical documentation or synthetic normalization expectations. Existing individual category-i shingles were rechecked as identical public word sequences against 0964e4cd2. No new Corpus shingle is approved.",
+    "sha256": "e809edb550ff8528dd03b295e4367c74b869256a61e4bc1ab45044e3e58cbef5",
+    "reason": "_internal/docs/CHANGELOG.md: 0.4.171 technical release notes, ignored-tracked implementation and test description; existing individual shingle approvals unchanged. _internal/docs/CHANGELOG.md: tnfix172 exact changed bytes reviewed; authored technical documentation or synthetic normalization expectations. Existing individual category-i shingles were rechecked as identical public word sequences against 0964e4cd2. No new Corpus shingle is approved. Integration 0.4.172: byte pins refreshed for combined technical notes and existing normalization tests; no new Corpus shingle approval.",
     "corpus_review": {
       "classification": "i",
-      "file_sha256": "a2843178d5f8f910beff4bf7a1dec72e842e5edcd606c3fb397911da53def70e",
+      "file_sha256": "e809edb550ff8528dd03b295e4367c74b869256a61e4bc1ab45044e3e58cbef5",
       "reason": "_internal/docs/CHANGELOG.md: 0.4.171 technical release notes, ignored-tracked implementation and test description; existing individual shingle approvals unchanged. _internal/docs/CHANGELOG.md: each listed shingle retains its prior Lead-approved category-i classification. Exact public eight-word sequences are unchanged against 0964e4cd2; changes concern only TN behavior, expectations or technical notes. Byte pins expired and were individually re-reviewed.",
       "shingles": [
         "a427005770c2fa6d"
@@ -1205,8 +1205,8 @@
     "reason": "Production interruption instructions and continuity limits; operational guidance rather than book text."
   },
   "_internal/docs/TEST_REPORT.md": {
-    "sha256": "85faafcefe0b25892c07a08aca2f2ccde85d3979965a9eca0f63fa5d840adb58",
-    "reason": "_internal/docs/TEST_REPORT.md: 0.4.171 technical release notes, ignored-tracked implementation and test description; existing individual shingle approvals unchanged. TEST_REPORT TN audit: records the 440-case string benchmark, exact JUnit suite counts, aggregate Corpus sampling and unchanged implementation hash alongside prior technical evidence. This review only covers long technical prose. Original TN audit technical prose or deterministic diagnostics of the 440 independently authored cases. IPA is generated by the production G2P functions from those cases and accepted readings. Only listed technical/IPA rules are reviewed; Corpus matching remains enabled. TEST_REPORT: original technical validation notes, package versions, two-stage TN totals and JUnit counts alongside inherited test evidence. Exact file-byte review covers long technical prose only; Corpus matching remains enabled. _internal/docs/TEST_REPORT.md: tnfix172 exact bytes reviewed as authored normalization implementation or its unit-test expectations. Original source samples are preserved. The 485 benchmark inputs/answers have zero eight-word overlap across 523400 Corpus files. Only the existing technical/IPA rules are covered; Corpus checks remain active. _internal/docs/TEST_REPORT.md: exact technical test report bytes re-reviewed after recording measured TN, JVM and full-suite counts plus the ten missing UI dependency failures. Only the initial English validation notes changed; every historical paragraph is byte-identical to c8d80a93d. This existing long-vietnamese review covers technical documentation only; Corpus matching remains active and no Corpus shingle is approved.",
+    "sha256": "43404352fb0d889dfd0dfd54c30750f267e7bc21615bc6464ee6faa88f8206a0",
+    "reason": "_internal/docs/TEST_REPORT.md: 0.4.171 technical release notes, ignored-tracked implementation and test description; existing individual shingle approvals unchanged. TEST_REPORT TN audit: records the 440-case string benchmark, exact JUnit suite counts, aggregate Corpus sampling and unchanged implementation hash alongside prior technical evidence. This review only covers long technical prose. Original TN audit technical prose or deterministic diagnostics of the 440 independently authored cases. IPA is generated by the production G2P functions from those cases and accepted readings. Only listed technical/IPA rules are reviewed; Corpus matching remains enabled. TEST_REPORT: original technical validation notes, package versions, two-stage TN totals and JUnit counts alongside inherited test evidence. Exact file-byte review covers long technical prose only; Corpus matching remains enabled. _internal/docs/TEST_REPORT.md: tnfix172 exact bytes reviewed as authored normalization implementation or its unit-test expectations. Original source samples are preserved. The 485 benchmark inputs/answers have zero eight-word overlap across 523400 Corpus files. Only the existing technical/IPA rules are covered; Corpus checks remain active. _internal/docs/TEST_REPORT.md: exact technical test report bytes re-reviewed after recording measured TN, JVM and full-suite counts plus the ten missing UI dependency failures. Only the initial English validation notes changed; every historical paragraph is byte-identical to c8d80a93d. This existing long-vietnamese review covers technical documentation only; Corpus matching remains active and no Corpus shingle is approved. Integration 0.4.172: byte pins refreshed for combined technical notes and existing normalization tests; no new Corpus shingle approval.",
     "rules": [
       "long-vietnamese"
     ]

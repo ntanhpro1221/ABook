@@ -7,11 +7,16 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+## [0.4.172] - 2026-11-15
+
+- Đọc đúng hơn số dài, tiền và ký hiệu như sao, trừ, chia; giữ cách đọc mã số và số điện thoại.
+- Sửa cách đọc URL/email, tên Nhật có ou/ei, viết tắt tiếng Anh và thán từ kéo dài; đồng bộ máy tính và điện thoại.
+- Thêm bộ đo chuẩn hoá chữ 485 ca; khớp âm vị sau G2P khoảng 89 % ở cả Nghe ngay và Studio.
+
 ## [0.4.171] - 2026-11-14
 
 - Máy quét mã nguồn công khai nhớ chỉ mục Corpus; lượt kiểm với bộ đệm đã có giảm từ khoảng 30 phút xuống khoảng 1–2 phút.
 - Cổng phát hành chặn tệp tạm của thợ bị ignore nhưng vẫn nằm trong commit, kể cả tệp đã bị xoá ở commit sau.
-- Sửa cách đọc số lớn, tiền, ký hiệu, tên Nhật, thán từ và địa chỉ web/email; đồng bộ máy tính và điện thoại.
 
 ## [0.4.170] - 2026-11-14
 

@@ -1,5 +1,11 @@
 # Test report
 
+## 15-11-2026 — 0.4.172 integration
+
+Five normalization commits were integrated on the public 0.4.171 base.
+The 485-case phoneme benchmark has zero floor tolerance; release validation uses the full gate with the explicitly approved implementation hash.
+Evidence and local artifact checks remain outside Git.
+
 ## 14-11-2026 — ignored tracked files and private work logs
 
 The release gate checks ignored tracked paths against three byte-pinned generated MP3 seek fixtures.
