@@ -134,12 +134,13 @@ fun SettingsScreen(
     // Nhóm đang mở ở cột phải: nhớ qua xoay máy và qua lúc cửa sổ hẹp lại rồi rộng ra.
     var selected by rememberSaveable { mutableStateOf(SettingsGroup.entries.first()) }
     BoxWithConstraints(modifier.fillMaxSize()) {
-        val wide = widthClass(maxWidth.value) >= WidthClass.EXPANDED
+        val wide = vn.abook.player.ui.theme.windowLayout(maxWidth.value, maxHeight.value).twoPane
+        val groupWidth = minOf(GroupColumnWidth, maxWidth * 0.36f)
         AnimatedContent(wide, Modifier.fillMaxSize(), transitionSpec = { Motion.layoutSwitch(targetState) }, label = "settings-layout") { twoColumns ->
             if (twoColumns) {
                 Box(Modifier.fillMaxSize().testTag("settings_split"), contentAlignment = Alignment.TopCenter) {
                     Row(Modifier.widthIn(max = SettingsMaxWidth).fillMaxSize()) {
-                        GroupList(settings, voices, repo.version, devicesSummary, selected, { selected = it }, Modifier.width(GroupColumnWidth))
+                        GroupList(settings, voices, repo.version, devicesSummary, selected, { selected = it }, Modifier.width(groupWidth))
                         // Đổi nhóm thì màn con trượt như đổi khổ; mỗi màn con tự cuộn.
                         AnimatedContent(selected, Modifier.weight(1f).fillMaxHeight().testTag("settings_pane"), transitionSpec = { Motion.layoutSwitch(true) }, label = "settings-pane") { group ->
                             CompositionLocalProvider(LocalEmbeddedPane provides true) {

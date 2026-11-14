@@ -216,6 +216,8 @@ Riêng cử chỉ khi màn tắt không có View: dùng hiệu ứng CLICK sẵn
 
 #### Khổ cửa sổ
 
+Cửa sổ nội dung thấp dưới 480 dp/px dùng nhóm chiều cao compact, cùng quy tắc cho điện thoại xoay ngang, chia màn hình và máy tính bảng. Từ khổ medium ở nhóm này, trình phát có hai vùng điều khiển/chữ, trang sách và Cài đặt dùng hai cột; Studio xếp dự án thành hai cột, Kho nhạc đặt bộ lọc cạnh danh sách. Vùng điều khiển dài cuộn độc lập; không giảm vùng chạm hoặc cắt nhãn để ép vừa. Tấm dùng hộp tối đa 560 dp/px với lề 16, nội dung cuộn trong chiều cao còn lại. Trạng thái tab, tấm và anchor cuộn thuộc cửa sổ, giữ nguyên khi đổi khổ. Mọi phép trừ khoảng dành riêng phải chặn ở 0 trước khi làm padding/kích thước.
+
 Cả ba nền tảng tính khổ theo bề ngang **nội dung sau thanh bên** (dp / px), năm khổ,
 MỘT bảng này là nguồn (`scripts/gen_native_tokens.py` sinh `WidthClass` cho điện thoại
 và `shared/widthClass.generated.ts` cho web; `desktop_qt/tools/gen_theme.py` sinh

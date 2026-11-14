@@ -68,6 +68,12 @@ private class ParagraphInk(layout: TextLayoutResult, paragraph: ReadParagraph, p
 /** Nền tô thở ra chừng này ngoài cột chữ (0,2em của web với cỡ chữ tới 40 sp) mà chữ không dời; danh sách rộng thêm đúng chừng này để nền không bị cắt, và khung chữ của trình phát (PlayerTextArea) cũng chừa ngang chừng này. */
 internal val InkBleed = 4.dp
 
+/** A window owns the reading anchor even when its reading column moves to another parent. */
+class ReadAlongViewport {
+    val list = LazyListState()
+    internal val following = mutableStateOf(true)
+}
+
 @Composable
 fun ReadAlongPane(
     state: ReadAlongState, position: PlayerPosition, modifier: Modifier = Modifier,
@@ -85,16 +91,19 @@ fun ReadAlongPane(
     onNext: () -> Unit = {},
     rate: Double = 1.0,
     returnAvailable: Boolean = false, returnSerial: Int = 0, onReturn: () -> Unit = {},
+    viewport: ReadAlongViewport? = null,
 ) {
     // Lời nhắc là mục đầu của danh sách (cuộn đi cùng chữ): các chỉ số đoạn lệch đi một khi nó có mặt.
     val lead = if (hint != null) 1 else 0
     // Cây chữ chỉ sống khi đang ở chế độ đọc: mỗi lần vào, danh sách dựng lại ngay ở câu đang đọc chứ không từ đầu chương.
     // Không đăng ký đọc đồng hồ ở đây: mỗi nhịp đồng hồ không được dựng lại màn.
-    val list = rememberLazyListState(initialFirstVisibleItemIndex = remember {
+    val localList = rememberLazyListState(initialFirstVisibleItemIndex = remember {
         Snapshot.withoutReadObservation { ReadAlongLookup.sentence(state.paragraphs, position.milliseconds.value).coerceAtLeast(0) + lead }
     })
+    val list = viewport?.list ?: localList
     val userDragging by list.interactionSource.collectIsDraggedAsState()
-    var following by remember(state.bookId, state.chapterId) { mutableStateOf(true) }
+    val followState: MutableState<Boolean> = viewport?.following ?: remember(state.bookId, state.chapterId) { mutableStateOf(true) }
+    var following by followState
     // Chữ chưa đứng đúng chỗ thì chưa hiện: khung đầu tiên người nghe thấy đã là dòng đang đọc, không có cú cuộn nào để thấy.
     var placed by remember(state.bookId, state.chapterId, look.size, look.lineHeight) { mutableStateOf(false) }
     val layouts = remember { HashMap<Int, TextLayoutResult>() }

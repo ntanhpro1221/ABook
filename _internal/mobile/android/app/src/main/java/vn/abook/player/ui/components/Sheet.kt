@@ -3,6 +3,8 @@ package vn.abook.player.ui.components
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.core.Animatable
 import androidx.compose.foundation.background
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.gestures.detectVerticalDragGestures
 import androidx.compose.runtime.mutableFloatStateOf
@@ -11,8 +13,12 @@ import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.input.pointer.util.VelocityTracker
 import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.layout.layout
 import androidx.compose.ui.unit.Velocity
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -111,27 +117,41 @@ fun SheetLayer(host: SheetHost) {
     BackHandler(enabled = spec != null) { if (host.keepOpen?.invoke() != true) host.dismiss() }
     val colors = Abook.colors
     val scrim = colors.scrim
-    Box(
+    BoxWithConstraints(
         Modifier.fillMaxSize().testTag("sheet_layer")
             .drawBehind { drawRect(scrim, alpha = progress.value) }
             .pointerInput(Unit) { detectTapGestures { host.dismiss() } },
     ) {
+        val floating = vn.abook.player.ui.theme.windowLayout(maxWidth.value, maxHeight.value).floatingSheet
+        val contentBound = if (constraints.hasBoundedHeight) maxOf(maxHeight * 4, 4096.dp) else 4096.dp
         Column(
             // imePadding ở đây (một chỗ cho MỌI bảng): bàn phím mở thì cả bảng - ô nhập lẫn nút - nằm trên bàn phím, không bảng nào phải tự nhớ.
-            Modifier.align(Alignment.BottomCenter).fillMaxWidth().statusBarsPadding().imePadding()
+            Modifier.align(if (floating) Alignment.Center else Alignment.BottomCenter)
+                .then(if (floating) Modifier.padding(Dim.s16).widthIn(max = 560.dp).heightIn(max = (maxHeight - Dim.s32).coerceAtLeast(0.dp)) else Modifier)
+                .fillMaxWidth().statusBarsPadding().imePadding()
                 .sheetSurface(drag)
                 .graphicsLayer {
                     translationY = if (reduced) 0f else (1f - progress.value) * size.height + drag.offset
                     alpha = if (reduced) progress.value else 1f
                 }
-                .clip(RoundedCornerShape(topStart = Dim.radiusSheet, topEnd = Dim.radiusSheet))
+                .clip(if (floating) RoundedCornerShape(Dim.radiusSheet) else RoundedCornerShape(topStart = Dim.radiusSheet, topEnd = Dim.radiusSheet))
                 .background(colors.panel)
                 .then(if (colors.dark) Modifier.sheetEdge(colors.line) else Modifier),
         ) {
             Box(Modifier.fillMaxWidth().height(Dim.s24), contentAlignment = Alignment.Center) {
                 Box(Modifier.width(40.dp).height(Dim.s4).clip(CircleShape).background(colors.lineStrong))  // tay nắm 40x4 --line-strong, như web
             }
-            Box(Modifier.gestureBarPadding().padding(horizontal = Dim.margin).padding(bottom = Dim.s16)) {
+            val contentScroll = rememberScrollState()
+            // Cửa sổ thấp: nội dung dài hơn chỗ còn lại thì cuộn. Giới hạn hữu hạn (4 lần chiều cao cửa sổ, ít nhất 4096 dp) thay cho vô hạn của verticalScroll,
+            // để bảng có danh sách cuộn riêng (LazyColumn / verticalScroll + heightIn) vẫn đo được, không văng vì lồng cuộn.
+            Box(Modifier.gestureBarPadding().padding(horizontal = Dim.margin).padding(bottom = Dim.s16)
+                .fadeEdges(contentScroll).verticalScroll(contentScroll)
+                .layout { measurable, constraints ->
+                    val bound = if (constraints.hasBoundedHeight) constraints.maxHeight else contentBound.roundToPx()
+                    val placeable = measurable.measure(constraints.copy(maxHeight = bound.coerceAtLeast(constraints.minHeight)))
+                    layout(placeable.width, placeable.height) { placeable.place(0, 0) }
+                }
+                .testTag("sheet_scroll")) {
                 sheet.content { host.dismiss() }
             }
         }

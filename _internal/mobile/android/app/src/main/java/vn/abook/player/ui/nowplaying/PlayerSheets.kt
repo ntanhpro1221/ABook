@@ -21,6 +21,8 @@ import androidx.compose.animation.core.tween
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -86,6 +88,7 @@ fun PlayerSheets(state: NowPlayingState, model: NowPlayingModel, window: NowPlay
         transitionSpec = { if (targetState) tween(MotionMs.SLOW) else tween(MotionMs.SLOW_OUT) }, label = "player-sheet-scrim",
     ) { if (it) 1f else 0f }
     BoxWithConstraints(Modifier.fillMaxSize()) {
+        val floating = vn.abook.player.ui.theme.windowLayout(maxWidth.value, maxHeight.value).floatingSheet
         Reveal(transition.currentState || transition.targetState) {
             Box(Modifier.fillMaxSize().drawBehind { drawRect(scrim, alpha = scrimShown * (1f - drag.offset / drag.height).coerceIn(0f, 1f)) }
                 .pressable(onClick = ::closeSheet).semantics { contentDescription = S.s_dong_5d54c2a1 })
@@ -93,13 +96,14 @@ fun PlayerSheets(state: NowPlayingState, model: NowPlayingModel, window: NowPlay
         transition.AnimatedVisibility(
             visible = { it }, enter = slideInVertically(tween(MotionMs.SLOW)) { it },
             exit = slideOutVertically(tween(MotionMs.SLOW_OUT)) { it },
-            modifier = Modifier.align(Alignment.BottomCenter),
+            modifier = Modifier.align(if (floating) Alignment.Center else Alignment.BottomCenter)
+                .then(if (floating) Modifier.padding(Dim.s16).widthIn(max = 560.dp) else Modifier),
         ) {
-            Column(Modifier.fillMaxWidth().heightIn(max = maxHeight * 0.82f)
+            Column(Modifier.fillMaxWidth().heightIn(max = if (floating) (maxHeight - Dim.s32).coerceAtLeast(0.dp) else maxHeight * 0.82f)
                 .testTag("player_sheet_${window.sheet.name.lowercase()}").semantics { paneTitle = sheetTitle(window.sheet) }
                 .sheetSurface(drag)
                 .graphicsLayer { translationY = drag.offset }
-                .clip(RoundedCornerShape(topStart = Dim.radiusSheet, topEnd = Dim.radiusSheet)).background(Abook.colors.panel)
+                .clip(if (floating) RoundedCornerShape(Dim.radiusSheet) else RoundedCornerShape(topStart = Dim.radiusSheet, topEnd = Dim.radiusSheet)).background(Abook.colors.panel)
                 .then(if (Abook.colors.dark) Modifier.sheetEdge(Abook.colors.line) else Modifier)
                 .gestureBarPadding().padding(horizontal = 20.dp).padding(top = 12.dp, bottom = 20.dp)) {
                 // Đóng bằng kéo xuống (cả tấm), chạm nền tối hay Back - không nút đóng riêng.
@@ -108,7 +112,11 @@ fun PlayerSheets(state: NowPlayingState, model: NowPlayingModel, window: NowPlay
                         .background(Abook.colors.line, CircleShape))
                     SheetTitle(sheetTitle(window.sheet), if (parents.isNotEmpty()) ::back else null)
                 }
-                SheetPages(window.sheet, { it.ordinal }, "player_sheet_pages") { shown -> Column(Modifier.fillMaxWidth()) { when (shown) {
+                SheetPages(window.sheet, { it.ordinal }, "player_sheet_pages") { shown ->
+                    val simplePage = shown in listOf(PlayerSheet.Speed, PlayerSheet.Sleep, PlayerSheet.More, PlayerSheet.Look) ||
+                        shown == PlayerSheet.Voice && state.voices.isEmpty()
+                    val scroll = rememberScrollState()
+                    Column(Modifier.fillMaxWidth().then(if (simplePage) Modifier.fadeEdges(scroll).verticalScroll(scroll) else Modifier)) { when (shown) {
                     // Bộ chọn giá trị (DESIGN mục 6, chủ sách 09-11): chip tiêu biểu một chạm + kéo / -,+ / gõ số ra mọi tốc độ 0,5-3× bước 0,05.
                     // Đổi là áp ngay, tấm không tự đóng (kéo thước cần tấm đứng yên).
                     PlayerSheet.Speed -> ValuePicker(ValueSpecs.speed, state.rate, { rate -> model.setRate(rate) }, PlayerLabels::rate,
@@ -284,7 +292,7 @@ private fun VoiceList(state: NowPlayingState, model: NowPlayingModel, window: No
 internal fun SheetTitle(title: String, onBack: (() -> Unit)?) {
     var last by remember { mutableStateOf(onBack) }
     if (onBack != null) last = onBack
-    Row(Modifier.fillMaxWidth().height(64.dp), verticalAlignment = Alignment.CenterVertically) {
+    Row(Modifier.fillMaxWidth().heightIn(min = 64.dp), verticalAlignment = Alignment.CenterVertically) {
         AnimatedVisibility(onBack != null,
             enter = androidx.compose.animation.fadeIn(tween(MotionMs.MEDIUM)) + androidx.compose.animation.expandHorizontally(tween(MotionMs.MEDIUM)),
             exit = androidx.compose.animation.fadeOut(tween(MotionMs.MEDIUM)) + androidx.compose.animation.shrinkHorizontally(tween(MotionMs.MEDIUM))) {

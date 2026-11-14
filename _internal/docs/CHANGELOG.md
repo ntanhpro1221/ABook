@@ -8,6 +8,7 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 ## [Chưa phát hành]
 
 - Android: sửa văng khi xoay ngang màn Đọc theo hoặc thu nhỏ cửa sổ.
+- Bố cục ngang: tách điều khiển và chữ, tận dụng hai cột cho sách, cài đặt, Studio và kho nhạc; tấm mở gọn trong cửa sổ thấp.
 
 - Nhóm nhân vật, lịch sử nghe và các danh sách con dài chỉ dựng hàng gần màn hình khi mở; giữ trạng thái gập và chuyển động trên Android, web và máy tính Qt.
 

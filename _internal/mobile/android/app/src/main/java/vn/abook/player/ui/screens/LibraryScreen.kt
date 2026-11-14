@@ -24,10 +24,13 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.runtime.snapshotFlow
+import androidx.compose.runtime.snapshots.Snapshot
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -133,7 +136,7 @@ fun LibraryScreen(
     val top = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
     val coords = remember { arrayOfNulls<LayoutCoordinates>(2) }
     var anchor by remember { mutableStateOf(IntOffset.Zero) }
-    LaunchedEffect(ui.menuOpen) {
+    fun placeMenu() {
         val root = coords[0]
         val button = coords[1]
         if (ui.menuOpen && root != null && button != null && root.isAttached && button.isAttached) {
@@ -141,10 +144,12 @@ fun LibraryScreen(
             anchor = IntOffset((at.x + button.size.width).roundToInt(), (at.y + button.size.height).roundToInt())
         }
     }
+    LaunchedEffect(ui.menuOpen) { placeMenu() }
     // Back đóng ô tìm trước - chỉ khi màn này đang là màn trên cùng (không bị trang sách phủ, không ở tab khác).
     SearchBack(ui, backEnabled)
-    Box(modifier.fillMaxSize().onGloballyPositioned { coords[0] = it }) {
-        LibraryGrid(books, ui, grid, covers, sheets, actions, top, recap) { coords[1] = it }
+    // Xoay máy / đổi cỡ cửa sổ khi menu đang mở: menu theo nút sắp xếp tới chỗ mới (đo lại sau mỗi lượt bố cục của màn).
+    Box(modifier.fillMaxSize().onGloballyPositioned { coords[0] = it; placeMenu() }) {
+        LibraryGrid(books, ui, grid, covers, sheets, actions, top, recap) { coords[1] = it; placeMenu() }
         SortMenu(ui, anchor, backEnabled)
     }
 }
@@ -166,21 +171,39 @@ private fun LibraryGrid(
     top: Dp,
     recap: (@Composable (List<ListenBook>) -> Unit)?,
     onSortCoordinates: (LayoutCoordinates) -> Unit,
-) {
-    val widthDp = LocalConfiguration.current.screenWidthDp
+) = BoxWithConstraints(Modifier.fillMaxSize()) {
+    val widthDp = maxWidth.value.toInt()
+    val compactWidth = vn.abook.player.ui.theme.widthClass(maxWidth.value) < vn.abook.player.ui.theme.WidthClass.MEDIUM
+    val short = vn.abook.player.ui.theme.windowLayout(maxWidth.value, maxHeight.value).short
+    val searchWidth = 160.dp.coerceAtMost(maxWidth * 0.3f)
     val columns = libraryColumns(widthDp)
-    val cell = ((widthDp - 2f * Dim.margin.value - (columns - 1) * Dim.s12.value) / columns).dp
+    val cell = ((widthDp - 2f * Dim.margin.value - (columns - 1) * Dim.s12.value) / columns).coerceAtLeast(0f).dp
     // Filtering and grouping depend on data/query/sort, never on the moving pager position.
     val views = remember(books, ui.query, ui.sort) {
         LibraryFilter.entries.map { Library.view(books, it, ui.query, ui.sort) }
     }
     val selected = views[ui.filter.ordinal]
     LaunchedEffect(ui) { snapshotFlow { ui.pager.settledPage }.collect { ui.settled(it) } }
-    Column(Modifier.fillMaxSize()) {
-        Column(Modifier.fillMaxWidth().padding(top = top, start = Dim.margin, end = Dim.margin)) {
-            ScreenHeader(S.s_thu_vien_58145555, trailing = { AddBookButton(actions.addBook) }, bottomGap = if (books.isEmpty()) Dim.s16 else 0.dp)
-            vn.abook.player.ui.components.Reveal(books.isNotEmpty()) { FilterBar(ui, selected.shown, onSortCoordinates) }
+    // Cửa sổ thấp: mỗi trang lọc có bản đầu màn riêng; chỉ trang đang hiện báo chỗ nút sắp xếp (menu neo vào đó).
+    val chrome: @Composable (Boolean) -> Unit = { reports ->
+        Column(Modifier.fillMaxWidth().padding(top = if (short) 0.dp else top, start = if (short) 0.dp else Dim.margin, end = if (short) 0.dp else Dim.margin)) {
+            if (short) {
+                Row(Modifier.fillMaxWidth().heightIn(min = Dim.s48), verticalAlignment = Alignment.CenterVertically) {
+                    BasicText(S.s_thu_vien_58145555, Modifier.weight(1f), style = Abook.type.sectionTitle)
+                    AddBookButton(actions.addBook, iconOnly = compactWidth)
+                    SortButton(ui, if (reports) onSortCoordinates else ({ _ -> }))
+                    SearchBox(ui, Modifier.width(searchWidth))
+                }
+                FilterBar(ui, selected.shown, onSortCoordinates, compact = true)
+            } else {
+                ScreenHeader(S.s_thu_vien_58145555, trailing = { AddBookButton(actions.addBook) }, bottomGap = if (books.isEmpty()) Dim.s16 else 0.dp)
+                vn.abook.player.ui.components.Reveal(books.isNotEmpty()) { FilterBar(ui, selected.shown, onSortCoordinates) }
+            }
         }
+    }
+    // Cửa sổ thấp: đầu màn là mục đầu của lưới (cuộn đi cùng sách); chỗ chừa thanh trạng thái đứng ngoài lưới để sách không chạy dưới nó.
+    Column(Modifier.fillMaxSize().padding(top = if (short) top else 0.dp)) {
+        if (!short) chrome(true)
         HorizontalPager(state = ui.pager, beyondViewportPageCount = if (books.isEmpty()) 0 else LibraryFilter.entries.lastIndex,
             modifier = Modifier.weight(1f).fillMaxWidth().clipToBounds().testTag("library_pages"),
             key = { LibraryFilter.entries[it] }) { page ->
@@ -188,6 +211,9 @@ private fun LibraryGrid(
             val view = views[page]
             val tiles = rememberPresence(view.tiles) { it.key }
             val pageGrid = if (page == 0) grid else rememberLazyGridState()
+            // Lưới neo theo khoá của ô đầu: đổi khổ khi đang ở đầu lưới thì vẫn ở đầu (đầu màn vào / ra khỏi lưới), không neo vào ô sách đầu.
+            val restoreTop = remember(short) { Snapshot.withoutReadObservation { pageGrid.firstVisibleItemIndex == 0 && pageGrid.firstVisibleItemScrollOffset == 0 } }
+            LaunchedEffect(short) { if (restoreTop) pageGrid.scrollToItem(0) }
             val active = page == ui.pager.currentPage
             val isActive = remember(ui, page) { { page == ui.pager.currentPage } }
             Box(Modifier.fillMaxSize().then(if (active) Modifier else Modifier.clearAndSetSemantics {})) {
@@ -198,6 +224,7 @@ private fun LibraryGrid(
                 contentPadding = PaddingValues(start = Dim.margin, end = Dim.margin, top = Dim.s16, bottom = Dim.s24),
                 horizontalArrangement = Arrangement.spacedBy(Dim.s12), verticalArrangement = Arrangement.spacedBy(Dim.s16),
             ) {
+                if (short) item(key = "chrome", span = { GridItemSpan(maxLineSpan) }, contentType = "chrome") { chrome(active) }
                 if (recap != null) item(key = "recap", span = { GridItemSpan(maxLineSpan) }, contentType = "recap") { recap(books) }
                 if (tiles.isEmpty()) {
                     item(key = "none", span = { GridItemSpan(maxLineSpan) }, contentType = "none") {

@@ -93,6 +93,13 @@ class NowPlayingWindowState(private val scope: CoroutineScope) {
     var composed by mutableStateOf(false)
         private set
     var reading by mutableStateOf(false)
+    private var viewportKey: Pair<String, Int?>? = null
+    private var viewport = ReadAlongViewport()
+    internal fun readViewport(bookId: String, chapterId: Int?): ReadAlongViewport {
+        val key = bookId to chapterId
+        if (key != viewportKey) { viewportKey = key; viewport = ReadAlongViewport() }
+        return viewport
+    }
 
     /** Số phút của lần hẹn giờ gần nhất: tấm Hẹn giờ mời "Bật lại N phút" khi hẹn giờ vừa tắt tiếng (web: 30 lúc đầu). */
     var lastSleepMinutes by mutableIntStateOf(30)

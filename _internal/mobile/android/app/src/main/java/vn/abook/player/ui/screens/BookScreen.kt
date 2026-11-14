@@ -230,7 +230,7 @@ fun BookScreen(
     bookMusic: (@Composable (String) -> (LazyListScope.() -> Unit))? = null,
 ) {
     BoxWithConstraints(modifier.fillMaxSize()) {
-        BookScreenBody(book, library, player, clock, covers, source, sheets, actions, Modifier.fillMaxSize(), music, prepare, maxWidth, bookMusic)
+        BookScreenBody(book, library, player, clock, covers, source, sheets, actions, Modifier.fillMaxSize(), music, prepare, maxWidth, maxHeight, bookMusic)
     }
 }
 
@@ -238,7 +238,7 @@ fun BookScreen(
 internal fun bookLeftWidth(contentDp: Float): Float = minOf(380f, 320f + maxOf(0f, contentDp - WidthClass.EXPANDED.fromDp) * 0.06f)
 
 /** Bề ngang cả khối hai cột: không quá bề ngang trừ hai lề, 1360, cột trái + khe 32 + danh sách chương 640 (Qt `compositionWidth`). */
-internal fun bookCompositionWidth(contentDp: Float): Float = minOf(contentDp - 2 * Dim.margin.value, 1360f, bookLeftWidth(contentDp) + Dim.s32.value + BOOK_LIST_MEASURE)
+internal fun bookCompositionWidth(contentDp: Float): Float = minOf(contentDp - 2 * Dim.margin.value, 1360f, bookLeftWidth(contentDp) + Dim.s32.value + BOOK_LIST_MEASURE).coerceAtLeast(0f)
 
 private const val BOOK_LIST_MEASURE = 640f
 
@@ -256,9 +256,10 @@ private fun BookScreenBody(
     music: MusicState?,
     prepare: vn.abook.player.ui.data.PrepareState?,
     width: androidx.compose.ui.unit.Dp,
+    height: androidx.compose.ui.unit.Dp,
     bookMusic: (@Composable (String) -> (LazyListScope.() -> Unit))? = null,
 ) {
-    val wide = widthClass(width.value) >= WidthClass.EXPANDED
+    val wide = vn.abook.player.ui.theme.windowLayout(width.value, height.value).twoPane
     val prefetched = vn.abook.player.ui.screens.LocalBookPageState.current
     val ui = remember(book.id, source, prefetched) { prefetched?.takeIf { it.bookId == book.id } ?: BookUiState(book.id, source) }
     // Chương đã "Làm trước" (dấu "Đã làm sẵn"): lắng nghe lõi chỉ khi trang đang hiện.
@@ -428,10 +429,10 @@ private fun BookScreenBody(
                 Box(Modifier.fillMaxSize().testTag("book_split"), contentAlignment = Alignment.TopCenter) {
                     Row(Modifier.width(composition.dp).fillMaxHeight()) {
                         Column(
-                            Modifier.width(bookLeftWidth(width.value).dp).fillMaxHeight().testTag("book_info").fadeEdges(infoScroll).verticalScroll(infoScroll)
+                            Modifier.width((if (widthClass(width.value) < WidthClass.EXPANDED) composition * 0.42f else bookLeftWidth(width.value)).dp).fillMaxHeight().testTag("book_info").fadeEdges(infoScroll).verticalScroll(infoScroll)
                                 .padding(top = Dim.s12, bottom = bottom + Dim.s32),
                         ) {
-                            BookHead(shown, covers, detail?.records.orEmpty(), player.bookId == shown.id && player.hasTrack, player.error.isNotEmpty(), stacked = true, onOpenPlayer = { actions.openNowPlaying(shown.id) }) { openRecords(null) }
+                            BookHead(shown, covers, detail?.records.orEmpty(), player.bookId == shown.id && player.hasTrack, player.error.isNotEmpty(), stacked = height >= 480.dp, compact = height < 480.dp, onOpenPlayer = { actions.openNowPlaying(shown.id) }) { openRecords(null) }
                             Reveal(built) { BookButtons(shown, detail, player, sheets, source, actions, music, notes, openRecords) }
                         }
                         Spacer(Modifier.width(Dim.s32))
@@ -485,7 +486,7 @@ private const val TABS_ITEM = 2
 /** Bìa · (tập / bộ) · tên · tác giả · giọng · số chương · thời lượng · dòng tình trạng · tiến độ mảnh. Tên dài xuống dòng, không cắt. */
 @Composable
 private fun BookHead(
-    book: ListenBook, covers: CoverLoader, records: List<ListenRecord>, listening: Boolean, failed: Boolean, stacked: Boolean = false, onOpenPlayer: () -> Unit, onRecords: () -> Unit,
+    book: ListenBook, covers: CoverLoader, records: List<ListenRecord>, listening: Boolean, failed: Boolean, stacked: Boolean = false, compact: Boolean = false, onOpenPlayer: () -> Unit, onRecords: () -> Unit,
 ) {
     val colors = Abook.colors
     // Cuốn đang ở trình phát: chạm bìa mở trình phát; cuốn khác thì bìa chỉ là hình.
@@ -498,7 +499,7 @@ private fun BookHead(
                 Spacer(Modifier.height(Dim.s4))
             }
         }
-        BasicText(main, style = Abook.type.screenTitle, modifier = Modifier.testTag("book_title"))
+        BasicText(main, style = if (compact) Abook.type.sectionTitle else Abook.type.screenTitle, modifier = Modifier.testTag("book_title"))
         Spacer(Modifier.height(Dim.s8))
         ClusterLabel(BookPage.metaLine(book), style = Abook.type.bodySmall)
     }
@@ -511,7 +512,8 @@ private fun BookHead(
                 Column(Modifier.fillMaxWidth(), content = info)
             } else {
                 Row(Modifier.fillMaxWidth()) {
-                    FlyingBookCover(book, covers, CoverWidth, Modifier.width(CoverWidth).then(coverOpens).testTag("book_cover"))
+                    val side = if (compact) 64.dp else CoverWidth
+                    FlyingBookCover(book, covers, side, Modifier.width(side).then(coverOpens).testTag("book_cover"))
                     Spacer(Modifier.width(Dim.s16))
                     Column(Modifier.weight(1f), content = info)
                 }

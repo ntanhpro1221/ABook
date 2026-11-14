@@ -5,6 +5,8 @@ import vn.abook.player.ui.motion.ContentLayout
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -68,7 +70,9 @@ fun StudioHomeScreen(state: StudioHomeState, onBack: () -> Unit, onOpen: (Studio
                 BasicText(StudioText.LOADING, style = Abook.type.body.copy(color = Abook.colors.text2), modifier = Modifier.testTag("studio_loading"))
             }
             books == null -> InlineProblem(poll.error?.let { StudioText.failure(it) }.orEmpty(), state::refreshSoon, "studio_home_problem")
-            else -> LazyColumn(Modifier.fillMaxSize().fadeEdges(list).testTag("studio_list"), state = list, contentPadding = PaddingValues(bottom = Dim.s16)) {
+            else -> BoxWithConstraints(Modifier.fillMaxSize()) {
+                val columns = if (vn.abook.player.ui.theme.windowLayout(maxWidth.value, maxHeight.value).twoPane) 2 else 1
+                LazyColumn(Modifier.fillMaxSize().fadeEdges(list).testTag("studio_list"), state = list, contentPadding = PaddingValues(bottom = Dim.s16)) {
                 item("notices", "notices") {
                     Column {
                         InlineProblem(if (state.mismatched) StudioText.MISMATCH else "", null, "studio_mismatch")
@@ -81,7 +85,13 @@ fun StudioHomeScreen(state: StudioHomeState, onBack: () -> Unit, onOpen: (Studio
                 for ((index, entry) in groups.withIndex()) {
                     val (group, members) = entry
                     item("group_${group.name}", "group") { SectionTitle(StudioText.group(group), first = index == 0, modifier = Modifier.testTag("studio_group_${group.name}")) }
-                    items(members, key = { "book_${it.id}" }, contentType = { "book" }) { book -> ProjectCard(book, onOpen) }
+                    items(members.chunked(columns), key = { "book_${it.first().id}" }, contentType = { "book" }) { row ->
+                        Row(Modifier.fillMaxWidth(), horizontalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(Dim.s24)) {
+                            for (book in row) Box(Modifier.weight(1f)) { ProjectCard(book, onOpen) }
+                            repeat(columns - row.size) { Spacer(Modifier.weight(1f)) }
+                        }
+                    }
+                }
                 }
             }
         }

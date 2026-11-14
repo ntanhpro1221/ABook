@@ -9,12 +9,15 @@ import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.WindowInsets
 import vn.abook.player.ui.components.gestureSafe
+import vn.abook.player.ui.components.fadeEdges
 import vn.abook.player.ui.components.ClockLabel
 import vn.abook.player.ui.components.Reveal
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.gestures.awaitEachGesture
@@ -55,6 +58,7 @@ import vn.abook.player.ui.theme.MotionMs
 import vn.abook.player.ui.theme.WidthClass
 import vn.abook.player.ui.theme.widthClass
 import vn.abook.player.ui.theme.remainingSpace
+import vn.abook.player.ui.theme.windowLayout
 import vn.abook.player.ui.motion.Motion
 
 /**
@@ -68,7 +72,8 @@ fun NowPlayingScreen(
     parts: SharedPlayerParts, windowProgress: State<Float>, modifier: Modifier = Modifier,
 ) {
     BoxWithConstraints(modifier) {
-        NowPlayingBody(state, model, window, parts, windowProgress, Modifier.fillMaxSize(), widthClass(maxWidth.value) >= WidthClass.LARGE && state.readAlongAvailable)
+        val layout = windowLayout(maxWidth.value, maxHeight.value)
+        NowPlayingBody(state, model, window, parts, windowProgress, Modifier.fillMaxSize(), layout.playerPanes && state.readAlongAvailable, layout.short)
     }
 }
 
@@ -81,7 +86,7 @@ private val SideColumnWidth = 440.dp
 @Composable
 private fun NowPlayingBody(
     state: NowPlayingState, model: NowPlayingModel, window: NowPlayingWindowState,
-    parts: SharedPlayerParts, windowProgress: State<Float>, modifier: Modifier, split: Boolean,
+    parts: SharedPlayerParts, windowProgress: State<Float>, modifier: Modifier, split: Boolean, compactHeight: Boolean,
 ) {
     val background = rememberPlayerBackground(state.cover)
     val scope = rememberCoroutineScope()
@@ -124,15 +129,32 @@ private fun NowPlayingBody(
       Box(Modifier.fillMaxSize().graphicsLayer {}) {
         val playerColumn: @Composable ColumnScope.() -> Unit = {
             val setReading = { on: Boolean -> if (on != window.reading) { window.reading = on; controlsDimmed = false } }
-            Row(Modifier.fillMaxWidth().height(56.dp).playerReveal(windowProgress)
+            // Cửa sổ thấp: bìa gọn + tên đứng ở thanh trên thay chữ "Đang nghe" (khi thanh trên không cần công tắc chế độ),
+            // để tốc độ / hẹn giờ / chương vẫn nằm trong màn mà không phải cuộn.
+            val titlesInHeader = compactHeight && !(state.readAlongAvailable && !split)
+            val coverTitles: @Composable (Modifier, androidx.compose.ui.unit.Dp) -> Unit = { rowModifier, coverSize ->
+                Row(rowModifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                    PlayerCover(state.cover, state.bookTitle, parts.element(NowPlayingPart.Cover, Modifier.size(coverSize).testTag("player_cover")))
+                    Spacer(Modifier.width(12.dp))
+                    Column(Modifier.weight(1f)) {
+                        RollingLabel(state.chapterTitle, parts.element(NowPlayingPart.Chapter), Abook.type.bodyStrong)
+                        RollingLabel(subtitle, parts.element(NowPlayingPart.Book,
+                            window.bookPage?.let { Modifier.pressable(onClick = it).testTag("player_book") } ?: Modifier), Abook.type.bodySmall)
+                    }
+                }
+            }
+            Row(Modifier.fillMaxWidth().heightIn(min = if (compactHeight) 48.dp else 56.dp).playerReveal(windowProgress)
                 .dismissPlayerOnDrag(window, readingHere && !window.sheetOpen),
                 verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
                 GlyphButton(S.s_thu_nho_d7896922, "⌄", window::close, Modifier.testTag("collapse_player"))
                 // Đọc theo là một chế độ của chính cửa sổ này, nên công tắc chế độ nằm ở thanh trên của cửa sổ - không phải một nút hành động ở đáy.
-                    SwapContent(state, split, contentKey = { state, split -> state.readAlongAvailable && !split }, layout = ContentLayout.Row) { state, split ->
+                Box(Modifier.weight(1f), contentAlignment = Alignment.Center) {
+                    if (titlesInHeader) coverTitles(Modifier.padding(vertical = 4.dp), 40.dp)
+                    else SwapContent(state, split, contentKey = { state, split -> state.readAlongAvailable && !split }, layout = ContentLayout.Row) { state, split ->
                         if (state.readAlongAvailable && !split) PlayerModeSwitch(mode, setReading)
                         else BasicText(S.s_dang_nghe_8bb22da4, style = Abook.type.caption)
                     }
+                }
                 GlyphButton(S.s_them_tuy_chon_a0b4bb6e, "⋯", { window.openSheet(PlayerSheet.More) }, Modifier.testTag("player_more"))
             }
             // Both modes occupy this same fixed weight. Transport is outside it and never changes coordinates.
@@ -140,10 +162,15 @@ private fun NowPlayingBody(
             // đứng cạnh nó (thu nhỏ, vẫn xuống dòng, không mất), chữ chương mở ra bên dưới. Không phần nào mờ đi rồi biến mất.
             // Ô chữ có mặt khi đang đọc hoặc còn đang chuyển cảnh; chỉ đổi khi qua mốc 0, không recompose theo từng khung.
             val textShown by remember { derivedStateOf { mode.value > 0f } }
-            Layout(modifier = Modifier.weight(1f).fillMaxWidth(), content = {
+            if (compactHeight) {
+                if (!titlesInHeader) coverTitles(Modifier.heightIn(min = 56.dp).padding(vertical = 4.dp), 48.dp)
+                if (!split && window.reading) {
+                    ReadAlongHost(state, model, window, Modifier.fillMaxWidth().height(240.dp)) { controlsDimmed = it }
+                }
+            } else Layout(modifier = Modifier.weight(1f).fillMaxWidth(), content = {
                 Box(Modifier.fillMaxSize()) {
                   Reveal(!split && (window.reading || textShown) && window.shown) {
-                    ReadAlongHost(state, model, window, Modifier.fillMaxSize()) { controlsDimmed = it }
+                    if (!split) ReadAlongHost(state, model, window, Modifier.fillMaxSize()) { controlsDimmed = it }
                   }
                 }
                 // Chạm bìa cũng đổi chế độ: bìa lớn -> đọc theo, bìa nhỏ -> về nghe. Bìa là phần tử chung (bay bằng lớp vẽ, xem SharedPlayerParts);
@@ -190,7 +217,7 @@ private fun NowPlayingBody(
                     // Mép trên của chữ bám mép dưới của khối bìa + tên đang thu lại: chữ trượt lên từ đáy, không bao giờ nằm dưới bìa hay tên.
                     text.placeWithLayer(0, textTop) {
                         val p = mode.value
-                        val coverBottom = coverY * (1f - p) + coverSide * (1f + (thumb.toFloat() / coverSide - 1f) * p)
+                        val coverBottom = coverY * (1f - p) + coverSide * (1f + (thumb.toFloat() / coverSide.coerceAtLeast(1) - 1f) * p)
                         val titlesTop = titlesY * (1f - p) + (header - titles.height * titleScale).coerceAtLeast(0f) / 2f * p
                         val titlesBottom = titlesTop + titles.height * (1f + (titleScale - 1f) * p)
                         translationY = maxOf(coverBottom, titlesBottom) + gap * p - textTop
@@ -203,7 +230,7 @@ private fun NowPlayingBody(
                         // Đang chuyển, bìa và tên co giãn như ảnh dựng sẵn (xem WindowFlight.fly): co giãn trực tiếp thì nét chữ của tên dựng lại mỗi khung.
                         if (p > 0f && p < 1f) compositingStrategy = CompositingStrategy.Offscreen
                         transformOrigin = TransformOrigin(0f, 0f)
-                        scaleX = 1f + (thumb.toFloat() / coverSide - 1f) * p; scaleY = scaleX
+                        scaleX = 1f + (thumb.toFloat() / coverSide.coerceAtLeast(1) - 1f) * p; scaleY = scaleX
                         translationX = -coverX * p
                         translationY = -coverY * p
                     }
@@ -235,8 +262,8 @@ private fun NowPlayingBody(
                 }.padding(bottom = Dim.s8), contentAlignment = Alignment.BottomCenter) {
                     ReturnChip(state.returnAvailable && !window.reading && !split, state.returnSerial, model::returnToPreviousPlace)
                 }
-                PlayerSeekBar(state.durationMs, model.position, model::seek, Modifier.playerReveal(windowProgress))
-                Row(Modifier.fillMaxWidth().height(88.dp).testTag("transport"),
+                PlayerSeekBar(state.durationMs, model.position, model::seek, Modifier.playerReveal(windowProgress), compact = compactHeight)
+                Row(Modifier.fillMaxWidth().height(if (compactHeight) 72.dp else 88.dp).testTag("transport"),
                     verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceEvenly) {
                     GlyphButton(S.s_chuong_truoc_4750f9e9, "|‹", model::previous, Modifier.playerReveal(windowProgress))
                     GlyphButton(S.s_lui_15_giay_eb84ecc0, "↶15", { model.skip(-Playback.SKIP_SECONDS) }, Modifier.playerReveal(windowProgress))
@@ -269,16 +296,18 @@ private fun NowPlayingBody(
         Layout(
             modifier = Modifier.fillMaxSize().windowInsetsPadding(gestureSafe(WindowInsets.systemBars)).padding(horizontal = 20.dp).padding(bottom = 12.dp),
             content = {
-                Column(Modifier.fillMaxSize(), content = playerColumn)
-                Box(Modifier.fillMaxSize().testTag("player_read_side").padding(top = 64.dp), contentAlignment = Alignment.TopCenter) {
-                    Reveal(rightComposed && window.shown) { ReadAlongHost(state, model, window, Modifier.widthIn(max = ReadColumnMax).fillMaxSize()) {} }
+                val controlsScroll = rememberScrollState()
+                Column(Modifier.fillMaxSize().then(if (compactHeight) Modifier.fadeEdges(controlsScroll).verticalScroll(controlsScroll) else Modifier).testTag("player_controls"), content = playerColumn)
+                Box(Modifier.fillMaxSize().testTag("player_read_side").padding(top = if (compactHeight) 0.dp else 64.dp), contentAlignment = Alignment.TopCenter) {
+                    Reveal(rightComposed && window.shown) { if (split) ReadAlongHost(state, model, window, Modifier.widthIn(max = ReadColumnMax).fillMaxSize()) {} }
                 }
             },
         ) { measurables, constraints ->
             val full = constraints.maxWidth
-            val gap = 32.dp.roundToPx().coerceAtMost(full)
+            val gap = (if (compactHeight) 16.dp else 32.dp).roundToPx().coerceAtMost(full)
             val t = sideT.value
-            val room = (full - SideColumnWidth.roundToPx() - gap).coerceAtLeast(0)
+            val targetLeft = if (compactHeight) (full * 0.42f).toInt().coerceIn(minOf(full, 280.dp.roundToPx()), minOf(full, SideColumnWidth.roundToPx())) else SideColumnWidth.roundToPx()
+            val room = remainingSpace(full, targetLeft + gap)
             val right = (room * t).toInt()
             val left = full - right - (gap * t).toInt()
             val leftPlaceable = measurables[0].measure(Constraints.fixed(left, constraints.maxHeight))
@@ -312,7 +341,8 @@ private fun ReadAlongHost(state: NowPlayingState, model: NowPlayingModel, window
         onEdit = model.lineEditor?.takeUnless { state.speaking }?.let { editor -> { paragraph -> reading.chapterId?.let { editor.open(reading.bookId, it, paragraph) } } },
         returnAvailable = state.returnAvailable, returnSerial = state.returnSerial, onReturn = model::returnToPreviousPlace,
         onListen = { ms -> window.changeLook(window.look.copy(tapped = true)); model.listenFrom(ms) },
-        nextTitle = nextTitle, onNext = model::next)
+        nextTitle = nextTitle, onNext = model::next,
+        viewport = window.readViewport(state.bookId, state.chapterId))
 }
 
 @Composable
@@ -336,7 +366,7 @@ private fun SleepAction(sleep: PlayerSleep, position: PlayerPosition, onClick: (
 }
 
 @Composable
-fun PlayerSeekBar(durationMs: Long, position: PlayerPosition, onSeek: (Long) -> Unit, modifier: Modifier = Modifier, center: @Composable () -> Unit = {}) {
+fun PlayerSeekBar(durationMs: Long, position: PlayerPosition, onSeek: (Long) -> Unit, modifier: Modifier = Modifier, compact: Boolean = false, center: @Composable () -> Unit = {}) {
     val dragging = remember { mutableStateOf(false) }
     val dragged = remember { mutableLongStateOf(0L) }
     val view = LocalView.current
@@ -361,7 +391,7 @@ fun PlayerSeekBar(durationMs: Long, position: PlayerPosition, onSeek: (Long) -> 
         )
         // Isolated second-resolution labels. The frame clock never recomposes the transport or chapter.
         // Hàng giờ cao cố định: chip ở giữa hiện / ẩn không bao giờ đẩy hàng nút phát.
-        Box(Modifier.fillMaxWidth().height(32.dp)) {
+        Box(Modifier.fillMaxWidth().heightIn(min = if (compact) 24.dp else 32.dp)) {
             ClockLabel(PlayerLabels.time(seconds * 1000), Modifier.align(Alignment.TopStart).testTag("time_elapsed"), style = Abook.type.caption)
             Box(Modifier.align(Alignment.TopCenter)) { center() }
             ClockLabel("−" + PlayerLabels.time(durationMs - seconds * 1000), Modifier.align(Alignment.TopEnd).testTag("time_left"), style = Abook.type.caption)
@@ -377,15 +407,15 @@ fun PlayerSeekBar(durationMs: Long, position: PlayerPosition, onSeek: (Long) -> 
 fun PlayerModeSwitch(mode: State<Float>, onSelect: (Boolean) -> Unit, modifier: Modifier = Modifier) {
     val colors = Abook.colors
     val style = Abook.type.label.copy(textAlign = androidx.compose.ui.text.style.TextAlign.Center)
-    Layout(modifier = modifier.height(36.dp).testTag("player_mode")
+    Layout(modifier = modifier.heightIn(min = 36.dp).testTag("player_mode")
         .drawBehind {
             val corner = size.height / 2
             val inset = 3.dp.toPx()
             val segment = size.width / 2
             drawRoundRect(colors.bgSunken, cornerRadius = androidx.compose.ui.geometry.CornerRadius(corner))
             drawRoundRect(colors.panel, Offset(inset + segment * mode.value, inset),
-                androidx.compose.ui.geometry.Size(segment - inset * 2, size.height - inset * 2),
-                androidx.compose.ui.geometry.CornerRadius(corner - inset))
+                androidx.compose.ui.geometry.Size((segment - inset * 2).coerceAtLeast(0f), (size.height - inset * 2).coerceAtLeast(0f)),
+                androidx.compose.ui.geometry.CornerRadius((corner - inset).coerceAtLeast(0f)))
         },
         content = {
             for ((index, label) in listOf(S.s_nghe_a43aafef, S.s_doc_theo_df342819).withIndex()) {
@@ -402,9 +432,10 @@ fun PlayerModeSwitch(mode: State<Float>, onSelect: (Boolean) -> Unit, modifier: 
         }) { measurables, constraints ->
         val segment = measurables.maxOf { it.maxIntrinsicWidth(constraints.maxHeight) }
             .coerceAtMost(constraints.maxWidth / 2)
-        val placeables = measurables.map { it.measure(Constraints.fixed(segment, constraints.maxHeight)) }
-        layout(segment * 2, constraints.maxHeight) {
-            placeables.forEachIndexed { i, p -> p.place(segment * i, 0) }
+        val placeables = measurables.map { it.measure(Constraints(minWidth = segment, maxWidth = segment, maxHeight = constraints.maxHeight)) }
+        val height = (placeables.maxOfOrNull { it.height } ?: 0).coerceIn(constraints.minHeight, constraints.maxHeight)
+        layout(segment * 2, height) {
+            placeables.forEachIndexed { i, p -> p.place(segment * i, (height - p.height) / 2) }
         }
     }
 }

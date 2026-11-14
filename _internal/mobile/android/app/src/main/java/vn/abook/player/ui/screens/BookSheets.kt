@@ -141,7 +141,7 @@ fun BookMenuSheet(
                 BasicText(S.s_nhac_nen_271fb292, style = Abook.type.sectionTitle)
                 RowHint(book.title)
                 Spacer(Modifier.height(Dim.s8))
-                MusicPanel(music, book.id, playerMusic)
+                Box(Modifier.fillMaxWidth().heightIn(max = 480.dp)) { MusicPanel(music, book.id, playerMusic) }
             }
             MenuPage.Delete -> DeletePage(book, source, actions, dismiss, onKeep = { page = MenuPage.Actions })
         }

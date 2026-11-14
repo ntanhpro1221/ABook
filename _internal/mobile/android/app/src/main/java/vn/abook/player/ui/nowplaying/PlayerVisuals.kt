@@ -259,7 +259,7 @@ fun PlayerAction(label: String, glyph: String, onClick: () -> Unit, modifier: Mo
     Column(modifier.widthIn(min = 48.dp).pressable(onClick = onClick).padding(vertical = 8.dp)
         .semantics { contentDescription = label }, horizontalAlignment = Alignment.CenterHorizontally) {
         // Ô trên cùng một chiều cao (= ô icon 28 dp) dù là icon hay chữ ("1×", "12:30"): nhãn dưới của cả hàng nằm trên cùng một đường.
-        Box(Modifier.height(28.dp), contentAlignment = Alignment.Center) {
+        Box(Modifier.heightIn(min = 28.dp), contentAlignment = Alignment.Center) {
             SwapContent(glyph, contentKey = { glyph -> glyph == "◷" || glyph == "☷" || glyph == MINI_WINDOW_GLYPH }, layout = ContentLayout.Box) { glyph ->
                 if (glyph == "◷" || glyph == "☷" || glyph == MINI_WINDOW_GLYPH) PlayerGlyph(glyph)
                 else SwapContent(clock, contentKey = { clock -> clock }, layout = ContentLayout.Box) { clock ->

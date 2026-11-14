@@ -7,6 +7,8 @@ import vn.abook.player.S
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -24,6 +26,7 @@ import vn.abook.player.StudioErrors
 import vn.abook.player.readaloud.WebSocket
 import vn.abook.player.ui.addbook.BookForm
 import vn.abook.player.ui.components.GlobeIcon
+import vn.abook.player.ui.components.fadeEdges
 import vn.abook.player.ui.components.ImageIcon
 import vn.abook.player.ui.components.InlineProblem
 import vn.abook.player.ui.components.MenuRow
@@ -140,13 +143,16 @@ private fun CoverHub(editor: BookEditor, onBack: () -> Unit, find: () -> Unit, c
     val picker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri -> uri?.let { crop(it.toString()) } }
     val has = state.saved?.cover != null
     BookForm(StudioCoverText.TITLE, onBack, "studio_cover") {
-        RowHint(StudioCoverText.LEAD, Modifier.padding(top = Dim.s4))
-        SheetMenu(Modifier.padding(top = Dim.s8)) {
-            RowHint(if (state.loading) "" else if (has) StudioCoverText.HAS else StudioCoverText.NONE, Modifier.padding(bottom = Dim.s8))
-            MenuRow(StudioCoverText.PICK, "studio_cover_pick", onClick = { picker.launch(arrayOf("image/*")) }) { ink -> ImageIcon(ink) }
-            MenuRow(StudioCoverText.FIND, "studio_cover_find", onClick = find) { ink -> GlobeIcon(ink) }
-            Reveal(has) { MenuRow(StudioCoverText.REMOVE, "studio_cover_remove", danger = true, onClick = { editor.setCover(null) }) { ink -> TrashIcon(ink) } }
-            InlineProblem(state.problem, editor::retry, "studio_cover_problem")
+        // The shared menu scrolls the lead and all actions together in short windows.
+        SheetMenu(Modifier.fillMaxWidth()) {
+            RowHint(StudioCoverText.LEAD, Modifier.padding(top = Dim.s4))
+            Column(Modifier.fillMaxWidth().padding(top = Dim.s8)) {
+                RowHint(if (state.loading) "" else if (has) StudioCoverText.HAS else StudioCoverText.NONE, Modifier.padding(bottom = Dim.s8))
+                MenuRow(StudioCoverText.PICK, "studio_cover_pick", onClick = { picker.launch(arrayOf("image/*")) }) { ink -> ImageIcon(ink) }
+                MenuRow(StudioCoverText.FIND, "studio_cover_find", onClick = find) { ink -> GlobeIcon(ink) }
+                Reveal(has) { MenuRow(StudioCoverText.REMOVE, "studio_cover_remove", danger = true, onClick = { editor.setCover(null) }) { ink -> TrashIcon(ink) } }
+                InlineProblem(state.problem, editor::retry, "studio_cover_problem")
+            }
         }
     }
 }

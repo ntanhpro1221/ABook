@@ -7,12 +7,20 @@ import androidx.activity.compose.PredictiveBackHandler
 import androidx.compose.animation.SharedTransitionLayout
 import vn.abook.player.ui.motion.LocalCoverOverlay
 import androidx.compose.foundation.background
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.layout.only
+import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.grid.LazyGridState
 import androidx.compose.runtime.collectAsState
@@ -112,6 +120,7 @@ import vn.abook.player.ui.screens.SettingsEnv
 import vn.abook.player.ui.screens.SettingsGroupScreen
 import vn.abook.player.ui.screens.SettingsScreen
 import vn.abook.player.ui.screens.StudioScreen
+import vn.abook.player.ui.components.fadeEdges
 import vn.abook.player.ui.theme.Abook
 import vn.abook.player.ui.theme.Dim
 import vn.abook.player.ui.nowplaying.NowPlayingLayer
@@ -514,6 +523,8 @@ private fun ShellFrame(
     val insets = remember { LayerInsets() }
     val colors = Abook.colors
     val clearance = navigationClearance()
+    val config = androidx.compose.ui.platform.LocalConfiguration.current
+    val rail = vn.abook.player.ui.theme.windowLayout(config.screenWidthDp.toFloat(), config.screenHeightDp.toFloat()).let { it.short && it.twoPane }
     Layout(
         content = {
             Box(Modifier.layoutId(TAB_BAR).semantics { if (tabBarShown(nav) <= 0f) hideFromAccessibility() }) { Column(Modifier.fillMaxWidth()) { tabBar() } }
@@ -526,15 +537,16 @@ private fun ShellFrame(
         },
         modifier = Modifier.fillMaxSize(),
     ) { measurables, constraints ->
-        val width = constraints.maxWidth
+        val railWidth = if (rail) 112.dp.roundToPx().coerceAtMost(constraints.maxWidth) else 0
+        val width = constraints.maxWidth - railWidth
         val height = constraints.maxHeight
         val loose = Constraints(maxWidth = width, maxHeight = height)
-        val tabPlaceable = measurables.first { it.layoutId == TAB_BAR }.measure(loose)
+        val tabPlaceable = measurables.first { it.layoutId == TAB_BAR }.measure(if (rail) Constraints.fixed(railWidth, height) else loose)
         val miniPlaceable = measurables.first { it.layoutId == MINI_BAR }.measure(loose)
         val barsPlaceable = measurables.first { it.layoutId == BARS }.measure(loose)
         val strip = clearance.roundToPx()
         // Phần thanh tab đứng trên dải chừa đáy của khối thanh phát nhỏ.
-        val tabAbove = tabPlaceable.height - strip
+        val tabAbove = if (rail) 0 else (tabPlaceable.height - strip).coerceAtLeast(0)
         // Lookahead and the actual pass can measure different animated bar
         // heights. Publishing both into one State oscillates forever during
         // Undo/notice reveals inside SharedTransitionLayout.
@@ -544,15 +556,18 @@ private fun ShellFrame(
             insets.bare = barsPlaceable.height
         }
         val stackPlaceable = measurables.first { it.layoutId == STACK }.measure(Constraints.fixed(width, height))
-        layout(width, height) {
+        layout(constraints.maxWidth, height) {
             // Chrome paints above every content layer, including a destination
             // with its own bottom actions while shell bars slide away.
-            stackPlaceable.place(0, 0)
-            miniPlaceable.placeWithLayer(0, height - miniPlaceable.height) {
+            stackPlaceable.place(railWidth, 0)
+            miniPlaceable.placeWithLayer(railWidth, height - miniPlaceable.height) {
                 translationY = miniPlaceable.height * (1f - miniBarShown(nav)) - tabAbove * tabBarShown(nav)
             }
-            tabPlaceable.placeWithLayer(0, height - tabPlaceable.height) { translationY = tabPlaceable.height * (1f - tabBarShown(nav)) }
-            barsPlaceable.placeWithLayer(0, height - barsPlaceable.height) {
+            tabPlaceable.placeWithLayer(0, if (rail) 0 else height - tabPlaceable.height) {
+                if (rail) translationX = -railWidth * (1f - tabBarShown(nav))
+                else translationY = tabPlaceable.height * (1f - tabBarShown(nav))
+            }
+            barsPlaceable.placeWithLayer(railWidth, height - barsPlaceable.height) {
                 translationY = -(tabAbove * tabBarShown(nav) + miniPlaceable.height * miniBarShown(nav))
             }
         }
@@ -738,8 +753,44 @@ fun TabHost(tabs: TabState, modifier: Modifier = Modifier, content: @Composable 
 @Composable
 fun TabBar(tabs: TabState, modifier: Modifier = Modifier, onSelect: (Tab) -> Unit = { tabs.select(it) }) {
     val colors = Abook.colors
+    val config = androidx.compose.ui.platform.LocalConfiguration.current
+    val layout = vn.abook.player.ui.theme.windowLayout(config.screenWidthDp.toFloat(), config.screenHeightDp.toFloat())
+    if (layout.short && layout.twoPane) {
+        val scroll = androidx.compose.foundation.rememberScrollState()
+        Column(modifier.fillMaxSize().background(colors.panel).windowInsetsPadding(vn.abook.player.ui.components.gestureSafe(androidx.compose.foundation.layout.WindowInsets.systemBars)
+                .only(androidx.compose.foundation.layout.WindowInsetsSides.Vertical + androidx.compose.foundation.layout.WindowInsetsSides.Start))
+            .fadeEdges(scroll).verticalScroll(scroll).testTag("navigation_rail")) {
+            for (tab in Tab.entries) {
+                Box(Modifier.fillMaxWidth().heightIn(min = Dim.s48 + Dim.s8)
+                    .pressable(Role.Tab) { onSelect(tab) }.semantics { selected = tabs.selected == tab.ordinal }.testTag(tab.tag)
+                    .padding(horizontal = Dim.s12, vertical = Dim.s8), contentAlignment = Alignment.CenterStart) {
+                    BasicText(tab.label, style = Abook.type.tab,
+                        color = { lerp(colors.text2, colors.text, (1f - abs(tabs.position.value - tab.ordinal)).coerceIn(0f, 1f)) })
+                    if (tabs.selected == tab.ordinal) Box(Modifier.align(Alignment.BottomStart).width(28.dp).height(3.dp).background(colors.accent).testTag("tab_indicator"))
+                }
+            }
+        }
+        return
+    }
     // Vạch hổ phách nằm đáy hàng tab: dưới nó là chỗ chừa đáy chung - thanh điều hướng, hay vùng hệ thống nuốt chạm + khoảng thở khi máy giấu thanh (components/Insets.kt).
     val clearance = navigationClearance()
+    val fontScale = androidx.compose.ui.platform.LocalDensity.current.fontScale
+    if (fontScale > 1.3f || config.screenWidthDp < 360) {
+        val scroll = androidx.compose.foundation.rememberScrollState()
+        Column(modifier.fillMaxWidth().background(colors.panel)) {
+            Row(Modifier.fillMaxWidth().horizontalScroll(scroll)) {
+                for (tab in Tab.entries) Box(Modifier.widthIn(min = 96.dp).heightIn(min = Dim.s48 + Dim.s8)
+                    .pressable(Role.Tab) { onSelect(tab) }.semantics { selected = tabs.selected == tab.ordinal }.testTag(tab.tag)
+                    .padding(horizontal = Dim.s16, vertical = Dim.s8), contentAlignment = Alignment.Center) {
+                    BasicText(tab.label, style = Abook.type.tab, softWrap = false,
+                        color = { lerp(colors.text2, colors.text, (1f - abs(tabs.position.value - tab.ordinal)).coerceIn(0f, 1f)) })
+                    if (tabs.selected == tab.ordinal) Box(Modifier.align(Alignment.BottomStart).width(28.dp).height(3.dp).background(colors.accent).testTag("tab_indicator"))
+                }
+            }
+            Box(Modifier.fillMaxWidth().height(clearance))
+        }
+        return
+    }
     Column(modifier.fillMaxWidth().background(colors.panel)) {
         Box(Modifier.fillMaxWidth().height(1.dp).background(colors.line))
         Box(Modifier.fillMaxWidth().height(Dim.s48 + Dim.s8)) {

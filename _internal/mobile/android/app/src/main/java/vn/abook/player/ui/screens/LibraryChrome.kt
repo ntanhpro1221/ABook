@@ -65,8 +65,12 @@ import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.rememberScrollState
 import vn.abook.player.ui.components.fadeEdgesHorizontal
+import vn.abook.player.ui.components.fadeEdges
 import vn.abook.player.ui.theme.MotionMs
 import androidx.compose.ui.unit.dp
 import vn.abook.player.ui.components.CheckIcon
@@ -88,15 +92,17 @@ import vn.abook.player.ui.components.Reveal
 
 /** "Thêm sách": chữ hổ phách với dấu + (nút chữ, DESIGN.md §6 "Nút (c)"), vùng chạm cao 48. */
 @Composable
-fun AddBookButton(onClick: () -> Unit, modifier: Modifier = Modifier) {
+fun AddBookButton(onClick: () -> Unit, modifier: Modifier = Modifier, iconOnly: Boolean = false) {
     val colors = Abook.colors
     Row(
-        modifier.height(Dim.s48).pressable(onClick = onClick).testTag("add_book"),
+        modifier.height(Dim.s48).pressable(onClick = onClick).testTag("add_book").semantics { contentDescription = S.s_them_sach_2a9d3708 },
         verticalAlignment = Alignment.CenterVertically,
     ) {
         PlusIcon(colors.accentText, size = 18.dp)
-        Spacer(Modifier.width(Dim.s4))
-        BasicText(S.s_them_sach_2a9d3708, style = Abook.type.label.copy(color = colors.accentText))
+        if (!iconOnly) {
+            Spacer(Modifier.width(Dim.s4))
+            BasicText(S.s_them_sach_2a9d3708, style = Abook.type.label.copy(color = colors.accentText))
+        } else Spacer(Modifier.width(Dim.s24))
     }
 }
 
@@ -301,11 +307,14 @@ fun SortMenu(ui: LibraryUiState, anchor: IntOffset, backEnabled: () -> Boolean =
     BackHandler(enabled = open && backEnabled()) { ui.closeMenu() }
     val colors = Abook.colors
     val shape = RoundedCornerShape(Dim.radiusCover)
-    Box(Modifier.fillMaxSize().pointerInput(Unit) { detectTapGestures { ui.closeMenu() } }.testTag("sort_menu")) {
+    BoxWithConstraints(Modifier.fillMaxSize().pointerInput(Unit) { detectTapGestures { ui.closeMenu() } }.testTag("sort_menu")) {
+        val menuWidth = minOf(MenuWidth, maxWidth)
+        val menuTop = with(androidx.compose.ui.platform.LocalDensity.current) { anchor.y.toDp() }.coerceIn(0.dp, (maxHeight - Dim.s48).coerceAtLeast(0.dp))
+        val scroll = rememberScrollState()
         Column(
             Modifier
-                .offset { IntOffset(anchor.x - MenuWidth.roundToPx(), anchor.y) }
-                .width(MenuWidth)
+                .offset { IntOffset((anchor.x - menuWidth.roundToPx()).coerceIn(0, (maxWidth - menuWidth).roundToPx().coerceAtLeast(0)), menuTop.roundToPx()) }
+                .width(menuWidth).heightIn(max = (maxHeight - menuTop).coerceAtLeast(0.dp))
                 .graphicsLayer {
                     transformOrigin = TransformOrigin(1f, 0f)
                     val k = progress.value
@@ -317,12 +326,12 @@ fun SortMenu(ui: LibraryUiState, anchor: IntOffset, backEnabled: () -> Boolean =
                 .background(colors.panel)
                 .border(1.dp, colors.line, shape)
                 .pointerInput(Unit) { detectTapGestures { } }
-                .padding(vertical = Dim.s4),
+                .fadeEdges(scroll).verticalScroll(scroll).padding(vertical = Dim.s4),
         ) {
             for (option in LibrarySort.entries) {
                 val chosen = option == ui.sort
                 Row(
-                    Modifier.fillMaxWidth().height(Dim.s48).pressable { ui.chooseSort(option) }.padding(horizontal = Dim.s16).testTag("sort_${option.name}"),
+                    Modifier.fillMaxWidth().heightIn(min = Dim.s48).pressable { ui.chooseSort(option) }.padding(horizontal = Dim.s16).testTag("sort_${option.name}"),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Box(Modifier.size(Dim.s24), contentAlignment = Alignment.CenterStart) {
@@ -342,9 +351,9 @@ private val MenuWidth = 220.dp
  * chỉ còn 232 dp cho bốn chữ (cần ~260): "Xong" bị cuộn khuất, chỉ còn một nét mờ.
  */
 @Composable
-fun FilterBar(ui: LibraryUiState, count: Int, onSortCoordinates: (LayoutCoordinates) -> Unit, modifier: Modifier = Modifier) {
+fun FilterBar(ui: LibraryUiState, count: Int, onSortCoordinates: (LayoutCoordinates) -> Unit, modifier: Modifier = Modifier, compact: Boolean = false) {
     Column(modifier.fillMaxWidth()) {
-        Box(Modifier.fillMaxWidth().height(Dim.s48)) {
+        if (!compact) Box(Modifier.fillMaxWidth().height(Dim.s48)) {
             BasicText(S.s_0_cuon_2356f2f6(count), style = Abook.type.bodySmall, modifier = Modifier.align(Alignment.CenterStart).testTag("library_count"))
             Row(Modifier.align(Alignment.CenterEnd)) {
                 SortButton(ui, onSortCoordinates)

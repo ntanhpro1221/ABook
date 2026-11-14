@@ -6,6 +6,7 @@ import vn.abook.player.ui.motion.ContentLayout
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -13,6 +14,7 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
@@ -114,9 +116,13 @@ fun MusicScreen(
     var part by rememberSaveable { mutableStateOf(if (pick != null) MusicPart.Library else initialPart) }
     LaunchedEffect(ui.libraryRequest) { if (ui.libraryRequest > 0) part = MusicPart.Library }
     Box(modifier.fillMaxSize().testTag("music_screen")) {
+        androidx.compose.foundation.layout.BoxWithConstraints(Modifier.fillMaxSize()) {
+        val headScroll = androidx.compose.foundation.rememberScrollState()
+        val headMax = maxHeight / 2
         Column(Modifier.fillMaxSize()) {
-            // Đầu màn cố định, danh sách cuộn nằm DƯỚI nó (không chạy dưới thanh trạng thái): chừa thanh trạng thái ở đây
-            Column(Modifier.statusBarsPadding().padding(horizontal = Dim.margin)) {
+            // Đầu màn cố định, danh sách cuộn nằm DƯỚI nó (không chạy dưới thanh trạng thái): chừa thanh trạng thái ở đây.
+            // Cửa sổ rất thấp: đầu màn tối đa nửa chiều cao và tự cuộn, không ép tab xuống còn vài px.
+            Column(Modifier.heightIn(max = headMax).fadeEdges(headScroll).verticalScroll(headScroll).statusBarsPadding().padding(horizontal = Dim.margin)) {
                 SwapContent(pick, onBack, contentKey = { pick, onBack -> pick != null || onBack != null }, layout = ContentLayout.Column) { pick, onBack ->
                     if (pick != null || onBack != null) {
                         PageHeader(if (pick != null) S.s_chon_bai_cho_doan_840afc40 else S.s_nhac_0e4413e9, onBack ?: {})
@@ -138,6 +144,7 @@ fun MusicScreen(
                 part == MusicPart.Saved -> SavedPart(ui, state, sheets, onMyMusic)
                 else -> LibraryPart(ui, state, sheets, pick)
             }
+        }
         }
         PreviewBar(ui, state, Modifier.align(Alignment.BottomCenter))
         if (ui.meteredAsk.isNotEmpty()) {
@@ -199,7 +206,7 @@ private fun LibraryPart(ui: LibraryUi, state: LibraryState, sheets: SheetHost, p
     val index = ui.index ?: return
     val list = rememberLazyListState()
     val filters = ui.filters
-    Column(Modifier.fillMaxSize()) {
+    val controls: @Composable androidx.compose.foundation.layout.ColumnScope.() -> Unit = {
         SearchField(filters.q, state::setQuery, Modifier.padding(horizontal = Dim.margin))
         Spacer(Modifier.height(Dim.s8))
         FilterChips(ui, index, state, sheets)
@@ -215,6 +222,8 @@ private fun LibraryPart(ui: LibraryUi, state: LibraryState, sheets: SheetHost, p
             }
         }
         Reveal(!ui.online) { Caption(S.s_mat_mang_chi_nghe_thu_duoc_bai_da_tai_cab0d6f8, Modifier.padding(horizontal = Dim.margin).padding(bottom = Dim.s8)) }
+    }
+    val tracks: @Composable () -> Unit = {
         LazyColumn(
             Modifier.fillMaxSize().testTag("music_list").fadeEdges(list),
             state = list,
@@ -226,6 +235,16 @@ private fun LibraryPart(ui: LibraryUi, state: LibraryState, sheets: SheetHost, p
                 RowLine(start = ROW_TEXT_START)
             }
         }
+    }
+    androidx.compose.foundation.layout.BoxWithConstraints(Modifier.fillMaxSize()) {
+        val panes = vn.abook.player.ui.theme.windowLayout(maxWidth.value, maxHeight.value).twoPane
+        if (panes) {
+            Row(Modifier.fillMaxSize()) {
+                val scroll = androidx.compose.foundation.rememberScrollState()
+                Column(Modifier.width(240.dp).fillMaxHeight().fadeEdges(scroll).verticalScroll(scroll), content = controls)
+                Box(Modifier.weight(1f).fillMaxHeight()) { tracks() }
+            }
+        } else Column(Modifier.fillMaxSize()) { controls(); tracks() }
     }
 }
 
