@@ -284,7 +284,10 @@ private fun BookScreenBody(
     val headItems = if (wide) WIDE_HEAD_ITEMS else HEAD_ITEMS
     val tabsItem = if (wide) 0 else TABS_ITEM
     val current = BookPage.currentChapter(shown, player)
-    val chapters = detail?.chapters
+    var selectedVolume by rememberSaveable(book.id) { mutableStateOf<Int?>(null) }
+    val volume = detail?.volumes?.firstOrNull { it.id == selectedVolume }
+    val volumePicker = (detail?.volumes?.size ?: 0) > 1 && volume == null
+    val chapters = detail?.chapters?.filter { volume == null || it.id in volume.chapterIds }
     val arrival = remember(ui) { Animatable(if (detail != null) 1f else 0f) }
     LaunchedEffect(detail != null) { if (detail != null) arrival.animateTo(1f, tween(MotionMs.MEDIUM_OUT, easing = Motion.Decelerate)) }
     val scope = rememberCoroutineScope()
@@ -367,9 +370,26 @@ private fun BookScreenBody(
     val tabContent: LazyListScope.() -> Unit = {
         when (shownTab) {
             BookTab.Chapters -> {
+                if ((detail?.volumes?.size ?: 0) > 1 && volume != null) item(key = "volume_back") {
+                    Column(Modifier.animateItem(fadeInSpec = null, fadeOutSpec = null).fade { fade.value * arrival.value }) {
+                        BasicText(S.s_volumes, Modifier.fillMaxWidth().pressable { selectedVolume = null }.padding(vertical = Dim.s12))
+                        BasicText(volume.title, style = Abook.type.bodyStrong)
+                    }
+                }
+                if (volumePicker) items(detail?.volumes.orEmpty(), key = { "volume_${it.id}" }, contentType = { "volume" }) { item ->
+                    Row(Modifier.animateItem(fadeInSpec = null, fadeOutSpec = null).fade { fade.value * arrival.value }
+                        .fillMaxWidth().pressable { selectedVolume = item.id }.padding(vertical = Dim.s12),
+                        verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(Dim.s16)) {
+                        BookCover(item.cover, item.title, null, covers, 56.dp, Modifier.width(56.dp), small = true)
+                        Column(Modifier.weight(1f)) {
+                            BasicText(item.title, style = Abook.type.bodyStrong)
+                            BasicText(S.s_volume_progress(item.chapterIds.size, (item.progress * 100).toInt()), style = Abook.type.bodySmall)
+                        }
+                    }
+                }
                 // Đã đọc xong mà sách không có chương: câu ở chỗ nút chính đã nói điều ấy - không thêm gì ở đây.
                 val noChapters = ui.loaded && chapters.isNullOrEmpty()
-                if (!noChapters) item(key = "chapters_jump", contentType = "jump") {
+                if (!noChapters && !volumePicker) item(key = "chapters_jump", contentType = "jump") {
                     Column {
                         BookPage.statusLine(shown)?.let { line ->
                             ClockLabel(line, Modifier.padding(vertical = Dim.s8), style = Abook.type.bodySmall)
@@ -378,6 +398,7 @@ private fun BookScreenBody(
                     }
                 }
                 when {
+                    volumePicker -> Unit
                     chapters == null && !ui.loaded -> items(SKELETON_ROWS, key = { "skeleton_$it" }, contentType = { "skeleton" }) { SkeletonRow() }
                     chapters.isNullOrEmpty() -> Unit
                     else -> items(chapters.orEmpty(), key = { it.id }, contentType = { "chapter" }) { chapter ->

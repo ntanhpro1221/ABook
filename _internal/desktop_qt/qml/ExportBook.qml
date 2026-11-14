@@ -21,6 +21,8 @@ StudioConfirm {
     property bool changedOnly: false
     property bool partial: false
     property var parts: []
+    property var volumes: []                // MP3 / M4B: cả sách hay một quyển (như web), lọc chương có sẵn
+    property int volumeId: -1
     property var history: []
     property var estimate: null
     property var musicState: null
@@ -39,6 +41,8 @@ StudioConfirm {
     readonly property var plan: Logic.plan(book, {kind: kind, scope: scope, layout: layout, parts: parts.length, changedOnly: changedOnly, changed: changedIds,
                                                  bytes: estimate ? estimate.bytes || 0 : 0})
     readonly property bool audioKind: kind === "mp3" || kind === "m4b"
+    readonly property bool byVolume: audioKind && !plan.wholeSeries && volumes.length > 1
+    readonly property var chosenVolume: byVolume ? volumes.find(v => v.id === volumeId) || null : null
     readonly property bool withMusic: Logic.musicChecked(musicState, chosenMusic, book.id)
     readonly property bool mixes: audioKind && withMusic
     readonly property bool wantsFfmpeg: open && !job.running && (kind === "m4b" || mixes)
@@ -76,11 +80,12 @@ StudioConfirm {
         snapshot = data
         job.bookId = data.id
         scope = "part"; layout = "single"; changedOnly = false; partial = false; chosenMusic = null
-        parts = []; history = []; estimate = null; musicState = null; ffmpeg = null; askedSize = ""; askedMusic = ""
+        parts = []; volumes = []; volumeId = -1; history = []; estimate = null; musicState = null; ffmpeg = null; askedSize = ""; askedMusic = ""
         kind = job.running ? job.kind : "mp3"
         show()
         const id = data.id
         get("/api/books/" + id + "/parts", function(result) { root.parts = result.parts || [] })
+        get("/api/listen/books/" + id, function(result) { root.volumes = result.volumes || [] })
         loadHistory()
         // Máy chủ đang xuất cuốn này (hộp bị đóng giữa chừng, hay app mở lại): theo tiếp, không cho bấm xuất lần nữa. Studio từ xa cũng hỏi được.
         if (!job.running) job.attachRunning(function(attached) { root.kind = attached })
@@ -117,10 +122,10 @@ StudioConfirm {
         else go("")
     }
     function go(target) {
-        job.chapters = plan.wholeSeries ? 0 : plan.selectedCount
+        job.chapters = plan.wholeSeries ? 0 : chosenVolume ? chosenVolume.chapters.filter(c => c.available).length : plan.selectedCount
         job.countText = plan.countText
         finished = null
-        job.start(kind, Logic.startBody(kind, {target: target, mixes: mixes, wholeSeries: plan.wholeSeries, changedOnly: changedOnly, changedIds: changedIds, layout: layout, partial: partial}), false)
+        job.start(kind, Logic.startBody(kind, {target: target, mixes: mixes, wholeSeries: plan.wholeSeries, changedOnly: changedOnly, changedIds: changedIds, layout: layout, partial: partial, volumeId: chosenVolume ? chosenVolume.id : 0}), false)
     }
     function jobEnded(error, result) {
         const made = job.kind
@@ -177,6 +182,17 @@ StudioConfirm {
                 options: Logic.scopeOptions(root.parts.length)
                 value: root.scope
                 onPicked: value => root.scope = value
+            }
+        }
+        Collapse {
+            width: parent.width
+            open: root.byVolume
+            Select {
+                objectName: "exportVolume"
+                width: parent.width; label: S.s_volumes
+                options: [{value: -1, label: S.s_volume_all}].concat(root.volumes.map(v => ({value: v.id, label: v.title})))
+                value: root.chosenVolume ? root.chosenVolume.id : -1
+                onPicked: value => root.volumeId = value
             }
         }
         ExportKinds { objectName: "exportKinds"; width: parent.width; kinds: root.kinds; value: root.kind; onPicked: value => root.kind = value }

@@ -16,6 +16,7 @@ class BookDetail : public QObject {
     /// "loading" | "ready" | "failed"
     Q_PROPERTY(QString status READ status NOTIFY changed)
     Q_PROPERTY(ChaptersModel *chapters READ chapters CONSTANT)
+    Q_PROPERTY(int selectedVolume READ selectedVolume WRITE setSelectedVolume NOTIFY changed)
     /// Nhãn nút chính: "Nghe" | "Nghe tiếp" | "Nghe tiếp · {chương sẽ nghe}" | "Tạm dừng" | "Nghe lại từ đầu".
     Q_PROPERTY(QString primaryText READ primaryText NOTIFY changed)
     /// Biểu tượng của nút chính (tên icon lucide).
@@ -37,6 +38,8 @@ public:
     void setBookId(const QString &bookId);
     QString status() const { return m_status; }
     ChaptersModel *chapters() { return &m_chapters; }
+    int selectedVolume() const { return m_selectedVolume; }
+    void setSelectedVolume(int id);
     QString primaryText() const { return m_primaryText; }
     QString primaryIcon() const { return m_primaryIcon; }
     bool hasPoint() const { return m_hasPoint; }
@@ -63,12 +66,14 @@ signals:
 
 private:
     void recompute();
+    void refreshChapters();
     bool playableHere(const PlayerLogic::Chapter &chapter) const;
 
     QString m_bookId;
     QString m_status = QStringLiteral("loading");
     PlayerLogic::Book m_book;
     bool m_hasBook = false;
+    int m_selectedVolume = -1;
     ChaptersModel m_chapters;
     quint64 m_seq = 0;
     QString m_primaryText;

@@ -39,7 +39,7 @@ object BookFileImport {
     const val PROJECT_MIMETYPE = "application/vnd.ngdtuanh.abookproj+zip"
     private const val FORMAT = "abook"
     private const val PROJECT_MAX_ENTRIES = 1_000_000
-    private const val FORMAT_VERSION = 6  // 2 = có thêm rãnh nhạc nền (music/<sha1>.<mp3|m4a|ogg|opus|flac|wav>; bài người dùng nhập giữ định dạng của file); 3 = cả bộ nhiều phần (chapters/<phần>/...); 4 = lớp sửa của người nghe (edits.json, edits/cover.jpg); 5 = chương chỉ có chữ (texts/<n>.txt, không audio); 6 = ảnh nhân vật (avatars/<sha256>.webp)
+    private const val FORMAT_VERSION = 6  // Volume trees and character artwork.
     /** Chỗ trống dư ngoài cỡ giải nén (book.json, thư mục tạm): đủ để không đầy bộ nhớ giữa chừng. */
     private const val ROOM_MARGIN = 64L shl 20
     private const val MAX_ENTRIES = 20_000
@@ -56,7 +56,7 @@ object BookFileImport {
     private val CONTENT_V4 = Regex("""$COMMON|chapters/(?:\d{1,4}/)?[0-9A-Za-z_.\-]+\.mp3|edits\.json|edits/cover\.jpg""")
     /** Phiên bản 5 thêm chữ của chương: texts/<mã chương>.txt (sách chỉ có chữ - docs/LISTEN_ANYTHING.md mục 1). */
     private val CONTENT_V5 = Regex("""$COMMON|chapters/(?:\d{1,4}/)?[0-9A-Za-z_.\-]+\.mp3|edits\.json|edits/cover\.jpg|texts/\d{1,9}\.txt""")
-    private val CONTENT_V6 = Regex(CONTENT_V5.pattern + "|avatars/[0-9a-f]{64}\\.webp")
+    private val CONTENT_V6 = Regex(CONTENT_V5.pattern + """|avatars/[0-9a-f]{64}\.webp|covers/[1-9][0-9]{0,8}\.jpg""")
     private val DESCRIPTIONS = setOf("mimetype", "book.json", "manifest.json")
     /** Bom nén (bookfile.check_expansion, cùng các con số): âm thanh / ảnh thật gần như không nén được, chữ nén vài chục lần là cùng. */
     private const val MEDIA_RATIO = 20L
@@ -298,6 +298,10 @@ object BookFileImport {
             val version = if (declared is Int || declared is Long) (declared as Number).toInt() else -1
             if (version < 1) throw Refused(S.s_file_sach_co_phien_ban_dinh_dang_khong_hop_3dcef37b)
             if (version > FORMAT_VERSION) throw Refused(S.s_sach_nay_duoc_lam_bang_ban_app_moi_hon_hay_27f95a02)
+            if (book.has("volumes")) {
+                if (version < BookVolumes.TREE_VERSION) throw Refused(S.s_goi_co_muc_la_0_44ad5278("volumes"))
+                try { BookVolumes.project(book) } catch (_: Exception) { throw Refused(S.s_book_json_hong_c149af72) }
+            }
             checkShape(book)
             BookEdits.scrubCoverColor(book) // màu bìa chỉ #rrggbb: `url(...)` trong file của người khác sẽ thành CSS gọi máy lạ
             // Thư mục phần chỉ có từ phiên bản 3, lớp sửa của người nghe từ phiên bản 4.

@@ -6,6 +6,18 @@
 // tiến độ, nhãn "Đọc" / "Đọc tiếp". `book` là lời đáp GET /api/listen/books/<id>. Chữ giữ đúng từng chữ của bản web.
 
 function formatLength(seconds) { return Cast.formatLength(seconds) }
+
+function volumeProgress(book, volume) {
+    const rows = volume.chapters || []
+    const states = book.state && book.state.chapters || {}
+    let heard = 0
+    for (let i = 0; i < rows.length; ++i) {
+        const row = rows[i], record = states[String(row.id)] || {}
+        const duration = row.duration || record.duration || 0
+        heard += record.done ? 1 : duration > 0 ? Math.min(1, (record.heard || 0) / duration) : 0
+    }
+    return rows.length ? heard / rows.length : 0
+}
 // Như formatLength nhưng làm tròn LÊN tới phút (thời gian còn lại).
 function formatLengthUp(seconds) {
     if (!isFinite(seconds) || seconds <= 0) return S.s_0_phut_66a3b36a

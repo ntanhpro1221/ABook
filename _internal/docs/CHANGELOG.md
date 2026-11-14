@@ -7,6 +7,12 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+- Sách có thể gồm nhiều quyển, mỗi quyển có bìa riêng (như các tập trên Hako). Trang sách nhiều quyển hiện danh sách quyển kèm bìa và tiến độ; bấm vào một quyển để xem chương. Sách một quyển hiện như trước. Có ở web, máy tính và Android.
+- Nghe liền mạch qua các quyển: hết quyển tự sang chương đầu quyển sau; thứ tự chương, phân tích, giọng và seed của sách không đổi khi chia hay gộp quyển.
+- Studio: chia sách nhiều tập giờ tạo một sách nhiều quyển (không còn tạo các phần nối tiếp riêng); sửa tên, số, ranh giới và bìa từng quyển trong trang sách.
+- Dán đường dẫn sách Hako vào ô đường dẫn của Studio để nhập đủ các tập (mỗi tập một quyển, kèm bìa tập). EPUB và TXT có mục "Tập/Quyển" cũng được chia quyển khi nhập.
+- Xuất MP3/M4B cả sách hoặc một quyển. File .abook nhiều quyển dùng định dạng 6 (bìa quyển trong covers/); sách một quyển giữ định dạng cũ.
+
 - Tab Nhân vật xếp Vai chính / Vai phụ theo vai thật: nhân vật chính không còn rơi xuống Vai phụ và mất giới tính, tuổi; NPC và người chỉ có một cảnh luôn là Vai phụ.
 - Một nhân vật viết đảo họ-tên ("Hajikano Aya" / "Aya Hajikano"), gọi bằng một phần tên, hay mang vài cách tả gần nhau ("người phụ nữ bí ẩn qua/trên điện thoại") không còn bị tách làm hai người hai giọng.
 - Người chưa rõ giới lấy giới từ chính tên gọi ("người phụ nữ…", "nam sinh…") và không còn mặc định giọng nam.

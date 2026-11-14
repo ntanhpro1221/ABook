@@ -144,7 +144,8 @@ private:
 QQuickImageResponse *CoverProvider::requestImageResponse(const QString &id, const QSize &requestedSize) {
     // id = <mã>/<phiên bản>/<bán kính>
     const QStringList parts = id.split(QLatin1Char('/'));
-    const QString book = parts.value(0), version = parts.value(1, QStringLiteral("0"));
-    const int radius = parts.value(2).toInt();
+    const QString book = parts.value(2) == QLatin1String("volumes") ? parts.value(0) + QStringLiteral("/volumes/") + parts.value(3) : parts.value(0);
+    const QString version = parts.value(1, QStringLiteral("0"));
+    const int radius = parts.last().toInt();
     return new CoverResponse(book, version, requestedSize, radius);
 }

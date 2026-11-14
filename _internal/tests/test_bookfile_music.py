@@ -259,7 +259,7 @@ def test_a_series_stores_a_shared_track_once_and_keys_the_cues_by_global_chapter
         book.verify()
         manifest = json.loads(book.read("book.json"))
     music = manifest["music"]
-    assert manifest["package"]["version"] == 3 and set(music["tracks"]) == {calm, battle}
+    assert manifest["package"]["version"] == bookfile.FORMAT_VERSION and set(music["tracks"]) == {calm, battle}  # mỗi phần một quyển
     assert set(music["chapters"]) == {"100001", "200001"}, "mã chương chung của bộ"
     assert [cue["track"] for cue in music["chapters"]["200001"]] == [calm]
     assert music["chapters"]["100001"][0] == {"start": 0.0, "end": 60.0, "track": calm, "gainDb": -7.39}

@@ -317,6 +317,7 @@ function startBody(kind, ctx) {
         if (ctx.mixes) body.music = true
         if (kind === "mp3" && ctx.wholeSeries) body.series = true
         if (kind === "mp3" && !ctx.wholeSeries && ctx.changedOnly && ctx.changedIds.length) body.chapterIds = ctx.changedIds
+        if (!ctx.wholeSeries && ctx.volumeId > 0) body.volumeId = ctx.volumeId
     } else if (kind === "abook") {
         if (ctx.partial) body.partial = true
         body.series = Boolean(ctx.wholeSeries)

@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import hashlib
 import io
+import json
 import os
 import re
 import stat
@@ -490,20 +491,21 @@ def _gather_inputs(paths: list[str], epub_root: Path | None = None) -> tuple[lis
     group_of: dict[str, int] = {}
     groups = 0
 
-    def unpack(book: Path, root: Path) -> list[Path]:
+    def unpack(book: Path | str, root: Path) -> list[Path]:
         nonlocal book_title, groups
+        label = book if isinstance(book, str) else book.name
         try:
             folder, info = importers.extract(book, root)
             chapter_files = discover_txt_files(folder)
         except importers.ImportFailed as error:
-            errors.append(f"{book.name}: {error}")
+            errors.append(f"{label}: {error}")
             return []
         except OSError as error:  # lời báo không mang đường dẫn của máy này (thiết bị ở xa cũng đọc nó)
-            errors.append(f"{book.name}: {humanize.write_error(error) if humanize.is_write_problem(error) else 'không đọc được thư mục chương vừa tách'}")
+            errors.append(f"{label}: {humanize.write_error(error) if humanize.is_write_problem(error) else 'không đọc được thư mục chương vừa tách'}")
             return []
         book_title = book_title or str(info.get("title") or "")
         # Dòng ghi công đã có khung gợi ý riêng (credits/tailCredits của từng chương) - không lặp thành ghi chú (soát UX a24, A1).
-        notes.extend(f"{book.name}: {note}" for note in info.get("notes") or [] if not importers.is_credit_note(note))
+        notes.extend(f"{label}: {note}" for note in info.get("notes") or [] if not importers.is_credit_note(note))
         groups += 1
         reasons = info.get("matter") if isinstance(info.get("matter"), dict) else {}
         for chapter in chapter_files:
@@ -516,6 +518,17 @@ def _gather_inputs(paths: list[str], epub_root: Path | None = None) -> tuple[lis
     for item in paths:
         # "Copy as path" của Explorer luôn thêm ngoặc kép; khoảng trắng hai đầu cũng hay dính theo khi dán.
         cleaned = str(item).strip().strip('"').strip("'").strip()
+        if cleaned.startswith("https://"):
+            # A Hako book address: its volumes, chapters and volume covers become a chapter folder with import.json.
+            if epub_root is None:
+                errors.append(f"{cleaned}: chưa có thư viện để lưu các chương")
+                continue
+            for candidate in unpack(cleaned, epub_root):
+                key = os.path.normcase(str(candidate.resolve()))
+                if candidate.suffix.casefold() == ".txt" and key not in seen:
+                    seen.add(key)
+                    files.append(candidate.resolve())
+            continue
         path = Path(cleaned).expanduser()
         if not path.exists():
             missing.append(cleaned)
@@ -766,6 +779,35 @@ def create_book(library_root: Path, paths: list[str], title: str, profile: str, 
             db.lock_character_gender(first_person, first_person_gender)  # ghim như người nghe: thắng suy đoán của model
         if teller_mode:
             teller_voice.set_mode(paths_created.root, "teller")
+    from .. import book_volumes, importers
+    # Volume boundaries come from the import sidecar next to each chosen chapter file. The project keeps copies, so pair the
+    # chosen files with the stored chapters in the manifest's own order (text_processing.build_chapter_manifest).
+    with db.connect() as connection:
+        stored = [dict(row) for row in connection.execute("SELECT id FROM chapters ORDER BY chapter_index")]
+    chosen = sorted((file.resolve() for file in files), key=lambda file: natural_key(file.name))
+    definitions = []
+    metadata = {}
+    for file, chapter in zip(chosen, stored) if len(chosen) == len(stored) else ():
+        sidecar = file.parent / importers.SIDECAR
+        if sidecar.is_file():
+            info = metadata.setdefault(file.parent, json.loads(sidecar.read_text(encoding="utf-8")))
+            original = next((v for v in info.get("volumes", []) if file.name in v.get("chapters", [])), None)
+        else:
+            original = None
+        key = (str(file.parent), original["id"]) if original else None
+        if not definitions or definitions[-1]["key"] != key:
+            definitions.append({"id": len(definitions) + 1, "number": original["number"] if original else len(definitions) + 1,
+                                "title": original["title"] if original else f"Quyển {len(definitions) + 1}",
+                                "key": key, "chapters": [], "source": file.parent, "cover": original.get("cover") if original else None})
+        definitions[-1]["chapters"].append(chapter["id"])
+    plain = len(definitions) == 1 and definitions[0]["key"] is None  # one unnamed volume: no volumes.json at all
+    if definitions and not plain and not db.casting_is_finalized():
+        book_volumes.organize(paths_created.root, definitions)
+        for definition in definitions:
+            if definition["cover"]:
+                from ..book_paths import inside
+                source = inside(definition["source"], str((definition["source"] / definition["cover"]).resolve()))
+                book_volumes.save_cover(paths_created.root, definition["id"], source.read_bytes())
     return paths_created.root
 
 

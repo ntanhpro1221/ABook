@@ -98,7 +98,7 @@ def cover_warnings(book: dict[str, Any], files: Container[str], edits: dict[str,
 # 1 = sách không nhạc nền; 2 = có mục `music` + music/*.mp3 (02-10); 3 = cả bộ nhiều phần (`pack_series`); 4 = có lớp sửa của
 # người nghe (edits.json + edits/cover.jpg, `repack`); 5 = có chương chỉ-chữ (texts/<n>.txt, không audio); 6 = có ảnh nhân vật (avatars/<sha256>.webp). Gói ghi phiên bản THẤP
 # NHẤT đủ chứa nội dung: sách một phần không nhạc vẫn là 1, có nhạc là 2 - app cũ mở được; app cũ gặp file mới hơn thì từ chối kèm
-# lời nhắc cập nhật thay vì báo "mục lạ".
+# Version 6 supports volume trees and character artwork.
 FORMAT_VERSION = 6
 MANIFEST = "book.json"
 READIUM_MANIFEST = "manifest.json"
@@ -118,9 +118,8 @@ _CONTENT_V4 = re.compile(_COMMON + r"|chapters/(?:\d{1,4}/)?[0-9A-Za-z_.\-]+\.mp
 # Phiên bản 5 thêm chữ của chương: texts/<mã chương>.txt (mã chương cả bộ có thể tới 9 chữ số).
 TEXT_ENTRY = re.compile(r"texts/\d{1,9}\.txt")
 _CONTENT_V5 = re.compile(_CONTENT_V4.pattern + "|" + TEXT_ENTRY.pattern)
-# Phiên bản 6 thêm ảnh nhân vật: avatars/<sha256>.webp (256 px, cast.json trỏ tới qua `avatar.file`).
 AVATAR_ENTRY = re.compile(r"avatars/[0-9a-f]{64}\.webp")
-_CONTENT_V6 = re.compile(_CONTENT_V5.pattern + "|" + AVATAR_ENTRY.pattern)
+_CONTENT_V6 = re.compile(_CONTENT_V5.pattern + "|" + AVATAR_ENTRY.pattern + r"|covers/[1-9][0-9]{0,8}\.jpg")
 LISTENING_ENTRY = _CONTENT_V6
 # Chỗ trống dư ngoài cỡ giải nén (thư mục tạm, book.json): không cần sát từng byte, chỉ cần không để ổ đĩa đầy giữa chừng.
 _ROOM_MARGIN = 64 * 1024 * 1024
@@ -232,6 +231,8 @@ def listening_layer(project_root: Path, music_track: Callable[[str], Path | None
         cover = covers.cover_file(project_root)
         if cover is not None:
             files[covers.COVER_FILE] = cover
+        from .. import book_volumes
+        files.update(book_volumes.cover_files(project_root, book_volumes.volumes_of(book)))
         _add_chapters(project_root, book, files, tick=None if progress is None else lambda done, total: progress("listen", done, total))
         if not any(chapter.get("file") for chapter in book["chapters"]):
             _add_texts(project_root, book, files)
@@ -338,6 +339,9 @@ def layer_version(book: dict[str, Any], files: dict[str, Path | bytes], edits: d
     `package_version`."""
     if any(AVATAR_ENTRY.fullmatch(name) for name in files):
         return 6
+    from .. import book_volumes
+    if book_volumes.needs_tree(book):
+        return book_volumes.TREE_VERSION
     if any(TEXT_ENTRY.fullmatch(name) for name in files):
         return 5
     if not book_edits.is_empty(edits):
@@ -348,7 +352,11 @@ def layer_version(book: dict[str, Any], files: dict[str, Path | bytes], edits: d
 
 
 def package_version(book: dict[str, Any]) -> int:
-    """Phiên bản THẤP NHẤT đủ chứa sách một phần: có chương chỉ-chữ là 5, có nhạc nền là 2, không thì 1 (cả bộ: 3, `pack_series`)."""
+    """Phiên bản THẤP NHẤT đủ chứa sách một phần: nhiều quyển là 6, có chương chỉ-chữ là 5, có nhạc nền là 2, không thì 1 (cả bộ: 3,
+    `pack_series`)."""
+    from .. import book_volumes
+    if book_volumes.needs_tree(book):
+        return book_volumes.TREE_VERSION
     if any(isinstance(chapter, dict) and chapter.get("text") for chapter in book.get("chapters") or []):
         return 5
     return 2 if "music" in book else 1
@@ -408,10 +416,13 @@ def pack_series(parts: Sequence[tuple[int, Path] | Path], out: Path, *, producer
         "version": hashlib.sha256("".join(str(book["version"]) for _, _, book in books).encode()).hexdigest()[:16],
         "sourceFingerprint": hashlib.sha256(json.dumps([book["sourceFingerprint"] for _, _, book in books]).encode()).hexdigest() if all(book.get("sourceFingerprint") for _, _, book in books) else "",
         "audioUpdatedAt": max((book.get("audioUpdatedAt", "") for _, _, book in books), default=""),
-        "chapters": [chapter for _, _, book in books for chapter in book["chapters"]],
+        "chapters": [{**chapter, "volumeId": number} for number, _, book in books for chapter in book["chapters"]],
         "cast": "cast.json",
         "samples": samples,
         "cover": first.get("cover") if cover is not None else None,
+        # Each linked part becomes one volume of the series file; covers stay the book cover.
+        "volumes": [{"id": number, "number": number, "title": continuation.continued_title(book["title"], number), "cover": None}
+                    for number, _, book in books],
         "parts": [{"part": number, "title": continuation.continued_title(book["title"], number),
                    "chapters": [book["chapters"][0]["id"], book["chapters"][-1]["id"]],
                    "duration": round(float(book["duration"]), 1), "narrator": book["narrator"]}
@@ -530,6 +541,9 @@ def seal(book: dict[str, Any], files: dict[str, Path | bytes], out: Path, *, pro
         hashed += int(described_files[name]["size"])
     if progress is not None:
         progress("hash", hashed, total_hash)
+    from .. import book_volumes
+    if book_volumes.needs_tree(book):
+        version = max(version, book_volumes.TREE_VERSION)
     book["package"] = {
         "format": FORMAT,
         "version": version,
@@ -546,7 +560,7 @@ def seal(book: dict[str, Any], files: dict[str, Path | bytes], out: Path, *, pro
     try:
         with zipfile.ZipFile(temporary, "w", allowZip64=True) as archive:
             archive.writestr(_entry("mimetype", stored=True), MIMETYPE)
-            archive.writestr(_entry(MANIFEST), json_bytes(book))
+            archive.writestr(_entry(MANIFEST), json_bytes(book_volumes.nested(book)))
             archive.writestr(_entry(READIUM_MANIFEST), json_bytes(_readium(book_edits.apply_manifest(book, edits or {}))))
             if progress is None:
                 write_entries(archive, files, order=_order, expected=described_files)
@@ -857,6 +871,13 @@ class BookFile:
             raise BookFileError("File sách có phiên bản định dạng không hợp lệ.")
         if version > FORMAT_VERSION:
             raise BookFileError("Sách này được làm bằng bản app mới hơn. Hãy cập nhật app để mở.")
+        from .. import book_volumes
+        if "volumes" in book and version < book_volumes.TREE_VERSION:
+            raise BookFileError("File sách có mục lạ: quyển chỉ có từ định dạng 6.")
+        try:
+            book_volumes.flatten(book)
+        except ValueError as error:
+            raise BookFileError(str(error)) from error
         check_shape(book)
         files = package.get("files")
         content = names - {"mimetype", MANIFEST, READIUM_MANIFEST}
@@ -890,6 +911,9 @@ class BookFile:
             written = chapter.get("text") if isinstance(chapter, dict) else None
             if written and (not isinstance(written, str) or written not in content):
                 raise BookFileError("File sách thiếu chữ của một chương.")
+        for volume in book_volumes.volumes_of(book):
+            if volume.get("cover") and volume["cover"]["file"] not in content:
+                raise BookFileError("File sách thiếu bìa quyển.")
         self._check_edits(content)
         return book
 
@@ -1050,6 +1074,8 @@ def base_layer(book: dict[str, Any], edits: dict[str, Any]) -> dict[str, Any]:
     for chapter in base.get("chapters", []):
         for key in ("sha256", "size"):
             chapter.pop(key, None)
+    for volume in base.get("volumes", []):
+        volume["chapters"] = [chapter.get("id") for chapter in volume.get("chapters", [])]  # the projection above holds them
     listener_files = {book_edits.EDITS_FILE, book_edits.EDITS_COVER}
     listener_files.update(set(book_edits.pinned_files(edits)) - set((base.get("music") or {}).get("tracks", {})))
     base["package"] = {"files": {name: meta for name, meta in package.get("files", {}).items() if name not in listener_files}}
@@ -1135,7 +1161,7 @@ def _gigabytes(size: int) -> str:
 
 def _order(name: str) -> tuple[int, str]:
     """Phần nhỏ trước, audio sau cùng: đọc mô tả, bìa, chữ mà không phải lướt qua hàng trăm MB audio."""
-    rank = ("edits", "cover.jpg", "cast.json", "avatars/", "scripts/", "texts/", "samples/", "chapters/", "music/")
+    rank = ("edits", "cover.jpg", "covers/", "cast.json", "avatars/", "scripts/", "texts/", "samples/", "chapters/", "music/")
     return next(index for index, prefix in enumerate(rank) if name.startswith(prefix)), name
 
 

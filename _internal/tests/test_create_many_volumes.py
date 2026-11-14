@@ -164,55 +164,39 @@ def test_split_paths_cuts_by_chapter_number_and_rejects_bad_boundaries() -> None
             volumes.split_paths(paths, bad)
 
 
-def test_first_person_chapters_follow_their_chapter_into_the_volume() -> None:
-    chapters = {"2": "Lucien", "5": "Natasha", "7": "Lucien"}
-    assert volumes.localize_chapters(chapters, 0, 3) == {"2": "Lucien"}
-    assert volumes.localize_chapters(chapters, 3, 3) == {"2": "Natasha"}
-    assert volumes.localize_chapters(chapters, 6, 3) == {"1": "Lucien"}
-    assert volumes.localize_chapters(None, 0, 3) is None and volumes.localize_chapters({"9": "X"}, 0, 3) is None
-
-
 # ---- tạo nhiều tập -----------------------------------------------------------------------------------------------------
 
 
-def _titles(server) -> dict[str, str]:
-    _status, data = _call(server, "GET", "/api/library")
-    return {book["id"]: book["title"] for book in data["books"]}
+def _volumes(app, book: str) -> list[tuple[str, list[str]]]:
+    from abook import book_volumes
+
+    root = app.library.resolve(book)
+    chapters = [dict(row) for row in ProjectDB(root / "project.sqlite3").list_chapters()]
+    return [(volume["title"], [Path(chapter["input_path"]).name for chapter in volume["chapters"]])
+            for volume in book_volumes.project(root, chapters)]
 
 
-def test_volumes_become_one_book_and_linked_parts_queued_in_order(studio, tmp_path: Path) -> None:  # noqa: F811
-    paths, app, server, _runner = studio
+def test_volumes_become_one_book_with_ordered_volumes_and_one_queue_entry(studio, tmp_path: Path) -> None:  # noqa: F811
+    _paths, app, server, _runner = studio
     folder = _chapters(tmp_path / "truyen", [f"Chương {n}" for n in range(1, 7)])
     files = sorted(str(path) for path in folder.glob("*.txt"))
+    before = len(app.library.projects())
 
     status, created = _call(server, "POST", "/api/books", {
         "paths": files, "title": "Ánh Trăng", "profile": "high_quality", "narrator": "", "firstPerson": "",
-        "volumeStarts": [1, 3, 6], "start": True,
+        "volumeStarts": [1, 3, 6], "volumeLabels": ["Tập 1", "Tập 2", "Tập 3"], "start": True,
     })
 
     assert status == 201, created
-    parts = created["parts"]
-    assert [part["part"] for part in parts] == [1, 2, 3] and parts[0]["id"] == created["id"]
-    roots = [app.library.resolve(part["id"]) for part in parts]
-    assert continuation.chain_of(roots[2]) == [root.resolve() for root in roots], "chuỗi continues.json đúng thứ tự"
-    assert [continuation.part_number(root) for root in roots] == [1, 2, 3]
-    titles = _titles(server)
-    assert [titles[part["id"]] for part in parts] == ["Ánh Trăng", "Ánh Trăng · Phần 2", "Ánh Trăng · Phần 3"], \
-        "cùng quy ước đặt tên với 'Làm tiếp cuốn này'"
-    assert [len(continuation._input_paths(root)) for root in roots] == [2, 3, 1]
-    assert [[Path(path).name for path in continuation._input_paths(root)] for root in roots] == [
-        ["001.txt", "002.txt"], ["003.txt", "004.txt", "005.txt"], ["006.txt"]]
-    # Hàng đợi: tập 1 chạy (hay đang khởi động), tập 2 rồi tập 3 xếp sau - đúng thứ tự, không tranh GPU.
-    assert app.queue == [parts[1]["id"], parts[2]["id"]]
-    assert [part["queued"] for part in parts] == [0, 1, 2]
-    # Chưa gieo gì: tập 1 chưa chạy nên chưa có gì để mang - cờ chờ gieo thay cho việc gieo một cái vỏ rỗng.
-    assert [continuation.seed_pending(root) for root in roots] == [False, True, True]
-    assert ProjectDB(roots[1] / "project.sqlite3").locked_character_voices() == {}
-    link = json.loads((roots[1] / continuation.LINK_FILE).read_text(encoding="utf-8"))
-    assert link["part"] == 2 and link["seedPending"] is True and "seededAt" not in link
-    status, view = _call(server, "GET", f"/api/books/{parts[1]['id']}")
-    assert view["book"]["seedPending"] is True and view["book"]["queuePosition"] == 1
-    assert view["book"]["series"] == {"root": parts[0]["id"], "part": 2}
+    assert "parts" not in created and len(app.library.projects()) == before + 1, "một sách, không phải chuỗi phần"
+    root = app.library.resolve(created["id"])
+    assert not (root / continuation.LINK_FILE).exists()
+    assert _volumes(app, created["id"]) == [("Tập 1", ["001.txt", "002.txt"]), ("Tập 2", ["003.txt", "004.txt", "005.txt"]),
+                                            ("Tập 3", ["006.txt"])]
+    assert app.queue == [], "chỉ một sách chạy, không có phần nối tiếp xếp hàng"
+    status, view = _call(server, "GET", f"/api/listen/books/{created['id']}")
+    assert [v["title"] for v in view["volumes"]] == ["Tập 1", "Tập 2", "Tập 3"]
+    assert [len(v["chapters"]) for v in view["volumes"]] == [2, 3, 1]
 
 
 def test_without_start_the_volumes_are_made_but_nothing_is_queued(studio, tmp_path: Path) -> None:  # noqa: F811
@@ -222,7 +206,7 @@ def test_without_start_the_volumes_are_made_but_nothing_is_queued(studio, tmp_pa
         "paths": sorted(str(path) for path in folder.glob("*.txt")), "title": "Bộ", "profile": "fast", "narrator": "",
         "firstPerson": "", "volumeStarts": [1, 3],
     })
-    assert status == 201 and len(created["parts"]) == 2
+    assert status == 201 and [title for title, _ in _volumes(app, created["id"])] == ["Quyển 1", "Quyển 2"]
     assert app.queue == [] and not app.jobs.starting(app.library.resolve(created["id"]))
 
 
@@ -237,6 +221,7 @@ def test_one_volume_is_an_ordinary_book(studio, tmp_path: Path) -> None:  # noqa
         root = app.library.resolve(created["id"])
         assert not (root / continuation.LINK_FILE).exists() and not continuation.seed_pending(root)
         assert len(continuation._input_paths(root)) == 3
+        assert [title for title, _ in _volumes(app, created["id"])] == ["Quyển 1"]
 
 
 def test_bad_boundaries_create_nothing(studio, tmp_path: Path) -> None:  # noqa: F811
@@ -252,7 +237,7 @@ def test_bad_boundaries_create_nothing(studio, tmp_path: Path) -> None:  # noqa:
     assert len(app.library.projects()) == before
 
 
-def test_first_person_chapters_are_numbered_inside_each_volume(studio, tmp_path: Path) -> None:  # noqa: F811
+def test_first_person_chapters_keep_their_whole_book_numbers(studio, tmp_path: Path) -> None:  # noqa: F811
     _paths, app, server, _runner = studio
     folder = _chapters(tmp_path / "truyen", [f"Chương {n}" for n in range(1, 7)])
     status, created = _call(server, "POST", "/api/books", {
@@ -262,15 +247,26 @@ def test_first_person_chapters_are_numbered_inside_each_volume(studio, tmp_path:
     assert status == 201, created
     from abook.webui import store
 
-    settings = [store.read_settings(app.library.resolve(part["id"])) for part in created["parts"]]
-    assert [item["voices"]["first_person_chapters"] for item in settings] == [{"2": "Natasha"}, {"2": "Natasha"}]
+    settings = store.read_settings(app.library.resolve(created["id"]))
+    assert settings["voices"]["first_person_chapters"] == {"2": "Natasha", "5": "Natasha"}, "số chương toàn sách"
 
 
-# ---- gieo đúng lúc -----------------------------------------------------------------------------------------------------
+def test_volumes_across_two_folders_with_the_same_file_names_follow_the_book_order(studio, tmp_path: Path) -> None:  # noqa: F811
+    _paths, app, server, _runner = studio
+    one = _chapters(tmp_path / "Tập 1", ["Chương 1", "Chương 2", "Chương 3"])
+    two = _chapters(tmp_path / "Tập 2", ["Chương 1", "Chương 2", "Chương 3"])
+    files = [str(path) for path in sorted(one.glob("*.txt"))] + [str(path) for path in sorted(two.glob("*.txt"))]
+    status, data = _call(server, "POST", "/api/books", {
+        "paths": files, "title": "Hai thư mục", "profile": "fast", "narrator": "", "firstPerson": "", "volumeStarts": [1, 4]})
+    assert status == 201, data
+    assert [len(files) for _title, files in _volumes(app, data["id"])] == [3, 3]
+
+
+# ---- phần nối tiếp chờ gieo ("Làm tiếp cuốn này") ----------------------------------------------------------------------
 
 
 def _pending_part(paths, app, tmp_path: Path) -> Path:
-    """Một tập sau đang chờ gieo, nối sau dự án của bài thử (đã phân vai xong, có giọng)."""
+    """Một phần sau đang chờ gieo, nối sau dự án của bài thử (đã phân vai xong, có giọng)."""
     folder = _chapters(tmp_path / "tap2", ["Chương 1"])
     root = app._create_book({"profile": "fast"}, [str(next(folder.glob("*.txt")))], "T · Phần 2", None)
     continuation.link_pending(paths.root, root)
@@ -291,54 +287,6 @@ def test_a_pending_part_is_seeded_when_it_starts_after_the_previous_one_has_cast
     assert link["part"] == 2 and "seededAt" in link and "seedPending" not in link
 
 
-def test_a_part_whose_previous_has_not_cast_yet_does_not_start_and_stays_pending(studio, tmp_path: Path) -> None:  # noqa: F811
-    paths, app, server, _runner = studio
-    folder = _chapters(tmp_path / "truyen", [f"Chương {n}" for n in range(1, 5)])
-    status, created = _call(server, "POST", "/api/books", {
-        "paths": sorted(str(path) for path in folder.glob("*.txt")), "title": "Bộ", "profile": "fast", "narrator": "",
-        "firstPerson": "", "volumeStarts": [1, 3],
-    })
-    assert status == 201
-    second = created["parts"][1]["id"]
-
-    status, data = _call(server, "POST", f"/api/books/{second}/start")  # tập 1 chưa chạy: chưa phân vai
-
-    assert status == 409 and "chưa phân tích xong" in data["error"]
-    root = app.library.resolve(second)
-    assert continuation.seed_pending(root), "vẫn chờ gieo - không chạy ra giọng khác phần trước"
-    assert not app.jobs.starting(root) and not app.runner.running(root)
-
-
-def test_the_queue_reports_a_part_it_could_not_seed_and_keeps_draining(studio, tmp_path: Path, monkeypatch) -> None:  # noqa: F811
-    from abook.webui import server as server_module
-
-    _paths, app, server, _runner = studio
-    folder = _chapters(tmp_path / "truyen", [f"Chương {n}" for n in range(1, 5)])
-    status, created = _call(server, "POST", "/api/books", {
-        "paths": sorted(str(path) for path in folder.glob("*.txt")), "title": "Bộ", "profile": "fast", "narrator": "",
-        "firstPerson": "", "volumeStarts": [1, 3], "start": True,
-    })
-    assert status == 201
-    second = app.library.resolve(created["parts"][1]["id"])
-    first = app.library.resolve(created["id"])
-    # Tập 1 bị dừng giữa chừng: hàng đợi tới lượt tập 2, nhưng chưa có phân vai để gieo.
-    app.jobs._starting.clear()
-    app.runner._running.discard(str(first))
-    ticks = iter([None])
-
-    def one_round(_seconds: float) -> None:
-        if next(ticks, "stop") == "stop":
-            raise SystemExit
-
-    monkeypatch.setattr(server_module.time, "sleep", one_round)
-    with pytest.raises(SystemExit):
-        app._drain_queue()
-    # (vòng lặp chạy một lượt rồi bị cắt ở lần ngủ kế)
-
-    assert app.queue == [] and app.jobs.error(second).startswith("Phần trước"), app.jobs.error(second)
-    assert continuation.seed_pending(second)
-
-
 def test_a_part_whose_previous_was_deleted_starts_as_a_plain_book(studio, tmp_path: Path) -> None:  # noqa: F811
     paths, app, _server, _runner = studio
     root = _pending_part(paths, app, tmp_path)
@@ -351,70 +299,18 @@ def test_a_part_whose_previous_was_deleted_starts_as_a_plain_book(studio, tmp_pa
     assert continuation.seed_when_ready(root) is None
 
 
-def test_a_volume_spanning_two_folders_with_the_same_file_names_is_refused_before_anything_is_made(studio, tmp_path: Path) -> None:  # noqa: F811
-    _paths, app, server, _runner = studio
-    one = _chapters(tmp_path / "Tập 1", ["Chương 1", "Chương 2", "Chương 3"])
-    two = _chapters(tmp_path / "Tập 2", ["Chương 1", "Chương 2", "Chương 3"])
-    files = [str(path) for path in sorted(one.glob("*.txt"))] + [str(path) for path in sorted(two.glob("*.txt"))]
-    before = len(app.library.projects())
-
-    # Cắt giữa Tập 2: tập 1 có "001.txt" của hai thư mục - dây chuyền xếp theo tên file nên chúng sẽ xen nhau.
-    status, data = _call(server, "POST", "/api/books", {
-        "paths": files, "title": "Lệch", "profile": "fast", "narrator": "", "firstPerson": "", "volumeStarts": [1, 6]})
-    assert status == 400 and "xếp xen chương" in data["error"] and "cắt ở ranh thư mục" in data["error"], data
-    assert len(app.library.projects()) == before, "không tạo gì"
-
-    # Cắt đúng ranh giới thư mục thì được.
-    status, data = _call(server, "POST", "/api/books", {
-        "paths": files, "title": "Đúng", "profile": "fast", "narrator": "", "firstPerson": "", "volumeStarts": [1, 4]})
-    assert status == 201 and len(data["parts"]) == 2
-    # Một tập trải hai thư mục mà tên file nối tiếp nhau (001-003 rồi 004-006) vẫn đúng thứ tự đọc.
-    assert not volumes.reading_order_problem(["a/001.txt", "a/002.txt", "b/003.txt"])
-    assert volumes.reading_order_problem(["a/001.txt", "b/001.txt"])
-
-
-def test_starting_the_first_part_queues_the_pending_parts_after_it_in_order(studio, tmp_path: Path) -> None:  # noqa: F811
-    _paths, app, server, _runner = studio
-    folder = _chapters(tmp_path / "truyen", [f"Chương {n}" for n in range(1, 7)])
-    status, created = _call(server, "POST", "/api/books", {
-        "paths": sorted(str(path) for path in folder.glob("*.txt")), "title": "Bộ", "profile": "fast", "narrator": "",
-        "firstPerson": "", "volumeStarts": [1, 3, 5],
-    })
-    assert status == 201 and app.queue == []
-    ids = [part["id"] for part in created["parts"]]
-
-    status, _data = _call(server, "POST", f"/api/books/{ids[0]}/start")
-
-    assert status == 202
-    assert app.queue == ids[1:], "phần 2 rồi phần 3 xếp hàng sau phần 1, đúng thứ tự"
-    # Bấm lại / chạy tiếp không xếp hàng đôi.
-    app._queue_successors(app.library.resolve(ids[0]))
-    assert app.queue == ids[1:]
-
-
 def test_after_a_restart_starting_any_part_requeues_the_pending_ones_after_it(studio, tmp_path: Path) -> None:  # noqa: F811
     paths, app, _server, _runner = studio
     second = _pending_part(paths, app, tmp_path)
     folder = _chapters(tmp_path / "tap3", ["Chương 1"])
     third = app._create_book({"profile": "fast"}, [str(next(folder.glob("*.txt")))], "T · Phần 3", None)
     continuation.link_pending(second, third)
-    assert app.queue == [], "chưa phần nào trong hàng (vd. đã bỏ khỏi hàng)"
+    assert app.queue == []
 
-    app.start(book_id(second), now=True)  # phần 1 (bài thử) đã phân vai xong nên gieo được
+    app.start(book_id(second), now=True)
 
     assert not continuation.seed_pending(second) and continuation.seed_pending(third)
     assert app.queue == [book_id(third)]
-
-
-def test_a_part_that_cannot_start_does_not_queue_its_successors(studio, tmp_path: Path) -> None:  # noqa: F811
-    _paths, app, server, _runner = studio
-    folder = _chapters(tmp_path / "truyen", [f"Chương {n}" for n in range(1, 7)])
-    status, created = _call(server, "POST", "/api/books", {
-        "paths": sorted(str(path) for path in folder.glob("*.txt")), "title": "Bộ", "profile": "fast", "narrator": "",
-        "firstPerson": "", "volumeStarts": [1, 3, 5],
-    })
-    status, _data = _call(server, "POST", f"/api/books/{created['parts'][1]['id']}/start")
-    assert status == 409 and app.queue == [], "phần 1 chưa phân vai: phần 2 không chạy, phần 3 không vào hàng"
 
 
 def test_sibling_folders_used_together_suggest_the_parent_folder_as_the_title(tmp_path: Path) -> None:

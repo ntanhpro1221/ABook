@@ -13,7 +13,8 @@ import { listenOnlyOwner } from "@/shared/peerStudio";
 import { coverArtwork } from "@/shared/cover";
 import { fileName, formatNumber, formatSize } from "@/shared/format";
 import { spokenProgress } from "@/shared/progressSpeech";
-import { DialogActions, Button, Dialog, LiveText, Progress, radioGroupKeys, radioTabIndex } from "@/shared/ui";
+import { DialogActions, Button, Dialog, LiveText, Progress, radioGroupKeys, radioTabIndex, Select } from "@/shared/ui";
+import type { ListenVolume } from "@/listen/model";
 import { FfmpegNeeded } from "@/desktop/AudiobookDialog";
 import { MusicMixOption, useMusicChoice } from "@/desktop/musicMix";
 import { exportedOnComputer } from "@/desktop/bookFileExport";
@@ -104,6 +105,14 @@ export function ExportDialog({
   const [changedOnly, setChangedOnly] = useState(false);
   const [partial, setPartial] = useState(false);
   useEffect(() => setPartial(false), [book.id, open]);
+  // MP3 / M4B: cả sách hay một quyển (lọc chương có sẵn, không làm lại audio).
+  const volumes = useQuery({
+    queryKey: ["export-volumes", book.id], enabled: open,
+    queryFn: () => api<{ volumes?: ListenVolume[] }>(`/api/listen/books/${book.id}`),
+    staleTime: 10_000,
+  }).data?.volumes ?? [];
+  const [volumeId, setVolumeId] = useState<number | null>(null);
+  useEffect(() => setVolumeId(null), [book.id, open]);
   const history = useQuery({
     queryKey: ["export-history", book.id], enabled: open,
     queryFn: () => api<ExportHistory[]>(`/api/books/${book.id}/export-history`),
@@ -197,7 +206,10 @@ export function ExportDialog({
   const needsFfmpeg = (kind === "m4b" || mixes) && ffmpeg.data !== undefined && !ffmpeg.data.ready;
   const bytes = estimate.data?.bytes ?? 0;
   const musicPending = estimate.data?.musicPending ?? 0;
-  const selectedCount = kind === "mp3" && !wholeSeries && changedOnly && changedChapters.length ? changedChapters.length : ready;
+  const byVolume = audioKind && !wholeSeries && volumes.length > 1;
+  const chosenVolume = byVolume ? volumes.find((volume) => volume.id === volumeId) : undefined;
+  const selectedCount = kind === "mp3" && !wholeSeries && changedOnly && changedChapters.length ? changedChapters.length
+    : chosenVolume ? chosenVolume.chapters.filter((chapter) => chapter.available).length : ready;
   const countText = kind === "abookproj" ? undefined : wholeSeries ? S.s_0_phan_40e8af8c(parts.length) : S.s_0_chuong_04093412(selectedCount);
   // Chỗ lưu nói trước khi bấm "Xuất": có hộp chọn thư mục của máy thì người dùng tự chọn, không thì vào thư mục "Đã xuất" của thư viện.
   const root = info?.libraryRoot ?? "";
@@ -234,7 +246,8 @@ export function ExportDialog({
     if (kind === "m4b" || kind === "mp3") {
       // Việc nền do ExportJobHost (desktop/App.tsx) giữ: tiến độ, Huỷ và kết quả hiện ở thông báo nổi, nên đóng hộp ngay.
       const extra = { ...(mixes ? { music: true } : {}), ...(kind === "mp3" && wholeSeries ? { series: true } : {}),
-        ...(kind === "mp3" && !wholeSeries && changedOnly && changedChapters.length ? { chapterIds: changedChapters } : {}) };
+        ...(kind === "mp3" && !wholeSeries && changedOnly && changedChapters.length ? { chapterIds: changedChapters } : {}),
+        ...(chosenVolume ? { volumeId: chosenVolume.id } : {}) };
       startExport(kind, { id: book.id, chapters: wholeSeries ? 0 : selectedCount, target, cover: coverArtwork(book.title), ...(Object.keys(extra).length ? { extra } : {}) });
       onOpenChange(false);
       return;
@@ -436,6 +449,15 @@ export function ExportDialog({
           ))}
         </div>
       )}
+      <MotionPresence open={byVolume}>
+        <label className="mb-3 flex items-center gap-3 text-sm">
+          <span className="font-medium">{S.s_volumes}</span>
+          <Select inline aria-label={S.s_volumes} value={chosenVolume?.id ?? ""} onChange={(event) => setVolumeId(event.target.value ? Number(event.target.value) : null)}>
+            <option value="">{S.s_volume_all}</option>
+            {volumes.map((volume) => <option key={volume.id} value={volume.id}>{volume.title}</option>)}
+          </Select>
+        </label>
+      </MotionPresence>
       <div className="relative grid divide-y divide-line" role="radiogroup" aria-label={S.s_kieu_ban_xuat_c2b4cb1e} onKeyDown={radioGroupKeys(kindValues, kind, setKind)}>
         <SlidingIndicator variant="line" />
         {kinds.map(({ value, title, detail, icon: Icon }, index) => (

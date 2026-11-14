@@ -528,6 +528,7 @@ export function SourceStep({
                 <Button type="submit" className="h-10 min-h-10" disabled={!cleanPath(typed) || scanning}>{S.s_lay_chuong_8869b554}</Button>
               </form>
               {!info?.dialogs && <p className="mx-auto mt-2 max-w-lg break-all text-left text-xs text-fg-3">{S.s_vi_du_d_truyen_ten_truyen_d4c4a6e8}</p>}
+              <p className="mx-auto mt-2 max-w-lg text-left text-xs text-fg-3">{S.s_hako_paste}</p>
             </>
           )}
           {problem && (

@@ -34,7 +34,7 @@ object BookDocumentWriter {
     private const val FORMAT = "abook"
     private val STORED = listOf(".mp3", ".jpg", ".wav", ".m4a", ".ogg", ".opus", ".flac", ".webp")
     private val PROJECT_STORED = STORED + listOf(".png", ".zip")
-    private val RANK = listOf("edits", "cover.jpg", "cast.json", "avatars/", "scripts/", "texts/", "samples/", "chapters/", "music/")
+    private val RANK = listOf("edits", "cover.jpg", "covers/", "cast.json", "avatars/", "scripts/", "texts/", "samples/", "chapters/", "music/")
     private val TEXT_ENTRY = Regex("""texts/[0-9]+\.txt""")
     private val PART_AUDIO = Regex("chapters/[0-9]+/.+")
 
@@ -53,7 +53,7 @@ object BookDocumentWriter {
 
     fun write(bookDir: File, out: OutputStream, asProject: Boolean = false): Written {
         val book = try {
-            JSONObject(File(bookDir, "book.json").readText())
+            BookVolumes.project(JSONObject(File(bookDir, "book.json").readText()))
         } catch (error: Exception) {
             throw Refused(S.s_chua_doc_duoc_thu_muc_sach_nay_2c7f22f7)
         }
@@ -86,6 +86,7 @@ object BookDocumentWriter {
         }
         val version = when {
             files.keys.any { it.startsWith("avatars/") } -> 6
+            BookVolumes.needsTree(book) -> BookVolumes.TREE_VERSION
             files.keys.any { TEXT_ENTRY.matches(it) } -> 5
             changes > 0 -> 4
             files.keys.any { PART_AUDIO.matches(it) } -> 3
@@ -123,7 +124,7 @@ object BookDocumentWriter {
         val counting = Counting(out)
         ZipOutputStream(counting).use { zip ->
             put(zip, "mimetype", BookFileImport.MIMETYPE.toByteArray(Charsets.US_ASCII), stored = true)
-            put(zip, "book.json", StrictJson.dumps(book, 1).toByteArray(Charsets.UTF_8), stored = false)
+            put(zip, "book.json", StrictJson.dumps(BookVolumes.nested(book), 1).toByteArray(Charsets.UTF_8), stored = false)
             put(zip, "manifest.json", StrictJson.dumps(readium(BookEdits.applyManifest(book, edits), packageInfo["createdAt"] as String), 1).toByteArray(Charsets.UTF_8), stored = false)
             for (name in files.keys.sortedWith(compareBy({ rank(it) }, { it }))) {
                 val stored = STORED.any { name.lowercase(Locale.ROOT).endsWith(it) }
@@ -178,7 +179,7 @@ object BookDocumentWriter {
         packageInfo["producer"] = PRODUCER
         packageInfo["files"] = listed
         book.put("package", packageInfo as Any)
-        val bookBytes = StrictJson.dumps(book, 1).toByteArray(Charsets.UTF_8)
+        val bookBytes = StrictJson.dumps(BookVolumes.nested(book), 1).toByteArray(Charsets.UTF_8)
         files["book.json"] = bookBytes
         described["book.json"] = describe("book.json", bookBytes, null)
         val manifest = LinkedHashMap<String, Any?>()

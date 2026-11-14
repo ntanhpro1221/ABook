@@ -132,7 +132,7 @@ object Store {
     @Synchronized
     fun rawManifest(id: String): JSONObject? {
         val file = File(bookDir(id), "book.json")
-        return readJson(file)
+        return readJson(file)?.let(BookVolumes::project)
     }
 
     /**

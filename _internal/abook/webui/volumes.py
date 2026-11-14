@@ -192,25 +192,3 @@ def split_paths(paths: list[str], starts: list[Any] | None) -> list[list[str]]:
     if len(cuts) > MAX_VOLUMES:
         raise ValueError(f"Tối đa {MAX_VOLUMES} tập")
     return [list(paths[start - 1:end - 1]) for start, end in zip(cuts, [*cuts[1:], len(paths) + 1])]
-
-
-def reading_order_problem(volume: list[str]) -> bool:
-    """Thứ tự đọc của một tập không giữ được: dây chuyền xếp chương theo TÊN file (text_processing.build_chapter_manifest), nên
-    một tập gồm file của nhiều thư mục chỉ đúng khi xếp theo tên vẫn ra đúng thứ tự đã cho - "001.txt" của hai thư mục thì
-    không."""
-    names = [tuple(natural_key(Path(path).name)) for path in volume]
-    return names != sorted(names) or len(set(names)) != len(names)
-
-
-def localize_chapters(chapters: dict[str, str] | None, offset: int, size: int) -> dict[str, str] | None:
-    """Người xưng "tôi" theo chương (`firstPersonChapters`, số chương tính cả truyện) -> số chương trong một tập: tập bắt
-    đầu sau `offset` chương và có `size` chương."""
-    if not chapters:
-        return None
-    local: dict[str, str] = {}
-    for key, name in chapters.items():
-        if not str(key).strip().isdigit():
-            local[str(key)] = name  # không phải số chương: để `create_book` từ chối như với sách một tập
-        elif 1 <= int(key) - offset <= size:
-            local[str(int(key) - offset)] = name
-    return local or None

@@ -54,6 +54,7 @@ Item {
     }
     // Cuốn đầy đủ (quyền sửa, số thay đổi...): nạp lúc mở trang và sau mỗi lần sửa
     property var fullBook: ({})
+    readonly property bool volumePicker: (fullBook.volumes || []).length > 1 && bookDetail.selectedVolume < 0
     onFullBookChanged: if (Api.needsVoiceList(fullBook)) Api.ensureVoiceName()
     function loadFull() {
         const id = root.book.bookId
@@ -566,12 +567,17 @@ Item {
                 width: parent.width
                 height: Math.max(0, parent.height - y)
                 clip: true
-                opacity: root.paneIndex === 0 ? 1 : 0
+                opacity: root.paneIndex === 0 && !root.volumePicker ? 1 : 0
                 transform: Translate { x: Theme.reduceMotion ? 0 : (root.paneIndex === 0 ? root.paneDirection : -root.paneDirection) * (1 - list.opacity) * 24 }
                 visible: opacity > 0
-                enabled: root.paneIndex === 0
+                enabled: root.paneIndex === 0 && !root.volumePicker
                 Behavior on opacity { NumberAnimation { duration: chapterRegion.fade } }
                 model: bookDetail.chapters
+                header: Item {
+                    width: list.width
+                    height: (root.fullBook.volumes || []).length > 1 ? 48 : 0
+                    Button { text: S.s_volumes; visible: parent.height > 0; onClicked: bookDetail.selectedVolume = -1 }
+                }
                 boundsBehavior: Flickable.StopAtBounds
                 bottomMargin: Theme.s16
                 delegate: ChapterRow {
@@ -610,6 +616,36 @@ Item {
                 target: list
                 opacity: list.opacity
                 visible: list.visible
+            }
+            ListView {
+                id: volumeList
+                objectName: "bookVolumes"
+                y: chapterRegion.headHeight + Theme.s8
+                width: parent.width
+                height: Math.max(0, parent.height - y)
+                clip: true
+                model: root.fullBook.volumes || []
+                opacity: root.paneIndex === 0 && root.volumePicker ? 1 : 0
+                visible: opacity > 0
+                enabled: root.paneIndex === 0 && root.volumePicker
+                Behavior on opacity { NumberAnimation { duration: chapterRegion.fade } }
+                delegate: Item {
+                    required property var modelData
+                    width: volumeList.width
+                    height: 112
+                    CoverView {
+                        x: Theme.s8; y: Theme.s8; width: 56; height: 84
+                        title: modelData.title
+                        coverKey: modelData.cover ? root.book.bookId + "/" + (modelData.cover.version || 0) + "/volumes/" + modelData.id : root.book.coverKey || ""
+                    }
+                    Column {
+                        x: 80; y: Theme.s16; width: parent.width - x
+                        Text { width: parent.width; text: TextWrap.keepDots(modelData.title); color: Theme.text; font.pixelSize: Theme.sizeBody; wrapMode: Text.Wrap }
+                        Text { width: parent.width; text: S.s_volume_progress((modelData.chapters || []).length, Math.round(BookText.volumeProgress(root.fullBook, modelData) * 100)); color: Theme.text2; font.pixelSize: Theme.sizeBodySmall; wrapMode: Text.Wrap }
+                    }
+                    TapHandler { onTapped: bookDetail.selectedVolume = modelData.id }
+                }
+                Scrollbar { target: volumeList }
             }
             HistoryList {
                 id: historyList

@@ -5915,7 +5915,20 @@
     "s_avatar_generate": "Sinh lại ảnh",
     "s_avatar_pattern": "Dùng hoạ tiết",
     "s_avatar_generating": "Đang sinh ảnh",
-    "s_avatar_unavailable": "Chưa bật sinh ảnh"
+    "s_avatar_unavailable": "Chưa bật sinh ảnh",
+    "s_volumes": "Các quyển",
+    "s_volume_number": "Quyển {0}",
+    "s_volume_progress": "{0} chương · Đã nghe {1}%",
+    "s_volume_manage": "Sắp xếp quyển",
+    "s_volume_cover": "Bìa quyển",
+    "s_volume_book_cover": "Dùng bìa sách",
+    "s_volume_save": "Lưu quyển",
+    "s_volume_first_chapter": "Chương đầu",
+    "s_volume_add": "Thêm quyển",
+    "s_volume_title": "Tên quyển",
+    "s_volume_all": "Cả sách",
+    "s_volume_split_help": "Các quyển nằm trong cùng một sách, dùng chung nhân vật và giọng đọc.",
+    "s_hako_paste": "Có thể dán đường dẫn sách Hako: mỗi tập thành một quyển, kèm bìa tập."
   },
   "android_resources": {
     "app_name": "s_abook_1c37d334",

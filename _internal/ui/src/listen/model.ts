@@ -7,6 +7,7 @@ import type { CoverImage } from "@/shared/cover";
 // Android: đọc từ gói sách đã tải về (book.json cùng hình dạng).
 
 export interface ListenChapter {
+  volumeId?: number;
   id: number;
   index: number;
   title: string;
@@ -94,6 +95,7 @@ export interface ListeningRecord {
 }
 
 export interface ListenBook {
+  volumes?: ListenVolume[];
   id: string;
   title: string;
   /** Tác giả ghi trong file sách (EPUB / DOCX / PDF); trống khi không có. */
@@ -156,6 +158,14 @@ export interface ListenBook {
   /** Cuốn nhập từ file dự án `.abookproj` (docs/EDITING.md, P3); cuốn từ file `.abook`: null. `workshop` "present" - xưởng đi theo cuốn
    *  để lưu lại; "pending" - chỉ có phần nghe, chờ "Dựng xưởng" (`built` = mã dự án đã dựng). `views`: bản chụp chỉ đọc có trong file. */
   projectFile?: { workshop: "present" | "pending"; views: ("work" | "casting" | "names")[]; built?: string | null } | null;
+}
+
+export interface ListenVolume {
+  id: number;
+  number: number;
+  title: string;
+  cover?: CoverImage | null;
+  chapters: ListenChapter[];
 }
 
 export interface SeriesPlace {

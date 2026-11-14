@@ -27,6 +27,7 @@ void BookDetail::setBookId(const QString &bookId) {
     if (bookId == m_bookId)
         return;
     m_bookId = bookId;
+    m_selectedVolume = -1;
     m_hasBook = false;
     m_status = QStringLiteral("loading");
     emit bookIdChanged();
@@ -50,14 +51,28 @@ void BookDetail::reload() {
         }
         m_book = parseBook(body);
         m_finished = m_book.finished;
-        if (!m_hasBook)
-            m_chapters.setBook(m_book);
-        else
-            m_chapters.refreshStates(m_book);
+        refreshChapters();
         m_hasBook = true;
         m_status = QStringLiteral("ready");
         recompute();
     }, false);
+}
+
+void BookDetail::setSelectedVolume(int id) {
+    if (id == m_selectedVolume) return;
+    m_selectedVolume = id;
+    refreshChapters();
+    emit changed();
+}
+
+void BookDetail::refreshChapters() {
+    Book visible = m_book;
+    if (m_selectedVolume > 0) {
+        visible.chapters.clear();
+        for (const Chapter &chapter : m_book.chapters)
+            if (chapter.volumeId == m_selectedVolume) visible.chapters.append(chapter);
+    }
+    m_chapters.setBook(visible);
 }
 
 void BookDetail::recompute() {

@@ -127,7 +127,7 @@ export function VolumeSplit({
         </h3>
         <Button size="sm" variant="ghost" onClick={() => onChange(null)}>{S.s_khong_chia_nua_3d6b48ed}</Button>
       </div>
-      <p className="mt-1 text-fg-2">{S.s_moi_phan_thanh_mot_sach_noi_tiep_chon_chuo_d7604c1a}</p>
+      <p className="mt-1 text-fg-2">{S.s_volume_split_help}</p>
       {/* Thêm / bỏ chỗ cắt: hàng của phần mở / khép tại chỗ (useListPresence), không mờ cả khung; đổi trong hàng thì hàng tự mờ qua.
           Hàng đang khép giữ số phần / tên cuối của nó. */}
       <div data-motion-live="">
@@ -138,7 +138,6 @@ export function VolumeSplit({
               {/* Phần 1 giữ nguyên tên sách (là sách thường, như máy chủ đặt) - nên nói ra nó là phần 1; các phần sau đã có "· Phần N" trong tên. */}
               <div className="truncate font-medium max-sm:whitespace-normal max-sm:break-words">
                 {title}
-                {index === 0 && <span className="ml-2 text-xs font-normal text-fg-3">{S.s_phan_1_81023e6c}</span>}
               </div>
               <div className="truncate text-xs text-fg-2">
                 {files[part.start - 1]?.firstLine || files[part.start - 1]?.name}

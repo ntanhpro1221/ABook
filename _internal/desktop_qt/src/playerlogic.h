@@ -57,6 +57,7 @@ struct Chapter {
     double duration = 0;
     bool available = false;
     bool textOnly = false;
+    int volumeId = 1;
 };
 
 inline bool canPlay(const Chapter &chapter) {
@@ -79,6 +80,7 @@ struct Book {
     QString record;   // hồ sơ nghe đang dùng ("" nếu không có)
     QString voice;
     QVector<Chapter> chapters;
+    QJsonArray volumes;
     // state
     std::optional<double> rate;
     bool hasLast = false;
@@ -121,6 +123,7 @@ inline void applyState(Book &book, const QJsonObject &state) {
 
 inline Book parseBook(const QJsonObject &json) {
     Book book;
+    book.volumes = json.value(QStringLiteral("volumes")).toArray();
     book.id = json.value(QStringLiteral("id")).toString();
     book.title = json.value(QStringLiteral("title")).toString();
     book.author = json.value(QStringLiteral("author")).toString();
@@ -135,11 +138,24 @@ inline Book parseBook(const QJsonObject &json) {
             break;
         }
     }
-    for (const QJsonValue &value : json.value(QStringLiteral("chapters")).toArray()) {
+    // The playback queue is the whole book in global order; the volume tree only labels each chapter.
+    QJsonArray entries = json.value(QStringLiteral("chapters")).toArray();
+    if (entries.isEmpty()) {
+        for (const QJsonValue &volume : book.volumes) {
+            const auto object = volume.toObject();
+            for (const auto &value : object.value(QStringLiteral("chapters")).toArray()) {
+                auto chapter = value.toObject();
+                chapter.insert(QStringLiteral("volumeId"), object.value(QStringLiteral("id")));
+                entries.append(chapter);
+            }
+        }
+    }
+    for (const QJsonValue &value : entries) {
         const QJsonObject item = value.toObject();
         Chapter chapter;
         chapter.id = item.value(QStringLiteral("id")).toInt();
         chapter.index = item.value(QStringLiteral("index")).toInt();
+        chapter.volumeId = item.value(QStringLiteral("volumeId")).toInt(1);
         chapter.title = item.value(QStringLiteral("title")).toString();
         chapter.subtitle = item.value(QStringLiteral("subtitle")).toString();
         chapter.fullTitle = item.value(QStringLiteral("fullTitle")).toString();

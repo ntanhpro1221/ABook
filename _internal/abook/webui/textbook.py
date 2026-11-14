@@ -38,7 +38,7 @@ def book_json(book: importers.ImportedBook, texts: dict[str, bytes], cover: dict
         chapter = book.chapters[number - 1]
         title = _title(chapter.name or chapter.title, f"Chương {number}")
         chapters.append({
-            "id": number, "index": number, "title": title, "subtitle": "", "fullTitle": title,
+            "id": number, "index": number, "volumeId": chapter.volume, "title": title, "subtitle": "", "fullTitle": title,
             "duration": 0, "available": False, "size": 0, "state": bookfile.TEXT_STATE, "text": name,
         })
     result: dict[str, Any] = {"format": packages.FORMAT, "title": _title(book.title, "Sách")}
@@ -52,6 +52,8 @@ def book_json(book: importers.ImportedBook, texts: dict[str, bytes], cover: dict
         "version": digest[:16], "chapters": chapters, "samples": [],
         "cover": {**cover, "version": COVER_VERSION, "file": covers.COVER_FILE} if cover else None,
     })
+    from ..book_volumes import group
+    result["volumes"] = group(chapters, book.volume_metadata())
     return result
 
 
@@ -114,6 +116,13 @@ def build(book: importers.ImportedBook, out: Path, *, producer: str = "ABook") -
         except covers.CoverError:
             cover = None  # bìa hỏng hay quá nhỏ: sách vẫn nhập được, giao diện tự vẽ bìa từ tên
     manifest = book_json(book, texts, cover)
+    for volume in book.volumes:
+        if volume.cover_bytes and any(v["id"] == volume.id for v in manifest["volumes"]):
+            jpeg, details = covers.render_cover(volume.cover_bytes)
+            name = f"covers/{volume.id}.jpg"
+            files[name] = jpeg
+            next(v for v in manifest["volumes"] if v["id"] == volume.id)["cover"] = {
+                **details, "file": name, "version": covers.content_version(jpeg)}
     return bookfile.seal(manifest, files, Path(out), producer=producer, version=bookfile.package_version(manifest))
 
 

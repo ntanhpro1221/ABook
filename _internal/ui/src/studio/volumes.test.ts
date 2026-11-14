@@ -48,8 +48,7 @@ describe("chỗ cắt tập", () => {
     expect(inOrder(files, null)).toBe(files);
   });
 
-  it("đặt tên như phần nối tiếp: tập 1 giữ tên, tập sau 'Tên · Phần N'", () => {
-    expect(volumeTitles("Re:Zero", 3)).toEqual(["Re:Zero", "Re:Zero · Phần 2", "Re:Zero · Phần 3"]);
-    expect(volumeTitles("Re:Zero · Phần 1", 2)).toEqual(["Re:Zero · Phần 1", "Re:Zero · Phần 2"]);
+  it("các quyển nằm trong một sách: tên mặc định 'Quyển N', không đổi tên sách", () => {
+    expect(volumeTitles("Re:Zero", 3)).toEqual(["Quyển 1", "Quyển 2", "Quyển 3"]);
   });
 });

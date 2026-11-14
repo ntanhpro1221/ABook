@@ -308,10 +308,10 @@ function addStart(starts, number, total) {
     return starts.concat([number]).sort(function(a, b) { return a - b })
 }
 function removeStart(starts, position) { return position < 1 ? starts : starts.filter(function(value, index) { return index !== position }) }
-function volumeTitles(title, count) {
-    const base = String(title).replace(/\s*(?:\(phần\s*\d+\)|[·|:—–-]\s*phần\s*\d+)\s*$/i, "").trim() || String(title).trim()
+function volumeTitles(_title, count) {
+    // Volumes live inside one book: their default names are "Quyển N", as on the web (studio/volumes.ts).
     const out = []
-    for (let i = 0; i < count; ++i) out.push(i === 0 ? String(title).trim() : base + S.s_u00a0_u00a0phan_1a9d9c8e + (i + 1))
+    for (let i = 0; i < count; ++i) out.push(S.s_volume_number(i + 1))
     return out
 }
 /** Thư mục chứa file (cắt ở dấu gạch cuối): đếm số thư mục trong một tập. */

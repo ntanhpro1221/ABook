@@ -39,6 +39,7 @@ import { chapterSubline, displayTitle, keepTogether, partialBookLine, primaryLis
 import { useNowPlaying, usePlayer } from "./player";
 import { usePreparedChapters } from "./PlayerViews";
 import { BookMusic } from "@/music/BookMusic";
+import { VolumeEditor } from "./VolumeEditor";
 import { EditsNoticesBanner, EditsSyncBanner, LocalEditsBanner, SendEditsItem } from "./SendEdits";
 import { PlaylistSubmenu } from "./PlaylistChoice";
 import { ProjectFileItems, ProjectViewsDialog, TextBookItems } from "./ProjectFileItems";
@@ -295,12 +296,36 @@ export function ChapterGroups({ book, currentChapter, onDone, onRename, prepared
   layout?: string;
 }) {
   const chapters = book.chapters ?? [];
+  const [selectedVolume, setSelectedVolume] = useState<number | null>(null);
   const groups = chaptersByPart(chapters, book.parts);
   const actions = useChapterActions(book, onDone, onRename);
   const list = { book, actions, renamable: Boolean(onRename), prepared, currentChapter, layout };
+  if ((book.volumes?.length ?? 0) > 1) {
+    const selected = book.volumes?.find(volume => volume.id === selectedVolume);
+    return <MotionRegion motionKey={selected?.id ?? "volumes"} slideIndex={selected ? 1 : 0} className="mt-2">
+      <MotionPresence open={Boolean(onRename)}><VolumeEditor book={book} /></MotionPresence>
+      {selected ? <>
+        <Button variant="ghost" onClick={() => setSelectedVolume(null)}>{S.s_volumes}</Button>
+        <h3 className="mt-3 text-lg font-medium">{selected.title}</h3>
+        <ChapterGroupList {...list} chapters={chapters.filter(chapter => selected.chapters.some(c => c.id === chapter.id))} memory={`book.${book.id}.volume.${selected.id}`} />
+      </> : <div role="list" aria-label={S.s_volumes} data-motion-live>
+        {book.volumes?.map(volume => {
+          const rows = chapters.filter(chapter => volume.chapters.some(c => c.id === chapter.id));
+          const progress = rows.length ? rows.reduce((total, chapter) => total + chapterHeard(book.state, chapter), 0) / rows.length : 0;
+          return <button key={volume.id} type="button" role="listitem" onClick={() => setSelectedVolume(volume.id)} className="flex w-full items-center gap-4 rounded-control p-3 text-left hover:bg-hover">
+            <BookCover title={volume.title} size="sm" image={volume.cover ?? book.cover} />
+            <div className="min-w-0 flex-1"><div className="font-medium">{volume.title}</div>
+              <div className="text-xs text-fg-2">{S.s_volume_progress(formatNumber(rows.length), formatNumber(Math.round(progress * 100)))}</div>
+              <Progress value={progress} label={S.s_da_nghe_1e0f8d88} className="mt-2" />
+            </div>
+          </button>;
+        })}
+      </div>}
+    </MotionRegion>;
+  }
   // Sách không chia phần: một danh sách phẳng ngay dưới tab - không gấp trong một khối "Danh sách chương" lặp lại tên tab.
   if (groups.length === 1 && !groups[0].heading) {
-    return <div className="mt-2"><ChapterGroupList {...list} chapters={groups[0].chapters} memory={`book.${book.id}.0`} /></div>;
+    return <div className="mt-2"><MotionPresence open={Boolean(onRename)}><VolumeEditor book={book} /></MotionPresence><ChapterGroupList {...list} chapters={groups[0].chapters} memory={`book.${book.id}.0`} /></div>;
   }
   return <>{groups.map((group, index) => (
             <Fold key={group.heading ?? index} storageKey={`book.${book.id}.chapters.${index}`} title={group.heading || S.s_danh_sach_chuong_7fa755f9} summary={S.s_0_chuong_1_6fd924b9(group.chapters.length, group.chapters.some(chapter => chapter.id === currentChapter) ? S.s_dang_nghe_a38a21a6 : "")} defaultOpen={group.chapters.length <= 4 || group.chapters.some(chapter => chapter.id === currentChapter)} onOpened={(element) => {

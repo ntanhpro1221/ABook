@@ -107,7 +107,11 @@ class LibraryRepo(private val context: Context, private val scope: kotlinx.corou
             val downloaded = Store.rawManifest(id) != null
             val manifest = (if (downloaded) Store.manifest(id) else Store.streamManifest(id)?.let { Store.streamed(id, it) }) ?: return@withContext null
             val remote = if (downloaded) null else RemoteRef(SyncLink.holderName(context, id))
-            BookDetail.of(live(manifest), Store.state(id), { coverOf(it) }, remote, BookActions.canShare(id), Store.records(id), Store.isImported(id))
+            BookDetail.of(live(manifest), Store.state(id), { coverOf(it) }, remote, BookActions.canShare(id), Store.records(id), Store.isImported(id),
+                volumeCoverOf = { relative ->
+                    if (!Regex("covers/[1-9][0-9]{0,8}\\.jpg").matches(relative)) null
+                    else Store.contained(Store.bookDir(id), relative).takeIf { it.isFile }?.let { CoverRef(it.absolutePath, it.lastModified()) }
+                })
         } catch (error: Exception) {
             AppLog.w("Library", S.s_khong_doc_duoc_trang_sach_0_829ad767(error.javaClass.simpleName))
             null

@@ -1755,8 +1755,6 @@ class App:
             split = volumes.split_paths(paths, body.get("volumeStarts"))
         except ValueError as error:
             raise ApiError(HTTPStatus.BAD_REQUEST, str(error)) from error
-        if len(split) > 1:
-            return self._create_volumes(body, split)
         # "Làm tiếp cuốn này": phần mới gieo từ phần trước (continuation.py) - tìm phần trước TRƯỚC khi tạo, để id sai
         # không để lại một dự án mồ côi.
         previous = self._book(str(body["seedFrom"])) if body.get("seedFrom") else None
@@ -1834,6 +1832,26 @@ class App:
                 raise ApiError(HTTPStatus.CONFLICT,
                                f"Đã tạo sách nhưng không mang được gì từ phần trước: {error}") from error
         shared = self._apply_shared_readings(root, [str(path) for path in continuation._input_paths(root)])
+        if len(split) > 1:
+            from .. import book_volumes
+            with contextlib.closing(store.connect(root)) as connection:
+                chapter_ids = [row[0] for row in connection.execute("SELECT id FROM chapters ORDER BY chapter_index")]
+            # A volume the import already named (Hako / EPUB / TXT headings) keeps its id, title and cover when a cut starts there.
+            named = {volume["chapters"][0]["id"]: (volume["id"], volume["number"], volume["title"])
+                     for volume in book_volumes.project(root, [{"id": identifier} for identifier in chapter_ids]) if volume["chapters"]}
+            starts = [int(value) for value in body["volumeStarts"]]
+            labels = body.get("volumeLabels") or []
+            definitions, used = [], set()
+            for position, (start, end) in enumerate(zip(starts, [*starts[1:], len(chapter_ids) + 1])):
+                identifier, number, title = named.get(chapter_ids[start - 1], (None, position + 1, f"Quyển {position + 1}"))
+                if position < len(labels) and str(labels[position]).strip():
+                    title = str(labels[position]).strip()
+                definitions.append({"id": identifier, "number": number, "title": title, "chapters": chapter_ids[start - 1:end - 1]})
+                used.add(identifier)
+            free = (candidate for candidate in range(1, 1000) if candidate not in used)
+            for definition in definitions:
+                definition["id"] = definition["id"] or next(free)
+            book_volumes.organize(root, definitions)
         if body.get("start"):
             # Qua hàng đợi như nút "Bắt đầu": cuốn đang chạy thì cuốn mới xếp hàng, không tranh GPU (soát 28-09 - trước
             # đây "Tạo + bắt đầu ngay" chạy song song với cuốn đang sản xuất).
@@ -1843,46 +1861,6 @@ class App:
         return {"id": book_id(root), "sharedReadings": shared, "queued": queued,
                 **({"replaceError": replace_error} if replace_error else {}),
                 **({"unchanged": True} if unchanged else {})}
-
-    def _create_volumes(self, body: dict[str, Any], split: list[list[str]]) -> dict[str, Any]:
-        """"Tạo nhiều tập" (B7): tập 1 là sách thường (qua `create`: kể cả "Làm tiếp cuốn này" / "Sửa thiết lập" nếu có), các
-        tập sau là phần nối tiếp "Tên · Phần N" trong chuỗi continues.json - đúng quy ước của "Làm tiếp cuốn này".
-
-        Các tập sau tạo NGAY (người dùng thấy đủ bộ, đúng thứ tự) nhưng chưa gieo: tập 1 chưa chạy nên chưa có nhân vật hay
-        giọng để mang. Chúng ghi cờ "chờ gieo" (continuation.link_pending); `_launch` gieo từ phần trước đúng lúc tập ấy bắt
-        đầu chạy - tức sau khi phần trước phân vai xong (hàng đợi chỉ cho chạy khi không cuốn nào khác đang chạy)."""
-        title = str(body.get("title", ""))
-        chapters = self._first_person_chapters(body)
-        sizes = [len(volume) for volume in split]
-        offsets = [sum(sizes[:index]) for index in range(len(split))]
-        for number, volume in enumerate(split, start=1):
-            if volumes.reading_order_problem(volume):
-                raise ApiError(HTTPStatus.BAD_REQUEST, f"Tập {number} xếp xen chương giữa thư mục — bạn cắt ở ranh thư mục để giữ thứ tự.")
-        first = self.create({**body, "paths": split[0], "volumeStarts": None,
-                             "firstPersonChapters": volumes.localize_chapters(chapters, offsets[0], sizes[0]) or {}})
-        parts = [{"id": first["id"], "part": 1, "queued": first.get("queued", 0)}]
-        made: list[str] = []
-        previous = self._book(first["id"])
-        try:
-            for number, volume in enumerate(split[1:], start=2):
-                root = self._create_book(body, volume, continuation.continued_title(title, number),
-                                         volumes.localize_chapters(chapters, offsets[number - 1], sizes[number - 1]))
-                made.append(book_id(root))
-                continuation.link_pending(previous, root)
-                self._apply_shared_readings(root, volume)
-                previous = root
-                if body.get("start"):
-                    self._enqueue(book_id(root))  # sau tập trước, đúng thứ tự (tập 1 đang chạy hay đang khởi động)
-                parts.append({"id": book_id(root), "part": number, "queued": self._queue_position(root)})
-        except (ValueError, continuation.ContinuationError, OSError) as error:
-            # Bộ dở dang không dùng được (tập sau nối vào chuỗi nào?): bỏ các tập sau vừa tạo, giữ tập 1 như sách thường.
-            for made_id in made:
-                try:
-                    self.delete(made_id)
-                except ApiError:
-                    pass
-            raise ApiError(HTTPStatus.CONFLICT, f"Đã tạo tập 1 nhưng không tạo được tập {len(parts) + 1}: {error}") from error
-        return {**first, "parts": parts}
 
     def shared_readings_view(self) -> dict[str, Any]:
         return {"entries": self.shared_readings.entries()}
@@ -5121,7 +5099,7 @@ class Handler(BaseHTTPRequestHandler):
                 music = source if wanted else None
                 if parts is None:
                     result = export_book(project, root, cover=body.get("cover"), music=music, cancelled=cancelled, progress=writing,
-                                         chapter_ids=body.get("chapterIds"))
+                                         chapter_ids=body.get("chapterIds"), volume_id=body.get("volumeId"))
                 else:
                     result = export_series(parts, root, lambda part, folder, label: export_book(
                         part, folder, cover=body.get("cover"), folder_name=label, music=music, cancelled=cancelled, progress=writing))
@@ -5280,7 +5258,7 @@ class Handler(BaseHTTPRequestHandler):
             # Huỷ (`post_m4b_job_cancel`) có hiệu lực ở mọi pha: trước bài nhạc kế phải tải, giữa lúc trộn / ghép, trước mỗi chương đo đỉnh.
             with self._export_music(project, "m4b", app.m4b_jobs, key, [project] if wanted else []) as source:
                 result = export_m4b(project, root, cover=body.get("cover"), music=source if wanted else None, progress=mixing, peaks=peaks,
-                                    cancelled=cancelled)
+                                    cancelled=cancelled, volume_id=body.get("volumeId"))
             app.exports.add(result["folder"])
             return result
 
@@ -6275,6 +6253,80 @@ class Handler(BaseHTTPRequestHandler):
         path = self.app.cover_file(self.app._listenable(value))
         if path is None:
             raise ApiError(HTTPStatus.NOT_FOUND, "Sách này chưa có ảnh bìa")
+        self._send_file(path, cache=True)
+
+    def put_volumes(self, _query: dict[str, list[str]], value: str) -> None:
+        from .. import book_volumes
+        self.app._mutating()
+        root = self.app._editable(value)
+        body = self._body()
+        with self.app._queue_lock:
+            if self.app._busy_elsewhere() is not None:
+                raise ApiError(HTTPStatus.CONFLICT, "Đợi sách đang làm xong rồi sắp xếp quyển.")
+            try:
+                if packages.is_package(root):
+                    book = dict(packages.manifest(root))
+                    definitions = body.get("volumes")
+                    old = {v["id"]: v for v in book_volumes.volumes_of(book)}
+                    chapters = {c["id"]: c for c in book["chapters"]}
+                    proposed = [{**v, "cover": old.get(v["id"], {}).get("cover"),
+                                 "chapters": [chapters[c] for c in v["chapters"]]} for v in definitions]
+                    candidate = {**book, "volumes": proposed}
+                    book_volumes.flatten(candidate)
+                    if [c["id"] for c in candidate["chapters"]] != list(chapters):
+                        raise ValueError("Thứ tự chương phải giữ nguyên")
+                    atomic_write_bytes(root / packages.MANIFEST, bookfile.json_bytes(book_volumes.nested(candidate)))
+                else:
+                    book_volumes.organize(root, body.get("volumes"))
+            except (ValueError, TypeError, KeyError) as error:
+                raise ApiError(HTTPStatus.BAD_REQUEST, str(error)) from error
+        self._send_json(HTTPStatus.OK, {"ok": True})
+
+    def put_volume_cover(self, _query: dict[str, list[str]], value: str, identifier: str) -> None:
+        from .. import book_volumes
+        self.app._mutating()
+        root = self.app._editable(value)
+        body = self._body(limit=covers.MAX_UPLOAD_BYTES * 4 // 3 + 4096)
+        raw = covers.decode_data_url(str(body["image"])) if body.get("image") else None
+        with self.app._queue_lock:
+            if self.app._busy_elsewhere() is not None:
+                raise ApiError(HTTPStatus.CONFLICT, "Đợi sách đang làm xong rồi đặt bìa quyển.")
+            if packages.is_package(root):
+                from .. import book_paths
+                book = dict(packages.manifest(root))
+                volume = next((v for v in book_volumes.volumes_of(book) if v["id"] == int(identifier)), None)
+                if volume is None:
+                    raise ApiError(HTTPStatus.NOT_FOUND, "Không có quyển này")
+                volume = dict(volume)
+                volume["cover"] = None
+                if raw is not None:
+                    jpeg, meta = covers.render_cover(raw)
+                    name = f"covers/{int(identifier)}.jpg"
+                    target = book_paths.inside(root, str((root / name).resolve()))
+                    target.parent.mkdir(parents=True, exist_ok=True)
+                    atomic_write_bytes(target, jpeg)
+                    volume["cover"] = {**meta, "file": name, "version": covers.content_version(jpeg)}
+                    book["package"] = {**book["package"], "files": {**book["package"]["files"], name: bookfile.describe(jpeg)}}
+                book["volumes"] = [volume if v["id"] == int(identifier) else v for v in book_volumes.volumes_of(book)]
+                atomic_write_bytes(root / packages.MANIFEST, bookfile.json_bytes(book_volumes.nested(book)))
+            else:
+                book_volumes.save_cover(root, int(identifier), raw)
+        self._send_json(HTTPStatus.OK, {"ok": True})
+
+    def media_volume_cover(self, _query: dict[str, list[str]], value: str, identifier: str) -> None:
+        from .. import book_volumes
+        root = self.app._listenable(value)
+        if packages.is_package(root):
+            volume = next((v for v in book_volumes.volumes_of(packages.manifest(root)) if v["id"] == int(identifier)), None)
+            path = packages._file(root, volume["cover"]["file"]) if volume and volume.get("cover") else None
+        else:
+            volumes = book_volumes.project(root, listen_view.chapters(root))
+            volume = next((v for v in volumes if v["id"] == int(identifier)), None)
+            path = book_volumes.cover_files(root, [volume])[volume["cover"]["file"]] if volume and volume.get("cover") else None
+        if path is None:
+            path = self.app.cover_file(root)
+        if path is None:
+            raise ApiError(HTTPStatus.NOT_FOUND, "Quyển này chưa có ảnh bìa")
         self._send_file(path, cache=True)
 
     def post_reveal_export(self, _query: dict[str, list[str]]) -> None:
@@ -7495,6 +7547,8 @@ ROUTES: list[Route] = [
     ("GET", re.compile(BOOK + r"/voices"), Handler.get_voice_choices),
     ("GET", re.compile(BOOK + r"/cover/search"), Handler.get_cover_search),
     ("PUT", re.compile(BOOK + r"/cover"), Handler.put_cover),
+    ("PUT", re.compile(BOOK + r"/volumes"), Handler.put_volumes),
+    ("PUT", re.compile(BOOK + r"/volumes/(\d+)/cover"), Handler.put_volume_cover),
     ("DELETE", re.compile(BOOK + r"/cover"), Handler.delete_cover),
     ("POST", re.compile(r"/api/reveal-export"), Handler.post_reveal_export),
     ("POST", re.compile(r"/api/open-url"), Handler.post_open_url),
@@ -7564,6 +7618,7 @@ ROUTES: list[Route] = [
     ("GET", re.compile(r"/media/books/([A-Za-z0-9_-]+)/chapters/(\d+)"), Handler.media_chapter),
     ("GET", re.compile(r"/media/books/([A-Za-z0-9_-]+)/samples/(\d+)"), Handler.media_sample),
     ("GET", re.compile(r"/media/books/([A-Za-z0-9_-]+)/cover"), Handler.media_cover),
+    ("GET", re.compile(r"/media/books/([A-Za-z0-9_-]+)/volumes/(\d+)/cover"), Handler.media_volume_cover),
     ("GET", re.compile(r"/media/books/([A-Za-z0-9_-]+)/reading-previews/([0-9a-f]{32})\.wav"), Handler.media_reading_preview),
 ]
 

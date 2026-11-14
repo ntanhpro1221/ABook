@@ -375,7 +375,8 @@ def _seal(out: Path, files: dict[str, Path | bytes], book: dict[str, Any] | None
             "producer": producer,
             "files": {name: meta for name, meta in described.items() if listening_name(name)},
         }
-        files[bookfile.MANIFEST] = bookfile.json_bytes(book)
+        from .. import book_volumes
+        files[bookfile.MANIFEST] = bookfile.json_bytes(book_volumes.nested(book))
         described[bookfile.MANIFEST] = bookfile.describe(files[bookfile.MANIFEST])
     elif workshop == PENDING:
         raise ProjectFileError("Sách chưa có chương nào nghe được để lưu thành dự án.")
@@ -816,8 +817,10 @@ class ProjectFile:
                 not isinstance(meta, dict) or meta != manifest["files"][name] for name, meta in listed.items()):
             raise ProjectFileError("Phần nghe của dự án không khớp nội dung gói.")
         try:
+            from .. import book_volumes
+            book_volumes.flatten(book)
             bookfile.check_shape(book)
-        except bookfile.BookFileError as exc:
+        except (ValueError, bookfile.BookFileError) as exc:
             raise ProjectFileError(str(exc)) from exc
         for chapter in book.get("chapters") or []:
             reference = chapter.get("file") if isinstance(chapter, dict) else None

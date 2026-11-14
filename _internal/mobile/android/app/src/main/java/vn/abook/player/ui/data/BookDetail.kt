@@ -26,6 +26,7 @@ data class ChapterLine(
     val resumeAt: Double = 0.0,
     /** Tên ngắn của chương (`title` của gói, không kèm tên phụ): dàn nhân vật ghi "từ <chương>" bằng tên này hay [title]. */
     val shortTitle: String = "",
+    val volumeId: Int = 1,
 ) {
     val playable: Boolean get() = available || textOnly
 }
@@ -50,6 +51,7 @@ class BookDetail(
     val wishes: Int = 0,
     /** Cuốn đến từ file dự án (.abookproj): "present" = mang cả xưởng, "pending" = chờ dựng xưởng; null = từ file sách nghe (.abook). */
     val workshop: String? = null,
+    val volumes: List<VolumeLine> = emptyList(),
 ) {
     companion object {
         /** Hàm thuần: gói sách (như người nghe thấy) + trạng thái nghe -> trang sách. */
@@ -61,12 +63,26 @@ class BookDetail(
             canShare: Boolean = false,
             records: JSONArray? = null,
             imported: Boolean = false,
+            volumeCoverOf: (String) -> CoverRef? = { null },
         ): BookDetail {
+            vn.abook.player.BookVolumes.project(manifest)
             val book = BookJson.book(manifest, state, coverOf, remote, imported = imported)
+            val chapters = lines(manifest, book.state)
+            val volumes = manifest.optJSONArray("volumes")?.let { definitions ->
+                (0 until definitions.length()).map { index ->
+                    val definition = definitions.getJSONObject(index)
+                    val id = definition.getInt("id")
+                    val selected = chapters.filter { it.volumeId == id }
+                    VolumeLine(id, definition.getInt("number"), definition.getString("title"),
+                        definition.optJSONObject("cover")?.optString("file")?.let(volumeCoverOf) ?: book.cover,
+                        selected.map { it.id }, if (selected.isEmpty()) 0f else selected.sumOf { it.heard.toDouble() }.toFloat() / selected.size)
+                }
+            }.orEmpty()
             return BookDetail(
                 book, lines(manifest, book.state), canShare, Records.parse(records), History.sessions(state),
                 unsaved = manifest.optInt("unsaved", manifest.optInt("edits")), wishes = manifest.optInt("wishes"),
                 workshop = manifest.optJSONObject("projectFile")?.optString("workshop")?.takeIf { it.isNotEmpty() },
+                volumes = volumes,
             )
         }
 
@@ -101,6 +117,7 @@ class BookDetail(
                     textPath = textPath,
                     resumeAt = if (heard > 0f && heard < 1f) state.chapters[id]?.heard ?: 0.0 else 0.0,
                     shortTitle = field(entry, "title"),
+                    volumeId = entry.optInt("volumeId", 1),
                 )
             }
             return out
@@ -109,6 +126,9 @@ class BookDetail(
         private fun field(entry: JSONObject, key: String): String = entry.optString(key).takeIf { it != "null" }.orEmpty().trim()
     }
 }
+
+@Immutable
+data class VolumeLine(val id: Int, val number: Int, val title: String, val cover: CoverRef?, val chapterIds: List<Int>, val progress: Float)
 
 /**
  * Chữ của trang sách (viết lại từ listen/labels.ts + BookScreen.tsx, cùng quy tắc). Hàm thuần - thử trên JVM (BookDetailTest).

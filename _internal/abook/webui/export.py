@@ -23,7 +23,7 @@ import subprocess
 import tempfile
 import time
 from collections.abc import Callable, Iterable, Iterator
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from pathlib import Path
 from typing import Any
 
@@ -153,14 +153,25 @@ def packaged_tracks(_link: str) -> None:
     return None
 
 
-def book_facts(root: Path) -> Facts:
+def book_facts(root: Path, volume_id: int | None = None) -> Facts:
     from . import packages
 
-    if not packages.is_package(root):
-        return _project_facts(root)
-    if packages._remote(root):
+    packaged = packages.is_package(root)
+    if packaged and packages._remote(root):
         raise ValueError("Cuốn này nằm ở máy tính khác - bạn hãy tải về máy này rồi xuất.")
-    return _package_facts(root)
+    facts = _package_facts(root) if packaged else _project_facts(root)
+    if volume_id is None:
+        return facts
+    from .. import book_volumes
+    volumes = book_volumes.volumes_of(packages.manifest(root)) if packaged else book_volumes.project(root, listen_view.chapters(root))
+    volume = next((v for v in volumes if v["id"] == volume_id), None)
+    if volume is None:
+        raise ValueError("Unknown volume")
+    ids = {chapter["id"] for chapter in volume["chapters"]}
+    cover = volume.get("cover")
+    own_cover = (packages._file(root, cover["file"]) if packaged else book_volumes.cover_files(root, [volume])[cover["file"]]) if cover else None
+    return replace(facts, title=f"{facts.title} · {volume['title']}", chapters=[c for c in facts.chapters if c["id"] in ids],
+                   audio={key: value for key, value in facts.audio.items() if key in ids}, total=len(ids), cover=own_cover or facts.cover)
 
 
 def chapter_file_name(number: int, total: int, full_title: str) -> str:
@@ -268,13 +279,13 @@ def write_mp3_folder(ffmpeg: str, folder: Path, chapters: Iterable[tuple[str, Pa
 def export_book(project_root: Path, target_root: Path, *, cover: str | None = None,
                 folder_name: str | None = None, music: Callable[[str], Path | None] | None = None,
                 cancelled: Callable[[], bool] | None = None, progress: Callable[[int, int], None] | None = None,
-                chapter_ids: list[int] | None = None) -> dict[str, Any]:
+                chapter_ids: list[int] | None = None, volume_id: int | None = None) -> dict[str, Any]:
     """`folder_name`: tên thư mục thay cho tên sách - bản xuất cả bộ đặt mỗi phần vào "Phần N - ...".
     `progress(i, N)`: sắp làm chương thứ i (từ 1) trong N chương của cuốn này.
     `music`: nguồn file bài nhạc (như gói `.abook`, music_plan.TrackSource) = "Kèm nhạc nền": chương có nhạc được giải mã, trộn
     (music_export.py) rồi mã hoá lại MP3 cùng bitrate; không có thì chép nguyên luồng như cũ.
     `cancelled()` True (người dùng bấm Huỷ): dừng trước chương kế / giữa lúc trộn, xoá thư mục bản xuất dở và ném `export_jobs.Cancelled`."""
-    facts = book_facts(project_root)
+    facts = book_facts(project_root, volume_id)
     title, narrator, chapters = facts.title, facts.narrator, facts.chapters
     numbered ={chapter["id"]: index for index, chapter in enumerate(chapters, 1)}
     total_available = len(chapters)
@@ -672,13 +683,13 @@ def m4b_from_files(ffmpeg: str, chapters: list[tuple[str, Path]], target_root: P
 
 def export_m4b(project_root: Path, target_root: Path, *, cover: str | None = None, music: Callable[[str], Path | None] | None = None,
                progress: Callable[[int, int], None] | None = None, peaks: Callable[[int, int], None] | None = None,
-               cancelled: Callable[[], bool] | None = None) -> dict[str, Any]:
+               cancelled: Callable[[], bool] | None = None, volume_id: int | None = None) -> dict[str, Any]:
     """Cả cuốn thành một file `<tên sách>.m4b` trong `target_root`: AAC, mỗi chương một mục (tên chương thật), bìa và tag như
     bản xuất MP3. Chỉ chương đã nghe được, như mọi kiểu xuất; `chaptersTotal` để giao diện nói chương nào chưa có.
     `music`: nguồn file bài nhạc = "Kèm nhạc nền" (như `export_book`): nhạc trộn vào PCM trước bộ mã hoá AAC; `progress(i, N)` báo đang
     trộn nhạc chương thứ i (từ 1) trong N; `peaks(lượt, số chương vượt)`: bước kiểm đỉnh AAC (`m4b_from_files` on_peaks). `cancelled()`: Huỷ
     (`m4b_from_files`) - bài nhạc còn phải tải thì do nguồn `music` tự dừng (server.music_exporting)."""
-    facts = book_facts(project_root)
+    facts = book_facts(project_root, volume_id)
     title, narrator = facts.title, facts.narrator
     listed = [(chapter["id"], chapter["fullTitle"], path) for chapter in facts.chapters
               if (path := facts.audio.get(chapter["id"])) is not None]

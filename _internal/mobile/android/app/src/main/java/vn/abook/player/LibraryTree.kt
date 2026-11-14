@@ -55,6 +55,7 @@ object LibraryTree {
     /** Các chương nghe được của một gói sách: chương có audio, và chương chỉ có chữ (giọng máy đọc to). Chương chưa có audio
      *  cũng chưa có chữ thì không có trong cây (bấm vào không phát được). */
     fun chapters(manifest: JSONObject): List<Playback.Chapter> {
+        BookVolumes.project(manifest)
         val array = manifest.optJSONArray("chapters") ?: return emptyList()
         return (0 until array.length()).map { array.getJSONObject(it) }.mapNotNull {
             val text = textEntry(it)

@@ -40,7 +40,8 @@ object BookImport {
     /** `short`: mục EPUB rất ngắn (bìa, trang bản quyền) - bị bỏ, trừ khi bước xem trước giữ nó làm chương CHƯA CHỌN (`keepShort`).
      *  `name`: tên người dùng đặt ở bước xem trước ([selectChapters]); rỗng = `title`. Chỉ là tên - `text` không đổi (`importers.Chapter`).
      *  `matter`: có vẻ không phải truyện (bìa, bản quyền, mục lục…) - lý do cho người nghe; KHÔNG bị bỏ, chỉ chưa tích sẵn ở bước xem trước. */
-    class Chapter(val title: String, val text: String, val short: Boolean = false, val name: String = "", val matter: String = "")
+    class Chapter(val title: String, val text: String, val short: Boolean = false, val name: String = "", val matter: String = "", var volume: Int = 1)
+    class Volume(val id: Int, val number: Int, val title: String, var cover: ByteArray? = null, var coverType: String? = null)
 
     class Book(
         var title: String,
@@ -66,6 +67,7 @@ object BookImport {
         val footnoteExamples: MutableList<Pair<String, String>> = mutableListOf(),
         val keepMatter: Boolean = false,
         val defaultSkips: MutableSet<String> = mutableSetOf(),
+        val volumes: MutableList<Volume> = mutableListOf(),
     )
 
     /**
@@ -151,12 +153,12 @@ object BookImport {
         for ((position, pick) in picks.sortedBy { it.first }.withIndex()) {
             val chapter = book.chapters[pick.first - 1]
             val name = words(pick.second)
-            chapters.add(Chapter(chapter.title, chapter.text, chapter.short, if (name.isEmpty()) chapter.name else if (name != chapter.title) name else "", chapter.matter))
+            chapters.add(Chapter(chapter.title, chapter.text, chapter.short, if (name.isEmpty()) chapter.name else if (name != chapter.title) name else "", chapter.matter, chapter.volume))
             renumbered[pick.first] = position + 1
         }
         val credits = book.credits.mapNotNull { (number, line) -> renumbered[number]?.let { it to line } }.toMutableList()
         return Book(book.title, book.author, book.language, book.cover, book.coverType, chapters, book.notes.toMutableList(), book.textHasTitle, credits, book.splitOffer, book.splitHeadings,
-            book.footnoteFound, book.footnoteMarks, book.footnoteExamples.toMutableList(), book.keepMatter, book.defaultSkips.toMutableSet())
+            book.footnoteFound, book.footnoteMarks, book.footnoteExamples.toMutableList(), book.keepMatter, book.defaultSkips.toMutableSet(), book.volumes.toMutableList())
     }
 
     /** PDF có lớp chữ: `pages` là các dòng CÓ CHỮ của từng trang (như file pages trong bộ ví dụ). */
@@ -214,13 +216,25 @@ object BookImport {
     private fun sha256(bytes: ByteArray) = MessageDigest.getInstance("SHA-256").digest(bytes).joinToString("") { "%02x".format(it) }
 
     private fun finish(book: Book, keepShort: Boolean = false, source: String = ""): Book {
+        if (book.volumes.isEmpty()) {
+            var current = 1
+            book.volumes.add(Volume(1, 1, S.s_volume_number(1)))
+            for ((index, chapter) in book.chapters.withIndex()) {
+                val label = (listOf(chapter.title) + chapter.text.split('\n').take(3)).firstOrNull { TXT_VOLUME.matches(it) }
+                if (label != null && label != book.volumes.last().title) {
+                    if (index > 0) current++ else book.volumes.clear()
+                    book.volumes.add(Volume(current, current, label))
+                }
+                chapter.volume = current
+            }
+        }
         book.title = nfc(book.title).let { title -> TOC_SUFFIX.matcher(title).replaceAll("").ifEmpty { title } } // "Lều chõng — Mục lục" -> "Lều chõng"
         book.author = book.author?.takeIf { it.isNotEmpty() }?.let(::nfc)
-        var all = book.chapters.map { Chapter(nfc(textControls(it.title)).replace(BOM, ""), nfc(textControls(it.text)).replace(BOM, ""), it.short, it.name, it.matter) }
-            .map { Chapter(it.title, it.text, it.short, it.name, it.matter.ifEmpty { textMatter(it.title, it.text) }) }
+        var all = book.chapters.map { Chapter(nfc(textControls(it.title)).replace(BOM, ""), nfc(textControls(it.text)).replace(BOM, ""), it.short, it.name, it.matter, it.volume) }
+            .map { Chapter(it.title, it.text, it.short, it.name, it.matter.ifEmpty { textMatter(it.title, it.text) }, it.volume) }
         if (all.all { it.matter.isNotEmpty() || it.short }) {
             // Cả cuốn "không phải truyện" là nhận nhầm (TXT cả truyện mở bằng lời Project Gutenberg): không cờ nào (`importers._finish`).
-            all = all.map { Chapter(it.title, it.text, it.short, it.name) }
+            all = all.map { Chapter(it.title, it.text, it.short, it.name, volume = it.volume) }
         }
         val notes = book.notes.map(::nfc)
         book.notes.clear()
@@ -1867,6 +1881,15 @@ object BookImport {
         for (entry in tocEntries) titles.putIfAbsent(entry.href, entry.label)
         val listedIn = tocEntries.groupBy { it.href }
         val result = Book(metaText(opf, "title") ?: titleFromFilename(stemOf(file.name)), author = metaText(opf, "creator"), language = metaText(opf, "language"))
+        val volumeOf = HashMap<String, Int>()
+        var currentVolume = 1
+        for (entry in tocEntries) {
+            if (TXT_VOLUME.matches(entry.label)) {
+                currentVolume = result.volumes.size + 1
+                result.volumes.add(Volume(currentVolume, currentVolume, entry.label))
+            }
+            volumeOf[entry.href] = currentVolume
+        }
         if (declared && tocEntries.isEmpty()) result.notes.add(S.s_muc_luc_trong_file_khong_doc_duoc_ten_chuo_ec2d748b)
         epubCover(zip, opf, manifest)?.let { (bytes, media) ->
             result.cover = bytes
@@ -1945,14 +1968,14 @@ object BookImport {
                     if (body.isNotEmpty()) body = body.drop(1) else tail = tail.drop(1)
                 }
                 if (taken.removed && lines.isEmpty()) continue // trang chỉ có lời chú (chương Endnotes) mà lời chú đã đặt về chương của chúng / bị bỏ: không còn gì
-                result.chapters.add(Chapter(title, "", short = isShort, matter = pageMatter))
+                result.chapters.add(Chapter(title, "", short = isShort, matter = pageMatter, volume = volumeOf[href] ?: 1))
                 stored.add(body.toMutableList() to tail.toMutableList())
             }
         }
         for ((index, parts) in stored.withIndex()) {
             val chapter = result.chapters[index]
             val text = (parts.first.asSequence() + parts.second.asSequence()).filter { it.isNotEmpty() }.joinToString("\n\n")
-            result.chapters[index] = Chapter(chapter.title, text, chapter.short, chapter.name, chapter.matter)
+            result.chapters[index] = Chapter(chapter.title, text, chapter.short, chapter.name, chapter.matter, chapter.volume)
         }
         if (images > 0) result.notes.add(S.s_bo_qua_0_trang_chi_co_anh_708219a0(images))
         if (missing > 0) result.notes.add(S.s_bo_qua_0_phan_bi_thieu_trong_file_file_co_230726f6(missing))

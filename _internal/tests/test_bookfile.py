@@ -5,6 +5,7 @@ Fixture: cuốn hai chương của test đồng bộ (`make_project`) - chương
 from __future__ import annotations
 
 import json
+from abook import continuation
 import hashlib
 import subprocess
 import sys
@@ -385,12 +386,14 @@ def test_a_series_is_one_file_with_part_folders_and_global_ids(tmp_path: Path) -
     with BookFile(path) as book:
         book.verify()
         manifest = json.loads(book.read("book.json"))
-        assert manifest["package"]["version"] == 3
+        assert manifest["package"]["version"] == bookfile.FORMAT_VERSION
+        assert [(volume["id"], volume["title"]) for volume in manifest["volumes"]] == [
+            (1, continuation.continued_title(manifest["title"], 1)), (2, continuation.continued_title(manifest["title"], 2))]
         assert set(book.content) == {
             "cast.json", "chapters/1/00001_645.mp3", "chapters/2/00001_645.mp3", "samples/1.wav", "samples/2.wav",
             "scripts/100001.json", "scripts/100002.json", "scripts/200001.json", "scripts/200002.json"}, \
             "hai phần trùng tên file nên audio nằm trong thư mục phần"
-        assert [(c["id"], c["part"], c["file"], c["script"]) for c in manifest["chapters"]] == [
+        assert [(c["id"], c["part"], c["file"], c["script"]) for c in book.book["chapters"]] == [
             (100001, 1, "chapters/1/00001_645.mp3", "scripts/100001.json"),
             (100002, 1, None, "scripts/100002.json"),
             (200001, 2, "chapters/2/00001_645.mp3", "scripts/200001.json"),
@@ -433,7 +436,9 @@ def test_a_part_without_audio_is_left_out_but_keeps_the_numbers_of_the_others(tm
     assert [part["part"] for part in manifest["parts"]] == [1, 2, 3]
     assert manifest["chaptersTotal"] == 6 and manifest["chaptersAvailable"] == 2
     assert {c["id"] for c in manifest["audioCoverage"]["missing"]} == {100002, 200001, 200002, 300002}
-    assert [chapter["id"] for chapter in manifest["chapters"] if chapter["file"]] == [100001, 300001]
+    chapters = [chapter for volume in manifest["volumes"] for chapter in volume["chapters"]]
+    assert [chapter["id"] for chapter in chapters if chapter["file"]] == [100001, 300001]
+    assert [volume["id"] for volume in manifest["volumes"]] == [1, 2, 3], "một quyển mỗi phần, phần không audio vẫn giữ số"
     with pytest.raises(BookFileError, match="chưa có chương nào"):
         bookfile.pack_series([(2, projects[1])], tmp_path / f"rong{bookfile.EXTENSION}", partial=True)
     assert not list(tmp_path.glob("rong*")), "không để lại file dở"
@@ -449,7 +454,7 @@ def test_no_version_carries_the_machines_series_link(tmp_path: Path, series: boo
     with zipfile.ZipFile(path) as archive:
         book = json.loads(archive.read("book.json"))
         everything = "".join(archive.read(name).decode("utf-8") for name in archive.namelist() if name.endswith(".json"))
-    assert book["package"]["version"] == (3 if series else 1) and "series" not in book
+    assert book["package"]["version"] == (bookfile.FORMAT_VERSION if series else 1) and "series" not in book
     assert book_id(projects[0]) not in everything and book_id(projects[1]) not in everything
 
 
@@ -468,7 +473,7 @@ def test_a_series_file_refuses_names_outside_the_part_layout(tmp_path: Path, nam
 
 
 def test_part_folders_exist_only_from_version_3(tmp_path: Path) -> None:
-    """Gói ghi phiên bản 2 mà có `chapters/1/x.mp3` là gói sai (app phiên bản 2 cũ sẽ báo "mục lạ") - không nhận."""
+    """Gói ghi phiên bản 2 mà có `chapters/1/x.mp3` (hay quyển) là gói sai (app phiên bản 2 cũ sẽ báo "mục lạ") - không nhận."""
     _library, projects = _series(tmp_path)
     path = bookfile.pack_series(projects, tmp_path / f"bo{bookfile.EXTENSION}", partial=True)
 
@@ -483,8 +488,8 @@ def test_part_folders_exist_only_from_version_3(tmp_path: Path) -> None:
         BookFile(_rewrite(path, tmp_path / f"cu{bookfile.EXTENSION}", older))
 
 
-def test_a_newer_version_is_refused_with_the_update_hint_and_3_is_accepted(tmp_path: Path) -> None:
-    assert bookfile.FORMAT_VERSION == 6, "6 = ảnh nhân vật (test_avatars.py); 5 = chương chỉ-chữ (test_text_books.py)"
+def test_a_newer_version_is_refused_with_the_update_hint_and_the_current_is_accepted(tmp_path: Path) -> None:
+    assert bookfile.FORMAT_VERSION == 6, "Volume trees and character artwork"
     _library, projects = _series(tmp_path)
     path = bookfile.pack_series(projects, tmp_path / f"bo{bookfile.EXTENSION}", partial=True)
 

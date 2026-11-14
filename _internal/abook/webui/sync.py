@@ -47,6 +47,7 @@ from urllib.parse import unquote, urlsplit
 
 from ..io_utils import atomic_write_json
 from .. import avatars
+from .. import book_volumes
 from . import book_edits, covers, edits_inbox, export, listen_view, listing_cache, music_plan, notices, package_share, packages, precast, remote_books, remote_studio, store, tls, word_timing
 from .cast import CastError
 from .fingerprints import Fingerprints
@@ -579,6 +580,12 @@ def manifest(project_root: Path, book: str, listening: Listening,
         **({"music": music} if music else {}),
         **({"wordsVersion": words} if words else {}),
     }
+    volumes = book_volumes.project(project_root, chapters)
+    if book_volumes.needs_tree({"volumes": volumes}):  # same rule as book.json: one plain volume is just the chapter list
+        result["volumes"] = volumes
+    else:
+        for chapter in chapters:
+            chapter.pop("volumeId", None)
     result["metaVersion"] = listen_view.metadata_version(result)  # tên / người đọc / liên kết bộ / tên chương: điện thoại đã tải đổi riêng phần này mà giữ audio
     return result
 
@@ -920,6 +927,9 @@ class SyncApp:
             return avatars.image_files(project_root, avatars.cast(project_root)).get(relative)
         if relative == covers.COVER_FILE:
             return covers.cover_file(project_root)
+        if book_volumes.COVER_FILE.fullmatch(relative):
+            volumes = book_volumes.project(project_root, listen_view.chapters(project_root))
+            return book_volumes.cover_files(project_root, volumes).get(relative)
         match = re.fullmatch(r"scripts/(\d+)\.json", relative)
         if match:
             script = avatars.script(store.chapter_script(project_root, int(match.group(1))), avatars.cast(project_root))

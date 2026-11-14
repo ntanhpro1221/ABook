@@ -34,7 +34,7 @@ object TextBook {
             val chapter = book.chapters[index]
             val title = cleanTitle(chapter.name.ifEmpty { chapter.title }, S.s_chuong_0_268b0521(number))
             chapters.put(
-                JSONObject().put("id", number).put("index", number).put("title", title).put("subtitle", "").put("fullTitle", title)
+                JSONObject().put("id", number).put("index", number).put("volumeId", chapter.volume).put("title", title).put("subtitle", "").put("fullTitle", title)
                     .put("duration", 0).put("available", false).put("size", 0).put("state", TEXT_STATE).put("text", name),
             )
         }
@@ -46,7 +46,12 @@ object TextBook {
             .put("version", digest.take(16)).put("chapters", chapters).put("samples", JSONArray())
             .put("cover", cover?.let { JSONObject().put("color", it.color).put("width", it.width.toLong()).put("height", it.height.toLong())
                 .put("version", COVER_VERSION).put("file", "cover.jpg") } ?: JSONObject.NULL)
-        return result
+        val used = book.chapters.map { it.volume }.toSet()
+        val definitions = if (book.volumes.isEmpty()) listOf(BookImport.Volume(1, 1, S.s_volume_number(1))) else book.volumes
+        result.put("volumes", JSONArray(definitions.filter { it.id in used }.map { volume ->
+            JSONObject().put("id", volume.id).put("number", volume.number).put("title", volume.title)
+        }))
+        return BookVolumes.project(BookVolumes.nested(result))
     }
 
     /** {tên mục: byte chữ} của các chương, đúng như [build] ghi vào gói (`textbook.texts_of`). */

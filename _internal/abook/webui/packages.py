@@ -19,7 +19,7 @@ from collections.abc import Callable, Container, Iterable, Iterator
 from pathlib import Path
 from typing import Any
 
-from .. import continuation
+from .. import continuation, book_volumes
 from ..io_utils import atomic_write_bytes
 from . import book_edits, covers, humanize, listing_cache, project_views, store
 from .fingerprints import Fingerprints, base_name, identity_prints, is_text_identity
@@ -46,6 +46,7 @@ def manifest(path: Path) -> dict[str, Any]:
     data = json.loads(file.read_text(encoding="utf-8"))
     if not isinstance(data, dict):
         raise ValueError("book.json không phải một đối tượng")
+    book_volumes.flatten(data)
     _CACHE[str(file)] = (stamp, data)
     return data
 
@@ -404,6 +405,7 @@ def listen(path: Path, book_id: str, state: dict[str, Any], *, with_chapters: bo
         items.append({
             "id": chapter.get("id"),
             "index": chapter.get("index"),
+            "volumeId": chapter.get("volumeId"),
             "title": chapter.get("title") or "",
             "subtitle": subtitle,
             "qualityPassed": chapter.get("qualityPassed"),
@@ -460,6 +462,10 @@ def listen(path: Path, book_id: str, state: dict[str, Any], *, with_chapters: bo
         # Cả bộ trong một file (bookfile.pack_series): các phần theo thứ tự; sách một phần thì rỗng.
         "parts": _parts(book),
     }
+    result["volumes"] = book_volumes.group(items, book_volumes.volumes_of(book))
+    for volume in result["volumes"]:
+        if volume.get("cover"):
+            volume["cover"] = {**volume["cover"], "url": f"/media/books/{book_id}/volumes/{volume['id']}/cover?v={volume['cover'].get('version', 0)}"}
     if with_chapters:
         result["chapters"] = items
     return result

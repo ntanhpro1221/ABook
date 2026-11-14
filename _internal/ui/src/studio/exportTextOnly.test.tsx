@@ -28,6 +28,7 @@ vi.mock("@/shared/ui", () => ({
   Progress: () => <div />,
   radioGroupKeys: () => undefined,
   radioTabIndex: () => 0,
+  Select: () => null,
 }));
 vi.mock("@/desktop/AudiobookDialog", () => ({ FfmpegNeeded: () => null }));
 vi.mock("@/desktop/ExportBookFileJob", () => ({ startExport: vi.fn(), trackExport: vi.fn() }));

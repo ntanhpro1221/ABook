@@ -191,7 +191,8 @@ def test_studio_exports_the_whole_series_as_a_single_book_file(tmp_path: Path) -
     with bookfile.BookFile(Path(result["file"])) as book:
         book.verify()
         manifest = json.loads(book.read("book.json"))
-    assert manifest["package"]["version"] == 3 and [part["part"] for part in manifest["parts"]] == [1, 2, 3]
+    assert manifest["package"]["version"] == bookfile.FORMAT_VERSION and [part["part"] for part in manifest["parts"]] == [1, 2, 3]
+    assert [volume["id"] for volume in manifest["volumes"]] == [1, 2, 3], "mỗi phần một quyển"
     assert result["folder"] in app.exports
 
 

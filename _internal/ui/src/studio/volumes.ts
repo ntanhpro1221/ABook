@@ -76,7 +76,6 @@ export function removeStart(starts: number[], position: number): number[] {
 }
 
 /** Tên các sách sẽ tạo - như máy chủ đặt (continuation.continued_title): tập 1 giữ tên, tập sau "Tên · Phần N". Chỉ để HIỆN. */
-export function volumeTitles(title: string, count: number): string[] {
-  const base = title.replace(/\s*(?:\(phần\s*\d+\)|[·|:—–-]\s*phần\s*\d+)\s*$/i, "").trim() || title.trim();
-  return Array.from({ length: count }, (_value, index) => (index === 0 ? title.trim() : S.s_0_phan_1_3957afda(base, index + 1)));
+export function volumeTitles(_title: string, count: number): string[] {
+  return Array.from({ length: count }, (_value, index) => S.s_volume_number(index + 1));
 }

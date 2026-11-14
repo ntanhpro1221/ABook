@@ -5,7 +5,7 @@ import "NewProjectLogic.js" as Logic
 import "StudioLogic.js" as Studio
 
 // "Chia thành nhiều tập" (VolumeSplit.tsx; abook/webui/volumes.py): máy ĐỀ XUẤT chỗ cắt (thư mục / EPUB / tiêu đề "Tập N"); không bấm thì cả truyện vẫn là MỘT sách.
-// Bấm thì hiện danh sách phần: sửa chỗ cắt theo số chương, thêm, bỏ. Tạo xong: phần 1 là sách thường, các phần sau nối tiếp và tự chạy khi phần trước xong.
+// Bấm thì hiện danh sách quyển: sửa chỗ cắt theo số chương, thêm, bỏ. Tạo xong: một sách gồm các quyển, thứ tự chương giữ nguyên.
 // Chỗ cắt lưu bằng đường dẫn file chương đầu của phần (sống sót qua việc bỏ chương); số chương chỉ là cách hiện và cách nhập.
 Column {
     id: root
@@ -88,7 +88,7 @@ Column {
                 }
                 Button { id: noMore; objectName: "newSplitCancel"; x: parent.width - width; text: S.s_khong_chia_nua_3d6b48ed; kind: "ghost"; size: "sm"; onActivated: root.form.update({volumeStarts: null}) }
             }
-            Prose { topPadding: 4; text: S.s_moi_phan_thanh_mot_sach_noi_tiep_chon_chuo_d7604c1a }
+            Prose { topPadding: 4; text: S.s_volume_split_help }
             Item { width: 1; height: 12 }
             StudioRows {
                 id: rowsList
@@ -113,8 +113,7 @@ Column {
                                 tone: Theme.text
                                 font.weight: Theme.weightMedium
                                 textFormat: Text.StyledText
-                                // Phần 1 giữ nguyên tên sách (là sách thường, như máy chủ đặt) - nên nói ra nó là phần 1
-                                text: Logic.esc(row.modelData.title) + (row.modelData.index === 0 ? " <font color=\"" + Theme.text3 + S.s_size_2_phan_1_font_d3b1f617 : "")
+                                text: Logic.esc(row.modelData.title)
                             }
                             Prose {
                                 small: true

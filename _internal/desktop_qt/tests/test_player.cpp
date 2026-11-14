@@ -4,6 +4,7 @@
 #include "player.h"
 #include "hostwait.h"
 
+#include <QJsonDocument>
 #include <QSignalSpy>
 #include <QTemporaryDir>
 #include <QtTest>
@@ -44,6 +45,18 @@ class PlayerTest : public QObject {
     };
 
 private slots:
+    void chaptersRunAcrossVolumesInOneQueue() {
+        const QByteArray raw = R"({"id":"v","volumes":[
+            {"id":1,"number":1,"title":"A","chapters":[{"id":1,"index":1,"available":true},{"id":2,"index":2,"available":false}]},
+            {"id":2,"number":2,"title":"B","chapters":[{"id":3,"index":3,"available":true}]}]})";
+        using namespace PlayerLogic;
+        const Book book = parseBook(QJsonDocument::fromJson(raw).object());
+        QCOMPARE(book.chapters.size(), 3);
+        QCOMPARE(book.chapters[2].volumeId, 2);
+        QCOMPARE(book.volumes.size(), 2);
+        QCOMPARE(availableAfter(book.chapters, 1, 1), 3);   // the next playable chapter is the first of the next volume
+        QCOMPARE(availableAfter(book.chapters, 3, -1), 1);
+    }
     void timerExtensionNotifiesOnceAndAnOffTimerIsSilent() {
         Rig rig;
         rig.player->open(QStringLiteral("a"), -1, -1, true);

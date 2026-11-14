@@ -34,7 +34,7 @@ from dataclasses import dataclass, field, replace
 from html.parser import HTMLParser
 from pathlib import Path
 from typing import Any
-from urllib.parse import unquote
+from urllib.parse import unquote, urlsplit
 from xml.etree import ElementTree
 
 from .io_utils import atomic_write_bytes, decode_text, discover_txt_files
@@ -134,6 +134,16 @@ class Chapter:
     short: bool = False  # mục EPUB rất ngắn (bìa, trang bản quyền): bị bỏ, trừ khi `import_text(keep_short=True)` đưa nó về như chương CHƯA CHỌN
     name: str = ""  # tên người dùng đặt ở bước xem trước (`select_chapters`); rỗng = `title`. Chỉ là tên: `text` và tên trong chữ không đổi
     matter: str = ""  # có vẻ không phải truyện (bìa, bản quyền, mục lục…): lý do cho người nghe. KHÔNG bị bỏ - chỉ chưa tích sẵn ở bước xem trước
+    volume: int = 1
+
+
+@dataclass
+class Volume:
+    id: int
+    number: int
+    title: str
+    cover_bytes: bytes | None = None
+    cover_type: str | None = None
 
 
 @dataclass
@@ -155,6 +165,13 @@ class ImportedBook:
     keep_matter: bool = False  # TXT/DOCX/PDF: nghi là phần đầu/cuối chỉ là gợi ý; mặc định giữ chữ.
     default_skips: set[str] = field(default_factory=set)  # đề xuất PDF chắc chắn; chữ nguồn vẫn nguyên
     edge_lines: list[str] = field(default_factory=list)  # PDF: dòng lặp ở mép trang (tiêu đề chạy, số trang) còn nằm trong chữ chương; `default_skips` là phần chắc chắn của chúng
+    volumes: list[Volume] = field(default_factory=list)
+
+    def volume_metadata(self) -> list[dict[str, Any]]:
+        used = {chapter.volume for chapter in self.chapters}
+        definitions = self.volumes or [Volume(1, 1, "Quyển 1")]
+        return [{"id": volume.id, "number": volume.number, "title": volume.title, "cover": None}
+                for volume in definitions if volume.id in used]
 
     def chapter_source(self, chapter: Chapter) -> str:
         """Chữ của chương như FILE NGUỒN mà Studio đọc: TXT nguyên văn (tên chương nằm sẵn trong chữ); EPUB / DOCX / PDF: tên
@@ -215,6 +232,9 @@ def import_text(path: Path | str, *, split_chapters: bool = False, keep_short: b
     `keep_short`: bước xem trước - mục rất ngắn (`Chapter.short`) vẫn nằm trong danh sách, đúng chỗ của nó trong file, để người dùng tích
     nếu muốn giữ (`default_picks` bỏ chúng); không có thì chúng bị bỏ như trước. `footnotes`: EPUB / DOCX có chú thích - lựa chọn người dùng đã
     tích ở bước xem trước (`FootnoteChoice`); không có thì như trong sách."""
+    if isinstance(path, str) and path.startswith("https://"):
+        from .hako_import import load
+        return _finish(load(path), keep_short, path)
     path = Path(path)
     if path.is_dir():
         book = _txt_folder(path)
@@ -236,6 +256,20 @@ def import_text(path: Path | str, *, split_chapters: bool = False, keep_short: b
 
 def _finish(book: ImportedBook, keep_short: bool = False, source: str = "") -> ImportedBook:
     """Mọi định dạng đi qua đây: Unicode NFC, và gợi ý (không bỏ) dòng ghi công ở đầu chương."""
+    if not book.volumes:
+        current = 1
+        definitions = [Volume(1, 1, "Quyển 1")]
+        for index, chapter in enumerate(book.chapters):
+            label = next((line.strip() for line in [chapter.title, *chapter.text.split("\n", 3)[:3]]
+                          if TXT_VOLUME.fullmatch(line)), "")
+            if label and label != definitions[-1].title:
+                if index:
+                    current += 1
+                    definitions.append(Volume(current, current, label))
+                else:
+                    definitions[-1].title = label
+            chapter.volume = current
+        book.volumes = definitions
     book.title = TOC_SUFFIX.sub("", _nfc(book.title)) or _nfc(book.title)  # "Lều chõng — Mục lục" (tên trang mục lục Wikisource) -> "Lều chõng"
     book.author = _nfc(book.author) if book.author else None
     for chapter in book.chapters:
@@ -532,8 +566,24 @@ def _txt_folder(folder: Path) -> ImportedBook:
     if not files:
         raise ImportFailed("Thư mục này không có file .txt nào nằm ngay bên trong")
     read = [_txt_chapter(file) for file in files]
-    return ImportedBook(title=title_from_filename(folder.resolve().name), chapters=[chapter for chapter, _ in read], text_has_title=True, keep_matter=True,
-                        notes=_encoding_notes(encoding for _, encoding in read))
+    result = ImportedBook(title=title_from_filename(folder.resolve().name), chapters=[chapter for chapter, _ in read], text_has_title=True, keep_matter=True,
+                          notes=_encoding_notes(encoding for _, encoding in read))
+    sidecar = folder / SIDECAR
+    if sidecar.is_file():
+        info = json.loads(sidecar.read_text(encoding="utf-8"))
+        result.title = str(info.get("title") or result.title)
+        for definition in info.get("volumes", []):
+            identifier = int(definition["id"])
+            cover = definition.get("cover")
+            raw = None
+            if cover:
+                from . import book_paths
+                raw = book_paths.inside(folder, str((folder / cover).resolve())).read_bytes()
+            result.volumes.append(Volume(identifier, int(definition["number"]), str(definition["title"]), raw, "image/jpeg"))
+            for file, chapter in zip(files, result.chapters):
+                if file.name in definition["chapters"]:
+                    chapter.volume = identifier
+    return result
 
 
 def _txt_file(path: Path, split: bool = False) -> ImportedBook:
@@ -1446,6 +1496,13 @@ def _epub(path: Path, choice: FootnoteChoice = NO_FOOTNOTES) -> ImportedBook:
             listed_in.setdefault(toc_href, []).append((toc_fragment, toc_label))
         result = ImportedBook(title=_meta_text(opf, "title") or title_from_filename(path.stem), author=_meta_text(opf, "creator"),
                               language=_meta_text(opf, "language"))
+        volume_of = {}
+        current_volume = 1
+        for toc_href, _fragment, label in toc:
+            if TXT_VOLUME.fullmatch(label):
+                current_volume = len(result.volumes) + 1
+                result.volumes.append(Volume(current_volume, current_volume, label))
+            volume_of[toc_href] = current_volume
         if declared and not toc:
             result.notes.append("Mục lục trong file không đọc được - tên chương lấy từ chữ của từng chương.")
         cover = _epub_cover(book, opf, manifest)
@@ -1473,6 +1530,16 @@ def _epub(path: Path, choice: FootnoteChoice = NO_FOOTNOTES) -> ImportedBook:
         result.footnote_found, result.footnote_marks, result.footnote_examples = notes.found, notes.marks, notes.examples
         stored: list[tuple[list[str], list[str]]] = []  # thân + lời chú ở cuối của từng chương trong `result.chapters` (nối file sau vào chương trước)
         for at, (href, page) in enumerate(entries):
+            volume_id = volume_of.get(href, 1)
+            volume = next((v for v in result.volumes if v.id == volume_id), None)
+            if volume is not None and volume.cover_bytes is None:
+                raw_page = _read(book, href).decode("utf-8", errors="replace")
+                link = re.search(r'<(?:img|image)\b[^>]*(?:src|(?:xlink:)?href)=["\']([^"\']+)', raw_page, re.I)
+                if link:
+                    image_path = posixpath.normpath(posixpath.join(posixpath.dirname(href), unquote(link[1])))
+                    media = next((media for name, media, _props in manifest.values() if name == image_path and media.startswith("image/")), "")
+                    if media and book.member(image_path) is not None:
+                        volume.cover_bytes, volume.cover_type = _read(book, image_path), media
             # Nhiều chương trong MỘT file: mục lục trỏ vào các mảnh (#id) của file này thì cắt chữ tại các mảnh ấy, theo thứ tự đọc,
             # mỗi phần mang tên của mục lục. Chữ trước mảnh đầu là phần riêng (không tên) nếu không mục nào trỏ về đầu file.
             points = _split_points(page, listed_in.get(href, []))
@@ -1513,7 +1580,7 @@ def _epub(path: Path, choice: FootnoteChoice = NO_FOOTNOTES) -> ImportedBook:
                     body, tail = (body[1:], tail) if body else (body, tail[1:])
                 if removed and not lines:
                     continue  # trang chỉ có lời chú (chương Endnotes) mà lời chú đã đặt về chương của chúng / bị bỏ: không còn gì
-                result.chapters.append(Chapter(title, "", short=is_short, matter=page_matter))
+                result.chapters.append(Chapter(title, "", short=is_short, matter=page_matter, volume=volume_id))
                 stored.append((body, tail))
         for chapter, (body, tail) in zip(result.chapters, stored):
             chapter.text = "\n\n".join(filter(None, [*body, *tail]))
@@ -2007,7 +2074,7 @@ def _publish_folder(staging: Path, folder: Path) -> None:
         staging.rmdir()
 
 
-def extract(path: Path, folder_root: Path) -> tuple[Path, dict[str, Any]]:
+def extract(path: Path | str, folder_root: Path) -> tuple[Path, dict[str, Any]]:
     """Tách EPUB / DOCX / PDF thành thư mục chương TXT trong `folder_root` (đặt tên theo file + băm nội dung: mở lại cùng file thì
     dùng lại thư mục, file khác cùng tên không đè lên nhau). Trả (thư mục, thông tin: title, author, language, notes, cover, matter).
     `matter`: {tên file chương: lý do} cho chương mà Nghe ngay để CHƯA tích (bìa, bản quyền, mục lục, mục rất ngắn - `default_picks`, một
@@ -2018,11 +2085,16 @@ def extract(path: Path, folder_root: Path) -> tuple[Path, dict[str, Any]]:
     from .webui.actions import check_upload_folder, contained_upload
 
     folder_root = contained_upload(folder_root, folder_root)
-    try:
-        digest = hashlib.sha256(path.read_bytes()).hexdigest()[:8]
-    except OSError as error:
-        raise ImportFailed("Chưa đọc được file — bạn kiểm tra quyền đọc, file còn đó và không bị khoá.") from error
-    stem = UNSAFE_NAME.sub(" ", path.stem).strip() or path.suffix.lstrip(".") or "sach"
+    if isinstance(path, str):
+        # Hako book page: downloaded only now, when the user submitted it; the folder name keys on the address.
+        digest = hashlib.sha256(path.encode("utf-8")).hexdigest()[:8]
+        stem = UNSAFE_NAME.sub(" ", urlsplit(path).path.rstrip("/").rsplit("/", 1)[-1]).strip() or "hako"
+    else:
+        try:
+            digest = hashlib.sha256(path.read_bytes()).hexdigest()[:8]
+        except OSError as error:
+            raise ImportFailed("Chưa đọc được file — bạn kiểm tra quyền đọc, file còn đó và không bị khoá.") from error
+        stem = UNSAFE_NAME.sub(" ", path.stem).strip() or path.suffix.lstrip(".") or "sach"
     folder = contained_upload(folder_root, folder_root / f"{stem[:80]} - {digest}")
     if folder.is_dir():
         check_upload_folder(folder_root, folder)
@@ -2045,11 +2117,13 @@ def extract(path: Path, folder_root: Path) -> tuple[Path, dict[str, Any]]:
     except OSError as error:
         raise ImportFailed(humanize.write_error(error)) from error
     try:
+        filenames = []
         for index, chapter in enumerate(book.chapters, start=1):
             body = book.chapter_source(replace(chapter, text=_without_lines(chapter.text, set(dropped))) if dropped else chapter)
             label = clip_title(_words(UNSAFE_NAME.sub(" ", chapter.title)), 50).strip(" .")
             name = f"{index:0{width}d}{' ' + label if label else ''}.txt"
             (staging / name).write_bytes(body.encode("utf-8"))
+            filenames.append(name)
             if index not in picked:
                 matter[name] = chapter.matter or SHORT_REASON
         cover = ""
@@ -2057,6 +2131,17 @@ def extract(path: Path, folder_root: Path) -> tuple[Path, dict[str, Any]]:
             cover = "cover" + {"image/png": ".png", "image/gif": ".gif", "image/webp": ".webp"}.get(book.cover_type or "", ".jpg")
             (staging / cover).write_bytes(book.cover_bytes)
         info = {"title": book.title, "author": book.author, "language": book.language, "notes": _studio_notes(book), "cover": cover, "matter": matter}
+        info["volumes"] = []
+        for volume in book.volumes:
+            volume_cover = ""
+            if volume.cover_bytes:
+                from .webui.covers import render_cover
+                jpeg, _meta = render_cover(volume.cover_bytes)
+                volume_cover = f"covers/{volume.id}.jpg"
+                (staging / "covers").mkdir(exist_ok=True)
+                (staging / volume_cover).write_bytes(jpeg)
+            info["volumes"].append({"id": volume.id, "number": volume.number, "title": volume.title, "cover": volume_cover,
+                                    "chapters": [name for name, chapter in zip(filenames, book.chapters) if chapter.volume == volume.id]})
         # Ghi SAU CÙNG và nguyên tử: có sidecar nghĩa là các chương đã ghi đủ.
         atomic_write_bytes(staging / SIDECAR, json.dumps(info, ensure_ascii=False, indent=1).encode("utf-8") + b"\n")
         folder = contained_upload(folder_root, folder)
