@@ -53,6 +53,7 @@ class StudioDecisions(
     fun hiding(): Set<String> = held?.let { away + it.decision.key } ?: away
 
     fun hold(decision: WorkDecision) {
+        if (session.listenOnly) return
         notice = ""
         val current = held
         if (current != null) {
@@ -100,15 +101,19 @@ class StudioDecisions(
     }
 
     private fun send(decision: WorkDecision) {
+        if (session.listenOnly) return
         away = away + decision.key
         session.scope.launch {
             var done = 0
             var ok = false
+            var lineReceipt: Pair<String, Double>? = null
             try {
                 var elsewhere: Pair<Int, String>? = null
                 for (step in decision.steps) {
                     val answer = session.source.write(session.computer, bookId, step)
                     elsewhere = elsewhere ?: WorkLogic.elsewhere(step.endpoint, answer, decision.names)
+                    if (decision.rollbackLine && step.endpoint == "line" && answer.optDouble("requestedAt", 0.0) > 0.0)
+                        lineReceipt = step.body.getString("stableId") to answer.getDouble("requestedAt")
                     done++
                 }
                 ok = true
@@ -118,7 +123,17 @@ class StudioDecisions(
             } catch (error: Throwable) {
                 val failure = StudioErrors.of(error)
                 session.note(failure)
-                notice = failureNotice(failure, done, decision.steps.size)
+                var rolledBack = false
+                if (decision.rollbackLine && done == 1) {
+                    lineReceipt?.let { (id, stamp) ->
+                        try {
+                            session.source.write(session.computer, bookId, WorkStep("line", JSONObject().put("stableId", id).put("withdraw", true).put("requestedAt", stamp)))
+                            rolledBack = true
+                        } catch (cancelled: CancellationException) { throw cancelled }
+                        catch (_: Throwable) { /* The partial-write notice below remains visible. */ }
+                    }
+                }
+                notice = failureNotice(failure, if (rolledBack) 0 else done, decision.steps.size)
             } finally {
                 // Thẻ chưa gửi được (hay chỉ gửi được một phần) trở lại bộ bài; thẻ đã gửi chờ lần nạp lại kế tiếp mới rời `away`.
                 if (!ok) away = away - decision.key

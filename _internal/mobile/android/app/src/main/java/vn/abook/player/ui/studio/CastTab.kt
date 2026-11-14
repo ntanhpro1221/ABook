@@ -55,6 +55,8 @@ import vn.abook.player.ui.studio.parts.collectClip
 import vn.abook.player.ui.theme.Abook
 import vn.abook.player.ui.theme.Dim
 import vn.abook.player.ui.components.Reveal
+import vn.abook.player.ui.components.IconAction
+import vn.abook.player.ui.components.MoreIcon
 
 /** Những gì tab "Nhân vật" đọc từ các luồng (lần hỏi gần nhất, tiếng đang phát). */
 @Immutable
@@ -132,13 +134,25 @@ private fun LazyListScope.members(
                 if (editable) ({ openVoiceSheet(state, sheets, member.name, member.displayName) }) else null,
                 "studio_cast_${member.name}",
                 hint = memberHint(member),
-                trailing = if (member.sampleId != null) ({ ClipButton(StudioCastState.sampleId(member), clip, { cast.playSample(member) }, "studio_cast_play_${member.name}") }) else null,
+                trailing = if (editable || member.sampleId != null) ({
+                    Row {
+                        Reveal(member.sampleId != null) { ClipButton(StudioCastState.sampleId(member), clip, { cast.playSample(member) }, "studio_cast_play_${member.name}") }
+                        Reveal(editable) { IconAction(StudioText.MORE, {
+                            val loaded = dataForPeople(cast)
+                            sheets.show { dismiss ->
+                                CastPersonSheet(state, member, loaded, dismiss) { openVoiceSheet(state, sheets, member.name, member.displayName) }
+                            }
+                        }, "studio_cast_menu_${member.name}") { MoreIcon(Abook.colors.text2) } }
+                    }
+                }) else null,
                 chevron = editable && member.sampleId == null,
             )
             RowLine()
         }
     }
 }
+
+private fun dataForPeople(cast: StudioCastState): List<CastMember> = cast.poll.value.data?.let { it.characters + it.extras }.orEmpty()
 
 /** Dòng phụ của một hàng: giọng đang đọc, số câu, rồi điều đang chờ (giọng mới chọn, chờ gộp, tên gốc). */
 private fun memberHint(member: CastMember): String = listOfNotNull(

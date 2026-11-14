@@ -209,6 +209,9 @@ class FakeStudioSource(
         return voiceChoicesFor[character] ?: voiceChoices(character)
     }
 
+    var pending = JSONObject().put("items", org.json.JSONArray())
+    override suspend fun pendingChanges(computer: String, id: String) = pending
+
     override suspend fun write(computer: String, id: String, step: WorkStep, slow: Boolean): JSONObject {
         writes += step.endpoint to step.body
         writeGate?.await()

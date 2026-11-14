@@ -6,6 +6,7 @@ import vn.abook.player.ui.motion.ContentLayout
 import vn.abook.player.S
 
 import vn.abook.player.ui.data.dotJoined
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -90,7 +91,7 @@ private fun ScriptBody(state: StudioScriptState, contents: ScriptContents, scrip
     val list = rememberLazyListState()
     var editing by rememberSaveable { mutableStateOf<String?>(null) }
     val entry = contents.chapters.firstOrNull { it.chapterId == state.chapter }
-    val shown = script?.let { ScriptLogic.visible(it.lines, state.filter) }.orEmpty()
+    val shown = script?.let { ScriptEdits.visible(it, state.filter, state.query, state.personFilter) }.orEmpty()
     LazyColumn(Modifier.fillMaxSize().fadeEdges(list).testTag("studio_script_list"), state = list, contentPadding = PaddingValues(bottom = Dim.s16)) {
         item("head", "head") {
             Column(Modifier.fillMaxWidth().padding(top = Dim.s8)) {
@@ -108,6 +109,24 @@ private fun ScriptBody(state: StudioScriptState, contents: ScriptContents, scrip
                     }
                 }
                 DisclosureRow(filterName(state.filter, script), { sheets.show { dismiss -> FilterSheet(state, script, dismiss) } }, "studio_script_filter")
+                BookField(null, state.query, { state.query = it }, "studio_script_search", description = S.s_tim_chu_trong_chuong_nay_75ba2c08, placeholder = S.s_tim_chu_trong_chuong_nay_75ba2c08)
+                DisclosureRow(if (state.personFilter.isEmpty()) S.s_tat_ca_49c73a31 else script?.let { ScriptLogic.nameOf(it, state.personFilter) }.orEmpty(), {
+                    if (script != null) sheets.show { dismiss ->
+                        Column {
+                            PickRow(S.s_tat_ca_49c73a31, null, state.personFilter.isEmpty(), { state.personFilter = ""; dismiss() }, "studio_filter_person_all")
+                            ScriptPeoplePicker(script, state.personFilter, allowCreate = false) { state.personFilter = it.value; dismiss() }
+                        }
+                    }
+                }, "studio_script_person_filter")
+                TextAction(if (state.selecting) S.s_bo_chon_het_669fa50d else S.s_chon_cau_75ca91ac, { if (state.selecting) state.clearSelection() else state.selecting = true }, "studio_script_select")
+                Reveal(state.selected.isNotEmpty()) {
+                    Row {
+                        TextAction(S.s_chon_nguoi_noi_f64cfd5e, {
+                            if (script != null) sheets.show { dismiss -> ScriptPeoplePicker(script, "") { state.assignSelected(it); dismiss() } }
+                        }, "studio_script_assign_selected")
+                        TextAction(S.s_bo_chon_het_669fa50d, state::clearSelection, "studio_script_clear_selection")
+                    }
+                }
                 InlineProblem(state.error?.let { StudioText.failure(it) }.orEmpty(), state::retry, "studio_script_stale")
             }
         }
@@ -148,12 +167,20 @@ private fun LineRow(state: StudioScriptState, script: ChapterScript, row: ShownL
                         }
                     }
                 }
-                val pending = line.wish?.state == "pending"
+                val pending = line.wish?.state == "pending" || line.lineWish?.state == "pending"
                 Caption(listOfNotNull(ScriptText.line(line.seq), ScriptText.PENDING.takeIf { pending }, ScriptText.CONTEXT.takeIf { row.context }).dotJoined())
             }
             Reveal(line.hasAudio && !row.context) { ClipButton(StudioScriptState.clipId(line), clip, { state.play(line) }, "studio_line_play_${line.stableId}") }
         }
-        BasicText(line.text, style = Abook.type.body, modifier = Modifier.padding(top = Dim.s4).testTag("studio_line_text_${line.stableId}"))
+        BasicText(line.text, style = Abook.type.body, modifier = Modifier.padding(top = Dim.s4).then(
+            if (line.editable && !row.context) Modifier.combinedClickable(onClick = { if (state.selecting) state.toggle(line) }, onLongClick = { state.toggle(line) }) else Modifier
+        ).testTag("studio_line_text_${line.stableId}"))
+        Reveal(state.selecting && line.editable && !row.context) {
+            PickRow(if (line.stableId in state.selected) S.s_bo_chon_cau_bab8219f else S.s_chon_cau_75ca91ac, null, line.stableId in state.selected, { state.toggle(line) }, "studio_line_select_${line.stableId}")
+        }
+        Reveal(script.castReady && line.textSha256.isNotBlank() && !row.context) {
+            TextAction(S.s_cach_doc_cau_50f2072a, { sheets.show { dismiss -> ScriptDeliverySheet(state, script, line, dismiss) } }, "studio_line_delivery_${line.stableId}", align = Alignment.CenterStart)
+        }
         val spoken = line.lineWish?.spoken ?: line.spoken
         Reveal(!spoken.isNullOrEmpty() && !editing) {
             RowHint("${ScriptText.READ_AS}: $spoken", Modifier.padding(top = Dim.s4).testTag("studio_line_spoken_${line.stableId}"))
@@ -191,17 +218,7 @@ private fun SpokenEditor(state: StudioScriptState, line: ScriptLine, onDone: () 
 
 @Composable
 private fun PeopleSheet(state: StudioScriptState, script: ChapterScript, line: ScriptLine, dismiss: () -> Unit) {
-    val current = ScriptLogic.speaker(line)
-    Column(Modifier.fillMaxWidth().testTag("studio_script_people")) {
-        BasicText(ScriptText.WHO, style = Abook.type.sectionTitle)
-        Spacer(Modifier.padding(top = Dim.s8))
-        val list1 = rememberLazyListState()
-        LazyColumn(Modifier.heightIn(max = 420.dp).fadeEdges(list1), state = list1) {
-            items(ScriptLogic.people(script), key = { "person_${it.value}" }) { person ->
-                PickRow(person.label, if (person.lines > 0) S.s_0_cau_2a1e6590(person.lines) else null, person.value == current, { dismiss(); state.assign(line, person) }, "studio_person_${person.value}")
-            }
-        }
-    }
+    ScriptPeoplePicker(script, ScriptLogic.speaker(line)) { person -> dismiss(); state.assign(line, person) }
 }
 
 @Composable

@@ -1,0 +1,242 @@
+[
+  {
+    "id": "existing",
+    "op": "assign",
+    "ids": [
+      "c1s1"
+    ],
+    "expected": [
+      {
+        "endpoint": "speaker",
+        "body": {
+          "lines": [
+            {
+              "stableId": "c1s1",
+              "textSha256": "sha-c1s1"
+            }
+          ],
+          "speaker": "NATASHA",
+          "newGender": "",
+          "seen": {
+            "c1s1": ""
+          }
+        }
+      }
+    ]
+  },
+  {
+    "id": "new",
+    "op": "assign",
+    "ids": [
+      "c1s1"
+    ],
+    "speaker": "Bác Trực",
+    "newGender": "male",
+    "expected": [
+      {
+        "endpoint": "speaker",
+        "body": {
+          "lines": [
+            {
+              "stableId": "c1s1",
+              "textSha256": "sha-c1s1"
+            }
+          ],
+          "speaker": "Bác Trực",
+          "newGender": "male",
+          "seen": {
+            "c1s1": ""
+          }
+        }
+      }
+    ]
+  },
+  {
+    "id": "narration-dialogue",
+    "op": "delivery",
+    "kind": "dialogue",
+    "expected": [
+      {
+        "endpoint": "line",
+        "body": {
+          "stableId": "c1s0",
+          "textSha256": "sha-c1s0",
+          "seen": null,
+          "kind": "dialogue",
+          "speaker": "NATASHA"
+        }
+      }
+    ]
+  },
+  {
+    "id": "thought",
+    "op": "delivery",
+    "kind": "thought",
+    "expected": [
+      {
+        "endpoint": "line",
+        "body": {
+          "stableId": "c1s0",
+          "textSha256": "sha-c1s0",
+          "seen": null,
+          "kind": "thought",
+          "speaker": "NATASHA"
+        }
+      }
+    ]
+  },
+  {
+    "id": "batch",
+    "op": "assign",
+    "ids": [
+      "c1s1",
+      "c1s3"
+    ],
+    "expected": [
+      {
+        "endpoint": "speaker",
+        "body": {
+          "lines": [
+            {
+              "stableId": "c1s1",
+              "textSha256": "sha-c1s1"
+            },
+            {
+              "stableId": "c1s3",
+              "textSha256": "sha-c1s3"
+            }
+          ],
+          "speaker": "NATASHA",
+          "newGender": "",
+          "seen": {
+            "c1s1": "",
+            "c1s3": ""
+          }
+        }
+      }
+    ]
+  },
+  {
+    "id": "rename",
+    "op": "rename",
+    "expected": [
+      {
+        "endpoint": "characters/rename",
+        "body": {
+          "character": "LUCIEN",
+          "name": "Bác Trực"
+        }
+      }
+    ]
+  },
+  {
+    "id": "gender",
+    "op": "gender",
+    "expected": [
+      {
+        "endpoint": "voice",
+        "body": {
+          "character": "LUCIEN",
+          "gender": "female"
+        }
+      }
+    ]
+  },
+  {
+    "id": "merge",
+    "op": "merge",
+    "expected": [
+      {
+        "endpoint": "characters/merge",
+        "body": {
+          "into": "NATASHA",
+          "from": "LUCIEN"
+        }
+      }
+    ]
+  },
+  {
+    "id": "unmerge",
+    "op": "unmerge",
+    "expected": [
+      {
+        "endpoint": "speaker",
+        "body": {
+          "lines": [
+            {
+              "stableId": "c1s1"
+            },
+            {
+              "stableId": "c1s2"
+            }
+          ],
+          "withdraw": true,
+          "requestedAt": 42.0
+        }
+      }
+    ]
+  },
+  {
+    "id": "no-voice",
+    "op": "assign",
+    "ids": [
+      "c1s1"
+    ],
+    "speaker": "NOBODY",
+    "status": 400,
+    "error": "Người này chưa có giọng trong sách (chưa nói câu nào) - chưa gán được.",
+    "expected": [
+      {
+        "endpoint": "speaker",
+        "body": {
+          "lines": [
+            {
+              "stableId": "c1s1",
+              "textSha256": "sha-c1s1"
+            }
+          ],
+          "speaker": "NOBODY",
+          "newGender": "",
+          "seen": {
+            "c1s1": ""
+          }
+        }
+      }
+    ]
+  },
+  {
+    "id": "offline",
+    "op": "assign",
+    "ids": [
+      "c1s1"
+    ],
+    "transport": "offline",
+    "expected": [
+      {
+        "endpoint": "speaker",
+        "body": {
+          "lines": [
+            {
+              "stableId": "c1s1",
+              "textSha256": "sha-c1s1"
+            }
+          ],
+          "speaker": "NATASHA",
+          "newGender": "",
+          "seen": {
+            "c1s1": ""
+          }
+        }
+      }
+    ]
+  },
+  {
+    "id": "listen-only",
+    "op": "assign",
+    "ids": [
+      "c1s1"
+    ],
+    "transport": "listen-only",
+    "expected": []
+  }
+]

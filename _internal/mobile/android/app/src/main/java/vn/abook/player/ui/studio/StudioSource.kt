@@ -55,6 +55,8 @@ interface StudioSource {
 
     suspend fun cast(computer: String, id: String): Cast
 
+    suspend fun pendingChanges(computer: String, id: String): JSONObject
+
     /** Các giọng chọn được cho một nhân vật (`GET /voices`). */
     suspend fun voices(computer: String, id: String, character: String): VoiceChoices
 
@@ -214,6 +216,8 @@ class StudioRepo(
         parsed { StudioMusicJson.alternatives(api(computer).getObject(StudioPaths.musicAlternatives(id, scene))) }
 
     override suspend fun castingContents(computer: String, id: String): ScriptContents = parsed { StudioScriptJson.contents(api(computer).getObject(StudioPaths.casting(id))) }
+
+    override suspend fun pendingChanges(computer: String, id: String): JSONObject = api(computer).getObject(StudioPaths.book(id) + "/pending-changes")
 
     override suspend fun castingChapter(computer: String, id: String, chapter: Int): ChapterScript =
         parsed { StudioScriptJson.chapter(api(computer).getObject(StudioPaths.castingChapter(id, chapter))) }

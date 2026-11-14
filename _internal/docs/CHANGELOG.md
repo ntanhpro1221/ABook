@@ -7,6 +7,8 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+- Studio trên Android thêm tạo người, sửa cách đọc câu, chọn nhóm cảm ứng và menu đổi tên, giới tính, gộp hoặc bỏ gộp đang chờ.
+
 - Sửa đọc giờ, khoảng số, điện thoại, đơn vị và viết tắt khi nghe truyện.
 
 ## [0.4.172] - 2026-11-15

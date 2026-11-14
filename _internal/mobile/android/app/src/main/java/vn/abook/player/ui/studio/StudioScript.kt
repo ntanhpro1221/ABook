@@ -21,7 +21,6 @@ import vn.abook.player.StudioPaths
 
 // "Kịch bản" (NATIVE_REMOTE_STUDIO.md §6.8): đọc cả chương như kịch bản - câu nào của ai - và đổi người nói / chữ đem đọc của từng câu. Port từ ScriptTab.tsx
 // (webui/casting_review.py). Chữ của truyện KHÔNG bao giờ bị sửa: "chữ đem đọc" chỉ đổi điều máy đọc, sách giữ nguyên chữ của nó.
-// Bỏ so với web (việc của máy tính): tìm-thay thế cả cuốn, chọn nhiều câu, kéo, người mới, cảm xúc / mức, loại đoạn.
 
 /** Một chương trong mục lục `GET /casting`. */
 @Immutable
@@ -31,7 +30,7 @@ data class ScriptEntry(val chapterId: Int, val index: Int, val title: String, va
 data class ScriptContents(val castReady: Boolean, val chapters: List<ScriptEntry>)
 
 @Immutable
-data class ScriptPerson(val value: String, val label: String, val lines: Int)
+data class ScriptPerson(val value: String, val label: String, val lines: Int, val newGender: String = "")
 
 /** Chỗ máy nghi ai nói câu này (web `Hint`). */
 @Immutable
@@ -63,6 +62,8 @@ data class ScriptLine(
     /** Chữ người nghe sửa đang được đọc thay câu gốc (đã áp); null = đọc đúng chữ sách. */
     val spoken: String?,
     val lineWish: ScriptLineWish?,
+    val emotion: String? = null,
+    val intensity: Int? = null,
 )
 
 /** Một chương như `GET /casting/<chapterId>` mô tả (web `ChapterScript`). */
@@ -98,6 +99,8 @@ internal object StudioScriptJson {
         hint = json.optJSONObject("hint")?.let { ScriptHint(it.text("kind"), it.text("note"), it.textOrNull("suggest")?.takeIf { s -> s.isNotEmpty() }) },
         wish = json.optJSONObject("wish")?.let { ScriptWish(it.text("value"), it.text("label"), it.text("state"), it.textOrNull("reason")) },
         spoken = json.textOrNull("spoken"),
+        emotion = json.textOrNull("emotion"),
+        intensity = optInt(json, "intensity"),
         lineWish = json.optJSONObject("lineWish")?.let { ScriptLineWish(it.text("kind"), it.text("emotion"), optInt(it, "intensity"), it.textOrNull("spoken"), it.text("state")) },
     )
 
@@ -217,21 +220,30 @@ object ScriptLogic {
     /** Câu như đã lưu: điều đang giữ cho "Hoàn tác" hiện như đã ghi. */
     fun withHeld(script: ChapterScript, held: WorkDecision?): ChapterScript {
         if (held == null) return script
-        val step = held.steps.firstOrNull() ?: return script
-        return when {
-            held.key.startsWith("line:") -> {
-                val id = held.key.removePrefix("line:")
-                val value = step.body.optString("speaker")
-                val label = nameOf(script, value)
-                script.copy(lines = script.lines.map { if (it.stableId == id) it.copy(wish = ScriptWish(value, label, if (value == it.current) "applied" else "pending", null)) else it })
+        var lines = script.lines
+        for (step in held.steps) {
+            val body = step.body
+            if (step.endpoint == "speaker") {
+                val ids = body.optJSONArray("lines").objects().map { it.text("stableId") }.toSet()
+                val value = body.optString("speaker")
+                val label = ScriptLogic.people(script).firstOrNull { it.value == value }?.label ?: value
+                lines = lines.map { if (it.stableId in ids) it.copy(wish = ScriptWish(value, label, "pending", null)) else it }
+            } else if (step.endpoint == "line") {
+                lines = lines.map { line ->
+                    if (line.stableId != body.optString("stableId")) line else {
+                        val before = line.lineWish
+                        line.copy(lineWish = ScriptLineWish(
+                            body.optString("kind", before?.kind.orEmpty()),
+                            body.optString("emotion", before?.emotion.orEmpty()),
+                            if (body.has("intensity")) body.optInt("intensity") else before?.intensity,
+                            if (body.has("spoken")) body.optString("spoken") else before?.spoken,
+                            "pending",
+                        ), wish = if (body.has("speaker")) ScriptWish(body.optString("speaker"), nameOf(script, body.optString("speaker")), "pending", null) else line.wish)
+                    }
+                }
             }
-            held.key.startsWith("spoken:") -> {
-                val id = held.key.removePrefix("spoken:")
-                val spoken = step.body.optString("spoken")
-                script.copy(lines = script.lines.map { if (it.stableId == id) it.copy(lineWish = (it.lineWish ?: ScriptLineWish("", "", null, null, "pending")).copy(spoken = spoken, state = "pending")) else it })
-            }
-            else -> script
         }
+        return script.copy(lines = lines)
     }
 }
 
@@ -288,6 +300,35 @@ class StudioScriptState(
         private set
 
     var filter by mutableStateOf(ScriptFilter.All)
+    var query by mutableStateOf("")
+    var personFilter by mutableStateOf("")
+    var selected by mutableStateOf<Set<String>>(emptySet())
+        private set
+    var selecting by mutableStateOf(false)
+    private var selectionLines = emptyMap<String, ScriptLine>()
+
+    fun toggle(line: ScriptLine) {
+        if (session.listenOnly || !line.editable) return
+        selecting = true
+        selected = if (line.stableId in selected) selected - line.stableId else selected + line.stableId
+        selectionLines = if (line.stableId in selected) selectionLines + (line.stableId to line) else selectionLines - line.stableId
+    }
+
+    fun clearSelection() { selected = emptySet(); selectionLines = emptyMap(); selecting = false }
+
+    fun assignSelected(person: ScriptPerson) {
+        val lines = selectionLines.values.toList()
+        if (session.listenOnly || lines.isEmpty()) return
+        decisions.hold(ScriptEdits.assign(lines, person))
+        clearSelection()
+    }
+
+    fun delivery(line: ScriptLine, kind: String, emotion: String, intensity: Int, person: ScriptPerson?): Boolean {
+        if (session.listenOnly) return false
+        val decision = ScriptEdits.delivery(line, kind, emotion, intensity, person) ?: return false
+        decisions.hold(decision)
+        return true
+    }
 
     /** Lời nói điều vừa xảy ra (lỗi gửi...) - rỗng khi không có. */
     val notice: String get() = decisions.notice
@@ -340,6 +381,7 @@ class StudioScriptState(
         if (chapterId == chapter) return
         decisions.flush()
         session.clips?.stop()
+        clearSelection()
         chapter = chapterId
         script = null
         session.scope.launch { reload() }
@@ -348,10 +390,13 @@ class StudioScriptState(
     /** Chương đang xem, như đã lưu (kể cả điều đang giữ). */
     fun shown(): ChapterScript? = script?.let { ScriptLogic.withHeld(it, decisions.held?.decision) }
 
-    fun assign(line: ScriptLine, person: ScriptPerson) = decisions.hold(ScriptLogic.assign(line, person))
+    fun assign(line: ScriptLine, person: ScriptPerson) {
+        if (!session.listenOnly && line.editable) decisions.hold(ScriptEdits.assign(listOf(line), person))
+    }
 
     /** Lưu chữ đem đọc của một câu; không đổi gì thì không gửi. */
     fun speak(line: ScriptLine, typed: String): Boolean {
+        if (session.listenOnly) return false
         val spoken = ScriptLogic.spokenChange(line, typed) ?: return false
         decisions.hold(ScriptLogic.speak(line, spoken))
         return true

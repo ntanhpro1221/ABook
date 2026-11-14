@@ -32,6 +32,7 @@ data class CastMember(
     val pendingVoice: PendingVoice?,
     /** Tên người mà nhân vật này đang chờ gộp vào ("Gộp vào…" chưa áp); null = không gộp. */
     val mergedInto: String?,
+    val mergedAt: Double? = null,
 )
 
 /** Người kể: giọng đang dùng và lựa chọn đang chờ. */
@@ -123,6 +124,7 @@ internal object StudioCastJson {
         sampleId = if (json.has("sampleId") && !json.isNull("sampleId")) json.optInt("sampleId") else null,
         firstChapter = json.text("firstChapter"),
         pendingVoice = pendingVoice(json.optJSONObject("pendingVoice")),
+        mergedAt = if (json.has("mergedAt") && !json.isNull("mergedAt")) json.optDouble("mergedAt").takeIf { it.isFinite() && it > 0 } else null,
         mergedInto = json.textOrNull("mergedInto")?.takeIf { it.isNotEmpty() },
     )
 

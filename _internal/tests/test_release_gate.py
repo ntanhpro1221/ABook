@@ -19,6 +19,22 @@ spec.loader.exec_module(gate)
 FIXTURES = Path(__file__).parent / "fixtures/release_gate"
 
 
+@pytest.mark.parametrize("name", ["ui-parity", "ui-parity-qt"])
+@pytest.mark.parametrize("exit_code", [0, 1])
+def test_parity_workers_run_the_existing_checker_and_propagate_failure(monkeypatch, name, exit_code):
+    from scripts import ui_parity, ui_parity_qt
+
+    checker = ui_parity_qt if name == "ui-parity-qt" else ui_parity
+    calls = []
+    monkeypatch.setattr(checker, "main", lambda args: calls.append(args) or exit_code)
+    if exit_code:
+        with pytest.raises(ValueError, match="source parity check failed"):
+            gate.worker(name)
+    else:
+        assert gate.worker(name)["counts"] == {"checks": 1}
+    assert calls == [["--check"]]
+
+
 @pytest.fixture
 def ignored_repo(tmp_path, monkeypatch):
     def run(*args):

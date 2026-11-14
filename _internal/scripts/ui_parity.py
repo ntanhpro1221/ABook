@@ -556,7 +556,17 @@ PROP_LITERAL = re.compile(r"(?<![\w-])(label|title|description|caption|text|plac
 
 
 def web_scan_file(path: Path, scan: Scan) -> None:
-    src = expand(path.read_bytes().decode("utf-8"), "ts")
+    original = path.read_bytes().decode("utf-8")
+    # Shared-copy tuple labels include words without accents/spaces, such as
+    # the emotion "Vui". The .tsx literal heuristic otherwise drops them.
+    from scripts.ui_copy_source import _entries
+    catalog_path = ROOT / "ui_strings/vi.json"
+    entries = _entries(str(catalog_path), catalog_path.stat().st_mtime_ns) if catalog_path.is_file() else {}
+    for ref in re.finditer(r'''\[\s*["'][a-z_]+["']\s*,\s*S\.(s_[a-z0-9_]+)\b''', strip_ts_comments(original)):
+        text = entries.get(ref.group(1), "")
+        if text and "{" not in text and looks_ui(text, strict=True):
+            scan.items.append(Item("web", rel(path), line_of(original, ref.start()), text, "shared-copy"))
+    src = expand(original, "ts")
     file = rel(path)
     if path.suffix == ".ts":
         # File logic: mọi chuỗi có dạng chữ giao diện (hoa đầu / có dấu tiếng Việt), kể cả chuỗi trả về từ hàm nhãn.

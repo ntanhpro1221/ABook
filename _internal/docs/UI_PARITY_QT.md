@@ -11,7 +11,7 @@ icon `LucidePaths.js` sinh bởi `scripts/gen_lucide_icons.py --qml`. Bảng dư
 
 <!-- ui_parity_qt:begin (SINH TỰ ĐỘNG bởi scripts/ui_parity_qt.py - không sửa tay, chạy lại script) -->
 
-Quét: web máy tính 6052 chữ (2840 khác nhau), 352 cặp nhãn-icon; Qt 3522 chữ (2624 khác nhau), 290 cặp nhãn-icon (icon dùng ở 405 chỗ). Khoá so lỏng như UI_PARITY.md (hạ chữ, dấu thanh một kiểu, `...` = `…`, bỏ dấu câu cuối); phím tắt trong chú thích Qt (`Thu nhỏ (Esc)`) tách khỏi nhãn.
+Quét: web máy tính 6071 chữ (2841 khác nhau), 352 cặp nhãn-icon; Qt 3522 chữ (2624 khác nhau), 290 cặp nhãn-icon (icon dùng ở 405 chỗ). Khoá so lỏng như UI_PARITY.md (hạ chữ, dấu thanh một kiểu, `...` = `…`, bỏ dấu câu cuối); phím tắt trong chú thích Qt (`Thu nhỏ (Esc)`) tách khỏi nhãn.
 
 ## a. Cùng việc, khác chữ
 
@@ -234,7 +234,7 @@ Nhãn ngắn (<= 6 chữ). **Chỉ Qt**: không có ở web cùng màn; `*` = we
 ### Studio kịch bản
 
 - chỉ Qt (7): Người nghĩ (`qt/ScriptRow.qml:97`); Người nói (`qt/ScriptRow.qml:97`); Gán cho {} (`qt/ScriptRow.qml:245`); Thu lại* (`qt/ScriptRow.qml:291`); Lấy của máy kia (`qt/ScriptStore.qml:53`); Đang chọn {} câu (`qt/ScriptTab.qml:467`); Duyệt {} câu (`qt/ScriptTab.qml:590`)
-- chỉ web (10): Cách đọc câu này (`768`); Nam (`868`); Đổi {}: {} (`926`); Ai nghĩ câu này? (`941`); Đang chọn. (`1068`); Cách đọc mới không áp được: (`1105`); Gán cho (`1119`); Yêu cầu (`1144`); Thu lại (R) (`1152`); Chưa có câu: {} (`1393`)
+- chỉ web (11): Vui (`185`); Cách đọc câu này (`768`); Nam (`868`); Đổi {}: {} (`926`); Ai nghĩ câu này? (`941`); Đang chọn. (`1068`); Cách đọc mới không áp được: (`1105`); Gán cho (`1119`); Yêu cầu (`1144`); Thu lại (R) (`1152`); Chưa có câu: {} (`1393`)
 
 ### Studio xuất và áp dụng
 

@@ -367,6 +367,7 @@ internal object S {
     const val s_bo_anh_bia_696c6692 = "Bỏ ảnh bìa"
     fun s_bo_cach_doc_0_c3b9bf0d(p0: Any?): String = "Bỏ cách đọc " + p0.toString()
     const val s_bo_chay_giong_892e1ea9 = "Bộ chạy giọng"
+    const val s_bo_chon_cau_bab8219f = "Bỏ chọn câu"
     const val s_bo_chon_duong_dang_ban_ban_hay_thu_lai_0776acd8 = "Bộ chọn đường đang bận; bạn hãy thử lại"
     const val s_bo_chon_het_669fa50d = "Bỏ chọn hết"
     const val s_bo_chuong_khong_muon_doc_ten_chuong_sua_sa_0a16128d = "Bỏ chương không muốn đọc. Tên chương sửa sau ở trang dự án."
@@ -379,6 +380,7 @@ internal object S {
     const val s_bo_ghim_1600e29e = "Bỏ ghim"
     fun s_bo_giai_ma_ra_pcm_dinh_dang_0_khong_phai_1_7927e697(p0: Any?): String = "bộ giải mã ra PCM định dạng " + p0.toString() + ", không phải 16 bit"
     const val s_bo_giong_75b79178 = "Bộ giọng"
+    const val s_bo_gop_d7199137 = "Bỏ gộp"
     const val s_bo_het_502895ca = "Bỏ hết"
     const val s_bo_het_thay_doi_b55603a1 = "Bỏ hết thay đổi"
     const val s_bo_loc_74de0064 = "Bỏ lọc"
@@ -432,6 +434,8 @@ internal object S {
     const val s_cac_manh_wav_khac_dinh_dang_812de347 = "các mảnh WAV khác định dạng"
     const val s_cac_may_tinh_da_ghep_deu_chi_cho_nghe_tren_7b97a8d5 = "Các máy tính đã ghép đều chỉ cho nghe - trên từng máy, bật Cài đặt › Thiết bị › “Điều khiển từ xa”."
     const val s_cach_doc_94265da7 = "Cách đọc"
+    const val s_cach_doc_cau_50f2072a = "Cách đọc câu"
+    const val s_cach_doc_cau_nay_d8d0b9f1 = "Cách đọc câu này"
     fun s_cach_doc_cho_0_e92e2d44(p0: Any?): String = "Cách đọc cho " + p0.toString()
     const val s_cach_doc_moi_1c0ae3fe = "cách đọc mới"
     const val s_cach_doc_moi_39ce794c = "Cách đọc mới"
@@ -576,6 +580,7 @@ internal object S {
     const val s_chon_lai_nhac_ebe26dde = "Chọn lại nhạc"
     const val s_chon_mot_cuon_khac_cdfbf9a0 = "Chọn một cuốn khác"
     const val s_chon_nguoi_noi_f64cfd5e = "Chọn người nói"
+    const val s_chon_nguoi_noi_truoc_f3e512e0 = "Chọn người nói trước"
     const val s_chon_nhac_4e9b1d72 = "Chọn nhạc"
     const val s_chon_nhan_vat_xung_toi_trong_loi_ke_d47a6c20 = "Chọn nhân vật xưng “tôi” trong lời kể."
     const val s_chon_tep_7d0d2f7b = "Chọn tệp"
@@ -989,6 +994,7 @@ internal object S {
     fun s_da_bo_0_khoi_thu_vien_8218fead(p0: Any?): String = "Đã bỏ “" + p0.toString() + "” khỏi thư viện"
     fun s_da_bo_ghep_0_d1ec976d(p0: Any?): String = "Đã bỏ ghép " + p0.toString()
     const val s_da_bo_ghep_may_nay_bce936f5 = "Đã bỏ ghép máy này"
+    fun s_da_bo_gop_0_4a404f0a(p0: Any?): String = "Đã bỏ gộp " + p0.toString()
     const val s_da_bo_khoi_thu_vien_3fbd2b81 = "Đã bỏ khỏi thư viện"
     const val s_da_bo_lua_chon_giong_1aff3c76 = "Đã bỏ lựa chọn giọng"
     const val s_da_bo_qua_df41794e = "Đã bỏ qua"
@@ -1030,6 +1036,7 @@ internal object S {
     fun s_da_ghep_0_a04998dd(p0: Any?): String = "Đã ghép " + p0.toString()
     fun s_da_ghep_voi_may_0_11302662(p0: Any?): String = "đã ghép với máy " + p0.toString()
     fun s_da_ghi_0_5450366f(p0: Any?): String = "Đã ghi: " + p0.toString()
+    fun s_da_ghi_0_cau_cua_1_c1ccd6a7(p0: Any?, p1: Any?): String = "Đã ghi: " + p0.toString() + " câu của " + p1.toString()
     fun s_da_ghi_0_cau_cua_1_la_cua_2_099ed4e5(p0: Any?, p1: Any?, p2: Any?): String = "Đã ghi: " + p0.toString() + " câu của " + p1.toString() + " là của " + p2.toString()
     fun s_da_ghi_0_cua_1_36d6075b(p0: Any?, p1: Any?): String = "Đã ghi: " + p0.toString() + " của " + p1.toString()
     fun s_da_ghi_0_doc_bang_giong_1_2_27a9c30c(p0: Any?, p1: Any?, p2: Any?): String = "Đã ghi: " + p0.toString() + " đọc bằng giọng " + p1.toString() + p2.toString()
@@ -1361,6 +1368,7 @@ internal object S {
     const val s_doi_bai_7b81488f = "Đổi bài"
     const val s_doi_chuong_2c6b94e8 = "Đổi chương"
     const val s_doi_gioi_tinh_8fde2c62 = "Đổi giới tính"
+    const val s_doi_giong_94b6b371 = "Đổi giọng"
     fun s_doi_giong_la_thu_lai_0_cau_da_thu_cua_1_2_34198100(p0: Any?, p1: Any?, p2: Any?): String = "Đổi giọng là thu lại " + p0.toString() + " câu đã thu của " + p1.toString() + ", " + p2.toString() + "."
     const val s_doi_giong_va_gioi_21985f64 = "Đổi giọng và giới"
     fun s_doi_ma_sach_0_chua_xong_thu_lai_lan_sau_1451dcaa(p0: Any?): String = "đổi mã sách " + p0.toString() + " chưa xong, thử lại lần sau"
@@ -1881,6 +1889,7 @@ internal object S {
     fun s_lam_truoc_de_nghe_khi_khong_co_mang_0_3cd15943(p0: Any?): String = "Làm trước để nghe khi không có mạng" + p0.toString() + "."
     const val s_lan_chon_nay_da_het_han_chon_lai_file_fece2ec0 = "Lần chọn này đã hết hạn - chọn lại file."
     const val s_lan_cuoi_cham_may_5c49b606 = "Lần cuối chạm máy"
+    const val s_lan_gop_nay_da_duoc_ap_hoac_da_bi_thay_ban_a6f706a3 = "Lần gộp này đã được áp hoặc đã bị thay bằng lựa chọn khác - mở lại màn này để xem."
     const val s_lan_nap_bi_huy_cae67fb1 = "Lần nạp bị huỷ"
     fun s_lan_nghe_0_10ac9e59(p0: Any?): String = "Lần nghe " + p0.toString()
     const val s_lan_nhi_mien_nam_02a7b357 = "Lan Nhi - miền Nam"
@@ -1898,6 +1907,7 @@ internal object S {
     const val s_linh_san_mien_nam_630af677 = "Linh San - miền Nam"
     const val s_loa_tv_chi_phat_duoc_sach_cua_may_tinh_bbee0026 = "Loa, TV chỉ phát được sách của máy tính"
     const val s_loa_tv_chi_phat_o_toc_do_1x_9aa457df = "loa, TV chỉ phát ở tốc độ 1x"
+    const val s_loai_doan_4c243930 = "Loại đoạn"
     const val s_loai_doan_phai_la_loi_ke_loi_thoai_hay_noi_69b997f9 = "Loại đoạn phải là lời kể, lời thoại hay nội tâm."
     const val s_loai_file_74f0a115 = "Loại file"
     const val s_loai_khoi_cuon_3b45b802 = "Loại khỏi cuốn"
@@ -1916,6 +1926,7 @@ internal object S {
     const val s_loi_phat_1946da6c = "lỗi phát"
     fun s_loi_phat_sach_0_chuong_1_2_3_3b06d1e0(p0: Any?, p1: Any?, p2: Any?, p3: Any?): String = "lỗi phát (sách " + p0.toString() + ", chương " + p1.toString() + "): " + p2.toString() + ": " + p3.toString()
     const val s_loi_tai_0d142bd4 = "lỗi tải"
+    const val s_loi_thoai_4ed83728 = "Lời thoại"
     const val s_loi_thoai_8bac28b3 = "lời thoại"
     const val s_loi_trong_c682376b = "Lời trong 『』"
     const val s_lon_hon_hoac_bang_3d061c8c = "lớn hơn hoặc bằng"
@@ -1962,6 +1973,7 @@ internal object S {
     const val s_mang_nay_khong_phai_chu_1b06838a = "mảng này không phải chữ"
     const val s_mang_nay_khong_phai_so_48d2cabf = "mảng này không phải số"
     const val s_mang_qua_lon_2d0bc2cb = "mảng quá lớn"
+    const val s_manh_52416a97 = "Mạnh"
     const val s_manh_tay_fe6b55ab = "Mạnh tay"
     const val s_mat_file_audio_b2b0802b = "Mất file audio"
     const val s_mat_ket_noi_f892c115 = "Mất kết nối"
@@ -2017,6 +2029,7 @@ internal object S {
     fun s_may_doc_ky_hieu_trong_0_thanh_mot_cho_ngun_41720519(p0: Any?): String = "Máy đọc ký hiệu trong “" + p0.toString() + "” thành một chỗ ngừng trước khi tra cách đọc, nên cách đọc cho chữ này không bao giờ được dùng. Muốn đọc khác, sửa “Chữ đem đọc” của từng câu có chữ ấy."
     const val s_may_f0f07096 = "máy "
     const val s_may_gap_loi_khong_ngo_khi_lam_viec_nay_thu_b7a45f7b = "Máy gặp lỗi không ngờ khi làm việc này. Thử lại; nếu vẫn lỗi, mở Chi tiết để gửi cho người hỗ trợ."
+    const val s_may_giu_muc_trong_tam_giong_doc_duoc_thi_t_0b46ded3 = "Máy giữ mức trong tầm giọng đọc được: thì thầm, dịu dàng tối đa \"Vừa\"."
     const val s_may_hay_cua_so_khac_vua_bo_phan_quyet_cua_85952428 = "Máy hay cửa sổ khác vừa bỏ phán quyết của câu này."
     fun s_may_hay_cua_so_khac_vua_chon_0_cho_cau_nay_a85b8d97(p0: Any?): String = "Máy hay cửa sổ khác vừa chọn " + p0.toString() + " cho câu này."
     fun s_may_khac_da_nghe_toi_0_1_8d162758(p0: Any?, p1: Any?): String = "Máy khác đã nghe tới " + p0.toString() + " · " + p1.toString()
@@ -2122,6 +2135,7 @@ internal object S {
     const val s_mp3_b84e4872 = "MP3"
     const val s_mp3_theo_chuong_a08d3a89 = "MP3 theo chương"
     const val s_mu_451bb93b = "mũ"
+    const val s_muc_10267bc5 = "Mức"
     const val s_muc_luc_32a748ed = "Mục lục"
     const val s_muc_luc_499e7b14 = "- mục lục"
     const val s_muc_luc_56d30656 = "— mục lục"
@@ -2247,6 +2261,7 @@ internal object S {
     fun s_nhat_ky_cua_abook_se_bi_xoa_khoi_may_nay_0_b2e35856(p0: Any?): String = "Nhật ký của ABook sẽ bị xoá khỏi máy này. " + p0.toString()
     const val s_nhat_ky_trong_tu_da8fe5b2 = "Nhật ký trong tù"
     const val s_nhat_nhut_nhi_78506ae6 = "nhất|nhứt|nhì"
+    const val s_nhe_52e76ce9 = "Nhẹ"
     const val s_nhe_tay_a3b81145 = "Nhẹ tay"
     const val s_nhip_8a75919d = "Nhịp"
     const val s_nho_9c1511d3 = "Nhỏ"
@@ -2267,6 +2282,7 @@ internal object S {
     const val s_noi_may_tinh_2950692d = "Nối máy tính"
     const val s_noi_may_tinh_de_lam_sach_noi_va_xem_tien_d_4b697ccc = "Nối máy tính để làm sách nói và xem tiến độ."
     const val s_noi_tam_41e63cdd = "nội tâm"
+    const val s_noi_tam_885fce10 = "Nội tâm"
     const val s_noi_tam_nguoi_ke_0c360f80 = "Nội tâm người kể"
     const val s_nu_316c30fd = "nữ"
     const val s_nu_e15bc11c = "Nữ"
@@ -2361,6 +2377,7 @@ internal object S {
     const val s_quyen_bluetooth_b86ed969 = "Quyền Bluetooth"
     const val s_quyet_dinh_nay_da_duoc_thay_bang_mot_lua_c_52d7dad8 = "Quyết định này đã được thay bằng một lựa chọn sau - không còn gì để hoàn tác."
     fun s_ram_dinh_0_mb_077d5736(p0: Any?): String = "RAM đỉnh " + p0.toString() + " MB"
+    const val s_rat_manh_bef32ca9 = "Rất mạnh"
     const val s_rat_nho_ro_loi_0afefef2 = "Rất nhỏ (rõ lời)"
     fun s_ro_0_68776af2(p0: Any?): String = "Rõ " + p0.toString() + "%"
     const val s_roi_app_khi_co_sach_mo_thi_sach_thu_vao_cu_7f4e317e = "Rời app khi sách đang phát thì sách thu vào cửa sổ mini."
@@ -2666,12 +2683,14 @@ internal object S {
     const val s_tim_anh_bia_9825b3d1 = "Tìm ảnh bìa"
     const val s_tim_bbe47492 = "Tìm"
     const val s_tim_bia_34025664 = "Tìm bìa"
+    const val s_tim_chu_trong_chuong_nay_75ba2c08 = "Tìm trong chương"
     const val s_tim_chu_trong_sach_7bc2c2ee = "Tìm chữ trong sách"
     const val s_tim_dung_cau_4bfb13c3 = "Tìm đúng câu"
     const val s_tim_hieu_them_032fe408 = "Tìm hiểu thêm"
     const val s_tim_hoac_them_ten_27507006 = "Tìm hoặc thêm tên"
     const val s_tim_lai_635fcbe8 = "Tìm lại"
     const val s_tim_lai_thiet_bi_phat_0dc4396a = "Tìm lại thiết bị phát"
+    const val s_tim_nguoi_noi_70e3871e = "Tìm người nói"
     const val s_tim_nguoi_trong_truyen_a1507054 = "Tìm người trong truyện"
     const val s_tim_sach_1deb0125 = "Tìm sách"
     const val s_tim_ten_260c6baf = "Tìm tên"

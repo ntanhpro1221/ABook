@@ -1,5 +1,14 @@
 # Test report
 
+## 15-11-2026 — Android Studio script and cast editing
+
+Shared original-prose fixtures compare twelve editing scenarios with the web request contract.
+Android JVM tests cover request fields, pending merge receipts, selected IDs and two-request rollback.
+Compose tests exercise person creation, narration to thought, touch selection, cast merging,
+offline failure, listen-only access and undo before submission. Requests preserve source text;
+pending wishes remain separate from the audio being heard. Light and dark sheet renders are recorded
+under the ignored Android build directory for visual review.
+
 ## 15-11-2026 — structured TN forms and reviewed references
 
 Both production boundaries agree with all 551 authored benchmark references after G2P.
