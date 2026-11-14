@@ -2,12 +2,13 @@
 
 Use --legacy to reproduce the inventory/tokenizer after Lead's initial patch.
 An optional --findings JSON limits repository inputs to previously reported paths.
-No source text, token, or shingle hash is emitted.
+No Corpus text, token, or shingle hash is emitted. --repo-evidence explicitly
+adds matching spans read only from public repository files.
 """
 from __future__ import annotations
 
 import argparse
-from collections import defaultdict
+from collections import Counter, defaultdict
 from concurrent.futures import ProcessPoolExecutor
 import json
 import os
@@ -71,7 +72,7 @@ def _chunk(paths):
     return hits
 
 
-def diagnose(repo, corpus, *, legacy=False, wanted=None, workers=3):
+def _legacy_diagnose(repo, corpus, *, legacy=False, wanted=None, workers=3):
     shingler = legacy_shingles if legacy else scan.shingles
     owners = defaultdict(set)
     for name in scan.tracked(repo):
@@ -114,11 +115,84 @@ def diagnose(repo, corpus, *, legacy=False, wanted=None, workers=3):
                             for group, v in sorted(groups.items())]}
 
 
+def repository_evidence(text, wanted):
+    """Yield exact public spans using the scanner's token/window boundaries."""
+    text = unicodedata.normalize("NFC", text)
+    tokens = list(scan.PROSE_TOKEN.finditer(text))
+    words = [match.group(1) if match.group(1) and match.group(1).isalpha() else "" for match in tokens]
+    starts = (i for i in range(len(tokens) - scan.SHINGLE + 1)
+              if all(words[i:i + scan.SHINGLE])
+              and sum(len(w) > 1 for w in words[i:i + scan.SHINGLE]) >= scan.SHINGLE // 2)
+    for start, value in zip(starts, scan.shingles(text).tolist()):
+        if value in wanted:
+            offset = tokens[start].start()
+            yield value, {"line": text.count("\n", 0, offset) + 1,
+                          "repo_text": text[offset:tokens[start + scan.SHINGLE - 1].end()]}
+
+
+def summarize(repo, owners, hits, *, repo_evidence=False):
+    """Summarize one complete intersection; never reread private text to print."""
+    frequencies = scan.story_frequencies(hits)
+    kept = {h for h, books in frequencies.items() if len(books) < scan.COMMON_STORY_MIN}
+    matches = defaultdict(dict)
+    counts = Counter()
+    for source, hashes in hits:
+        for value in hashes:
+            if value in kept:
+                for owner in owners[value]:
+                    counts[owner, source] += 1
+    groups = defaultdict(lambda: {"paths": set(), "sources": set(), "pairs": 0})
+    for (owner, source), count in sorted(counts.items()):
+        matches[owner][source] = count
+        group = "/".join(Path(source).parts[:2]) if source.startswith("_") else Path(source).parts[0]
+        groups[group]["paths"].add(owner)
+        groups[group]["sources"].add(source)
+        groups[group]["pairs"] += count
+    findings = [{"path": owner, "corpus_matches": mapping} for owner, mapping in sorted(matches.items())]
+    if repo_evidence:
+        for finding in findings:
+            wanted = {h for h in kept if finding["path"] in owners[h]}
+            evidence = {}
+            for member, text in scan.texts(repo / finding["path"]):
+                for value, span in repository_evidence(text, wanted):
+                    evidence.setdefault(value, {**span, "where": member,
+                                                "story_count": len(frequencies[value])})
+            finding["repository_shingles"] = list(evidence.values())
+    return {
+        "common_story_min": scan.COMMON_STORY_MIN,
+        "unfiltered_finding_count": len({owner for found in owners.values() for owner in found}),
+        "matched_shingle_count": len(frequencies),
+        "suppressed_shingle_count": len(frequencies) - len(kept),
+        "story_frequency_distribution": [{"stories": n, "shingles": count}
+                                          for n, count in sorted(Counter(map(len, frequencies.values())).items())],
+        "threshold_sweep": [{"minimum_stories": k,
+                             "remaining_files": len({owner for h, books in frequencies.items() if len(books) < k
+                                                     for owner in owners[h]})} for k in (2, 3, 4, 5, 8)],
+        "findings": findings,
+        "directories": [{"directory": group, "repository_files": len(v["paths"]),
+                         "corpus_files": len(v["sources"]), "shingle_pairs": v["pairs"]}
+                        for group, v in sorted(groups.items())],
+    }
+
+
+def diagnose(repo, corpus, *, legacy=False, wanted=None, workers=3, repo_evidence=False):
+    if legacy:
+        if repo_evidence:
+            raise ValueError("Repository evidence is supported only for the current scanner")
+        return _legacy_diagnose(repo, corpus, legacy=True, wanted=wanted, workers=workers)
+    sources = {name: [text for _, text in scan.texts(repo / name)] for name in scan.tracked(repo)
+               if wanted is None or name in wanted}
+    with tempfile.TemporaryDirectory(prefix="leak-diagnose-") as work:
+        owners, hits, count = scan.collect_corpus_matches(sources, corpus, Path(work), workers)
+    return {"corpus_file_count": count, **summarize(repo, owners, hits, repo_evidence=repo_evidence)}
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--legacy", action="store_true")
     parser.add_argument("--findings", type=Path)
     parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument("--repo-evidence", action="store_true", help="include public repository spans, never Corpus prose")
     args = parser.parse_args()
     corpus = scan.corpus_root()
     if corpus is None:
@@ -127,10 +201,11 @@ def main():
     if args.findings:
         wanted = {f["path"] for f in json.loads(args.findings.read_text(encoding="utf-8"))["findings"]
                   if f["rule"] == f"shares>={scan.SHINGLE}words"}
-    result = diagnose(scan.REPO, corpus, legacy=args.legacy, wanted=wanted)
+    result = diagnose(scan.REPO, corpus, legacy=args.legacy, wanted=wanted, repo_evidence=args.repo_evidence)
     args.output.write_text(json.dumps(result, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     print(json.dumps({"findings": len(result["findings"]), "directories": result["directories"]}, ensure_ascii=False))
 
 
 if __name__ == "__main__":
+    sys.path.insert(0, str(scan.REPO / "_internal"))
     main()

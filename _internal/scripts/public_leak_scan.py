@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import argparse
 import ast
+from collections import defaultdict
 from concurrent.futures import ProcessPoolExecutor
 from contextlib import contextmanager
 import hashlib
@@ -29,6 +30,9 @@ import numpy as np
 REPO = Path(__file__).resolve().parents[2]
 REVIEWED = Path(__file__).with_name("public_leak_reviewed.json")
 SHINGLE = 8
+# Three independent book folders establish a shared formula. Two may still be
+# editions/aliases of the same work; chapter counts never establish commonness.
+COMMON_STORY_MIN = 3
 IPA_RUN = 8
 LONG_VI_WORDS = 40
 # Ký tự chỉ có trong phiên âm (IPA của sea-g2p / espeak), không có trong chữ Việt thường.
@@ -313,7 +317,60 @@ def read_corpus_text(path: Path) -> str:
     kept = [line for line in preamble.splitlines()
             if _title_key(line) not in titles and not CHAPTER_METADATA.match(line.strip())
             and not CHAPTER_HEADING.match(line.strip()) and not line.lstrip().startswith("# ")]
-    return "\n".join(kept) + separator + rest
+    text = "\n".join(kept) + separator + rest
+    return without_source_credits(text)
+
+
+def without_source_credits(text: str) -> str:
+    """Reuse the importer credit rules at chapter edges, never inside dialogue.
+
+    Blank paragraphs replace removed lines, so surrounding prose cannot join
+    into a new shingle. Do not use the broader author-note removal heuristic.
+    """
+    from abook.text_processing import (
+        CREDIT_LINE_PATTERN, CREDIT_WINDOW_LINES, CREDIT_TAIL_WINDOW_LINES,
+        tail_credit_line,
+    )
+
+    lines = text.splitlines()
+    filled = [i for i, line in enumerate(lines) if line.strip()]
+    drop = {i for i in filled[:CREDIT_WINDOW_LINES] if CREDIT_LINE_PATTERN.match(lines[i].strip())}
+    for i in reversed(filled[-CREDIT_TAIL_WINDOW_LINES:]):
+        line = lines[i].strip()
+        if not tail_credit_line(line):
+            break
+        drop.add(i)
+    return "\n".join("\n" if i in drop else line for i, line in enumerate(lines))
+
+
+def story_identity(relative: Path) -> str:
+    """Book-folder identity shared by chapters, volumes and mirrored collections.
+
+    Fold accents, separators and an optional numeric catalogue prefix. This
+    merges spelling-equivalent folder names, not arbitrary translated titles.
+    Unrecognized aliases remain a documented limitation of folder identities.
+    """
+    parts = relative.parts
+    if parts[0] == "_full":
+        book = parts[2]
+    elif parts[0] in {"_dup", "_gold"}:
+        folders = list(parts[1:-1])
+        while len(folders) > 1 and (folders[0] == "model_eval_gold" or folders[0].startswith("gold_v")):
+            folders.pop(0)
+        book = folders[0]
+    else:
+        book = parts[0]
+    return _title_key(re.sub(r"^\d+[-_]", "", book)).replace(" ", "")
+
+
+def story_frequencies(hits: list[tuple[str, list[int]]]) -> dict[int, set[str]]:
+    """Document frequency uses distinct books, never files or occurrences."""
+    frequencies: dict[int, set[str]] = defaultdict(set)
+    for relative, hashes in hits:
+        book = story_identity(Path(relative))
+        for value in hashes:
+            frequencies[value].add(book)
+    return dict(frequencies)
 
 
 _INDEX: np.ndarray | None = None
@@ -376,8 +433,13 @@ def _corpus_chunk(paths: list[str]) -> list[tuple[str, list[int]]]:
     return hits
 
 
-def corpus_overlap(sources: dict[str, list[str]], root: Path, workdir: Path, workers: int = 3) -> list[dict]:
-    """sources: đường dẫn repo -> các đoạn chữ. Trả mỗi file repo chung >= 1 cụm SHINGLE chữ với Corpus."""
+def collect_corpus_matches(sources: dict[str, list[str]], root: Path, workdir: Path,
+                           workers: int = 3) -> tuple[dict[int, set[str]], list[tuple[str, list[int]]], int]:
+    """Intersect against every chapter; keep only matching hashes, never prose.
+
+    Computing document frequency only for public candidate hashes is equivalent
+    to filtering the complete private index, without materializing that index.
+    """
     names = sorted(sources)
     values_parts, owner_parts = [], []
     for number, relative in enumerate(names):
@@ -386,13 +448,13 @@ def corpus_overlap(sources: dict[str, list[str]], root: Path, workdir: Path, wor
             values_parts.append(values)
             owner_parts.append(np.full(values.size, number, dtype=np.int32))
     if not values_parts:
-        return []
+        return {}, [], 0
     all_values = np.concatenate(values_parts)
     order = np.argsort(all_values, kind="stable")
     all_values, all_owners = all_values[order], np.concatenate(owner_parts)[order]
     index = np.unique(all_values)
     if not index.size:
-        return []
+        return {}, [], 0
     workdir.mkdir(parents=True, exist_ok=True)
     index_path = workdir / "repo_shingles.npy"
     np.save(index_path, index)
@@ -400,22 +462,41 @@ def corpus_overlap(sources: dict[str, list[str]], root: Path, workdir: Path, wor
     if not files:
         raise ValueError("Corpus exists but no readable source files were selected")
     batches = [files[i:i + 200] for i in range(0, len(files), 200)]
-    matches: dict[str, set[str]] = {}
+    matches = []
     with windowless_workers(), ProcessPoolExecutor(max_workers=min(3, max(1, workers)), initializer=_load_index,
                                                    initargs=(str(index_path),)) as pool:
         for batch_number, hits in enumerate(pool.map(_corpus_chunk, batches), 1):
             for corpus_file, common in hits:
-                found = np.asarray(common, dtype=np.uint64)
-                start = np.searchsorted(all_values, found, side="left")
-                stop = np.searchsorted(all_values, found, side="right")
-                for a, b in zip(start.tolist(), stop.tolist()):
-                    for owner in set(all_owners[a:b].tolist()):
-                        matches.setdefault(names[owner], set()).add(os.path.relpath(corpus_file, root))
+                matches.append((Path(corpus_file).relative_to(root).as_posix(), common))
             if os.environ.get("ABOOK_LEAK_PROGRESS") == "1" and (batch_number % 50 == 0 or batch_number == len(batches)):
                 print(f"public-leak Corpus: {min(batch_number * 200, len(files))}/{len(files)} files",
                       file=sys.stderr, flush=True)
+    matching_values = np.array(sorted({h for _, hashes in matches for h in hashes}), dtype=np.uint64)
+    start = np.searchsorted(all_values, matching_values, side="left")
+    stop = np.searchsorted(all_values, matching_values, side="right")
+    owners = {int(h): {names[owner] for owner in all_owners[a:b].tolist()}
+              for h, a, b in zip(matching_values, start, stop)}
+    return owners, matches, len(files)
+
+
+def overlap_findings(owners: dict[int, set[str]], hits: list[tuple[str, list[int]]],
+                     *, common_min: int = COMMON_STORY_MIN) -> list[dict]:
+    frequencies = story_frequencies(hits)
+    matches: dict[str, set[str]] = defaultdict(set)
+    for relative, hashes in hits:
+        for value in hashes:
+            if len(frequencies[value]) < common_min:
+                for owner in owners[value]:
+                    matches[owner].add(relative)
     return [{"path": owner, "where": "corpus", "rule": f"shares>={SHINGLE}words",
-             "corpus_files": sorted(found)[:5], "corpus_file_count": len(found)} for owner, found in sorted(matches.items())]
+             "corpus_files": sorted(found)[:5], "corpus_file_count": len(found),
+             "corpus_story_count": len({story_identity(Path(p)) for p in found})}
+            for owner, found in sorted(matches.items())]
+
+
+def corpus_overlap(sources: dict[str, list[str]], root: Path, workdir: Path, workers: int = 3) -> list[dict]:
+    owners, hits, _ = collect_corpus_matches(sources, root, workdir, workers)
+    return overlap_findings(owners, hits)
 
 
 def load_reviewed(path: Path = REVIEWED) -> dict[str, dict]:
@@ -485,4 +566,5 @@ def main(argv: list[str] | None = None) -> int:
 
 
 if __name__ == "__main__":
+    sys.path.insert(0, str(REPO / "_internal"))
     sys.exit(main())

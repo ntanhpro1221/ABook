@@ -1,5 +1,13 @@
 # Test report
 
+## 14-11-2026 — public shingle document frequency
+
+Document-frequency scanner tests cover real injection.
+
+Book frequency and edge credits are covered.
+
+Final run: 77 passed; real injection included.
+
 ## 14-11-2026 — public story corpus inventory
 
 - Public leak scanner tests: **64 passed**. Coverage includes chapter collections, technical backup exclusion, annotation labels versus quoted evidence, title metadata, prose token boundaries, source attribution, and a runtime-only real chapter injection. No story excerpt is stored by these tests.

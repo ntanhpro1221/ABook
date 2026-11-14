@@ -1072,7 +1072,7 @@
     "reason": "Production interruption instructions and continuity limits; operational guidance rather than book text."
   },
   "_internal/docs/TEST_REPORT.md": {
-    "sha256": "b3cdc81108433894d2da373b951cc81fc467737fcba7f04d824510678a5e921a",
+    "sha256": "f392ce320d804bd88460ce22f1104936a63be589defc46d4c41d2e2496dd03f9",
     "reason": "Technical history; scanner test results added."
   },
   "_internal/docs/TEXT_NORMALIZATION.md": {

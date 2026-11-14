@@ -247,3 +247,103 @@ def test_real_story_excerpt_in_temporary_public_file_is_detected(tmp_path, monke
                for f in result["findings"]), "Injected real story excerpt was missed"
     if excerpt in str(result):
         pytest.fail("Diagnostic output exposed story text", pytrace=False)
+
+
+def synthetic_prose(prefix="synthetic", count=12):
+    return " ".join(prefix + chr(97 + i) for i in range(count))
+
+
+def test_common_shingles_are_suppressed_at_k_books_but_unique_leaks_survive(tmp_path):
+    common, unique = synthetic_prose(), synthetic_prose("private")
+    corpus = tmp_path / "corpus"
+    for i in range(scan.COMMON_STORY_MIN):
+        chapter = corpus / ("Book " + chr(97 + i)) / "001.txt"
+        chapter.parent.mkdir(parents=True)
+        chapter.write_text(common + ("\n\n" + unique if i == 0 else ""), encoding="utf-8")
+    result = scan.corpus_overlap({"common.txt": [common], "leak.txt": [unique]},
+                                 corpus, tmp_path / "index", workers=1)
+    assert [f["path"] for f in result] == ["leak.txt"]
+    assert result[0]["corpus_story_count"] == 1
+    assert unique not in str(result) and common not in str(result)
+
+
+def test_k_minus_one_books_still_block_and_chapters_and_mirrors_count_once(tmp_path):
+    sentence = synthetic_prose()
+    corpus = tmp_path / "corpus"
+    paths = ["Some Book/001.txt", "Some Book/002.txt", "Some Book/volume/003.txt",
+             "_full/truyen/123-some-book/004.txt", "_dup/some_book/005.txt",
+             "_gold/model_eval_gold/some_book/006.txt", "Another Book/001.txt"]
+    for relative in paths:
+        chapter = corpus / relative
+        chapter.parent.mkdir(parents=True, exist_ok=True)
+        chapter.write_text(sentence, encoding="utf-8")
+    result = scan.corpus_overlap({"leak.txt": [sentence]}, corpus, tmp_path / "index", workers=1)
+    assert result[0]["corpus_story_count"] == scan.COMMON_STORY_MIN - 1
+    assert result[0]["corpus_file_count"] == len(paths)
+
+
+@pytest.mark.parametrize("relative", [
+    "Some Book/001.txt", "Some Book/volume/001.txt", "_full/ai-dich/123-some-book/001.txt",
+    "_dup/some_book/001.txt", "_gold/some_book/001.txt",
+    "_gold/model_eval_gold/some_book/001.txt",
+    "_gold/gold_v3x_2026-11-14/gold_v3x/some_book/001.txt",
+])
+def test_book_identity_collapses_mirrors_and_volume_subfolders(relative):
+    assert scan.story_identity(Path(relative)) == "somebook"
+
+
+def test_filtering_common_prefix_does_not_hide_the_unique_remainder(tmp_path):
+    common, unique = synthetic_prose(), synthetic_prose("private")
+    hits = [(f"Book {chr(97 + i)}/001.txt", scan.shingles(common).tolist())
+            for i in range(scan.COMMON_STORY_MIN)]
+    hits[0][1].extend(scan.shingles(unique).tolist())
+    owners = {h: {"leak.txt"} for _, values in hits for h in values}
+    result = scan.overlap_findings(owners, hits)
+    assert [f["path"] for f in result] == ["leak.txt"]
+    assert result[0]["corpus_file_count"] == 1
+
+
+def test_existing_credit_rules_remove_only_edge_metadata_without_joining_prose(tmp_path):
+    prose = synthetic_prose()
+    credit = "Translator: " + " ".join(chr(97 + i) * 3 for i in range(8))
+    advert = "Đọc truyện aaaa bbbb cccc dddd tại example.com"
+    assert scan.shingles(credit).size and scan.shingles(advert).size
+    assert not scan.shingles(scan.without_source_credits(credit)).size
+    assert not scan.shingles(scan.without_source_credits(advert)).size
+    assert set(scan.shingles(scan.without_source_credits(credit + "\n\n" + prose + "\n\n" + advert))) == set(scan.shingles(prose))
+    # A matching-looking line in the interior or quoted speech stays covered.
+    interior = (prose + "\n") * 7 + credit + "\n" + (prose + "\n") * 7
+    assert credit in scan.without_source_credits(interior)
+    dialogue = '“' + advert + '”'
+    assert dialogue in scan.without_source_credits(dialogue)
+    halves = " ".join(prose.split()[:4]) + "\n" + credit + "\n" + " ".join(prose.split()[4:8])
+    assert not scan.shingles(scan.without_source_credits(halves)).size
+
+
+def test_diagnosis_reports_frequency_and_public_evidence_only_on_request(tmp_path):
+    from scripts import public_leak_diagnose as diagnosis
+    sentence = synthetic_prose()
+    path = tmp_path / "public.txt"
+    path.write_text(sentence, encoding="utf-8")
+    values = scan.shingles(sentence).tolist()
+    owners = {h: {path.name} for h in values}
+    hits = [("Book/001.txt", values), ("_gold/Book/002.txt", values)]
+    result = diagnosis.summarize(tmp_path, owners, hits)
+    assert result["story_frequency_distribution"] == [{"stories": 1, "shingles": 5}]
+    assert sentence not in str(result)
+    assert "repository_shingles" not in result["findings"][0]
+    explicit = diagnosis.summarize(tmp_path, owners, hits, repo_evidence=True)
+    evidence = explicit["findings"][0]["repository_shingles"]
+    assert len(evidence) == 5
+    assert all(row["story_count"] == 1 and row["repo_text"] in sentence for row in evidence)
+    common = [(f"Book {chr(97 + i)}/001.txt", values) for i in range(scan.COMMON_STORY_MIN)]
+    assert not diagnosis.summarize(tmp_path, owners, common, repo_evidence=True)["findings"]
+
+
+def test_repository_evidence_stays_aligned_across_unicode_numeric_tokens():
+    from scripts import public_leak_diagnose as diagnosis
+    sentence = synthetic_prose()
+    wanted = set(scan.shingles(sentence).tolist())
+    evidence = list(diagnosis.repository_evidence(sentence + " Ⅳ " + sentence, wanted))
+    assert len(evidence) == 10
+    assert all(scan.shingles(span["repo_text"]).tolist() == [value] for value, span in evidence)
