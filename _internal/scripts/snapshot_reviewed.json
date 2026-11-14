@@ -620,24 +620,24 @@
     "reason": "Reviewed old/new settings_clear_sheet_light.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
   },
   "_internal/mobile/android/app/src/test/snapshots/settings_expanded_light.png": {
-    "sha256": "881976b0ce335a78774ac49538a26da25513fc6d470583d5838c7039f4e28c28",
-    "reason": "Reviewed old/new settings_expanded_light.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+    "sha256": "beb273fc54555dd32b12f8c1ddba7d61a07084c2438ce745114d6a2d1c5be5b4",
+    "reason": "Visually reviewed 0.4.169 summary case fix: settings_expanded_light.png; only the Listening row summary changed from \"nhạc tự chọn\" to \"Nhạc tự chọn\" (diff box (170, 569, 438, 610)). Old/new contact sheet inspected before adoption."
   },
   "_internal/mobile/android/app/src/test/snapshots/settings_large_dark.png": {
-    "sha256": "14f213e1061b25ca5fd73c28a633d0185da1ccff96d1ae08044ef2e22eb96c23",
-    "reason": "Reviewed old/new settings_large_dark.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+    "sha256": "a2589a25af3ff5d205a7c58a0117ae5f0fb478b178d8715267d91f20149a4230",
+    "reason": "Visually reviewed 0.4.169 summary case fix: settings_large_dark.png; only the Listening row summary changed from \"nhạc tự chọn\" to \"Nhạc tự chọn\" (diff box (350, 569, 618, 610)). Old/new contact sheet inspected before adoption."
   },
   "_internal/mobile/android/app/src/test/snapshots/settings_log_sheet_dark.png": {
     "sha256": "d07687d6a619deaf33b04b9d66aeb26f7b3ca97b4e81924b46ab7319f655071f",
     "reason": "Reviewed old/new settings_log_sheet_dark.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
   },
   "_internal/mobile/android/app/src/test/snapshots/settings_root_dark.png": {
-    "sha256": "93ddbddf13e95e5bda36dfdd6a07e7ae828a1a50217070b89b8ee4dd69560044",
-    "reason": "Reviewed old/new settings_root_dark.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+    "sha256": "fa3842a4355f9b9ef76e8b31f801da45b3ace21dfe6727d0085c0e43da68698c",
+    "reason": "Visually reviewed 0.4.169 summary case fix: settings_root_dark.png; only the Listening row summary changed from \"nhạc tự chọn\" to \"Nhạc tự chọn\" (diff box (170, 572, 438, 613)). Old/new contact sheet inspected before adoption."
   },
   "_internal/mobile/android/app/src/test/snapshots/settings_root_light.png": {
-    "sha256": "09b819cc89cf834ca43d60a89eb920d9d2adc46961bbe3f906d2c798eff07ec9",
-    "reason": "Reviewed old/new settings_root_light.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+    "sha256": "bd0b0087fc504aeddaf8d374377482a576fd412a33550b91b600be8c4226774e",
+    "reason": "Visually reviewed 0.4.169 summary case fix: settings_root_light.png; only the Listening row summary changed from \"nhạc tự chọn\" to \"Nhạc tự chọn\" (diff box (170, 572, 438, 613)). Old/new contact sheet inspected before adoption."
   },
   "_internal/mobile/android/app/src/test/snapshots/settings_sleep_time_sheet_light.png": {
     "sha256": "815ab8548937f54cb0f99a22859cdece8f40af7db3c99aaf986ac27d9ba26b5a",
@@ -684,8 +684,8 @@
     "reason": "Reviewed old/new shell_read_along_from_book_light.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
   },
   "_internal/mobile/android/app/src/test/snapshots/shell_settings_dark.png": {
-    "sha256": "240bfd7a325622eceb68e12bead4ae8cb1b40773a5ce9b6520fcbe240dff074e",
-    "reason": "Reviewed old/new shell_settings_dark.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+    "sha256": "9a67e3d38867d6e5969ec70cc439a4c1bd0c781f0aec723715f68ac0dc148107",
+    "reason": "Visually reviewed 0.4.169 summary case fix: shell_settings_dark.png; only the Listening row summary changed from \"nhạc tự chọn\" to \"Nhạc tự chọn\" (diff box (170, 572, 438, 613)). Old/new contact sheet inspected before adoption."
   },
   "_internal/mobile/android/app/src/test/snapshots/shell_studio_paired_light.png": {
     "sha256": "bd2682fd70d8de11da169215185af3cfe210c9929ff5bed3c3dfd43fe52d4453",
