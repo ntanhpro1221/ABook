@@ -404,7 +404,7 @@ describe("tắt tự chọn nhạc nền trong Cài đặt", () => {
     expect(playlistLabel(view, undefined)).toBe("Chưa có nhạc");
     expect(playlistPlaying(view)).toBe(false);
     expect(chosenId(view)).toBeNull();
-    expect(playlistOptions(undefined, false, view)[0]).toMatchObject({ id: null, hint: "đang tắt trong Cài đặt" });
+    expect(playlistOptions(undefined, false, view)[0]).toMatchObject({ id: null, hint: "Đang tắt trong Cài đặt" });
   });
 
   it("danh mục chưa tải: không nói mã trần của danh sách đã chọn", () => {

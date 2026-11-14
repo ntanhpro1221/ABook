@@ -2,7 +2,7 @@ import QtQuick
 import ABook
 
 // Một dòng của menu "…" của Studio (MenuItem của ProjectScreen.tsx): biểu tượng + chữ (xuống dòng khi dài, không cắt), lời phụ nhỏ bên dưới
-// ("chạy phần này trước"), mờ khi chưa dùng được, đỏ khi là việc nguy hiểm. Như MenuRow nhưng cao theo chữ.
+// ("Chạy phần này trước"), mờ khi chưa dùng được, đỏ khi là việc nguy hiểm. Như MenuRow nhưng cao theo chữ.
 Interactive {
     id: root
     property string text: ""
