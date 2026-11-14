@@ -142,7 +142,7 @@ private fun Actions(ui: LibraryUi, state: LibraryState, track: MusicLibrary.Trac
             } else {
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(Dim.s8)) {
                     PrimaryButton(
-                    if (ui.previewing == link) S.s_dung_nghe_f20939be else S.s_nghe_thu_fa024065,
+                    if (ui.previewing == link && ui.previewLoading) S.s_dang_tai_am_thanh_6c7cb62f else if (ui.previewing == link) S.s_dung_nghe_f20939be else S.s_nghe_thu_fa024065,
                     { state.togglePreview(link) }, Modifier.weight(1f).testTag("track_preview"), enabled = ui.online || downloaded, compact = true,
                     icon = { ink -> LucideIcon(if (ui.previewing == link) LucidePaths.SQUARE else LucidePaths.PLAY, ink) },
                     )
@@ -154,6 +154,7 @@ private fun Actions(ui: LibraryUi, state: LibraryState, track: MusicLibrary.Trac
                     icon = { ink -> if (load != null) DownloadRing(load.percent, S.s_dang_tai_0_e9a97892(load.percent ?: 0)) else LucideIcon(if (downloaded) LucidePaths.TRASH_2 else LucidePaths.DOWNLOAD, ink) },
                     )
                 }
+                PreviewProblem(ui)
                 Reveal(link in ui.failed) { Caption(S.s_chua_tai_xong_b257419d, Modifier.testTag("track_failed"), color = Abook.colors.danger) }
                 SwapContent(pick, contentKey = { pick -> pick != null }, layout = ContentLayout.Column) { pick ->
                     if (pick != null) {

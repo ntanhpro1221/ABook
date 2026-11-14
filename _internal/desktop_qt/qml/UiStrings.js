@@ -646,6 +646,7 @@ var s_chua_nghe_39f63ea8 = " chưa nghe";
 var s_chua_nghe_do_cuon_nao_chon_mot_cuon_de_bat_eac6b96e = "Chưa nghe dở cuốn nào - chọn một cuốn để bắt đầu.";
 var s_chua_nghe_thu_duoc_37e1d214 = "Chưa nghe thử được - ";
 var s_chua_nghe_thu_duoc_cau_mau_nay_chua_co_ban_34bbd4d4 = "Chưa nghe thử được\nCâu mẫu này chưa có bản thu.";
+var s_chua_nghe_thu_duoc_luc_nay_58b11ef5 = "Chưa nghe thử được lúc này.";
 function s_chua_nghe_u00a0_u00a0_0_2ada9121(p0) { return "Chưa nghe · " + String(p0); }
 function s_chua_nghe_u00a0_u00a0_0_chuong_af6b9134(p0) { return "Chưa nghe · " + String(p0) + " chương"; }
 var s_chua_nghe_xong_6b821209 = "Chưa nghe xong";
@@ -2885,3 +2886,4 @@ function s_cast_history_conflicts(p0) { return String(p0) + " câu xung đột";
 function s_cast_history_alias_conflicts(p0) { return String(p0) + " bí danh xung đột"; }
 function s_cast_history_row(p0, p1, p2) { return String(p0) + " → " + String(p1) + " · " + String(p2) + " câu"; }
 var s_cast_history_group = "Nhóm câu";
+var s_preview_timeout = "Mạng chậm, thử nghe lại.";

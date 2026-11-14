@@ -3,6 +3,8 @@ package vn.abook.player.ui.screens
 import vn.abook.player.ui.motion.SwapContent
 import vn.abook.player.ui.motion.ContentLayout
 
+import vn.abook.player.ui.components.SheetMenu
+
 import vn.abook.player.S
 
 import androidx.activity.compose.BackHandler
@@ -91,7 +93,7 @@ fun PersonSheet(
     val name = Cast.cleanName(person.displayName)
     SheetPages(page, { it.ordinal }, "person_sheet") { shown ->
         when (shown) {
-            PersonPage.Menu -> Column(Modifier.fillMaxWidth()) {
+            PersonPage.Menu -> SheetMenu() {
                 BasicText(name, style = Abook.type.sectionTitle)
                 Spacer(Modifier.height(Dim.s8))
                 Reveal(person.lines > 0) { MenuRow(S.s_gop_vao_nguoi_khac_8f5c461d, tag = "person_merge", onClick = { page = PersonPage.Merge }) { ink -> GitMergeIcon(ink) } }

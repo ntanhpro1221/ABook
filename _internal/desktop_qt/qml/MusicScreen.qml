@@ -201,6 +201,7 @@ FocusScope {
             styles: root.meta ? root.meta.styles : []
             online: root.online
             previewing: root.previewing === modelData.link
+            previewLoading: Clip.loading
             picking: root.picking
             onPreview: root.togglePreview(modelData)
             onUse: root.use(modelData.link)
@@ -238,7 +239,7 @@ FocusScope {
         Text {
             x: Theme.s16; width: parent.width - stop.width - 2 * Theme.s16
             anchors.verticalCenter: parent.verticalCenter
-            text: TextWrap.keepDots(S.s_dang_nghe_thu_f1fb4cba + (bar.track ? "\u00a0·\u00a0" + bar.track.title : ""))
+            text: TextWrap.keepDots((Clip.loading ? S.s_dang_tai_am_thanh_6c7cb62f : S.s_dang_nghe_thu_f1fb4cba) + (bar.track ? "\u00a0·\u00a0" + bar.track.title : ""))
             color: Theme.text; font.pixelSize: Theme.sizeBodySmall; wrapMode: Text.Wrap
         }
         IconButton { id: stop; anchors.right: parent.right; anchors.verticalCenter: parent.verticalCenter; icon: "square"; tip: S.s_dung_nghe_f20939be; onClicked: Clip.stop() }
@@ -250,6 +251,7 @@ FocusScope {
         picking: root.picking
         online: root.online
         previewing: root.previewing !== "" && root.previewing === detail.link
+        previewLoading: Clip.loading
         onPreview: if (detail.detail) root.togglePreview(detail.detail)
         onSave: root.save([detail.link])
         onUnsave: root.unsave([detail.link])

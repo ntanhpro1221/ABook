@@ -124,7 +124,7 @@ class AbookApplication : Application(), androidx.work.Configuration.Provider {
      *  Nghe thử thì tạm dừng sách (không tự phát lại). */
     val musicLibrary by lazy {
         val source = vn.abook.player.ui.music.library.AndroidLibrarySource(this)
-        vn.abook.player.ui.music.library.LibraryState(source, uiScope, vn.abook.player.ui.music.library.MediaPreviewPlayer(source), pauseBook = { player.pause() })
+        vn.abook.player.ui.music.library.LibraryState(source, uiScope, vn.abook.player.ui.music.library.ExoPreviewPlayer(this, source), pauseBook = { player.pause() })
     }
 
     /** Cửa hỏi bạn trước khi đọc bằng giọng trực tuyến chưa được đồng ý (chữ chưa rời máy khi chưa có câu trả lời): trình phát qua nó, Activity vẽ câu hỏi. */

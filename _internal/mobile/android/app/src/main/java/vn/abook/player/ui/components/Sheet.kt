@@ -20,6 +20,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
@@ -117,7 +118,7 @@ fun SheetLayer(host: SheetHost) {
     ) {
         Column(
             // imePadding ở đây (một chỗ cho MỌI bảng): bàn phím mở thì cả bảng - ô nhập lẫn nút - nằm trên bàn phím, không bảng nào phải tự nhớ.
-            Modifier.align(Alignment.BottomCenter).fillMaxWidth().imePadding()
+            Modifier.align(Alignment.BottomCenter).fillMaxWidth().statusBarsPadding().imePadding()
                 .sheetSurface(drag)
                 .graphicsLayer {
                     translationY = if (reduced) 0f else (1f - progress.value) * size.height + drag.offset

@@ -3,6 +3,8 @@ package vn.abook.player.ui.voice
 import vn.abook.player.ui.motion.SwapContent
 import vn.abook.player.ui.motion.ContentLayout
 
+import vn.abook.player.ui.components.SheetMenu
+
 import vn.abook.player.S
 
 import vn.abook.player.formatSize
@@ -80,7 +82,7 @@ fun ModuleSheet(kind: ModuleKind, initial: ModuleChoice, voice: VoiceState, dism
 private fun ModuleActions(kind: ModuleKind, choice: ModuleChoice, status: ModuleStatus?, voice: VoiceState, dismiss: () -> Unit, onRemove: () -> Unit) {
     val colors = Abook.colors
     val bench = status?.benchmark?.get(choice.id)
-    Column(Modifier.fillMaxWidth()) {
+    SheetMenu() {
         BasicText(VoiceText.choiceTitle(choice), style = Abook.type.sectionTitle)
         SwapContent(bench, status, contentKey = { bench, status -> bench != null && status != null }, layout = ContentLayout.Column) { bench, status ->
             if (bench != null && status != null) Caption(VoiceText.benchmark(choice.id, bench, status.slowRtf), Modifier.padding(top = Dim.s4).testTag("module_benchmark"))

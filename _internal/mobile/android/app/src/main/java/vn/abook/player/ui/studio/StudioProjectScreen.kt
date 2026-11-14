@@ -3,6 +3,8 @@ package vn.abook.player.ui.studio
 import vn.abook.player.ui.motion.SwapContent
 import vn.abook.player.ui.motion.ContentLayout
 
+import vn.abook.player.ui.components.SheetMenu
+
 import vn.abook.player.S
 
 import androidx.compose.animation.AnimatedContent
@@ -257,7 +259,7 @@ private fun MoreSheet(book: StudioBook, kind: PrimaryKind?, state: StudioProject
     var page by remember { mutableStateOf(MorePage.Menu) }
     SheetPages(page, { it.ordinal }, "studio_more_sheet") { shown ->
         when (shown) {
-            MorePage.Menu -> Column(Modifier.fillMaxWidth()) {
+            MorePage.Menu -> SheetMenu() {
                 Reveal(book.chaptersCompleted > 0 && kind != PrimaryKind.Listen) {
                     MenuRow(StudioText.label(PrimaryKind.Listen, book), "studio_more_listen", onClick = { dismiss(); listen() }) { HeadphonesIcon(it) }
                 }

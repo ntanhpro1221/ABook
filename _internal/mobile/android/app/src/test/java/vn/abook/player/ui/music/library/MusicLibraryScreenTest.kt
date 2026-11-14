@@ -118,8 +118,9 @@ class FakeLibrarySource : LibrarySource {
 class SilentPreview : PreviewPlayer {
     val played = ArrayList<String>()
     var stops = 0
-    override fun play(link: String, startSeconds: Double, volume: Float, onEnd: () -> Unit) {
+    override fun play(link: String, startSeconds: Double, volume: Float, onEnd: () -> Unit, onPlaying: (Boolean) -> Unit, onError: (String) -> Unit) {
         played += link
+        onPlaying(true)
     }
 
     override fun stop() {

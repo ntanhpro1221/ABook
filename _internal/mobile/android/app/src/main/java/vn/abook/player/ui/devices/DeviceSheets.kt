@@ -3,6 +3,8 @@ package vn.abook.player.ui.devices
 import vn.abook.player.ui.motion.SwapContent
 import vn.abook.player.ui.motion.ContentLayout
 
+import vn.abook.player.ui.components.SheetMenu
+
 import vn.abook.player.S
 
 import androidx.activity.compose.BackHandler
@@ -76,7 +78,7 @@ private fun DeviceActions(device: Paired, studio: StudioComputer?, state: Device
     val scope = rememberCoroutineScope()
     var opening by remember { mutableStateOf(false) }
     var problem by remember { mutableStateOf("") }
-    Column(Modifier.fillMaxWidth()) {
+    SheetMenu() {
         BasicText(device.name, style = Abook.type.sectionTitle)
         Spacer(Modifier.height(Dim.s8))
         SwapContent(studio, contentKey = { studio -> studio != null }, layout = ContentLayout.Column) { studio ->

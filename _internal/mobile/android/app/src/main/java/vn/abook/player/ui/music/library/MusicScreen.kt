@@ -131,6 +131,7 @@ fun MusicScreen(
                     }
                 }
             }
+            PreviewProblem(ui, Modifier.padding(horizontal = Dim.margin))
             when {
                 ui.loading -> Caption(S.s_dang_tai_465b1987, Modifier.padding(horizontal = Dim.margin).testTag("music_loading"))
                 ui.error.isNotEmpty() -> InlineProblem(ui.error, state::open, "music_error", Modifier.padding(horizontal = Dim.margin))
@@ -146,6 +147,14 @@ fun MusicScreen(
                 sheets.show { dismiss -> MeteredAsk(bytes, { dismiss(); state.save(links, confirmed = true) }) { dismiss(); state.dismissMetered() } }
             }
         }
+    }
+}
+
+@Composable
+internal fun PreviewProblem(ui: LibraryUi, modifier: Modifier = Modifier) {
+    Reveal(ui.previewError.isNotEmpty()) {
+        Caption(if (ui.previewError == S.s_preview_timeout) S.s_preview_timeout else S.s_chua_nghe_thu_duoc_luc_nay_58b11ef5,
+            modifier.testTag("preview_error"), color = Abook.colors.danger)
     }
 }
 
@@ -348,7 +357,7 @@ private fun PreviewBar(ui: LibraryUi, state: LibraryState, modifier: Modifier = 
             .padding(start = Dim.s16).testTag("preview_bar"),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        BasicText(listOf(S.s_dang_nghe_thu_f1fb4cba, track.title).dotJoined(), style = Abook.type.label, modifier = Modifier.weight(1f).padding(vertical = Dim.s12))
+        BasicText(listOf(if (ui.previewLoading) S.s_dang_tai_am_thanh_6c7cb62f else S.s_dang_nghe_thu_f1fb4cba, track.title).dotJoined(), style = Abook.type.label, modifier = Modifier.weight(1f).padding(vertical = Dim.s12))
         Box(
             Modifier.size(Dim.touch).pressable { state.stopPreview() }.semantics { contentDescription = S.s_dung_nghe_f20939be }.testTag("preview_stop"),
             contentAlignment = Alignment.Center,

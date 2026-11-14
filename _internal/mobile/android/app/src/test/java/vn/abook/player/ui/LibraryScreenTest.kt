@@ -234,6 +234,23 @@ class LibraryScreenTest {
     }
 
     @Test
+    fun warmTabsStartMovingWithinTwoFramesWithThirtyBooks() {
+        show(DemoLibrary.books(36))
+        rule.waitForIdle()
+        rule.mainClock.autoAdvance = false
+        for (filter in listOf(LibraryFilter.Listening, LibraryFilter.New, LibraryFilter.Finished, LibraryFilter.All)) {
+            val before = ui.position.value
+            rule.onNodeWithTag(filter.tag).performClick()
+            assertEquals(filter, ui.filter)
+            rule.mainClock.advanceTimeByFrame()
+            rule.mainClock.advanceTimeByFrame()
+            assertTrue("Tab stayed frozen for two frames", ui.position.value != before)
+            rule.mainClock.advanceTimeBy(600)
+        }
+        rule.mainClock.autoAdvance = true
+    }
+
+    @Test
     fun filterPagesMoveTogetherAndKeepTheirCoverAspectRatios() {
         show(DemoLibrary.books(30))
         rule.mainClock.autoAdvance = false

@@ -77,6 +77,7 @@ Column {
                 downloads: root.downloads
                 styles: root.meta ? root.meta.styles : []
                 previewing: root.previewing === modelData.link
+            previewLoading: Clip.loading
                 onPreview: { const start = Number(modelData.audibleStart) || 0; Clip.toggle("library:" + modelData.link, Logic.previewPath(modelData.link), start, start + Logic.PREVIEW_SECONDS) }
                 onSave: root.change("/api/music/library/save", [modelData.link])
                 onCancelDownload: root.change("/api/music/library/unsave", [modelData.link])
@@ -95,6 +96,7 @@ Column {
         meta: root.meta
         downloads: root.downloads
         previewing: root.previewing !== "" && root.previewing === detail.link
+        previewLoading: Clip.loading
         onPreview: if (detail.detail) { const start = Number(detail.detail.audibleStart) || 0; Clip.toggle("library:" + detail.link, Logic.previewPath(detail.link), start, start + Logic.PREVIEW_SECONDS) }
         onSave: root.change("/api/music/library/save", [detail.link])
         onUnsave: root.change("/api/music/library/unsave", [detail.link])

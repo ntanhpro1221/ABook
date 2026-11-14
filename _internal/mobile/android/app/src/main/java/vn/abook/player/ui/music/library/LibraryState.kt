@@ -58,9 +58,9 @@ interface LibrarySource {
     fun online(): Boolean
 }
 
-/** Phát nghe thử (Android: MediaPlayer). `volume` 0..1 đưa bài về một mức to ([PREVIEW_LUFS]). */
+/** Preview callbacks describe actual output, including buffering and terminal errors. */
 interface PreviewPlayer {
-    fun play(link: String, startSeconds: Double, volume: Float, onEnd: () -> Unit)
+    fun play(link: String, startSeconds: Double, volume: Float, onEnd: () -> Unit, onPlaying: (Boolean) -> Unit, onError: (String) -> Unit)
     fun stop()
 }
 
@@ -82,6 +82,8 @@ data class LibraryUi(
     val active: Map<String, Loading> = emptyMap(),
     val failed: Map<String, String> = emptyMap(),
     val previewing: String? = null,
+    val previewLoading: Boolean = false,
+    val previewError: String = "",
     val online: Boolean = true,
     /** Thời gian lọc lần gần nhất (ms) - đo "lọc dưới 50 ms". */
     val filterMs: Double = 0.0,
@@ -121,6 +123,7 @@ class LibraryState(
     @Volatile private var cancelling: String? = null
     @Volatile private var currentLink: String? = null
     private var previewJob: Job? = null
+    private var previewRequest = 0L
     private var opened = false
 
     fun open() {
@@ -256,20 +259,34 @@ class LibraryState(
         if (!ui.online && link !in ui.downloaded) return
         stopPreview()
         pauseBook()
-        flow.update { it.copy(previewing = link) }
-        preview.play(link, track.audibleStart, previewVolume(track.lufs)) { if (flow.value.previewing == link) stopPreview() }
-        previewJob = scope.launch {
-            delay(PREVIEW_SECONDS * 1000L)
-            if (flow.value.previewing == link) stopPreview()
-        }
+        val request = previewRequest
+        flow.update { it.copy(previewing = link, previewLoading = true, previewError = "") }
+        preview.play(link, track.audibleStart, previewVolume(track.lufs),
+            onEnd = { if (request == previewRequest) stopPreview() },
+            onPlaying = { playing ->
+                if (request == previewRequest) {
+                    flow.update { it.copy(previewLoading = !playing) }
+                    if (playing && previewJob == null) previewJob = scope.launch {
+                        delay(PREVIEW_SECONDS * 1000L)
+                        if (request == previewRequest) stopPreview()
+                    }
+                }
+            },
+            onError = { message ->
+                if (request == previewRequest) {
+                    stopPreview()
+                    flow.update { it.copy(previewError = message) }
+                }
+            })
     }
 
     fun stopPreview() {
+        previewRequest++
         previewJob?.cancel()
         previewJob = null
         if (flow.value.previewing != null) {
             preview.stop()
-            flow.update { it.copy(previewing = null) }
+            flow.update { it.copy(previewing = null, previewLoading = false) }
         }
     }
 

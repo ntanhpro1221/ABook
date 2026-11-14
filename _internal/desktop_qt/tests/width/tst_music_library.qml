@@ -114,6 +114,28 @@ Item {
         function both(fn) { for (const mode of ["light", "dark"]) { Theme.mode = mode; fn() } }
 
         // ---- hành vi ----
+        function test_previewUsesActualOutputAndBoundsLoading() {
+            Clip.stop()
+            Clip.toggle("library:probe", "/probe", 3.434, 33.434)
+            compare(Clip.loading, true)
+            compare(Clip.current, "library:probe")
+            compare(DesktopApi.starts[DesktopApi.starts.length - 1], 3.434)
+            DesktopApi.previewStarted()
+            compare(Clip.loading, false)
+            Clip.stop()
+            Clip.toggle("library:failure", "/failure")
+            DesktopApi.previewFailed("HTTP 503")
+            compare(Clip.current, "")
+            compare(Api.notice, "Chưa nghe thử được lúc này.")
+            const old = Clip.loadingDeadline.interval
+            Clip.loadingDeadline.interval = 20
+            Clip.toggle("library:timeout", "/timeout")
+            tryCompare(Clip, "current", "")
+            compare(Api.notice, "Mạng chậm, thử nghe lại.")
+            Clip.loadingDeadline.interval = old
+            Clip.stop()
+        }
+
         function test_libraryListsEveryTrackAndCountsThem() {
             const page = make({part: 1})
             compare(page.shown.length, 24)

@@ -124,9 +124,10 @@ function TrackBody({
         </div>
       ) : (
       <div className="space-y-2">
+      {preview.error ? <p role="alert" className="text-sm text-danger">{preview.error}</p> : null}
       <ActionPair primary={
         <Button icon={previewing ? Square : Play} aria-pressed={previewing} onClick={() => preview.toggle(track)}>
-          {previewing ? S.s_dung_nghe_f20939be : S.s_nghe_thu_fa024065}
+          {previewing && preview.loading ? S.s_dang_tai_am_thanh_6c7cb62f : previewing ? S.s_dung_nghe_f20939be : S.s_nghe_thu_fa024065}
         </Button>
         } secondary={load.kind === "loading" ? (
           <Button icon={X} onClick={() => unsave.mutate([track.link])}>

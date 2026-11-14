@@ -1,8 +1,19 @@
 package vn.abook.player.ui.music.library
 
 import android.content.Context
-import android.media.AudioAttributes
-import android.media.MediaPlayer
+import android.os.Handler
+import android.os.Looper
+import android.util.Log
+import androidx.media3.common.AudioAttributes
+import androidx.media3.common.C
+import androidx.media3.common.MediaItem
+import androidx.media3.common.PlaybackException
+import androidx.media3.common.Player
+import androidx.media3.datasource.DefaultDataSource
+import androidx.media3.datasource.DefaultHttpDataSource
+import androidx.media3.exoplayer.ExoPlayer
+import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
+import kotlinx.coroutines.*
 import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
 import org.json.JSONObject
@@ -63,36 +74,97 @@ class AndroidLibrarySource(context: Context) : LibrarySource {
 
     /** File đã tải của bài (nghe thử không mạng) hay null. */
     fun cached(link: String) = catalog.cached(link)
+
+    /** Use the signed catalogue's source order, also used for downloads. Called off main. */
+    fun previewSources(link: String): List<String> {
+        cached(link)?.let { return listOf(it.toURI().toString()) }
+        val info = infos[link] ?: catalog.lookup(listOf(link))[link]
+        val mirrors = info?.optJSONArray("mirrors")
+        return (listOf(link) + (0 until (mirrors?.length() ?: 0)).map { mirrors!!.optString(it) })
+            .filter { it.isNotBlank() }.distinct()
+    }
 }
 
-/** Nghe thử bằng MediaPlayer: file đã tải nếu có, không thì phát thẳng từ link gốc. Luồng âm thanh "nhạc" - không giành tiêu điểm của sách (sách đã dừng). */
-class MediaPreviewPlayer(private val source: AndroidLibrarySource) : PreviewPlayer {
-    private var player: MediaPlayer? = null
+/** HTTPS is opened by Media3, independently of the device vendor's NuPlayer. */
+@androidx.media3.common.util.UnstableApi
+class ExoPreviewPlayer(context: Context, private val source: AndroidLibrarySource,
+    private val sourceUrls: (String) -> List<String> = source::previewSources,
+) : PreviewPlayer {
+    private val app = context.applicationContext
+    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
+    private val handler = Handler(Looper.getMainLooper())
+    private var player: ExoPlayer? = null
+    private var lookup: Job? = null
+    private var request = 0L
+    private var deadline: Runnable? = null
 
-    override fun play(link: String, startSeconds: Double, volume: Float, onEnd: () -> Unit) {
+    override fun play(link: String, startSeconds: Double, volume: Float, onEnd: () -> Unit, onPlaying: (Boolean) -> Unit, onError: (String) -> Unit) {
         stop()
-        val made = MediaPlayer()
-        player = made
-        runCatching {
-            made.setAudioAttributes(AudioAttributes.Builder().setUsage(AudioAttributes.USAGE_MEDIA).setContentType(AudioAttributes.CONTENT_TYPE_MUSIC).build())
-            val file = source.cached(link)
-            if (file != null) made.setDataSource(file.path) else made.setDataSource(link)
-            made.setVolume(volume, volume)
-            made.setOnPreparedListener { prepared ->
-                if (player !== prepared) return@setOnPreparedListener
-                if (startSeconds > 0) prepared.seekTo((startSeconds * 1000).toInt())
-                prepared.start()
+        val token = request
+        lookup = scope.launch {
+            val urls = withContext(Dispatchers.IO) { runCatching { sourceUrls(link) } }.getOrNull()
+            if (token != request) return@launch
+            if (urls.isNullOrEmpty()) { onError(vn.abook.player.S.s_chua_nghe_thu_duoc_luc_nay_58b11ef5); return@launch }
+            var index = 0
+            fun attempt() {
+                clearDeadline()
+                player?.release()
+                val http = DefaultHttpDataSource.Factory().setConnectTimeoutMs(8000).setReadTimeoutMs(8000).setAllowCrossProtocolRedirects(true)
+                val made = ExoPlayer.Builder(app)
+                    .setMediaSourceFactory(DefaultMediaSourceFactory(DefaultDataSource.Factory(app, http))).build()
+                player = made
+                fun next(timedOut: Boolean) {
+                    if (token != request || player !== made) return
+                    Log.w("MusicPreview", "source_failed index=$index timeout=$timedOut")
+                    if (++index < urls.size) attempt()
+                    else { stop(); onError(if (timedOut) vn.abook.player.S.s_preview_timeout else vn.abook.player.S.s_chua_nghe_thu_duoc_luc_nay_58b11ef5) }
+                }
+                fun watch() {
+                    clearDeadline()
+                    deadline = Runnable { next(true) }.also { handler.postDelayed(it, SOURCE_TIMEOUT_MS) }
+                }
+                made.setAudioAttributes(AudioAttributes.Builder().setUsage(C.USAGE_MEDIA).setContentType(C.AUDIO_CONTENT_TYPE_MUSIC).build(), true)
+                made.volume = volume
+                made.addListener(object : Player.Listener {
+                    override fun onIsPlayingChanged(isPlaying: Boolean) {
+                        if (token != request || player !== made) return
+                        onPlaying(isPlaying)
+                        if (isPlaying) {
+                            clearDeadline()
+                            Log.i("MusicPreview", "playing index=$index positionMs=${made.currentPosition}")
+                        } else if (made.playbackState != Player.STATE_ENDED) watch()
+                    }
+                    override fun onPlayWhenReadyChanged(playWhenReady: Boolean, reason: Int) {
+                        if (token == request && player === made && !playWhenReady && reason == Player.PLAY_WHEN_READY_CHANGE_REASON_AUDIO_FOCUS_LOSS) onEnd()
+                    }
+                    override fun onPlaybackStateChanged(state: Int) {
+                        if (token != request || player !== made) return
+                        if (state == Player.STATE_BUFFERING) watch()
+                        if (state == Player.STATE_ENDED) onEnd()
+                    }
+                    override fun onPlayerError(error: PlaybackException) { next(false) }
+                })
+                Log.i("MusicPreview", "loading index=$index")
+                made.setMediaItem(MediaItem.fromUri(urls[index]), (startSeconds.coerceAtLeast(0.0) * 1000).toLong())
+                watch()
+                made.prepare()
+                made.play()
             }
-            made.setOnCompletionListener { onEnd() }
-            made.setOnErrorListener { _, _, _ -> onEnd(); true }
-            made.prepareAsync()
-        }.onFailure { onEnd() }
+            attempt()
+        }
     }
+
+    private fun clearDeadline() { deadline?.let(handler::removeCallbacks); deadline = null }
 
     override fun stop() {
-        val held = player ?: return
+        request++
+        lookup?.cancel()
+        lookup = null
+        clearDeadline()
+        val held = player
         player = null
-        runCatching { held.stop() }
-        held.release()
+        held?.release()
     }
+
+    companion object { const val SOURCE_TIMEOUT_MS = 12_000L }
 }

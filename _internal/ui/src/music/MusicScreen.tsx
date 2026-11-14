@@ -63,16 +63,19 @@ export function MusicScreen() {
 export function PreviewBar({ preview }: { preview: LibraryPreview }) {
   const playing = preview.playing;
   return (
+    <>
+    {preview.error ? <p role="alert" className="text-sm text-danger">{preview.error}</p> : null}
     <MotionPresence open={playing !== null} className="sticky bottom-3 z-10 mt-4">
       <div role="status" className="mx-auto flex max-w-[560px] items-center gap-3 rounded-cover border border-line bg-panel px-4 py-2 shadow-float">
         <Music2 aria-hidden className="size-4 shrink-0 text-accent-text" />
         <p className="min-w-0 flex-1 truncate text-sm">
-          <span className="text-fg-2">{S.s_dang_nghe_thu_f1fb4cba}</span>
+          <span className="text-fg-2">{preview.loading ? S.s_dang_tai_am_thanh_6c7cb62f : S.s_dang_nghe_thu_f1fb4cba}</span>
           {playing?.title ? <span className="font-medium"> · {playing.title}</span> : null}
         </p>
         <IconButton size="sm" label={S.s_dung_nghe_thu_41a2925b} icon={Square} onClick={preview.stop} />
       </div>
     </MotionPresence>
+    </>
   );
 }
 
@@ -297,7 +300,7 @@ export function TrackRow({
   return (
     <Item role={Item === "div" && !nested ? "listitem" : undefined} className="flex min-h-16 items-center gap-2 border-b border-line py-2 last:border-b-0">
       <IconButton
-        label={previewing ? S.s_dung_nghe_f20939be : S.s_nghe_thu_fa024065}
+        label={previewing && preview.loading ? S.s_dang_tai_am_thanh_6c7cb62f : previewing ? S.s_dung_nghe_f20939be : S.s_nghe_thu_fa024065}
         icon={previewing ? Square : Play}
         aria-pressed={previewing}
         disabled={!playable}

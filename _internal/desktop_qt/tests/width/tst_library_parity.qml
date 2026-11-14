@@ -24,6 +24,18 @@ Item {
         ]
         function init() { Theme.reduceMotion = false; Nav.layers = []; Platform.reset(); DesktopApi.reset(); Api.bind(DesktopApi, Theme) }
         function cleanup() { Nav.layers = []; Theme.reduceMotion = false }
+        function test_selectionAppliesBeforeAsynchronousImageCapture() {
+            const page = createTemporaryObject(library, host, {width: 792, height: 700, books: fixture})
+            ready()
+            page.filter = "listening"
+            compare(page.sections.length, 1)
+            compare(page.appliedFilter, 1)
+            compare(page.shownSections.length, 1)
+            page.filter = "finished"
+            compare(page.sections.length, 1)
+            compare(page.appliedFilter, 3)
+            compare(page.shownSections.length, 1)
+        }
         function test_filters_search_sort() {
             compare(fixture.filter(b => Logic.matches(b, "listening", "")).length, 1)
             compare(fixture.filter(b => Logic.matches(b, "finished", "")).length, 1)

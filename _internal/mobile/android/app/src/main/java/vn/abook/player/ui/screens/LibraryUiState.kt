@@ -9,6 +9,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.launch
 import vn.abook.player.ui.data.LibraryFilter
 import vn.abook.player.ui.data.LibrarySort
@@ -52,7 +53,7 @@ class LibraryUiState(
         if (target == filter) return
         filter = target
         job?.cancel()
-        job = scope.launch { pager.animateScrollToPage(target.ordinal, animationSpec = Motion.TabSlide) }
+        job = scope.launch(start = CoroutineStart.UNDISPATCHED) { pager.animateScrollToPage(target.ordinal, animationSpec = Motion.TabSlide) }
     }
 
     fun settled(page: Int) { filter = LibraryFilter.entries[page] }

@@ -3330,4 +3330,5 @@ export const S = {
   s_cast_history_alias_conflicts: (p0: unknown) => String(p0) + " bí danh xung đột",
   s_cast_history_row: (p0: unknown, p1: unknown, p2: unknown) => String(p0) + " → " + String(p1) + " · " + String(p2) + " câu",
   s_cast_history_group: "Nhóm câu",
+  s_preview_timeout: "Mạng chậm, thử nghe lại.",
 } as const;

@@ -7,6 +7,9 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+- Nghe thử nhạc có báo đang tải, thử bản sao khi nguồn lỗi và báo khi không phát được.
+- Menu cuộn để giữ đủ chữ trên màn thấp hoặc khi phóng to; chuyển bộ lọc Thư viện bớt khựng.
+
 - Lưu lịch sử gộp, tách và hoàn tác có kiểm tra xung đột trên cả ba giao diện.
 
 - Việc duyệt ưu tiên chương sắp thu, nêu công duyệt, số đã thu và lúc áp trên cả ba giao diện.

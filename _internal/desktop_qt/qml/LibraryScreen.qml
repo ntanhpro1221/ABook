@@ -60,9 +60,18 @@ FocusScope {
     property real resultProgress: 1
     property int resultDirection: 1
     property var resultImage: null
+    property var settledImage: null
     property int resultGeneration: 0
     property int appliedFilter: 0
-    readonly property int filterIndex: ["all", "listening", "new", "finished"].indexOf(filter)
+    function cacheResults() {
+        const generation = resultGeneration
+        if (!resultViewport.width || !resultViewport.height || resultMotion.running) return
+        resultViewport.grabToImage(function(result) {
+            if (generation === root.resultGeneration && !resultMotion.running) root.settledImage = result
+        })
+    }
+    function selectedFilterIndex() { return ["all", "listening", "new", "finished"].indexOf(filter) }
+    readonly property int filterIndex: selectedFilterIndex()
     function applyResults() {
         const selection = selectionKey()
         const changed = selection !== appliedSelection
@@ -71,31 +80,31 @@ FocusScope {
         if (changed) { current = 0; list.positionViewAtBeginning() }
         else list.contentY = previousY
         appliedSelection = selection
-        appliedFilter = filterIndex
+        appliedFilter = selectedFilterIndex()
     }
     onSectionsChanged: {
         const selection = selectionKey()
         if (selection === appliedSelection && shapeOf(sections) === shapeOf(shownSections)) { shownSections = sections; return }
-        const generation = ++resultGeneration
+        ++resultGeneration
         resultMotion.stop()
-        if (!resultViewport.width || !resultViewport.height || loading) { applyResults(); resultProgress = 1; return }
-        // Keep the old page visible while its immutable image is captured.
-        // Both pages then translate together; no out-then-in or width tween.
-        resultViewport.grabToImage(function(result) {
-            if (generation !== root.resultGeneration) return
-            root.resultImage = result
-            root.resultDirection = root.filterIndex >= root.appliedFilter ? 1 : -1
-            root.applyResults()
-            root.resultProgress = 0
-            resultMotion.start()
-        })
+        // Capture while idle. A selection must never wait for asynchronous GPU readback.
+        resultImage = settledImage
+        resultDirection = selectedFilterIndex() >= appliedFilter ? 1 : -1
+        applyResults()
+        if (!resultViewport.width || !resultViewport.height || loading) {
+            resultProgress = 1
+            Later.call(root, function() { root.cacheResults() })
+            return
+        }
+        resultProgress = 0
+        resultMotion.start()
     }
     NumberAnimation {
         id: resultMotion
         target: root; property: "resultProgress"; to: 1
         duration: Theme.reduceMotion ? Theme.motionFast : Theme.motionMedium
         easing.type: Easing.BezierSpline; easing.bezierCurve: Theme.easeStandard
-        onFinished: root.resultImage = null
+        onFinished: { root.resultImage = null; root.cacheResults() }
     }
     readonly property bool libraryError: Backend.library.error !== ""
     property int current: 0              // ô đang giữ tiêu điểm bàn phím (chỉ số trong danh sách)
@@ -299,6 +308,7 @@ FocusScope {
         boundsBehavior: Flickable.StopAtBounds
         keyNavigationEnabled: false
         reuseItems: true
+        onMovementEnded: root.cacheResults()
         Accessible.role: Accessible.List
         Accessible.name: S.s_sach_0c2b3e9b
 

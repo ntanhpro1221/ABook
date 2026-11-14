@@ -3,6 +3,8 @@ package vn.abook.player.ui.editbook
 import vn.abook.player.ui.motion.SwapContent
 import vn.abook.player.ui.motion.ContentLayout
 
+import vn.abook.player.ui.components.SheetMenu
+
 import vn.abook.player.S
 
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -100,7 +102,7 @@ fun EditBookRoute(
 /** Bảng của bìa: chọn ảnh trên máy, tìm bìa trên mạng (màn riêng), hay bỏ ảnh đang có (hàng "Bỏ ảnh bìa" chỉ khi đang có ảnh). */
 @Composable
 fun CoverSheet(hasCover: Boolean, onPick: () -> Unit, onRemove: () -> Unit, onFind: () -> Unit = {}) {
-    Column(Modifier.fillMaxWidth().testTag("cover_sheet")) {
+    SheetMenu(Modifier.testTag("cover_sheet")) {
         BasicText(S.s_anh_bia_f224644d, style = Abook.type.sectionTitle)
         Spacer(Modifier.height(Dim.s8))
         MenuRow(S.s_chon_anh_41ecf092, tag = "cover_pick", onClick = onPick) { ink -> ImageIcon(ink) }

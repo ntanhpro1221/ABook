@@ -3,6 +3,7 @@ package vn.abook.player.ui.studio
 import vn.abook.player.ui.motion.SwapContent
 import vn.abook.player.ui.motion.ContentLayout
 
+import vn.abook.player.ui.components.SheetMenu
 import vn.abook.player.S
 
 import vn.abook.player.ui.data.dotJoined
@@ -33,6 +34,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import vn.abook.player.ClipState
+import vn.abook.player.ui.components.SheetMenu
 import vn.abook.player.StudioPolling
 import vn.abook.player.ui.components.Caption
 import vn.abook.player.ui.components.ClockLabel
@@ -251,7 +253,7 @@ private fun SceneRow(music: StudioMusicState, view: MusicView, scenes: List<Musi
 /** "Thêm" của một đoạn: im lặng / có nhạc, bỏ ghim (khi đã ghim), loại bài đang dùng khỏi cả cuốn (có báo trước số đoạn đang dùng bài ấy). */
 @Composable
 private fun SceneMenu(music: StudioMusicState, view: MusicView, scene: MusicScene, dismiss: () -> Unit) {
-    Column(Modifier.fillMaxWidth().testTag("studio_music_scene_menu")) {
+    SheetMenu(Modifier.testTag("studio_music_scene_menu")) {
         MenuRow(if (scene.silenced) StudioMusicText.SILENCE_OFF else StudioMusicText.SILENCE_ON, "studio_scene_silence", onClick = { dismiss(); music.change(MusicLogic.silence(scene.key, !scene.silenced)) }) { }
         Reveal(scene.pinned) { MenuRow(StudioMusicText.UNPIN, "studio_scene_unpin", onClick = { dismiss(); music.change(MusicLogic.unpin(scene.key)) }) { } }
         scene.link?.let { link ->

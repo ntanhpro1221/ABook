@@ -3,6 +3,8 @@ package vn.abook.player.ui.screens
 import vn.abook.player.ui.motion.SwapContent
 import vn.abook.player.ui.motion.ContentLayout
 
+import vn.abook.player.ui.components.SheetMenu
+
 import vn.abook.player.S
 
 import vn.abook.player.ui.components.ClockLabel
@@ -168,7 +170,7 @@ private fun MenuActions(
     val context = LocalContext.current
     var sharing by remember { mutableStateOf(false) }
     var problem by remember { mutableStateOf("") }
-    Column(Modifier.fillMaxWidth()) {
+    SheetMenu() {
         BasicText(book.title, style = Abook.type.sectionTitle)
         Spacer(Modifier.height(Dim.s8))
         // Một hồ sơ thì không có chip "Hồ sơ nghe": các việc với hồ sơ duy nhất nằm ở đây (web: singleRecordActions); xoá hồ sơ ở cuối, cạnh xoá sách.
@@ -292,7 +294,7 @@ fun ChapterSheet(book: ListenBook, chapter: ChapterLine, source: BookSource, onL
     val scope = rememberCoroutineScope()
     var renaming by remember { mutableStateOf(false) }
     if (renaming) return RenameChapterPage(book, chapter, source, notes, dismiss) { renaming = false }
-    Column(Modifier.fillMaxWidth().testTag("chapter_sheet")) {
+    SheetMenu(Modifier.testTag("chapter_sheet")) {
         BasicText(chapter.title, style = Abook.type.sectionTitle)
         RowHint(book.title)
         Spacer(Modifier.height(Dim.s8))

@@ -32,7 +32,7 @@ fun TrackRow(track: MusicLibrary.Track, ui: LibraryUi, state: LibraryState, pick
     ) {
         Box(
             Modifier.size(40.dp).then(if (canPlay) Modifier.pressable { state.togglePreview(track.link) } else Modifier.semantics { disabled() })
-                .semantics { contentDescription = if (playing) S.s_dung_nghe_thu_41a2925b else S.s_nghe_thu_fa024065 }
+                .semantics { contentDescription = if (playing && ui.previewLoading) S.s_dang_tai_am_thanh_6c7cb62f else if (playing) S.s_dung_nghe_thu_41a2925b else S.s_nghe_thu_fa024065 }
                 .testTag("preview_${track.link.hashCode()}"), contentAlignment = Alignment.Center,
         ) { LucideIcon(if (playing) LucidePaths.SQUARE else LucidePaths.PLAY, if (!canPlay) colors.text3 else if (playing) colors.accentText else colors.text) }
         Spacer(Modifier.width(Dim.s8))

@@ -800,6 +800,7 @@ internal object S {
     const val s_chua_nghe_thu_duoc_f7601d1f = "Chưa nghe thử được"
     const val s_chua_nghe_thu_duoc_giong_nay_baf64b64 = "Chưa nghe thử được giọng này."
     const val s_chua_nghe_thu_duoc_giong_nay_f17da379 = "Chưa nghe thử được giọng này"
+    const val s_chua_nghe_thu_duoc_luc_nay_58b11ef5 = "Chưa nghe thử được lúc này."
     const val s_chua_nghe_xong_6b821209 = "Chưa nghe xong"
     fun s_chua_nhan_duoc_0_ban_viet_tung_am_tieng_vi_629aa9cc(p0: Any?): String = "Chưa nhận được “" + p0.toString() + "” — bạn viết từng âm tiếng Việt, nối bằng gạch nối."
     const val s_chua_nhap_khoa_7ae5f64c = "Chưa nhập khoá."
@@ -2990,4 +2991,5 @@ internal object S {
     const val s_cast_history_group = "Nhóm câu"
     const val s_cast_history_undo = "Hoàn tác phân vai"
     const val s_cast_history_bad_wish = "Một ý muốn hoàn tác trong phần sửa không hợp lệ."
+    const val s_preview_timeout = "Mạng chậm, thử nghe lại."
 }

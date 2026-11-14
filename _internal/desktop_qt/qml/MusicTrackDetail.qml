@@ -17,6 +17,7 @@ Modal {
     property bool picking: false
     property bool playing: false
     property bool previewing: false
+    property bool previewLoading: false
     property bool online: true
     property var detail: null
     property bool loading: false
@@ -67,7 +68,7 @@ Modal {
             Button {
                 width: (parent.width - parent.spacing) / 2
                 objectName: "musicDetailPreview"
-                text: root.previewing ? S.s_dung_nghe_f20939be : S.s_nghe_thu_fa024065
+                text: root.previewing && root.previewLoading ? S.s_dang_tai_am_thanh_6c7cb62f : root.previewing ? S.s_dung_nghe_f20939be : S.s_nghe_thu_fa024065
                 icon: root.previewing ? "square" : "play"
                 enabled: root.online || root.load.kind === "done"
                 onActivated: root.preview()

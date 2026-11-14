@@ -1,5 +1,7 @@
 package vn.abook.player.ui.studio
 
+import vn.abook.player.ui.components.SheetMenu
+
 import vn.abook.player.S
 
 import androidx.activity.compose.BackHandler
@@ -139,7 +141,7 @@ private fun CoverHub(editor: BookEditor, onBack: () -> Unit, find: () -> Unit, c
     val has = state.saved?.cover != null
     BookForm(StudioCoverText.TITLE, onBack, "studio_cover") {
         RowHint(StudioCoverText.LEAD, Modifier.padding(top = Dim.s4))
-        Column(Modifier.fillMaxWidth().padding(top = Dim.s8)) {
+        SheetMenu(Modifier.padding(top = Dim.s8)) {
             RowHint(if (state.loading) "" else if (has) StudioCoverText.HAS else StudioCoverText.NONE, Modifier.padding(bottom = Dim.s8))
             MenuRow(StudioCoverText.PICK, "studio_cover_pick", onClick = { picker.launch(arrayOf("image/*")) }) { ink -> ImageIcon(ink) }
             MenuRow(StudioCoverText.FIND, "studio_cover_find", onClick = find) { ink -> GlobeIcon(ink) }

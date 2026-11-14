@@ -58,6 +58,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.testTag
 import vn.abook.player.ui.components.TextAction
 import androidx.compose.ui.Modifier
 import vn.abook.player.ui.motion.bookCoverSource
@@ -169,21 +170,26 @@ private fun LibraryGrid(
     val widthDp = LocalConfiguration.current.screenWidthDp
     val columns = libraryColumns(widthDp)
     val cell = ((widthDp - 2f * Dim.margin.value - (columns - 1) * Dim.s12.value) / columns).dp
-    val selected = remember(books, ui.filter, ui.query, ui.sort) { Library.view(books, ui.filter, ui.query, ui.sort) }
+    // Filtering and grouping depend on data/query/sort, never on the moving pager position.
+    val views = remember(books, ui.query, ui.sort) {
+        LibraryFilter.entries.map { Library.view(books, it, ui.query, ui.sort) }
+    }
+    val selected = views[ui.filter.ordinal]
     LaunchedEffect(ui) { snapshotFlow { ui.pager.settledPage }.collect { ui.settled(it) } }
     Column(Modifier.fillMaxSize()) {
         Column(Modifier.fillMaxWidth().padding(top = top, start = Dim.margin, end = Dim.margin)) {
             ScreenHeader(S.s_thu_vien_58145555, trailing = { AddBookButton(actions.addBook) }, bottomGap = if (books.isEmpty()) Dim.s16 else 0.dp)
             vn.abook.player.ui.components.Reveal(books.isNotEmpty()) { FilterBar(ui, selected.shown, onSortCoordinates) }
         }
-        HorizontalPager(state = ui.pager, beyondViewportPageCount = if (books.isEmpty()) 0 else 1,
+        HorizontalPager(state = ui.pager, beyondViewportPageCount = if (books.isEmpty()) 0 else LibraryFilter.entries.lastIndex,
             modifier = Modifier.weight(1f).fillMaxWidth().clipToBounds().testTag("library_pages"),
             key = { LibraryFilter.entries[it] }) { page ->
             val filter = LibraryFilter.entries[page]
-            val view = remember(books, filter, ui.query, ui.sort) { Library.view(books, filter, ui.query, ui.sort) }
+            val view = views[page]
             val tiles = rememberPresence(view.tiles) { it.key }
             val pageGrid = if (page == 0) grid else rememberLazyGridState()
             val active = page == ui.pager.currentPage
+            val isActive = remember(ui, page) { { page == ui.pager.currentPage } }
             Box(Modifier.fillMaxSize().then(if (active) Modifier else Modifier.clearAndSetSemantics {})) {
             LazyVerticalGrid(
                 columns = GridCells.Fixed(columns), state = pageGrid,
@@ -208,7 +214,7 @@ private fun LibraryGrid(
                         androidx.compose.animation.AnimatedVisibility(tile.visible, modifier = Modifier.animateItem(fadeInSpec = null, fadeOutSpec = null),
                             enter = androidx.compose.animation.fadeIn(tween(MotionMs.MEDIUM_OUT)) + slideInVertically(tween(MotionMs.MEDIUM, easing = Motion.Decelerate)) { it / 4 },
                             exit = androidx.compose.animation.fadeOut(tween(MotionMs.MEDIUM_OUT)) + slideOutVertically(tween(MotionMs.MEDIUM_OUT, easing = Motion.Accelerate)) { it / 4 }) {
-                            BookTile(tile.item, covers, cell, sheets, actions, active)
+                            BookTile(tile.item, covers, cell, sheets, actions, isActive)
                         }
                     }
                 }
@@ -247,7 +253,7 @@ private fun BookTile(
     cell: Dp,
     sheets: SheetHost,
     actions: LibraryActions,
-    active: Boolean,
+    active: () -> Boolean,
 ) {
     val view = LocalView.current
     val series = tile as? ShelfTile.Series
@@ -266,9 +272,9 @@ private fun BookTile(
     Column(
         Modifier.fillMaxWidth()
             .pressable(onLongClick = onLong, onClick = onClick)
-            .then(if (active) Modifier.testTag(if (series != null) "series_cell" else "book_cell") else Modifier),
+            .semantics { if (active()) testTag = if (series != null) "series_cell" else "book_cell" },
     ) {
-        Box(Modifier.fillMaxWidth().bookCoverSource(lead.id).clip(BookCoverShape).then(if (active) Modifier.testTag("library_cover") else Modifier)) {
+        Box(Modifier.fillMaxWidth().bookCoverSource(lead.id).clip(BookCoverShape).semantics { if (active()) testTag = "library_cover" }) {
             BookCover(lead.cover, title, if (series != null) null else lead.part, covers, cell, Modifier.fillMaxWidth())
             SwapContent(series, contentKey = { series -> series != null }, layout = ContentLayout.Box, modifier = Modifier.align(Alignment.BottomStart)) { series ->
                 if (series != null) {
@@ -305,7 +311,7 @@ private fun BookTile(
         val sub = detail
         val name: @Composable () -> Unit = {
             // cắt-có-chủ-ý: tên dưới bìa giữ đúng 2 dòng để mọi ô một hàng cao bằng nhau; tên đầy đủ ở trang sách và trình đọc màn hình.
-            BasicText(title, Modifier.fillMaxWidth().testTag("tile_title"), style = Abook.type.label, minLines = 2, maxLines = 2, overflow = TextOverflow.Ellipsis)
+            BasicText(title, Modifier.fillMaxWidth().semantics { if (active()) testTag = "tile_title" }, style = Abook.type.label, minLines = 2, maxLines = 2, overflow = TextOverflow.Ellipsis)
         }
         val line: @Composable () -> Unit = {
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(Dim.s4)) {
@@ -315,7 +321,7 @@ private fun BookTile(
                     }, size = 12.dp)
                 }
                 // cắt-có-chủ-ý: dòng phụ một dòng (tác giả / tình trạng), phần đầu là thứ quan trọng.
-                BasicText(sub, Modifier.weight(1f).testTag("tile_sub"), style = Abook.type.caption, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                BasicText(sub, Modifier.weight(1f).semantics { if (active()) testTag = "tile_sub" }, style = Abook.type.caption, maxLines = 1, overflow = TextOverflow.Ellipsis)
             }
         }
         if (drawn) {

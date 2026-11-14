@@ -492,6 +492,7 @@ fun MenuRow(
     value: String? = null,
     icon: @Composable (Color) -> Unit,
 ) {
+    require(label.isNotBlank())
     val colors = Abook.colors
     val ink = when {
         unavailable -> colors.fg3

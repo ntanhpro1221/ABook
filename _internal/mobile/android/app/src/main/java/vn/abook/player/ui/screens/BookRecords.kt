@@ -3,6 +3,8 @@ package vn.abook.player.ui.screens
 import vn.abook.player.ui.motion.SwapContent
 import vn.abook.player.ui.motion.ContentLayout
 
+import vn.abook.player.ui.components.SheetMenu
+
 import vn.abook.player.S
 
 import androidx.activity.compose.BackHandler
@@ -102,7 +104,7 @@ private fun PickPage(
 ) {
     val scope = rememberCoroutineScope()
     var problem by remember { mutableStateOf("") }
-    Column(Modifier.fillMaxWidth()) {
+    SheetMenu() {
         BasicText(S.s_ho_so_nghe_a1cef52b, style = Abook.type.sectionTitle)
         RowHint(S.s_moi_ho_so_giu_cho_nghe_lich_su_rieng_c3195597)
         Spacer(Modifier.height(Dim.s8))

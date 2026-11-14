@@ -1,5 +1,36 @@
 # Test report
 
+## 15-11-2026 — music preview, sheet menu text and library filters
+
+The native preview uses Media3 HTTP sources in catalogue order, beginning at audibleStart.
+Loading remains visible until actual playback; failure and bounded waiting use the shared UI copy.
+Web and Qt preview surfaces expose the same loading and failure states; their server path already tries catalogue mirrors.
+
+At 360 x 640 dp the baseline book menu leaves only the final trash icon visible and cannot scroll.
+The shared SheetMenu measures rows without a height cap and scrolls the viewport with the standard edge fade.
+The source audit covers all 46 MenuRow call sites in nine files. Compose checks catalogue labels and long labels at 130% font scale,
+including a delayed hint, a trailing value, complete text and glyph bounds after scrolling each row into view.
+
+Library filter views are cached independently of the selected tab, and the four native pager viewports remain resident.
+The deterministic Compose test requires motion within two frames with 36 books while preserving cover proportions.
+Qt applies the selected results before asynchronous image capture; its screenshot for the outgoing page is prepared while idle.
+Web already commits its selected results synchronously and its library DOM tests remain green.
+
+Validation: 45 selected Android JVM/Compose tests, 51 related Vitest tests and TypeScript noEmit passed.
+Qt functional checks passed with this worktree's QML: MusicLibrary 7, LibraryParity 8, and three CastTab preview cases plus setup/cleanup (5).
+The existing Qt runner predates qtUiTree, so its unrelated screenshot case is excluded from this functional run.
+The quality implementation hash is unchanged.
+
+On the isolated AOSP 35 emulator, real Jungle, Incompetech and Freesound streams reached the audio renderer;
+the exact Jungle track began at 3.434 seconds. A real HTTP 503 followed by its Archive mirror also played.
+The original OPPO trace remains the evidence for the vendor HTTPS preparation hang; no real phone was used for this change.
+
+The final matched debug-APK probe uses 37 covered books, 12 tab selections, real touch events, an actual-pixel selection assertion,
+FrameMetrics and gfxinfo reset before the measured interval. Maximum touch-to-first-frame time fell from 201.24 to 16.43 ms.
+Gfxinfo p95 fell from 89 to 38 ms; janky frames fell from 30/165 (18.18%) to 21/183 (11.48%), and missed-vsync events from 8 to 2.
+These are shared-host emulator measurements, not OPPO measurements. The zero-jank target is not met by this probe.
+A separate PixelCopy probe validates that both the indicator and content change, but its readback overhead is excluded from these frame totals.
+
 ## 15-11-2026 — durable cast history
 
 Cast merge and split batches now journal an operation ID before publishing aliases. The worker commits each batch and a versioned before/after receipt in the same SQLite transaction. Compensation compares current decisions, pending wishes, voice identity and seed before restoring a line. Aliases use independent ownership checks. Existing event rows are never treated as recovery snapshots; no schema changes or in-place conversion are involved.

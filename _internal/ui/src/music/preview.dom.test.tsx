@@ -22,7 +22,7 @@ class AudioStub extends EventTarget {
   constructor() { super(); AudioStub.instances.push(this); }
 }
 
-afterEach(() => { vi.unstubAllGlobals(); vi.restoreAllMocks(); AudioStub.instances = []; });
+afterEach(() => { vi.useRealTimers(); vi.unstubAllGlobals(); vi.restoreAllMocks(); AudioStub.instances = []; });
 
 async function mounted() {
   vi.stubGlobal("Audio", AudioStub);
@@ -75,5 +75,37 @@ it("ignores a stale play rejection even after returning to the same track", asyn
     await act(async () => view.preview.toggle({ link: "https://a" }));
     await act(async () => reject(new Error("old source interrupted")));
     expect(view.preview.playing?.link).toBe("https://a");
+  } finally { await view.close(); }
+});
+
+it("keeps loading until actual playback, and reports a media error", async () => {
+  const view = await mounted();
+  try {
+    await act(async () => view.preview.toggle({ link: "https://a", audibleStart: 3.434 }));
+    expect(view.preview.loading).toBe(true);
+    const audio = AudioStub.instances[0];
+    await act(async () => audio.dispatchEvent(new Event("playing")));
+    expect(view.preview.loading).toBe(false);
+    await act(async () => audio.dispatchEvent(new Event("waiting")));
+    expect(view.preview.loading).toBe(true);
+    await act(async () => audio.dispatchEvent(new Event("error")));
+    expect(view.preview.playing).toBe(null);
+    expect(view.preview.loading).toBe(false);
+    expect(view.preview.error).toBe("Chưa nghe thử được lúc này.");
+  } finally { await view.close(); }
+});
+
+it("bounds silent loading and removes the deadline when stopped", async () => {
+  const view = await mounted();
+  vi.useFakeTimers();
+  try {
+    await act(async () => view.preview.toggle({ link: "https://a" }));
+    await act(async () => vi.advanceTimersByTime(30_000));
+    expect(view.preview.error).toBe("Mạng chậm, thử nghe lại.");
+    expect(view.preview.playing).toBe(null);
+    await act(async () => view.preview.toggle({ link: "https://b" }));
+    await act(async () => view.preview.stop());
+    await act(async () => vi.advanceTimersByTime(30_000));
+    expect(view.preview.error).toBe("");
   } finally { await view.close(); }
 });

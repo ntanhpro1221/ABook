@@ -14,6 +14,7 @@ Interactive {
     property var styles: []
     property bool online: true
     property bool previewing: false
+    property bool previewLoading: false
     property bool picking: false
     property bool first: false
     signal preview()
@@ -41,7 +42,7 @@ Interactive {
         enabled: root.canPlay
         opacity: root.canPlay ? 1 : 0.45
         ink: root.previewing ? Theme.accentText : Theme.text
-        tip: (root.previewing ? S.s_dung_nghe_thu_41a2925b : S.s_nghe_thu_fa024065) + ": " + (root.track.title || "")
+        tip: (root.previewing && root.previewLoading ? S.s_dang_tai_am_thanh_6c7cb62f : root.previewing ? S.s_dung_nghe_thu_41a2925b : S.s_nghe_thu_fa024065) + ": " + (root.track.title || "")
         onClicked: root.preview()
     }
     Column {
