@@ -82,6 +82,8 @@ public:
     Q_INVOKABLE void setScript(const QString &book, int chapter, const QVariantMap &script) {
         m_net->scripts.insert(QStringLiteral("/api/books/%1/chapters/%2/script").arg(book).arg(chapter), QJsonObject::fromVariantMap(script));
     }
+    Q_INVOKABLE void setAnswer(const QString &key, const QVariantMap &value) { m_net->answers.insert(key, QJsonObject::fromVariantMap(value)); }
+    Q_INVOKABLE void resetAnswers() { m_net->answers.clear(); }
     Q_INVOKABLE void finishChapter() { m_out->finish(); }
     Q_INVOKABLE void buffering(bool value) { emit m_out->buffering(value); }
     Q_INVOKABLE void fail(const QString &message) { m_out->fail(message); }

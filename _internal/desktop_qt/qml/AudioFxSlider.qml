@@ -9,8 +9,9 @@ import ABook
 ValuePicker {
     id: root
     property string suffix: " dB"
+    property bool livePreview: true
     dense: true
     format: function(v) { return (root.spec.min < 0 ? Labels.signed(v) : Logic.formatNumber(root.spec, v)) + root.suffix }
     chipLabel: function(v) { return Logic.formatNumber(root.spec, v) }
-    onPreviewed: value => root.picked(value)
+    onPreviewed: value => { if (root.livePreview) root.picked(value) }
 }

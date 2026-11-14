@@ -204,7 +204,7 @@ fun ValuePicker(
                     if (dense) {
                         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                             Column(Modifier.weight(1f)) {
-                                BasicText(label, style = Abook.type.bodySmall)
+                                BasicText(label, style = Abook.type.bodySmall.copy(color = colors.text))
                                 SwapContent(hint, contentKey = { hint -> hint != null }, layout = ContentLayout.Column) { hint ->
                                     if (hint != null) RowHint(hint)
                                 }

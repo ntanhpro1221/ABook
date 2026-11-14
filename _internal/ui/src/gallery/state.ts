@@ -25,6 +25,7 @@ export interface Scenario {
   myMusic?: boolean;
   /** Cuốn đang có nhạc nền (theo cảnh, mức -18 dB): menu Nhạc nền hiện thanh trượt "Mức nhạc nền" ở một mức khác mặc định. */
   music?: boolean;
+  musicEnabled?: boolean;
   /** Cuốn audio nhập từ file, có nhạc người làm sách gắn. */
   packagedMusic?: boolean;
   /** Kho nhạc: hai bài đang tải (vòng phần trăm trên dòng, nút Huỷ tải ở chi tiết). */

@@ -336,8 +336,13 @@ const ROUTES: [string, RegExp, Handler][] = [
     moods: { running: false, error: "" },
     levelDb: -20,
     // Sách chữ đang có nhạc theo cảnh ở mức khác mặc định (scenario.music): menu Nhạc nền hiện thanh trượt mức.
-    ...(galleryState.scenario.music ? { playlist: "scene", hasMusic: true, enabled: true, cues: [], levelDb: -18 } : {}),
+    ...(galleryState.scenario.music ? { playlist: galleryState.scenario.musicEnabled === false ? "off" : "scene", hasMusic: true, enabled: galleryState.scenario.musicEnabled !== false, cues: [], levelDb: -18 } : {}),
   })],
+  ["PUT", /^\/api\/books\/([^/]+)\/music$/, (_match, body) => {
+    const enabled = typeof body.enabled === "boolean" ? body.enabled : body.playlist !== undefined ? body.playlist !== "off" : galleryState.scenario.musicEnabled !== false;
+    galleryState.scenario.musicEnabled = enabled;
+    return { hasMusic: true, enabled, playlist: enabled ? "scene" : "off", cues: [], levelDb: body.levelDb ?? -18 };
+  }],
   ["GET", /^\/api\/books\/([^/]+)\/music\/chapters\/(\d+)$/, () => ({ cues: [], levelDb: -20 })],
   ["GET", /^\/api\/books\/([^/]+)\/music\/playlist$/, () => ({ playlist: null, tracks: [], levelDb: -20 })],
   ["GET", /^\/api\/books\/([^/]+)\/suggestions$/, () => ({ suggestions: [] })],

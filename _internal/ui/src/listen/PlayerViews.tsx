@@ -1,3 +1,4 @@
+import { SheetMusic } from '@/shared/SheetMusic';
 import { Presence } from "../shared/MotionPresence";
 import { S } from "../shared/strings.generated";
 import { TickingValue } from "@/shared/TickingValue";
@@ -6,7 +7,7 @@ import { AudioFxPanel } from './AudioFxPanel';
 import { createPortal } from "react-dom";
 import { BackButton } from "@/shared/ScreenHeader";
 import { SheetPageDepth, SheetPages, useSheetPage, useSheetPageStack } from './sheetPages';
-import { SlidersHorizontal } from 'lucide-react';
+import { SlidersHorizontal, ChevronRight } from 'lucide-react';
 import { SlidingIndicator } from "@/shared/SlidingIndicator";
 import { MotionPresence, Reveal } from "@/shared/MotionPresence";
 import { Collapse } from "@/shared/Collapse";
@@ -517,7 +518,7 @@ export function SpeedMenu({ look = "chip" }: { look?: MenuLook }) {
 /** Nhạc nền ở trình phát. Chương chỉ-có-chữ ("Nghe ngay"): một danh sách phát cho cả cuốn, S.s_nhac_cua_toi_f65b7ac6 hay tắt - cùng lựa chọn với
  *  menu của sách (PlaylistChoice.tsx), lưu vào phần sửa của sách. Chương có audio của sách nói có nhạc người làm sách gắn: bật/tắt và mức
  *  (cùng lệnh với hộp S.s_sua_sach_79fb71d2); sách không gắn nhạc thì không hiện nút. */
-export function MusicMenu({ look = "chip" }: { look?: MenuLook }) {
+export function MusicMenu({ look = "chip", audio = false }: { look?: MenuLook; audio?: boolean }) {
   const { track, queue } = usePlayer();
   const speaking = Boolean(track) && queue.find((chapter) => chapter.id === track?.chapterId)?.state === "text";
   // Một vỏ cho cả hai loại chương (và lúc chưa có gì): đổi component không dựng lại nút trần mà mờ chéo. Vùng con tự lo cùng một cuốn đổi
@@ -525,7 +526,7 @@ export function MusicMenu({ look = "chip" }: { look?: MenuLook }) {
   // phải cùng mép với các dòng khác (luật menu-row-short).
   return (
     <MotionRegion as="span" motionKey={[track?.bookId ?? null, speaking]} className={look === "row" ? "grid grid-cols-[minmax(0,1fr)]" : "inline-flex"}>
-      {track && (speaking ? <MusicMenuFor bookId={track.bookId} look={look} /> : <PackagedMusicMenu bookId={track.bookId} look={look} />)}
+      {track && (speaking ? <MusicMenuFor bookId={track.bookId} look={look} audio={audio} /> : <PackagedMusicMenu bookId={track.bookId} look={look} audio={audio} />)}
     </MotionRegion>
   );
 }
@@ -541,23 +542,23 @@ export function MusicLevelRow({ level, disabled, saving = false, onChange }: { l
   );
 }
 
-function PackagedMusicMenu({ bookId, look }: { bookId: string; look: MenuLook }) {
+function PackagedMusicMenu({ bookId, look, audio = false }: { bookId: string; look: MenuLook; audio?: boolean }) {
   const { view, change } = useBookMusic(bookId);
   const { musicBroken: broken } = usePlayer();
   const music = view.data;
   const id = `player-music-${bookId}`;
   // Gốc luôn là một MotionRegion: nhạc tải xong / gỡ nhạc thì nút hiện / ẩn dần, không thay gốc MotionRegion <-> MenuShell.
-  return (
+  const menu = (
     <MotionRegion as="span" className={look === "row" ? "grid grid-cols-[minmax(0,1fr)]" : "inline-flex"}>{music?.hasMusic && <MenuShell
-      label={S.s_nhac_nen_271fb292}
+      label={audio ? S.s_chon_nhac_4e9b1d72 : S.s_nhac_nen_271fb292}
       active={music.enabled}
       width="w-64"
 
       look={look}
-      caption={S.s_nhac_nen_271fb292}
-      icon={EighthNote}
+      caption={audio ? S.s_chon_nhac_4e9b1d72 : S.s_nhac_nen_271fb292}
+      icon={audio ? undefined : EighthNote}
       triggerKey={look === "row" ? music.enabled : undefined}
-      trigger={look === "row" ? (music.enabled ? S.s_bat_f26cbc4a : S.s_tat_3286064e) :
+      trigger={audio ? <ChevronRight className="ink-end [--icon-w:1rem] size-4 text-fg-2"/> : look === "row" ? (music.enabled ? S.s_bat_f26cbc4a : S.s_tat_3286064e) :
         // Tắt: gạch chéo trên nốt nhạc (lucide không có biểu tượng S.s_copy_50c73817bdd6).
         <span className="relative">
           <EighthNote className="size-4" />
@@ -578,23 +579,24 @@ function PackagedMusicMenu({ bookId, look }: { bookId: string; look: MenuLook })
       <p className="px-2 pb-1 pt-2 text-xs text-fg-2">{music.project ? S.s_doi_luon_trong_studio_20c762a6 : S.s_chi_doi_tren_may_nay_93811b69}</p>
     </MotionRegion></MenuShell>}</MotionRegion>
   );
+  return audio ? <Reveal when={Boolean(music?.hasMusic)}><div>{music && <SheetMusic enabled={music.enabled} busy={change.isPending} level={music.levelDb} onToggle={enabled=>change.mutate({enabled})} onLevel={levelDb=>change.mutate({levelDb})}>{menu}</SheetMusic>}</div></Reveal> : menu;
 }
 
-function MusicMenuFor({ bookId, look }: { bookId: string; look: MenuLook }) {
+function MusicMenuFor({ bookId, look, audio = false }: { bookId: string; look: MenuLook; audio?: boolean }) {
   const scrollFade = useFadeScroller<HTMLDivElement>();
   const { options, chosen, label, playing, known, scene, error, loading, choose, busy, levelDb, setLevel, levelBusy, canImport, addMusic } = usePlaylistChoice(bookId);
   const { musicOffline, musicBroken, musicLoading } = usePlayer();
   const waiting = busy || musicLoading;
-  return (
+  const menu = (
     <MenuShell
-      label={S.s_nhac_nen_271fb292}
+      label={audio ? S.s_chon_nhac_4e9b1d72 : S.s_nhac_nen_271fb292}
       tooltip={waiting ? S.s_dang_chuan_bi_nhac_nen_2e3197d1 : playing ? S.s_nhac_nen_0_bam_de_chon_nhac_khac_2c0ebda2(shortPlaylistLabel(label)) : S.s_nhac_nen_bam_de_chon_nhac_538c2c84}
       active={playing || waiting}
       look={look}
-      caption={S.s_nhac_nen_271fb292}
-      icon={EighthNote}
+      caption={audio ? S.s_chon_nhac_4e9b1d72 : S.s_nhac_nen_271fb292}
+      icon={audio ? undefined : EighthNote}
       triggerKey={look === "row" ? [waiting, playing, label, known] : undefined}
-      trigger={look === "row"
+      trigger={audio ? <ChevronRight className="ink-end [--icon-w:1rem] size-4 text-fg-2"/> : look === "row"
         ? (waiting ? <Loader2 className="size-4 animate-spin" aria-hidden="true" /> : <span className="block max-w-32 truncate">{playing ? shortPlaylistLabel(label) : known ? S.s_tat_3286064e : ""}</span>)
         : <>{waiting ? <Loader2 className="size-4 animate-spin" aria-hidden="true" /> : <EighthNote className="size-4" />}<span className="max-w-40 truncate max-sm:hidden @max-[83rem]:hidden" title={playing ? label : undefined}>{playing ? shortPlaylistLabel(label) : ""}</span></>}
       width="w-72"
@@ -634,6 +636,7 @@ function MusicMenuFor({ bookId, look }: { bookId: string; look: MenuLook }) {
       {(error || musicOffline) && <p className="px-2 pb-1 pt-2 text-xs text-fg-2">{error || musicOffline}</p>}
     </MotionRegion></MenuShell>
   );
+  return audio ? <SheetMusic enabled={playing} busy={busy} level={levelDb} onToggle={on=>choose(on ? null : "off")} onLevel={setLevel}>{menu}</SheetMusic> : menu;
 }
 
 /** Giọng đọc của "Nghe ngay" (chương chỉ-có-chữ đang nghe): chọn nhớ riêng cho cuốn này và làm giọng chung cho cuốn khác; đổi giữa chừng
@@ -1557,7 +1560,7 @@ function AudioFxMenu() {
   const toneGuard=useContext(ToneExitGuard)??localGuard;
   const change=(next:boolean)=>{if(!next&&toneGuard.current)toneGuard.current(()=>setOpen(false));else setOpen(next);};
   // Nhạc nền ngay dưới Giọng đọc (không còn dòng riêng trong "…"): to nhỏ của lời và nhạc ở cùng một chỗ.
-  return <MenuShell open={open} onOpenChange={change} label={S.s_copy_c1303271503d} caption={S.s_copy_c1303271503d} icon={SlidersHorizontal} trigger={S.s_copy_cc27613e0895} look="row" width="w-[22.5rem] max-w-[calc(100vw-1.5rem)]"><AudioFxPanel leaveGuard={toneGuard} setVolume={setVolume} music={<MusicMenu look="row" />}/></MenuShell>;
+  return <MenuShell open={open} onOpenChange={change} label={S.s_copy_c1303271503d} caption={S.s_copy_c1303271503d} icon={SlidersHorizontal} trigger={S.s_copy_cc27613e0895} look="row" width="w-[22.5rem] max-w-[calc(100vw-1.5rem)]"><AudioFxPanel leaveGuard={toneGuard} setVolume={setVolume} music={<MusicMenu look="row" audio />}/></MenuShell>;
 }
 function MoreMenu({ scope, children }: { scope: VoiceMenuScope; children: ReactNode }) {
   const [open, setOpen] = useState(false);

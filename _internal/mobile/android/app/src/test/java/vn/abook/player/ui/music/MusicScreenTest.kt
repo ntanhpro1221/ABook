@@ -6,6 +6,9 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.Density
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.hasTestTag
@@ -93,7 +96,7 @@ class MusicScreenTest {
         rule.waitForIdle()
     }
 
-    private fun showPlayer(dark: Boolean = false, playerMusic: PlayerMusic = PlayerMusic(credit, scene = true)) {
+    private fun showPlayer(dark: Boolean = false, playerMusic: PlayerMusic = PlayerMusic(credit, scene = true), fontScale: Float = 1f) {
         val model = FakeNowPlayingModel(FakeNowPlayingModel.demoState().copy(music = playerMusic), music = music)
         rule.setContent {
             AbookTheme(dark) {
@@ -102,7 +105,10 @@ class MusicScreenTest {
                     window.open()
                     window.openSheet(PlayerSheet.More)
                 }
-                NowPlayingLayer(model, window, sampleClock = false) { Box(Modifier.fillMaxSize().background(Abook.colors.bg)) }
+                val density = LocalDensity.current
+                CompositionLocalProvider(LocalDensity provides Density(density.density, fontScale)) {
+                    NowPlayingLayer(model, window, sampleClock = false) { Box(Modifier.fillMaxSize().background(Abook.colors.bg)) }
+                }
             }
         }
         rule.waitForIdle()
@@ -147,10 +153,37 @@ class MusicScreenTest {
         rule.waitForIdle()
     }
 
+    private fun audioSheet(dark: Boolean, scale: Float = 1f) {
+        showPlayer(dark, fontScale = scale); openAudio()
+        val name = "audio_sheet_${if (scale > 1f) "130_" else ""}${if (dark) "dark" else "light"}"
+        shot(name)
+        rule.onNodeWithTag("audiofx_page").performScrollToNode(hasTestTag("audiofx_reset"))
+        shot("${name}_bottom")
+        rule.onNodeWithTag("audiofx_page").performScrollToNode(hasTestTag("audiofx_music_switch"))
+        rule.onNodeWithTag("audiofx_music_switch").performClick(); rule.waitForIdle()
+        assertTrue(rule.onAllNodesWithTag("audiofx_music_more").fetchSemanticsNodes().isEmpty())
+        assertTrue(rule.onAllNodesWithTag("audiofx_music_level").fetchSemanticsNodes().isEmpty())
+        shot("${name}_off")
+        rule.onNodeWithTag("audiofx_music_switch").performClick(); rule.waitForIdle()
+        rule.onNodeWithTag("audiofx_music_more").assertIsDisplayed()
+    }
+    @Test fun audioSheetLight() = audioSheet(false)
+    @Test fun audioSheetDark() = audioSheet(true)
+    @Test fun audioSheetLargeLight() = audioSheet(false, 1.3f)
+    @Test fun audioSheetLargeDark() = audioSheet(true, 1.3f)
+
+    private fun fullAudioSheet(dark: Boolean, scale: Float) {
+        showPlayer(dark, fontScale = scale); openAudio()
+        shot("audio_sheet_full_${if (scale > 1f) "130_" else ""}${if (dark) "dark" else "light"}")
+    }
+    @Test @Config(qualifiers = "w360dp-h1400dp-xxhdpi") fun audioSheetFullLight() = fullAudioSheet(false, 1f)
+    @Test @Config(qualifiers = "w360dp-h1400dp-xxhdpi") fun audioSheetFullDark() = fullAudioSheet(true, 1f)
+    @Test @Config(qualifiers = "w360dp-h1400dp-xxhdpi") fun audioSheetFullLargeLight() = fullAudioSheet(false, 1.3f)
+    @Test @Config(qualifiers = "w360dp-h1400dp-xxhdpi") fun audioSheetFullLargeDark() = fullAudioSheet(true, 1.3f)
+
     private fun playerMusicSheet(dark: Boolean) {
         showPlayer(dark)
         openAudio()
-        rule.onNodeWithText("Theo cảnh").assertIsDisplayed()
         chooseMusic()
         rule.onNodeWithTag("player_sheet_music").assertIsDisplayed()
         rule.onNodeWithTag("music_option_auto").assertIsDisplayed()

@@ -3,8 +3,8 @@ import { readFileSync } from 'node:fs';
 import { expect, it } from 'vitest';
 
 it('uses the shared solid switch in audio controls', () => {
-  for (const name of ['AudioFxPanel', 'TonePage']) {
-    const source = readFileSync(new URL(`../listen/${name}.tsx`, import.meta.url), 'utf8');
+  for (const name of ['../shared/SheetControls', '../listen/TonePage']) {
+    const source = readFileSync(new URL(`${name}.tsx`, import.meta.url), 'utf8');
     expect(source).toContain("import { Switch } from '@/desktop/Switch'");
     expect(source).not.toContain('Switch.Root');
   }

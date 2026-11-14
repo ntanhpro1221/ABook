@@ -145,7 +145,7 @@ Column {
             Reveal { shown: root.dense }
             anchors.verticalCenter: parent.verticalCenter
             width: parent.width - valueBox.width - Theme.s12
-            Text { width: parent.width; text: root.label; wrapMode: Text.Wrap; color: Theme.text; font.pixelSize: Theme.sizeBodySmall; font.weight: Theme.weightMedium }
+            Text { width: parent.width; text: root.label; wrapMode: Text.Wrap; color: Theme.text; font.pixelSize: Theme.sizeBodySmall; font.weight: Theme.weightRegular }
             Text { Reveal { shown: root.hint !== "" } width: parent.width; text: root.hint; wrapMode: Text.Wrap; color: Theme.text2; font.pixelSize: Theme.sizeCaption }
         }
         Item {

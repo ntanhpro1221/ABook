@@ -289,7 +289,7 @@ export function ValuePicker({
       {dense ? (
         <div className="flex min-h-5 items-center justify-between gap-3">
           <div className="min-w-0">
-            <div className="text-sm font-medium text-pretty">{label}</div>
+            <div className="text-sm text-fg text-pretty">{label}</div>
             <Reveal when={hint}><div className="mt-1 text-xs leading-snug text-fg-2 [overflow-wrap:anywhere]">{hint}</div></Reveal>
           </div>
           {valueField}

@@ -63,7 +63,7 @@ QML_SKIP = {"BenchScenario.qml"}
 # Màn: (tên, file QML, nguồn web). Nguồn web = (file, tên hàm / hằng cấp trên cùng) - None là cả file.
 SCREENS: list[tuple[str, tuple[str, ...], tuple[tuple[str, tuple[str, ...] | None], ...]]] = [
     ("Lịch sử phân vai", ("CastHistory.qml",), (("studio/CastHistory.tsx", None),)),
-    ("Âm thanh", ("AudioFxPanel.qml", "AudioFxSlider.qml", "TonePage.qml"), (("listen/AudioFxPanel.tsx", None), ("listen/audioFx.ts", None), ("listen/TonePage.tsx", None))),
+    ("Âm thanh", ("AudioFxPanel.qml", "AudioFxSlider.qml", "TonePage.qml", "SheetRow.qml", "SheetSection.qml"), (("listen/AudioFxPanel.tsx", None), ("listen/audioFx.ts", None), ("listen/TonePage.tsx", None), ("shared/SheetControls.tsx", None), ("shared/SheetMusic.tsx", None))),
     ("Khay và cửa sổ mini", ("DesktopTray.qml", "TrayMenuModel.qml", "WindowMode.qml", "MiniPlayer.qml"), ()),
     ("Nhạc", ("MusicScreen.qml", "MusicTrackRow.qml", "MusicTrackDetail.qml", "MusicBookSection.qml", "MusicOpenRow.qml", "MusicLibraryLogic.js"),
      (("music/MusicScreen.tsx", None), ("music/TrackSheet.tsx", None), ("music/BookMusic.tsx", None), ("music/NowPlayingMusic.tsx", None), ("music/OpenMusicRow.tsx", None), ("music/library.ts", None))),

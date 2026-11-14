@@ -7,6 +7,8 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+- Tấm Âm thanh gọn theo ba nhóm, đồng nhất hàng và thanh trượt trên điện thoại, web và máy tính.
+
 - Nghe thử nhạc có báo đang tải, thử bản sao khi nguồn lỗi và báo khi không phát được.
 - Menu cuộn để giữ đủ chữ trên màn thấp hoặc khi phóng to; chuyển bộ lọc Thư viện bớt khựng.
 

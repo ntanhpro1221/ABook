@@ -301,3 +301,5 @@ MusicTrackDetail 1.0 ../../../../qml/MusicTrackDetail.qml
 MusicTrackRow 1.0 ../../../../qml/MusicTrackRow.qml
 MusicBookSection 1.0 ../../../../qml/MusicBookSection.qml
 MusicOpenRow 1.0 ../../../../qml/MusicOpenRow.qml
+SheetRow 1.0 ../../../../qml/SheetRow.qml
+SheetSection 1.0 ../../../../qml/SheetSection.qml

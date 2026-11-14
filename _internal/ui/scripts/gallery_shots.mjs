@@ -71,8 +71,9 @@ async function main() {
     console.log(`${entries.length} mục × ${themes.length} chủ đề · ${executable}`);
     for (const entry of entries) {
       for (const theme of themes) {
-        const mobile = entry.platform === "phone";
-        const page = await openPage(cdp, { width: entry.width, height: entry.height, scale: args.scale ?? (mobile ? 2 : 1), mobile, theme });
+        const width = args.width ?? entry.width, height = args.height ?? entry.height;
+        const mobile = args.width ? width <= 640 : entry.platform === "phone";
+        const page = await openPage(cdp, { width, height, scale: args.scale ?? (mobile ? 2 : 1), mobile, theme });
         const file = `${entry.id.replace(/\//g, "__")}-${theme}.png`;
         const problems = [];
         const started = Date.now();
@@ -80,6 +81,7 @@ async function main() {
           await cdp.send("Page.navigate", { url: `${base}?frame=${encodeURIComponent(entry.id).replace(/%2F/g, "/")}&theme=${theme}` }, page.sessionId);
           await waitUntil(cdp, page.sessionId, "Boolean(window.__gallery && window.__gallery.ready)", args.timeout, `mục ${entry.id}`);
           await evaluate(cdp, page.sessionId, "document.fonts ? document.fonts.ready.then(() => true) : true");
+          if (args.fontScale) await evaluate(cdp, page.sessionId, `document.documentElement.style.fontSize = ${JSON.stringify(`${16 * args.fontScale}px`)}`);
           await evaluate(cdp, page.sessionId, STILL);
           const report = await evaluate(cdp, page.sessionId, "window.__gallery");
           // --probe <file.js>: biểu thức máy dò chạy trên màn đã đứng yên; mảng khác rỗng = vấn đề (vd chữ mồ côi).
@@ -94,7 +96,7 @@ async function main() {
           await cdp.send("Target.closeTarget", { targetId: page.targetId }).catch(() => undefined);
         }
         if (problems.length) failures += 1;
-        shots.push({ ...entry, theme, file, problems });
+        shots.push({ ...entry, width, height, fontScale: args.fontScale ?? 1, theme, file, problems });
         console.log(`${problems.length ? "!!" : "ok"} ${entry.id} (${theme}) ${((Date.now() - started) / 1000).toFixed(1)}s${problems.length ? `\n   ${problems.join("\n   ")}` : ""}`);
       }
     }
