@@ -1,7 +1,7 @@
 """VieNeu reads a phrase the text says twice one time too many - and a new seed does not help.
 
 repeat_design.md (12-11-2026): every real repeat in four books has one shape. A phrase of two or
-more syllables appears twice in the line ("Chạy mau! Chạy mau!", "là đôi giày, là đôi giày"); after
+more syllables appears twice in the line ("Tắt bếp! Tắt bếp!", "là đôi giày, là đôi giày"); after
 the second copy the model's implicit text pointer jumps back to just after the first and reads
 the middle again. At Hello every seed did it (1915 6/6, 2153 6/6), so the seed-only repair round
 never rescued the class, and four such segments were even published as `warning` through the
@@ -50,7 +50,7 @@ from abook.tts import GENERATION_CEILING_METRIC, VIENEU_SDK_CHUNK_MAX_CHARS
 
 DESIGN_CASES = [
     # (text, ASR n-gram, expected pieces) - the shapes of repeat_design.md F1, in sentences written for this test.
-    ("Chạy mau! Chạy mau! Chạy mau!", "chạy mau", ["Chạy mau!", "Chạy mau!", "Chạy mau!"]),
+    ("Tắt bếp! Tắt bếp! Tắt bếp!", "tắt bếp", ["Tắt bếp!", "Tắt bếp!", "Tắt bếp!"]),
     (
         "Anh ấy mở cửa. Là đôi giày, là đôi giày. Trời bên ngoài mưa to.",
         "là dôi giày",  # normalize_transcript: đ -> d, tones kept
@@ -93,9 +93,9 @@ def test_without_an_asr_phrase_the_longest_repeat_of_the_text_is_used():
 
 
 def test_an_unmapped_asr_phrase_does_not_pick_an_unrelated_repeat():
-    text = "Chạy mau! Chạy mau! Chạy mau!"
+    text = "Tắt bếp! Tắt bếp! Tắt bếp!"
     assert BookPipeline._repeat_alias_pieces(text, "đọc sách ở thư viện") == [text]
-    assert BookPipeline._repeat_alias_pieces(text, "") == ["Chạy mau!"] * 3
+    assert BookPipeline._repeat_alias_pieces(text, "") == ["Tắt bếp!"] * 3
 
 
 def test_two_long_hyphenated_words_are_still_a_two_word_line():
@@ -120,8 +120,8 @@ def test_an_english_span_is_never_cut():
 
 
 def test_closing_quotes_after_the_mark_still_count_as_the_boundary():
-    text = "“Chạy mau!” “Chạy mau!”"
-    assert split_text_at_repeated_phrase(text, None) == ["“Chạy mau!”", "“Chạy mau!”"]
+    text = "“Tắt bếp!” “Tắt bếp!”"
+    assert split_text_at_repeated_phrase(text, None) == ["“Tắt bếp!”", "“Tắt bếp!”"]
 
 
 def test_tone_fold_matches_whisper_tone_errors():
@@ -488,7 +488,7 @@ def test_two_decodes_of_one_seed_cannot_supply_the_two_take_trigger(tmp_path, mo
     ) is None
 
 
-SHOUT = "Chạy mau! Chạy mau! Chạy mau!"
+SHOUT = "Tắt bếp! Tắt bếp! Tắt bếp!"
 
 
 def test_a_shout_far_longer_than_its_syllables_goes_to_the_alias_split_after_one_take(tmp_path, monkeypatch):
@@ -501,7 +501,7 @@ def test_a_shout_far_longer_than_its_syllables_goes_to_the_alias_split_after_one
     assert signal[SYLLABLE_DURATION_OUTLIER_METRIC] == 1.0
     _watch_alias_takes(pipeline, monkeypatch)
 
-    pipeline._verify_chapter_audio(chapter, _SavedTranscripts(SHOUT, SHOUT + " Chạy mau!"))
+    pipeline._verify_chapter_audio(chapter, _SavedTranscripts(SHOUT, SHOUT + " Tắt bếp!"))
 
     promoted = _promoted(pipeline, row)
     assert int(promoted["repair_round"]) == 0
