@@ -1,5 +1,31 @@
 # Chuẩn hoá chữ để đọc tiếng Việt
 
+## Bản sửa tnfix173 — 15-11-2026
+
+551 câu tự viết: sau G2P đạt 551/551 ở cả Nghe ngay và Studio với rubric bổ sung.
+Chỉ đo âm vị gửi VieNeu; chưa đo chất lượng audio.
+Trên đúng 485 đề cũ, giữ rubric tnfix172: 434/433 → 461/461 ca sau G2P.
+Bổ sung 24 ca rubric có lý do: tên chữ Anh, phương ngữ lẻ/linh, hệ số lần,
+phiên âm Nhật theo policy, tham chiếu nguyên âm Việt và một số nguyên không có nhãn mã/lượng.
+Mọi đáp án cũ được giữ. Không đổi phép so âm vị.
+Với rubric bổ sung, cùng 485 đề đạt 485/485 ở hai đường; 66 đề mới đều đạt.
+88 ô loại × đường × tầng không giảm, cả khi giữ rubric tnfix172.
+
+Luật chung nhận AM/PM, điện thoại có nhóm, mã chữ-số theo nhãn mã,
+khoảng dùng gạch dài hoặc dấu ~, phần trăm thập phân và đơn vị V/GB/MB/KB/TB/dB.
+Đơn vị nhận dạng liền và phân nhóm: `1.000V`, `1,000 MB`, `0.5GB`.
+12 AM → mười hai giờ đêm; 12 PM → mười hai giờ trưa.
+Số nguyên không có 0 đầu mặc định là lượng; nhãn mã/điện thoại/ID/serial/# thắng.
+VD/CĐ/SĐT dùng từ điển chung; tr. trước số được đọc là trang.
+Studio dùng luật mũi tên chung trước bước đổi ký hiệu; cue thở dài cùng đọc hầy.
+Đơn vị đã được xác định nghĩa không được lượt La Mã ghi đè.
+Cache đọc Python/Kotlin 21 → 22; chỉ chữ gửi TTS thay đổi, chữ hiển thị giữ nguyên.
+Không bổ sung IPA hoặc từ điển âm vị ngoài sea-g2p.
+
+66 đề/đáp án mới đã đối chiếu chỉ mục Corpus: không có chuỗi tám chữ trùng.
+Fixture chung Python/Kotlin: `tests/fixtures/readaloud/tnfix173/cases.json`.
+Sàn benchmark cập nhật đủ 551 đề, dung sai giảm 0.
+
 ## Bản sửa tnfix172 — 14-11-2026
 
 Nhánh `dev/tnfix172` từ `0964e4cd2`, giữ runtime sea-g2p 0.10.0 / VieNeu 3.8.3.

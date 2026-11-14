@@ -4620,6 +4620,18 @@
    "path": "_internal/docs/tn_benchmark/report.md",
    "sha256": "3d3141b823e58013f513a16cebbcf5f3a3be3db9375af13fa64186162fd87f95",
    "reason": "Exact generated IPA from the 485 authored TN benchmark cases and accepted readings; expanded fixture has zero eight-word overlap across 523400 Corpus files. This review covers IPA only."
+  },
+  {
+   "kind": "corpus",
+   "path": "_internal/tests/fixtures/tn_benchmark/cases.jsonl",
+   "sha256": "cfd96e6417c041dbceb32a5f1045deb684c62cac7b26ef57f676893c998b6056",
+   "reason": "Exact synthetic vocalization alternatives: the scanner concatenates five existing a tokens and the two-vowel a-a reference into seven identical letters across JSON strings. No field contains a seven-word sentence; all 551 inputs/answers have zero eight-word Corpus matches. This approves only this exact JSON line."
+  },
+  {
+   "kind": "corpus",
+   "path": "_internal/tests/fixtures/tn_benchmark/cases.jsonl",
+   "sha256": "1b8375a137250df91094501c0ca0f6bc29a15d67ac96d185ecb62a9d9304cfe3",
+   "reason": "Exact synthetic vocalization alternatives: the scanner concatenates five existing a tokens and the two-vowel a-a reference into seven identical letters across JSON strings. No field contains a seven-word sentence; all 551 inputs/answers have zero eight-word Corpus matches. This approves only this exact JSON line."
   }
  ]
 }

@@ -58,7 +58,8 @@ class ClipCache(
         // 19: integrated numeric/loanword rules and NFC boundaries, shared with desktop cache.py.
         // 20: dotted date/time/version contexts and every fractional zero, shared with cache.py.
         // 21 refreshes amounts, addresses, symbols and vocal continuations.
-        const val CACHE_RULES = 21
+        // 22 refreshes structured times, grouped phones, units and numeric intervals.
+        const val CACHE_RULES = 22
         const val RULES = "${Names.RULE_VERSION}.$CACHE_RULES"
 
         /** `rules`: phiên bản luật đọc trong khoá (mặc định [RULES]; test đổi để thấy khoá đổi theo). */

@@ -1,0 +1,470 @@
+[
+  {
+    "id": "tn173_game_01",
+    "category": "game",
+    "text": "Đạt Lv.7.",
+    "spoken": "Đạt le-vồ 7.",
+    "studio": "Đạt le-vồ 7."
+  },
+  {
+    "id": "tn173_game_02",
+    "category": "game",
+    "text": "Nhận x3.",
+    "spoken": "Nhận nhân 3.",
+    "studio": "Nhận nhân 3."
+  },
+  {
+    "id": "tn173_game_03",
+    "category": "game",
+    "text": "Quà 6x.",
+    "spoken": "Quà 6 lần.",
+    "studio": "Quà 6 lần."
+  },
+  {
+    "id": "tn173_game_04",
+    "category": "game",
+    "text": "Thêm +8 STR.",
+    "spoken": "Thêm +8 <en>S T R</en>.",
+    "studio": "Thêm cộng tám <en>S T R</en>."
+  },
+  {
+    "id": "tn173_game_05",
+    "category": "game",
+    "text": "MP -9.",
+    "spoken": "mờ pê trừ 9.",
+    "studio": "mờ pê trừ 9."
+  },
+  {
+    "id": "tn173_game_06",
+    "category": "game",
+    "text": "DEF 70.",
+    "spoken": "<en>D E F</en> bảy mươi.",
+    "studio": "<en>D E F</en> bảy mươi."
+  },
+  {
+    "id": "tn173_phone_code_01",
+    "category": "phone_code",
+    "text": "Gọi 0782 956 314.",
+    "spoken": "Gọi không bảy tám hai chín năm sáu ba một bốn.",
+    "studio": "Gọi không bảy tám hai chín năm sáu ba một bốn."
+  },
+  {
+    "id": "tn173_phone_code_02",
+    "category": "phone_code",
+    "text": "SĐT +84 783 926 154.",
+    "spoken": "số điện thoại cộng tám bốn bảy tám ba chín hai sáu một năm bốn.",
+    "studio": "số điện thoại cộng tám bốn bảy tám ba chín hai sáu một năm bốn."
+  },
+  {
+    "id": "tn173_phone_code_03",
+    "category": "phone_code",
+    "text": "Mã QZ76.",
+    "spoken": "Mã quy dét bảy sáu.",
+    "studio": "Mã quy dét bảy sáu."
+  },
+  {
+    "id": "tn173_phone_code_04",
+    "category": "phone_code",
+    "text": "Mã OTP 738496.",
+    "spoken": "Mã <en>O T P</en> bảy ba tám bốn chín sáu.",
+    "studio": "Mã <en>O T P</en> bảy ba tám bốn chín sáu."
+  },
+  {
+    "id": "tn173_phone_code_05",
+    "category": "phone_code",
+    "text": "Phòng B206.",
+    "spoken": "Phòng bê hai trăm lẻ sáu.",
+    "studio": "Phòng bê hai trăm lẻ sáu."
+  },
+  {
+    "id": "tn173_phone_code_06",
+    "category": "phone_code",
+    "text": "Mã 590378.",
+    "spoken": "Mã năm chín không ba bảy tám.",
+    "studio": "Mã năm chín không ba bảy tám."
+  },
+  {
+    "id": "tn173_range_01",
+    "category": "range",
+    "text": "Chọn 4–9 nắp.",
+    "spoken": "Chọn bốn đến chín nắp.",
+    "studio": "Chọn bốn đến chín nắp."
+  },
+  {
+    "id": "tn173_range_02",
+    "category": "range",
+    "text": "Đợi 13—16 phút.",
+    "spoken": "Đợi mười ba đến mười sáu phút.",
+    "studio": "Đợi mười ba đến mười sáu phút."
+  },
+  {
+    "id": "tn173_range_03",
+    "category": "range",
+    "text": "Mức 2.5~3.5.",
+    "spoken": "Mức hai phẩy năm đến ba phẩy năm.",
+    "studio": "Mức hai phẩy năm đến ba phẩy năm."
+  },
+  {
+    "id": "tn173_range_04",
+    "category": "range",
+    "text": "Nhiệt độ -8–2 °C.",
+    "spoken": "Nhiệt độ âm tám đến hai °C.",
+    "studio": "Nhiệt độ âm tám đến hai °C."
+  },
+  {
+    "id": "tn173_range_05",
+    "category": "range",
+    "text": "Cần 6-9 hộp.",
+    "spoken": "Cần 6 đến 9 hộp.",
+    "studio": "Cần 6 đến 9 hộp."
+  },
+  {
+    "id": "tn173_range_06",
+    "category": "range",
+    "text": "Đo 14–18 cm.",
+    "spoken": "Đo mười bốn đến mười tám cm.",
+    "studio": "Đo mười bốn đến mười tám cm."
+  },
+  {
+    "id": "tn173_vocalization_01",
+    "category": "vocalization",
+    "text": "Eeeeeee!",
+    "spoken": "e… e!",
+    "studio": "e… e!"
+  },
+  {
+    "id": "tn173_vocalization_02",
+    "category": "vocalization",
+    "text": "Uuuuuuu!",
+    "spoken": "u… u!",
+    "studio": "u… u!"
+  },
+  {
+    "id": "tn173_vocalization_03",
+    "category": "vocalization",
+    "text": "Aaaaaaa!",
+    "spoken": "a… a!",
+    "studio": "a… a!"
+  },
+  {
+    "id": "tn173_vocalization_04",
+    "category": "vocalization",
+    "text": "Ááááá!",
+    "spoken": "á… a!",
+    "studio": "á… a!"
+  },
+  {
+    "id": "tn173_vocalization_05",
+    "category": "vocalization",
+    "text": "Ôôôôô!",
+    "spoken": "ô… ô!",
+    "studio": "ô… ô!"
+  },
+  {
+    "id": "tn173_vocalization_06",
+    "category": "vocalization",
+    "text": "Ưưưưư!",
+    "spoken": "ư… ư!",
+    "studio": "ư… ư!"
+  },
+  {
+    "id": "tn173_time_01",
+    "category": "time",
+    "text": "Chuông lúc 6 AM.",
+    "spoken": "Chuông lúc sáu giờ sáng.",
+    "studio": "Chuông lúc sáu giờ sáng."
+  },
+  {
+    "id": "tn173_time_02",
+    "category": "time",
+    "text": "Họp lúc 9 PM.",
+    "spoken": "Họp lúc chín giờ tối.",
+    "studio": "Họp lúc chín giờ tối."
+  },
+  {
+    "id": "tn173_time_03",
+    "category": "time",
+    "text": "Gặp lúc 4:25 PM.",
+    "spoken": "Gặp lúc bốn giờ hai mươi lăm phút chiều.",
+    "studio": "Gặp lúc bốn giờ hai mươi lăm phút chiều."
+  },
+  {
+    "id": "tn173_time_04",
+    "category": "time",
+    "text": "Đợi lúc 10:05 AM.",
+    "spoken": "Đợi lúc mười giờ năm phút sáng.",
+    "studio": "Đợi lúc mười giờ năm phút sáng."
+  },
+  {
+    "id": "tn173_time_05",
+    "category": "time",
+    "text": "Mở lúc 7h30.",
+    "spoken": "Mở lúc 7h30.",
+    "studio": "Mở lúc 7h30."
+  },
+  {
+    "id": "tn173_time_06",
+    "category": "time",
+    "text": "Đóng lúc 21:00.",
+    "spoken": "Đóng lúc 21:00.",
+    "studio": "Đóng lúc 21:00."
+  },
+  {
+    "id": "tn173_cardinal_large_01",
+    "category": "cardinal_large",
+    "text": "Đếm 3000000000.",
+    "spoken": "Đếm ba tỷ.",
+    "studio": "Đếm ba tỷ."
+  },
+  {
+    "id": "tn173_cardinal_large_02",
+    "category": "cardinal_large",
+    "text": "Ghi 20000000000.",
+    "spoken": "Ghi hai mươi tỷ.",
+    "studio": "Ghi hai mươi tỷ."
+  },
+  {
+    "id": "tn173_cardinal_large_03",
+    "category": "cardinal_large",
+    "text": "Có 17000000 nắp.",
+    "spoken": "Có mười bảy triệu nắp.",
+    "studio": "Có mười bảy triệu nắp."
+  },
+  {
+    "id": "tn173_cardinal_large_04",
+    "category": "cardinal_large",
+    "text": "Tổng 6000000000.",
+    "spoken": "Tổng sáu tỷ.",
+    "studio": "Tổng sáu tỷ."
+  },
+  {
+    "id": "tn173_cardinal_large_05",
+    "category": "cardinal_large",
+    "text": "Đủ 80000000.",
+    "spoken": "Đủ tám mươi triệu.",
+    "studio": "Đủ tám mươi triệu."
+  },
+  {
+    "id": "tn173_cardinal_large_06",
+    "category": "cardinal_large",
+    "text": "Đếm 10.000.000.",
+    "spoken": "Đếm mười triệu.",
+    "studio": "Đếm mười triệu."
+  },
+  {
+    "id": "tn173_abbrev_vi_01",
+    "category": "abbrev_vi",
+    "text": "Có VD. khác.",
+    "spoken": "Có ví dụ. khác.",
+    "studio": "Có ví dụ. khác."
+  },
+  {
+    "id": "tn173_abbrev_vi_02",
+    "category": "abbrev_vi",
+    "text": "Xem tr. 8.",
+    "spoken": "Xem trang tám.",
+    "studio": "Xem trang tám."
+  },
+  {
+    "id": "tn173_abbrev_vi_03",
+    "category": "abbrev_vi",
+    "text": "Chọn CĐ.",
+    "spoken": "Chọn cao đẳng.",
+    "studio": "Chọn cao đẳng."
+  },
+  {
+    "id": "tn173_abbrev_vi_04",
+    "category": "abbrev_vi",
+    "text": "Ghi SĐT.",
+    "spoken": "Ghi số điện thoại.",
+    "studio": "Ghi số điện thoại."
+  },
+  {
+    "id": "tn173_abbrev_vi_05",
+    "category": "abbrev_vi",
+    "text": "Gặp GVCN.",
+    "spoken": "Gặp giáo viên chủ nhiệm.",
+    "studio": "Gặp giáo viên chủ nhiệm."
+  },
+  {
+    "id": "tn173_abbrev_vi_06",
+    "category": "abbrev_vi",
+    "text": "Mở CLB.",
+    "spoken": "Mở câu lạc bộ.",
+    "studio": "Mở câu lạc bộ."
+  },
+  {
+    "id": "tn173_japanese_01",
+    "category": "japanese",
+    "text": "Yuna-sama tới.",
+    "spoken": "Giu-na-xa-ma tới.",
+    "studio": "Giu-na-xa-ma tới.",
+    "origin": "ja"
+  },
+  {
+    "id": "tn173_japanese_02",
+    "category": "japanese",
+    "text": "Ohayou, ngồi nhé.",
+    "spoken": "ô-ha-giô, ngồi nhé.",
+    "studio": "ô-ha-giô, ngồi nhé.",
+    "origin": "ja"
+  },
+  {
+    "id": "tn173_japanese_03",
+    "category": "japanese",
+    "text": "Onee-chan chờ.",
+    "spoken": "ô-ne-chan chờ.",
+    "studio": "ô-ne-chan chờ.",
+    "origin": "ja"
+  },
+  {
+    "id": "tn173_japanese_04",
+    "category": "japanese",
+    "text": "Yuuki đứng đây.",
+    "spoken": "Giu-ki đứng đây.",
+    "studio": "Giu-ki đứng đây.",
+    "origin": "ja"
+  },
+  {
+    "id": "tn173_japanese_05",
+    "category": "japanese",
+    "text": "Sensei mở hộp.",
+    "spoken": "xen-xê mở hộp.",
+    "studio": "xen-xê mở hộp.",
+    "origin": "ja"
+  },
+  {
+    "id": "tn173_japanese_06",
+    "category": "japanese",
+    "text": "Shouta đóng nắp.",
+    "spoken": "Sô-ta đóng nắp.",
+    "studio": "Sô-ta đóng nắp.",
+    "origin": "ja"
+  },
+  {
+    "id": "tn173_unit_01",
+    "category": "unit",
+    "text": "Pin 12 V.",
+    "spoken": "Pin mười hai vôn.",
+    "studio": "Pin mười hai vôn."
+  },
+  {
+    "id": "tn173_unit_02",
+    "category": "unit",
+    "text": "Ổ 4 GB.",
+    "spoken": "Ổ bốn ghi ga bai.",
+    "studio": "Ổ bốn ghi ga bai."
+  },
+  {
+    "id": "tn173_unit_03",
+    "category": "unit",
+    "text": "Mức 45 dB.",
+    "spoken": "Mức bốn mươi lăm đề xi ben.",
+    "studio": "Mức bốn mươi lăm đề xi ben."
+  },
+  {
+    "id": "tn173_unit_04",
+    "category": "unit",
+    "text": "Tệp 9 MB.",
+    "spoken": "Tệp chín mê ga bai.",
+    "studio": "Tệp chín mê ga bai."
+  },
+  {
+    "id": "tn173_unit_05",
+    "category": "unit",
+    "text": "Kho 3 TB.",
+    "spoken": "Kho ba tê ra bai.",
+    "studio": "Kho ba tê ra bai."
+  },
+  {
+    "id": "tn173_unit_06",
+    "category": "unit",
+    "text": "Tệp 28 KB.",
+    "spoken": "Tệp hai mươi tám ki lô bai.",
+    "studio": "Tệp hai mươi tám ki lô bai."
+  },
+  {
+    "id": "tn173_percentage_01",
+    "category": "percentage",
+    "text": "Đạt 3.75%.",
+    "spoken": "Đạt ba phẩy bảy năm%.",
+    "studio": "Đạt ba phẩy bảy năm%."
+  },
+  {
+    "id": "tn173_percentage_02",
+    "category": "percentage",
+    "text": "Đạt 4.05%.",
+    "spoken": "Đạt bốn phẩy không năm%.",
+    "studio": "Đạt bốn phẩy không năm%."
+  },
+  {
+    "id": "tn173_percentage_03",
+    "category": "percentage",
+    "text": "Đạt 6,5%.",
+    "spoken": "Đạt sáu phẩy năm%.",
+    "studio": "Đạt sáu phẩy năm%."
+  },
+  {
+    "id": "tn173_percentage_04",
+    "category": "percentage",
+    "text": "Giảm -7%.",
+    "spoken": "Giảm trừ 7%.",
+    "studio": "Giảm trừ 7%."
+  },
+  {
+    "id": "tn173_percentage_05",
+    "category": "percentage",
+    "text": "Đạt 18%.",
+    "spoken": "Đạt 18%.",
+    "studio": "Đạt 18%."
+  },
+  {
+    "id": "tn173_percentage_06",
+    "category": "percentage",
+    "text": "Đạt 0.25%.",
+    "spoken": "Đạt không phẩy hai năm%.",
+    "studio": "Đạt không phẩy hai năm%."
+  },
+  {
+    "id": "tn173_symbol_01",
+    "category": "symbol",
+    "text": "Nắp → hộp.",
+    "spoken": "Nắp thành hộp.",
+    "studio": "Nắp thành hộp."
+  },
+  {
+    "id": "tn173_symbol_02",
+    "category": "symbol",
+    "text": "Nhãn C&D.",
+    "spoken": "Nhãn C en D.",
+    "studio": "Nhãn C en D."
+  },
+  {
+    "id": "tn173_symbol_03",
+    "category": "symbol",
+    "text": "Tính 9−4.",
+    "spoken": "Tính 9 trừ 4.",
+    "studio": "Tính 9 trừ 4."
+  },
+  {
+    "id": "tn173_symbol_04",
+    "category": "symbol",
+    "text": "Tính 8÷2.",
+    "spoken": "Tính 8 chia 2.",
+    "studio": "Tính tám chia hai."
+  },
+  {
+    "id": "tn173_symbol_05",
+    "category": "symbol",
+    "text": "Mức ≈6.",
+    "spoken": "Mức xấp xỉ 6.",
+    "studio": "Mức xấp xỉ 6."
+  },
+  {
+    "id": "tn173_symbol_06",
+    "category": "symbol",
+    "text": "Sai số ±3.",
+    "spoken": "Sai số cộng trừ 3.",
+    "studio": "Sai số cộng trừ 3."
+  }
+]

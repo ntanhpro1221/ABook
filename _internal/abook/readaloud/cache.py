@@ -42,7 +42,8 @@ TYPES = {"mp3": "audio/mpeg", "wav": "audio/wav"}
 # 19 invalidates clips made before the integrated numeric/loanword rules and NFC input boundaries.
 # 20 resolves dotted date/time/version contexts and preserves fractional zeroes.
 # 21 refreshes amounts, addresses, symbols and untoned vocal continuations.
-CACHE_RULES = 21
+# 22 refreshes structured times, grouped phones, units and numeric intervals.
+CACHE_RULES = 22
 
 
 def rules_version() -> str:

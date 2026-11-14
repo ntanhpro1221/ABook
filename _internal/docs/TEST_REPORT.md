@@ -1,5 +1,23 @@
 # Test report
 
+## 15-11-2026 — structured TN forms and reviewed references
+
+Both production boundaries agree with all 551 authored benchmark references after G2P.
+On the same 485 cases with the tnfix172 rubric retained, code alone reaches 461/485 on both paths.
+The 24 additive reference changes retain every previous answer; 66 new cases cover the eleven weak classes.
+All 88 category/path/stage cells retain their tnfix172 floor, including with the old rubric.
+Source/display tokens and explicit book readings remain protected. No new phoneme table is introduced.
+Python and Kotlin share 66 text fixtures; six further boundary checks cover joined/grouped units and AM/PM at twelve.
+The benchmark floor has zero tolerance for a dropped numerator.
+Final Python TN/readaloud selection: 3406 passed, 4 skipped, 0 failed/errors.
+Android JVM/host-JNI TN selection: 564 passed, 3 skipped, 0 failed/errors.
+Python Android snapshot/readings/privacy modules: 62 passed; scanner/privacy regression modules: 103 passed.
+Exact JNI agreement covers 748 public tokens, 115 stretches and 12 authored occurrences.
+Optional private punctuation/calibration exports and Supertonic style assets account for the Android skips.
+Three Android paragraph-unit derivatives were regenerated for the Vietnamese GB reading; all 209 raw inputs/phones, source paragraphs, seeds and origin labels remain identical.
+Earlier runs recorded four Python expectation failures, then one joined-unit expectation failure; whole-selection retries above passed.
+
+
 ## 15-11-2026 — 0.4.172 integration
 
 Five normalization commits were integrated on the public 0.4.171 base.

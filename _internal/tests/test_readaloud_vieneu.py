@@ -115,7 +115,7 @@ def test_tn9_a_hyphenated_name_and_a_lone_one_before_a_non_english_word(text: st
 @pytest.mark.parametrize("text, said", [
     ("Giá 10G, 9,999G và 30.000G.", "Giá 10 giê, 9999 giê và ba mươi nghìn giê."),  # chữ cái G (giê), không phải "gờ"
     ("Mạng 5G và 1G trọng lực.", "Mạng 5 giê và 1 giê trọng lực."),
-    ("15GB, 3Gb, 100g, G10 và 4Gx.", "15GB, 3Gb, 100g, giê mười và 4Gx."),  # dính chữ sau, hay G thường (gam): giữ; G đứng trước số là mã (tên chữ + số)
+    ("15GB, 3Gb, 100g, G10 và 4Gx.", "mười lăm ghi ga bai, 3Gb, 100g, giê mười và 4Gx."),  # Byte units are quantities; other suffixes retain their own rules.
     ("10Gà, 7Gỗ và 2G.", "10Gà, 7Gỗ và 2 giê."),  # chữ có dấu cũng là chữ (Kotlin: \W chỉ ASCII - fixture dùng chung kiểm hai bên)
 ])
 def test_tn9_a_capital_g_after_a_number_is_the_letter_g(text: str, said: str) -> None:

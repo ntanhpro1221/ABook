@@ -1351,7 +1351,7 @@ class TTSCoordinator:
         # book readings still match their complete surface before inserting spaces.
         protected = [match.span() for pattern in (self._exact_pronunciation_pattern, self._pronunciation_pattern)
                      if pattern is not None for match in pattern.finditer(raw)]
-        source_text = spoken_symbols_to_words(reading_punctuation(raw, protected)[0])
+        source_text = spoken_symbols_to_words(reading_punctuation(raw, protected)[0], contextual_arrows=True)
         origins = [(index, index + 1) for index in range(len(source_text))]
         anchor_tags = [frozenset() for _character in source_text]
         anchors: list[dict[str, Any]] = []

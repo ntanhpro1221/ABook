@@ -62,6 +62,6 @@ class SpokenNumeralsTest {
     fun aCapitalGAfterANumberIsTheLetterG() {
         assertEquals("Giá 10 giê, 9999 giê và ba mươi nghìn giê.", said("Giá 10G, 9,999G và 30.000G."))
         assertEquals("Mạng 5 giê và 1 giê trọng lực.", said("Mạng 5G và 1G trọng lực."))
-        assertEquals("15GB, 3Gb, 100g, giê mười và 4Gx.", said("15GB, 3Gb, 100g, G10 và 4Gx."))
+        assertEquals("mười lăm ghi ga bai, 3Gb, 100g, giê mười và 4Gx.", said("15GB, 3Gb, 100g, G10 và 4Gx."))
     }
 }

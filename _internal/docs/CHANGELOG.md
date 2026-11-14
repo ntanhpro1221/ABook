@@ -7,6 +7,8 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+- Sửa đọc giờ, khoảng số, điện thoại, đơn vị và viết tắt khi nghe truyện.
+
 ## [0.4.172] - 2026-11-15
 
 - Đọc đúng hơn số dài, tiền và ký hiệu như sao, trừ, chia; giữ cách đọc mã số và số điện thoại.

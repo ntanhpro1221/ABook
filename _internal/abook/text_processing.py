@@ -416,7 +416,7 @@ def _spoken_symbols_in_span(text: str) -> str:
     return "".join(result)
 
 
-def spoken_symbols_to_words(text: str) -> str:
+def spoken_symbols_to_words(text: str, *, contextual_arrows: bool = False) -> str:
     """Turn characters the voice cannot say into words it can, or into a pause.
 
     The book's own text is never changed - this is only what gets handed to the voice, and
@@ -441,6 +441,14 @@ def spoken_symbols_to_words(text: str) -> str:
     conversion instead, which reaches the same tidy result - a fragment of converted text has
     no separators left in it, so that rule cannot fire twice.
     """
+    if contextual_arrows:
+        from .readaloud.vieneu import _arrows
+
+        tokens = re.findall(r'\S+', text)
+        spoken = list(tokens)
+        _arrows(spoken, tokens)
+        pieces = iter(spoken)
+        text = re.sub(r'\S+', lambda _m: next(pieces), text)
     # "=>" là một mũi tên, không phải "bằng" rồi "lớn hơn": đổi thành → trước mọi bước khác, để
     # luật sẵn có của SPOKEN_SEPARATORS lo phần còn lại (đầu dòng thì cắt, giữa câu thì phẩy).
     source = _censored_words_as_pauses(str(text).replace("=>", "→"))

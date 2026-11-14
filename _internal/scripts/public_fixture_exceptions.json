@@ -120,8 +120,8 @@
     "reason": "Pre-existing public regression fixture; exact bytes only, changes require renewed privacy review"
   },
   "_internal/tests/fixtures/vieneu/android/text.json": {
-    "sha256": "ae2486387112b5b7beedd8ea5fb306077223f269232e06a019e10594a88060e7",
-    "reason": "_internal/tests/fixtures/vieneu/android/text.json: exact derived speech snapshot under tnfix172 ou/ei, address and neutral-continuation rules. Compared every JSON path with the previously byte-reviewed 0964e4cd2 fixture; source cases, names and ordering are unchanged. No new sentence data; strict IPA and Corpus overlap scans remain active."
+    "sha256": "2299b6522fe34f5fea123d17be0a99c70e1820a7bc4a4edfa63032e68f6b1145",
+    "reason": "Preserved public authored Android input set; only numeric-unit normalization derivatives, frame counts and their generated sea-g2p phones changed. All 209 raw inputs/phones, paragraph source texts, seeds and origin labels were compared unchanged against d136b0f4e. No private calibration is included."
   },
   "_internal/tests/fixtures/vieneu/android/tokens.json": {
     "sha256": "83103fbe41222d6fbf4d124fe8efafd365505264d8bf9db1391be2e30baa4b17",

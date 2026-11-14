@@ -371,6 +371,8 @@ def _range(match: re.Match, mode: str = "") -> str:
         return " trừ ".join(parts)  # "8-2=6": phép trừ
     if len(parts) == 2:
         first, second = parts
+        if mode == "date" and 1 <= int(first) <= 31 and 1 <= int(second) <= 12:
+            return f"{first} tháng {second}"
         if mode == "duel" and first == second == "1":
             return "1 chọi 1"  # "đấu 1-1": một chọi một
         if mode == "join":
@@ -392,6 +394,8 @@ def _range_mode(plain: list[str], index: int) -> str:
         before.append(symbols.core(word).lower())
     if set(before) & {"tính", "trừ", "hiệu"}:
         return "minus"
+    if before[:1] and before[0] in {"ngày", "hôm", "mùng", "mồng"}:
+        return "date"
     if set(before[:1]) & RANGE_CODES or set(before) & RANGE_RATIO or (not before and plain[index].endswith(".")):
         return "join"
     return "duel" if set(before[:3]) & symbols.DUEL_WORDS else ""
@@ -439,7 +443,8 @@ def _dotted_number(match: re.Match, token: str, plain: list[str], index: int) ->
     if len(parts) != 2:
         return match.group()
     whole, fraction = parts
-    decimal = (len(whole) >= 4 or len(fraction) >= 4 or whole == "0"
+    decimal = (len(whole) >= 4 or len(fraction) >= 4 or whole == "0" or tail.startswith("%")
+               or prefix.endswith("-") or " đến " in prefix
                or before in {"là", "mức", "giá", "hệ", "cân"})
     if decimal or unit or _number_unit(plain, index):
         # sea-g2p strips fractional trailing zeroes after converting '.' to ','.
@@ -476,6 +481,8 @@ def _numbers(out: list[str], toks: list[str] | None = None) -> None:
                        lambda match: symbols.money_number(match.group()), token)
         token = re.sub(r"(?<![\w.,])(-?)([0-9]+),([0-9]+)(?!\w|[.,]\d)",
                        lambda match: ("âm " if match[1] else "") + decimal_reading(match[2], match[3]), token)
+        token = re.sub(r"(?<![\w.,])-([0-9]+)\.([0-9]+)(?!\w|[.,]\d)",
+                       lambda match: "âm " + decimal_reading(match[1], match[2]), token)
         token = DOTTED_NUMBER.sub(lambda match: _dotted_number(match, token, plain, index), token)
         # Do not delegate bare integers to sea-g2p's sentence-language guess.
         # Only a number standing alone is a count; dates, codes, money,
@@ -555,7 +562,8 @@ def _letter_codes(toks: list[str], out: list[str]) -> None:
         match = code.fullmatch(token)
         if match:
             parts = re.findall(r"[A-Z]+|\d+", match[2])
-            said = [integer_reading(part) if part.isdigit() else " ".join(abbreviations.LETTERS[c.lower()] for c in part) for part in parts]
+            identifier = any(symbols.core(t).casefold() in {"mã", "id", "serial", "otp"} for t in toks[max(0, index - 3):index])
+            said = [(" ".join(symbols.DIGIT_WORDS[int(c)] for c in part) if identifier else integer_reading(part)) if part.isdigit() else " ".join(abbreviations.LETTERS[c.lower()] for c in part) for part in parts]
             out[index] = match[1] + " ".join(said) + match[3]
 
 
@@ -747,9 +755,7 @@ _COUNTED_THOUSANDS = frozenset("vàng xu yên yen đồng đô usd vnd người 
 _THOUSANDS_LABELS = frozenset("giá tổng hp mp sp exp xp str agi vit int dex luk atk def".split())
 
 
-# Existing counted vocabulary plus population evidence from the measured Sugaru case.
-_BIGINT_COUNTED = _COUNTED_THOUSANDS | {"dân"}
-_BIGINT_CUES = frozenset("khoảng gần hơn tổng có".split())
+# Explicit identifiers retain digit readings; other unmarked integers are counts.
 _BIGINT = re.compile(r"[1-9][0-9]{6,}")
 _BIGINT_ID = re.compile(r"\b(?:mã|số điện thoại|điện thoại|sđt|tài khoản|id|serial)\b|#", re.I)
 
@@ -770,11 +776,10 @@ def _big_integers(out: list[str], toks: list[str] | None = None) -> None:
         after = plain[index + 1].strip(trim).lower() if index + 1 < len(plain) else ""
         if _BIGINT_ID.search(prefix) or before in {"thứ", "hạng", "năm", "-", "–", "/"} or after in {"-", "–", "/", "id", "serial", "mã"}:
             continue
-        if (len(core) < 10 or after in _BIGINT_COUNTED or before in _BIGINT_CUES
-                or prefix.endswith(("dân số", "tổng cộng", "lên tới"))):
-            start = len(token) - len(token.lstrip(OPENERS))
-            suffix = token[start + len(core):]
-            out[index] = token[:start] + integer_reading(core) + suffix
+        # Unmarked integers are counts; explicit identifier/phone syntax wins above.
+        start = len(token) - len(token.lstrip(OPENERS))
+        suffix = token[start + len(core):]
+        out[index] = token[:start] + integer_reading(core) + suffix
 
 
 def _thousands(out: list[str], toks: list[str] | None = None) -> None:
@@ -877,6 +882,7 @@ def _spoken_tokens(toks: list[str], origin: str | None = None, speaks_english: b
         return said
     out = list(toks)
     book_readings.apply_tokens(toks, out, readings)
+    _semantic_forms(toks, out)
     structural = symbols.read_currency(toks, out)
     structural.update(symbols.read_addresses(toks, out))
     _stutters(toks, out, origin, speaks_english, readings, direct_english)
@@ -908,10 +914,86 @@ def _spoken_tokens(toks: list[str], origin: str | None = None, speaks_english: b
     return [separate_digit_quotes(eth_words.sub(vietnamese_d_stroke, unicodedata.normalize('NFC', word))).rstrip() for word in out]
 
 
+def _semantic_forms(toks: list[str], out: list[str]) -> None:
+    """Resolve structured voice expressions before word/acronym classification.
+
+    Keep one output per source token, including consumed AM/PM and phone groups.
+    Book readings already assigned to a token always take precedence.
+    """
+    from .english_policy import POLICY
+
+    trim = OPENERS + CLOSERS + PUNCT_MARKS
+    atom = re.compile(r'([^\w+\-]*)([+\-]?[0-9]+(?:[.,][0-9]+)*)([^\w]*)')
+    core = [t.strip(trim) for t in toks]
+    def quantity(value: str) -> str:
+        sign = 'âm ' if value.startswith('-') else 'cộng ' if value.startswith('+') else ''
+        return sign + symbols.money_number(value.lstrip('+-'))
+    for index, token in enumerate(toks):
+        if out[index] != token:
+            continue
+        if core[index].casefold() == 'tr' and token.rstrip(CLOSERS).endswith('.') and index + 1 < len(toks) and core[index + 1].isdigit():
+            out[index] = token.replace('tr.', 'trang', 1)
+            continue
+        # A phone run needs phone syntax, not merely space-grouped quantities.
+        phone = re.fullmatch(r'(["\'“‘(\[]*)(\+?[0-9]+)(["\'”’)\].,;:!?…]*)', token)
+        if phone:
+            end = index + 1
+            while end < len(toks) and re.fullmatch(r'[0-9]{2,4}[.,;!?]?', toks[end]) and out[end] == toks[end]:
+                end += 1
+            groups = core[index:end]
+            digits = ''.join(groups).lstrip('+')
+            context = ' '.join(core[max(0, index - 4):index]).casefold()
+            if (len(groups) >= 2 and 9 <= len(digits) <= 15
+                    and (phone[2].startswith(('+', '0')) or re.search(r'điện thoại|sđt', context)
+                         or phone[2] == '84' and context.endswith('cộng'))):
+                for pos in range(index, end):
+                    out[pos] = re.sub(r'[0-9]+', lambda m: ' '.join(symbols.DIGIT_WORDS[int(c)] for c in m.group()), toks[pos]).replace('+', 'cộng ')
+                continue
+        # Number plus a physical/storage unit; casing remains significant (V != v).
+        joined = re.fullmatch(r'([^\w+\-]*)([+\-]?[0-9]+(?:[.,][0-9]+)*)(V|GB|MB|KB|TB|dB)([^\w]*)', token)
+        if joined:
+            out[index] = joined[1] + quantity(joined[2]) + ' ' + POLICY['numeric_units'][joined[3]] + joined[4]
+            continue
+        number = atom.fullmatch(token)
+        if number and index + 1 < len(toks) and out[index + 1] == toks[index + 1]:
+            unit = core[index + 1]
+            reading = POLICY['numeric_units'].get(unit)
+            if reading:
+                out[index] = number[1] + quantity(number[2]) + number[3]
+                out[index + 1] = toks[index + 1].replace(unit, reading, 1)
+        clock = re.fullmatch(r'([^\w]*)([0-9]{1,2})(?:(:|h)([0-9]{2}))?([^\w]*)', token)
+        marker = core[index + 1].upper() if index + 1 < len(core) else ''
+        if clock and marker in {'AM', 'PM'} and out[index + 1] == toks[index + 1]:
+            hour, minute = int(clock[2]), int(clock[4] or 0)
+            if 1 <= hour <= 12 and 0 <= minute <= 59:
+                period = ('đêm' if hour == 12 else 'sáng') if marker == 'AM' else ('trưa' if hour == 12 else 'chiều' if hour < 7 else 'tối')
+                said = integer_reading(str(hour)) + ' giờ'
+                if minute:
+                    said += ' ' + integer_reading(str(minute)) + ' phút'
+                out[index] = clock[1] + said + clock[5]
+                out[index + 1] = toks[index + 1].replace(core[index + 1], period, 1)
+                continue
+        # Unicode interval dashes and decimal tilde intervals share one parser.
+        interval = re.fullmatch(r'([^\w+\-]*)(-?[0-9]+(?:[.,][0-9]+)?)[–—~](-?[0-9]+(?:[.,][0-9]+)?)([^\w]*)', token)
+        if interval and not ('~' in token and not any(c in interval[2] + interval[3] for c in '.,')):
+            def scalar(value: str) -> str:
+                sign = 'âm ' if value.startswith('-') else ''
+                parts = re.split(r'[.,]', value.lstrip('-'))
+                return sign + (decimal_reading(*parts) if len(parts) == 2 else integer_reading(parts[0]))
+            out[index] = interval[1] + scalar(interval[2]) + ' đến ' + scalar(interval[3]) + interval[4]
+    # Vietnamese editorial cues are speech, never text to spell literally.
+    for index in range(len(toks) - 1):
+        if toks[index].casefold() == '[thở' and toks[index + 1].casefold().startswith('dài]') and out[index:index + 2] == toks[index:index + 2]:
+            out[index] = 'hầy'
+            out[index + 1] = toks[index + 1][4:]
+
+
 def _roman_numbers(toks: list[str], out: list[str]) -> None:
     """Số La Mã đứng đúng chỗ thành số tiếng Việt, tại chỗ trong `out` - xem `spoken_tokens`."""
     for index, token in enumerate(toks):
         core = token.lstrip(OPENERS + FRAMES_OPEN).rstrip(CLOSERS + FRAMES_CLOSE + ".,;:!?…")
+        if out[index] != token:
+            continue
         value = roman_value(core)
         if value is None or (value > ROMAN_PLAIN and (len(core) < 2 or index == 0 or not numbered_by(toks, index, by_name=False))):
             continue  # "Chương XLV", "tầng LX" là số; "size XL", "hạng C", "Louis XL" thì không

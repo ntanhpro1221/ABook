@@ -41,7 +41,11 @@
     "hđnd": "hội đồng nhân dân", "ubmttq": "ủy ban mặt trận tổ quốc",
     "pgs": "phó giáo sư", "ths": "thạc sĩ", "tnhh": "trách nhiệm hữu hạn",
     "bhyt": "bảo hiểm y tế", "bhxh": "bảo hiểm xã hội", "cmnd": "chứng minh nhân dân",
-    "cccd": "căn cước công dân", "gdđt": "giáo dục và đào tạo"
+    "cccd": "căn cước công dân", "gdđt": "giáo dục và đào tạo",
+    "vd": "ví dụ", "cđ": "cao đẳng", "sđt": "số điện thoại"
+  },
+  "numeric_units": {
+    "V": "vôn", "GB": "ghi ga bai", "MB": "mê ga bai", "KB": "ki lô bai", "TB": "tê ra bai", "dB": "đề xi ben"
   },
   "contextual_abbreviations": {
     "vn": {"prose": "Việt Nam", "code": "vê-en"}

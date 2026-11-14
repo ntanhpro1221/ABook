@@ -181,8 +181,8 @@
     "reason": "abook/readaloud/byok.py: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
   },
   "_internal/abook/readaloud/cache.py": {
-    "sha256": "37963cef719473e75c7b1dc8ba5ee8e12bf2de0582acfd05eca5539c95851a0e",
-    "reason": "_internal/abook/readaloud/cache.py: tnfix172 exact bytes reviewed as authored normalization implementation or its unit-test expectations. Original source samples are preserved. The 485 benchmark inputs/answers have zero eight-word overlap across 523400 Corpus files. Only the existing technical/IPA rules are covered; Corpus checks remain active."
+    "sha256": "8e7851023a1a225de1461642b072dca540eb809b221b565b516f23393c3ada9d",
+    "reason": "_internal/abook/readaloud/cache.py: tnfix173 exact bytes reviewed as clip namespace 22 for changed structured readings. Existing comments and historical documentation retain their public origin. Corpus matching remains active."
   },
   "_internal/abook/readaloud/edge.py": {
     "sha256": "c686d6afc867d00d6212c8c64a09d91f74759300437d953796de3a540c094fd6",
@@ -302,8 +302,8 @@
     "reason": "_internal/abook/readaloud/symbols.py: tnfix172 exact bytes reviewed as authored normalization implementation or its unit-test expectations. Original source samples are preserved. The 485 benchmark inputs/answers have zero eight-word overlap across 523400 Corpus files. Only the existing technical/IPA rules are covered; Corpus checks remain active."
   },
   "_internal/abook/readaloud/vieneu.py": {
-    "sha256": "a91700dae2804eb44cd24c11ae6e757b96d9a05fdee4c2008ce2822bd188260b",
-    "reason": "_internal/abook/readaloud/vieneu.py: tnfix172 exact bytes reviewed as authored normalization implementation or its unit-test expectations. Original source samples are preserved. The 485 benchmark inputs/answers have zero eight-word overlap across 523400 Corpus files. Only the existing technical/IPA rules are covered; Corpus checks remain active."
+    "sha256": "fbe3d9d64652f3ef429f840d1053092d2a44bcf24a56f0267370e8f5f1ee31a4",
+    "reason": "_internal/abook/readaloud/vieneu.py: tnfix173 exact bytes reviewed as shared structured time, unit, identifier and interval rules. Existing comments and historical documentation retain their public origin. Corpus matching remains active."
   },
   "_internal/abook/readaloud/vieneu_engine.py": {
     "sha256": "319a7912363f2fcf2bfbf981f6a179ec60293b602c93aee99201c480b5cdf12c",
@@ -354,20 +354,20 @@
     "reason": "abook/teller_voice.py: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
   },
   "_internal/abook/text_processing.py": {
-    "sha256": "c84a4f2818575ba0225f1c0e4155f3722487aca0d304750c7337f5738925d1a6",
-    "reason": "_internal/abook/text_processing.py: tnfix172 exact changed bytes reviewed; authored technical documentation or synthetic normalization expectations. Existing individual category-i shingles were rechecked as identical public word sequences against 0964e4cd2. No new Corpus shingle is approved.",
+    "sha256": "28bac9e4e0721b9e7921f3cdede91e09231831315427a03e5a4bef496b3efaaa",
+    "reason": "_internal/abook/text_processing.py: tnfix173 exact bytes reviewed as optional shared arrow interpretation for speech only. Existing comments and historical documentation retain their public origin. Corpus matching remains active.",
     "corpus_review": {
       "classification": "i",
-      "file_sha256": "c84a4f2818575ba0225f1c0e4155f3722487aca0d304750c7337f5738925d1a6",
-      "reason": "_internal/abook/text_processing.py: each listed shingle retains its prior Lead-approved category-i classification. Exact public eight-word sequences are unchanged against 0964e4cd2; changes concern only TN behavior, expectations or technical notes. Byte pins expired and were individually re-reviewed.",
+      "file_sha256": "28bac9e4e0721b9e7921f3cdede91e09231831315427a03e5a4bef496b3efaaa",
+      "reason": "_internal/abook/text_processing.py: each existing Lead-approved category-i eight-word sequence was rechecked unchanged against d136b0f4e; no new Corpus shingle is approved.",
       "shingles": [
         "5b11cdc6770a15c1"
       ]
     }
   },
   "_internal/abook/tts.py": {
-    "sha256": "c994a1516848a1cf5827f65e1e97f2743af1f4477d621ba0f7737dd65e133de5",
-    "reason": "abook/tts.py: all flagged strings match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data. Re-pinned for 0.4.169: its added lines were reviewed as engineering text, no story or phoneme strings."
+    "sha256": "db61881f0f4e4a27ab9139da929754ef168ec6cbc68d127bdc575e4e9d97bb28",
+    "reason": "_internal/abook/tts.py: tnfix173 exact bytes reviewed as Studio calls the common arrow rules before symbol conversion. Existing comments and historical documentation retain their public origin. Corpus matching remains active."
   },
   "_internal/abook/vietnamese_syllable.py": {
     "sha256": "4f0da911f5c6494550dcb8284ac9d0b061877a52759cec844ce1a5e6cd7a528a",
@@ -979,11 +979,11 @@
   },
   "_internal/docs/CHANGELOG.md": {
     "sha256": "e809edb550ff8528dd03b295e4367c74b869256a61e4bc1ab45044e3e58cbef5",
-    "reason": "_internal/docs/CHANGELOG.md: 0.4.171 technical release notes, ignored-tracked implementation and test description; existing individual shingle approvals unchanged. _internal/docs/CHANGELOG.md: tnfix172 exact changed bytes reviewed; authored technical documentation or synthetic normalization expectations. Existing individual category-i shingles were rechecked as identical public word sequences against 0964e4cd2. No new Corpus shingle is approved. Integration 0.4.172: byte pins refreshed for combined technical notes and existing normalization tests; no new Corpus shingle approval.",
+    "reason": "_internal/docs/CHANGELOG.md: 0.4.171 technical release notes, ignored-tracked implementation and test description; existing individual shingle approvals unchanged. _internal/docs/CHANGELOG.md: tnfix172 exact changed bytes reviewed; authored technical documentation or synthetic normalization expectations. Existing individual category-i shingles were rechecked as identical public word sequences against 0964e4cd2. No new Corpus shingle is approved. Integration 0.4.172: byte pins refreshed for combined technical notes and existing normalization tests; no new Corpus shingle approval. _internal/docs/CHANGELOG.md: tnfix173 exact bytes reviewed as authored short Vietnamese release note; historical entries unchanged. Existing comments and historical documentation retain their public origin. Corpus matching remains active.",
     "corpus_review": {
       "classification": "i",
       "file_sha256": "e809edb550ff8528dd03b295e4367c74b869256a61e4bc1ab45044e3e58cbef5",
-      "reason": "_internal/docs/CHANGELOG.md: 0.4.171 technical release notes, ignored-tracked implementation and test description; existing individual shingle approvals unchanged. _internal/docs/CHANGELOG.md: each listed shingle retains its prior Lead-approved category-i classification. Exact public eight-word sequences are unchanged against 0964e4cd2; changes concern only TN behavior, expectations or technical notes. Byte pins expired and were individually re-reviewed.",
+      "reason": "_internal/docs/CHANGELOG.md: 0.4.171 technical release notes, ignored-tracked implementation and test description; existing individual shingle approvals unchanged. _internal/docs/CHANGELOG.md: each listed shingle retains its prior Lead-approved category-i classification. Exact public eight-word sequences are unchanged against 0964e4cd2; changes concern only TN behavior, expectations or technical notes. Byte pins expired and were individually re-reviewed. _internal/docs/CHANGELOG.md: each existing Lead-approved category-i eight-word sequence was rechecked unchanged against d136b0f4e; no new Corpus shingle is approved.",
       "shingles": [
         "a427005770c2fa6d"
       ]
@@ -1206,17 +1206,17 @@
   },
   "_internal/docs/TEST_REPORT.md": {
     "sha256": "43404352fb0d889dfd0dfd54c30750f267e7bc21615bc6464ee6faa88f8206a0",
-    "reason": "_internal/docs/TEST_REPORT.md: 0.4.171 technical release notes, ignored-tracked implementation and test description; existing individual shingle approvals unchanged. TEST_REPORT TN audit: records the 440-case string benchmark, exact JUnit suite counts, aggregate Corpus sampling and unchanged implementation hash alongside prior technical evidence. This review only covers long technical prose. Original TN audit technical prose or deterministic diagnostics of the 440 independently authored cases. IPA is generated by the production G2P functions from those cases and accepted readings. Only listed technical/IPA rules are reviewed; Corpus matching remains enabled. TEST_REPORT: original technical validation notes, package versions, two-stage TN totals and JUnit counts alongside inherited test evidence. Exact file-byte review covers long technical prose only; Corpus matching remains enabled. _internal/docs/TEST_REPORT.md: tnfix172 exact bytes reviewed as authored normalization implementation or its unit-test expectations. Original source samples are preserved. The 485 benchmark inputs/answers have zero eight-word overlap across 523400 Corpus files. Only the existing technical/IPA rules are covered; Corpus checks remain active. _internal/docs/TEST_REPORT.md: exact technical test report bytes re-reviewed after recording measured TN, JVM and full-suite counts plus the ten missing UI dependency failures. Only the initial English validation notes changed; every historical paragraph is byte-identical to c8d80a93d. This existing long-vietnamese review covers technical documentation only; Corpus matching remains active and no Corpus shingle is approved. Integration 0.4.172: byte pins refreshed for combined technical notes and existing normalization tests; no new Corpus shingle approval.",
+    "reason": "_internal/docs/TEST_REPORT.md: 0.4.171 technical release notes, ignored-tracked implementation and test description; existing individual shingle approvals unchanged. TEST_REPORT TN audit: records the 440-case string benchmark, exact JUnit suite counts, aggregate Corpus sampling and unchanged implementation hash alongside prior technical evidence. This review only covers long technical prose. Original TN audit technical prose or deterministic diagnostics of the 440 independently authored cases. IPA is generated by the production G2P functions from those cases and accepted readings. Only listed technical/IPA rules are reviewed; Corpus matching remains enabled. TEST_REPORT: original technical validation notes, package versions, two-stage TN totals and JUnit counts alongside inherited test evidence. Exact file-byte review covers long technical prose only; Corpus matching remains enabled. _internal/docs/TEST_REPORT.md: tnfix172 exact bytes reviewed as authored normalization implementation or its unit-test expectations. Original source samples are preserved. The 485 benchmark inputs/answers have zero eight-word overlap across 523400 Corpus files. Only the existing technical/IPA rules are covered; Corpus checks remain active. _internal/docs/TEST_REPORT.md: exact technical test report bytes re-reviewed after recording measured TN, JVM and full-suite counts plus the ten missing UI dependency failures. Only the initial English validation notes changed; every historical paragraph is byte-identical to c8d80a93d. This existing long-vietnamese review covers technical documentation only; Corpus matching remains active and no Corpus shingle is approved. Integration 0.4.172: byte pins refreshed for combined technical notes and existing normalization tests; no new Corpus shingle approval. _internal/docs/TEST_REPORT.md: tnfix173 exact bytes reviewed as new TN verification results; historical report unchanged. Existing comments and historical documentation retain their public origin. Corpus matching remains active.",
     "rules": [
       "long-vietnamese"
     ]
   },
   "_internal/docs/TEXT_NORMALIZATION.md": {
-    "sha256": "f6d30f4bad05ea0e22f480d5ddc788595b7343de7dbb369d8000aaaecb07f929",
+    "sha256": "8aa05c81d09b7054f4b80cebfdb4e60b6145b763a71f786c0a732503b4049f4e",
     "rules": [
       "long-vietnamese"
     ],
-    "reason": "_internal/docs/TEXT_NORMALIZATION.md: tnfix172 exact bytes reviewed as TN architecture, rules and before/after measurements. Original source samples are preserved. The 485 benchmark inputs/answers have zero eight-word overlap across 523400 Corpus files. Only the existing technical/IPA rules are covered; Corpus checks remain active."
+    "reason": "_internal/docs/TEXT_NORMALIZATION.md: tnfix173 exact bytes reviewed as 551-case normalization measurements and structured-form policy; historical sections unchanged. Existing comments and historical documentation retain their public origin. Corpus matching remains active."
   },
   "_internal/docs/THE_MACHINE_IS_SHARED.md": {
     "sha256": "abb41668adcafbe2b73f1f208899025bdda92deba71e0aee9576ff3078c94757",
@@ -1472,8 +1472,8 @@
     "reason": "mobile/android/app/src/main/java/vn/abook/player/readaloud/Abbreviations.kt: all flagged strings match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
   },
   "_internal/mobile/android/app/src/main/java/vn/abook/player/readaloud/ClipCache.kt": {
-    "sha256": "0b6f305aba671f6705df9d8762b8afe239e5d8df952353f1da690fee55a69e10",
-    "reason": "_internal/mobile/android/app/src/main/java/vn/abook/player/readaloud/ClipCache.kt: tnfix172 exact bytes reviewed as authored normalization implementation or its unit-test expectations. Original source samples are preserved. The 485 benchmark inputs/answers have zero eight-word overlap across 523400 Corpus files. Only the existing technical/IPA rules are covered; Corpus checks remain active."
+    "sha256": "97f78a7220ddb2b547439607180dd4a39c0a1a5ef3e4f31b34e5e141be73933d",
+    "reason": "_internal/mobile/android/app/src/main/java/vn/abook/player/readaloud/ClipCache.kt: tnfix173 exact bytes reviewed as Android clip namespace 22 matches Python. Existing comments and historical documentation retain their public origin. Corpus matching remains active."
   },
   "_internal/mobile/android/app/src/main/java/vn/abook/player/readaloud/ClipRetry.kt": {
     "sha256": "6bd46f15491af5f983c412479a0d3d6d745848f8746553b2d8fa26a9db8337d2",
@@ -3390,12 +3390,12 @@
     "reason": "tests/fixtures/vieneu/android/clips.json: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
   },
   "_internal/tests/fixtures/vieneu/android/text.json": {
-    "sha256": "ae2486387112b5b7beedd8ea5fb306077223f269232e06a019e10594a88060e7",
-    "reason": "_internal/tests/fixtures/vieneu/android/text.json: tnfix172 exact changed bytes reviewed; authored technical documentation or synthetic normalization expectations. Existing individual category-i shingles were rechecked as identical public word sequences against 0964e4cd2. No new Corpus shingle is approved.",
+    "sha256": "2299b6522fe34f5fea123d17be0a99c70e1820a7bc4a4edfa63032e68f6b1145",
+    "reason": "_internal/tests/fixtures/vieneu/android/text.json: tnfix173 exact bytes reviewed as authored technical normalization expectations. Existing comments and historical documentation retain their public origin. Corpus matching remains active.",
     "corpus_review": {
       "classification": "i",
-      "file_sha256": "ae2486387112b5b7beedd8ea5fb306077223f269232e06a019e10594a88060e7",
-      "reason": "_internal/tests/fixtures/vieneu/android/text.json: each listed shingle retains its prior Lead-approved category-i classification. Exact public eight-word sequences are unchanged against 0964e4cd2; changes concern only TN behavior, expectations or technical notes. Byte pins expired and were individually re-reviewed.",
+      "file_sha256": "2299b6522fe34f5fea123d17be0a99c70e1820a7bc4a4edfa63032e68f6b1145",
+      "reason": "_internal/tests/fixtures/vieneu/android/text.json: each existing Lead-approved category-i eight-word sequence was rechecked unchanged against d136b0f4e; no new Corpus shingle is approved.",
       "shingles": [
         "23cae7b6e4fef3c5",
         "322165be87076ff3",
@@ -4594,12 +4594,12 @@
     "reason": "tests/test_readaloud_truepeak.py: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
   },
   "_internal/tests/test_readaloud_vieneu.py": {
-    "sha256": "87476cca94834dfda1bc0564eb1f01151d858f3c609872cfc24b47ec3a17f384",
-    "reason": "_internal/tests/test_readaloud_vieneu.py: tnfix172 exact changed bytes reviewed; authored technical documentation or synthetic normalization expectations. Existing individual category-i shingles were rechecked as identical public word sequences against 0964e4cd2. No new Corpus shingle is approved.",
+    "sha256": "f17d08a0fa5a932d12d90cd5c9287cc700115f2fbc09e082a6e0346a30b6524c",
+    "reason": "_internal/tests/test_readaloud_vieneu.py: tnfix173 exact bytes reviewed as authored technical normalization expectations. Existing comments and historical documentation retain their public origin. Corpus matching remains active.",
     "corpus_review": {
       "classification": "i",
-      "file_sha256": "87476cca94834dfda1bc0564eb1f01151d858f3c609872cfc24b47ec3a17f384",
-      "reason": "_internal/tests/test_readaloud_vieneu.py: each listed shingle retains its prior Lead-approved category-i classification. Exact public eight-word sequences are unchanged against 0964e4cd2; changes concern only TN behavior, expectations or technical notes. Byte pins expired and were individually re-reviewed.",
+      "file_sha256": "f17d08a0fa5a932d12d90cd5c9287cc700115f2fbc09e082a6e0346a30b6524c",
+      "reason": "_internal/tests/test_readaloud_vieneu.py: each existing Lead-approved category-i eight-word sequence was rechecked unchanged against d136b0f4e; no new Corpus shingle is approved.",
       "shingles": [
         "d7c7e36fd5e81b17",
         "ffd7f09fd751c208"
