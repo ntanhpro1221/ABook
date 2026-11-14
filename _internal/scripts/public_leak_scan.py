@@ -1,20 +1,21 @@
-"""Quét mọi file git theo dõi (sẽ được đẩy/phát hành) tìm chữ truyện và phiên âm câu bị rò.
+"""Find story text and sentence phonemes in every public Git file.
 
-Ba phép thử, chỉ in đường dẫn và vị trí, không bao giờ in nội dung bị nghi:
-  (a) phiên âm/IPA: >= 8 âm tiết phiên âm liền nhau trong một chuỗi;
-  (b) đoạn văn tiếng Việt dài trong fixture/chuỗi test (>= LONG_VI_WORDS chữ, có dấu tiếng Việt);
-  (c) chung một đoạn SHINGLE chữ liên tiếp với Corpus cục bộ (nếu có mặt). Corpus vắng thì in rõ là đã bỏ qua.
+Report paths and locations only, never suspected prose. Check long IPA runs,
+long Vietnamese strings, and eight consecutive prose words shared with local
+story chapters. Report explicitly when the local Corpus is unavailable.
 
-Chạy từ _internal: runtime/.venv/Scripts/python.exe -X utf8 scripts/public_leak_scan.py [--json]
+Run from _internal: python -X utf8 scripts/public_leak_scan.py [--json].
 """
 from __future__ import annotations
 
 import argparse
 import ast
 from concurrent.futures import ProcessPoolExecutor
+from contextlib import contextmanager
 import hashlib
 import io
 import json
+import multiprocessing
 import os
 from pathlib import Path, PurePosixPath
 import re
@@ -44,13 +45,37 @@ FIXTURE_PARTS = {"fixtures", "fixture", "data", "testdata", "resources", "snapsh
 CORPUS_SKIP_DIRS = {".venv", "venv", "site-packages", "node_modules", "lib", "libs", "__pycache__", ".git", "build",
                     "dist", "scripts", "tools", "include", "share"}
 CORPUS_SUFFIXES = {".txt", ".md"}
+# Top-level Corpus folders that hold no story of their own: agent notes, R8 mapping archives (Kotlin identifiers),
+# research notes and specs, scratch specs and key docs. Story excerpts quoted there come from the story folders,
+# which stay indexed, so skipping these loses no leak while app code stops matching identifiers and specs.
+CORPUS_NON_STORY_DIRS = {"claude", "releases", "research", "s", "keys"}
+CORPUS_COLLECTIONS = {"truyen", "ai-dich", "sang-tac", "khac", "merged"}
+CORPUS_TECHNICAL_DIRS = CORPUS_SKIP_DIRS | {
+    "android", "docs", "spec", "specs", "mapping", "mappings", "notes", "survey",
+    "research", "releases", "tests", "test", "src", "vendor", "runtime",
+}
+CHAPTER_NAME = re.compile(r"(?:\[\d+\].*|\d+[a-z]?(?:[ ._-].*)?|(?:ch|chapter|chuong|chương)[ ._-]*\d+.*)$", re.I)
+# Keep digits/underscores/escapes intact until validation: x00 must never become x.
+PROSE_TOKEN = re.compile(
+    r"\r?\n[ \t\r]*\n|\\(?:[uU][0-9a-fA-F]{4,8}|x[0-9a-fA-F]{2}|.)"
+    r"|\b[a-z]+[A-Z]\w*|\b\w*[\d_]\w*|\b([^\W\d_]+)\b"
+    r"|[^\w\s.,!?;:'\"“”‘’«»—–…()\[\]{}-]"
+)
+GOLD_ROW = re.compile(r"^\d+\s+(?:[NDT](?:,[NDT])*|H)(?:\s+.*)?$")
+GOLD_START = re.compile(r"\s*(?:#[^\n]*\n\s*)*\d+\s+[NDTH](?:[,\s]|$)")
+QUOTED_EVIDENCE = re.compile(r'“([^”\n]+)”|"([^"\n]+)"|«([^»\n]+)»')
+CHAPTER_HEADING = re.compile(r"^(?:chương|chapter|tập|vol(?:ume)?)[ .:-]*(?:\d|[ivxlcdm]+\b)", re.I)
+CHAPTER_METADATA = re.compile(
+    r"^(?:tên truyện|tác giả|dịch giả|nhóm dịch|nguồn|book title|author|translator|source)\s*:", re.I
+)
 CODE_SUFFIXES = {".py", ".kt", ".java", ".ts", ".tsx", ".js", ".mjs", ".qml", ".cpp", ".h"}
 PRIME = np.uint64(1099511628211)
 
 
 def tracked(repo: Path = REPO) -> list[str]:
     names = subprocess.run(["git", "-C", str(repo), "ls-files", "-z", "--cached", "--others", "--exclude-standard"],
-                           capture_output=True, check=True).stdout.decode("utf-8").split("\0")
+                           capture_output=True, check=True,
+                           creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0)).stdout.decode("utf-8").split("\0")
     return sorted(name for name in set(names) if name and (repo / name).is_file())
 
 
@@ -187,18 +212,30 @@ def _word_hash(word: str, cache: dict) -> int:
 
 
 def shingles(text: str, cache: dict | None = None) -> np.ndarray:
-    """Hash 64-bit ổn định (giữa các process) của mọi cụm SHINGLE chữ liên tiếp, chữ thường."""
+    """Hash consecutive prose words; invalid tokens break a run, never disappear."""
     cache = {} if cache is None else cache
-    words = WORD.findall(unicodedata.normalize("NFC", text).lower())
+    # Only the letter alternative is captured; every invalid token yields an
+    # empty sentinel. Punctuation is skipped by the regex, not by a Python loop.
+    words = [token.lower() if token.isalpha() else ""
+             for token in PROSE_TOKEN.findall(unicodedata.normalize("NFC", text))]
     if len(words) < SHINGLE:
         return np.empty(0, dtype=np.uint64)
-    hashes = np.fromiter((_word_hash(w, cache) for w in words), dtype=np.uint64, count=len(words))
+    valid = np.fromiter(map(bool, words), dtype=np.int32, count=len(words))
+    totals = np.concatenate(([0], np.cumsum(valid)))
+    keep = totals[SHINGLE:] - totals[:-SHINGLE] == SHINGLE
+    # Alphabet/codec tables contain letters, but are not eight prose words.
+    substantive = np.concatenate(([0], np.cumsum([len(w) > 1 for w in words])))
+    keep &= substantive[SHINGLE:] - substantive[:-SHINGLE] >= SHINGLE // 2
+    if not keep.any():
+        return np.empty(0, dtype=np.uint64)
+    hashes = np.fromiter((_word_hash(w, cache) if w else 0 for w in words),
+                         dtype=np.uint64, count=len(words))
     count = len(words) - SHINGLE + 1
     combined = np.zeros(count, dtype=np.uint64)
     with np.errstate(over="ignore"):
         for offset in range(SHINGLE):
             combined = combined * PRIME + hashes[offset:offset + count]
-    return combined
+    return combined[keep]
 
 
 def corpus_root() -> Path | None:
@@ -206,22 +243,115 @@ def corpus_root() -> Path | None:
     return next((Path(c) for c in candidates if c and Path(c).is_dir()), None)
 
 
+def is_story_chapter(relative: Path) -> bool:
+    """Numbered TXT/MD chapters in book folders or supported chapter collections.
+
+    Root notes and named technical files are not chapter sources. _full contains
+    category/book/chapter; _dup and _gold contain book/chapter, optionally nested
+    in an evaluation collection. Hidden/underscore backup trees are never books.
+    """
+    parts = relative.parts
+    if relative.suffix.lower() not in CORPUS_SUFFIXES or not CHAPTER_NAME.fullmatch(relative.stem):
+        return False
+    if len(parts) < 2:
+        return False
+    top = parts[0].lower()
+    if top == "_full":
+        if len(parts) < 4 or parts[1].lower() not in CORPUS_COLLECTIONS:
+            return False
+        folders = parts[2:-1]
+    elif top in {"_dup", "_gold"}:
+        if len(parts) < 3:
+            return False
+        folders = parts[1:-1]
+    else:
+        if top in CORPUS_NON_STORY_DIRS or top.startswith(("_", ".")):
+            return False
+        folders = parts[:-1]
+    return not any(p.startswith(("_", ".")) or p.lower() in CORPUS_TECHNICAL_DIRS for p in folders)
+
+
 def corpus_files(root: Path) -> list[Path]:
     found = []
     for directory, subdirs, files in os.walk(root):
-        subdirs[:] = [d for d in subdirs if d.lower() not in CORPUS_SKIP_DIRS and not d.lower().endswith(".dist-info")]
+        subdirs[:] = [d for d in subdirs if d.lower() not in CORPUS_TECHNICAL_DIRS
+                     and not d.lower().endswith(".dist-info")
+                     and (not d.startswith(("_", ".")) or (Path(directory) == root and d in {"_full", "_dup", "_gold"}))]
+        if Path(directory) == root:
+            subdirs[:] = [d for d in subdirs if d.lower() not in CORPUS_NON_STORY_DIRS]
         for name in files:
-            if Path(name).suffix.lower() in CORPUS_SUFFIXES and not re.match(r"(license|copying|requirements|readme)", name, re.I):
-                found.append(Path(directory) / name)
+            path = Path(directory) / name
+            if is_story_chapter(path.relative_to(root)):
+                found.append(path)
     return sorted(found)
+
+
+def _title_key(text: str) -> str:
+    text = unicodedata.normalize("NFD", text.lower().replace("đ", "d"))
+    return " ".join(WORD.findall("".join(c for c in text if not unicodedata.combining(c))))
+
+
+def read_corpus_text(path: Path) -> str:
+    """Read chapter prose, separating annotation rows from quoted evidence.
+
+    Gold TXT files use seq/kind/speaker/delivery rows, not chapter prose (see
+    GOLD_GUIDE.md). Only explicitly quoted comment evidence belongs in the index.
+    Raw chapter files, including raw chapters under _gold, remain intact.
+    """
+    text = path.read_text(encoding="utf-8-sig", errors="ignore")
+    if GOLD_START.match(text):
+        lines = [line.strip() for line in text.splitlines() if line.strip()]
+        rows = [line for line in lines if not line.startswith("#")]
+        if rows and all(GOLD_ROW.fullmatch(line) for line in rows):
+            return "\n\n".join(next(part for part in match.groups() if part)
+                                for line in lines if line.startswith("#")
+                                for match in QUOTED_EVIDENCE.finditer(line))
+    # Imported book/chapter titles are metadata, even when a title is a sentence.
+    # Bound this to the preamble; identical words inside the story remain indexed.
+    titles = {_title_key(re.sub(r"^\d+[-_]", "", parent.name)) for parent in list(path.parents)[:3]}
+    preamble, separator, rest = text.partition("\n\n")
+    kept = [line for line in preamble.splitlines()
+            if _title_key(line) not in titles and not CHAPTER_METADATA.match(line.strip())
+            and not CHAPTER_HEADING.match(line.strip()) and not line.lstrip().startswith("# ")]
+    return "\n".join(kept) + separator + rest
 
 
 _INDEX: np.ndarray | None = None
 
 
+@contextmanager
+def windowless_workers():
+    """Bypass the Windows venv redirector while retaining its environment.
+
+    The redirector adds a process and breaks multiprocessing's PID/pipe handshake.
+    Mirror multiprocessing's own venv launch, using the base windowless binary.
+    Restore the caller's spawn executable and environment when the pool closes.
+    """
+    if os.name != "nt":
+        yield
+        return
+    from multiprocessing import spawn
+
+    executable = Path(sys._base_executable).with_name("pythonw.exe")
+    if not executable.is_file():
+        raise RuntimeError("A windowless Python interpreter is required for scanner workers")
+    previous = spawn.get_executable()
+    launcher = os.environ.get("__PYVENV_LAUNCHER__")
+    multiprocessing.set_executable(str(executable))
+    os.environ["__PYVENV_LAUNCHER__"] = sys.executable
+    try:
+        yield
+    finally:
+        multiprocessing.set_executable(previous)
+        if launcher is None:
+            os.environ.pop("__PYVENV_LAUNCHER__", None)
+        else:
+            os.environ["__PYVENV_LAUNCHER__"] = launcher
+
+
 def _load_index(path: str) -> None:
     global _INDEX
-    _INDEX = np.load(path)
+    _INDEX = np.load(path, mmap_mode="r")
 
 
 def _corpus_chunk(paths: list[str]) -> list[tuple[str, list[int]]]:
@@ -230,7 +360,7 @@ def _corpus_chunk(paths: list[str]) -> list[tuple[str, list[int]]]:
     cache: dict = {}
     for name in paths:
         try:
-            text = Path(name).read_text(encoding="utf-8", errors="ignore")
+            text = read_corpus_text(Path(name))
         except OSError:
             continue
         values = shingles(text, cache)
@@ -271,8 +401,9 @@ def corpus_overlap(sources: dict[str, list[str]], root: Path, workdir: Path, wor
         raise ValueError("Corpus exists but no readable source files were selected")
     batches = [files[i:i + 200] for i in range(0, len(files), 200)]
     matches: dict[str, set[str]] = {}
-    with ProcessPoolExecutor(max_workers=max(1, workers), initializer=_load_index, initargs=(str(index_path),)) as pool:
-        for hits in pool.map(_corpus_chunk, batches):
+    with windowless_workers(), ProcessPoolExecutor(max_workers=min(3, max(1, workers)), initializer=_load_index,
+                                                   initargs=(str(index_path),)) as pool:
+        for batch_number, hits in enumerate(pool.map(_corpus_chunk, batches), 1):
             for corpus_file, common in hits:
                 found = np.asarray(common, dtype=np.uint64)
                 start = np.searchsorted(all_values, found, side="left")
@@ -280,6 +411,9 @@ def corpus_overlap(sources: dict[str, list[str]], root: Path, workdir: Path, wor
                 for a, b in zip(start.tolist(), stop.tolist()):
                     for owner in set(all_owners[a:b].tolist()):
                         matches.setdefault(names[owner], set()).add(os.path.relpath(corpus_file, root))
+            if os.environ.get("ABOOK_LEAK_PROGRESS") == "1" and (batch_number % 50 == 0 or batch_number == len(batches)):
+                print(f"public-leak Corpus: {min(batch_number * 200, len(files))}/{len(files)} files",
+                      file=sys.stderr, flush=True)
     return [{"path": owner, "where": "corpus", "rule": f"shares>={SHINGLE}words",
              "corpus_files": sorted(found)[:5], "corpus_file_count": len(found)} for owner, found in sorted(matches.items())]
 

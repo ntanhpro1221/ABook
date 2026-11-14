@@ -1072,8 +1072,8 @@
     "reason": "Production interruption instructions and continuity limits; operational guidance rather than book text."
   },
   "_internal/docs/TEST_REPORT.md": {
-    "sha256": "777d57e4c99a1f35e6645b3f1eb4efc307f530bdffe817ebdac869d09cee160e",
-    "reason": "_internal/docs/TEST_REPORT.md: reviewed integration-only layout, generated parity inventory or pinned asset URL edits; existing scrubbed prose preserved. Re-pinned for 0.4.169: its added lines were reviewed as engineering text, no story or phoneme strings."
+    "sha256": "b3cdc81108433894d2da373b951cc81fc467737fcba7f04d824510678a5e921a",
+    "reason": "Technical history; scanner test results added."
   },
   "_internal/docs/TEXT_NORMALIZATION.md": {
     "sha256": "06b3499d392b6f6a990b026d4f665b520ca3c9257ce452c57a5e7fa92e8ec94b",
@@ -2298,10 +2298,6 @@
   "_internal/scripts/prove_a_patch.py": {
     "sha256": "8d500a2e016082569d9a7eb18fe6d47912cecd0812139fde5b82136b718edcc6",
     "reason": "scripts/prove_a_patch.py: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
-  },
-  "_internal/scripts/public_leak_scan.py": {
-    "sha256": "9eed0ff5a7814d100999c8dc699b3bbd16b9f6c28b65a78b34e032d293e0c5b9",
-    "reason": "The scanner module docstring describes its IPA, long-text and corpus-overlap algorithms."
   },
   "_internal/scripts/publish_model.py": {
     "sha256": "501136cc6d4db49337af98462e8aa4e4d040c8f7c68c2ca069865abd408f8546",
@@ -4356,8 +4352,8 @@
     "reason": "ui/src/studio/liveRefresh.ts: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
   },
   "_internal/ui_strings/vi.json": {
-    "sha256": "5b84d7a0d87e9d60e906be291cdc6879d2ccf0696b7ba9d8d5a6ff85b6bd734c",
-    "reason": "ui_strings/vi.json: all flagged strings match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data. Re-pinned for 0.4.169: its added lines were reviewed as engineering text, no story or phoneme strings."
+    "sha256": "b2864673310ab90187525e5452c50e91340c2e7290f44b07dae4fbe7f46a49a7",
+    "reason": "ui_strings/vi.json: all flagged strings match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
   },
   "_internal/abook/vietnamese_letters.py": {
     "sha256": "b5c1b946b9456f7cac9dbc34d995a1d56fe592e623ffd56662d760c864875e44",

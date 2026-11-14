@@ -1,5 +1,11 @@
 # Test report
 
+## 14-11-2026 — public story corpus inventory
+
+- Public leak scanner tests: **64 passed**. Coverage includes chapter collections, technical backup exclusion, annotation labels versus quoted evidence, title metadata, prose token boundaries, source attribution, and a runtime-only real chapter injection. No story excerpt is stored by these tests.
+- Corpus candidates are numbered chapter files. Gold label rows, chapter metadata, and alphabet/codec runs are separated from story prose. Corpus overlaps remain blocking regardless of reviewed-file hashes.
+- Windows pool workers bypass the venv redirector with the windowless base interpreter and the venv launcher environment. The caller's spawn configuration is restored after the pool closes. Full corpus validation is recorded in the task result report.
+
 ## 14-11-2026 — complete integration fixture and motion repairs
 
 - Complete diagnostic pytest: **13,552 passed / 20 failed / 17 skipped / 2 deselected**. The same source passed browser geometry, TypeScript and full Vitest. Android unit XML reported **3,750 passed / 5 failed / 5 skipped**; snapshot Verify also found changed renderings after the completed review branches. These red results are retained as diagnostics, not release approval.
