@@ -106,7 +106,7 @@ fun StudioProjectScreen(state: StudioProjectState, sheets: SheetHost, onBack: ()
                 modifier = Modifier.padding(top = Dim.s24).testTag("studio_loading"),
             )
             page == null -> InlineProblem(poll.error?.let { StudioText.failure(it) }.orEmpty(), state::refreshSoon, "studio_project_problem")
-            else -> ProjectBody(page, kind, state, poll.error, sheets, listen, active)
+            else -> ProjectBody(page, kind, state, poll.error, sheets, listen, active, openSub)
         }
     }
 }
@@ -124,7 +124,7 @@ private fun GoneCard(onBack: () -> Unit) {
 }
 
 @Composable
-private fun ProjectBody(page: StudioPage, kind: PrimaryKind?, state: StudioProjectState, error: StudioError?, sheets: SheetHost, listen: () -> Unit, active: Boolean) {
+private fun ProjectBody(page: StudioPage, kind: PrimaryKind?, state: StudioProjectState, error: StudioError?, sheets: SheetHost, listen: () -> Unit, active: Boolean, openSub: (StudioSubKind) -> Unit) {
     val book = page.book
     val status = StudioLogic.status(book)
     val list = rememberLazyListState()
@@ -169,6 +169,14 @@ private fun ProjectBody(page: StudioPage, kind: PrimaryKind?, state: StudioProje
             }
         }
         item("progress", "progress") { ProgressBlock(book) }
+        if (book.cover == null) {
+            item("missing_cover", "suggestion") {
+                Column(Modifier.fillMaxWidth().padding(top = Dim.s16).testTag("studio_missing_cover")) {
+                    BasicText(S.s_chua_co_bia, style = Abook.type.bodySmall.copy(color = Abook.colors.text2))
+                    QuietButton(S.s_chon_anh_41ecf092, { openSub(StudioSubKind.Cover) }, "studio_missing_cover_pick")
+                }
+            }
+        }
         item("tabs", "tabs") {
             Column(Modifier.fillMaxWidth().padding(top = Dim.s24)) {
                 ScrollingTabs(StudioTab.entries, state.tab, { state.tab = it }, label = { it.label }, tag = { "studio_tab_${it.key}" }, rowTag = "studio_tabs")

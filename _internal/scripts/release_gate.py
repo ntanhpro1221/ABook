@@ -393,7 +393,8 @@ def worker(name: str, confirm_hash: str | None = None) -> dict:
         execution = run_process(py(script, "--check"), ROOT, 180)
         print(execution.output, end="")
         require(execution.returncode == 0 and not execution.timed_out, name + ": source parity failed")
-        return {"status": "PASS", "counts": {"checks": 1}, "detail": "Shared labels, icons and generated parity report"}
+        return {"status": "PASS", "counts": {"checks": 1},
+                "detail": execution.output.strip() or "Shared labels, icons and generated parity report", "timed_out": False}
     if name in {"android-unit", "android-snapshots"}:
         inputs = android_host_inputs()  # Fail before Gradle if the mandatory host frontend is unavailable.
         android = ROOT / "mobile/android"

@@ -102,6 +102,7 @@ export interface ExportResult {
   format?: string;
   /** Ảnh bìa của sách hỏng: bản xuất mang bìa vẽ từ tên (export.usable_cover). */
   coverBroken?: boolean;
+  warnings?: string[];
   /** Xuất "Kèm nhạc nền": số đoạn không có nhạc vì bài không tải / không đọc được (webui/music_export.py). */
   musicMissing?: number;
   /** Xuất cả bộ: các phần chưa có chương nào nên bị bỏ qua (export.export_series). */
@@ -249,7 +250,7 @@ export function jobView(job: ExportJob, chapters = 0, announce = false, copy: Ex
     // `note`: riêng phần LƯU Ý (thiếu chương / nhạc / nguồn / bìa) - thông báo "xong" chỉ một dòng, lưu ý đổi thành cảnh báo (toastDone).
     const skipped = skippedPartsNote(job.result);
     const lacks = [missingChaptersNote(job.result), missingSourcesNote(job.result), musicMissingNote(job.result),
-      job.result.coverBroken ? S.s_anh_bia_cua_sach_bi_hong_nen_dung_bia_ve_t_782534c3 : ""].filter(Boolean);
+      job.result.coverBroken ? S.s_anh_bia_cua_sach_bi_hong_nen_dung_bia_ve_t_782534c3 : "", ...(job.result.warnings ?? [])].filter(Boolean);
     const details = [partsNote, !file && count ? `${count} file` : "", skipped, job.result.size ? formatSize(job.result.size) : "", ...lacks].filter(Boolean);
     const place = file ?? folder ?? "";
     return { kind: "success", title: copy.done, description: [fileName(place), ...details].filter(Boolean).join(" · "), ...(skipped || lacks.length ? { note: [skipped, ...lacks].filter(Boolean).join(" · ") } : {}), ...(fileName(place) !== place ? { place } : {}) };

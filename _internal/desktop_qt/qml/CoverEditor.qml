@@ -20,7 +20,7 @@ Item {
     readonly property bool hasCover: Boolean(book && book.cover)
     readonly property real coverW: narrow ? 96 : 176
     implicitWidth: coverW
-    implicitHeight: art.height + 8 + actions.height + (narrow ? 0 : 20)
+    implicitHeight: actions.y + actions.height + (narrow ? 0 : 20)
     width: coverW
     objectName: "coverEditor"
 
@@ -121,15 +121,27 @@ Item {
         }
     }
     // Nút: chữ đầu thẳng mép trái của bìa (lề âm bù đệm của nút)
-    Row {
-        id: actions
-        x: root.narrow ? 0 : -8
+    Text {
+        id: missingCover
+        objectName: "studioMissingCover"
+        visible: !root.hasCover
         y: art.height + 8
+        width: parent.width
+        text: S.s_chua_co_bia
+        color: Theme.text2
+        wrapMode: Text.WrapAtWordBoundaryOrAnywhere
+        font.pixelSize: Theme.sizeBodySmall
+    }
+    Flow {
+        id: actions
+        width: parent.width + (root.narrow ? 0 : 16)
+        x: root.narrow ? 0 : -8
+        y: root.hasCover ? art.height + 8 : missingCover.y + missingCover.height + 4
         spacing: 4
         Button {
             objectName: "coverSet"
-            Reveal { shown: !root.narrow }
-            text: root.hasCover ? S.s_doi_bia_37220dae : S.s_dat_bia_a7e3a9a7
+            Reveal { shown: !root.narrow || !root.hasCover }
+            text: root.hasCover ? S.s_doi_bia_37220dae : S.s_chon_anh_41ecf092
             icon: "image-plus"
             kind: "ghost"
             size: "sm"
@@ -138,7 +150,7 @@ Item {
         }
         IconButton {
             objectName: "coverSetIcon"
-            Reveal { shown: root.narrow }
+            Reveal { shown: root.narrow && root.hasCover }
             icon: "image-plus"
             iconSize: 16
             ink: Theme.text2

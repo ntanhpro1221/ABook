@@ -58,6 +58,7 @@ data class StudioExportResult(
     val coverBroken: Boolean,
     val musicMissing: Int,
     val skipped: List<Int>,
+    val warnings: List<String> = emptyList(),
 )
 
 /** Lời đáp của `GET/POST .../<kiểu>-job`: máy tính nhớ lượt xuất gần nhất của mỗi cuốn. */
@@ -118,6 +119,7 @@ internal object StudioExportJson {
         coverBroken = json.optBoolean("coverBroken"),
         musicMissing = json.optInt("musicMissing"),
         skipped = json.optJSONArray("skipped").objects().map { it.optInt("part") },
+        warnings = json.optJSONArray("warnings").strings(),
     )
 
     fun job(json: JSONObject) = StudioExportJob(
@@ -260,7 +262,7 @@ object StudioExportLogic {
             if (result.coverBroken) S.s_anh_bia_cua_sach_bi_hong_nen_dung_bia_ve_t_782534c3 else null,
             result.skipped.takeIf { it.isNotEmpty() }?.let { S.s_chua_co_chuong_nao_nen_bo_qua_09add84f + it.joinToString(", ") { part -> S.s_phan_0_7c77642d(part) } },
         )
-        return StudioExportOutcome(StudioExportText.doneTitle(machine), listOf((listOf(name) + detail).dotJoined()).filter { it.isNotEmpty() }, notes)
+        return StudioExportOutcome(StudioExportText.doneTitle(machine), listOf((listOf(name) + detail).dotJoined()).filter { it.isNotEmpty() }, notes + result.warnings)
     }
 
     /** Điều còn lại sau khi huỷ, theo kiểu xuất (web `stoppedNote`). */

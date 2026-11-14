@@ -33,7 +33,11 @@ def test_parity_worker_requires_the_real_scanner_to_finish_successfully(monkeypa
         with pytest.raises(Exception, match="source parity failed"):
             gate.worker(name)
     else:
-        assert gate.worker(name)["counts"] == {"checks": 1}
+        result = gate.worker(name)
+        assert result["counts"] == {"checks": 1}
+        assert result["status"] == "PASS"
+        assert result["detail"] == "scanner evidence"
+        assert result["timed_out"] is False
     assert calls and calls[0][-1] == "--check"
     expected = "scripts/ui_parity.py" if name == "ui-parity" else "scripts/ui_parity_qt.py"
     assert calls[0] == gate.py(expected, "--check")

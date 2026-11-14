@@ -1,6 +1,7 @@
 import QtQuick
 import QtTest
 import "../../qml/TextWrap.js" as TextWrap
+import "../../qml/ExportLogic.js" as ExportLogic
 import "ModalLayer.js" as ModalLayer
 import "VisualReady.js" as VisualReady
 import ABook
@@ -742,7 +743,8 @@ Item {
         function test_coverEditorFailureSaysWhy() {
             reply("PUT /api/books/c2/cover", {status: 400, data: {message: "Ảnh quá lớn"}})
             const page = openBook(book("c2"))
-            compare(one(page, "coverSet").text, "Đặt bìa")
+            compare(one(page, "coverSet").text, "Chọn ảnh")
+            verify(shown(one(page, "studioMissingCover")))
             verify(!shown(one(page, "coverRemove")))
             one(page, "coverEditor").setImage("data:image/png;base64,AAA")
             tryVerify(function() { return Api.notice.indexOf("Chưa đặt được ảnh bìa\n") === 0 })
@@ -771,6 +773,21 @@ Item {
             compare(one(page, "coverEditor").width, 96)
             verify(shown(one(page, "coverSetIcon")))
             verify(!shown(one(page, "coverSet")))
+        }
+        function test_missingCoverOffersLocalPickerOnNarrowWindow() {
+            const page = openBook(book("coverless"), 520)
+            verify(shown(one(page, "studioMissingCover")))
+            verify(shown(one(page, "coverSet")))
+            compare(one(page, "coverSet").text, "Chọn ảnh")
+            one(page, "coverSet").activated()
+            compare(DesktopApi.pickers.length, 1)
+            compare(calls("PUT", "/api/books/coverless/cover").length, 0)
+            both("project_missing_cover_narrow", page)
+        }
+        function test_coverWarningSurvivesTheExportDialog() {
+            const result = ExportLogic.finishedOf("abook", {file: "Synthetic.abook", folder: "", warnings: ["Chưa có bìa"]}, {})
+            verify(result.detail.indexOf("Chưa có bìa") >= 0)
+            verify(result.note.indexOf("Chưa có bìa") >= 0)
         }
     }
 }

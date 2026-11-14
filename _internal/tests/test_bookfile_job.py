@@ -57,6 +57,7 @@ def test_starting_an_export_returns_at_once_and_the_status_ends_with_the_file(tm
     assert done["result"]["size"] == file.stat().st_size and done["finishedAt"] >= done["startedAt"]
     assert again["state"] == "done" and again["result"] == done["result"]
     assert done["result"]["folder"] in app.exports, "nút Mở thư mục mở được thư mục vừa xuất"
+    assert done["result"]["warnings"] == [bookfile.MISSING_COVER]
     with bookfile.BookFile(file) as opened:
         opened.verify()
 

@@ -7,6 +7,8 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+- Studio gợi ý chọn ảnh khi sách chưa có bìa; xuất file sách thiếu bìa có cảnh báo rõ.
+
 - Tấm Âm thanh gọn theo ba nhóm, đồng nhất hàng và thanh trượt trên điện thoại, web và máy tính.
 
 - Nghe thử nhạc có báo đang tải, thử bản sao khi nguồn lỗi và báo khi không phát được.

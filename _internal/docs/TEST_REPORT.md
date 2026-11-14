@@ -1,5 +1,17 @@
 # Test report
 
+## 15-11-2026 — missing cover suggestions and export warnings
+
+Studio on web, Qt and Android suggests choosing an image when artwork is absent, including completed projects.
+The existing image editor handles the action; showing the suggestion makes no network request.
+Package sealing warns on missing effective artwork, including listener removal, and export results retain the warning on all three clients.
+The CLI warning is verified through a real repack subprocess. Both UI parity checkers also support the worker entrypoint, with failure and timeout coverage.
+
+Validation: focused Python packaging/edit/parity suites 331 passed, 2 skipped; series/cover refresh 16 passed; release gate 86 passed.
+Vitest 39 passed across three files, with no unhandled errors; TypeScript check and shared UI source audit passed.
+Android JVM 86 tests passed with no failures, errors or skips. Qt offscreen 6 functional tests plus setup/cleanup passed, including narrow-window selection and export warning retention.
+UI parity and Qt parity passed against the requested base. Quality implementation hash is unchanged. Private covers and complete books stay outside Git.
+
 ## 15-11-2026 — music preview, sheet menu text and library filters
 
 The native preview uses Media3 HTTP sources in catalogue order, beginning at audibleStart.

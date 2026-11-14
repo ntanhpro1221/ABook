@@ -181,8 +181,9 @@ function finishedOf(kind, result, opts) {
     const detail = (opts.remote
         ? exportedOnComputer(opts.computer, perPart ? "" : single ? fileName(result.file) : fileName(result.folder || ""),
                              [perPart ? S.s_moi_phan_mot_file_abook_rieng_e768e635 : "", single ? size : ""].filter(Boolean).join("\u00a0·\u00a0"))
-        : placeText) + skipped + (lostNote ? "\u00a0·\u00a0" + lostNote : "") + (result.coverage ? "\u00a0·\u00a0" + result.coverage : "")
-    return {title: title, detail: detail, folder: result.folder || "", note: [skippedNote, lostNote, result.coverage].filter(Boolean).join("\u00a0·\u00a0"), remoteTitle: exportedOnComputer(opts.computer, "")}
+        : placeText) + skipped + (lostNote ? "\u00a0·\u00a0" + lostNote : "") + (result.coverage ? "\u00a0·\u00a0" + result.coverage : "") +
+        ((result.warnings || []).length ? "\u00a0·\u00a0" + result.warnings.join("\u00a0·\u00a0") : "")
+    return {title: title, detail: detail, folder: result.folder || "", note: [skippedNote, lostNote, result.coverage].concat(result.warnings || []).filter(Boolean).join("\u00a0·\u00a0"), remoteTitle: exportedOnComputer(opts.computer, "")}
 }
 
 // ---- việc nền (MP3, M4B): bookFileExport.ts jobView ----
@@ -238,7 +239,7 @@ function jobView(job, chapters, copy) {
         const count = job.result.files !== undefined ? job.result.files : (job.result.parts ? job.result.parts.length : undefined)
         const partsNote = !file && job.result.files !== undefined && job.result.parts ? job.result.parts.length + S.s_phan_20f71101 : ""
         const skipped = skippedPartsNote(job.result)
-        const lacks = [missingChaptersNote(job.result), musicMissingNote(job.result), job.result.coverBroken ? S.s_anh_bia_cua_sach_bi_hong_nen_dung_bia_ve_t_782534c3 : ""].filter(Boolean)
+        const lacks = [missingChaptersNote(job.result), musicMissingNote(job.result), job.result.coverBroken ? S.s_anh_bia_cua_sach_bi_hong_nen_dung_bia_ve_t_782534c3 : ""].concat(job.result.warnings || []).filter(Boolean)
         const details = [partsNote, !file && count ? count + " file" : "", skipped, job.result.size ? Size.formatSize(job.result.size) : ""].concat(lacks).filter(Boolean)
         const place = file || folder || ""
         const view = {kind: "success", title: copy.done, description: [fileName(place)].concat(details).filter(Boolean).join("\u00a0·\u00a0"), place: place, folder: folder || ""}

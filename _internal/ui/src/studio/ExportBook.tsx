@@ -244,7 +244,7 @@ export function ExportDialog({
     setFinished(null);
     setPackJob(null);
     try {
-      type Packed = { folder: string; file: string; size: number; missingSources?: string[]; coverage?: string } & Partial<SeriesResult>;
+      type Packed = { folder: string; file: string; size: number; missingSources?: string[]; coverage?: string; warnings?: string[] } & Partial<SeriesResult>;
       const result =
         kind === "abookproj"
           ? await (attach ? Promise.resolve() : api(`/api/books/${book.id}/projectfile-job`, { method: "POST", body: { target } })).then(
@@ -273,14 +273,15 @@ export function ExportDialog({
           ? exportedOnComputer(computer, perPart ? "" : single ? fileName(result.file as string) : fileName(result.folder ?? ""), [perPart ? S.s_moi_phan_mot_file_abook_rieng_e768e635 : "", single ? formatSize(result.size ?? 0) : ""].filter(Boolean).join(" · "))
           : placeText) +
         skipped +
-        (lostNote ? ` · ${lostNote}` : "") + (result.coverage ? ` · ${result.coverage}` : "");
+        (lostNote ? ` · ${lostNote}` : "") + (result.coverage ? ` · ${result.coverage}` : "") +
+        (result.warnings?.length ? ` · ${result.warnings.join(" · ")}` : "");
       const pending = loadingToast.current;
       loadingToast.current = null;
       if (openRef.current) {
         setFinished({ title, detail, folder: result.folder });
       } else {
         // MỘT dòng + nút “Mở thư mục” (chỗ file nằm); thiếu gì (phần bỏ qua, nguồn chương) thì cảnh báo với đúng phần thiếu. Studio từ xa: file nằm ở máy tính.
-        toastDone(info?.remote ? exportedOnComputer(computer, "") : title, [skippedNote, lostNote, result.coverage].filter(Boolean).join(" · ") || undefined, {
+        toastDone(info?.remote ? exportedOnComputer(computer, "") : title, [skippedNote, lostNote, result.coverage, ...(result.warnings ?? [])].filter(Boolean).join(" · ") || undefined, {
           id: pending ?? undefined,
           action: info?.remote ? undefined : { label: S.s_mo_thu_muc_4bf5b127, onClick: () => revealFolder(result.folder) },
         });

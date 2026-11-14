@@ -19,6 +19,11 @@ import {
 
 afterEach(() => setApiTransport(null));
 
+it("keeps cover warnings visible after leaving the export dialog", () => {
+  const view = jobView({ state: "done", result: { file: "Synthetic.abook", warnings: ["Chưa có bìa"] } }, 0, false);
+  expect(view).toMatchObject({ description: expect.stringContaining("Chưa có bìa") });
+});
+
 describe("defaultExportFolder", () => {
   it("joins with the separator the library path already uses", () => {
     expect(defaultExportFolder("D:\\Sách\\Thư viện")).toBe("D:\\Sách\\Thư viện\\Đã xuất");

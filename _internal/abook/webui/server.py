@@ -5143,8 +5143,10 @@ class Handler(BaseHTTPRequestHandler):
                         with bookfile.BookFile(path) as opened:
                             coverage = opened.book.get("audioCoverage")
                             available, total = opened.book["chaptersAvailable"], opened.book["chaptersTotal"]
+                            notes = bookfile.cover_warnings(opened.book, opened.content, opened.edits)
                         return {"file": str(path), "size": path.stat().st_size,
                                 "chaptersAvailable": available, "chaptersTotal": total,
+                                "warnings": notes,
                                 "coverage": bookfile.audio_coverage.summary(coverage) if coverage else ""}
 
                     if parts is None:
@@ -5156,7 +5158,9 @@ class Handler(BaseHTTPRequestHandler):
                                                     music_track=music, progress=progress, partial=partial)
                         with bookfile.BookFile(path) as opened:
                             coverage = opened.book["audioCoverage"]
+                            notes = bookfile.cover_warnings(opened.book, opened.content, opened.edits)
                         result = {"file": str(path), "folder": str(path.parent), "size": path.stat().st_size,
+                                  "warnings": notes,
                                   "coverage": bookfile.audio_coverage.summary(coverage), "partsTotal": len(parts), "skipped": [],
                                   "parts": [{"part": index, "title": store.summarize(part)["title"]}
                                             for index, part in enumerate(parts, 1)]}
@@ -5174,6 +5178,7 @@ class Handler(BaseHTTPRequestHandler):
                                   "coverage": f"{sum(len(c['expected']) - len(c['missing']) for c in series_coverage)}/{sum(len(c['expected']) for c in series_coverage)} chương · "
                                               + "; ".join(f"Phần {index}: {bookfile.audio_coverage.summary(c)}" for index, c in enumerate(series_coverage, 1))}
                         result["size"] = sum(part["size"] for part in result["parts"])
+                        result["warnings"] = list(dict.fromkeys(note for part in result["parts"] for note in part["warnings"]))
             except export_jobs.Cancelled as error:
                 raise ApiError(HTTPStatus.CONFLICT, "Đã huỷ xuất.", reason="cancelled") from error
             except (bookfile.BookFileError, ValueError) as error:

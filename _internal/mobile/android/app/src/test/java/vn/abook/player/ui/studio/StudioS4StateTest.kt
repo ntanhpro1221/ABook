@@ -283,6 +283,8 @@ class StudioS4StateTest {
         assertEquals("Đã xuất vào máy tính Máy bàn", outcome.title)
         assertTrue(outcome.lines.single().startsWith("Tắt đèn.abook"))
         assertEquals(4, outcome.notes.size)
+        val coverless = StudioExportJson.result(JSONObject().put("warnings", org.json.JSONArray().put("Chưa có bìa")))
+        assertEquals(listOf("Chưa có bìa"), StudioExportLogic.outcome(StudioExportKind.BookFile, coverless, "").notes)
         assertEquals("Đã xuất vào máy tính", StudioExportText.doneTitle(""))
     }
 

@@ -48,6 +48,7 @@ nhắc cập nhật. Trong gói không có gì được "chạy".
 """
 from __future__ import annotations
 
+from collections.abc import Container
 import argparse
 import contextlib
 import hashlib
@@ -59,6 +60,7 @@ import secrets
 import shutil
 import sys
 import time
+import warnings
 import zipfile
 import zlib
 from datetime import UTC, datetime
@@ -76,6 +78,23 @@ from .library import book_id
 EXTENSION = ".abook"
 MIMETYPE = "application/vnd.ngdtuanh.abook+zip"
 FORMAT = "abook"
+
+MISSING_COVER = "Chưa có bìa. Chọn ảnh trong Studio trước khi chia sẻ file .abook."
+
+
+class MissingCoverWarning(UserWarning):
+    """A book can be exported without artwork, but must say so."""
+
+
+def cover_warnings(book: dict[str, Any], files: Container[str], edits: dict[str, Any] | None = None) -> list[str]:
+    """Report the effective cover, including a listener's replacement or removal."""
+    if edits is not None and "cover" in edits:
+        present = bool(edits["cover"]) and book_edits.EDITS_COVER in files
+    else:
+        present = bool(book.get("cover")) and covers.COVER_FILE in files
+    return [] if present else [MISSING_COVER]
+
+
 # 1 = sách không nhạc nền; 2 = có mục `music` + music/*.mp3 (02-10); 3 = cả bộ nhiều phần (`pack_series`); 4 = có lớp sửa của
 # người nghe (edits.json + edits/cover.jpg, `repack`); 5 = có chương chỉ-chữ (texts/<n>.txt, không audio). Gói ghi phiên bản THẤP
 # NHẤT đủ chứa nội dung: sách một phần không nhạc vẫn là 1, có nhạc là 2 - app cũ mở được; app cũ gặp file mới hơn thì từ chối kèm
@@ -486,6 +505,8 @@ def seal(book: dict[str, Any], files: dict[str, Path | bytes], out: Path, *, pro
         raise BookFileError("Sách chưa có chương nào nghe được hay đọc được để xuất."
                             + (" " + audio_coverage.summary(coverage) if coverage else ""))
     known = known or {}
+    for message in cover_warnings(book, files, edits):
+        warnings.warn(message, MissingCoverWarning, stacklevel=2)
     described_files = {}
     total_hash = sum(source.stat().st_size if isinstance(source, Path) else len(source) for source in files.values())
     hashed = 0

@@ -72,6 +72,22 @@ class StudioScreenTest {
 
     // ---- danh sách ----
 
+    @Test fun missingArtworkOffersTheCoverEditorWithoutStartingTheBook() {
+        source.books = listOf(studioBook())
+        val state = StudioProjectState(hub.session(""), "b1", StudioTab.Chapters, never)
+        val routes = ArrayList<StudioSubKind>()
+        show { StudioProjectScreen(state, sheets, {}, {}, openSub = { routes += it }) }
+        tag("studio_missing_cover").assertIsDisplayed()
+        tag("studio_missing_cover_pick").performClick()
+        assertEquals(listOf(StudioSubKind.Cover), routes)
+    }
+
+    @Test fun existingArtworkNeedsNoSuggestion() {
+        source.books = listOf(studioBook().copy(cover = "/cover.jpg?v=1"))
+        project()
+        absent("studio_missing_cover")
+    }
+
     @Test fun theListGroupsProjectsByWhatNeedsYou() {
         source.books = listOf(
             studioBook("a", title = "Đang chạy", running = true, canPause = true), studioBook("b", title = "Chờ duyệt", phase = "casting", precastHeld = true),

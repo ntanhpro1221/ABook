@@ -109,17 +109,18 @@ export function CoverEditor({ book }: { book: BookSummary & { cover?: CoverImage
             <Skeleton className="h-full w-full" />
           </div>
       </div>
+      {!book.cover && <p data-testid="studio-missing-cover" className="mt-2 text-body-small text-fg-2">{S.s_chua_co_bia}</p>}
       {/* Biểu tượng / chữ đầu thẳng mép trái của bìa (soát 24-10): lề âm bù đệm của nút; điện thoại (chỉ biểu tượng, nền chạm 48 px) dồn biểu tượng về trái. */}
-      <div className="mt-2 -ml-2 flex items-center gap-1 max-sm:ml-0">
+      <div className="mt-2 -ml-2 flex flex-wrap items-center gap-1 max-sm:ml-0">
         <button
           type="button"
           disabled={busy}
           onClick={() => input.current?.click()}
-          aria-label={book.cover ? S.s_doi_anh_bia_7889ff91 : S.s_dat_anh_bia_dac4c265}
+          aria-label={book.cover ? S.s_doi_anh_bia_7889ff91 : S.s_chon_anh_41ecf092}
           className="touch-box inline-flex h-8 items-center gap-2 rounded-control px-2 text-body-small font-medium text-fg-2 hover:bg-hover hover:text-fg disabled:opacity-50 max-sm:!justify-start max-sm:px-0"
         >
           <ImagePlus className="ink-start size-4" /> {/* Hai chữ, không xuống dòng: nút đứng dưới bìa 154 px cạnh hai nút biểu tượng ("Đổi ảnh bìa" gãy dòng đè lên dòng gợi ý, soát 24-10). */}
-          <span className="whitespace-nowrap max-sm:hidden">{book.cover ? S.s_doi_bia_37220dae : S.s_dat_bia_a7e3a9a7}</span>
+          <span className={cn("whitespace-nowrap", book.cover && "max-sm:hidden")}>{book.cover ? S.s_doi_bia_37220dae : S.s_chon_anh_41ecf092}</span>
         </button>
         <button
           type="button"
