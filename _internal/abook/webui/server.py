@@ -449,6 +449,9 @@ class App:
         self.music_downloads = music_library.Downloads(self.music_track_file, export_jobs.Cancelled)
         self._music_index: tuple[str, dict[str, dict[str, Any]], dict[str, str]] | None = None  # (revision, bài, link -> tên file đệm)
         self._music_lock = threading.Lock()
+        # Mốc của mỗi yêu cầu Hoàn tác được (`request_stamp`): tăng ngặt, kể cả khi đồng hồ Windows nhảy 15,6 ms một lần.
+        self._stamp_lock = threading.Lock()
+        self._last_stamp = 0.0
         # Thao tác bìa của từng cuốn xếp theo lúc BẮT ĐẦU (`cover_ticket`): ảnh mạng tải chậm về sau một ảnh khác đã đặt xong thì bị bỏ.
         self._cover_lock = threading.Lock()
         self._cover_turns: dict[str, int] = {}
@@ -1182,6 +1185,14 @@ class App:
     def book_view(self, value: str) -> dict[str, Any]:
         path = self._book(value)
         return {"book": self.summary(path), "chapters": store.chapters(path)}
+
+    def request_stamp(self, clock: Callable[[], float] = time.time) -> float:
+        """Mốc `requested_at` của một lần bấm, cũng là khoá Hoàn tác (`requestedAt`): hai lần sửa trong cùng một nhịp đồng hồ
+        (time.time() trên Windows chỉ nhảy mỗi 15,6 ms) không được trùng mốc - trùng thì Hoàn tác lần đầu gỡ nhầm lần sau."""
+        with self._stamp_lock:
+            stamp = max(float(clock()), self._last_stamp + 0.001)
+            self._last_stamp = stamp
+            return stamp
 
     def _mutating(self) -> None:
         if self.read_only:
@@ -4711,7 +4722,7 @@ class Handler(BaseHTTPRequestHandler):
             problem = book_wishes.speaker_problem(index, cast, found[0][0], found[0][1], target)
             if problem is not None:
                 raise ApiError(HTTPStatus.BAD_REQUEST, SPEAKER_PROBLEMS.get(problem, "Không gộp được vào người này"))
-            now = time.time()
+            now = self.app.request_stamp()
             book_wishes.request_speakers(path, found, target, now=now)
             book_wishes.request_alias(path, source, target, now=now)
             self._send_json(HTTPStatus.OK, {"lines": len(found), "requestedAt": now})
@@ -4728,7 +4739,7 @@ class Handler(BaseHTTPRequestHandler):
         problem = store.speaker_request_problem(path, lines[0][0], lines[0][1], target, "")
         if problem is not None:
             raise ApiError(HTTPStatus.BAD_REQUEST, SPEAKER_PROBLEMS.get(problem, "Không gộp được vào người này"))
-        now = time.time()
+        now = self.app.request_stamp()
         listener_overrides.request_speakers(path, lines, target, now=now)
         aliases.add(path, source, target, now=now)
         self._send_json(HTTPStatus.OK, {"lines": len(lines), "requestedAt": now})
@@ -4781,7 +4792,7 @@ class Handler(BaseHTTPRequestHandler):
             found = book_wishes.chapter_lines(book_wishes.Lines(path), int(chapter))
             if not found:
                 raise ApiError(HTTPStatus.BAD_REQUEST, "Chương này chưa có câu nào đã thu để thu lại.")
-            now = time.time()
+            now = self.app.request_stamp()
             book_wishes.request_retakes(path, found, now=now)
             self._send_json(HTTPStatus.OK, {"lines": len(found), "requestedAt": now})
             return
@@ -4793,7 +4804,7 @@ class Handler(BaseHTTPRequestHandler):
             ).fetchall()
         if not rows:
             raise ApiError(HTTPStatus.BAD_REQUEST, "Chương này chưa có câu nào đã thu để thu lại.")
-        now = time.time()
+        now = self.app.request_stamp()
         for row in rows:
             listener_overrides.request_retake(path, str(row["stable_id"]), str(row["text_sha256"]), now=now)
         self._send_json(HTTPStatus.OK, {"lines": len(rows), "requestedAt": now})
@@ -5779,7 +5790,7 @@ class Handler(BaseHTTPRequestHandler):
             raise ApiError(HTTPStatus.BAD_REQUEST, never_text(surface))
         # Chữ chưa có câu nào trong sách (gõ sai, hay chỉ có ở chương sau): vẫn ghi - nhưng nói để người nghe soát lại chữ đã gõ.
         warning = {} if reach.get("lines") else {"warning": f"Đã ghi nhưng chưa có câu chứa “{surface}” để đổi — bạn kiểm tra chữ đã gõ."}
-        now = time.time()
+        now = self.app.request_stamp()
         if package:
             book_wishes.request_pronunciation(path, surface, spoken, now=now)
             # Lời đáp của cuốn mở từ file giữ đúng hợp đồng với LocalStudio của điện thoại (test_book_edits): ở đó trang đọc tự hỏi `reading-reach` và nói trước khi lưu.
@@ -5881,7 +5892,7 @@ class Handler(BaseHTTPRequestHandler):
                     # Chưa phân vai: chưa ai có giọng, không phải "người này chưa nói câu nào" (soát a83 B9).
                     raise ApiError(HTTPStatus.BAD_REQUEST, NOT_CAST_YET)
                 raise ApiError(HTTPStatus.BAD_REQUEST, SPEAKER_PROBLEMS.get(problem, "Không đổi được người nói câu này"))
-        now = time.time()
+        now = self.app.request_stamp()
         # Cửa sổ khác (hay máy khác) vừa sửa chính câu này: `seen` là điều giao diện này tưởng đang ghi cho từng câu ("" = chưa ai quyết).
         # Khác với điều thật sự đang ghi thì báo lại để người nghe biết mình vừa ghi đè (soát UX a23 B19) - vẫn ghi, không bao giờ chặn.
         elsewhere = self._edited_elsewhere(path, lines, body.get("seen"))
@@ -6016,7 +6027,7 @@ class Handler(BaseHTTPRequestHandler):
         # Như người nói: máy/cửa sổ khác vừa đổi cách đọc câu này khác điều giao diện đã thấy - vẫn ghi, báo lại (chỉ khi lệch).
         elsewhere = self._line_elsewhere(path, stable_id, text_sha256, body)
         write = book_wishes.request_line if package else listener_overrides.request_line
-        now = time.time()
+        now = self.app.request_stamp()
         write(path, stable_id, text_sha256, kind=kind, emotion=emotion, intensity=intensity,
               speaker=speaker, spoken=spoken, now=now)
         self._send_json(HTTPStatus.OK, {"stableId": stable_id, "kind": kind, "emotion": emotion, "intensity": intensity,
@@ -6058,7 +6069,7 @@ class Handler(BaseHTTPRequestHandler):
                    else store.voice_request_problem(path, character, preset=preset, gender=gender, avoid=avoid))
         if problem is not None:
             raise ApiError(HTTPStatus.BAD_REQUEST, VOICE_PROBLEMS.get(problem, "Không đổi được giọng nhân vật này"))
-        now = time.time()
+        now = self.app.request_stamp()
         # Như người nói: máy/cửa sổ khác vừa chọn giọng khác cho người này - vẫn ghi, báo lại (chỉ khi lệch: lời đáp thường như cũ).
         elsewhere = self._voice_elsewhere(path, character, body)
         write = book_wishes.request_voice if package else listener_overrides.request_voice
@@ -6079,7 +6090,7 @@ class Handler(BaseHTTPRequestHandler):
         stable_ids = ([str(item.get("stableId", ""))[:80] for item in refs[:2000] if isinstance(item, dict)]
                       if isinstance(refs, list) else [str(body.get("stableId", ""))[:80]])
         project = self.app._editable(value)
-        now = time.time()
+        now = self.app.request_stamp()
         # Một câu: lời đáp `{ok}` như trước (điện thoại và hợp đồng ghi sẵn đáp y vậy); nhóm: thêm số câu + mốc để Hoàn tác.
         reply = (lambda count: {"ok": True, "lines": count, "requestedAt": now}) if isinstance(refs, list) else (lambda _count: {"ok": True})
         # Phán quyết máy/cửa sổ khác vừa ghi cho câu này khác điều giao diện đã thấy (`seen`: {mã câu: "ok" | "redo" | ""}): vẫn ghi, báo lại

@@ -66,6 +66,16 @@ def test_a_line_fix_replaced_by_a_later_one_cannot_be_withdrawn_by_the_old_mark(
     assert not lo.read_overrides(paths.root).get("lines"), "cách đọc câu không giữ yêu cầu cũ (listener_overrides.request_line không ghi `replaced`)"
 
 
+def test_two_fixes_in_one_clock_tick_get_different_undo_marks(studio) -> None:
+    """time.time() trên Windows nhảy 15,6 ms một lần: hai lần sửa liền nhau từng trùng mốc, Hoàn tác lần đầu gỡ nhầm lần sau."""
+    _paths, _post, app = studio
+    frozen = lambda: 1_800_000_000.0  # noqa: E731 - đồng hồ đứng yên như trong một nhịp
+    first, second, third = app.request_stamp(frozen), app.request_stamp(frozen), app.request_stamp(frozen)
+    assert first < second < third
+    assert abs(second - first) > 1e-6, "withdraw_requests so mốc với sai số 1e-6"
+    assert app.request_stamp(lambda: 1_900_000_000.0) == 1_900_000_000.0, "đồng hồ đã đi thì dùng đúng giờ thật"
+
+
 def test_a_line_fix_the_pipeline_already_took_cannot_be_withdrawn_quietly(studio) -> None:
     from abook.database import ProjectDB
     from abook.models import ProjectPaths
