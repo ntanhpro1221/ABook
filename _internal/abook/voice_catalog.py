@@ -355,9 +355,11 @@ def casting_preset_priority(preset: dict[str, Any]) -> tuple[int, int, int, int,
 # Children, boys included, are cast from the female presets by the female `character` tiers,
 # untouched (`character_registry.casting_gender`, owner 05-11): there is no child role.
 #
-# Only what was actually judged goes in. A preset absent from a list is unheard rather
-# than rejected, and sorts after every ranked one, so the theory still decides among the
-# unheard.
+# Only what was actually judged goes in. A preset absent from every list (and from the
+# machine-scored `machine_approved`) is NOT cast automatically - owner 15-11: an unranked voice
+# such as Adam bựa is not a good voice, and running short of good voices means sharing them
+# between characters who never meet (`character_registry.PresetAllocator`), never reaching
+# down. A listener may still pick any preset by hand.
 VOICE_RANK_PATH = Path(__file__).resolve().parent / "assets" / "voice_rank.json"
 
 
@@ -404,6 +406,54 @@ def load_never_auto(path: Path = VOICE_RANK_PATH) -> frozenset[str]:
 NEVER_AUTO = load_never_auto()
 
 
+def load_machine_approved(path: Path = VOICE_RANK_PATH) -> dict[str, dict[str, frozenset[str]]]:
+    """Giọng MÁY CHẤM cho qua (`voice_rank.json` -> `machine_approved`), theo vai và giới; không phải phán quyết chủ sách.
+
+    Mục ấy ghi nguồn (`source`: bộ chấm, ngày, số); một tên đã có trong bậc của chủ sách hay nằm ở `never_auto` thì sai:
+    phán quyết của tai người đứng trên máy, và máy không được mở lại một giọng chủ sách đã chê.
+    """
+    data = json.loads(path.read_text(encoding="utf-8"))
+    section = data.get("machine_approved") or {}
+    known = {str(preset["name"]) for preset in VIENEU_PRESETS}
+    never = set(data.get("never_auto", []))
+    table: dict[str, dict[str, frozenset[str]]] = {}
+    for role in VOICE_RANK_ROLES:
+        table[role] = {}
+        for gender in (GENDER_MALE, GENDER_FEMALE):
+            names = [str(name) for name in (section.get(role) or {}).get(gender, [])]
+            where = f"{path.name}: machine_approved.{role}.{gender}"
+            unknown = [name for name in names if name not in known]
+            if unknown:
+                raise ValueError(f"{where} names no such VieNeu preset: {unknown}")
+            ranked = [name for tier in data[role][gender] for name in tier]
+            clash = [name for name in names if name in ranked or name in never]
+            if clash:
+                raise ValueError(f"{where} repeats the owner's verdict: {clash}")
+            table[role][gender] = frozenset(names)
+    return table
+
+
+MACHINE_APPROVED = load_machine_approved()
+
+
+def auto_rank(preset_name: str, gender: str, role: str = "character") -> int | None:
+    """Bậc của giọng khi MÁY tự chọn: bậc chủ sách (0 = tốt nhất), giọng máy chấm cho qua ngay sau mọi bậc ấy, còn lại None.
+
+    None = không bao giờ tự chọn (chủ sách 15-11: "kể cả không rõ thật mà lại dùng adam bựa? đó không phải giọng tốt"): giọng
+    chưa ai xếp hạng không còn là "chưa nghe nên vẫn dùng được", mà là chưa đạt. Người nghe vẫn chọn tay được mọi giọng.
+    """
+    name = str(preset_name)
+    if name in NEVER_AUTO:
+        return None
+    tiers = VOICE_RANK[role].get(str(gender), ())
+    tier = next((index for index, names in enumerate(tiers) if name in names), None)
+    if tier is not None:
+        return tier
+    if name in MACHINE_APPROVED.get(role, {}).get(str(gender), frozenset()):
+        return len(tiers)
+    return None
+
+
 def listener_rank(preset_name: str, gender: str, role: str = "character") -> int:
     """The listener's tier for a preset in this role (0 = best); unranked = the number of tiers, after every ranked one.
 
@@ -418,9 +468,10 @@ def listener_rank(preset_name: str, gender: str, role: str = "character") -> int
 def preset_eligible(preset: dict[str, Any], role: str, *, automatic: bool = False) -> bool:
     """Quyền dùng theo vai: phán quyết chủ sách mở cả giọng tin tức, chỉ cho vai đã xếp hạng.
 
-    Giọng chưa nghe giữ luật catalog cũ. Vùng miền và lệnh cấm phân vai vẫn có hiệu lực.
+    `automatic` (máy tự chọn: phân vai, giọng dẫn mặc định): chỉ giọng ĐẠT - có bậc chủ sách hoặc máy chấm cho qua
+    (`auto_rank`); NEVER_AUTO và giọng chưa đạt chỉ đến tay người nghe tự chọn. Vùng miền và lệnh cấm phân vai vẫn có hiệu lực.
     """
-    if automatic and preset["name"] in NEVER_AUTO:
+    if automatic and auto_rank(str(preset["name"]), str(preset["gender"]), role) is None:
         return False
     tiers = VOICE_RANK[role].get(str(preset["gender"]), ())
     ranked = any(preset["name"] in tier for tier in tiers)

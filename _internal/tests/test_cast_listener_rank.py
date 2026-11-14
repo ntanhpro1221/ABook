@@ -66,7 +66,7 @@ def _table(**roles) -> dict:
 
 def test_the_shipped_file_loads_in_tiers_and_names_only_real_presets() -> None:
     data = json.loads(voice_catalog.VOICE_RANK_PATH.read_text(encoding="utf-8"))
-    assert set(data) == {"narrator", "character", "never_auto"}
+    assert set(data) <= {"narrator", "character", "never_auto", "machine_approved"}
     table = voice_catalog.load_voice_rank()
     stable = ("Kim Thanh", "Mỹ Duyên", "Quỳnh Anh", "Thục Đoan")
     assert table["character"]["female"] == (("Ngọc Linh",), ("Đoan Trang",), stable)
@@ -135,49 +135,56 @@ def test_listener_rank_is_the_tier_index_and_unranked_is_the_tier_count(monkeypa
 
 
 def test_the_most_speaking_male_takes_the_best_tier_then_the_next(monkeypatch: pytest.MonkeyPatch) -> None:
-    _rank(monkeypatch)  # the old order, with nothing ranked
-    baseline = _picks("male", 8)
     _rank(monkeypatch, male=[["Đức Trí"], ["Quốc Tuấn"]])
     picks = _picks("male", 8)
     assert picks[:2] == ["Đức Trí", "Quốc Tuấn"]
-    # Past the ranked voices the old order carries on, untouched.
-    assert picks[2:] == [name for name in baseline if name not in {"Đức Trí", "Quốc Tuấn"}][:6]
-    assert len(set(picks)) == len(picks)
+    # Past the ranked voices nobody reaches down to an unranked one: the two ranked voices are shared.
+    assert set(picks) == {"Đức Trí", "Quốc Tuấn"}
 
 
 def test_the_most_speaking_female_takes_the_best_tier_then_the_next(monkeypatch: pytest.MonkeyPatch) -> None:
-    _rank(monkeypatch)  # the old order, with nothing ranked
-    baseline = _picks("female", 6)
     _rank(monkeypatch, female=[["Quỳnh Anh"], ["Kim Thanh"]])
     picks = _picks("female", 6)
     assert picks[:2] == ["Quỳnh Anh", "Kim Thanh"]
-    assert picks[2:] == [name for name in baseline if name not in {"Quỳnh Anh", "Kim Thanh"}][:4]
+    assert set(picks) == {"Quỳnh Anh", "Kim Thanh"}
 
 
-def test_voices_in_one_tier_are_equal_so_the_proxies_and_the_old_order_break_the_tie(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    _rank(monkeypatch)  # the old order, with nothing ranked
-    baseline = list(dict.fromkeys(_picks("male", 11)))
+def test_voices_in_one_tier_are_equal_so_the_catalog_order_breaks_the_tie(monkeypatch: pytest.MonkeyPatch) -> None:
     tier = ["Đức Trí", "Quốc Tuấn", "Hải Đăng"]
     _rank(monkeypatch, male=[tier])
     picks = _picks("male", 3)
-    assert set(picks) == set(tier)
-    assert picks == [name for name in baseline if name in tier]
+    by_catalog = sorted(tier, key=lambda name: voice_catalog.casting_preset_priority(voice_catalog.preset_by_name(name)))
+    assert picks == by_catalog
 
 
-def test_variety_still_comes_before_the_ranking(monkeypatch: pytest.MonkeyPatch) -> None:
-    """Two characters never share a voice while an unused one exists, however well it is ranked."""
-    _rank(monkeypatch, male=[["Đức Trí"]])
+def test_variety_still_comes_before_the_ranking() -> None:
+    """Two characters never share a voice while an unused good one exists, however well it is ranked."""
     picks = _picks("male", 5)
-    assert picks.count("Đức Trí") == 1
+    assert len(set(picks)) == 5
 
 
 def test_the_narrator_voice_is_never_given_to_a_character(monkeypatch: pytest.MonkeyPatch) -> None:
     _rank(monkeypatch, male=[[NARRATOR], ["Quốc Tuấn"]], female=[["Ngọc Linh"]])
     assert NARRATOR not in _picks("male", 12)
     assert _picks("male", 1)[0] == "Quốc Tuấn"
-    assert "Ngọc Linh" not in _picks("female", 12, narrator="Ngọc Linh")
+    # The narrator's voice is the only good female voice: casting refuses rather than hand it to a character.
+    with pytest.raises(RuntimeError):
+        _picks("female", 1, narrator="Ngọc Linh")
+
+
+def test_an_unknown_gender_picks_from_both_good_pools_and_never_an_unranked_voice(monkeypatch) -> None:
+    _rank(monkeypatch, male=[["Đức Trí"]], female=[["Ngọc Linh"]])
+    picks = _picks("unknown", 6)
+    assert set(picks) == {"Đức Trí", "Ngọc Linh"}
+
+
+def test_with_nothing_ranked_nothing_is_cast_automatically(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Owner 15-11: an unranked voice is not a good voice; an empty ranking leaves nothing to cast from."""
+    _rank(monkeypatch)
+    assert casting_presets("male") == [] and casting_presets("female") == []
+    assert narrator_presets(automatic=True) == []
+    with pytest.raises(RuntimeError):
+        _picks("male", 1)
 
 
 def test_the_shipped_male_verdict_decides_who_the_characters_get() -> None:
@@ -195,24 +202,6 @@ def test_the_shipped_female_verdict_decides_who_the_characters_get() -> None:
     assert set(picks[2:5]) == {"Kim Thanh", "Quỳnh Anh", "Thục Đoan"}
     assert not set(picks) & voice_catalog.NEVER_AUTO
     assert set(picks[5:7]) == {"Ngọc Linh", "Đoan Trang"}
-
-
-def test_the_cross_gender_fallback_uses_the_same_news_eligibility(monkeypatch) -> None:
-    _rank(monkeypatch, female=[["Thùy Dung"]])
-    allocator = PresetAllocator(NARRATOR)
-    allocator.not_for_characters = frozenset(p["name"] for p in voice_catalog.VIENEU_PRESETS
-                                            if p["name"] not in {"Mai Anh", "Thùy Dung", "Minh Đức", "Minh Triết"})
-    assert allocator.choose("male", npc=False, age="adult", who="P")["name"] == "Thùy Dung"
-    _rank(monkeypatch)
-    allocator.not_for_characters -= {"Ngọc Linh"}
-    assert allocator.choose("male", npc=True, age="adult", who="Q")["name"] == "Ngọc Linh"
-
-
-def test_empty_lists_leave_casting_exactly_as_it_was(monkeypatch: pytest.MonkeyPatch) -> None:
-    """With nothing ranked the change is neutral: the old order, voice for voice."""
-    _rank(monkeypatch)
-    assert _picks("male", 6) == ["Adam bựa", "Hải Đăng", "Quốc Tuấn", "Xuân Vĩnh", "Adam", "Thanh Bình"]
-    assert _picks("female", 6) == ["Đoan Trang", "Ngọc Linh", "Quỳnh Anh", "Kim Thanh", "Mỹ Duyên", "Thục Đoan"]
 
 
 @pytest.mark.parametrize("gender", ["male", "female"])

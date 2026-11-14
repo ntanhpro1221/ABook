@@ -26,11 +26,11 @@ from .database import (
 from .io_utils import slugify, stable_int
 from .voice_catalog import (
     GENDER_FEMALE,
-    preset_eligible,
+    GENDER_MALE,
     VIENEU_PRESETS,
+    auto_rank,
     casting_preset_priority,
     casting_presets,
-    listener_rank,
     preset_by_name,
     ENGINE_VIENEU,
     ENGINE_VOICES,
@@ -1737,29 +1737,106 @@ def preset_fits_person(preset_gender: str | None, gender: str | None, age: str |
     return str(age) == "child" and preset_gender == GENDER_FEMALE
 
 
+# Hai người "nói kề nhau" khi câu thoại của họ cách nhau tối đa chừng này đoạn (kể cả câu dẫn) trong cùng một cảnh: một
+# cuộc đối thoại qua lại. Hai người như thế mà chung giọng thì người nghe không biết ai đang nói.
+DIALOGUE_PARTNER_MAX_SEGMENT_GAP = 3
+
+
+def speaking_cooccurrence(
+    rows: Iterable[Any], who_of: Callable[[Any], str | None],
+) -> tuple[dict[str, Counter[tuple[int, int]]], dict[str, set[str]]]:
+    """Ai nói ở cảnh nào (bao nhiêu câu) và ai nói kề ai, cho `PresetAllocator.note_scenes/note_partners`.
+
+    Cảnh = (chapter_id, số dấu ngăn cảnh đã qua trong chương): đoạn mang `scene_break` là đoạn CUỐI của một cảnh
+    (`text_processing`, dòng ngăn cảnh không thành đoạn). `who_of(row)` trả khoá người nói như `choose(who=...)` nhận, None
+    cho người kể. Tất định: chỉ phụ thuộc thứ tự (chapter_id, seq).
+    """
+    scenes: dict[str, Counter[tuple[int, int]]] = defaultdict(Counter)
+    partners: dict[str, set[str]] = defaultdict(set)
+    chapter: int | None = None
+    scene = 0
+    last: tuple[str, int, int] | None = None  # (ai, seq, cảnh) của câu thoại gần nhất trong chương
+    for row in sorted(rows, key=lambda row: (int(row["chapter_id"]), int(row["seq"]))):
+        if int(row["chapter_id"]) != chapter:
+            chapter, scene, last = int(row["chapter_id"]), 0, None
+        seq = int(row["seq"])
+        who = who_of(row)
+        if who:
+            scenes[who][(chapter, scene)] += 1
+            if last is not None and last[0] != who and last[2] == scene and seq - last[1] <= DIALOGUE_PARTNER_MAX_SEGMENT_GAP:
+                partners[who].add(last[0])
+                partners[last[0]].add(who)
+            last = (who, seq, scene)
+        if "scene_break" in row.keys() and row["scene_break"]:
+            scene += 1
+    return dict(scenes), dict(partners)
+
+
 class PresetAllocator:
-    """Một preset là một giọng; ưu tiên giọng chưa ai giữ trong cả hai nhóm vai."""
+    """Chỉ giọng ĐẠT (`voice_catalog.auto_rank`); một preset là một giọng; giọng chưa ai giữ đi trước.
+
+    Hết giọng đạt thì DÙNG CHUNG giọng đạt, không bao giờ với xuống giọng chưa đạt (chủ sách 15-11). Người chung giọng chọn
+    như tô màu đồ thị đồng xuất hiện: tránh người nói kề nó trong một cuộc đối thoại, rồi người cùng cảnh, rồi cùng chương,
+    rồi chọn người giữ ở xa nó nhất trong sách, rồi người giữ ít câu (vai nhiều câu giữ được giọng riêng). Vòng gọi theo số
+    câu giảm dần, nên vai chính nhận giọng riêng trước. Tất định: mọi phép hoà rơi về thứ tự danh mục.
+    """
     def __init__(self, narrator_voice: str, other_narrators: Iterable[str] = ()) -> None:
         self.narrator_voice = narrator_voice
         self.not_for_characters = frozenset({str(narrator_voice), *map(str, other_narrators)})
         self.usage: Counter[str] = Counter()
         self.holders: dict[str, set[str]] = {}
         self.chapters_of: dict[str, set[int]] = {}
+        self.scenes_of: dict[str, Counter[tuple[int, int]]] = {}
+        self.partners_of: dict[str, set[str]] = {}
 
     def note_chapters(self, who: str, chapters: set[int]) -> None:
         self.chapters_of[str(who)] = set(chapters)
 
+    def note_scenes(self, who: str, scenes: dict[tuple[int, int], int]) -> None:
+        """Cảnh (chapter_id, số thứ tự cảnh) người này nói, kèm số câu ở mỗi cảnh."""
+        self.scenes_of[str(who)] = Counter(scenes)
+
+    def note_partners(self, who: str, partners: Iterable[str]) -> None:
+        """Những người nói kề người này trong một cuộc đối thoại (`speaking_cooccurrence`)."""
+        self.partners_of[str(who)] = set(map(str, partners))
+
+    def _pool(self, gender: str) -> list[dict[str, str]]:
+        genders = (gender,) if gender in (GENDER_MALE, GENDER_FEMALE) else (GENDER_FEMALE, GENDER_MALE)
+        pool = [p for g in genders for p in casting_presets(g, automatic=True)]
+        candidates = [p for p in pool if p["name"] not in self.not_for_characters]
+        if not candidates:
+            # Mọi giọng đạt đều đã từng kể sách này: giọng dẫn CŨ nhường lại, giọng dẫn hiện tại thì không.
+            candidates = [p for p in pool if p["name"] != self.narrator_voice]
+        if not candidates:
+            raise RuntimeError(f"Không còn giọng đạt nào cho giới {gender!r} ngoài giọng người kể {self.narrator_voice!r}")
+        return candidates
+
     def choose(self, gender: str, *, npc: bool, age: str = "unknown", who: str = "") -> dict[str, str]:
         gender = casting_gender(gender, age)
-        candidates = [p for p in casting_presets(gender, automatic=True) if p["name"] not in self.not_for_characters]
-        if not candidates:
-            candidates = [p for p in VIENEU_PRESETS if p["name"] not in self.not_for_characters and preset_eligible(p, "character", automatic=True)]
+        # Giới chưa rõ: chọn trong giọng đạt của CẢ HAI giới theo cùng phép xếp hạng - không giới nào mặc định.
+        candidates = self._pool(gender)
         mine = self.chapters_of.get(who, set())
+        my_scenes = self.scenes_of.get(who, Counter())
+        my_partners = self.partners_of.get(who, set())
+        # Hoà giữa hai giới (giới chưa rõ) theo khoá tên ổn định, cùng khoá với luật trung tính của castfix: chẵn nữ, lẻ nam.
+        leaning = GENDER_FEMALE if stable_int(f"unknown-gender::{who}") % 2 == 0 else GENDER_MALE
+
         def rank(preset: dict[str, Any]) -> tuple[Any, ...]:
             name = str(preset["name"])
-            occupied = set().union(*(self.chapters_of.get(h, set()) for h in self.holders.get(name, ())))
-            return (self.usage[name] > 0, len(mine & occupied), self.usage[name],
-                    listener_rank(name, gender), *casting_preset_priority(preset))
+            holders = sorted(self.holders.get(name, ()))
+            occupied = set().union(*(self.chapters_of.get(h, set()) for h in holders))
+            scenes = set().union(*(self.scenes_of.get(h, Counter()).keys() for h in holders))
+            nearest = min((abs(a - b) for a in mine for b in occupied), default=None)
+            lines = sum(sum(self.scenes_of.get(h, Counter()).values()) for h in holders)
+            return (self.usage[name] > 0,
+                    sum(1 for h in holders if h in my_partners),
+                    len(set(my_scenes) & scenes),
+                    len(mine & occupied),
+                    -(nearest if nearest is not None else 1 << 30),
+                    str(preset["gender"]) != leaning if gender not in (GENDER_MALE, GENDER_FEMALE) else False,
+                    self.usage[name], lines,
+                    auto_rank(name, str(preset["gender"])),
+                    *casting_preset_priority(preset))
         selected = min(candidates, key=rank)
         self.reserve(str(selected["name"]), who=who)
         return selected
@@ -2709,6 +2786,19 @@ def build_registry_and_cast(
             f"ANONYMOUS_{anonymous_gender.upper()}",
             {int(row["chapter_id"]) for row in anonymous_gender_rows},
         )
+    # Ai nói cùng cảnh, ai nói kề ai: để khi hết giọng đạt, người chung giọng là người KHÔNG BAO GIỜ gặp nhau (voicepool).
+    def _who_speaks(row: Any) -> str | None:
+        speaker = str(row["speaker"])
+        if speaker == "NARRATOR":
+            return None
+        if speaker.casefold() == "unknown" or normalize_name(speaker) in PRONOUNS:
+            gender = str(row["gender"])
+            return f"ANONYMOUS_{(gender if gender in {'male', 'female'} else 'unknown').upper()}"
+        return canonical_key(speaker)
+    scenes_by_who, partners_by_who = speaking_cooccurrence(db.list_segments(), _who_speaks)
+    for who_key in sorted(scenes_by_who):
+        allocator.note_scenes(who_key, scenes_by_who[who_key])
+        allocator.note_partners(who_key, partners_by_who.get(who_key, ()))
     local_count = 0
     for speaker, speaker_rows in speaker_groups:
         # The same resolver the gate used, so a character that passed the gate on text
@@ -2812,14 +2902,21 @@ def book_allocator(conn: Any, voices: dict[str, Any], *, leave_out: str) -> Pres
     )
     chapters: dict[str, set[int]] = defaultdict(set)
     held: dict[str, set[str]] = defaultdict(set)
-    for row in conn.execute(
+    rows = conn.execute(
         """
-        SELECT c.canonical_name, s.chapter_id, v.preset_name FROM segments s
-        JOIN characters c ON c.id = s.canonical_character_id
-        JOIN voice_profiles v ON v.id = s.voice_profile_id
-        WHERE c.canonical_name <> 'NARRATOR'
+        SELECT c.canonical_name, s.chapter_id, s.seq, s.scene_break, v.preset_name FROM segments s
+        LEFT JOIN characters c ON c.id = s.canonical_character_id
+        LEFT JOIN voice_profiles v ON v.id = s.voice_profile_id
         """
-    ):
+    ).fetchall()
+    scenes, partners = speaking_cooccurrence(
+        rows, lambda row: None if row["canonical_name"] in (None, "NARRATOR") else str(row["canonical_name"]))
+    for who in sorted(scenes):
+        allocator.note_scenes(who, scenes[who])
+        allocator.note_partners(who, partners.get(who, ()))
+    for row in rows:
+        if row["canonical_name"] in (None, "NARRATOR") or row["preset_name"] is None:
+            continue
         who = str(row["canonical_name"])
         chapters[who].add(int(row["chapter_id"]))
         if who != leave_out and row["preset_name"]:

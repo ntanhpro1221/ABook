@@ -241,12 +241,13 @@ def test_casting_prioritizes_natural_north_then_natural_south() -> None:
         for preset in casting_presets(GENDER_FEMALE)
     ]
 
-    # Natural before storytelling, North before South within each. Xuân Vĩnh is back as a
-    # Northern natural voice since VieNeu 3.8.1, and Adam is the one Southern natural male.
+    # Natural before storytelling, North before South within each - among the voices that PASSED (owner tiers or
+    # machine-approved): Phạm Tuyên, Xuân Vĩnh (North natural), Adam (South natural), Thiền Tâm Đức (North story),
+    # Thái Sơn, Đức Trí (South story). Adam bựa, Hải Đăng, Quốc Tuấn, Thanh Bình, Thiện Minh are never cast automatically.
     assert male_order == [
-        *[(REGION_NORTH, STYLE_NATURAL)] * 5,
+        *[(REGION_NORTH, STYLE_NATURAL)] * 2,
         (REGION_SOUTH, STYLE_NATURAL),
-        *[(REGION_NORTH, STYLE_STORY)] * 3,
+        *[(REGION_NORTH, STYLE_STORY)] * 1,
         *[(REGION_SOUTH, STYLE_STORY)] * 2,
     ]
     assert female_order == [

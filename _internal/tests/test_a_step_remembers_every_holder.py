@@ -14,11 +14,11 @@ def test_a_preset_remembers_every_holder():
 def test_all_holders_count_when_choosing_a_shared_preset():
     a = PresetAllocator("Phạm Tuyên")
     a.not_for_characters = frozenset(p["name"] for p in VIENEU_PRESETS
-                                    if p["name"] not in {"Xuân Vĩnh", "Thanh Bình"})
+                                    if p["name"] not in {"Xuân Vĩnh", "Adam"})
     a.reserve("Xuân Vĩnh", who="VIKTOR")
     a.reserve("Xuân Vĩnh", who="KANG")
-    a.reserve("Thanh Bình", who="JAY")
-    a.reserve("Thanh Bình", who="OTHER")
+    a.reserve("Adam", who="JAY")
+    a.reserve("Adam", who="OTHER")
     a.note_chapters("KANG", {71})
     a.note_chapters("NEW", {71})
-    assert a.choose("male", npc=False, who="NEW")["name"] == "Thanh Bình"
+    assert a.choose("male", npc=False, who="NEW")["name"] == "Adam"

@@ -7,6 +7,8 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+- Tự phân vai chỉ dùng giọng đạt (chủ sách xếp hạng hoặc máy chấm cho qua); hết giọng đạt thì dùng chung giọng giữa những vai không bao giờ gặp nhau, không còn rơi xuống Adam bựa, Ngọc Huyền, Trúc Ly. Giới chưa rõ không còn mặc định giọng nam.
+
 - Thư viện (điện thoại, web, máy tính): ô sách có bìa vẽ (sách chưa có ảnh bìa) giờ cũng hiện tên dưới bìa như ô có ảnh; trình đọc màn hình đọc được tên.
 
 - Nhận đúng tên chương như “Đoạn kết”, “Lời bạt” và tiêu đề không số; tên dự phòng theo thứ tự trong sách.

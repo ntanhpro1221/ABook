@@ -29,6 +29,9 @@ def test_carry_refuses_the_current_narrator_pin_and_casts_the_same_gender(tmp_pa
     assert report["voices"] == 0
     assert "MARCUS" not in db.locked_character_voices()
     _speak(db, "002", [("MARCUS", VOICE_C)], status="analyzed")
+    # Phân tích nói Marcus là nam: giới chưa rõ không còn rơi về giọng nam mặc định (voicepool 15-11).
+    with db.connect() as conn:
+        conn.execute("UPDATE segments SET gender='male' WHERE speaker='MARCUS'")
     build_registry_and_cast(db, SETTINGS, lambda _: None)
     assert NARRATOR_VOICE not in _preset(db, "MARCUS")
     assert {preset_by_name(name)["gender"] for name in _preset(db, "MARCUS")} == {"male"}
