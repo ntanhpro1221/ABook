@@ -91,7 +91,10 @@ export function galleryCases(platform: Platform): void {
         }
         if (/player-(?:full-)?sleep(?:-active)?$/.test(entry.id)) {
           // Six numeric shortcuts, a free ruler and a separate chapter count row.
-          const choices = [...document.querySelectorAll<HTMLButtonElement>('[role="group"][aria-label="Hẹn giờ ngủ"] [data-value-chip]')];
+          // ValuePicker starts with the ruler (shortcuts are its tick labels) and only falls back to a chip group after measured overflow.
+          const ruler = document.querySelector<HTMLElement>('[data-value-ruler][role="slider"][aria-label="Hẹn giờ ngủ"]');
+          const choices = [...document.querySelectorAll<HTMLButtonElement>(
+            `[data-value-chip][data-tap-proxy-for="${ruler?.id ?? ''}"], [role="group"][aria-label="Hẹn giờ ngủ"] [data-value-chip]`)];
           expect(choices).toHaveLength(6);
           expect(document.querySelector('[data-value-ruler][role="slider"]')).not.toBeNull();
           expect(document.querySelector('[data-sleep-chapters]')).not.toBeNull();
