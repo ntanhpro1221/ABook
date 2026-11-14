@@ -12,6 +12,7 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 - Studio repairs VieNeu lines where the speech check hears the same phrase twice: the line is recorded again in parts split at its own punctuation, keeping the text and chosen readings unchanged. Takes with repeated content are no longer accepted as exceptions.
 - Row summaries start with a capital letter on Android, desktop and web, for example "Nhạc tự chọn" under Listening settings and "Chưa có bài nào" in the music picker.
 - The Saved part of Music no longer shows "Đã tải 0 bài · 1 KB" before any song is downloaded.
+- Undo after changing the same line twice in quick succession now removes only the change it belongs to.
 - Release builds keep the private Android crash-decoding map of each version automatically.
 
 ## [0.4.168] - 2026-11-13
