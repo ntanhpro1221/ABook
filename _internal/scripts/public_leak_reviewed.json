@@ -1205,12 +1205,18 @@
     "reason": "Production interruption instructions and continuity limits; operational guidance rather than book text."
   },
   "_internal/docs/TEST_REPORT.md": {
-    "sha256": "69a61c1ca5224f332d8b43251320a01106b05b5923edea93993659af71a954ee",
-    "reason": "_internal/docs/TEST_REPORT.md: 0.4.171 technical release notes, ignored-tracked implementation and test description; existing individual shingle approvals unchanged."
+    "sha256": "f129401bbacc70837325460ec24e80c2be2f8830c9372e8cf011067f30f214da",
+    "reason": "_internal/docs/TEST_REPORT.md: 0.4.171 technical release notes, ignored-tracked implementation and test description; existing individual shingle approvals unchanged. TEST_REPORT TN audit: records the 440-case string benchmark, exact JUnit suite counts, aggregate Corpus sampling and unchanged implementation hash alongside prior technical evidence. This review only covers long technical prose.",
+    "rules": [
+      "long-vietnamese"
+    ]
   },
   "_internal/docs/TEXT_NORMALIZATION.md": {
-    "sha256": "06b3499d392b6f6a990b026d4f665b520ca3c9257ce452c57a5e7fa92e8ec94b",
-    "reason": "docs/TEXT_NORMALIZATION.md: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
+    "sha256": "6ce8fd1b5a8e41e68d24ad436fef952b797f658270fc4f1328ef988a64af599f",
+    "reason": "TEXT_NORMALIZATION audit: original technical architecture, 440-case score tables, aggregate-only frequency estimates and retained historical research notes; long prose is documentation, not a story excerpt. Corpus overlap remains blocking.",
+    "rules": [
+      "long-vietnamese"
+    ]
   },
   "_internal/docs/THE_MACHINE_IS_SHARED.md": {
     "sha256": "abb41668adcafbe2b73f1f208899025bdda92deba71e0aee9576ff3078c94757",
@@ -5566,5 +5572,12 @@
         "f28c48a570996d75"
       ]
     }
+  },
+  "_internal/docs/tn_benchmark/report.md": {
+    "sha256": "b535c1342a93abd68aa6b29bac0cb16ba1750f45fce155be8742d9c07387e649",
+    "reason": "TN mismatch report: generated solely from the independently authored 440 neutral test cases, acceptable readings and application outputs; long paragraphs are structured mismatch records. No Corpus prose or Corpus waiver.",
+    "rules": [
+      "long-vietnamese"
+    ]
   }
 }

@@ -1,4 +1,350 @@
-# Chuẩn hoá chữ cho giọng đọc (text normalization)
+# Chuẩn hoá chữ để đọc tiếng Việt
+
+Mốc đo: v0.4.170, commit nguồn `20889b26f83c72e13e137780e7a2812ab3e27e88`, ngày 14-11-2026.
+Nhánh `dev/tnaudit` chỉ bổ sung bộ đo, fixture và tài liệu. Không thay hành vi TN hoặc tạo audio.
+
+## Phạm vi và cách hiểu điểm
+
+440 câu ngắn trung tính tự đặt, 22 loại × 20 ca. Đáp án do người viết đặt theo cách đọc Việt phổ biến;
+chưa có chủ sách nghe duyệt hoặc hội đồng người gán nhãn. Một số ca mơ hồ có nhiều đáp án và note.
+Không dùng câu truyện làm đề hoặc đáp án. Rà lại cách ghi phiên âm (khoảng trắng/gạch nối) trước khi khóa baseline.
+
+Điểm là **khớp toàn chuỗi ở biên trước máy đọc**, sau NFC, thường hóa, gộp khoảng trắng và bỏ dấu câu cuối.
+Giữ nguyên dấu bên trong, gạch nối, chữ số và thẻ `<en>`. Chỉ cần khớp một đáp án là đạt.
+Các cách ghi phiên âm tương đương đã được liệt kê trong fixture; bộ so không tự phiên âm hay gấp dấu.
+
+**Đây chưa phải tỷ lệ TTS phát âm đúng.** Số thứ tự, đơn vị, thời gian và phần trăm thường còn ở dạng số
+vì app giao cho normalizer sea-g2p. Thẻ `<en>...</en>` là chỉ dẫn phát âm, không phải lời nói thêm.
+Một chuỗi chưa khớp có thể vẫn đọc đúng sau bước đó. URL bị rút gọn là quyết định nội dung hiện có.
+Ngược lại, khớp chữ không chứng minh waveform đúng tên, thanh điệu, kéo dài hay nhịp nghỉ.
+
+Profile cố định: VieNeu desktop, `speaks_english=True`, `direct_english=True`, không có bảng cách đọc riêng,
+không shared rulings; gốc `ja` cho loại Nhật, `None` cho các loại khác. Không suy kết quả sang Supertonic,
+Edge, giọng mạng hoặc toàn bộ Kotlin/Android. Chữ hoa 100% chỉ kiểm nội dung khi bỏ hoa thường.
+
+## Hai đường kiến trúc
+
+```text
+Nghe ngay, VieNeu trên máy
+văn bản -> word_timing.tokens -> vieneu.units
+        -> spoken_tokens -> _spoken_tokens -> các luật theo từ / reading_marks
+        -> Unit.pieces (BIÊN ĐO) -> vieneu_engine.phonemize / sea-g2p -> infer -> audio
+
+Studio
+row.text hoặc listener_text -> bỏ marker tham chiếu / NFC / reading_punctuation
+        -> spoken_symbols_to_words -> thay cách đọc đã khóa, mang anchor_tags
+        -> studio_tn_tagged -> studio_tn -> _spoken_tokens dùng chung
+        -> _normalize_with_anchor_spans -> spoken_text (BIÊN ĐO)
+        -> EngineAdapter / sea-g2p -> infer -> QA / audio
+
+Pipeline -> TTSCoordinator.spoken_text_with_anchors
+         -> dùng cùng chữ cho máy đọc, expected ASR và phép chia câu
+```
+
+Điểm vào không tạo audio:
+
+| Đường | Điểm vào | Kết quả / lưu ý |
+|---|---|---|
+| Lõi chung | `readaloud/vieneu.py:799` `spoken_tokens(tokens, origin, speaks_english, readings, direct_english=...)` | Một chuỗi đọc cho mỗi token hiện |
+| Nghe ngay VieNeu | `readaloud/vieneu.py:1064` `units(text, max_chars, ..., direct_english=True)` | Nối `part.pieces`; đây là cách `_speak` gọi tại `vieneu.py:1267` |
+| Nghe ngay giọng có normalises_text | `readaloud/spoken.py:27` `layout(...)` | Chuỗi và mốc token; direct English khác VieNeu, không nằm trong bảng đo |
+| Studio lõi | `readaloud/studio_tn.py:104` `studio_tn(...)` | Chuỗi và bản đồ vị trí, chưa gồm toàn bộ tiền/hậu xử lý Studio |
+| Studio có anchor | `readaloud/studio_tn.py:210` `studio_tn_tagged(...)` | Bảo vệ cách đọc đã khóa, giữ cue cho bước sau |
+| Studio đầy đủ | `tts.py:1315` `TTSCoordinator.spoken_text_with_anchors(row)`; `tts.py:1470` `spoken_text(row)` | Bộ đo gọi method công khai với DB rỗng tạm, không nạp engine |
+| Caller pipeline | `pipeline.py:3717`, `pipeline.py:5290`, `pipeline.py:6069` | Vòng thu, chữ expected và kiểm lại dùng cùng chuỗi |
+
+Các dòng là ở commit nguồn, tính dưới `_internal/abook/`. Bộ đo chỉ điền cache gốc cuốn và bảng tên rỗng
+để từng ca có context cố định; không thay hàm TN. DB tạm nằm ngoài repo và được dọn khi kết thúc.
+
+`readings.apply_tokens` (`readaloud/readings.py:116`) giữ quyền cách đọc người nghe. Studio bảo vệ span
+đã thay bằng mapping/anchor, còn `shared_rulings.py` và `phoneme_policy.py:400` có quyết định theo occurrence.
+Các trường hợp có bảng phát âm, suy gốc toàn sách, ruling LLM và tác động lượt sea-g2p thứ hai chưa được chấm ở đây.
+
+## Bản đồ luật hiện có
+
+| Loại | Luật hiện có (dưới `abook/`) |
+|---|---|
+| Số đếm nhỏ | `readaloud/vieneu.py:449,474,481,501` |
+| Số đếm lớn | `readaloud/vieneu.py:501,737,761` |
+| Thập phân / phân nhóm VN–Anh | `readaloud/vieneu.py:401,406,761` |
+| Số thứ tự | `readaloud/vieneu.py:146,481 (giữ chữ số sau "thứ")` |
+| La Mã / chữ cái I, V, X | `readaloud/vieneu.py:105,135,888,911` |
+| Ngày tháng năm | `readaloud/vieneu.py:368,406; readaloud/symbols.py:167` |
+| Giờ phút giây | `readaloud/vieneu.py:406; readaloud/symbols.py:627` |
+| Khoảng | `readaloud/vieneu.py:368,386; readaloud/symbols.py:415` |
+| Phần trăm | `readaloud/symbols.py:664; readaloud/vieneu.py:470` |
+| Tiền | `readaloud/symbols.py:517; readaloud/vieneu.py:737` |
+| Đơn vị | `readaloud/vieneu.py:470,494; readaloud/symbols.py:161` |
+| Điện thoại / mã | `readaloud/vieneu.py:163,474,529,737` |
+| Viết tắt Việt | `readaloud/abbreviations.py:250,352; readaloud/english_policy.json:37` |
+| Viết tắt Anh | `readaloud/abbreviations.py:250; readaloud/english_policy.py:39,273; readaloud/english_policy.json:30` |
+| Từ Anh trong câu Việt | `readaloud/english_policy.py:273; readaloud/english_policy.json:8; readaloud/names.py` |
+| Tên / romaji Nhật | `readaloud/japanese_policy.py:124,202,265,342; romanization.py` |
+| Ký hiệu | `readaloud/symbols.py:598,664,781; text_processing.py:418` |
+| URL / email | `readaloud/symbols.py:58,298,598; readaloud/studio_tn.py:32` |
+| Thán từ kéo dài | `readaloud/shouts.py:360; readaloud/sound_policy.json; text_processing.py:950` |
+| Ba chấm / gạch / dấu câu | `readaloud/vieneu.py:587,605,674; readaloud/studio_tn.py:32` |
+| Chữ hoa nhấn mạnh | `readaloud/abbreviations.py:194,250; readaloud/shouts.py:360` |
+| Chỉ số game | `readaloud/abbreviations.py:231; readaloud/symbols.py:433,449,627` |
+
+`vieneu.py:481` chủ động để sea-g2p đọc dạng "thứ 1"; `vieneu.py:474` giữ mã dài/số không đầu,
+`vieneu.py:494` nhận đơn vị. Vì thế nhiều 0% ở biên chữ là phần việc chưa materialize tại app.
+`symbols.py:598` đổi URL thành lời rút gọn; fixture đòi còn tên miền nên chưa khớp chính sách đó.
+Studio có `text_processing.py:418` và `text_processing.py:950` ngoài lõi chung, giải thích chênh lệch ký hiệu/cue.
+
+## Số đo theo loại
+
+| Loại / khóa | N | Nghe ngay | Studio |
+|---|---:|---:|---:|
+| Số đếm nhỏ (`cardinal_small`) | 20 | 20/20 = 100.00% | 20/20 = 100.00% |
+| Số đếm lớn (`cardinal_large`) | 20 | 10/20 = 50.00% | 10/20 = 50.00% |
+| Thập phân / phân nhóm VN–Anh (`decimal`) | 20 | 7/20 = 35.00% | 7/20 = 35.00% |
+| Số thứ tự (`ordinal`) | 20 | 0/20 = 0.00% | 0/20 = 0.00% |
+| La Mã / chữ cái I, V, X (`roman`) | 20 | 17/20 = 85.00% | 17/20 = 85.00% |
+| Ngày tháng năm (`date`) | 20 | 2/20 = 10.00% | 2/20 = 10.00% |
+| Giờ phút giây (`time`) | 20 | 1/20 = 5.00% | 1/20 = 5.00% |
+| Khoảng (`range`) | 20 | 1/20 = 5.00% | 1/20 = 5.00% |
+| Phần trăm (`percentage`) | 20 | 0/20 = 0.00% | 0/20 = 0.00% |
+| Tiền (`currency`) | 20 | 6/20 = 30.00% | 6/20 = 30.00% |
+| Đơn vị (`unit`) | 20 | 0/20 = 0.00% | 0/20 = 0.00% |
+| Điện thoại / mã (`phone_code`) | 20 | 0/20 = 0.00% | 0/20 = 0.00% |
+| Viết tắt Việt (`abbrev_vi`) | 20 | 14/20 = 70.00% | 14/20 = 70.00% |
+| Viết tắt Anh (`abbrev_en`) | 20 | 7/20 = 35.00% | 7/20 = 35.00% |
+| Từ Anh trong câu Việt (`english`) | 20 | 20/20 = 100.00% | 20/20 = 100.00% |
+| Tên / romaji Nhật (`japanese`) | 20 | 14/20 = 70.00% | 14/20 = 70.00% |
+| Ký hiệu (`symbol`) | 20 | 2/20 = 10.00% | 8/20 = 40.00% |
+| URL / email (`url_email`) | 20 | 0/20 = 0.00% | 0/20 = 0.00% |
+| Thán từ kéo dài (`vocalization`) | 20 | 17/20 = 85.00% | 18/20 = 90.00% |
+| Ba chấm / gạch / dấu câu (`punctuation`) | 20 | 20/20 = 100.00% | 20/20 = 100.00% |
+| Chữ hoa nhấn mạnh (`uppercase`) | 20 | 20/20 = 100.00% | 20/20 = 100.00% |
+| Chỉ số game (`game`) | 20 | 0/20 = 0.00% | 2/20 = 10.00% |
+| **Tổng, cân đều 22 loại** | 440 | **178/440 = 40.45%** | **187/440 = 42.50%** |
+
+[JSON đầy đủ](tn_benchmark/report.json) có text, expected, got, note, đường gọi và kết quả từng ca.
+[Markdown ca chưa khớp](tn_benchmark/report.md) và [mốc sàn](../tests/fixtures/tn_benchmark/baseline.json)
+được sinh từ cùng lượt đo. Các ví dụ trong hai report đều thuộc fixture tự đặt.
+
+Hai đường chênh **9 ca**: ký hiệu 6, cue/thán từ 1, chỉ số game 2. Mỗi ô có 20 ca nên một ca bằng 5 điểm phần trăm.
+Tổng cân đều theo loại; không dùng nó làm phần trăm chất lượng trên truyện thực tế.
+
+## Tần suất Corpus và thứ tự khảo sát
+
+Chỉ đọc Corpus để đếm, không lưu câu hoặc token nguồn. Script `scripts/tn_corpus_frequency.py` dùng bộ chọn
+chương truyện của public_leak_scan, nhóm theo story_identity; xếp SHA-256 tên truyện rồi chọn 100 nhóm,
+trong mỗi nhóm chọn tối đa 4 chương bằng SHA-256 đường dẫn tương đối. Tên và đường dẫn chỉ dùng trong RAM.
+
+Mẫu có **100 truyện / 356 chương**, 5,351,661 ký tự và **1,175,185 từ cách trắng**. Fingerprint mẫu: `8d207d705a2937c3571ae62bfe6dbe4e3159149fd17ba45df60bd8a3f515304a`.
+
+[Số đếm và regex](tn_benchmark/corpus_frequency.json) ghi toàn bộ mẫu nhận diện, fingerprint và mẫu số.
+Đây là **ước lượng bằng dấu hiệu regex**, không phải nhãn NSW đã kiểm tay. Các loại có thể đếm chồng:
+ngày, khoảng, phân số và mã đều chứa số; chữ La Mã còn lẫn chữ I/V/X; URL chứa ký hiệu.
+Danh sách từ Anh/Nhật còn thiếu; viết tắt Anh phân biệt HOA để tránh đếm đại từ "ai" thành AI.
+Chọn đều truyện khác chọn đều từ; chỉ 100/6823 nhóm được đọc nên không chứng minh đại diện mọi thể loại.
+
+Đặt `điểm ưu tiên = số dấu hiệu / số từ cách trắng × 100000 × trung bình tỉ lệ chưa khớp của hai đường`.
+Đây là giả định chuyển tỷ lệ của bộ ca cân bằng sang mẫu nguồn để sắp việc khảo sát.
+Không cộng các điểm để dự đoán số lỗi audio: loại chồng nhau, tỷ lệ chưa khớp chưa phải xác suất sai âm,
+và phân bố ca tự đặt khác phân bố các dấu hiệu trong truyện. Không có khoảng tin cậy người gán nhãn.
+
+| Hạng | Lớp | Số dấu hiệu mẫu | /100k từ | Chưa khớp trung bình | Điểm ưu tiên |
+|---:|---|---:|---:|---:|---:|
+| 1 | Ký hiệu | 1968 | 167.463 | 75.0% | 125.597 |
+| 2 | Tên / romaji Nhật | 1950 | 165.931 | 30.0% | 49.779 |
+| 3 | Viết tắt Anh | 151 | 12.849 | 65.0% | 8.352 |
+| 4 | La Mã / chữ cái I, V, X | 416 | 35.399 | 15.0% | 5.310 |
+| 5 | Số đếm lớn | 100 | 8.509 | 50.0% | 4.255 |
+| 6 | Ngày tháng năm | 49 | 4.170 | 90.0% | 3.753 |
+| 7 | Thập phân / phân nhóm VN–Anh | 66 | 5.616 | 65.0% | 3.651 |
+| 8 | Chỉ số game | 40 | 3.404 | 95.0% | 3.233 |
+| 9 | Đơn vị | 36 | 3.063 | 100.0% | 3.063 |
+| 10 | Số thứ tự | 35 | 2.978 | 100.0% | 2.978 |
+
+[Xếp hạng cả 22 lớp](tn_benchmark/priority.json). Ký hiệu và Nhật lên đầu theo phép ưu tiên này;
+thán từ/dấu câu xuất hiện nhiều nhưng điểm khớp cao nên thứ tự khác với tần suất thô.
+
+## Đề xuất theo lớp, chưa triển khai
+
+Trước khi sửa, phân tách ba nguồn chưa khớp: khác biểu diễn (thẻ/gạch nối), để engine chuẩn hoá tiếp,
+và khác cách đọc/nội dung thật. Chạy kiểm phoneme rồi nghe có đối chứng cho nhóm định sửa.
+Không sửa chỉ để làm đẹp điểm chuỗi. Chẳng hạn chính sách "đường dẫn" cần quyết định nội dung của chủ sách.
+
+Danh sách khoá được **import từ `abook.quality_policy.QUALITY_IMPLEMENTATION_FILES`**, không chép lại từ trí nhớ.
+Tại mốc này có **71 mục**, hash trước/sau **`db6c9cb847dac2e536deca158114df29dcfedac4ab88b69885c08e1924876997`**.
+Các đường dẫn dưới đây tương đối với `abook/`. Mọi đề xuất đụng file KHOÁ cần nhánh sửa và phép đo mới;
+audit này chỉ tạo script/test/docs bên ngoài danh sách đó. Không tự gửi câu Corpus cho LLM.
+
+### Ký hiệu (`symbol`)
+
+**Luật xác định theo ngữ cảnh.** Tách ký hiệu trang trí, toán học, tên tài khoản và mũi tên kể chuyện; giữ nguồn và nghĩa. Soát khác biệt lớp spoken_symbols_to_words của Studio trước khi sửa.
+
+**KHOÁ:** `readaloud/symbols.py`, `text_processing.py`, `readaloud/studio_tn.py`.
+
+### Tên / romaji Nhật (`japanese`)
+
+**Từ điển + LLM cho mơ hồ.** Soát romaji dài, ou/you, y và kính ngữ bằng bảng âm; giữ chính sách tên đã khóa. LLM chỉ phân loại tên hoặc gốc khi luật chưa đủ, lưu theo occurrence rồi kiểm bằng luật.
+
+**KHOÁ:** `readaloud/japanese_policy.py`, `readaloud/japanese_policy.json`, `romanization.py`, `readaloud/shared_rulings.py`.
+
+### Viết tắt Anh (`abbrev_en`)
+
+**Từ điển + ngữ cảnh.** Tách viết tắt chuẩn, tên chữ Việt/Anh và chữ hoa nhấn mạnh; thêm lựa chọn theo cụm game. Thẻ <en> là biểu diễn của máy đọc, cần kiểm riêng trước khi thay cách đọc.
+
+**KHOÁ:** `readaloud/abbreviations.py`, `readaloud/english_policy.json`, `readaloud/english_policy.py`.
+
+### La Mã / chữ cái I, V, X (`roman`)
+
+**Luật xác định.** Chỉ mở số sau tiêu đề, thế kỷ, tên vua có bằng chứng; giữ I/V/X là chữ ở ca đối chứng. Kiểm thẻ <en> và phoneme trước khi kết luận cách đọc chữ cái sai.
+
+**KHOÁ:** `readaloud/vieneu.py`, `readaloud/english_policy.py`.
+
+### Số đếm lớn (`cardinal_large`)
+
+**Luật xác định.** Phân biệt lượng đếm và mã dài bằng từ chỉ lượng/đơn vị; ghi dạng đọc đầy đủ ở biên khi ngữ cảnh rõ. Không diễn giải mọi chuỗi dài thành số đếm.
+
+**KHOÁ:** `readaloud/vieneu.py`.
+
+### Ngày tháng năm (`date`)
+
+**Luật xác định + LLM cho mơ hồ.** Nhận ngày/tháng/năm theo tiền tố, kiểm lịch và ISO; trường hợp 1/2 thiếu ngữ cảnh giữ đa giả thuyết. LLM chỉ chọn loại ở occurrence, không tự bịa ngày.
+
+**KHOÁ:** `readaloud/vieneu.py`, `readaloud/symbols.py`.
+
+### Thập phân / phân nhóm VN–Anh (`decimal`)
+
+**Luật xác định.** Ưu tiên dấu phân nhóm lặp, locale theo sách và đơn vị; bảo toàn số không phần lẻ. Thiếu chứng cứ cho 1.005 thì cần cách đọc sách hoặc đa đáp án.
+
+**KHOÁ:** `readaloud/vieneu.py`, `readaloud/symbols.py`.
+
+### Chỉ số game (`game`)
+
+**Từ điển + luật xác định.** Ghép Lv., hệ số, dấu cộng/trừ và tên stat trước xử lý token; tách phân số khỏi tỉ số và ngày; không dịch tên nhân vật trùng stat.
+
+**KHOÁ:** `readaloud/abbreviations.py`, `readaloud/symbols.py`, `readaloud/english_policy.json`.
+
+### Đơn vị (`unit`)
+
+**Từ điển đơn vị + luật xác định.** Bảng đơn vị có kiểu chữ, mũ và mẫu số; khóa V là vôn chỉ sau số đo, tránh xung đột La Mã hoặc chữ cái.
+
+**KHOÁ:** `readaloud/vieneu.py`, `readaloud/symbols.py`.
+
+### Số thứ tự (`ordinal`)
+
+**Luật xác định.** Giữ nghĩa thứ nhất/thứ tư theo ngữ cảnh; xác minh sea-g2p đang đọc đúng trước khi chuyển quyền khai triển sang app.
+
+**KHOÁ:** `readaloud/vieneu.py`.
+
+### Phần trăm (`percentage`)
+
+**Luật xác định.** Đo cả dạng sát/rời, phần thập phân và âm; nếu đưa về chữ ở lớp app thì tránh chuẩn hoá lại ở engine.
+
+**KHOÁ:** `readaloud/vieneu.py`, `readaloud/symbols.py`.
+
+### Thán từ kéo dài (`vocalization`)
+
+**Từ điển âm + luật xác định.** Đối chiếu cue Studio và thán từ Nghe ngay, giới hạn kéo dài/lặp; thử dấu nghỉ và nội dung âm trước khi đổi chính sách.
+
+**KHOÁ:** `readaloud/shouts.py`, `readaloud/sound_policy.json`, `readaloud/studio_tn.py`, `text_processing.py`.
+
+### Tiền (`currency`)
+
+**Từ điển tiền + luật xác định.** Xử lý tiền tố/hậu tố, đơn vị phụ và dấu phân cách; ¥ thiếu bối cảnh quốc gia cần cấu hình sách, không tự áp yên cho mọi sách.
+
+**KHOÁ:** `readaloud/symbols.py`, `readaloud/vieneu.py`.
+
+### Giờ phút giây (`time`)
+
+**Luật xác định.** Kiểm 24 giờ, h/phút/giây và AM/PM; tách tỉ số 2:1 khỏi giờ, bảo toàn phút không.
+
+**KHOÁ:** `readaloud/vieneu.py`, `readaloud/symbols.py`.
+
+### Khoảng (`range`)
+
+**Luật xác định + LLM cho mơ hồ.** Nhận khoảng có đơn vị, nhiệt độ âm và dấu tilde; phân biệt phép trừ, số lớp, mã và tỉ số. Chỉ hỏi LLM khi cả câu vẫn thiếu bằng chứng.
+
+**KHOÁ:** `readaloud/vieneu.py`, `readaloud/symbols.py`.
+
+### Điện thoại / mã (`phone_code`)
+
+**Luật xác định.** Đọc từng chữ số cho số điện thoại/mã có tiền tố; giữ số không đầu và cách nhóm. Không chuyển mã sang lượng đếm chỉ vì dài.
+
+**KHOÁ:** `readaloud/vieneu.py`, `readaloud/abbreviations.py`.
+
+### Viết tắt Việt (`abbrev_vi`)
+
+**Từ điển + luật ngữ cảnh.** Tách học hàm/học vị, địa chỉ và viết tắt tổ chức; TP./Q./P. cần chứng cứ địa chỉ để tránh tên hoặc ký hiệu khác.
+
+**KHOÁ:** `readaloud/abbreviations.py`, `readaloud/english_policy.json`.
+
+### URL / email (`url_email`)
+
+**Luật xác định + cấu hình sách.** Chủ sách quyết định đọc tên miền, đọc đủ địa chỉ hay chỉ nói đường dẫn; quy ước benchmark đòi giữ thông tin nên chưa khớp chính sách rút gọn hiện có. Không cần LLM để phân tích cú pháp URL/email.
+
+**KHOÁ:** `readaloud/symbols.py`, `readaloud/studio_tn.py`.
+
+### Số đếm nhỏ (`cardinal_small`)
+
+**Luật xác định.** Giữ đối chứng số 0, 1, 4, 5 và lẻ/linh. Mở rộng ca số đứng cạnh đơn vị trước mọi sửa đổi.
+
+**KHOÁ:** `readaloud/vieneu.py`.
+
+### Từ Anh trong câu Việt (`english`)
+
+**Từ điển + LLM cho mơ hồ.** Giữ từ mượn phổ biến; LLM chỉ xử lý đồng tự Việt/Anh có ngữ cảnh, dùng shared_rulings và cách đọc người nghe. Chưa có lỗi chuỗi trong 20 ca này không chứng minh âm đúng.
+
+**KHOÁ:** `readaloud/english_policy.py`, `readaloud/english_policy.json`, `readaloud/shared_rulings.py`.
+
+### Ba chấm / gạch / dấu câu (`punctuation`)
+
+**Luật xác định.** Giữ mốc chữ và nhịp nghỉ; 100% hiện tại chỉ bảo đảm chuỗi theo rubric, cần đo pause audio riêng khi thay luật.
+
+**KHOÁ:** `readaloud/vieneu.py`, `readaloud/studio_tn.py`.
+
+### Chữ hoa nhấn mạnh (`uppercase`)
+
+**Luật xác định.** Giữ nội dung Việt khi viết HOA, tránh đánh vần cả lời nhấn mạnh; phép so bỏ hoa nên chưa chấm nhấn giọng.
+
+**KHOÁ:** `readaloud/abbreviations.py`, `readaloud/shouts.py`.
+
+
+## Chạy lại và cổng kiểm
+
+Từ `_internal`, dùng interpreter venv runtime theo môi trường. Lệnh con dưới đây cần được thả qua
+`Start-Process pythonw` + `scripts/run_detached.py` theo luật vận hành; không mở console.
+
+```text
+python -X utf8 scripts/tn_benchmark.py --output-dir <ngoài-repo>/tn-report --check-baseline tests/fixtures/tn_benchmark/baseline.json
+python -X utf8 scripts/tn_corpus_frequency.py --corpus <Corpus-cục-bộ> --output <ngoài-repo>/frequency.json
+python -X utf8 -m pytest tests/test_tn_benchmark.py tests/test_studio_tn.py -rf
+python -X utf8 -m pytest tests -k "spoken or number or reading or abbrev or symbol or english or japanese" -rf
+```
+
+Test không khẳng định một tỷ lệ đích cao. Mỗi loại/đường giữ tử số đạt ít nhất bằng baseline lúc commit,
+dung sai giảm bằng 0; dùng số nguyên để tránh làm tròn. Fingerprint fixture và profile phải giữ nguyên.
+Ca mới/rubric mới phải được review và đo lại riêng. Sàn 0/20 chưa chặn được suy giảm trong lớp đó;
+sàn theo tổng loại cũng không bắt được hai ca đổi đúng/sai bù nhau. Đây là hạn chế rõ của cổng hiện trạng.
+
+Kết quả kiểm được chốt trong biên bản ngoài repo. Bộ TN theo biểu thức chọn có 2414 passed, 1 skipped,
+0 failed, 0 errors (đếm JUnit testcase, không đếm chữ FAILED trong log).
+Bộ hạ tầng (3 test) và Studio (19 test) chạy riêng: 22 passed, 0 failed/errors.
+Kiểm từng trường text/expected của fixture dùng tất cả shingle tám chữ,
+kể cả công thức phổ biến vốn được scanner công khai phân loại riêng.
+
+Scanner gốc tại 20889b26 chưa có đường cache. Kiểm công khai dùng tool có cache ở commit `0f0a32aba`
+trong worktree kiểm định sẵn có, trỏ vào repo audit và bảng reviewed của chính audit. Đã so AST các hàm
+shingles, giải mã, định danh truyện và áp reviewed với bản gốc trước khi quét. Không thay script quét trong repo.
+Chỉ mục riêng ở runtime/cache/public_leak_index có 523400 file; trạng thái nóng vẫn kiểm inventory và shard hash.
+Không bỏ Corpus, không duyệt thêm trùng Corpus. Ba mục review kỹ thuật chỉ cho luật `long-vietnamese`:
+tài liệu này, TEST_REPORT và Markdown report có đoạn kỹ thuật tự viết; ghim hash byte, không miễn kiểm Corpus.
+Lệnh leak_scan cuối dùng `--strict-audio --rev HEAD`.
+
+
+## Phụ lục ghi chép trước mốc audit
+
+Giữ lại nghiên cứu và số đo lịch sử đã có trong tài liệu nguồn. Các mô tả hiện trạng, phiên bản,
+ưu tiên và kết luận dưới đây thuộc các ngày được ghi trong từng phần, chưa được đo lại trong audit này.
+Chúng dùng mẫu và biên khác bảng 440 ca phía trên; không so trực tiếp hai tỷ lệ.
+
+## Chuẩn hoá chữ cho giọng đọc (text normalization)
 
 Chủ sách 04-10: "nghiên cứu thêm về text normalization của studio. hiện tại nó đã ngon chưa? có sẵn bộ text normalization nào
 trên mạng không? ... nhất là từ tiếng anh sang cụm để máy tiếng việt đọc, chính là cách mà người việt đọc tiếng anh, đọc số,
@@ -13,7 +359,7 @@ Tài liệu này gồm bốn phần:
 Chuẩn hoá chữ là **biến đổi để đọc**: chữ hiện cho người đọc không bao giờ đổi, và app không tự bỏ chữ nào của truyện (chỉ đề
 xuất, người nghe đồng ý mới áp).
 
-### Ranh giới đọc khi thiếu cách sau dấu câu (tnfix167, nhánh dev)
+#### Ranh giới đọc khi thiếu cách sau dấu câu (tnfix167, nhánh dev)
 
 `readaloud.studio_tn.reading_punctuation` thêm khoảng cách vào chuỗi đọc sau dấu câu dính chữ, kèm bảng dịch vị trí.
 Studio chạy bước này trước chuẩn hoá ký hiệu (để còn nhận được URL/email), giữ nguyên các surface có cách đọc của cuốn;
@@ -41,9 +387,9 @@ mất hiệu lực bằng chứng QA và phán quyết nghe của bản thu cũ;
 Không đặt luật riêng cho từ “Hello”: kiểm tra main vẫn giữ chữ này trong chuỗi gửi máy và phoneme; bằng chứng audio/ASR/CTC
 được lưu ngoài repo. Chưa có bằng chứng để quy lỗi bỏ đọc cho chuẩn hoá hay G2P.
 
-## 1. Hiện trạng: chưa ngon, nhưng hỏng đúng ở chỗ truyện dùng nhiều nhất
+### 1. Hiện trạng: chưa ngon, nhưng hỏng đúng ở chỗ truyện dùng nhiều nhất
 
-### Chữ đi qua những gì (04-10, đọc code + chạy thật)
+#### Chữ đi qua những gì (04-10, đọc code + chạy thật)
 
 **Studio** (`tts.py` → `vieneu 3.8.1`):
 1. `text_processing.normalize_text`: Unicode, khoảng trắng, 「」 thành “”.
@@ -63,7 +409,7 @@ Không đặt luật riêng cho từ “Hello”: kiểm tra main vẫn giữ ch
 - Edge: nhận CHÍNH chữ mà giọng trên máy nhận (`readaloud/spoken.py` -> `vieneu.spoken_tokens`, `speaks_english` True; điện thoại `SpokenText.kt`). Đo a39 (Whisper, 74 câu bịa x 2 giọng): âm tiết sai 29% (thô) -> 12%; tên Nhật + kính ngữ 33% -> 2%, tiếng kêu, "1,500", "+50" "x2" "3-5" "100/250", viết tắt thắng lớn; xấu hơn ở 5 ca nhỏ (mức nhiễu của ASR).
 - Giọng dùng khoá (Azure, Google, FPT, Viettel): chữ thô; nhà cung cấp tự chuẩn hoá (chưa đo).
 
-### sea-g2p chạy thật trên câu kiểu truyện
+#### sea-g2p chạy thật trên câu kiểu truyện
 
 | vào | ra | |
 |---|---|---|
@@ -80,7 +426,7 @@ Không đặt luật riêng cho từ “Hello”: kiểm tra main vẫn giữ ch
 Số, ngày giờ, đơn vị, phần trăm: tốt. Chỗ hỏng là từ mượn, viết tắt, ký hiệu cảm xúc, nghìn kiểu Anh, và Nghe ngay không có
 bảng tên.
 
-### Truyện thật dùng gì (161 cuốn trong Corpus/_full, 29.115 chương, 87,3 triệu chữ)
+#### Truyện thật dùng gì (161 cuốn trong Corpus/_full, 29.115 chương, 87,3 triệu chữ)
 
 Tính trên 10.000 chữ, xếp theo tần suất:
 
@@ -110,7 +456,7 @@ Kết luận ưu tiên:
 6. viết tắt;
 7. số (đã tốt, chỉ vá chỗ hỏng).
 
-## 2. Thế giới đã có gì
+### 2. Thế giới đã có gì
 
 | công cụ | cách làm | số/ngày/đơn vị | viết tắt | chữ nước ngoài | giấy phép | tình trạng |
 |---|---|---|---|---|---|---|
@@ -147,7 +493,7 @@ Các phát hiện chính:
   - Mạng nơ-ron thuần có lỗi nguy hiểm, kiểu "3 cm" → "ba ki-lô-mét".
 - **Bộ thử:** chưa có bộ thử chuẩn hoá tiếng Việt công khai; phải tự dựng.
 
-## 3. Quy trình đề xuất
+### 3. Quy trình đề xuất
 
 Một mô-đun **chung cho mọi giọng** (VieNeu, Supertonic, ZeroTTS, và các lớp từ điển cho cả Edge), chạy TRƯỚC engine.
 - **Đầu ra:** âm tiết tiếng Việt và dấu câu ngắt. Đầu ra chỉ còn âm tiết Việt nên lần chuẩn hoá thứ hai bên trong sea-g2p không
@@ -279,7 +625,7 @@ word và cho ra dạng normalized của word").
 - thán từ kéo dài (Aaaa → "A… a", đã có ở Studio, chuyển sang dùng chung);
 - dấu *.
 
-## 4. Đo và lộ trình
+### 4. Đo và lộ trình
 
 **Bộ thử:**
 - khoảng 600 câu bốc phân tầng theo lớp từ Corpus/_full; chữ truyện nằm ở repo riêng tư;
@@ -375,7 +721,7 @@ Ràng buộc:
 - Nghe ngay cũng có file khoá (`readaloud/symbols.py`, `readaloud/vieneu.py`...): đọc `QUALITY_IMPLEMENTATION_FILES` từ code,
   đo `quality_implementation_hash()` trước/sau; thay đổi hash chỉ nằm ở nhánh dev và chờ hết run trước khi tích hợp.
 
-## 5. Từ tiếng Anh viết giống một âm tiết Việt (10-11)
+### 5. Từ tiếng Anh viết giống một âm tiết Việt (10-11)
 
 Chủ sách: "thi thoảng có mấy từ tiếng nước ngoài có ký tự như một từ tiếng việt thì app không phân nó vào là từ nước ngoài
 để đọc". 223 từ trong `english_words.txt` cũng là âm tiết Việt hợp lệ (to, con, ban, the, my, go, hot, top...). sea-g2p tự
@@ -432,7 +778,7 @@ bay (~4%), to (~3%), ban, an (~2%). Phần lớn trong số đó là chữ Việ
 không cách ly được; ký tự vô hình (ZWSP, WJ, soft hyphen) cũng không. Chỉ dấu ngắt thật (`;`, `:`, `.`) hoặc ngoặc đơn quanh
 chữ ấy mới giữ được âm Việt - cả hai đều đổi chuỗi nói, nên chưa làm. Mục 6 sửa lỗi này ở biên âm vị.
 
-## 6. Chữ Việt đứng sát tên hay từ tiếng Anh (10-11)
+### 6. Chữ Việt đứng sát tên hay từ tiếng Anh (10-11)
 
 **Gốc** (sea-g2p 0.10.0, lõi Rust, `src/g2p/mod.rs:477-568 propagate_language`; Android chạy cùng crate qua JNI nên cùng lỗi).
 Từ điển của sea-g2p có 231 từ nằm ở CẢ hai bảng Việt và Anh ("common", gán ở dòng 388-396), 227 từ khác âm. Mỗi chuỗi từ
@@ -499,7 +845,7 @@ Anh mà không thuộc `before_english` ("có **in** logo"); câu không có b�
 đứng đầu câu trùng một từ `strong` bị đọc kiểu Việt khi theo sau là tên lạ ("**Do** Cheol-ho nói" đầu câu), và 1 / 150 ca đổi soát
 mắt ở bộ thiết kế ("Reconguista **in** G"). Câu hoàn toàn không dấu ("Simon quay sang Stephanie.") giữ nguyên đáp án của sea-g2p.
 
-### Mở rộng cặp ghép sau g2pvi (10-11)
+#### Mở rộng cặp ghép sau g2pvi (10-11)
 
 Khai thác cả 227 từ chung khác âm trên phần kho đã lộ (hash dư 1), chỉ lấy cặp liền nhau với một thành viên chỉ-Việt trong
 từ điển: 22.856 cặp, 7.590 cặp có ít nhất 3 lần ở ít nhất 2 bộ. Soát 145 ứng viên từ ghép/láy bằng văn bản, nhận 143 cặp
@@ -536,7 +882,7 @@ best 1,161 -> 1,068 ms/câu; median 1,258 -> 1,275 ms/câu (+1,4%), dưới tr�
 chắn vì máy có tải nền. Ước lượng có trọng số (lần đọc Anh, gồm cả Anh/tên thật, không phải số lỗi): pool cũ 4.313 -> 4.290;
 pool g2pvi dư 1: 3.768 -> 3.722; pool thứ ba: 11.197 -> 11.149. Không cộng ba pool hay so tỷ lệ giữa các pool để suy hiệu quả.
 
-## 7. Từ mượn đã có cách đọc Việt quen (11-11)
+### 7. Từ mượn đã có cách đọc Việt quen (11-11)
 
 Phán quyết chủ sách 10-11: "quán net" phải nghe là "nét". Từ mượn mà người Việt đã có MỘT cách đọc quen thì viết lại thành âm
 tiết Việt trước khi ra âm vị, với mọi giọng; không bọc `<en>`. Bảng nằm ở `abook/readaloud/english_policy.json` (`loanwords`,

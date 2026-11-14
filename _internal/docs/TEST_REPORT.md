@@ -2504,3 +2504,23 @@ GPU A/B/C measurements are pending in the task's external `result.md`.
 ## Integration 0.4.170 — 2026-11-14
 
 Integrated the six plsfix commits onto 0.4.169. Replaced the remaining repeat-alias comment examples with original wording. Corpus approvals retain the exact individually reviewed shingle sets; integration updates only technical instructions, UI capitalization and release notes. Full release gate and both leak scans are required on the final integration revision.
+
+## TN category audit — 2026-11-14
+
+Source: `20889b26f83c72e13e137780e7a2812ab3e27e88`. Added 440 independently
+authored cases across 22 categories, measured through the production VieNeu
+read-aloud and Studio text entry points without synthesis. Exact text agreement
+is 178/440 (40.45%) and 187/440 (42.50%), respectively. These are pre-engine
+string scores, not acoustic accuracy; sea-g2p still owns several numeric forms.
+
+JUnit evidence: the requested TN selection ran 2,415 cases: 2,414 passed,
+one skipped, zero failed and zero errors. The benchmark infrastructure plus
+Studio TN suite ran separately: 22 passed, zero failed or errors. The committed
+floor permits no decrease in correct-case count in any category and path.
+
+The deterministic frequency sample counts 100 stories, 356 chapters and
+1,175,185 whitespace tokens, emitting aggregate patterns and a fingerprint only.
+See [TEXT_NORMALIZATION.md](TEXT_NORMALIZATION.md) for architecture, category
+scores, ranked investigation priorities and locked-file implications.
+No normalization implementation or dependency changed; the quality hash remains
+`db6c9cb847dac2e536deca158114df29dcfedac4ab88b69885c08e1924876997`.

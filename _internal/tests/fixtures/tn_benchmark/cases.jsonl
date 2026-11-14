@@ -1,0 +1,440 @@
+{"id": "cardinal_small_01", "category": "cardinal_small", "text": "Khay có 0 hạt.", "expected": "Khay có không hạt.", "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "cardinal_small_02", "category": "cardinal_small", "text": "Hộp có 1 nắp.", "expected": "Hộp có một nắp.", "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "cardinal_small_03", "category": "cardinal_small", "text": "Cân 2 quả.", "expected": "Cân hai quả.", "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "cardinal_small_04", "category": "cardinal_small", "text": "Gói có 3 viên.", "expected": "Gói có ba viên.", "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "cardinal_small_05", "category": "cardinal_small", "text": "Đặt 4 cốc.", "expected": ["Đặt bốn cốc.", "Đặt tư cốc."], "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "cardinal_small_06", "category": "cardinal_small", "text": "Xếp 5 đĩa.", "expected": "Xếp năm đĩa.", "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "cardinal_small_07", "category": "cardinal_small", "text": "Lấy 6 que.", "expected": "Lấy sáu que.", "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "cardinal_small_08", "category": "cardinal_small", "text": "Gắn 7 nút.", "expected": "Gắn bảy nút.", "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "cardinal_small_09", "category": "cardinal_small", "text": "Rổ có 8 củ.", "expected": "Rổ có tám củ.", "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "cardinal_small_10", "category": "cardinal_small", "text": "Kệ có 9 ô.", "expected": "Kệ có chín ô.", "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "cardinal_small_11", "category": "cardinal_small", "text": "Đếm 10 bước.", "expected": "Đếm mười bước.", "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "cardinal_small_12", "category": "cardinal_small", "text": "Đặt 11 thẻ.", "expected": "Đặt mười một thẻ.", "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "cardinal_small_13", "category": "cardinal_small", "text": "Có 14 tờ.", "expected": ["Có mười bốn tờ.", "Có mười tư tờ."], "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "cardinal_small_14", "category": "cardinal_small", "text": "Có 15 hạt.", "expected": "Có mười lăm hạt.", "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "cardinal_small_15", "category": "cardinal_small", "text": "Đếm 21 ghế.", "expected": "Đếm hai mươi mốt ghế.", "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "cardinal_small_16", "category": "cardinal_small", "text": "Chia 24 túi.", "expected": ["Chia hai mươi bốn túi.", "Chia hai mươi tư túi."], "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "cardinal_small_17", "category": "cardinal_small", "text": "Gom 25 lá.", "expected": "Gom hai mươi lăm lá.", "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "cardinal_small_18", "category": "cardinal_small", "text": "Đủ 99 ô.", "expected": "Đủ chín mươi chín ô.", "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "cardinal_small_19", "category": "cardinal_small", "text": "Đếm 100 que.", "expected": "Đếm một trăm que.", "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "cardinal_small_20", "category": "cardinal_small", "text": "Gắn 105 nút.", "expected": ["Gắn một trăm linh năm nút.", "Gắn một trăm lẻ năm nút."], "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "cardinal_large_01", "category": "cardinal_large", "text": "Phiếu ghi 1000.", "expected": ["Phiếu ghi một nghìn.", "Phiếu ghi một ngàn."], "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "cardinal_large_02", "category": "cardinal_large", "text": "Phiếu ghi 2000.", "expected": ["Phiếu ghi hai nghìn.", "Phiếu ghi hai ngàn."], "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "cardinal_large_03", "category": "cardinal_large", "text": "Phiếu ghi 10000.", "expected": ["Phiếu ghi mười nghìn.", "Phiếu ghi mười ngàn."], "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "cardinal_large_04", "category": "cardinal_large", "text": "Phiếu ghi 20000.", "expected": "Phiếu ghi hai mươi nghìn.", "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "cardinal_large_05", "category": "cardinal_large", "text": "Phiếu ghi 100000.", "expected": "Phiếu ghi một trăm nghìn.", "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "cardinal_large_06", "category": "cardinal_large", "text": "Phiếu ghi 1000000.", "expected": "Phiếu ghi một triệu.", "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "cardinal_large_07", "category": "cardinal_large", "text": "Phiếu ghi 2000000.", "expected": "Phiếu ghi hai triệu.", "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "cardinal_large_08", "category": "cardinal_large", "text": "Phiếu ghi 10000000.", "expected": "Phiếu ghi mười triệu.", "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "cardinal_large_09", "category": "cardinal_large", "text": "Phiếu ghi 100000000.", "expected": "Phiếu ghi một trăm triệu.", "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "cardinal_large_10", "category": "cardinal_large", "text": "Phiếu ghi 1000000000.", "expected": ["Phiếu ghi một tỷ.", "Phiếu ghi một tỉ."], "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "cardinal_large_11", "category": "cardinal_large", "text": "Phiếu ghi 2000000000.", "expected": ["Phiếu ghi hai tỷ.", "Phiếu ghi hai tỉ."], "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "cardinal_large_12", "category": "cardinal_large", "text": "Phiếu ghi 10000000000.", "expected": ["Phiếu ghi mười tỷ.", "Phiếu ghi mười tỉ."], "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "cardinal_large_13", "category": "cardinal_large", "text": "Phiếu ghi 1100.", "expected": "Phiếu ghi một nghìn một trăm.", "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "cardinal_large_14", "category": "cardinal_large", "text": "Phiếu ghi 1500.", "expected": "Phiếu ghi một nghìn năm trăm.", "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "cardinal_large_15", "category": "cardinal_large", "text": "Phiếu ghi 2300.", "expected": "Phiếu ghi hai nghìn ba trăm.", "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "cardinal_large_16", "category": "cardinal_large", "text": "Phiếu ghi 45000.", "expected": "Phiếu ghi bốn mươi lăm nghìn.", "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "cardinal_large_17", "category": "cardinal_large", "text": "Phiếu ghi 750000.", "expected": "Phiếu ghi bảy trăm năm mươi nghìn.", "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "cardinal_large_18", "category": "cardinal_large", "text": "Phiếu ghi 3200000.", "expected": "Phiếu ghi ba triệu hai trăm nghìn.", "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "cardinal_large_19", "category": "cardinal_large", "text": "Phiếu ghi 45000000.", "expected": "Phiếu ghi bốn mươi lăm triệu.", "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "cardinal_large_20", "category": "cardinal_large", "text": "Phiếu ghi 1200000000.", "expected": ["Phiếu ghi một tỷ hai trăm triệu.", "Phiếu ghi một tỉ hai trăm triệu."], "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "decimal_01", "category": "decimal", "text": "Mức là 1,5.", "expected": "Mức là một phẩy năm.", "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "decimal_02", "category": "decimal", "text": "Mức là 2.5.", "expected": "Mức là hai phẩy năm.", "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "decimal_03", "category": "decimal", "text": "Mức là 0,25.", "expected": "Mức là không phẩy hai năm.", "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "decimal_04", "category": "decimal", "text": "Mức là 0.75.", "expected": "Mức là không phẩy bảy năm.", "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "decimal_05", "category": "decimal", "text": "Mức là 3,14.", "expected": "Mức là ba phẩy một bốn.", "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "decimal_06", "category": "decimal", "text": "Mức là 6.28.", "expected": "Mức là sáu phẩy hai tám.", "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "decimal_07", "category": "decimal", "text": "Mức là 10,01.", "expected": "Mức là mười phẩy không một.", "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "decimal_08", "category": "decimal", "text": "Mức là 12.05.", "expected": "Mức là mười hai phẩy không năm.", "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "decimal_09", "category": "decimal", "text": "Mức là -1,5.", "expected": "Mức là âm một phẩy năm.", "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "decimal_10", "category": "decimal", "text": "Mức là -2.5.", "expected": "Mức là âm hai phẩy năm.", "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "decimal_11", "category": "decimal", "text": "Tổng 1.000 hạt.", "expected": "Tổng một nghìn hạt.", "note": "Dấu chấm phân nhóm nghìn kiểu Việt."}
+{"id": "decimal_12", "category": "decimal", "text": "Tổng 2,000 hạt.", "expected": "Tổng hai nghìn hạt.", "note": "Dấu phẩy phân nhóm nghìn kiểu Anh."}
+{"id": "decimal_13", "category": "decimal", "text": "Tổng 1.000.000 hạt.", "expected": "Tổng một triệu hạt.", "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "decimal_14", "category": "decimal", "text": "Tổng 2,000,000 hạt.", "expected": "Tổng hai triệu hạt.", "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "decimal_15", "category": "decimal", "text": "Cân 1.234,5 kg.", "expected": ["Cân một nghìn hai trăm ba mươi bốn phẩy năm ki lô gam.", "Cân một nghìn hai trăm ba mươi tư phẩy năm ki lô gam."], "note": "Hai dấu phân cách theo kiểu Việt."}
+{"id": "decimal_16", "category": "decimal", "text": "Cân 1,234.5 kg.", "expected": ["Cân một nghìn hai trăm ba mươi bốn phẩy năm ki lô gam.", "Cân một nghìn hai trăm ba mươi tư phẩy năm ki lô gam."], "note": "Hai dấu phân cách theo kiểu Anh."}
+{"id": "decimal_17", "category": "decimal", "text": "Mức là 1,005.", "expected": ["Mức là một phẩy không không năm.", "Mức là một nghìn không trăm linh năm.", "Mức là một nghìn không trăm lẻ năm."], "note": "Thiếu đơn vị nên chấp nhận thập phân hoặc phân nhóm nghìn."}
+{"id": "decimal_18", "category": "decimal", "text": "Mức là 1.005.", "expected": ["Mức là một phẩy không không năm.", "Mức là một nghìn không trăm linh năm.", "Mức là một nghìn không trăm lẻ năm."], "note": "Thiếu đơn vị nên chấp nhận hai quy ước."}
+{"id": "decimal_19", "category": "decimal", "text": "Mức là 0,001.", "expected": "Mức là không phẩy không không một.", "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "decimal_20", "category": "decimal", "text": "Mức là 0.010.", "expected": "Mức là không phẩy không một không.", "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "ordinal_01", "category": "ordinal", "text": "Lượt thứ 1.", "expected": ["Lượt thứ nhất.", "Lượt thứ một."], "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "ordinal_02", "category": "ordinal", "text": "Lượt thứ 2.", "expected": "Lượt thứ hai.", "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "ordinal_03", "category": "ordinal", "text": "Lượt thứ 3.", "expected": "Lượt thứ ba.", "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "ordinal_04", "category": "ordinal", "text": "Lượt thứ 4.", "expected": ["Lượt thứ tư.", "Lượt thứ bốn."], "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "ordinal_05", "category": "ordinal", "text": "Lượt thứ 5.", "expected": "Lượt thứ năm.", "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "ordinal_06", "category": "ordinal", "text": "Lượt thứ 6.", "expected": "Lượt thứ sáu.", "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "ordinal_07", "category": "ordinal", "text": "Lượt thứ 7.", "expected": "Lượt thứ bảy.", "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "ordinal_08", "category": "ordinal", "text": "Lượt thứ 8.", "expected": "Lượt thứ tám.", "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "ordinal_09", "category": "ordinal", "text": "Lượt thứ 9.", "expected": "Lượt thứ chín.", "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "ordinal_10", "category": "ordinal", "text": "Lượt thứ 10.", "expected": "Lượt thứ mười.", "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "ordinal_11", "category": "ordinal", "text": "Vị trí thứ 11.", "expected": "Vị trí thứ mười một.", "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "ordinal_12", "category": "ordinal", "text": "Vị trí thứ 12.", "expected": "Vị trí thứ mười hai.", "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "ordinal_13", "category": "ordinal", "text": "Vị trí thứ 14.", "expected": ["Vị trí thứ mười bốn.", "Vị trí thứ mười tư."], "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "ordinal_14", "category": "ordinal", "text": "Vị trí thứ 15.", "expected": "Vị trí thứ mười lăm.", "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "ordinal_15", "category": "ordinal", "text": "Vị trí thứ 20.", "expected": "Vị trí thứ hai mươi.", "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "ordinal_16", "category": "ordinal", "text": "Vị trí thứ 21.", "expected": "Vị trí thứ hai mươi mốt.", "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "ordinal_17", "category": "ordinal", "text": "Vị trí thứ 24.", "expected": ["Vị trí thứ hai mươi bốn.", "Vị trí thứ hai mươi tư."], "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "ordinal_18", "category": "ordinal", "text": "Vị trí thứ 25.", "expected": "Vị trí thứ hai mươi lăm.", "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "ordinal_19", "category": "ordinal", "text": "Vị trí thứ 100.", "expected": "Vị trí thứ một trăm.", "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "ordinal_20", "category": "ordinal", "text": "Vị trí thứ 101.", "expected": ["Vị trí thứ một trăm linh một.", "Vị trí thứ một trăm lẻ một."], "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "roman_01", "category": "roman", "text": "Chương I: Hạt.", "expected": "Chương một: Hạt.", "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "roman_02", "category": "roman", "text": "Chương II: Cốc.", "expected": "Chương hai: Cốc.", "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "roman_03", "category": "roman", "text": "Chương IV: Khay.", "expected": "Chương bốn: Khay.", "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "roman_04", "category": "roman", "text": "Chương V: Nắp.", "expected": "Chương năm: Nắp.", "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "roman_05", "category": "roman", "text": "Chương IX: Kệ.", "expected": "Chương chín: Kệ.", "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "roman_06", "category": "roman", "text": "Chương XII: Rổ.", "expected": "Chương mười hai: Rổ.", "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "roman_07", "category": "roman", "text": "Chương XX: Túi.", "expected": "Chương hai mươi: Túi.", "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "roman_08", "category": "roman", "text": "Quyển III: Sổ.", "expected": "Quyển ba: Sổ.", "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "roman_09", "category": "roman", "text": "Phần VI: Cân.", "expected": "Phần sáu: Cân.", "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "roman_10", "category": "roman", "text": "Thế kỷ XIX.", "expected": "Thế kỷ mười chín.", "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "roman_11", "category": "roman", "text": "Thế kỷ XXI.", "expected": "Thế kỷ hai mươi mốt.", "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "roman_12", "category": "roman", "text": "Thế kỉ XX.", "expected": "Thế kỉ hai mươi.", "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "roman_13", "category": "roman", "text": "Louis XIV dùng bút.", "expected": ["Louis mười bốn dùng bút.", "Louis mười tư dùng bút."], "note": "Tên riêng Anh/Pháp giữ spelling cho giọng đa ngữ."}
+{"id": "roman_14", "category": "roman", "text": "Henry VIII dùng cốc.", "expected": "Henry tám dùng cốc.", "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "roman_15", "category": "roman", "text": "Edward VII xem sổ.", "expected": "Edward bảy xem sổ.", "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "roman_16", "category": "roman", "text": "Chữ I in nghiêng.", "expected": ["Chữ i in nghiêng.", "Chữ ai in nghiêng."], "note": "Tên chữ Việt hoặc Anh; không phải số một."}
+{"id": "roman_17", "category": "roman", "text": "Chữ V in đậm.", "expected": ["Chữ vê in đậm.", "Chữ vi in đậm."], "note": "Không đọc thành năm."}
+{"id": "roman_18", "category": "roman", "text": "Chữ X in nhỏ.", "expected": ["Chữ ích in nhỏ.", "Chữ éc in nhỏ.", "Chữ ét in nhỏ."], "note": "Không đọc thành mười."}
+{"id": "roman_19", "category": "roman", "text": "Tia X xuyên hộp.", "expected": ["Tia ích xuyên hộp.", "Tia X xuyên hộp."], "note": "X có thể giữ spelling cho máy đọc."}
+{"id": "roman_20", "category": "roman", "text": "Ông X ký phiếu.", "expected": ["Ông ích ký phiếu.", "Ông X ký phiếu."], "note": "Ẩn danh, không phải số La Mã."}
+{"id": "date_01", "category": "date", "text": "Ngày 1/2/2026.", "expected": "Ngày một tháng hai năm hai nghìn không trăm hai mươi sáu.", "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "date_02", "category": "date", "text": "Ngày 02/03/2025.", "expected": "Ngày hai tháng ba năm hai nghìn không trăm hai mươi lăm.", "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "date_03", "category": "date", "text": "Ngày 15/4/2024.", "expected": "Ngày mười lăm tháng tư năm hai nghìn không trăm hai mươi bốn.", "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "date_04", "category": "date", "text": "Ngày 20/5/2023.", "expected": "Ngày hai mươi tháng năm năm hai nghìn không trăm hai mươi ba.", "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "date_05", "category": "date", "text": "Ngày 30/6/2022.", "expected": "Ngày ba mươi tháng sáu năm hai nghìn không trăm hai mươi hai.", "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "date_06", "category": "date", "text": "Ngày 31/7/2123.", "expected": "Ngày ba mươi mốt tháng bảy năm hai nghìn một trăm hai mươi ba.", "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "date_07", "category": "date", "text": "Ngày 8/8/2020.", "expected": "Ngày tám tháng tám năm hai nghìn không trăm hai mươi.", "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "date_08", "category": "date", "text": "Ngày 9/9/2019.", "expected": "Ngày chín tháng chín năm hai nghìn không trăm mười chín.", "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "date_09", "category": "date", "text": "Ngày 10/10/2018.", "expected": "Ngày mười tháng mười năm hai nghìn không trăm mười tám.", "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "date_10", "category": "date", "text": "Ngày 11/11/2347.", "expected": "Ngày mười một tháng mười một năm hai nghìn ba trăm bốn mươi bảy.", "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "date_11", "category": "date", "text": "Ngày 12/12/2458.", "expected": "Ngày mười hai tháng mười hai năm hai nghìn bốn trăm năm mươi tám.", "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "date_12", "category": "date", "text": "Ngày 29/2/2024.", "expected": "Ngày hai mươi chín tháng hai năm hai nghìn không trăm hai mươi bốn.", "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "date_13", "category": "date", "text": "Ngày 1-3-2026.", "expected": "Ngày một tháng ba năm hai nghìn không trăm hai mươi sáu.", "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "date_14", "category": "date", "text": "Ngày 2.4.2026.", "expected": "Ngày hai tháng tư năm hai nghìn không trăm hai mươi sáu.", "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "date_15", "category": "date", "text": "Ngày 2026-05-03.", "expected": "Ngày ba tháng năm năm hai nghìn không trăm hai mươi sáu.", "note": "Định dạng ISO, năm đi trước."}
+{"id": "date_16", "category": "date", "text": "Hẹn ngày 4/6.", "expected": "Hẹn ngày bốn tháng sáu.", "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "date_17", "category": "date", "text": "Hẹn ngày 5-7.", "expected": "Hẹn ngày năm tháng bảy.", "note": "Có tiền tố ngày, ưu tiên ngày tháng."}
+{"id": "date_18", "category": "date", "text": "Tháng 8/2026.", "expected": "Tháng tám năm hai nghìn không trăm hai mươi sáu.", "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "date_19", "category": "date", "text": "Năm 2000.", "expected": ["Năm hai nghìn.", "Năm hai ngàn."], "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "date_20", "category": "date", "text": "Năm 1999.", "expected": ["Năm một nghìn chín trăm chín mươi chín.", "Năm mười chín chín chín."], "note": "Cách đọc tắt năm phổ biến cũng chấp nhận."}
+{"id": "time_01", "category": "time", "text": "Hẹn lúc 7:00.", "expected": ["Hẹn lúc bảy giờ.", "Hẹn lúc bảy giờ không phút."], "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "time_02", "category": "time", "text": "Hẹn lúc 07:05.", "expected": ["Hẹn lúc bảy giờ năm phút.", "Hẹn lúc bảy giờ linh năm phút."], "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "time_03", "category": "time", "text": "Hẹn lúc 8:15.", "expected": "Hẹn lúc tám giờ mười lăm phút.", "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "time_04", "category": "time", "text": "Hẹn lúc 9:30.", "expected": ["Hẹn lúc chín giờ ba mươi phút.", "Hẹn lúc chín giờ rưỡi."], "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "time_05", "category": "time", "text": "Hẹn lúc 10:45.", "expected": "Hẹn lúc mười giờ bốn mươi lăm phút.", "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "time_06", "category": "time", "text": "Hẹn lúc 12:00.", "expected": ["Hẹn lúc mười hai giờ.", "Hẹn lúc mười hai giờ không phút."], "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "time_07", "category": "time", "text": "Hẹn lúc 13:20.", "expected": "Hẹn lúc mười ba giờ hai mươi phút.", "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "time_08", "category": "time", "text": "Hẹn lúc 18:40.", "expected": "Hẹn lúc mười tám giờ bốn mươi phút.", "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "time_09", "category": "time", "text": "Hẹn lúc 23:00.", "expected": "Hẹn lúc hai mươi ba giờ.", "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "time_10", "category": "time", "text": "Hẹn lúc 00:00.", "expected": ["Hẹn lúc không giờ.", "Hẹn lúc không giờ không phút."], "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "time_11", "category": "time", "text": "Hẹn lúc 7h.", "expected": "Hẹn lúc bảy giờ.", "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "time_12", "category": "time", "text": "Hẹn lúc 8h05.", "expected": ["Hẹn lúc tám giờ năm phút.", "Hẹn lúc tám giờ linh năm phút."], "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "time_13", "category": "time", "text": "Hẹn lúc 9h30.", "expected": ["Hẹn lúc chín giờ ba mươi phút.", "Hẹn lúc chín giờ rưỡi."], "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "time_14", "category": "time", "text": "Hẹn lúc 10h45.", "expected": "Hẹn lúc mười giờ bốn mươi lăm phút.", "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "time_15", "category": "time", "text": "Hẹn lúc 11 giờ 5 phút.", "expected": "Hẹn lúc mười một giờ năm phút.", "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "time_16", "category": "time", "text": "Đồng hồ 01:02:03.", "expected": "Đồng hồ một giờ hai phút ba giây.", "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "time_17", "category": "time", "text": "Đồng hồ 12:34:56.", "expected": ["Đồng hồ mười hai giờ ba mươi bốn phút năm mươi sáu giây.", "Đồng hồ mười hai giờ ba mươi tư phút năm mươi sáu giây."], "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "time_18", "category": "time", "text": "Hẹn lúc 7 AM.", "expected": "Hẹn lúc bảy giờ sáng.", "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "time_19", "category": "time", "text": "Hẹn lúc 8 PM.", "expected": "Hẹn lúc tám giờ tối.", "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "time_20", "category": "time", "text": "Hẹn lúc 3:15 PM.", "expected": "Hẹn lúc ba giờ mười lăm phút chiều.", "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "range_01", "category": "range", "text": "Cần 1-2 hạt.", "expected": ["Cần một đến hai hạt.", "Cần một hai hạt."], "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "range_02", "category": "range", "text": "Cần 3~5 túi.", "expected": "Cần ba đến năm túi.", "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "range_03", "category": "range", "text": "Cần 6–8 khay.", "expected": "Cần sáu đến tám khay.", "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "range_04", "category": "range", "text": "Cần 10—12 cốc.", "expected": "Cần mười đến mười hai cốc.", "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "range_05", "category": "range", "text": "Cần 20 - 30 que.", "expected": "Cần hai mươi đến ba mươi que.", "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "range_06", "category": "range", "text": "Cần 40 ~ 50 lá.", "expected": "Cần bốn mươi đến năm mươi lá.", "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "range_07", "category": "range", "text": "Cần 100-200 viên.", "expected": "Cần một trăm đến hai trăm viên.", "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "range_08", "category": "range", "text": "Cần 2-4 kg.", "expected": "Cần hai đến bốn ki lô gam.", "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "range_09", "category": "range", "text": "Cần 5~7 km.", "expected": "Cần năm đến bảy ki lô mét.", "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "range_10", "category": "range", "text": "Cần 8–10 cm.", "expected": "Cần tám đến mười xen ti mét.", "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "range_11", "category": "range", "text": "Tuổi 18-20.", "expected": "Tuổi mười tám đến hai mươi.", "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "range_12", "category": "range", "text": "Trang 21-25.", "expected": "Trang hai mươi mốt đến hai mươi lăm.", "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "range_13", "category": "range", "text": "Chương 2-3.", "expected": "Chương hai đến ba.", "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "range_14", "category": "range", "text": "Mức 0,5-1,5.", "expected": "Mức không phẩy năm đến một phẩy năm.", "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "range_15", "category": "range", "text": "Mức 1.5~2.5.", "expected": "Mức một phẩy năm đến hai phẩy năm.", "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "range_16", "category": "range", "text": "Từ 1 đến 2.", "expected": "Từ một đến hai.", "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "range_17", "category": "range", "text": "Nhiệt độ -5–0 °C.", "expected": "Nhiệt độ âm năm đến không độ xê.", "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "range_18", "category": "range", "text": "Giờ mở 8-10 giờ.", "expected": "Giờ mở tám đến mười giờ.", "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "range_19", "category": "range", "text": "Giá 10-20 đồng.", "expected": "Giá mười đến hai mươi đồng.", "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "range_20", "category": "range", "text": "Tỉ lệ 30~40%.", "expected": "Tỉ lệ ba mươi đến bốn mươi phần trăm.", "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "percentage_01", "category": "percentage", "text": "Mức đạt 0%.", "expected": "Mức đạt không phần trăm.", "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "percentage_02", "category": "percentage", "text": "Mức đạt 1%.", "expected": "Mức đạt một phần trăm.", "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "percentage_03", "category": "percentage", "text": "Mức đạt 2%.", "expected": "Mức đạt hai phần trăm.", "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "percentage_04", "category": "percentage", "text": "Mức đạt 5%.", "expected": "Mức đạt năm phần trăm.", "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "percentage_05", "category": "percentage", "text": "Mức đạt 10%.", "expected": "Mức đạt mười phần trăm.", "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "percentage_06", "category": "percentage", "text": "Mức đạt 15%.", "expected": "Mức đạt mười lăm phần trăm.", "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "percentage_07", "category": "percentage", "text": "Mức đạt 20%.", "expected": "Mức đạt hai mươi phần trăm.", "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "percentage_08", "category": "percentage", "text": "Mức đạt 25%.", "expected": "Mức đạt hai mươi lăm phần trăm.", "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "percentage_09", "category": "percentage", "text": "Mức đạt 30%.", "expected": "Mức đạt ba mươi phần trăm.", "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "percentage_10", "category": "percentage", "text": "Mức đạt 50%.", "expected": "Mức đạt năm mươi phần trăm.", "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "percentage_11", "category": "percentage", "text": "Mức đạt 75%.", "expected": "Mức đạt bảy mươi lăm phần trăm.", "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "percentage_12", "category": "percentage", "text": "Mức đạt 99%.", "expected": "Mức đạt chín mươi chín phần trăm.", "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "percentage_13", "category": "percentage", "text": "Mức đạt 100%.", "expected": "Mức đạt một trăm phần trăm.", "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "percentage_14", "category": "percentage", "text": "Mức đạt 150%.", "expected": "Mức đạt một trăm năm mươi phần trăm.", "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "percentage_15", "category": "percentage", "text": "Mức đạt 0,5%.", "expected": "Mức đạt không phẩy năm phần trăm.", "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "percentage_16", "category": "percentage", "text": "Mức đạt 1.5%.", "expected": "Mức đạt một phẩy năm phần trăm.", "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "percentage_17", "category": "percentage", "text": "Mức đạt 12,5%.", "expected": "Mức đạt mười hai phẩy năm phần trăm.", "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "percentage_18", "category": "percentage", "text": "Mức đạt 2.25%.", "expected": "Mức đạt hai phẩy hai năm phần trăm.", "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "percentage_19", "category": "percentage", "text": "Mức đạt 25 %.", "expected": "Mức đạt hai mươi lăm phần trăm.", "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "percentage_20", "category": "percentage", "text": "Mức giảm -5%.", "expected": "Mức giảm âm năm phần trăm.", "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "currency_01", "category": "currency", "text": "Giá 5 đồng.", "expected": "Giá năm đồng.", "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "currency_02", "category": "currency", "text": "Giá 100 đồng.", "expected": "Giá một trăm đồng.", "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "currency_03", "category": "currency", "text": "Giá 1.000 đồng.", "expected": "Giá một nghìn đồng.", "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "currency_04", "category": "currency", "text": "Giá 20.000đ.", "expected": "Giá hai mươi nghìn đồng.", "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "currency_05", "category": "currency", "text": "Giá 50.000₫.", "expected": "Giá năm mươi nghìn đồng.", "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "currency_06", "category": "currency", "text": "Giá 2 triệu đồng.", "expected": "Giá hai triệu đồng.", "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "currency_07", "category": "currency", "text": "Giá $5.", "expected": ["Giá năm đô la.", "Giá năm đô."], "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "currency_08", "category": "currency", "text": "Giá 10$.", "expected": ["Giá mười đô la.", "Giá mười đô."], "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "currency_09", "category": "currency", "text": "Giá $1.50.", "expected": ["Giá một phẩy năm không đô la.", "Giá một đô la năm mươi xu."], "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "currency_10", "category": "currency", "text": "Giá 20 USD.", "expected": ["Giá hai mươi đô la Mỹ.", "Giá hai mươi đô la.", "Giá hai mươi u ét đê."], "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "currency_11", "category": "currency", "text": "Giá USD 30.", "expected": ["Giá ba mươi đô la Mỹ.", "Giá ba mươi đô la.", "Giá u ét đê ba mươi."], "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "currency_12", "category": "currency", "text": "Giá 100 USD.", "expected": ["Giá một trăm đô la Mỹ.", "Giá một trăm đô la."], "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "currency_13", "category": "currency", "text": "Giá ¥500.", "expected": ["Giá năm trăm yên.", "Giá yên năm trăm."], "note": "Quy ước ¥ là yên Nhật trong benchmark."}
+{"id": "currency_14", "category": "currency", "text": "Giá 1000¥.", "expected": "Giá một nghìn yên.", "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "currency_15", "category": "currency", "text": "Giá 50 yên.", "expected": "Giá năm mươi yên.", "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "currency_16", "category": "currency", "text": "Giá 2.000 yên.", "expected": "Giá hai nghìn yên.", "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "currency_17", "category": "currency", "text": "Giá 300 JPY.", "expected": ["Giá ba trăm yên Nhật.", "Giá ba trăm yên."], "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "currency_18", "category": "currency", "text": "Giá €10.", "expected": ["Giá mười ơ rô.", "Giá mười euro."], "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "currency_19", "category": "currency", "text": "Giá 20 EUR.", "expected": ["Giá hai mươi ơ rô.", "Giá hai mươi euro."], "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "currency_20", "category": "currency", "text": "Giá £5.", "expected": "Giá năm bảng Anh.", "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "unit_01", "category": "unit", "text": "Dài 2 km.", "expected": ["Dài hai ki lô mét.", "Dài hai cây số."], "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "unit_02", "category": "unit", "text": "Nặng 3 kg.", "expected": ["Nặng ba ki lô gam.", "Nặng ba ký."], "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "unit_03", "category": "unit", "text": "Rộng 4 m².", "expected": "Rộng bốn mét vuông.", "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "unit_04", "category": "unit", "text": "Nóng 25 °C.", "expected": ["Nóng hai mươi lăm độ xê.", "Nóng hai mươi lăm độ C."], "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "unit_05", "category": "unit", "text": "Dài 5 cm.", "expected": "Dài năm xen ti mét.", "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "unit_06", "category": "unit", "text": "Dày 6 mm.", "expected": "Dày sáu mi li mét.", "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "unit_07", "category": "unit", "text": "Cao 7 m.", "expected": "Cao bảy mét.", "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "unit_08", "category": "unit", "text": "Chứa 8 m³.", "expected": "Chứa tám mét khối.", "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "unit_09", "category": "unit", "text": "Cân 9 g.", "expected": "Cân chín gam.", "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "unit_10", "category": "unit", "text": "Liều 10 mg.", "expected": "Liều mười mi li gam.", "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "unit_11", "category": "unit", "text": "Rót 2 l.", "expected": "Rót hai lít.", "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "unit_12", "category": "unit", "text": "Rót 250 ml.", "expected": "Rót hai trăm năm mươi mi li lít.", "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "unit_13", "category": "unit", "text": "Chạy 60 km/h.", "expected": ["Chạy sáu mươi ki lô mét trên giờ.", "Chạy sáu mươi cây số một giờ."], "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "unit_14", "category": "unit", "text": "Tốc độ 5 m/s.", "expected": "Tốc độ năm mét trên giây.", "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "unit_15", "category": "unit", "text": "Đèn 12 W.", "expected": "Đèn mười hai oát.", "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "unit_16", "category": "unit", "text": "Nguồn 220 V.", "expected": "Nguồn hai trăm hai mươi vôn.", "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "unit_17", "category": "unit", "text": "Nhịp 50 Hz.", "expected": "Nhịp năm mươi héc.", "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "unit_18", "category": "unit", "text": "Kho 2 GB.", "expected": ["Kho hai ghi ga bai.", "Kho hai gi ga bai."], "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "unit_19", "category": "unit", "text": "Mức 30 dB.", "expected": "Mức ba mươi đề xi ben.", "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "unit_20", "category": "unit", "text": "Diện tích 1 ha.", "expected": "Diện tích một héc ta.", "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "phone_code_01", "category": "phone_code", "text": "Số thử 0900123456.", "expected": "Số thử không chín không không một hai ba bốn năm sáu.", "note": "Số giả dùng thử; đọc từng chữ số, không gọi điện."}
+{"id": "phone_code_02", "category": "phone_code", "text": "Số thử 0910234567.", "expected": "Số thử không chín một không hai ba bốn năm sáu bảy.", "note": "Mã giả tự đặt; đọc từng chữ số, giữ số không đầu; không liên hệ số này."}
+{"id": "phone_code_03", "category": "phone_code", "text": "Số thử 0920345678.", "expected": "Số thử không chín hai không ba bốn năm sáu bảy tám.", "note": "Mã giả tự đặt; đọc từng chữ số, giữ số không đầu; không liên hệ số này."}
+{"id": "phone_code_04", "category": "phone_code", "text": "Số thử 0930456789.", "expected": "Số thử không chín ba không bốn năm sáu bảy tám chín.", "note": "Mã giả tự đặt; đọc từng chữ số, giữ số không đầu; không liên hệ số này."}
+{"id": "phone_code_05", "category": "phone_code", "text": "Số thử 0940567890.", "expected": "Số thử không chín bốn không năm sáu bảy tám chín không.", "note": "Mã giả tự đặt; đọc từng chữ số, giữ số không đầu; không liên hệ số này."}
+{"id": "phone_code_06", "category": "phone_code", "text": "Số thử 0900 111 222.", "expected": "Số thử không chín không không một một một hai hai hai.", "note": "Mã giả tự đặt; đọc từng chữ số, giữ số không đầu; không liên hệ số này."}
+{"id": "phone_code_07", "category": "phone_code", "text": "Số thử +84 900 123 456.", "expected": "Số thử cộng tám bốn chín không không một hai ba bốn năm sáu.", "note": "Mã giả tự đặt; đọc từng chữ số, giữ số không đầu; không liên hệ số này."}
+{"id": "phone_code_08", "category": "phone_code", "text": "Mã PIN 0123.", "expected": ["Mã pin không một hai ba.", "Mã pi ai en không một hai ba."], "note": "Mã giả tự đặt; đọc từng chữ số, giữ số không đầu; không liên hệ số này."}
+{"id": "phone_code_09", "category": "phone_code", "text": "Mã PIN 0005.", "expected": ["Mã pin không không không năm.", "Mã pi ai en không không không năm."], "note": "Mã giả tự đặt; đọc từng chữ số, giữ số không đầu; không liên hệ số này."}
+{"id": "phone_code_10", "category": "phone_code", "text": "Mã OTP 654321.", "expected": ["Mã ô ti pi sáu năm bốn ba hai một.", "Mã ô tê pê sáu năm bốn ba hai một."], "note": "Mã giả tự đặt; đọc từng chữ số, giữ số không đầu; không liên hệ số này."}
+{"id": "phone_code_11", "category": "phone_code", "text": "Mã OTP 100200.", "expected": ["Mã ô ti pi một không không hai không không.", "Mã ô tê pê một không không hai không không."], "note": "Mã giả tự đặt; đọc từng chữ số, giữ số không đầu; không liên hệ số này."}
+{"id": "phone_code_12", "category": "phone_code", "text": "Mã vé 0017.", "expected": "Mã vé không không một bảy.", "note": "Mã giả tự đặt; đọc từng chữ số, giữ số không đầu; không liên hệ số này."}
+{"id": "phone_code_13", "category": "phone_code", "text": "Mã vé 0204.", "expected": "Mã vé không hai không bốn.", "note": "Mã giả tự đặt; đọc từng chữ số, giữ số không đầu; không liên hệ số này."}
+{"id": "phone_code_14", "category": "phone_code", "text": "Mã vé 3006.", "expected": "Mã vé ba không không sáu.", "note": "Mã giả tự đặt; đọc từng chữ số, giữ số không đầu; không liên hệ số này."}
+{"id": "phone_code_15", "category": "phone_code", "text": "Mã AB12.", "expected": ["Mã ây bi một hai.", "Mã a bê một hai."], "note": "Mã giả tự đặt; đọc từng chữ số, giữ số không đầu; không liên hệ số này."}
+{"id": "phone_code_16", "category": "phone_code", "text": "Mã CD34.", "expected": ["Mã xi đi ba bốn.", "Mã xê đê ba bốn."], "note": "Mã giả tự đặt; đọc từng chữ số, giữ số không đầu; không liên hệ số này."}
+{"id": "phone_code_17", "category": "phone_code", "text": "Mã ZX90.", "expected": ["Mã dét ích chín không.", "Mã zi éc chín không."], "note": "Mã giả tự đặt; đọc từng chữ số, giữ số không đầu; không liên hệ số này."}
+{"id": "phone_code_18", "category": "phone_code", "text": "Phòng A101.", "expected": ["Phòng a một không một.", "Phòng ây một không một.", "Phòng a một trăm linh một."], "note": "Mã giả tự đặt; đọc từng chữ số, giữ số không đầu; không liên hệ số này."}
+{"id": "phone_code_19", "category": "phone_code", "text": "Mã 007.", "expected": "Mã không không bảy.", "note": "Mã giả tự đặt; đọc từng chữ số, giữ số không đầu; không liên hệ số này."}
+{"id": "phone_code_20", "category": "phone_code", "text": "Mã 0000.", "expected": "Mã không không không không.", "note": "Mã giả tự đặt; đọc từng chữ số, giữ số không đầu; không liên hệ số này."}
+{"id": "abbrev_vi_01", "category": "abbrev_vi", "text": "Đến TP. Hạ An.", "expected": "Đến thành phố Hạ An.", "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "abbrev_vi_02", "category": "abbrev_vi", "text": "Gặp ThS. An.", "expected": "Gặp thạc sĩ An.", "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "abbrev_vi_03", "category": "abbrev_vi", "text": "Gặp PGS. Bình.", "expected": "Gặp phó giáo sư Bình.", "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "abbrev_vi_04", "category": "abbrev_vi", "text": "Gặp GS. Chi.", "expected": "Gặp giáo sư Chi.", "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "abbrev_vi_05", "category": "abbrev_vi", "text": "Gặp TS. Dung.", "expected": "Gặp tiến sĩ Dung.", "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "abbrev_vi_06", "category": "abbrev_vi", "text": "Gặp BS. Hà.", "expected": "Gặp bác sĩ Hà.", "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "abbrev_vi_07", "category": "abbrev_vi", "text": "Gặp KS. Lan.", "expected": ["Gặp kỹ sư Lan.", "Gặp kĩ sư Lan."], "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "abbrev_vi_08", "category": "abbrev_vi", "text": "Gửi UBND xã.", "expected": ["Gửi ủy ban nhân dân xã.", "Gửi uỷ ban nhân dân xã."], "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "abbrev_vi_09", "category": "abbrev_vi", "text": "Tại Q.1.", "expected": "Tại quận một.", "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "abbrev_vi_10", "category": "abbrev_vi", "text": "Tại P.2.", "expected": "Tại phường hai.", "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "abbrev_vi_11", "category": "abbrev_vi", "text": "Mang bút, v.v.", "expected": "Mang bút, vân vân.", "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "abbrev_vi_12", "category": "abbrev_vi", "text": "Đọc VD. này.", "expected": "Đọc ví dụ này.", "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "abbrev_vi_13", "category": "abbrev_vi", "text": "Xem tr. 5.", "expected": "Xem trang năm.", "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "abbrev_vi_14", "category": "abbrev_vi", "text": "Học THPT.", "expected": "Học trung học phổ thông.", "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "abbrev_vi_15", "category": "abbrev_vi", "text": "Học THCS.", "expected": "Học trung học cơ sở.", "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "abbrev_vi_16", "category": "abbrev_vi", "text": "Học ĐH.", "expected": "Học đại học.", "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "abbrev_vi_17", "category": "abbrev_vi", "text": "Học CĐ.", "expected": "Học cao đẳng.", "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "abbrev_vi_18", "category": "abbrev_vi", "text": "Ở KTX.", "expected": ["Ở ký túc xá.", "Ở kí túc xá."], "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "abbrev_vi_19", "category": "abbrev_vi", "text": "Tìm SĐT.", "expected": "Tìm số điện thoại.", "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "abbrev_vi_20", "category": "abbrev_vi", "text": "Ghi CMND.", "expected": "Ghi chứng minh nhân dân.", "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "abbrev_en_01", "category": "abbrev_en", "text": "Hồi HP.", "expected": ["Hồi hát pê.", "Hồi ây-ch pi."], "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "abbrev_en_02", "category": "abbrev_en", "text": "Hồi MP.", "expected": ["Hồi em pê.", "Hồi em pi.", "Hồi mờ pê."], "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "abbrev_en_03", "category": "abbrev_en", "text": "Gặp NPC.", "expected": ["Gặp en pê xê.", "Gặp en pi xi."], "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "abbrev_en_04", "category": "abbrev_en", "text": "Bật TV.", "expected": ["Bật ti vi.", "Bật tê vê."], "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "abbrev_en_05", "category": "abbrev_en", "text": "Gặp CEO.", "expected": ["Gặp xi i ô.", "Gặp giám đốc điều hành."], "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "abbrev_en_06", "category": "abbrev_en", "text": "Chọn OK.", "expected": ["Chọn ô kê.", "Chọn okay."], "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "abbrev_en_07", "category": "abbrev_en", "text": "Đỏ vs. xanh.", "expected": ["Đỏ với xanh.", "Đỏ đấu với xanh.", "Đỏ versus xanh."], "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "abbrev_en_08", "category": "abbrev_en", "text": "Gắn CPU.", "expected": ["Gắn xi pi iu.", "Gắn xê pê u."], "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "abbrev_en_09", "category": "abbrev_en", "text": "Gắn GPU.", "expected": ["Gắn gi pi iu.", "Gắn gi pê u."], "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "abbrev_en_10", "category": "abbrev_en", "text": "Đọc PDF.", "expected": ["Đọc pi đi ép.", "Đọc pê đê ép."], "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "abbrev_en_11", "category": "abbrev_en", "text": "Mở USB.", "expected": ["Mở iu ét bi.", "Mở u ét bê."], "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "abbrev_en_12", "category": "abbrev_en", "text": "Dùng GPS.", "expected": ["Dùng gi pi ét.", "Dùng gi pê ét."], "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "abbrev_en_13", "category": "abbrev_en", "text": "Tăng FPS.", "expected": ["Tăng ép pi ét.", "Tăng ép pê ét."], "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "abbrev_en_14", "category": "abbrev_en", "text": "Chơi RPG.", "expected": ["Chơi a pi gi.", "Chơi rờ pê gi."], "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "abbrev_en_15", "category": "abbrev_en", "text": "Tăng EXP.", "expected": ["Tăng i éc pi.", "Tăng e ích pê.", "Tăng kinh nghiệm."], "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "abbrev_en_16", "category": "abbrev_en", "text": "Đọc FAQ.", "expected": ["Đọc ép ây kiu.", "Đọc câu hỏi thường gặp."], "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "abbrev_en_17", "category": "abbrev_en", "text": "Gặp VIP.", "expected": ["Gặp víp.", "Gặp vi ai pi.", "Gặp vê i pê."], "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "abbrev_en_18", "category": "abbrev_en", "text": "Nghe DJ.", "expected": ["Nghe đi giây.", "Nghe đê giây."], "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "abbrev_en_19", "category": "abbrev_en", "text": "Bật AC.", "expected": ["Bật ây xi.", "Bật a xê."], "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "abbrev_en_20", "category": "abbrev_en", "text": "Học AI.", "expected": ["Học ây ai.", "Học a i.", "Học trí tuệ nhân tạo."], "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "english_01", "category": "english", "text": "Mở game.", "expected": ["Mở game.", "Mở ghêm."], "note": "Từ mượn: chấp nhận spelling Anh gửi giọng đa ngữ hoặc phiên âm Việt quen; chưa kiểm âm thanh."}
+{"id": "english_02", "category": "english", "text": "Tăng level.", "expected": ["Tăng level.", "Tăng le vồ.", "Tăng le-vồ."], "note": "Từ mượn: chấp nhận spelling Anh gửi giọng đa ngữ hoặc phiên âm Việt quen; chưa kiểm âm thanh."}
+{"id": "english_03", "category": "english", "text": "Gặp boss.", "expected": ["Gặp boss.", "Gặp bót.", "Gặp bốt."], "note": "Từ mượn: chấp nhận spelling Anh gửi giọng đa ngữ hoặc phiên âm Việt quen; chưa kiểm âm thanh."}
+{"id": "english_04", "category": "english", "text": "Dùng skill.", "expected": ["Dùng skill.", "Dùng skin.", "Dùng xờ kiu."], "note": "Từ mượn: chấp nhận spelling Anh gửi giọng đa ngữ hoặc phiên âm Việt quen; chưa kiểm âm thanh."}
+{"id": "english_05", "category": "english", "text": "Chọn item.", "expected": ["Chọn item.", "Chọn ai tầm."], "note": "Từ mượn: chấp nhận spelling Anh gửi giọng đa ngữ hoặc phiên âm Việt quen; chưa kiểm âm thanh."}
+{"id": "english_06", "category": "english", "text": "Gọi team.", "expected": ["Gọi team.", "Gọi tim."], "note": "Từ mượn: chấp nhận spelling Anh gửi giọng đa ngữ hoặc phiên âm Việt quen; chưa kiểm âm thanh."}
+{"id": "english_07", "category": "english", "text": "Chọn server.", "expected": ["Chọn server.", "Chọn sơ vơ.", "Chọn sơ-vơ.", "Chọn xơ-vơ."], "note": "Từ mượn: chấp nhận spelling Anh gửi giọng đa ngữ hoặc phiên âm Việt quen; chưa kiểm âm thanh."}
+{"id": "english_08", "category": "english", "text": "Đọc file.", "expected": ["Đọc file.", "Đọc phai."], "note": "Từ mượn: chấp nhận spelling Anh gửi giọng đa ngữ hoặc phiên âm Việt quen; chưa kiểm âm thanh."}
+{"id": "english_09", "category": "english", "text": "Mở link.", "expected": ["Mở link.", "Mở linh."], "note": "Từ mượn: chấp nhận spelling Anh gửi giọng đa ngữ hoặc phiên âm Việt quen; chưa kiểm âm thanh."}
+{"id": "english_10", "category": "english", "text": "Gửi email.", "expected": ["Gửi email.", "Gửi i meo.", "Gửi i mêl.", "Gửi i-meo."], "note": "Từ mượn: chấp nhận spelling Anh gửi giọng đa ngữ hoặc phiên âm Việt quen; chưa kiểm âm thanh."}
+{"id": "english_11", "category": "english", "text": "Xem video.", "expected": ["Xem video.", "Xem vi đê ô.", "Xem vi-đê-ô."], "note": "Từ mượn: chấp nhận spelling Anh gửi giọng đa ngữ hoặc phiên âm Việt quen; chưa kiểm âm thanh."}
+{"id": "english_12", "category": "english", "text": "Mở menu.", "expected": ["Mở menu.", "Mở me nu."], "note": "Từ mượn: chấp nhận spelling Anh gửi giọng đa ngữ hoặc phiên âm Việt quen; chưa kiểm âm thanh."}
+{"id": "english_13", "category": "english", "text": "Chọn online.", "expected": ["Chọn online.", "Chọn on lai.", "Chọn on-lai."], "note": "Từ mượn: chấp nhận spelling Anh gửi giọng đa ngữ hoặc phiên âm Việt quen; chưa kiểm âm thanh."}
+{"id": "english_14", "category": "english", "text": "Chọn offline.", "expected": ["Chọn offline.", "Chọn óp lai.", "Chọn óp-lai."], "note": "Từ mượn: chấp nhận spelling Anh gửi giọng đa ngữ hoặc phiên âm Việt quen; chưa kiểm âm thanh."}
+{"id": "english_15", "category": "english", "text": "Chọn save.", "expected": ["Chọn save.", "Chọn xây-vơ."], "note": "Từ mượn: chấp nhận spelling Anh gửi giọng đa ngữ hoặc phiên âm Việt quen; chưa kiểm âm thanh."}
+{"id": "english_16", "category": "english", "text": "Nhấn enter.", "expected": ["Nhấn enter.", "Nhấn en tơ."], "note": "Từ mượn: chấp nhận spelling Anh gửi giọng đa ngữ hoặc phiên âm Việt quen; chưa kiểm âm thanh."}
+{"id": "english_17", "category": "english", "text": "Nhấn reset.", "expected": ["Nhấn reset.", "Nhấn ri xét."], "note": "Từ mượn: chấp nhận spelling Anh gửi giọng đa ngữ hoặc phiên âm Việt quen; chưa kiểm âm thanh."}
+{"id": "english_18", "category": "english", "text": "Mở chat.", "expected": ["Mở chat.", "Mở chát."], "note": "Từ mượn: chấp nhận spelling Anh gửi giọng đa ngữ hoặc phiên âm Việt quen; chưa kiểm âm thanh."}
+{"id": "english_19", "category": "english", "text": "Đọc status.", "expected": ["Đọc status.", "Đọc xờ ta tút."], "note": "Từ mượn: chấp nhận spelling Anh gửi giọng đa ngữ hoặc phiên âm Việt quen; chưa kiểm âm thanh."}
+{"id": "english_20", "category": "english", "text": "Xem update.", "expected": ["Xem update.", "Xem ấp đết."], "note": "Từ mượn: chấp nhận spelling Anh gửi giọng đa ngữ hoặc phiên âm Việt quen; chưa kiểm âm thanh."}
+{"id": "japanese_01", "category": "japanese", "text": "Aki-san xếp khay.", "expected": ["A-ki-xan xếp khay.", "A-ki san xếp khay."], "note": "Gốc ja cố định; phiên âm thực dụng theo âm tiết, không tự đổi nghĩa hoặc dịch kính ngữ."}
+{"id": "japanese_02", "category": "japanese", "text": "Haru-kun xếp khay.", "expected": ["Ha-ru-cun xếp khay.", "Ha-ru-kun xếp khay."], "note": "Gốc ja cố định; phiên âm thực dụng theo âm tiết, không tự đổi nghĩa hoặc dịch kính ngữ."}
+{"id": "japanese_03", "category": "japanese", "text": "Mika-chan xếp khay.", "expected": ["Mi-ca-chan xếp khay.", "Mi-ka-chan xếp khay."], "note": "Gốc ja cố định; phiên âm thực dụng theo âm tiết, không tự đổi nghĩa hoặc dịch kính ngữ."}
+{"id": "japanese_04", "category": "japanese", "text": "Yuki-sama xếp khay.", "expected": ["Yu-ki-xa-ma xếp khay.", "Yư-ki-xa-ma xếp khay."], "note": "Gốc ja cố định; phiên âm thực dụng theo âm tiết, không tự đổi nghĩa hoặc dịch kính ngữ."}
+{"id": "japanese_05", "category": "japanese", "text": "Sora-senpai xếp khay.", "expected": ["Xô-ra-xen-pai xếp khay.", "So-ra-sen-pai xếp khay."], "note": "Gốc ja cố định; phiên âm thực dụng theo âm tiết, không tự đổi nghĩa hoặc dịch kính ngữ."}
+{"id": "japanese_06", "category": "japanese", "text": "Ren-san cầm cốc.", "expected": "Ren-xan cầm cốc.", "note": "Gốc ja cố định; phiên âm thực dụng theo âm tiết, không tự đổi nghĩa hoặc dịch kính ngữ."}
+{"id": "japanese_07", "category": "japanese", "text": "Riku-kun cầm cốc.", "expected": ["Ri-cu-cun cầm cốc.", "Ri-ku-kun cầm cốc."], "note": "Gốc ja cố định; phiên âm thực dụng theo âm tiết, không tự đổi nghĩa hoặc dịch kính ngữ."}
+{"id": "japanese_08", "category": "japanese", "text": "Nami-chan cầm cốc.", "expected": "Na-mi-chan cầm cốc.", "note": "Gốc ja cố định; phiên âm thực dụng theo âm tiết, không tự đổi nghĩa hoặc dịch kính ngữ."}
+{"id": "japanese_09", "category": "japanese", "text": "Taro-sama cầm cốc.", "expected": ["Ta-rô-xa-ma cầm cốc.", "Ta-ro-sama cầm cốc."], "note": "Gốc ja cố định; phiên âm thực dụng theo âm tiết, không tự đổi nghĩa hoặc dịch kính ngữ."}
+{"id": "japanese_10", "category": "japanese", "text": "Hana-senpai cầm cốc.", "expected": ["Ha-na-xen-pai cầm cốc.", "Ha-na-sen-pai cầm cốc."], "note": "Gốc ja cố định; phiên âm thực dụng theo âm tiết, không tự đổi nghĩa hoặc dịch kính ngữ."}
+{"id": "japanese_11", "category": "japanese", "text": "Senpai xem phiếu.", "expected": ["Xen-pai xem phiếu.", "Sen-pai xem phiếu."], "note": "Gốc ja cố định; phiên âm thực dụng theo âm tiết, không tự đổi nghĩa hoặc dịch kính ngữ."}
+{"id": "japanese_12", "category": "japanese", "text": "Sensei xem phiếu.", "expected": ["Xen-xê xem phiếu.", "Sen-sê xem phiếu."], "note": "Gốc ja cố định; phiên âm thực dụng theo âm tiết, không tự đổi nghĩa hoặc dịch kính ngữ."}
+{"id": "japanese_13", "category": "japanese", "text": "Kouhai xem phiếu.", "expected": ["Cô-hai xem phiếu.", "Kô-hai xem phiếu."], "note": "Gốc ja cố định; phiên âm thực dụng theo âm tiết, không tự đổi nghĩa hoặc dịch kính ngữ."}
+{"id": "japanese_14", "category": "japanese", "text": "Arigatou, xin nhận.", "expected": ["A-ri-ga-tô, xin nhận.", "A-ri-ga-tou, xin nhận."], "note": "Gốc ja cố định; phiên âm thực dụng theo âm tiết, không tự đổi nghĩa hoặc dịch kính ngữ."}
+{"id": "japanese_15", "category": "japanese", "text": "Ohayou, mời vào.", "expected": ["Ô-ha-yô, mời vào.", "O-ha-yo, mời vào."], "note": "Gốc ja cố định; phiên âm thực dụng theo âm tiết, không tự đổi nghĩa hoặc dịch kính ngữ."}
+{"id": "japanese_16", "category": "japanese", "text": "Konnichiwa, mời vào.", "expected": ["Côn-ni-chi-oa, mời vào.", "Kon-ni-chi-wa, mời vào."], "note": "Gốc ja cố định; phiên âm thực dụng theo âm tiết, không tự đổi nghĩa hoặc dịch kính ngữ."}
+{"id": "japanese_17", "category": "japanese", "text": "Hai, đã rõ.", "expected": "Hai, đã rõ.", "note": "Âm trùng tiếng Việt giữ nguyên được."}
+{"id": "japanese_18", "category": "japanese", "text": "Iie, chưa xong.", "expected": ["I-i-ê, chưa xong.", "I-ê, chưa xong.", "I-e, chưa xong."], "note": "Gốc ja cố định; phiên âm thực dụng theo âm tiết, không tự đổi nghĩa hoặc dịch kính ngữ."}
+{"id": "japanese_19", "category": "japanese", "text": "Onii-san đến.", "expected": ["Ô-ni-xan đến.", "O-ni-san đến."], "note": "Gốc ja cố định; phiên âm thực dụng theo âm tiết, không tự đổi nghĩa hoặc dịch kính ngữ."}
+{"id": "japanese_20", "category": "japanese", "text": "Onee-chan đến.", "expected": ["Ô-nê-chan đến.", "O-nê-chan đến."], "note": "Gốc ja cố định; phiên âm thực dụng theo âm tiết, không tự đổi nghĩa hoặc dịch kính ngữ."}
+{"id": "symbol_01", "category": "symbol", "text": "Trà & bánh.", "expected": "Trà và bánh.", "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "symbol_02", "category": "symbol", "text": "Gửi @An.", "expected": ["Gửi a còng An.", "Gửi át An."], "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "symbol_03", "category": "symbol", "text": "Mã #5.", "expected": ["Mã thăng năm.", "Mã số năm."], "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "symbol_04", "category": "symbol", "text": "Ký hiệu %.", "expected": "Ký hiệu phần trăm.", "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "symbol_05", "category": "symbol", "text": "Tính 2 + 3.", "expected": "Tính hai cộng ba.", "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "symbol_06", "category": "symbol", "text": "Tính 2 = 2.", "expected": "Tính hai bằng hai.", "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "symbol_07", "category": "symbol", "text": "Trà / cà phê.", "expected": ["Trà hoặc cà phê.", "Trà trên cà phê."], "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "symbol_08", "category": "symbol", "text": "Tính 3 × 4.", "expected": "Tính ba nhân bốn.", "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "symbol_09", "category": "symbol", "text": "Khay → hộp.", "expected": ["Khay sang hộp.", "Khay đến hộp.", "Khay chuyển thành hộp."], "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "symbol_10", "category": "symbol", "text": "Xếp hạng ★★★.", "expected": ["Xếp hạng ba sao.", "Xếp hạng sao sao sao."], "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "symbol_11", "category": "symbol", "text": "La ♪ la.", "expected": ["La la.", "La, la."], "note": "Nốt nhạc chỉ ngữ điệu, không thêm lời."}
+{"id": "symbol_12", "category": "symbol", "text": "Tính 5 − 2.", "expected": "Tính năm trừ hai.", "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "symbol_13", "category": "symbol", "text": "Tính 6 ÷ 3.", "expected": "Tính sáu chia ba.", "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "symbol_14", "category": "symbol", "text": "Điểm ≥ 5.", "expected": "Điểm lớn hơn hoặc bằng năm.", "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "symbol_15", "category": "symbol", "text": "Điểm ≤ 8.", "expected": "Điểm nhỏ hơn hoặc bằng tám.", "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "symbol_16", "category": "symbol", "text": "Điểm ≠ 0.", "expected": "Điểm khác không.", "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "symbol_17", "category": "symbol", "text": "Mức ±2.", "expected": "Mức cộng trừ hai.", "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "symbol_18", "category": "symbol", "text": "Ký hiệu ©.", "expected": "Ký hiệu bản quyền.", "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "symbol_19", "category": "symbol", "text": "Tính 2:1.", "expected": ["Tính hai chia một.", "Tính hai trên một."], "note": "Quy ước là phép tính hoặc tỉ số."}
+{"id": "symbol_20", "category": "symbol", "text": "Nhãn A&B.", "expected": ["Nhãn a và bê.", "Nhãn ây và bi."], "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "url_email_01", "category": "url_email", "text": "Mở https://example.com.", "expected": ["Mở hát tê tê pê ét hai chấm gạch chéo gạch chéo example chấm com.", "Mở example chấm com."], "note": "Cho phép bỏ giao thức khi đọc URL, tên miền giữ spelling đa ngữ."}
+{"id": "url_email_02", "category": "url_email", "text": "Mở http://example.org.", "expected": ["Mở hát tê tê pê hai chấm gạch chéo gạch chéo example chấm org.", "Mở example chấm org."], "note": "Địa chỉ ví dụ thuộc example.com/org/net; cần còn thông tin tên miền và các ký hiệu cần đọc."}
+{"id": "url_email_03", "category": "url_email", "text": "Mở www.example.net.", "expected": ["Mở vê kép vê kép vê kép chấm example chấm net.", "Mở example chấm net."], "note": "Địa chỉ ví dụ thuộc example.com/org/net; cần còn thông tin tên miền và các ký hiệu cần đọc."}
+{"id": "url_email_04", "category": "url_email", "text": "Mở example.com/a.", "expected": "Mở example chấm com gạch chéo a.", "note": "Địa chỉ ví dụ thuộc example.com/org/net; cần còn thông tin tên miền và các ký hiệu cần đọc."}
+{"id": "url_email_05", "category": "url_email", "text": "Mở example.org/b.", "expected": ["Mở example chấm org gạch chéo bê.", "Mở example chấm org gạch chéo bi."], "note": "Địa chỉ ví dụ thuộc example.com/org/net; cần còn thông tin tên miền và các ký hiệu cần đọc."}
+{"id": "url_email_06", "category": "url_email", "text": "Mở https://example.net/5.", "expected": ["Mở example chấm net gạch chéo năm.", "Mở hát tê tê pê ét hai chấm gạch chéo gạch chéo example chấm net gạch chéo năm."], "note": "Địa chỉ ví dụ thuộc example.com/org/net; cần còn thông tin tên miền và các ký hiệu cần đọc."}
+{"id": "url_email_07", "category": "url_email", "text": "Mở https://example.com?q=2.", "expected": "Mở example chấm com hỏi kiu bằng hai.", "note": "Địa chỉ ví dụ thuộc example.com/org/net; cần còn thông tin tên miền và các ký hiệu cần đọc."}
+{"id": "url_email_08", "category": "url_email", "text": "Mở https://example.org/#top.", "expected": "Mở example chấm org gạch chéo thăng top.", "note": "Địa chỉ ví dụ thuộc example.com/org/net; cần còn thông tin tên miền và các ký hiệu cần đọc."}
+{"id": "url_email_09", "category": "url_email", "text": "Mở https://example.net/a-b.", "expected": "Mở example chấm net gạch chéo a gạch ngang bê.", "note": "Địa chỉ ví dụ thuộc example.com/org/net; cần còn thông tin tên miền và các ký hiệu cần đọc."}
+{"id": "url_email_10", "category": "url_email", "text": "Mở https://example.com/a_b.", "expected": "Mở example chấm com gạch chéo a gạch dưới bê.", "note": "Địa chỉ ví dụ thuộc example.com/org/net; cần còn thông tin tên miền và các ký hiệu cần đọc."}
+{"id": "url_email_11", "category": "url_email", "text": "Gửi an@example.com.", "expected": ["Gửi an a còng example chấm com.", "Gửi an át example chấm com."], "note": "Địa chỉ ví dụ thuộc example.com/org/net; cần còn thông tin tên miền và các ký hiệu cần đọc."}
+{"id": "url_email_12", "category": "url_email", "text": "Gửi binh@example.org.", "expected": ["Gửi binh a còng example chấm org.", "Gửi binh át example chấm org."], "note": "Địa chỉ ví dụ thuộc example.com/org/net; cần còn thông tin tên miền và các ký hiệu cần đọc."}
+{"id": "url_email_13", "category": "url_email", "text": "Gửi chi@example.net.", "expected": ["Gửi chi a còng example chấm net.", "Gửi chi át example chấm net."], "note": "Địa chỉ ví dụ thuộc example.com/org/net; cần còn thông tin tên miền và các ký hiệu cần đọc."}
+{"id": "url_email_14", "category": "url_email", "text": "Gửi a.b@example.com.", "expected": "Gửi a chấm bê a còng example chấm com.", "note": "Địa chỉ ví dụ thuộc example.com/org/net; cần còn thông tin tên miền và các ký hiệu cần đọc."}
+{"id": "url_email_15", "category": "url_email", "text": "Gửi a_b@example.org.", "expected": "Gửi a gạch dưới bê a còng example chấm org.", "note": "Địa chỉ ví dụ thuộc example.com/org/net; cần còn thông tin tên miền và các ký hiệu cần đọc."}
+{"id": "url_email_16", "category": "url_email", "text": "Gửi a-b@example.net.", "expected": "Gửi a gạch ngang bê a còng example chấm net.", "note": "Địa chỉ ví dụ thuộc example.com/org/net; cần còn thông tin tên miền và các ký hiệu cần đọc."}
+{"id": "url_email_17", "category": "url_email", "text": "Gửi an+test@example.com.", "expected": "Gửi an cộng test a còng example chấm com.", "note": "Địa chỉ ví dụ thuộc example.com/org/net; cần còn thông tin tên miền và các ký hiệu cần đọc."}
+{"id": "url_email_18", "category": "url_email", "text": "Gửi a12@example.org.", "expected": "Gửi a một hai a còng example chấm org.", "note": "Địa chỉ ví dụ thuộc example.com/org/net; cần còn thông tin tên miền và các ký hiệu cần đọc."}
+{"id": "url_email_19", "category": "url_email", "text": "Mở https://sub.example.com.", "expected": "Mở sub chấm example chấm com.", "note": "Địa chỉ ví dụ thuộc example.com/org/net; cần còn thông tin tên miền và các ký hiệu cần đọc."}
+{"id": "url_email_20", "category": "url_email", "text": "Mở ftp://example.net.", "expected": ["Mở ép tê pê hai chấm gạch chéo gạch chéo example chấm net.", "Mở example chấm net."], "note": "Địa chỉ ví dụ thuộc example.com/org/net; cần còn thông tin tên miền và các ký hiệu cần đọc."}
+{"id": "vocalization_01", "category": "vocalization", "text": "Aaaa!", "expected": ["a… a!", "a... a!", "a!"], "note": "Nhiều cách ghi tiếng kéo dài hợp lý; chấp nhận âm rút gọn hoặc tách âm có dấu nghỉ."}
+{"id": "vocalization_02", "category": "vocalization", "text": "Áaaaa!", "expected": ["á… a!", "á... a!", "á!"], "note": "Nhiều cách ghi tiếng kéo dài hợp lý; chấp nhận âm rút gọn hoặc tách âm có dấu nghỉ."}
+{"id": "vocalization_03", "category": "vocalization", "text": "Oooo!", "expected": ["o… o!", "o... o!", "ô!"], "note": "Nhiều cách ghi tiếng kéo dài hợp lý; chấp nhận âm rút gọn hoặc tách âm có dấu nghỉ."}
+{"id": "vocalization_04", "category": "vocalization", "text": "Ôôôô!", "expected": ["ô… ô!", "ô... ô!", "ô!"], "note": "Nhiều cách ghi tiếng kéo dài hợp lý; chấp nhận âm rút gọn hoặc tách âm có dấu nghỉ."}
+{"id": "vocalization_05", "category": "vocalization", "text": "Eeee!", "expected": ["e… e!", "e... e!", "e!"], "note": "Nhiều cách ghi tiếng kéo dài hợp lý; chấp nhận âm rút gọn hoặc tách âm có dấu nghỉ."}
+{"id": "vocalization_06", "category": "vocalization", "text": "Êêêê!", "expected": ["ê… ê!", "ê... ê!", "ê!"], "note": "Nhiều cách ghi tiếng kéo dài hợp lý; chấp nhận âm rút gọn hoặc tách âm có dấu nghỉ."}
+{"id": "vocalization_07", "category": "vocalization", "text": "Uuuu!", "expected": ["u… u!", "u... u!", "u!"], "note": "Nhiều cách ghi tiếng kéo dài hợp lý; chấp nhận âm rút gọn hoặc tách âm có dấu nghỉ."}
+{"id": "vocalization_08", "category": "vocalization", "text": "Ưưưư!", "expected": ["ư… ư!", "ư... ư!", "ư!"], "note": "Nhiều cách ghi tiếng kéo dài hợp lý; chấp nhận âm rút gọn hoặc tách âm có dấu nghỉ."}
+{"id": "vocalization_09", "category": "vocalization", "text": "Hmmmm.", "expected": ["hừm.", "hừm…"], "note": "Nhiều cách ghi tiếng kéo dài hợp lý; chấp nhận âm rút gọn hoặc tách âm có dấu nghỉ."}
+{"id": "vocalization_10", "category": "vocalization", "text": "Hừmmmm.", "expected": ["hừm.", "hừm…"], "note": "Nhiều cách ghi tiếng kéo dài hợp lý; chấp nhận âm rút gọn hoặc tách âm có dấu nghỉ."}
+{"id": "vocalization_11", "category": "vocalization", "text": "Haizzz.", "expected": ["hầy.", "hai.", "hầy…"], "note": "Nhiều cách ghi tiếng kéo dài hợp lý; chấp nhận âm rút gọn hoặc tách âm có dấu nghỉ."}
+{"id": "vocalization_12", "category": "vocalization", "text": "Haizzzzz!", "expected": ["hầy!", "hai!", "hầy…"], "note": "Nhiều cách ghi tiếng kéo dài hợp lý; chấp nhận âm rút gọn hoặc tách âm có dấu nghỉ."}
+{"id": "vocalization_13", "category": "vocalization", "text": "Grrrr!", "expected": ["gừ!", "gừ…"], "note": "Nhiều cách ghi tiếng kéo dài hợp lý; chấp nhận âm rút gọn hoặc tách âm có dấu nghỉ."}
+{"id": "vocalization_14", "category": "vocalization", "text": "Haaaa!", "expected": ["ha… a!", "ha... a!", "ha!"], "note": "Nhiều cách ghi tiếng kéo dài hợp lý; chấp nhận âm rút gọn hoặc tách âm có dấu nghỉ."}
+{"id": "vocalization_15", "category": "vocalization", "text": "Haaaah!", "expected": ["ha… a!", "ha... a!", "ha!"], "note": "Nhiều cách ghi tiếng kéo dài hợp lý; chấp nhận âm rút gọn hoặc tách âm có dấu nghỉ."}
+{"id": "vocalization_16", "category": "vocalization", "text": "Hihihi!", "expected": "hi hi hi!", "note": "Nhiều cách ghi tiếng kéo dài hợp lý; chấp nhận âm rút gọn hoặc tách âm có dấu nghỉ."}
+{"id": "vocalization_17", "category": "vocalization", "text": "Hahaha!", "expected": "ha ha ha!", "note": "Nhiều cách ghi tiếng kéo dài hợp lý; chấp nhận âm rút gọn hoặc tách âm có dấu nghỉ."}
+{"id": "vocalization_18", "category": "vocalization", "text": "Huhuhu!", "expected": "hu hu hu!", "note": "Nhiều cách ghi tiếng kéo dài hợp lý; chấp nhận âm rút gọn hoặc tách âm có dấu nghỉ."}
+{"id": "vocalization_19", "category": "vocalization", "text": "Aaaa...!?", "expected": ["a… a…!?", "a... a...!?", "a!"], "note": "Nhiều cách ghi tiếng kéo dài hợp lý; chấp nhận âm rút gọn hoặc tách âm có dấu nghỉ."}
+{"id": "vocalization_20", "category": "vocalization", "text": "[thở dài]", "expected": ["hầy.", "hầy…", "hầy..."], "note": "Cue thở dài được đọc bằng từ thường của Studio."}
+{"id": "punctuation_01", "category": "punctuation", "text": "Khay... cốc.", "expected": ["Khay, cốc.", "Khay… cốc.", "Khay... cốc."], "note": "Giữ nhịp nghỉ, không đọc tên dấu câu."}
+{"id": "punctuation_02", "category": "punctuation", "text": "Hộp… nắp.", "expected": ["Hộp, nắp.", "Hộp… nắp."], "note": "Chỉ kiểm chữ và dấu nghỉ ở biên trước máy đọc; dấu cuối bỏ khi so."}
+{"id": "punctuation_03", "category": "punctuation", "text": "Phiếu.... bút.", "expected": ["Phiếu, bút.", "Phiếu... bút.", "Phiếu… bút."], "note": "Chỉ kiểm chữ và dấu nghỉ ở biên trước máy đọc; dấu cuối bỏ khi so."}
+{"id": "punctuation_04", "category": "punctuation", "text": "Kệ..... rổ.", "expected": ["Kệ, rổ.", "Kệ... rổ.", "Kệ… rổ."], "note": "Chỉ kiểm chữ và dấu nghỉ ở biên trước máy đọc; dấu cuối bỏ khi so."}
+{"id": "punctuation_05", "category": "punctuation", "text": "Sổ—bút.", "expected": ["Sổ, bút.", "Sổ bút.", "Sổ—bút."], "note": "Chỉ kiểm chữ và dấu nghỉ ở biên trước máy đọc; dấu cuối bỏ khi so."}
+{"id": "punctuation_06", "category": "punctuation", "text": "Khay – hộp.", "expected": ["Khay, hộp.", "Khay hộp.", "Khay – hộp."], "note": "Chỉ kiểm chữ và dấu nghỉ ở biên trước máy đọc; dấu cuối bỏ khi so."}
+{"id": "punctuation_07", "category": "punctuation", "text": "Rổ - túi.", "expected": ["Rổ, túi.", "Rổ túi.", "Rổ - túi."], "note": "Chỉ kiểm chữ và dấu nghỉ ở biên trước máy đọc; dấu cuối bỏ khi so."}
+{"id": "punctuation_08", "category": "punctuation", "text": "— Mời cân.", "expected": ["Mời cân.", "— Mời cân."], "note": "Chỉ kiểm chữ và dấu nghỉ ở biên trước máy đọc; dấu cuối bỏ khi so."}
+{"id": "punctuation_09", "category": "punctuation", "text": "– Mời đếm.", "expected": ["Mời đếm.", "– Mời đếm."], "note": "Chỉ kiểm chữ và dấu nghỉ ở biên trước máy đọc; dấu cuối bỏ khi so."}
+{"id": "punctuation_10", "category": "punctuation", "text": "- Mời xếp.", "expected": ["Mời xếp.", "- Mời xếp."], "note": "Chỉ kiểm chữ và dấu nghỉ ở biên trước máy đọc; dấu cuối bỏ khi so."}
+{"id": "punctuation_11", "category": "punctuation", "text": "Đã xong...", "expected": ["Đã xong.", "Đã xong…", "Đã xong,"], "note": "Chỉ kiểm chữ và dấu nghỉ ở biên trước máy đọc; dấu cuối bỏ khi so."}
+{"id": "punctuation_12", "category": "punctuation", "text": "Chưa xong…", "expected": ["Chưa xong.", "Chưa xong,"], "note": "Chỉ kiểm chữ và dấu nghỉ ở biên trước máy đọc; dấu cuối bỏ khi so."}
+{"id": "punctuation_13", "category": "punctuation", "text": "Đợi.....", "expected": ["Đợi.", "Đợi,"], "note": "Chỉ kiểm chữ và dấu nghỉ ở biên trước máy đọc; dấu cuối bỏ khi so."}
+{"id": "punctuation_14", "category": "punctuation", "text": "Rõ!?", "expected": "Rõ.", "note": "Chỉ kiểm chữ và dấu nghỉ ở biên trước máy đọc; dấu cuối bỏ khi so."}
+{"id": "punctuation_15", "category": "punctuation", "text": "Xong?!", "expected": "Xong.", "note": "Chỉ kiểm chữ và dấu nghỉ ở biên trước máy đọc; dấu cuối bỏ khi so."}
+{"id": "punctuation_16", "category": "punctuation", "text": "Đã đủ!!!", "expected": "Đã đủ.", "note": "Chỉ kiểm chữ và dấu nghỉ ở biên trước máy đọc; dấu cuối bỏ khi so."}
+{"id": "punctuation_17", "category": "punctuation", "text": "Còn không???", "expected": "Còn không.", "note": "Chỉ kiểm chữ và dấu nghỉ ở biên trước máy đọc; dấu cuối bỏ khi so."}
+{"id": "punctuation_18", "category": "punctuation", "text": "Cốc... rồi... khay.", "expected": ["Cốc, rồi, khay.", "Cốc... rồi... khay.", "Cốc… rồi… khay."], "note": "Chỉ kiểm chữ và dấu nghỉ ở biên trước máy đọc; dấu cuối bỏ khi so."}
+{"id": "punctuation_19", "category": "punctuation", "text": "Sổ—rồi—phiếu.", "expected": ["Sổ, rồi, phiếu.", "Sổ rồi phiếu.", "Sổ—rồi—phiếu."], "note": "Chỉ kiểm chữ và dấu nghỉ ở biên trước máy đọc; dấu cuối bỏ khi so."}
+{"id": "punctuation_20", "category": "punctuation", "text": "Khay; nắp: cốc.", "expected": "Khay; nắp: cốc.", "note": "Chỉ kiểm chữ và dấu nghỉ ở biên trước máy đọc; dấu cuối bỏ khi so."}
+{"id": "uppercase_01", "category": "uppercase", "text": "MỜI XẾP KHAY.", "expected": "Mời xếp khay.", "note": "Nhấn mạnh bằng chữ hoa không đổi nội dung; thường hóa khi so."}
+{"id": "uppercase_02", "category": "uppercase", "text": "ĐẶT CỐC XUỐNG.", "expected": "Đặt cốc xuống.", "note": "Nhấn mạnh bằng chữ hoa không đổi nội dung; thường hóa khi so."}
+{"id": "uppercase_03", "category": "uppercase", "text": "ĐẾM LẠI HẠT.", "expected": "Đếm lại hạt.", "note": "Nhấn mạnh bằng chữ hoa không đổi nội dung; thường hóa khi so."}
+{"id": "uppercase_04", "category": "uppercase", "text": "GIỮ NẮP HỘP.", "expected": "Giữ nắp hộp.", "note": "Nhấn mạnh bằng chữ hoa không đổi nội dung; thường hóa khi so."}
+{"id": "uppercase_05", "category": "uppercase", "text": "CÂN TÚI NÀY.", "expected": "Cân túi này.", "note": "Nhấn mạnh bằng chữ hoa không đổi nội dung; thường hóa khi so."}
+{"id": "uppercase_06", "category": "uppercase", "text": "ĐỌC PHIẾU MỚI.", "expected": "Đọc phiếu mới.", "note": "Nhấn mạnh bằng chữ hoa không đổi nội dung; thường hóa khi so."}
+{"id": "uppercase_07", "category": "uppercase", "text": "ĐỪNG GẬP SỔ.", "expected": "Đừng gập sổ.", "note": "Nhấn mạnh bằng chữ hoa không đổi nội dung; thường hóa khi so."}
+{"id": "uppercase_08", "category": "uppercase", "text": "CHỌN BÚT ĐỎ.", "expected": "Chọn bút đỏ.", "note": "Nhấn mạnh bằng chữ hoa không đổi nội dung; thường hóa khi so."}
+{"id": "uppercase_09", "category": "uppercase", "text": "CHỌN KHAY XANH.", "expected": "Chọn khay xanh.", "note": "Nhấn mạnh bằng chữ hoa không đổi nội dung; thường hóa khi so."}
+{"id": "uppercase_10", "category": "uppercase", "text": "CHƯA ĐỦ CỐC.", "expected": "Chưa đủ cốc.", "note": "Nhấn mạnh bằng chữ hoa không đổi nội dung; thường hóa khi so."}
+{"id": "uppercase_11", "category": "uppercase", "text": "ĐÃ ĐỦ KHAY.", "expected": "Đã đủ khay.", "note": "Nhấn mạnh bằng chữ hoa không đổi nội dung; thường hóa khi so."}
+{"id": "uppercase_12", "category": "uppercase", "text": "MỜI NGỒI XUỐNG.", "expected": "Mời ngồi xuống.", "note": "Nhấn mạnh bằng chữ hoa không đổi nội dung; thường hóa khi so."}
+{"id": "uppercase_13", "category": "uppercase", "text": "MỞ HỘP NHỎ.", "expected": "Mở hộp nhỏ.", "note": "Nhấn mạnh bằng chữ hoa không đổi nội dung; thường hóa khi so."}
+{"id": "uppercase_14", "category": "uppercase", "text": "ĐÓNG NẮP LẠI.", "expected": "Đóng nắp lại.", "note": "Nhấn mạnh bằng chữ hoa không đổi nội dung; thường hóa khi so."}
+{"id": "uppercase_15", "category": "uppercase", "text": "GHI RÕ SỐ.", "expected": "Ghi rõ số.", "note": "Nhấn mạnh bằng chữ hoa không đổi nội dung; thường hóa khi so."}
+{"id": "uppercase_16", "category": "uppercase", "text": "ĐỔI BÚT KHÁC.", "expected": "Đổi bút khác.", "note": "Nhấn mạnh bằng chữ hoa không đổi nội dung; thường hóa khi so."}
+{"id": "uppercase_17", "category": "uppercase", "text": "XẾP GỌN KỆ.", "expected": "Xếp gọn kệ.", "note": "Nhấn mạnh bằng chữ hoa không đổi nội dung; thường hóa khi so."}
+{"id": "uppercase_18", "category": "uppercase", "text": "ĐỪNG ĐỔ NƯỚC.", "expected": "Đừng đổ nước.", "note": "Nhấn mạnh bằng chữ hoa không đổi nội dung; thường hóa khi so."}
+{"id": "uppercase_19", "category": "uppercase", "text": "NHẬN PHIẾU MỚI.", "expected": "Nhận phiếu mới.", "note": "Nhấn mạnh bằng chữ hoa không đổi nội dung; thường hóa khi so."}
+{"id": "uppercase_20", "category": "uppercase", "text": "GIỮ SỔ SẠCH.", "expected": "Giữ sổ sạch.", "note": "Nhấn mạnh bằng chữ hoa không đổi nội dung; thường hóa khi so."}
+{"id": "game_01", "category": "game", "text": "Đạt Lv.5.", "expected": ["Đạt cấp năm.", "Đạt le vồ năm.", "Đạt level năm."], "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "game_02", "category": "game", "text": "Đạt Lv.10.", "expected": ["Đạt cấp mười.", "Đạt le vồ mười.", "Đạt level mười."], "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "game_03", "category": "game", "text": "Đạt LV 20.", "expected": ["Đạt cấp hai mươi.", "Đạt le vồ hai mươi.", "Đạt level hai mươi."], "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "game_04", "category": "game", "text": "Đạt level 7.", "expected": ["Đạt level bảy.", "Đạt le vồ bảy."], "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "game_05", "category": "game", "text": "Thưởng x2.", "expected": ["Thưởng nhân hai.", "Thưởng gấp hai."], "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "game_06", "category": "game", "text": "Thưởng ×3.", "expected": ["Thưởng nhân ba.", "Thưởng gấp ba."], "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "game_07", "category": "game", "text": "Thưởng 4x.", "expected": ["Thưởng nhân bốn.", "Thưởng gấp bốn."], "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "game_08", "category": "game", "text": "Cộng +10 STR.", "expected": ["Cộng mười sức mạnh.", "Cộng cộng mười ét tê rờ.", "Cộng cộng mười ét ti a."], "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "game_09", "category": "game", "text": "Cộng +5 DEX.", "expected": ["Cộng năm khéo léo.", "Cộng cộng năm đê e ích.", "Cộng cộng năm đi i éc."], "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "game_10", "category": "game", "text": "Cộng +3 INT.", "expected": ["Cộng ba trí tuệ.", "Cộng cộng ba i en tê.", "Cộng cộng ba ai en ti."], "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "game_11", "category": "game", "text": "Máu 3/4.", "expected": ["Máu ba trên bốn.", "Máu ba phần tư."], "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "game_12", "category": "game", "text": "Mana 1/2.", "expected": ["Mana một trên hai.", "Mana một phần hai.", "Ma-na một trên hai."], "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "game_13", "category": "game", "text": "Tỉ số 2:1.", "expected": ["Tỉ số hai một.", "Tỉ số hai trên một."], "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "game_14", "category": "game", "text": "HP +20.", "expected": "Hát pê cộng hai mươi.", "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "game_15", "category": "game", "text": "MP -5.", "expected": ["Em pê trừ năm.", "Em pi trừ năm."], "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "game_16", "category": "game", "text": "ATK 100.", "expected": ["A tê ca một trăm.", "Ây ti cây một trăm.", "Tấn công một trăm."], "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "game_17", "category": "game", "text": "DEF 50.", "expected": ["Đê e ép năm mươi.", "Đi i ép năm mươi.", "Phòng thủ năm mươi."], "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "game_18", "category": "game", "text": "EXP +100.", "expected": ["Kinh nghiệm cộng một trăm.", "E ích pê cộng một trăm.", "I éc pi cộng một trăm."], "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "game_19", "category": "game", "text": "Tăng 10% ATK.", "expected": ["Tăng mười phần trăm tấn công.", "Tăng mười phần trăm a tê ca."], "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}
+{"id": "game_20", "category": "game", "text": "Hạng S+.", "expected": ["Hạng ét cộng.", "Hạng ét plus."], "note": "Câu trung tính tự đặt; đọc theo thói quen tiếng Việt phổ biến."}

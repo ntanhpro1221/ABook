@@ -1,0 +1,292 @@
+{
+  "schema_version": 1,
+  "profile": {
+    "engine": "VieNeu",
+    "speaks_english": true,
+    "direct_english": true,
+    "origin": "ja for japanese; None otherwise",
+    "book_readings": {},
+    "boundary": "text before engine phonemization; no synthesis"
+  },
+  "case_count": 440,
+  "cases_sha256": "b3c5acd2f60326d4253e01ccd03f0efcaaa736878caaed5085c64c6fa41a9909",
+  "quality_implementation_hash": "db6c9cb847dac2e536deca158114df29dcfedac4ab88b69885c08e1924876997",
+  "categories": {
+    "cardinal_small": {
+      "nghe_ngay": {
+        "correct": 20,
+        "total": 20,
+        "percent": 100.0
+      },
+      "studio": {
+        "correct": 20,
+        "total": 20,
+        "percent": 100.0
+      }
+    },
+    "cardinal_large": {
+      "nghe_ngay": {
+        "correct": 10,
+        "total": 20,
+        "percent": 50.0
+      },
+      "studio": {
+        "correct": 10,
+        "total": 20,
+        "percent": 50.0
+      }
+    },
+    "decimal": {
+      "nghe_ngay": {
+        "correct": 7,
+        "total": 20,
+        "percent": 35.0
+      },
+      "studio": {
+        "correct": 7,
+        "total": 20,
+        "percent": 35.0
+      }
+    },
+    "ordinal": {
+      "nghe_ngay": {
+        "correct": 0,
+        "total": 20,
+        "percent": 0.0
+      },
+      "studio": {
+        "correct": 0,
+        "total": 20,
+        "percent": 0.0
+      }
+    },
+    "roman": {
+      "nghe_ngay": {
+        "correct": 17,
+        "total": 20,
+        "percent": 85.0
+      },
+      "studio": {
+        "correct": 17,
+        "total": 20,
+        "percent": 85.0
+      }
+    },
+    "date": {
+      "nghe_ngay": {
+        "correct": 2,
+        "total": 20,
+        "percent": 10.0
+      },
+      "studio": {
+        "correct": 2,
+        "total": 20,
+        "percent": 10.0
+      }
+    },
+    "time": {
+      "nghe_ngay": {
+        "correct": 1,
+        "total": 20,
+        "percent": 5.0
+      },
+      "studio": {
+        "correct": 1,
+        "total": 20,
+        "percent": 5.0
+      }
+    },
+    "range": {
+      "nghe_ngay": {
+        "correct": 1,
+        "total": 20,
+        "percent": 5.0
+      },
+      "studio": {
+        "correct": 1,
+        "total": 20,
+        "percent": 5.0
+      }
+    },
+    "percentage": {
+      "nghe_ngay": {
+        "correct": 0,
+        "total": 20,
+        "percent": 0.0
+      },
+      "studio": {
+        "correct": 0,
+        "total": 20,
+        "percent": 0.0
+      }
+    },
+    "currency": {
+      "nghe_ngay": {
+        "correct": 6,
+        "total": 20,
+        "percent": 30.0
+      },
+      "studio": {
+        "correct": 6,
+        "total": 20,
+        "percent": 30.0
+      }
+    },
+    "unit": {
+      "nghe_ngay": {
+        "correct": 0,
+        "total": 20,
+        "percent": 0.0
+      },
+      "studio": {
+        "correct": 0,
+        "total": 20,
+        "percent": 0.0
+      }
+    },
+    "phone_code": {
+      "nghe_ngay": {
+        "correct": 0,
+        "total": 20,
+        "percent": 0.0
+      },
+      "studio": {
+        "correct": 0,
+        "total": 20,
+        "percent": 0.0
+      }
+    },
+    "abbrev_vi": {
+      "nghe_ngay": {
+        "correct": 14,
+        "total": 20,
+        "percent": 70.0
+      },
+      "studio": {
+        "correct": 14,
+        "total": 20,
+        "percent": 70.0
+      }
+    },
+    "abbrev_en": {
+      "nghe_ngay": {
+        "correct": 7,
+        "total": 20,
+        "percent": 35.0
+      },
+      "studio": {
+        "correct": 7,
+        "total": 20,
+        "percent": 35.0
+      }
+    },
+    "english": {
+      "nghe_ngay": {
+        "correct": 20,
+        "total": 20,
+        "percent": 100.0
+      },
+      "studio": {
+        "correct": 20,
+        "total": 20,
+        "percent": 100.0
+      }
+    },
+    "japanese": {
+      "nghe_ngay": {
+        "correct": 14,
+        "total": 20,
+        "percent": 70.0
+      },
+      "studio": {
+        "correct": 14,
+        "total": 20,
+        "percent": 70.0
+      }
+    },
+    "symbol": {
+      "nghe_ngay": {
+        "correct": 2,
+        "total": 20,
+        "percent": 10.0
+      },
+      "studio": {
+        "correct": 8,
+        "total": 20,
+        "percent": 40.0
+      }
+    },
+    "url_email": {
+      "nghe_ngay": {
+        "correct": 0,
+        "total": 20,
+        "percent": 0.0
+      },
+      "studio": {
+        "correct": 0,
+        "total": 20,
+        "percent": 0.0
+      }
+    },
+    "vocalization": {
+      "nghe_ngay": {
+        "correct": 17,
+        "total": 20,
+        "percent": 85.0
+      },
+      "studio": {
+        "correct": 18,
+        "total": 20,
+        "percent": 90.0
+      }
+    },
+    "punctuation": {
+      "nghe_ngay": {
+        "correct": 20,
+        "total": 20,
+        "percent": 100.0
+      },
+      "studio": {
+        "correct": 20,
+        "total": 20,
+        "percent": 100.0
+      }
+    },
+    "uppercase": {
+      "nghe_ngay": {
+        "correct": 20,
+        "total": 20,
+        "percent": 100.0
+      },
+      "studio": {
+        "correct": 20,
+        "total": 20,
+        "percent": 100.0
+      }
+    },
+    "game": {
+      "nghe_ngay": {
+        "correct": 0,
+        "total": 20,
+        "percent": 0.0
+      },
+      "studio": {
+        "correct": 2,
+        "total": 20,
+        "percent": 10.0
+      }
+    }
+  },
+  "overall": {
+    "nghe_ngay": {
+      "correct": 178,
+      "total": 440,
+      "percent": 40.45
+    },
+    "studio": {
+      "correct": 187,
+      "total": 440,
+      "percent": 42.5
+    }
+  }
+}

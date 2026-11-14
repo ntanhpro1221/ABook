@@ -1,0 +1,160 @@
+{
+  "formula": "pattern hits / whitespace tokens * 100000 * mean(two path mismatch fractions)",
+  "warning": "Prioritization proxy only, not an estimate of deployed error probability.",
+  "ranking": [
+    {
+      "category": "symbol",
+      "count": 1968,
+      "per_100k_tokens": 167.463,
+      "mean_mismatch_fraction": 0.75,
+      "priority_proxy": 125.5972
+    },
+    {
+      "category": "japanese",
+      "count": 1950,
+      "per_100k_tokens": 165.931,
+      "mean_mismatch_fraction": 0.3,
+      "priority_proxy": 49.7794
+    },
+    {
+      "category": "abbrev_en",
+      "count": 151,
+      "per_100k_tokens": 12.849,
+      "mean_mismatch_fraction": 0.65,
+      "priority_proxy": 8.3519
+    },
+    {
+      "category": "roman",
+      "count": 416,
+      "per_100k_tokens": 35.399,
+      "mean_mismatch_fraction": 0.15,
+      "priority_proxy": 5.3098
+    },
+    {
+      "category": "cardinal_large",
+      "count": 100,
+      "per_100k_tokens": 8.509,
+      "mean_mismatch_fraction": 0.5,
+      "priority_proxy": 4.2546
+    },
+    {
+      "category": "date",
+      "count": 49,
+      "per_100k_tokens": 4.17,
+      "mean_mismatch_fraction": 0.9,
+      "priority_proxy": 3.7526
+    },
+    {
+      "category": "decimal",
+      "count": 66,
+      "per_100k_tokens": 5.616,
+      "mean_mismatch_fraction": 0.65,
+      "priority_proxy": 3.6505
+    },
+    {
+      "category": "game",
+      "count": 40,
+      "per_100k_tokens": 3.404,
+      "mean_mismatch_fraction": 0.95,
+      "priority_proxy": 3.2335
+    },
+    {
+      "category": "unit",
+      "count": 36,
+      "per_100k_tokens": 3.063,
+      "mean_mismatch_fraction": 1.0,
+      "priority_proxy": 3.0633
+    },
+    {
+      "category": "ordinal",
+      "count": 35,
+      "per_100k_tokens": 2.978,
+      "mean_mismatch_fraction": 1.0,
+      "priority_proxy": 2.9783
+    },
+    {
+      "category": "percentage",
+      "count": 35,
+      "per_100k_tokens": 2.978,
+      "mean_mismatch_fraction": 1.0,
+      "priority_proxy": 2.9783
+    },
+    {
+      "category": "vocalization",
+      "count": 178,
+      "per_100k_tokens": 15.147,
+      "mean_mismatch_fraction": 0.125,
+      "priority_proxy": 1.8933
+    },
+    {
+      "category": "currency",
+      "count": 28,
+      "per_100k_tokens": 2.383,
+      "mean_mismatch_fraction": 0.7,
+      "priority_proxy": 1.6678
+    },
+    {
+      "category": "time",
+      "count": 17,
+      "per_100k_tokens": 1.447,
+      "mean_mismatch_fraction": 0.95,
+      "priority_proxy": 1.3743
+    },
+    {
+      "category": "range",
+      "count": 16,
+      "per_100k_tokens": 1.361,
+      "mean_mismatch_fraction": 0.95,
+      "priority_proxy": 1.2934
+    },
+    {
+      "category": "phone_code",
+      "count": 8,
+      "per_100k_tokens": 0.681,
+      "mean_mismatch_fraction": 1.0,
+      "priority_proxy": 0.6807
+    },
+    {
+      "category": "abbrev_vi",
+      "count": 10,
+      "per_100k_tokens": 0.851,
+      "mean_mismatch_fraction": 0.3,
+      "priority_proxy": 0.2553
+    },
+    {
+      "category": "url_email",
+      "count": 1,
+      "per_100k_tokens": 0.085,
+      "mean_mismatch_fraction": 1.0,
+      "priority_proxy": 0.0851
+    },
+    {
+      "category": "cardinal_small",
+      "count": 1234,
+      "per_100k_tokens": 105.005,
+      "mean_mismatch_fraction": 0.0,
+      "priority_proxy": 0.0
+    },
+    {
+      "category": "english",
+      "count": 279,
+      "per_100k_tokens": 23.741,
+      "mean_mismatch_fraction": 0.0,
+      "priority_proxy": 0.0
+    },
+    {
+      "category": "punctuation",
+      "count": 13413,
+      "per_100k_tokens": 1141.352,
+      "mean_mismatch_fraction": 0.0,
+      "priority_proxy": 0.0
+    },
+    {
+      "category": "uppercase",
+      "count": 1219,
+      "per_100k_tokens": 103.728,
+      "mean_mismatch_fraction": 0.0,
+      "priority_proxy": 0.0
+    }
+  ]
+}
