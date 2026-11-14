@@ -1,17 +1,20 @@
 package vn.abook.player.ui.music.library
 
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.produceState
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.staticCompositionLocalOf
-import androidx.compose.ui.Modifier
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.withContext
+import vn.abook.player.MusicLibrary
 import vn.abook.player.ui.components.SheetHost
 import vn.abook.player.ui.music.MusicCredit
-import vn.abook.player.ui.theme.Dim
-import vn.abook.player.ui.components.Reveal
 
 /**
  * Lối vào màn Nhạc từ những chỗ khác (Shell cung cấp; null = bản thử, không có màn Nhạc):
@@ -29,13 +32,20 @@ val LocalMusicEntry = staticCompositionLocalOf<MusicEntry?> { null }
 fun MusicCredit.inCatalog(): Boolean = link.isNotEmpty() && !link.startsWith("local:")
 
 /**
- * "Nhạc trong sách" của trang sách: đọc (khoá đoạn, bài) của cuốn ở luồng nền qua `scenesOf` rồi vẽ [BookMusicSection]. Cuốn không có nhạc gắn sẵn
- * (hay đọc lỗi) thì không hiện gì.
+ * Load and group scenes on IO, then contribute lazy rows to the dedicated Music tab.
+ * Empty books and read failures have distinct states; retry never runs on the UI thread.
  */
 @Composable
-fun BookMusicFor(state: LibraryState, sheets: SheetHost, bookId: String, scenesOf: (String) -> List<Pair<String?, String>>) {
-    val scenes by produceState(emptyList<Pair<String?, String>>(), bookId) {
-        value = withContext(Dispatchers.IO) { runCatching { scenesOf(bookId) }.getOrDefault(emptyList()) }
+fun BookMusicFor(state: LibraryState, sheets: SheetHost, bookId: String, scenesOf: (String) -> List<Pair<String?, String>>): LazyListScope.() -> Unit {
+    DisposableEffect(state, bookId) { onDispose { state.stopPreview() } }
+    var retry by remember(bookId) { mutableIntStateOf(0) }
+    val entries by produceState<Result<List<MusicLibrary.BookTrack>>?>(null, bookId, retry) {
+        value = null
+        value = withContext(Dispatchers.IO) {
+            try { Result.success(MusicLibrary.bookTracks(scenesOf(bookId))) }
+            catch (error: CancellationException) { throw error }
+            catch (error: Exception) { Result.failure(error) }
+        }
     }
-    Reveal(scenes.isNotEmpty()) { BookMusicSection(state, sheets, scenes, Modifier.padding(top = Dim.s24)) }
+    return BookMusicSection(state, sheets, entries) { retry++; state.open() }
 }

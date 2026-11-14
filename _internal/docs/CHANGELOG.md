@@ -7,6 +7,8 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+- Đưa nhạc của sách sang tab Nhạc trên điện thoại, web và máy tính; tải nền và dựng từng hàng để cuộn cuối danh sách chương không bị khựng vì nhạc.
+
 - Các bài trong thư viện Nhạc có bìa nguồn hoặc hình trừu tượng theo cảm xúc, dùng được cả khi mất mạng.
 
 - Ô từ đang đọc trượt và co giãn theo chữ, bỏ dấu câu; nút quay lại nổi trong vùng chữ, cuộn mượt và không chừa dải trống.

@@ -6,26 +6,33 @@ import "SizeFormat.js" as Size
 
 // Phần "Nhạc trong sách" của trang sách (BookMusic.tsx của web): các bài của danh mục cuốn này dùng (gộp trùng, số đoạn mỗi bài, GET
 // /api/books/<id>/music/library) + "Lưu tất cả (X MB)" - lưu = ghim + tải về, nghe không mạng. Bấm bài mở chi tiết kèm "Vì sao bài này"
-// (cảm xúc máy đọc được ở đoạn đầu tiên dùng bài). Cuốn không có bài nào của danh mục thì phần này ẩn.
-Column {
+// (cảm xúc máy đọc được ở đoạn đầu tiên dùng bài). The dedicated tab has explicit loading, empty and retry states.
+ListView {
     id: root
     objectName: "bookMusic"
     property string bookId: ""
     property var data: null
     property var downloads: null
     property var meta: null
+    property bool loading: true
+    property string problem: ""
     readonly property var tracks: data && data.tracks ? data.tracks : []
-    readonly property var unsaved: tracks.filter(track => !track.saved)
+    readonly property var unsaved: data && data.unsaved ? data.unsaved : []
     readonly property bool busy: !!(downloads && downloads.active && Object.keys(downloads.active).length)
     readonly property string previewing: Clip.current.indexOf("library:") === 0 ? Clip.current.slice(8) : ""
-    Reveal { shown: root.tracks.length > 0 }
-    height: visible ? implicitHeight : 0
-    spacing: Theme.s8
+    clip: true
+    boundsBehavior: Flickable.StopAtBounds
+    model: root.tracks
+    bottomMargin: Theme.s16
 
     function refresh() {
-        if (!bookId) { data = null; return }
+        if (!bookId) { data = null; loading = false; return }
         const asked = bookId
-        Api.quiet("GET", "/api/books/" + encodeURIComponent(bookId) + "/music/library", null, function(next, problem) { if (asked === root.bookId) data = problem ? null : next })
+        loading = true; problem = ""
+        Api.quiet("GET", "/api/books/" + encodeURIComponent(bookId) + "/music/library", null, function(next, error) {
+            if (asked !== root.bookId) return
+            loading = false; problem = error ? S.s_chua_tai_duoc_kho_nhac_9577b7c7 : ""; data = error ? null : next
+        })
     }
     function pollDownloads() { Api.quiet("GET", "/api/music/library/downloads", null, function(next, problem) { if (!problem) { const was = busy; downloads = next; if (was && !busy) refresh() } }) }
     function change(path, links) {
@@ -40,7 +47,10 @@ Column {
     onVisibleChanged: if (!visible && previewing !== "") Clip.stop()
     Timer { interval: 700; repeat: true; running: root.busy && root.visible; onTriggered: root.pollDownloads() }
 
-    Item {
+    header: Column {
+        width: root.width
+        spacing: Theme.s8
+        Item {
         width: root.width
         height: Math.max(heading.height, saveAll.visible ? saveAll.height : 0)
         Text {
@@ -59,12 +69,27 @@ Column {
             Reveal { shown: root.unsaved.length > 0 }
             text: S.s_luu_tat_ca_0_e16e7860(Size.formatSize(root.data ? root.data.missingBytes : 0))
             icon: "download"; kind: "ghost"; size: "sm"
-            onActivated: root.change("/api/music/library/save", root.unsaved.map(track => track.link))
+            onActivated: root.change("/api/music/library/save", root.unsaved)
+        }
+        }
+        Text {
+            id: status
+            objectName: "bookMusicStatus"
+            width: parent.width
+            text: root.loading ? S.s_dang_tai_465b1987 : root.problem || (root.tracks.length === 0 ? S.s_chua_co_nhac_ed5dc66e : "")
+            Reveal { shown: status.text !== "" }
+            wrapMode: Text.Wrap; color: Theme.text2; font.pixelSize: Theme.sizeBody
+            Accessible.role: Accessible.StaticText
+        }
+        Button {
+            objectName: "bookMusicRetry"
+            Reveal { shown: root.problem !== "" }
+            text: S.s_thu_lai_c58d068c
+            onActivated: root.refresh()
         }
     }
-    Repeater {
-        model: root.tracks
-        delegate: Item {
+    delegate: Item {
+            objectName: "bookMusicRow"
             required property var modelData
             required property int index
             width: root.width
@@ -89,7 +114,6 @@ Column {
                 text: S.s_0_doan_c2eb5200(modelData.scenes)
                 color: Theme.text2; font.pixelSize: Theme.sizeCaption
             }
-        }
     }
     MusicTrackDetail {
         id: detail

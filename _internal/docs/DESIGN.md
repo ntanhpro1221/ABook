@@ -351,7 +351,7 @@ giữ tên trong cột tối đa 640 px, thanh tua dùng phần rộng còn lạ
   chữ + "Xếp theo" + Tìm. Lưới bìa luôn MỞ (bộ sách nhiều tập gom thành một bìa kèm số tập, chạm mở bộ) - không kệ thu gọn
   che hết bìa. Sách máy kia có dấu nguồn nhỏ góc bìa.
 - **Trang sách**: bìa + tên + tác giả · giọng · thời lượng + tiến độ mảnh; MỘT nút chính "Nghe tiếp · Chương 4" (hay
-  "Nghe"); hàng phụ cùng kiểu: Đọc · Tìm · Từ đầu · Thêm(…). Tab Chương / Lịch sử / Nhân vật; danh sách phẳng. Cuốn đang nạp:
+  "Nghe"); hàng phụ cùng kiểu: Đọc · Tìm · Từ đầu · Thêm(…). Tab Chương / Lịch sử / Nhân vật / Nhạc; danh sách chương chỉ chứa chương. Cuốn đang nạp:
   bìa và dòng chương đang phát mở trình phát (L3b).
 - **Trình phát đầy đủ**: thanh đầu: thu nhỏ · viên chọn chế độ "Nghe / Đọc theo" (chương chưa có chữ đọc theo: chữ "Đang nghe") · "…"; bìa lớn; tên chương (20) + tên sách (nút "›" tới trang sách, L3c); thanh tiến độ + thời gian;
   hàng điều khiển 5 nút (chương trước · lùi 15 · phát tròn 72 · tới 15 · chương sau); hàng phụ 3 nút có nhãn (Tốc độ · Hẹn giờ ·
@@ -394,7 +394,9 @@ giữ tên trong cột tối đa 640 px, thanh tua dùng phần rộng còn lạ
   - *Chế độ chọn* (từ "Xem cả kho ›" cuối sheet "Đổi bài" của một đoạn): tiêu đề "Chọn bài cho đoạn" + nút ←, không tab, mỗi dòng có nút
     "Dùng"; chọn xong quay lại (Back), cùng đường lưu với chọn bài gợi ý.
   - *Bài đang phát* (chạm dòng Nhạc nền của trình phát): sheet chi tiết với tiêu đề "Bài đang phát", nút Lưu / Bỏ lưu · Xem trong kho ·
-    Đổi bài. *Nhạc trong sách* (trang sách): danh sách bài cuốn dùng, mỗi dòng thêm "N đoạn", nút "Lưu tất cả (X MB)".
+    Đổi bài. *Nhạc trong sách* (tab **Nhạc** của trang sách): danh sách bài cuốn dùng, mỗi dòng thêm "N đoạn", nút "Lưu tất cả (X MB)".
+    Nhạc là nội dung nên có tab riêng; hàng **Nhạc nền** trong menu sách giữ phần điều chỉnh phát. Chỉ mở tab Nhạc mới đọc danh mục, cảnh và trạng thái tải ở nền;
+    hiện "Đang tải", lỗi có "Thử lại", rỗng hiện "Chưa có nhạc". Mỗi hàng nhạc được dựng khi tới vùng nhìn, không gộp cả kho vào một mục cuộn.
   - Bài người dùng lưu / tải tay là bài GHIM: bộ dọn bộ đệm nhạc không xoá. Điện thoại trên mạng tính phí: hỏi trước khi tải.
 
 ### Việc cần duyệt: vai phụ và người gọi (HITL mốc 2)

@@ -219,10 +219,11 @@ Item {
     // Menu chương dùng cùng màn đọc với Thư viện và Đang nghe.
     property var menuChapter: null          // {chapterId, title, subtitle, fullTitle, playable, done}
     readonly property bool canRename: Logic.canEditLayer(fullBook.capabilities)
-    // Mục của sách: Chương | Lịch sử | Nhân vật (0, 1, 2). Sách chỉ có chữ (chưa phân vai) không có dàn nhân vật nên không có mục cuối.
+    // Chapters | History | Cast | Music. Text-only books omit Cast; music is never a chapter footer.
     property int tab: 0
     readonly property bool hasCast: fullBook.id !== undefined && fullBook.stage !== "text"
-    readonly property var tabLabels: hasCast ? [S.s_chuong_2d157977, S.s_lich_su_0a235708, S.s_nhan_vat_d4940c17] : [S.s_chuong_2d157977, S.s_lich_su_0a235708]
+    readonly property var tabLabels: hasCast ? [S.s_chuong_2d157977, S.s_lich_su_0a235708, S.s_nhan_vat_d4940c17, S.s_nhac_0e4413e9] : [S.s_chuong_2d157977, S.s_lich_su_0a235708, S.s_nhac_0e4413e9]
+    readonly property int musicIndex: hasCast ? 3 : 2
     readonly property int paneIndex: Math.min(tab, tabLabels.length - 1)
     property int previousPaneIndex: 0
     property int paneDirection: 1
@@ -573,8 +574,6 @@ Item {
                 model: bookDetail.chapters
                 boundsBehavior: Flickable.StopAtBounds
                 bottomMargin: Theme.s16
-                // "Nhạc trong sách" dưới danh sách chương (DESIGN.md §7 "Nhạc"); cuốn không có nhạc danh mục thì cao 0
-                footer: MusicBookSection { width: list.width; topPadding: Theme.s24; bookId: root.book.bookId || "" }
                 delegate: ChapterRow {
                     id: row
                     required property var model
@@ -633,16 +632,24 @@ Item {
                 width: parent.width
                 height: Math.max(0, parent.height - y)
                 bookId: root.book.bookId || ""
-                active: root.paneIndex === 2
+                active: root.hasCast && root.paneIndex === 2
                 caps: root.castCaps
                 reached: root.castReached
-                opacity: root.paneIndex === 2 ? 1 : 0
+                opacity: root.hasCast && root.paneIndex === 2 ? 1 : 0
                 transform: Translate { x: Theme.reduceMotion ? 0 : (root.paneIndex === 2 ? root.paneDirection : -root.paneDirection) * (1 - castList.opacity) * 24 }
                 visible: opacity > 0
-                enabled: root.paneIndex === 2
+                enabled: root.hasCast && root.paneIndex === 2
                 Behavior on opacity { NumberAnimation { duration: chapterRegion.fade } }
                 onRequest: (kind, person) => root.castRequest(kind, person)
                 onMenuRequested: (anchor, person) => root.openCastMenu(anchor, person)
+            }
+            Loader {
+                objectName: "bookMusicPane"
+                y: chapterRegion.headHeight + Theme.s8
+                width: parent.width
+                height: Math.max(0, parent.height - y)
+                active: root.paneIndex === root.musicIndex
+                sourceComponent: MusicBookSection { bookId: root.book.bookId || "" }
             }
         }
     }

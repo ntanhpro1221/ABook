@@ -2,16 +2,19 @@ package vn.abook.player.ui.music.library
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyListScope
+import androidx.compose.foundation.lazy.items
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.produceState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import vn.abook.player.MusicLibrary
 import vn.abook.player.S
 import vn.abook.player.formatSize
@@ -21,32 +24,62 @@ import vn.abook.player.ui.components.RowLine
 import vn.abook.player.ui.components.SectionTitle
 import vn.abook.player.ui.components.SheetHost
 import vn.abook.player.ui.theme.Dim
-import vn.abook.player.ui.components.Reveal
 
-/**
- * Phần "Nhạc trong sách" của trang sách: các bài của danh mục cuốn này dùng (gộp trùng, số đoạn mỗi bài) + "Lưu tất cả (X)" - lưu = ghim + tải
- * về máy, nghe không mạng. Chạm bài mở chi tiết. `scenes`: (khoá đoạn, link) theo thứ tự nghe. Không có bài nào của danh mục thì không hiện gì.
- */
-@Composable
-fun BookMusicSection(state: LibraryState, sheets: SheetHost, scenes: List<Pair<String?, String>>, modifier: Modifier = Modifier) {
-    val ui by state.ui.collectAsState()
-    LaunchedEffect(state) { state.open() }
-    val entries = remember(scenes) { MusicLibrary.bookTracks(scenes) }
-    val index = ui.index ?: return
-    val tracks = entries.mapNotNull { entry -> index.byLink[entry.link]?.let { it to entry } }
-    if (tracks.isEmpty()) return
-    val unsaved = tracks.map { it.first }.filter { it.link !in ui.savedSet }
-    Column(modifier.fillMaxWidth().testTag("book_music")) {
-        SectionTitle(S.s_nhac_trong_sach_9070d53a)
-        for ((track, entry) in tracks) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Column(Modifier.weight(1f)) { TrackRow(track, ui, state, onOpen = { openTrack(sheets, state, track.link, null) }) }
-                Caption(S.s_0_doan_c2eb5200(entry.scenes), Modifier.padding(start = Dim.s8))
-            }
-            RowLine(start = Dim.s48)
+/** Built on IO, including joins, saved membership and byte totals. Drawing only visits visible rows. */
+data class BookMusicRows(
+    val tracks: List<Pair<MusicLibrary.Track, MusicLibrary.BookTrack>>,
+    val unsaved: List<String>,
+    val missingBytes: Long,
+) {
+    companion object {
+        fun build(entries: List<MusicLibrary.BookTrack>, index: LibraryIndex, saved: List<String>, downloaded: Set<String>): BookMusicRows {
+            val kept = saved.toHashSet()
+            val tracks = entries.mapNotNull { entry -> index.byLink[entry.link]?.let { it to entry } }
+            val unsaved = tracks.filter { it.first.link !in kept }.map { it.first }
+            return BookMusicRows(tracks, unsaved.map { it.link }, unsaved.filter { it.link !in downloaded }.sumOf { it.bytes })
         }
-        Reveal(unsaved.isNotEmpty()) {
-            QuietButton(S.s_luu_tat_ca_0_e16e7860(formatSize(ui.missingBytes(unsaved))), { state.save(unsaved.map { it.link }) }, "book_music_save_all")
+    }
+}
+
+/** The book's Music tab contributes lazy rows, never a whole eagerly measured Column. */
+@Composable
+fun BookMusicSection(state: LibraryState, sheets: SheetHost, entries: Result<List<MusicLibrary.BookTrack>>?, retry: () -> Unit): LazyListScope.() -> Unit {
+    val ui by state.ui.collectAsState()
+    val found = entries?.getOrNull()
+    val snapshot = ui
+    LaunchedEffect(state, found != null) { if (!found.isNullOrEmpty()) state.open() }
+    val rows by produceState<BookMusicRows?>(null, found, ui.index, ui.saved, ui.downloaded) {
+        val index = ui.index
+        if (found != null && index != null) value = withContext(Dispatchers.IO) { BookMusicRows.build(found, index, snapshot.saved, snapshot.downloaded) }
+    }
+    val failed = entries?.isFailure == true || (!found.isNullOrEmpty() && ui.error.isNotEmpty())
+    val empty = found?.isEmpty() == true || rows?.tracks?.isEmpty() == true
+    return {
+        item(key = "book_music_heading", contentType = "heading") { SectionTitle(S.s_nhac_trong_sach_9070d53a) }
+        when {
+            failed -> item(key = "book_music_error", contentType = "status") {
+                Column(Modifier.testTag("book_music_error")) {
+                    Caption(S.s_chua_tai_duoc_kho_nhac_9577b7c7)
+                    QuietButton(S.s_thu_lai_c58d068c, retry, "book_music_retry")
+                }
+            }
+            empty -> item(key = "book_music_empty", contentType = "status") { Caption(S.s_chua_co_nhac_ed5dc66e, Modifier.testTag("book_music_empty")) }
+            entries == null || ui.loading || rows == null -> item(key = "book_music_loading", contentType = "status") { Caption(S.s_dang_tai_465b1987, Modifier.testTag("book_music_loading")) }
+            else -> {
+                val ready = checkNotNull(rows)
+                items(ready.tracks, key = { "book_music_${it.first.link}" }, contentType = { "music_track" }) { (track, entry) ->
+                    Column {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Column(Modifier.weight(1f)) { TrackRow(track, ui, state, onOpen = { openTrack(sheets, state, track.link, null) }) }
+                            Caption(S.s_0_doan_c2eb5200(entry.scenes), Modifier.padding(start = Dim.s8))
+                        }
+                        RowLine(start = Dim.s48)
+                    }
+                }
+                if (ready.unsaved.isNotEmpty()) item(key = "book_music_save_all", contentType = "action") {
+                    QuietButton(S.s_luu_tat_ca_0_e16e7860(formatSize(ready.missingBytes)), { state.save(ready.unsaved) }, "book_music_save_all")
+                }
+            }
         }
     }
 }

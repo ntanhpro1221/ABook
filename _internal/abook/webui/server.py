@@ -2610,7 +2610,7 @@ class App:
             if not entry["downloaded"]:
                 missing += int(known.get("bytes") or 0)
             rows.append(entry)
-        return {"tracks": rows, "missingBytes": missing}
+        return {"tracks": rows, "missingBytes": missing, "unsaved": [row["link"] for row in rows if not row["saved"]]}
 
     # ---- danh sách phát cho sách nghe bằng "Nghe ngay" (music_playlist.py) ---------------------------------------------
     def music_playlists(self) -> dict[str, Any]:

@@ -207,6 +207,8 @@ dependencies {
     testImplementation "org.json:json:20240303"
     androidTestImplementation "androidx.test.ext:junit:$androidxJunitVersion"
     androidTestImplementation "androidx.test.espresso:espresso-core:$androidxEspressoCoreVersion"
+    androidTestImplementation platform("androidx.compose:compose-bom:$composeBomVersion")
+    androidTestImplementation "androidx.compose.ui:ui-test-junit4"
 }
 
 // Robolectric tự tải android-all bằng HTTP riêng (hỏng khi DNS / tường lửa chập chờn): để Gradle tải, Robolectric đọc offline từ thư mục này.

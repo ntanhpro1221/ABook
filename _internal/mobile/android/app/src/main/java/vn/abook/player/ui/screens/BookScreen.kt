@@ -54,6 +54,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import vn.abook.player.ui.components.BasicText
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.key
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Stable
@@ -225,7 +226,7 @@ fun BookScreen(
     music: MusicState? = null,
     prepare: vn.abook.player.ui.data.PrepareState? = null,
     /** "Nhạc trong sách" dưới danh sách chương (mã cuốn -> phần ấy); null = bản thử. */
-    bookMusic: (@Composable (String) -> Unit)? = null,
+    bookMusic: (@Composable (String) -> (LazyListScope.() -> Unit))? = null,
 ) {
     BoxWithConstraints(modifier.fillMaxSize()) {
         BookScreenBody(book, library, player, clock, covers, source, sheets, actions, Modifier.fillMaxSize(), music, prepare, maxWidth, bookMusic)
@@ -254,7 +255,7 @@ private fun BookScreenBody(
     music: MusicState?,
     prepare: vn.abook.player.ui.data.PrepareState?,
     width: androidx.compose.ui.unit.Dp,
-    bookMusic: (@Composable (String) -> Unit)? = null,
+    bookMusic: (@Composable (String) -> (LazyListScope.() -> Unit))? = null,
 ) {
     val wide = widthClass(width.value) >= WidthClass.EXPANDED
     val prefetched = vn.abook.player.ui.screens.LocalBookPageState.current
@@ -289,7 +290,7 @@ private fun BookScreenBody(
     val notes = remember(book.id) { BookNotes(scope) }
     var tab by rememberSaveable(book.id) { mutableStateOf(BookTab.Chapters) }
     var later by rememberSaveable(book.id) { mutableStateOf(false) }
-    val tabs = if (shown.textOnly) listOf(BookTab.Chapters, BookTab.History) else BookTab.entries
+    val tabs = BookTab.entries.filter { (it != BookTab.Cast || !shown.textOnly) && (it != BookTab.Music || bookMusic != null) }
     val shownTab = if (tab in tabs) tab else BookTab.Chapters
     // Đổi mục thì nội dung mờ vào (đọc trong pha vẽ); lần dựng đầu không mờ.
     val fade = remember { Animatable(1f) }
@@ -353,6 +354,8 @@ private fun BookScreenBody(
     }
     // Vị trí cuộn được khôi phục (sau khi tiến trình bị giết) thì dựng cả trang ngay: danh sách chỉ một mục ở khung đầu sẽ kéo vị trí ấy về đầu.
     var built by remember { mutableStateOf(list.firstVisibleItemIndex > 0 || list.firstVisibleItemScrollOffset > 0) }
+    // Music is composed only on demand. Its rows join this list individually after background loading.
+    val musicContent = if (shownTab == BookTab.Music) key(shown.id) { bookMusic?.invoke(shown.id) } else null
     LaunchedEffect(Unit) {
         withFrameNanos { }
         built = true
@@ -399,10 +402,8 @@ private fun BookScreenBody(
                         }
                     }
                 }
-                if (bookMusic != null && !chapters.isNullOrEmpty()) item(key = "book_music", contentType = "book_music") {
-                    bookMusic(shown.id)
-                }
             }
+            BookTab.Music -> musicContent?.invoke(this)
             BookTab.History -> historyItems(detail, ui.loaded, { fade.value }) { session -> actions.playChapter(shown.id, session.toChapter, session.toSeconds) }
             BookTab.Cast -> castItems(
                 ui.cast, ui.castLoaded, reached, later, { later = !later }, samples,

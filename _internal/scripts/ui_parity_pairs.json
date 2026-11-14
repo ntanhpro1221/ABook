@@ -1616,6 +1616,7 @@
         "!music/*.test.ts"
       ],
       "web_also": [
+        "shared/ui.tsx",
         "shared/format.ts",
         "listen/MyMusic.tsx",
         "studio/MusicTab.tsx"
@@ -1643,11 +1644,6 @@
           "side": "native",
           "label": "Xoá ô tìm",
           "reason": "native clear button of the search box; the web search input clears with the browser's own control and Esc"
-        },
-        {
-          "side": "native",
-          "label": "Đang tải",
-          "reason": "native writes a word while the catalogue index loads; the web list shows a skeleton"
         },
         {
           "side": "native",

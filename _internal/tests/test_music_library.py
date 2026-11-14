@@ -222,6 +222,7 @@ def test_the_book_page_lists_the_music_the_book_uses(studio, tmp_path: Path) -> 
     status, data = _call(server, "GET", f"/api/books/{book}/music/library")
     assert status == 200
     assert [item["link"] for item in data["tracks"]] == list(dict.fromkeys(links))
+    assert data["unsaved"] == [item["link"] for item in data["tracks"] if not item["saved"]]
     assert sum(item["scenes"] for item in data["tracks"]) == len(links)
     assert data["missingBytes"] == sum(item.get("bytes", 0) for item in data["tracks"])
     # Chi tiết mở từ "Nhạc trong sách": có "Vì sao bài này" khi đoạn có cảm xúc máy đọc được.

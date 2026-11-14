@@ -602,7 +602,7 @@ export function CastList({ bookId, onPickVoice, onPickNarrator, onMerge, onUnmer
   );
 }
 
-const TABS = ["chapters", "history", "cast"] as const;
+const TABS = ["chapters", "history", "cast", "music"] as const;
 
 function dayLabel(epoch: number): string {
   const date = new Date(epoch * 1000);
@@ -1277,6 +1277,7 @@ function BookPage({ extraActions, dangerActions, studioLink, notice, editing = {
           <TabsTrigger value="chapters" count={chapters.length}>{S.s_chuong_2d157977}</TabsTrigger>
           <TabsTrigger value="history">{S.s_lich_su_0a235708}</TabsTrigger>
           {<Presence>{!textOnly && <TabsTrigger value="cast">{S.s_nhan_vat_d4940c17}</TabsTrigger>}</Presence>}
+          <TabsTrigger value="music">{S.s_nhac_0e4413e9}</TabsTrigger>
         </TabsList>
         {/* Hai cột: hàng tab đứng yên ở đầu cột phải, chỉ phần bên dưới cuộn. */}
         {/* -mx-4 px-4 pt-1: khung cuộn cắt mọi thứ tràn ra ngoài nó - nền rê chuột (-inset-x-3) và vòng tiêu điểm (4) của hàng mở/gập và của chính
@@ -1285,8 +1286,9 @@ function BookPage({ extraActions, dangerActions, studioLink, notice, editing = {
         <TabsPanels value={tab}>
         <TabsContent value="chapters" className="mt-2" ref={chapterList}>
           <ChapterGroups book={book} currentChapter={point?.chapter.id} onDone={(chapterId, done) => mutations.chapterDone.mutate({ chapterId, done })} onRename={editable ? setRenamingChapter : undefined} prepared={prepared} layout={split ? "split" : "stacked"} />
-          {/* "Nhạc trong sách" dưới danh sách chương (DESIGN.md mục Nhạc); cuốn không có nhạc danh mục thì không hiện gì */}
-          <BookMusic bookId={book.id} />
+        </TabsContent>
+        <TabsContent value="music">
+          <BookMusic key={book.id} bookId={book.id} />
         </TabsContent>
         <TabsContent value="history">
           <HistoryTab book={book} />

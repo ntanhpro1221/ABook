@@ -88,6 +88,53 @@ const tabs = () => layout().querySelector<HTMLElement>('[data-orientation]:not([
 const list = () => layout().querySelector<HTMLElement>("[data-book-list]")!; // phần cuộn của cột phải (hàng tab nằm ngoài nó)
 const scrolls = (element: Element) => element.className.split(/\s+/).includes("overflow-y-auto");
 
+it("chapters never mount book music or request its catalog", async () => {
+  manyChapters(300);
+  await open(700);
+  expect(host.querySelector('[role="tab"][id$="-trigger-music"]')?.textContent).toBe("Nhạc");
+  expect(host.querySelector("#book-music")).toBeNull();
+  expect(vi.mocked(fetch).mock.calls.some(([url]) => String(url).includes("music/library"))).toBe(false);
+});
+
+it("the music tab loads independently while its request is pending", async () => {
+  state.entry = "/book/a?tab=music";
+  await open(1630);
+  expect(host.querySelector('[role="tab"][aria-selected="true"]')?.textContent).toBe("Nhạc");
+  expect(host.querySelector("#book-music")).not.toBeNull();
+  expect(host.querySelector('[role="status"]')?.textContent).toBe("Đang tải");
+  expect(host.querySelector("[data-chapter]")).toBeNull();
+  expect(vi.mocked(fetch).mock.calls.some(([url]) => String(url).includes("/api/books/a/music/library"))).toBe(true);
+  await resize(700);
+  expect(host.querySelector('[role="tab"][aria-selected="true"]')?.textContent).toBe("Nhạc");
+});
+
+it.each(["ready", "empty", "error"])("the music tab exposes its %s state without chapter rows", async (mode) => {
+  state.entry = "/book/a?tab=music";
+  vi.mocked(fetch).mockImplementation(async (input) => {
+    const path = String(input);
+    const bookTracks = path.includes("/api/books/a/music/library");
+    const data = bookTracks
+      ? { tracks: mode === "ready" ? [{ link: "https://example.invalid/melody.mp3", title: "Audit melody", scenes: 3, bytes: 1024, saved: false, downloaded: false }] : [], missingBytes: 1024, unsaved: mode === "ready" ? ["https://example.invalid/melody.mp3"] : [] }
+      : { styles: [], emotions: [], playlists: [], active: {}, failed: {} };
+    return new Response(JSON.stringify(data), { status: bookTracks && mode === "error" ? 503 : 200, headers: { "Content-Type": "application/json" } });
+  });
+  await open(700);
+  await act(async () => { await new Promise((resolve) => setTimeout(resolve, 100)); });
+  expect(host.querySelector("[data-chapter]")).toBeNull();
+  if (mode === "ready") {
+    expect(host.textContent).toContain("Audit melody");
+    const saveAll = [...host.querySelectorAll<HTMLButtonElement>("button")].find(button => button.textContent?.includes("Lưu tất cả"))!;
+    expect(saveAll).toBeDefined();
+    await act(() => saveAll.click());
+    expect(vi.mocked(fetch).mock.calls.some(([url, options]) => String(url).includes("/api/music/library/save") && String(options?.body).includes("https://example.invalid/melody.mp3"))).toBe(true);
+  }
+  if (mode === "empty") expect(host.textContent).toContain("Chưa có nhạc");
+  if (mode === "error") {
+    expect(host.querySelector('[role="alert"]')?.textContent).toContain("Chưa tải được kho nhạc");
+    expect(host.querySelector('[role="alert"] button')?.textContent).toBe("Thử lại");
+  }
+});
+
 it("cột trái của trang sách theo đúng công thức của Qt: 320 ở 840, rộng thêm 6 % phần dư, tối đa 380", () => {
   expect(WIDTH_FROM.expanded).toBe(840);
   expect(bookLeftWidth(840)).toBe(320);

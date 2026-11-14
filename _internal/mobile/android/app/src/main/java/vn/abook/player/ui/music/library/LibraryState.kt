@@ -124,6 +124,7 @@ class LibraryState(
     @Volatile private var currentLink: String? = null
     private var previewJob: Job? = null
     private var previewRequest = 0L
+    private var filterJob: Job? = null
     private var opened = false
 
     fun open() {
@@ -165,10 +166,18 @@ class LibraryState(
     private fun refilter() {
         val ui = flow.value
         val index = ui.index ?: return
-        val started = System.nanoTime()
-        val shown = MusicLibrary.select(index.tracks, ui.filters, index.playlistLinks, ui.downloaded)
-        val ms = (System.nanoTime() - started) / 1e6
-        flow.update { it.copy(shown = shown, filterMs = ms) }
+        filterJob?.cancel()
+        filterJob = scope.launch {
+            val (shown, ms) = withContext(io) {
+                val started = System.nanoTime()
+                val shown = MusicLibrary.select(index.tracks, ui.filters, index.playlistLinks, ui.downloaded)
+                shown to (System.nanoTime() - started) / 1e6
+            }
+            flow.update { latest ->
+                if (latest.index === index && latest.filters == ui.filters && latest.downloaded == ui.downloaded) latest.copy(shown = shown, filterMs = ms)
+                else latest
+            }
+        }
     }
 
     // ---- Lưu / tải ----

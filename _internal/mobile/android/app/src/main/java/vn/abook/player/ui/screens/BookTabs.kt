@@ -104,11 +104,12 @@ import kotlin.math.floor
  * như danh sách chương.
  */
 
-/** Ba mục của trang sách, theo thứ tự trên thanh. */
+/** Book sections in display order; text-only books omit Cast. */
 enum class BookTab(val label: String, val tag: String) {
     Chapters(S.s_chuong_2d157977, "book_tab_chapters"),
     History(S.s_lich_su_0a235708, "book_tab_history"),
     Cast(S.s_nhan_vat_d4940c17, "book_tab_cast"),
+    Music(S.s_nhac_0e4413e9, "book_tab_music"),
 }
 
 /**

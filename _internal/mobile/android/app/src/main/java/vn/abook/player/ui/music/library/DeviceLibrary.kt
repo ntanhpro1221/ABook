@@ -16,6 +16,13 @@ import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import kotlinx.coroutines.*
 import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.json.JSONObject
 import vn.abook.player.AndroidMusicStudent
 import vn.abook.player.DeviceMusic
@@ -102,7 +109,9 @@ class ExoPreviewPlayer(context: Context, private val source: AndroidLibrarySourc
         stop()
         val token = request
         lookup = scope.launch {
-            val urls = withContext(Dispatchers.IO) { runCatching { sourceUrls(link) } }.getOrNull()
+            val urls = try { withContext(Dispatchers.IO) { sourceUrls(link) } }
+            catch (error: CancellationException) { throw error }
+            catch (_: Exception) { null }
             if (token != request) return@launch
             if (urls.isNullOrEmpty()) { onError(vn.abook.player.S.s_chua_nghe_thu_duoc_luc_nay_58b11ef5); return@launch }
             var index = 0
