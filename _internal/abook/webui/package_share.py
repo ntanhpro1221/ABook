@@ -15,6 +15,7 @@ from __future__ import annotations
 import copy
 import hashlib
 import json
+import re
 import secrets
 import shutil
 import tempfile
@@ -128,6 +129,8 @@ def manifest(path: Path, key: str) -> dict[str, Any]:
         "sourceFingerprint": book.get("sourceFingerprint", ""),
         "chapters": chapters,
         "cast": "cast.json",
+        "avatars": {name: meta for name, meta in (book.get("package", {}).get("files") or {}).items()
+                    if re.fullmatch(r"avatars/[0-9a-f]{64}\.webp", name)},
         "samples": samples,
         "cover": {**meta, "file": covers.COVER_FILE} if meta else None,
         **({"music": music} if music else {}),
@@ -169,6 +172,10 @@ def resolve_file(path: Path, relative: str) -> Path | bytes | None:
     dàn nhân vật là bản đã qua lớp sửa."""
     if relative == "cast.json":
         return _shared_cast(path)
+    if re.fullmatch(r"avatars/[0-9a-f]{64}\.webp", relative):
+        from .. import avatars
+        listed = (packages.edited_manifest(path).get("package", {}).get("files") or {})
+        return avatars.image_file(path, relative) if relative in listed else None
     if relative == SHARED_EDITS:
         shared = shared_edits(path)
         return json.dumps(shared, ensure_ascii=False).encode("utf-8") if shared else None

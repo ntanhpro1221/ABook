@@ -321,7 +321,8 @@ def test_unknown_portable_receipt_is_refused_and_counted(book):
     assert dropped == [("cast_undos", fixture["undoId"])] and row(db) == before
 
 
-def test_listening_package_and_sync_export_the_same_history(book):
+@pytest.mark.parametrize("with_portrait", [False, True])
+def test_listening_package_and_sync_export_the_same_history(book, with_portrait):
     from abook.config import save_settings
     from abook.webui import bookfile
     from abook.webui.sync import SyncApp
@@ -329,13 +330,30 @@ def test_listening_package_and_sync_export_the_same_history(book):
     paths, db, settings = book
     save_settings(paths.settings, settings)
     op = merge(book)
+    portrait = None
+    if with_portrait:
+        import io
+        from PIL import Image
+        from abook import avatars
+
+        image = io.BytesIO()
+        Image.new("RGB", (256, 256), "blue").save(image, format="PNG")
+        portrait = avatars.choose(paths.root, "MAI", image.getvalue())
     _manifest, files = bookfile.listening_layer(paths.root)
-    packaged = json.loads(files["cast.json"])["castHistory"]
+    packaged_cast = json.loads(files["cast.json"])
+    packaged = packaged_cast["castHistory"]
     # This route needs no network transport or application state to serialize cast.json.
-    synced = json.loads(SyncApp.resolve_file(None, paths.root, "cast.json"))["castHistory"]
+    synced_cast = json.loads(SyncApp.resolve_file(None, paths.root, "cast.json"))
+    synced = synced_cast["castHistory"]
     assert packaged == synced
+    assert packaged_cast == synced_cast
     assert packaged["items"][0]["operationId"] == op
     assert "before" not in json.dumps(packaged)
+    if portrait:
+        people = [person for group in ("characters", "extras", "carried") for person in packaged_cast.get(group, [])]
+        assert any((person.get("avatar") or {}).get("file") == portrait["file"] for person in people)
+        assert SyncApp.resolve_file(None, paths.root, portrait["file"]) == files[portrait["file"]]
+        assert files[portrait["file"]].read_bytes() == avatars.image_file(paths.root, portrait["file"]).read_bytes()
 
 
 def test_pending_undo_can_be_withdrawn_then_requested_again(book):

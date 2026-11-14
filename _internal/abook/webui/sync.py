@@ -46,6 +46,7 @@ from typing import Any, Callable
 from urllib.parse import unquote, urlsplit
 
 from ..io_utils import atomic_write_json
+from .. import avatars
 from . import book_edits, covers, edits_inbox, export, listen_view, listing_cache, music_plan, notices, package_share, packages, precast, remote_books, remote_studio, store, tls, word_timing
 from .cast import CastError
 from .fingerprints import Fingerprints
@@ -532,7 +533,9 @@ def manifest(project_root: Path, book: str, listening: Listening,
             "script": f"scripts/{chapter['id']}.json",
         })
     texts = {} if any(chapter["available"] for chapter in chapters) else text_layer(project_root, chapters)
-    cast = store.cast(project_root)
+    cast = avatars.cast(project_root)
+    avatar_files = {name: {"size": file.stat().st_size, "sha256": file.stem}
+                    for name, file in avatars.image_files(project_root, cast).items()}
     samples = sorted({person["sampleId"] for person in cast["characters"] + cast["extras"] if person.get("sampleId")})
     cover = covers.cover_meta(project_root)
     music = None
@@ -547,7 +550,8 @@ def manifest(project_root: Path, book: str, listening: Listening,
     words = word_timing.stamp(project_root)
     # Đổi ảnh bìa hay nhạc nền cũng là một phiên bản mới của gói: điện thoại thấy "có cập nhật" và tải lại.
     # Chữ chương chỉ-chữ vào băm bằng mã băm riêng (cỡ luôn 0): sửa file nguồn là một phiên bản mới.
-    version = hashlib.sha256(json.dumps([[(c["id"], c["sha256"]) for c in chapters],
+    # Ảnh nhân vật (thêm, đổi, bỏ) là phiên bản mới của gói; cuốn không có ảnh nào giữ nguyên phiên bản.
+    version = hashlib.sha256(json.dumps(([{"avatars": avatar_files}] if avatar_files else []) + [[(c["id"], c["sha256"]) for c in chapters],
                                          cover["version"] if cover else 0] + ([music] if music else []) + ([{"words": words}] if words else [])
                                         + ([{"texts": {name: hashlib.sha256(text).hexdigest()[:16] for name, text in texts.items()}}] if texts else []),
                                         sort_keys=True).encode()).hexdigest()[:16]
@@ -569,6 +573,7 @@ def manifest(project_root: Path, book: str, listening: Listening,
         "sourceFingerprint": audio_revision.source_fingerprint(project_root),
         "chapters": chapters,
         "cast": "cast.json",
+        "avatars": avatar_files,
         "samples": [f"samples/{sample}.wav" for sample in samples],
         "cover": {**cover, "file": covers.COVER_FILE} if cover else None,
         **({"music": music} if music else {}),
@@ -910,12 +915,14 @@ class SyncApp:
         if relative == "cast.json":
             from ..cast_operations import with_history
 
-            return json.dumps(with_history(project_root, book_edits.shared_cast(store.recorded_cast(project_root))), ensure_ascii=False).encode("utf-8")
+            return json.dumps(with_history(project_root, book_edits.shared_cast(avatars.recorded_cast(project_root))), ensure_ascii=False).encode("utf-8")
+        if avatars.IMAGE_NAME.fullmatch(relative):
+            return avatars.image_files(project_root, avatars.cast(project_root)).get(relative)
         if relative == covers.COVER_FILE:
             return covers.cover_file(project_root)
         match = re.fullmatch(r"scripts/(\d+)\.json", relative)
         if match:
-            script = store.chapter_script(project_root, int(match.group(1)))
+            script = avatars.script(store.chapter_script(project_root, int(match.group(1))), avatars.cast(project_root))
             return json.dumps(script, ensure_ascii=False).encode("utf-8") if script else None
         match = TEXT_ENTRY.fullmatch(relative)
         if match:

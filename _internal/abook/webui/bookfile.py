@@ -67,7 +67,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, Callable, Self, Sequence
 
-from .. import continuation
+from .. import avatars, continuation
 from . import audio_coverage, book_edits, covers, music_plan, store, sync, word_timing
 from .fingerprints import content_key, identity_prints
 from .library import book_id
@@ -96,10 +96,10 @@ def cover_warnings(book: dict[str, Any], files: Container[str], edits: dict[str,
 
 
 # 1 = sách không nhạc nền; 2 = có mục `music` + music/*.mp3 (02-10); 3 = cả bộ nhiều phần (`pack_series`); 4 = có lớp sửa của
-# người nghe (edits.json + edits/cover.jpg, `repack`); 5 = có chương chỉ-chữ (texts/<n>.txt, không audio). Gói ghi phiên bản THẤP
+# người nghe (edits.json + edits/cover.jpg, `repack`); 5 = có chương chỉ-chữ (texts/<n>.txt, không audio); 6 = có ảnh nhân vật (avatars/<sha256>.webp). Gói ghi phiên bản THẤP
 # NHẤT đủ chứa nội dung: sách một phần không nhạc vẫn là 1, có nhạc là 2 - app cũ mở được; app cũ gặp file mới hơn thì từ chối kèm
 # lời nhắc cập nhật thay vì báo "mục lạ".
-FORMAT_VERSION = 5
+FORMAT_VERSION = 6
 MANIFEST = "book.json"
 READIUM_MANIFEST = "manifest.json"
 TEXT_STATE = sync.TEXT_STATE  # `chapters[i].state` của chương chỉ có chữ (các giai đoạn khác: docs/LISTEN_ANYTHING.md mục 1)
@@ -118,10 +118,13 @@ _CONTENT_V4 = re.compile(_COMMON + r"|chapters/(?:\d{1,4}/)?[0-9A-Za-z_.\-]+\.mp
 # Phiên bản 5 thêm chữ của chương: texts/<mã chương>.txt (mã chương cả bộ có thể tới 9 chữ số).
 TEXT_ENTRY = re.compile(r"texts/\d{1,9}\.txt")
 _CONTENT_V5 = re.compile(_CONTENT_V4.pattern + "|" + TEXT_ENTRY.pattern)
-LISTENING_ENTRY = _CONTENT_V5
+# Phiên bản 6 thêm ảnh nhân vật: avatars/<sha256>.webp (256 px, cast.json trỏ tới qua `avatar.file`).
+AVATAR_ENTRY = re.compile(r"avatars/[0-9a-f]{64}\.webp")
+_CONTENT_V6 = re.compile(_CONTENT_V5.pattern + "|" + AVATAR_ENTRY.pattern)
+LISTENING_ENTRY = _CONTENT_V6
 # Chỗ trống dư ngoài cỡ giải nén (thư mục tạm, book.json): không cần sát từng byte, chỉ cần không để ổ đĩa đầy giữa chừng.
 _ROOM_MARGIN = 64 * 1024 * 1024
-_STORED = (".mp3", ".jpg", ".wav", ".m4a", ".ogg", ".opus", ".flac")  # đã nén sẵn hay cần đọc thẳng: nén thêm chỉ tốn công khi phát
+_STORED = (".mp3", ".jpg", ".wav", ".m4a", ".ogg", ".opus", ".flac", ".webp")
 _CHUNK = 1024 * 1024
 _TICK = 8 * _CHUNK  # băm / ghi một file lớn: báo tiến độ (và cho dừng) mỗi ngần này byte, không chờ hết cả file
 
@@ -166,12 +169,13 @@ def _add_chapters(project_root: Path, book: dict[str, Any], files: dict[str, Pat
     """Audio + chữ đọc theo của từng chương vào `files`. `part` (cả bộ): chương `book["chapters"]` được sửa tại chỗ sang
     mã chung của bộ, đường dẫn nằm trong thư mục phần, và mang số phần. `tick(đã gom, tổng)` gọi trước mỗi chương (ném thì dừng)."""
     paths = store.chapter_audio_paths(project_root)
+    people = avatars.cast(project_root)
     for done, chapter in enumerate(book["chapters"]):
         if tick is not None:
             tick(done, len(book["chapters"]))
         local = chapter["id"]
         audio = paths.get(local) if chapter.get("file") else None
-        script = store.chapter_script(project_root, local)
+        script = avatars.script(store.chapter_script(project_root, local), people)
         if part is not None:
             if not 0 < local < PART_SPAN:
                 raise BookFileError(f"Mã chương {local} vượt cỡ một phần của bộ.")
@@ -211,7 +215,9 @@ def listening_layer(project_root: Path, music_track: Callable[[str], Path | None
         book = _packaged_book(project_root)
         from ..cast_operations import with_history
 
-        files: dict[str, Path | bytes] = {"cast.json": json_bytes(with_history(project_root, book_edits.shared_cast(store.recorded_cast(project_root))))}
+        recorded = avatars.recorded_cast(project_root)
+        files: dict[str, Path | bytes] = {"cast.json": json_bytes(with_history(project_root, book_edits.shared_cast(recorded)))}
+        files.update(avatars.image_files(project_root, recorded))
         # Bằng chứng máy chỉ gồm số đo trên MP3; đi theo cuốn, không thêm bước người nghe.
         level_report = Path(project_root) / "output" / "reports" / "levelQa.json"
         if level_report.is_file():
@@ -330,6 +336,8 @@ def repack(folder: Path, out: Path, *, producer: str = "ABook") -> Path:
 def layer_version(book: dict[str, Any], files: dict[str, Path | bytes], edits: dict[str, Any]) -> int:
     """Phiên bản THẤP NHẤT đủ chứa một lớp sách đã nhập: có chữ chương là 5, có lớp sửa là 4, có thư mục phần là 3, còn lại theo
     `package_version`."""
+    if any(AVATAR_ENTRY.fullmatch(name) for name in files):
+        return 6
     if any(TEXT_ENTRY.fullmatch(name) for name in files):
         return 5
     if not book_edits.is_empty(edits):
@@ -386,6 +394,8 @@ def pack_series(parts: Sequence[tuple[int, Path] | Path], out: Path, *, producer
     if cover is not None:
         files[covers.COVER_FILE] = cover
     cast, samples = _merge_cast([(number, root) for number, root, _ in books], files)
+    for _, root, _ in books:
+        files.update(avatars.image_files(root, cast))
     files["cast.json"] = json_bytes(book_edits.shared_cast(cast))
     merged: dict[str, Any] = {
         "format": first["format"],
@@ -443,7 +453,7 @@ def _merge_cast(parts: list[tuple[int, Path]], files: dict[str, Path | bytes]) -
     narrator: dict[str, Any] | None = None
     samples: list[str] = []
     for number, root in parts:
-        cast = store.recorded_cast(root)
+        cast = avatars.recorded_cast(root)
         narrator = narrator or cast["narrator"]
         for kind in ("characters", "extras"):
             for person in cast[kind]:
@@ -504,6 +514,8 @@ def seal(book: dict[str, Any], files: dict[str, Path | bytes], out: Path, *, pro
         coverage = book.get("audioCoverage")
         raise BookFileError("Sách chưa có chương nào nghe được hay đọc được để xuất."
                             + (" " + audio_coverage.summary(coverage) if coverage else ""))
+    if any(AVATAR_ENTRY.fullmatch(name) for name in files):
+        version = max(version, 6)  # ảnh nhân vật (avatars/<sha256>.webp) có từ phiên bản 6
     known = known or {}
     for message in cover_warnings(book, files, edits):
         warnings.warn(message, MissingCoverWarning, stacklevel=2)
@@ -563,7 +575,8 @@ def seal(book: dict[str, Any], files: dict[str, Path | bytes], out: Path, *, pro
 
 def content_pattern(version: int) -> re.Pattern[str]:
     """Tên mục hợp lệ của một file `.abook` phiên bản `version` (thư mục phần từ 3, lớp sửa từ 4, chữ chương từ 5)."""
-    return _CONTENT_V5 if version >= 5 else _CONTENT_V4 if version >= 4 else _CONTENT_V3 if version >= 3 else _CONTENT
+    return (_CONTENT_V6 if version >= 6 else _CONTENT_V5 if version >= 5 else _CONTENT_V4 if version >= 4
+            else _CONTENT_V3 if version >= 3 else _CONTENT)
 
 
 def described(name: str, source: Path | bytes, known: dict[str, dict[str, Any]], tick: Callable[[int], None] | None = None) -> dict[str, Any]:
@@ -1122,7 +1135,7 @@ def _gigabytes(size: int) -> str:
 
 def _order(name: str) -> tuple[int, str]:
     """Phần nhỏ trước, audio sau cùng: đọc mô tả, bìa, chữ mà không phải lướt qua hàng trăm MB audio."""
-    rank = ("edits", "cover.jpg", "cast.json", "scripts/", "texts/", "samples/", "chapters/", "music/")
+    rank = ("edits", "cover.jpg", "cast.json", "avatars/", "scripts/", "texts/", "samples/", "chapters/", "music/")
     return next(index for index, prefix in enumerate(rank) if name.startswith(prefix)), name
 
 

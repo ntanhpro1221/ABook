@@ -38,7 +38,7 @@ from pathlib import Path, PureWindowsPath
 from typing import Any, Callable, Iterable, Iterator, Protocol
 from urllib.parse import parse_qs, quote, unquote, urlsplit
 
-from .. import aliases, bracket_rule, cast_operations, continuation, importers, listener_overrides, power_source
+from .. import aliases, avatars as portraits, bracket_rule, cast_operations, continuation, importers, listener_overrides, power_source
 from ..io_utils import FileLockUnavailable, atomic_write_bytes, atomic_write_json, file_lock, project_write_lock
 from ..readaloud import azure as readaloud_azure
 from ..readaloud import keys as readaloud_keys
@@ -4824,7 +4824,7 @@ class Handler(BaseHTTPRequestHandler):
 
     def get_cast(self, _query: dict[str, list[str]], value: str) -> None:
         path = self.app._listenable(value)
-        cast = packages.cast(path) if packages.is_package(path) else store.cast(path)
+        cast = packages.cast(path) if packages.is_package(path) else portraits.cast(path)
         history = cast_operations.history(path, package=packages.is_package(path))
         if history["items"]:
             cast["castHistory"] = history
@@ -4849,6 +4849,37 @@ class Handler(BaseHTTPRequestHandler):
             op = cast_operations.request_undo(path, original, now=now)
         self._send_json(HTTPStatus.OK, {"operationId": op, "state": "pending"})
 
+    def get_avatar_status(self, query: dict[str, list[str]], value: str) -> None:
+        from . import avatars
+        self._send_json(HTTPStatus.OK, avatars.status(self.app._book(value), (query.get("character") or [""])[0]))
+
+    def post_avatar(self, _query: dict[str, list[str]], value: str) -> None:
+        from . import avatars
+        self._send_json(HTTPStatus.OK, avatars.update(self.app._book(value), self._body(limit=6 * 1024 * 1024)))
+
+    def get_avatar_image(self, query: dict[str, list[str]], value: str) -> None:
+        import base64
+        root = self.app._listenable(value)
+        path = portraits.image_file(root, (query.get("file") or [""])[0])
+        if path is None:
+            self.send_error(HTTPStatus.NOT_FOUND)
+            return
+        self._send_json(HTTPStatus.OK, {"image": base64.b64encode(path.read_bytes()).decode("ascii")})
+
+    def media_avatar(self, _query: dict[str, list[str]], value: str, digest: str) -> None:
+        path = portraits.image_file(self.app._listenable(value), f"avatars/{digest}.webp")
+        if path is None:
+            self.send_error(HTTPStatus.NOT_FOUND)
+            return
+        self._send_file(path, cache=True)
+
+    def media_voice_avatar(self, _query: dict[str, list[str]], filename: str) -> None:
+        path = Path(__file__).parents[1] / "assets" / "voice_avatars" / filename
+        if not path.is_file():
+            self.send_error(HTTPStatus.NOT_FOUND)
+            return
+        self._send_file(path, cache=True)
+
     def get_activity(self, query: dict[str, list[str]], value: str) -> None:
         technical = (query.get("technical") or ["0"])[0] == "1"
         self._send_json(HTTPStatus.OK, store.activity(self.app._book(value), technical=technical))
@@ -4865,7 +4896,7 @@ class Handler(BaseHTTPRequestHandler):
             raise ApiError(HTTPStatus.SERVICE_UNAVAILABLE, f"{str(error).rstrip('.')}. Chữ chương này chưa có trên máy này") from error
         if script is None:
             raise ApiError(HTTPStatus.NOT_FOUND, "Không có chương này")
-        self._send_json(HTTPStatus.OK, script)
+        self._send_json(HTTPStatus.OK, portraits.script(script, packages.cast(path) if packages.is_package(path) else portraits.cast(path)))
 
     def post_start(self, _query: dict[str, list[str]], value: str) -> None:
         self._send_json(HTTPStatus.ACCEPTED, self.app.start(value))
@@ -7330,6 +7361,9 @@ ROUTES: list[Route] = [
     ("GET", re.compile(BOOK + r"/cast"), Handler.get_cast),
     ("GET", re.compile(BOOK + r"/cast-history"), Handler.get_cast_history),
     ("POST", re.compile(BOOK + r"/cast-history/undo"), Handler.post_cast_undo),
+    ("GET", re.compile(BOOK + r"/avatar"), Handler.get_avatar_status),
+    ("POST", re.compile(BOOK + r"/avatar"), Handler.post_avatar),
+    ("GET", re.compile(BOOK + r"/avatar-image"), Handler.get_avatar_image),
     ("GET", re.compile(BOOK + r"/activity"), Handler.get_activity),
     ("GET", re.compile(BOOK + r"/pending-changes"), Handler.get_pending_changes),
     ("GET", re.compile(BOOK + r"/wishes"), Handler.get_wishes),
@@ -7524,6 +7558,8 @@ ROUTES: list[Route] = [
     ("GET", re.compile(r"/api/listen/night"), Handler.get_night),
     ("POST", re.compile(r"/api/listen/night/dismiss"), Handler.post_night_dismiss),
     ("GET", re.compile(r"/media/voices/([^/]+)"), Handler.media_voice),
+    ("GET", re.compile(r"/media/voice-avatars/(voice-[0-9a-f]{8}\.webp)"), Handler.media_voice_avatar),
+    ("GET", re.compile(r"/media/books/([A-Za-z0-9_-]+)/avatars/([0-9a-f]{64})\.webp"), Handler.media_avatar),
     ("GET", re.compile(r"/media/readaloud/([0-9a-f]{64}\.(?:mp3|wav))"), Handler.media_readaloud),
     ("GET", re.compile(r"/media/books/([A-Za-z0-9_-]+)/chapters/(\d+)"), Handler.media_chapter),
     ("GET", re.compile(r"/media/books/([A-Za-z0-9_-]+)/samples/(\d+)"), Handler.media_sample),

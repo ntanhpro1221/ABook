@@ -5910,7 +5910,12 @@
     "s_cast_history_undo": "Hoàn tác phân vai",
     "s_cast_history_bad_wish": "Một ý muốn hoàn tác trong phần sửa không hợp lệ.",
     "s_preview_timeout": "Mạng chậm, thử nghe lại.",
-    "s_chua_co_bia": "Chưa có bìa"
+    "s_chua_co_bia": "Chưa có bìa",
+    "s_avatar_portrait": "Ảnh nhân vật",
+    "s_avatar_generate": "Sinh lại ảnh",
+    "s_avatar_pattern": "Dùng hoạ tiết",
+    "s_avatar_generating": "Đang sinh ảnh…",
+    "s_avatar_unavailable": "Chưa bật sinh ảnh"
   },
   "android_resources": {
     "app_name": "s_abook_1c37d334",

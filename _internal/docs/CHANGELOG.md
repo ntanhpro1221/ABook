@@ -7,6 +7,11 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+- Mỗi giọng có sẵn có ảnh chân dung minh hoạ riêng (app tự chọn theo giới tính, tuổi, chất giọng), hiện ở danh sách giọng của Studio trên máy tính, web và điện thoại.
+- Nhân vật trong sách có ảnh đại diện: mặc định là hoạ tiết kèm chữ cái đầu, màu riêng cho từng người, giống nhau trên cả ba nền. Khi đã cấu hình dịch vụ ảnh, sau bước phân tích app sinh ảnh cho từng nhân vật có tên từ chính câu tả ngoại hình trong truyện; dừng và làm tiếp an toàn, không đổi phân tích, giọng hay bản thu.
+- Studio cho chọn ảnh riêng, sinh lại ảnh hoặc quay về hoạ tiết cho từng nhân vật; ảnh bạn chọn không bị thay lại.
+- Ảnh nhân vật hiện ở danh sách nhân vật, kịch bản, chọn người nói, Đọc theo và trang sách; file `.abook` mang ảnh (phiên bản định dạng 6) và điện thoại tải ảnh khi đồng bộ.
+
 - Đưa nhạc của sách sang tab Nhạc trên điện thoại, web và máy tính; tải nền và dựng từng hàng để cuộn cuối danh sách chương không bị khựng vì nhạc.
 
 - Các bài trong thư viện Nhạc có bìa nguồn hoặc hình trừu tượng theo cảm xúc, dùng được cả khi mất mạng.

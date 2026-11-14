@@ -70,7 +70,7 @@ def test_a_text_book_is_a_book_file_with_no_audio_at_all(tmp_path: Path) -> None
         assert archive.infolist()[0].filename == "mimetype" and archive.infolist()[0].compress_type == zipfile.ZIP_STORED
     with BookFile(path) as opened:
         opened.verify()
-        assert opened.book["package"]["version"] == 5 == bookfile.FORMAT_VERSION
+        assert opened.book["package"]["version"] == 5 < bookfile.FORMAT_VERSION
         assert opened.content == ["texts/1.txt", "texts/2.txt", "texts/3.txt"]
         chapters = opened.book["chapters"]
         assert [(chapter["state"], chapter["text"], chapter["available"], chapter["duration"]) for chapter in chapters] == [

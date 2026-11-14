@@ -316,6 +316,10 @@ def casting_chapter(project_root: Path, chapter_id: int) -> dict[str, Any] | Non
         for raw, count in sorted(voiced.items(), key=lambda item: (-item[1], label(item[0], display).casefold()))
         if _is_person(raw) and not raw.startswith("NPC_LOCAL") and raw not in here
     ][:OTHERS]
+    from .. import avatars
+    portraits = avatars.entries(project_root)
+    for person in cast + others:
+        person["avatar"] = portraits.get(person["value"]) or avatars.fallback(person["value"])
     voices = store.read_settings(project_root).get("voices")
     voices = voices if isinstance(voices, dict) else {}
     first_person = str(voices.get("first_person_identity") or "")

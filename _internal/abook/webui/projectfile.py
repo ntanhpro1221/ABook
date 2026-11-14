@@ -224,6 +224,11 @@ def pack(project_root: Path, out: Path | None = None, *, running: bool = False, 
         _snapshot(project_root / store.DB_NAME, database)
         files: dict[str, Path | bytes] = {f"project/{store.DB_NAME}": database}
         files.update(_project_files(project_root))
+        from .. import avatars
+        if (project_root / avatars.DB).is_file():
+            portrait_db = Path(scratch) / avatars.DB
+            _snapshot(project_root / avatars.DB, portrait_db)
+            files[f"project/{avatars.DB}"] = portrait_db
         sources = _sources(database, project_root)
         # Nguồn đã bị dời hay xoá thì vẫn gói (sao lưu không được hỏng vì nó), ghi lại để báo: nghe, xem, xuất vẫn được,
         # chỉ việc phải đọc lại nguồn (làm tiếp phân tích, thu lại chương) mới cần chép nguồn vào.

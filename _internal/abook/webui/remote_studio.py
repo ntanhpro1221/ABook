@@ -55,6 +55,9 @@ _MEDIA = r"/media/books/[A-Za-z0-9_-]+"
 # mẫu, audio, bìa - đúng những gì app điện thoại đã có qua /sync/v1, nên mọi thiết bị đã ghép đều được (chế độ chỉ
 # nghe). Không có gì của Studio.
 LISTEN_ROUTES: tuple[tuple[str, re.Pattern[str]], ...] = tuple((method, re.compile(pattern)) for method, pattern in (
+    ("GET", _BOOK + r"/avatar-image"),
+    ("GET", r"/media/voice-avatars/voice-[0-9a-f]{8}\.webp"),
+    ("GET", _MEDIA + r"/avatars/[0-9a-f]{64}\.webp"),
     ("GET", r"/api/app"),
     ("GET", r"/api/preferences"),
     ("GET", r"/api/listen/library"),
@@ -101,6 +104,8 @@ LISTEN_ROUTES: tuple[tuple[str, re.Pattern[str]], ...] = tuple((method, re.compi
 ))
 # Thêm cho thiết bị được điều khiển sản xuất: dự án, bắt đầu/dừng, tạo sách, duyệt phân vai, giọng, bìa.
 ALLOWED: tuple[tuple[str, re.Pattern[str]], ...] = LISTEN_ROUTES + tuple((method, re.compile(pattern)) for method, pattern in (
+    ("GET", _BOOK + r"/avatar"),
+    ("POST", _BOOK + r"/avatar"),
     ("GET", r"/api/library"),
     ("GET", r"/api/voices"),
     # Mẫu thiết lập (lưu / đổi tên / xoá / đặt lại): mỗi thao tác áp lên danh sách mới nhất của máy tính; PUT /api/preferences vẫn đóng.

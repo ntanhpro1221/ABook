@@ -187,6 +187,11 @@
         "file": "mobile/android/app/src/main/java/vn/abook/player/ui/player/MiniPlayer.kt",
         "match": "Color.Black",
         "reason": "shadow above the floating mini player (web `shadow` is CSS, web-only); drawn as a gradient"
+      },
+      {
+        "file": "mobile/android/app/src/main/java/vn/abook/player/ui/components/PersonAvatar.kt",
+        "match": "*",
+        "reason": "character pattern portrait: the shared six-colour avatar palette with white initials (abook/avatars.py PALETTE, same bytes on web/Qt/Android), not a theme colour"
       }
     ],
     "_doc": "Colour tokens: every tokens.json colour reaches Theme.qml and Tokens.kt except `web_only`. QML/Kotlin UI files use Theme.* / Abook.colors.*; `allow` = (file, exact match) with a reason."

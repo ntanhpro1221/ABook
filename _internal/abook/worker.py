@@ -239,6 +239,8 @@ def prepare_before_synthesis(root: Path, db: ProjectDB, settings: dict[str, Any]
                              stop_requested: Any, log: Any, emit: Any, *, pause_requested: Any,
                              ensure_server: Any, analysed: bool) -> None:
     """Resume every checkpointed preparation step, including books already past analysis."""
+    from . import avatars
+    avatars.run_after_analysis(root, stop_requested, log, paused=pause_requested)
     apply_teller_voice(root, db, settings, log)
     if ensure_server():
         try:
