@@ -1139,6 +1139,18 @@ select[class~="border-line"] {
 .focus-scroll { margin: -4px -8px; padding: 4px calc(var(--spacing) + 8px) 4px 8px; }
 .voice-picker-scroll { margin-top: calc(var(--spacing) * 3 - 4px); margin-right: calc(var(--spacing) * -1 - 8px); }
 .player-controls-scroll { margin-inline: -4px; padding-inline: 24px; }
+
+@media (min-width: 600px) and (max-height: 479px) {
+  .sheet-surface {
+    inset-inline: max(16px, calc((100vw - 560px) / 2));
+    bottom: auto;
+    top: 50%;
+    translate: 0 -50%;
+    max-height: max(0px, calc(100dvh - max(16px, env(safe-area-inset-top)) - max(16px, env(safe-area-inset-bottom))));
+    border-radius: var(--radius-sheet);
+  }
+  .now-playing > [data-player-column] { width: 42%; min-width: 280px; }
+}
 /* Nền hàng chọn vẫn tràn 12 px; chỉ dời mép cửa sổ cuộn ra thêm 4 px. */
 .player-sheet .sheet-body [class~="p-1"][class~="overflow-y-auto"] { margin-inline: -16px; padding-inline: 16px; }
 [class~="overflow-y-auto"][class~="p-1"] { margin-block: -1px; padding-block: calc(var(--spacing) + 1px); }

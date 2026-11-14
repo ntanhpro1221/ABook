@@ -84,7 +84,7 @@ Interactive {
     Text {
         id: label
         x: root.showsIcon ? lead.x + root.iconBox : Math.max(root.pad, (root.width - implicitWidth) / 2)
-        width: Math.min(implicitWidth, root.width - x - root.pad)
+        width: Math.max(0, Math.min(implicitWidth, root.width - x - root.pad))
         anchors.verticalCenter: parent.verticalCenter
         anchors.verticalCenterOffset: root.halfLeading
         text: root.text

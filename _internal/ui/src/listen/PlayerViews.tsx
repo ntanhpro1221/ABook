@@ -2122,7 +2122,7 @@ const NowPlayingColumn = memo(function NowPlayingColumn({
         plain && "motion-reveal",
         // Điện thoại xoay ngang chỉ cao ~360px: cả cột không vừa - cho cả cột cuộn dọc (soát UX a9). Màn dọc đủ chỗ nên không có gì để cuộn.
         // Cửa sổ vừa (~900px): cột trái co về 320px dưới lg (soát UX 29-09).
-        mobile ? "player-controls-scroll min-h-0 flex-1 overflow-y-auto overscroll-contain px-[20px] pb-6 pt-2" : "w-[320px] border-r border-line px-6 pb-8 pt-5 lg:w-[400px] lg:px-8",
+        mobile ? "player-controls-scroll min-h-0 flex-1 overflow-y-auto overscroll-contain px-[20px] pb-6 pt-2" : "min-h-0 w-[320px] overflow-y-auto overscroll-contain border-r border-line px-6 pb-8 pt-5 lg:w-[400px] lg:px-8",
       )}
     >
       {/* Thanh đầu: thu nhỏ · ĐANG NGHE · "…" - không gì khác. Mực hai đầu đứng đúng mép cột (bìa, thanh tua): mực ⌄ bắt đầu 5/24 trong ô

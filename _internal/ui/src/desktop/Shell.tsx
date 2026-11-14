@@ -12,6 +12,7 @@ import { BookCover } from "@/shared/BookCover";
 import { cn } from "@/shared/cn";
 import { useMediaQuery } from "@/shared/media";
 import { useElementWidth } from "@/shared/elementWidth";
+import { SHORT_WINDOW, twoPaneWindow } from "@/shared/windowLayout";
 import { widthAtLeast } from "@/shared/widthClass.generated";
 import { pageFocusKey, useLayoutChangeFade, usePageEnter, usePageFocus } from "@/shared/motion";
 import { AnimatedRows, MotionPresence, Reveal } from "@/shared/MotionPresence";
@@ -232,7 +233,8 @@ export function Shell({ children }: { children: ReactNode }) {
   const compactBar = useMediaQuery("(max-width: 1023px)");
   const content = useRef<HTMLDivElement>(null);
   const contentWidth = useElementWidth(content);
-  const stackedPlayer = contentWidth === null || !widthAtLeast(contentWidth, "large");
+  const shortWindow = useMediaQuery(SHORT_WINDOW);
+  const stackedPlayer = contentWidth === null || !(widthAtLeast(contentWidth, "large") || (shortWindow && twoPaneWindow(contentWidth, true)));
   usePageEnter(main, pathname);
   usePageFocus(main, pageFocusKey(pathname));
   // Kéo cửa sổ qua mốc bố cục (thanh bên <-> tab dưới, thanh phát đầy đủ <-> gọn): bố cục mới hiện dần thay vì nhảy một cú.

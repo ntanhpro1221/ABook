@@ -48,7 +48,7 @@ Item {
     Connections { target: ReadAlong; function onListened() { root.tapped = true } }
     Text {
         id: hint; objectName: "readerHint"
-        x: Theme.s24; y: Theme.s12; width: parent.width - 2 * Theme.s24
+        x: Theme.s24; y: Theme.s12; width: Math.max(0, parent.width - 2 * Theme.s24)
         Reveal { shown: ReadAlong.status === "ready" && hint.text !== "" }
         text: Labels.readerHint(Player.speaking, Api.voiceList.length > 0, ReadAlong.timed, root.tapped)
         wrapMode: Text.Wrap; color: root.surface.fg2; font.pixelSize: Theme.sizeCaption
@@ -249,9 +249,10 @@ Item {
     ListView {
         id: list
         objectName: "readAlongParagraphs"
-        anchors.fill: parent
-        anchors.bottomMargin: Theme.s8
-        anchors.topMargin: hint.visible ? hint.height + 2 * Theme.s12 : 0
+        x: 0
+        y: hint.visible ? hint.height + 2 * Theme.s12 : 0
+        width: parent.width
+        height: Math.max(0, parent.height - y - Theme.s8)
         model: ReadAlong.timed ? ReadAlong.paragraphs : null
         clip: true
         cacheBuffer: 900
@@ -274,7 +275,7 @@ Item {
             required property string kind
             required property string speaker
             required property var avatar
-            readonly property real textW: Math.min(list.width - 40, root.textMax)
+            readonly property real textW: Math.max(0, Math.min(list.width - 40, root.textMax))
             readonly property bool heading: kind === "heading"
             readonly property bool scene: kind === "scene"
             readonly property real px: heading ? Math.round(root.fontPx * 1.4) : root.fontPx
@@ -464,7 +465,7 @@ Item {
 
     Text {
         anchors.centerIn: parent
-        width: Math.min(parent.width - 2 * Theme.s24, 360)
+        width: Math.max(0, Math.min(parent.width - 2 * Theme.s24, 360))
         horizontalAlignment: Text.AlignHCenter
         wrapMode: Text.Wrap
         Reveal { shown: ReadAlong.status === "loading" || ReadAlong.status === "failed" }

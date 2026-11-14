@@ -58,7 +58,7 @@ Item {
             text: to.text}
     }
 
-    readonly property bool wide: width >= Theme.widthLarge
+    readonly property bool wide: width >= Theme.widthLarge || (height < 480 && width >= Theme.widthMedium)
     property real wideT: wide ? 1 : 0
     Behavior on wideT {
         NumberAnimation {
@@ -147,7 +147,7 @@ Item {
     // ---- số đo bố cục ----
     readonly property real gap: 48
     readonly property real topH: 72
-    readonly property real colW: blend(Math.min(width - 2 * Theme.margin, 520), Math.min(440, Math.floor((width - 2 * Theme.margin - gap) * 0.42)))
+    readonly property real colW: Math.max(0, blend(Math.min(width - 2 * Theme.margin, 520), Math.min(440, Math.floor((width - 2 * Theme.margin - gap) * 0.42))))
     readonly property real colX: blend((width - colW) / 2, Theme.margin)
     readonly property real titlesH: titles.implicitHeight
     readonly property real controlsH: controls.implicitHeight
@@ -167,7 +167,7 @@ Item {
     readonly property real coverPageX: -pageT * shift * (1 - wideT)
     readonly property real coverPageOpacity: blend(1 - pageT, 1)
     readonly property real textX: blend((width - Math.min(width - 2 * Theme.margin, 720)) / 2, colX + colW + gap)
-    readonly property real textW: blend(Math.min(width - 2 * Theme.margin, 720), width - Theme.margin - textX)
+    readonly property real textW: Math.max(0, blend(Math.min(width - 2 * Theme.margin, 720), width - Theme.margin - textX))
     readonly property real textTop: blend(topH + (titlesH + Theme.s24) * pageT, topH - 24)
     readonly property real textBottom: blend(height - 24 - controlsH - 16, height)
 
@@ -509,11 +509,10 @@ Item {
                     }
                     ChapterList {
                         objectName: "nowChapterList"
-                        anchors.left: parent.left
-                        anchors.top: parent.top
-                        anchors.bottom: parent.bottom
+                        x: 0
+                        y: root.wide ? sideTabs.height + 2 * Theme.s16 : Theme.s24
+                        height: Math.max(0, parent.height - y)
                         width: Theme.listWidth(parent, parent.width)
-                        anchors.topMargin: root.wide ? sideTabs.height + 2 * Theme.s16 : Theme.s24
                         visible: !root.displayedText
                         opacity: root.panelOpacity
                         transform: Translate { x: Theme.reduceMotion ? 0 : (1 - root.panelOpacity) * 24 }

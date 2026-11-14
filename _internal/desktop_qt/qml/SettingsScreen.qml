@@ -7,14 +7,15 @@ import ABook
 // như đổi tab (không chồng Back). Hẹp: trang gốc là danh sách, mỗi nhóm một màn con có nút ← "Về Cài đặt" (Back về danh sách). Cả trang cuộn.
 FocusScope {
     id: root
-    readonly property bool expanded: Theme.widthClass(width) >= 2
+    readonly property bool expanded: Theme.widthClass(width) >= 2 || (height < 480 && width >= Theme.widthMedium)
     property bool layoutExpanded: expanded
     readonly property real layoutPhase: navigationSwap.phase
     property string active: ""
     property string displayedActive: ""
     readonly property real navigationPhase: navigationSwap.phase
     signal studioRequested()
-    readonly property real bodyWidth: Math.min(width - 2 * Theme.margin, layoutExpanded ? 1180 : 760)
+    readonly property real bodyWidth: Math.max(0, Math.min(width - 2 * Theme.margin, layoutExpanded ? 1180 : 760))
+    readonly property real groupWidth: Math.min(260, bodyWidth * 0.36)
     readonly property var groups: {
         // desktopGroups(info, touchOnly=false) của bản web, máy này (không điều khiển từ xa)
         const info = Api.info || {}
@@ -97,7 +98,7 @@ FocusScope {
             ScreenHeader {
                 id: header
                 objectName: "settingsHeader"
-                width: root.layoutExpanded ? 260 : parent.width
+                width: root.layoutExpanded ? root.groupWidth : parent.width
                 title: !root.layoutExpanded && root.shown ? root.groupTitle : S.s_cai_dat_202e0e9b
                 backLabel: S.s_ve_cai_dat_0c328887
                 showBack: !root.layoutExpanded && root.shown !== ""
@@ -107,8 +108,8 @@ FocusScope {
                 id: groupHeading
                 objectName: "settingsGroupHeading"
                 visible: root.layoutExpanded
-                x: 260 + Theme.s32
-                width: parent.width - x
+                x: root.groupWidth + Theme.s32
+                width: Math.max(0, parent.width - x)
                 y: header.titleBaseline - baselineOffset
                 text: root.groupTitle
                 color: Theme.text
@@ -130,7 +131,7 @@ FocusScope {
                 id: navigation
                 objectName: "settingsGroups"
                 y: header.height + (updateNotice.visible ? updateNotice.height + 16 : 0) + 20
-                width: root.layoutExpanded ? 260 : parent.width
+                width: root.layoutExpanded ? root.groupWidth : parent.width
                 visible: root.layoutExpanded || !root.shown
                 Accessible.name: S.s_nhom_cai_dat_8cf2ef86
                 Repeater {
@@ -157,9 +158,9 @@ FocusScope {
                 id: content
                 objectName: "settingsContent"
                 property bool wholeRows: true     // mọi hàng chạy hết cột: danh sách trong đây cũng vậy (Theme.listWidth)
-                x: root.layoutExpanded ? 260 + Theme.s32 : 0
+                x: root.layoutExpanded ? root.groupWidth + Theme.s32 : 0
                 y: header.height
-                width: parent.width - x
+                width: Math.max(0, parent.width - x)
                 height: body.height
                 visible: root.shown !== ""
                 SettingsBody { id: body; width: parent.width; group: root.shown; onStudioRequested: root.studioRequested() }

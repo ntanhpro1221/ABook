@@ -12,6 +12,7 @@ import { useEffect, useState } from "react";
 import { useParams } from "react-router";
 import { toast } from "@/shared/toast";
 import { useMediaQuery } from "@/shared/media";
+import { SHORT_WINDOW } from "@/shared/windowLayout";
 import { Select, Button, Dialog, ChoiceRow, WRAP_LABEL } from "@/shared/ui";
 import { ScreenHeader } from "@/shared/ScreenHeader";
 import { GroupHeader, isSettingsGroup, SettingsBlock, SettingsList, SettingsRow, settingsPath, type GroupRow, type SettingsGroupId } from "@/shared/SettingsNav";
@@ -495,7 +496,10 @@ export function SettingsScreen() {
   const { data: info } = useAppInfo();
   // Phím tắt vô nghĩa trên màn chỉ có cảm ứng (điện thoại, máy tính bảng không bàn phím): ẩn cả mục.
   const touchOnly = useMediaQuery("(hover: none) and (pointer: coarse)");
-  const wide = useMediaQuery("(min-width: 1024px)");
+  // Hai truy vấn riêng: danh sách truy vấn có dấu phẩy không được mọi bộ dựng hiểu (happy-dom luôn trả "không khớp").
+  const wideWindow = useMediaQuery("(min-width: 1024px)");
+  const shortWideWindow = useMediaQuery(`(min-width: 600px) and ${SHORT_WINDOW}`);
+  const wide = wideWindow || shortWideWindow;
   const groups = desktopGroups(info, touchOnly);
   const rows = useRows(groups, info);
   const active = isSettingsGroup(group) && groups.includes(group) ? group : null;
@@ -512,7 +516,7 @@ export function SettingsScreen() {
     // canh theo chân chữ (canh đỉnh để chân chữ lệch 3 px).
     const shown = active ?? groups[0];
     return (
-      <div className="settings-page page-x mx-auto grid max-w-[1180px] grid-cols-[260px_minmax(0,1fr)] gap-x-8 pb-16">
+      <div className="settings-page page-x mx-auto grid max-w-[1180px] grid-cols-[minmax(0,0.36fr)_minmax(0,0.64fr)] gap-x-8 pb-16">
         <ScreenHeader title={S.s_cai_dat_202e0e9b} className="self-baseline" />
         <div className="min-w-0 self-baseline">
           <GroupHeader id={shown} back={false} />

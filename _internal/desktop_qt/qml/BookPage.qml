@@ -18,7 +18,7 @@ Item {
     signal castRequested(string kind, var data)         // hộp của tab Nhân vật (CastDialogs của Main.qml): "merge" | "rename" | "gender" | "voice" | "narrator"
     signal recordRequested(string kind, var data)       // hộp / việc của hồ sơ nghe (RecordDialogs của Main.qml): "create" | "rename" | "move" | "delete" | "activate"
     property var book: ({})
-    readonly property bool expanded: width >= Theme.widthExpanded
+    readonly property bool expanded: width >= Theme.widthExpanded || (height < 480 && width >= Theme.widthMedium)
     property real split: expanded ? 1 : 0
     // First make room horizontally, then lift the chapter list beside the summary.
     // The reverse follows the same route, keeping text clear of the moving cover.
@@ -31,8 +31,8 @@ Item {
             easing.bezierCurve: Theme.easeStandard
         }
     }
-    readonly property real leftWidth: Math.min(380, 320 + Math.max(0, width - Theme.widthExpanded) * 0.06)
-    readonly property real compositionWidth: Math.min(width - 2 * Theme.margin, 1360, leftWidth + Theme.s32 + Theme.listMeasure)
+    readonly property real leftWidth: Math.min(width < Theme.widthExpanded ? Math.max(0, width - 2 * Theme.margin) * 0.42 : 380, 320 + Math.max(0, width - Theme.widthExpanded) * 0.06)
+    readonly property real compositionWidth: Math.max(0, Math.min(width - 2 * Theme.margin, 1360, leftWidth + Theme.s32 + Theme.listMeasure))
     readonly property real compactCoverH: Math.min(150, height * 0.25)
     readonly property real wideCoverH: Math.max(0, Math.min(height * 0.4, stage.height - info.height - Theme.s16))
     readonly property real stackedHeight: Math.max(compactCoverH, info.height) + Theme.s24

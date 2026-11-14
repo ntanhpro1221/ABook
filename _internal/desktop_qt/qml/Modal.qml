@@ -71,7 +71,7 @@ WindowLayer {
     Item {
         id: panel
         objectName: "modalPanel"
-        width: Math.min(root.panelWidth, root.width - 32)
+        width: Math.max(0, Math.min(root.panelWidth, root.width - 32))
         height: Math.min(Math.max(root.height * 0.9, 0), Math.max(0, root.height - 32), heading.height + 16 + body.implicitHeight + footerArea.height + 48)
         x: (root.width - width) / 2
         y: (root.height - height) / 2 + (Theme.reduceMotion ? 0 : 10 * (1 - root.shown))
@@ -86,7 +86,7 @@ WindowLayer {
             id: heading
             x: 24
             y: 24
-            width: Math.min(640, panel.width - 48 - 44 - 16 + 17)     // chừa nút ✕ (mực ✕ thẳng mép nội dung bên phải)
+            width: Math.max(0, Math.min(640, panel.width - 48 - 44 - 16 + 17))     // chừa nút ✕ (mực ✕ thẳng mép nội dung bên phải)
             spacing: 4
             Text { width: parent.width; text: TextWrap.pretty(root.title); color: Theme.text; wrapMode: Text.Wrap; font.pixelSize: Theme.sizeSection; font.weight: Theme.weightBold }
             Text { id: textItem; width: parent.width; text: root.description; Reveal { shown: textItem.text !== "" } color: Theme.text2; wrapMode: Text.Wrap; font.pixelSize: Theme.sizeBodySmall }
@@ -110,13 +110,13 @@ WindowLayer {
             id: scroll
             x: 20
             y: heading.y + Math.max(heading.height, 20) + 16
-            width: panel.width - 40
-            height: panel.height - y - 24 - footerArea.height
+            width: Math.max(0, panel.width - 40)
+            height: Math.max(0, panel.height - y - 24 - footerArea.height)
             contentWidth: width
             contentHeight: body.implicitHeight
             clip: true
             boundsBehavior: Flickable.StopAtBounds
-            Column { id: body; x: 4; width: scroll.width - 8; spacing: 16 }
+            Column { id: body; x: 4; width: Math.max(0, scroll.width - 8); spacing: 16 }
             SmoothWheel { flick: scroll }
         }
         ScrollEdges { target: scroll; color: Theme.panel; x: scroll.x; y: scroll.y; width: scroll.width; height: scroll.height }
@@ -124,7 +124,7 @@ WindowLayer {
         Item {
             id: footerArea
             x: 24
-            width: panel.width - 48
+            width: Math.max(0, panel.width - 48)
             y: panel.height - 24 - height
             height: root.hasFooter ? footerBox.childrenRect.height + 32 : 0
             Rectangle { y: 16; width: parent.width; height: 1; color: Theme.line; Reveal { shown: root.hasFooter }}

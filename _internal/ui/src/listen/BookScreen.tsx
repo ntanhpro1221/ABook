@@ -51,6 +51,8 @@ import { withFeedback } from "@/shared/feedback";
 import { ActionButton } from "./ActionButton";
 import { DotJoin } from "@/shared/DotJoin";
 import { WIDTH_FROM, widthAtLeast } from "@/shared/widthClass.generated";
+import { SHORT_WINDOW, twoPaneWindow } from "@/shared/windowLayout";
+import { useMediaQuery } from "@/shared/media";
 
 /** Trang sách chia hai cột từ khổ expanded của bề rộng NỘI DUNG (sau thanh bên): bìa + thông tin một bên, danh sách chương một bên, cuộn riêng từng bên.
  *  Cùng ngưỡng, cùng tỉ lệ với Qt (BookPage.qml: Theme.widthExpanded, leftWidth, listMeasure). Hẹp hơn: một cột như cũ. */
@@ -941,7 +943,8 @@ function BookPage({ extraActions, dangerActions, studioLink, notice, editing = {
   // Bề rộng nội dung (không phải cửa sổ): từ khổ expanded thì chia hai cột. Chưa đo xong (null) thì một cột.
   const frame = useRef<HTMLDivElement>(null);
   const contentWidth = useElementWidth(frame);
-  const split = contentWidth !== null && widthAtLeast(contentWidth, "expanded");
+  const shortWindow = useMediaQuery(SHORT_WINDOW);
+  const split = contentWidth !== null && twoPaneWindow(contentWidth, shortWindow);
   // Hai cột: mỗi cột tự cuộn nên mờ mép (DESIGN 4.5); một cột không cuộn riêng nên mặt nạ không bao giờ bật.
   const infoFade = useFadeScroller<HTMLElement>();
   const listFade = useFadeScroller<HTMLDivElement>();
@@ -1091,7 +1094,7 @@ function BookPage({ extraActions, dangerActions, studioLink, notice, editing = {
     <div
       data-book-layout={split ? "split" : "stacked"}
       // Khối nội dung rộng đúng cột trái + 32 + danh sách (tối đa 640), cộng hai lề 40, căn giữa - như Qt (compositionWidth).
-      style={split ? ({ "--book-left": `${bookLeftWidth(contentWidth)}px`, width: `min(100%, ${bookLeftWidth(contentWidth) + 32 + BOOK_LIST_MEASURE + 80}px)` } as CSSProperties) : undefined}
+      style={split ? ({ "--book-left": `${Math.min(bookLeftWidth(contentWidth), widthAtLeast(contentWidth, "expanded") ? Infinity : (contentWidth - 80) * 0.42)}px`, width: `min(100%, ${bookLeftWidth(contentWidth) + 32 + BOOK_LIST_MEASURE + 80}px)` } as CSSProperties) : undefined}
       className={cn("motion-reveal page-x mx-auto", split ? "flex h-full flex-col pb-4" : "max-w-[1180px] pb-16")}
     >
       {/* Nút ← chung của màn con (ScreenHeader) đứng riêng một hàng: tên sách nằm cạnh bìa bên dưới. */}
