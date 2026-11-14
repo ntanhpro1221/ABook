@@ -585,7 +585,10 @@ def scan_inputs(paths: list[str], epub_root: Path | None = None, *, continuation
     total_words = 0
     total_seconds = 0.0
     estimated = False
-    for path in files:
+    from ..chapter_titles import fallback_positions
+
+    positions = fallback_positions([path.stem for path in files])
+    for position, path in zip(positions, files):
         try:
             head, tail, size, sha256 = _read_chapter(path)
             truncated = size > len(head)
@@ -615,7 +618,7 @@ def scan_inputs(paths: list[str], epub_root: Path | None = None, *, continuation
         rows.append({
             "path": str(path),
             "name": path.name,
-            "title": humanize.chapter_title(path.stem),
+            "title": importers.display_chapter_name(path.stem, text, position),
             # Không tích sẵn (bìa, bản quyền, mục lục, mục rất ngắn của EPUB / DOCX): cùng luật với Nghe ngay (importers.default_picks); vẫn tích lại được.
             **({"matter": reason} if reason else {}),
             **({"estimated": True} if truncated else {}),

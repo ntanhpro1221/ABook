@@ -582,18 +582,22 @@ def _chapter_names(connection: sqlite3.Connection,
     }
     has_path = "input_path" in {row[1] for row in connection.execute("PRAGMA table_info(chapters)")}
     out: dict[int, dict[str, Any]] = {}
-    for row in connection.execute(f"SELECT id, chapter_index, title{', input_path' if has_path else ''} FROM chapters"):
+    rows = connection.execute(f"SELECT id, chapter_index, title{', input_path' if has_path else ''} FROM chapters ORDER BY chapter_index").fetchall()
+    from ..chapter_titles import fallback_positions, read_opening
+
+    positions = fallback_positions([str(row["title"]) for row in rows])
+    for position, row in zip(positions, rows):
         heading = headings.get(int(row["id"]))
-        if heading is None and has_path:
-            # Chương chưa tách câu (dự án chưa chạy tới): dòng đầu FILE nguồn, như danh sách chương của trình tạo - tên file
-            # lệch một so với truyện ("767.txt" mở đầu "Chương 768 - ...") làm ranh giới hai phần trông như lặp chương
-            # (soát UX 29-09).
+        if has_path and (heading is None or not humanize.is_heading(heading)):
+            # Read the opening when its first segment cannot establish a title.
+            # Standalone names also need the source's blank-line boundary.
             # Đường trong sổ là dữ liệu (file dự án người khác gửi): chỉ đọc nguồn được phép (book_paths), không stat/mở đường mạng.
             source = book_paths.safe_source(project_root, row["input_path"])
-            if source is not None:
+            if source is not None and heading is None:
                 sources.append((str(source), _mtime_ns(source)))
-            heading = _first_line(source)
-        name, subtitle = humanize.chapter_names(str(row["title"]), heading)
+            heading = read_opening(source) or heading
+        name, subtitle = humanize.chapter_names(str(row["title"]), heading,
+                                               int(row["chapter_index"]) if position is not None else None)
         name, subtitle = apply_chapter_title(name, subtitle, renamed.get(int(row["id"])))
         out[int(row["id"])] = {
             "index": int(row["chapter_index"]),

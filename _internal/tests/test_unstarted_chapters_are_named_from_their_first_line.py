@@ -25,4 +25,4 @@ def test_an_unsegmented_chapter_takes_its_heading_from_the_file(tmp_path: Path) 
     names = chapter_names(db, tmp_path)  # chỉ đọc nguồn nằm trong thư mục sách (book_paths)
 
     assert names[1]["name"] == "Chương 768" and names[1]["subtitle"] == "Mô hình chân không mới"
-    assert names[2]["name"] == "Chương 768", "file mất: tên theo tên file như trước"
+    assert names[2]["name"] == "Chương 2", "Missing source: use the chapter's book position, not its file number."

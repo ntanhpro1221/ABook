@@ -7,6 +7,8 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+- Nhận đúng tên chương như “Đoạn kết”, “Lời bạt” và tiêu đề không số; tên dự phòng theo thứ tự trong sách.
+
 - Android: sửa văng khi xoay ngang màn Đọc theo hoặc thu nhỏ cửa sổ.
 - Bố cục ngang: tách điều khiển và chữ, tận dụng hai cột cho sách, cài đặt, Studio và kho nhạc; tấm mở gọn trong cửa sổ thấp.
 

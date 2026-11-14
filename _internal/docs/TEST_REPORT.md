@@ -1,5 +1,16 @@
 # Test report
 
+## 15-11-2026 — chapter display names
+
+Python and Android share the heading rules and original positive/negative fixtures in `chapter_titles.json`.
+Coverage includes unnumbered sections, Roman and written numbers, bounded standalone titles, prose rejection,
+Unicode normalization, numeric file labels, reader overrides and package/library audit reports.
+Import names live in display metadata; source assembly and split rules retain their existing contracts.
+The structural heading classifier used by music analysis stays unchanged; regression cases keep its segment kinds.
+Package tests compare complete chapter and segment rows before and after export, along with source bytes.
+Web import/chapter flows and the web/Android/Qt parity gates cover the consuming interfaces.
+The task report records test counts, a 129-case source-input comparison and implementation hashes.
+
 ## 15-11-2026 — music library artwork
 
 Shared fixtures pin metadata seeds, canonical 96×96 RGB SHA-256 and BMP SHA-256 across web, Kotlin and Qt's real JS engine.

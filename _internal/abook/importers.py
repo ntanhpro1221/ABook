@@ -263,7 +263,18 @@ def _finish(book: ImportedBook, keep_short: bool = False, source: str = "") -> I
         # tên (trang đề tựa) thì ở lại: người dùng quyết có tích nó không.
         book.notes += [f"Bỏ qua mục trống: {chapter.title}" for chapter in book.chapters if not chapter.text.strip() and not chapter.short]
         book.chapters = [chapter for chapter in book.chapters if chapter.text.strip() or chapter.short]
+    from .chapter_titles import explicit_heading, fallback_positions
+
+    positions = fallback_positions([chapter.title for chapter in book.chapters])
     for number, chapter in enumerate(book.chapters, start=1):
+        # Tên hiển thị (siêu dữ liệu). "Mở đầu" là nhãn phần trước chương đầu: dòng đầu của nó thường là tên sách, không đặt lại.
+        if not chapter.name and chapter.title != PREAMBLE:
+            if book.text_has_title:
+                display = display_chapter_name(chapter.title, chapter.text, positions[number - 1])
+            else:
+                # Chương mang tên sách: chỉ nhận tiêu đề có từ khoá ("Đoạn kết", "Chương 3"), không nhận dòng đầu trang PDF.
+                display = explicit_heading(chapter.text) if chapter.title == book.title else ""
+            chapter.name = display if display and display != chapter.title else ""
         # Tên chương tính là một dòng của chương (cửa sổ 6 dòng đầu), như file chương mà Studio đọc.
         for line, at_end in chapter_credit_suggestions(book.chapter_source(chapter)):
             book.credits.append((number, line))
@@ -303,7 +314,7 @@ def select_chapters(book: ImportedBook, picks: list[tuple[int, str]]) -> Importe
     chapters, renumbered = [], {}
     for position, (number, name) in enumerate(sorted(picks), start=1):
         chapter, name = book.chapters[number - 1], _nfc(" ".join(name.split()))
-        chapters.append(replace(chapter, name=name if name != chapter.title else ""))
+        chapters.append(replace(chapter, name=(name if name != chapter.title else "") if name else chapter.name))
         renumbered[number] = position
     return replace(book, chapters=chapters, credits=[(renumbered[number], line) for number, line in book.credits if number in renumbered])
 
@@ -353,6 +364,14 @@ def title_from_filename(stem: str) -> str:
     "Tam Quoc Dien Nghia"); một dấu "-" đơn là của tên ("Re-Zero") và hoa thường giữ nguyên. Không còn gì thì giữ nguyên `stem`.
     Kotlin cùng luật: BookImport.titleFromFilename (bảng ví dụ chung expected/name_title.json)."""
     return " ".join(re.sub(r"_+|-{2,}", " ", stem).split()) or stem
+
+
+def display_chapter_name(stored: str, text: str, index: int | None) -> str:
+    """Display metadata shared by Studio and file imports; source text stays intact. `index`: book position to show
+    when no heading is found, None to keep the file number (see chapter_titles.fallback_positions)."""
+    from .chapter_titles import chapter_name, first_heading, full_name
+
+    return first_heading(text) or full_name(chapter_name(stored, index=index))
 
 
 def clip_title(text: str, limit: int) -> str:

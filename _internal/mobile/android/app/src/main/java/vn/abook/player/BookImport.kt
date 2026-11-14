@@ -151,7 +151,7 @@ object BookImport {
         for ((position, pick) in picks.sortedBy { it.first }.withIndex()) {
             val chapter = book.chapters[pick.first - 1]
             val name = words(pick.second)
-            chapters.add(Chapter(chapter.title, chapter.text, chapter.short, if (name != chapter.title) name else "", chapter.matter))
+            chapters.add(Chapter(chapter.title, chapter.text, chapter.short, if (name.isEmpty()) chapter.name else if (name != chapter.title) name else "", chapter.matter))
             renumbered[pick.first] = position + 1
         }
         val credits = book.credits.mapNotNull { (number, line) -> renumbered[number]?.let { it to line } }.toMutableList()
@@ -241,6 +241,16 @@ object BookImport {
             book.chapters.addAll(chapters.filter { pyStrip(it.text).isNotEmpty() || it.short })
         } else {
             book.chapters.addAll(chapters)
+        }
+        // Tên hiển thị (siêu dữ liệu), cùng luật với importers._finish: "Mở đầu" không đặt lại; chương mang tên sách chỉ nhận tiêu đề có từ khoá.
+        val positions = ChapterTitles.fallbackPositions(book.chapters.map { it.title })
+        for ((index, chapter) in book.chapters.withIndex()) {
+            if (chapter.name.isNotEmpty() || chapter.title == PREAMBLE) continue
+            val display = if (book.textHasTitle) ChapterTitles.display(chapter.title, chapter.text, positions[index])
+                else if (chapter.title == book.title) ChapterTitles.explicitHeading(chapter.text) else ""
+            if (display.isNotEmpty() && display != chapter.title) {
+                book.chapters[index] = Chapter(chapter.title, chapter.text, chapter.short, display, chapter.matter)
+            }
         }
         for ((index, chapter) in book.chapters.withIndex()) {
             // Tên chương tính là một dòng của chương (cửa sổ 6 dòng đầu), như file chương mà Studio đọc.
