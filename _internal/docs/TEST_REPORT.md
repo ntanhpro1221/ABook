@@ -1,5 +1,19 @@
 # Test report
 
+## 14-11-2026 — original examples and exact Corpus reviews
+
+Source excerpts replaced with original regression examples.
+
+Shared syllable prose also feeds Kotlin tests.
+
+Corpus reviews now pin individual shingle hashes.
+
+Byte changes and new shingles invalidate approval.
+
+Generic reviews still cannot waive Corpus matches.
+
+Validation: 2452 passed; Kotlin 7 passed.
+
 ## 14-11-2026 — public shingle document frequency
 
 Document-frequency scanner tests cover real injection.

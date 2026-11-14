@@ -1,10 +1,7 @@
-"""The ASR gate must catch audio that says MORE than the text, not only less.
+"""Self-written ASR regressions: inserted repetitions must fail even in long references.
 
-Owner, 09-11: "thi thoảng có một câu ngắn bị lặp lại đọc 2 lần". The two books he was
-hearing (All You Need Is Kill, Nơi mà hai ta đã gọi điện) carry the evidence in their own
-stored transcripts: VieNeu read a short sentence or clause of a long segment twice, and the
-gate passed it because one repeated clause is a small insertion against a long reference
-(similarity 0.86-0.97 against a 0.78 floor). The transcripts below are those stored ones.
+No stored book transcripts are included. Noise, stutters and written repetitions
+remain distinct from extra audio content.
 """
 from __future__ import annotations
 
@@ -22,41 +19,42 @@ def _verifier() -> asr.WhisperVerifier:
     return verifier
 
 
-# (written text, what the stored transcript heard) - every one verified before this gate.
+# Self-written (reference, simulated ASR) pairs preserve local repeat shapes.
 HEARD_TWICE = [
-    (  # AYNIK c3 id1628: the closing question, said twice
-        ("0. Câu thử đã gỡ. 0."
-        "0. Câu thử đã gỡ. 0."
-        "0. Câu thử đã gỡ. 0."),
-        ("0. Câu thử đã gỡ. 0."
-        "0. Câu thử đã gỡ. 0."
-        "0. Câu thử đã gỡ. 0."
-        "sao không?"),
+    (  # A short closing question repeated after a long reference.
+        ("Mirva nhận chiếc cốc tím vì đã sửa xong máy in trong xưởng gốm. "
+         "Chiếc cốc có vẽ bảy đám mây nhỏ và một con mèo đang nằm cạnh cuộn giấy. "
+         "Cả tổ đặt nó lên chiếc kệ mới, ngay bên hộp mực vừa được thay. Ai kiểm nữa?"),
+        ("Mirva nhận chiếc cốc tím vì đã sửa xong máy in trong xưởng gốm. "
+         "Chiếc cốc có vẽ 7 đám mây nhỏ và một con mèo đang nằm cạnh cuộn giấy. "
+         "Cả tổ đặt nó lên chiếc kệ mới, ngay bên hộp mực vừa được thay. Ai kiểm nữa? Ai kiểm nữa?"),
     ),
-    (  # NOIMA c3 id1079
-        ("0. Câu thử đã gỡ. 0."
-        "0. Câu thử đã gỡ. 0."
-        "0. Câu thử đã gỡ. 0."),
-        ("0. Câu thử đã gỡ. 0."
-        "0. Câu thử đã gỡ. 0."
-        "0. Câu thử đã gỡ. 0."),
+    (  # An interior time phrase repeats, alongside harmless number normalization.
+        ("Tôi xếp các hộp mực lên bàn kiểm, đánh dấu từng nắp bằng bút tím rồi đặt "
+         "một tờ giấy trắng vào khay. Chiếc máy bên cửa sổ đã chạy liên tục từ sáng, "
+         "nhưng bản in thử chỉ xuất hiện vào lúc bảy giờ, sau khi cả tổ lau sạch con lăn."),
+        ("Tôi xếp các hộp mực lên bàn kiểm, đánh dấu từng nắp bằng bút tím rồi đặt "
+         "một tờ giấy trắng vào khay. Chiếc máy bên cửa sổ đã chạy liên tục từ sáng, "
+         "nhưng bản in thử chỉ xuất hiện vào lúc 7 giờ, vào lúc 7 giờ, sau khi cả tổ lau sạch con lăn."),
     ),
-    (  # AYNIK c2 id1218
-        ("0. Câu thử đã gỡ. 0."
-        "0. Câu thử đã gỡ. 0."),
-        ("0. Câu thử đã gỡ. 0."
-        "0. Câu thử đã gỡ. 0."),
+    (  # A final clause repeats with a plausible spelling error elsewhere.
+        ("Máy dừng sau tám mươi phút kiểm mực. Tôi ghi thời gian vào sổ, nhấc khay "
+         "giấy khỏi con lăn rồi mở nắp sau để xem dây cuốn có bị lệch không. "
+         "Cứ kiểm lại. Tổ trưởng muốn từng hộp đều có nhãn tím."),
+        ("Máy dừng sau 80 phút kiểm mực. Tôi ghi thời gian vào sổ, nhấc khay "
+         "giấy khỏi con lăng rồi mở nắp sau để xem dây cuốn có bị lệch không. "
+         "Cứ kiểm lại. Tổ trưởng muốn từng hộp đều có nhãn tím, từng hộp đều có nhãn tím."),
     ),
-    (  # NOIMA c2 id360: the text says "Nhỡ như" twice, the audio four times
-        ("0. Câu thử đã gỡ. 0."
-        "0. Câu thử đã gỡ. 0."
-        "0. Câu thử đã gỡ. 0."),
-        ("0. Câu thử đã gỡ. 0."
-        "0. Câu thử đã gỡ. 0."
-        "0. Câu thử đã gỡ. 0."),
+    (  # Two written copies become four heard copies.
+        ("Tôi giữ nguyên khay giấy trên bàn để mọi người xem đường mực vừa in. "
+         "Các nét tím khá đều, chỉ có góc dưới hơi nhòe vì tờ giấy còn ẩm. "
+         "Kiểm lại, kiểm lại hộp mực bên trái trước khi đóng nắp nhé."),
+        ("Tôi giữ nguyên khay giấy trên bàn để mọi người xem đường mực vừa in. "
+         "Các nét tím khá đều, chỉ có góc dưới hơi nhòe vì tờ giấy còn ẩm. "
+         "Kiểm lại, kiểm lại, kiểm lại, kiểm lại hộp mực bên trái trước khi đóng nắp nhé."),
     ),
-    ("“Không.”", "Không. Không."),  # a whole one-word line said twice
-    ("“Để anh ta yên đi.”", "Để anh ta yên đi Đi"),  # AYNIK id2586
+    ("“Xong.”", "Xong. Xong."),
+    ("“Đặt hộp mực xuống đi.”", "Đặt hộp mực xuống đi đi."),
 ]
 
 
@@ -72,22 +70,17 @@ def test_a_repeated_clause_fails_the_gate_and_asks_for_a_new_take(written, heard
 
 
 HEARD_ONCE = [
-    # The text itself repeats: reading it as written is not a repetition.
-    ("“Đấm hắn! Đấm hắn! Đấm hắn!”", "Đấm hắn, đấm hắn, đấm hắn."),
-    ("0. Câu thử đã gỡ. 0.", "0. Câu thử đã gỡ. 0."),
-    # Tone-only difference that makes Whisper's spelling look doubled ("gãi gãi" -> "gái gái").
-    ("Hắn gãi gãi cằm.", "Hắn gái gái cầm."),
-    ("Tôi lắc đầu quầy quậy.", "Tôi lắc đầu quậy quậy."),
-    # A stammer the author wrote: same number of words, nothing extra was said.
-    ("“C-Chào buổi sáng.”", "Chào, chào buổi sáng."),
-    # One short word doubled inside a long sentence is Whisper noise as often as audio: the
-    # broad single-word flags were often not supported by the waveform check.
-    (
-        "0. Câu thử đã gỡ. 0.",
-        "0. Câu thử đã gỡ. 0.",
-    ),
-    # Whisper looping on a sound that is not in the text is a different failure with its own checks.
-    ("“Keiji. Keiji Kiriya.”", "ừ ừ ừ ừ ừ ừ ừ ừ ừ ừ ừ"),
+    # Written repetitions and stutters must keep their original multiplicity.
+    ("“Kiểm mực! Kiểm mực! Kiểm mực!”", "Kiểm mực, kiểm mực, kiểm mực."),
+    ("Kiểm lại, kiểm lại hộp mực tím nhé?", "Kiểm lại, kiểm lại hộp mực tím nhé?"),
+    ("Cậu gãi gãi má.", "Cậu gái gái mà."),
+    ("Tavin đẩy chiếc khay nhè nhẹ.", "Tavin đẩy chiếc khay nhẹ nhẹ."),
+    ("“C-Cất hộp đi.”", "Cất, cất hộp đi."),
+    # A single doubled word inside a long sentence can be ASR spelling noise.
+    ("Mirva đang kiểm hộp mực tím rồi ghi từng số lên phiếu trắng bên cạnh máy in.",
+     "Mirva đang kiểm hộp mực tím rồi rồi ghi từng số lên phiếu trắng bên cạnh máy in."),
+    # Hallucinated filler is a separate failure rather than copied source content.
+    ("“Tavin. Tavin Melvor.”", "ừ ừ ừ ừ ừ ừ ừ ừ ừ ừ ừ"),
 ]
 
 
@@ -107,9 +100,9 @@ def test_repeated_short_context_counts_against_the_tiled_reference():
 
 
 def test_a_repeated_last_word_is_not_hidden_by_the_three_copy_context():
-    written = "Để anh ta yên đi."
+    written = "Đặt hộp mực xuống đi."
     expected = " ".join([written] * asr.SHORT_CONTEXT_REPEAT_COUNT)
-    heard = " ".join(["Để anh ta yên đi đi."] * asr.SHORT_CONTEXT_REPEAT_COUNT)
+    heard = " ".join(["Đặt hộp mực xuống đi đi."] * asr.SHORT_CONTEXT_REPEAT_COUNT)
     result = _verifier()._evaluate_transcript(expected, heard, 20.0)
     assert result["passed"] is False
     assert result[asr.ASR_REPEATED_CONTENT_KEY]["ngram"] == asr.normalize_transcript("đi")
@@ -118,7 +111,7 @@ def test_a_repeated_last_word_is_not_hidden_by_the_three_copy_context():
 def test_a_canonical_name_rescue_cannot_wave_a_repetition_through():
     """The locked-name promotion turns a plain ASR_MISMATCH into a pass when the sentence
     without the names is fine. A repeated clause is not a name problem."""
-    name = "Giô-na-ba-ru"
+    name = "Giô-na-ve-ru"
     written = (
         f"{name} lắc đầu chậm rãi rồi nhìn ra cửa sổ thật lâu mà không nói thêm một lời nào "
         "nữa với bất kỳ ai trong căn phòng nhỏ. Rồi hắn cười."
@@ -126,7 +119,7 @@ def test_a_canonical_name_rescue_cannot_wave_a_repetition_through():
     heard = written.replace("Rồi hắn cười.", "Rồi hắn cười. Rồi hắn cười.")
     raw = _verifier()._evaluate_transcript(written, heard, 20.0)
     anchors = [{
-        "pronunciation_id": 7, "surface": "Yonabaru", "normalized_surface": "yonabaru",
+        "pronunciation_id": 7, "surface": "Yonaveru", "normalized_surface": "yonaveru",
         "spoken_form": name, "source": "cmudict_vietnamese_transliteration",
         "occurrence_index": 0, "order": 0, "source_start": 0, "source_end": 8,
         "spoken_start": 0, "spoken_end": len(name),
@@ -142,18 +135,18 @@ def test_a_canonical_name_rescue_cannot_wave_a_repetition_through():
 def test_collapsed_repeat_rescue_refuses_a_repeated_take():
     raw = {
         "passed": False, "verdict": asr.ASR_MISMATCH, "reason": "ASR_MISMATCH",
-        "transcript": "Phe rồn lắc đầu.", "similarity": 0.5, "wer": 0.5,
+        "transcript": "Me vờn lắc đầu.", "similarity": 0.5, "wer": 0.5,
         "repairable": True, "severe": False,
         asr.ASR_REPEATED_CONTENT_KEY: {"ngram": "lắc đầu", "heard": 2, "written": 1},
     }
     anchors = [{
-        "pronunciation_id": 7, "surface": "Ferrell", "normalized_surface": "ferrell",
-        "spoken_form": "Ferrell", "source": "cmudict_vietnamese_transliteration",
+        "pronunciation_id": 7, "surface": "Melvern", "normalized_surface": "melvern",
+        "spoken_form": "Melvern", "source": "cmudict_vietnamese_transliteration",
         "occurrence_index": 0, "order": 0, "source_start": 0, "source_end": 7,
         "spoken_start": 0, "spoken_end": 7,
     }]
     assert asr.adjudicate_collapsed_repeated_short(
-        "Ferrell lắc đầu.", raw, anchors,
+        "Melvern lắc đầu.", raw, anchors,
         requested_repeat_count=asr.SHORT_CONTEXT_REPEAT_COUNT, min_similarity=0.78, max_wer=0.3,
     ) is None
 

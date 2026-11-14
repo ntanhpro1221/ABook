@@ -17,8 +17,8 @@ def test_a_spoken_line_in_square_brackets_is_dialogue() -> None:
 
 
 def test_an_inner_thought_line_in_square_brackets_is_a_voice() -> None:
-    assert _kinds("[Mình có thể dẫn dắt thầy ấy đến đâu nhỉ?]") == [
-        ("dialogue", "[Mình có thể dẫn dắt thầy ấy đến đâu nhỉ?]")
+    assert _kinds("[Mình nên cất hộp mực ở ngăn nào nhỉ?]") == [
+        ("dialogue", "[Mình nên cất hộp mực ở ngăn nào nhỉ?]")
     ]
 
 
@@ -89,16 +89,16 @@ def test_a_stray_curly_quote_inside_a_voice_line_does_not_hang_the_next_paragrap
 
 
 def test_a_balanced_quote_inside_a_voice_line_stays_one_unit() -> None:
-    assert _kinds("0. Câu thử đã gỡ. 0.") == [
-        ("0. Câu thử đã gỡ. 0.", "0. Câu thử đã gỡ. 0.")
+    assert _kinds("[Bác thợ gọi Tavin là ‘chuyên gia hộp mực’. Tôi thấy danh hiệu ấy buồn cười.]") == [
+        ("dialogue", "[Bác thợ gọi Tavin là ‘chuyên gia hộp mực’. Tôi thấy danh hiệu ấy buồn cười.]")
     ]
 
 
 def test_a_whole_line_in_lenticular_brackets_is_a_voice() -> None:
-    rows = _kinds("【Bạn đã lên cấp.】\n\n【Danh hiệu 〖Trứng đi bộ〗 được kích hoạt】\n\n【...】\n\nNó nhìn xuống.")
+    rows = _kinds("【Bạn đã lên cấp.】\n\n【Danh hiệu 〖Cốc bay thấp〗 được kích hoạt】\n\n【...】\n\nNó nhìn xuống.")
     assert rows == [
         ("dialogue", "【Bạn đã lên cấp.】"),
-        ("dialogue", "【Danh hiệu 〖Trứng đi bộ〗 được kích hoạt】"),
+        ("dialogue", "【Danh hiệu 〖Cốc bay thấp〗 được kích hoạt】"),
         ("narration", "Nó nhìn xuống."),
     ]
     text = "Nó đọc dòng 【Bạn đã lên cấp】 mấy lần."
@@ -129,33 +129,33 @@ def test_a_translator_note_line_is_not_a_voice() -> None:
     for note in (
         "[Note: Tui tiểu đường mất!!!]",
         "[ NOTE: Ở đây tác giả chơi chữ.]",
-        "[*TL Note: Chúc phúc của Titania]",
+        "[*TL Note: Chúc phúc của Melvoria]",
         "[TL: Ý chỉ mặc cảm tự ti]",
         "[Trans: Death flag detected]",
         "[Ghi chú của dịch giả: Đau quá!!!]",
         "[Chú thích của dịch giả: Một canh giờ là hai tiếng.]",
         "[Lời nhóm dịch]",
         "[Từ chương này mình sẽ bắt đầu dịch từ bản Jap, nên sẽ chỉ cố gắng dịch sát.]",
-        "[Editor: Deemo]",
+        "[Editor: Tavren]",
     ):
         assert _kinds(note) == [("narration", note)], note
 
 
 def test_speech_that_only_looks_like_a_note_stays_a_voice() -> None:
     for speech in (
-        "0. Câu thử đã gỡ. 0.",
+        "[Ghi chú? Cậu ghi bằng bút màu tím à?]",
         "[Edit nó đi, nhanh lên!]",
-        "0. Câu thử đã gỡ. 0.",
+        "[Phiền thật! Hộp mực tím lại bị kẹt ngay trước buổi kiểm tra!]",
         "[Mình sẽ dịch chuyển tới đó ngay.]",
         "[Notebook của tôi đâu rồi?]",
-        "0. Câu thử đã gỡ. 0.",
-        "【Ghi chú: Cây sáo của thần Pan đã bị phong ấn.】",
+        "[Chú thích 2: Tavin phải lắp hộp mực tím trước khi bật máy thử.]",
+        "【Ghi chú: Hộp mực của Tavin vừa bị khóa.】",
     ):
         assert _kinds(speech) == [("dialogue", speech)], speech
 
 
 def test_a_framed_name_or_title_is_not_a_voice() -> None:
-    for title in ("[Lớp A]", "[Mateo Jordana]", "[Sổ Hướng Dẫn]", "[Chương 12]", "【Hiệp Sĩ Bóng Đêm】", "[ Nhà Kho Số 3 ]"):
+    for title in ("[Lớp A]", "[Tavin Melvor]", "[Sổ Hướng Dẫn]", "[Chương 12]", "【Hiệp Sĩ Bóng Đêm】", "[ Nhà Kho Số 3 ]"):
         assert _kinds(title) == [("narration", title)], title
 
 

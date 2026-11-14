@@ -42,6 +42,8 @@ Không đổi sang phân tích cuốn chiếu nếu người dùng chưa thay đ
 
 ## Invariant an toàn
 
+- Public Corpus overlap reviews must pin the repository path, exact file-byte SHA-256 and every approved eight-word shingle hash. Only individually classified contextual coincidences (category i) may be reviewed. Generic file reviews cannot waive Corpus matches; changed bytes (including line endings) or new matching shingles must block again. Keep story excerpts outside Git and use original examples in prompts and fixtures.
+
 - Stored project paths are untrusted. Every source/audio/artifact path must pass `book_paths.inside` using the actual book folder before filesystem access; UNC/device paths and relative paths fail before I/O. New projects copy selected TXT files into `sources/`; do not migrate or allow external stored sources. Validate imported workbooks before opening, listening-only import, or merge into an existing book.
 - Locked model paths are untrusted too: only the current runtime permits model reads/hashes. An old absolute path may supply a validated `models/` suffix without probing its old location; UNC/device paths and relative/traversal suffixes fail before I/O. Continuation links may identify sibling books within the current library, never an arbitrary external folder.
 - Continuation never discovers sources from stored paths. `source_hint.json` holds a display/picker hint only; open a fresh file/folder picker, filter `next_chapters` over the user's selection (uploads for remote Studio), then copy selected TXT files into the new book's `sources/<chapter>/` before use. Loading a plan must not probe the hinted directory.

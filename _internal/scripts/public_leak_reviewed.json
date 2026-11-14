@@ -32,16 +32,37 @@
     "reason": "README.md: all flagged strings match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
   },
   "_internal/AGENTS.md": {
-    "sha256": "5b7d260641aa2aaabd2d6b6113b3502619919b442a7fe5faaae5c1d1a00f9d86",
-    "reason": "Developer workflow instructions covering containment, production boundaries and quality gates. Re-pinned for 0.4.169: its added lines were reviewed as engineering text, no story or phoneme strings."
+    "sha256": "8a3afaca23a3684c1604c1efdc5bc685f130c13a2b8cbeff2a9be92c0bd671c6",
+    "reason": "_internal/AGENTS.md: reviewed technical workflow and test documentation, including exact per-shingle Corpus approval requirements.",
+    "corpus_review": {
+      "classification": "i",
+      "file_sha256": "8a3afaca23a3684c1604c1efdc5bc685f130c13a2b8cbeff2a9be92c0bd671c6",
+      "reason": "_internal/AGENTS.md: Technical commentary or book-title metadata. Lead approved category (i) only; each hash was classified in round two.",
+      "shingles": [
+        "278c69d8d369f37e"
+      ]
+    }
   },
   "_internal/abook/aliases.py": {
     "sha256": "850df951a2c98e937583208b9c0c066721edc5a3c94bd82db3efd44a474345ff",
     "reason": "abook/aliases.py: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
   },
   "_internal/abook/analysis.py": {
-    "sha256": "12e20a6dca2778d707da89972513fd202a5aac649fed8bc242bfeecb4038bd50",
-    "reason": "abook/analysis.py: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
+    "sha256": "52882d5cf17f06f4230d3b260155a930b345214932b594201748fd8cca4bbeb0",
+    "reason": "_internal/abook/analysis.py: reviewed original workshop examples, regression descriptions and technical prompt instructions after removal of source excerpts.",
+    "corpus_review": {
+      "classification": "i",
+      "file_sha256": "52882d5cf17f06f4230d3b260155a930b345214932b594201748fd8cca4bbeb0",
+      "reason": "_internal/abook/analysis.py: Short generic test/UI prose or literal bridge. Lead approved category (i) only; each hash was classified in round two.",
+      "shingles": [
+        "715c8c99c2fc0f9f",
+        "a514afcc44512683",
+        "cdda6c9259834010"
+      ]
+    },
+    "rules": [
+      "long-vietnamese"
+    ]
   },
   "_internal/abook/asr.py": {
     "sha256": "b08e03078e19604c6f669b77672d405f8a2ef73d4d2d2df8ffee1824e064f4ee",
@@ -73,7 +94,15 @@
   },
   "_internal/abook/character_registry.py": {
     "sha256": "cd42c0ce164ae5f7a09211de739c837a4491d0a91e3316b281f6a68bf76f962d",
-    "reason": "abook/character_registry.py: all flagged strings match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
+    "reason": "abook/character_registry.py: all flagged strings match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data.",
+    "corpus_review": {
+      "classification": "i",
+      "file_sha256": "cd42c0ce164ae5f7a09211de739c837a4491d0a91e3316b281f6a68bf76f962d",
+      "reason": "_internal/abook/character_registry.py: Short generic test/UI prose or literal bridge. Lead approved category (i) only; each hash was classified in round two.",
+      "shingles": [
+        "8cfce811b287e1ce"
+      ]
+    }
   },
   "_internal/abook/continuation.py": {
     "sha256": "d70a625fc159f8b31f6b29ce640cf66b293b8d1be0564cc75e0e4e09455fe269",
@@ -165,7 +194,17 @@
   },
   "_internal/abook/readaloud/engine_pick.py": {
     "sha256": "01e27a4431da2e4dd323baf852c5d9ca3d94b1f943e59885be93aa7cbad4f069",
-    "reason": "abook/readaloud/engine_pick.py: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
+    "reason": "abook/readaloud/engine_pick.py: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data.",
+    "corpus_review": {
+      "classification": "i",
+      "file_sha256": "01e27a4431da2e4dd323baf852c5d9ca3d94b1f943e59885be93aa7cbad4f069",
+      "reason": "_internal/abook/readaloud/engine_pick.py: Short generic test/UI prose or literal bridge. Lead approved category (i) only; each hash was classified in round two.",
+      "shingles": [
+        "8316d21834562c14",
+        "889707cc9e859359",
+        "f7314f919a249cd3"
+      ]
+    }
   },
   "_internal/abook/readaloud/flac_mp4.py": {
     "sha256": "92fb54d4775109424a194553c17aca5d7974c3096bf44a906ac8d381aadd145a",
@@ -205,7 +244,15 @@
   },
   "_internal/abook/readaloud/names.py": {
     "sha256": "9f12694b152dea143fb0e2a56f5e75e17bed75794d8d67b4d6f23a04a44c83bc",
-    "reason": "abook/readaloud/names.py: all flagged strings match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
+    "reason": "abook/readaloud/names.py: all flagged strings match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data.",
+    "corpus_review": {
+      "classification": "i",
+      "file_sha256": "9f12694b152dea143fb0e2a56f5e75e17bed75794d8d67b4d6f23a04a44c83bc",
+      "reason": "_internal/abook/readaloud/names.py: Number-word table or normalization fixture. Lead approved category (i) only; each hash was classified in round two.",
+      "shingles": [
+        "df5b7845de8cd602"
+      ]
+    }
   },
   "_internal/abook/readaloud/paragraphs.py": {
     "sha256": "12a0224518c1a8aa2e04ebe7f83288530b8476d28871eebea47360c07c94c63a",
@@ -224,8 +271,11 @@
     "reason": "abook/readaloud/service.py: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
   },
   "_internal/abook/readaloud/shared_rulings.py": {
-    "sha256": "077d02c9562c6869c2c8a19be25c0e6bc139794d356cf25ecc7521eedc8d5acf",
-    "reason": "abook/readaloud/shared_rulings.py: all flagged strings match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
+    "sha256": "5bc5b7ab9da4417a9cb6b3dcb1f53746653ab34581fdb03ea2f855f9ceed6cd2",
+    "reason": "_internal/abook/readaloud/shared_rulings.py: reviewed original workshop examples, regression descriptions and technical prompt instructions after removal of source excerpts.",
+    "rules": [
+      "long-vietnamese"
+    ]
   },
   "_internal/abook/readaloud/shouts.py": {
     "sha256": "6e1359a19019341fae1a365e35df096d10688ff0b6ba6ce4cca990b623ce827a",
@@ -304,8 +354,16 @@
     "reason": "abook/teller_voice.py: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
   },
   "_internal/abook/text_processing.py": {
-    "sha256": "379603e72e67d6e5fbaf59945b088d0ddb2cc1b81ee0a7b92c0b16ed37ca1dd2",
-    "reason": "abook/text_processing.py: all flagged documentation matches scrubbed 0.4.167; the added NFC operation changes source normalization, with no new narrative strings. Re-pinned for 0.4.169: its added lines were reviewed as engineering text, no story or phoneme strings."
+    "sha256": "31ad93250dcd656dbfb2662b1bc734d25074f806ff6c97e24c2c860fb2de8016",
+    "reason": "abook/text_processing.py: all flagged documentation matches scrubbed 0.4.167; the added NFC operation changes source normalization, with no new narrative strings.",
+    "corpus_review": {
+      "classification": "i",
+      "file_sha256": "31ad93250dcd656dbfb2662b1bc734d25074f806ff6c97e24c2c860fb2de8016",
+      "reason": "_internal/abook/text_processing.py: Short generic test/UI prose or literal bridge. Lead approved category (i) only; each hash was classified in round two.",
+      "shingles": [
+        "5b11cdc6770a15c1"
+      ]
+    }
   },
   "_internal/abook/tts.py": {
     "sha256": "c994a1516848a1cf5827f65e1e97f2743af1f4477d621ba0f7737dd65e133de5",
@@ -681,7 +739,15 @@
   },
   "_internal/abook/webui/work_items.py": {
     "sha256": "da645f029f445ad3740d2e85c40327670403104d5369dca91b33af0f77928072",
-    "reason": "abook/webui/work_items.py: all flagged strings match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
+    "reason": "abook/webui/work_items.py: all flagged strings match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data.",
+    "corpus_review": {
+      "classification": "i",
+      "file_sha256": "da645f029f445ad3740d2e85c40327670403104d5369dca91b33af0f77928072",
+      "reason": "_internal/abook/webui/work_items.py: Short generic test/UI prose or literal bridge. Lead approved category (i) only; each hash was classified in round two.",
+      "shingles": [
+        "3e731b44ff3ddbd4"
+      ]
+    }
   },
   "_internal/abook/webui/workshop.py": {
     "sha256": "fc63fba8b69d322c85a55884cfea6ac0206f82772efd4e24e9254506060dcd06",
@@ -761,7 +827,15 @@
   },
   "_internal/desktop_qt/tests/width/ParityFixtures.js": {
     "sha256": "e9ece565d61dc10e02288d3126f0da079d4601a3510dcbeecc5e54163ff08d8a",
-    "reason": "desktop_qt/tests/width/ParityFixtures.js: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
+    "reason": "desktop_qt/tests/width/ParityFixtures.js: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data.",
+    "corpus_review": {
+      "classification": "i",
+      "file_sha256": "e9ece565d61dc10e02288d3126f0da079d4601a3510dcbeecc5e54163ff08d8a",
+      "reason": "_internal/desktop_qt/tests/width/ParityFixtures.js: Short generic test/UI prose or literal bridge. Lead approved category (i) only; each hash was classified in round two.",
+      "shingles": [
+        "34c39778d36c91e5"
+      ]
+    }
   },
   "_internal/desktop_qt/tests/width/tst_d2.qml": {
     "sha256": "b7eeb55639bac3f5849e2e11a2bc1d660d1c3b3ffafbaa138a2014b03475b310",
@@ -904,8 +978,16 @@
     "reason": "docs/BOUNDARY_6_AND_THE_DRIVER_MORNING.md: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
   },
   "_internal/docs/CHANGELOG.md": {
-    "sha256": "1415456b61fdcc40db4b3b551e45adcd0f681c8a6476fd5741d8100fa808f24c",
-    "reason": "docs/CHANGELOG.md: all flagged strings match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data. Re-pinned for 0.4.169: its added lines were reviewed as engineering text, no story or phoneme strings."
+    "sha256": "c01964f9356e6f45022fc34d53f2914a6d86828d56af437cf2667b6f490810c8",
+    "reason": "docs/CHANGELOG.md: all flagged strings match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data.",
+    "corpus_review": {
+      "classification": "i",
+      "file_sha256": "c01964f9356e6f45022fc34d53f2914a6d86828d56af437cf2667b6f490810c8",
+      "reason": "_internal/docs/CHANGELOG.md: Technical commentary or book-title metadata. Lead approved category (i) only; each hash was classified in round two.",
+      "shingles": [
+        "a427005770c2fa6d"
+      ]
+    }
   },
   "_internal/docs/CHILD_VOICE_TRANSFORM.md": {
     "sha256": "4c03cdd1a841928490dc9604b25c59d1fd1726c5cb4bc8938b6c87a34de8ba71",
@@ -945,7 +1027,24 @@
   },
   "_internal/docs/LLM_EVAL.md": {
     "sha256": "2aa9605b0fe06e5815da1e29d25d800acd7ca6552d5598f88282154e0d712ecc",
-    "reason": "docs/LLM_EVAL.md: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
+    "reason": "docs/LLM_EVAL.md: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data.",
+    "corpus_review": {
+      "classification": "i",
+      "file_sha256": "2aa9605b0fe06e5815da1e29d25d800acd7ca6552d5598f88282154e0d712ecc",
+      "reason": "_internal/docs/LLM_EVAL.md: Technical commentary or book-title metadata. Lead approved category (i) only; each hash was classified in round two.",
+      "shingles": [
+        "0bec18ff0e942f55",
+        "13c9656e25b053ad",
+        "3845f7ce2ef03410",
+        "a5212ff662c55939",
+        "b9e94ea3eeb7da60",
+        "d2a5745b41444713",
+        "d6cafdc979884677",
+        "e0cc947480891cd5",
+        "e4c4ec5566e34fbf",
+        "fb96ac21111f4755"
+      ]
+    }
   },
   "_internal/docs/LOCKED_NAME_ANCHOR_IS_A_SPELLING_TEST.md": {
     "sha256": "4ab3751047864af6c86b06f52eda0b4b8d417b3eb9e59f21754d3f2560fd1d86",
@@ -961,7 +1060,19 @@
   },
   "_internal/docs/MUSIC_RESEARCH.md": {
     "sha256": "8dfa1393fa7d3e209b9d57d1d850dd3251917e50e77eb8b99cf0fc6f35392f92",
-    "reason": "docs/MUSIC_RESEARCH.md: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
+    "reason": "docs/MUSIC_RESEARCH.md: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data.",
+    "corpus_review": {
+      "classification": "i",
+      "file_sha256": "8dfa1393fa7d3e209b9d57d1d850dd3251917e50e77eb8b99cf0fc6f35392f92",
+      "reason": "_internal/docs/MUSIC_RESEARCH.md: Technical commentary or book-title metadata. Lead approved category (i) only; each hash was classified in round two.",
+      "shingles": [
+        "13c9656e25b053ad",
+        "3845f7ce2ef03410",
+        "bb8308cf47bb33fb",
+        "fb96ac21111f4755",
+        "ff1a6624e6f1e17c"
+      ]
+    }
   },
   "_internal/docs/MUSIC_SELECTION_MODEL.md": {
     "sha256": "761c3827c0dec581855f0d50324e932505475507ee947a7f247f091ff9ccfa0e",
@@ -989,7 +1100,21 @@
   },
   "_internal/docs/OPTIMISATION_QUEUE.md": {
     "sha256": "6c79f26cd0091221994961c10d2f9252eeb23aabe6cf063cc8e8c9d62d25818c",
-    "reason": "Engineering task notes on contained sources and production supervisor discovery."
+    "reason": "Engineering task notes on contained sources and production supervisor discovery.",
+    "corpus_review": {
+      "classification": "i",
+      "file_sha256": "6c79f26cd0091221994961c10d2f9252eeb23aabe6cf063cc8e8c9d62d25818c",
+      "reason": "_internal/docs/OPTIMISATION_QUEUE.md: Technical commentary or book-title metadata. Lead approved category (i) only; each hash was classified in round two.",
+      "shingles": [
+        "13f59b4fa133d5df",
+        "5c6cd67312afa7f1",
+        "7a7abb3fdb195e40",
+        "9cda93c427b2838e",
+        "aaff6a04b191ecef",
+        "af47720c4c88e5c2",
+        "b333ed7594692774"
+      ]
+    }
   },
   "_internal/docs/PACE_COUNTS_THE_WRONG_STRING.md": {
     "sha256": "689fe5c6c9e11be781dff3d05c3b5cc3d26f3b182e14f023d6c3529a201b52cb",
@@ -1005,7 +1130,15 @@
   },
   "_internal/docs/PERCEPTUAL_QA_COST.md": {
     "sha256": "5110562a8bde58656264daef3398c6116f5163ec9217d5c63a8249a4e015a438",
-    "reason": "docs/PERCEPTUAL_QA_COST.md: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
+    "reason": "docs/PERCEPTUAL_QA_COST.md: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data.",
+    "corpus_review": {
+      "classification": "i",
+      "file_sha256": "5110562a8bde58656264daef3398c6116f5163ec9217d5c63a8249a4e015a438",
+      "reason": "_internal/docs/PERCEPTUAL_QA_COST.md: Technical commentary or book-title metadata. Lead approved category (i) only; each hash was classified in round two.",
+      "shingles": [
+        "0ff204825711e58b"
+      ]
+    }
   },
   "_internal/docs/PERF_WEB.md": {
     "sha256": "6f73f998acb95095945dae46ba6b43cfb15225d6765bd94a4f4bad30426211ec",
@@ -1072,8 +1205,8 @@
     "reason": "Production interruption instructions and continuity limits; operational guidance rather than book text."
   },
   "_internal/docs/TEST_REPORT.md": {
-    "sha256": "f392ce320d804bd88460ce22f1104936a63be589defc46d4c41d2e2496dd03f9",
-    "reason": "Technical history; scanner test results added."
+    "sha256": "1d494403499755f0a6a1e93a0eaffbba6aaf2302daa5fb51a9722c7f17fbbd09",
+    "reason": "_internal/docs/TEST_REPORT.md: reviewed technical workflow and test documentation, including exact per-shingle Corpus approval requirements."
   },
   "_internal/docs/TEXT_NORMALIZATION.md": {
     "sha256": "06b3499d392b6f6a990b026d4f665b520ca3c9257ce452c57a5e7fa92e8ec94b",
@@ -1085,7 +1218,15 @@
   },
   "_internal/docs/THE_SOURCE_IS_WATERMARKED.md": {
     "sha256": "ab5e7d8c574327a6f1f23293ea8de0708d5ddcb9182ac2f344e84787e42b3a8b",
-    "reason": "docs/THE_SOURCE_IS_WATERMARKED.md: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
+    "reason": "docs/THE_SOURCE_IS_WATERMARKED.md: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data.",
+    "corpus_review": {
+      "classification": "i",
+      "file_sha256": "ab5e7d8c574327a6f1f23293ea8de0708d5ddcb9182ac2f344e84787e42b3a8b",
+      "reason": "_internal/docs/THE_SOURCE_IS_WATERMARKED.md: Technical commentary or book-title metadata. Lead approved category (i) only; each hash was classified in round two.",
+      "shingles": [
+        "a1ccc5fee39fbfd5"
+      ]
+    }
   },
   "_internal/docs/THE_VOICE_MODEL_IS_NOT_PINNED.md": {
     "sha256": "09bf6cf94155d6a00e95abae54538da5b0822fffb2d7ef4aa5a6ba434c4e88c4",
@@ -1093,7 +1234,15 @@
   },
   "_internal/docs/THIRD_PARTY.md": {
     "sha256": "86b38576def5cb56dd16a9cba51ff1d9549599d406cf54b3c26bf1d616d0451e",
-    "reason": "docs/THIRD_PARTY.md: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
+    "reason": "docs/THIRD_PARTY.md: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data.",
+    "corpus_review": {
+      "classification": "i",
+      "file_sha256": "86b38576def5cb56dd16a9cba51ff1d9549599d406cf54b3c26bf1d616d0451e",
+      "reason": "_internal/docs/THIRD_PARTY.md: Technical commentary or book-title metadata. Lead approved category (i) only; each hash was classified in round two.",
+      "shingles": [
+        "34673a5dbf551cda"
+      ]
+    }
   },
   "_internal/docs/THROUGHPUT.md": {
     "sha256": "0e6a9951078f534e945e662e0eb9986f3b1bb9ca4b3848088ed110cbb0bb9836",
@@ -1121,7 +1270,18 @@
   },
   "_internal/docs/VERSIONS.md": {
     "sha256": "1ddb14ec3d69bae10830dd684959394b7cd1ad33cd258e8c7ae67b7c08253915",
-    "reason": "docs/VERSIONS.md: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
+    "reason": "docs/VERSIONS.md: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data.",
+    "corpus_review": {
+      "classification": "i",
+      "file_sha256": "1ddb14ec3d69bae10830dd684959394b7cd1ad33cd258e8c7ae67b7c08253915",
+      "reason": "_internal/docs/VERSIONS.md: Technical commentary or book-title metadata. Lead approved category (i) only; each hash was classified in round two.",
+      "shingles": [
+        "69971e6b69f7be45",
+        "7659c5af92463c54",
+        "97eba70e85ec5e1b",
+        "b5ef2756bda3fc48"
+      ]
+    }
   },
   "_internal/docs/VOICE_BALANCE.md": {
     "sha256": "1f2b25742b2c3286673a1c832ccdb93a5e5da47298ab771ecf1b5543c0d03c8f",
@@ -1161,7 +1321,22 @@
   },
   "_internal/docs/WORK_LOG.md": {
     "sha256": "39fa65f9d137ac23623bf98ab3b40ee134cd0ffc19acc0c6df80ea6e6951d5ed",
-    "reason": "Development journal describing pronunciation, containment and verification changes."
+    "reason": "Development journal describing pronunciation, containment and verification changes.",
+    "corpus_review": {
+      "classification": "i",
+      "file_sha256": "39fa65f9d137ac23623bf98ab3b40ee134cd0ffc19acc0c6df80ea6e6951d5ed",
+      "reason": "_internal/docs/WORK_LOG.md: Technical commentary or book-title metadata. Lead approved category (i) only; each hash was classified in round two.",
+      "shingles": [
+        "13f59b4fa133d5df",
+        "5c6cd67312afa7f1",
+        "7a7abb3fdb195e40",
+        "9cda93c427b2838e",
+        "aaff6a04b191ecef",
+        "af47720c4c88e5c2",
+        "b333ed7594692774",
+        "b628f672c50a9b4c"
+      ]
+    }
   },
   "_internal/docs/castrules/result.md": {
     "sha256": "5ab9f41c7267758f59cf7316aa043f8ca5158782198cdde95e00846acf0ac706",
@@ -1201,7 +1376,16 @@
   },
   "_internal/mobile/android/app/src/androidTest/java/vn/abook/player/LiveStreamOnDeviceTest.kt": {
     "sha256": "37df21d1555d5f06c6a0593d4896a8f69c5ccab15073281e6e72f774cb876509",
-    "reason": "mobile/android/app/src/androidTest/java/vn/abook/player/LiveStreamOnDeviceTest.kt: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
+    "reason": "mobile/android/app/src/androidTest/java/vn/abook/player/LiveStreamOnDeviceTest.kt: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data.",
+    "corpus_review": {
+      "classification": "i",
+      "file_sha256": "37df21d1555d5f06c6a0593d4896a8f69c5ccab15073281e6e72f774cb876509",
+      "reason": "_internal/mobile/android/app/src/androidTest/java/vn/abook/player/LiveStreamOnDeviceTest.kt: Short generic test/UI prose or literal bridge. Lead approved category (i) only; each hash was classified in round two.",
+      "shingles": [
+        "7973b0f396e46248",
+        "ba246d6c70679b85"
+      ]
+    }
   },
   "_internal/mobile/android/app/src/androidTest/java/vn/abook/player/MusicLoopSeamTest.kt": {
     "sha256": "942fded5fe677a778b241f53be926d6cee883c399ab68000c942bf7bd7400844",
@@ -1260,8 +1444,18 @@
     "reason": "mobile/android/app/src/main/java/vn/abook/player/SyncLink.kt: all flagged strings match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
   },
   "_internal/mobile/android/app/src/main/java/vn/abook/player/UiStrings.kt": {
-    "sha256": "a96d1c1a90c38f8246ca28e4f470613c5acf77ce3bd9c515e4dfd0c152c5e420",
-    "reason": "mobile/android/app/src/main/java/vn/abook/player/UiStrings.kt: all flagged strings match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data. Re-pinned for 0.4.169: its added lines were reviewed as engineering text, no story or phoneme strings."
+    "sha256": "9d6300ab84f70cb398fe1a73292cf7ba6bee8acd0cfe530676c86adfd61c9a5d",
+    "reason": "mobile/android/app/src/main/java/vn/abook/player/UiStrings.kt: all flagged strings match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data.",
+    "corpus_review": {
+      "classification": "i",
+      "file_sha256": "9d6300ab84f70cb398fe1a73292cf7ba6bee8acd0cfe530676c86adfd61c9a5d",
+      "reason": "_internal/mobile/android/app/src/main/java/vn/abook/player/UiStrings.kt: Short generic test/UI prose or literal bridge. Lead approved category (i) only; each hash was classified in round two.",
+      "shingles": [
+        "8316d21834562c14",
+        "889707cc9e859359",
+        "f7314f919a249cd3"
+      ]
+    }
   },
   "_internal/mobile/android/app/src/main/java/vn/abook/player/net/FastConnect.kt": {
     "sha256": "b994369373798542df5e0bc40ed3fb2d66d207309c67107c53ade94bbe873f70",
@@ -1289,7 +1483,15 @@
   },
   "_internal/mobile/android/app/src/main/java/vn/abook/player/readaloud/Names.kt": {
     "sha256": "89b52fa9b30024821f945c863bc5b520cda546980906d0ed263796c1e52fd3fd",
-    "reason": "mobile/android/app/src/main/java/vn/abook/player/readaloud/Names.kt: all flagged strings match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
+    "reason": "mobile/android/app/src/main/java/vn/abook/player/readaloud/Names.kt: all flagged strings match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data.",
+    "corpus_review": {
+      "classification": "i",
+      "file_sha256": "89b52fa9b30024821f945c863bc5b520cda546980906d0ed263796c1e52fd3fd",
+      "reason": "_internal/mobile/android/app/src/main/java/vn/abook/player/readaloud/Names.kt: Number-word table or normalization fixture. Lead approved category (i) only; each hash was classified in round two.",
+      "shingles": [
+        "df5b7845de8cd602"
+      ]
+    }
   },
   "_internal/mobile/android/app/src/main/java/vn/abook/player/readaloud/PreparePlan.kt": {
     "sha256": "6f2b40bafcb9f45f38d5977e52e1333f3d96c42c43262b784c78555099909dec",
@@ -1401,7 +1603,15 @@
   },
   "_internal/scripts/README.md": {
     "sha256": "17683b13e57e38a7365fb5159d3b39592a8e938a89bcc4331d399195dfe34cab",
-    "reason": "scripts/README.md: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
+    "reason": "scripts/README.md: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data.",
+    "corpus_review": {
+      "classification": "i",
+      "file_sha256": "17683b13e57e38a7365fb5159d3b39592a8e938a89bcc4331d399195dfe34cab",
+      "reason": "_internal/scripts/README.md: Short generic test/UI prose or literal bridge. Lead approved category (i) only; each hash was classified in round two.",
+      "shingles": [
+        "82555d50621d0299"
+      ]
+    }
   },
   "_internal/scripts/assemble_book.py": {
     "sha256": "7ea1a9a8e473b4ed9dd82558f529b5931eed4426225f7467353eb92e3c44b6c2",
@@ -1433,7 +1643,21 @@
   },
   "_internal/scripts/book_paths.py": {
     "sha256": "b9939c5af8675d513f49fbd37c5e59159dfc86826b86c96b72adaf9f89dbcad6",
-    "reason": "scripts/book_paths.py: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
+    "reason": "scripts/book_paths.py: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data.",
+    "corpus_review": {
+      "classification": "i",
+      "file_sha256": "b9939c5af8675d513f49fbd37c5e59159dfc86826b86c96b72adaf9f89dbcad6",
+      "reason": "_internal/scripts/book_paths.py: Book-title metadata or technical commentary. Lead approved category (i) only; each hash was classified in round two.",
+      "shingles": [
+        "13f59b4fa133d5df",
+        "5c6cd67312afa7f1",
+        "7a7abb3fdb195e40",
+        "9cda93c427b2838e",
+        "aaff6a04b191ecef",
+        "af47720c4c88e5c2",
+        "b333ed7594692774"
+      ]
+    }
   },
   "_internal/scripts/bt_desktop_probe.py": {
     "sha256": "237de6cb94fc9acb6079fdbaec2d34db1bc912781787a63795094e335f389849",
@@ -1485,7 +1709,47 @@
   },
   "_internal/scripts/corpus/manifest.py": {
     "sha256": "3cb792e954eb240b585949e3abc37b263ce03ddf17eb70d1a7db2adb40750b17",
-    "reason": "scripts/corpus/manifest.py: all flagged strings match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
+    "reason": "scripts/corpus/manifest.py: all flagged strings match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data.",
+    "corpus_review": {
+      "classification": "i",
+      "file_sha256": "3cb792e954eb240b585949e3abc37b263ce03ddf17eb70d1a7db2adb40750b17",
+      "reason": "_internal/scripts/corpus/manifest.py: Book-title metadata or technical commentary. Lead approved category (i) only; each hash was classified in round two.",
+      "shingles": [
+        "0bec18ff0e942f55",
+        "13c9656e25b053ad",
+        "13f59b4fa133d5df",
+        "1addbb21c58355b8",
+        "3845f7ce2ef03410",
+        "38bf6cd97aec080c",
+        "5a73f61853b92279",
+        "5c6cd67312afa7f1",
+        "60888d5067462da5",
+        "64edad96a8bc2461",
+        "6677659e315dc669",
+        "6a007c718a6180f3",
+        "6ad13a5057f22842",
+        "778a511097348295",
+        "77baae0660669d8c",
+        "7a7abb3fdb195e40",
+        "8b8cf3a4632c8e04",
+        "92b13cbae4fdcad6",
+        "9cda93c427b2838e",
+        "aaff6a04b191ecef",
+        "af47720c4c88e5c2",
+        "b28116838398b8e6",
+        "b333ed7594692774",
+        "b3c34e03d867fbc5",
+        "b9e94ea3eeb7da60",
+        "c7c7bf0bc3c6d729",
+        "d2a5745b41444713",
+        "d4cfb47af8e4602d",
+        "d6cafdc979884677",
+        "e0cc947480891cd5",
+        "e4c4ec5566e34fbf",
+        "f2796620f903e4d8",
+        "fb96ac21111f4755"
+      ]
+    }
   },
   "_internal/scripts/corpus/wikisource.py": {
     "sha256": "ca416f51e5f0a2c0c0c4b78c5c631fbb4f1bd321d2b73edb4cf28f5df325c881",
@@ -1609,7 +1873,15 @@
   },
   "_internal/scripts/make_speaker_pass_fixtures.py": {
     "sha256": "910d7eb166bde803d24492f7da620e42761761d199c596890b27cd7a0eb0465a",
-    "reason": "scripts/make_speaker_pass_fixtures.py: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
+    "reason": "scripts/make_speaker_pass_fixtures.py: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data.",
+    "corpus_review": {
+      "classification": "i",
+      "file_sha256": "910d7eb166bde803d24492f7da620e42761761d199c596890b27cd7a0eb0465a",
+      "reason": "_internal/scripts/make_speaker_pass_fixtures.py: Generator declares self-written synthetic text. Lead approved category (i) only; each hash was classified in round two.",
+      "shingles": [
+        "0ff9419cc4faafe0"
+      ]
+    }
   },
   "_internal/scripts/make_voice_previews.py": {
     "sha256": "81b16862f0309a6840dfa77c0a29eda23cc73e445d8dff8e871c29dc03cf3d8e",
@@ -1677,7 +1949,16 @@
   },
   "_internal/scripts/measure_vieneu_loudness.py": {
     "sha256": "0e433f465a7e5c490f7f6f8d47bf07d745c4e3aadc52fa28debc60d16869b7ca",
-    "reason": "scripts/measure_vieneu_loudness.py: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
+    "reason": "scripts/measure_vieneu_loudness.py: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data.",
+    "corpus_review": {
+      "classification": "i",
+      "file_sha256": "0e433f465a7e5c490f7f6f8d47bf07d745c4e3aadc52fa28debc60d16869b7ca",
+      "reason": "_internal/scripts/measure_vieneu_loudness.py: Short generic test/UI prose or literal bridge. Lead approved category (i) only; each hash was classified in round two.",
+      "shingles": [
+        "deb894937563fd76",
+        "fc02515bfaa89569"
+      ]
+    }
   },
   "_internal/scripts/measure_what_the_machine_let_through.py": {
     "sha256": "e11a9446393cbe5e1e2539e175dd8acfae16903197c99301d0338d8161f8f3e4",
@@ -1865,7 +2146,21 @@
   },
   "_internal/scripts/model_eval/quote_scorer/narrator_raw.py": {
     "sha256": "203b7f8a50aa38d959dcb6a5da4f8f6151b6a518eace132c96be540e9ac40c3b",
-    "reason": "scripts/model_eval/quote_scorer/narrator_raw.py: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
+    "reason": "scripts/model_eval/quote_scorer/narrator_raw.py: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data.",
+    "corpus_review": {
+      "classification": "i",
+      "file_sha256": "203b7f8a50aa38d959dcb6a5da4f8f6151b6a518eace132c96be540e9ac40c3b",
+      "reason": "_internal/scripts/model_eval/quote_scorer/narrator_raw.py: Book-title metadata or technical commentary. Lead approved category (i) only; each hash was classified in round two.",
+      "shingles": [
+        "13f59b4fa133d5df",
+        "5c6cd67312afa7f1",
+        "7a7abb3fdb195e40",
+        "9cda93c427b2838e",
+        "aaff6a04b191ecef",
+        "af47720c4c88e5c2",
+        "b333ed7594692774"
+      ]
+    }
   },
   "_internal/scripts/model_eval/quote_scorer/pseudo_label.py": {
     "sha256": "e8da57c1e509f73a6a14523dd29858b547f1e70d413cb5921b2c28ba1a614630",
@@ -1881,7 +2176,47 @@
   },
   "_internal/scripts/model_eval/replay_all.py": {
     "sha256": "41721b25749ae8d38696f911222190369833c8bfd2f941e9857150aa1557e97e",
-    "reason": "scripts/model_eval/replay_all.py: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
+    "reason": "scripts/model_eval/replay_all.py: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data.",
+    "corpus_review": {
+      "classification": "i",
+      "file_sha256": "41721b25749ae8d38696f911222190369833c8bfd2f941e9857150aa1557e97e",
+      "reason": "_internal/scripts/model_eval/replay_all.py: Book-title metadata or technical commentary. Lead approved category (i) only; each hash was classified in round two.",
+      "shingles": [
+        "0bec18ff0e942f55",
+        "13c9656e25b053ad",
+        "13f59b4fa133d5df",
+        "1addbb21c58355b8",
+        "3845f7ce2ef03410",
+        "38bf6cd97aec080c",
+        "5a73f61853b92279",
+        "5c6cd67312afa7f1",
+        "60888d5067462da5",
+        "64edad96a8bc2461",
+        "6677659e315dc669",
+        "6a007c718a6180f3",
+        "6ad13a5057f22842",
+        "778a511097348295",
+        "77baae0660669d8c",
+        "7a7abb3fdb195e40",
+        "8b8cf3a4632c8e04",
+        "92b13cbae4fdcad6",
+        "9cda93c427b2838e",
+        "aaff6a04b191ecef",
+        "af47720c4c88e5c2",
+        "b28116838398b8e6",
+        "b333ed7594692774",
+        "b3c34e03d867fbc5",
+        "b9e94ea3eeb7da60",
+        "c7c7bf0bc3c6d729",
+        "d2a5745b41444713",
+        "d4cfb47af8e4602d",
+        "d6cafdc979884677",
+        "e0cc947480891cd5",
+        "e4c4ec5566e34fbf",
+        "f2796620f903e4d8",
+        "fb96ac21111f4755"
+      ]
+    }
   },
   "_internal/scripts/model_eval/replay_from_candidates.py": {
     "sha256": "da8e0d4749c82238d44c10159401ca0570c1d14a13afca87c9548db37df63cc9",
@@ -1985,7 +2320,21 @@
   },
   "_internal/scripts/pending_patches/patch_a_first_person_book_knows_who_i_is.py": {
     "sha256": "1338f19c403c5f0f511123732778460384adf7021ad64f632f70418f72cf80b3",
-    "reason": "scripts/pending_patches/patch_a_first_person_book_knows_who_i_is.py: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
+    "reason": "scripts/pending_patches/patch_a_first_person_book_knows_who_i_is.py: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data.",
+    "corpus_review": {
+      "classification": "i",
+      "file_sha256": "1338f19c403c5f0f511123732778460384adf7021ad64f632f70418f72cf80b3",
+      "reason": "_internal/scripts/pending_patches/patch_a_first_person_book_knows_who_i_is.py: Book-title metadata or technical commentary. Lead approved category (i) only; each hash was classified in round two.",
+      "shingles": [
+        "13f59b4fa133d5df",
+        "5c6cd67312afa7f1",
+        "7a7abb3fdb195e40",
+        "9cda93c427b2838e",
+        "aaff6a04b191ecef",
+        "af47720c4c88e5c2",
+        "b333ed7594692774"
+      ]
+    }
   },
   "_internal/scripts/pending_patches/patch_a_formula_is_read_as_words.py": {
     "sha256": "cc36402a0ec7d9c41ccc8e559df56b8de0851c5889ff630b700304d9b640e1ae",
@@ -2005,7 +2354,15 @@
   },
   "_internal/scripts/pending_patches/patch_a_named_tag_beats_a_generic_one.py": {
     "sha256": "6b1b25b73b404d562c62fa36b3f50d526ddc37fd72efbf86e192dea687737a37",
-    "reason": "scripts/pending_patches/patch_a_named_tag_beats_a_generic_one.py: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
+    "reason": "scripts/pending_patches/patch_a_named_tag_beats_a_generic_one.py: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data.",
+    "corpus_review": {
+      "classification": "i",
+      "file_sha256": "6b1b25b73b404d562c62fa36b3f50d526ddc37fd72efbf86e192dea687737a37",
+      "reason": "_internal/scripts/pending_patches/patch_a_named_tag_beats_a_generic_one.py: Short generic test/UI prose or literal bridge. Lead approved category (i) only; each hash was classified in round two.",
+      "shingles": [
+        "bf4509dab433a2be"
+      ]
+    }
   },
   "_internal/scripts/pending_patches/patch_a_nickname_before_a_name_is_still_the_narrators.py": {
     "sha256": "969ceba38f330d50494c71f68a2f04042f5c8ab2ed74bf4583da691dd32d290c",
@@ -2077,7 +2434,17 @@
   },
   "_internal/scripts/pending_patches/patch_a_whole_line_in_white_corner_brackets_is_a_voice.py": {
     "sha256": "e00626de31dabed232e5583fe1319864d6d839cfa26f59ea406b98e4592c797f",
-    "reason": "scripts/pending_patches/patch_a_whole_line_in_white_corner_brackets_is_a_voice.py: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
+    "reason": "scripts/pending_patches/patch_a_whole_line_in_white_corner_brackets_is_a_voice.py: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data.",
+    "corpus_review": {
+      "classification": "i",
+      "file_sha256": "e00626de31dabed232e5583fe1319864d6d839cfa26f59ea406b98e4592c797f",
+      "reason": "_internal/scripts/pending_patches/patch_a_whole_line_in_white_corner_brackets_is_a_voice.py: Book-title metadata or technical commentary. Lead approved category (i) only; each hash was classified in round two.",
+      "shingles": [
+        "13c9656e25b053ad",
+        "3845f7ce2ef03410",
+        "fb96ac21111f4755"
+      ]
+    }
   },
   "_internal/scripts/pending_patches/patch_an_inaudible_delta_on_a_heading_needs_no_override.py": {
     "sha256": "6826136cfda91e8643d619b78eb40c4ea378321164db2111b259bc832c927783",
@@ -2201,7 +2568,15 @@
   },
   "_internal/scripts/pending_patches/patch_the_book_decides_the_spelling.py": {
     "sha256": "d46ddacd6b106c6a5a43dad51e1470f6aa1597d44d4d436dcaff6a59f590d997",
-    "reason": "scripts/pending_patches/patch_the_book_decides_the_spelling.py: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
+    "reason": "scripts/pending_patches/patch_the_book_decides_the_spelling.py: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data.",
+    "corpus_review": {
+      "classification": "i",
+      "file_sha256": "d46ddacd6b106c6a5a43dad51e1470f6aa1597d44d4d436dcaff6a59f590d997",
+      "reason": "_internal/scripts/pending_patches/patch_the_book_decides_the_spelling.py: Short generic test/UI prose or literal bridge. Lead approved category (i) only; each hash was classified in round two.",
+      "shingles": [
+        "8cfce811b287e1ce"
+      ]
+    }
   },
   "_internal/scripts/pending_patches/patch_the_log_names_the_model_that_actually_answered.py": {
     "sha256": "e962402107bd672263e55f9a13f8fc529d39eef6645f878688ca65619a9a875d",
@@ -2261,7 +2636,15 @@
   },
   "_internal/scripts/pin_the_book_cast.py": {
     "sha256": "4978266ff6c77577c36b8c17e2a87dd3bbf606aa64ad25e8d671bc36423ef099",
-    "reason": "scripts/pin_the_book_cast.py: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
+    "reason": "scripts/pin_the_book_cast.py: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data.",
+    "corpus_review": {
+      "classification": "i",
+      "file_sha256": "4978266ff6c77577c36b8c17e2a87dd3bbf606aa64ad25e8d671bc36423ef099",
+      "reason": "_internal/scripts/pin_the_book_cast.py: Short generic test/UI prose or literal bridge. Lead approved category (i) only; each hash was classified in round two.",
+      "shingles": [
+        "6a5c411674f80b09"
+      ]
+    }
   },
   "_internal/scripts/plan_batches.py": {
     "sha256": "e7aa5e9326b05e0e36a77aafb069f3d197d728635eef8ca77dd8e59668da8209",
@@ -2313,7 +2696,19 @@
   },
   "_internal/scripts/report_castrules.py": {
     "sha256": "e742108582619a1aeda0e435ca799f9bf11e00d820f93c205a6e319cd822a832",
-    "reason": "scripts/report_castrules.py: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
+    "reason": "scripts/report_castrules.py: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data.",
+    "corpus_review": {
+      "classification": "i",
+      "file_sha256": "e742108582619a1aeda0e435ca799f9bf11e00d820f93c205a6e319cd822a832",
+      "reason": "_internal/scripts/report_castrules.py: Book-title metadata or technical commentary. Lead approved category (i) only; each hash was classified in round two.",
+      "shingles": [
+        "492cb50c1e5ecb63",
+        "78a65de46d89a35d",
+        "89751fe707402172",
+        "b9dafc9136eb1e78",
+        "e47a23663513ddb4"
+      ]
+    }
   },
   "_internal/scripts/resume_interrupted.py": {
     "sha256": "b7e4ed458ee1ddea9ed634779a26b7be6018d8a4f838b70f36a3578f3f9847d7",
@@ -2345,7 +2740,15 @@
   },
   "_internal/scripts/source_spellings.py": {
     "sha256": "c30a0b8e13c728429403533b180513883866a37fed8c0189f62e3ebaf353eeb0",
-    "reason": "scripts/source_spellings.py: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
+    "reason": "scripts/source_spellings.py: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data.",
+    "corpus_review": {
+      "classification": "i",
+      "file_sha256": "c30a0b8e13c728429403533b180513883866a37fed8c0189f62e3ebaf353eeb0",
+      "reason": "_internal/scripts/source_spellings.py: Short generic test/UI prose or literal bridge. Lead approved category (i) only; each hash was classified in round two.",
+      "shingles": [
+        "8cfce811b287e1ce"
+      ]
+    }
   },
   "_internal/scripts/stage_costs.py": {
     "sha256": "6197dd50e124d98ac54b61f90df66f32edb4293c5029dd4f9ec147adc3e13758",
@@ -2357,7 +2760,15 @@
   },
   "_internal/scripts/supertonic_android_fixtures.py": {
     "sha256": "6a2de914dcd6a39278800eedaf3cd93f33fc3bcb6d1df49ba24f240909fa0b2e",
-    "reason": "scripts/supertonic_android_fixtures.py: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
+    "reason": "scripts/supertonic_android_fixtures.py: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data.",
+    "corpus_review": {
+      "classification": "i",
+      "file_sha256": "6a2de914dcd6a39278800eedaf3cd93f33fc3bcb6d1df49ba24f240909fa0b2e",
+      "reason": "_internal/scripts/supertonic_android_fixtures.py: Generator declares self-written synthetic text. Lead approved category (i) only; each hash was classified in round two.",
+      "shingles": [
+        "4aad77781e47e969"
+      ]
+    }
   },
   "_internal/scripts/sweep_english_vi_variants.py": {
     "sha256": "cb7c383fe71eb596f1249a96303bca28715f33c7e967b7d883855577febc0400",
@@ -2397,7 +2808,27 @@
   },
   "_internal/scripts/vieneu_android_fixtures.py": {
     "sha256": "315110c250fdc4143ec83daa1f50cce48e38027e1b27ff4ec833499f48874fb2",
-    "reason": "scripts/vieneu_android_fixtures.py: all flagged strings match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
+    "reason": "scripts/vieneu_android_fixtures.py: all flagged strings match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data.",
+    "corpus_review": {
+      "classification": "i",
+      "file_sha256": "315110c250fdc4143ec83daa1f50cce48e38027e1b27ff4ec833499f48874fb2",
+      "reason": "_internal/scripts/vieneu_android_fixtures.py: Generator declares self-written synthetic text. Lead approved category (i) only; each hash was classified in round two.",
+      "shingles": [
+        "23cae7b6e4fef3c5",
+        "322165be87076ff3",
+        "7f754735ca426ba6",
+        "806b8123a439c669",
+        "80710c9f6908cbd1",
+        "995ae4dd4210ac2b",
+        "a5eaf977d2581ab6",
+        "ba246d6c70679b85",
+        "c0d10b6a0f15b2a7",
+        "d7c7e36fd5e81b17",
+        "eace8aa6859be99c",
+        "ed11dd7146bed208",
+        "ffd7f09fd751c208"
+      ]
+    }
   },
   "_internal/scripts/voice_balance_import.py": {
     "sha256": "42f964afa05defdcd57220fbd5ef103b262b11504491c1ac08bd61777e79bfda",
@@ -2437,7 +2868,15 @@
   },
   "_internal/tests/conftest.py": {
     "sha256": "dd7004d88be48245f6bc7bf752720f56f5e9bd58b4e2f361441d36a52d8cdd49",
-    "reason": "tests/conftest.py: all flagged strings match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
+    "reason": "tests/conftest.py: all flagged strings match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data.",
+    "corpus_review": {
+      "classification": "i",
+      "file_sha256": "dd7004d88be48245f6bc7bf752720f56f5e9bd58b4e2f361441d36a52d8cdd49",
+      "reason": "_internal/tests/conftest.py: Short generic test/UI prose or literal bridge. Lead approved category (i) only; each hash was classified in round two.",
+      "shingles": [
+        "8f809a112b05be5f"
+      ]
+    }
   },
   "_internal/tests/cover_search_fixtures.py": {
     "sha256": "ca0afe0e82029d5b95547a89f15631c3c73500f6de003997e3ace77d4dc4e9e9",
@@ -2457,11 +2896,27 @@
   },
   "_internal/tests/fixtures/import/epub2.epub": {
     "sha256": "d040e4a2ea74dd97e4c3fc1b87cc2dfd4dedbb0a5477a3067c0941874ca788de",
-    "reason": "tests/fixtures/import/epub2.epub: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
+    "reason": "tests/fixtures/import/epub2.epub: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data.",
+    "corpus_review": {
+      "classification": "i",
+      "file_sha256": "d040e4a2ea74dd97e4c3fc1b87cc2dfd4dedbb0a5477a3067c0941874ca788de",
+      "reason": "_internal/tests/fixtures/import/epub2.epub: Self-written import fixture; short coincidence. Lead approved category (i) only; each hash was classified in round two.",
+      "shingles": [
+        "b3fba8c1421bbc8a"
+      ]
+    }
   },
   "_internal/tests/fixtures/import/epub3.epub": {
     "sha256": "06b5f970bb9e53b3112f26e0f9283b8e5492f2adebf4372183b3986175694d38",
-    "reason": "tests/fixtures/import/epub3.epub: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
+    "reason": "tests/fixtures/import/epub3.epub: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data.",
+    "corpus_review": {
+      "classification": "i",
+      "file_sha256": "06b5f970bb9e53b3112f26e0f9283b8e5492f2adebf4372183b3986175694d38",
+      "reason": "_internal/tests/fixtures/import/epub3.epub: Self-written import fixture; short coincidence. Lead approved category (i) only; each hash was classified in round two.",
+      "shingles": [
+        "b3fba8c1421bbc8a"
+      ]
+    }
   },
   "_internal/tests/fixtures/import/expected/a84_contracts.json": {
     "sha256": "cf82cec2d26720a048453152bc168b85a05269767ef7fec24b59637d1550a7ba",
@@ -2485,11 +2940,27 @@
   },
   "_internal/tests/fixtures/import/expected/epub2.json": {
     "sha256": "44bdff03ce7b2a5f9eb3df0dd783b23a672e1557f6aca44209719f5a7fe43563",
-    "reason": "tests/fixtures/import/expected/epub2.json: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
+    "reason": "tests/fixtures/import/expected/epub2.json: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data.",
+    "corpus_review": {
+      "classification": "i",
+      "file_sha256": "44bdff03ce7b2a5f9eb3df0dd783b23a672e1557f6aca44209719f5a7fe43563",
+      "reason": "_internal/tests/fixtures/import/expected/epub2.json: Self-written import fixture; short coincidence. Lead approved category (i) only; each hash was classified in round two.",
+      "shingles": [
+        "b3fba8c1421bbc8a"
+      ]
+    }
   },
   "_internal/tests/fixtures/import/expected/epub3.json": {
     "sha256": "321abcfe9fa5d55a4426f371bb9ee43187d7aaf189f50c5681323c631cbc51af",
-    "reason": "tests/fixtures/import/expected/epub3.json: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
+    "reason": "tests/fixtures/import/expected/epub3.json: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data.",
+    "corpus_review": {
+      "classification": "i",
+      "file_sha256": "321abcfe9fa5d55a4426f371bb9ee43187d7aaf189f50c5681323c631cbc51af",
+      "reason": "_internal/tests/fixtures/import/expected/epub3.json: Self-written import fixture; short coincidence. Lead approved category (i) only; each hash was classified in round two.",
+      "shingles": [
+        "b3fba8c1421bbc8a"
+      ]
+    }
   },
   "_internal/tests/fixtures/import/expected/glued.json": {
     "sha256": "8595edc18d0c7197b3823af6ef12fe69da7715e10f4f0f570ce5f01bb8bf853f",
@@ -2517,7 +2988,15 @@
   },
   "_internal/tests/fixtures/import/expected/keep_short.json": {
     "sha256": "cf219db5670cc7e3cfb61ec12ae46d7a3a4fc90901311a959dbe9fcee97f8de2",
-    "reason": "tests/fixtures/import/expected/keep_short.json: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
+    "reason": "tests/fixtures/import/expected/keep_short.json: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data.",
+    "corpus_review": {
+      "classification": "i",
+      "file_sha256": "cf219db5670cc7e3cfb61ec12ae46d7a3a4fc90901311a959dbe9fcee97f8de2",
+      "reason": "_internal/tests/fixtures/import/expected/keep_short.json: Self-written import fixture; short coincidence. Lead approved category (i) only; each hash was classified in round two.",
+      "shingles": [
+        "b3fba8c1421bbc8a"
+      ]
+    }
   },
   "_internal/tests/fixtures/import/expected/markup_alias_cases.json": {
     "sha256": "ddc02d87804b12b09d0e78561e7976238d3b21b2d6f7a6d347e3c44091e9dd92",
@@ -2581,7 +3060,15 @@
   },
   "_internal/tests/fixtures/import/expected/plain.json": {
     "sha256": "8351f885bdd2f1e84078731401fb84d78c90958a1915981f0bb8c2f2db411298",
-    "reason": "tests/fixtures/import/expected/plain.json: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
+    "reason": "tests/fixtures/import/expected/plain.json: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data.",
+    "corpus_review": {
+      "classification": "i",
+      "file_sha256": "8351f885bdd2f1e84078731401fb84d78c90958a1915981f0bb8c2f2db411298",
+      "reason": "_internal/tests/fixtures/import/expected/plain.json: Self-written import fixture; short coincidence. Lead approved category (i) only; each hash was classified in round two.",
+      "shingles": [
+        "b3fba8c1421bbc8a"
+      ]
+    }
   },
   "_internal/tests/fixtures/import/expected/scenes.json": {
     "sha256": "979dd23d75326595ee8a90a1ad45943549abf34995b20d02cf13342d01eea462",
@@ -2593,7 +3080,15 @@
   },
   "_internal/tests/fixtures/import/expected/story.json": {
     "sha256": "e1a83ce87f69432316db6f055d8754fccb70f6c8caa14ec88f5f4e57f88df33e",
-    "reason": "tests/fixtures/import/expected/story.json: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
+    "reason": "tests/fixtures/import/expected/story.json: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data.",
+    "corpus_review": {
+      "classification": "i",
+      "file_sha256": "e1a83ce87f69432316db6f055d8754fccb70f6c8caa14ec88f5f4e57f88df33e",
+      "reason": "_internal/tests/fixtures/import/expected/story.json: Self-written import fixture; short coincidence. Lead approved category (i) only; each hash was classified in round two.",
+      "shingles": [
+        "b3fba8c1421bbc8a"
+      ]
+    }
   },
   "_internal/tests/fixtures/import/expected/tail_credit_lines.json": {
     "sha256": "2d6fd666df12b9c02788604aedcac191ce6e3fba4aa69b5839b1c7b4ff5e176d",
@@ -2637,7 +3132,15 @@
   },
   "_internal/tests/fixtures/import/plain.docx": {
     "sha256": "2658c454cbb458a2d5e28f2e45d695e22d9cf3b5d8b36985fd93cfc280d83b74",
-    "reason": "tests/fixtures/import/plain.docx: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
+    "reason": "tests/fixtures/import/plain.docx: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data.",
+    "corpus_review": {
+      "classification": "i",
+      "file_sha256": "2658c454cbb458a2d5e28f2e45d695e22d9cf3b5d8b36985fd93cfc280d83b74",
+      "reason": "_internal/tests/fixtures/import/plain.docx: Self-written import fixture; short coincidence. Lead approved category (i) only; each hash was classified in round two.",
+      "shingles": [
+        "b3fba8c1421bbc8a"
+      ]
+    }
   },
   "_internal/tests/fixtures/import/roman.docx": {
     "sha256": "e958fe7708799c8690aaca6d983203c114ce55d5b865f074065a7c3ee5cf7e2c",
@@ -2661,7 +3164,15 @@
   },
   "_internal/tests/fixtures/music/n0/chapters_handmade.json": {
     "sha256": "460c834dfb75710ccd425f582471a6a65ef4059f818f571b45492b372d38fd9e",
-    "reason": "tests/fixtures/music/n0/chapters_handmade.json: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
+    "reason": "tests/fixtures/music/n0/chapters_handmade.json: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data.",
+    "corpus_review": {
+      "classification": "i",
+      "file_sha256": "460c834dfb75710ccd425f582471a6a65ef4059f818f571b45492b372d38fd9e",
+      "reason": "_internal/tests/fixtures/music/n0/chapters_handmade.json: Short generic test/UI prose or literal bridge. Lead approved category (i) only; each hash was classified in round two.",
+      "shingles": [
+        "c4fde576a21dc740"
+      ]
+    }
   },
   "_internal/tests/fixtures/music/n0/chapters_main.json": {
     "sha256": "61163a3c1f41dd0480d975659505f49449d6aabfb3a7366fa04c3921aa8e251c",
@@ -2689,7 +3200,19 @@
   },
   "_internal/tests/fixtures/readaloud/edge/pieces.json": {
     "sha256": "a5c754484b2b2575d78f7efd3406e8f690de3c51e6205de223fc807889e12b7f",
-    "reason": "tests/fixtures/readaloud/edge/pieces.json: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
+    "reason": "tests/fixtures/readaloud/edge/pieces.json: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data.",
+    "corpus_review": {
+      "classification": "i",
+      "file_sha256": "a5c754484b2b2575d78f7efd3406e8f690de3c51e6205de223fc807889e12b7f",
+      "reason": "_internal/tests/fixtures/readaloud/edge/pieces.json: Short generic test/UI prose or literal bridge. Lead approved category (i) only; each hash was classified in round two.",
+      "shingles": [
+        "13144cc7dd734c81",
+        "3d5b95d966d7a3de",
+        "7157b2c610cb4820",
+        "a203e621f64e9ab6",
+        "f64457b2eb8b0f2d"
+      ]
+    }
   },
   "_internal/tests/fixtures/readaloud/english_direct/frontend.json": {
     "sha256": "625dcc619270f8a05f4f0e853e601d83b5b0decd2f808cdf1843203298ee9fb6",
@@ -2709,11 +3232,28 @@
   },
   "_internal/tests/fixtures/readaloud/shared_vietnamese/cases.json": {
     "sha256": "69bba5b10f2c60b15c6e4b18e4bb5d56cd016011fa6b849a717431e1d844f7d2",
-    "reason": "tests/fixtures/readaloud/shared_vietnamese/cases.json: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
+    "reason": "tests/fixtures/readaloud/shared_vietnamese/cases.json: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data.",
+    "corpus_review": {
+      "classification": "i",
+      "file_sha256": "69bba5b10f2c60b15c6e4b18e4bb5d56cd016011fa6b849a717431e1d844f7d2",
+      "reason": "_internal/tests/fixtures/readaloud/shared_vietnamese/cases.json: Short generic test/UI prose or literal bridge. Lead approved category (i) only; each hash was classified in round two.",
+      "shingles": [
+        "a0b1fee5cfd2c006"
+      ]
+    }
   },
   "_internal/tests/fixtures/readaloud/spoken/reading_forms.json": {
     "sha256": "dca1ab309080e3b583488adfcd3c4bfb3ccf74472616f0b40250bbfdb196590e",
-    "reason": "tests/fixtures/readaloud/spoken/reading_forms.json: all flagged strings match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
+    "reason": "tests/fixtures/readaloud/spoken/reading_forms.json: all flagged strings match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data.",
+    "corpus_review": {
+      "classification": "i",
+      "file_sha256": "dca1ab309080e3b583488adfcd3c4bfb3ccf74472616f0b40250bbfdb196590e",
+      "reason": "_internal/tests/fixtures/readaloud/spoken/reading_forms.json: Number-word table or normalization fixture; Short generic test/UI prose or literal bridge. Lead approved category (i) only; each hash was classified in round two.",
+      "shingles": [
+        "8fa7776d713864f2",
+        "d4391d87c91b8304"
+      ]
+    }
   },
   "_internal/tests/fixtures/readaloud/spread/README.md": {
     "sha256": "7f728b127e4488f285f857349ae6255d1d275e1183c46e76a2adc461bca417d3",
@@ -2721,11 +3261,27 @@
   },
   "_internal/tests/fixtures/readaloud/supertonic/supertonic.json": {
     "sha256": "79755c82b1743e74268b4cd4f50d181e496071901201ffeb158c9c006a7bab6d",
-    "reason": "Self-written speech benchmark metadata and short synthetic reading cases; no corpus overlap in the strict scan."
+    "reason": "Self-written speech benchmark metadata and short synthetic reading cases; no corpus overlap in the strict scan.",
+    "corpus_review": {
+      "classification": "i",
+      "file_sha256": "79755c82b1743e74268b4cd4f50d181e496071901201ffeb158c9c006a7bab6d",
+      "reason": "_internal/tests/fixtures/readaloud/supertonic/supertonic.json: Short generic test/UI prose or literal bridge. Lead approved category (i) only; each hash was classified in round two.",
+      "shingles": [
+        "4aad77781e47e969"
+      ]
+    }
   },
   "_internal/tests/fixtures/readaloud/supertonic/supertonic_bench.json": {
     "sha256": "8aef9f032ddf96234e9a3878f263eccc08658c17aabda63ce15d680d12b16c18",
-    "reason": "tests/fixtures/readaloud/supertonic/supertonic_bench.json: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
+    "reason": "tests/fixtures/readaloud/supertonic/supertonic_bench.json: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data.",
+    "corpus_review": {
+      "classification": "i",
+      "file_sha256": "8aef9f032ddf96234e9a3878f263eccc08658c17aabda63ce15d680d12b16c18",
+      "reason": "_internal/tests/fixtures/readaloud/supertonic/supertonic_bench.json: Short generic test/UI prose or literal bridge. Lead approved category (i) only; each hash was classified in round two.",
+      "shingles": [
+        "4aad77781e47e969"
+      ]
+    }
   },
   "_internal/tests/fixtures/records/writes.json": {
     "sha256": "164effcb317a8a55310f833540e7b951547a5f5d12ce616915906436f144b7b4",
@@ -2745,7 +3301,15 @@
   },
   "_internal/tests/fixtures/speaker_pass/synthetic_a.json": {
     "sha256": "e5f24f5085aed861c24024e612133f6a9121cbb40690cce62ea4003cc5a3168c",
-    "reason": "tests/fixtures/speaker_pass/synthetic_a.json: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
+    "reason": "tests/fixtures/speaker_pass/synthetic_a.json: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data.",
+    "corpus_review": {
+      "classification": "i",
+      "file_sha256": "e5f24f5085aed861c24024e612133f6a9121cbb40690cce62ea4003cc5a3168c",
+      "reason": "_internal/tests/fixtures/speaker_pass/synthetic_a.json: Generator declares self-written synthetic text. Lead approved category (i) only; each hash was classified in round two.",
+      "shingles": [
+        "0ff9419cc4faafe0"
+      ]
+    }
   },
   "_internal/tests/fixtures/speaker_pass/synthetic_b.json": {
     "sha256": "58745ca1056dada3c4fdac6852b7f5a31e36ff3c66416b12c469a5316cbc2628",
@@ -2753,7 +3317,23 @@
   },
   "_internal/tests/fixtures/supertonic/opening_cut.json": {
     "sha256": "ceb89eec60165238f0a4274e35f4dbbce20e750f889d418500b4d001ae07b752",
-    "reason": "tests/fixtures/supertonic/opening_cut.json: all flagged strings match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
+    "reason": "tests/fixtures/supertonic/opening_cut.json: all flagged strings match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data.",
+    "corpus_review": {
+      "classification": "i",
+      "file_sha256": "ceb89eec60165238f0a4274e35f4dbbce20e750f889d418500b4d001ae07b752",
+      "reason": "_internal/tests/fixtures/supertonic/opening_cut.json: Short generic test/UI prose or literal bridge. Lead approved category (i) only; each hash was classified in round two.",
+      "shingles": [
+        "058b7644137036b6",
+        "0a624fb8eb304968",
+        "1d4101b8162848b1",
+        "412fe3e12f9ef182",
+        "81b796a6df22e0e5",
+        "90a32bb78d1a3b29",
+        "955960a46286c5ff",
+        "a0586a6a08cb3e4f",
+        "c6f985b6797d1074"
+      ]
+    }
   },
   "_internal/tests/fixtures/sync/records_host.json": {
     "sha256": "d407a14288df1152a6a4002a7e5c4be0979cc957f4a44f593a790c4d3829e655",
@@ -2761,15 +3341,39 @@
   },
   "_internal/tests/fixtures/text_books/cases.json": {
     "sha256": "cc85333ad58e61ecfe18a1eff59f580772c5524035224803be44295a701b63f9",
-    "reason": "tests/fixtures/text_books/cases.json: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
+    "reason": "tests/fixtures/text_books/cases.json: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data.",
+    "corpus_review": {
+      "classification": "i",
+      "file_sha256": "cc85333ad58e61ecfe18a1eff59f580772c5524035224803be44295a701b63f9",
+      "reason": "_internal/tests/fixtures/text_books/cases.json: Self-written import fixture; short coincidence. Lead approved category (i) only; each hash was classified in round two.",
+      "shingles": [
+        "b3fba8c1421bbc8a"
+      ]
+    }
   },
   "_internal/tests/fixtures/text_books/kotlin_text.abook": {
     "sha256": "5fe3b370733a44cab7ece0819e82d6ed392f0ae5fcdb31dc50cdf0eaadfdf60f",
-    "reason": "tests/fixtures/text_books/kotlin_text.abook: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
+    "reason": "tests/fixtures/text_books/kotlin_text.abook: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data.",
+    "corpus_review": {
+      "classification": "i",
+      "file_sha256": "5fe3b370733a44cab7ece0819e82d6ed392f0ae5fcdb31dc50cdf0eaadfdf60f",
+      "reason": "_internal/tests/fixtures/text_books/kotlin_text.abook: Self-written import fixture; short coincidence. Lead approved category (i) only; each hash was classified in round two.",
+      "shingles": [
+        "b3fba8c1421bbc8a"
+      ]
+    }
   },
   "_internal/tests/fixtures/text_books/python_text.abook": {
     "sha256": "919e8e1e9d240d697051a322aaf447a69b72ca5c19e98f4af6d5f31c6c8d2cdf",
-    "reason": "tests/fixtures/text_books/python_text.abook: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
+    "reason": "tests/fixtures/text_books/python_text.abook: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data.",
+    "corpus_review": {
+      "classification": "i",
+      "file_sha256": "919e8e1e9d240d697051a322aaf447a69b72ca5c19e98f4af6d5f31c6c8d2cdf",
+      "reason": "_internal/tests/fixtures/text_books/python_text.abook: Self-written import fixture; short coincidence. Lead approved category (i) only; each hash was classified in round two.",
+      "shingles": [
+        "b3fba8c1421bbc8a"
+      ]
+    }
   },
   "_internal/tests/fixtures/value_picker/cases.json": {
     "sha256": "2f6ec646f0f849edf4a8faf829541b40c69e235cf251b1d7c81bd70785251614",
@@ -2781,7 +3385,31 @@
   },
   "_internal/tests/fixtures/vieneu/android/text.json": {
     "sha256": "d3c6fa5a1e69f5025741f78a6b3f6738fc90868e2dd8ebbbce9eaa085cfad937",
-    "reason": "Generated desktop/phone contract from self-written numeric, hesitation, honorific and phonetic test sentences; source cases inspected after integration."
+    "reason": "Generated desktop/phone contract from self-written numeric, hesitation, honorific and phonetic test sentences; source cases inspected after integration.",
+    "corpus_review": {
+      "classification": "i",
+      "file_sha256": "d3c6fa5a1e69f5025741f78a6b3f6738fc90868e2dd8ebbbce9eaa085cfad937",
+      "reason": "_internal/tests/fixtures/vieneu/android/text.json: Generator declares self-written synthetic text. Lead approved category (i) only; each hash was classified in round two.",
+      "shingles": [
+        "23cae7b6e4fef3c5",
+        "322165be87076ff3",
+        "643c288762546612",
+        "742943348f9b2fc7",
+        "806b8123a439c669",
+        "80710c9f6908cbd1",
+        "8a8488ac471a9a23",
+        "995ae4dd4210ac2b",
+        "a5eaf977d2581ab6",
+        "b058222edf2b9bd5",
+        "ba246d6c70679b85",
+        "c0d10b6a0f15b2a7",
+        "d3214c258e43949e",
+        "d7c7e36fd5e81b17",
+        "e916b367c3fe5978",
+        "eace8aa6859be99c",
+        "ffd7f09fd751c208"
+      ]
+    }
   },
   "_internal/tests/fixtures/vieneu/android/tokens.json": {
     "sha256": "5725bc88c551c2305e6ef06b957506f7a6332873dd330a571c34792ba271e074",
@@ -2792,8 +3420,11 @@
     "reason": "tests/fixtures/vietnamese_syllable/cases.json: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
   },
   "_internal/tests/fixtures/vietnamese_syllable/passage.txt": {
-    "sha256": "f7a02c936ff34f3b1bca400e38fc897ba45f970d506d18138d132933600742b7",
-    "reason": "tests/fixtures/vietnamese_syllable/passage.txt: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
+    "sha256": "70fa9ed9e56fbb059bdeef373238e4e72593760f2c6f4e65c34c455204239890",
+    "reason": "_internal/tests/fixtures/vietnamese_syllable/passage.txt: reviewed original workshop examples, regression descriptions and technical prompt instructions after removal of source excerpts.",
+    "rules": [
+      "long-vietnamese"
+    ]
   },
   "_internal/tests/fresh_slot_fakes.py": {
     "sha256": "8dda7fad872fd4b4b0f535bf64aca60cc2d9eb20e86e8088ad35d2df12be5229",
@@ -2805,7 +3436,15 @@
   },
   "_internal/tests/import_fixtures.py": {
     "sha256": "50bc3e80ac72cf523021f3fb73585ff476ba63c33c01e8fc8fb21c7831d056ae",
-    "reason": "tests/import_fixtures.py: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
+    "reason": "tests/import_fixtures.py: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data.",
+    "corpus_review": {
+      "classification": "i",
+      "file_sha256": "50bc3e80ac72cf523021f3fb73585ff476ba63c33c01e8fc8fb21c7831d056ae",
+      "reason": "_internal/tests/import_fixtures.py: Self-written import fixture; short coincidence. Lead approved category (i) only; each hash was classified in round two.",
+      "shingles": [
+        "b3fba8c1421bbc8a"
+      ]
+    }
   },
   "_internal/tests/mp3_export_fixtures.py": {
     "sha256": "92cc882ac468f291e6672bfca75ca417149d8e89c1d3831ec6d7498901436573",
@@ -3101,11 +3740,28 @@
   },
   "_internal/tests/test_address_cues.py": {
     "sha256": "60d65a3fc3e172f4b476d4b8165c1409a72ce6a168763e4e5a5c5a066d0716ff",
-    "reason": "tests/test_address_cues.py: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
+    "reason": "tests/test_address_cues.py: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data.",
+    "corpus_review": {
+      "classification": "i",
+      "file_sha256": "60d65a3fc3e172f4b476d4b8165c1409a72ce6a168763e4e5a5c5a066d0716ff",
+      "reason": "_internal/tests/test_address_cues.py: Short generic test/UI prose or literal bridge. Lead approved category (i) only; each hash was classified in round two.",
+      "shingles": [
+        "aac5b4c73775361f",
+        "d14bd53aa8d8d7b6"
+      ]
+    }
   },
   "_internal/tests/test_aliases_follow_the_book.py": {
     "sha256": "a399ce6218d06554428f7c73e384c61eedc7adc9ab1c8a5a52ef45c35bce0fe6",
-    "reason": "tests/test_aliases_follow_the_book.py: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
+    "reason": "tests/test_aliases_follow_the_book.py: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data.",
+    "corpus_review": {
+      "classification": "i",
+      "file_sha256": "a399ce6218d06554428f7c73e384c61eedc7adc9ab1c8a5a52ef45c35bce0fe6",
+      "reason": "_internal/tests/test_aliases_follow_the_book.py: Short generic test/UI prose or literal bridge. Lead approved category (i) only; each hash was classified in round two.",
+      "shingles": [
+        "66d11ad2037afb56"
+      ]
+    }
   },
   "_internal/tests/test_an_inaudible_delta_on_a_heading_needs_no_override.py": {
     "sha256": "fee7492dc2bd5ee146c4945945414fc6a1aab791afeb8e5617d23e9a3c7a09a5",
@@ -3128,16 +3784,33 @@
     "reason": "tests/test_analysis_model_choice.py: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
   },
   "_internal/tests/test_analysis_required.py": {
-    "sha256": "f25521911c276265089c15f2fb7fd79ff564a49719da59f411d67d6de89c7e12",
-    "reason": "tests/test_analysis_required.py: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
+    "sha256": "dff80fa42f40b4ebd1d98545830a23c53115e185f40e174bb0bccd831908a7f4",
+    "reason": "_internal/tests/test_analysis_required.py: reviewed original workshop examples, regression descriptions and technical prompt instructions after removal of source excerpts.",
+    "corpus_review": {
+      "classification": "i",
+      "file_sha256": "dff80fa42f40b4ebd1d98545830a23c53115e185f40e174bb0bccd831908a7f4",
+      "reason": "_internal/tests/test_analysis_required.py: Short generic test/UI prose or literal bridge. Lead approved category (i) only; each hash was classified in round two.",
+      "shingles": [
+        "9fde1c1e67185f24",
+        "b6685f67d60878d2",
+        "b7f999111b86a44b",
+        "fa8936a95f77d59c"
+      ]
+    },
+    "rules": [
+      "long-vietnamese"
+    ]
   },
   "_internal/tests/test_apply_all_retires_its_queue.py": {
     "sha256": "a46a1ab9c7f1711073c316d336891785bf94b12d1b4b83c7127c746a9df5318d",
     "reason": "tests/test_apply_all_retires_its_queue.py: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
   },
   "_internal/tests/test_asr_repeated_content.py": {
-    "sha256": "5441335fcbf7b717899dc59a7069a562847190f2a199529a2c17dbfa87457acb",
-    "reason": "tests/test_asr_repeated_content.py: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
+    "sha256": "1ff822f97c8b45d7a2a3fe2135cca72004066a39bbb5a1a90e43913c29967f71",
+    "reason": "_internal/tests/test_asr_repeated_content.py: reviewed original workshop examples, regression descriptions and technical prompt instructions after removal of source excerpts.",
+    "rules": [
+      "long-vietnamese"
+    ]
   },
   "_internal/tests/test_asr_surrogate_does_not_kill_the_book.py": {
     "sha256": "008380862b7b0097db5a69b0c4e4d1ddad5e5a12cd32b6d20c5c1a37b345267b",
@@ -3260,8 +3933,19 @@
     "reason": "tests/test_credit_lines.py: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
   },
   "_internal/tests/test_database_safety.py": {
-    "sha256": "de4e0976a6271c8902be9650d642ca22df26b0908bfe5f6b3feaa7618948fe0a",
-    "reason": "tests/test_database_safety.py: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
+    "sha256": "90a4a4f95e8bb91af8bc626b69eea7cc4e595513623cce74c04c6ffcedd51727",
+    "reason": "_internal/tests/test_database_safety.py: reviewed original workshop examples, regression descriptions and technical prompt instructions after removal of source excerpts.",
+    "corpus_review": {
+      "classification": "i",
+      "file_sha256": "90a4a4f95e8bb91af8bc626b69eea7cc4e595513623cce74c04c6ffcedd51727",
+      "reason": "_internal/tests/test_database_safety.py: Short generic test/UI prose or literal bridge. Lead approved category (i) only; each hash was classified in round two.",
+      "shingles": [
+        "2efeefc089786cf8"
+      ]
+    },
+    "rules": [
+      "long-vietnamese"
+    ]
   },
   "_internal/tests/test_desktop_opens_book_files.py": {
     "sha256": "f369ced01350671a3ec90c876fa32084b86548d70087aea10b2abf73814bd1c4",
@@ -3293,7 +3977,17 @@
   },
   "_internal/tests/test_engine_voices.py": {
     "sha256": "ec1a69fcc67d1f65e6b97e351e48328edb041f662186e0519ba707a3bd9701ab",
-    "reason": "tests/test_engine_voices.py: all flagged strings match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
+    "reason": "tests/test_engine_voices.py: all flagged strings match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data.",
+    "corpus_review": {
+      "classification": "i",
+      "file_sha256": "ec1a69fcc67d1f65e6b97e351e48328edb041f662186e0519ba707a3bd9701ab",
+      "reason": "_internal/tests/test_engine_voices.py: Short generic test/UI prose or literal bridge. Lead approved category (i) only; each hash was classified in round two.",
+      "shingles": [
+        "9b74f80854061857",
+        "a0298219a26a74ef",
+        "b2fd71543d66e621"
+      ]
+    }
   },
   "_internal/tests/test_english_vi.py": {
     "sha256": "8cdc1e3f79c5480d60af5525c3c276d3c050810aa7c23d5523fa4ca00217b64c",
@@ -3417,7 +4111,16 @@
   },
   "_internal/tests/test_listener_writes_do_not_race.py": {
     "sha256": "cd584b427656c7b659e2a5dff0cd4820fda7e5b6e3ffda63eaa755b8cfbd2271",
-    "reason": "tests/test_listener_writes_do_not_race.py: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
+    "reason": "tests/test_listener_writes_do_not_race.py: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data.",
+    "corpus_review": {
+      "classification": "i",
+      "file_sha256": "cd584b427656c7b659e2a5dff0cd4820fda7e5b6e3ffda63eaa755b8cfbd2271",
+      "reason": "_internal/tests/test_listener_writes_do_not_race.py: Number-word table or normalization fixture. Lead approved category (i) only; each hash was classified in round two.",
+      "shingles": [
+        "5eeec1ebcddd1b13",
+        "892c9ec77867c263"
+      ]
+    }
   },
   "_internal/tests/test_listening_records.py": {
     "sha256": "0f5b9e407a9f30f2011ef91c65052f1c03f24a224f45d1c7a0fb01af5763425f",
@@ -3605,7 +4308,16 @@
   },
   "_internal/tests/test_narrator_sections.py": {
     "sha256": "0b710c0c1bb2c8633ef91451643a14f69548946679dc555d39c66e699ac589a0",
-    "reason": "tests/test_narrator_sections.py: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
+    "reason": "tests/test_narrator_sections.py: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data.",
+    "corpus_review": {
+      "classification": "i",
+      "file_sha256": "0b710c0c1bb2c8633ef91451643a14f69548946679dc555d39c66e699ac589a0",
+      "reason": "_internal/tests/test_narrator_sections.py: Short generic test/UI prose or literal bridge. Lead approved category (i) only; each hash was classified in round two.",
+      "shingles": [
+        "526fd09092d9c548",
+        "c45e64c24ee4667b"
+      ]
+    }
   },
   "_internal/tests/test_narrator_voice.py": {
     "sha256": "bccd6b9f531221c531e66f194a5d52fe0fa0ea54a74e6278b9c2b01591b9441a",
@@ -3628,8 +4340,11 @@
     "reason": "tests/test_no_run_over_a_drifted_recording.py: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
   },
   "_internal/tests/test_nobody_calls_their_own_name.py": {
-    "sha256": "e344f079d9b0d7959bbde30d706982d8ca9b5a83cbb9b820ca2e9e739a38a749",
-    "reason": "tests/test_nobody_calls_their_own_name.py: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
+    "sha256": "8d2357bbb984ae947cabe6e57e3d13b4a8fb317d6c6c40322398e1b72b55e7b1",
+    "reason": "_internal/tests/test_nobody_calls_their_own_name.py: reviewed original workshop examples, regression descriptions and technical prompt instructions after removal of source excerpts.",
+    "rules": [
+      "long-vietnamese"
+    ]
   },
   "_internal/tests/test_npc_local_chapter_scope.py": {
     "sha256": "bf82fcf4c31a69294d81fbee3e7e10c6a8a254bea10552e82d03414c71d633f7",
@@ -3757,7 +4472,15 @@
   },
   "_internal/tests/test_qt_fixed_waits.py": {
     "sha256": "acc2d39c89b3e608be4b15f68d9080783fb24a0c467487cd10e987101e3a0e70",
-    "reason": "tests/test_qt_fixed_waits.py: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
+    "reason": "tests/test_qt_fixed_waits.py: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data.",
+    "corpus_review": {
+      "classification": "i",
+      "file_sha256": "acc2d39c89b3e608be4b15f68d9080783fb24a0c467487cd10e987101e3a0e70",
+      "reason": "_internal/tests/test_qt_fixed_waits.py: Short generic test/UI prose or literal bridge. Lead approved category (i) only; each hash was classified in round two.",
+      "shingles": [
+        "8e5e3f7543822ace"
+      ]
+    }
   },
   "_internal/tests/test_qt_layout_lints.py": {
     "sha256": "460810dfaf222b3f23ac96100bb8e3b9a34b843274a9f5f2454e6c5cc00aa75b",
@@ -3801,7 +4524,16 @@
   },
   "_internal/tests/test_readaloud_edge_pieces.py": {
     "sha256": "80e264f7134156d7ee3a7ce03aba4d96aeb8c635ad819352f7f607f087aa766b",
-    "reason": "tests/test_readaloud_edge_pieces.py: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
+    "reason": "tests/test_readaloud_edge_pieces.py: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data.",
+    "corpus_review": {
+      "classification": "i",
+      "file_sha256": "80e264f7134156d7ee3a7ce03aba4d96aeb8c635ad819352f7f607f087aa766b",
+      "reason": "_internal/tests/test_readaloud_edge_pieces.py: Short generic test/UI prose or literal bridge. Lead approved category (i) only; each hash was classified in round two.",
+      "shingles": [
+        "7157b2c610cb4820",
+        "f64457b2eb8b0f2d"
+      ]
+    }
   },
   "_internal/tests/test_readaloud_edge_stream.py": {
     "sha256": "24af6a068ab715d2ff8b354cef77c7c930d5e663003a7190b3a87fb77d54a0a3",
@@ -3817,15 +4549,27 @@
   },
   "_internal/tests/test_readaloud_reading_forms.py": {
     "sha256": "9483af6659526c2c5d0d63724a0639de69f96407fd05e6480b7c44a92e74085d",
-    "reason": "tests/test_readaloud_reading_forms.py: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
+    "reason": "tests/test_readaloud_reading_forms.py: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data.",
+    "corpus_review": {
+      "classification": "i",
+      "file_sha256": "9483af6659526c2c5d0d63724a0639de69f96407fd05e6480b7c44a92e74085d",
+      "reason": "_internal/tests/test_readaloud_reading_forms.py: Short generic test/UI prose or literal bridge. Lead approved category (i) only; each hash was classified in round two.",
+      "shingles": [
+        "3fc60f85fb90c457",
+        "ea0219028a4c2372"
+      ]
+    }
   },
   "_internal/tests/test_readaloud_readings.py": {
     "sha256": "113c439b211375079be701b21f1ec2239a89e4b7dc90a37ba1ebbd6686d0caf8",
     "reason": "tests/test_readaloud_readings.py: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
   },
   "_internal/tests/test_readaloud_sounds.py": {
-    "sha256": "2d8c7f8c1bc488005931db2b49748dafb3cafe568e45a245f5f490472aea7b6e",
-    "reason": "tests/test_readaloud_sounds.py: all flagged strings match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
+    "sha256": "4873393ef42c5d25cc42b66fca987196bf682d1e87fcb2dc069cc5ac73be3800",
+    "reason": "_internal/tests/test_readaloud_sounds.py: reviewed original workshop examples, regression descriptions and technical prompt instructions after removal of source excerpts.",
+    "rules": [
+      "long-vietnamese"
+    ]
   },
   "_internal/tests/test_readaloud_spoken.py": {
     "sha256": "55f55aa1d9e1c6331f3838d179217c7369758e4e53bb4c792ffa87b4da542d91",
@@ -3845,7 +4589,16 @@
   },
   "_internal/tests/test_readaloud_vieneu.py": {
     "sha256": "e2a80c1f7216f37e3c3ec9697605ef7e48f7cea4ee7a37ba65eb4fe80985c8a8",
-    "reason": "tests/test_readaloud_vieneu.py: all flagged strings match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
+    "reason": "tests/test_readaloud_vieneu.py: all flagged strings match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data.",
+    "corpus_review": {
+      "classification": "i",
+      "file_sha256": "e2a80c1f7216f37e3c3ec9697605ef7e48f7cea4ee7a37ba65eb4fe80985c8a8",
+      "reason": "_internal/tests/test_readaloud_vieneu.py: Number-word table or normalization fixture. Lead approved category (i) only; each hash was classified in round two.",
+      "shingles": [
+        "d7c7e36fd5e81b17",
+        "ffd7f09fd751c208"
+      ]
+    }
   },
   "_internal/tests/test_readaloud_vieneu_gguf.py": {
     "sha256": "9d2d00ae3c6e2ecb98cf2ec8c8a322c1c74c616e2de035ef38ffae0223b2cb46",
@@ -4009,7 +4762,15 @@
   },
   "_internal/tests/test_supertonic_opening_cut.py": {
     "sha256": "206c853debc7a310c4e1533e8c3a0ad8f50ad5d4db1f09f2cfafe51583d9f7a1",
-    "reason": "tests/test_supertonic_opening_cut.py: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
+    "reason": "tests/test_supertonic_opening_cut.py: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data.",
+    "corpus_review": {
+      "classification": "i",
+      "file_sha256": "206c853debc7a310c4e1533e8c3a0ad8f50ad5d4db1f09f2cfafe51583d9f7a1",
+      "reason": "_internal/tests/test_supertonic_opening_cut.py: Short generic test/UI prose or literal bridge. Lead approved category (i) only; each hash was classified in round two.",
+      "shingles": [
+        "81b796a6df22e0e5"
+      ]
+    }
   },
   "_internal/tests/test_sync_text_only_books.py": {
     "sha256": "76eef4e0e2ce59f8b18a7a7124ca606232947c0a95f71c41c377ff0ae87c90f2",
@@ -4021,7 +4782,15 @@
   },
   "_internal/tests/test_tail_credit_lines.py": {
     "sha256": "7ddfb1919c23682e38ccff12ea606e982865c3420da84ea7de3098d6e477984a",
-    "reason": "tests/test_tail_credit_lines.py: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
+    "reason": "tests/test_tail_credit_lines.py: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data.",
+    "corpus_review": {
+      "classification": "i",
+      "file_sha256": "7ddfb1919c23682e38ccff12ea606e982865c3420da84ea7de3098d6e477984a",
+      "reason": "_internal/tests/test_tail_credit_lines.py: Short generic test/UI prose or literal bridge. Lead approved category (i) only; each hash was classified in round two.",
+      "shingles": [
+        "fa6f06df16db87cf"
+      ]
+    }
   },
   "_internal/tests/test_tap_audit_targets.py": {
     "sha256": "b34ea5d04edf5c8182fa96ccf0200c65ac3e3c284af4e0851ac91a53420065f2",
@@ -4176,8 +4945,11 @@
     "reason": "tests/test_vieneu_android.py: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
   },
   "_internal/tests/test_vietnamese_syllable.py": {
-    "sha256": "fdbfcf30c9f37fa776a1ae381807ab09ed2d999182e2a4cc690a09eeaa688ab8",
-    "reason": "tests/test_vietnamese_syllable.py: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
+    "sha256": "e7910b25aea0760bf13b08aca886b67a3341ffdae6b4c125ef8638ed0d5ca656",
+    "reason": "_internal/tests/test_vietnamese_syllable.py: reviewed original workshop examples, regression descriptions and technical prompt instructions after removal of source excerpts.",
+    "rules": [
+      "long-vietnamese"
+    ]
   },
   "_internal/tests/test_voice_identity_scoring.py": {
     "sha256": "1e56d407202f1beabcffb80779c020958f1b1bb6646762f22b0abdeb37d75d61",
@@ -4205,7 +4977,15 @@
   },
   "_internal/tests/test_voice_try.py": {
     "sha256": "6b8d765fa9c078cb3678057d90ac33a73032f12a5cb96853e808f08fd5ffeaf3",
-    "reason": "tests/test_voice_try.py: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
+    "reason": "tests/test_voice_try.py: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data.",
+    "corpus_review": {
+      "classification": "i",
+      "file_sha256": "6b8d765fa9c078cb3678057d90ac33a73032f12a5cb96853e808f08fd5ffeaf3",
+      "reason": "_internal/tests/test_voice_try.py: Short generic test/UI prose or literal bridge. Lead approved category (i) only; each hash was classified in round two.",
+      "shingles": [
+        "7f52f9dc25aa6a56"
+      ]
+    }
   },
   "_internal/tests/test_webui_keepalive.py": {
     "sha256": "e20a0fe4fd7fee282de3fff1a4fb1d746d89fd80a6d14d76989eec1840994593",
@@ -4353,7 +5133,17 @@
   },
   "_internal/ui_strings/vi.json": {
     "sha256": "b2864673310ab90187525e5452c50e91340c2e7290f44b07dae4fbe7f46a49a7",
-    "reason": "ui_strings/vi.json: all flagged strings match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
+    "reason": "ui_strings/vi.json: all flagged strings match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data.",
+    "corpus_review": {
+      "classification": "i",
+      "file_sha256": "b2864673310ab90187525e5452c50e91340c2e7290f44b07dae4fbe7f46a49a7",
+      "reason": "_internal/ui_strings/vi.json: Short generic test/UI prose or literal bridge. Lead approved category (i) only; each hash was classified in round two.",
+      "shingles": [
+        "8316d21834562c14",
+        "889707cc9e859359",
+        "f7314f919a249cd3"
+      ]
+    }
   },
   "_internal/abook/vietnamese_letters.py": {
     "sha256": "b5c1b946b9456f7cac9dbc34d995a1d56fe592e623ffd56662d760c864875e44",
@@ -4362,5 +5152,419 @@
   "_internal/tests/test_vietnamese_letters.py": {
     "sha256": "2d9b17e43d1c40d38115bccbc0d0a5db6edc463d6f0e752e102a411c126c9a00",
     "reason": "Shared Vietnamese letter-class regression documentation describes uppercase/lowercase code points and synthetic test provenance, not narrative text."
+  },
+  "_internal/desktop_qt/tests/test_width.cpp": {
+    "reason": "_internal/desktop_qt/tests/test_width.cpp: individually classified contextual coincidences only.",
+    "rules": [],
+    "sha256": "a464a876c67415664da73503f41b3bf46abc5e5453004efd8027c65dfed802b8",
+    "corpus_review": {
+      "classification": "i",
+      "file_sha256": "a464a876c67415664da73503f41b3bf46abc5e5453004efd8027c65dfed802b8",
+      "reason": "_internal/desktop_qt/tests/test_width.cpp: Short generic test/UI prose or literal bridge. Lead approved category (i) only; each hash was classified in round two.",
+      "shingles": [
+        "34c39778d36c91e5"
+      ]
+    }
+  },
+  "_internal/desktop_qt/tests/width/tst_d2_studio.qml": {
+    "reason": "_internal/desktop_qt/tests/width/tst_d2_studio.qml: individually classified contextual coincidences only.",
+    "rules": [],
+    "sha256": "83c6c5d29d7c4710a876dd81c53eecb48b0573bd975bb2a1780ab4f20680e0c3",
+    "corpus_review": {
+      "classification": "i",
+      "file_sha256": "83c6c5d29d7c4710a876dd81c53eecb48b0573bd975bb2a1780ab4f20680e0c3",
+      "reason": "_internal/desktop_qt/tests/width/tst_d2_studio.qml: Short generic test/UI prose or literal bridge. Lead approved category (i) only; each hash was classified in round two.",
+      "shingles": [
+        "6d401ca665d09d80"
+      ]
+    }
+  },
+  "_internal/desktop_qt/tests/width/tst_history.qml": {
+    "reason": "_internal/desktop_qt/tests/width/tst_history.qml: individually classified contextual coincidences only.",
+    "rules": [],
+    "sha256": "97b02bb20177d7d66bc7c1d907496b67edf055e46d8c32168fd38e7bc9a67edb",
+    "corpus_review": {
+      "classification": "i",
+      "file_sha256": "97b02bb20177d7d66bc7c1d907496b67edf055e46d8c32168fd38e7bc9a67edb",
+      "reason": "_internal/desktop_qt/tests/width/tst_history.qml: Short generic test/UI prose or literal bridge. Lead approved category (i) only; each hash was classified in round two.",
+      "shingles": [
+        "2c53b56c02517a33"
+      ]
+    }
+  },
+  "_internal/desktop_qt/tests/width/tst_records.qml": {
+    "reason": "_internal/desktop_qt/tests/width/tst_records.qml: individually classified contextual coincidences only.",
+    "rules": [],
+    "sha256": "a4c829f01c716d0295bc45adf80199d6174077a7b170062b72064ffaf7750246",
+    "corpus_review": {
+      "classification": "i",
+      "file_sha256": "a4c829f01c716d0295bc45adf80199d6174077a7b170062b72064ffaf7750246",
+      "reason": "_internal/desktop_qt/tests/width/tst_records.qml: Short generic test/UI prose or literal bridge. Lead approved category (i) only; each hash was classified in round two.",
+      "shingles": [
+        "2c53b56c02517a33"
+      ]
+    }
+  },
+  "_internal/mobile/android/app/proguard-rules.pro": {
+    "reason": "_internal/mobile/android/app/proguard-rules.pro: individually classified contextual coincidences only.",
+    "rules": [],
+    "sha256": "65f8ceae4336be4b584ca4abca6fca8d55a6ab07553a5f4ba49efe34ea0d9642",
+    "corpus_review": {
+      "classification": "i",
+      "file_sha256": "65f8ceae4336be4b584ca4abca6fca8d55a6ab07553a5f4ba49efe34ea0d9642",
+      "reason": "_internal/mobile/android/app/proguard-rules.pro: Technical commentary or book-title metadata. Lead approved category (i) only; each hash was classified in round two.",
+      "shingles": [
+        "c886cbfb7989a1b9"
+      ]
+    }
+  },
+  "_internal/mobile/android/app/src/main/java/vn/abook/player/readaloud/Shouts.kt": {
+    "reason": "_internal/mobile/android/app/src/main/java/vn/abook/player/readaloud/Shouts.kt: individually classified contextual coincidences only.",
+    "rules": [],
+    "sha256": "66248af17b4ee55bb3d263237d91a36d69fe12490cb0c23cd1cf0af26826ffde",
+    "corpus_review": {
+      "classification": "i",
+      "file_sha256": "66248af17b4ee55bb3d263237d91a36d69fe12490cb0c23cd1cf0af26826ffde",
+      "reason": "_internal/mobile/android/app/src/main/java/vn/abook/player/readaloud/Shouts.kt: Number-word table or normalization fixture. Lead approved category (i) only; each hash was classified in round two.",
+      "shingles": [
+        "df5b7845de8cd602"
+      ]
+    }
+  },
+  "_internal/mobile/android/app/src/test/java/vn/abook/player/readaloud/EdgePiecesTest.kt": {
+    "reason": "_internal/mobile/android/app/src/test/java/vn/abook/player/readaloud/EdgePiecesTest.kt: individually classified contextual coincidences only.",
+    "rules": [],
+    "sha256": "b74e02552497efcfe3e6e51050965dfc4b140553a5bc022ca4abeacd0d6e72dc",
+    "corpus_review": {
+      "classification": "i",
+      "file_sha256": "b74e02552497efcfe3e6e51050965dfc4b140553a5bc022ca4abeacd0d6e72dc",
+      "reason": "_internal/mobile/android/app/src/test/java/vn/abook/player/readaloud/EdgePiecesTest.kt: Short generic test/UI prose or literal bridge. Lead approved category (i) only; each hash was classified in round two.",
+      "shingles": [
+        "13144cc7dd734c81",
+        "3d5b95d966d7a3de",
+        "7157b2c610cb4820",
+        "a203e621f64e9ab6",
+        "f64457b2eb8b0f2d"
+      ]
+    }
+  },
+  "_internal/mobile/android/app/src/test/java/vn/abook/player/readaloud/LocalLiveTest.kt": {
+    "reason": "_internal/mobile/android/app/src/test/java/vn/abook/player/readaloud/LocalLiveTest.kt: individually classified contextual coincidences only.",
+    "rules": [],
+    "sha256": "de0c1db8e4684b4d700d6bccfb056d37707023364548081ed60a3a71e602c179",
+    "corpus_review": {
+      "classification": "i",
+      "file_sha256": "de0c1db8e4684b4d700d6bccfb056d37707023364548081ed60a3a71e602c179",
+      "reason": "_internal/mobile/android/app/src/test/java/vn/abook/player/readaloud/LocalLiveTest.kt: Number-word table or normalization fixture; Short generic test/UI prose or literal bridge. Lead approved category (i) only; each hash was classified in round two.",
+      "shingles": [
+        "d7c7e36fd5e81b17",
+        "f97757164667c9d2",
+        "ffd7f09fd751c208"
+      ]
+    }
+  },
+  "_internal/mobile/android/app/src/test/java/vn/abook/player/vieneu/PhonemePolicyTest.kt": {
+    "reason": "_internal/mobile/android/app/src/test/java/vn/abook/player/vieneu/PhonemePolicyTest.kt: individually classified contextual coincidences only.",
+    "rules": [],
+    "sha256": "cde13033b531af2a56421ac39faa0e2649cb1d847ce8c21b8afd25e7685eb834",
+    "corpus_review": {
+      "classification": "i",
+      "file_sha256": "cde13033b531af2a56421ac39faa0e2649cb1d847ce8c21b8afd25e7685eb834",
+      "reason": "_internal/mobile/android/app/src/test/java/vn/abook/player/vieneu/PhonemePolicyTest.kt: Short generic test/UI prose or literal bridge. Lead approved category (i) only; each hash was classified in round two.",
+      "shingles": [
+        "2bce759036bdf6f8"
+      ]
+    }
+  },
+  "_internal/mobile/android/app/src/test/java/vn/abook/player/vieneu/ReadingFormsTest.kt": {
+    "reason": "_internal/mobile/android/app/src/test/java/vn/abook/player/vieneu/ReadingFormsTest.kt: individually classified contextual coincidences only.",
+    "rules": [],
+    "sha256": "fe11aec89abf5328fcc1d2b33ccd999ba32f945db9e010643209634f72d26f98",
+    "corpus_review": {
+      "classification": "i",
+      "file_sha256": "fe11aec89abf5328fcc1d2b33ccd999ba32f945db9e010643209634f72d26f98",
+      "reason": "_internal/mobile/android/app/src/test/java/vn/abook/player/vieneu/ReadingFormsTest.kt: Short generic test/UI prose or literal bridge. Lead approved category (i) only; each hash was classified in round two.",
+      "shingles": [
+        "3fc60f85fb90c457",
+        "ea0219028a4c2372"
+      ]
+    }
+  },
+  "_internal/mobile/android/app/src/test/java/vn/abook/player/vieneu/VieneuSpeakerTest.kt": {
+    "reason": "_internal/mobile/android/app/src/test/java/vn/abook/player/vieneu/VieneuSpeakerTest.kt: individually classified contextual coincidences only.",
+    "rules": [],
+    "sha256": "4467e215f957d90b7e4d8d54613c1674a60f8665dfa1f1d8fe8bc3c437193f9e",
+    "corpus_review": {
+      "classification": "i",
+      "file_sha256": "4467e215f957d90b7e4d8d54613c1674a60f8665dfa1f1d8fe8bc3c437193f9e",
+      "reason": "_internal/mobile/android/app/src/test/java/vn/abook/player/vieneu/VieneuSpeakerTest.kt: Number-word table or normalization fixture; Short generic test/UI prose or literal bridge. Lead approved category (i) only; each hash was classified in round two.",
+      "shingles": [
+        "d7c7e36fd5e81b17",
+        "eace8aa6859be99c",
+        "ffd7f09fd751c208"
+      ]
+    }
+  },
+  "_internal/scripts/book1.env": {
+    "reason": "_internal/scripts/book1.env: individually classified contextual coincidences only.",
+    "rules": [],
+    "sha256": "7de226a5de845dca03e009e28cb51368ca042287c384086e2dd61366ee6947c3",
+    "corpus_review": {
+      "classification": "i",
+      "file_sha256": "7de226a5de845dca03e009e28cb51368ca042287c384086e2dd61366ee6947c3",
+      "reason": "_internal/scripts/book1.env: Book-title metadata or technical commentary. Lead approved category (i) only; each hash was classified in round two.",
+      "shingles": [
+        "13f59b4fa133d5df",
+        "5c6cd67312afa7f1",
+        "7a7abb3fdb195e40",
+        "9cda93c427b2838e",
+        "aaff6a04b191ecef",
+        "af47720c4c88e5c2",
+        "b333ed7594692774"
+      ]
+    }
+  },
+  "_internal/scripts/vieneu_phone_bench_export.py": {
+    "reason": "_internal/scripts/vieneu_phone_bench_export.py: individually classified contextual coincidences only.",
+    "rules": [],
+    "sha256": "b464b639752a2826240c1baee3bfa5c5aa51e6ceabcd9d4b59788096435bbce7",
+    "corpus_review": {
+      "classification": "i",
+      "file_sha256": "b464b639752a2826240c1baee3bfa5c5aa51e6ceabcd9d4b59788096435bbce7",
+      "reason": "_internal/scripts/vieneu_phone_bench_export.py: Short generic test/UI prose or literal bridge. Lead approved category (i) only; each hash was classified in round two.",
+      "shingles": [
+        "ba246d6c70679b85"
+      ]
+    }
+  },
+  "_internal/tests/fixtures/import/a84_breaks.docx": {
+    "reason": "_internal/tests/fixtures/import/a84_breaks.docx: individually classified contextual coincidences only.",
+    "rules": [],
+    "sha256": "98634d75e4ffe2e1f7685858be398f1a743289f3dcf4eec9005f92225598b857",
+    "corpus_review": {
+      "classification": "i",
+      "file_sha256": "98634d75e4ffe2e1f7685858be398f1a743289f3dcf4eec9005f92225598b857",
+      "reason": "_internal/tests/fixtures/import/a84_breaks.docx: Self-written import fixture; short coincidence. Lead approved category (i) only; each hash was classified in round two.",
+      "shingles": [
+        "e4895f0a4093d4ac"
+      ]
+    }
+  },
+  "_internal/tests/fixtures/import/a84_controls.txt": {
+    "reason": "_internal/tests/fixtures/import/a84_controls.txt: individually classified contextual coincidences only.",
+    "rules": [],
+    "sha256": "10dab9f974d83b1714d0bfa52a7b7d5161f8249b472a16fab3cd5e3c897ae9ca",
+    "corpus_review": {
+      "classification": "i",
+      "file_sha256": "10dab9f974d83b1714d0bfa52a7b7d5161f8249b472a16fab3cd5e3c897ae9ca",
+      "reason": "_internal/tests/fixtures/import/a84_controls.txt: Self-written import fixture; short coincidence. Lead approved category (i) only; each hash was classified in round two.",
+      "shingles": [
+        "ddb8b91b57655824",
+        "e4895f0a4093d4ac"
+      ]
+    }
+  },
+  "_internal/tests/fixtures/import/pages/story.pages.json": {
+    "reason": "_internal/tests/fixtures/import/pages/story.pages.json: individually classified contextual coincidences only.",
+    "rules": [],
+    "sha256": "c2b6dc10ced74b75ccf052d904ab6089e7b6e8f2f001d91676a4621fdffbf936",
+    "corpus_review": {
+      "classification": "i",
+      "file_sha256": "c2b6dc10ced74b75ccf052d904ab6089e7b6e8f2f001d91676a4621fdffbf936",
+      "reason": "_internal/tests/fixtures/import/pages/story.pages.json: Self-written import fixture; short coincidence. Lead approved category (i) only; each hash was classified in round two.",
+      "shingles": [
+        "b3fba8c1421bbc8a"
+      ]
+    }
+  },
+  "_internal/tests/fixtures/music/n0/chapters_mood.json": {
+    "reason": "_internal/tests/fixtures/music/n0/chapters_mood.json: individually classified contextual coincidences only.",
+    "rules": [],
+    "sha256": "bdd7540e7b8713ba3661cee1f39e0a24d423d83df558b15403b54d4415c4242d",
+    "corpus_review": {
+      "classification": "i",
+      "file_sha256": "bdd7540e7b8713ba3661cee1f39e0a24d423d83df558b15403b54d4415c4242d",
+      "reason": "_internal/tests/fixtures/music/n0/chapters_mood.json: Short generic test/UI prose or literal bridge. Lead approved category (i) only; each hash was classified in round two.",
+      "shingles": [
+        "f3c8b2fe0d85dc5a",
+        "f70f8d1aa8a21b39"
+      ]
+    }
+  },
+  "_internal/tests/fixtures/music/nnlite/lb_fixture.json": {
+    "reason": "_internal/tests/fixtures/music/nnlite/lb_fixture.json: individually classified contextual coincidences only.",
+    "rules": [],
+    "sha256": "6f0a0de5700c12c6c9a48134d73a3c28ee1aac29fd60599b3b685a3c9b957ccb",
+    "corpus_review": {
+      "classification": "i",
+      "file_sha256": "6f0a0de5700c12c6c9a48134d73a3c28ee1aac29fd60599b3b685a3c9b957ccb",
+      "reason": "_internal/tests/fixtures/music/nnlite/lb_fixture.json: Short generic test/UI prose or literal bridge. Lead approved category (i) only; each hash was classified in round two.",
+      "shingles": [
+        "f3c8b2fe0d85dc5a",
+        "f70f8d1aa8a21b39"
+      ]
+    }
+  },
+  "_internal/tests/fixtures/music/nnlite/lvj_fixture.json": {
+    "reason": "_internal/tests/fixtures/music/nnlite/lvj_fixture.json: individually classified contextual coincidences only.",
+    "rules": [],
+    "sha256": "e65d74f400111f2b0d459bbdc21725c00d9356e7a0bbf05c996fa351f992919f",
+    "corpus_review": {
+      "classification": "i",
+      "file_sha256": "e65d74f400111f2b0d459bbdc21725c00d9356e7a0bbf05c996fa351f992919f",
+      "reason": "_internal/tests/fixtures/music/nnlite/lvj_fixture.json: Short generic test/UI prose or literal bridge. Lead approved category (i) only; each hash was classified in round two.",
+      "shingles": [
+        "f3c8b2fe0d85dc5a"
+      ]
+    }
+  },
+  "_internal/tests/fixtures/music/nnlite/nnlite_out_fixture.json": {
+    "reason": "_internal/tests/fixtures/music/nnlite/nnlite_out_fixture.json: individually classified contextual coincidences only.",
+    "rules": [],
+    "sha256": "24092d1c1a140380a1c38eeb860417b026caacba4072ad1ff8d1bec29e2b59a3",
+    "corpus_review": {
+      "classification": "i",
+      "file_sha256": "24092d1c1a140380a1c38eeb860417b026caacba4072ad1ff8d1bec29e2b59a3",
+      "reason": "_internal/tests/fixtures/music/nnlite/nnlite_out_fixture.json: Short generic test/UI prose or literal bridge. Lead approved category (i) only; each hash was classified in round two.",
+      "shingles": [
+        "f3c8b2fe0d85dc5a",
+        "f70f8d1aa8a21b39"
+      ]
+    }
+  },
+  "_internal/tests/fixtures/music/nnlite/nnlite_text_fixture.json": {
+    "reason": "_internal/tests/fixtures/music/nnlite/nnlite_text_fixture.json: individually classified contextual coincidences only.",
+    "rules": [],
+    "sha256": "aba086809cdac190e9397db3f207cc48f68a51ac8a6a62b5564bd76dc549fd06",
+    "corpus_review": {
+      "classification": "i",
+      "file_sha256": "aba086809cdac190e9397db3f207cc48f68a51ac8a6a62b5564bd76dc549fd06",
+      "reason": "_internal/tests/fixtures/music/nnlite/nnlite_text_fixture.json: Short generic test/UI prose or literal bridge. Lead approved category (i) only; each hash was classified in round two.",
+      "shingles": [
+        "38f9e956fbd6dc7a",
+        "fcc52bc9fdc7af9a"
+      ]
+    }
+  },
+  "_internal/tests/test_a_named_tag_beats_a_generic_one.py": {
+    "reason": "_internal/tests/test_a_named_tag_beats_a_generic_one.py: individually classified contextual coincidences only.",
+    "rules": [],
+    "sha256": "b307181ca39e2162bf0b5530e3ba95bc9ec798f1ee7eb499e289bda88ac870dc",
+    "corpus_review": {
+      "classification": "i",
+      "file_sha256": "b307181ca39e2162bf0b5530e3ba95bc9ec798f1ee7eb499e289bda88ac870dc",
+      "reason": "_internal/tests/test_a_named_tag_beats_a_generic_one.py: Short generic test/UI prose or literal bridge. Lead approved category (i) only; each hash was classified in round two.",
+      "shingles": [
+        "bf4509dab433a2be"
+      ]
+    }
+  },
+  "_internal/tests/test_music_scenes.py": {
+    "reason": "_internal/tests/test_music_scenes.py: individually classified contextual coincidences only.",
+    "rules": [],
+    "sha256": "a6c6aecc85c92e17409436f455528e2be798521fe80dca494e4b9a0e04232323",
+    "corpus_review": {
+      "classification": "i",
+      "file_sha256": "a6c6aecc85c92e17409436f455528e2be798521fe80dca494e4b9a0e04232323",
+      "reason": "_internal/tests/test_music_scenes.py: Short generic test/UI prose or literal bridge. Lead approved category (i) only; each hash was classified in round two.",
+      "shingles": [
+        "df3c2ef276a7d370"
+      ]
+    }
+  },
+  "_internal/tests/test_pace_pause_compensation.py": {
+    "reason": "_internal/tests/test_pace_pause_compensation.py: individually classified contextual coincidences only.",
+    "rules": [],
+    "sha256": "a212e25f73c7c7481ac0c29a3fe84cddbb3980a70fba965a5ccf179ebf4a92af",
+    "corpus_review": {
+      "classification": "i",
+      "file_sha256": "a212e25f73c7c7481ac0c29a3fe84cddbb3980a70fba965a5ccf179ebf4a92af",
+      "reason": "_internal/tests/test_pace_pause_compensation.py: Short generic test/UI prose or literal bridge. Lead approved category (i) only; each hash was classified in round two.",
+      "shingles": [
+        "4e58df8957d4ca6a",
+        "f9e7c92a7c413c38"
+      ]
+    }
+  },
+  "_internal/tests/test_shared_vietnamese.py": {
+    "reason": "_internal/tests/test_shared_vietnamese.py: individually classified contextual coincidences only.",
+    "rules": [],
+    "sha256": "5fd354d0c80df49110a8a1504a0844327cd2e92def13c1c91171eeddd4a4bac2",
+    "corpus_review": {
+      "classification": "i",
+      "file_sha256": "5fd354d0c80df49110a8a1504a0844327cd2e92def13c1c91171eeddd4a4bac2",
+      "reason": "_internal/tests/test_shared_vietnamese.py: Short generic test/UI prose or literal bridge. Lead approved category (i) only; each hash was classified in round two.",
+      "shingles": [
+        "2bce759036bdf6f8"
+      ]
+    }
+  },
+  "_internal/ui/scripts/fixtures/ink-rhythm.html": {
+    "reason": "_internal/ui/scripts/fixtures/ink-rhythm.html: individually classified contextual coincidences only.",
+    "rules": [],
+    "sha256": "1aa722c7a866b8a74b661ecd74590b72424038b786ef9ac528136a92b875a5b1",
+    "corpus_review": {
+      "classification": "i",
+      "file_sha256": "1aa722c7a866b8a74b661ecd74590b72424038b786ef9ac528136a92b875a5b1",
+      "reason": "_internal/ui/scripts/fixtures/ink-rhythm.html: CSS declarations; not narrative. Lead approved category (i) only; each hash was classified in round two.",
+      "shingles": [
+        "b487b0ccefddbbbe"
+      ]
+    }
+  },
+  "_internal/ui/src/gallery/data.ts": {
+    "reason": "_internal/ui/src/gallery/data.ts: individually classified contextual coincidences only.",
+    "rules": [],
+    "sha256": "b14f9ef78f0dfc9871ad4c6151db8de37d432daf99772af8fc88581e3ce10682",
+    "corpus_review": {
+      "classification": "i",
+      "file_sha256": "b14f9ef78f0dfc9871ad4c6151db8de37d432daf99772af8fc88581e3ce10682",
+      "reason": "_internal/ui/src/gallery/data.ts: Generator declares self-written synthetic text. Lead approved category (i) only; each hash was classified in round two.",
+      "shingles": [
+        "4db970eee7de6c6a",
+        "b96ba4cf9c799aef",
+        "e07fa53a4ad1a1b9"
+      ]
+    }
+  },
+  "_internal/ui/src/gallery/desktopApi.ts": {
+    "reason": "_internal/ui/src/gallery/desktopApi.ts: individually classified contextual coincidences only.",
+    "rules": [],
+    "sha256": "9d6a8d412a29e93dfc15db39673ec5d3d154c4bdc9516a6180675548fa998c78",
+    "corpus_review": {
+      "classification": "i",
+      "file_sha256": "9d6a8d412a29e93dfc15db39673ec5d3d154c4bdc9516a6180675548fa998c78",
+      "reason": "_internal/ui/src/gallery/desktopApi.ts: Generator declares self-written synthetic text. Lead approved category (i) only; each hash was classified in round two.",
+      "shingles": [
+        "4db970eee7de6c6a",
+        "b96ba4cf9c799aef"
+      ]
+    }
+  },
+  "_internal/ui/src/listen/player.tsx": {
+    "reason": "_internal/ui/src/listen/player.tsx: individually classified contextual coincidences only.",
+    "rules": [],
+    "sha256": "fb1fc9ed1648e2413edd0542430f90bf819e11854f3a84c56c28e979600281ea",
+    "corpus_review": {
+      "classification": "i",
+      "file_sha256": "fb1fc9ed1648e2413edd0542430f90bf819e11854f3a84c56c28e979600281ea",
+      "reason": "_internal/ui/src/listen/player.tsx: Short generic test/UI prose or literal bridge. Lead approved category (i) only; each hash was classified in round two.",
+      "shingles": [
+        "cebf58e770e0bac2"
+      ]
+    }
+  },
+  "_internal/ui/src/studio/musicLocal.ts": {
+    "reason": "_internal/ui/src/studio/musicLocal.ts: individually classified contextual coincidences only.",
+    "rules": [],
+    "sha256": "019ab9c49174c09a181a9fb9958b2635c39f3d30080be39ff06edb46631d6628",
+    "corpus_review": {
+      "classification": "i",
+      "file_sha256": "019ab9c49174c09a181a9fb9958b2635c39f3d30080be39ff06edb46631d6628",
+      "reason": "_internal/ui/src/studio/musicLocal.ts: Short generic test/UI prose or literal bridge. Lead approved category (i) only; each hash was classified in round two.",
+      "shingles": [
+        "f28c48a570996d75"
+      ]
+    }
   }
 }

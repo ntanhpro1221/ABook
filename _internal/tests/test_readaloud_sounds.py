@@ -273,20 +273,20 @@ def test_won_yen_and_kwan_are_units_only_after_a_number() -> None:
 
 
 def test_a_capital_o_starting_a_hyphenated_name_is_a_syllable_not_a_letter() -> None:
-    assert _said("Otsuki-san, Okayama, Onii-sama", "ja") == ["ô-xu-ki-xan,", "ô-ca-gia-ma,", "ô-ni-xa-ma"]
+    assert _said("Otsukiri-san, Okayama, Onii-sama", "ja") == ["ô-xu-ki-ri-xan,", "ô-ca-gia-ma,", "ô-ni-xa-ma"]
 
 
 def test_a_lone_o_syllable_is_marked_so_the_normaliser_keeps_it_an_o_and_not_the_letter_o_circumflex() -> None:
     """An "o" syllable after a / e inside a Japanese word stays "o" (owner 10-11: only the word-initial one is "ô"). sea-g2p spells a bare "o" in a Vietnamese sentence as the letter "ô"; "o_" loses the "_" in its first pass and `keep_lone_o` protects it in the second, so the engine says "o" (the TN answer)."""
-    assert _said("Kaori, okonomiyaki, Naoki", "ja") == ["Ca-o_-ri,", "ô-cô-nô-mi-a-ki,", "Na-o_-ki"]
+    assert _said("Kaori, okonomiyaki, Naokiri", "ja") == ["Ca-o_-ri,", "ô-cô-nô-mi-a-ki,", "Na-o_-ki-ri"]
     assert names.lone_syllable("O-xu-ki-xan") == "o_-xu-ki-xan" and names.lone_syllable("A-ri") == "a-ri" and names.lone_syllable("ca-o-ri") == "ca-o_-ri" and names.lone_syllable("o") == "o_" and names.lone_syllable("ô") == "ô"
     pytest.importorskip("sea_g2p")
     from abook.readaloud import vieneu_engine
 
-    pieces = " ".join(_said("Hẳn là Naoki-san rất thích nấu ăn."))
-    assert vieneu_engine.normalize([pieces]).startswith("hẳn là na o ki xan rất")
+    pieces = " ".join(_said("Xem kìa Naokiri-san đang lau hộp mực."))
+    assert vieneu_engine.normalize([pieces]).startswith("xem kìa na o ki ri xan đang")
     assert " nˈaː ˈɔ kˈi " in vieneu_engine.phonemize([pieces]), "VieNeu's second normalisation must not turn the syllable into the letter ô (ˈo)"
-    assert "0. Câu thử đã gỡ. 0." in vieneu_engine.phonemize(["0. Câu thử đã gỡ. 0.".join(_said("0. Câu thử đã gỡ. 0."))]), "0. Câu thử đã gỡ. 0."
+    assert " ˈo sˈu kˈi " in vieneu_engine.phonemize([" ".join(_said("Xem kìa Otsukiri-san đang lau hộp mực."))]), "the word-initial o is ô"
     assert " ˈo bˈeɜ " in vieneu_engine.phonemize(["Tôi đi o bế con."]), "a real Vietnamese 'o' is still spelled like sea-g2p does"
     assert vieneu_engine.keep_lone_o("a o, b", "a ô, b") == "a o, b" and vieneu_engine.keep_lone_o("a o b", "a ô b c") == "a ô b c"
 

@@ -4405,8 +4405,8 @@ def test_v38_source_bound_compatibility_row_can_share_rejected_batch(
     tmp_path: Path,
 ) -> None:
     texts = (
-        "0. Câu thử đã gỡ. 0."
-        "0. Câu thử đã gỡ. 0.",
+        "Cậu thấy hỗn loạn, không phân biệt nổi giấc mơ với hiện thực; "
+        "những hộp mực tím cứ xoay mãi trước mắt.",
         "Cậu bước tới bên giường.",
     )
     db, source_rows = _analysis_batch_db(tmp_path, texts=texts)
@@ -8723,8 +8723,8 @@ def test_analysis_candidate_rejects_adjacent_semantic_lock_without_mortality_cue
         "‘Tôi đã từng nghĩ mình sẽ chết mất, nhưng giờ đã an toàn.’",
         "‘Tôi không thể nghĩ mình sẽ chết mất.’",
         (
-            "0. Câu thử đã gỡ. 0."
-            "0. Câu thử đã gỡ. 0."
+            "‘Mình sẽ chết mất.’ Yết hầu bỏng rát; cậu bám lấy giá hộp mực, "
+            "ý thức lịm dần."
         ),
     ),
 )

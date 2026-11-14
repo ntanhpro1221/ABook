@@ -97,10 +97,10 @@ def test_ordinary_dialect_folding_uses_the_voice_region(region, passed):
 
 
 @pytest.mark.parametrize("form,surface,heard,region,passed", [
-    ("Ri-ta", "Rita", "zita", "Nam", True),
-    ("Ri-ta", "Rita", "zita", "Bắc", True),
-    ("Ri-ta", "Rita", "dita", "Nam", False),
-    ("Ri-ta", "Rita", "dita", "Bắc", True),
+    ("Ri-va", "Riva", "ziva", "Nam", True),
+    ("Ri-va", "Riva", "ziva", "Bắc", True),
+    ("Ri-va", "Riva", "diva", "Nam", False),
+    ("Ri-va", "Riva", "diva", "Bắc", True),
     # Romaji "Yona" is read by the app's Japanese rule as Giô-na (o -> ô).
     ("Dô-na", "Dona", "yona", "Nam", True),
     ("Dô-na", "Dona", "yôna", "Nam", True),
@@ -109,8 +109,8 @@ def test_ordinary_dialect_folding_uses_the_voice_region(region, passed):
     ("Sát-ta", "Shasta", "sata", "Nam", True),
     ("Pha-na", "Fana", "fana", "Nam", True),
     ("Oan", "Wan", "wan", "Nam", True),
-    ("Ri-ta", "Rita", "zita", "", False),
-    ("Ri-ta", "Rita", "zita", "Trung", False),
+    ("Ri-va", "Riva", "ziva", "", False),
+    ("Ri-va", "Riva", "ziva", "Trung", False),
     ("Lu-si-en", "Lucien", "Lucy", "Nam", False),
     ("Lu-si-en", "Lucien", "Lusienne", "Bắc", False),
     ("Xa-men", "Samael", "Sam Min", "Nam", False),
@@ -131,9 +131,9 @@ def test_names_compare_exact_sounds_and_keep_region_boundaries(form, surface, he
 
 
 def test_regional_folding_never_changes_sentence_phonemes():
-    original = asr._segmental_phonemes('zita')
-    adjudicate('Anh Ri-ta.', 'Anh zita.', form='Ri-ta', surface='Rita', region='Nam')
-    assert asr._segmental_phonemes('zita') == original
+    original = asr._segmental_phonemes('ziva')
+    adjudicate('Anh Ri-va.', 'Anh ziva.', form='Ri-va', surface='Riva', region='Nam')
+    assert asr._segmental_phonemes('ziva') == original
 
 
 @pytest.mark.parametrize("left,right", [
@@ -166,25 +166,25 @@ def test_yuki_northern_consonant_alias_keeps_the_same_vowel(heard):
     assert result['verdict'] == asr.ASR_PASS
 
 
-def test_rita_vrataski_accepts_tone_and_northern_initials():
-    form = 'Ri-ta vờ-ra-ta-xờ-ki'
-    result = adjudicate(f'Không. Tôi còn lâu mới bằng được {form}.',
-                        'Không. Tôi còn lâu mới bằng được di ta vở ra ta sở kì.',
-                        form=form, surface='Rita Vrataski', region='Bắc', alias=False)
+def test_riva_vranaski_accepts_tone_and_northern_initials():
+    form = 'Ri-va vờ-ra-na-xờ-ki'
+    result = adjudicate(f'Thợ in {form} vừa thay hộp mực.',
+                        'Thợ in di va vở ra na sở kì vừa thay hộp mực.',
+                        form=form, surface='Riva Vranaski', region='Bắc', alias=False)
     assert result['verdict'] == asr.ASR_PASS
 
 
-def test_rita_vrataski_southern_keeps_the_same_o_horn_vowel():
+def test_riva_vranaski_southern_keeps_the_same_o_horn_vowel():
     # Stripping every mark turned "sờ" into "so" (English /soʊ/) against
     # "xờ" -> "xo" (/sɔ/). Retaining ơ on both sides compares the same vowel.
     assert asr._anchor_component_sounds_right(
-        ('vờ', 'ra', 'ta', 'xờ', 'ki'), 'Vrataski', 'vờratasờkỳ', voice_region='Nam')
+        ('vờ', 'ra', 'na', 'xờ', 'ki'), 'Vranaski', 'vờranasờkỳ', voice_region='Nam')
     assert not asr._anchor_component_sounds_right(
-        ('vờ', 'ra', 'ta', 'xờ', 'ki'), 'Vrataski', 'voratasoky', voice_region='Nam')
-    form = 'Ri-ta vờ-ra-ta-xờ-ki'
-    result = adjudicate(f'0. Câu thử đã gỡ. 0.',
-                        '0. Câu thử đã gỡ. 0.',
-                        form=form, surface='Rita Vrataski', region='Nam', alias=False)
+        ('vờ', 'ra', 'na', 'xờ', 'ki'), 'Vranaski', 'voranasoky', voice_region='Nam')
+    form = 'Ri-va vờ-ra-na-xờ-ki'
+    result = adjudicate(f'Trên phiếu kiểm mực, {form}, vừa ghi thêm một dấu tròn màu tím.',
+                        'Trên phiếu kiểm mực, Ziva vờ ra na sờ kỳ vừa ghi thêm một dấu tròn màu tím.',
+                        form=form, surface='Riva Vranaski', region='Nam', alias=False)
     assert result['verdict'] == asr.ASR_PASS
 
 
@@ -231,7 +231,7 @@ def test_pipeline_passes_effective_region_to_direct_repeat_and_collapsed(tmp_pat
 
     pipeline, _chapter, row, _expected = _asr_signal_pipeline(tmp_path, repair_rounds=0)
     pipeline.tts.spoken_text_with_anchors = lambda _: (
-        'Anh Ri-ta!', [dict(surface='Rita', spoken_form='Ri-ta', spoken_start=4, spoken_end=9)])
+        'Anh Ri-va!', [dict(surface='Riva', spoken_form='Ri-va', spoken_start=4, spoken_end=9)])
     pipeline.tts.voice_region_for_row = lambda _: 'Nam'
     seen = []
     def direct(*args, **kw):
@@ -244,7 +244,7 @@ def test_pipeline_passes_effective_region_to_direct_repeat_and_collapsed(tmp_pat
     monkeypatch.setattr(module, 'adjudicate_collapsed_repeated_short', collapsed)
     class Verifier:
         def verify(self, *args, **kw):
-            return _asr_result(asr.ASR_MISMATCH, 'Anh zita', similarity=.5, wer=.5)
+            return _asr_result(asr.ASR_MISMATCH, 'Anh ziva', similarity=.5, wer=.5)
         verify_repeated_short = verify
         def can_verify_repeated_short(self, text):
             return True
@@ -336,7 +336,7 @@ def test_pipeline_persists_spelling_alias_evidence_without_changing_verdict(tmp_
     from tests.test_pipeline_mock import _asr_signal_pipeline, _asr_result
 
     pipeline, _chapter, row, expected = _asr_signal_pipeline(tmp_path, repair_rounds=0)
-    alias_evidence = {'anchors': [{'surface': 'Rita', 'status': 'mismatch', 'voice_region': 'Nam'}]}
+    alias_evidence = {'anchors': [{'surface': 'Riva', 'status': 'mismatch', 'voice_region': 'Nam'}]}
     result = _asr_result(asr.ASR_PASS, expected, similarity=1.0, wer=0.0)
     result['spelling_alias_evidence'] = alias_evidence
     evidence = pipeline._record_segment_asr_decode_evidence(dict(row), result, confirmation=False,

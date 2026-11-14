@@ -1,7 +1,7 @@
 """Bộ kiểm âm tiết tiếng Việt chặt (abook/vietnamese_syllable.py): chính tả, vần, thanh.
 
   - bộ ví dụ dùng chung với Kotlin (tests/fixtures/vietnamese_syllable/cases.json): đúng phải qua, sai phải trượt;
-  - văn bản Việt có sẵn trong repo công khai (passage.txt: Truyện Kiều, hết bản quyền; fixture nhập sách): MỌI âm tiết phải qua;
+  - văn bản Việt có sẵn trong repo công khai (passage.txt: self-written workshop prose; fixture nhập sách): MỌI âm tiết phải qua;
   - ba ca bộ cũ (analysis._valid_vietnamese_spoken_form) để lọt: Gen, Mêch, Ain, Got - bộ này chặn, bộ cũ vẫn nhận (đó là lý do có bộ này);
   - mọi cách đọc máy sinh ra (romanization, english_vi: bảng ghi đè, bộ ví dụ dùng chung) đều qua bộ kiểm;
   - kho truyện hết bản quyền trong Corpus (nếu máy có): tỉ lệ âm tiết bị từ chối chỉ là lỗi gõ / OCR.

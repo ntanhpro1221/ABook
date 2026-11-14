@@ -1240,7 +1240,7 @@ def test_generator_schema_forbids_free_form_analysis_metadata() -> None:
     assert GENERATOR_RETRY_SCHEMA_POLICY_VERSION == (
         "per_id_host_emotion_semantic_rejection_director_advisory_source_kind_v5"
     )
-    assert "cậu biết rõ mình đang" in SYSTEM_PROMPT
+    assert "cậu nhận ra giấc mơ vẫn tiếp diễn" in SYSTEM_PROMPT
     assert "vẫn là narration chứ không phải thought" in SYSTEM_PROMPT
     assert "cậu biết... muốn..." in DIRECTOR_CRITIC_SYSTEM_PROMPT
     assert "Mình đang ở đâu thế này?" in DIRECTOR_CRITIC_SYSTEM_PROMPT

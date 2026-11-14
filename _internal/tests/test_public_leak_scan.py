@@ -1,5 +1,7 @@
 """The public scanner must inspect resources, inline test strings and documentation."""
 from pathlib import Path
+import json
+import hashlib
 
 import pytest
 
@@ -74,7 +76,7 @@ def test_public_git_files_contain_no_private_machine_or_session_path():
     assert findings == [], findings
 
 
-def test_reviewed_bytes_must_match_and_corpus_overlap_cannot_be_waived(tmp_path, monkeypatch):
+def test_reviewed_bytes_must_match_and_generic_review_cannot_waive_corpus(tmp_path, monkeypatch):
     name = "synthetic.json"
     path = tmp_path / name
     content = '"' + " ".join(["kəː"] * 8) + '"'
@@ -95,6 +97,76 @@ def test_reviewed_bytes_must_match_and_corpus_overlap_cannot_be_waived(tmp_path,
     ])
     result = scan.audit(tmp_path, corpus=tmp_path)
     assert [r["rule"] for r in result["findings"]] == [f"shares>={scan.SHINGLE}words"]
+
+
+def test_corpus_review_pins_individual_shingles_and_file_bytes(tmp_path, monkeypatch):
+    name = "public.txt"
+    path = tmp_path / name
+    approved, injected = synthetic_prose("approved"), synthetic_prose("injected")
+    path.write_bytes((approved + "\n").encode("utf-8"))
+    corpus = tmp_path / "corpus" / "Book"
+    corpus.mkdir(parents=True)
+    (corpus / "001.txt").write_text(approved, encoding="utf-8")
+    entry = {"sha256": scan.digest(path), "rules": [],
+             "reason": "Public synthetic coincidence reviewed for this test only",
+             "corpus_review": {"classification": "i", "reason": "Synthetic individually checked public shingles",
+                               "file_sha256": hashlib.sha256(path.read_bytes()).hexdigest(),
+                               "shingles": sorted({f"{int(h):016x}" for h in scan.shingles(approved)})}}
+    monkeypatch.setattr(scan, "tracked", lambda _: [name])
+    monkeypatch.setattr(scan, "load_reviewed", lambda: {name: entry})
+
+    def audit():
+        return scan.audit(tmp_path, corpus=corpus.parent, workdir=tmp_path / "index")
+
+    assert audit()["findings"] == []
+    assert audit()["waived"] == 1
+    # CRLF-only edits keep the legacy normalized pin, but expire Corpus approval.
+    path.write_bytes((approved + "\r\n").encode("utf-8"))
+    assert entry["sha256"] == scan.digest(path)
+    assert audit()["findings"]
+    # Even a whitespace edit expires the pinned file review.
+    path.write_text(approved + " ", encoding="utf-8")
+    assert audit()["findings"]
+    # Updating only the byte pin cannot authorize newly injected story shingles.
+    path.write_text(approved + "\n\n" + injected, encoding="utf-8")
+    entry["sha256"] = scan.digest(path)
+    entry["corpus_review"]["file_sha256"] = hashlib.sha256(path.read_bytes()).hexdigest()
+    (corpus / "001.txt").write_text(approved + "\n\n" + injected, encoding="utf-8")
+    result = audit()
+    assert len(result["findings"]) == 1
+    assert result["findings"][0]["reviewed_shingle_count"] == len(entry["corpus_review"]["shingles"])
+    assert set(result["findings"][0]["shingle_hashes"]) == {f"{int(h):016x}" for h in scan.shingles(injected)}
+
+
+def test_new_corpus_match_expires_approval_even_without_public_file_edit(tmp_path, monkeypatch):
+    name = "public.txt"
+    approved, other = synthetic_prose("approved"), synthetic_prose("other")
+    path = tmp_path / name
+    path.write_text(approved + "\n\n" + other, encoding="utf-8")
+    reviewed = {name: {"sha256": scan.digest(path), "rules": [],
+                       "corpus_review": {"classification": "i", "file_sha256": hashlib.sha256(path.read_bytes()).hexdigest(), "shingles": [
+                           f"{int(h):016x}" for h in set(scan.shingles(approved))]}}}
+    hashes = [f"{int(h):016x}" for h in set(scan.shingles(approved + "\n\n" + other))]
+    blocking, waived = scan.apply_reviews([
+        {"path": name, "rule": f"shares>={scan.SHINGLE}words", "shingle_hashes": hashes}], reviewed, tmp_path)
+    assert not waived and blocking[0]["shingle_hashes"]
+    # A Corpus-only approval cannot waive unrelated long text or IPA warnings.
+    assert scan.apply_reviews([{"path": name, "rule": "long-vietnamese"}], reviewed, tmp_path)[0]
+
+
+@pytest.mark.parametrize("review", [
+    {"classification": "ii", "shingles": ["0123456789abcdef"]},
+    {"classification": "i", "shingles": []},
+    {"classification": "i", "shingles": ["whole-file"]},
+    {"classification": "i", "shingles": ["0123456789abcdef"] * 2},
+])
+def test_corpus_review_requires_explicit_classification_and_exact_hashes(tmp_path, review):
+    path = tmp_path / "reviewed.json"
+    path.write_text(json.dumps({"public.txt": {"sha256": "a" * 64,
+                    "reason": "Synthetic review schema validation case",
+                    "corpus_review": {"reason": "Reviewed contextual coincidence for this file", "file_sha256": "b" * 64, **review}}}), encoding="utf-8")
+    with pytest.raises(ValueError, match="Corpus review"):
+        scan.load_reviewed(path)
 
 
 def test_non_story_folders_at_corpus_root_are_not_indexed(tmp_path):
@@ -241,7 +313,11 @@ def test_real_story_excerpt_in_temporary_public_file_is_detected(tmp_path, monke
     public.mkdir()
     (public / "injected.txt").write_text(excerpt, encoding="utf-8")
     monkeypatch.setattr(scan, "tracked", lambda _: ["injected.txt"])
-    monkeypatch.setattr(scan, "load_reviewed", lambda: {})
+    # A correctly byte-pinned generic review still cannot approve new prose.
+    monkeypatch.setattr(scan, "load_reviewed", lambda: {"injected.txt": {
+        "sha256": scan.digest(public / "injected.txt"), "rules": [],
+        "corpus_review": {"classification": "i", "file_sha256": hashlib.sha256((public / "injected.txt").read_bytes()).hexdigest(),
+                          "shingles": ["0000000000000000"]}}})
     result = scan.audit(public, corpus=local_corpus.parent, workdir=tmp_path / "index")
     assert any(f["path"] == "injected.txt" and f["rule"] == f"shares>={scan.SHINGLE}words"
                for f in result["findings"]), "Injected real story excerpt was missed"

@@ -1,11 +1,14 @@
-"""0. Câu thử đã gỡ. 0."""
+"""Công thức lịch sự ("vui lòng", "làm ơn") không phải cue vui: lời từ chối lạnh lùng không bị ép happy.
+
+Self-written example: a polite instruction contains "vui" without expressing happiness.
+"""
 from __future__ import annotations
 
 from abook.analysis import _direct_cue_allowed_emotions, _semantic_cue_matches
 
 
 def test_vui_long_in_a_cold_refusal_allows_any_emotion() -> None:
-    text = "“Xin lỗi, giờ tôi đang bận. Cô vui lòng ra ngoài được không?”"
+    text = "“Tôi chưa nhận sửa máy. Vui lòng mang phiếu tới quầy khác.”"
     assert "happy" not in _semantic_cue_matches(text)
     assert _direct_cue_allowed_emotions(text) == ()
 

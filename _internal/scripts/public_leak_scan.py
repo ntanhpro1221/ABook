@@ -483,14 +483,17 @@ def overlap_findings(owners: dict[int, set[str]], hits: list[tuple[str, list[int
                      *, common_min: int = COMMON_STORY_MIN) -> list[dict]:
     frequencies = story_frequencies(hits)
     matches: dict[str, set[str]] = defaultdict(set)
+    matched_hashes: dict[str, set[int]] = defaultdict(set)
     for relative, hashes in hits:
         for value in hashes:
             if len(frequencies[value]) < common_min:
                 for owner in owners[value]:
                     matches[owner].add(relative)
+                    matched_hashes[owner].add(value)
     return [{"path": owner, "where": "corpus", "rule": f"shares>={SHINGLE}words",
              "corpus_files": sorted(found)[:5], "corpus_file_count": len(found),
-             "corpus_story_count": len({story_identity(Path(p)) for p in found})}
+             "corpus_story_count": len({story_identity(Path(p)) for p in found}),
+             "shingle_hashes": [f"{value:016x}" for value in sorted(matched_hashes[owner])]}
             for owner, found in sorted(matches.items())]
 
 
@@ -505,11 +508,59 @@ def load_reviewed(path: Path = REVIEWED) -> dict[str, dict]:
     reasons = [entry.get("reason", "").strip() for entry in entries.values()]
     if any(len(reason) < 20 for reason in reasons) or len(set(reasons)) != len(reasons):
         raise ValueError("public_leak_reviewed.json: mỗi mục cần lý do riêng, cụ thể (>= 20 ký tự, không trùng)")
+    for name, entry in entries.items():
+        review = entry.get("corpus_review")
+        if review is None:
+            continue
+        if (not isinstance(review, dict) or review.get("classification") != "i"
+                or len(review.get("reason", "").strip()) < 20
+                or not re.fullmatch(r"[0-9a-f]{64}", review.get("file_sha256", ""))
+                or not isinstance(review.get("shingles"), list) or not review["shingles"]
+                or any(not isinstance(h, str) or not re.fullmatch(r"[0-9a-f]{16}", h)
+                       for h in review["shingles"])
+                or len(set(review["shingles"])) != len(review["shingles"])):
+            raise ValueError(f"{name}: Corpus review needs classification i, a reason and exact shingle hashes")
     return entries
 
 
 def digest(path: Path) -> str:
     return hashlib.sha256(path.read_bytes().replace(b"\r\n", b"\n")).hexdigest()
+
+
+def apply_reviews(findings: list[dict], reviewed: dict[str, dict], repo: Path) -> tuple[list[dict], list[dict]]:
+    """Pin contextual coincidences to file bytes AND individually reviewed shingles.
+
+    A generic file review never approves Corpus overlap. A new Corpus match is
+    blocking even if the public file has not changed; edited bytes expire all
+    approvals. Partial matches retain the original source summary for context.
+    """
+    blocking, waived = [], []
+    digests = {}
+    for finding in findings:
+        name = finding["path"]
+        entry = reviewed.get(name)
+        if name not in digests:
+            digests[name] = digest(repo / name)
+        if not entry or entry.get("sha256") != digests[name]:
+            blocking.append(finding)
+            continue
+        if finding["rule"] == f"shares>={SHINGLE}words":
+            review = entry.get("corpus_review") or {}
+            exact_bytes = hashlib.sha256((repo / name).read_bytes()).hexdigest()
+            approved = (set(review.get("shingles", []))
+                        if review.get("classification") == "i" and review.get("file_sha256") == exact_bytes else set())
+            hashes = set(finding.get("shingle_hashes", []))
+            remaining = hashes - approved
+            if not hashes or remaining:
+                blocking.append({**finding, "shingle_hashes": sorted(remaining),
+                                 "reviewed_shingle_count": len(hashes & approved)})
+            else:
+                waived.append(finding)
+        elif "rules" not in entry or finding["rule"] in entry["rules"]:
+            waived.append(finding)
+        else:
+            blocking.append(finding)
+    return blocking, waived
 
 
 def audit(repo: Path = REPO, corpus: Path | None | bool = True, workdir: Path | None = None) -> dict:
@@ -535,14 +586,7 @@ def audit(repo: Path = REPO, corpus: Path | None | bool = True, workdir: Path | 
         findings += corpus_overlap(sources, root, work, workers=max(1, int(os.environ.get("ABOOK_LEAK_WORKERS", "3"))))
         corpus_status = f"đã kiểm Corpus: {root}"
     stale = sorted(set(reviewed) - set(names))
-    blocking = []
-    waived = []
-    for finding in findings:
-        entry = reviewed.get(finding["path"])
-        if entry and entry.get("sha256") == digest(repo / finding["path"]) and finding["rule"] != f"shares>={SHINGLE}words":
-            waived.append(finding)
-        else:
-            blocking.append(finding)
+    blocking, waived = apply_reviews(findings, reviewed, repo)
     return {"files": len(names), "text_files": len(sources), "corpus": corpus_status, "findings": blocking,
             "waived": len(waived), "stale_reviewed": stale}
 

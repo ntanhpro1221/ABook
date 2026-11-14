@@ -53,21 +53,21 @@ SYSTEM = """Bạn giúp máy đọc truyện chọn cách phát âm. Mỗi mục
 Việc của bạn: cho biết chữ trong [[ ]] ĐƯỢC VIẾT bằng tiếng nào - không phải nó dịch ra tiếng Việt nghĩa là gì.
 1. "cum": chép lại đúng cụm 2-3 chữ liền nhau trong câu mà chữ ấy thuộc về.
 2. "loai": một trong bốn loại
-   - "tu_viet": cụm ấy là lời văn tiếng Việt, chữ ấy là từ tiếng Việt không cần dấu (than vãn, to lớn, say sưa, bay lên, do dự, so sánh, leo thang, ban cho, in qua, no bụng, non nớt). Một từ tiếng Việt đứng ngay sau tên nước ngoài vẫn là "tu_viet": "Edward than vãn", "Leila in bóng lên cửa", "Naomi do dự". Viết hoa trong danh hiệu, tên kỹ năng tiếng Việt cũng là "tu_viet".
+   - "tu_viet": cụm ấy là lời văn tiếng Việt, chữ ấy là từ tiếng Việt không cần dấu (than vãn, to lớn, say sưa, bay lên, do dự, so sánh, leo thang, ban cho, in qua, no bụng, non nớt). Một từ tiếng Việt đứng ngay sau tên nước ngoài vẫn là "tu_viet": "Tavren than vãn", "Melvi in bóng lên cửa", "Neravi do dự". Viết hoa trong danh hiệu, tên kỹ năng tiếng Việt cũng là "tu_viet".
    - "ten_viet": tên người Việt hay Hán Việt (An, Yen, Can, Ban, Long), đi cùng họ tên / lời văn kiểu Việt - Trung.
    - "tieng_anh": chữ ấy nằm trong một câu hay cụm tiếng Anh (so high, to do, more than, I am, mini van, Zero Day, trust me), kể cả cụm tiếng Anh chen giữa câu tiếng Việt.
-   - "ten_ngoai": một phần của tên riêng nước ngoài hay romaji, tiếng Hàn, Nhật, Pháp, Latin... (Do Hyun, An Hyeon-do, Ban Seong-cheol, Le Do-yoon, de Valis, Van Gogh, Marina Bay, Hikaru no Go, Ben, Leo).
+   - "ten_ngoai": một phần của tên riêng nước ngoài hay romaji, tiếng Hàn, Nhật, Pháp, Latin... (Do Hyun, An Hyeon-do, Ban Seong-cheol, Le Do-yoon, de Valis, Van Gogh, Marina Bay, Tamori no Uta, Ben, Leo).
 
 Trả JSON, đủ mọi số thứ tự."""
 
 # One worked batch, written for this prompt (no book's text): the model copies the shape and the care about names.
 SHOTS = (
-    ("Edward [[than]] vãn.", "Edward than vãn", "tu_viet"),
+    ("Tavren [[than]] vãn.", "Tavren than vãn", "tu_viet"),
     ("\"[[So]], what do you want?\" Alice asked.", "So, what do", "tieng_anh"),
-    ("0. Câu thử đã gỡ. 0.", "0. Câu thử đã gỡ. 0.", "0. Câu thử đã gỡ. 0."),
+    ("Tavren vẽ chú Orc [[to]] lớn bên cạnh hộp màu.", "Orc to lớn", "tu_viet"),
     ("Cậu ta mặc áo in dòng chữ \"I [[am]] happy\" rất buồn cười.", "I am happy", "tieng_anh"),
     ("Anh họ [[Do]] Hyun bước vào phòng.", "Do Hyun", "ten_ngoai"),
-    ("Sakuya [[say]] sưa ngẩng đầu nhìn lên nóc nhà.", "say sưa", "tu_viet"),
+    ("Tamori [[say]] sưa ngẩng đầu nhìn lên nóc nhà.", "say sưa", "tu_viet"),
     ("Danh hiệu mới: Kỵ Sĩ Tự [[Do]].", "Tự Do", "tu_viet"),
     ("\"[[An]] An, lại đây với mẹ.\" Lâm phu nhân gọi.", "An An", "ten_viet"),
     ("[[Do]] editor bận nên chương này ra trễ.", "Do editor bận", "tu_viet"),
@@ -77,15 +77,15 @@ NAME_SYSTEM = """Bạn giúp máy đọc truyện đọc đúng tên nhân vật
 - "vi": tên Việt, hoặc tên Trung Quốc đọc theo âm Hán Việt (An An, Lan Anh, Tieu Yen, Long, Hung, Minh, Van, Son, Tan, Linh).
 - "ja": tên Nhật viết romaji (Tanaka Kenji, Yuki, Akane, Shinomiya, Ryouta).
 - "ko": tên Hàn (Kim Seo-yeon, Jihoon, Park Taehyun, Yejin, Eunbi).
-- "en": tên Âu - Mỹ, tên fantasy, hay tên nào khác (Edward Elric, Alice, Ben, Dan, Leo, Van Helsing, Rimuru).
+- "en": tên Âu - Mỹ, tên fantasy, hay tên nào khác (Tavren Melvik, Alice, Ben, Dan, Leo, Van Melvorn, Velmora).
 Xét chính cái tên trước: tên rõ là Nhật, Hàn hay Âu - Mỹ thì giữ gốc ấy dù truyện có nhân vật gốc khác. Chỉ tên ngắn không rõ gốc (An, Ban, Can, Long, Son, Van, Bin, Min) mới theo các nhân vật cùng truyện: cùng truyện với tên Việt / Hán Việt thì "vi", với tên Âu - Mỹ thì "en", với tên Hàn thì "ko".
 
 Trả JSON dạng {"1": "ja", "2": "vi"}, đủ mọi số thứ tự."""
 
 # (name, the other characters shown with it, origin)
-NAME_SHOTS = (("Lan Anh", (), "vi"), ("Tanaka Kenji", (), "ja"), ("Kim Seo-yeon", (), "ko"), ("Edward Elric", (), "en"),
-              ("Van", ("Tiêu Viêm", "Dược Lão", "Nạp Lan"), "vi"), ("Van", ("Alice", "Edward", "Helsing"), "en"),
-              ("Yuki", ("Alice", "Edward", "William"), "ja"), ("Jihoon", ("Tanaka", "Akane", "Ryouta"), "ko"))
+NAME_SHOTS = (("Lan Anh", (), "vi"), ("Tanaka Kenji", (), "ja"), ("Kim Seo-yeon", (), "ko"), ("Tavren Melvik", (), "en"),
+              ("Van", ("Tạ Mộc", "Đinh Hạ", "Lục Lam"), "vi"), ("Van", ("Alice", "Tavren", "Melvorn"), "en"),
+              ("Yuki", ("Alice", "Tavren", "William"), "ja"), ("Jihoon", ("Tanaka", "Akane", "Ryouta"), "ko"))
 
 
 @dataclass(frozen=True)
@@ -135,7 +135,7 @@ def payload(model: str, digest: str, batch: Sequence[Doubt]) -> dict[str, Any]:
 
 
 def ambiguous(name: str) -> bool:
-    """A name that holds a word of the table ("An An", "Van", "Son Goku"): its letters alone do not say which language."""
+    """A name that holds a word of the table ("An An", "Van", "Son Tavro"): its letters alone do not say which language."""
     from .phoneme_policy import _shared
 
     listed = _shared().listed

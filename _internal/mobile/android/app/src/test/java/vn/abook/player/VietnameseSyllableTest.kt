@@ -12,7 +12,7 @@ import java.text.Normalizer
 /**
  * Bộ kiểm âm tiết tiếng Việt chặt (VietnameseSyllable.kt) trên bộ ví dụ DÙNG CHUNG với Python
  * (tests/fixtures/vietnamese_syllable/cases.json; test_vietnamese_syllable.py đọc cùng file): đúng phải qua, sai phải trượt, và mọi âm tiết
- * của lời Truyện Kiều (passage.txt, hết bản quyền) phải qua.
+ * of the self-written workshop passage (passage.txt) must pass.
  */
 class VietnameseSyllableTest {
     private val folder = File("../../../tests/fixtures/vietnamese_syllable").also {
