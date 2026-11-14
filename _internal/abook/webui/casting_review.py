@@ -42,9 +42,10 @@ REFUSED = {
 
 
 def display_names(connection: Any) -> dict[str, str]:
-    """canonical_name -> display_name của sổ nhân vật: tên như tab Nhân vật viết ("Người Khách"), không phải khoá sổ ("người khách")."""
+    """speaker_key(canonical_name) -> display_name của sổ nhân vật: tên như tab Nhân vật viết ("Người Khách"), không phải khoá sổ
+    ("người khách"). Khoá chuẩn (`store.speaker_key`) vì câu giữ người nói ở cách viết hiển thị, sổ ở chữ hoa."""
     try:
-        return {str(row["canonical_name"]): str(row["display_name"] or "")
+        return {store.speaker_key(str(row["canonical_name"])): str(row["display_name"] or "")
                 for row in connection.execute("SELECT canonical_name, display_name FROM characters")}
     except Exception:  # sách chưa qua bước phân tích nào: chưa có bảng nhân vật
         return {}
@@ -53,7 +54,7 @@ def display_names(connection: Any) -> dict[str, str]:
 def label(raw: str, display: dict[str, str] | None = None) -> str:
     """Tên người nói cho người đọc. `display` (display_names): cùng cách viết với tab Nhân vật - hai tab gọi một người bằng hai
     kiểu chữ hoa là lỗi (soát UX a8, mục 20)."""
-    named = display.get(raw) if display and _is_person(raw) and not raw.startswith("NPC_LOCAL") else None
+    named = display.get(store.speaker_key(raw)) if display and _is_person(raw) and not raw.startswith("NPC_LOCAL") else None
     return speaker_label(named or raw)
 
 

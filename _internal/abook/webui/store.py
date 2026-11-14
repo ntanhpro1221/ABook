@@ -1574,10 +1574,7 @@ def chapter_script(project_root: Path, chapter_id: int) -> dict[str, Any] | None
         scene_break = ["scene_break"] if "scene_break" in columns else []
         rows = _script_rows(connection, chapter_id, ["id", "seq", "paragraph_index", "text", "kind", "speaker", "wav_duration",
                                                      "break_ms", "status", *identity, *scene_break, *tags])
-        names = {
-            str(row["canonical_name"]): str(row["display_name"] or row["canonical_name"])
-            for row in connection.execute("SELECT canonical_name, display_name FROM characters")
-        }
+        names = {key: str(row["display_name"] or row["canonical_name"]) for key, row in characters_by_key(connection).items()}
         chapter_name = chapter_names(connection, project_root).get(int(chapter["id"]), {})
     renamed = renames.load(project_root)
     timed, spans, mp3, duration = _sentence_timeline(project_root, chapter, rows)
@@ -1593,7 +1590,7 @@ def chapter_script(project_root: Path, chapter_id: int) -> dict[str, Any] | None
             "text": str(row["text"]),
             "kind": "heading" if heading else str(row["kind"] or "narration"),
             "speaker": "" if speaker in ("", "NARRATOR")
-            else renamed.get(renames.name_key(speaker)) or humanize.person_name(names.get(speaker, speaker)),
+            else renamed.get(renames.name_key(speaker)) or humanize.person_name(names.get(speaker_key(speaker), speaker)),
             "start": round(start, 3) if timed else None,
             "end": round(end, 3) if timed else None,
             "status": str(row["status"]),
@@ -1853,6 +1850,62 @@ def speaker_key(name: str) -> str:
     return " ".join(name.strip().casefold().split()).upper()
 
 
+def characters_by_key(connection: sqlite3.Connection) -> dict[str, sqlite3.Row]:
+    """{speaker_key(tên sổ): bản ghi} - sổ nhân vật khoá CHỮ HOA ("FUKAMACHI") còn `segments.speaker` giữ cách viết hiển thị
+    ("Fukamachi"): mọi chỗ tra sổ theo tên người nói đi qua khoá này, không tra tên thô (castfix 15-11: tra thô làm mọi nhân vật
+    chính rơi xuống "Vai phụ" và mất giới tính, tuổi)."""
+    return {speaker_key(str(row["canonical_name"])): row for row in connection.execute("SELECT * FROM characters")}
+
+
+# Vai chính / Vai phụ (tab Nhân vật cả ba nền đọc thẳng `characters` / `extras` của cast.json, không tự xếp lại). Vai phụ là
+# "người chỉ có một cảnh" (BookTabs.castItems, CastList "người trong một cảnh"): vai chính phải lên tiếng ở ít nhất ngần này
+# cảnh (cảnh = đoạn giữa hai dòng ngăn cảnh trong một chương; sách không có dòng ngăn cảnh thì mỗi chương là một cảnh).
+MAIN_ROLE_MIN_SCENES = 2
+# Cuốn chỉ có một cảnh thì số cảnh không phân biệt được ai: vai chính là người có ít nhất ngần này câu.
+MAIN_ROLE_MIN_LINES_ONE_SCENE = 3
+
+
+def is_npc_speaker(speaker: str, record: Any = None) -> bool:
+    """Người nói không phải một nhân vật có tên riêng: vai cục bộ (`NPC_LOCAL::`), nhãn "NPC ...", nhóm vô danh, UNKNOWN, hay
+    bản ghi mà phân tích đã xếp `minor` (vai cục bộ hoặc dưới ngưỡng số lần nhắc)."""
+    from ..character_registry import is_local_speaker
+
+    key = speaker_key(speaker)
+    if is_local_speaker(speaker) or key in ("UNKNOWN", "UNNAMED") or key.startswith("ANONYMOUS"):
+        return True
+    if key == "NPC" or key.startswith(("NPC ", "NPC_", "NPC:")):
+        return True
+    return record is not None and "importance" in record.keys() and str(record["importance"] or "") == "minor"
+
+
+def cast_role(speaker: str, record: Any, lines: int, scenes: int, book_scenes: int) -> str:
+    """"characters" (Vai chính) hay "extras" (Vai phụ) - MỘT luật cho cả ba nền. NPC luôn là phụ; người có tên là chính khi lên
+    tiếng ở từ MAIN_ROLE_MIN_SCENES cảnh (cuốn chỉ một cảnh: từ MAIN_ROLE_MIN_LINES_ONE_SCENE câu)."""
+    if is_npc_speaker(speaker, record):
+        return "extras"
+    if book_scenes < MAIN_ROLE_MIN_SCENES:
+        return "characters" if lines >= MAIN_ROLE_MIN_LINES_ONE_SCENE else "extras"
+    return "characters" if scenes >= MAIN_ROLE_MIN_SCENES else "extras"
+
+
+def _speaker_scenes(connection: sqlite3.Connection) -> tuple[dict[str, int], int]:
+    """({người nói: số cảnh có lời thoại/nội tâm của họ}, số cảnh của cả cuốn)."""
+    columns = _segment_columns(connection)
+    scene = ("COALESCE(SUM(scene_break) OVER (PARTITION BY chapter_id ORDER BY seq"
+             " ROWS BETWEEN UNBOUNDED PRECEDING AND 1 PRECEDING), 0)") if "scene_break" in columns else "0"
+    rows = connection.execute(
+        f"WITH s AS (SELECT speaker, kind, chapter_id, {scene} AS scene FROM segments)"
+        " SELECT speaker, kind, chapter_id, scene FROM s GROUP BY speaker, kind, chapter_id, scene").fetchall()
+    scenes: dict[str, set[tuple[int, int]]] = defaultdict(set)
+    book: set[tuple[int, int]] = set()
+    for row in rows:
+        place = (int(row["chapter_id"]), int(row["scene"] or 0))
+        book.add(place)
+        if str(row["kind"]) != "narration":
+            scenes[str(row["speaker"] or "")].add(place)
+    return {speaker: len(places) for speaker, places in scenes.items()}, len(book)
+
+
 def voice_samples(connection: sqlite3.Connection) -> dict[str, int]:
     """{người nói: mã một câu thoại đã thu của họ} - câu nghe thử giọng (dài gần 4 giây nhất, đã kiểm). Tab Nhân vật và nút nghe
     thử cạnh mỗi người được đề xuất trên thẻ "Ai nói câu này" dùng chung một câu. Sổ chưa có cột thu âm: không ai có câu."""
@@ -1885,9 +1938,8 @@ def _cast(project_root: Path) -> dict[str, Any]:
     voices = settings.get("voices", {}) if isinstance(settings.get("voices"), dict) else {}
     with closing(connect(project_root)) as connection:
         profiles = {int(row["id"]): row for row in connection.execute("SELECT * FROM voice_profiles")}
-        characters = {
-            str(row["canonical_name"]): row for row in connection.execute("SELECT * FROM characters")
-        }
+        characters = characters_by_key(connection)
+        scenes_of, book_scenes = _speaker_scenes(connection)
         spoken = connection.execute(
             "SELECT speaker, kind, voice_profile_id, COUNT(*) AS lines,"
             " COALESCE(SUM(wav_duration), 0) AS seconds, MIN(chapter_id) AS first_chapter,"
@@ -1965,14 +2017,14 @@ def _cast(project_root: Path) -> dict[str, Any]:
         target = merging.get(aliases.key(speaker))
         if not target or aliases.key(target) == aliases.key(speaker):
             return None
-        record = characters.get(target)
+        record = characters.get(speaker_key(target))
         return shown_name(target, speaker_label(str(record["display_name"] or target) if record else target))["displayName"]
 
     main, extras = [], []
     for speaker, count in lines.items():
         if speaker in ("", "NARRATOR"):
             continue
-        record = characters.get(speaker)
+        record = characters.get(speaker_key(speaker))
         entry = {
             "name": speaker,
             **shown_name(speaker, speaker_label(str(record["display_name"] or speaker) if record else speaker)),
@@ -1990,7 +2042,8 @@ def _cast(project_root: Path) -> dict[str, Any]:
             # Mốc của lần "Gộp vào…" ấy: đủ để tìm lại đúng yêu cầu mà rút ("Bỏ gộp").
             "mergedAt": merge_stamps.get(aliases.key(speaker)) if merged_into(speaker) else None,
         }
-        (main if record is not None else extras).append(entry)
+        role = cast_role(speaker, record, count, scenes_of.get(speaker, 0), book_scenes)
+        (main if role == "characters" else extras).append(entry)
     main.sort(key=lambda entry: (-entry["lines"], entry["displayName"]))
     extras.sort(key=lambda entry: (-entry["lines"], entry["displayName"]))
     # Phần nối tiếp chưa phân tích (soát UX a6 01-10, B2): dàn mang từ phần trước - giọng đã ghim - chưa ai nói câu nào ở
@@ -2014,7 +2067,7 @@ def _cast(project_root: Path) -> dict[str, Any]:
             "firstChapter": "",
             "pendingVoice": pending.get(speaker_key(name)),
         }
-        for name, record in characters.items()
+        for record in characters.values() for name in (str(record["canonical_name"]),)
         if speaker_key(name) not in spoke and "locked_voice_key" in record.keys() and str(record["locked_voice_key"] or "")
     ] if continuation.part_number(project_root) > 1 else []
     carried.sort(key=lambda entry: entry["displayName"])
@@ -2024,8 +2077,7 @@ def _cast(project_root: Path) -> dict[str, Any]:
 def original_name(project_root: Path, character: str) -> str | None:
     """Tên gốc (như sổ nhân vật ghi, chưa qua "Đổi tên") của một người nói trong sách này; None khi sách không có người ấy."""
     with closing(connect(project_root)) as connection:
-        record = connection.execute(
-            "SELECT display_name FROM characters WHERE canonical_name = ?", (character,)).fetchone()
+        record = characters_by_key(connection).get(speaker_key(character))
         spoke = connection.execute("SELECT 1 FROM segments WHERE speaker = ? LIMIT 1", (character,)).fetchone()
     if record is None and spoke is None:
         return None

@@ -66,6 +66,25 @@ def test_an_unknown_gender_is_not_a_male_default() -> None:
     assert genders == {"male", "female"}
 
 
+def test_unknown_gender_avoids_a_dialogue_partner_before_the_gender_tie_break(monkeypatch: pytest.MonkeyPatch) -> None:
+    from abook import character_registry as registry
+
+    male = next(p for p in casting_presets("male", automatic=True) if p["name"] != NARRATOR)
+    female = casting_presets("female", automatic=True)[0]
+    monkeypatch.setattr(registry, "casting_presets", lambda gender, automatic=True: [male] if gender == "male" else [female])
+    who = next(f"UNKNOWN_GRAPH_{i}" for i in range(100) if registry.stable_int(f"unknown-gender::UNKNOWN_GRAPH_{i}") % 2)
+    allocator = PresetAllocator(NARRATOR)
+    for holder in (who, "PARTNER", "OTHER"):
+        allocator.note_chapters(holder, {1})
+        allocator.note_scenes(holder, {(1, 0): 1})
+    allocator.note_partners(who, {"PARTNER"})
+    allocator.note_partners("PARTNER", {who})
+    allocator.reserve(str(male["name"]), who="PARTNER")
+    allocator.reserve(str(female["name"]), who="OTHER")
+
+    assert allocator.choose("unknown", npc=False, who=who)["name"] == female["name"]
+
+
 def test_machine_approved_names_are_checked(tmp_path: Path) -> None:
     import json
     data = json.loads(voice_catalog.VOICE_RANK_PATH.read_text(encoding="utf-8"))

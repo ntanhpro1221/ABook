@@ -306,6 +306,63 @@ def merge_stray_surnames(
     return redirected
 
 
+def _representative_lines(representatives: dict[str, str], counts: "Counter[str]") -> "Counter[str]":
+    """{đại diện: tổng số câu của mọi khoá đang trỏ về nó}."""
+    by_key: Counter[str] = Counter()
+    for name, count in counts.items():
+        by_key[identity_key(name)] += int(count)
+    lines: Counter[str] = Counter()
+    for key, name in representatives.items():
+        lines[name] += by_key.get(key, 0)
+    return lines
+
+
+def merge_reordered_names(representatives: dict[str, str], counts: "Counter[str]") -> dict[str, str]:
+    """Trỏ "HAJIKANO AYA" về "Aya Hajikano": cùng các chữ, khác thứ tự. Trả về {key thua: đại diện thắng}.
+
+    Đo 15-11 (castfix, "Nơi mà hai ta đã gọi điện"): chị gái Yui lúc là "HAJIKANO AYA" (103 câu, giọng nữ), lúc "Aya
+    Hajikano" (40 câu, giới chưa rõ -> giọng nam), xen kẽ trong cùng một cuộc nói chuyện. Tên Nhật, Hàn, Trung đi qua bản dịch
+    lúc họ trước lúc tên trước; `merge_into_book_full_names` chỉ nối khi SÁCH viết tên đủ hai lần, còn ở đây sách gọi "Aya",
+    "chị gái Hajikano" - không lần nào tên đủ. Hai nhãn có đúng cùng một bộ chữ (từ hai chữ, không kể hoa/thường) là một
+    người: không ai tên "Aya Hajikano" lại khác người "Hajikano Aya". Đích: nhãn nhiều câu hơn (hoà: chữ cái)."""
+    lines = _representative_lines(representatives, counts)
+    groups: dict[tuple[str, ...], set[str]] = defaultdict(set)
+    for name in set(representatives.values()):
+        words = normalize_name(name).split()
+        if len(words) >= 2 and not is_local_speaker(name):
+            groups[tuple(sorted(words))].add(name)
+    redirected: dict[str, str] = {}
+    for names in groups.values():
+        if len({identity_key(name) for name in names}) < 2:
+            continue
+        winner = min(names, key=lambda name: (-lines.get(name, 0), name.casefold(), name))
+        for key, name in representatives.items():
+            if name in names and name != winner:
+                redirected[key] = winner
+    return redirected
+
+
+def merge_lone_romaji_names(representatives: dict[str, str]) -> dict[str, str]:
+    """Nhãn MỘT chữ romaji là chữ của ĐÚNG MỘT nhãn tên Nhật đủ trong sổ -> tên đủ ấy ("AYA" -> "AYA HAJIKANO"). Trả về {key
+    thua: đại diện thắng}. Như `merge_into_book_full_names` nhưng tên đủ lấy từ chính các nhãn (sau `merge_reordered_names`,
+    hai thứ tự đã là một người). Họ cả nhà dùng chung ("HAJIKANO": Yui, Aya, Yoshie) khớp nhiều tên đủ -> không đoán."""
+    owners: dict[str, set[str]] = defaultdict(set)
+    for name in set(representatives.values()):
+        words = normalize_name(name).split()
+        if len(words) >= 2 and _japanese_order_name(name) and not is_local_speaker(name):
+            for word in words:
+                owners[word].add(name)
+    redirected: dict[str, str] = {}
+    for key, name in representatives.items():
+        words = normalize_name(name).split()
+        if len(words) != 1 or not _japanese_order_name(name) or len(words[0]) < NICKNAME_MINIMUM_LENGTH:
+            continue
+        found = owners.get(words[0], set())
+        if len(found) == 1:
+            redirected[key] = next(iter(found))
+    return redirected
+
+
 def _folded_source_text(db: ProjectDB) -> str:
     """`_source_text` bỏ dấu và hạ chữ, để đếm một cái tên trong đó."""
     return fold_for_source_search(_source_text(db))
@@ -1002,6 +1059,12 @@ def canonical_speaker_names(
     for loser_key, winner in merge_stray_surnames(representatives, cleaned_counts).items():
         representatives[loser_key] = winner
 
+    # Một tên, hai thứ tự họ-tên ("HAJIKANO AYA" / "Aya Hajikano"): một người.
+    for loser_key, winner in sorted(merge_reordered_names(representatives, cleaned_counts).items()):
+        if representatives[loser_key] != winner:
+            log(f"  {representatives[loser_key]} là {winner} viết đảo họ-tên: cùng một nhân vật.")
+            representatives[loser_key] = winner
+
     # Pass cuối trong ba pass nhận dạng, và cố ý cuối: hai pass trên có thể đã trỏ một key về
     # `SELNE`, và pass này trỏ **giá trị** `SELNE` sang `SELENE`, nên nó dọn cả những key vừa
     # được trỏ tới - không cần đi vòng nào để nối hai luật lại.
@@ -1036,6 +1099,12 @@ def canonical_speaker_names(
     for key, winner in sorted(merge_into_book_full_names(representatives, source).items()):
         if representatives[key] != winner:
             log(f"  {representatives[key]} là một phần tên {winner} trong sách: cùng một nhân vật.")
+            representatives[key] = winner
+
+    # Tên Nhật một chữ -> tên đủ duy nhất mang chữ ấy trong chính các nhãn.
+    for key, winner in sorted(merge_lone_romaji_names(representatives).items()):
+        if representatives[key] != winner:
+            log(f"  {representatives[key]} là một phần tên {winner}: cùng một nhân vật.")
             representatives[key] = winner
 
     # Biệt danh - sau lượt tên đủ, để "KOUTAROU" đã thành "SATOMI KOUTAROU" trước khi "KOU" tìm chủ.
@@ -1492,6 +1561,26 @@ def _gendered_word_evidence(rows: list[Any], names: set[str]) -> Counter[str]:
     return counts
 
 
+# Chữ mang giới trong chính NHÃN người nói ("Người Phụ Nữ Gọi Điện Thoại", "Nam Sinh Tóc Húi Cua", "Em gái Yadomura"): khi
+# phiếu và văn bản đều không quyết được, tên tự nói. Rộng hơn MALE/FEMALE_PERSON_WORDS vì ở đây là danh từ chỉ người, không
+# phải đại từ ngữ cảnh: "nam", "trai", "gái", "mẹ", "vợ".
+NAME_MALE_WORDS = MALE_PERSON_WORDS | frozenset({"nam", "trai", "bố", "cha", "chồng", "ông", "cậu", "boy", "man", "mr"})
+NAME_FEMALE_WORDS = FEMALE_PERSON_WORDS | frozenset({"gái", "mẹ", "vợ", "girl", "woman", "lady", "mrs", "ms", "miss"})
+
+
+def gender_from_name(names: Iterable[str]) -> str | None:
+    """Giới mà chữ trong các cách viết tên chỉ ra, khi chỉ một giới có mặt; None khi không có hoặc lẫn cả hai."""
+    found = set()
+    for name in names:
+        label = local_speaker_label(name) if is_local_speaker(name) else str(name)
+        for word in WORD_PATTERN.findall(label.casefold()):
+            if word in NAME_MALE_WORDS:
+                found.add("male")
+            elif word in NAME_FEMALE_WORDS:
+                found.add("female")
+    return next(iter(found)) if len(found) == 1 else None
+
+
 def _decisive(counts: Counter[str], ratio: float = GENDER_EVIDENCE_MINIMUM_RATIO) -> str | None:
     """The gender the evidence points at, or None when it does not point hard enough."""
     male, female = counts.get("male", 0), counts.get("female", 0)
@@ -1553,6 +1642,11 @@ def resolve_gender(
         return decided, f"text:{evidence.get('male', 0)}nam/{evidence.get('female', 0)}nữ"
     if ranked and ranked[0][1] > ranked[1][1]:
         return ranked[0][0], "model_majority"
+    # Không phiếu, không đủ chữ quanh tên: chữ mang giới trong chính nhãn (castfix 15-11: "Người Phụ Nữ Bí Ẩn Qua Điện Thoại"
+    # giới chưa rõ đã được cấp giọng nam).
+    named = gender_from_name(names)
+    if named is not None:
+        return named, "name"
     return "unknown", "unresolved"
 
 
@@ -1813,7 +1907,12 @@ class PresetAllocator:
 
     def choose(self, gender: str, *, npc: bool, age: str = "unknown", who: str = "") -> dict[str, str]:
         gender = casting_gender(gender, age)
-        # Giới chưa rõ: chọn trong giọng đạt của CẢ HAI giới theo cùng phép xếp hạng - không giới nào mặc định.
+        if gender not in (GENDER_MALE, GENDER_FEMALE):
+            return self._choose_unknown(npc=npc, age=age, who=who)
+        return self._choose_ranked(gender, who=who)
+
+    def _choose_ranked(self, gender: str, *, who: str) -> dict[str, str]:
+        """Apply the same approved-pool graph priorities for either gender or both."""
         candidates = self._pool(gender)
         mine = self.chapters_of.get(who, set())
         my_scenes = self.scenes_of.get(who, Counter())
@@ -1840,6 +1939,10 @@ class PresetAllocator:
         selected = min(candidates, key=rank)
         self.reserve(str(selected["name"]), who=who)
         return selected
+
+    def _choose_unknown(self, *, npc: bool, age: str, who: str) -> dict[str, str]:
+        """Neutral casting keeps graph priorities ahead of the stable gender tie-break."""
+        return self._choose_ranked("unknown", who=who)
 
     def reserve(self, preset_name: str, who: str | None = None) -> None:
         self.usage[str(preset_name)] += 1
