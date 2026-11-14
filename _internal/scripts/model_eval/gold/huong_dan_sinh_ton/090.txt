@@ -65,14 +65,14 @@
 63 N
 64 N
 65 N
-66 D ED ROSTAILER,ED,NARRATOR~ tired,afraid 1-2 normal,fast normal m
+66 D ED,ED ROSTAILER,NARRATOR~ tired,afraid 1-2 normal,fast normal m
 67 N NARRATOR neutral,tired 0-1 normal normal u
-68 D ED ROSTAILER,ED,NARRATOR~ tired,afraid 1-2 normal,fast normal m
+68 D ED,ED ROSTAILER,NARRATOR~ tired,afraid 1-2 normal,fast normal m
 69 N
-70 D ED ROSTAILER,ED tired,sarcastic 1 slow,normal soft,normal m
+70 D ED,ED ROSTAILER tired,sarcastic 1 slow,normal soft,normal m
 71 N NARRATOR neutral,tired 0-1 normal normal u
 72 N
-73 D ED ROSTAILER,ED tired,happy 1 slow soft,normal m
+73 D ED,ED ROSTAILER tired,happy 1 slow soft,normal m
 74 N
 75 N NARRATOR neutral,sad 0-1 normal normal u
 76 N
@@ -84,43 +84,43 @@
 82 N
 83 N
 84 N
-85 D ED ROSTAILER,ED neutral,tired,whispering 0-1 slow,normal soft m
+85 D ED,ED ROSTAILER neutral,tired,whispering 0-1 slow,normal soft m
 86 N
 87 N
 88 N
-89 D ED ROSTAILER,ED tired 1 slow soft,normal m
+89 D ED,ED ROSTAILER tired 1 slow soft,normal m
 90 N NARRATOR neutral,tired 0-1 normal normal u
 91 N
 92 N
 93 D YENNICA,YENNICA FAILOVER,NPC*~ excited,happy,tired 1-2 fast,normal normal,loud f
 94 N
-95 D ED ROSTAILER,ED surprised 1 normal soft,normal m
+95 D ED,ED ROSTAILER surprised 1 normal soft,normal m
 96 N NARRATOR neutral,surprised 0-1 normal normal u
 97 N
 98 N NARRATOR neutral,happy,tender 0-1 normal normal u
-99 D ED ROSTAILER,ED happy,tired 1 normal normal m
+99 D ED,ED ROSTAILER happy,tired 1 normal normal m
 100 N NARRATOR neutral,happy 0-1 normal normal u
 101 N,T ED ROSTAILER,ED,NARRATOR neutral 0-1 normal normal u
 102 N
 103 N
-104 D ED ROSTAILER,ED neutral,surprised 0-1 normal normal m
+104 D ED,ED ROSTAILER neutral,surprised 0-1 normal normal m
 105 N
 106 N NARRATOR neutral,tender 0-1 normal normal u
 107 N
 108 N
 109 N NARRATOR neutral,tender 0-1 normal normal u
-110 D ED ROSTAILER,ED tender,sad 1 slow,normal soft m
+110 D ED,ED ROSTAILER tender,sad 1 slow,normal soft m
 111 N NARRATOR neutral,tender 0-1 normal normal u
 112 N NARRATOR neutral,tender,sad 0-1 normal normal u
 113 N
 114 N
 115 N
 116 D YENNICA,YENNICA FAILOVER neutral 0-1 normal normal,soft f
-117 D ED ROSTAILER,ED neutral 0-1 normal normal m
+117 D ED,ED ROSTAILER neutral 0-1 normal normal m
 118 N
-119 D ED ROSTAILER,ED neutral 0-1 normal normal m
+119 D ED,ED ROSTAILER neutral 0-1 normal normal m
 120 D YENNICA,YENNICA FAILOVER tender,neutral 0-1 normal normal,soft f
-121 D ED ROSTAILER,ED tired,tender 0-1 normal soft,normal m
+121 D ED,ED ROSTAILER tired,tender 0-1 normal soft,normal m
 122 N NARRATOR neutral,tender 0-1 normal normal u
 123 N NARRATOR neutral,tired 0-1 normal normal u
 124 N
@@ -130,6 +130,6 @@
 128 N
 129 N
 130 N
-131 D ED ROSTAILER,ED neutral,tired,whispering 0-1 slow,normal soft m
+131 D ED,ED ROSTAILER neutral,tired,whispering 0-1 slow,normal soft m
 132 N
 133 N

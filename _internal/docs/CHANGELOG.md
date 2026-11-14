@@ -7,6 +7,10 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+- Tab Nhân vật xếp Vai chính / Vai phụ theo vai thật: nhân vật chính không còn rơi xuống Vai phụ và mất giới tính, tuổi; NPC và người chỉ có một cảnh luôn là Vai phụ.
+- Một nhân vật viết đảo họ-tên ("Hajikano Aya" / "Aya Hajikano"), gọi bằng một phần tên, hay mang vài cách tả gần nhau ("người phụ nữ bí ẩn qua/trên điện thoại") không còn bị tách làm hai người hai giọng.
+- Người chưa rõ giới lấy giới từ chính tên gọi ("người phụ nữ…", "nam sinh…") và không còn mặc định giọng nam.
+
 - Tự phân vai chỉ dùng giọng đạt (chủ sách xếp hạng hoặc máy chấm cho qua); hết giọng đạt thì dùng chung giọng giữa những vai không bao giờ gặp nhau, không còn rơi xuống Adam bựa, Ngọc Huyền, Trúc Ly. Giới chưa rõ không còn mặc định giọng nam.
 
 - Thư viện (điện thoại, web, máy tính): ô sách có bìa vẽ (sách chưa có ảnh bìa) giờ cũng hiện tên dưới bìa như ô có ảnh; trình đọc màn hình đọc được tên.

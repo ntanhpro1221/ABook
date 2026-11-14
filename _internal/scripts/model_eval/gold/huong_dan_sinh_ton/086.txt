@@ -62,18 +62,18 @@
 60 N
 61 N
 62 N
-63 D ED ROSTAILER,ED neutral,surprised,sarcastic 0-1 normal normal m
+63 D ED,ED ROSTAILER neutral,surprised,sarcastic 0-1 normal normal m
 64 D LORTEL,LORTEL KEHELN neutral,happy 0-1 normal normal f
-65 D ED ROSTAILER,ED surprised,neutral 0-1 normal normal m
+65 D ED,ED ROSTAILER surprised,neutral 0-1 normal normal m
 66 D LORTEL,LORTEL KEHELN neutral,whispering,happy,tender 0-1 normal soft,normal f
 67 N
 68 N
 69 N
 70 N
 71 N
-72 D ED ROSTAILER,ED surprised,neutral,sarcastic 0-1 normal normal m
+72 D ED,ED ROSTAILER surprised,neutral,sarcastic 0-1 normal normal m
 73 D LORTEL,LORTEL KEHELN sarcastic,happy,neutral 0-1 normal normal f
-74 D ED ROSTAILER,ED surprised,neutral 0-1 normal normal m
+74 D ED,ED ROSTAILER surprised,neutral 0-1 normal normal m
 75 D LORTEL,LORTEL KEHELN neutral,sarcastic 0-1 normal normal f
 76 D LORTEL,LORTEL KEHELN neutral,sarcastic 0-1 normal normal f
 77 N
@@ -81,17 +81,17 @@
 79 N
 80 N
 81 D LORTEL,LORTEL KEHELN happy,sarcastic,excited 0-1 normal normal f
-82 D ED ROSTAILER,ED sarcastic,neutral 0-1 normal normal m
+82 D ED,ED ROSTAILER sarcastic,neutral 0-1 normal normal m
 83 D LORTEL,LORTEL KEHELN happy,sarcastic 0-1 normal normal f
 84 N
 85 N,T LORTEL~,LORTEL KEHELN~,NARRATOR happy,neutral 0-1 normal normal u
 86 N
 87 D LORTEL,LORTEL KEHELN neutral,sarcastic 0-1 normal normal f
-88 D ED ROSTAILER,ED surprised,neutral 0-1 normal normal m
+88 D ED,ED ROSTAILER surprised,neutral 0-1 normal normal m
 89 D LORTEL,LORTEL KEHELN neutral,sarcastic,angry 0-1 normal normal f
 90 N
 91 D LORTEL,LORTEL KEHELN neutral 0-1 normal normal f
-92 D ED ROSTAILER,ED neutral,tired 0-1 normal normal m
+92 D ED,ED ROSTAILER neutral,tired 0-1 normal normal m
 93 D LORTEL,LORTEL KEHELN neutral 0-1 normal normal f
 94 N
 95 N
@@ -118,21 +118,21 @@
 116 N
 117 N
 118 D LORTEL,LORTEL KEHELN,ED ROSTAILER~,ED~ neutral,happy 0-1 normal normal f
-119 D ED ROSTAILER,ED neutral,surprised 0-1 normal normal m
+119 D ED,ED ROSTAILER neutral,surprised 0-1 normal normal m
 120 D LORTEL,LORTEL KEHELN neutral,sarcastic 0-1 normal normal f
 121 N
 122 N
 123 D LORTEL,LORTEL KEHELN happy,neutral,sarcastic 0-1 normal normal f
-124 D ED ROSTAILER,ED neutral,tired 0-1 normal normal m
+124 D ED,ED ROSTAILER neutral,tired 0-1 normal normal m
 125 D LORTEL,LORTEL KEHELN sad,sarcastic,neutral 0-1 normal normal f
 126 N
 127 N
 128 N
 129 D LORTEL,LORTEL KEHELN neutral,happy 0-1 normal normal f
-130 D ED ROSTAILER,ED surprised,neutral 0-1 normal normal m
+130 D ED,ED ROSTAILER surprised,neutral 0-1 normal normal m
 131 N
 132 D LORTEL,LORTEL KEHELN whispering,neutral,sarcastic 0-1 normal soft f
-133 D ED ROSTAILER,ED neutral,tired,whispering 0-1 normal soft,normal m
+133 D ED,ED ROSTAILER neutral,tired,whispering 0-1 normal soft,normal m
 134 D LORTEL,LORTEL KEHELN whispering,tender,neutral 0-1 normal soft f
 135 N
 136 D LORTEL,LORTEL KEHELN whispering,neutral,sad 0-1 normal soft,normal f
@@ -143,14 +143,14 @@
 141 N
 142 N NARRATOR neutral,sad 0-1 normal normal u
 143 D LORTEL,LORTEL KEHELN surprised,afraid,neutral 0-1 normal normal f
-144 D ED ROSTAILER,ED surprised,neutral 0-1 normal normal m
+144 D ED,ED ROSTAILER surprised,neutral 0-1 normal normal m
 145 D LORTEL,LORTEL KEHELN happy,tender,neutral 0-1 normal normal f
 146 N
-147 D ED ROSTAILER,ED tired,neutral,sad 0-1 normal normal m
+147 D ED,ED ROSTAILER tired,neutral,sad 0-1 normal normal m
 148 D LORTEL,LORTEL KEHELN surprised,neutral 0-1 normal normal f
-149 D ED ROSTAILER,ED neutral,tired,afraid 0-1 normal,slow normal m
+149 D ED,ED ROSTAILER neutral,tired,afraid 0-1 normal,slow normal m
 150 D LORTEL,LORTEL KEHELN happy,tender 0-1 normal soft,normal f
-151 D ED ROSTAILER,ED surprised,neutral 0-1 normal normal m
+151 D ED,ED ROSTAILER surprised,neutral 0-1 normal normal m
 152 N
 153 D LORTEL,LORTEL KEHELN tender,happy,sarcastic 0-1 normal soft,normal f
 154 D LORTEL,LORTEL KEHELN sarcastic,happy,tender 0-1 normal normal f
@@ -162,7 +162,7 @@
 160 N,T LORTEL~,LORTEL KEHELN~,NARRATOR surprised,neutral 0-1 normal normal u
 161 N
 162 D LORTEL,LORTEL KEHELN sarcastic,sad,happy 0-1 normal normal f
-163 D ED ROSTAILER,ED neutral,tired 0-1 normal normal m
+163 D ED,ED ROSTAILER neutral,tired 0-1 normal normal m
 164 D LORTEL,LORTEL KEHELN surprised,neutral 0-1 normal normal f
 165 N
 166 D LORTEL,LORTEL KEHELN surprised,happy,sarcastic 0-1 normal normal f
@@ -172,14 +172,14 @@
 170 D LORTEL,LORTEL KEHELN sarcastic,happy,tender 0-1 normal normal f
 171 N
 172 D LORTEL,LORTEL KEHELN happy,sarcastic 0-1 normal normal f
-173 D ED ROSTAILER,ED tired,neutral,sarcastic 0-1 normal normal m
+173 D ED,ED ROSTAILER tired,neutral,sarcastic 0-1 normal normal m
 174 D LORTEL,LORTEL KEHELN happy,neutral,tender 0-1 normal normal f
-175 D ED ROSTAILER,ED neutral 0-1 normal normal m
+175 D ED,ED ROSTAILER neutral 0-1 normal normal m
 176 D LORTEL,LORTEL KEHELN happy,surprised 0-1 normal normal f
 177 N
 178 N
 179 D LORTEL,LORTEL KEHELN happy,neutral,sad 0-1 normal normal f
-180 D ED ROSTAILER,ED surprised,neutral 0-1 normal normal m
+180 D ED,ED ROSTAILER surprised,neutral 0-1 normal normal m
 181 D LORTEL,LORTEL KEHELN neutral,tired,sad 0-1 normal normal f
 182 N
 183 N
@@ -187,24 +187,24 @@
 185 D LORTEL,LORTEL KEHELN neutral,tired,afraid 0-1 normal normal f
 186 N
 187 D LORTEL,LORTEL KEHELN neutral,tired 0-1 normal normal f
-188 D ED ROSTAILER,ED surprised,neutral 0-1 normal normal m
+188 D ED,ED ROSTAILER surprised,neutral 0-1 normal normal m
 189 D LORTEL,LORTEL KEHELN neutral 0-1 normal normal f
 190 N
 191 N
 192 D LORTEL,LORTEL KEHELN neutral,tired,sarcastic 0-1 normal normal f
-193 D ED ROSTAILER,ED neutral 0-1 normal normal m
+193 D ED,ED ROSTAILER neutral 0-1 normal normal m
 194 D LORTEL,LORTEL KEHELN neutral,tired 0-1 normal normal f
 195 N
 196 D LORTEL,LORTEL KEHELN happy,neutral,excited 0-1 normal normal f
-197 D ED ROSTAILER,ED neutral,tender,sarcastic 0-1 normal normal m
+197 D ED,ED ROSTAILER neutral,tender,sarcastic 0-1 normal normal m
 198 D LORTEL,LORTEL KEHELN happy,sarcastic,excited 0-2 normal normal f
 199 N
 200 N
 201 D LORTEL,LORTEL KEHELN happy,surprised,neutral 0-1 normal normal f
 202 N
-203 D ED ROSTAILER,ED neutral 0-1 normal normal m
+203 D ED,ED ROSTAILER neutral 0-1 normal normal m
 204 D LORTEL,LORTEL KEHELN surprised,neutral 0-1 normal normal f
-205 D ED ROSTAILER,ED neutral,happy 0-1 normal normal m
+205 D ED,ED ROSTAILER neutral,happy 0-1 normal normal m
 206 D LORTEL,LORTEL KEHELN surprised,neutral 0-1 normal normal f
 207 N
 208 N
@@ -215,9 +215,9 @@
 213 D ZIX,ZIX EFFELSTEIN,NPC*~ neutral,happy 0-1 normal normal m
 214 N
 215 N
-216 D ED ROSTAILER,ED neutral,happy 0-1 normal normal m
+216 D ED,ED ROSTAILER neutral,happy 0-1 normal normal m
 217 D ZIX,ZIX EFFELSTEIN neutral,happy 0-1 normal normal m
-218 D ED ROSTAILER,ED surprised,neutral 0-1 normal normal m
+218 D ED,ED ROSTAILER surprised,neutral 0-1 normal normal m
 219 N
 220 N
 221 N
@@ -233,12 +233,12 @@
 231 N
 232 N
 233 D ZIX,ZIX EFFELSTEIN neutral 0-1 normal normal m
-234 D ED ROSTAILER,ED neutral,tender 0-1 normal normal m
+234 D ED,ED ROSTAILER neutral,tender 0-1 normal normal m
 235 D ZIX,ZIX EFFELSTEIN neutral,happy 0-1 normal normal m
 236 N,T ED ROSTAILER~,ED~,NARRATOR neutral,sarcastic,tired 0-1 normal normal u
-237 D ED ROSTAILER,ED neutral 0-1 normal normal m
+237 D ED,ED ROSTAILER neutral 0-1 normal normal m
 238 D ZIX,ZIX EFFELSTEIN surprised,neutral 0-1 normal normal m
-239 D ED ROSTAILER,ED neutral,happy 0-1 normal normal m
+239 D ED,ED ROSTAILER neutral,happy 0-1 normal normal m
 240 N
 241 N
 242 N

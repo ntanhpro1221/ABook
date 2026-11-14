@@ -33,9 +33,13 @@ def test_a_person_merged_into_another_shows_the_merge_is_waiting(tmp_path: Path)
                (time.time(),))
     db.commit()
     db.close()
-    assert all(person.get("mergedInto") is None for person in store.cast(project)["characters"])
+    def everyone() -> list[dict]:
+        cast = store.cast(project)
+        return cast["characters"] + cast["extras"]
+
+    assert all(person.get("mergedInto") is None for person in everyone())
     aliases.add(project, "GIAO_SU", "LUCIEN", now=1234.5)
-    people = {person["name"]: person for person in store.cast(project)["characters"]}
+    people = {person["name"]: person for person in everyone()}
     assert people["GIAO_SU"]["mergedInto"] == "Lucien" and people["LUCIEN"]["mergedInto"] is None
     # Mốc lần gộp đi kèm: giao diện dùng nó để tìm đúng yêu cầu mà "Bỏ gộp" (cùng mốc với các câu đã đổi người nói).
     assert people["GIAO_SU"]["mergedAt"] == 1234.5 and people["LUCIEN"]["mergedAt"] is None

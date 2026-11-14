@@ -57,5 +57,6 @@ def test_a_seeded_part_shows_the_carried_cast_before_any_line_and_then_as_normal
     from abook.database import ProjectDB
     _speak(ProjectDB(book["second"] / "project.sqlite3"), "003", [("SELENE", VOICE_B)])
     after = store.cast(book["second"])
-    assert [(person["name"], person["lines"], person["displayName"]) for person in after["characters"]]         == [("SELENE", 1, "Selena")] and after["extras"] == []
+    # Một câu ở một cảnh: Vai phụ theo luật vai (store.cast_role); đây chỉ kiểm người ấy hiện như thường.
+    assert [(person["name"], person["lines"], person["displayName"]) for person in after["characters"] + after["extras"]]         == [("SELENE", 1, "Selena")]
     assert [person["name"] for person in after["carried"]] == ["MARCUS"], "đã nói ở phần này thì không còn trong 'mang sang'"

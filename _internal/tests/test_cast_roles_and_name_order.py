@@ -9,8 +9,10 @@ from __future__ import annotations
 from collections import Counter
 from pathlib import Path
 
+from abook import aliases
 from abook.character_registry import (
     PresetAllocator,
+    _canonicalize_named_speakers,
     canonical_speaker_names,
     gender_from_name,
     merge_reordered_names,
@@ -46,7 +48,9 @@ PEOPLE = {
 }
 
 
-def _book(tmp_path: Path) -> Path:
+def _book(tmp_path: Path, lines: list | None = None, people: dict | None = None) -> Path:
+    lines = LINES if lines is None else lines
+    people = PEOPLE if people is None else people
     paths = ProjectPaths.build(tmp_path / "project")
     settings = build_settings()
     db = ProjectDB(paths.db)
@@ -56,22 +60,22 @@ def _book(tmp_path: Path) -> Path:
     for number in (1, 2):
         source = paths.root / "sources" / f"00{number}.txt"
         source.parent.mkdir(parents=True, exist_ok=True)
-        source.write_text("\n".join(text for chapter, _k, _s, text, _b in LINES if chapter == number), encoding="utf-8")
+        source.write_text("\n".join(text for chapter, _k, _s, text, _b in lines if chapter == number), encoding="utf-8")
         chapter_ids[number] = db.ensure_chapters([{
             "chapter_index": number, "title": f"00{number}", "input_path": source, "input_sha256": sha256_file(source),
             "input_size": source.stat().st_size, "output_mp3": paths.chapters / f"00{number}.mp3",
         }])[0]
         db.replace_chapter_segments(chapter_ids[number], [
             {"stable_id": f"c{number}s{seq}", "seq": seq, "text": text, "text_sha256": f"sha-{number}-{seq}", "kind_hint": kind}
-            for seq, (_chapter, kind, _speaker, text, _brk) in enumerate(row for row in LINES if row[0] == number)
+            for seq, (_chapter, kind, _speaker, text, _brk) in enumerate(row for row in lines if row[0] == number)
         ])
     with db.connect() as conn:
-        for key, (display, gender, age, importance) in PEOPLE.items():
+        for key, (display, gender, age, importance) in people.items():
             conn.execute("INSERT INTO characters(canonical_name,display_name,gender,age,personality,importance,"
                          "mention_count,confidence,locked,created_at,updated_at) VALUES(?,?,?,?,'',?,1,1,0,0,0)",
                          (key, display, gender, age, importance))
         for number in (1, 2):
-            for seq, (_chapter, kind, speaker, _text, brk) in enumerate(row for row in LINES if row[0] == number):
+            for seq, (_chapter, kind, speaker, _text, brk) in enumerate(row for row in lines if row[0] == number):
                 conn.execute("UPDATE segments SET kind=?, speaker=?, scene_break=?, status='verified' WHERE stable_id=?",
                              (kind, speaker, brk, f"c{number}s{seq}"))
     return paths.root
@@ -151,3 +155,80 @@ def test_unknown_gender_takes_the_gender_with_a_free_voice() -> None:
         if preset["gender"] == GENDER_MALE:
             allocator.reserve(str(preset["name"]), who="AI ĐÓ")
     assert allocator.choose("unknown", npc=False, who="X")["gender"] == GENDER_FEMALE
+
+
+def test_a_listener_alias_to_a_name_the_book_reordered_joins_that_person(tmp_path: Path) -> None:
+    """Bí danh "Aya" -> "Aya Hajikano" trong khi lượt gom đã đưa "Aya Hajikano" về "HAJIKANO AYA": "Aya" về đúng người ấy,
+    không thành người thứ hai."""
+    lines = [
+        (1, "dialogue", "HAJIKANO AYA", "“Về rồi à.”", 0),
+        (1, "dialogue", "Aya Hajikano", "“Vào đi.”", 0),
+        (1, "dialogue", "Aya", "“Trà nhé.”", 0),
+        (1, "dialogue", "HAJIKANO AYA", "“Ngồi đây.”", 0),
+        (2, "dialogue", "Yui Hajikano", "“Chị ơi.”", 0),
+        (2, "dialogue", "Aya", "“Gì thế.”", 0),
+    ]
+    root = _book(tmp_path, lines, {})
+    aliases.add(root, "Aya", "Aya Hajikano")
+    db = ProjectDB(root / "project.sqlite3")
+    _canonicalize_named_speakers(db, lambda message: None)
+    speakers = Counter(str(row["speaker"]) for row in db.list_segments())
+    assert speakers == Counter({"HAJIKANO AYA": 5, "Yui Hajikano": 1}), speakers
+
+
+def _attributed(lead: str, label: str) -> tuple[str, str]:
+    from abook import analysis
+
+    group = [{"stable_id": f"s{index}", "text": text, "chapter_id": 1, "paragraph_index": 1, "kind_hint": kind}
+             for index, (kind, text) in enumerate([("dialogue", "“Vào đi.”"), ("narration", lead)])]
+    result = {"s0": {"kind": "dialogue", "speaker": label, "confidence": 0.9, "gender": "female", "age": "young"},
+              "s1": {"kind": "narration", "speaker": "NARRATOR", "confidence": 1.0, "gender": "unknown", "age": "unknown"}}
+    analysis._repair_explicit_attribution(group, result)
+    return result["s0"]["speaker"], result["s0"]["gender"]
+
+
+def test_a_lead_in_naming_part_of_the_label_confirms_the_label() -> None:
+    assert _attributed("Aya nói.", "Aya Hajikano") == ("Aya Hajikano", "female"), "một phần tên: vẫn người ấy, giữ giới"
+    assert _attributed("Yadomura nói.", "Em gái Yadomura")[0] == "Yadomura", "nhãn quan hệ mang tên NGƯỜI KHÁC"
+    assert _attributed("Kenta nói.", "Aya Hajikano")[0] == "Kenta", "tên khác: lời dẫn vẫn thắng"
+
+
+def test_close_descriptions_of_one_role_are_one_person() -> None:
+    labels = Counter({"Người Phụ Nữ Bí Ẩn Qua Điện Thoại": 7, "Người Phụ Nữ Bí Ẩn Trên Điện Thoại": 1,
+                      "Người Phụ Nữ Gọi Điện Thoại": 2, "Người phụ nữ bên kia đầu dây": 1,
+                      "Người Đàn Ông Qua Điện Thoại": 3, "Người Phụ Nữ": 4, "Người Phụ Nữ Bán Hàng": 2})
+    mapping = canonical_speaker_names(labels, "")
+    woman = "Người Phụ Nữ Bí Ẩn Qua Điện Thoại"
+    for label in ("Người Phụ Nữ Bí Ẩn Trên Điện Thoại", "Người Phụ Nữ Gọi Điện Thoại", "Người phụ nữ bên kia đầu dây"):
+        assert mapping[label] == woman, label
+    assert mapping["Người Đàn Ông Qua Điện Thoại"] == "Người Đàn Ông Qua Điện Thoại", "khác giới trong nhãn"
+    assert mapping["Người Phụ Nữ"] == "Người Phụ Nữ", "nhãn trơn khớp mọi người phụ nữ: không gộp"
+    assert mapping["Người Phụ Nữ Bán Hàng"] == "Người Phụ Nữ Bán Hàng", "nội dung khác"
+
+
+def test_a_description_inside_two_wider_ones_stays_apart() -> None:
+    labels = Counter({"Người Phụ Nữ Gọi Điện Thoại": 2, "Người Phụ Nữ Bí Ẩn Qua Điện Thoại": 5,
+                      "Người Phụ Nữ Già Qua Điện Thoại": 3})
+    mapping = canonical_speaker_names(labels, "")
+    assert mapping["Người Phụ Nữ Gọi Điện Thoại"] == "Người Phụ Nữ Gọi Điện Thoại", "hai nhãn rộng hơn: mơ hồ"
+
+
+def test_a_plain_local_role_joins_the_one_described_person_of_its_chapter(tmp_path: Path) -> None:
+    from abook.character_registry import _merge_local_speakers_with_named_identity
+
+    lines = [
+        (1, "dialogue", "Người Phụ Nữ Bí Ẩn Qua Điện Thoại", "“Alô.”", 0),
+        (1, "dialogue", "NPC_LOCAL::c00001::người phụ nữ", "“Cậu nghe chứ?”", 0),
+        (1, "dialogue", "Haru", "“Ai đấy?”", 0),
+        (2, "dialogue", "Người Phụ Nữ Bí Ẩn Qua Điện Thoại", "“Lại là tôi.”", 0),
+        (2, "dialogue", "Người Phụ Nữ Bán Hàng", "“Mời vào.”", 0),
+        (2, "dialogue", "NPC_LOCAL::c00002::người phụ nữ", "“Cảm ơn.”", 0),
+        (2, "dialogue", "NPC_LOCAL::c00002::người bán hàng", "“Lấy gì?”", 0),
+    ]
+    root = _book(tmp_path, lines, {})
+    db = ProjectDB(root / "project.sqlite3")
+    _merge_local_speakers_with_named_identity(db, lambda message: None)
+    speakers = Counter(str(row["speaker"]) for row in db.list_segments())
+    assert speakers["Người Phụ Nữ Bí Ẩn Qua Điện Thoại"] == 3, "chương 1: chỉ một người phụ nữ được tả"
+    assert speakers["NPC_LOCAL::c00002::người phụ nữ"] == 1, "chương 2: hai người phụ nữ được tả - mơ hồ"
+    assert speakers["NPC_LOCAL::c00002::người bán hàng"] == 1, "nhãn cục bộ có nội dung riêng không theo luật này"

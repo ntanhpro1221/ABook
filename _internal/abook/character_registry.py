@@ -342,6 +342,72 @@ def merge_reordered_names(representatives: dict[str, str], counts: "Counter[str]
     return redirected
 
 
+# Nhãn MÔ TẢ một người ("Người Phụ Nữ Bí Ẩn Qua Điện Thoại", "... Trên Điện Thoại", "Người Phụ Nữ Gọi Điện Thoại"): so phần
+# nội dung, bỏ chữ chỉ người (đã kiểm riêng bằng giới trong nhãn), giới từ và động từ nối. Cụm cùng nghĩa viết về một dạng.
+DESCRIPTIVE_SAME_PHRASES = (("bên kia đầu dây", "điện thoại"), ("đầu dây bên kia", "điện thoại"))
+DESCRIPTIVE_FILLER_WORDS = frozenset({"qua", "trên", "bên", "ở", "tại", "trong", "từ", "gọi", "của", "với", "đang", "kia", "đó",
+                                      "này", "ấy"})
+DESCRIPTIVE_PERSON_WORDS = frozenset({"người", "phụ", "nữ", "đàn", "ông", "bà", "cô", "gái", "chàng", "trai", "cậu", "bé", "lão",
+                                      "thanh", "niên", "thiếu", "một"})
+# Phần nội dung phải đủ riêng (từ hai chữ: "điện thoại", "bán hàng") mới so - "Người Phụ Nữ" trơn khớp mọi người phụ nữ.
+DESCRIPTIVE_MINIMUM_CONTENT = 2
+
+
+def _descriptive_content(name: str) -> frozenset[str] | None:
+    """Phần nội dung của một nhãn mô tả tiếng Việt mở bằng chữ chỉ người/vai; None với tên riêng, nhãn cục bộ, nhãn ngắn."""
+    from .name_snap import ROLE_PREFIX
+
+    text = normalize_name(name)
+    words = text.split()
+    if (len(words) < 3 or is_local_speaker(name) or not ROLE_PREFIX.match(text)
+            or not all(is_vietnamese_syllable(word) for word in words)):
+        return None
+    for phrase, same in DESCRIPTIVE_SAME_PHRASES:
+        text = text.replace(phrase, same)
+    content = frozenset(word for word in text.split()
+                        if word not in DESCRIPTIVE_FILLER_WORDS and word not in DESCRIPTIVE_PERSON_WORDS)
+    return content if len(content) >= DESCRIPTIVE_MINIMUM_CONTENT else None
+
+
+def merge_descriptive_variants(representatives: dict[str, str], counts: "Counter[str]") -> dict[str, str]:
+    """Các nhãn mô tả gần nhau của MỘT vai -> một người. Trả về {key thua: đại diện thắng}.
+
+    Đo 15-11 (castfix, "Nơi mà hai ta đã gọi điện"): người phụ nữ gọi cho nhân vật chính mang bốn nhãn - "... Bí Ẩn Qua
+    Điện Thoại" (7 câu), "... Bí Ẩn Trên Điện Thoại" (1), "Người Phụ Nữ Gọi Điện Thoại" (2) - giới chưa rõ, ba giọng, hai giọng
+    nam. Hai nhãn cùng giới trong nhãn (`gender_from_name`) và cùng phần nội dung là một người (đích: nhiều câu hơn); phần
+    nội dung của một nhãn nằm trọn trong ĐÚNG MỘT nhãn khác cùng giới -> nhãn ấy (hai nhãn rộng hơn khớp: mơ hồ, không gộp)."""
+    lines = _representative_lines(representatives, counts)
+    info = {}
+    for name in set(representatives.values()):
+        content = _descriptive_content(name)
+        if content is not None:
+            info[name] = (content, gender_from_name([name]))
+    winner_of: dict[str, str] = {}
+    same: dict[tuple[frozenset[str], str | None], list[str]] = defaultdict(list)
+    for name, signature in info.items():
+        same[signature].append(name)
+    for names in same.values():
+        winner = min(names, key=lambda name: (-lines.get(name, 0), name.casefold(), name))
+        for name in names:
+            winner_of[name] = winner
+    heads = {winner_of[name] for name in info}
+    for name in sorted(heads):
+        content, gender = info[name]
+        wider = [other for other in heads if other != name and info[other][1] == gender and content < info[other][0]]
+        if len(wider) == 1:
+            for loser, current in winner_of.items():
+                if current == name:
+                    winner_of[loser] = wider[0]
+    # Một lượt nối: đích của đích (A ⊂ B, B có đích C do trùng nội dung đã xử ở trên; B ⊂ C chỉ khi C duy nhất rộng hơn B).
+    for loser in list(winner_of):
+        seen = {loser}
+        while winner_of.get(winner_of[loser], winner_of[loser]) != winner_of[loser] and winner_of[loser] not in seen:
+            seen.add(winner_of[loser])
+            winner_of[loser] = winner_of[winner_of[loser]]
+    return {key: winner_of[name] for key, name in representatives.items()
+            if name in winner_of and winner_of[name] != name}
+
+
 def merge_lone_romaji_names(representatives: dict[str, str]) -> dict[str, str]:
     """Nhãn MỘT chữ romaji là chữ của ĐÚNG MỘT nhãn tên Nhật đủ trong sổ -> tên đủ ấy ("AYA" -> "AYA HAJIKANO"). Trả về {key
     thua: đại diện thắng}. Như `merge_into_book_full_names` nhưng tên đủ lấy từ chính các nhãn (sau `merge_reordered_names`,
@@ -1065,6 +1131,12 @@ def canonical_speaker_names(
             log(f"  {representatives[loser_key]} là {winner} viết đảo họ-tên: cùng một nhân vật.")
             representatives[loser_key] = winner
 
+    # Nhãn mô tả gần nhau của một vai ("Người Phụ Nữ Bí Ẩn Qua/Trên Điện Thoại", "Người Phụ Nữ Gọi Điện Thoại").
+    for loser_key, winner in sorted(merge_descriptive_variants(representatives, cleaned_counts).items()):
+        if representatives[loser_key] != winner:
+            log(f"  {representatives[loser_key]} là cách tả khác của {winner}: cùng một nhân vật.")
+            representatives[loser_key] = winner
+
     # Pass cuối trong ba pass nhận dạng, và cố ý cuối: hai pass trên có thể đã trỏ một key về
     # `SELNE`, và pass này trỏ **giá trị** `SELNE` sang `SELENE`, nên nó dọn cả những key vừa
     # được trỏ tới - không cần đi vòng nào để nối hai luật lại.
@@ -1145,6 +1217,31 @@ def canonical_speaker_names(
     return targets
 
 
+def _listener_person_resolver(targets: dict[str, str]) -> Callable[[str], str]:
+    """Đích của một bí danh người nghe, nói bằng TÊN SỔ đã gom (castfix 15-11). Bí danh ghi "Aya" -> "Aya Hajikano", còn các
+    lượt gom tự động đã đưa "Aya Hajikano" về "HAJIKANO AYA" (thứ tự sách): so thẳng tên bí danh với đích thì thấy khác, và
+    "Aya" bị tách thành người thứ hai (40 câu, giới chưa rõ, giọng nam). Tên bí danh là một nhãn đã gom -> đích của nhãn ấy;
+    là một đích (không kể hoa/thường) -> chính đích ấy; cùng bộ chữ với đúng một đích (đảo họ-tên) -> đích ấy; không thì giữ."""
+    from .aliases import key as alias_key
+
+    by_key = {alias_key(target): target for target in targets.values()}
+    by_key.update({alias_key(original): target for original, target in targets.items()})
+    by_words: dict[tuple[str, ...], set[str]] = defaultdict(set)
+    for target in set(targets.values()):
+        words = normalize_name(target).split()
+        if len(words) >= 2 and not is_local_speaker(target):
+            by_words[tuple(sorted(words))].add(target)
+
+    def resolve(person: str) -> str:
+        found = by_key.get(alias_key(person))
+        if found is not None:
+            return found
+        same = by_words.get(tuple(sorted(normalize_name(person).split())), set())
+        return next(iter(same)) if len(same) == 1 else person
+
+    return resolve
+
+
 def _canonicalize_named_speakers(
     db: ProjectDB,
     log: Callable[[str], None],
@@ -1180,8 +1277,11 @@ def _canonicalize_named_speakers(
 
     confirmed = listener_aliases(Path(path).parent) if path else {}
     told: set[tuple[str, str]] = set()
+    as_target = _listener_person_resolver(targets)
     for original, target in list(targets.items()):
         person = confirmed.get(alias_key(target)) or confirmed.get(alias_key(original))
+        if person:
+            person = as_target(person)
         if person and alias_key(person) != alias_key(target):
             if (target, person) not in told:
                 told.add((target, person))
@@ -2119,6 +2219,8 @@ def _merge_local_speakers_with_named_identity(
         label = normalize_name(local_speaker_label(local_speaker))
         candidates = named_by_chapter_and_label.get((chapter_id, label))
         if not candidates:
+            candidates = _named_description_owner(named_by_chapter_and_label, chapter_id, label)
+        if not candidates:
             continue
         named_rows = [r for r in rows if str(r["speaker"]) in candidates]
         if not all(_compatible_local_traits(matching_rows, named_rows, field) for field in ("gender", "age")):
@@ -2134,6 +2236,21 @@ def _merge_local_speakers_with_named_identity(
                 f"{local_speaker_display(local_speaker)} → {named_speaker} "
                 f"({rewritten} segment)."
             )
+
+
+def _named_description_owner(
+    named_by_chapter_and_label: dict[tuple[int, str], Counter[str]], chapter_id: int, label: str,
+) -> Counter[str] | None:
+    """Vai cục bộ trơn ("người phụ nữ", "cô gái": chỉ chữ chỉ người) trong một chương mà ĐÚNG MỘT nhân vật có nhãn mô tả mở
+    bằng chính cụm ấy cũng nói ("Người Phụ Nữ Bí Ẩn Qua Điện Thoại"): là người ấy. castfix 15-11: người phụ nữ gọi điện
+    vừa là nhãn mô tả, vừa là "người phụ nữ" cục bộ ở chương 1, 2, 9 - mỗi chương một giọng mới. Hai nhân vật mô tả cùng
+    mở bằng cụm ấy trong chương: mơ hồ, giữ nguyên."""
+    words = label.split()
+    if len(words) < 2 or not all(word in DESCRIPTIVE_PERSON_WORDS for word in words):
+        return None
+    owners = [(named, candidates) for (chapter, named), candidates in named_by_chapter_and_label.items()
+              if chapter == chapter_id and named.startswith(label + " ") and _descriptive_content(named) is not None]
+    return owners[0][1] if len(owners) == 1 else None
 
 
 def _compatible_local_traits(left: list[Any], right: list[Any], field: str) -> bool:

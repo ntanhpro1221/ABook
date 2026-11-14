@@ -1800,6 +1800,11 @@ def _repair_explicit_attribution(
             # một nhân vật mới chưa rõ giới, và tên ấy lọt vào danh sách "Nhân vật đã biết" của mọi lô sau.
             attributed_speaker = strip_japanese_honorific(attributed_speaker)
         previous_speaker = str(data["speaker"])
+        if _is_part_of_label(attributed_speaker, previous_speaker):
+            # Câu kể gọi người nói bằng MỘT PHẦN nhãn đang có ("Aya nói" khi nhãn là "Aya Hajikano"): lời dẫn xác nhận
+            # nhãn ấy, không phải người mới. castfix 15-11: đổi thành "Aya" rồi lan theo đoạn đã tách chị gái của nữ chính
+            # thành hai người (40 câu giới chưa rõ, giọng nam); "Em gái Yadomura" -> "Em" cũng vậy.
+            attributed_speaker = previous_speaker
         known_rows = [
             candidate
             for candidate in result.values()
@@ -1825,6 +1830,23 @@ def _repair_explicit_attribution(
 
 def normalize_speaker_name(value: str) -> str:
     return " ".join(value.casefold().split())
+
+
+def _is_part_of_label(part: str, label: str) -> bool:
+    """`part` là một phần chữ của nhãn người có tên `label` (ít chữ hơn, mọi chữ đều có trong nhãn, không kể hoa/thường)."""
+    if is_local_speaker(part) or is_local_speaker(label) or label.casefold() in {"unknown", "narrator", ""}:
+        return False
+    from .name_snap import ROLE_PREFIX
+
+    words, whole = normalize_speaker_name(part).split(), normalize_speaker_name(label).split()
+    if not words or len(words) >= len(whole):
+        return False
+    role = ROLE_PREFIX.match(normalize_speaker_name(label))
+    if role:
+        # Nhãn quan hệ/vai mang tên NGƯỜI KHÁC ("Em gái Yadomura"): "Yadomura nói" là Yadomura, chỉ phần vai ("Em") mới là
+        # nhãn này.
+        return set(words) <= set(role.group(0).split())
+    return set(words) <= set(whole)
 
 
 def _strong_majority_value(

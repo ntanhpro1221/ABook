@@ -50,7 +50,8 @@ def test_a_rename_shows_at_once_and_clearing_restores_the_original(tmp_path: Pat
         # Đọc lại từ đĩa (không nhớ gì giữa hai lần gọi) và qua đường HTTP của giao diện.
         status, data, _ = _request(server.port, "GET", f"{url}/cast", headers=headers)
         assert status == 200
-        assert next(p for p in json.loads(data)["characters"] if p["name"] == "LUCIEN")["displayName"] == "Lu Xi"
+        served = json.loads(data)
+        assert next(p for p in served["characters"] + served["extras"] if p["name"] == "LUCIEN")["displayName"] == "Lu Xi"
         assert json.loads((paths.root / names.FILE_NAME).read_text(encoding="utf-8"))["LUCIEN"]["name"] == "Lu Xi"
         script = store.chapter_script(paths.root, 1)
         assert {segment["speaker"] for segment in script["segments"] if segment["speaker"]} >= {"Lu Xi", "Natasha"}
