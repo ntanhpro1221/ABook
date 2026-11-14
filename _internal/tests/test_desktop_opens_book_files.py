@@ -263,7 +263,8 @@ def test_a_series_file_plays_on_another_computer_part_by_part(tmp_path: Path) ->
     assert packages.chapter_file(folder, 200001) == folder / "chapters" / "2" / "00001_645.mp3"
     assert packages.chapter_file(folder, 100001).read_bytes() != packages.chapter_file(folder, 200001).read_bytes()
     assert packages.script(folder, 200001)["chapterId"] == 200001
-    assert packages.sample_file(folder, 1) is not None and packages.cast(folder)["characters"][0]["parts"] == [1, 2]
+    assert packages.sample_file(folder, 1) is not None and next(p for kind in ("characters", "extras") for p in packages.cast(folder)[kind]
+                                                                         if p["name"] == "LUCIEN")["parts"] == [1, 2]
     assert app.listen_book(opened["id"])["state"]["last"]["chapterId"] == 200001
     server = Server(app, port=0).start()
     try:

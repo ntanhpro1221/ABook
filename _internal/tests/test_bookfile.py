@@ -410,7 +410,8 @@ def test_a_series_merges_the_cast_and_renumbers_the_samples(tmp_path: Path) -> N
 
     with BookFile(path) as book:
         cast = json.loads(book.read("cast.json"))
-        people = {person["name"]: person for person in cast["characters"]}
+        # Một câu một cảnh mỗi phần: vai phụ (store.cast_role); dàn của bộ gộp cả hai mục.
+        people = {person["name"]: person for kind in ("characters", "extras") for person in cast[kind]}
         assert set(people) == {"LUCIEN", "NATASHA"}
         assert people["LUCIEN"]["parts"] == [1, 2] and people["LUCIEN"]["lines"] == 2, "gộp theo tên, cộng số câu"
         assert people["NATASHA"]["parts"] == [2]
@@ -531,7 +532,8 @@ def test_a_merge_or_voice_change_not_yet_applied_never_leaves_this_machine(tmp_p
     project = make_project(tmp_path)
     aliases.add(project, "LUCIEN", "Giáo sư Lucien", now=1.0)
     request_voice(project, "LUCIEN", preset="Thanh Bình", now=time.time() + scaled(60))
-    (person,) = store.cast(project)["characters"]
+    served = store.cast(project)
+    (person,) = [entry for kind in ("characters", "extras") for entry in served[kind] if entry["name"] == "LUCIEN"]
     assert person["mergedInto"] and person["pendingVoice"], "trên máy này tab Nhân vật vẫn hiện hai dấu"
 
     def shared(cast: dict) -> list[dict]:

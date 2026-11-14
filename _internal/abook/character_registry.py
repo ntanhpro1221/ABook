@@ -2984,6 +2984,10 @@ def build_registry_and_cast(
         by_speaker.items(),
         key=lambda item: (-len(item[1]), item[0].casefold()),
     )
+    # Giới đã biết từ trước (phần trước của bộ qua `continuation`, lần phân vai trước): bằng chứng tốt hơn luật trung tính
+    # của `choose()` khi phiếu, văn bản lẫn tên đều im lặng. Đọc TRƯỚC vòng dưới vì vòng ấy ghi đè dòng nhân vật.
+    known_genders = {str(row["canonical_name"]): str(row["gender"]) for row in db.list_characters()
+                     if str(row["gender"]) in (GENDER_MALE, GENDER_FEMALE)}
     # Ai có mặt ở chương nào - cho MỌI người, trước lần `choose()` đầu tiên. Ghi theo tên chuẩn
     # vì đó là tên `choose()` và `reserve()` nhận. Thứ tự vòng lặp bên dưới là theo số câu giảm
     # dần, nên nếu ghi ở trong vòng thì một nhân vật xử lý sau sẽ vô hình với lần chọn ép buộc
@@ -3028,6 +3032,8 @@ def build_registry_and_cast(
         local = is_local_speaker(speaker)
         display_name = local_speaker_display(speaker) if local else speaker
         canonical = canonical_key(speaker if local else display_name)
+        if gender not in (GENDER_MALE, GENDER_FEMALE) and canonical in known_genders:
+            gender = known_genders[canonical]
         confidence = sum(float(row["confidence"]) for row in speaker_rows) / max(1, len(speaker_rows))
         importance = "minor" if local or len(speaker_rows) < minimum_main_mentions else "main"
         character_id = db.upsert_character(

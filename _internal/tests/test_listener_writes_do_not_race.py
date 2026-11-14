@@ -122,7 +122,8 @@ def test_a_waiting_merge_can_be_taken_back_from_the_cast_line(tmp_path: Path) ->
     try:
         status, merged = _call(server, "POST", base + "/characters/merge", {"from": "NATASHA", "into": "LUCIEN"})
         assert status == 200, merged
-        person = next(item for item in cast(project)["characters"] if item["name"] == "NATASHA")
+        served = cast(project)
+        person = next(item for kind in ("characters", "extras") for item in served[kind] if item["name"] == "NATASHA")
         assert person["mergedInto"] == "Lucien" and person["mergedAt"] == merged["requestedAt"]
 
         status, details = _call(server, "GET", base + "/pending-changes")
@@ -134,4 +135,6 @@ def test_a_waiting_merge_can_be_taken_back_from_the_cast_line(tmp_path: Path) ->
     finally:
         server.stop()
     assert speaker_requests(read_overrides(project)) == [] and aliases.load(project) == {}
-    assert next(item for item in cast(project)["characters"] if item["name"] == "NATASHA")["mergedInto"] is None
+    served = cast(project)
+    assert next(item for kind in ("characters", "extras") for item in served[kind]
+                if item["name"] == "NATASHA")["mergedInto"] is None
