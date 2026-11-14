@@ -39,7 +39,7 @@ object BookFileImport {
     const val PROJECT_MIMETYPE = "application/vnd.ngdtuanh.abookproj+zip"
     private const val FORMAT = "abook"
     private const val PROJECT_MAX_ENTRIES = 1_000_000
-    private const val FORMAT_VERSION = 5  // 2 = có thêm rãnh nhạc nền (music/<sha1>.<mp3|m4a|ogg|opus|flac|wav>; bài người dùng nhập giữ định dạng của file); 3 = cả bộ nhiều phần (chapters/<phần>/...); 4 = lớp sửa của người nghe (edits.json, edits/cover.jpg); 5 = chương chỉ có chữ (texts/<n>.txt, không audio)
+    private const val FORMAT_VERSION = 6  // 2 = có thêm rãnh nhạc nền (music/<sha1>.<mp3|m4a|ogg|opus|flac|wav>; bài người dùng nhập giữ định dạng của file); 3 = cả bộ nhiều phần (chapters/<phần>/...); 4 = lớp sửa của người nghe (edits.json, edits/cover.jpg); 5 = chương chỉ có chữ (texts/<n>.txt, không audio); 6 = ảnh nhân vật (avatars/<sha256>.webp)
     /** Chỗ trống dư ngoài cỡ giải nén (book.json, thư mục tạm): đủ để không đầy bộ nhớ giữa chừng. */
     private const val ROOM_MARGIN = 64L shl 20
     private const val MAX_ENTRIES = 20_000
@@ -56,6 +56,7 @@ object BookFileImport {
     private val CONTENT_V4 = Regex("""$COMMON|chapters/(?:\d{1,4}/)?[0-9A-Za-z_.\-]+\.mp3|edits\.json|edits/cover\.jpg""")
     /** Phiên bản 5 thêm chữ của chương: texts/<mã chương>.txt (sách chỉ có chữ - docs/LISTEN_ANYTHING.md mục 1). */
     private val CONTENT_V5 = Regex("""$COMMON|chapters/(?:\d{1,4}/)?[0-9A-Za-z_.\-]+\.mp3|edits\.json|edits/cover\.jpg|texts/\d{1,9}\.txt""")
+    private val CONTENT_V6 = Regex(CONTENT_V5.pattern + "|avatars/[0-9a-f]{64}\\.webp")
     private val DESCRIPTIONS = setOf("mimetype", "book.json", "manifest.json")
     /** Bom nén (bookfile.check_expansion, cùng các con số): âm thanh / ảnh thật gần như không nén được, chữ nén vài chục lần là cùng. */
     private const val MEDIA_RATIO = 20L
@@ -580,7 +581,7 @@ object BookFileImport {
 
     /** Tên mục hợp lệ của một file .abook phiên bản `version` (BookDocumentWriter dùng cùng bộ luật với bộ nhập). */
     internal fun contentPattern(version: Int): Regex =
-        if (version >= 5) CONTENT_V5 else if (version >= 4) CONTENT_V4 else if (version >= 3) CONTENT_V3 else CONTENT
+        if (version >= 6) CONTENT_V6 else if (version >= 5) CONTENT_V5 else if (version >= 4) CONTENT_V4 else if (version >= 3) CONTENT_V3 else CONTENT
 
     /**
      * Cỡ + mã băm các mục DÙNG ĐỂ nhận ra một cuốn (`fingerprints.identity_prints` bên Python): audio từng chương (`chapters/...`);

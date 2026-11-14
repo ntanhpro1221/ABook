@@ -273,6 +273,7 @@ Item {
             required property string text
             required property string kind
             required property string speaker
+            required property var avatar
             readonly property real textW: Math.min(list.width - 40, root.textMax)
             readonly property bool heading: kind === "heading"
             readonly property bool scene: kind === "scene"
@@ -305,11 +306,24 @@ Item {
             }
             onHoverSegChanged: refreshHover()
 
+            AvatarPortrait {
+                Reveal { shown: speakerLabel.shown }
+                x: speakerLabel.x
+                y: Math.round((speakerLabel.height - height) / 2)
+                pixels: 20
+                name: del.speaker
+                portrait: del.avatar && del.avatar.kind ? del.avatar : null
+                bookId: Player.bookId
+            }
             Text {
                 id: speakerLabel
-                Reveal { shown: del.speaker !== "" && !del.heading && !del.scene }
+                readonly property bool shown: del.speaker !== "" && !del.heading && !del.scene
+                Reveal { shown: speakerLabel.shown }
                 x: Math.round((del.width - del.textW) / 2)
                 width: del.textW
+                height: Math.max(implicitHeight, 20)
+                leftPadding: 26
+                verticalAlignment: Text.AlignVCenter
                 text: del.speaker
                 color: root.surface.fg2
                 font.pixelSize: Theme.sizeCaption

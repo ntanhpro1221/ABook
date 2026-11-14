@@ -43,6 +43,7 @@ interface BookSource {
 
     /** Đường tới file nói mẫu của một người (`samples/<n>.wav`); null khi file chưa có trên máy (cuốn nghe thẳng chưa tải). */
     suspend fun samplePath(id: String, sampleId: Int): String?
+    suspend fun avatarBytes(id: String, file: String): ByteArray? = null
 
     // ---- hồ sơ nghe: null = xong, khác null = câu lỗi của lõi. Cuốn đang ở trình phát thì trình phát theo sang hồ sơ mới. ----
 

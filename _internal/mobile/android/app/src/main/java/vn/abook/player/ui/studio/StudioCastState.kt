@@ -79,6 +79,10 @@ class StudioCastState(private val project: StudioProjectState, pause: suspend (L
 
     /** Bảng giọng của một người (`character` = khoá sổ, "NARRATOR" cho người kể). */
     fun voiceSheet(character: String, displayName: String) = VoiceSheetState(project, character, displayName)
+    suspend fun avatar(member: CastMember): ByteArray? = member.avatar?.file?.let { session.source.avatar(session.computer, project.bookId, it) }
+    suspend fun changeAvatar(member: CastMember, action: String, data: String? = null) =
+        session.source.avatarChange(session.computer, project.bookId, JSONObject().put("character", member.name).put("action", action).put("data", data))
+    suspend fun avatarStatus(member: CastMember) = session.source.avatarStatus(session.computer, project.bookId, member.name)
 
     companion object {
         fun sampleId(member: CastMember) = "cast-${member.name}"

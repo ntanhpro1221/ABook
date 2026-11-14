@@ -1,6 +1,7 @@
 package vn.abook.player.ui.studio
 
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
@@ -15,6 +16,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import vn.abook.player.NameRules
@@ -50,7 +52,10 @@ internal fun ScriptPeoplePicker(script: ChapterScript, current: String, allowNar
         val list = rememberLazyListState()
         LazyColumn(Modifier.heightIn(max = 224.dp).fadeEdges(list), state = list) {
             items(people.filter { ScriptEdits.matches(it.label, query) }, key = { it.value }) { person ->
-                PickRow(person.label, if (person.lines > 0) S.s_0_cau_2a1e6590(person.lines) else null, person.value == current, { onPick(person) }, "studio_person_${person.value}")
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    vn.abook.player.ui.components.PersonAvatar(person.value, person.avatar, size = 24.dp)
+                    PickRow(person.label, if (person.lines > 0) S.s_0_cau_2a1e6590(person.lines) else null, person.value == current, { onPick(person) }, "studio_person_${person.value}")
+                }
             }
         }
         Reveal(allowCreate) { TextAction(S.s_tao_nhan_vat_18e9a09a, { creating = !creating }, "studio_script_new") }

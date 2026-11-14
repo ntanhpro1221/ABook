@@ -1764,7 +1764,7 @@ export function ScriptTab({ bookId }: { bookId: string }) {
       {data && (people.length > 0 || unnamed > 0) && (
         <MotionRegion motionKey={[...people.map((person) => person.value), unnamed > 0]} className="-ml-1 flex flex-wrap items-center gap-1" role="group" aria-label={S.s_nguoi_noi_trong_chuong_bam_de_chi_xem_cau_b5f0aad7}>
           {[...people.map((person, index) => ({ person, badge: index < HOTKEYS ? String(index + 1) : "" })), ...(unnamed > 0 ? [{ person: { value: UNNAMED, label: S.s_chua_ro_be464a5a, lines: unnamed }, badge: "?" }] : [])].map(
-            ({ person }) => (
+            ({ person, badge }) => (
               <button
                 key={person.value}
                 type="button"
@@ -1777,7 +1777,7 @@ export function ScriptTab({ bookId }: { bookId: string }) {
                   who && who !== person.value && "opacity-50",
                 )}
               >
-                <PersonAvatar name={person.value} avatar={"avatar" in person ? person.avatar : undefined} size={24} />
+                <PersonAvatar name={person.value} avatar={"avatar" in person ? person.avatar : undefined} size={24} mark={badge === "?" ? "?" : ""} />
                 {person.label}
                 <span className="text-fg-3">{formatNumber(person.lines)}</span>
               </button>

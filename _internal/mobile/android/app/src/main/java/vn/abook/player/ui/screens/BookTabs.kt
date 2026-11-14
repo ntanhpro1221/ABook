@@ -279,6 +279,7 @@ class CastSamples(
     private val player: SamplePlayer,
     private val scope: CoroutineScope,
 ) {
+    suspend fun avatar(person: CastMember): ByteArray? = person.avatar?.file?.let { source.avatarBytes(bookId, it) }
     /** Mã mẫu đang phát (null: không có). */
     var playing by mutableStateOf<Int?>(null)
         private set
@@ -390,7 +391,7 @@ private fun PersonRow(person: CastMember, samples: CastSamples, onMore: (CastMem
     val colors = Abook.colors
     val name = Cast.cleanName(person.displayName)
     Row(Modifier.fillMaxWidth().padding(vertical = Dim.s12).testTag("person_row"), verticalAlignment = Alignment.Top) {
-        Avatar(Cast.initials(name), Cast.hue(person.voice?.preset?.ifEmpty { null } ?: person.name))
+        vn.abook.player.ui.components.PersonAvatar(person.name, person.avatar, load = { samples.avatar(person) })
         Spacer(Modifier.width(Dim.s12))
         Column(Modifier.weight(1f)) {
             Row(verticalAlignment = Alignment.Bottom) {

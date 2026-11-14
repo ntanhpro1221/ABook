@@ -305,9 +305,10 @@ CastModal {
                                     label: Logic.tryLabel(row.voice.name, false)
                                     onRequested: root.tryVoice(row.voice)
                                 }
+                                AvatarPortrait { name: row.voice.key; voice: true; pixels: 28; x: root.choices.tryLine ? 88 : 48; anchors.verticalCenter: parent.verticalCenter }
                                 Column {
                                     id: texts
-                                    x: root.choices.tryLine ? 88 : 48
+                                    x: root.choices.tryLine ? 124 : 84
                                     anchors.verticalCenter: parent.verticalCenter
                                     width: parent.width - x - action.width - 20
                                     spacing: 4

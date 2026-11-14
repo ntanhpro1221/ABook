@@ -31,7 +31,8 @@ data class ScriptEntry(val chapterId: Int, val index: Int, val title: String, va
 data class ScriptContents(val castReady: Boolean, val chapters: List<ScriptEntry>)
 
 @Immutable
-data class ScriptPerson(val value: String, val label: String, val lines: Int, val newGender: String = "")
+data class ScriptPerson(val value: String, val label: String, val lines: Int, val newGender: String = "",
+                        val avatar: vn.abook.player.ui.data.AvatarRef? = null)
 
 /** Chỗ máy nghi ai nói câu này (web `Hint`). */
 @Immutable
@@ -88,7 +89,8 @@ data class ChapterScript(
 internal object StudioScriptJson {
     private fun optInt(json: JSONObject, key: String): Int? = if (!json.has(key) || json.isNull(key)) null else json.optInt(key)
 
-    private fun person(json: JSONObject) = ScriptPerson(json.text("value"), json.text("label"), json.optInt("lines"))
+    private fun person(json: JSONObject) = ScriptPerson(json.text("value"), json.text("label"), json.optInt("lines"),
+        avatar = vn.abook.player.ui.data.AvatarArt.parse(json.optJSONObject("avatar")))
 
     private fun line(json: JSONObject) = ScriptLine(
         scene = optInt(json, "scene"),

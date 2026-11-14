@@ -8,6 +8,7 @@
 #include <QPair>
 #include <QRegularExpression>
 #include <QString>
+#include <QVariantMap>
 #include <QVector>
 
 #include <algorithm>
@@ -29,6 +30,7 @@ struct Segment {
     QString text;                          // đã đổi xuống dòng thành khoảng trắng: vị trí ký tự = vị trí trong văn bản đoạn
     QString kind;                          // "narration" | "dialogue" | "thought" | "heading" | ...
     QString speaker;
+    QVariantMap avatar;                    // ảnh người nói khi là ảnh thật (GET script); rỗng: vẽ hoạ tiết theo tên
     bool sceneBreak = false;
     int paragraph = 0;                     // thứ tự đoạn trong danh sách đoạn
     int textStart = 0;                     // vị trí ký tự đầu / cuối trong văn bản của đoạn
@@ -44,6 +46,7 @@ struct Paragraph {
     int first = 0;                         // câu đầu (thứ tự toàn chương)
     int count = 0;
     QString speaker;                       // nhãn hiện trên đoạn (người nói của câu thoại đầu đoạn mới đổi người) hay ""
+    QVariantMap avatar;                    // ảnh người nói khi là ảnh thật (GET script); rỗng: vẽ hoạ tiết theo tên
 };
 
 struct Script {
@@ -120,6 +123,7 @@ inline Script parseScript(const QJsonObject &json) {
         segment.text.replace(QLatin1Char('\r'), QLatin1Char(' '));
         segment.kind = item.value(QStringLiteral("kind")).toString();
         segment.speaker = item.value(QStringLiteral("speaker")).toString();
+        segment.avatar = item.value(QStringLiteral("avatar")).toObject().toVariantMap();
         segment.sceneBreak = item.value(QStringLiteral("sceneBreak")).toBool();
         if (item.value(QStringLiteral("start")).isDouble())
             segment.start = item.value(QStringLiteral("start")).toDouble();
@@ -158,8 +162,10 @@ inline Script parseScript(const QJsonObject &json) {
             paragraph.kind = QStringLiteral("scene");
         else
             paragraph.kind = QStringLiteral("body");
-        if (first.showSpeaker && !first.speaker.isEmpty())
+        if (first.showSpeaker && !first.speaker.isEmpty()) {
             paragraph.speaker = first.speaker;
+            paragraph.avatar = first.avatar;
+        }
     }
     return script;
 }

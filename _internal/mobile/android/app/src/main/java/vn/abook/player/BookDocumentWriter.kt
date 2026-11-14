@@ -32,9 +32,9 @@ object BookDocumentWriter {
     const val PROJECT_EXTENSION = ".abookproj"
     private const val PRODUCER = S.s_abook_1c37d334
     private const val FORMAT = "abook"
-    private val STORED = listOf(".mp3", ".jpg", ".wav", ".m4a", ".ogg", ".opus", ".flac")
+    private val STORED = listOf(".mp3", ".jpg", ".wav", ".m4a", ".ogg", ".opus", ".flac", ".webp")
     private val PROJECT_STORED = STORED + listOf(".png", ".zip")
-    private val RANK = listOf("edits", "cover.jpg", "cast.json", "scripts/", "texts/", "samples/", "chapters/", "music/")
+    private val RANK = listOf("edits", "cover.jpg", "cast.json", "avatars/", "scripts/", "texts/", "samples/", "chapters/", "music/")
     private val TEXT_ENTRY = Regex("""texts/[0-9]+\.txt""")
     private val PART_AUDIO = Regex("chapters/[0-9]+/.+")
 
@@ -85,6 +85,7 @@ object BookDocumentWriter {
             }
         }
         val version = when {
+            files.keys.any { it.startsWith("avatars/") } -> 6
             files.keys.any { TEXT_ENTRY.matches(it) } -> 5
             changes > 0 -> 4
             files.keys.any { PART_AUDIO.matches(it) } -> 3

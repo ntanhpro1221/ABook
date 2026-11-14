@@ -13,6 +13,8 @@ Column {
     property var line: ({})
     property var script: ({cast: [], others: []})
     property bool embedded: false
+    property string bookId: ""
+    property string peer: ""
     signal picked(var person)
 
     readonly property string query: findField.text.trim()
@@ -116,20 +118,15 @@ Column {
         Keys.onReturnPressed: root.picked(person)
         Keys.onSpacePressed: root.picked(person)
         Rectangle { anchors.fill: parent; radius: Theme.radiusControl; color: Theme.hover; opacity: option.hovered || option.activeFocus ? 1 : 0 }
-        Rectangle {
+        AvatarPortrait {
             id: badge
             x: 8
             anchors.verticalCenter: parent.verticalCenter
-            width: 24; height: 24; radius: width / 2
-            readonly property real hue: Cast.hueOf(option.person.label || "")
-            color: Cast.avatarFill(hue, Theme.dark)
-            Text {
-                anchors.centerIn: parent
-                text: option.hotkey || String(option.person.label || "").slice(0, 1).toUpperCase()
-                color: Cast.avatarInk(badge.hue, Theme.dark)
-                font.pixelSize: 12
-                font.weight: Theme.weightBold
-            }
+            pixels: 24
+            name: option.person.value || ""
+            portrait: option.person.avatar || null
+            bookId: root.bookId
+            peer: root.peer
         }
         Text {
             id: label

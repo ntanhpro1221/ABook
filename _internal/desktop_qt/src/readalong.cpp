@@ -59,12 +59,13 @@ QVariant ScriptModel::data(const QModelIndex &index, int role) const {
     case SpeakerRole: return paragraph.speaker;
     case FirstRole: return paragraph.first;
     case CountRole: return paragraph.count;
+    case AvatarRole: return paragraph.avatar;
     default: return {};
     }
 }
 
 QHash<int, QByteArray> ScriptModel::roleNames() const {
-    return {{TextRole, "text"}, {KindRole, "kind"}, {SpeakerRole, "speaker"}, {FirstRole, "first"}, {CountRole, "count"}};
+    return {{TextRole, "text"}, {KindRole, "kind"}, {SpeakerRole, "speaker"}, {FirstRole, "first"}, {CountRole, "count"}, {AvatarRole, "avatar"}};
 }
 
 void ScriptModel::set(Script script) {

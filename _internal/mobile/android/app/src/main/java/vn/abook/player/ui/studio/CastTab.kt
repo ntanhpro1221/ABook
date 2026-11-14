@@ -7,6 +7,8 @@ import vn.abook.player.S
 
 import vn.abook.player.ui.data.dotJoined
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -137,6 +139,12 @@ private fun LazyListScope.members(
                 if (editable) ({ openVoiceSheet(state, sheets, member.name, member.displayName) }) else null,
                 "studio_cast_${member.name}",
                 hint = memberHint(member),
+                leading = {
+                    Box(Modifier.clickable(enabled = editable) { sheets.show { AvatarSheet(member, cast) } }) {
+                        vn.abook.player.ui.components.PersonAvatar(member.name, member.avatar, load = { cast.avatar(member) })
+                    }
+                },
+                leadingWidth = 40.dp,
                 trailing = if (editable || member.sampleId != null) ({
                     Row {
                         Reveal(member.sampleId != null) { ClipButton(StudioCastState.sampleId(member), clip, { cast.playSample(member) }, "studio_cast_play_${member.name}") }
@@ -255,6 +263,8 @@ private fun VoiceRow(sheet: VoiceSheetState, voice: VoiceEntry, clip: ClipState,
     }
     Column(Modifier.fillMaxWidth().padding(vertical = Dim.s12).testTag("studio_voice_${voice.key}")) {
         Row(verticalAlignment = Alignment.Top) {
+            vn.abook.player.ui.components.PersonAvatar(voice.key, size = 32.dp, voice = true)
+            Spacer(Modifier.padding(end = Dim.s12))
             Column(Modifier.weight(1f)) {
                 BasicText(voice.name, style = Abook.type.bodyStrong)
                 val meta = VoiceLogic.meta(voice, filter == GenderFilter.All)

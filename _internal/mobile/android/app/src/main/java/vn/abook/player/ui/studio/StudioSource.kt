@@ -54,6 +54,9 @@ interface StudioSource {
     suspend fun review(computer: String, id: String, filter: String, all: Boolean, cursor: String): ReviewPage
 
     suspend fun cast(computer: String, id: String): Cast
+    suspend fun avatar(computer: String, id: String, file: String): ByteArray? = null
+    suspend fun avatarChange(computer: String, id: String, body: JSONObject): JSONObject = JSONObject()
+    suspend fun avatarStatus(computer: String, id: String, character: String): JSONObject = JSONObject()
 
     suspend fun pendingChanges(computer: String, id: String): JSONObject
 
@@ -180,6 +183,13 @@ class StudioRepo(
         parsed { StudioReviewJson.page(api(computer).getObject(StudioPaths.review(id, filter, all, cursor))) }
 
     override suspend fun cast(computer: String, id: String): Cast = parsed { StudioCastJson.cast(api(computer).getObject(StudioPaths.cast(id))) }
+    override suspend fun avatar(computer: String, id: String, file: String): ByteArray? {
+        if (!vn.abook.player.ui.data.AvatarArt.imageFile(file)) return null
+        val image = api(computer).getObject(StudioPaths.book(id) + "/avatar-image?file=" + java.net.URLEncoder.encode(file, "UTF-8")).optString("image")
+        return android.util.Base64.decode(image, android.util.Base64.DEFAULT)
+    }
+    override suspend fun avatarChange(computer: String, id: String, body: JSONObject): JSONObject = api(computer).post(StudioPaths.book(id) + "/avatar", body)
+    override suspend fun avatarStatus(computer: String, id: String, character: String): JSONObject = api(computer).getObject(StudioPaths.book(id) + "/avatar?character=" + java.net.URLEncoder.encode(character, "UTF-8"))
 
     override suspend fun voices(computer: String, id: String, character: String): VoiceChoices =
         parsed { StudioCastJson.voices(api(computer).getObject(StudioPaths.voices(id, character))) }

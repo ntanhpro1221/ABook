@@ -24,23 +24,18 @@ Item {
     implicitHeight: Math.max(avatar.height, texts.height) + 24
     height: implicitHeight
 
-    Rectangle {
+    AvatarPortrait {
         id: avatar
         objectName: "castAvatar"
         x: 0
         y: 12
         width: 40
         height: 40
-        radius: width / 2
-        readonly property real hue: Logic.hueOf(root.person.voice && root.person.voice.preset ? root.person.voice.preset : root.person.name)
-        color: Logic.avatarFill(hue, Theme.dark)
-        Text {
-            anchors.centerIn: parent
-            text: Logic.initials(root.person.displayName)
-            color: Logic.avatarInk(avatar.hue, Theme.dark)
-            font.pixelSize: Theme.sizeBodySmall
-            font.weight: Theme.weightBold
-        }
+        name: root.person.name || ""
+        portrait: root.person.avatar || null
+        bookId: root.bookId
+        peer: root.peer
+        TapHandler { enabled: Boolean(root.caps.voice); onTapped: root.request("avatar", root.person) }
     }
     Column {
         id: texts

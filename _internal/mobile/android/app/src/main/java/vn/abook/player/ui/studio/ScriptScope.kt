@@ -127,7 +127,7 @@ fun ScriptScopeSheet(state: StudioScriptState, script: ChapterScript, line: Scri
             else Column(Modifier.fillMaxWidth()) {
                 BookField(null, query, { query = it }, "scope_search", description = S.s_tim_nguoi_noi_70e3871e, placeholder = S.s_tim_nguoi_noi_70e3871e)
                 val found = ScriptLogic.people(script).filter { it.value != ScriptLogic.NARRATOR && fold(it.label).contains(fold(query.trim())) }.take(8)
-                for (item in found) ScopeRow(item.label, null, item.value == line.current, false, "scope_person_${item.value}") { person = item }
+                for (item in found) ScopeRow(item.label, null, item.value == line.current, false, "scope_person_${item.value}", avatarPerson = item) { person = item }
                 Reveal(query.isNotBlank() && found.isEmpty()) {
                     FlowRow(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         for ((gender, label) in listOf("male" to S.s_nam_22dd59c8, "female" to S.s_nu_e15bc11c, "unknown" to S.s_khong_ro_8af7da78)) {
@@ -187,13 +187,17 @@ private fun ScopeChoice(label: String, active: Boolean, enabled: Boolean, tag: S
 
 /** Selection changes the check mark only, matching the web and Qt previews. */
 @Composable
-private fun ScopeRow(label: String, hint: String?, picked: Boolean, multiple: Boolean, tag: String, onClick: () -> Unit) {
+private fun ScopeRow(label: String, hint: String?, picked: Boolean, multiple: Boolean, tag: String, avatarPerson: ScriptPerson? = null, onClick: () -> Unit) {
     Row(Modifier.fillMaxWidth().heightIn(min = Dim.s48)
         .pressable(if (multiple) Role.Checkbox else Role.Button, onClick = onClick)
         .semantics { if (multiple) toggleableState = if (picked) ToggleableState.On else ToggleableState.Off }
         .padding(8.dp).testTag(tag), verticalAlignment = Alignment.Top) {
         Box(Modifier.size(16.dp)) { Reveal(picked) { CheckIcon(Abook.colors.accentText, size = 16.dp) } }
         Spacer(Modifier.width(8.dp))
+        if (avatarPerson != null) {
+            vn.abook.player.ui.components.PersonAvatar(avatarPerson.value, avatarPerson.avatar, size = 24.dp)
+            Spacer(Modifier.width(8.dp))
+        }
         Column(Modifier.weight(1f)) {
             BasicText(label, style = Abook.type.bodySmall)
             Reveal(hint != null) { BasicText(hint.orEmpty(), style = Abook.type.bodySmall.copy(color = Abook.colors.text2)) }

@@ -44,6 +44,7 @@ endforeach()
 # Qt >= 6.10.3, liên kết ĐỘNG (LGPL): DLL Qt nằm cạnh file chạy do windeployqt chép, người dùng thay được.
 find_package(Qt6 6.10 REQUIRED COMPONENTS Quick Network Test QuickTest CorePrivate GuiPrivate QmlPrivate QuickPrivate)   # *Private: QWindowKit cần
 qt_standard_project_setup(REQUIRES 6.10)
+file(GLOB ABOOK_VOICE_PORTRAITS "${CMAKE_CURRENT_SOURCE_DIR}/../abook/assets/voice_avatars/*.webp")
 
 qt_add_executable(AudioFxTests tests/test_audiofx.cpp src/timestretch.cpp third_party/sonic/sonic.c)
 target_include_directories(AudioFxTests PRIVATE src third_party)
@@ -138,6 +139,7 @@ qt_add_executable(ABookDesk WIN32
     ${ABOOK_MIXER_SOURCES}
 )
 target_include_directories(ABookDesk PRIVATE src third_party)
+qt_add_resources(ABookDesk VoicePortraits PREFIX "/voiceavatars" BASE "${CMAKE_CURRENT_SOURCE_DIR}/../abook/assets/voice_avatars" FILES ${ABOOK_VOICE_PORTRAITS})
 qt_add_qml_module(ABookDesk
     URI ABook
     VERSION 1.0
@@ -150,6 +152,9 @@ qt_add_qml_module(ABookDesk
         qml/TrayMenuModel.qml
         qml/MiniPlayer.qml
         qml/Icon.qml
+        qml/AvatarPortrait.qml
+        qml/AvatarLogic.js
+        qml/AvatarEditor.qml
         qml/LucidePaths.js
         qml/ReadingInk.js
         qml/Interactive.qml

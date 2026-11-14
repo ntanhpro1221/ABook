@@ -205,6 +205,7 @@ data class CastMember(
     val firstChapter: String,
     val pendingVoice: PendingVoice?,
     val mergedInto: String?,
+    val avatar: AvatarRef? = null,
 )
 
 @Immutable
@@ -260,6 +261,7 @@ object Cast {
                 firstChapter = item.optString("firstChapter").cleanNull(),
                 pendingVoice = pending(item.optJSONObject("pendingVoice")),
                 mergedInto = item.optString("mergedInto").cleanNull().ifEmpty { null },
+                avatar = AvatarArt.parse(item.optJSONObject("avatar")),
             )
         }
         return out

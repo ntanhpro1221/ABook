@@ -319,6 +319,11 @@ object BookDownloads {
             files += chapter.getString("file") to chapter.optLong("size")
         }
         files += "cast.json" to 0L
+        manifest.optJSONObject("avatars")?.let { portraits ->
+            for (file in portraits.keys()) if (vn.abook.player.ui.data.AvatarArt.imageFile(file)) {
+                files += file to (portraits.optJSONObject(file)?.optLong("size") ?: 0L)
+            }
+        }
         val samples = manifest.optJSONArray("samples") ?: JSONArray()
         for (index in 0 until samples.length()) files += samples.getString(index) to 0L
         // Ảnh bìa thật (webui/covers.py): tải lại mỗi lần (vài trăm KB); máy tính đã bỏ bìa thì xoá bản cũ.

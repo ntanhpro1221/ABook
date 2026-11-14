@@ -783,12 +783,14 @@ Item {
                             x: 2
                             anchors.verticalCenter: parent.verticalCenter
                             spacing: 8
-                            Rectangle {
+                            AvatarPortrait {
                                 id: badge
-                                width: 24; height: 24; radius: width / 2
-                                readonly property real hue: Cast.hueOf(chip.modelData.person.label)
-                                color: Cast.avatarFill(hue, Theme.dark)
-                                Text { anchors.centerIn: parent; text: chip.modelData.badge; color: Cast.avatarInk(badge.hue, Theme.dark); font.pixelSize: 12; font.weight: Theme.weightBold }
+                                pixels: 24
+                                name: chip.modelData.person.value || ""
+                                mark: chip.modelData.badge === "?" ? "?" : ""
+                                portrait: chip.modelData.person.avatar || null
+                                bookId: root.bookId
+                                peer: root.store ? root.store.peer : ""
                             }
                             Text { objectName: "legendName"; anchors.verticalCenter: parent.verticalCenter; text: chip.modelData.person.label; color: Theme.text; font.pixelSize: 14; font.weight: Theme.weightMedium }
                             Text { anchors.verticalCenter: parent.verticalCenter; text: Studio.formatNumber(chip.modelData.person.lines); color: Theme.text3; font.pixelSize: 14 }
@@ -887,6 +889,8 @@ Item {
                 width: parent ? parent.width : 0
                 line: speakerPop.line
                 script: root.script
+                bookId: root.bookId
+                peer: root.store ? root.store.peer : ""
                 onPicked: person => root.pick(speakerPop.line, person, true)
             }
         }

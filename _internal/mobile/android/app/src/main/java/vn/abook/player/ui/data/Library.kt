@@ -193,6 +193,16 @@ class LibraryRepo(private val context: Context, private val scope: kotlinx.corou
         runCatching { Store.init(context); Store.file(id, "samples/$sampleId.wav").takeIf { it.isFile }?.path }.getOrNull()
     }
 
+    override suspend fun avatarBytes(id: String, file: String): ByteArray? = withContext(Dispatchers.IO) {
+        if (!AvatarArt.imageFile(file)) return@withContext null
+        runCatching {
+            Store.init(context)
+            val target = Store.file(id, file)
+            if (!target.isFile) vn.abook.player.Streaming.fetchSmall(context, id, file)
+            if (target.isFile && target.length() <= 4 * 1024 * 1024) target.readBytes() else null
+        }.getOrNull()
+    }
+
     // ---- hồ sơ nghe: lõi [ListeningRecords]; xong thì đọc lại Thư viện, báo máy tính ở nền ----
 
     private suspend fun records(change: () -> ListeningRecords.Change): String? {

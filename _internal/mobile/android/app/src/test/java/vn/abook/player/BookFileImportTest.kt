@@ -291,7 +291,7 @@ class BookFileImportTest {
 
     @Test
     fun a_newer_format_asks_to_update_the_app_and_copies_nothing() {
-        val message = refusal { BookFileImport.importFile(seriesFile("moi.abook", version = 6)) }
+        val message = refusal { BookFileImport.importFile(seriesFile("moi.abook", version = 7)) }
         assertTrue(message, "Hãy cập nhật app" in message)
         assertFalse(File(root, "books").exists() && File(root, "books").listFiles()!!.isNotEmpty())
     }

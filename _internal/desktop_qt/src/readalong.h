@@ -21,7 +21,7 @@ class ScriptModel : public QAbstractListModel {
     QML_ELEMENT
     QML_UNCREATABLE("Có sẵn trong ReadAlong.paragraphs")
 public:
-    enum Role { TextRole = Qt::UserRole + 1, KindRole, SpeakerRole, FirstRole, CountRole };
+    enum Role { TextRole = Qt::UserRole + 1, KindRole, SpeakerRole, FirstRole, CountRole, AvatarRole };
     explicit ScriptModel(QObject *parent = nullptr) : QAbstractListModel(parent) {}
     int rowCount(const QModelIndex &parent = {}) const override { return parent.isValid() ? 0 : int(m_script.paragraphs.size()); }
     QVariant data(const QModelIndex &index, int role) const override;

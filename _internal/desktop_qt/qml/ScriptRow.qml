@@ -90,7 +90,7 @@ Item {
             objectName: "speakerChip"
             Reveal { shown: root.speech }
             enabled: root.script.castReady && root.line.editable
-            width: Math.min(parent.width, chipText.implicitWidth + 20 + 18)
+            width: Math.min(parent.width, chipText.implicitWidth + 64)
             height: Math.max(28, chipText.implicitHeight + 6)
             activeFocusOnTab: false
             tip: ""
@@ -99,11 +99,18 @@ Item {
             onClicked: { root.activate(); root.openSpeaker(chip) }
             readonly property real hue: Cast.hueOf(root.speakerShown || "")
             Rectangle { anchors.fill: parent; radius: height / 2; color: Cast.avatarFill(chip.hue, Theme.dark) }
+            AvatarPortrait {
+                x: 2; anchors.verticalCenter: parent.verticalCenter; pixels: 24
+                name: root.line.current || root.speakerShown
+                portrait: (root.script.cast || []).concat(root.script.others || []).find(p => p.value === root.line.current)?.avatar || null
+                bookId: root.bookId
+                peer: root.store ? root.store.peer : ""
+            }
             Text {
                 id: chipText
                 objectName: "speakerChipText"
-                x: 10
-                width: Math.min(implicitWidth, chip.parent.width - 38)
+                x: 32
+                width: Math.min(implicitWidth, chip.parent.width - 64)
                 anchors.verticalCenter: parent.verticalCenter
                 text: root.speakerShown
                 color: Cast.avatarInk(chip.hue, Theme.dark)

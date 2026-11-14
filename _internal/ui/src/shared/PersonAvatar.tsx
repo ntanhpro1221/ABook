@@ -5,8 +5,10 @@ import { avatarCells, avatarPattern, voiceAvatarFile, type AvatarRef } from "./a
 export const AvatarBook = createContext("");
 
 /** Fixed dimensions and immutable URLs keep lazy decoding out of the layout path. */
-export function PersonAvatar({ name, avatar, bookId, voice, size = 40, className = "" }: {
+export function PersonAvatar({ name, avatar, bookId, voice, size = 40, className = "", mark = "" }: {
   name: string; avatar?: AvatarRef | null; bookId?: string; voice?: boolean; size?: number; className?: string;
+  /** Replaces the initials, e.g. "?" for lines nobody has been assigned. */
+  mark?: string;
 }) {
   const [failed, setFailed] = useState("");
   const scopeBook = useContext(AvatarBook);
@@ -21,7 +23,7 @@ export function PersonAvatar({ name, avatar, bookId, voice, size = 40, className
     style={{ width: size, height: size, backgroundColor: fallback.color }}>
     <svg viewBox="0 0 100 100" className="absolute inset-0 size-full" focusable="false">
       {avatarCells(fallback.bits || 0).map(({ x, y }) => <rect key={`${x}-${y}`} x={x * 20} y={y * 20} width="20" height="20" fill="#ffffff" opacity="0.10" />)}
-      <text x="50" y="51" textAnchor="middle" dominantBaseline="central" fill="#ffffff" fontSize="30" fontWeight="700">{fallback.initials}</text>
+      <text x="50" y="51" textAnchor="middle" dominantBaseline="central" fill="#ffffff" fontSize="30" fontWeight="700">{mark || fallback.initials}</text>
     </svg>
     <Presence>{src && failed !== src && <img alt="" src={src} width={size} height={size} loading="lazy" decoding="async"
       className="absolute inset-0 size-full object-cover" onError={() => setFailed(src)} />}</Presence>

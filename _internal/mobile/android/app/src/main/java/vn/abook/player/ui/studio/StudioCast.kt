@@ -33,6 +33,7 @@ data class CastMember(
     /** Tên người mà nhân vật này đang chờ gộp vào ("Gộp vào…" chưa áp); null = không gộp. */
     val mergedInto: String?,
     val mergedAt: Double? = null,
+    val avatar: vn.abook.player.ui.data.AvatarRef? = null,
 )
 
 /** Người kể: giọng đang dùng và lựa chọn đang chờ. */
@@ -129,6 +130,7 @@ internal object StudioCastJson {
         pendingVoice = pendingVoice(json.optJSONObject("pendingVoice")),
         mergedAt = if (json.has("mergedAt") && !json.isNull("mergedAt")) json.optDouble("mergedAt").takeIf { it.isFinite() && it > 0 } else null,
         mergedInto = json.textOrNull("mergedInto")?.takeIf { it.isNotEmpty() },
+        avatar = vn.abook.player.ui.data.AvatarArt.parse(json.optJSONObject("avatar")),
     )
 
     fun cast(json: JSONObject): Cast {
