@@ -35,7 +35,7 @@ from typing import Any, Callable
 
 from .. import aliases as alias_book
 from .. import listener_overrides as overrides
-from ..io_utils import atomic_write_json, project_write_lock
+from ..io_utils import atomic_write_json
 from . import book_edits, humanize, notices, store
 from .book_edits import EditsError
 
@@ -799,7 +799,7 @@ def overrides_turn(project: Path) -> Iterator[None]:
     """Lượt đọc-sửa-ghi overrides.json: khoá ghi của dự án (cùng khoá các nút Studio, `_serialized_per_book`) + `guard_overrides`. Mọi đường
     ghi yêu cầu NGOÀI nút Studio (cách đọc dùng chung, gộp xưởng từ file dự án) phải đi qua đây: không thì lần ghi của nó nuốt lần ghi của
     nút vừa bấm, hoặc - file đang bị chương trình khác giữ - đè sạch yêu cầu cũ (soát a89 V5). `notices.Unreadable` nếu file không đọc được."""
-    with project_write_lock(project):
+    with overrides.edit_turn(project):
         guard_overrides(project)
         yield
 
@@ -807,7 +807,7 @@ def overrides_turn(project: Path) -> Iterator[None]:
 def fold(project: Path, wishes: dict[str, Any], *, now: float, dropped: list[tuple[str, str]] | None = None) -> dict[str, int]:
     # Giữ chỗ biên nhận và ghi overrides dưới cùng khoá với các đường sửa sách VÀ với các nút Studio (khoá ghi của dự án, ngoài cùng:
     # `request_*` đọc-sửa-ghi cả overrides.json, hai khoá khác nhau thì lần ghi sau nuốt lần ghi trước - soát a83 B3).
-    with project_write_lock(project), book_edits._LOCK:
+    with overrides.edit_turn(project), book_edits._LOCK:
         guard_overrides(project)
         return _fold(project, wishes, now=now, dropped=dropped)
 
