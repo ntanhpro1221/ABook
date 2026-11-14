@@ -34,6 +34,12 @@ class StudioDecisions(
     private val wait: suspend (Long) -> Unit = { delay(it) },
     private val after: suspend (sent: Boolean) -> Unit = {},
 ) {
+    /** The player persists first, then offers the same strip with receipt-bound undo. Studio keeps its existing hold. */
+    var persistImmediately: Boolean = false
+    var busy by mutableStateOf(false)
+        private set
+    private var saved = false
+    private var undoSteps = emptyList<WorkStep>()
     /** Quyết định đang được giữ cho "Hoàn tác" (null = không có). */
     var held by mutableStateOf<HeldDecision?>(null)
         private set
@@ -54,6 +60,13 @@ class StudioDecisions(
 
     fun hold(decision: WorkDecision) {
         if (session.listenOnly) return
+        if (persistImmediately) {
+            if (busy) return
+            flush()
+            notice = ""
+            send(decision, rememberUndo = true)
+            return
+        }
         notice = ""
         val current = held
         if (current != null) {
@@ -75,6 +88,14 @@ class StudioDecisions(
     /** "Hoàn tác": bỏ quyết định đang giữ, chưa gửi gì. */
     fun undo() {
         cancelTimer()
+        if (saved) {
+            val previous = held
+            val steps = undoSteps.asReversed()
+            held = null; saved = false; undoSteps = emptyList()
+            notice = ""
+            if (previous != null && steps.isNotEmpty()) send(WorkDecision("undo:${previous.id}", S.s_da_hoan_tac_2ef55fca, steps, hold = false))
+            return
+        }
         held = null
     }
 
@@ -83,6 +104,7 @@ class StudioDecisions(
         val current = held ?: return
         cancelTimer()
         held = null
+        if (saved) { saved = false; undoSteps = emptyList(); return }
         send(current.decision)
     }
 
@@ -100,23 +122,40 @@ class StudioDecisions(
         timer = null
     }
 
-    private fun send(decision: WorkDecision) {
+    private fun send(decision: WorkDecision, rememberUndo: Boolean = false) {
         if (session.listenOnly) return
         away = away + decision.key
+        if (persistImmediately) busy = true
         session.scope.launch {
             var done = 0
             var ok = false
             var lineReceipt: Pair<String, Double>? = null
+            val receipts = ArrayList<WorkStep>()
+            var retractSent = false
             try {
                 var elsewhere: Pair<Int, String>? = null
                 for (step in decision.steps) {
                     val answer = session.source.write(session.computer, bookId, step)
+                    retractSent = retractSent || answer.optBoolean("sent")
+                    if (rememberUndo) receipt(step, answer)?.let(receipts::add)
                     elsewhere = elsewhere ?: WorkLogic.elsewhere(step.endpoint, answer, decision.names)
                     if (decision.rollbackLine && step.endpoint == "line" && answer.optDouble("requestedAt", 0.0) > 0.0)
                         lineReceipt = step.body.getString("stableId") to answer.getDouble("requestedAt")
                     done++
                 }
                 ok = true
+                if (rememberUndo && receipts.size == decision.steps.size) {
+                    saved = true
+                    undoSteps = receipts
+                    val mine = HeldDecision(++counter, decision)
+                    held = mine
+                    timer = session.scope.launch {
+                        wait(WorkDecisions.UNDO_MS)
+                        if (held?.id == mine.id) flush()
+                    }
+                }
+                if (persistImmediately && decision.key.startsWith("undo:")) notice =
+                    if (retractSent) S.s_da_nho_may_giu_sach_rut_lai_e7afaa0b else decision.summary
                 elsewhere?.let { (count, was) -> WorkLogic.elsewhereNote(count, was).let { (title, detail) -> notice = "$title. $detail" } }
             } catch (cancelled: CancellationException) {
                 throw cancelled
@@ -135,10 +174,27 @@ class StudioDecisions(
                 }
                 notice = failureNotice(failure, if (rolledBack) 0 else done, decision.steps.size)
             } finally {
+                if (persistImmediately) busy = false
                 // Thẻ chưa gửi được (hay chỉ gửi được một phần) trở lại bộ bài; thẻ đã gửi chờ lần nạp lại kế tiếp mới rời `away`.
                 if (!ok) away = away - decision.key
             }
             after(ok)
+        }
+    }
+
+    private fun receipt(step: WorkStep, answer: JSONObject): WorkStep? {
+        val at = answer.optDouble("requestedAt", 0.0)
+        if (at <= 0.0) return null
+        val body = step.body
+        return when (step.endpoint) {
+            "speaker" -> WorkStep("speaker", JSONObject().put("lines", body.getJSONArray("lines")).put("requestedAt", at).put("withdraw", true))
+            "line" -> WorkStep("line", JSONObject().put("stableId", body.getString("stableId")).put("requestedAt", at).put("withdraw", true))
+            "review" -> {
+                val ids = body.optJSONArray("lines")?.let { refs -> (0 until refs.length()).map { refs.getJSONObject(it).getString("stableId") } }
+                    ?: listOf(body.getString("stableId"))
+                WorkStep("pending-changes/withdraw", JSONObject().put("section", "retakes").put("key", ids.first()).put("keys", org.json.JSONArray(ids)).put("requestedAt", at))
+            }
+            else -> null
         }
     }
 
@@ -161,6 +217,15 @@ internal fun WorkLogic.elsewhere(endpoint: String, answer: JSONObject, names: Ma
         }
         "pronunciation" -> if (theirs.has("spokenForm")) 1 to theirs.optString("spokenForm").let { if (it.isEmpty()) "" else "“$it”" } else null
         "voice" -> if (theirs.length() == 0) null else 1 to voiceWas(theirs.optString("voice"), theirs.optString("gender"))
+        "line" -> if (!theirs.has("delivery")) null else 1 to (theirs.optJSONObject("delivery")?.let { delivery ->
+            listOfNotNull(
+                ScriptEdits.kinds.firstOrNull { it.first == delivery.optString("kind") }?.second,
+                ScriptEdits.emotions.firstOrNull { it.first == delivery.optString("emotion") }?.second,
+                delivery.optString("spoken").takeIf { it.isNotEmpty() },
+            ).joinToString(" · ")
+        }.orEmpty())
+        "review" -> if (theirs.length() == 0) null else theirs.length() to
+            (if (theirs.keys().asSequence().any { theirs.optString(it) == "redo" }) S.s_thu_lai_cau_nay_034c2834 else "")
         else -> null
     }
 }

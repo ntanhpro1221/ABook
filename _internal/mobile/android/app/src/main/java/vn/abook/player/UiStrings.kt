@@ -2,6 +2,7 @@
 package vn.abook.player
 
 internal object S {
+    const val s_player_line_waiting_audio = "Chỉ ghi yêu cầu; giọng đọc đổi sau khi Studio thu lại."
     fun s_ghi_nen_chua_xong_0_9b2f61d4(p0: Any?): String = "Ghi nền chưa xong: " + p0.toString()
     const val s_pair_fingerprint_label = "Mã nhận máy: "
     const val s_pair_fingerprint_help = "Bạn so mã nhận máy với mã trên máy kia rồi bấm “Đúng, ghép”."
@@ -232,7 +233,10 @@ internal object S {
     const val s_abook_upnp_1_0_dlnadoc_1_50_7bb0f34b = "ABook UPnP/1.0 DLNADOC/1.50"
     const val s_ai_ao_au_ay_au_ay_eo_eu_iu_oi_oi_oi_ui_ui_d6c42ab1 = "ai ao au ay âu ây eo êu iu oi ôi ơi ui ưi ưu iêu yêu uôi ươi ươu oai oay oeo oao uây uyu uya"
     const val s_ai_han_a1f0d04f = "Ái Hân"
+    const val s_ai_nghi_cau_nay_0656af4f = "Ai nghĩ câu này"
+    const val s_ai_nghi_cau_nay_1d5dd20c = "Ai nghĩ câu này?"
     const val s_ai_noi_cau_nay_0e00a5c7 = "Ai nói câu này"
+    const val s_ai_noi_cau_nay_39d97e95 = "Ai nói câu này?"
     const val s_am_luong_phai_tu_0_toi_100_fbc8dad2 = "âm lượng phải từ 0 tới 100"
     const val s_am_sac_8c2f4e1a = "Âm sắc"
     const val s_am_thanh_cham_a33e2a3c = "Âm thanh chạm"
@@ -600,6 +604,7 @@ internal object S {
     const val s_chu_hay_cau_can_tim_41e570d3 = "Chữ cần tìm"
     const val s_chu_lech_nhe_2bfc36c8 = "Chữ lệch nhẹ"
     const val s_chu_lech_nhieu_06623d45 = "Chữ lệch nhiều"
+    const val s_chu_may_se_doc_thay_cho_cau_nay_a93194d6 = "Chữ thay thế"
     const val s_chu_nhat_d79bedd4 = "Chủ nhật"
     fun s_chu_se_duoc_gui_toi_0_362780c4(p0: Any?): String = "; chữ sẽ được gửi tới " + p0.toString()
     const val s_chu_thich_22668ced = "chú thích"
@@ -702,6 +707,7 @@ internal object S {
     const val s_chua_ghep_duoc_e27b68c8 = "Chưa ghép được"
     const val s_chua_ghep_voi_may_tinh_nao_97f851e1 = "Chưa ghép với máy tính nào"
     fun s_chua_ghi_duoc_0_96798ec8(p0: Any?): String = "Chưa ghi được " + p0.toString()
+    const val s_chua_ghi_duoc_9fa87a7d = "Chưa ghi được"
     const val s_chua_ghi_duoc_ban_thu_vao_bo_nho_dem_cd407762 = "Chưa ghi được bản thu vào bộ nhớ đệm"
     fun s_chua_ghi_duoc_du_lieu_cua_ban_len_thu_muc_2a739b6c(p0: Any?): String = "Chưa ghi được dữ liệu của bạn lên thư mục: " + p0.toString()
     const val s_chua_ghi_duoc_file_ban_hay_thu_tai_lai_5c7dabb1 = "Chưa ghi được file; bạn hãy thử tải lại."
@@ -790,6 +796,7 @@ internal object S {
     const val s_chua_nghe_do_cuon_nao_chon_mot_cuon_de_bat_eac6b96e = "Chưa nghe dở cuốn nào - chọn một cuốn để bắt đầu."
     const val s_chua_nghe_sach_nao_595a4141 = "Chưa nghe sách nào"
     const val s_chua_nghe_sach_nao_f2635716 = "chưa nghe sách nào"
+    const val s_chua_nghe_thu_duoc_f7601d1f = "Chưa nghe thử được"
     const val s_chua_nghe_thu_duoc_giong_nay_baf64b64 = "Chưa nghe thử được giọng này."
     const val s_chua_nghe_thu_duoc_giong_nay_f17da379 = "Chưa nghe thử được giọng này"
     const val s_chua_nghe_xong_6b821209 = "Chưa nghe xong"
@@ -876,6 +883,7 @@ internal object S {
     fun s_chuong_dau_nghe_duoc_sau_khoang_0_424385a4(p0: Any?): String = "chương đầu nghe được sau khoảng " + p0.toString()
     const val s_chuong_gio_phut_giay_tap_cuon_vai_kb_mb_gb_e49fb7e8 = "chương|giờ|phút|giây|tập|cuốn|vai|KB|MB|GB"
     const val s_chuong_nay_chua_co_audio_53a41b55 = "Chương này chưa có audio."
+    const val s_chuong_nay_chua_co_audio_chua_co_gi_de_thu_47e4d310 = "Chương này chưa có audio - chưa có gì để thu lại"
     const val s_chuong_nay_chua_co_cau_nao_63c211e9 = "Chương này chưa có câu nào."
     const val s_chuong_nay_chua_co_cau_nao_da_thu_de_thu_l_70c44bee = "Chương này chưa có câu nào đã thu để thu lại."
     const val s_chuong_nay_chua_co_tren_dien_thoai_a7fc54f5 = "chương này chưa có trên điện thoại"
@@ -1044,15 +1052,18 @@ internal object S {
     fun s_da_ghi_0_la_nhan_vat_1_8cc62f3d(p0: Any?, p1: Any?): String = "Đã ghi: " + p0.toString() + " là nhân vật " + p1.toString()
     fun s_da_ghi_cau_nay_cua_0_8b08302d(p0: Any?): String = "Đã ghi: câu này của " + p0.toString()
     fun s_da_ghi_cau_nay_doc_la_0_e21c67e2(p0: Any?): String = "Đã ghi: câu này đọc là “" + p0.toString() + "”"
+    const val s_da_ghi_dang_cho_may_lam_sach_7335a8a2 = "Đã ghi - đang chờ máy làm sách"
     fun s_da_ghi_doan_nay_do_0_ke_99b4e3f7(p0: Any?): String = "Đã ghi: đoạn này do " + p0.toString() + " kể"
     fun s_da_ghi_doan_nay_khong_phai_0_ke_71722738(p0: Any?): String = "Đã ghi: đoạn này không phải " + p0.toString() + " kể"
     const val s_da_ghi_lai_bam_thu_am_de_lam_tiep_0f63f737 = "Đã ghi lại. Bấm “Thu âm” để làm tiếp."
+    const val s_da_ghi_thu_lai_cau_nay_9c9b1e4b = "Đã ghi: thu lại câu này"
     const val s_da_ghim_f1645be7 = "Đã ghim"
     fun s_da_gom_0_1_chuong_ed4dbcd9(p0: Any?, p1: Any?): String = "Đã gom " + p0.toString() + "/" + p1.toString() + " chương"
     const val s_da_gui_bfc50557 = "Đã gửi"
     fun s_da_gui_ve_0_1_f817fbb4(p0: Any?, p1: Any?): String = "Đã gửi về " + p0.toString() + " " + p1.toString()
     fun s_da_gui_ve_0_c5d9f5e1(p0: Any?): String = "Đã gửi về " + p0.toString()
     fun s_da_hoan_tac_0_tro_lai_nhu_truoc_khi_doi_gi_308f6f6e(p0: Any?): String = "Đã hoàn tác. " + p0.toString() + " trở lại như trước khi đổi giới tính."
+    const val s_da_hoan_tac_2ef55fca = "Đã hoàn tác"
     const val s_da_huy_5014a7d6 = "Đã huỷ"
     const val s_da_huy_6287edb4 = "đã huỷ"
     const val s_da_huy_lan_tai_sau_lam_tiep_tu_cho_dung_a3bd5f77 = "Đã huỷ - lần tải sau làm tiếp từ chỗ dừng."
@@ -1082,6 +1093,7 @@ internal object S {
     const val s_da_nghe_het_phan_da_co_chuong_moi_se_hien_4b18ca13 = "Đã nghe hết phần đã có. Chương mới sẽ hiện ở đây khi làm xong."
     const val s_da_nghe_het_sach_4a2d3bf1 = "Đã nghe hết sách."
     const val s_da_nghe_xong_d276b702 = "Đã nghe xong"
+    const val s_da_nho_may_giu_sach_rut_lai_e7afaa0b = "Đã nhờ máy giữ sách rút lại"
     fun s_da_noi_0_f564288f(p0: Any?): String = "Đã nối " + p0.toString()
     fun s_da_san_sang_0_1_chuong_06edeb48(p0: Any?, p1: Any?): String = "Đã sẵn sàng " + p0.toString() + "/" + p1.toString() + " chương"
     fun s_da_tai_0_bai_1_3cac202f(p0: Any?, p1: Any?): String = "Đã tải " + p0.toString() + " bài · " + p1.toString()
@@ -1125,6 +1137,7 @@ internal object S {
     const val s_dang_chep_2a13e1c3 = "Đang chép"
     const val s_dang_cho_4257d45b = "Đang chờ"
     const val s_dang_cho_mang_4e41560e = "Đang chờ mạng"
+    fun s_dang_cho_may_lam_sach_0_712ab9de(p0: Any?): String = "Đang chờ máy làm sách: " + p0.toString()
     const val s_dang_cho_may_lam_sach_bad9fc96 = "Chờ máy làm sách"
     fun s_dang_chon_0_1_cau_3dce2fb6(p0: Any?, p1: Any?): String = "Đang chọn " + p0.toString() + "/" + p1.toString() + " câu"
     const val s_dang_chon_4851f502 = " · đang chọn"
@@ -1357,6 +1370,7 @@ internal object S {
     fun s_doc_la_0_328eec99(p0: Any?): String = "đọc là “" + p0.toString() + "”"
     fun s_doc_la_0_f8cd3da0(p0: Any?): String = "đọc là " + p0.toString()
     const val s_doc_la_332819df = "Đọc là"
+    const val s_doc_lai_mot_lan_khac_giong_nhu_cu_a0908dad = "Đọc lại một lần khác, giọng như cũ"
     const val s_doc_lai_ngu_canh_edb18d3a = "Đọc lại ngữ cảnh"
     const val s_doc_lai_theo_chu_sach_839313cb = "đọc lại theo chữ sách"
     const val s_doc_nhu_trong_sach_4ff053c6 = "Đọc như trong sách"
@@ -1501,6 +1515,7 @@ internal object S {
     const val s_file_sach_co_phien_ban_dinh_dang_khong_hop_3dcef37b = "File sách có phiên bản định dạng không hợp lệ."
     const val s_file_sach_co_qua_nhieu_muc_eecd9377 = "File sách có quá nhiều mục."
     const val s_file_sach_hong_hoac_khong_doc_duoc_ban_xin_80b98983 = "File sách hỏng hoặc không đọc được — bạn xin người gửi gửi lại."
+    const val s_file_sach_nay_lam_bang_abook_ban_cu_nen_ch_45df1722 = "File sách này làm bằng ABook bản cũ nên chưa ghi được việc riêng cho từng câu (người nói, cách đọc câu, thu lại). Sửa cách đọc một từ vẫn được; muốn sửa từng câu, làm lại file bằng ABook mới."
     const val s_file_sach_qua_lon_35668818 = "File sách quá lớn."
     const val s_file_sach_thieu_audio_cua_mot_chuong_6e7fb960 = "File sách thiếu audio của một chương."
     const val s_file_sach_thieu_bai_nhac_ma_nguoi_nghe_da_d722ea89 = "File sách thiếu bài nhạc mà người nghe đã chọn."
@@ -1705,6 +1720,7 @@ internal object S {
     const val s_hien_ca_cau_lech_nhe_0379133b = "Hiện cả câu lệch nhẹ"
     const val s_hien_chuong_sau_81aa431a = "Hiện chương sau"
     fun s_hien_dang_la_nhan_vat_0_cda496a1(p0: Any?): String = "Hiện đang là nhân vật " + p0.toString() + "."
+    fun s_hien_la_0_d6cdb2e8(p0: Any?): String = "Hiện là " + p0.toString()
     const val s_hieu_nang_8c7b7526 = "Hiệu năng"
     const val s_hieu_ngu_canh_de_chon_nhac_1_phut_moi_gio_1ed08581 = "Hiểu ngữ cảnh để chọn nhạc; ~1 phút mỗi giờ sách."
     const val s_hinh_model_la_edb53cea = "hình model lạ"
@@ -1907,6 +1923,7 @@ internal object S {
     const val s_linh_san_mien_nam_630af677 = "Linh San - miền Nam"
     const val s_loa_tv_chi_phat_duoc_sach_cua_may_tinh_bbee0026 = "Loa, TV chỉ phát được sách của máy tính"
     const val s_loa_tv_chi_phat_o_toc_do_1x_9aa457df = "loa, TV chỉ phát ở tốc độ 1x"
+    const val s_loai_cau_cam_xuc_chu_dem_doc_483deab7 = "Loại câu, cảm xúc, chữ đem đọc"
     const val s_loai_doan_4c243930 = "Loại đoạn"
     const val s_loai_doan_phai_la_loi_ke_loi_thoai_hay_noi_69b997f9 = "Loại đoạn phải là lời kể, lời thoại hay nội tâm."
     const val s_loai_file_74f0a115 = "Loại file"
@@ -1920,6 +1937,7 @@ internal object S {
     const val s_loi_ke_eba0761e = "Lời kể"
     const val s_loi_ke_ed1d797e = "lời kể"
     const val s_loi_ke_khong_co_nguoi_noi_doi_thanh_loi_th_fd8a4f85 = "Lời kể không có người nói - đổi thành lời thoại trước."
+    const val s_loi_ke_khong_co_nguoi_noi_muon_gan_nguoi_d_a62c8bf9 = "Lời kể không có người nói - muốn gán người, đổi câu thành lời thoại ở “Cách đọc câu”"
     fun s_loi_khi_ghi_0_7ee7b58a(p0: Any?): String = "Lỗi khi ghi: " + p0.toString()
     fun s_loi_khi_lam_file_m4b_0_725f2664(p0: Any?): String = "Lỗi khi làm file M4B: " + p0.toString()
     fun s_loi_phat_0_9eec8a78(p0: Any?): String = "lỗi phát " + p0.toString()
@@ -2419,6 +2437,7 @@ internal object S {
     fun s_sach_nay_co_0_1_chuong_da_thu_cac_chuong_s_b799aec1(p0: Any?, p1: Any?): String = "Sách này có " + p0.toString() + "/" + p1.toString() + " chương đã thu - các chương sau chưa có audio"
     const val s_sach_nay_duoc_lam_bang_ban_app_moi_hon_hay_27f95a02 = "Sách này được làm bằng bản app mới hơn. Hãy cập nhật app để mở."
     const val s_sach_nay_lay_tu_may_tinh_khac_muon_gui_fil_4ef0fe11 = "Sách này lấy từ máy tính khác - muốn gửi file sách thì gửi từ máy ấy"
+    const val s_sach_nay_nam_tren_dien_thoai_khac_sua_tung_269dd675 = "Sách này nằm trên điện thoại khác - sửa từng câu phải làm ở máy ấy"
     const val s_sach_nghe_abook_cb8e508e = "Sách nghe (.abook)"
     const val s_sach_nghe_lai_nhieu_lan_hoac_de_chia_se_c35352d9 = "Sách nghe lại nhiều lần hoặc để chia sẻ."
     const val s_sach_nghe_mo_duoc_bang_abook_tren_may_tinh_ef9eba65 = "Sách nghe mở được bằng ABook trên máy tính và điện thoại, mang theo tên, bìa, tên nhân vật, tên chương, nhạc bạn đã sửa"
@@ -2454,6 +2473,7 @@ internal object S {
     const val s_studio_tren_may_tinh_6c00d830 = "Studio trên máy tính"
     fun s_su_co_0_f2a511ec(p0: Any?): String = "Sự cố: " + p0.toString()
     fun s_sua_cach_doc_0_683b998a(p0: Any?): String = "Sửa cách đọc " + p0.toString()
+    const val s_sua_cau_nay_a82aec43 = "Sửa câu này"
     const val s_sua_d4e07603 = "Sửa"
     const val s_sua_nao_cung_da_ghi_lai_may_ap_khi_sach_ch_eb78b798 = "Sửa nào cũng đã ghi lại; máy áp khi sách chạy tiếp. Những chỗ khác máy chưa chắc vẫn ở “Việc cần duyệt”."
     const val s_sua_nao_cung_da_ghi_lai_may_ap_o_chuong_ke_7b639271 = "Sửa nào cũng đã ghi lại; máy áp ở chương kế tiếp. Những chỗ khác máy chưa chắc vẫn ở “Việc cần duyệt”."
@@ -2645,6 +2665,7 @@ internal object S {
     const val s_thu_lai_bceb80c2 = "Thu lại "
     const val s_thu_lai_c58d068c = "Thử lại"
     fun s_thu_lai_ca_chuong_0_cau_781a8c0d(p0: Any?): String = "Thu lại cả chương (" + p0.toString() + " câu)"
+    const val s_thu_lai_cau_nay_034c2834 = "Thu lại câu này"
     const val s_thu_lai_toc_do_a69ef56d = "Thử lại tốc độ"
     const val s_thu_minh_mien_bac_7c56c7eb = "Thu Minh - miền Bắc"
     fun s_thu_muc_co_qua_nhieu_file_0_toi_da_1_842b73bc(p0: Any?, p1: Any?): String = "Thư mục có quá nhiều file (" + p0.toString() + ") - tối đa " + p1.toString() + "."

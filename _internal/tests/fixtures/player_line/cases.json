@@ -1,0 +1,698 @@
+[
+  {
+    "name": "dialogue-existing",
+    "source": {
+      "id": 41,
+      "stableId": "player_line_one",
+      "textSha256": "0440ae6adf41a3d7212f051b731da6c87c818ad2677983593ee469188a1389c7",
+      "text": "Chiếc hộp kiểm thử phát sáng màu tím cạnh rô-bốt giấy.",
+      "kind": "dialogue",
+      "speaker": "Minh",
+      "emotion": "neutral",
+      "intensity": 0,
+      "start": 3,
+      "end": 6
+    },
+    "cast": {
+      "characters": [
+        {
+          "name": "MINH",
+          "displayName": "Minh",
+          "lines": 1,
+          "gender": "male",
+          "voice": {
+            "preset": "test"
+          }
+        },
+        {
+          "name": "AN",
+          "displayName": "An",
+          "lines": 1,
+          "gender": "female",
+          "voice": {
+            "preset": "test"
+          }
+        }
+      ]
+    },
+    "wishes": {
+      "lines": {}
+    },
+    "action": "speaker",
+    "expectedSteps": [
+      {
+        "endpoint": "speaker",
+        "body": {
+          "lines": [
+            {
+              "stableId": "player_line_one",
+              "textSha256": "0440ae6adf41a3d7212f051b731da6c87c818ad2677983593ee469188a1389c7"
+            }
+          ],
+          "speaker": "AN",
+          "newGender": "",
+          "seen": {
+            "player_line_one": ""
+          }
+        }
+      }
+    ],
+    "person": {
+      "value": "AN",
+      "label": "An",
+      "lines": 1
+    }
+  },
+  {
+    "name": "thought-existing",
+    "source": {
+      "id": 41,
+      "stableId": "player_line_one",
+      "textSha256": "0440ae6adf41a3d7212f051b731da6c87c818ad2677983593ee469188a1389c7",
+      "text": "Chiếc hộp kiểm thử phát sáng màu tím cạnh rô-bốt giấy.",
+      "kind": "thought",
+      "speaker": "Minh",
+      "emotion": "neutral",
+      "intensity": 0,
+      "start": 3,
+      "end": 6
+    },
+    "cast": {
+      "characters": [
+        {
+          "name": "MINH",
+          "displayName": "Minh",
+          "lines": 1,
+          "gender": "male",
+          "voice": {
+            "preset": "test"
+          }
+        },
+        {
+          "name": "AN",
+          "displayName": "An",
+          "lines": 1,
+          "gender": "female",
+          "voice": {
+            "preset": "test"
+          }
+        }
+      ]
+    },
+    "wishes": {
+      "lines": {}
+    },
+    "action": "speaker",
+    "expectedSteps": [
+      {
+        "endpoint": "speaker",
+        "body": {
+          "lines": [
+            {
+              "stableId": "player_line_one",
+              "textSha256": "0440ae6adf41a3d7212f051b731da6c87c818ad2677983593ee469188a1389c7"
+            }
+          ],
+          "speaker": "AN",
+          "newGender": "",
+          "seen": {
+            "player_line_one": ""
+          }
+        }
+      }
+    ],
+    "person": {
+      "value": "AN",
+      "label": "An",
+      "lines": 1
+    }
+  },
+  {
+    "name": "new-person",
+    "source": {
+      "id": 41,
+      "stableId": "player_line_one",
+      "textSha256": "0440ae6adf41a3d7212f051b731da6c87c818ad2677983593ee469188a1389c7",
+      "text": "Chiếc hộp kiểm thử phát sáng màu tím cạnh rô-bốt giấy.",
+      "kind": "dialogue",
+      "speaker": "Minh",
+      "emotion": "neutral",
+      "intensity": 0,
+      "start": 3,
+      "end": 6
+    },
+    "cast": {
+      "characters": [
+        {
+          "name": "MINH",
+          "displayName": "Minh",
+          "lines": 1,
+          "gender": "male",
+          "voice": {
+            "preset": "test"
+          }
+        },
+        {
+          "name": "AN",
+          "displayName": "An",
+          "lines": 1,
+          "gender": "female",
+          "voice": {
+            "preset": "test"
+          }
+        }
+      ]
+    },
+    "wishes": {
+      "lines": {}
+    },
+    "action": "speaker",
+    "expectedSteps": [
+      {
+        "endpoint": "speaker",
+        "body": {
+          "lines": [
+            {
+              "stableId": "player_line_one",
+              "textSha256": "0440ae6adf41a3d7212f051b731da6c87c818ad2677983593ee469188a1389c7"
+            }
+          ],
+          "speaker": "Bình",
+          "newGender": "unknown",
+          "seen": {
+            "player_line_one": ""
+          }
+        }
+      }
+    ],
+    "person": {
+      "value": "Bình",
+      "label": "Bình",
+      "lines": 0,
+      "newGender": "unknown"
+    }
+  },
+  {
+    "name": "pending-new-person",
+    "source": {
+      "id": 41,
+      "stableId": "player_line_one",
+      "textSha256": "0440ae6adf41a3d7212f051b731da6c87c818ad2677983593ee469188a1389c7",
+      "text": "Chiếc hộp kiểm thử phát sáng màu tím cạnh rô-bốt giấy.",
+      "kind": "dialogue",
+      "speaker": "Minh",
+      "emotion": "neutral",
+      "intensity": 0,
+      "start": 3,
+      "end": 6
+    },
+    "cast": {
+      "characters": [
+        {
+          "name": "MINH",
+          "displayName": "Minh",
+          "lines": 1,
+          "gender": "male",
+          "voice": {
+            "preset": "test"
+          }
+        },
+        {
+          "name": "AN",
+          "displayName": "An",
+          "lines": 1,
+          "gender": "female",
+          "voice": {
+            "preset": "test"
+          }
+        }
+      ]
+    },
+    "wishes": {
+      "lines": {
+        "player_line_one": {
+          "speaker": {
+            "name": "Bình",
+            "shown": "Bình",
+            "newGender": "unknown",
+            "requestedAt": 1
+          }
+        }
+      }
+    },
+    "action": "speaker",
+    "expectedSteps": [
+      {
+        "endpoint": "speaker",
+        "body": {
+          "lines": [
+            {
+              "stableId": "player_line_one",
+              "textSha256": "0440ae6adf41a3d7212f051b731da6c87c818ad2677983593ee469188a1389c7"
+            }
+          ],
+          "speaker": "Bình",
+          "newGender": "unknown",
+          "seen": {
+            "player_line_one": "Bình"
+          }
+        }
+      }
+    ],
+    "person": {
+      "value": "Bình",
+      "label": "Bình",
+      "lines": 0,
+      "newGender": "unknown"
+    }
+  },
+  {
+    "name": "narration-to-thought",
+    "source": {
+      "id": 41,
+      "stableId": "player_line_one",
+      "textSha256": "0440ae6adf41a3d7212f051b731da6c87c818ad2677983593ee469188a1389c7",
+      "text": "Chiếc hộp kiểm thử phát sáng màu tím cạnh rô-bốt giấy.",
+      "kind": "narration",
+      "speaker": "",
+      "emotion": "neutral",
+      "intensity": 0,
+      "start": 3,
+      "end": 6
+    },
+    "cast": {
+      "characters": [
+        {
+          "name": "MINH",
+          "displayName": "Minh",
+          "lines": 1,
+          "gender": "male",
+          "voice": {
+            "preset": "test"
+          }
+        },
+        {
+          "name": "AN",
+          "displayName": "An",
+          "lines": 1,
+          "gender": "female",
+          "voice": {
+            "preset": "test"
+          }
+        }
+      ]
+    },
+    "wishes": {
+      "lines": {}
+    },
+    "action": "delivery",
+    "expectedSteps": [
+      {
+        "endpoint": "line",
+        "body": {
+          "stableId": "player_line_one",
+          "textSha256": "0440ae6adf41a3d7212f051b731da6c87c818ad2677983593ee469188a1389c7",
+          "seen": null,
+          "kind": "thought",
+          "speaker": "AN"
+        }
+      }
+    ],
+    "delivery": {
+      "kind": "thought",
+      "emotion": "neutral",
+      "intensity": 0
+    },
+    "person": {
+      "value": "AN",
+      "label": "An",
+      "lines": 1
+    }
+  },
+  {
+    "name": "narration-to-new-dialogue",
+    "source": {
+      "id": 41,
+      "stableId": "player_line_one",
+      "textSha256": "0440ae6adf41a3d7212f051b731da6c87c818ad2677983593ee469188a1389c7",
+      "text": "Chiếc hộp kiểm thử phát sáng màu tím cạnh rô-bốt giấy.",
+      "kind": "narration",
+      "speaker": "",
+      "emotion": "neutral",
+      "intensity": 0,
+      "start": 3,
+      "end": 6
+    },
+    "cast": {
+      "characters": [
+        {
+          "name": "MINH",
+          "displayName": "Minh",
+          "lines": 1,
+          "gender": "male",
+          "voice": {
+            "preset": "test"
+          }
+        },
+        {
+          "name": "AN",
+          "displayName": "An",
+          "lines": 1,
+          "gender": "female",
+          "voice": {
+            "preset": "test"
+          }
+        }
+      ]
+    },
+    "wishes": {
+      "lines": {}
+    },
+    "action": "delivery",
+    "expectedSteps": [
+      {
+        "endpoint": "line",
+        "body": {
+          "stableId": "player_line_one",
+          "textSha256": "0440ae6adf41a3d7212f051b731da6c87c818ad2677983593ee469188a1389c7",
+          "seen": null,
+          "kind": "dialogue"
+        }
+      },
+      {
+        "endpoint": "speaker",
+        "body": {
+          "lines": [
+            {
+              "stableId": "player_line_one",
+              "textSha256": "0440ae6adf41a3d7212f051b731da6c87c818ad2677983593ee469188a1389c7"
+            }
+          ],
+          "speaker": "Bình",
+          "newGender": "unknown"
+        }
+      }
+    ],
+    "delivery": {
+      "kind": "dialogue",
+      "emotion": "neutral",
+      "intensity": 0
+    },
+    "person": {
+      "value": "Bình",
+      "label": "Bình",
+      "lines": 0,
+      "newGender": "unknown"
+    }
+  },
+  {
+    "name": "emotion-and-level",
+    "source": {
+      "id": 41,
+      "stableId": "player_line_one",
+      "textSha256": "0440ae6adf41a3d7212f051b731da6c87c818ad2677983593ee469188a1389c7",
+      "text": "Chiếc hộp kiểm thử phát sáng màu tím cạnh rô-bốt giấy.",
+      "kind": "dialogue",
+      "speaker": "Minh",
+      "emotion": "neutral",
+      "intensity": 0,
+      "start": 3,
+      "end": 6
+    },
+    "cast": {
+      "characters": [
+        {
+          "name": "MINH",
+          "displayName": "Minh",
+          "lines": 1,
+          "gender": "male",
+          "voice": {
+            "preset": "test"
+          }
+        },
+        {
+          "name": "AN",
+          "displayName": "An",
+          "lines": 1,
+          "gender": "female",
+          "voice": {
+            "preset": "test"
+          }
+        }
+      ]
+    },
+    "wishes": {
+      "lines": {}
+    },
+    "action": "delivery",
+    "expectedSteps": [
+      {
+        "endpoint": "line",
+        "body": {
+          "stableId": "player_line_one",
+          "textSha256": "0440ae6adf41a3d7212f051b731da6c87c818ad2677983593ee469188a1389c7",
+          "seen": null,
+          "emotion": "sad",
+          "intensity": 2
+        }
+      }
+    ],
+    "delivery": {
+      "kind": "dialogue",
+      "emotion": "sad",
+      "intensity": 2
+    }
+  },
+  {
+    "name": "spoken-layer",
+    "source": {
+      "id": 41,
+      "stableId": "player_line_one",
+      "textSha256": "0440ae6adf41a3d7212f051b731da6c87c818ad2677983593ee469188a1389c7",
+      "text": "Chiếc hộp kiểm thử phát sáng màu tím cạnh rô-bốt giấy.",
+      "kind": "dialogue",
+      "speaker": "Minh",
+      "emotion": "neutral",
+      "intensity": 0,
+      "start": 3,
+      "end": 6
+    },
+    "cast": {
+      "characters": [
+        {
+          "name": "MINH",
+          "displayName": "Minh",
+          "lines": 1,
+          "gender": "male",
+          "voice": {
+            "preset": "test"
+          }
+        },
+        {
+          "name": "AN",
+          "displayName": "An",
+          "lines": 1,
+          "gender": "female",
+          "voice": {
+            "preset": "test"
+          }
+        }
+      ]
+    },
+    "wishes": {
+      "lines": {}
+    },
+    "action": "spoken",
+    "expectedSteps": [
+      {
+        "endpoint": "line",
+        "body": {
+          "stableId": "player_line_one",
+          "textSha256": "0440ae6adf41a3d7212f051b731da6c87c818ad2677983593ee469188a1389c7",
+          "seen": null,
+          "spoken": "Rô bốt thử nghiệm gõ nhịp lên chiếc hộp tím."
+        }
+      }
+    ],
+    "spoken": "Rô bốt thử nghiệm gõ nhịp lên chiếc hộp tím."
+  },
+  {
+    "name": "retake",
+    "source": {
+      "id": 41,
+      "stableId": "player_line_one",
+      "textSha256": "0440ae6adf41a3d7212f051b731da6c87c818ad2677983593ee469188a1389c7",
+      "text": "Chiếc hộp kiểm thử phát sáng màu tím cạnh rô-bốt giấy.",
+      "kind": "dialogue",
+      "speaker": "Minh",
+      "emotion": "neutral",
+      "intensity": 0,
+      "start": 3,
+      "end": 6
+    },
+    "cast": {
+      "characters": [
+        {
+          "name": "MINH",
+          "displayName": "Minh",
+          "lines": 1,
+          "gender": "male",
+          "voice": {
+            "preset": "test"
+          }
+        },
+        {
+          "name": "AN",
+          "displayName": "An",
+          "lines": 1,
+          "gender": "female",
+          "voice": {
+            "preset": "test"
+          }
+        }
+      ]
+    },
+    "wishes": {
+      "lines": {}
+    },
+    "action": "review",
+    "expectedSteps": [
+      {
+        "endpoint": "review",
+        "body": {
+          "lines": [{"stableId": "player_line_one"}],
+          "chapterId": 1,
+          "verdict": "redo",
+          "seen": {
+            "player_line_one": ""
+          }
+        }
+      }
+    ]
+  },
+  {
+    "name": "missing-stable-id",
+    "source": {
+      "id": 41,
+      "textSha256": "0440ae6adf41a3d7212f051b731da6c87c818ad2677983593ee469188a1389c7",
+      "text": "Chiếc hộp kiểm thử phát sáng màu tím cạnh rô-bốt giấy.",
+      "kind": "dialogue",
+      "speaker": "Minh",
+      "emotion": "neutral",
+      "intensity": 0,
+      "start": 3,
+      "end": 6
+    },
+    "cast": {
+      "characters": [
+        {
+          "name": "MINH",
+          "displayName": "Minh",
+          "lines": 1,
+          "gender": "male",
+          "voice": {
+            "preset": "test"
+          }
+        },
+        {
+          "name": "AN",
+          "displayName": "An",
+          "lines": 1,
+          "gender": "female",
+          "voice": {
+            "preset": "test"
+          }
+        }
+      ]
+    },
+    "wishes": {
+      "lines": {}
+    },
+    "action": "blocked",
+    "expectedSteps": []
+  },
+  {
+    "name": "missing-source-hash",
+    "source": {
+      "id": 41,
+      "stableId": "player_line_one",
+      "text": "Chiếc hộp kiểm thử phát sáng màu tím cạnh rô-bốt giấy.",
+      "kind": "dialogue",
+      "speaker": "Minh",
+      "emotion": "neutral",
+      "intensity": 0,
+      "start": 3,
+      "end": 6
+    },
+    "cast": {
+      "characters": [
+        {
+          "name": "MINH",
+          "displayName": "Minh",
+          "lines": 1,
+          "gender": "male",
+          "voice": {
+            "preset": "test"
+          }
+        },
+        {
+          "name": "AN",
+          "displayName": "An",
+          "lines": 1,
+          "gender": "female",
+          "voice": {
+            "preset": "test"
+          }
+        }
+      ]
+    },
+    "wishes": {
+      "lines": {}
+    },
+    "action": "blocked",
+    "expectedSteps": []
+  },
+  {
+    "name": "listen-only",
+    "source": {
+      "id": 41,
+      "stableId": "player_line_one",
+      "textSha256": "0440ae6adf41a3d7212f051b731da6c87c818ad2677983593ee469188a1389c7",
+      "text": "Chiếc hộp kiểm thử phát sáng màu tím cạnh rô-bốt giấy.",
+      "kind": "dialogue",
+      "speaker": "Minh",
+      "emotion": "neutral",
+      "intensity": 0,
+      "start": 3,
+      "end": 6
+    },
+    "cast": {
+      "characters": [
+        {
+          "name": "MINH",
+          "displayName": "Minh",
+          "lines": 1,
+          "gender": "male",
+          "voice": {
+            "preset": "test"
+          }
+        },
+        {
+          "name": "AN",
+          "displayName": "An",
+          "lines": 1,
+          "gender": "female",
+          "voice": {
+            "preset": "test"
+          }
+        }
+      ]
+    },
+    "wishes": {
+      "lines": {}
+    },
+    "action": "blocked",
+    "expectedSteps": [],
+    "listenOnly": true
+  }
+]

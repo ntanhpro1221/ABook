@@ -202,6 +202,14 @@ void ReadAlong::reload() {
     }, false);
 }
 
+QVariantMap ReadAlong::lineAt(int paragraph, int position) const {
+    if (paragraph < 0 || paragraph >= m_model.script().paragraphs.size() || position < 0 || position > m_model.script().paragraphs[paragraph].text.size()) return {};
+    const int index = segmentAt(paragraph, position);
+    if (index < 0) return {};
+    return {{QStringLiteral("bookId"), m_loadedBook}, {QStringLiteral("chapterId"), m_loadedChapter},
+            {QStringLiteral("source"), m_model.script().segments[index].source.toVariantMap()}};
+}
+
 void ReadAlong::narrationScript(const QString &book, int chapter, const QJsonObject &script) {
     m_narrationBook = book; m_narrationChapter = chapter; m_narration = script;
     if (m_active && m_player->speaking() && m_player->bookId() == book && m_player->chapterId() == chapter) {

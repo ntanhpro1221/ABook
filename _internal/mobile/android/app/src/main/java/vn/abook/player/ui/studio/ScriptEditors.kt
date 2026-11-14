@@ -39,13 +39,13 @@ import vn.abook.player.ui.motion.ContentLayout
 
 /** Existing people remain a single tap. A typed new name is validated against canonical and displayed names. */
 @Composable
-internal fun ScriptPeoplePicker(script: ChapterScript, current: String, allowNarrator: Boolean = true, allowCreate: Boolean = true, onPick: (ScriptPerson) -> Unit) {
+internal fun ScriptPeoplePicker(script: ChapterScript, current: String, allowNarrator: Boolean = true, allowCreate: Boolean = true, showTitle: Boolean = true, onPick: (ScriptPerson) -> Unit) {
     var query by remember { mutableStateOf("") }
     var creating by remember { mutableStateOf(false) }
     var name by remember { mutableStateOf("") }
     val people = ScriptLogic.people(script).filter { allowNarrator || it.value != ScriptLogic.NARRATOR }
     FieldGroup(Modifier.fillMaxWidth().heightIn(max = 520.dp).verticalScroll(rememberScrollState()).testTag("studio_script_people")) {
-        BasicText(ScriptText.WHO, style = Abook.type.sectionTitle)
+        if (showTitle) BasicText(ScriptText.WHO, style = Abook.type.sectionTitle)
         BookField(null, query, { query = it }, "studio_people_search", description = S.s_tim_nguoi_noi_70e3871e, placeholder = S.s_tim_nguoi_noi_70e3871e)
         val list = rememberLazyListState()
         LazyColumn(Modifier.heightIn(max = 224.dp).fadeEdges(list), state = list) {
@@ -71,14 +71,22 @@ internal fun ScriptPeoplePicker(script: ChapterScript, current: String, allowNar
 
 @Composable
 internal fun ScriptDeliverySheet(state: StudioScriptState, script: ChapterScript, line: ScriptLine, dismiss: () -> Unit) {
+    ScriptDeliveryEditor(script, line, dismiss) { kind, emotion, intensity, person, _ -> state.delivery(line, kind, emotion, intensity, person) }
+}
+
+/** The player uses the same kind/person controls and can also edit the reading layer here. */
+@Composable
+internal fun ScriptDeliveryEditor(script: ChapterScript, line: ScriptLine, dismiss: () -> Unit, reading: Boolean = false, showTitle: Boolean = true, modifier: Modifier = Modifier,
+    save: (String, String, Int, ScriptPerson?, String) -> Boolean) {
     val pending = line.lineWish?.takeIf { it.state == "pending" }
     var kind by remember { mutableStateOf(pending?.kind?.ifEmpty { line.kind } ?: line.kind) }
     var emotion by remember { mutableStateOf(pending?.emotion?.ifEmpty { line.emotion ?: "neutral" } ?: line.emotion ?: "neutral") }
     var intensity by remember { mutableStateOf(pending?.intensity ?: line.intensity ?: 0) }
     var person by remember { mutableStateOf<ScriptPerson?>(null) }
+    var spoken by remember { mutableStateOf(line.lineWish?.spoken ?: line.spoken ?: line.text) }
     val needsPerson = line.kind == "narration" && kind != "narration"
-    Column(Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).testTag("studio_delivery_sheet")) {
-        BasicText(S.s_cach_doc_cau_nay_d8d0b9f1, style = Abook.type.sectionTitle)
+    Column(modifier.fillMaxWidth().verticalScroll(rememberScrollState()).testTag("studio_delivery_sheet")) {
+        if (showTitle) BasicText(S.s_cach_doc_cau_nay_d8d0b9f1, style = Abook.type.sectionTitle)
         BasicText(S.s_loai_doan_4c243930, style = Abook.type.bodySmall)
         val kinds = ScriptEdits.kinds.map { Option(it.first, it.second) }
         ChoiceRow(kinds, kinds.first { it.value == kind }, { picked, _ -> kind = picked.value }, tag = "studio_delivery_kind")
@@ -107,8 +115,14 @@ internal fun ScriptDeliverySheet(state: StudioScriptState, script: ChapterScript
                 }
             }
         }
+        Reveal(reading) {
+            Column {
+                BookField(null, spoken, { spoken = it }, "player_line_spoken", description = S.s_chu_may_se_doc_thay_cho_cau_nay_a93194d6)
+                RowHint(ScriptText.SPOKEN_HINT)
+            }
+        }
         RowHint(ScriptText.PENDING, Modifier.padding(top = Dim.s8))
-        AnswerButton(if (needsPerson && person == null) S.s_chon_nguoi_noi_truoc_f3e512e0 else S.s_luu_cho_cau_nay_6402d7a6, { if (state.delivery(line, kind, emotion, intensity, person)) dismiss() }, "studio_delivery_save", primary = true,
-            enabled = ScriptEdits.delivery(line, kind, emotion, intensity, person) != null)
+        AnswerButton(if (needsPerson && person == null) S.s_chon_nguoi_noi_truoc_f3e512e0 else S.s_luu_cho_cau_nay_6402d7a6, { if (save(kind, emotion, intensity, person, spoken)) dismiss() }, "studio_delivery_save", primary = true,
+            enabled = (!needsPerson || person != null) && (ScriptEdits.delivery(line, kind, emotion, intensity, person) != null || (reading && ScriptLogic.spokenChange(line, spoken) != null)))
     }
 }

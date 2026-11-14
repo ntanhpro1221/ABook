@@ -15,6 +15,8 @@ Item {
     id: root
     property bool following: true
     property bool tapped: false
+    PlayerLineEditor { id: lineEditor }
+    Connections { target: lineEditor; function onOpenChanged() { if (lineEditor.open) followAnim.stop() } }
     // Retain the paragraph at the viewport edge while its preceding text wraps.
     // Playback following still owns placement when following is enabled.
     property var viewportAnchor: null
@@ -104,6 +106,7 @@ Item {
         placement = middle >= 0 && ReadAlong.currentPara < middle ? "above" : "below"
     }
     function follow(animate) {
+        if (lineEditor.open) return
         if (ReadAlong.currentSegment < 0 || ReadAlong.currentPara < 0) return
         const box = currentBox()
         if (!box) {
@@ -123,7 +126,7 @@ Item {
     // Đỉnh dòng của chữ đang đọc, tính trong nội dung cuộn: chữ sang dòng khác thì đưa dòng ấy về chỗ đọc (luật ở follow.ts).
     property real wordLine: -1
     function afterWord() {
-        if (!following) return
+        if (!following || lineEditor.open) return
         const item = list.itemAtIndex(ReadAlong.currentPara)
         if (!item || item.wordRects.length === 0) return
         const rect = item.wordRects[0]
@@ -286,6 +289,7 @@ Item {
                 }
                 TextEdit {
                     id: edit
+                    objectName: "readAlongParagraphText"
                     width: parent.width
                     text: del.text
                     readOnly: true
@@ -336,10 +340,30 @@ Item {
                 onHoveredChanged: if (!hovered) del.hoverSeg = -1
             }
             TapHandler {
+                acceptedButtons: Qt.LeftButton
+                property bool editingGesture: false
+                onPressedChanged: if (pressed) editingGesture = false
+                onLongPressed: {
+                    if (Player.speaking) return
+                    editingGesture = true
+                    const y = point.position.y - body.y
+                    if (y >= 0 && y <= edit.height)
+                        lineEditor.begin(ReadAlong.lineAt(del.index, edit.positionAt(point.position.x - body.x, y)), ReadAlong.timed)
+                }
                 onTapped: (eventPoint) => {
+                    if (editingGesture) return
                     const y = eventPoint.position.y - body.y
                     if (y < 0 || y > edit.height) return
                     ReadAlong.listenFrom(del.index, edit.positionAt(eventPoint.position.x - body.x, y))
+                }
+            }
+            TapHandler {
+                acceptedButtons: Qt.RightButton
+                onTapped: eventPoint => {
+                    if (Player.speaking) return
+                    const y = eventPoint.position.y - body.y
+                    if (y >= 0 && y <= edit.height)
+                        lineEditor.begin(ReadAlong.lineAt(del.index, edit.positionAt(eventPoint.position.x - body.x, y)), ReadAlong.timed)
                 }
             }
         }

@@ -84,6 +84,7 @@ interface PlayerPosition {
 
 @Stable
 interface NowPlayingModel {
+    val lineEditor: PlayerLineEditor? get() = null
     val state: StateFlow<NowPlayingState>
     val position: PlayerPosition
     val readAlong: StateFlow<ReadAlongState>

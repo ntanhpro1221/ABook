@@ -31,6 +31,7 @@ import androidx.compose.ui.layout.layout
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.onClick
+import androidx.compose.ui.semantics.onLongClick
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -71,6 +72,8 @@ fun ReadAlongPane(
     hint: String? = null,
     /** Chạm chữ: nghe từ mốc này. */
     onListen: (Long) -> Unit = {},
+    onEdit: ((ReadParagraph) -> Unit)? = null,
+    editing: Boolean = false,
     /** Tên chương kế (thẻ "Chương tiếp theo" ở cuối chữ); null = chương cuối. */
     nextTitle: String? = null,
     onNext: () -> Unit = {},
@@ -106,7 +109,8 @@ fun ReadAlongPane(
         val tracker = remember(list) { LineTracker(list, layouts, position) }
         tracker.paragraphs = state.paragraphs
         tracker.lead = lead
-        LaunchedEffect(state.bookId, state.chapterId, state.paragraphs, following, lead, placeAt, viewportPx, look.size, look.lineHeight) {
+        LaunchedEffect(state.bookId, state.chapterId, state.paragraphs, following, lead, placeAt, viewportPx, look.size, look.lineHeight, editing) {
+            if (editing) return@LaunchedEffect
             if (state.paragraphs.isEmpty()) return@LaunchedEffect
             if (!following) { placed = true; return@LaunchedEffect }
             if (!placed) {
@@ -123,7 +127,8 @@ fun ReadAlongPane(
             }
         }
         // Tự cuộn rồi ngừng SETTLE_MS mà dòng đang đọc vẫn trong khung thì theo lại (follow.ts của web); đứng yên ở chỗ khác thì không kéo người đọc đi.
-        LaunchedEffect(following) {
+        LaunchedEffect(following, editing) {
+            if (editing) return@LaunchedEffect
             if (!following) snapshotFlow { list.isScrollInProgress }.collectLatest { moving ->
                 if (!moving) {
                     delay(ReadFollow.SETTLE_MS)
@@ -166,15 +171,18 @@ fun ReadAlongPane(
                     BasicText(
                         paragraph.text,
                         Modifier.widthIn(max = 680.dp).fillMaxWidth().testTag("paragraph_${paragraph.id}")
-                            .semantics { onClick(S.s_nghe_tu_day_6a7ff4ab) { onListen(paragraph.startMs); following = true; true } }
-                            .pointerInput(paragraph) {
-                                detectTapGestures { at ->
+                            .semantics {
+                                onClick(S.s_nghe_tu_day_6a7ff4ab) { onListen(paragraph.startMs); following = true; true }
+                                if (onEdit != null) onLongClick(S.s_sua_cau_nay_a82aec43) { following = false; onEdit(paragraph); true }
+                            }
+                            .pointerInput(paragraph, onEdit) {
+                                detectTapGestures(onLongPress = if (onEdit == null) null else { _ -> following = false; onEdit(paragraph) }, onTap = { at ->
                                     onTap()
                                     if (paragraph.timed) {
                                         onListen(ReadTap.startAt(paragraph, layout?.getOffsetForPosition(at) ?: 0))
                                         following = true
                                     }
-                                }
+                                })
                             }.drawBehind {
                             val ms = position.milliseconds.value
                             if (ReadAlongLookup.sentence(state.paragraphs, ms) == index) {

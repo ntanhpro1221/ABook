@@ -2,7 +2,7 @@ import { Presence } from "../shared/MotionPresence";
 import { S } from "../shared/strings.generated";
 import { withViewTransition } from "@/shared/motion";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { ChevronLeft, ChevronRight, Clock, MessageSquareQuote, RotateCcw, Type, UserRound, X } from "lucide-react";
+import { ChevronLeft, ChevronRight, Clock, MessageSquareQuote, Play, RotateCcw, Type, UserRound, X } from "lucide-react";
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { toast, toastDone } from "@/shared/toast";
 import { useBackLayer } from "@/shared/backStack";
@@ -25,6 +25,7 @@ import { useReadAloudTry } from "./readings";
 import { useCast } from "./source";
 import { useFadeScroller } from "@/shared/scrollFade";
 import type { LineWish, NameWish, WishesView } from "./lineWishData";
+import { useClip } from "./clip";
 
 // Sửa MỘT CÂU từ trang đọc, trên cuốn không có xưởng (file .abook trên máy tính hay điện thoại - docs/EDITING.md, P2a). Cùng
 // những việc tab Kịch bản của Studio làm cho cuốn có xưởng - ai nói câu này, loại câu / cảm xúc / chữ đem đọc, cách đọc một tên,
@@ -37,7 +38,7 @@ function sameWord(a: string, b: string): boolean {
 
 /** Mọi người có giọng của cuốn: người nói trong chương này đứng trước (kèm số câu trong chương), người khác sau. Người nghe vừa TẠO (đang chờ
  *  máy làm sách, chưa có trong dàn nhân vật) cũng có ở cuối - chọn được cho câu khác, không phải tạo lại cùng tên (soát a70). */
-function peopleOf(cast: Cast | undefined, script: Script, wishes?: WishesView): { here: Person[]; others: Person[] } {
+export function peopleOf(cast: Cast | undefined, script: Script, wishes?: WishesView): { here: Person[]; others: Person[] } {
   const all: CastMember[] = [...(cast?.characters ?? []), ...(cast?.extras ?? []), ...(cast?.carried ?? [])].filter((person) => person.voice);
   const said = new Map<string, number>();
   for (const segment of script.segments) {
@@ -65,7 +66,7 @@ function peopleOf(cast: Cast | undefined, script: Script, wishes?: WishesView): 
 }
 
 /** Một câu của chữ đọc theo -> `Line` của bảng chọn dùng chung với tab Kịch bản (không có hint, không có audio riêng). */
-function lineOf(segment: ScriptSegment, index: number, people: Person[], wish: LineWish | undefined): Line {
+export function lineOf(segment: ScriptSegment, index: number, people: Person[], wish: LineWish | undefined): Line {
   const speaker = cleanName(segment.speaker);
   const found = people.find((person) => person.label.toLowerCase() === speaker.toLowerCase());
   return {
@@ -243,6 +244,7 @@ export function LineWishDialog({
   onClose: () => void;
 }) {
   const client = useQueryClient();
+  const clip = useClip();
   const { data: cast } = useCast(book.id);
   const [view, setView] = useState<View>(heldWord ? "word" : "menu");
   // Từ mở ở bước sửa cách đọc: chữ vừa giữ, hay từ bấm "Sửa" trong danh sách cách đọc của câu.
@@ -288,6 +290,7 @@ export function LineWishDialog({
   const speech = line?.kind === "dialogue" || line?.kind === "thought";
   const hasAudio = script.timed;
   const close = () => {
+    clip.stop();
     goView("menu");
     onClose();
   };
@@ -400,6 +403,7 @@ export function LineWishDialog({
       {<Presence>{line && (
         <div ref={scrollFade.ref} style={scrollFade.style} className="max-h-[68dvh] space-y-3 overflow-y-auto overscroll-contain pr-1">
           <LineQuote line={line} />
+          <p className="text-xs text-fg-2">{S.s_player_line_waiting_audio}</p>
           {<Presence>{!identified && (
             <p className="py-2 text-sm text-fg-2">{S.s_file_sach_nay_lam_bang_abook_ban_cu_nen_ch_45df1722}</p>
           )}</Presence>}
@@ -471,7 +475,11 @@ export function LineWishDialog({
                   disabled={!identified}
                   onClick={() => goView("delivery")}
                 />
-                <MenuRow icon={Type} title={S.s_sua_cach_doc_mot_tu_ad71101c} note={S.s_chon_tu_may_doc_sai_go_cach_doc_dung_3c5ef37e} onClick={() => goView("word")} />
+                <MenuRow icon={Play} title={S.s_nghe_thu_fa024065} note={null}
+                  disabled={!hasAudio || typeof segment?.start !== "number" || typeof segment?.end !== "number" || segment.end <= segment.start}
+                  onClick={() => { if (segment && typeof segment.start === "number" && typeof segment.end === "number") clip.toggle(`player-line-${line.stableId}`, {
+                    src: `/media/books/${book.id}/chapters/${script.chapterId}`, start: segment.start, end: segment.end,
+                  }); }} />
                 <MenuRow
                   icon={RotateCcw}
                   title={S.s_thu_lai_cau_nay_034c2834}
@@ -480,6 +488,7 @@ export function LineWishDialog({
                   onClick={() => retake.mutate()}
                   trailing={null}
                 />
+                <MenuRow icon={Type} title={S.s_sua_cach_doc_mot_tu_ad71101c} note={S.s_chon_tu_may_doc_sai_go_cach_doc_dung_3c5ef37e} onClick={() => goView("word")} />
               </MotionRegion>
             </>
           )}

@@ -38,7 +38,7 @@ data class ScriptHint(val kind: String, val note: String, val suggest: String?)
 
 /** Điều người nghe đã ghi cho người nói của câu (web `Wish`): `state` là pending | applied | refused. */
 @Immutable
-data class ScriptWish(val value: String, val label: String, val state: String, val reason: String?)
+data class ScriptWish(val value: String, val label: String, val state: String, val reason: String?, val held: Boolean = false)
 
 /** Cách đọc câu người nghe đã ghi (web `LineWish`): cái ta cần là `spoken` ("" = trả về chữ sách, null = không đổi chữ). */
 @Immutable
@@ -64,6 +64,7 @@ data class ScriptLine(
     val lineWish: ScriptLineWish?,
     val emotion: String? = null,
     val intensity: Int? = null,
+    val retake: String? = null,
 )
 
 /** Một chương như `GET /casting/<chapterId>` mô tả (web `ChapterScript`). */
@@ -97,10 +98,11 @@ internal object StudioScriptJson {
         editable = json.optBoolean("editable"),
         hasAudio = json.optBoolean("hasAudio"),
         hint = json.optJSONObject("hint")?.let { ScriptHint(it.text("kind"), it.text("note"), it.textOrNull("suggest")?.takeIf { s -> s.isNotEmpty() }) },
-        wish = json.optJSONObject("wish")?.let { ScriptWish(it.text("value"), it.text("label"), it.text("state"), it.textOrNull("reason")) },
+        wish = json.optJSONObject("wish")?.let { ScriptWish(it.text("value"), it.text("label"), it.text("state"), it.textOrNull("reason"), it.optBoolean("held")) },
         spoken = json.textOrNull("spoken"),
         emotion = json.textOrNull("emotion"),
         intensity = optInt(json, "intensity"),
+        retake = json.textOrNull("retake"),
         lineWish = json.optJSONObject("lineWish")?.let { ScriptLineWish(it.text("kind"), it.text("emotion"), optInt(it, "intensity"), it.textOrNull("spoken"), it.text("state")) },
     )
 

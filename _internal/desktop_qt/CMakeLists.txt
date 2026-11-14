@@ -464,6 +464,8 @@ qt_add_qml_module(ABookDesk
         qml/PlayerNotice.qml
         qml/Popover.qml
         qml/ReadAlongView.qml
+        qml/PlayerLineEditor.qml
+        qml/PlayerLineLogic.js
         qml/SeekBar.qml
         qml/SkipButton.qml
         qml/SkipGlyph.qml

@@ -28,7 +28,11 @@ it("withdraws the first receipt if a new speaker request fails", async () => {
 });
 
 const qtLogic = runInNewContext(qtScript.replace(/^\.(?:import|pragma).*$/gm, "") +
-  "\n({ref, seenDelivery, deliveryChange, deliveryReady, EMOTIONS, KINDS, LEVELS})", { S: copy.strings });
+  "\n({ref, seenDelivery, deliveryChange, deliveryReady, EMOTIONS, KINDS, LEVELS})", { S: copy.strings }) as {
+    deliveryChange: (...args: unknown[]) => unknown;
+    deliveryReady: (...args: unknown[]) => boolean;
+    EMOTIONS: unknown; KINDS: unknown; LEVELS: unknown;
+  };
 
 function qtRequests(kind: string, newGender = "", failSpeaker = false) {
   const calls: { endpoint: string; body: Record<string, unknown> }[] = [];
@@ -42,7 +46,8 @@ function qtRequests(kind: string, newGender = "", failSpeaker = false) {
     else done({ requestedAt: 42 }, "");
   };
   const source = qtStore.match(/    function postLineFix\([\s\S]*?(?=\n    function fixLine\()/)![0];
-  const post = runInNewContext(source + "\npostLineFix", { Script: qtLogic, quietly, root: { quietly } });
+  const post = runInNewContext(source + "\npostLineFix", { Script: qtLogic, quietly, root: { quietly } }) as
+    (line: unknown, change: unknown, done: () => void) => void;
   post(line, change, () => undefined);
   return calls;
 }

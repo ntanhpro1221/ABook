@@ -63,6 +63,7 @@ ChoiceChip 1.0 ../../../../qml/ChoiceChip.qml
 Switch 1.0 ../../../../qml/Switch.qml
 MenuRow 1.0 ../../../../qml/MenuRow.qml
 ReadAlongView 1.0 ../../../../qml/ReadAlongView.qml
+PlayerLineEditor 1.0 ../../../../qml/PlayerLineEditor.qml
 FormLabel 1.0 ../../../../qml/FormLabel.qml
 FormField 1.0 ../../../../qml/FormField.qml
 SettingRow 1.0 ../../../../qml/SettingRow.qml

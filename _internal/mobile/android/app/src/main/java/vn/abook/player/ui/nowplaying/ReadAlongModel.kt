@@ -3,6 +3,7 @@ package vn.abook.player.ui.nowplaying
 import androidx.compose.runtime.Immutable
 import org.json.JSONArray
 import org.json.JSONObject
+import vn.abook.player.ui.studio.ScriptLine
 
 @Immutable
 data class WordTiming(val startMs: Long, val endMs: Long, val from: Int, val until: Int)
@@ -11,6 +12,7 @@ data class WordTiming(val startMs: Long, val endMs: Long, val from: Int, val unt
 data class ReadParagraph(
     val id: Int, val text: String, val startMs: Long, val endMs: Long,
     val timed: Boolean, val words: List<WordTiming> = emptyList(),
+    val line: ScriptLine? = null,
 )
 
 @Immutable
@@ -97,7 +99,15 @@ object ReadAlongLookup {
             // An active virtual timeline deliberately has estimates for unfinished clips, as the web reader does.
             val timed = (json.optBoolean("active") || segment.optBoolean("timed", json.optBoolean("timed"))) && !segment.isNull("start")
             ReadParagraph(i, text, (segment.optDouble("start", 0.0) * 1000).toLong(),
-                (segment.optDouble("end", 0.0) * 1000).toLong(), timed, words(text, segment.optJSONArray("words")))
+                (segment.optDouble("end", 0.0) * 1000).toLong(), timed, words(text, segment.optJSONArray("words")),
+                if (texts != null || textParagraphs.isNotEmpty()) null else ScriptLine(
+                    segment.optInt("id"), segment.optString("stableId"), segment.optString("textSha256"), i, text,
+                    segment.optString("kind"), segment.optString("speaker").ifEmpty { "NARRATOR" }, segment.optString("speaker"),
+                    segment.optString("stableId").isNotBlank() && segment.optString("textSha256").isNotBlank(), timed, null, null,
+                    if (segment.isNull("spoken")) null else segment.optString("spoken"), null,
+                    if (segment.isNull("emotion")) null else segment.optString("emotion"),
+                    if (segment.isNull("intensity")) null else segment.optInt("intensity"),
+                ))
         }
     }
 }

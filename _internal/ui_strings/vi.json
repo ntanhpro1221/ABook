@@ -1,6 +1,7 @@
 {
   "_doc": "Single Vietnamese UI copy source. {0}, {1}, ... are ordered value slots. Edit here, then run scripts/gen_ui_strings.py.",
   "strings": {
+    "s_player_line_waiting_audio": "Chỉ ghi yêu cầu; giọng đọc đổi sau khi Studio thu lại.",
     "s_ghi_nen_chua_xong_0_9b2f61d4": "Ghi nền chưa xong: {0}",
     "s_pair_fingerprint_label": "Mã nhận máy: ",
     "s_pair_fingerprint_help": "Bạn so mã nhận máy với mã trên máy kia rồi bấm “Đúng, ghép”.",

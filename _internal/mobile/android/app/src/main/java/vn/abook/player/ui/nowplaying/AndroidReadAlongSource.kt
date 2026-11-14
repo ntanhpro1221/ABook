@@ -13,6 +13,7 @@ import vn.abook.player.ui.data.PlayerChapter
 /** Read-along text and voices from the core, never on the main thread except the engine's own snapshot call (the caller's context, as the engine expects). */
 class AndroidReadAlongSource(context: Context) : ReadAlongSource {
     private val app = context.applicationContext
+    override val lineSource: PlayerLineSource = AndroidPlayerLineSource(app)
 
     override suspend fun paragraphs(bookId: String, chapter: PlayerChapter): List<ReadParagraph> {
         if (chapter.textPath.isNotEmpty()) {

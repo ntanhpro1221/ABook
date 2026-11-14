@@ -1,5 +1,16 @@
 # Test report
 
+## 15-11-2026 — Native player sentence editing
+
+Qt and Android retain the selected script stable ID and source hash instead of deriving identity from audio time.
+Twelve original-prose cases are shared by Python wish persistence, web request construction, Qt Quick transport tests,
+and Kotlin LocalStudio persistence tests. Missing identity and listen-only access block changes; narration to speech requires a person.
+Native UI tests exercise sentence context actions, existing-person selection and Back without seeking or moving the reading viewport.
+Android reuses the Studio picker, delivery controls and decision strip, persisting player wishes before exposing receipt-bound Undo.
+Reopen, stale Undo and partial new-person rollback are exercised against the local edit layer. Packaged/offline wishes use the existing BookActions/EditsSync path.
+Online production projects use the same pinned remote Studio endpoints and the twelve shared request cases. Each selection binds its writer and refresh route; remote Undo retains its original computer/project even when refresh loses the network. Qt toast Undo likewise retains the original book after another sentence opens.
+Screenshots are written only below ignored build directories. These checks use fake audio/transport and Compose on the JVM; no physical phone or production book is used.
+
 ## 15-11-2026 — Android Studio script and cast editing
 
 Shared original-prose fixtures compare twelve editing scenarios with the web request contract.

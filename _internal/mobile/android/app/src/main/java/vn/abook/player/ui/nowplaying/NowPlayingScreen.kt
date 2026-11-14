@@ -282,6 +282,7 @@ private fun NowPlayingBody(
             }
         }
         PlayerSheets(state, model, window)
+        PlayerLineLayer(model.lineEditor)
       }
     }
 }
@@ -300,6 +301,8 @@ private fun ReadAlongHost(state: NowPlayingState, model: NowPlayingModel, window
         onManualScroll = { onDim(true) }, onTap = { onDim(false) },
         onRetry = { onDim(false); scope.launch { model.loadReadAlong() } },
         look = window.look, hint = hint,
+        editing = model.lineEditor?.selected != null,
+        onEdit = model.lineEditor?.takeUnless { state.speaking }?.let { editor -> { paragraph -> reading.chapterId?.let { editor.open(reading.bookId, it, paragraph) } } },
         onListen = { ms -> window.changeLook(window.look.copy(tapped = true)); model.listenFrom(ms) },
         nextTitle = nextTitle, onNext = model::next)
 }

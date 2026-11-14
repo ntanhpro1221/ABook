@@ -21,6 +21,7 @@ Modal {
     property real textOpacity: 1
     property string error: ""
     property bool loading: false
+    PlayerLineEditor { id: lineEditor }
     property int generation: 0
     property int at: -1                     // đoạn được yêu cầu (-1: đầu chương)
     property bool play: false
@@ -57,7 +58,8 @@ Modal {
             if (err) { root.error = err; root.pendingParagraphs = []; textMotion.restart(); return }
             // Skip is the explicit reading edit layer; the original source stays
             // intact. Reloading book metadata on begin gives the latest choices.
-            root.pendingParagraphs = Find.paragraphs(data, next.skip).map((p, index) => ({text: p.text, index: index, start: p.start})).filter(p => p.text)
+            root.pendingParagraphs = Find.paragraphs(data, next.skip).map((p, index) => ({text: p.text, index: index, start: p.start,
+                source: typeof data.text === "string" ? {text: p.text} : (data.segments || [])[index] || {text: p.text}})).filter(p => p.text)
             textMotion.restart()
         })
     }
@@ -111,6 +113,14 @@ Modal {
                 font.family: Theme.family; font.pixelSize: Theme.sizeReading
                 Component.onCompleted: ReadAlong.setLineHeight(textDocument, Theme.sizeReading * Theme.lineHeightReading)
                 selectionColor: Theme.accentSoft
+                TapHandler {
+                    acceptedButtons: Qt.LeftButton
+                    onLongPressed: if (modelData.source) lineEditor.begin({bookId: root.bookId, chapterId: root.chapter.id, source: modelData.source}, typeof modelData.start === "number")
+                }
+                TapHandler {
+                    acceptedButtons: Qt.RightButton
+                    onTapped: if (modelData.source) lineEditor.begin({bookId: root.bookId, chapterId: root.chapter.id, source: modelData.source}, typeof modelData.start === "number")
+                }
                 // Đoạn vừa tìm thấy: nền nhấn nhạt tràn ra hai bên một chút (như câu được chọn ở màn đọc web).
                 Rectangle {
                     z: -1; x: -8; y: -4; width: parent.width + 16; height: parent.height + 8

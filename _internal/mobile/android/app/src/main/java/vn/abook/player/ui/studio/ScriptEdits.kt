@@ -30,7 +30,7 @@ object ScriptEdits {
         val seen = JSONObject()
         unique.forEach {
             refs.put(JSONObject().put("stableId", it.stableId).put("textSha256", it.textSha256))
-            seen.put(it.stableId, it.wish?.value.orEmpty())
+            seen.put(it.stableId, it.wish?.takeUnless { wish -> wish.held }?.value.orEmpty())
         }
         val body = JSONObject().put("lines", refs).put("speaker", person.value).put("newGender", person.newGender).put("seen", seen)
         val summary = if (unique.size > 1) S.s_da_ghi_0_cau_cua_1_c1ccd6a7(unique.size, person.label) else S.s_da_ghi_cau_nay_cua_0_8b08302d(person.label)

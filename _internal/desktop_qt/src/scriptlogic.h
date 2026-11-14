@@ -23,6 +23,7 @@ inline constexpr double kLastWordHoldMs = 400;
 inline constexpr double kSentenceLeadSeconds = 0.05;
 
 struct Segment {
+    QJsonObject source;                    // Exact script identity; never reconstructed from the audio clock.
     double start = -1;                     // giây từ đầu chương; < 0: chưa có mốc
     double end = -1;
     QString text;                          // đã đổi xuống dòng thành khoảng trắng: vị trí ký tự = vị trí trong văn bản đoạn
@@ -113,6 +114,7 @@ inline Script parseScript(const QJsonObject &json) {
     for (int i = 0; i < array.size(); ++i) {
         const QJsonObject item = array[i].toObject();
         Segment segment;
+        segment.source = item;
         segment.text = item.value(QStringLiteral("text")).toString();
         segment.text.replace(QLatin1Char('\n'), QLatin1Char(' '));
         segment.text.replace(QLatin1Char('\r'), QLatin1Char(' '));

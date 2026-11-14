@@ -107,11 +107,6 @@
       "missing": [
         {
           "side": "native",
-          "label": "Đang chọn",
-          "reason": "native has no SelectionMark tick yet (DESIGN §6): the chosen sheet row writes 'Đang chọn' on the right"
-        },
-        {
-          "side": "native",
           "match": "^(chọn giọng|giọng thu sẵn)$",
           "reason": "web shows the voice name in the Voice row and hides the row on recorded chapters; native writes a placeholder value"
         },
@@ -144,7 +139,12 @@
         "shared/ui.tsx",
         "listen/prepareAhead.ts",
         "listen/ReaderScreen.tsx",
-        "listen/MorningRecap.tsx"
+        "listen/MorningRecap.tsx",
+        "listen/LineWishes.tsx",
+        "listen/clip.tsx",
+        "shared/capabilities.ts",
+        "studio/ScriptTab.tsx",
+        "studio/decisions.ts"
       ],
       "sentences": true,
       "native_also": [

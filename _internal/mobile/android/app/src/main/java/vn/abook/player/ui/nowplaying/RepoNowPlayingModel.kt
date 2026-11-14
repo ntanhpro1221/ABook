@@ -30,6 +30,7 @@ import vn.abook.player.ui.voice.VoiceState
 
 /** Where Read-along text and the installed voices come from (off the main thread inside); real: [AndroidReadAlongSource]. */
 interface ReadAlongSource {
+    val lineSource: PlayerLineSource? get() = null
     /** Paragraphs of one chapter. Throws a listener-readable message when the text is not on this device and cannot be fetched. */
     suspend fun paragraphs(bookId: String, chapter: PlayerChapter): List<ReadParagraph>
     suspend fun voices(): List<PlayerVoice>
@@ -59,6 +60,7 @@ class RepoNowPlayingModel(
     override val prepare: PrepareState? = null,
     private val night: vn.abook.player.ui.data.NightState? = null,
 ) : NowPlayingModel {
+    override val lineEditor = source.lineSource?.let { PlayerLineEditor(it, scope) }
     override val hadNight: Boolean get() = night?.had == true
 
     @Immutable
@@ -143,6 +145,9 @@ class RepoNowPlayingModel(
     }
 
     init {
+        scope.launch {
+            androidx.compose.runtime.snapshotFlow { lineEditor?.notice.orEmpty() }.collect { if (it.isNotEmpty()) say(it) }
+        }
         scope.launch {
             repo.state.map { it.bookId }.distinctUntilChanged().collect { id -> loadedBook = id; loadedAt = clockMs(); askedAt = "" }
         }

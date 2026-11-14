@@ -67,7 +67,8 @@ export function editBlockedNote(caps: Capabilities | null | undefined): string |
  *  `null`: chưa biết máy làm được gì. */
 export type LineEditing = { mode: "wish" } | { mode: "studio" } | { mode: "blocked"; note: string };
 
-export function lineEditing(caps: Capabilities | null | undefined): LineEditing | null {
+export function lineEditing(caps: Capabilities | null | undefined, listenOnly = false): LineEditing | null {
+  if (listenOnly) return { mode: "blocked", note: S.s_may_tinh_chua_cho_ban_sua_6a5d6567 };
   if (!caps) return null;
   if (caps.link && !caps.workshop) return { mode: "blocked", note: LINK_BOOK };
   // Việc chờ Studio cần một máy làm sách nhận được; điện thoại khác không phải máy ấy.

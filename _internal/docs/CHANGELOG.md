@@ -7,6 +7,7 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+- Sửa người nói, cách đọc và yêu cầu thu lại ngay trên câu đang nghe ở Qt và Android; giữ nguyên chỗ nghe khi đóng bảng.
 - Studio trên Android thêm tạo người, sửa cách đọc câu, chọn nhóm cảm ứng và menu đổi tên, giới tính, gộp hoặc bỏ gộp đang chờ.
 
 - Sửa đọc giờ, khoảng số, điện thoại, đơn vị và viết tắt khi nghe truyện.

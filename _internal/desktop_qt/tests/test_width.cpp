@@ -79,6 +79,9 @@ public:
         : m_net(net), m_out(out), m_player(player), m_advance(std::move(advance)), m_original(net->books) {}
     Q_INVOKABLE int count(const QString &method, const QString &suffix) const { return int(m_net->callsTo(suffix, method.toLatin1()).size()); }
     Q_INVOKABLE void setBook(const QVariantMap &book) { const auto json = QJsonObject::fromVariantMap(book); m_net->books.insert(json.value(QStringLiteral("id")).toString(), json); }
+    Q_INVOKABLE void setScript(const QString &book, int chapter, const QVariantMap &script) {
+        m_net->scripts.insert(QStringLiteral("/api/books/%1/chapters/%2/script").arg(book).arg(chapter), QJsonObject::fromVariantMap(script));
+    }
     Q_INVOKABLE void finishChapter() { m_out->finish(); }
     Q_INVOKABLE void buffering(bool value) { emit m_out->buffering(value); }
     Q_INVOKABLE void fail(const QString &message) { m_out->fail(message); }

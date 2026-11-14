@@ -74,6 +74,7 @@ public:
     Q_INVOKABLE QVariantList wordRects(QQuickTextDocument *document, int paragraph, int segment, int word) const;
     /// Câu dưới vị trí ký tự `position` của đoạn (toàn chương), hay -1.
     Q_INVOKABLE int segmentAt(int paragraph, int position) const;
+    Q_INVOKABLE QVariantMap lineAt(int paragraph, int position) const;
     /// Đặt chiều cao dòng cố định cho mọi khối của tài liệu (TextEdit không có lineHeight).
     Q_INVOKABLE void setLineHeight(QQuickTextDocument *document, qreal pixels) const;
     /// Tô màu "đã nghe": đoạn trước đoạn đang đọc nhạt hết, đoạn đang đọc nhạt tới hết câu trước câu đang đọc, đoạn sau giữ màu thường.

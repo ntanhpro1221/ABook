@@ -68,6 +68,8 @@ class SheetSpec internal constructor(val id: Int, val content: @Composable (dism
  */
 @Stable
 class SheetHost {
+    /** A nested page can consume Back while the same sheet stays open. */
+    var keepOpen: (() -> Boolean)? = null
     private var next = 0
     var current by mutableStateOf<SheetSpec?>(null)
         private set
@@ -105,7 +107,7 @@ fun SheetLayer(host: SheetHost) {
         }
     }
     val sheet = shown ?: return
-    BackHandler(enabled = spec != null) { host.dismiss() }
+    BackHandler(enabled = spec != null) { if (host.keepOpen?.invoke() != true) host.dismiss() }
     val colors = Abook.colors
     val scrim = colors.scrim
     Box(

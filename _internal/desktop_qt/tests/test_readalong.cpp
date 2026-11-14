@@ -71,6 +71,34 @@ class ReadAlongTest : public QObject {
 private slots:
     void init() { g_now = 1'800'000'000'000; }
 
+    void selectedLineRetainsItsSourceIdentityWithoutSeeking() {
+        Rig rig;
+        QJsonObject script = sampleScript();
+        QJsonArray segments = script.value(QStringLiteral("segments")).toArray();
+        QJsonObject source = segments[1].toObject();
+        source.insert(QStringLiteral("stableId"), QStringLiteral("original_line"));
+        source.insert(QStringLiteral("textSha256"), QString(64, QLatin1Char('a')));
+        segments[1] = source; script.insert(QStringLiteral("segments"), segments);
+        rig.net.scripts[QStringLiteral("/api/books/a/chapters/1/script")] = script;
+        rig.openAndLoad();
+        QTRY_COMPARE(rig.read->status(), QStringLiteral("ready"));
+        const double position = rig.player->position();
+        const QVariantMap selected = rig.read->lineAt(1, 2);
+        QCOMPARE(selected.value(QStringLiteral("bookId")).toString(), QStringLiteral("a"));
+        QCOMPARE(selected.value(QStringLiteral("chapterId")).toInt(), 1);
+        QCOMPARE(QJsonObject::fromVariantMap(selected.value(QStringLiteral("source")).toMap()), source);
+        QCOMPARE(rig.player->position(), position);
+        QVERIFY(rig.read->lineAt(1, -1).isEmpty());
+        QVERIFY(rig.read->lineAt(1, 10000).isEmpty());
+        QVERIFY(rig.read->lineAt(-1, 0).isEmpty());
+    }
+
+    void sourceIdentityIsNotInventedForAnOldScript() {
+        const Script script = parseScript(sampleScript());
+        QVERIFY(!script.segments[1].source.contains(QStringLiteral("stableId")));
+        QVERIFY(!script.segments[1].source.contains(QStringLiteral("textSha256")));
+    }
+
     void scriptGroupsParagraphsAndOffsets() {
         const Script script = parseScript(sampleScript());
         QCOMPARE(script.segments.size(), 6);

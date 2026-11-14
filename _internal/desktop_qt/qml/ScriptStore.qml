@@ -92,7 +92,7 @@ QtObject {
         const value = person.value, label = person.label
         const refs = lines.map(Script.ref)
         const known = {}
-        for (const line of lines) known[line.stableId] = line.wish ? line.wish.value : ""
+        for (const line of lines) known[line.stableId] = line.wish && !line.wish.held ? line.wish.value : ""
         const ids = refs.map(item => item.stableId)
         const restore = optimistic(item => ids.indexOf(item.stableId) >= 0 ? Object.assign({}, item, {wish: {value: value, label: label, state: value === item.current ? "applied" : "pending"}}) : item)
         quietly("POST", "/speaker", {lines: refs, speaker: value, newGender: person.newGender || "", seen: D.seenFor(lines, known)}, function(answer, error) {

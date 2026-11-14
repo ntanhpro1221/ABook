@@ -62,7 +62,8 @@ export function useSentenceMenu({
   const textOnly = chapter?.state === "text";
   // Sửa một câu (docs/EDITING.md, P2a): cuốn không có xưởng ghi ý muốn chờ Studio ngay tại đây; cuốn có xưởng sửa ở Studio; cuốn
   // nghe thẳng từ máy khác hay chưa cài Studio: nút vẫn hiện, mờ đi, kèm lý do.
-  const lineEdit = editing && !textOnly ? lineEditing(book?.capabilities) : null;
+  const { data: appInfo } = useAppInfo();
+  const lineEdit = editing && !textOnly ? lineEditing(book?.capabilities, Boolean(appInfo?.listenOnly)) : null;
   const wishes = useWishes(bookId, lineEdit?.mode === "wish");
   // Dấu "đang chờ Studio" sau câu: một hàm cố định tới khi danh sách việc chờ đổi - văn bản vẽ lại theo từng đoạn (ReadAlongText), hàm mới
   // mỗi lần vẽ thì đoạn nào cũng vẽ lại.
@@ -72,7 +73,6 @@ export function useSentenceMenu({
   );
   // "Đọc từ này là…": cuốn chỉ có chữ của máy này - giữ (hay bấm chuột phải) một chữ để dạy giọng đọc cách đọc nó cho cả cuốn.
   // Thiết bị chỉ được nghe thì không dạy giọng đọc từ đây (máy tính từ chối): việc ấy ở máy tính, trang sách có dòng nói rõ.
-  const { data: appInfo } = useAppInfo();
   const readingEdit = canTeachWords({ allowed: teachWords, textOnly, canEdit: canEditBook(book), listenOnly: Boolean(appInfo?.listenOnly) });
   const [readingWord, setReadingWord] = useState<string | null>(null);
   // Câu của hộp "Đọc từ này là…" mở từ nút “Sửa cách đọc” (cho chọn từ trong câu); giữ một chữ thì cũng kèm câu để đổi sang từ khác.
