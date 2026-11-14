@@ -7,7 +7,6 @@ import vn.abook.player.S
 
 import vn.abook.player.ui.components.ClockLabel
 import vn.abook.player.ui.components.ProgressFill
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.text.style.TextOverflow
 import vn.abook.player.ui.data.CoverArt
 import androidx.activity.compose.BackHandler
@@ -287,7 +286,7 @@ private fun BookTile(
     val single = tile as? ShelfTile.Single
     val lead = series?.first ?: single!!.book
     val title = series?.label ?: lead.title
-    // Bìa tự vẽ (không ảnh) in tên sách ngay trên bìa: dưới bìa khỏi in lại.
+    // Bìa tự vẽ (không ảnh) in tên sách ngay trên bìa; tên dưới bìa vẫn hiện như ô có ảnh (chủ sách 15-11: hàng ô đồng nhất).
     val drawn = lead.cover?.path == null
     val onClick = {
         if (series != null) sheets.show { dismiss -> SeriesSheet(series, covers, actions.openBook, dismiss) } else actions.openBook(lead)
@@ -351,14 +350,8 @@ private fun BookTile(
                 BasicText(sub, Modifier.weight(1f).semantics { if (active()) testTag = "tile_sub" }, style = Abook.type.caption, maxLines = 1, overflow = TextOverflow.Ellipsis)
             }
         }
-        if (drawn) {
-            line()
-            // Chỗ của tên vẫn dành sẵn (trong suốt, không đọc lên) để ô cao bằng ô có ảnh bìa bên cạnh.
-            Box(Modifier.alpha(0f).clearAndSetSemantics { }) { name() }
-        } else {
-            name()
-            line()
-        }
+        name()
+        line()
     }
 }
 

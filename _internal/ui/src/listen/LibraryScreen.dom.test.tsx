@@ -166,13 +166,16 @@ it("bìa bộ luôn mở, chạm mở các tập và Back đóng hộp trước 
   expect(main.querySelector('[aria-label="Mở bộ Truyện thử"]')).toBe(cover);
 });
 
-it('reserves two title lines and one subtitle without repeating drawn cover titles', async () => {
+it('shows the two-line title under every cover, drawn or photo (owner 15-11)', async () => {
   state.books = [state.books[0], { ...state.books[1], cover: { url: 'data:image/png;base64,AA==' }, author: 'A long subtitle' }];
   await draw();
   const names = [...main.querySelectorAll('[data-tile-name]')];
   expect(names).toHaveLength(2);
   expect(names.every(name => name.className.includes('h-[2.75em]'))).toBe(true);
-  expect(names.filter(name => name.querySelector('.sr-only'))).toHaveLength(1);
+  // Bìa vẽ (books[0], không ảnh) cũng hiện tên dưới bìa: chữ thật, không sr-only, không ẩn khỏi trình đọc màn hình.
+  expect(names.map(name => name.textContent)).toEqual([state.books[0].title, state.books[1].title]);
+  expect(names.some(name => name.querySelector('.sr-only') || name.closest('[aria-hidden="true"]') || name.className.includes('sr-only'))).toBe(false);
+  expect(names.every(name => name.compareDocumentPosition(name.parentElement!.querySelector('[data-tile-sub]')!) & Node.DOCUMENT_POSITION_FOLLOWING)).toBe(true);
   expect(main.querySelectorAll('[data-tile-sub] .truncate')).toHaveLength(2);
 });
 

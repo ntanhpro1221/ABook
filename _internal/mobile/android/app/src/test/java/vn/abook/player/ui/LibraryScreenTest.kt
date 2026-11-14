@@ -11,6 +11,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.captureToImage
+import androidx.compose.ui.graphics.toPixelMap
 import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.longClick
 import androidx.compose.ui.test.onAllNodesWithTag
@@ -68,6 +70,22 @@ class LibraryScreenTest {
     @Test
     @Config(sdk = [35], qualifiers = "w360dp-h780dp-xxhdpi", fontScale = 1.3f)
     fun gridCellsReserveEqualTextSlotsAtLargeScale() = assertGridTextSlots()
+
+    /** Chủ sách 15-11 ("quyển helo còn không hiện tên"): bìa vẽ (không ảnh) vẫn có tên thấy được dưới bìa, đọc được bởi trình đọc màn hình. */
+    @Test fun drawnCoverTileShowsReadableTitleUnderCover() {
+        show(listOf(ListenBook("hello", "Hello, Hello and Hello", "Tác giả")))
+        val title = rule.onNodeWithTag("tile_title", useUnmergedTree = true)
+        title.assertIsDisplayed()
+        // Có mực thật (không alpha 0): ảnh của riêng ô tên phải có điểm khác màu nền.
+        val pixels = title.captureToImage().toPixelMap()
+        val inked = (0 until pixels.width).any { x -> (0 until pixels.height).any { y -> pixels[x, y].toArgb() != expectedBackground } }
+        assertTrue("tên dưới bìa vẽ không có mực", inked)
+        // Trình đọc màn hình: tên nằm trong cây semantics đã gộp (không bị clearAndSetSemantics).
+        rule.onNodeWithText("Hello, Hello and Hello").assertExists()
+        val name = title.fetchSemanticsNode().boundsInRoot
+        val sub = rule.onNodeWithTag("tile_sub", useUnmergedTree = true).fetchSemanticsNode().boundsInRoot
+        assertTrue("tên ở trên dòng phụ như ô có ảnh", name.bottom <= sub.top + 0.5f)
+    }
 
     private fun assertGridTextSlots() {
         show(listOf(

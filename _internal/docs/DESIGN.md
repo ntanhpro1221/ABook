@@ -327,8 +327,9 @@ giữ tên trong cột tối đa 640 px, thanh tua dùng phần rộng còn lạ
   ngang dưới tên; điều khiển bên phải chỉ ngang hàng với tên.
 - **Lưới bìa**: bìa 2:3, bo 12, tên dưới bìa 2 dòng dành sẵn, phụ một dòng cắt "…"; mọi ô một hàng cao bằng nhau.
   Điện thoại 2-3 cột, máy tính tự giãn 160-200 px.
-- **Bìa và tên**: bìa không có ảnh vẽ tên sách trên bìa; khi đó chú thích dưới bìa chỉ còn dòng phụ. Bìa có ảnh thì tên nằm dưới bìa. Không bao
-  giờ in tên hai lần trong một ô. Nhãn tập ("Tập 2") chỉ in một chỗ.
+- **Bìa và tên**: tên LUÔN nằm dưới bìa (2 dòng) rồi tới dòng phụ, bìa ảnh hay bìa vẽ như nhau - mọi ô một hàng đọc cùng một kiểu (chủ sách
+  15-11). Bìa vẽ (không ảnh) vẫn in tên trên bìa như ảnh bìa thật in tên sách: bìa vẽ còn dùng ở trang sách, trình phát, thanh phát - nơi nó là
+  nhận diện duy nhất của cuốn sách. Nhãn tập ("Tập 2") chỉ in một chỗ.
 - **Bộ lọc**: hàng chữ có gạch chân hổ phách (không hộp segmented); "Xếp theo" là menu nhỏ, không select toàn chiều rộng;
   Tìm là icon mở rộng thành ô. Trong code: `FilterRow` (shared/ui.tsx) - mọi bộ lọc hai-ba mục trong tab (Kịch bản, Cần nghe lại, Việc cần duyệt) dùng nó, không `Segmented`. Một tab không chứa tab / bộ lọc thứ hai chỉ để đổi kiểu xem cùng một danh sách (Nhật ký: danh sách diễn biến + nút "Chi tiết kỹ thuật" mở thêm).
 - **Mục đang chọn của tab và bộ lọc**: cùng một kiểu - chữ `--text` đậm màu thường + gạch chân hổ phách; hổ phách chỉ ở gạch, không ở chữ (soát 25-10: tab chữ tối, bộ lọc chữ hổ phách trông như hai app).

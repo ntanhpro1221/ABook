@@ -7,6 +7,8 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+- Thư viện (điện thoại, web, máy tính): ô sách có bìa vẽ (sách chưa có ảnh bìa) giờ cũng hiện tên dưới bìa như ô có ảnh; trình đọc màn hình đọc được tên.
+
 - Nhận đúng tên chương như “Đoạn kết”, “Lời bạt” và tiêu đề không số; tên dự phòng theo thứ tự trong sách.
 
 - Android: sửa văng khi xoay ngang màn Đọc theo hoặc thu nhỏ cửa sổ.

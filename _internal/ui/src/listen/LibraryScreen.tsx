@@ -184,13 +184,9 @@ export function useRestoreLastListening() {
   }, [books, player, source]);
 }
 
-/** Tên dưới bìa: đúng 2 dòng (dành sẵn, cắt "…" sau dòng 2). `drawn`: bìa vẽ đã in tên - chữ chỉ còn cho trình đọc màn hình, chỗ vẫn giữ ở cuối ô. */
-function TileName({ drawn, className, children }: { drawn: boolean; className?: string; children: ReactNode }) {
-  return drawn ? (
-    <span data-tile-name="" className="relative order-2 mt-1 block h-[2.75em] text-sm leading-snug"><span className="sr-only">{children}</span></span>
-  ) : (
-    <span data-tile-name="" className={cn("order-1 block h-[2.75em] break-words text-sm font-medium leading-snug line-clamp-2", className)}>{children}</span>
-  );
+/** Tên dưới bìa: đúng 2 dòng (dành sẵn, cắt "…" sau dòng 2). Luôn hiện, kể cả bìa vẽ đã in tên: hàng ô đồng nhất như ô có ảnh bìa (chủ sách 15-11). */
+function TileName({ className, children }: { className?: string; children: ReactNode }) {
+  return <span data-tile-name="" className={cn("block h-[2.75em] break-words text-sm font-medium leading-snug line-clamp-2", className)}>{children}</span>;
 }
 
 /** Một bìa của lưới. Nhớ (memo): trình phát đổi, thư viện được hỏi lại, lưới cuộn - chỉ bìa có giá trị đổi vẽ lại (docs/PERF_WEB.md).
@@ -240,11 +236,11 @@ const BookTile = memo(function BookTile({ book, badge, twin, current, playingHer
       </div>
       <button type="button" onClick={() => actions.open(book)} className="touch-row mt-3 flex w-full flex-col text-left">
         {/* Tên 2 dòng dành sẵn, dòng phụ 1 dòng cắt "…": mọi ô một hàng cao bằng nhau (DESIGN.md §6, soát 10-11 việc 4, như điện thoại và Qt).
-            Bìa vẽ (không ảnh) đã in tên: tên dưới bìa chỉ còn cho trình đọc màn hình, chỗ của nó vẫn giữ ở cuối ô. */}
-        <TileName drawn={!book.cover?.url} className={cn(current && "text-accent-text")}>{displayTitle(book.title)}</TileName>
+            Bìa vẽ hay ảnh đều có tên dưới bìa (chủ sách 15-11: hàng ô phải đồng nhất). */}
+        <TileName className={cn(current && "text-accent-text")}>{displayTitle(book.title)}</TileName>
         {/* Cuốn ở máy khác: dấu máy tính đầu dòng trạng thái, không đè lên bìa - nhãn góc trên từng che tên sách của bìa vẽ (audit140 V8).
             Hai cuốn cùng tên: nhãn "Dự án" / "Đã nhập" và ngày vào thư viện nối vào cùng dòng để biết cuốn nào là cuốn nào. */}
-        <div data-tile-sub="" className={cn("flex h-[1rem] items-center gap-1 text-xs leading-4 text-fg-2", book.cover?.url ? "order-2 mt-1" : "relative top-[2px] order-1")}>
+        <div data-tile-sub="" className="mt-1 flex h-[1rem] items-center gap-1 text-xs leading-4 text-fg-2">
           {book.remote && <Laptop role="img" aria-label={typeof book.remote === "object" && book.remote.downloaded ? S.s_0_da_tai_ve_may_nay_a4649b44(remotePlace(book)) : remotePlace(book)} className="size-3 shrink-0" />}
           <TickingValue className="min-w-0 truncate">{[progressText(book, speaks), ...(twin ? [twinKind(book), book.addedAt ? S.s_them_0_07ca4c38(formatWhen(book.addedAt)) : ""] : [])].filter(Boolean).join(" · ")}</TickingValue>
         </div>
@@ -426,8 +422,8 @@ const SeriesTile = memo(function SeriesTile({ item, twins, phone }: { item: Retu
       {extras.seriesCover?.(item.items)}
     </div>
     <span className="mt-3 flex flex-col">
-      <TileName drawn={!item.items[0].cover?.url}>{item.label}</TileName>
-      <span data-tile-sub="" className={cn("flex h-[1rem] items-center gap-1 text-xs leading-4 text-fg-2", item.items[0].cover?.url ? "order-2 mt-1" : "order-1")}>
+      <TileName>{item.label}</TileName>
+      <span data-tile-sub="" className="mt-1 flex h-[1rem] items-center gap-1 text-xs leading-4 text-fg-2">
         <Reveal when={item.items.some(book => book.remote)}><Laptop role="img" aria-label={S.s_co_sach_tren_may_khac_3b7cdd88} className="size-3 shrink-0" /></Reveal>
         <span className="min-w-0 truncate">{item.items.length}{S.s_tap_269b0b3d}</span></span>
     </span>

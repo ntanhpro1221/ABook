@@ -401,7 +401,7 @@ Item {
             cell.book = {bookId: "a", stage: "audio"}
             compare(play.tip, "Nghe Truyện chữ")
         }
-        // Soát thiết kế 10-11 việc 4: tên 2 dòng dành sẵn, phụ 1 dòng cắt "…" - mọi ô cao bằng nhau; bìa vẽ đã in tên thì không in lại dưới bìa.
+        // Soát thiết kế 10-11 việc 4: tên 2 dòng dành sẵn, phụ 1 dòng cắt "…" - mọi ô cao bằng nhau; bìa vẽ cũng hiện tên dưới bìa (15-11).
         function test_everyCellHasTheSameHeight() {
             const props = [
                 {title: "Chí Phèo", subtitle: "Nam Cao", coverKey: "a"},
@@ -417,7 +417,13 @@ Item {
             verify(longSub.truncated)
             verify(one(cells[1], "bookCellTitle").lineCount <= 2)
             verify(one(cells[0], "bookCellTitle").visible)
-            verify(!one(cells[3], "bookCellTitle").visible)     // bìa vẽ đã in tên
+            // Chủ sách 15-11: bìa vẽ (không ảnh) vẫn có tên dưới bìa, thấy được và đọc được, nằm trên dòng phụ như ô có ảnh.
+            const drawn = one(cells[3], "bookCellTitle")
+            verify(drawn.visible)
+            compare(drawn.opacity, 1)
+            compare(drawn.text, "Bìa vẽ")
+            compare(drawn.y, one(cells[0], "bookCellTitle").y)
+            verify(one(cells[3], "bookCellSubtitle").y >= drawn.y + drawn.height)
             compare(one(cells[2], "bookCellSubtitle").text, "Trên máy tính · Hồ Chí Minh")
         }
         // Nút phát trên bìa như web: tròn 44, nền panel, shadow-card, cách góc bìa 10 - bìa tối hay sáng vẫn nổi; ẩn tới khi rê chuột
