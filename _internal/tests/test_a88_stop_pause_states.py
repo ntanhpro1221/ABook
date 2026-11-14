@@ -255,6 +255,18 @@ def test_a_crashed_run_says_why_and_a_stop_you_pressed_does_not(studio) -> None:
     assert data["book"]["runEnd"] is None, "bạn bấm Dừng - không phải sự cố"
 
 
+def test_a_heartbeat_in_the_same_millisecond_as_the_stop_is_not_newer_than_it() -> None:
+    """`finished_at` chỉ giữ mili giây: nhịp tim cuối ghi ngay trước khi dừng (cùng mili giây) từng làm sách "đang chạy" thêm 120 giây."""
+    from datetime import datetime
+
+    finished = "2026-11-14T03:00:00.123Z"
+    status = SimpleNamespace(supervised=False, finished_at=finished)
+    last_beat = datetime.fromisoformat(finished).timestamp() + 0.0006  # trước lúc dừng thật, cùng mili giây đã cắt
+    assert background_runner.lease_after_of(status) > last_beat
+    assert background_runner.lease_after_of(SimpleNamespace(supervised=False, finished_at=None)) is None
+    assert background_runner.lease_after_of(SimpleNamespace(supervised=True, finished_at=finished)) == float("inf")
+
+
 def test_the_phone_is_told_apart_a_stop_from_a_crash(studio, tmp_path: Path) -> None:
     from abook.webui.sync import Devices, SyncApp
 

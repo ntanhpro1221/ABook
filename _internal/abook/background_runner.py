@@ -475,7 +475,9 @@ def lease_after_of(status: BackgroundStatus) -> float | None:
     if status.supervised:
         return float("inf")
     try:
-        return datetime.fromisoformat(status.finished_at).timestamp() if status.finished_at else None
+        # `finished_at` cắt tới mili giây (`_utc_now`): lúc dừng thật nằm trong mili giây sau đó, nên nhịp tim ghi TRƯỚC khi dừng
+        # mà cùng mili giây ấy không được tính là mới hơn.
+        return datetime.fromisoformat(status.finished_at).timestamp() + 0.001 if status.finished_at else None
     except ValueError:
         return None
 
