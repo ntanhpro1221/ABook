@@ -192,7 +192,12 @@ private fun LineRow(state: StudioScriptState, script: ChapterScript, row: ShownL
         SwapContent(editing, contentKey = { editing -> editing }, layout = ContentLayout.Column) { editing ->
             if (editing) SpokenEditor(state, line) { onEdit(false) }
             else SwapContent(line, row, contentKey = { line, row -> line.editable && !row.context }, layout = ContentLayout.Column) { line, row ->
-                if (line.editable && !row.context) TextAction(ScriptText.SPOKEN, { onEdit(true) }, "studio_line_edit_${line.stableId}", align = Alignment.CenterStart)
+                if (line.editable && !row.context) Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(Dim.s16)) {
+                    TextAction(ScriptText.SPOKEN, { onEdit(true) }, "studio_line_edit_${line.stableId}", align = Alignment.CenterStart)
+                    Reveal(script.castReady) {
+                        TextAction(S.s_scope_title, { sheets.show { dismiss -> ScriptScopeSheet(state, script, line, dismiss) } }, "script_scope_open_${line.stableId}", align = Alignment.CenterStart)
+                    }
+                }
                 else Spacer(Modifier.height(Dim.s16))
             }
         }  // hàng không có nút "Chữ đem đọc" vẫn chừa chỗ cuối như hàng có nút

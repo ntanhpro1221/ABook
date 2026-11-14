@@ -24,6 +24,7 @@ Item {
     signal openSpeaker(Item anchor)
     signal openDelivery(Item anchor)
     signal pick(var person)
+    signal scope()
     signal retake()
     signal cancelRetake()
 
@@ -186,6 +187,12 @@ Item {
                 lineHeight: 1.5
                 wrapMode: Text.Wrap
             }
+        }
+        Button {
+            Reveal { shown: root.line.editable && !root.context && root.script.castReady }
+            objectName: "scriptScopeOpen"
+            text: S.s_scope_title; size: "sm"; kind: "ghost"
+            onClicked: root.scope()
         }
         Note_ {
             Reveal { shown: !!root.line.spoken }

@@ -387,6 +387,12 @@ def require_phoneme_suites_ran(results: Path) -> None:
 
 
 def worker(name: str, confirm_hash: str | None = None) -> dict:
+    if name in {"ui-parity", "ui-parity-qt"}:
+        script = "scripts/ui_parity.py" if name == "ui-parity" else "scripts/ui_parity_qt.py"
+        execution = run_process(py(script, "--check"), ROOT, 180)
+        print(execution.output, end="")
+        require(execution.returncode == 0 and not execution.timed_out, name + ": source parity failed")
+        return {"status": "PASS", "counts": {"checks": 1, "failed": 0}}
     """Kiểm thuần nguồn cũng chạy trong subprocess để có deadline như bộ test."""
     if name in {"ui-parity", "ui-parity-qt"}:
         from scripts import ui_parity, ui_parity_qt

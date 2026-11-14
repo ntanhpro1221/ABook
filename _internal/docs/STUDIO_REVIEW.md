@@ -41,6 +41,23 @@ Người duyệt đúng những câu ấy là cách rẻ nhất để đạt 100
 
 ## Luồng dữ liệu
 
+### Tách nhóm có xem trước
+
+Trong Kịch bản, **Tách nhóm** mở bốn phạm vi giống nhau trên web, Qt và Android: **Câu này**, **Vai trong cảnh**,
+**Vai trong chương**, **Quãng tự chọn**. Cảnh chỉ là quãng suy ra từ dấu ngăn đã lưu; dấu ngăn nằm sau câu mang cờ,
+kể cả câu kể. Không có dấu ngăn thì không có phạm vi cảnh. Quãng thủ công cho chỉnh **Từ câu / Đến câu** và bỏ từng ngoại lệ.
+Mọi phạm vi chỉ lấy câu thoại/nội tâm của đúng mã vai gốc, không gom theo tên hiển thị, không chọn lời kể xen giữa.
+
+Bảng hiện số câu chọn, số quyết định riêng và người trước → sau trên từng câu. Câu có wish người nói hoặc cách đọc được
+bỏ chọn sẵn; chỉ chọn lại từng câu mới thay quyết định ấy. Danh sách dùng toàn bộ chương, không chỉ trang đang nhìn.
+Người đích có thể có sẵn hoặc được đặt tên + giới. Mở bảng không ghi gì; **Ghi nhóm** tải lại chương để đối chiếu bản xem
+trước rồi gửi danh sách stable ID + hash vào `/speaker` hiện có. Android kiểm lại cả sau khoảng giữ Hoàn tác.
+Nguồn/dấu ngăn/quyết định đổi thì yêu cầu chọn lại; backend tiếp tục kiểm băm nguồn của mọi câu trước khi nhận cả nhóm.
+
+Sách đóng gói dùng chữ đọc theo và wish trong lớp sửa, không mở SQLite. Thiếu marker luôn cho chọn quãng thủ công,
+không tự dựng cảnh. Nhãn hiển thị khớp nhiều mã người được giữ riêng từng câu, không suy đồng nhất người từ nhãn ấy.
+Đây là sửa nhóm được chọn; không tạo alias, không phân tích lại, không sửa chữ nguồn và không phải phục hồi lịch sử gộp đã áp.
+
 - Dây chuyền (worker) là nơi DUY NHẤT ghi SQLite của sách. Giao diện ghi YÊU CẦU vào file riêng cạnh sách (như
   `reviews.json` của hàng chờ "Cần nghe lại"); worker đọc và áp ở ranh giới an toàn, ghi `runtime_events` từng lần áp.
 - Ghi đè theo câu khoá bằng `stable_id` + `text_sha256`: nguồn đổi thì ghi đè tự rơi (không áp nhầm câu khác).

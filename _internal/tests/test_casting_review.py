@@ -15,6 +15,13 @@ from tests.timing import assert_within
 from tests.project_tables import create_project_tables
 
 
+def test_scope_metadata_does_not_invent_a_scene_without_a_marker(tmp_path: Path) -> None:
+    project = make_book(tmp_path)
+    view = casting_chapter(project, 1)
+    assert all(line["scene"] is None for line in view["lines"])
+    assert len(view["scopeRevision"]) == 64
+
+
 def make_book(root: Path, *, cast: bool = True) -> Path:
     project = root / "sach"
     project.mkdir()

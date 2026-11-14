@@ -1,5 +1,25 @@
 # Test report
 
+## 15-11-2026 — scene and range speaker previews
+
+Studio can select one line, the original role within a marker-derived scene or chapter, or an editable range.
+Nine shared cases compare exact stable IDs in Python, TypeScript, QML and Kotlin, including narration, thoughts,
+private wishes, exclusions, a 138-line role, missing markers, and distinct opaque identities with the same label.
+The marker belongs after its row. Imported read-along chapters offer manual ranges without inventing scenes.
+Requests still use `/speaker` with stable IDs, source hashes and `seen`; no database schema or production pipeline file changes.
+
+Validation: core pytest 436 passed / 2 skipped, Qt source rules 172 passed / 3 skipped, Vitest 76 passed,
+and the selected JVM/Compose suites 93 passed. Qt executable XML contains 832 passing entries, including 48 lifecycle
+entries (784 test cases); these cover 18 native executables and the ScriptScope, Studio6 and ModalLayer QML inputs.
+The full WidthTests run was interrupted in unrelated Music screens; full WidthTests and HitlTests are not claimed.
+TypeScript, gallery build, QML member checks (342 files, zero missing), and both UI parity workers passed.
+
+Actual headless browser pointer input at 1440 and 390 pixels took three clicks and submitted exactly the three
+selected fixture IDs. Qt and Compose UI tests took three taps for ten scene lines. A single exception adds one tap;
+the web DOM new-person case takes four actions. Browser writes use a fake responder; real handler behavior and source-hash
+batch rejection are covered by pytest. No real books, models or audio generation were used, and no physical phone was tested.
+The quality implementation hash stayed `db6c9cb847dac2e536deca158114df29dcfedac4ab88b69885c08e1924876997`.
+
 ## 15-11-2026 — Native player sentence editing
 
 Qt and Android retain the selected script stable ID and source hash instead of deriving identity from audio time.

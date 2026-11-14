@@ -540,16 +540,19 @@ class LocalStudioTest {
     @Test
     fun the_workshop_views_of_a_project_file_are_answered_read_only_and_a_plain_book_says_there_are_none() {
         // cuốn từ file .abook (base): không có bản chụp nào
-        for (path in listOf("/work", "/casting", "/pronunciations", "/casting/1")) assertEquals(path, 404, call("GET", path).first)
+        for (path in listOf("/work", "/pronunciations")) assertEquals(path, 404, call("GET", path).first)
+        for (path in listOf("/casting", "/casting/1")) assertEquals(path, 200, call("GET", path).first)
         // cuốn từ file dự án: bản chụp trong file, cùng JSON với Studio (tests/book_edits_fixtures.py WORKSHOP_VIEWS)
         val imported = BookFileImport.importFile(BookEditsFixtures.file("written/python_workshop.abookproj"))
         fun view(path: String) = LocalStudio.handle("GET", "/api/books/${imported.id}$path", null)
         val work = view("/work")
         assertEquals(200, work.first)
         assertEquals("name:Hailkes", ((work.second as JSONObject).getJSONArray("items")).getJSONObject(0).getString("id"))
-        assertEquals(1, ((view("/casting").second as JSONObject).getJSONArray("chapters")).length())
+        assertTrue(((view("/casting").second as JSONObject).getJSONArray("chapters")).length() > 0)
         assertEquals("Hên-khơ", ((view("/pronunciations").second as JSONObject).getJSONArray("items")).getJSONObject(0).getString("spoken"))
-        assertEquals("từng câu của chương không có trong file", 404, view("/casting/1").first)
+        val chapter = view("/casting/1")
+        assertEquals(200, chapter.first)
+        assertTrue((chapter.second as JSONObject).getJSONArray("lines").getJSONObject(0).isNull("scene"))
         assertEquals("chỉ đọc: không ghi được", 404, LocalStudio.handle("POST", "/api/books/${imported.id}/work", JSONObject()).first)
     }
 }

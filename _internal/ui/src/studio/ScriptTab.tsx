@@ -1,3 +1,4 @@
+import { ScriptScope } from "./ScriptScope";
 import { Presence } from "../shared/MotionPresence";
 import { S } from "../shared/strings.generated";
 import { MoreInfo } from "@/shared/SettingsNav";
@@ -52,6 +53,8 @@ interface Wish {
 }
 
 export interface Line {
+  scene?: number | null;
+  sceneBreak?: boolean;
   segmentId: number;
   stableId: string;
   textSha256: string;
@@ -132,6 +135,7 @@ export function undoLineFix(client: QueryClient, bookId: string, ref: { stableId
 }
 
 export interface ChapterScript {
+  scopeRevision?: string;
   chapterId: number;
   index: number;
   title: string;
@@ -983,6 +987,7 @@ function ScriptRow({
   pendingNote,
   onRetake,
   onCancelRetake,
+  onScope,
   rowRef,
 }: {
   bookId: string;
@@ -1009,6 +1014,7 @@ function ScriptRow({
   /** "Thu lại câu này" (chỉ câu đã thu) và bỏ yêu cầu ấy khi còn chờ. */
   onRetake: () => void;
   onCancelRetake: () => void;
+  onScope: () => void;
   rowRef: (element: HTMLElement | null) => void;
 }) {
   const clip = useClip();
@@ -1083,6 +1089,7 @@ function ScriptRow({
             line.text
           )}
         </p>
+        <Reveal when={line.editable && !context && script.castReady}><Button size="sm" variant="ghost" onClick={onScope}>{S.s_scope_title}</Button></Reveal>
         {line.spoken && (
           <p className="mt-1 text-xs text-fg-2">{S.s_doc_la_4f8195e0}<span className="text-fg">{line.spoken}</span>
           </p>
@@ -1216,6 +1223,7 @@ function ChapterScriptView({
 }) {
   // Ctrl+Z: hoàn tác lần gán gần nhất (soát UX a6 01-10: gán nhầm một phím số chỉ hoàn tác được trong vài giây thông báo).
   const assign = useAssign(bookId, script.chapterId, pushUndo, (value) => nameOf(script, value));
+  const scopeClient = useQueryClient();
   const fixLine = useLineFix(bookId, script.chapterId);
   const retake = useRetake(bookId, script.chapterId, pushUndo);
   const clip = useClip();
@@ -1228,6 +1236,7 @@ function ChapterScriptView({
   const [menu, setMenu] = useState<string | null>(null);
   const [delivery, setDelivery] = useState<string | null>(null);
   const rows = useRef(new Map<string, HTMLElement>());
+  const [scope, setScope] = useState<Line | null>(null);
 
   // Câu hiện ra theo bộ lọc; "Máy nghi" giữ câu nói liền trước mỗi chỗ nghi làm ngữ cảnh (mờ).
   const shown = useMemo(() => visibleLines(script.lines, filter, who), [script.lines, filter, who]);
@@ -1266,7 +1275,7 @@ function ChapterScriptView({
     const onKey = (event: globalThis.KeyboardEvent) => {
       if (!(event.ctrlKey || event.metaKey) || event.shiftKey || event.key.toLowerCase() !== "z") return;
       // Đang gõ trong ô chữ thì Ctrl+Z là của ô ấy.
-      if (event.target instanceof Element && event.target.closest("input, textarea, select, [contenteditable=true]")) return;
+      if (event.target instanceof Element && event.target.closest("input, textarea, select, [contenteditable=true], [role=dialog]")) return;
       event.preventDefault();
       // Lần đã hoàn tác bằng nút trên thông báo thì bỏ qua, lấy lần trước nữa; hết thì nói ra thay vì im lặng (soát UX a23).
       let undone = false;
@@ -1425,6 +1434,15 @@ function ChapterScriptView({
           })()}
         </p>
       </MotionPresence>
+      <Presence>{scope && <ScriptScope key={scope.stableId} script={script} line={scope} onClose={() => setScope(null)} onApply={async (lines, person, revision) => {
+        const fresh = await api<ChapterScript>(`/api/books/${bookId}/casting/${script.chapterId}`);
+        if (!revision || fresh.scopeRevision !== revision) {
+          scopeClient.setQueryData(["casting", bookId, script.chapterId], fresh);
+          throw new Error(S.s_scope_changed);
+        }
+        await assign.mutateAsync({ lines, value: person.value, label: person.label, newGender: person.newGender });
+        onPicked(person);
+      }} />}</Presence>
       <ol aria-label={S.s_kich_ban_0_214591c3(script.title)} onKeyDown={onKeyDown} className="-mx-2 mt-3">
       {/* Hàng rời / vào danh sách (gán câu sang người khác khi đang lọc theo người nói) khép / mở tại chỗ; đổi chương hay bộ lọc thì dựng
           lại từ đầu (key) - cả danh sách trượt theo vùng cha, không từng hàng. */}
@@ -1473,6 +1491,7 @@ function ChapterScriptView({
               fixLine.mutate({ line, change });
             }}
             pendingNote={pendingNote}
+            onScope={() => setScope(line)}
             onRetake={() => askRetake(line)}
             onCancelRetake={() => retake.cancel.mutate([line])}
             rowRef={(element) => {

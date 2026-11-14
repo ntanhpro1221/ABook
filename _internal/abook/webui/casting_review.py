@@ -24,6 +24,7 @@ from ..listener_overrides import (
     speaker_requests, speaker_target,
 )
 from . import listing_cache, store
+from .script_scope import project_scenes, scope_revision
 from .reviews import speaker_label
 from .address_cues import _same_person, address_doubts
 from .work_items import calls_of, first_person_lookup, merged_turns, unsure_speaker_lines
@@ -263,7 +264,7 @@ def casting_chapter(project_root: Path, chapter_id: int) -> dict[str, Any] | Non
         if connection.execute("SELECT 1 FROM chapters WHERE id = ?", (chapter_id,)).fetchone() is None:
             return None
         columns = {str(row[1]) for row in connection.execute("PRAGMA table_info(segments)")}
-        extra = [column for column in ("paragraph_index", "wav_path", "emotion", "intensity", "listener_text", "listener_retake_at")
+        extra = [column for column in ("paragraph_index", "wav_path", "emotion", "intensity", "listener_text", "listener_retake_at", "scene_break")
                  if column in columns]
         rows = connection.execute(
             "SELECT id, stable_id, chapter_id, seq, text, text_sha256, speaker, kind"
@@ -338,6 +339,7 @@ def casting_chapter(project_root: Path, chapter_id: int) -> dict[str, Any] | Non
             "stableId": stable_id,
             "textSha256": str(row["text_sha256"] or ""),
             "seq": int(row["seq"]),
+            "sceneBreak": bool(row["scene_break"]) if "scene_break" in extra else False,
             "paragraph": int(paragraph) if paragraph is not None else None,
             "text": str(row["text"]),
             "kind": kind,
@@ -356,7 +358,9 @@ def casting_chapter(project_root: Path, chapter_id: int) -> dict[str, Any] | Non
             # Người nghe đã xin thu lại câu này, chờ dây chuyền thu ("pending"); None = không có yêu cầu nào đang chờ.
             "retake": _retake(row, retakes.get(stable_id)),
         })
+    lines = project_scenes(lines)
     return {
+        "scopeRevision": scope_revision(lines),
         "chapterId": chapter_id,
         "index": int(chapter_name.get("index", chapter_id)),
         "title": str(chapter_name.get("full") or ""),

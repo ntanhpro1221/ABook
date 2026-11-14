@@ -224,7 +224,8 @@ data class WorkStep(val endpoint: String, val body: JSONObject)
  * dải hoàn tác. `hold`: giữ 15 giây trước khi gửi, cho "Hoàn tác" - false cho việc không hoàn tác được (bỏ một yêu cầu đã bị từ chối).
  */
 @Immutable
-data class WorkDecision(val key: String, val summary: String, val steps: List<WorkStep>, val hold: Boolean = true, val names: Map<String, String> = emptyMap(), val rollbackLine: Boolean = false)
+data class WorkDecision(val key: String, val summary: String, val steps: List<WorkStep>, val hold: Boolean = true, val names: Map<String, String> = emptyMap(),
+                        val rollbackLine: Boolean = false, val scopeChapter: Int? = null, val scopeRevision: String = "")
 
 /** Dựng thân yêu cầu cho từng kiểu quyết định - port nguyên từ `SpeakerFix` / `PronunciationFix` / `NarratorFix` / `VoiceFix` / `RefusedFix` của WorkInbox.tsx. */
 object WorkDecisions {

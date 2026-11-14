@@ -2848,3 +2848,18 @@ function s_value_left(p0) { return "Trái " + String(p0) + " %"; }
 function s_value_right(p0) { return "Phải " + String(p0) + " %"; }
 var s_continuation_choose = "Chọn chương mới";
 function s_continuation_hint(p0) { return "Gợi ý thư mục: " + String(p0) + ". Bạn chọn lại các chương cần làm tiếp."; }
+var s_scope_title = "Tách nhóm";
+var s_scope_scene = "Vai trong cảnh";
+var s_scope_chapter = "Vai trong chương";
+var s_scope_manual = "Quãng tự chọn";
+var s_scope_start = "Từ câu";
+var s_scope_end = "Đến câu";
+var s_scope_marker_note = "Cảnh suy ra từ dấu ngăn; chỉ chọn câu của vai này.";
+var s_scope_no_markers = "Thiếu dấu ngăn; bạn chọn quãng bằng số câu.";
+function s_scope_target(p0) { return "Sang: " + String(p0); }
+var s_scope_pick = "Chọn người";
+function s_scope_count(p0, p1) { return String(p0) + " câu chọn · " + String(p1) + " quyết định riêng"; }
+function s_scope_before_after(p0, p1) { return String(p0) + " → " + String(p1); }
+var s_scope_conflict = "Quyết định riêng";
+var s_scope_apply = "Ghi nhóm";
+var s_scope_changed = "Chương vừa đổi. Bạn đóng bảng rồi chọn lại.";

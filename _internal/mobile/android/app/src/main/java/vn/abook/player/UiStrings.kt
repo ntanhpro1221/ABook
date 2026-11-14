@@ -1491,7 +1491,6 @@ internal object S {
     const val s_file_do_da_xoa_3d5d9f52 = "File dở đã xoá"
     const val s_file_du_an_chua_co_xuong_ma_lai_mang_so_du_50179408 = "File dự án chưa có xưởng mà lại mang sổ dự án."
     const val s_file_du_an_co_phien_ban_dinh_dang_khong_ho_612a2fec = "File dự án có phiên bản định dạng không hợp lệ."
-    const val s_file_du_an_khong_kem_tung_cau_cua_chuong_d_d856bdf2 = "File dự án không kèm từng câu của chương - đọc chữ trong sách"
     const val s_file_du_an_khong_noi_ro_co_xuong_hay_chua_908027bd = "File dự án không nói rõ có xưởng hay chưa."
     const val s_file_du_an_nay_khong_kem_ban_chup_cua_man_2c1c8244 = "File dự án này không kèm bản chụp của màn đó"
     const val s_file_du_an_thieu_phan_mo_ta_project_json_edffa271 = "File dự án thiếu phần mô tả (project.json)."
@@ -2952,4 +2951,19 @@ internal object S {
     fun s_value_left(p0: Any?): String = "Trái " + p0.toString() + " %"
     fun s_value_right(p0: Any?): String = "Phải " + p0.toString() + " %"
     const val s_android_khong_cho_phat_tiep_tu_nen_3c41e7a2 = "Android không cho phát tiếp từ nền: đã dừng đúng chỗ, bấm Phát trên thông báo để nghe tiếp"
+    const val s_scope_title = "Tách nhóm"
+    const val s_scope_scene = "Vai trong cảnh"
+    const val s_scope_chapter = "Vai trong chương"
+    const val s_scope_manual = "Quãng tự chọn"
+    const val s_scope_start = "Từ câu"
+    const val s_scope_end = "Đến câu"
+    const val s_scope_marker_note = "Cảnh suy ra từ dấu ngăn; chỉ chọn câu của vai này."
+    const val s_scope_no_markers = "Thiếu dấu ngăn; bạn chọn quãng bằng số câu."
+    fun s_scope_target(p0: Any?): String = "Sang: " + p0.toString()
+    const val s_scope_pick = "Chọn người"
+    fun s_scope_count(p0: Any?, p1: Any?): String = p0.toString() + " câu chọn · " + p1.toString() + " quyết định riêng"
+    fun s_scope_before_after(p0: Any?, p1: Any?): String = p0.toString() + " → " + p1.toString()
+    const val s_scope_conflict = "Quyết định riêng"
+    const val s_scope_apply = "Ghi nhóm"
+    const val s_scope_changed = "Chương vừa đổi. Bạn đóng bảng rồi chọn lại."
 }

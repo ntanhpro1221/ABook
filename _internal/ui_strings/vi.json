@@ -5870,7 +5870,22 @@
     "s_value_right": "Phải {0} %",
     "s_android_khong_cho_phat_tiep_tu_nen_3c41e7a2": "Android không cho phát tiếp từ nền: đã dừng đúng chỗ, bấm Phát trên thông báo để nghe tiếp",
     "s_continuation_choose": "Chọn chương mới",
-    "s_continuation_hint": "Gợi ý thư mục: {0}. Bạn chọn lại các chương cần làm tiếp."
+    "s_continuation_hint": "Gợi ý thư mục: {0}. Bạn chọn lại các chương cần làm tiếp.",
+    "s_scope_title": "Tách nhóm",
+    "s_scope_scene": "Vai trong cảnh",
+    "s_scope_chapter": "Vai trong chương",
+    "s_scope_manual": "Quãng tự chọn",
+    "s_scope_start": "Từ câu",
+    "s_scope_end": "Đến câu",
+    "s_scope_marker_note": "Cảnh suy ra từ dấu ngăn; chỉ chọn câu của vai này.",
+    "s_scope_no_markers": "Thiếu dấu ngăn; bạn chọn quãng bằng số câu.",
+    "s_scope_target": "Sang: {0}",
+    "s_scope_pick": "Chọn người",
+    "s_scope_count": "{0} câu chọn · {1} quyết định riêng",
+    "s_scope_before_after": "{0} → {1}",
+    "s_scope_conflict": "Quyết định riêng",
+    "s_scope_apply": "Ghi nhóm",
+    "s_scope_changed": "Chương vừa đổi. Bạn đóng bảng rồi chọn lại."
   },
   "android_resources": {
     "app_name": "s_abook_1c37d334",

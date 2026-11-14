@@ -133,6 +133,14 @@ class StudioDecisions(
             val receipts = ArrayList<WorkStep>()
             var retractSent = false
             try {
+                if (decision.scopeChapter != null) {
+                    val fresh = session.source.castingChapter(session.computer, bookId, decision.scopeChapter)
+                    if (decision.scopeRevision.isEmpty() || fresh.scopeRevision != decision.scopeRevision) {
+                        notice = S.s_scope_changed
+                        after(false)
+                        return@launch
+                    }
+                }
                 var elsewhere: Pair<Int, String>? = null
                 for (step in decision.steps) {
                     val answer = session.source.write(session.computer, bookId, step)

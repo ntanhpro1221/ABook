@@ -402,6 +402,8 @@ qt_add_qml_module(ABookDesk
         qml/ScriptSpeakerMenu.qml
         qml/ScriptDelivery.qml
         qml/ScriptChapterMenu.qml
+        qml/ScriptScope.qml
+        qml/ScriptScope.js
         qml/ScriptLogic.js
         qml/EditBookReadings.qml
         qml/EditBookRename.qml

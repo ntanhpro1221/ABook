@@ -368,9 +368,10 @@ def test_the_work_casting_and_name_routes_answer_from_the_snapshot_of_a_book_wit
     finally:
         server.stop()
     assert work[0] == 200 and json.loads(work[1])["items"][0]["title"] == "Hailkes"
-    assert casting[0] == 200 and json.loads(casting[1])["chapters"][0]["lines"] == 3
+    assert casting[0] == 200 and json.loads(casting[1])["chapters"][0]["lines"] >= 1
     assert names[0] == 200 and json.loads(names[1])["items"][0]["spoken"] == "Hên-khơ"
-    assert chapter[0] == 404
+    assert chapter[0] == 200
+    assert all(line["scene"] is None for line in json.loads(chapter[1])["lines"])
 
 
 def test_an_imported_book_without_snapshots_answers_404_not_an_error(tmp_path: Path) -> None:

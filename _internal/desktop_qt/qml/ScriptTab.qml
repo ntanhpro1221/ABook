@@ -282,7 +282,7 @@ Item {
     }
 
     function onKey(event) {
-        if (menuLine || deliveryLine || (event.modifiers & (Qt.AltModifier | Qt.ControlModifier | Qt.MetaModifier))) return
+        if (menuLine || deliveryLine || scopePop.open || (event.modifiers & (Qt.AltModifier | Qt.ControlModifier | Qt.MetaModifier))) return
         const index = activeLine ? speechRows.indexOf(activeLine) : -1
         const shift = Boolean(event.modifiers & Qt.ShiftModifier)
         const key = event.key
@@ -316,7 +316,7 @@ Item {
     }
     Shortcut {
         sequences: [StandardKey.Undo]
-        enabled: root.visible && !root.menuLine && !root.deliveryLine
+        enabled: root.visible && !root.menuLine && !root.deliveryLine && !scopePop.open
         onActivated: scripts.undoLast()
     }
 
@@ -554,6 +554,7 @@ Item {
                                 pendingNote: root.pendingNote
                                 onActivate: root.activate(line)
                                 onExtend: root.extend(line)
+                                onScope: scopePop.begin(line)
                                 onOpenSpeaker: anchor => root.openSpeaker(line, anchor)
                                 onOpenDelivery: anchor => root.openDelivery(line, anchor)
                                 onPick: person => root.pick(line, person, true)
@@ -850,6 +851,15 @@ Item {
         }
     }
 
+    ScriptScope {
+        id: scopePop
+        objectName: "scriptScope"
+        script: root.script
+        store: root.store
+        bookId: root.bookId
+        onApply: (lines, person) => scripts.assign(lines, person)
+        onRefreshed: data => scripts.script.setData(data)
+    }
     // ---- bảng nổi: chọn chương, chọn người nói, cách đọc câu ----
     ScriptChapterMenu {
         id: chapterMenu

@@ -45,6 +45,7 @@ Mỗi luồng có: điểm vào, các bước, số chạm đích, trạng thái
 | L14 | Tìm / nghe thử / tải một bài nhạc | 3 | Nhạc -> "Kho nhạc" -> gõ tên hay chạm chip lọc -> nút nghe thử / nút tải trên dòng |
 | L15 | Lưu bài đang phát trong sách | 2 | trình phát: chạm dòng "Nhạc nền" -> "Lưu" (tải + ghim vào Đã lưu; chạm lại = bỏ lưu) |
 | L16 | Đổi bài một đoạn bằng cả kho | 3 | "Đổi bài" của đoạn -> "Xem cả kho ›" -> "Dùng" trên bài (quay lại, đoạn đã đổi) |
+| L17 | Tách vai trong cảnh | ≤ 5 + k | Kịch bản -> "Tách nhóm" ngay câu -> chọn người (hoặc tên + giới) -> "Ghi nhóm"; mặc định "Vai trong cảnh" khi có dấu ngăn, k câu ngoại lệ thêm k chạm. Thiếu dấu ngăn dùng "Quãng tự chọn" |
 
 Số chạm do máy đếm (`ui/src/gallery/flowTaps.phone.dom.test.tsx`, `flowTaps.desktop.dom.test.tsx`): mỗi cú bấm trong app một chạm, mỗi lần mở
 hộp chọn file của hệ thống cũng một chạm. Hộp hỏi trước lần đầu gửi chữ tới giọng trực tuyến là quyết định quyền riêng tư, tính riêng.

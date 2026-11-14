@@ -57,6 +57,7 @@ from .. import names as renames
 from .remote_studio import LENGTH_REQUIRED, REMOTE_HEADER, StudioGate, lacks_length
 from .reviews import Reviews, review_view
 from .casting_review import casting_chapter, casting_stamp, casting_view
+from .package_scope import package_chapter, package_contents
 from .name_readings import name_readings_view, never_text, package_reading_reach, reading_reach
 from .voice_picker import (
     cancel_engine_module,
@@ -5651,7 +5652,8 @@ class Handler(BaseHTTPRequestHandler):
 
     def get_casting(self, _query: dict[str, list[str]], value: str) -> None:
         # Tab "Kịch bản" (casting_review.py): chương nào bao nhiêu câu thoại, bao nhiêu chỗ máy nghi, bao nhiêu câu đã quyết.
-        self._send_json(HTTPStatus.OK, self._view(value, "casting", casting_view))
+        path = self.app._listenable(value)
+        self._send_json(HTTPStatus.OK, package_contents(path) if packages.is_package(path) else casting_view(self.app._book(value)))
 
     def get_reading_reach(self, query: dict[str, list[str]], value: str) -> None:
         # Ô "Thêm cách đọc cho từ bất kỳ" (NameReadings.tsx), và "Đọc từ này là…" ở trang đọc của cuốn mở từ file (LineWishes.tsx):
@@ -5665,13 +5667,17 @@ class Handler(BaseHTTPRequestHandler):
 
     def get_casting_stamp(self, _query: dict[str, list[str]], value: str) -> None:
         # Hỏi nhẹ mỗi vài giây: lần ghi yêu cầu cuối (overrides.json) - đổi nghĩa là cửa sổ khác vừa sửa, tab Kịch bản tự làm mới (B19).
-        self._send_json(HTTPStatus.OK, {"stamp": casting_stamp(self.app._book(value))})
+        path = self.app._listenable(value)
+        if packages.is_package(path):
+            data = json.dumps(book_edits.load(path), sort_keys=True, ensure_ascii=False).encode()
+            stamp = int(hashlib.sha256(data).hexdigest()[:12], 16)
+        else:
+            stamp = casting_stamp(self.app._book(value))
+        self._send_json(HTTPStatus.OK, {"stamp": stamp})
 
     def get_casting_chapter(self, _query: dict[str, list[str]], value: str, chapter: str) -> None:
-        if packages.is_package(self.app._listenable(value)):
-            raise ApiError(HTTPStatus.NOT_FOUND, "File dự án không kèm từng câu của chương - đọc chữ trong sách")
-        project = self.app._book(value)
-        view = casting_chapter(project, int(chapter))
+        project = self.app._listenable(value)
+        view = package_chapter(project, int(chapter)) if packages.is_package(project) else casting_chapter(self.app._book(value), int(chapter))
         if view is None:
             raise ApiError(HTTPStatus.NOT_FOUND, "Không có chương này")
         # Phán quyết "Nghe lại" của từng câu (reviews.json): "Thu lại" ở tab gửi nó làm `seen` (post_review), máy kia vừa quyết khác thì được hỏi.

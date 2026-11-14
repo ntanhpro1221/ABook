@@ -21,6 +21,7 @@ import vn.abook.player.StudioPaths
 
 // "Kịch bản" (NATIVE_REMOTE_STUDIO.md §6.8): đọc cả chương như kịch bản - câu nào của ai - và đổi người nói / chữ đem đọc của từng câu. Port từ ScriptTab.tsx
 // (webui/casting_review.py). Chữ của truyện KHÔNG bao giờ bị sửa: "chữ đem đọc" chỉ đổi điều máy đọc, sách giữ nguyên chữ của nó.
+// ScriptScope adds explicit role/range batches and new targets; the single-line editor remains separate.
 
 /** Một chương trong mục lục `GET /casting`. */
 @Immutable
@@ -65,6 +66,8 @@ data class ScriptLine(
     val emotion: String? = null,
     val intensity: Int? = null,
     val retake: String? = null,
+    val scene: Int? = null,
+    val scopeSpeaker: String? = null,
 )
 
 /** Một chương như `GET /casting/<chapterId>` mô tả (web `ChapterScript`). */
@@ -79,6 +82,7 @@ data class ChapterScript(
     val cast: List<ScriptPerson>,
     val others: List<ScriptPerson>,
     val lines: List<ScriptLine>,
+    val scopeRevision: String = "",
 )
 
 internal object StudioScriptJson {
@@ -87,6 +91,8 @@ internal object StudioScriptJson {
     private fun person(json: JSONObject) = ScriptPerson(json.text("value"), json.text("label"), json.optInt("lines"))
 
     private fun line(json: JSONObject) = ScriptLine(
+        scene = optInt(json, "scene"),
+        scopeSpeaker = json.textOrNull("speaker")?.takeIf { it.isNotEmpty() },
         segmentId = json.optInt("segmentId"),
         stableId = json.text("stableId"),
         textSha256 = json.text("textSha256"),
@@ -112,6 +118,7 @@ internal object StudioScriptJson {
     )
 
     fun chapter(json: JSONObject) = ChapterScript(
+        scopeRevision = json.text("scopeRevision"),
         chapterId = json.optInt("chapterId"),
         index = json.optInt("index"),
         title = json.text("title"),
@@ -229,7 +236,7 @@ object ScriptLogic {
                 val ids = body.optJSONArray("lines").objects().map { it.text("stableId") }.toSet()
                 val value = body.optString("speaker")
                 val label = ScriptLogic.people(script).firstOrNull { it.value == value }?.label ?: value
-                lines = lines.map { if (it.stableId in ids) it.copy(wish = ScriptWish(value, label, "pending", null)) else it }
+                lines = lines.map { if (it.stableId in ids) it.copy(wish = ScriptWish(value, label, if (value == it.current) "applied" else "pending", null)) else it }
             } else if (step.endpoint == "line") {
                 lines = lines.map { line ->
                     if (line.stableId != body.optString("stableId")) line else {

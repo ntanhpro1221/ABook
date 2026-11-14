@@ -165,8 +165,8 @@ object LocalStudio {
         CHAPTER_TITLE.matchEntire(path)?.takeIf { method == "PUT" }?.let { match -> return { dir, body -> chapterTitle(dir, match.groupValues[1], body) } }
         CHAPTER_SCRIPT.matchEntire(path)?.takeIf { method == "GET" }?.let { match -> return { dir, _ -> script(dir, match.groupValues[1]) } }
         CHAPTER_RETAKE.matchEntire(path)?.takeIf { method == "POST" }?.let { match -> return { dir, _ -> chapterRetake(dir, match.groupValues[1]) } }
-        CASTING_CHAPTER.matchEntire(path)?.takeIf { method == "GET" }?.let {
-            return { _, _ -> throw Api(404, S.s_file_du_an_khong_kem_tung_cau_cua_chuong_d_d856bdf2) }
+        CASTING_CHAPTER.matchEntire(path)?.takeIf { method == "GET" }?.let { match ->
+            return { dir, _ -> PackageScriptView.chapter(dir, match.groupValues[1].toLong()) ?: throw Api(404, S.s_khong_co_chuong_nay_87338800) }
         }
         SCENE_ALTERNATIVES.matchEntire(path)?.takeIf { method == "GET" }?.let { match -> return { dir, _ -> alternatives(dir, java.net.URLDecoder.decode(match.groupValues[1], "UTF-8")) } }
         return when (method to path) {
@@ -200,7 +200,7 @@ object LocalStudio {
             "GET" to "/cast" -> { dir, _ -> BookEdits.cast(dir, BookEdits.rawBook(dir)) }
             // Bản chụp chỉ đọc của xưởng trong file dự án (ProjectDocument.view, project_views.py): cùng JSON với đường của Studio.
             "GET" to "/work" -> { dir, _ -> projectView(dir, "work") }
-            "GET" to "/casting" -> { dir, _ -> projectView(dir, "casting") }
+            "GET" to "/casting" -> { dir, _ -> PackageScriptView.contents(dir) }
             "GET" to "/narrator-mode" -> { dir, _ -> narratorMode(dir) }
             "GET" to "/pronunciations" -> { dir, _ -> projectView(dir, "names") }
             else -> null

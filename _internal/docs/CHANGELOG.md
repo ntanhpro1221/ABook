@@ -7,6 +7,8 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+- Kịch bản cho tách vai theo cảnh hoặc quãng tự chọn, xem trước từng câu và giữ các quyết định riêng trên web, Qt và Android.
+
 - Sửa người nói, cách đọc và yêu cầu thu lại ngay trên câu đang nghe ở Qt và Android; giữ nguyên chỗ nghe khi đóng bảng.
 - Studio trên Android thêm tạo người, sửa cách đọc câu, chọn nhóm cảm ứng và menu đổi tên, giới tính, gộp hoặc bỏ gộp đang chờ.
 

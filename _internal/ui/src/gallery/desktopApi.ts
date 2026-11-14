@@ -264,14 +264,17 @@ function casting(item: GalleryBook, chapterId: number) {
     next: chapterId < item.chapters.length ? chapterId + 1 : null,
     castReady: true,
     firstPerson: null,
+    scopeRevision: `gallery-scope-${chapterId}`,
     cast: people,
     others: [],
     lines: script.segments.map((segment, seq) => {
       const narrator = segment.kind === "narration" || segment.kind === "heading";
       return {
         segmentId: segment.id, stableId: segment.stableId ?? "", textSha256: `t${seq}`, seq, paragraph: segment.paragraph, text: segment.text, kind: segment.kind,
+        // Synthetic gallery chapters have an explicit break after every twelfth row.
+        scene: Math.floor(seq / 12) + 1, sceneBreak: seq % 12 === 11,
         speaker: narrator ? "NARRATOR" : segment.speaker, current: narrator ? "NARRATOR" : segment.speaker, label: narrator ? "Người kể" : segment.speaker,
-        editable: true, hasAudio: chapterId <= 5, emotion: segment.kind === "dialogue" ? "neutral" : null, intensity: null, lineWish: null, spoken: null, wish: null,
+        editable: !narrator, hasAudio: chapterId <= 5, emotion: segment.kind === "dialogue" ? "neutral" : null, intensity: null, lineWish: null, spoken: null, wish: null,
         hint: seq === 17 ? { kind: "unsure", note: "Máy chưa chắc ai nói câu này." } : null,
       };
     }),
