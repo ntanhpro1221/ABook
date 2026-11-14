@@ -5,6 +5,8 @@ import vn.abook.player.ui.motion.ContentLayout
 
 import vn.abook.player.ui.components.SheetMenu
 import vn.abook.player.S
+import vn.abook.player.ui.components.LazyFoldState
+import vn.abook.player.ui.components.foldItems
 
 import vn.abook.player.ui.data.dotJoined
 import vn.abook.player.ui.components.fadeEdges
@@ -78,7 +80,7 @@ internal fun rememberMusicData(music: StudioMusicState): MusicData {
  * mỗi đoạn một bài đang dùng, nghe thử và "Đổi bài". "Đọc không khí cả đoạn bằng AI" nằm trong "Nâng cao", chỉ khi máy tính đã có model. Nhạc riêng nằm trên máy tính nên
  * không có ở đây.
  */
-internal fun LazyListScope.musicTab(music: StudioMusicState, data: MusicData, chapters: List<StudioChapter>, sheets: SheetHost, slide: Modifier) {
+internal fun LazyListScope.musicTab(music: StudioMusicState, data: MusicData, chapters: List<StudioChapter>, sheets: SheetHost, slide: Modifier, folds: LazyFoldState) {
     val view = data.poll.data
     item("music_notice", "music_notice") {
         Column(Modifier.fillMaxWidth().then(slide)) {
@@ -103,9 +105,9 @@ internal fun LazyListScope.musicTab(music: StudioMusicState, data: MusicData, ch
             }
         }
     }
-    if (view.banned.isNotEmpty()) item("music_banned", "music_banned") {
-        Fold(StudioMusicText.banned(view.banned.size), "studio_music_banned", Modifier.then(slide).padding(top = Dim.s12)) {
-            for (link in view.banned) {
+    if (view.banned.isNotEmpty()) {
+        foldItems(folds, StudioMusicText.banned(view.banned.size), "studio_music_banned", view.banned, { it }, Modifier.then(slide).padding(top = Dim.s12)) { _, link ->
+            Column(Modifier.then(slide)) {
                 ListItem(
                     MusicLogic.trackLabel(link, view.bannedTracks[link] ?: view.tracks[link]), Modifier, null, null,
                     trailing = { TextAction(StudioMusicText.UNBAN, { music.change(MusicLogic.unban(link)) }, "studio_music_unban_${link.hashCode()}") },
@@ -131,17 +133,17 @@ internal fun LazyListScope.musicTab(music: StudioMusicState, data: MusicData, ch
         item("music_empty", "status") { RowHint(StudioMusicText.NO_SCENES, Modifier.then(slide).padding(top = Dim.s12).testTag("studio_music_empty")) }
     } else {
         val byChapter = view.scenes.groupBy { it.chapterId }
-        items(byChapter.entries.toList(), key = { "music_chapter_${it.key}" }, contentType = { "music_chapter" }) { (chapterId, scenes) ->
+        for ((chapterId, scenes) in byChapter) {
             val title = chapters.firstOrNull { it.id == chapterId }?.title ?: S.s_chuong_0_268b0521(chapterId)
-            Fold(title, "studio_music_chapter_$chapterId", Modifier.then(slide).padding(top = Dim.s12), summary = StudioMusicText.sceneCount(scenes.size)) {
-                scenes.forEachIndexed { index, scene -> SceneRow(music, view, scenes, index, data.clip, sheets) }
+            foldItems(folds, title, "studio_music_chapter_$chapterId", scenes, { it.key }, Modifier.then(slide).padding(top = Dim.s12), summary = StudioMusicText.sceneCount(scenes.size)) { index, _ ->
+                SceneRow(music, view, scenes, index, data.clip, sheets)
             }
         }
     }
-    if (view.tracks.isNotEmpty()) item("music_credits", "music_credits") {
-        Fold("${StudioMusicText.CREDITS} (${view.tracks.size})", "studio_music_credits", Modifier.then(slide).padding(top = Dim.s12)) {
-            for ((link, track) in view.tracks) Caption(MusicLogic.creditText(link, track), Modifier.padding(bottom = Dim.s8))
-            Reveal(MusicLogic.needsModifiedNote(view)) { Caption(MusicText.MODIFIED_NOTE, Modifier.padding(bottom = Dim.s8)) }
+    if (view.tracks.isNotEmpty()) {
+        foldItems(folds, "${StudioMusicText.CREDITS} (${view.tracks.size})", "studio_music_credits", view.tracks.entries.toList(), { it.key }, Modifier.then(slide).padding(top = Dim.s12),
+            footer = if (MusicLogic.needsModifiedNote(view)) ({ Caption(MusicText.MODIFIED_NOTE, Modifier.padding(bottom = Dim.s8)) }) else null) { _, entry ->
+            Caption(MusicLogic.creditText(entry.key, entry.value), Modifier.then(slide).padding(bottom = Dim.s8))
         }
     }
 }

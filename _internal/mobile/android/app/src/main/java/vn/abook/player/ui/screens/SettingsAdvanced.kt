@@ -4,6 +4,23 @@ import vn.abook.player.ui.motion.SwapContent
 import vn.abook.player.ui.motion.ContentLayout
 
 import vn.abook.player.S
+import vn.abook.player.ui.components.foldItems
+import vn.abook.player.ui.components.rememberLazyFoldState
+import vn.abook.player.ui.components.ClockLabel
+import vn.abook.player.ui.devices.StorageUi
+import vn.abook.player.ui.devices.PairUi
+import vn.abook.player.ui.devices.StoredRow
+import vn.abook.player.ui.devices.StoredSheet
+import vn.abook.player.ui.devices.StorageSummary
+import vn.abook.player.ui.motion.rememberPresence
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.shrinkVertically
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
+import androidx.compose.animation.core.tween
+import vn.abook.player.ui.motion.Motion
+import vn.abook.player.ui.theme.MotionMs
 
 import vn.abook.player.formatSize
 
@@ -83,11 +100,18 @@ fun AdvancedSettings(env: SettingsEnv, sheets: SheetHost, onBack: () -> Unit, mo
     val repo = env.repo
     val cache by repo.cache.collectAsState()
     val notice by repo.notice.collectAsState()
+    val devices = env.devices
+    val storage = devices?.storage?.collectAsState()?.value ?: StorageUi()
+    val pair = devices?.pair?.collectAsState()?.value ?: PairUi()
+    val entries = rememberPresence(storage.storage.entries) { it.id }
+    val folds = rememberLazyFoldState()
     LaunchedEffect(repo) { repo.loadCache() }
-    SettingsPage(SettingsGroup.Advanced.label, onBack, SettingsGroup.Advanced.screenTag, modifier) {
-        MaintenanceSections(env, sheets)
-        Fold(S.s_bo_nho_e3d4d2b2, "advanced_memory", Modifier.padding(top = Dim.s16)) {
-            env.devices?.let { StorageScreen(it, sheets, embedded = true, onBack = {}) }
+    LazySettingsPage(SettingsGroup.Advanced.label, onBack, SettingsGroup.Advanced.screenTag, modifier) {
+        item("maintenance", "maintenance") { Column { MaintenanceSections(env, sheets) } }
+        foldItems(folds, S.s_bo_nho_e3d4d2b2, "advanced_memory", entries, { it.item.id }, Modifier.padding(top = Dim.s16),
+            onOpen = { devices?.openStorage() },
+            header = { Reveal(storage.loaded) { Column(Modifier.testTag("storage_screen")) { StorageSummary(storage, entries.isEmpty()) } } },
+            footer = { Column {
             val bytes = cache
             ListRow(S.s_ban_doc_da_lam_776edb87, hint = AdvancedCopy.cache(bytes)) {
                 SwapContent(bytes, contentKey = { bytes -> bytes != null && bytes > 0 }, layout = ContentLayout.Box) { bytes ->
@@ -97,8 +121,17 @@ fun AdvancedSettings(env: SettingsEnv, sheets: SheetHost, onBack: () -> Unit, mo
                 }
             }
             vn.abook.player.ui.components.MoreInfo(S.s_tim_hieu_them_032fe408, S.s_nghe_lai_doan_da_doc_xong_thi_khong_phai_c_05c920a7, "cache_more")
+        } }) { _, entry ->
+            AnimatedVisibility(entry.visible,
+                enter = expandVertically(tween(MotionMs.MEDIUM, easing = Motion.Decelerate)) + slideInVertically(tween(MotionMs.MEDIUM)) { it / 4 },
+                exit = shrinkVertically(tween(MotionMs.MEDIUM_OUT, easing = Motion.Accelerate)) + slideOutVertically(tween(MotionMs.MEDIUM_OUT)) { it / 4 }) {
+                Column {
+                    StoredRow(entry.item, entry.item.id in pair.downloading) { if (devices != null) sheets.show { dismiss -> StoredSheet(entry.item, devices, dismiss) } }
+                    RowLine()
+                }
+            }
         }
-        ListSection(S.s_chan_doan_906791d5) {
+        item("diagnostics", "section") { ListSection(S.s_chan_doan_906791d5) {
             ActionRow(S.s_nhat_ky_1e6c3c10, S.s_xem_f6de0ffd, { sheets.show { LogSheet(repo) } }, "logs_view", AdvancedCopy.LOG)
             vn.abook.player.ui.components.MoreInfo(S.s_tim_hieu_them_032fe408, AdvancedCopy.LOG_NOTE, "logs_more")
             RowLine()
@@ -109,14 +142,14 @@ fun AdvancedSettings(env: SettingsEnv, sheets: SheetHost, onBack: () -> Unit, mo
                 S.s_xoa_nhat_ky_743fb17f, onClick = { sheets.show { dismiss -> ClearLogsSheet({ repo.clearLogs(); dismiss() }, dismiss) } }, tag = "logs_clear", titleStyle = Abook.type.bodyStrong, titleColor = Abook.colors.danger,
                 hint = if (notice == S.s_da_xoa_nhat_ky_526f2ff7) AdvancedCopy.CLEARED else AdvancedCopy.CLEAR,
             )
-        }
-        ListSection(S.s_gioi_thieu_0c84d33f) {
+        } }
+        item("about", "section") { ListSection(S.s_gioi_thieu_0c84d33f) {
             ListRow(S.s_phien_ban_e055ec35) { BasicText(repo.version, style = Abook.type.bodySmall, modifier = Modifier.testTag("app_version")) }
             RowLine()
             ActionRow(S.s_ma_nguon_mo_mit_d9c23b48, S.s_mo_741bd2c2, env.links.openSource, "source_open", AdvancedCopy.SOURCE)
             RowLine()
             NavRow(S.s_thanh_phan_su_dung_46f70f05, { sheets.show { ThirdPartySheet(repo) } }, "third_party")
-        }
+        } }
     }
 }
 

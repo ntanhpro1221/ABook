@@ -7,6 +7,7 @@ import { SettingsRow } from "@/shared/SettingsNav";
 import { Switch } from "@/desktop/Switch";
 import { AnimatedRows, MotionPresence, Reveal } from "@/shared/MotionPresence";
 import { Fold, Collapse } from "@/shared/Collapse";
+import { FoldRows } from "@/shared/FoldRows";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import * as DropdownMenu from "@/shared/DropdownMenu";
@@ -581,13 +582,13 @@ export function MusicTab({ bookId, chapterTitle }: { bookId: string; chapterTitl
       ) : (
         [...byChapter.entries()].map(([chapterId, scenes]) => (
           <Fold key={chapterId} storageKey={`studio.music.${bookId}.${chapterId}`} title={chapterTitle(chapterId)} summary={S.s_0_doan_c2eb5200(scenes.length)} heading="h3" className={overrides.enabled ? undefined : "opacity-50"}>
-            <ul className="divide-y divide-line">
-              {scenes.map((scene, index) => {
+            <FoldRows items={scenes} keyOf={(scene) => scene.key} className="divide-y divide-line" estimate={100}>
+              {(scene, index) => {
                 const track = scene.link ? plan.tracks[scene.link] : undefined;
                 const follows = isContinuation(scene);
                 const swap = swapButton(scene);
                 return (
-                  <li key={scene.key} className={cn("flex flex-wrap items-center gap-x-4 gap-y-2 text-sm", follows ? "py-2" : "py-3")}>
+                  <div className={cn("flex flex-wrap items-center gap-x-4 gap-y-2 text-sm", follows ? "py-2" : "py-3")}>
                     <span className="tabular-cell w-28 shrink-0 text-fg-2">
                       {/* Các đoạn nối liền: đoạn này hết ở đúng chỗ đoạn sau bắt đầu (cùng cách làm tròn). */}
                       {formatClock(scene.start)}–{formatClock(scenes[index + 1]?.start ?? scene.end)}
@@ -653,10 +654,10 @@ export function MusicTab({ bookId, chapterTitle }: { bookId: string; chapterTitl
                         />
                       </MotionPresence>
                     </Collapse></div>
-                  </li>
+                  </div>
                 );
-              })}
-            </ul>
+              }}
+            </FoldRows>
           </Fold>
         ))
       )}

@@ -6,6 +6,14 @@ import vn.abook.player.ui.motion.ContentLayout
 import vn.abook.player.ui.music.library.inCatalog
 
 import vn.abook.player.S
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListScope
+import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.runtime.LaunchedEffect
+import vn.abook.player.ui.components.LazyFoldState
+import vn.abook.player.ui.components.rememberLazyFoldState
+import vn.abook.player.ui.components.revealItems
 
 import android.net.Uri
 import androidx.activity.compose.BackHandler
@@ -15,7 +23,6 @@ import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.SizeTransform
 import androidx.compose.animation.animateColorAsState
-import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
@@ -127,8 +134,9 @@ fun MusicPanel(music: MusicState, bookId: String, player: PlayerMusic?, modifier
 @Composable
 private fun MainPage(music: MusicState, ui: BookMusicUi, player: PlayerMusic?, onAdd: () -> Unit, onCue: (String) -> Unit) {
     val book = ui.book
-    val scroll = rememberScrollState()
-    Column(Modifier.fillMaxWidth().fadeEdges(scroll).verticalScroll(scroll).testTag("music_panel")) {
+    val scroll = rememberLazyListState()
+    LazyColumn(Modifier.fillMaxWidth().fadeEdges(scroll).testTag("music_panel"), state = scroll) {
+      item("music_status", "status") {
         val stage = when {
             book != null -> book.kind
             ui.failed -> null
@@ -147,7 +155,7 @@ private fun MainPage(music: MusicState, ui: BookMusicUi, player: PlayerMusic?, o
             when {
                 kind == null -> InlineProblem(MusicText.LOAD_FAILED, music::retry, "music_load_problem")
                 waiting -> MusicSkeleton()
-                kind == MusicKind.Playlist -> PlaylistChoices(music, ui, onAdd)
+                kind == MusicKind.Playlist -> Unit
                 kind == MusicKind.Packaged -> {
                     val on = book?.enabled == true
                     SwitchRow(MusicText.switchLabel(on), on, music::setEnabled, "music_enabled")
@@ -155,6 +163,17 @@ private fun MainPage(music: MusicState, ui: BookMusicUi, player: PlayerMusic?, o
                 else -> Caption(MusicText.NONE, Modifier.padding(vertical = Dim.s12).testTag("music_none"))
             }
         }
+      }
+        if (book?.kind == MusicKind.Playlist) {
+            val chosen = MusicText.chosen(book)
+            itemsIndexed(MusicText.options(ui.menu, book), key = { _, option -> "option:${option.id ?: "auto"}" }, contentType = { _, _ -> "option" }) { _, option ->
+                Box(Modifier.animateItem(fadeInSpec = null, fadeOutSpec = null)) {
+                    OptionRow(option, option.id == chosen, enabled = !ui.busy && !option.disabled) { music.choose(option.id) }
+                }
+            }
+            item("music_add", "action") { AddRow(ui, onAdd) }
+        }
+      item("music_level", "level") { Column {
         SwapContent(book, contentKey = { book -> book != null && book.kind != MusicKind.None }, layout = ContentLayout.Column) { book ->
             if (book != null && book.kind != MusicKind.None) {
                 Reveal(MusicText.playing(book)) { LevelMeter(book.levelDb, enabled = !ui.busy, music::setLevel) }
@@ -166,9 +185,8 @@ private fun MainPage(music: MusicState, ui: BookMusicUi, player: PlayerMusic?, o
             }
         }
         MusicCreditBlock(player?.credit, ui.bookId)
-        SwapContent(book, contentKey = { book -> book != null && book.kind == MusicKind.Packaged && book.cues.isNotEmpty() }, layout = ContentLayout.Column) { book ->
-            if (book != null && book.kind == MusicKind.Packaged && book.cues.isNotEmpty()) CueList(book, enabled = !ui.busy, onCue)
-        }
+      } }
+        if (book?.kind == MusicKind.Packaged && book.cues.isNotEmpty()) cueItems(book, enabled = !ui.busy, onCue)
     }
 }
 
@@ -176,15 +194,12 @@ private fun MainPage(music: MusicState, ui: BookMusicUi, player: PlayerMusic?, o
  * Các đoạn nhạc gắn sẵn, như danh sách của web: tên bài (im lặng thì "Im lặng (bạn chọn)" mực phụ), dưới là chương · giờ · tác giả · "bài của bạn". Nhạc nền đang tắt
  * thì cả danh sách mờ đi (vẫn sửa được - bật lại là có).
  */
-@Composable
-private fun CueList(book: BookMusic, enabled: Boolean, onCue: (String) -> Unit) {
-    val colors = Abook.colors
+private fun LazyListScope.cueItems(book: BookMusic, enabled: Boolean, onCue: (String) -> Unit) {
     // Như opacity-50 của web khi tắt, nhưng bằng mực: tên và dòng phụ chuyển sang mực nhạt nhất (không làm mờ cả khối bằng alpha).
-    val hintInk by animateColorAsState(if (book.enabled) colors.text2 else colors.text3, tween(MotionMs.MEDIUM), label = "cues-hint")
-    Column(Modifier.fillMaxWidth().padding(top = Dim.s12).testTag("music_cues")) {
-        Box(Modifier.fillMaxWidth().height(1.dp).background(colors.line))
-        book.cues.forEachIndexed { index, cue ->
-            key(cue.key) {
+    item("music_cues", "cue-heading") { Box(Modifier.fillMaxWidth().padding(top = Dim.s12).height(1.dp).background(Abook.colors.line).testTag("music_cues")) }
+    itemsIndexed(book.cues, key = { _, cue -> "cue:${cue.key}" }, contentType = { _, _ -> "cue" }) { index, cue ->
+                val colors = Abook.colors
+                val hintInk by animateColorAsState(if (book.enabled) colors.text2 else colors.text3, tween(MotionMs.MEDIUM), label = "cues-hint")
                 val ink by animateColorAsState(if (!book.enabled) colors.text3 else if (cue.silenced) colors.text2 else colors.text, tween(MotionMs.FAST), label = "cue-ink")
                 ListItem(
                     MusicText.cueTitle(cue), Modifier, if (enabled) ({ onCue(cue.key) }) else null, "music_cue_$index",
@@ -194,8 +209,6 @@ private fun CueList(book: BookMusic, enabled: Boolean, onCue: (String) -> Unit) 
                     titleStyle = Abook.type.body,
                     chevron = true,
                 )
-            }
-        }
     }
 }
 
@@ -209,8 +222,11 @@ private fun CuePage(music: MusicState, ui: BookMusicUi, cue: MusicCue, onAdd: ()
     val colors = Abook.colors
     val enabled = !ui.busy
     val open = ui.swapKey == cue.key
-    val scroll = rememberScrollState()
-    Column(Modifier.fillMaxWidth().fadeEdges(scroll).verticalScroll(scroll).testTag("music_cue_page")) {
+    val scroll = rememberLazyListState()
+    val folds = rememberLazyFoldState()
+    LaunchedEffect(open) { folds.setOpen("music_swap", open) }
+    LazyColumn(Modifier.fillMaxWidth().fadeEdges(scroll).testTag("music_cue_page"), state = scroll) {
+      item("cue_header", "header") { Column {
         BasicText(
             MusicText.cueTitle(cue),
             style = Abook.type.sectionTitle.copy(
@@ -234,8 +250,9 @@ private fun CuePage(music: MusicState, ui: BookMusicUi, cue: MusicCue, onAdd: ()
                 music.silence(cue.key, !cue.silenced)
             }
         }
-        Reveal(open) { SwapList(music, ui, onAdd) }
-        InlineProblem(ui.problem, tag = "music_problem")
+      } }
+        swapItems(folds, music, ui, onAdd)
+        item("cue_problem", "problem") { InlineProblem(ui.problem, tag = "music_problem") }
     }
 }
 
@@ -267,9 +284,7 @@ private fun CueAction(
 }
 
 /** "Đổi bài" (MyMusic.tsx SwapTrack): các bài trong Nhạc của tôi - tên, nghệ sĩ · độ dài, chú thích, "Chọn" có ghim. Trống thì mời thêm nhạc. */
-@Composable
-private fun SwapList(music: MusicState, ui: BookMusicUi, onAdd: () -> Unit) {
-    val colors = Abook.colors
+private fun LazyListScope.swapItems(folds: LazyFoldState, music: MusicState, ui: BookMusicUi, onAdd: () -> Unit) {
     val mine = ui.mine
     val stage = when {
         ui.swapFailed && mine == null -> 0
@@ -277,18 +292,10 @@ private fun SwapList(music: MusicState, ui: BookMusicUi, onAdd: () -> Unit) {
         mine.isEmpty() -> 2
         else -> 3
     }
-    AnimatedContent(
-        targetState = stage,
-        transitionSpec = {
-            (slideInVertically(tween(MotionMs.MEDIUM, easing = Motion.Decelerate)) { it / 8 } + fadeIn(tween(MotionMs.MEDIUM)))
-                .togetherWith(slideOutVertically(tween(MotionMs.FAST_OUT, easing = Motion.Accelerate)) { -it / 8 } + fadeOut(tween(MotionMs.FAST_OUT)))
-                .using(SizeTransform(clip = false))
-        },
-        label = "swap-list",
-        modifier = Modifier.fillMaxWidth().testTag("music_swap"),
-    ) { shown ->
-        Column(Modifier.fillMaxWidth()) {
-            Box(Modifier.fillMaxWidth().height(1.dp).background(colors.line))
+    revealItems(folds, "music_swap", ui.mine.orEmpty(), { it.link },
+        header = { Column(Modifier.fillMaxWidth().testTag("music_swap")) {
+            Box(Modifier.fillMaxWidth().height(1.dp).background(Abook.colors.line))
+            SwapContent(stage, contentKey = { it }, layout = ContentLayout.Column) { shown ->
             when (shown) {
                 0 -> InlineProblem(MusicText.SWAP_FAILED, music::retrySwap, "music_swap_problem")
                 1 -> MusicSkeleton(rows = 2)
@@ -296,26 +303,14 @@ private fun SwapList(music: MusicState, ui: BookMusicUi, onAdd: () -> Unit) {
                     Caption(MusicText.NO_MINE, Modifier.padding(vertical = Dim.s8).testTag("music_swap_empty"))
                     AddRow(ui, onAdd)
                 }
-                else -> ui.mine.orEmpty().forEachIndexed { index, track -> key(track.link) {
-                    val note = MusicText.mineNote(track)
-                    val choosing = ui.choosing == track.link
-                    ListItem(
-                        track.title, Modifier, if (!ui.busy) ({ music.pin(ui.swapKey, track.link) }) else null, "music_mine_$index",
-                        hint = MusicText.mineLine(track).ifEmpty { null },
-                        trailing = {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                PinIcon(if (choosing) colors.text3 else colors.accentText, size = 16.dp)
-                                Spacer(Modifier.size(Dim.s4))
-                                BasicText(MusicText.CHOOSE_LABEL, style = Abook.type.bodySmall.copy(color = if (choosing) colors.text3 else colors.accentText))
-                            }
-                        },
-                        below = if (note.isNotEmpty()) ({ Caption(note) }) else null,
-                    )
-                } }
+                else -> Unit
             }
+            }
+        } }, footer = {
+            val colors = Abook.colors
             // Dòng cuối: cả Kho nhạc ở chế độ chọn cho đoạn này ("Dùng" ghim bài như "Chọn" ở trên)
             val entry = vn.abook.player.ui.music.library.LocalMusicEntry.current
-            SwapContent(entry, shown, contentKey = { entry, shown -> entry != null && shown != 0 }, layout = ContentLayout.Column) { entry, shown ->
+            SwapContent(entry, stage, contentKey = { entry, shown -> entry != null && shown != 0 }, layout = ContentLayout.Column) { entry, shown ->
                 if (entry != null && shown != 0) {
                     ListItem(
                     MusicText.OPEN_LIBRARY, Modifier, { entry.openPick(ui.bookId, ui.swapKey) }, "music_open_library",
@@ -324,8 +319,26 @@ private fun SwapList(music: MusicState, ui: BookMusicUi, onAdd: () -> Unit) {
                     )
                 }
             }
-        }
-    }
+        }) { index, track -> SwapTrack(music, ui, index, track) }
+}
+
+@Composable
+private fun SwapTrack(music: MusicState, ui: BookMusicUi, index: Int, track: MineTrack) {
+    val colors = Abook.colors
+    val note = MusicText.mineNote(track)
+    val choosing = ui.choosing == track.link
+    ListItem(
+        track.title, Modifier, if (!ui.busy) ({ music.pin(ui.swapKey, track.link) }) else null, "music_mine_$index",
+        hint = MusicText.mineLine(track).ifEmpty { null },
+        trailing = {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                PinIcon(if (choosing) colors.text3 else colors.accentText, size = 16.dp)
+                Spacer(Modifier.size(Dim.s4))
+                BasicText(MusicText.CHOOSE_LABEL, style = Abook.type.bodySmall.copy(color = if (choosing) colors.text3 else colors.accentText))
+            }
+        },
+        below = if (note.isNotEmpty()) ({ Caption(note) }) else null,
+    )
 }
 
 /** Hàng "Thêm nhạc của bạn": tiến độ (xong / tổng) chạy ngay hàng này. */
@@ -340,20 +353,6 @@ private fun AddRow(ui: BookMusicUi, onAdd: () -> Unit) {
         below = if (ui.importing) ({ StageProgress { if (ui.total > 0) ui.done.toFloat() / ui.total else 0f } }) else null,
     )
     Reveal(ui.notice.isNotEmpty() && !ui.importing) { Caption(ui.notice, Modifier.testTag("music_notice")) }
-}
-
-@Composable
-private fun PlaylistChoices(music: MusicState, ui: BookMusicUi, onAdd: () -> Unit) {
-    val book = ui.book ?: return
-    val chosen = MusicText.chosen(book)
-    val colors = Abook.colors
-    // Danh mục tải xong thì thêm hàng: khung giãn dần, không nhảy.
-    Column(Modifier.fillMaxWidth().animateContentSize(tween(MotionMs.MEDIUM, easing = Motion.Standard))) {
-        for (option in MusicText.options(ui.menu, book)) {
-            key(option.id ?: "auto") { OptionRow(option, option.id == chosen, enabled = !ui.busy && !option.disabled) { music.choose(option.id) } }
-        }
-        AddRow(ui, onAdd)
-    }
 }
 
 /** Một lựa chọn: dấu tích đầu dòng (luôn giữ chỗ, nở / thu), tên hổ phách khi đang chọn, mô tả dưới tên, độ dài / số bài ở mép phải. */

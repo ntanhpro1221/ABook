@@ -45,15 +45,7 @@ fun StorageScreen(devices: DevicesState, sheets: SheetHost, embedded: Boolean = 
     LaunchedEffect(devices) { devices.openStorage() }
     DeviceSettingsContent(S.s_dung_luong_32009349, onBack, "storage_screen", embedded) {
         Reveal(ui.loaded) { Column(Modifier.fillMaxWidth().testTag("storage_list").padding(bottom = Dim.s16)) {
-            key("total", "total") {
-                Column(Modifier.fillMaxWidth().padding(top = Dim.s16, bottom = Dim.s8).testTag("storage_total")) {
-                    ClockLabel(formatSize(ui.storage.bytes), style = Abook.type.screenTitle)
-                    Caption(S.s_con_trong_0_78b8755a(formatSize(ui.storage.free)), ticking = true)
-                }
-            }
-            if (entries.isEmpty()) key("empty", "status") {
-                ListItem(S.s_chua_co_gi_tren_may_e57d2ed6, Modifier.testTag("storage_empty"))
-            }
+            StorageSummary(ui, entries.isEmpty())
             for (entry in entries) key("stored_${entry.item.id}") {
                 AnimatedVisibility(entry.visible,
                     enter = expandVertically(tween(MotionMs.MEDIUM, easing = Motion.Decelerate)) + slideInVertically(tween(MotionMs.MEDIUM)) { it / 4 },
@@ -66,5 +58,17 @@ fun StorageScreen(devices: DevicesState, sheets: SheetHost, embedded: Boolean = 
                 }
             }
         } }
+    }
+}
+
+/** Shared summary for the standalone fixture and the lazy settings group. */
+@Composable
+fun StorageSummary(ui: StorageUi, empty: Boolean) {
+    Column(Modifier.fillMaxWidth()) {
+        Column(Modifier.fillMaxWidth().padding(top = Dim.s16, bottom = Dim.s8).testTag("storage_total")) {
+            ClockLabel(formatSize(ui.storage.bytes), style = Abook.type.screenTitle)
+            Caption(S.s_con_trong_0_78b8755a(formatSize(ui.storage.free)), ticking = true)
+        }
+        if (empty) ListItem(S.s_chua_co_gi_tren_may_e57d2ed6, Modifier.testTag("storage_empty"))
     }
 }

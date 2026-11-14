@@ -6,6 +6,7 @@ import vn.abook.player.ui.motion.ContentLayout
 import vn.abook.player.ui.components.skeletonPulse
 import vn.abook.player.ui.components.skeletonPulse
 import vn.abook.player.S
+import vn.abook.player.ui.components.rememberLazyFoldState
 
 import vn.abook.player.ui.components.navigationClearance
 import vn.abook.player.ui.components.ClockLabel
@@ -361,6 +362,7 @@ private fun BookScreenBody(
         built = true
     }
     // Nội dung của mục đang chọn (từ lối "Tới chỗ đang nghe" trở đi): dùng chung cho hai bố cục.
+    val folds = rememberLazyFoldState()
     val tabContent: LazyListScope.() -> Unit = {
         when (shownTab) {
             BookTab.Chapters -> {
@@ -404,13 +406,14 @@ private fun BookScreenBody(
                 }
             }
             BookTab.Music -> musicContent?.invoke(this)
-            BookTab.History -> historyItems(detail, ui.loaded, { fade.value }) { session -> actions.playChapter(shown.id, session.toChapter, session.toSeconds) }
+            BookTab.History -> historyItems(detail, ui.loaded, { fade.value }, folds) { session -> actions.playChapter(shown.id, session.toChapter, session.toSeconds) }
             BookTab.Cast -> castItems(
                 ui.cast, ui.castLoaded, reached, later, { later = !later }, samples,
                 onMore = { person ->
                     sheets.show { dismiss -> PersonSheet(shown.id, person, ui.cast?.characters.orEmpty(), source, notes, dismiss) }
                 },
                 fade = { fade.value },
+                folds = folds,
             )
         }
     }

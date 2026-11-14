@@ -1,4 +1,6 @@
 package vn.abook.player.ui.studio
+import vn.abook.player.ui.components.foldItems
+import vn.abook.player.ui.components.rememberLazyFoldState
 
 import vn.abook.player.ui.motion.SwapContent
 import vn.abook.player.ui.motion.ContentLayout
@@ -88,6 +90,7 @@ private fun ReadingsList(state: StudioReadingsState, data: NameReadings, clip: C
     val typed = state.query.trim()
     val addable = ReadingsLogic.addable(state.query, found)
     val counted = data.items.count { it.lines > 0 }
+    val folds = rememberLazyFoldState()
     LazyColumn(Modifier.fillMaxSize().fadeEdges(list).testTag("studio_readings_list"), state = list, contentPadding = PaddingValues(bottom = Dim.s16)) {
         item("lead", "lead") {
             Column(Modifier.fillMaxWidth().padding(top = Dim.s8)) {
@@ -127,7 +130,16 @@ private fun ReadingsList(state: StudioReadingsState, data: NameReadings, clip: C
         if (data.unseen > 0 && typed.isEmpty()) item("unseen", "status") {
             Caption(ReadingsText.unseen(data.unseen), Modifier.padding(top = Dim.s8).testTag("studio_readings_unseen"))
         }
-        if (state.credits.isNotEmpty()) item("credits", "credits") { Credits(state) }
+        if (state.credits.isNotEmpty()) {
+            foldItems(folds, ReadingsText.SUGGEST_TITLE, "studio_readings_credits", state.credits, { "${it.chapters}:${it.line}" },
+                Modifier.padding(top = Dim.s24), summary = ReadingsText.lineCount(state.credits.size)) { index, group ->
+                Column {
+                    if (index == 0) RowHint(ReadingsText.SUGGEST_LEAD, Modifier.padding(bottom = Dim.s8))
+                    SwitchRow(ReadingsText.SUGGEST_SKIP, group.skipped, { state.skipLine(group, it) }, "studio_credit_$index",
+                        hint = "“${group.line}” · ${ReadingsLogic.where(group)}")
+                }
+            }
+        }
         item("clip", "clip") { ClipProblem(clip) }
     }
 }
@@ -239,20 +251,6 @@ private fun ReadingEditor(state: StudioReadingsState, item: NameReading, fresh: 
             }
             AnswerButton(ReadingsText.SAVE, { save(typed) }, "studio_reading_save", primary = true, enabled = !busy && typed.isNotEmpty() && !never && !unchanged)
             AnswerButton(ReadingsText.CANCEL, { state.cancelTry(); onDone() }, "studio_reading_close")
-        }
-    }
-}
-
-/** Mục riêng cuối màn: dòng ghi công / xin ủng hộ máy gợi ý bỏ khỏi phần đọc. MẶC ĐỊNH KHÔNG ÁP; chữ của truyện không bao giờ bị sửa. */
-@Composable
-private fun Credits(state: StudioReadingsState) {
-    Fold(ReadingsText.SUGGEST_TITLE, "studio_readings_credits", Modifier.padding(top = Dim.s24), summary = ReadingsText.lineCount(state.credits.size)) {
-        RowHint(ReadingsText.SUGGEST_LEAD, Modifier.padding(bottom = Dim.s8))
-        for ((index, group) in state.credits.withIndex()) {
-            SwitchRow(
-                ReadingsText.SUGGEST_SKIP, group.skipped, { state.skipLine(group, it) }, "studio_credit_$index",
-                hint = "“${group.line}” · ${ReadingsLogic.where(group)}",
-            )
         }
     }
 }

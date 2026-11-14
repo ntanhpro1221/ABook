@@ -427,6 +427,7 @@ qt_add_qml_module(ABookDesk
         qml/CastMerge.qml
         qml/CastModal.qml
         qml/CastPeople.qml
+        qml/WindowedRows.qml
         qml/CastPerson.qml
         qml/CastRename.qml
         qml/CastSample.qml

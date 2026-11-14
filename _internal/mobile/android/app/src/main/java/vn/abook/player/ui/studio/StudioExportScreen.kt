@@ -1,4 +1,6 @@
 package vn.abook.player.ui.studio
+import vn.abook.player.ui.components.foldItems
+import vn.abook.player.ui.components.rememberLazyFoldState
 
 import vn.abook.player.ui.motion.SwapContent
 import vn.abook.player.ui.motion.ContentLayout
@@ -94,6 +96,7 @@ private fun ExportBody(state: StudioProjectState, book: StudioBook, job: StudioE
     val options = export.options
     val blocker = StudioExportLogic.blocker(kind, book)
     val list = rememberLazyListState()
+    val folds = rememberLazyFoldState()
     LazyColumn(Modifier.fillMaxSize().fadeEdges(list).testTag("studio_export_list"), state = list, contentPadding = PaddingValues(bottom = Dim.s16)) {
         item("head", "head") {
             Column(Modifier.fillMaxWidth().padding(top = Dim.s8)) {
@@ -131,12 +134,10 @@ private fun ExportBody(state: StudioProjectState, book: StudioBook, job: StudioE
         }
         if (StudioExportLogic.shown(job) && job != null) item("job:${job.state}", "job") { JobBlock(state, kind, job) }
         if (options.history.isNotEmpty()) {
-            item("history", "history") {
-                Fold(StudioExportText.HISTORY, "studio_export_history", Modifier.padding(top = Dim.s16)) {
-                    for (past in options.history) {
+            foldItems(folds, StudioExportText.HISTORY, "studio_export_history", options.history, { "${it.kind}:${it.target}" }, Modifier.padding(top = Dim.s16)) { _, past ->
+                Column {
                         ListItem(StudioExportLogic.pastTitle(past), Modifier, null, "studio_export_past", hint = StudioExportLogic.pastLine(past))
                         RowLine()
-                    }
                 }
             }
         }

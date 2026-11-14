@@ -6,6 +6,7 @@ import vn.abook.player.ui.motion.ContentLayout
 import vn.abook.player.ui.components.SheetMenu
 
 import vn.abook.player.S
+import vn.abook.player.ui.components.rememberLazyFoldState
 
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.core.Animatable
@@ -152,6 +153,7 @@ private fun ProjectBody(page: StudioPage, kind: PrimaryKind?, state: StudioProje
     val castData = if (state.tab == StudioTab.Cast) rememberCastData(state.cast) else null
     val musicData = if (state.tab == StudioTab.Music) rememberMusicData(state.music) else null
     LaunchedEffect(musicData?.poll?.data) { musicData?.poll?.data?.let(state.music::seen) }
+    val folds = rememberLazyFoldState()
     LazyColumn(Modifier.fillMaxSize().fadeEdges(list).testTag("studio_project_list"), state = list, contentPadding = PaddingValues(bottom = Dim.s16)) {
         item("link", "notices") { LinkBanner(error, state.session.name, state::refreshSoon) }
         item("head", "head") {
@@ -188,7 +190,7 @@ private fun ProjectBody(page: StudioPage, kind: PrimaryKind?, state: StudioProje
             StudioTab.Work -> item("work", "work") { WorkDeck(state, book, sheets, { state.tab = StudioTab.Review }, slide) }
             StudioTab.Review -> if (reviewData != null) reviewTab(state.review, reviewData, book, slide)
             StudioTab.Cast -> if (castData != null) castTab(state.cast, castData, state, sheets, slide)
-            StudioTab.Music -> if (musicData != null) musicTab(state.music, musicData, page.chapters, sheets, slide)
+            StudioTab.Music -> if (musicData != null) musicTab(state.music, musicData, page.chapters, sheets, slide, folds)
         }
     }
 }

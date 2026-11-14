@@ -111,14 +111,17 @@ Item {
                             storageKey: "book." + root.bookId + ".history." + modelData.day
                             title: modelData.day
                             summary: Logic.groupSummary(modelData)
-                            Column {
+                            WindowedRows {
                                 width: parent.width
-                                Repeater {
-                                    model: dayFold.modelData.items
-                                    Item {
+                                rows: dayFold.modelData.items
+                                estimate: 80
+                                delegate: Component {
+                                  Item {
                                         id: session
-                                        required property var modelData
-                                        required property int index
+                                        readonly property var rowData: parent.rowData
+                                        readonly property int rowIndex: parent.rowIndex
+                                        readonly property var modelData: rowData
+                                        readonly property int index: rowIndex
                                         objectName: "historySession"
                                         width: parent.width
                                         height: Math.max(texts.height, resume.height) + 20
@@ -159,7 +162,7 @@ Item {
                                             text: Logic.resumeLabel(session.modelData)        // tick-ok: chỗ dừng của một phiên đã ghi, không tự đổi
                                             onActivated: root.play(session.modelData.to.chapterId, session.modelData.to.seconds)
                                         }
-                                    }
+                                  }
                                 }
                             }
                         }

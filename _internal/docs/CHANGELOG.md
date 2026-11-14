@@ -7,6 +7,8 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+- Nhóm nhân vật, lịch sử nghe và các danh sách con dài chỉ dựng hàng gần màn hình khi mở; giữ trạng thái gập và chuyển động trên Android, web và máy tính Qt.
+
 - Mỗi giọng có sẵn có ảnh chân dung minh hoạ riêng (app tự chọn theo giới tính, tuổi, chất giọng), hiện ở danh sách giọng của Studio trên máy tính, web và điện thoại.
 - Nhân vật trong sách có ảnh đại diện: mặc định là hoạ tiết kèm chữ cái đầu, màu riêng cho từng người, giống nhau trên cả ba nền. Khi đã cấu hình dịch vụ ảnh, sau bước phân tích app sinh ảnh cho từng nhân vật có tên từ chính câu tả ngoại hình trong truyện; dừng và làm tiếp an toàn, không đổi phân tích, giọng hay bản thu.
 - Studio cho chọn ảnh riêng, sinh lại ảnh hoặc quay về hoạ tiết cho từng nhân vật; ảnh bạn chọn không bị thay lại.

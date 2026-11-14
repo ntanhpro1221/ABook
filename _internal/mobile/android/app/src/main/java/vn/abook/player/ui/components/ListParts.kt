@@ -270,22 +270,28 @@ fun Fold(
     content: @Composable ColumnScope.() -> Unit,
 ) {
     var open by rememberSaveable(tag) { mutableStateOf(defaultOpen) }
-    val turn by animateFloatAsState(if (open) 1f else 0f, if (open) Motion.Expand else Motion.Collapse, label = "fold_turn")
     Column(modifier.fillMaxWidth()) {
-        Row(
-            Modifier.fillMaxWidth().heightIn(min = Dim.s48).pressable { open = !open }.toggles(open) { open = !open }.testTag(tag),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Column(Modifier.weight(1f).padding(vertical = Dim.s4)) {
-                BasicText(title, style = Abook.type.sectionTitle)
-                SwapContent(summary, contentKey = { summary -> summary != null }, layout = ContentLayout.Column) { summary ->
-                    if (summary != null) RowHint(summary, Modifier.testTag("${tag}_summary"))
-                }
-            }
-            Spacer(Modifier.width(Dim.s12))
-            ChevronIcon(Abook.colors.text3, turn = { turn })
-        }
+        FoldHeading(title, tag, summary, open, { open = !open })
         Reveal(open) { Column(Modifier.fillMaxWidth().testTag("${tag}_body"), content = content) }
+    }
+}
+
+/** Shared heading for short disclosures and groups whose children belong to an outer lazy list. */
+@Composable
+internal fun FoldHeading(title: String, tag: String, summary: String?, open: Boolean, toggle: () -> Unit, modifier: Modifier = Modifier) {
+    val turn = animateFloatAsState(if (open) 1f else 0f, if (open) Motion.Expand else Motion.Collapse, label = "fold_turn")
+    Row(
+        modifier.fillMaxWidth().heightIn(min = Dim.s48).pressable(onClick = toggle).toggles(open, toggle).testTag(tag),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Column(Modifier.weight(1f).padding(vertical = Dim.s4)) {
+            BasicText(title, style = Abook.type.sectionTitle)
+            SwapContent(summary, contentKey = { summary -> summary != null }, layout = ContentLayout.Column) { summary ->
+                if (summary != null) RowHint(summary, Modifier.testTag("${tag}_summary"))
+            }
+        }
+        Spacer(Modifier.width(Dim.s12))
+        ChevronIcon(Abook.colors.text3, turn = { turn.value })
     }
 }
 

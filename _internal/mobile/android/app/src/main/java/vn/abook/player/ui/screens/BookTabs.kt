@@ -6,6 +6,8 @@ import vn.abook.player.ui.motion.ContentLayout
 import vn.abook.player.ui.components.skeletonPulse
 import vn.abook.player.ui.components.skeletonPulse
 import vn.abook.player.S
+import vn.abook.player.ui.components.LazyFoldState
+import vn.abook.player.ui.components.foldItems
 
 import vn.abook.player.ui.components.gestureBarPadding
 import androidx.compose.animation.core.Animatable
@@ -194,7 +196,7 @@ fun EmptyNote(title: String, body: String, modifier: Modifier = Modifier, tag: S
  * Mục "Lịch sử": lượt nghe của hồ sơ đang dùng, mới nhất trước, gom theo ngày (mỗi ngày một phần gập, tóm tắt "3 lượt nghe"); bấm "Nghe tiếp từ …" nghe tiếp từ CUỐI lượt ấy.
  * `detail` null và chưa `loaded` = trang chưa đọc xong: ba khung chờ (không phải "Chưa có lịch sử nghe" rồi mới đổi); đã `loaded` mà vẫn null (kho không đọc được) = "Chưa có lịch sử nghe" như web, không chờ mãi.
  */
-fun LazyListScope.historyItems(detail: BookDetail?, loaded: Boolean, fade: () -> Float, onResume: (ListenSession) -> Unit) {
+fun LazyListScope.historyItems(detail: BookDetail?, loaded: Boolean, fade: () -> Float, folds: LazyFoldState, onResume: (ListenSession) -> Unit) {
     if (detail == null) {
         if (!loaded) {
             items(HISTORY_SKELETON, key = { "history_skeleton_$it" }, contentType = { "skeleton" }) { SkeletonLine(fade) }
@@ -216,12 +218,10 @@ fun LazyListScope.historyItems(detail: BookDetail?, loaded: Boolean, fade: () ->
         BasicText(weekText(seconds), style = Abook.type.bodySmall.copy(color = colors.text2), modifier = Modifier.fade(fade).padding(top = Dim.s4, bottom = Dim.s8).testTag("history_week"))
     }
     for (day in days) {
-        item(key = "history_day_${day.label}", contentType = "day") {
-            Fold(day.label, "history_day_${day.label}", Modifier.fade(fade), summary = History.daySummary(day)) {
-                for ((n, session) in day.sessions.withIndex()) {
-                    Reveal(n > 0) { RowLine() }
-                    HistoryRow(session, { titles[it] }, onResume)
-                }
+        foldItems(folds, day.label, "history_day_${day.label}", day.sessions, { it.id }, Modifier.fade(fade), summary = History.daySummary(day)) { n, session ->
+            Column(Modifier.fade(fade)) {
+                if (n > 0) RowLine()
+                HistoryRow(session, { titles[it] }, onResume)
             }
         }
     }
@@ -320,6 +320,7 @@ fun LazyListScope.castItems(
     samples: CastSamples,
     onMore: (CastMember) -> Unit,
     fade: () -> Float,
+    folds: LazyFoldState,
 ) {
     if (!loaded) {
         items(CAST_SKELETON, key = { "cast_skeleton_$it" }, contentType = { "skeleton" }) { SkeletonLine(fade) }
@@ -336,30 +337,27 @@ fun LazyListScope.castItems(
     }
     item(key = "cast_narrator", contentType = "narrator") { NarratorRow(cast, Modifier.fade(fade)) }
     if (cast.characters.isNotEmpty()) {
-        item(key = "cast_main", contentType = "fold") {
-            val ahead = if (reached != null) Cast.ahead(cast.characters, reached) else 0
-            val shown = Cast.visible(cast.characters, reached, later)
-            Fold(
-                S.s_vai_chinh_b84f4098, "cast_main", Modifier.fade(fade).padding(top = Dim.s16),
-                summary = S.s_0_nguoi_co_loi_thoai_1e48f89a(cast.characters.size), defaultOpen = cast.characters.size <= 4,
-            ) {
-                for ((n, person) in shown.withIndex()) {
-                    Reveal(n > 0) { RowLine(start = PersonTextStart) }
-                    PersonRow(person, samples, onMore)
-                }
-                Reveal(ahead > 0) {
+        val ahead = if (reached != null) Cast.ahead(cast.characters, reached) else 0
+        val shown = Cast.visible(cast.characters, reached, later)
+        foldItems(
+            folds, S.s_vai_chinh_b84f4098, "cast_main", shown, { it.name }, Modifier.fade(fade).padding(top = Dim.s16),
+            summary = S.s_0_nguoi_co_loi_thoai_1e48f89a(cast.characters.size), defaultOpen = cast.characters.size <= 4,
+            footer = if (ahead > 0) ({
                     TextAction(Cast.laterLabel(later, ahead), onLater, "cast_later", Modifier.padding(top = Dim.s4), align = Alignment.CenterStart)
-                }
+            }) else null,
+        ) { n, person ->
+            Column(Modifier.fade(fade)) {
+                if (n > 0) RowLine(start = PersonTextStart)
+                PersonRow(person, samples, onMore)
             }
         }
     }
     if (cast.extras.isNotEmpty()) {
-        item(key = "cast_extras", contentType = "fold") {
-            Fold(S.s_vai_phu_6e7c6bce, "cast_extras", Modifier.fade(fade).padding(top = Dim.s8), summary = S.s_0_nguoi_trong_mot_canh_bb4fd602(cast.extras.size)) {
-                for ((n, person) in cast.extras.withIndex()) {
-                    Reveal(n > 0) { RowLine(start = PersonTextStart) }
-                    PersonRow(person, samples, onMore)
-                }
+        foldItems(folds, S.s_vai_phu_6e7c6bce, "cast_extras", cast.extras, { it.name }, Modifier.fade(fade).padding(top = Dim.s8),
+            summary = S.s_0_nguoi_trong_mot_canh_bb4fd602(cast.extras.size)) { n, person ->
+            Column(Modifier.fade(fade)) {
+                if (n > 0) RowLine(start = PersonTextStart)
+                PersonRow(person, samples, onMore)
             }
         }
     }

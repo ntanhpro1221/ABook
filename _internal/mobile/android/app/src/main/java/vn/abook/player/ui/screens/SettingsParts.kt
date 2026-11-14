@@ -4,6 +4,10 @@ import vn.abook.player.ui.components.navigationClearance
 import vn.abook.player.ui.components.PageHeader
 import vn.abook.player.ui.components.ListRow
 import vn.abook.player.ui.components.Reveal
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListScope
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.tween
@@ -85,3 +89,15 @@ fun SettingsPage(title: String, onBack: () -> Unit, tag: String, modifier: Modif
     }
 }
 
+/** Settings surfaces containing user-sized lists keep a single lazy scroller. */
+@Composable
+fun LazySettingsPage(title: String, onBack: () -> Unit, tag: String, modifier: Modifier = Modifier, content: LazyListScope.() -> Unit) {
+    val top = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
+    val bottom = navigationClearance()
+    val list = rememberLazyListState()
+    LazyColumn(modifier.fillMaxSize().imePadding().testTag(tag).fadeEdges(list, startInset = top), state = list,
+        contentPadding = PaddingValues(start = Dim.margin, end = Dim.margin, top = top, bottom = bottom + Dim.s48)) {
+        item("settings_header", "header") { PageHeader(title, onBack) }
+        content()
+    }
+}

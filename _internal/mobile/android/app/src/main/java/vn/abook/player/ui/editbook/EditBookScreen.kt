@@ -6,6 +6,10 @@ import vn.abook.player.ui.motion.ContentLayout
 import vn.abook.player.ui.components.SheetMenu
 
 import vn.abook.player.S
+import vn.abook.player.ui.components.foldItems
+import vn.abook.player.ui.components.rememberLazyFoldState
+import vn.abook.player.ui.motion.Presence
+import androidx.compose.foundation.lazy.LazyListScope
 
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -151,6 +155,9 @@ fun EditBookScreen(
         val book = state.saved
         val draft = state.draft
         val list = rememberLazyListState()
+        val folds = rememberLazyFoldState()
+        var readingEditing by remember { mutableStateOf<String?>(null) }
+        val readingRows = rememberPresence(readings.list) { it.surface }
         LazyColumn(Modifier.fillMaxSize().fadeEdges(list).testTag("edit_book_list"), state = list, contentPadding = PaddingValues(bottom = Dim.s32)) {
             if (state.loading) item("loading", "state") { Caption(S.s_dang_doc_1b09d2d9, Modifier.padding(top = Dim.s16)) }
             if (book == null || draft == null) {
@@ -193,10 +200,8 @@ fun EditBookScreen(
                     }
                 }
                 // Sách chỉ có chữ: các từ đã dạy giọng đọc (web: "Cách đọc tên" gập trong Sửa sách).
-                if (book.textOnly) item("readings", "readings") {
-                    Fold(S.s_cach_doc_ten_1c46e75d, "edit_readings", Modifier.padding(top = Dim.sectionGap)) {
-                        ReadingsSection(readings, loadReadings, setReading)
-                    }
+                if (book.textOnly) {
+                    readingsItems(folds, readings, readingRows, readingEditing, { readingEditing = it }, loadReadings, setReading)
                 }
                 item("discard", "discard") { DiscardRow(book.edits, discard) }
             }
@@ -276,35 +281,32 @@ private fun DiscardRow(edits: Int, discard: () -> Unit) {
  * Bên trong phần "Cách đọc tên": mỗi từ một hàng (chữ trong sách, "đọc là …", nút sửa / bỏ); sửa mở ô ngay dưới hàng ấy. Mở phần là đọc lại danh sách. Chưa có từ nào thì
  * nói đúng thế - giao diện native chưa có chạm giữ một chữ ở màn đọc để dạy, nên không chỉ cách ấy.
  */
-@Composable
-private fun ReadingsSection(ui: ReadingsUi, load: () -> Unit, setReading: (String, String, () -> Unit) -> Unit) {
-    LaunchedEffect(Unit) { load() }
-    var editing by remember { mutableStateOf<String?>(null) }
-    val rows = rememberPresence(ui.list) { it.surface }
+private fun LazyListScope.readingsItems(
+    folds: vn.abook.player.ui.components.LazyFoldState, ui: ReadingsUi, rows: List<Presence<WordReading>>,
+    editing: String?, edit: (String?) -> Unit, load: () -> Unit, setReading: (String, String, () -> Unit) -> Unit,
+) {
     val stage = when {
         !ui.loaded && ui.problem.isNotEmpty() -> ReadingsStage.Failed
         !ui.loaded -> ReadingsStage.Loading
         ui.list.isEmpty() && rows.isEmpty() -> ReadingsStage.Empty
         else -> ReadingsStage.Words
     }
-    Column(Modifier.fillMaxWidth().testTag("readings_section")) {
+    foldItems(folds, S.s_cach_doc_ten_1c46e75d, "edit_readings", rows, { it.item.surface }, Modifier.padding(top = Dim.sectionGap),
+        onOpen = load,
+        header = { Column(Modifier.fillMaxWidth().testTag("readings_section")) {
         RowHint(ReadingText.HINT)
-        // Đang tải -> danh sách (hay lời "chưa có"): trượt ngắn, không thay cứng; trong danh sách, từ thêm / bỏ mở / khép tại chỗ.
-        AnimatedContent(
-            targetState = stage,
-            transitionSpec = {
-                (slideInVertically(tween(MotionMs.MEDIUM, easing = Motion.Decelerate)) { it / 8 } + fadeIn(tween(MotionMs.MEDIUM)))
-                    .togetherWith(slideOutVertically(tween(MotionMs.FAST_OUT, easing = Motion.Accelerate)) { -it / 8 } + fadeOut(tween(MotionMs.FAST_OUT)))
-                    .using(SizeTransform(clip = false))
-            },
-            label = "readings",
-        ) { shown ->
+        SwapContent(stage, contentKey = { it }, layout = ContentLayout.Column) { shown ->
             when (shown) {
                 ReadingsStage.Failed -> InlineProblem(ui.problem, load, "readings_problem")
                 ReadingsStage.Loading -> Caption(S.s_dang_tai_cach_doc_32d14df3, Modifier.padding(top = Dim.s12).testTag("readings_loading"))
                 ReadingsStage.Empty -> Caption(S.s_chua_co_tu_nao_b1a59234, Modifier.padding(top = Dim.s12).testTag("readings_empty"))
-                ReadingsStage.Words -> Column(Modifier.fillMaxWidth()) {
-                    for (row in rows) key(row.item.surface) {
+                ReadingsStage.Words -> Unit
+            }
+        }
+    } }, footer = { Column {
+        InlineProblem(ui.failed, tag = "readings_failed")
+        Reveal(ui.notice.isNotEmpty()) { Caption(ui.notice, Modifier.padding(top = Dim.s8).testTag("readings_notice")) }
+    } }) { _, row ->
                         AnimatedVisibility(
                             row.visible,
                             enter = expandVertically(tween(MotionMs.MEDIUM, easing = Motion.Decelerate)) + slideInVertically(tween(MotionMs.MEDIUM)) { -it / 4 },
@@ -312,17 +314,11 @@ private fun ReadingsSection(ui: ReadingsUi, load: () -> Unit, setReading: (Strin
                         ) {
                             val item = row.item
                             Column(Modifier.fillMaxWidth()) {
-                                ReadingRow(item, editing == item.surface, ui.saving, onEdit = { editing = if (editing == item.surface) null else item.surface },
-                                    onRemove = { setReading(item.surface, "") {} }, onSave = { spoken -> setReading(item.surface, spoken) { editing = null } })
+                                ReadingRow(item, editing == item.surface, ui.saving, onEdit = { edit(if (editing == item.surface) null else item.surface) },
+                                    onRemove = { setReading(item.surface, "") {} }, onSave = { spoken -> setReading(item.surface, spoken) { edit(null) } })
                                 RowLine()
                             }
                         }
-                    }
-                }
-            }
-        }
-        InlineProblem(ui.failed, tag = "readings_failed")
-        Reveal(ui.notice.isNotEmpty()) { Caption(ui.notice, Modifier.padding(top = Dim.s8).testTag("readings_notice")) }
     }
 }
 

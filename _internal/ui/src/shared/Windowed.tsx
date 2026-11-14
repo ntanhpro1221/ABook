@@ -136,6 +136,8 @@ function viewTopOf(scroller: HTMLElement): number {
 export function Windowed<T>({
   items,
   row,
+  renderBlock,
+  margin = MARGIN,
   estimate,
   keep,
   block = WINDOW_BLOCK,
@@ -147,6 +149,10 @@ export function Windowed<T>({
   items: readonly T[];
   /** Một hàng; `index` là vị trí trong cả danh sách (cho aria-rowindex / aria-posinset). */
   row: (item: T, index: number) => ReactNode;
+  /** Optional keyed presence inside a block, for groups that add or remove rows in place. */
+  renderBlock?: (items: readonly T[], start: number) => ReactNode;
+  /** Overscan for the enclosing scroll viewport. Long disclosures use a smaller first-open budget. */
+  margin?: string;
   /** Chiều cao ước của một hàng (px) - chỉ dùng tới khi đo được khối đầu. */
   estimate: number;
   /** Vị trí luôn dựng (vd chương đang nghe). */
@@ -224,7 +230,7 @@ export function Windowed<T>({
       },
       // Gốc là chính khung cuộn: gốc mặc định (cửa sổ) bị `<main>` cắt nên lề 1500 px vô tác dụng - khối chỉ dựng khi đã lộ vào
       // khung, ngay mép màn hình, và đổi cỡ trước mắt người xem.
-      { root: isPage(scroller) ? null : scroller, rootMargin: MARGIN },
+      { root: isPage(scroller) ? null : scroller, rootMargin: margin },
     );
     const resizes =
       typeof ResizeObserver === "undefined"
@@ -260,7 +266,7 @@ export function Windowed<T>({
       view.current = null;
       pending.current = null;
     };
-  }, [windowed, count, memoryKey, layout]);
+  }, [windowed, count, memoryKey, layout, margin]);
 
   // Sau mỗi lần dựng: khối phía trên khung nhìn đổi chiều cao thì bù scrollTop đúng phần chênh - nội dung đang thấy đứng yên.
   useLayoutEffect(() => {
@@ -308,7 +314,7 @@ export function Windowed<T>({
               });
             }}
           >
-            {visible && items.slice(start, start + block).map((item, offset) => row(item, start + offset))}
+            {visible && (renderBlock ? renderBlock(items.slice(start, start + block), start) : items.slice(start, start + block).map((item, offset) => row(item, start + offset)))}
           </div>
         );
       })}

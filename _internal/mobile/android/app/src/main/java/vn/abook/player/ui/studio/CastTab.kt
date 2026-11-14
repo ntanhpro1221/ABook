@@ -4,6 +4,8 @@ import vn.abook.player.ui.motion.SwapContent
 import vn.abook.player.ui.motion.ContentLayout
 
 import vn.abook.player.S
+import vn.abook.player.ui.components.foldItems
+import vn.abook.player.ui.components.rememberLazyFoldState
 
 import vn.abook.player.ui.data.dotJoined
 import androidx.compose.foundation.layout.Column
@@ -229,16 +231,16 @@ private fun VoiceBody(sheet: VoiceSheetState, choices: VoiceChoices, clip: ClipS
         val labels = VoiceLogic.groupLabels(groups)
         Reveal(groups.isEmpty()) { RowHint(WorkText.VOICE_NO_VOICES, Modifier.padding(top = Dim.s12).testTag("studio_voice_none")) }
         val list = rememberLazyListState()
+        val folds = rememberLazyFoldState()
         LazyColumn(Modifier.fillMaxWidth().padding(top = Dim.s8).heightIn(max = 340.dp).fadeEdges(list).testTag("studio_voice_list"), state = list) {
             groups.forEachIndexed { index, group ->
                 if (group.engine == "vieneu" || groups.size == 1) {
                     item("group_${group.engine}", "group") { Caption(labels[index], Modifier.padding(top = Dim.s8)) }
                     items(group.voices, key = { it.key }, contentType = { "voice" }) { voice -> VoiceRow(sheet, voice, clip, filter, dismiss) }
                 } else {
-                    item("group_${group.engine}", "fold") {
-                        Fold(labels[index], "studio_voice_group_${group.engine}", summary = group.label, defaultOpen = group.voices.any { it.current || it.pending }) {
-                            for (voice in group.voices) VoiceRow(sheet, voice, clip, filter, dismiss)
-                        }
+                    foldItems(folds, labels[index], "studio_voice_group_${group.engine}", group.voices, { it.key },
+                        summary = group.label, defaultOpen = group.voices.any { it.current || it.pending }) { _, voice ->
+                        VoiceRow(sheet, voice, clip, filter, dismiss)
                     }
                 }
             }
