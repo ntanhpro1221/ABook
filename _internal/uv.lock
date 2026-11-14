@@ -19,7 +19,7 @@ constraints = [
 
 [[package]]
 name = "abook"
-version = "0.4.170"
+version = "0.4.171"
 source = { editable = "." }
 dependencies = [
     { name = "ctranslate2" },

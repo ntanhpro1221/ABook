@@ -1,5 +1,12 @@
 # Test report
 
+## 14-11-2026 — ignored tracked files and private work logs
+
+The release gate checks ignored tracked paths against three byte-pinned generated MP3 seek fixtures.
+All commits in the release range are checked for additions of root work logs, including later-deleted files and renames.
+Temporary Git repositories cover forced additions, exact fixture bytes, staged removals, deleted logs and root anchoring.
+
+
 ## 14-11-2026 — incremental public Corpus index
 
 The scanner caches hash postings in private runtime storage.

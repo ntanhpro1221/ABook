@@ -34,6 +34,17 @@ FORBIDDEN_TERMS = ("migrat", "legacy", "nâng cấp từ")
 # pitch and LUFS remain mandatory direct measurements in the same test module.
 PYTEST_MAX_SKIPPED = 17
 PYTEST_MAX_XFAILED = 0
+# Exact generated libmp3lame fixtures: four-second mono test signals, no source audio.
+# Pin bytes so the exception cannot silently admit replacement recordings.
+IGNORED_TRACKED_APPROVED = {
+    "_internal/mobile/android/app/src/test/resources/mp3seek/cbr_info.mp3":
+        "bce7766e6933254c2b1ed1edde28283ea146663b504d88cc9dd79d5f2c54f002",
+    "_internal/mobile/android/app/src/test/resources/mp3seek/cbr_plain.mp3":
+        "ed9f10afe47c000235898d8599f53899999cdd40e79e9b265cd70a86de12b339",
+    "_internal/mobile/android/app/src/test/resources/mp3seek/vbr_xing.mp3":
+        "1d17de62d2262412376540a3dfc17004a9da87bea17ec2aa9558609482499051",
+}
+PRIVATE_WORK_LOGS = ("result.md", "PROGRESS.md", "_internal/PROGRESS.md")
 
 
 @dataclass
@@ -202,7 +213,7 @@ def checks(confirm_hash: str | None = None) -> list[Check]:
         Check("design-lint", worker_command("design-lint"), timeout=600, parser="json"),
     ]
     definitions += [Check(name, worker_command(name), parser="json", timeout=1200 if name == "public-fixtures" else 120) for name in
-                    ("quality-hash", "changelog", "versions", "licenses", "diff-safety", "forbidden-terms", "public-fixtures", "public-paths", "batch-crlf",
+                    ("quality-hash", "changelog", "versions", "licenses", "diff-safety", "forbidden-terms", "public-fixtures", "public-paths", "ignored-tracked", "batch-crlf",
                      "studio-pins", "android-sdk")]
     definitions += [Check(name, manual=detail) for name, detail in (
         ("manual-ui", "Android thật/máy ảo; duyệt ảnh gallery, README, nguồn truyện trong diff và giấy phép thành phần đóng gói"),
@@ -224,6 +235,34 @@ def git(*args: str) -> str:
 def tracked_and_new() -> list[Path]:
     names = git("ls-files", "-z", "--cached", "--others", "--exclude-standard").split("\0")
     return [REPO / name for name in dict.fromkeys(names) if name and (REPO / name).is_file()]
+
+
+def ignored_tracked() -> dict:
+    # A staged removal must not hide a file still published by HEAD.
+    require(not git("diff", "--cached", "--name-only", "HEAD"),
+            "ignored-tracked: index differs from HEAD; commit before checking")
+    ignored = [name for name in git("ls-files", "-ci", "--exclude-standard", "-z").split("\0") if name]
+    unexpected = [name for name in ignored if name not in IGNORED_TRACKED_APPROVED]
+    require(not unexpected, "ignored-tracked: unapproved paths: " + ", ".join(unexpected))
+    for name in ignored:
+        blob = subprocess.run(["git", "show", "HEAD:" + name], cwd=REPO, capture_output=True,
+                              check=True, timeout=30,
+                              creationflags=subprocess.CREATE_NO_WINDOW if os.name == "nt" else 0).stdout
+        require(hashlib.sha256(blob).hexdigest() == IGNORED_TRACKED_APPROVED[name],
+                "ignored-tracked: approved fixture bytes changed: " + name)
+    comparison = release_range()
+    commits = git("rev-list", comparison["base"] + "..HEAD").splitlines()
+    additions = []
+    for commit in commits:
+        # Compare every parent, including merges; disable rename detection so a move
+        # into a private path counts as an addition. Inspect deleted files too.
+        names = git("diff-tree", "--root", "-m", "-r", "--no-commit-id", "--name-only",
+                    "--diff-filter=A", "--no-renames", "-z", commit, "--",
+                    *(":(top,literal)" + name for name in PRIVATE_WORK_LOGS)).split("\0")
+        additions.extend(commit + ":" + name for name in names if name)
+    require(not additions, "ignored-tracked: private work logs added in history: " + ", ".join(additions))
+    return {"counts": {"ignored": len(ignored), "approved": len(ignored),
+                       "commits": len(commits), "findings": 0}, "range": comparison}
 
 
 def changed_files() -> list[Path]:
@@ -475,6 +514,8 @@ def worker(name: str, confirm_hash: str | None = None) -> dict:
         findings = [p.relative_to(REPO).as_posix() for p in files if scanner.private_file(p)]
         require(not findings, "public-paths: private machine/session paths in " + ", ".join(findings))
         return {"counts": {"files": len(files), "findings": 0}}
+    if name == "ignored-tracked":
+        return ignored_tracked()
     if name in {"diff-safety", "forbidden-terms"}:
         comparison = release_range()
         files = changed_files()

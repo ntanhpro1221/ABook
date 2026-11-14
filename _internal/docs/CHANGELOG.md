@@ -7,6 +7,11 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+## [0.4.171] - 2026-11-14
+
+- Máy quét mã nguồn công khai nhớ chỉ mục Corpus; lượt kiểm với bộ đệm đã có giảm từ khoảng 30 phút xuống khoảng 1–2 phút.
+- Cổng phát hành chặn tệp tạm của thợ bị ignore nhưng vẫn nằm trong commit, kể cả tệp đã bị xoá ở commit sau.
+
 ## [0.4.170] - 2026-11-14
 
 - Gỡ các ví dụ và dữ liệu kiểm thử chép chữ truyện khỏi mã nguồn công khai, thay bằng câu tự viết và giữ nguyên mục đích kiểm thử.

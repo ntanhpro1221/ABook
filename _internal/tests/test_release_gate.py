@@ -19,6 +19,93 @@ spec.loader.exec_module(gate)
 FIXTURES = Path(__file__).parent / "fixtures/release_gate"
 
 
+@pytest.fixture
+def ignored_repo(tmp_path, monkeypatch):
+    def run(*args):
+        return subprocess.run(["git", "-C", str(tmp_path), *args], check=True,
+                              capture_output=True, text=True,
+                              creationflags=subprocess.CREATE_NO_WINDOW if sys.platform == "win32" else 0).stdout.strip()
+    run("init")
+    run("config", "user.name", "Gate test")
+    run("config", "user.email", "gate@example.invalid")
+    (tmp_path / ".gitignore").write_text(
+        "/result.md\n/PROGRESS.md\n/_internal/PROGRESS.md\n*.mp3\n", encoding="utf-8")
+    run("add", ".gitignore")
+    run("commit", "-m", "baseline")
+    monkeypatch.setattr(gate, "REPO", tmp_path)
+    monkeypatch.setattr(gate, "RELEASE_BASE", run("rev-parse", "HEAD"))
+    run("commit", "--allow-empty", "-m", "release work")
+    return tmp_path, run
+
+
+def test_ignored_tracked_is_in_full_gate_and_clean_repo_passes(ignored_repo):
+    assert "ignored-tracked" in {check.name for check in gate.checks()}
+    assert gate.worker("ignored-tracked")["counts"] == {
+        "ignored": 0, "approved": 0, "commits": 1, "findings": 0}
+
+
+def test_ignored_tracked_blocks_forced_audio_and_staged_removal(ignored_repo):
+    root, run = ignored_repo
+    (root / "unexpected.mp3").write_bytes(b"test signal")
+    run("add", "-f", "unexpected.mp3")
+    run("commit", "-m", "forced audio")
+    with pytest.raises(ValueError, match="unapproved paths.*unexpected.mp3"):
+        gate.worker("ignored-tracked")
+    run("update-index", "--force-remove", "unexpected.mp3")
+    with pytest.raises(ValueError, match="index differs from HEAD"):
+        gate.worker("ignored-tracked")
+
+
+@pytest.mark.parametrize("relative", list(gate.IGNORED_TRACKED_APPROVED))
+def test_ignored_tracked_allows_only_exact_generated_fixture_bytes(ignored_repo, relative):
+    root, run = ignored_repo
+    path = root / relative
+    path.parent.mkdir(parents=True)
+    path.write_bytes((ROOT.parent / relative).read_bytes())
+    run("add", "-f", relative)
+    run("commit", "-m", "generated fixture")
+    assert gate.worker("ignored-tracked")["counts"]["approved"] == 1
+    path.write_bytes(b"replacement recording")
+    run("add", "-f", relative)
+    run("commit", "-m", "replaced fixture")
+    with pytest.raises(ValueError, match="fixture bytes changed"):
+        gate.worker("ignored-tracked")
+
+
+@pytest.mark.parametrize("relative", gate.PRIVATE_WORK_LOGS)
+@pytest.mark.parametrize("rename", [False, True])
+def test_ignored_tracked_blocks_work_logs_even_after_deletion(ignored_repo, relative, rename):
+    root, run = ignored_repo
+    path = root / relative
+    path.parent.mkdir(parents=True, exist_ok=True)
+    if rename:
+        (root / "notes.txt").write_text("private work notes\n", encoding="utf-8")
+        run("add", "notes.txt")
+        run("commit", "-m", "notes")
+        (root / "notes.txt").rename(path)
+        run("add", "-u")
+    else:
+        path.write_text("private work notes\n", encoding="utf-8")
+    run("add", "-f", relative)
+    run("commit", "-m", "work log")
+    path.unlink()
+    run("add", "-u")
+    run("commit", "-m", "remove work log")
+    assert run("ls-files", "-ci", "--exclude-standard") == ""
+    with pytest.raises(ValueError, match="private work logs added in history") as caught:
+        gate.worker("ignored-tracked")
+    assert relative in str(caught.value)
+
+
+def test_ignored_tracked_paths_are_anchored_to_repo_root(ignored_repo):
+    root, run = ignored_repo
+    (root / "docs").mkdir()
+    (root / "docs/result.md").write_text("public documentation\n", encoding="utf-8")
+    run("add", "docs/result.md")
+    run("commit", "-m", "documentation")
+    assert gate.worker("ignored-tracked")["counts"]["findings"] == 0
+
+
 def test_publication_verification_is_not_a_prepublication_manual_row():
     assert "manual-publish" not in {check.name for check in gate.checks()}
 

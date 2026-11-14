@@ -978,12 +978,12 @@
     "reason": "docs/BOUNDARY_6_AND_THE_DRIVER_MORNING.md: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
   },
   "_internal/docs/CHANGELOG.md": {
-    "sha256": "a6196a4f28992e6476302a5dfb19b5c25eee4e26e5951fb24175d11fb80509d7",
-    "reason": "_internal/docs/CHANGELOG.md: 0.4.170 release notes describe source cleanup and scanner behavior, alongside the integrated 0.4.169 release notes; the existing technical shingle approval is unchanged.",
+    "sha256": "be71762a34af4fcbb5ba7a9c0fd8d9b6a518b0b9630895f88bf35ca2a00cbc3a",
+    "reason": "_internal/docs/CHANGELOG.md: 0.4.171 technical release notes, ignored-tracked implementation and test description; existing individual shingle approvals unchanged.",
     "corpus_review": {
       "classification": "i",
-      "file_sha256": "a6196a4f28992e6476302a5dfb19b5c25eee4e26e5951fb24175d11fb80509d7",
-      "reason": "_internal/docs/CHANGELOG.md: 0.4.170 release notes describe source cleanup and scanner behavior, alongside the integrated 0.4.169 release notes; the existing technical shingle approval is unchanged. Only the inherited individual shingle hashes remain approved as category i.",
+      "file_sha256": "be71762a34af4fcbb5ba7a9c0fd8d9b6a518b0b9630895f88bf35ca2a00cbc3a",
+      "reason": "_internal/docs/CHANGELOG.md: 0.4.171 technical release notes, ignored-tracked implementation and test description; existing individual shingle approvals unchanged.",
       "shingles": [
         "a427005770c2fa6d"
       ]
@@ -1205,8 +1205,8 @@
     "reason": "Production interruption instructions and continuity limits; operational guidance rather than book text."
   },
   "_internal/docs/TEST_REPORT.md": {
-    "sha256": "e3fc8e166089658a2108a258a4077576d27b502009fe66414d3b9dee2bef1f8f",
-    "reason": "_internal/docs/TEST_REPORT.md: technical test records with added original hash-index validation notes; no story excerpt or new Corpus approval."
+    "sha256": "69a61c1ca5224f332d8b43251320a01106b05b5923edea93993659af71a954ee",
+    "reason": "_internal/docs/TEST_REPORT.md: 0.4.171 technical release notes, ignored-tracked implementation and test description; existing individual shingle approvals unchanged."
   },
   "_internal/docs/TEXT_NORMALIZATION.md": {
     "sha256": "06b3499d392b6f6a990b026d4f665b520ca3c9257ce452c57a5e7fa92e8ec94b",
@@ -2691,8 +2691,8 @@
     "reason": "scripts/release.py: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data. Re-pinned for 0.4.169: its added lines were reviewed as engineering text, no story or phoneme strings."
   },
   "_internal/scripts/release_gate.py": {
-    "sha256": "12794e696f281fa0e3bffd129185593aee3a3580dd9fb7e369a403af2078d45e",
-    "reason": "scripts/release_gate.py: all flagged strings match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
+    "sha256": "477cf8bf14875c8ccadd3d34e6764e6e2e701835aa7a605385463c2e29dea2fe",
+    "reason": "_internal/scripts/release_gate.py: 0.4.171 technical release notes, ignored-tracked implementation and test description; existing individual shingle approvals unchanged."
   },
   "_internal/scripts/report_castrules.py": {
     "sha256": "e742108582619a1aeda0e435ca799f9bf11e00d820f93c205a6e319cd822a832",
