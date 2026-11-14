@@ -50,7 +50,7 @@ def test_every_sourced_form_matches_or_is_explained_by_a_chosen_rule():
     assert len(matched) + len(evidence.EXPLAINED) == len(evidence.SOURCED)
     # 140 / 195 (10-11: o đầu từ -> ô, Ōsaka và Ōita khớp SGK): 38 / 91 dạng có nguồn + 114 ca của chủ sách (04-10, chín lần; ca của chủ sách thay dạng SGK cùng chữ: Yamato, Osaka; Gangwon viết cang theo chính tả: EXPLAINED);
     # 55 còn lại đều do luật của chủ sách, điểm đã quét hay nguồn tự lệch (EXPLAINED)
-    assert len(matched) == 136
+    assert len(matched) == 125  # 11 earlier ou/ei spellings differ under Lead 14-11.
 
 
 def test_tally_of_sourced_forms_by_kind():
@@ -60,7 +60,7 @@ def test_tally_of_sourced_forms_by_kind():
         entry[0] += _matches(token, origin, sources)
         entry[1] += 1
     # (khớp, tổng). Dạng "community" (Doraemon cũ) chỉ để xem, không là chuẩn.
-    assert tally == {("owner", "ja"): [70, 70], ("owner", "ko"): [39, 40], ("textbook", "ja"): [21, 43], ("official", "ja"): [3, 11], ("community", "ja"): [0, 7],
+    assert tally == {("owner", "ja"): [59, 70], ("owner", "ko"): [39, 40], ("textbook", "ja"): [21, 43], ("official", "ja"): [3, 11], ("community", "ja"): [0, 7],
                      ("official", "ko"): [3, 20]}
 
 
@@ -70,10 +70,10 @@ def test_tally_of_sourced_forms_by_kind():
     # chủ sách 04-10 (đứng trên mọi nguồn): u Nhật -> u ở mọi chỗ, hậu tố nối gạch thành một chuỗi
     # lần 2: y + nguyên âm -> gi (đầu và giữa từ), ei -> ây, e Nhật -> e (ge -> ghe, ke -> ke)
     ("Yamato", "ja", "Gia-ma-tô"), ("Ayaka", "ja", "A-gia-ca"), ("Yuki", "ja", "Giu-ki"), ("Mayu", "ja", "Ma-giu"), ("Yoshida", "ja", "Giô-si-đa"),
-    ("Rei", "ja", "Rây"), ("Hajime", "ja", "Ha-gi-me"), ("Sanae", "ja", "Xa-na-e"), ("Kōbe", "ja", "Cô-be"), ("Edo", "ja", "E-đô"),
-    ("Ge", "ja", "Ghe"), ("Keita", "ja", "Cây-ta"), ("Seiya", "ja", "Xây-a"),
+    ("Rei", "ja", 'Rê'), ("Hajime", "ja", "Ha-gi-me"), ("Sanae", "ja", "Xa-na-e"), ("Kōbe", "ja", "Cô-be"), ("Edo", "ja", "E-đô"),
+    ("Ge", "ja", "Ghe"), ("Keita", "ja", 'Kê-ta'), ("Seiya", "ja", 'Xê-gia'),
     # ou viết ra -> âu (kyou / ryou tách i-âu; shou chou jou giữ âm vòm, có cờ analogy); ō, ô, oo vẫn -> ô
-    ("Kyouko", "ja", "Ki-âu-cô"), ("Ryouma", "ja", "Ri-âu-ma"), ("Kouki", "ja", "Câu-ki"), ("Satou", "ja", "Xa-tâu"),
+    ("Kyouko", "ja", 'Ki-ô-cô'), ("Ryouma", "ja", 'Ri-ô-ma'), ("Kouki", "ja", 'Cô-ki'), ("Satou", "ja", 'Xa-tô'),
     ("Kyôto", "ja", "Ki-ô-tô"), ("Tooru", "ja", "Tô-ru"),
     ("Haruto-kun", "ja", "Ha-ru-tô-cun"), ("Fukushima", "ja", "Phu-cu-si-ma"), ("Suzu", "ja", "Xu-du"), ("Gugu", "ja", "Gu-gu"),
     ("Tsuru", "ja", "Xu-ru"), ("Kuro", "ja", "Cu-rô"), ("Fumio", "ja", "Phu-mi-ô"), ("Masakazu", "ja", "Ma-xa-ca-du"),
@@ -85,13 +85,13 @@ def test_tally_of_sourced_forms_by_kind():
     ("Kyuushuu", "ja", "Ki-u-su"), ("Chuubu", "ja", "Chu-bu"), ("Tsubasa", "ja", "Xu-ba-xa"),
     ("Kawasaki", "ja", "Ca-oa-xa-ki"),
     # nguyên âm dài không kéo dài; ei -> ây (chủ sách); ai giữ; n âm tiết khép
-    ("Koutarou", "ja", "Câu-ta-râu"), ("Tōkyō", "ja", "Tô-ki-ô"), ("Reiji", "ja", "Rây-gi"), ("Saitama", "ja", "Xai-ta-ma"),
+    ("Koutarou", "ja", 'Cô-ta-rô'), ("Tōkyō", "ja", "Tô-ki-ô"), ("Reiji", "ja", 'Rê-gi'), ("Saitama", "ja", "Xai-ta-ma"),
     ("Sendai", "ja", "Xen-đai"), ("Shinzō", "ja", "Sin-dô"),
     # c / k / g theo chính tả
     ("Kenji", "ja", "Ken-gi"), ("Ginko", "ja", "Ghin-cô"),
     # hậu tố: nối gạch vào tên thành một chuỗi (chủ sách 04-10), hậu tố giữ chữ thường
-    ("Subaru-kun", "ja", "Xu-ba-ru-cun"), ("Tanaka-senpai", "ja", "Ta-na-ca-xen-pai"), ("Sato-sensei", "ja", "Xa-tô-xen-xây"),
-    ("Aiko-san", "ja", "Ai-cô-xan"), ("Rin-chan", "ja", "Rin-chan"), ("Ojou-sama", "ja", "Ô-giâu-xa-ma"), ("Hiiragi-chan", "ja", "Hi-ra-ghi-chan"),
+    ("Subaru-kun", "ja", "Xu-ba-ru-cun"), ("Tanaka-senpai", "ja", "Ta-na-ca-xen-pai"), ("Sato-sensei", "ja", 'Xa-tô-xen-xê'),
+    ("Aiko-san", "ja", "Ai-cô-xan"), ("Rin-chan", "ja", "Rin-chan"), ("Ojou-sama", "ja", "Ô-giô-xa-ma"), ("Hiiragi-chan", "ja", "Hi-ra-ghi-chan"),
     ("senpai", "ja", "xen-pai"),
     # chủ sách 04-10 lần 4 (Nhật): ee -> e, ii -> i, aa -> a; g + i -> ghi, ji -> gi; tsu -> xu; yu sau phụ âm tách; shu -> su; o không phụ âm đầu -> o; ao cuối gộp
     ("Onee-san", "ja", "Ô-ne-xan"), ("Onii-chan", "ja", "Ô-ni-chan"), ("Hiiragi", "ja", "Hi-ra-ghi"), ("Ryuu", "ja", "Ri-u"), ("Kyuuji", "ja", "Ki-u-gi"),
@@ -128,10 +128,10 @@ def test_unsure_is_none(token, origin):
 
 
 def test_ou_before_a_palatal_is_flagged_as_an_analogy():
-    assert romanized_reading_flags("Shouta", "ja") == ("Sâu-ta", ("analogy:ou_vom",))
-    assert romanized_reading_flags("Chouji", "ja") == ("Châu-gi", ("analogy:ou_vom",))
-    assert romanized_reading_flags("Jouji", "ja") == ("Giâu-gi", ("analogy:ou_vom",))
-    assert romanized_reading_flags("Kyouko", "ja") == ("Ki-âu-cô", ())  # kyou / ryou do chính chủ sách chốt
+    assert romanized_reading_flags("Shouta", "ja") == ('Sô-ta', ("analogy:ou_vom",))
+    assert romanized_reading_flags("Chouji", "ja") == ('Chô-gi', ("analogy:ou_vom",))
+    assert romanized_reading_flags("Jouji", "ja") == ('Giô-gi', ("analogy:ou_vom",))
+    assert romanized_reading_flags("Kyouko", "ja") == ('Ki-ô-cô', ())  # kyou / ryou do chính chủ sách chốt
 
 
 def test_open_choices_are_flagged_not_silent():
@@ -146,7 +146,7 @@ def test_open_choices_are_flagged_not_silent():
     assert romanized_reading_flags("Suwon", "ko")[1] == ("analogy:ko_w_gu",)
     assert romanized_reading_flags("Hoe", "ko")[1] == ("open:ko_rare_vowels",)
     assert romanized_reading_flags("Naoki", "ja")[1] == ("analogy:ao_split",)
-    assert romanized_reading_flags("Seiya", "ja")[1] == ()
+    assert romanized_reading_flags("Seiya", "ja")[1] == ("open:y_after_vowel_pair",)
     assert romanized_reading_flags("Mayu", "ja")[1] == ("analogy:y_gi",)  # yu / yo cuối từ không còn bán âm (lần 9); chỉ ya (Maya)
     assert romanized_reading_flags("Kouya", "ja")[1] == ("open:y_after_vowel_pair",)
     assert romanized_reading_flags("Gyeong", "ko")[1] == ("analogy:ko_yeo",)
@@ -228,9 +228,9 @@ def test_the_preprocessing_flags_what_the_convention_does_not_say():
 def test_a_hyphen_joins_what_the_part_says_and_a_camel_pair_of_single_syllables_is_one_name():
     # đoạn thường hay hậu tố sau gạch nối vào tên; đoạn viết hoa là từ mới; CamelCase cách nhau dấu cách, trừ hai nửa đều MỘT âm tiết (JoJo, ChuChu)
     assert romanized_reading("Kanata-cả", "ja") == "Ca-na-ta-cả"
-    assert romanized_reading("Waseda-Keio", "ja") == "Oa-xe-đa Cây-o"
+    assert romanized_reading("Waseda-Keio", "ja") == 'Oa-xe-đa Kê-o'
     assert romanized_reading("Rin-san", "ja") == "Rin-xan"
-    assert romanized_reading("YuNa", "ja") == "Giu-na" and romanized_reading("KouIchi", "ja") == "Câu I-chi"
+    assert romanized_reading("YuNa", "ja") == "Giu-na" and romanized_reading("KouIchi", "ja") == 'Cô I-chi'
     assert romanized_reading("Seol-Ah", "ko") == "Xe-on-a" and romanized_reading("Park Seol-Ah", "ko") == "Pắc Xe-on-a"
 
 
@@ -240,7 +240,7 @@ def test_a_hyphen_joins_what_the_part_says_and_a_camel_pair_of_single_syllables_
     ("Hiiraghi", "ja", "Hi-ra-ghi"), ("Fina", "ja", "Phi-na"),
     ("tokki", "ko", "tô-ki"), ("Gangwon", "ko", "Cang-guôn"),
     # không đổi: ō đầu từ vẫn o, oh trước nguyên âm là o + h của ha / hi, ge không thành ghét ngoài Gesunoh, Oppa đã tách ở lần 9
-    ("Ōsaka", "ja", "Ô-xa-ca"), ("Ohayou", "ja", "Ô-ha-giâu"), ("Gesu", "ja", "Ghe-xu"), ("Gen", "ja", "Ghen"),
+    ("Ōsaka", "ja", "Ô-xa-ca"), ("Ohayou", "ja", 'Ô-ha-giô'), ("Gesu", "ja", "Ghe-xu"), ("Gen", "ja", "Ghen"),
 ])
 def test_owner_ruling_of_the_eighth_round_and_what_it_leaves_alone(token, origin, reading):
     assert romanized_reading(token, origin) == reading
@@ -259,8 +259,8 @@ def test_the_eighth_round_flags_what_it_infers():
     # chủ sách 04-10 lần 9, Nhật (chữ viết đúng chính tả của app: ka / ku của chủ sách -> ca / cu; "doi" -> gioi, d = gi ở giọng Bắc)
     ("Yurika", "ja", "Giu-ri-ca"), ("Yukinoshita", "ja", "Giu-ki-nô-si-ta"), ("Yume", "ja", "Giu-me"), ("Yue", "ja", "Giu-e"), ("Izayoi", "ja", "I-da-gioi"),
     ("Futayo", "ja", "Phu-ta-giô"), ("Renya", "ja", "Re-ni-a"), ("Shinomiya", "ja", "Si-nô-mi-a"), ("Sakuya", "ja", "Xa-cu-gia"), ("Kasuya", "ja", "Ca-xu-gia"),
-    ("Kouya", "ja", "Câu-gia"), ("Raiya", "ja", "Rai-gia"), ("Direkuresu", "ja", "Đi-re-cu-re-xu"), ("Hamsuke", "ja", "Ham-xu-ke"), ("ecchi", "ja", "ét-chi"),
-    ("Haffu", "ja", "Ha-phu"), ("Reidi", "ja", "Rây-đi"), ("Poh-chan", "ja", "Pô-chan"),
+    ("Kouya", "ja", 'Cô-gia'), ("Raiya", "ja", "Rai-gia"), ("Direkuresu", "ja", "Đi-re-cu-re-xu"), ("Hamsuke", "ja", "Ham-xu-ke"), ("ecchi", "ja", "ét-chi"),
+    ("Haffu", "ja", "Ha-phu"), ("Reidi", "ja", 'Rê-đi'), ("Poh-chan", "ja", "Pô-chan"),
     # Hàn: pp / nn tách âm tiết, yeo đầu từ + coda -> gi + o + coda (young -> yeong), eun -> ưn, ye đầu từ -> gie (Yeeun, Yejin), ca cố định Jeongeun / Luda
     ("Oppa", "ko", "Óp-pa"), ("unnie", "ko", "un-ni"), ("noona", "ko", "nu-na"), ("Ahn", "ko", "An"), ("Yeeun", "ko", "Gie-ưn"), ("Muyoung", "ko", "Mu-giong"), ("Namgung", "ko", "Nam-gung"),
     ("Chaeyeon", "ko", "Che-gion"), ("Young", "ko", "Giong"), ("Hye", "ko", "Hê"), ("Jeongeun", "ko", "Châng-gưn"), ("Luda", "ko", "Lu-đa"), ("won", "ko", "guôn"),

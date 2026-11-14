@@ -253,6 +253,8 @@ Không đổi sang phân tích cuốn chiếu nếu người dùng chưa thay đ
   e/ê, o/ô/ơ giữ chữ có mũ/móc và thanh; ư không gộp với u. Cặp hai nguyên âm phải giống nhau sau bỏ
   thanh mới được gộp trước G2P. Tiếng kêu chỉ có ă/â/y dùng a/ơ/i để đọc được,
   giữ thanh. Python/Kotlin cùng ca parity JNI; namespace clip `shouts2`. Chữ truyện hiển thị không đổi.
+  Lead 14-11: thanh chỉ giữ ở âm gốc, nguyên âm kéo tiếp đọc thanh ngang (rồi… i, á… a), không mang `_`.
+  TN số, tiền và địa chỉ dùng chung Python/Kotlin; fixture `tests/fixtures/readaloud/tnfix172/cases.json`, cache luật 21.
   Nếu endpoint vẫn còn hoạt động ở đúng trần thì phải repair kể cả Whisper nhận đúng; không fade/cắt waveform để lách.
 - Câu một hoặc hai từ có tối đa tám ký tự đọc được phải dùng ngân sách cực ngắn 24 frame. Nếu câu đó đã chạm
   trần frame rồi bị Whisper xác nhận lệch hoặc endpoint còn hoạt động, repair tiếp theo phải giảm xuống 12 frame để

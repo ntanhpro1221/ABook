@@ -50,7 +50,7 @@ class SupertonicSpeakerTest {
         val engine = FakeEngine()
         val text = "Haruto gặp Kyouko."
         val spoken = SupertonicSpeaker(null) { pieces -> pieces.joinToString(" ").lowercase() }.speak(engine, "F1", text, "ja", mapOf("Haruto" to "Ha-ru-to"))
-        assertEquals(listOf("ha-ru-to gặp ki-âu-cô."), engine.calls.map { it.first })
+        assertEquals(listOf("ha-ru-to gặp ki-ô-cô."), engine.calls.map { it.first })
         assertEquals(WordTokens.count(text), spoken.words.size)
     }
 

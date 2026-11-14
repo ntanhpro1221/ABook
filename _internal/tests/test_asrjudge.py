@@ -254,9 +254,9 @@ def test_pipeline_passes_effective_region_to_direct_repeat_and_collapsed(tmp_pat
 
 
 @pytest.mark.parametrize("text,reading", [
-    ("đââââââyy", "đây…"), ("Eeeê", "ê… ê"), ("Gìì", "gì… ì"),
-    ("Gaààoo", "gào… ò"), ("Piiim", "pim… i"), ("Êii", "ê… i"),
-    ("ớớ", "ớ… ớ"), ("ừừ", "ừ… ừ"), ("Ưư", "ư… ư"), ("hẵẵng", "hẵng…"), ("bậập", "bập…"),
+    ("đââââââyy", "đây…"), ("Eeeê", "ê… ê"), ("Gìì", "gì… i"),
+    ("Gaààoo", "gào… o"), ("Piiim", "pim… i"), ("Êii", "ê… i"),
+    ("ớớ", "ớ… ơ"), ("ừừ", "ừ… ư"), ("Ưư", "ư… ư"), ("hẵẵng", "hẵng…"), ("bậập", "bập…"),
 ])
 def test_marked_stretches_are_readable_before_g2p(text, reading):
     assert shouts.stretch_reading(text) == reading
@@ -291,7 +291,7 @@ def test_every_vietnamese_vowel_and_tone_collapses(vowel, tone):
     assert shouts.stretch_reading(char * 4) is not None
 
 
-@pytest.mark.parametrize('text,expected', [('âââ', 'ơ… ơ'), ('ắắ', 'á… á'), ('ỳỳ', 'ì… ì')])
+@pytest.mark.parametrize('text,expected', [('âââ', 'ơ… ơ'), ('ắắ', 'á… a'), ('ỳỳ', 'ì… i')])
 def test_bare_short_vowel_cries_use_a_readable_sustained_vowel(text, expected):
     assert shouts.stretch_reading(text) == expected
 

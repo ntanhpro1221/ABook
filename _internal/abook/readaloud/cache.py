@@ -41,7 +41,8 @@ TYPES = {"mp3": "audio/mpeg", "wav": "audio/wav"}
 # bảng điểm chữ trùng Việt / Anh (shared_words.json; phiên bản english_policy của nó trùng số 6 với loanwords), tên Nhật tự động đọc tách từng âm tiết.
 # 19 invalidates clips made before the integrated numeric/loanword rules and NFC input boundaries.
 # 20 resolves dotted date/time/version contexts and preserves fractional zeroes.
-CACHE_RULES = 20
+# 21 refreshes amounts, addresses, symbols and untoned vocal continuations.
+CACHE_RULES = 21
 
 
 def rules_version() -> str:

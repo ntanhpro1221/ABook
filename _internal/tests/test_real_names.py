@@ -105,7 +105,7 @@ def test_read_aloud_and_studio_say_the_same_string(book, case):
     assert said == case["said"]
     assert len(offsets) == len(text) + 1 and offsets == sorted(offsets) and offsets[-1] == len(said)
     assert vieneu.reading_tag(text, origin, direct_english=True) == case["tag"]
-    assert case["tag"].endswith("jp-fallback6")
+    assert case["tag"].endswith('jp-fallback7')
 
 
 @pytest.mark.parametrize("book,case", CASES, ids=_id)
@@ -141,8 +141,8 @@ def test_each_name_and_word_has_its_own_sound_in_every_book(book):
     assert by_text["Hyun Woo nhìn Ji-eun rồi cười."]["phonemes"].startswith("hˈi ˈun ˈu ɲˈi2n ")
     # Heizaemon: four phonetic words wherever it stands, the same sounds in every book
     for text in ("Chờ đã, Heizaemon!", "Pa-pa nhìn Heizaemon.", "Dan! Heizaemon và Yuki đang chờ.", "Hạng K! Heizaemon mở APP."):
-        assert "Hây-da-e-môn" in by_text[text]["said"]
-        assert " hˈəɪ zˈaː ˈɛ mˈon" in " " + by_text[text]["phonemes"].replace("!", " ").replace(".", " ")
+        assert "Hê-da-e-môn" in by_text[text]["said"]
+        assert " hˈe zˈaː ˈɛ mˈon" in " " + by_text[text]["phonemes"].replace("!", " ").replace(".", " ")
     # Yuki is "Giu-ki" beside a Vietnamese word, a Western name and a Japanese name
     assert "zˈu kˈi" in by_text["Dan! Heizaemon và Yuki đang chờ."]["phonemes"]
     # Dan: a name by the book's rulings (đ) after "Rồi" and opening a sentence; without the rulings sea-g2p reads the syllable "dan"
@@ -158,7 +158,7 @@ def test_each_name_and_word_has_its_own_sound_in_every_book(book):
     assert app["said"] == "Gi-ưn tải app hạng K về máy."
     assert app["phonemes"].endswith(" t̪ˈaː4j ˈæp hˈaː6ŋ kˈaː vˈe2 mˈaɜj.")
     assert phonemize(["hạng K về máy."]) == phonemize(["hạng ca về máy."]) == "hˈaː6ŋ kˈaː vˈe2 mˈaɜj."
-    assert by_text["Hạng K! Heizaemon mở APP."]["phonemes"] == "hˈaː6ŋ kˈaː! hˈəɪ zˈaː ˈɛ mˈon mˈəː4 ˈæp."
+    assert by_text["Hạng K! Heizaemon mở APP."]["phonemes"] == "hˈaː6ŋ kˈaː! hˈe zˈaː ˈɛ mˈon mˈəː4 ˈæp."
 
 
 def test_a_shouted_name_is_the_name_in_a_japanese_book():
@@ -167,10 +167,10 @@ def test_a_shouted_name_is_the_name_in_a_japanese_book():
     book = BOOKS[0]
     by_text = {case["text"]: case for case in book["cases"]}
     assert book["proven"] == {"HYUN": "Hi-un", "WOO": "Woo", "YUKI": "Giu-ki"}
-    assert by_text["YUKI! Heizaemon gọi lớn."]["said"] == "Giu-ki! Hây-da-e-môn gọi lớn."
+    assert by_text["YUKI! Heizaemon gọi lớn."]["said"] == "Giu-ki! Hê-da-e-môn gọi lớn."
     assert by_text["“HYUN WOO! Ji-eun đâu rồi?”"]["said"] == "“Hi-un U! Gi-ưn đâu rồi?”"
     assert by_text["“HYUN WOO! Ji-eun đâu rồi?”"]["phonemes"] == "hˈi ˈun ˈu! zˈi ˈən ɗˈə1w ɹˈo2j?"
     mixed = by_text["Rồi Dan, Heizaemon và YUKI mở APP hạng K xem cục pin."]
-    assert mixed["said"] == "Rồi Dan, Hây-da-e-môn và Giu-ki mở app hạng K xem cục pin."
-    assert mixed["phonemes"] == "ɹˈo2j ɗˈaːn, hˈəɪ zˈaː ˈɛ mˈon vˌaː2 zˈu kˈi mˈəː4 ˈæp hˈaː6ŋ kˈaː sˈɛm kˈu6c pˈin."
+    assert mixed["said"] == "Rồi Dan, Hê-da-e-môn và Giu-ki mở app hạng K xem cục pin."
+    assert mixed["phonemes"] == "ɹˈo2j ɗˈaːn, hˈe zˈaː ˈɛ mˈon vˌaː2 zˈu kˈi mˈəː4 ˈæp hˈaː6ŋ kˈaː sˈɛm kˈu6c pˈin."
     assert _phonemes("Rồi Dan, Heizaemon và Yuki mở APP hạng K xem cục pin.", book) == mixed["phonemes"]

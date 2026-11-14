@@ -52,11 +52,11 @@ class NamesTest {
 
     @Test
     fun aJapaneseNameIsReadByTheRulesAndEnglishAndVietnameseWordsAreNot() {
-        assertEquals(listOf("“Ha-ru-tô-cun,”", "Gia-ma-tô!", "(Ki-âu-cô)", "Xa-cu-ra…"), said("“Haruto-kun,” Yamato! (Kyouko) Sakura…", "ja"))
+        assertEquals(listOf("“Ha-ru-tô-cun,”", "Gia-ma-tô!", "(Ki-ô-cô)", "Xa-cu-ra…"), said("“Haruto-kun,” Yamato! (Kyouko) Sakura…", "ja"))
         assertEquals(listOf("Kate", "và", "Mike", "Rose,", "Anne", "Emma", "Hoa", "Tôi", "ây ai", "a… a", "Server"), said("Kate và Mike Rose, Anne Emma Hoa Tôi AI Aaaa Server", "ja"))
         assertEquals(VieneuUnits.tokens("Haruto đến"), said("Haruto đến", null))
         assertEquals(listOf("Xeo-gion", "gặp", "Gi-hô"), said("Seo-yeon gặp Ji-ho", "ko"))
-        assertEquals(listOf("Gin-đô-nô", "Giu-ki-tan", "Câu-ni", "hừm", "Goblin", "Elf"), said("Jin-dono Yuki-tan Kou-nii Hm Goblin Elf", "ja"))
+        assertEquals(listOf("Gin-đô-nô", "Giu-ki-tan", "Cô-ni", "hừm", "Goblin", "Elf"), said("Jin-dono Yuki-tan Kou-nii Hm Goblin Elf", "ja"))
     }
 
     @Test
@@ -97,9 +97,9 @@ class NamesTest {
         assertTrue(ClipCache.key("vieneu", "nano/Adam", "t", "ja") != ClipCache.key("vieneu", "nano/Adam", "t"))
         assertEquals("ja+tn", ClipCache.reading("edge:vi-VN-X", "Haruto đến.", "ja")) // Edge nhận chữ chuẩn hoá: thêm dấu tn
         assertEquals("", ClipCache.reading("azure:vi-VN-X", "Haruto đến.", "ja"))
-        assertEquals("ja+direct-en${EnglishPolicy.VERSION}+jp-fallback6+${ClipLift.TAG}", ClipCache.reading("vieneu:nano/Adam", "Haruto đến.", "ja"))
-        assertEquals("direct-en${EnglishPolicy.VERSION}+jp-fallback6+${ClipLift.TAG}", ClipCache.reading("vieneu:nano/Adam", "Kate đến.", "ja"))
-        assertEquals("ja+direct-en${EnglishPolicy.VERSION}+jp-fallback6+${ClipLift.TAG}", ClipCache.reading("vieneu:nano/Giọng chưa đo", "Haruto đến.", "ja"))
+        assertEquals("ja+direct-en${EnglishPolicy.VERSION}+jp-fallback7+${ClipLift.TAG}", ClipCache.reading("vieneu:nano/Adam", "Haruto đến.", "ja"))
+        assertEquals("direct-en${EnglishPolicy.VERSION}+jp-fallback7+${ClipLift.TAG}", ClipCache.reading("vieneu:nano/Adam", "Kate đến.", "ja"))
+        assertEquals("ja+direct-en${EnglishPolicy.VERSION}+jp-fallback7+${ClipLift.TAG}", ClipCache.reading("vieneu:nano/Giọng chưa đo", "Haruto đến.", "ja"))
     }
 
     @Test

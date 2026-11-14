@@ -47,10 +47,10 @@ def test_the_kotlin_copy_of_the_list_is_the_same_words() -> None:
 
 # ---- token nào được đọc theo luật --------------------------------------------------------------------------------------------------
 @pytest.mark.parametrize("token, reading", [
-    ("Haruto", "Ha-ru-tô"), ("Yamato", "Gia-ma-tô"), ("Kyouko", "Ki-âu-cô"), ("Hana", "Ha-na"), ("Rika", "Ri-ca"), ("Sakura", "Xa-cu-ra"),
+    ("Haruto", "Ha-ru-tô"), ("Yamato", "Gia-ma-tô"), ("Kyouko", 'Ki-ô-cô'), ("Hana", "Ha-na"), ("Rika", "Ri-ca"), ("Sakura", "Xa-cu-ra"),
     ("Haruto-kun", "Ha-ru-tô-cun"), ("Tōkyō", "Tô-ki-ô"),
     # hậu tố gọi nối gạch vào tên, không tách thành hai chữ
-    ("Jin-dono", "Gin-đô-nô"), ("Yuki-tan", "Giu-ki-tan"), ("Kou-nii", "Câu-ni"), ("Sora-nee", "Xô-ra-ne"), ("Tanaka-senpai", "Ta-na-ca-xen-pai"),
+    ("Jin-dono", "Gin-đô-nô"), ("Yuki-tan", "Giu-ki-tan"), ("Kou-nii", 'Cô-ni'), ("Sora-nee", "Xô-ra-ne"), ("Tanaka-senpai", "Ta-na-ca-xen-pai"),
 ])
 def test_a_japanese_name_in_a_japanese_book_is_read_by_the_rules(token: str, reading: str) -> None:
     assert _said(f"Rồi {token}.", "ja")[1] == f"{reading}."
@@ -71,7 +71,7 @@ def test_names_stay_without_an_origin_and_punctuation_around_a_name_is_kept() ->
     toks = word_timing.tokens("“Haruto-kun,” Yamato! (Kyouko) Sakura… Hajime")
     # không gốc: chỉ hậu tố gọi nối gạch cho biết là tên Nhật (names.honorific_reading); tên trần để nguyên
     assert vieneu.spoken_tokens(toks) == ["“Ha-ru-tô-cun,”", "Yamato!", "(Kyouko)", "Sakura…", "Hajime"] == vieneu.spoken_tokens(toks, None) == vieneu.spoken_tokens(toks, "zz")
-    assert vieneu.spoken_tokens(toks, "ja") == ["“Ha-ru-tô-cun,”", "Gia-ma-tô!", "(Ki-âu-cô)", "Xa-cu-ra…", "Ha-gi-me"]
+    assert vieneu.spoken_tokens(toks, "ja") == ["“Ha-ru-tô-cun,”", "Gia-ma-tô!", '(Ki-ô-cô)', "Xa-cu-ra…", "Ha-gi-me"]
 
 
 def test_a_korean_book_reads_romanized_korean_names() -> None:
@@ -220,7 +220,7 @@ def test_the_clip_key_only_changes_for_text_the_origin_changes(fake_voices, tmp_
     provider, engines = fake_voices
     assert clip_key("p", "v", "t") == clip_key("p", "v", "t", "")
     assert clip_key("p", "v", "t", "ja") != clip_key("p", "v", "t")
-    direct = f"direct-en{english_policy.VERSION}+jp-fallback6+jp-name-audio1-plain"
+    direct = f"direct-en{english_policy.VERSION}+jp-fallback7+jp-name-audio1-plain"
     assert provider.reading_tag("Haruto đến.", "ja") == f"ja+{direct}" and provider.reading_tag("Haruto đến.", None) == direct
     assert provider.reading_tag("Kate đến.", "ja") == direct and provider.reading_tag("Hoa đến.", "ko") == direct
     service = ReadAloud(tmp_path / "cache", [provider])
@@ -342,9 +342,9 @@ def test_punctuation_is_kept_and_the_shown_words_and_their_count_never_change() 
 
 
 def test_japanese_names_follow_the_book_origin_and_the_english_rule_takes_the_rest() -> None:
-    assert _said_en("Kyouko và Haruto gặp Rose.", "ja") == ["Ki-âu-cô", "và", "Ha-ru-tô", "gặp", english_vi.vietnamized_english("Rose") + "."]
-    assert _said_en("Kyouko và Haruto gặp Rose.", None)[0] != "Ki-âu-cô", "không gốc: đi đường chữ Anh, không phải luật romaji"
-    assert vieneu.spoken_tokens(word_timing.tokens("Kyouko gặp Rose."), "ja") == ["Ki-âu-cô", "gặp", "Rose."], "giọng nói được Anh: tên Anh để nguyên"
+    assert _said_en("Kyouko và Haruto gặp Rose.", "ja") == ['Ki-ô-cô', "và", "Ha-ru-tô", "gặp", english_vi.vietnamized_english("Rose") + "."]
+    assert _said_en("Kyouko và Haruto gặp Rose.", None)[0] != 'Ki-ô-cô', "không gốc: đi đường chữ Anh, không phải luật romaji"
+    assert vieneu.spoken_tokens(word_timing.tokens("Kyouko gặp Rose."), "ja") == ['Ki-ô-cô', "gặp", "Rose."], "giọng nói được Anh: tên Anh để nguyên"
 
 
 def test_the_reading_tag_changes_only_when_the_reading_does() -> None:

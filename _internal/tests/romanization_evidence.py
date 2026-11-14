@@ -307,3 +307,21 @@ EXPLAINED: dict[str, tuple[str, str]] = {
     "Kim Hyong-o": ("Kim He-ong-ô", "yeo sau phụ âm mất y, eo tách e-ong (" + _KO4 + "); nguồn viết Kim Hiêng Ô" + "; " + _HY),
     "Gangwon": ("Cang-guôn", "g đầu từ -> k, k trước a viết c theo chính tả (luật 1.5; bộ kiểm âm tiết không nhận kang); chủ sách 04-10 lần 8 viết kang-guôn"),
 }
+
+# Current policy exceptions; original SOURCED evidence is preserved.
+EXPLAINED.update({
+    'Rei': ('Rê', "Lead 14-11: Japanese long vowels ou -> o circumflex and ei -> e circumflex replace the earlier spelling choice."),
+    'sensei': ('xen-xê', "Lead 14-11: Japanese long vowels ou -> o circumflex and ei -> e circumflex replace the earlier spelling choice."),
+    'Kyouko': ('Ki-ô-cô', "Lead 14-11: Japanese long vowels ou -> o circumflex and ei -> e circumflex replace the earlier spelling choice."),
+    'Ryouma': ('Ri-ô-ma', "Lead 14-11: Japanese long vowels ou -> o circumflex and ei -> e circumflex replace the earlier spelling choice."),
+    'Inoue': ('I-nô-e', "Lead 14-11: Japanese long vowels ou -> o circumflex and ei -> e circumflex replace the earlier spelling choice."),
+    'Shouta': ('Sô-ta', "Lead 14-11: Japanese long vowels ou -> o circumflex and ei -> e circumflex replace the earlier spelling choice."),
+    'Jouichi': ('Giô-i-chi', "Lead 14-11: Japanese long vowels ou -> o circumflex and ei -> e circumflex replace the earlier spelling choice."),
+    'Kouhai': ('Cô-hai', "Lead 14-11: Japanese long vowels ou -> o circumflex and ei -> e circumflex replace the earlier spelling choice."),
+    'Seiya': ('Xê-gia', "Lead 14-11: Japanese long vowels ou -> o circumflex and ei -> e circumflex replace the earlier spelling choice."),
+    'Kouya': ('Cô-gia', "Lead 14-11: Japanese long vowels ou -> o circumflex and ei -> e circumflex replace the earlier spelling choice."),
+    'Reidi': ('Rê-đi', "Lead 14-11: Japanese long vowels ou -> o circumflex and ei -> e circumflex replace the earlier spelling choice."),
+    'Kōmei': ('Cô-mê', "Lead 14-11: Japanese long vowels ou -> o circumflex and ei -> e circumflex replace the earlier spelling choice."),
+    'Meiji': ('Mê-gi', "Lead 14-11: Japanese long vowels ou -> o circumflex and ei -> e circumflex replace the earlier spelling choice."),
+    'Eisuke': ('Ê-xu-ke', "Lead 14-11: Japanese long vowels ou -> o circumflex and ei -> e circumflex replace the earlier spelling choice."),
+})

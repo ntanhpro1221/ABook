@@ -66,7 +66,7 @@ def test_a_fixed_latin_interjection_is_read_as_a_vietnamese_sound(token: str, re
     # nguyên âm đứng riêng: gốc, "…", nguyên âm một lần
     ("Aaaa", "a… a"), ("Haaa", "ha… a"), ("Uuu", "u… u"), ("Viiiiii", "vi… i"), ("Taaa", "ta… a"), ("oaaaa", "oa… a"), ("Eeee", "e… e"),
     # kéo nguyên âm mang thanh của âm gốc
-    ("rồiiiii", "rồi… ì"), ("tớơơơơ", "tớ… ớ"), ("chứứứứ", "chứ… ứ"), ("quẹooo", "quẹo… ọ"), ("đâuuuu", "đâu… u"), ("màaaa", "mà… à"), ("nhaaa", "nha… a"), ("tooo", "to… o_"),
+    ("rồiiiii", "rồi… i"), ("tớơơơơ", "tớ… ơ"), ("chứứứứ", "chứ… ư"), ("quẹooo", "quẹo… o"), ("đâuuuu", "đâu… u"), ("màaaa", "mà… a"), ("nhaaa", "nha… a"), ("tooo", "to… o"),
     # phụ âm / "y": chỉ gốc và "…"
     ("Khônggg", "không…"), ("Emmmm", "ừm"), ("Hầyyy", "hầy…"), ("rấtttt", "rất…"), ("hiếppppp", "hiếp…"), ("Oáppp", "oáp…"), ("Haizzz", "hai…"),
     # thán từ Latin: gốc trong bảng
@@ -146,7 +146,7 @@ def test_three_equal_capitals_are_a_cry_only_with_a_cry_mark() -> None:
     assert _said("Kết quả: AAA là cao nhất") == ["Kết", "quả:", "a a a", "là", "cao", "nhất"]  # tên chữ, không phải "a… a"
     assert _said("Rider OOO, tài khoản YYY.") == ["Rider", "ô ô ô,", "tài", "khoản", "i-dài i-dài i-dài."]
     assert _said("『AAA――――』 AAA──") == ["『a… a――――』", "a… a──"]
-    assert _said("AAA! OOO…! UUU~ EEE?! Aaa, AAAA") == ["a… a!", "o… o_…!", "u… u,", "e… e?", "a… a,", "a… a"]
+    assert _said("AAA! OOO…! UUU~ EEE?! Aaa, AAAA") == ["a… a!", "o… o…!", "u… u,", "e… e?", "a… a,", "a… a"]
 
 
 @pytest.mark.parametrize(("core", "reading"), [("Hmmm", "hừm…"), ("HMMM", "hừm…"), ("Shhh", "suỵt…"), ("Grrr", "gừ…"), ("Pffft", "phụt…"), ("Kkkk", "khà khà…")])
@@ -160,7 +160,7 @@ def test_two_stretched_words_in_a_row_and_a_stretch_inside_quotes() -> None:
 
 def test_a_stretch_glued_to_the_next_word_is_read_before_the_break() -> None:
     assert _said("Ummm…Ý bạn; Haaa…..cuối; màaaa—nếu; Oáppp~....Hầy; -EH....nhìn") == [
-        "ừm…Ý", "bạn;", "ha… a…..cuối;", "mà… à, nếu;", "oáp....Hầy;", "-ê....nhìn"]
+        "ừm…Ý", "bạn;", "ha… a…..cuối;", "mà… a, nếu;", "oáp....Hầy;", "-ê....nhìn"]
 
 
 def test_a_trailing_dash_of_a_stretch_is_dropped() -> None:
@@ -178,7 +178,7 @@ def test_a_stretched_roman_numeral_or_x_is_not_a_stretch() -> None:
 
 # ---- hậu tố gọi ---------------------------------------------------------------------------------------------------------------------------
 @pytest.mark.parametrize("token, reading", [
-    ("Ariel-sama", "Ariel-xa-ma"), ("Mary-san", "Mary-xan"), ("Zeros-sensei", "Zeros-xen-xây"), ("Goblin-san", "Goblin-xan"), ("Noel-chan", "Noel-chan"),
+    ("Ariel-sama", "Ariel-xa-ma"), ("Mary-san", "Mary-xan"), ("Zeros-sensei", "Zeros-xen-xê"), ("Goblin-san", "Goblin-xan"), ("Noel-chan", "Noel-chan"),
     ("sĩ-sama", "sĩ-xa-ma"), ("thần-chan", "thần-chan"), ("diện-san", "diện-xan"), ("Bá-sama", "Bá-xa-ma"),
     # tên Nhật rõ đọc cả tên (không cần gốc của cuốn)
     ("Sora-sama", "Xô-ra-xa-ma"), ("Hinata-sama", "Hi-na-ta-xa-ma"), ("Haruto-kun", "Ha-ru-tô-cun"), ("Tanaka-senpai", "Ta-na-ca-xen-pai"),
@@ -221,7 +221,7 @@ def test_a_laugh_or_an_interjection_is_read_as_sounds(token: str, reading: str) 
 
 
 def test_a_word_stretched_in_several_places_is_collected_when_it_makes_one_syllable() -> None:
-    assert shouts.stretch_reading("Cccchhhhàaaaaaoooo") == "chào… ò"
+    assert shouts.stretch_reading("Cccchhhhàaaaaaoooo") == "chào… o"
     assert shouts.stretch_reading("sssssáaaannnngggg") == "sáng…"
     assert shouts.stretch_reading("Bbbbbuuuuuôooiiii") == "buôi… i", "ô/o is one vowel stretch"
 

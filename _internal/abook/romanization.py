@@ -40,7 +40,7 @@ OPEN_CHOICES = {
 # ở mọi chỗ (fu phu, ku cu, ru ru, su xu, zu du, tsu xu, gu gu), hậu tố nối gạch (Haruto-kun -> Ha-ru-tô-cun), fu -> phu, e Nhật -> e
 # (Hajime -> Ha-gi-me, Kôbe -> Cô-be), y + nguyên âm -> gi (Yamato -> Gia-ma-tô, Ayaka -> A-gia-ca; Yoon -> Giun), ee -> e, ii -> i (Onee -> One,
 # Hiiragi -> Hi-ra-ghi), yu sau phụ âm tách (Ryuu -> Ri-u), shu -> su, k / t / p bật hơi của Hàn -> c / t / p, j Hàn -> gi, eo -> eo / e-o + coda
-# (Seo -> Xeo, Jeong -> Gie-ong), wo -> uô (Won -> Guôn). "ei" dưới đây cũng đã chốt (Rei -> Rây), "g" trước i đọc "ghi" (Hiiragi) còn ji -> gi.
+# (Seo -> Xeo, Jeong -> Gie-ong), wo -> uô (Won -> Guôn). Lead 14-11 updates Japanese ei -> ê and ou -> ô in the shared policy; g + i remains ghi, ji remains gi.
 CHOICES = {
     "ko_g": "k",              # g đầu từ của Hàn: "k" | "g"
     "ko_d": "t",              # d đầu từ: "t" | "đ"
@@ -284,7 +284,7 @@ def _ja_word(word: str, flags: list[str]) -> list[_Syl] | None:
             return None
         if forced_o:
             syllables[-1].nucleus = "ô"  # oh: ô dài, kể cả đầu từ (Ohto -> Ô-tô; ō đầu từ vẫn o: Ōsaka -> O-xa-ca)
-        # nguyên âm dài (không kéo dài): oo, ō -> ô, uu -> u, ee -> e, ii -> i, ei -> ây, ou viết ra -> âu (chủ sách 04-10); ai giữ là ai
+        # Long Japanese vowels: ei -> ê, ou -> ô; ai remains a diphthong.
         follow = "" if long_o else word[j:j + 1]
         if vowel == "e" and follow == "i":
             syllables[-1].nucleus = CHOICES["ei"]

@@ -374,6 +374,7 @@ object VieneuUnits {
             if (last != null && last in SENTENCE_END) break
             before.add(Symbols.core(word).lowercase())
         }
+        if (before.any { it in setOf("tính", "trừ", "hiệu") }) return "minus"
         if (before.take(1).any { it in RANGE_CODES } || before.any { it in RANGE_RATIO } || (before.isEmpty() && plain[index].endsWith("."))) return "join"
         return if (before.take(3).any { it in Symbols.DUEL_WORDS }) "duel" else ""
     }
@@ -418,7 +419,7 @@ object VieneuUnits {
             return if (unit || numberUnit(plain, index)) match.value else integerReading(parts.joinToString(""))
         if (parts.size != 2) return match.value
         val (whole, fraction) = parts
-        val decimal = whole.length >= 4 || fraction.length >= 4 || (whole == "0" && fraction.length >= 3)
+        val decimal = whole.length >= 4 || fraction.length >= 4 || whole == "0" || before in setOf("là", "mức", "giá", "hệ", "cân")
         if (decimal || unit || numberUnit(plain, index)) {
             // Preserve every fractional zero and separate an attached unit before sea-g2p.
             val said = decimalReading(whole, fraction)
@@ -432,9 +433,26 @@ object VieneuUnits {
         val plain = if (toks != null && toks.size == out.size) toks else out
         for ((index, original) in out.withIndex()) {
             if (original.none { it.isDigit() }) continue
+            val prefix = plain.subList(maxOf(0, index - 6), index).joinToString(" ").split(Regex("[.!?;]")).last()
+            val identifier = Regex("""(["'“‘(\[]*)#([0-9]+)(["'”’)\].,;:!?…]*)""").matchEntire(original)
+            if (identifier != null) {
+                val digits = listOf("không", "một", "hai", "ba", "bốn", "năm", "sáu", "bảy", "tám", "chín")
+                val label = if (prefix.trim().split(Regex("\\s+")).lastOrNull()?.lowercase() in setOf("số", "no")) "" else "số "
+                out[index] = identifier.groupValues[1] + label + identifier.groupValues[2].map { digits[it.digitToInt()] }.joinToString(" ") + identifier.groupValues[3]
+                continue
+            }
+            if (Regex("""["'“‘(«]*[0-9]+["'”’)».,;:!?…]*""").matches(original) && (BIGINT_ID.containsMatchIn(prefix) || Regex("""^["'“‘(«]*0[0-9]""").containsMatchIn(original))) {
+                val digits = listOf("không", "một", "hai", "ba", "bốn", "năm", "sáu", "bảy", "tám", "chín")
+                out[index] = Regex("[0-9]+").replace(original) { match -> match.value.map { digits[it.digitToInt()] }.joinToString(" ") }
+                continue
+            }
+            if (Regex("""\d[.,]\d+-\d""").containsMatchIn(original)) continue
+            if (original.any { it in "★☆✩✪✫✬✭✮✯✰⭐↑↓▲▼△▽" }) continue
             val mode = if (RANGE.containsMatchIn(original)) rangeMode(plain, index) else ""
             out[index] = GOLD_G.replace(RANGE.replace(original) { m -> range(m, if (original.getOrNull(m.range.last + 1) == '=' || (m.range.first > 0 && original[m.range.first - 1] == '=')) "minus" else mode) }, " giê")
             var token = out[index]
+            token = Regex("""(?<![$W.,])[0-9]+(?:\.[0-9]{3})+,[0-9]+(?![$W]|[.,][0-9])|(?<![$W.,])[0-9]+(?:,[0-9]{3})+\.[0-9]+(?![$W]|[.,][0-9])""").replace(token) { Symbols.moneyNumber(it.value) }
+            token = Regex("""(?<![$W.,])(-?)([0-9]+),([0-9]+)(?![$W]|[.,][0-9])""").replace(token) { (if (it.groupValues[1].isNotEmpty()) "âm " else "") + decimalReading(it.groupValues[2], it.groupValues[3]) }
             token = DOTTED_NUMBER.replace(token) { dottedNumber(it, token, plain, index) }
             // Only a number standing alone is a count; dates, codes, money, brackets and comparisons keep their digits.
             if (bareNumber(plain, index)) {
@@ -728,6 +746,13 @@ object VieneuUnits {
         // Check complete source tokens before splitGlued can hide a numeric tail.
         bookLabels(toks, out)
         enumerationAbbreviations(toks, out)
+        for ((index, token) in toks.withIndex()) {
+            if (index > 0 && index < toks.lastIndex && out[index] == token && core(toks[index - 1]).lowercase() !in setOf("mã", "id", "serial")) {
+                Regex("""(["'“‘(\[]*)(?i:vs)\.?(["'”’)\],;:!?…]*)""").matchEntire(token)?.let {
+                    out[index] = it.groupValues[1] + "với" + it.groupValues[2]
+                }
+            }
+        }
         val pieces = ArrayList<String>()
         val said = ArrayList<String>()
         val owner = ArrayList<Int>()
@@ -830,9 +855,9 @@ object VieneuUnits {
     private val BIGINT_COUNTED = COUNTED_THOUSANDS + "dân"
     private val BIGINT_CUES = "khoảng gần hơn tổng có".split(" ").toSet()
     private val BIGINT = Regex("[1-9][0-9]{6,}")
-    private val BIGINT_ID = Regex("""(?<![$W])(?:mã|số điện thoại|điện thoại|tài khoản|id|serial)(?![$W])""", RegexOption.IGNORE_CASE)
+    private val BIGINT_ID = Regex("""(?<![$W])(?:mã|số điện thoại|điện thoại|sđt|tài khoản|id|serial)(?![$W])|#""", RegexOption.IGNORE_CASE)
 
-    /** Group long counted integers; preserve codes, ranges and leading zeroes (Python `_big_integers`). */
+    /** Read long quantities before G2P; preserve codes, ranges and leading zeroes. */
     private fun bigIntegers(out: MutableList<String>, toks: List<String>? = null) {
         val plain = if (toks != null && toks.size == out.size) toks else out.toList()
         val trim = OPENERS + CLOSERS + PUNCT_MARKS
@@ -844,11 +869,10 @@ object VieneuUnits {
             val before = prefix.split(Regex("\\s+")).lastOrNull() ?: ""
             val after = plain.getOrNull(index + 1)?.trim { it in trim }?.lowercase() ?: ""
             if (BIGINT_ID.containsMatchIn(prefix) || before in setOf("thứ", "hạng", "năm", "-", "–", "/") || after in setOf("-", "–", "/", "id", "serial", "mã")) continue
-            if (after in BIGINT_COUNTED || before in BIGINT_CUES || listOf("dân số", "tổng cộng", "lên tới").any { prefix.endsWith(it) }) {
-                val grouped = core.reversed().chunked(3).joinToString(".").reversed()
+            if (core.length < 10 || after in BIGINT_COUNTED || before in BIGINT_CUES || listOf("dân số", "tổng cộng", "lên tới").any { prefix.endsWith(it) }) {
                 val start = token.length - token.trimStart { it in OPENERS }.length
                 val suffix = token.drop(start + core.length)
-                out[index] = token.take(start) + grouped + (if (suffix.startsWith(".")) " " else "") + suffix
+                out[index] = token.take(start) + integerReading(core) + suffix
             }
         }
     }
@@ -952,9 +976,12 @@ object VieneuUnits {
             return said
         }
         val out = toks.toMutableList()
+        Readings.applyTokens(toks, out, readings)
+        val structural = Symbols.readCurrency(toks, out) + Symbols.readAddresses(toks, out)
         stutters(toks, out, origin, readings, directEnglish)
         Shouts.readShouts(toks, out, origin)
         val vocalized = toks.indices.filter { toks[it] != out[it] }.toMutableSet()
+        vocalized.addAll(structural)
         vocalized.addAll(readWords(toks, out, origin))
         Readings.applyTokens(toks, out, readings)
         readingMarks(out, toks)

@@ -390,6 +390,8 @@ def _range_mode(plain: list[str], index: int) -> str:
         if word.rstrip(CLOSERS)[-1:] in tuple(SENTENCE_END):
             break
         before.append(symbols.core(word).lower())
+    if set(before) & {"tính", "trừ", "hiệu"}:
+        return "minus"
     if set(before[:1]) & RANGE_CODES or set(before) & RANGE_RATIO or (not before and plain[index].endswith(".")):
         return "join"
     return "duel" if set(before[:3]) & symbols.DUEL_WORDS else ""
@@ -437,7 +439,8 @@ def _dotted_number(match: re.Match, token: str, plain: list[str], index: int) ->
     if len(parts) != 2:
         return match.group()
     whole, fraction = parts
-    decimal = len(whole) >= 4 or len(fraction) >= 4 or (whole == "0" and len(fraction) >= 3)
+    decimal = (len(whole) >= 4 or len(fraction) >= 4 or whole == "0"
+               or before in {"là", "mức", "giá", "hệ", "cân"})
     if decimal or unit or _number_unit(plain, index):
         # sea-g2p strips fractional trailing zeroes after converting '.' to ','.
         # Speak every fractional digit ourselves, with a boundary before glued units.
@@ -453,9 +456,26 @@ def _numbers(out: list[str], toks: list[str] | None = None) -> None:
     for index, token in enumerate(out):
         if not any(char.isdigit() for char in token):
             continue
+        prefix = re.split(r"[.!?;]", " ".join(plain[max(0, index - 6):index]))[-1]
+        identifier = re.fullmatch(r"([\"'“‘(\[]*)#([0-9]+)([\"'”’)\].,;:!?…]*)", token)
+        if identifier:
+            label = "" if prefix.split() and prefix.split()[-1].casefold() in {"số", "no"} else "số "
+            out[index] = identifier[1] + label + " ".join(symbols.DIGIT_WORDS[int(c)] for c in identifier[2]) + identifier[3]
+            continue
+        if re.fullmatch(r"[\"'“‘(«]*[0-9]+[\"'”’)».,;:!?…]*", token) and (_BIGINT_ID.search(prefix) or re.match(r"[\"'“‘(«]*0[0-9]", token)):
+            out[index] = re.sub(r"[0-9]+", lambda match: " ".join(symbols.DIGIT_WORDS[int(c)] for c in match.group()), token)
+            continue
+        if re.search(r"\d[.,]\d+-\d", token):
+            continue  # Decimal intervals remain intact for the range normalizer.
+        if any(char in symbols.STARS + "↑↓▲▼△▽" for char in token):
+            continue  # Rating and direction rules own their complete numeric operand.
         mode = _range_mode(plain, index) if RANGE.search(token) else ""
         out[index] = GOLD_G.sub(" giê", RANGE.sub(lambda match: _range(match, "minus" if "=" in (token[match.end():match.end() + 1], token[match.start() - 1:match.start()]) else mode), token))
         token = out[index]
+        token = re.sub(r"(?<![\w.,])\d+(?:\.\d{3})+,\d+(?!\w|[.,]\d)|(?<![\w.,])\d+(?:,\d{3})+\.\d+(?!\w|[.,]\d)",
+                       lambda match: symbols.money_number(match.group()), token)
+        token = re.sub(r"(?<![\w.,])(-?)([0-9]+),([0-9]+)(?!\w|[.,]\d)",
+                       lambda match: ("âm " if match[1] else "") + decimal_reading(match[2], match[3]), token)
         token = DOTTED_NUMBER.sub(lambda match: _dotted_number(match, token, plain, index), token)
         # Do not delegate bare integers to sea-g2p's sentence-language guess.
         # Only a number standing alone is a count; dates, codes, money,
@@ -731,11 +751,11 @@ _THOUSANDS_LABELS = frozenset("giá tổng hp mp sp exp xp str agi vit int dex l
 _BIGINT_COUNTED = _COUNTED_THOUSANDS | {"dân"}
 _BIGINT_CUES = frozenset("khoảng gần hơn tổng có".split())
 _BIGINT = re.compile(r"[1-9][0-9]{6,}")
-_BIGINT_ID = re.compile(r"\b(?:mã|số điện thoại|điện thoại|tài khoản|id|serial)\b", re.I)
+_BIGINT_ID = re.compile(r"\b(?:mã|số điện thoại|điện thoại|sđt|tài khoản|id|serial)\b|#", re.I)
 
 
 def _big_integers(out: list[str], toks: list[str] | None = None) -> None:
-    """Group long counted integers for sea-g2p; never infer a number from a code.
+    """Read long quantities before G2P can mistake them for digit sequences.
     Sentence punctuation ends evidence; leading zeroes, ranges and compound tokens stay.
     """
     plain = toks if toks is not None and len(toks) == len(out) else list(out)
@@ -750,12 +770,11 @@ def _big_integers(out: list[str], toks: list[str] | None = None) -> None:
         after = plain[index + 1].strip(trim).lower() if index + 1 < len(plain) else ""
         if _BIGINT_ID.search(prefix) or before in {"thứ", "hạng", "năm", "-", "–", "/"} or after in {"-", "–", "/", "id", "serial", "mã"}:
             continue
-        if after in _BIGINT_COUNTED or before in _BIGINT_CUES or prefix.endswith(("dân số", "tổng cộng", "lên tới")):
-            grouped = re.sub(r"(?<=\d)(?=(?:\d{3})+$)", ".", core)
+        if (len(core) < 10 or after in _BIGINT_COUNTED or before in _BIGINT_CUES
+                or prefix.endswith(("dân số", "tổng cộng", "lên tới"))):
             start = len(token) - len(token.lstrip(OPENERS))
             suffix = token[start + len(core):]
-            # A sentence dot glued to a grouped integer defeats sea-g2p's number matcher.
-            out[index] = token[:start] + grouped + (" " if suffix.startswith(".") else "") + suffix
+            out[index] = token[:start] + integer_reading(core) + suffix
 
 
 def _thousands(out: list[str], toks: list[str] | None = None) -> None:
@@ -857,9 +876,13 @@ def _spoken_tokens(toks: list[str], origin: str | None = None, speaks_english: b
         book_readings.apply_tokens(toks, said, sounds)
         return said
     out = list(toks)
+    book_readings.apply_tokens(toks, out, readings)
+    structural = symbols.read_currency(toks, out)
+    structural.update(symbols.read_addresses(toks, out))
     _stutters(toks, out, origin, speaks_english, readings, direct_english)
     shouts.read_shouts(toks, out, origin)
     vocalized = {index for index, (source, said) in enumerate(zip(toks, out)) if source != said}
+    vocalized.update(structural)
     vocalized.update(_read_words(toks, out, origin, speaks_english))
     book_readings.apply_tokens(toks, out, readings)
     reading_marks(out, toks)
@@ -994,6 +1017,12 @@ def _read_words(toks: list[str], out: list[str], origin: str | None, speaks_engl
     # Validate the complete source token before GLUED can hide a numeric tail.
     _book_labels(toks, out)
     _enumeration_abbreviations(toks, out)
+    for index, token in enumerate(toks):
+        if (0 < index < len(toks) - 1 and out[index] == token
+                and symbols.core(toks[index - 1]).casefold() not in {"mã", "id", "serial"}):
+            match = re.fullmatch(r"([\"'“‘(\[]*)(?i:vs)\.?([\"'”’)\],;:!?…]*)", token)
+            if match:
+                out[index] = match[1] + "với" + match[2]
     pieces: list[str] = []
     said: list[str] = []
     owner: list[int] = []

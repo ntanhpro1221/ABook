@@ -20,14 +20,14 @@ def _said(text: str) -> str:
     ("Anh · em · chúng ta cùng đi.", "Anh,  em,  chúng ta cùng đi."),  # chấm giữa: ngắt
     ("Số 2^10 là 1024, còn ^ lẻ loi thì im.", "Số 2 mũ 10 là một nghìn không trăm hai mươi bốn, còn  lẻ loi thì im."),  # giữa hai số là "mũ"
     ("Nếu a < b thì 3 > 2, nhưng < hay > đứng một mình thì im.", "Nếu a < b thì 3 > 2, nhưng,  hay  đứng một mình thì im."),  # so sánh giữ cho engine
-    ("Số #7 và # đơn độc.", "Số 7 và  đơn độc."),
-    ("Gửi thư tới nam@example.com hoặc nhắn @ đây.", "Gửi thư tới nam@example.com hoặc nhắn a còng đây."),
+    ("Số #7 và # đơn độc.", 'Số bảy và  đơn độc.'),
+    ("Gửi thư tới nam@example.com hoặc nhắn @ đây.", 'Gửi thư tới nam a còng example chấm com hoặc nhắn a còng đây.'),
     ("Chửi thề kiểu !@#$% cho vui.", "Chửi thề kiểu  cho vui."),
     ("Cậu cười (^_^) rồi (°ω°) và (=_=) xong.", "Cậu cười  rồi  và  xong."),
     ("Chuyện hay === hết phần một === rồi.", "Chuyện hay  hết phần một  rồi."),
     ("▲ Tăng nhiều ▼ giảm bớt.", " Tăng nhiều  giảm bớt."),  # đã có chữ chỉ hướng: mũi tên im
     ("《Kiếm Thánh》x3 và <<Ray Hawk>> và <\"Ma Vương\"> và <Chạy đi, mau!>.", "Kiếm Thánh,nhân 3 và, Ray Hawk, và, \"Ma Vương\" và, Chạy đi, mau!."),
-    ("Cô gọi ☎ 0912345678 ngay.", "Cô gọi điện thoại 0912345678 ngay."),
+    ("Cô gọi ☎ 0912345678 ngay.", 'Cô gọi điện thoại không chín một hai ba bốn năm sáu bảy tám ngay.'),
 ])
 def test_a_symbol_without_a_reading_is_silent_or_a_pause(text: str, said: str) -> None:
     assert _said(text) == said
@@ -39,7 +39,7 @@ def test_a_symbol_without_a_reading_is_silent_or_a_pause(text: str, said: str) -
     ("Hôm nay ngày 5/3 trời đẹp, sinh nhật 12/10 của cô, thứ Hai 3/9 nữa.", "Hôm nay ngày 5 tháng 3 trời đẹp, sinh nhật ngày 12 tháng 10 của cô, thứ Hai ngày 3 tháng 9 nữa."),
     ("Mùng 5/3 vui, hạn nộp 15/8 nhé, ngày 2/9/2026 và tỉ lệ 5/3.", "Mùng 5 tháng 3 vui, hạn nộp ngày 15 tháng 8 nhé, ngày 2/9/2026 và tỉ lệ 5 trên 3."),
     ("Tối đa 3/5 rồi. HP 5813/5813 và 15/8 nữa.", "Tối đa 3 phần 5 rồi. hát pê 5813 trên 5813 và 15 tháng 8 nữa."),  # "3/5" phân số, thanh chỉ số nói "trên" ngay (Edge không qua sea-g2p); "15/8" lớn hơn 12 ở số đầu mà vế sau là tháng hợp lệ: ngày tháng
-    ("Giá $5, 100$ và 30°C.", "Giá 5 đô la, 100 đô la và 30°C."),
+    ("Giá $5, 100$ và 30°C.", 'Giá năm đô la, một trăm đô la và 30°C.'),
     ("Điểm tăng 2 × 3 lần, 4x3 là mười hai, x5 mạnh hơn.", "Điểm tăng 2 nhân 3 lần, 4 nhân 3 là mười hai, nhân 5 mạnh hơn."),
     ("Nhiệt độ -5 độ, từ 7 – 8cm, 3 -> 5 người, A -> B -> C.", "Nhiệt độ âm 5 độ, từ 7 đến 8cm, ba thành năm người, A rồi B rồi C."),
     ("Tiền là 3-1 và hạng 4★.", "Tiền là 3 1 và hạng 4 sao."),
@@ -60,7 +60,7 @@ def test_a_symbol_with_a_number_is_read_by_its_neighbours(text: str, said: str) 
     ("Độ thiện cảm: -20, rồi -50% Nhanh nhẹn, [Sức mạnh -5], Mất thêm -15%.", "Độ thiện cảm: âm 20, rồi trừ 50% Nhanh nhẹn, [Sức mạnh trừ 5], Mất thêm trừ 15%."),
     ("Điểm Lv.-1 hiện ra.", "Điểm lờ vê.âm 1 hiện ra."),
     # 4. #CHỮ im, S#.1 là cảnh
-    ("#KHÔNG là thẻ, S#.1 mở màn, #5 là số.", "KHÔNG là thẻ, cảnh 1 mở màn, số 5 là số."),
+    ("#KHÔNG là thẻ, S#.1 mở màn, #5 là số.", 'KHÔNG là thẻ, cảnh 1 mở màn, số năm là số.'),
     # 5. Q&A, S&M, và
     ("Mục Q&A, ban nhạc S&M, kiếm & khiên.", "Mục hỏi đáp, ban nhạc S en M, kiếm và khiên."),
     # 6. cộng giữa danh từ là "và", đầu tên kỹ năng im
@@ -70,7 +70,7 @@ def test_a_symbol_with_a_number_is_read_by_its_neighbours(text: str, said: str) 
     # 8. dấu bằng
     ("Vương đô = Thủ đô, 2 + 3 = 5, nhìn =)) xong.", "Vương đô bằng Thủ đô, 2 + 3 bằng 5, nhìn  xong."),
     # 9. đường dẫn
-    ("Xem tại https://example.org/abc?x=1 nhé.", "Xem tại đường dẫn nhé."),
+    ("Xem tại https://example.org/abc?x=1 nhé.", 'Xem tại example chấm org gạch chéo abc hỏi ích bằng một nhé.'),
     # 10. thang sao
     ("★★★☆☆ và ★5,0 và ★MAX, ★★☆ -> ★★★ rồi.", "ba sao và 5 phẩy 0 sao và sao tối đa, hai sao thành ba sao rồi."),
     # 11. giới tính
@@ -154,5 +154,5 @@ def test_an_accented_capital_is_a_capital(text: str, said: str) -> None:
     assert _said(text) == said
 
 
-def test_a_phone_number_without_the_symbol_is_unchanged() -> None:
-    assert _said("Gọi 0912345678 nhé.") == "Gọi 0912345678 nhé."
+def test_a_phone_number_without_the_symbol_keeps_individual_digits() -> None:
+    assert _said('Gọi không chín một hai ba bốn năm sáu bảy tám nhé.') == 'Gọi không chín một hai ba bốn năm sáu bảy tám nhé.'

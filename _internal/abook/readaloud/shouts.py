@@ -2,7 +2,7 @@
 
 sea-g2p đọc "Aaaa" thành "a a a a" và "Hmmm" thành chữ cái; người nghe cần một tiếng kéo dài. Quy ước (bộ thử TN, gold_spec 3.10 và quyết định phân xử 04-10):
 thán từ gốc MỘT lần bằng âm tiết Việt, rồi "…", rồi - chỉ khi chữ bị kéo là nguyên âm đứng riêng được thành một âm tiết (a, e, ê, i, o, ô, ơ, u, ư) - nguyên âm ấy một
-lần, mang thanh của âm tiết gốc ("rồi… ì", "tớ… ớ"). Chữ kéo là phụ âm hay "y" thì chỉ "<gốc>…" ("hừm…", "không…", "hầy…"). Toàn hoa cùng luật. "ー" sau nguyên âm
+lần ở thanh ngang ("rồi… i", "tớ… ơ"); thanh viết thuộc âm gốc. Chữ kéo là phụ âm hay "y" thì chỉ "<gốc>…" ("hừm…", "không…", "hầy…"). Toàn hoa cùng luật. "ー" sau nguyên âm
 là kéo ("Aー" -> "a… a"). Nhận ra bằng một chữ lặp từ ba lần liền (hay "ー"); thán từ Latin cố định (`INTERJECTIONS`) thì khớp cả dạng không kéo.
 
 Chỉ đọc khi tách được gốc: gốc là thán từ trong bảng, âm tiết tiếng Việt, hay tiếng kêu kiểu Nhật đọc được bằng luật romaji ("Kyaaa" -> "ki-a… a"). Còn lại
@@ -274,8 +274,8 @@ def _basic_reading(core: str) -> str | None:
             trimmed = word.rstrip("h")
             return stretch_reading(trimmed) if letter in VOWELS and trimmed != word and len(trimmed) >= MIN_RUN else None  # "Haaah" -> "Haaa": "h" cuối là hơi thở
         if letter in STANDALONE:
-            append = unicodedata.normalize("NFC", unicodedata.normalize("NFD", letter) + _tone(base))
-    return f"{base}…" + (f" {names.lone_syllable(append)}" if append and letter in STANDALONE else "")
+            append = letter
+    return f"{base}…" + (f" {_plain(append)}" if append and letter in STANDALONE else "")
 
 
 @lru_cache(maxsize=4096)
@@ -304,8 +304,8 @@ def listed_abbreviations() -> frozenset[str]:
 
 
 def _collapsed(chars: list[str], runs: list[tuple[int, int]]) -> str | None:
-    """Chữ có NHIỀU chỗ kéo ("Cccchhhhàaaaaaoooo" -> "chào… ò"): gộp mỗi chỗ kéo thành một chữ (giữ dấu thanh ở chữ đầu của chỗ ấy); chỉ đọc khi gộp ra đúng một âm tiết tiếng Việt.
-    Chỗ kéo cuối là nguyên âm đứng riêng thì nhắc lại nó một lần sau "…", mang thanh của âm tiết."""
+    """Chữ có NHIỀU chỗ kéo ("Cccchhhhàaaaaaoooo" -> "chào… o"): gộp mỗi chỗ kéo thành một chữ (giữ dấu thanh ở chữ đầu của chỗ ấy); chỉ đọc khi gộp ra đúng một âm tiết tiếng Việt.
+    Chỗ kéo cuối là nguyên âm đứng riêng thì nhắc lại nó ở thanh ngang sau "…"."""
     from ..analysis import is_vietnamese_syllable
 
     if len(runs) < 2:
@@ -321,8 +321,8 @@ def _collapsed(chars: list[str], runs: list[tuple[int, int]]) -> str | None:
     if not is_vietnamese_syllable(base):
         return None
     letter = _plain(_run_char(chars[runs[-1][0]:runs[-1][1]]))
-    append = unicodedata.normalize("NFC", unicodedata.normalize("NFD", letter) + _tone(base)) if runs[-1][1] == len(chars) and letter in STANDALONE else ""
-    return f"{base}…" + (f" {names.lone_syllable(append)}" if append else "")
+    append = letter if runs[-1][1] == len(chars) and letter in STANDALONE else ""
+    return f"{base}…" + (f" {append}" if append else "")
 
 
 def _counted(word: str) -> bool:

@@ -75,7 +75,7 @@ def _stored(db: StudioDB) -> dict[str, tuple[str, str]]:
 
 def test_rule_reading_is_the_read_aloud_romanization() -> None:
     assert studio_names.rule_reading("Haruto-kun", "ja") == "Ha-ru-tô-cun"
-    assert studio_names.rule_reading("Kyoukota", "ja") == "Ki-âu-cô-ta"
+    assert studio_names.rule_reading("Kyoukota", "ja") == "Ki-ô-cô-ta"
     assert studio_names.rule_reading("Haruto Shinomiya", "ja") == "Ha-ru-tô Si-nô-mi-a"
     assert studio_names.rule_reading("Seojun", "ko") == romanized_reading("Seojun", "ko")
     assert studio_names.rule_reading("Haruto", None) is None
@@ -164,7 +164,7 @@ def test_a_locked_name_is_never_changed(monkeypatch) -> None:
     stored = _stored(db)
     assert stored["Haruto"] == ("Ha-ru-to", LISTENER_PRONUNCIATION_SOURCE)
     assert stored["Kenji"] == ("Ken-di", "english_name_transliteration")
-    assert stored["Kyoukota"] == ("Ki-âu-cô-ta", RULE_ROMANIZATION_PRONUNCIATION_SOURCE)
+    assert stored["Kyoukota"] == ("Ki-ô-cô-ta", RULE_ROMANIZATION_PRONUNCIATION_SOURCE)
 
 
 def test_a_full_name_reads_its_kept_word_the_same_way(monkeypatch) -> None:

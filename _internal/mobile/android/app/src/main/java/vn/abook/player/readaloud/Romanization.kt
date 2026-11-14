@@ -243,7 +243,7 @@ object Romanization {
             if (forcedO) syllables.last().nucleus = "ô" // oh: ô dài, kể cả đầu từ (Ohto -> Ô-tô; ō đầu từ vẫn o: Ōsaka -> O-xa-ca)
             val follow = if (longO) "" else sub(word, j, j + 1)
             if (vowel == 'e' && follow == "i") {
-                syllables.last().nucleus = JapanesePolicy.choice("ei") // ei -> ây (chủ sách 04-10: Rei -> Rây, sensei -> xen-xây)
+                syllables.last().nucleus = JapanesePolicy.choice("ei") // Long Japanese ei -> ê.
                 j += 1
             } else if (vowel == 'o' && follow == "u") { // ou viết ra -> âu (chủ sách 04-10: Kyouko -> Ki-âu-cô); ō / oo vẫn -> ô
                 if (onset == "sh" || onset == "ch" || onset == "j") flags.add("analogy:ou_vom")

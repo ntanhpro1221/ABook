@@ -62,7 +62,84 @@ object Symbols {
     private const val STARS = "★☆✩✪✫✬✭✮✯✰⭐"
     private const val STAR_FULL = "★✪✮⭐"
     private const val STAR_MARKS = STARS + "︎️"
-    private val SPECIAL = ("/／=#＃@＠^·<>+＋-–—―xX×$°&＆♀♂≠☎☏:↑↓▲▼△▽" + STARS).toSet()
+    private val SPECIAL = ("/／=#＃@＠^·<>+＋-−–—―xX×÷≈±$°&＆♀♂≠☎☏:↑↓▲▼△▽" + STARS).toSet()
+
+    private val CURRENCIES = mapOf("$" to "đô la", "USD" to "đô la", "₫" to "đồng", "đ" to "đồng", "VND" to "đồng", "¥" to "yên", "￥" to "yên", "JPY" to "yên", "€" to "euro", "EUR" to "euro", "£" to "bảng Anh", "GBP" to "bảng Anh")
+    private const val MONEY_UNIT = "(?:USD|VND|JPY|EUR|GBP|[$₫đ¥￥€£])"
+    private const val MONEY_NUMBER = """[0-9]+(?:[.,][0-9]+)*"""
+    private const val MONEY_OPEN = """["'“‘(\[]*"""
+    private const val MONEY_TAIL = """["'”’)\].,;:!?…]*"""
+    private val MONEY_AMOUNT = Regex("($MONEY_OPEN)($MONEY_NUMBER)($MONEY_TAIL)")
+    private val MONEY_LABEL = Regex("($MONEY_OPEN)($MONEY_UNIT)($MONEY_TAIL)")
+    private val MONEY_JOINED = Regex("($MONEY_OPEN)(?:($MONEY_UNIT)($MONEY_NUMBER)|($MONEY_NUMBER)($MONEY_UNIT))($MONEY_TAIL)")
+    private val ADDRESS = Regex("""(?<![$W.])(?:(?:https?://|ftp://|www\.)\S+|[$W.+-]+@[$W-]+(?:\.[$W-]+)+|[$W-]+(?:\.[$W-]+)*\.(?:com|net|org|vn|jp|io|co|app)(?:[/?#]\S*)?)(?![$W])""", RegexOption.IGNORE_CASE)
+    private val ADDRESS_MARKS = mapOf("." to "chấm", "@" to "a còng", "/" to "gạch chéo", "_" to "gạch dưới", "-" to "gạch ngang", "?" to "hỏi", "=" to "bằng", "#" to "thăng", "&" to "và", "+" to "cộng", ":" to "hai chấm", "%" to "phần trăm")
+
+    fun readAddresses(toks: List<String>, out: MutableList<String>): Set<Int> {
+        val protected = mutableSetOf<Int>()
+        for ((index, token) in toks.withIndex()) {
+            if (out[index] != token) continue
+            val said = ADDRESS.replace(token) { match ->
+                val raw = match.value.trimEnd { it in URL_TAIL }
+                val tail = match.value.drop(raw.length)
+                val address = Regex("""^(?:https?://|ftp://|www\.)""", RegexOption.IGNORE_CASE).replace(raw, "")
+                val email = '@' in address
+                val parts = Regex("""[.@/_?=#&+:%-]|[0-9]+|[^.@/_?=#&+:%0-9-]+""").findAll(address).map { it.value }.map { part ->
+                    when {
+                        part in ADDRESS_MARKS -> ADDRESS_MARKS.getValue(part)
+                        part.all { it.isDigit() } -> if (email) part.map { DIGIT_WORDS[it.digitToInt()] }.joinToString(" ") else VieneuUnits.integerReading(part)
+                        part.length == 1 && part[0].lowercaseChar() in Abbreviations.LETTERS -> if (part.lowercase() == "q") "kiu" else Abbreviations.LETTERS.getValue(part[0].lowercaseChar())
+                        else -> part
+                    }
+                }
+                parts.joinToString(" ") + tail
+            }
+            if (said != token) {
+                out[index] = said
+                protected.add(index)
+            }
+        }
+        return protected
+    }
+
+    internal fun moneyNumber(number: String): String {
+        if (Regex("""[1-9][0-9]{0,2}([.,])[0-9]{3}(?:\1[0-9]{3})*""").matches(number)) return VieneuUnits.integerReading(number.replace(".", "").replace(",", ""))
+        if ('.' in number || ',' in number) {
+            val separator = maxOf(number.lastIndexOf('.'), number.lastIndexOf(','))
+            return VieneuUnits.decimalReading(number.take(separator).replace(".", "").replace(",", ""), number.drop(separator + 1))
+        }
+        return VieneuUnits.integerReading(number)
+    }
+
+    /** Bounded amounts precede abbreviations and foreign-word routing, as in Python. */
+    fun readCurrency(toks: List<String>, out: MutableList<String>): Set<Int> {
+        val protected = mutableSetOf<Int>()
+        for ((index, token) in toks.withIndex()) {
+            if (index in protected || out[index] != token) continue
+            val joined = MONEY_JOINED.matchEntire(token)
+            if (joined != null) {
+                val g = joined.groupValues
+                out[index] = g[1] + moneyNumber(g[3].ifEmpty { g[4] }) + " " + CURRENCIES.getValue(g[2].ifEmpty { g[5] }) + g[6]
+                protected.add(index)
+                continue
+            }
+            val label = MONEY_LABEL.matchEntire(token) ?: continue
+            val (opening, unit, tail) = label.destructured
+            val previous = toks.getOrNull(index - 1)?.let { MONEY_AMOUNT.matchEntire(it) }
+            val following = toks.getOrNull(index + 1)?.let { MONEY_AMOUNT.matchEntire(it) }
+            if (previous != null && out[index - 1] == toks[index - 1] && index - 1 !in protected && previous.groupValues[3].trim { it in CLOSE }.isEmpty()) {
+                val (lead, number, end) = previous.destructured
+                out[index - 1] = lead + moneyNumber(number) + end
+                out[index] = opening + CURRENCIES.getValue(unit) + tail
+                protected.addAll(listOf(index - 1, index))
+            } else if (following != null && out[index + 1] == toks[index + 1] && tail.isEmpty() && following.groupValues[1].isEmpty()) {
+                out[index] = opening + moneyNumber(following.groupValues[2]) + " " + CURRENCIES.getValue(unit) + following.groupValues[3]
+                out[index + 1] = ""
+                protected.addAll(listOf(index, index + 1))
+            }
+        }
+        return protected
+    }
     private val NUMBER = Regex("""[+-]?\d+(?:[.,]\d+)*%?""")
     private val NUMBERISH = Regex("""\d+[A-Za-z%°]*""")
     private val DIGIT_WORDS = listOf("không", "một", "hai", "ba", "bốn", "năm", "sáu", "bảy", "tám", "chín", "mười")
@@ -535,7 +612,7 @@ object Symbols {
         if (stars.length == 1 && full > 0 && standing && (search("""(?:^|[\s(\[])\d+(?:[.,]\d+)?$""", spot.left) != null || (spot.lw1 in NUMBER_WORDS && spot.ltype == "space"))) return Found(end, say("sao"))
         if (stars.length in 3..10 && standing && !(spot.gluedL && spot.ltype in listOf("lower", "upper"))) {
             val mixed = full > 0 && full < stars.length
-            if (mixed || spot.lch == '[' || ':' in spot.left.takeLast(30) || "để lại" in spot.left.takeLast(14)) return Found(end, say(DIGIT_WORDS[if (mixed) full else stars.length] + " sao"))
+            if (mixed || spot.lch == '[' || ':' in spot.left.takeLast(30) || "để lại" in spot.left.takeLast(14) || spot.left3.any { it in setOf("hạng", "giá", "sao") } || (spot.lineStart && spot.lineEnd)) return Found(end, say(DIGIT_WORDS[if (mixed) full else stars.length] + " sao"))
         }
         return Found(end, SILENT)
     }
@@ -545,6 +622,16 @@ object Symbols {
         val char = token[pos]
         val before: Char? = if (pos > 0) token[pos - 1] else null
         val afterChar: Char? = token.getOrNull(pos + 1)
+        if (char in "÷≈±") return Found(pos + 1, say(mapOf('÷' to "chia", '≈' to "xấp xỉ", '±' to "cộng trừ").getValue(char)))
+        if (char == '−') {
+            val around = spot(pos + 1)
+            return Found(pos + 1, say(if (search("""\d\s*$""", around.left) != null) "trừ" else "âm"))
+        }
+        if (char == '-') {
+            val around = spot(pos + 1)
+            val expression = around.left + around.sym + around.right
+            if (search("""\d\s*$""", around.left) != null && match("""\s*\d""", around.right) != null && ('=' in expression || Regex("""(?<![$W])(?:tính|trừ|hiệu|phép tính)(?![$W])""", RegexOption.IGNORE_CASE).containsMatchIn(expression))) return Found(pos + 1, say("trừ"))
+        }
         if (char in "/／") {
             val end = run(token, pos, "/／")
             val said = slash(spot(end))
@@ -631,6 +718,7 @@ object Symbols {
         if (char in "♀♂") return Found(pos + 1, gender(spot(pos + 1)))
         if (char == '≠') {
             val around = spot(pos + 1)
+            if (match("""\s*\d""", around.right) != null) return Found(pos + 1, say("khác"))
             return Found(pos + 1, if (around.l1.isNotEmpty() && around.r1.isNotEmpty() && around.ltype != "sym" && around.rtype != "sym") say("không phải là") else SILENT)
         }
         if (char in "☎☏") return Found(pos + 1, if (match("""\s?[\d(]""", spot(pos + 1).right) != null) say("điện thoại") else SILENT)

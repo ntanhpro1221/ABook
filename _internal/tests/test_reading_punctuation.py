@@ -105,7 +105,7 @@ def test_phone_and_desktop_share_reading_boundary_cases():
             assert " ".join(spoken_tokens(source.split())) == case["spoken"], source
 
 
-def test_coordinator_does_not_reinterpret_a_url_after_symbols_remove_its_scheme(tmp_path):
+def test_coordinator_keeps_url_and_mailbox_components_before_symbol_rules(tmp_path):
     coordinator = TTSCoordinator(build_settings(), ProjectDB(tmp_path / "project.sqlite3"), lambda _: None)
     source = "3.5 12:30 https://example.com/a?x=1 a@example.com"
-    assert coordinator.spoken_text({"text": source}) == "3.5 12:30 đường dẫn, a?x bằng một a@example.com"
+    assert coordinator.spoken_text({"text": source}) == "3.5 12:30 example chấm com gạch chéo a hỏi ích bằng một a a còng example chấm com"

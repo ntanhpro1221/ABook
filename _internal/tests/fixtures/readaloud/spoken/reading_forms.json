@@ -259,12 +259,12 @@
   {
    "id": "thousands_keep-1",
    "text": "Nặng 1,5 kg và 3,25 lít.",
-   "said": "Nặng 1,5 kg và 3,25 lít."
+   "said": "Nặng một phẩy năm kg và ba phẩy hai năm lít."
   },
   {
    "id": "thousands_keep-2",
    "text": "Số 12,3456 và 1,234.5 nhé.",
-   "said": "Số 12,3456 và 1,234.5 nhé."
+   "said": "Số mười hai phẩy ba bốn năm sáu và một nghìn hai trăm ba mươi bốn phẩy năm nhé."
   },
   {
    "id": "thousands_keep-3",
@@ -509,7 +509,7 @@
   {
    "id": "bigint-2",
    "text": "Dân số 98000000.",
-   "said": "Dân số chín mươi tám triệu ."
+   "said": "Dân số chín mươi tám triệu."
   },
   {
    "id": "bigint-3",
@@ -529,12 +529,12 @@
   {
    "id": "bigint-6",
    "text": "Tổng cộng 1234567.",
-   "said": "Tổng cộng một triệu hai trăm ba mươi bốn nghìn năm trăm sáu mươi bảy ."
+   "said": "Tổng cộng một triệu hai trăm ba mươi bốn nghìn năm trăm sáu mươi bảy."
   },
   {
    "id": "bigint-7",
    "text": "Lên tới 1234567.",
-   "said": "Lên tới một triệu hai trăm ba mươi bốn nghìn năm trăm sáu mươi bảy ."
+   "said": "Lên tới một triệu hai trăm ba mươi bốn nghìn năm trăm sáu mươi bảy."
   },
   {
    "id": "bigint-8",
@@ -549,47 +549,47 @@
   {
    "id": "bigint_keep-1",
    "text": "1234567",
-   "said": "1234567"
+   "said": "một triệu hai trăm ba mươi bốn nghìn năm trăm sáu mươi bảy"
   },
   {
    "id": "bigint_keep-2",
    "text": "Mã 1234567 người.",
-   "said": "Mã 1234567 người."
+   "said": "Mã một hai ba bốn năm sáu bảy người."
   },
   {
    "id": "bigint_keep-3",
    "text": "Có mã 1234567.",
-   "said": "Có mã 1234567."
+   "said": "Có mã một hai ba bốn năm sáu bảy."
   },
   {
    "id": "bigint_keep-4",
    "text": "Số điện thoại 123456789.",
-   "said": "Số điện thoại 123456789."
+   "said": "Số điện thoại một hai ba bốn năm sáu bảy tám chín."
   },
   {
    "id": "bigint_keep-5",
    "text": "Có số điện thoại 123456789.",
-   "said": "Có số điện thoại 123456789."
+   "said": "Có số điện thoại một hai ba bốn năm sáu bảy tám chín."
   },
   {
    "id": "bigint_keep-6",
    "text": "Tài khoản 123456789.",
-   "said": "Tài khoản 123456789."
+   "said": "Tài khoản một hai ba bốn năm sáu bảy tám chín."
   },
   {
    "id": "bigint_keep-7",
    "text": "ID 1234567.",
-   "said": "ai-đi 1234567."
+   "said": "ai-đi một hai ba bốn năm sáu bảy."
   },
   {
    "id": "bigint_keep-8",
    "text": "Serial 1234567.",
-   "said": "Serial 1234567."
+   "said": "Serial một hai ba bốn năm sáu bảy."
   },
   {
    "id": "bigint_keep-9",
    "text": "Có 01234567 người.",
-   "said": "Có 01234567 người."
+   "said": "Có không một hai ba bốn năm sáu bảy người."
   },
   {
    "id": "bigint_keep-10",
@@ -634,7 +634,7 @@
   {
    "id": "bigint_keep-18",
    "text": "Có 1,234567 người.",
-   "said": "Có 1,234567 người."
+   "said": "Có một phẩy hai ba bốn năm sáu bảy người."
   },
   {
    "id": "bigint_keep-19",
@@ -659,7 +659,7 @@
   {
    "id": "bigint_keep-23",
    "text": "Mã: 1234567 người.",
-   "said": "Mã: 1234567 người."
+   "said": "Mã: một hai ba bốn năm sáu bảy người."
   },
   {
    "id": "bigint_keep-24",
@@ -704,7 +704,7 @@
   {
    "id": "generated_bigint_keep-1",
    "text": "Có 144 126 071 người.",
-   "said": "Có 144 126 071 người."
+   "said": "Có 144 126 không bảy một người."
   },
   {
    "id": "generated_bigint_keep-2",
@@ -724,7 +724,7 @@
   {
    "id": "generated_bigint_keep-5",
    "text": "Có 01234567 người.",
-   "said": "Có 01234567 người."
+   "said": "Có không một hai ba bốn năm sáu bảy người."
   },
   {
    "id": "generated_bigint-7",
@@ -814,7 +814,7 @@
   {
    "id": "book_label-17",
    "text": "Chap 001: Bắt đầu.",
-   "said": "chương 001: Bắt đầu."
+   "said": "chương không không một: Bắt đầu."
   },
   {
    "id": "book_label-18",
@@ -884,12 +884,12 @@
   {
    "id": "book_label_keep-11",
    "text": "Chọn Vol 2,5 nhé.",
-   "said": "Chọn Vol 2,5 nhé."
+   "said": "Chọn Vol hai phẩy năm nhé."
   },
   {
    "id": "book_label_keep-12",
    "text": "Mở https://example.org/Vol.2 nhé.",
-   "said": "Mở đường dẫn nhé."
+   "said": "Mở example chấm org gạch chéo Vol chấm hai nhé."
   },
   {
    "id": "book_label_keep-13",
@@ -944,7 +944,7 @@
   {
    "id": "book_label_keep-23",
    "text": "Serial Chap 12 còn đó.",
-   "said": "Serial Chap mười hai còn đó."
+   "said": "Serial Chap một hai còn đó."
   },
   {
    "id": "book_label_keep-24",
@@ -1104,7 +1104,7 @@
   {
    "id": "enumeration_keep-9",
    "text": "Dùng v.v.com nhé.",
-   "said": "Dùng v.v.com nhé."
+   "said": "Dùng vê chấm vê chấm com nhé."
   },
   {
    "id": "honorific_hyphen-8",
@@ -1159,7 +1159,7 @@
   {
    "id": "tnfix_numbers-5",
    "text": "Giá 1,25 đồng.",
-   "said": "Giá 1,25 đồng."
+   "said": "Giá một phẩy hai năm đồng."
   },
   {
    "id": "tnfix_loanword-1",
@@ -1454,12 +1454,12 @@
   {
    "id": "tnfix_decimal_keep-1",
    "text": "Đo 0,357 giây.",
-   "said": "Đo 0,357 giây."
+   "said": "Đo không phẩy ba năm bảy giây."
   },
   {
    "id": "tnfix_decimal_keep-2",
    "text": "Đo 3,0005 giây.",
-   "said": "Đo 3,0005 giây."
+   "said": "Đo ba phẩy không không không năm giây."
   },
   {
    "id": "tnfix_structure_keep-1",
@@ -1479,7 +1479,7 @@
   {
    "id": "tnfix_structure_keep-4",
    "text": "Mã 007 đây.",
-   "said": "Mã 007 đây."
+   "said": "Mã không không bảy đây."
   },
   {
    "id": "tnfix_code-6",
@@ -1752,7 +1752,7 @@
   {"id": "fix168_dotted_ambiguous_keep-2", "text": "1.10", "said": "1.10", "normalized": "một chấm một không"},
   {"id": "fix168_dotted_ambiguous_keep-3", "text": "12.05", "said": "12.05", "normalized": "mười hai chấm không năm"},
   {"id": "fix168_dotted_ambiguous_keep-4", "text": "10.30", "said": "10.30", "normalized": "mười chấm ba không"},
-  {"id": "fix168_dotted_ambiguous_keep-5", "text": "0.05", "said": "0.05", "normalized": "không chấm không năm"},
+  {"id": "fix168_dotted_ambiguous_keep-5", "text": "0.05", "said": "không phẩy không năm", "normalized": "không phẩy không năm"},
   {"id": "fix168_dotted_ambiguous_keep-6", "text": "99.99", "said": "99.99", "normalized": "chín mươi chín chấm chín chín"},
   {"id": "fix168_dotted_ambiguous_keep-7", "text": "ngày. 12.05", "said": "ngày. 12.05"},
   {"id": "fix168_dotted_ambiguous_keep-8", "text": "lúc khác 10.30", "said": "lúc khác 10.30", "normalized": "lúc khác mười chấm ba không"},
@@ -1775,7 +1775,7 @@
   {"id": "fix168_dotted_code_keep-1", "text": "A1.10", "said": "A1.10"},
   {"id": "fix168_dotted_code_keep-2", "text": "1.10.2026", "said": "1.10.2026"},
   {"id": "fix168_dotted_code_keep-3", "text": "12.05.2026", "said": "12.05.2026"},
-  {"id": "fix168_dotted_code_keep-4", "text": "2,345.50", "said": "2,345.50"},
+  {"id": "fix168_dotted_code_keep-4", "text": "2,345.50", "said": "hai nghìn ba trăm bốn mươi lăm phẩy năm không"},
   {"id": "fix168_dotted_multiplier-1", "text": "x2.0", "said": "nhân hai phẩy không", "normalized": "nhân hai phẩy không"},
   {"id": "fix168_dotted_multiplier-2", "text": "x1.10", "said": "nhân một phẩy một không", "normalized": "nhân một phẩy một không"},
   {"id": "fix168_dotted_multiplier-3", "text": "x0.0010", "said": "nhân không phẩy không không một không", "normalized": "nhân không phẩy không không một không"},

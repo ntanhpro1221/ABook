@@ -53,10 +53,10 @@ class RomanizationTest {
         assertEquals("Xu-ba-ru-cun", Romanization.reading("Subaru-kun", "ja"))
         assertEquals("Ha-ru-tô-cun", Romanization.reading("Haruto-kun", "ja"))
         assertEquals("Phu-cu-si-ma", Romanization.reading("Fukushima", "ja"))
-        assertEquals("Xa-tô-xen-xây", Romanization.reading("Sato-sensei", "ja"))
+        assertEquals("Xa-tô-xen-xê", Romanization.reading("Sato-sensei", "ja"))
         assertEquals("Gia-ma-tô", Romanization.reading("Yamato", "ja"))
         assertEquals("Ha-gi-me", Romanization.reading("Hajime", "ja"))
-        assertEquals("Rây", Romanization.reading("Rei", "ja"))
+        assertEquals("Rê", Romanization.reading("Rei", "ja"))
         assertEquals("Pắc Cưn-hê", Romanization.reading("Park Geun-hye", "ko"))
         assertEquals("Li Mung-bắc", Romanization.reading("Lee Myung-bak", "ko"))
         assertEquals("Xe-un", Romanization.reading("Seoul", "ko"))
@@ -69,7 +69,7 @@ class RomanizationTest {
         assertEquals("A-gia-ca", Romanization.reading("Ayaka", "ja"))
         assertEquals("May-a", Romanization.reading("Maya", "ja"))
         assertEquals("Cay-a", Romanization.reading("Kaya", "ja"))
-        assertEquals("Xây-a", Romanization.reading("Seiya", "ja"))
+        assertEquals("Xê-gia", Romanization.reading("Seiya", "ja"))
         assertEquals("Ma-giu", Romanization.reading("Mayu", "ja"))
         assertEquals("Ki-ung", Romanization.reading("Kyung", "ko"))
         assertEquals("Bi-ung", Romanization.reading("Byung", "ko"))
@@ -85,7 +85,7 @@ class RomanizationTest {
         // TOÀN HOA casefold, CamelCase, hoa lạ, gạch nối / hậu tố / chữ Việt / chữ Anh / viết tắt (token tên của bộ đo luật)
         assertEquals("Ca-na-ta", Romanization.reading("KANATA", "ja"))
         assertEquals("Ne-xan", Romanization.reading("NEE-SAN", "ja"))
-        assertEquals("Ô-ca-be Rin-ta-râu", Romanization.reading("OkabeRintarou", "ja"))
+        assertEquals("Ô-ca-be Rin-ta-rô", Romanization.reading("OkabeRintarou", "ja"))
         assertEquals("Chu-chu", Romanization.reading("ChuChu", "ja"))
         assertEquals("Nhạc Giô-giô", Romanization.reading("NhạcJoJo", "ja"))
         assertEquals("Ha-ru-tô", Romanization.reading("HAruto", "ja"))
@@ -120,7 +120,7 @@ class RomanizationTest {
         for ((token, origin, want) in listOf(
             Triple("Izayoi", "ja", "I-da-gioi"), Triple("Futayo", "ja", "Phu-ta-giô"), Triple("Shinomiya", "ja", "Si-nô-mi-a"), Triple("Renya", "ja", "Re-ni-a"),
             Triple("Sakuya", "ja", "Xa-cu-gia"), Triple("Direkuresu", "ja", "Đi-re-cu-re-xu"), Triple("Hamsuke", "ja", "Ham-xu-ke"), Triple("ecchi", "ja", "ét-chi"),
-            Triple("Haffu", "ja", "Ha-phu"), Triple("Reidi", "ja", "Rây-đi"), Triple("Kiyoshi", "ja", "Ki-ô-si"), Triple("Sayo", "ja", "Xa-giô"),
+            Triple("Haffu", "ja", "Ha-phu"), Triple("Reidi", "ja", "Rê-đi"), Triple("Kiyoshi", "ja", "Ki-ô-si"), Triple("Sayo", "ja", "Xa-giô"),
             Triple("unnie", "ko", "un-ni"), Triple("Yeeun", "ko", "Gie-ưn"), Triple("Muyoung", "ko", "Mu-giong"), Triple("Chaeyeon", "ko", "Che-gion"),
             Triple("Koizumi", "ja", "Coi-du-mi"), Triple("Taruー", "ja", "Ta-ru"), Triple("Fii", "ja", "Phi"), Triple("Fina", "ja", "Phi-na"), Triple("Hyunn", "ko", "Hi-un"), Triple("Gyu", "ko", "Ghiu"), Triple("Hyung", "ko", "Hi-ung"), Triple("Nissan", "ja", "Nít-xan"), Triple("Yejin", "ko", "Gie-gin"), Triple("Seoyeon", "ko", "Xeo-gion"),
             Triple("Young", "ko", "Giong"), Triple("Jeongeun", "ko", "Châng-gưn"), Triple("Luda", "ko", "Lu-đa"), Triple("Oppa", "ko", "Óp-pa"),
@@ -140,7 +140,7 @@ class RomanizationTest {
         assertEquals(listOf("analogy:ao_split"), Romanization.readingWithFlags("Naoki", "ja")?.flags)
         assertEquals(listOf("analogy:ko_w_gu"), Romanization.readingWithFlags("Suwon", "ko")?.flags)
         assertEquals(emptyList<String>(), Romanization.readingWithFlags("Kwon", "ko")?.flags)
-        assertEquals(emptyList<String>(), Romanization.readingWithFlags("Seiya", "ja")?.flags)
+        assertEquals(listOf("open:y_after_vowel_pair"), Romanization.readingWithFlags("Seiya", "ja")?.flags)
         assertEquals(listOf("analogy:y_gi"), Romanization.readingWithFlags("Mayu", "ja")?.flags) // yu / yo cuối từ không còn bán âm (lần 9); chỉ ya
         assertEquals(listOf("open:y_after_vowel_pair"), Romanization.readingWithFlags("Kouya", "ja")?.flags)
         assertEquals(listOf("analogy:ko_yeo"), Romanization.readingWithFlags("Gyeong", "ko")?.flags)

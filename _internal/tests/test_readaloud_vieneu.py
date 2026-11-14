@@ -138,8 +138,8 @@ def test_a_tilde_is_dropped_or_read_as_range(text: str, said: str) -> None:
     ("Có 500,000 đồng, 100,000 yen và 1,419 / 3,419.", "Có năm trăm nghìn đồng, một trăm nghìn yên và 1419 trên 3419."),
     ("Trả 2,000,000, xong.", "Trả hai triệu, xong."),
     # "1,500" (đúng 3 chữ số sau phẩy) được coi là nghìn: truyện dịch dùng kiểu Anh, thập phân Việt có 1-2 chữ số
-    ("Giá 1,500 và 1,5 và 3,25 và 12,3456.", "Giá một nghìn năm trăm và 1,5 và 3,25 và 12,3456."),
-    ("Số 1.234,567 và 9.389.700 và 1,234.5 và 1,234,5.", "Số 1.234,567 và chín triệu ba trăm tám mươi chín nghìn bảy trăm và 1,234.5 và 1,234,5."),
+    ("Giá 1,500 và 1,5 và 3,25 và 12,3456.", 'Giá một nghìn năm trăm và một phẩy năm và ba phẩy hai năm và mười hai phẩy ba bốn năm sáu.'),
+    ("Số 1.234,567 và 9.389.700 và 1,234.5 và 1,234,5.", 'Số một nghìn hai trăm ba mươi bốn phẩy năm sáu bảy và chín triệu ba trăm tám mươi chín nghìn bảy trăm và một nghìn hai trăm ba mươi bốn phẩy năm và 1,234,5.'),
 ])
 def test_english_thousands_lose_their_commas(text: str, said: str) -> None:
     assert _said(text) == said
@@ -694,7 +694,7 @@ def test_the_server_starts_and_stops_preparing(studio) -> None:  # noqa: F811
     ("Chia 3/5 chai, 1/2 và 180/300, 5/3 và 15/8.", "Chia 3 phần 5 chai, 1 phần 2 và 180 trên 300, 5 tháng 3 và 15 tháng 8."),  # phân số bé: phần; tỉ lệ / thanh chỉ số: trên; "5/3", "15/8" không có điểm hay phân số thì là ngày tháng
     ("Lớp 1-1, được 1-3-1, dài 3-4000 từ, 3-5 người.", "Lớp 1 1, được 1 3 1, dài 3 đến 4000 từ, 3 đến 5 người."),
     ("Ngày 01-10-2026, số 090-123-4567, tỉ số 3-1, giờ 9-5.", "Ngày 01-10-2026, số 090-123-4567, tỉ số 3 1, giờ 9 5."),
-    ("Sự kiện x2 và ×3, ($1 USD) và $5.", "Sự kiện nhân 2 và nhân 3, (1 đô la u ét đê) và 5 đô la."),
+    ("Sự kiện x2 và ×3, ($1 USD) và $5.", 'Sự kiện nhân 2 và nhân 3, (một đô la u ét đê) và năm đô la.'),
 ])
 def test_numbers_are_read_the_way_a_listener_hears_them(text: str, said: str) -> None:
     assert _said(text) == said

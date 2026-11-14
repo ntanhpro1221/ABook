@@ -62,10 +62,98 @@ STARS = "★☆✩✪✫✬✭✮✯✰⭐"
 STAR_FULL = "★✪✮⭐"
 STAR_MARKS = STARS + "︎️"  # dấu chọn kiểu chữ / kiểu emoji đứng sau ngôi sao
 FULL_WIDTH = {"／": "/", "＃": "#", "＠": "@", "＋": "+", "＝": "=", "＞": ">", "＜": "<", "＆": "&"}
-SPECIAL = frozenset("/／=#＃@＠^·<>+＋-–—―xX×$°&＆♀♂≠☎☏:↑↓▲▼△▽") | frozenset(STARS)
+SPECIAL = frozenset("/／=#＃@＠^·<>+＋-−–—―xX×÷≈±$°&＆♀♂≠☎☏:↑↓▲▼△▽") | frozenset(STARS)
 _NUMBER = re.compile(r"[+-]?\d+(?:[.,]\d+)*%?")
 _NUMBERISH = re.compile(r"\d+[A-Za-z%°]*")
 DIGIT_WORDS = ("không", "một", "hai", "ba", "bốn", "năm", "sáu", "bảy", "tám", "chín", "mười")
+
+CURRENCIES = {"$": "đô la", "USD": "đô la", "₫": "đồng", "đ": "đồng", "VND": "đồng",
+              "¥": "yên", "￥": "yên", "JPY": "yên", "€": "euro", "EUR": "euro", "£": "bảng Anh", "GBP": "bảng Anh"}
+_MONEY_UNIT = "(?:USD|VND|JPY|EUR|GBP|[$₫đ¥￥€£])"
+_MONEY_NUMBER = r"\d+(?:[.,]\d+)*"
+_MONEY_OPEN = r"[\"'“‘(\[]*"
+_MONEY_TAIL = r"[\"'”’)\].,;:!?…]*"
+_MONEY_AMOUNT = re.compile(rf"({_MONEY_OPEN})({_MONEY_NUMBER})({_MONEY_TAIL})")
+_MONEY_LABEL = re.compile(rf"({_MONEY_OPEN})({_MONEY_UNIT})({_MONEY_TAIL})")
+_MONEY_JOINED = re.compile(rf"({_MONEY_OPEN})(?:({_MONEY_UNIT})({_MONEY_NUMBER})|({_MONEY_NUMBER})({_MONEY_UNIT}))({_MONEY_TAIL})")
+ADDRESS = re.compile(r"(?<![\w.])(?:(?:https?://|ftp://|www\.)[^\s]+|[\w.+-]+@[\w-]+(?:\.[\w-]+)+|[\w-]+(?:\.[\w-]+)*\.(?:com|net|org|vn|jp|io|co|app)(?:[/?#][^\s]*)?)(?!\w)", re.I)
+ADDRESS_MARKS = {".": "chấm", "@": "a còng", "/": "gạch chéo", "_": "gạch dưới", "-": "gạch ngang",
+                 "?": "hỏi", "=": "bằng", "#": "thăng", "&": "và", "+": "cộng", ":": "hai chấm", "%": "phần trăm"}
+
+
+def read_addresses(toks: list[str], out: list[str]) -> set[int]:
+    """Read address components without losing the domain, mailbox or path."""
+    from .vieneu import integer_reading
+
+    protected = set()
+    for index, token in enumerate(toks):
+        if out[index] != token:
+            continue
+        def replace(match: re.Match) -> str:
+            address = match.group().rstrip(URL_TAIL)
+            tail = match.group()[len(address):]
+            address = re.sub(r"^(?:https?://|ftp://|www\.)", "", address, flags=re.I)
+            email = "@" in address
+            parts = []
+            for part in re.split(r"([.@/_?=#&+:%-]|[0-9]+)", address):
+                if not part:
+                    continue
+                if part in ADDRESS_MARKS:
+                    parts.append(ADDRESS_MARKS[part])
+                elif part.isdigit():
+                    parts.append(" ".join(DIGIT_WORDS[int(c)] for c in part) if email else integer_reading(part))
+                elif len(part) == 1 and part.lower() in LETTERS:
+                    parts.append("kiu" if part.lower() == "q" else LETTERS[part.lower()])
+                else:
+                    parts.append(part)
+            return " ".join(parts) + tail
+        said = ADDRESS.sub(replace, token)
+        if said != token:
+            out[index] = said
+            protected.add(index)
+    return protected
+
+
+def money_number(number: str) -> str:
+    """Currency resolves separators explicitly, preserving fractional zeroes."""
+    from .vieneu import integer_reading, decimal_reading
+
+    if re.fullmatch(r"[1-9]\d{0,2}([.,])\d{3}(?:\1\d{3})*", number):
+        return integer_reading(number.replace(".", "").replace(",", ""))
+    if "." in number or "," in number:
+        separator = max(number.rfind("."), number.rfind(","))
+        whole, fraction = number[:separator], number[separator + 1:]
+        return decimal_reading(whole.replace(".", "").replace(",", ""), fraction)
+    return integer_reading(number)
+
+
+def read_currency(toks: list[str], out: list[str]) -> set[int]:
+    """Materialize bounded amounts before abbreviation and foreign-word routing."""
+    protected = set()
+    for index, token in enumerate(toks):
+        if index in protected or out[index] != token:
+            continue
+        joined = _MONEY_JOINED.fullmatch(token)
+        if joined:
+            opening, pre, first, last, post, tail = joined.groups()
+            out[index] = opening + money_number(first or last) + " " + CURRENCIES[pre or post] + tail
+            protected.add(index)
+            continue
+        label = _MONEY_LABEL.fullmatch(token)
+        if not label:
+            continue
+        opening, unit, tail = label.groups()
+        previous = _MONEY_AMOUNT.fullmatch(toks[index - 1]) if index else None
+        following = _MONEY_AMOUNT.fullmatch(toks[index + 1]) if index + 1 < len(toks) else None
+        if previous and out[index - 1] == toks[index - 1] and index - 1 not in protected and not previous[3].strip(CLOSE):
+            out[index - 1] = previous[1] + money_number(previous[2]) + previous[3]
+            out[index] = opening + CURRENCIES[unit] + tail
+            protected.update((index - 1, index))
+        elif following and out[index + 1] == toks[index + 1] and not tail and not following[1]:
+            out[index] = opening + money_number(following[2]) + " " + CURRENCIES[unit] + following[3]
+            out[index + 1] = ""
+            protected.update((index, index + 1))
+    return protected
 
 
 def core(word: str) -> str:
@@ -656,7 +744,8 @@ def _star(token: str, pos: int, c) -> tuple:
         return end, ("sao", False)  # "5★", "một ★"
     if 3 <= len(stars) <= 10 and standing and not (spot.glued_l and spot.ltype in ("lower", "upper")):
         mixed = 0 < full < len(stars)
-        if mixed or spot.lch == "[" or ":" in spot.left[-30:] or "để lại" in spot.left[-14:]:
+        if (mixed or spot.lch == "[" or ":" in spot.left[-30:] or "để lại" in spot.left[-14:]
+                or spot.left3 & {"hạng", "giá", "sao"} or (spot.line_start and spot.line_end)):
             return end, (DIGIT_WORDS[full if mixed else len(stars)] + " sao", False)  # "★★★☆☆": ba sao
     return end, SILENT
 
@@ -666,6 +755,17 @@ def _dispatch(token: str, pos: int, spot) -> tuple | None:
     char = token[pos]
     before = token[pos - 1] if pos else ""
     after_char = token[pos + 1] if pos + 1 < len(token) else ""
+    if char in "÷≈±":
+        return pos + 1, ({"÷": "chia", "≈": "xấp xỉ", "±": "cộng trừ"}[char], False)
+    if char == "−":
+        around = spot(pos + 1)
+        return pos + 1, ("trừ" if re.search(r"\d\s*$", around.left) else "âm", False)
+    if char == "-":
+        around = spot(pos + 1)
+        expression = around.left + around.sym + around.right
+        if (re.search(r"\d\s*$", around.left) and re.match(r"\s*\d", around.right)
+                and ("=" in expression or re.search(r"\b(?:tính|trừ|hiệu|phép tính)\b", expression, re.I))):
+            return pos + 1, ("trừ", False)
     if char in "/／":
         end = _run(token, pos, "/／")
         said = _slash(spot(end))
@@ -749,6 +849,8 @@ def _dispatch(token: str, pos: int, spot) -> tuple | None:
         return pos + 1, _gender(spot(pos + 1))
     if char == "≠":
         around = spot(pos + 1)
+        if re.match(r"\s*\d", around.right):
+            return pos + 1, ("khác", False)
         return pos + 1, ("không phải là", False) if around.l1 and around.r1 and around.ltype != "sym" and around.rtype != "sym" else SILENT
     if char in "☎☏":
         return pos + 1, ("điện thoại", False) if re.match(r"\s?[\d(]", spot(pos + 1).right) else SILENT

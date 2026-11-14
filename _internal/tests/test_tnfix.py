@@ -10,9 +10,9 @@ from abook.readaloud.vieneu import integer_reading
     ("Giá 3,000 đồng.", "Giá ba nghìn đồng."),
     ("Đo 2.5kg.", "Đo hai phẩy năm kg."),
     ("Alex 1. Morgan 3. Taylor 5.", "Alex một. Morgan ba. Taylor năm."),
-    ("Giá 1,25 đồng.", "Giá 1,25 đồng."),
-    ("Đo 0,357 giây.", "Đo 0,357 giây."),
-    ("Đo 3,0005 giây.", "Đo 3,0005 giây."),
+    ("Giá 1,25 đồng.", "Giá một phẩy hai năm đồng."),
+    ("Đo 0,357 giây.", "Đo không phẩy ba năm bảy giây."),
+    ("Đo 3,0005 giây.", "Đo ba phẩy không không không năm giây."),
     ("Mã v1.2 và 12:30.", "Mã một chấm hai và 12:30."),
 ])
 def test_number_boundaries(source, expected):

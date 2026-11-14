@@ -32,12 +32,12 @@
     "reason": "README.md: all flagged strings match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
   },
   "_internal/AGENTS.md": {
-    "sha256": "407b2617419df24e7fb1195a2ca0bdfbed20dae59b67d7f69f6ae119b214116c",
-    "reason": "_internal/AGENTS.md: technical contributor rules; added private index lifecycle invariants. The inherited approved Corpus shingle set is unchanged.",
+    "sha256": "0b684df8090abad34c37871601b843644cb50908b93ded85dba416a86e2d8894",
+    "reason": "_internal/AGENTS.md: technical contributor rules; added private index lifecycle invariants. The inherited approved Corpus shingle set is unchanged. _internal/AGENTS.md: tnfix172 exact changed bytes reviewed; authored technical documentation or synthetic normalization expectations. Existing individual category-i shingles were rechecked as identical public word sequences against 0964e4cd2. No new Corpus shingle is approved.",
     "corpus_review": {
       "classification": "i",
-      "file_sha256": "407b2617419df24e7fb1195a2ca0bdfbed20dae59b67d7f69f6ae119b214116c",
-      "reason": "_internal/AGENTS.md: 0.4.170 integration retains the repeat-alias/F4 technical invariants from 0.4.169 and the exact existing contextual shingle approval. Only the inherited individual shingle hashes remain approved as category i.",
+      "file_sha256": "0b684df8090abad34c37871601b843644cb50908b93ded85dba416a86e2d8894",
+      "reason": "_internal/AGENTS.md: each listed shingle retains its prior Lead-approved category-i classification. Exact public eight-word sequences are unchanged against 0964e4cd2; changes concern only TN behavior, expectations or technical notes. Byte pins expired and were individually re-reviewed.",
       "shingles": [
         "278c69d8d369f37e"
       ]
@@ -181,8 +181,8 @@
     "reason": "abook/readaloud/byok.py: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
   },
   "_internal/abook/readaloud/cache.py": {
-    "sha256": "5578b5b54191a55e20fcfb0a57a62091e57e6a5a30c4e3d8e2ed0a97f64d542f",
-    "reason": "_internal/abook/readaloud/cache.py: inherited cache API documentation; the shared rule counter now invalidates pre-0.4.168 audio, with no new narrative strings."
+    "sha256": "37963cef719473e75c7b1dc8ba5ee8e12bf2de0582acfd05eca5539c95851a0e",
+    "reason": "_internal/abook/readaloud/cache.py: tnfix172 exact bytes reviewed as authored normalization implementation or its unit-test expectations. Original source samples are preserved. The 485 benchmark inputs/answers have zero eight-word overlap across 523400 Corpus files. Only the existing technical/IPA rules are covered; Corpus checks remain active."
   },
   "_internal/abook/readaloud/edge.py": {
     "sha256": "c686d6afc867d00d6212c8c64a09d91f74759300437d953796de3a540c094fd6",
@@ -278,8 +278,8 @@
     ]
   },
   "_internal/abook/readaloud/shouts.py": {
-    "sha256": "6e1359a19019341fae1a365e35df096d10688ff0b6ba6ce4cca990b623ce827a",
-    "reason": "abook/readaloud/shouts.py: all flagged strings match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
+    "sha256": "8185bddc4baf8db00bbfd17adcc16a8407b0c337912e60860aded2ae5f8436c5",
+    "reason": "_internal/abook/readaloud/shouts.py: tnfix172 exact bytes reviewed as authored normalization implementation or its unit-test expectations. Original source samples are preserved. The 485 benchmark inputs/answers have zero eight-word overlap across 523400 Corpus files. Only the existing technical/IPA rules are covered; Corpus checks remain active."
   },
   "_internal/abook/readaloud/spoken.py": {
     "sha256": "fb05ad10f6ea8a5ab8cceef2224c1b5b7d5e766eba20a6642c37056853d30e96",
@@ -298,12 +298,12 @@
     "reason": "abook/readaloud/supertonic.py: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
   },
   "_internal/abook/readaloud/symbols.py": {
-    "sha256": "a4701271859532c902c11aae83740b08e93a452cee85c87158bbc3c21eb3de69",
-    "reason": "abook/readaloud/symbols.py: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
+    "sha256": "f48aac6e70263ae746ca3e4eed86458d7b91f8d70e000a409f7d6231344d5a45",
+    "reason": "_internal/abook/readaloud/symbols.py: tnfix172 exact bytes reviewed as authored normalization implementation or its unit-test expectations. Original source samples are preserved. The 485 benchmark inputs/answers have zero eight-word overlap across 523400 Corpus files. Only the existing technical/IPA rules are covered; Corpus checks remain active."
   },
   "_internal/abook/readaloud/vieneu.py": {
-    "sha256": "8123728e9d7c1e4054844fde396586591161f81063b67cc18725986a5e0fd7c1",
-    "reason": "abook/readaloud/vieneu.py: all flagged strings match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
+    "sha256": "a91700dae2804eb44cd24c11ae6e757b96d9a05fdee4c2008ce2822bd188260b",
+    "reason": "_internal/abook/readaloud/vieneu.py: tnfix172 exact bytes reviewed as authored normalization implementation or its unit-test expectations. Original source samples are preserved. The 485 benchmark inputs/answers have zero eight-word overlap across 523400 Corpus files. Only the existing technical/IPA rules are covered; Corpus checks remain active."
   },
   "_internal/abook/readaloud/vieneu_engine.py": {
     "sha256": "319a7912363f2fcf2bfbf981f6a179ec60293b602c93aee99201c480b5cdf12c",
@@ -326,8 +326,8 @@
     "reason": "abook/readaloud/windows.py: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
   },
   "_internal/abook/romanization.py": {
-    "sha256": "344e0252635ed1cf1cef52c55b927767561d8fc35c542575d99ec53f4473d600",
-    "reason": "abook/romanization.py: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
+    "sha256": "557f241d23bbd1bca79ab01af623c91459d9ac8b2725d8d2bd8a38f8321b4f24",
+    "reason": "_internal/abook/romanization.py: tnfix172 exact bytes reviewed as authored normalization implementation or its unit-test expectations. Original source samples are preserved. The 485 benchmark inputs/answers have zero eight-word overlap across 523400 Corpus files. Only the existing technical/IPA rules are covered; Corpus checks remain active."
   },
   "_internal/abook/runtime_contract.py": {
     "sha256": "eaf50abec34c5a309fac3fa41ec8e65ae56b90bed1fd6c9201f6342dd5a5df9f",
@@ -354,12 +354,12 @@
     "reason": "abook/teller_voice.py: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
   },
   "_internal/abook/text_processing.py": {
-    "sha256": "d1dcf19658877c5165c9ca6190bf1bb33b16a7a155ec33c5352f6d8fd052637a",
-    "reason": "_internal/abook/text_processing.py: 0.4.170 retains the repeat-alias algorithm and replaces three comment fragments with original wording; the existing generic shingle approval is unchanged.",
+    "sha256": "c84a4f2818575ba0225f1c0e4155f3722487aca0d304750c7337f5738925d1a6",
+    "reason": "_internal/abook/text_processing.py: tnfix172 exact changed bytes reviewed; authored technical documentation or synthetic normalization expectations. Existing individual category-i shingles were rechecked as identical public word sequences against 0964e4cd2. No new Corpus shingle is approved.",
     "corpus_review": {
       "classification": "i",
-      "file_sha256": "d1dcf19658877c5165c9ca6190bf1bb33b16a7a155ec33c5352f6d8fd052637a",
-      "reason": "_internal/abook/text_processing.py: 0.4.170 retains the repeat-alias algorithm and replaces three comment fragments with original wording; the existing generic shingle approval is unchanged. Only the inherited individual shingle hashes remain approved as category i.",
+      "file_sha256": "c84a4f2818575ba0225f1c0e4155f3722487aca0d304750c7337f5738925d1a6",
+      "reason": "_internal/abook/text_processing.py: each listed shingle retains its prior Lead-approved category-i classification. Exact public eight-word sequences are unchanged against 0964e4cd2; changes concern only TN behavior, expectations or technical notes. Byte pins expired and were individually re-reviewed.",
       "shingles": [
         "5b11cdc6770a15c1"
       ]
@@ -978,12 +978,12 @@
     "reason": "docs/BOUNDARY_6_AND_THE_DRIVER_MORNING.md: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
   },
   "_internal/docs/CHANGELOG.md": {
-    "sha256": "be71762a34af4fcbb5ba7a9c0fd8d9b6a518b0b9630895f88bf35ca2a00cbc3a",
-    "reason": "_internal/docs/CHANGELOG.md: 0.4.171 technical release notes, ignored-tracked implementation and test description; existing individual shingle approvals unchanged.",
+    "sha256": "a2843178d5f8f910beff4bf7a1dec72e842e5edcd606c3fb397911da53def70e",
+    "reason": "_internal/docs/CHANGELOG.md: 0.4.171 technical release notes, ignored-tracked implementation and test description; existing individual shingle approvals unchanged. _internal/docs/CHANGELOG.md: tnfix172 exact changed bytes reviewed; authored technical documentation or synthetic normalization expectations. Existing individual category-i shingles were rechecked as identical public word sequences against 0964e4cd2. No new Corpus shingle is approved.",
     "corpus_review": {
       "classification": "i",
-      "file_sha256": "be71762a34af4fcbb5ba7a9c0fd8d9b6a518b0b9630895f88bf35ca2a00cbc3a",
-      "reason": "_internal/docs/CHANGELOG.md: 0.4.171 technical release notes, ignored-tracked implementation and test description; existing individual shingle approvals unchanged.",
+      "file_sha256": "a2843178d5f8f910beff4bf7a1dec72e842e5edcd606c3fb397911da53def70e",
+      "reason": "_internal/docs/CHANGELOG.md: 0.4.171 technical release notes, ignored-tracked implementation and test description; existing individual shingle approvals unchanged. _internal/docs/CHANGELOG.md: each listed shingle retains its prior Lead-approved category-i classification. Exact public eight-word sequences are unchanged against 0964e4cd2; changes concern only TN behavior, expectations or technical notes. Byte pins expired and were individually re-reviewed.",
       "shingles": [
         "a427005770c2fa6d"
       ]
@@ -1205,18 +1205,18 @@
     "reason": "Production interruption instructions and continuity limits; operational guidance rather than book text."
   },
   "_internal/docs/TEST_REPORT.md": {
-    "sha256": "0238c198cf72b0630d0084cfff95f5835131f6937ce3a0da56ba3184bcc95315",
-    "reason": "_internal/docs/TEST_REPORT.md: 0.4.171 technical release notes, ignored-tracked implementation and test description; existing individual shingle approvals unchanged. TEST_REPORT TN audit: records the 440-case string benchmark, exact JUnit suite counts, aggregate Corpus sampling and unchanged implementation hash alongside prior technical evidence. This review only covers long technical prose. Original TN audit technical prose or deterministic diagnostics of the 440 independently authored cases. IPA is generated by the production G2P functions from those cases and accepted readings. Only listed technical/IPA rules are reviewed; Corpus matching remains enabled. TEST_REPORT: original technical validation notes, package versions, two-stage TN totals and JUnit counts alongside inherited test evidence. Exact file-byte review covers long technical prose only; Corpus matching remains enabled.",
+    "sha256": "eebc0d261e5791609ae36d844a251ffd3bf603d5bd310c9b4693a55b3a3cc114",
+    "reason": "_internal/docs/TEST_REPORT.md: 0.4.171 technical release notes, ignored-tracked implementation and test description; existing individual shingle approvals unchanged. TEST_REPORT TN audit: records the 440-case string benchmark, exact JUnit suite counts, aggregate Corpus sampling and unchanged implementation hash alongside prior technical evidence. This review only covers long technical prose. Original TN audit technical prose or deterministic diagnostics of the 440 independently authored cases. IPA is generated by the production G2P functions from those cases and accepted readings. Only listed technical/IPA rules are reviewed; Corpus matching remains enabled. TEST_REPORT: original technical validation notes, package versions, two-stage TN totals and JUnit counts alongside inherited test evidence. Exact file-byte review covers long technical prose only; Corpus matching remains enabled. _internal/docs/TEST_REPORT.md: tnfix172 exact bytes reviewed as authored normalization implementation or its unit-test expectations. Original source samples are preserved. The 485 benchmark inputs/answers have zero eight-word overlap across 523400 Corpus files. Only the existing technical/IPA rules are covered; Corpus checks remain active.",
     "rules": [
       "long-vietnamese"
     ]
   },
   "_internal/docs/TEXT_NORMALIZATION.md": {
-    "sha256": "29e577fcb826d3222b38b7a69c1795223a486b67b84338ab2b6a27b3345566c2",
+    "sha256": "f6d30f4bad05ea0e22f480d5ddc788595b7343de7dbb369d8000aaaecb07f929",
     "rules": [
       "long-vietnamese"
     ],
-    "reason": "TEXT_NORMALIZATION: original architecture documentation, comparison rules, aggregate-only frequency estimates, post-G2P priorities and retained historical technical notes. Exact file-byte review covers long technical prose only; Corpus matching remains enabled."
+    "reason": "_internal/docs/TEXT_NORMALIZATION.md: tnfix172 exact bytes reviewed as TN architecture, rules and before/after measurements. Original source samples are preserved. The 485 benchmark inputs/answers have zero eight-word overlap across 523400 Corpus files. Only the existing technical/IPA rules are covered; Corpus checks remain active."
   },
   "_internal/docs/THE_MACHINE_IS_SHARED.md": {
     "sha256": "abb41668adcafbe2b73f1f208899025bdda92deba71e0aee9576ff3078c94757",
@@ -1472,8 +1472,8 @@
     "reason": "mobile/android/app/src/main/java/vn/abook/player/readaloud/Abbreviations.kt: all flagged strings match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
   },
   "_internal/mobile/android/app/src/main/java/vn/abook/player/readaloud/ClipCache.kt": {
-    "sha256": "feddfcfe471e9548fc7e1cce8bc472810b94ca0e4039cfeac8bc837237243f61",
-    "reason": "_internal/mobile/android/app/src/main/java/vn/abook/player/readaloud/ClipCache.kt: inherited cache API documentation; the shared rule counter now invalidates pre-0.4.168 audio, with no new narrative strings."
+    "sha256": "0b6f305aba671f6705df9d8762b8afe239e5d8df952353f1da690fee55a69e10",
+    "reason": "_internal/mobile/android/app/src/main/java/vn/abook/player/readaloud/ClipCache.kt: tnfix172 exact bytes reviewed as authored normalization implementation or its unit-test expectations. Original source samples are preserved. The 485 benchmark inputs/answers have zero eight-word overlap across 523400 Corpus files. Only the existing technical/IPA rules are covered; Corpus checks remain active."
   },
   "_internal/mobile/android/app/src/main/java/vn/abook/player/readaloud/ClipRetry.kt": {
     "sha256": "6bd46f15491af5f983c412479a0d3d6d745848f8746553b2d8fa26a9db8337d2",
@@ -1512,8 +1512,8 @@
     "reason": "mobile/android/app/src/main/java/vn/abook/player/readaloud/ReadAloud.kt: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
   },
   "_internal/mobile/android/app/src/main/java/vn/abook/player/readaloud/Romanization.kt": {
-    "sha256": "e3a645c5c7c708057370d85b80c2388152bec8ff87ac02d3db759e1cf8c05df7",
-    "reason": "mobile/android/app/src/main/java/vn/abook/player/readaloud/Romanization.kt: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
+    "sha256": "36f7c4f811036802d7428fc921d37f0c0c1e75a17c59225764eab953ece2f8e9",
+    "reason": "_internal/mobile/android/app/src/main/java/vn/abook/player/readaloud/Romanization.kt: tnfix172 exact bytes reviewed as authored normalization implementation or its unit-test expectations. Original source samples are preserved. The 485 benchmark inputs/answers have zero eight-word overlap across 523400 Corpus files. Only the existing technical/IPA rules are covered; Corpus checks remain active."
   },
   "_internal/mobile/android/app/src/main/java/vn/abook/player/readaloud/SeekPlan.kt": {
     "sha256": "37f61338be8d09aaa085a0cbaaee4343e1c932427a53fac5642f9d987293e0c5",
@@ -1524,8 +1524,8 @@
     "reason": "mobile/android/app/src/main/java/vn/abook/player/readaloud/StalledClips.kt: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
   },
   "_internal/mobile/android/app/src/main/java/vn/abook/player/readaloud/Symbols.kt": {
-    "sha256": "af94924146d04907d0d243080fc374ef871edb04c945632508a3d508705e97cd",
-    "reason": "mobile/android/app/src/main/java/vn/abook/player/readaloud/Symbols.kt: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
+    "sha256": "5c52f40fcd0a73ea617188ca1730cc03ce69e700826ae8b73e904820d9925bc5",
+    "reason": "_internal/mobile/android/app/src/main/java/vn/abook/player/readaloud/Symbols.kt: tnfix172 exact bytes reviewed as authored normalization implementation or its unit-test expectations. Original source samples are preserved. The 485 benchmark inputs/answers have zero eight-word overlap across 523400 Corpus files. Only the existing technical/IPA rules are covered; Corpus checks remain active."
   },
   "_internal/mobile/android/app/src/main/java/vn/abook/player/ui/NativeActivity.kt": {
     "sha256": "40fc78c8030309048119f5ccd33084ca0d84e58d5545f01f0df54daaadce8b7e",
@@ -1596,8 +1596,8 @@
     "reason": "mobile/android/app/src/test/java/vn/abook/player/ui/voice/ConsentGateTest.kt: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
   },
   "_internal/mobile/android/app/src/test/java/vn/abook/player/vieneu/RealNamesTest.kt": {
-    "sha256": "934d0b5f321cba35ae174a23a0895fbe5a1ce29b86a3bf0996cea70fbfc30885",
-    "reason": "mobile/android/app/src/test/java/vn/abook/player/vieneu/RealNamesTest.kt: all flagged strings match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
+    "sha256": "32613c72f64482ab1f69003a9e54dc4ad585ae75719914b4e9cbb2c8eeac6e65",
+    "reason": "_internal/mobile/android/app/src/test/java/vn/abook/player/vieneu/RealNamesTest.kt: tnfix172 exact bytes reviewed as authored normalization implementation or its unit-test expectations. Original source samples are preserved. The 485 benchmark inputs/answers have zero eight-word overlap across 523400 Corpus files. Only the existing technical/IPA rules are covered; Corpus checks remain active."
   },
   "_internal/mobile/android/scripts/phone_frames.py": {
     "sha256": "6b45f327fd9e74d5370efa973abc439d04b8372c1579b45c6516e92af6fefa2e",
@@ -3233,8 +3233,8 @@
     "reason": "tests/fixtures/readaloud/phoneme_delivery/cases.json: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
   },
   "_internal/tests/fixtures/readaloud/real_names/cases.json": {
-    "sha256": "005b114bce54028a9a5cc12008e7ba6eaada8558de0420c2f2424859356556d3",
-    "reason": "tests/fixtures/readaloud/real_names/cases.json: all flagged strings match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
+    "sha256": "1a9eeb428c4d7fd464df4d0277707a9d355e57a8b15ebb6f00e5ace5621d02a6",
+    "reason": "_internal/tests/fixtures/readaloud/real_names/cases.json: tnfix172 exact bytes reviewed as derived synthetic speech and token expectations. Original source samples are preserved. The 485 benchmark inputs/answers have zero eight-word overlap across 523400 Corpus files. Only the existing technical/IPA rules are covered; Corpus checks remain active."
   },
   "_internal/tests/fixtures/readaloud/shared_vietnamese/cases.json": {
     "sha256": "69bba5b10f2c60b15c6e4b18e4bb5d56cd016011fa6b849a717431e1d844f7d2",
@@ -3249,12 +3249,12 @@
     }
   },
   "_internal/tests/fixtures/readaloud/spoken/reading_forms.json": {
-    "sha256": "dca1ab309080e3b583488adfcd3c4bfb3ccf74472616f0b40250bbfdb196590e",
-    "reason": "tests/fixtures/readaloud/spoken/reading_forms.json: all flagged strings match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data.",
+    "sha256": "e26a511a78a8495a2b3242716c51ea762233f6c5482f0c9ac40ab75e5746459a",
+    "reason": "_internal/tests/fixtures/readaloud/spoken/reading_forms.json: tnfix172 exact changed bytes reviewed; authored technical documentation or synthetic normalization expectations. Existing individual category-i shingles were rechecked as identical public word sequences against 0964e4cd2. No new Corpus shingle is approved.",
     "corpus_review": {
       "classification": "i",
-      "file_sha256": "dca1ab309080e3b583488adfcd3c4bfb3ccf74472616f0b40250bbfdb196590e",
-      "reason": "_internal/tests/fixtures/readaloud/spoken/reading_forms.json: Number-word table or normalization fixture; Short generic test/UI prose or literal bridge. Lead approved category (i) only; each hash was classified in round two.",
+      "file_sha256": "e26a511a78a8495a2b3242716c51ea762233f6c5482f0c9ac40ab75e5746459a",
+      "reason": "_internal/tests/fixtures/readaloud/spoken/reading_forms.json: each listed shingle retains its prior Lead-approved category-i classification. Exact public eight-word sequences are unchanged against 0964e4cd2; changes concern only TN behavior, expectations or technical notes. Byte pins expired and were individually re-reviewed.",
       "shingles": [
         "8fa7776d713864f2",
         "d4391d87c91b8304"
@@ -3266,12 +3266,12 @@
     "reason": "tests/fixtures/readaloud/spread/README.md: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
   },
   "_internal/tests/fixtures/readaloud/supertonic/supertonic.json": {
-    "sha256": "79755c82b1743e74268b4cd4f50d181e496071901201ffeb158c9c006a7bab6d",
-    "reason": "Self-written speech benchmark metadata and short synthetic reading cases; no corpus overlap in the strict scan.",
+    "sha256": "bd01bcf108564dd83703c861be648ea93140e736deb1a64b4ae620ce9a3c16b8",
+    "reason": "_internal/tests/fixtures/readaloud/supertonic/supertonic.json: tnfix172 exact changed bytes reviewed; authored technical documentation or synthetic normalization expectations. Existing individual category-i shingles were rechecked as identical public word sequences against 0964e4cd2. No new Corpus shingle is approved.",
     "corpus_review": {
       "classification": "i",
-      "file_sha256": "79755c82b1743e74268b4cd4f50d181e496071901201ffeb158c9c006a7bab6d",
-      "reason": "_internal/tests/fixtures/readaloud/supertonic/supertonic.json: Short generic test/UI prose or literal bridge. Lead approved category (i) only; each hash was classified in round two.",
+      "file_sha256": "bd01bcf108564dd83703c861be648ea93140e736deb1a64b4ae620ce9a3c16b8",
+      "reason": "_internal/tests/fixtures/readaloud/supertonic/supertonic.json: each listed shingle retains its prior Lead-approved category-i classification. Exact public eight-word sequences are unchanged against 0964e4cd2; changes concern only TN behavior, expectations or technical notes. Byte pins expired and were individually re-reviewed.",
       "shingles": [
         "4aad77781e47e969"
       ]
@@ -3298,8 +3298,8 @@
     "reason": "tests/fixtures/release_gate/README.md: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
   },
   "_internal/tests/fixtures/romanization/cases.json": {
-    "sha256": "7a8cbfd075b243456fdc38cd90c8d2abab5f42e469ff64fd5ec74854a7887b73",
-    "reason": "tests/fixtures/romanization/cases.json: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
+    "sha256": "f0319ec8cc4dd190a9dac46e4ab202d9b762009370327ac84ddbef69c5d4fc95",
+    "reason": "_internal/tests/fixtures/romanization/cases.json: tnfix172 exact bytes reviewed as derived synthetic speech and token expectations. Original source samples are preserved. The 485 benchmark inputs/answers have zero eight-word overlap across 523400 Corpus files. Only the existing technical/IPA rules are covered; Corpus checks remain active."
   },
   "_internal/tests/fixtures/settings/ranges.json": {
     "sha256": "6932bc05147bc3c5392ee12c83b167e332247e1c390642ad1e353d9cf3db9009",
@@ -3390,12 +3390,12 @@
     "reason": "tests/fixtures/vieneu/android/clips.json: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
   },
   "_internal/tests/fixtures/vieneu/android/text.json": {
-    "sha256": "d3c6fa5a1e69f5025741f78a6b3f6738fc90868e2dd8ebbbce9eaa085cfad937",
-    "reason": "Generated desktop/phone contract from self-written numeric, hesitation, honorific and phonetic test sentences; source cases inspected after integration.",
+    "sha256": "ae2486387112b5b7beedd8ea5fb306077223f269232e06a019e10594a88060e7",
+    "reason": "_internal/tests/fixtures/vieneu/android/text.json: tnfix172 exact changed bytes reviewed; authored technical documentation or synthetic normalization expectations. Existing individual category-i shingles were rechecked as identical public word sequences against 0964e4cd2. No new Corpus shingle is approved.",
     "corpus_review": {
       "classification": "i",
-      "file_sha256": "d3c6fa5a1e69f5025741f78a6b3f6738fc90868e2dd8ebbbce9eaa085cfad937",
-      "reason": "_internal/tests/fixtures/vieneu/android/text.json: Generator declares self-written synthetic text. Lead approved category (i) only; each hash was classified in round two.",
+      "file_sha256": "ae2486387112b5b7beedd8ea5fb306077223f269232e06a019e10594a88060e7",
+      "reason": "_internal/tests/fixtures/vieneu/android/text.json: each listed shingle retains its prior Lead-approved category-i classification. Exact public eight-word sequences are unchanged against 0964e4cd2; changes concern only TN behavior, expectations or technical notes. Byte pins expired and were individually re-reviewed.",
       "shingles": [
         "23cae7b6e4fef3c5",
         "322165be87076ff3",
@@ -3418,8 +3418,8 @@
     }
   },
   "_internal/tests/fixtures/vieneu/android/tokens.json": {
-    "sha256": "5725bc88c551c2305e6ef06b957506f7a6332873dd330a571c34792ba271e074",
-    "reason": "Tokenizer outputs derived from the reviewed synthetic Android text contract, including updated numeric and hesitation phonemes."
+    "sha256": "83103fbe41222d6fbf4d124fe8efafd365505264d8bf9db1391be2e30baa4b17",
+    "reason": "_internal/tests/fixtures/vieneu/android/tokens.json: tnfix172 exact bytes reviewed as derived synthetic speech and token expectations. Original source samples are preserved. The 485 benchmark inputs/answers have zero eight-word overlap across 523400 Corpus files. Only the existing technical/IPA rules are covered; Corpus checks remain active."
   },
   "_internal/tests/fixtures/vietnamese_syllable/cases.json": {
     "sha256": "03d34beb1602eb48a05ecf1eacb72208e4f80b9e749161ae55610a39e0d06be4",
@@ -3473,12 +3473,12 @@
     "reason": "tests/real_disk_plugin.py: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
   },
   "_internal/tests/romanization_evidence.py": {
-    "sha256": "23ce4867f600ed1583d800879261476a3ec5e0e0814c22deb77ef5cf875b6a80",
-    "reason": "tests/romanization_evidence.py: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
+    "sha256": "234f95dbb7067550ada2553701206fb86640554b8eb50e0f6c28969fb76ebbc9",
+    "reason": "_internal/tests/romanization_evidence.py: tnfix172 exact bytes reviewed as authored normalization implementation or its unit-test expectations. Original source samples are preserved. The 485 benchmark inputs/answers have zero eight-word overlap across 523400 Corpus files. Only the existing technical/IPA rules are covered; Corpus checks remain active."
   },
   "_internal/tests/romanization_preprocessing_cases.py": {
-    "sha256": "92b252b0368d99aa03437619fca694b6dd5ee82665f3d1df939b78007db8cc3c",
-    "reason": "tests/romanization_preprocessing_cases.py: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
+    "sha256": "a8c622963ce118cbb9a28f3ac220efdb549eb450c46a1c7060fb18497fa4d457",
+    "reason": "_internal/tests/romanization_preprocessing_cases.py: tnfix172 exact bytes reviewed as authored normalization implementation or its unit-test expectations. Original source samples are preserved. The 485 benchmark inputs/answers have zero eight-word overlap across 523400 Corpus files. Only the existing technical/IPA rules are covered; Corpus checks remain active."
   },
   "_internal/tests/test_a100_preferences_contract.py": {
     "sha256": "bbd9c042922491c00e0a58d1b2e5615f4a29469e54bfa7f9243b2b7247cea15e",
@@ -4301,8 +4301,8 @@
     "reason": "tests/test_name_readings.py: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
   },
   "_internal/tests/test_names.py": {
-    "sha256": "92606a5a2d900ad8495c4b75bf22e430447b72dc7ba3b786f6de79a4edaf4b0d",
-    "reason": "tests/test_names.py: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
+    "sha256": "3c6e91dcf1d685881f6a55c0554b683bc64742a235b7c0fabe85be522fc9d946",
+    "reason": "_internal/tests/test_names.py: tnfix172 exact bytes reviewed as authored normalization implementation or its unit-test expectations. Original source samples are preserved. The 485 benchmark inputs/answers have zero eight-word overlap across 523400 Corpus files. Only the existing technical/IPA rules are covered; Corpus checks remain active."
   },
   "_internal/tests/test_names_keep_the_book_spelling.py": {
     "sha256": "883ed0700c4ed2cab076c09d0c887c7546fc15683b9a3d60116b9d8818e49816",
@@ -4405,8 +4405,8 @@
     "reason": "tests/test_peer_studio.py: all flagged strings match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
   },
   "_internal/tests/test_pending_changes_preview.py": {
-    "sha256": "af83497e4e267ef253ba03bb02cff0ac2dec033d9578a6a39e67624af15637cc",
-    "reason": "tests/test_pending_changes_preview.py: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
+    "sha256": "6e7ce079f3ff9b95431c9a6fa0c334956313a9960eb6fb2e57a63175eaaca67f",
+    "reason": "_internal/tests/test_pending_changes_preview.py: tnfix172 exact bytes reviewed as authored normalization implementation or its unit-test expectations. Original source samples are preserved. The 485 benchmark inputs/answers have zero eight-word overlap across 523400 Corpus files. Only the existing technical/IPA rules are covered; Corpus checks remain active."
   },
   "_internal/tests/test_phone_diagnostics.py": {
     "sha256": "9163e2372fc443dc031a5ecf1f39c7d1f41efb77edee5ee7d73a7493ca87ebb5",
@@ -4571,8 +4571,8 @@
     "reason": "tests/test_readaloud_readings.py: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
   },
   "_internal/tests/test_readaloud_sounds.py": {
-    "sha256": "4873393ef42c5d25cc42b66fca987196bf682d1e87fcb2dc069cc5ac73be3800",
-    "reason": "_internal/tests/test_readaloud_sounds.py: reviewed original workshop examples, regression descriptions and technical prompt instructions after removal of source excerpts.",
+    "sha256": "276a585a2171abfc2906770d04ec01c0e5a7101c60252acfb32b6ad5192075c6",
+    "reason": "_internal/tests/test_readaloud_sounds.py: tnfix172 exact bytes reviewed as authored normalization implementation or its unit-test expectations. Original source samples are preserved. The 485 benchmark inputs/answers have zero eight-word overlap across 523400 Corpus files. Only the existing technical/IPA rules are covered; Corpus checks remain active.",
     "rules": [
       "long-vietnamese"
     ]
@@ -4582,24 +4582,24 @@
     "reason": "tests/test_readaloud_spoken.py: all flagged strings match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
   },
   "_internal/tests/test_readaloud_supertonic.py": {
-    "sha256": "8400b5a6831fb795f326577367f3fe370eab976f6c9f3a5aa466eeb9ddc7027a",
-    "reason": "tests/test_readaloud_supertonic.py: all flagged strings match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
+    "sha256": "034d2efd1b8a17c1ddbc5f883d3b9da61266a6e62bcdf25565a58d12113707b9",
+    "reason": "_internal/tests/test_readaloud_supertonic.py: tnfix172 exact bytes reviewed as authored normalization implementation or its unit-test expectations. Original source samples are preserved. The 485 benchmark inputs/answers have zero eight-word overlap across 523400 Corpus files. Only the existing technical/IPA rules are covered; Corpus checks remain active."
   },
   "_internal/tests/test_readaloud_symbols.py": {
-    "sha256": "d0485c03db4f587e34fdce83c354241b5c7de6a61a43970dceb95e9ee734401e",
-    "reason": "tests/test_readaloud_symbols.py: all flagged strings match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
+    "sha256": "905f8ce66f48212477695df26f0c040159aeca284b9d092d382e46e2fbf145b6",
+    "reason": "_internal/tests/test_readaloud_symbols.py: tnfix172 exact bytes reviewed as authored normalization implementation or its unit-test expectations. Original source samples are preserved. The 485 benchmark inputs/answers have zero eight-word overlap across 523400 Corpus files. Only the existing technical/IPA rules are covered; Corpus checks remain active."
   },
   "_internal/tests/test_readaloud_truepeak.py": {
     "sha256": "49c7036522e00a49750c3d8de42480c5568c897fb9fdc8536e3fce61ebab8ae3",
     "reason": "tests/test_readaloud_truepeak.py: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
   },
   "_internal/tests/test_readaloud_vieneu.py": {
-    "sha256": "e2a80c1f7216f37e3c3ec9697605ef7e48f7cea4ee7a37ba65eb4fe80985c8a8",
-    "reason": "tests/test_readaloud_vieneu.py: all flagged strings match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data.",
+    "sha256": "87476cca94834dfda1bc0564eb1f01151d858f3c609872cfc24b47ec3a17f384",
+    "reason": "_internal/tests/test_readaloud_vieneu.py: tnfix172 exact changed bytes reviewed; authored technical documentation or synthetic normalization expectations. Existing individual category-i shingles were rechecked as identical public word sequences against 0964e4cd2. No new Corpus shingle is approved.",
     "corpus_review": {
       "classification": "i",
-      "file_sha256": "e2a80c1f7216f37e3c3ec9697605ef7e48f7cea4ee7a37ba65eb4fe80985c8a8",
-      "reason": "_internal/tests/test_readaloud_vieneu.py: Number-word table or normalization fixture. Lead approved category (i) only; each hash was classified in round two.",
+      "file_sha256": "87476cca94834dfda1bc0564eb1f01151d858f3c609872cfc24b47ec3a17f384",
+      "reason": "_internal/tests/test_readaloud_vieneu.py: each listed shingle retains its prior Lead-approved category-i classification. Exact public eight-word sequences are unchanged against 0964e4cd2; changes concern only TN behavior, expectations or technical notes. Byte pins expired and were individually re-reviewed.",
       "shingles": [
         "d7c7e36fd5e81b17",
         "ffd7f09fd751c208"
@@ -4615,8 +4615,8 @@
     "reason": "tests/test_reading_preview.py: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
   },
   "_internal/tests/test_real_names.py": {
-    "sha256": "595904f875c374cf7585a3d87ab09ee501463b59a3b4b83589ef79faa85cfbd3",
-    "reason": "tests/test_real_names.py: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
+    "sha256": "6391d8b975bcbe014e9f2aeaef88c48714047637b221b41e8822121b90594c6f",
+    "reason": "_internal/tests/test_real_names.py: tnfix172 exact bytes reviewed as authored normalization implementation or its unit-test expectations. Original source samples are preserved. The 485 benchmark inputs/answers have zero eight-word overlap across 523400 Corpus files. Only the existing technical/IPA rules are covered; Corpus checks remain active."
   },
   "_internal/tests/test_redo_a_book_not_started.py": {
     "sha256": "2fbc7c8e30684d8cdac26c94be09f816ba072bd94627ada3259437317a2bd555",
@@ -4659,8 +4659,8 @@
     "reason": "tests/test_review_spoken_fix.py: all flagged strings match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
   },
   "_internal/tests/test_romanization.py": {
-    "sha256": "f7db289d700b1d7ddbcebcb4b602cc7321ef644cf499d25c8bbc5c1f1b96e00f",
-    "reason": "tests/test_romanization.py: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
+    "sha256": "72c9a15d070c94e93179910fd56b6b36f4dc23db47fa7a06783dcfa6989bcb7b",
+    "reason": "_internal/tests/test_romanization.py: tnfix172 exact bytes reviewed as authored normalization implementation or its unit-test expectations. Original source samples are preserved. The 485 benchmark inputs/answers have zero eight-word overlap across 523400 Corpus files. Only the existing technical/IPA rules are covered; Corpus checks remain active."
   },
   "_internal/tests/test_runtime_contract.py": {
     "sha256": "71a556e4fb0c84d1c5c0fae075ae755c7f1271d0d351ccb3f68541a0b842be64",
@@ -4751,8 +4751,8 @@
     "reason": "tests/test_studio_cast_labels.py: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
   },
   "_internal/tests/test_studio_names.py": {
-    "sha256": "cf368cf357ab8a7b40269787349b0ed48a96e00195c40df827188aeea676fef7",
-    "reason": "tests/test_studio_names.py: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
+    "sha256": "679e3266c8527b14694e8da92d715a046a768fd06b9e5f42e6816bab280a5239",
+    "reason": "_internal/tests/test_studio_names.py: tnfix172 exact bytes reviewed as authored normalization implementation or its unit-test expectations. Original source samples are preserved. The 485 benchmark inputs/answers have zero eight-word overlap across 523400 Corpus files. Only the existing technical/IPA rules are covered; Corpus checks remain active."
   },
   "_internal/tests/test_studio_requirements_freeze.py": {
     "sha256": "da0fc246db1792abf3702680b46de4560ca35499048342cf928d1e884ae52de2",
@@ -5225,13 +5225,13 @@
     }
   },
   "_internal/mobile/android/app/src/main/java/vn/abook/player/readaloud/Shouts.kt": {
-    "reason": "_internal/mobile/android/app/src/main/java/vn/abook/player/readaloud/Shouts.kt: individually classified contextual coincidences only.",
+    "reason": "_internal/mobile/android/app/src/main/java/vn/abook/player/readaloud/Shouts.kt: tnfix172 exact changed bytes reviewed; authored technical documentation or synthetic normalization expectations. Existing individual category-i shingles were rechecked as identical public word sequences against 0964e4cd2. No new Corpus shingle is approved.",
     "rules": [],
-    "sha256": "66248af17b4ee55bb3d263237d91a36d69fe12490cb0c23cd1cf0af26826ffde",
+    "sha256": "3d910cfc2ab698c59dbf2cbbcd97b11661afe92bf54dc6a49299e43828be637c",
     "corpus_review": {
       "classification": "i",
-      "file_sha256": "66248af17b4ee55bb3d263237d91a36d69fe12490cb0c23cd1cf0af26826ffde",
-      "reason": "_internal/mobile/android/app/src/main/java/vn/abook/player/readaloud/Shouts.kt: Number-word table or normalization fixture. Lead approved category (i) only; each hash was classified in round two.",
+      "file_sha256": "3d910cfc2ab698c59dbf2cbbcd97b11661afe92bf54dc6a49299e43828be637c",
+      "reason": "_internal/mobile/android/app/src/main/java/vn/abook/player/readaloud/Shouts.kt: each listed shingle retains its prior Lead-approved category-i classification. Exact public eight-word sequences are unchanged against 0964e4cd2; changes concern only TN behavior, expectations or technical notes. Byte pins expired and were individually re-reviewed.",
       "shingles": [
         "df5b7845de8cd602"
       ]
@@ -5574,18 +5574,18 @@
     }
   },
   "_internal/docs/tn_benchmark/report.md": {
-    "sha256": "48ef425991e01943e39edf0c09bdb1520cf8d8ba9684795d401c082a4e6592e2",
+    "sha256": "ca604d0c7e1798999b5bbb71c45d3a496244140667c25a538c6a1926edc7b1ec",
     "rules": [
       "ipa>=8",
       "long-vietnamese"
     ],
-    "reason": "TN Markdown report: deterministic tables and structured mismatch records from the unchanged 440 original neutral cases, including top-five diagnostics. IPA is generated from the authored cases and accepted readings; only listed IPA and long-prose rules are covered, with no Corpus waiver."
+    "reason": "_internal/docs/tn_benchmark/report.md: tnfix172 exact bytes reviewed as generated benchmark phoneme records. Original source samples are preserved. The 485 benchmark inputs/answers have zero eight-word overlap across 523400 Corpus files. Only the existing technical/IPA rules are covered; Corpus checks remain active."
   },
   "_internal/docs/tn_benchmark/report.json": {
-    "sha256": "28ebf40fe15347605ad50f288caa7b88ae9e77805d826a16bc2b0e4b379951e0",
+    "sha256": "108c284254f38c8234da1cf0aa2a0933554a9761ff164cc2614e46dd8f20b682",
     "rules": [
       "ipa>=8"
     ],
-    "reason": "TN JSON report: complete two-stage results with production G2P output for the unchanged 440 original cases and every accepted alternative. The exact bytes are reviewed for generated IPA only; the original fixture has zero eight-word Corpus overlap, and Corpus matching remains enabled."
+    "reason": "_internal/docs/tn_benchmark/report.json: tnfix172 exact bytes reviewed as generated benchmark phoneme records. Original source samples are preserved. The 485 benchmark inputs/answers have zero eight-word overlap across 523400 Corpus files. Only the existing technical/IPA rules are covered; Corpus checks remain active."
   }
 }

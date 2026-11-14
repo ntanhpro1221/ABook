@@ -42,9 +42,9 @@
     "ambiguity": null
   },
   "japanese:Sou": {
-    "reading": "xâu",
+    "reading": "xô",
     "phones": [
-      "sˈə1w"
+      "sˈo"
     ],
     "ambiguity": null
   },
@@ -245,9 +245,9 @@
     "ambiguity": null
   },
   "japanese:Keiji": {
-    "reading": "cây gi",
+    "reading": "kê gi",
     "phones": [
-      "kˈəɪ zˈi"
+      "kˈe zˈi"
     ],
     "ambiguity": null
   },
@@ -364,9 +364,9 @@
     "ambiguity": null
   },
   "japanese:Eina": {
-    "reading": "ây na",
+    "reading": "ê na",
     "phones": [
-      "ˈəɪ nˈaː"
+      "ˈe nˈaː"
     ],
     "ambiguity": null
   },
@@ -399,9 +399,9 @@
     "ambiguity": null
   },
   "japanese:Rindou": {
-    "reading": "rin đâu",
+    "reading": "rin đô",
     "phones": [
-      "ɹˈin ɗˈə1w"
+      "ɹˈin ɗˈo"
     ],
     "ambiguity": null
   },
@@ -490,9 +490,9 @@
     "ambiguity": null
   },
   "japanese:Yousuke": {
-    "reading": "giâu xu ke",
+    "reading": "giô xu ke",
     "phones": [
-      "zˈə1w sˈu kˈɛ"
+      "zˈo sˈu kˈɛ"
     ],
     "ambiguity": null
   },
@@ -574,9 +574,9 @@
     "ambiguity": null
   },
   "japanese:Keisuke": {
-    "reading": "cây xu ke",
+    "reading": "kê xu ke",
     "phones": [
-      "kˈəɪ sˈu kˈɛ"
+      "kˈe sˈu kˈɛ"
     ],
     "ambiguity": null
   },
@@ -623,9 +623,9 @@
     "ambiguity": null
   },
   "japanese:Andou": {
-    "reading": "an đâu",
+    "reading": "an đô",
     "phones": [
-      "ˈaːn ɗˈə1w"
+      "ˈaːn ɗˈo"
     ],
     "ambiguity": null
   },
@@ -651,9 +651,9 @@
     "ambiguity": null
   },
   "japanese:Katou": {
-    "reading": "ca tâu",
+    "reading": "ca tô",
     "phones": [
-      "kˈaː t̪ˈə1w"
+      "kˈaː t̪ˈo"
     ],
     "ambiguity": null
   },
@@ -777,9 +777,9 @@
     "ambiguity": null
   },
   "japanese:Endou": {
-    "reading": "en đâu",
+    "reading": "en đô",
     "phones": [
-      "ˈɛn ɗˈə1w"
+      "ˈɛn ɗˈo"
     ],
     "ambiguity": null
   },
@@ -798,9 +798,9 @@
     "ambiguity": null
   },
   "japanese:Kouhei": {
-    "reading": "câu hây",
+    "reading": "cô hê",
     "phones": [
-      "kˈə1w hˈəɪ"
+      "kˈo hˈe"
     ],
     "ambiguity": null
   },
@@ -847,16 +847,16 @@
     "ambiguity": null
   },
   "japanese:Kouchi": {
-    "reading": "câu chi",
+    "reading": "cô chi",
     "phones": [
-      "kˈə1w tʃˈi"
+      "kˈo tʃˈi"
     ],
     "ambiguity": null
   },
   "japanese:Midou": {
-    "reading": "mi đâu",
+    "reading": "mi đô",
     "phones": [
-      "mˈi ɗˈə1w"
+      "mˈi ɗˈo"
     ],
     "ambiguity": null
   },
@@ -896,9 +896,9 @@
     "ambiguity": null
   },
   "japanese:Shouta": {
-    "reading": "sâu ta",
+    "reading": "sô ta",
     "phones": [
-      "sˈə1w t̪ˈaː"
+      "sˈo t̪ˈaː"
     ],
     "ambiguity": null
   },
@@ -1085,9 +1085,9 @@
     "ambiguity": null
   },
   "japanese:Sousuke": {
-    "reading": "xâu xu ke",
+    "reading": "xô xu ke",
     "phones": [
-      "sˈə1w sˈu kˈɛ"
+      "sˈo sˈu kˈɛ"
     ],
     "ambiguity": null
   },
@@ -1099,9 +1099,9 @@
     "ambiguity": null
   },
   "japanese:Itou": {
-    "reading": "i tâu",
+    "reading": "i tô",
     "phones": [
-      "ˈi t̪ˈə1w"
+      "ˈi t̪ˈo"
     ],
     "ambiguity": null
   },
@@ -1190,9 +1190,9 @@
     "ambiguity": null
   },
   "japanese:Koutarou": {
-    "reading": "câu ta râu",
+    "reading": "cô ta rô",
     "phones": [
-      "kˈə1w t̪ˈaː ɹˈə1w"
+      "kˈo t̪ˈaː ɹˈo"
     ],
     "ambiguity": null
   },
@@ -1463,9 +1463,9 @@
     "ambiguity": null
   },
   "japanese:Sudou": {
-    "reading": "xu đâu",
+    "reading": "xu đô",
     "phones": [
-      "sˈu ɗˈə1w"
+      "sˈu ɗˈo"
     ],
     "ambiguity": null
   },
@@ -1533,9 +1533,9 @@
     "ambiguity": null
   },
   "japanese:Kouta": {
-    "reading": "câu ta",
+    "reading": "cô ta",
     "phones": [
-      "kˈə1w t̪ˈaː"
+      "kˈo t̪ˈaː"
     ],
     "ambiguity": null
   },
@@ -1708,9 +1708,9 @@
     "ambiguity": null
   },
   "japanese:Kou": {
-    "reading": "câu",
+    "reading": "cô",
     "phones": [
-      "kˈə1w"
+      "kˈo"
     ],
     "ambiguity": null
   },
@@ -1932,16 +1932,16 @@
     "ambiguity": null
   },
   "japanese:Kitsushouharukaze": {
-    "reading": "ki xu sâu ha ru ca de",
+    "reading": "ki xu sô ha ru ca de",
     "phones": [
-      "kˈi sˈu sˈə1w hˈaː ɹˈu kˈaː zˈɛ"
+      "kˈi sˈu sˈo hˈaː ɹˈu kˈaː zˈɛ"
     ],
     "ambiguity": null
   },
   "japanese:Kokurei": {
-    "reading": "cô cu rây",
+    "reading": "cô cu rê",
     "phones": [
-      "kˈo kˈu ɹˈəɪ"
+      "kˈo kˈu ɹˈe"
     ],
     "ambiguity": null
   },
@@ -4193,9 +4193,9 @@
     "ambiguity": null
   },
   "mixed:Deiga-san": {
-    "reading": "đây ga xan",
+    "reading": "đê ga xan",
     "phones": [
-      "ɗˈəɪ ɣˈaː sˈaːn"
+      "ɗˈe ɣˈaː sˈaːn"
     ],
     "ambiguity": null
   },
@@ -4256,9 +4256,9 @@
     "ambiguity": null
   },
   "mixed:Chiyabashira-sensei": {
-    "reading": "chi a ba si ra xen xây",
+    "reading": "chi a ba si ra xen xê",
     "phones": [
-      "tʃˈi ˈaː bˈaː sˈi ɹˈaː sˈɛn sˈəɪ"
+      "tʃˈi ˈaː bˈaː sˈi ɹˈaː sˈɛn sˈe"
     ],
     "ambiguity": null
   },
@@ -4655,9 +4655,9 @@
     "ambiguity": null
   },
   "japanese:Sensei": {
-    "reading": "xen xây",
+    "reading": "xen xê",
     "phones": [
-      "sˈɛn sˈəɪ"
+      "sˈɛn sˈe"
     ],
     "ambiguity": null
   },
@@ -4725,9 +4725,9 @@
     "ambiguity": null
   },
   "japanese:Kochou": {
-    "reading": "cô châu",
+    "reading": "cô chô",
     "phones": [
-      "kˈo tʃˈə1w"
+      "kˈo tʃˈo"
     ],
     "ambiguity": null
   },
@@ -4928,9 +4928,9 @@
     "ambiguity": null
   },
   "japanese:Yuichirou": {
-    "reading": "giu i chi râu",
+    "reading": "giu i chi rô",
     "phones": [
-      "zˈu ˈi tʃˈi ɹˈə1w"
+      "zˈu ˈi tʃˈi ɹˈo"
     ],
     "ambiguity": null
   },
@@ -4942,9 +4942,9 @@
     "ambiguity": null
   },
   "japanese:Akou": {
-    "reading": "a câu",
+    "reading": "a cô",
     "phones": [
-      "ˈaː kˈə1w"
+      "ˈaː kˈo"
     ],
     "ambiguity": null
   },
@@ -4984,9 +4984,9 @@
     "ambiguity": null
   },
   "japanese:Ayanokouji": {
-    "reading": "a gia nô câu gi",
+    "reading": "a gia nô cô gi",
     "phones": [
-      "ˈaː zˈaː nˈo kˈə1w zˈi"
+      "ˈaː zˈaː nˈo kˈo zˈi"
     ],
     "ambiguity": null
   },
@@ -5005,9 +5005,9 @@
     "ambiguity": null
   },
   "japanese:Godou": {
-    "reading": "gô đâu",
+    "reading": "gô đô",
     "phones": [
-      "ɣˈo ɗˈə1w"
+      "ɣˈo ɗˈo"
     ],
     "ambiguity": null
   },

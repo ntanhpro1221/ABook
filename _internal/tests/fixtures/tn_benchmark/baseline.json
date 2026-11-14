@@ -16,32 +16,32 @@
     "nghe_ngay_g2p": "abook.readaloud.vieneu_engine.phonemize(Unit.pieces, source=Unit.text)",
     "studio_g2p": "keep_vieneu_final_mark; sentence_case; normalize_to_chunks_v3_with_gaps; phonemize_text_with_emotions"
   },
-  "case_count": 440,
-  "cases_sha256": "b3c5acd2f60326d4253e01ccd03f0efcaaa736878caaed5085c64c6fa41a9909",
-  "quality_implementation_hash": "db6c9cb847dac2e536deca158114df29dcfedac4ab88b69885c08e1924876997",
+  "case_count": 485,
+  "cases_sha256": "0bce6ed9da4ec4f3656c81cdb91bf182b925f6293f2e08998a102a57ab2a863a",
+  "quality_implementation_hash": "2c2be34ea9b7ac4b80206110ffdcbc8e0dec4ed759afd60754e9c9c66f387176",
   "categories": {
     "cardinal_small": {
       "nghe_ngay": {
         "string": {
-          "correct": 20,
-          "total": 20,
+          "correct": 21,
+          "total": 21,
           "percent": 100.0
         },
         "post_g2p": {
-          "correct": 20,
-          "total": 20,
+          "correct": 21,
+          "total": 21,
           "percent": 100.0
         }
       },
       "studio": {
         "string": {
-          "correct": 20,
-          "total": 20,
+          "correct": 21,
+          "total": 21,
           "percent": 100.0
         },
         "post_g2p": {
-          "correct": 20,
-          "total": 20,
+          "correct": 21,
+          "total": 21,
           "percent": 100.0
         }
       }
@@ -49,52 +49,52 @@
     "cardinal_large": {
       "nghe_ngay": {
         "string": {
-          "correct": 10,
-          "total": 20,
-          "percent": 50.0
+          "correct": 19,
+          "total": 23,
+          "percent": 82.61
         },
         "post_g2p": {
-          "correct": 10,
-          "total": 20,
-          "percent": 50.0
+          "correct": 19,
+          "total": 23,
+          "percent": 82.61
         }
       },
       "studio": {
         "string": {
-          "correct": 10,
-          "total": 20,
-          "percent": 50.0
+          "correct": 19,
+          "total": 23,
+          "percent": 82.61
         },
         "post_g2p": {
-          "correct": 10,
-          "total": 20,
-          "percent": 50.0
+          "correct": 19,
+          "total": 23,
+          "percent": 82.61
         }
       }
     },
     "decimal": {
       "nghe_ngay": {
         "string": {
-          "correct": 7,
-          "total": 20,
-          "percent": 35.0
+          "correct": 20,
+          "total": 24,
+          "percent": 83.33
         },
         "post_g2p": {
-          "correct": 14,
-          "total": 20,
-          "percent": 70.0
+          "correct": 23,
+          "total": 24,
+          "percent": 95.83
         }
       },
       "studio": {
         "string": {
-          "correct": 7,
-          "total": 20,
-          "percent": 35.0
+          "correct": 20,
+          "total": 24,
+          "percent": 83.33
         },
         "post_g2p": {
-          "correct": 14,
-          "total": 20,
-          "percent": 70.0
+          "correct": 23,
+          "total": 24,
+          "percent": 95.83
         }
       }
     },
@@ -153,26 +153,26 @@
     "date": {
       "nghe_ngay": {
         "string": {
-          "correct": 2,
-          "total": 20,
-          "percent": 10.0
+          "correct": 3,
+          "total": 21,
+          "percent": 14.29
         },
         "post_g2p": {
-          "correct": 19,
-          "total": 20,
-          "percent": 95.0
+          "correct": 20,
+          "total": 21,
+          "percent": 95.24
         }
       },
       "studio": {
         "string": {
-          "correct": 2,
-          "total": 20,
-          "percent": 10.0
+          "correct": 3,
+          "total": 21,
+          "percent": 14.29
         },
         "post_g2p": {
-          "correct": 19,
-          "total": 20,
-          "percent": 95.0
+          "correct": 20,
+          "total": 21,
+          "percent": 95.24
         }
       }
     },
@@ -206,25 +206,25 @@
       "nghe_ngay": {
         "string": {
           "correct": 1,
-          "total": 20,
-          "percent": 5.0
+          "total": 21,
+          "percent": 4.76
         },
         "post_g2p": {
-          "correct": 15,
-          "total": 20,
-          "percent": 75.0
+          "correct": 16,
+          "total": 21,
+          "percent": 76.19
         }
       },
       "studio": {
         "string": {
           "correct": 1,
-          "total": 20,
-          "percent": 5.0
+          "total": 21,
+          "percent": 4.76
         },
         "post_g2p": {
-          "correct": 15,
-          "total": 20,
-          "percent": 75.0
+          "correct": 16,
+          "total": 21,
+          "percent": 76.19
         }
       }
     },
@@ -257,26 +257,26 @@
     "currency": {
       "nghe_ngay": {
         "string": {
-          "correct": 6,
-          "total": 20,
-          "percent": 30.0
+          "correct": 28,
+          "total": 28,
+          "percent": 100.0
         },
         "post_g2p": {
-          "correct": 12,
-          "total": 20,
-          "percent": 60.0
+          "correct": 28,
+          "total": 28,
+          "percent": 100.0
         }
       },
       "studio": {
         "string": {
-          "correct": 6,
-          "total": 20,
-          "percent": 30.0
+          "correct": 28,
+          "total": 28,
+          "percent": 100.0
         },
         "post_g2p": {
-          "correct": 12,
-          "total": 20,
-          "percent": 60.0
+          "correct": 28,
+          "total": 28,
+          "percent": 100.0
         }
       }
     },
@@ -309,26 +309,26 @@
     "phone_code": {
       "nghe_ngay": {
         "string": {
-          "correct": 0,
-          "total": 20,
-          "percent": 0.0
+          "correct": 16,
+          "total": 25,
+          "percent": 64.0
         },
         "post_g2p": {
-          "correct": 13,
-          "total": 20,
-          "percent": 65.0
+          "correct": 18,
+          "total": 25,
+          "percent": 72.0
         }
       },
       "studio": {
         "string": {
-          "correct": 0,
-          "total": 20,
-          "percent": 0.0
+          "correct": 16,
+          "total": 25,
+          "percent": 64.0
         },
         "post_g2p": {
-          "correct": 12,
-          "total": 20,
-          "percent": 60.0
+          "correct": 17,
+          "total": 25,
+          "percent": 68.0
         }
       }
     },
@@ -361,26 +361,26 @@
     "abbrev_en": {
       "nghe_ngay": {
         "string": {
-          "correct": 7,
-          "total": 20,
-          "percent": 35.0
+          "correct": 23,
+          "total": 23,
+          "percent": 100.0
         },
         "post_g2p": {
-          "correct": 7,
-          "total": 20,
-          "percent": 35.0
+          "correct": 23,
+          "total": 23,
+          "percent": 100.0
         }
       },
       "studio": {
         "string": {
-          "correct": 7,
-          "total": 20,
-          "percent": 35.0
+          "correct": 23,
+          "total": 23,
+          "percent": 100.0
         },
         "post_g2p": {
-          "correct": 7,
-          "total": 20,
-          "percent": 35.0
+          "correct": 23,
+          "total": 23,
+          "percent": 100.0
         }
       }
     },
@@ -413,104 +413,104 @@
     "japanese": {
       "nghe_ngay": {
         "string": {
-          "correct": 14,
-          "total": 20,
-          "percent": 70.0
+          "correct": 20,
+          "total": 23,
+          "percent": 86.96
         },
         "post_g2p": {
-          "correct": 14,
-          "total": 20,
-          "percent": 70.0
+          "correct": 20,
+          "total": 23,
+          "percent": 86.96
         }
       },
       "studio": {
         "string": {
-          "correct": 14,
-          "total": 20,
-          "percent": 70.0
+          "correct": 20,
+          "total": 23,
+          "percent": 86.96
         },
         "post_g2p": {
-          "correct": 14,
-          "total": 20,
-          "percent": 70.0
+          "correct": 20,
+          "total": 23,
+          "percent": 86.96
         }
       }
     },
     "symbol": {
       "nghe_ngay": {
         "string": {
-          "correct": 2,
-          "total": 20,
-          "percent": 10.0
+          "correct": 10,
+          "total": 29,
+          "percent": 34.48
         },
         "post_g2p": {
-          "correct": 14,
-          "total": 20,
-          "percent": 70.0
+          "correct": 28,
+          "total": 29,
+          "percent": 96.55
         }
       },
       "studio": {
         "string": {
-          "correct": 8,
-          "total": 20,
-          "percent": 40.0
+          "correct": 16,
+          "total": 29,
+          "percent": 55.17
         },
         "post_g2p": {
-          "correct": 14,
-          "total": 20,
-          "percent": 70.0
+          "correct": 27,
+          "total": 29,
+          "percent": 93.1
         }
       }
     },
     "url_email": {
       "nghe_ngay": {
         "string": {
-          "correct": 0,
-          "total": 20,
-          "percent": 0.0
+          "correct": 23,
+          "total": 23,
+          "percent": 100.0
         },
         "post_g2p": {
-          "correct": 4,
-          "total": 20,
-          "percent": 20.0
+          "correct": 23,
+          "total": 23,
+          "percent": 100.0
         }
       },
       "studio": {
         "string": {
-          "correct": 0,
-          "total": 20,
-          "percent": 0.0
+          "correct": 23,
+          "total": 23,
+          "percent": 100.0
         },
         "post_g2p": {
-          "correct": 5,
-          "total": 20,
-          "percent": 25.0
+          "correct": 23,
+          "total": 23,
+          "percent": 100.0
         }
       }
     },
     "vocalization": {
       "nghe_ngay": {
         "string": {
-          "correct": 17,
-          "total": 20,
-          "percent": 85.0
+          "correct": 22,
+          "total": 24,
+          "percent": 91.67
         },
         "post_g2p": {
-          "correct": 13,
-          "total": 20,
-          "percent": 65.0
+          "correct": 19,
+          "total": 24,
+          "percent": 79.17
         }
       },
       "studio": {
         "string": {
-          "correct": 18,
-          "total": 20,
-          "percent": 90.0
+          "correct": 23,
+          "total": 24,
+          "percent": 95.83
         },
         "post_g2p": {
-          "correct": 14,
-          "total": 20,
-          "percent": 70.0
+          "correct": 20,
+          "total": 24,
+          "percent": 83.33
         }
       }
     },
@@ -596,26 +596,26 @@
   "overall": {
     "nghe_ngay": {
       "string": {
-        "correct": 180,
-        "total": 440,
-        "percent": 40.91
+        "correct": 300,
+        "total": 485,
+        "percent": 61.86
       },
       "post_g2p": {
-        "correct": 331,
-        "total": 440,
-        "percent": 75.23
+        "correct": 434,
+        "total": 485,
+        "percent": 89.48
       }
     },
     "studio": {
       "string": {
-        "correct": 189,
-        "total": 440,
-        "percent": 42.95
+        "correct": 309,
+        "total": 485,
+        "percent": 63.71
       },
       "post_g2p": {
-        "correct": 332,
-        "total": 440,
-        "percent": 75.45
+        "correct": 433,
+        "total": 485,
+        "percent": 89.28
       }
     }
   }

@@ -3660,6 +3660,966 @@
    "path": "_internal/docs/tn_benchmark/report.md",
    "sha256": "2bbcff4a2982197e28169ae53082502746a79a88aaf6971c6831cf7da0666766",
    "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "d805afad4cadf808649f8c77620ded3ad0bf8f644e4d4ca940dbebdbe1375571",
+   "reason": "Exact generated IPA from the 485 authored TN benchmark cases and accepted readings; expanded fixture has zero eight-word overlap across 523400 Corpus files. This review covers IPA only."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "d805afad4cadf808649f8c77620ded3ad0bf8f644e4d4ca940dbebdbe1375571",
+   "reason": "Exact generated IPA from the 485 authored TN benchmark cases and accepted readings; expanded fixture has zero eight-word overlap across 523400 Corpus files. This review covers IPA only."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "d805afad4cadf808649f8c77620ded3ad0bf8f644e4d4ca940dbebdbe1375571",
+   "reason": "Exact generated IPA from the 485 authored TN benchmark cases and accepted readings; expanded fixture has zero eight-word overlap across 523400 Corpus files. This review covers IPA only."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "d805afad4cadf808649f8c77620ded3ad0bf8f644e4d4ca940dbebdbe1375571",
+   "reason": "Exact generated IPA from the 485 authored TN benchmark cases and accepted readings; expanded fixture has zero eight-word overlap across 523400 Corpus files. This review covers IPA only."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "7047443ca7b0fc7e0bb381fb2ef8d0fc02ebac3f82c0620d8a5dc3066c0d4ad6",
+   "reason": "Exact generated IPA from the 485 authored TN benchmark cases and accepted readings; expanded fixture has zero eight-word overlap across 523400 Corpus files. This review covers IPA only."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "7047443ca7b0fc7e0bb381fb2ef8d0fc02ebac3f82c0620d8a5dc3066c0d4ad6",
+   "reason": "Exact generated IPA from the 485 authored TN benchmark cases and accepted readings; expanded fixture has zero eight-word overlap across 523400 Corpus files. This review covers IPA only."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "7047443ca7b0fc7e0bb381fb2ef8d0fc02ebac3f82c0620d8a5dc3066c0d4ad6",
+   "reason": "Exact generated IPA from the 485 authored TN benchmark cases and accepted readings; expanded fixture has zero eight-word overlap across 523400 Corpus files. This review covers IPA only."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "7047443ca7b0fc7e0bb381fb2ef8d0fc02ebac3f82c0620d8a5dc3066c0d4ad6",
+   "reason": "Exact generated IPA from the 485 authored TN benchmark cases and accepted readings; expanded fixture has zero eight-word overlap across 523400 Corpus files. This review covers IPA only."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "2d94388dea1cd97d6111033d17e753ae9573c957ccb5b78937de0064a2631e47",
+   "reason": "Exact generated IPA from the 485 authored TN benchmark cases and accepted readings; expanded fixture has zero eight-word overlap across 523400 Corpus files. This review covers IPA only."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "2d94388dea1cd97d6111033d17e753ae9573c957ccb5b78937de0064a2631e47",
+   "reason": "Exact generated IPA from the 485 authored TN benchmark cases and accepted readings; expanded fixture has zero eight-word overlap across 523400 Corpus files. This review covers IPA only."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "2d94388dea1cd97d6111033d17e753ae9573c957ccb5b78937de0064a2631e47",
+   "reason": "Exact generated IPA from the 485 authored TN benchmark cases and accepted readings; expanded fixture has zero eight-word overlap across 523400 Corpus files. This review covers IPA only."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "2d94388dea1cd97d6111033d17e753ae9573c957ccb5b78937de0064a2631e47",
+   "reason": "Exact generated IPA from the 485 authored TN benchmark cases and accepted readings; expanded fixture has zero eight-word overlap across 523400 Corpus files. This review covers IPA only."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "f91d1c03831d6f00bde70e664ca9419a0801a5e69c391e7db82d313e7a93a0dc",
+   "reason": "Exact generated IPA from the 485 authored TN benchmark cases and accepted readings; expanded fixture has zero eight-word overlap across 523400 Corpus files. This review covers IPA only."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "f91d1c03831d6f00bde70e664ca9419a0801a5e69c391e7db82d313e7a93a0dc",
+   "reason": "Exact generated IPA from the 485 authored TN benchmark cases and accepted readings; expanded fixture has zero eight-word overlap across 523400 Corpus files. This review covers IPA only."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "f91d1c03831d6f00bde70e664ca9419a0801a5e69c391e7db82d313e7a93a0dc",
+   "reason": "Exact generated IPA from the 485 authored TN benchmark cases and accepted readings; expanded fixture has zero eight-word overlap across 523400 Corpus files. This review covers IPA only."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "f91d1c03831d6f00bde70e664ca9419a0801a5e69c391e7db82d313e7a93a0dc",
+   "reason": "Exact generated IPA from the 485 authored TN benchmark cases and accepted readings; expanded fixture has zero eight-word overlap across 523400 Corpus files. This review covers IPA only."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "ab3c64279ddaa5a160487cc70ac8f2e543a7dce6d693c2051cfac1f702bdfff4",
+   "reason": "Exact generated IPA from the 485 authored TN benchmark cases and accepted readings; expanded fixture has zero eight-word overlap across 523400 Corpus files. This review covers IPA only."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "bdaa6ba4d13df695658b92a1bdeafc69b2908258f170fa20823029e41c29a41b",
+   "reason": "Exact generated IPA from the 485 authored TN benchmark cases and accepted readings; expanded fixture has zero eight-word overlap across 523400 Corpus files. This review covers IPA only."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "ab3c64279ddaa5a160487cc70ac8f2e543a7dce6d693c2051cfac1f702bdfff4",
+   "reason": "Exact generated IPA from the 485 authored TN benchmark cases and accepted readings; expanded fixture has zero eight-word overlap across 523400 Corpus files. This review covers IPA only."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "bdaa6ba4d13df695658b92a1bdeafc69b2908258f170fa20823029e41c29a41b",
+   "reason": "Exact generated IPA from the 485 authored TN benchmark cases and accepted readings; expanded fixture has zero eight-word overlap across 523400 Corpus files. This review covers IPA only."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "5e2f1408a111700e5d00fd12743300647e5a7fc0bb62a7850c5859e930201cac",
+   "reason": "Exact generated IPA from the 485 authored TN benchmark cases and accepted readings; expanded fixture has zero eight-word overlap across 523400 Corpus files. This review covers IPA only."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "98468398b24c2c50052204a8d4128b3fb8aeea0d1d744cf4964bc3dc8f84fd84",
+   "reason": "Exact generated IPA from the 485 authored TN benchmark cases and accepted readings; expanded fixture has zero eight-word overlap across 523400 Corpus files. This review covers IPA only."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "5e2f1408a111700e5d00fd12743300647e5a7fc0bb62a7850c5859e930201cac",
+   "reason": "Exact generated IPA from the 485 authored TN benchmark cases and accepted readings; expanded fixture has zero eight-word overlap across 523400 Corpus files. This review covers IPA only."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "98468398b24c2c50052204a8d4128b3fb8aeea0d1d744cf4964bc3dc8f84fd84",
+   "reason": "Exact generated IPA from the 485 authored TN benchmark cases and accepted readings; expanded fixture has zero eight-word overlap across 523400 Corpus files. This review covers IPA only."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "f3c6267c42e4965f947797a388842e9b59ab5d1adcdbbe846afa015a6cb66fbc",
+   "reason": "Exact generated IPA from the 485 authored TN benchmark cases and accepted readings; expanded fixture has zero eight-word overlap across 523400 Corpus files. This review covers IPA only."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "249cacbd08ecfe4c03dbd282644799d64abd0550ad7875c28cfd2914ad4644a5",
+   "reason": "Exact generated IPA from the 485 authored TN benchmark cases and accepted readings; expanded fixture has zero eight-word overlap across 523400 Corpus files. This review covers IPA only."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "a523c3ffc25ac4739ab9e22053d0d21cf01abda20b1b0f88828810f362f109d4",
+   "reason": "Exact generated IPA from the 485 authored TN benchmark cases and accepted readings; expanded fixture has zero eight-word overlap across 523400 Corpus files. This review covers IPA only."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "ed770d16c8fd4b92046c2dcada0900bbd43c7e74a9cc93f4fbe4f508ccb3ef1a",
+   "reason": "Exact generated IPA from the 485 authored TN benchmark cases and accepted readings; expanded fixture has zero eight-word overlap across 523400 Corpus files. This review covers IPA only."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "6923f8f165d4bee1959617abdcd9f7f7c0df66fb2f65d9e814cd94468f706d1e",
+   "reason": "Exact generated IPA from the 485 authored TN benchmark cases and accepted readings; expanded fixture has zero eight-word overlap across 523400 Corpus files. This review covers IPA only."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "e3571d4c7847cacd1bc76f97447f0d3117e05f56810d12e7ae2230a27a3ccb92",
+   "reason": "Exact generated IPA from the 485 authored TN benchmark cases and accepted readings; expanded fixture has zero eight-word overlap across 523400 Corpus files. This review covers IPA only."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "6f43171d84f38d8a8fa00691e7d3206ff516c64a5865a0f74d4b30d1bb8d6cd0",
+   "reason": "Exact generated IPA from the 485 authored TN benchmark cases and accepted readings; expanded fixture has zero eight-word overlap across 523400 Corpus files. This review covers IPA only."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "70c041c531605e45f5da65c9a750af35fd0e6beb92a15e9e2b6f35ebceb1e678",
+   "reason": "Exact generated IPA from the 485 authored TN benchmark cases and accepted readings; expanded fixture has zero eight-word overlap across 523400 Corpus files. This review covers IPA only."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "29d9ea168b471dad2efd13231d6e4caf8c02eaa87234bf6c0cee96576cbe7ec9",
+   "reason": "Exact generated IPA from the 485 authored TN benchmark cases and accepted readings; expanded fixture has zero eight-word overlap across 523400 Corpus files. This review covers IPA only."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "68c197a5fdb2105417874f9235977d7f9d394a7b1167b6544b237aec7b87b994",
+   "reason": "Exact generated IPA from the 485 authored TN benchmark cases and accepted readings; expanded fixture has zero eight-word overlap across 523400 Corpus files. This review covers IPA only."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "b980c9b0d64b609bd803194bfd41ad0fac4f8bd274c84127bda4549eb9659db9",
+   "reason": "Exact generated IPA from the 485 authored TN benchmark cases and accepted readings; expanded fixture has zero eight-word overlap across 523400 Corpus files. This review covers IPA only."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "588c6904ed932a3dbe58fce49cacb7bbf35804e4b7bc264ce33cdf80229f2a25",
+   "reason": "Exact generated IPA from the 485 authored TN benchmark cases and accepted readings; expanded fixture has zero eight-word overlap across 523400 Corpus files. This review covers IPA only."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "e79ccd374268498ffdb68d70680e88e29d8f115f03b67196e7891eebea88ecfa",
+   "reason": "Exact generated IPA from the 485 authored TN benchmark cases and accepted readings; expanded fixture has zero eight-word overlap across 523400 Corpus files. This review covers IPA only."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "43a5353606026f392271e496b36e7b510bb2ce71718e82486b9b942d013f92df",
+   "reason": "Exact generated IPA from the 485 authored TN benchmark cases and accepted readings; expanded fixture has zero eight-word overlap across 523400 Corpus files. This review covers IPA only."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "5c6497abefb0a9e8ebe2ab83d9476b63009e2f7d55cc567e18bd6bb0c05d66d1",
+   "reason": "Exact generated IPA from the 485 authored TN benchmark cases and accepted readings; expanded fixture has zero eight-word overlap across 523400 Corpus files. This review covers IPA only."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "2451cb18c01d879d03550cf067d765eec433e63786c1cdbfbb54c6e7c462b4fa",
+   "reason": "Exact generated IPA from the 485 authored TN benchmark cases and accepted readings; expanded fixture has zero eight-word overlap across 523400 Corpus files. This review covers IPA only."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "f1fd629029c8ec7e960b52607a9fbc1a1bd6c9dd212cb253ea1ccc3dcbc55d06",
+   "reason": "Exact generated IPA from the 485 authored TN benchmark cases and accepted readings; expanded fixture has zero eight-word overlap across 523400 Corpus files. This review covers IPA only."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "b109d1993b3c03b38ab39a9fc20ead4b0b91303623be01cd9fd3df4093516ff1",
+   "reason": "Exact generated IPA from the 485 authored TN benchmark cases and accepted readings; expanded fixture has zero eight-word overlap across 523400 Corpus files. This review covers IPA only."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "1391c20170d84fa3913e6dfe3e7264349118a084c8829d2975ca22a630100b80",
+   "reason": "Exact generated IPA from the 485 authored TN benchmark cases and accepted readings; expanded fixture has zero eight-word overlap across 523400 Corpus files. This review covers IPA only."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "a2c838a139f3449ae250dfb21fd714ca0b699ed93d97f54b39ba17e15708bd29",
+   "reason": "Exact generated IPA from the 485 authored TN benchmark cases and accepted readings; expanded fixture has zero eight-word overlap across 523400 Corpus files. This review covers IPA only."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "67a8fb5e97692e7883c071758ccb6d518cd83a749178b691e4d94b032c91775b",
+   "reason": "Exact generated IPA from the 485 authored TN benchmark cases and accepted readings; expanded fixture has zero eight-word overlap across 523400 Corpus files. This review covers IPA only."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "e430e6b1e396e6cb5d59726216801b932a622542c2fb5f05f5c70e145fb622ec",
+   "reason": "Exact generated IPA from the 485 authored TN benchmark cases and accepted readings; expanded fixture has zero eight-word overlap across 523400 Corpus files. This review covers IPA only."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "686b26cd953f4667b4e4f427f216028843a442e654dfe6b2c807947912d72031",
+   "reason": "Exact generated IPA from the 485 authored TN benchmark cases and accepted readings; expanded fixture has zero eight-word overlap across 523400 Corpus files. This review covers IPA only."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "87353053ef6fdf9d9558cc97f6bee025406229e60e20c389ca3992390fb8d826",
+   "reason": "Exact generated IPA from the 485 authored TN benchmark cases and accepted readings; expanded fixture has zero eight-word overlap across 523400 Corpus files. This review covers IPA only."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "03a74f1b29fd962962b7d81a901ac323ebd6d096bb7de4d0f276bcf631c728f1",
+   "reason": "Exact generated IPA from the 485 authored TN benchmark cases and accepted readings; expanded fixture has zero eight-word overlap across 523400 Corpus files. This review covers IPA only."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "78b1d1b51cf6fe08f38c2ff4d3c535b51311fe5b6b33a9c6eb257ee1129db8b7",
+   "reason": "Exact generated IPA from the 485 authored TN benchmark cases and accepted readings; expanded fixture has zero eight-word overlap across 523400 Corpus files. This review covers IPA only."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "78b1d1b51cf6fe08f38c2ff4d3c535b51311fe5b6b33a9c6eb257ee1129db8b7",
+   "reason": "Exact generated IPA from the 485 authored TN benchmark cases and accepted readings; expanded fixture has zero eight-word overlap across 523400 Corpus files. This review covers IPA only."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "3dcd4e183db004bd00d64451754a36823b9f367d16e4044df00a75ead9b65d74",
+   "reason": "Exact generated IPA from the 485 authored TN benchmark cases and accepted readings; expanded fixture has zero eight-word overlap across 523400 Corpus files. This review covers IPA only."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "1e3c7164cd547e4cef00857494617ff16bea9609b232fc47ceed3dd7390a1570",
+   "reason": "Exact generated IPA from the 485 authored TN benchmark cases and accepted readings; expanded fixture has zero eight-word overlap across 523400 Corpus files. This review covers IPA only."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "8c379c4e1bdefa28a1e3cee900da0edf3e38c140db3ce62008408df2fd22fb84",
+   "reason": "Exact generated IPA from the 485 authored TN benchmark cases and accepted readings; expanded fixture has zero eight-word overlap across 523400 Corpus files. This review covers IPA only."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "8c379c4e1bdefa28a1e3cee900da0edf3e38c140db3ce62008408df2fd22fb84",
+   "reason": "Exact generated IPA from the 485 authored TN benchmark cases and accepted readings; expanded fixture has zero eight-word overlap across 523400 Corpus files. This review covers IPA only."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "bfeaa71d1351b93facb726cb2d931611dfab06c7ed2bc0df8440b9d2e8acbe4b",
+   "reason": "Exact generated IPA from the 485 authored TN benchmark cases and accepted readings; expanded fixture has zero eight-word overlap across 523400 Corpus files. This review covers IPA only."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "2d884fd483f762296099ccb5c077e81fc99c79bdcb66d8942e62ddac6d69a0f7",
+   "reason": "Exact generated IPA from the 485 authored TN benchmark cases and accepted readings; expanded fixture has zero eight-word overlap across 523400 Corpus files. This review covers IPA only."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "e305dd40c846e46660349908bfa5dc049db6601a7c8be2f89bb16825901f49a0",
+   "reason": "Exact generated IPA from the 485 authored TN benchmark cases and accepted readings; expanded fixture has zero eight-word overlap across 523400 Corpus files. This review covers IPA only."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "e305dd40c846e46660349908bfa5dc049db6601a7c8be2f89bb16825901f49a0",
+   "reason": "Exact generated IPA from the 485 authored TN benchmark cases and accepted readings; expanded fixture has zero eight-word overlap across 523400 Corpus files. This review covers IPA only."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "a0289f21640eaf38265de45a4c1bc359351c19bd3c14ffaf08fd83434a6585a1",
+   "reason": "Exact generated IPA from the 485 authored TN benchmark cases and accepted readings; expanded fixture has zero eight-word overlap across 523400 Corpus files. This review covers IPA only."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "09ae83c116fbb97cfdb6bc0dcc8820c88626a5d5b9ebe17b594e96636cab9257",
+   "reason": "Exact generated IPA from the 485 authored TN benchmark cases and accepted readings; expanded fixture has zero eight-word overlap across 523400 Corpus files. This review covers IPA only."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "f7dca068b254c17e148f78c7219aa99a2c08acec92317ea5cdb2c57c17f7069b",
+   "reason": "Exact generated IPA from the 485 authored TN benchmark cases and accepted readings; expanded fixture has zero eight-word overlap across 523400 Corpus files. This review covers IPA only."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "f7dca068b254c17e148f78c7219aa99a2c08acec92317ea5cdb2c57c17f7069b",
+   "reason": "Exact generated IPA from the 485 authored TN benchmark cases and accepted readings; expanded fixture has zero eight-word overlap across 523400 Corpus files. This review covers IPA only."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "eb9706a78894fede067d3ced8b44c165e9ffb9438a3b39b4a8bf8386261ee7ec",
+   "reason": "Exact generated IPA from the 485 authored TN benchmark cases and accepted readings; expanded fixture has zero eight-word overlap across 523400 Corpus files. This review covers IPA only."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "21ce75cf63549b93af13d96d2e1f734a27361c9a625ceeb94988103e7aabd5e9",
+   "reason": "Exact generated IPA from the 485 authored TN benchmark cases and accepted readings; expanded fixture has zero eight-word overlap across 523400 Corpus files. This review covers IPA only."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "bdaa6ba4d13df695658b92a1bdeafc69b2908258f170fa20823029e41c29a41b",
+   "reason": "Exact generated IPA from the 485 authored TN benchmark cases and accepted readings; expanded fixture has zero eight-word overlap across 523400 Corpus files. This review covers IPA only."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "bdaa6ba4d13df695658b92a1bdeafc69b2908258f170fa20823029e41c29a41b",
+   "reason": "Exact generated IPA from the 485 authored TN benchmark cases and accepted readings; expanded fixture has zero eight-word overlap across 523400 Corpus files. This review covers IPA only."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "fda07993e0daee4902f8dcfa6267a5f2caa9443731650148fef53cfa7db4d728",
+   "reason": "Exact generated IPA from the 485 authored TN benchmark cases and accepted readings; expanded fixture has zero eight-word overlap across 523400 Corpus files. This review covers IPA only."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "67b0f1fc5cf92009f400fe2beec00701b38de09ae5a16bc3a782ee72a2e856a3",
+   "reason": "Exact generated IPA from the 485 authored TN benchmark cases and accepted readings; expanded fixture has zero eight-word overlap across 523400 Corpus files. This review covers IPA only."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "5f544c813babb5967f8cb1d03c3cdf49ba11d14ebd2d59c32ce86d2c2eb6bb4b",
+   "reason": "Exact generated IPA from the 485 authored TN benchmark cases and accepted readings; expanded fixture has zero eight-word overlap across 523400 Corpus files. This review covers IPA only."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "5f544c813babb5967f8cb1d03c3cdf49ba11d14ebd2d59c32ce86d2c2eb6bb4b",
+   "reason": "Exact generated IPA from the 485 authored TN benchmark cases and accepted readings; expanded fixture has zero eight-word overlap across 523400 Corpus files. This review covers IPA only."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "c069811fa7f4c2293e04ff130f01c9ee2b75a4fa2357bb6aba4666a790fe9a3d",
+   "reason": "Exact generated IPA from the 485 authored TN benchmark cases and accepted readings; expanded fixture has zero eight-word overlap across 523400 Corpus files. This review covers IPA only."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "4aa38564577c6d36b7425cfce8fe5349e9298be9e653f403f8551c5342ad7a82",
+   "reason": "Exact generated IPA from the 485 authored TN benchmark cases and accepted readings; expanded fixture has zero eight-word overlap across 523400 Corpus files. This review covers IPA only."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "98468398b24c2c50052204a8d4128b3fb8aeea0d1d744cf4964bc3dc8f84fd84",
+   "reason": "Exact generated IPA from the 485 authored TN benchmark cases and accepted readings; expanded fixture has zero eight-word overlap across 523400 Corpus files. This review covers IPA only."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "98468398b24c2c50052204a8d4128b3fb8aeea0d1d744cf4964bc3dc8f84fd84",
+   "reason": "Exact generated IPA from the 485 authored TN benchmark cases and accepted readings; expanded fixture has zero eight-word overlap across 523400 Corpus files. This review covers IPA only."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "420062d08330fc7c318fb3214e8567550a826a0ed3a1014e1c55952735b0ae30",
+   "reason": "Exact generated IPA from the 485 authored TN benchmark cases and accepted readings; expanded fixture has zero eight-word overlap across 523400 Corpus files. This review covers IPA only."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "33146f59fcf7e6fc380ab30067e1df600a72604d973a14cb1a89b4c584daa9c7",
+   "reason": "Exact generated IPA from the 485 authored TN benchmark cases and accepted readings; expanded fixture has zero eight-word overlap across 523400 Corpus files. This review covers IPA only."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "75ba50d0a11ba4ad6076fe75d1758fb61379a7611c946efb85ea3dd491739053",
+   "reason": "Exact generated IPA from the 485 authored TN benchmark cases and accepted readings; expanded fixture has zero eight-word overlap across 523400 Corpus files. This review covers IPA only."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "75ba50d0a11ba4ad6076fe75d1758fb61379a7611c946efb85ea3dd491739053",
+   "reason": "Exact generated IPA from the 485 authored TN benchmark cases and accepted readings; expanded fixture has zero eight-word overlap across 523400 Corpus files. This review covers IPA only."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "cc7a89218510ad92d4ec9ff54555d286fcf16fd1e687562502d2d8694018d9db",
+   "reason": "Exact generated IPA from the 485 authored TN benchmark cases and accepted readings; expanded fixture has zero eight-word overlap across 523400 Corpus files. This review covers IPA only."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "0cda439969a82069749b9622dc985f9feb8d67bde37281d1ca1fdba9e0f01d42",
+   "reason": "Exact generated IPA from the 485 authored TN benchmark cases and accepted readings; expanded fixture has zero eight-word overlap across 523400 Corpus files. This review covers IPA only."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "31e68f74c7fb2445d3534537eb81e922a50dce87eb7deba5a58098fd699a2e9e",
+   "reason": "Exact generated IPA from the 485 authored TN benchmark cases and accepted readings; expanded fixture has zero eight-word overlap across 523400 Corpus files. This review covers IPA only."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "31e68f74c7fb2445d3534537eb81e922a50dce87eb7deba5a58098fd699a2e9e",
+   "reason": "Exact generated IPA from the 485 authored TN benchmark cases and accepted readings; expanded fixture has zero eight-word overlap across 523400 Corpus files. This review covers IPA only."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "12071f33b6584c8ea55c681cfa57a4f6cd0b3c548c1aee7c3f78f80dea675fd5",
+   "reason": "Exact generated IPA from the 485 authored TN benchmark cases and accepted readings; expanded fixture has zero eight-word overlap across 523400 Corpus files. This review covers IPA only."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "12071f33b6584c8ea55c681cfa57a4f6cd0b3c548c1aee7c3f78f80dea675fd5",
+   "reason": "Exact generated IPA from the 485 authored TN benchmark cases and accepted readings; expanded fixture has zero eight-word overlap across 523400 Corpus files. This review covers IPA only."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "5f8f53b221ac87353b1455b03097fc0e33d74478ad823d1342113abb14b25c98",
+   "reason": "Exact generated IPA from the 485 authored TN benchmark cases and accepted readings; expanded fixture has zero eight-word overlap across 523400 Corpus files. This review covers IPA only."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "715eff59d75ce5dc4ca5db220e58270dfa1a2ccee9e10747a036077339b726a7",
+   "reason": "Exact generated IPA from the 485 authored TN benchmark cases and accepted readings; expanded fixture has zero eight-word overlap across 523400 Corpus files. This review covers IPA only."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "715eff59d75ce5dc4ca5db220e58270dfa1a2ccee9e10747a036077339b726a7",
+   "reason": "Exact generated IPA from the 485 authored TN benchmark cases and accepted readings; expanded fixture has zero eight-word overlap across 523400 Corpus files. This review covers IPA only."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "9d976b6701b91d59e7fa148226b9593a77e200d6c605beb41d900673fb33b06d",
+   "reason": "Exact generated IPA from the 485 authored TN benchmark cases and accepted readings; expanded fixture has zero eight-word overlap across 523400 Corpus files. This review covers IPA only."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "d7c4e5aab6b7ff1699cba585c0fe4fe25822f55f88a4aa6642d6879ad7f5146a",
+   "reason": "Exact generated IPA from the 485 authored TN benchmark cases and accepted readings; expanded fixture has zero eight-word overlap across 523400 Corpus files. This review covers IPA only."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "4217cf993e4a3866f8457ecf8c36f5bd16415dec5aca91b573b95c6657406131",
+   "reason": "Exact generated IPA from the 485 authored TN benchmark cases and accepted readings; expanded fixture has zero eight-word overlap across 523400 Corpus files. This review covers IPA only."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "3b7fd01ec7154c62595a9f6d6ac511a89dee6150177638b442d1a74d6a4e32d9",
+   "reason": "Exact generated IPA from the 485 authored TN benchmark cases and accepted readings; expanded fixture has zero eight-word overlap across 523400 Corpus files. This review covers IPA only."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "66a19eb7645d6281c413848ba67bb08bc8af2bdf144313c63dbddac4763bfe9b",
+   "reason": "Exact generated IPA from the 485 authored TN benchmark cases and accepted readings; expanded fixture has zero eight-word overlap across 523400 Corpus files. This review covers IPA only."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "4bd1c7c68c85eb472ec59cfcce2f93baf462d1acec3d9a28105c935329e272d2",
+   "reason": "Exact generated IPA from the 485 authored TN benchmark cases and accepted readings; expanded fixture has zero eight-word overlap across 523400 Corpus files. This review covers IPA only."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "2460a8f60f3619d5a8001fe5fa0af4a6f450bf6cf4bb35873e3654b6fcfa7de1",
+   "reason": "Exact generated IPA from the 485 authored TN benchmark cases and accepted readings; expanded fixture has zero eight-word overlap across 523400 Corpus files. This review covers IPA only."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "a0de93212f3fb73af15693c224525eb1b68131dfa49ef0519cc012a3d293945c",
+   "reason": "Exact generated IPA from the 485 authored TN benchmark cases and accepted readings; expanded fixture has zero eight-word overlap across 523400 Corpus files. This review covers IPA only."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "cdf493afe891288de4bd5e98ece201836694a3f8f6104da086964bcf4edc959e",
+   "reason": "Exact generated IPA from the 485 authored TN benchmark cases and accepted readings; expanded fixture has zero eight-word overlap across 523400 Corpus files. This review covers IPA only."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "9d976b6701b91d59e7fa148226b9593a77e200d6c605beb41d900673fb33b06d",
+   "reason": "Exact generated IPA from the 485 authored TN benchmark cases and accepted readings; expanded fixture has zero eight-word overlap across 523400 Corpus files. This review covers IPA only."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "feddf2da50a873907a7270115b4475725e379fac55d0c19bd725af4d4a237f47",
+   "reason": "Exact generated IPA from the 485 authored TN benchmark cases and accepted readings; expanded fixture has zero eight-word overlap across 523400 Corpus files. This review covers IPA only."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "a11e72ebaefc38912c71adb4fd2bdacf24940893f99f05263a4f67f020cf2d13",
+   "reason": "Exact generated IPA from the 485 authored TN benchmark cases and accepted readings; expanded fixture has zero eight-word overlap across 523400 Corpus files. This review covers IPA only."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "30e99b8d724bc5e69bc95d8125fface802adb628041d19d6a11db7b659b88320",
+   "reason": "Exact generated IPA from the 485 authored TN benchmark cases and accepted readings; expanded fixture has zero eight-word overlap across 523400 Corpus files. This review covers IPA only."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "66a19eb7645d6281c413848ba67bb08bc8af2bdf144313c63dbddac4763bfe9b",
+   "reason": "Exact generated IPA from the 485 authored TN benchmark cases and accepted readings; expanded fixture has zero eight-word overlap across 523400 Corpus files. This review covers IPA only."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "4bd1c7c68c85eb472ec59cfcce2f93baf462d1acec3d9a28105c935329e272d2",
+   "reason": "Exact generated IPA from the 485 authored TN benchmark cases and accepted readings; expanded fixture has zero eight-word overlap across 523400 Corpus files. This review covers IPA only."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "2460a8f60f3619d5a8001fe5fa0af4a6f450bf6cf4bb35873e3654b6fcfa7de1",
+   "reason": "Exact generated IPA from the 485 authored TN benchmark cases and accepted readings; expanded fixture has zero eight-word overlap across 523400 Corpus files. This review covers IPA only."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "0b09b50471c85f37f12dcbd8ec1fd929363cadf847d97b69837604da443803bd",
+   "reason": "Exact generated IPA from the 485 authored TN benchmark cases and accepted readings; expanded fixture has zero eight-word overlap across 523400 Corpus files. This review covers IPA only."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "cdf493afe891288de4bd5e98ece201836694a3f8f6104da086964bcf4edc959e",
+   "reason": "Exact generated IPA from the 485 authored TN benchmark cases and accepted readings; expanded fixture has zero eight-word overlap across 523400 Corpus files. This review covers IPA only."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "5393c61c2cfb3504e1674d07d7a60b69b86e3b46189d78b980d6c1b4ff62c12d",
+   "reason": "Exact generated IPA from the 485 authored TN benchmark cases and accepted readings; expanded fixture has zero eight-word overlap across 523400 Corpus files. This review covers IPA only."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "5393c61c2cfb3504e1674d07d7a60b69b86e3b46189d78b980d6c1b4ff62c12d",
+   "reason": "Exact generated IPA from the 485 authored TN benchmark cases and accepted readings; expanded fixture has zero eight-word overlap across 523400 Corpus files. This review covers IPA only."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "789946b611c2b0444ad0fe73c3edd98e8e3704be8f95086a0e26c30a9f4c5189",
+   "reason": "Exact generated IPA from the 485 authored TN benchmark cases and accepted readings; expanded fixture has zero eight-word overlap across 523400 Corpus files. This review covers IPA only."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "789946b611c2b0444ad0fe73c3edd98e8e3704be8f95086a0e26c30a9f4c5189",
+   "reason": "Exact generated IPA from the 485 authored TN benchmark cases and accepted readings; expanded fixture has zero eight-word overlap across 523400 Corpus files. This review covers IPA only."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "0bcc031bd4cd8e67a0935975fffed592ca8fcfd645addde27ed0edfd4c75e896",
+   "reason": "Exact generated IPA from the 485 authored TN benchmark cases and accepted readings; expanded fixture has zero eight-word overlap across 523400 Corpus files. This review covers IPA only."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "0bcc031bd4cd8e67a0935975fffed592ca8fcfd645addde27ed0edfd4c75e896",
+   "reason": "Exact generated IPA from the 485 authored TN benchmark cases and accepted readings; expanded fixture has zero eight-word overlap across 523400 Corpus files. This review covers IPA only."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "0bcc031bd4cd8e67a0935975fffed592ca8fcfd645addde27ed0edfd4c75e896",
+   "reason": "Exact generated IPA from the 485 authored TN benchmark cases and accepted readings; expanded fixture has zero eight-word overlap across 523400 Corpus files. This review covers IPA only."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "0bcc031bd4cd8e67a0935975fffed592ca8fcfd645addde27ed0edfd4c75e896",
+   "reason": "Exact generated IPA from the 485 authored TN benchmark cases and accepted readings; expanded fixture has zero eight-word overlap across 523400 Corpus files. This review covers IPA only."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "5c931787563f3fcc886febb44bb8d4664c5cac8700ad25d39b9996882dc32e5b",
+   "reason": "Exact generated IPA from the 485 authored TN benchmark cases and accepted readings; expanded fixture has zero eight-word overlap across 523400 Corpus files. This review covers IPA only."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "5c931787563f3fcc886febb44bb8d4664c5cac8700ad25d39b9996882dc32e5b",
+   "reason": "Exact generated IPA from the 485 authored TN benchmark cases and accepted readings; expanded fixture has zero eight-word overlap across 523400 Corpus files. This review covers IPA only."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "3946c62c1cca50cf3ddbcbe3b08c617309efbf13849c7b44caf0fd7f03feb797",
+   "reason": "Exact generated IPA from the 485 authored TN benchmark cases and accepted readings; expanded fixture has zero eight-word overlap across 523400 Corpus files. This review covers IPA only."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "3946c62c1cca50cf3ddbcbe3b08c617309efbf13849c7b44caf0fd7f03feb797",
+   "reason": "Exact generated IPA from the 485 authored TN benchmark cases and accepted readings; expanded fixture has zero eight-word overlap across 523400 Corpus files. This review covers IPA only."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "58dce24f66cff712f1b14a4b28357d806d3b9a95f782c6dda1ca3fe3f24e9fcc",
+   "reason": "Exact generated IPA from the 485 authored TN benchmark cases and accepted readings; expanded fixture has zero eight-word overlap across 523400 Corpus files. This review covers IPA only."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "58dce24f66cff712f1b14a4b28357d806d3b9a95f782c6dda1ca3fe3f24e9fcc",
+   "reason": "Exact generated IPA from the 485 authored TN benchmark cases and accepted readings; expanded fixture has zero eight-word overlap across 523400 Corpus files. This review covers IPA only."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "58dce24f66cff712f1b14a4b28357d806d3b9a95f782c6dda1ca3fe3f24e9fcc",
+   "reason": "Exact generated IPA from the 485 authored TN benchmark cases and accepted readings; expanded fixture has zero eight-word overlap across 523400 Corpus files. This review covers IPA only."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "58dce24f66cff712f1b14a4b28357d806d3b9a95f782c6dda1ca3fe3f24e9fcc",
+   "reason": "Exact generated IPA from the 485 authored TN benchmark cases and accepted readings; expanded fixture has zero eight-word overlap across 523400 Corpus files. This review covers IPA only."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "b74f2490cd3da8c26820a212960a444ef7b44d52bb9a5e972fc3427602cd6bec",
+   "reason": "Exact generated IPA from the 485 authored TN benchmark cases and accepted readings; expanded fixture has zero eight-word overlap across 523400 Corpus files. This review covers IPA only."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "b74f2490cd3da8c26820a212960a444ef7b44d52bb9a5e972fc3427602cd6bec",
+   "reason": "Exact generated IPA from the 485 authored TN benchmark cases and accepted readings; expanded fixture has zero eight-word overlap across 523400 Corpus files. This review covers IPA only."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "b74f2490cd3da8c26820a212960a444ef7b44d52bb9a5e972fc3427602cd6bec",
+   "reason": "Exact generated IPA from the 485 authored TN benchmark cases and accepted readings; expanded fixture has zero eight-word overlap across 523400 Corpus files. This review covers IPA only."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "b74f2490cd3da8c26820a212960a444ef7b44d52bb9a5e972fc3427602cd6bec",
+   "reason": "Exact generated IPA from the 485 authored TN benchmark cases and accepted readings; expanded fixture has zero eight-word overlap across 523400 Corpus files. This review covers IPA only."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "3048afd1884e53a77e2c4d6c5fff2fb6185d0e11a5901123c8ace120eaf34483",
+   "reason": "Exact generated IPA from the 485 authored TN benchmark cases and accepted readings; expanded fixture has zero eight-word overlap across 523400 Corpus files. This review covers IPA only."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "3048afd1884e53a77e2c4d6c5fff2fb6185d0e11a5901123c8ace120eaf34483",
+   "reason": "Exact generated IPA from the 485 authored TN benchmark cases and accepted readings; expanded fixture has zero eight-word overlap across 523400 Corpus files. This review covers IPA only."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "3048afd1884e53a77e2c4d6c5fff2fb6185d0e11a5901123c8ace120eaf34483",
+   "reason": "Exact generated IPA from the 485 authored TN benchmark cases and accepted readings; expanded fixture has zero eight-word overlap across 523400 Corpus files. This review covers IPA only."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "3048afd1884e53a77e2c4d6c5fff2fb6185d0e11a5901123c8ace120eaf34483",
+   "reason": "Exact generated IPA from the 485 authored TN benchmark cases and accepted readings; expanded fixture has zero eight-word overlap across 523400 Corpus files. This review covers IPA only."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "62cf640cf1d701b18c88eae9665b01bf60310e1bb8776d25203372569e8a2202",
+   "reason": "Exact generated IPA from the 485 authored TN benchmark cases and accepted readings; expanded fixture has zero eight-word overlap across 523400 Corpus files. This review covers IPA only."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "62cf640cf1d701b18c88eae9665b01bf60310e1bb8776d25203372569e8a2202",
+   "reason": "Exact generated IPA from the 485 authored TN benchmark cases and accepted readings; expanded fixture has zero eight-word overlap across 523400 Corpus files. This review covers IPA only."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "62cf640cf1d701b18c88eae9665b01bf60310e1bb8776d25203372569e8a2202",
+   "reason": "Exact generated IPA from the 485 authored TN benchmark cases and accepted readings; expanded fixture has zero eight-word overlap across 523400 Corpus files. This review covers IPA only."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "62cf640cf1d701b18c88eae9665b01bf60310e1bb8776d25203372569e8a2202",
+   "reason": "Exact generated IPA from the 485 authored TN benchmark cases and accepted readings; expanded fixture has zero eight-word overlap across 523400 Corpus files. This review covers IPA only."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "3e25884cbf8a5311fc3ef0190717e7fe05ab4c149e4221334907b247ff11bc99",
+   "reason": "Exact generated IPA from the 485 authored TN benchmark cases and accepted readings; expanded fixture has zero eight-word overlap across 523400 Corpus files. This review covers IPA only."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "3e25884cbf8a5311fc3ef0190717e7fe05ab4c149e4221334907b247ff11bc99",
+   "reason": "Exact generated IPA from the 485 authored TN benchmark cases and accepted readings; expanded fixture has zero eight-word overlap across 523400 Corpus files. This review covers IPA only."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "3e25884cbf8a5311fc3ef0190717e7fe05ab4c149e4221334907b247ff11bc99",
+   "reason": "Exact generated IPA from the 485 authored TN benchmark cases and accepted readings; expanded fixture has zero eight-word overlap across 523400 Corpus files. This review covers IPA only."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "3e25884cbf8a5311fc3ef0190717e7fe05ab4c149e4221334907b247ff11bc99",
+   "reason": "Exact generated IPA from the 485 authored TN benchmark cases and accepted readings; expanded fixture has zero eight-word overlap across 523400 Corpus files. This review covers IPA only."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "2c8dc5a676aa6f27208dfc290f6b0548ef3b6b83f943b9402cf71107798d7043",
+   "reason": "Exact generated IPA from the 485 authored TN benchmark cases and accepted readings; expanded fixture has zero eight-word overlap across 523400 Corpus files. This review covers IPA only."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "2c8dc5a676aa6f27208dfc290f6b0548ef3b6b83f943b9402cf71107798d7043",
+   "reason": "Exact generated IPA from the 485 authored TN benchmark cases and accepted readings; expanded fixture has zero eight-word overlap across 523400 Corpus files. This review covers IPA only."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "7737623cb262b5234de9413319ced725eab8a29789c97eddf8c3bcfc9ea535cb",
+   "reason": "Exact generated IPA from the 485 authored TN benchmark cases and accepted readings; expanded fixture has zero eight-word overlap across 523400 Corpus files. This review covers IPA only."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "d3430b0e4e23119797fffbd4c21d6bfdbbc5e0f0dec305120fb7d5f27c5df8a0",
+   "reason": "Exact generated IPA from the 485 authored TN benchmark cases and accepted readings; expanded fixture has zero eight-word overlap across 523400 Corpus files. This review covers IPA only."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "d3430b0e4e23119797fffbd4c21d6bfdbbc5e0f0dec305120fb7d5f27c5df8a0",
+   "reason": "Exact generated IPA from the 485 authored TN benchmark cases and accepted readings; expanded fixture has zero eight-word overlap across 523400 Corpus files. This review covers IPA only."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "63e795ebaa04f368c1c8e86b3d2dc57a548de8a2ed9b2e543786aea50beac372",
+   "reason": "Exact generated IPA from the 485 authored TN benchmark cases and accepted readings; expanded fixture has zero eight-word overlap across 523400 Corpus files. This review covers IPA only."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "63e795ebaa04f368c1c8e86b3d2dc57a548de8a2ed9b2e543786aea50beac372",
+   "reason": "Exact generated IPA from the 485 authored TN benchmark cases and accepted readings; expanded fixture has zero eight-word overlap across 523400 Corpus files. This review covers IPA only."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "f212c0f5feaa248cc644668f2ea680f94701a8aec0de31cc8592ef08c9a9c740",
+   "reason": "Exact generated IPA from the 485 authored TN benchmark cases and accepted readings; expanded fixture has zero eight-word overlap across 523400 Corpus files. This review covers IPA only."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "f212c0f5feaa248cc644668f2ea680f94701a8aec0de31cc8592ef08c9a9c740",
+   "reason": "Exact generated IPA from the 485 authored TN benchmark cases and accepted readings; expanded fixture has zero eight-word overlap across 523400 Corpus files. This review covers IPA only."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "d642c70279c29d5523fc45c31be26701a1e319eb1e3d0d124e94a431eade582d",
+   "reason": "Exact generated IPA from the 485 authored TN benchmark cases and accepted readings; expanded fixture has zero eight-word overlap across 523400 Corpus files. This review covers IPA only."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "d642c70279c29d5523fc45c31be26701a1e319eb1e3d0d124e94a431eade582d",
+   "reason": "Exact generated IPA from the 485 authored TN benchmark cases and accepted readings; expanded fixture has zero eight-word overlap across 523400 Corpus files. This review covers IPA only."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "1756a3f57a134c7e7238977ba00cfbc2f5a768868e97a03c375b007fd527d92a",
+   "reason": "Exact generated IPA from the 485 authored TN benchmark cases and accepted readings; expanded fixture has zero eight-word overlap across 523400 Corpus files. This review covers IPA only."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "65b34da7f29cad782e3015d0966b7e8e520ca52b0839dfedc64439344fac57f4",
+   "reason": "Exact generated IPA from the 485 authored TN benchmark cases and accepted readings; expanded fixture has zero eight-word overlap across 523400 Corpus files. This review covers IPA only."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "65b34da7f29cad782e3015d0966b7e8e520ca52b0839dfedc64439344fac57f4",
+   "reason": "Exact generated IPA from the 485 authored TN benchmark cases and accepted readings; expanded fixture has zero eight-word overlap across 523400 Corpus files. This review covers IPA only."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "4f5b83f11fea2437e3a8580c42197d7e75f2fb8a7099284e4fe993af8f5f9dee",
+   "reason": "Exact generated IPA from the 485 authored TN benchmark cases and accepted readings; expanded fixture has zero eight-word overlap across 523400 Corpus files. This review covers IPA only."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "4f5b83f11fea2437e3a8580c42197d7e75f2fb8a7099284e4fe993af8f5f9dee",
+   "reason": "Exact generated IPA from the 485 authored TN benchmark cases and accepted readings; expanded fixture has zero eight-word overlap across 523400 Corpus files. This review covers IPA only."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "c9c0a61afa3236740f2f9a63d85157036d4d929ddfc1657810b56a9afd7e66e8",
+   "reason": "Exact generated IPA from the 485 authored TN benchmark cases and accepted readings; expanded fixture has zero eight-word overlap across 523400 Corpus files. This review covers IPA only."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "c9c0a61afa3236740f2f9a63d85157036d4d929ddfc1657810b56a9afd7e66e8",
+   "reason": "Exact generated IPA from the 485 authored TN benchmark cases and accepted readings; expanded fixture has zero eight-word overlap across 523400 Corpus files. This review covers IPA only."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "4abbe1062211fd672df3b59378884d0d340f80fa92a7613a3b49f8ab0e5d1779",
+   "reason": "Exact generated IPA from the 485 authored TN benchmark cases and accepted readings; expanded fixture has zero eight-word overlap across 523400 Corpus files. This review covers IPA only."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "4abbe1062211fd672df3b59378884d0d340f80fa92a7613a3b49f8ab0e5d1779",
+   "reason": "Exact generated IPA from the 485 authored TN benchmark cases and accepted readings; expanded fixture has zero eight-word overlap across 523400 Corpus files. This review covers IPA only."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "3d3141b823e58013f513a16cebbcf5f3a3be3db9375af13fa64186162fd87f95",
+   "reason": "Exact generated IPA from the 485 authored TN benchmark cases and accepted readings; expanded fixture has zero eight-word overlap across 523400 Corpus files. This review covers IPA only."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "3d3141b823e58013f513a16cebbcf5f3a3be3db9375af13fa64186162fd87f95",
+   "reason": "Exact generated IPA from the 485 authored TN benchmark cases and accepted readings; expanded fixture has zero eight-word overlap across 523400 Corpus files. This review covers IPA only."
   }
  ]
 }

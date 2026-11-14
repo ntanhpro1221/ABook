@@ -1,12 +1,12 @@
 {
-  "version": 6,
-  "namespace": "jp-fallback6",
+  "version": 7,
+  "namespace": "jp-fallback7",
   "provenance": "auto",
   "description": "Automatic Vietnamese approximation of Japanese romaji; not native Japanese pronunciation or an owner verdict.",
   "choices": {
     "s": "x",
     "sh": "s",
-    "ei": "ây",
+    "ei": "ê",
     "k": "orth",
     "g": "gh",
     "kya": "ki_a",
@@ -190,7 +190,7 @@
     "y": "gi"
   },
   "vowel_pairs": {
-    "ou": "âu",
+    "ou": "ô",
     "ei": "ây",
     "ai": "ai",
     "oi": "oi",

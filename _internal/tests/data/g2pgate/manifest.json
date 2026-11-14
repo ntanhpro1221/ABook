@@ -5,9 +5,10 @@
   "calibration_rows": 748,
   "sha256": {
     "tokens.json": "a061bb5d6abca50c580b99d84039f80390bd30bbf545bcdf65d344f7255e4a5e",
-    "expected.json": "af35a0551dfaf54a17a222aee1ef79531d2b09643ec4adfb55971966a956294e",
+    "expected.json": "11436ef2eeb64b7b04adb97bf37def9ac5069c20b766a40dfbb6e54f6bbd7b07",
     "calibration.json": "3fec5129e8cd2cd432f65d5379492f84e7541505eeff7d9340ec6c0957067198"
   },
   "hash_normalization": "UTF-8 bytes with CRLF normalized to LF",
-  "private_calibration_rows": 442
+  "private_calibration_rows": 442,
+  "reading_policy_revision": "tnfix172: Lead 14-11 ou/ei policy; original token/class/book-hash/calibration data and ambiguity unchanged."
 }

@@ -69,7 +69,7 @@ class RealNamesTest {
             assertEquals(case.text, case.said, unit.pieces.joinToString(" "))
             assertEquals(case.text, case.said, VieneuUnits.spokenTokens(tokens, book.origin, book.readings(), directEnglish = true).filter { it.isNotEmpty() }.joinToString(" "))
             assertEquals(case.text, case.tag, VieneuUnits.readingTag(case.text, book.origin, directEnglish = true))
-            assertTrue(case.tag, case.tag.endsWith("jp-fallback6"))
+            assertTrue(case.tag, case.tag.endsWith("jp-fallback7"))
         }
     }
 
@@ -87,15 +87,15 @@ class RealNamesTest {
             val said = book.cases.associate { it.text to it.said }
             assertEquals("Gi-ưn gật đầu.", said["Ji-eun gật đầu."])
             assertEquals("Hi-un U nhìn Gi-ưn rồi cười.", said["Hyun Woo nhìn Ji-eun rồi cười."])
-            assertEquals("Chờ đã, Hây-da-e-môn!", said["Chờ đã, Heizaemon!"])
+            assertEquals("Chờ đã, Hê-da-e-môn!", said["Chờ đã, Heizaemon!"])
             assertEquals("Rồi Dan cười.", said["Rồi Dan cười."])
             assertEquals("Nước trong veo, Giu-ki thả con boa xuống rồi thay pin.", said["Nước trong veo, Yuki thả con boa xuống rồi thay pin."])
             assertEquals("Gi-ưn tải app hạng K về máy.", said["Ji-eun tải APP hạng K về máy."])
         }
         val shouted = books[0].cases.associate { it.text to it.said }
-        assertEquals("Giu-ki! Hây-da-e-môn gọi lớn.", shouted["YUKI! Heizaemon gọi lớn."])
+        assertEquals("Giu-ki! Hê-da-e-môn gọi lớn.", shouted["YUKI! Heizaemon gọi lớn."])
         assertEquals("“Hi-un U! Gi-ưn đâu rồi?”", shouted["“HYUN WOO! Ji-eun đâu rồi?”"])
-        assertEquals("Rồi Dan, Hây-da-e-môn và Giu-ki mở app hạng K xem cục pin.", shouted["Rồi Dan, Heizaemon và YUKI mở APP hạng K xem cục pin."])
+        assertEquals("Rồi Dan, Hê-da-e-môn và Giu-ki mở app hạng K xem cục pin.", shouted["Rồi Dan, Heizaemon và YUKI mở APP hạng K xem cục pin."])
     }
 
     @Test fun theNativeFrontendHandsTheModelTheSamePhonemes() {
@@ -124,7 +124,7 @@ class RealNamesTest {
             assertEquals("hˈaː6ŋ kˈaː vˈe2 mˈaɜj.", reader.phonemize(listOf("hạng K về máy.")))
             assertEquals(reader.phonemize(listOf("hạng ca về máy.")), reader.phonemize(listOf("hạng K về máy.")))
             val mixed = books[0].cases.first { it.text.startsWith("Rồi Dan, Heizaemon và YUKI") }.phonemes
-            assertEquals("ɹˈo2j ɗˈaːn, hˈəɪ zˈaː ˈɛ mˈon vˌaː2 zˈu kˈi mˈəː4 ˈæp hˈaː6ŋ kˈaː sˈɛm kˈu6c pˈin.", mixed)
+            assertEquals("ɹˈo2j ɗˈaːn, hˈe zˈaː ˈɛ mˈon vˌaː2 zˈu kˈi mˈəː4 ˈæp hˈaː6ŋ kˈaː sˈɛm kˈu6c pˈin.", mixed)
         }
     }
 }

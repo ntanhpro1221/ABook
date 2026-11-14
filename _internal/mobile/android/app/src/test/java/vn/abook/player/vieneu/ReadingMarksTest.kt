@@ -28,8 +28,8 @@ class ReadingMarksTest {
     fun englishThousandsLoseTheirCommas() = check(
         "Có 500,000 đồng, 100,000 yen và 1,419 / 3,419." to "Có năm trăm nghìn đồng, một trăm nghìn yên và 1419 trên 3419.",
         "Trả 2,000,000, xong." to "Trả hai triệu, xong.",
-        "Giá 1,500 và 1,5 và 3,25 và 12,3456." to "Giá một nghìn năm trăm và 1,5 và 3,25 và 12,3456.",
-        "Số 1.234,567 và 9.389.700 và 1,234.5 và 1,234,5." to "Số 1.234,567 và chín triệu ba trăm tám mươi chín nghìn bảy trăm và 1,234.5 và 1,234,5.",
+        "Giá 1,500 và 1,5 và 3,25 và 12,3456." to "Giá một nghìn năm trăm và một phẩy năm và ba phẩy hai năm và mười hai phẩy ba bốn năm sáu.",
+        "Số 1.234,567 và 9.389.700 và 1,234.5 và 1,234,5." to "Số một nghìn hai trăm ba mươi bốn phẩy năm sáu bảy và chín triệu ba trăm tám mươi chín nghìn bảy trăm và một nghìn hai trăm ba mươi bốn phẩy năm và 1,234,5.",
     )
 
     @Test
@@ -58,7 +58,7 @@ class ReadingMarksTest {
         "Chia 3/5 chai, 1/2 và 180/300, 5/3 và 15/8." to "Chia 3 phần 5 chai, 1 phần 2 và 180 trên 300, 5 tháng 3 và 15 tháng 8.",
         "Lớp 1-1, được 1-3-1, dài 3-4000 từ, 3-5 người." to "Lớp 1 1, được 1 3 1, dài 3 đến 4000 từ, 3 đến 5 người.",
         "Ngày 01-10-2026, số 090-123-4567, tỉ số 3-1, giờ 9-5." to "Ngày 01-10-2026, số 090-123-4567, tỉ số 3 1, giờ 9 5.",
-        "Sự kiện x2 và ×3, (\$1 USD) và \$5." to "Sự kiện nhân 2 và nhân 3, (1 đô la u ét đê) và 5 đô la.",
+        "Sự kiện x2 và ×3, (\$1 USD) và \$5." to "Sự kiện nhân 2 và nhân 3, (một đô la u ét đê) và năm đô la.",
     )
 
     @Test

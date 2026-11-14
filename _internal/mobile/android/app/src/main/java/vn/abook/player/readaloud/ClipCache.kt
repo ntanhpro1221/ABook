@@ -57,7 +57,8 @@ class ClipCache(
         // `foreign_onsets` "Dan" -> đ), the shared Vietnamese / English score table, automatic Japanese names read one word per syllable. Same as cache.py.
         // 19: integrated numeric/loanword rules and NFC boundaries, shared with desktop cache.py.
         // 20: dotted date/time/version contexts and every fractional zero, shared with cache.py.
-        const val CACHE_RULES = 20
+        // 21 refreshes amounts, addresses, symbols and vocal continuations.
+        const val CACHE_RULES = 21
         const val RULES = "${Names.RULE_VERSION}.$CACHE_RULES"
 
         /** `rules`: phiên bản luật đọc trong khoá (mặc định [RULES]; test đổi để thấy khoá đổi theo). */

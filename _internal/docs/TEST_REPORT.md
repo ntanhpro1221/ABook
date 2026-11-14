@@ -24,6 +24,21 @@ Atomic generations preserve the last complete manifest.
 Regression coverage uses generated original prose.
 
 Performance and final validation are recorded in the task report.
+## 14-11-2026 — shared Vietnamese text normalization
+
+Original 440 cases: post-G2P agreement is 389/440 for instant reading and 388/440 for Studio.
+With the original rubric, both reach 375/440; rubric changes are listed individually in TEXT_NORMALIZATION.md.
+The expanded 485-case suite includes 45 new authored rules and counterexamples, all passing after G2P on both paths.
+
+Related Python checks: 2869 passed, 1 skipped, 0 failures, 0 errors.
+Android JVM and host-JNI checks across 18 TN classes: 107 passed, 1 skipped, 0 failures, 0 errors.
+The optional private-corpus punctuation export was absent; all public parity methods ran.
+Exact parity includes 748 public tokens, 115 stretches and 12 authored occurrences.
+The full-gate snapshot retry passed 409 tests, skipped 1, with no failures or errors; original token/class/calibration inputs are unchanged.
+The four later modules (preview, fixture privacy, capitals and vocal rules) passed 169 tests after refreshing exact fixture pins and derived expectations.
+A separate-click preview test now supplies distinct timestamps: equal clock ticks combine two wishes into one label by design. A controlled same-tick/distinct-tick probe reproduced this test-only assumption; product logic is unchanged.
+The shared Android text and phoneme snapshots were refreshed; Supertonic model inputs and the referenced audio seed are unchanged.
+Full-suite and exact-revision scanner evidence is retained in the external task result.
 
 ## 14-11-2026 — original examples and exact Corpus reviews
 

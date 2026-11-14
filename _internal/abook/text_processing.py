@@ -7,7 +7,7 @@ from typing import Any
 
 from . import book_paths
 from .io_utils import decode_text_bytes, natural_key, sha256_bytes, sha256_file, sha256_text, slugify
-from .readaloud.symbols import unit_slash
+from .readaloud.symbols import ADDRESS, unit_slash
 from .vietnamese_letters import VIETNAMESE_UPPERCASE_CLASS
 
 
@@ -373,7 +373,8 @@ _SPOKEN_WORD_SLASH = re.compile(r"(?<=[^\W\d_])\s*/\s*(?=[^\W\d_])", re.UNICODE)
 def _word_slash(match: re.Match[str]) -> str:
     """Except between two units of measure: "km/h" is "ki lô mét trên giờ", not "km, h" - the same
     rule Nghe ngay uses (readaloud.symbols.unit_slash), so both read it alike."""
-    return match.group() if unit_slash(match.string[:match.start()], match.string[match.end():]) else ", "
+    address = any(start <= match.start() < end for start, end in (m.span() for m in ADDRESS.finditer(match.string)))
+    return match.group() if address or unit_slash(match.string[:match.start()], match.string[match.end():]) else ", "
 # Separators sitting at either end of the whole text are removed before conversion rather
 # than trimmed away as commas afterwards. Same result, but stable: a fragment of converted
 # text contains no separators at all, so this can never fire a second time. ↓ and ↑ are not
@@ -445,7 +446,10 @@ def spoken_symbols_to_words(text: str) -> str:
     source = _censored_words_as_pauses(str(text).replace("=>", "→"))
     spans: list[tuple[str, bool]] = []
     position = 0
-    for match in VOCAL_CUE_PATTERN.finditer(source):
+    protected = sorted([*VOCAL_CUE_PATTERN.finditer(source), *ADDRESS.finditer(source)], key=lambda match: match.start())
+    for match in protected:
+        if match.start() < position:
+            continue
         spans.append((source[position:match.start()], False))
         spans.append((match.group(0), True))
         position = match.end()

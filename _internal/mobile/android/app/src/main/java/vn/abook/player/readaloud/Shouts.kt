@@ -193,8 +193,8 @@ object Shouts {
         if (!VietnameseReading.isSyllable(base)) return null
         val letter = plain(runChar(chars.subList(runs.last().first, runs.last().second)).single())
         val append = if (runs.last().second == chars.size && letter.singleOrNull() in STANDALONE)
-            Normalizer.normalize(Normalizer.normalize(letter, Normalizer.Form.NFD) + tone(base), Normalizer.Form.NFC) else ""
-        return "$base…" + if (append.isNotEmpty()) " ${Names.loneSyllable(append)}" else ""
+            letter else ""
+        return "$base…" + if (append.isNotEmpty()) " $append" else ""
     }
 
     private val readings = ConcurrentHashMap<String, String>()
@@ -262,9 +262,9 @@ object Shouts {
                     return if (letter.singleOrNull() in VOWELS && trimmed != word && trimmed.length >= MIN_RUN) stretchReading(trimmed) else null
                 }
             }
-            if (letter.singleOrNull() in STANDALONE) append = Normalizer.normalize(Normalizer.normalize(letter, Normalizer.Form.NFD) + tone(base), Normalizer.Form.NFC)
+            if (letter.singleOrNull() in STANDALONE) append = letter
         }
-        return "$base…" + if (append.isNotEmpty() && letter.singleOrNull() in STANDALONE) " ${Names.loneSyllable(append)}" else ""
+        return "$base…" + if (append.isNotEmpty() && letter.singleOrNull() in STANDALONE) " ${plain(append.single())}" else ""
     }
 
     /** The word before is a quantity ("127", "một", "vài"): a "mm" after it is the unit. */

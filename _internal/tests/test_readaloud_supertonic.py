@@ -406,7 +406,7 @@ def test_english_and_japanese_names_reach_the_model_as_syllables(fake_voices) ->
     provider.synthesize("Kyouko và Haruto đi học.", "F1", "ja")
     provider.synthesize("Kyouko và Haruto đi học.", "F1")
     rose = english_vi.vietnamized_english("Rose").lower()
-    assert [text for _, text in engine.calls] == [f"tôi gặp {rose} và mi-ke.", "ki-âu-cô và ha-ru-tô đi học.",
+    assert [text for _, text in engine.calls] == [f"tôi gặp {rose} và mi-ke.", 'ki-ô-cô và ha-ru-tô đi học.',
                                                   f"{english_vi.vietnamized_english('Kyouko').lower()} và {english_vi.vietnamized_english('Haruto').lower()} đi học."]
 
 
@@ -434,7 +434,7 @@ def test_the_books_own_readings_come_after_the_names(fake_voices, tmp_path: Path
     text = "Haruto gặp Kyouko."
     table = {"Haruto": "Ha-ru-to"}
     clip = service.clip("supertonic:F1", text, origin="ja", readings=table)
-    assert engine.calls[-1] == ("F1", "ha-ru-to gặp ki-âu-cô."), "cách đọc của người nghe thắng luật phiên âm, tên khác vẫn theo gốc cuốn"
+    assert engine.calls[-1] == ("F1", 'ha-ru-to gặp ki-ô-cô.'), "cách đọc của người nghe thắng luật phiên âm, tên khác vẫn theo gốc cuốn"
     assert len(clip["words"]) == len(text.split())
     tag = f"{provider.reading_tag(text, 'ja')}+{readings.tag(text, table)}+{loudness.LIFT_TAG}"
     assert tag.startswith("ja+r") and clip["file"].startswith(cache.clip_key("supertonic", "F1", text, tag))

@@ -3,39 +3,25 @@
   "warning": "Prioritization proxy only; phoneme agreement is not acoustic accuracy.",
   "ranking": [
     {
-      "category": "symbol",
-      "count": 1968,
-      "per_100k_tokens": 167.463,
-      "mean_mismatch_fraction": 0.3,
-      "priority_proxy": 50.2389
-    },
-    {
       "category": "japanese",
       "count": 1950,
       "per_100k_tokens": 165.931,
-      "mean_mismatch_fraction": 0.3,
-      "priority_proxy": 49.7794
+      "mean_mismatch_fraction": 0.130435,
+      "priority_proxy": 21.6432
     },
     {
-      "category": "abbrev_en",
-      "count": 151,
-      "per_100k_tokens": 12.849,
-      "mean_mismatch_fraction": 0.65,
-      "priority_proxy": 8.3519
+      "category": "symbol",
+      "count": 1968,
+      "per_100k_tokens": 167.463,
+      "mean_mismatch_fraction": 0.051724,
+      "priority_proxy": 8.6619
     },
     {
       "category": "vocalization",
       "count": 178,
       "per_100k_tokens": 15.147,
-      "mean_mismatch_fraction": 0.325,
-      "priority_proxy": 4.9226
-    },
-    {
-      "category": "cardinal_large",
-      "count": 100,
-      "per_100k_tokens": 8.509,
-      "mean_mismatch_fraction": 0.5,
-      "priority_proxy": 4.2546
+      "mean_mismatch_fraction": 0.1875,
+      "priority_proxy": 2.84
     },
     {
       "category": "roman",
@@ -45,13 +31,6 @@
       "priority_proxy": 1.7699
     },
     {
-      "category": "decimal",
-      "count": 66,
-      "per_100k_tokens": 5.616,
-      "mean_mismatch_fraction": 0.3,
-      "priority_proxy": 1.6848
-    },
-    {
       "category": "game",
       "count": 40,
       "per_100k_tokens": 3.404,
@@ -59,11 +38,11 @@
       "priority_proxy": 1.5317
     },
     {
-      "category": "currency",
-      "count": 28,
-      "per_100k_tokens": 2.383,
-      "mean_mismatch_fraction": 0.4,
-      "priority_proxy": 0.953
+      "category": "cardinal_large",
+      "count": 100,
+      "per_100k_tokens": 8.509,
+      "mean_mismatch_fraction": 0.173913,
+      "priority_proxy": 1.4799
     },
     {
       "category": "unit",
@@ -83,8 +62,8 @@
       "category": "range",
       "count": 16,
       "per_100k_tokens": 1.361,
-      "mean_mismatch_fraction": 0.25,
-      "priority_proxy": 0.3404
+      "mean_mismatch_fraction": 0.238095,
+      "priority_proxy": 0.3242
     },
     {
       "category": "time",
@@ -94,18 +73,25 @@
       "priority_proxy": 0.2893
     },
     {
+      "category": "decimal",
+      "count": 66,
+      "per_100k_tokens": 5.616,
+      "mean_mismatch_fraction": 0.041667,
+      "priority_proxy": 0.234
+    },
+    {
       "category": "phone_code",
       "count": 8,
       "per_100k_tokens": 0.681,
-      "mean_mismatch_fraction": 0.375,
-      "priority_proxy": 0.2553
+      "mean_mismatch_fraction": 0.3,
+      "priority_proxy": 0.2042
     },
     {
       "category": "date",
       "count": 49,
       "per_100k_tokens": 4.17,
-      "mean_mismatch_fraction": 0.05,
-      "priority_proxy": 0.2085
+      "mean_mismatch_fraction": 0.047619,
+      "priority_proxy": 0.1986
     },
     {
       "category": "abbrev_vi",
@@ -113,13 +99,6 @@
       "per_100k_tokens": 0.851,
       "mean_mismatch_fraction": 0.2,
       "priority_proxy": 0.1702
-    },
-    {
-      "category": "url_email",
-      "count": 1,
-      "per_100k_tokens": 0.085,
-      "mean_mismatch_fraction": 0.775,
-      "priority_proxy": 0.0659
     },
     {
       "category": "cardinal_small",
@@ -136,9 +115,30 @@
       "priority_proxy": 0.0
     },
     {
+      "category": "currency",
+      "count": 28,
+      "per_100k_tokens": 2.383,
+      "mean_mismatch_fraction": 0.0,
+      "priority_proxy": 0.0
+    },
+    {
+      "category": "abbrev_en",
+      "count": 151,
+      "per_100k_tokens": 12.849,
+      "mean_mismatch_fraction": 0.0,
+      "priority_proxy": 0.0
+    },
+    {
       "category": "english",
       "count": 279,
       "per_100k_tokens": 23.741,
+      "mean_mismatch_fraction": 0.0,
+      "priority_proxy": 0.0
+    },
+    {
+      "category": "url_email",
+      "count": 1,
+      "per_100k_tokens": 0.085,
       "mean_mismatch_fraction": 0.0,
       "priority_proxy": 0.0
     },

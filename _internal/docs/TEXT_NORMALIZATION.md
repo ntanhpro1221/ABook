@@ -1,5 +1,132 @@
 # Chuẩn hoá chữ để đọc tiếng Việt
 
+## Bản sửa tnfix172 — 14-11-2026
+
+Nhánh `dev/tnfix172` từ `0964e4cd2`, giữ runtime sea-g2p 0.10.0 / VieNeu 3.8.3.
+Các bảng dưới đo chuỗi và âm vị gửi VieNeu, chưa đo audio hoặc suy điểm sang engine đám mây.
+Số trước/sau cùng 440 đề gốc; chỉ 19 ca rubric được bổ sung rõ lý do bên dưới, không xoá đáp án.
+Sàn riêng từng loại × đường × tầng, dung sai giảm **0**. Mọi lượt lớp và báo cáo đầy đủ được giữ ngoài Git.
+
+| Loại | N | Nghe ngay chuỗi | Nghe ngay sau G2P | Studio chuỗi | Studio sau G2P |
+|---|---:|---:|---:|---:|---:|
+| cardinal_small | 20 | 20 → 20 | 20 → 20 | 20 → 20 | 20 → 20 |
+| cardinal_large | 20 | 10 → 16 | 10 → 16 | 10 → 16 | 10 → 16 |
+| decimal | 20 | 7 → 17 | 14 → 19 | 7 → 17 | 14 → 19 |
+| ordinal | 20 | 0 → 0 | 20 → 20 | 0 → 0 | 20 → 20 |
+| roman | 20 | 17 → 17 | 19 → 19 | 17 → 17 | 19 → 19 |
+| date | 20 | 2 → 2 | 19 → 19 | 2 → 2 | 19 → 19 |
+| time | 20 | 1 → 1 | 16 → 16 | 1 → 1 | 16 → 16 |
+| range | 20 | 1 → 1 | 15 → 15 | 1 → 1 | 15 → 15 |
+| percentage | 20 | 0 → 0 | 17 → 17 | 0 → 0 | 17 → 17 |
+| currency | 20 | 6 → 20 | 12 → 20 | 6 → 20 | 12 → 20 |
+| unit | 20 | 0 → 0 | 17 → 17 | 0 → 0 | 17 → 17 |
+| phone_code | 20 | 0 → 12 | 13 → 13 | 0 → 12 | 12 → 12 |
+| abbrev_vi | 20 | 14 → 14 | 16 → 16 | 14 → 14 | 16 → 16 |
+| abbrev_en | 20 | 7 → 20 | 7 → 20 | 7 → 20 | 7 → 20 |
+| english | 20 | 20 → 20 | 20 → 20 | 20 → 20 | 20 → 20 |
+| japanese | 20 | 14 → 17 | 14 → 17 | 14 → 17 | 14 → 17 |
+| symbol | 20 | 2 → 7 | 14 → 19 | 8 → 12 | 14 → 18 |
+| url_email | 20 | 0 → 20 | 4 → 20 | 0 → 20 | 5 → 20 |
+| vocalization | 20 | 17 → 18 | 13 → 15 | 18 → 19 | 14 → 16 |
+| punctuation | 20 | 20 → 20 | 20 → 20 | 20 → 20 | 20 → 20 |
+| uppercase | 20 | 20 → 20 | 20 → 20 | 20 → 20 | 20 → 20 |
+| game | 20 | 2 → 2 | 11 → 11 | 4 → 4 | 11 → 11 |
+| **Tổng** | 440 | 180 → 264 | 331 → 389 | 189 → 272 | 332 → 388 |
+
+### Tách sửa code khỏi sửa rubric
+
+| Phép đối chiếu 440 ca | Nghe ngay sau G2P | Studio sau G2P |
+|---|---:|---:|
+| Code gốc, rubric gốc | 331/440 (75,23%) | 332/440 (75,45%) |
+| Code gốc, rubric đã duyệt | 344/440 | 344/440 |
+| Code đã sửa, rubric gốc | 375/440 | 375/440 |
+| Code đã sửa, rubric đã duyệt | 389/440 (88.41%) | 388/440 (88.18%) |
+
+Giữ rubric gốc: sửa code tăng **44** ca Nghe ngay và **43** ca Studio sau G2P.
+Không cộng hai mức tăng độc lập thành dự báo chất lượng nghe. Mỗi phép đối chiếu chạy thật qua cả hai biên.
+
+### Luật và ca phản
+
+- Số nguyên 7–9 chữ số không có số 0 đầu đọc số lượng. Từ 10 chữ số cần ngữ cảnh lượng (người/chiếc/đồng… hoặc tổng/có…). Mã, điện thoại, SĐT, ID, serial và # thắng ngữ cảnh lượng; số 0 đầu đọc từng chữ số. Chỉ áp nhận diện mã cho số nguyên liền, không nuốt dấu thập phân. Năm 2026 giữ cách đọc năm.
+- Tiền có ký hiệu hoặc USD/VND/JPY/EUR/GBP đứng trước/sau số được nhận trước viết tắt; dấu chấm/phẩy phân nhóm phải nhất quán, số lẻ đọc “phẩy” và giữ từng chữ số lẻ, kể cả số 0. Cách đọc riêng của người nghe thắng.
+- Đếm sao ở thang đánh giá hoặc dãy sao đứng riêng; dấu trừ Unicode, ASCII trong phép tính, chia, xấp xỉ và cộng trừ có lời. Khoảng số giữ nghĩa “đến”, dấu / giữa danh từ giữ ngắt. Mũi tên “thành” giữ nguyên.
+- Nhật: ou → ô, ei → ê qua policy chung phiên bản 7. Giữ yu → giu theo quy ước trước đó; không thay cách đọc riêng. Bằng chứng lịch sử trong SOURCED không đổi; 11 dạng ou/ei lệch lựa chọn 04-10 được giải thích bằng quyết định Lead 14-11.
+- Viết tắt Anh giữ tên chữ Anh qua `<en>`; vs/vs. giữa hai vế đổi “với”. AC được thêm vào bảng viết tắt vì G2P trước đó đọc thành “ác”; cache 21 áp cho cả nhóm thay đổi này.
+- Tiếng kéo giữ thanh ở âm gốc; phần nguyên âm kéo tiếp không chép thanh và không mang `_`. Âm tiết Việt hợp lệ như “cứu” vẫn giữ.
+- URL/email đọc tên miền, hòm thư và thành phần đường dẫn bằng “chấm”, “a còng”, “gạch chéo”…; bỏ giao thức/www. Studio bảo vệ địa chỉ trước bước đổi ký hiệu. Mã thư đọc riêng từng chữ số.
+- Ngữ cảnh mức/là/giá/đơn vị phân giải dấu chấm thập phân; ngày, giờ, phiên bản, phân nhóm và khoảng thập phân có quyền trước. Hỗn hợp 1.234,5 và 1,234.5 dùng dấu cuối cho phần lẻ.
+
+Python và Kotlin dùng chung 45 ca tự viết trong `tests/fixtures/readaloud/tnfix172/cases.json`; đề hiển thị không bị sửa.
+Các snapshot desktop/JNI của 748 token và 115 tiếng kéo cũng được làm mới. Chỉ 29 cách đọc chuẩn ou/ei đổi theo quyết định Lead; token, nhãn lớp, hash sách, dữ liệu calibration và cờ mơ hồ không đổi. Đây là cập nhật đầu ra dẫn xuất theo luật mới, không thêm đáp án nới chuẩn cho benchmark.
+Ba fixture đã có duyệt riêng tư được đối chiếu từng trường JSON với byte gốc rồi ghim lại: chỉ đầu ra giọng đọc, âm vị, ID token dẫn xuất và cache tag đổi; đề, tên và thứ tự ca giữ nguyên. Các assertion Kotlin về số, URL và cache cũng đồng bộ kỳ vọng Python; không sửa rubric ngoài 19 ca đã kê.
+45 ca mới đạt **45/45 sau G2P trên cả hai đường**. Bộ mở rộng 485 ca khoá sàn mới riêng; không dùng đổi mẫu để che mức tăng trên 440 ca.
+Biên chuỗi còn khác ở các chỗ chủ động giao chữ số cho G2P. Cache luật đọc tăng 20 → 21 ở hai nền để làm lại clip mang cách đọc cũ.
+
+### Mỗi ca bổ sung rubric
+
+- `abbrev_en_01`: thêm tên chữ Anh qua `<en>` để giữ nguyên âm/trọng âm Anh theo quyết định Lead; giữ mọi đáp án cũ.
+- `abbrev_en_02`: thêm tên chữ Anh qua `<en>` để giữ nguyên âm/trọng âm Anh theo quyết định Lead; giữ mọi đáp án cũ.
+- `abbrev_en_03`: thêm tên chữ Anh qua `<en>` để giữ nguyên âm/trọng âm Anh theo quyết định Lead; giữ mọi đáp án cũ.
+- `abbrev_en_04`: thêm tên chữ Anh qua `<en>` để giữ nguyên âm/trọng âm Anh theo quyết định Lead; giữ mọi đáp án cũ.
+- `abbrev_en_05`: thêm tên chữ Anh qua `<en>` để giữ nguyên âm/trọng âm Anh theo quyết định Lead; giữ mọi đáp án cũ.
+- `abbrev_en_08`: thêm tên chữ Anh qua `<en>` để giữ nguyên âm/trọng âm Anh theo quyết định Lead; giữ mọi đáp án cũ.
+- `abbrev_en_09`: thêm tên chữ Anh qua `<en>` để giữ nguyên âm/trọng âm Anh theo quyết định Lead; giữ mọi đáp án cũ.
+- `abbrev_en_10`: thêm tên chữ Anh qua `<en>` để giữ nguyên âm/trọng âm Anh theo quyết định Lead; giữ mọi đáp án cũ.
+- `abbrev_en_11`: thêm tên chữ Anh qua `<en>` để giữ nguyên âm/trọng âm Anh theo quyết định Lead; giữ mọi đáp án cũ.
+- `abbrev_en_12`: thêm tên chữ Anh qua `<en>` để giữ nguyên âm/trọng âm Anh theo quyết định Lead; giữ mọi đáp án cũ.
+- `abbrev_en_13`: thêm tên chữ Anh qua `<en>` để giữ nguyên âm/trọng âm Anh theo quyết định Lead; giữ mọi đáp án cũ.
+- `abbrev_en_14`: thêm tên chữ Anh qua `<en>` để giữ nguyên âm/trọng âm Anh theo quyết định Lead; giữ mọi đáp án cũ.
+- `abbrev_en_15`: thêm tên chữ Anh qua `<en>` để giữ nguyên âm/trọng âm Anh theo quyết định Lead; giữ mọi đáp án cũ.
+- `abbrev_en_16`: thêm tên chữ Anh qua `<en>` để giữ nguyên âm/trọng âm Anh theo quyết định Lead; giữ mọi đáp án cũ.
+- `abbrev_en_18`: thêm tên chữ Anh qua `<en>` để giữ nguyên âm/trọng âm Anh theo quyết định Lead; giữ mọi đáp án cũ.
+- `abbrev_en_19`: thêm tên chữ Anh qua `<en>` để giữ nguyên âm/trọng âm Anh theo quyết định Lead; giữ mọi đáp án cũ.
+- `abbrev_en_20`: thêm tên chữ Anh qua `<en>` để giữ nguyên âm/trọng âm Anh theo quyết định Lead; giữ mọi đáp án cũ.
+- `symbol_07`: thêm dấu ngắt giữa hai danh từ, đúng lựa chọn ngắt đã được phép.
+- `symbol_09`: thêm “thành”, cách đọc đổi trạng thái Lead cho phép; giữ “sang/đến/chuyển thành”.
+
+### Bộ 485 ca và hash triển khai
+
+| Category | N | Nghe ngay chuỗi | Nghe ngay sau G2P | Studio chuỗi | Studio sau G2P |
+|---|---:|---:|---:|---:|---:|
+| cardinal_small | 21 | 21/21 = 100.00% | 21/21 = 100.00% | 21/21 = 100.00% | 21/21 = 100.00% |
+| cardinal_large | 23 | 19/23 = 82.61% | 19/23 = 82.61% | 19/23 = 82.61% | 19/23 = 82.61% |
+| decimal | 24 | 20/24 = 83.33% | 23/24 = 95.83% | 20/24 = 83.33% | 23/24 = 95.83% |
+| ordinal | 20 | 0/20 = 0.00% | 20/20 = 100.00% | 0/20 = 0.00% | 20/20 = 100.00% |
+| roman | 20 | 17/20 = 85.00% | 19/20 = 95.00% | 17/20 = 85.00% | 19/20 = 95.00% |
+| date | 21 | 3/21 = 14.29% | 20/21 = 95.24% | 3/21 = 14.29% | 20/21 = 95.24% |
+| time | 20 | 1/20 = 5.00% | 16/20 = 80.00% | 1/20 = 5.00% | 16/20 = 80.00% |
+| range | 21 | 1/21 = 4.76% | 16/21 = 76.19% | 1/21 = 4.76% | 16/21 = 76.19% |
+| percentage | 20 | 0/20 = 0.00% | 17/20 = 85.00% | 0/20 = 0.00% | 17/20 = 85.00% |
+| currency | 28 | 28/28 = 100.00% | 28/28 = 100.00% | 28/28 = 100.00% | 28/28 = 100.00% |
+| unit | 20 | 0/20 = 0.00% | 17/20 = 85.00% | 0/20 = 0.00% | 17/20 = 85.00% |
+| phone_code | 25 | 16/25 = 64.00% | 18/25 = 72.00% | 16/25 = 64.00% | 17/25 = 68.00% |
+| abbrev_vi | 20 | 14/20 = 70.00% | 16/20 = 80.00% | 14/20 = 70.00% | 16/20 = 80.00% |
+| abbrev_en | 23 | 23/23 = 100.00% | 23/23 = 100.00% | 23/23 = 100.00% | 23/23 = 100.00% |
+| english | 20 | 20/20 = 100.00% | 20/20 = 100.00% | 20/20 = 100.00% | 20/20 = 100.00% |
+| japanese | 23 | 20/23 = 86.96% | 20/23 = 86.96% | 20/23 = 86.96% | 20/23 = 86.96% |
+| symbol | 29 | 10/29 = 34.48% | 28/29 = 96.55% | 16/29 = 55.17% | 27/29 = 93.10% |
+| url_email | 23 | 23/23 = 100.00% | 23/23 = 100.00% | 23/23 = 100.00% | 23/23 = 100.00% |
+| vocalization | 24 | 22/24 = 91.67% | 19/24 = 79.17% | 23/24 = 95.83% | 20/24 = 83.33% |
+| punctuation | 20 | 20/20 = 100.00% | 20/20 = 100.00% | 20/20 = 100.00% | 20/20 = 100.00% |
+| uppercase | 20 | 20/20 = 100.00% | 20/20 = 100.00% | 20/20 = 100.00% | 20/20 = 100.00% |
+| game | 20 | 2/20 = 10.00% | 11/20 = 55.00% | 4/20 = 20.00% | 11/20 = 55.00% |
+| **Overall** | 485 | 300/485 = 61.86% | 434/485 = 89.48% | 309/485 = 63.71% | 433/485 = 89.28% |
+
+Hash trước: `db6c9cb847dac2e536deca158114df29dcfedac4ab88b69885c08e1924876997`. Hash sau: `2c2be34ea9b7ac4b80206110ffdcbc8e0dec4ed759afd60754e9c9c66f387176`.
+Danh sách khoá đọc từ code: 71 mục; thay đổi các mục:
+
+- `_internal/abook/readaloud/english_policy.json`
+- `_internal/abook/readaloud/japanese_policy.json`
+- `_internal/abook/readaloud/shouts.py`
+- `_internal/abook/readaloud/symbols.py`
+- `_internal/abook/readaloud/vieneu.py`
+- `_internal/abook/romanization.py`
+- `_internal/abook/text_processing.py`
+
+Nhánh dev riêng; không sửa runtime, dependency hoặc chữ truyện. Test và scanner được ghi bằng số thực trong kết quả bàn giao.
+
+## Audit gốc — giữ làm bằng chứng lịch sử
+
 Mốc đo: v0.4.170, commit nguồn `20889b26f83c72e13e137780e7a2812ab3e27e88`, ngày 14-11-2026.
 Nhánh `dev/tnaudit` chỉ bổ sung bộ đo, fixture và tài liệu. Không thay hành vi TN hoặc tạo audio.
 

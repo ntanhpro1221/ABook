@@ -67,7 +67,7 @@ class SoundsTest {
     fun aStretchedSoundIsTheSoundThenAnEllipsisThenTheVowel() {
         val cases = listOf(
             "Aaaa" to "a… a", "Haaa" to "ha… a", "Uuu" to "u… u", "Viiiiii" to "vi… i", "Taaa" to "ta… a", "oaaaa" to "oa… a", "Eeee" to "e… e",
-            "rồiiiii" to "rồi… ì", "tớơơơơ" to "tớ… ớ", "chứứứứ" to "chứ… ứ", "quẹooo" to "quẹo… ọ", "đâuuuu" to "đâu… u", "màaaa" to "mà… à", "nhaaa" to "nha… a", "tooo" to "to… o_",
+            "rồiiiii" to "rồi… i", "tớơơơơ" to "tớ… ơ", "chứứứứ" to "chứ… ư", "quẹooo" to "quẹo… o", "đâuuuu" to "đâu… u", "màaaa" to "mà… a", "nhaaa" to "nha… a", "tooo" to "to… o",
             "Khônggg" to "không…", "Emmmm" to "ừm", "Hầyyy" to "hầy…", "rấtttt" to "rất…", "hiếppppp" to "hiếp…", "Oáppp" to "oáp…", "Haizzz" to "hai…",
             "Hmmm" to "hừm…", "Ummm" to "ừm…", "Shhhh" to "suỵt…", "Ahhhh" to "a…", "Aaah" to "a… a", "Oooh" to "ô… ô", "Ughhh" to "ức…",
             "Kyaaa" to "ki-a… a", "Uwaaa" to "u-oa… a", "Yaaa" to "gia… a",
@@ -115,7 +115,7 @@ class SoundsTest {
     @Test
     fun stretchesInQuotesGluedToTheNextWordAndRanks() {
         assertEquals(listOf("“a… a…", "u… u!”", "‘nha… a”", "(hừm…)"), said("“Aaaa… Uuu!” ‘nhaaa’ (Hmmm)"))
-        assertEquals(listOf("ừm…Ý", "bạn;", "ha… a…..cuối;", "mà… à, nếu;", "oáp....Hầy;", "-ê....nhìn"), said("Ummm…Ý bạn; Haaa…..cuối; màaaa—nếu; Oáppp~....Hầy; -EH....nhìn"))
+        assertEquals(listOf("ừm…Ý", "bạn;", "ha… a…..cuối;", "mà… a, nếu;", "oáp....Hầy;", "-ê....nhìn"), said("Ummm…Ý bạn; Haaa…..cuối; màaaa—nếu; Oáppp~....Hầy; -EH....nhìn"))
         assertEquals(listOf("xoạt…", "vi… i"), said("Xoạttt- *Viiiii*-"))
         assertEquals(listOf("hạng", "a a a", "và", "a a a cộng cộng cộng,", "rồi", "ét ét ét"), said("hạng AAA và AAA+++, rồi SSS"))
         assertEquals(listOf("Chương", "ba,", "ba mươi."), said("Chương III, XXX."))
@@ -123,7 +123,7 @@ class SoundsTest {
 
     @Test
     fun anHonorificSuffixIsReadWithAnyBookOrigin() {
-        val cases = listOf("Ariel-sama" to "Ariel-xa-ma", "Mary-san" to "Mary-xan", "Zeros-sensei" to "Zeros-xen-xây", "Goblin-san" to "Goblin-xan", "Noel-chan" to "Noel-chan",
+        val cases = listOf("Ariel-sama" to "Ariel-xa-ma", "Mary-san" to "Mary-xan", "Zeros-sensei" to "Zeros-xen-xê", "Goblin-san" to "Goblin-xan", "Noel-chan" to "Noel-chan",
             "sĩ-sama" to "sĩ-xa-ma", "thần-chan" to "thần-chan", "diện-san" to "diện-xan", "Bá-sama" to "Bá-xa-ma",
             "Sora-sama" to "Xô-ra-xa-ma", "Hinata-sama" to "Hi-na-ta-xa-ma", "Haruto-kun" to "Ha-ru-tô-cun", "Tanaka-senpai" to "Ta-na-ca-xen-pai",
             "Kate-san" to "Kate-xan", "Ian-sama" to "Ian-xa-ma")
@@ -161,7 +161,7 @@ class SoundsTest {
 
     @Test
     fun aWordStretchedInSeveralPlacesIsCollectedWhenItMakesOneSyllable() {
-        assertEquals("chào… ò", Shouts.stretchReading("Cccchhhhàaaaaaoooo"))
+        assertEquals("chào… o", Shouts.stretchReading("Cccchhhhàaaaaaoooo"))
         assertEquals("sáng…", Shouts.stretchReading("sssssáaaannnngggg"))
         assertEquals("buôi… i", Shouts.stretchReading("Bbbbbuuuuuôooiiii"))
     }

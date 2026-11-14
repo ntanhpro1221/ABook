@@ -1,6 +1,5 @@
 {
   "sea_g2p": "0.10.0",
-
   "comparison": "exact UTF-8 phonemes; no stress, tone, whitespace or punctuation folding",
   "cases": [
     {
@@ -143,12 +142,12 @@
       "units": [
         {
           "pieces": [
-            "Xâu"
+            "Xô"
           ],
-          "phonemes": "sˈə1w."
+          "phonemes": "sˈo."
         }
       ],
-      "phonemes": "sˈə1w."
+      "phonemes": "sˈo."
     },
     {
       "id": "token:007",
@@ -752,12 +751,12 @@
       "units": [
         {
           "pieces": [
-            "Cây-gi"
+            "Kê-gi"
           ],
-          "phonemes": "kˈəɪ zˈi."
+          "phonemes": "kˈe zˈi."
         }
       ],
-      "phonemes": "kˈəɪ zˈi."
+      "phonemes": "kˈe zˈi."
     },
     {
       "id": "token:036",
@@ -1109,12 +1108,12 @@
       "units": [
         {
           "pieces": [
-            "Ây-na"
+            "ê-na"
           ],
-          "phonemes": "ˈəɪ nˈaː."
+          "phonemes": "ˈe nˈaː."
         }
       ],
-      "phonemes": "ˈəɪ nˈaː."
+      "phonemes": "ˈe nˈaː."
     },
     {
       "id": "token:053",
@@ -1214,12 +1213,12 @@
       "units": [
         {
           "pieces": [
-            "Rin-đâu"
+            "Rin-đô"
           ],
-          "phonemes": "ɹˈin ɗˈə1w."
+          "phonemes": "ɹˈin ɗˈo."
         }
       ],
-      "phonemes": "ɹˈin ɗˈə1w."
+      "phonemes": "ɹˈin ɗˈo."
     },
     {
       "id": "token:058",
@@ -1489,12 +1488,12 @@
       "units": [
         {
           "pieces": [
-            "Giâu-xu-ke"
+            "Giô-xu-ke"
           ],
-          "phonemes": "zˈə1w sˈu kˈɛ."
+          "phonemes": "zˈo sˈu kˈɛ."
         }
       ],
-      "phonemes": "zˈə1w sˈu kˈɛ."
+      "phonemes": "zˈo sˈu kˈɛ."
     },
     {
       "id": "token:071",
@@ -1741,12 +1740,12 @@
       "units": [
         {
           "pieces": [
-            "Cây-xu-ke"
+            "Kê-xu-ke"
           ],
-          "phonemes": "kˈəɪ sˈu kˈɛ."
+          "phonemes": "kˈe sˈu kˈɛ."
         }
       ],
-      "phonemes": "kˈəɪ sˈu kˈɛ."
+      "phonemes": "kˈe sˈu kˈɛ."
     },
     {
       "id": "token:083",
@@ -1888,12 +1887,12 @@
       "units": [
         {
           "pieces": [
-            "An-đâu"
+            "An-đô"
           ],
-          "phonemes": "ˈaːn ɗˈə1w."
+          "phonemes": "ˈaːn ɗˈo."
         }
       ],
-      "phonemes": "ˈaːn ɗˈə1w."
+      "phonemes": "ˈaːn ɗˈo."
     },
     {
       "id": "token:090",
@@ -1972,12 +1971,12 @@
       "units": [
         {
           "pieces": [
-            "Ca-tâu"
+            "Ca-tô"
           ],
-          "phonemes": "kˈaː t̪ˈə1w."
+          "phonemes": "kˈaː t̪ˈo."
         }
       ],
-      "phonemes": "kˈaː t̪ˈə1w."
+      "phonemes": "kˈaː t̪ˈo."
     },
     {
       "id": "token:094",
@@ -2350,12 +2349,12 @@
       "units": [
         {
           "pieces": [
-            "En-đâu"
+            "En-đô"
           ],
-          "phonemes": "ˈɛn ɗˈə1w."
+          "phonemes": "ˈɛn ɗˈo."
         }
       ],
-      "phonemes": "ˈɛn ɗˈə1w."
+      "phonemes": "ˈɛn ɗˈo."
     },
     {
       "id": "token:112",
@@ -2413,12 +2412,12 @@
       "units": [
         {
           "pieces": [
-            "Câu-hây"
+            "Cô-hê"
           ],
-          "phonemes": "kˈə1w hˈəɪ."
+          "phonemes": "kˈo hˈe."
         }
       ],
-      "phonemes": "kˈə1w hˈəɪ."
+      "phonemes": "kˈo hˈe."
     },
     {
       "id": "token:115",
@@ -2560,12 +2559,12 @@
       "units": [
         {
           "pieces": [
-            "Câu-chi"
+            "Cô-chi"
           ],
-          "phonemes": "kˈə1w tʃˈi."
+          "phonemes": "kˈo tʃˈi."
         }
       ],
-      "phonemes": "kˈə1w tʃˈi."
+      "phonemes": "kˈo tʃˈi."
     },
     {
       "id": "token:122",
@@ -2581,12 +2580,12 @@
       "units": [
         {
           "pieces": [
-            "Mi-đâu"
+            "Mi-đô"
           ],
-          "phonemes": "mˈi ɗˈə1w."
+          "phonemes": "mˈi ɗˈo."
         }
       ],
-      "phonemes": "mˈi ɗˈə1w."
+      "phonemes": "mˈi ɗˈo."
     },
     {
       "id": "token:123",
@@ -2707,12 +2706,12 @@
       "units": [
         {
           "pieces": [
-            "Sâu-ta"
+            "Sô-ta"
           ],
-          "phonemes": "sˈə1w t̪ˈaː."
+          "phonemes": "sˈo t̪ˈaː."
         }
       ],
-      "phonemes": "sˈə1w t̪ˈaː."
+      "phonemes": "sˈo t̪ˈaː."
     },
     {
       "id": "token:129",
@@ -3274,12 +3273,12 @@
       "units": [
         {
           "pieces": [
-            "Xâu-xu-ke"
+            "Xô-xu-ke"
           ],
-          "phonemes": "sˈə1w sˈu kˈɛ."
+          "phonemes": "sˈo sˈu kˈɛ."
         }
       ],
-      "phonemes": "sˈə1w sˈu kˈɛ."
+      "phonemes": "sˈo sˈu kˈɛ."
     },
     {
       "id": "token:156",
@@ -3316,12 +3315,12 @@
       "units": [
         {
           "pieces": [
-            "i-tâu"
+            "i-tô"
           ],
-          "phonemes": "ˈi t̪ˈə1w."
+          "phonemes": "ˈi t̪ˈo."
         }
       ],
-      "phonemes": "ˈi t̪ˈə1w."
+      "phonemes": "ˈi t̪ˈo."
     },
     {
       "id": "token:158",
@@ -3589,12 +3588,12 @@
       "units": [
         {
           "pieces": [
-            "Câu-ta-râu"
+            "Cô-ta-rô"
           ],
-          "phonemes": "kˈə1w t̪ˈaː ɹˈə1w."
+          "phonemes": "kˈo t̪ˈaː ɹˈo."
         }
       ],
-      "phonemes": "kˈə1w t̪ˈaː ɹˈə1w."
+      "phonemes": "kˈo t̪ˈaː ɹˈo."
     },
     {
       "id": "token:171",
@@ -4410,12 +4409,12 @@
       "units": [
         {
           "pieces": [
-            "Xu-đâu"
+            "Xu-đô"
           ],
-          "phonemes": "sˈu ɗˈə1w."
+          "phonemes": "sˈu ɗˈo."
         }
       ],
-      "phonemes": "sˈu ɗˈə1w."
+      "phonemes": "sˈu ɗˈo."
     },
     {
       "id": "token:210",
@@ -4620,12 +4619,12 @@
       "units": [
         {
           "pieces": [
-            "Câu-ta"
+            "Cô-ta"
           ],
-          "phonemes": "kˈə1w t̪ˈaː."
+          "phonemes": "kˈo t̪ˈaː."
         }
       ],
-      "phonemes": "kˈə1w t̪ˈaː."
+      "phonemes": "kˈo t̪ˈaː."
     },
     {
       "id": "token:220",
@@ -5149,12 +5148,12 @@
       "units": [
         {
           "pieces": [
-            "câu"
+            "cô"
           ],
-          "phonemes": "kˈə1w."
+          "phonemes": "kˈo."
         }
       ],
-      "phonemes": "kˈə1w."
+      "phonemes": "kˈo."
     },
     {
       "id": "token:245",
@@ -5823,12 +5822,12 @@
       "units": [
         {
           "pieces": [
-            "Ki-xu-sâu-ha-ru-ca-de"
+            "Ki-xu-sô-ha-ru-ca-de"
           ],
-          "phonemes": "kˈi sˈu sˈə1w hˈaː ɹˈu kˈaː zˈɛ."
+          "phonemes": "kˈi sˈu sˈo hˈaː ɹˈu kˈaː zˈɛ."
         }
       ],
-      "phonemes": "kˈi sˈu sˈə1w hˈaː ɹˈu kˈaː zˈɛ."
+      "phonemes": "kˈi sˈu sˈo hˈaː ɹˈu kˈaː zˈɛ."
     },
     {
       "id": "token:277",
@@ -5844,12 +5843,12 @@
       "units": [
         {
           "pieces": [
-            "Cô-cu-rây"
+            "Cô-cu-rê"
           ],
-          "phonemes": "kˈo kˈu ɹˈəɪ."
+          "phonemes": "kˈo kˈu ɹˈe."
         }
       ],
-      "phonemes": "kˈo kˈu ɹˈəɪ."
+      "phonemes": "kˈo kˈu ɹˈe."
     },
     {
       "id": "token:278",
@@ -12196,12 +12195,12 @@
       "units": [
         {
           "pieces": [
-            "Đây-ga-xan"
+            "Đê-ga-xan"
           ],
-          "phonemes": "ɗˈəɪ ɣˈaː sˈaːn."
+          "phonemes": "ɗˈe ɣˈaː sˈaːn."
         }
       ],
-      "phonemes": "ɗˈəɪ ɣˈaː sˈaːn."
+      "phonemes": "ɗˈe ɣˈaː sˈaːn."
     },
     {
       "id": "token:580",
@@ -12385,12 +12384,12 @@
       "units": [
         {
           "pieces": [
-            "Chi-a-ba-si-ra-xen-xây"
+            "Chi-a-ba-si-ra-xen-xê"
           ],
-          "phonemes": "tʃˈi ˈaː bˈaː sˈi ɹˈaː sˈɛn sˈəɪ."
+          "phonemes": "tʃˈi ˈaː bˈaː sˈi ɹˈaː sˈɛn sˈe."
         }
       ],
-      "phonemes": "tʃˈi ˈaː bˈaː sˈi ɹˈaː sˈɛn sˈəɪ."
+      "phonemes": "tʃˈi ˈaː bˈaː sˈi ɹˈaː sˈɛn sˈe."
     },
     {
       "id": "token:589",
@@ -13574,7 +13573,7 @@
       "text": "Sensei",
       "origin": "ja",
       "readings": {
-        "Sensei": "Xen-xây"
+        "Sensei": "Xen-xê"
       },
       "book_names": true,
       "rulings": {
@@ -13584,12 +13583,12 @@
       "units": [
         {
           "pieces": [
-            "Xen-xây"
+            "Xen-xê"
           ],
-          "phonemes": "sˈɛn sˈəɪ."
+          "phonemes": "sˈɛn sˈe."
         }
       ],
-      "phonemes": "sˈɛn sˈəɪ."
+      "phonemes": "sˈɛn sˈe."
     },
     {
       "id": "token:646",
@@ -13794,12 +13793,12 @@
       "units": [
         {
           "pieces": [
-            "Cô-châu"
+            "Cô-chô"
           ],
-          "phonemes": "kˈo tʃˈə1w."
+          "phonemes": "kˈo tʃˈo."
         }
       ],
-      "phonemes": "kˈo tʃˈə1w."
+      "phonemes": "kˈo tʃˈo."
     },
     {
       "id": "token:656",
@@ -14405,12 +14404,12 @@
       "units": [
         {
           "pieces": [
-            "Giu-i-chi-râu"
+            "Giu-i-chi-rô"
           ],
-          "phonemes": "zˈu ˈi tʃˈi ɹˈə1w."
+          "phonemes": "zˈu ˈi tʃˈi ɹˈo."
         }
       ],
-      "phonemes": "zˈu ˈi tʃˈi ɹˈə1w."
+      "phonemes": "zˈu ˈi tʃˈi ɹˈo."
     },
     {
       "id": "token:685",
@@ -14447,12 +14446,12 @@
       "units": [
         {
           "pieces": [
-            "a-câu"
+            "a-cô"
           ],
-          "phonemes": "ˈaː kˈə1w."
+          "phonemes": "ˈaː kˈo."
         }
       ],
-      "phonemes": "ˈaː kˈə1w."
+      "phonemes": "ˈaː kˈo."
     },
     {
       "id": "token:687",
@@ -14575,12 +14574,12 @@
       "units": [
         {
           "pieces": [
-            "a-gia-nô-câu-gi"
+            "a-gia-nô-cô-gi"
           ],
-          "phonemes": "ˈaː zˈaː nˈo kˈə1w zˈi."
+          "phonemes": "ˈaː zˈaː nˈo kˈo zˈi."
         }
       ],
-      "phonemes": "ˈaː zˈaː nˈo kˈə1w zˈi."
+      "phonemes": "ˈaː zˈaː nˈo kˈo zˈi."
     },
     {
       "id": "token:693",
@@ -14638,12 +14637,12 @@
       "units": [
         {
           "pieces": [
-            "Gô-đâu"
+            "Gô-đô"
           ],
-          "phonemes": "ɣˈo ɗˈə1w."
+          "phonemes": "ɣˈo ɗˈo."
         }
       ],
-      "phonemes": "ɣˈo ɗˈə1w."
+      "phonemes": "ɣˈo ɗˈo."
     },
     {
       "id": "token:696",

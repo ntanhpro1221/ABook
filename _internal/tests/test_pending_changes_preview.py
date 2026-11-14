@@ -55,9 +55,10 @@ def test_people_are_named_as_the_reader_sees_them(tmp_path: Path) -> None:
     db.execute("UPDATE segments SET text = '“Ai đó?”' WHERE id = 2")
     db.commit()
     db.close()
-    since = time.time() - 1
-    listener_overrides.request_speaker(project, "s2", "x", "NPC_LOCAL::c00003::r2ce8a10554acb22e::người dân", now=time.time())
-    listener_overrides.request_line(project, "s2", "x", emotion="excited", now=time.time())
+    # Separate clicks need distinct timestamps even within one Windows clock tick.
+    since = time.time() - 3
+    listener_overrides.request_speaker(project, "s2", "x", "NPC_LOCAL::c00003::r2ce8a10554acb22e::người dân", now=since + 1)
+    listener_overrides.request_line(project, "s2", "x", emotion="excited", now=since + 2)
 
     labels = [item["label"] for item in store.pending_details(project, since)["items"]]
     assert "“Ai đó?” là lời của người dân" in labels

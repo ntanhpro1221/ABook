@@ -16,7 +16,7 @@ assert 'abook.analysis' not in sys.modules
 from abook.readaloud.vieneu import ordinal_one
 from abook.readaloud.shouts import stretch_reading
 assert ordinal_one(['Toán', 'I', 'rồi'], 1, 'I')
-assert stretch_reading('rồiiii') == 'rồi… ì'
+assert stretch_reading('rồiiii') == 'rồi… i'
 assert 'abook.analysis' in sys.modules
 from abook.config import build_settings
 assert model == build_settings()['analysis']['model']

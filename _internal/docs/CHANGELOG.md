@@ -11,6 +11,7 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 - Máy quét mã nguồn công khai nhớ chỉ mục Corpus; lượt kiểm với bộ đệm đã có giảm từ khoảng 30 phút xuống khoảng 1–2 phút.
 - Cổng phát hành chặn tệp tạm của thợ bị ignore nhưng vẫn nằm trong commit, kể cả tệp đã bị xoá ở commit sau.
+- Sửa cách đọc số lớn, tiền, ký hiệu, tên Nhật, thán từ và địa chỉ web/email; đồng bộ máy tính và điện thoại.
 
 ## [0.4.170] - 2026-11-14
 
