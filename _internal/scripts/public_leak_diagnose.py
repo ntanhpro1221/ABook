@@ -1,6 +1,6 @@
 """Attribute corpus overlaps using paths and distinct shingle counts only.
 
-Use --legacy to reproduce the inventory/tokenizer after Lead's initial patch.
+Use --initial to reproduce the inventory/tokenizer after Lead's initial patch.
 An optional --findings JSON limits repository inputs to previously reported paths.
 No Corpus text, token, or shingle hash is emitted. --repo-evidence explicitly
 adds matching spans read only from public repository files.
@@ -26,7 +26,7 @@ except ModuleNotFoundError:
     import public_leak_scan as scan
 
 
-def legacy_files(root: Path) -> list[Path]:
+def initial_files(root: Path) -> list[Path]:
     found = []
     for directory, subdirs, files in os.walk(root):
         subdirs[:] = [d for d in subdirs if d.lower() not in scan.CORPUS_SKIP_DIRS
@@ -38,7 +38,7 @@ def legacy_files(root: Path) -> list[Path]:
     return sorted(found)
 
 
-def legacy_shingles(text: str, cache=None) -> np.ndarray:
+def initial_shingles(text: str, cache=None) -> np.ndarray:
     cache = {} if cache is None else cache
     words = scan.WORD.findall(unicodedata.normalize("NFC", text).lower())
     count = max(0, len(words) - scan.SHINGLE + 1)
@@ -50,17 +50,17 @@ def legacy_shingles(text: str, cache=None) -> np.ndarray:
     return combined
 
 
-def _init(index_path, legacy):
-    global _INDEX, _SHINGLES, _LEGACY
+def _init(index_path, initial):
+    global _INDEX, _SHINGLES, _INITIAL
     _INDEX = np.load(index_path, mmap_mode="r")
-    _SHINGLES = legacy_shingles if legacy else scan.shingles
-    _LEGACY = legacy
+    _SHINGLES = initial_shingles if initial else scan.shingles
+    _INITIAL = initial
 
 
 def _chunk(paths):
     hits, cache = [], {}
     for name in paths:
-        text = Path(name).read_text(encoding="utf-8", errors="ignore") if _LEGACY else scan.read_corpus_text(Path(name))
+        text = Path(name).read_text(encoding="utf-8", errors="ignore") if _INITIAL else scan.read_corpus_text(Path(name))
         values = _SHINGLES(text, cache)
         positions = np.searchsorted(_INDEX, values)
         positions[positions >= len(_INDEX)] = 0
@@ -72,8 +72,8 @@ def _chunk(paths):
     return hits
 
 
-def _legacy_diagnose(repo, corpus, *, legacy=False, wanted=None, workers=3):
-    shingler = legacy_shingles if legacy else scan.shingles
+def _initial_diagnose(repo, corpus, *, initial=False, wanted=None, workers=3):
+    shingler = initial_shingles if initial else scan.shingles
     owners = defaultdict(set)
     for name in scan.tracked(repo):
         if wanted is not None and name not in wanted:
@@ -83,14 +83,14 @@ def _legacy_diagnose(repo, corpus, *, legacy=False, wanted=None, workers=3):
                 owners[value_hash].add(name)
     if not owners:
         return {"findings": [], "directories": []}
-    files = legacy_files(corpus) if legacy else scan.corpus_files(corpus)
+    files = initial_files(corpus) if initial else scan.corpus_files(corpus)
     matches = defaultdict(dict)
     groups = defaultdict(lambda: {"paths": set(), "sources": set(), "pairs": 0})
     with tempfile.TemporaryDirectory(prefix="leak-diagnose-") as work:
         index = Path(work) / "index.npy"
         np.save(index, np.array(sorted(owners), dtype=np.uint64))
         with scan.windowless_workers(), ProcessPoolExecutor(max_workers=min(3, max(1, workers)), initializer=_init,
-                                 initargs=(str(index), legacy)) as pool:
+                                 initargs=(str(index), initial)) as pool:
             for number, hits in enumerate(pool.map(_chunk, [[str(p) for p in files[i:i + 200]]
                                                            for i in range(0, len(files), 200)]), 1):
                 for source, hashes in hits:
@@ -175,11 +175,11 @@ def summarize(repo, owners, hits, *, repo_evidence=False):
     }
 
 
-def diagnose(repo, corpus, *, legacy=False, wanted=None, workers=3, repo_evidence=False):
-    if legacy:
+def diagnose(repo, corpus, *, initial=False, wanted=None, workers=3, repo_evidence=False):
+    if initial:
         if repo_evidence:
             raise ValueError("Repository evidence is supported only for the current scanner")
-        return _legacy_diagnose(repo, corpus, legacy=True, wanted=wanted, workers=workers)
+        return _initial_diagnose(repo, corpus, initial=True, wanted=wanted, workers=workers)
     sources = {name: [text for _, text in scan.texts(repo / name)] for name in scan.tracked(repo)
                if wanted is None or name in wanted}
     with tempfile.TemporaryDirectory(prefix="leak-diagnose-") as work:
@@ -189,7 +189,7 @@ def diagnose(repo, corpus, *, legacy=False, wanted=None, workers=3, repo_evidenc
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--legacy", action="store_true")
+    parser.add_argument("--initial", action="store_true")
     parser.add_argument("--findings", type=Path)
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--repo-evidence", action="store_true", help="include public repository spans, never Corpus prose")
@@ -201,7 +201,7 @@ def main():
     if args.findings:
         wanted = {f["path"] for f in json.loads(args.findings.read_text(encoding="utf-8"))["findings"]
                   if f["rule"] == f"shares>={scan.SHINGLE}words"}
-    result = diagnose(scan.REPO, corpus, legacy=args.legacy, wanted=wanted, repo_evidence=args.repo_evidence)
+    result = diagnose(scan.REPO, corpus, initial=args.initial, wanted=wanted, repo_evidence=args.repo_evidence)
     args.output.write_text(json.dumps(result, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     print(json.dumps({"findings": len(result["findings"]), "directories": result["directories"]}, ensure_ascii=False))
 

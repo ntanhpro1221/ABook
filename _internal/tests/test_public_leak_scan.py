@@ -120,7 +120,7 @@ def test_corpus_review_pins_individual_shingles_and_file_bytes(tmp_path, monkeyp
 
     assert audit()["findings"] == []
     assert audit()["waived"] == 1
-    # CRLF-only edits keep the legacy normalized pin, but expire Corpus approval.
+    # CRLF-only edits keep the earlier normalized pin, but expire Corpus approval.
     path.write_bytes((approved + "\r\n").encode("utf-8"))
     assert entry["sha256"] == scan.digest(path)
     assert audit()["findings"]
