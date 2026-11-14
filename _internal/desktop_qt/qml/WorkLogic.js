@@ -309,3 +309,17 @@ function focusAfterChange(before, after, focused) {
     if (now.length) return now[Math.min(before[list].indexOf(focused), now.length - 1)]
     return list === "decided" && after.open.indexOf(focused) >= 0 ? focused : "end"
 }
+
+// Counts describe the initial scope; effort is an estimate, never a probability.
+function priorityText(item, note) {
+    const p = item.priority
+    const reasons = {upcoming: S.s_work_reason_upcoming, impact: S.s_work_reason_impact,
+        tentative: S.s_work_reason_tentative, redo: S.s_work_reason_redo, refused: S.s_work_reason_refused}
+    return [reasons[p ? p.reason : "impact"],
+        p && p.recordedLines !== null && p.recordedChapters !== null
+            ? S.s_work_recorded(p.lines, p.recordedLines, p.recordedChapters) : S.s_work_unknown(p ? p.lines : item.affected),
+        S.s_work_effort(p ? p.estimatedActions : 1),
+        p && p.overlapLines ? S.s_work_overlap(p.overlapLines) : "",
+        item.redoOnly ? S.s_work_reason_redo : S.s_work_apply(note)
+    ].filter(Boolean).join(" ")
+}

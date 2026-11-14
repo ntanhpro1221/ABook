@@ -146,6 +146,7 @@ data class WorkItem(
     val newPersonLabel: String?,
     val suggestedName: String = "",
     val narratorSection: NarratorSection?,
+    val priority: WorkPriority? = null,
     val contextLines: List<LineRef> = emptyList(),
     val contextExamples: List<WorkExample> = emptyList(),
 )
@@ -219,6 +220,12 @@ internal object StudioWorkJson {
             key = key,
             title = json.text("title"),
             problem = json.text("problem"),
+            priority = json.optJSONObject("priority")?.let { p -> WorkPriority(
+                p.text("reason"), p.optInt("lines"),
+                if (p.isNull("recordedLines")) null else p.optInt("recordedLines"),
+                if (p.isNull("recordedChapters")) null else p.optInt("recordedChapters"),
+                p.optInt("estimatedActions", 1), p.optInt("overlapLines"),
+            ) },
             affected = json.optInt("affected"),
             doubt = json.optInt("doubt"),
             options = json.optJSONArray("options").strings(),

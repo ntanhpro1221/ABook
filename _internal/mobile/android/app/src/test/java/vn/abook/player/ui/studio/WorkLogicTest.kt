@@ -14,6 +14,23 @@ import org.robolectric.annotation.Config
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [35])
 class WorkLogicTest {
+    @Test fun sharedPriorityOrderNumbersAndLiveNotes() {
+        val fixture = JSONObject(java.io.File("../../../tests/fixtures/work_priority/contract.json").readText())
+        val items = fixture.getJSONArray("items")
+        val order = fixture.getJSONArray("order")
+        assertEquals((0 until order.length()).map { order.getString(it) }, (0 until items.length()).map { StudioWorkJson.item(items.getJSONObject(it))!!.key })
+        val cases = fixture.getJSONArray("cases")
+        for (index in 0 until cases.length()) {
+            val scenario = cases.getJSONObject(index)
+            val item = StudioWorkJson.item(scenario.getJSONObject("item"))!!
+            val book = StudioJson.book(scenario.getJSONObject("book"))
+            val note = WorkLogic.pendingNote(WorkLogic.applyWhen(book))
+            assertEquals(scenario.getString("name"), scenario.getString("note"), note)
+            assertEquals(scenario.getString("text"), WorkPriorityText.describe(item, note))
+            if (scenario.getString("name") == "unknown") assertNull(item.priority!!.recordedLines)
+        }
+    }
+
     @Test fun sharedVoiceRangeContractKeepsOnlyChosenIdsAndTheirOwnSpeakers() {
         val json = JSONObject(java.io.File("../../../tests/fixtures/voice_review/contract.json").readText())
         val card = StudioWorkJson.item(json)!!

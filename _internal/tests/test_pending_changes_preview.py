@@ -48,6 +48,19 @@ def test_nothing_waiting_means_nothing_to_redo(tmp_path: Path) -> None:
                                                            "measured": True}
 
 
+def test_overlapping_decisions_keep_one_recording_in_the_preview(tmp_path: Path) -> None:
+    """Review counts are a ceiling; the apply preview counts the union of retakes."""
+    project = _project(tmp_path)
+    with sqlite3.connect(project / "project.sqlite3") as db:
+        db.execute("UPDATE segments SET text='Buổi tập đã bắt đầu.', text_sha256='x' WHERE id=3")
+    since = time.time() - 1
+    listener_overrides.request_line(project, "s3", "x", spoken="Buổi tập bắt đầu rồi.", now=time.time())
+    listener_overrides.request_retake(project, "s3", "x", now=time.time())
+    details = store.pending_details(project, since)
+    assert len(details["items"]) == 2
+    assert details["lines"] == 1 and len(details["chapters"]) == 1
+
+
 def test_people_are_named_as_the_reader_sees_them(tmp_path: Path) -> None:
     # Soát lần đầu: hộp hiện "là lời của NPC_LOCAL::c00003::r2ce…::người dân", "LOUise", "cảm xúc excited", ngoặc kép hai lớp.
     project = _project(tmp_path)

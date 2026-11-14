@@ -1,7 +1,7 @@
 """Hộp "Việc cần duyệt" của Studio (docs/STUDIO_REVIEW.md).
 
 Dựng danh sách chỗ máy nghi ngờ từ SQLite của sách (mở chỉ đọc như mọi phần của webui), mỗi việc tự giải thích và xếp
-theo LỢI TRÊN MỖI LẦN BẤM: `số câu bị ảnh hưởng x khả năng máy sai x độ chói tai`. Không việc nào chặn dây chuyền - máy
+theo chương sắp thu, rồi số câu trên công duyệt ước tính; cùng mức lợi thì hỏi gợi ý ít chắc sau. Không việc nào chặn dây chuyền - máy
 đã tự quyết và đang chạy tiếp. Sửa được ngay: cách đọc tên (bước 2) - giao diện ghi mong muốn vào `overrides.json`, dây
 chuyền áp ở ranh giới an toàn (listener_overrides.py); việc đã áp thì biến khỏi danh sách.
 
@@ -27,7 +27,7 @@ from ..listener_overrides import (
     voice_requests,
 )
 from .. import speaker_logprobs, teller_voice
-from . import listing_cache, narrator_cards, store
+from . import listing_cache, narrator_cards, store, work_priority
 from .voice_review import REMOTE_VOICE, COLLECTIVE_VOICE, nearby_dialogue
 from .address_cues import address_doubts, split_doubts
 from .humanize import person_name, shown_reading
@@ -38,26 +38,6 @@ if TYPE_CHECKING:
     from .vocatives import Call
 
 # Độ chói tai khi máy sai ở khía cạnh ấy (1 = người nghe nhận ra ngay: giọng sai người, sai giới).
-SEVERITY = {
-    "speaker": 1.0,
-    "caller": 1.0,
-    "collective": 1.0,
-    "gender": 1.0,
-    "vocative": 0.9,
-    "turn": 1.0,
-    "alias": 0.8,
-    "bracket": 1.0,  # sai người nói ở cả một nhóm câu - như thẻ "Ai nói câu này"
-    "shared-voice": 0.6,
-    "pronunciation": 0.5,
-    "unnamed": 0.3,
-    "audio": 0.9,
-    "voice-wish": 0.6,  # giọng đã chọn mà không áp được: ý muốn của người nghe đang mất
-    "refused": 1.0,  # yêu cầu của chính người nghe mà máy đã từ chối: họ đang tin nó đã được làm
-    "snap": 0.4,  # máy đã đổi nhãn về tên chương viết - luật đo 0 câu xấu đi / ~11.000 câu, nên hỏi nhẹ, sau các thẻ người nói
-    "teller-voice": 0.5,  # giọng dẫn khác giới người kể "tôi": sở thích hơn là lỗi
-    "teller-thought": 0.5,  # nội tâm của chính "tôi" đọc bằng giọng nhân vật: như trên
-    "narrator": 0.9,  # đoạn kể bởi người khác mà máy cứ gán lời họ cho "tôi": sai người ở cả một đoạn
-}
 EXAMPLES = 3
 # Thẻ "cùng một người?" (máy đổi nhãn người nói lệch về tên chương viết - character_registry.snap_labels_to_chapter_names) chỉ
 # hỏi khi phép đổi chạm từ ngần này câu: dưới đó, giọng sai ở vài câu chưa đáng một lần bấm (Diễn biến vẫn ghi mọi phép đổi).
@@ -1021,6 +1001,7 @@ def work_items(project_root: Path, verdicts: dict[str, Any] | None = None) -> di
         return label
 
     with closing(store.connect(project_root)) as connection:
+        priority_rows, upcoming = work_priority.read_snapshot(connection)
         names = store.chapter_names(connection, project_root)
         # Văn bản sách cho thẻ biệt danh (3a); sổ tối thiểu của test không có cột này.
         chapter_paths = [  # chỉ nguồn được phép đọc (book_paths): sổ có thể do người khác viết
@@ -1822,15 +1803,10 @@ def work_items(project_root: Path, verdicts: dict[str, Any] | None = None) -> di
         item["chapters"] = sorted({chapter_of[line["stableId"]] for line in item.get("lines") or ()
                                    if line["stableId"] in chapter_of}
                                   or {int(example["chapterId"]) for example in item["examples"]})
-        # M2 chapter roles and remote speakers are ordered by affected lines, not an unmeasured cue confidence.
-        item["score"] = (item["affected"] if item["kind"] in ("caller", "collective") or item.get("suggestedName") else
-                         round(item["affected"] * item["doubt"] * SEVERITY[item["kind"]], 3))
         undo = _undo_of(item, overrides)
         if undo is not None:
             item["undo"] = undo
-    # Việc chỉ áp được khi làm lại sách (thẻ người kể của đoạn đã phân tích xong) đứng sau mọi việc áp được ngay, điểm cao cũng vậy;
-    # thẻ máy hay đoán nhầm (`askLast`: "Người này có phải X?") đứng sau mọi việc áp được ngay khác.
-    items.sort(key=lambda item: (bool(item.get("redoOnly")), bool(item.get("askLast")), -item["score"]))
+    items = work_priority.rank(items, priority_rows, upcoming)
     counts: dict[str, int] = defaultdict(int)
     for item in items:
         counts[item["kind"]] += 1

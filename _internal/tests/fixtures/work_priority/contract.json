@@ -1,0 +1,878 @@
+{
+  "rows": {
+    "a": {
+      "chapterId": 1,
+      "text": "Chào bạn.",
+      "speaker": "MAI",
+      "recorded": true
+    },
+    "b": {
+      "chapterId": 2,
+      "text": "Hẹn ở sân.",
+      "speaker": "MAI",
+      "recorded": false
+    },
+    "c": {
+      "chapterId": 2,
+      "text": "Tôi sẽ tới.",
+      "speaker": "LAN",
+      "recorded": true
+    },
+    "d": {
+      "chapterId": 3,
+      "text": "Đợi nhé.",
+      "speaker": "MAI",
+      "recorded": false
+    },
+    "e": {
+      "chapterId": 1,
+      "text": "Buổi tập ngày mai.",
+      "speaker": "MAI",
+      "recorded": true
+    }
+  },
+  "upcoming": [
+    2
+  ],
+  "cards": [
+    {
+      "kind": "caller",
+      "title": "Ai nói từ xa?",
+      "problem": "Buổi tập ở sân.",
+      "affected": 1,
+      "doubt": 0.2,
+      "options": [],
+      "current": "Mai",
+      "currentValue": "MAI",
+      "choices": [
+        {
+          "label": "Lan",
+          "value": "LAN"
+        }
+      ],
+      "examples": [],
+      "suggested": false,
+      "key": "urgent",
+      "lines": [
+        {
+          "stableId": "b",
+          "textSha256": "sha-b"
+        },
+        {
+          "stableId": "c",
+          "textSha256": "sha-c"
+        }
+      ]
+    },
+    {
+      "kind": "caller",
+      "title": "Ai nói từ xa?",
+      "problem": "Buổi tập ở sân.",
+      "affected": 1,
+      "doubt": 0.2,
+      "options": [],
+      "current": "Mai",
+      "currentValue": "MAI",
+      "choices": [
+        {
+          "label": "Lan",
+          "value": "LAN"
+        }
+      ],
+      "examples": [],
+      "suggested": false,
+      "key": "past",
+      "lines": [
+        {
+          "stableId": "a",
+          "textSha256": "sha-a"
+        }
+      ]
+    },
+    {
+      "kind": "caller",
+      "title": "Ai nói từ xa?",
+      "problem": "Buổi tập ở sân.",
+      "affected": 1,
+      "doubt": 0.2,
+      "options": [],
+      "current": "Mai",
+      "currentValue": "MAI",
+      "choices": [
+        {
+          "label": "Lan",
+          "value": "LAN"
+        }
+      ],
+      "examples": [],
+      "suggested": false,
+      "key": "future",
+      "lines": [
+        {
+          "stableId": "d",
+          "textSha256": "sha-d"
+        }
+      ]
+    },
+    {
+      "kind": "caller",
+      "title": "Ai nói từ xa?",
+      "problem": "Buổi tập ở sân.",
+      "affected": 1,
+      "doubt": 0.2,
+      "options": [],
+      "current": "Mai",
+      "currentValue": "MAI",
+      "choices": [
+        {
+          "label": "Hạ",
+          "value": "HA"
+        }
+      ],
+      "examples": [],
+      "suggested": false,
+      "key": "tentative",
+      "lines": [
+        {
+          "stableId": "e",
+          "textSha256": "sha-e"
+        }
+      ],
+      "askLast": true
+    },
+    {
+      "kind": "caller",
+      "title": "Ai nói từ xa?",
+      "problem": "Buổi tập ở sân.",
+      "affected": 1,
+      "doubt": 0.2,
+      "options": [],
+      "current": "Mai",
+      "currentValue": "MAI",
+      "choices": [
+        {
+          "label": "Lan",
+          "value": "LAN"
+        }
+      ],
+      "examples": [],
+      "suggested": false,
+      "key": "redo",
+      "lines": [
+        {
+          "stableId": "a",
+          "textSha256": "sha-a"
+        },
+        {
+          "stableId": "b",
+          "textSha256": "sha-b"
+        },
+        {
+          "stableId": "c",
+          "textSha256": "sha-c"
+        },
+        {
+          "stableId": "d",
+          "textSha256": "sha-d"
+        }
+      ],
+      "redoOnly": true
+    }
+  ],
+  "order": [
+    "urgent",
+    "future",
+    "past",
+    "tentative",
+    "redo"
+  ],
+  "items": [
+    {
+      "kind": "caller",
+      "title": "Ai nói từ xa?",
+      "problem": "Buổi tập ở sân.",
+      "affected": 2,
+      "doubt": 0.2,
+      "options": [],
+      "current": "Mai",
+      "currentValue": "MAI",
+      "choices": [
+        {
+          "label": "Lan",
+          "value": "LAN"
+        }
+      ],
+      "examples": [],
+      "suggested": false,
+      "key": "urgent",
+      "lines": [
+        {
+          "stableId": "b",
+          "textSha256": "sha-b"
+        },
+        {
+          "stableId": "c",
+          "textSha256": "sha-c"
+        }
+      ],
+      "priority": {
+        "reason": "upcoming",
+        "lines": 2,
+        "recordedLines": 1,
+        "recordedChapters": 1,
+        "estimatedActions": 1,
+        "upcoming": true,
+        "overlapLines": 2,
+        "tentative": false
+      },
+      "score": 2.0
+    },
+    {
+      "kind": "caller",
+      "title": "Ai nói từ xa?",
+      "problem": "Buổi tập ở sân.",
+      "affected": 1,
+      "doubt": 0.2,
+      "options": [],
+      "current": "Mai",
+      "currentValue": "MAI",
+      "choices": [
+        {
+          "label": "Lan",
+          "value": "LAN"
+        }
+      ],
+      "examples": [],
+      "suggested": false,
+      "key": "future",
+      "lines": [
+        {
+          "stableId": "d",
+          "textSha256": "sha-d"
+        }
+      ],
+      "priority": {
+        "reason": "impact",
+        "lines": 1,
+        "recordedLines": 0,
+        "recordedChapters": 0,
+        "estimatedActions": 1,
+        "upcoming": false,
+        "overlapLines": 1,
+        "tentative": false
+      },
+      "score": 1.0
+    },
+    {
+      "kind": "caller",
+      "title": "Ai nói từ xa?",
+      "problem": "Buổi tập ở sân.",
+      "affected": 1,
+      "doubt": 0.2,
+      "options": [],
+      "current": "Mai",
+      "currentValue": "MAI",
+      "choices": [
+        {
+          "label": "Lan",
+          "value": "LAN"
+        }
+      ],
+      "examples": [],
+      "suggested": false,
+      "key": "past",
+      "lines": [
+        {
+          "stableId": "a",
+          "textSha256": "sha-a"
+        }
+      ],
+      "priority": {
+        "reason": "impact",
+        "lines": 1,
+        "recordedLines": 1,
+        "recordedChapters": 1,
+        "estimatedActions": 1,
+        "upcoming": false,
+        "overlapLines": 1,
+        "tentative": false
+      },
+      "score": 1.0
+    },
+    {
+      "kind": "caller",
+      "title": "Ai nói từ xa?",
+      "problem": "Buổi tập ở sân.",
+      "affected": 1,
+      "doubt": 0.2,
+      "options": [],
+      "current": "Mai",
+      "currentValue": "MAI",
+      "choices": [
+        {
+          "label": "Hạ",
+          "value": "HA"
+        }
+      ],
+      "examples": [],
+      "suggested": false,
+      "key": "tentative",
+      "lines": [
+        {
+          "stableId": "e",
+          "textSha256": "sha-e"
+        }
+      ],
+      "askLast": true,
+      "priority": {
+        "reason": "tentative",
+        "lines": 1,
+        "recordedLines": 1,
+        "recordedChapters": 1,
+        "estimatedActions": 1,
+        "upcoming": false,
+        "overlapLines": 0,
+        "tentative": true
+      },
+      "score": 1.0
+    },
+    {
+      "kind": "caller",
+      "title": "Ai nói từ xa?",
+      "problem": "Buổi tập ở sân.",
+      "affected": 4,
+      "doubt": 0.2,
+      "options": [],
+      "current": "Mai",
+      "currentValue": "MAI",
+      "choices": [
+        {
+          "label": "Lan",
+          "value": "LAN"
+        }
+      ],
+      "examples": [],
+      "suggested": false,
+      "key": "redo",
+      "lines": [
+        {
+          "stableId": "a",
+          "textSha256": "sha-a"
+        },
+        {
+          "stableId": "b",
+          "textSha256": "sha-b"
+        },
+        {
+          "stableId": "c",
+          "textSha256": "sha-c"
+        },
+        {
+          "stableId": "d",
+          "textSha256": "sha-d"
+        }
+      ],
+      "redoOnly": true,
+      "priority": {
+        "reason": "redo",
+        "lines": 4,
+        "recordedLines": 2,
+        "recordedChapters": 2,
+        "estimatedActions": 1,
+        "upcoming": false,
+        "overlapLines": 4,
+        "tentative": false
+      },
+      "score": 4.0
+    }
+  ],
+  "cases": [
+    {
+      "name": "upcoming",
+      "item": {
+        "kind": "caller",
+        "title": "Ai nói từ xa?",
+        "problem": "Buổi tập ở sân.",
+        "affected": 2,
+        "doubt": 0.2,
+        "options": [],
+        "current": "Mai",
+        "currentValue": "MAI",
+        "choices": [
+          {
+            "label": "Lan",
+            "value": "LAN"
+          }
+        ],
+        "examples": [],
+        "suggested": false,
+        "key": "urgent",
+        "lines": [
+          {
+            "stableId": "b",
+            "textSha256": "sha-b"
+          },
+          {
+            "stableId": "c",
+            "textSha256": "sha-c"
+          }
+        ],
+        "priority": {
+          "reason": "upcoming",
+          "lines": 2,
+          "recordedLines": 1,
+          "recordedChapters": 1,
+          "estimatedActions": 1,
+          "upcoming": true,
+          "overlapLines": 2,
+          "tentative": false
+        },
+        "score": 2.0
+      },
+      "book": {
+        "phase": "tts",
+        "running": true,
+        "id": "fixture"
+      },
+      "note": "áp từ chương sau",
+      "text": "Cần trước chương sắp thu. Phạm vi đầu: 2 câu; đã thu 1 câu / 1 chương. Đây là trần thu lại; cùng giọng có thể giữ bản thu. Ước 1 thao tác cho lựa chọn ngắn nhất; chưa tính nghe và ngoại lệ. Trùng 2 câu với việc khác; không cộng hai lần khi thu lại. Lúc áp: áp từ chương sau."
+    },
+    {
+      "name": "recorded",
+      "item": {
+        "kind": "caller",
+        "title": "Ai nói từ xa?",
+        "problem": "Buổi tập ở sân.",
+        "affected": 1,
+        "doubt": 0.2,
+        "options": [],
+        "current": "Mai",
+        "currentValue": "MAI",
+        "choices": [
+          {
+            "label": "Lan",
+            "value": "LAN"
+          }
+        ],
+        "examples": [],
+        "suggested": false,
+        "key": "past",
+        "lines": [
+          {
+            "stableId": "a",
+            "textSha256": "sha-a"
+          }
+        ],
+        "priority": {
+          "reason": "impact",
+          "lines": 1,
+          "recordedLines": 1,
+          "recordedChapters": 1,
+          "estimatedActions": 1,
+          "upcoming": false,
+          "overlapLines": 1,
+          "tentative": false
+        },
+        "score": 1.0
+      },
+      "book": {
+        "phase": "tts",
+        "running": true,
+        "id": "fixture"
+      },
+      "note": "áp từ chương sau",
+      "text": "Xếp theo số câu trên công duyệt ước tính. Phạm vi đầu: 1 câu; đã thu 1 câu / 1 chương. Đây là trần thu lại; cùng giọng có thể giữ bản thu. Ước 1 thao tác cho lựa chọn ngắn nhất; chưa tính nghe và ngoại lệ. Trùng 1 câu với việc khác; không cộng hai lần khi thu lại. Lúc áp: áp từ chương sau."
+    },
+    {
+      "name": "unrecorded",
+      "item": {
+        "kind": "caller",
+        "title": "Ai nói từ xa?",
+        "problem": "Buổi tập ở sân.",
+        "affected": 1,
+        "doubt": 0.2,
+        "options": [],
+        "current": "Mai",
+        "currentValue": "MAI",
+        "choices": [
+          {
+            "label": "Lan",
+            "value": "LAN"
+          }
+        ],
+        "examples": [],
+        "suggested": false,
+        "key": "future",
+        "lines": [
+          {
+            "stableId": "d",
+            "textSha256": "sha-d"
+          }
+        ],
+        "priority": {
+          "reason": "impact",
+          "lines": 1,
+          "recordedLines": 0,
+          "recordedChapters": 0,
+          "estimatedActions": 1,
+          "upcoming": false,
+          "overlapLines": 1,
+          "tentative": false
+        },
+        "score": 1.0
+      },
+      "book": {
+        "phase": "tts",
+        "running": true,
+        "id": "fixture"
+      },
+      "note": "áp từ chương sau",
+      "text": "Xếp theo số câu trên công duyệt ước tính. Phạm vi đầu: 1 câu; đã thu 0 câu / 0 chương. Đây là trần thu lại; cùng giọng có thể giữ bản thu. Ước 1 thao tác cho lựa chọn ngắn nhất; chưa tính nghe và ngoại lệ. Trùng 1 câu với việc khác; không cộng hai lần khi thu lại. Lúc áp: áp từ chương sau."
+    },
+    {
+      "name": "paused",
+      "item": {
+        "kind": "caller",
+        "title": "Ai nói từ xa?",
+        "problem": "Buổi tập ở sân.",
+        "affected": 2,
+        "doubt": 0.2,
+        "options": [],
+        "current": "Mai",
+        "currentValue": "MAI",
+        "choices": [
+          {
+            "label": "Lan",
+            "value": "LAN"
+          }
+        ],
+        "examples": [],
+        "suggested": false,
+        "key": "urgent",
+        "lines": [
+          {
+            "stableId": "b",
+            "textSha256": "sha-b"
+          },
+          {
+            "stableId": "c",
+            "textSha256": "sha-c"
+          }
+        ],
+        "priority": {
+          "reason": "upcoming",
+          "lines": 2,
+          "recordedLines": 1,
+          "recordedChapters": 1,
+          "estimatedActions": 1,
+          "upcoming": true,
+          "overlapLines": 2,
+          "tentative": false
+        },
+        "score": 2.0
+      },
+      "book": {
+        "phase": "tts",
+        "running": true,
+        "paused": "listener",
+        "id": "fixture"
+      },
+      "note": "chờ áp dụng khi sách chạy tiếp",
+      "text": "Cần trước chương sắp thu. Phạm vi đầu: 2 câu; đã thu 1 câu / 1 chương. Đây là trần thu lại; cùng giọng có thể giữ bản thu. Ước 1 thao tác cho lựa chọn ngắn nhất; chưa tính nghe và ngoại lệ. Trùng 2 câu với việc khác; không cộng hai lần khi thu lại. Lúc áp: chờ áp dụng khi sách chạy tiếp."
+    },
+    {
+      "name": "done",
+      "item": {
+        "kind": "caller",
+        "title": "Ai nói từ xa?",
+        "problem": "Buổi tập ở sân.",
+        "affected": 1,
+        "doubt": 0.2,
+        "options": [],
+        "current": "Mai",
+        "currentValue": "MAI",
+        "choices": [
+          {
+            "label": "Lan",
+            "value": "LAN"
+          }
+        ],
+        "examples": [],
+        "suggested": false,
+        "key": "past",
+        "lines": [
+          {
+            "stableId": "a",
+            "textSha256": "sha-a"
+          }
+        ],
+        "priority": {
+          "reason": "impact",
+          "lines": 1,
+          "recordedLines": 1,
+          "recordedChapters": 1,
+          "estimatedActions": 1,
+          "upcoming": false,
+          "overlapLines": 1,
+          "tentative": false
+        },
+        "score": 1.0
+      },
+      "book": {
+        "phase": "done",
+        "running": false,
+        "id": "fixture"
+      },
+      "note": "bấm “Áp dụng thay đổi” ở đầu trang để áp",
+      "text": "Xếp theo số câu trên công duyệt ước tính. Phạm vi đầu: 1 câu; đã thu 1 câu / 1 chương. Đây là trần thu lại; cùng giọng có thể giữ bản thu. Ước 1 thao tác cho lựa chọn ngắn nhất; chưa tính nghe và ngoại lệ. Trùng 1 câu với việc khác; không cộng hai lần khi thu lại. Lúc áp: bấm “Áp dụng thay đổi” ở đầu trang để áp."
+    },
+    {
+      "name": "analysis",
+      "item": {
+        "kind": "caller",
+        "title": "Ai nói từ xa?",
+        "problem": "Buổi tập ở sân.",
+        "affected": 2,
+        "doubt": 0.2,
+        "options": [],
+        "current": "Mai",
+        "currentValue": "MAI",
+        "choices": [
+          {
+            "label": "Lan",
+            "value": "LAN"
+          }
+        ],
+        "examples": [],
+        "suggested": false,
+        "key": "urgent",
+        "lines": [
+          {
+            "stableId": "b",
+            "textSha256": "sha-b"
+          },
+          {
+            "stableId": "c",
+            "textSha256": "sha-c"
+          }
+        ],
+        "priority": {
+          "reason": "upcoming",
+          "lines": 2,
+          "recordedLines": 1,
+          "recordedChapters": 1,
+          "estimatedActions": 1,
+          "upcoming": true,
+          "overlapLines": 2,
+          "tentative": false
+        },
+        "score": 2.0
+      },
+      "book": {
+        "phase": "analysis",
+        "running": true,
+        "id": "fixture"
+      },
+      "note": "chờ phân vai xong",
+      "text": "Cần trước chương sắp thu. Phạm vi đầu: 2 câu; đã thu 1 câu / 1 chương. Đây là trần thu lại; cùng giọng có thể giữ bản thu. Ước 1 thao tác cho lựa chọn ngắn nhất; chưa tính nghe và ngoại lệ. Trùng 2 câu với việc khác; không cộng hai lần khi thu lại. Lúc áp: chờ phân vai xong."
+    },
+    {
+      "name": "idle",
+      "item": {
+        "kind": "caller",
+        "title": "Ai nói từ xa?",
+        "problem": "Buổi tập ở sân.",
+        "affected": 1,
+        "doubt": 0.2,
+        "options": [],
+        "current": "Mai",
+        "currentValue": "MAI",
+        "choices": [
+          {
+            "label": "Lan",
+            "value": "LAN"
+          }
+        ],
+        "examples": [],
+        "suggested": false,
+        "key": "future",
+        "lines": [
+          {
+            "stableId": "d",
+            "textSha256": "sha-d"
+          }
+        ],
+        "priority": {
+          "reason": "impact",
+          "lines": 1,
+          "recordedLines": 0,
+          "recordedChapters": 0,
+          "estimatedActions": 1,
+          "upcoming": false,
+          "overlapLines": 1,
+          "tentative": false
+        },
+        "score": 1.0
+      },
+      "book": {
+        "phase": "idle",
+        "running": false,
+        "id": "fixture"
+      },
+      "note": "dùng khi bắt đầu làm sách",
+      "text": "Xếp theo số câu trên công duyệt ước tính. Phạm vi đầu: 1 câu; đã thu 0 câu / 0 chương. Đây là trần thu lại; cùng giọng có thể giữ bản thu. Ước 1 thao tác cho lựa chọn ngắn nhất; chưa tính nghe và ngoại lệ. Trùng 1 câu với việc khác; không cộng hai lần khi thu lại. Lúc áp: dùng khi bắt đầu làm sách."
+    },
+    {
+      "name": "tentative",
+      "item": {
+        "kind": "caller",
+        "title": "Ai nói từ xa?",
+        "problem": "Buổi tập ở sân.",
+        "affected": 1,
+        "doubt": 0.2,
+        "options": [],
+        "current": "Mai",
+        "currentValue": "MAI",
+        "choices": [
+          {
+            "label": "Hạ",
+            "value": "HA"
+          }
+        ],
+        "examples": [],
+        "suggested": false,
+        "key": "tentative",
+        "lines": [
+          {
+            "stableId": "e",
+            "textSha256": "sha-e"
+          }
+        ],
+        "askLast": true,
+        "priority": {
+          "reason": "tentative",
+          "lines": 1,
+          "recordedLines": 1,
+          "recordedChapters": 1,
+          "estimatedActions": 1,
+          "upcoming": false,
+          "overlapLines": 0,
+          "tentative": true
+        },
+        "score": 1.0
+      },
+      "book": {
+        "phase": "tts",
+        "running": true,
+        "id": "fixture"
+      },
+      "note": "áp từ chương sau",
+      "text": "Gợi ý ít chắc; cùng mức lợi thì hỏi sau. Phạm vi đầu: 1 câu; đã thu 1 câu / 1 chương. Đây là trần thu lại; cùng giọng có thể giữ bản thu. Ước 1 thao tác cho lựa chọn ngắn nhất; chưa tính nghe và ngoại lệ. Lúc áp: áp từ chương sau."
+    },
+    {
+      "name": "redo",
+      "item": {
+        "kind": "caller",
+        "title": "Ai nói từ xa?",
+        "problem": "Buổi tập ở sân.",
+        "affected": 4,
+        "doubt": 0.2,
+        "options": [],
+        "current": "Mai",
+        "currentValue": "MAI",
+        "choices": [
+          {
+            "label": "Lan",
+            "value": "LAN"
+          }
+        ],
+        "examples": [],
+        "suggested": false,
+        "key": "redo",
+        "lines": [
+          {
+            "stableId": "a",
+            "textSha256": "sha-a"
+          },
+          {
+            "stableId": "b",
+            "textSha256": "sha-b"
+          },
+          {
+            "stableId": "c",
+            "textSha256": "sha-c"
+          },
+          {
+            "stableId": "d",
+            "textSha256": "sha-d"
+          }
+        ],
+        "redoOnly": true,
+        "priority": {
+          "reason": "redo",
+          "lines": 4,
+          "recordedLines": 2,
+          "recordedChapters": 2,
+          "estimatedActions": 1,
+          "upcoming": false,
+          "overlapLines": 4,
+          "tentative": false
+        },
+        "score": 4.0
+      },
+      "book": {
+        "phase": "done",
+        "running": false,
+        "id": "fixture"
+      },
+      "note": "bấm “Áp dụng thay đổi” ở đầu trang để áp",
+      "text": "Chỉ áp khi làm lại sách. Phạm vi đầu: 4 câu; đã thu 2 câu / 2 chương. Đây là trần thu lại; cùng giọng có thể giữ bản thu. Ước 1 thao tác cho lựa chọn ngắn nhất; chưa tính nghe và ngoại lệ. Trùng 4 câu với việc khác; không cộng hai lần khi thu lại. Chỉ áp khi làm lại sách."
+    },
+    {
+      "name": "unknown",
+      "item": {
+        "kind": "caller",
+        "title": "Ai nói từ xa?",
+        "problem": "Buổi tập ở sân.",
+        "affected": 1,
+        "doubt": 0.2,
+        "options": [],
+        "current": "Mai",
+        "currentValue": "MAI",
+        "choices": [
+          {
+            "label": "Lan",
+            "value": "LAN"
+          }
+        ],
+        "examples": [],
+        "suggested": false,
+        "key": "unknown",
+        "lines": [
+          {
+            "stableId": "missing",
+            "textSha256": "sha-missing"
+          }
+        ],
+        "priority": {
+          "reason": "impact",
+          "lines": 1,
+          "recordedLines": null,
+          "recordedChapters": null,
+          "estimatedActions": 1,
+          "upcoming": false,
+          "overlapLines": 0,
+          "tentative": false
+        },
+        "score": 1.0
+      },
+      "book": {
+        "phase": "tts",
+        "running": false,
+        "id": "fixture"
+      },
+      "note": "chờ áp dụng khi sách chạy tiếp",
+      "text": "Xếp theo số câu trên công duyệt ước tính. Phạm vi đầu: 1 câu; số đã thu chưa biết. Ước 1 thao tác cho lựa chọn ngắn nhất; chưa tính nghe và ngoại lệ. Lúc áp: chờ áp dụng khi sách chạy tiếp."
+    }
+  ]
+}

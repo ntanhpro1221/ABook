@@ -61,6 +61,18 @@ class StudioWorkScreenTest {
     private fun tag(tag: String) = rule.onNodeWithTag(tag)
     private fun absent(tag: String) = assertEquals(0, rule.onAllNodesWithTag(tag).fetchSemanticsNodes().size)
 
+    @Test fun priorityCaptionMatchesSharedCountsAndLeavesCandidateAtOneClick() {
+        val fixture = org.json.JSONObject(java.io.File("../../../tests/fixtures/work_priority/contract.json").readText())
+        val scenario = fixture.getJSONArray("cases").getJSONObject(0)
+        source.workView = WorkView(listOf(StudioWorkJson.item(scenario.getJSONObject("item"))!!), emptyMap())
+        project(StudioTab.Work)
+        tag("studio_card_priority").assertTextEquals(scenario.getString("text"))
+        assertTrue(source.writes.isEmpty())
+        tag("studio_choice_0").performScrollTo().performClick()
+        rule.waitForIdle()
+        tag("studio_undo_text").assertTextEquals("Đã ghi: 2 câu này của Lan")
+    }
+
     // ---- Việc cần duyệt ----
 
     @Test fun voiceRangeStartsWithOneLineAndOnlyKeepsChosenSameGroupLines() {

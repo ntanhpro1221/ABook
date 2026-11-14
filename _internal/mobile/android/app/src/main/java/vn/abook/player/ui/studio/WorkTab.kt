@@ -134,11 +134,13 @@ private fun EmptyDeck(live: Boolean) {
 @Composable
 internal fun WorkCard(item: WorkItem, deckSize: Int, state: StudioProjectState, sheets: SheetHost, clip: ClipState, goReview: () -> Unit) {
     val work = state.work
+    val book by state.poll.collectAsState()
     val template = WorkLogic.template(item)
     Column(Modifier.fillMaxWidth().padding(top = Dim.s16).testTag("studio_card_${item.kind.key}")) {
         Caption(item.kind.label, Modifier.testTag("studio_card_kind"))
         BasicText(item.title, style = Abook.type.sectionTitle, modifier = Modifier.padding(top = Dim.s4).testTag("studio_card_title"))
         Reveal(item.problem.isNotEmpty()) { RowHint(item.problem, Modifier.padding(top = Dim.s8).testTag("studio_card_problem")) }
+        Caption(WorkPriorityText.describe(item, WorkLogic.pendingNote(WorkLogic.applyWhen(book.data?.book))), Modifier.padding(top = Dim.s8).testTag("studio_card_priority"))
         Reveal(item.affected > 0) { Caption(WorkText.affected(item.affected), Modifier.padding(top = Dim.s8).testTag("studio_card_affected")) }
         Reveal(item.current.isNotEmpty() && (template == CardTemplate.Choose || template == CardTemplate.Voice)) {
             RowHint(WorkText.using(item.current), Modifier.padding(top = Dim.s4).testTag("studio_card_using"))

@@ -164,6 +164,15 @@ Item {
             }
         }
 
+        Text {
+            objectName: "workPriority"
+            width: parent.width
+            text: W.priorityText(root.item, root.work ? root.work.pendingNote : "")
+            color: Theme.text2
+            font.pixelSize: Theme.sizeCaption
+            wrapMode: Text.Wrap
+        }
+
         // ---- chỗ sửa theo loại thẻ ----
         Loader {
             id: fix

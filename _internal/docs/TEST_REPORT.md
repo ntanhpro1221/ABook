@@ -1,5 +1,16 @@
 # Test report
 
+## 15-11-2026 — review effort and recording cost
+
+The inbox now orders applicable cards by upcoming chapter, affected lines per estimated action, tentative cue and stable key.
+Stored recording counts are an upper bound on retakes; missing evidence stays unknown. Existing same-voice assignments can retain audio.
+Equivalent speaker decisions share candidates and context without combining pending, refused or undo states.
+
+The original shared fixture is `tests/fixtures/work_priority/contract.json`. Python checks permutations, duplicate IDs, overlap and another window's edits.
+Web DOM, Qt Quick and Compose check the same counts and application wording; visible candidate selection remains one click.
+Qt measures ten offscreen mouse clicks separately from recording time. Listening-only access remains covered by the existing peer Studio tests.
+No model, source editing, DB schema change or quality-policy file is involved.
+
 ## 15-11-2026 — scene and range speaker previews
 
 Studio can select one line, the original role within a marker-derived scene or chapter, or an editable range.

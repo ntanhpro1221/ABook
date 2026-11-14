@@ -405,7 +405,11 @@ giữ tên trong cột tối đa 640 px, thanh tua dùng phần rộng còn lạ
 - Loại `caller` mang cùng nhãn **Người gọi / ngoài khung** trên web, Qt, Android. Bằng chứng là lời kể ngay cạnh câu thoại
   nhắc đầu dây, điện thoại, bộ đàm, loa hoặc giọng bên ngoài; lời thoại chỉ nhắc điện thoại không tự sinh thẻ.
   Hỏi ai nói, hiển thị ngữ cảnh; `Giữ … (máy đề xuất)` giữ người máy đã gán. Chưa có hiệu ứng điện thoại nên không mời lọc giọng.
-- Các thẻ mốc 2 xếp theo số câu ảnh hưởng; ứng viên tên chỉ là gợi ý, không tự đổi người nói. Thẻ NPC đã có gợi ý người thật
+- Các thẻ ưu tiên chương sắp thu, rồi số câu trên công duyệt ước tính; cùng mức lợi thì hỏi gợi ý ít chắc sau.
+  Mỗi thẻ ghi lý do, số câu, số đã thu (hoặc chưa biết) và lúc áp theo trạng thái sách đang thấy. Số đã thu là trần thu lại,
+  không phải lời hứa thu lại hết: đổi sang người cùng giọng có thể giữ bản thu. Công duyệt chưa gồm nghe và ngoại lệ.
+  Quyết định trùng phạm vi/người hiện tại được gom cùng các ứng viên; việc khác có câu chồng nhau không cộng đôi khi thu lại.
+  Ứng viên tên chỉ là gợi ý, không tự đổi người nói. Thẻ NPC đã có gợi ý người thật
   được bổ sung đặt tên/giọng tại chỗ, không hỏi hai lần. Thẻ gộp vai cả cuốn là một quyết định khác, không phải mặc định của thẻ chương.
 - `Đặt tên`, `Người khác` trên thẻ caller và `Giới / giọng` dùng nút chữ, không thêm icon, giống nhau trên ba nền tảng.
   Badge loại việc không có icon riêng. Các lựa chọn trả lời và hoàn tác dùng điều khiển sẵn có.

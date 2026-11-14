@@ -1,3 +1,4 @@
+import { priorityText, type WorkPriority } from "./workPriority";
 import { Presence } from "../shared/MotionPresence";
 import { S } from "../shared/strings.generated";
 import { MotionRegion } from "@/shared/MotionRegion";
@@ -53,6 +54,7 @@ interface WorkExample {
 }
 
 export interface WorkItem {
+  priority?: WorkPriority;
   contextLines?: LineRef[];
   contextExamples?: WorkExample[];
   kind: WorkKind;
@@ -556,7 +558,7 @@ function SpeakerFix({
           <ul className="mt-2 space-y-2">{item.contextExamples?.map((example) => <Example key={example.stableId} bookId={bookId} example={example} picked={rangeIds.has(example.stableId!)} onPick={() => setRangeIds(toggleLine(rangeIds, example.stableId!))} />)}</ul>
         </Collapse>
       </>}
-      {item.kind === "collective" && <p className="text-xs text-fg-2">{S.s_voice_collective_note}</p>}
+      <Reveal when={item.kind === "collective"}><p className="text-xs text-fg-2">{S.s_voice_collective_note}</p></Reveal>
       <Reveal when={item.requested}><p className="mb-2 flex items-center gap-2 text-xs text-fg-2">
           <Check className="size-3.5 text-success" />
           {/* Gộp tên là ở cấp TÊN cho cả cuốn và các phần sau, không phải "câu này của X" (soát UX 29-09). */}
@@ -889,6 +891,7 @@ function UndoDecision({ bookId, item }: { bookId: string; item: WorkItem }) {
 }
 
 function Card({ bookId, item, onOpenReview, onOpenScript, onOpenNames, onPickVoice, active = false, exiting = false, as: Tag = "li" }: { as?: "li" | "div"; bookId: string; item: WorkItem; onOpenReview: OpenReview; onOpenScript?: OpenScript; onOpenNames?: OpenNames; onPickVoice?: PickVoice; active?: boolean; exiting?: boolean }) {
+  const pending = useContext(PendingHint);
   // Thẻ chuỗi lượt đối đáp: đổi các câu xen kẽ (mặc định) hay cả chuỗi - câu "sẽ đổi" theo phạm vi đang chọn.
   const [scope, setScope] = useState<Scope>("alternate");
   // Thẻ vai phụ cả cuốn: câu người nghe bỏ chọn (mã câu), và mở cả danh sách hay chỉ vài câu đầu.
@@ -937,6 +940,7 @@ function Card({ bookId, item, onOpenReview, onOpenScript, onOpenNames, onPickVoi
         {item.requested && item.undo && <UndoDecision bookId={bookId} item={item} />}
       </div>
       <p className="mt-2 text-sm text-fg-2">{item.problem}</p>
+      <p data-testid="work-priority" className="mt-2 text-xs text-fg-2">{priorityText(item, pending)}</p>
       <MotionRegion motionKey={scope} className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-fg-2">
         <span>{S.s_anh_huong_f9ba35dd}<span className="font-medium text-fg">{formatNumber(item.allLines && scope === "all" ? item.allLines.length : item.affected)}</span>{S.s_cau_b07e1008}</span>
         <span>

@@ -5890,7 +5890,17 @@
     "s_voice_range_note": "Chỉ chọn câu liên quan; kênh phát tiếng không xác định người nói.",
     "s_voice_range_window": "Các câu gần đây; đây không phải ranh giới cuộc gọi hay cảnh.",
     "s_voice_collective": "Tiếng tập thể",
-    "s_voice_collective_note": "Cùng một nhóm dùng một danh tính và một giọng; chữ truyện giữ nguyên."
+    "s_voice_collective_note": "Cùng một nhóm dùng một danh tính và một giọng; chữ truyện giữ nguyên.",
+    "s_work_reason_upcoming": "Cần trước chương sắp thu.",
+    "s_work_reason_impact": "Xếp theo số câu trên công duyệt ước tính.",
+    "s_work_reason_tentative": "Gợi ý ít chắc; cùng mức lợi thì hỏi sau.",
+    "s_work_reason_redo": "Chỉ áp khi làm lại sách.",
+    "s_work_reason_refused": "Yêu cầu đã bị từ chối; bạn xem lại lựa chọn.",
+    "s_work_recorded": "Phạm vi đầu: {0} câu; đã thu {1} câu / {2} chương. Đây là trần thu lại; cùng giọng có thể giữ bản thu.",
+    "s_work_unknown": "Phạm vi đầu: {0} câu; số đã thu chưa biết.",
+    "s_work_effort": "Ước {0} thao tác cho lựa chọn ngắn nhất; chưa tính nghe và ngoại lệ.",
+    "s_work_overlap": "Trùng {0} câu với việc khác; không cộng hai lần khi thu lại.",
+    "s_work_apply": "Lúc áp: {0}."
   },
   "android_resources": {
     "app_name": "s_abook_1c37d334",

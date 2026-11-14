@@ -3,6 +3,7 @@ import QtTest
 import ABook
 import "../../qml/WorkLogic.js" as W
 import "../../qml/PrecastLogic.js" as P
+import "../../qml/DecisionLogic.js" as D
 
 Item {
     width: 900
@@ -29,6 +30,38 @@ Item {
     TestCase {
         name: "HitlRolesAndCallers"
         when: windowShown
+        function test_priority_contract_and_ten_real_candidate_clicks() {
+            const request = new XMLHttpRequest()
+            request.open("GET", Qt.resolvedUrl("../../../tests/fixtures/work_priority/contract.json"), false)
+            request.send()
+            const fixture = JSON.parse(request.responseText)
+            compare(fixture.items.map(x => x.key), fixture.order)
+            for (const scenario of fixture.cases) {
+                fake.saved = null
+                fake.pendingNote = D.pendingNote(scenario.book)
+                compare(fake.pendingNote, scenario.note)
+                compare(W.priorityText(scenario.item, fake.pendingNote), scenario.text)
+                const view = createTemporaryObject(cardFactory, parent, {item: scenario.item, work: fake})
+                verify(view)
+                compare(findChild(view, "workPriority").text, scenario.text)
+                waitForRendering(view)
+                if (scenario.name === "upcoming") {
+                    let captured = false
+                    verify(view.grabToImage(function(result) {
+                        captured = result.saveToFile(Qt.resolvedUrl("../../build/d2shots/g5_priority.png").toString().replace(/^file:\/\/\//, ""))
+                    }))
+                    tryVerify(function() { return captured })
+                }
+                const before = Date.now()
+                mouseClick(findChild(view, "workCard").choices()[0])
+                verify(fake.saved !== null)
+                compare(fake.saved.speaker, scenario.item.choices[0].value)
+                compare(fake.savedLines, scenario.item.lines)
+                console.log("M2G5_ACTION", scenario.name, "clicks=1", "milliseconds=" + (Date.now() - before))
+                view.destroy()
+            }
+            fake.pendingNote = "chờ áp dụng"
+        }
         function test_kind_and_review_scope() {
             compare(W.kindLabel("caller"), "Người gọi / ngoài khung")
             verify(W.BULK_KINDS.indexOf("caller") >= 0)
