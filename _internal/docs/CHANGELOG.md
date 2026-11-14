@@ -7,6 +7,8 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+- Android: sửa văng khi xoay ngang màn Đọc theo hoặc thu nhỏ cửa sổ.
+
 - Nhóm nhân vật, lịch sử nghe và các danh sách con dài chỉ dựng hàng gần màn hình khi mở; giữ trạng thái gập và chuyển động trên Android, web và máy tính Qt.
 
 - Mỗi giọng có sẵn có ảnh chân dung minh hoạ riêng (app tự chọn theo giới tính, tuổi, chất giọng), hiện ở danh sách giọng của Studio trên máy tính, web và điện thoại.

@@ -54,6 +54,7 @@ import vn.abook.player.ui.theme.Dim
 import vn.abook.player.ui.theme.MotionMs
 import vn.abook.player.ui.theme.WidthClass
 import vn.abook.player.ui.theme.widthClass
+import vn.abook.player.ui.theme.remainingSpace
 import vn.abook.player.ui.motion.Motion
 
 /**
@@ -176,7 +177,7 @@ private fun NowPlayingBody(
                 val coverSide = minOf(width, (height - titles.height - 24.dp.roundToPx()).coerceAtLeast(1), 320.dp.roundToPx())
                 val cover = measurables[1].measure(Constraints.fixed(coverSide, coverSide))
                 // Tên trong đầu trang đọc theo = cùng khối chữ thu theo một tỉ lệ (20 sp -> 16 sp), vừa phần bề ngang còn lại cạnh bìa nhỏ.
-                val titleScale = minOf(0.8f, (width - thumb - gap).toFloat() / width)
+                val titleScale = if (width > 0) minOf(0.8f, remainingSpace(width, thumb + gap).toFloat() / width) else 0f
                 val header = maxOf(thumb, (titles.height * titleScale).toInt())
                 val textTop = header + gap
                 val text = measurables[0].measure(Constraints.fixed(width, (height - textTop).coerceAtLeast(0)))
@@ -275,7 +276,7 @@ private fun NowPlayingBody(
             },
         ) { measurables, constraints ->
             val full = constraints.maxWidth
-            val gap = 32.dp.roundToPx()
+            val gap = 32.dp.roundToPx().coerceAtMost(full)
             val t = sideT.value
             val room = (full - SideColumnWidth.roundToPx() - gap).coerceAtLeast(0)
             val right = (room * t).toInt()

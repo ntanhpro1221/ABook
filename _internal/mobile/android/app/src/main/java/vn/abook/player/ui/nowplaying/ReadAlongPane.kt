@@ -54,6 +54,7 @@ import vn.abook.player.ui.theme.Dim
 import vn.abook.player.ui.theme.MotionMs
 import vn.abook.player.ui.motion.Motion
 import kotlinx.coroutines.launch
+import vn.abook.player.ui.theme.remainingSpace
 
 /** Geometry computed once per paragraph layout, never allocated in draw. */
 private class ParagraphInk(layout: TextLayoutResult, paragraph: ReadParagraph, pad: Float, radius: Float, wordInset: Float) {
@@ -109,7 +110,7 @@ fun ReadAlongPane(
         layout(placeable.width - 2 * bleed, placeable.height) { placeable.place(-bleed, 0) }
     }.clipToBounds()) {
         // The floating return button never reserves text height.
-        val listHeight = maxHeight
+        val listHeight = remainingSpace(maxHeight, 0.dp)
         val third = listHeight / 3
         val density = LocalDensity.current
         val viewportPx = with(density) { listHeight.roundToPx() }

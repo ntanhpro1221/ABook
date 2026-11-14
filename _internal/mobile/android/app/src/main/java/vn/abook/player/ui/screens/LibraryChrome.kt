@@ -225,7 +225,7 @@ fun SearchBox(ui: LibraryUiState, modifier: Modifier = Modifier) {
     Row(
         modifier
             .layout { measurable, constraints ->
-                val closed = Dim.touch.roundToPx()
+                val closed = Dim.touch.roundToPx().coerceAtMost(constraints.maxWidth)
                 val width = (closed + (constraints.maxWidth - closed) * ui.search.value).roundToInt().coerceIn(closed, constraints.maxWidth)
                 val placeable = measurable.measure(Constraints.fixed(width, closed))
                 layout(width, closed) { placeable.place(0, 0) }

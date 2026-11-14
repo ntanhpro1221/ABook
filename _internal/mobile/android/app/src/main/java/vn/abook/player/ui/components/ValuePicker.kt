@@ -229,11 +229,11 @@ fun ValuePicker(
                 val selected = if (current) ValuePickerLogic.chipIndex(spec, shown) else -1
                 BoxWithConstraints(Modifier.fillMaxWidth()) {
                     val density = LocalDensity.current
-                    val rulerWidth = (constraints.maxWidth - 2 * with(density) { Dim.s48.roundToPx() }).toDouble()
+                    val rulerWidth = (constraints.maxWidth - 2 * with(density) { Dim.s48.roundToPx() }).coerceAtLeast(0).toDouble()
                     val widths = labels.map { measurer.measure(it, labelStyle.copy(fontWeight = FontWeight.Bold)).size.width.toDouble() }
                     val plan = with(density) { ValuePickerLogic.tickLabels(fractions, widths, rulerWidth, 8.dp.toPx().toDouble(), Dim.s4.toPx().toDouble()) }
                     val inset = plan.inset.toFloat()
-                    fun at(x: Float) = (x - inset) / (rulerWidth.toFloat() - 2 * inset)
+                    fun at(x: Float) = (x - inset) / (rulerWidth.toFloat() - 2 * inset).coerceAtLeast(1f)
                     Column(Modifier.fillMaxWidth()) {
                         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.Top) {
                             StepButton(-1, enabled && shown > spec.min, "${tag}_down", ::nudge, scope)
