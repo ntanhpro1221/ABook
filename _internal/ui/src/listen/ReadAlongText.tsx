@@ -12,7 +12,7 @@ import { usePlayListenBook } from "./LibraryScreen";
 import type { ListenBook, ListenChapter, Script, ScriptSegment } from "./model";
 import { usePlayer } from "./player";
 import { estimatedStarts } from "./readAloud";
-import { scrollMotion } from "@/shared/motion";
+import { cancelReadingScroll, moveWordInk, scrollReading, wordDuration, wordInkRange, type WordBox } from './wordGlide';
 import { wordAtPoint } from "./wordTap";
 import { sentenceIndexAt, splitPieces, usableWords, wordIndexAt, type WordSpan } from "./words";
 import { sentenceOutline, type InkLine } from './readingInk';
@@ -103,7 +103,7 @@ export function useFollowVoice(container: RefObject<HTMLElement | null>, playing
     // Có chữ đang sáng thì đưa DÒNG của nó vào chỗ, không phải đầu câu: câu dài đang đọc dở không bị kéo ngược lên.
     const lit = box.querySelector<HTMLElement>(`[data-index="${indexRef.current}"] ${LIT_WORD}`)?.getBoundingClientRect();
     if (lit) wordLine.current = lit.top - place.view.top + box.scrollTop;
-    box.scrollTo({ top: followScrollTop(lit ?? place.rect, place.view, box.scrollTop), behavior: scrollMotion(animate) });
+    scrollReading(box, followScrollTop(lit ?? place.rect, place.view, box.scrollTop), animate);
   }, [container, measure]);
 
   // Chữ đang đọc đổi: sang dòng mới thì đưa dòng ấy về chỗ đọc. Gắn lại mỗi lần vẽ vì khung cuộn có thể dựng sau (đang tải chữ); chỉ vẽ lại khi sang câu.
@@ -117,7 +117,7 @@ export function useFollowVoice(container: RefObject<HTMLElement | null>, playing
       const line = rect.top - view.top + box.scrollTop;
       if (!isNewLine(wordLine.current, line)) return;
       wordLine.current = line;
-      box.scrollTo({ top: followScrollTop(rect, view, box.scrollTop), behavior: scrollMotion(smoothRef.current && placed.current) });
+      scrollReading(box, followScrollTop(rect, view, box.scrollTop), smoothRef.current && placed.current);
     };
     box.addEventListener(LIT_WORD_EVENT, lit);
     return () => box.removeEventListener(LIT_WORD_EVENT, lit);
@@ -154,10 +154,14 @@ export function useFollowVoice(container: RefObject<HTMLElement | null>, playing
     if (shouldResumeFollowing(false, place.placement, manualAt.current, Date.now())) setFollowing(true);
   }, [following, measure, playingIndex, scrollToPlaying]);
 
-  useEffect(() => () => window.clearTimeout(settle.current), []);
+  useEffect(() => {
+    const box = container.current;
+    return () => { window.clearTimeout(settle.current); if (box) cancelReadingScroll(box); };
+  }, [container]);
 
   /** Người tự cuộn: thôi theo; thôi cuộn SETTLE_MS mà câu đang nghe nằm trong khung thì theo lại. */
   const manual = useCallback(() => {
+    if (container.current) cancelReadingScroll(container.current);
     setFollowing(false);
     manualAt.current = Date.now();
     window.clearTimeout(settle.current);
@@ -188,7 +192,7 @@ export function useFollowVoice(container: RefObject<HTMLElement | null>, playing
   return {
     following,
     showJump: playingIndex >= 0 && showJumpToPlaying(following, placement),
-    /** "Tới câu đang nghe": theo lại và cuộn tới ngay. */
+    /** Return to the current line with the shared bounded scroll animation. */
     jump: () => {
       setFollowing(true);
       scrollToPlaying(true);
@@ -218,25 +222,35 @@ export const LONG_PRESS_MS = 500;
 /** Ngón tay trượt quá chừng này (px) thì là cuộn, không phải giữ. */
 const PRESS_SLOP = 10;
 
-/** Câu đang nghe, chữ đang đọc sáng lên. Một component riêng: đồng hồ khung hình chỉ làm render lại MỘT câu, và chỉ khi sang chữ khác.
- *  Mọi chữ của câu đều có sẵn span (chỉ câu đang nghe): sang chữ kế chỉ đổi lớp `is-lit`, nền mờ dần sang chữ mới (styles.css) - span dựng
- *  đúng lúc tới lượt thì không có gì để chuyển tiếp, chữ bật sáng cứng. Chữ nhớ (memo): mỗi nhịp chỉ hai chữ vẽ lại. */
-function LitWords({ text, words }: { text: string; words: WordSpan[] }) {
-  const wordIndex = useClock((time) => wordIndexAt(words, time * 1000));
+/** Only the active sentence observes word changes. Stable spans provide geometry to the single moving ink element. */
+function LitWords({ text, words, rate }: { text: string; words: WordSpan[]; rate: number }) {
+  const timedIndex = useClock((time) => wordIndexAt(words, time * 1000));
   const pieces = useMemo(() => splitPieces(text), [text]);
+  const visibleWords = useMemo(() => new Set(pieces.filter(piece => piece.word >= 0 && wordInkRange(piece.text)[0] < wordInkRange(piece.text)[1]).map(piece => piece.word)), [pieces]);
+  let wordIndex = timedIndex;
+  while (wordIndex >= 0 && !visibleWords.has(wordIndex)) wordIndex--;
   return (
     <>
-      {pieces.map((piece, at) => (piece.word >= 0 ? <Word key={at} text={piece.text} lit={piece.word === wordIndex} /> : piece.text))}
+      {pieces.map((piece, at) => {
+        if (piece.word < 0) return piece.text;
+        const lit = piece.word === wordIndex;
+        const timing = lit ? timedIndex : piece.word;
+        const [start, end] = words[timing];
+        return <Word key={at} text={piece.text} lit={lit} index={piece.word} sequence={lit ? timedIndex : -1}
+          duration={wordDuration((words[timing + 1]?.[0] ?? end) - start, rate)} />;
+      })}
     </>
   );
 }
 
-const Word = memo(function Word({ text, lit }: { text: string; lit: boolean }) {
+const Word = memo(function Word({ text, lit, index, sequence, duration }: { text: string; lit: boolean; index: number; sequence: number; duration: number }) {
   const span = useRef<HTMLSpanElement | null>(null);
   useLayoutEffect(() => {
-    if (lit) span.current?.dispatchEvent(new Event(LIT_WORD_EVENT, { bubbles: true }));
-  }, [lit]);
-  return <span ref={span} className={lit ? "read-along-word is-lit" : "read-along-word"}>{text}</span>;
+    if (lit || !span.current?.closest('[data-sentence]')?.querySelector(LIT_WORD))
+      span.current?.dispatchEvent(new CustomEvent(LIT_WORD_EVENT, { bubbles: true, detail: lit ? { index: sequence, duration } : undefined }));
+  }, [lit, sequence, duration]);
+  const [from, until] = wordInkRange(text);
+  return <span ref={span} data-word-index={index} data-word-sequence={sequence} className={lit ? "read-along-word is-lit" : "read-along-word"}>{text.slice(0, from)}<span data-word-ink>{text.slice(from, until)}</span>{text.slice(until)}</span>;
 });
 
 export function ReadAlongText({
@@ -252,6 +266,7 @@ export function ReadAlongText({
   headingClassName,
   className,
   after,
+  rate = 1,
 }: {
   script: Script;
   playingIndex: number;
@@ -271,7 +286,39 @@ export function ReadAlongText({
   className?: string;
   /** Thêm sau câu (dấu "đang chờ Studio" của màn đọc). */
   after?: (segment: ScriptSegment) => ReactNode;
+  rate?: number;
 }) {
+  const inkRoot = useRef<HTMLDivElement | null>(null);
+  const wordInk = useRef<HTMLSpanElement | null>(null);
+  const previousInk = useRef<{ box: WordBox; index: number; sentence: string } | null>(null);
+  useLayoutEffect(() => {
+    const host = inkRoot.current, ink = wordInk.current;
+    if (!host || !ink) return;
+    const measure = (event?: Event) => {
+      const word = host.querySelector<HTMLElement>(LIT_WORD);
+      if (!word) { ink.style.opacity = '0'; previousInk.current = null; return; }
+      const core = word?.querySelector<HTMLElement>('[data-word-ink]');
+      if (!core?.textContent) return; // Punctuation-only tokens hold the preceding ink.
+      const rect = Array.from(core.getClientRects()).find(rect => rect.width > 0 && rect.height > 0) ?? core.getBoundingClientRect();
+      const origin = host.getBoundingClientRect();
+      if (!rect.width || !rect.height) return;
+      const box = { x: rect.left - origin.left, y: rect.top - origin.top + 1, width: rect.width, height: rect.height - 2 };
+      const detail = (event as CustomEvent | undefined)?.detail;
+      const index = detail?.index ?? Number(word.dataset.wordSequence), sentence = word?.closest<HTMLElement>('[data-index]')?.dataset.index ?? '';
+      const prev = previousInk.current;
+      moveWordInk(ink, box, prev?.box ?? null, detail?.duration ?? 0, Boolean(event && prev && prev.sentence === sentence && index === prev.index + 1));
+      previousInk.current = { box, index, sentence };
+    };
+    host.addEventListener(LIT_WORD_EVENT, measure);
+    measure();
+    const resize = typeof ResizeObserver === 'function' ? new ResizeObserver(() => measure()) : null;
+    resize?.observe(host);
+    const motion = window.matchMedia?.('(prefers-reduced-motion: reduce)');
+    const motionChanged = () => measure();
+    motion?.addEventListener?.('change', motionChanged);
+    document.fonts?.ready.then(() => measure());
+    return () => { host.removeEventListener(LIT_WORD_EVENT, measure); resize?.disconnect(); motion?.removeEventListener?.('change', motionChanged); ink.getAnimations?.().forEach(a => a.cancel()); };
+  }, [playingIndex, script]);
   const [focused, setFocused] = useState<number | null>(null);
   // Sang chương khác thì quên câu đã đi tới bằng bàn phím (kịch bản cùng chương đổi mỗi khi giọng máy đọc xong một đoạn - không tính).
   useEffect(() => setFocused(null), [script.chapterId]);
@@ -367,11 +414,11 @@ export function ReadAlongText({
   const marks: Marks = { playing: playingIndex, litWords, heard: dimHeard && playingIndex >= 0 ? playingIndex : -1, selected, tabStop };
   const hintId = useId();
   const hint = onTap ? hintId : undefined;
-  const shared = { tappable: Boolean(onTap), menu: Boolean(onWordMenu), speakers, Heading, headingClassName, after, actions, hint };
+  const shared = { tappable: Boolean(onTap), menu: Boolean(onWordMenu), speakers, Heading, headingClassName, after, actions, hint, rate };
   const chunks = useMemo(() => chunksOf(paragraphs), [paragraphs]);
 
   return (
-    <div className={className} onKeyDown={keys}>
+    <div ref={inkRoot} className={cn('relative isolate', className)} onKeyDown={keys}>
       {hint && (
         <p id={hint} className="sr-only">{S.s_mui_ten_len_xuong_sang_cau_truoc_cau_sau_e_d21a29aa}{onWordMenu ? S.s_shift_f10_sua_cach_doc_fb8b912c : ""}
         </p>
@@ -379,6 +426,7 @@ export function ReadAlongText({
       {chunks.map((chunk) => (
         <Chunk key={chunk.first} chunk={chunk} {...narrow(marks, chunk.first, chunk.last)} {...shared} />
       ))}
+      <span ref={wordInk} aria-hidden data-word-glide data-underlay style={{ margin: 0 }} className="pointer-events-none absolute left-0 top-0 -z-10 rounded-[var(--radius-control)] bg-[var(--read-along-word)]" />
     </div>
   );
 }
@@ -407,6 +455,7 @@ function narrow(marks: Marks, first: number, last: number): Marks {
 }
 
 interface Shared {
+  rate: number;
   tappable: boolean;
   menu: boolean;
   speakers: boolean;
@@ -486,6 +535,7 @@ const Paragraph = memo(function Paragraph({
   after,
   actions,
   hint,
+  rate,
 }: { paragraph: ParagraphItems } & Marks & Shared) {
   const inkHost = useRef<HTMLElement | null>(null);
   const [outline, setOutline] = useState('');
@@ -557,7 +607,7 @@ const Paragraph = memo(function Paragraph({
             <SpeakerLabel speaker={segment.speaker} sentence={segment.text} />
           )}</Presence>}
           <span {...sentence(index, segment)}>
-            {index === playing && litWords ? <LitWords text={segment.text} words={litWords} /> : segment.text}
+            {index === playing && litWords ? <LitWords text={segment.text} words={litWords} rate={rate} /> : segment.text}
             {after?.(segment)}
           </span>{" "}
         </span>

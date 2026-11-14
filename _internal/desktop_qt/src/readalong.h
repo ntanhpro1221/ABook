@@ -72,6 +72,7 @@ public:
     /// Hình chữ nhật (toạ độ của TextEdit) từng dòng của câu `segment` (thứ tự toàn chương) nằm trong đoạn `paragraph`; rỗng nếu câu không thuộc đoạn.
     Q_INVOKABLE QVariantList sentenceRects(QQuickTextDocument *document, int paragraph, int segment) const;
     Q_INVOKABLE QVariantList wordRects(QQuickTextDocument *document, int paragraph, int segment, int word) const;
+    Q_INVOKABLE double wordStepMs() const;
     /// Câu dưới vị trí ký tự `position` của đoạn (toàn chương), hay -1.
     Q_INVOKABLE int segmentAt(int paragraph, int position) const;
     Q_INVOKABLE QVariantMap lineAt(int paragraph, int position) const;

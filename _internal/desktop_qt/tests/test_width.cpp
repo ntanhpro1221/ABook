@@ -88,6 +88,12 @@ public:
     Q_INVOKABLE void buffering(bool value) { emit m_out->buffering(value); }
     Q_INVOKABLE void fail(const QString &message) { m_out->fail(message); }
     Q_INVOKABLE void resetBooks() { m_net->books = m_original; }
+    Q_INVOKABLE void setReadScript(const QString &script) {
+        auto book = m_original.value(QStringLiteral("width"));
+        book.insert(QStringLiteral("id"), QStringLiteral("wordglide"));
+        m_net->books.insert(QStringLiteral("wordglide"), book);
+        m_net->scripts.insert(QStringLiteral("/api/books/wordglide/chapters/1/script"), QJsonDocument::fromJson(script.toUtf8()).object());
+    }
     Q_INVOKABLE void advance(double seconds) {
         for (int i = 0; i < qRound(seconds * 10); ++i) {
             m_advance(0.1);

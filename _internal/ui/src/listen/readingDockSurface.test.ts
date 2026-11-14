@@ -12,11 +12,13 @@ function docks(text: string): string[] {
   return [...text.matchAll(/<[A-Za-z.]+[^>]*\bdata-reading-dock\b[^>]*>/g)].map((match) => match[0]);
 }
 
-it("every reading dock is painted with the reading surface, not the app ground", () => {
+it("return controls float inside the text without reserving a bottom strip", () => {
   const found = FILES.flatMap((file) => docks(readFileSync(SRC + file, "utf8")).map((tag) => ({ file, tag })));
   expect(found.length).toBe(FILES.length);
   for (const { file, tag } of found) {
-    expect(`${file}: ${tag}`).toMatch(/bg-\[var\(--read-bg\)\]/);
+    expect(`${file}: ${tag}`).toMatch(/absolute/);
+    expect(`${file}: ${tag}`).toMatch(/bottom-2/);
+    expect(`${file}: ${tag}`).not.toMatch(/h-12|shrink-0/);
     expect(`${file}: ${tag}`).not.toMatch(/\bbg-bg\b/);
   }
 });
@@ -25,4 +27,8 @@ it("the rule catches a dock on the app ground", () => {
   const planted = '<div data-reading-dock className="flex h-12 shrink-0 bg-bg">';
   expect(docks(planted)).toHaveLength(1);
   expect(docks(planted)[0]).toMatch(/\bbg-bg\b/);
+});
+
+it("the reader hides its floating toolbar while the return button is shown", () => {
+  expect(readFileSync(SRC + "listen/ReaderScreen.tsx", "utf8")).toContain("controls && !menu.bar && !follow.showJump");
 });

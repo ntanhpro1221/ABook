@@ -387,7 +387,7 @@ export function ReaderScreen(edit: SentenceEditing) {
   );
 
   return (
-    <div className="motion-reveal flex h-full flex-col">
+    <div className="motion-reveal relative flex h-full flex-col">
       {/* Thanh đầu chỉ có nút về + tên chương, nền đặc, đứng NGOÀI khung cuộn: không bao giờ đè lên chữ. Mọi điều khiển khác ở thanh dưới. */}
       <header ref={header} data-reader-header className="sticky top-0 z-10 flex min-h-14 shrink-0 items-center border-b border-line bg-bg py-1 page-x">
         {/* Cùng nút ← với mọi màn con (ScreenHeader): nét mũi tên đứng trên lề màn như mép chữ bên dưới, tên chương sát sau. */}
@@ -414,6 +414,7 @@ export function ReaderScreen(edit: SentenceEditing) {
           </MotionPresence>
           <ReadAlongText
             script={script}
+            rate={player.rate}
             playingIndex={playingIndex}
             onTap={selectable ? tapSentence : undefined}
             onWordMenu={menu.wordMenu}
@@ -455,11 +456,11 @@ export function ReaderScreen(edit: SentenceEditing) {
             <MotionPresence open={Boolean(menu.bar)} className="w-full">{menu.bar}</MotionPresence>
             {/* Đang chọn câu thì thanh việc của câu thay chỗ thanh này. */}
             {/* Vùng có khoá riêng: "Nghe từ đây" tới / đi (giọng máy sẵn sàng muộn) mờ qua cả thanh, không bật vào đẩy các nút khác. */}
-            <MotionPresence open={controls && !menu.bar}><MotionRegion motionKey={canListen}>{bar}</MotionRegion></MotionPresence>
+            <MotionPresence open={controls && !menu.bar && !follow.showJump}><MotionRegion motionKey={canListen}>{bar}</MotionRegion></MotionPresence>
           </div>
         </MotionRegion>
       </div>
-      <div data-reading-dock className="flex h-12 shrink-0 items-center justify-center bg-[var(--read-bg)]">
+      <div data-reading-dock className="pointer-events-none absolute inset-x-0 bottom-2 z-10 flex items-center justify-center">
         <MotionPresence open={selected === null && follow.showJump}><JumpToPlaying onClick={follow.jump} /></MotionPresence>
       </div>
       <FindInBook book={book} open={finding} onOpenChange={setFinding} />

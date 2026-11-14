@@ -12,6 +12,10 @@ import android.graphics.Bitmap
 import android.graphics.Canvas
 import androidx.compose.ui.test.getUnclippedBoundsInRoot
 import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollToIndex
+import androidx.compose.ui.test.performTouchInput
+import androidx.compose.ui.test.swipeUp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.height
 import org.junit.Assert.assertEquals
@@ -55,12 +59,14 @@ class ReadAlongFollowUiTest {
     private fun paragraphTop(index: Int) = rule.onNodeWithTag("paragraph_$index").getUnclippedBoundsInRoot().top
     private fun viewport() = rule.onNodeWithTag("read_along_text").getUnclippedBoundsInRoot()
 
-    @Test fun theJumpDockHasItsOwnSpaceBelowTheTextViewport() {
+    @Test fun theReturnButtonDoesNotReserveAnyTextHeight() {
         rule.setContent { AbookTheme(false) { ReadAlongPane(text(), Clock(1_230_000), Modifier.fillMaxSize()) } }
         val scroll = rule.onNodeWithTag("reading_scroll").getUnclippedBoundsInRoot()
         val dock = rule.onNodeWithTag("reading_dock").getUnclippedBoundsInRoot()
         assertEquals(48f, dock.height.value, 0.5f)
-        assertTrue(scroll.bottom <= dock.top)
+        assertEquals(viewport().bottom.value, scroll.bottom.value, 0.5f)
+        assertTrue(dock.bottom <= scroll.bottom)
+        assertTrue(dock.top > scroll.top)
     }
 
     @Test fun openingMidChapterStandsAtTheCurrentLineWithoutScrollingThroughTheChapter() {
@@ -75,6 +81,23 @@ class ReadAlongFollowUiTest {
         val at = (paragraphTop(123) - view.top) / view.height
         assertTrue("đoạn đang đọc phải đứng trong vùng đọc ngay khung đầu, đang ở $at", at in 0.05f..0.5f)
         rule.onNodeWithTag("paragraph_0").assertDoesNotExistOnScreen()
+    }
+
+    @Test fun returningFromFarAwayAnimatesTheFinalApproach() {
+        rule.setContent { AbookTheme(false) { ReadAlongPane(text(), Clock(1_230_000), Modifier.fillMaxSize()) } }
+        rule.onNodeWithTag("reading_scroll").performTouchInput { swipeUp() }
+        rule.onNodeWithTag("reading_scroll").performScrollToIndex(160)
+        rule.waitForIdle()
+        rule.mainClock.autoAdvance = false
+        rule.onNodeWithTag("follow_sentence").performClick()
+        rule.mainClock.advanceTimeBy(64)
+        val moving = paragraphTop(123)
+        rule.mainClock.advanceTimeBy(400)
+        val final = paragraphTop(123)
+        assertTrue("final approach must travel across frames: $moving -> $final", moving > final + 1.dp)
+        val view = viewport()
+        assertEquals(ReadFollow.PLACE_AT, (final - view.top) / view.height, 0.04f)
+        rule.mainClock.autoAdvance = true
     }
 
     private fun androidx.compose.ui.test.SemanticsNodeInteraction.assertDoesNotExistOnScreen() {

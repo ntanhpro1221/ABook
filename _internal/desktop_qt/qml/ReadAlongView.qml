@@ -65,6 +65,59 @@ Item {
     Behavior on surfaceBg { ColorAnimation { duration: Theme.reduceMotion ? Math.min(Theme.motionFast, 120) : Theme.motionSlow; easing.type: Easing.BezierSpline; easing.bezierCurve: Theme.easeStandard } }
     Rectangle { objectName: "readingSurface"; anchors.fill: parent; color: root.surfaceBg }
 
+    property int inkWord: -1
+    property int inkSegment: -1
+    property bool inkTween: false
+    property int inkDuration: Theme.motionFast
+    property var pendingInk: null
+    property var inkTarget: null
+    function wordChanged() { placeInk(true); afterWord() }
+    function placeInk(progressed) {
+        const item = list.itemAtIndex(ReadAlong.currentPara)
+        if (ReadAlong.currentWord < 0) { lineInk.stop(); wordInk.opacity = 0; inkWord = -1; inkTarget = null; return }
+        if (progressed !== true && inkWord >= 0 && inkSegment === ReadAlong.currentSegment && inkWord !== ReadAlong.currentWord) return
+        if (!item || !item.wordRects.length) return // punctuation retains the preceding box
+        const r = item.wordRects[0]
+        const next = {x: (item.width - item.textW) / 2 + r.x, y: item.y + item.bodyY + r.y + 1,
+                      width: r.width, height: r.height - 2}
+        if (progressed !== true && inkTarget && inkWord === ReadAlong.currentWord && inkSegment === ReadAlong.currentSegment &&
+            next.x === inkTarget.x && next.y === inkTarget.y && next.width === inkTarget.width && next.height === inkTarget.height) return
+        inkTarget = next
+        const sequential = progressed === true && inkSegment === ReadAlong.currentSegment && ReadAlong.currentWord === inkWord + 1
+        inkDuration = Math.max(0, Math.min(Theme.motionFast, Math.floor(ReadAlong.wordStepMs())))
+        lineInk.stop()
+        inkTween = false
+        inkWord = ReadAlong.currentWord
+        inkSegment = ReadAlong.currentSegment
+        if (sequential && !Theme.reduceMotion && Math.abs(wordInk.y - next.y) > 4 && wordInk.opacity > 0) {
+            pendingInk = next
+            wordInk.opacity = 1
+            lineInk.start()
+            return
+        }
+        inkTween = sequential && !Theme.reduceMotion
+        wordInk.x = next.x; wordInk.y = next.y; wordInk.width = next.width; wordInk.height = next.height; wordInk.opacity = 1
+    }
+    Rectangle {
+        id: wordInk
+        objectName: "readingWordInk"
+        parent: list.contentItem
+        z: -1
+        opacity: 0
+        radius: Theme.radiusControl
+        color: Qt.alpha(root.surface.accent, root.surface.word)
+        Behavior on x { enabled: root.inkTween; NumberAnimation { duration: root.inkDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: Theme.easeStandard } }
+        Behavior on y { enabled: root.inkTween; NumberAnimation { duration: root.inkDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: Theme.easeStandard } }
+        Behavior on width { enabled: root.inkTween; NumberAnimation { duration: root.inkDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: Theme.easeStandard } }
+        Behavior on height { enabled: root.inkTween; NumberAnimation { duration: root.inkDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: Theme.easeStandard } }
+    }
+    SequentialAnimation {
+        id: lineInk
+        NumberAnimation { target: wordInk; property: "width"; to: 0; duration: Math.floor(root.inkDuration / 2); easing.type: Easing.BezierSpline; easing.bezierCurve: Theme.easeStandard }
+        ScriptAction { script: { wordInk.x = root.pendingInk.x; wordInk.y = root.pendingInk.y; wordInk.height = root.pendingInk.height } }
+        NumberAnimation { target: wordInk; property: "width"; to: root.pendingInk ? root.pendingInk.width : 0; duration: Math.ceil(root.inkDuration / 2); easing.type: Easing.BezierSpline; easing.bezierCurve: Theme.easeStandard }
+    }
+
     // ---- đi theo giọng ----
     function manual() {
         following = false
@@ -80,6 +133,8 @@ Item {
             list.contentY = target
             return
         }
+        if (Math.abs(target - list.contentY) > list.height * 2)
+            list.contentY = target - Math.sign(target - list.contentY) * list.height * 0.5
         followAnim.from = list.contentY
         followAnim.to = target
         followAnim.start()
@@ -112,6 +167,7 @@ Item {
         if (!box) {
             // Đoạn chưa dựng (nhảy xa, mới mở): đưa nó vào rồi đợi nó báo hình chữ nhật của câu (currentRectsChanged)
             list.positionViewAtIndex(ReadAlong.currentPara, ListView.Beginning)
+            if (animate && !firstPlacement) list.contentY -= list.height * 0.8
             return
         }
         if (firstPlacement || ReadAlong.needsFollow(box.top, box.bottom, 0, list.height))
@@ -139,12 +195,17 @@ Item {
     // cuộn / positionViewAtIndex ngay trong lúc ListView đang dựng dòng bằng incubator làm dòng bị đụng lại giữa chừng (app chết trong QQmlObjectCreator::finalize).
     function currentRectsChanged() { Later.call(root, rectsSettled) }
     function rectsSettled() {
-        if (following) follow(true)
+        if (following) { follow(true); afterWord() }
         else refreshPlacement()
     }
     function goBackToReading() {
         following = true
-        follow(true)
+        firstPlacement = false
+        const item = list.itemAtIndex(ReadAlong.currentPara)
+        if (item && item.wordRects.length) {
+            const line = item.y + item.bodyY + item.wordRects[0].y
+            scrollTo(ReadAlong.followTop(line - list.contentY, 0, list.height, list.contentY), true)
+        } else follow(true)
     }
 
     Timer {
@@ -159,14 +220,14 @@ Item {
         id: followAnim
         target: list
         property: "contentY"
-        duration: 300
+        duration: Theme.motionSlow
         easing.type: Easing.BezierSpline
-        easing.bezierCurve: Theme.easeDecelerate
+        easing.bezierCurve: Theme.easeStandard
     }
     Connections {
         target: ReadAlong
         function onCurrentSegmentChanged() { Later.call(root, root.afterSegment) }
-        function onCurrentWordChanged() { Later.call(root, root.afterWord) }
+        function onCurrentWordChanged() { Later.call(root, root.wordChanged) }
         function onListened() { root.following = true; root.firstPlacement = false }
         function onStatusChanged() {
             if (ReadAlong.status === "ready") {
@@ -179,6 +240,9 @@ Item {
         target: Theme
         function onDarkChanged() { root.shadeAll() }
         function onReadChanged() { root.shadeAll() }
+        function onReduceMotionChanged() {
+            if (Theme.reduceMotion) { lineInk.stop(); root.inkTarget = null; root.placeInk(false); followAnim.stop(); if (root.following) root.follow(false) }
+        }
     }
     signal shadeAll()
 
@@ -186,7 +250,7 @@ Item {
         id: list
         objectName: "readAlongParagraphs"
         anchors.fill: parent
-        anchors.bottomMargin: 48
+        anchors.bottomMargin: Theme.s8
         anchors.topMargin: hint.visible ? hint.height + 2 * Theme.s12 : 0
         model: ReadAlong.timed ? ReadAlong.paragraphs : null
         clip: true
@@ -277,16 +341,6 @@ Item {
                         PathSvg { path: ReadingInk.sentenceOutline(del.sentRects) }
                     }
                 }
-                Repeater {
-                    model: del.wordRects.length
-                    Rectangle {
-                        required property int index
-                        readonly property var r: del.wordRects[index]
-                        x: r.x - 2; y: r.y + 1; width: r.width + 4; height: r.height - 2
-                        radius: Theme.radiusControl
-                        color: Qt.alpha(root.surface.accent, root.surface.word)
-                    }
-                }
                 TextEdit {
                     id: edit
                     objectName: "readAlongParagraphText"
@@ -323,6 +377,8 @@ Item {
                         del.wordRects = ReadAlong.wordRects(edit.textDocument, del.index, ReadAlong.currentSegment, ReadAlong.currentWord)
                 }
             }
+            onWordRectsChanged: if (ReadAlong.currentPara === index) Later.call(root, root.placeInk)
+            onYChanged: if (ReadAlong.currentPara === index) Later.call(root, root.placeInk)
             Connections {
                 target: root
                 function onShadeAll() { del.shade() }
@@ -383,7 +439,7 @@ Item {
     }
     Rectangle {
         anchors.bottom: parent.bottom
-        anchors.bottomMargin: 48
+        anchors.bottomMargin: Theme.s8
         width: parent.width
         height: 24
         gradient: Gradient {
@@ -405,20 +461,15 @@ Item {
 
     // "Tới câu đang nghe" (JumpToPlaying của web: icon locate, viên tròn): trượt lên từ đáy khung khi người đã cuộn đi chỗ khác
     Rectangle {
-        id: jumpDock
-        objectName: "readingDock"
-        anchors.bottom: parent.bottom
-        width: parent.width
-        height: 48
-        color: Theme.bg
-    }
-    Rectangle {
         id: chip
+        objectName: "readingReturn"
         readonly property bool shown: root.showChip
         anchors.horizontalCenter: parent.horizontalCenter
-        y: jumpDock.y + (jumpDock.height - height) / 2 + (shown ? 0 : 16)
+        y: Math.min(list.y + list.height - height - Theme.s8, root.height - height - Theme.s8) + (shown ? 0 : 16)
         width: chipRow.implicitWidth + 2 * Theme.s16
-        height: 40
+        height: Math.max(48, chipRow.implicitHeight + 2 * Theme.s8)
+        border.width: 1
+        border.color: root.surface.fg2
         radius: height / 2
         color: Theme.text
         opacity: shown ? 1 : 0

@@ -39,6 +39,7 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.layout.Layout
+import androidx.compose.ui.layout.layout
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.semantics.*
 import androidx.compose.ui.text.font.FontWeight
@@ -226,9 +227,14 @@ private fun NowPlayingBody(
                 alpha = dim.value
                 scaleX = 0.98f + dim.value * 0.02f; scaleY = scaleX
             }) {
-                PlayerSeekBar(state.durationMs, model.position, model::seek, Modifier.playerReveal(windowProgress)) {
-                    ReturnChip(state.returnAvailable, state.returnSerial, model::returnToPreviousPlace)
+                // Zero-height anchor: the return action floats above the seek bar, never between its time labels.
+                Box(Modifier.fillMaxWidth().layout { measurable, constraints ->
+                    val placeable = measurable.measure(constraints.copy(minHeight = 0, maxHeight = Constraints.Infinity))
+                    layout(placeable.width, 0) { placeable.place(0, -placeable.height) }
+                }.padding(bottom = Dim.s8), contentAlignment = Alignment.BottomCenter) {
+                    ReturnChip(state.returnAvailable && !window.reading && !split, state.returnSerial, model::returnToPreviousPlace)
                 }
+                PlayerSeekBar(state.durationMs, model.position, model::seek, Modifier.playerReveal(windowProgress))
                 Row(Modifier.fillMaxWidth().height(88.dp).testTag("transport"),
                     verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceEvenly) {
                     GlyphButton(S.s_chuong_truoc_4750f9e9, "|‹", model::previous, Modifier.playerReveal(windowProgress))
@@ -300,9 +306,10 @@ private fun ReadAlongHost(state: NowPlayingState, model: NowPlayingModel, window
     ReadAlongPane(reading, model.position, modifier,
         onManualScroll = { onDim(true) }, onTap = { onDim(false) },
         onRetry = { onDim(false); scope.launch { model.loadReadAlong() } },
-        look = window.look, hint = hint,
+        look = window.look, hint = hint, rate = state.rate,
         editing = model.lineEditor?.selected != null,
         onEdit = model.lineEditor?.takeUnless { state.speaking }?.let { editor -> { paragraph -> reading.chapterId?.let { editor.open(reading.bookId, it, paragraph) } } },
+        returnAvailable = state.returnAvailable, returnSerial = state.returnSerial, onReturn = model::returnToPreviousPlace,
         onListen = { ms -> window.changeLook(window.look.copy(tapped = true)); model.listenFrom(ms) },
         nextTitle = nextTitle, onNext = model::next)
 }
@@ -402,11 +409,10 @@ fun PlayerModeSwitch(mode: State<Float>, onSelect: (Boolean) -> Unit, modifier: 
 }
 
 /**
- * "Về chỗ cũ": ngay sau khi bạn tua / nhảy, nằm đúng chỗ vừa thao tác (giữa hàng giờ dưới thanh tua) trong 10 giây - không phải một hàng tắt sẵn
- * trong menu "…". Vào / ra bằng trượt dọc qua khe cắt.
+ * Return to the previous listening position for ten seconds after a seek. Its host owns placement above the progress controls.
  */
 @Composable
-private fun ReturnChip(available: Boolean, serial: Int, onReturn: () -> Unit) {
+internal fun ReturnChip(available: Boolean, serial: Int, onReturn: () -> Unit) {
     var shown by remember { mutableStateOf(false) }
     LaunchedEffect(available, serial) {
         shown = available
@@ -417,6 +423,7 @@ private fun ReturnChip(available: Boolean, serial: Int, onReturn: () -> Unit) {
             enter = androidx.compose.animation.slideInVertically(tween(MotionMs.MEDIUM)) { it },
             exit = androidx.compose.animation.slideOutVertically(tween(MotionMs.MEDIUM_OUT)) { it }) {
             BasicText(S.s_ve_cho_vua_nghe_8da3c710, Modifier
+                .heightIn(min = Dim.s48)
                 .background(Abook.colors.accentSoft, RoundedCornerShape(Dim.radiusCover))
                 .pressable { shown = false; onReturn() }
                 .testTag("return_place")

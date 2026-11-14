@@ -751,23 +751,9 @@ select[class~="border-line"] {
    Mọi chữ của câu đang nghe đều là span sẵn; chữ tới lượt thêm .is-lit, nền đến và đi đều mờ dần. */
 .read-along-word {
   background-color: transparent;
-  border-radius: var(--radius-control);
-  transition: background-color var(--motion-fast-out) linear;
 }
 .read-along-word.is-lit {
-  background-color: var(--read-along-word);
   color: var(--text);
-}
-/* Chữ đầu của câu vừa tới lượt: span mới dựng cũng hiện dần (trình duyệt có @starting-style). */
-@starting-style {
-  .read-along-word.is-lit {
-    background-color: transparent;
-  }
-}
-@media (prefers-reduced-motion: reduce) {
-  .read-along-word {
-    transition: background-color var(--motion-fast-out) linear;
-  }
 }
 
 /* Chữ cái đầu của nhân vật: cùng độ sáng cho mọi màu (OKLCH), chỉ đổi sắc - đủ tương phản ở cả hai giao diện. Sắc chỉ để phân biệt người

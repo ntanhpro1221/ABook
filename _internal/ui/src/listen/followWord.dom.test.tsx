@@ -6,6 +6,10 @@ import { beforeEach, expect, it, vi } from "vitest";
 vi.mock("@/listen/LibraryScreen", () => ({ usePlayListenBook: () => vi.fn() }));
 vi.mock("@/listen/player", () => ({ usePlayer: () => ({ track: null, jumpTo: vi.fn() }) }));
 vi.mock("@/shared/motion", async (original) => ({ ...(await original<object>()), scrollMotion: (animate = true) => (animate ? "smooth" : "auto") }));
+vi.mock('./wordGlide', async (original) => ({ ...(await original<object>()),
+  scrollReading: (box: HTMLElement, top: number, animate: boolean) => box.scrollTo({ top, behavior: animate ? 'smooth' : 'auto' }),
+  cancelReadingScroll: vi.fn(),
+}));
 import { LIT_WORD_EVENT, useFollowVoice } from "./ReadAlongText";
 
 // Chủ sách 09-11: "scroll chỉ thay đổi mỗi khi chuyển highlight đoạn chứ không đi theo highlight word" và "bấm vào tab đọc theo là nó bắt đầu scroll vội từ trên xuống".

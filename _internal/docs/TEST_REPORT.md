@@ -1,5 +1,15 @@
 # Test report
 
+## 15-11-2026 — moving word ink and floating read-along return
+
+Android draws an Animatable rectangle without composing the text on animation frames; web animates one absolute element; Qt animates one Rectangle. All use the shared fast/slow durations and standard curve. Line changes collapse before repositioning. Display geometry excludes edge punctuation without changing timing or tap offsets.
+
+Return controls float inside the text viewport. Following and return scroll smoothly with a bounded final approach. Android bounds checks cover small screens, large system fonts and landscape; web browser geometry checks cover widths 320–1100 and reading text up to 44 px; Qt covers small, large-font, landscape and desktop layouts. Reduced motion and reflow place the ink immediately.
+
+Validation: 14 Android JVM tests; 58 targeted Vitest tests and TypeScript; 14 Qt ReadAlong tests plus 11 QML tests; 45 Python token/parity/layout tests (2 skipped). All completed suites have zero failures. Common UI preparation and compileall pass. Browser and Qt image sequences include same-line movement and line changes. The opt-in Android frame probe uses original prose, generated tone and a private package on a dedicated headless emulator; raw measurements and image sequences stay outside Git.
+
+The 71-file quality implementation hash remains `db6c9cb847dac2e536deca158114df29dcfedac4ab88b69885c08e1924876997`; `abook/webui/word_timing.py` is unchanged.
+
 ## 15-11-2026 — missing cover suggestions and export warnings
 
 Studio on web, Qt and Android suggests choosing an image when artwork is absent, including completed projects.

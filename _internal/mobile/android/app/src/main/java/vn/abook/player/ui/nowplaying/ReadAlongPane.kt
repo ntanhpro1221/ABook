@@ -52,11 +52,16 @@ import vn.abook.player.ui.components.RowHint
 import vn.abook.player.ui.theme.Abook
 import vn.abook.player.ui.theme.Dim
 import vn.abook.player.ui.theme.MotionMs
+import vn.abook.player.ui.motion.Motion
+import kotlinx.coroutines.launch
 
 /** Geometry computed once per paragraph layout, never allocated in draw. */
-private class ParagraphInk(layout: TextLayoutResult, paragraph: ReadParagraph, pad: Float, radius: Float, wordPad: Float, wordInset: Float) {
+private class ParagraphInk(layout: TextLayoutResult, paragraph: ReadParagraph, pad: Float, radius: Float, wordInset: Float) {
     val sentence: Path = ReadInk.path(ReadInk.paragraphLines(layout, pad), radius)
-    val words: List<List<Rect>> = paragraph.words.map { ReadInk.rangeRects(layout, it.from, it.until, wordPad, wordInset) }
+    val words: List<List<Rect>> = paragraph.words.map {
+        val range = WordInk.range(paragraph.text, it.from, it.until)
+        ReadInk.rangeRects(layout, range.first, range.last + 1, 0f, wordInset)
+    }
 }
 
 /** Nền tô thở ra chừng này ngoài cột chữ (0,2em của web với cỡ chữ tới 40 sp) mà chữ không dời; danh sách rộng thêm đúng chừng này để nền không bị cắt, và khung chữ của trình phát (PlayerTextArea) cũng chừa ngang chừng này. */
@@ -77,6 +82,8 @@ fun ReadAlongPane(
     /** Tên chương kế (thẻ "Chương tiếp theo" ở cuối chữ); null = chương cuối. */
     nextTitle: String? = null,
     onNext: () -> Unit = {},
+    rate: Double = 1.0,
+    returnAvailable: Boolean = false, returnSerial: Int = 0, onReturn: () -> Unit = {},
 ) {
     // Lời nhắc là mục đầu của danh sách (cuộn đi cùng chữ): các chỉ số đoạn lệch đi một khi nó có mặt.
     val lead = if (hint != null) 1 else 0
@@ -90,6 +97,7 @@ fun ReadAlongPane(
     // Chữ chưa đứng đúng chỗ thì chưa hiện: khung đầu tiên người nghe thấy đã là dòng đang đọc, không có cú cuộn nào để thấy.
     var placed by remember(state.bookId, state.chapterId, look.size, look.lineHeight) { mutableStateOf(false) }
     val layouts = remember { HashMap<Int, TextLayoutResult>() }
+    val scope = rememberCoroutineScope()
     LaunchedEffect(userDragging) {
         if (userDragging) { following = false; onManualScroll() }
     }
@@ -100,8 +108,8 @@ fun ReadAlongPane(
             maxWidth = if (constraints.hasBoundedWidth) constraints.maxWidth + 2 * bleed else constraints.maxWidth))
         layout(placeable.width - 2 * bleed, placeable.height) { placeable.place(-bleed, 0) }
     }.clipToBounds()) {
-        // The list ends above the jump dock, so placement measures the list's own viewport.
-        val listHeight = maxHeight - Dim.s48
+        // The floating return button never reserves text height.
+        val listHeight = maxHeight
         val third = listHeight / 3
         val density = LocalDensity.current
         val viewportPx = with(density) { listHeight.roundToPx() }
@@ -146,7 +154,7 @@ fun ReadAlongPane(
                 }
             }
             else -> LazyColumn(
-                state = list, modifier = Modifier.fillMaxSize().padding(bottom = Dim.s48).testTag("reading_scroll")
+                state = list, modifier = Modifier.fillMaxSize().testTag("reading_scroll")
                     .drawWithContent { if (placed || state.paragraphs.isEmpty()) drawContent() }
                     .fadeEdges(list).pointerInput(onTap) { detectTapGestures { onTap() } },
                 // Đáy chừa đủ để cả dòng cuối vẫn lên được tới vùng đọc, không kẹt ở nửa dưới màn.
@@ -166,7 +174,28 @@ fun ReadAlongPane(
                     val wordColor = colors.accent.copy(alpha = if (colors.dark) 0.30f else 0.62f)
                     val radius = with(density) { Dim.radiusControl.toPx() }
                     val geometry = remember(layout, paragraph, radius) {
-                        layout?.let { with(density) { ParagraphInk(it, paragraph, 4.dp.toPx(), radius, 2.dp.toPx(), 1.dp.toPx()) } }
+                        layout?.let { with(density) { ParagraphInk(it, paragraph, 4.dp.toPx(), radius, 1.dp.toPx()) } }
+                    }
+                    val glide = remember(paragraph.id) { WordGlide() }
+                    val active = remember(state.paragraphs, index, position) { derivedStateOf {
+                        ReadAlongLookup.sentence(state.paragraphs, position.milliseconds.value) == index
+                    } }
+                    LaunchedEffect(geometry, paragraph, rate) {
+                        var previous = -1
+                        snapshotFlow {
+                            if (active.value)
+                                ReadAlongLookup.word(paragraph.words, position.milliseconds.value) else -1
+                        }.distinctUntilChanged().collectLatest { word ->
+                            if (word < 0) { previous = -1; glide.move(null, 0, false); return@collectLatest }
+                            val rect = geometry?.words?.take(word + 1)?.lastOrNull { it.isNotEmpty() }?.firstOrNull()
+                            val old = previous
+                            previous = word
+                            if (rect != null) {
+                                val timing = paragraph.words[word]
+                                val step = (paragraph.words.getOrNull(word + 1)?.startMs ?: timing.endMs) - timing.startMs
+                                glide.move(rect, WordInk.duration(step, rate), old >= 0 && word == old + 1)
+                            }
+                        }
                     }
                     BasicText(
                         paragraph.text,
@@ -184,13 +213,14 @@ fun ReadAlongPane(
                                     }
                                 })
                             }.drawBehind {
-                            val ms = position.milliseconds.value
-                            if (ReadAlongLookup.sentence(state.paragraphs, ms) == index) {
+                            if (active.value) {
                                 val ink = geometry
                                 if (ink != null) {
                                     drawPath(ink.sentence, sentenceColor)
-                                    val word = ReadAlongLookup.word(paragraph.words, ms)
-                                    if (word >= 0 && word < ink.words.size) drawInkRects(ink.words[word], wordColor, radius)
+                                    if (glide.visible) {
+                                        val rect = glide.rect.value
+                                        drawRoundRect(wordColor, rect.topLeft, rect.size, androidx.compose.ui.geometry.CornerRadius(radius))
+                                    }
                                 }
                             }
                         },
@@ -207,14 +237,19 @@ fun ReadAlongPane(
                 }
             }
         }
-        // The fixed dock owns its space; the text viewport ends above it, so the dock paints nothing of its own: the player's cover tint shows through
-        // (a bg fill here was a dark slab under the text on the phone, 13-11).
-        Box(Modifier.align(Alignment.BottomCenter).fillMaxWidth().height(Dim.s48)
+        Box(Modifier.align(Alignment.BottomCenter).padding(bottom = Dim.s8).fillMaxWidth().heightIn(min = Dim.s48)
             .testTag("reading_dock").clipToBounds(), contentAlignment = Alignment.Center) {
+            ReturnChip(returnAvailable && !showJump, returnSerial, onReturn)
             AnimatedVisibility(showJump,
                 enter = slideInVertically(tween(MotionMs.MEDIUM)) { it },
                 exit = slideOutVertically(tween(MotionMs.MEDIUM_OUT)) { it }) {
-                Box(Modifier.heightIn(min = 48.dp).pressable { following = true; onTap() }.testTag("follow_sentence"),
+                Box(Modifier.heightIn(min = 48.dp).pressable {
+                    scope.launch {
+                        tracker.settle(placeAt, viewportPx, animate = true)
+                        following = true
+                        onTap()
+                    }
+                }.testTag("follow_sentence"),
                     contentAlignment = Alignment.Center) {
                     BasicText(S.s_toi_cau_dang_nghe_4526cf38, Modifier
                         .background(Abook.colors.accentSoft, RoundedCornerShape(Dim.radiusCover))
@@ -262,17 +297,15 @@ private class LineTracker(private val list: LazyListState, private val layouts: 
         val sentence = sentence()
         if (sentence < 0) return
         try {
-            var far = false
             var y = lineY(sentence)
-            if (y == null) {
+            if (y == null || abs(y - placeAt) > 2 * viewportPx) {
                 // Đoạn đang đọc ở xa (mới mở, tua): nhảy thẳng tới rồi mới canh dòng; cuộn dài qua cả trăm đoạn chỉ làm người đọc chóng mặt.
-                far = true
-                list.scrollToItem(sentence + lead, -placeAt)
+                list.scrollToItem(sentence + lead, if (animate) -(placeAt + viewportPx * 0.5f).roundToInt() else -placeAt)
                 y = lineY(sentence)
             }
             val delta = (y ?: return) - placeAt
             if (abs(delta) < 1f) return
-            if (animate && !far && abs(delta) <= viewportPx) list.animateScrollBy(delta, tween(MotionMs.SLOW))
+            if (animate) list.animateScrollBy(delta, tween(MotionMs.SLOW, easing = Motion.Standard))
             else list.scrollBy(delta)
         } catch (interrupted: CancellationException) {
             // Ngón tay người đọc giành danh sách giữa chừng: hủy riêng cú cuộn này, không dừng cả việc theo.

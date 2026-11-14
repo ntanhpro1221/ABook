@@ -7,6 +7,8 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+- Ô từ đang đọc trượt và co giãn theo chữ, bỏ dấu câu; nút quay lại nổi trong vùng chữ, cuộn mượt và không chừa dải trống.
+
 - Studio gợi ý chọn ảnh khi sách chưa có bìa; xuất file sách thiếu bìa có cảnh báo rõ.
 
 - Tấm Âm thanh gọn theo ba nhóm, đồng nhất hàng và thanh trượt trên điện thoại, web và máy tính.

@@ -163,7 +163,8 @@ Token có sẵn (`shared/motion.ts` = `--motion-*` trong `styles.css`): nhanh 12
   (truy vấn, state riêng) tự bọc `MotionPresence` / `MotionRegion` của mình. Hiện / ẩn = `MotionPresence` (lỗi: `open` của
   `InlineError` / `LoadError`), không `{điều kiện && <…>}` trần; vùng có `motionKey` thì thứ đứng ngoài khoá cần vùng riêng; danh sách
   dùng useListPresence, vùng lớn quanh nó mang `data-motion-live` để không mờ cả khối theo từng hàng (`shared/motionLint.test.ts`).
-- **Câu đang đọc**: dải tô nhạt trượt sang câu kế (120 ms), từ đang đọc tô đậm hơn; tự cuộn mềm giữ câu ở 1/3 trên màn.
+- **Câu đang đọc**: dải tô nhạt cho câu, một ô từ đậm hơn trượt và co giãn theo khung chữ. Dùng motionFast (120 ms), easeStandard; chặn thời lượng ở khoảng cách mốc từ chia tốc độ phát. Chỉ bỏ dấu câu ở hai mép trong lớp UI, giữ gạch nối giữa từ; token toàn dấu giữ khung chữ ngay trước. Xuống dòng thu ô cũ về rộng 0 rồi mở ô mới, mỗi pha nửa thời lượng: tránh đường chéo quét qua chữ. Tua/nhảy qua từ, dàn lại chữ và giảm chuyển động đặt ngay. Các số lấy từ ui_design/tokens.json qua bộ sinh chung.
+- **Theo giọng và quay lại**: cuộn motionSlow (300 ms), easeStandard, đưa dòng đang đọc về 30% chiều cao vùng chữ. Xa quá hai màn thì đặt gần đích rồi lướt tối đa một màn cuối; giảm chuyển động đặt ngay. Nút quay lại nổi cách đáy vùng chữ s8, có nền và viền riêng, không chừa hàng trống khi ẩn và không nằm trên thanh tua, nhãn giờ hay điều khiển. Cùng luật cho Android, web và Qt.
 - **Đang tải**: khung xám đúng hình nội dung, nhịp mờ 0,6 <-> 1 chu kỳ 1,6 s; không vòng xoay giữa màn, không ánh lấp lánh.
 - **Thanh tiến độ chạy theo việc thật** (chủ sách 11-11): byte đã chép / kiểm, mục đã xong trên tổng - không gán mốc cứng, không bò tới một số
   rồi đứng. Chưa biết tổng thì dạng không xác định: một đoạn 2/5 rãnh chạy qua lại liên tục (1,4 s, web `.indeterminate-bar`, Android

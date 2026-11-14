@@ -296,7 +296,24 @@ QVariantList ReadAlong::wordRects(QQuickTextDocument *document, int paragraph, i
     const Segment &item = script.segments[segment];
     if (item.paragraph != paragraph || word < 0 || word >= item.wordChars.size() || item.words.isEmpty())
         return {};
-    return rangeRects(document->textDocument(), item.wordChars[word].first, item.wordChars[word].second);
+    const QString text = document->textDocument()->toPlainText();
+    auto edge = [](QChar ch) { return ch.isPunct() || ch.isSpace(); };
+    for (int at = word; at >= 0; --at) {
+        int from = item.wordChars[at].first, until = item.wordChars[at].second;
+        while (from < until && edge(text.at(from))) ++from;
+        while (until > from && edge(text.at(until - 1))) --until;
+        if (from < until) return rangeRects(document->textDocument(), from, until);
+    }
+    return {};
+}
+
+double ReadAlong::wordStepMs() const {
+    const auto &segments = m_model.script().segments;
+    if (m_segment < 0 || m_segment >= segments.size()) return 0;
+    const auto &words = segments[m_segment].words;
+    if (m_word < 0 || m_word >= words.size()) return 0;
+    const auto end = m_word + 1 < words.size() ? words[m_word + 1].first : words[m_word].second;
+    return (end - words[m_word].first) / qMax(0.1, m_player->rate());
 }
 
 int ReadAlong::segmentAt(int paragraph, int position) const {

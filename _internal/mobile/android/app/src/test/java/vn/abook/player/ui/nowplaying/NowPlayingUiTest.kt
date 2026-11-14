@@ -392,6 +392,28 @@ class NowPlayingUiTest {
         rule.mainClock.autoAdvance = true
     }
 
+    private fun assertReturnFloatsAboveAllPlaybackControls(fontScale: Float) {
+        show(reading = true, fontScale = fontScale)
+        rule.runOnUiThread { model.update(model.state.value.copy(returnAvailable = true, returnSerial = 1)) }
+        rule.waitForIdle()
+        val chip = bounds("return_place")
+        val text = bounds("read_along_text")
+        assertTrue("return=$chip text=$text", chip.top >= text.top && chip.bottom <= text.bottom)
+        for (tag in listOf("player_seek", "time_elapsed", "time_left", "transport")) {
+            val control = bounds(tag)
+            assertTrue("return=$chip overlaps $tag=$control", chip.bottom <= control.top)
+        }
+    }
+
+    @Test @Config(qualifiers = "w320dp-h560dp-xxhdpi")
+    fun returnStaysInTextOnSmallScreens() = assertReturnFloatsAboveAllPlaybackControls(1f)
+
+    @Test @Config(qualifiers = "w360dp-h780dp-xxhdpi")
+    fun returnStaysInTextWithLargeFonts() = assertReturnFloatsAboveAllPlaybackControls(1.6f)
+
+    @Test @Config(qualifiers = "w720dp-h480dp-xxhdpi")
+    fun returnStaysInTextInLandscape() = assertReturnFloatsAboveAllPlaybackControls(1.3f)
+
     @Test fun returnChipAppearsAfterSeekAndNeverMovesTransport() {
         show()
         val before = bounds("transport")

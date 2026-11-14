@@ -1737,7 +1737,7 @@ export function PlayerBar({
  *  theo giọng; thêm nhãn người nói và câu đã nghe nhạt đi. Cùng thanh việc với màn đọc (SentenceMenu): bấm câu thì câu được chọn, giữ / bấm chuột
  *  phải một chữ thì sửa chữ ấy - sửa câu đang phát không phải rời màn này (soát a70). */
 function ReadAlong({ edit }: { edit?: SentenceEditing }) {
-  const { track, playing, queue } = usePlayer();
+  const { track, playing, queue, rate } = usePlayer();
   const source = useSource();
   const client = useQueryClient();
   const current = queue.find((chapter) => chapter.id === track?.chapterId);
@@ -1771,7 +1771,7 @@ function ReadAlong({ edit }: { edit?: SentenceEditing }) {
   }
   return (
     <MotionRegion as="div" className="relative flex h-full flex-col">
-      <div ref={container} onScroll={follow.onScroll} {...follow.input} className="reading-surface min-h-0 flex-1 overflow-y-auto px-[20px] py-8 sm:px-[32px]">
+      <div ref={container} onScroll={follow.onScroll} {...follow.input} className="reading-surface min-h-0 flex-1 overflow-y-auto px-[20px] pb-2 pt-8 sm:px-[32px]">
         <div className="measure mx-auto text-reading leading-[1.7]">
           {/* Chương giọng máy đọc chưa có mốc chỉ trong lúc chờ đoạn đầu - không phải S.s_copy_815d3b923a95. */}
           {!script.timed && current?.state !== "text" && (
@@ -1779,6 +1779,7 @@ function ReadAlong({ edit }: { edit?: SentenceEditing }) {
           )}
           <ReadAlongText
             script={script}
+            rate={rate}
             playingIndex={active}
             onTap={(index, word) => {
               if (canListen) listen(index, word);
@@ -1801,9 +1802,9 @@ function ReadAlong({ edit }: { edit?: SentenceEditing }) {
       {/* Mép trên mờ dần (cao bằng lề py-8): chữ cuộn lên không bị cắt ngang để lại chân chữ dưới thanh tab. */}
       <div aria-hidden="true" className="pointer-events-none absolute inset-x-0 top-0 h-8 bg-gradient-to-b from-[var(--read-bg)] from-40% to-transparent" />
       {/* Mép dưới mờ dần cùng cỡ (lề py-8 phía dưới chữ cuối nên hết chương thì không thấy): chữ không bị cắt ngang sát đáy khung. */}
-      <div aria-hidden="true" className="pointer-events-none absolute inset-x-0 bottom-12 h-6 bg-gradient-to-t from-[var(--read-bg)] from-40% to-transparent" />
-      <MotionRegion motionKey="floating" data-reading-dock className="flex h-12 shrink-0 flex-col items-center justify-center bg-[var(--read-bg)]">
-        <MotionPresence open={Boolean(menu.bar)} className="w-full px-3">{menu.bar}</MotionPresence>
+      <div aria-hidden="true" className="pointer-events-none absolute inset-x-0 bottom-0 h-6 bg-gradient-to-t from-[var(--read-bg)] from-40% to-transparent" />
+      <MotionRegion motionKey="floating" data-reading-dock className="pointer-events-none absolute inset-x-0 bottom-2 z-10 flex flex-col items-center justify-center">
+        <MotionPresence open={Boolean(menu.bar)} className="pointer-events-auto w-full px-3">{menu.bar}</MotionPresence>
         <MotionPresence open={!menu.bar && follow.showJump}><JumpToPlaying onClick={follow.jump} /></MotionPresence>
       </MotionRegion>
       {menu.dialogs}
