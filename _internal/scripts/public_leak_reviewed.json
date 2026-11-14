@@ -32,12 +32,12 @@
     "reason": "README.md: all flagged strings match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
   },
   "_internal/AGENTS.md": {
-    "sha256": "8a3afaca23a3684c1604c1efdc5bc685f130c13a2b8cbeff2a9be92c0bd671c6",
-    "reason": "_internal/AGENTS.md: reviewed technical workflow and test documentation, including exact per-shingle Corpus approval requirements.",
+    "sha256": "db51e66d79c8b5404f103f7660056809449432cf7df69348d2418b8f835c5619",
+    "reason": "_internal/AGENTS.md: 0.4.170 integration retains the repeat-alias/F4 technical invariants from 0.4.169 and the exact existing contextual shingle approval.",
     "corpus_review": {
       "classification": "i",
-      "file_sha256": "8a3afaca23a3684c1604c1efdc5bc685f130c13a2b8cbeff2a9be92c0bd671c6",
-      "reason": "_internal/AGENTS.md: Technical commentary or book-title metadata. Lead approved category (i) only; each hash was classified in round two.",
+      "file_sha256": "db51e66d79c8b5404f103f7660056809449432cf7df69348d2418b8f835c5619",
+      "reason": "_internal/AGENTS.md: 0.4.170 integration retains the repeat-alias/F4 technical invariants from 0.4.169 and the exact existing contextual shingle approval. Only the inherited individual shingle hashes remain approved as category i.",
       "shingles": [
         "278c69d8d369f37e"
       ]
@@ -157,8 +157,8 @@
     "reason": "abook/netconnect.py: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
   },
   "_internal/abook/pipeline.py": {
-    "sha256": "1705f67f5cd7a81d8d0fc1f9a210348f30a11a44d9ebae5d3fdeeccc2fbde33d",
-    "reason": "Pipeline path-validation docstring describing project containment before filesystem access. Re-pinned for 0.4.169: its added lines were reviewed as engineering text, no story or phoneme strings."
+    "sha256": "5827a3a2dbaa27406b7dabd32623d03a7563b88cf43fb77550be8d7d7dbb5185",
+    "reason": "_internal/abook/pipeline.py: 0.4.170 replaces the remaining repeat-alias comment example with original kitchen wording; no execution changes."
   },
   "_internal/abook/power_source.py": {
     "sha256": "7ed6a8547664643593390f2821fb2a0103f6ddb7a15eba5ef088f645b0862645",
@@ -354,12 +354,12 @@
     "reason": "abook/teller_voice.py: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
   },
   "_internal/abook/text_processing.py": {
-    "sha256": "31ad93250dcd656dbfb2662b1bc734d25074f806ff6c97e24c2c860fb2de8016",
-    "reason": "abook/text_processing.py: all flagged documentation matches scrubbed 0.4.167; the added NFC operation changes source normalization, with no new narrative strings.",
+    "sha256": "d1dcf19658877c5165c9ca6190bf1bb33b16a7a155ec33c5352f6d8fd052637a",
+    "reason": "_internal/abook/text_processing.py: 0.4.170 retains the repeat-alias algorithm and replaces three comment fragments with original wording; the existing generic shingle approval is unchanged.",
     "corpus_review": {
       "classification": "i",
-      "file_sha256": "31ad93250dcd656dbfb2662b1bc734d25074f806ff6c97e24c2c860fb2de8016",
-      "reason": "_internal/abook/text_processing.py: Short generic test/UI prose or literal bridge. Lead approved category (i) only; each hash was classified in round two.",
+      "file_sha256": "d1dcf19658877c5165c9ca6190bf1bb33b16a7a155ec33c5352f6d8fd052637a",
+      "reason": "_internal/abook/text_processing.py: 0.4.170 retains the repeat-alias algorithm and replaces three comment fragments with original wording; the existing generic shingle approval is unchanged. Only the inherited individual shingle hashes remain approved as category i.",
       "shingles": [
         "5b11cdc6770a15c1"
       ]
@@ -978,12 +978,12 @@
     "reason": "docs/BOUNDARY_6_AND_THE_DRIVER_MORNING.md: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
   },
   "_internal/docs/CHANGELOG.md": {
-    "sha256": "c01964f9356e6f45022fc34d53f2914a6d86828d56af437cf2667b6f490810c8",
-    "reason": "docs/CHANGELOG.md: all flagged strings match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data.",
+    "sha256": "a6196a4f28992e6476302a5dfb19b5c25eee4e26e5951fb24175d11fb80509d7",
+    "reason": "_internal/docs/CHANGELOG.md: 0.4.170 release notes describe source cleanup and scanner behavior, alongside the integrated 0.4.169 release notes; the existing technical shingle approval is unchanged.",
     "corpus_review": {
       "classification": "i",
-      "file_sha256": "c01964f9356e6f45022fc34d53f2914a6d86828d56af437cf2667b6f490810c8",
-      "reason": "_internal/docs/CHANGELOG.md: Technical commentary or book-title metadata. Lead approved category (i) only; each hash was classified in round two.",
+      "file_sha256": "a6196a4f28992e6476302a5dfb19b5c25eee4e26e5951fb24175d11fb80509d7",
+      "reason": "_internal/docs/CHANGELOG.md: 0.4.170 release notes describe source cleanup and scanner behavior, alongside the integrated 0.4.169 release notes; the existing technical shingle approval is unchanged. Only the inherited individual shingle hashes remain approved as category i.",
       "shingles": [
         "a427005770c2fa6d"
       ]
@@ -1205,8 +1205,8 @@
     "reason": "Production interruption instructions and continuity limits; operational guidance rather than book text."
   },
   "_internal/docs/TEST_REPORT.md": {
-    "sha256": "1d494403499755f0a6a1e93a0eaffbba6aaf2302daa5fb51a9722c7f17fbbd09",
-    "reason": "_internal/docs/TEST_REPORT.md: reviewed technical workflow and test documentation, including exact per-shingle Corpus approval requirements."
+    "sha256": "206cc22a90fe3e2cdee922b7596a35ba6f1056ed78f328a174af6111dbce6203",
+    "reason": "_internal/docs/TEST_REPORT.md: 0.4.170 integrates 0.4.169 results and records the source-cleanup validation requirements; engineering evidence only."
   },
   "_internal/docs/TEXT_NORMALIZATION.md": {
     "sha256": "06b3499d392b6f6a990b026d4f665b520ca3c9257ce452c57a5e7fa92e8ec94b",
@@ -1444,12 +1444,12 @@
     "reason": "mobile/android/app/src/main/java/vn/abook/player/SyncLink.kt: all flagged strings match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
   },
   "_internal/mobile/android/app/src/main/java/vn/abook/player/UiStrings.kt": {
-    "sha256": "9d6300ab84f70cb398fe1a73292cf7ba6bee8acd0cfe530676c86adfd61c9a5d",
-    "reason": "mobile/android/app/src/main/java/vn/abook/player/UiStrings.kt: all flagged strings match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data.",
+    "sha256": "a96d1c1a90c38f8246ca28e4f470613c5acf77ce3bd9c515e4dfd0c152c5e420",
+    "reason": "_internal/mobile/android/app/src/main/java/vn/abook/player/UiStrings.kt: 0.4.170 retains 0.4.169 UI capitalization and the removed duplicate empty-list string; exact prior contextual shingle approvals remain unchanged.",
     "corpus_review": {
       "classification": "i",
-      "file_sha256": "9d6300ab84f70cb398fe1a73292cf7ba6bee8acd0cfe530676c86adfd61c9a5d",
-      "reason": "_internal/mobile/android/app/src/main/java/vn/abook/player/UiStrings.kt: Short generic test/UI prose or literal bridge. Lead approved category (i) only; each hash was classified in round two.",
+      "file_sha256": "a96d1c1a90c38f8246ca28e4f470613c5acf77ce3bd9c515e4dfd0c152c5e420",
+      "reason": "_internal/mobile/android/app/src/main/java/vn/abook/player/UiStrings.kt: 0.4.170 retains 0.4.169 UI capitalization and the removed duplicate empty-list string; exact prior contextual shingle approvals remain unchanged. Only the inherited individual shingle hashes remain approved as category i.",
       "shingles": [
         "8316d21834562c14",
         "889707cc9e859359",
@@ -3655,8 +3655,8 @@
     "reason": "tests/test_a_pinned_person_outranks_a_ported_voice.py: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
   },
   "_internal/tests/test_a_polite_request_is_not_a_happiness_cue.py": {
-    "sha256": "dd28681c2382182e99461916fcb11d7cc9e1afb5f3fdf3b2ce6223d8eee29c01",
-    "reason": "tests/test_a_polite_request_is_not_a_happiness_cue.py: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
+    "sha256": "87c94e7f6f1a5aa3137d542f6e526c6e545ca3f29074cf6f40f78e7840da1c04",
+    "reason": "_internal/tests/test_a_polite_request_is_not_a_happiness_cue.py: 0.4.170 pins the exact original repair-counter example supplied by plsfix; the file is byte-identical to dev/plsfix and has no Corpus waiver."
   },
   "_internal/tests/test_a_project_can_be_renamed_or_deleted.py": {
     "sha256": "69b3c389fa9b6f3983a185fa5bb0a385c402a61fba6f13d3e796a0f4ba54c4cf",
@@ -5132,12 +5132,12 @@
     "reason": "ui/src/studio/liveRefresh.ts: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
   },
   "_internal/ui_strings/vi.json": {
-    "sha256": "b2864673310ab90187525e5452c50e91340c2e7290f44b07dae4fbe7f46a49a7",
-    "reason": "ui_strings/vi.json: all flagged strings match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data.",
+    "sha256": "5b84d7a0d87e9d60e906be291cdc6879d2ccf0696b7ba9d8d5a6ff85b6bd734c",
+    "reason": "_internal/ui_strings/vi.json: 0.4.170 retains 0.4.169 UI capitalization and the removed duplicate empty-list string; exact prior contextual shingle approvals remain unchanged.",
     "corpus_review": {
       "classification": "i",
-      "file_sha256": "b2864673310ab90187525e5452c50e91340c2e7290f44b07dae4fbe7f46a49a7",
-      "reason": "_internal/ui_strings/vi.json: Short generic test/UI prose or literal bridge. Lead approved category (i) only; each hash was classified in round two.",
+      "file_sha256": "5b84d7a0d87e9d60e906be291cdc6879d2ccf0696b7ba9d8d5a6ff85b6bd734c",
+      "reason": "_internal/ui_strings/vi.json: 0.4.170 retains 0.4.169 UI capitalization and the removed duplicate empty-list string; exact prior contextual shingle approvals remain unchanged. Only the inherited individual shingle hashes remain approved as category i.",
       "shingles": [
         "8316d21834562c14",
         "889707cc9e859359",

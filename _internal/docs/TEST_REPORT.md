@@ -2474,3 +2474,8 @@ from the design's existing 14,432-row snapshot, SHA-256
 These diagnostic constants never change gain, tempo or generation budgets.
 
 GPU A/B/C measurements are pending in the task's external `result.md`.
+
+
+## Integration 0.4.170 — 2026-11-14
+
+Integrated the six plsfix commits onto 0.4.169. Replaced the remaining repeat-alias comment examples with original wording. Corpus approvals retain the exact individually reviewed shingle sets; integration updates only technical instructions, UI capitalization and release notes. Full release gate and both leak scans are required on the final integration revision.
