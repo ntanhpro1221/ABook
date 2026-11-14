@@ -604,7 +604,7 @@ const Paragraph = memo(function Paragraph({
       {paragraph.items.map(({ index, segment, showSpeaker }) => (
         <span key={index}>
           {<Presence>{speakers && segment.speaker && showSpeaker && (
-            <SpeakerLabel speaker={segment.speaker} sentence={segment.text} />
+            <SpeakerLabel speaker={segment.speaker} sentence={segment.text} avatar={segment.avatar} />
           )}</Presence>}
           <span {...sentence(index, segment)}>
             {index === playing && litWords ? <LitWords text={segment.text} words={litWords} rate={rate} /> : segment.text}

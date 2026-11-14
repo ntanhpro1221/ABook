@@ -1,4 +1,5 @@
 import { S } from "../shared/strings.generated";
+import { PersonAvatar } from "@/shared/PersonAvatar";
 import { MoreInfo } from "@/shared/SettingsNav";
 import { MotionRegion } from "@/shared/MotionRegion";
 import { Fold } from "@/shared/Collapse";
@@ -320,6 +321,7 @@ export function VoicePicker({
             {group.voices.map((voice) => (
               <li key={voice.key} className={cn("flex items-center gap-3 rounded-cover px-2 py-2", voice.current ? "text-accent-text" : "hover:bg-hover")}>
                 <PreviewButton voice={voice} />
+                <PersonAvatar name={voice.key} voice size={32} />
                 {data.tryLine &&
                   tryVoice.button({ character: data.character.value, preset: voice.key }, voice.name, {
                     fallbackUrl: voice.preview ? urls.voice(voice.key) : undefined,

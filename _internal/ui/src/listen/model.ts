@@ -296,6 +296,7 @@ export interface NightSession {
 }
 
 export interface ScriptSegment {
+  avatar?: import("@/shared/avatar").AvatarRef;
   id: number;
   paragraph: number;
   text: string;
@@ -326,6 +327,7 @@ export interface Script {
 }
 
 export interface CastMember {
+  avatar?: import("@/shared/avatar").AvatarRef;
   name: string;
   displayName: string;
   /** Tên gốc khi người nghe đã "Đổi tên" (displayName là tên đã đổi) - chỉ có khi đã đổi. */

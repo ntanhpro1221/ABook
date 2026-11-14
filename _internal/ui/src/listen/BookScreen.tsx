@@ -12,6 +12,8 @@ import { memo, useId, Fragment, useEffect, useLayoutEffect, useMemo, useRef, use
 import { useNavigate, useParams, useSearchParams } from "react-router";
 import { toast } from "@/shared/toast";
 import { BookCover } from "@/shared/BookCover";
+import { PersonAvatar } from "@/shared/PersonAvatar";
+import { AvatarEditor } from "@/studio/AvatarEditor";
 import { cn } from "@/shared/cn";
 import { SCREEN_TITLE, ScreenHeader } from "@/shared/ScreenHeader";
 import { syncsToComputer } from "@/shared/capabilities";
@@ -408,23 +410,10 @@ export function PersonRow({
   const name = cleanName(person.displayName);
   // "Gộp vào người khác…" nằm trong menu "…" của người (chữ hiện sẵn) - nút chỉ-biểu-tượng cạnh các nút khác không ai đoán được.
   const canMerge = Boolean(onMerge) && person.lines > 0;
-  const initials = name
-    .split(/\s+/)
-    .filter((word) => !/^[IVXLCDM]+$/.test(word))
-    .slice(0, 2)
-    .map((word) => word[0])
-    .join("")
-    .toUpperCase();
   return (
     // min-w-0: ô lưới mặc định không co dưới chiều rộng nội dung - tên dài từng đẩy "Đổi giọng" ra ngoài màn 375px.
     <MotionRegion as="div" className="flex min-w-0 items-center gap-3 py-3">
-      <div
-        className="avatar grid size-10 shrink-0 place-items-center rounded-full text-sm font-bold"
-        style={{ ["--hue" as string]: hueOf(person.voice?.preset ?? person.name) }}
-        aria-hidden
-      >
-        {initials}
-      </div>
+      {onPickVoice ? <AvatarEditor bookId={bookId} person={person} /> : <PersonAvatar name={person.name} avatar={person.avatar} bookId={bookId} />}
       <div className="min-w-0 flex-1">
         <div className="flex items-baseline gap-2">
           {/* Tên và giọng xuống dòng thay vì cắt: "Thanh Bình · trầm hẳn" cắt giữa chừng là mất đúng chữ người nghe cần (soát UX a8). */}

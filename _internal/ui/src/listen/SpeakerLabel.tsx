@@ -1,9 +1,11 @@
 import { useLayoutEffect, useRef } from "react";
+import { PersonAvatar } from "@/shared/PersonAvatar";
+import type { AvatarRef } from "@/shared/avatar";
 
 let context: CanvasRenderingContext2D | null | undefined;
 
 /** Cùng 6 px giữa mực cuối tên và glyph mở câu, kể cả tên kết bằng ư hay ê và câu mở bằng dấu ngoặc. */
-export function SpeakerLabel({ speaker, sentence }: { speaker: string; sentence: string }) {
+export function SpeakerLabel({ speaker, sentence, avatar, bookId }: { speaker: string; sentence: string; avatar?: AvatarRef; bookId?: string }) {
   const label = useRef<HTMLSpanElement>(null);
   useLayoutEffect(() => {
     const element = label.current;
@@ -28,5 +30,5 @@ export function SpeakerLabel({ speaker, sentence }: { speaker: string; sentence:
     window.addEventListener("resize", measure);
     return () => { active = false; document.fonts?.removeEventListener("loadingdone", measure); window.removeEventListener("resize", measure); };
   }, [speaker, sentence]);
-  return <span ref={label} className="mr-[8px] inline-block text-xs font-medium text-fg-2">{speaker}</span>;
+  return <span ref={label} className="mr-[8px] inline-block text-xs font-medium text-fg-2"><PersonAvatar name={speaker} avatar={avatar} bookId={bookId} size={20} className="mr-1 align-middle" />{speaker}</span>;
 }

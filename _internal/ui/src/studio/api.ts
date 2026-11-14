@@ -135,6 +135,7 @@ export interface VoiceProfile {
 }
 
 export interface CastMember {
+  avatar?: import("@/shared/avatar").AvatarRef;
   name: string;
   displayName: string;
   gender: string;

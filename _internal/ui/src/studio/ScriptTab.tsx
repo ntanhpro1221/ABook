@@ -14,6 +14,7 @@ import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, 
 import { useSearchParams } from "react-router";
 import { toast } from "@/shared/toast";
 import { hueOf } from "@/listen/BookScreen";
+import { AvatarBook, PersonAvatar } from "@/shared/PersonAvatar";
 import { useClip } from "@/listen/clip";
 import { cn } from "@/shared/cn";
 import { formatNumber } from "@/shared/format";
@@ -32,6 +33,7 @@ import { useFadeScroller } from "@/shared/scrollFade";
 // chương, câu đã thu thì thu lại), nên không có gì phải chờ; mỗi lần sửa hay xác nhận là một nhãn cho vòng học.
 
 export interface Person {
+  avatar?: import("@/shared/avatar").AvatarRef;
   value: string;
   label: string;
   lines: number;
@@ -820,7 +822,7 @@ export function SpeakerMenu({
   const everyone = [...script.cast, ...script.others];
   const suggested = line.hint?.suggest ? everyone.find((person) => person.value === line.hint?.suggest) : undefined;
   const found = query.trim() ? everyone.filter((person) => fold(person.label).includes(fold(query.trim()))).slice(0, 8) : [];
-  const item = (person: Person, hotkey?: number) => {
+  const item = (person: Person, _hotkey?: number) => {
     const current = person.value === line.current;
     return (
       <button
@@ -829,9 +831,7 @@ export function SpeakerMenu({
         onClick={() => onPick(person)}
         className="flex h-9 w-full items-center gap-2 rounded-control px-2 text-left text-sm hover:bg-hover focus-visible:bg-hover focus-visible:outline-none pointer-coarse:h-11"
       >
-        <span className="avatar grid size-6 shrink-0 place-items-center rounded-full text-caption font-bold" style={hue(person.label)} aria-hidden>
-          {hotkey ?? person.label.slice(0, 1).toUpperCase()}
-        </span>
+        <PersonAvatar name={person.value} avatar={person.avatar} size={24} />
         <span className="min-w-0 flex-1 truncate">
           {current ? S.s_dung_la_0_32e8685a(person.label) : person.label}
         </span>
@@ -935,6 +935,7 @@ function SpeakerChip({
       className="avatar inline-flex h-7 max-w-full items-center gap-1 rounded-full px-3 text-body-small font-medium transition-[filter] hover:brightness-95 disabled:cursor-default disabled:hover:brightness-100"
       style={hue(shown)}
     >
+      <PersonAvatar name={line.current || shown} avatar={[...script.cast, ...script.others].find((person) => person.value === line.current)?.avatar} size={22} />
       <span className="truncate">{shown}</span>
       <Icon className={cn("size-3.5 shrink-0", line.wish?.state === "applied" && "text-success")} strokeWidth={2.25} />
     </button>
@@ -1702,7 +1703,7 @@ export function ScriptTab({ bookId }: { bookId: string }) {
       ]
     : [];
   return (
-    <MotionRegion as="div" className="mt-5" motionKey={[filter, who, chapterId, Boolean(data), data?.castReady]}>
+    <AvatarBook.Provider value={bookId}><MotionRegion as="div" className="mt-5" motionKey={[filter, who, chapterId, Boolean(data), data?.castReady]}>
       <p className="max-w-3xl text-sm text-fg-2">{S.s_bam_ten_de_doi_nguoi_noi_dau_vang_la_cau_c_bf16b47d}</p>
       <MotionPresence open={Boolean(data && data.lines.length > 0 && !data.lines.some((line) => line.hasAudio))}>
         <p className="mt-1 max-w-3xl text-sm text-fg-2">{S.s_thu_xong_chuong_se_nghe_lai_duoc_tung_cau_f8926561}</p>
@@ -1763,7 +1764,7 @@ export function ScriptTab({ bookId }: { bookId: string }) {
       {data && (people.length > 0 || unnamed > 0) && (
         <MotionRegion motionKey={[...people.map((person) => person.value), unnamed > 0]} className="-ml-1 flex flex-wrap items-center gap-1" role="group" aria-label={S.s_nguoi_noi_trong_chuong_bam_de_chi_xem_cau_b5f0aad7}>
           {[...people.map((person, index) => ({ person, badge: index < HOTKEYS ? String(index + 1) : "" })), ...(unnamed > 0 ? [{ person: { value: UNNAMED, label: S.s_chua_ro_be464a5a, lines: unnamed }, badge: "?" }] : [])].map(
-            ({ person, badge }) => (
+            ({ person }) => (
               <button
                 key={person.value}
                 type="button"
@@ -1776,9 +1777,7 @@ export function ScriptTab({ bookId }: { bookId: string }) {
                   who && who !== person.value && "opacity-50",
                 )}
               >
-                <span className="avatar grid size-6 place-items-center rounded-full text-caption font-bold" style={hue(person.label)} aria-hidden>
-                  {badge}
-                </span>
+                <PersonAvatar name={person.value} avatar={"avatar" in person ? person.avatar : undefined} size={24} />
                 {person.label}
                 <span className="text-fg-3">{formatNumber(person.lines)}</span>
               </button>
@@ -1836,6 +1835,6 @@ export function ScriptTab({ bookId }: { bookId: string }) {
           <ChapterFooter bookId={bookId} script={data} onNext={() => go(data.next)} onUndoable={undo.push} />
         </>
       )}
-    </MotionRegion>
+    </MotionRegion></AvatarBook.Provider>
   );
 }

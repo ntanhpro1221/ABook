@@ -96,6 +96,7 @@ import { READINGS_CHANGED_EVENT, type ReadAloudVoice, type ReadingsChanged } fro
 import { chapterScriptQuery, useWarmVoice, useChapterScript, useListenBook, useListenLibrary, useLastNight, useReadAloudVoices, useSource, useChosenVoice } from "./source";
 import { crossedSeekMark, feedback, withFeedback } from "@/shared/feedback";
 import { useFadeScroller } from "@/shared/scrollFade";
+import { AvatarBook } from "@/shared/PersonAvatar";
 
 export function speedLabel(rate: number): string {
   return `${formatNumber(VALUE_SPECS.speed, rate)}×`;
@@ -1778,7 +1779,7 @@ function ReadAlong({ edit }: { edit?: SentenceEditing }) {
           {!script.timed && current?.state !== "text" && (
             <p className="mb-5 py-3 text-sm text-fg-2">{S.s_chuong_nay_chua_co_audio_hoan_chinh_dang_h_15f33c5e}</p>
           )}
-          <ReadAlongText
+          <AvatarBook.Provider value={track?.bookId ?? ""}><ReadAlongText
             script={script}
             rate={rate}
             playingIndex={active}
@@ -1795,7 +1796,7 @@ function ReadAlong({ edit }: { edit?: SentenceEditing }) {
             dimHeard
             headingClassName="pb-2 text-2xl font-bold leading-snug tracking-tight"
             className="space-y-5"
-          />
+          /></AvatarBook.Provider>
         </div>
       </div>
       {/* Thanh việc của câu / nút S.s_toi_cau_dang_nghe_4526cf38 hiện / ẩn dần (MotionPresence). Vùng con có khoá cố định: chúng không làm vùng của cả bài

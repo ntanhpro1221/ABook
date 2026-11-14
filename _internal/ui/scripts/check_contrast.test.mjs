@@ -68,8 +68,9 @@ it("không thành phần nào vòng qua token: không màu thô trong className 
     }
   };
   walk(root);
-  // Ảnh bìa vẽ (cover.ts: bảng màu bìa, canvas) và ô vẽ bìa đã cắt (EditBook) là nghệ thuật, không phải vỏ app.
-  const art = /\/(shared\/cover|listen\/EditBook)\.tsx?$/;
+  // Ảnh bìa vẽ (cover.ts: bảng màu bìa, canvas) và ô vẽ bìa đã cắt (EditBook) là nghệ thuật, không phải vỏ app. Chân dung hoạ
+  // tiết của nhân vật (avatar.ts, PersonAvatar) cũng vậy: sáu màu chung với abook/avatars.py, Qt và Android, chữ trắng trên đó.
+  const art = /\/(shared\/cover|listen\/EditBook|shared\/avatar|shared\/PersonAvatar)\.tsx?$/;
   const palette = /\b(?:text|bg|border|ring|fill|stroke|from|to|via|outline|divide|decoration|shadow)-(?:white|black|slate|gray|zinc|neutral|stone|red|orange|amber|yellow|lime|green|emerald|teal|cyan|sky|blue|indigo|violet|purple|fuchsia|pink|rose)\b/;
   const literal = /#[\da-f]{6}\b|rgba?\((?!0, 0, 0, 0\))/i;
   const offenders = [];
