@@ -7,6 +7,11 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+## [0.4.170] - 2026-11-14
+
+- Gỡ các ví dụ và dữ liệu kiểm thử chép chữ truyện khỏi mã nguồn công khai, thay bằng câu tự viết và giữ nguyên mục đích kiểm thử.
+- Máy quét mã nguồn công khai chỉ đối chiếu phần lời truyện thật, lọc các cụm phổ biến theo số truyện khác nhau và khóa từng cụm trùng đã được duyệt vào đúng nội dung tệp.
+
 ## [0.4.169] - 2026-11-14
 
 - Studio repairs VieNeu lines where the speech check hears the same phrase twice: the line is recorded again in parts split at its own punctuation, keeping the text and chosen readings unchanged. Takes with repeated content are no longer accepted as exceptions.
