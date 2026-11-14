@@ -6097,7 +6097,7 @@ class BookPipeline:
             pronunciation_delivery_variant,
         )
         if split_strategy == REPEAT_ALIAS_SPLIT_STRATEGY:
-            # Không có sàn 100 ký tự: "Đấm hắn! ×3" có 24. Nhưng câu <= 2 từ thì không bao giờ
+            # Không có sàn 100 ký tự: "Tắt bếp! ×3" có 24. Nhưng câu <= 2 từ thì không bao giờ
             # (bất biến AGENTS), và mảnh nối lại phải đúng từng ký tự (kiểm ngay dưới).
             if repeat_ngram is None or is_short_utterance(text):
                 raise AudioQualityError("repeat-alias split needs its phrase and a non-short line")

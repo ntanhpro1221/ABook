@@ -711,8 +711,8 @@ def split_text_for_strategy(text: str, strategy: str) -> tuple[list[str], int]:
 
 # Tách "alias" (repeat_design.md, F1): VieNeu không có căn chỉnh tường minh, nên hai bản giống hệt
 # nhau của một cụm trong cùng một prompt là hai đích attention nó không phân biệt được. Đọc xong
-# lần sau, con trỏ ngầm nhảy về sau lần trước và đọc lại đoạn giữa ("Đấm hắn! ×3" ra ×4, "là đồ
-# bơi, là đồ bơi" ra ×4) - ở MỌI hạt giống (Hello 1915 6/6, 2153 6/6), nên vòng hạt mới không cứu
+# lần sau, con trỏ ngầm nhảy về sau lần trước và đọc lại đoạn giữa ("Tắt bếp! ×3" ra ×4, "trời
+# mưa, trời mưa" ra ×4) - ở MỌI hạt giống (Hello 1915 6/6, 2153 6/6), nên vòng hạt mới không cứu
 # được. Tách văn bản ở dấu câu giữa hai lần xuất hiện để không lần gọi nào thấy hai bản. Chỉ cắt
 # văn bản, không đổi một ký tự (`" ".join(pieces) == text`), không cắt audio.
 REPEAT_ALIAS_SPLIT_STRATEGY = "repeat_alias_v1"
@@ -770,7 +770,7 @@ def repeated_alias_phrase(text: str, ngram: str | None = None) -> list[str] | No
     """Cụm (đã gộp thanh) dài nhất, 2-6 từ, xuất hiện >= 2 lần không chồng nhau trong `text`.
 
     Có `ngram` (cụm ASR nghe lặp, `repeated_content.ngram`) thì cụm phải nằm trong nó: ASR nghe
-    "một mình ngắm pháo hoa" còn cụm lặp của văn bản là "một mình". Bằng nhau về độ dài thì lấy
+    "một lần nữa đi về" còn cụm lặp của văn bản là "một lần". Bằng nhau về độ dài thì lấy
     cụm xuất hiện sớm nhất. Không có thì None.
     """
     folded = [word for word, _start, _end in _repeat_alias_words(text)]
