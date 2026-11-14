@@ -182,13 +182,37 @@ private fun SpeakerAnswers(item: WorkItem, state: StudioProjectState, sheets: Sh
     var scope by rememberSaveable(item.key) { mutableStateOf(WorkScope.Alternate) }
     val left = remember(item.key) { mutableStateOf(emptySet<String>()) }
     val lines = item.lines.orEmpty()
-    val picked: List<LineRef>? = if (item.pick) WorkLogic.pickedLines(lines, left.value) else null
+    var rangeOpen by rememberSaveable(item.key, item.contextLines) { mutableStateOf(false) }
+    var rangeIds by remember(item.key, item.contextLines) { mutableStateOf(lines.map { it.stableId }.toSet()) }
+    val rangeLines = item.contextLines.filter { it.stableId in rangeIds }
+    val picked: List<LineRef>? = if (rangeOpen) rangeLines else if (item.pick) WorkLogic.pickedLines(lines, left.value) else null
     val none = (picked ?: lines).isEmpty()
     val choices = item.choices.orEmpty()
     val shown = choices.filterIndexed { index, choice -> index < SHOWN_CHOICES || choice.label in GENERIC_PEOPLE }
     val more = choices.filter { it !in shown }
     fun pick(speaker: String, gender: String? = null) = work.decide(WorkDecisions.speaker(item, speaker, scope, picked, gender))
 
+    Reveal(item.contextLines.isNotEmpty()) {
+        TextAction(S.s_voice_range, { rangeOpen = !rangeOpen }, "studio_voice_range", align = Alignment.CenterStart)
+    }
+    Reveal(rangeOpen) {
+        Column {
+            Caption(S.s_voice_range_note)
+            Caption(S.s_voice_range_window)
+            SideBySide {
+                QuietButton(WorkText.PICK_ALL, { rangeIds = item.contextLines.map { it.stableId }.toSet() }, "studio_range_all", Modifier.weight(1f))
+                QuietButton(WorkText.PICK_NONE, { rangeIds = emptySet() }, "studio_range_none", Modifier.weight(1f))
+            }
+            Caption(WorkLogic.pickNote(rangeLines.size, item.contextLines.size))
+            for (example in item.contextExamples) {
+                Caption(example.speaker)
+                Reveal(example.before.isNotEmpty()) { Caption(example.before) }
+                PickRow(example.text, example.chapterTitle, example.stableId in rangeIds, { rangeIds = WorkLogic.toggleLine(rangeIds, example.stableId) }, "studio_range_${example.segmentId}")
+                Reveal(example.after.isNotEmpty()) { Caption(example.after) }
+            }
+        }
+    }
+    Reveal(item.kind == WorkKind.Collective) { Caption(S.s_voice_collective_note) }
     if (item.allLines != null && item.lines != null) {
         val options = scopeOptions(item)
         RowHint(WorkText.SCOPE_LEAD)
@@ -218,9 +242,9 @@ private fun SpeakerAnswers(item: WorkItem, state: StudioProjectState, sheets: Sh
             }
         }
     }
-    item.currentValue?.let { current -> AnswerButton(WorkText.keepName(item), { pick(current) }, "studio_keep", enabled = !none) }
+    item.currentValue?.takeIf { item.kind != WorkKind.Collective }?.let { current -> AnswerButton(WorkText.keepName(item), { pick(current) }, "studio_keep", enabled = !none) }
     item.newPerson?.let { name -> AnswerButton(item.newPersonLabel ?: S.s_tao_nhan_vat_18e9a09a, { pick(name, "unknown") }, "studio_new_person", enabled = !none) }
-    Reveal(item.keepGroups.isNotEmpty()) { AnswerButton(item.keepLabel ?: S.s_giu_nguyen_1b550a12, { WorkDecisions.keepAll(item)?.let(work::decide) }, "studio_keep_all") }
+    Reveal(item.keepGroups.isNotEmpty()) { AnswerButton(item.keepLabel ?: S.s_giu_nguyen_1b550a12, { WorkDecisions.keepAll(item, picked ?: lines)?.let(work::decide) }, "studio_keep_all", enabled = !none) }
     Reveal(item.kind != WorkKind.Alias) {
         TextAction(if (item.suggestedName.isNotEmpty()) S.s_dat_ten_519d84a1 else WorkText.OTHER_PERSON, { sheets.show { dismiss -> OtherPersonSheet(more, none, item.suggestedName) { speaker, gender -> dismiss(); pick(speaker, gender) } } }, "studio_other", align = Alignment.CenterStart)
     }

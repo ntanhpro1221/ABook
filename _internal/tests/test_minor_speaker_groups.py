@@ -6,6 +6,18 @@ tác, làm tiếp và thu lại đi đúng đường cũ.
 """
 from __future__ import annotations
 
+
+def test_collective_speech_offers_one_identity_or_preserves_individual_roles(tmp_path):
+    from tests.test_voice_review_range import review_book, card
+    from abook.webui.work_items import work_items
+    project = review_book(tmp_path, 'Cả nhóm đồng thanh đáp.')
+    item = card(project, 'collective')
+    assert item['lines'] == [{'stableId': 'b', 'textSha256': 'sha-b'}]
+    assert item['newPersonLabel'] == 'Cùng một nhóm' and item['keepLabel'] == 'Giữ riêng'
+    assert len(item['keepGroups']) > 1 and item['choices']
+    assert item['currentValue'] in {choice['value'] for choice in item['choices']}
+    assert not any(x['kind'] == 'caller' for x in work_items(project)['items'])
+
 import json
 import sqlite3
 import time

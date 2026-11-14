@@ -9,6 +9,7 @@ import org.json.JSONObject
 enum class WorkKind(val key: String, val label: String) {
     Speaker("speaker", S.s_ai_noi_cau_nay_0e00a5c7),
     Caller("caller", S.s_nguoi_goi_ngoai_khung_03677986),
+    Collective("collective", S.s_voice_collective),
     Turn("turn", S.s_luot_doi_dap_a2c055e0),
     Pronunciation("pronunciation", S.s_cach_doc_ten_1c46e75d),
     Gender("gender", S.s_nam_hay_nu_0167dbc6),
@@ -145,6 +146,8 @@ data class WorkItem(
     val newPersonLabel: String?,
     val suggestedName: String = "",
     val narratorSection: NarratorSection?,
+    val contextLines: List<LineRef> = emptyList(),
+    val contextExamples: List<WorkExample> = emptyList(),
 )
 
 /** Lời đáp của `GET /api/books/<id>/work`. */
@@ -245,6 +248,8 @@ internal object StudioWorkJson {
             newPersonLabel = json.textOrNull("newPersonLabel")?.takeIf { it.isNotEmpty() },
             suggestedName = json.optString("suggestedName"),
             narratorSection = json.optJSONObject("narratorSection")?.let(::narrator),
+            contextLines = lines(json.optJSONArray("contextLines")),
+            contextExamples = json.optJSONArray("contextExamples").objects().map(::example),
         )
     }
 

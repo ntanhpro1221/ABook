@@ -20,7 +20,18 @@ Column {
     signal openScript(int chapterId, string stableId, bool pick)
     signal pickVoice(var person)
 
-    readonly property var lines: picked ? picked : (scope === "all" && item.allLines ? item.allLines : item.lines)
+    property bool rangeOpen: false
+    property var rangeIds: ({})
+    readonly property var rangeLines: (item.contextLines || []).filter(function(line) { return root.rangeIds[line.stableId] === true })
+    readonly property var lines: rangeOpen ? rangeLines : picked ? picked : (scope === "all" && item.allLines ? item.allLines : item.lines)
+    function resetRange() {
+        const ids = {}
+        for (const line of item.lines || []) ids[line.stableId] = true
+        rangeIds = ids
+    }
+    readonly property string rangeSignature: JSON.stringify([item.lines, item.contextLines])
+    onRangeSignatureChanged: { rangeOpen = false; resetRange() }
+    Component.onCompleted: resetRange()
     readonly property bool none: !lines || lines.length === 0
     readonly property var shown: W.shownChoices(item)
     readonly property var more: W.moreChoices(item)
@@ -35,7 +46,7 @@ Column {
     function keepAll() {
         if (busy) return
         busy = true
-        work.keepAllSpeakers(item, W.keepRequests(item), function() { root.busy = false })
+        work.keepAllSpeakers(item, W.keepRequests(item, lines), function() { root.busy = false })
     }
     onCreatingChanged: if (creating) Later.call(root, function() { nameField.forceActiveFocus() })
 
@@ -78,6 +89,77 @@ Column {
             }
         }
     }
+    Button {
+        objectName: "voiceRange"
+        Reveal { shown: Boolean(root.item.contextLines) }
+        size: "sm"
+        kind: "ghost"
+        text: S.s_voice_range
+        Accessible.description: root.rangeOpen ? S.s_dang_mo_98235c77 : S.s_dang_dong_4886d4e7
+        onClicked: root.rangeOpen = !root.rangeOpen
+    }
+    Collapse {
+        objectName: "voiceRangeBody"
+        width: parent.width
+        open: root.rangeOpen
+        Column {
+            width: parent.width
+            spacing: 8
+            Text { width: parent.width; text: S.s_voice_range_note; wrapMode: Text.Wrap; color: Theme.text2; font.pixelSize: Theme.sizeCaption }
+            Text { width: parent.width; text: S.s_voice_range_window; wrapMode: Text.Wrap; color: Theme.text2; font.pixelSize: Theme.sizeCaption }
+            Flow {
+                width: parent.width
+                spacing: 8
+                Button {
+                    objectName: "voiceRangeAll"
+                    size: "sm"
+                    kind: "ghost"
+                    text: S.s_chon_het_9e8a7c2c
+                    enabled: !root.busy
+                    onClicked: {
+                        const ids = {}
+                        for (const line of root.item.contextLines || []) ids[line.stableId] = true
+                        root.rangeIds = ids
+                    }
+                }
+                Button {
+                    objectName: "voiceRangeNone"
+                    size: "sm"
+                    kind: "ghost"
+                    text: S.s_bo_het_502895ca
+                    enabled: !root.busy
+                    onClicked: root.rangeIds = ({})
+                }
+            }
+            Text { text: W.pickNote(root.rangeLines.length, (root.item.contextLines || []).length); color: Theme.text2; font.pixelSize: Theme.sizeCaption }
+            Repeater {
+                model: root.item.contextExamples || []
+                delegate: WorkExample {
+                    required property var modelData
+                    required property int index
+                    objectName: "voiceRangeExample_" + index
+                    width: parent.width
+                    work: root.work
+                    example: modelData
+                    picks: true
+                    picked: root.rangeIds[modelData.stableId] === true
+                    onPickToggled: {
+                        const ids = Object.assign({}, root.rangeIds)
+                        ids[modelData.stableId] = !ids[modelData.stableId]
+                        root.rangeIds = ids
+                    }
+                }
+            }
+        }
+    }
+    Text {
+        Reveal { shown: root.item.kind === "collective" }
+        width: parent.width
+        text: S.s_voice_collective_note
+        wrapMode: Text.Wrap
+        color: Theme.text2
+        font.pixelSize: Theme.sizeCaption
+    }
     Flow {
         id: chips
         objectName: "workChips"
@@ -96,9 +178,9 @@ Column {
         }
         DecisionButton {
             objectName: "speakerKeep"
-            Reveal { shown: Boolean(root.item.currentValue) }
+            Reveal { shown: Boolean(root.item.currentValue) && root.item.kind !== "collective" }
             text: W.keepButtonLabel(root.item)
-            enabled: !root.busy
+            enabled: !root.busy && !root.none
             onClicked: root.choose({speaker: root.item.currentValue})
         }
         // Vai phụ ngôi ba (lính gác) không phải ai trong danh sách - cả nhóm có thể là MỘT người mới, có giọng riêng
@@ -113,7 +195,7 @@ Column {
             objectName: "speakerKeepGroups"
             Reveal { shown: Boolean(root.item.keepGroups) && root.item.keepGroups.length > 0 }
             text: root.item.keepLabel || S.s_giu_nguyen_1b550a12
-            enabled: !root.busy
+            enabled: !root.busy && !root.none
             onClicked: root.keepAll()
         }
         Button {

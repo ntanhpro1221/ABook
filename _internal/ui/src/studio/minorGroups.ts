@@ -16,6 +16,7 @@ export interface SpeakerRequest {
 export interface KeepableItem {
   lines?: LineRef[];
   currentValue?: string;
+  contextLines?: LineRef[];
   /** Thẻ nhóm: mỗi vai giữ người của nó - một yêu cầu cho mỗi vai. */
   keepGroups?: SpeakerRequest[];
 }
@@ -35,8 +36,12 @@ export function toggleLine(left: ReadonlySet<string>, stableId: string): Set<str
 
 /** "Giữ nguyên" một thẻ là những yêu cầu nào: thẻ thường giữ người đang nói cho mọi câu; thẻ nhóm giữ người của từng vai.
  *  Thẻ không giữ được (không có người đang nói) thì rỗng. */
-export function keepRequests(item: KeepableItem): SpeakerRequest[] {
-  if (item.keepGroups?.length) return item.keepGroups.filter((group) => group.lines.length > 0);
+export function keepRequests(item: KeepableItem, selected?: LineRef[]): SpeakerRequest[] {
+  if (item.keepGroups?.length) {
+    const scope = selected ?? (item.contextLines ? item.lines : undefined);
+    const ids = scope && new Set(scope.map((line) => line.stableId));
+    return item.keepGroups.map((group) => ({ ...group, lines: ids ? group.lines.filter((line) => ids.has(line.stableId)) : group.lines })).filter((group) => group.lines.length > 0);
+  }
   if (item.lines?.length && item.currentValue) return [{ lines: item.lines, speaker: item.currentValue }];
   return [];
 }

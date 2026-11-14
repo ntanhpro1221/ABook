@@ -160,8 +160,11 @@ object WorkLogic {
     // ---- thẻ nhóm (minorGroups.ts) ----
 
     /** "Giữ nguyên" một thẻ là những yêu cầu nào: thẻ nhóm giữ người của từng vai; thẻ thường giữ người đang nói cho mọi câu; không giữ được thì rỗng. */
-    fun keepRequests(item: WorkItem): List<SpeakerRequest> {
-        if (item.keepGroups.isNotEmpty()) return item.keepGroups.filter { it.lines.isNotEmpty() }
+    fun keepRequests(item: WorkItem, selected: List<LineRef>? = null): List<SpeakerRequest> {
+        if (item.keepGroups.isNotEmpty()) {
+            val ids = (selected ?: item.lines.takeIf { item.contextLines.isNotEmpty() })?.map { it.stableId }?.toSet()
+            return item.keepGroups.map { group -> group.copy(lines = if (ids == null) group.lines else group.lines.filter { it.stableId in ids }) }.filter { it.lines.isNotEmpty() }
+        }
         val lines = item.lines
         val current = item.currentValue
         if (!lines.isNullOrEmpty() && current != null && current.isNotEmpty()) return listOf(SpeakerRequest(lines, current))
@@ -259,8 +262,8 @@ object WorkDecisions {
     }
 
     /** "Giữ nguyên" của thẻ nhóm: mỗi vai giữ người của nó, một yêu cầu cho mỗi vai (`keepAll`). Rỗng nếu thẻ không giữ được. */
-    fun keepAll(item: WorkItem): WorkDecision? {
-        val requests = WorkLogic.keepRequests(item)
+    fun keepAll(item: WorkItem, selected: List<LineRef>? = null): WorkDecision? {
+        val requests = WorkLogic.keepRequests(item, selected)
         if (requests.isEmpty()) return null
         val steps = requests.map { request ->
             WorkStep("speaker", JSONObject().put("lines", array(request.lines)).put("speaker", request.speaker).put("seen", WorkLogic.seenFor(request.lines, item.seen)))

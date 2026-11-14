@@ -5,6 +5,23 @@ chức danh, tên trần ở rìa một câu giữa lời thoại, tên sau ti�
 """
 from __future__ import annotations
 
+
+def test_remote_channel_does_not_treat_named_addressees_or_dialogue_mentions_as_evidence(tmp_path):
+    from tests.test_voice_review_range import review_book
+    from abook.webui.work_items import work_items
+    import sqlite3
+    project = review_book(tmp_path, 'Mai gọi tên Lan rồi ra sân.')
+    with sqlite3.connect(project / 'project.sqlite3') as db:
+        db.execute("UPDATE segments SET text='Lan, điện thoại của bạn nằm trên bàn.' WHERE id=2")
+    assert not any(item['kind'] == 'caller' for item in work_items(project)['items'])
+
+
+def test_loudspeaker_in_the_room_offers_channel_review_without_a_person_guess(tmp_path):
+    from tests.test_voice_review_range import review_book, card
+    item = card(review_book(tmp_path, 'Tiếng nói từ loa trong phòng vang tới.'))
+    assert item['suggested'] is False
+    assert item['lines'] == [{'stableId': 'b', 'textSha256': 'sha-b'}]
+
 from pathlib import Path
 
 import pytest

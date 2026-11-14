@@ -63,6 +63,33 @@ class StudioWorkScreenTest {
 
     // ---- Việc cần duyệt ----
 
+    @Test fun voiceRangeStartsWithOneLineAndOnlyKeepsChosenSameGroupLines() {
+        val json = org.json.JSONObject(java.io.File("../../../tests/fixtures/voice_review/contract.json").readText())
+        val item = StudioWorkJson.item(json)!!
+        source.workView = WorkView(listOf(item), emptyMap())
+        project(StudioTab.Work)
+        assertTrue(source.writes.isEmpty())
+        tag("studio_voice_range").performScrollTo().performClick()
+        tag("studio_range_3").performScrollTo().performClick()
+        tag("studio_new_person").performScrollTo().performClick()
+        rule.waitForIdle()
+        tag("studio_undo_text").assertTextEquals("Đã ghi: 2 câu này của Nhóm chương 1 câu 2")
+        assertTrue(source.writes.isEmpty())
+    }
+
+    @Test fun voiceRangeCanExplicitlySelectAllAndRemoveAnException() {
+        val json = org.json.JSONObject(java.io.File("../../../tests/fixtures/voice_review/contract.json").readText())
+        source.workView = WorkView(listOf(StudioWorkJson.item(json)!!), emptyMap())
+        project(StudioTab.Work)
+        tag("studio_voice_range").performScrollTo().performClick()
+        tag("studio_range_all").performScrollTo().performClick()
+        tag("studio_range_2").performScrollTo().performClick()
+        tag("studio_new_person").performScrollTo().performClick()
+        rule.waitForIdle()
+        tag("studio_undo_text").assertTextEquals("Đã ghi: 2 câu này của Nhóm chương 1 câu 2")
+        assertTrue(source.writes.isEmpty())
+    }
+
     @Test fun chapterRoleSuggestsANameAndGenderForAllItsLines() {
         source.workView = WorkView(listOf(speakerCard().copy(kind = WorkKind.Unnamed,
             suggestedName = "Người gác chương 1", lines = listOf(lineRef("a"), lineRef("b")))), emptyMap())

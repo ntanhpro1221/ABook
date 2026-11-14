@@ -7,10 +7,11 @@
 // nhóm, bộ lọc, phân trang, "Giữ cả nhóm", tiêu điểm sau khi quyết. Chữ chép từng chữ của bản web; ở đây không có gì dính tới giao diện.
 
 // Thứ tự loại việc = thứ tự khoá của KIND_LABEL bản web (thanh lọc liệt kê theo thứ tự này)
-var KINDS = ["speaker", "caller", "turn", "pronunciation", "gender", "vocative", "alias", "bracket", "shared-voice", "unnamed", "audio", "narrator", "voice-wish", "snap", "teller-voice", "teller-thought", "refused"]
+var KINDS = ["speaker", "caller", "collective", "turn", "pronunciation", "gender", "vocative", "alias", "bracket", "shared-voice", "unnamed", "audio", "narrator", "voice-wish", "snap", "teller-voice", "teller-thought", "refused"]
 var KIND_LABEL = {
     "speaker": S.s_ai_noi_cau_nay_0e00a5c7,
     "caller": S.s_nguoi_goi_ngoai_khung_03677986,
+    "collective": S.s_voice_collective,
     "turn": S.s_luot_doi_dap_a2c055e0,
     "pronunciation": S.s_cach_doc_ten_1c46e75d,
     "gender": S.s_nam_hay_nu_0167dbc6,
@@ -145,8 +146,11 @@ function toggleLine(dropped, stableId) {
     if (next[stableId]) delete next[stableId]; else next[stableId] = true
     return next
 }
-function keepRequests(item) {
-    if (item.keepGroups && item.keepGroups.length) return item.keepGroups.filter(function(group) { return group.lines.length > 0 })
+function keepRequests(item, selected) {
+    if (!selected && item.contextLines) selected = item.lines || []
+    if (item.keepGroups && item.keepGroups.length) return item.keepGroups.map(function(group) {
+        return {speaker: group.speaker, lines: selected ? group.lines.filter(function(line) { return selected.some(function(pick) { return pick.stableId === line.stableId }) }) : group.lines}
+    }).filter(function(group) { return group.lines.length > 0 })
     if (item.lines && item.lines.length && item.currentValue) return [{lines: item.lines, speaker: item.currentValue}]
     return []
 }

@@ -14,6 +14,20 @@ import org.robolectric.annotation.Config
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [35])
 class WorkLogicTest {
+    @Test fun sharedVoiceRangeContractKeepsOnlyChosenIdsAndTheirOwnSpeakers() {
+        val json = JSONObject(java.io.File("../../../tests/fixtures/voice_review/contract.json").readText())
+        val card = StudioWorkJson.item(json)!!
+        assertEquals(WorkKind.Collective, card.kind)
+        assertEquals(3, card.contextExamples.size)
+        assertEquals(listOf("near"), WorkLogic.keepRequests(card).flatMap { it.lines }.map { it.stableId })
+        val selected = card.contextLines.filter { it.stableId in setOf("near", "far") }
+        val step = WorkDecisions.speaker(card, "LAN", WorkScope.Alternate, selected).steps.single()
+        assertEquals(listOf("near", "far"), (0 until step.body.getJSONArray("lines").length()).map { step.body.getJSONArray("lines").getJSONObject(it).getString("stableId") })
+        val kept = WorkDecisions.keepAll(card, selected)!!.steps.single().body
+        assertEquals("MAI", kept.getString("speaker"))
+        assertEquals(2, kept.getJSONArray("lines").length())
+        assertNull(WorkDecisions.keepAll(card, emptyList()))
+    }
     @Test fun callerAndChapterRoleUseTheSpeakerContractAndKeepMachineUntilClicked() {
         val caller = StudioWorkJson.item(JSONObject("""{"kind":"caller","key":"caller:s1","current":"Kati","currentValue":"kati","suggested":false,"lines":[{"stableId":"s1","textSha256":"sha-s1"}],"choices":[]}"""))!!
         assertEquals(WorkKind.Caller, caller.kind)

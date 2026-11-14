@@ -4,6 +4,18 @@ người?" và "Người này có phải X?". Chỉ đề xuất: chưa bấm th
 Dữ liệu giả (tên và câu bịa), sổ tối thiểu trong thư mục tạm."""
 from __future__ import annotations
 
+
+def test_collective_mention_and_remote_thought_do_not_propose_speaker_changes(tmp_path):
+    from tests.test_voice_review_range import review_book
+    from abook.webui.work_items import work_items
+    import sqlite3
+    project = review_book(tmp_path, 'Đám đông đứng quanh chiếc loa trong phòng.')
+    assert not any(item['kind'] in ('caller', 'collective') for item in work_items(project)['items'])
+    with sqlite3.connect(project / 'project.sqlite3') as db:
+        db.execute("UPDATE segments SET text='Giọng nói từ loa vang tới.' WHERE id=1")
+        db.execute("UPDATE segments SET kind='thought' WHERE id=2")
+    assert not any(item['kind'] in ('caller', 'collective') for item in work_items(project)['items'])
+
 import os
 import sqlite3
 import time

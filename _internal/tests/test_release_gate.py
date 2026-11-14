@@ -20,19 +20,23 @@ FIXTURES = Path(__file__).parent / "fixtures/release_gate"
 
 
 @pytest.mark.parametrize("name", ["ui-parity", "ui-parity-qt"])
-@pytest.mark.parametrize("exit_code", [0, 1])
-def test_parity_workers_run_the_existing_checker_and_propagate_failure(monkeypatch, name, exit_code):
-    from scripts import ui_parity, ui_parity_qt
-
-    checker = ui_parity_qt if name == "ui-parity-qt" else ui_parity
+@pytest.mark.parametrize("code,timed_out", [(0, False), (1, False), (0, True)])
+def test_parity_worker_requires_the_real_scanner_to_finish_successfully(monkeypatch, name, code, timed_out):
     calls = []
-    monkeypatch.setattr(checker, "main", lambda args: calls.append(args) or exit_code)
-    if exit_code:
-        with pytest.raises(ValueError, match="source parity check failed"):
+    def scanner(command, cwd, timeout):
+        calls.append(command)
+        assert cwd == gate.ROOT
+        assert timeout == 180
+        return gate.Execution(code, "scanner evidence", timed_out)
+    monkeypatch.setattr(gate, "run_process", scanner)
+    if code or timed_out:
+        with pytest.raises(Exception, match="source parity failed"):
             gate.worker(name)
     else:
         assert gate.worker(name)["counts"] == {"checks": 1}
-    assert calls == [["--check"]]
+    assert calls and calls[0][-1] == "--check"
+    expected = "scripts/ui_parity.py" if name == "ui-parity" else "scripts/ui_parity_qt.py"
+    assert calls[0] == gate.py(expected, "--check")
 
 
 @pytest.fixture

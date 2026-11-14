@@ -29,7 +29,7 @@ import { workKeyHandler } from "./workKeys";
 // quyết và dây chuyền KHÔNG chờ ai - đây là nơi người sửa ít nhất mà được nhiều nhất. Cách đọc tên sửa được ngay trên thẻ
 // (bước 2): mong muốn ghi vào overrides.json, dây chuyền áp ở ranh giới chương và thu lại những câu có tên ấy.
 
-export type WorkKind = "speaker" | "caller" | "turn" | "gender" | "vocative" | "alias" | "bracket" | "shared-voice" | "pronunciation" | "unnamed" | "audio" | "narrator" | "voice-wish" | "snap" | "teller-voice" | "teller-thought" | "refused";
+export type WorkKind = "speaker" | "caller" | "collective" | "turn" | "gender" | "vocative" | "alias" | "bracket" | "shared-voice" | "pronunciation" | "unnamed" | "audio" | "narrator" | "voice-wish" | "snap" | "teller-voice" | "teller-thought" | "refused";
 
 interface WorkExample {
   segmentId: number;
@@ -53,6 +53,8 @@ interface WorkExample {
 }
 
 export interface WorkItem {
+  contextLines?: LineRef[];
+  contextExamples?: WorkExample[];
   kind: WorkKind;
   key: string;
   title: string;
@@ -148,6 +150,7 @@ export interface WorkView {
 const KIND_LABEL: Record<WorkKind, string> = {
   speaker: S.s_ai_noi_cau_nay_0e00a5c7,
   caller: S.s_nguoi_goi_ngoai_khung_03677986,
+  collective: S.s_voice_collective,
   turn: S.s_luot_doi_dap_a2c055e0,
   pronunciation: S.s_cach_doc_ten_1c46e75d,
   gender: S.s_nam_hay_nu_0167dbc6,
@@ -436,7 +439,17 @@ function SpeakerFix({
   picked?: LineRef[];
 }) {
   const client = useQueryClient();
-  const lines = picked ?? (scope === "all" && item.allLines ? item.allLines : item.lines);
+  const [rangeOpen, setRangeOpen] = useState(false);
+  const [rangeIds, setRangeIds] = useState<ReadonlySet<string>>(new Set(item.lines?.map((line) => line.stableId)));
+  const rangeSignature = item.contextLines?.map((line) => `${line.stableId}:${line.textSha256}`).join(" ");
+  useEffect(() => {
+    setRangeOpen(false);
+    setRangeIds(new Set(item.lines?.map((line) => line.stableId)));
+  // Preserve selection during polling; reset when the source/range changes.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [rangeSignature]);
+  const rangeLines = item.contextLines?.filter((line) => rangeIds.has(line.stableId));
+  const lines = rangeOpen ? rangeLines : picked ?? (scope === "all" && item.allLines ? item.allLines : item.lines);
   const pending = useContext(PendingHint);
   // "Người khác…": người nói chưa có trong lựa chọn - kể cả người máy CHƯA TỪNG gán câu nào (linh thể nói trong 『』):
   // gõ tên + chọn giới, dây chuyền tạo người ấy và cấp giọng riêng như bước phân vai.
@@ -530,6 +543,20 @@ function SpeakerFix({
   const sample = everyChoice.map((choice) => choice.name ?? choice.label).find((text) => text && !GENERIC_PEOPLE.has(text) && !/^(Tất cả là|Giữ) /.test(text));
   return (
     <div className="mt-3">
+      {item.contextLines && <>
+        <Button size="sm" variant="ghost" aria-expanded={rangeOpen} onClick={() => setRangeOpen((value) => !value)}>{S.s_voice_range}</Button>
+        <Collapse open={rangeOpen}>
+          <p className="text-xs text-fg-2">{S.s_voice_range_note}</p>
+          <p className="text-xs text-fg-2">{S.s_voice_range_window}</p>
+          <div className="flex flex-wrap gap-2">
+            <Button size="sm" variant="ghost" disabled={busy} onClick={() => setRangeIds(new Set(item.contextLines?.map((line) => line.stableId)))}>{S.s_chon_het_9e8a7c2c}</Button>
+            <Button size="sm" variant="ghost" disabled={busy} onClick={() => setRangeIds(new Set())}>{S.s_bo_het_502895ca}</Button>
+          </div>
+          <p className="text-xs text-fg-2">{pickNote(rangeLines?.length ?? 0, item.contextLines.length)}</p>
+          <ul className="mt-2 space-y-2">{item.contextExamples?.map((example) => <Example key={example.stableId} bookId={bookId} example={example} picked={rangeIds.has(example.stableId!)} onPick={() => setRangeIds(toggleLine(rangeIds, example.stableId!))} />)}</ul>
+        </Collapse>
+      </>}
+      {item.kind === "collective" && <p className="text-xs text-fg-2">{S.s_voice_collective_note}</p>}
       <Reveal when={item.requested}><p className="mb-2 flex items-center gap-2 text-xs text-fg-2">
           <Check className="size-3.5 text-success" />
           {/* Gộp tên là ở cấp TÊN cho cả cuốn và các phần sau, không phải "câu này của X" (soát UX 29-09). */}
@@ -573,14 +600,14 @@ function SpeakerFix({
             {choice.sampleId || choice.samplePreset ? <VoiceSample bookId={bookId} sampleId={choice.sampleId} samplePreset={choice.samplePreset} name={choice.name ?? choice.label} /> : null}
           </span>
         ))}
-        <Reveal when={item.currentValue}><DecisionButton data-choice size="sm" variant="ghost" disabled={busy} onClick={() => save.mutate({ speaker: item.currentValue! })}>
+        <Reveal when={item.currentValue && item.kind !== "collective"}><DecisionButton data-choice size="sm" variant="ghost" disabled={busy || none} onClick={() => save.mutate({ speaker: item.currentValue! })}>
             {item.keepLabel ?? (item.kind === "unnamed" ? S.s_dung_la_vai_phu_7f821afe : S.s_giu_0_b8c06ffa(item.current))}
           </DecisionButton></Reveal>
         {/* Vai phụ ngôi ba (lính gác) không phải ai trong danh sách - cả nhóm có thể là MỘT người mới, có giọng riêng. */}
         <Reveal when={item.newPerson}><DecisionButton data-choice size="sm" variant="ghost" disabled={busy || none} onClick={() => save.mutate({ speaker: item.newPerson!, newGender: "unknown" })}>
             {item.newPersonLabel ?? S.s_tao_nhan_vat_18e9a09a}
           </DecisionButton></Reveal>
-        <Reveal when={item.keepGroups && item.keepGroups.length > 0}><DecisionButton data-choice size="sm" variant="ghost" disabled={busy} onClick={() => keepAll.mutate(keepRequests(item))}>
+        <Reveal when={item.keepGroups && item.keepGroups.length > 0}><DecisionButton data-choice size="sm" variant="ghost" disabled={busy || none} onClick={() => keepAll.mutate(keepRequests(item, lines))}>
             {item.keepLabel ?? S.s_giu_nguyen_1b550a12}
           </DecisionButton></Reveal>
         {/* Thẻ "một người hai tên" hỏi hai tên có phải một người - chọn người thứ ba lạc chủ đề (soát UX 29-09). */}

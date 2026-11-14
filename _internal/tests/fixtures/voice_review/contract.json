@@ -1,0 +1,29 @@
+{
+  "kind": "collective",
+  "key": "collective:near",
+  "title": "Ai cùng nói?",
+  "current": "Mai",
+  "currentValue": "MAI",
+  "suggested": false,
+  "lines": [{"stableId": "near", "textSha256": "sha-near"}],
+  "choices": [{"label": "Lan", "value": "LAN"}],
+  "contextLines": [
+    {"stableId": "near", "textSha256": "sha-near"},
+    {"stableId": "reply", "textSha256": "sha-reply"},
+    {"stableId": "far", "textSha256": "sha-far"}
+  ],
+  "contextExamples": [
+    {"segmentId": 1, "chapterId": 1, "chapterTitle": "Buổi tập", "seq": 1, "stableId": "near", "text": "Chúng tôi đã sẵn sàng.", "speaker": "Mai", "before": "Cả nhóm đồng thanh đáp.", "hasAudio": false},
+    {"segmentId": 2, "chapterId": 1, "chapterTitle": "Buổi tập", "seq": 2, "stableId": "reply", "text": "Các bạn hãy đứng ở đây.", "speaker": "Lan", "hasAudio": false},
+    {"segmentId": 3, "chapterId": 1, "chapterTitle": "Buổi tập", "seq": 3, "stableId": "far", "text": "Chúng tôi hiểu rồi.", "speaker": "Mai", "hasAudio": false}
+  ],
+  "seen": {"near": "", "reply": "", "far": ""},
+  "keepLabel": "Giữ riêng",
+  "keepGroups": [
+    {"speaker": "MAI", "lines": [{"stableId": "near", "textSha256": "sha-near"}, {"stableId": "far", "textSha256": "sha-far"}]},
+    {"speaker": "LAN", "lines": [{"stableId": "reply", "textSha256": "sha-reply"}]}
+  ],
+  "newPerson": "Nhóm chương 1 câu 2",
+  "newPersonLabel": "Cùng một nhóm",
+  "selectedIds": ["near", "far"]
+}

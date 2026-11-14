@@ -5885,7 +5885,12 @@
     "s_scope_before_after": "{0} → {1}",
     "s_scope_conflict": "Quyết định riêng",
     "s_scope_apply": "Ghi nhóm",
-    "s_scope_changed": "Chương vừa đổi. Bạn đóng bảng rồi chọn lại."
+    "s_scope_changed": "Chương vừa đổi. Bạn đóng bảng rồi chọn lại.",
+    "s_voice_range": "Chọn quãng",
+    "s_voice_range_note": "Chỉ chọn câu liên quan; kênh phát tiếng không xác định người nói.",
+    "s_voice_range_window": "Các câu gần đây; đây không phải ranh giới cuộc gọi hay cảnh.",
+    "s_voice_collective": "Tiếng tập thể",
+    "s_voice_collective_note": "Cùng một nhóm dùng một danh tính và một giọng; chữ truyện giữ nguyên."
   },
   "android_resources": {
     "app_name": "s_abook_1c37d334",

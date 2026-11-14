@@ -2586,6 +2586,12 @@ GPU A/B/C measurements are pending in the task's external `result.md`.
 ## Integration 0.4.170 — 2026-11-14
 
 Integrated the six plsfix commits onto 0.4.169. Replaced the remaining repeat-alias comment examples with original wording. Corpus approvals retain the exact individually reviewed shingle sets; integration updates only technical instructions, UI capitalization and release notes. Full release gate and both leak scans are required on the final integration revision.
+# Duyệt quãng người nói từ xa và tập thể
+
+Thẻ người gọi giữ thao tác một câu. “Chọn quãng” mở tối đa tám vị trí trước/sau cùng chương; chỉ câu thoại đủ ID/băm nguồn và chưa có quyết định riêng được chọn thêm. Đây là ngữ cảnh gần câu, không phải ranh giới cuộc gọi hoặc cảnh. Mặc định chỉ câu gốc được chọn. Nội tâm không thuộc quãng này.
+
+Thẻ tập thể cho chọn một người, cùng một nhóm (một danh tính và một giọng), hoặc giữ riêng người đang nói ở từng câu đã chọn. “Chọn hết” là thao tác rõ ràng sau khi mở quãng; bỏ ngoại lệ trước khi gán, tổng ba lần bấm cộng số ngoại lệ. “Bỏ hết” chặn gán quãng rỗng. Không ghi chữ nguồn, không trộn giọng; vẫn ghi yêu cầu `/speaker` để worker áp ở ranh giới sẵn có. Các fixture dùng câu tự viết trong `tests/fixtures/voice_review/contract.json`; Python, web DOM, Qt Quick và Android dùng cùng danh sách ID kỳ vọng. Không dùng tín hiệu này làm xác suất đúng hoặc bằng chứng cải thiện phân vai.
+
 
 ## TN category audit — 2026-11-14
 

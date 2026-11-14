@@ -28,6 +28,7 @@ from ..listener_overrides import (
 )
 from .. import speaker_logprobs, teller_voice
 from . import listing_cache, narrator_cards, store
+from .voice_review import REMOTE_VOICE, COLLECTIVE_VOICE, nearby_dialogue
 from .address_cues import address_doubts, split_doubts
 from .humanize import person_name, shown_reading
 from .reviews import awaiting, review_items
@@ -40,6 +41,7 @@ if TYPE_CHECKING:
 SEVERITY = {
     "speaker": 1.0,
     "caller": 1.0,
+    "collective": 1.0,
     "gender": 1.0,
     "vocative": 0.9,
     "turn": 1.0,
@@ -146,7 +148,7 @@ def _refine_speaker_cards(project_root: Path, items: list[dict[str, Any]]) -> No
       cùng phép thử với lúc ghi yêu cầu, nên chip còn lại luôn bấm được);
     - gắn `sampleId` (một câu đã thu của người ấy, như tab Nhân vật - `store.voice_samples`) cho mỗi người được đề xuất: nghe giọng
       trước khi chọn."""
-    cards = [item for item in items if item["kind"] in ("speaker", "vocative", "caller") and len(item["examples"]) == 1]
+    cards = [item for item in items if item["kind"] in ("speaker", "vocative", "caller", "collective") and len(item["examples"]) == 1]
     if not cards:
         return
     with closing(store.connect(project_root)) as connection:
@@ -907,42 +909,59 @@ def _refused_requests(project_root: Path, overrides: dict[str, Any]) -> list[dic
     return cards
 
 
-# Only narration can supply a channel cue: a speaker mentioning a phone is not evidence that their voice is remote.
-REMOTE_VOICE = re.compile(
-    r"đầu dây bên kia|(?:giọng|tiếng)[^.!?\n]{0,80}(?:qua điện thoại|từ điện thoại|qua bộ đàm|từ bộ đàm|từ loa|ngoài khung|ngoài cửa|bên ngoài)"
-    r"|(?:điện thoại|bộ đàm|loa)[^.!?\n]{0,40}(?:vang lên|cất tiếng)", re.IGNORECASE,
-)
-
-
 def _remote_voice_cards(project_root: Path, spoken: Any, names: dict, wishes: dict,
                         label: Callable[[str], str], audio: Any) -> list[dict[str, Any]]:
-    """Review evidence, never a speaker rewrite or a pipeline hold. Keep each utterance independently answerable."""
+    """Keep one-click single-line review; context requires explicit selection on every client."""
     with closing(store.connect(project_root)) as connection:
-        cues = {(int(row["chapter_id"]), int(row["seq"])): str(row["text"])
-                for row in connection.execute("SELECT chapter_id, seq, text FROM segments WHERE kind='narration'")
-                if REMOTE_VOICE.search(str(row["text"]))}
+        narration = {(int(row["chapter_id"]), int(row["seq"])): str(row["text"])
+                     for row in connection.execute("SELECT chapter_id, seq, text FROM segments WHERE kind='narration'")}
+    # Raw wishes also protect decisions whose source has since changed.
+    protected = (read_overrides(project_root).get("speakers") or {})
     cards = []
     for row in spoken:
-        if row["kind"] != "dialogue":
+        if row["kind"] != "dialogue" or not row["stable_id"] or not row["text_sha256"]:
             continue
         chapter, seq = int(row["chapter_id"]), int(row["seq"])
-        evidence = cues.get((chapter, seq - 1)) or cues.get((chapter, seq + 1))
-        if not evidence:
-            continue
-        current = str(row["speaker"])
-        choices = _cast_choices(spoken, {chapter}, {current.casefold()}, label)
-        choices += [{"label": "Người kể", "value": NARRATOR}]
-        fix = _speaker_fix([row], choices, current, wishes, label)
-        if fix is None:
-            continue
-        cards.append({
-            "kind": "caller", "key": f"caller:{row['stable_id']}", "title": "Ai nói từ xa?",
-            "problem": f"Lời kể gợi giọng qua điện thoại hoặc ngoài khung: “{evidence}” — bạn kiểm tra người nói.",
-            "affected": 1, "doubt": 0.6, "suggested": False,
-            "options": [label(current)] + [choice["label"] for choice in choices],
-            "current": label(current), "keepLabel": f"Giữ {label(current)} (máy đề xuất)",
-            "examples": [_example(row, names, label, audio)], **fix,
-        })
+        adjacent = [narration.get((chapter, seq - 1), ""), narration.get((chapter, seq + 1), "")]
+        for kind, detector in (("caller", REMOTE_VOICE), ("collective", COLLECTIVE_VOICE)):
+            evidence = next((text for text in adjacent if detector.search(text)), "")
+            if not evidence:
+                continue
+            current = str(row["speaker"])
+            choices = _cast_choices(spoken, {chapter}, {current.casefold()}, label)
+            choices += [{"label": "Người kể", "value": NARRATOR}]
+            fix = _speaker_fix([row], choices, current, wishes, label)
+            if fix is None:
+                continue
+            context = nearby_dialogue(row, spoken.in_chapter(chapter), protected)
+            refs = [{"stableId": str(line["stable_id"]), "textSha256": str(line["text_sha256"])} for line in context]
+            examples = []
+            for line in context:
+                example = _example(line, names, label, audio)
+                example.update(stableId=str(line["stable_id"]),
+                               before=narration.get((chapter, int(line["seq"]) - 1), ""),
+                               after=narration.get((chapter, int(line["seq"]) + 1), ""))
+                examples.append(example)
+            fix["seen"].update({ref["stableId"]: str((wishes.get(ref["stableId"]) or {}).get("speaker") or "") for ref in refs})
+            card = {
+                "kind": kind, "key": f"{kind}:{row['stable_id']}",
+                "title": "Ai nói từ xa?" if kind == "caller" else "Ai cùng nói?",
+                "problem": (f"Lời kể gợi giọng qua điện thoại hoặc ngoài khung: “{evidence}” — bạn kiểm tra người phát tiếng, không phải người được gọi tên."
+                            if kind == "caller" else f"Lời kể gợi tiếng tập thể: “{evidence}” — bạn chọn một người, cùng một nhóm hoặc giữ riêng."),
+                "affected": 1, "doubt": 0.6 if kind == "caller" else 0.0, "suggested": False,
+                "options": [label(current)] + [choice["label"] for choice in choices],
+                "current": label(current), "keepLabel": f"Giữ {label(current)} (máy đề xuất)",
+                "examples": [_example(row, names, label, audio)],
+                "contextLines": refs, "contextExamples": examples, **fix,
+            }
+            if kind == "collective":
+                card["choices"].insert(0, {"label": label(current), "value": current})
+                groups = defaultdict(list)
+                for line, ref in zip(context, refs):
+                    groups[str(line["speaker"])].append(ref)
+                card.update(keepLabel="Giữ riêng", keepGroups=[{"speaker": who, "lines": lines} for who, lines in groups.items()],
+                            newPerson=f"Nhóm chương {chapter} câu {seq + 1}", newPersonLabel="Cùng một nhóm")
+            cards.append(card)
     return cards
 
 
@@ -1804,7 +1823,7 @@ def work_items(project_root: Path, verdicts: dict[str, Any] | None = None) -> di
                                    if line["stableId"] in chapter_of}
                                   or {int(example["chapterId"]) for example in item["examples"]})
         # M2 chapter roles and remote speakers are ordered by affected lines, not an unmeasured cue confidence.
-        item["score"] = (item["affected"] if item["kind"] == "caller" or item.get("suggestedName") else
+        item["score"] = (item["affected"] if item["kind"] in ("caller", "collective") or item.get("suggestedName") else
                          round(item["affected"] * item["doubt"] * SEVERITY[item["kind"]], 3))
         undo = _undo_of(item, overrides)
         if undo is not None:

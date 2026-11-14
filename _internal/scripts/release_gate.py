@@ -387,19 +387,13 @@ def require_phoneme_suites_ran(results: Path) -> None:
 
 
 def worker(name: str, confirm_hash: str | None = None) -> dict:
+    """Kiểm thuần nguồn cũng chạy trong subprocess để có deadline như bộ test."""
     if name in {"ui-parity", "ui-parity-qt"}:
         script = "scripts/ui_parity.py" if name == "ui-parity" else "scripts/ui_parity_qt.py"
         execution = run_process(py(script, "--check"), ROOT, 180)
         print(execution.output, end="")
         require(execution.returncode == 0 and not execution.timed_out, name + ": source parity failed")
-        return {"status": "PASS", "counts": {"checks": 1, "failed": 0}}
-    """Kiểm thuần nguồn cũng chạy trong subprocess để có deadline như bộ test."""
-    if name in {"ui-parity", "ui-parity-qt"}:
-        from scripts import ui_parity, ui_parity_qt
-
-        checker = ui_parity_qt if name == "ui-parity-qt" else ui_parity
-        require(checker.main(["--check"]) == 0, f"{name}: source parity check failed")
-        return {"counts": {"checks": 1}, "detail": "Shared labels, icons and generated parity report"}
+        return {"status": "PASS", "counts": {"checks": 1}, "detail": "Shared labels, icons and generated parity report"}
     if name in {"android-unit", "android-snapshots"}:
         inputs = android_host_inputs()  # Fail before Gradle if the mandatory host frontend is unavailable.
         android = ROOT / "mobile/android"
