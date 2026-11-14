@@ -101,12 +101,22 @@ def test_long_dash_stutters_read_like_hyphen_stutters(source, dash):
 
 @pytest.mark.parametrize("source", [
     "Ngày 01-10-2026 nhé.", "Gọi 090-123-4567 nhé.", "Phép 3 < 5 đúng.", "Xem [1] nhé.", "Nặng 10 kg.",
-    "Mã 007 đây.", "Số 1234567 đây.", "Có 144 126 071 người.", "Giá $5 thôi.", "Tăng ×3 lần.", "Khoảng ~50 người.",
+    "Có 144 126 071 người.", "Tăng ×3 lần.", "Khoảng ~50 người.",
 ])
 def test_only_a_standalone_count_becomes_words(source):
     assert studio_tn(source, None, True, direct_english=True)[0] == studio_tn(source, None, True)[0]
     said = studio_tn(source, None, True)[0]
     assert any(c.isdigit() for c in said), said
+
+
+@pytest.mark.parametrize(("source", "expected"), [
+    ("Mã 007 đây.", "Mã không không bảy đây."),
+    ("Số 1234567 đây.", "Số một triệu hai trăm ba mươi bốn nghìn năm trăm sáu mươi bảy đây."),
+    ("Giá $5 thôi.", "Giá năm đô la thôi."),
+])
+def test_tnfix172_materializes_codes_quantities_and_currency(source, expected):
+    assert studio_tn(source, None, True)[0] == expected
+    assert studio_tn(source, None, True, direct_english=True)[0] == expected
 
 
 @pytest.mark.parametrize(("source", "expected"), [

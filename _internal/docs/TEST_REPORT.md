@@ -30,7 +30,8 @@ Original 440 cases: post-G2P agreement is 389/440 for instant reading and 388/44
 With the original rubric, both reach 375/440; rubric changes are listed individually in TEXT_NORMALIZATION.md.
 The expanded 485-case suite includes 45 new authored rules and counterexamples, all passing after G2P on both paths.
 
-Related Python checks: 2869 passed, 1 skipped, 0 failures, 0 errors.
+Final resumed Python TN checks (including tnfix): 2970 passed, 1 skipped, 0 failures, 0 errors.
+The complete test_tnfix module also passed all 115 tests after splitting three outdated digit-preservation assertions into exact identifier, quantity and currency expectations.
 Android JVM and host-JNI checks across 18 TN classes: 107 passed, 1 skipped, 0 failures, 0 errors.
 The optional private-corpus punctuation export was absent; all public parity methods ran.
 Exact parity includes 748 public tokens, 115 stretches and 12 authored occurrences.
@@ -39,6 +40,8 @@ The four later modules (preview, fixture privacy, capitals and vocal rules) pass
 A separate-click preview test now supplies distinct timestamps: equal clock ticks combine two wishes into one label by design. A controlled same-tick/distinct-tick probe reproduced this test-only assumption; product logic is unchanged.
 The shared Android text and phoneme snapshots were refreshed; Supertonic model inputs and the referenced audio seed are unchanged.
 Full-suite and exact-revision scanner evidence is retained in the external task result.
+The complete resumed run recorded 13671 passed, 20 skipped, 28 failed and 0 errors. Eighteen outdated expectations were corrected and passed whole-module retries; the run itself is not reported as green.
+Both UI modules were rerun: 34 passed and 10 failed because this checkout has no node_modules (9 missing rolldown/parseAst, 1 missing typescript). UI tests and detector scripts are unchanged; dependencies were not added and tests were not skipped.
 
 ## 14-11-2026 — original examples and exact Corpus reviews
 
