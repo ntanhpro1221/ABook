@@ -450,6 +450,3216 @@
    "path": "_internal/scripts/public_leak_reviewed.json",
    "sha256": "ede9bc5ea5f34de09881d30217b992819841c7fe499a0148bfe9e6548f2e7f78",
    "reason": "Technical path metadata identifying a scrubbed gold-label file; only the existing book identifier is present, with no quoted sentence."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "3cb4bf2dc3742d129c500e433a04efd3c657708caa8926661334e15bfb07ebc2",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "200d65269e4a659e69fa14760bd16dea4f33a5a58030499003e23088cc53d50b",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "8c0d5f7302a8fef8f57bd4fa92b3d4e277ddbb95003a239e9aa782369ab02ad6",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "5281b2a4a78b120f32df6a642782ff194a9fe75c3a92b70bb8fd14e3bead4e53",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "b162db860fd14b91a78ccba805d5b36942d90d92672b8ed38ff79470880ba878",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "ad0d3d684b7bf298913598ba7173ee6a660ec2a4d9372eaef0fcef973eca133e",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "5ef1d67bff3c5783ec99410d496dcb05ff858a53f67704a4efba7982dff9b3ed",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "cacb7fedfa44d28b0f522d58bd591b00ee7b46981c867d04297bfa60f9056962",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "28df54a1efd90ada0f0231d1e2066eec2cbce2fe473d764578941f62e1340c7d",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "608c233dd65085c951137803064eac687a6fb2b38b0a5ce2457d90dc7eeca243",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "ca348dbf664565d78c91c581b1cd9d58205ae01d4284f9b7f403e448ec76f327",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "5c93de287ae7c3ecf94e24119365f2ff096835dc8f972c1b0cc95f8f5a2c59c8",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "3694bf9b5053e7cecd074a5d1f677379c38de8c1bd0f906d3dd4c863b37d12d1",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "198ccf6a6bcad1d2c46bfff3226b4b10902a6cd8aa1640f2415921e4228bae20",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "b172bc665a47eb81032ea6057c9480c8857869c436f5b05b039a9332cbee1638",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "2cee78e49340be19b8d6cf39075294537ae0e536c2f75b65b6e54bddf3e73dc9",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "b74377c37e7147e303138112d5be37d3fb2190448f8e542994d6d99a5f00c332",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "5e05ae74e85f20e4fd16045a916b9aad8b2e5837033d6733f78174ba9a038bf0",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "ab46d2e801b929a03479a76c91081c305fb50a87b817a08a81d97f9f0f5fd4f9",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "4f376ce69d06752119c8d7d7e468e0bc55f0be5299b7f625cf39ecfd72520c60",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "2245a4357ac92bc26062724820f56bc2af8d1bbf203c2585191d5f936143d7f3",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "45db9e1ac97e65b44b635573fa670d53def476ecffe451047ec1d91406ebcadb",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "d0dd3c9c92d5727682a794e5ca242b1449df73b2304617e0bb4a051fdeb28bd8",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "c39d17aed8195d8063a17ed954ad5b9197f37327c240d59548be3d4d9463da7f",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "5340e5df23e522fb7de30ce666b21396844101cbad5ed375f649b25a2d729c9b",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "baae691a8f26db89ad9416e1bb57d13079ea28ee33c48ee7cc6aab64db78a367",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "773f2864abaaec54039cd95e981e88effed4753f56c75150a3751622bd88b3a9",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "5e4395a743e0b45bd3100fb6f237b880921690c9236190e5928315f5971c072c",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "14c0bcf56736914c69be865b45f732434e02df8f99d9f45efbe30e682e3d66f1",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "6cb1f57aa0e880eccfe8dde69941d4fdd50af58203f8cbab1d2ee4e46f702b90",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "20e8179f9a07d7edbf99878937794b24af882e920928714b7290b3bbad32d494",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "3957df1832f81855bcfc9183f35d5abbf0434c3e79eda606c2cfd2c43085adee",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "bf7251008501f089368fe7eba0cf48a3941d8f7a6318227b8736f24cafa52661",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "0d2564585688a2f28ee7723e42da8311e0d34c63cff730012194785e16a7458b",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "8d56b15c6872d7e4ba5f520824330808fce74a189821191cd491e9ffe5d0e4e0",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "fef1d6c77130458ae3846f953501114dc1b8d1338cd4e39b7bea31dcb10aa423",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "64467541ed422d8359e2abd00abefec898237bd067da5c536a25384a2c14ac1d",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "21e866098df891802baffe09c82d349682c037f54d42353f7139f3df0bafcd61",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "90406dea2e21e54963080f8dda0c3c3033c0264cc01cd78dca3b6f3bfa8722a2",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "cf91afc31f7ac4260fe734ac054c6d45069e5d7e4dc934854b3b528fa18962b8",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "eafcf378a6c80de68320f8dc7079c3677f6a1d95fca099111f1ef971c3e8ca49",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "c2079acb106f6423be998e0cc3af7d470295ef85cde65220de3294cf3a9e032b",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "167ff7a2e003c1b91270eb602dacc85ca5bd8e975da0f46f5166cde0612384db",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "cd462b0fe7a01009556ee3e874e298a13db8331dcc723aa58e31e4099d45c02b",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "5e85ca8fe9eefd3c10bd01431da9dcae1b65b12e8229b32482a3ffca0939709e",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "de973dc30736df2fe270ddbde50bb737f8e56553f46d9ed0cafe795c42cee459",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "2555d28270d688e7ff7e4d82bb4644030a289b7e62479cf18296773a99a8ef50",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "3c0e21c312192d4348de8d8e95bd203fdb2dc6812bf6cd3e6d0df5262f259522",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "01642eab00518efd03f3d99d3f138a8b80f76e98f8bb5d8253e1b331bb08a092",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "ee8c0f77bb710f7f4767b877c35212b18ab0d5cdd738b1137858ce7f99f83e5f",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "c6bc25ee196bb20368d1393f6b92b2892d807da8f6fe73a3ae6425b5d249dc16",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "5ad8a351f4b3afce8a510f10b1cc44c5486f9a65d1baac4d07272d3abfda642a",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "22f0c7534b52a41394fc618e52baa6fbb86a0d8dc4491826332fbc68b2838c50",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "e491517ceecccefbd98ee48e258b00c817fc7ac5c0d3cf0e3060d6a16b6d6f06",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "2ee2ddc2e46a4e2066ba87a43da4ed4e91215536344e509131213d29c7000a76",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "d8382abf656b65578950bd2b9a9f59aaa3695bd90cd60543b33744317e29357f",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "b5c2009ea0e6f98c73eebdf178cc209f21795a05fdb3f5d3b337c8aed75f8e52",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "b12520ec9cba5dbeba5d15eabe322f5d57cad23794dc7a7a7da8afd7dddd7e18",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "eb78766d35c348fe902af5a3a876a8a97f16b380ab5841baaaa43b4b086f472c",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "a7af3b83f3ec15ef2561ac94249346cc0320f5daebc397605889b9ca9e675a7c",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "d97706c520a8c729a0ece832adc580ca3409470ca8c0699400633d4e2ac476d0",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "bb87bef079e7384d8c45d108725edbab7aa7ccb9d4776fe46a8e8fae09152eec",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "36631dcf30d74583ebb5ec5d2dd28dae30b713c00c5442f88f8724a8248f66be",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "c8aae3643df266d3463816d2e0b1ff8c28389a894bf3b4e5f4843c02946f9d27",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "3bbf72695cc19fc7aa16bf0d3570ac330f843ec56c63c28a68e1cfde2bfee3ae",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "1b9b63d2adc16b30ecdcbdc66d55e0febbd9aa94bec8ef431b7a4c406d100865",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "02336a23c193a3dede7cc58b6e0b16078f8be62ad95961ed9382bf52f93205db",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "a78391d013f7b44a291e5017c7f7decf43b49ba2c6e4cb2b470090bb684be25d",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "e47c79bf3f59b93a04d9def35a61f3abb2a07d7e4de3495e3e52781daa72285e",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "3aed4933633773ddb6949965e59844d7d273c6e03254d38b3a89cc25ea63c543",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "bb4ec456f028cc658bf0c2ec8e8ce4ab2172fe182176330c1f7632eacb1e3dfd",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "b2565f03192ad37a7d437be2b5d9a21efd72028249d84ccab936cfbd634fe50b",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "5532ef1b54d490e245fd9f6d1295479f7a9a15245b8dfa65155868433ad4f91c",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "aca24c22d83dec1788323f41d74a348237d9e91132ecec672e684532f3c28120",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "c502f41009e6cee78d31011235cdeb7e6c9b35a6b9dd052c46ad117e114abd2b",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "38cef2e0a118fe069ba965ab74d906851668159b0aeb088d58dabba6534634f4",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "eac008f3286ac385f84deb75e9aa88c2b5408022397443b0991bdfb6764d5cec",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "931f87d371e593fd4a5f2e8b33e3a408534a93cf120666d29ac58eed04c4ba34",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "7f7f5b3bb978faec602dcf46fb44b3773753949636a27eced58ec85642d9057c",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "be373d433d3f4b01dd453b445dda79cdd9cc2f070ff6792a2bd2b71af7d57357",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "99852f7198884010a65bd0cd8c96a20689ce412a77875ebd587036aaa4043cf4",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "abd85c0e4fe451d1a1d61ea5cc39ccde7a4727629b94e1097b08bf145e852fe8",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "baf900abc09882f34bf2d44af5c308bf087ade53d614a664520ee4a88de314e8",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "a6f3b47bd9b4d182bdee8608b2902e80c59ceecce690a5d45bce242ba0805862",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "abd9fc01ac7963f91c7b07e43e0a9a9e4ca3f813552f167ca3e92419ac3a47f3",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "3d37d0d0ef026c1c4c79e2d939c6e9dd54096aaddafcb76509a978e2f0845d0c",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "25fb383aba1bdaaffefe0c75dafcd82fc6a7b11ab4852c9f4f36ac20c158f10b",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "5f917e0e76bea4b27d5aef6c7bd959f2456326f8f87b89376e2a69c4fcd44d44",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "52b5df5300aed1efd8f944e5dd40a8369b70f36fe21534fce9b4928754ae9610",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "a37edbb3feab23b60df5d092da0d6c3fa4fd7360521280aafb01282a51fb3156",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "3d966270202e619212f90a356624d6a5560a12d572b83fca6e66c7fe8d0bef95",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "ae6fe817117775443f261d2e57465b58dc554ac192bdb6824a4b5f61c9143bd4",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "5540e98625a1db113a3773d3a311081941165c86b699d3c313cacadba118be45",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "05ad659636865411f4e5bc2486903014f47be7ca7ab0edd0e3f3382ac758711a",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "20f6fdb571b99411c015fce8d64786bf58b7f84672d63abd9aafda2ed0582258",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "5556fc1d9d0c6a775825795b38ce1ea2bcfb6f9350a83291a1787e326fe53b6b",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "512df98ef4a53d5d18cf8f9094f2968d413bbd40d718f0125cbefdc8c58e16fd",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "b8665bad5b3a6cbb2d1651a4bb2343eeb3a3b9ba5c91c5b2c21b0b956c499110",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "bcb0030e1ba234c518ab11ec941508695567798d49a84dcf3430ac1b5b5c6fdc",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "18ed6cb1a65be43814f4309c5c01831ba1732ec48046e89f451d5cbd8bf3f6ce",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "41a3409e1e2cacbac363b42bb614e5080c872ce67c3ea1c94292d14fa51d2131",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "6e076709a3048ee3de9b2e679d7b545f4c632966351cdf27e823e8345be8c4c5",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "0f1ac5d958cf9baada9aac0b52254269377a3fb9f3a00c12f4eed37daafdcdbb",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "1364db6d7f7e8f831bf847b70edbb4ad9482faec38d52238d4c18538884a8f7c",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "7bb03cee7a7df33a30588134505be8b4cb3650b05970702dc2c5e2a493ec9f44",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "3777263624e07d000a48cd42e5a88a862f71d18dfc13623bb8905d9ba0651294",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "8ee27d2c72251f04741f57c794883d32a0c9c02b55620fc7206bef5f7760b306",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "b572792f7f6adaaafb79600935b25c9ffc32af0f8575717fb5838e54057b434f",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "d398c760cfc114166731889e2410cf208d22ffc88aee8d1fa14e6d1f8bc69f30",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "1ec8d3d16b0b84599f2bd0de938eb2b2894cefd985483e4b670f88fe3685d044",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "56cfce71c5f28078b4b035719e5667e2f34244ff110c7b0adff21f75ea80b629",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "f9841667ae84faad9ef9c1d50f54e0962f7073b0a46e00ff488d0c053ce5b942",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "ba9c081a54f02b03318cadd6568afd59669387c04ea7cf93758c7d3c50cecdd4",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "56649a45b60e39bc94fb72aa031376f7357da3d800fc945c5b508436c4ed8fc0",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "c61a1f2f82470532da783f721cdf725b8715afa6aeb26334fdfc355c7e84368b",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "0097a2f3425c0a8ef23c1c2247b49354185f6fdf23b2cb860a919ab7d6b75aa7",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "808a06185df173d96a2e1bd64087f6061d7fff947f1190aee74e5004cf3e8eef",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "0d120db783aabece84f9be8988f142e3ec8c5c593d994541ff0523a7eaaa1feb",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "f69a2e725180ac610e1326ccc8f55347747181d403b7ec1693fd783c056537f3",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "dd65b20cd95187bf2e079ac492de05106d6f4963cf84b22a91e2b237f4e72980",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "9f0276b38b5a3b12c6f24ddd07a0d12a5b0d314c749ce6bc11aee5eb6d229c6a",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "8949554df2f776dbbc0896ad2d612181e955ace1a1156fc565e534fe57d59783",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "5efc2b5956e4b1c43da8071be8bd54d2872f8763b34a55281ff4dd2f5ca3fab3",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "2faeb0e7af646977bfe449ed45be484ec81d7e31d25c3bbd0ed92428ec22cb97",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "13a8c2009e12bdf5f360caabcb9fe19c71de8673d34f414916064b700f0c9ab5",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "1298acbf9396766156d9a29f673a01e3689650b460b4957768345d5a13bcc4cc",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "06bc6c43bfc11e2c94752be3e9c52a5e6e2ae0abd211386a13ed8a715e7ff0af",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "7644569e33b0fd6f0c0703f6989e73fda269bf7260c29d86031ebf5425d124b2",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "c8b01217d486d17e16f0537be963b9dfae09e5ce2120c5b96d5b2fee28cde08e",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "fd686d18dddd309b206282e3785213c0686431c6b5f6e40beee57b21feb668bf",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "fef4f2b1a8a25958625776b22d7b7bfaea0f0d2c338918e69e73684c80ae9e39",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "c30433c199476e5549472b0cfd1f9f7247efb459928b90e6fdd62c0280aa88af",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "a73865ee2dc65bbab539f8f3f86dd78c830c5b5ea0ce4ae318abb86663cb0c2f",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "624ad869c8883233f17f64cc33d9df4e4d190302d9c1f8342d0a1584d9ee0df3",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "7e3e80cc17eecd9ed5028e961a7e569e400bd5ee47cb59f5c7cee43a67717946",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "d6dc43604a9b14677583032dbc48458ec176110e9b236fe692ab7ddb8889a062",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "aabb6968b4058f5380cff7a4cf4070a4b4359ffcfd3e72a5f6854ee2e718619d",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "0d3be4ea72e6354b397c7c6b48105a74bb15d840132e5bec9f6fcdeb03290761",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "3eb5a6cab67443dab5a6e6717fb432f0455da091d9c7483d48cb0447327101a2",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "4c29f8c2e4e9865e7d8be1f306f422d2d17ddf0b0624d432bebdd31b3cc7f65f",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "9ae81d0d48306761683b178c901a8d9fb4c88009945726e200922aff5d1c630a",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "699dbb8d269429f76d45794008da5796e966d32c5eb6cf73ef642621977be6c6",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "7240985b24e1e506adfbcc56fe7025d105e9aa727f52824248da432cf30b7296",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "73e3b8847124e1d1364c7631c1cfb062ac85dc740330bef781c19d78e9e38abe",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "3de550434dcf06175e7b21e59e55e174ad258c884a0bd22b6f94a0f5da7a0ea2",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "5525c1eb5c7a64d21a90cab3f039e3d8f6d3b591b8a8489da9493f0810dcd9fd",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "41f892d2ac2e6bd1b1a6652ea18adea7d32c2a0d9b364fd90c63bb93dd448e8b",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "ac466d6f4d7e2968fa15af070028fc7bdf036a89d93b4711a317470633018aa2",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "a08584b10953c638637bb3d993ca438eb69c7c67cb727ff27c56827e1ba4548c",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "eab697a9bbe6075646d564d2bc99eadb0e9d9155252e41dbfc1a585b5cf0f54d",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "07d71db72d100dffa0a4bc9f4a2652469793115d588dc66df09fa8ba2cd3ca68",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "8af5ecf08b93222d464687b952b0bfde36e58f4c96d3075c4335dd39701934dd",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "c93d6c02de844d36e17d335b04cda37932a3f376acfbf8523d71f8f969c0e5a8",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "f8eed774cdaddfcc2f7a3e1e429dce4051047c3ed013630e0f431594b7ecbbb6",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "191fc3d592ed9aa0ff1d28728d6006c2dd148c9e2062342e8035b6fcf4c7a42d",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "e3f277e639c0eafa4b2f922597df745dd0aa07f8ea480a29671d4fe8aba74a51",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "c75883203e30c748bcbfdeeabe5c0d3526bd817d632614ca9669376ff5bce760",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "e952c1e8b066dd0e081029ce66e1d8a32bffcca29539990586fb72551f4ac980",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "1f6ce8e52ee423635d98e7a47992ee71764be8df8eead07c9ee76cb5df2696e3",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "c481d464f2c62c54a41a1b4013fa271245b3dce5dc695a5436b6a8967173b78d",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "9066e6f416d9ad9173e2383b5e02b8dc5ab015c93adc0c2a7e2e0a8a02910ec1",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "70b13221ccce4932738346b74fd588a5988e71de951022e90d635ee958036ea9",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "7b37d8cc585511041406b90fdf19029f1da2597636f272075ab42522b86ce0b1",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "642e9fc93b06d0f1e04c3f3fb3aa15868e89634d2a825c2e993c95a2594bd85e",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "92308050f9e1b02826cb2873f74fa3901140666988cc35670f9172705aac3d44",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "c6d630bee48da4c122c2b501b05110df1a961db13947462ebf7351aaa4022c40",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "390a6016561ba92899cabfeae756b193e579c1988a97130e0479a16c6e228cb8",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "a9f3dce144e1bcf96547891144f82b7123d4eedd3497a01f2593e64ca239fe55",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "371e73f6dd705fe86c308545dd6271417286932839c47a9b6739ec069d9e2564",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "3becf77064ace1e588b190b1388ec6c8d61a4520a6062cce0dbe769ba9d7907a",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "d64f68a6fe5558e5fe28d6438af4ad1438d64cbef4715e84781b8c0f3d35f078",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "c34c7e905cecf9104a3c04319b8a673f05b7e7b0fc7ccdcebb31c32e79908229",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "b2e35fb50fd0b76528a84eb113d327b0a99742a65a50f0aa351c2940df50f4e9",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "9913c43fdf34aac3824f2397c61b6ae7a4847ddab768c5edefcd856aca2de32a",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "cca4c421c349b7512dd5724d34f791a915c1e48887de833a33fd4914f5afe33a",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "6b80bd0bbacca160cd3602b67a9ab065d8caebe242e06d35756592549b4e04f2",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "60fd140ce9b4ee2ecd935bd0600e5f00e7f568072fcd548e6baac6a8b7430094",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "9548d459a7c468c83dccb22c0382d2705a4c170f862894490cea91d2db7950f8",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "ded8023a37019ac18f851615eb62dcae74f95439ce9c301db858bca9964991db",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "8dbd239a56825de8a82c4123fc254e31e3249c7ba9098c61ecf876b1d79e7a5d",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "10abcf5372c46f1c1c0e488a103ecf80c8150c8431231170be6571cb860967f8",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "45b4e0360a1a6b7f72d509ae09390d5c97c229113f9b6956c25a45698c32990b",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "ec7ba7f9dd0bcb6d76161ab5d05ef65e64703ad488637bfdf4b0b5a3941424f4",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "03f66dd86427a96bbdc66af9c742de9ea314e6e5082ece7e1cb8b3e18b203825",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "e4193f5245afad38270abf4923d97b52f83ca62d1cff85b4c5c779f3972e3428",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "bd5e6058dad1ef410c628b8606f2d2e42cd8780d92b84d0e3255db6f5eba694f",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "2f9c88de4900fff15a638eba48c24630123eac1c33af97098bfe7056b5b92b11",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "93a498628ee4c67899dc4fa8c29ca175e8b52d56713c539e26a705492089cafc",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "f05babcb097aa10820a8886a6485230e76f2f8d456bceb70948a5cc29aa0068f",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "8eaf5eb1778596b0b5b1ac94af3b22a9e1e72c078431055f92fb4521ea593b0f",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "2cf77300f04329dafa21e265dfd44b6462ab00d9bd966f0adf32c3dd886e0c50",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "e385b44796218d7f2232a1660dfae962271c53a41cd7b63b83cb15df17c0fc61",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "70fd30df0360b7cd93d73a82cf07f6f3ae16b5ae292b0816cd287a6a3f3eb4aa",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "86daa87b11dc9df59300e15c6cfc12e8baa8dc26dc4e0334898ac8846b777667",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "f480e7f0514bcdc2daee908ada408e8df01411f0d5adaecdb77fd3a512bd7e71",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "ea75af108adb8ac2b935af66954f2cfea1d99034dcb45c79c5990b1286779580",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "c6d6287a881cc3602411a3ac23c25ae64b9aa25fa94f230904ea960bb058086d",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "4ad33d1ae8f690b20b3153e5eab53369dde71ddf4b59e658e196041bf1201a28",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "814e11d44f1de7fc48e054e657f85551b347679d872f937213c6356046e7a402",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "165c31af663d500ed0c8bfc112eb714366cd78f3e0c37d8890574cc60cbd3931",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "662f5ae24ce6dcd35ea5b5b2d86aa42332402579e4bdd29ac47fd90ebe2ee319",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "1f066a51d1334038bc9cbb60950c51388bac51b7745518ed65b993d3887cae05",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "3dadcb59c1ad6197e2ef07241017abd2e8a9638550811ddba045be868891c694",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "846ddc2c5402c56cdb7bc36a4656cf97867d39df39abbf3a8750707da3a8c110",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "7662f49612a64427c9d2f58eae704d6b9bf29c30f238e4d40e808c3f93715df6",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "4bfa606b4a1348eae25b59759ac9442fb699da3c2951c2b252b53e00be5c799a",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "68e5a399dcd52422f561fca1bb0d468f854d62f8f898d9236a682fc0df177efc",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "9a1439c7c24e5a20b66cc4d4d27bf296e6763faa3584d8addfd8ffdfc1380785",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "29933af2715e6cf4e15e3d4efc6ad2464733cce85a5156450f62102c11a24b6f",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "f1db87f684fe3ab1b479e49bb6311dc1c4f08e8b28888d4bc6358ea9ea355967",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "e4fc8cd6907a80fa351620b5864b9ddb968bf846bb6b6ec74d0d2f7f29346809",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "4ee5ba93296229b45c4e241849c1c766b4a01f3f2a7b1f6e89c2f8f21a29f483",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "16fe056394c781bbd16dae066bff45b1bc312dd28249401b9627da366cf72b67",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "2c2a088c54d888303f1593b5545bc317a42f6de04d25dc711afc6a2984032f02",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "4c8c97949677f6307f7f2285a7c79802dc027d367e50bfb0185d5e76302f4d1a",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "9f88eb6f951260339cac931fd0ec86cf01c5e7ec1a0807d19d0799b7b59cc15c",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "07f0f9f9d343e2acac0ba8591cb3a42974251cca7982e603afd8a7c6322389fe",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "973fa3a929edb3d4909ba68044623891a555eafa76e74f1fc916190375c71da5",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "fdb0188fb721d4611fa7d88599b6702bdb981d41cf796033692a8fb952aab3d0",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "fbfa8c2e41afaebb2541a765f92da1a97d4b3668968cafe7b36599fd17e0fd65",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "8e3e24c1f80d9fce4681168941ceda100eefacd827bca7e56526fd28d0291d6b",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "4ebd45cf8bfd05a86ce54e5ec446ee916a6634688d52845d824c67e6ed2878bf",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "99d44630536c8054a82b10ac5bf659999b5620bf65e9456da38d02846295d353",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "ca32f58fde86069b8a3aab0e44bcdcf2e449c2ba3b3191403251d6732274e477",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "4d96f75689e7db9e61abf16498ca350ddbb0b7b29d2b3492f5c9ff9b8860b3de",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "8860ab132985e54d4e61c3232bd1c02c23c57d08ab66c3e7725964e099f966cd",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "9a3503af9250d35a8184edb9e2abc00418c38a8d3f410587c42fbf12773c2c24",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "16a155e130d92a17243a8a56c617a3a9b04c69618b75a4e9344399973bf818a0",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "a468b6e6119f3464f8d7f7e50ae82332552ac4928744520a00dc438a303e9d42",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "325adb98f159300f4ad4536be930c00854f1158ec39fe2bc8552c5aa9723003a",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "c48985ba70797a1041dac0a4020c0ccfa8db79ccfe13e8963a36b67114d88d8c",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "a8a1d5ebed0cbddabcc398d72d8488bd9d06123c185b1448b80ed5b51cdb093e",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "aff0e65474a375b08418fec582fef63ace90e16807708dda4cc094e222dad3c9",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "77f7ac1d44f70fc879fd64d41da1df6b73a5a55c69201fc6ca36bb83eb0a27c0",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "f8faf66062bb176a8e4735b2132076da9a7db1b25090e1452a6b27a8fbbaf397",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "1071e2bd1e13441615fd70cc3974c6da229b75dc9ab596e2bde90e6b873b939f",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "7bf04759af4a70f05c4acac4e691d257b6c5b242afc8f6860d24947a4d5bec4c",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "c9083ce63c6f453cd95b32b426ca63c2c0ee3aca97bc4469f5793901a7c3047e",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "b6e136c99c1901d68ccdbd31b1d7da40040ba394756dc6dc1115c28e84e2fe97",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "00d2c8e56e9015039259ca9f2bba0430ce5c329f5972d425bae29a1e7091929b",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "70bf0de6cf656f922c09704c67b1d6bfc4049a3aeadb213dbcbf0e67599856d0",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "7aefdae7a210b66191ba07b4ecf95ddcd80943dafdb7db4e757e48cce6945d08",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "98cda6d926aaeb3745a2137526554420f173dd0bb5b855406b4768495486e6fa",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "b43a544b7dd20a72a949a86436cc3313a0b7cbf4d1154cdc6479b0ed80da67a5",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "f0cf09ba9b90a7907d9f93f81b40e52f159cb70f7329d466babed627dd41b981",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "052e93d09a3fd03d0f4b80012902b70c228dad99b422cbad559934eb7d62186f",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "149f912157b96c27ed1acfcbf19b61dd85abd1d8f4eca9709f8c62194c422f75",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "5ef716aa10882d2d0cf41ce677022f0385c0844481738beee6a736b71d6da221",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "a86582dcf666289ae899888ec29fbedb1cf06b355472df37c1b1d6ea4fed927a",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "e432c961b974f0df43e7e958ebe3cf29888a4b5afd75c368f085c88dbd18e8c7",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.json",
+   "sha256": "a84f5bfde2cc89775b9d1b9cb370e8dfacdd80f77b7ce8ae338741d6ea0ff97d",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "a53104bf6928d4ea6b2adf4e3bafc03adab1737b17704741fa055c0ca7e7c6c7",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "c27554a954cf3f555019fbeb9d5b66806c1f51b41adaf257e54e29c1229f047a",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "68950e75df5682bf1a056705a021670fa79aa2bca01c35301fac3d983f6c9663",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "3e7cb01a73cf18253fb4b07968b5f0f5e4fc9cbe418f99ffd63f88329cbdfe4d",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "28c94e33e6f1e960ba9d068f3aa6eef35ba9ee814dbf0eb5af440199226ddd0e",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "627ae826e43deea2fe4109117f7436c89d70d262b21622db2f30e4b377ea1464",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "6974cce78f7d59c61967a56cc3df494bc493b38e9b520c66fa2b663a30bc3733",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "af42f16870ad84ee5bf755b47cbfad888f3e521924b390c4761a27388fe79161",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "eef1e996f569c659ab8b88b2f534b397b2cd0b0d6a9a5cb2634b2d3d49fcd117",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "e0be8c31beb1014727f397fa51a108d8356fe55bc9eb9eea882c77e79b025e33",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "4957bfde0eb380710641ff2b1980dd9c747cfd40004a543fa52a37e9d289d8de",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "f3d29c43526425e005a07e2b7f9fdc96d87c509452f9d7b3224a36da8e7c54eb",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "9cb5f819ac71af07d2deeda7fe4c268ecb2fdfb413186966dbbb7ed0f9aad3dc",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "aedddc106d9a8135967261ebabdbc4c109c59c130bc29d48e751b85954914067",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "a5bb07b31d3c968ca66439f1a0c8a384383678bab935e50995e7f8fbb47688ff",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "986a5b0ae885b848ad762d622ac6646b8d9c9346d136f4a900ee1bcf9416a1b4",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "0c3f4a8d5c975f7aa07873a79a4f447a34cc294af393576de6e7da7d0de3681c",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "df202403dbff39e4a1424c63f378e1bf63d4330cbd03501f7a6b4577e4f66983",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "98edf7f8bf1e542b558fbafa5754e6b73a9b12e74e34445d411db7365b197cfd",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "0681527b828b6574318934091ff7c930c5e3e5252cc623294bf0866fbe4279c5",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "47da2c7c2b7ac2f94e6ba3b5f5ac3747b3fce460b3106059e64e59cd7e34efaa",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "06a8d9728dab0a87ef6dfae11971591f18828ed6f8ae3fa86bedb9b7ae823323",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "940931db5ef0a6fcd753ae712f7e72e425ac30b15b463221143828304b3f1b91",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "30b8f105f28963df0e91cf7568b87f411974549e23f4ebc1919c58b6a4c4616c",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "7ce10b27656ae1f961c47b33c287fe6bd34667df9970b53addf36a961a8430da",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "78cc02b20acede23d003ff7a4a652925e8bdd11559ba15c8e7f27a7629950b19",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "5f37f8944e3bee78cc7447b6eca9cd4e39aa74e143946e14aa7d83f85aed00fb",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "cc1009a0b6fa041214fc8ce402e3d73b60fd451ed98eae8b7bebcea06882ea81",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "bbf38b8273021cfea25125dd687867d032706b75b32be82c0a3aae83b1f2fec0",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "dc4c9befc7a225b1e7b544eec5d1c705a3733fdc6f97379e626f73940c5293be",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "f7e52630c1dfe06bb8b176552bb1bfea04df68585dcceed477479fda59f5d1e3",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "2c90b096474b30731a2a8024e20facc921d3557dadc4c7e956f7468181fe625f",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "bd3d628fa5736693fdf3ddb03b1cc2879c8ce06475ceebb527c5907e801b9393",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "14e8d016722b8c5e90fb9b2f200501d391a11e283a3443ad15891affcf3a7ee0",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "0f3b823bd4aadb472c2dfb8cd321cb3afedc262df5b2fcbd1b99af1d0536ec99",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "2d1b41bfc87831545516ddca1134a06970abdd084cb555812f14d714f9b44f63",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "73c0b937bee47c99dc19989dbc916a19fb7d4d228784a727f2a0412d40173089",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "c2ad5f6e986a06cb1283d114a3f0cc17bf90c97cda41d60f2ef57d3227db4ba8",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "421078e3dd5d03a3b3ee14abbbcd62d3cfc6f913cf6f549205cc69f923575cf0",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "b83450fe10b99456beb2093f541319759899c08d77cc167ce14c5485211046fb",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "20c479a8fd944a487d3b1a1a72a4f8de75d08262eb483183452ff724137c2497",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "709052a6304bab646a7b3b1001b5a808b2e04b5980b19892bbc105c865089980",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "fd6d21c19d678cafdb89af829e5cba8452eaf80ee49783a6623940387753bd18",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "b2f8137c93ee12e1cd84a8c7d5f6e0060248c102c8bcd90a3dfd28aa51778226",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "d6b1472cfab6e9a02e6c39f54a90cb28a99c250a645e51521cf3664f58491b4a",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "737584bfa29c7b6b53b55c3dd26c66af1af5b2b03455808d88e9abc87c539834",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "f0cf1468bf75dbc99c5574132321c0591c67c4430209f256ae960839cd0f400d",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "6f79783b8b0c86a7299e00ed2fcd802bf5e0a9a8832dafb3383f07590ea07b5a",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "5ef3726ff39d706540999c20632fbb190ff42dd5937ab2e3d76d067047914d72",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "e1b9ea9cdef93a275e623443d1976a03b78746dab633b12336c1aacefd1ac65a",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "8e9602a729eb6fc8eeadd8bb053952e3e4d70dfcce7a5045050a9534b76e68b0",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "c775ece12f9773bb02371498e4a037e4432128ab362bf1dd07a62ea87a29e90c",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "79e25d31cea19eb2ca6e84e1a46a8c50854895baa4ee506f42eef71e2cb3b37d",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "225ddf41f2b9336ea23f203e6b35ed6d70e89859c3cb9f7886d4eaa53d6308f7",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "6581191b751ce3dcc5d223ea9d9bfea534c6995d4d06d0aaa80a7a694a5ff4ae",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "0f972cc9d70d9133b91e91f863512966843ebd68cd29f309760e52d239b99eb5",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "42391e74450cd7abdb62a2583f0e616aec0850cad4e6f2b1aa9e248a3ddf5686",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "96235aa9e862802a87ca3a5a5946974aa0805c7e8bbbf2dcba42929ff01ce292",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "cb8234e7a6d9591a2d79c90c0f433b8ff18962a23bfcf2ef84106369e1973ad2",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "7aa0e52b92653c3f58b6aba060fef6dbb79e043663d28a42a999843af37a5bd9",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "d827d27ec9b392520da9046d4b098e4e5cbb2239229ce0860de3f567ff5ab24a",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "c179d7ad73327cd7efc8135390048992faac92dab3c3fad4e307fff6ecbfec7f",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "b8537e9216a578d984bc5ad2a21699242ab357504829b4b5d01006428b65bf36",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "df8e710a850efb062b51337f56f14d45da1ef50f959e0462630dd4f579b6a6cd",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "70c82974dc17e00228fc66804ddfa461826bd7d89139becfff1824e3a1380aa2",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "db54dce19c2a999c8947d375a5cee36f5553fd7d9823f8b04469a1ede38ddb23",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "42e3e6989dfb3fa34f327ba4a103c65591e094d1eda19c118deba1f527e9fce4",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "6966c627cf013ac6db1356990038b3fbdaff8a511822f546f784706ff1acffe9",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "cfaa990ef277fcca58679af9a0464798982c2b22457b5eb21dc9291f53570644",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "4b59d6b939337b08f0d7fb189729db4d60ea1d0ab16aad2e714e0df9342a66a5",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "24541f43671de66fc3c6700a90fc7f32a477bbee00522812132bc24c8c6cbea6",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "2348ffc9019be96389637fb4528c0e27997787a978b56ce15692c9fc33d7b33f",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "7d9b639d1d12506cfc27b71d629c0a695a47944ee482428251e041bd2a94921a",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "6d2b8e5e34068ac833cf98a2f73c68677bbcf83067bca420fc341a867cc02b5e",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "6ee016de88a9e9425841fc35057f1ca085d7d2b44cd3b1d61bab2ad184c0230f",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "aca70c4d07ba1109523aa437f0dd11be318d068fcd0e877c86d8e848a2a5da9f",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "3635a40311a574d206e01cf9937c59a9749e06d10d0c94e15c9ece33665f52cb",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "1db7c31df1a3c3ee44ee7b83987e3f7b487c0e36f7cf792bba9bae61b7f72c89",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "d5a0a3081a1898b76f718052aa43cc38e621e1710efacd58ac47d2ba1cd2c4c7",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "dc6299748d938bb34c9df2fb298663b3a5a2a08ad0095d7362014c0ae11cb936",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "1432c33576806133bf4e44892a8745d4c151f618df2e447bbec0032f66a63d69",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "6fde5bae26784910670ab7c0adb7e1769a9fae4128936a337e4888d94de8fe74",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "e946c09838a959907c957b04ce464b18896e441f27443e74d80c6dd63445becb",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "a50915dac66ecee2505096684b9957311b6357f04e66d44597bb6a8c8ab7d28a",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "e9da0dd7a0dcf14ebfa52ee83bab65289e472876ddb06dc9a3c66ed9422ab5d9",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "7102b7a687ec35cdd11c88d4f96aa34c9d15df8b52c19c4037a3ebba149b3ae2",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "a37e4cd97b6b1d6701d3c9530f3a8f3f44e0b1a5b9e5026204ff1c9cd5f8e7b6",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "0f720e061db66e64177595c7ba98cfd4144eeb4ddbfadcaca2592593a783f574",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "a1b122f471d06c8b618148d5fe57e7db2a838fa7a90951b1048057d9c92f4852",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "6eb056f867c28633fa10b5839dc2fe2de4d18966687c93f4d769ab1d0a7f7008",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "375abe8707e366523f51c2e7570347041d5c4520e778198b709a3f2ca5dadc20",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "17418ac690e6bcbed0c9616cfbe20a001762289c5aea5312c9b9a0c3487b04fa",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "709e8edee9461811aff0cff77a616389f82713c318d3bcef5911f452154b227a",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "54fb3921bfda6552f04d3d804cdaf97e1911b176b0e4588aa270dcc179403e65",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "3c6095dc1726809bd957b7cff7aa1964f9a4ab12f35558b29985b95f896f66cc",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "5abdf592be358341fadf50957387d253778d3d64f32c4b5984a11695dac2e057",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "4e379fa1ff940ea48f01b4f07df0d085e5b3427723f152fe28a7d61187923de3",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "951c9812832beb6a1d73ba7ff1e33f9f06894b73bc75452779bae7c417ef10b0",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "dc685eddd6fe622243866e8729f4092f74fde6937d73b326b6d9281d0f36aad5",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "a666de9938866943926f163d29ce2463fa8e3899d9a1c6c7339cf5c181dda1a0",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "5750a936b1e825efb47c24c66d9d35f9acec1b4da3e6e077bcc50853b3ece487",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "b07b8d5f50d055937c0ada279bf06df303f84a155af1aae42997f7e988eed5b6",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "4f269961a664bffc7cae9fa708d974a48adbdf75cfb9efbe1c661500f3758010",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "f9d444e276e97764fcdfb873bb06e2ae8f4454161dda3acbcc0b183eb1fe0d73",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "e1f1fac97f922ca2352d862713b2b3381b3df301773cb1061554d36f8b593dfc",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "727b504063fc0be7db2ba7d31a0e67775c8842b24b618f7c646fe71cbe274432",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "f197b50e8197ad501f18aea6779070fac549d5debacb077faac9ab825577542d",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "23fa372b5ec7291d2c8ce520ce27e9b9868997a89ab71c8acd39dc766346486f",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "25a1b676d8f31c425757c717e8993626c9fcea196eacdba7ed6aa41ddeb477e9",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "613356f0d6b0f94ca76ae849c99735ffe97efa05f3beaeac853ccadf3d1eea56",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "ab8409fb2a2aafdaf234fd57f710cd507a44bb277187716702f2653e5f7b28ae",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "5cad2c5288a7791cd9ba22f6ab72c39571d0825b23520e3c73950061aa7cb64e",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "a125b63c741dfe14b7cfed0b1365feeaf0d7cc29f9025276fe2793e5350e96da",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "6e5b11f36eb47dc1d55c7b8b237913958051ca3daf0288166766b9b39417cc9c",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "14bcc7c9da28c0e1425c9bed36b845ef37fd3b6ae82538b75bc26a76b8086c6e",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "7200a60e2d5bc82678f3b27ca67a0aaa2360387b419e789d90ea4868ce99095a",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "501def472e55d091a9b49f459256e2ad285508fb6115a94119a9fc7f2a07faa7",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "b066ab35bdcf290c021b2fd21da925c8345106554d3fb82658cd32355601c902",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "6b85b081eab1de847104eb09e364b10f54982e8436161c0c53561f44f3c45230",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "e9bc6bfe887a6f3d6a251630735e3130711adb1b509a6673210b2d43cf1ef614",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "b978c4fcde3b7ecda402f5a345b9a6ea8e2680fbac0e4face9ab1659412e47eb",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "746aa941d5064f1bac563c047c24f8e3a724e643e72f09821cfd6776f019223b",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "4c79b181b75b758b7aa90451965d91cffab682edce9e2932c96318a0fb39d567",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "b65780ba64a15d0eea9b439f6c13e6b2b4485839dc597b2762bbb9e8869e6d93",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "ee35cc996f412a96238554f3892e7608b9ce2da61031b2e0a85c7bacc2fff92a",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "3c6de52ece20ca0ec9e55e7fe591151b25bde308a624966ad0070973aaef3d84",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "9cd576cc9e9a8dafa50dfa415252e81be2c7df1198d957422c1a17349081704d",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "cc42d91fb58a856fb0b5588d4ced4ef0f5e1a7c4b49d834b7f613764513eb4a7",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "7e0e9dfe68d64ae1e83a8840c7898a5b99f74bb3fd490f6c317dfce61340e3a5",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "41ee3f8a01ef22a9f97b54bbd4ff69cb41b45f8943d86656080a337881f9a0ef",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "fec0b141ab93a2a907006788dd2c582eb009060e7bc59fb5d65cd9f634d0d3b5",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "3110d5206403b476990d587846e6e7326dbe02ae538abd72bf5360bc22cf7a9a",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "c18ccf2c5045f9a210e8e68beee85e40565ab4b477cf911e0dc5354698e3911b",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "3f96f2af0b7b934ebc7cfbd99e762425ca871421ea1fb66060e1a0a60fd1baa8",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "5df983aedc9c8221af8f9a993f8500eb06d3d4f10060e3c48a6835a489dc72e3",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "b7cca6e01dbb9999c0c663ff9d7e332f10c786eb53044bbb69d782bbd62b2879",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "4aaf166f5da1ec2ee1686bab84d1ffcc70b08279f3e1a10d30ed9ff39d931ef7",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "a13e9a0c480f623e0527cb6f3c57d23ae20baac36561184bfd8d1f5cfee48789",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "6a7119634b83a53eebdf3048df4330f7ed32a7761a30508748962d23c9d8daee",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "6e7e39292604476acea238b0a77add48dfd079915c08829084b07f664804ed39",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "2a8a6e70d96c4a65456ea9b1ffed5b87da96ae2b81c370bd972051177952655b",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "17180f207f4f3c0cb7809d276ba76f74c0b84009e67f54e23c714497a715064d",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "6886882f23173354a74da8e4ea078c6a2ef13147fdbc08d9d1ff621d1a9e28f3",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "2f993336083e1c4cee4ad332543789b2b5b908834397023b3f270c1e10b448db",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "b2e984232422dcf208ddad0a6a4eb7da840bacc6715ad269f102a777392c5909",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "fe91cbc8c9c5ec870c726b82781642f4ac5b2c455ebe11e332019bb9ea182b9f",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "ad05bac442782723f7dc45fa62787f48fd970e56281c9410d85209b7a81bb7ba",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "4bfc975d8643b6f1970d8a0aecc54e56688d1fb6a3cb23fb06b7b2438f627d57",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "9965b404c498809bae1d8e8df3c1069352942673f95fb9632c4ae76a462fb016",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "a9f6ae93d41d0e2eb2170243edb8f5e9281d9588d642ea02b4ec8d2597d4c21b",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "fb0540c279f21db8919db946f77f372108acbe496db028dcc7ded1d452294e9c",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "276dbfe57ec44a85503cc45a5c54eeddc30be5a3a2f69d2abc58d7cce82c5ad5",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "b865801b2e184197dc81cfe6e2186c23daeec2697284ac22b8734f903e9ce15e",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "58ed117fae12420d3e0539dfc8c39aeceb54338f43fa20e246112300959ec932",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "26e874ea5d94965bef46e401fccd07f1a6be84f710b3e023c288f794deb91f83",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "f7d05bc7d3c37bbf1381654aad70fbee2e0e7076f3b5f05db1ee43f50a1005c3",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "c153981b8ec4c3ffbc5d475c89a73e11172a1ff9a2de8ed4b0728bbdb7810805",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "2ad45e00f4f0bf491fc1294537ca21510c7a2635c8ebd45797f3d48048552a4c",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "96637f896e517dabf85bab76a2157f9ba310136c54ecaa51b9f9825adc30f584",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "594af461b6844a2b402cd4e20f022132e65a4a797fe449c07e9d835b0ca22112",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "bdd6d80ab8499ffed133e9333cad689a8a772e131c072f362945539055c5995b",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "c0ee58066a41d926c4b72727391e9487fc9fa52b58856086d2eb70639b86faab",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "8d74e6eb2aee1c26560cee6bdc69aa817dff8114a389c7ef3cf3a0603f74fe57",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "5ec970bbdca2551adda81e18a01b63697c366612cfbd3af1f31972430ec14e05",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "506e4b14e78393da3829498590842cd7d1319b2f7dd5cefd3a3eb88f4b8712fb",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "0e8e6bd623cc964ca3e193e3a19333d7ab472ca697dba564ff796b36406fd4b2",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "7f228ef23645d3ebd3979b9bee231b059fab33942ca122af4b435011af0489a4",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "0fa9ad7cd1d7edf07a7b6784f5a5048e3e2cc9f6f3ce5572537334aab4595303",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "79583bf545f1fbf4a1614724efce9692d81ba14fcf9d5aa724660570cb2e3ce9",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "90d0b8322bb92ac7a6b2e384103c51c1ea4169ca1b0f56b03087e5100b9ef193",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "a5e95e80a5d038aad93321acaff6a9de2b4b13398b87fc27404f38cfa7b956a3",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "6e3c928075b5514cde0e4b13c053c7cb675e74cda23d5fd17076fbdd5dbb4d29",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "95163ef542c0653951016216c68475ca014c5174431b903a8050841768248db3",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "fda8505a5e464458d4893d2622182b86ad36ddf509d6c45198b6d0dfddc79653",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "8d20c3bd6332853c9d607f5aba4fad31b71556f3cb857a3e7e3530f6038ac63d",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "1f45b905c9d3f8a1dd6df238e4e2a37f1fdbb946a4c05b065d14abd55bf97a8e",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "23b7b6db8bf1621bd785ba644a184fddefbc78e293a57b7d4ebc5c882260cf42",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "746efdd4ee4efe6e3295794c1476bd3f3e6ea3192d7e8c8fde1f41816b0fb628",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "76e46f9113a3d32c35c78158b707137c022f90904661f2c3937e64354ae79c3a",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "6a3196e1bdeaf0064c8991dd5405ebb3ad6d7de0c8e730b2ddf89fe87d608bd8",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "49aed3d618058f3edf3dcb01d68cf4b4513b58a3cf78c934da55e043c6edc185",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "8d4222805a72dd9fefc18ea7b299bee63b58b0c4cb6f49f1a7f326a7337cfc21",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "8a41f24f0aa075090c6f8ff2b37ac7f973c902878d55bbff211ae3b18ed8f2fa",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "dd0aea307b46ca94c5cc1c4c38802fd78208e0c1271957ea423da58ab86272ef",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "d1b2c968d4ac635841b924b5f2cf05048c969bdfaca3edd949273f0083688a25",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "7098cb9d773b5974ce2a37c6ac05245758cd2ce9066f8d6e3a1788ef891d3c69",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "cebe6b470bf25b6b0c57cb1b791e3c30f2393f5a3a8e94665707edb989dd5de9",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "20770372461fc0268af1413c0db5e47e05b949a6785b2a8597e3ec67c02bdbab",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "a2468648ce03918f350bde1842257f9a5d8a3c6657de0a230594baa2ff3c1f51",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "0dbe96596839bf7c8e99c94719252878bc32d0bdbc2338ed83792a934b62def3",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "68c581c5d5b8df644c61aefee78746ec37fdc0a7bb2bcd822fc19c4892e4f315",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "61be52d47c247d95acf9dee4aad07039b7a25dce32fcd0c087ce7b8d60b91a44",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "4f70b102ec8305ba09daf0d290e8c542e7e4bff623da2d3ea69d2cdddaaecb0f",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "e209261a8d82c611f72a560a44fd2cdb0be7c6601fe8889aa772b820a114ac7f",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "d47904cb2994d10c567f990cc31ce8de21047057056d6cbf361d111202595e93",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "60cb0dc496d2d4c78f18f01dfb0989b29370a9a1ebcf3bc37cfff7db58f8f993",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "c2369daf7236e0ee8fef44098ddd6c9ac8dcecca3b98f7284da73fb201e5f95b",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "9170d45399e989da916127781e3cb920b23ded8434c0f56c06527270db60f699",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "2f9e964c5a0bb833308f580325ba05f6579280d0e88a9fb850fd9c47597fb981",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "721aa8d10269499abd02b72d10d231630331041480115bd08159859e30b2e2fb",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "181db16c5624ff51c4687b5429e51806d06fc996bc1bd88f3899714da3799ba8",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "bb5a21bdfbb900969d726bd0ae35b9a7b121de7378edf3a6d864cc4a185b52a3",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "e670cc32be54e22d4af331d870d914f720720cc016d1de05fda84aabda414a8a",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "f5a7e2c87f2d46cdcfb05244fe2cef432c6225ec9630f853973ad1d49995f1ad",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "f3c3e3edf31461c0753dc2953177d517341c5e8cc653ea0bdd998cf43f19ec05",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "7e9c5fcedcdb11b26f801f0f3b688af6c4976a3b8b0c495f994fa27e9c81ce85",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "f8a398014b93c1de34f98079b5ca8d53698efd17fcfbdbf7495376f131478a0a",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "1d99cb138542c0a4d232472f1070fe75dfcf7cd76bfe5c35f3b54c55e7e337c3",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "4044977106fea12c024395c4cd4371a637409ba06c99a96d310ad625c816e604",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "08f94de7cae8955a0cc4b132cd28b0b9358fb527266f4ef461f37bcba14af984",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "c15e55d74cddfd0dc778b583f4656c6b9d4d6b2530b462077a43b506f396865a",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "6c65c74c0e41e2c93bf0bca18f1341797ff3625990bfac760b56701340d0d50b",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "15625799daf777676d725ec6fb7b80c8c12a6dd2614df9d50d3faabc1d8d64c4",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "52bf09e766d7d298e6d9d1b3430b2f9b04e8ae5c4aa3a70fb05f6e9d7d67fdb4",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "1ac62cf4ef4ef5563a2ae6fc1c7afb19cebb717897414cdb4c3e02acef24ade0",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "452cc4c112207c4346795d9045abd3c8a8021f6ff8e349f98e45a344dcff9e35",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "371810fd4cd77e422d5ef79506a23abd1c9cdffd5ad469391c75a23f0012720a",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "e80798320aaa5775021f3911b4af4cda5cb8a247724c982f160b925d5ebcd756",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "d8cca1ace3c7e5736cc78892a76729d860f2534a297c6bf1bfb6b923cee3057d",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "7f6f87218b934da7d35c1ce4c89fc1956f3e273159942931526a081994b7ac94",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "5b41d43cc348b7bf823b4811d7cb388aae9641444b00aeb8fd3ec21dcdf42fca",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "2cf054fc6729ac42d614822b8c7fcbd0b39640404beb9c3f0eae148e41bf4d7a",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "1ef655e15f05e5eb0435a5dd9d33029bb69ad37cf1c18710327baa990773fa76",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "daf12bdcbbdc05ad6564cc56c526687c29d5da37b6ba3b02c0a7c4652735a068",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "85606d63dd90b897903b6fa092346e34b8917547090214aead7d387479f02254",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "8143034a9ed090b37d2f76ca3cbbd709e8d106e92eb554ba82b2bd9f9f675b5c",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "c38aecad11659479324c1e5fbfee099e2994dca96ef87e0293e755786c73c3ad",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "24a8d7464d1de7747b192e01e6d51642f415124ea5309e2841d5f387a82ee93d",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "e4664a461f8d6a2da7b34d19f0f1de1fa6b8c46472963a31f4110ec4a26dc256",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "ea3cd86b8fe531d07562e1c4e2f269834b70854ae33278fab2b998c6e1092de6",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "62780f73a0f032e2f915b6a5d48900f68a306f2c8f718b33da042c9a56b64072",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "ef1352b419a1c0d6295ca916329035a862c09773b9392d779f0d3754c92d2a64",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "4d89d97f7c00e9b51c5b25dc32a2c5bef2071d3807563259979d70427d978042",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "e46e82c9233a490b061de1da7888ca2876e910da1f2d45f9e9a5d34b9cd6b316",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "7be75a077eb89ba32dfb64fb2fab78214b59a62781dff84ca84476d918780d75",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "48b88c7666f4fc5c831e77c3a1b8b8e6042841e786aa4786e827e9959694989f",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "625f9a56473e0556bc259abe9f673ba9191e4bf3a57f693f611d1f6bf7d4957a",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "218fe3518a67346e67c1da6c6c3be4b1c9fa5aaffdc32f4963f6e2fd34157922",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "7b4e48541b5b32fe088622698fd1a4d21461bddfbdbfe1a3c61ae6b8120c02d0",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "c80eb252ae6c6b02ae95e0b97796d42d3154eb090c537124aee94e190757a10e",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "9a9e5da5237d2da49d84de8d7277d627767afbe6eebed10b12e482f65b232ba5",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "3f5de16b5d2840c40922d99a8bedb32ed375d6b1e93ef12163b303120a6ef9ac",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "9a0b66f75d2faabe5ca1690f0987388a39e2176ee1d7c9485abfa54828aeab13",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "0b18f7b26da0643936dec65f30dd5c6fe2f8fc5d34289cc808051dec5fcdbef3",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "ee4c20a7250513d68842e723253f033f1db252b061a5990eaad38659bc85465c",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "66df0c47cb2cc7cc5dfebbc2af31177544894409f0b570fd296e4748cc1684e4",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "6170ad665d82fb81488dd96e8d933dc210fc84e00f566da90dac242597de483d",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "b990cd0b6b89363a455354242c5958bfe8a775d5e14d73d73cc15f37883fd029",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "12f37a17068a5760a8857bab75783020a49484b05a400430b50eaccabac05602",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "0132fb3fc899cace7f8bd5e3c2a6970a4c09e3dfd524d9ecc7763248390d7304",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "22d315fea9051808ad76c52b11d107c9b1c0a550533d98ab89fbe73c6e0f5a4e",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "65c030ca5946874d6af07f04af98ca4460531a6d75b14787c76f981ee136c785",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "5b1aed596ad91fe1a54adcad08a9a2de705e9bb004e901be1974359df02a8486",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "ba3fd315d40eb6a3c811be73e27fd1c1694fa87bb70ebdad9c72599dd1e24ec6",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "f4bb08425422fae25d02d77b61807c6e9023e6a24b174cf767e2579523cf427d",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "ff6bec55fea805153b9de90992b995638bbd222e5e27831a6fd593e0056dcfd6",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "74aaa35b0c5681956d1d630f27c67807b0a60711cc1e928abdbc4126c06354f4",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "6feccc11b75cd2f4d59ea1d8d63a5bd3e139e12d9c717e3d8a65918fd56f5e44",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "776985057b6a1864f7d55d2a58fa7be21295d6192cc2977959a223902e8e37ac",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "9bde5e5b43b9b706e68c11cfd8c20991ca134e12cf6c608aaeebab32ba14215d",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "ac74d7310d6ecb8b43097c9b6f629bee04a7a063c4eb3ab6e1606b684973aa10",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "493f70b85750b116d6d5b9d55a3baef1241cfd22879ff716267d8c04cc11401a",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "d00f0bbc69562cd546f1f39c1c7fd5e49a0fda36b0866f777d0d885f0f20d5b5",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "7dc75d93ae87fcb1f97c75c69a50cbe9c8ccfee4e38ece1dc00f8bb0014b1d0a",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "597506b5ffdcb20b9dc272157f58a7cea0cb617cb9700e0d2346fb382ba1c276",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "009cbfde29e4b1e7776208ed846775db5721c945da16170e412453ead9c1c987",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "b5078b5a16f4b8bca589c93b8842a474fd48604ca1b61a61e3ead940a8563f4e",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "c54ea9a7989b40012402db94b4f2be8d219cbc29d66808d1a4f361cbba2f33de",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "5fe3ab5fcb581e709530f890ac5bc9c4e511151f816ca5c435e0eee1e58563fa",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "d3575b809a07921431a8c7d267d900e6f2a022a16f0bd56c870f6f8c1a102ae4",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "8fec77f7feb1dc03b2e823e67c4e973a233ecd83b344667118950dd04dca21e9",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "dc8d6d171b0951415c6af2e1ed8d387ea792b2c41540250bf01bfea3469e9005",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "3bb58f0fd448175f1205d037594204e6c1098d8f26f4d5f170bba21d33f5d668",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "9906a1226a2176b2d669a7d91ceb612f0d20245dae372a3115d377710aba8408",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "c82f87bd08e02e05a027fb45e2e350abc0ce34fb193f354aacfb92c335a843b5",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "60dc74b690d9c3bec279b3555ad3eb56511cda9b9aafd434e274f0d8aff2ab16",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "14f656a8f924bb5f7ad3213f53109cf6f8d0c513fd2ea842756fbc59c6133ff2",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "2bf4a9fd5b9c0a1fcf077d3f54950738ec91ac4a7b5fbfe3b2bc251d3d0371ea",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "4e35f7740d38dda75eca018bd43dfd802cedbea40219b4be6a8d6dc46f39f44e",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "a9eb118145d4a6a01d09acdc3098f9054373725f4a9e4bd3585173476c4ec976",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "d2e892bd960fd0ab8163d2ce5c4bec52ae8587f4162ab1e618fc25a4ef07dd89",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "1ea33aeb9b25ebdc49d1e2b8516174bcad8e946d355760ad88ef352d995e67c6",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "1b7987b397635e38efc90546e1bd6b442e98f24aa057c6d9831dd7c300a6d215",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
+  },
+  {
+   "kind": "ipa",
+   "path": "_internal/docs/tn_benchmark/report.md",
+   "sha256": "2bbcff4a2982197e28169ae53082502746a79a88aaf6971c6831cf7da0666766",
+   "reason": "Exact generated IPA line from the 440 independently authored TN cases and their accepted readings; source fixture has zero eight-word Corpus overlap. No Corpus waiver."
   }
  ]
 }

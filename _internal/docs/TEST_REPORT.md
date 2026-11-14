@@ -2507,20 +2507,27 @@ Integrated the six plsfix commits onto 0.4.169. Replaced the remaining repeat-al
 
 ## TN category audit — 2026-11-14
 
-Source: `20889b26f83c72e13e137780e7a2812ab3e27e88`. Added 440 independently
-authored cases across 22 categories, measured through the production VieNeu
-read-aloud and Studio text entry points without synthesis. Exact text agreement
-is 178/440 (40.45%) and 187/440 (42.50%), respectively. These are pre-engine
-string scores, not acoustic accuracy; sea-g2p still owns several numeric forms.
+Source: `20889b26f83c72e13e137780e7a2812ab3e27e88`. The same 440 original cases
+now measure both text and post-G2P output for local VieNeu. The read-aloud path
+uses its production unit-aware phonemizer; Studio uses its production final-mark
+patch, sentence-case context, text chunk normalizer and emotion-aware phonemizer.
+No TTS model is loaded. Runtime packages: sea-g2p 0.10.0 and vieneu 3.8.3.
 
-JUnit evidence: the requested TN selection ran 2,415 cases: 2,414 passed,
-one skipped, zero failed and zero errors. The benchmark infrastructure plus
-Studio TN suite ran separately: 22 passed, zero failed or errors. The committed
-floor permits no decrease in correct-case count in any category and path.
+Text agreement (hyphens folded to spaces): 180/440 (40.91%) read-aloud and
+189/440 (42.95%) Studio. Post-G2P agreement: 331/440 (75.23%) and 332/440
+(75.45%). Each expected alternative passes through the same path's G2P.
+Phoneme comparison ignores punctuation and word separators while preserving
+IPA stress, vowel length, tone and emotion-token identity. These scores measure
+phoneme agreement, with no acoustic or cloud-engine accuracy claim.
 
-The deterministic frequency sample counts 100 stories, 356 chapters and
-1,175,185 whitespace tokens, emitting aggregate patterns and a fingerprint only.
-See [TEXT_NORMALIZATION.md](TEXT_NORMALIZATION.md) for architecture, category
-scores, ranked investigation priorities and locked-file implications.
-No normalization implementation or dependency changed; the quality hash remains
+JUnit: benchmark infrastructure plus Studio TN: 26 passed, zero failed/errors.
+The requested TN selection: 2414 passed, 1 skipped, zero failed/errors
+(`-k "spoken or number or reading or abbrev or symbol or english or japanese" -rf`).
+Floors permit zero loss in correct counts for each category, path and stage.
+
+The unchanged frequency sample counts 100 stories, 356 chapters and 1,175,185
+whitespace tokens. Investigation priorities use post-G2P mismatches; the report
+includes up to ten failures with got/expected phonemes per path for each top-five
+category, and every mismatch in JSON. See [TEXT_NORMALIZATION.md](TEXT_NORMALIZATION.md).
+No normalization implementation or dependency changed; quality hash:
 `db6c9cb847dac2e536deca158114df29dcfedac4ab88b69885c08e1924876997`.

@@ -9,18 +9,28 @@ Nhánh `dev/tnaudit` chỉ bổ sung bộ đo, fixture và tài liệu. Không t
 chưa có chủ sách nghe duyệt hoặc hội đồng người gán nhãn. Một số ca mơ hồ có nhiều đáp án và note.
 Không dùng câu truyện làm đề hoặc đáp án. Rà lại cách ghi phiên âm (khoảng trắng/gạch nối) trước khi khóa baseline.
 
-Điểm là **khớp toàn chuỗi ở biên trước máy đọc**, sau NFC, thường hóa, gộp khoảng trắng và bỏ dấu câu cuối.
-Giữ nguyên dấu bên trong, gạch nối, chữ số và thẻ `<en>`. Chỉ cần khớp một đáp án là đạt.
-Các cách ghi phiên âm tương đương đã được liệt kê trong fixture; bộ so không tự phiên âm hay gấp dấu.
+Bộ đo gồm hai tầng độc lập cho mỗi đường:
 
-**Đây chưa phải tỷ lệ TTS phát âm đúng.** Số thứ tự, đơn vị, thời gian và phần trăm thường còn ở dạng số
-vì app giao cho normalizer sea-g2p. Thẻ `<en>...</en>` là chỉ dẫn phát âm, không phải lời nói thêm.
-Một chuỗi chưa khớp có thể vẫn đọc đúng sau bước đó. URL bị rút gọn là quyết định nội dung hiện có.
-Ngược lại, khớp chữ không chứng minh waveform đúng tên, thanh điệu, kéo dài hay nhịp nghỉ.
+- **Chuỗi:** NFC, thường hoá, coi gạch nối (-/‐/‑) là khoảng trắng, gộp khoảng trắng, bỏ dấu câu cuối.
+  Giữ chữ số, dấu bên trong khác và thẻ `<en>`; khớp một đáp án là đạt.
+- **Sau G2P:** chạy chữ đã TN và TỪNG đáp án qua đúng hàm phonemize của đường đó, rồi so âm vị.
+  NFC; bỏ dấu câu, khoảng trắng, gạch nối và dấu ranh giới từ. Giữ âm IPA, độ dài, trọng âm,
+  mã thanh và thẻ emotion nguyên vẹn. Không bỏ dấu hoặc thay âm để ép khớp.
 
-Profile cố định: VieNeu desktop, `speaks_english=True`, `direct_english=True`, không có bảng cách đọc riêng,
-không shared rulings; gốc `ja` cho loại Nhật, `None` cho các loại khác. Không suy kết quả sang Supertonic,
-Edge, giọng mạng hoặc toàn bộ Kotlin/Android. Chữ hoa 100% chỉ kiểm nội dung khi bỏ hoa thường.
+**Sau G2P là số đo nội dung âm vị gửi vào VieNeu cục bộ**, khắc phục việc chấm chữ số chưa khai triển là sai.
+Đây vẫn chưa phải kết quả nghe audio: chưa chấm waveform, nhịp, kéo dài hay nhấn giọng. Cùng một G2P
+có thể đọc sai cả đáp án lẫn đầu ra theo cùng cách, nên khớp âm vị không chứng minh rubric âm học đúng.
+Sai sau G2P cũng có thể là đáp án phiên âm quá hẹp; ví dụ tên chữ Anh CEO có nguyên âm dài/đôi khác
+`xi i ô`. Giữ nguyên 440 đáp án lượt một để so được; cần người nghe duyệt trước khi sửa rubric.
+
+Profile cố định: VieNeu Turbo desktop, `speaks_english=True`, `direct_english=True`, không bảng cách đọc riêng,
+không shared rulings; gốc `ja` cho loại Nhật, `None` cho loại khác. Runtime đo thực tế:
+**sea-g2p 0.10.0 / vieneu 3.8.3**, trùng pin pyproject; không cài hoặc đổi dependency, không nạp model TTS.
+Phiên bản package được ghi trong profile/baseline để thay môi trường phải đo lại rõ ràng.
+Chữ hoa 100% chỉ kiểm nội dung, phép so chuỗi bỏ hoa thường.
+
+**Edge/Azure/Google/FPT tự TN phía nhà cung cấp, ngoài phạm vi bộ đo này.** Không suy điểm VieNeu
+sang các engine đó, Supertonic hoặc Kotlin/Android.
 
 ## Hai đường kiến trúc
 
@@ -28,14 +38,17 @@ Edge, giọng mạng hoặc toàn bộ Kotlin/Android. Chữ hoa 100% chỉ ki�
 Nghe ngay, VieNeu trên máy
 văn bản -> word_timing.tokens -> vieneu.units
         -> spoken_tokens -> _spoken_tokens -> các luật theo từ / reading_marks
-        -> Unit.pieces (BIÊN ĐO) -> vieneu_engine.phonemize / sea-g2p -> infer -> audio
+        -> Unit.pieces (BIÊN CHUỖI) -> vieneu_engine.phonemize / sea-g2p
+        -> âm vị (BIÊN SAU G2P) -> infer -> audio
 
 Studio
 row.text hoặc listener_text -> bỏ marker tham chiếu / NFC / reading_punctuation
         -> spoken_symbols_to_words -> thay cách đọc đã khóa, mang anchor_tags
         -> studio_tn_tagged -> studio_tn -> _spoken_tokens dùng chung
-        -> _normalize_with_anchor_spans -> spoken_text (BIÊN ĐO)
-        -> EngineAdapter / sea-g2p -> infer -> QA / audio
+        -> _normalize_with_anchor_spans -> spoken_text (BIÊN CHUỖI)
+        -> sentence_case + keep_vieneu_final_mark
+        -> normalize_to_chunks_v3_with_gaps -> phonemize_text_with_emotions / sea-g2p
+        -> âm vị (BIÊN SAU G2P) -> infer -> QA / audio
 
 Pipeline -> TTSCoordinator.spoken_text_with_anchors
          -> dùng cùng chữ cho máy đọc, expected ASR và phép chia câu
@@ -53,12 +66,20 @@ Pipeline -> TTSCoordinator.spoken_text_with_anchors
 | Studio đầy đủ | `tts.py:1315` `TTSCoordinator.spoken_text_with_anchors(row)`; `tts.py:1470` `spoken_text(row)` | Bộ đo gọi method công khai với DB rỗng tạm, không nạp engine |
 | Caller pipeline | `pipeline.py:3717`, `pipeline.py:5290`, `pipeline.py:6069` | Vòng thu, chữ expected và kiểm lại dùng cùng chuỗi |
 
+G2P Nghe ngay gọi `readaloud/vieneu_engine.py:340` với `part.pieces` và `source=part.text(tokens)`,
+đúng caller `readaloud/vieneu.py:1280`; không gộp Unit trước khi phonemize.
+Studio giữ patch `tts.py:607`, context `sentence_case` như `tts.py:723`, rồi gọi hai hàm package
+`normalize_to_chunks_v3_with_gaps(max_chars=256)` và `phonemize_text_with_emotions` như
+`vieneu/v3turbo.py:617,559` (runtime 3.8.3). Đây là các hàm xử lý chữ, không gọi infer/load.
+Hai đường giữ các sửa âm vị của `readaloud/phoneme_policy.py`, thay vì chỉ gọi trực tiếp `SEAPipeline.run`.
+Đáp án bỏ qua TN của app, đi qua cùng G2P tương ứng; chính đáp án làm `source` của nó.
+
 Các dòng là ở commit nguồn, tính dưới `_internal/abook/`. Bộ đo chỉ điền cache gốc cuốn và bảng tên rỗng
 để từng ca có context cố định; không thay hàm TN. DB tạm nằm ngoài repo và được dọn khi kết thúc.
 
 `readings.apply_tokens` (`readaloud/readings.py:116`) giữ quyền cách đọc người nghe. Studio bảo vệ span
 đã thay bằng mapping/anchor, còn `shared_rulings.py` và `phoneme_policy.py:400` có quyết định theo occurrence.
-Các trường hợp có bảng phát âm, suy gốc toàn sách, ruling LLM và tác động lượt sea-g2p thứ hai chưa được chấm ở đây.
+Các trường hợp có bảng phát âm, suy gốc toàn sách và ruling LLM chưa được chấm ở đây; lượt sea-g2p thứ hai đã nằm trong phép đo sau G2P.
 
 ## Bản đồ luật hiện có
 
@@ -94,38 +115,43 @@ Studio có `text_processing.py:418` và `text_processing.py:950` ngoài lõi chu
 
 ## Số đo theo loại
 
-| Loại / khóa | N | Nghe ngay | Studio |
-|---|---:|---:|---:|
-| Số đếm nhỏ (`cardinal_small`) | 20 | 20/20 = 100.00% | 20/20 = 100.00% |
-| Số đếm lớn (`cardinal_large`) | 20 | 10/20 = 50.00% | 10/20 = 50.00% |
-| Thập phân / phân nhóm VN–Anh (`decimal`) | 20 | 7/20 = 35.00% | 7/20 = 35.00% |
-| Số thứ tự (`ordinal`) | 20 | 0/20 = 0.00% | 0/20 = 0.00% |
-| La Mã / chữ cái I, V, X (`roman`) | 20 | 17/20 = 85.00% | 17/20 = 85.00% |
-| Ngày tháng năm (`date`) | 20 | 2/20 = 10.00% | 2/20 = 10.00% |
-| Giờ phút giây (`time`) | 20 | 1/20 = 5.00% | 1/20 = 5.00% |
-| Khoảng (`range`) | 20 | 1/20 = 5.00% | 1/20 = 5.00% |
-| Phần trăm (`percentage`) | 20 | 0/20 = 0.00% | 0/20 = 0.00% |
-| Tiền (`currency`) | 20 | 6/20 = 30.00% | 6/20 = 30.00% |
-| Đơn vị (`unit`) | 20 | 0/20 = 0.00% | 0/20 = 0.00% |
-| Điện thoại / mã (`phone_code`) | 20 | 0/20 = 0.00% | 0/20 = 0.00% |
-| Viết tắt Việt (`abbrev_vi`) | 20 | 14/20 = 70.00% | 14/20 = 70.00% |
-| Viết tắt Anh (`abbrev_en`) | 20 | 7/20 = 35.00% | 7/20 = 35.00% |
-| Từ Anh trong câu Việt (`english`) | 20 | 20/20 = 100.00% | 20/20 = 100.00% |
-| Tên / romaji Nhật (`japanese`) | 20 | 14/20 = 70.00% | 14/20 = 70.00% |
-| Ký hiệu (`symbol`) | 20 | 2/20 = 10.00% | 8/20 = 40.00% |
-| URL / email (`url_email`) | 20 | 0/20 = 0.00% | 0/20 = 0.00% |
-| Thán từ kéo dài (`vocalization`) | 20 | 17/20 = 85.00% | 18/20 = 90.00% |
-| Ba chấm / gạch / dấu câu (`punctuation`) | 20 | 20/20 = 100.00% | 20/20 = 100.00% |
-| Chữ hoa nhấn mạnh (`uppercase`) | 20 | 20/20 = 100.00% | 20/20 = 100.00% |
-| Chỉ số game (`game`) | 20 | 0/20 = 0.00% | 2/20 = 10.00% |
-| **Tổng, cân đều 22 loại** | 440 | **178/440 = 40.45%** | **187/440 = 42.50%** |
+| Category | N | Nghe ngay chuỗi | Nghe ngay sau G2P | Studio chuỗi | Studio sau G2P |
+|---|---:|---:|---:|---:|---:|
+| cardinal_small | 20 | 20/20 = 100.00% | 20/20 = 100.00% | 20/20 = 100.00% | 20/20 = 100.00% |
+| cardinal_large | 20 | 10/20 = 50.00% | 10/20 = 50.00% | 10/20 = 50.00% | 10/20 = 50.00% |
+| decimal | 20 | 7/20 = 35.00% | 14/20 = 70.00% | 7/20 = 35.00% | 14/20 = 70.00% |
+| ordinal | 20 | 0/20 = 0.00% | 20/20 = 100.00% | 0/20 = 0.00% | 20/20 = 100.00% |
+| roman | 20 | 17/20 = 85.00% | 19/20 = 95.00% | 17/20 = 85.00% | 19/20 = 95.00% |
+| date | 20 | 2/20 = 10.00% | 19/20 = 95.00% | 2/20 = 10.00% | 19/20 = 95.00% |
+| time | 20 | 1/20 = 5.00% | 16/20 = 80.00% | 1/20 = 5.00% | 16/20 = 80.00% |
+| range | 20 | 1/20 = 5.00% | 15/20 = 75.00% | 1/20 = 5.00% | 15/20 = 75.00% |
+| percentage | 20 | 0/20 = 0.00% | 17/20 = 85.00% | 0/20 = 0.00% | 17/20 = 85.00% |
+| currency | 20 | 6/20 = 30.00% | 12/20 = 60.00% | 6/20 = 30.00% | 12/20 = 60.00% |
+| unit | 20 | 0/20 = 0.00% | 17/20 = 85.00% | 0/20 = 0.00% | 17/20 = 85.00% |
+| phone_code | 20 | 0/20 = 0.00% | 13/20 = 65.00% | 0/20 = 0.00% | 12/20 = 60.00% |
+| abbrev_vi | 20 | 14/20 = 70.00% | 16/20 = 80.00% | 14/20 = 70.00% | 16/20 = 80.00% |
+| abbrev_en | 20 | 7/20 = 35.00% | 7/20 = 35.00% | 7/20 = 35.00% | 7/20 = 35.00% |
+| english | 20 | 20/20 = 100.00% | 20/20 = 100.00% | 20/20 = 100.00% | 20/20 = 100.00% |
+| japanese | 20 | 14/20 = 70.00% | 14/20 = 70.00% | 14/20 = 70.00% | 14/20 = 70.00% |
+| symbol | 20 | 2/20 = 10.00% | 14/20 = 70.00% | 8/20 = 40.00% | 14/20 = 70.00% |
+| url_email | 20 | 0/20 = 0.00% | 4/20 = 20.00% | 0/20 = 0.00% | 5/20 = 25.00% |
+| vocalization | 20 | 17/20 = 85.00% | 13/20 = 65.00% | 18/20 = 90.00% | 14/20 = 70.00% |
+| punctuation | 20 | 20/20 = 100.00% | 20/20 = 100.00% | 20/20 = 100.00% | 20/20 = 100.00% |
+| uppercase | 20 | 20/20 = 100.00% | 20/20 = 100.00% | 20/20 = 100.00% | 20/20 = 100.00% |
+| game | 20 | 2/20 = 10.00% | 11/20 = 55.00% | 4/20 = 20.00% | 11/20 = 55.00% |
+| **Overall** | 440 | 180/440 = 40.91% | 331/440 = 75.23% | 189/440 = 42.95% | 332/440 = 75.45% |
 
-[JSON đầy đủ](tn_benchmark/report.json) có text, expected, got, note, đường gọi và kết quả từng ca.
-[Markdown ca chưa khớp](tn_benchmark/report.md) và [mốc sàn](../tests/fixtures/tn_benchmark/baseline.json)
-được sinh từ cùng lượt đo. Các ví dụ trong hai report đều thuộc fixture tự đặt.
+[JSON đầy đủ](tn_benchmark/report.json) giữ chuỗi, âm vị got, âm vị từng đáp án và kết quả từng tầng.
+[Report chẩn đoán](tn_benchmark/report.md) có tối đa 10 ca sai sau G2P cho mỗi đường của từng loại top 5;
+nếu loại chỉ có 6 hoặc 7 ca sai thì in hết, không chế thêm ca. Phần cuối liệt kê mọi ca chưa khớp ở cả hai tầng.
+[Mốc sàn](../tests/fixtures/tn_benchmark/baseline.json) khoá riêng từng loại × đường × tầng, dung sai giảm 0.
 
-Hai đường chênh **9 ca**: ký hiệu 6, cue/thán từ 1, chỉ số game 2. Mỗi ô có 20 ca nên một ca bằng 5 điểm phần trăm.
-Tổng cân đều theo loại; không dùng nó làm phần trăm chất lượng trên truyện thực tế.
+Sau G2P: Nghe ngay **331/440 (75,23%)**, Studio **332/440 (75,45%)**.
+Điểm chuỗi khoan dung gạch nối: **180/440 (40,91%)** và **189/440 (42,95%)**.
+Không thay TN hoặc đáp án: chênh lệch so lượt một là thay biên đo và phép so chuỗi.
+Số thứ tự từ 0% chuỗi thành 100% sau G2P; ngày 10% thành 95%; đơn vị 0% thành 85%.
+Một ca bằng 5 điểm phần trăm mỗi ô; tổng cân đều loại không phải chất lượng có trọng số trên truyện.
+Hai đường còn khác ở mã/điện thoại, URL/email, thán từ sau G2P dù nhiều ô tổng bằng nhau.
 
 ## Tần suất Corpus và thứ tự khảo sát
 
@@ -141,31 +167,37 @@ ngày, khoảng, phân số và mã đều chứa số; chữ La Mã còn lẫn 
 Danh sách từ Anh/Nhật còn thiếu; viết tắt Anh phân biệt HOA để tránh đếm đại từ "ai" thành AI.
 Chọn đều truyện khác chọn đều từ; chỉ 100/6823 nhóm được đọc nên không chứng minh đại diện mọi thể loại.
 
-Đặt `điểm ưu tiên = số dấu hiệu / số từ cách trắng × 100000 × trung bình tỉ lệ chưa khớp của hai đường`.
+Đặt `điểm ưu tiên = số dấu hiệu / số từ cách trắng × 100000 × trung bình tỉ lệ sai SAU G2P của hai đường`.
 Đây là giả định chuyển tỷ lệ của bộ ca cân bằng sang mẫu nguồn để sắp việc khảo sát.
-Không cộng các điểm để dự đoán số lỗi audio: loại chồng nhau, tỷ lệ chưa khớp chưa phải xác suất sai âm,
+Không cộng các điểm để dự đoán số lỗi audio: loại chồng nhau, tỷ lệ sai G2P chưa phải xác suất sai waveform,
 và phân bố ca tự đặt khác phân bố các dấu hiệu trong truyện. Không có khoảng tin cậy người gán nhãn.
 
-| Hạng | Lớp | Số dấu hiệu mẫu | /100k từ | Chưa khớp trung bình | Điểm ưu tiên |
+| Hạng | Lớp | Số dấu hiệu mẫu | /100k từ | Sai sau G2P trung bình | Điểm ưu tiên |
 |---:|---|---:|---:|---:|---:|
-| 1 | Ký hiệu | 1968 | 167.463 | 75.0% | 125.597 |
-| 2 | Tên / romaji Nhật | 1950 | 165.931 | 30.0% | 49.779 |
-| 3 | Viết tắt Anh | 151 | 12.849 | 65.0% | 8.352 |
-| 4 | La Mã / chữ cái I, V, X | 416 | 35.399 | 15.0% | 5.310 |
-| 5 | Số đếm lớn | 100 | 8.509 | 50.0% | 4.255 |
-| 6 | Ngày tháng năm | 49 | 4.170 | 90.0% | 3.753 |
-| 7 | Thập phân / phân nhóm VN–Anh | 66 | 5.616 | 65.0% | 3.651 |
-| 8 | Chỉ số game | 40 | 3.404 | 95.0% | 3.233 |
-| 9 | Đơn vị | 36 | 3.063 | 100.0% | 3.063 |
-| 10 | Số thứ tự | 35 | 2.978 | 100.0% | 2.978 |
+| 1 | symbol | 1968 | 167.463 | 30.0% | 50.239 |
+| 2 | japanese | 1950 | 165.931 | 30.0% | 49.779 |
+| 3 | abbrev_en | 151 | 12.849 | 65.0% | 8.352 |
+| 4 | vocalization | 178 | 15.147 | 32.5% | 4.923 |
+| 5 | cardinal_large | 100 | 8.509 | 50.0% | 4.255 |
+| 6 | roman | 416 | 35.399 | 5.0% | 1.770 |
+| 7 | decimal | 66 | 5.616 | 30.0% | 1.685 |
+| 8 | game | 40 | 3.404 | 45.0% | 1.532 |
+| 9 | currency | 28 | 2.383 | 40.0% | 0.953 |
+| 10 | unit | 36 | 3.063 | 15.0% | 0.460 |
 
-[Xếp hạng cả 22 lớp](tn_benchmark/priority.json). Ký hiệu và Nhật lên đầu theo phép ưu tiên này;
-thán từ/dấu câu xuất hiện nhiều nhưng điểm khớp cao nên thứ tự khác với tần suất thô.
+[Xếp hạng cả 22 lớp](tn_benchmark/priority.json), tính từ số SAU G2P; mẫu Corpus giữ nguyên lượt một.
+Top 5 hiện là ký hiệu, Nhật, viết tắt Anh, thán từ, số lớn. Dấu câu/thán từ không được coi tương đương
+chỉ vì cùng chữ sau thường hoá: cue và ngữ cảnh chữ gốc có thể đổi âm vị.
+
+Ví dụ tự đặt để đọc report: ký hiệu sao bị bỏ nội dung; `vs.` bị đánh vần; `Sensei` ra `xen-xây`
+khác đáp án `xen-xê`; chuỗi `1000000` trong loại số lớn bị đọc từng chữ số thay cho một triệu.
+Viết tắt Anh còn gồm khác biệt rubric nguyên âm Anh/phiên âm Việt, cần nghe duyệt trước khi coi là lỗi chính sách.
+Các hướng sửa phía dưới là đề xuất, chưa triển khai hoặc hứa tăng điểm.
 
 ## Đề xuất theo lớp, chưa triển khai
 
-Trước khi sửa, phân tách ba nguồn chưa khớp: khác biểu diễn (thẻ/gạch nối), để engine chuẩn hoá tiếp,
-và khác cách đọc/nội dung thật. Chạy kiểm phoneme rồi nghe có đối chứng cho nhóm định sửa.
+Trước khi sửa, đọc ca sai sau G2P và phân biệt lỗi nội dung, âm vị khác rubric, hoặc cue.
+Phép đo âm vị đã có; bước tiếp theo là nghe có đối chứng cho nhóm định sửa.
 Không sửa chỉ để làm đẹp điểm chuỗi. Chẳng hạn chính sách "đường dẫn" cần quyết định nội dung của chủ sách.
 
 Danh sách khoá được **import từ `abook.quality_policy.QUALITY_IMPLEMENTATION_FILES`**, không chép lại từ trí nhớ.
@@ -318,14 +350,14 @@ python -X utf8 -m pytest tests/test_tn_benchmark.py tests/test_studio_tn.py -rf
 python -X utf8 -m pytest tests -k "spoken or number or reading or abbrev or symbol or english or japanese" -rf
 ```
 
-Test không khẳng định một tỷ lệ đích cao. Mỗi loại/đường giữ tử số đạt ít nhất bằng baseline lúc commit,
+Test không khẳng định một tỷ lệ đích cao. Mỗi loại/đường/tầng giữ tử số đạt ít nhất bằng baseline lúc commit,
 dung sai giảm bằng 0; dùng số nguyên để tránh làm tròn. Fingerprint fixture và profile phải giữ nguyên.
 Ca mới/rubric mới phải được review và đo lại riêng. Sàn 0/20 chưa chặn được suy giảm trong lớp đó;
 sàn theo tổng loại cũng không bắt được hai ca đổi đúng/sai bù nhau. Đây là hạn chế rõ của cổng hiện trạng.
 
 Kết quả kiểm được chốt trong biên bản ngoài repo. Bộ TN theo biểu thức chọn có 2414 passed, 1 skipped,
 0 failed, 0 errors (đếm JUnit testcase, không đếm chữ FAILED trong log).
-Bộ hạ tầng (3 test) và Studio (19 test) chạy riêng: 22 passed, 0 failed/errors.
+Số kiểm lượt hai được chốt ở TEST_REPORT và result.md ngoài repo; test hạ tầng kiểm đủ hai tầng và cả bốn sàn đường × tầng.
 Kiểm từng trường text/expected của fixture dùng tất cả shingle tám chữ,
 kể cả công thức phổ biến vốn được scanner công khai phân loại riêng.
 
