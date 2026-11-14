@@ -1,7 +1,7 @@
 """VieNeu reads a phrase the text says twice one time too many - and a new seed does not help.
 
 repeat_design.md (12-11-2026): every real repeat in four books has one shape. A phrase of two or
-more syllables appears twice in the line ("Đấm hắn! Đấm hắn!", "là đồ bơi, là đồ bơi"); after
+more syllables appears twice in the line ("Chạy mau! Chạy mau!", "là đôi giày, là đôi giày"); after
 the second copy the model's implicit text pointer jumps back to just after the first and reads
 the middle again. At Hello every seed did it (1915 6/6, 2153 6/6), so the seed-only repair round
 never rescued the class, and four such segments were even published as `warning` through the
@@ -49,27 +49,27 @@ from abook.tts import GENERATION_CEILING_METRIC, VIENEU_SDK_CHUNK_MAX_CHARS
 # --- the split itself -------------------------------------------------------------------------
 
 DESIGN_CASES = [
-    # (text, ASR n-gram, expected pieces) - the expected results written in repeat_design.md F1.
-    ("Đấm hắn! Đấm hắn! Đấm hắn!", "dấm hắn", ["Đấm hắn!", "Đấm hắn!", "Đấm hắn!"]),
+    # (text, ASR n-gram, expected pieces) - the shapes of repeat_design.md F1, in sentences written for this test.
+    ("Chạy mau! Chạy mau! Chạy mau!", "chạy mau", ["Chạy mau!", "Chạy mau!", "Chạy mau!"]),
     (
-        "0. Câu thử đã gỡ. 0.",
-        "là dồ bơi",  # normalize_transcript: đ -> d, tones kept
-        ["0. Câu thử đã gỡ. 0.", "0. Câu thử đã gỡ. 0."],
+        "Anh ấy mở cửa. Là đôi giày, là đôi giày. Trời bên ngoài mưa to.",
+        "là dôi giày",  # normalize_transcript: đ -> d, tones kept
+        ["Anh ấy mở cửa. Là đôi giày,", "là đôi giày. Trời bên ngoài mưa to."],
     ),
     (
-        "0. Câu thử đã gỡ. 0.",
-        "một mình ngắm pháo hoa",
-        ["0. Câu thử đã gỡ. 0.", "0. Câu thử đã gỡ. 0.", "0. Câu thử đã gỡ. 0."],
+        "Tôi hay đi học một mình, ăn cơm trưa một mình, đọc sách ở thư viện một mình.",
+        "một mình đọc sách ở thư viện",
+        ["Tôi hay đi học một mình,", "ăn cơm trưa một mình,", "đọc sách ở thư viện một mình."],
     ),
     (
-        "0. Câu thử đã gỡ. 0.",
-        "mùi hương của cô",
-        ["0. Câu thử đã gỡ. 0.", "0. Câu thử đã gỡ. 0."],
+        "Tôi nhớ giọng nói của bà, nụ cười của bà. Mắt tôi cay xè.",
+        "nụ cười của bà",
+        ["Tôi nhớ giọng nói của bà,", "nụ cười của bà. Mắt tôi cay xè."],
     ),
     (
-        "0. Câu thử đã gỡ. 0.",
-        "cậu ấy sẽ cười",
-        ["0. Câu thử đã gỡ. 0.", "0. Câu thử đã gỡ. 0."],
+        "Có lẽ chị ấy sẽ về muộn. Chị ấy sẽ về muộn vì mưa.",
+        "chị ấy sẽ về muộn",
+        ["Có lẽ chị ấy sẽ về muộn.", "Chị ấy sẽ về muộn vì mưa."],
     ),
 ]
 
@@ -87,30 +87,30 @@ def test_the_split_lands_between_the_copies_and_changes_no_character(text, ngram
 
 
 def test_without_an_asr_phrase_the_longest_repeat_of_the_text_is_used():
-    # "Ăn đi! x3" is heard as "anh đi": the heard phrase is not in the text at all.
-    assert split_text_at_repeated_phrase("Ăn đi! Ăn đi! Ăn đi!", None) == ["Ăn đi!", "Ăn đi!", "Ăn đi!"]
-    assert repeated_alias_phrase("Ăn đi! Ăn đi! Ăn đi!", "anh đi") is None
+    # "Ngồi đi! x3" is heard as "người đi": the heard phrase is not in the text at all.
+    assert split_text_at_repeated_phrase("Ngồi đi! Ngồi đi! Ngồi đi!", None) == ["Ngồi đi!", "Ngồi đi!", "Ngồi đi!"]
+    assert repeated_alias_phrase("Ngồi đi! Ngồi đi! Ngồi đi!", "người đi") is None
 
 
 def test_an_unmapped_asr_phrase_does_not_pick_an_unrelated_repeat():
-    text = "Đấm hắn! Đấm hắn! Đấm hắn!"
-    assert BookPipeline._repeat_alias_pieces(text, "ngắm pháo hoa") == [text]
-    assert BookPipeline._repeat_alias_pieces(text, "") == ["Đấm hắn!"] * 3
+    text = "Chạy mau! Chạy mau! Chạy mau!"
+    assert BookPipeline._repeat_alias_pieces(text, "đọc sách ở thư viện") == [text]
+    assert BookPipeline._repeat_alias_pieces(text, "") == ["Chạy mau!"] * 3
 
 
 def test_two_long_hyphenated_words_are_still_a_two_word_line():
-    text = "Giô-en! Giô-en!"
+    text = "Ri-ta! Ri-ta!"
     assert split_text_at_repeated_phrase(text, None) == [text]
 
 
 def test_a_one_syllable_repeat_and_a_repeat_without_punctuation_are_left_alone():
     # Segment 673: "không ... không" is one syllable; the next seed fixed it by itself.
-    assert split_text_at_repeated_phrase("Tôi không thể không thấy nó.", "không") == [
-        "Tôi không thể không thấy nó."
+    assert split_text_at_repeated_phrase("Tôi không thể không nghe máy.", "không") == [
+        "Tôi không thể không nghe máy."
     ]
     # No punctuation between the copies: never cut inside a clause at this stage.
-    assert split_text_at_repeated_phrase("đi mãi đi mãi mà không tới", None) == [
-        "đi mãi đi mãi mà không tới"
+    assert split_text_at_repeated_phrase("đi mãi đi mãi mà chưa đến", None) == [
+        "đi mãi đi mãi mà chưa đến"
     ]
 
 
@@ -120,16 +120,16 @@ def test_an_english_span_is_never_cut():
 
 
 def test_closing_quotes_after_the_mark_still_count_as_the_boundary():
-    text = "“Đấm hắn!” “Đấm hắn!”"
-    assert split_text_at_repeated_phrase(text, None) == ["“Đấm hắn!”", "“Đấm hắn!”"]
+    text = "“Chạy mau!” “Chạy mau!”"
+    assert split_text_at_repeated_phrase(text, None) == ["“Chạy mau!”", "“Chạy mau!”"]
 
 
 def test_tone_fold_matches_whisper_tone_errors():
     assert fold_vietnamese_tones("Gãi gãi") == fold_vietnamese_tones("gái gai")
-    assert fold_vietnamese_tones("Đồ bơi") == fold_vietnamese_tones("dô bơi")
+    assert fold_vietnamese_tones("Đôi giày") == fold_vietnamese_tones("dôi giay")
     assert fold_vietnamese_tones("giôn") == fold_vietnamese_tones("dôn")
-    assert fold_vietnamese_tones("Đồ bơi") == " ".join(
-        asr._tone_folded_words(asr.normalize_transcript("Đồ bơi").split())
+    assert fold_vietnamese_tones("Đôi giày") == " ".join(
+        asr._tone_folded_words(asr.normalize_transcript("Đôi giày").split())
     )
 
 
@@ -182,7 +182,7 @@ def test_a_locked_reading_that_was_heard_repeating_is_not_kept(tmp_path: Path, d
 
 def test_a_finished_take_that_was_heard_repeating_does_not_replace_a_cut_off_one() -> None:
     gate = object.__new__(ProjectDB)
-    segment = {"stable_id": "s", "text": '"Bất bại?"', "wav_duration": 1.92,
+    segment = {"stable_id": "s", "text": '"Thật sao?"', "wav_duration": 1.92,
                "signal_json": json.dumps({"generation_ceiling_hit": 1.0})}
     candidate = {"id": 7, "repair_round": 1, "wav_duration": 1.1,
                  "failure_reason": "beam=ASR_MISMATCH; greedy=ASR_MISMATCH",
@@ -191,7 +191,7 @@ def test_a_finished_take_that_was_heard_repeating_does_not_replace_a_cut_off_one
     assert "tự kết thúc" in gate._require_candidate_beats_a_cut_off_incumbent(candidate, segment)
 
     candidate["greedy_result_json"] = json.dumps(
-        {asr.ASR_REPEATED_CONTENT_KEY: {"ngram": "bất bại", "heard": 2, "written": 1}}
+        {asr.ASR_REPEATED_CONTENT_KEY: {"ngram": "thật sao", "heard": 2, "written": 1}}
     )
     with pytest.raises(RuntimeError, match="ứng viên nghe cụm lặp"):
         gate._require_candidate_beats_a_cut_off_incumbent(candidate, segment)
@@ -315,7 +315,7 @@ def _promoted(pipeline, row) -> dict:
     return dict(candidate)
 
 
-TWO_COPIES = "0. Câu thử đã gỡ. 0."
+TWO_COPIES = "Anh ấy mở cửa. Là đôi giày, là đôi giày. Cảnh đó làm tôi bật cười."
 
 
 def test_two_takes_repeating_one_phrase_send_the_next_candidate_to_the_alias_split(tmp_path, monkeypatch):
@@ -325,7 +325,7 @@ def test_two_takes_repeating_one_phrase_send_the_next_candidate_to_the_alias_spl
         folder.mkdir()
         pipeline, chapter, row = _pipeline(folder, TWO_COPIES, incumbent_seconds=4.0, seconds_per_syllable=0.25)
         _watch_alias_takes(pipeline, monkeypatch)
-        verifier = _SavedTranscripts("Là đồ bơi, là đồ bơi", "Là đồ bơi, là đồ bơi, là đồ bơi")
+        verifier = _SavedTranscripts("Là đôi giày, là đôi giày", "Là đôi giày, là đôi giày, là đôi giày")
 
         pipeline._verify_chapter_audio(chapter, verifier)
 
@@ -339,7 +339,7 @@ def test_two_takes_repeating_one_phrase_send_the_next_candidate_to_the_alias_spl
         assert promoted["generation_strategy"] == "split_v1"
         signal = json.loads(promoted["signal_json"])
         assert signal[SPLIT_STRATEGY_FIELD] == REPEAT_ALIAS_SPLIT_STRATEGY
-        assert fold_vietnamese_tones(signal[SPLIT_REPEAT_NGRAM_FIELD]) == fold_vietnamese_tones("là đồ bơi")
+        assert fold_vietnamese_tones(signal[SPLIT_REPEAT_NGRAM_FIELD]) == fold_vietnamese_tones("là đôi giày")
         assert len(signal["split_parts"]) == 2
         assert [s for s in pipeline.tts.seed_salts if s.startswith("asr_clarity_candidate_1")] == [
             "asr_clarity_candidate_1_split_part_0",
@@ -359,14 +359,14 @@ def test_the_database_refuses_an_alias_split_without_its_stored_evidence(tmp_pat
     pipeline, chapter, row = _pipeline(tmp_path, TWO_COPIES, incumbent_seconds=4.0, seconds_per_syllable=0.25)
     _watch_alias_takes(pipeline, monkeypatch)
     pipeline._verify_chapter_audio(
-        chapter, _SavedTranscripts("Là đồ bơi, là đồ bơi", "Là đồ bơi, là đồ bơi, là đồ bơi")
+        chapter, _SavedTranscripts("Là đôi giày, là đôi giày", "Là đôi giày, là đôi giày, là đôi giày")
     )
     promoted = _promoted(pipeline, row)
     signal = json.loads(promoted["signal_json"])
     with pipeline.db.connect() as conn:
         candidate = conn.execute("SELECT * FROM segment_candidates WHERE id=?", (promoted["id"],)).fetchone()
         ProjectDB._require_candidate_split_provenance(conn, candidate, signal)  # holds as stored
-        forged = dict(signal, **{SPLIT_REPEAT_NGRAM_FIELD: "cái cảnh"})
+        forged = dict(signal, **{SPLIT_REPEAT_NGRAM_FIELD: "bật cười"})
         with pytest.raises(RuntimeError, match="repeat-alias phrase differs"):
             ProjectDB._require_candidate_split_provenance(conn, candidate, forged)
     with pipeline.db.transaction() as conn:
@@ -393,7 +393,7 @@ def test_one_repeating_take_still_gets_an_ordinary_new_seed(tmp_path, monkeypatc
             return self.gate._evaluate_transcript(text, heard, 20.0)
 
     pipeline._verify_chapter_audio(
-        chapter, FirstTakeOnly("Là đồ bơi, là đồ bơi", "Là đồ bơi, là đồ bơi, là đồ bơi")
+        chapter, FirstTakeOnly("Là đôi giày, là đôi giày", "Là đôi giày, là đôi giày, là đôi giày")
     )
     promoted = _promoted(pipeline, row)
     assert int(promoted["repair_round"]) == 0
@@ -415,7 +415,7 @@ def test_alias_split_resumes_at_its_durable_boundary_without_changing_the_incumb
         folder.mkdir()
         pipeline, chapter, row = _pipeline(folder, TWO_COPIES, incumbent_seconds=4.0, seconds_per_syllable=0.25)
         _watch_alias_takes(pipeline, monkeypatch)
-        verifier = _SavedTranscripts("Là đồ bơi, là đồ bơi", "Là đồ bơi, là đồ bơi, là đồ bơi")
+        verifier = _SavedTranscripts("Là đôi giày, là đôi giày", "Là đôi giày, là đôi giày, là đôi giày")
         if label == "crash":
             incumbent_path = Path(row["wav_path"])
             incumbent_bytes = incumbent_path.read_bytes()
@@ -474,7 +474,7 @@ def test_two_decodes_of_one_seed_cannot_supply_the_two_take_trigger(tmp_path, mo
     pipeline, chapter, row = _pipeline(tmp_path, TWO_COPIES, incumbent_seconds=4.0, seconds_per_syllable=0.25)
     _watch_alias_takes(pipeline, monkeypatch)
     pipeline._verify_chapter_audio(
-        chapter, _SavedTranscripts("Là đồ bơi, là đồ bơi", "Là đồ bơi, là đồ bơi, là đồ bơi")
+        chapter, _SavedTranscripts("Là đôi giày, là đôi giày", "Là đôi giày, là đôi giày, là đôi giày")
     )
     promoted = _promoted(pipeline, row)
     with pipeline.db.transaction() as conn:
@@ -488,7 +488,7 @@ def test_two_decodes_of_one_seed_cannot_supply_the_two_take_trigger(tmp_path, mo
     ) is None
 
 
-SHOUT = "Đấm hắn! Đấm hắn! Đấm hắn!"
+SHOUT = "Chạy mau! Chạy mau! Chạy mau!"
 
 
 def test_a_shout_far_longer_than_its_syllables_goes_to_the_alias_split_after_one_take(tmp_path, monkeypatch):
@@ -501,7 +501,7 @@ def test_a_shout_far_longer_than_its_syllables_goes_to_the_alias_split_after_one
     assert signal[SYLLABLE_DURATION_OUTLIER_METRIC] == 1.0
     _watch_alias_takes(pipeline, monkeypatch)
 
-    pipeline._verify_chapter_audio(chapter, _SavedTranscripts(SHOUT, SHOUT + " Đấm hắn!"))
+    pipeline._verify_chapter_audio(chapter, _SavedTranscripts(SHOUT, SHOUT + " Chạy mau!"))
 
     promoted = _promoted(pipeline, row)
     assert int(promoted["repair_round"]) == 0
@@ -512,8 +512,8 @@ def test_a_shout_far_longer_than_its_syllables_goes_to_the_alias_split_after_one
 
 
 def test_a_two_word_line_is_never_split_whatever_the_evidence(tmp_path):
-    pipeline, _chapter, row = _pipeline(tmp_path, "Ăn đi!", incumbent_seconds=2.0, seconds_per_syllable=0.25)
-    assert pipeline._repeat_alias_split_ngram(row, 1, "Ăn đi!", str(row["wav_sha256"])) is None
+    pipeline, _chapter, row = _pipeline(tmp_path, "Ngồi đi!", incumbent_seconds=2.0, seconds_per_syllable=0.25)
+    assert pipeline._repeat_alias_split_ngram(row, 1, "Ngồi đi!", str(row["wav_sha256"])) is None
 
 
 # --- F4: the duration ruler only measures 5-12 syllables ---------------------------------------
@@ -549,7 +549,7 @@ def test_an_uncalibrated_preset_has_no_duration_opinion():
     # The missing calibration must never silently become a shared 255ms reference.
     _array, metrics = audio_io.validate_audio_array(
         quiet_edges(np.sin(np.arange(48_000 * 3) / 30).astype(np.float32) * 0.12),
-        "Đấm hắn! Đấm hắn! Đấm hắn!", build_settings(), 48_000,
+        SHOUT, build_settings(), 48_000,
         segment={"kind": "dialogue"},
     )
     assert SYLLABLE_DURATION_RATIO_METRIC not in metrics
@@ -558,7 +558,7 @@ def test_an_uncalibrated_preset_has_no_duration_opinion():
 # --- F3: the ceiling flag is no longer reserved for two-word lines ------------------------------
 
 @pytest.mark.parametrize(("text", "flagged"), [
-    ("Tôi hay đi một mình, ăn kem một mình, ngắm pháo hoa một mình.", True),
+    ("Tôi hay đi học một mình, ăn cơm trưa một mình, đọc sách ở thư viện một mình.", True),
     (("Một câu rất dài, " * 20).strip(), False),  # > 256 chars: the SDK splits it, the cap is per chunk
 ])
 def test_a_long_line_that_used_every_frame_is_flagged(tmp_path, monkeypatch, text, flagged):
