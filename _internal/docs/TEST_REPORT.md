@@ -1,5 +1,15 @@
 # Test report
 
+## 15-11-2026 — music library artwork
+
+Shared fixtures pin metadata seeds, canonical 96×96 RGB SHA-256 and BMP SHA-256 across web, Kotlin and Qt's real JS engine.
+Base64 is checked separately: Qt's QString encoder must not change high RGB bytes through UTF-8.
+Library row/detail API projection preserves the same seed and source image credit. Source images use checked disk caches;
+web CacheStorage and Qt provider tests cover verified offline reads, and web rejects a corrupt response.
+Music library UI checks require actual decoded covers, in addition to the existing title, preview and download behavior.
+The opt-in MusicArtOnDeviceTest measures post-warmup FrameMetrics on an isolated, windowless emulator with 2,387 synthetic tracks;
+one in three tracks has a verified image already on disk, and the catalog reports offline throughout. Screenshots and measured timings stay outside Git.
+
 ## 15-11-2026 — moving word ink and floating read-along return
 
 Android draws an Animatable rectangle without composing the text on animation frames; web animates one absolute element; Qt animates one Rectangle. All use the shared fast/slow durations and standard curve. Line changes collapse before repositioning. Display geometry excludes edge punctuation without changing timing or tap offsets.

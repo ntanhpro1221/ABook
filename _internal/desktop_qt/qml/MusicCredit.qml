@@ -10,11 +10,19 @@ Item {
     readonly property bool shown: Player.playing && (Music.credit.label || "") !== ""
     property var credit: ({})
     property bool open: false
+    property var artTrack: ({})
     readonly property bool catalog: (credit.link || "") !== "" && String(credit.link).indexOf("local:") !== 0
 
     // Giữ lời ghi công cuối trong lúc mờ đi, không để chữ biến mất trước khung.
     function refresh() {
         if ((Music.credit.label || "") !== "") credit = Music.credit
+        const link = credit.link || ""
+        if (link && link !== artTrack.link && link.indexOf("local:") !== 0) {
+            artTrack = {link: link}
+            Api.quiet("GET", "/api/music/library/track?link=" + encodeURIComponent(link), null, function(data, error) {
+                if (!error && root.credit.link === link) root.artTrack = data
+            })
+        }
         open = false
     }
     function esc(value) { return String(value || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/\u00a0/g, "&nbsp;").split('"').join("&quot;") }
@@ -25,7 +33,7 @@ Item {
     }
 
     // Cuốn có nhạc: giữ chỗ một dòng kể cả khi nhạc im (dừng nghe, đoạn không nhạc) - bìa lớn không đổi cỡ mỗi lần bấm phát / dừng.
-    implicitHeight: shown ? body.implicitHeight : (Music.hasMusic ? body.topPadding + caption.implicitHeight : 0)
+    implicitHeight: shown ? body.implicitHeight : (Music.hasMusic ? 32 + body.topPadding + caption.implicitHeight : 0)
     height: implicitHeight
     opacity: shown ? 1 : 0
     clip: height < body.implicitHeight
@@ -37,6 +45,11 @@ Item {
         width: parent.width
         topPadding: 4
         spacing: 0
+        MusicArt {
+            anchors.horizontalCenter: parent.horizontalCenter
+            width: 32; height: 32
+            track: root.artTrack
+        }
 
         Interactive {
             id: toggle

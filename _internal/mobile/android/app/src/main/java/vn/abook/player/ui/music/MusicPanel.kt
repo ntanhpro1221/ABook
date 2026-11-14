@@ -445,6 +445,7 @@ fun MusicCreditBlock(credit: MusicCredit?, bookId: String = "") {
                 S.s_dang_phat_ac2dd0c2, Modifier,
                 { if (entry != null && shown.inCatalog()) entry.openPlaying(shown, bookId) else open = !open }, "music_credit_toggle",
                 hint = MusicText.creditLine(shown),
+                leading = { vn.abook.player.ui.music.library.PlayingMusicArt(shown.link) },
                 trailing = { ChevronIcon(Abook.colors.text3, turn = { if (entry != null && shown.inCatalog()) 0f else turn }) },
             )
             Reveal(open) {

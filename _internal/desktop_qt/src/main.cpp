@@ -4,6 +4,7 @@
 #include "desktopapi.h"
 #include "bench.h"
 #include "coverprovider.h"
+#include "musicartprovider.h"
 #include "shadowprovider.h"
 #include "feedback.h"
 #include "filesinkdevice.h"
@@ -303,6 +304,7 @@ int main(int argc, char *argv[]) {
         engine.setInitialProperties({{QStringLiteral("x"), -10000}, {QStringLiteral("y"), -10000},
             {QStringLiteral("flags"), int(Qt::Window | Qt::WindowDoesNotAcceptFocus)}});
     engine.addImageProvider(QStringLiteral("cover"), new CoverProvider);
+    engine.addImageProvider(QStringLiteral("musicart"), new MusicArtProvider);
     engine.addImageProvider(QStringLiteral("shadow"), new ShadowProvider);
     QObject::connect(&engine, &QQmlApplicationEngine::objectCreationFailed, &app, [] { QCoreApplication::exit(3); }, Qt::QueuedConnection);
     // ABOOK_SMOKE_EXIT=1 (build.bat, tools/smoke_dist.py): quit shortly after the first frame, 0 only when the

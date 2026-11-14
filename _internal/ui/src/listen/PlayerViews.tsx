@@ -46,6 +46,7 @@ import {
 import { createContext, memo, useContext, useDeferredValue, useId, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type ButtonHTMLAttributes, type ComponentProps, type CSSProperties, type KeyboardEvent as ReactKeyboardEvent, type ReactNode } from "react";
 import { useLocation, useNavigate } from "react-router";
 import { NowPlayingMusic } from "@/music/NowPlayingMusic";
+import { PlayingMusicArt } from "@/music/MusicArt";
 import { toast } from "@/shared/toast";
 import { BookCover } from "@/shared/BookCover";
 import { Windowed } from "@/shared/Windowed";
@@ -1309,8 +1310,8 @@ function MusicCreditLine() {
         aria-haspopup={catalogLink ? "dialog" : undefined}
         onClick={() => (catalogLink ? setSheet(catalogLink) : setOpen((value) => !value))}
         title={musicCreditText(musicCredit) || label}
-        className="max-w-full truncate rounded-control outline-none focus-visible:ring-2 focus-visible:ring-focus"
-      >{S.s_nhac_nen_198fce26}{label}
+        className="inline-flex max-w-full items-center gap-2 rounded-control outline-none focus-visible:ring-2 focus-visible:ring-focus"
+      >{catalogLink && <PlayingMusicArt link={catalogLink} />}<span className="truncate">{S.s_nhac_nen_198fce26}{label}</span>
       </button>
       <Collapse open={open} className="mx-auto mt-1 max-w-sm break-words text-left">
           <p>{musicCreditText(musicCredit)}</p>

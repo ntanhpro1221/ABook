@@ -179,6 +179,7 @@ class MusicLibraryScreenTest {
     private fun library(dark: Boolean) {
         show(dark)
         rule.onNodeWithTag("music_count").assertIsDisplayed()
+        assertTrue(rule.onAllNodesWithTag("music_art", useUnmergedTree = true).fetchSemanticsNodes().isNotEmpty())
         shot("music_library_${theme(dark)}")
     }
 

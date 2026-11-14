@@ -3,6 +3,7 @@ import { useEffect } from "react";
 import { formatSize } from "../shared/format";
 import { S } from "../shared/strings.generated";
 import { api } from "../studio/api";
+import type { ArtTrack } from "./MusicArt";
 
 // Kho nhạc (màn "Nhạc", docs/DESIGN.md mục Nhạc): danh sách cả danh mục nhạc nền, lọc / tìm ở máy chủ (abook/webui/music_library.py -
 // cùng bảng ca với Android và Qt: tests/fixtures/music_library/cases.json), lưu bài về máy (bài ghim: bộ dọn bộ đệm không xoá).
@@ -22,7 +23,7 @@ export interface LibraryFilters {
 
 export const NO_FILTERS: LibraryFilters = { q: "", playlist: "", style: "", emotion: "", tempo: "", length: "", downloaded: false };
 
-export interface LibraryTrack {
+export interface LibraryTrack extends ArtTrack {
   link: string;
   title?: string;
   creator?: string;
@@ -65,7 +66,7 @@ export interface LibraryMeta {
   error: string;
 }
 
-export interface TrackDetail {
+export interface TrackDetail extends ArtTrack {
   link: string;
   title?: string;
   creator?: string;

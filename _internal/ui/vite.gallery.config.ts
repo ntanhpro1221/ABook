@@ -22,7 +22,8 @@ export default defineConfig({
     strictPort: false,
     fs: {
       allow: [import.meta.dirname, path.resolve(import.meta.dirname, "../docs/THIRD_PARTY.md"),
-        path.resolve(import.meta.dirname, "../abook/webui/assets/music_mix.json")],
+        path.resolve(import.meta.dirname, "../abook/webui/assets/music_mix.json"),
+        path.resolve(import.meta.dirname, "../desktop_qt/qml/MusicArtRaster.mjs")],
     },
   },
   preview: { port: 5174, strictPort: false },

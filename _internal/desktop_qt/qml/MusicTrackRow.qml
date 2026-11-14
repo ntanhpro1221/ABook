@@ -34,10 +34,16 @@ Interactive {
         opacity: root.pressed ? 0.08 : (root.hovered ? 0.04 : 0)
         Behavior on opacity { NumberAnimation { duration: Theme.motionFast } }
     }
+    MusicArt {
+        id: art
+        x: 0; y: 1 + Theme.s12
+        width: 40; height: 40
+        track: root.track
+    }
     IconButton {
         id: play
         objectName: "musicRowPreview"
-        x: 0; y: 1 + Theme.s12
+        x: art.width + Theme.s8; y: 1 + Theme.s12
         icon: root.previewing ? "square" : "play"
         enabled: root.canPlay
         opacity: root.canPlay ? 1 : 0.45
@@ -47,7 +53,7 @@ Interactive {
     }
     Column {
         id: words
-        x: play.width + Theme.s12
+        x: play.x + play.width + Theme.s12
         y: 1 + Theme.s12
         width: root.width - x - tail.width - Theme.s12
         spacing: 4

@@ -30,6 +30,8 @@ fun TrackRow(track: MusicLibrary.Track, ui: LibraryUi, state: LibraryState, pick
         Modifier.fillMaxWidth().heightIn(min = 64.dp).pressable(onClick = onOpen).padding(vertical = Dim.s8).testTag("track_${track.link.hashCode()}"),
         verticalAlignment = Alignment.CenterVertically,
     ) {
+        MusicArt(track)
+        Spacer(Modifier.width(Dim.s8))
         Box(
             Modifier.size(40.dp).then(if (canPlay) Modifier.pressable { state.togglePreview(track.link) } else Modifier.semantics { disabled() })
                 .semantics { contentDescription = if (playing && ui.previewLoading) S.s_dang_tai_am_thanh_6c7cb62f else if (playing) S.s_dung_nghe_thu_41a2925b else S.s_nghe_thu_fa024065 }

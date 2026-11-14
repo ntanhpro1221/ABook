@@ -112,6 +112,8 @@ qt_add_executable(ABookDesk WIN32
     src/bench.h
     src/coverprovider.cpp
     src/coverprovider.h
+    src/musicartprovider.cpp
+    src/musicartprovider.h
     src/shadowprovider.cpp
     src/shadowprovider.h
     src/feedback.cpp
@@ -374,6 +376,8 @@ qt_add_qml_module(ABookDesk
         qml/MyMusicTrack.qml
         qml/MusicScreen.qml
         qml/MusicTrackRow.qml
+        qml/MusicArt.qml
+        qml/MusicArtRaster.mjs
         qml/DownloadRing.qml
         qml/LevelBar.qml
         qml/MusicTrackDetail.qml
@@ -690,6 +694,10 @@ if(MSVC)
     target_compile_options(MusicLibraryTests PRIVATE /W3 /utf-8)
 endif()
 add_test(NAME MusicLibraryTests COMMAND MusicLibraryTests)
+qt_add_executable(MusicArtTests tests/test_musicart.cpp src/musicartprovider.cpp src/musicartprovider.h)
+target_compile_definitions(MusicArtTests PRIVATE MUSICART_DIR="${CMAKE_CURRENT_SOURCE_DIR}")
+target_link_libraries(MusicArtTests PRIVATE Qt6::Test Qt6::Qml Qt6::Quick Qt6::Network)
+add_test(NAME MusicArtTests COMMAND MusicArtTests)
 # Khay Win32 tự viết (thay Qt.labs.platform, bỏ Qt6Widgets.dll): menu, tooltip, lệnh chọn trên khay GIẢ, không icon nào vào khay thật
 qt_add_executable(TrayTests tests/test_tray.cpp src/trayicon.cpp src/trayicon.h)
 target_include_directories(TrayTests PRIVATE src)

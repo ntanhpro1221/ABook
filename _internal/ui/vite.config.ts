@@ -40,7 +40,8 @@ export default defineConfig({
     // abook/webui/assets/music_mix.json (listen/musicBed.ts) - nằm ngoài thư mục ui.
     fs: {
       allow: [import.meta.dirname, path.resolve(import.meta.dirname, "../docs/THIRD_PARTY.md"),
-        path.resolve(import.meta.dirname, "../abook/webui/assets/music_mix.json")],
+        path.resolve(import.meta.dirname, "../abook/webui/assets/music_mix.json"),
+        path.resolve(import.meta.dirname, "../desktop_qt/qml/MusicArtRaster.mjs")],
     },
     proxy: {
       "/api": devBackend,

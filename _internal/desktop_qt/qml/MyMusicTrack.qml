@@ -36,14 +36,14 @@ Collapse {
 
     Item {
         width: parent.width
-        height: Math.max(words.height, buttons.height) + 16 + 1
+        height: Math.max(words.height, buttons.height, 40) + 16 + 1
         Rectangle { width: parent.width; height: 1; color: Theme.line; Reveal { shown: !root.first }}
         Item {
             id: row
             y: 1 + 8
             width: parent.width
-            height: Math.max(words.height, buttons.height)
-            Icon { id: noteIcon; y: 2; name: "eighth-note"; size: 16; color: Theme.accentText }
+            height: Math.max(words.height, buttons.height, 40)
+            MusicArt { id: noteIcon; track: root.track; width: 40; height: 40 }
             Column {
                 id: words
                 x: noteIcon.width + 6

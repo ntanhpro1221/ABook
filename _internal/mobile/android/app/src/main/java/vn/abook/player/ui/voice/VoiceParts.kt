@@ -92,6 +92,7 @@ fun KeyRow(provider: KeyProvider, onOpen: (() -> Unit)?) {
 fun TrackRow(track: MusicTrack, onOpen: () -> Unit) {
     ListItem(
         track.title, Modifier, onOpen, trackTag(track), hint = VoiceText.trackLine(track).ifEmpty { null },
+        leading = { vn.abook.player.ui.music.library.MusicArt(androidx.compose.runtime.remember(track.link) { vn.abook.player.MusicLibrary.Track(track.link, org.json.JSONObject()) }) },
         trailing = { BasicText(formatSize(track.bytes), style = Abook.type.bodySmall.copy(color = Abook.colors.text2)) },
         below = if (track.analysed) null else ({ Caption(MusicText.UNANALYSED) }),
     )

@@ -21,6 +21,7 @@ from pathlib import Path
 from typing import Any, Callable, Iterable
 
 from ..io_utils import atomic_write_json
+from .music_art import descriptor as artwork
 
 SAVED_VERSION = 1
 EMOTION_THRESHOLD = 0.5  # chip cảm xúc: bài có điểm cảm xúc ấy từ 0,5 trở lên, xếp theo điểm
@@ -113,7 +114,7 @@ def select(tracks: dict[str, dict[str, Any]], filters: dict[str, Any], playlists
 
 def row(link: str, info: dict[str, Any]) -> dict[str, Any]:
     """Một dòng của danh sách: đủ để vẽ dòng và nghe thử (không kèm 13 điểm cảm xúc - chi tiết bài mới có)."""
-    out: dict[str, Any] = {"link": link}
+    out: dict[str, Any] = {"link": link, **artwork(link, info)}
     for key in ROW_KEYS:
         value = info.get(key)
         if isinstance(value, (str, int, float)) and not isinstance(value, bool) and value != "":
@@ -129,7 +130,7 @@ def top_emotions(info: dict[str, Any], count: int = 3) -> list[str]:
 
 def detail(link: str, info: dict[str, Any], playlists: list[dict[str, Any]]) -> dict[str, Any]:
     """Chi tiết bài: mọi trường hiện trên sheet chi tiết + 13 cảm xúc (xếp giảm dần) + các danh sách phát chứa bài."""
-    out: dict[str, Any] = {"link": link}
+    out: dict[str, Any] = {"link": link, **artwork(link, info)}
     for key in DETAIL_KEYS:
         value = info.get(key)
         if value is not None and value != "":

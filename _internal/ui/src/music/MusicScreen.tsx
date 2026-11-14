@@ -1,4 +1,5 @@
 import { Presence } from "../shared/MotionPresence";
+import { MusicArt } from "./MusicArt";
 import * as DropdownMenu from "@/shared/DropdownMenu";
 import { useQueryClient } from "@tanstack/react-query";
 import { Check, ChevronDown, CircleAlert, Download, Loader2, Music2, Play, Search, Square, X } from "lucide-react";
@@ -299,6 +300,7 @@ export function TrackRow({
   const title = track.title || S.s_bai_nay_d9683a01;
   return (
     <Item role={Item === "div" && !nested ? "listitem" : undefined} className="flex min-h-16 items-center gap-2 border-b border-line py-2 last:border-b-0">
+      <MusicArt track={track} />
       <IconButton
         label={previewing && preview.loading ? S.s_dang_tai_am_thanh_6c7cb62f : previewing ? S.s_dung_nghe_f20939be : S.s_nghe_thu_fa024065}
         icon={previewing ? Square : Play}

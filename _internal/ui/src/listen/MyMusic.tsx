@@ -1,4 +1,5 @@
 import { S } from "../shared/strings.generated";
+import { MusicArt } from "../music/MusicArt";
 import { TickingValue } from "@/shared/TickingValue";
 import { MotionRegion } from "@/shared/MotionRegion";
 import { Fold } from "@/shared/Collapse";
@@ -158,6 +159,7 @@ export function MyMusicSection() {
         <ul className="divide-y divide-line">
           {rows.map(({ item: track, key, state, ref }) => (
             <li key={key} ref={ref} className="motion-row" data-state={state} inert={state === "exit"}><div className="flex flex-wrap items-center gap-x-3 gap-y-1 py-2 text-sm">
+              <MusicArt track={track} />
               <span className="min-w-0 flex-1 break-words">
                 <EighthNote className="mr-2 inline size-4 text-accent-text" />
                 {track.title}

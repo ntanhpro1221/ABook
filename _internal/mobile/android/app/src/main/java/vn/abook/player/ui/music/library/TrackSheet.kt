@@ -84,7 +84,10 @@ fun TrackSheet(
                 SwapContent(playing, contentKey = { playing -> playing != null }, layout = ContentLayout.Column) { playing ->
                     if (playing != null) Caption(S.s_bai_dang_phat_3c20c832, Modifier.padding(bottom = Dim.s4).testTag("track_playing"))
                 }
+                MusicArt(track, Modifier.size(160.dp).align(Alignment.CenterHorizontally))
+                Spacer(Modifier.height(Dim.s16))
                 BasicText(track.title, style = Abook.type.sectionTitle, modifier = Modifier.testTag("track_title"))
+                track.info.optJSONObject("art")?.optString("credit")?.takeIf { it.isNotEmpty() }?.let { Caption(it) }
                 Reveal(track.creator.isNotEmpty()) { BasicText(track.creator, style = Abook.type.body.copy(color = colors.text2)) }
                 Spacer(Modifier.height(Dim.s16))
                 Actions(ui, state, track, dismiss, pick, playing)

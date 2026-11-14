@@ -56,6 +56,20 @@ Modal {
     Column {
         width: root.bodyWidth
         spacing: Theme.s16
+        MusicArt {
+            anchors.horizontalCenter: parent.horizontalCenter
+            width: 160; height: 160
+            track: root.detail || ({})
+            Reveal { shown: !!root.detail }
+        }
+        Text {
+            id: artCredit
+            width: parent.width
+            text: root.detail && root.detail.art ? root.detail.art.credit || "" : ""
+            Reveal { shown: artCredit.text !== "" }
+            wrapMode: Text.WrapAtWordBoundaryOrAnywhere
+            color: Theme.text2; font.pixelSize: Theme.sizeBodySmall
+        }
         Text {
             Reveal { shown: !root.detail }
             text: root.loading ? S.s_dang_tai_465b1987 : S.s_chua_tai_duoc_bai_nay_d66f95b6

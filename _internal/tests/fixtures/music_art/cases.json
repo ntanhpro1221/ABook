@@ -1,0 +1,97 @@
+[
+  {
+    "link": "https://music.example/calm.mp3",
+    "info": {
+      "style": "piano",
+      "valence": 0.6,
+      "arousal": -0.8,
+      "emotions": {
+        "peacefulness": 0.9,
+        "tenderness": 0.4
+      }
+    },
+    "seed": 56652,
+    "rgbSha256": "823189ef802627e99acc60d53e518e69c845d94b19ba39cf2a2022fc7e879fff",
+    "bmpSha256": "00be247da439a1c5ec7126b7360957deeb94f6b2e5f8ff4b09bc97e45f5778e8"
+  },
+  {
+    "link": "https://music.example/dark.mp3",
+    "info": {
+      "style": "dark",
+      "valence": -1,
+      "arousal": 1,
+      "emotions": {
+        "fear": 0.8,
+        "tension": 0.8
+      }
+    },
+    "seed": 834523,
+    "rgbSha256": "e83aa19ae8c68d0ddfdff5045836611b632470136ae9a83dadbcccbf84831ff6",
+    "bmpSha256": "6c380c5c85c43d0369e127cb87de14d4d7aa97d29c2aa1a6b8e8fb66661001e3"
+  },
+  {
+    "link": "https://music.example/quiet.mp3",
+    "info": {
+      "style": "ambient",
+      "valence": -0.333,
+      "arousal": -0.995,
+      "emotions": {}
+    },
+    "seed": 850678,
+    "rgbSha256": "8a76cc2c77fb3224552886c088ec4c4c1e39eaf73eb5c302b256378158b3ca5c",
+    "bmpSha256": "787494844c618ce75827be1dc1e1230075e76d846786e11c618c483bc496a763"
+  },
+  {
+    "link": "https://music.example/Đêm-🌙.mp3",
+    "info": {
+      "style": "world_other",
+      "valence": 0,
+      "arousal": 0,
+      "emotions": {
+        "wonder": 1
+      }
+    },
+    "seed": 1346889,
+    "rgbSha256": "cd6bf410413e3fa6d3d6dbbc65db950a61ac86bf46cc1750da4933c24b59817f",
+    "bmpSha256": "f1fef5138918895f1bfec7cf4aba3958608c09fbcde9a030c97d8a1487b36633"
+  },
+  {
+    "link": "local:0123456789",
+    "info": {},
+    "seed": 287860,
+    "rgbSha256": "d6a0874814ce84ca7ffe32023636a94e363c680f8dbd3970e15098a878e3e72f",
+    "bmpSha256": "893a654dc75216ff2d93bb74f70786a70b2dc594c705e6676bfa65a4d6894fcc"
+  },
+  {
+    "link": "https://music.example/clamped.mp3",
+    "info": {
+      "valence": 9,
+      "arousal": -9,
+      "style": "electronic"
+    },
+    "seed": 271677,
+    "rgbSha256": "8b26909112b5e4fc71938075b9a983bf6163dce76fc82c084f1640aaf07559eb",
+    "bmpSha256": "7f3c43b7377feed8017532285b54e2c6dc8860b83c7d970c461a817029170ca0"
+  },
+  {
+    "link": "https://music.example/tie.mp3",
+    "info": {
+      "emotions": {
+        "joy": 0.5,
+        "anger": 0.5
+      },
+      "valence": -0.005,
+      "arousal": 0.005
+    },
+    "seed": 329413,
+    "rgbSha256": "02728b685026d385ab750f6fde7c0cda6c3866ddc70ccd8dd10b4664972515d9",
+    "bmpSha256": "24ee790e94958a3efd26ebc1599b588988ad59828e5bf09a1fc21213a1bc6f35"
+  },
+  {
+    "link": "",
+    "info": {},
+    "seed": 1457035,
+    "rgbSha256": "fdf0c07330f7e7902f32131ef12a990f9f5a88a6c54bfb01406cabe6d15b67da",
+    "bmpSha256": "ca0ba8ee065fc59a16fd87a3b985885c2ba2119a9c5f12ac9137cef52e5b8f1f"
+  }
+]

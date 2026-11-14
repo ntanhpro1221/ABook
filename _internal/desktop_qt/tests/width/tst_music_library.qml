@@ -141,6 +141,8 @@ Item {
             compare(page.shown.length, 24)
             verify(named(page, "musicCount") !== null)
             verify(named(page, "musicList") !== null)
+            tryVerify(function() { return named(page, "musicArt") !== null })
+            tryVerify(function() { const cover = named(page, "musicArtGenerated"); return cover && cover.status === Image.Ready })
             // danh sách ảo hoá: không dựng đủ 24 hàng cùng lúc ở 900 px
             const rows = named(page, "musicList")
             verify(rows.count === 24)
@@ -165,6 +167,7 @@ Item {
             detail.show(track(5).link, {book: "b", scene: "1:0"})
             tryVerify(function() { return detail.detail !== null })
             compare(detail.detail.emotions.length, 13)
+            verify(named(detail, "musicArt") !== null)
             verify(detail.detail.why !== undefined)
             detail.open = false
         }

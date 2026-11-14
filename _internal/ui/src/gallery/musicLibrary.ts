@@ -1,4 +1,5 @@
 import { galleryState } from "./state";
+import { seedOf } from "../../../desktop_qt/qml/MusicArtRaster.mjs";
 
 // Kho nhạc giả cho phòng trưng bày (màn Nhạc): 48 bài dựng sẵn, tên dài ngắn lẫn lộn (kiểm chữ cắt / đè), vài bài đã lưu, hai bài đang tải
 // khi `scenario.musicDownloading`. Lọc ở đây chỉ đủ cho ảnh chụp (tìm + phong cách + danh sách phát) - luật thật ở máy chủ
@@ -62,7 +63,7 @@ function fold(text: string): string {
 
 function row(track: (typeof LIBRARY_TRACKS)[number]) {
   const { link, title, creator, duration, bpm, style, bytes, lufs, audibleStart } = track;
-  return { link, title, creator, duration, bpm, style, bytes, lufs, audibleStart, saved: saved.has(link), downloaded: saved.has(link) };
+  return { link, title, creator, duration, bpm, style, bytes, lufs, audibleStart, artSeed: seedOf(link, track), saved: saved.has(link), downloaded: saved.has(link) };
 }
 
 export function libraryMeta() {
