@@ -30,6 +30,7 @@ import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
@@ -139,15 +140,19 @@ fun SheetLayer(host: SheetHost) {
             val contentScroll = rememberScrollState()
             // Cửa sổ thấp: nội dung dài hơn chỗ còn lại thì cuộn. Giới hạn hữu hạn (4 lần chiều cao cửa sổ, ít nhất 4096 dp) thay cho vô hạn của verticalScroll,
             // để bảng có danh sách cuộn riêng (LazyColumn / verticalScroll + heightIn) vẫn đo được, không văng vì lồng cuộn.
-            Box(Modifier.gestureBarPadding().padding(horizontal = Dim.margin).padding(bottom = Dim.s16)
-                .fadeEdges(contentScroll).verticalScroll(contentScroll)
-                .layout { measurable, constraints ->
-                    val bound = if (constraints.hasBoundedHeight) constraints.maxHeight else contentBound.roundToPx()
-                    val placeable = measurable.measure(constraints.copy(maxHeight = bound.coerceAtLeast(constraints.minHeight)))
-                    layout(placeable.width, placeable.height) { placeable.place(0, 0) }
+            BoxWithConstraints(Modifier.gestureBarPadding().padding(horizontal = Dim.margin).padding(bottom = Dim.s16)) {
+                val viewport = if (constraints.hasBoundedHeight) maxHeight else contentBound
+                Box(Modifier.fadeEdges(contentScroll).verticalScroll(contentScroll)
+                    .layout { measurable, constraints ->
+                        val bound = if (constraints.hasBoundedHeight) constraints.maxHeight else contentBound.roundToPx()
+                        val placeable = measurable.measure(constraints.copy(maxHeight = bound.coerceAtLeast(constraints.minHeight)))
+                        layout(placeable.width, placeable.height) { placeable.place(0, 0) }
+                    }
+                    .testTag("sheet_scroll")) {
+                    CompositionLocalProvider(LocalSheetViewportHeight provides viewport) {
+                        sheet.content { host.dismiss() }
+                    }
                 }
-                .testTag("sheet_scroll")) {
-                sheet.content { host.dismiss() }
             }
         }
     }
