@@ -75,7 +75,7 @@ Mỗi cặp còn lại phải có giải thích trong ui_strings/qt_wording_revi
 | Bắt đầu | headphones | wand-sparkles | `qt/NewProjectScreen.qml:185` ~ `desktop/AudiobookDialog.tsx:215` | Different operations: Qt starts a Studio production job (wand-sparkles); the matched web dialog starts a read-aloud export (headphones). |
 | Chi tiết | info | chevron-right | `qt/MyMusicDetails.qml:29` (+1) ~ `studio/ProjectScreen.tsx:757` | Different controls: Qt rotates a disclosure chevron to expand the music details; the matched web item opens project information. |
 | Quay lại | chevron-left | arrow-left | `qt/ScreenHeader.qml:14` (+1) ~ `listen/LineWishes.tsx:224` (+2) | Different navigation depth: the web chevron returns one step inside a sentence editor; the Qt arrow returns to the previous screen. |
-| Tạm dừng {} | check, circle-dashed, play | pause | `qt/BookCell.qml:86` ~ `listen/BookScreen.tsx:186` (+2) | Scanner pairing ambiguity: the web book row has status check/circle icons beside its transport action. Its actual pause action and the Qt book cell use pause. |
+| Tạm dừng {} | check, circle-dashed, play | pause | `qt/BookCell.qml:87` ~ `listen/BookScreen.tsx:186` (+2) | Scanner pairing ambiguity: the web book row has status check/circle icons beside its transport action. Its actual pause action and the Qt book cell use pause. |
 
 **Cùng icon, khác nhãn** (64 cặp Qt; web cùng màn dùng cùng icon với nhãn khác):
 
@@ -87,13 +87,13 @@ Mỗi cặp còn lại phải có giải thích trong ui_strings/qt_wording_revi
 | Thêm sách | file-text | Đang đọc | Đang đọc / Chọn file sách | `qt/AddBook.qml:551` |
 | Cài đặt | download | Cập nhật ABook | Cài Studio, Cài tiếp, Có ABook {} | `qt/AdvancedUpdate.qml:96` |
 | Cài đặt | download | Đang tải bản mới | Cài Studio, Cài tiếp, Có ABook {} | `qt/AdvancedUpdate.qml:96` |
-| Thư viện | play | Nghe ngay {} | Đọc {} | `qt/BookCell.qml:86` |
-| Thư viện | play | Nghe {} | Đọc {} | `qt/BookCell.qml:86` |
-| Thư viện | pause | Tạm dừng {} | Đọc {} | `qt/BookCell.qml:86` |
-| Trang sách | check-check | Chưa nghe xong | Chưa nghe / Đã nghe xong, Chưa nghe xong / Đã nghe xong | `qt/BookPage.qml:171` |
-| Trang sách | check-check | Đã nghe xong | Chưa nghe / Đã nghe xong, Chưa nghe xong / Đã nghe xong | `qt/BookPage.qml:171` |
-| Trang sách | circle-dashed | Chưa nghe | Chưa nghe / Đã nghe xong, Tạm dừng {} | `qt/BookPage.qml:302` |
-| Trang sách | check-check | Đã nghe xong | Chưa nghe / Đã nghe xong, Chưa nghe xong / Đã nghe xong | `qt/BookPage.qml:302` |
+| Thư viện | play | Nghe ngay {} | Đọc {} | `qt/BookCell.qml:87` |
+| Thư viện | play | Nghe {} | Đọc {} | `qt/BookCell.qml:87` |
+| Thư viện | pause | Tạm dừng {} | Đọc {} | `qt/BookCell.qml:87` |
+| Trang sách | check-check | Chưa nghe xong | Chưa nghe / Đã nghe xong, Chưa nghe xong / Đã nghe xong | `qt/BookPage.qml:173` |
+| Trang sách | check-check | Đã nghe xong | Chưa nghe / Đã nghe xong, Chưa nghe xong / Đã nghe xong | `qt/BookPage.qml:173` |
+| Trang sách | circle-dashed | Chưa nghe | Chưa nghe / Đã nghe xong, Tạm dừng {} | `qt/BookPage.qml:304` |
+| Trang sách | check-check | Đã nghe xong | Chưa nghe / Đã nghe xong, Chưa nghe xong / Đã nghe xong | `qt/BookPage.qml:304` |
 | Trang sách | git-merge | Gộp | Gộp vào người khác | `qt/CastMerge.qml:163` |
 | Đang nghe | play | Nghe từ đầu chương | Dừng / Nghe thử, Nghe {} | `qt/ChapterList.qml:45` |
 | Đang nghe | book-open | Đọc chương này | Trang sách | `qt/ChapterList.qml:46` |
