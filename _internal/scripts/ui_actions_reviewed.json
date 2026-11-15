@@ -1779,85 +1779,85 @@
     "id": "83613ccbd44e125ebf71",
     "kind": "pending",
     "path": "ui/src/listen/PlayerViews.tsx",
-    "line": 802,
+    "line": 801,
     "statement": "onClick={() => (playing ? sample.stop() : void sample.play(voice.id))}",
     "occurrence": 1,
-    "source_sha256": "e5aa80310189b2e3ce9520903e64cb36badebf2d33415f8560792df5238adf8f",
+    "source_sha256": "4c5ec68cd503fbcec0ccb9ef5840866c6612fac6dce26e2cb96950f891a281df",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; BookProgressLine, CompactProgress, PendingIndicator, bookProgressText, busy, busyClick, isLoading, isPending, levelBusy, loading, musicLoading, pending",
-    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
+    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Devvoice review: device voice names, circled radio marks, one-line names and 8 dp text gaps leave this action and its guard unchanged."
   },
   {
     "id": "f014459f7e3244b9fbb4",
     "kind": "pending",
     "path": "ui/src/listen/PlayerViews.tsx",
-    "line": 885,
+    "line": 884,
     "statement": "const start = async () => {",
     "occurrence": 1,
-    "source_sha256": "e5aa80310189b2e3ce9520903e64cb36badebf2d33415f8560792df5238adf8f",
+    "source_sha256": "4c5ec68cd503fbcec0ccb9ef5840866c6612fac6dce26e2cb96950f891a281df",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; BookProgressLine, CompactProgress, PendingIndicator, bookProgressText, busy, busyClick, isLoading, isPending, levelBusy, loading, musicLoading, pending",
-    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
+    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Devvoice review: device voice names, circled radio marks, one-line names and 8 dp text gaps leave this action and its guard unchanged."
   },
   {
     "id": "3a79393defa6f77f9bcb",
     "kind": "pending",
     "path": "ui/src/listen/PlayerViews.tsx",
-    "line": 913,
+    "line": 912,
     "statement": "<button type=\"button\" data-focus-next className=\"touch-hit -ml-2 rounded-control px-2 py-1 font-medium text-fg hover:bg-hover\" onClick={() => void source.readAloudPrepareCancel?.().then(settle)}>{S.s_dung_lam_truoc_632af923}</button>",
     "occurrence": 1,
-    "source_sha256": "e5aa80310189b2e3ce9520903e64cb36badebf2d33415f8560792df5238adf8f",
+    "source_sha256": "4c5ec68cd503fbcec0ccb9ef5840866c6612fac6dce26e2cb96950f891a281df",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; BookProgressLine, CompactProgress, PendingIndicator, bookProgressText, busy, busyClick, isLoading, isPending, levelBusy, loading, musicLoading, pending",
-    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
+    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Devvoice review: device voice names, circled radio marks, one-line names and 8 dp text gaps leave this action and its guard unchanged."
   },
   {
     "id": "b0dcdbfe651ac29eeb28",
     "kind": "pending",
     "path": "ui/src/listen/PlayerViews.tsx",
-    "line": 916,
+    "line": 915,
     "statement": "<button type=\"button\" data-focus-next aria-disabled={busy || undefined} aria-busy={busy || undefined} className=\"touch-hit -ml-2 rounded-control px-2 py-1 font-medium text-accent-text hover:bg-hover aria-disabled:opacity-45\" onClick={busyClick(busy, () => void start())}>",
     "occurrence": 1,
-    "source_sha256": "e5aa80310189b2e3ce9520903e64cb36badebf2d33415f8560792df5238adf8f",
+    "source_sha256": "4c5ec68cd503fbcec0ccb9ef5840866c6612fac6dce26e2cb96950f891a281df",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; BookProgressLine, CompactProgress, PendingIndicator, bookProgressText, busy, busyClick, isLoading, isPending, levelBusy, loading, musicLoading, pending",
-    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
+    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Devvoice review: device voice names, circled radio marks, one-line names and 8 dp text gaps leave this action and its guard unchanged."
   },
   {
     "id": "5d21139a7aa11bae8a5b",
     "kind": "pending",
     "path": "ui/src/listen/PlayerViews.tsx",
-    "line": 944,
+    "line": 943,
     "statement": "const clear = async () => {",
     "occurrence": 1,
-    "source_sha256": "e5aa80310189b2e3ce9520903e64cb36badebf2d33415f8560792df5238adf8f",
+    "source_sha256": "4c5ec68cd503fbcec0ccb9ef5840866c6612fac6dce26e2cb96950f891a281df",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; BookProgressLine, CompactProgress, PendingIndicator, bookProgressText, busy, busyClick, isLoading, isPending, levelBusy, loading, musicLoading, pending",
-    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
+    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Devvoice review: device voice names, circled radio marks, one-line names and 8 dp text gaps leave this action and its guard unchanged."
   },
   {
     "id": "d91727560f169d121388",
     "kind": "pending",
     "path": "ui/src/listen/PlayerViews.tsx",
-    "line": 1504,
+    "line": 1503,
     "statement": "return switchRecord(bookId, async () => undefined).then(() =>",
     "occurrence": 1,
-    "source_sha256": "e5aa80310189b2e3ce9520903e64cb36badebf2d33415f8560792df5238adf8f",
+    "source_sha256": "4c5ec68cd503fbcec0ccb9ef5840866c6612fac6dce26e2cb96950f891a281df",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; BookProgressLine, CompactProgress, PendingIndicator, bookProgressText, busy, busyClick, isLoading, isPending, levelBusy, loading, musicLoading, pending",
-    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
+    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Devvoice review: device voice names, circled radio marks, one-line names and 8 dp text gaps leave this action and its guard unchanged."
   },
   {
     "id": "048072df29fe02577ac4",
     "kind": "pending",
     "path": "ui/src/listen/PlayerViews.tsx",
-    "line": 2038,
+    "line": 2037,
     "statement": "function PlayerModeSwitch({ reading, onSelect }: { reading: boolean; onSelect: (reading: boolean) => void }) {",
     "occurrence": 1,
-    "source_sha256": "e5aa80310189b2e3ce9520903e64cb36badebf2d33415f8560792df5238adf8f",
+    "source_sha256": "4c5ec68cd503fbcec0ccb9ef5840866c6612fac6dce26e2cb96950f891a281df",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; BookProgressLine, CompactProgress, PendingIndicator, bookProgressText, busy, busyClick, isLoading, isPending, levelBusy, loading, musicLoading, pending",
-    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
+    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Devvoice review: device voice names, circled radio marks, one-line names and 8 dp text gaps leave this action and its guard unchanged."
   },
   {
     "id": "bf54d84f837e1fca0fd4",
@@ -2790,10 +2790,10 @@
     "line": 61,
     "statement": "removeKey(provider: string): Promise<OnlineProviderInfo>;",
     "occurrence": 1,
-    "source_sha256": "8fa79d873ba77aa1d32be5c51333cf5f19402b0562434e0ba5bd1594e20b461d",
+    "source_sha256": "4f3a5642d15bee8d34903cf09dcac8d2e626e0b64fe333d3e47d4f5913f28988",
     "disposition": "confirmation",
     "guard": "VoiceSettings useDestructiveConfirm / ProviderKey removeConfirm / VoiceSheets key confirmation",
-    "reason": "Provider credentials are deleted only after the object-specific confirmation."
+    "reason": "Provider credentials are deleted only after the object-specific confirmation. Devvoice review: device voice names, circled radio marks, one-line names and 8 dp text gaps leave this action and its guard unchanged."
   },
   {
     "id": "ac569ba46ded7bdd0b79",
@@ -2802,10 +2802,10 @@
     "line": 99,
     "statement": "const play = async (voice: string) => {",
     "occurrence": 1,
-    "source_sha256": "8fa79d873ba77aa1d32be5c51333cf5f19402b0562434e0ba5bd1594e20b461d",
+    "source_sha256": "4f3a5642d15bee8d34903cf09dcac8d2e626e0b64fe333d3e47d4f5913f28988",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; PendingIndicator, busy, loading, pending, savingVoice, setBusy, setLoading, setSavingVoice, usePendingAction",
-    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering."
+    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Devvoice review: device voice names, circled radio marks, one-line names and 8 dp text gaps leave this action and its guard unchanged."
   },
   {
     "id": "7174707a5103518db27f",
@@ -2814,10 +2814,10 @@
     "line": 139,
     "statement": "const save = async () => {",
     "occurrence": 1,
-    "source_sha256": "8fa79d873ba77aa1d32be5c51333cf5f19402b0562434e0ba5bd1594e20b461d",
+    "source_sha256": "4f3a5642d15bee8d34903cf09dcac8d2e626e0b64fe333d3e47d4f5913f28988",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; PendingIndicator, busy, loading, pending, savingVoice, setBusy, setLoading, setSavingVoice, usePendingAction",
-    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering."
+    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Devvoice review: device voice names, circled radio marks, one-line names and 8 dp text gaps leave this action and its guard unchanged."
   },
   {
     "id": "8de02973bb503c48fead",
@@ -2826,10 +2826,10 @@
     "line": 154,
     "statement": "const check = async () => {",
     "occurrence": 1,
-    "source_sha256": "8fa79d873ba77aa1d32be5c51333cf5f19402b0562434e0ba5bd1594e20b461d",
+    "source_sha256": "4f3a5642d15bee8d34903cf09dcac8d2e626e0b64fe333d3e47d4f5913f28988",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; PendingIndicator, busy, loading, pending, savingVoice, setBusy, setLoading, setSavingVoice, usePendingAction",
-    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering."
+    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Devvoice review: device voice names, circled radio marks, one-line names and 8 dp text gaps leave this action and its guard unchanged."
   },
   {
     "id": "3bee06542385deac81c0",
@@ -2838,10 +2838,10 @@
     "line": 175,
     "statement": "const remove = async () => {",
     "occurrence": 1,
-    "source_sha256": "8fa79d873ba77aa1d32be5c51333cf5f19402b0562434e0ba5bd1594e20b461d",
+    "source_sha256": "4f3a5642d15bee8d34903cf09dcac8d2e626e0b64fe333d3e47d4f5913f28988",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; PendingIndicator, busy, loading, pending, savingVoice, setBusy, setLoading, setSavingVoice, usePendingAction",
-    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering."
+    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Devvoice review: device voice names, circled radio marks, one-line names and 8 dp text gaps leave this action and its guard unchanged."
   },
   {
     "id": "6b9042f79a6faf8a0ac4",
@@ -2850,10 +2850,10 @@
     "line": 178,
     "statement": "await api.removeKey(info.id);",
     "occurrence": 1,
-    "source_sha256": "8fa79d873ba77aa1d32be5c51333cf5f19402b0562434e0ba5bd1594e20b461d",
+    "source_sha256": "4f3a5642d15bee8d34903cf09dcac8d2e626e0b64fe333d3e47d4f5913f28988",
     "disposition": "confirmation",
     "guard": "VoiceSettings useDestructiveConfirm / ProviderKey removeConfirm / VoiceSheets key confirmation",
-    "reason": "Provider credentials are deleted only after the object-specific confirmation."
+    "reason": "Provider credentials are deleted only after the object-specific confirmation. Devvoice review: device voice names, circled radio marks, one-line names and 8 dp text gaps leave this action and its guard unchanged."
   },
   {
     "id": "a4d39ce872f726368bbe",
@@ -2862,10 +2862,10 @@
     "line": 260,
     "statement": "const saveVoice = usePendingAction(async (id: string) => {",
     "occurrence": 1,
-    "source_sha256": "8fa79d873ba77aa1d32be5c51333cf5f19402b0562434e0ba5bd1594e20b461d",
+    "source_sha256": "4f3a5642d15bee8d34903cf09dcac8d2e626e0b64fe333d3e47d4f5913f28988",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; PendingIndicator, busy, loading, pending, savingVoice, setBusy, setLoading, setSavingVoice, usePendingAction",
-    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering."
+    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Devvoice review: device voice names, circled radio marks, one-line names and 8 dp text gaps leave this action and its guard unchanged."
   },
   {
     "id": "1baa90435fef45a13f36",
@@ -2874,22 +2874,22 @@
     "line": 266,
     "statement": "const load = useCallback(async () => {",
     "occurrence": 1,
-    "source_sha256": "8fa79d873ba77aa1d32be5c51333cf5f19402b0562434e0ba5bd1594e20b461d",
+    "source_sha256": "4f3a5642d15bee8d34903cf09dcac8d2e626e0b64fe333d3e47d4f5913f28988",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; PendingIndicator, busy, loading, pending, savingVoice, setBusy, setLoading, setSavingVoice, usePendingAction",
-    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering."
+    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Devvoice review: device voice names, circled radio marks, one-line names and 8 dp text gaps leave this action and its guard unchanged."
   },
   {
     "id": "18204298c4c90b8f9d0d",
     "kind": "pending",
     "path": "ui/src/listen/VoiceSettings.tsx",
-    "line": 346,
+    "line": 345,
     "statement": "onClick={() => (playing ? sample.stop() : void sample.play(voice.id))}",
     "occurrence": 1,
-    "source_sha256": "8fa79d873ba77aa1d32be5c51333cf5f19402b0562434e0ba5bd1594e20b461d",
+    "source_sha256": "4f3a5642d15bee8d34903cf09dcac8d2e626e0b64fe333d3e47d4f5913f28988",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; PendingIndicator, busy, loading, pending, savingVoice, setBusy, setLoading, setSavingVoice, usePendingAction",
-    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering."
+    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Devvoice review: device voice names, circled radio marks, one-line names and 8 dp text gaps leave this action and its guard unchanged."
   },
   {
     "id": "5c3be57cbf989a854c67",
@@ -3879,13 +3879,13 @@
     "id": "57d9fdfa0d79b9ec8104",
     "kind": "pending",
     "path": "ui/src/shared/ui.tsx",
-    "line": 88,
+    "line": 89,
     "statement": "export function busyClick<E extends { preventDefault: () => void }>(loading: boolean | undefined, onClick: ((event: E) => void) | undefined) {",
     "occurrence": 1,
-    "source_sha256": "2533be31394dbf91a7dc2bdf7d69e7979227c3f5040ddc9441a6d016d26fa867",
+    "source_sha256": "b48cc3e0eef473d45ae84baa42647e484fb426f8ae612653a01053555b78e42a",
     "disposition": "internal",
     "guard": "Async interface/helper boundary; concrete activation inventoried separately",
-    "reason": "This signature supplies work to a model or component; declaring it starts no user operation. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
+    "reason": "This signature supplies work to a model or component; declaring it starts no user operation. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Devvoice review: device voice names, circled radio marks, one-line names and 8 dp text gaps leave this action and its guard unchanged."
   },
   {
     "id": "55eac8835610195bed03",
@@ -6702,10 +6702,10 @@
     "line": 92,
     "statement": "fun clearCache(): Long",
     "occurrence": 1,
-    "source_sha256": "d25e0fa13c4d41a04990caf2c0da628efc41cd2d9571e451b836f286a7c22174",
+    "source_sha256": "1f93cdc4b196f118316a7f523c1250d9483ce2d80e13a0930b39c45bb69d4d05",
     "disposition": "internal",
     "guard": "Declaration; the invoked call site is independently inventoried",
-    "reason": "A declaration/signature is not an executing UI action."
+    "reason": "A declaration/signature is not an executing UI action. Devvoice review: device voice names, circled radio marks, one-line names and 8 dp text gaps leave this action and its guard unchanged."
   },
   {
     "id": "d4a356857d1ed4b9c6f5",
@@ -6714,10 +6714,10 @@
     "line": 99,
     "statement": "fun clearLogs()",
     "occurrence": 1,
-    "source_sha256": "d25e0fa13c4d41a04990caf2c0da628efc41cd2d9571e451b836f286a7c22174",
+    "source_sha256": "1f93cdc4b196f118316a7f523c1250d9483ce2d80e13a0930b39c45bb69d4d05",
     "disposition": "internal",
     "guard": "Declaration; the invoked call site is independently inventoried",
-    "reason": "A declaration/signature is not an executing UI action."
+    "reason": "A declaration/signature is not an executing UI action. Devvoice review: device voice names, circled radio marks, one-line names and 8 dp text gaps leave this action and its guard unchanged."
   },
   {
     "id": "94fb94385f1c8214d0dc",
@@ -6726,10 +6726,10 @@
     "line": 117,
     "statement": "suspend fun offerNotifications(allow: () -> Unit) {",
     "occurrence": 1,
-    "source_sha256": "d25e0fa13c4d41a04990caf2c0da628efc41cd2d9571e451b836f286a7c22174",
+    "source_sha256": "1f93cdc4b196f118316a7f523c1250d9483ce2d80e13a0930b39c45bb69d4d05",
     "disposition": "internal",
     "guard": "Async interface/helper boundary; concrete activation inventoried separately",
-    "reason": "This signature supplies work to a model or component; declaring it starts no user operation."
+    "reason": "This signature supplies work to a model or component; declaring it starts no user operation. Devvoice review: device voice names, circled radio marks, one-line names and 8 dp text gaps leave this action and its guard unchanged."
   },
   {
     "id": "56906c7a0f18b0327fae",
@@ -6738,10 +6738,10 @@
     "line": 130,
     "statement": "scope.launch {",
     "occurrence": 1,
-    "source_sha256": "d25e0fa13c4d41a04990caf2c0da628efc41cd2d9571e451b836f286a7c22174",
+    "source_sha256": "1f93cdc4b196f118316a7f523c1250d9483ce2d80e13a0930b39c45bb69d4d05",
     "disposition": "pending",
     "guard": "ViewModel/operation fields: Loading, maintenanceBusy, savingSpeed, savingVoice; Components pending indicator",
-    "reason": "The model retains the operation and locks repeats; UI uses the shared pending parameter, loading content or progress owner."
+    "reason": "The model retains the operation and locks repeats; UI uses the shared pending parameter, loading content or progress owner. Devvoice review: device voice names, circled radio marks, one-line names and 8 dp text gaps leave this action and its guard unchanged."
   },
   {
     "id": "f661f42d7f2546024efc",
@@ -6750,10 +6750,10 @@
     "line": 150,
     "statement": "scope.launch {",
     "occurrence": 2,
-    "source_sha256": "d25e0fa13c4d41a04990caf2c0da628efc41cd2d9571e451b836f286a7c22174",
+    "source_sha256": "1f93cdc4b196f118316a7f523c1250d9483ce2d80e13a0930b39c45bb69d4d05",
     "disposition": "pending",
     "guard": "ViewModel/operation fields: Loading, maintenanceBusy, savingSpeed, savingVoice; Components pending indicator",
-    "reason": "The model retains the operation and locks repeats; UI uses the shared pending parameter, loading content or progress owner."
+    "reason": "The model retains the operation and locks repeats; UI uses the shared pending parameter, loading content or progress owner. Devvoice review: device voice names, circled radio marks, one-line names and 8 dp text gaps leave this action and its guard unchanged."
   },
   {
     "id": "04df4cc5d642242bf8ae",
@@ -6762,10 +6762,10 @@
     "line": 189,
     "statement": "suspend fun load() {",
     "occurrence": 1,
-    "source_sha256": "d25e0fa13c4d41a04990caf2c0da628efc41cd2d9571e451b836f286a7c22174",
+    "source_sha256": "1f93cdc4b196f118316a7f523c1250d9483ce2d80e13a0930b39c45bb69d4d05",
     "disposition": "internal",
     "guard": "Async interface/helper boundary; concrete activation inventoried separately",
-    "reason": "This signature supplies work to a model or component; declaring it starts no user operation."
+    "reason": "This signature supplies work to a model or component; declaring it starts no user operation. Devvoice review: device voice names, circled radio marks, one-line names and 8 dp text gaps leave this action and its guard unchanged."
   },
   {
     "id": "a814c01a7e1cdf5c62f6",
@@ -6774,10 +6774,10 @@
     "line": 208,
     "statement": "scope.launch {",
     "occurrence": 3,
-    "source_sha256": "d25e0fa13c4d41a04990caf2c0da628efc41cd2d9571e451b836f286a7c22174",
+    "source_sha256": "1f93cdc4b196f118316a7f523c1250d9483ce2d80e13a0930b39c45bb69d4d05",
     "disposition": "pending",
     "guard": "ViewModel/operation fields: Loading, maintenanceBusy, savingSpeed, savingVoice; Components pending indicator",
-    "reason": "The model retains the operation and locks repeats; UI uses the shared pending parameter, loading content or progress owner."
+    "reason": "The model retains the operation and locks repeats; UI uses the shared pending parameter, loading content or progress owner. Devvoice review: device voice names, circled radio marks, one-line names and 8 dp text gaps leave this action and its guard unchanged."
   },
   {
     "id": "ad9ea8f816535fbf7a7c",
@@ -6786,10 +6786,10 @@
     "line": 224,
     "statement": "scope.launch {",
     "occurrence": 4,
-    "source_sha256": "d25e0fa13c4d41a04990caf2c0da628efc41cd2d9571e451b836f286a7c22174",
+    "source_sha256": "1f93cdc4b196f118316a7f523c1250d9483ce2d80e13a0930b39c45bb69d4d05",
     "disposition": "pending",
     "guard": "ViewModel/operation fields: Loading, maintenanceBusy, savingSpeed, savingVoice; Components pending indicator",
-    "reason": "The model retains the operation and locks repeats; UI uses the shared pending parameter, loading content or progress owner."
+    "reason": "The model retains the operation and locks repeats; UI uses the shared pending parameter, loading content or progress owner. Devvoice review: device voice names, circled radio marks, one-line names and 8 dp text gaps leave this action and its guard unchanged."
   },
   {
     "id": "9f6fd0f69d0c1662b693",
@@ -6798,10 +6798,10 @@
     "line": 237,
     "statement": "scope.launch { speedFlow.value = withContext(io) { runCatching { VoiceSpeedText.state(core.voiceSpeed()) }.getOrNull() } }",
     "occurrence": 1,
-    "source_sha256": "d25e0fa13c4d41a04990caf2c0da628efc41cd2d9571e451b836f286a7c22174",
+    "source_sha256": "1f93cdc4b196f118316a7f523c1250d9483ce2d80e13a0930b39c45bb69d4d05",
     "disposition": "pending",
     "guard": "ViewModel/operation fields: Loading, maintenanceBusy, savingSpeed, savingVoice; Components pending indicator",
-    "reason": "The model retains the operation and locks repeats; UI uses the shared pending parameter, loading content or progress owner."
+    "reason": "The model retains the operation and locks repeats; UI uses the shared pending parameter, loading content or progress owner. Devvoice review: device voice names, circled radio marks, one-line names and 8 dp text gaps leave this action and its guard unchanged."
   },
   {
     "id": "eedff2c169b27864f48c",
@@ -6810,10 +6810,10 @@
     "line": 245,
     "statement": "scope.launch {",
     "occurrence": 5,
-    "source_sha256": "d25e0fa13c4d41a04990caf2c0da628efc41cd2d9571e451b836f286a7c22174",
+    "source_sha256": "1f93cdc4b196f118316a7f523c1250d9483ce2d80e13a0930b39c45bb69d4d05",
     "disposition": "pending",
     "guard": "ViewModel/operation fields: Loading, maintenanceBusy, savingSpeed, savingVoice; Components pending indicator",
-    "reason": "The model retains the operation and locks repeats; UI uses the shared pending parameter, loading content or progress owner."
+    "reason": "The model retains the operation and locks repeats; UI uses the shared pending parameter, loading content or progress owner. Devvoice review: device voice names, circled radio marks, one-line names and 8 dp text gaps leave this action and its guard unchanged."
   },
   {
     "id": "cd7a331ddeac6cf2acb5",
@@ -6822,10 +6822,10 @@
     "line": 255,
     "statement": "scope.launch { cacheFlow.value = withContext(io) { runCatching { core.cacheBytes() }.getOrNull() } }",
     "occurrence": 1,
-    "source_sha256": "d25e0fa13c4d41a04990caf2c0da628efc41cd2d9571e451b836f286a7c22174",
+    "source_sha256": "1f93cdc4b196f118316a7f523c1250d9483ce2d80e13a0930b39c45bb69d4d05",
     "disposition": "pending",
     "guard": "ViewModel/operation fields: Loading, maintenanceBusy, savingSpeed, savingVoice; Components pending indicator",
-    "reason": "The model retains the operation and locks repeats; UI uses the shared pending parameter, loading content or progress owner."
+    "reason": "The model retains the operation and locks repeats; UI uses the shared pending parameter, loading content or progress owner. Devvoice review: device voice names, circled radio marks, one-line names and 8 dp text gaps leave this action and its guard unchanged."
   },
   {
     "id": "7fa5c9ed6a152a2de08c",
@@ -6834,10 +6834,10 @@
     "line": 258,
     "statement": "fun clearCache() {",
     "occurrence": 1,
-    "source_sha256": "d25e0fa13c4d41a04990caf2c0da628efc41cd2d9571e451b836f286a7c22174",
+    "source_sha256": "1f93cdc4b196f118316a7f523c1250d9483ce2d80e13a0930b39c45bb69d4d05",
     "disposition": "internal",
     "guard": "Declaration; the invoked call site is independently inventoried",
-    "reason": "A declaration/signature is not an executing UI action."
+    "reason": "A declaration/signature is not an executing UI action. Devvoice review: device voice names, circled radio marks, one-line names and 8 dp text gaps leave this action and its guard unchanged."
   },
   {
     "id": "8482e68c4f0a741ef84d",
@@ -6846,10 +6846,10 @@
     "line": 259,
     "statement": "maintenance(S.s_chua_don_duoc_ban_doc_fbc43cc6, S.s_da_don_ban_doc_da_lam_19cc9826, refreshSaves = false) { cacheFlow.value = core.clearCache() }",
     "occurrence": 1,
-    "source_sha256": "d25e0fa13c4d41a04990caf2c0da628efc41cd2d9571e451b836f286a7c22174",
+    "source_sha256": "1f93cdc4b196f118316a7f523c1250d9483ce2d80e13a0930b39c45bb69d4d05",
     "disposition": "confirmation",
     "guard": "SettingsAdvanced ClearSheet and ClearLogsSheet / SettingsMaintenance old-delete / AdvancedStorage clearDialog",
-    "reason": "Cache, diagnostic logs and recovery saves are cleared only after their respective confirmations."
+    "reason": "Cache, diagnostic logs and recovery saves are cleared only after their respective confirmations. Devvoice review: device voice names, circled radio marks, one-line names and 8 dp text gaps leave this action and its guard unchanged."
   },
   {
     "id": "3c8c0bb0a50464924e90",
@@ -6858,10 +6858,10 @@
     "line": 264,
     "statement": "scope.launch { notifyFlow.value = withContext(io) { runCatching { core.notificationsAllowed() }.getOrDefault(true) } }",
     "occurrence": 1,
-    "source_sha256": "d25e0fa13c4d41a04990caf2c0da628efc41cd2d9571e451b836f286a7c22174",
+    "source_sha256": "1f93cdc4b196f118316a7f523c1250d9483ce2d80e13a0930b39c45bb69d4d05",
     "disposition": "pending",
     "guard": "ViewModel/operation fields: Loading, maintenanceBusy, savingSpeed, savingVoice; Components pending indicator",
-    "reason": "The model retains the operation and locks repeats; UI uses the shared pending parameter, loading content or progress owner."
+    "reason": "The model retains the operation and locks repeats; UI uses the shared pending parameter, loading content or progress owner. Devvoice review: device voice names, circled radio marks, one-line names and 8 dp text gaps leave this action and its guard unchanged."
   },
   {
     "id": "8d336a5f369abf3f0ce7",
@@ -6870,10 +6870,10 @@
     "line": 267,
     "statement": "suspend fun logLines(): List<String> = withContext(io) { core.logLines() }",
     "occurrence": 1,
-    "source_sha256": "d25e0fa13c4d41a04990caf2c0da628efc41cd2d9571e451b836f286a7c22174",
+    "source_sha256": "1f93cdc4b196f118316a7f523c1250d9483ce2d80e13a0930b39c45bb69d4d05",
     "disposition": "internal",
     "guard": "Async interface/helper boundary; concrete activation inventoried separately",
-    "reason": "This signature supplies work to a model or component; declaring it starts no user operation."
+    "reason": "This signature supplies work to a model or component; declaring it starts no user operation. Devvoice review: device voice names, circled radio marks, one-line names and 8 dp text gaps leave this action and its guard unchanged."
   },
   {
     "id": "9ee4588a2684b22bfe39",
@@ -6882,10 +6882,10 @@
     "line": 269,
     "statement": "fun clearLogs() {",
     "occurrence": 1,
-    "source_sha256": "d25e0fa13c4d41a04990caf2c0da628efc41cd2d9571e451b836f286a7c22174",
+    "source_sha256": "1f93cdc4b196f118316a7f523c1250d9483ce2d80e13a0930b39c45bb69d4d05",
     "disposition": "internal",
     "guard": "Declaration; the invoked call site is independently inventoried",
-    "reason": "A declaration/signature is not an executing UI action."
+    "reason": "A declaration/signature is not an executing UI action. Devvoice review: device voice names, circled radio marks, one-line names and 8 dp text gaps leave this action and its guard unchanged."
   },
   {
     "id": "530dd958113c5af70e78",
@@ -6894,10 +6894,10 @@
     "line": 270,
     "statement": "maintenance(S.s_chua_xoa_duoc_nhat_ky_1b7a3e04, S.s_da_xoa_nhat_ky_526f2ff7, refreshSaves = false) { core.clearLogs() }",
     "occurrence": 1,
-    "source_sha256": "d25e0fa13c4d41a04990caf2c0da628efc41cd2d9571e451b836f286a7c22174",
+    "source_sha256": "1f93cdc4b196f118316a7f523c1250d9483ce2d80e13a0930b39c45bb69d4d05",
     "disposition": "confirmation",
     "guard": "SettingsAdvanced ClearSheet and ClearLogsSheet / SettingsMaintenance old-delete / AdvancedStorage clearDialog",
-    "reason": "Cache, diagnostic logs and recovery saves are cleared only after their respective confirmations."
+    "reason": "Cache, diagnostic logs and recovery saves are cleared only after their respective confirmations. Devvoice review: device voice names, circled radio marks, one-line names and 8 dp text gaps leave this action and its guard unchanged."
   },
   {
     "id": "cdd06ceb88f01b3ffc28",
@@ -6906,10 +6906,10 @@
     "line": 273,
     "statement": "suspend fun thirdParty(): List<ThirdPartySection> = withContext(io) { ThirdParty.parse(runCatching { core.thirdParty() }.getOrDefault(\"\")) }",
     "occurrence": 1,
-    "source_sha256": "d25e0fa13c4d41a04990caf2c0da628efc41cd2d9571e451b836f286a7c22174",
+    "source_sha256": "1f93cdc4b196f118316a7f523c1250d9483ce2d80e13a0930b39c45bb69d4d05",
     "disposition": "internal",
     "guard": "Async interface/helper boundary; concrete activation inventoried separately",
-    "reason": "This signature supplies work to a model or component; declaring it starts no user operation."
+    "reason": "This signature supplies work to a model or component; declaring it starts no user operation. Devvoice review: device voice names, circled radio marks, one-line names and 8 dp text gaps leave this action and its guard unchanged."
   },
   {
     "id": "f8c1e96c013fc26f132a",
@@ -6918,10 +6918,10 @@
     "line": 366,
     "statement": "titles += line.removePrefix(\"## \").trim()",
     "occurrence": 1,
-    "source_sha256": "d25e0fa13c4d41a04990caf2c0da628efc41cd2d9571e451b836f286a7c22174",
+    "source_sha256": "1f93cdc4b196f118316a7f523c1250d9483ce2d80e13a0930b39c45bb69d4d05",
     "disposition": "internal",
     "guard": "String transformation / event subscription ownership",
-    "reason": "No persisted user data is removed."
+    "reason": "No persisted user data is removed. Devvoice review: device voice names, circled radio marks, one-line names and 8 dp text gaps leave this action and its guard unchanged."
   },
   {
     "id": "a01eb0dd1aac4985a517",
@@ -10206,10 +10206,10 @@
     "line": 110,
     "statement": "{ state.forget(track.link) }, pending = pending, problem = ui.actionError)",
     "occurrence": 1,
-    "source_sha256": "cf239599e1fa8a6fb83fb5a70246d1d090a05483ee1ed491cd72f31150760b67",
+    "source_sha256": "e4d1f260ec2564fc3de023ba287bac1feb5e26adae21ae3aa6a9ea42e55f7c4e",
     "disposition": "confirmation",
     "guard": "DownloadControl / TrackRow / TrackSheet DestructiveConfirm; cancel incomplete transfer is exempt",
-    "reason": "Complete music download removal is confirmed with track title and size. Cancelling an unfinished download discards partial bytes immediately. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
+    "reason": "Complete music download removal is confirmed with track title and size. Cancelling an unfinished download discards partial bytes immediately. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Devvoice review: device voice names, circled radio marks, one-line names and 8 dp text gaps leave this action and its guard unchanged."
   },
   {
     "id": "acdce9447837d66fe3d1",
@@ -10998,10 +10998,10 @@
     "line": 77,
     "statement": "fun pop() { if(parents.isNotEmpty())window.openSheet(parents.removeAt(parents.lastIndex)) else window.closeSheet() }",
     "occurrence": 1,
-    "source_sha256": "84787a9123a780c2cf84989de26b145f78216f5540237d1fbaa74e07a7d9c8fd",
+    "source_sha256": "135787d3ab93d54b7426a538abd62ce95395131d7c8334808a924f318981b147",
     "disposition": "internal",
     "guard": "Declaration; the invoked call site is independently inventoried",
-    "reason": "A declaration/signature is not an executing UI action. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
+    "reason": "A declaration/signature is not an executing UI action. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Devvoice review: device voice names, circled radio marks, one-line names and 8 dp text gaps leave this action and its guard unchanged."
   },
   {
     "id": "41d49281785c0f3be740",
@@ -11406,10 +11406,10 @@
     "line": 184,
     "statement": "suspend fun load() {",
     "occurrence": 1,
-    "source_sha256": "7fcdfc84f6673e3614029c8ca260ecac91bd72f8bccbfc65bee528641b4c3884",
+    "source_sha256": "afe465c3d8d38ef7833f799b25fb46883247dd2a2884d2cc7bc61df4bb29ed14",
     "disposition": "internal",
     "guard": "Async interface/helper boundary; concrete activation inventoried separately",
-    "reason": "This signature supplies work to a model or component; declaring it starts no user operation. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
+    "reason": "This signature supplies work to a model or component; declaring it starts no user operation. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Devvoice review: device voice names, circled radio marks, one-line names and 8 dp text gaps leave this action and its guard unchanged."
   },
   {
     "id": "3fe3465713164a2d2bd5",
@@ -11418,10 +11418,10 @@
     "line": 195,
     "statement": "suspend fun wantCast() {",
     "occurrence": 1,
-    "source_sha256": "7fcdfc84f6673e3614029c8ca260ecac91bd72f8bccbfc65bee528641b4c3884",
+    "source_sha256": "afe465c3d8d38ef7833f799b25fb46883247dd2a2884d2cc7bc61df4bb29ed14",
     "disposition": "internal",
     "guard": "Async interface/helper boundary; concrete activation inventoried separately",
-    "reason": "This signature supplies work to a model or component; declaring it starts no user operation. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
+    "reason": "This signature supplies work to a model or component; declaring it starts no user operation. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Devvoice review: device voice names, circled radio marks, one-line names and 8 dp text gaps leave this action and its guard unchanged."
   },
   {
     "id": "cdb975d60b510da0614d",
@@ -11430,10 +11430,10 @@
     "line": 200,
     "statement": "private suspend fun loadCast() {",
     "occurrence": 1,
-    "source_sha256": "7fcdfc84f6673e3614029c8ca260ecac91bd72f8bccbfc65bee528641b4c3884",
+    "source_sha256": "afe465c3d8d38ef7833f799b25fb46883247dd2a2884d2cc7bc61df4bb29ed14",
     "disposition": "internal",
     "guard": "Async interface/helper boundary; concrete activation inventoried separately",
-    "reason": "This signature supplies work to a model or component; declaring it starts no user operation. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
+    "reason": "This signature supplies work to a model or component; declaring it starts no user operation. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Devvoice review: device voice names, circled radio marks, one-line names and 8 dp text gaps leave this action and its guard unchanged."
   },
   {
     "id": "a1779010345e9c7c4091",
@@ -11442,10 +11442,10 @@
     "line": 398,
     "statement": "ChapterJump(below) { currentItem?.let { scope.launch { list.animateScrollToItem((it - 1).coerceAtLeast(0)) } } }",
     "occurrence": 1,
-    "source_sha256": "7fcdfc84f6673e3614029c8ca260ecac91bd72f8bccbfc65bee528641b4c3884",
+    "source_sha256": "afe465c3d8d38ef7833f799b25fb46883247dd2a2884d2cc7bc61df4bb29ed14",
     "disposition": "pending",
     "guard": "ViewModel/operation fields: PendingIndicator, loading, preparingBookId, progress, progressLine; Components pending indicator",
-    "reason": "The model retains the operation and locks repeats; UI uses the shared pending parameter, loading content or progress owner. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
+    "reason": "The model retains the operation and locks repeats; UI uses the shared pending parameter, loading content or progress owner. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Devvoice review: device voice names, circled radio marks, one-line names and 8 dp text gaps leave this action and its guard unchanged."
   },
   {
     "id": "7a85018d5968a539b205",
@@ -11574,10 +11574,10 @@
     "line": 276,
     "statement": "TextAction(label, { scope.launch { problem = voice.applySuggestion(kind).orEmpty() } }, \"suggestion_${kind.key}_action\", align = Alignment.CenterStart)",
     "occurrence": 1,
-    "source_sha256": "8d494eec2196966eeb5ebe2e2ba32e8606e881005960bc7139416157c61d0a65",
+    "source_sha256": "cdde99d99f2597e6ab8d8041d9a1bd7b129fa5e74c0ed74de37b8d100fcd8361",
     "disposition": "pending",
     "guard": "ViewModel/operation fields: Loading, PendingIndicator, WorkingProgress, loading, pending, progress, saving, savingSpeed, savingVoice, voices_loading; Components pending indicator",
-    "reason": "The model retains the operation and locks repeats; UI uses the shared pending parameter, loading content or progress owner. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
+    "reason": "The model retains the operation and locks repeats; UI uses the shared pending parameter, loading content or progress owner. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Devvoice review: device voice names, circled radio marks, one-line names and 8 dp text gaps leave this action and its guard unchanged."
   },
   {
     "id": "76dc12b9598bdb85c87f",
@@ -15666,10 +15666,10 @@
     "line": 30,
     "statement": "Api.quiet(\"GET\", \"/api/listen/books/\" + bookId + \"/sessions\", null, function(data, error) {",
     "occurrence": 1,
-    "source_sha256": "19a6eb835abace9c69e26514624e44f8143181a43961b73221dbb835b54cbc7c",
+    "source_sha256": "f8a9a94dc4e89eb1c30e5fd5ab21f4bea43ea2e7353f506a2d0d7cd4c08baa46",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; LoadingCrossfade, loading",
-    "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
+    "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Devvoice review: device voice names, circled radio marks, one-line names and 8 dp text gaps leave this action and its guard unchanged."
   },
   {
     "id": "a1e319eb0a2d8e545b4f",
@@ -16791,37 +16791,25 @@
     "id": "90a842e81f588305311d",
     "kind": "pending",
     "path": "desktop_qt/qml/SettingsVoice.qml",
-    "line": 28,
+    "line": 27,
     "statement": "Api.quiet(\"GET\", \"/api/readaloud/voices\", null, function(data, error) {",
     "occurrence": 1,
-    "source_sha256": "caed6ef88d216c9decc59e66579c258a4df6a2c2b1d6549f5b537f69f782a52f",
+    "source_sha256": "02f80176e4843de89f143e7e5c2c69d657a4d7d530c6b9e8e6e546b32073442a",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; loading",
-    "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads."
+    "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads. Devvoice review: device voice names, circled radio marks, one-line names and 8 dp text gaps leave this action and its guard unchanged."
   },
   {
     "id": "2355ab56c47e68ae3ca7",
     "kind": "pending",
     "path": "desktop_qt/qml/SettingsVoice.qml",
-    "line": 35,
+    "line": 34,
     "statement": "Api.quiet(\"GET\", \"/api/readaloud/online\", null, function(data, error) { root.syncProviders(!error && Array.isArray(data) ? data : []) })",
     "occurrence": 1,
-    "source_sha256": "caed6ef88d216c9decc59e66579c258a4df6a2c2b1d6549f5b537f69f782a52f",
+    "source_sha256": "02f80176e4843de89f143e7e5c2c69d657a4d7d530c6b9e8e6e546b32073442a",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; loading",
-    "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads."
-  },
-  {
-    "id": "8e77e82a57d6aea8c5f9",
-    "kind": "pending",
-    "path": "desktop_qt/qml/SettingsVoice.qml",
-    "line": 81,
-    "statement": "Api.quiet(\"POST\", \"/api/readaloud/clip\", {voice: id, text: VoiceLogic.SAMPLE_TEXT}, function(data, error) {",
-    "occurrence": 1,
-    "source_sha256": "caed6ef88d216c9decc59e66579c258a4df6a2c2b1d6549f5b537f69f782a52f",
-    "disposition": "pending",
-    "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; loading",
-    "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads."
+    "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads. Devvoice review: device voice names, circled radio marks, one-line names and 8 dp text gaps leave this action and its guard unchanged."
   },
   {
     "id": "611d0a897cfa327d7e69",
@@ -16998,10 +16986,10 @@
     "line": 41,
     "statement": "setup.remove(function(ok, data) {",
     "occurrence": 1,
-    "source_sha256": "20af58d17426d17f9e9b3ce48f885e2f4397640d11a9809bf2e0918d5ca2c507",
+    "source_sha256": "aadc4fbbaa32a3f700b33ccffcb001dbafde071cd3da4b0613230bdd374b8cf2",
     "disposition": "confirmation",
     "guard": "StudioSetup useDestructiveConfirm / StudioSettings removeConfirm",
-    "reason": "Uninstalling optional Studio runtime asks and describes which files and books are retained."
+    "reason": "Uninstalling optional Studio runtime asks and describes which files and books are retained. Devvoice review: device voice names, circled radio marks, one-line names and 8 dp text gaps leave this action and its guard unchanged."
   },
   {
     "id": "5b6fe5ddffc91d3e0ebf",
@@ -17010,22 +16998,22 @@
     "line": 127,
     "statement": "onActivated: root.remove()",
     "occurrence": 1,
-    "source_sha256": "20af58d17426d17f9e9b3ce48f885e2f4397640d11a9809bf2e0918d5ca2c507",
+    "source_sha256": "aadc4fbbaa32a3f700b33ccffcb001dbafde071cd3da4b0613230bdd374b8cf2",
     "disposition": "confirmation",
     "guard": "StudioSetup useDestructiveConfirm / StudioSettings removeConfirm",
-    "reason": "Uninstalling optional Studio runtime asks and describes which files and books are retained."
+    "reason": "Uninstalling optional Studio runtime asks and describes which files and books are retained. Devvoice review: device voice names, circled radio marks, one-line names and 8 dp text gaps leave this action and its guard unchanged."
   },
   {
     "id": "78a32f6dcb04274ae91d",
     "kind": "destructive",
     "path": "desktop_qt/qml/StudioSettings.qml",
-    "line": 180,
+    "line": 181,
     "statement": "DestructiveConfirm { id: removeConfirm; objectName: \"studioRemoveConfirm\"; title: S.s_go_studio_832e6f10; description: S.s_xoa_runtime_model_1520_gb_giu_sach_va_ho_s_66d08224; actionText: S.s_go_studio_832e6f10; onAccepted: root.removeConfirmed() }",
     "occurrence": 1,
-    "source_sha256": "20af58d17426d17f9e9b3ce48f885e2f4397640d11a9809bf2e0918d5ca2c507",
+    "source_sha256": "aadc4fbbaa32a3f700b33ccffcb001dbafde071cd3da4b0613230bdd374b8cf2",
     "disposition": "confirmation",
     "guard": "StudioSetup useDestructiveConfirm / StudioSettings removeConfirm",
-    "reason": "Uninstalling optional Studio runtime asks and describes which files and books are retained."
+    "reason": "Uninstalling optional Studio runtime asks and describes which files and books are retained. Devvoice review: device voice names, circled radio marks, one-line names and 8 dp text gaps leave this action and its guard unchanged."
   },
   {
     "id": "2b4dbe010e89b66356b1",
@@ -17182,6 +17170,18 @@
     "disposition": "confirmation",
     "guard": "VoiceSheets ModuleRemovePage, KeyRemovePage, TrackSheet / VoiceModule confirmation",
     "reason": "Removing installed resources, credentials or imported music asks first; removing an incomplete package discards only temporary downloaded bytes. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
+  },
+  {
+    "id": "0e95271548b4b870e267",
+    "kind": "pending",
+    "path": "desktop_qt/qml/VoiceSample.qml",
+    "line": 28,
+    "statement": "Api.quiet(\"POST\", \"/api/readaloud/clip\", {voice: id, text: VoiceLogic.SAMPLE_TEXT}, function(data, error) {",
+    "occurrence": 1,
+    "source_sha256": "d92235376adea73160879f86015214702886e807558aaece64824da1865eeb14",
+    "disposition": "pending",
+    "guard": "VoiceSample turn token drops late replies; loading/playing/failedVoice state shown on each VoiceRow; stopSample on popover close and destruction",
+    "reason": "Moved verbatim from SettingsVoice.qml so Settings and the player voice popover share one preview owner. Each press starts a new turn; stale replies are ignored and failures are shown on the row."
   },
   {
     "id": "05fca5f003975d2aa527",
