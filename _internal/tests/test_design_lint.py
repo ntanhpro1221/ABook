@@ -469,6 +469,28 @@ def test_r8_cut_text_and_overlap_red_clean_green():
     assert "chồng nhau" in dt.rule_r8("k", overlap)[0].detail
 
 
+def test_r8_text_under_an_open_modal_is_covered_not_overlapping():
+    page = [n(0, 20, 60, 340, 90, text="Chọn bài cho đoạn"), n(0, 20, 300, 340, 320, text="Air Prelude")]
+    modal = [n(0, 0, 0, 360, 780, modal=True, z=70), n(3, 40, 40, 320, 400, type="FloatingPanel"),
+             n(4, 60, 70, 300, 92, text="Đồi gió")]
+    assert dt.rule_r8("k", tree(ROOT, *page, *modal)) == []
+    # Hai hộp chữ chồng nhau TRONG cùng lớp modal vẫn đỏ, chữ trang chồng chữ trang vẫn đỏ.
+    inside = tree(ROOT, *page, *modal, n(4, 100, 80, 300, 100, text="Scott Buckley"))
+    assert any("chồng nhau" in f.detail for f in dt.rule_r8("k", inside))
+    page_overlap = tree(ROOT, *page, n(0, 100, 70, 300, 95, text="Tìm tên bài"))
+    assert any("chồng nhau" in f.detail for f in dt.rule_r8("k", page_overlap))
+
+
+def test_r8_row_under_a_scroll_fade_is_not_a_hard_cut():
+    def row():
+        return n(0, 20, 760, 340, 800, text="Dùng", visible=(20, 760, 340, 780))
+    fade = n(0, 0, 764, 360, 780, tag="scrollFadeBottom")
+    assert dt.rule_r8("k", tree(ROOT, row(), fade)) == []
+    assert "bị cắt" in dt.rule_r8("k", tree(ROOT, row()))[0].detail               # không có lớp mờ: cụt cứng
+    off_side = n(0, 0, 0, 360, 16, tag="scrollFadeTop")                            # lớp mờ ở mép kia không che mép cắt
+    assert "bị cắt" in dt.rule_r8("k", tree(ROOT, row(), off_side))[0].detail
+
+
 def test_r11_font_scale_and_row_title_style():
     good = tree(ROOT, *[n(0, 0, 100 + i * 56, 360, 156 + i * 56, clickable=True) for i in range(3)],
                 *[n(1 + i, 20, 110 + i * 56, 200, 130 + i * 56, text=f"Hàng {i}", font_size=16, font_weight=400, color="#1a1814")

@@ -15786,7 +15786,7 @@
     "line": 38,
     "statement": "Api.quiet(\"GET\", \"/api/music/library\" + Logic.libraryQuery(forSaved ? Logic.noFilters() : effective, forSaved), null, function(data, problem) {",
     "occurrence": 1,
-    "source_sha256": "2951d0e18c280c2eaa63103b25ff401c0ec86a4edc6c2b35886fe554d8c4607f",
+    "source_sha256": "83fcd560785a97940f5e94e140ee49a180c368395b05aa99efcc8d508f535e06",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; busy, loading, previewLoading",
     "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads."
@@ -15798,7 +15798,7 @@
     "line": 46,
     "statement": "function loadMeta() { Api.quiet(\"GET\", \"/api/music/library/meta\", null, function(data, problem) { if (!problem) meta = data }) }",
     "occurrence": 1,
-    "source_sha256": "2951d0e18c280c2eaa63103b25ff401c0ec86a4edc6c2b35886fe554d8c4607f",
+    "source_sha256": "83fcd560785a97940f5e94e140ee49a180c368395b05aa99efcc8d508f535e06",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; busy, loading, previewLoading",
     "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads."
@@ -15810,7 +15810,7 @@
     "line": 47,
     "statement": "function pollDownloads() { Api.quiet(\"GET\", \"/api/music/library/downloads\", null, function(data, problem) { if (!problem) { const was = busy; downloads = data; if (was && !busy) refresh() } }) }",
     "occurrence": 1,
-    "source_sha256": "2951d0e18c280c2eaa63103b25ff401c0ec86a4edc6c2b35886fe554d8c4607f",
+    "source_sha256": "83fcd560785a97940f5e94e140ee49a180c368395b05aa99efcc8d508f535e06",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; busy, loading, previewLoading",
     "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads."
@@ -15822,7 +15822,7 @@
     "line": 51,
     "statement": "Api.quiet(\"POST\", \"/api/music/library/save\", {links: links}, function(data, problem) {",
     "occurrence": 1,
-    "source_sha256": "2951d0e18c280c2eaa63103b25ff401c0ec86a4edc6c2b35886fe554d8c4607f",
+    "source_sha256": "83fcd560785a97940f5e94e140ee49a180c368395b05aa99efcc8d508f535e06",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; busy, loading, previewLoading",
     "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads."
@@ -15834,7 +15834,7 @@
     "line": 56,
     "statement": "function unsave(links) {",
     "occurrence": 1,
-    "source_sha256": "2951d0e18c280c2eaa63103b25ff401c0ec86a4edc6c2b35886fe554d8c4607f",
+    "source_sha256": "83fcd560785a97940f5e94e140ee49a180c368395b05aa99efcc8d508f535e06",
     "disposition": "internal",
     "guard": "Declaration; the invoked call site is independently inventoried",
     "reason": "A declaration/signature is not an executing UI action."
@@ -15846,7 +15846,7 @@
     "line": 57,
     "statement": "Api.quiet(\"POST\", \"/api/music/library/unsave\", {links: links}, function(data, problem) {",
     "occurrence": 1,
-    "source_sha256": "2951d0e18c280c2eaa63103b25ff401c0ec86a4edc6c2b35886fe554d8c4607f",
+    "source_sha256": "83fcd560785a97940f5e94e140ee49a180c368395b05aa99efcc8d508f535e06",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; busy, loading, previewLoading",
     "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads."
@@ -15858,7 +15858,7 @@
     "line": 63,
     "statement": "Api.quiet(\"POST\", \"/api/music/library/cancel\", {links: links}, function(data, problem) {",
     "occurrence": 1,
-    "source_sha256": "2951d0e18c280c2eaa63103b25ff401c0ec86a4edc6c2b35886fe554d8c4607f",
+    "source_sha256": "83fcd560785a97940f5e94e140ee49a180c368395b05aa99efcc8d508f535e06",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; busy, loading, previewLoading",
     "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads."
@@ -15870,7 +15870,7 @@
     "line": 74,
     "statement": "Api.quiet(\"PUT\", \"/api/books/\" + encodeURIComponent(pickBook) + \"/music\", {pins: (function() { const pins = {}; pins[pickScene] = link; return pins })()}, function(data, problem) {",
     "occurrence": 1,
-    "source_sha256": "2951d0e18c280c2eaa63103b25ff401c0ec86a4edc6c2b35886fe554d8c4607f",
+    "source_sha256": "83fcd560785a97940f5e94e140ee49a180c368395b05aa99efcc8d508f535e06",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; busy, loading, previewLoading",
     "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads."
@@ -15882,7 +15882,7 @@
     "line": 82,
     "statement": "Api.quiet(\"PUT\", \"/api/books/\" + encodeURIComponent(pickBook) + \"/music\", {ban: [link]}, function(data, problem) {",
     "occurrence": 1,
-    "source_sha256": "2951d0e18c280c2eaa63103b25ff401c0ec86a4edc6c2b35886fe554d8c4607f",
+    "source_sha256": "83fcd560785a97940f5e94e140ee49a180c368395b05aa99efcc8d508f535e06",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; busy, loading, previewLoading",
     "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads."
@@ -15894,7 +15894,7 @@
     "line": 216,
     "statement": "onDeleteDownload: root.unsave([modelData.link])",
     "occurrence": 1,
-    "source_sha256": "2951d0e18c280c2eaa63103b25ff401c0ec86a4edc6c2b35886fe554d8c4607f",
+    "source_sha256": "83fcd560785a97940f5e94e140ee49a180c368395b05aa99efcc8d508f535e06",
     "disposition": "confirmation",
     "guard": "DownloadControl / TrackRow / TrackSheet DestructiveConfirm; cancel incomplete transfer is exempt",
     "reason": "Complete music download removal is confirmed with track title and size. Cancelling an unfinished download discards partial bytes immediately."
@@ -15906,7 +15906,7 @@
     "line": 264,
     "statement": "onUnsave: root.unsave([detail.link])",
     "occurrence": 1,
-    "source_sha256": "2951d0e18c280c2eaa63103b25ff401c0ec86a4edc6c2b35886fe554d8c4607f",
+    "source_sha256": "83fcd560785a97940f5e94e140ee49a180c368395b05aa99efcc8d508f535e06",
     "disposition": "confirmation",
     "guard": "DownloadControl / TrackRow / TrackSheet DestructiveConfirm; cancel incomplete transfer is exempt",
     "reason": "Complete music download removal is confirmed with track title and size. Cancelling an unfinished download discards partial bytes immediately."

@@ -187,14 +187,39 @@ def rule_r3(key: str, tree: dict) -> list[dl.Finding]:
     return out
 
 
+def modal_layer(tree: dict) -> list[int]:
+    """Lớp vẽ của từng nút: id của lớp modal gần nhất chứa nó (sheet, hộp thoại, menu đang mở: `modal` trong cây), -1 = trang.
+
+    Lớp modal phủ màn mờ + mặt nổi lên trên trang: chữ của trang nằm DƯỚI mặt nổi là bị che, không phải hai hộp chữ chồng nhau.
+    """
+    nodes = tree["nodes"]
+    layer = [-1] * len(nodes)
+    for node in nodes:   # cha luôn đứng trước con
+        parent = node["parent"]
+        layer[node["id"]] = node["id"] if node.get("modal") else (layer[parent] if parent >= 0 else -1)
+    return layer
+
+
 def rule_r8(key: str, tree: dict) -> list[dl.Finding]:
     out = []
+    layer = modal_layer(tree)
     texts = [n for n in tree["nodes"] if n.get("text") and shown(n)]
+    # Mép mờ của vùng cuộn (DESIGN 5.5 "Mọi vùng cuộn dọc"; Qt ScrollEdges: scrollFadeTop / scrollFadeBottom): hàng đi dưới
+    # lớp mờ là hàng đang cuộn ra khỏi khung, không phải chữ cụt cứng. Mép cắt phải nằm trong dải mờ đang hiện, cùng lớp vẽ.
+    fades = {side: [f for f in tree["nodes"] if f.get("tag") == tag and shown(f)]
+             for side, tag in (("top", "scrollFadeTop"), ("bottom", "scrollFadeBottom"))}
+
+    def faded(n, side: str, y: float) -> bool:
+        v = n["visible"]
+        return any(layer[f["id"]] == layer[n["id"]] and f["visible"][1] - 0.5 <= y <= f["visible"][3] + 0.5
+                   and min(f["visible"][2], v[2]) - max(f["visible"][0], v[0]) > 0.5 for f in fades[side])
+
     for n in texts:
         v, b = n["visible"], n["bounds"]
         lines = [line["bounds"] for line in n.get("lines", [])] or [b]
-        cut = any((line[1] < v[1] - 0.5 < line[3] or line[1] < v[3] + 0.5 < line[3])
-                  and min(line[3], v[3]) - max(line[1], v[1]) > 0.5 for line in lines)
+        shown_lines = [line for line in lines if min(line[3], v[3]) - max(line[1], v[1]) > 0.5]
+        cut = any((line[1] < v[1] - 0.5 < line[3] and not faded(n, "top", v[1]))
+                  or (line[1] < v[3] + 0.5 < line[3] and not faded(n, "bottom", v[3])) for line in shown_lines)
         if cut:
             out.append(dl.Finding("R8", key, f"chữ '{n['text'][:30]}' bị cắt: thấy {v[3] - v[1]:g}/{b[3] - b[1]:g} dp",
                                   [round(x) for x in v]))
@@ -203,7 +228,7 @@ def rule_r8(key: str, tree: dict) -> list[dl.Finding]:
             va, vc = a["visible"], c["visible"]
             w = min(va[2], vc[2]) - max(va[0], vc[0])
             h = min(va[3], vc[3]) - max(va[1], vc[1])
-            if w <= 1 or h <= 1:
+            if w <= 1 or h <= 1 or layer[a["id"]] != layer[c["id"]]:
                 continue
             def ancestor(parent, child):
                 while child["parent"] >= 0:

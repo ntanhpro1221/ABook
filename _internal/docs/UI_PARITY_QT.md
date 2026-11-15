@@ -108,7 +108,7 @@ Mỗi cặp còn lại phải có giải thích trong ui_strings/qt_wording_revi
 | Thư viện | pause | Tạm dừng | Đọc {} | `qt/LibraryContinue.qml:46` |
 | Thư viện | x | Đóng ô tìm | Xoá ô tìm | `qt/LibraryScreen.qml:212` |
 | Thư viện | search | Chưa có cuốn nào nghe xong. | Thử tên sách hoặc tác giả khác., Tìm sách | `qt/LibraryScreen.qml:519` |
-| Nhạc | square | Dừng nghe | Dừng nghe thử, Dừng tải | `qt/MusicScreen.qml:252` |
+| Nhạc | square | Dừng nghe | Dừng nghe thử, Dừng tải | `qt/MusicScreen.qml:254` |
 | Nhạc | download | Tải tiếp | Lưu tất cả ({}), Tải cả danh sách ({}), Tải tiếp / Tải về | `qt/MusicTrackDetail.qml:106` |
 | Nhạc | download | Tải về | Lưu tất cả ({}), Tải cả danh sách ({}), Tải tiếp / Tải về | `qt/MusicTrackDetail.qml:106` |
 | Nhạc | download | Dừng tải | Lưu tất cả ({}), Tải cả danh sách ({}), Tải tiếp / Tải về | `qt/MusicTrackRow.qml:103` |
@@ -170,7 +170,7 @@ Nhãn ngắn (<= 6 chữ). **Chỉ Qt**: không có ở web cùng màn; `*` = we
 
 ### Nhạc
 
-- chỉ Qt (2): Dừng nghe (`qt/MusicScreen.qml:252`); Đã tải - bấm để xoá (`qt/MusicTrackRow.qml:107`)
+- chỉ Qt (2): Dừng nghe (`qt/MusicScreen.qml:254`); Đã tải - bấm để xoá (`qt/MusicTrackRow.qml:107`)
 - chỉ web (1): Nhanh (`100`)
 
 ### Thư viện
