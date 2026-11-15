@@ -503,6 +503,19 @@ def test_r1_grid_of_choices_and_long_choice_row_are_red():
         assert [f.rule for f in dt.rule_r1("k", t)] == ["R1"]
 
 
+def test_r1_slider_ticks_and_checked_menu_are_not_choice_groups():
+    # Thanh trượt có `current`: không phải mục chọn-một. Menu có dấu chọn một cột: là danh sách.
+    picker = tree(ROOT, *[n(0, 20 + i * 60, 100, 70 + i * 60, 148, selected=i == 2) for i in range(5)],
+                  n(1, 20, 100, 70, 148, role="slider"), n(2, 80, 100, 130, 148, role="slider"))
+    menu = tree(ROOT, *[n(0, 0, 100 + i * 48, 240, 148 + i * 48, role="menuitem", selected=i == 1) for i in range(6)])
+    assert dt.rule_r1("k", menu) == []
+    # Ba mục còn lại (không chứa slider) trên một hàng, vai rỗng: vẫn đỏ - chỉ bỏ đúng nút chứa slider.
+    assert [f.rule for f in dt.rule_r1("k", picker)] == ["R1"] and "3 mục" in dt.rule_r1("k", picker)[0].detail
+    grid_menu = tree(ROOT, *[n(0, (i % 2) * 120, 100 + (i // 2) * 48, 110 + (i % 2) * 120, 148 + (i // 2) * 48,
+                               role="menuitem", selected=i == 1) for i in range(6)])
+    assert [f.rule for f in dt.rule_r1("k", grid_menu)] == ["R1"]
+
+
 def test_r3_gaps_on_scale_green_off_scale_red():
     good = tree(ROOT, n(0, 20, 100, 340, 124, text="Tiêu đề"), n(0, 20, 140, 340, 160, text="Dòng"),
                 n(0, 20, 164, 340, 184, text="Phụ"))

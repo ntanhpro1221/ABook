@@ -126,11 +126,23 @@ def words(text: str) -> list[str]:
 
 # ---------------------------------------------------------------- luật
 
+def has_role(tree: dict, node: dict, role: str) -> bool:
+    stack = [node]
+    while stack:
+        n = stack.pop()
+        if n.get("role") == role:
+            return True
+        stack += [tree["nodes"][c] for c in n["children"]]
+    return False
+
+
 def rule_r1(key: str, tree: dict) -> list[dl.Finding]:
     out = []
     nodes = tree["nodes"]
     for parent in nodes:
-        items = [nodes[c] for c in parent["children"] if nodes[c].get("selected") is not None and shown(nodes[c])]
+        # Thanh trượt (ValuePicker: `current` = giá trị đang hiện) không phải mục chọn-một: bỏ nút chứa một slider.
+        items = [nodes[c] for c in parent["children"] if nodes[c].get("selected") is not None and shown(nodes[c])
+                 and not has_role(tree, nodes[c], "slider")]
         if len(items) < 2 or not (parent.get("selectable_group") or any(n["selected"] for n in items)):
             continue
         roles = {n.get("role") for n in items}
@@ -143,7 +155,8 @@ def rule_r1(key: str, tree: dict) -> list[dl.Finding]:
             continue
         if roles <= {"radiobutton", "choice"} and one_row and 2 <= len(items) <= 5 and selection_count == 1:
             continue
-        if roles <= {"radiobutton", "listitem"} and one_column and selection_count == 1:
+        # Danh sách một cột: hàng, ô radio, hay mục menu có dấu chọn (menu giọng, menu hồ sơ nghe) - mỗi dòng một mục.
+        if roles <= {"radiobutton", "listitem", "menuitem"} and one_column and selection_count == 1:
             continue
         shape = "một hàng" if one_row else "một cột" if one_column else f"lưới {rows} hàng"
         names = ", ".join(sorted(str(r) for r in roles))

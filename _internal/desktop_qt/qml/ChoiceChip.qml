@@ -14,6 +14,10 @@ Interactive {
     property string fullWidthReason: ""
     implicitHeight: 36
     implicitWidth: label.implicitWidth + 2 * Theme.s12
+    // Ô chọn-một (DESIGN R1: choice): trợ năng và cây UI thấy đúng vai, như role="radio" của web.
+    Accessible.role: Accessible.RadioButton
+    Accessible.name: text
+    Accessible.checked: selected
 
     Rectangle {
         anchors.fill: parent

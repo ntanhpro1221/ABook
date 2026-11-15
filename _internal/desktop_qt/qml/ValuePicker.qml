@@ -306,7 +306,9 @@ Column {
                     x: ruler.inset + Logic.toFraction(root.spec, modelData) * track.width - width / 2
                     enabled: root.enabled
                     activeFocusOnTab: root.enabled
-                    Accessible.role: Accessible.Button
+                    // Giá trị tiêu biểu là ô chọn-một như ChoiceChip dự phòng (DESIGN R1: choice).
+                    Accessible.role: Accessible.RadioButton
+                    Accessible.checked: selected
                     Accessible.name: root.format(modelData)
                     // Same entry point as the fallback ChoiceChip, so keyboard, assistive tech and tests activate either form alike.
                     function clicked() { Feedback.play("toggle"); root.clampNote = false; root.commit(modelData) }
