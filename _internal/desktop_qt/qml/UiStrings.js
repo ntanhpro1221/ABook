@@ -207,6 +207,7 @@ var s_bo_ghim_1600e29e = "Bỏ ghim";
 var s_bo_giong_75b79178 = "Bộ giọng";
 var s_bo_gop_2bdba67e = "Bỏ gộp ";
 var s_bo_gop_d7199137 = "Bỏ gộp";
+var s_bo_het_502895ca = "Bỏ hết";
 var s_bo_het_thay_doi_b55603a1 = "Bỏ hết thay đổi";
 var s_bo_khoi_phan_doc_6726e734 = "Bỏ khỏi phần đọc";
 var s_bo_khoi_phan_doc_giu_chu_goc_bo_chon_de_do_53aadf4d = "Bỏ khỏi phần đọc, giữ chữ gốc; bỏ chọn để đọc lại. Chương đang nghe sẽ đổi từ lần nghe sau; các chương khác đổi ngay.";
@@ -2863,3 +2864,24 @@ function s_scope_before_after(p0, p1) { return String(p0) + " → " + String(p1)
 var s_scope_conflict = "Quyết định riêng";
 var s_scope_apply = "Ghi nhóm";
 var s_scope_changed = "Chương vừa đổi. Bạn đóng bảng rồi chọn lại.";
+var s_voice_range = "Chọn quãng";
+var s_voice_range_note = "Chỉ chọn câu liên quan; kênh phát tiếng không xác định người nói.";
+var s_voice_range_window = "Các câu gần đây; đây không phải ranh giới cuộc gọi hay cảnh.";
+var s_voice_collective = "Tiếng tập thể";
+var s_voice_collective_note = "Cùng một nhóm dùng một danh tính và một giọng; chữ truyện giữ nguyên.";
+var s_work_reason_upcoming = "Cần trước chương sắp thu.";
+var s_work_reason_impact = "Xếp theo số câu trên công duyệt ước tính.";
+var s_work_reason_tentative = "Gợi ý ít chắc; cùng mức lợi thì hỏi sau.";
+var s_work_reason_redo = "Chỉ áp khi làm lại sách.";
+var s_work_reason_refused = "Yêu cầu đã bị từ chối; bạn xem lại lựa chọn.";
+function s_work_recorded(p0, p1, p2) { return "Phạm vi đầu: " + String(p0) + " câu; đã thu " + String(p1) + " câu / " + String(p2) + " chương. Đây là trần thu lại; cùng giọng có thể giữ bản thu."; }
+function s_work_unknown(p0) { return "Phạm vi đầu: " + String(p0) + " câu; số đã thu chưa biết."; }
+function s_work_effort(p0) { return "Ước " + String(p0) + " thao tác cho lựa chọn ngắn nhất; chưa tính nghe và ngoại lệ."; }
+function s_work_overlap(p0) { return "Trùng " + String(p0) + " câu với việc khác; không cộng hai lần khi thu lại."; }
+function s_work_apply(p0) { return "Lúc áp: " + String(p0) + "."; }
+var s_cast_history_manual = "Không có trạng thái trước; hãy tách thủ công.";
+var s_cast_history_audio = "Giọng đọc chưa đổi; chờ thu lại.";
+function s_cast_history_conflicts(p0) { return String(p0) + " câu xung đột"; }
+function s_cast_history_alias_conflicts(p0) { return String(p0) + " bí danh xung đột"; }
+function s_cast_history_row(p0, p1, p2) { return String(p0) + " → " + String(p1) + " · " + String(p2) + " câu"; }
+var s_cast_history_group = "Nhóm câu";
