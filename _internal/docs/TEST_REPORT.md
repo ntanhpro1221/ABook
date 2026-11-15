@@ -1,5 +1,16 @@
 # Test report
 
+## 15-11-2026 — reversible book navigation
+
+Android: 96 related JVM tests pass with snapshot verification, including bitmap reuse,
+predictive-back cancellation and a button Back during a slow opening. The interruption
+regression fails before stopping the old animator and passes after the fix.
+Qt: 9 offscreen navigation tests and 12 book-page tests pass, including a scrolled
+source, reduced motion and content opacity on the shared progress clock.
+The video judge has 14 authored-fixture tests for cuts, endpoints, reversals, sideways
+drift, unequal timing, eased pixel tails, sampling uncertainty, sparse timestamps and stationary chrome. Private recordings and
+performance measurements remain outside Git.
+
 ## 15-11-2026 — retained sleep selection
 
 Sleep expiry preserves the selected timer and restarts a full cycle on subsequent playback. Deliberate input resets the active cycle; paused timers have no inactivity expiry. The unattended safety timer is absent.

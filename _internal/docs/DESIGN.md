@@ -146,10 +146,15 @@ Bộ hiện có (xám lạnh #f4f5f7 + hổ phách) chỉnh lại có chủ đí
 Token có sẵn (`shared/motion.ts` = `--motion-*` trong `styles.css`): nhanh 120/90 ms, vừa 220/150, chậm 300/200 (vào/ra);
 đường cong Material 3 (vào = decelerate, ra = accelerate, đổi chỗ = standard). Quy tắc:
 
-- **Vào chậm hơn ra**; ra luôn dùng thời lượng `*Out`.
+- **Vào chậm hơn ra**; ra luôn dùng thời lượng `*Out`. Ngoại lệ Thư viện ↔ trang sách: một container transform đối xứng 350 ms
+  (`timing.bookTransformMs`), cả hai chiều dùng emphasized cubic-bezier(0.4, 0, 0.2, 1). Bìa đo trong hệ tọa độ gốc, từ ô lưới thật
+  (giữ chỗ cuộn) đến đầu trang; cùng bitmap suốt đường. Thư viện giữ dưới trang, lùi cỡ 1,5% (`bookRecede`), trang hiện đồng thời
+  theo cùng tiến trình; không có pha nền trống. Tiêu đề → nút nghe → danh sách lệch nhịp 0 / 0,06 / 0,12 phần tiến trình
+  (`bookTitleDelay`, `bookActionDelay`, `bookListDelay`), dịch tối đa 12 dp (`bookDrift`). Đảo chiều, kéo Back và huỷ kéo dùng đúng
+  các hàm hình học ấy. Thanh tab / thanh phát nhỏ ở ngoài vùng biến đổi. Giảm chuyển động giữ mờ tối đa 120 ms, bỏ hình học.
 - **Đổi trang và bộ lọc**: hai trang dịch chuyển đồng thời trong hai vùng kề nhau, cùng thời lượng/đường cong. Không có khoảng chờ trang cũ ra hết,
   không bóp ngang bìa và không giữ các hàng đang thoát bên trong trang mới. Android dùng HorizontalPager cho bộ lọc; số cuốn theo kết quả đang chọn.
-  Bìa Thư viện ↔ trang sách là container transform trong SharedTransitionLayout, nội dung còn lại fade-through trên cùng clock (kể cả predictive Back/huỷ).
+  Bìa Thư viện ↔ trang sách là container transform trong SharedTransitionLayout, nội dung còn lại hiện đồng thời trên cùng clock (kể cả predictive Back/huỷ).
   Đây là ngoại lệ fade có chủ đích. Nội dung dữ liệu về muộn hiện dần 150 ms. Mở/khép hàng riêng vẫn dùng Collapse/Reveal.
   Ngoại lệ: nền scrim / đổi màu, phản hồi trạng thái nhỏ và chế độ giảm chuyển động của hệ điều hành.
 - **Đi / về cùng đường, ngược chiều**: màn con thường vào từ phải, Back ra phải và trang dưới trở lại từ trái; bìa trang sách đi/về theo đúng đường chung; tab ngang cấp trượt theo thứ tự tab.

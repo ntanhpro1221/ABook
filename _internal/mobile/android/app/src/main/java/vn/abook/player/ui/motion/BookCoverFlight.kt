@@ -15,6 +15,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.TransformOrigin
+import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.LayoutCoordinates
 import androidx.compose.ui.layout.onGloballyPositioned
@@ -35,6 +36,7 @@ import vn.abook.player.ui.nav.NavState
 class BookCoverFlight(private val nav: NavState) {
     private val sources = mutableMapOf<String, MutableList<LayoutCoordinates>>()
     private var captured by mutableStateOf<Pair<String, Rect>?>(null)
+    private var artwork: ImageBitmap? = null
 
     fun source(id: String, coordinates: LayoutCoordinates) {
         sources.getOrPut(id) { mutableListOf() }.apply {
@@ -43,7 +45,8 @@ class BookCoverFlight(private val nav: NavState) {
         }
     }
 
-    fun capture(id: String) {
+    fun capture(id: String, image: ImageBitmap? = null) {
+        artwork = image
         // Adjacent resident pager pages may contain the same book. Only the
         // visible instance may become the source; never the last laid-out one.
         val candidates = sources[id].orEmpty().filter { it.isAttached }.map { coordinates ->
@@ -61,11 +64,15 @@ class BookCoverFlight(private val nav: NavState) {
     fun origin(id: String): Rect? = captured?.takeIf { it.first == id }?.second
     fun clear() {
         captured = null
+        artwork = null
         nav.stack.top?.key?.let(nav::entryReady)
     }
     fun active(id: String): Boolean = origin(id) != null &&
         (nav.stack.top?.destination as? Destination.Book)?.book?.id == id
     fun progress(): Float = nav.progress.value
+    fun reducedMotion(): Boolean = nav.reducedMotion
+    fun isTopBook(): Boolean = nav.stack.top?.destination is Destination.Book
+    fun image(id: String): ImageBitmap? = if (active(id)) artwork else null
     fun entryKey(id: String): Int? = nav.stack.top?.takeIf { (it.destination as? Destination.Book)?.book?.id == id }?.key
     fun destinationPlaced(key: Int?) { if (key != null) nav.entryReady(key) }
 }
@@ -78,7 +85,10 @@ fun Modifier.bookCoverSource(id: String): Modifier {
     val flight = LocalBookCoverFlight.current ?: return this
     // Keep the source pixels until the incoming page covers them. A missing or
     // delayed destination must never leave an empty hole in the library.
-    return onGloballyPositioned { flight.source(id, it) }
+    return onGloballyPositioned { flight.source(id, it) }.graphicsLayer {
+        // The overlay owns the selected artwork from departure through return.
+        alpha = if (flight.active(id) && !flight.reducedMotion() && flight.progress() > 0f) 0f else 1f
+    }
 }
 
 /** A stable, untransformed wrapper supplies the target coordinates. Reading the
@@ -96,24 +106,24 @@ fun FlyingBookCover(book: ListenBook, covers: CoverLoader, width: Dp, modifier: 
     // placeholder would cover the library cell with a blank card until the decode lands.
     var painted by remember(book.id, entry) { mutableStateOf(false) }
     LaunchedEffect(entry, placed, painted) { if (placed && painted) flight?.destinationPlaced(entry) }
-    Box(modifier.onPlaced { coordinates ->
+    Box(modifier.onGloballyPositioned { coordinates ->
         val origin = coordinates.localToRoot(Offset.Zero)
         destination = Rect(origin.x, origin.y, origin.x + coordinates.size.width, origin.y + coordinates.size.height)
         if (coordinates.size.width > 0 && coordinates.size.height > 0) placed = true
     }) {
-        val shared = if (overlay == null) Modifier else with(overlay) {
+        val shared = if (overlay == null || flight?.reducedMotion() == true) Modifier else with(overlay) {
             Modifier.renderInSharedTransitionScopeOverlay(renderInOverlay = { flight?.active(book.id) == true && flight.progress() < 1f })
         }
         BookCover(book.cover, book.title, book.part, covers, width, Modifier.width(width).then(shared).graphicsLayer {
             if (flight?.active(book.id) != true) return@graphicsLayer
             val target = destination?.takeIf { painted } ?: run { alpha = 0f; return@graphicsLayer }
             val source = flight.origin(book.id) ?: return@graphicsLayer
-            val p = flight.progress()
+            val p = if (flight.reducedMotion()) 1f else flight.progress()
             transformOrigin = TransformOrigin(0f, 0f)
             translationX = (source.left - target.left) * (1f - p)
             translationY = (source.top - target.top) * (1f - p)
             scaleX = source.width / size.width + (1f - source.width / size.width) * p
-            scaleY = scaleX
-        }.testTag("flying_book_cover"), settled = { painted = true })
+            scaleY = source.height / size.height + (1f - source.height / size.height) * p
+        }.testTag("flying_book_cover"), settled = { painted = true }, frozenImage = flight?.image(book.id))
     }
 }

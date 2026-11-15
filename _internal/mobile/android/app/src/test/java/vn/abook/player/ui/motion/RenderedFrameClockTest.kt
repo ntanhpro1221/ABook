@@ -48,4 +48,25 @@ class RenderedFrameClockTest {
         val clock = RenderedFrameClock(upstream)
         repeat(40) { clock.withFrameNanos { assertEquals(now, it) } }
     }
+
+    @Test fun aBriefHitchRecoversItsTimeWithoutSkippingTheBookPath() = runBlocking {
+        var now = 1_000_000_000L
+        var step = 0
+        val upstream = object : MonotonicFrameClock {
+            override suspend fun <R> withFrameNanos(onFrame: (Long) -> R): R {
+                now += if (step++ == 2) 41_666_667L else 16_666_667L
+                return onFrame(now)
+            }
+        }
+        val clock = RenderedFrameClock(upstream, BookMotion.maxFrameNanos)
+        var previous: Long? = null
+        repeat(12) {
+            clock.withFrameNanos { rendered ->
+                previous?.let { assertTrue(rendered-it in 0L..BookMotion.maxFrameNanos) }
+                assertTrue(rendered <= now)
+                previous = rendered
+            }
+        }
+        assertEquals("a short hitch must not stretch the whole entrance", now, previous!!)
+    }
 }

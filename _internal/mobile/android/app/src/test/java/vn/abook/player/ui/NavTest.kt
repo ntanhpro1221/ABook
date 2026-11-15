@@ -103,7 +103,7 @@ class NavTest {
     }
 
     @Test
-    fun `cover container fades through without overlapping page content`() {
+    fun `cover container keeps the library under the incoming page`() {
         assertEquals(1f, ScreenGeometry.outgoingAlpha(0f), 0f)
         assertEquals(1f, ScreenGeometry.incomingAlpha(1f), 0f)
         for (step in 0..100) {
@@ -111,7 +111,8 @@ class NavTest {
             val incoming = ScreenGeometry.incomingAlpha(progress)
             val outgoing = ScreenGeometry.outgoingAlpha(progress)
             assertTrue(incoming in 0f..1f && outgoing in 0f..1f)
-            assertTrue(incoming == 0f || outgoing == 0f)
+            assertEquals(progress, incoming, 0f)
+            assertEquals(1f, outgoing, 0f)
         }
     }
 

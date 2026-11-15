@@ -87,6 +87,6 @@ object ScreenGeometry {
     fun forBack(back: Float): Float = 1f - back.coerceIn(0f, 1f)
 
     /** Container content fades on the cover's clock, including cancelled predictive back. */
-    fun incomingAlpha(p: Float): Float = ((p - 0.35f) / 0.65f).coerceIn(0f, 1f)
-    fun outgoingAlpha(p: Float): Float = (1f - p / 0.35f).coerceIn(0f, 1f)
+    fun incomingAlpha(p: Float): Float = p.coerceIn(0f, 1f)
+    fun outgoingAlpha(p: Float): Float = 1f
 }

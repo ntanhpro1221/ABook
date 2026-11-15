@@ -6,7 +6,8 @@ import ABook
 //   vào sâu (push)      màn cũ trượt sang trái, màn mới vào đồng thời từ phải, qua hết bề rộng khung
 //   lùi ra (pop / Back) đúng gương: màn cũ trôi sang phải, màn mới từ trái vào
 //   đổi mục thanh bên   trượt dọc 16 px theo chiều của mục (xuống = mục dưới), vì thanh bên xếp dọc
-// Push / Back share one motionSlow slide and a cover path when a source is available. Sidebar changes use 90 / 220 ms fade-through with geometry.
+// A book with a measured cover uses one reversible container clock. Other Push / Back routes share a motionSlow slide.
+// Sidebar changes use 90 / 220 ms fade-through with geometry.
 // "Giảm hiệu ứng" của Windows: bỏ trượt / thu, chỉ còn mờ <= 120 ms. Bấm liên tiếp: chuyển cảnh đang dở
 // được chốt ngay rồi chuyển cảnh mới chạy.
 Item {
@@ -17,7 +18,7 @@ Item {
     property int current: -1
     property int depth: 0
     readonly property bool canPop: depth > 1
-    readonly property bool busy: seq.running || slide.running
+    readonly property bool busy: seq.running || slide.running || containerMotion.running
     signal reselected(int index)          // chọn lại mục đang mở ở thanh bên: màn gốc tự về đầu (Studio: về danh sách dự án)
 
     property var _stacks: ({})
@@ -33,6 +34,23 @@ Item {
     property int outMs: Theme.motionFastOut
     property int inMs: Theme.motionMedium
     property real coverT: 0
+    property bool _container: false
+    property bool _backward: false
+    readonly property real bookProgress: _backward ? 1 - coverT : coverT
+    function _applyContainer() {
+        if (!_container || !_out || !_in) return
+        // Read the animation value directly: a derived binding can still hold
+        // the previous frame while this change handler is running.
+        const progress = _backward ? 1 - coverT : coverT
+        const library = _backward ? _in : _out
+        const page = _backward ? _out : _in
+        library.opacity = 1
+        library.zoom = Theme.reduceMotion ? 1 : 1 - Theme.bookRecede * progress
+        page.opacity = progress
+        if (page.content && page.content.transitionProgress !== undefined)
+            page.content.transitionProgress = progress
+    }
+    onCoverTChanged: _applyContainer()
     property Item _coverFrom: null
     property Item _coverTo: null
     property rect _coverStart: Qt.rect(0, 0, 0, 0)
@@ -47,8 +65,9 @@ Item {
 
     Component {
         id: wrapperComp
-        Item {
+        Rectangle {
             id: wrapper
+            color: Theme.bg
             property Item content: null
             property Item transitionSource: null
             property real dx: 0
@@ -142,6 +161,25 @@ Item {
             return
         }
         const reduced = Theme.reduceMotion
+        if (kind === "forward" || kind === "back") {
+            _neutral(outW)
+            _neutral(inW)
+            inW.visible = true
+            // Polish anchors before measuring; the destination has never painted.
+            inW.ensurePolished()
+            const from = kind === "back" ? outW.content.transitionCover : inW.transitionSource
+            const to = kind === "back" ? outW.transitionSource : inW.content.transitionCover
+            if (from && to) {
+                _backward = kind === "back"
+                if (!reduced) _startCover(from, to)
+                else coverT = 0
+                _container = true
+                _applyContainer()
+                _stage = 1
+                containerMotion.restart()
+                return
+            }
+        }
         if (!reduced && (kind === "forward" || kind === "back")) {
             const direction = kind === "forward" ? -1 : 1
             outDx = direction * width
@@ -186,8 +224,9 @@ Item {
         _stage = 2
     }
     function _coverBox(item, relativeTo) {
-        const a = item.mapToItem(relativeTo || root, 0, 0)
-        const b = item.mapToItem(relativeTo || root, item.width, item.height)
+        const anchor = item.transitionAnchor || item
+        const a = anchor.mapToItem(relativeTo || root, 0, 0)
+        const b = anchor.mapToItem(relativeTo || root, item.width, item.height)
         return Qt.rect(a.x, a.y, b.x - a.x, b.y - a.y)
     }
     function _startCover(from, to) {
@@ -207,6 +246,12 @@ Item {
         if (_coverTo) _coverTo.opacity = 1
         _coverFrom = null
         _coverTo = null
+        if (_container) {
+            const page = _backward ? _out : _in
+            if (page && page.content && page.content.transitionProgress !== undefined)
+                page.content.transitionProgress = 1
+        }
+        _container = false
         if (_out) {
             _out.visible = false
             _neutral(_out)
@@ -215,6 +260,7 @@ Item {
         _done()
     }
     function _finish() {
+        if (containerMotion.running) { containerMotion.stop(); _slideDone(); return }
         if (slide.running) { slide.stop(); _slideDone(); return }
         if (_stage === 2 && !seq.running) return
         seq.stop()
@@ -225,8 +271,8 @@ Item {
         id: sharedCover
         objectName: "navigationCoverMorph"
         sourceItem: root._coverFrom
-        hideSource: false
-        live: true
+        hideSource: true
+        live: false
         recursive: true
         z: 100
         visible: root._coverFrom !== null && root._coverTo !== null
@@ -234,6 +280,14 @@ Item {
         y: root._coverStart.y + (root.liveCoverEnd.y - root._coverStart.y) * root.coverT
         width: root._coverStart.width + (root.liveCoverEnd.width - root._coverStart.width) * root.coverT
         height: width * Theme.coverRatio
+        opacity: Theme.reduceMotion ? 1 - root.coverT : 1
+    }
+    NumberAnimation {
+        id: containerMotion
+        target: root; property: "coverT"; from: 0; to: 1
+        duration: Theme.reduceMotion ? Theme.motionReduced : Theme.bookTransformMs
+        easing.type: Easing.BezierSpline; easing.bezierCurve: Theme.easeEmphasized
+        onFinished: root._slideDone()
     }
     ParallelAnimation {
         id: slide

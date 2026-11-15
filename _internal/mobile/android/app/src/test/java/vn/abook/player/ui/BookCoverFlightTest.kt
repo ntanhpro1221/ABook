@@ -4,6 +4,7 @@ import androidx.activity.ComponentActivity
 import androidx.compose.foundation.layout.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.test.getUnclippedBoundsInRoot
 import androidx.compose.ui.test.onNodeWithTag
@@ -203,6 +204,25 @@ class BookCoverFlightTest {
         rule.waitUntil(10_000) { nav.progress.value == 1f && !nav.busy }
     }
 
+    @Test fun capturedCellBitmapOpensWithoutWaitingForAnotherDecode() {
+        val gate = java.util.concurrent.CountDownLatch(1)
+        val pool = java.util.concurrent.Executors.newSingleThreadExecutor()
+        pool.execute { gate.await() }
+        try {
+            val covers = CoverLoader(1 shl 20, pool.asCoroutineDispatcher())
+            val art = artworkStage(CoverRef("/unreadable/frozen-cover.png", 1L), covers)
+            val frozen = android.graphics.Bitmap.createBitmap(180, 270, android.graphics.Bitmap.Config.ARGB_8888).apply {
+                eraseColor(android.graphics.Color.rgb(30, 90, 140))
+            }.asImageBitmap()
+            rule.runOnUiThread { flight.capture(art.id, frozen); nav.push(Destination.Book(art)) }
+            rule.waitUntil(10_000) { nav.progress.value == 1f && !nav.busy }
+            org.junit.Assert.assertSame(frozen, flight.image(art.id))
+            assertEquals(null, covers.peek("/unreadable/frozen-cover.png", 1L))
+        } finally {
+            gate.countDown(); pool.shutdown()
+        }
+    }
+
     @Test fun coverMovesFromCellAndPredictiveBackRetracesEveryRectangle() {
         val covers = CoverLoader(1 shl 20)
         rule.setContent {
@@ -256,5 +276,13 @@ class BookCoverFlightTest {
         for (step in 10 downTo 0) same(out[step], at(step / 10f))
         same(source, out.first()); same(target, out.last())
         rule.mainClock.autoAdvance = true
+        rule.runOnUiThread { scope.launch { nav.cancelBack() } }
+        rule.waitForIdle()
+        assertEquals(1, nav.stack.size)
+        same(target, bounds("flying_book_cover"))
+        rule.runOnUiThread { nav.pop() }
+        rule.waitForIdle()
+        assertTrue(nav.stack.isEmpty)
+        same(source, bounds("cell"))
     }
 }

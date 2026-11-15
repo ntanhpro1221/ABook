@@ -2,6 +2,12 @@
    Shared with Compose and Qt. Do not edit these declarations. */
 @theme static {
   --radius-*: initial;
+  --book-transform-ms: 350ms;
+  --book-recede: 0.015;
+  --book-drift: 12;
+  --book-title-delay: 0.0;
+  --book-action-delay: 0.06;
+  --book-list-delay: 0.12;
   --skeleton-low: 0.6;
   --skeleton-period-ms: 1600ms;
   --notice-ms: 4000ms;

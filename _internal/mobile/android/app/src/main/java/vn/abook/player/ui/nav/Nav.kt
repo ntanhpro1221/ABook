@@ -21,6 +21,8 @@ import vn.abook.player.ui.export.ExportFormat
 import vn.abook.player.ui.voice.VoicePage
 import vn.abook.player.ui.data.SettingsGroup
 import vn.abook.player.ui.motion.Motion
+import vn.abook.player.ui.motion.BookMotion
+import vn.abook.player.ui.motion.FadeDurationScale
 import vn.abook.player.ui.motion.ScreenGeometry
 import vn.abook.player.ui.motion.RenderedFrameClock
 import vn.abook.player.ui.studio.StudioSubKind
@@ -124,6 +126,10 @@ class NavState(private val scope: CoroutineScope) {
         private set
 
     val progress = Animatable(1f)
+    var reducedMotion = false
+    private fun bookTransition() = stack.top?.destination is Destination.Book
+    private fun enterSpec() = if (bookTransition()) BookMotion.spec(1f - progress.value, reducedMotion) else Motion.PushIn
+    private fun exitSpec() = if (bookTransition()) BookMotion.spec(progress.value, reducedMotion) else Motion.popOut(progress.value)
     private var job: Job? = null
 
     val canPop: Boolean get() = !stack.isEmpty
@@ -167,7 +173,7 @@ class NavState(private val scope: CoroutineScope) {
             } finally {
                 if (entering === ready) { entering = null; staging = false }
             }
-            animateTo(1f, Motion.PushIn)
+            animateTo(1f, enterSpec())
         }
     }
 
@@ -183,7 +189,7 @@ class NavState(private val scope: CoroutineScope) {
         if (!canPop) return
         job?.cancel()
         job = scope.launch {
-            animateTo(0f, Motion.popOut(progress.value))
+            animateTo(0f, exitSpec())
             stack = BackStack()
             progress.snapTo(1f)
         }
@@ -199,7 +205,7 @@ class NavState(private val scope: CoroutineScope) {
         if (at == stack.size - 1) return true
         job?.cancel()
         job = scope.launch {
-            animateTo(0f, Motion.popOut(progress.value))
+            animateTo(0f, exitSpec())
             stack = stack.keep(at + 1)
             progress.snapTo(1f)
         }
@@ -217,18 +223,25 @@ class NavState(private val scope: CoroutineScope) {
 
     /** Thả trước ngưỡng / huỷ: màn quay lại hẳn. */
     suspend fun cancelBack() {
-        animateTo(1f, Motion.PushIn)
+        animateTo(1f, enterSpec())
     }
 
     private suspend fun finishPop() {
-        animateTo(0f, Motion.popOut(progress.value))
+        animateTo(0f, exitSpec())
         stack = stack.pop()
         progress.snapTo(1f)
     }
 
     private suspend fun animateTo(target: Float, spec: FiniteAnimationSpec<Float>) {
         val clock = checkNotNull(currentCoroutineContext()[MonotonicFrameClock])
-        withContext(RenderedFrameClock(clock)) { progress.animateTo(target, spec) }
+        // A button Back can interrupt entry without any drag events. Finish
+        // that animator before creating a fresh rendered clock, otherwise its
+        // older frame timestamp can spend the entire return in one frame.
+        progress.stop()
+        val rendered = if (bookTransition()) RenderedFrameClock(clock, BookMotion.maxFrameNanos) else RenderedFrameClock(clock)
+        if (reducedMotion && bookTransition()) {
+            withContext(rendered + FadeDurationScale) { progress.animateTo(target, spec) }
+        } else withContext(rendered) { progress.animateTo(target, spec) }
     }
 
     private companion object {

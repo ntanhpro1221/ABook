@@ -26,6 +26,12 @@ export function widthAtLeast(px: number, name: WidthClass): boolean {
 }
 
 export const TIMING = {
+  "bookTransformMs": 350,
+  "bookRecede": 0.015,
+  "bookDrift": 12,
+  "bookTitleDelay": 0.0,
+  "bookActionDelay": 0.06,
+  "bookListDelay": 0.12,
   "skeletonLow": 0.6,
   "skeletonPeriodMs": 1600,
   "noticeMs": 4000,

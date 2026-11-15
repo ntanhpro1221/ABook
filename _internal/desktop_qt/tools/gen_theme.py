@@ -39,7 +39,7 @@ TYPE_NAMES = {
     "phụ chú": "caption", "thân phụ": "bodySmall", "thân": "body", "tiêu đề mục": "section",
     "tiêu đề màn điện thoại": "titlePhone", "tiêu đề màn máy tính": "titleDesktop", "chữ đọc theo": "reading",
 }
-EASE_NAMES = {"standard": "Standard", "decelerate": "Decelerate", "accelerate": "Accelerate"}
+EASE_NAMES = {"standard": "Standard", "decelerate": "Decelerate", "accelerate": "Accelerate", "emphasized": "Emphasized"}
 MOTION_NAMES = {"fast": "Fast", "fastOut": "FastOut", "medium": "Medium", "mediumOut": "MediumOut", "slow": "Slow", "slowOut": "SlowOut"}
 
 

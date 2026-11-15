@@ -18,6 +18,8 @@ Item {
     signal castRequested(string kind, var data)         // hộp của tab Nhân vật (CastDialogs của Main.qml): "merge" | "rename" | "gender" | "voice" | "narrator"
     signal recordRequested(string kind, var data)       // hộp / việc của hồ sơ nghe (RecordDialogs của Main.qml): "create" | "rename" | "move" | "delete" | "activate"
     property var book: ({})
+    property real transitionProgress: 1
+    function transitionReveal(delay) { return Math.max(0, Math.min(1, (transitionProgress - delay) / (1 - delay))) }
     readonly property bool expanded: width >= Theme.widthExpanded || (height < 480 && width >= Theme.widthMedium)
     property real split: expanded ? 1 : 0
     // First make room horizontally, then lift the chapter list beside the summary.
@@ -370,6 +372,8 @@ Item {
 
                 Text {
                     objectName: "bookTitle"
+                    opacity: root.transitionReveal(Theme.bookTitleDelay)
+                    transform: Translate { y: Theme.reduceMotion ? 0 : Theme.bookDrift * (1 - root.transitionReveal(Theme.bookTitleDelay)) }
                     width: parent.width
                     text: TextWrap.pretty(root.book.title || "")
                     color: Theme.text
@@ -460,6 +464,8 @@ Item {
                 // chương có khung riêng, nên khi đủ chỗ thì hàng nút phụ đứng cạnh nút chính để phần trên không ăn mất chỗ của chương.
                 Grid {
                     id: actions
+                    opacity: root.transitionReveal(Theme.bookActionDelay)
+                    transform: Translate { y: Theme.reduceMotion ? 0 : Theme.bookDrift * (1 - root.transitionReveal(Theme.bookActionDelay)) }
                     objectName: "bookActions"
                     Reveal { shown: bookDetail.status === "ready" || (bookDetail.status === "failed" && root.loaded) }
                     width: parent.width
@@ -592,6 +598,8 @@ Item {
                 bottomMargin: Theme.s16
                 delegate: ChapterRow {
                     id: row
+                    opacity: root.transitionReveal(Theme.bookListDelay)
+                    transform: Translate { y: Theme.reduceMotion ? 0 : Theme.bookDrift * (1 - root.transitionReveal(Theme.bookListDelay)) }
                     required property var model
                     objectName: "bookChapterRow"
                     width: list.width

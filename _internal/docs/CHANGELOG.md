@@ -7,6 +7,8 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+- Mở và đóng sách liền mạch, bìa trở về đúng ô Thư viện; đồng bộ chuyển cảnh trên điện thoại và máy tính.
+
 - Hẹn giờ ngủ giữ nguyên sau khi tự dừng; lần phát sau tự đếm lại.
 
 - Dựng từ đáp án giữ đúng người nói qua mọi bước sửa nhãn; bìa JPEG đã đạt chuẩn giữ nguyên byte khi lưu trên máy tính và điện thoại.

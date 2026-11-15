@@ -2,6 +2,7 @@ package vn.abook.player.ui.screens
 
 import vn.abook.player.ui.motion.SwapContent
 import vn.abook.player.ui.motion.ContentLayout
+import vn.abook.player.ui.motion.bookReveal
 
 import vn.abook.player.ui.components.skeletonPulse
 import vn.abook.player.ui.components.skeletonPulse
@@ -404,7 +405,7 @@ private fun BookScreenBody(
                     else -> items(chapters.orEmpty(), key = { it.id }, contentType = { "chapter" }) { chapter ->
                         val here = chapter.id == current
                         val live = here && player.bookId == shown.id
-                        Box(Modifier.fade { fade.value * arrival.value }) {
+                        Box(Modifier.bookReveal(MotionMs.BOOK_LIST_DELAY) { fade.value * arrival.value }) {
                             ChapterRow(
                                 chapter = chapter,
                                 current = here,
@@ -520,7 +521,7 @@ private fun BookHead(
                 Spacer(Modifier.height(Dim.s4))
             }
         }
-        BasicText(main, style = if (compact) Abook.type.sectionTitle else Abook.type.screenTitle, modifier = Modifier.testTag("book_title"))
+        BasicText(main, style = if (compact) Abook.type.sectionTitle else Abook.type.screenTitle, modifier = Modifier.bookReveal(MotionMs.BOOK_TITLE_DELAY).testTag("book_title"))
         Spacer(Modifier.height(Dim.s8))
         ClusterLabel(BookPage.metaLine(book), style = Abook.type.bodySmall)
     }
@@ -601,7 +602,7 @@ private fun BookButtons(
             }
         }
     }
-    Column(Modifier.fillMaxWidth().padding(top = Dim.s24)) {
+    Column(Modifier.fillMaxWidth().bookReveal(MotionMs.BOOK_ACTION_DELAY).padding(top = Dim.s24)) {
         when {
             caughtUp -> BasicText(
                 S.s_da_nghe_het_phan_da_co_chuong_moi_se_hien_4b18ca13,

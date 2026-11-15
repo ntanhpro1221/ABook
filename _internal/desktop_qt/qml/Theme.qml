@@ -112,6 +112,12 @@ QtObject {
     readonly property real lineHeightReading: 1.7
 
     // ---- chuyển động (5.2; cùng số với motion.ts) ----
+    readonly property int bookTransformMs: 350
+    readonly property real bookRecede: 0.015
+    readonly property int bookDrift: 12
+    readonly property real bookTitleDelay: 0.0
+    readonly property real bookActionDelay: 0.06
+    readonly property real bookListDelay: 0.12
     readonly property real skeletonLow: 0.6
     readonly property int skeletonPeriodMs: 1600
     readonly property int noticeMs: 4000
@@ -129,6 +135,7 @@ QtObject {
     readonly property var easeStandard: [0.2, 0, 0, 1, 1, 1]
     readonly property var easeDecelerate: [0.05, 0.7, 0.1, 1, 1, 1]
     readonly property var easeAccelerate: [0.3, 0, 0.8, 0.15, 1, 1]
+    readonly property var easeEmphasized: [0.4, 0, 0.2, 1, 1, 1]
     // Nhấn: thu 0,97 + tối nền 6 % trong 90 ms, thả về trong 120 ms (5.2)
     readonly property real pressScale: 0.97
     readonly property real pressShade: 0.06

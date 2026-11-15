@@ -128,6 +128,12 @@ internal object TypeScale {
 
 /** Thời lượng chuyển động (ms): vào / ra. */
 internal object MotionMs {
+    const val BOOK_TRANSFORM_MS = 350
+    const val BOOK_RECEDE = 0.015f
+    const val BOOK_DRIFT = 12
+    const val BOOK_TITLE_DELAY = 0f
+    const val BOOK_ACTION_DELAY = 0.06f
+    const val BOOK_LIST_DELAY = 0.12f
     const val SKELETON_LOW = 0.6f
     const val SKELETON_PERIOD_MS = 1600
     const val NOTICE_MS = 4000
@@ -145,6 +151,10 @@ internal object MotionMs {
 
 /** Đường cong cubic-bezier (x1, y1, x2, y2), Material 3. */
 internal object Bezier {
+    const val EMPHASIZED_X1 = 0.4f
+    const val EMPHASIZED_Y1 = 0f
+    const val EMPHASIZED_X2 = 0.2f
+    const val EMPHASIZED_Y2 = 1f
     const val STANDARD_X1 = 0.2f
     const val STANDARD_Y1 = 0f
     const val STANDARD_X2 = 0f

@@ -101,6 +101,26 @@ Item {
             verify(!Player.playing)
             compare(first.count, 0)
         }
+        function test_bookContentUsesTheSharedProgressWithoutNestedFades() {
+            const made = bookPage()
+            const title = findChild(made, "bookTitle")
+            const actions = findChild(made, "bookActions")
+            tryCompare(actions, "opacity", 1)
+            tryVerify(() => findChild(made, "bookChapterRow") !== null)
+            const row = findChild(made, "bookChapterRow")
+            Theme.reduceMotion = false
+            made.transitionProgress = .5
+            fuzzyCompare(title.opacity, .5, .001)
+            fuzzyCompare(actions.opacity, made.transitionReveal(Theme.bookActionDelay), .001)
+            fuzzyCompare(row.opacity, made.transitionReveal(Theme.bookListDelay), .001)
+            fuzzyCompare(row.transform[0].y, Theme.bookDrift * (1 - row.opacity), .001)
+            Theme.reduceMotion = true
+            compare(row.transform[0].y, 0)
+            made.transitionProgress = 1
+            compare(title.opacity, 1)
+            compare(actions.opacity, 1)
+            compare(row.opacity, 1)
+        }
         function test_metaClustersWrapWhole() {
             const made = bookPage()
             const flow = findChild(made, "bookMeta")

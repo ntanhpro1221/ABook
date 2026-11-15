@@ -299,8 +299,8 @@ class LibraryRepo(private val context: Context, private val scope: kotlinx.corou
     }
 
     /** Sách giả cho đo đạc (`abook.demo.books`): không chạm kho thật. */
-    fun showDemo(count: Int) {
-        flow.value = LibraryState.Ready(DemoLibrary.books(count))
+    fun showDemo(count: Int, coverDirectory: String? = null) {
+        flow.value = LibraryState.Ready(DemoLibrary.books(count, coverDirectory))
     }
 
     companion object {

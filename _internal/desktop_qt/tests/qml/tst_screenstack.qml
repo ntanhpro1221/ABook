@@ -12,6 +12,14 @@ Item {
     Component { id: libraryPage; Rectangle { property alias transitionCover: cover; CoverView { id: cover; x: 40; y: 80; width: 100; height: 150; title: "Sách" } } }
     Component { id: bookPage; Rectangle { property alias transitionCover: cover; CoverView { id: cover; x: 400; y: 100; width: 160; height: 240; title: "Sách" } } }
     Component { id: stackFactory; App.ScreenStack { width: 900; height: 600; roots: [libraryPage, page, page] } }
+    Component {
+        id: scrolledLibrary
+        Flickable {
+            property alias transitionCover: scrolledCover
+            contentWidth: width; contentHeight: 1400; contentY: 510
+            CoverView { id: scrolledCover; x: 40; y: 800; width: 100; height: 150; title: "Sách" }
+        }
+    }
 
     TestCase {
         name: "ScreenStackDirection"
@@ -19,9 +27,12 @@ Item {
         property var stack: null
 
         function init() {
+            Theme.reduceMotion = false
             stack = createTemporaryObject(stackFactory, host)
             stack.show(0)
         }
+
+        function cleanup() { Theme.reduceMotion = false }
 
         function test_pushAndBackMoveInOppositeDirections() {
             const library = stack._top(0)
@@ -99,6 +110,63 @@ Item {
             tryCompare(stack, "busy", false, 1500)
             compare(source.opacity, 1)
             compare(cover.visible, false)
+        }
+
+        function test_bookKeepsItsLibraryAndUsesOneClockBothWays() {
+            const library = stack._top(0)
+            const source = library.content.transitionCover
+            stack.push(bookPage, {}, source)
+            const book = stack._top(0)
+            verify(stack._container)
+            compare(library.dx, 0)
+            compare(book.dx, 0)
+            tryVerify(() => stack.coverT > .1 && stack.coverT < .9)
+            compare(library.opacity, 1)
+            fuzzyCompare(book.opacity, stack.bookProgress, .001)
+            fuzzyCompare(library.zoom, 1 - Theme.bookRecede * stack.bookProgress, .001)
+            tryCompare(stack, "busy", false, 1500)
+            stack.pop()
+            verify(stack._container)
+            compare(library.dx, 0)
+            compare(book.dx, 0)
+            tryVerify(() => stack.coverT > .1 && stack.coverT < .9)
+            compare(library.opacity, 1)
+            fuzzyCompare(book.opacity, stack.bookProgress, .001)
+            tryCompare(stack, "busy", false, 1500)
+            compare(library.zoom, 1)
+            compare(source.opacity, 1)
+        }
+
+        function test_scrolledSourceReturnsToItsVisibleCell() {
+            stack.destroy()
+            stack = createTemporaryObject(stackFactory, host, { roots: [scrolledLibrary, page, page] })
+            stack.show(0)
+            const library = stack._top(0).content
+            const source = library.transitionCover
+            stack.push(bookPage, {}, source)
+            compare(stack._coverStart.y, 290)
+            tryCompare(stack, "busy", false, 1500)
+            stack.pop()
+            compare(stack._coverEnd.y, 290)
+            tryCompare(stack, "busy", false, 1500)
+            compare(library.contentY, 510)
+            compare(stack._coverBox(source).y, 290)
+        }
+
+        function test_reducedMotionFadesWithoutMovingArtwork() {
+            Theme.reduceMotion = true
+            const library = stack._top(0)
+            stack.push(bookPage, {}, library.content.transitionCover)
+            const book = stack._top(0)
+            verify(stack._container)
+            compare(stack._coverFrom, null)
+            compare(book.content.transitionCover.opacity, 1)
+            compare(library.zoom, 1)
+            tryCompare(stack, "busy", false, 1000)
+            stack.pop()
+            compare(stack._coverFrom, null)
+            tryCompare(stack, "busy", false, 1000)
+            compare(library.zoom, 1)
         }
     }
 }

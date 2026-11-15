@@ -146,7 +146,7 @@ class NativeActivity : ComponentActivity() {
         // màn đổi màu ngay sau khi hiện. Hai lần đọc chạy song song ở luồng nền.
         splash.setKeepOnScreenCondition { library.state.value is LibraryState.Loading || !settings.loaded.value }
         lifecycleScope.launch { settings.load() }
-        if (demo) library.showDemo(demoBooks) else lifecycleScope.launch { library.refresh() }
+        if (demo) library.showDemo(demoBooks, intent.getStringExtra(DEMO_COVERS)) else lifecycleScope.launch { library.refresh() }
         // Dừng phát thì chỗ nghe đã ghi: đọc lại để "Đang nghe" và vạch tiến độ theo kịp.
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
@@ -437,6 +437,8 @@ class NativeActivity : ComponentActivity() {
     companion object {
         /** Extra của Intent: số sách giả thay Thư viện thật (đo đạc; chỉ bản thử -PbenchAppId, [BuildConfig.DEMO]). */
         const val DEMO_BOOKS = "abook.demo.books"
+        /** Optional original artwork for benchmark builds; production never enters demo mode. */
+        const val DEMO_COVERS = "abook.demo.covers"
 
         /** "Mã nguồn mở" (Cài đặt > Nâng cao): trang của ABook trên GitHub - địa chỉ cố định, không nhận từ đâu. */
         const val SOURCE_URL = "https://github.com/ntanhpro1221/ABook/"

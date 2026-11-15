@@ -49,6 +49,7 @@ Interactive {
         }
         CoverView {
             id: coverView
+            property Item transitionAnchor: root
             anchors.fill: parent
             coverKey: root.coverKey
             title: root.title

@@ -13,6 +13,7 @@ export const MOTION = {
 
 /** Đường cong - cùng giá trị với --ease-* (Material 3). */
 export const EASE = {
+  emphasized: "cubic-bezier(0.4, 0, 0.2, 1)",
   standard: "cubic-bezier(0.2, 0, 0, 1)",
   decelerate: "cubic-bezier(0.05, 0.7, 0.1, 1)",
   accelerate: "cubic-bezier(0.3, 0, 0.8, 0.15)",

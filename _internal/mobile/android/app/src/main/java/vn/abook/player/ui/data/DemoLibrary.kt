@@ -10,7 +10,7 @@ object DemoLibrary {
     private val bases = arrayOf(S.s_tat_den_e8abef9d, S.s_chi_pheo_92401a7e, S.s_dem_trang_aedad6e4, S.s_de_men_phieu_luu_ky_4e0a5b60, S.s_nhat_ky_trong_tu_da8fe5b2, S.s_so_do_8c497a89, S.s_truyen_kieu_1a35c271, S.s_lao_hac_042cebe1, S.s_canh_dong_bat_tan_d273c661)
     private val authors = arrayOf(S.s_ngo_tat_to_354f581c, "Nam Cao", "Dostoevsky", S.s_to_hoai_5ed4f544, S.s_ho_chi_minh_d8678887, S.s_vu_trong_phung_b3c8fd0d, S.s_nguyen_du_34215116, S.s_nguyen_huy_thiep_58945098, "")
 
-    fun books(count: Int): List<ListenBook> {
+    fun books(count: Int, coverDirectory: String? = null): List<ListenBook> {
         val list = ArrayList<ListenBook>(count)
         var index = 0
         while (list.size < count) {
@@ -18,9 +18,9 @@ object DemoLibrary {
             // Cứ mười ba cuốn có một bộ ba tập: ba bìa gom thành một.
             if (index % 13 == 4 && list.size + 3 <= count) {
                 val name = "$base ${index / bases.size + 1}"
-                for (volume in 1..3) list += book(list.size, S.s_0_tap_1_c13c39ff(name, volume), authors[index % authors.size])
+                for (volume in 1..3) list += book(list.size, S.s_0_tap_1_c13c39ff(name, volume), authors[index % authors.size], coverDirectory)
             } else {
-                list += book(list.size, "$base ${index + 1}", authors[index % authors.size])
+                list += book(list.size, "$base ${index + 1}", authors[index % authors.size], coverDirectory)
             }
             index++
         }
@@ -36,7 +36,7 @@ object DemoLibrary {
         return (1..CHAPTERS).map { ChapterInfo(it, S.s_chuong_0_268b0521(it), if (textOnly) 0.0 else duration / CHAPTERS, available = !textOnly, textOnly = textOnly) }
     }
 
-    private fun book(n: Int, title: String, author: String): ListenBook {
+    private fun book(n: Int, title: String, author: String, coverDirectory: String?): ListenBook {
         val duration = 3600.0 * (2 + n % 9)
         val kind = n % 7
         val share = when (kind) {
@@ -58,6 +58,7 @@ object DemoLibrary {
         val progress = ListenLogic.bookProgress(state, chapters, complete = true)
         return ListenBook(
             id = "demo-$n",
+            cover = coverDirectory?.let { CoverRef("$it/demo-$n.png", 1L) },
             title = title,
             author = author,
             duration = duration,

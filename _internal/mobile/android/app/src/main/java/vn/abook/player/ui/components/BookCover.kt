@@ -71,6 +71,7 @@ fun BookCover(
     modifier: Modifier = Modifier,
     small: Boolean = false,
     settled: (() -> Unit)? = null,
+    frozenImage: ImageBitmap? = null,
 ) {
     val density = LocalDensity.current
     val widthPx = with(density) { width.roundToPx() }
@@ -78,10 +79,10 @@ fun BookCover(
     val path = cover?.path
     val stamp = cover?.stamp ?: 0L
     val key = remember(path, stamp, widthPx, heightPx) { path?.let { covers.key(it, stamp, widthPx, heightPx) } }
-    val image = remember(path, stamp) { mutableStateOf(key?.let(covers::peek) ?: path?.let { covers.peek(it, stamp) }) }
+    val image = remember(path, stamp) { mutableStateOf(frozenImage ?: key?.let(covers::peek) ?: path?.let { covers.peek(it, stamp) }) }
     // Final pixels are known: decoded, generated, or the decode gave up. Until then this cover is only the sunken placeholder.
     val decided = remember(key) { mutableStateOf(key == null || path == null || image.value != null) }
-    if (key != null && path != null) {
+    if (key != null && path != null && frozenImage == null) {
         LaunchedEffect(key) { covers.load(key, path, widthPx, heightPx)?.let { image.value = it }; decided.value = true }
     }
     if (settled != null && decided.value) {

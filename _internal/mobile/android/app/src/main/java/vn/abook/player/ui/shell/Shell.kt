@@ -231,13 +231,14 @@ fun AppShell(
     studio: StudioHub? = null,
 ) {
     val nav = shell.nav
+    nav.reducedMotion = vn.abook.player.ui.motion.rememberReducedMotion()
     val playerState by player.state.collectAsState()
     PredictiveBackHandler(enabled = nav.canPop) { events ->
         try {
             events.collect { nav.dragBack(it.progress) }
             nav.commitBack()
         } catch (cancelled: CancellationException) {
-            nav.cancelBack()
+            kotlinx.coroutines.withContext(kotlinx.coroutines.NonCancellable) { nav.cancelBack() }
             throw cancelled
         }
     }
@@ -263,7 +264,7 @@ fun AppShell(
                 if (book.remote != null && devices != null) shell.sheets.show { dismiss ->
                     vn.abook.player.ui.screens.RemoteBookSheet(book, devices) { dismiss(); player.playNow(book.id) }
                 } else {
-                    shell.coverFlight.capture(book.id)
+                    shell.coverFlight.capture(book.id, book.cover?.let { covers.peek(it.path, it.stamp) })
                     shell.prefetchBook(book.id, books)
                     shell.nav.push(Destination.Book(book))
                 }
@@ -617,11 +618,11 @@ fun ScreenStack(nav: NavState, root: @Composable () -> Unit, insets: LayerInsets
                                 Layer.Below -> nav.progress.value.let { p -> if (p >= 1f) -1f else ScreenGeometry.belowFraction(p) }
                             }
                             translationX = if (container) 0f else fraction * size.width
-                            alpha = if (!container) 1f else when (layer) {
-                                Layer.Top -> ScreenGeometry.incomingAlpha(nav.progress.value)
-                                Layer.Below -> ScreenGeometry.outgoingAlpha(nav.progress.value)
-                                Layer.Alone -> 1f
-                            }
+                            alpha = if (container && layer == Layer.Top) ScreenGeometry.incomingAlpha(nav.progress.value) else 1f
+                            val recede = if (container && layer == Layer.Below && !nav.reducedMotion)
+                                vn.abook.player.ui.motion.BookMotion.libraryScale(nav.progress.value) else 1f
+                            scaleX = recede
+                            scaleY = recede
                         }
                         .background(background)
                         .testTag(if (index < 0) "screen_root" else if (layer == Layer.Top) "screen_top" else "screen_below")
