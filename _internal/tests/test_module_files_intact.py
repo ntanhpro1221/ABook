@@ -26,6 +26,9 @@ def test_intact_means_same_size_and_hash_not_just_the_name(tmp_path: Path) -> No
     (tmp_path / "model.onnx").write_bytes(other)  # cùng cỡ, khác nội dung
     assert len(other) == len(good) and not studio_setup.intact(tmp_path, [item])
     (tmp_path / "model.onnx").write_bytes(good)
+    # A same-size replacement must have a distinct stat identity, even in one Windows clock tick.
+    import os
+    os.utime(tmp_path / "model.onnx", ns=(1, 2))
     assert studio_setup.intact(tmp_path, [item])
     assert not studio_setup.intact(None, [item])
 
