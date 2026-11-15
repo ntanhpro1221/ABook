@@ -1,5 +1,9 @@
 # Test report
 
+## 15-11-2026 — 0.4.173 integration
+
+Integrated the 17 phase-one branches and volumes, authoritative speaker labels and cover-byte preservation, retained sleep timers, book transitions, floating surfaces, music downloads and UI affordances. Branch-focused checks passed before the release commit. The full guarded release gate uses the exact implementation hash explicitly approved by Lead; private reports, recordings, database observations and release assets remain outside Git.
+
 ## 15-11-2026 — music controls, pending actions and destructive confirmations
 
 Compose, Qt and web use fixed download/stop/downloaded slots, shared confirmations, delayed pending indicators and stationary state icon transitions. Music playback runs to EOS with seek, position/duration and actual output buffering; native confirmation retains a returned Job before model busy state begins. Download cancellation preserves a committed file; explicit confirmed deletion serializes with its writer and reports failure. Default voice changes wait for persistence.
