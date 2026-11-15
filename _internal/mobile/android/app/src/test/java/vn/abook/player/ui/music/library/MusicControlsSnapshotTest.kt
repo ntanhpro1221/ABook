@@ -41,6 +41,9 @@ class MusicControlsSnapshotTest {
                 }
             }
         }
+        rule.waitUntil(timeoutMillis = vn.abook.player.TestTime.ms(5_000)) {
+            rule.onAllNodesWithTag("music_art_image", useUnmergedTree = true).fetchSemanticsNodes().isNotEmpty()
+        }
         val theme = if (dark) "dark" else "light"
         fun shot(name: String) {
             rule.waitForIdle()

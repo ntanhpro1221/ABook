@@ -17,6 +17,23 @@ import org.junit.Test
  * phải ra đúng từng byte JSON mà abook/importers.py ra. Thư mục làm việc của Gradle là mobile/android/app.
  */
 class BookImportTest {
+    @Test
+    fun displayHeadingsKeepChaptersInTheirOriginalVolumes() {
+        val root = Files.createTempDirectory("abook-title-volumes").toFile()
+        try {
+            val first = "Quyển 1\nChương 1: Bến sáng\n\nMột đoạn tự viết."
+            val second = "Quyển 2\nChương 2: Lối nhỏ\n\nMột đoạn khác tự viết."
+            File(root, "01.txt").writeText(first)
+            File(root, "02.txt").writeText(second)
+            val book = BookImport.importFile(root)
+            assertEquals(listOf(1, 2), book.chapters.map { it.volume })
+            assertEquals(listOf("Chương 1: Bến sáng", "Chương 2: Lối nhỏ"), book.chapters.map { it.name })
+            assertEquals(listOf(first, second), book.chapters.map { it.text })
+        } finally {
+            root.deleteRecursively()
+        }
+    }
+
     private val dir: File by lazy {
         val found = File("../../../tests/fixtures/import")
         if (!File(found, "expected/story.json").isFile) {

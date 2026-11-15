@@ -195,9 +195,16 @@ class DlnaPlayers(
             sessions.filter { !it.value.ended && it.key in renderers }.map { renderers.getValue(it.key).first to it.value }
         }
         for ((renderer, session) in active) {
-            session.ended = true
-            store(session, session.estimate(System.currentTimeMillis()))
-            stop(renderer, 2000)
+            val device = deviceLocks.getOrPut(renderer.id) { ReentrantLock() }
+            device.lock()
+            try {
+                if (synchronized(lock) { sessions[renderer.id] !== session || session.ended }) continue
+                session.ended = true
+                store(session, session.estimate(System.currentTimeMillis()))
+                stop(renderer, 2000)
+            } finally {
+                device.unlock()
+            }
         }
         val rest = synchronized(lock) { backends.values.toList().also { backends.clear() } }
         rest.forEach { runCatching { it.close() } }
@@ -532,7 +539,7 @@ class DlnaPlayers(
         val device = deviceLocks.getOrPut(id) { ReentrantLock() }
         if (!device.tryLock(200, TimeUnit.MILLISECONDS)) return // đang có lệnh: lượt sau hỏi
         try {
-            if (synchronized(lock) { sessions[id] } !== session) return
+            if (synchronized(lock) { sessions[id] !== session || session.ended }) return
             val status = try {
                 client.status()
             } catch (_: Dlna.Failure) {

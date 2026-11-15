@@ -24,8 +24,10 @@ class FeedbackTest {
             override fun sound(notes: List<Feedback.Note>, context: Context?) { calls += "sound:${notes.map { it.pitch }}" }
             override fun haptic(effect: String, view: View?, context: Context?) { calls += "haptic:$effect" }
         }
-        field("mode").set(SleepTimer, SleepTimer.Mode.MINUTES)
-        field("minutes").setInt(SleepTimer, 10)
+        SleepTimer.cancel()
+        SleepTimer.activityResets = true
+        SleepTimer.setMinutes(10, feedback = false)
+        calls.clear()
         field("remainingMs").setLong(SleepTimer, 120_000L)
         field("runningSinceMs").setLong(SleepTimer, 0L)
         field("automaticReason").set(SleepTimer, "")
@@ -38,7 +40,7 @@ class FeedbackTest {
         Feedback.output = original
         Feedback.sounds = true; Feedback.haptics = true
         Playback.player = null
-        field("mode").set(SleepTimer, SleepTimer.Mode.OFF)
+        SleepTimer.cancel()
         field("warned").setBoolean(SleepTimer, false)
         Handler.reset()
     }
@@ -124,7 +126,8 @@ class FeedbackTest {
         assertTrue(Playback.fadeLevel < 1f)
         field("remainingMs").setLong(SleepTimer, 0L)
         Handler.advance(250L)
-        assertEquals(SleepTimer.Mode.OFF, SleepTimer.mode)
+        assertEquals(SleepTimer.Mode.MINUTES, SleepTimer.mode)
+        assertEquals(600.0, SleepTimer.describe().getDouble("remaining"), 0.01)
         assertFalse(voice.playing)
         assertEquals(listOf("sound:[220.0]"), calls)
     }

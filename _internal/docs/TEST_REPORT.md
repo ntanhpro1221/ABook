@@ -2786,3 +2786,10 @@ No normalization implementation or dependency changed; quality hash:
 - Qt floating panels composite through a transparent gutter, preserving their layout size and the full shadow extent. Modal, Popover, ConnectionPopover, Select and Toast share this component. Web sheets use their own rounded box shadow without the rectangular backdrop band.
 - `scripts/audit_surface_frames.py` measures recorded pixels independently from the animation implementation: scrim fitting, surface tracking, shadow offset/motion gain, rounded corner samples, edge profiles and straight cuts. It accepts variable-rate video or consecutive PNG captures. Missing/insufficient motion is UNKNOWN. Unit controls include a fixed shadow, a rectangular band, missing surfaces and static captures.
 - Owner video and emulator evidence, magnified comparisons and detailed before/after measurements remain outside Git in the sheetedge task folder. No owner media belongs in the repository. Snapshot updates replace the stationary 24 dp paint strip with the shared rounded shadow; all resting layouts remain unchanged.
+
+
+### 0.4.173 — đối chiếu hẹn ngủ và tên chương sau ghép
+
+Gate Android toàn phần phát hiện fixture phản hồi còn dựng riêng mode cũ và fixture ghi nền còn đọc tiến độ đếm ngược. Bài kiểm dùng lựa chọn hẹn giờ thật, giữ lựa chọn sau hết lượt và kiểm bản lưu theo sách/hồ sơ; kiểm chặn đĩa vẫn giữ nguyên. Tên xem trước TXT được đối chiếu với bộ nhập Python hiện hành, kèm kiểm nguyên dòng nguồn và thứ tự. Bộ nhập Kotlin giữ mã quyển khi áp tên hiển thị; ca hai quyển kiểm tên, mã quyển và nguyên chữ.
+
+Kiểm nhắm hẹn ngủ/nhập sách: 126 test ở 9 lớp, 0 lỗi, 0 bỏ qua. Ca CastCloseTest tái hiện lỗi đóng đồng thời với lượt hỏi trạng thái trước sửa; thao tác đóng nay dùng cùng khóa thiết bị và lượt hỏi kiểm lại phiên còn hoạt động sau khi có khóa. Kiểm Cast/DLNA cùng ảnh chuẩn xuất sách, nhạc và cài đặt dùng Verify; không nới ngưỡng. 12 ảnh được đối chiếu trực quan theo thay đổi nhãn M4B, ảnh nhạc hoàn tất và khoảng cách hàng thao tác; bài kiểm ảnh nhạc chờ ảnh sẵn sàng trước chụp.

@@ -9,6 +9,8 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [0.4.173] - 2026-11-15
 
+- Giữ đúng quyển khi nhận tên chương từ nội dung; đóng phiên loa/TV đồng bộ với lượt hỏi trạng thái đang chạy.
+
 - Nút tải nhạc rõ trạng thái dừng/đã tải, xoá có xác nhận; báo đang chờ và đang đệm, nghe trọn bài kèm thanh tua trên cả ba giao diện.
 
 - Làm rõ nút Thêm giọng, hàng hành động, liên kết và lựa chọn trên điện thoại, web và máy tính.

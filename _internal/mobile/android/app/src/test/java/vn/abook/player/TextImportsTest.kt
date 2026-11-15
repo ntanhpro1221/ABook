@@ -345,7 +345,14 @@ class TextImportsTest {
         val staged = stageFolder("txt")
         assertEquals("txt", staged.name)
         val preview = TextImports.preview(staged.ref)
-        assertEquals(titles(sharedPreview("txt")), titles(preview))
+        // The live Python importer resolves display names; the raw writer fixture keeps source titles.
+        assertEquals(listOf("Chương 1", "Sương sớm", "Chương hai", "9 Ngoại truyện", "Chương ba", "Chương 6"), titles(preview))
+        val source = sharedPreview("txt").getJSONArray("chapters")
+        val actual = preview.getJSONArray("chapters")
+        assertEquals(source.length(), actual.length())
+        for (index in 0 until source.length()) {
+            assertEquals(source.getJSONObject(index).getString("firstLine"), actual.getJSONObject(index).getString("firstLine"))
+        }
         val created = TextImports.create(staged.ref, "Truyện của tôi", cache)
         assertEquals(sharedExpected("txt").getString("contentKey"), created.getString("id"))
         assertEquals("Truyện của tôi", Store.manifest(created.getString("id"))!!.getString("title"))

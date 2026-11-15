@@ -263,7 +263,7 @@ object BookImport {
             val display = if (book.textHasTitle) ChapterTitles.display(chapter.title, chapter.text, positions[index])
                 else if (chapter.title == book.title) ChapterTitles.explicitHeading(chapter.text) else ""
             if (display.isNotEmpty() && display != chapter.title) {
-                book.chapters[index] = Chapter(chapter.title, chapter.text, chapter.short, display, chapter.matter)
+                book.chapters[index] = Chapter(chapter.title, chapter.text, chapter.short, display, chapter.matter, chapter.volume)
             }
         }
         for ((index, chapter) in book.chapters.withIndex()) {
