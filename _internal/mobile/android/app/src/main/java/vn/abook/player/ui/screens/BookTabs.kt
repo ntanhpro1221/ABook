@@ -388,8 +388,9 @@ private fun NarratorRow(row: NarratorLine, redo: Int) {
         Spacer(Modifier.width(Dim.s12))
         Column(Modifier.weight(1f)) {
             BasicText(row.voice, style = Abook.type.bodyStrong)
-            if (row.scope.isNotEmpty()) BasicText(row.scope, style = Abook.type.caption.copy(color = colors.text2), modifier = Modifier.padding(top = 4.dp))
-            BasicText(Cast.narratorRowCount(row, redo), style = Abook.type.caption.copy(color = colors.text2), modifier = Modifier.padding(top = Dim.s4))
+            // Dòng phụ dưới tên giọng: RowHint như mọi hàng; số câu · thời lượng đổi khi làm lại nên ticking (web TickingValue).
+            Reveal(row.scope.isNotEmpty()) { RowHint(row.scope, Modifier.padding(top = Dim.s4)) }
+            RowHint(Cast.narratorRowCount(row, redo), Modifier.padding(top = Dim.s4), ticking = true)
         }
     }
 }

@@ -121,7 +121,7 @@ internal fun LazyListScope.castTab(cast: StudioCastState, data: CastData, state:
                 Modifier, if (row.main) ({ openVoiceSheet(state, sheets, "NARRATOR", WorkText.CAST_NARRATOR) }) else null,
                 if (row.main) "studio_cast_narrator" else "studio_cast_narrator_${row.key}",
                 hint = (if (row.main) narrator.pendingVoice?.let { WorkText.pendingVoice(it.label) } else null)
-                    ?: listOf(row.scope, WorkText.castLines(row.lines)).filter { it.isNotEmpty() }.joinToString(" · "),
+                    ?: listOf(row.scope, WorkText.castLines(row.lines)).dotJoined(),
                 hintColor = Abook.colors.text2, chevron = row.main,
             )
             RowLine()

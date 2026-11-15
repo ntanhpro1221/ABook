@@ -176,9 +176,9 @@ Item {
                                                 font.pixelSize: Theme.sizeBody
                                                 font.weight: Theme.weightMedium
                                             }
-                                            Text {
+                                            Text { id: castNarratorScope;
                                                 objectName: "castNarratorScope"
-                                                visible: text !== ""
+                                                Reveal { shown: castNarratorScope.text !== "" }
                                                 width: parent.width
                                                 text: narratorRow.modelData.scope
                                                 color: Theme.text2
