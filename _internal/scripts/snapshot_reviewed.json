@@ -232,36 +232,36 @@
     "reason": "Reviewed old/new export_done_mp3_light.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
   },
   "_internal/mobile/android/app/src/test/snapshots/export_not_started_dark.png": {
-    "sha256": "596e0614a93bc34eb216a9103573eaa463afe2d4563d9a71e5c4d5cd0bd6ced4",
-    "reason": "Visually compared base and after in affordance review-04.jpg: action ink, navigation chevrons, persistent choice rings and read-along play cues; no frame or shadow change."
+    "sha256": "667d11aa5cb0c14ed07d2848dcd164dfaf3612e579b1924f8b0ef5121a1f7c2b",
+    "reason": "Visually reviewed actual/reference/diff; merged volume-aware M4B label, completed generated music artwork, or shared action-row spacing. Exact previously reviewed bytes reconciled after integration; no new rendering or baseline change."
   },
   "_internal/mobile/android/app/src/test/snapshots/export_not_started_light.png": {
-    "sha256": "d3e09239c66576088fb6f03c4c09fe90847a5c797ece0c696a5fb869af775e55",
-    "reason": "Visually compared base and after in affordance review-04.jpg: action ink, navigation chevrons, persistent choice rings and read-along play cues; no frame or shadow change."
+    "sha256": "a4601692f2a2a9cee07cecdb53dffb8905f57f6e1368e130f99aecf376659e4c",
+    "reason": "Visually reviewed actual/reference/diff; merged volume-aware M4B label, completed generated music artwork, or shared action-row spacing. Exact previously reviewed bytes reconciled after integration; no new rendering or baseline change."
   },
   "_internal/mobile/android/app/src/test/snapshots/export_options_fresh_dark.png": {
-    "sha256": "1eda0915b1a2353d61cbc5a7f6360fc00704b8ffe68eaccdb411ad9d83491037",
-    "reason": "Visually compared base and after in affordance review-04.jpg: action ink, navigation chevrons, persistent choice rings and read-along play cues; no frame or shadow change."
+    "sha256": "2dedfa7cb89344f13226ff4bdbad4ba5959c79e672f0d882efb23f1d5ae5c3a0",
+    "reason": "Visually reviewed actual/reference/diff; merged volume-aware M4B label, completed generated music artwork, or shared action-row spacing. Exact previously reviewed bytes reconciled after integration; no new rendering or baseline change."
   },
   "_internal/mobile/android/app/src/test/snapshots/export_options_fresh_light.png": {
-    "sha256": "9c3c53a3a12b70bcbb21e6d91511cf6632fcc13361e7defc65010c409dda41d8",
-    "reason": "Visually compared base and after in affordance review-04.jpg: action ink, navigation chevrons, persistent choice rings and read-along play cues; no frame or shadow change."
+    "sha256": "6b6e9eeafd145c149626ea92ea38a764cffab2a388c4d4dcdd16944b0975cb7e",
+    "reason": "Visually reviewed actual/reference/diff; merged volume-aware M4B label, completed generated music artwork, or shared action-row spacing. Exact previously reviewed bytes reconciled after integration; no new rendering or baseline change."
   },
   "_internal/mobile/android/app/src/test/snapshots/export_options_m4b_dark.png": {
-    "sha256": "ce7a4b5e5d69d539f44fd4b1b3bcc979b64bfe53d53d95958957829c36c0e18a",
-    "reason": "Visually compared base and after in affordance review-04.jpg: action ink, navigation chevrons, persistent choice rings and read-along play cues; no frame or shadow change."
+    "sha256": "fd0cec51df4e38a11adec74d86a9a621410c3ef6b6d9c01c11eb4fc8d4694b2b",
+    "reason": "Visually reviewed actual/reference/diff; merged volume-aware M4B label, completed generated music artwork, or shared action-row spacing. Exact previously reviewed bytes reconciled after integration; no new rendering or baseline change."
   },
   "_internal/mobile/android/app/src/test/snapshots/export_options_m4b_light.png": {
-    "sha256": "5494fd864e80722f069daeb410f261348452b1da3baacaf201fb904a3b5bbe53",
-    "reason": "Visually compared base and after in affordance review-04.jpg: action ink, navigation chevrons, persistent choice rings and read-along play cues; no frame or shadow change."
+    "sha256": "1c74f697a1a70f6803825dc992192abe9262b032146887735aa8597f413d4b70",
+    "reason": "Visually reviewed actual/reference/diff; merged volume-aware M4B label, completed generated music artwork, or shared action-row spacing. Exact previously reviewed bytes reconciled after integration; no new rendering or baseline change."
   },
   "_internal/mobile/android/app/src/test/snapshots/export_options_mp3_dark.png": {
-    "sha256": "43d8ea6810e5517e2fe5ff13eaf60bbbb6dd47a384908a2014cf7595e9ebe428",
-    "reason": "Visually compared base and after in affordance review-04.jpg: action ink, navigation chevrons, persistent choice rings and read-along play cues; no frame or shadow change."
+    "sha256": "1ef7b68520dc2ec5649b17d1fc647252bccc742a8448cca1698b3e11d63bff10",
+    "reason": "Visually reviewed actual/reference/diff; merged volume-aware M4B label, completed generated music artwork, or shared action-row spacing. Exact previously reviewed bytes reconciled after integration; no new rendering or baseline change."
   },
   "_internal/mobile/android/app/src/test/snapshots/export_options_mp3_light.png": {
-    "sha256": "6b3297e82a4112c79372ef65b52e9a6b02adac2b42f95d0db7e73a0d83fb31ea",
-    "reason": "Visually compared base and after in affordance review-04.jpg: action ink, navigation chevrons, persistent choice rings and read-along play cues; no frame or shadow change."
+    "sha256": "d7e25462fd588b2a6ec716f13db658ed8861fb0e923780a16eed2c541e2f72dd",
+    "reason": "Visually reviewed actual/reference/diff; merged volume-aware M4B label, completed generated music artwork, or shared action-row spacing. Exact previously reviewed bytes reconciled after integration; no new rendering or baseline change."
   },
   "_internal/mobile/android/app/src/test/snapshots/export_options_no_voice_dark.png": {
     "sha256": "b3fa8f7e67192e02351dad2ea2d75d982d70d1e24c4d7ff6715131b0a7af8cc5",
@@ -676,8 +676,8 @@
     "reason": "Opened the before/after contact sheet in this integration session. Intentional action ink, radio outlines, chevrons and music artwork retained; labels and primary controls remain readable."
   },
   "_internal/mobile/android/app/src/test/snapshots/shell_push_mid_light.png": {
-    "sha256": "4a158325da531e57f0e38ed18ab31f42ee4c1e8578f1e9d42625ad87c392aaf5",
-    "reason": "Opened the before/after contact sheet in this integration session. Intentional action ink, radio outlines, chevrons and music artwork retained; labels and primary controls remain readable. This is the deliberate intermediate book transition frame, with the library and incoming page both drawn."
+    "sha256": "818c52bee8799c480c159f639249764dd0f514fabce6c62fa129e2df8addd996",
+    "reason": "Both full-size before and after images inspected. Identical library/cover geometry; page text and controls use the new reveal denominator and ModulateAlpha at this deliberate intermediate frame. No final-screen geometry baseline changed. Exact previously reviewed bytes reconciled after integration; no new rendering or baseline change."
   },
   "_internal/mobile/android/app/src/test/snapshots/shell_read_along_from_book_light.png": {
     "sha256": "ff11a21ca3f42e01d6fee1641d73683f98117233cff9efbd161eb45fe3351cdf",
@@ -993,19 +993,35 @@
   },
   "_internal/mobile/android/app/src/test/snapshots/np_picker_audio_dark.png": {
     "sha256": "a863b06472d77b3fa75af600c7a28341c7219f9822d67f15171a25ce3e9bb44d",
-    "reason": "Opened the before/after contact sheet in this integration session. Intentional action ink, radio outlines, chevrons and music artwork retained; labels and primary controls remain readable. The established full-scroll extent is retained; audio grouping and ruler controls remain present."
+    "reason": "Opened the before/after contact sheet in this integration session. Intentional action ink, radio outlines, chevrons and music artwork retained; labels and primary controls remain readable. The established full-scroll extent is retained; audio grouping and ruler controls remain present.",
+    "scroll_dimensions": [
+      1080,
+      10200
+    ]
   },
   "_internal/mobile/android/app/src/test/snapshots/np_picker_audio_font130_dark.png": {
     "sha256": "4d73526fe8a648f7c789a02bfd54b5d7457fede1f9ea30f075e8abf47aa33c49",
-    "reason": "Opened the before/after contact sheet in this integration session. Intentional action ink, radio outlines, chevrons and music artwork retained; labels and primary controls remain readable. The established full-scroll extent is retained; audio grouping and ruler controls remain present."
+    "reason": "Opened the before/after contact sheet in this integration session. Intentional action ink, radio outlines, chevrons and music artwork retained; labels and primary controls remain readable. The established full-scroll extent is retained; audio grouping and ruler controls remain present.",
+    "scroll_dimensions": [
+      1080,
+      10200
+    ]
   },
   "_internal/mobile/android/app/src/test/snapshots/np_picker_audio_font130_light.png": {
     "sha256": "d5a5eed6b0fa10a19ec7ebfe28aa4580d8c8f81def09cce687e82a13fc1831b5",
-    "reason": "Opened the before/after contact sheet in this integration session. Intentional action ink, radio outlines, chevrons and music artwork retained; labels and primary controls remain readable. The established full-scroll extent is retained; audio grouping and ruler controls remain present."
+    "reason": "Opened the before/after contact sheet in this integration session. Intentional action ink, radio outlines, chevrons and music artwork retained; labels and primary controls remain readable. The established full-scroll extent is retained; audio grouping and ruler controls remain present.",
+    "scroll_dimensions": [
+      1080,
+      10200
+    ]
   },
   "_internal/mobile/android/app/src/test/snapshots/np_picker_audio_light.png": {
     "sha256": "9214d916107d474ebc59b3562393e2a6eaba95a11b52baab5073df116fb99fc1",
-    "reason": "Opened the before/after contact sheet in this integration session. Intentional action ink, radio outlines, chevrons and music artwork retained; labels and primary controls remain readable. The established full-scroll extent is retained; audio grouping and ruler controls remain present."
+    "reason": "Opened the before/after contact sheet in this integration session. Intentional action ink, radio outlines, chevrons and music artwork retained; labels and primary controls remain readable. The established full-scroll extent is retained; audio grouping and ruler controls remain present.",
+    "scroll_dimensions": [
+      1080,
+      10200
+    ]
   },
   "_internal/mobile/android/app/src/test/snapshots/np_picker_look_font130_dark.png": {
     "sha256": "3925d6108ca691d69191ed9c901c1e7b017990b9f8684f7dc09efaaf8cc8f5a3",
@@ -1076,12 +1092,12 @@
     "reason": "Visually compared base and after in affordance review-04.jpg: action ink, navigation chevrons, persistent choice rings and read-along play cues; no frame or shadow change."
   },
   "_internal/mobile/android/app/src/test/snapshots/export_options_past_dark.png": {
-    "sha256": "45e52491f30692d97f29ea6289edbdccf21d08266c906d63416183bbeeee9516",
-    "reason": "Visually compared base and after in affordance review-05.jpg: action ink, navigation chevrons, persistent choice rings and read-along play cues; no frame or shadow change."
+    "sha256": "5946342de0a0565650d0955401019ee9de808117d72182801bf45d21045d2f44",
+    "reason": "Visually reviewed actual/reference/diff; merged volume-aware M4B label, completed generated music artwork, or shared action-row spacing. Exact previously reviewed bytes reconciled after integration; no new rendering or baseline change."
   },
   "_internal/mobile/android/app/src/test/snapshots/export_options_past_light.png": {
-    "sha256": "551ddba78c881b1bdb5585e68e844af4d17ba857fcf9494eaef38631c7ab71a8",
-    "reason": "Visually compared base and after in affordance review-05.jpg: action ink, navigation chevrons, persistent choice rings and read-along play cues; no frame or shadow change."
+    "sha256": "e4d5624ffb71d182bd799309d4190d3a30f035495a5d48b42cc8182cd808115f",
+    "reason": "Visually reviewed actual/reference/diff; merged volume-aware M4B label, completed generated music artwork, or shared action-row spacing. Exact previously reviewed bytes reconciled after integration; no new rendering or baseline change."
   },
   "_internal/mobile/android/app/src/test/snapshots/filters_360_dark.png": {
     "sha256": "f83cac0e4969b45910a8f7f5a2c835ab1acc79a0edf0497086cb3e1b1073f8ff",
@@ -1164,8 +1180,8 @@
     "reason": "Visually compared base and after in affordance review-15.jpg: action ink, navigation chevrons, persistent choice rings and read-along play cues; no frame or shadow change."
   },
   "_internal/mobile/android/app/src/test/snapshots/settings_memory_inline_dark.png": {
-    "sha256": "96313d8686f092d651809dbef94daca39f8a81a0a70c09338bf8517af0dfeb45",
-    "reason": "Visually compared base and after in affordance review-15.jpg: action ink, navigation chevrons, persistent choice rings and read-along play cues; no frame or shadow change."
+    "sha256": "9e29afaa7cbaa2556b3eb4092d99f7ce313ab9d99ff4c7979550146701dcbefd",
+    "reason": "Visually reviewed actual/reference/diff; merged volume-aware M4B label, completed generated music artwork, or shared action-row spacing. Exact previously reviewed bytes reconciled after integration; no new rendering or baseline change."
   },
   "_internal/mobile/android/app/src/test/snapshots/settings_sleep_dark.png": {
     "sha256": "4854d6651142eee51116056bcc6a137cce24cb46419f377612d3232ac33ad336",
@@ -1300,8 +1316,8 @@
     "reason": "Inspected all ten exact combined-source before/after images on the gate-repair contact sheet; additionally opened buffering dark at full native resolution. Token spacing aligns the listening ruler with the play control; download/stop rings stay inside their fixed slots. Titles, metadata, seek track and all state controls remain visible without clipping or overlap. The buffering ring is present after advancing the Compose test clock."
   },
   "_internal/mobile/android/app/src/test/snapshots/music_controls_download_dark.png": {
-    "sha256": "603e6db2a707706dfbdf80e2ec77c16ff4af7b14ee786dd054e689e2ed264abe",
-    "reason": "Inspected the combined-source before/after contact sheet and exact image bytes. Labels and controls remain inside their surfaces; selection marks, icons and shared confirmation rows reflect the integrated musicdl behavior. New music fixture shows the requested download/connecting/buffering/full-playback state; seek/progress and explicit cancel/delete controls are visible."
+    "sha256": "925ae2d5406452b18eada49a0b7ee2cb68f69b30a621a67d99d020dce257801e",
+    "reason": "Visually reviewed actual/reference/diff; merged volume-aware M4B label, completed generated music artwork, or shared action-row spacing. Exact previously reviewed bytes reconciled after integration; no new rendering or baseline change."
   },
   "_internal/mobile/android/app/src/test/snapshots/music_controls_download_light.png": {
     "sha256": "18e6db7f5d3abe7f4a16268077f368dd19bf82f2ba37e5d9edc48536842a4ac5",

@@ -357,9 +357,39 @@ def require_reviewed_snapshot(path: Path) -> None:
             and entry.get("sha256") == hashlib.sha256(path.read_bytes()).hexdigest(),
             f"snapshot review missing or stale: {relative}")
     with Image.open(path) as image:
-        require(image.format == "PNG" and not image.info and 0 < image.width <= 8192 and 0 < image.height <= 8192,
+        standard_size = 0 < image.width <= 8192 and 0 < image.height <= 8192
+        reviewed_scroll = (entry.get("scroll_dimensions") == [image.width, image.height]
+                           and 0 < image.width <= 8192 and 8192 < image.height <= 16384
+                           and image.width * image.height <= 8192 * 8192)
+        require(image.format == "PNG" and not image.info and (standard_size or reviewed_scroll),
                 f"snapshot PNG format/metadata invalid: {relative}")
         image.verify()
+
+
+def require_reviewed_voice_artwork(path: Path) -> None:
+    """Accept only the exact reviewed, generated portraits bundled in both clients."""
+    from PIL import Image
+
+    relative = path.relative_to(REPO).as_posix()
+    roots = ("_internal/abook/assets/voice_avatars/",
+             "_internal/mobile/android/app/src/main/assets/voice_avatars/")
+    require(any(relative.startswith(root) and re.fullmatch(r"voice-[0-9a-f]{8}\.webp", relative[len(root):])
+                for root in roots), f"binary artwork path not permitted: {relative}")
+    registry = REPO / "_internal/scripts/voice_artwork_reviewed.json"
+    require(registry.is_file(), f"artwork review missing: {relative}")
+    entry = json.loads(registry.read_text(encoding="utf-8")).get(relative)
+    data = path.read_bytes()
+    require(isinstance(entry, dict) and len(entry.get("reason", "")) >= 40
+            and entry.get("sha256") == hashlib.sha256(data).hexdigest(),
+            f"artwork review missing or stale: {relative}")
+    require(12 <= len(data) < 32 * 1024 and data[:4] == b"RIFF" and data[8:12] == b"WEBP"
+            and int.from_bytes(data[4:8], "little") + 8 == len(data),
+            f"artwork container invalid: {relative}")
+    with Image.open(path) as image:
+        require(image.format == "WEBP" and image.size == (256, 256) and image.n_frames == 1
+                and not (set(image.info) - {"loop", "background"}),
+                f"artwork format/metadata invalid: {relative}")
+        image.load()
 
 
 def validate_snapshot_proofs(directory: Path, baseline: dict[str, str]) -> dict:
@@ -547,7 +577,10 @@ def worker(name: str, confirm_hash: str | None = None) -> dict:
                 require(not prohibited, f"file riêng tư/audio/khoá trong diff: {relative}")
                 data = path.read_bytes()
                 if b"\0" in data:
-                    require_reviewed_snapshot(path)
+                    if path.suffix == ".webp":
+                        require_reviewed_voice_artwork(path)
+                    else:
+                        require_reviewed_snapshot(path)
                     continue
                 lines = source_lines(path, comparison["base"])
                 if any(secret.search(line) for line in lines):

@@ -421,6 +421,73 @@ def test_corpus_tool_namespace_is_distinct_from_private_corpus_data(tmp_path, mo
             gate.worker("diff-safety")
 
 
+@pytest.mark.parametrize("prefix", ["_internal/abook/assets/voice_avatars/",
+                                     "_internal/mobile/android/app/src/main/assets/voice_avatars/"])
+def test_voice_artwork_requires_exact_reviewed_clean_bytes(tmp_path, monkeypatch, prefix):
+    from PIL import Image
+
+    monkeypatch.setattr(gate, "REPO", tmp_path)
+    relative = prefix + "voice-1234abcd.webp"
+    path = tmp_path / relative
+    path.parent.mkdir(parents=True)
+    registry = tmp_path / "_internal/scripts/voice_artwork_reviewed.json"
+    registry.parent.mkdir(parents=True)
+    def review():
+        registry.write_text(json.dumps({relative: {
+            "sha256": hashlib.sha256(path.read_bytes()).hexdigest(),
+            "reason": "Reviewed generated illustration with no source text or private metadata.",
+        }}), encoding="utf-8")
+    Image.new("RGB", (256, 256), "white").save(path, format="WEBP")
+    with pytest.raises(ValueError, match="review missing"):
+        gate.require_reviewed_voice_artwork(path)
+    review()
+    gate.require_reviewed_voice_artwork(path)
+    Image.new("RGB", (256, 256), "black").save(path, format="WEBP")
+    with pytest.raises(ValueError, match="stale"):
+        gate.require_reviewed_voice_artwork(path)
+    review()
+    with path.open("ab") as stream:
+        stream.write(b"private trailing data")
+    review()
+    with pytest.raises(ValueError, match="container invalid"):
+        gate.require_reviewed_voice_artwork(path)
+    for size, metadata in [((128, 256), {}), ((256, 256), {"xmp": b"private metadata"})]:
+        Image.new("RGB", size).save(path, format="WEBP", **metadata)
+        review()
+        with pytest.raises(ValueError, match="format/metadata invalid"):
+            gate.require_reviewed_voice_artwork(path)
+    with pytest.raises(ValueError, match="path not permitted"):
+        gate.require_reviewed_voice_artwork(tmp_path / "private/voice-1234abcd.webp")
+
+
+def test_tall_scroll_snapshot_requires_exact_bounded_dimensions(tmp_path, monkeypatch):
+    from PIL import Image
+
+    monkeypatch.setattr(gate, "REPO", tmp_path)
+    relative = "_internal/mobile/android/app/src/test/snapshots/scroll.png"
+    path = tmp_path / relative
+    path.parent.mkdir(parents=True)
+    registry = tmp_path / "_internal/scripts/snapshot_reviewed.json"
+    registry.parent.mkdir(parents=True)
+    Image.new("RGB", (32, 9000), "white").save(path)
+    def review(dimensions=None):
+        row = {"sha256": hashlib.sha256(path.read_bytes()).hexdigest(),
+               "reason": "Visually reviewed complete scroll content and all controls at its exact dimensions."}
+        if dimensions is not None:
+            row["scroll_dimensions"] = dimensions
+        registry.write_text(json.dumps({relative: row}), encoding="utf-8")
+    for dimensions in (None, [32, 9001]):
+        review(dimensions)
+        with pytest.raises(ValueError, match="format/metadata invalid"):
+            gate.require_reviewed_snapshot(path)
+    review([32, 9000])
+    gate.require_reviewed_snapshot(path)
+    Image.new("RGB", (32, 16385), "white").save(path)
+    review([32, 16385])
+    with pytest.raises(ValueError, match="format/metadata invalid"):
+        gate.require_reviewed_snapshot(path)
+
+
 def test_binary_diff_requires_exact_reviewed_snapshot_without_metadata(tmp_path, monkeypatch):
     from PIL import Image, PngImagePlugin
 
