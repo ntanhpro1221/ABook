@@ -213,6 +213,7 @@
       "web": [
         "listen/LibraryScreen.tsx",
         "listen/BookScreen.tsx",
+        "listen/castNarrator.ts",
         "studio/CastEdits.tsx",
         "studio/MergePeople.tsx",
         "listen/bookMenu.ts",

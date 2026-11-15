@@ -367,10 +367,34 @@ export interface CastHistoryView {
   manualOnly: boolean;
 }
 
+/** Một chương trong cast.json: mã chương và tên như tab Chương hiện. */
+export interface CastChapter { id: number; title: string }
+
+/** Giọng kể khác giọng chính ở vài chương (store._narrator_chapter_voices). */
+export interface NarratorChapterVoice { voice: string; profile?: { preset: string; label?: string } | null; chapters: CastChapter[]; lines: number; seconds: number }
+
+export interface CastNarrator {
+  voice: string;
+  lines: number;
+  seconds: number;
+  chapterVoices?: NarratorChapterVoice[];
+  /** Chương giọng chính không đọc câu nào ("Toàn sách trừ …"). */
+  exceptChapters?: CastChapter[];
+  /** Số câu / giây của riêng giọng chính. */
+  voiceLines?: number;
+  voiceSeconds?: number;
+  /** Giọng người kể người nghe đã chọn ở Studio mà dây chuyền chưa áp (store.cast). */
+  pendingVoice?: { preset: string; label?: string; gender: string } | null;
+  /** Câu kể chờ thu lại theo sửa của người nghe. */
+  redo?: number;
+}
+
+/** Một hàng của danh sách "Người kể chuyện": giọng, phạm vi chương (chỉ khi có hơn một giọng), số câu, giây. */
+export interface NarratorRowView { key: string; /** Tên giọng để hiện. */ voice: string; /** Khoá giọng (nghe thử). */ preset: string; main: boolean; scope: string; lines: number; seconds: number }
+
 export interface Cast {
   castHistory?: CastHistoryView;
-  /** `pendingVoice`: giọng người kể người nghe đã chọn ở Studio mà dây chuyền chưa áp (store.cast). */
-  narrator: { chapterVoices?: string[]; voice: string; lines: number; seconds: number; pendingVoice?: { preset: string; label?: string; gender: string } | null; /** Câu kể chờ thu lại theo sửa của người nghe. */ redo?: number };
+  narrator: CastNarrator;
   characters: CastMember[];
   extras: CastMember[];
   /** Studio, phần nối tiếp: giọng mang từ phần trước của những người chưa nói câu nào ở phần này. */

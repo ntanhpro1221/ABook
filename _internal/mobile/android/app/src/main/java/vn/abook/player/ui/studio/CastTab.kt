@@ -109,17 +109,21 @@ internal fun LazyListScope.castTab(cast: StudioCastState, data: CastData, state:
             }
         }
     }
-    item("cast_narrator", "member") {
-        val narrator = loaded.narrator
+    // Người kể là một danh sách như các vai: mỗi giọng kể một hàng. Hàng giọng chính mở "Đổi giọng" người kể; giọng kể theo chương
+    // đi theo người kể "tôi" của chương ấy, không đổi riêng.
+    val narrator = loaded.narrator
+    val narrators = vn.abook.player.ui.data.Cast.narratorRows(narrator.voice, narrator.chapterVoices, narrator.exceptChapters, narrator.voiceLines, narrator.voiceSeconds)
+    item("cast_narrator_title", "section") { SectionTitle(WorkText.CAST_NARRATOR, first = true, modifier = Modifier.then(slide)) }
+    items(narrators, key = { "cast_narrator_${it.key}" }, contentType = { "member" }) { row ->
         Column(Modifier.fillMaxWidth().then(slide)) {
-            SectionTitle(WorkText.CAST_NARRATOR, first = true)
             ListItem(
-                narrator.profile?.label ?: narrator.voice.ifEmpty { WorkText.CAST_NO_VOICE },
-                Modifier, { openVoiceSheet(state, sheets, "NARRATOR", WorkText.CAST_NARRATOR) }, "studio_cast_narrator",
-                hint = narrator.pendingVoice?.let { WorkText.pendingVoice(it.label) } ?: WorkText.castLines(narrator.lines),
-                hintColor = Abook.colors.text2, chevron = true,
+                if (row.main) narrator.profile?.label ?: narrator.voice.ifEmpty { WorkText.CAST_NO_VOICE } else row.voice,
+                Modifier, if (row.main) ({ openVoiceSheet(state, sheets, "NARRATOR", WorkText.CAST_NARRATOR) }) else null,
+                if (row.main) "studio_cast_narrator" else "studio_cast_narrator_${row.key}",
+                hint = (if (row.main) narrator.pendingVoice?.let { WorkText.pendingVoice(it.label) } else null)
+                    ?: listOf(row.scope, WorkText.castLines(row.lines)).filter { it.isNotEmpty() }.joinToString(" · "),
+                hintColor = Abook.colors.text2, chevron = row.main,
             )
-            narrator.chapterVoices.forEach { RowHint(it) }
             RowLine()
         }
     }

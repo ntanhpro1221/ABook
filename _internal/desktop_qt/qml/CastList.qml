@@ -28,6 +28,7 @@ Item {
     readonly property bool hasPeople: characters.length > 0 || extras.length > 0 || carried.length > 0
     readonly property bool isEmpty: status === "failed" || (status === "ready" && !hasPeople)
     readonly property var narrator: cast && cast.narrator ? cast.narrator : ({})
+    readonly property var narratorRows: Logic.narratorRows(narrator)
     property int generation: 0
     implicitHeight: embedded ? flick.contentHeight : 0
     signal request(string kind, var person)
@@ -134,88 +135,102 @@ Item {
                     width: parent.width
                     topPadding: Theme.s16
                     spacing: Theme.s16
-                    // Người kể chuyện (+ lời dưới hàng ấy do nơi dùng đưa vào)
+                    // Người kể chuyện là một danh sách như Vai chính: mỗi giọng kể một hàng (+ lời dưới danh sách do nơi dùng đưa vào)
                     Column {
                         width: parent.width
-                        Item {
-                            id: narratorRow
-                            objectName: "castNarrator"
+                        DevicesFold {
                             width: parent.width
-                            height: Math.max(40, narratorTexts.height) + 16
-                            readonly property string voice: root.narrator.voice || ""
-                            readonly property real buttonsWidth: narratorButtons.width
-                            Rectangle {
-                                x: 0; y: 8; width: 40; height: 40; radius: width / 2
-                                color: Theme.accentSoft
-                                Icon { anchors.centerIn: parent; name: "book-open-text"; size: 20; color: Theme.accentText }
-                            }
+                            storageKey: root.fold("narrator")
+                            title: S.s_nguoi_ke_chuyen_c0c2c504
+                            summary: S.s_0_giong_7be1af23(root.narratorRows.length)
+                            defaultOpen: true
                             Column {
-                                id: narratorTexts
-                                x: 52
-                                y: 8
-                                width: Math.max(0, narratorRow.width - x - 12 - narratorRow.buttonsWidth)
-                                spacing: 4
-                                Text {
-                                    width: parent.width
-                                    text: S.s_nguoi_ke_chuyen_c0c2c504
-                                    color: Theme.text2
-                                    wrapMode: Text.WrapAtWordBoundaryOrAnywhere
-                                    font.pixelSize: Theme.sizeCaption
-                                    font.weight: Theme.weightMedium
-                                    font.capitalization: Font.AllUppercase
-                                    font.letterSpacing: 0.72
-                                }
-                                Text {
-                                    objectName: "castNarratorVoice"
-                                    width: parent.width
-                                    text: narratorRow.voice || S.s_mac_dinh_9a1af367
-                                    color: Theme.text
-                                    wrapMode: Text.WrapAtWordBoundaryOrAnywhere
-                                    font.pixelSize: Theme.sizeBody
-                                    font.weight: Theme.weightMedium
-                                }
-                                Text { id: castNarratorPending;
-                                    objectName: "castNarratorPending"
-                                    Reveal { shown: Boolean(root.caps.voice) && castNarratorPending.text !== "" }
-                                    width: parent.width
-                                    text: Logic.narratorPending(root.narrator)
-                                    color: Theme.text2
-                                    wrapMode: Text.WrapAtWordBoundaryOrAnywhere
-                                    font.pixelSize: Theme.sizeCaption
-                                    font.weight: Theme.weightMedium
-                                }
-                                Text {
-                                    width: parent.width
-                                    text: Logic.narratorLine(root.narrator)
-                                    color: Theme.text2
-                                    wrapMode: Text.WrapAtWordBoundaryOrAnywhere
-                                    font.pixelSize: Theme.sizeCaption
-                                }
-                            }
-                            Row {
-                                id: narratorButtons
-                                x: narratorRow.width - width
-                                y: 8 + (40 - 36) / 2
-                                spacing: 4
-                                CastSample {
-                                    objectName: "castNarratorSample"
-                                    Reveal { shown: narratorRow.voice !== "" }
-                                    clipId: Logic.voiceId(narratorRow.voice)
-                                    url: Logic.routed(Logic.voiceUrl(narratorRow.voice), root.peer)
-                                    label: S.s_nghe_giong_c10b4bc4 + narratorRow.voice
-                                }
-                                IconButton {
-                                    objectName: "castNarratorVoiceButton"
-                                    Reveal { shown: Boolean(root.caps.voice) && Boolean(root.caps.narrator) }
-                                    implicitWidth: 36
-                                    implicitHeight: 36
-                                    icon: "sliders-horizontal"
-                                    iconSize: 16
-                                    ink: Theme.text2
-                                    hoverInk: Theme.text
-                                    tip: S.s_doi_giong_nguoi_ke_c2afb757
-                                    Accessible.name: S.s_doi_giong_nguoi_ke_c2afb757
-                                    onActivated: root.request("narrator", ({name: "NARRATOR", displayName: S.s_nguoi_ke_50063a62}))
+                                width: parent.width
+                                Repeater {
+                                    model: root.narratorRows
+                                    Item {
+                                        id: narratorRow
+                                        required property var modelData
+                                        objectName: modelData.main ? "castNarrator" : "castNarratorChapter"
+                                        width: parent.width
+                                        height: Math.max(40, narratorTexts.height) + 24
+                                        readonly property string voice: modelData.preset
+                                        readonly property real buttonsWidth: narratorButtons.width
+                                        Rectangle {
+                                            x: 0; y: 12; width: 40; height: 40; radius: width / 2
+                                            color: Theme.accentSoft
+                                            Icon { anchors.centerIn: parent; name: "book-open-text"; size: 20; color: Theme.accentText }
+                                        }
+                                        Column {
+                                            id: narratorTexts
+                                            x: 52
+                                            y: 12
+                                            width: Math.max(0, narratorRow.width - x - 12 - narratorRow.buttonsWidth)
+                                            spacing: 4
+                                            Text {
+                                                objectName: narratorRow.modelData.main ? "castNarratorVoice" : "castNarratorChapterVoice"
+                                                width: parent.width
+                                                text: narratorRow.modelData.voice
+                                                color: Theme.text
+                                                wrapMode: Text.WrapAtWordBoundaryOrAnywhere
+                                                font.pixelSize: Theme.sizeBody
+                                                font.weight: Theme.weightMedium
+                                            }
+                                            Text {
+                                                objectName: "castNarratorScope"
+                                                visible: text !== ""
+                                                width: parent.width
+                                                text: narratorRow.modelData.scope
+                                                color: Theme.text2
+                                                wrapMode: Text.WrapAtWordBoundaryOrAnywhere
+                                                font.pixelSize: Theme.sizeCaption
+                                            }
+                                            Text { id: castNarratorPending;
+                                                objectName: narratorRow.modelData.main ? "castNarratorPending" : "castNarratorChapterPending"
+                                                Reveal { shown: Boolean(root.caps.voice) && castNarratorPending.text !== "" }
+                                                width: parent.width
+                                                text: narratorRow.modelData.main ? Logic.narratorPending(root.narrator) : ""
+                                                color: Theme.text2
+                                                wrapMode: Text.WrapAtWordBoundaryOrAnywhere
+                                                font.pixelSize: Theme.sizeCaption
+                                                font.weight: Theme.weightMedium
+                                            }
+                                            Text {
+                                                objectName: "castNarratorCount"
+                                                width: parent.width
+                                                text: Logic.narratorRowLine(narratorRow.modelData, root.narrator.redo)
+                                                color: Theme.text2
+                                                wrapMode: Text.WrapAtWordBoundaryOrAnywhere
+                                                font.pixelSize: Theme.sizeCaption
+                                            }
+                                        }
+                                        Row {
+                                            id: narratorButtons
+                                            x: narratorRow.width - width
+                                            y: 12 + (40 - 36) / 2
+                                            spacing: 4
+                                            CastSample {
+                                                objectName: narratorRow.modelData.main ? "castNarratorSample" : "castNarratorChapterSample"
+                                                Reveal { shown: narratorRow.voice !== "" }
+                                                clipId: Logic.voiceId(narratorRow.voice)
+                                                url: Logic.routed(Logic.voiceUrl(narratorRow.voice), root.peer)
+                                                label: S.s_nghe_giong_c10b4bc4 + narratorRow.modelData.voice
+                                            }
+                                            IconButton {
+                                                objectName: narratorRow.modelData.main ? "castNarratorVoiceButton" : "castNarratorChapterButton"
+                                                Reveal { shown: narratorRow.modelData.main && Boolean(root.caps.voice) && Boolean(root.caps.narrator) }
+                                                implicitWidth: 36
+                                                implicitHeight: 36
+                                                icon: "sliders-horizontal"
+                                                iconSize: 16
+                                                ink: Theme.text2
+                                                hoverInk: Theme.text
+                                                tip: S.s_doi_giong_nguoi_ke_c2afb757
+                                                Accessible.name: S.s_doi_giong_nguoi_ke_c2afb757
+                                                onActivated: root.request("narrator", ({name: "NARRATOR", displayName: S.s_nguoi_ke_50063a62}))
+                                            }
+                                        }
+                                    }
                                 }
                             }
                         }
@@ -277,7 +292,7 @@ Item {
                             width: parent.width
                             storageKey: root.fold("extras")
                             title: S.s_vai_phu_6e7c6bce
-                            summary: root.extras.length + S.s_nguoi_trong_mot_canh_516e46e7
+                            summary: Logic.extrasSummary(root.extras)
                             CastPeople {
                                 width: parent.width
                                 bookId: root.bookId

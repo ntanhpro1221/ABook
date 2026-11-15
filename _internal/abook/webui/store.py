@@ -1857,12 +1857,16 @@ def characters_by_key(connection: sqlite3.Connection) -> dict[str, sqlite3.Row]:
     return {speaker_key(str(row["canonical_name"])): row for row in connection.execute("SELECT * FROM characters")}
 
 
-# Vai chính / Vai phụ (tab Nhân vật cả ba nền đọc thẳng `characters` / `extras` của cast.json, không tự xếp lại). Vai phụ là
-# "người chỉ có một cảnh" (BookTabs.castItems, CastList "người trong một cảnh"): vai chính phải lên tiếng ở ít nhất ngần này
-# cảnh (cảnh = đoạn giữa hai dòng ngăn cảnh trong một chương; sách không có dòng ngăn cảnh thì mỗi chương là một cảnh).
+# Vai chính / Vai phụ (tab Nhân vật cả ba nền đọc thẳng `characters` / `extras` của cast.json, không tự xếp lại; file sách là
+# nguồn chuẩn). Luật tất định theo dữ liệu của chính cuốn (`cast_role`): người có tên riêng lên tiếng ở ít nhất ngần này cảnh là
+# vai chính (cảnh = đoạn giữa hai dòng ngăn cảnh trong một chương; sách không có dòng ngăn cảnh thì mỗi chương là một cảnh).
 MAIN_ROLE_MIN_SCENES = 2
 # Cuốn chỉ có một cảnh thì số cảnh không phân biệt được ai: vai chính là người có ít nhất ngần này câu.
 MAIN_ROLE_MIN_LINES_ONE_SCENE = 3
+# Người nói từng ấy câu trở lên, ở từ hai chương, luôn là vai chính - kể cả khi sổ ghi NPC / vai cục bộ (nhân vật không tên mà
+# xuyên suốt cuốn, như "cô gái" kể cả trăm câu): người nghe gặp họ suốt cuốn, không phải vai phụ.
+MAIN_ROLE_MAJOR_LINES = 100
+MAIN_ROLE_MAJOR_CHAPTERS = 2
 
 
 def is_npc_speaker(speaker: str, record: Any = None) -> bool:
@@ -1878,9 +1882,14 @@ def is_npc_speaker(speaker: str, record: Any = None) -> bool:
     return record is not None and "importance" in record.keys() and str(record["importance"] or "") == "minor"
 
 
-def cast_role(speaker: str, record: Any, lines: int, scenes: int, book_scenes: int) -> str:
-    """"characters" (Vai chính) hay "extras" (Vai phụ) - MỘT luật cho cả ba nền. NPC luôn là phụ; người có tên là chính khi lên
-    tiếng ở từ MAIN_ROLE_MIN_SCENES cảnh (cuốn chỉ một cảnh: từ MAIN_ROLE_MIN_LINES_ONE_SCENE câu)."""
+def cast_role(speaker: str, record: Any, lines: int, scenes: int, book_scenes: int, chapters: int = 1) -> str:
+    """"characters" (Vai chính) hay "extras" (Vai phụ) - MỘT luật, chạy khi xuất cast.json. Theo thứ tự:
+    1. từ MAIN_ROLE_MAJOR_LINES câu ở từ MAIN_ROLE_MAJOR_CHAPTERS chương: chính (kể cả NPC);
+    2. NPC (nhãn NPC, vai cục bộ, nhóm vô danh, sổ xếp `minor`): phụ - NPC vài câu không bao giờ là vai chính;
+    3. cuốn chỉ một cảnh: chính khi có từ MAIN_ROLE_MIN_LINES_ONE_SCENE câu;
+    4. còn lại: chính khi lên tiếng ở từ MAIN_ROLE_MIN_SCENES cảnh."""
+    if lines >= MAIN_ROLE_MAJOR_LINES and chapters >= MAIN_ROLE_MAJOR_CHAPTERS:
+        return "characters"
     if is_npc_speaker(speaker, record):
         return "extras"
     if book_scenes < MAIN_ROLE_MIN_SCENES:
@@ -1888,8 +1897,25 @@ def cast_role(speaker: str, record: Any, lines: int, scenes: int, book_scenes: i
     return "characters" if scenes >= MAIN_ROLE_MIN_SCENES else "extras"
 
 
-def _speaker_scenes(connection: sqlite3.Connection) -> tuple[dict[str, int], int]:
-    """({người nói: số cảnh có lời thoại/nội tâm của họ}, số cảnh của cả cuốn)."""
+def cast_gender(speaker: str, record: Any, voice_gender: str) -> str:
+    """Giới ("male" / "female" / "") của một người trong cast.json, từ nguồn có sẵn theo thứ tự: sổ nhân vật (phân vai, kể cả giới
+    người nghe đã đổi và đã áp), chữ chỉ giới trong nhãn ("Người phụ nữ…", "Mẹ…"), rồi giới của giọng đã gán (phán quyết phân vai) -
+    trừ trẻ em, vì trẻ em đọc giọng nữ theo luật cấp giọng chứ không phải vì là nữ. Không nguồn nào nói thì để trống."""
+    from ..character_registry import gender_from_name
+
+    gender = str(record["gender"] or "") if record is not None else ""
+    if gender in ("male", "female"):
+        return gender
+    names = [speaker] + ([str(record["display_name"] or "")] if record is not None else [])
+    gender = gender_from_name(name for name in names if name) or ""
+    if gender:
+        return gender
+    age = str(record["age"] or "") if record is not None and "age" in record.keys() else ""
+    return voice_gender if voice_gender in ("male", "female") and age != "child" else ""
+
+
+def _speaker_scenes(connection: sqlite3.Connection) -> tuple[dict[str, int], int, dict[str, int]]:
+    """({người nói: số cảnh có lời thoại/nội tâm của họ}, số cảnh của cả cuốn, {người nói: số chương có lời của họ})."""
     columns = _segment_columns(connection)
     scene = ("COALESCE(SUM(scene_break) OVER (PARTITION BY chapter_id ORDER BY seq"
              " ROWS BETWEEN UNBOUNDED PRECEDING AND 1 PRECEDING), 0)") if "scene_break" in columns else "0"
@@ -1903,7 +1929,8 @@ def _speaker_scenes(connection: sqlite3.Connection) -> tuple[dict[str, int], int
         book.add(place)
         if str(row["kind"]) != "narration":
             scenes[str(row["speaker"] or "")].add(place)
-    return {speaker: len(places) for speaker, places in scenes.items()}, len(book)
+    return ({speaker: len(places) for speaker, places in scenes.items()}, len(book),
+            {speaker: len({chapter for chapter, _scene in places}) for speaker, places in scenes.items()})
 
 
 def voice_samples(connection: sqlite3.Connection) -> dict[str, int]:
@@ -1925,6 +1952,36 @@ def voice_samples(connection: sqlite3.Connection) -> dict[str, int]:
     }
 
 
+def _narrator_chapter_voices(reads: list[Any], profiles: dict[int, Any], chapter_names_of: dict[int, str]
+                             ) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
+    """(giọng kể khác giọng chính theo chương, chương giọng chính không đọc câu nào). `reads`: (chapter_id, voice_profile_id, lines,
+    seconds) của các câu người kể, theo thứ tự chương. Chương ghi {id, title} - `title` đúng tên tab Chương hiện (chapter_names),
+    không phải số thứ tự trong sổ (cuốn mở bằng "Chương 0" thì số thứ tự lệch tên một đơn vị)."""
+    others: dict[int, dict[str, Any]] = {}
+    main_chapters: set[int] = set()
+    for row in reads:
+        chapter, profile = int(row["chapter_id"]), profiles.get(int(row["voice_profile_id"]))
+        if profile is None or str(profile["voice_key"]).casefold() == "narrator":
+            main_chapters.add(chapter)
+            continue
+        entry = others.setdefault(int(profile["id"]), {
+            "voice": str(profile["preset_name"]), "profile": _voice_view(profile), "chapters": [], "lines": 0, "seconds": 0.0})
+        if chapter not in [item["id"] for item in entry["chapters"]]:
+            entry["chapters"].append({"id": chapter, "title": chapter_names_of.get(chapter, "")})
+        entry["lines"] += int(row["lines"])
+        entry["seconds"] += float(row["seconds"] or 0.0)
+    voices = list(others.values())  # theo chương đầu tiên mỗi giọng đọc (reads đã theo thứ tự chương)
+    for entry in voices:
+        entry["seconds"] = round(entry["seconds"], 1)
+    except_chapters: dict[int, dict[str, Any]] = {}
+    for entry in voices:
+        for item in entry["chapters"]:
+            if item["id"] not in main_chapters:
+                except_chapters.setdefault(item["id"], item)
+    position = {int(row["chapter_id"]): n for n, row in reversed(list(enumerate(reads)))}
+    return voices, sorted(except_chapters.values(), key=lambda item: position[item["id"]])
+
+
 def cast(project_root: Path) -> dict[str, Any]:
     return _remembered("cast", project_root, (), lambda: _cast(project_root))
 
@@ -1939,7 +1996,7 @@ def _cast(project_root: Path) -> dict[str, Any]:
     with closing(connect(project_root)) as connection:
         profiles = {int(row["id"]): row for row in connection.execute("SELECT * FROM voice_profiles")}
         characters = characters_by_key(connection)
-        scenes_of, book_scenes = _speaker_scenes(connection)
+        scenes_of, book_scenes, chapters_of = _speaker_scenes(connection)
         spoken = connection.execute(
             "SELECT speaker, kind, voice_profile_id, COUNT(*) AS lines,"
             " COALESCE(SUM(wav_duration), 0) AS seconds, MIN(chapter_id) AS first_chapter,"
@@ -1951,11 +2008,11 @@ def _cast(project_root: Path) -> dict[str, Any]:
         book_row = connection.execute("SELECT updated_at FROM book WHERE id=1").fetchone()
         narrator_now = narrator_voice_in(connection, voices)
         narrator_base = next((p for p in profiles.values() if str(p["voice_key"]).casefold() == "narrator"), None)
-        chapter_voices = [f"Chương {row['chapter_index']}: {row['preset_name']}" for row in connection.execute(
-            "SELECT DISTINCT c.chapter_index, v.preset_name FROM segments s"
-            " JOIN chapters c ON c.id=s.chapter_id JOIN voice_profiles v ON v.id=s.voice_profile_id"
-            " WHERE s.kind='narration' AND UPPER(s.speaker)='NARRATOR' AND v.voice_key<>'narrator' COLLATE NOCASE"
-            " ORDER BY c.chapter_index, v.preset_name")]
+        narrator_reads = connection.execute(
+            "SELECT s.chapter_id, s.voice_profile_id, COUNT(*) AS lines, COALESCE(SUM(s.wav_duration), 0) AS seconds"
+            " FROM segments s JOIN chapters c ON c.id = s.chapter_id"
+            " WHERE UPPER(s.speaker) = 'NARRATOR' AND s.voice_profile_id IS NOT NULL"
+            " GROUP BY s.chapter_id, s.voice_profile_id ORDER BY c.chapter_index, s.chapter_id").fetchall()
 
         # Câu kể của chương đã nghe được mà sửa của người nghe (đổi giọng kể) đặt lại - chờ thu lại bằng giọng mới (soát UX a24).
         narrator_redo = int(connection.execute(
@@ -1986,9 +2043,24 @@ def _cast(project_root: Path) -> dict[str, Any]:
             return None
         return _voice_view(profiles.get(votes.most_common(1)[0][0]))
 
+    def voice_gender_of(speaker: str) -> str:
+        """Giới của giọng đọc phần lớn câu người này - giọng phân vai đã chọn cho họ."""
+        from ..teller_voice import profile_gender
+
+        votes = voice_votes.get(speaker)
+        profile = profiles.get(votes.most_common(1)[0][0]) if votes else None
+        return profile_gender(profile) if profile is not None else ""
+
+    chapter_voices, except_chapters = _narrator_chapter_voices(narrator_reads, profiles, chapter_numbers)
     narrator = {
         "voice": narrator_now,
+        # Giọng kể khác giọng chính, theo chương (người kể "tôi" của chương ấy đọc bằng giọng cùng giới...): mỗi giọng một mục
+        # có cấu trúc - giọng, các chương ({id, title} như tab Chương hiện), số câu, giây. Ba nền hiện mỗi giọng một hàng.
         "chapterVoices": chapter_voices,
+        # Chương giọng chính không đọc câu nào ("Toàn sách trừ …"), và số câu / giây của riêng giọng chính.
+        "exceptChapters": except_chapters,
+        "voiceLines": lines.get("NARRATOR", 0) - sum(entry["lines"] for entry in chapter_voices),
+        "voiceSeconds": round(seconds.get("NARRATOR", 0.0) - sum(entry["seconds"] for entry in chapter_voices), 1),
         "lines": lines.get("NARRATOR", 0),
         "seconds": round(seconds.get("NARRATOR", 0.0), 1),
         "profile": _voice_view(narrator_base) or voice_of("NARRATOR"),
@@ -2028,7 +2100,7 @@ def _cast(project_root: Path) -> dict[str, Any]:
         entry = {
             "name": speaker,
             **shown_name(speaker, speaker_label(str(record["display_name"] or speaker) if record else speaker)),
-            "gender": humanize.GENDER_LABELS.get(str(record["gender"] if record else ""), ""),
+            "gender": humanize.GENDER_LABELS.get(cast_gender(speaker, record, voice_gender_of(speaker)), ""),
             "age": humanize.AGE_LABELS.get(str(record["age"] if record else ""), ""),
             "lines": count,
             "seconds": round(seconds[speaker], 1),
@@ -2042,7 +2114,7 @@ def _cast(project_root: Path) -> dict[str, Any]:
             # Mốc của lần "Gộp vào…" ấy: đủ để tìm lại đúng yêu cầu mà rút ("Bỏ gộp").
             "mergedAt": merge_stamps.get(aliases.key(speaker)) if merged_into(speaker) else None,
         }
-        role = cast_role(speaker, record, count, scenes_of.get(speaker, 0), book_scenes)
+        role = cast_role(speaker, record, count, scenes_of.get(speaker, 0), book_scenes, chapters_of.get(speaker, 0))
         (main if role == "characters" else extras).append(entry)
     main.sort(key=lambda entry: (-entry["lines"], entry["displayName"]))
     extras.sort(key=lambda entry: (-entry["lines"], entry["displayName"]))

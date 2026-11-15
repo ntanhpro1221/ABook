@@ -9,6 +9,8 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
+import vn.abook.player.ui.data.CastChapter
+import vn.abook.player.ui.data.NarratorVoice
 
 /** Logic thuần của ba tab nội dung: bộ bài, mẫu thẻ, thân yêu cầu (lines[{stableId,textSha256}], seen), phân tích JSON, chữ của bảng giọng. */
 @RunWith(RobolectricTestRunner::class)
@@ -300,13 +302,15 @@ class WorkLogicTest {
     @Test fun castAndVoicesJsonRead() {
         val cast = StudioCastJson.cast(
             JSONObject(
-                """{"narrator":{"voice":"Giọng A","lines":3,"chapterVoices":["Chương 8: Đoan Trang"],"profile":{"key":"k","preset":"p","label":"Giọng A"}},
+                """{"narrator":{"voice":"Giọng A","lines":3,"chapterVoices":["cũ",{"voice":"Giọng D","profile":{"key":"kd","preset":"Giọng D","label":"Giọng D"},"chapters":[{"id":9,"title":"Chương 8"}],"lines":5,"seconds":12.5}],"exceptChapters":[{"id":9,"title":"Chương 8"}],"voiceLines":2,"profile":{"key":"k","preset":"p","label":"Giọng A"}},
                 "characters":[{"name":"kati","displayName":"Kati","lines":4,"sampleId":7,"voice":{"key":"k","preset":"p","label":"Giọng B"},"pendingVoice":{"preset":"q","label":"Giọng C","gender":"female"}}],
                 "extras":[],"carried":[]}""",
             ),
         )
         assertEquals("Giọng A", cast.narrator.profile?.label)
-        assertEquals(listOf("Chương 8: Đoan Trang"), cast.narrator.chapterVoices)
+        assertEquals(listOf(NarratorVoice("Giọng D", "Giọng D", listOf(CastChapter(9, "Chương 8")), 5, 12.5)), cast.narrator.chapterVoices)
+        assertEquals(listOf(CastChapter(9, "Chương 8")), cast.narrator.exceptChapters)
+        assertEquals(2, cast.narrator.voiceLines)
         val kati = cast.characters.single()
         assertEquals(7, kati.sampleId)
         assertEquals("Giọng C", kati.pendingVoice?.label)

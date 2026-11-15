@@ -1122,7 +1122,7 @@
     "line": 786,
     "statement": "if (dialog.kind === \"delete\") switchTo(() => mutations.removeRecord.mutateAsync(active.id), S.s_da_xoa_ho_so_0_54dabd55(active.name));",
     "occurrence": 1,
-    "source_sha256": "1e26b067594ea500ca6a819f840028db69a3e2771f3935dcb728baa0f7a499c3",
+    "source_sha256": "a4d71c11ee3ae988bddb8534791ace1ca58f1d04d52ef4cf68a9c1df12a2fda5",
     "disposition": "confirmation",
     "guard": "BookRecords ConfirmPage / BookScreen record Dialog / RecordDialogs Modal / DeleteBookPage",
     "reason": "Deleting a listening profile explicitly describes loss of progress and history. Deleting a book uses the book confirmation. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
@@ -1134,7 +1134,7 @@
     "line": 1087,
     "statement": "const restart = async () => {",
     "occurrence": 1,
-    "source_sha256": "1e26b067594ea500ca6a819f840028db69a3e2771f3935dcb728baa0f7a499c3",
+    "source_sha256": "a4d71c11ee3ae988bddb8534791ace1ca58f1d04d52ef4cf68a9c1df12a2fda5",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; LoadingCrossfade, Progress, busy, isLoading, loading, pending, pendingVoice, preparingBookId, progress, progressFill",
     "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
@@ -1146,7 +1146,7 @@
     "line": 1102,
     "statement": "action: { label: S.s_quay_lai_cho_cu_fea69b14, onClick: () => void playBook(book, before.chapter.id, before.at) },",
     "occurrence": 1,
-    "source_sha256": "1e26b067594ea500ca6a819f840028db69a3e2771f3935dcb728baa0f7a499c3",
+    "source_sha256": "a4d71c11ee3ae988bddb8534791ace1ca58f1d04d52ef4cf68a9c1df12a2fda5",
     "disposition": "internal",
     "guard": "Async interface/helper boundary; concrete activation inventoried separately",
     "reason": "This signature supplies work to a model or component; declaring it starts no user operation. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
@@ -1158,7 +1158,7 @@
     "line": 1108,
     "statement": "const listenNow = async () => {",
     "occurrence": 1,
-    "source_sha256": "1e26b067594ea500ca6a819f840028db69a3e2771f3935dcb728baa0f7a499c3",
+    "source_sha256": "a4d71c11ee3ae988bddb8534791ace1ca58f1d04d52ef4cf68a9c1df12a2fda5",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; LoadingCrossfade, Progress, busy, isLoading, loading, pending, pendingVoice, preparingBookId, progress, progressFill",
     "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
@@ -1170,7 +1170,7 @@
     "line": 1254,
     "statement": "onSelect={() => void saver.save()}",
     "occurrence": 1,
-    "source_sha256": "1e26b067594ea500ca6a819f840028db69a3e2771f3935dcb728baa0f7a499c3",
+    "source_sha256": "a4d71c11ee3ae988bddb8534791ace1ca58f1d04d52ef4cf68a9c1df12a2fda5",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; LoadingCrossfade, Progress, busy, isLoading, loading, pending, pendingVoice, preparingBookId, progress, progressFill",
     "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
@@ -1182,7 +1182,7 @@
     "line": 1263,
     "statement": "onSelect={() => void sharer.share()}",
     "occurrence": 1,
-    "source_sha256": "1e26b067594ea500ca6a819f840028db69a3e2771f3935dcb728baa0f7a499c3",
+    "source_sha256": "a4d71c11ee3ae988bddb8534791ace1ca58f1d04d52ef4cf68a9c1df12a2fda5",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; LoadingCrossfade, Progress, busy, isLoading, loading, pending, pendingVoice, preparingBookId, progress, progressFill",
     "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
@@ -3978,7 +3978,7 @@
     "line": 444,
     "statement": "async function call<T>(path: string, init: ApiInit | undefined, read: (response: Response, alive: () => void) => Promise<T>): Promise<T> {",
     "occurrence": 1,
-    "source_sha256": "d8a8a0d9714e0d20cc23c5ea1ab8c1e18c346083622ab928d648c27c59cf871a",
+    "source_sha256": "5817a9c0ce61bedc93fa9909b0047c1b34b4ecd3454fde1c60b8bced4a51eabd",
     "disposition": "internal",
     "guard": "Async interface/helper boundary; concrete activation inventoried separately",
     "reason": "This signature supplies work to a model or component; declaring it starts no user operation. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
@@ -3990,7 +3990,7 @@
     "line": 468,
     "statement": "export async function api<T>(path: string, init?: ApiInit): Promise<T> {",
     "occurrence": 1,
-    "source_sha256": "d8a8a0d9714e0d20cc23c5ea1ab8c1e18c346083622ab928d648c27c59cf871a",
+    "source_sha256": "5817a9c0ce61bedc93fa9909b0047c1b34b4ecd3454fde1c60b8bced4a51eabd",
     "disposition": "internal",
     "guard": "Async interface/helper boundary; concrete activation inventoried separately",
     "reason": "This signature supplies work to a model or component; declaring it starts no user operation. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
@@ -4002,7 +4002,7 @@
     "line": 470,
     "statement": "return call(path, init, async (response, alive) => settle<T>(response, await readText(response, alive)));",
     "occurrence": 1,
-    "source_sha256": "d8a8a0d9714e0d20cc23c5ea1ab8c1e18c346083622ab928d648c27c59cf871a",
+    "source_sha256": "5817a9c0ce61bedc93fa9909b0047c1b34b4ecd3454fde1c60b8bced4a51eabd",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; busy, narratorPending, pending, pendingChanges, pendingVoice, pending_changes, progress, seedPending, working",
     "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
@@ -4014,7 +4014,7 @@
     "line": 479,
     "statement": "export async function apiOrStream<T, S>(path: string, init: ApiInit, streamType: string, onStream: (response: Response) => Promise<S>): Promise<T | S> {",
     "occurrence": 1,
-    "source_sha256": "d8a8a0d9714e0d20cc23c5ea1ab8c1e18c346083622ab928d648c27c59cf871a",
+    "source_sha256": "5817a9c0ce61bedc93fa9909b0047c1b34b4ecd3454fde1c60b8bced4a51eabd",
     "disposition": "internal",
     "guard": "Async interface/helper boundary; concrete activation inventoried separately",
     "reason": "This signature supplies work to a model or component; declaring it starts no user operation. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
@@ -4026,7 +4026,7 @@
     "line": 480,
     "statement": "return call<T | S>(path, init, async (response, alive) =>",
     "occurrence": 1,
-    "source_sha256": "d8a8a0d9714e0d20cc23c5ea1ab8c1e18c346083622ab928d648c27c59cf871a",
+    "source_sha256": "5817a9c0ce61bedc93fa9909b0047c1b34b4ecd3454fde1c60b8bced4a51eabd",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; busy, narratorPending, pending, pendingChanges, pendingVoice, pending_changes, progress, seedPending, working",
     "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
@@ -11514,7 +11514,7 @@
     "line": 284,
     "statement": "suspend fun avatar(person: CastMember): ByteArray? = person.avatar?.file?.let { source.avatarBytes(bookId, it) }",
     "occurrence": 1,
-    "source_sha256": "492050c2e7c4b87681784214ff330e13cf1045e5a7ea62fe5f520cd28a66eb67",
+    "source_sha256": "bcfd02747f6ad7a773c2f65ed5ab3c2dce49d62e68bef562ff3e2080d0df082f",
     "disposition": "internal",
     "guard": "suspend service boundary; awaited by existing export/cast UI state owner",
     "reason": "Volume export and portrait source methods are awaited service adapters. ExportState/StudioCastState retain progress and errors; byte reads use the existing IO boundary."
@@ -11526,7 +11526,7 @@
     "line": 296,
     "statement": "scope.launch {",
     "occurrence": 1,
-    "source_sha256": "492050c2e7c4b87681784214ff330e13cf1045e5a7ea62fe5f520cd28a66eb67",
+    "source_sha256": "bcfd02747f6ad7a773c2f65ed5ab3c2dce49d62e68bef562ff3e2080d0df082f",
     "disposition": "internal",
     "guard": "Animation/frame clock or test harness lifecycle",
     "reason": "The coroutine advances presentation or test fixtures, not a user-triggered network/file operation. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
@@ -11730,7 +11730,7 @@
     "line": 196,
     "statement": "choices == null -> InlineProblem(sheet.problem, { scope.launch { sheet.load() } }, \"studio_voice_problem\")",
     "occurrence": 1,
-    "source_sha256": "027b1e1a3e4003943565b7f0270b96cd9b11494669773c382d5832700e17148d",
+    "source_sha256": "18994fb957887193166d3e38d7b1bb526ae8a02b751d5104a937db659ac5ea8c",
     "disposition": "pending",
     "guard": "ViewModel/operation fields: cast_loading, loading, pending, pendingVoice, studio_cast_loading, studio_voice_loading, studio_voice_pending, voicePending; Components pending indicator",
     "reason": "The model retains the operation and locks repeats; UI uses the shared pending parameter, loading content or progress owner. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
@@ -15342,7 +15342,7 @@
     "line": 47,
     "statement": "else Api.quiet(\"GET\", \"/api/books/\" + bookId + \"/cast\", null, answer)",
     "occurrence": 1,
-    "source_sha256": "072c1934928fc49073a3b32e8f464394c6b656c7430b7efc3b8d808d495398fd",
+    "source_sha256": "438f9fcbb6fb5f711fde9d9dc051113e5369acb758722e7bb40a52392406938c",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; castNarratorPending, loading, narratorPending",
     "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."

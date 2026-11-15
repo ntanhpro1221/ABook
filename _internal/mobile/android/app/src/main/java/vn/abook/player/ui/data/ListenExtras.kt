@@ -208,8 +208,25 @@ data class CastMember(
     val avatar: AvatarRef? = null,
 )
 
+/** Một chương trong cast.json: mã chương và tên như tab Chương hiện. */
 @Immutable
-data class Narrator(val voice: String, val lines: Int, val seconds: Double, val pendingVoice: PendingVoice?, val redo: Int, val chapterVoices: List<String> = emptyList())
+data class CastChapter(val id: Int, val title: String)
+
+/** Giọng kể khác giọng chính ở vài chương (store._narrator_chapter_voices): khoá giọng, nhãn, các chương, số câu, giây. */
+@Immutable
+data class NarratorVoice(val voice: String, val label: String, val chapters: List<CastChapter>, val lines: Int, val seconds: Double)
+
+/** Một hàng của danh sách "Người kể chuyện" (web `NarratorRowView`): tên giọng, khoá giọng, phạm vi chương, số câu, giây. */
+@Immutable
+data class NarratorLine(val key: String, val voice: String, val preset: String, val main: Boolean, val scope: String, val lines: Int, val seconds: Double)
+
+/** `voiceLines` / `voiceSeconds`: của riêng giọng chính; `exceptChapters`: chương giọng chính không đọc câu nào. */
+@Immutable
+data class Narrator(
+    val voice: String, val lines: Int, val seconds: Double, val pendingVoice: PendingVoice?, val redo: Int,
+    val chapterVoices: List<NarratorVoice> = emptyList(), val exceptChapters: List<CastChapter> = emptyList(),
+    val voiceLines: Int = lines, val voiceSeconds: Double = seconds,
+)
 
 @Immutable
 class CastView(val narrator: Narrator, val characters: List<CastMember>, val extras: List<CastMember>) {
@@ -230,13 +247,64 @@ object Cast {
             Narrator(
                 narrator?.optString("voice").orEmpty().cleanNull(), narrator?.optInt("lines") ?: 0, narrator?.optDouble("seconds", 0.0) ?: 0.0,
                 pending(narrator?.optJSONObject("pendingVoice")), narrator?.optInt("redo") ?: 0,
-                narrator?.optJSONArray("chapterVoices").let { list -> (0 until (list?.length() ?: 0)).map { list!!.optString(it) } },
+                narratorVoices(narrator?.optJSONArray("chapterVoices")), chapters(narrator?.optJSONArray("exceptChapters")),
+                narrator?.let { it.optInt("voiceLines", it.optInt("lines")) } ?: 0,
+                narrator?.let { it.optDouble("voiceSeconds", it.optDouble("seconds", 0.0)) }?.takeIf { it.isFinite() } ?: 0.0,
             ),
             people(json.optJSONArray("characters")), people(json.optJSONArray("extras")),
         )
     }
 
     private fun String.cleanNull(): String = if (this == "null") "" else this
+
+    /** Các chương {id, title} của cast.json; mục không đúng dạng thì bỏ qua. */
+    fun chapters(list: JSONArray?): List<CastChapter> =
+        (0 until (list?.length() ?: 0)).mapNotNull { index -> list!!.optJSONObject(index)?.let { CastChapter(it.optInt("id"), it.optString("title").cleanNull()) } }
+
+    /** `narrator.chapterVoices`: mỗi mục một giọng có cấu trúc; mục không phải đối tượng thì bỏ qua (app chỉ hiện điều cast.json ghi). */
+    fun narratorVoices(list: JSONArray?): List<NarratorVoice> =
+        (0 until (list?.length() ?: 0)).mapNotNull { index ->
+            list!!.optJSONObject(index)?.let { item ->
+                val profile = item.optJSONObject("profile")
+                NarratorVoice(
+                    profile?.optString("preset")?.cleanNull()?.ifEmpty { null } ?: item.optString("voice").cleanNull(),
+                    profile?.optString("label")?.cleanNull()?.ifEmpty { null } ?: profile?.optString("preset")?.cleanNull()?.ifEmpty { null } ?: item.optString("voice").cleanNull(),
+                    chapters(item.optJSONArray("chapters")), item.optInt("lines"), item.optDouble("seconds", 0.0).takeIf { it.isFinite() } ?: 0.0,
+                )
+            }
+        }
+
+    private val NUMBERED_CHAPTER = Regex("^Chương\\s+(\\d+)$")
+
+    /** "Chương 5, 7" khi mọi tên là "Chương <số>"; không thì các tên nối bằng dấu phẩy. `lower`: đứng sau chữ khác ("… trừ chương 5, 7"). */
+    fun chapterList(chapters: List<CastChapter>, lower: Boolean = false): String {
+        val numbers = chapters.map { NUMBERED_CHAPTER.find(it.title.trim())?.groupValues?.get(1) }
+        if (chapters.isNotEmpty() && numbers.all { it != null }) {
+            val joined = numbers.joinToString(", ")
+            return if (lower) S.s_chuong_0_55d256d1(joined) else S.s_chuong_0_268b0521(joined)
+        }
+        return chapters.joinToString(", ") { it.title }
+    }
+
+    /** Danh sách "Người kể chuyện" đúng như cast.json ghi: giọng chính rồi từng giọng kể theo chương (web `narratorRows`). */
+    fun narratorRows(voice: String, chapterVoices: List<NarratorVoice>, exceptChapters: List<CastChapter>, voiceLines: Int, voiceSeconds: Double): List<NarratorLine> {
+        val scope = if (chapterVoices.isNotEmpty() && exceptChapters.isNotEmpty()) S.s_toan_sach_tru_0_baff4d91(chapterList(exceptChapters, lower = true)) else ""
+        val main = NarratorLine("main", voice.ifEmpty { S.s_mac_dinh_9a1af367 }, voice, true, scope, voiceLines, voiceSeconds)
+        return listOf(main) + chapterVoices.mapIndexed { index, entry ->
+            NarratorLine("chapter-$index-${entry.voice}", entry.label, entry.voice, false, chapterList(entry.chapters), entry.lines, entry.seconds)
+        }
+    }
+
+    fun narratorRows(narrator: Narrator): List<NarratorLine> =
+        narratorRows(narrator.voice, narrator.chapterVoices, narrator.exceptChapters, narrator.voiceLines, narrator.voiceSeconds)
+
+    /** "1.599 câu dẫn truyện · 2 giờ 52 phút" của một giọng kể; giọng chính kèm số câu chờ thu lại. */
+    fun narratorRowCount(row: NarratorLine, redo: Int = 0): String {
+        val text = StringBuilder(Fmt.number(row.lines.toLong())).append(S.s_cau_dan_truyen_f0d4156b)
+        if (row.seconds > 0) text.append(" · ").append(Fmt.length(row.seconds))
+        if (row.main && redo > 0) text.append(" · ").append(Fmt.number(redo.toLong())).append(S.s_cau_cho_thu_lai_98956e55)
+        return text.toString()
+    }
 
     private fun pending(json: JSONObject?): PendingVoice? =
         json?.let { PendingVoice(it.optString("preset").cleanNull(), it.optString("label").cleanNull(), it.optString("gender").cleanNull()) }
@@ -309,13 +377,6 @@ object Cast {
         if (person.seconds > 0) parts.append(" · ").append(Fmt.length(person.seconds))
         if (person.firstChapter.isNotEmpty()) parts.append(S.s_tu_02926cd1).append(person.firstChapter)
         return parts.toString()
-    }
-
-    fun narratorCountLine(narrator: Narrator): String {
-        val text = StringBuilder(Fmt.number(narrator.lines.toLong())).append(S.s_cau_dan_truyen_f0d4156b)
-        if (narrator.seconds > 0) text.append(" · ").append(Fmt.length(narrator.seconds))
-        if (narrator.redo > 0) text.append(" · ").append(Fmt.number(narrator.redo.toLong())).append(S.s_cau_cho_thu_lai_98956e55)
-        return text.toString()
     }
 
     fun narratorName(narrator: Narrator): String = narrator.voice.ifEmpty { S.s_mac_dinh_9a1af367 }

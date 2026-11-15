@@ -166,7 +166,7 @@ internal object S {
     fun s_0_nguoi_272b4f6d(p0: Any?): String = p0.toString() + " người"
     fun s_0_nguoi_co_loi_thoai_1e48f89a(p0: Any?): String = p0.toString() + " người có lời thoại"
     fun s_0_nguoi_khac_dung_khong_cung_chuong_9e46519d(p0: Any?): String = p0.toString() + " người khác dùng, không cùng chương"
-    fun s_0_nguoi_trong_mot_canh_bb4fd602(p0: Any?): String = p0.toString() + " người trong một cảnh"
+    fun s_0_nguoi_1_cau_0a0bbce4(p0: Any?, p1: Any?): String = p0.toString() + " người · " + p1.toString() + " câu"
     fun s_0_nhac_cua_ban_khong_co_thong_tin_giay_phe_71454f92(p0: Any?): String = p0.toString() + " - nhạc của bạn, không có thông tin giấy phép"
     fun s_0_nhip_phut_3c154e09(p0: Any?): String = p0.toString() + " nhịp/phút"
     fun s_0_nut_phat_van_nghe_duoc_cau_mau_chung_cua_8895276e(p0: Any?): String = p0.toString() + " - nút phát vẫn nghe được câu mẫu chung của giọng"
@@ -2739,6 +2739,7 @@ internal object S {
     fun s_toi_qua_0_dbb7ff0b(p0: Any?): String = "tối qua " + p0.toString()
     const val s_toi_qua_920edeaa = "Tối qua"
     const val s_tokenizer_json_khong_phai_bytelevel_bpe_nf_008360a0 = "tokenizer.json không phải ByteLevel-BPE + NFC như VieNeu 3.8.1"
+    fun s_toan_sach_tru_0_baff4d91(p0: Any?): String = "Toàn sách trừ " + p0.toString()
     const val s_tra_cho_ket_noi_qua_so_da_giu_a86b0a3c = "Trả chỗ kết nối quá số đã giữ"
     const val s_tra_loi_qua_lon_1c99a5e8 = "trả lời quá lớn"
     const val s_trang_ban_quyen_6da8bd2c = "Trang bản quyền"

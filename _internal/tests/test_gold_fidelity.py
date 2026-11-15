@@ -102,3 +102,28 @@ def test_the_cli_exits_one_on_fail(tmp_path: Path) -> None:
     out = tmp_path / "report.json"
     assert gold_fidelity.main([str(project), "--gold", str(gold), "--json", str(out)]) == 1
     assert json.loads(out.read_text(encoding="utf-8"))["speaker_mismatches"] == 1
+
+
+def _set_record(project: Path, canonical: str, display: str, importance: str, mentions: int) -> None:
+    with ProjectDB(ProjectPaths.build(project).db).connect() as conn:
+        conn.execute("INSERT INTO characters(canonical_name,display_name,gender,age,personality,importance,"
+                     "mention_count,confidence,locked,created_at,updated_at) VALUES(?,?,'male','elderly','',?,?,1,0,0,0)",
+                     (canonical, display, importance, mentions))
+
+
+def test_a_gold_npc_whose_prefix_was_dropped_upstream_is_still_an_extra(tmp_path: Path) -> None:
+    """Một bộ tiêm cũ bỏ tiền tố "NPC ": sổ nhân vật ghi minor thì cast.json vẫn xếp Vai phụ, không cần chấp nhận tay."""
+    lines = [*LINES[:4], ("dialogue", "NPC bác bảo vệ", "Bác Bảo Vệ", "Xuân Vĩnh"), LINES[5]]
+    project, gold = _book(tmp_path, lines)
+    _set_record(project, "BÁC BẢO VỆ", "Bác Bảo Vệ", "minor", 1)
+    report = gold_fidelity.check(project, gold)
+    assert report["npc_in_main_cast"] == [] and report["pass"], gold_fidelity.summary(report)
+
+
+def test_a_gold_npc_promoted_to_the_main_cast_fails(tmp_path: Path) -> None:
+    lines = [*LINES[:4], *[("dialogue", "NPC bác bảo vệ", "Bác Bảo Vệ", "Xuân Vĩnh")] * 3, LINES[5]]
+    project, gold = _book(tmp_path, lines)
+    _set_record(project, "BÁC BẢO VỆ", "Bác Bảo Vệ", "main", 40)
+    report = gold_fidelity.check(project, gold)
+    assert report["npc_in_main_cast"] == ["Bác Bảo Vệ (NPC BÁC BẢO VỆ)"], report["npc_in_main_cast"]
+    assert not report["pass"]

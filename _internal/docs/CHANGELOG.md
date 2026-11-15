@@ -15,6 +15,8 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 - Mở lại sách giữ nguyên bản thu đã chấp nhận kèm cảnh báo ở mép; kiểm tra bằng đúng lời đọc để không thu lại oan câu kéo dài. Bản thu mất, hỏng hoặc sai băm vẫn bị phát hiện.
 
+- Tab Nhân vật: vai chính và vai phụ chia đúng theo số câu, người nói nhiều qua nhiều chương luôn là vai chính, giới tính điền đủ; "Người kể chuyện" thành danh sách, mỗi giọng một hàng ghi rõ chương nó đọc, trên điện thoại, web và máy tính.
+
 ## [0.4.173] - 2026-11-15
 
 - Nút tải nhạc rõ trạng thái dừng/đã tải, xoá có xác nhận; báo đang chờ và đang đệm, nghe trọn bài kèm thanh tua trên cả ba giao diện.
