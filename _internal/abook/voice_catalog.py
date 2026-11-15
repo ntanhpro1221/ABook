@@ -438,10 +438,10 @@ MACHINE_APPROVED = load_machine_approved()
 
 
 def auto_rank(preset_name: str, gender: str, role: str = "character") -> int | None:
-    """Bậc của giọng khi MÁY tự chọn: bậc chủ sách (0 = tốt nhất), giọng máy chấm cho qua ngay sau mọi bậc ấy, còn lại None.
+    """Return the owner tier, then machine-approved tier, or None for automatic use.
 
-    None = không bao giờ tự chọn (chủ sách 15-11: "kể cả không rõ thật mà lại dùng adam bựa? đó không phải giọng tốt"): giọng
-    chưa ai xếp hạng không còn là "chưa nghe nên vẫn dùng được", mà là chưa đạt. Người nghe vẫn chọn tay được mọi giọng.
+    Unranked and never_auto presets are ineligible for automatic casting,
+    including unknown gender. Listeners may still choose a voice manually.
     """
     name = str(preset_name)
     if name in NEVER_AUTO:
@@ -467,10 +467,11 @@ def listener_rank(preset_name: str, gender: str, role: str = "character") -> int
 
 
 def preset_eligible(preset: dict[str, Any], role: str, *, automatic: bool = False) -> bool:
-    """Quyền dùng theo vai: phán quyết chủ sách mở cả giọng tin tức, chỉ cho vai đã xếp hạng.
+    """Check role eligibility, owner tiers, region and casting exclusions.
 
-    `automatic` (máy tự chọn: phân vai, giọng dẫn mặc định): chỉ giọng ĐẠT - có bậc chủ sách hoặc máy chấm cho qua
-    (`auto_rank`); NEVER_AUTO và giọng chưa đạt chỉ đến tay người nghe tự chọn. Vùng miền và lệnh cấm phân vai vẫn có hiệu lực.
+    Automatic casting and default narration require auto_rank approval.
+    Manual listener choice may use unranked presets; news-style voices still
+    require an owner tier for the requested role.
     """
     if automatic and auto_rank(str(preset["name"]), str(preset["gender"]), role) is None:
         return False

@@ -195,12 +195,12 @@ def test_a_lead_in_naming_part_of_the_label_confirms_the_label() -> None:
 
 
 def test_close_descriptions_of_one_role_are_one_person() -> None:
-    labels = Counter({"Người Phụ Nữ Bí Ẩn Qua Điện Thoại": 7, "Người Phụ Nữ Bí Ẩn Trên Điện Thoại": 1,
+    labels = Counter({"Người Phụ Nữ Đội Mũ Nâu Qua Điện Thoại": 7, "Người Phụ Nữ Đội Mũ Nâu Trên Điện Thoại": 1,
                       "Người Phụ Nữ Gọi Điện Thoại": 2, "Người phụ nữ bên kia đầu dây": 1,
                       "Người Đàn Ông Qua Điện Thoại": 3, "Người Phụ Nữ": 4, "Người Phụ Nữ Bán Hàng": 2})
     mapping = canonical_speaker_names(labels, "")
-    woman = "Người Phụ Nữ Bí Ẩn Qua Điện Thoại"
-    for label in ("Người Phụ Nữ Bí Ẩn Trên Điện Thoại", "Người Phụ Nữ Gọi Điện Thoại", "Người phụ nữ bên kia đầu dây"):
+    woman = "Người Phụ Nữ Đội Mũ Nâu Qua Điện Thoại"
+    for label in ("Người Phụ Nữ Đội Mũ Nâu Trên Điện Thoại", "Người Phụ Nữ Gọi Điện Thoại", "Người phụ nữ bên kia đầu dây"):
         assert mapping[label] == woman, label
     assert mapping["Người Đàn Ông Qua Điện Thoại"] == "Người Đàn Ông Qua Điện Thoại", "khác giới trong nhãn"
     assert mapping["Người Phụ Nữ"] == "Người Phụ Nữ", "nhãn trơn khớp mọi người phụ nữ: không gộp"
@@ -208,7 +208,7 @@ def test_close_descriptions_of_one_role_are_one_person() -> None:
 
 
 def test_a_description_inside_two_wider_ones_stays_apart() -> None:
-    labels = Counter({"Người Phụ Nữ Gọi Điện Thoại": 2, "Người Phụ Nữ Bí Ẩn Qua Điện Thoại": 5,
+    labels = Counter({"Người Phụ Nữ Gọi Điện Thoại": 2, "Người Phụ Nữ Đội Mũ Nâu Qua Điện Thoại": 5,
                       "Người Phụ Nữ Già Qua Điện Thoại": 3})
     mapping = canonical_speaker_names(labels, "")
     assert mapping["Người Phụ Nữ Gọi Điện Thoại"] == "Người Phụ Nữ Gọi Điện Thoại", "hai nhãn rộng hơn: mơ hồ"
@@ -218,10 +218,10 @@ def test_a_plain_local_role_joins_the_one_described_person_of_its_chapter(tmp_pa
     from abook.character_registry import _merge_local_speakers_with_named_identity
 
     lines = [
-        (1, "dialogue", "Người Phụ Nữ Bí Ẩn Qua Điện Thoại", "“Alô.”", 0),
+        (1, "dialogue", "Người Phụ Nữ Đội Mũ Nâu Qua Điện Thoại", "“Alô.”", 0),
         (1, "dialogue", "NPC_LOCAL::c00001::người phụ nữ", "“Cậu nghe chứ?”", 0),
         (1, "dialogue", "Haru", "“Ai đấy?”", 0),
-        (2, "dialogue", "Người Phụ Nữ Bí Ẩn Qua Điện Thoại", "“Lại là tôi.”", 0),
+        (2, "dialogue", "Người Phụ Nữ Đội Mũ Nâu Qua Điện Thoại", "“Lại là tôi.”", 0),
         (2, "dialogue", "Người Phụ Nữ Bán Hàng", "“Mời vào.”", 0),
         (2, "dialogue", "NPC_LOCAL::c00002::người phụ nữ", "“Cảm ơn.”", 0),
         (2, "dialogue", "NPC_LOCAL::c00002::người bán hàng", "“Lấy gì?”", 0),
@@ -230,6 +230,6 @@ def test_a_plain_local_role_joins_the_one_described_person_of_its_chapter(tmp_pa
     db = ProjectDB(root / "project.sqlite3")
     _merge_local_speakers_with_named_identity(db, lambda message: None)
     speakers = Counter(str(row["speaker"]) for row in db.list_segments())
-    assert speakers["Người Phụ Nữ Bí Ẩn Qua Điện Thoại"] == 3, "chương 1: chỉ một người phụ nữ được tả"
+    assert speakers["Người Phụ Nữ Đội Mũ Nâu Qua Điện Thoại"] == 3, "chương 1: chỉ một người phụ nữ được tả"
     assert speakers["NPC_LOCAL::c00002::người phụ nữ"] == 1, "chương 2: hai người phụ nữ được tả - mơ hồ"
     assert speakers["NPC_LOCAL::c00002::người bán hàng"] == 1, "nhãn cục bộ có nội dung riêng không theo luật này"
