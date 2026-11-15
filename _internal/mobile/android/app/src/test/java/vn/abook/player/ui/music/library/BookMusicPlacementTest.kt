@@ -72,7 +72,8 @@ class BookMusicPlacementTest {
         rule.setContent {
             val scope = rememberCoroutineScope()
             state = remember { LibraryState(library, scope, object : PreviewPlayer {
-                override fun play(link: String, startSeconds: Double, volume: Float, onEnd: () -> Unit) {}
+                override fun play(link: String, startSeconds: Double, volume: Float, onEnd: () -> Unit,
+                    onPlaying: (Boolean) -> Unit, onError: (String) -> Unit) {}
                 override fun stop() {}
             }) }
             val sheets = remember { SheetHost() }
