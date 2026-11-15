@@ -35,7 +35,20 @@ Item {
         }
         root.height = Math.max(0, y - 8)
     }
-    function relayoutSoon() { Later.call(root, relayout) }
+    // Keep the queued layout in this component's signal context. Passing the
+    // method through QJSValue can outlive its creation context during teardown.
+    function relayoutSoon() { if (layoutTurn) layoutTurn.restart() }
+    Timer { id: layoutTurn; interval: 0; onTriggered: root.relayout() }
+    Component.onCompleted: relayoutSoon()
+    Component.onDestruction: {
+        // Signal.connect stores a JavaScript callback rather than a receiver
+        // object. Release it before this component's identifiers disappear.
+        for (const kid of watched) if (kid) {
+            if (kid.implicitWidthChanged) kid.implicitWidthChanged.disconnect(relayoutSoon)
+            if (kid.visibleChanged) kid.visibleChanged.disconnect(relayoutSoon)
+        }
+        if (layoutTurn) layoutTurn.stop()
+    }
     onWidthChanged: relayoutSoon()
     Item {
         id: holder

@@ -1,4 +1,5 @@
 import QtQuick
+import ABook
 
 // Long disclosures share their enclosing Flickable. Offscreen rows retain measured height without keeping controls alive.
 Column {
@@ -25,10 +26,10 @@ Column {
         viewTop = top - viewport.height / 2
         viewBottom = top + viewport.height * 1.5
     }
-    Component.onCompleted: { viewport = findViewport(); Qt.callLater(refresh) }
+    Component.onCompleted: { viewport = findViewport(); Later.call(root, refresh) }
     onYChanged: refresh()
-    onWidthChanged: Qt.callLater(refresh)
-    onVisibleChanged: Qt.callLater(refresh)
+    onWidthChanged: Later.call(root, refresh)
+    onVisibleChanged: Later.call(root, refresh)
     Connections {
         target: root.viewport
         ignoreUnknownSignals: true
