@@ -20,25 +20,29 @@ Item {
     // Phần tô thêm của icon có chấm đặc (palette); icon không có thì rỗng
     readonly property string fillPath: name === "" ? "" : (Lucide[key + "_FILL"] || "")
 
-    Shape {
-        width: 24
-        height: 24
-        scale: root.size / 24
-        transformOrigin: Item.TopLeft
-        preferredRendererType: Shape.CurveRenderer
-        ShapePath {
-            strokeColor: root.solid ? "transparent" : root.color
-            strokeWidth: root.solid ? -1 : 2
-            capStyle: ShapePath.RoundCap
-            joinStyle: ShapePath.RoundJoin
-            fillColor: root.solid ? root.color : "transparent"
-            PathSvg { path: root.path }
-        }
-        ShapePath {
-            strokeColor: "transparent"
-            strokeWidth: -1
-            fillColor: root.fillPath !== "" ? root.color : "transparent"
-            PathSvg { path: root.fillPath }
+    // Empty and hidden state slots do not need vector geometry. Keep the item itself for layout and fades.
+    Loader {
+        active: root.visible && root.opacity > 0 && root.path !== ""
+        sourceComponent: Shape {
+            width: 24
+            height: 24
+            scale: root.size / 24
+            transformOrigin: Item.TopLeft
+            preferredRendererType: Shape.CurveRenderer
+            ShapePath {
+                strokeColor: root.solid ? "transparent" : root.color
+                strokeWidth: root.solid ? -1 : 2
+                capStyle: ShapePath.RoundCap
+                joinStyle: ShapePath.RoundJoin
+                fillColor: root.solid ? root.color : "transparent"
+                PathSvg { path: root.path }
+            }
+            ShapePath {
+                strokeColor: "transparent"
+                strokeWidth: -1
+                fillColor: root.fillPath !== "" ? root.color : "transparent"
+                PathSvg { path: root.fillPath }
+            }
         }
     }
 }

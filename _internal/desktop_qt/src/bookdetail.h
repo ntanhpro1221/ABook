@@ -8,6 +8,7 @@
 #include <QObject>
 #include <QVariantMap>
 #include <QtQml/qqmlregistration.h>
+#include <functional>
 
 class BookDetail : public QObject {
     Q_OBJECT
@@ -33,6 +34,7 @@ class BookDetail : public QObject {
     Q_PROPERTY(bool finished READ finished NOTIFY changed)
 public:
     explicit BookDetail(QObject *parent = nullptr);
+    ~BookDetail() override;
 
     QString bookId() const { return m_bookId; }
     void setBookId(const QString &bookId);
@@ -76,6 +78,7 @@ private:
     int m_selectedVolume = -1;
     ChaptersModel m_chapters;
     quint64 m_seq = 0;
+    std::function<void()> m_cancel;
     QString m_primaryText;
     QString m_primaryIcon;
     bool m_hasPoint = false;

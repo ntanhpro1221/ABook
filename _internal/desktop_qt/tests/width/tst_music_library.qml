@@ -12,6 +12,9 @@ Item {
     height: 900
     Rectangle { anchors.fill: parent; color: Theme.bg }
     Component { id: screenFactory; MusicScreen {} }
+    Component { id: rowFactory; MusicTrackRow {
+        onDeleteDownload: Api.call("DELETE", "/api/music/local/fixture", null)
+    } }
     Component { id: confirmationFactory; DestructiveConfirm {
         onAccepted: Api.call("DELETE", "/api/music/local/fixture", null)
     } }
@@ -117,6 +120,19 @@ Item {
         function both(fn) { for (const mode of ["light", "dark"]) { Theme.mode = mode; fn() } }
 
         // ---- hành vi ----
+        function test_rowBuildsConfirmationOnlyWhenRequested() {
+            const row = createTemporaryObject(rowFactory, host, {width: 880, track: track(0)})
+            const deferred = findChild(row, "musicRowRemoveLoader")
+            compare(deferred.active, false)
+            compare(deferred.item, null)
+            findChild(row, "musicRowDownload").activated()
+            compare(deferred.active, true)
+            compare(deferred.item.open, true)
+            compare(DesktopApi.requests.length, 0)
+            deferred.item.close()
+            compare(deferred.item.open, false)
+            compare(DesktopApi.requests.length, 0)
+        }
         function test_sharedConfirmationWaitsForAcknowledgementAndRetriesFailure() {
             const dialog = createTemporaryObject(confirmationFactory, host)
             dialog.show()

@@ -7,6 +7,10 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+- Giảm khựng khi cuộn kho nhạc và nhạc trong sách trên máy tính; giữ nguyên hình bài nhạc.
+- Mở giao diện nhanh hơn, bớt RAM cho các biểu tượng đang ẩn trên máy tính.
+- Khắc phục lỗi ứng dụng thoát đột ngột khi dữ liệu trang sách về muộn.
+
 ## [0.4.173] - 2026-11-15
 
 - Nút tải nhạc rõ trạng thái dừng/đã tải, xoá có xác nhận; báo đang chờ và đang đệm, nghe trọn bài kèm thanh tua trên cả ba giao diện.

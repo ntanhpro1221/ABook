@@ -120,9 +120,17 @@ Interactive {
     Collapse { id: progress; x: words.x; y: Math.max(words.height, 40) + 2 * Theme.s12; width: root.width - x; open: root.previewing
         MusicListeningProgress { width: parent.width }
     }
-    DestructiveConfirm { id: remove; title: S.s_delete_download_question
-        description: S.s_delete_download_description(root.track.title || "", Size.formatSize(root.track.bytes || 0))
-        onAccepted: root.deleteDownload()
+    // A hidden confirmation still builds a full modal tree. Create it on the first delete request.
+    Loader {
+        id: remove
+        objectName: "musicRowRemoveLoader"
+        active: false
+        function show() { active = true; item.show() }
+        sourceComponent: DestructiveConfirm {
+            title: S.s_delete_download_question
+            description: S.s_delete_download_description(root.track.title || "", Size.formatSize(root.track.bytes || 0))
+            onAccepted: root.deleteDownload()
+        }
     }
 
 }
