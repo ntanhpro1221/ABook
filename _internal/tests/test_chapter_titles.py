@@ -152,8 +152,9 @@ def test_packed_book_uses_the_display_name_without_changing_model_rows(tmp_path)
     packed = bookfile.pack(project, tmp_path / "display.abook", partial=True)
     with zipfile.ZipFile(packed) as archive:
         book = json.loads(archive.read("book.json"))
-        assert book["chapters"][0]["title"] == "Đoạn kết"
-        assert book["chapters"][0]["fullTitle"] == "Đoạn kết"
+        first = book["volumes"][0]["chapters"][0]  # package version 6 nests chapters in volumes
+        assert first["title"] == "Đoạn kết"
+        assert first["fullTitle"] == "Đoạn kết"
     with sqlite3.connect(project / "project.sqlite3") as db:
         assert tuple(tuple(row) for row in db.execute("SELECT * FROM segments ORDER BY id")) == before
         assert tuple(tuple(row) for row in db.execute("SELECT * FROM chapters ORDER BY id")) == chapters

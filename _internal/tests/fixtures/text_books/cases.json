@@ -160,7 +160,8 @@
      },
      {
       "title": "Chương 1",
-      "text": "Sương sớm\n\nChuyến phà đầu tiên rời bến lúc năm giờ.\nCậu bé đứng ở mạn thuyền."
+      "text": "Sương sớm\n\nChuyến phà đầu tiên rời bến lúc năm giờ.\nCậu bé đứng ở mạn thuyền.",
+      "name": "Sương sớm"
      },
      {
       "title": "Chương hai",
@@ -176,7 +177,8 @@
      },
      {
       "title": "Chương ١١",
-      "text": "Tên bằng chữ số Ả Rập: vẫn là số 11."
+      "text": "Tên bằng chữ số Ả Rập: vẫn là số 11.",
+      "name": "Chương 6"
      }
     ],
     "textHasTitle": true
@@ -217,9 +219,9 @@
          "id": 2,
          "index": 2,
          "volumeId": 1,
-         "title": "Chương 1",
+         "title": "Sương sớm",
          "subtitle": "",
-         "fullTitle": "Chương 1",
+         "fullTitle": "Sương sớm",
          "duration": 0,
          "available": false,
          "size": 0,
@@ -269,9 +271,9 @@
          "id": 6,
          "index": 6,
          "volumeId": 1,
-         "title": "Chương ١١",
+         "title": "Chương 6",
          "subtitle": "",
-         "fullTitle": "Chương ١١",
+         "fullTitle": "Chương 6",
          "duration": 0,
          "available": false,
          "size": 0,
@@ -334,7 +336,7 @@
       },
       {
        "index": 2,
-       "title": "Chương 1",
+       "title": "Sương sớm",
        "firstLine": "Sương sớm",
        "words": 17,
        "chars": 60,
@@ -366,7 +368,7 @@
       },
       {
        "index": 6,
-       "title": "Chương ١١",
+       "title": "Chương 6",
        "firstLine": "Tên bằng chữ số Ả Rập: vẫn là số 11.",
        "words": 10,
        "chars": 27,
