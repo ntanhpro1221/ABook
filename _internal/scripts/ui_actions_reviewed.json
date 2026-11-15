@@ -15678,7 +15678,7 @@
     "line": 190,
     "statement": "onTextChanged: if (length > 160) remove(160, length)",
     "occurrence": 1,
-    "source_sha256": "d9ddd216adb864475b9161521da594e70c2830ab16a90c19f311dcdba3186c45",
+    "source_sha256": "2dfacb5f6f3e3dc1ceda1dad4cccfc64a3d901296f1b8119bae1482078253366",
     "disposition": "internal",
     "guard": "Temporary DOM/audio/image lifecycle or string/UI bookkeeping",
     "reason": "Only a transient node, source attribute, cache image, listener, collection entry or display text is affected. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."

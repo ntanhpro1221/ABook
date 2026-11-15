@@ -15,6 +15,7 @@ line_count, color, selected, clickable.
 """
 from __future__ import annotations
 
+import html
 import json
 import hashlib
 import math
@@ -121,6 +122,8 @@ def label(tree: dict, node: dict) -> str:
 
 
 def words(text: str) -> list[str]:
+    # Chữ giàu định dạng của Qt (Text.StyledText: <span style=...>, &nbsp;): đếm chữ hiện, không đếm thẻ.
+    text = html.unescape(re.sub(r"<[^>]*>", " ", text))
     return [w for w in re.split(r"\s+", text.strip()) if w and not UNIT.match(w.strip("()·,."))]
 
 
@@ -351,6 +354,9 @@ def rule_r14(key: str, tree: dict) -> list[dl.Finding]:
             continue
         # Nhãn là TÊN dữ liệu (tên giọng, tên nhân vật qua OneLineFit), không phải chữ giao diện: không đếm chữ.
         if holds_one_line_fit(tree, n):
+            continue
+        # Hộp chọn hiện GIÁ TRỊ đang chọn (tên chương, thể loại), không phải nhãn của nó: chỉ đỏ khi rỗng cả chữ lẫn mô tả.
+        if n["role"] == "dropdownlist" and text.strip():
             continue
         count = len(words(text))
         if count > 4 or not text.strip():

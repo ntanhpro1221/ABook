@@ -637,6 +637,17 @@ def test_r14_label_word_count_ignores_numbers_and_units():
     assert "0 chữ" in dt.rule_r14("k", unnamed)[0].detail
 
 
+def test_r14_dropdown_shows_its_value_and_markup_is_not_words():
+    value = tree(ROOT, n(0, 20, 100, 340, 148, role="dropdownlist", text="Chương 12: Một buổi sáng ở bến sông"))
+    styled = tree(ROOT, n(0, 20, 100, 200, 148, role="button", text="<span style='color:#a0600c'>Nghe</span>&nbsp;tiếp"))
+    for t in (value, styled):
+        assert dt.rule_r14("k", t) == []
+    empty = tree(ROOT, n(0, 20, 100, 340, 148, role="dropdownlist"))
+    long_button = tree(ROOT, n(0, 20, 100, 340, 148, role="button", text="<b>Thử</b> gửi trước rồi bỏ ghép"))
+    assert "0 chữ" in dt.rule_r14("k", empty)[0].detail
+    assert "6 chữ" in dt.rule_r14("k", long_button)[0].detail
+
+
 def test_r9_parity_pair_compares_role_lines_token_height():
     a = tree(ROOT, n(0, 20, 100, 340, 148, role="button", text="Nghe tiếp", line_count=1, font_size=16, color="#1d1304"))
     same = tree(ROOT, n(0, 20, 100, 340, 147, role="button", text="Nghe tiếp", line_count=1, font_size=16, color="#1d1304"))
