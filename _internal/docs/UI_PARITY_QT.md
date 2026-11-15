@@ -11,7 +11,7 @@ icon `LucidePaths.js` sinh bởi `scripts/gen_lucide_icons.py --qml`. Bảng dư
 
 <!-- ui_parity_qt:begin (SINH TỰ ĐỘNG bởi scripts/ui_parity_qt.py - không sửa tay, chạy lại script) -->
 
-Quét: web máy tính 6133 chữ (2857 khác nhau), 355 cặp nhãn-icon; Qt 3611 chữ (2681 khác nhau), 294 cặp nhãn-icon (icon dùng ở 410 chỗ). Khoá so lỏng như UI_PARITY.md (hạ chữ, dấu thanh một kiểu, `...` = `…`, bỏ dấu câu cuối); phím tắt trong chú thích Qt (`Thu nhỏ (Esc)`) tách khỏi nhãn.
+Quét: web máy tính 6141 chữ (2857 khác nhau), 355 cặp nhãn-icon; Qt 3616 chữ (2683 khác nhau), 294 cặp nhãn-icon (icon dùng ở 410 chỗ). Khoá so lỏng như UI_PARITY.md (hạ chữ, dấu thanh một kiểu, `...` = `…`, bỏ dấu câu cuối); phím tắt trong chú thích Qt (`Thu nhỏ (Esc)`) tách khỏi nhãn.
 
 ## a. Cùng việc, khác chữ
 
@@ -92,8 +92,8 @@ Mỗi cặp còn lại phải có giải thích trong ui_strings/qt_wording_revi
 | Thư viện | pause | Tạm dừng {} | Đọc {} | `qt/BookCell.qml:88` |
 | Trang sách | check-check | Chưa nghe xong | Chưa nghe / Đã nghe xong, Chưa nghe xong / Đã nghe xong | `qt/BookPage.qml:170` |
 | Trang sách | check-check | Đã nghe xong | Chưa nghe / Đã nghe xong, Chưa nghe xong / Đã nghe xong | `qt/BookPage.qml:170` |
-| Trang sách | circle-dashed | Chưa nghe | Chưa nghe / Đã nghe xong, Tạm dừng {} | `qt/BookPage.qml:300` |
-| Trang sách | check-check | Đã nghe xong | Chưa nghe / Đã nghe xong, Chưa nghe xong / Đã nghe xong | `qt/BookPage.qml:300` |
+| Trang sách | circle-dashed | Chưa nghe | Chưa nghe / Đã nghe xong, Tạm dừng {} | `qt/BookPage.qml:301` |
+| Trang sách | check-check | Đã nghe xong | Chưa nghe / Đã nghe xong, Chưa nghe xong / Đã nghe xong | `qt/BookPage.qml:301` |
 | Trang sách | git-merge | Gộp | Gộp vào người khác | `qt/CastMerge.qml:163` |
 | Đang nghe | play | Nghe từ đầu chương | Dừng / Nghe thử, Nghe {} | `qt/ChapterList.qml:45` |
 | Đang nghe | book-open | Đọc chương này | Trang sách | `qt/ChapterList.qml:46` |
@@ -169,8 +169,8 @@ Nhãn ngắn (<= 6 chữ). **Chỉ Qt**: không có ở web cùng màn; `*` = we
 
 ### Nhạc
 
-- chỉ Qt (1): Đang tải* (`qt/MusicTrackDetail.qml:75`)
-- chỉ web (4): Chưa tải được kho nhạc (`110`); Đang tải {} % (`321`); Chưa tải xong (`329`); Nhanh (`99`)
+- chỉ Qt (1): Thử lại* (`qt/MusicBookSection.qml:87`)
+- chỉ web (3): Đang tải {} % (`321`); Chưa tải xong (`329`); Nhanh (`99`)
 
 ### Thư viện
 
