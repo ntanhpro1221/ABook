@@ -136,7 +136,7 @@ def test_completed_resume_replaces_a_package_with_older_mastered_audio(tmp_path:
     with bookfile.BookFile(_output(project)) as opened:
         opened.verify()
         assert opened.chapter_prints[changed['file']]['sha256']==levels['audio_sha256'][str(changed['id'])]
-        assert opened.book['levelQa']==levels
+        assert 'levelQa' not in opened.book  # báo cáo QA ở lại dự án
     latest=_output(project).stat().st_mtime_ns
     pipeline._export_book_file(only_if_missing=True)
     assert _output(project).stat().st_mtime_ns==latest

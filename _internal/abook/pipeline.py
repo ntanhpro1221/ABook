@@ -1223,7 +1223,8 @@ class BookPipeline:
                             prints = existing.chapter_prints
                             packaged = {str(ch['id']): prints[ch['file']]['sha256']
                                         for ch in existing.book['chapters'] if ch.get('file')}
-                            current = packaged == levels.get('audio_sha256') and existing.book.get('levelQa') == levels
+                            # Báo cáo QA (levelQa) ở lại dự án, không vào gói: gói đúng khi MP3 trùng mã băm báo cáo đã đo.
+                            current = packaged == levels.get('audio_sha256')
                         if covered and current:
                             return
                 except (BookFileError, KeyError):

@@ -1,7 +1,6 @@
 """Cổng phát hành: một dòng chưa đạt không được làm biến mất chương có đủ lời đọc."""
 from __future__ import annotations
 
-import copy
 import hashlib
 import json
 import random
@@ -225,15 +224,11 @@ def test_release_gate_real_audio_keeps_failed_chapter_and_blocks_missing_line(tm
     with bookfile.BookFile(exported) as opened:
         opened.verify()
         assert opened.book['chaptersAvailable'] == opened.book['chaptersTotal'] == 1
-        assert opened.book['chapters'][0]['qualityPassed'] is False
-        assert opened.book['chapters'][0]['failedLines']
-        # Tình trạng QA đi theo dữ liệu (qualityPassed/failedLines), không bao giờ thành chữ người nghe thấy.
+        # Trạng thái QA ở lại dự án (statusLabel 'Cần nghe lại' ở trên): gói người nghe không mang trường QA nào, không thành chữ.
+        assert bookfile.package_field_problems(opened.book) == []
+        assert not {'qualityPassed', 'qualityWarning', 'failedLines'} & set(opened.book['chapters'][0])
         assert 'Cần nghe lại' not in opened.book['chapters'][0]['subtitle']
         assert bookfile.listener_text_problems(opened.book, json.loads(opened.read('cast.json'))) == []
-        concealed = copy.deepcopy(opened.book)
-        concealed['chapters'][0]['qualityPassed'] = True
-        with pytest.raises(ValueError, match='che dòng'):
-            audio_coverage.verify(concealed, opened.read, lambda _: True)
     # Gói còn nguyên audio và mã băm nhưng bảng chương bị rơi mất: CLI vẫn phải bắt được.
     for remove_coverage in (False, True):
         damaged = tmp_path / f'chapter-lost-{remove_coverage}.abook'
@@ -265,7 +260,7 @@ def test_release_gate_real_audio_keeps_failed_chapter_and_blocks_missing_line(tm
     assert row['stable_id'] in str(refused.value)
 
 
-@pytest.mark.parametrize('damage', ['missing_chapter', 'hash', 'subtitle', 'decode', 'qa_label'])
+@pytest.mark.parametrize('damage', ['missing_chapter', 'hash', 'subtitle', 'decode'])
 def test_verifier_detects_omitted_chapters_bad_audio_hashes_and_subtitles(damage):
     audio = b'invented audio'
     expected = [{'id': 1, 'textSha256': hashlib.sha256('Lá xanh.'.encode()).hexdigest()}]
@@ -279,9 +274,6 @@ def test_verifier_detects_omitted_chapters_bad_audio_hashes_and_subtitles(damage
         chapter['sha256'] = 'bad'
     elif damage == 'subtitle':
         script['segments'] = []
-    elif damage == 'qa_label':
-        book['audioCoverage']['expected'][0]['qualityPassed'] = False
-        chapter['qualityPassed'] = True
     read = lambda name: audio if name.endswith('mp3') else json.dumps(script).encode()
     with pytest.raises(ValueError):
         audio_coverage.verify(book, read, lambda _: damage != 'decode')

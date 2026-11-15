@@ -67,7 +67,8 @@ with BookFile(sys.argv[1]) as book:
     assert result.returncode == 0, result.stderr
 
 
-def test_finished_level_qa_travels_with_the_book(tmp_path):
+def test_level_qa_stays_with_the_project(tmp_path):
+    """The level QA report is project QA state (owner ruling 15-11): it never travels in the listener's .abook."""
     project = make_project(tmp_path)
     report = project / "output" / "reports" / "levelQa.json"
     report.parent.mkdir(parents=True, exist_ok=True)
@@ -75,7 +76,8 @@ def test_finished_level_qa_travels_with_the_book(tmp_path):
     report.write_bytes(payload)
     package = bookfile.pack(project, tmp_path / "synthetic.abook", partial=True)
     with zipfile.ZipFile(package) as archive:
-        assert json.loads(archive.read("book.json"))["levelQa"] == json.loads(payload)
+        assert "levelQa" not in json.loads(archive.read("book.json"))
+    assert report.read_bytes() == payload
 
 
 @pytest.mark.parametrize("listener_cover", [False, True])

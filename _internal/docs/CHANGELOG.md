@@ -19,6 +19,7 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 - Tab Nhân vật: ô giới không còn trống - nhóm người ghi "Nhóm", trẻ em chưa rõ giới ghi "Trẻ em", còn lại "Chưa rõ"; không bao giờ đoán giới. Vai phụ không tên ("NPC bà cụ") và nhân vật cùng tên ("Bà cụ") là hai người, tên hiện ra không còn chữ "NPC".
 - Tên chương và thông tin sách không bao giờ mang dấu kiểm tra nội bộ (như "Cần nghe lại"); file sách có dấu ấy bị từ chối khi đóng gói.
 - Hai chương không còn trùng tên "Chương 1": phần "Mở đầu" không chiếm số chương, và tên theo số không trùng tên một chương khác.
+- File sách nghe (.abook) không còn mang trạng thái kiểm tra (chương đạt hay chưa, dòng lỗi, báo cáo mức âm): những thứ ấy chỉ ở dự án; file còn trường ấy bị từ chối khi đóng gói.
 - Tên chương nhận theo mẫu lặp lại trong cả cuốn ("Lần gặp thứ N - …"), kể cả tiêu đề dài; một cuốn không bao giờ lẫn tên thật với "Chương N", và đoạn văn thường không bị nhận nhầm thành tên chương.
 
 ## [0.4.173] - 2026-11-15

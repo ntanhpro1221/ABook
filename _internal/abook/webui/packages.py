@@ -407,8 +407,6 @@ def listen(path: Path, book_id: str, state: dict[str, Any], *, with_chapters: bo
             "volumeId": chapter.get("volumeId"),
             "title": chapter.get("title") or "",
             "subtitle": subtitle,
-            "qualityPassed": chapter.get("qualityPassed"),
-            "qualityWarning": chapter.get("qualityWarning") or "",
             "fullTitle": chapter.get("fullTitle") or chapter.get("title") or "",
             "duration": round(float(chapter.get("duration") or 0), 1) if available else 0.0,
             "available": available,

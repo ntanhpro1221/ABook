@@ -68,8 +68,10 @@ def summary(coverage: dict[str, Any]) -> str:
 
 
 def expected_source(project_root: Path) -> list[dict[str, Any]]:
+    """Danh sách chương nguồn như gói mang (`audioCoverage.expected`): mã, tên, mã băm audio đã kiểm, mã băm chữ từng câu. Trạng thái
+    QA (chương đạt hay chưa, dòng hỏng, lỗi máy) là của dự án, không vào đây (bookfile.PACKAGE_EXPECTED_KEYS)."""
     with closing(store.connect(project_root)) as connection:
-        chapters = connection.execute("SELECT id,title,chapter_index,status,last_error FROM chapters ORDER BY chapter_index").fetchall()
+        chapters = connection.execute("SELECT id,title,chapter_index FROM chapters ORDER BY chapter_index").fetchall()
         artifacts = {str(r["artifact_key"]): r for r in connection.execute(
             "SELECT artifact_key,sha256,verified FROM artifacts WHERE kind='chapter_mp3'"
         )}
@@ -81,17 +83,22 @@ def expected_source(project_root: Path) -> list[dict[str, Any]]:
             ).fetchall()
             artifact = artifacts.get(f"chapter_mp3:{chapter['chapter_index']}")
             expected.append({"id": int(chapter["id"]), "title": str(chapter["title"]),
-                             "qualityPassed": chapter['status'] == 'completed' and all(r['status'] != 'failed' for r in rows),
-                             "qualityWarning": str(chapter['last_error'] or ''),
                              "audioSha256": str(artifact["sha256"]) if artifact and artifact["verified"] else None,
                              "segments": [{"id": int(r["id"]),
-                                           "textSha256": hashlib.sha256(str(r["text"]).encode("utf-8")).hexdigest()} for r in rows],
-                             "failedLines": [{"id": int(r["id"]), "reason": "failed"} for r in rows if r["status"] == "failed"]})
+                                           "textSha256": hashlib.sha256(str(r["text"]).encode("utf-8")).hexdigest()} for r in rows]})
     return expected
+
+
+def _machine_errors(project_root: Path) -> dict[int, str]:
+    """Mã chương -> lỗi máy của dự án (`chapters.last_error`): chỉ để nói lý do khi từ chối đóng gói, không vào gói."""
+    with closing(store.connect(project_root)) as connection:
+        return {int(row["id"]): str(row["last_error"] or "") for row in connection.execute("SELECT id,last_error FROM chapters")}
 
 
 def project(project_root: Path, book: dict[str, Any], files: dict[str, Any], *, partial: bool = False) -> dict[str, Any]:
     expected = expected_source(project_root)
+    errors = _machine_errors(project_root)
+    details: list[dict[str, Any]] = []  # lý do đầy đủ (kể cả mã câu của dự án) cho câu từ chối; gói chỉ mang lý do chung
     indexed = {c["id"]: c for c in book["chapters"]}
     if len(indexed) != len(book["chapters"]) or set(indexed) - {c["id"] for c in expected}:
         raise ValueError("Danh sách chương không khớp nguồn.")
@@ -103,8 +110,8 @@ def project(project_root: Path, book: dict[str, Any], files: dict[str, Any], *, 
             entry = {"id": chapter["id"], "title": chapter["title"], "file": None, "available": False}
             book["chapters"].append(entry)
         path = files.get(entry.get("file"))
-        reason = (chapter['qualityWarning'] if chapter['qualityWarning'].startswith('Thiếu audio dòng:')
-                  else "thiếu audio")
+        machine = errors.get(chapter["id"], "")
+        reason = machine if machine.startswith('Thiếu audio dòng:') else "thiếu audio"
         if isinstance(path, Path) and path.is_file():
             stat = path.stat()
             key = (path, stat.st_size, stat.st_mtime_ns)
@@ -128,17 +135,16 @@ def project(project_root: Path, book: dict[str, Any], files: dict[str, Any], *, 
                 if not reason and (duration is None or abs(float(script["duration"]) - duration) > .25):
                     reason = "thời lượng phụ đề không khớp audio"
         if reason:
-            missing.append({"id": chapter["id"], "title": chapter["title"], "reason": reason})
+            details.append({"id": chapter["id"], "title": chapter["title"], "reason": reason})
+            missing.append({"id": chapter["id"], "title": chapter["title"],
+                            "reason": "thiếu audio" if reason.startswith('Thiếu audio dòng:') else reason})
             # Không mang một chương hỏng vào gói xuất một phần.
             if entry.get("file"):
                 files.pop(entry["file"], None)
             entry.update(file=None, available=False, duration=0.0)
-        entry["failedLines"] = chapter["failedLines"]
-        entry["qualityPassed"] = chapter['qualityPassed']
-        entry['qualityWarning'] = chapter['qualityWarning']
     coverage = {"expected": expected, "missing": missing, "partial": bool(partial)}
     if missing and not partial:
-        raise ValueError("Thiếu chương: " + summary(coverage) + ". Dùng --partial để xuất một phần.")
+        raise ValueError("Thiếu chương: " + summary({**coverage, "missing": details}) + ". Dùng --partial để xuất một phần.")
     book["audioCoverage"] = coverage
     book["chaptersTotal"] = len(expected)
     book["chaptersAvailable"] = len(expected) - len(missing)
@@ -170,11 +176,6 @@ def verify(book: dict[str, Any], read: Callable[[str], bytes], decode: Callable[
     if any(c["title"] != indexed[c["id"]]["title"] for c in missing):
         raise ValueError("Tên chương thiếu không khớp nguồn.")
     for chapter in chapters:
-        failed = indexed[chapter['id']].get('failedLines', [])
-        if ((failed and chapter.get('failedLines') != failed)
-                or ((failed or indexed[chapter['id']].get('qualityPassed') is False)
-                    and chapter.get('qualityPassed') is not False)):
-            raise ValueError(f"Chương {chapter['title']} che dòng chưa đạt QA.")
         if chapter["id"] in missing_ids:
             if chapter.get("file"):
                 raise ValueError("Chương thiếu vẫn khai có audio.")

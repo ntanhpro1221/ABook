@@ -100,7 +100,7 @@ def cover_warnings(book: dict[str, Any], files: Container[str], edits: dict[str,
 INTERNAL_MARKER = re.compile(
     r"Cần nghe lại|Cần thu lại|listener_redo|Thiếu audio dòng|NPC_LOCAL|\bc\d{5}_s\d{4}\b|\b[A-Z]{2,}(?:_[A-Z0-9]{2,}){2,}\b")
 # Các trường chữ người nghe thấy (danh sách trắng): tên sách, tác giả, người kể, tên quyển/phần/chương, tên phụ; ở cast.json là tên
-# hiện, chương đầu, giới, tuổi, tên giọng và tên chương của người kể. Trường dữ liệu (qualityWarning, name...) không ra mặt người nghe.
+# hiện, chương đầu, giới, tuổi, tên giọng và tên chương của người kể. Trường dữ liệu (name...) không ra mặt người nghe.
 LISTENER_BOOK_FIELDS = ("title", "author", "narrator")
 LISTENER_CHAPTER_FIELDS = ("title", "subtitle", "fullTitle")
 LISTENER_PERSON_FIELDS = ("displayName", "originalName", "firstChapter", "gender", "age", "mergedInto")
@@ -109,6 +109,67 @@ LISTENER_PERSON_FIELDS = ("displayName", "originalName", "firstChapter", "gender
 NPC_SHOWN = re.compile(r"^\s*npc\b", re.IGNORECASE)
 LISTENER_NAME_FIELDS = ("displayName", "originalName", "mergedInto")
 SCRIPT_SPEAKER = re.compile(rb'"speaker":\s*"((?:[^"\\]|\\.)*)"')
+
+
+# Trường của `book.json` trong gói người nghe (danh sách trắng, luật chủ sách 15-11): trạng thái QA (qualityPassed, qualityWarning,
+# failedLines, levelQa) và mọi trường nội bộ chỉ thuộc dự án (sổ, .abookproj), không bao giờ vào .abook. Bước xuất bỏ chúng
+# (`listener_book`), `seal` từ chối gói còn trường ngoài danh sách. Cây con không mang QA (bìa, nhạc, ảnh, sharedWords, package)
+# không xét sâu.
+PACKAGE_BOOK_KEYS = frozenset({
+    "format", "title", "author", "description", "language", "narrator", "duration", "chaptersTotal", "chaptersAvailable", "complete", "version", "audioVersion",
+    "audioUpdatedAt", "sourceFingerprint", "metaVersion", "chapters", "volumes", "parts", "cast", "avatars", "samples", "cover", "music",
+    "sharedWords", "audioCoverage", "package"})
+PACKAGE_CHAPTER_KEYS = frozenset({
+    "id", "index", "part", "volumeId", "title", "subtitle", "fullTitle", "file", "size", "sha256", "script", "text", "state", "duration",
+    "available", "audioVersion", "wordsVersion"})
+PACKAGE_VOLUME_KEYS = frozenset({"id", "number", "title", "cover", "chapters"})
+PACKAGE_PART_KEYS = frozenset({"part", "title", "chapters", "duration", "narrator"})
+PACKAGE_COVERAGE_KEYS = frozenset({"expected", "missing", "partial"})
+PACKAGE_EXPECTED_KEYS = frozenset({"id", "title", "audioSha256", "segments"})
+PACKAGE_MISSING_KEYS = frozenset({"id", "title", "reason"})
+
+
+def _package_fields(book: dict[str, Any], strip: bool) -> list[str]:
+    found: list[str] = []
+
+    def keep(where: str, item: Any, allowed: frozenset[str]) -> None:
+        if not isinstance(item, dict):
+            return
+        extra = [key for key in item if key not in allowed]
+        found.extend(f"{where}.{key}" for key in extra)
+        if strip:
+            for key in extra:
+                del item[key]
+
+    keep("book", book, PACKAGE_BOOK_KEYS)
+    for chapter in book.get("chapters") or []:
+        keep(f"chapters[{chapter.get('id') if isinstance(chapter, dict) else '?'}]", chapter, PACKAGE_CHAPTER_KEYS)
+    for volume in book.get("volumes") or []:
+        keep("volumes", volume, PACKAGE_VOLUME_KEYS)
+        for chapter in (volume.get("chapters") or []) if isinstance(volume, dict) else []:
+            if isinstance(chapter, dict):
+                keep(f"chapters[{chapter.get('id')}]", chapter, PACKAGE_CHAPTER_KEYS)
+    for part in book.get("parts") or []:
+        keep("parts", part, PACKAGE_PART_KEYS)
+    coverage = book.get("audioCoverage")
+    keep("audioCoverage", coverage, PACKAGE_COVERAGE_KEYS)
+    if isinstance(coverage, dict):
+        for item in coverage.get("expected") or []:
+            keep("audioCoverage.expected", item, PACKAGE_EXPECTED_KEYS)
+        for item in coverage.get("missing") or []:
+            keep("audioCoverage.missing", item, PACKAGE_MISSING_KEYS)
+    return found
+
+
+def package_field_problems(book: dict[str, Any]) -> list[str]:
+    """Trường của `book.json` ngoài danh sách trắng của gói người nghe (QA, nội bộ), dạng "chỗ.trường" - rỗng là sạch."""
+    return _package_fields(book, strip=False)
+
+
+def listener_book(book: dict[str, Any]) -> dict[str, Any]:
+    """Bỏ tại chỗ mọi trường ngoài danh sách trắng của gói người nghe (trạng thái QA, trường nội bộ); trả lại chính `book`."""
+    _package_fields(book, strip=True)
+    return book
 
 
 def listener_text_problems(book: dict[str, Any], cast: dict[str, Any] | None) -> list[str]:
@@ -222,6 +283,7 @@ def _packaged_book(project_root: Path) -> dict[str, Any]:
     book = sync.manifest(project_root, book_id(project_root), _NoListening())
     for key in ("id", "series", "wordsVersion"):
         book.pop(key, None)
+    listener_book(book)  # trạng thái QA và trường nội bộ chỉ thuộc dự án, không vào gói
     # Chương chờ thu lại theo sửa của người nghe vẫn mang bản thu cũ: file có audio của mọi chương là cuốn trọn vẹn, không phải
     # "chỉ có các chương đã làm" (soát UX a25 T7 - file ghi "3/3 chương có audio" mà vẫn "Chưa hoàn thành").
     if book["chaptersTotal"] and book["chaptersAvailable"] == book["chaptersTotal"]:
@@ -283,10 +345,7 @@ def listening_layer(project_root: Path, music_track: Callable[[str], Path | None
         recorded = avatars.recorded_cast(project_root)
         files: dict[str, Path | bytes] = {"cast.json": json_bytes(with_history(project_root, book_edits.shared_cast(recorded)))}
         files.update(avatars.image_files(project_root, recorded))
-        # Bằng chứng máy chỉ gồm số đo trên MP3; đi theo cuốn, không thêm bước người nghe.
-        level_report = Path(project_root) / "output" / "reports" / "levelQa.json"
-        if level_report.is_file():
-            book["levelQa"] = json.loads(level_report.read_text(encoding="utf-8"))
+        # Báo cáo QA mức âm (output/reports/levelQa.json) là của dự án: không đi theo cuốn (PACKAGE_BOOK_KEYS).
         # Phán quyết tầng hai của chữ trùng Việt / Anh và gốc từng tên (readaloud/shared_rulings.py): đi theo cuốn để máy nghe
         # không có model (điện thoại) đọc chương chỉ-chữ đúng như Studio đã quyết.
         from ..readaloud import shared_rulings
@@ -380,6 +439,7 @@ def book_layer(folder: Path) -> tuple[dict[str, Any], dict[str, Path | bytes], d
             raise BookFileError(f"Thư mục sách thiếu file {name}.")
         files[name], known[name] = source, meta
     book.pop("package", None)
+    listener_book(book)  # gói cũ còn mang trạng thái QA: đóng lại thì bỏ
     edits = book_edits.load(folder)
     try:
         layer = book_edits.layer_files(folder, edits)
@@ -589,6 +649,9 @@ def seal(book: dict[str, Any], files: dict[str, Path | bytes], out: Path, *, pro
             leaked += script_speaker_problems(name, source.read_bytes() if isinstance(source, Path) else source)
     if leaked:
         raise BookFileError("Chữ người nghe thấy có dấu nội bộ (QA, mã máy) - không đóng gói: " + "; ".join(leaked[:3]))
+    internal = package_field_problems({key: value for key, value in book.items() if key != "package"})
+    if internal:
+        raise BookFileError("book.json có trường QA / nội bộ chỉ thuộc dự án - không đóng gói: " + "; ".join(internal[:3]))
     described_files = {}
     total_hash = sum(source.stat().st_size if isinstance(source, Path) else len(source) for source in files.values())
     hashed = 0

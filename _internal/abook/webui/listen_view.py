@@ -64,8 +64,8 @@ def _chapters(project_root: Path) -> list[dict[str, Any]]:
     out = []
     for chapter in store.chapters(project_root):
         duration = chapter["seconds"] if chapter["playable"] else 0.0
-        # Dấu QA ("Cần nghe lại"...) không bao giờ vào chữ người nghe thấy: tình trạng chương nằm ở qualityPassed/qualityWarning,
-        # Studio đọc hai trường ấy; tên phụ chỉ là tên phụ của chương (bookfile.listener_text_problems chặn lúc đóng gói).
+        # Trạng thái QA ("Cần nghe lại", chương đạt hay chưa, lỗi máy) không vào phần nghe: nó ở sổ dự án, Studio đọc từ store.chapters
+        # (statusLabel...). Phần nghe này là nguồn của book.json trong gói và của điện thoại (bookfile.PACKAGE_CHAPTER_KEYS).
         subtitle = chapter["subtitle"]
         out.append({
             "id": chapter["id"],
@@ -75,8 +75,6 @@ def _chapters(project_root: Path) -> list[dict[str, Any]]:
             "fullTitle": chapter["fullTitle"],
             "duration": round(float(duration), 1),
             "available": bool(chapter["playable"]),
-            "qualityPassed": chapter["status"] == "completed" and chapter["segments"]["failed"] == 0,
-            "qualityWarning": chapter["lastError"],
             "audioVersion": str(chapter["completedAt"] or ""),
         })
     return out
