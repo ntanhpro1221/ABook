@@ -372,12 +372,18 @@ Không đổi sang phân tích cuốn chiếu nếu người dùng chưa thay đ
   Preset vẫn nằm trong catalog vì VieNeu có chúng và sách cũ có thể đã khóa chúng — chỉ là không được cast.
   Mọi đường dẫn tới preset đều phải tôn trọng `CASTING_REGIONS`; một fallback quét cả catalog sẽ đưa chúng
   quay lại sách.
-- Preset được phân bổ theo giới tính và ưu tiên dùng hết pool phù hợp trước khi tái sử dụng. Trong cùng mức sử dụng,
-  bảng hạng người nghe đi trước các thước đo; giọng ngang bậc hoặc chưa xếp mới phân xử theo các thước đo và thứ tự cũ.
-- `voice_catalog.preset_eligible` là cửa dùng giọng theo vai: preset được chủ sách xếp trong `assets/voice_rank.json`
-  được dùng cho đúng vai ấy bất kể style catalog; tin tức chưa được xếp vẫn bị loại. Vùng miền và lệnh cấm phân vai
-  vẫn giữ nguyên khi tự chọn. `never_auto` cấm tự chọn ở cả hai vai và cả dự phòng; danh sách chọn tay vẫn giữ các giọng ấy.
-  Bảng hạng ưu tiên hơn thứ tự catalog; mặc định nữ là Ngọc Linh, nam là Đức Trí. Hạng dẫn nữ đầu gồm Ngọc Linh và Kim Thanh ngang nhau.
+- Phân vai và giọng dẫn tự động chỉ nhận preset có `voice_catalog.auto_rank` cho đúng giới/vai: hạng chủ sách hoặc
+  `machine_approved` đã qua kiểm tra. Không dự phòng sang giọng chưa đạt; `never_auto` vẫn chặn mọi đường tự chọn.
+  `preset_eligible` giữ luật vùng miền/vai; lựa chọn tay giữ hành vi hiện có.
+- Dùng hết giọng đạt chưa ai giữ trước khi dùng chung. Khi phải dùng chung, xếp theo bạn thoại, cảnh, chương,
+  khoảng cách chương, rồi số người/số câu của người giữ và hạng/thứ tự danh mục như `PresetAllocator`.
+  Giọng người kể hiện tại không được chia cho nhân vật. Không thay giọng nguyên bản bằng biến thể cao độ.
+- Giới chưa rõ xét cả hai kho đạt qua `_choose_unknown` và cùng phép xếp hạng đồ thị; hoà giới dùng đúng khoá
+  `unknown-gender::<who>`, không mặc định nam. Giữ giới từ tên qua `resolve_gender`/`gender_from_name` và giới đã biết
+  trong sổ khi nguồn hiện tại vẫn chưa xác định, trước luật trung tính. Trẻ con vẫn dùng kho nữ theo `casting_gender`.
+- Store tra nhân vật qua khoá chuẩn hoá. Vai có tên là chính khi nói từ hai cảnh; sách dưới hai cảnh cần ít nhất ba câu.
+  NPC luôn là vai phụ. Các cách đảo họ-tên, romaji đơn và nhãn mô tả cùng giới chỉ gom theo luật đích duy nhất trong
+  `character_registry`; lời dẫn gọi một phần của chính nhãn ấy không được làm ngắn nhãn người nói.
 - NPC có nhãn cục bộ được giữ identity riêng trong phạm vi chapter/batch; NPC không phân biệt được
   ít nhất phải tách pool nam, nữ và chưa rõ giới tính.
 - Nhãn NPC cục bộ trùng chính xác với tên nhân vật trong cùng chapter phải được hợp nhất trước khi
