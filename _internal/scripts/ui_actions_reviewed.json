@@ -10506,7 +10506,7 @@
     "line": 162,
     "statement": "job = scope.launch {",
     "occurrence": 1,
-    "source_sha256": "b1161e8136b1a716e4b55c6c8cc45ef917af79480e9b1bc62f72f4276351676e",
+    "source_sha256": "2dd28cca6b0348736435cd1baf97156c44aacc0eb1304f7f24f08b1ff6c54ac8",
     "disposition": "pending",
     "guard": "ViewModel/operation fields: busy, progress; Components pending indicator",
     "reason": "The model retains the operation and locks repeats; UI uses the shared pending parameter, loading content or progress owner. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
@@ -10518,7 +10518,7 @@
     "line": 184,
     "statement": "job = scope.launch { finishPop() }",
     "occurrence": 1,
-    "source_sha256": "b1161e8136b1a716e4b55c6c8cc45ef917af79480e9b1bc62f72f4276351676e",
+    "source_sha256": "2dd28cca6b0348736435cd1baf97156c44aacc0eb1304f7f24f08b1ff6c54ac8",
     "disposition": "pending",
     "guard": "ViewModel/operation fields: busy, progress; Components pending indicator",
     "reason": "The model retains the operation and locks repeats; UI uses the shared pending parameter, loading content or progress owner. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
@@ -10530,7 +10530,7 @@
     "line": 191,
     "statement": "job = scope.launch {",
     "occurrence": 2,
-    "source_sha256": "b1161e8136b1a716e4b55c6c8cc45ef917af79480e9b1bc62f72f4276351676e",
+    "source_sha256": "2dd28cca6b0348736435cd1baf97156c44aacc0eb1304f7f24f08b1ff6c54ac8",
     "disposition": "pending",
     "guard": "ViewModel/operation fields: busy, progress; Components pending indicator",
     "reason": "The model retains the operation and locks repeats; UI uses the shared pending parameter, loading content or progress owner. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
@@ -10542,7 +10542,7 @@
     "line": 207,
     "statement": "job = scope.launch {",
     "occurrence": 3,
-    "source_sha256": "b1161e8136b1a716e4b55c6c8cc45ef917af79480e9b1bc62f72f4276351676e",
+    "source_sha256": "2dd28cca6b0348736435cd1baf97156c44aacc0eb1304f7f24f08b1ff6c54ac8",
     "disposition": "pending",
     "guard": "ViewModel/operation fields: busy, progress; Components pending indicator",
     "reason": "The model retains the operation and locks repeats; UI uses the shared pending parameter, loading content or progress owner. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
@@ -10554,7 +10554,7 @@
     "line": 216,
     "statement": "suspend fun dragBack(back: Float) {",
     "occurrence": 1,
-    "source_sha256": "b1161e8136b1a716e4b55c6c8cc45ef917af79480e9b1bc62f72f4276351676e",
+    "source_sha256": "2dd28cca6b0348736435cd1baf97156c44aacc0eb1304f7f24f08b1ff6c54ac8",
     "disposition": "internal",
     "guard": "Async interface/helper boundary; concrete activation inventoried separately",
     "reason": "This signature supplies work to a model or component; declaring it starts no user operation. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
@@ -10566,7 +10566,7 @@
     "line": 222,
     "statement": "suspend fun commitBack() = finishPop()",
     "occurrence": 1,
-    "source_sha256": "b1161e8136b1a716e4b55c6c8cc45ef917af79480e9b1bc62f72f4276351676e",
+    "source_sha256": "2dd28cca6b0348736435cd1baf97156c44aacc0eb1304f7f24f08b1ff6c54ac8",
     "disposition": "internal",
     "guard": "Async interface/helper boundary; concrete activation inventoried separately",
     "reason": "This signature supplies work to a model or component; declaring it starts no user operation. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
@@ -10578,7 +10578,7 @@
     "line": 225,
     "statement": "suspend fun cancelBack() {",
     "occurrence": 1,
-    "source_sha256": "b1161e8136b1a716e4b55c6c8cc45ef917af79480e9b1bc62f72f4276351676e",
+    "source_sha256": "2dd28cca6b0348736435cd1baf97156c44aacc0eb1304f7f24f08b1ff6c54ac8",
     "disposition": "internal",
     "guard": "Async interface/helper boundary; concrete activation inventoried separately",
     "reason": "This signature supplies work to a model or component; declaring it starts no user operation. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
@@ -10590,7 +10590,7 @@
     "line": 229,
     "statement": "private suspend fun finishPop() {",
     "occurrence": 1,
-    "source_sha256": "b1161e8136b1a716e4b55c6c8cc45ef917af79480e9b1bc62f72f4276351676e",
+    "source_sha256": "2dd28cca6b0348736435cd1baf97156c44aacc0eb1304f7f24f08b1ff6c54ac8",
     "disposition": "internal",
     "guard": "Async interface/helper boundary; concrete activation inventoried separately",
     "reason": "This signature supplies work to a model or component; declaring it starts no user operation. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
@@ -10602,7 +10602,7 @@
     "line": 235,
     "statement": "private suspend fun animateTo(target: Float, spec: FiniteAnimationSpec<Float>) {",
     "occurrence": 1,
-    "source_sha256": "b1161e8136b1a716e4b55c6c8cc45ef917af79480e9b1bc62f72f4276351676e",
+    "source_sha256": "2dd28cca6b0348736435cd1baf97156c44aacc0eb1304f7f24f08b1ff6c54ac8",
     "disposition": "internal",
     "guard": "Async interface/helper boundary; concrete activation inventoried separately",
     "reason": "This signature supplies work to a model or component; declaring it starts no user operation. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
@@ -11586,7 +11586,7 @@
     "line": 143,
     "statement": "scope.launch { page.load() }",
     "occurrence": 1,
-    "source_sha256": "a6485a0f8d13401f1b0a84dc0fd017a177aeb585e12e62edd89b2d11fa8865d9",
+    "source_sha256": "bf21a170c9ddf77584ccea0d2ea02285b70b32f8498a5eb7c1babc6ddefc4254",
     "disposition": "pending",
     "guard": "ViewModel/operation fields: busy, pending, progress; Components pending indicator",
     "reason": "The model retains the operation and locks repeats; UI uses the shared pending parameter, loading content or progress owner. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
@@ -11598,7 +11598,7 @@
     "line": 158,
     "statement": "suspend fun receive(queue: ImportQueue, sources: List<String>) {",
     "occurrence": 1,
-    "source_sha256": "a6485a0f8d13401f1b0a84dc0fd017a177aeb585e12e62edd89b2d11fa8865d9",
+    "source_sha256": "bf21a170c9ddf77584ccea0d2ea02285b70b32f8498a5eb7c1babc6ddefc4254",
     "disposition": "internal",
     "guard": "Async interface/helper boundary; concrete activation inventoried separately",
     "reason": "This signature supplies work to a model or component; declaring it starts no user operation. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
@@ -11610,7 +11610,7 @@
     "line": 167,
     "statement": "suspend fun showBookPage(book: vn.abook.player.ui.data.ListenBook) {",
     "occurrence": 1,
-    "source_sha256": "a6485a0f8d13401f1b0a84dc0fd017a177aeb585e12e62edd89b2d11fa8865d9",
+    "source_sha256": "bf21a170c9ddf77584ccea0d2ea02285b70b32f8498a5eb7c1babc6ddefc4254",
     "disposition": "internal",
     "guard": "Async interface/helper boundary; concrete activation inventoried separately",
     "reason": "This signature supplies work to a model or component; declaring it starts no user operation. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
@@ -11622,7 +11622,7 @@
     "line": 179,
     "statement": "suspend fun openStudio(request: StudioRequest) {",
     "occurrence": 1,
-    "source_sha256": "a6485a0f8d13401f1b0a84dc0fd017a177aeb585e12e62edd89b2d11fa8865d9",
+    "source_sha256": "bf21a170c9ddf77584ccea0d2ea02285b70b32f8498a5eb7c1babc6ddefc4254",
     "disposition": "internal",
     "guard": "Async interface/helper boundary; concrete activation inventoried separately",
     "reason": "This signature supplies work to a model or component; declaring it starts no user operation. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
@@ -11634,7 +11634,7 @@
     "line": 328,
     "statement": "(libraryNow.value as? LibraryState.Ready)?.books?.firstOrNull { it.id == id }?.let { book -> shell.scope.launch { shell.showBookPage(book) } }",
     "occurrence": 1,
-    "source_sha256": "a6485a0f8d13401f1b0a84dc0fd017a177aeb585e12e62edd89b2d11fa8865d9",
+    "source_sha256": "bf21a170c9ddf77584ccea0d2ea02285b70b32f8498a5eb7c1babc6ddefc4254",
     "disposition": "pending",
     "guard": "ViewModel/operation fields: busy, pending, progress; Components pending indicator",
     "reason": "The model retains the operation and locks repeats; UI uses the shared pending parameter, loading content or progress owner. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
@@ -11646,7 +11646,7 @@
     "line": 339,
     "statement": "readAlong = { book -> shell.scope.launch { if (player.prepare(book)) window.openReading() } },",
     "occurrence": 1,
-    "source_sha256": "a6485a0f8d13401f1b0a84dc0fd017a177aeb585e12e62edd89b2d11fa8865d9",
+    "source_sha256": "bf21a170c9ddf77584ccea0d2ea02285b70b32f8498a5eb7c1babc6ddefc4254",
     "disposition": "pending",
     "guard": "ViewModel/operation fields: busy, pending, progress; Components pending indicator",
     "reason": "The model retains the operation and locks repeats; UI uses the shared pending parameter, loading content or progress owner. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
@@ -11658,7 +11658,7 @@
     "line": 344,
     "statement": "openNowPlaying = { id -> shell.scope.launch { if (player.awaitLoaded(id)) window.open() } },",
     "occurrence": 1,
-    "source_sha256": "a6485a0f8d13401f1b0a84dc0fd017a177aeb585e12e62edd89b2d11fa8865d9",
+    "source_sha256": "bf21a170c9ddf77584ccea0d2ea02285b70b32f8498a5eb7c1babc6ddefc4254",
     "disposition": "pending",
     "guard": "ViewModel/operation fields: busy, pending, progress; Components pending indicator",
     "reason": "The model retains the operation and locks repeats; UI uses the shared pending parameter, loading content or progress owner. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
@@ -15246,7 +15246,7 @@
     "line": 64,
     "statement": "Api.call(\"GET\", \"/api/listen/books/\" + id, null, function(data, error) { if (!error && id === root.book.bookId) root.fullBook = data })",
     "occurrence": 1,
-    "source_sha256": "7376de2a720b5e24f15b2f7f6d7e4ec3d859122277a4fc694973eae6d0aa1540",
+    "source_sha256": "b0a4b376221dab8894bfbaa1a3e171e1383544ef35abd0d4bac9a222d9a2b5ef",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; ProgressBar, bookProgress, bookProgressLine, progress, progressLine, progressOf",
     "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
@@ -15258,7 +15258,7 @@
     "line": 72,
     "statement": "Api.call(\"GET\", \"/api/listen/books/\" + bookId, null, function(data, error) {",
     "occurrence": 1,
-    "source_sha256": "7376de2a720b5e24f15b2f7f6d7e4ec3d859122277a4fc694973eae6d0aa1540",
+    "source_sha256": "b0a4b376221dab8894bfbaa1a3e171e1383544ef35abd0d4bac9a222d9a2b5ef",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; ProgressBar, bookProgress, bookProgressLine, progress, progressLine, progressOf",
     "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
@@ -15270,7 +15270,7 @@
     "line": 140,
     "statement": "Api.call(\"POST\", \"/api/listen/books/\" + id + \"/finished\", active ? {finished: finished, record: active.id} : {finished: finished}, function(data, error) {",
     "occurrence": 1,
-    "source_sha256": "7376de2a720b5e24f15b2f7f6d7e4ec3d859122277a4fc694973eae6d0aa1540",
+    "source_sha256": "b0a4b376221dab8894bfbaa1a3e171e1383544ef35abd0d4bac9a222d9a2b5ef",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; ProgressBar, bookProgress, bookProgressLine, progress, progressLine, progressOf",
     "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
@@ -15282,7 +15282,7 @@
     "line": 271,
     "statement": "Api.call(\"POST\", \"/api/listen/books/\" + id + \"/chapters/\" + chapterId + \"/done\", body, function(data, error) {",
     "occurrence": 1,
-    "source_sha256": "7376de2a720b5e24f15b2f7f6d7e4ec3d859122277a4fc694973eae6d0aa1540",
+    "source_sha256": "b0a4b376221dab8894bfbaa1a3e171e1383544ef35abd0d4bac9a222d9a2b5ef",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; ProgressBar, bookProgress, bookProgressLine, progress, progressLine, progressOf",
     "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
