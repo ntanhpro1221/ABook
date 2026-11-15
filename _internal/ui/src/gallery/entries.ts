@@ -150,6 +150,8 @@ const DESKTOP: Omit<Entry, "platform">[] = [
     await click("Thêm vào thư viện");
   } },
   { id: "desktop/settings", group: "Cài đặt", title: "Cài đặt (gốc)", route: "/settings" },
+  { id: "desktop/settings-device-voices", group: "Cài đặt", title: "Tên giọng thiết bị", route: "/settings/voice",
+    scenario: { installedStudio: true, deviceVoices: true }, storage: { "abook.fold.voice.provider.device": "1" } },
   ...(["voice", "listen", "sleep", "look", "devices", "studio", "advanced"] as const).map((group): Omit<Entry, "platform"> => ({
     id: `desktop/settings-${group}`,
     group: "Cài đặt",

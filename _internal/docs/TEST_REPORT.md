@@ -1,5 +1,11 @@
 # Test report
 
+## 15-11-2026 — device voice names
+
+Android device voices use the configured engine name and the Voice network flag. Colliding labels get stable numbers; offline voices precede online voices and higher reported quality comes first within each group. No gender or accent is inferred from Android identifiers. Windows preserves the supplied vendor and proper name for both Qt and web. The shared device-group description allows engines with network voices. Voice rows keep individual preview actions; the Android selection status sits below the name when a preview button is present.
+
+Focused validation passed 35 Android tests, two existing voice-sheet screenshot Verify tests, 39 Vitest tests, 29 Qt QML checks, three backend tests, TypeScript, the web gallery build and both parity checks. Android and Qt review frames are exported outside the repository. The Qt run uses the existing C++ test runner from the base worktree with this worktree's QML imports and tests; C++ sources are unchanged. Preview tests use fake voices and audio sources, so they verify labels, selection and requests rather than the sound of installed engines.
+
 ## 15-11-2026 — hash-bound signal edge acceptance on reopen
 
 Recovery recognizes an already committed edge refusal only for the same WAV checksum and locked

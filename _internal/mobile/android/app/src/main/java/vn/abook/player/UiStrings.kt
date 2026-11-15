@@ -2,6 +2,13 @@
 package vn.abook.player
 
 internal object S {
+    const val s_device_engine_google = "Google"
+    const val s_device_engine_samsung = "Samsung"
+    const val s_device_engine_default = "Máy"
+    fun s_device_voice_network(p0: Any?): String = p0.toString() + " cần mạng"
+    fun s_device_voice_offline(p0: Any?): String = p0.toString() + " ngoại tuyến"
+    fun s_device_voice_number(p0: Any?, p1: Any?): String = p0.toString() + " " + p1.toString()
+    const val s_device_voice_group_detail = "Theo bộ đọc hệ thống"
     const val s_player_line_waiting_audio = "Chỉ ghi yêu cầu; giọng đọc đổi sau khi Studio thu lại."
     fun s_ghi_nen_chua_xong_0_9b2f61d4(p0: Any?): String = "Ghi nền chưa xong: " + p0.toString()
     const val s_pair_fingerprint_label = "Mã nhận máy: "
@@ -1797,7 +1804,6 @@ internal object S {
     const val s_khoi_khong_tron_khung_c184e523 = "khối không trọn khung"
     const val s_khong_5b3c9ba4 = "Không"
     const val s_khong_biet_bai_dai_bao_lau_c511f4c1 = "không biết bài dài bao lâu"
-    const val s_khong_can_mang_1c7dfe7f = "không cần mạng"
     const val s_khong_cau_nao_nghi_25d773f7 = "Không câu nào nghi"
     fun s_khong_co_ai_khop_0_d1bfb22a(p0: Any?): String = "Không có ai khớp “" + p0.toString() + "”."
     const val s_khong_co_am_thanh_nao_de_ghi_9998b831 = "Không có âm thanh nào để ghi"
@@ -2690,8 +2696,6 @@ internal object S {
     fun s_tien_trinh_khoi_dong_android_0_1_2_75124ad7(p0: Any?, p1: Any?, p2: Any?): String = "tiến trình khởi động (Android " + p0.toString() + ", " + p1.toString() + " " + p2.toString() + ")"
     const val s_tieng_nho_dan_39149d9b = "Tiếng nhỏ dần "
     const val s_tieng_trung_gb18030_e1cc1f23 = "tiếng Trung (GB18030)"
-    fun s_tieng_viet_0_3e248b21(p0: Any?): String = "Tiếng Việt " + p0.toString()
-    const val s_tieng_viet_690829f8 = "Tiếng Việt"
     fun s_tieng_viet_viet_0_khong_viet_1_b8bd99fa(p0: Any?, p1: Any?): String = "Tiếng Việt viết " + p0.toString() + ", không viết " + p1.toString() + "."
     const val s_tieng_viet_windows_cp1258_4501871c = "tiếng Việt Windows (cp1258)"
     const val s_tiep_6e2dd224 = "Tiếp"

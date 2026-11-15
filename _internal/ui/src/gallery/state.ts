@@ -3,6 +3,8 @@
 
 export interface Scenario {
   volumes?: boolean;
+  /** Explicit device-voice fixtures for checking engine names and preview controls. */
+  deviceVoices?: boolean;
   /** Thư viện: đủ sách, rỗng, đang tải mãi, hay lỗi. */
   library: "full" | "empty" | "loading" | "error";
   /** Điện thoại đã ghép máy tính chưa (Cài đặt › Thiết bị). */

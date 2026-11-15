@@ -1,6 +1,13 @@
 {
   "_doc": "Single Vietnamese UI copy source. {0}, {1}, ... are ordered value slots. Edit here, then run scripts/gen_ui_strings.py.",
   "strings": {
+    "s_device_engine_google": "Google",
+    "s_device_engine_samsung": "Samsung",
+    "s_device_engine_default": "Máy",
+    "s_device_voice_network": "{0} cần mạng",
+    "s_device_voice_offline": "{0} ngoại tuyến",
+    "s_device_voice_number": "{0} {1}",
+    "s_device_voice_group_detail": "Theo bộ đọc hệ thống",
     "s_player_line_waiting_audio": "Chỉ ghi yêu cầu; giọng đọc đổi sau khi Studio thu lại.",
     "s_ghi_nen_chua_xong_0_9b2f61d4": "Ghi nền chưa xong: {0}",
     "s_pair_fingerprint_label": "Mã nhận máy: ",

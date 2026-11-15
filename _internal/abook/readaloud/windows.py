@@ -7,9 +7,12 @@ Chạy ẩn (CREATE_NO_WINDOW, không nháy cửa sổ). Máy không có giọng
 """
 from __future__ import annotations
 
+from collections import Counter
+from dataclasses import replace
 import io
 import json
 import os
+import re
 import shutil
 import subprocess
 import tempfile
@@ -117,9 +120,17 @@ def voices(folder: Path, *, language: str = "vi", refresh: bool = False) -> list
                 raw = _run(folder, {"mode": "list"}).get("voices") or []
             except VoiceError:
                 raw = []
-            _listed = [Voice(PREFIX + item["id"], str(item["name"]).removeprefix("Microsoft ").strip(), "device", False, False,
+            # Keep the supplied proper name and vendor; language is already filtered below.
+            _listed = [Voice(PREFIX + item["id"], re.sub(r"\s+-\s+Vietnamese\s+\(Vietnam\)$", "", str(item["name"])).strip(), "device", False, False,
                              str(item.get("language", "")), gender(item.get("gender")))
                        for item in raw if str(item.get("language", "")).lower().startswith("vi-")]
+            _listed.sort(key=lambda voice: (voice.name.casefold(), voice.id))
+            counts = Counter(voice.name for voice in _listed)
+            seen: Counter[str] = Counter()
+            for index, voice in enumerate(_listed):
+                seen[voice.name] += 1
+                if counts[voice.name] > 1:
+                    _listed[index] = replace(voice, name=f"{voice.name} {seen[voice.name]}")
         return [voice for voice in _listed if voice.language.lower().startswith(language.lower())]
 
 

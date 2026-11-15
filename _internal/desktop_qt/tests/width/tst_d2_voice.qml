@@ -175,7 +175,7 @@ Item {
             verify(hasText(page, "trực tuyến, miễn phí\u00a0·\u00a02 giọng"))
             verify(hasText(page, "dùng khoá của bạn\u00a0·\u00a01 giọng"))
             verify(hasText(page, "trên máy này, không cần mạng\u00a0·\u00a04 giọng\u00a0·\u00a0đang dùng"))
-            verify(hasText(page, "không cần mạng\u00a0·\u00a01 giọng"))
+            verify(hasText(page, "Theo bộ đọc hệ thống\u00a0·\u00a01 giọng"))
             verify(hasText(page, "Giọng Edge gửi chữ của sách tới máy chủ Microsoft để đọc."))
             verify(hasText(page, "Giọng Azure Speech gửi chữ của sách tới Azure Speech bằng khoá của bạn - có thể bị tính tiền vào tài khoản của bạn."))
             verify(!hasText(page, "Cài giọng tiếng Việt tại Cài đặt Windows › Thời gian và ngôn ngữ › Giọng nói."))
@@ -188,7 +188,7 @@ Item {
             openAll()
             const page = make()
             verify(hasText(page, "Cài giọng tiếng Việt tại Cài đặt Windows › Thời gian và ngôn ngữ › Giọng nói."))
-            verify(hasText(page, "không cần mạng\u00a0·\u00a00 giọng"))
+            verify(hasText(page, "Theo bộ đọc hệ thống\u00a0·\u00a00 giọng"))
         }
 
         function test_choosingDefaultVoice() {
@@ -263,6 +263,34 @@ Item {
             // hết thời lượng mẫu thì nút về "Nghe thử"
             DesktopApi.delayed = false
             tryCompare(other, "playing", false)
+        }
+
+        function test_deviceNames_data() { return [{tag: "light"}, {tag: "dark"}] }
+        function test_deviceNames(data) {
+            Theme.mode = data.tag
+            host.voices = [
+                {id: "device:an", name: "Microsoft An", provider: "device", gender: "male", online: false},
+                {id: "device:google", name: "Google ngoại tuyến 1", provider: "device", gender: "", online: false},
+                {id: "device:samsung", name: "Samsung cần mạng", provider: "device", gender: "", online: true},
+                {id: "device:oem", name: "OPPO ngoại tuyến", provider: "device", gender: "", online: false}
+            ]
+            openAll()
+            const page = make()
+            for (const voice of host.voices) {
+                const target = row(page, voice.id)
+                compare(target.shown, voice.name)
+                verify(textItem(target, "Nghe thử") !== null)
+            }
+            shot("settings_device", page)
+            for (const voice of host.voices) {
+                const target = row(page, voice.id)
+                DesktopApi.delayed = true
+                click(textItem(target, "Nghe thử"))
+                compare(last("POST", "/api/readaloud/clip").body.voice, voice.id)
+                DesktopApi.finish()
+                tryCompare(target, "playing", true)
+                click(textItem(target, "Dừng"))
+            }
         }
 
         function test_sampleErrorShowsUnderTheRow() {

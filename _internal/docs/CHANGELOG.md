@@ -7,6 +7,8 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+- Giọng đọc của thiết bị ghi tên bộ đọc và ngoại tuyến hay cần mạng, thay số tiếng Việt khó phân biệt; ưu tiên giọng ngoại tuyến có chất lượng cao và giữ nút nghe thử.
+
 - Mở lại sách giữ nguyên bản thu đã chấp nhận kèm cảnh báo ở mép; kiểm tra bằng đúng lời đọc để không thu lại oan câu kéo dài. Bản thu mất, hỏng hoặc sai băm vẫn bị phát hiện.
 
 ## [0.4.173] - 2026-11-15

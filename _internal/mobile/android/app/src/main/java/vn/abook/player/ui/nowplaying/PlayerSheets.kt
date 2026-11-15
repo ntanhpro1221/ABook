@@ -263,10 +263,10 @@ private fun VoiceList(state: NowPlayingState, model: NowPlayingModel, window: No
                 items(state.voices, key = { it.id }, contentType = { "voice" }) { voice ->
                     val playing = sample.playing == voice.id
                     Row(Modifier.fillMaxWidth().testTag("voice_${voice.id}"), verticalAlignment = Alignment.CenterVertically) {
-                        Box(Modifier.weight(1f)) {
+                        Box(Modifier.weight(1f).padding(end = if (sampling != null) Dim.s12 else 0.dp)) {
                             SheetRow(voice.name, if (voice.id == state.voiceId) S.s_dang_chon_ad61dc23 else "",
                                 if (voice.id == state.voiceId) LucidePaths.CIRCLE_CHECK else LucidePaths.CIRCLE,
-                                role = Role.RadioButton, tag = "voice_choice_${voice.id}") {
+                                role = Role.RadioButton, tag = "voice_choice_${voice.id}", valueBelow = sampling != null) {
                                 model.setVoice(voice.id); window.closeSheet()
                             }
                         }
@@ -340,7 +340,7 @@ private fun SleepChapterChoice(sleep: PlayerSleep, onSet: (Int) -> Unit) {
 
 /** Một dòng của tấm: `icon` (Lucide, 20 dp, cách chữ 16 dp) - trong một tấm hoặc mọi dòng có icon hoặc không dòng nào có. */
 @Composable
-private fun SheetRow(label: String, value: String, icon: String? = null, enabled: Boolean = true, role: Role = Role.Button, tag: String? = null, onClick: () -> Unit) {
+private fun SheetRow(label: String, value: String, icon: String? = null, enabled: Boolean = true, role: Role = Role.Button, tag: String? = null, valueBelow: Boolean = false, onClick: () -> Unit) {
     Row(Modifier.fillMaxWidth().heightIn(min = Dim.s48).then(if (enabled) Modifier.pressable(role = role, onClick = onClick) else Modifier)
         .semantics { if (!enabled) disabled(); if (role == Role.RadioButton) selected = value.isNotEmpty() }.then(if (tag != null) Modifier.testTag(tag) else Modifier).padding(vertical = 8.dp),
         verticalAlignment = Alignment.CenterVertically) {
@@ -350,9 +350,16 @@ private fun SheetRow(label: String, value: String, icon: String? = null, enabled
                 Spacer(Modifier.width(Dim.s16))
             }
         }
-        BasicText(label, Modifier.weight(1f), style = Abook.type.body)
-        Spacer(Modifier.width(12.dp))
-        RollingLabel(value, Modifier.widthIn(max = 144.dp), Abook.type.bodySmall)
+        if (valueBelow) {
+            Column(Modifier.weight(1f)) {
+                BasicText(label, style = Abook.type.body)
+                Reveal(value.isNotEmpty()) { BasicText(value, style = Abook.type.caption) }
+            }
+        } else {
+            BasicText(label, Modifier.weight(1f), style = Abook.type.body)
+            Spacer(Modifier.width(12.dp))
+            RollingLabel(value, Modifier.widthIn(max = 144.dp), Abook.type.bodySmall)
+        }
         Reveal(role == Role.Button && enabled) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Spacer(Modifier.width(Dim.s8))
