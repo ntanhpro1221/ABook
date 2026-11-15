@@ -7824,6 +7824,13 @@ class ProjectDB:
         ):
             # Only an edge refusal kept after every attempt passes on, and only as a warning.
             raise ValueError("a take the signal gate refused cannot be marked signal-passed")
+        if signal.get("signal_rejected"):
+            from .audio_io import accepted_edge_signal
+
+            accepted_signal = accepted_edge_signal(signal, signal.get("generation_policy_hash"), wav_sha256)
+            if accepted_signal is None:
+                raise ValueError("edge acceptance must identify the refused reason and recording")
+            signal = accepted_signal
         with self.transaction() as conn:
             row = conn.execute(
                 "SELECT warning_code,text FROM segments WHERE id=?",
@@ -7869,6 +7876,32 @@ class ProjectDB:
                     time.time(),
                     segment_id,
                 ),
+            )
+
+    def remember_signal_edge_acceptance(
+        self, segment_id: int, *, wav_sha256: str, original_signal: str,
+        signal: dict[str, Any], policy_hash: str,
+    ) -> None:
+        """Checkpoint the checked edge warning without granting a new audio/content verdict."""
+        from .audio_io import TTS_SIGNAL_EDGE_KEPT, accepted_edge_signal
+
+        with self.transaction() as conn:
+            row = conn.execute("SELECT * FROM segments WHERE id=?", (segment_id,)).fetchone()
+            if (row is None or row["wav_sha256"] != wav_sha256 or row["signal_json"] != original_signal
+                    or row["status"] not in {"signal_passed", "verified", "warning"}):
+                raise RuntimeError("edge acceptance checkpoint changed during inspection")
+            self._require_candidate_policy_conn(conn, policy_hash)
+            expected = accepted_edge_signal(
+                json.loads(original_signal), policy_hash, wav_sha256,
+                accepted=row["status"] in {"verified", "warning"},
+            )
+            if signal != expected:
+                raise ValueError("edge acceptance differs from the committed refusal")
+            warning = self._merge_warning_codes(row["warning_code"], TTS_SIGNAL_EDGE_KEPT)
+            conn.execute(
+                """UPDATE segments SET signal_json=?,warning_code=?,
+                    status=CASE WHEN status='verified' THEN 'warning' ELSE status END,updated_at=? WHERE id=?""",
+                (json.dumps(signal, ensure_ascii=False), warning, time.time(), segment_id),
             )
 
     def mark_asr_result(

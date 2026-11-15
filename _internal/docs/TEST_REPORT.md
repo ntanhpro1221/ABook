@@ -1,5 +1,29 @@
 # Test report
 
+## 15-11-2026 — hash-bound signal edge acceptance on reopen
+
+Recovery recognizes an already committed edge refusal only for the same WAV checksum and locked
+policy, after all other signal gates pass. SQLite records the original reason and a warning;
+recording and recovery retain the same acceptance through later QA checkpoints. Pending, clipped,
+changed-hash and changed-policy takes cannot inherit it. No waveform or gate threshold changes.
+Recovery now uses the same materialized speech as the writer, with the recorded text hash still
+guarding reading drift.
+
+Eighteen synthetic regression cases pass, including two chapter resumes without TTS, interruption
+before/after acceptance commit, missing/truncated/replaced WAVs and byte-identical passing audio.
+The related recovery, rejected-take, signal-cache and spoken-text suites pass 110 cases with no
+failures. Compileall passes. The new test file passes Ruff; application diagnostics match the base.
+
+A read-only external audit uses copied SQLite databases and original audio under a write guard.
+For 34 selected checkpoints, the base recovery resets 34 on both fresh-snapshot scans. Fixed
+recovery preserves all 34 across two DB opens, with zero missing/corrupt resets, zero reading-drift
+resets and unchanged WAV hashes when given the exact recorded, hash-verified materialized speech.
+A separate whole-project scan with the current materializer has zero missing/corrupt resets but
+correctly reports 84 reading drifts, including two selected checkpoints; those are not edge waivers.
+No real project was resumed or rendered. Its database contents and the 34 audio hashes remain unchanged.
+
+Full-suite and committed-tree leak-scan results are recorded with the final change.
+
 ## 15-11-2026 — 0.4.173 integration
 
 Integrated the 17 phase-one branches and volumes, authoritative speaker labels and cover-byte preservation, retained sleep timers, book transitions, floating surfaces, music downloads and UI affordances. Branch-focused checks passed before the release commit. The full guarded release gate uses the exact implementation hash explicitly approved by Lead; private reports, recordings, database observations and release assets remain outside Git.

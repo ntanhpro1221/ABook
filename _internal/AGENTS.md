@@ -435,6 +435,11 @@ Không đổi sang phân tích cuốn chiếu nếu người dùng chưa thay đ
 - Whisper phải nhận WAV đã đọc/resample trong process; không truyền đường dẫn cho API Whisper vì bản
   dependency hiện tại sẽ gọi FFmpeg subprocess cho từng segment và gây nháy console trên Windows.
 - Recovery xóa `.part`, reset stage dở và chỉ reuse artifact có checksum + validation hợp lệ.
+- An accepted edge refusal must retain its exact reason, WAV checksum and locked policy in `signal_edge_acceptance`.
+  Recovery may recognize a committed verified/warning checkpoint with an edge refusal reason only after matching the
+  actual WAV hash and passing every other signal gate; it records the same acceptance and warning without changing audio
+  or granting content QA. Pending, clipped, changed-hash or changed-policy takes never inherit that exemption.
+  Recovery and recording validate the same materialized speech; its recorded text hash still guards reading drift.
 - Project `completed` được fast-path nếu toàn bộ chapter/full-book MP3 còn decode + checksum hợp lệ.
 - Dừng cưỡng bức phải kết thúc process con trước process worker để không bỏ lại FFmpeg/Ollama helper.
 - Ollama ẩn phải ghi stdout/stderr vào `runtime/logs/ollama-server.log`; không bỏ mất bằng `DEVNULL`.
