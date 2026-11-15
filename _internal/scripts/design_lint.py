@@ -333,11 +333,37 @@ def rule_r10(a: Analysis) -> list[Finding]:
         share = (bottom - top + 1) / a.h
         tail = not rows[bottom + 1:a.h - a.px(R10_PINNED_DP)].any()
         listed = sum(1 for b in a.bands() if b.bottom < top and b.height >= a.px(4)) >= R10_LIST_ROWS
-        if share > 0.40 and not (tail and listed):
+        # Màn trạng thái căn giữa (soát 10-11 L10: tâm khối ở 35-50 % chiều cao dùng được): khối đứng giữa hai dải trống, dải trên ít
+        # nhất 55 % dải dưới, khối căn giữa ngang - dải dưới ấy là nửa kia của lề đều, không phải chỗ trống bỏ phí. Khối dính đỉnh
+        # (dải trên nhỏ) hay lệch trái vẫn đỏ.
+        above = [r for r in empty_rows if r[1] < top]
+        centred_state = False
+        if above:
+            a_top, a_bottom = max(above, key=lambda r: r[1] - r[0])
+            block = a.ink[a_bottom + 1:top]
+            cols = np.flatnonzero(block.sum(axis=0) > 0)
+            centred_state = (a_bottom - a_top + 1 >= 0.55 * (bottom - top + 1) and cols.size > 0
+                             and any(x0 <= cols[0] and cols[-1] < x1 and abs((cols[0] + cols[-1]) / 2 - (x0 + x1 - 1) / 2) <= a.px(48)
+                                     for x0, x1 in a.panes()))
+        if share > 0.40 and not (tail and listed) and not centred_state:
             out.append(Finding("R10", a.shot.key, f"dải trống {share:.0%} chiều cao (y {top}-{bottom})",
                                [0, top, a.w, bottom]))
     if a.w / a.s >= 600:
-        empty_cols = runs(~(a.ink.sum(axis=0) > 1))
+        # Khe giữa chữ đầu hàng và việc cuối hàng (công tắc, ›, ⌄, cột dữ liệu) của hàng chạy hết cột (DESIGN §4: "mọi hàng chạy hết
+        # cột") không phải nội dung dồn trái: có dòng mực cao >= 4 dp nằm cả hai bên khe thì khe ở TRONG hàng. Dồn trái là khe
+        # chạy tới mép mà bên kia không còn gì của cùng các hàng.
+        def inside_rows(left: int, right: int) -> bool:
+            both = (a.ink[:, :left].sum(axis=1) > 0) & (a.ink[:, right + 1:].sum(axis=1) > 0)
+            return any(b - t + 1 >= a.px(4) for t, b in runs(both))
+        # Khối căn giữa vùng (màn trạng thái: rỗng, lỗi - soát 10-11 L10 "căn giữa toàn bộ") để trống đều hai bên, không dồn trái:
+        # nội dung dưới đầu màn của vùng chứa khe có tâm ngang lệch tâm vùng <= 48 dp thì khe ấy là lề của khối giữa.
+        def centred_pane(left: int, right: int) -> bool:
+            for x0, x1 in a.panes():
+                if x0 <= left < x1:
+                    cols = np.flatnonzero(a.ink[a.px(96):, x0:x1].sum(axis=0) > 1)
+                    return cols.size > 0 and abs((cols[0] + cols[-1]) / 2 - (x1 - x0) / 2) <= a.px(48)
+            return False
+        empty_cols = [r for r in runs(~(a.ink.sum(axis=0) > 1)) if not inside_rows(*r) and not centred_pane(*r)]
         if empty_cols:
             left, right = max(empty_cols, key=lambda r: r[1] - r[0])
             share = (right - left + 1) / a.w

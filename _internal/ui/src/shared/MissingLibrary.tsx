@@ -12,7 +12,7 @@ export function folderName(path: string): string {
 
 /** Thư mục thư viện người dùng chọn không còn (ổ rời rút ra, bị đổi tên / chuyển chỗ khi app đang chạy - soát a28 lỗi 6): nói thẳng thay vì
  *  một thư viện trống im lặng. Chọn lại thư mục (kể cả chỗ mới của chính nó) thì chỗ nghe đi theo sách. */
-export function MissingLibrary({ root, className }: { root: string; className?: string }) {
+export function MissingLibrary({ root, className, fill }: { root: string; className?: string; fill?: boolean }) {
   const navigate = useNavigate();
   // Studio từ xa: thư mục thư viện là của máy tính (đường dẫn không tới thiết bị này, cài đặt không đổi được từ đây).
   const remote = Boolean(useAppInfo().data?.remote);
@@ -21,6 +21,7 @@ export function MissingLibrary({ root, className }: { root: string; className?: 
       icon={FolderX}
       title={remote || !root ? S.s_khong_thay_thu_muc_thu_vien_8c2af7eb : S.s_khong_thay_thu_muc_thu_vien_0_9b3dbbec(folderName(root))}
       className={className}
+      fill={fill}
       action={
         remote ? (
           <OnComputerOnly verb={S.s_chon_lai_thu_muc_thu_vien_2d290748} />

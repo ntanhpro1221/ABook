@@ -111,12 +111,12 @@ function EmptyLibrary() {
   // thêm file được thì Studio vẫn là nút chính.
   const canAdd = Boolean(useSource().textImport);
   const openBookPath = useOpenBookPath();
-  if (library?.rootMissing) return <MotionRegion><MissingLibrary root={library.root} className="mt-12" /></MotionRegion>;
+  if (library?.rootMissing) return <MotionRegion><MissingLibrary root={library.root} fill /></MotionRegion>;
   return (
     <MotionRegion><EmptyState
       icon={Headphones}
       title={S.s_chua_co_sach_30843cb2}
-      className="mt-12"
+      fill
       // Một nút chính; các lối khác cùng một kiểu chữ-có-biểu-tượng ở hàng dưới (DESIGN: một câu + một nút, không khung đứt nét - soát V25).
       action={
         <div className="flex flex-col items-center gap-3">
@@ -480,7 +480,7 @@ function PeerTrouble({ error, retry }: { error: unknown; retry: () => void }) {
     <EmptyState
       icon={Laptop}
       title={(error as Error).message || S.s_may_kia_khong_tra_loi_aabbe89f}
-      className="mt-16"
+      fill
       action={<Button onClick={() => window.location.assign(homePage(window.location.search))}>{S.s_ve_may_nay_d9404884}</Button>}
     >
       <MotionRegion as="span">{silent ? S.s_studio_tu_mo_khi_may_ay_tra_loi_lai_f4f4f246 : null}</MotionRegion>
@@ -517,7 +517,7 @@ function StudioClosed({ children }: { children: ReactNode }) {
     <MotionRegion motionKey="closed"><EmptyState
       icon={Clapperboard}
       title={listenOnlyLine(listenOnlyOwner(info))}
-      className="mt-16"
+      fill
       action={<Button onClick={() => navigate("/")}>{S.s_ve_thu_vien_992fad7b}</Button>}
     >{S.s_sach_cua_may_ay_van_nghe_duoc_o_thu_vien_04fff8ae}</EmptyState></MotionRegion>
   );
@@ -529,7 +529,7 @@ function NotFound() {
     <EmptyState
       icon={Compass}
       title={S.s_khong_co_trang_nay_8ab9dc44}
-      className="mt-16"
+      fill
       action={<Button onClick={() => navigate("/")}>{S.s_ve_thu_vien_992fad7b}</Button>}
     >{S.s_duong_dan_co_the_da_cu_hoac_go_nham_006475cb}</EmptyState>
   );
@@ -577,9 +577,11 @@ export function App() {
   if (!info && error && currentPeer()) return <MotionRegion motionKey="peer-error"><PeerTrouble error={error} retry={retry} /></MotionRegion>;
   // Màn lỗi trước khi có app: dải mất mạng tràn cả bề ngang (không nằm trong lề), lời lỗi thẳng lề màn (page-x 20 / 40) - p-10 cũ là 35 px
   // vì thang khoảng cách 3,5 px, dải mạng thụt vào trong lề (soát 25-10).
-  if (!info && error) return <MotionRegion motionKey="app-error"><OfflineStrip /><InlineError message={S.s_ban_hay_mo_lai_abook_roi_thu_ket_noi_lai_7d16da25} onRetry={retry} className="page-x py-[32px]" /></MotionRegion>;
-  if (info && !info.remote && !voiceReady && preferencesError) return <MotionRegion motionKey="preferences-error"><InlineError message={S.s_ban_hay_thu_tai_lai_cai_dat_giong_doc_7911aec7} onRetry={() => void reloadPreferences()} className="page-x py-[32px]" /></MotionRegion>;
-  if (!info || (!info.remote && !voiceReady)) return <MotionRegion motionKey="loading" className="h-full"><OfflineStrip /><div className="flex h-full gap-10 p-10"><ContentSkeleton count={3} className="hidden w-44 md:block" label={S.s_dang_tai_dieu_huong_6542cd54} /><ContentSkeleton shape="covers" count={5} className="flex-1 self-start" label={S.s_dang_mo_abook_90234941} /></div></MotionRegion>;
+  // Lỗi khi chưa có app là cả màn (DESIGN §2 màn trạng thái): khối lỗi đứng giữa cửa sổ, không dính góc trên trái (design_lint R10).
+  if (!info && error) return <MotionRegion motionKey="app-error" className="flex h-full flex-col"><OfflineStrip /><div className="page-x flex flex-1 items-center justify-center"><InlineError message={S.s_ban_hay_mo_lai_abook_roi_thu_ket_noi_lai_7d16da25} onRetry={retry} /></div></MotionRegion>;
+  if (info && !info.remote && !voiceReady && preferencesError) return <MotionRegion motionKey="preferences-error" className="flex h-full flex-col"><div className="page-x flex flex-1 items-center justify-center"><InlineError message={S.s_ban_hay_thu_tai_lai_cai_dat_giong_doc_7911aec7} onRetry={() => void reloadPreferences()} /></div></MotionRegion>;
+  // Khung chờ đúng hình nội dung (DESIGN §2): lưới bìa đủ hai hàng như thư viện đầy, không một hàng rồi trống nửa màn.
+  if (!info || (!info.remote && !voiceReady)) return <MotionRegion motionKey="loading" className="h-full"><OfflineStrip /><div className="flex h-full gap-10 p-10"><ContentSkeleton count={3} className="hidden w-44 md:block" label={S.s_dang_tai_dieu_huong_6542cd54} /><ContentSkeleton shape="covers" count={14} className="flex-1 self-start" label={S.s_dang_mo_abook_90234941} /></div></MotionRegion>;
   return (
     <MotionRegion motionKey="ready" className="h-full" fadeThrough><TooltipProvider delayDuration={350} skipDelayDuration={150}>
       <SourceProvider source={source}>

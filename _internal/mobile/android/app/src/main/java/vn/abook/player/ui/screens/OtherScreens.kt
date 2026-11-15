@@ -4,18 +4,19 @@ import vn.abook.player.ui.motion.SwapContent
 import vn.abook.player.ui.motion.ContentLayout
 
 import vn.abook.player.S
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import vn.abook.player.ui.components.*
 import vn.abook.player.ui.devices.*
 import vn.abook.player.ui.studio.*
-import vn.abook.player.ui.theme.Abook
 import vn.abook.player.ui.theme.Dim
 
 /** The Studio tab owns its project list; only notification links use Destination.Studio. */
@@ -62,17 +63,28 @@ fun StudioScreen(
             }
         } else {
             val scroll = rememberScrollState()
+            androidx.compose.foundation.layout.BoxWithConstraints(Modifier.fillMaxSize()) {
+            // Chưa có Studio để mở là cả màn (DESIGN §2): lời mời đứng giữa phần còn lại dưới đầu màn (tiêu đề + báo Studio nếu có),
+            // không dính góc trên, cũng không trôi xuống đáy khi đầu màn cao (cùng EmptyState web / Qt).
+            val density = androidx.compose.ui.platform.LocalDensity.current
+            var headerHeight by remember { mutableStateOf(0.dp) }
+            val stateHeight = (maxHeight - headerHeight - Dim.s24).coerceAtLeast(0.dp)
             Column(Modifier.fillMaxSize().fadeEdges(scroll, startInset = 0.dp).verticalScroll(scroll).padding(bottom = Dim.s24)) {
-                header()
+                Column(Modifier.onSizeChanged { headerHeight = with(density) { it.height.toDp() } }) { header() }
                 SwapContent(computer, contentKey = { computer -> computer == null }, layout = ContentLayout.Column) { computer ->
                     if (computer == null) {
-                        RowHint(S.s_noi_may_tinh_de_lam_sach_noi_va_xem_tien_d_4b697ccc)
-                        TextAction(S.s_noi_may_tinh_2950692d, connect, "studio_connect")
+                        vn.abook.player.ui.components.EmptyState(vn.abook.player.ui.components.LucidePaths.CLAPPERBOARD,
+                            S.s_noi_may_tinh_de_lam_sach_noi_va_xem_tien_d_4b697ccc, fillHeight = stateHeight) {
+                            vn.abook.player.ui.components.PrimaryButton(S.s_noi_may_tinh_2950692d, connect, Modifier.testTag("studio_connect"))
+                        }
                     } else {
-                        BasicText(DeviceText.studioBlocked(listOf(computer.name)), style = Abook.type.body.copy(color = Abook.colors.text2))
-                        TextAction(StudioText.RETRY, { devices?.loadStudio() }, "studio_retry")
+                        vn.abook.player.ui.components.EmptyState(vn.abook.player.ui.components.LucidePaths.CLAPPERBOARD,
+                            DeviceText.studioBlocked(listOf(computer.name)), fillHeight = stateHeight) {
+                            TextAction(StudioText.RETRY, { devices?.loadStudio() }, "studio_retry", align = Alignment.Center)
+                        }
                     }
                 }
+            }
             }
         }
     }

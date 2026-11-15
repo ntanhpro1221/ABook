@@ -300,13 +300,13 @@ export function ProjectsScreen() {
           </div>
         </div>
       ) : failedEmpty({ isError: libraryQuery.isError, data: data?.books }) ? (
-        <LoadError what={S.s_danh_sach_du_an_0b93bfdf} error={libraryQuery.error} onRetry={() => void libraryQuery.refetch()} className="mt-12" />
+        <LoadError what={S.s_danh_sach_du_an_0b93bfdf} error={libraryQuery.error} onRetry={() => void libraryQuery.refetch()} fill />
       ) : data?.rootMissing ? (
-        <MissingLibrary root={data.root} className="mt-12" />
+        <MissingLibrary root={data.root} fill />
       ) : !books.length ? (
         // Rỗng: một câu + một nút dẫn tới việc tạo (DESIGN.md mục 2), không khung.
         // Cùng EmptyState và cùng khoảng cách dưới đầu màn với Thư viện trống (soát 25-10: hai màn trống hai kiểu, hai độ cao).
-        <EmptyState icon={Clapperboard} title={S.s_chua_co_du_an_dd6cd3d2} className="mt-12"
+        <EmptyState icon={Clapperboard} title={S.s_chua_co_du_an_dd6cd3d2} fill
           action={<Button variant="primary" size="lg" icon={Plus} onClick={() => navigate("/studio/new", PICK_SOURCE)}>{S.s_du_an_moi_992d22b2}</Button>}>{S.s_bien_mot_truyen_thanh_sach_noi_nhieu_giong_3e0bcdc1}</EmptyState>
       ) : (
         // Lề âm bù đệm của dòng: bìa thẳng mép tiêu đề, cột cuối thẳng mép phải; nền rê chuột và vạch kẻ tràn ra lề.

@@ -550,7 +550,8 @@ export function LibraryScreen({
       {recap}
       <LoadingCrossfade loading={isLoading} placeholder={
         <div className="mt-8 grid grid-cols-2 gap-x-[16px] gap-y-[32px] sm:grid-cols-[repeat(auto-fill,minmax(160px,1fr))] sm:gap-x-[24px]">
-          {Array.from({ length: 6 }, (_, index) => (
+          {/* Đủ hai hàng ở khổ rộng nhất (6 cột): khung chờ đúng hình thư viện, không một hàng rồi trống nửa màn (DESIGN §2). */}
+          {Array.from({ length: 12 }, (_, index) => (
             <div key={index}>
               <Skeleton className="aspect-[2/3] w-full rounded-cover" />
               <Skeleton className="mt-3 h-4 w-3/4" />
@@ -561,10 +562,10 @@ export function LibraryScreen({
       {/* Lỗi / trống / có sách thay nhau (mạng về, sách đầu tiên vào thư viện): mờ hẳn qua, không thay cả trang tức thì. */}
       <MotionRegion fadeThrough motionKey={failedEmpty(libraryQuery) ? "error" : !libraryRows.length ? (upcoming.length ? "upcoming" : "empty") : "books"}>
       {failedEmpty(libraryQuery) ? (
-        <LoadError what={S.s_thu_vien_beb0f831} error={libraryQuery.error} onRetry={() => void libraryQuery.refetch()} className="mt-12" />
+        <LoadError what={S.s_thu_vien_beb0f831} error={libraryQuery.error} onRetry={() => void libraryQuery.refetch()} fill />
       ) : !libraryRows.length ? (
         upcoming.length ? null : empty ?? (
-          <EmptyState icon={Headphones} title={S.s_chua_co_sach_30843cb2} className="mt-12">{S.s_them_sach_cua_ban_de_bat_dau_nghe_ac868e6f}</EmptyState>
+          <EmptyState icon={Headphones} title={S.s_chua_co_sach_30843cb2} fill>{S.s_them_sach_cua_ban_de_bat_dau_nghe_ac868e6f}</EmptyState>
         )
       ) : (
         <>

@@ -15,10 +15,10 @@ export function StateStories({ state }: { state: StateStory }) {
     {/* Cùng khung, cùng đầu màn và cùng khoảng cách với Thư viện thật: trống / lỗi đứng đúng chỗ của chúng trong app (soát 25-10). */}
     <main className="page-x mx-auto w-full max-w-[1180px] pb-16">
       <ScreenHeader title="Thư viện" subtitle={"\u00a0"} />
-      <MotionRegion motionKey={[state, ready]} className={state === "empty" || state === "error" ? "mt-12" : "mt-8"}>
-        {state === "skeleton" ? <ContentSkeleton shape="covers" count={4} label="Đang tải sách" />
-          : state === "empty" && !ready ? <EmptyState icon={BookOpen} title="Thêm cuốn đầu tiên của bạn" action={<Button variant="primary" icon={Plus} onClick={() => setReady(true)}>Thêm sách</Button>} />
-          : state === "error" && !ready ? <InlineError message="Bạn hãy kiểm tra kết nối rồi tải lại thư viện." onRetry={() => setReady(true)} />
+      <MotionRegion motionKey={[state, ready]} className="mt-8">
+        {state === "skeleton" ? <ContentSkeleton shape="covers" count={14} label="Đang tải sách" />
+          : state === "empty" && !ready ? <EmptyState fill icon={BookOpen} title="Thêm cuốn đầu tiên của bạn" action={<Button variant="primary" icon={Plus} onClick={() => setReady(true)}>Thêm sách</Button>} />
+          : state === "error" && !ready ? <InlineError fill message="Bạn hãy kiểm tra kết nối rồi tải lại thư viện." onRetry={() => setReady(true)} />
           : <div className="space-y-5">
             <h2 className="text-lg font-medium">Thành Phố Sương Mù</h2>
             <MotionRegion as="p" motionKey={playing} className="text-sm text-fg-2">{playing ? "Bạn đang nghe chương 4." : "Bạn có thể nghe tiếp chương 4."}</MotionRegion>

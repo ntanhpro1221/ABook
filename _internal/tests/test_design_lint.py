@@ -393,6 +393,57 @@ def test_r10_isolated_fixture_is_not_a_page(tmp_path):
     assert dl.rule_r10(analyse(tmp_path, im, "sheet_light.png")) == []
 
 
+def test_r10_gutter_inside_full_width_rows_is_green_but_packed_left_is_red(tmp_path):
+    def wide(trailing: bool) -> list:
+        im = Image.new("RGB", (1440, 900), BG)
+        draw = ImageDraw.Draw(im)
+        text(draw, 40, 24, words=2, height=32)                    # tiêu đề màn
+        for i in range(12):
+            y = 100 + i * 64
+            text(draw, 40, y, words=3, height=20)                 # tên hàng
+            if trailing:
+                draw.rounded_rectangle([1360, y - 4, 1400, y + 20], radius=12, fill=TEXT)   # công tắc cuối hàng
+        path = tmp_path / f"rows_{trailing}_light.png"
+        im.save(path)
+        return [f for f in dl.rule_r10(dl.Analysis(dl.Shot("qt", path))) if "cột trống" in f.detail]
+
+    assert wide(trailing=True) == []                              # khe ở trong hàng chạy hết cột
+    assert wide(trailing=False)                                   # cùng hàng mà dừng ở 1/4 bề ngang: dồn trái
+
+
+def test_r10_centred_state_block_is_not_packed_left(tmp_path):
+    def state(x: int) -> list:
+        im = Image.new("RGB", (1440, 900), BG)
+        draw = ImageDraw.Draw(im)
+        text(draw, 40, 24, words=2, height=32)                    # tiêu đề màn ở lề
+        draw.rounded_rectangle([x + 72, 330, x + 128, 386], radius=12, fill=(230, 205, 160))   # ô icon
+        text(draw, x, 410, words=3, height=20)                    # câu mời, 200 px
+        draw.rounded_rectangle([x + 40, 460, x + 160, 500], radius=8, fill=(212, 145, 43))     # nút chính
+        path = tmp_path / f"state_{x}_light.png"
+        im.save(path)
+        return [f for f in dl.rule_r10(dl.Analysis(dl.Shot("qt", path))) if "cột trống" in f.detail]
+
+    assert state(620) == []                                       # khối giữa màn: hai bên trống đều
+    assert state(40)                                              # cùng khối dồn lề trái: nửa phải trống
+
+
+def test_r10_vertically_centred_state_block_is_green_but_top_stuck_is_red(tmp_path):
+    def state(x: int, y: int) -> list:
+        im = Image.new("RGB", (1440, 900), BG)
+        draw = ImageDraw.Draw(im)
+        text(draw, 40, 24, words=2, height=32)                    # tiêu đề màn ở lề
+        draw.rounded_rectangle([x + 72, y, x + 128, y + 56], radius=12, fill=(230, 205, 160))   # ô icon
+        text(draw, x, y + 80, words=3, height=20)                 # câu mời
+        draw.rounded_rectangle([x + 40, y + 130, x + 160, y + 170], radius=8, fill=(212, 145, 43))   # nút chính
+        path = tmp_path / f"state_{x}_{y}_light.png"
+        im.save(path)
+        return [f for f in dl.rule_r10(dl.Analysis(dl.Shot("qt", path))) if "dải trống" in f.detail]
+
+    assert state(620, 330) == []                                  # tâm khối ~45 % chiều cao dưới đầu màn (L10)
+    assert state(620, 100)                                        # dính dưới đầu màn: hơn nửa màn dưới trống
+    assert state(40, 330)                                         # giữa theo chiều dọc nhưng dồn trái
+
+
 def test_r10_component_snapshot_is_skipped(tmp_path):
     im = Image.new("RGB", (960, 144), BG)
     text(ImageDraw.Draw(im), 20, 50)

@@ -198,7 +198,8 @@ private fun LibraryGrid(
                 FilterBar(ui, selected.shown, onSortCoordinates, compact = true)
                 }
             } else Column {
-                ScreenHeader(S.s_thu_vien_58145555, trailing = { AddBookButton(actions.addBook) }, bottomGap = if (books.isEmpty()) Dim.s16 else 0.dp)
+                // Thư viện trống: nút chính "Thêm sách" của lời mời giữa màn là lối duy nhất - nút cùng tên ở đầu màn chỉ lặp lại (như web); mờ vào khi có sách.
+                ScreenHeader(S.s_thu_vien_58145555, trailing = if (books.isEmpty()) null else ({ AddBookButton(actions.addBook) }), bottomGap = if (books.isEmpty()) Dim.s16 else 0.dp)
                 vn.abook.player.ui.components.Reveal(books.isNotEmpty()) { FilterBar(ui, selected.shown, onSortCoordinates) }
             }
             }
@@ -219,7 +220,9 @@ private fun LibraryGrid(
             LaunchedEffect(short) { if (restoreTop) pageGrid.scrollToItem(0) }
             val active = page == ui.pager.currentPage
             val isActive = remember(ui, page) { { page == ui.pager.currentPage } }
-            Box(Modifier.fillMaxSize().then(if (active) Modifier else Modifier.clearAndSetSemantics {})) {
+            BoxWithConstraints(Modifier.fillMaxSize().then(if (active) Modifier else Modifier.clearAndSetSemantics {})) {
+            // Thư viện trống là cả màn (DESIGN §2): lời mời đứng giữa phần trang dưới đầu màn (trừ đệm trên / dưới của lưới).
+            val pageHeight = maxHeight - Dim.s16 - Dim.s24
             LazyVerticalGrid(
                 columns = GridCells.Fixed(columns), state = pageGrid,
                 // The fixed header already keeps this viewport below the status bar.
@@ -232,10 +235,14 @@ private fun LibraryGrid(
                 if (tiles.isEmpty()) {
                     item(key = "none", span = { GridItemSpan(maxLineSpan) }, contentType = "none") {
                             SwapContent(books, contentKey = { books -> books.isEmpty() }, layout = ContentLayout.Box) { books ->
-                                if (books.isEmpty()) Column {
-                                    BasicText(S.s_chua_co_sach_30843cb2, style = Abook.type.sectionTitle)
-                                    RowHint(S.s_them_sach_cua_ban_de_bat_dau_nghe_ac868e6f)
-                                    actions.connect?.let { TextAction(S.s_noi_may_ebc41ba4, it, "library_connect", align = Alignment.CenterStart) }
+                                // DESIGN L1: thư viện trống = một lời mời "Thêm sách" (nút chính) + dòng phụ "Nối máy"; cùng EmptyState với web / Qt.
+                                if (books.isEmpty()) vn.abook.player.ui.components.EmptyState(
+                                    vn.abook.player.ui.components.LucidePaths.HEADPHONES, S.s_chua_co_sach_30843cb2,
+                                    text = S.s_them_sach_cua_ban_de_bat_dau_nghe_ac868e6f,
+                                    fillHeight = if (short) 0.dp else pageHeight,
+                                ) {
+                                    vn.abook.player.ui.components.PrimaryButton(S.s_them_sach_2a9d3708, actions.addBook, Modifier.testTag("library_empty_add"))
+                                    actions.connect?.let { TextAction(S.s_noi_may_ebc41ba4, it, "library_connect", align = Alignment.Center) }
                                 } else NoMatch(ui.query.trim(), filter)
                             }
                     }

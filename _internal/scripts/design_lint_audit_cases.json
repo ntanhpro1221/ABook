@@ -26,8 +26,6 @@
   {"rule": "R8", "image": "android/np_reading_dark.png", "why": "đỉnh dòng bị cắt lộ hàng chấm dưới lớp mờ"},
   {"rule": "R8", "image": "android/settings_expanded_light.png", "why": "Tải (48 MB) bị cắt ở đáy"},
   {"rule": "R8", "image": "android/settings_large_dark.png", "why": "Tải (48 MB) bị cắt ở đáy"},
-  {"rule": "R10", "image": "android/library_empty_light.png", "why": "83 % trống, tiêu đề dính góc"},
-  {"rule": "R10", "image": "android/shell_studio_light.png", "why": "71 % là dải trống"},
   {"rule": "R10", "image": "android/devices_storage_empty_light.png", "why": "79 % trống"},
   {"rule": "R10", "image": "android/voice_music_empty_light.png", "why": "69 % trống"},
   {"rule": "R10", "image": "android/settings_expanded_light.png", "why": "khổ rộng: khung phải dồn trái, nửa phải trống"},
