@@ -49,6 +49,7 @@ Item {
             shot("qt_volumes")
             mouseClick(findChild(made, "bookVolume_2"))
             tryCompare(made, "volumePicker", false)
+            compare(findChild(made, "bookVolumeTitle").text, "Tập hai")
             shot("qt_volume_chapters")
             mouseClick(findChild(made, "bookVolumeBack"))
             tryCompare(made, "volumePicker", true)

@@ -575,8 +575,18 @@ Item {
                 model: bookDetail.chapters
                 header: Item {
                     width: list.width
-                    height: (root.fullBook.volumes || []).length > 1 ? 48 : 0
-                    Button { objectName: "bookVolumeBack"; text: S.s_volumes; visible: parent.height > 0; onClicked: bookDetail.selectedVolume = -1 }
+                    height: (root.fullBook.volumes || []).length > 1 ? volumeHeading.implicitHeight + Theme.s12 : 0
+                    Column {
+                        id: volumeHeading
+                        width: parent.width; spacing: Theme.s8; visible: parent.height > 0
+                        Button { objectName: "bookVolumeBack"; text: S.s_volumes; onClicked: bookDetail.selectedVolume = -1 }
+                        Text {
+                            objectName: "bookVolumeTitle"
+                            width: parent.width
+                            text: TextWrap.keepDots((root.fullBook.volumes || []).find(v => v.id === bookDetail.selectedVolume)?.title || "")
+                            color: Theme.text; font.pixelSize: Theme.sizeBody; font.weight: Font.DemiBold; wrapMode: Text.Wrap
+                        }
+                    }
                 }
                 boundsBehavior: Flickable.StopAtBounds
                 bottomMargin: Theme.s16

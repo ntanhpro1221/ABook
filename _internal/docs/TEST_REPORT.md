@@ -10,7 +10,7 @@ book screens; one-volume books keep the direct chapter view. The task report out
 final counts. Quality implementation files and their aggregate hash remain unchanged.
 Text-book exports also select a volume before estimating or synthesizing it. Real FFmpeg tests verify both MP3 and
 M4B contain only the selected global chapter ids, the selected album name and embedded volume artwork; API tests
-reject missing/invalid volume selections. Android tests check the same chapter filtering, estimate and worker input.
+reject missing/invalid volume selections. Android tests check the same chapter filtering and selected-volume estimate/start requests.
 
 ## 15-11-2026 — chapter display names
 
