@@ -47,9 +47,7 @@ class CastCloseTest {
         var closing: Thread? = null
         try {
             players.scan()
-            val deadline = System.nanoTime() + TimeUnit.MILLISECONDS.toNanos(TestTime.ms(5_000))
-            while (!players.owns("speaker") && System.nanoTime() < deadline) Thread.yield()
-            assertTrue(players.owns("speaker"))
+            TestTime.eventually("loa nhận phiên", pollMs = 1) { players.owns("speaker") }
             players.send("speaker", JSONObject().put("action", "load").put("bookId", "book").put("chapterId", 1))
             pollBlocked.set(true)
             assertTrue(entered.await(TestTime.seconds(5), TimeUnit.SECONDS))

@@ -107,13 +107,7 @@ class FastConnectTest {
 
     private fun server() = ServerSocket(0, 50, live).track()
 
-    private fun waitUntil(what: String, condition: () -> Boolean) {
-        val end = System.nanoTime() + TimeUnit.SECONDS.toNanos(10)
-        while (!condition()) {
-            assertTrue("hết 10 giây mà chưa $what", System.nanoTime() < end)
-            Thread.sleep(5)
-        }
-    }
+    private fun waitUntil(what: String, condition: () -> Boolean) = vn.abook.player.TestTime.eventually(what, 10_000, condition = condition)
 
     private inline fun <T> timed(block: () -> T): Pair<T, Long> {
         val start = System.nanoTime()

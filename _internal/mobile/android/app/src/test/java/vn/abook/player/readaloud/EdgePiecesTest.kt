@@ -341,13 +341,7 @@ class EdgePiecesTest {
     // ---- huỷ, hạn chung, độ lệch đồng hồ (a50) ---------------------------------------------------------------------------------
 
     /** Chờ tới khi `condition` đúng (tối đa 5 giây) - bài thử đa luồng không đoán giờ. */
-    private fun waitUntil(what: String, condition: () -> Boolean) {
-        val end = System.nanoTime() + TestTime.nanos(5_000_000_000L)
-        while (!condition()) {
-            assertTrue("hết 5 giây mà chưa $what", System.nanoTime() < end)
-            Thread.sleep(10)
-        }
-    }
+    private fun waitUntil(what: String, condition: () -> Boolean) = TestTime.eventually(what, pollMs = 10, condition = condition)
 
     private val threePieces = (1..9).joinToString(" ") { "Câu số $it kể về một chuyện nhỏ trong ngôi làng ven sông." }
 

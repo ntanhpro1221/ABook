@@ -8,6 +8,7 @@ import { MyMusicSection } from "@/listen/MyMusic";
 import { dismissTopLayer } from "@/shared/backLayers";
 import { installBackOrder } from "./backOrder";
 import { MotionHashRouter } from "./MotionRouter";
+import { eventually } from "@/testing/eventually";
 
 vi.mock("@/listen/clip", () => ({ useClip: () => ({ stop() {}, current: null }) }));
 vi.mock("@/studio/VoiceTry", () => ({ useVoiceTry: () => ({ note: null }) }));
@@ -29,8 +30,9 @@ async function click(name: string) { const el = button(name); await act(() => { 
 async function expectFocusReturnedTo(opener: HTMLElement) {
   // Radix restores focus after its closing surface unmounts, on a deferred task.
   // Waiting for that result still fails if focus stays on body or another control.
-  await vi.waitFor(async () => {
-    await act(async () => { await new Promise<void>(resolve => setTimeout(resolve, 0)); });
+  // `eventually` polls on real timers, so Radix's deferred task runs between attempts; act flushes React each time.
+  await eventually(async () => {
+    await act(async () => {});
     expect(opener.isConnected).toBe(true);
     expect(document.activeElement).toBe(opener);
   });

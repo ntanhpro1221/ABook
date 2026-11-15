@@ -26,6 +26,18 @@ object TestTime {
 
     fun seconds(limit: Double): Double = limit * scale
 
+    /**
+     * Chờ tới khi `condition` đúng, hạn `limitMs` nhân hệ số máy tải - chỗ DUY NHẤT test JVM được tự quay vòng đồng hồ
+     * (web: ui/src/testing/eventually.ts, Python: tests/timing.py). Test không tự viết vòng `nanoTime()`/`sleep` riêng.
+     */
+    fun eventually(what: String, limitMs: Long = 5_000, pollMs: Long = 5, condition: () -> Boolean) {
+        val end = System.nanoTime() + nanos(limitMs * 1_000_000) // wallclock-ok: the shared scaled deadline helper
+        while (!condition()) {
+            if (System.nanoTime() > end) throw AssertionError("hết ${ms(limitMs)} ms mà chưa $what") // wallclock-ok: the shared scaled deadline helper
+            Thread.sleep(pollMs) // wallclock-ok: the shared scaled deadline helper polls
+        }
+    }
+
     /** Ngưỡng đo hiệu năng thật: bỏ qua trừ khi `ABOOK_PERF=1`. */
     fun perf(check: () -> Unit) {
         if (System.getenv("ABOOK_PERF") == "1") check()

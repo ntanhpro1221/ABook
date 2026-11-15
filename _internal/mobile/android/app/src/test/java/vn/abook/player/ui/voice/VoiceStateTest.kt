@@ -26,13 +26,7 @@ class VoiceStateTest {
 
     private fun state(pollMs: Long = 3_600_000) = VoiceState(source, scope, player, { changed++ }, pollMs, imports)
 
-    private fun eventually(what: String, condition: () -> Boolean) {
-        val until = System.currentTimeMillis() + TestTime.ms(5_000)
-        while (!condition()) {
-            if (System.currentTimeMillis() > until) throw AssertionError("không xảy ra: $what")
-            Thread.sleep(5)
-        }
-    }
+    private fun eventually(what: String, condition: () -> Boolean) = vn.abook.player.TestTime.eventually(what, condition = condition)
 
     // ---- giọng tải về máy ----
 
