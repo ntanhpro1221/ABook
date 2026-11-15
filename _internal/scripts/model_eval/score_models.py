@@ -36,7 +36,9 @@ if str(HERE.parents[1]) not in sys.path:
 from abook.character_registry import PRONOUNS  # noqa: E402
 
 # Một thư mục cho mỗi truyện: số chương của các truyện trùng nhau (cuốn 1 cũng có chương 351).
-GOLD_ROOT = HERE / "gold"
+from gold_root import gold_root  # noqa: E402
+
+GOLD_ROOT = gold_root()
 GOLD_DIR = GOLD_ROOT / "throne_of_magical_arcana"
 EVAL_ROOT = Path("D:/Novels/Audiobooks/_model_eval")
 

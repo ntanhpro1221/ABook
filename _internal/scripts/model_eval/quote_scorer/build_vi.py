@@ -30,7 +30,9 @@ sys.path.insert(0, str(HERE.parent))
 
 from build_training_set import SPLIT  # noqa: E402
 
-GOLD_ROOT = HERE.parent / "gold"
+from gold_root import gold_root  # noqa: E402
+
+GOLD_ROOT = gold_root()
 NULL_SPEAKERS = ("NARRATOR", "NPC", "?", "UNKNOWN")
 # Ngôi thứ nhất (N7, 27-09): truyện mạng/light novel hay kể bằng "tôi" - nhân vật kể KHÔNG BAO GIỜ được gọi tên
 # trong lời kể, nên 118/138 câu có người nói nằm ngoài ứng viên là của chính người kể. PDNC (tiểu thuyết cổ điển,
