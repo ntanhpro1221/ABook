@@ -42,7 +42,7 @@ kênh). Dải = các hàng có mực liền nhau; cụm = cột mực tách nhau
 | R6 | mép trái các dải chữ trong mỗi vùng (tách vùng ở cột đổi màu trên >= 80 % chiều cao) | > 3 trục (mép mực cách nhau <= 3 dp là một trục: lề chữ cái 1-3 dp); hay một dòng căn giữa cạnh >= 2 dòng căn lề |
 | R7 | neo trong nhóm trạng thái (`design_lint_groups.json`): đỉnh/mép trái bìa, tâm x/y nút phát, thanh tiến độ, đỉnh/mép trái/cao nút chính, cao ảnh | lệch mốc chung của nhóm > 1 dp |
 | R8 | mép sheet (nền hàng đổi giữa hai mặt tràn ngang cao >= 24 dp), đáy màn, mảnh dòng còn lại (dải <= 6 dp toàn chấm) | mép cắt qua dòng chữ (trừ dòng mờ < 35 % độ đậm, tức nằm trong dải mờ) |
-| R10 | dải ngang không mực trên nền màn; khổ >= 600 dp: dải dọc không mực | > 40 % chiều cao / bề ngang |
+| R10 | dải ngang không mực trên nền màn; khổ >= 600 dp: dải dọc không mực. Chỉ xét ảnh là một màn: nền là `--bg` và có tiêu đề ở góc trên trái (ảnh thành phần chụp riêng, sheet tách trên màn mờ không xét) | > 40 % chiều cao / bề ngang; dải chạy tới đáy (hay tới thanh đáy ghim trong 160 dp cuối) sau >= 6 dòng là đuôi danh sách vừa hết mục, không đỏ - màn thưa hơn là trạng thái trống dồn góc |
 
 Luật trên cây UI (bước 2, `scripts/design_lint_tree.py`):
 

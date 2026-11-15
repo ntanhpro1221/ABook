@@ -309,6 +309,38 @@ def test_r10_large_empty_band_is_red(tmp_path):
     assert findings and "dải trống" in findings[0].detail
 
 
+def test_r10_short_list_tail_is_green_but_sparse_empty_state_is_red(tmp_path):
+    im, draw = canvas()
+    column(draw, 60, rows=7)                                  # danh sách 7 dòng vừa hết mục, đuôi trống tới thanh đáy
+    text(draw, 60, 2250, words=4, height=40)                  # thanh điều hướng ghim đáy
+    assert dl.rule_r10(analyse(tmp_path, im)) == []
+    im, draw = canvas()
+    column(draw, 60, rows=3)                                  # màn thưa: tiêu đề + hai dòng dồn góc
+    text(draw, 60, 2250, words=4, height=40)
+    findings = dl.rule_r10(analyse(tmp_path, im, "sparse_light.png"))
+    assert findings and "dải trống" in findings[0].detail
+
+
+def test_r10_gap_in_the_middle_of_a_list_is_red(tmp_path):
+    im, draw = canvas()
+    column(draw, 60, rows=7, pitch=100)
+    column(draw, 60, top=1800, rows=1)                        # khối không ghim đáy: khoảng giữa là lỗ hổng bố cục
+    findings = dl.rule_r10(analyse(tmp_path, im))
+    assert findings and "dải trống" in findings[0].detail
+
+
+def test_r10_isolated_fixture_is_not_a_page(tmp_path):
+    im, draw = canvas()
+    draw.rectangle([60, 2100, 1020, 2300], fill=(230, 226, 220))   # trình phát nhỏ chụp riêng: không tiêu đề góc trên
+    text(draw, 100, 2160)
+    assert dl.rule_r10(analyse(tmp_path, im)) == []
+    im = Image.new("RGB", (W, H), (98, 95, 91))                 # sheet tách riêng trên màn mờ: nền không phải --bg
+    ImageDraw.Draw(im).rectangle([0, 1500, W, H], fill=BG)
+    text(ImageDraw.Draw(im), 60, 40)
+    text(ImageDraw.Draw(im), 60, 1600)
+    assert dl.rule_r10(analyse(tmp_path, im, "sheet_light.png")) == []
+
+
 def test_r10_component_snapshot_is_skipped(tmp_path):
     im = Image.new("RGB", (960, 144), BG)
     text(ImageDraw.Draw(im), 20, 50)

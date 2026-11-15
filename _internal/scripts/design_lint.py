@@ -50,6 +50,7 @@ TOKENS = {
     "focus": ("#a0600c", "#e9a945"),
     "switch-off": ("#857e72", "#75706a"),
     "switch-thumb": ("#ffffff", "#1b1204"),
+    "bg": ("#f5f3ef", "#121110"),
 }
 
 # Màn mờ dưới sheet / hộp thoại (DESIGN.md §5.5 "Bóng"): rgb + độ đục, (sáng, tối). Công tắc của trang nằm dưới màn mờ
@@ -302,16 +303,37 @@ class Analysis:
 
 # ---------------------------------------------------------------- luật trên ảnh
 
+# Ít nhất chừng này dòng mực phía trên dải trống thì dải ấy là đuôi của một danh sách / mẫu điền vừa hết mục (lượng dữ
+# liệu, không phải bố cục); ít hơn là màn thưa - trạng thái trống dồn góc mà DESIGN L1 muốn dựng thành lời mời có nút chính.
+R10_LIST_ROWS = 6
+R10_PINNED_DP = 160     # thanh đáy ghim (thanh điều hướng, trình phát nhỏ, nút hành động đáy) nằm trong chừng này dp cuối màn
+
+
+def is_page(a: Analysis) -> bool:
+    """Ảnh là một màn: nền màn là --bg của DESIGN (không phải màn mờ quanh sheet tách riêng) và có tiêu đề ở góc trên trái.
+    Ảnh thành phần chụp riêng (trình phát nhỏ, toast, sheet trên màn mờ) không có bố cục màn để xét R10."""
+    bg = token("bg", a.shot.dark)
+    if delta_e(a.page_bg, bg) > 6:
+        return False
+    top = a.ink[:a.px(96), :int(a.w * 0.4)]
+    return bool(top.sum(axis=1).max(initial=0) > 1)
+
+
 def rule_r10(a: Analysis) -> list[Finding]:
-    """Vùng trống: dải ngang không mực > 40 % chiều cao; khổ rộng: dải dọc trống > 40 % bề ngang."""
-    if not a.full_screen:
+    """Vùng trống: dải ngang không mực > 40 % chiều cao; khổ rộng: dải dọc trống > 40 % bề ngang.
+
+    Dải chạy tới đáy màn (hay tới thanh đáy ghim) sau >= R10_LIST_ROWS dòng là đuôi danh sách, không đỏ."""
+    if not a.full_screen or not is_page(a):
         return []
     out = []
-    empty_rows = runs(~(a.ink.sum(axis=1) > 1) & a.page_rows)
+    rows = a.ink.sum(axis=1) > 1
+    empty_rows = runs(~rows & a.page_rows)
     if empty_rows:
         top, bottom = max(empty_rows, key=lambda r: r[1] - r[0])
         share = (bottom - top + 1) / a.h
-        if share > 0.40:
+        tail = not rows[bottom + 1:a.h - a.px(R10_PINNED_DP)].any()
+        listed = sum(1 for b in a.bands() if b.bottom < top and b.height >= a.px(4)) >= R10_LIST_ROWS
+        if share > 0.40 and not (tail and listed):
             out.append(Finding("R10", a.shot.key, f"dải trống {share:.0%} chiều cao (y {top}-{bottom})",
                                [0, top, a.w, bottom]))
     if a.w / a.s >= 600:
