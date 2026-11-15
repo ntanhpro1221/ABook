@@ -41,3 +41,6 @@ export const TIMING = {
   "indeterminateMs": 1400,
   "spinMs": 1000
 } as const;
+
+/** Tên một dòng (OneLineFit): thu cỡ tới tỉ lệ này cho vừa một dòng, không vừa thì xuống dòng ở cỡ gốc. */
+export const ONE_LINE_MIN_SCALE = 0.75;

@@ -456,7 +456,7 @@ export function PersonRow({
         </div>
         {/* Việc của Studio (giọng người nghe đã chọn, chưa áp) - trang nghe không cần (soát UX 29-09). */}
         {person.pendingVoice && (onPickVoice || waiting) && (
-          <div className="mt-1 truncate text-xs font-medium text-fg-2">
+          <div className="mt-1 break-words text-xs font-medium text-fg-2">
             {waiting ? S.s_dang_cho_may_lam_sach_bad9fc96 : S.s_cho_ap_dung_77a52853}:{" "}
             {[person.pendingVoice.preset && S.s_giong_0_e048b478(voiceName(person.pendingVoice)), person.pendingVoice.gender.toLowerCase()]
               .filter(Boolean)
@@ -574,7 +574,7 @@ export function CastList({ bookId, onPickVoice, onPickNarrator, onMerge, onUnmer
           <div className="mt-1 font-medium">{cast.narrator.voice || S.s_mac_dinh_9a1af367}</div>
           {cast.narrator.chapterVoices?.map(line => <div key={line} className="mt-1 text-xs text-fg-2">{line}</div>)}
           {onPickNarrator && cast.narrator.pendingVoice?.preset && (
-            <div className="mt-1 truncate text-xs font-medium text-fg-2">{S.s_cho_ap_dung_giong_82c96902}{voiceName(cast.narrator.pendingVoice)}</div>
+            <div className="mt-1 break-words text-xs font-medium text-fg-2">{S.s_cho_ap_dung_giong_82c96902}{voiceName(cast.narrator.pendingVoice)}</div>
           )}
           <div className="text-xs text-fg-2">{formatNumber(cast.narrator.lines)}{S.s_cau_dan_truyen_f0d4156b}{cast.narrator.seconds > 0 ? ` · ${formatLength(cast.narrator.seconds)}` : ""}
             {/* Sau "Áp dụng" đổi giọng kể: các câu đã thu chờ thu lại bằng giọng mới (soát UX a24). */}

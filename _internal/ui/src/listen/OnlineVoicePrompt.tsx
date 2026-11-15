@@ -5,6 +5,7 @@ import { useBackLayer } from "@/shared/backStack";
 import { Play, Square } from "lucide-react";
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { cn } from "@/shared/cn";
+import { OneLineFit } from "@/shared/OneLineFit";
 import { Button, Dialog } from "@/shared/ui";
 import { chooseVoiceText, onlinePromptText, pendingConsent, spokenVoiceName, subscribeConsent } from "./onlineConsent";
 import { useNowPlaying } from "./player";
@@ -64,7 +65,7 @@ export function OnlineVoicePrompt() {
                       item.id === voice.id && "font-medium",
                     )}
                   >
-                    <span className="truncate">{spokenVoiceName(item.name)}</span>
+                    <OneLineFit>{spokenVoiceName(item.name)}</OneLineFit>
                     <span className="shrink-0 text-xs font-normal text-fg-2">{item.online ? S.s_truc_tuyen_ada49667 : S.s_cua_may_f44ee5ca}{item.id === voice.id ? S.s_dang_chon_4851f502 : ""}</span>
                   </button>
                   <Reveal when={source.readAloudSample}><Button

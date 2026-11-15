@@ -24,8 +24,8 @@ data class OneLineFit(val maxSize: TextUnit, val minSize: TextUnit, val step: Te
     }
 
     companion object {
-        /** Đáy thu cỡ: ba phần tư cỡ gốc (chữ thân 16 -> 12, vẫn trên cỡ chú thích nhỏ nhất). */
-        const val MIN_SCALE = 0.75f
+        /** Đáy thu cỡ: ba phần tư cỡ gốc (chữ thân 16 -> 12, vẫn trên cỡ chú thích nhỏ nhất) - token chung `sizes.ONE_LINE_MIN_SCALE`, cùng số với web `OneLineFit` và Qt `OneLineFit.qml`. */
+        const val MIN_SCALE = vn.abook.player.ui.theme.TypeScale.ONE_LINE_MIN_SCALE
 
         fun of(style: TextStyle) = OneLineFit(style.fontSize, style.fontSize * MIN_SCALE)
     }

@@ -524,7 +524,8 @@ Item {
             tryVerify(function() { return row(page, "edge:vi-VN-HoaiMyNeural") !== null })
         }
 
-        function test_longVoiceNamesStayOnOneLine() {
+        // Tên một dòng (OneLineFit, DESIGN.md 5.5): thu cỡ vừa một dòng, không vừa thì xuống dòng ở cỡ gốc - không bao giờ "…"
+        function test_longVoiceNamesFitOrWrapNeverCut() {
             const longName = "Giọng có một cái tên rất rất dài để thử xem nó xuống dòng thay vì bị cắt mất chữ ở cuối dòng (Edge)"
             voices = fixtureVoices().concat([{id: "edge:long", name: longName, provider: "edge", gender: "female", online: true}])
             openAll()
@@ -532,8 +533,11 @@ Item {
             const longRow = row(page, "edge:long")
             const name = findAll(longRow, node => node.text === longName.replace(" (Edge)", ""))[0]
             verify(name !== undefined)
-            compare(name.lineCount, 1)
-            compare(name.elide, Text.ElideRight)
+            compare(name.elide, Text.ElideNone)
+            verify(!name.truncated)
+            compare(name.fit, "wrap")    // tên này dài gấp đôi chỗ: thu tới 0,75 vẫn không vừa
+            verify(name.lineCount > 1)
+            compare(name.font.pixelSize, Theme.sizeBodySmall)
             compare(longRow.radio.Accessible.name, longName)
             verify(name.paintedWidth <= name.width + 1)
             verify(longRow.radio.height >= name.height)

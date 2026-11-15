@@ -12,6 +12,7 @@ import { Button, radioGroupKeys, radioTabIndex, ContentSkeleton, InlineError, Se
 import { MoreInfo } from "@/shared/SettingsNav";
 import { Collapse, Fold, useFold } from "@/shared/Collapse";
 import { cn } from "@/shared/cn";
+import { FIRST_LINE_ROW, FIRST_LINE_TEXT, OneLineFit } from "@/shared/OneLineFit";
 import type { ReadAloudVoice } from "./readAloud";
 import {
   DEFAULT_VOICE_EVENT,
@@ -325,15 +326,15 @@ export function VoiceSettings({ api, deviceHint, modules }: { api: VoiceSettings
                             aria-busy={savingVoice === voice.id}
                             aria-disabled={saveVoice.pending}
                             onClick={() => saveVoice.invoke(voice.id)}
-                            className="touch-row flex min-w-0 flex-1 items-center gap-3 text-left"
+                            className={cn("touch-row flex min-w-0 flex-1 items-center gap-3 text-left", FIRST_LINE_ROW)}
                           >
                             <span className="flex size-5 shrink-0 text-accent-text">
                               <PendingIndicator pending={savingVoice === voice.id}>
                                 <SelectionMark selected={selected} circled className="ink-start [--icon-w:17.5px] size-5" />
                               </PendingIndicator>
                             </span>
-                            <span className="min-w-0 truncate text-sm font-medium">{shown}</span>
-                            {<Presence>{genderLabel(voice.gender) && <span className="shrink-0 text-xs text-fg-2">{genderLabel(voice.gender)}</span>}</Presence>}
+                            <OneLineFit className="text-sm font-medium">{shown}</OneLineFit>
+                            {<Presence>{genderLabel(voice.gender) && <span className={cn("shrink-0 text-xs text-fg-2", FIRST_LINE_TEXT)}>{genderLabel(voice.gender)}</span>}</Presence>}
                           </button>
                           <Button
                             size="sm"

@@ -11,7 +11,7 @@ icon `LucidePaths.js` sinh bởi `scripts/gen_lucide_icons.py --qml`. Bảng dư
 
 <!-- ui_parity_qt:begin (SINH TỰ ĐỘNG bởi scripts/ui_parity_qt.py - không sửa tay, chạy lại script) -->
 
-Quét: web máy tính 6226 chữ (2878 khác nhau), 352 cặp nhãn-icon; Qt 3682 chữ (2716 khác nhau), 290 cặp nhãn-icon (icon dùng ở 413 chỗ). Khoá so lỏng như UI_PARITY.md (hạ chữ, dấu thanh một kiểu, `...` = `…`, bỏ dấu câu cuối); phím tắt trong chú thích Qt (`Thu nhỏ (Esc)`) tách khỏi nhãn.
+Quét: web máy tính 6224 chữ (2877 khác nhau), 352 cặp nhãn-icon; Qt 3682 chữ (2716 khác nhau), 290 cặp nhãn-icon (icon dùng ở 413 chỗ). Khoá so lỏng như UI_PARITY.md (hạ chữ, dấu thanh một kiểu, `...` = `…`, bỏ dấu câu cuối); phím tắt trong chú thích Qt (`Thu nhỏ (Esc)`) tách khỏi nhãn.
 
 ## a. Cùng việc, khác chữ
 
@@ -29,13 +29,13 @@ Mỗi cặp còn lại phải có giải thích trong ui_strings/qt_wording_revi
 | Cài đặt | Vân tay {} | Vân tay | 1.00 | `qt/OtherComputersRow.qml:99` ~ `desktop/OtherComputers.tsx:204` | Same certificate-fingerprint label; Qt appends the first fingerprint groups in one expression, web renders them as a JSX child. |
 | Cài đặt | Địa chỉ: {} | Địa chỉ: | 1.00 | `qt/PhoneSyncPairing.qml:59` ~ `desktop/PhoneSync.tsx:155` | Same address label; web renders its address value as a JSX child. |
 | Cài đặt | Xoá file ({}) | Xoá: {} | 0.67 | `qt/MyMusicModule.qml:188` ~ `listen/MyMusic.tsx:168` | Different controls: Qt removes the optional emotion module files; the web phrase is the accessible name of deleting an imported music track. Both actions show their own object-specific confirmation. |
-| Cài đặt | Khoá | Chưa có khoá | 0.50 | `qt/ProviderKey.qml:141` ~ `listen/VoiceSettings.tsx:126` | Different roles: Qt labels the provider key input and appends its provider name; the web phrase describes an empty provider key status. |
+| Cài đặt | Khoá | Chưa có khoá | 0.50 | `qt/ProviderKey.qml:141` ~ `listen/VoiceSettings.tsx:127` | Different roles: Qt labels the provider key input and appends its provider name; the web phrase describes an empty provider key status. |
 | Studio dự án | Chưa khởi động được: {} | Chưa khởi động được: | 1.00 | `qt/ProjectScreen.qml:477` ~ `studio/ProjectScreen.tsx:198` | Same start error; web renders the error after the heading as a JSX child. |
 | Studio dự án | Chưa dừng được | Chưa tải được | 0.74 | `qt/StudioStore.qml:160` ~ `studio/ProjectScreen.tsx:1374` | Different operations: Qt reports a failed stop request, the matched web text reports a failed load. Do not rename a stop failure to a load failure. |
 | Studio dự án | Đang làm tiếp | Làm tiếp từ chỗ ấy | 0.52 | `qt/StudioLogic.js:228` ~ `studio/ProjectScreen.tsx:370` | Different roles: Qt status after resuming versus the web resume action. Both phrases already exist in the shared catalog. |
-| Studio kịch bản | Gán cho {} | Gán cho | 1.00 | `qt/ScriptRow.qml:259` ~ `studio/ScriptTab.tsx:1127` | Same attribution action; web renders the selected speaker after the label. |
-| Studio kịch bản | Đang chọn {} câu | Đang chọn | 0.82 | `qt/ScriptTab.qml:467` ~ `studio/ScriptTab.tsx:1417` | Same selection count; web uses separate TickingValue and unit children. |
-| Studio kịch bản | Duyệt {} câu | Chưa có câu: {} | 0.50 | `qt/ScriptTab.qml:591` ~ `studio/ScriptTab.tsx:1405` | Different states: Qt opens review for a selected count; web is the empty result of filtering by a speaker. Not a wording pair. |
+| Studio kịch bản | Gán cho {} | Gán cho | 1.00 | `qt/ScriptRow.qml:259` ~ `studio/ScriptTab.tsx:1123` | Same attribution action; web renders the selected speaker after the label. |
+| Studio kịch bản | Đang chọn {} câu | Đang chọn | 0.82 | `qt/ScriptTab.qml:467` ~ `studio/ScriptTab.tsx:1413` | Same selection count; web uses separate TickingValue and unit children. |
+| Studio kịch bản | Duyệt {} câu | Chưa có câu: {} | 0.50 | `qt/ScriptTab.qml:591` ~ `studio/ScriptTab.tsx:1401` | Different states: Qt opens review for a selected count; web is the empty result of filtering by a speaker. Not a wording pair. |
 | Studio tạo sách | Tạo trên {} | Tạo trên | 1.00 | `qt/StudioSetupNotice.qml:98` ~ `studio/StudioSetup.tsx:104` | Same remote-create action; web renders the computer name as another child. |
 | Studio tạo sách | Bản thử nghiệm | Bản thử nghiệm{} | 1.00 | `qt/NewProjectLogic.js:371` ~ `studio/AnalysisModelPicker.tsx:53` | Same model qualifier; web appends an optional model-description value. |
 | Studio tạo sách | Có file không gửi{} | Có file không gửi | 1.00 | `qt/NewProjectStore.qml:273` ~ `studio/NewProjectScreen.tsx:312` | Same upload warning; Qt appends a detail list in the expression, web uses a separate child. |
@@ -181,17 +181,17 @@ Nhãn ngắn (<= 6 chữ). **Chỉ Qt**: không có ở web cùng màn; `*` = we
 ### Thanh phát
 
 - chỉ Qt (11): Không có mạng - (`qt/PlayerAlert.qml:10`); Giọng {} đang không dùng được.* (`qt/PlayerAlert.qml:25`); Cửa sổ mini (`qt/PlayerBar.qml:128`); Chỉnh* (`qt/PlayerBar.qml:156`); Âm thanh* (`qt/PlayerBar.qml:156`); Hẹn giờ* (`qt/PlayerBar.qml:157`); Giọng đọc* (`qt/PlayerBar.qml:160`); Hẹn lại {} phút* (`qt/PlayerFade.qml:16`); Nghe bằng giọng đọc. (`qt/PlayerLabels.js:18`); Thêm giọng* (`qt/PlayerVoicePopover.qml:47`); Tua nhạc (`qt/SeekBar.qml:29`)
-- chỉ web (8): Shift+← (`283`); Sắp tắt · (`1262`); Chưa nghe · {} chương (`69`); Nghe tiếp · {} (`88`); Shift+→ (`106`); Chưa có audio (`116`); Chạm (`127`); Nghe bằng giọng đọc.{} (`149`)
+- chỉ web (8): Shift+← (`284`); Sắp tắt · (`1264`); Chưa nghe · {} chương (`69`); Nghe tiếp · {} (`88`); Shift+→ (`106`); Chưa có audio (`116`); Chạm (`127`); Nghe bằng giọng đọc.{} (`149`)
 
 ### Đang nghe
 
 - chỉ Qt (20): Tạm dừng {}* (`qt/ChapterList.qml:27`); Đọc {}* (`qt/ChapterList.qml:27`); Đọc chương này* (`qt/ChapterList.qml:46`); Đọc* (`qt/ChapterReader.qml:15`); Chưa có chương để đọc. (`qt/ChapterReader.qml:35`); Đang tải chương (`qt/ChapterReader.qml:89`); Đã nghe* (`qt/ChapterRow.qml:76`); Thêm tuỳ chọn: {}* (`qt/ChapterRow.qml:127`); Thêm tuỳ chọn* (`qt/NowPlaying.qml:241`); Giọng {}* (`qt/NowPlaying.qml:297`); Thử lại* (`qt/NowPlaying.qml:341`); Danh sách chương* (`qt/NowPlaying.qml:463`); Nhạc nền* (`qt/NowPlaying.qml:474`); Chỉnh* (`qt/NowPlaying.qml:611`); Âm thanh* (`qt/NowPlaying.qml:611`); Cửa sổ mini (`qt/NowPlaying.qml:620`); Gợi ý phần đọc* (`qt/ReadingSuggestions.qml:9`); Bỏ dòng (`qt/ReadingSuggestions.qml:57`); Đóng* (`qt/ReadingSuggestions.qml:80`); Số chương* (`qt/SleepPopover.qml:98`)
-- chỉ web (17): Shift+← (`283`); Đã chọn tốc độ đọc {} (`516`); Phím (`519`); Đã chọn giọng {} (`782`); Hẹn giờ đã tắt tiếng lúc (`976`); Bật lại (`984`); Tiếng nhỏ dần (`990`); Hẹn giờ ngủ trên {} (`1064`); Về chế độ nghe (`2131`); Chưa nghe · {} chương (`69`); Nghe tiếp · {} (`88`); Shift+→ (`106`); Chưa có audio (`116`); Chạm (`127`); Nghe bằng giọng đọc.{} (`149`); ...
+- chỉ web (17): Shift+← (`284`); Đã chọn tốc độ đọc {} (`517`); Phím (`520`); Đã chọn giọng {} (`783`); Hẹn giờ đã tắt tiếng lúc (`978`); Bật lại (`986`); Tiếng nhỏ dần (`992`); Hẹn giờ ngủ trên {} (`1066`); Về chế độ nghe (`2133`); Chưa nghe · {} chương (`69`); Nghe tiếp · {} (`88`); Shift+→ (`106`); Chưa có audio (`116`); Chạm (`127`); Nghe bằng giọng đọc.{} (`149`); ...
 
 ### Đọc theo
 
 - chỉ Qt (2): Đang tải kịch bản* (`qt/PlayerLineEditor.qml:115`); Đang mở văn bản chương (`qt/ReadAlongView.qml:478`)
-- chỉ web (12): Người nói: {} (`101`); Cách đọc câu - {} (`104`); Các từ trong câu (`165`); Cách đọc “{}”: “{}” (`398`); Đọc từ này là (`400`); Đang chờ máy làm sách (`418`); Sửa cách đọc “{}” (`424`); Bỏ: {} (`437`); Sửa cách đọc từ (`491`); Đang tải chữ (`1746`); Nghe từ “{}” (`59`); Shift F10: sửa cách đọc. (`423`)
+- chỉ web (12): Người nói: {} (`101`); Cách đọc câu - {} (`104`); Các từ trong câu (`165`); Cách đọc “{}”: “{}” (`398`); Đọc từ này là (`400`); Đang chờ máy làm sách (`418`); Sửa cách đọc “{}” (`424`); Bỏ: {} (`437`); Sửa cách đọc từ (`491`); Đang tải chữ (`1748`); Nghe từ “{}” (`59`); Shift F10: sửa cách đọc. (`423`)
 
 ### Trang sách
 
@@ -236,12 +236,12 @@ Nhãn ngắn (<= 6 chữ). **Chỉ Qt**: không có ở web cùng màn; `*` = we
 ### Studio nhân vật
 
 - chỉ Qt (1): Đổi giọng kể* (`qt/TellerLogic.js:38`)
-- chỉ web (8): Nam (`92`); Giọng đọc của (`153`); Áp dụng sẽ thu lại (`160`); Không có ai khớp “ (`123`); Tên nào cũng ổn (`165`); Không câu nào nghi (`166`); Nghe và chỉnh giọng cho (`228`); Giọng của {} (`253`)
+- chỉ web (8): Nam (`92`); Giọng đọc của (`153`); Áp dụng sẽ thu lại (`160`); Không có ai khớp “ (`124`); Tên nào cũng ổn (`165`); Không câu nào nghi (`166`); Nghe và chỉnh giọng cho (`228`); Giọng của {} (`253`)
 
 ### Studio kịch bản
 
 - chỉ Qt (7): Người nghĩ (`qt/ScriptRow.qml:98`); Người nói (`qt/ScriptRow.qml:98`); Gán cho {} (`qt/ScriptRow.qml:259`); Thu lại* (`qt/ScriptRow.qml:305`); Lấy của máy kia (`qt/ScriptStore.qml:53`); Đang chọn {} câu (`qt/ScriptTab.qml:467`); Duyệt {} câu (`qt/ScriptTab.qml:591`)
-- chỉ web (9): Vui (`191`); Nam (`872`); Đổi {}: {} (`930`); Đang chọn. (`1075`); Cách đọc mới không áp được: (`1113`); Gán cho (`1127`); Yêu cầu (`1152`); Thu lại (R) (`1160`); Chưa có câu: {} (`1403`)
+- chỉ web (9): Vui (`192`); Nam (`868`); Đổi {}: {} (`926`); Đang chọn. (`1071`); Cách đọc mới không áp được: (`1109`); Gán cho (`1123`); Yêu cầu (`1148`); Thu lại (R) (`1156`); Chưa có câu: {} (`1399`)
 
 ### Studio xuất và áp dụng
 

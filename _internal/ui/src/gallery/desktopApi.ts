@@ -327,6 +327,10 @@ const ROUTES: [string, RegExp, Handler][] = [
     { id: "device:google2", name: "Google ngoại tuyến 2", provider: "device", online: false, gender: "" },
     { id: "device:samsung", name: "Samsung cần mạng", provider: "device", online: true, gender: "" },
     { id: "device:oem", name: "OPPO ngoại tuyến", provider: "device", online: false, gender: "" },
+    ...(galleryState.scenario.longVoiceNames ? [
+      { id: "device:long1", name: "Supertonic F1 - giọng nữ trầm ấm đọc truyện", provider: "device", online: false, gender: "female" },
+      { id: "device:long2", name: "Supertonic F1 - giọng nữ trầm ấm đọc truyện dài cho những đêm khuya không ngủ", provider: "device", online: false, gender: "female" },
+    ] : []),
   ] : [
     { id: "edge:vi-VN-HoaiMyNeural", name: "Hoài My", provider: "edge", online: true, default: true, gender: "female" },
     { id: "edge:vi-VN-NamMinhNeural", name: "Nam Minh", provider: "edge", online: true, gender: "male" },

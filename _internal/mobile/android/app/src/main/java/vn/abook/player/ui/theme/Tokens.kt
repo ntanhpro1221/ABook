@@ -124,6 +124,8 @@ internal object TypeScale {
     const val SCREEN_TITLE_DESKTOP = 32
     const val READING = 20
     const val READING_LEADING = 1.7f
+    /** Tên một dòng (OneLineFit): thu cỡ tới tỉ lệ này cho vừa một dòng, không vừa thì xuống dòng ở cỡ gốc. */
+    const val ONE_LINE_MIN_SCALE = 0.75f
 }
 
 /** Thời lượng chuyển động (ms): vào / ra. */

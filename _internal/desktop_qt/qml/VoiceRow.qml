@@ -62,29 +62,29 @@ Item {
                 SelectionMark {
                     id: mark
                     selected: root.selected
-                    visible: !saveWait.shown
                     circled: true
-                    anchors.verticalCenter: parent.verticalCenter
+                    y: name.y + (name.firstLineHeight - height) / 2      // dấu chọn đứng giữa DÒNG ĐẦU của tên (tên xuống dòng vẫn thẳng dòng đầu)
                 }
-                PendingIndicator { id: saveWait; anchors.verticalCenter: parent.verticalCenter; pending: root.saving }
-                Text {
+                // Dấu chọn mờ ra khi vòng chờ lưu hiện, mờ vào khi xong (không bật / tắt cứng)
+                Reveal { target: mark; shown: !saveWait.shown }
+                PendingIndicator { id: saveWait; y: name.y + (name.firstLineHeight - height) / 2; pending: root.saving }
+                // Tên dài: thu cỡ cho vừa một dòng, không vừa nữa thì xuống dòng ở cỡ gốc - không "…" (OneLineFit, cùng luật điện thoại và web)
+                OneLineFit {
                     id: name
                     x: 30
                     objectName: "voiceName"
-                    width: Math.min(implicitWidth, Math.max(0, radio.width - 30 - (gender.visible ? gender.implicitWidth + 10 : 0)))
+                    room: Math.max(0, radio.width - 30 - (gender.visible ? gender.implicitWidth + 10 : 0))
                     anchors.verticalCenter: parent.verticalCenter
                     text: root.shown
                     color: Theme.text
-                    wrapMode: Text.NoWrap
-                    elide: Text.ElideRight
-                    font.pixelSize: Theme.sizeBodySmall
+                    baseSize: Theme.sizeBodySmall
                     font.weight: Theme.weightMedium
                 }
                 Text {
                     id: gender
                     Reveal { shown: gender.text !== "" }
                     x: name.x + name.width + 10
-                    anchors.verticalCenter: parent.verticalCenter
+                    y: name.y + (name.firstLineHeight - height) / 2
                     text: VoiceLogic.genderLabel(root.voice.gender)
                     color: Theme.text2
                     font.pixelSize: Theme.sizeCaption

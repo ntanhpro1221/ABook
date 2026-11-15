@@ -29,7 +29,9 @@ it("renders device names and previews the exact selected engine voice", async ()
     expect(host.textContent).not.toContain("Mặc định");
     expect(radios.filter(row => row.getAttribute("aria-checked") === "true")).toHaveLength(1);
     for (const row of radios) {
-      expect(row.querySelector(".truncate")).not.toBeNull();
+      // Tên giọng qua OneLineFit: thu cỡ cho vừa một dòng hay xuống dòng, không bao giờ cắt "…".
+      expect(row.querySelector("[data-one-line-fit]")).not.toBeNull();
+      expect(row.querySelector(".truncate")).toBeNull();
       expect(row.parentElement!.className).toContain("gap-3");
     }
     for (const voice of voices) {

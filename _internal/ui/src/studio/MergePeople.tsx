@@ -7,6 +7,7 @@ import { toast } from "@/shared/toast";
 import { cleanName } from "@/listen/BookScreen";
 import { voiceName, type CastMember } from "@/listen/model";
 import { cn } from "@/shared/cn";
+import { FIRST_LINE_ICON, FIRST_LINE_ROW, FIRST_LINE_TEXT, OneLineFit } from "@/shared/OneLineFit";
 import { formatNumber } from "@/shared/format";
 import { DialogActions, SelectionMark, Button, Dialog } from "@/shared/ui";
 import { api } from "./api";
@@ -107,12 +108,12 @@ export function MergeDialog({
                 aria-selected={into?.name === other.name}
                 onClick={() => setInto(other)}
                 className={cn(
-                  "flex w-full items-center gap-2 px-3 py-2 text-left text-sm transition-colors duration-motion-fast",
+                  "flex w-full items-center gap-2 px-3 py-2 text-left text-sm transition-colors duration-motion-fast", FIRST_LINE_ROW,
                   into?.name === other.name ? "text-accent-text" : "hover:bg-hover",
                 )}
               >
-                <SelectionMark selected={into?.name === other.name} /><span className="min-w-0 flex-1 truncate font-medium">{cleanName(other.displayName)}</span>
-                <span className="shrink-0 text-xs text-fg-3">
+                <SelectionMark selected={into?.name === other.name} className={FIRST_LINE_ICON} /><OneLineFit className="flex-1 font-medium">{cleanName(other.displayName)}</OneLineFit>
+                <span className={cn("shrink-0 text-xs text-fg-3", FIRST_LINE_TEXT)}>
                   {voiceToUse(other)}
                   {other.pendingVoice?.preset ? S.s_cho_ap_dung_31faa52d : ""} · {formatNumber(other.lines)}{S.s_cau_b07e1008}{twins.has(nameKey(other.displayName)) && other.firstChapter ? ` · ${other.firstChapter}` : ""}
                 </span>
