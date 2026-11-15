@@ -2,7 +2,7 @@ import { Presence } from "../shared/MotionPresence";
 import { MusicArt } from "./MusicArt";
 import * as DropdownMenu from "@/shared/DropdownMenu";
 import { useQueryClient } from "@tanstack/react-query";
-import { Check, ChevronDown, ChevronRight, CircleAlert, Download, Loader2, Music2, Play, Search, Square, X } from "lucide-react";
+import { ChevronDown, ChevronRight, CircleAlert, Download, Loader2, Music2, Play, Search, Square, X } from "lucide-react";
 import { useDeferredValue, useEffect, useMemo, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router";
 import { toast } from "../shared/toast";

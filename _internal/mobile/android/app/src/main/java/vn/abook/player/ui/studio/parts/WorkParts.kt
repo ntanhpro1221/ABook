@@ -40,6 +40,7 @@ import vn.abook.player.ui.components.IconAction
 import vn.abook.player.ui.components.InlineProblem
 import vn.abook.player.ui.components.PlayIcon
 import vn.abook.player.ui.components.PrimaryButton
+import vn.abook.player.ui.components.PendingIndicator
 import vn.abook.player.ui.components.Reveal
 import vn.abook.player.ui.components.RowHint
 import vn.abook.player.ui.components.StopIcon
@@ -125,11 +126,11 @@ fun DecisionStrip(decisions: StudioDecisions, modifier: Modifier = Modifier) {
  * Cao ít nhất 48, trải hết bề ngang.
  */
 @Composable
-fun AnswerButton(label: String, onClick: () -> Unit, tag: String, modifier: Modifier = Modifier, primary: Boolean = false, hint: String? = null, enabled: Boolean = true) {
+fun AnswerButton(label: String, onClick: () -> Unit, tag: String, modifier: Modifier = Modifier, primary: Boolean = false, hint: String? = null, enabled: Boolean = true, pending: Boolean = false) {
     Column(modifier.fillMaxWidth()) {
         SwapContent(primary, contentKey = { primary -> primary }, layout = ContentLayout.Column) { primary ->
             if (primary) {
-                PrimaryButton(label, onClick, Modifier.fillMaxWidth().testTag(tag), enabled)
+                PrimaryButton(label, onClick, Modifier.fillMaxWidth().testTag(tag), enabled, pending = pending)
             } else {
                 Box(
                 Modifier.fillMaxWidth().heightIn(min = Dim.s48)
@@ -138,7 +139,10 @@ fun AnswerButton(label: String, onClick: () -> Unit, tag: String, modifier: Modi
                     .padding(horizontal = Dim.s16, vertical = Dim.s12).testTag(tag),
                 contentAlignment = Alignment.Center,
                 ) {
-                    BasicText(label, style = Abook.type.bodyStrong.copy(color = if (enabled) Abook.colors.text else Abook.colors.text3))
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        if (pending) { PendingIndicator(true); Spacer(Modifier.width(Dim.s8)) }
+                        BasicText(label, style = Abook.type.bodyStrong.copy(color = if (enabled) Abook.colors.text else Abook.colors.text3))
+                    }
                 }
             }
         }

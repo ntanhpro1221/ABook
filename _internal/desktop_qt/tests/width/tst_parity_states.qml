@@ -102,7 +102,7 @@ Item {
                 if (d.state === "fading" || d.state === "stopped") {
                     Player.seek(0); Player.resume(); Player.setSleep("minutes", 1); WidthNet.advance(d.state === "fading" ? 45 : 61)
                     if (d.state === "fading") verify(Player.fading)
-                    else { compare(Player.sleepKind, "off"); verify(Player.sleepStoppedText !== "") }
+                    else { compare(Player.sleepKind, "minutes"); verify(!Player.playing); verify(Player.sleepStoppedText !== "") }
                     if (d.state === "stopped") findChild(page, "nowSleep").clicked()
                 }
                 if (d.state === "chapters" || d.state === "chapter-menu") {

@@ -33,6 +33,7 @@ function AvatarChoices({ bookId, person }: { bookId: string; person: CastMember 
     client.invalidateQueries({ queryKey: ["casting", bookId] }),
   ]);
   async function change(action: string, data?: string) {
+    if (busy) return;
     setBusy(true); setError("");
     try {
       await api(path, { method: "POST", body: { character: person.name, action, data } });
@@ -51,7 +52,7 @@ function AvatarChoices({ bookId, person }: { bookId: string; person: CastMember 
   const problem = error || state.data?.error || "";
   return <div className="flex flex-col items-start gap-3">
     <PersonAvatar name={person.name} avatar={person.avatar} bookId={bookId} size={96} />
-    <input ref={input} type="file" accept="image/png,image/jpeg,image/webp" hidden onChange={(event) => {
+    <input ref={input} type="file" accept="image/png,image/jpeg,image/webp" hidden disabled={busy} onChange={(event) => {
       const file = event.target.files?.[0];
       if (!file) return;
       const reader = new FileReader();
@@ -59,11 +60,11 @@ function AvatarChoices({ bookId, person }: { bookId: string; person: CastMember 
       reader.readAsDataURL(file); event.target.value = "";
     }} />
     <Button variant="ghost" disabled={busy} onClick={() => input.current?.click()}>{S.s_chon_anh_41ecf092}</Button>
-    <Button variant="ghost" disabled={busy || !state.data?.available || pending} onClick={() => void change("generate")}>
+    <Button variant="ghost" loading={busy} disabled={busy || !state.data?.available || pending} onClick={() => change("generate")}>
       {pending ? S.s_avatar_generating : S.s_avatar_generate}
     </Button>
     <MotionPresence open={state.isSuccess && !state.data.available}><p className="text-sm text-fg-2">{S.s_avatar_unavailable}</p></MotionPresence>
-    <Button variant="ghost" disabled={busy} onClick={() => void change("pattern")}>{S.s_avatar_pattern}</Button>
+    <Button variant="ghost" loading={busy} disabled={busy} onClick={() => change("pattern")}>{S.s_avatar_pattern}</Button>
     <MotionPresence open={Boolean(problem)}><InlineError message={problem} onRetry={() => void state.refetch()} /></MotionPresence>
   </div>;
 }

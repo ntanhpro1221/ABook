@@ -8,6 +8,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -30,13 +31,15 @@ internal fun AvatarSheet(member: CastMember, cast: StudioCastState) {
         available = state.optBoolean("available"); pending = state.optBoolean("pending"); error = state.optString("error")
     }
     fun change(action: String, data: String? = null) {
+        if (busy) return
+        busy = true; error = ""
         scope.launch {
-            busy = true; error = ""
             try {
                 val result = cast.changeAvatar(member, action, data)
                 portrait = vn.abook.player.ui.data.AvatarArt.parse(result.optJSONObject("avatar")) ?: portrait
                 pending = result.optBoolean("pending"); cast.refresh()
-            } catch (failure: Exception) { error = failure.message.orEmpty() }
+            } catch (cancelled: CancellationException) { throw cancelled }
+            catch (failure: Exception) { error = failure.message.orEmpty() }
             finally { busy = false }
         }
     }
@@ -71,9 +74,9 @@ internal fun AvatarSheet(member: CastMember, cast: StudioCastState) {
         BasicText(S.s_avatar_portrait, style = Abook.type.sectionTitle)
         PersonAvatar(member.name, portrait, size = 96.dp, load = { cast.avatar(member.copy(avatar = portrait)) })
         AnswerButton(S.s_chon_anh_41ecf092, { picker.launch("image/*") }, "avatar_choose", enabled = !busy)
-        AnswerButton(if (pending) S.s_avatar_generating else S.s_avatar_generate, { change("generate") }, "avatar_generate", enabled = !busy && !pending && available)
+        AnswerButton(if (pending) S.s_avatar_generating else S.s_avatar_generate, { change("generate") }, "avatar_generate", enabled = !busy && !pending && available, pending = busy || pending)
         Reveal(!available) { RowHint(S.s_avatar_unavailable) }
-        AnswerButton(S.s_avatar_pattern, { change("pattern") }, "avatar_pattern", enabled = !busy)
+        AnswerButton(S.s_avatar_pattern, { change("pattern") }, "avatar_pattern", enabled = !busy, pending = busy)
         Reveal(error.isNotEmpty()) { InlineProblem(error, { scope.launch { runCatching { status() } } }, "avatar_error") }
     }
 }

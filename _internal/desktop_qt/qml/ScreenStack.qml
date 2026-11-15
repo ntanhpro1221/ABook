@@ -241,7 +241,9 @@ Item {
         coverT = 0
     }
     function _slideDone() {
-        _coverEnd = liveCoverEnd
+        // Mapping depends on ancestor geometry, which mapToItem does not
+        // expose as binding dependencies. Measure the actual final frame.
+        if (_coverTo && _in) _coverEnd = _coverBox(_coverTo, _in)
         if (_coverFrom) _coverFrom.opacity = 1
         if (_coverTo) _coverTo.opacity = 1
         _coverFrom = null

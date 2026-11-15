@@ -45,7 +45,9 @@ Column {
             width: root.width
             property real measured: root.estimate
             // New delegates may themselves be revealing from zero. Do not let zero-height rows fill the whole viewport.
-            height: loader.item ? Math.max(loader.item.height, measured) : measured
+            // Activation must not change its own culling bounds synchronously.
+            // The settled measurement updates the slot after layout completes.
+            height: measured
             onYChanged: root.refresh()
             Loader {
                 id: loader

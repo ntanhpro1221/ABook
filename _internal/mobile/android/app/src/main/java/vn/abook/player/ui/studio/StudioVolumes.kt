@@ -98,8 +98,9 @@ fun StudioVolumesScreen(session: StudioSession, bookId: String, onBack: () -> Un
     }
     BookForm(S.s_volume_manage, onBack, "studio_volumes", footer = {
         PrimaryButton(S.s_volume_save, {
-            if (!busy) scope.launch {
+            if (!busy) {
                 busy = true
+                scope.launch {
                 val submitted = rows
                 try {
                     session.source.put(session.computer, bookId, "volumes", StudioVolumes.definitions(submitted, chapters))
@@ -109,8 +110,9 @@ fun StudioVolumesScreen(session: StudioSession, bookId: String, onBack: () -> Un
                 } catch (cancelled: CancellationException) { throw cancelled }
                 catch (error: Exception) { failure(error) }
                 finally { busy = false }
+                }
             }
-        }, Modifier.testTag("volumes_save"), enabled = !busy && rows.isNotEmpty())
+        }, Modifier.testTag("volumes_save"), enabled = !busy && rows.isNotEmpty(), pending = busy)
     }) {
         LazyColumn(Modifier.fillMaxSize().fadeEdges(list).testTag("volume_editor"), state = list, contentPadding = PaddingValues(vertical = Dim.s16), verticalArrangement = Arrangement.spacedBy(Dim.s16)) {
             item("help") { RowHint(S.s_volume_split_help) }

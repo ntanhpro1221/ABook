@@ -27,6 +27,7 @@ export function VolumeEditor({ book }: { book: ListenBook }) {
   };
   const change = (id: number, patch: Partial<Draft>) => setRows(previous => previous.map(row => row.id === id ? { ...row, ...patch } : row));
   const save = async () => {
+    if (busy) return;
     setBusy(true); setError("");
     try {
       if (!rows.length || rows[0].start !== 1 || rows.some((row, index) => !row.title.trim() || row.title.length > 240
@@ -61,7 +62,7 @@ export function VolumeEditor({ book }: { book: ListenBook }) {
       </AnimatedRows>
       <Button variant="ghost" disabled={rows.length >= Math.min(99, chapters.length)} onClick={() => setRows([...rows, { id: Math.max(...rows.map(row => row.id)) + 1, number: rows.length + 1, title: S.s_volume_number(rows.length + 1), start: Math.min(chapters.length, (rows.at(-1)?.start ?? 0) + 1) }])}>{S.s_volume_add}</Button>
       <InlineError message={error} open={Boolean(error)} onRetry={() => void save()} />
-      <DialogActions><Button onClick={() => void save()} disabled={busy || !rows.length}>{S.s_volume_save}</Button></DialogActions>
+      <DialogActions><Button onClick={save} loading={busy} disabled={busy || !rows.length}>{S.s_volume_save}</Button></DialogActions>
     </Dialog>
   </>;
 }

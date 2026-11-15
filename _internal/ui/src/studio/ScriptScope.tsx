@@ -6,7 +6,6 @@ import { Button, Dialog, SelectionMark } from "@/shared/ui";
 import { useFadeScroller } from "@/shared/scrollFade";
 import type { ChapterScript, Line, Person } from "./ScriptTab";
 import { scopeConflict, scopeLines, scopeSelected, type ScopeMode } from "./scopeLines";
-import { useFadeScroller } from "@/shared/scrollFade";
 
 export const scopeOptions: [ScopeMode, string][] = [
   ["line", S.s_cau_nay_ee66e104], ["scene", S.s_scope_scene], ["chapter", S.s_scope_chapter], ["manual", S.s_scope_manual],
@@ -26,7 +25,6 @@ export function ScriptScope({ script: incoming, line, onClose, onApply }: {
   const [query, setQuery] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
-  const fade = useFadeScroller();
   const candidates = scopeLines(script.lines, line.stableId, mode, start - 1, end - 1);
   const selected = scopeSelected(candidates, toggled);
   const conflicts = candidates.filter(scopeConflict).length;

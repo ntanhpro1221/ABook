@@ -10,7 +10,7 @@ import { Switch } from "@/desktop/Switch";
 import { AnimatedRows, MotionPresence, Reveal } from "@/shared/MotionPresence";
 import { Fold, Collapse } from "@/shared/Collapse";
 import { FoldRows } from "@/shared/FoldRows";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import * as DropdownMenu from "@/shared/DropdownMenu";
 import { Ban, Download, EighthNote, MoreHorizontal, Pause, Pin, PinOff, Play, RefreshCw, Shuffle, Square, VolumeX } from "lucide-react";
