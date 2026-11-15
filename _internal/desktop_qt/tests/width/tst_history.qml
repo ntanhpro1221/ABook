@@ -106,7 +106,7 @@ Item {
 
         function test_tabOrderAndLazyLoad() {
             const history = openPage()
-            compare(findChild(page, "bookTabs").labels.join("|"), "Chương|Lịch sử|Nhân vật")
+            compare(findChild(page, "bookTabs").labels.join("|"), "Chương|Lịch sử|Nhân vật|Nhạc")
             compare(calls("GET", "/api/listen/books/width/sessions").length, 0)      // chưa mở tab thì chưa hỏi
             findChild(page, "bookTabs").picked(1)
             tryCompare(history, "status", "ready")
