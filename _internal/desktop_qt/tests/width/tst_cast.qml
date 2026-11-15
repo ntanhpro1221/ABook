@@ -121,7 +121,7 @@ Item {
         // ---------- danh sách ----------
         function test_listRenders() {
             openCast()
-            compare(findChild(page, "bookTabs").labels.join("|"), "Chương|Lịch sử|Nhân vật")
+            compare(findChild(page, "bookTabs").labels.join("|"), "Chương|Lịch sử|Nhân vật|Nhạc")
             compare(findChild(page, "castNarratorVoice").text, "Minh Quân")
             compare(findChild(page, "castNarratorPending").text, "Chờ áp dụng: giọng Hương")
             compare(all(page, "castName").map(item => item.text).join("|"), "Lan|Hạ Vy|Tuấn")
@@ -161,7 +161,7 @@ Item {
             dialogs = createTemporaryObject(dialogsFactory, host, {})
             page = createTemporaryObject(pageFactory, host, {width: host.width, height: host.height, book: {bookId: "b1", title: "Sách chữ"}})
             tryVerify(function() { return page.fullBook.id === "b1" })
-            compare(findChild(page, "bookTabs").labels.join("|"), "Chương|Lịch sử")      // chưa có giọng thì chưa có tab Nhân vật
+            compare(findChild(page, "bookTabs").labels.join("|"), "Chương|Lịch sử|Nhạc")      // chưa có giọng thì chưa có tab Nhân vật
             compare(calls("GET", "/api/books/b1/cast").length, 0)
         }
         function test_castLoadsOnlyWhenOpened() {
