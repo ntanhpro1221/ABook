@@ -355,7 +355,9 @@ def keylines(a: Analysis, bands: list[Band], x0: int, width: int) -> list[float]
     """
     edges = sorted({round(a.dp(b.left - x0)) for b in bands
                     if b.height >= a.px(4) and b.right - b.left > a.px(10)
-                    and a.px(1) < b.left - x0 < width * 0.4})
+                    and a.px(1) < b.left - x0 < width * 0.4
+                    and not distributed(a, b, x0, width) and not inside_filled(a, b, x0)
+                    and not centred_in(a, b, x0, x0 + width)})
     groups: list[list[int]] = []
     for e in edges:
         if groups and e - groups[-1][-1] <= KEYLINE_SLACK_DP:
@@ -363,6 +365,26 @@ def keylines(a: Analysis, bands: list[Band], x0: int, width: int) -> list[float]
         else:
             groups.append([e])
     return [g[0] for g in groups]
+
+
+def centred_in(a: Analysis, band: Band, x0: int, x1: int) -> bool:
+    """Khối căn giữa vùng (lệch tâm <= 2 dp): mép trái của nó đổi theo độ dài chữ, không phải trục.
+    Trộn căn giữa với căn trái có phép thử riêng trong rule_r6."""
+    return abs((band.left - x0) - (x1 - 1 - band.right)) <= a.px(2)
+
+
+def distributed(a: Analysis, band: Band, x0: int, width: int) -> bool:
+    """Hàng chia ô đều (thanh nút đáy trình phát, hàng nhãn dưới icon, vạch số dưới thanh trượt, hàng −/thanh/+):
+    >= 3 cụm trải >= 60 % bề ngang vùng, hay >= 3 cụm ngắn (<= 48 dp) có tâm cách đều (thang số 50 100 150 200
+    dưới thanh trượt). Mép trái của cụm đầu là mép ô, không phải trục chữ của cột."""
+    if len(band.segments) < 3:
+        return False
+    if band.right - band.left >= 0.6 * width:
+        return True
+    if any(b - s > a.px(48) for s, b in band.segments):
+        return False
+    pitch = np.diff([(s + b) / 2 for s, b in band.segments])
+    return bool(pitch.min() >= a.px(16) and pitch.max() - pitch.min() <= max(a.px(4), 0.15 * pitch.mean()))
 
 
 def inside_filled(a: Analysis, band: Band, x0: int) -> bool:
@@ -394,6 +416,10 @@ def rule_r6(a: Analysis) -> list[Finding]:
         # Nút chữ phụ căn giữa ngay dưới nút tô nền tràn ngang (cụm hành động ở đáy) là một khối, không phải trộn căn.
         buttons = [b for b in bands if inside_filled(a, b, x0)]
         centred = [b for b in centred if not any(0 <= b.top - f.bottom <= a.px(64) for f in buttons)]
+        # Số đọc trên thanh trượt (1× trên thang 0,8 1 1,25), chú thích dưới bộ chỉnh âm: cùng nhóm căn giữa với hàng ô đều sát nó.
+        cells = [b for b in bands if distributed(a, b, x0, width) and centred_in(a, b, x0, x1)]
+        centred = [b for b in centred if not any(b.top - c.bottom <= a.px(64) and c.top - b.bottom <= a.px(64)
+                                                 for c in cells)]
         flush = [b for b in bands if abs(b.left - margin) <= a.px(1) and b.height >= a.px(4)
                  and b.right - b.left > a.px(10)]
         if centred and len(flush) >= 2:
@@ -401,6 +427,40 @@ def rule_r6(a: Analysis) -> list[Finding]:
             out.append(Finding("R6", a.shot.key,
                                f"trộn căn giữa ({len(centred)} khối, đầu tiên y {b.top}) với căn trái ({len(flush)} khối)",
                                [b.left, b.top, b.right, b.bottom]))
+        out += artwork_off_text(a, bands, x0, x1)
+    return out
+
+
+def artwork_off_text(a: Analysis, bands: list[Band], x0: int, x1: int) -> list[Finding]:
+    """Bìa / ảnh lớn (mặt đặc >= 120 dp) mà dòng chữ ngay dưới nó không chung mép trái cũng không chung tâm: bìa căn giữa,
+    tên chương căn trái (np_large). Chỉ xét trên nền --bg: hộp thoại trên màn mờ là mặt nổi, không phải ảnh."""
+    if delta_e(a.page_bg, token("bg", a.shot.dark)) > 6:
+        return []
+    labels, objects = a.surface_components()
+    out = []
+    for index, sl in enumerate(objects, start=1):
+        if sl is None:
+            continue
+        top, bottom, left, right = sl[0].start, sl[0].stop, sl[1].start, sl[1].stop
+        if (bottom - top < a.px(120) or right - left < a.px(120) or right - left > 0.9 * (x1 - x0)
+                or left < x0 or right > x1 or (labels[sl] == index).mean() < 0.8):
+            continue
+        # Dòng chữ đầu tiên dưới ảnh có cụm nằm trong bề ngang ảnh (cột bên cạnh có dòng riêng của nó); cụm chạm mép vùng là mặt nổi.
+        segs = []
+        for b in bands:
+            if bottom <= b.top <= bottom + a.px(96) and b.height <= a.px(48):
+                segs = [s for s in b.segments if s[1] >= left and s[0] <= right]
+                if segs:
+                    break
+        if not segs or segs[0][0] - x0 <= a.px(1):
+            continue
+        s0, s1 = segs[0][0], segs[-1][1]
+        # Chữ thò ra trái ảnh (ảnh thụt vào giữa, chữ bám lề) - chữ thụt so với ảnh là tầng lồng, không xét ở đây.
+        if (left - s0 > a.px(16) and abs((s0 + s1) - (left + right)) / 2 > a.px(16)
+                and s1 - s0 <= 1.5 * (right - left)):
+            out.append(Finding("R6", a.shot.key, f"ảnh mép trái {round(a.dp(left - x0))} dp, chữ ngay dưới mép trái "
+                                                  f"{round(a.dp(s0 - x0))} dp: không chung mép, không chung tâm",
+                               [left, top, right, bottom]))
     return out
 
 

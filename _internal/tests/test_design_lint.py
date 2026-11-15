@@ -121,6 +121,58 @@ def test_r6_text_button_under_filled_button_is_one_block(tmp_path):
     assert not any("trộn căn" in f.detail for f in dl.rule_r6(analyse(tmp_path, im)))
 
 
+def test_r6_slider_scale_and_spread_bar_are_cells_not_axes(tmp_path):
+    im, draw = canvas()
+    column(draw, 60, rows=6)
+    for i, top in enumerate((900, 1200, 1500, 1800)):  # thang số dưới thanh trượt: ô ngắn cách đều, mỗi thang lệch một chút
+        for k in range(4):
+            draw.rectangle([150 + i * 45 + k * 150, top, 150 + i * 45 + k * 150 + 44, top + 30], fill=TEXT)
+    for k in range(4):                               # thanh nút đáy trải hết bề ngang
+        draw.rectangle([100 + k * 260, 2200, 100 + k * 260 + 60, 2260], fill=TEXT)
+    assert dl.rule_r6(analyse(tmp_path, im)) == []
+
+
+def test_r6_centred_empty_state_lines_are_not_axes(tmp_path):
+    im, draw = canvas()
+    draw.rectangle([60, 140, 107, 187], fill=TEXT)   # nút lùi ở lề
+    for i, words in enumerate((4, 6, 5, 7)):         # trạng thái trống căn giữa: mỗi dòng dài khác nhau
+        width = text(ImageDraw.Draw(Image.new("RGB", (W, 50))), 0, 0, words=words) + 1
+        text(draw, (W - width) // 2, 900 + i * 150, words=words)
+    assert not any("trục mép trái" in f.detail for f in dl.rule_r6(analyse(tmp_path, im)))
+
+
+@pytest.mark.parametrize("cover_left, red", [(300, True), (60, False)])
+def test_r6_cover_indented_over_flush_title(tmp_path, cover_left, red):
+    im, draw = canvas()
+    draw.rectangle([cover_left, 300, cover_left + 480, 780], fill=(70, 45, 25))   # bìa
+    text(draw, 60, 840, words=4)                                                # tên chương bám lề ngay dưới
+    column(draw, 60, top=1000, rows=4)
+    findings = [f for f in dl.rule_r6(analyse(tmp_path, im)) if "ảnh mép trái" in f.detail]
+    assert bool(findings) is red
+
+
+def test_r6_value_over_a_centred_scale_is_one_group(tmp_path):
+    im, draw = canvas()
+    column(draw, 60, rows=6)
+    width = text(ImageDraw.Draw(Image.new("RGB", (W, 50))), 0, 0, words=1) + 1
+    text(draw, (W - width) // 2, 1500, words=1)              # số đọc "1×" căn giữa
+    for k in range(5):                                       # thang số căn giữa ngay dưới (khe 30 dp)
+        x = 218 + k * 150
+        draw.rectangle([x, 1632, x + 44, 1662], fill=TEXT)
+    assert not any("trộn căn" in f.detail for f in dl.rule_r6(analyse(tmp_path, im)))
+
+
+def test_r6_uneven_short_clusters_still_count_as_an_axis(tmp_path):
+    im, draw = canvas()
+    column(draw, 60, rows=4)
+    for i, top in enumerate((900, 1200, 1500, 1800)):  # cụm ngắn KHÔNG cách đều: vẫn là chữ thụt, vẫn tính trục
+        x = 200 + i * 70
+        for dx in (0, 90, 330):
+            draw.rectangle([x + dx, top, x + dx + 44, top + 40], fill=TEXT)
+    findings = dl.rule_r6(analyse(tmp_path, im))
+    assert any("trục mép trái" in f.detail for f in findings)
+
+
 # ---------------------------------------------------------------- R4 công tắc, nút chính
 
 def switch(draw, track, y=600, thumb=(255, 255, 255), on=True):
