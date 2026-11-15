@@ -127,7 +127,7 @@ Item {
                 text: S.s_hoan_tac_e72ff675
                 enabled: !root.asked
                 Accessible.name: S.s_hoan_tac_4f656a74 + W.cardTitle(root.item)
-                onClicked: root.undo()
+                onActivated: root.undo()
             }
         }
         Text {
@@ -190,7 +190,7 @@ Item {
             id: audioFix
             Item {
                 height: 12 + review.height
-                Button { id: review; objectName: "workReview"; y: 12; size: "sm"; kind: "ghost"; icon: "audio-lines"; text: S.s_nghe_lai_2ac2936f; onClicked: root.openReview(root.item.key) }
+                Button { id: review; objectName: "workReview"; y: 12; size: "sm"; kind: "ghost"; icon: "audio-lines"; text: S.s_nghe_lai_2ac2936f; onActivated: root.openReview(root.item.key) }
             }
         }
         Component {
@@ -237,7 +237,7 @@ Item {
                         size: "sm"
                         kind: "ghost"
                         text: S.s_chon_giong_khac_d31cfe89
-                        onClicked: root.pickVoice(root.item.pickVoice)
+                        onActivated: root.pickVoice(root.item.pickVoice)
                     }
                 }
                 WorkVoice { width: parent.width; work: root.work; item: root.item }
@@ -349,7 +349,7 @@ Item {
                 kind: "ghost"
                 text: root.all ? S.s_thu_gon_1f6bf2c3 : S.s_xem_ca_bcce605f + Studio.formatNumber(root.page.total) + S.s_cau_b07e1008
                 Accessible.description: root.all ? S.s_dang_mo_98235c77 : S.s_dang_dong_4886d4e7
-                onClicked: {
+                onActivated: {
                     if (!root.all && root.page.next && root.more.length === 0) root.loadMore()
                     root.all = !root.all
                 }
@@ -361,7 +361,7 @@ Item {
                 kind: "ghost"
                 enabled: !root.loadingMore
                 text: root.loadingMore ? S.s_dang_tai_465b1987 : W.moreText(root.examples.length, root.page.total)
-                onClicked: root.loadMore()
+                onActivated: root.loadMore()
             }
         }
     }

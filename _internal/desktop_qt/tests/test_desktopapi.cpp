@@ -118,11 +118,17 @@ private slots:
     }
     void jsonArrayAndHeader() {
         clear(); answer = "[{\"id\":\"voice\"}]";
+        QSignalSpy started(api, &DesktopApi::requestStarted);
+        QSignalSpy finished(api, &DesktopApi::requestFinished);
         api->request(QStringLiteral("GET"),QStringLiteral("/api/readaloud/voices"),QJSValue(QJSValue::NullValue),done());
         QTRY_VERIFY(!engine.globalObject().property(QStringLiteral("result")).isNull());
         QVERIFY(received.startsWith("GET /api/readaloud/voices "));
         QVERIFY(received.toLower().contains("x-ebook-token: fixture-token"));
         QVERIFY(engine.globalObject().property(QStringLiteral("result")).property(QStringLiteral("data")).isArray());
+        QCOMPARE(started.size(), 1);
+        QCOMPARE(finished.size(), 1);
+        QCOMPARE(started.at(0).at(0), finished.at(0).at(0));
+        QCOMPARE(finished.at(0).at(1).toInt(), 200);
     }
     void writes_data() {
         QTest::addColumn<QString>("path");
@@ -251,9 +257,15 @@ private slots:
         QSignalSpy started(api, &DesktopApi::previewStarted);
         QSignalSpy ended(api, &DesktopApi::previewEnded);
         QSignalSpy failed(api, &DesktopApi::previewFailed);
+        QSignalSpy waiting(api, &DesktopApi::previewBuffering);
         api->preview(QStringLiteral("/media/books/b/samples/3"));
         QCOMPARE(started.size(), 1);
         QCOMPARE(out.url.path(), QStringLiteral("/media/books/b/samples/3"));
+        out.buffering(true);
+        QCOMPARE(waiting.size(), 1);
+        QCOMPARE(waiting.takeFirst().at(0).toBool(), true);
+        api->seekPreview(62.0);
+        QCOMPARE(api->previewPosition(), 62.0);
         out.finish();
         QCOMPARE(ended.size(), 1);
         out.fail(QStringLiteral("404"));
@@ -419,9 +431,14 @@ private slots:
     }
     void abortDoesNotDeliverLateReply() {
         clear(); hold = true;
+        QSignalSpy finished(api, &DesktopApi::requestFinished);
         const int id = api->request(QStringLiteral("GET"),QStringLiteral("/api/books/fixture/cover/search?q=old"),QJSValue(QJSValue::NullValue),done());
         QTRY_VERIFY(!received.isEmpty());
         api->cancel(id);
+        api->cancel(id);
+        QCOMPARE(finished.size(), 1);
+        QCOMPARE(finished.at(0).at(0).toInt(), id);
+        QCOMPARE(finished.at(0).at(1).toInt(), 0);
         QTest::qWait(80); // fixed: proves absence
         QVERIFY(engine.globalObject().property(QStringLiteral("result")).isNull());
         hold = false;

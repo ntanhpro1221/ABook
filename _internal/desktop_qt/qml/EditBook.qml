@@ -122,7 +122,8 @@ Modal {
     function setCoverImage(image) {
         call("settingCover", "PUT", "/cover", {image: image}, function() { root.done(S.s_da_dat_anh_bia_90470364) }, S.s_chua_dat_duoc_anh_bia_a4afb9fa)
     }
-    function removeCover() {
+    function removeCover() { removeConfirm.show() }
+    function removeCoverConfirmed() {
         call("removingCover", "DELETE", "/cover", null, function() { root.done(S.s_da_bo_anh_bia_sach_dung_bia_ve_tu_ten_f562bcab) }, S.s_chua_bo_duoc_anh_bia_a4173b5d)
     }
     function revertAll() {
@@ -247,7 +248,7 @@ Modal {
                                     icon: "image-plus"
                                     kind: "ghost"
                                     enabled: !root.busy
-                                    onClicked: images.open()
+                                    onActivated: images.open()
                                 }
                                 Button {
                                     id: findCover
@@ -256,7 +257,7 @@ Modal {
                                     icon: "globe"
                                     kind: "ghost"
                                     enabled: !root.busy
-                                    onClicked: root.search()
+                                    onActivated: root.search()
                                 }
                                 Collapse {
                                     width: parent.width
@@ -267,7 +268,7 @@ Modal {
                                         icon: "trash"
                                         kind: "ghost"
                                         enabled: !root.busy
-                                        onClicked: root.removeCover()
+                                        onActivated: root.removeCover()
                                     }
                                 }
                                 Collapse {
@@ -301,7 +302,7 @@ Modal {
                                 icon: "eighth-note"
                                 kind: "ghost"
                                 size: "sm"
-                                onClicked: root.openStudio()
+                                onActivated: root.openStudio()
                             }
                         }
                         Loader {
@@ -345,7 +346,7 @@ Modal {
                                     x: -14
                                     text: S.s_bo_moi_thay_doi_ad999cde
                                     kind: "ghost"
-                                    onClicked: root.askRevert()
+                                    onActivated: root.askRevert()
                                 }
                             }
                             Collapse {
@@ -366,7 +367,7 @@ Modal {
                                         objectName: "editRevertCancel"
                                         text: S.s_thoi_e68f9e88
                                         kind: "ghost"
-                                        onClicked: root.cancelRevert()
+                                        onActivated: root.cancelRevert()
                                     }
                                 }
                             }
@@ -416,4 +417,6 @@ Modal {
             root.setCoverImage(image)
         }
     }
+    DestructiveConfirm { id: removeConfirm; objectName: "editCoverRemoveConfirm"; title: S.s_bo_anh_bia_696c6692; description: S.s_irreversible_detail(root.book ? root.book.title || "" : ""); onAccepted: root.removeCoverConfirmed() }
+
 }

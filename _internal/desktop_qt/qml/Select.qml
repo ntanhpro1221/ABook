@@ -18,7 +18,7 @@ Interactive {
         for (let i = 0; i < choices.length; ++i) if (!choices[i].header && String(choices[i].value) === String(value)) return i
         return -1
     }
-    readonly property string currentLabel: currentIndex >= 0 ? choices[currentIndex].label : ""
+    readonly property string currentLabel: currentIndex >= 0 ? String(choices[currentIndex].label ?? "") : ""
     Accessible.role: Accessible.ComboBox
     Accessible.name: label
     Accessible.description: currentLabel
@@ -133,7 +133,7 @@ Interactive {
                 activeFocusOnTab: false
                 externalFocus: ListView.isCurrentItem && rows.activeFocus
                 Accessible.role: header ? Accessible.StaticText : Accessible.ListItem
-                Accessible.name: header ? modelData.header : modelData.label
+                Accessible.name: String((header ? modelData.header : modelData.label) ?? "")
                 Accessible.selected: selected
                 onClicked: rows.pick(index)
                 Rectangle { anchors.fill: parent; radius: Theme.radiusControl; color: Theme.hover; opacity: !row.header && (row.hovered || row.ListView.isCurrentItem) ? 1 : 0 }
@@ -152,7 +152,7 @@ Interactive {
                     x: row.header ? 8 : 8 + 16 + 8
                     width: row.width - x - 8
                     anchors.verticalCenter: parent.verticalCenter
-                    text: row.header ? row.modelData.header : row.modelData.label
+                    text: String((row.header ? row.modelData.header : row.modelData.label) ?? "")
                     wrapMode: Text.Wrap
                     color: row.header ? Theme.text2 : row.selected ? Theme.accentText : Theme.text
                     font.pixelSize: row.header ? Theme.sizeCaption : Theme.sizeBodySmall

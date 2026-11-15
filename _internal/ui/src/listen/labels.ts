@@ -90,8 +90,8 @@ export function primaryListenLabel(state: {
 }
 
 /** Nhãn đọc màn hình của nút phát: đang chờ thì nói đang chờ gì - không nói "Tạm dừng" khi chưa có tiếng nào. */
-export function toggleLabel(playing: boolean, buffering: boolean, speaking: boolean): string {
-  if (playing && buffering) return speaking ? PREPARING_VOICE : S.s_dang_tai_am_thanh_6c7cb62f;
+export function toggleLabel(playing: boolean, buffering: boolean, _speaking: boolean): string {
+  if (buffering) return S.s_buffering;
   return playing ? S.s_tam_dung_67635815 : S.s_phat_343e7e48;
 }
 

@@ -38,6 +38,7 @@ import androidx.compose.ui.unit.dp
 import vn.abook.player.ClipState
 import vn.abook.player.ui.components.SheetMenu
 import vn.abook.player.StudioPolling
+import vn.abook.player.ui.components.RangeSlider
 import vn.abook.player.ui.components.Caption
 import vn.abook.player.ui.components.ClockLabel
 import vn.abook.player.ui.components.ConfirmPage
@@ -244,6 +245,7 @@ private fun SceneRow(music: StudioMusicState, view: MusicView, scenes: List<Musi
                 if (link != null && !follows) ClipButton(StudioMusicState.trackClip(link), clip, { music.playTrack(link) }, "studio_music_play_${scene.key}")
             }
         }
+        Reveal(link != null && (clip.playing == StudioMusicState.trackClip(link) || clip.loading == StudioMusicState.trackClip(link))) { StudioMusicProgress(clip, music) }
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(Dim.s8), verticalAlignment = Alignment.CenterVertically) {
             TextAction(MusicLogic.swapText(scene), { sheets.show { dismiss -> AlternativesSheet(music, scene, dismiss) } }, "studio_music_swap_${scene.key}", align = Alignment.CenterStart)
             Reveal(!follows) { TextAction(StudioMusicText.MORE, { sheets.show { dismiss -> SceneMenu(music, view, scene, dismiss) } }, "studio_music_more_${scene.key}", align = Alignment.CenterStart) }
@@ -299,15 +301,24 @@ private fun AlternativesSheet(music: StudioMusicState, scene: MusicScene, dismis
                             BasicText(listOf(alt.title.ifEmpty { StudioMusicText.TRACK }, alt.creator).dotJoined(), style = Abook.type.body)
                             Reveal(alt.duration > 0) { ClockLabel(Fmt.clock(alt.duration), Modifier, Abook.type.bodySmall.copy(color = Abook.colors.text2)) }
                             Row(horizontalArrangement = Arrangement.spacedBy(Dim.s8), verticalAlignment = Alignment.CenterVertically) {
-                                val active = clip.playing == StudioMusicState.trackClip(alt.link) || clip.loading == StudioMusicState.trackClip(alt.link)
-                                TextAction(if (active) StudioMusicText.STOP else StudioMusicText.PLAY, { music.playTrack(alt.link) }, "studio_alt_play_${alt.link.hashCode()}", align = Alignment.CenterStart)
+                                ClipButton(StudioMusicState.trackClip(alt.link), clip, { music.playTrack(alt.link) }, "studio_alt_play_${alt.link.hashCode()}")
                                 TextAction(StudioMusicText.CHOOSE, { music.release(); dismiss(); music.change(MusicLogic.pin(scene, alt.link)) }, "studio_alt_choose_${alt.link.hashCode()}", align = Alignment.CenterStart)
                             }
+                            Reveal(clip.playing == StudioMusicState.trackClip(alt.link) || clip.loading == StudioMusicState.trackClip(alt.link)) { StudioMusicProgress(clip, music) }
                             RowLine()
                         }
                     }
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun StudioMusicProgress(clip: ClipState, music: StudioMusicState) {
+    Column(Modifier.fillMaxWidth()) {
+        RangeSlider(clip.position, 0.0, clip.duration.coerceAtLeast(1.0), .1, null, vn.abook.player.S.s_music_seek,
+            "${Fmt.clock(clip.position)} / ${Fmt.clock(clip.duration)}", clip.duration > 0, {}, music::seek)
+        ClockLabel("${Fmt.clock(clip.position)} / ${Fmt.clock(clip.duration)}", style = Abook.type.caption)
     }
 }

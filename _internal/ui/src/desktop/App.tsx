@@ -203,7 +203,7 @@ function RemoveImportedHost() {
   return (
     <Dialog footer={<DialogActions>
         <Button variant="ghost" onClick={() => setBook(null)}>{S.s_de_sau_9be0a7ab}</Button>
-        <Button variant="danger" icon={Trash2} loading={busy} onClick={() => void remove()}>{S.s_xoa_khoi_thu_vien_79dbd32b}</Button>
+        <Button variant="danger" icon={Trash2} loading={busy} onClick={() => remove()}>{S.s_xoa_khoi_thu_vien_79dbd32b}</Button>
       </DialogActions>}
       open={book !== null}
       onOpenChange={(open) => !open && setBook(null)}
@@ -442,7 +442,7 @@ function OpenBookFileButton({ variant = "ghost" }: { variant?: "ghost" }) {
     }
   };
   return (
-    <Button variant={variant} icon={FileAudio} className="touch-row" disabled={busy} onClick={() => void run()}>
+    <Button variant={variant} icon={FileAudio} className="touch-row" loading={busy} disabled={busy} onClick={() => run()}>
       {busy ? S.s_dang_mo_98235c77 : S.s_mo_file_sach_d826dd00}
     </Button>
   );
@@ -545,8 +545,7 @@ export function App() {
     restoreDefaultVoice(preferences.readAloudVoice ?? "");
     setVoiceReady(true);
     return onDefaultVoiceChosen((voice) => {
-      void api("/api/preferences", { method: "PUT", body: { readAloudVoice: voice } })
-        .catch(() => toast.error(S.s_chua_luu_duoc_giong_mac_dinh_ban_hay_chon_a2d2c7af));
+      return api("/api/preferences", { method: "PUT", body: { readAloudVoice: voice } }).then(() => undefined);
     });
   }, [info?.remote, preferences?.readAloudVoice]);
   useTheme(preferences?.theme ?? info?.theme);

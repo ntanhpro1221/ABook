@@ -492,7 +492,7 @@ Item {
                         width: actions.rowWidth          // web: cột w-fit min-w-[16rem], nút giãn bằng cột
                         text: bookDetail.hasPoint ? bookDetail.primaryText : BookText.readLabel(root.fullBook, root.listening)
                         icon: bookDetail.hasPoint ? bookDetail.primaryIcon : "book-open"
-                        onClicked: root.primary()
+                        onActivated: root.primary()
                     }
                     // Hàng phụ "Việc với sách": luôn cùng chỗ, cùng thứ tự - nút chưa dùng được thì mờ đi chứ không biến mất; hai đầu thẳng hai mép nút chính.
                     Item {
@@ -729,6 +729,6 @@ Item {
         icon: "book-open-text"
         title: S.s_khong_tim_thay_sach_nay_0836038e
         text: S.s_sach_co_the_da_bi_chuyen_sang_thu_muc_khac_b74249d0
-        Button { objectName: "bookMissingBack"; text: S.s_ve_thu_vien_7bb3f8c2; onClicked: Nav.back() }
+        Button { objectName: "bookMissingBack"; text: S.s_ve_thu_vien_7bb3f8c2; onActivated: Nav.back() }
     }
 }

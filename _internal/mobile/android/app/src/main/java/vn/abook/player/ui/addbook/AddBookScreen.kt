@@ -187,7 +187,7 @@ private fun ImportRow(
         tag = if (item.stage == ImportStage.Review) "review_${item.id}" else "open_${item.id}",
         hint = if (failed) item.problem.ifEmpty { item.stage.label } else if (working) ImportLogic.workLabel(work!!.value) else item.stage.label,
         hintColor = if (failed) colors.danger else colors.text2,
-        leading = { SwapContent(item, contentKey = { item -> item.folder }, layout = ContentLayout.Box) { item ->
+        leading = { SwapContent(item, contentKey = { item -> item.folder }, layout = ContentLayout.Box, inPlace = true) { item ->
             if (item.folder) FolderIcon(colors.text2) else FileIcon(colors.text2)
         } },
         trailing = if (failed) ({ TextAction(S.s_thu_lai_c58d068c, { retry(item.id) }, "retry_${item.id}") }) else null,

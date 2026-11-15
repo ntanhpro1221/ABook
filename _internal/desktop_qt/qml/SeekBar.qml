@@ -6,33 +6,37 @@ import ABook
 // Rê chuột hiện giờ ở chỗ con trỏ; bấm hay kéo là tua (thả chuột mới tua thật, trong lúc kéo hiện giờ sẽ tới).
 Item {
     id: root
+    property bool musicMode: false
+    property real sourcePosition: musicMode ? Clip.position : Player.clock.position
+    function commit(seconds) { if (musicMode) Clip.seek(seconds); else Player.seek(seconds) }
+    function skip(seconds) { commit(Math.max(0, Math.min(total, sourcePosition + seconds))) }
     property bool compact: false
     property real lineHeight: 0
     property bool bottomAligned: false
-    readonly property real total: Player.clock.duration
+    readonly property real total: musicMode ? Clip.duration : Player.clock.duration
     property bool dragging: false
     property real dragFraction: 0
     property real hoverFraction: 0
     readonly property bool hovered: area.containsMouse
-    readonly property real fraction: dragging ? dragFraction : (total > 0 ? Math.max(0, Math.min(1, Player.clock.position / total)) : 0)
+    readonly property real fraction: dragging ? dragFraction : (total > 0 ? Math.max(0, Math.min(1, sourcePosition / total)) : 0)
     /// Giây đang hiện (trong lúc kéo là chỗ sẽ tới).
-    readonly property real shownPosition: dragging ? dragFraction * total : Player.clock.position
+    readonly property real shownPosition: dragging ? dragFraction * total : root.sourcePosition
     readonly property bool active: hovered || dragging
     implicitHeight: compact ? 12 : 24
-    enabled: Player.loaded && total > 0
+    enabled: (musicMode || Player.loaded) && total > 0
     activeFocusOnTab: enabled
     Accessible.role: Accessible.Slider
-    Accessible.name: S.s_vi_tri_trong_chuong_2f741c43
+    Accessible.name: musicMode ? S.s_music_seek : S.s_vi_tri_trong_chuong_2f741c43
     Accessible.description: S.s_da_nghe_chuong_nay_u00a0_u00a0_e748babe + Player.clockText(shownPosition)
-    Keys.onLeftPressed: Player.skip(-Player.skipSeconds)
-    Keys.onRightPressed: Player.skip(Player.skipSeconds)
-    Keys.onUpPressed: Player.skip(Player.skipSeconds)
-    Keys.onDownPressed: Player.skip(-Player.skipSeconds)
+    Keys.onLeftPressed: root.skip(-Player.skipSeconds)
+    Keys.onRightPressed: root.skip(Player.skipSeconds)
+    Keys.onUpPressed: root.skip(Player.skipSeconds)
+    Keys.onDownPressed: root.skip(-Player.skipSeconds)
     Keys.onPressed: event => {
         if (event.key === Qt.Key_Home || event.key === Qt.Key_End) {
-            Player.seek(event.key === Qt.Key_Home ? 0 : Math.max(0, total - 2)); event.accepted = true
+            root.commit(event.key === Qt.Key_Home ? 0 : Math.max(0, total - 2)); event.accepted = true
         } else if (event.key === Qt.Key_PageUp || event.key === Qt.Key_PageDown) {
-            Player.skip(event.key === Qt.Key_PageUp ? 60 : -60); event.accepted = true
+            root.skip(event.key === Qt.Key_PageUp ? 60 : -60); event.accepted = true
         }
     }
 
@@ -117,7 +121,7 @@ Item {
             root.dragging = true
         }
         onReleased: {
-            if (root.dragging) Player.seek(root.dragFraction * root.total)
+            if (root.dragging) root.commit(root.dragFraction * root.total)
             root.dragging = false
         }
         onCanceled: root.dragging = false

@@ -71,9 +71,7 @@ fun SampleButton(active: Boolean, description: String, tag: String, onClick: () 
         Modifier.size(Dim.s48).pressable(Role.Button, onClick = onClick).semantics { contentDescription = description }.testTag(tag),
         contentAlignment = Alignment.Center,
     ) {
-        AnimatedContent(active, label = "sample-glyph", transitionSpec = {
-            (fadeIn(tween(MotionMs.FAST)) + scaleIn(tween(MotionMs.FAST), 0.6f)) togetherWith (fadeOut(tween(MotionMs.FAST)) + scaleOut(tween(MotionMs.FAST), 0.6f))
-        }) { on -> if (on) StopIcon(colors.accentText) else PlayIcon(colors.text2) }
+        vn.abook.player.ui.components.StateIcon(active) { on -> if (on) StopIcon(colors.accentText) else PlayIcon(colors.text2) }
     }
 }
 

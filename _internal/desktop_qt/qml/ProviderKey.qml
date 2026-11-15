@@ -61,7 +61,8 @@ Item {
             })
         } else ask()
     }
-    function remove() {
+    function remove() { removeConfirm.show() }
+    function removeConfirmed() {
         busy = "remove"
         Api.quiet("DELETE", path(), null, function(data, error) {
             if (error) fail(error)
@@ -193,4 +194,6 @@ Item {
             }
         }
     }
+    DestructiveConfirm { id: removeConfirm; objectName: "keyRemoveConfirm"; title: S.s_xoa_khoa_2ec6cb1a; description: S.s_khoa_0_se_bi_xoa_khoi_may_nay_va_cac_giong_735b6db2(root.info.name || ""); onAccepted: root.removeConfirmed() }
+
 }

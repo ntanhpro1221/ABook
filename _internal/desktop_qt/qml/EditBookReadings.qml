@@ -38,7 +38,9 @@ Column {
             root.changed()
         })
     }
-    function remove(surface) {
+    property string removingSurface: ""
+    function remove(surface) { removingSurface = surface; removeConfirm.show() }
+    function removeConfirmed(surface) {
         if (saving) return
         saving = true
         Api.call("PUT", "/api/books/" + bookId + "/readings", {surface: surface, spoken: ""}, function(data, error) {
@@ -112,7 +114,7 @@ Column {
                     icon: "pencil"; iconSize: 16
                     tip: S.s_sua_cach_doc_5968f72a + entry.modelData.surface
                     Accessible.name: tip
-                    onClicked: root.openEdit(entry.modelData)
+                    onActivated: root.openEdit(entry.modelData)
                 }
                 IconButton {
                     x: parent.width - 32
@@ -122,7 +124,7 @@ Column {
                     enabled: !root.saving
                     tip: S.s_bo_cach_doc_4887d95e + entry.modelData.surface
                     Accessible.name: tip
-                    onClicked: root.remove(entry.modelData.surface)
+                    onActivated: root.remove(entry.modelData.surface)
                 }
             }
             Collapse {
@@ -162,11 +164,15 @@ Column {
                         kind: "ghost"
                         size: "sm"
                         enabled: !root.saving
-                        onClicked: root.store(entry.modelData.surface, "", entry.modelData.spoken)
+                        onActivated: root.store(entry.modelData.surface, "", entry.modelData.spoken)
                     }
                 }
             }
             Item { width: 1; height: 8 }
         }
     }
+    DestructiveConfirm { id: removeConfirm; title: S.s_destructive_question(root.removingSurface)
+        description: S.s_irreversible_detail(root.removingSurface); onAccepted: root.removeConfirmed(root.removingSurface)
+    }
+
 }

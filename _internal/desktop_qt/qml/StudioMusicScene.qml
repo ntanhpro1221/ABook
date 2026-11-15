@@ -168,6 +168,20 @@ Column {
                 Accessible.checked: root.open
                 onActivated: root.swapRequested()
             }
+            Item {
+              width: 32; height: 32
+              anchors.verticalCenter: parent.verticalCenter
+              IconButton {
+                objectName: "scenePreview"
+                Reveal { shown: !root.follows && !!root.scene.link }
+                width: 32; height: 32
+                anchors.verticalCenter: parent.verticalCenter
+                icon: root.previewing === root.scene.link && !Clip.paused ? "pause" : "play"
+                pending: root.previewing === root.scene.link && Clip.loading
+                Accessible.name: root.previewing === root.scene.link ? (Clip.loading ? S.s_buffering : Clip.paused ? S.s_phat_343e7e48 : S.s_tam_dung_67635815) : S.s_nghe_thu_fa024065
+                onActivated: root.preview(root.scene.link)
+              }
+            }
             Item { Reveal { shown: root.follows && root.wide } width: 32; height: 32 }
             IconButton {
                 id: more
@@ -182,12 +196,13 @@ Column {
                 hoverInk: Theme.text
                 enabled: !root.busy
                 Accessible.name: S.s_them_tuy_chon_a0b4bb6e
-                onClicked: root.menuRequested(more)
+                onActivated: root.menuRequested(more)
             }
         }
     }
     function esc(text) { return String(text).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/\u00a0/g, "&nbsp;") }
     // "Đổi bài" chỉ dựng khi mở lần đầu (sách dài có hàng trăm đoạn), rồi giữ để khép lại có chuyển động
+    Collapse { width: parent.width; open: !root.follows && root.previewing === root.scene.link; MusicListeningProgress { width: parent.width } }
     property bool swapMade: false
     onOpenChanged: if (open) swapMade = true
     Collapse {

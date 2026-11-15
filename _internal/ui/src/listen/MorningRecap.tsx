@@ -154,7 +154,7 @@ export function MorningRecap({ className }: { className?: string }) {
 
   return (
     <MotionRegion as="section" className={cn("relative py-4 sm:py-5", className)} aria-label={sessionLabel(session.endedAt)}>
-      <button type="button" aria-label={S.s_an_the_nay_820c504e} onClick={() => void dismiss()} className="touch-hit absolute right-[2px] top-2 grid size-9 place-items-center rounded-full text-fg-2 hover:bg-hover">
+      <button type="button" aria-label={S.s_an_the_nay_820c504e} onClick={() => dismiss()} className="touch-hit absolute right-[2px] top-2 grid size-9 place-items-center rounded-full text-fg-2 hover:bg-hover">
         <X className="size-4" />
       </button>
       {/* Nhãn HOA chỉ ≤ 3 chữ (DESIGN 5.5): tên sách xuống chữ thường 12 px - không thành một dòng HOA dài; tên dài xuống dòng, không cắt. */}
@@ -177,7 +177,7 @@ export function MorningRecap({ className }: { className?: string }) {
               <button
                 type="button"
                 data-recap-marker=""
-                onClick={() => void resume(marker.chapterId, marker.seconds)}
+                onClick={() => resume(marker.chapterId, marker.seconds)}
                 className={cn(
                   "-mx-2 flex h-full w-[calc(100%+14px)] gap-3 rounded-control px-2 py-3 text-left transition-colors hover:bg-hover",
                 )}
@@ -204,7 +204,7 @@ export function MorningRecap({ className }: { className?: string }) {
       <div className="mt-4 flex flex-wrap items-center gap-2">
         <button
           type="button"
-          onClick={() => void resume(suggested.chapterId, suggested.seconds)}
+          onClick={() => resume(suggested.chapterId, suggested.seconds)}
           className="touch-box flex h-11 flex-1 items-center justify-center gap-2 rounded-control bg-accent px-4 font-medium text-accent-ink sm:flex-none"
         >
           <Play className="size-4" fill="currentColor" strokeWidth={0} />{S.s_nghe_tu_day_2f4d7119}</button>
@@ -225,7 +225,7 @@ export function MorningRecap({ className }: { className?: string }) {
             <button
               key={segment.id}
               type="button"
-              onClick={() => void resume(group.chapterId, segment.start ?? 0)}
+              onClick={() => resume(group.chapterId, segment.start ?? 0)}
               className="-mx-2 block w-[calc(100%+14px)] rounded-control px-2 py-3 text-left text-body leading-snug hover:bg-hover active:bg-hover"
             >
               {<Presence>{segment.speaker && <SpeakerLabel speaker={segment.speaker} sentence={segment.text} />}</Presence>}

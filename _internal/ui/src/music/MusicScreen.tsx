@@ -23,6 +23,11 @@ import {
 } from "./library";
 import { useLibraryPreview, type LibraryPreview } from "./preview";
 import { TrackSheet } from "./TrackSheet";
+import { DownloadControl } from "./DownloadControl";
+import { TickingValue } from "../shared/TickingValue";
+import { ListeningProgress } from "./ListeningProgress";
+import { useDestructiveConfirm } from "../shared/DestructiveConfirm";
+import { Pause } from "lucide-react";
 
 /** Màn "Nhạc" (đích cấp cao nhất, docs/DESIGN.md mục Nhạc): "Đã lưu" (bài đã lưu + Nhạc của tôi) | "Kho nhạc" (cả danh mục: tìm, lọc,
  *  nghe thử, tải về). `?pick=<mã sách>&scene=<khoá đoạn>`: CHẾ ĐỘ CHỌN mở từ "Đổi bài" của một đoạn - mỗi bài có nút "Dùng", chọn xong
@@ -65,12 +70,12 @@ export function PreviewBar({ preview }: { preview: LibraryPreview }) {
   const playing = preview.playing;
   return (
     <>
-    {preview.error ? <p role="alert" className="text-sm text-danger">{preview.error}</p> : null}
+    {preview.error ? <InlineError message={preview.error} onRetry={preview.retry} /> : null}
     <MotionPresence open={playing !== null} className="sticky bottom-3 z-10 mt-4">
       <div role="status" className="mx-auto flex max-w-[560px] items-center gap-3 rounded-cover border border-line bg-panel px-4 py-2 shadow-float">
         <Music2 aria-hidden className="size-4 shrink-0 text-accent-text" />
         <p className="min-w-0 flex-1 truncate text-sm">
-          <span className="text-fg-2">{preview.loading ? S.s_dang_tai_am_thanh_6c7cb62f : S.s_dang_nghe_thu_f1fb4cba}</span>
+          <span className="text-fg-2">{preview.loading ? S.s_buffering : preview.paused ? S.s_music_paused : S.s_dang_nghe_thu_f1fb4cba}</span>
           {playing?.title ? <span className="font-medium"> · {playing.title}</span> : null}
         </p>
         <IconButton size="sm" label={S.s_dung_nghe_thu_41a2925b} icon={Square} onClick={preview.stop} />
@@ -293,17 +298,19 @@ export function TrackRow({
   /** Hàng nằm trong một `<li>` của danh sách khác (Nhạc trong sách) - khi ấy chính nó không phải mục danh sách. */
   nested?: boolean;
 }) {
-  const { save, unsave } = useSaveTracks();
+  const { save, unsave, cancel } = useSaveTracks();
+  const deletion = useDestructiveConfirm();
   const load = loadOf(track, downloads);
   const previewing = preview.playing?.link === track.link;
   const playable = online || track.downloaded;
   const title = track.title || S.s_bai_nay_d9683a01;
   return (
-    <Item role={Item === "div" && !nested ? "listitem" : undefined} className="flex min-h-16 items-center gap-2 border-b border-line py-2 last:border-b-0">
+    <Item role={Item === "div" && !nested ? "listitem" : undefined} className="flex min-h-16 flex-wrap items-center gap-2 border-b border-line py-2 last:border-b-0">
       <MusicArt track={track} />
       <IconButton
-        label={previewing && preview.loading ? S.s_dang_tai_am_thanh_6c7cb62f : previewing ? S.s_dung_nghe_f20939be : S.s_nghe_thu_fa024065}
-        icon={previewing ? Square : Play}
+        label={previewing && preview.loading ? S.s_buffering : previewing && !preview.paused ? S.s_tam_dung_67635815 : S.s_nghe_thu_fa024065}
+        icon={previewing && !preview.paused ? Pause : Play}
+        pending={previewing && preview.loading}
         aria-pressed={previewing}
         disabled={!playable}
         onClick={() => preview.toggle(track)}
@@ -312,42 +319,15 @@ export function TrackRow({
       <button type="button" onClick={() => onOpen(track.link)} className="relative min-w-0 flex-1 rounded-control py-2 pr-5 text-left outline-none focus-visible:ring-2 focus-visible:ring-focus">
         <ChevronRight aria-hidden className="ink-end absolute right-0 top-2.5 size-4 text-fg-3" />
         <span className="line-clamp-2 text-sm font-medium">{title}</span>
-        <DotJoin singleLine className="mt-1 text-xs text-fg-2" parts={[track.creator, typeof track.duration === "number" ? formatClock(track.duration) : null]} />
+        <DotJoin singleLine className="mt-1 text-xs text-fg-2" parts={[track.creator, load.kind === "failed" ? <span className="text-danger">{S.s_chua_tai_xong_b257419d}</span> : load.kind === "loading" && load.percent !== null ? <TickingValue>{S.s_dang_tai_0_e9a97892(load.percent)}</TickingValue> : typeof track.duration === "number" ? <TickingValue>{formatClock(track.duration)}</TickingValue> : null]} />
       </button>
       {<Presence>{onUse && <Button size="sm" variant="primary" onClick={() => onUse(track.link)}>{S.s_dung_7927ca4e}</Button>}</Presence>}
-      {load.kind === "loading" ? (
-        <button type="button" aria-label={S.s_huy_tai_1a9ff73d} title={S.s_huy_tai_1a9ff73d} onClick={() => unsave.mutate([track.link])}
-          className="press relative grid size-9 shrink-0 place-items-center rounded-control text-accent-text hover:bg-hover touch-reach">
-          <ProgressRing percent={load.percent} />
-          <span className="sr-only">{S.s_dang_tai_0_e9a97892(load.percent ?? 0)}</span>
-        </button>
-      ) : load.kind === "done" ? (
-        <span className="grid size-9 shrink-0 place-items-center text-success" title={S.s_da_tai_b7362bbf}>
-          <Check aria-hidden className="size-4" />
-          <span className="sr-only">{S.s_da_tai_b7362bbf}</span>
-        </span>
-      ) : (
-        <IconButton
-          label={load.kind === "failed" ? S.s_chua_tai_xong_b257419d : S.s_tai_ve_9b5bdb44}
-          icon={load.kind === "failed" ? CircleAlert : Download}
-          disabled={!online}
-          onClick={() => save.mutate([track.link])}
-          className={cn(load.kind === "failed" && "text-warning")}
-        />
-      )}
+      <DownloadControl load={load} online={online} busy={save.isPending || unsave.isPending || cancel.isPending}
+        onSave={() => save.mutate([track.link])} onStop={() => cancel.mutate([track.link])}
+        onDelete={() => deletion.confirm({title: S.s_delete_download_question,
+          description: S.s_delete_download_description(title, formatSize(track.bytes ?? 0)), run: () => unsave.mutateAsync([track.link])})} />
+      <Reveal when={previewing}><div className="basis-full pl-14"><ListeningProgress preview={preview} /></div></Reveal>
+      {deletion.dialog}
     </Item>
-  );
-}
-
-function ProgressRing({ percent }: { percent: number | null }) {
-  if (percent === null) return <Loader2 aria-hidden className="size-5 animate-spin" />;
-  const circumference = 2 * Math.PI * 16;
-  return (
-    <svg aria-hidden viewBox="0 0 36 36" className="size-9">
-      <circle cx="18" cy="18" r="16" fill="none" stroke="currentColor" strokeOpacity={0.2} strokeWidth={2.5} />
-      <circle cx="18" cy="18" r="16" transform="rotate(-90 18 18)" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round"
-        strokeDasharray={circumference} strokeDashoffset={circumference * (1 - percent / 100)} />
-      <text data-motion-live x="18" y="18" textAnchor="middle" dominantBaseline="central" className="fill-current text-xs">{percent}%</text>
-    </svg>
   );
 }

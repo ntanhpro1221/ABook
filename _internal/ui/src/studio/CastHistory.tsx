@@ -45,7 +45,7 @@ export function CastHistory({ bookId, history, editable }: { bookId: string; his
             <Reveal when={state === "pending"}><p className="text-xs text-fg-2">{S.s_cast_history_audio}</p></Reveal>
           </div>
           <Reveal when={editable && state === "applied"}>
-            <Button variant="ghost" disabled={busy !== null} loading={busy === item.operationId} onClick={() => void undo(item.operationId)}>{S.s_hoan_tac_e72ff675}</Button>
+            <Button variant="ghost" disabled={busy !== null} loading={busy === item.operationId} onClick={() => undo(item.operationId)}>{S.s_hoan_tac_e72ff675}</Button>
           </Reveal>
         </div>;
       }}

@@ -35,8 +35,9 @@ Item {
         })
     }
     function remove() {
-        if (!armed) { arm(true); return }
-        arm(false)
+        removeConfirm.show()
+    }
+    function removeConfirmed() {
         setup.remove(function(ok, data) {
             if (!ok) { setup.failure(S.s_chua_go_duoc_studio_1b3d65b8, data); return }
             Api.notice = S.s_da_go_studio_63706a8a
@@ -102,7 +103,7 @@ Item {
                             size: unfit ? "sm" : "md"
                             icon: running ? "" : "download"
                             enabled: running || !root.busy
-                            onClicked: running ? root.studioRequested() : root.install()
+                            onActivated: running ? root.studioRequested() : root.install()
                         }
                     }
                 }
@@ -123,7 +124,7 @@ Item {
                     icon: "trash"
                     text: root.busy ? S.s_dang_go_eadfa314 : root.armed ? S.s_xac_nhan_go_80920dda : S.s_go_studio_832e6f10
                     enabled: !root.busy
-                    onClicked: root.remove()
+                    onActivated: root.remove()
                 }
             }
             Collapse {
@@ -176,4 +177,6 @@ Item {
             }
         }
     }
+    DestructiveConfirm { id: removeConfirm; objectName: "studioRemoveConfirm"; title: S.s_go_studio_832e6f10; description: S.s_xoa_runtime_model_1520_gb_giu_sach_va_ho_s_66d08224; actionText: S.s_go_studio_832e6f10; onAccepted: root.removeConfirmed() }
+
 }

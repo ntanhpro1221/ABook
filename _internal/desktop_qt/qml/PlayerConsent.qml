@@ -46,7 +46,7 @@ Modal {
                 onClicked: root.finish(modelData)
             }
         }
-        Button { objectName: "consentOtherVoice"; Reveal { shown: !root.choosing } width: parent.width; wrap: true; kind: "ghost"; text: S.s_chon_giong_khac_d31cfe89; onClicked: root.choosing = true }
-        Button { objectName: "consentListen"; Reveal { shown: !root.choosing } width: parent.width; text: S.s_nghe_a43aafef; onClicked: root.finish(root.voice) }
+        Button { objectName: "consentOtherVoice"; Reveal { shown: !root.choosing } width: parent.width; wrap: true; kind: "ghost"; text: S.s_chon_giong_khac_d31cfe89; onActivated: root.choosing = true }
+        Button { objectName: "consentListen"; Reveal { shown: !root.choosing } width: parent.width; text: S.s_nghe_a43aafef; onActivated: root.finish(root.voice) }
     }
 }

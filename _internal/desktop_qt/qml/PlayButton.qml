@@ -11,7 +11,7 @@ Interactive {
     ringRadius: size / 2
     enabled: Player.loaded
     opacity: enabled ? 1 : 0.4
-    tip: Player.playing ? (Player.buffering ? (Player.speaking ? S.s_dang_chuan_bi_giong_doc_69f1b51a : S.s_dang_tai_am_thanh_6c7cb62f) : S.s_tam_dung_space_c826d0e6) : S.s_phat_space_7207d81e
+    tip: Player.buffering ? S.s_buffering : Player.playing ? S.s_tam_dung_space_c826d0e6 : S.s_phat_space_7207d81e
     Accessible.role: Accessible.Button
     Accessible.name: tip
     onClicked: Player.toggle()
@@ -28,19 +28,20 @@ Interactive {
             Behavior on opacity { NumberAnimation { duration: root.pressed ? Theme.motionFastOut : Theme.motionFast } }
         }
     }
-    Icon {
+    StateIcon {
         anchors.centerIn: parent
         anchors.horizontalCenterOffset: Player.playing ? 0 : 1
-        name: Player.playing ? "pause" : "play"
+        name: Player.buffering ? "play" : Player.playing ? "pause" : "play"
         size: Math.round(root.size * 0.42)
         color: Theme.accentInk
     }
+    PendingIndicator { id: wait; pending: Player.buffering; visible: false }
     // Cung quay khi đang chờ âm thanh
     Canvas {
         id: arc
         anchors.fill: parent
         anchors.margins: -4
-        Reveal { shown: Player.buffering && Player.playing }
+        Reveal { shown: wait.shown }
         onVisibleChanged: if (visible) requestPaint()
         onPaint: {
             const ctx = getContext("2d")

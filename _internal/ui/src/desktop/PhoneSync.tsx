@@ -362,7 +362,7 @@ export function PhoneSync() {
       )}
 
       <Dialog footer={<DialogActions>
-          <Button variant="ghost" onClick={() => setRemoving(null)}>{S.s_giu_lai_3c3ba2db}</Button>
+          <Button variant="ghost" onClick={() => setRemoving(null)}>{S.s_huy_96732485}</Button>
           <Button
             variant="danger"
             onClick={() => {

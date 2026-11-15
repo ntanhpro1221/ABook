@@ -179,19 +179,19 @@ Column {
                                         Reveal { shown: !!cue.modelData.pinned }
                                         text: S.s_ve_bai_goc_dc6a21f6; kind: "ghost"; size: "sm"
                                         enabled: !root.changing
-                                        onClicked: { const pins = {}; pins[cue.modelData.key] = null; root.change({pins: pins}) }
+                                        onActivated: { const pins = {}; pins[cue.modelData.key] = null; root.change({pins: pins}) }
                                     }
                                     Button {
                                         text: S.s_doi_bai_7b81488f; icon: "shuffle"; kind: "ghost"; size: "sm"
                                         enabled: !root.changing
-                                        onClicked: root.swapping === cue.modelData.key ? root.closeSwap() : root.openSwap(cue.modelData.key)
+                                        onActivated: root.swapping === cue.modelData.key ? root.closeSwap() : root.openSwap(cue.modelData.key)
                                     }
                                     Button {
                                         // Bề ngang theo chữ dài hơn trong hai chữ: "Đổi bài" đứng một cột ở mọi dòng
                                         width: Math.max(implicitWidth, silenceWide.implicitWidth, soundWide.implicitWidth)
                                         text: cue.modelData.silenced ? S.s_co_nhac_f514e0fa : S.s_im_lang_1a012238; kind: "ghost"; size: "sm"
                                         enabled: !root.changing
-                                        onClicked: { const silence = {}; silence[cue.modelData.key] = !cue.modelData.silenced; root.change({silence: silence}) }
+                                        onActivated: { const silence = {}; silence[cue.modelData.key] = !cue.modelData.silenced; root.change({silence: silence}) }
                                     }
                                 }
                             }

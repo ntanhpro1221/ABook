@@ -16,6 +16,12 @@ Item {
     signal preview(string link)
     signal choose(string link)
     readonly property bool narrow: width < 420
+    Collapse {
+        id: listening
+        x: words.x; y: root.contentHeight; width: root.width - x
+        open: root.previewing === root.item.link
+        MusicListeningProgress { width: parent.width }
+    }
     readonly property string line: {
         const dim = Qt.color(Theme.text2).toString()
         let html = Music.escapeHtml(item.title || S.s_bai_nhac_5d07657e)
@@ -23,7 +29,8 @@ Item {
         if (item.duration) html += "<font color=\"" + dim + "\">&nbsp;·&nbsp;" + Music.formatClock(item.duration) + "</font>"
         return html
     }
-    implicitHeight: narrow ? words.height + 4 + buttons.height : Math.max(words.height, buttons.height)
+    readonly property real contentHeight: narrow ? words.height + 4 + buttons.height : Math.max(words.height, buttons.height)
+    implicitHeight: contentHeight + listening.height
     height: implicitHeight
 
     Icon { id: noteIcon; y: words.y + 2; name: "eighth-note"; size: 16; color: Theme.text2 }
@@ -31,7 +38,7 @@ Item {
         id: words
         x: noteIcon.width + 6
         width: root.width - x - (root.narrow ? 0 : buttons.width + 12)
-        anchors.verticalCenter: root.narrow ? undefined : parent.verticalCenter
+        y: root.narrow ? 0 : (root.contentHeight - height) / 2
         Text {
             width: parent.width
             text: root.line
@@ -45,13 +52,14 @@ Item {
     Row {
         id: buttons
         x: root.narrow ? words.x - 12 : root.width - width
-        y: root.narrow ? words.height + 4 : (root.height - height) / 2
+        y: root.narrow ? words.height + 4 : (root.contentHeight - height) / 2
         spacing: 4
         Button {
             objectName: "musicPreview"
             Reveal { shown: root.canPreview }
-            text: root.previewing === root.item.link ? S.s_dung_nghe_f20939be : S.s_nghe_thu_fa024065
-            icon: root.previewing === root.item.link ? "square" : "play"
+            text: root.previewing === root.item.link && Clip.loading ? S.s_buffering : root.previewing === root.item.link && !Clip.paused ? S.s_tam_dung_67635815 : S.s_nghe_thu_fa024065
+            icon: root.previewing === root.item.link && !Clip.paused ? "pause" : "play"
+            pending: root.previewing === root.item.link && Clip.loading
             kind: "ghost"; size: "sm"
             Accessible.name: text + ": " + (root.item.title || S.s_bai_nhac_5d07657e)
             onActivated: root.preview(root.item.link)

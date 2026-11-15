@@ -109,7 +109,7 @@ private fun NowPlayingBody(
     // Đóng cửa sổ thì chữ mờ do cuộn tay trở lại rõ (trước đây cây bị huỷ nên lần mở sau luôn rõ).
     LaunchedEffect(live) { if (!live) controlsDimmed = false }
     // Giọng máy đọc đoạn đầu mà chờ lâu hơn ~1,5 giây mới nói "Đang chuẩn bị giọng đọc" (đệm một nhịp giữa câu không được nháy chữ).
-    val waiting = state.playing && state.buffering
+    val waiting = state.buffering
     var waited by remember { mutableStateOf(false) }
     LaunchedEffect(waiting) {
         waited = false
@@ -275,7 +275,7 @@ private fun NowPlayingBody(
                     verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceEvenly) {
                     GlyphButton(S.s_chuong_truoc_4750f9e9, "|‹", model::previous, Modifier.playerReveal(windowProgress))
                     GlyphButton(S.s_lui_15_giay_eb84ecc0, "↶15", { model.skip(-Playback.SKIP_SECONDS) }, Modifier.playerReveal(windowProgress))
-                    PlayMorph(state.playing, model::toggle, parts.element(NowPlayingPart.Play), description = toggleLabel)
+                    PlayMorph(state.playing, model::toggle, parts.element(NowPlayingPart.Play), description = toggleLabel, pending = waiting)
                     GlyphButton(S.s_toi_15_giay_77c8545b, "15↷", { model.skip(Playback.SKIP_SECONDS) }, Modifier.playerReveal(windowProgress))
                     // Chương cuối: nút mờ và nói đó là chương cuối; chương sau chưa có audio: nói vì sao (nút vẫn bấm được, như web).
                     GlyphButton(PlayerText.nextLabel(state.hasNext, state.hasNext || state.moreChapters), "›|", model::next,

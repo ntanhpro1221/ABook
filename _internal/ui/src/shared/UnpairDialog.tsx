@@ -2,6 +2,7 @@ import { Button, Dialog } from "./ui";
 import { MotionPresence } from "./MotionPresence";
 import { MotionRegion } from "./MotionRegion";
 import type { UnpairChoice, UnpairCopy } from "./unpair";
+import { S } from "./strings.generated";
 
 /** Hộp hỏi khi gỡ ghép một máy còn sửa chưa gửi (copy từ `unpairCopy`): gửi trước rồi gỡ / vẫn gỡ, bỏ thay đổi / huỷ. Lỗi lần gửi trước
  *  hiện ngay trong hộp, hộp ở nguyên để chọn lại - không gỡ gì khi gửi hỏng. */
@@ -33,7 +34,8 @@ export function UnpairDialog({
           </MotionRegion>
         )}</MotionPresence>
       </div>
-      <MotionRegion className="mt-5 flex flex-col gap-2">
+      <MotionRegion className="mt-5 flex flex-wrap justify-end gap-2">
+        <Button data-autofocus variant="ghost" disabled={busy !== null} onClick={onCancel}>{S.s_huy_96732485}</Button>
         {copy?.send && (
           <Button variant={copy.sendPrimary ? "primary" : "ghost"} loading={busy === "send"} disabled={busy !== null} onClick={() => onChoose("send")}>
             {copy.send}
@@ -41,10 +43,6 @@ export function UnpairDialog({
         )}
         <Button variant="danger" loading={busy === "discard"} disabled={busy !== null} onClick={() => onChoose("discard")}>
           {copy?.discard}
-        </Button>
-        {/* Máy kia tắt: nút chính là Huỷ (gửi lúc này sẽ hỏng), không phải "Gửi trước". */}
-        <Button variant={copy?.send && !copy.sendPrimary ? "primary" : "ghost"} disabled={busy !== null} onClick={onCancel}>
-          {copy?.cancel}
         </Button>
       </MotionRegion>
     </Dialog>

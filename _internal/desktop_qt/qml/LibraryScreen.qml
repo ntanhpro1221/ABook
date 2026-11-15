@@ -131,7 +131,7 @@ FocusScope {
         width: root.contentW
         title: S.s_thu_vien_58145555
         subtitle: root.loading || root.failed || root.total === 0 ? "" : root.filtered.length + S.s_cuon_421f8494
-        Button { opacity: root.total > 0 ? 1 : 0; enabled: opacity > 0; text: S.s_them_sach_2a9d3708; icon: "plus"; kind: "ghost"; onClicked: root.addRequested([]); Behavior on opacity { NumberAnimation { duration: Theme.motionFast } } }
+        Button { opacity: root.total > 0 ? 1 : 0; enabled: opacity > 0; text: S.s_them_sach_2a9d3708; icon: "plus"; kind: "ghost"; onActivated: root.addRequested([]); Behavior on opacity { NumberAnimation { duration: Theme.motionFast } } }
     }
 
     // Desktop: continue across the full grid width, filters on the next row;
@@ -187,9 +187,9 @@ FocusScope {
                     id: order; objectName: "librarySort"
                     kind: "ghost"; text: S.s_xep_theo_2b280cd9; icon: "arrow-down-wide-narrow"
                     tip: S.s_xep_theo_0_89631506(root.sortOptions.find(o => o.value === root.sortOrder).label)
-                    onClicked: sortMenu.toggle()
+                    onActivated: sortMenu.toggle()
                 }
-                IconButton { id: searchButton; objectName: "librarySearch"; icon: "search"; tip: S.s_tim_sach_1deb0125; onClicked: search.open ? search.close() : search.show() }
+                IconButton { id: searchButton; objectName: "librarySearch"; icon: "search"; tip: S.s_tim_sach_1deb0125; onActivated: search.open ? search.close() : search.show() }
             }
         }
         Collapse {
@@ -209,7 +209,7 @@ FocusScope {
                     onTextChanged: root.query = text
                     escapeLocal: true; onEscaped: search.close()
                 }
-                IconButton { id: clear; objectName: "librarySearchClear"; icon: "x"; tip: root.query ? S.s_xoa_o_tim_0bafa7ad : S.s_dong_o_tim_1ba06fdf; onClicked: root.query ? root.query = "" : search.close() }
+                IconButton { id: clear; objectName: "librarySearchClear"; icon: "x"; tip: root.query ? S.s_xoa_o_tim_0bafa7ad : S.s_dong_o_tim_1ba06fdf; onActivated: root.query ? root.query = "" : search.close() }
             }
         }
     }
@@ -240,7 +240,7 @@ FocusScope {
                 Button {
                     required property var modelData
                     width: parent.width; wrap: true; kind: "ghost"; text: modelData.title
-                    onClicked: { seriesDialog.close(); root.openBook(modelData, null) }
+                    onActivated: { seriesDialog.close(); root.openBook(modelData, null) }
                 }
             }
         }
@@ -481,7 +481,7 @@ FocusScope {
             Button {
                 anchors.horizontalCenter: parent.horizontalCenter
                 text: S.s_thu_lai_c58d068c
-                onClicked: root.failed ? Backend.restart() : Backend.refreshLibrary()
+                onActivated: root.failed ? Backend.restart() : Backend.refreshLibrary()
             }
         }
         Collapse {
@@ -492,7 +492,7 @@ FocusScope {
                 text: S.s_them_sach_2a9d3708
                 icon: "plus"
                 size: "lg"
-                onClicked: root.addRequested([])
+                onActivated: root.addRequested([])
             }
         }
         Collapse {
@@ -501,8 +501,8 @@ FocusScope {
             Row {
                 anchors.horizontalCenter: parent.horizontalCenter
                 spacing: 4
-                Button { objectName: "emptyStudio"; text: S.s_tao_sach_noi_ab873c7a; icon: "clapperboard"; kind: "ghost"; onClicked: root.studioRequested() }
-                Button { objectName: "emptyOpenFile"; text: root.fileOpening ? S.s_dang_mo_98235c77 : S.s_mo_file_sach_d826dd00; icon: "file-audio"; kind: "ghost"; enabled: !root.fileOpening; onClicked: root.openFileRequested() }
+                Button { objectName: "emptyStudio"; text: S.s_tao_sach_noi_ab873c7a; icon: "clapperboard"; kind: "ghost"; onActivated: root.studioRequested() }
+                Button { objectName: "emptyOpenFile"; text: root.fileOpening ? S.s_dang_mo_98235c77 : S.s_mo_file_sach_d826dd00; icon: "file-audio"; kind: "ghost"; enabled: !root.fileOpening; onActivated: root.openFileRequested() }
             }
         }
     }

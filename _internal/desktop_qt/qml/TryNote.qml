@@ -37,7 +37,7 @@ Collapse {
             kind: "ghost"
             icon: "download"
             text: root.reading ? root.reading.work.store.studioState.action : ""
-            onClicked: if (Nav.stack) Nav.stack.show(2)
+            onActivated: if (Nav.stack) Nav.stack.show(2)
         }
     }
 }

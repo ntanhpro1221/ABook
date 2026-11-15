@@ -25,8 +25,9 @@ object PlayerText {
     const val FINISHED = S.s_da_nghe_het_ca_cuon_11fdce7b
 
     /** Nhãn đọc màn hình của nút phát: đang chờ thì nói đang chờ gì - không nói "Tạm dừng" khi chưa có tiếng nào. */
+    @Suppress("UNUSED_PARAMETER")
     fun toggleLabel(playing: Boolean, buffering: Boolean, speaking: Boolean): String = when {
-        playing && buffering -> if (speaking) PREPARING_VOICE else S.s_dang_tai_am_thanh_6c7cb62f
+        buffering -> S.s_buffering
         playing -> S.s_tam_dung_67635815
         else -> S.s_phat_343e7e48
     }

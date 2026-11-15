@@ -108,6 +108,8 @@ fun VoiceSettings(env: SettingsEnv, sheets: SheetHost, onBack: () -> Unit, modif
     val voices by repo.voices.collectAsState()
     val speed by repo.speed.collectAsState()
     val sample by (voice?.sample ?: NoSample).collectAsState()
+    val savingVoice by repo.savingVoice.collectAsState()
+    val savingSpeed by repo.savingSpeed.collectAsState()
     val modules by (voice?.modules ?: NoModules).collectAsState()
     val summary by (voice?.summary ?: NoSummary).collectAsState()
     LaunchedEffect(repo) {
@@ -168,7 +170,8 @@ fun VoiceSettings(env: SettingsEnv, sheets: SheetHost, onBack: () -> Unit, modif
                                 option, option.id == list.chosen, canHear = voice != null,
                                 loading = sample.loading == option.id, playing = sample.playing == option.id,
                                 failure = sample.failed?.takeIf { it.voice == option.id }?.message,
-                                onChoose = { if (option.id != list.chosen) choose(option) }, onHear = { voice?.play(option.id) },
+                                onChoose = { if (savingVoice == null && option.id != list.chosen) choose(option) }, onHear = { voice?.play(option.id) },
+                                saving = savingVoice == option.id,
                             )
                         }
                     }
@@ -190,6 +193,7 @@ fun VoiceSettings(env: SettingsEnv, sheets: SheetHost, onBack: () -> Unit, modif
                     ChoiceSetting(
                         S.s_chat_luong_giong_5d1c8e07, VoiceSpeedChoice.entries, state.choice,
                         { choice, _ -> repo.chooseSpeed(choice) }, "voice_speed",
+                        pending = savingSpeed,
                     )
                     for (line in state.lines) {
                         BasicText(line, style = Abook.type.caption.copy(color = Abook.colors.text2), modifier = Modifier.padding(top = Dim.s4))
@@ -280,7 +284,7 @@ private fun SuggestionBlock(kind: ModuleKind, suggestion: ModuleSuggestion, voic
  */
 @Composable
 private fun VoiceRow(
-    voice: VoiceOption, chosen: Boolean, canHear: Boolean, loading: Boolean, playing: Boolean, failure: String?, onChoose: () -> Unit, onHear: () -> Unit,
+    voice: VoiceOption, chosen: Boolean, canHear: Boolean, loading: Boolean, playing: Boolean, failure: String?, onChoose: () -> Unit, onHear: () -> Unit, saving: Boolean = false,
 ) {
     val colors = Abook.colors
     val trailing: (@Composable () -> Unit)? = when {
@@ -294,9 +298,11 @@ private fun VoiceRow(
         hintColor = if (failure != null) colors.danger else colors.text2,
         titleColor = if (chosen) colors.accentText else colors.text,
         leading = {
+            Box(Modifier.size(Dim.s24)) { vn.abook.player.ui.components.PendingIndicator(saving) {
             Box(Modifier.size(Dim.s24), contentAlignment = Alignment.CenterStart) {
                 vn.abook.player.ui.components.SelectionMark(chosen)
             }
+            } }
         },
         trailing = trailing,
         below = if (loading) ({ WorkingProgress() }) else null,

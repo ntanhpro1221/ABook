@@ -165,7 +165,7 @@ FocusScope {
                         size: "sm"
                         kind: "ghost"
                         text: S.s_mo_man_duyet_5d7f194c
-                        onClicked: root.openPrecast()
+                        onActivated: root.openPrecast()
                     }
                 }
             }
@@ -218,7 +218,7 @@ FocusScope {
                         size: "sm"
                         kind: "ghost"
                         text: S.s_xem_them_58c3f515 + Math.min(W.PAGE, root.group.filtered.length - root.shown) + S.s_viec_1c50ca93
-                        onClicked: root.shown += W.PAGE
+                        onActivated: root.shown += W.PAGE
                     }
                 }
             }

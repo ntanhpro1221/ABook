@@ -103,9 +103,10 @@ ListView {
                 styles: root.meta ? root.meta.styles : []
                 previewing: root.previewing === modelData.link
             previewLoading: Clip.loading
-                onPreview: { const start = Number(modelData.audibleStart) || 0; Clip.toggle("library:" + modelData.link, Logic.previewPath(modelData.link), start, start + Logic.PREVIEW_SECONDS) }
+                onPreview: { const start = Number(modelData.audibleStart) || 0; Clip.toggle("library:" + modelData.link, Logic.previewPath(modelData.link), start, undefined, Logic.previewVolume(modelData.lufs)) }
                 onSave: root.change("/api/music/library/save", [modelData.link])
                 onCancelDownload: root.change("/api/music/library/unsave", [modelData.link])
+                onDeleteDownload: root.change("/api/music/library/unsave", [modelData.link])
                 onClicked: detail.show(modelData.link, modelData.scene ? {book: root.bookId, scene: modelData.scene} : null)
             }
             Text {
@@ -121,7 +122,7 @@ ListView {
         downloads: root.downloads
         previewing: root.previewing !== "" && root.previewing === detail.link
         previewLoading: Clip.loading
-        onPreview: if (detail.detail) { const start = Number(detail.detail.audibleStart) || 0; Clip.toggle("library:" + detail.link, Logic.previewPath(detail.link), start, start + Logic.PREVIEW_SECONDS) }
+        onPreview: if (detail.detail) { const start = Number(detail.detail.audibleStart) || 0; Clip.toggle("library:" + detail.link, Logic.previewPath(detail.link), start, undefined, Logic.previewVolume(detail.detail.lufs)) }
         onSave: root.change("/api/music/library/save", [detail.link])
         onUnsave: root.change("/api/music/library/unsave", [detail.link])
         onCancelDownload: root.change("/api/music/library/unsave", [detail.link])

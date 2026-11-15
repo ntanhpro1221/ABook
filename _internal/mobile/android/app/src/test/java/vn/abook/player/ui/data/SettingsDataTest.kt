@@ -3,6 +3,8 @@ package vn.abook.player.ui.data
 import vn.abook.player.formatSize
 
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlin.coroutines.CoroutineContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import org.json.JSONObject
@@ -101,6 +103,37 @@ class SettingsDataTest {
         repo.chooseVoice("supertonic:F1")
         assertEquals("supertonic:F1", core.default)
         assertEquals("edge:vi-VN-HoaiMyNeural", Voices.resolve(list.groups, "vieneu:gone"))
+    }
+
+    @Test
+    fun `voice choice waits for persistence and can retry after failure`() = runBlocking {
+        val work = ArrayList<Runnable>()
+        var hold = false
+        val io = object : CoroutineDispatcher() {
+            override fun dispatch(context: CoroutineContext, block: Runnable) {
+                if (hold) work.add(block) else block.run()
+            }
+        }
+        val core = FakeSettingsCore()
+        val repo = SettingsRepo(core, CoroutineScope(Dispatchers.Unconfined), io)
+        repo.loadVoices()
+        val before = (repo.voices.value as VoiceList.Ready).chosen
+        hold = true
+        repo.chooseVoice("supertonic:F1")
+        assertEquals("supertonic:F1", repo.savingVoice.value)
+        assertEquals(before, (repo.voices.value as VoiceList.Ready).chosen)
+        repo.chooseVoice("device:vi-vn-x-gft-local")
+        assertEquals(1, work.size)
+        core.beforeChoose = { throw IllegalStateException("disk full") }
+        work.removeAt(0).run()
+        assertNull(repo.savingVoice.value)
+        assertEquals(before, (repo.voices.value as VoiceList.Ready).chosen)
+        assertTrue(repo.voiceSaveError.value.isNotBlank())
+        core.beforeChoose = {}
+        repo.chooseVoice("supertonic:F1")
+        work.removeAt(0).run()
+        assertEquals("supertonic:F1", (repo.voices.value as VoiceList.Ready).chosen)
+        assertEquals("", repo.voiceSaveError.value)
     }
 
     @Test

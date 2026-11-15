@@ -59,7 +59,7 @@ Modal {
     footer: [
         EditBookActions {
             width: root.bodyWidth
-            Button { objectName: "studioRenameCancel"; text: S.s_huy_96732485; kind: "ghost"; onClicked: root.close() }
+            Button { objectName: "studioRenameCancel"; text: S.s_huy_96732485; kind: "ghost"; onActivated: root.close() }
             Button { objectName: "studioRenameSave"; text: S.s_doi_ten_a2a0dc70; busy: root.saving; enabled: root.changed; onActivated: root.submit() }
         }
     ]

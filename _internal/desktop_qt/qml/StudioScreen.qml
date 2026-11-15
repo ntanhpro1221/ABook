@@ -227,7 +227,7 @@ Item {
             icon: "clapperboard"
             title: Peer.listenOnlyLine(Peer.listenOnlyOwner(root.peerInfo))
             text: S.s_sach_cua_may_ay_van_nghe_duoc_o_thu_vien_04fff8ae
-            Button { objectName: "studioClosedLibrary"; text: S.s_ve_thu_vien_992fad7b; onClicked: { root.home(); if (Nav.stack) Nav.stack.show(0) } }
+            Button { objectName: "studioClosedLibrary"; text: S.s_ve_thu_vien_992fad7b; onActivated: { root.home(); if (Nav.stack) Nav.stack.show(0) } }
         }
         // Chưa vào được Studio của máy kia (PeerTrouble): lời máy chủ; máy ấy im thì tự mở lại khi nó trả lời
         EmptyState {
@@ -239,7 +239,7 @@ Item {
             icon: "laptop"
             title: root.trouble
             text: root.silent ? S.s_studio_tu_mo_khi_may_ay_tra_loi_lai_f4f4f246 : ""
-            Button { objectName: "peerTroubleHome"; text: S.s_ve_may_nay_d9404884; onClicked: root.home() }
+            Button { objectName: "peerTroubleHome"; text: S.s_ve_may_nay_d9404884; onActivated: root.home() }
         }
     }
 }

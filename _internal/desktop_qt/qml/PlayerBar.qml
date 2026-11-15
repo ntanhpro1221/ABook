@@ -120,7 +120,7 @@ Item {
             IconButton {
                 id: deviceButton; objectName: "barDevices"; icon: "cast"; tip: S.s_phat_tren_681e16e1
                 anchors.verticalCenter: parent.verticalCenter
-                onClicked: output.show()
+                onActivated: output.show()
             }
             PlayButton { id: playButton; size: 44; anchors.verticalCenter: parent.verticalCenter; opacity: root.sharedShown ? 1 : 0 }
             SkipButton { forward: true; anchors.verticalCenter: parent.verticalCenter }
@@ -128,9 +128,9 @@ Item {
                 icon: "picture-in-picture-2"; tip: S.s_cua_so_mini_65edeb9b
                 enabled: Player.loaded
                 anchors.verticalCenter: parent.verticalCenter
-                onClicked: Nav.windowMode.enter()
+                onActivated: Nav.windowMode.enter()
             }
-            IconButton { id: moreButton; objectName: "barMore"; icon: "ellipsis"; tip: S.s_them_tuy_chon_a0b4bb6e; anchors.verticalCenter: parent.verticalCenter; onClicked: more.toggle() }
+            IconButton { id: moreButton; objectName: "barMore"; icon: "ellipsis"; tip: S.s_them_tuy_chon_a0b4bb6e; anchors.verticalCenter: parent.verticalCenter; onActivated: more.toggle() }
         }
     }
 

@@ -142,11 +142,10 @@ Item {
             const remove = one(page, "studioRemove")
             compare(remove.text, "Gỡ Studio")
             remove.clicked()
-            compare(remove.text, "Xác nhận gỡ")
-            compare(remove.kind, "danger")
+            compare(remove.text, "Gỡ Studio")
+            verify(one(host.Window.window.contentItem, "studioRemoveConfirm").open)
             compare(Nav.layers.length, 1)
-            tryVerify(function() { return texts(page).some(t => t.includes("Xoá runtime")) })
-            verify(has(page, "Xoá runtime/model (15–20 GB), giữ sách và hồ sơ; cuốn đang làm phải làm lại sau khi cài."))
+            compare(one(host.Window.window.contentItem, "studioRemoveConfirm").description, "Xoá runtime/model (15–20 GB), giữ sách và hồ sơ; cuốn đang làm phải làm lại sau khi cài.")
             compare(requestsOf("DELETE", "/api/studio/setup").length, 0)
             // Back huỷ lần hỏi lại, không gỡ
             verify(Nav.back())
@@ -155,17 +154,17 @@ Item {
             compare(requestsOf("DELETE", "/api/studio/setup").length, 0)
             // Bấm hai lần mới gỡ
             remove.clicked()
-            remove.clicked()
+            one(host.Window.window.contentItem, "studioRemoveConfirm").accept()
             compare(requestsOf("DELETE", "/api/studio/setup").length, 1)
             compare(Api.notice, "Đã gỡ Studio")
-            compare(Nav.layers.length, 0)
+            tryCompare(one(host.Window.window.contentItem, "studioRemoveConfirm"), "open", false)
             tryCompare(one(page, "studioState"), "text", "Chưa cài.")
         }
         function test_uninstallFailureAndBusy() {
             const page = make()
             DesktopApi.responses["DELETE /api/studio/setup"] = {status: 409, data: {message: "Đang làm cuốn \"A\" - dừng cuốn ấy trước khi gỡ Studio"}}
             const remove = one(page, "studioRemove")
-            remove.clicked(); remove.clicked()
+            remove.clicked(); one(host.Window.window.contentItem, "studioRemoveConfirm").accept()
             compare(Api.notice, "Chưa gỡ được Studio\nĐang làm cuốn \"A\" - dừng cuốn ấy trước khi gỡ Studio")
             compare(remove.text, "Gỡ Studio")
         }

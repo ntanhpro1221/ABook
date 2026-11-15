@@ -237,7 +237,8 @@ class Downloads:
         with self._lock:
             for link in links:
                 self._failed.pop(link, None)
-                if link != self._active and link not in self._queue:
+                interrupted = self._cancel.get(link)
+                if (link != self._active or (interrupted is not None and interrupted.is_set())) and link not in self._queue:
                     self._queue.append(link)
             if self._queue and self._thread is None:
                 self._thread = threading.Thread(target=self._run, name="music-library-download", daemon=True)
@@ -257,6 +258,9 @@ class Downloads:
         with self._lock:
             active = {}
             for link in [*([self._active] if self._active else []), *self._queue]:
+                event = self._cancel.get(link)
+                if event is not None and event.is_set() and link not in self._queue:
+                    continue
                 done, total = self._progress.get(link, (0, None))
                 active[link] = {"done": done, "total": total}
             return {"active": active, "failed": dict(self._failed)}
@@ -286,7 +290,8 @@ class Downloads:
             except Exception as exc:  # noqa: BLE001 - luồng nền: lời báo về sổ hỏng, bài sau vẫn tải
                 message = getattr(exc, "message", None) or str(exc) or type(exc).__name__
                 with self._lock:
-                    self._failed[link] = str(message)
+                    if not cancel.is_set():
+                        self._failed[link] = str(message)
             finally:
                 with self._lock:
                     self._progress.pop(link, None)

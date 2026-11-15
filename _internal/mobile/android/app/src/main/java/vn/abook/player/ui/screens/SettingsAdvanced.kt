@@ -116,7 +116,7 @@ fun AdvancedSettings(env: SettingsEnv, sheets: SheetHost, onBack: () -> Unit, mo
             ListRow(S.s_ban_doc_da_lam_776edb87, hint = AdvancedCopy.cache(bytes)) {
                 SwapContent(bytes, contentKey = { bytes -> bytes != null && bytes > 0 }, layout = ContentLayout.Box) { bytes ->
                     if (bytes != null && bytes > 0) {
-                        TextAction(S.s_don_ban_doc_5ae4774e, { sheets.show { dismiss -> ClearSheet(bytes, onClear = { repo.clearCache(); dismiss() }, dismiss) } }, "cache_clear")
+                        TextAction(S.s_don_ban_doc_5ae4774e, { sheets.show { dismiss -> MaintenanceConfirm(repo, sheets, S.s_don_ban_doc_5ae4774e, "clear", listOf(AdvancedCopy.clearQuestion(bytes)), S.s_don_6730827d, repo::clearCache, dismiss) } }, "cache_clear")
                     }
                 }
             }
@@ -139,7 +139,7 @@ fun AdvancedSettings(env: SettingsEnv, sheets: SheetHost, onBack: () -> Unit, mo
             RowLine()
             // Việc phá huỷ là hàng thường tên màu nguy hiểm (cả hàng là chỗ chạm): mỗi phần chỉ có một chữ hổ phách.
             ListItem(
-                S.s_xoa_nhat_ky_743fb17f, onClick = { sheets.show { dismiss -> ClearLogsSheet({ repo.clearLogs(); dismiss() }, dismiss) } }, tag = "logs_clear", titleStyle = Abook.type.bodyStrong, titleColor = Abook.colors.danger,
+                S.s_xoa_nhat_ky_743fb17f, onClick = { sheets.show { dismiss -> MaintenanceConfirm(repo, sheets, S.s_xoa_nhat_ky_c85df7e1, "logs_clear", listOf(AdvancedCopy.CLEAR_QUESTION), S.s_xoa_777195ab, repo::clearLogs, dismiss) } }, tag = "logs_clear", titleStyle = Abook.type.bodyStrong, titleColor = Abook.colors.danger,
                 hint = if (notice == S.s_da_xoa_nhat_ky_526f2ff7) AdvancedCopy.CLEARED else AdvancedCopy.CLEAR,
             )
         } }
@@ -161,22 +161,19 @@ private fun NavRow(title: String, onClick: () -> Unit, tag: String, hint: String
 
 /** Hỏi lại trước khi dọn: bước xác nhận chung [ConfirmPage] - nút đỏ "Dọn", "Giữ lại" là nút chữ. */
 @Composable
-private fun ClearSheet(bytes: Long, onClear: () -> Unit, dismiss: () -> Unit) {
-    ConfirmPage(S.s_don_ban_doc_5ae4774e, "clear_sheet", listOf(AdvancedCopy.clearQuestion(bytes)), "") {
-        // Dọn bản đọc làm lại được: chữ đỏ, không nút tô đỏ cả bề ngang - nút đặc chỉ cho xoá sách (DESIGN.md §6, soát 10-11 L13).
-        QuietButton(S.s_don_6730827d, onClear, "clear_confirm", danger = true)
-        Spacer(Modifier.height(Dim.s8))
-        QuietButton(S.s_giu_lai_3c3ba2db, dismiss, "clear_cancel")
+private fun MaintenanceConfirm(repo: SettingsRepo, sheets: SheetHost, title: String, tag: String, lines: List<String>, action: String, onClear: () -> Unit, dismiss: () -> Unit) {
+    val busy by repo.maintenanceBusy.collectAsState()
+    val problem by repo.problem.collectAsState()
+    var submitted by remember { mutableStateOf(false) }
+    androidx.compose.runtime.DisposableEffect(sheets) {
+        val before = sheets.keepOpen
+        sheets.keepOpen = { repo.maintenanceBusy.value }
+        onDispose { sheets.keepOpen = before }
     }
-}
-
-/** Hỏi lại trước khi xoá nhật ký (không lấy lại được): cùng bước xác nhận với mọi việc phá huỷ khác. */
-@Composable
-private fun ClearLogsSheet(onClear: () -> Unit, dismiss: () -> Unit) {
-    ConfirmPage(S.s_xoa_nhat_ky_c85df7e1, "logs_clear_sheet", listOf(AdvancedCopy.CLEAR_QUESTION), "") {
-        QuietButton(S.s_xoa_777195ab, onClear, "logs_clear_confirm", danger = true)
-        Spacer(Modifier.height(Dim.s8))
-        QuietButton(S.s_giu_lai_3c3ba2db, dismiss, "logs_clear_cancel")
+    LaunchedEffect(submitted, busy, problem) { if (submitted && !busy && problem.isEmpty()) dismiss() }
+    ConfirmPage(title, "${tag}_sheet", lines, if (submitted) problem else "") {
+        vn.abook.player.ui.components.DangerButton(if (submitted && problem.isNotEmpty()) S.s_thu_lai_c58d068c else action, { submitted = true; onClear() }, "${tag}_confirm", pending = busy)
+        QuietButton(S.s_huy_96732485, { if (!busy) dismiss() }, "${tag}_cancel")
     }
 }
 

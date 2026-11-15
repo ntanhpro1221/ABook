@@ -64,8 +64,8 @@ CastModal {
     footer: [
         EditBookActions {
             width: root.bodyWidth
-            Button { objectName: "personNameOriginal"; Reveal { shown: !!(root.person && root.person.originalName) } text: S.s_ve_ten_goc_643cd2e0; kind: "ghost"; enabled: !root.saving; onClicked: root.save("") }
-            Button { objectName: "personNameCancel"; text: S.s_thoi_e68f9e88; kind: "ghost"; onClicked: root.close() }
+            Button { objectName: "personNameOriginal"; Reveal { shown: !!(root.person && root.person.originalName) } text: S.s_ve_ten_goc_643cd2e0; kind: "ghost"; enabled: !root.saving; onActivated: root.save("") }
+            Button { objectName: "personNameCancel"; text: S.s_thoi_e68f9e88; kind: "ghost"; onActivated: root.close() }
             Button { objectName: "personNameSave"; text: S.s_luu_e91f26c0; busy: root.saving; enabled: root.typed.trim() !== ""; onActivated: root.submit() }
         }
     ]

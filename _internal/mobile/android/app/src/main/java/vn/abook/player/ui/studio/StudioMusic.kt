@@ -155,8 +155,6 @@ internal object StudioMusicJson {
 }
 
 object MusicLogic {
-    /** Nghe thử một bài: ~20 giây từ đầu, không bao giờ tự phát (web `PREVIEW_SECONDS`). */
-    const val PREVIEW_MS = 20_000
 
     /** Hỏi lại khi máy đang đọc không khí (3 giây) / tải sẵn nhạc (2 giây); không thì không hỏi theo nhịp. */
     const val MOODS_REFRESH_MS = 3000L
@@ -288,7 +286,6 @@ object StudioMusicText {
     const val BAN = S.s_loai_khoi_cuon_3b45b802
     const val MORE = S.s_them_dd92626f
     const val PLAY = S.s_nghe_thu_fa024065
-    const val STOP = S.s_dung_nghe_f20939be
     const val CHOOSE = S.s_chon_1171ca97
     const val ALT_TITLE = S.s_doi_bai_7b81488f
     const val ALT_LOADING = S.s_dang_tai_bai_khac_2c0e1ec8
@@ -409,10 +406,12 @@ class StudioMusicState(private val project: StudioProjectState, pause: suspend (
     /** Các bài khác hợp đoạn này, hợp nhất trước. */
     suspend fun alternatives(scene: MusicScene): List<MusicAlternative> = session.source.alternatives(session.computer, project.bookId, scene.key)
 
-    /** Nghe thử một bài trong danh mục (~20 giây từ đầu); bấm lại thì dừng. */
+    /** Listen to the complete track; press again to pause or resume. */
     fun playTrack(link: String) {
-        session.clips?.toggle(trackClip(link), ClipSpec(session.computer, StudioPaths.musicTrack(link), 0, MusicLogic.PREVIEW_MS))
+        session.clips?.toggle(trackClip(link), ClipSpec(session.computer, StudioPaths.musicTrack(link)))
     }
+
+    fun seek(seconds: Double) { session.clips?.seek(seconds) }
 
     fun release() {
         session.clips?.stop()

@@ -73,7 +73,7 @@ Item {
             width: flick.width
             Collapse {
                 width: parent.width
-                open: root.status === "ready" && (root.hasPeople || (root.cast && root.cast.castHistory && root.cast.castHistory.items.length > 0))
+                open: root.status === "ready" && Boolean(root.hasPeople || (root.cast && root.cast.castHistory && (root.cast.castHistory.items || []).length > 0))
                 CastHistory {
                     width: parent.width
                     bookId: root.bookId
@@ -215,7 +215,7 @@ Item {
                                     hoverInk: Theme.text
                                     tip: S.s_doi_giong_nguoi_ke_c2afb757
                                     Accessible.name: S.s_doi_giong_nguoi_ke_c2afb757
-                                    onClicked: root.request("narrator", ({name: "NARRATOR", displayName: S.s_nguoi_ke_50063a62}))
+                                    onActivated: root.request("narrator", ({name: "NARRATOR", displayName: S.s_nguoi_ke_50063a62}))
                                 }
                             }
                         }

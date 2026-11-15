@@ -252,7 +252,7 @@ Item {
                         kind: "ghost"
                         icon: root.continuous ? "square" : "list-music"
                         text: root.continuous ? S.s_dung_nghe_lien_fff6a5f1 : S.s_nghe_lien_4fca5416 + root.playableCount + S.s_cau_b07e1008
-                        onClicked: {
+                        onActivated: {
                             if (root.continuous) { root.continuous = false; Clip.stop() }
                             else { root.continuous = true; root.playAt(0) }
                         }
@@ -335,7 +335,7 @@ Item {
                         kind: "ghost"
                         enabled: !root.fetchingNext
                         text: R.loadMoreText(root.view ? root.view.remaining : 0, root.fetchingNext)
-                        onClicked: root.loadNext()
+                        onActivated: root.loadNext()
                     }
                 }
             }

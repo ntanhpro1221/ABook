@@ -491,7 +491,7 @@ Item {
             tryVerify(function() { return DesktopApi.previews.length === 1 })
             compare(DesktopApi.previews[0], "/media/books/a/chapters/1")
             compare(DesktopApi.starts[0], 12.5)
-            compare(Clip.span, 2.5)
+            compare(Clip.span, 15) // The stop boundary is an absolute position in the chapter file.
             noCut(page)
             scrollTo(page, one(page, "reviewLead"))
             both("review_list", page)

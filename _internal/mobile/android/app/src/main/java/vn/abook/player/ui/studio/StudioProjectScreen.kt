@@ -231,7 +231,7 @@ private fun PrimaryAction(book: StudioBook, kind: PrimaryKind?, busy: Boolean, o
             },
             label = "studio_primary",
             ) { target ->
-                PrimaryButton(StudioText.label(target, book), { onPick(target) }, Modifier.fillMaxWidth().testTag("studio_primary"), enabled = !busy && !StudioText.inert(target))
+                PrimaryButton(StudioText.label(target, book), { onPick(target) }, Modifier.fillMaxWidth().testTag("studio_primary"), pending = busy, enabled = !busy && !StudioText.inert(target))
             }
         }
     }

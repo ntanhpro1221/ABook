@@ -39,6 +39,23 @@ it("giọng mặc định nhận từ backend ở origin mới trước khi ch�
 });
 
 /** Nguồn giả: `fail[mã giọng]` = lý do lỗi của giọng ấy; ghi lại mọi lần gọi. */
+it("keeps the committed default until persistence succeeds and preserves it on failure", async () => {
+  const { module } = await fresh();
+  module.restoreDefaultVoice("device:an");
+  let resolve!: () => void;
+  let reject!: (error: Error) => void;
+  const disconnect = module.onDefaultVoiceChosen(() => new Promise<void>((yes, no) => { resolve = yes; reject = no; }));
+  const saved = module.chooseDefaultVoice("fpt:banmai");
+  expect(module.defaultVoice()).toBe("device:an");
+  resolve(); await saved;
+  expect(module.defaultVoice()).toBe("fpt:banmai");
+  const failed = module.chooseDefaultVoice("device:an");
+  reject(new Error("disk full"));
+  await expect(failed).rejects.toThrow("disk full");
+  expect(module.defaultVoice()).toBe("fpt:banmai");
+  disconnect();
+});
+
 function source(fail: Record<string, string> = {}, voices: ReadAloudVoice[] = VOICES) {
   const calls: string[] = [];
   const value: ListenSource = {

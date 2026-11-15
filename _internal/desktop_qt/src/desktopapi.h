@@ -34,11 +34,20 @@ public:
     Q_INVOKABLE void preview(const QString &path);
     Q_INVOKABLE void previewFrom(const QString &path, double startSeconds);    // một đoạn của file dài (câu trong file chương): bắt đầu từ giây `startSeconds`
     Q_INVOKABLE void stopPreview();
+    Q_INVOKABLE void pausePreview();
+    Q_INVOKABLE void resumePreview();
+    Q_INVOKABLE void seekPreview(double seconds);
+    Q_INVOKABLE void previewVolume(double volume);
+    Q_INVOKABLE double previewPosition() const;
+    Q_INVOKABLE double previewDuration() const;
     static void setPreviewOut(class AudioOut *out);
     QString thirdParty() const;
 signals:
+    void requestStarted(int id);
+    void requestFinished(int id, int status);
     /// Nghe thử (câu mẫu của nhân vật, giọng): clip bắt đầu ra tiếng / hết / không phát được. Cùng ba mốc của thẻ audio trong clip.tsx.
     void previewStarted();
+    void previewBuffering(bool loading);
     void previewEnded();
     void previewFailed(const QString &reason);
 private:

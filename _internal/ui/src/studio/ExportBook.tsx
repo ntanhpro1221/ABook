@@ -386,7 +386,7 @@ export function ExportDialog({
           icon={KINDS.find((item) => item.value === kind)?.icon ?? FolderDown}
           loading={busy}
           disabled={whole ? Boolean(book.running) : needsFfmpeg || (!wholeSeries && !ready && !textOnly)}
-          onClick={() => void run()}
+          onClick={() => run()}
         >
           {info?.dialogs ? S.s_luu_va_xuat_e274cff0 : S.s_xuat_b2ebc56b}
         </Button>

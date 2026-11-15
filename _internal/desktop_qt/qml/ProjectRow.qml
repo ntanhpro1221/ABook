@@ -177,7 +177,7 @@ Item {
             Accessible.name: S.s_them_tuy_chon_cho_0_82a2cf4d(root.book.title || "")
             opacity: root.moreShown ? 1 : 0
             Behavior on opacity { NumberAnimation { duration: Theme.reduceMotion ? Theme.motionReduced : Theme.motionFast } }
-            onClicked: root.menuRequested(more)
+            onActivated: root.menuRequested(more)
         }
     }
 
@@ -215,15 +215,15 @@ Item {
             y: 10 - 2
             spacing: 4
             // Đang bị chương trình khác giữ (diệt virus, sao lưu): KHÔNG phải hỏng - chỉ Thử lại / Mở thư mục, không mời xoá
-            IconButton { objectName: "brokenRetry"; Reveal { shown: root.busy } width: 32; height: 32; icon: "rotate-cw"; iconSize: 16; ink: Theme.text2; hoverInk: Theme.text; tip: S.s_thu_lai_c58d068c; Accessible.name: S.s_thu_lai_c58d068c; onClicked: root.retried() }
-            IconButton { objectName: "brokenReveal"; Reveal { shown: root.busy && root.local } width: 32; height: 32; icon: "folder-open"; iconSize: 16; ink: Theme.text2; hoverInk: Theme.text; tip: S.s_mo_thu_muc_4bf5b127; Accessible.name: S.s_mo_thu_muc_4bf5b127; onClicked: root.revealRequested() }
+            IconButton { objectName: "brokenRetry"; Reveal { shown: root.busy } width: 32; height: 32; icon: "rotate-cw"; iconSize: 16; ink: Theme.text2; hoverInk: Theme.text; tip: S.s_thu_lai_c58d068c; Accessible.name: S.s_thu_lai_c58d068c; onActivated: root.retried() }
+            IconButton { objectName: "brokenReveal"; Reveal { shown: root.busy && root.local } width: 32; height: 32; icon: "folder-open"; iconSize: 16; ink: Theme.text2; hoverInk: Theme.text; tip: S.s_mo_thu_muc_4bf5b127; Accessible.name: S.s_mo_thu_muc_4bf5b127; onActivated: root.revealRequested() }
             IconButton {
                 id: brokenMore
                 objectName: "projectMore"
                 Reveal { shown: !root.busy && root.local }
                 width: 32; height: 32; icon: "ellipsis"; iconSize: 16; ink: Theme.text2; hoverInk: Theme.text
                 Accessible.name: S.s_them_tuy_chon_cho_0_82a2cf4d(root.book.title || "")
-                onClicked: root.menuRequested(brokenMore)
+                onActivated: root.menuRequested(brokenMore)
             }
             // Studio từ xa: khôi phục, mở thư mục, xoá đều là việc ngay trên máy tính - nói thẳng thay vì để chỗ trống
             OnComputerPill { objectName: "brokenOnComputer"; Reveal { shown: !root.busy && !root.local } verb: S.s_khoi_phuc_hoac_xoa_9cc4c06f; computer: root.computer; maxWidth: 260 }

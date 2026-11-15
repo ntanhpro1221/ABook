@@ -109,8 +109,8 @@ Collapse {
                     x: body.inline ? body.width - width : body.width - width
                     y: body.inline ? (body.lineHeight - height) / 2 : body.lineHeight + 12
                     // Studio của máy tính ấy ngay trong app này, bằng ghép sẵn có - không ghép lần hai (webui/peer_studio.py).
-                    Button { objectName: "openStudio"; Reveal { shown: root.computer.kind === "computer" } size: "sm"; kind: "ghost"; icon: "clapperboard"; text: S.s_mo_studio_84ec0a81; Accessible.name: S.s_mo_studio_cua_57fcc890 + (root.computer.name || ""); onClicked: root.openStudio(root.rowId) }
-                    Button { objectName: "diagnose"; Reveal { shown: root.computer.kind === "phone" } size: "sm"; kind: "ghost"; icon: "stethoscope"; text: S.s_chan_doan_906791d5; Accessible.name: S.s_chan_doan_738cc26b + (root.computer.name || ""); onClicked: root.diagnose(root.computer) }
+                    Button { objectName: "openStudio"; Reveal { shown: root.computer.kind === "computer" } size: "sm"; kind: "ghost"; icon: "clapperboard"; text: S.s_mo_studio_84ec0a81; Accessible.name: S.s_mo_studio_cua_57fcc890 + (root.computer.name || ""); onActivated: root.openStudio(root.rowId) }
+                    Button { objectName: "diagnose"; Reveal { shown: root.computer.kind === "phone" } size: "sm"; kind: "ghost"; icon: "stethoscope"; text: S.s_chan_doan_906791d5; Accessible.name: S.s_chan_doan_738cc26b + (root.computer.name || ""); onActivated: root.diagnose(root.computer) }
                     OtherComputersBluetooth {
                         Reveal { shown: !root.bluetoothHost }
                         computer: root.computer
@@ -118,8 +118,8 @@ Collapse {
                         busy: root.busy
                         onChoose: address => root.bluetooth(root.rowId, address)
                     }
-                    IconButton { objectName: "refreshBooks"; icon: "refresh-cw"; tip: S.s_hoi_lai_thu_vien_bfe2a0e8; enabled: !root.busy; Accessible.name: S.s_hoi_lai_thu_vien_bfe2a0e8; onClicked: root.refresh() }
-                    IconButton { objectName: "unpairComputer"; icon: "unplug"; tip: S.s_bo_ghep_9139fc92 + (root.computer.name || ""); Accessible.name: S.s_bo_ghep_9139fc92 + (root.computer.name || ""); onClicked: root.unpair(root.computer) }
+                    IconButton { objectName: "refreshBooks"; icon: "refresh-cw"; tip: S.s_hoi_lai_thu_vien_bfe2a0e8; enabled: !root.busy; Accessible.name: S.s_hoi_lai_thu_vien_bfe2a0e8; onActivated: root.refresh() }
+                    IconButton { objectName: "unpairComputer"; icon: "unplug"; tip: S.s_bo_ghep_9139fc92 + (root.computer.name || ""); Accessible.name: S.s_bo_ghep_9139fc92 + (root.computer.name || ""); onActivated: root.unpair(root.computer) }
                 }
             }
         }

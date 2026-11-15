@@ -7,6 +7,8 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+- Nút tải nhạc rõ trạng thái dừng/đã tải, xoá có xác nhận; báo đang chờ và đang đệm, nghe trọn bài kèm thanh tua trên cả ba giao diện.
+
 - Làm rõ nút Thêm giọng, hàng hành động, liên kết và lựa chọn trên điện thoại, web và máy tính.
 
 - Bóng và viền cửa sổ đi cùng bảng khi mở, đóng và kéo; bỏ dải tối đứng yên, đồng bộ ba nền.

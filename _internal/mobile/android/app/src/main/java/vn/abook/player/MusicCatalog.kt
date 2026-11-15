@@ -76,7 +76,7 @@ class MusicCatalog(
      *  Nguồn vẫn trả lời nên KHÔNG bị cho nghỉ [HOST_REST_MS]; tải sẵn xin lại ngay như [Yielded]. */
     class Progressed(kept: Long) : Offline(S.s_tai_dut_giu_0_byte_de_tai_tiep_546e3693(kept))
 
-    /** Người dùng huỷ lượt tải ([download] `cancelled`): phần đã tải nằm lại trong `.part` để tải tiếp. */
+    /** User cancellation discards incomplete bytes; network interruption remains resumable. */
     class Cancelled : IOException()
 
     /** Bài người dùng đã lưu ở Kho nhạc ([SavedTracks]): [prune] không bao giờ xoá - như `_music_pinned_names` của máy tính. */
@@ -318,11 +318,15 @@ class MusicCatalog(
     /** Byte đã tải của lượt dở (`.part`) - "Tải tiếp" của Kho nhạc. */
     fun partial(link: String): Long = File(fileOf(link).path + ".part").length()
 
+    /** Cancelling a transfer cannot remove a file that has already committed. */
+    fun discardPartial(link: String) { File(fileOf(link).path + ".part").delete() }
+
     /** Xoá bản tải của một bài (Kho nhạc "Xoá bản tải" / "Bỏ lưu"); cả phần dở. */
     fun forget(link: String) {
         val file = fileOf(link)
-        file.delete()
-        File(file.path + ".part").delete()
+        for (entry in listOf(file, File(file.path + ".part"))) {
+            if (entry.exists() && !entry.delete()) throw IOException(S.s_chua_xoa_duoc_b872fff6)
+        }
     }
 
     /** Dữ liệu đã gắn cho các link (link không có trong danh mục thì vắng). Các mảnh chưa cất tải song song. Mảnh không tải được (mạng) thì bỏ
@@ -549,6 +553,11 @@ class MusicCatalog(
      * Đứt vì mạng thì phần đã tải nằm lại trong `.part` (tên cố định theo bài - bản sao phải khớp sha1 nên cùng byte): lần sau tải tiếp bằng Range
      * ([openFrom]); nguồn không trả đúng phần còn lại thì tải lại từ 0. Đã nhận thêm byte thì ném [Progressed], không cho nguồn nghỉ.
      */
+    private val activeStreams = java.util.concurrent.ConcurrentHashMap<String, java.io.InputStream>()
+
+    /** Called off main so closing a stalled network read cannot block input. */
+    fun cancelDownload(link: String) { runCatching { activeStreams.remove(link)?.close() } }
+
     fun download(
         link: String,
         info: JSONObject?,
@@ -602,9 +611,11 @@ class MusicCatalog(
                     }
                     try {
                         (if (start > 0) openFrom(url, start) else open(url)).use { input ->
+                            activeStreams[link] = input
                             if ((input as? Sized)?.from != start) start = 0 // nguồn bỏ qua Range (200 cả bài): ghi lại từ đầu
                             FileOutputStream(part, start > 0).use { copyCapped(input, it, gate, start) }
                         }
+                        if (cancelled?.invoke() == true) throw Cancelled()
                         // Mọi nguồn (cả bản gốc) phải khớp `bytes` / `sha1` danh mục ghi: bài cụt hay bị đổi không được cất như bài tốt (bản sao thì bài không có `sha1` đã không được dùng).
                         if ((size != null && part.length() != size) || (expected != null && sha1(part) != expected)) {
                             throw LocalFailure(if (url == link) S.s_bai_tai_ve_khac_danh_muc_d0e04efb else S.s_ban_sao_khac_ban_goc_ae5bf25d)
@@ -612,14 +623,15 @@ class MusicCatalog(
                         if (!part.renameTo(target) && !target.isFile) throw LocalFailure(S.s_khong_ghi_duoc_a36f16c1)
                         note(url, failed = false) // tải được = nguồn ấy có mạng
                         return target
-                    } catch (error: Cancelled) { // Kho nhạc: người dùng huỷ - giữ phần đã tải, không đổ lỗi cho nguồn
-                        keep = part.length() > 0
+                    } catch (error: Cancelled) {
+                        keep = false
                         throw error
                     } catch (error: TrackTooBig) { // bản sao cùng cỡ: khỏi thử
                         note(url, failed = false)
                         markTooBig(link, error.size)
                         throw error
                     } catch (error: Exception) {
+                        if (cancelled?.invoke() == true) throw Cancelled()
                         lastError = error
                         val network = isNetworkFailure(error)
                         keep = network && part.length() > 0
@@ -635,6 +647,7 @@ class MusicCatalog(
                             if (error is HttpFailure) note(url, failed = false) // nguồn trả lời (404...): nối được, chỉ bài hỏng
                         }
                     } finally {
+                        activeStreams.remove(link)
                         if (!keep) part.delete()
                     }
                 }

@@ -180,7 +180,7 @@ Column {
         kind: "primary"
         enabled: root.ready
         text: root.needsSpeaker && !root.picked ? S.s_chon_nguoi_noi_truoc_f3e512e0 : S.s_luu_cho_cau_nay_6402d7a6
-        onClicked: root.save(root.change)
+        onActivated: root.save(root.change)
     }
     ImportFold {
         id: deliveryNames

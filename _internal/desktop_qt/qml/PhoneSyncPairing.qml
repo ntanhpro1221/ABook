@@ -102,7 +102,7 @@ Column {
                 width: parent.width
                 height: cancelButton.height
                 // Chỉ huỷ mã đang hiện, không gỡ thiết bị nào - "Huỷ ghép" dễ hiểu thành gỡ thiết bị (soát UX 29-09).
-                Button { id: cancelButton; anchors.right: parent.right; size: "sm"; kind: "ghost"; text: S.s_huy_ma_1b0a6559; onClicked: root.cancel() }
+                Button { id: cancelButton; anchors.right: parent.right; size: "sm"; kind: "ghost"; text: S.s_huy_ma_1b0a6559; onActivated: root.cancel() }
             }
         }
     }

@@ -73,9 +73,9 @@ Column {
             kind: "ghost"
             text: S.s_luu_8c00346c + (root.twins.length + 1) + S.s_cau_b07e1008
             enabled: !root.busy
-            onClicked: root.save([root.item].concat(root.twins))
+            onActivated: root.save([root.item].concat(root.twins))
         }
-        Button { objectName: "spokenCancel"; size: "sm"; kind: "ghost"; text: S.s_huy_96732485; enabled: !root.busy; onClicked: root.finished(null) }
+        Button { objectName: "spokenCancel"; size: "sm"; kind: "ghost"; text: S.s_huy_96732485; enabled: !root.busy; onActivated: root.finished(null) }
     }
     Item { width: 1; height: 4 }
 }

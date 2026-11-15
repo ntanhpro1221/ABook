@@ -40,8 +40,8 @@ export function unpairDone(device: string): string {
 export function unpairCopy(device: string, self: "điện thoại" | "máy tính", unsent: UnsentEdits | null | undefined, reachable: boolean): UnpairCopy | null {
   const edited = !!unsent && unsent.changes > 0 && unsent.books.length > 0;
   const cache = unsent?.cache && unsent.cache.books > 0 ? unsent.cache : null;
-  if (!unsent || (!edited && !cache)) return null;
-  const lines: string[] = [];
+  if (!unsent) return null;
+  const lines: string[] = edited || cache ? [] : [S.s_unpair_detail(device)];
   if (cache) {
     const downloaded = cache.bytes > 0 ? S.s_va_0_da_tai_ve_1_nay_se_bi_xoa_868c13af(cache.bytes < 1024 ** 2 ? S.s_duoi_1_mb_b59395ae : formatSize(cache.bytes), self) : "";
     lines.push(S.s_0_cuon_cua_1_se_roi_thu_vien_2_da517a50(cache.books, device, downloaded));
@@ -62,5 +62,5 @@ export function unpairCopy(device: string, self: "điện thoại" | "máy tính
       lines.push(S.s_0_dang_tat_hay_khac_mang_luc_nay_nen_chua_ebd45cfe(device));
     }
   }
-  return { title: S.s_bo_ghep_0_e98b86ca(device), lines, send, sendPrimary: edited && up, discard: edited ? S.s_van_bo_ghep_bo_thay_doi_64cb2e74 : S.s_bo_ghep_64f921f9, cancel: S.s_giu_lai_3c3ba2db };
+  return { title: S.s_bo_ghep_0_e98b86ca(device), lines, send, sendPrimary: edited && up, discard: edited ? S.s_van_bo_ghep_bo_thay_doi_64cb2e74 : S.s_bo_ghep_64f921f9, cancel: S.s_huy_96732485 };
 }

@@ -83,7 +83,7 @@ CastModal {
     footer: [
         EditBookActions {
             width: root.bodyWidth
-            Button { objectName: "genderCancel"; text: S.s_thoi_e68f9e88; kind: "ghost"; onClicked: root.close() }
+            Button { objectName: "genderCancel"; text: S.s_thoi_e68f9e88; kind: "ghost"; onActivated: root.close() }
             Button { objectName: "genderSave"; text: S.s_ghi_lai_923c1fd4; busy: root.saving; enabled: root.choice !== "" && root.choice !== root.current; onActivated: root.save() }
         }
     ]

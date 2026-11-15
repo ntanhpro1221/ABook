@@ -51,7 +51,7 @@ fun FoundRow(found: Found, selected: Boolean, onPick: () -> Unit) {
     ListItem(
         found.shown, Modifier.semantics { this.selected = selected }, onPick, "found_${found.address}", hint = found.detail,
         titleColor = if (selected) colors.accentText else colors.text,
-        leading = { SwapContent(found, contentKey = { found -> found.bluetooth }, layout = ContentLayout.Box) { found ->
+        leading = { SwapContent(found, contentKey = { found -> found.bluetooth }, layout = ContentLayout.Box, inPlace = true) { found ->
             if (found.bluetooth) BluetoothIcon(ink) else DeviceIcon(found.kind, ink)
         } },
         trailing = if (selected) ({ CheckIcon(colors.accentText) }) else null,

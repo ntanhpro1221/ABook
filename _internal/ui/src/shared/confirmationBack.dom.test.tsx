@@ -49,9 +49,11 @@ it("V3 xoá nhạc: Back huỷ riêng câu hỏi và focus nút Xoá được d�
     [["music-local"], { tracks: [{ link: "local:test", title: "Bài A", creator: "", analysed: true }], module: { installed: true } }],
   ]);
   await click("Nhạc của tôi1 bài");
-  await click("Xoá");
-  expect(button("Xoá bài")).toBeDefined();
+  const opener = await click("Xoá");
+  const dialog = document.querySelector('[role="dialog"][data-state="open"]');
+  expect(dialog?.textContent).toContain("Xoá bài này?");
+  expect(document.activeElement?.textContent).toBe("Huỷ");
   await act(() => { expect(dismissTopLayer()).toBe(true); });
-  expect(button("Xoá bài")).toBeUndefined();
-  expect(document.activeElement).toBe(button("Xoá"));
+  expect(document.querySelector('[role="dialog"][data-state="open"]')).toBeNull();
+  expect(document.activeElement).toBe(opener);
 });

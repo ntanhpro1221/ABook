@@ -197,6 +197,6 @@ Item {
         Accessible.name: S.s_them_tuy_chon_cho_0_82a2cf4d(root.chapter.displayTitle || "")
         opacity: root.hot || !root.wide ? 1 : 0
         Behavior on opacity { NumberAnimation { duration: Theme.reduceMotion ? Theme.motionReduced : Theme.motionFast } }
-        onClicked: root.menuRequested(more)
+        onActivated: root.menuRequested(more)
     }
 }

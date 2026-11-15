@@ -74,7 +74,7 @@ Column {
             size: "sm"
             kind: "ghost"
             text: S.s_moi_cach_doc_ten_5d01fa0c
-            onClicked: root.openNames(root.item.surface || "")
+            onActivated: root.openNames(root.item.surface || "")
         }
     }
     TryNote { reading: tryIt; width: parent.width }

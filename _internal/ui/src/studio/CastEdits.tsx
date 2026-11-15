@@ -55,7 +55,7 @@ export function RenamePersonDialog({
   const name = person ? cleanName(person.displayName) : "";
   return (
     <Dialog footer={<DialogActions>
-          <Reveal when={person?.originalName}><Button type="button" variant="ghost" disabled={busy} onClick={() => void save("")}>{S.s_ve_ten_goc_643cd2e0}</Button></Reveal>
+          <Reveal when={person?.originalName}><Button type="button" variant="ghost" loading={busy} disabled={busy} onClick={() => save("")}>{S.s_ve_ten_goc_643cd2e0}</Button></Reveal>
           <Button type="button" variant="ghost" onClick={onClose}>{S.s_thoi_e68f9e88}</Button>
           <Button type="submit" form={dialogForm1} variant="primary" loading={busy} disabled={!value.trim()}>{S.s_luu_e91f26c0}</Button>
         </DialogActions>}
@@ -140,7 +140,7 @@ export function GenderDialog({ bookId, person, onClose, waiting = false, onSaved
   return (
     <Dialog footer={<DialogActions>
         <Button variant="ghost" onClick={onClose}>{S.s_thoi_e68f9e88}</Button>
-        <Button variant="primary" loading={busy} disabled={!choice || choice === current} onClick={() => void save()}>{S.s_ghi_lai_923c1fd4}</Button>
+        <Button variant="primary" loading={busy} disabled={!choice || choice === current} onClick={() => save()}>{S.s_ghi_lai_923c1fd4}</Button>
       </DialogActions>}
       open={person !== null}
       onOpenChange={(open) => !open && onClose()}

@@ -1,5 +1,12 @@
 package vn.abook.player.ui.components
 
+import androidx.compose.animation.core.*
+import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.background
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.ui.Alignment
+import vn.abook.player.ui.motion.rememberReducedMotion
+import vn.abook.player.ui.theme.Abook
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
@@ -39,9 +46,10 @@ internal fun DrawScope.drawLucide(data: String, color: Color, unit: Float = size
 
 @Composable
 fun LucideIcon(data: String, color: Color, modifier: Modifier = Modifier, size: Dp = 20.dp, fill: String? = null) {
+    StateIcon(data) { snapshot ->
     Box(
         modifier.size(size).visualIcon().drawWithCache {
-            val path = lucidePath(data)
+            val path = lucidePath(snapshot)
             val dots = fill?.let(::lucidePath)
             val unit = this.size.width / 24f
             onDrawBehind {
@@ -52,6 +60,7 @@ fun LucideIcon(data: String, color: Color, modifier: Modifier = Modifier, size: 
             }
         },
     )
+    }
 }
 
 @Composable fun PlusIcon(color: Color, modifier: Modifier = Modifier, size: Dp = 20.dp) = LucideIcon(LucidePaths.PLUS, color, modifier, size)
@@ -159,3 +168,23 @@ fun LucideIcon(data: String, color: Color, modifier: Modifier = Modifier, size: 
 @Composable fun KeyIcon(color: Color, modifier: Modifier = Modifier, size: Dp = 20.dp) = LucideIcon(LucidePaths.KEY_ROUND, color, modifier, size)
 @Composable fun PlayIcon(color: Color, modifier: Modifier = Modifier, size: Dp = 20.dp) = LucideIcon(LucidePaths.PLAY, color, modifier, size)
 @Composable fun StopIcon(color: Color, modifier: Modifier = Modifier, size: Dp = 20.dp) = LucideIcon(LucidePaths.SQUARE, color, modifier, size)
+
+@Composable
+fun BusyRing(modifier: Modifier = Modifier, color: Color = Abook.colors.accentText) {
+    val reduced = rememberReducedMotion()
+    val turn = if (reduced) 0f else rememberInfiniteTransition(label = "pending").animateFloat(
+        0f, 360f, infiniteRepeatable(tween(1000, easing = LinearEasing)), label = "pending-turn").value
+    Canvas(modifier.size(20.dp)) { drawBusyRing(color, turn) }
+}
+
+internal fun DrawScope.drawBusyRing(color: Color, turn: Float = 0f) {
+    drawArc(color.copy(alpha = .2f), 0f, 360f, false, style = Stroke(2.dp.toPx()))
+    drawArc(color, turn - 90f, 90f, false, style = Stroke(2.dp.toPx(), cap = StrokeCap.Round))
+}
+
+@Composable
+fun DownloadedIcon() {
+    Box(Modifier.size(20.dp).background(Abook.colors.accent, CircleShape), contentAlignment = androidx.compose.ui.Alignment.Center) {
+        LucideIcon(LucidePaths.ARROW_DOWN, Abook.colors.accentInk, size = 14.dp)
+    }
+}

@@ -3,6 +3,7 @@ import { S } from "@/shared/strings.generated";
 import { MotionRegion } from "@/shared/MotionRegion";
 import { AnimatedRows, MotionPresence, Reveal } from "@/shared/MotionPresence";
 import { Button, Dialog, SelectionMark } from "@/shared/ui";
+import { useFadeScroller } from "@/shared/scrollFade";
 import type { ChapterScript, Line, Person } from "./ScriptTab";
 import { scopeConflict, scopeLines, scopeSelected, type ScopeMode } from "./scopeLines";
 import { useFadeScroller } from "@/shared/scrollFade";
@@ -25,6 +26,7 @@ export function ScriptScope({ script: incoming, line, onClose, onApply }: {
   const [query, setQuery] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const fade = useFadeScroller();
   const candidates = scopeLines(script.lines, line.stableId, mode, start - 1, end - 1);
   const selected = scopeSelected(candidates, toggled);
   const conflicts = candidates.filter(scopeConflict).length;
@@ -40,12 +42,12 @@ export function ScriptScope({ script: incoming, line, onClose, onApply }: {
     finally { setBusy(false); }
   };
   return <Dialog open onOpenChange={(open) => { if (!open && !busy) onClose(); }} title={S.s_scope_title}
-    footer={<Button className="w-full sm:w-auto" variant="primary" disabled={busy || !person || !selected.length} onClick={apply}>{S.s_scope_apply}</Button>}>
+    footer={<Button className="w-full sm:w-auto" variant="primary" loading={busy} disabled={busy || !person || !selected.length} onClick={apply}>{S.s_scope_apply}</Button>}>
     <div className="space-y-3">
       <p className="text-body-small text-fg-2">{line.scene == null ? S.s_scope_no_markers : S.s_scope_marker_note}</p>
       <div className="flex flex-wrap gap-2">
         {scopeOptions.map(([value, label]) => <Button key={value} size="sm" variant="ghost" aria-pressed={value === mode} className={value === mode ? "font-bold underline underline-offset-4" : undefined}
-          disabled={busy || (value === "scene" && line.scene == null)} onClick={() => { setMode(value); setToggled([]); }}>{label}</Button>)}
+          loading={busy} disabled={busy || (value === "scene" && line.scene == null)} onClick={() => { setMode(value); setToggled([]); }}>{label}</Button>)}
       </div>
       <MotionRegion motionKey={mode}>
         {mode === "manual" && <div className="flex gap-3">

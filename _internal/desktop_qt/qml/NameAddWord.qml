@@ -33,7 +33,7 @@ Column {
                 kind: "ghost"
                 icon: "plus"
                 text: S.s_them_cach_doc_2c703022
-                onClicked: root.openBox()
+                onActivated: root.openBox()
             }
         }
     }
@@ -60,7 +60,7 @@ Column {
                     hoverInk: Theme.text
                     tip: S.s_dong_5d54c2a1
                     Accessible.name: S.s_dong_5d54c2a1
-                    onClicked: root.closeBox()
+                    onActivated: root.closeBox()
                 }
             }
             Item { width: 1; height: 6 }

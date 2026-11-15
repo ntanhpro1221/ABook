@@ -1,3 +1,5 @@
+import { useLibraryPreview } from "../music/preview";
+import { ListeningProgress } from "../music/ListeningProgress";
 import { Presence } from "../shared/MotionPresence";
 import { S } from "../shared/strings.generated";
 import { MotionRegion } from "@/shared/MotionRegion";
@@ -11,7 +13,7 @@ import { FoldRows } from "@/shared/FoldRows";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import * as DropdownMenu from "@/shared/DropdownMenu";
-import { Ban, Download, EighthNote, MoreHorizontal, Pin, PinOff, Play, RefreshCw, Shuffle, Square, VolumeX } from "lucide-react";
+import { Ban, Download, EighthNote, MoreHorizontal, Pause, Pin, PinOff, Play, RefreshCw, Shuffle, Square, VolumeX } from "lucide-react";
 import { toast } from "@/shared/toast";
 import { MUSIC_CHANGED_EVENT } from "@/listen/musicBed";
 import { cn } from "@/shared/cn";
@@ -20,10 +22,10 @@ import { spokenProgress } from "@/shared/progressSpeech";
 import { MusicLevelSlider } from "@/shared/MusicLevelSlider";
 import { LEVEL_TITLE } from "@/shared/musicLevels";
 import { Select, Button, IconButton, LiveText, Progress, ContentSkeleton, InlineError } from "@/shared/ui";
-import { api, mediaUrl } from "./api";
+import { api } from "./api";
 import { useAppInfo } from "./data";
 import { CONTINUED_NOTE, downloadShare, downloadText, isContinuation, moodOf, swapButton, type MusicDownload } from "./musicScenes";
-import { mineNote, previewPath } from "./musicLocal";
+import { mineNote } from "./musicLocal";
 import { BrowseLibraryLink } from "@/music/BrowseLibraryLink";
 import { OpenMusicRow } from "@/music/OpenMusicRow";
 
@@ -117,7 +119,7 @@ const REBUILDING = S.s_dang_chon_lai_nhac_co_nua_phut_4166612f;
 /** Sửa một đoạn (chọn bài, ghim, im lặng, bỏ bài) chỉ mất chốc lát: chỉ báo bận nhẹ, không hứa nửa phút. */
 const SAVING = S.s_dang_luu_lua_chon_d37252de;
 
-const PREVIEW_SECONDS = 20;
+
 
 /** Báo trình phát đang mở (cùng phiên) nạp lại mốc nhạc của cuốn này: bài đổi ngay, không cần tải lại trang. */
 function announceChange(bookId: string): void {
@@ -135,51 +137,11 @@ function trackLabel(link: string, info?: TrackInfo): string {
   }
 }
 
-/** "Nghe thử": MỘT <audio> dùng chung cho cả tab - bấm bài khác thì bài trước dừng, mỗi lần nghe ~20 giây từ đầu bài,
+/** "Nghe thử": MỘT <audio> dùng chung cho cả tab - bấm bài khác thì bài trước dừng, nghe trọn bài,
  *  không bao giờ tự phát. ?mute=1: kiểm thử tự động không phát tiếng ra loa (như musicBed.ts). */
 function usePreview() {
-  const audio = useRef<HTMLAudioElement | null>(null);
-  const current = useRef<string | null>(null);
-  const [playing, setPlaying] = useState<string | null>(null);
-  const stop = useCallback(() => {
-    const element = audio.current;
-    if (element) {
-      element.pause();
-      element.removeAttribute("src");
-      element.load();
-    }
-    current.current = null;
-    setPlaying(null);
-  }, []);
-  const toggle = useCallback(
-    (link: string) => {
-      if (current.current === link) {
-        stop();
-        return;
-      }
-      if (!audio.current) {
-        const created = new Audio();
-        created.preload = "none";
-        created.muted = new URLSearchParams(window.location.search).get("mute") === "1";
-        created.addEventListener("timeupdate", () => {
-          if (created.currentTime >= PREVIEW_SECONDS) stop();
-        });
-        created.addEventListener("ended", stop);
-        created.addEventListener("error", stop);
-        audio.current = created;
-      }
-      const element = audio.current;
-      element.src = mediaUrl(previewPath(link));
-      current.current = link;
-      setPlaying(link);
-      void element.play().catch(() => {
-        if (current.current === link) stop();
-      });
-    },
-    [stop],
-  );
-  useEffect(() => stop, [stop]); // rời tab thì dừng
-  return { playing, toggle, stop };
+  const shared = useLibraryPreview();
+  return { ...shared, playing: shared.playing?.link ?? null, toggle: (link: string) => shared.toggle({link}), shared };
 }
 
 /** Một dòng bài trong "Đổi bài": tên · tác giả · độ dài, "Nghe thử" và "Chọn" (= ghim bài ấy cho đoạn này). */
@@ -189,6 +151,7 @@ function TrackRow({
   busy,
   choosing,
   previewing,
+  preview,
   canPreview,
   onPreview,
   onChoose,
@@ -198,6 +161,7 @@ function TrackRow({
   busy: boolean;
   choosing: string | null;
   previewing: string | null;
+  preview: ReturnType<typeof useLibraryPreview>;
   canPreview: boolean;
   onPreview: (link: string) => void;
   onChoose: (link: string) => void;
@@ -212,15 +176,17 @@ function TrackRow({
         <Reveal when={note}><span className="block text-xs text-fg-2">{note}</span></Reveal>
       </span>
       <span className="flex shrink-0 gap-1">
-        <Reveal when={canPreview}><Button size="sm" variant="ghost" icon={previewing === item.link ? Square : Play} aria-pressed={previewing === item.link}
+        <Reveal when={canPreview}><Button size="sm" variant="ghost" icon={previewing === item.link && !preview.paused ? Pause : Play} aria-pressed={previewing === item.link}
+            pending={previewing === item.link && preview.loading}
             onClick={() => onPreview(item.link)}>
-            {previewing === item.link ? S.s_dung_nghe_f20939be : S.s_nghe_thu_fa024065}
+            {previewing === item.link ? preview.loading ? S.s_buffering : preview.paused ? S.s_phat_343e7e48 : S.s_tam_dung_67635815 : S.s_nghe_thu_fa024065}
           </Button></Reveal>
         <Button size="sm" variant="ghost" icon={Pin} disabled={busy} loading={choosing === item.link}
           onClick={() => onChoose(item.link)}>
           {choosing === item.link ? S.s_dang_doi_b4190199 : S.s_chon_1171ca97}
         </Button>
       </span>
+      <Reveal when={previewing === item.link}><div className="basis-full w-full"><ListeningProgress preview={preview} label={S.s_music_seek} /></div></Reveal>
     </li>
   );
 }
@@ -233,6 +199,7 @@ function Alternatives({
   busy,
   choosing,
   previewing,
+  preview,
   onPreview,
   onStopPreview,
   onChoose,
@@ -242,6 +209,7 @@ function Alternatives({
   busy: boolean;
   choosing: string | null;
   previewing: string | null;
+  preview: ReturnType<typeof useLibraryPreview>;
   onPreview: (link: string) => void;
   onStopPreview: () => void;
   onChoose: (link: string) => void;
@@ -262,7 +230,7 @@ function Alternatives({
   const mine = data?.mine ?? [];
   // Nhạc của tôi nằm trên máy tính chủ sách: nghe thử từ máy khác (Studio từ xa) không đi qua đường theo sách.
   const canPreviewMine = !info?.remote;
-  const row = { busy, choosing, previewing, onPreview, onChoose };
+  const row = { busy, choosing, previewing, preview, onPreview, onChoose };
   return (
     <MotionRegion as="div" className="space-y-3">
       {busy && (
@@ -494,6 +462,7 @@ export function MusicTab({ bookId, chapterTitle }: { bookId: string; chapterTitl
 
   return (
     <MotionRegion as="div" className="mt-6 space-y-6">
+      <InlineError open={Boolean(preview.error)} message={preview.error} onRetry={preview.retry} />
       {/* Cài đặt nhạc của cuốn: một hàng một việc, công tắc / ô chọn bên phải như trang Cài đặt - không khung bao (DESIGN 4, 6). */}
       <section className="flex flex-wrap items-end gap-x-4">
         <div className="basis-full divide-y divide-line">
@@ -623,7 +592,12 @@ export function MusicTab({ bookId, chapterTitle }: { bookId: string; chapterTitl
                       )}
                     </span>
                     {/* Một nút chính + "…": cột nút thẳng hàng ở mọi dòng (trước đây bốn nút, dòng có "Bỏ ghim" lệch cột). */}
-                    <span className="flex basis-full items-center gap-1 sm:w-32 sm:shrink-0 sm:basis-auto sm:justify-end">
+                    <span className="flex basis-full items-center gap-1 sm:w-44 sm:shrink-0 sm:basis-auto sm:justify-end">
+                      {!follows && scene.link && <IconButton
+                        label={preview.playing === scene.link ? preview.loading ? S.s_buffering : preview.paused ? S.s_phat_343e7e48 : S.s_tam_dung_67635815 : S.s_nghe_thu_fa024065}
+                        icon={preview.playing === scene.link && !preview.paused ? Pause : Play}
+                        pending={preview.playing === scene.link && preview.loading}
+                        onClick={() => preview.toggle(scene.link!)} />}
                       <Button size="sm" variant="ghost" icon={Shuffle} aria-expanded={swapping === scene.key} title={swap.title}
                         onClick={(event) => { swapTrigger.current = event.currentTarget; setSwapping(swapping === scene.key ? null : scene.key); }}>
                         {swap.text}
@@ -637,6 +611,7 @@ export function MusicTab({ bookId, chapterTitle }: { bookId: string; chapterTitl
                         onBan={scene.link ? () => ban(scene.link!, trackLabel(scene.link!, track)) : undefined}
                       />}</Presence>}
                     </span>
+                    <Reveal when={!follows && preview.playing === scene.link}><div className="basis-full w-full"><ListeningProgress preview={preview.shared} label={S.s_music_seek} /></div></Reveal>
                     <div ref={swapping === scene.key ? swapBox : undefined} className="basis-full"><Collapse open={swapping === scene.key} className="py-3 text-sm">
                       <MotionPresence open={swapping === scene.key}>
                         <Alternatives
@@ -645,6 +620,7 @@ export function MusicTab({ bookId, chapterTitle }: { bookId: string; chapterTitl
                           busy={change.isPending}
                           choosing={choosing}
                           previewing={preview.playing}
+                          preview={preview.shared}
                           onPreview={preview.toggle}
                           onStopPreview={preview.stop}
                           onChoose={(link) =>

@@ -1,3 +1,6 @@
+import { useDestructiveConfirm } from "../shared/DestructiveConfirm";
+import { usePendingAction } from "../shared/usePendingAction";
+import { PendingIndicator } from "../shared/PendingIndicator";
 import { Presence } from "../shared/MotionPresence";
 import { S } from "../shared/strings.generated";
 import { DisclosureRow } from "@/shared/DisclosureRow";
@@ -168,6 +171,7 @@ function KeyCard({ info, api, onChanged }: { info: OnlineProviderInfo; api: Voic
       onChanged();
     }
   };
+  const deletion = useDestructiveConfirm();
   const remove = async () => {
     setBusy("remove");
     try {
@@ -184,6 +188,7 @@ function KeyCard({ info, api, onChanged }: { info: OnlineProviderInfo; api: Voic
   const status = info.valid ? S.s_dung_duoc_0_giong_ddbd60b5(info.voices) : info.hasKey ? S.s_chua_dung_duoc_c68b3845 : undefined;
   return (
     <MotionRegion as="div" className="py-3" data-provider={info.id}>
+      {deletion.dialog}
       <DisclosureRow title={info.name} summary={status} expanded={open} onClick={() => setOpen((now) => !now)} />
       <Collapse open={open}>
       <p className="mt-1 text-body-small text-fg-2 text-pretty">
@@ -215,10 +220,10 @@ function KeyCard({ info, api, onChanged }: { info: OnlineProviderInfo; api: Voic
             />
           </label>
         )}
-        <Button size="md" variant="ghost" loading={busy === "save"} disabled={Boolean(busy) || (!key.trim() && !regionChanged)} onClick={() => void save()}>{S.s_luu_e91f26c0}</Button>
-        <Button size="md" icon={KeyRound} loading={busy === "check"} disabled={Boolean(busy) || (!info.hasKey && !key.trim())} onClick={() => void check()}>{S.s_kiem_tra_ff6e2891}</Button>
+        <Button size="md" variant="ghost" loading={busy === "save"} disabled={Boolean(busy) || (!key.trim() && !regionChanged)} onClick={() => save()}>{S.s_luu_e91f26c0}</Button>
+        <Button size="md" icon={KeyRound} loading={busy === "check"} disabled={Boolean(busy) || (!info.hasKey && !key.trim())} onClick={() => check()}>{S.s_kiem_tra_ff6e2891}</Button>
         {info.hasKey && (
-          <Button size="md" variant="ghost" icon={Trash2} loading={busy === "remove"} disabled={Boolean(busy)} onClick={() => void remove()}>{S.s_xoa_khoa_2ec6cb1a}</Button>
+          <Button size="md" variant="ghost" icon={Trash2} loading={busy === "remove"} disabled={Boolean(busy)} onClick={() => deletion.confirm({title: S.s_xoa_khoa_2ec6cb1a, description: S.s_khoa_0_se_bi_xoa_khoi_may_nay_va_cac_giong_735b6db2(info.name), run: remove})}>{S.s_xoa_khoa_2ec6cb1a}</Button>
         )}
       </div>
       {result && <p className={cn("mt-2 text-body-small text-pretty", result.ok ? "text-success" : "text-danger")} role="status">{result.text}</p>}
@@ -251,6 +256,12 @@ export function VoiceSettings({ api, deviceHint, modules }: { api: VoiceSettings
   const [chosen, setChosen] = useState(defaultVoice);
   const [loadError, setLoadError] = useState("");
   const [keysOpen, setKeysOpen] = useFold("voice.keys");
+  const [savingVoice, setSavingVoice] = useState("");
+  const saveVoice = usePendingAction(async (id: string) => {
+    setSavingVoice(id);
+    try { await chooseDefaultVoice(id); setChosen(id); }
+    finally { setSavingVoice(""); }
+  });
   const sample = useVoiceSample(api.sample);
   const load = useCallback(async () => {
     try {
@@ -294,10 +305,7 @@ export function VoiceSettings({ api, deviceHint, modules }: { api: VoiceSettings
               <Reveal when={list.length > 0}><div
                 role="radiogroup"
                 aria-label={groupLabel({ title: heading, detail })}
-                onKeyDown={radioGroupKeys(ids, current?.id ?? "", (id) => {
-                  chooseDefaultVoice(id);
-                  setChosen(id);
-                })}
+                onKeyDown={radioGroupKeys(ids, current?.id ?? "", saveVoice.invoke)}
               >
               {voiceSections(list).map((section) => (
                 <div key={section.label ?? ""}>
@@ -314,14 +322,15 @@ export function VoiceSettings({ api, deviceHint, modules }: { api: VoiceSettings
                             role="radio"
                             aria-checked={selected}
                             tabIndex={radioTabIndex(ids, current?.id ?? "", ids.indexOf(voice.id))}
-                            onClick={() => {
-                              chooseDefaultVoice(voice.id);
-                              setChosen(voice.id);
-                            }}
+                            aria-busy={savingVoice === voice.id}
+                            aria-disabled={saveVoice.pending}
+                            onClick={() => saveVoice.invoke(voice.id)}
                             className="touch-row flex min-w-0 flex-1 items-center gap-3 text-left"
                           >
                             <span className="flex size-5 shrink-0 text-accent-text">
-                              <SelectionMark selected={selected} className="ink-start [--icon-w:17.5px] size-5" />
+                              <PendingIndicator pending={savingVoice === voice.id}>
+                                <SelectionMark selected={selected} className="ink-start [--icon-w:17.5px] size-5" />
+                              </PendingIndicator>
                             </span>
                             <span className="min-w-0 text-pretty text-sm font-medium [overflow-wrap:anywhere]">{shown}</span>
                             {<Presence>{genderLabel(voice.gender) && <span className="shrink-0 text-xs text-fg-2">{genderLabel(voice.gender)}</span>}</Presence>}

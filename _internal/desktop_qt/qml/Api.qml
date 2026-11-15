@@ -43,6 +43,18 @@ QtObject {
     property bool voicesLoaded: false
     property bool voicesLoading: false
     property var transport: null
+    property int requestSerial: 0
+    property var requestsPending: ({})
+    property int finishedRequest: 0
+    property int finishedStatus: 0
+    signal requestBegan(int id)
+    signal requestDone(int id, int status)
+    property var pendingLink: Connections {
+        target: root.transport
+        ignoreUnknownSignals: true
+        function onRequestStarted(id) { root.requestSerial = id; const next = Object.assign({}, root.requestsPending); next[id] = true; root.requestsPending = next; root.requestBegan(id) }
+        function onRequestFinished(id, status) { root.finishedRequest = id; root.finishedStatus = status; const next = Object.assign({}, root.requestsPending); delete next[id]; root.requestsPending = next; root.requestDone(id, status) }
+    }
     property var themeObject: null
     function bind(bridge, theme) { transport = bridge; themeObject = theme }
     signal edited(string bookId)
@@ -120,11 +132,17 @@ QtObject {
             || (book.chapters || []).some(chapter => chapter.state === "text")
     }
     // Đặt giọng mặc định từ Cài đặt (chooseDefaultVoice + App.tsx: lưu tuỳ chọn readAloudVoice, lỗi thì báo cách thử lại)
+    property var savingVoice: null
     function chooseDefaultVoice(id) {
-        defaultVoice = id
-        store("abook-readaloud-voice", id)
-        preferences = Object.assign({}, preferences, {readAloudVoice: id})
-        refreshVoiceName()
-        call("PUT", "/api/preferences", {readAloudVoice: id}, function(data, error) { if (error) notice = VoiceLogic.DEFAULT_VOICE_ERROR })
+        if (savingVoice !== null || defaultVoice === id) return
+        savingVoice = id
+        call("PUT", "/api/preferences", {readAloudVoice: id}, function(data, error) {
+            savingVoice = null
+            if (error) { notice = VoiceLogic.DEFAULT_VOICE_ERROR; return }
+            defaultVoice = id
+            store("abook-readaloud-voice", id)
+            preferences = Object.assign({}, preferences, {readAloudVoice: id})
+            refreshVoiceName()
+        })
     }
 }

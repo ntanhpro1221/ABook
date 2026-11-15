@@ -87,7 +87,7 @@ DevicesFold {
                     kind: "ghost"
                     enabled: !root.busy
                     Reveal { shown: root.editable && entry.state === "applied" }
-                    onClicked: root.undo(entry.modelData.operationId)
+                    onActivated: root.undo(entry.modelData.operationId)
                 }
             }
         }

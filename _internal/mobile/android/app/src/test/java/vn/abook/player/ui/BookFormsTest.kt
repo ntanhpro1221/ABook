@@ -533,6 +533,12 @@ class BookFormsTest {
         rule.onAllNodesWithTag("reading_form").assertCountEquals(0)
         rule.onNodeWithText("“Haruto” sẽ đọc là “Ha-ru-to” từ đoạn sau").assertExists()
         rule.onNodeWithContentDescription("Bỏ cách đọc Haruto").performClick()
+        rule.onNodeWithTag("destructive_confirm").assertIsDisplayed()
+        assertEquals("Haruto" to "Ha-ru-to", source.readingCalls.last())
+        rule.onNodeWithTag("destructive_cancel").performClick()
+        assertEquals("Haruto" to "Ha-ru-to", source.readingCalls.last())
+        rule.onNodeWithContentDescription("Bỏ cách đọc Haruto").performClick()
+        rule.onNodeWithTag("destructive_accept").performClick()
         rule.waitForIdle()
         assertEquals("Haruto" to "", source.readingCalls.last())
         // Hàng cuối trượt ra hết rồi mới tới dòng "Chưa có từ nào." (không đổi cứng).
@@ -622,9 +628,9 @@ class BookFormsTest {
         rule.onAllNodesWithTag("discard_confirm").assertCountEquals(0)
     }
 
-    @Test fun discardSheetThoiClosesWithoutDiscarding() {
+    @Test fun discardSheetCancelClosesWithoutDiscarding() {
         val (source, _) = discardSheet(false, null)
-        rule.onNodeWithText("Thôi").performClick()
+        rule.onNodeWithText("Huỷ").performClick()
         rule.waitForIdle()
         assertEquals(0, source.discards)
         rule.onAllNodesWithTag("discard_confirm").assertCountEquals(0)

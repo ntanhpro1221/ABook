@@ -38,7 +38,8 @@ Item {
             Api.toast(S.s_da_dat_anh_bia_90470364)
         })
     }
-    function removeCover() {
+    function removeCover() { removeConfirm.show() }
+    function removeCoverConfirmed() {
         if (busy || !book) return
         working = true
         request("DELETE", null, function(status, data) {
@@ -158,7 +159,7 @@ Item {
             tip: root.hasCover ? S.s_doi_anh_bia_7889ff91 : S.s_dat_anh_bia_dac4c265
             Accessible.name: root.hasCover ? S.s_doi_anh_bia_7889ff91 : S.s_dat_anh_bia_dac4c265
             enabled: !root.busy
-            onClicked: root.chooseFile()
+            onActivated: root.chooseFile()
         }
         IconButton {
             objectName: "coverSearch"
@@ -171,7 +172,7 @@ Item {
             tip: S.s_tim_anh_bia_tren_mang_a87bd41b
             Accessible.name: S.s_tim_anh_bia_tren_mang_a87bd41b
             enabled: !root.busy
-            onClicked: { search.begin(root.book.id, Edit.seriesName(root.book.title)); searchBox.show() }
+            onActivated: { search.begin(root.book.id, Edit.seriesName(root.book.title)); searchBox.show() }
         }
         IconButton {
             objectName: "coverRemove"
@@ -185,7 +186,7 @@ Item {
             tip: S.s_bo_anh_bia_696c6692
             Accessible.name: S.s_bo_anh_bia_dung_lai_bia_ve_tu_ten_sach_95de3f45
             enabled: !root.busy
-            onClicked: root.removeCover()
+            onActivated: root.removeCover()
         }
     }
     Text {
@@ -217,4 +218,6 @@ Item {
             onChoosingChanged: root.choosing = choosing
         }
     }
+    DestructiveConfirm { id: removeConfirm; objectName: "studioCoverRemoveConfirm"; title: S.s_bo_anh_bia_696c6692; description: S.s_irreversible_detail(root.book ? root.book.title || "" : ""); onAccepted: root.removeCoverConfirmed() }
+
 }

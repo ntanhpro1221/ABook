@@ -38,7 +38,7 @@ Collapse {
                 size: "sm"
                 kind: "ghost"
                 text: S.s_dung_b12f0f49 + root.shownSuggestion + "”"
-                onClicked: root.used(root.shownSuggestion)
+                onActivated: root.used(root.shownSuggestion)
             }
         }
     }

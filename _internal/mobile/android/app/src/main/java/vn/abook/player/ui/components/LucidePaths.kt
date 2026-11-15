@@ -4,6 +4,7 @@ package vn.abook.player.ui.components
 
 /** Nét icon lucide trên lưới 24, mỗi icon một chuỗi đường SVG (cùng hình bản web dùng); `_FILL` là phần tô thêm của icon có chấm đặc. */
 internal object LucidePaths {
+    const val ARROW_DOWN = "M12 5v14M19 12l-7 7-7-7"
     const val ARROW_DOWN_WIDE_NARROW = "M3 16l4 4 4-4M7 20V4M11 4h10M11 8h7M11 12h4"
     const val ARROW_LEFT = "M12 19l-7-7 7-7M19 12H5"
     const val ARROW_RIGHT_LEFT = "M16 3l4 4-4 4M20 7H4M8 21l-4-4 4-4M4 17h16"

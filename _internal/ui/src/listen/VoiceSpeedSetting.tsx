@@ -1,4 +1,5 @@
 import { S } from "../shared/strings.generated";
+import { PendingIndicator } from "../shared/PendingIndicator";
 import { MotionRegion } from "@/shared/MotionRegion";
 import { Fold } from "@/shared/Collapse";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -45,6 +46,7 @@ export function VoiceSpeedSetting({
   const client = useQueryClient();
   const id = useId();
   const [busy, setBusy] = useState(false);
+  const saving = useRef(false);
   const { data: status } = useQuery({ queryKey: KEY, queryFn: () => backend.status() });
   // Thẻ mô-đun tải / đo xong (cùng khoá truy vấn với thẻ): số đo hay bản nhanh hơn vừa đổi - hỏi lại dòng này.
   const supertonicCard = useModuleStatus(supertonic, SUPERTONIC_COPY);
@@ -56,6 +58,8 @@ export function VoiceSpeedSetting({
   }, [working, client]);
   if (!status) return <MotionRegion />;
   const choose = async (choice: VoiceSpeedChoice) => {
+    if (saving.current) return;
+    saving.current = true;
     setBusy(true);
     try {
       client.setQueryData(KEY, await backend.set(choice));
@@ -64,6 +68,7 @@ export function VoiceSpeedSetting({
     } catch (error) {
       toast.error(S.s_chua_doi_duoc_toc_do_giong_e3562390, { description: (error as Error).message });
     } finally {
+      saving.current = false;
       setBusy(false);
     }
   };
@@ -76,7 +81,7 @@ export function VoiceSpeedSetting({
   };
   return (
     <MotionRegion><Fold storageKey="voice.performance" title={S.s_hieu_nang_8c7b7526} summary={voiceSpeedLabel(status.choice)} bodyClassName="space-y-2 pb-3">
-      <h3 id={`${id}-title`} className="text-sm font-medium">{VOICE_SPEED_TITLE}</h3>
+      <div className="flex items-center justify-between gap-2" aria-busy={busy}><h3 id={`${id}-title`} className="text-sm font-medium">{VOICE_SPEED_TITLE}</h3><PendingIndicator pending={busy} /></div>
       <ChoiceRow
         value={status.choice}
         onChange={(choice) => void (busy || choose(choice))}
@@ -91,7 +96,7 @@ export function VoiceSpeedSetting({
           return (
             <li key={voice.id} className="flex flex-wrap items-center gap-x-3 gap-y-1 text-body-small text-pretty">
               <span className="min-w-0 flex-1">{voiceSpeedLine(voice, status.choice)}</span>
-              <Reveal when={needsFastDownload(voice)}><Button size="sm" variant="ghost" loading={downloading} disabled={working} onClick={() => void download(voice)}>
+              <Reveal when={needsFastDownload(voice)}><Button size="sm" variant="ghost" loading={downloading} disabled={working} onClick={() => download(voice)}>
                   {S.s_tai_0_3463a4d8(formatSize(voice.fastBytes))}
                 </Button></Reveal>
             </li>

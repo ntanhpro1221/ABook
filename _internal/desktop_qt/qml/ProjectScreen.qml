@@ -273,7 +273,7 @@ FocusScope {
         icon: "circle-alert"
         title: S.s_du_an_nay_khong_con_94194a30
         text: S.s_cuon_nay_da_bi_xoa_hoac_chuyen_di_khoi_thu_7f90453a
-        Button { objectName: "projectGoneBack"; text: S.s_ve_danh_sach_du_an_67552315; onClicked: root.backRequested() }
+        Button { objectName: "projectGoneBack"; text: S.s_ve_danh_sach_du_an_67552315; onActivated: root.backRequested() }
     }
     EmptyState {
         id: projectError
@@ -285,8 +285,8 @@ FocusScope {
         icon: "circle-alert"
         title: S.s_chua_mo_duoc_sach_86cc68d3
         text: root.store && root.store.bookError ? Logic.failureText(root.store.bookError.status, root.store.bookError.text) : ""
-        Button { objectName: "projectRetry"; text: S.s_thu_lai_c58d068c; kind: "ghost"; onClicked: root.store.loadBook() }
-        Button { objectName: "projectErrorBack"; text: S.s_ve_studio_349a48c4; onClicked: root.backRequested() }
+        Button { objectName: "projectRetry"; text: S.s_thu_lai_c58d068c; kind: "ghost"; onActivated: root.store.loadBook() }
+        Button { objectName: "projectErrorBack"; text: S.s_ve_studio_349a48c4; onActivated: root.backRequested() }
     }
 
     // ---- danh sách ----
@@ -334,7 +334,7 @@ FocusScope {
                         iconSize: 20
                         tip: S.s_them_tuy_chon_a0b4bb6e
                         Accessible.name: S.s_them_tuy_chon_cho_0_82a2cf4d(root.book ? root.book.title : "")
-                        onClicked: { bookMenu.items = root.bookMenuItems(); bookMenu.anchorItem = moreButton; bookMenu.show() }
+                        onActivated: { bookMenu.items = root.bookMenuItems(); bookMenu.anchorItem = moreButton; bookMenu.show() }
                     }
                 }
                 // Dải báo khi lần hỏi gần nhất hỏng mà vẫn còn bản cũ
@@ -351,7 +351,7 @@ FocusScope {
                         wrapMode: Text.Wrap
                         font.pixelSize: Theme.sizeBodySmall
                     }
-                    Button { id: retry; size: "sm"; kind: "ghost"; text: S.s_thu_lai_c58d068c; onClicked: root.store.loadBook() }
+                    Button { id: retry; size: "sm"; kind: "ghost"; text: S.s_thu_lai_c58d068c; onActivated: root.store.loadBook() }
                 }
                 // Bìa thật (CoverEditor.tsx) bên trái; trạng thái, số liệu, tiến độ và lời nhắn bên phải. Màn hẹp: bìa 96, nút chỉ còn biểu tượng.
                 Row {
@@ -728,7 +728,7 @@ FocusScope {
                         kind: "ghost"
                         icon: "arrow-left"
                         text: S.s_ve_man_truoc_5bdf90b3
-                        onClicked: root.jumpBack()
+                        onActivated: root.jumpBack()
                     }
                 }
             }

@@ -345,7 +345,7 @@ private fun BookTile(
         }
         val line: @Composable () -> Unit = {
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(Dim.s4)) {
-                SwapContent(remote, contentKey = { remote -> remote }, layout = ContentLayout.Row) { remote ->
+                SwapContent(remote, contentKey = { remote -> remote }, layout = ContentLayout.Row, inPlace = true) { remote ->
                     if (remote) RemoteIcon(Abook.colors.text3, Modifier.semantics {
                         contentDescription = if (series != null) S.s_co_sach_tren_may_khac_3b7cdd88 else ListenLogic.remotePlace(lead)
                     }, size = 12.dp)

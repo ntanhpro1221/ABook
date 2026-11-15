@@ -11,10 +11,10 @@ class PlayerTextTest {
     @Test
     fun `play button says what it waits for`() {
         assertEquals("Phát", PlayerText.toggleLabel(playing = false, buffering = false, speaking = false))
-        assertEquals("Phát", PlayerText.toggleLabel(playing = false, buffering = true, speaking = true))
+        assertEquals("Đang đệm", PlayerText.toggleLabel(playing = false, buffering = true, speaking = true))
         assertEquals("Tạm dừng", PlayerText.toggleLabel(playing = true, buffering = false, speaking = false))
-        assertEquals("Đang tải âm thanh", PlayerText.toggleLabel(playing = true, buffering = true, speaking = false))
-        assertEquals("Đang chuẩn bị giọng đọc", PlayerText.toggleLabel(playing = true, buffering = true, speaking = true))
+        assertEquals("Đang đệm", PlayerText.toggleLabel(playing = true, buffering = true, speaking = false))
+        assertEquals("Đang đệm", PlayerText.toggleLabel(playing = true, buffering = true, speaking = true))
     }
 
     @Test

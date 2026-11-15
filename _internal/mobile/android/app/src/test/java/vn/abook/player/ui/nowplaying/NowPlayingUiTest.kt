@@ -371,6 +371,9 @@ class NowPlayingUiTest {
             assertTrue("còn \"$it\"", rule.onAllNodesWithText(it).fetchSemanticsNodes().isEmpty())
         }
         rule.onNodeWithTag("audiofx_reset").performScrollTo().performClick()
+        rule.onNodeWithTag("destructive_confirm").assertIsDisplayed()
+        assertTrue(vn.abook.player.AudioFxSettings() != vn.abook.player.AudioFx.current)
+        rule.onNodeWithTag("destructive_accept").performClick()
         rule.waitForIdle()
         assertEquals(vn.abook.player.AudioFxSettings(), vn.abook.player.AudioFx.current)
     }
@@ -760,7 +763,7 @@ class NowPlayingUiTest {
 
     @Test fun playButtonSaysWhatItWaitsFor() {
         show(base = FakeNowPlayingModel.demoState().copy(buffering = true, speaking = false), playing = true)
-        rule.onNodeWithContentDescription("Đang tải âm thanh").assertIsDisplayed()
+        rule.onNodeWithContentDescription("Đang đệm").assertIsDisplayed()
     }
 
     @Test fun aNoteShowsItsActionAndTappingRunsIt() {

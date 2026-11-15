@@ -693,7 +693,7 @@ export function HistoryTab({ book }: { book: ListenBook }) {
                   </div>
                 </div>
                 {/* Nút nhảy tới CUỐI phiên nghe ấy - nói rõ tới đâu, "Nghe từ đây" mơ hồ (soát UX 29-09). */}
-                <Button size="sm" variant="ghost" icon={Play} onClick={() => void playBook(book, item.to.chapterId, item.to.seconds)}>{S.s_nghe_tiep_tu_b61da900}{formatClock(item.to.seconds)}
+                <Button size="sm" variant="ghost" icon={Play} onClick={() => playBook(book, item.to.chapterId, item.to.seconds)}>{S.s_nghe_tiep_tu_b61da900}{formatClock(item.to.seconds)}
                 </Button>
               </div>
             )}
@@ -1211,12 +1211,13 @@ function BookPage({ extraActions, dangerActions, studioLink, notice, editing = {
               variant="primary"
               size="lg"
               data-book-primary
+              pending={(listening && player.buffering) || player.preparingBookId === book.id}
               icon={listenFirst ? (listening && player.playing ? Pause : finished ? RotateCcw : Play) : BookOpen}
-              onClick={listenFirst ? withFeedback("playPause", () => void listenNow()) : read}
+              onClick={listenFirst ? withFeedback("playPause", listenNow) : read}
               // Tên chương dài (truyện dịch) hay chữ hệ thống to: cắt "…" trong nút thay vì tràn ra hai mép màn hình (soát UX a9).
               className="min-w-0 max-w-full max-sm:w-full"
             >
-              <span className="min-w-0 truncate">{listenFirst ? primaryLabel : readLabel}</span>
+              <span className="min-w-0 truncate">{listenFirst && ((listening && player.buffering) || player.preparingBookId === book.id) ? S.s_buffering : listenFirst ? primaryLabel : readLabel}</span>
             </Button>
           )}
           {/* Hàng phụ: luôn cùng bốn chỗ, cùng thứ tự - nút chưa dùng được thì mờ đi chứ không biến mất (không nhảy chỗ khi bắt đầu nghe). */}

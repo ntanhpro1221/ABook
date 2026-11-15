@@ -52,6 +52,8 @@ interface LibrarySource {
     /** Tải một bài (kiểm byte + sha1, tải tiếp `.part`, bản sao - [vn.abook.player.MusicCatalog.download]). Huỷ: ném lỗi, phần đã tải giữ lại. */
     fun download(link: String, progress: (Long, Long?) -> Unit, cancelled: () -> Boolean)
     fun forget(link: String)
+    fun cancelDownload(link: String) {}
+    fun discardPartial(link: String) {}
     fun partial(link: String): Long
     /** Mạng tính phí (dữ liệu di động): hỏi trước khi tải. */
     fun metered(): Boolean
@@ -62,6 +64,11 @@ interface LibrarySource {
 interface PreviewPlayer {
     fun play(link: String, startSeconds: Double, volume: Float, onEnd: () -> Unit, onPlaying: (Boolean) -> Unit, onError: (String) -> Unit)
     fun stop()
+    fun pause() {}
+    fun resume() {}
+    fun seek(seconds: Double) {}
+    fun position(): Double = 0.0
+    fun duration(): Double = 0.0
 }
 
 @Immutable
@@ -81,9 +88,15 @@ data class LibraryUi(
     val downloaded: Set<String> = emptySet(),
     val active: Map<String, Loading> = emptyMap(),
     val failed: Map<String, String> = emptyMap(),
+    val pendingLinks: Set<String> = emptySet(),
+    val actionError: String = "",
     val previewing: String? = null,
     val previewLoading: Boolean = false,
     val previewError: String = "",
+    val previewPaused: Boolean = false,
+    val previewPosition: Double = 0.0,
+    val previewDuration: Double = 0.0,
+    val previewErrorLink: String? = null,
     val online: Boolean = true,
     /** Thời gian lọc lần gần nhất (ms) - đo "lọc dưới 50 ms". */
     val filterMs: Double = 0.0,
@@ -105,7 +118,7 @@ data class LibraryUi(
 
 /**
  * Trạng thái màn Nhạc (Đã lưu + Kho nhạc) của điện thoại: lọc ngay trên máy (MusicLibrary.select - cả danh mục ~2.400 bài, vài ms),
- * lưu = ghim + tải (một luồng, lần lượt, huỷ được, đứt mạng thì giữ phần đã tải để "Tải tiếp"), nghe thử 30 giây.
+ * lưu = ghim + tải (một luồng, lần lượt, huỷ được, đứt mạng thì giữ phần đã tải để "Tải tiếp"), nghe trọn bài từ điểm bắt đầu có tiếng.
  */
 @Stable
 class LibraryState(
@@ -184,8 +197,10 @@ class LibraryState(
 
     /** "Lưu" / "Tải về" / "Tải cả danh sách": ghim + tải. Mạng tính phí thì hỏi trước ([meteredAsk]) - trừ khi `confirmed`. */
     fun save(links: List<String>, confirmed: Boolean = false) {
-        if (links.isEmpty()) return
+        if (links.isEmpty() || links.any { it in flow.value.pendingLinks }) return
+        flow.update { it.copy(pendingLinks = it.pendingLinks + links, actionError = "") }
         scope.launch {
+          try {
             val metered = withContext(io) { runCatching { source.metered() }.getOrDefault(false) }
             val missing = links.filter { it !in flow.value.downloaded }
             if (metered && !confirmed && missing.isNotEmpty()) {
@@ -195,6 +210,11 @@ class LibraryState(
             withContext(io) { source.save(links) }
             flow.update { ui -> ui.copy(saved = (ui.saved - links.toSet()) + links, meteredAsk = emptyList()) }
             enqueue(missing)
+          } catch (error: kotlinx.coroutines.CancellationException) { throw error }
+          catch (_: Exception) {
+            retryAction = { save(links, confirmed) }
+            flow.update { it.copy(actionError = S.s_action_failed_retry) }
+          } finally { flow.update { it.copy(pendingLinks = it.pendingLinks - links.toSet()) } }
         }
     }
 
@@ -203,28 +223,43 @@ class LibraryState(
 
     /** "Bỏ lưu": huỷ tải, gỡ ghim, xoá bản tải. */
     fun unsave(links: List<String>) {
+        if (links.isEmpty() || links.any { it in flow.value.pendingLinks }) return
+        flow.update { it.copy(pendingLinks = it.pendingLinks + links, actionError = "") }
         cancel(links)
         scope.launch {
+          try {
             withContext(io) { source.unsave(links) }
             flow.update { ui -> ui.copy(saved = ui.saved - links.toSet(), downloaded = ui.downloaded - links.toSet()) }
             if (flow.value.filters.downloaded) refilter()
+          } catch (error: kotlinx.coroutines.CancellationException) { throw error }
+          catch (_: Exception) {
+            retryAction = { unsave(links) }
+            flow.update { it.copy(actionError = S.s_action_failed_retry) }
+          } finally { flow.update { it.copy(pendingLinks = it.pendingLinks - links.toSet()) } }
         }
     }
+
+    private var retryAction: (() -> Unit)? = null
+    fun retryAction() { retryAction?.invoke() }
 
     /** "Xoá bản tải" (bài vẫn ở kho, không còn ghim). */
     fun forget(link: String) = unsave(listOf(link))
 
-    /** "Huỷ tải": bài đang chờ ra khỏi hàng; bài đang tải dừng ở lần đọc kế (phần đã tải giữ lại - "Tải tiếp"). */
+    /** Cancel discards incomplete bytes; a complete download is deleted only after UI confirmation. */
     fun cancel(links: List<String>) {
-        val gone = links.toSet()
+        val gone = links.filterNot { it in flow.value.downloaded }.toSet()
         synchronized(queue) { queue.removeAll(gone) }
         val current = currentLink
-        if (current != null && current in gone) cancelling = current
-        flow.update { ui -> ui.copy(active = ui.active.filterKeys { it !in gone || it == current }, failed = ui.failed - gone) }
+        if (current != null && current in gone) {
+            cancelling = current
+            scope.launch { withContext(io) { source.cancelDownload(current) } }
+        }
+        scope.launch { withContext(io) { gone.filter { it != current }.forEach(source::discardPartial) } }
+        flow.update { ui -> ui.copy(active = ui.active.filterKeys { it !in gone }, failed = ui.failed - gone) }
     }
 
     private fun enqueue(links: List<String>) {
-        synchronized(queue) { for (link in links) if (link !in queue && link != currentLink) queue.addLast(link) }
+        synchronized(queue) { for (link in links) if (link !in queue && (link != currentLink || cancelling == link)) queue.addLast(link) }
         flow.update { ui -> ui.copy(active = ui.active + links.filter { it !in ui.active }.associateWith { Loading(0, null) }, failed = ui.failed - links.toSet()) }
         if (worker?.isActive == true) return
         worker = scope.launch {
@@ -232,12 +267,13 @@ class LibraryState(
                 val link = synchronized(queue) { queue.removeFirstOrNull() } ?: break
                 currentLink = link
                 cancelling = null
+                flow.update { it.copy(active = it.active + (link to Loading(0, null))) }
                 var last = 0L
                 val outcome = withContext(io) {
                     runCatching {
                         source.download(link, { done, total ->
                             val now = System.nanoTime()
-                            if (now - last > 150_000_000L) {
+                            if (cancelling != link && now - last > 150_000_000L) {
                                 last = now
                                 flow.update { ui -> ui.copy(active = ui.active + (link to Loading(done, total))) }
                             }
@@ -245,11 +281,15 @@ class LibraryState(
                     }
                 }
                 val wasCancelled = cancelling == link
+                val completed = if (wasCancelled) withContext(io) {
+                    source.discardPartial(link)
+                    link in source.downloaded(listOf(link))
+                } else outcome.isSuccess
                 currentLink = null
                 cancelling = null
                 flow.update { ui ->
                     when {
-                        outcome.isSuccess -> ui.copy(active = ui.active - link, downloaded = ui.downloaded + link)
+                        completed -> ui.copy(active = ui.active - link, downloaded = ui.downloaded + link)
                         wasCancelled -> ui.copy(active = ui.active - link)
                         else -> ui.copy(active = ui.active - link, failed = ui.failed + (link to (outcome.exceptionOrNull()?.message ?: S.s_chua_tai_xong_b257419d)))
                     }
@@ -260,34 +300,49 @@ class LibraryState(
 
     // ---- Nghe thử ----
 
-    /** Nghe thử: từ `audibleStart`, tối đa [PREVIEW_SECONDS] giây, mức to chuẩn; dừng sách đang đọc; một bài một lúc. Mất mạng: chỉ bài đã tải. */
+    /** Full track, normalized gain, from the first audible sample. Only EOS ends playback. */
     fun togglePreview(link: String) {
-        if (flow.value.previewing == link) return stopPreview()
+        if (flow.value.previewing == link) {
+            val paused = !flow.value.previewPaused
+            flow.update { it.copy(previewPaused = paused, previewLoading = !paused) }
+            if (paused) preview.pause() else preview.resume()
+            return
+        }
         val ui = flow.value
         val track = ui.index?.byLink?.get(link) ?: return
         if (!ui.online && link !in ui.downloaded) return
         stopPreview()
         pauseBook()
         val request = previewRequest
-        flow.update { it.copy(previewing = link, previewLoading = true, previewError = "") }
+        flow.update { it.copy(previewing = link, previewLoading = true, previewPaused = false,
+            previewPosition = track.audibleStart, previewDuration = track.duration ?: 0.0, previewError = "", previewErrorLink = null) }
         preview.play(link, track.audibleStart, previewVolume(track.lufs),
             onEnd = { if (request == previewRequest) stopPreview() },
             onPlaying = { playing ->
-                if (request == previewRequest) {
-                    flow.update { it.copy(previewLoading = !playing) }
-                    if (playing && previewJob == null) previewJob = scope.launch {
-                        delay(PREVIEW_SECONDS * 1000L)
-                        if (request == previewRequest) stopPreview()
-                    }
-                }
+                if (request == previewRequest) flow.update { it.copy(previewLoading = !playing && !it.previewPaused) }
             },
             onError = { message ->
                 if (request == previewRequest) {
                     stopPreview()
-                    flow.update { it.copy(previewError = message) }
+                    flow.update { it.copy(previewError = message, previewErrorLink = link) }
                 }
             })
+        previewJob = scope.launch {
+            while (request == previewRequest) {
+                delay(200)
+                flow.update { it.copy(previewPosition = preview.position(), previewDuration = preview.duration().takeIf { d -> d > 0 } ?: it.previewDuration) }
+            }
+        }
     }
+
+    fun seekPreview(seconds: Double) {
+        if (flow.value.previewing == null) return
+        val target = seconds.coerceIn(0.0, flow.value.previewDuration.coerceAtLeast(0.0))
+        preview.seek(target)
+        flow.update { it.copy(previewPosition = target) }
+    }
+
+    fun retryPreview() { flow.value.previewErrorLink?.let(::togglePreview) }
 
     fun stopPreview() {
         previewRequest++
@@ -302,7 +357,6 @@ class LibraryState(
     fun setOnline(online: Boolean) = flow.update { it.copy(online = online) }
 
     companion object {
-        const val PREVIEW_SECONDS = 30
         const val PREVIEW_LUFS = -18.0
 
         /** Như `previewVolume` của web: bài to hơn mức chuẩn thì giảm, không khuếch đại quá 1. */

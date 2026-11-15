@@ -70,6 +70,7 @@ class ConsentGateTest {
     @Test
     fun `an online voice not agreed yet asks first and plays nothing before the answer`() {
         gate.before("b1", true, play)
+        assertEquals("b1", gate.pendingBook.value)
         assertEquals("chữ chưa đi đâu", 0, played)
         val ask = request()
         assertNotNull(ask)
@@ -160,6 +161,7 @@ class ConsentGateTest {
         gate.before("b1", true, play)
         gate.cancel()
         assertNull(request())
+        assertNull(gate.pendingBook.value)
         assertEquals(0, played)
     }
 

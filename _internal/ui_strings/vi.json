@@ -5934,7 +5934,21 @@
     "s_volume_no_changed": "Quyển này không có chương đã đổi để xuất.",
     "s_volume_cover_missing": "File sách thiếu bìa của một quyển.",
     "s_sleep_paused_keep": "Đang tạm dừng - đồng hồ cũng dừng.",
-    "s_sleep_activity_resets": "Thao tác hẹn lại"
+    "s_sleep_activity_resets": "Thao tác hẹn lại",
+    "s_stop_download": "Dừng tải",
+    "s_downloaded_delete": "Đã tải - bấm để xoá",
+    "s_delete_download_question": "Xoá bản tải?",
+    "s_delete_download_detail": "“{0}” · Giải phóng {1}. Bài vẫn có trong kho; cần mạng để tải lại.",
+    "s_buffering": "Đang đệm",
+    "s_action_failed_retry": "Chưa thực hiện được. Bấm thử lại.",
+    "s_destructive_question": "Xoá “{0}”?",
+    "s_irreversible_detail": "“{0}” sẽ bị xoá khỏi máy. Không thể hoàn tác.",
+    "s_reset_question": "Đặt lại cài đặt?",
+    "s_reset_detail": "Các tuỳ chỉnh hiện tại sẽ mất. Không thể hoàn tác.",
+    "s_delete_download_description": "“{0}” sẽ bị xoá khỏi máy, giải phóng {1}. Muốn nghe khi mất mạng, bạn cần tải lại.",
+    "s_music_seek": "Tua nhạc",
+    "s_music_paused": "Đã tạm dừng",
+    "s_unpair_detail": "Máy này sẽ quên kết nối với “{0}”. Muốn nối lại, bạn cần ghép lại thiết bị."
   },
   "android_resources": {
     "app_name": "s_abook_1c37d334",

@@ -131,8 +131,8 @@ Column {
                                 spacing: 12
                                 x: normal.stacked ? 0 : parent.width - normal.buttons
                                 y: normal.stacked ? words.height + 6 : (normal.height - height) / 2
-                                Button { id: renameButton; objectName: "renameTemplate"; text: S.s_doi_ten_a2a0dc70; kind: "ghost"; size: "sm"; onClicked: root.startRename(row.modelData.name) }
-                                Button { id: removeButton; objectName: "deleteTemplate"; text: S.s_xoa_777195ab; kind: "ghost"; size: "sm"; onClicked: root.removeTemplate(row.modelData) }
+                                Button { id: renameButton; objectName: "renameTemplate"; text: S.s_doi_ten_a2a0dc70; kind: "ghost"; size: "sm"; onActivated: root.startRename(row.modelData.name) }
+                                Button { id: removeButton; objectName: "deleteTemplate"; text: S.s_xoa_777195ab; kind: "ghost"; size: "sm"; onActivated: root.removeTemplate(row.modelData) }
                             }
                         }
                     }
@@ -174,8 +174,8 @@ Column {
                                     spacing: 8
                                     x: editLine.stacked ? 0 : parent.width - editLine.buttons
                                     y: editLine.stacked ? nameField.height + 8 : (nameField.height - height) / 2
-                                    Button { id: saveButton; objectName: "saveRename"; text: S.s_luu_e91f26c0; size: "sm"; enabled: root.typed.trim() !== "" && !root.busy; onClicked: root.finishRename(row.modelData.name) }
-                                    Button { id: cancelButton; objectName: "cancelRename"; text: S.s_huy_96732485; kind: "ghost"; size: "sm"; onClicked: root.cancelRename() }
+                                    Button { id: saveButton; objectName: "saveRename"; text: S.s_luu_e91f26c0; size: "sm"; enabled: root.typed.trim() !== "" && !root.busy; onActivated: root.finishRename(row.modelData.name) }
+                                    Button { id: cancelButton; objectName: "cancelRename"; text: S.s_huy_96732485; kind: "ghost"; size: "sm"; onActivated: root.cancelRename() }
                                 }
                             }
                             Collapse {

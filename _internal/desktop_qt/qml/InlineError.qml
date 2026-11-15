@@ -60,7 +60,7 @@ Collapse {
                     kind: "ghost"
                     size: "sm"
                     enabled: root.open
-                    onClicked: root.retry()
+                    onActivated: root.retry()
                 }
             }
         }

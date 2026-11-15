@@ -57,4 +57,13 @@ interface SamplePlayer {
     fun playRange(path: String, startMs: Int, endMs: Int, onEnded: () -> Unit, onFailed: () -> Unit) = play(path, onEnded, onFailed)
 
     fun stop()
+    fun playRangeWithState(path: String, startMs: Int, endMs: Int, onEnded: () -> Unit, onFailed: () -> Unit, onPlaying: (Boolean) -> Unit) {
+        playRange(path, startMs, endMs, onEnded, onFailed)
+        onPlaying(true)
+    }
+    fun pause() {}
+    fun resume() {}
+    fun seek(ms: Int) {}
+    fun positionMs(): Int = 0
+    fun durationMs(): Int = 0
 }

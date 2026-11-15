@@ -83,7 +83,7 @@ export function VoicePickCard({ backend = desktopVoicePick, modulesBusy = false 
                   </span>
                   <span data-motion-live className="mt-1 block text-body-small text-fg-2 text-pretty">{rowNumbers(row, status.liveRtf)}</span>
                 </span>
-                <Reveal when={!isChosen && !measuring}><Button size="sm" variant="ghost" className="settings-edge-action -my-1 shrink-0" loading={busy} onClick={() => void run(() => backend.choose(row.engine))}>{S.s_dung_giong_nay_903b57aa}</Button></Reveal>
+                <Reveal when={!isChosen && !measuring}><Button size="sm" variant="ghost" className="settings-edge-action -my-1 shrink-0" loading={busy} onClick={() => run(() => backend.choose(row.engine))}>{S.s_dung_giong_nay_903b57aa}</Button></Reveal>
               </li>
             );
           })}
@@ -92,11 +92,11 @@ export function VoicePickCard({ backend = desktopVoicePick, modulesBusy = false 
       {measured && <p className="text-body-small text-fg-3 text-pretty">{pickMethod(status)}</p>}
       {status.engines.length > 0 && !measuring && (
         <div className="flex flex-wrap items-center gap-2">
-          <Button size="sm" variant={measured ? "ghost" : "primary"} loading={busy} onClick={() => void run(() => backend.measure())}>
+          <Button size="sm" variant={measured ? "ghost" : "primary"} loading={busy} onClick={() => run(() => backend.measure())}>
             {measured ? S.s_thu_lai_c58d068c : S.s_thu_77e1c0d9}
           </Button>
           {status.override && (
-            <Button size="sm" variant="ghost" loading={busy} onClick={() => void run(() => backend.choose(""))}>{S.s_theo_so_do_f3663b51}</Button>
+            <Button size="sm" variant="ghost" loading={busy} onClick={() => run(() => backend.choose(""))}>{S.s_theo_so_do_f3663b51}</Button>
           )}
         </div>
       )}

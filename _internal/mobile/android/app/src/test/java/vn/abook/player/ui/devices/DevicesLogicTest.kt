@@ -102,8 +102,8 @@ class DevicesLogicTest {
     private val edited = Unsent(listOf(UnsentBook("Sách A", 2), UnsentBook("Sách B", 1)), 3, sendable = true, cacheBooks = 2, cacheBytes = 80L * 1024 * 1024, places = 1)
 
     @Test
-    fun `nothing to lose means no question`() {
-        assertNull(DeviceText.forgetCopy("Máy phụ", Unsent(), reachable = true))
+    fun `removing even an empty pairing needs a question`() {
+        assertTrue(DeviceText.forgetCopy("Máy phụ", Unsent(), reachable = true)!!.lines.single().contains("ghép lại"))
         assertNull(DeviceText.forgetCopy("Máy phụ", null, reachable = true))
     }
 

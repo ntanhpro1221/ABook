@@ -90,8 +90,8 @@ function unpairDone(device) { return S.s_da_bo_ghep_0977f068 + device }
 function unpairCopy(device, self, unsent, reachable) {
     const edited = !!unsent && unsent.changes > 0 && (unsent.books || []).length > 0
     const cache = unsent && unsent.cache && unsent.cache.books > 0 ? unsent.cache : null
-    if (!unsent || (!edited && !cache)) return null
-    const lines = []
+    if (!unsent) return null
+    const lines = edited || cache ? [] : [S.s_unpair_detail(device)]
     if (cache) {
         const downloaded = cache.bytes > 0 ? S.s_va_231e8fb6 + (cache.bytes < Math.pow(1024, 2) ? S.s_duoi_1_mb_b59395ae : Size.formatSize(cache.bytes)) + S.s_da_tai_ve_80dabcac + self + S.s_nay_se_bi_xoa_99dfc8c2 : ""
         lines.push(cache.books + S.s_cuon_cua_4d2892a0 + device + S.s_se_roi_thu_vien_ec7e0d78 + downloaded + ".")
@@ -112,7 +112,7 @@ function unpairCopy(device, self, unsent, reachable) {
             lines.push(device + S.s_dang_tat_hay_khac_mang_luc_nay_nen_chua_gu_6b9e0bbc)
         }
     }
-    return {title: S.s_bo_ghep_9139fc92 + device + "?", lines: lines, send: send, sendPrimary: edited && up, discard: edited ? S.s_van_bo_ghep_bo_thay_doi_64cb2e74 : S.s_bo_ghep_64f921f9, cancel: S.s_giu_lai_3c3ba2db}
+    return {title: S.s_bo_ghep_9139fc92 + device + "?", lines: lines, send: send, sendPrimary: edited && up, discard: edited ? S.s_van_bo_ghep_bo_thay_doi_64cb2e74 : S.s_bo_ghep_64f921f9, cancel: S.s_huy_96732485}
 }
 
 // ---- Chẩn đoán điện thoại (shared/diagnostics.ts) ----

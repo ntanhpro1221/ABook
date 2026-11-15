@@ -271,7 +271,7 @@ Column {
                                             height: parent.height
                                             x: parent.width - width
                                             Text { id: pairedText; Reveal { shown: modelData.paired } anchors.verticalCenter: parent.verticalCenter; text: S.s_da_ghep_2bd0972f; color: Theme.text2; font.pixelSize: Theme.sizeCaption }
-                                            Button { id: chooseButton; Reveal { shown: !modelData.paired } anchors.verticalCenter: parent.verticalCenter; size: "sm"; kind: "ghost"; text: S.s_chon_1171ca97; onClicked: root.choose(modelData.host + ":" + modelData.port) }
+                                            Button { id: chooseButton; Reveal { shown: !modelData.paired } anchors.verticalCenter: parent.verticalCenter; size: "sm"; kind: "ghost"; text: S.s_chon_1171ca97; onActivated: root.choose(modelData.host + ":" + modelData.port) }
                                         }
                                     }
                                 }
@@ -341,7 +341,7 @@ Column {
                         spacing: 8
                         HintText { width: parent.width; text: S.s_pair_fingerprint_label + (root.confirmation ? root.confirmation.short : "") }
                         HintText { width: parent.width; text: S.s_pair_fingerprint_help }
-                        Button { text: S.s_pair_fingerprint_confirm; enabled: !root.pairBusy; onClicked: if (root.confirmation) root.pair(root.confirmation.fingerprint) }
+                        Button { text: S.s_pair_fingerprint_confirm; enabled: !root.pairBusy; onActivated: if (root.confirmation) root.pair(root.confirmation.fingerprint) }
                     }
                     Collapse {
                         width: parent.width
@@ -374,7 +374,7 @@ Column {
                                         icon: "bluetooth"
                                         wrap: true
                                         text: modelData.name + "\u00a0·\u00a0" + Logic.deviceKindLabel(modelData.kind)
-                                        onClicked: root.choose(modelData.address)
+                                        onActivated: root.choose(modelData.address)
                                     }
                                 }
                             }
@@ -388,7 +388,7 @@ Column {
                             kind: "ghost"
                             icon: "bluetooth"
                             text: modelData.name + S.s_u00a0_u00a0ban_thu_175857e0
-                            onClicked: root.choose(modelData.address + "@dev")
+                            onActivated: root.choose(modelData.address + "@dev")
                         }
                     }
                     HintText { width: parent.width; text: S.s_may_kia_cai_dat_thiet_bi_bat_4272e84f + root.syncLabel + S.s_de_lay_ma_ghep_mot_chieu_de_nghe_thu_vien_bea7e639 }

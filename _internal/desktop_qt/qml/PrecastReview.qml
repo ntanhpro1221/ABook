@@ -367,7 +367,7 @@ FocusScope {
                                 kind: "ghost"
                                 size: "lg"
                                 text: S.s_ve_danh_sach_chuong_b5fd5434
-                                onClicked: root.closeRequested()
+                                onActivated: root.closeRequested()
                             }
                         }
                     }
@@ -384,8 +384,8 @@ FocusScope {
                     width: parent.width
                     layoutDirection: Qt.RightToLeft
                     spacing: 8
-                    Button { objectName: "precastNext"; text: S.s_tiep_tuc_87a7ae88; onClicked: root.next() }
-                    Button { objectName: "precastSkip"; text: S.s_bo_qua_buoc_nay_128392ff; kind: "ghost"; onClicked: root.next() }
+                    Button { objectName: "precastNext"; text: S.s_tiep_tuc_87a7ae88; onActivated: root.next() }
+                    Button { objectName: "precastSkip"; text: S.s_bo_qua_buoc_nay_128392ff; kind: "ghost"; onActivated: root.next() }
                 }
             }
         }
@@ -415,7 +415,7 @@ FocusScope {
                 size: "sm"
                 kind: "ghost"
                 text: S.s_gop_vao_6221e312
-                onClicked: root.personRequest("merge", twin.person)
+                onActivated: root.personRequest("merge", twin.person)
             }
         }
     }

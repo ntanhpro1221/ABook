@@ -147,13 +147,13 @@ private fun ForgetPage(device: Paired, state: DevicesState, dismiss: () -> Unit,
     ) {
         SwapContent(copy, contentKey = { copy -> copy?.send != null }, layout = ContentLayout.Column) { copy ->
             if (copy?.send != null) {
-                PrimaryButton(copy.send, { run(ForgetChoice.Send) }, Modifier.fillMaxWidth().testTag("forget_send"), enabled = !working)
+                PrimaryButton(copy.send, { run(ForgetChoice.Send) }, Modifier.fillMaxWidth().testTag("forget_send"), pending = working, enabled = !working)
                 Spacer(Modifier.height(Dim.s8))
             }
         }
-        DangerButton(if (working) S.s_dang_bo_ghep_f640bfd2 else copy?.discard ?: S.s_bo_ghep_64f921f9, { run(if (copy?.edited == true) ForgetChoice.Discard else ForgetChoice.Plain) }, "forget_yes")
+        DangerButton(if (working) S.s_dang_bo_ghep_f640bfd2 else copy?.discard ?: S.s_bo_ghep_64f921f9, { run(if (copy?.edited == true) ForgetChoice.Discard else ForgetChoice.Plain) }, "forget_yes", pending = working)
         Spacer(Modifier.height(Dim.s8))
-        QuietButton(S.s_giu_lai_3c3ba2db, onKeep, "forget_keep")
+        QuietButton(S.s_huy_96732485, onKeep, "forget_keep")
     }
 }
 
@@ -199,7 +199,7 @@ fun RevokeSheet(sharer: Sharer, state: DevicesState, dismiss: () -> Unit) {
     ConfirmPage(S.s_bo_ghep_0_e98b86ca(sharer.name), "revoke_confirm", listOf(S.s_may_ay_khong_nghe_duoc_thu_vien_nay_nua_sa_6cb9d26e), "") {
         DangerButton(S.s_bo_ghep_64f921f9, { state.revoke(sharer.id); dismiss() }, "revoke_yes")
         Spacer(Modifier.height(Dim.s8))
-        QuietButton(S.s_giu_lai_3c3ba2db, dismiss, "revoke_keep")
+        QuietButton(S.s_huy_96732485, dismiss, "revoke_keep")
     }
 }
 

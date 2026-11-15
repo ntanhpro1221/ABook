@@ -2,6 +2,7 @@ import "UiStrings.js" as S
 import QtQuick
 import ABook
 import "MusicLibraryLogic.js" as Logic
+import "SizeFormat.js" as Size
 
 // Chi tiết một bài của Kho nhạc (TrackSheet.tsx của web): tên · người sáng tác; nút Dùng (chế độ chọn), Nghe thử, Tải về / Huỷ tải % / Xoá bản tải,
 // Không tự chọn bài này (chế độ chọn: chặn bài ở cuốn ấy - overrides.banned như web); "Vì sao bài này" (cảm xúc đoạn cạnh cảm xúc bài, 3 cảm
@@ -21,6 +22,7 @@ Modal {
     property bool online: true
     property var detail: null
     property bool loading: false
+    property string problem: ""
     signal preview()
     signal save()
     signal unsave()
@@ -43,19 +45,26 @@ Modal {
     function reload() {
         if (!link) return
         loading = true
+        problem = ""
         let path = "/api/music/library/track?link=" + encodeURIComponent(link)
         if (context && context.book && context.scene) path += "&book=" + encodeURIComponent(context.book) + "&scene=" + encodeURIComponent(context.scene)
         const asked = link
         Api.quiet("GET", path, null, function(data, error) {
             if (asked !== root.link) return
             loading = false
+            problem = error || ""
             detail = error ? null : data
         })
     }
 
+    DestructiveConfirm { id: remove; title: S.s_delete_download_question
+        description: S.s_delete_download_description(root.detail ? root.detail.title || "" : "", Size.formatSize(root.detail ? root.detail.bytes || 0 : 0))
+        onAccepted: root.unsave()
+    }
     Column {
         width: root.bodyWidth
         spacing: Theme.s16
+        InlineError { width: parent.width; message: root.problem; onRetry: root.reload() }
         MusicArt {
             anchors.horizontalCenter: parent.horizontalCenter
             width: 160; height: 160
@@ -82,8 +91,9 @@ Modal {
             Button {
                 width: (parent.width - parent.spacing) / 2
                 objectName: "musicDetailPreview"
-                text: root.previewing && root.previewLoading ? S.s_dang_tai_am_thanh_6c7cb62f : root.previewing ? S.s_dung_nghe_f20939be : S.s_nghe_thu_fa024065
-                icon: root.previewing ? "square" : "play"
+                text: root.previewing && root.previewLoading ? S.s_buffering : root.previewing && !Clip.paused ? S.s_tam_dung_67635815 : S.s_nghe_thu_fa024065
+                icon: root.previewing && !Clip.paused ? "pause" : "play"
+                pending: root.previewing && root.previewLoading
                 enabled: root.online || root.load.kind === "done"
                 onActivated: root.preview()
             }
@@ -91,12 +101,12 @@ Modal {
                 width: (parent.width - parent.spacing) / 2
                 objectName: "musicDetailDownload"
                 kind: "outline"
-                text: root.load.kind === "loading" ? S.s_huy_tai_1a9ff73d + (root.load.percent !== null && root.load.percent !== undefined ? "\u00a0·\u00a0" + root.load.percent + " %" : "")
+                text: root.load.kind === "loading" ? S.s_stop_download + (root.load.percent !== null && root.load.percent !== undefined ? "\u00a0·\u00a0" + root.load.percent + " %" : "")
                     : root.load.kind === "done" ? S.s_xoa_ban_tai_4b461f4a : root.load.kind === "failed" ? S.s_tai_tiep_1efbd854 : S.s_tai_ve_9b5bdb44
-                icon: root.load.kind === "loading" ? "x" : root.load.kind === "done" ? "trash" : "download"
+                icon: root.load.kind === "loading" ? "square" : root.load.kind === "done" ? "trash" : "download"
                 enabled: root.online || root.load.kind === "done" || root.load.kind === "loading"
                 Accessible.name: root.load.kind === "done" ? S.s_xoa_ban_tai_4b461f4a : text
-                onActivated: root.load.kind === "loading" ? root.cancelDownload() : root.load.kind === "done" ? root.unsave() : root.save()
+                onActivated: root.load.kind === "loading" ? root.cancelDownload() : root.load.kind === "done" ? remove.show() : root.save()
             }
         }
         Collapse {
@@ -114,7 +124,7 @@ Modal {
                         objectName: "musicDetailSave"
                         text: root.detail && root.detail.saved ? S.s_bo_luu_2fd51455 : S.s_luu_e91f26c0
                         kind: root.detail && root.detail.saved ? "ghost" : "primary"
-                        onActivated: root.detail && root.detail.saved ? root.unsave() : root.save()
+                        onActivated: root.detail && root.detail.saved ? remove.show() : root.save()
                     }
                 }
                 Collapse { width: musicView.implicitWidth; open: root.playing; Button { id: musicView; text: S.s_xem_trong_kho_2a139d05; kind: "ghost"; onActivated: root.openLibrary(root.detail ? root.detail.title || "" : "") } }
@@ -122,6 +132,7 @@ Modal {
                 Collapse { width: musicBan.implicitWidth; open: root.picking; Button { id: musicBan; text: S.s_khong_tu_chon_02ae1742; kind: "ghost"; onActivated: root.ban() } }
             }
         }
+        Collapse { width: parent.width; open: root.previewing; MusicListeningProgress { width: parent.width } }
         // Vì sao bài này
         Column {
             Reveal { shown: !!(root.detail && root.detail.why && root.detail.why.matches.length) }

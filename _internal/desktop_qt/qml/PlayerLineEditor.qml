@@ -141,7 +141,7 @@ Modal {
         Column {
             width: parent.width
             ScriptSpeakerMenu { width: parent.width; line: root.line; script: root.chapter; enabled: !root.writing; onPicked: person => commands.assign([root.line], person) }
-            Button { text: S.s_quay_lai_6d793582; kind: "ghost"; onClicked: root.step = "menu" }
+            Button { text: S.s_quay_lai_6d793582; kind: "ghost"; onActivated: root.step = "menu" }
         }
     }
     Component {
@@ -149,7 +149,7 @@ Modal {
         Column {
             width: parent.width
             ScriptDelivery { width: parent.width; line: root.line; script: root.chapter; enabled: !root.writing; onSave: change => commands.fixLine(root.line, change) }
-            Button { text: S.s_quay_lai_6d793582; kind: "ghost"; onClicked: root.step = "menu" }
+            Button { text: S.s_quay_lai_6d793582; kind: "ghost"; onActivated: root.step = "menu" }
         }
     }
 }

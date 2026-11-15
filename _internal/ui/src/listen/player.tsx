@@ -120,6 +120,7 @@ interface PlayerState {
   queue: ListenChapter[];
   playing: boolean;
   buffering: boolean;
+  preparingBookId?: string | null;
   rate: number;
   volume: number;
   sleep: SleepMode;
@@ -295,6 +296,7 @@ export function PlayerProvider({
   const [queue, setQueue] = useState<ListenChapter[]>([]);
   const [playing, setPlaying] = useState(false);
   const [buffering, setBuffering] = useState(false);
+  const [preparingBookId, setPreparingBookId] = useState<string | null>(null);
   const [rate, setRateState] = useState(defaultRate);
   const [volume, setVolumeState] = useState(defaultVolume);
   const [sleep, setSleepState] = useState<SleepMode>({ kind: "off" });
@@ -495,11 +497,12 @@ export function PlayerProvider({
    *  audio, giọng của máy, hay đã đồng ý: chạy ngay. Máy tính và điện thoại như nhau (lõi Android cũng chỉ đọc khi được lệnh phát). */
   const withConsent = useCallback((bookId: string, chapter: ListenChapter | undefined, run: () => void) => {
     const intent = refs.current.playIntent;
-    const guarded = () => { if (intent === refs.current.playIntent) run(); };
+    const guarded = () => { if (intent === refs.current.playIntent) { setPreparingBookId(null); run(); } };
     if (chapter?.state !== "text") {
       guarded();
       return;
     }
+    setPreparingBookId(bookId);
     const decide = (voices: ReadAloudVoice[]) => {
       if (intent !== refs.current.playIntent) return;
       const voice = resolveVoice(voices, chosenVoice(bookId));
@@ -508,7 +511,8 @@ export function PlayerProvider({
         return;
       }
       void askOnlineConsent(voice, voices).then((picked) => {
-        if (picked === null || intent !== refs.current.playIntent) return;
+        if (intent !== refs.current.playIntent) return;
+        if (picked === null) { setPreparingBookId(null); return; }
         // Chọn trong danh sách là lựa chọn cho cuốn, kể cả chọn lại đúng giọng đang hỏi (soát a66: không nhớ thì tải giọng trên máy xong cuốn
         // tự sang giọng mặc định khác). "Nghe" thì không: cuốn vẫn theo giọng mặc định.
         if (picked.chosen) chooseVoice(bookId, picked.voice);
@@ -516,8 +520,10 @@ export function PlayerProvider({
       });
     };
     const fresh = voicesOf(source).then((voices) => (voicesRef.current = voices));
-    if (voicesRef.current) decide(voicesRef.current);
-    else void fresh.then(decide);
+    if (voicesRef.current) { void fresh.catch(() => undefined); decide(voicesRef.current); }
+    else void fresh.then(decide).catch(() => {
+      if (intent === refs.current.playIntent) { setPreparingBookId(null); setError(S.s_action_failed_retry); }
+    });
   }, [source]);
 
   // Giọng riêng của cuốn đi theo hồ sơ nghe (soát a68 lỗi 8): chọn ở đây thì ghi vào hồ sơ; mở cuốn thì nhận giọng máy kia chọn sau, nếu máy này có.
@@ -1099,6 +1105,7 @@ export function PlayerProvider({
   }, []);
 
   const pause = useCallback(() => {
+    setPreparingBookId(null);
     awakeRef.current();
     ++refs.current.playIntent;
     refs.current.wantsPlay = false;
@@ -1337,6 +1344,7 @@ export function PlayerProvider({
   }, [applySleep, endFade, engine, native, night, options.extendMinutes, options.schedule, position, rememberSleep]);
 
   const close = useCallback(() => {
+    setPreparingBookId(null);
     if (!native) publishTrackMetadata(null);
     toast.dismiss("jump");
     refs.current.wantsPlay = false;
@@ -2013,11 +2021,11 @@ export function PlayerProvider({
   }, []);
 
   const value = useMemo<PlayerValue>(() => ({
-    track, queue, playing, buffering, rate, volume, sleep, fading, sleepStoppedAt, lastSleepMinutes, purpose, atEnd,
+    track, queue, playing, buffering: buffering || preparingBookId !== null, preparingBookId, rate, volume, sleep, fading, sleepStoppedAt, lastSleepMinutes, purpose, atEnd,
     canGoBack, error, errorRepeat, notice, options, musicCredit, musicBroken, musicOffline, musicLoading,
     play, prepare, toggle, resume, retry, dismissError, wantsPlay, pause, seek, skip, next, previous, jumpTo, goBack, restart, setRate, setVolume, setSleep,
     extendSleep, close, switchRecord, positionStamp, setContinues,
-  }), [track, queue, playing, buffering, rate, volume, sleep, fading, sleepStoppedAt, lastSleepMinutes, purpose, atEnd,
+  }), [track, queue, playing, buffering, preparingBookId, rate, volume, sleep, fading, sleepStoppedAt, lastSleepMinutes, purpose, atEnd,
     canGoBack, error, errorRepeat, notice, options, musicCredit, musicBroken, musicOffline, musicLoading, play, prepare, toggle, resume, retry, dismissError, wantsPlay, pause, seek, skip, next, previous, jumpTo, goBack, restart,
     setRate, setVolume, setSleep, extendSleep, close, switchRecord, positionStamp, setContinues]);
 

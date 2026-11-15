@@ -69,7 +69,7 @@ Modal {
                     objectName: "scopeMode_" + modelData.value
                     text: modelData.label; size: "sm"; kind: root.mode === modelData.value ? "outline" : "ghost"
                     enabled: !root.busy && (modelData.value !== "scene" || !!root.line && root.line.scene !== null && root.line.scene !== undefined)
-                    onClicked: { root.mode = modelData.value; root.toggled = [] }
+                    onActivated: { root.mode = modelData.value; root.toggled = [] }
                 }
             }
         }
@@ -118,7 +118,7 @@ Modal {
                             required property var modelData
                             objectName: "scopeNew_" + modelData.value
                             text: modelData.label; kind: "ghost"
-                            onClicked: root.person = {value: search.text.trim(), label: search.text.trim(), lines: 0, newGender: modelData.value}
+                            onActivated: root.person = {value: search.text.trim(), label: search.text.trim(), lines: 0, newGender: modelData.value}
                         }
                     }
                 }
@@ -127,7 +127,7 @@ Modal {
         Button {
             Reveal { shown: !!root.person }
             text: S.s_scope_target(root.person ? root.person.label : ""); kind: "ghost"
-            onClicked: root.person = null
+            onActivated: root.person = null
         }
         Text {
             objectName: "scopeCount"
@@ -166,5 +166,5 @@ Modal {
             Text { width: parent.width; wrapMode: Text.Wrap; color: Theme.danger; font.pixelSize: Theme.sizeBodySmall; text: root.error }
         }
     }
-    footer: Button { objectName: "scopeApply"; text: S.s_scope_apply; enabled: !root.busy && !!root.person && root.chosen.length > 0; onClicked: root.submit() }
+    footer: Button { objectName: "scopeApply"; text: S.s_scope_apply; enabled: !root.busy && !!root.person && root.chosen.length > 0; onActivated: root.submit() }
 }

@@ -1,3 +1,4 @@
+import { useDestructiveConfirm } from "../shared/DestructiveConfirm";
 import { S } from "../shared/strings.generated";
 import { MotionRegion } from "@/shared/MotionRegion";
 import { useQueryClient } from "@tanstack/react-query";
@@ -22,6 +23,7 @@ export function MusicModuleNotice({ view, queryKey }: { view: LocalMusicView | u
   const client = useQueryClient();
   const module = view?.module;
   const [starting, setStarting] = useState(false);
+  const deletion = useDestructiveConfirm();
   const busy = module?.state === "downloading" || Boolean(module?.analysing) || preciseBusy(module?.precise);
   useEffect(() => {
     if (!busy) return;
@@ -59,6 +61,7 @@ export function MusicModuleNotice({ view, queryKey }: { view: LocalMusicView | u
   const action = busy || module.state === "unsupported" || module.restart ? null : stale > 0 && module.state === "ready" ? "reanalyse" : "install";
   return (
     <MotionRegion role="status" className="space-y-3 text-xs text-fg-2">
+      {deletion.dialog}
       {showModule && (
         <div className="space-y-2">
           {/* Đang tải: % đổi liên tục trong vùng role=status - trình đọc màn hình chỉ đọc mốc 25 % (soát a31 A6). */}
@@ -71,18 +74,18 @@ export function MusicModuleNotice({ view, queryKey }: { view: LocalMusicView | u
             <div className="flex items-center gap-3">
               <Progress value={modulePercent(module) / 100} indeterminate={module.total <= 0} size="sm" running label={S.s_dang_tai_phan_tich_nhac_880839b5} className="flex-1" />
               {module.cancellable && (
-                <Button size="sm" variant="ghost" loading={starting} onClick={() => void cancel("/api/music/local/module/cancel")}>{S.s_huy_96732485}</Button>
+                <Button size="sm" variant="ghost" loading={starting} onClick={() => cancel("/api/music/local/module/cancel")}>{S.s_huy_96732485}</Button>
               )}
             </div>
           )}
           {action && (
             <div className="flex flex-wrap items-center gap-2">
               {action === "install" ? (
-                <Button size="sm" variant="ghost" className={WRAP} loading={starting} onClick={() => void post("/api/music/local/module")}>
+                <Button size="sm" variant="ghost" className={WRAP} loading={starting} onClick={() => post("/api/music/local/module")}>
                   {failed ? S.s_thu_lai_c58d068c : module.stopped ? S.s_tai_lai_0_31a8bdc1(formatSize(module.outdatedBytes ?? module.total)) : updating ? S.s_cap_nhat_0_618a3fa3(formatSize(module.outdatedBytes ?? module.total)) : S.s_tai_0_3463a4d8(formatSize(module.total))}
                 </Button>
               ) : (
-                <Button size="sm" variant="ghost" className={WRAP} loading={starting} onClick={() => void post("/api/music/local/reanalyse")}>
+                <Button size="sm" variant="ghost" className={WRAP} loading={starting} onClick={() => post("/api/music/local/reanalyse")}>
                   {S.s_phan_tich_0_bai_53fe1b94(stale)}
                 </Button>
               )}
@@ -108,7 +111,7 @@ export function MusicModuleNotice({ view, queryKey }: { view: LocalMusicView | u
             <Progress value={precise.total > 0 ? precise.done / precise.total : 0} indeterminate={!(precise.total > 0)} size="sm" running label={S.s_dang_tai_bo_do_cam_xuc_chinh_xac_hon_94cbb498} />
           )}
           {precise.state === "downloading" && module.cancellable && (
-            <Button size="sm" variant="ghost" loading={starting} onClick={() => void cancel("/api/music/local/precise/cancel")}>{S.s_huy_96732485}</Button>
+            <Button size="sm" variant="ghost" loading={starting} onClick={() => cancel("/api/music/local/precise/cancel")}>{S.s_huy_96732485}</Button>
           )}
           {precise.state !== "downloading" && (
             <div className="flex flex-wrap items-center gap-2">
@@ -116,7 +119,7 @@ export function MusicModuleNotice({ view, queryKey }: { view: LocalMusicView | u
                 {precise.state === "error" ? S.s_thu_lai_c58d068c : precise.state === "missing" ? S.s_tai_tiep_0_67826e5b(formatSize(precise.bytes)) : precise.state === "ready" ? S.s_tat_do_cam_xuc_1435c1ed : precise.present ? S.s_bat_do_cam_xuc_d6c6ba08 : S.s_tai_0_3463a4d8(formatSize(precise.bytes))}
               </Button>
               {precise.removable && (
-                <Button size="sm" variant="ghost" loading={starting} onClick={() => void post("/api/music/local/precise/remove")}>
+                <Button size="sm" variant="ghost" loading={starting} onClick={() => deletion.confirm({ title: S.s_xoa_file_0_22ad15c7(formatSize(precise.bytes)), description: S.s_irreversible_detail(S.s_cam_xuc_chinh_xac_eab97dc3), run: () => post("/api/music/local/precise/remove") })}>
                   {S.s_xoa_file_0_22ad15c7(formatSize(precise.bytes))}
                 </Button>
               )}

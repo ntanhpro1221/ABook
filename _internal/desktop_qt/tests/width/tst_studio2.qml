@@ -737,6 +737,8 @@ Item {
             compare(calls("PUT", "/api/books/c1/cover")[0].body, {image: "data:image/png;base64,AAA"})
             tryVerify(function() { return Api.notice === "Đã đặt ảnh bìa" })
             one(page, "coverRemove").clicked()
+            compare(calls("DELETE", "/api/books/c1/cover").length, 0)
+            one(host.Window.window.contentItem, "studioCoverRemoveConfirm").accept()
             tryVerify(function() { return calls("DELETE", "/api/books/c1/cover").length === 1 })
             tryVerify(function() { return Api.notice === "Đã bỏ ảnh bìa" })
         }

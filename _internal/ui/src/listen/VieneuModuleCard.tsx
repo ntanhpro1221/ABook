@@ -244,7 +244,7 @@ export function VieneuModuleCard({
         <div className="flex items-center gap-3">
           <Progress value={vieneuPercent(shown) / 100} indeterminate={shown.total <= 0} size="sm" running label={S.s_dang_tai_0_03db34d6(lowerName)} className="flex-1" />
           {backend.cancel && (
-            <Button size="sm" variant="ghost" data-focus-next loading={busy} onClick={() => void run(() => backend.cancel!(), S.s_chua_huy_duoc_viec_tai_0_d8afe625(lowerName))}>{S.s_huy_96732485}</Button>
+            <Button size="sm" variant="ghost" data-focus-next loading={busy} onClick={() => run(() => backend.cancel!(), S.s_chua_huy_duoc_viec_tai_0_d8afe625(lowerName))}>{S.s_huy_96732485}</Button>
           )}
         </div>
       )}
@@ -306,7 +306,7 @@ export function VieneuModuleCard({
       {suggestion && (
         <div className="py-3 text-body-small text-pretty">
           <p>{suggestion.message}</p>
-          <Button size="sm" variant="ghost" className="mt-2" loading={busy} onClick={() => void switchTo()}>
+          <Button size="sm" variant="ghost" className="mt-2" loading={busy} onClick={() => switchTo()}>
             {suggestion.action}
           </Button>
         </div>
@@ -320,22 +320,22 @@ export function VieneuModuleCard({
       {canPick && !status.restart && (
         <div className="flex flex-wrap items-center gap-2">
           {status.state === "outdated" && (
-            <Button size="sm" variant="ghost" loading={busy} onClick={() => void run(() => backend.start())}>
+            <Button size="sm" variant="ghost" loading={busy} onClick={() => run(() => backend.start())}>
               {S.s_cap_nhat_0_618a3fa3(formatSize(status.outdatedBytes))}
             </Button>
           )}
           {missing.length > 0 && (
-            <Button size="sm" variant={status.state === "missing" ? "primary" : "ghost"} data-focus-next loading={busy} onClick={() => void run(() => backend.start(missing))}>
+            <Button size="sm" variant={status.state === "missing" ? "primary" : "ghost"} data-focus-next loading={busy} onClick={() => run(() => backend.start(missing))}>
               {failed ? S.s_thu_lai_c58d068c : bytes > 0 ? S.s_tai_0_3463a4d8(formatSize(bytes)) : S.s_dung_7927ca4e}
             </Button>
           )}
           {(Object.keys(status.benchmark).length > 0 || Boolean(status.accelerated?.problem)) && (
-            <Button size="sm" variant="ghost" loading={busy} onClick={() => void run(() => backend.measure())}>{S.s_thu_lai_toc_do_a69ef56d}</Button>
+            <Button size="sm" variant="ghost" loading={busy} onClick={() => run(() => backend.measure())}>{S.s_thu_lai_toc_do_a69ef56d}</Button>
           )}
         </div>
       )}
       <Dialog footer={<DialogActions>
-          <Button variant="ghost" onClick={() => setAsking(null)}>{S.s_giu_lai_3c3ba2db}</Button>
+          <Button variant="ghost" onClick={() => setAsking(null)}>{S.s_huy_96732485}</Button>
           <Button
             variant="danger"
             disabled={asking?.use === undefined}

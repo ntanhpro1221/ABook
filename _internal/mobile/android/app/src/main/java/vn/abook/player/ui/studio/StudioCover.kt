@@ -142,6 +142,10 @@ private fun CoverHub(editor: BookEditor, onBack: () -> Unit, find: () -> Unit, c
     val state by editor.state.collectAsState()
     val picker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri -> uri?.let { crop(it.toString()) } }
     val has = state.saved?.cover != null
+    var askRemoveCover by remember { mutableStateOf(false) }
+    if (askRemoveCover) vn.abook.player.ui.components.DestructiveConfirm(S.s_bo_anh_bia_696c6692,
+        S.s_irreversible_detail(state.saved?.title.orEmpty()), { askRemoveCover = false },
+        { editor.setCover(null) }, pending = state.saving, problem = state.problem)
     BookForm(StudioCoverText.TITLE, onBack, "studio_cover") {
         // The shared menu scrolls the lead and all actions together in short windows.
         SheetMenu(Modifier.fillMaxWidth()) {
@@ -150,7 +154,7 @@ private fun CoverHub(editor: BookEditor, onBack: () -> Unit, find: () -> Unit, c
                 RowHint(if (state.loading) "" else if (has) StudioCoverText.HAS else StudioCoverText.NONE, Modifier.padding(bottom = Dim.s8))
                 MenuRow(StudioCoverText.PICK, "studio_cover_pick", onClick = { picker.launch(arrayOf("image/*")) }) { ink -> ImageIcon(ink) }
                 MenuRow(StudioCoverText.FIND, "studio_cover_find", onClick = find) { ink -> GlobeIcon(ink) }
-                Reveal(has) { MenuRow(StudioCoverText.REMOVE, "studio_cover_remove", danger = true, onClick = { editor.setCover(null) }) { ink -> TrashIcon(ink) } }
+                Reveal(has) { MenuRow(StudioCoverText.REMOVE, "studio_cover_remove", danger = true, onClick = { askRemoveCover = true }) { ink -> TrashIcon(ink) } }
                 InlineProblem(state.problem, editor::retry, "studio_cover_problem")
             }
         }

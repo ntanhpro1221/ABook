@@ -124,7 +124,7 @@ fun CoverCropRoute(editor: BookEditor, uri: String, onBack: () -> Unit) {
                 } catch (error: Exception) { problem = error.message.orEmpty() }
                 finally { committing = false }
             }
-        }, Modifier.fillMaxWidth().testTag("use_cover"), enabled = image != null && !committing)
+        }, Modifier.fillMaxWidth().testTag("use_cover"), enabled = image != null && !committing, pending = committing)
     }, trailing = {
         SwapContent(image, contentKey = { image -> image != null }, layout = ContentLayout.Box) { image ->
             if (image != null) TextAction(S.s_dat_lai_51a46825, { choice = CropChoice() }, "crop_reset")

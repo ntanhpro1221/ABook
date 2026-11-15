@@ -117,7 +117,7 @@ Window {
             size: "sm"
             Behavior on y { NumberAnimation { duration: Theme.reduceMotion ? 0 : Theme.motionFast; easing.type: Easing.BezierSpline; easing.bezierCurve: Theme.easeDecelerate } }
             Behavior on opacity { NumberAnimation { duration: Theme.motionFast } }
-            onClicked: {
+            onActivated: {
                 // Tiêu điểm tới ô đầu tiên của màn đang xem (thanh bên và thanh tiêu đề bị bỏ qua).
                 let item = skipLink.nextItemInFocusChain(true)
                 for (let guard = 0; item && item !== skipLink && guard < 1000; ++guard) {
@@ -280,7 +280,14 @@ Window {
         function begin(kind, data) { active = true; item.begin(kind, data) }
     }
     // Câu mẫu của một người bắt đầu phát thì sách đang nghe tạm dừng (hai tiếng không chồng lên nhau)
-    Connections { target: Clip; function onStarted() { if (Player.playing) Player.pause() } }
+    Connections { target: Clip;
+        function onStarted() { if (Player.playing) Player.pause() }
+        function onCurrentChanged() { if (Clip.music) Player.pause() }
+    }
+    Connections { target: Player;
+        function onPlayingChanged() { if (Player.playing && Clip.music) Clip.stop() }
+        function onBufferingChanged() { if (Player.buffering && Clip.music) Clip.stop() }
+    }
     Loader {
         id: saveBookAs
         objectName: "saveBookAsLoader"

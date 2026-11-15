@@ -6,7 +6,7 @@ import "StudioMusicLogic.js" as Logic
 // Tab "Nhạc nền" của trang dự án (MusicTab.tsx; docs/MUSIC_SELECTION_MODEL.md mục 4 - ba tầng chỉnh): cả cuốn (bật/tắt, thể loại của truyện, mức
 // nhạc), từng đoạn (đổi bài, im lặng, bỏ ghim), từng bài (không dùng bài này nữa). Máy tự làm hết; mọi chỉnh ở đây là tuỳ chọn và được giữ khi máy
 // chọn lại. Sửa nhạc không bao giờ phải đọc lại giọng. Mọi lời gọi đi qua `store` (máy này hay Studio của máy đã ghép); hỏi lại khi đang đọc không
-// khí / đang tải sẵn nhạc, nhưng CHỈ khi cửa sổ đang thấy (`store.active`). "Nghe thử": MỘT clip một lúc (Clip), ~20 giây, rời tab thì dừng.
+// khí / đang tải sẵn nhạc, nhưng CHỈ khi cửa sổ đang thấy (`store.active`). "Nghe thử": MỘT bài một lúc (Clip), nghe trọn bài, rời tab thì dừng.
 Column {
     id: root
     objectName: "studioMusic"
@@ -143,14 +143,8 @@ Column {
     // ---- nghe thử ----
     function togglePreview(link) { Clip.toggle("music:" + link, store.path(Logic.previewPath(link))) }
     function stopPreview() { if (previewing !== "") Clip.stop() }
-    property int previewMs: Logic.PREVIEW_SECONDS * 1000
-    Timer { id: previewCap; interval: root.previewMs; onTriggered: root.stopPreview() }
-    Connections {
-        target: Clip
-        function onStarted() { if (root.previewing !== "") previewCap.restart() }
-        function onCurrentChanged() { if (root.previewing === "") previewCap.stop() }
-    }
     Component.onDestruction: { closeSwap(); stopPreview() }
+
 
     // ---- đang tải / lỗi ----
     Collapse {

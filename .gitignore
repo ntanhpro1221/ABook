@@ -52,6 +52,8 @@ Desktop.ini
 
 # Frontend giao diện: cài bằng npm, không commit
 _internal/ui/node_modules/
+_internal/ui/.vite/
+_internal/ui/.vite-musicdl/
 # Bản dựng giao diện máy tính (npm run build trong _internal/ui) - cửa sổ app phục vụ nó; dựng tại máy
 _internal/abook/webui/static/
 

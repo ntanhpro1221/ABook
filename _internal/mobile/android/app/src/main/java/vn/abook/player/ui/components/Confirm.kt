@@ -16,6 +16,8 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
@@ -28,6 +30,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.layout.Layout
+import androidx.compose.ui.layout.layoutId
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.staticCompositionLocalOf
+import androidx.compose.runtime.LaunchedEffect
 import kotlinx.coroutines.launch
 import vn.abook.player.ui.motion.Motion
 import vn.abook.player.ui.theme.Abook
@@ -60,6 +69,8 @@ fun <T> SheetPages(page: T, ordinal: (T) -> Int, tag: String, content: @Composab
  * Trang xác nhận: câu hỏi, các dòng nói mất gì (chữ 16, mực phụ), lỗi tại chỗ màu nguy hiểm khi việc vừa thất bại, rồi các nút. Nút chính của bước này
  * là màu nguy hiểm ([DangerButton]) - việc không nhấn nhầm được.
  */
+private val LocalConfirmation = staticCompositionLocalOf { false }
+
 @Composable
 fun ConfirmPage(title: String, tag: String, lines: List<String>, problem: String, buttons: @Composable ColumnScope.() -> Unit) {
     val colors = Abook.colors
@@ -76,7 +87,31 @@ fun ConfirmPage(title: String, tag: String, lines: List<String>, problem: String
             }
         }
         Spacer(Modifier.height(Dim.s24))
-        buttons()
+        CompositionLocalProvider(LocalConfirmation provides true) {
+            Layout(content = { buttons() }, modifier = Modifier.fillMaxWidth()) { children, constraints ->
+                val danger = children.firstOrNull { it.layoutId == "confirm-danger" }
+                val cancel = children.firstOrNull { it.layoutId == "confirm-cancel" }
+                if (danger != null && cancel != null) {
+                    val gap = Dim.s8.roundToPx()
+                    val half = (constraints.maxWidth - gap) / 2
+                    val left = cancel.measure(constraints.copy(minWidth = half, maxWidth = half, minHeight = 0))
+                    val right = danger.measure(constraints.copy(minWidth = half, maxWidth = half, minHeight = 0))
+                    val extras = children.filter { it !== danger && it !== cancel }.map { it.measure(constraints.copy(minHeight = 0)) }.filter { it.width > 0 }
+                    val top = extras.sumOf { it.height + gap }
+                    layout(constraints.maxWidth, top + maxOf(left.height, right.height)) {
+                        var y = 0
+                        extras.forEach { it.placeRelative(0, y); y += it.height + gap }
+                        left.placeRelative(0, top); right.placeRelative(half + gap, top)
+                    }
+                } else {
+                    val placed = children.map { it.measure(constraints.copy(minHeight = 0)) }
+                    layout(constraints.maxWidth, placed.sumOf { it.height }) {
+                        var y = 0
+                        placed.forEach { it.placeRelative(0, y); y += it.height }
+                    }
+                }
+            }
+        }
     }
 }
 
@@ -104,32 +139,38 @@ fun DeleteBookPage(title: String, holder: String?, delete: suspend () -> String?
                 problem = error.orEmpty()
                 if (error == null) onDeleted()
             }
-        }, "delete_yes")
+        }, "delete_yes", pending = working)
         Spacer(Modifier.height(Dim.s8))
-        QuietButton(S.s_giu_lai_3c3ba2db, onKeep, "delete_keep")
+        QuietButton(S.s_huy_96732485, onKeep, "delete_keep")
     }
 }
 
 /** Nút đỏ của bước xác nhận. Chữ trên nền đỏ theo nền của giao diện để đủ tương phản cả hai chế độ. */
 @Composable
-fun DangerButton(label: String, onClick: () -> Unit, tag: String, modifier: Modifier = Modifier) {
+fun DangerButton(label: String, onClick: () -> Unit, tag: String, modifier: Modifier = Modifier, pending: Boolean = false) {
     val colors = Abook.colors
     val ink = if (colors.dark) colors.bg else colors.panel
     Box(
-        modifier.fillMaxWidth().heightIn(min = Dim.s48)
-            .pressable(onClick = onClick)
+        modifier.layoutId("confirm-danger").fillMaxWidth().heightIn(min = Dim.s48)
+            .pressable(onClick = { if (!pending) onClick() })
             .clip(RoundedCornerShape(Dim.radiusControl)).background(colors.danger).padding(horizontal = Dim.s24, vertical = Dim.s12)
             .testTag(tag),
         contentAlignment = Alignment.Center,
     ) {
-        BasicText(label, style = Abook.type.bodyStrong.copy(color = ink))
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            if (pendingVisible(pending)) { BusyRing(color = ink); Spacer(Modifier.width(Dim.s8)) }
+            BasicText(label, style = Abook.type.bodyStrong.copy(color = ink))
+        }
     }
 }
 
 /** Nút chữ "Giữ lại" dưới các nút khác: cao 48, chữ nhấn, canh giữa. */
 @Composable
 fun QuietButton(label: String, onClick: () -> Unit, tag: String, modifier: Modifier = Modifier, danger: Boolean = false) {
-    Box(modifier.fillMaxWidth().height(Dim.s48).pressable(onClick = onClick).testTag(tag), contentAlignment = Alignment.Center) {
-        BasicText(label, style = Abook.type.bodyStrong.copy(color = if (danger) Abook.colors.danger else Abook.colors.accentText))
+    val confirmation = LocalConfirmation.current
+    val focus = remember { FocusRequester() }
+    Box(modifier.layoutId(if (danger) "confirm-danger" else "confirm-cancel").focusRequester(focus).fillMaxWidth().height(Dim.s48).pressable(onClick = onClick).testTag(tag), contentAlignment = Alignment.Center) {
+        BasicText(if (confirmation && !danger) S.s_huy_96732485 else label, style = Abook.type.bodyStrong.copy(color = if (danger) Abook.colors.danger else Abook.colors.accentText))
     }
+    LaunchedEffect(confirmation) { if (confirmation && !danger) focus.requestFocus() }
 }

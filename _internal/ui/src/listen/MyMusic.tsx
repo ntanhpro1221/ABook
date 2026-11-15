@@ -1,3 +1,4 @@
+import { useDestructiveConfirm } from "../shared/DestructiveConfirm";
 import { S } from "../shared/strings.generated";
 import { MusicArt } from "../music/MusicArt";
 import { TickingValue } from "@/shared/TickingValue";
@@ -6,8 +7,7 @@ import { Fold } from "@/shared/Collapse";
 import { useListPresence } from "@/shared/motion";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { EighthNote, Pin, Trash2, Upload } from "lucide-react";
-import { useRef, useState } from "react";
-import { useBackLayer } from "@/shared/backStack";
+import { useState } from "react";
 import { MoreInfo } from "@/shared/SettingsNav";
 import { MY_MUSIC_HELP } from "@/studio/musicLocal";
 import { toast } from "@/shared/toast";
@@ -101,11 +101,7 @@ export function MyMusicSection() {
   const canImport = useCanImportMusic();
   const { data, isLoading, error, refetch } = useMyMusic();
   const [progress, setProgress] = useState<{ done: number; total: number } | null>(null);
-  const [removing, setRemoving] = useState<string | null>(null);
-  const removeBox = useRef<HTMLElement>(null);
-  const removeButton = useRef<HTMLButtonElement>(null);
-  const removeLink = useRef<string | null>(null);
-  useBackLayer(removing !== null, () => setRemoving(null), removeBox, removeButton);
+  const deletion = useDestructiveConfirm();
   const refresh = (view: LocalMusicView) => {
     client.setQueryData(MY_MUSIC_KEY, view);
     void client.invalidateQueries({ queryKey: ["music-alternatives"] });
@@ -133,7 +129,7 @@ export function MyMusicSection() {
     mutationFn: (link: string) => api<LocalMusicView>(`/api/music/local/${link.slice(LOCAL_PREFIX.length)}`, { method: "DELETE" }),
     onSuccess: (view) => {
       refresh(view);
-      setRemoving(null);
+
       toast(S.s_da_xoa_khoi_nhac_cua_toi_ccb5da2a);
     },
     onError: (error: Error) => toast.error(S.s_chua_xoa_duoc_bai_nay_6ba1ed47, { description: error.message }),
@@ -141,10 +137,11 @@ export function MyMusicSection() {
   const tracks = data?.tracks ?? [];
   const rows = useListPresence(tracks, (track) => track.link);
   return (
-    <MotionRegion><Fold storageKey="my-music.library" title={S.s_nhac_cua_toi_f65b7ac6} summary={tracks.length ? S.s_0_bai_1e392237(tracks.length) : S.s_chua_co_bai_nao_c1c708be} bodyClassName="space-y-2">
+    <MotionRegion>
+      {deletion.dialog}<Fold storageKey="my-music.library" title={S.s_nhac_cua_toi_f65b7ac6} summary={tracks.length ? S.s_0_bai_1e392237(tracks.length) : S.s_chua_co_bai_nao_c1c708be} bodyClassName="space-y-2">
       <div className="flex flex-wrap items-center justify-between gap-3">
         {canImport && (
-          <Button size="sm" variant="ghost" icon={Upload} className={`edge-start-action ${WRAP_LABEL}`} loading={Boolean(progress)} onClick={() => void importFiles()}>
+          <Button size="sm" variant="ghost" icon={Upload} className={`edge-start-action ${WRAP_LABEL}`} loading={Boolean(progress)} onClick={() => importFiles()}>
             <TickingValue>{progress ? S.s_dang_them_0_1_84372256(progress.done, progress.total) : S.s_them_nhac_cua_ban_dbd7d8c4}</TickingValue>
           </Button>
         )}
@@ -154,7 +151,7 @@ export function MyMusicSection() {
       <MoreInfo label={S.s_nhac_rieng_732d7761}>{MY_MUSIC_HELP}</MoreInfo>
       {!!tracks.length && <MusicModuleNotice view={data} queryKey={MY_MUSIC_KEY} />}
       {!canImport && <p className="text-xs text-fg-2">{S.s_them_va_xoa_nhac_lam_tren_may_tinh_chu_sac_bdde38b6}</p>}
-      <MotionRegion motionKey={isLoading ? "loading" : error && !data ? "error" : tracks.length ? "ready" : "empty"}>{isLoading ? <ContentSkeleton count={2} label={S.s_dang_tai_nhac_rieng_144f69a2} /> : error && !data ? <InlineError message={S.s_ban_hay_thu_tai_lai_nhac_cua_ban_f18be139} onRetry={() => void refetch()} /> : canImport && !tracks.length ? <EmptyState icon={EighthNote} title={S.s_chua_co_bai_nao_c1c708be} className="py-6" action={<Button icon={Upload} onClick={() => void importFiles()} loading={Boolean(progress)}>{S.s_them_nhac_cua_ban_dbd7d8c4}</Button>} /> : null}</MotionRegion>
+      <MotionRegion motionKey={isLoading ? "loading" : error && !data ? "error" : tracks.length ? "ready" : "empty"}>{isLoading ? <ContentSkeleton count={2} label={S.s_dang_tai_nhac_rieng_144f69a2} /> : error && !data ? <InlineError message={S.s_ban_hay_thu_tai_lai_nhac_cua_ban_f18be139} onRetry={() => void refetch()} /> : canImport && !tracks.length ? <EmptyState icon={EighthNote} title={S.s_chua_co_bai_nao_c1c708be} className="py-6" action={<Button icon={Upload} onClick={() => importFiles()} loading={Boolean(progress)}>{S.s_them_nhac_cua_ban_dbd7d8c4}</Button>} /> : null}</MotionRegion>
       {!!rows.length && (
         <ul className="divide-y divide-line">
           {rows.map(({ item: track, key, state, ref }) => (
@@ -168,15 +165,8 @@ export function MyMusicSection() {
                 {/* Nhãn ngắn như tab Nhạc của dự án; công tắc Tự chọn chỉ ở máy tính (điện thoại không tự chọn). */}
                 <AutoPickNote track={track} canOverride={canImport && !hasNativeMusicImport()} onView={refresh} />
               </span>
-              {canImport &&
-                (removing === track.link ? (
-                  <span ref={removeBox} className="flex shrink-0 gap-1">
-                    <Button size="sm" variant="ghost" icon={Trash2} aria-label={S.s_xoa_bai_0_d2cc8ffb(track.title)} loading={remove.isPending} onClick={() => remove.mutate(track.link)}>{S.s_xoa_bai_d554a496}</Button>
-                    <Button size="sm" variant="ghost" aria-label={S.s_giu_lai_0_9b038c0f(track.title)} disabled={remove.isPending} onClick={() => setRemoving(null)}>{S.s_giu_lai_3c3ba2db}</Button>
-                  </span>
-                ) : (
-                  <Button ref={(el) => { if (removeLink.current === track.link) removeButton.current = el; }} size="sm" variant="ghost" icon={Trash2} aria-label={S.s_xoa_0_179508ae(track.title)} onClick={() => { removeLink.current = track.link; setRemoving(track.link); }}>{S.s_xoa_777195ab}</Button>
-                ))}
+              {canImport && <Button size="sm" variant="ghost" icon={Trash2} aria-label={S.s_xoa_0_179508ae(track.title)}
+                onClick={() => deletion.confirm({ title: S.s_xoa_bai_nay_412d7001, description: S.s_0_se_bi_xoa_khoi_nhac_cua_toi_a41656b0(track.title), run: () => remove.mutateAsync(track.link) })}>{S.s_xoa_777195ab}</Button>}
             </div></li>
           ))}
         </ul>

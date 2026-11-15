@@ -618,6 +618,7 @@ private fun BookButtons(
                 label = BookPage.primaryLabel(playingHere, finished, resume, book.progress.heardSeconds),
                 detail = BookPage.primaryDetail(playingHere, finished, resume, book.progress.heardSeconds),
                 playing = playingHere,
+                buffering = (listening && player.buffering) || player.preparingBookId == book.id,
                 restart = finished,
                 onClick = {
                     vn.abook.player.Feedback.play("playPause", view)
@@ -665,35 +666,20 @@ private fun BookButtons(
  * động từ không bao giờ bị cắt. Tên đầy đủ nằm ở danh sách chương ngay dưới. Nhãn đổi thì trượt (chữ cũ lên, chữ mới từ dưới lên).
  */
 @Composable
-private fun ListenButton(label: String, detail: String?, playing: Boolean, restart: Boolean, onClick: () -> Unit) {
+private fun ListenButton(label: String, detail: String?, playing: Boolean, buffering: Boolean, restart: Boolean, onClick: () -> Unit) {
     val colors = Abook.colors
-    // Khung dựng của trang vẽ thẳng nhãn; AnimatedContent (~3 ms dựng, ở khung nặng nhất) chỉ vào sau vài khung, khi trang đã trượt vào và nhãn đứng yên.
-    // Cùng một nhãn trước và sau lúc đổi nên không có gì thay đổi trên màn; từ đó nhãn đổi thì trượt như cũ.
-    var animated by remember { mutableStateOf(false) }
-    LaunchedEffect(Unit) {
-        repeat(ANIMATE_AFTER_FRAMES) { withFrameNanos { } }
-        animated = true
-    }
-    Box(
-        Modifier.fillMaxWidth().height(Dim.s48).pressable(onClick = onClick).clip(RoundedCornerShape(Dim.radiusControl))
-            .background(colors.accent).padding(horizontal = Dim.s16).testTag("book_primary"),
-        contentAlignment = Alignment.Center,
-    ) {
-        SwapContent(animated, contentKey = { animated -> animated }, layout = ContentLayout.Box) { animated ->
-            if (animated) {
-                AnimatedContent(
-                targetState = label to detail,
-                transitionSpec = {
-                    (slideInVertically(tween(MotionMs.MEDIUM, easing = Motion.Decelerate)) { it } togetherWith
-                        slideOutVertically(tween(MotionMs.MEDIUM_OUT, easing = Motion.Accelerate)) { -it })
-                        .using(SizeTransform(clip = true))
-                },
-                contentAlignment = Alignment.Center,
-                label = "primary",
-                ) { (text, sub) -> ListenLabel(text, sub, playing, restart) }
-            } else {
-                ListenLabel(label, detail, playing, restart)
+    Box(Modifier.fillMaxWidth().height(Dim.s48).pressable(onClick = onClick)
+        .clip(RoundedCornerShape(Dim.radiusControl)).background(colors.accent)
+        .padding(horizontal = Dim.s16).testTag("book_primary"), contentAlignment = Alignment.Center) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            vn.abook.player.ui.components.PendingIndicator(buffering, Modifier.size(22.dp), color = colors.accentInk) {
+                vn.abook.player.ui.components.StateIcon(restart) { retry ->
+                    if (retry) RestartIcon(colors.accentInk) else PlayPauseGlyph(playing && !buffering, colors.accentInk, 22.dp)
+                }
             }
+            Spacer(Modifier.width(Dim.s8))
+            val words = (if (buffering) S.s_buffering else label) to detail
+            SwapContent(words, contentKey = { it }) { (text, sub) -> ListenLabel(text, sub, playing, restart) }
         }
     }
 }
@@ -704,12 +690,6 @@ private fun ListenLabel(text: String, sub: String?, playing: Boolean, restart: B
     val colors = Abook.colors
     val ink = Abook.type.bodyStrong.copy(color = colors.accentInk)
     Row(verticalAlignment = Alignment.CenterVertically) {
-        Box(Modifier.size(Dim.s24), contentAlignment = Alignment.Center) {
-            SwapContent(restart, contentKey = { restart -> restart }, layout = ContentLayout.Box) { restart ->
-                if (restart) RestartIcon(colors.accentInk) else PlayPauseGlyph(playing, colors.accentInk, 22.dp)
-            }
-        }
-        Spacer(Modifier.width(Dim.s8))
         BasicText(text, style = ink, softWrap = false)
         SwapContent(sub, contentKey = { sub -> sub != null }, layout = ContentLayout.Row) { sub ->
             if (sub != null) {
@@ -719,9 +699,6 @@ private fun ListenLabel(text: String, sub: String?, playing: Boolean, restart: B
         }
     }
 }
-
-/** Số khung nút chính vẽ tĩnh trước khi bật AnimatedContent (hai khung chờ dựng của Nav.push + một khung trượt đầu). */
-private const val ANIMATE_AFTER_FRAMES = 3
 
 /** Nút phụ (DESIGN.md §6 "Nút (b)"): biểu tượng trơn trong ô chạm 44 + nhãn nhỏ dưới. Nhãn rỗng (nút ⋯): vẫn chừa dòng nhãn để các biểu tượng thẳng hàng; tên đọc màn hình ở `description`. */
 @Composable

@@ -3,6 +3,8 @@ package vn.abook.player.ui.motion
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.animation.togetherWith
@@ -37,17 +39,23 @@ fun <T> SwapContent(
     layout: ContentLayout = ContentLayout.Box,
     modifier: Modifier = Modifier,
     spacing: Dp = 0.dp,
+    inPlace: Boolean = false,
     content: @Composable (T) -> Unit,
 ) {
     if (rememberReducedMotion()) {
-        ReducedSwap(value, contentKey, layout, modifier, spacing, content)
+        ReducedSwap(value, contentKey, layout, modifier, spacing, inPlace, content)
     } else {
         AnimatedContent(
             targetState = value,
+            contentAlignment = if (inPlace) Alignment.Center else Alignment.TopStart,
             modifier = modifier,
             contentKey = contentKey,
             transitionSpec = {
-                (fadeIn(tween(MotionMs.MEDIUM, easing = Motion.Decelerate)) +
+                if (inPlace) (fadeIn(tween(180, easing = Motion.Decelerate)) +
+                    scaleIn(tween(180, easing = Motion.Decelerate), initialScale = .8f)) togetherWith
+                    (fadeOut(tween(180, easing = Motion.Accelerate)) +
+                        scaleOut(tween(180, easing = Motion.Accelerate), targetScale = .8f))
+                else (fadeIn(tween(MotionMs.MEDIUM, easing = Motion.Decelerate)) +
                     slideInVertically(tween(MotionMs.MEDIUM, easing = Motion.Decelerate)) { it / 8 }) togetherWith
                     (fadeOut(tween(MotionMs.MEDIUM_OUT, easing = Motion.Accelerate)) +
                         slideOutVertically(tween(MotionMs.MEDIUM_OUT, easing = Motion.Accelerate)) { -it / 8 })
@@ -75,7 +83,7 @@ private data class RetainedValue<T>(val value: T)
 
 /** OS animation scale zero still has a real fade, on the same clock as ReducedFade. */
 @Composable
-private fun <T> ReducedSwap(value: T, keyOf: (T) -> Any?, layout: ContentLayout, modifier: Modifier, spacing: Dp, content: @Composable (T) -> Unit) {
+private fun <T> ReducedSwap(value: T, keyOf: (T) -> Any?, layout: ContentLayout, modifier: Modifier, spacing: Dp, inPlace: Boolean, content: @Composable (T) -> Unit) {
     val key = keyOf(value)
     var current by remember { mutableStateOf(RetainedValue(value)) }
     var previous by remember { mutableStateOf<RetainedValue<T>?>(null) }
@@ -93,7 +101,7 @@ private fun <T> ReducedSwap(value: T, keyOf: (T) -> Any?, layout: ContentLayout,
             previous = null
         }
     }
-    Box(modifier) {
+    Box(modifier, contentAlignment = if (inPlace) Alignment.Center else Alignment.TopStart) {
         previous?.let { old ->
             Box(Modifier.graphicsLayer { this.alpha = 1f - alpha.value }) { ContentGroup(layout, false, spacing) { content(old.value) } }
         }

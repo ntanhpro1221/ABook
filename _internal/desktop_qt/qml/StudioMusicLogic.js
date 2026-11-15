@@ -10,8 +10,7 @@
 var REBUILDING = S.s_dang_chon_lai_nhac_co_nua_phut_4166612f
 /** Sửa một đoạn (chọn bài, ghim, im lặng, bỏ bài) chỉ mất chốc lát: chỉ báo bận nhẹ, không hứa nửa phút. */
 var SAVING = S.s_dang_luu_lua_chon_d37252de
-/** Mỗi lần "Nghe thử" ~20 giây từ đầu bài. */
-var PREVIEW_SECONDS = 20
+/** Music playback ends with the source. */
 // Bản web viết "↳ tiếp bài của đoạn trên"; phông của app không có "↳" nên mũi tên là icon corner-down-right đứng trước chữ
 var CONTINUED_NOTE = S.s_tiep_bai_cua_doan_tren_6d0caf6d
 /** Lời "đã chỉnh sửa" đi kèm ghi công nhạc CC BY; cùng câu với bản xuất MP3 / M4B (`music_export.MODIFIED_NOTE`). */

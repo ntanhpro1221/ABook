@@ -78,7 +78,7 @@ Modal {
         Flow {
             width: parent.width
             spacing: 8
-            Button { text: S.s_chon_thu_muc_1fe47e38; kind: "ghost"; size: "sm"; onClicked: folders.open() }
+            Button { text: S.s_chon_thu_muc_1fe47e38; kind: "ghost"; size: "sm"; onActivated: folders.open() }
             Text {
                 width: Math.min(implicitWidth, parent.width)
                 height: 40
@@ -98,7 +98,7 @@ Modal {
     footer: [
         EditBookActions {
             width: root.bodyWidth
-            Button { objectName: "saveCancel"; text: S.s_thoi_e68f9e88; kind: "ghost"; onClicked: root.close() }
+            Button { objectName: "saveCancel"; text: S.s_thoi_e68f9e88; kind: "ghost"; onActivated: root.close() }
             Button { objectName: "saveGo"; text: S.s_luu_e91f26c0; icon: "file-down"; busy: root.saving; onActivated: root.submit() }
         }
     ]

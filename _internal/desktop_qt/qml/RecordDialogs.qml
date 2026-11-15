@@ -19,6 +19,8 @@ Modal {
     property string library: "loading"      // loading | ready | failed (cuốn nhận hồ sơ)
     property var options: []
     property int generation: 0
+    property bool working: false
+    property string problem: ""
     signal openBook(string id)              // lời báo "Mở cuốn ấy" sau khi chuyển hồ sơ sang cuốn khác
     readonly property var active: Logic.activeRecord(book)
     readonly property int recordCount: (book.records || []).length
@@ -31,6 +33,7 @@ Modal {
         generation++
         bookId = data.bookId; book = data.book
         dialog = Object.assign({}, data.dialog)
+        problem = ""
         nameField.text = dialog.name || ""
         if (dialog.kind === "move") loadLibrary()
         show()
@@ -53,38 +56,46 @@ Modal {
         if (found) dialog = Object.assign({}, dialog, {target: {id: found.value, title: found.label}})
     }
     function submit() {
-        if (!dialog || !open || !Logic.canConfirm(dialog)) return
+        if (!dialog || !open || working || !Logic.canConfirm(dialog)) return
         const kind = dialog.kind
         const typed = Object.assign({}, dialog, {name: nameField.text})
         const spec = Logic.request(bookId, kind, active, typed, null)
         const message = Logic.doneMessage(kind, active, typed, null)
         const target = typed.target
         const opens = kind === "move" ? {label: S.s_mo_cuon_ay_064ee566, run: function() { root.openBook(target.id) }} : null
-        root.dismiss()
-        perform(bookId, book, spec, message, opens, kind === "create", kind !== "rename")
+        const mine = generation
+        working = true; problem = ""
+        perform(bookId, book, spec, message, opens, kind === "create", kind !== "rename", function(error) {
+            root.working = false
+            if (mine !== root.generation) return
+            if (error) root.problem = error
+            else root.dismiss()
+        })
     }
     function activate(data) {
         const record = data.record
         perform(data.bookId, data.book, Logic.request(data.bookId, "activate", null, null, record), Logic.doneMessage("activate", null, null, record), null, false, true)
     }
     // Việc ghi hồ sơ. `follow`: cuốn đang nạp trong trình phát thì đóng nó trước, đổi, rồi nạp lại ở trạng thái dừng; `startOver`: phát từ chương đầu.
-    function perform(id, full, spec, message, action, startOver, follow) {
+    function perform(id, full, spec, message, action, startOver, follow, done) {
         const loaded = follow && Player.loaded && Player.bookId === id
         if (loaded) Player.close()
         Api.quiet(spec.method, spec.path, spec.body, function(data, error) {
-            if (error) { Api.notice = error; return }
+            if (error) { if (done) done(error); else Api.notice = error; return }
             Api.editedBook(id)
             if (startOver) {
                 const first = Logic.firstPlayable(full.chapters)
                 if (first) Player.open(id, first.id, 0, true)
             } else if (loaded) Player.open(id, -1, -1, false)
             Api.toast(message, action ? {action: action} : undefined)
+            if (done) done(null)
         })
     }
 
     Column {
         width: parent.width
         spacing: 12
+        InlineError { width: parent.width; message: root.problem; onRetry: root.submit() }
         // Chọn cuốn nhận hồ sơ: đang mở thư viện / chưa có cuốn nào khác / ô chọn, mờ qua tại chỗ
         Collapse {
             width: parent.width
@@ -139,11 +150,12 @@ Modal {
     footer: [
         EditBookActions {
             width: root.bodyWidth
-            Button { objectName: "recordCancel"; text: S.s_huy_96732485; kind: "ghost"; onClicked: root.close() }
+            Button { objectName: "recordCancel"; text: S.s_huy_96732485; kind: "ghost"; onActivated: root.close() }
             Button {
                 objectName: "recordConfirm"
                 text: root.dialog ? Logic.confirmLabel(root.dialog.kind) : ""
                 kind: root.dialog && root.dialog.kind === "delete" ? "danger" : "primary"
+                busy: root.working
                 enabled: root.dialog !== null && Logic.canConfirm(Object.assign({}, root.dialog, {name: nameField.text}))
                 onActivated: root.submit()
             }

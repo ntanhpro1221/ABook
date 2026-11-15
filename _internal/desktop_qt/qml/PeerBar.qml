@@ -49,7 +49,7 @@ Collapse {
                 text: S.s_ve_may_nay_d9404884
                 kind: "ghost"
                 size: "sm"
-                onClicked: root.home()
+                onActivated: root.home()
             }
         }
     }

@@ -59,10 +59,16 @@ FocusScope {
             downloads = data; refresh(); detail.reload()
         })
     }
+    function cancelDownload(links) {
+        Api.quiet("POST", "/api/music/library/cancel", {links: links}, function(data, problem) {
+            if (problem) { Api.notice = problem; return }
+            downloads = data; refresh(); detail.reload()
+        })
+    }
     function togglePreview(track) {
         if (!online && !track.downloaded) return
         const start = Number(track.audibleStart) || 0
-        Clip.toggle("library:" + track.link, Logic.previewPath(track.link), start, start + Logic.PREVIEW_SECONDS)
+        Clip.toggle("library:" + track.link, Logic.previewPath(track.link), start, undefined, Logic.previewVolume(track.lufs))
     }
     function use(link) {
         Api.quiet("PUT", "/api/books/" + encodeURIComponent(pickBook) + "/music", {pins: (function() { const pins = {}; pins[pickScene] = link; return pins })()}, function(data, problem) {
@@ -206,7 +212,8 @@ FocusScope {
             onPreview: root.togglePreview(modelData)
             onUse: root.use(modelData.link)
             onSave: root.save([modelData.link])
-            onCancelDownload: root.unsave([modelData.link])
+            onCancelDownload: root.cancelDownload([modelData.link])
+            onDeleteDownload: root.unsave([modelData.link])
             onClicked: detail.show(modelData.link, root.picking ? {book: root.pickBook, scene: root.pickScene} : null)
         }
         footer: Column {
@@ -239,10 +246,10 @@ FocusScope {
         Text {
             x: Theme.s16; width: parent.width - stop.width - 2 * Theme.s16
             anchors.verticalCenter: parent.verticalCenter
-            text: TextWrap.keepDots((Clip.loading ? S.s_dang_tai_am_thanh_6c7cb62f : S.s_dang_nghe_thu_f1fb4cba) + (bar.track ? "\u00a0·\u00a0" + bar.track.title : ""))
+            text: TextWrap.keepDots((Clip.loading ? S.s_buffering : Clip.paused ? S.s_music_paused : S.s_dang_nghe_thu_f1fb4cba) + (bar.track ? "\u00a0·\u00a0" + bar.track.title : ""))
             color: Theme.text; font.pixelSize: Theme.sizeBodySmall; wrapMode: Text.Wrap
         }
-        IconButton { id: stop; anchors.right: parent.right; anchors.verticalCenter: parent.verticalCenter; icon: "square"; tip: S.s_dung_nghe_f20939be; onClicked: Clip.stop() }
+        IconButton { id: stop; anchors.right: parent.right; anchors.verticalCenter: parent.verticalCenter; icon: "square"; tip: S.s_dung_nghe_f20939be; onActivated: Clip.stop() }
     }
     MusicTrackDetail {
         id: detail
@@ -255,7 +262,7 @@ FocusScope {
         onPreview: if (detail.detail) root.togglePreview(detail.detail)
         onSave: root.save([detail.link])
         onUnsave: root.unsave([detail.link])
-        onCancelDownload: Api.quiet("POST", "/api/music/library/unsave", {links: [detail.link]}, function(data, problem) { if (!problem) { root.downloads = data; detail.reload() } })
+        onCancelDownload: root.cancelDownload([detail.link])
         onUse: root.use(detail.link)
         onBan: root.ban(detail.link)
     }

@@ -12,6 +12,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -64,6 +65,7 @@ data class PlayerState(
     val moreChapters: Boolean = false,
     /** Phát hết chương cuối của hàng chương (lõi báo "ended") và chưa nghe lại gì: hiện lời "Đã nghe hết ...". */
     val ended: Boolean = false,
+    val preparingBookId: String? = null,
 ) {
     /** Có cuốn trong trình phát (thanh nhỏ hiện). */
     val hasTrack: Boolean get() = bookId.isNotEmpty() && chapterId != null
@@ -199,6 +201,9 @@ class PlayerRepo(
     private val flow = MutableStateFlow(PlayerState.Empty)
     val state: StateFlow<PlayerState> get() = flow
     val clock = PlayerClock()
+    private var planningBookId: String? = null
+    private fun publishPreparing() { flow.update { it.copy(preparingBookId = planningBookId ?: gate.pendingBook.value) } }
+    init { scope.launch { gate.pendingBook.collect { publishPreparing() } } }
 
     /**
      * Tên mỗi sự kiện KHÔNG phải nhịp của lõi ("state", "chapter", "record", "sleep"...), kể cả khi nó không đổi gì ở [state] (đọc to đẩy thêm chữ / thời lượng mới
@@ -275,6 +280,7 @@ class PlayerRepo(
         val parsed = PlayerState.from(json, keep, queueChapters, core.voiceId())
         // Hết chương cuối: lời "Đã nghe hết ..." ở lại tới khi nghe lại gì (phát, đổi chương hay đổi cuốn).
         val next = parsed.copy(
+            preparingBookId = planningBookId ?: gate.pendingBook.value,
             whole = shape?.whole ?: true,
             moreChapters = shape != null && shape.total > queueChapters.size,
             ended = previous.ended && !parsed.playing && id == previous.bookId && parsed.chapterId == previous.chapterId,
@@ -295,6 +301,7 @@ class PlayerRepo(
     /** Invalidate in-flight plans as well as the visible player. Undo restores the row, never restarts audio. */
     fun bookRemoved(id: String) {
         loadGeneration++
+        planningBookId = null
         gate.cancel()
         if (flow.value.bookId != id) return
         core.close()
@@ -335,6 +342,8 @@ class PlayerRepo(
 
     fun play() { heardAgain(); before(flow.value.chapterId) { core.play() } }
     fun pause() {
+        loadGeneration++
+        planningBookId = null; publishPreparing()
         gate.cancel()
         core.pause()
     }
@@ -385,10 +394,13 @@ class PlayerRepo(
             jumpTo(chapterId, seconds)
             return
         }
-        val generation = loadGeneration
+        val generation = ++loadGeneration
+        planningBookId = bookId; publishPreparing()
         scope.launch {
+          try {
             val request = withContext(io) { planAt(bookId, chapterId, seconds) } ?: return@launch
             if (generation == loadGeneration) load(request)
+          } finally { if (generation == loadGeneration) { planningBookId = null; publishPreparing() } }
         }
     }
 
@@ -410,10 +422,14 @@ class PlayerRepo(
         withTimeoutOrNull(3_000) { flow.first { it.bookId == bookId && it.hasTrack } } != null
 
     private fun playBook(bookId: String) {
-        val generation = loadGeneration
+        if (planningBookId == bookId) return
+        planningBookId = bookId; publishPreparing()
+        val generation = ++loadGeneration
         scope.launch {
+          try {
             val request = withContext(io) { planOf(bookId) } ?: return@launch
             if (generation == loadGeneration) load(request)
+          } finally { if (generation == loadGeneration) { planningBookId = null; publishPreparing() } }
         }
     }
 

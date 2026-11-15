@@ -179,6 +179,6 @@ fun nowPlayingState(player: PlayerState, voices: List<PlayerVoice>, returnAvaila
         chapters = player.chapters, readAlongAvailable = player.hasTrack, error = player.error,
         music = player.music, returnAvailable = returnAvailable, returnSerial = returnSerial,
         voices = voices.filter { !it.online }, voiceId = player.voiceId, voiceName = voices.firstOrNull { it.id == player.voiceId }?.name.orEmpty(),
-        buffering = player.buffering, speaking = player.chapters.firstOrNull { it.id == player.chapterId }?.textPath.orEmpty().isNotEmpty(),
+        buffering = player.buffering || player.preparingBookId != null, speaking = player.chapters.firstOrNull { it.id == player.chapterId }?.textPath.orEmpty().isNotEmpty(),
         whole = player.whole, moreChapters = player.moreChapters, ended = player.ended,
     )

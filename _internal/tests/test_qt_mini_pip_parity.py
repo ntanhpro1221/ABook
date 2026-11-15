@@ -145,9 +145,9 @@ def test_labels_are_read_correctly_from_the_real_sources():
     pip = pip_labels(read(KT / "ui" / "pip" / "PipParams.kt"))
     assert qt_label(qml, "miniBack") == ("Lùi {N} giây",)
     assert qt_label(qml, "miniForward") == ("Tới {N} giây",)
-    assert qt_label(qml, "miniPlay") == ("Tạm dừng", "Phát")
+    assert qt_label(qml, "miniPlay") == ("Đang đệm", "Tạm dừng", "Phát")
     assert pip["miniBack"] == ("Lùi {N} giây",) and pip["miniForward"] == ("Tới {N} giây",)
-    assert pip["miniPlay"] == ("Tạm dừng", "Phát")
+    assert pip["miniPlay"] == ("Đang đệm", "Tạm dừng", "Phát")
 
 
 # --- Kiểm lực: làm hỏng từng thứ trên bản sao trong bộ nhớ, máy dò phải đỏ. ---

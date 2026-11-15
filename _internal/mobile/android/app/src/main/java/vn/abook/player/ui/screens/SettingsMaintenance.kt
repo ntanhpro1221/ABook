@@ -36,8 +36,8 @@ fun MaintenanceSections(env: SettingsEnv, sheets: SheetHost) {
                         val busy by repo.maintenanceBusy.collectAsState()
                         val failure by repo.problem.collectAsState()
                         ConfirmPage(S.s_xoa_ban_luu_cu_d8966e9e, "old_delete", listOf(S.s_0_1_se_bi_xoa_khoi_dien_thoai_va_khong_lay_a827e2f0(file.title, formatSize(file.size))), failure) {
-                            DangerButton(S.s_xoa_777195ab, { if (!busy) repo.deleteOldSave(file.name) }, "old_delete_yes")
-                            QuietButton(S.s_giu_lai_3c3ba2db, dismiss, "old_delete_keep")
+                            DangerButton(S.s_xoa_777195ab, { if (!busy) repo.deleteOldSave(file.name) }, "old_delete_yes", pending = busy)
+                            QuietButton(S.s_huy_96732485, dismiss, "old_delete_keep")
                         }
                         LaunchedEffect(old) { if (old.none { it.name == file.name }) dismiss() }
                     } }, "old_delete_${file.name}")

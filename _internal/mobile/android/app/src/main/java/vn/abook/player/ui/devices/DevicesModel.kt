@@ -325,8 +325,9 @@ object DeviceText {
     fun forgetCopy(device: String, unsent: Unsent?, reachable: Boolean): ForgetCopy? {
         val edited = unsent != null && unsent.changes > 0 && unsent.books.isNotEmpty()
         val cache = unsent != null && unsent.cacheBooks > 0
-        if (unsent == null || (!edited && !cache)) return null
+        if (unsent == null) return null
         val lines = ArrayList<String>()
+        if (!edited && !cache) lines += S.s_unpair_detail(device)
         if (cache) {
             val downloaded = if (unsent.cacheBytes > 0) {
                 S.s_va_0_da_tai_ve_dien_thoai_nay_se_bi_xoa_0a9ac335(if (unsent.cacheBytes < 1024L * 1024) S.s_duoi_1_mb_b59395ae else formatSize(unsent.cacheBytes))

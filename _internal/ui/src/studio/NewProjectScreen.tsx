@@ -490,8 +490,8 @@ export function SourceStep({
           )}
           {info?.dialogs && (
             <div className="mt-6 flex justify-center gap-2">
-              <Button variant="primary" icon={Folder} onClick={() => void chooseFolder()}>{S.s_chon_thu_muc_1fe47e38}</Button>
-              <Button icon={FileText} onClick={() => void chooseFiles(false)}>{S.s_chon_tung_file_c6f96077}</Button>
+              <Button variant="primary" icon={Folder} onClick={() => chooseFolder()}>{S.s_chon_thu_muc_1fe47e38}</Button>
+              <Button icon={FileText} onClick={() => chooseFiles(false)}>{S.s_chon_tung_file_c6f96077}</Button>
             </div>
           )}
           {info?.remote ? null : browser && !advanced ? (
@@ -643,7 +643,7 @@ export function SourceStep({
               {formatLength(scan!.totals.audioSeconds)}{S.s_audio_7024c69b}</div>
             <div className="flex gap-1">
               {info?.dialogs && (
-                <Button size="sm" variant="ghost" icon={FileText} onClick={() => void chooseFiles(true)}>{S.s_them_file_834b1f33}</Button>
+                <Button size="sm" variant="ghost" icon={FileText} onClick={() => chooseFiles(true)}>{S.s_them_file_834b1f33}</Button>
               )}
               {browser && (
                 <Button size="sm" variant="ghost" icon={Upload} loading={Boolean(uploading)} onClick={() => browse(filesInput.current, true)}>
@@ -882,7 +882,7 @@ function SplitSuggestion({ file, title, onSplit }: { file: ScannedFile; title: s
             size="sm"
             variant="ghost"
             icon={busy ? Loader2 : Scissors}
-            disabled={busy}
+            loading={busy} disabled={busy}
             onClick={() => {
               setBusy(true);
               void onSplit(file.path).finally(() => setBusy(false));

@@ -61,7 +61,7 @@ Column {
                         x: parent.width - width + 12
                         y: library.sameLine ? (parent.height - height) / 2 : path.height + 8
                         text: S.s_doi_thu_muc_b5c84428; kind: "ghost"; size: "sm"; wrap: true
-                        onClicked: folders.choose(S.s_chon_thu_muc_thu_vien_1f1d7479, root.prefs.libraryRoot || "")
+                        onActivated: folders.choose(S.s_chon_thu_muc_thu_vien_1f1d7479, root.prefs.libraryRoot || "")
                     }
                 }
             }

@@ -444,7 +444,7 @@ Item {
                             readonly property var first: parent.parent.first
                             readonly property var person: first && root.script ? root.script.cast.find(item => item.value === first.chip) : null
                             text: first ? S.s_soat_cau_cua_b1475472 + (person ? person.label : first.label) : ""
-                            onClicked: root.setWho(first.chip)
+                            onActivated: root.setWho(first.chip)
                         }
                     }
                 }
@@ -486,7 +486,7 @@ Item {
                                 enabled: root.recordedInGroup > 0 && !scripts.retaking
                                 tip: root.recordedInGroup ? "" : S.s_cac_cau_dang_chon_chua_thu_hay_da_xin_thu_283d1f95
                                 text: root.recordedInGroup ? S.s_thu_lai_bceb80c2 + root.recordedInGroup + S.s_cau_b07e1008 : S.s_chua_co_ban_thu_9897618d
-                                onClicked: root.askRetake(root.group[0])
+                                onActivated: root.askRetake(root.group[0])
                             }
                         }
                     }
@@ -589,7 +589,7 @@ Item {
                             icon: "check"
                             busy: scripts.confirming
                             text: S.s_duyet_9a137351 + root.openLines.length + S.s_cau_b07e1008
-                            onClicked: scripts.confirm(root.openLines)
+                            onActivated: scripts.confirm(root.openLines)
                         }
                         Text {
                             id: footerNote
@@ -689,7 +689,7 @@ Item {
                         Accessible.name: S.s_chuong_truoc_4750f9e9
                         enabled: !!root.script && !!root.script.previous
                         opacity: enabled ? 1 : 0.4
-                        onClicked: root.go(root.script.previous)
+                        onActivated: root.go(root.script.previous)
                     }
                     IconButton {
                         objectName: "scriptNext"
@@ -698,7 +698,7 @@ Item {
                         Accessible.name: S.s_chuong_sau_17d1bd20
                         enabled: !!root.script && !!root.script.next
                         opacity: enabled ? 1 : 0.4
-                        onClicked: root.go(root.script.next)
+                        onActivated: root.go(root.script.next)
                     }
                 }
                 Text { id: textItem;

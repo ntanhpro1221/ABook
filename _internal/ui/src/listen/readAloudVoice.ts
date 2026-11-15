@@ -11,8 +11,8 @@ import voiceRanks from "../../../abook/assets/voice_rank.json";
 // rơi sang giọng kế - Edge rồi giọng của máy - mà không dừng.
 
 const GLOBAL_KEY = "abook-readaloud-voice";
-let defaultVoiceSink: ((voice: string) => void) | null = null;
-export function onDefaultVoiceChosen(sink: (voice: string) => void): () => void {
+let defaultVoiceSink: ((voice: string) => void | Promise<void>) | null = null;
+export function onDefaultVoiceChosen(sink: (voice: string) => void | Promise<void>): () => void {
   defaultVoiceSink = sink;
   return () => { if (defaultVoiceSink === sink) defaultVoiceSink = null; };
 }
@@ -20,7 +20,8 @@ export function onDefaultVoiceChosen(sink: (voice: string) => void): () => void 
 export function restoreDefaultVoice(voice: string): void { write(GLOBAL_KEY, voice); }
 function storeDefaultVoice(voice: string): void {
   write(GLOBAL_KEY, voice);
-  defaultVoiceSink?.(voice);
+  const result = defaultVoiceSink?.(voice);
+  if (result) void result.catch(() => toast.error(S.s_chua_luu_duoc_giong_mac_dinh_ban_hay_chon_a2d2c7af));
 }
 /** Sự kiện: người dùng vừa đặt giọng mặc định (Cài đặt → Giọng đọc) - lõi điện thoại nhớ theo (android/readAloud.ts). */
 export const DEFAULT_VOICE_EVENT = "abook:readaloud-default-voice";
@@ -184,9 +185,14 @@ export function defaultVoice(): string {
 }
 
 /** Đặt giọng mặc định từ Cài đặt: chỉ đổi giọng chung, cuốn đã chọn giọng riêng giữ nguyên (không báo trình phát đổi giọng giữa chừng). */
-export function chooseDefaultVoice(voice: string): void {
-  storeDefaultVoice(voice);
-  if (typeof window !== "undefined") window.dispatchEvent(new CustomEvent(DEFAULT_VOICE_EVENT));
+export function chooseDefaultVoice(voice: string): void | Promise<void> {
+  const commit = () => {
+    write(GLOBAL_KEY, voice);
+    if (typeof window !== "undefined") window.dispatchEvent(new CustomEvent(DEFAULT_VOICE_EVENT));
+  };
+  const result = defaultVoiceSink?.(voice);
+  if (result) return result.then(commit);
+  commit();
 }
 
 /** Câu đọc thử ("Nghe thử" trong Cài đặt): ngắn, có dấu câu để nghe cả chỗ ngắt. */

@@ -106,6 +106,6 @@ Item {
                 }
             }
         }
-        Collapse { width: parent.width; open: root.live.length > 3; Button { objectName: "sidebarAll"; width: parent.width; wrap: true; kind: "ghost"; text: S.s_xem_tat_ca_44aeb8cb; onClicked: root.allRequested() } }
+        Collapse { width: parent.width; open: root.live.length > 3; Button { objectName: "sidebarAll"; width: parent.width; wrap: true; kind: "ghost"; text: S.s_xem_tat_ca_44aeb8cb; onActivated: root.allRequested() } }
     }
 }

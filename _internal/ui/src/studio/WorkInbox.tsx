@@ -551,8 +551,8 @@ function SpeakerFix({
           <p className="text-xs text-fg-2">{S.s_voice_range_note}</p>
           <p className="text-xs text-fg-2">{S.s_voice_range_window}</p>
           <div className="flex flex-wrap gap-2">
-            <Button size="sm" variant="ghost" disabled={busy} onClick={() => setRangeIds(new Set(item.contextLines?.map((line) => line.stableId)))}>{S.s_chon_het_9e8a7c2c}</Button>
-            <Button size="sm" variant="ghost" disabled={busy} onClick={() => setRangeIds(new Set())}>{S.s_bo_het_502895ca}</Button>
+            <Button size="sm" variant="ghost" loading={busy} disabled={busy} onClick={() => setRangeIds(new Set(item.contextLines?.map((line) => line.stableId)))}>{S.s_chon_het_9e8a7c2c}</Button>
+            <Button size="sm" variant="ghost" loading={busy} disabled={busy} onClick={() => setRangeIds(new Set())}>{S.s_bo_het_502895ca}</Button>
           </div>
           <p className="text-xs text-fg-2">{pickNote(rangeLines?.length ?? 0, item.contextLines.length)}</p>
           <ul className="mt-2 space-y-2">{item.contextExamples?.map((example) => <Example key={example.stableId} bookId={bookId} example={example} picked={rangeIds.has(example.stableId!)} onPick={() => setRangeIds(toggleLine(rangeIds, example.stableId!))} />)}</ul>
@@ -632,7 +632,7 @@ function SpeakerFix({
         <div className="mt-2 flex flex-wrap items-center gap-2">
           <Reveal when={moreChoices.length > 0}><div className="flex w-full flex-wrap items-center gap-2" role="group" aria-label={S.s_nhung_nguoi_khac_trong_sach_43124252}>
               {moreChoices.map((choice) => (
-                <Button key={choice.value} size="sm" variant="ghost" disabled={busy || none} onClick={() => save.mutate({ speaker: choice.value })}>
+                <Button key={choice.value} size="sm" variant="ghost" loading={busy} disabled={busy || none} onClick={() => save.mutate({ speaker: choice.value })}>
                   {choice.label}
                 </Button>
               ))}
@@ -1089,7 +1089,7 @@ function BulkKeep({ bookId, kind, items }: { bookId: string; kind: WorkKind; ite
       <Button size="sm" variant="ghost" icon={Check} className="mt-3" onClick={() => setConfirm(true)}>{S.s_giu_d3777f80}{keepable.length}{S.s_the_5d800d1c}</Button>
       <Dialog footer={<DialogActions>
           <Button variant="ghost" onClick={() => setConfirm(false)}>{S.s_thoi_e68f9e88}</Button>
-          <Button variant="primary" icon={Check} loading={busy} onClick={() => void run()}>{S.s_giu_ca_4b7c5467}{keepable.length}{S.s_the_5d800d1c}</Button>
+          <Button variant="primary" icon={Check} loading={busy} onClick={() => run()}>{S.s_giu_ca_4b7c5467}{keepable.length}{S.s_the_5d800d1c}</Button>
         </DialogActions>}
         open={confirm}
         onOpenChange={setConfirm}

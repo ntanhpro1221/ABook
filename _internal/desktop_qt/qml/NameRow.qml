@@ -118,7 +118,7 @@ Item {
             opacity: 1 - editor.reveal
             text: N.addLabel(root.item, root.fresh)
             Accessible.name: N.editLabel(root.item, root.fresh)
-            onClicked: root.editing = true
+            onActivated: root.editing = true
         }
         Collapse {
             id: editor

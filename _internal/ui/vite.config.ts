@@ -23,6 +23,8 @@ const devBackend: ProxyOptions = {
 };
 
 export default defineConfig({
+  // Keep concurrent worktrees from sharing transformed test dependencies.
+  cacheDir: path.resolve(import.meta.dirname, ".vite"),
   plugins: [react(), tailwindcss()],
   base: "./",
   resolve: { alias: { "@": path.resolve(import.meta.dirname, "src") } },

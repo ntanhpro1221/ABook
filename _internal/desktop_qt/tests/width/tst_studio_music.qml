@@ -457,7 +457,7 @@ Item {
             tryVerify(function() { return calls("PUT", "/api/books/b/music").length === 4 })
             compare(calls("PUT", "/api/books/b/music")[3].body, {silence: {"2:0": false}})
         }
-        function test_previewPlaysOneAtATimeAndStopsAfterTwentySeconds() {
+        function test_musicPlaysPastThirtySecondsSeeksAndEndsWithTheSource() {
             const page = openMusic(musicData(), {folds: [1]})
             const tab = music(page)
             const c = "https://music.example/c.mp3"
@@ -473,18 +473,27 @@ Item {
             buttons[0].clicked()
             compare(DesktopApi.previews, ["/api/music/track?link=" + encodeURIComponent(c)])
             compare(tab.previewing, c)
-            tryCompare(buttons[0], "text", "Dừng nghe")
-            compare(DesktopApi.stops, stopsBefore, "first preview has no previous clip to stop")
+            compare(Clip.loading, true)
+            DesktopApi.previewStarted()
+            tryCompare(buttons[0], "text", "Tạm dừng")
             // bài khác: bài trước dừng, chỉ một bài kêu
             buttons[1].clicked()
             compare(tab.previewing, d)
             compare(buttons[0].text, "Nghe thử")
-            compare(DesktopApi.stops, stopsBefore + 1, "replacing a preview stops its previous output")
-            // ~20 giây rồi tự dừng (rút ngắn để thử)
-            tab.previewMs = 50
             DesktopApi.previewStarted()
+            DesktopApi.musicPosition = 65
+            Clip.tick.triggered()
+            compare(tab.previewing, d)
+            compare(Clip.position, 65)
+            Clip.seek(100)
+            compare(DesktopApi.musicPosition, 100)
+            DesktopApi.previewBuffering(true)
+            compare(Clip.loading, true)
+            DesktopApi.previewStarted()
+            compare(Clip.loading, false)
+            DesktopApi.previewEnded()
             tryCompare(tab, "previewing", "")
-            compare(DesktopApi.stops, stopsBefore + 2, "the duration limit also stops the active output")
+            compare(DesktopApi.stops, stopsBefore + 1, "only switching stops a source explicitly")
             // đóng "Đổi bài" thì bài đang nghe dừng
             buttons[0].clicked()
             compare(tab.previewing, c)

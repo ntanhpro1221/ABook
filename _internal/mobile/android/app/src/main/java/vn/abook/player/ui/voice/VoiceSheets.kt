@@ -123,9 +123,9 @@ private fun ModuleRemove(kind: ModuleKind, choice: ModuleChoice, voice: VoiceSta
                 problem = error.orEmpty()
                 if (error == null) dismiss()
             }
-        }, "module_remove_yes")
+        }, "module_remove_yes", pending = working)
         Spacer(Modifier.height(Dim.s8))
-        QuietButton(S.s_giu_lai_3c3ba2db, onKeep, "module_remove_keep")
+        QuietButton(S.s_huy_96732485, onKeep, "module_remove_keep")
     }
 }
 
@@ -146,7 +146,7 @@ fun MeteredSheet(text: String, onGo: () -> Unit, dismiss: () -> Unit) {
 @Composable
 fun ConsentPage(voiceName: String, provider: String, working: Boolean, onAllow: () -> Unit, onNo: () -> Unit) {
     ConfirmPage(S.s_giong_doc_truc_tuyen_44ae53c1, "consent_confirm", listOf(VoiceText.consent(voiceName, provider)), "") {
-        PrimaryButton(if (working) S.s_dang_luu_e93f245d else S.s_dong_y_1246fb97, { if (!working) onAllow() }, Modifier.fillMaxWidth().testTag("consent_yes"), enabled = !working)
+        PrimaryButton(if (working) S.s_dang_luu_e93f245d else S.s_dong_y_1246fb97, { if (!working) onAllow() }, Modifier.fillMaxWidth().testTag("consent_yes"), pending = working, enabled = !working)
         Spacer(Modifier.height(Dim.s8))
         QuietButton(S.s_khong_5b3c9ba4, onNo, "consent_no")
     }
@@ -305,9 +305,9 @@ private fun RemoveKeyPage(provider: KeyProvider, voice: VoiceState, dismiss: () 
                 problem = error.orEmpty()
                 if (error == null) dismiss()
             }
-        }, "key_remove_yes")
+        }, "key_remove_yes", pending = working)
         Spacer(Modifier.height(Dim.s8))
-        QuietButton(S.s_giu_lai_3c3ba2db, onKeep, "key_remove_keep")
+        QuietButton(S.s_huy_96732485, onKeep, "key_remove_keep")
     }
 }
 
@@ -327,8 +327,8 @@ fun TrackSheet(track: MusicTrack, voice: VoiceState, dismiss: () -> Unit) {
                 problem = error.orEmpty()
                 if (error == null) dismiss()
             }
-        }, "track_yes")
+        }, "track_yes", pending = working)
         Spacer(Modifier.height(Dim.s8))
-        QuietButton(S.s_giu_lai_3c3ba2db, dismiss, "track_keep")
+        QuietButton(S.s_huy_96732485, dismiss, "track_keep")
     }
 }

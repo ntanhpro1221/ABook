@@ -91,8 +91,8 @@ Collapse {
                             onToggled: value => root.studioToggled(root.rowId, value)
                         }
                     }
-                    Button { size: "sm"; kind: "ghost"; text: S.s_doi_ten_a2a0dc70; onClicked: root.rename(root.rowId, root.device.name || "") }
-                    Button { size: "sm"; kind: "ghost"; text: S.s_bo_ghep_64f921f9; onClicked: root.remove(root.rowId, root.device.name || "") }
+                    Button { size: "sm"; kind: "ghost"; text: S.s_doi_ten_a2a0dc70; onActivated: root.rename(root.rowId, root.device.name || "") }
+                    Button { size: "sm"; kind: "ghost"; text: S.s_bo_ghep_64f921f9; onActivated: root.remove(root.rowId, root.device.name || "") }
                 }
             }
         }

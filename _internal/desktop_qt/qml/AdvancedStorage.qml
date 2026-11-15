@@ -47,7 +47,7 @@ Collapse {
             Behavior on implicitWidth { enabled: !Theme.reduceMotion; NumberAnimation { duration: Theme.motionMedium; easing.type: Easing.BezierSpline; easing.bezierCurve: Theme.easeStandard } }
             opacity: root.hasStorage ? 1 : 0
             Behavior on opacity { NumberAnimation { duration: Theme.motionFast } }
-            Button { id: clean; text: S.s_don_ban_doc_5ae4774e; kind: "ghost"; size: "sm"; enabled: root.hasStorage; onClicked: root.ask() }
+            Button { id: clean; text: S.s_don_ban_doc_5ae4774e; kind: "ghost"; size: "sm"; enabled: root.hasStorage; onActivated: root.ask() }
         }
     }
     MoreInfo {
@@ -66,7 +66,7 @@ Collapse {
                 layoutDirection: Qt.RightToLeft
                 spacing: 8
                 Button { text: S.s_don_6730827d; kind: "danger"; busy: root.busy; onActivated: root.clear() }
-                Button { text: S.s_giu_lai_3c3ba2db; kind: "ghost"; enabled: !root.busy; onClicked: dialog.close() }
+                Button { text: S.s_huy_96732485; kind: "ghost"; enabled: !root.busy; onActivated: dialog.close() }
             }
         ]
     }

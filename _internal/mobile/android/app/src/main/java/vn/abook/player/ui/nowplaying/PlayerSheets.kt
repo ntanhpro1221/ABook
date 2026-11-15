@@ -344,7 +344,7 @@ private fun SheetRow(label: String, value: String, icon: String? = null, enabled
     Row(Modifier.fillMaxWidth().heightIn(min = Dim.s48).then(if (enabled) Modifier.pressable(role = role, onClick = onClick) else Modifier)
         .semantics { if (!enabled) disabled(); if (role == Role.RadioButton) selected = value.isNotEmpty() }.then(if (tag != null) Modifier.testTag(tag) else Modifier).padding(vertical = 8.dp),
         verticalAlignment = Alignment.CenterVertically) {
-        SwapContent(icon, contentKey = { icon -> icon != null }, layout = ContentLayout.Row) { icon ->
+        SwapContent(icon, contentKey = { icon -> icon != null }, layout = ContentLayout.Row, inPlace = true) { icon ->
             if (icon != null) {
                 vn.abook.player.ui.components.StateIcon(icon, Abook.colors.text, Modifier.testTag("sheet_row_icon"))
                 Spacer(Modifier.width(Dim.s16))

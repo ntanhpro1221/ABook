@@ -18,7 +18,10 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
+import vn.abook.player.formatSize
+import vn.abook.player.ui.components.DestructiveConfirm
+import vn.abook.player.ui.components.PendingIndicator
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -133,11 +136,15 @@ private fun Actions(ui: LibraryUi, state: LibraryState, track: MusicLibrary.Trac
     val load = ui.active[link]
     val downloaded = link in ui.downloaded
     val saved = link in ui.savedSet
+    var askDelete by remember(link) { mutableStateOf(false) }
+    if (askDelete) DestructiveConfirm(S.s_delete_download_question,
+        S.s_delete_download_description(track.title, formatSize(track.bytes)), { askDelete = false },
+        { state.forget(link) }, pending = link in ui.pendingLinks, problem = ui.actionError)
     Column {
         SwapContent(playing, contentKey = { playing -> playing != null }, layout = ContentLayout.Column) { playing ->
             if (playing != null) {
                 SwapContent(saved, contentKey = { saved -> saved }, layout = ContentLayout.Column) { saved ->
-                    if (saved) QuietButton(S.s_bo_luu_2fd51455, { state.unsave(listOf(link)) }, "track_unsave")
+                    if (saved) QuietButton(S.s_bo_luu_2fd51455, { askDelete = true }, "track_unsave")
                     else PrimaryButton(S.s_luu_e91f26c0, { state.save(listOf(link)) }, Modifier.fillMaxWidth().testTag("track_save"))
                 }
                 QuietButton(S.s_xem_trong_kho_2a139d05, { dismiss(); playing.onOpenLibrary(track.title) }, "track_open_library")
@@ -145,19 +152,20 @@ private fun Actions(ui: LibraryUi, state: LibraryState, track: MusicLibrary.Trac
             } else {
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(Dim.s8)) {
                     PrimaryButton(
-                    if (ui.previewing == link && ui.previewLoading) S.s_dang_tai_am_thanh_6c7cb62f else if (ui.previewing == link) S.s_dung_nghe_f20939be else S.s_nghe_thu_fa024065,
+                    if (ui.previewing == link && ui.previewLoading) S.s_buffering else if (ui.previewing == link && !ui.previewPaused) S.s_tam_dung_67635815 else S.s_nghe_thu_fa024065,
                     { state.togglePreview(link) }, Modifier.weight(1f).testTag("track_preview"), enabled = ui.online || downloaded, compact = true,
-                    icon = { ink -> LucideIcon(if (ui.previewing == link) LucidePaths.SQUARE else LucidePaths.PLAY, ink) },
+                    icon = { ink -> PendingIndicator(ui.previewing == link && ui.previewLoading, color = ink) { LucideIcon(if (ui.previewing == link && !ui.previewPaused) LucidePaths.PAUSE else LucidePaths.PLAY, ink) } },
                     )
                     OutlineButton(
-                    when { load != null -> S.s_huy_tai_1a9ff73d; downloaded -> S.s_xoa_ban_tai_4b461f4a; link in ui.failed -> S.s_tai_tiep_1efbd854; else -> S.s_tai_ve_9b5bdb44 },
-                    { when { load != null -> state.cancel(listOf(link)); downloaded -> state.forget(link); else -> state.save(listOf(link)) } },
+                    when { load != null -> S.s_stop_download; downloaded -> S.s_xoa_ban_tai_4b461f4a; link in ui.failed -> S.s_tai_tiep_1efbd854; else -> S.s_tai_ve_9b5bdb44 },
+                    { when { load != null -> state.cancel(listOf(link)); downloaded -> { askDelete = true }; else -> state.save(listOf(link)) } },
                     Modifier.weight(1f).testTag(when { load != null -> "track_cancel"; downloaded -> "track_forget"; else -> "track_download" }),
                     enabled = load != null || downloaded || ui.online,
                     icon = { ink -> if (load != null) DownloadRing(load.percent, S.s_dang_tai_0_e9a97892(load.percent ?: 0)) else LucideIcon(if (downloaded) LucidePaths.TRASH_2 else LucidePaths.DOWNLOAD, ink) },
                     )
                 }
-                PreviewProblem(ui)
+                Reveal(ui.previewing == link) { ListeningProgress(ui, state) }
+                PreviewProblem(ui, retry = state::retryPreview)
                 Reveal(link in ui.failed) { Caption(S.s_chua_tai_xong_b257419d, Modifier.testTag("track_failed"), color = Abook.colors.danger) }
                 SwapContent(pick, contentKey = { pick -> pick != null }, layout = ContentLayout.Column) { pick ->
                     if (pick != null) {

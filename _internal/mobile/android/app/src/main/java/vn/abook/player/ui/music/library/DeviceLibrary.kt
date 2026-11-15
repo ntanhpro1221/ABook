@@ -60,8 +60,8 @@ class AndroidLibrarySource(context: Context) : LibrarySource {
     }
 
     override fun unsave(links: List<String>) {
-        savedTracks.remove(links)
         for (link in links) catalog.forget(link)
+        savedTracks.remove(links)
     }
 
     override fun download(link: String, progress: (Long, Long?) -> Unit, cancelled: () -> Boolean) {
@@ -70,6 +70,8 @@ class AndroidLibrarySource(context: Context) : LibrarySource {
     }
 
     override fun forget(link: String) = catalog.forget(link)
+    override fun cancelDownload(link: String) = catalog.cancelDownload(link)
+    override fun discardPartial(link: String) = catalog.discardPartial(link)
     override fun partial(link: String): Long = catalog.partial(link)
     override fun metered(): Boolean = AndroidMusicStudent.metered(app)
 
@@ -140,7 +142,7 @@ class ExoPreviewPlayer(context: Context, private val source: AndroidLibrarySourc
                         if (isPlaying) {
                             clearDeadline()
                             Log.i("MusicPreview", "playing index=$index positionMs=${made.currentPosition}")
-                        } else if (made.playbackState != Player.STATE_ENDED) watch()
+                        } else if (made.playWhenReady && made.playbackState != Player.STATE_ENDED) watch()
                     }
                     override fun onPlayWhenReadyChanged(playWhenReady: Boolean, reason: Int) {
                         if (token == request && player === made && !playWhenReady && reason == Player.PLAY_WHEN_READY_CHANGE_REASON_AUDIO_FOCUS_LOSS) onEnd()
@@ -161,6 +163,12 @@ class ExoPreviewPlayer(context: Context, private val source: AndroidLibrarySourc
             attempt()
         }
     }
+
+    override fun pause() { clearDeadline(); player?.pause() }
+    override fun resume() { player?.play() }
+    override fun seek(seconds: Double) { player?.seekTo((seconds.coerceAtLeast(0.0) * 1000).toLong()) }
+    override fun position(): Double = (player?.currentPosition ?: 0) / 1000.0
+    override fun duration(): Double = (player?.duration?.takeIf { it > 0 } ?: 0) / 1000.0
 
     private fun clearDeadline() { deadline?.let(handler::removeCallbacks); deadline = null }
 

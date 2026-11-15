@@ -40,6 +40,7 @@ class ConsentRequest(val voice: ConsentVoice, val voices: List<ConsentVoice>, pr
 interface PlayGate {
     /** Câu hỏi đang hiện (một lúc một câu); giao diện vẽ nó. */
     val request: StateFlow<ConsentRequest?>
+    val pendingBook: StateFlow<String?> get() = idlePending
 
     /** Chạy `go` khi được phép phát: ngay nếu chương không phải chương chữ hay không cần hỏi, không thì sau khi bạn đồng ý; bạn đóng hộp thì không chạy. */
     fun before(bookId: String, textChapter: Boolean, go: () -> Unit)
@@ -53,10 +54,14 @@ interface PlayGate {
         override fun before(bookId: String, textChapter: Boolean, go: () -> Unit) = go()
         override fun cancel() = Unit
     }
+
+    companion object { private val idlePending = MutableStateFlow<String?>(null) }
 }
 
 @Stable
 class ConsentGate(private val source: ConsentSource, private val scope: CoroutineScope) : PlayGate {
+    private val pending = MutableStateFlow<String?>(null)
+    override val pendingBook: StateFlow<String?> get() = pending
     private val flow = MutableStateFlow<ConsentRequest?>(null)
     override val request: StateFlow<ConsentRequest?> get() = flow
     private var ticket = 0
@@ -68,7 +73,9 @@ class ConsentGate(private val source: ConsentSource, private val scope: Coroutin
             go()
             return
         }
+        pending.value = bookId
         scope.launch {
+          try {
             val ask = try {
                 needed(bookId)
             } catch (cancelled: CancellationException) {
@@ -92,6 +99,7 @@ class ConsentGate(private val source: ConsentSource, private val scope: Coroutin
                 // không nhớ được thì lõi vẫn chưa gửi chữ nào; lần sau hỏi lại
             }
             if (mine == ticket) go()
+          } finally { if (mine == ticket) pending.value = null }
         }
     }
 
@@ -101,6 +109,7 @@ class ConsentGate(private val source: ConsentSource, private val scope: Coroutin
 
     private fun supersede(): Int {
         ticket++
+        pending.value = null
         waiting?.complete(null)
         return ticket
     }

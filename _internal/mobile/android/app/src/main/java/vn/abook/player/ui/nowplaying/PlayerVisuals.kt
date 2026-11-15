@@ -220,6 +220,7 @@ fun PlayMorph(
     modifier: Modifier = Modifier, large: Boolean = true,
     /** Nhãn đọc màn hình; mặc định "Tạm dừng" / "Phát". Đang chờ âm thanh thì nói đang chờ gì ([PlayerText.toggleLabel]). */
     description: String? = null,
+    pending: Boolean = false,
 ) {
     val colors = Abook.colors
     val view = LocalView.current
@@ -233,6 +234,7 @@ fun PlayMorph(
     }
         .semantics { contentDescription = description ?: if (playing) S.s_tam_dung_67635815 else S.s_phat_343e7e48 }
         .drawBehind { drawCircle(colors.accent) }, contentAlignment = Alignment.Center) {
+        vn.abook.player.ui.components.PendingIndicator(pending, Modifier.size(if (large) 32.dp else 24.dp), colors.accentInk) {
         Canvas(Modifier.size(if (large) 32.dp else 24.dp).visualIcon()) {
             val p = morph.value
             val w = size.width; val h = size.height
@@ -250,6 +252,7 @@ fun PlayMorph(
             val ink = colors.accentInk
             drawPath(left, ink); drawPath(right, ink)
         }
+        }
     }
 }
 
@@ -262,7 +265,7 @@ fun PlayerAction(label: String, glyph: String, onClick: () -> Unit, modifier: Mo
         .semantics { contentDescription = label }, horizontalAlignment = Alignment.CenterHorizontally) {
         // Ô trên cùng một chiều cao (= ô icon 28 dp) dù là icon hay chữ ("1×", "12:30"): nhãn dưới của cả hàng nằm trên cùng một đường.
         Box(Modifier.heightIn(min = 28.dp), contentAlignment = Alignment.Center) {
-            SwapContent(glyph, contentKey = { glyph -> glyph == "◷" || glyph == "☷" || glyph == MINI_WINDOW_GLYPH }, layout = ContentLayout.Box) { glyph ->
+            SwapContent(glyph, contentKey = { glyph -> glyph == "◷" || glyph == "☷" || glyph == MINI_WINDOW_GLYPH }, layout = ContentLayout.Box, inPlace = true) { glyph ->
                 if (glyph == "◷" || glyph == "☷" || glyph == MINI_WINDOW_GLYPH) PlayerGlyph(glyph)
                 else SwapContent(clock, contentKey = { clock -> clock }, layout = ContentLayout.Box) { clock ->
                     if (clock) ClockLabel(glyph, style = Abook.type.sectionTitle.copy(color = Abook.colors.accentText))
@@ -297,7 +300,7 @@ fun PlayerGlyph(glyph: String) {
         else -> null
     }
     Box(Modifier.size(28.dp), contentAlignment = Alignment.Center) {
-        SwapContent(data, contentKey = { data -> data != null }, layout = ContentLayout.Box) { data ->
+        vn.abook.player.ui.components.StateIcon(data) { data ->
             if (data != null) LucideIcon(data, color, size = 24.dp)
             else Canvas(Modifier.fillMaxSize().visualIcon()) { drawSkip(glyph == "15↷", color, path, skipNumber) }
         }

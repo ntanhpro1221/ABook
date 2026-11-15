@@ -539,11 +539,11 @@ def qml_scan_file(path: Path, scan: QtScan, forwards: dict[str, dict[str, str]] 
         # Icon { name: ... } cạnh Text { text: ... } trong cùng khối
         kids = obj.children
         for index, child in enumerate(kids):
-            if child.type != "Icon" or "name" not in child.props:
+            if child.type not in ("Icon", "StateIcon") or "name" not in child.props:
                 continue
             for step in (1, -1):
                 k = index + step
-                while 0 <= k < len(kids) and kids[k].type == "Icon":
+                while 0 <= k < len(kids) and kids[k].type in ("Icon", "StateIcon"):
                     k += step
                 if 0 <= k < len(kids) and kids[k].type == "Text" and "text" in kids[k].props:
                     found = pair_up(kids[k].props["text"][0], child.props["name"][0])
@@ -556,7 +556,7 @@ def qml_scan_file(path: Path, scan: QtScan, forwards: dict[str, dict[str, str]] 
                 if "tip" in obj.props and not any(c.type == "Text" for c in kids):
                     for label, icon in pair_up(obj.props["tip"][0], child.props["name"][0]):
                         scan.pairs.append(Pair("qt", file, child.line, label, icon, "tip"))
-        if obj.type == "Icon" or "icon" in obj.props:
+        if obj.type in ("Icon", "StateIcon") or "icon" in obj.props:
             scan.icon_sites += 1
     # chuỗi qsTr(...) ở bất cứ đâu
     for m in re.finditer(r"qsTr\(\s*([\"'])", src):

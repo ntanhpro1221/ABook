@@ -38,6 +38,19 @@ WindowLayer {
         Nav.openLayer(root)
         forceActiveFocus(Qt.TabFocusReason)
         scroll.contentY = 0
+        Later.call(root, function() {
+            if (!root.open) return
+            const actions = []
+            const collect = function(item) {
+                if (item && item.kind !== undefined && item.text !== undefined) actions.push(item)
+                for (const child of item.children || []) collect(child)
+            }
+            collect(footerBox)
+            if (actions.some(action => action.kind === "danger")) {
+                const cancel = actions.find(action => action.kind !== "danger" && action.enabled && action.visible)
+                if (cancel) cancel.forceActiveFocus(Qt.TabFocusReason)
+            }
+        })
     }
     // Back, ✕, bấm ra ngoài: cùng một đường. `keepOpen()` (tuỳ) trả true thì hộp ở lại - nó tự lùi một bậc bên trong (đóng trang con,
     // huỷ hỏi lại...). dismiss(): đóng thẳng, không hỏi.
@@ -104,7 +117,7 @@ WindowLayer {
             hoverInk: Theme.text
             tip: S.s_dong_5d54c2a1
             Accessible.name: S.s_dong_5d54c2a1
-            onClicked: root.close()
+            onActivated: root.close()
         }
         Flickable {
             id: scroll

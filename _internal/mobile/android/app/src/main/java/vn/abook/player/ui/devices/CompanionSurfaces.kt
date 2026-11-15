@@ -161,7 +161,7 @@ fun StudioNotices(repo: CompanionRepo, askPermission: (() -> Unit) -> Unit, open
 @Composable
 private fun OtherPlayerIcon(remote: OtherPlayer) {
     val ink = Abook.colors.text2
-    SwapContent(remote, contentKey = { remote -> remote.cast }, layout = ContentLayout.Box) { remote ->
+    SwapContent(remote, contentKey = { remote -> remote.cast }, layout = ContentLayout.Box, inPlace = true) { remote ->
         if (remote.cast) CastIcon(ink) else when (remote.kind) {
             "computer" -> LaptopIcon(ink)
             "speaker" -> SpeakerIcon(ink)

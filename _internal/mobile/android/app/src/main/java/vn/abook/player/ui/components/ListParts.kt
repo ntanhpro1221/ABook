@@ -184,11 +184,15 @@ fun <T : Choice> ChoiceSetting(
     onPick: (T, Offset) -> Unit,
     tag: String,
     hint: String? = null,
+    pending: Boolean? = null,
 ) {
     Column(Modifier.fillMaxWidth().padding(top = Dim.s12, bottom = Dim.s4).testTag(tag)) {
-        RowLabel(label, hint, Modifier.fillMaxWidth())
+        Box(Modifier.fillMaxWidth()) {
+            RowLabel(label, hint, Modifier.fillMaxWidth().padding(end = if (pending != null) Dim.s24 else 0.dp))
+            if (pending != null) PendingIndicator(pending, Modifier.align(Alignment.CenterEnd))
+        }
         Spacer(Modifier.height(Dim.s4))
-        ChoiceRow(options, value, onPick, Modifier.fillMaxWidth(), tag = tag)
+        ChoiceRow(options, value, { option, offset -> if (pending != true) onPick(option, offset) }, Modifier.fillMaxWidth(), tag = tag)
     }
 }
 

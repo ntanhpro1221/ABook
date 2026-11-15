@@ -10,7 +10,6 @@ Collapse {
     id: root
     property var track: ({})
     property bool canImport: true
-    property bool confirming: false     // đang hỏi lại xoá bài này
     property bool removing: false       // đang gửi lệnh xoá
     property bool leaving: false
     property bool entered: false
@@ -19,8 +18,6 @@ Collapse {
     property bool canPreview: false     // tab Nhạc nền của Studio có "Nghe thử" ở mỗi bài; Cài đặt thì không
     property bool previewing: false
     signal preview()
-    signal askRemove()
-    signal keep()
     signal remove()
     signal pick(var next)
     open: entered && !leaving
@@ -72,13 +69,14 @@ Collapse {
                 spacing: 4
                 Reveal { shown: root.canImport || root.canPreview }
                 width: (root.canPreview ? listen.width + (root.canImport ? spacing : 0) : 0)
-                       + (root.canImport ? (ask.width + confirm.width + (ask.width > 0 && confirm.width > 0 ? spacing : 0)) : 0)
+                       + (root.canImport ? ask.width : 0)
                 Button {
                     id: listen
                     objectName: "musicPreview"
                     Reveal { shown: root.canPreview }
-                    text: root.previewing ? S.s_dung_nghe_thu_41a2925b : S.s_nghe_thu_fa024065
-                    icon: root.previewing ? "pause" : "play"
+                    text: root.previewing ? (Clip.loading ? S.s_buffering : Clip.paused ? S.s_phat_343e7e48 : S.s_tam_dung_67635815) : S.s_nghe_thu_fa024065
+                    icon: root.previewing && !Clip.paused ? "pause" : "play"
+                    pending: root.previewing && Clip.loading
                     kind: "ghost"; size: "sm"
                     Accessible.name: text + ": " + (root.track.title || "")
                     onActivated: root.preview()
@@ -86,49 +84,26 @@ Collapse {
                 Item {
                     id: ask
                     Reveal { shown: root.canImport }
-                    width: root.confirming ? 0 : askButton.implicitWidth
+                    width: askButton.implicitWidth
                     height: askButton.implicitHeight
                     clip: true
                     Behavior on width { enabled: !Theme.reduceMotion; NumberAnimation { duration: Theme.motionMedium; easing.type: Easing.BezierSpline; easing.bezierCurve: Theme.easeStandard } }
-                    opacity: root.confirming ? 0 : 1
                     Behavior on opacity { NumberAnimation { duration: Theme.motionFast } }
                     Button {
                         id: askButton
+                        objectName: "musicDelete"
                         text: S.s_xoa_777195ab; icon: "trash"; kind: "ghost"; size: "sm"
-                        enabled: !root.confirming
+                        busy: root.removing
                         Accessible.name: S.s_xoa_81a43b8a + (root.track.title || "")
-                        onClicked: root.askRemove()
-                    }
-                }
-                Item {
-                    id: confirm
-                    Reveal { shown: root.canImport }
-                    width: root.confirming ? confirmRow.implicitWidth : 0
-                    height: confirmRow.implicitHeight
-                    clip: true
-                    Behavior on width { enabled: !Theme.reduceMotion; NumberAnimation { duration: Theme.motionMedium; easing.type: Easing.BezierSpline; easing.bezierCurve: Theme.easeStandard } }
-                    opacity: root.confirming ? 1 : 0
-                    Behavior on opacity { NumberAnimation { duration: Theme.motionFast } }
-                    Row {
-                        id: confirmRow
-                        spacing: 4
-                        Button {
-                            id: removeButton
-                            text: S.s_xoa_bai_d554a496; icon: "trash"; kind: "ghost"; size: "sm"
-                            busy: root.removing
-                            enabled: root.confirming
-                            Accessible.name: S.s_xoa_bai_ccd757ca + (root.track.title || "")
-                            onActivated: root.remove()
-                        }
-                        Button {
-                            text: S.s_giu_lai_3c3ba2db; kind: "ghost"; size: "sm"
-                            enabled: root.confirming && !root.removing
-                            Accessible.name: S.s_giu_lai_28cdd2d4 + (root.track.title || "")
-                            onClicked: root.keep()
-                        }
+                        onActivated: removeConfirm.show()
                     }
                 }
             }
         }
     }
+    Collapse { width: parent.width; open: root.previewing; MusicListeningProgress { width: parent.width } }
+    DestructiveConfirm { id: removeConfirm; objectName: "musicRemoveConfirm:" + root.track.link; title: S.s_xoa_bai_nay_412d7001
+        description: S.s_0_se_bi_xoa_khoi_nhac_cua_toi_a41656b0(root.track.title || ""); onAccepted: root.remove()
+    }
+
 }

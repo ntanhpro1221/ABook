@@ -102,7 +102,7 @@ SettingsItem {
                         hoverInk: Theme.text
                         tip: S.s_bo_cach_doc_0_a883978b(row.modelData.surface)
                         Accessible.name: tip
-                        onClicked: root.save({surface: row.modelData.surface, remove: true})
+                        onActivated: root.save({surface: row.modelData.surface, remove: true})
                     }
                 }
             }
@@ -114,7 +114,7 @@ SettingsItem {
         Item {
             width: parent.width
             height: more.height
-            Button { id: more; objectName: "readingsMore"; text: S.s_xem_them_e0ac1b1e; kind: "ghost"; size: "sm"; onClicked: root.shown += 12 }
+            Button { id: more; objectName: "readingsMore"; text: S.s_xem_them_e0ac1b1e; kind: "ghost"; size: "sm"; onActivated: root.shown += 12 }
         }
     }
     Flow {

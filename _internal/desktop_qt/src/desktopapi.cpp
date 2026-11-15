@@ -32,11 +32,18 @@ void DesktopApi::setPreviewOut(AudioOut *out) {
     sampleOut = out;
     if (!out) return;
     QObject::connect(out, &AudioOut::playingChanged, out, [](bool on) { if (on && live) emit live->previewStarted(); });
+    QObject::connect(out, &AudioOut::buffering, out, [](bool loading) { if (live) emit live->previewBuffering(loading); });
     QObject::connect(out, &AudioOut::ended, out, [] { if (live) emit live->previewEnded(); });
     QObject::connect(out, &AudioOut::failed, out, [](const QString &reason) { if (live) emit live->previewFailed(reason); });
 }
 void DesktopApi::preview(const QString &path) { previewFrom(path, 0); }
 void DesktopApi::previewFrom(const QString &path, double startSeconds) { if (sampleOut) { sampleOut->stop(); sampleOut->load(mediaUrl(path), startSeconds); sampleOut->play(); } }
+void DesktopApi::pausePreview() { if (sampleOut) sampleOut->pause(); }
+void DesktopApi::resumePreview() { if (sampleOut) sampleOut->play(); }
+void DesktopApi::seekPreview(double seconds) { if (sampleOut) sampleOut->seek(qMax(0.0, seconds)); }
+void DesktopApi::previewVolume(double volume) { if (sampleOut) sampleOut->setVolume(qBound(0.0, volume, 1.0)); }
+double DesktopApi::previewPosition() const { return sampleOut ? sampleOut->position() : 0; }
+double DesktopApi::previewDuration() const { return sampleOut ? sampleOut->duration() : 0; }
 void DesktopApi::stopPreview() { if (sampleOut) sampleOut->stop(); }
 QString DesktopApi::thirdParty() const {
     QFile file(QStringLiteral(":/legal/THIRD_PARTY.md"));
@@ -49,7 +56,12 @@ QString DesktopApi::thirdParty() const {
     }
     return shown.join(QLatin1Char('\n'));
 }
-void DesktopApi::cancel(int id) { if (const QPointer<HostCall> call = m_pending.take(id)) call->abort(); }
+void DesktopApi::cancel(int id) {
+    if (const QPointer<HostCall> call = m_pending.take(id)) {
+        call->abort();
+        emit requestFinished(id, 0);
+    }
+}
 int DesktopApi::request(const QString &method, const QString &path, const QJSValue &body, const QJSValue &done) {
     const auto endpoint = Backend::endpoint();
     if (!path.startsWith(QStringLiteral("/api/")) || !endpoint.port) {
@@ -62,10 +74,12 @@ int DesktopApi::request(const QString &method, const QString &path, const QJSVal
     request.setHeader(QNetworkRequest::ContentTypeHeader, QStringLiteral("application/json"));
     const QByteArray bytes = body.isNull() || body.isUndefined() ? QByteArray() : QJsonDocument::fromVariant(body.toVariant()).toJson(QJsonDocument::Compact);
     const int id = ++m_next;
+    emit requestStarted(id);
     const QPointer<QJSEngine> engine = qjsEngine(this);
     // Wait limit by path (HostWait): a voice try waits like the player's clip, not 30 s.
     m_pending.insert(id, HostCall::send(&m_net, request, method.toLatin1(), bytes, [this, id, engine, done](int status, const QByteArray &answer, bool) {
         m_pending.remove(id);
+        emit requestFinished(id, status);
         if (!engine || !done.isCallable()) return;
         QJSValue callback = done;
         const auto document = QJsonDocument::fromJson(answer);

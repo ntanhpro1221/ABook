@@ -11,9 +11,9 @@ const two: UnsentEdits = {
 };
 
 describe("gỡ ghép khi còn sửa chưa gửi", () => {
-  it("không hỏi gì khi không còn sửa nào", () => {
+  it("asks before removing a pairing even when no cached data exists", () => {
     expect(unpairCopy("Máy bàn", "điện thoại", null, true)).toBeNull();
-    expect(unpairCopy("Máy bàn", "điện thoại", { books: [], changes: 0, sendable: true }, true)).toBeNull();
+    expect(unpairCopy("Máy bàn", "điện thoại", { books: [], changes: 0, sendable: true }, true)?.lines[0]).toContain("ghép lại");
   });
 
   it("nói số cuốn, số thay đổi và tên máy, kèm lựa chọn gửi trước khi máy kia tới được", () => {
@@ -22,7 +22,7 @@ describe("gỡ ghép khi còn sửa chưa gửi", () => {
     expect(copy.lines[0]).toBe("2 cuốn có 3 thay đổi chưa gửi về Máy bàn sẽ mất: “Sách một”, “Sách hai”.");
     expect(copy.send).toBe("Gửi trước rồi bỏ ghép");
     expect(copy.discard).toBe("Vẫn bỏ ghép, bỏ thay đổi");
-    expect(copy.cancel).toBe("Giữ lại");
+    expect(copy.cancel).toBe("Huỷ");
   });
 
   it("máy kia tới được thì “Gửi trước” là nút chính", () => {
@@ -65,7 +65,7 @@ describe("gỡ ghép khi còn sửa chưa gửi", () => {
   });
 
   it("không có gì để mất thì gỡ như thường; lời báo sau khi gỡ chỉ MỘT dòng", () => {
-    expect(unpairCopy("Máy bàn", "máy tính", { books: [], changes: 0, sendable: true, cache: { books: 0, bytes: 0, places: 0 } }, true)).toBeNull();
+    expect(unpairCopy("Máy bàn", "máy tính", { books: [], changes: 0, sendable: true, cache: { books: 0, bytes: 0, places: 0 } }, true)?.discard).toBe("Bỏ ghép");
     expect(unpairDone("Máy bàn")).toBe("Đã bỏ ghép Máy bàn");
   });
 });

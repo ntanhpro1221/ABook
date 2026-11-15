@@ -379,6 +379,7 @@ it("fix139 1.2 nút phát / dừng lớn: glyph (cả vòng chờ đệm) mờ c
     animate.mockClear();
     player(patch);
     await render(<NowPlaying mobile />);
+    if (patch.buffering) await act(async () => { await new Promise(resolve => setTimeout(resolve, 200)); });
     expect(toggle.querySelector("[data-motion-region]")).toBe(glyph);
     expect(animated((element) => element === glyph)).toHaveLength(1);
     expect(animated((element) => element === transport)).toHaveLength(0);

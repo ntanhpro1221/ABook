@@ -34,14 +34,14 @@ export function LibraryMoveRecovery({ recovery }: { recovery: LibraryMoveRecover
     <p>{S.s_kiem_tra_duong_dan_hoan_tat_dung_thu_vien_12eb02fe}</p>
     <div className="flex flex-wrap items-center gap-2">
       <label className="min-w-0 flex-1">{S.s_truoc_khi_chuyen_3ca9e502}<input aria-label={S.s_thu_vien_truoc_khi_chuyen_c012f0f0} className="w-full rounded-control border border-line bg-sunken p-2" value={oldRoot} onChange={(e) => setOldRoot(e.target.value)} disabled={busy} /></label>
-      <Button disabled={busy} onClick={() => void choose("old")}>{S.s_chon_thu_muc_truoc_c2cda7f4}</Button>
+      <Button loading={busy} disabled={busy} onClick={() => choose("old")}>{S.s_chon_thu_muc_truoc_c2cda7f4}</Button>
       <label className="min-w-0 flex-1">{S.s_sau_khi_chuyen_2ba52e4f}<input aria-label={S.s_thu_vien_sau_khi_chuyen_11438b42} className="w-full rounded-control border border-line bg-sunken p-2" value={newRoot} onChange={(e) => setNewRoot(e.target.value)} disabled={busy} /></label>
-      <Button disabled={busy} onClick={() => void choose("new")}>{S.s_chon_thu_muc_sau_217a3a2f}</Button>
+      <Button loading={busy} disabled={busy} onClick={() => choose("new")}>{S.s_chon_thu_muc_sau_217a3a2f}</Button>
     </div>
     <div className="flex flex-wrap gap-2">
-      <Button disabled={busy} onClick={() => void resolve("finish")}>{S.s_hoan_tat_chuyen_37f331ca}</Button>
-      <Button disabled={busy} variant="ghost" onClick={() => void resolve("rollback")}>{S.s_quay_lui_1fdecb6f}</Button>
-      <Button disabled={busy} variant="ghost" onClick={() => void resolve("ignore")}>{S.s_bo_qua_c67ba288}</Button>
+      <Button loading={busy} disabled={busy} onClick={() => resolve("finish")}>{S.s_hoan_tat_chuyen_37f331ca}</Button>
+      <Button loading={busy} disabled={busy} variant="ghost" onClick={() => resolve("rollback")}>{S.s_quay_lui_1fdecb6f}</Button>
+      <Button loading={busy} disabled={busy} variant="ghost" onClick={() => resolve("ignore")}>{S.s_bo_qua_c67ba288}</Button>
     </div>
   </div>;
 }

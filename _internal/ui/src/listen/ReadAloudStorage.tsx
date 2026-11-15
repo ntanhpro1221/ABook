@@ -23,7 +23,7 @@ export const STORAGE_KEY = ["readaloud", "storage"] as const;
 export function ClearDialog({ open, onOpenChange, usage, busy, onClear }: { open: boolean; onOpenChange: (open: boolean) => void; usage: ReadAloudCacheUsage; busy: boolean; onClear: () => void }) {
   return (
     <Dialog footer={<DialogActions>
-        <Button variant="ghost" disabled={busy} onClick={() => onOpenChange(false)}>{S.s_giu_lai_3c3ba2db}</Button>
+        <Button data-autofocus variant="ghost" disabled={busy} onClick={() => onOpenChange(false)}>{S.s_huy_96732485}</Button>
         <Button variant="danger" loading={busy} onClick={onClear}>{S.s_don_6730827d}</Button>
       </DialogActions>} open={open} onOpenChange={(next) => (busy ? undefined : onOpenChange(next))} title={S.s_don_ban_doc_5ae4774e} description={clearStorageQuestion(usage)}>
 

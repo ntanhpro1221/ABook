@@ -54,6 +54,8 @@ export function ClipProvider({ children, onStart }: { children: ReactNode; onSta
   }
   const [current, setCurrent] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const deadline = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const last = useRef<{id: string; source: string | ClipSource} | null>(null);
   // Mỗi lần bấm nghe thử có một số thứ tự: bấm nhanh sang clip khác thì play() của clip trước ném AbortError -
   // lỗi ấy không được xoá trạng thái của clip SAU (trước đây clip sau vẫn phát mà không nút nào hiện "đang phát").
   const request = useRef(0);
@@ -65,6 +67,7 @@ export function ClipProvider({ children, onStart }: { children: ReactNode; onSta
   };
 
   const stop = useCallback(() => {
+    clearTimeout(deadline.current);
     request.current += 1;
     clearEnd();
     audio.current?.pause();
@@ -78,6 +81,7 @@ export function ClipProvider({ children, onStart }: { children: ReactNode; onSta
   const startPending = useRef(0);
 
   const ended = useCallback(() => {
+    clearTimeout(deadline.current);
     startPending.current = 0;
     clearEnd();
     setCurrent(null);
@@ -85,9 +89,11 @@ export function ClipProvider({ children, onStart }: { children: ReactNode; onSta
   }, []);
 
   const failed = useCallback(() => {
+    clearTimeout(deadline.current);
     startPending.current = 0;
     setCurrent(null);
     setLoading(false);
+    audio.current?.pause();
     // Một id: sự kiện `error` và `play()` bị từ chối có thể cùng báo một lần bấm - hai toast giống hệt (soát UX 29-09). Không
     // hứa "sách vẫn phát tiếp": lúc bấm sách có thể đang dừng.
     toast.warning(S.s_chua_nghe_thu_duoc_f7601d1f, { id: "clip-failed", description: S.s_cau_mau_nay_chua_co_ban_thu_c744f35c });
@@ -101,6 +107,7 @@ export function ClipProvider({ children, onStart }: { children: ReactNode; onSta
       return;
     }
     const clip = typeof source === "string" ? { src: source } : source;
+    last.current = {id, source};
     const mine = (request.current += 1);
     startPending.current = mine;
     clearEnd();
@@ -111,6 +118,8 @@ export function ClipProvider({ children, onStart }: { children: ReactNode; onSta
     if (clip.end !== undefined) releaseEnd.current = stopAtEnd(element, clip.end, ended);
     setCurrent(id);
     setLoading(true);
+    clearTimeout(deadline.current);
+    deadline.current = setTimeout(failed, 30_000);
     void element.play().catch((error: unknown) => {
       // `startPending` đã về 0: sự kiện `error` của thẻ audio đã báo lần bấm này rồi.
       if (request.current !== mine || startPending.current !== mine || (error as { name?: string } | null)?.name === "AbortError") return;
@@ -126,6 +135,7 @@ export function ClipProvider({ children, onStart }: { children: ReactNode; onSta
       else ended();
     };
     const playing = () => {
+      clearTimeout(deadline.current);
       setLoading(false);
       if (startPending.current && startPending.current === request.current) {
         startPending.current = 0;
@@ -135,10 +145,20 @@ export function ClipProvider({ children, onStart }: { children: ReactNode; onSta
     element.addEventListener("ended", ended);
     element.addEventListener("error", error);
     element.addEventListener("playing", playing);
+    const waiting = () => {
+      setLoading(true);
+      clearTimeout(deadline.current);
+      deadline.current = setTimeout(failed, 30_000);
+    };
+    element.addEventListener("waiting", waiting);
+    element.addEventListener("stalled", waiting);
     return () => {
       element.removeEventListener("ended", ended);
       element.removeEventListener("error", error);
       element.removeEventListener("playing", playing);
+      element.removeEventListener("waiting", waiting);
+      element.removeEventListener("stalled", waiting);
+      clearTimeout(deadline.current);
     };
   }, [ended, failed]);
 

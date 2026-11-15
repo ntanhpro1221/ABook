@@ -12,7 +12,7 @@ Modal {
     id: root
     objectName: "chapterReader"
     panelWidth: 720
-    title: chapter ? chapter.fullTitle || chapter.title : S.s_doc_5709880c
+    title: (chapter ? chapter.fullTitle || chapter.title : "") || S.s_doc_5709880c
     property string bookId: ""
     property var chapters: []
     property var chapter: null

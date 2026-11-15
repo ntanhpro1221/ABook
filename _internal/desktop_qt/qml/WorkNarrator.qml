@@ -65,7 +65,7 @@ Column {
             icon: "user-plus"
             text: S.s_nguoi_ke_khac_7291e079
             Accessible.description: root.choosing ? S.s_dang_mo_98235c77 : S.s_dang_dong_4886d4e7
-            onClicked: root.choosing = !root.choosing
+            onActivated: root.choosing = !root.choosing
         }
     }
     Collapse {
@@ -87,7 +87,7 @@ Column {
                         kind: "ghost"
                         text: modelData.label
                         enabled: !root.busy
-                        onClicked: root.save({action: "choose", narrator: modelData.value})
+                        onActivated: root.save({action: "choose", narrator: modelData.value})
                     }
                 }
                 Item {

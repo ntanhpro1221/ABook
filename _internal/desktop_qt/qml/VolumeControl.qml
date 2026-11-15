@@ -19,7 +19,7 @@ Column {
             objectName: "volumeMute"
             icon: Player.volume === 0 ? "volume-x" : Player.volume < 0.5 ? "volume-1" : "volume-2"
             tip: Player.volume === 0 ? S.s_bat_tieng_m_87e6bed5 : S.s_tat_tieng_m_5ea1a520
-            onClicked: Player.toggleMute()
+            onActivated: Player.toggleMute()
         }
         C.Slider {
             id: slider; objectName: "volumeSlider"

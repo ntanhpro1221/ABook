@@ -46,6 +46,6 @@ Item {
         icon: root.waiting ? "" : root.here && Player.playing ? "pause" : "play"
         Accessible.name: root.waiting ? S.s_cho_chuong_moi_79b8dba7 : root.here && Player.playing ? S.s_tam_dung_0_43ccbbf2(root.book.title) : S.s_nghe_tiep_0_1_d03513bd(root.book.title, root.book.lastChapter ? ", " + root.book.lastChapter : "")
         enabled: !root.waiting
-        onClicked: root.here ? Player.toggle() : Player.playBook(root.book.bookId)
+        onActivated: root.here ? Player.toggle() : Player.playBook(root.book.bookId)
     }
 }

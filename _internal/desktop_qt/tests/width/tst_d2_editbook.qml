@@ -153,6 +153,8 @@ Item {
             compare(Api.notice, "Đã đặt ảnh bìa")
             compare(findChild(dialog, "editPickCover").text, "Đổi ảnh bìa")
             dialog.removeCover()
+            compare(calls("DELETE", "/api/books/b1/cover").length, 0)
+            findChild(host.Window.window.contentItem, "editCoverRemoveConfirm").accept()
             compare(calls("DELETE", "/api/books/b1/cover").length, 1)
             compare(Api.notice, "Đã bỏ ảnh bìa - sách dùng bìa vẽ từ tên")
             compare(findChild(dialog, "editPickCover").text, "Chọn ảnh bìa")

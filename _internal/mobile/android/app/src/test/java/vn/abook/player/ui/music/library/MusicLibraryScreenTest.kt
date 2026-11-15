@@ -296,7 +296,7 @@ class MusicLibraryScreenTest {
         val field = LibraryState::class.java.getDeclaredField("flow").apply { isAccessible = true }
         @Suppress("UNCHECKED_CAST")
         val flow = field.get(state) as kotlinx.coroutines.flow.MutableStateFlow<LibraryUi>
-        flow.value = flow.value.copy(active = flow.value.active + (link to Loading(percent * 10_000L, 1_000_000L)))
+        flow.value = flow.value.copy(downloaded = flow.value.downloaded - link, active = flow.value.active + (link to Loading(percent * 10_000L, 1_000_000L)))
     }
 
     @Test fun downloadingLight() = downloading(false)

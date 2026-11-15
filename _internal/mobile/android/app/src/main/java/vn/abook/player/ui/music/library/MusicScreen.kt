@@ -137,7 +137,8 @@ fun MusicScreen(
                     }
                 }
             }
-            PreviewProblem(ui, Modifier.padding(horizontal = Dim.margin))
+            PreviewProblem(ui, Modifier.padding(horizontal = Dim.margin), state::retryPreview)
+            if (ui.actionError.isNotEmpty()) InlineProblem(ui.actionError, state::retryAction, "music_action_error", Modifier.padding(horizontal = Dim.margin))
             when {
                 ui.loading -> Caption(S.s_dang_tai_465b1987, Modifier.padding(horizontal = Dim.margin).testTag("music_loading"))
                 ui.error.isNotEmpty() -> InlineProblem(ui.error, state::open, "music_error", Modifier.padding(horizontal = Dim.margin))
@@ -158,10 +159,11 @@ fun MusicScreen(
 }
 
 @Composable
-internal fun PreviewProblem(ui: LibraryUi, modifier: Modifier = Modifier) {
+internal fun PreviewProblem(ui: LibraryUi, modifier: Modifier = Modifier, retry: (() -> Unit)? = null) {
     Reveal(ui.previewError.isNotEmpty()) {
         Caption(if (ui.previewError == S.s_preview_timeout) S.s_preview_timeout else S.s_chua_nghe_thu_duoc_luc_nay_58b11ef5,
             modifier.testTag("preview_error"), color = Abook.colors.danger)
+        if (retry != null) vn.abook.player.ui.components.TextAction(S.s_thu_lai_c58d068c, retry, "preview_retry")
     }
 }
 
@@ -378,9 +380,9 @@ private fun PreviewBar(ui: LibraryUi, state: LibraryState, modifier: Modifier = 
             .padding(start = Dim.s16).testTag("preview_bar"),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        BasicText(listOf(if (ui.previewLoading) S.s_dang_tai_am_thanh_6c7cb62f else S.s_dang_nghe_thu_f1fb4cba, track.title).dotJoined(), style = Abook.type.label, modifier = Modifier.weight(1f).padding(vertical = Dim.s12))
+        BasicText(listOf(if (ui.previewLoading) S.s_buffering else if (ui.previewPaused) S.s_music_paused else S.s_dang_nghe_thu_f1fb4cba, track.title).dotJoined(), style = Abook.type.label, modifier = Modifier.weight(1f).padding(vertical = Dim.s12))
         Box(
-            Modifier.size(Dim.touch).pressable { state.stopPreview() }.semantics { contentDescription = S.s_dung_nghe_f20939be }.testTag("preview_stop"),
+            Modifier.size(Dim.touch).pressable { state.stopPreview() }.semantics { contentDescription = S.s_dung_nghe_thu_41a2925b }.testTag("preview_stop"),
             contentAlignment = Alignment.Center,
         ) { LucideIcon(LucidePaths.SQUARE, colors.text, size = 18.dp) }
     }

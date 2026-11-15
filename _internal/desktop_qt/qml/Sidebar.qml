@@ -91,7 +91,7 @@ Item {
             icon: root.expanded ? "panel-left-close" : "panel-left-open"
             iconSize: 18
             tip: root.expanded ? S.s_thu_gon_ctrl_b_8388742c : S.s_mo_rong_ctrl_b_efa58bb4
-            onClicked: root.toggle()
+            onActivated: root.toggle()
         }
 
         // Khối nền của mục đang mở
@@ -175,7 +175,7 @@ Item {
                 Button {
                     objectName: "sidebarUpdate"; width: parent.width; wrap: true; kind: "ghost"; icon: "download"
                     text: S.s_co_abook_39ccc742 + (Api.info.update ? Api.info.update.version : "") + S.s_bam_de_cap_nhat_186823a8
-                    onClicked: { root.choose(2); if (Nav.stack) Nav.stack.rootContent(2).active = "advanced" }
+                    onActivated: { root.choose(2); if (Nav.stack) Nav.stack.rootContent(2).active = "advanced" }
                 }
             }
             SmoothWheel { flick: productionScroll }

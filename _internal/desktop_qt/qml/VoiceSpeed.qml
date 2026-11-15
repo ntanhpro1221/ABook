@@ -38,13 +38,18 @@ VoiceFold {
     Column {
         width: parent.width
         spacing: 8
-        Text {
-            width: parent.width
+        Item {
+          width: parent.width; height: Math.max(speedTitle.implicitHeight, 20)
+          PendingIndicator { anchors.right: parent.right; anchors.verticalCenter: parent.verticalCenter; pending: root.busy }
+          Text {
+            id: speedTitle
+            width: parent.width - 28
             text: VoiceLogic.SPEED_TITLE
             color: Theme.text
             wrapMode: Text.WrapAtWordBoundaryOrAnywhere
             font.pixelSize: Theme.sizeBodySmall
             font.weight: Theme.weightMedium
+          }
         }
         ChoiceRow {
             objectName: "voiceSpeedChoice"

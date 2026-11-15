@@ -46,6 +46,8 @@ import vn.abook.player.ui.data.PlayerState
 import vn.abook.player.ui.theme.Abook
 import vn.abook.player.ui.theme.Dim
 import vn.abook.player.ui.components.Reveal
+import vn.abook.player.ui.components.PendingIndicator
+import vn.abook.player.S
 
 /**
  * Nội dung của cửa sổ nhỏ (PiP), cùng năm thứ với cửa sổ mini của bản máy tính (`MiniPlayer.qml`, docs/DESIGN.md "Khay hệ thống và cửa sổ mini"), cùng thứ tự đọc:
@@ -88,6 +90,8 @@ fun PipContent(player: PlayerState, position: () -> Long, covers: CoverLoader, m
                 }
             }
         }
+        PendingIndicator(player.buffering, Modifier.align(Alignment.Center).testTag("pip_buffering")
+            .semantics { if (player.buffering) contentDescription = S.s_buffering }, color = colors.coverInk)
         Box(
             Modifier.align(Alignment.BottomStart).fillMaxWidth().height(PROGRESS_HEIGHT).testTag("pip_progress").drawBehind {
                 drawRect(track)

@@ -127,7 +127,7 @@ Interactive {
         Accessible.name: S.s_them_tuy_chon_cho_0_82a2cf4d(root.fullTitle)
         opacity: root.hovered || more.hovered || more.activeFocus || root.menuOpen ? 1 : 0
         Behavior on opacity { NumberAnimation { duration: Theme.motionFast } }
-        onClicked: {
+        onActivated: {
             root.onMenuButton = true
             Later.call(root, function() { root.onMenuButton = false })
             root.menuRequested(more)

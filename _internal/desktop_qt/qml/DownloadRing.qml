@@ -12,7 +12,8 @@ Item {
     Canvas {
         id: ring
         anchors.fill: parent
-        Reveal { shown: root.percent >= 0 }
+
+        RotationAnimator on rotation { from: 0; to: 360; duration: Theme.spinMs; loops: Animation.Infinite; running: root.percent < 0 && root.visible && Nav.uiVisible && !Theme.reduceMotion }
         onPaint: {
             const ctx = getContext("2d")
             ctx.reset()
@@ -22,15 +23,8 @@ Item {
             ctx.beginPath(); ctx.arc(width / 2, height / 2, r, 0, 2 * Math.PI); ctx.stroke()
             ctx.strokeStyle = Theme.accent
             ctx.lineCap = "round"
-            ctx.beginPath(); ctx.arc(width / 2, height / 2, r, -Math.PI / 2, -Math.PI / 2 + 2 * Math.PI * Math.max(0, Math.min(100, root.percent)) / 100); ctx.stroke()
+            ctx.beginPath(); ctx.arc(width / 2, height / 2, r, -Math.PI / 2, -Math.PI / 2 + 2 * Math.PI * (root.percent < 0 ? 25 : Math.max(0, Math.min(100, root.percent))) / 100); ctx.stroke()
         }
     }
-    ClockLabel {
-        anchors.centerIn: parent
-        Reveal { shown: root.percent >= 0 }
-        text: Math.round(root.percent) + " %"
-        font.pixelSize: Theme.sizeCaption
-        color: Theme.text2
-    }
-    Icon { anchors.centerIn: parent; Reveal { shown: root.percent < 0 } name: "loader-circle"; size: 20; color: Theme.accentText }
+    Rectangle { anchors.centerIn: parent; width: 8; height: 8; color: Theme.accentText }
 }

@@ -421,13 +421,13 @@ Item {
                     kind: "danger"
                     text: S.s_go_giong_2f8014a9
                     enabled: root.asking !== null && root.asking.use !== undefined
-                    onClicked: { const id = root.asking.id; confirm.dismiss(); root.remove(id) }
+                    onActivated: { const id = root.asking.id; confirm.dismiss(); root.remove(id) }
                 }
                 Button {
                     objectName: "removeConfirmNo." + root.copy.key
                     kind: "text"
-                    text: S.s_giu_lai_3c3ba2db
-                    onClicked: confirm.dismiss()
+                    text: S.s_huy_96732485
+                    onActivated: confirm.dismiss()
                 }
             }
         ]

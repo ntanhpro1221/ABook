@@ -122,8 +122,8 @@ class NativeActivity : ComponentActivity() {
             // Params của PiP luôn khớp trạng thái phát: nút Phát / Tạm dừng đổi theo, và tự vào PiP chỉ khi công tắc bật + sách đang phát - dừng ở đâu (nút, thông báo, tai nghe) cũng đặt lại ngay (Android 12+ hệ thống tự vào, nên phải đặt trước khi bạn rời app).
             lifecycleScope.launch {
                 combine(
-                    player.state.map { it.hasTrack to it.playing }.distinctUntilChanged(), settings.state.map { it.autoPip }.distinctUntilChanged(),
-                ) { track, on -> PipParams.plan(playing = track.second, hasBook = track.first, switchOn = on) }
+                    player.state.map { Triple(it.hasTrack, it.playing, it.buffering) }.distinctUntilChanged(), settings.state.map { it.autoPip }.distinctUntilChanged(),
+                ) { track, on -> PipParams.plan(playing = track.second, hasBook = track.first, switchOn = on, buffering = track.third) }
                     .distinctUntilChanged().collect { plan ->
                         try {
                             setPictureInPictureParams(PipParams.build(this@NativeActivity, plan))
@@ -393,7 +393,7 @@ class NativeActivity : ComponentActivity() {
         }
     }
 
-    private fun currentPipPlan() = player.state.value.let { PipParams.plan(it.playing, it.hasTrack, app.settings.state.value.autoPip) }
+    private fun currentPipPlan() = player.state.value.let { PipParams.plan(it.playing, it.hasTrack, app.settings.state.value.autoPip, it.buffering) }
 
     // Android 12+ tự vào PiP nhờ setAutoEnterEnabled (PipParams); 8-11 thì gọi tay ở đây khi bạn rời app (Home / vuốt).
     override fun onUserLeaveHint() {

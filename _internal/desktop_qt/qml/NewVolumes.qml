@@ -167,7 +167,7 @@ Column {
                                     iconSize: 16
                                     tip: S.s_gop_vao_phan_truoc_b2b49634
                                     Accessible.name: S.s_bo_cho_cat_truoc_0_5082349b(row.modelData.title)
-                                    onClicked: root.commit(Logic.removeStart(root.starts, row.modelData.index))
+                                    onActivated: root.commit(Logic.removeStart(root.starts, row.modelData.index))
                                 }
                             }
                         }

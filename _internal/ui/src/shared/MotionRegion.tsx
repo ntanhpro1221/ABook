@@ -17,7 +17,7 @@ export function motionSignature(element: HTMLElement): string {
   return parts.join("|");
 }
 
-type Props = HTMLAttributes<HTMLElement> & { as?: "div" | "section" | "ul" | "ol" | "p" | "span" | "li" | "label" | "button"; htmlFor?: string; type?: "button" | "submit" | "reset"; disabled?: boolean; children?: ReactNode; motionKey?: unknown; elementRef?: Ref<HTMLElement>; followScroll?: boolean; fadeThrough?: boolean;
+type Props = HTMLAttributes<HTMLElement> & { as?: "div" | "section" | "ul" | "ol" | "p" | "span" | "li" | "label" | "button"; htmlFor?: string; type?: "button" | "submit" | "reset"; disabled?: boolean; children?: ReactNode; motionKey?: unknown; elementRef?: Ref<HTMLElement>; followScroll?: boolean; fadeThrough?: boolean; inPlace?: boolean;
   /** Thứ tự của mục đang chọn trong hàng tab/lọc điều khiển vùng này: đổi sang mục bên phải thì nội dung trượt vào từ phải, bên trái thì từ trái. */
   slideIndex?: number };
 type Snapshot = { clone?: HTMLElement; signature: string; height: number; display?: string; margins?: [number, number]; focus?: HTMLElement } | null;
@@ -142,7 +142,8 @@ export class MotionRegion extends Component<Props> {
       };
     }
     const finish = () => { restore?.(); if (generation === this.generation) { this.clearHidden?.(); this.clearExit?.(); } };
-    const duration = slide ? MOTION.slow : prefersReducedMotion() ? MOTION.fast : MOTION.medium;
+    const inPlace = this.props.inPlace || (typeof box.querySelector === "function" && box.querySelector("svg") !== null && !box.textContent?.trim());
+    const duration = inPlace ? (prefersReducedMotion() ? MOTION.fast : 180) : slide ? MOTION.slow : prefersReducedMotion() ? MOTION.fast : MOTION.medium;
     const through = !slide && this.props.fadeThrough && Math.abs(to - snapshot.height) > 1;
     // Cây mới chỉ hiện khi ảnh cũ đã mờ hết (fastOut) - hiện sớm hơn là hai lớp chữ chồng nhau ~60-100 ms (emu138 VỪA 1).
     // Reduced vẫn có đủ thời gian fade vào, không tween chiều cao.
@@ -152,19 +153,22 @@ export class MotionRegion extends Component<Props> {
       : [{ opacity: 0.45 }, { opacity: 1 }];
     // Content swaps also move when their height stays equal. Opacity alone concealed
     // these changes; reduced motion is the explicit exception.
-    if (!prefersReducedMotion()) {
+    if (!prefersReducedMotion() && !inPlace) {
       frames[0].transform = empty ? "none" : "translateY(8px)";
       if (through) frames[1].transform = "translateY(8px)";
       frames[frames.length - 1].transform = empty ? "translateY(-8px)" : "none";
     }
-    if (!prefersReducedMotion() && Math.abs(to - snapshot.height) > 1) {
+    if (!inPlace && !prefersReducedMotion() && Math.abs(to - snapshot.height) > 1) {
       frames[0].height = `${snapshot.height}px`; frames[frames.length - 1].height = `${to}px`;
       if (empty) for (const [index, name] of ["marginTop", "marginBottom"].entries()) {
         if (snapshot.margins?.[index]) { frames[0][name] = `${snapshot.margins[index]}px`; frames[frames.length - 1][name] = "0px"; }
       }
     }
     let restore: (() => void) | undefined;
-    if (slide && this.clone) ({ frames, restore } = this.slideFrames(box, this.clone, slide, duration));
+    if (inPlace) {
+      frames = [{opacity: 0, transform: prefersReducedMotion() ? "none" : "scale(.8)"}, {opacity: 1, transform: "none"}];
+    }
+    if (slide && !inPlace && this.clone) ({ frames, restore } = this.slideFrames(box, this.clone, slide, duration));
     this.animation = box.animate?.(frames, { duration, easing: through ? "linear" : EASE.standard }) ?? null;
     if (this.animation) {
       this.animation.onfinish = finish;
@@ -243,7 +247,7 @@ export class MotionRegion extends Component<Props> {
   }
   componentWillUnmount() { ++this.generation; this.animation?.cancel(); this.clearHidden?.(false); this.clearExit?.(); removeMotionSnapshot(this.clone); }
   render() {
-    const { as: Tag = "div", motionKey: _key, elementRef, followScroll: _followScroll, fadeThrough: _fadeThrough, slideIndex: _slideIndex, ...props } = this.props;
+    const { as: Tag = "div", motionKey: _key, elementRef, followScroll: _followScroll, fadeThrough: _fadeThrough, inPlace, slideIndex: _slideIndex, ...props } = this.props;
     return createElement(Tag as ElementType, { ...props, ref: (element: HTMLElement | null) => {
       this.box.current = element;
       if (typeof elementRef === "function") elementRef(element);

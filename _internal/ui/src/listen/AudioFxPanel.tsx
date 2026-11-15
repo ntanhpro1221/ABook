@@ -1,4 +1,5 @@
 import { formatBalance } from "@/shared/number";
+import { useDestructiveConfirm } from "../shared/DestructiveConfirm";
 import { S } from '@/shared/strings.generated';
 import { ValuePicker } from '@/shared/ValuePicker';
 import { VALUE_SPECS, formatNumber, type ValueSpec } from '@/shared/valuePickerLogic';
@@ -15,12 +16,13 @@ import { resetAudioFx, setAudioFx, useAudioFx, voiceLevel, withVoiceLevel, audio
 import { Reveal } from "../shared/MotionPresence";
 /** Shared voice, music and listening sections; audio updates keep their existing paths. */
 export function AudioFxPanel({setVolume,music,leaveGuard}:{setVolume:(value:number)=>void;music?:ReactNode;leaveGuard?:ToneLeaveGuard}) {
+  const deletion=useDestructiveConfirm();
   const fx=useAudioFx();
   const update:typeof setAudioFx=(value)=>{try {setAudioFx(value);} catch {toast.error(S.s_copy_c669a3bf438d);}};
   const voice=voiceLevel(fx)*100;
   const tones=useTones();
   const [toneOpen,setToneOpen]=useState(false);
-  return <MotionRegion motionKey={toneOpen} slideIndex={toneOpen?1:0}><div data-audio-fx className="flex min-w-0 flex-col gap-1">
+  return <MotionRegion motionKey={toneOpen} slideIndex={toneOpen?1:0}><div data-audio-fx className="flex min-w-0 flex-col gap-1">{deletion.dialog}
     {toneOpen?<TonePage onBack={()=>setToneOpen(false)} leaveGuard={leaveGuard}/>:<>
     <SheetSection first title={S.s_giong_doc_11f2548d}>
     <FxSlider label={S.s_am_luong_5dafca26} spec={VALUE_SPECS.voice} value={Math.round(voice)} suffix="%" onChange={v=>{const next=withVoiceLevel(v/100);setVolume(next.volume);update({boost:next.boost});}}/>
@@ -39,7 +41,7 @@ export function AudioFxPanel({setVolume,music,leaveGuard}:{setVolume:(value:numb
     </Collapse>
     <FxSwitch label={S.s_copy_0aedb2b2cf2b} checked={audioBookOnly()} onChange={value=>{try{setAudioBookOnly(value);}catch{toast.error(S.s_copy_c669a3bf438d);}}}/>
     </SheetSection>
-    <Button variant="ghost" size="sm" className="self-start px-0" onClick={()=>{try{resetAudioFx();setVolume(1);}catch{toast.error(S.s_copy_c669a3bf438d);}}}>{S.s_ve_mac_dinh_4eb6b300}</Button>
+    <Button variant="ghost" size="sm" className="self-start px-0" onClick={()=>deletion.confirm({title:S.s_reset_question,description:S.s_reset_detail,label:S.s_ve_mac_dinh_4eb6b300,run:()=>{resetAudioFx();setVolume(1);}})}>{S.s_ve_mac_dinh_4eb6b300}</Button>
   </>}</div></MotionRegion>;
 }
 /** Núm âm thanh = bộ chọn giá trị hàng gọn (DESIGN mục 6): tên + giá trị (chạm để gõ), thước giữa -/+, chip tiêu biểu.

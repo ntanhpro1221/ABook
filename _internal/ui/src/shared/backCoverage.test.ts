@@ -9,7 +9,7 @@ const cleanups: (() => void)[] = [];
 afterEach(() => { while (cleanups.length) cleanups.pop()!(); });
 it.each([
   ["B1", "../listen/SentenceMenu.tsx", /useBackLayer\(selected !== null, \(\) => select\(null\), barBox\)/],
-  ["B2", "../listen/PlayerViews.tsx", /useBackLayer\(asking, \(\) => setAsking\(false\), askBox\)/],
+  ["B2", "../listen/PlayerViews.tsx", /useDestructiveConfirm\(\)/],
   ["B3", "../listen/OnlineVoicePrompt.tsx", /useBackLayer\(Boolean\(request && choosing\), \(\) => setChoosing\(false\), list, chooseButton\)/],
   ["B4", "../listen/EditBook.tsx", /useBackLayer\(swapping !== null, \(\) => setSwapping\(null\), swapBox, swapButton\)/],
   ["B5", "../listen/EditBook.tsx", /useBackLayer\(open && confirmRevert, \(\) => setConfirmRevert\(false\), revertBox, revertButton\)/],

@@ -294,19 +294,20 @@ class BookScreenTest {
         rule.mainClock.autoAdvance = false
         setBook(detail(listening()), player = { player })
         repeat(2) { rule.mainClock.advanceTimeByFrame() }
-        // Nút còn vẽ tĩnh: nhãn đổi theo người phát ngay, không trượt.
+        // The label follows actual player state through the shared transition.
         rule.onNodeWithText("Nghe tiếp").assertExists()
         player = PlayerState(bookId = "b1", chapterId = 3, chapterTitle = "Chương 3", playing = true, durationMs = 1_500_000)
         rule.mainClock.advanceTimeByFrame()
+        rule.waitForIdle()
+        rule.mainClock.advanceTimeBy(1_000)
         rule.onNodeWithText("Tạm dừng").assertExists()
         rule.onAllNodesWithText("Nghe tiếp").assertCountEquals(0)
-        // Hết các khung tĩnh: AnimatedContent bật mà màn hình không đổi, rồi nhãn đổi lại thì trượt (trong lúc trượt có cả hai chữ) và dừng ở nhãn mới.
+        // A later state change settles on the new label as well.
         repeat(6) { rule.mainClock.advanceTimeByFrame() }
         rule.onNodeWithText("Tạm dừng").assertExists()
         player = PlayerState(bookId = "b1", chapterId = 3, chapterTitle = "Chương 3", playing = false, durationMs = 1_500_000)
         rule.mainClock.advanceTimeByFrame()
-        rule.onNodeWithText("Nghe tiếp").assertExists()
-        rule.onNodeWithText("Tạm dừng").assertExists()
+        rule.waitForIdle()
         rule.mainClock.advanceTimeBy(1_000)
         rule.onNodeWithText("Nghe tiếp").assertExists()
         rule.onAllNodesWithText("Tạm dừng").assertCountEquals(0)

@@ -6,6 +6,7 @@ import vn.abook.player.ui.motion.ContentLayout
 import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.graphics.drawscope.translate
 import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.animateFloat
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -218,14 +219,15 @@ fun ChevronIcon(color: androidx.compose.ui.graphics.Color, modifier: Modifier = 
 @Composable
 fun DownloadRing(percent: Int?, label: String, modifier: Modifier = Modifier) {
     val colors = Abook.colors
+    val turn = if (vn.abook.player.ui.motion.rememberReducedMotion() || percent != null) 0f else
+        androidx.compose.animation.core.rememberInfiniteTransition(label = "download").animateFloat(
+            0f, 360f, androidx.compose.animation.core.infiniteRepeatable(androidx.compose.animation.core.tween(1000, easing = androidx.compose.animation.core.LinearEasing)), label = "download-turn").value
     Box(modifier.size(36.dp).semantics { contentDescription = label; progressBarRangeInfo = percent?.let { ProgressBarRangeInfo(it / 100f, 0f..1f) } ?: ProgressBarRangeInfo.Indeterminate }, contentAlignment = Alignment.Center) {
-        Canvas(Modifier.fillMaxSize().padding(4.dp)) {
+        Canvas(Modifier.fillMaxSize().padding(2.dp)) {
             val stroke = Stroke(2.dp.toPx(), cap = StrokeCap.Round)
             drawArc(colors.line, 0f, 360f, false, style = stroke)
-            drawArc(colors.accent, -90f, (percent ?: 12) * 3.6f, false, style = stroke)
+            drawArc(colors.accent, turn - 90f, (percent ?: 25) * 3.6f, false, style = stroke)
         }
-        SwapContent(percent, contentKey = { percent -> percent != null }, layout = ContentLayout.Box) { percent ->
-            if (percent != null) ClockLabel("$percent %", style = Abook.type.caption.copy(color = colors.text2))
-        }
+        androidx.compose.foundation.Canvas(Modifier.size(8.dp)) { drawRect(colors.accentText) }
     }
 }

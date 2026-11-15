@@ -230,8 +230,8 @@ export function OtherComputers() {
               )}
               <IconButton label={S.s_hoi_lai_thu_vien_bfe2a0e8} icon={RefreshCw} size="sm" disabled={refresh.isPending} onClick={() => refresh.mutate()} className="max-sm:hidden" />
               <Button size="sm" variant="ghost" icon={RefreshCw} disabled={refresh.isPending} onClick={() => refresh.mutate()} className="sm:hidden" aria-label={S.s_hoi_lai_thu_vien_bfe2a0e8}>{S.s_hoi_lai_1dc3bd7a}</Button>
-              <IconButton label={S.s_bo_ghep_0_56c3fd6f(computer.name)} icon={Unplug} size="sm" onClick={() => void unpair.start(computer)} className="max-sm:hidden" />
-              <Button size="sm" variant="ghost" icon={Unplug} onClick={() => void unpair.start(computer)} className="text-danger sm:hidden max-sm:order-first max-sm:mr-auto" aria-label={S.s_bo_ghep_0_56c3fd6f(computer.name)}>{S.s_bo_ghep_64f921f9}</Button>
+              <IconButton label={S.s_bo_ghep_0_56c3fd6f(computer.name)} icon={Unplug} size="sm" onClick={() => unpair.start(computer)} className="max-sm:hidden" />
+              <Button size="sm" variant="ghost" icon={Unplug} onClick={() => unpair.start(computer)} className="text-danger sm:hidden max-sm:order-first max-sm:mr-auto" aria-label={S.s_bo_ghep_0_56c3fd6f(computer.name)}>{S.s_bo_ghep_64f921f9}</Button>
               </div>
               </Fold>
             </MotionRegion>

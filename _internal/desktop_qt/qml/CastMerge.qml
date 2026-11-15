@@ -159,7 +159,7 @@ CastModal {
     footer: [
         EditBookActions {
             width: root.bodyWidth
-            Button { objectName: "mergeCancel"; text: S.s_thoi_e68f9e88; kind: "ghost"; onClicked: root.close() }
+            Button { objectName: "mergeCancel"; text: S.s_thoi_e68f9e88; kind: "ghost"; onActivated: root.close() }
             Button { objectName: "mergeDo"; text: S.s_gop_2380bed6; icon: "git-merge"; busy: root.saving; enabled: root.into !== null; onActivated: root.merge() }
         }
     ]

@@ -27,14 +27,14 @@ Collapse {
                     : S.s_giong_0_dang_khong_dung_duoc_65353328(VoiceLogic.spokenVoiceName(root.current.name)) : Player.error
                 wrapMode: Text.Wrap; color: Theme.text; font.pixelSize: Theme.sizeBodySmall; Accessible.role: Accessible.AlertMessage
             }
-            IconButton { id: close; objectName: "playerErrorClose"; anchors.right: parent.right; icon: "x"; tip: S.s_dong_loi_bao_d13d19ff; onClicked: Player.dismissError() }
+            IconButton { id: close; objectName: "playerErrorClose"; anchors.right: parent.right; icon: "x"; tip: S.s_dong_loi_bao_d13d19ff; onActivated: Player.dismissError() }
         }
         Flow {
             width: parent.width; spacing: Theme.s4
-            Button { objectName: "playerLocalVoice"; Reveal { shown: root.stuck && !!root.local } text: S.s_doc_bang_f7f5f3b1 + (root.local ? VoiceLogic.spokenVoiceName(root.local.name) : ""); kind: "ghost"; wrap: true; width: Math.min(implicitWidth, parent.width); onClicked: Player.chooseVoice(root.local.id, true) }
-            Button { objectName: "playerRetry"; text: S.s_thu_lai_c58d068c; kind: "ghost"; onClicked: Player.retry() }
-            Button { objectName: "playerOtherVoice"; Reveal { shown: root.stuck && root.voices.length > 0 } text: S.s_chon_giong_khac_d31cfe89; kind: "ghost"; onClicked: root.voiceRequested() }
-            Button { Reveal { shown: root.stuck && !root.local } text: S.s_tai_giong_vieneu_94c86884; kind: "ghost"; onClicked: root.settingsRequested() }
+            Button { objectName: "playerLocalVoice"; Reveal { shown: root.stuck && !!root.local } text: S.s_doc_bang_f7f5f3b1 + (root.local ? VoiceLogic.spokenVoiceName(root.local.name) : ""); kind: "ghost"; wrap: true; width: Math.min(implicitWidth, parent.width); onActivated: Player.chooseVoice(root.local.id, true) }
+            Button { objectName: "playerRetry"; text: S.s_thu_lai_c58d068c; kind: "ghost"; onActivated: Player.retry() }
+            Button { objectName: "playerOtherVoice"; Reveal { shown: root.stuck && root.voices.length > 0 } text: S.s_chon_giong_khac_d31cfe89; kind: "ghost"; onActivated: root.voiceRequested() }
+            Button { Reveal { shown: root.stuck && !root.local } text: S.s_tai_giong_vieneu_94c86884; kind: "ghost"; onActivated: root.settingsRequested() }
         }
     }
 }

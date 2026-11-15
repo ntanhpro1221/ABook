@@ -188,10 +188,12 @@ Column {
                         text: root.precise ? S.s_xoa_file_ddf600eb + Size.formatSize(root.precise.bytes) + ")" : ""
                         kind: "ghost"; size: "sm"
                         busy: root.starting
-                        onActivated: root.post("/api/music/local/precise/remove")
+                        onActivated: removeConfirm.show()
                     }
                 }
             }
         }
     }
+    DestructiveConfirm { id: removeConfirm; title: S.s_xoa_777195ab; description: S.s_irreversible_detail(S.s_cam_xuc_chinh_xac_eab97dc3); onAccepted: root.post("/api/music/local/precise/remove") }
+
 }

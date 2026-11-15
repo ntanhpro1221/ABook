@@ -158,7 +158,7 @@ CastModal {
                             text: S.s_giu_d3777f80 + (root.choices ? (root.choices.current || S.s_giong_dang_dung_4e5460a7) : "")
                             size: "sm"; kind: "ghost"; wrap: true
                             enabled: !root.saving
-                            onClicked: root.keep()
+                            onActivated: root.keep()
                         }
                     }
                 }
@@ -195,7 +195,7 @@ CastModal {
                             width: parent.width
                             spacing: 8
                             Button { objectName: "voiceCrossGender"; text: S.s_doi_giong_va_gioi_21985f64; size: "sm"; busy: root.saving; onActivated: root.save(root.crossing, true) }
-                            Button { objectName: "voiceCrossKeep"; text: S.s_giu_nhu_cu_4fecf996; size: "sm"; kind: "ghost"; enabled: !root.saving; onClicked: root.crossing = null }
+                            Button { objectName: "voiceCrossKeep"; text: S.s_giu_nhu_cu_4fecf996; size: "sm"; kind: "ghost"; enabled: !root.saving; onActivated: root.crossing = null }
                         }
                     }
                 }

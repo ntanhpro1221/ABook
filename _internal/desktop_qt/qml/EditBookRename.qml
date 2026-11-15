@@ -93,8 +93,8 @@ Modal {
     footer: [
         EditBookActions {
             width: root.bodyWidth
-            Button { objectName: "renameRevert"; text: S.s_ve_ten_goc_643cd2e0; kind: "ghost"; enabled: !root.saving; onClicked: root.save({revert: true}) }
-            Button { objectName: "renameCancel"; text: S.s_thoi_e68f9e88; kind: "ghost"; onClicked: root.close() }
+            Button { objectName: "renameRevert"; text: S.s_ve_ten_goc_643cd2e0; kind: "ghost"; enabled: !root.saving; onActivated: root.save({revert: true}) }
+            Button { objectName: "renameCancel"; text: S.s_thoi_e68f9e88; kind: "ghost"; onActivated: root.close() }
             Button { objectName: "renameSave"; text: S.s_luu_e91f26c0; busy: root.saving; enabled: root.label.trim() !== ""; onActivated: root.submit() }
         }
     ]

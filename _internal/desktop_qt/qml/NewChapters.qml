@@ -293,7 +293,7 @@ Column {
                             opacity: root.narrow || over.hovered || activeFocus ? 1 : 0
                             Behavior on opacity { NumberAnimation { duration: Theme.motionFast } }
                             Accessible.name: cell.file ? S.s_bo_chuong_e13b0ad2 + cell.file.name : S.s_bo_chuong_940d1030
-                            onClicked: if (cell.file) root.form.removeChapter(cell.file.path)
+                            onActivated: if (cell.file) root.form.removeChapter(cell.file.path)
                         }
                     }
                 }

@@ -144,6 +144,10 @@ qt_add_qml_module(ABookDesk
     URI ABook
     VERSION 1.0
     QML_FILES
+        qml/StateIcon.qml
+        qml/PendingIndicator.qml
+        qml/MusicListeningProgress.qml
+        qml/DestructiveConfirm.qml
         qml/Theme.qml
         qml/Nav.qml
         qml/Main.qml
@@ -668,7 +672,7 @@ set_target_properties(WidthTests PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BI
 if(MSVC)
     target_compile_options(WidthTests PRIVATE /W3 /utf-8)
 endif()
-add_test(NAME WidthTests COMMAND WidthTests)
+add_test(NAME WidthTests COMMAND WidthTests -o ${CMAKE_BINARY_DIR}/width-test.txt,txt)
 qt_add_executable(HitlTests tests/test_width.cpp tests/glyphaudit.h tests/visualready.h tests/uitree.h tests/fakes.h src/later.h src/shadowprovider.cpp src/shadowprovider.h src/bookdetail.cpp src/bookdetail.h src/mediacontrols.cpp src/mediacontrols.h
     src/readalong.cpp src/readalong.h src/music.cpp src/music.h src/feedback.cpp src/feedback.h ${ABOOK_PLAYER_SOURCES} ${ABOOK_MUSIC_SOURCES})
 target_include_directories(HitlTests PRIVATE src tests)

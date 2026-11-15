@@ -107,6 +107,18 @@ def test_nested_buffering_label_keeps_its_transport_icon():
     assert pairs == [("Đang tải…", "pause"), ("Tạm dừng", "pause"), ("Phát", "play")]
 
 
+@pytest.mark.parametrize("kind", ["Icon", "StateIcon"])
+def test_shared_state_icons_keep_their_buffering_and_transport_pairs(tmp_path, kind):
+    tool = _tool()
+    qml = tmp_path / "Transport.qml"
+    qml.write_text('import QtQuick\nInteractive { tip: buffering ? "Đang đệm" : playing ? "Tạm dừng" : "Phát"; '
+                   + kind + ' { name: buffering ? "play" : playing ? "pause" : "play" } }', encoding="utf-8")
+    scan = tool.QtScan()
+    tool.qml_scan_file(qml, scan)
+    assert {(pair.label, pair.icon) for pair in scan.pairs} == {
+        ("Đang đệm", "play"), ("Tạm dừng", "pause"), ("Phát", "play")}
+
+
 def test_tray_and_mini_shared_labels_are_detected():
     tool = _tool()
     texts = {item.text for item in tool.qt_scan().items}

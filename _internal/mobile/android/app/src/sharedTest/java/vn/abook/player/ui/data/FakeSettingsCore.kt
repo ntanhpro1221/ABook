@@ -7,6 +7,7 @@ import org.json.JSONObject
 class FakeSettingsCore(var stored: JSONObject = JSONObject()) : SettingsCore {
     val saved = ArrayList<JSONObject>()
     var default = "edge:vi-VN-HoaiMyNeural"
+    var beforeChoose: (String) -> Unit = {}
     var allowed = true
     var bytes = 12L * 1024 * 1024 + 300 * 1024
     var logsCleared = 0
@@ -29,6 +30,7 @@ class FakeSettingsCore(var stored: JSONObject = JSONObject()) : SettingsCore {
 
     override fun defaultVoice() = default
     override fun chooseDefaultVoice(id: String) {
+        beforeChoose(id)
         default = id
     }
 

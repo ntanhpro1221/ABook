@@ -1,3 +1,7 @@
+import { PendingIndicator } from "./PendingIndicator";
+import { usePendingAction } from "./usePendingAction";
+import { StateIcon } from "./StateIcon";
+import { useAfter } from "./useAfter";
 import { Presence } from "./MotionPresence";
 import { S } from "./strings.generated";
 import * as DialogPrimitive from "@radix-ui/react-dialog";
@@ -65,6 +69,7 @@ export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   size?: Size;
   icon?: IconType;
   loading?: boolean;
+  pending?: boolean;
   /** React 19: `ref` đi như một prop thường - đủ để chỗ gọi đặt tiêu điểm về nút (vd TemplateBar sau khi lưu mẫu). */
   ref?: Ref<HTMLButtonElement>;
 }
@@ -94,6 +99,7 @@ export function Button({
   size = "md",
   icon: Icon,
   loading,
+  pending,
   className,
   children,
   disabled,
@@ -101,31 +107,34 @@ export function Button({
   type = "button",
   ...rest
 }: ButtonProps) {
+  const action = usePendingAction(onClick);
+  const working = loading || action.pending;
+  const showPending = useAfter(Boolean(working || pending), 180);
   return (
     <button
       type={type}
       data-variant={variant}
       data-size={size}
-      disabled={loading ? undefined : disabled}
-      aria-disabled={loading || undefined}
-      aria-busy={loading || undefined}
-      onClick={busyClick(loading, onClick)}
+      disabled={working ? undefined : disabled}
+      aria-disabled={working || undefined}
+      aria-busy={working || pending || undefined}
+      onClick={busyClick(working, action.invoke)}
       className={cn(
         "shared-button inline-flex select-none items-center justify-center whitespace-nowrap font-medium pointer-coarse:min-w-[48px] press transition-[background-color,color,border-color,outline-color,box-shadow,transform,scale,opacity] duration-motion-fast disabled:pointer-events-none disabled:opacity-45 aria-disabled:cursor-default aria-disabled:opacity-45",
         VARIANTS[variant],
         SIZES[size],
         // Màn hẹp / cảm ứng: nút 28-38 px nới vùng chạm theo chiều dọc lên 40 px (touch-reach trong styles.css; soát UX 29-09 và a14: "Sửa",
         // "Nam", "Nữ", "Thử giọng" chỉ 28-32 px trên điện thoại).
-        "touch-reach",
+        "touch-reach relative",
         className,
       )}
       {...rest}
     >
-      <MotionRegion as="span" aria-hidden className={cn("inline-grid shrink-0 place-items-center", !Icon && loading === undefined && "hidden", (Icon || loading !== undefined) && (size === "lg" ? "glyph" : "size-4"))}>{loading ? (
+      <StateIcon state={showPending ? "pending" : Icon} className={cn("inline-grid shrink-0 place-items-center", !Icon && loading === undefined && (showPending ? "absolute left-1 size-4" : "hidden"), (Icon || loading !== undefined) && (size === "lg" ? "glyph" : "size-4"))}>{showPending ? (
         <Loader2 className="size-4 animate-spin" />
       ) : Icon ? (
         <Icon className={size === "lg" ? "glyph" : "size-4"} strokeWidth={2} />
-      ) : loading !== undefined ? <span /> : null}</MotionRegion>
+      ) : loading !== undefined ? <span /> : null}</StateIcon>
       <MotionRegion as="span" className="inline-flex min-w-0 items-center [justify-content:inherit] gap-2" motionKey={typeof children === "string" || typeof children === "number" ? children : undefined}>{children}</MotionRegion>
     </button>
   );
@@ -168,6 +177,8 @@ export function IconButton({
   className,
   size = "md",
   tone = "ghost",
+  pending = false,
+  onClick,
   ...rest
 }: ButtonHTMLAttributes<HTMLButtonElement> & {
   ref?: Ref<HTMLButtonElement>;
@@ -175,7 +186,9 @@ export function IconButton({
   icon: IconType;
   size?: "sm" | "md" | "lg";
   tone?: "ghost" | "solid";
+  pending?: boolean;
 }) {
+  const action = usePendingAction(onClick);
   const box = size === "sm" ? "size-8" : size === "lg" ? "size-11" : "size-9";
   const glyph = size === "lg" ? "glyph-20" : "glyph";
   // Màn hẹp / cảm ứng: nút nới vùng chạm theo CHIỀU DỌC lên 40 px (touch-reach, soát UX 29-09 và a14) - không nới ngang, vì các nút trên
@@ -186,6 +199,9 @@ export function IconButton({
       <button
         type="button"
         aria-label={label}
+        aria-busy={pending || action.pending || undefined}
+        aria-disabled={action.pending || undefined}
+        onClick={action.invoke}
         className={cn(
           "press inline-flex shrink-0 items-center justify-center rounded-control transition-[color,background-color,outline-color,scale,opacity] duration-motion-fast disabled:pointer-events-none disabled:opacity-40",
           tone === "ghost" ? "text-fg-2 hover:bg-hover hover:text-fg" : "bg-panel-2 text-fg hover:bg-hover",
@@ -195,7 +211,7 @@ export function IconButton({
         )}
         {...rest}
       >
-        <MotionRegion as="span" className="inline-grid shrink-0 place-items-center"><Icon className={glyph} strokeWidth={2} /></MotionRegion>
+        <PendingIndicator pending={pending || action.pending}><StateIcon state={Icon}><Icon className={glyph} strokeWidth={2} /></StateIcon></PendingIndicator>
       </button>
     </Tooltip>
   );
@@ -707,7 +723,9 @@ export function Dialog({
           onOpenAutoFocus={(event) => {
             // Radix đặt con trỏ vào thứ bấm được đầu tiên - nút X ở đầu hộp - đè lên `autoFocus` của ô nhập (soát UX 30-09:
             // hộp Đổi tên). Ô nào mang `data-autofocus` thì nhận con trỏ, chữ có sẵn được chọn để gõ đè.
-            const target = (event.currentTarget as HTMLElement | null)?.querySelector<HTMLElement>("[data-autofocus]");
+            const surface = event.currentTarget as HTMLElement | null;
+            const target = surface?.querySelector<HTMLElement>("[data-autofocus]") ??
+              (surface?.querySelector('[data-variant="danger"]') ? surface.querySelector<HTMLElement>('[data-dialog-actions] button:not([data-variant="danger"]):not(:disabled)') : null);
             if (!target) return;
             event.preventDefault();
             target.focus();

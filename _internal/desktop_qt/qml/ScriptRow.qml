@@ -199,7 +199,7 @@ Item {
             Reveal { shown: root.line.editable && !root.context && root.script.castReady }
             objectName: "scriptScopeOpen"
             text: S.s_scope_title; size: "sm"; kind: "ghost"
-            onClicked: root.scope()
+            onActivated: root.scope()
         }
         Note_ {
             Reveal { shown: !!root.line.spoken }
@@ -257,7 +257,7 @@ Item {
                     size: "sm"
                     kind: "ghost"
                     text: root.suggested ? S.s_gan_cho_6fe48d05 + root.suggested.label : ""
-                    onClicked: root.pick(root.suggested)
+                    onActivated: root.pick(root.suggested)
                 }
             }
         }

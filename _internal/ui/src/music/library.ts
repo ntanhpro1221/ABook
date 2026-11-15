@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect } from "react";
+import { toast } from "../shared/toast";
 import { formatSize } from "../shared/format";
 import { S } from "../shared/strings.generated";
 import { api } from "../studio/api";
@@ -175,12 +176,19 @@ export function useSaveTracks() {
   const save = useMutation({
     mutationFn: (links: string[]) => api<DownloadState>("/api/music/library/save", { method: "POST", body: { links } }),
     onSuccess: refresh,
+    onError: (_error: Error, links: string[]) => toast.error(S.s_chua_tai_xong_b257419d, {action: {label: S.s_thu_lai_c58d068c, onClick: () => save.mutate(links)}}),
   });
   const unsave = useMutation({
     mutationFn: (links: string[]) => api<DownloadState>("/api/music/library/unsave", { method: "POST", body: { links } }),
     onSuccess: refresh,
+    onError: (_error: Error, links: string[]) => toast.error(S.s_action_failed_retry, {action: {label: S.s_thu_lai_c58d068c, onClick: () => unsave.mutate(links)}}),
   });
-  return { save, unsave };
+  const cancel = useMutation({
+    mutationFn: (links: string[]) => api<DownloadState>("/api/music/library/cancel", { method: "POST", body: { links } }),
+    onSuccess: refresh,
+    onError: (_error: Error, links: string[]) => toast.error(S.s_action_failed_retry, {action: {label: S.s_thu_lai_c58d068c, onClick: () => cancel.mutate(links)}}),
+  });
+  return { save, unsave, cancel };
 }
 
 /** Trạng thái tải của một bài để vẽ: đang tải (phần trăm, null = chưa biết cỡ), hỏng, đã tải, chưa tải. */

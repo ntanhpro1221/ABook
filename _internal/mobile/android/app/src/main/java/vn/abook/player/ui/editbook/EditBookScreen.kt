@@ -84,6 +84,10 @@ fun EditBookRoute(
 ) {
     val state by editor.state.collectAsState()
     val readings by editor.readings.collectAsState()
+    var askRemoveCover by remember { mutableStateOf(false) }
+    if (askRemoveCover) vn.abook.player.ui.components.DestructiveConfirm(S.s_bo_anh_bia_696c6692,
+        S.s_irreversible_detail(state.saved?.title.orEmpty()), { askRemoveCover = false },
+        { editor.setCover(null) }, pending = state.saving, problem = state.problem)
     val picker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri -> uri?.let { crop(it.toString()) } }
     EditBookScreen(
         state, covers, onBack, editor::change,
@@ -92,7 +96,7 @@ fun EditBookRoute(
                 CoverSheet(
                     hasCover = editor.state.value.saved?.cover != null,
                     onPick = { dismiss(); picker.launch(arrayOf("image/*")) },
-                    onRemove = { dismiss(); editor.setCover(null) },
+                    onRemove = { dismiss(); askRemoveCover = true },
                     onFind = { dismiss(); findCover() },
                 )
             }
@@ -133,7 +137,7 @@ fun DiscardSheet(discardAll: ((String?) -> Unit) -> Unit, dismiss: () -> Unit) {
                 problem = error.orEmpty()
                 if (error == null) dismiss()
             }
-        }, "discard_yes")
+        }, "discard_yes", pending = working)
         Spacer(Modifier.height(Dim.s8))
         QuietButton(S.s_thoi_e68f9e88, dismiss, "discard_keep")
     }
@@ -314,7 +318,7 @@ private fun LazyListScope.readingsItems(
                         ) {
                             val item = row.item
                             Column(Modifier.fillMaxWidth()) {
-                                ReadingRow(item, editing == item.surface, ui.saving, onEdit = { edit(if (editing == item.surface) null else item.surface) },
+                                ReadingRow(item, editing == item.surface, ui.saving, failure = ui.failed, onEdit = { edit(if (editing == item.surface) null else item.surface) },
                                     onRemove = { setReading(item.surface, "") {} }, onSave = { spoken -> setReading(item.surface, spoken) { edit(null) } })
                                 RowLine()
                             }
@@ -326,7 +330,10 @@ private enum class ReadingsStage { Failed, Loading, Empty, Words }
 
 /** Một từ đã dạy: tên là chữ trong sách, dòng phụ là cách đọc; cuối hàng "Sửa" (bút) và "Bỏ" (thùng rác). Ô sửa mở / khép ngay dưới. */
 @Composable
-private fun ReadingRow(item: WordReading, editing: Boolean, saving: Boolean, onEdit: () -> Unit, onRemove: () -> Unit, onSave: (String) -> Unit) {
+private fun ReadingRow(item: WordReading, editing: Boolean, saving: Boolean, failure: String, onEdit: () -> Unit, onRemove: () -> Unit, onSave: (String) -> Unit) {
+    var askRemove by remember { mutableStateOf(false) }
+    if (askRemove) vn.abook.player.ui.components.DestructiveConfirm(S.s_destructive_question(item.surface),
+        S.s_irreversible_detail(item.surface), { askRemove = false }, onRemove, pending = saving, problem = failure)
     val colors = Abook.colors
     Column(Modifier.fillMaxWidth().testTag("reading_${item.surface}")) {
         ListItem(
@@ -334,7 +341,7 @@ private fun ReadingRow(item: WordReading, editing: Boolean, saving: Boolean, onE
             trailing = {
                 Row {
                     IconAction(S.s_sua_cach_doc_0_683b998a(item.surface), onEdit, "reading_edit_${item.surface}") { PencilIcon(colors.text2) }
-                    IconAction(S.s_bo_cach_doc_0_c3b9bf0d(item.surface), { if (!saving) onRemove() }, "reading_remove_${item.surface}") { TrashIcon(colors.text2) }
+                    IconAction(S.s_bo_cach_doc_0_c3b9bf0d(item.surface), { if (!saving) askRemove = true }, "reading_remove_${item.surface}") { TrashIcon(colors.text2) }
                 }
             },
         )
@@ -352,7 +359,7 @@ private fun ReadingForm(surface: String, current: String, saving: Boolean, onSav
             BookField(null, value, { value = it }, "reading_field", !saving, description = S.s_cach_doc_cho_0_e92e2d44(surface), placeholder = S.s_vd_ha_ru_to_93151b6c)
             Spacer(Modifier.height(Dim.s12))
             PrimaryButton(S.s_luu_cho_ca_cuon_76b88dc9, { onSave(value) }, Modifier.fillMaxWidth().testTag("reading_save"),
-                enabled = !saving && ReadingText.canSave(surface, current, value))
+                pending = saving, enabled = !saving && ReadingText.canSave(surface, current, value))
             Reveal(current.isNotEmpty()) { TextAction(S.s_doc_nhu_trong_sach_4ff053c6, { if (!saving) onSave("") }, "reading_plain", Modifier.fillMaxWidth(), align = Alignment.Center) }
         }
     }

@@ -1,4 +1,6 @@
 import { SheetMusic } from '@/shared/SheetMusic';
+import { useDestructiveConfirm } from "../shared/DestructiveConfirm";
+import { PendingIndicator } from "../shared/PendingIndicator";
 import { Presence } from "../shared/MotionPresence";
 import { S } from "../shared/strings.generated";
 import { TickingValue } from "@/shared/TickingValue";
@@ -55,7 +57,7 @@ import { cn } from "@/shared/cn";
 import { APP_TITLE } from "@/shared/title";
 import { useMediaQuery } from "@/shared/media";
 import { MUSIC_MODIFIED_NOTE, formatClock, licenseLabel, progressFill, musicCreditText, musicNeedsModifiedNote } from "@/shared/format";
-import { ActionRow, SelectionMark, announce, busyClick, heardBarProps, IconButton, menuArrowKeys, Sheet, Tooltip, useFocusFollows, Vu } from "@/shared/ui";
+import { ActionRow, Button, SelectionMark, announce, busyClick, heardBarProps, IconButton, menuArrowKeys, Sheet, Tooltip, useFocusFollows, Vu } from "@/shared/ui";
 import { Switch } from "@/desktop/Switch";
 import { MusicLevelSlider } from "@/shared/MusicLevelSlider";
 import { LEVEL_TITLE } from "@/shared/musicLevels";
@@ -272,7 +274,8 @@ function Transport({ large = false, chapters = true }: { large?: boolean; chapte
     return [later.some(canPlay), later.length > 0];
   }, [queue, track?.chapterId]);
   const size = large ? "lg" : "sm";
-  const waiting = buffering && playing;
+  const waiting = buffering;
+  const showWaiting = useAfter(waiting, 180);
   return (
     <MotionRegion as="div" data-player-transport className={cn(large ? "slot-row w-full max-w-sm [--slot:clamp(1.25rem,0.8333rlh,2.40625rem)]" : "flex items-center gap-1",
       // getBBox + nửa nét: ⏮ / ⏭ cách mép ô 2/24, nên bề rộng mực là 20/24 ô glyph-20.
@@ -284,7 +287,7 @@ function Transport({ large = false, chapters = true }: { large?: boolean; chapte
         onClick={withFeedback("playPause", toggle)}
         {...keepFocus}
         // Đang chờ đoạn đầu: nói đang chờ gì, không nói S.s_tam_dung_67635815 khi chưa có tiếng nào (bấm vẫn là thôi chờ).
-        aria-label={toggleLabel(playing, buffering, speaking)}
+        aria-label={waiting ? S.s_buffering : toggleLabel(playing, buffering, speaking)}
         aria-busy={waiting || undefined}
         aria-keyshortcuts="Space"
         data-player-toggle
@@ -296,7 +299,7 @@ function Transport({ large = false, chapters = true }: { large?: boolean; chapte
         )}
       >
         {/* Đổi glyph = mờ chéo tại chỗ (DESIGN 5.2), cả vòng chờ đệm; không nảy vào, không mất cứng. */}
-        <MotionRegion as="span" className="inline-grid place-items-center">{waiting ? (
+        <MotionRegion as="span" className="inline-grid place-items-center" inPlace>{showWaiting ? (
           <Loader2 className={cn("animate-spin", large ? "size-8" : "size-5")} />
         ) : playing ? (
           <Pause className={large ? "size-8" : "size-5"} fill="currentColor" strokeWidth={0} />
@@ -625,7 +628,7 @@ function MusicMenuFor({ bookId, look, audio = false }: { bookId: string; look: M
         ))}
         {canImport && (
           <Popover.Close asChild>
-            <button type="button" data-sheet-choice onClick={() => void addMusic()} className={cn(CHOICE_ROW, "text-fg")}>
+            <button type="button" data-sheet-choice onClick={() => addMusic()} className={cn(CHOICE_ROW, "text-fg")}>
               <Plus className="size-4 shrink-0" />
               {ADD_MUSIC_LABEL}
             </button>
@@ -934,45 +937,22 @@ function PrepareAhead({ voice, bookId, chapterId }: { voice: ReadAloudVoice; boo
 function ReadAloudCache({ bookId }: { bookId: string }) {
   const source = useSource();
   const client = useQueryClient();
-  const [asking, setAsking] = useState(false);
-  const askBox = useRef<HTMLDivElement>(null);
-  useBackLayer(asking, () => setAsking(false), askBox);
-  const [busy, setBusy] = useState(false);
+  const deletion = useDestructiveConfirm();
   const key = ["readaloud", "cache", bookId];
   const { data: usage } = useQuery({ queryKey: key, queryFn: () => source.readAloudCache!(bookId), refetchInterval: 15000 });
-  // Hỏi lại / xoá xong: nút đang giữ tiêu điểm biến mất - tiêu điểm theo sang nút vừa hiện, xoá xong thì về dòng dung lượng (soát a67).
-  const follow = useFocusFollows(`${asking}:${(usage?.book ?? 0) > 0}`);
   if (!usage) return <MotionRegion />;
   const clear = async () => {
-    setBusy(true);
-    try {
-      client.setQueryData(key, await source.readAloudCacheClear!(bookId));
-      void client.invalidateQueries({ queryKey: PREPARE_STATUS_KEY }); // máy chủ đã bỏ dòng S.s_copy_ee4b1c2c4a26 của cuốn này cùng bản đọc
-      window.dispatchEvent(new CustomEvent<ReadingsChanged>(READINGS_CHANGED_EVENT, { detail: { bookId, surfaces: [], all: true } }));
-    } catch (error) {
-      toast.error(S.s_chua_xoa_duoc_ban_doc_b429734e, { description: (error as Error).message });
-    } finally {
-      setBusy(false);
-      setAsking(false);
-    }
+    client.setQueryData(key, await source.readAloudCacheClear!(bookId));
+    void client.invalidateQueries({ queryKey: PREPARE_STATUS_KEY });
+    window.dispatchEvent(new CustomEvent<ReadingsChanged>(READINGS_CHANGED_EVENT, { detail: { bookId, surfaces: [], all: true } }));
   };
-  return (
-    <MotionRegion as="div" {...follow} elementRef={follow.ref} ref={undefined} className="border-t border-line px-2 pb-1 pt-2 text-xs text-fg-2">
-      <p tabIndex={-1} data-focus-fallback className="text-pretty">{cacheLabel(usage)}</p>
-      {usage.book > 0 &&
-        (asking ? (
-          <div ref={askBox} role="alertdialog" aria-label={S.s_xoa_ban_doc_1eb88b99} className="mt-2">
-            <p className="text-pretty text-fg">{clearCacheQuestion(usage)}</p>
-            <div className="mt-2 flex flex-wrap items-center gap-2">
-              <button type="button" aria-disabled={busy || undefined} aria-busy={busy || undefined} className="rounded-control px-2 py-1 font-medium text-danger hover:bg-hover aria-disabled:opacity-45" onClick={busyClick(busy, () => void clear())}>{S.s_xoa_777195ab}</button>
-              <button type="button" data-focus-next aria-disabled={busy || undefined} className="rounded-control px-2 py-1 font-medium text-fg hover:bg-hover" onClick={busyClick(busy, () => setAsking(false))}>{S.s_giu_lai_3c3ba2db}</button>
-            </div>
-          </div>
-        ) : (
-          <button type="button" data-focus-next className="mt-2 rounded-control px-2 py-1 font-medium text-fg hover:bg-hover" onClick={() => setAsking(true)}>{S.s_xoa_ban_doc_1eb88b99}</button>
-        ))}
-    </MotionRegion>
-  );
+  return <MotionRegion as="div" className="border-t border-line px-2 pb-1 pt-2 text-xs text-fg-2">
+    <p className="text-pretty">{cacheLabel(usage)}</p>
+    <Reveal when={usage.book > 0}><Button size="sm" variant="ghost" onClick={() => deletion.confirm({
+      title: S.s_xoa_ban_doc_1eb88b99, description: clearCacheQuestion(usage), failureMessage: S.s_chua_xoa_duoc_ban_doc_b429734e, run: clear,
+    })}>{S.s_xoa_ban_doc_1eb88b99}</Button></Reveal>
+    {deletion.dialog}
+  </MotionRegion>;
 }
 
 export function SleepMenu({ look = "chip" }: { look?: MenuLook }) {
@@ -1657,18 +1637,16 @@ export function PlayerBar({
           <button
             type="button"
             onClick={withFeedback("playPause", toggle)}
-            aria-label={toggleLabel(playing, buffering, speaking)}
-            aria-busy={(playing && buffering) || undefined}
+            aria-label={buffering ? S.s_buffering : toggleLabel(playing, buffering, speaking)}
+            aria-busy={buffering || undefined}
             data-np="play"
             className="touch-hit press grid size-11 shrink-0 place-items-center rounded-full bg-fg text-bg transition-transform"
           >
-            <MotionRegion as="span" className="inline-grid size-5 place-items-center">{playing && buffering ? (
-              <Loader2 className="size-5 animate-spin" />
-            ) : playing ? (
+            <PendingIndicator pending={buffering}><MotionRegion as="span" inPlace className="inline-grid size-5 place-items-center">{playing && !buffering ? (
               <Pause className="size-5" fill="currentColor" strokeWidth={0} />
             ) : (
               <Play className="size-5 translate-x-[1px]" fill="currentColor" strokeWidth={0} />
-            )}</MotionRegion>
+            )}</MotionRegion></PendingIndicator>
           </button>
         </div>
       </section>
@@ -1972,7 +1950,7 @@ function AfterTheEnd({ skipId }: { skipId?: string }) {
               <li key={book.id}>
                 <button
                   type="button"
-                  onClick={() => void playBook(book)}
+                  onClick={() => playBook(book)}
                   aria-label={S.s_nghe_0_42d1e966(book.title)}
                   className="flex min-h-[48px] w-full items-center gap-3 rounded-control px-1 py-1 text-left hover:bg-hover"
                 >
@@ -2008,7 +1986,7 @@ function CaughtUpNotice() {
     return (
       <div className="motion-appear mt-3 rounded-cover px-3 py-3 text-center text-sm">
         <div className="text-fg">{S.s_da_nghe_het_cuon_nay_05edcdd9}</div>
-        <button type="button" onClick={() => void playBook(next)} className="mt-2 font-medium text-accent-text underline underline-offset-2">{S.s_nghe_tiep_062d402e}{nextLabel(next.title)}
+        <button type="button" onClick={() => playBook(next)} className="mt-2 font-medium text-accent-text underline underline-offset-2">{S.s_nghe_tiep_062d402e}{nextLabel(next.title)}
         </button>
         <AfterTheEnd skipId={next.id} />
       </div>

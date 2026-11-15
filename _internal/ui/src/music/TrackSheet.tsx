@@ -1,6 +1,6 @@
 import { Presence } from "../shared/MotionPresence";
 import { MusicArt } from "./MusicArt";
-import { Ban, Bookmark, BookmarkCheck, Check, Download, ExternalLink, Library, Loader2, Play, Shuffle, Square, Trash2, X } from "lucide-react";
+import { Ban, Bookmark, BookmarkCheck, Check, Download, ExternalLink, Library, Loader2, Play, Shuffle, Trash2, Square } from "lucide-react";
 import type { HTMLAttributes, ReactNode } from "react";
 import { cn } from "../shared/cn";
 import { openExternal } from "../shared/openExternal";
@@ -13,6 +13,10 @@ import { labelOf, loadOf, useDownloads, useLibraryMeta, useSaveTracks, useTrackD
 import type { LibraryPreview } from "./preview";
 
 import { Reveal } from "../shared/MotionPresence";
+import { useDestructiveConfirm } from "../shared/DestructiveConfirm";
+import { ListeningProgress } from "./ListeningProgress";
+import { formatSize } from "../shared/format";
+import { Pause } from "lucide-react";
 /** Năng lượng (arousal của danh mục, -1..1) thành 0-100 %. Cùng phép đổi: MusicLibrary.kt `energyPercent`, MusicLibrary.js. */
 export function energyPercent(arousal: number | undefined): number | null {
   if (typeof arousal !== "number" || !Number.isFinite(arousal)) return null;
@@ -104,8 +108,12 @@ function TrackBody({
   playing?: { onOpenLibrary: (title: string) => void; onSwap?: () => void };
 }) {
   const { data: downloads } = useDownloads();
-  const { save, unsave } = useSaveTracks();
+  const { save, unsave, cancel } = useSaveTracks();
   const load = loadOf(track, downloads);
+  const deletion = useDestructiveConfirm();
+  const askDelete = () => deletion.confirm({ title: S.s_delete_download_question,
+    description: S.s_delete_download_description(track.title || S.s_bai_nay_d9683a01, formatSize(track.bytes ?? 0)),
+    run: () => unsave.mutateAsync([track.link]) });
   const previewing = preview.playing?.link === track.link;
   const energy = energyPercent(track.arousal);
   const credit = musicCreditText(track);
@@ -118,7 +126,7 @@ function TrackBody({
         <div className="flex flex-wrap gap-2">
           {/* "Lưu" = tải về + ghim vào Đã lưu; chạm lại = bỏ lưu. Đang tải thì vòng phần trăm trên chính nút. */}
           <Button variant="primary" icon={track.saved ? BookmarkCheck : Bookmark} aria-pressed={track.saved} loading={save.isPending || unsave.isPending}
-            onClick={() => (track.saved ? unsave.mutate([track.link]) : save.mutate([track.link]))}>
+            onClick={() => (track.saved ? askDelete() : save.mutate([track.link]))}>
             {track.saved ? S.s_bo_luu_2fd51455 : S.s_luu_e91f26c0}
             {<Presence>{load.kind === "loading" && load.percent !== null && <span data-motion-live>{load.percent} %</span>}</Presence>}
           </Button>
@@ -127,18 +135,18 @@ function TrackBody({
         </div>
       ) : (
       <div className="space-y-2">
-      {preview.error ? <p role="alert" className="text-sm text-danger">{preview.error}</p> : null}
+      {preview.error ? <InlineError message={preview.error} onRetry={preview.retry} /> : null}
       <ActionPair primary={
-        <Button icon={previewing ? Square : Play} aria-pressed={previewing} onClick={() => preview.toggle(track)}>
-          {previewing && preview.loading ? S.s_dang_tai_am_thanh_6c7cb62f : previewing ? S.s_dung_nghe_f20939be : S.s_nghe_thu_fa024065}
+        <Button icon={previewing && !preview.paused ? Pause : Play} pending={previewing && preview.loading} aria-pressed={previewing} onClick={() => preview.toggle(track)}>
+          {previewing && preview.loading ? S.s_buffering : previewing && !preview.paused ? S.s_tam_dung_67635815 : S.s_nghe_thu_fa024065}
         </Button>
         } secondary={load.kind === "loading" ? (
-          <Button icon={X} onClick={() => unsave.mutate([track.link])}>
-            {S.s_huy_tai_1a9ff73d}
+          <Button icon={Square} loading={cancel.isPending} onClick={() => cancel.mutate([track.link])}>
+            {S.s_stop_download}
             <span data-motion-live className="text-fg-2">{load.percent === null ? <Loader2 className="size-4 animate-spin" /> : `${load.percent} %`}</span>
           </Button>
-        ) : track.saved || load.kind === "done" ? (
-          <Button icon={Trash2} loading={unsave.isPending} onClick={() => unsave.mutate([track.link])}>{S.s_xoa_ban_tai_4b461f4a}</Button>
+        ) : load.kind === "done" ? (
+          <Button icon={Trash2} loading={unsave.isPending} onClick={askDelete}>{S.s_xoa_ban_tai_4b461f4a}</Button>
         ) : (
           <Button icon={Download} loading={save.isPending} onClick={() => save.mutate([track.link])}>
             {load.kind === "failed" ? S.s_tai_tiep_1efbd854 : S.s_tai_ve_9b5bdb44}
@@ -148,6 +156,8 @@ function TrackBody({
         {<Presence>{onBan && <Button icon={Ban} onClick={() => onBan(track.link)}>{S.s_khong_tu_chon_02ae1742}</Button>}</Presence>}
       </div>
       )}
+      {deletion.dialog}
+      <Reveal when={previewing}><ListeningProgress preview={preview} /></Reveal>
       {<Presence>{track.why && track.why.matches.length > 0 && (
         <section aria-labelledby="track-why">
           <SectionHeading as="h3" id="track-why">{S.s_vi_sao_bai_nay_f681e004}</SectionHeading>

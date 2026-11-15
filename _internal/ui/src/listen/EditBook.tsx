@@ -1,3 +1,4 @@
+import { useDestructiveConfirm } from "../shared/DestructiveConfirm";
 import { Presence } from "../shared/MotionPresence";
 import { S } from "../shared/strings.generated";
 import { MotionRegion } from "@/shared/MotionRegion";
@@ -340,6 +341,7 @@ export function EditBookDialog({
     onSuccess: () => done(S.s_da_dat_anh_bia_90470364),
     onError: (error: Error) => toast.error(S.s_chua_dat_duoc_anh_bia_a4afb9fa, { description: error.message }),
   });
+  const deletion = useDestructiveConfirm();
   const removeCover = useMutation({
     mutationFn: () => api(`/api/books/${book.id}/cover`, { method: "DELETE" }),
     onSuccess: () => done(S.s_da_bo_anh_bia_sach_dung_bia_ve_tu_ten_f562bcab),
@@ -371,7 +373,8 @@ export function EditBookDialog({
           ? S.s_doi_co_hieu_luc_ngay_tren_may_tinh_0_audio_1381413a(computer)
           : undefined
       }
-    >{/* Tìm bìa là MỘT BƯỚC của hộp này (trượt sang, có "Quay lại", Back cũng về), không phải hộp thứ hai đè lên (audit140 V9). */}
+    >
+      {deletion.dialog}{/* Tìm bìa là MỘT BƯỚC của hộp này (trượt sang, có "Quay lại", Back cũng về), không phải hộp thứ hai đè lên (audit140 V9). */}
     <MotionRegion motionKey={searching}>{searching ? (
       <div>
         <button ref={searchBack} type="button" onClick={() => setSearching(false)} className="touch-hit touch-row mb-3 inline-flex items-center gap-2 text-sm text-fg-2 hover:text-fg">
@@ -435,11 +438,11 @@ export function EditBookDialog({
             <BookCover title={book.title} part={book.series?.part} size="lg" image={book.cover} className="w-28 shrink-0" />
             {/* Nút chữ xếp chồng canh trái chung một mép (icon thẳng hàng); kéo giãn thì chữ canh giữa từng nút, lệch nhau (soát 25-10). */}
             <div className="flex min-w-0 max-w-full flex-col items-start gap-1">
-              <Button variant="ghost" className="justify-start text-left" icon={ImagePlus} disabled={busy} onClick={() => file.current?.click()}>
+              <Button variant="ghost" className="justify-start text-left" icon={ImagePlus} loading={busy} disabled={busy} onClick={() => file.current?.click()}>
                 {book.cover ? S.s_doi_anh_bia_7889ff91 : S.s_chon_anh_bia_207ac182}
               </Button>
-              <Button ref={searchOpener} variant="ghost" className="justify-start text-left" icon={Globe} disabled={busy} onClick={() => setSearching(true)}>{S.s_tim_bia_34025664}</Button>
-              <Reveal when={book.cover}><Button variant="ghost" className="justify-start text-left" icon={Trash2} disabled={busy} onClick={() => removeCover.mutate()}>{S.s_bo_anh_bia_696c6692}</Button></Reveal>
+              <Button ref={searchOpener} variant="ghost" className="justify-start text-left" icon={Globe} loading={busy} disabled={busy} onClick={() => setSearching(true)}>{S.s_tim_bia_34025664}</Button>
+              <Reveal when={book.cover}><Button variant="ghost" className="justify-start text-left" icon={Trash2} loading={busy} disabled={busy} onClick={() => deletion.confirm({ title: S.s_bo_anh_bia_696c6692, description: S.s_irreversible_detail(book.title), run: () => removeCover.mutateAsync() })}>{S.s_bo_anh_bia_696c6692}</Button></Reveal>
               {<Presence>{setCover.isPending && (
                 <ContentSkeleton count={1} label={S.s_dang_dat_anh_bia_f4a60e45} />
               )}</Presence>}
@@ -671,7 +674,7 @@ export function SaveAsDialog({
       )}
       {<Presence>{pickFolder && (
         <div className="mt-3 flex items-center gap-2 text-sm">
-          <Button variant="ghost" size="sm" onClick={() => void pickFolder().then((picked) => picked && setFolder(picked))}>{S.s_chon_thu_muc_1fe47e38}</Button>
+          <Button variant="ghost" size="sm" onClick={() => pickFolder().then((picked) => picked && setFolder(picked))}>{S.s_chon_thu_muc_1fe47e38}</Button>
           <MotionRegion as="span" motionKey={folder ?? ""} className="min-w-0 truncate text-fg-2">{folder ?? S.s_mac_dinh_thu_muc_da_xuat_65fabfd2}</MotionRegion>
         </div>
       )}</Presence>}

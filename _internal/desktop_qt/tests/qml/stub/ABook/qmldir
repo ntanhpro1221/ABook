@@ -12,6 +12,10 @@ singleton Backend 1.0 Backend.qml
 singleton Bench 1.0 Bench.qml
 Interactive 1.0 ../../../../qml/Interactive.qml
 Icon 1.0 ../../../../qml/Icon.qml
+StateIcon 1.0 ../../../../qml/StateIcon.qml
+PendingIndicator 1.0 ../../../../qml/PendingIndicator.qml
+MusicListeningProgress 1.0 ../../../../qml/MusicListeningProgress.qml
+DestructiveConfirm 1.0 ../../../../qml/DestructiveConfirm.qml
 IconButton 1.0 ../../../../qml/IconButton.qml
 Shadow 1.0 ../../../../qml/Shadow.qml
 FloatingPanel 1.0 ../../../../qml/FloatingPanel.qml

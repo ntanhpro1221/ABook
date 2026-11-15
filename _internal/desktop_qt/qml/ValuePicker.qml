@@ -130,7 +130,7 @@ Column {
             width: 48; height: 48
             icon: "minus"; iconSize: 18; tip: S.s_giam_a6c2901a
             enabled: root.enabled && root.shown > root.spec.min
-            onClicked: root.nudge(-1)
+            onActivated: root.nudge(-1)
         }
         IconButton {
             objectName: "valueCountUp"
@@ -138,7 +138,7 @@ Column {
             x: parent.width - width; width: 48; height: 48
             icon: "plus"; iconSize: 18; tip: S.s_tang_a2363bce
             enabled: root.enabled && root.shown < root.spec.max
-            onClicked: root.nudge(1)
+            onActivated: root.nudge(1)
         }
         Column {
             id: nameColumn
@@ -220,7 +220,7 @@ Column {
             Accessible.name: S.s_giam_a6c2901a
             enabled: root.enabled && root.shown > root.spec.min
             opacity: enabled ? 1 : 0.4
-            onClicked: if (!downRepeat.fired) root.nudge(-1)
+            onActivated: if (!downRepeat.fired) root.nudge(-1)
             onPressedChanged: downRepeat.hold(pressed)
             Timer {
                 id: downRepeat
@@ -364,7 +364,7 @@ Column {
             Accessible.name: S.s_tang_a2363bce
             enabled: root.enabled && root.shown < root.spec.max
             opacity: enabled ? 1 : 0.4
-            onClicked: if (!upRepeat.fired) root.nudge(1)
+            onActivated: if (!upRepeat.fired) root.nudge(1)
             onPressedChanged: upRepeat.hold(pressed)
             Timer {
                 id: upRepeat

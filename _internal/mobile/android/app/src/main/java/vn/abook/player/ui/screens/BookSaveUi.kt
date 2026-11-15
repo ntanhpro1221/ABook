@@ -133,7 +133,7 @@ fun SaveAsPage(detail: BookDetail, run: BookSaveRun) {
             SaveText.kindNote(kind.project, detail.workshop, detail.wishes),
             style = Abook.type.bodySmall.copy(color = Abook.colors.text2), modifier = Modifier.padding(vertical = Dim.s8).testTag("save_kind_note"),
         )
-        PrimaryButton(if (run.busy) S.s_dang_luu_e93f245d else S.s_luu_e91f26c0, { run.saveAs(kind) }, Modifier.fillMaxWidth().testTag("save_as_go"), enabled = !run.busy) { ink -> ExportIcon(ink) }
+        PrimaryButton(if (run.busy) S.s_dang_luu_e93f245d else S.s_luu_e91f26c0, { run.saveAs(kind) }, Modifier.fillMaxWidth().testTag("save_as_go"), enabled = !run.busy, pending = run.busy) { ink -> ExportIcon(ink) }
         Reveal(run.problem.isNotEmpty()) {
             BasicText(run.problem, style = Abook.type.bodySmall.copy(color = Abook.colors.danger), modifier = Modifier.padding(top = Dim.s8).testTag("save_problem"))
         }

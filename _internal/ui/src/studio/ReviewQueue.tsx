@@ -154,8 +154,8 @@ function SpokenEditor({
       <p className="mt-1 text-xs text-fg-3">{S.s_viet_cach_doc_thanh_tieng_de_trong_de_dung_0f9e441a}</p>
       <div className="mt-2 flex flex-wrap gap-2">
         <Button type="submit" size="sm" variant="primary" loading={busy} disabled={!value.trim() && !item.spoken}>{S.s_luu_e91f26c0}</Button>
-        <Reveal when={twins.length > 0}><Button size="sm" variant="ghost" disabled={busy} onClick={() => void save([item, ...twins])}>{S.s_luu_8c00346c}{twins.length + 1}{S.s_cau_b07e1008}</Button></Reveal>
-        <Button size="sm" variant="ghost" disabled={busy} onClick={() => onDone(null)}>{S.s_huy_96732485}</Button>
+        <Reveal when={twins.length > 0}><Button size="sm" variant="ghost" loading={busy} disabled={busy} onClick={() => save([item, ...twins])}>{S.s_luu_8c00346c}{twins.length + 1}{S.s_cau_b07e1008}</Button></Reveal>
+        <Button size="sm" variant="ghost" loading={busy} disabled={busy} onClick={() => onDone(null)}>{S.s_huy_96732485}</Button>
       </div>
     </form>
   );
@@ -495,7 +495,7 @@ export function ReviewQueue({ bookId, onOpenScript }: { bookId: string; onOpenSc
         </div>
       )}
       {hasNextPage && (
-        <Button className="mt-4" variant="ghost" disabled={isFetchingNextPage} onClick={() => void fetchNextPage()}>
+        <Button className="mt-4" variant="ghost" disabled={isFetchingNextPage} onClick={() => fetchNextPage()}>
           {isFetchingNextPage ? S.s_dang_tai_465b1987 : S.s_tai_tiep_con_0_cau_cb00c39b(pages?.pages.at(-1)?.remaining ?? 0)}
         </Button>
       )}

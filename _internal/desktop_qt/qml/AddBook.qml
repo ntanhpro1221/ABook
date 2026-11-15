@@ -439,15 +439,15 @@ Modal {
             open: root.leave === "" && ((root.queue !== null && !root.preview && root.busy === "") || root.preview !== null)
             ImportSlot {
                 open: root.queue !== null && !root.preview && root.busy === ""
-                Button { text: S.s_xong_a6f4543a; onClicked: root.close() }
+                Button { text: S.s_xong_a6f4543a; onActivated: root.close() }
             }
             ImportSlot {
                 open: root.preview !== null
-                Button { text: S.s_chon_lai_834274af; kind: "ghost"; enabled: root.busy === ""; onClicked: root.chooseAgain() }
+                Button { text: S.s_chon_lai_834274af; kind: "ghost"; enabled: root.busy === ""; onActivated: root.chooseAgain() }
             }
             ImportSlot {
                 open: root.preview !== null && root.queue !== null && !root.known
-                Button { objectName: "importSkip"; text: S.s_bo_cuon_nay_ba5f36fe; kind: "ghost"; enabled: root.busy === ""; onClicked: root.skipCurrent() }
+                Button { objectName: "importSkip"; text: S.s_bo_cuon_nay_ba5f36fe; kind: "ghost"; enabled: root.busy === ""; onActivated: root.skipCurrent() }
             }
             ImportSlot {
                 open: root.preview !== null && root.rest > 0
@@ -459,7 +459,7 @@ Modal {
             }
             ImportSlot {
                 open: root.preview !== null && root.known !== null && root.queue === null
-                Button { objectName: "importOpenKnown"; text: S.s_mo_cuon_do_75ab80a2; icon: "book-open"; enabled: root.busy === ""; onClicked: root.openExisting(root.known.id) }
+                Button { objectName: "importOpenKnown"; text: S.s_mo_cuon_do_75ab80a2; icon: "book-open"; enabled: root.busy === ""; onActivated: root.openExisting(root.known.id) }
             }
             ImportSlot {
                 open: root.preview !== null && root.known === null
@@ -467,7 +467,7 @@ Modal {
             }
             ImportSlot {
                 open: root.preview !== null && root.queue !== null && root.known !== null
-                Button { text: S.s_bo_cuon_nay_ba5f36fe; enabled: root.busy === ""; onClicked: root.skipCurrent() }
+                Button { text: S.s_bo_cuon_nay_ba5f36fe; enabled: root.busy === ""; onActivated: root.skipCurrent() }
             }
         }
     ]
@@ -507,12 +507,12 @@ Modal {
                         objectName: "importLeaveDrop"
                         text: root.shownLeave === "again" ? S.s_bo_va_chon_lai_89f7d490 : S.s_bo_phan_con_lai_63a3c314
                         kind: "ghost"
-                        onClicked: {
+                        onActivated: {
                             if (root.leave === "again") root.chooseAgain()
                             else { root.reset(); root.dismiss() }
                         }
                     }
-                    Button { objectName: "importLeaveBack"; text: S.s_quay_lai_them_sach_e5ac9359; onClicked: root.leave = "" }
+                    Button { objectName: "importLeaveBack"; text: S.s_quay_lai_them_sach_e5ac9359; onActivated: root.leave = "" }
                 }
             }
         }
@@ -553,7 +553,7 @@ Modal {
                         enabled: root.busy === ""
                         onActivated: root.pickFiles()
                     }
-                    Button { text: S.s_chon_thu_muc_txt_dd0d140c; icon: "folder"; kind: "ghost"; enabled: root.busy === ""; onClicked: root.pickFolder() }
+                    Button { text: S.s_chon_thu_muc_txt_dd0d140c; icon: "folder"; kind: "ghost"; enabled: root.busy === ""; onActivated: root.pickFolder() }
                 }
                 Item {
                     width: parent.width
@@ -575,7 +575,7 @@ Modal {
                         text: S.s_mo_741bd2c2
                         kind: "ghost"
                         enabled: root.busy === "" && Queue.cleanPath(typed.text) !== ""
-                        onClicked: root.openTyped()
+                        onActivated: root.openTyped()
                     }
                 }
                 Collapse {

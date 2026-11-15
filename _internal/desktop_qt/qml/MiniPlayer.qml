@@ -52,13 +52,13 @@ Rectangle {
             width: 28; height: 28; iconSize: 16
             icon: root.windowMode && !root.windowMode.pinned ? "pin-off" : "pin"
             tip: S.s_ghim_tren_cung_2407176d
-            onClicked: if (root.windowMode) root.windowMode.pinned = !root.windowMode.pinned
+            onActivated: if (root.windowMode) root.windowMode.pinned = !root.windowMode.pinned
         }
         IconButton {
             objectName: "miniExpand"
             width: 28; height: 28; iconSize: 16
             icon: "maximize-2"; tip: S.s_mo_rong_65e38618
-            onClicked: if (root.windowMode) root.windowMode.expand()
+            onActivated: if (root.windowMode) root.windowMode.expand()
         }
     }
     Column {
@@ -87,8 +87,8 @@ Rectangle {
         y: details.y + (details.height + Theme.s4) * (1 - Math.max(0, root.wideT * 2 - 1))
         spacing: Theme.s8
         SkipButton { objectName: "miniBack"; forward: false; tip: S.s_lui_0_giay_718bdd89(Player.skipSeconds) }
-        PlayButton { objectName: "miniPlay"; size: 40; tip: Player.playing ? S.s_tam_dung_67635815 : S.s_phat_343e7e48 }
-        IconButton { id: deviceButton; objectName: "miniDevices"; icon: "cast"; tip: S.s_phat_tren_681e16e1; onClicked: output.show() }
+        PlayButton { objectName: "miniPlay"; size: 40; tip: Player.buffering ? S.s_buffering : Player.playing ? S.s_tam_dung_67635815 : S.s_phat_343e7e48 }
+        IconButton { id: deviceButton; objectName: "miniDevices"; icon: "cast"; tip: S.s_phat_tren_681e16e1; onActivated: output.show() }
         SkipButton { objectName: "miniForward"; forward: true; tip: S.s_toi_0_giay_84234225(Player.skipSeconds) }
     }
     SeekBar {

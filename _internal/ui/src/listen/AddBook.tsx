@@ -546,17 +546,17 @@ export function AddBookDialog({
             </DialogActions>)}</Presence>) : (!preview ? (null) : (<DialogActions data-add-book-actions>
             <Button variant="ghost" disabled={busy !== null} onClick={chooseAgain}>{S.s_chon_lai_834274af}</Button>
             {!known && skipAction}
-            <Reveal when={rest > 0}><Button disabled={!title.trim() || nothingPicked || busy !== null} loading={busy === "adding"} onClick={() => void addAll()}>{S.s_them_phan_con_lai_45b70e44}</Button></Reveal>
+            <Reveal when={rest > 0}><Button disabled={!title.trim() || nothingPicked || busy !== null} loading={busy === "adding"} onClick={() => addAll()}>{S.s_them_phan_con_lai_45b70e44}</Button></Reveal>
             {known ? (
               <>
-                <Button icon={Copy} loading={busy === "adding"} disabled={!title.trim() || nothingPicked || busy !== null} onClick={() => void add(true)}>
+                <Button icon={Copy} loading={busy === "adding"} disabled={!title.trim() || nothingPicked || busy !== null} onClick={() => add(true)}>
                   {existing ? S.s_them_ban_rieng_fe9759e4 : S.s_van_them_ban_moi_f4832361}
                 </Button>
                 {/* Trong hàng, "Mở cuốn đó" bỏ dở các cuốn sau: ở đó nút chính là "Bỏ cuốn này" (cuốn này đã có rồi). */}
                 <Reveal when={!queue}><Button variant="primary" icon={BookOpen} disabled={busy !== null} onClick={() => openExisting(known.id)}>{S.s_mo_cuon_do_75ab80a2}</Button></Reveal>
               </>
             ) : (
-              <Button variant="primary" icon={BookPlus} loading={busy === "adding"} disabled={!title.trim() || nothingPicked || busy === "reading"} onClick={() => void add()}>{S.s_them_vao_thu_vien_cc27dafc}</Button>
+              <Button variant="primary" icon={BookPlus} loading={busy === "adding"} disabled={!title.trim() || nothingPicked || busy === "reading"} onClick={() => add()}>{S.s_them_vao_thu_vien_cc27dafc}</Button>
             )}
             {known && skipAction}
           </DialogActions>))}
@@ -615,10 +615,10 @@ export function AddBookDialog({
           <div className="add-book-pick flex flex-wrap gap-2">
             {importer.choose && (
               <>
-                <Button variant="primary" icon={busy === "reading" ? Loader2 : FileText} disabled={busy !== null} onClick={() => void choose("file")}>
+                <Button variant="primary" icon={busy === "reading" ? Loader2 : FileText} disabled={busy !== null} onClick={() => choose("file")}>
                   {busy === "reading" ? S.s_dang_doc_1b09d2d9 : S.s_chon_file_sach_1f25282c}
                 </Button>
-                <Button icon={Folder} disabled={busy !== null} onClick={() => void choose("folder")}>{S.s_chon_thu_muc_txt_dd0d140c}</Button>
+                <Button icon={Folder} disabled={busy !== null} onClick={() => choose("folder")}>{S.s_chon_thu_muc_txt_dd0d140c}</Button>
               </>
             )}
           </div>

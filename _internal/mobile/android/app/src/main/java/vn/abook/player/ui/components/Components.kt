@@ -173,30 +173,30 @@ fun PlaceholderTab(title: String, line: String, modifier: Modifier = Modifier) {
 
 /** Nút chính: nền hổ phách, cao 48, chữ ≤ 3 từ (DESIGN.md §6 "Nút (a)"). `enabled` = false: nhạt hơn và không bấm được (việc đang chạy). */
 @Composable
-fun PrimaryButton(label: String, onClick: () -> Unit, modifier: Modifier = Modifier, enabled: Boolean = true, compact: Boolean = false, icon: (@Composable (Color) -> Unit)? = null) =
-    ActionButton(label, onClick, modifier, enabled, icon, compact, false)
+fun PrimaryButton(label: String, onClick: () -> Unit, modifier: Modifier = Modifier, enabled: Boolean = true, compact: Boolean = false, pending: Boolean = false, icon: (@Composable (Color) -> Unit)? = null) =
+    ActionButton(label, onClick, modifier, enabled, icon, compact, false, pending)
 
 /** Secondary action paired with a primary button: same height, compact label and a control outline. */
 @Composable
-fun OutlineButton(label: String, onClick: () -> Unit, modifier: Modifier = Modifier, enabled: Boolean = true, icon: (@Composable (Color) -> Unit)? = null) =
-    ActionButton(label, onClick, modifier, enabled, icon, true, true)
+fun OutlineButton(label: String, onClick: () -> Unit, modifier: Modifier = Modifier, enabled: Boolean = true, pending: Boolean = false, icon: (@Composable (Color) -> Unit)? = null) =
+    ActionButton(label, onClick, modifier, enabled, icon, true, true, pending)
 
 @Composable
-private fun ActionButton(label: String, onClick: () -> Unit, modifier: Modifier, enabled: Boolean, icon: (@Composable (Color) -> Unit)?, compact: Boolean, outline: Boolean) {
+private fun ActionButton(label: String, onClick: () -> Unit, modifier: Modifier, enabled: Boolean, icon: (@Composable (Color) -> Unit)?, compact: Boolean, outline: Boolean, pending: Boolean) {
     val accent = Abook.colors.accent
     val shape = RoundedCornerShape(Dim.radiusControl)
     val ink = if (outline) Abook.colors.text else Abook.colors.accentInk
     Box(
         modifier.height(Dim.s48)
-            .then(if (enabled) Modifier.pressable(onClick = onClick) else Modifier.semantics { disabled() })
+            .then(if (enabled && !pending) Modifier.pressable(onClick = onClick) else Modifier.semantics { disabled() })
             .clip(shape).background(if (outline) Color.Transparent else if (enabled) accent else accent.copy(alpha = 0.45f))
             .then(if (outline) Modifier.border(1.dp, Abook.colors.controlLine, shape) else Modifier)
             .padding(horizontal = if (compact) Dim.s12 else Dim.s24),
         contentAlignment = Alignment.Center,
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            if (icon != null) {
-                icon(ink)
+            if (icon != null || pending) {
+                PendingIndicator(pending, color = ink) { icon?.invoke(ink) }
                 Spacer(Modifier.width(Dim.s8))
             }
             BasicText(label, style = (if (compact) Abook.type.label else Abook.type.bodyStrong).copy(color = ink))

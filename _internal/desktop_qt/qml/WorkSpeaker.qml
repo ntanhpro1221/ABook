@@ -96,7 +96,7 @@ Column {
         kind: "ghost"
         text: S.s_voice_range
         Accessible.description: root.rangeOpen ? S.s_dang_mo_98235c77 : S.s_dang_dong_4886d4e7
-        onClicked: root.rangeOpen = !root.rangeOpen
+        onActivated: root.rangeOpen = !root.rangeOpen
     }
     Collapse {
         objectName: "voiceRangeBody"
@@ -116,7 +116,7 @@ Column {
                     kind: "ghost"
                     text: S.s_chon_het_9e8a7c2c
                     enabled: !root.busy
-                    onClicked: {
+                    onActivated: {
                         const ids = {}
                         for (const line of root.item.contextLines || []) ids[line.stableId] = true
                         root.rangeIds = ids
@@ -128,7 +128,7 @@ Column {
                     kind: "ghost"
                     text: S.s_bo_het_502895ca
                     enabled: !root.busy
-                    onClicked: root.rangeIds = ({})
+                    onActivated: root.rangeIds = ({})
                 }
             }
             Text { text: W.pickNote(root.rangeLines.length, (root.item.contextLines || []).length); color: Theme.text2; font.pixelSize: Theme.sizeCaption }
@@ -204,7 +204,7 @@ Column {
             size: "sm"
             kind: "ghost"
             text: S.s_gioi_giong_a5c7c7b7
-            onClicked: root.pickVoice(root.item.pickVoice)
+            onActivated: root.pickVoice(root.item.pickVoice)
         }
         // Thẻ "một người hai tên" hỏi hai tên có phải một người - chọn người thứ ba lạc chủ đề
         Button {
@@ -215,7 +215,7 @@ Column {
             icon: root.item.suggestedName || root.item.kind === "caller" ? "" : "user-plus"
             text: root.item.suggestedName ? S.s_dat_ten_519d84a1 : S.s_nguoi_khac_36be042b
             Accessible.description: root.creating ? S.s_dang_mo_98235c77 : S.s_dang_dong_4886d4e7
-            onClicked: root.creating = !root.creating
+            onActivated: root.creating = !root.creating
         }
         // Thẻ chỉ gợi vài người; tab Kịch bản tìm được mọi nhân vật trong sách - mở đúng câu này ở đó
         Button {
@@ -225,7 +225,7 @@ Column {
             kind: "ghost"
             icon: "search"
             text: S.s_tim_nguoi_khac_ce406b45
-            onClicked: root.openScript(root.item.examples[0].chapterId, root.item.lines[0].stableId, true)
+            onActivated: root.openScript(root.item.examples[0].chapterId, root.item.lines[0].stableId, true)
         }
         // Thẻ nhóm chỉ in vài câu làm ví dụ: đọc đủ ngữ cảnh ở tab Kịch bản trước khi quyết, mở đúng chương, tại câu đầu của nhóm
         Button {
@@ -235,7 +235,7 @@ Column {
             kind: "ghost"
             icon: "search"
             text: root.item.lines ? S.s_xem_e7ed16f8 + root.item.lines.length + S.s_cau_b07e1008 : ""
-            onClicked: root.openScript(root.item.examples[0].chapterId, root.item.lines[0].stableId, false)
+            onActivated: root.openScript(root.item.examples[0].chapterId, root.item.lines[0].stableId, false)
         }
     }
     Collapse {
@@ -264,7 +264,7 @@ Column {
                             kind: "ghost"
                             text: modelData.label
                             enabled: !root.busy && !root.none
-                            onClicked: root.choose({speaker: modelData.value})
+                            onActivated: root.choose({speaker: modelData.value})
                         }
                     }
                     Text { height: 40; verticalAlignment: Text.AlignVCenter; text: S.s_hay_dat_ten_mot_nguoi_moi_10597c08; color: Theme.text3; font.pixelSize: Theme.sizeCaption }
@@ -297,7 +297,7 @@ Column {
                             text: modelData.label
                             enabled: root.typed !== "" && !root.busy && !root.none
                             Accessible.name: S.s_luu_nguoi_noi_moi_gioi_0_f39ab58a(modelData.label.toLowerCase())
-                            onClicked: root.choose({speaker: root.typed, newGender: modelData.gender})
+                            onActivated: root.choose({speaker: root.typed, newGender: modelData.gender})
                         }
                     }
                 }

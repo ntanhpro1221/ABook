@@ -6,7 +6,6 @@
 var TEMPOS = ["slow", "mid", "fast"]
 var LENGTHS = ["short", "mid", "long"]
 var KEYS = ["q", "playlist", "style", "emotion", "tempo", "length"]
-var PREVIEW_SECONDS = 30
 
 // Render the catalog's license code and version, as MusicCredits/format.licenseLabel do on phone/web.
 function licenseLabel(code, url) {
@@ -99,4 +98,8 @@ function clock(seconds) {
 // Đường nghe thử của một bài (cùng đường "Nghe thử" của Studio › Nhạc nền: bài tải về máy chủ rồi phát).
 function previewPath(link) {
     return "/api/music/track?link=" + encodeURIComponent(link)
+}
+
+function previewVolume(lufs) {
+    return typeof lufs === "number" && isFinite(lufs) ? Math.max(.05, Math.min(1, Math.pow(10, (-18 - lufs) / 20))) : 1
 }

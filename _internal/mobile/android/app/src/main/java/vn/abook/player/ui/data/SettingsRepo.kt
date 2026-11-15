@@ -144,11 +144,11 @@ class SettingsRepo(private val core: SettingsCore, private val scope: CoroutineS
 
     fun deleteOldSave(name: String) = maintenance(S.s_chua_xoa_duoc_b872fff6, S.s_da_xoa_ban_luu_cu_7be7cd34) { core.deleteOldSave(name) }
     fun exportOldSave(name: String, uri: String) = maintenance(S.s_chua_luu_ra_duoc_e5ce53e8, S.s_da_luu_ban_cu_ra_cho_ban_chon_b2e322d5) { core.exportOldSave(name, uri) }
-    private fun maintenance(error: String, success: String, action: () -> Unit) {
+    private fun maintenance(error: String, success: String, refreshSaves: Boolean = true, action: () -> Unit) {
         if (maintenanceBusy.value) return
         maintenanceBusy.value = true; problem.value = ""
         scope.launch {
-            try { withContext(io) { action() }; notice.value = success; oldSaves.value = withContext(io) { core.oldSaves() } }
+            try { withContext(io) { action() }; notice.value = success; if (refreshSaves) oldSaves.value = withContext(io) { core.oldSaves() } }
             catch (e: Exception) { problem.value = listOf(error, e.message.orEmpty()).filter { it.isNotBlank() }.joinToString(". ") }
             finally { maintenanceBusy.value = false }
         }
@@ -214,24 +214,40 @@ class SettingsRepo(private val core: SettingsCore, private val scope: CoroutineS
     }
 
     /** Chọn giọng mặc định (cuốn chưa chọn giọng riêng đọc bằng giọng này từ lần nạp kế). */
+    val savingVoice = MutableStateFlow<String?>(null)
+    val voiceSaveError = MutableStateFlow("")
     fun chooseVoice(id: String) {
         val now = voiceFlow.value as? VoiceList.Ready ?: return
-        if (now.chosen == id) return
-        voiceFlow.value = now.copy(chosen = id)
-        writes.trySend { core.chooseDefaultVoice(id) }
+        if (now.chosen == id || savingVoice.value != null) return
+        savingVoice.value = id
+        voiceSaveError.value = ""
+        scope.launch {
+            try {
+                withContext(io) { core.chooseDefaultVoice(id) }
+                val current = voiceFlow.value as? VoiceList.Ready
+                if (current != null) voiceFlow.value = current.copy(chosen = id)
+            } catch (_: Exception) {
+                voiceSaveError.value = S.s_chua_luu_duoc_giong_mac_dinh_ban_hay_chon_a2d2c7af
+                notes.say(voiceSaveError.value, S.s_thu_lai_c58d068c) { chooseVoice(id) }
+            } finally { savingVoice.value = null }
+        }
     }
 
     fun loadSpeed() {
         scope.launch { speedFlow.value = withContext(io) { runCatching { VoiceSpeedText.state(core.voiceSpeed()) }.getOrNull() } }
     }
 
+    val savingSpeed = MutableStateFlow(false)
     fun chooseSpeed(choice: VoiceSpeedChoice) {
         val now = speedFlow.value ?: return
-        if (now.choice == choice) return
-        speedFlow.value = now.copy(choice = choice)
+        if (now.choice == choice || savingSpeed.value) return
+        savingSpeed.value = true
         scope.launch {
             try { speedFlow.value = withContext(io) { VoiceSpeedText.state(core.setVoiceSpeed(choice.key)) } }
-            catch (e: Exception) { speedFlow.value = now; problem.value = listOf(S.s_chua_doi_duoc_toc_do_giong_e3562390, e.message.orEmpty()).joinToString(". ") }
+            catch (e: Exception) {
+                problem.value = listOf(S.s_chua_doi_duoc_toc_do_giong_e3562390, e.message.orEmpty()).joinToString(". ")
+                notes.say(problem.value, S.s_thu_lai_c58d068c) { chooseSpeed(choice) }
+            } finally { savingSpeed.value = false }
         }
     }
 
@@ -240,10 +256,7 @@ class SettingsRepo(private val core: SettingsCore, private val scope: CoroutineS
     }
 
     fun clearCache() {
-        scope.launch {
-            try { cacheFlow.value = withContext(io) { core.clearCache() }; notice.value = S.s_da_don_ban_doc_da_lam_19cc9826 }
-            catch (e: Exception) { problem.value = listOf(S.s_chua_don_duoc_ban_doc_fbc43cc6, e.message.orEmpty()).joinToString(". ") }
-        }
+        maintenance(S.s_chua_don_duoc_ban_doc_fbc43cc6, S.s_da_don_ban_doc_da_lam_19cc9826, refreshSaves = false) { cacheFlow.value = core.clearCache() }
     }
 
     /** Hỏi lại quyền thông báo (mở màn, quay lại từ Cài đặt Android). */
@@ -254,10 +267,7 @@ class SettingsRepo(private val core: SettingsCore, private val scope: CoroutineS
     suspend fun logLines(): List<String> = withContext(io) { core.logLines() }
 
     fun clearLogs() {
-        scope.launch {
-            try { withContext(io) { core.clearLogs() }; notice.value = S.s_da_xoa_nhat_ky_526f2ff7 }
-            catch (e: Exception) { problem.value = listOf(S.s_chua_xoa_duoc_nhat_ky_1b7a3e04, e.message.orEmpty()).joinToString(". ") }
-        }
+        maintenance(S.s_chua_xoa_duoc_nhat_ky_1b7a3e04, S.s_da_xoa_nhat_ky_526f2ff7, refreshSaves = false) { core.clearLogs() }
     }
 
     suspend fun thirdParty(): List<ThirdPartySection> = withContext(io) { ThirdParty.parse(runCatching { core.thirdParty() }.getOrDefault("")) }

@@ -81,7 +81,7 @@ export function useVoiceTry(bookId: string): {
       return (
         <button
           type="button"
-          onClick={() => void ask(request, voiceName, fallbackUrl)}
+          onClick={() => ask(request, voiceName, fallbackUrl)}
           disabled={disabled || (asking !== null && asking !== key)}
           aria-label={label}
           title={label}
@@ -100,7 +100,7 @@ export function useVoiceTry(bookId: string): {
         type="button"
         loading={asking === key}
         disabled={disabled || (asking !== null && asking !== key)}
-        onClick={() => void ask(request, voiceName, fallbackUrl)}
+        onClick={() => ask(request, voiceName, fallbackUrl)}
         aria-label={label}
       >
         {playing ? <Pause className="size-3.5" fill="currentColor" strokeWidth={0} /> : <BookOpenText className="size-4" />}

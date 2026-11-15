@@ -1,8 +1,8 @@
+import { useDestructiveConfirm } from "../shared/DestructiveConfirm";
 import { S } from "../shared/strings.generated";
 import { TickingValue } from "@/shared/TickingValue";
 import { MotionRegion } from "@/shared/MotionRegion";
 import { SectionHeading } from "@/shared/SectionHeading";
-import { MotionPresence } from "@/shared/MotionPresence";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Check, Clapperboard, Cpu, Download, LoaderCircle, Square, Trash2 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
@@ -209,17 +209,17 @@ export function StudioSetupCard({ className }: { className?: string }) {
         </div>
         <div className="flex items-center gap-2">
           {status.running ? (
-            <Button icon={Square} onClick={() => void call("/api/studio/setup/cancel")}>{S.s_dung_11554138}</Button>
+            <Button icon={Square} onClick={() => call("/api/studio/setup/cancel")}>{S.s_dung_11554138}</Button>
           ) : status.leftover ? (
             status.leftover.orphan ? (
-              <Button icon={Square} onClick={() => void call("/api/studio/setup/cancel")}>{S.s_dung_luot_cu_98c3e5d1}</Button>
+              <Button icon={Square} onClick={() => call("/api/studio/setup/cancel")}>{S.s_dung_luot_cu_98c3e5d1}</Button>
             ) : (
               <Button variant="primary" icon={Download} disabled>{S.s_cai_tiep_f4243054}</Button>
             )
           ) : unfit ? (
-            <Button variant="ghost" size="sm" icon={Download} onClick={() => void call("/api/studio/setup")}>{S.s_van_cai_ef098464}</Button>
+            <Button variant="ghost" size="sm" icon={Download} onClick={() => call("/api/studio/setup")}>{S.s_van_cai_ef098464}</Button>
           ) : (
-            <Button variant="primary" icon={Download} onClick={() => void call("/api/studio/setup")}>
+            <Button variant="primary" icon={Download} onClick={() => call("/api/studio/setup")}>
               {repair ? S.s_sua_studio_2f99394d : update ? S.s_cap_nhat_studio_b3acc7e7 : started ? S.s_cai_tiep_f4243054 : S.s_cai_studio_5fdd3bd9}
             </Button>
           )}
@@ -288,14 +288,9 @@ export function StudioSettings() {
   const { data: info } = useAppInfo();
   const client = useQueryClient();
   const navigate = useNavigate();
-  const [armed, setArmed] = useState(false);
+  const deletion = useDestructiveConfirm();
   const [busy, setBusy] = useState(false);
   const { data: status } = useQuery({ ...SETUP_QUERY, enabled: Boolean(info?.studio) });
-  useEffect(() => {
-    if (!armed) return;
-    const timer = window.setTimeout(() => setArmed(false), 6000);
-    return () => window.clearTimeout(timer);
-  }, [armed]);
   if (!info?.studio || !status) return <MotionRegion />;
   if (!status.installed) {
     const fit = studioFit(status.gpu);
@@ -322,19 +317,14 @@ export function StudioSettings() {
         {status.running ? (
           <Button className="mt-3" variant="ghost" onClick={() => navigate("/studio")}>{S.s_xem_tien_do_cai_42e94c00}</Button>
         ) : fit.level === "no" ? (
-          <Button className="mt-3" variant="ghost" size="sm" icon={Download} disabled={busy} onClick={() => void install()}>{S.s_van_cai_ef098464}</Button>
+          <Button className="mt-3" variant="ghost" size="sm" icon={Download} loading={busy} onClick={() => install()}>{S.s_van_cai_ef098464}</Button>
         ) : (
-          <Button className="mt-3" variant="primary" icon={Download} disabled={busy} onClick={() => void install()}>{S.s_cai_studio_5fdd3bd9}</Button>
+          <Button className="mt-3" variant="primary" icon={Download} loading={busy} onClick={() => install()}>{S.s_cai_studio_5fdd3bd9}</Button>
         )}
       </MotionRegion>
     );
   }
   const remove = async () => {
-    if (!armed) {
-      setArmed(true);
-      return;
-    }
-    setArmed(false);
     setBusy(true);
     try {
       client.setQueryData(["studio-setup"], await api<SetupStatus>("/api/studio/setup", { method: "DELETE" }));
@@ -352,8 +342,8 @@ export function StudioSettings() {
         <p>{S.s_da_cai_e0159635}{status.gpu ? ` · ${status.gpu.name}` : ""}</p>
         <p className="mt-1 break-all">{status.root}</p>
       </>}>
-        <Button size="sm" variant={armed ? "danger" : "ghost"} icon={Trash2} disabled={busy} onClick={() => void remove()}>
-          {busy ? S.s_dang_go_eadfa314 : armed ? S.s_xac_nhan_go_80920dda : S.s_go_studio_832e6f10}
+        <Button size="sm" variant="ghost" icon={Trash2} loading={busy} onClick={() => deletion.confirm({title: S.s_go_studio_832e6f10, description: S.s_xoa_runtime_model_1520_gb_giu_sach_va_ho_s_66d08224, label: S.s_go_studio_832e6f10, run: remove})}>
+          {busy ? S.s_dang_go_eadfa314 : S.s_go_studio_832e6f10}
         </Button>
       </SettingsRow>
       {status.outdated.length > 0 && (
@@ -366,9 +356,7 @@ export function StudioSettings() {
         </p>
       )}
       {/* Hậu quả của việc gỡ chỉ cần lúc đang xác nhận - không treo thường trực dưới nút. */}
-      <MotionPresence open={armed}>
-        <p className="pb-3 text-xs leading-snug text-fg-2 text-pretty">{S.s_xoa_runtime_model_1520_gb_giu_sach_va_ho_s_66d08224}</p>
-      </MotionPresence>
+      {deletion.dialog}
     </MotionRegion>
   );
 }

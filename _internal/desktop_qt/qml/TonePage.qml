@@ -84,7 +84,7 @@ Column {
             IconButton {
                 objectName: row.mine ? "toneMore" : ""; Reveal { shown: row.mine } icon: "ellipsis"; ink: Theme.text2; x: parent.width - width + 10; anchors.verticalCenter: parent.verticalCenter
                 tip: S.s_them_tuy_chon_cho_0_82a2cf4d(row.name); Accessible.name: S.s_them_tuy_chon_cho_0_82a2cf4d(row.name)
-                onClicked: root.menu = root.menu === row.preset.id ? "" : row.preset.id
+                onActivated: root.menu = root.menu === row.preset.id ? "" : row.preset.id
             }
         }
         Item { id: itemItem;
@@ -103,7 +103,7 @@ Column {
 
     Item {
         width: parent.width; height: 48
-        IconButton { id: back; x: -10; anchors.verticalCenter: parent.verticalCenter; icon: "arrow-left"; tip: S.s_quay_lai_6d793582; Accessible.name: S.s_quay_lai_6d793582; onClicked: root.close() }
+        IconButton { id: back; x: -10; anchors.verticalCenter: parent.verticalCenter; icon: "arrow-left"; tip: S.s_quay_lai_6d793582; Accessible.name: S.s_quay_lai_6d793582; onActivated: root.close() }
         Text { x: back.width - 10 + Theme.s8; width: parent.width - x; anchors.verticalCenter: parent.verticalCenter; text: S.s_am_sac_8c2f4e1a; color: Theme.text; font.pixelSize: Theme.sizeSection; font.weight: Theme.weightMedium; wrapMode: Text.Wrap }
     }
     Item {

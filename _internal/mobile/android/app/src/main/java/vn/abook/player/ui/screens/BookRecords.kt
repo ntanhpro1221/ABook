@@ -33,6 +33,7 @@ import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
 import vn.abook.player.ui.components.ArrowRightLeftIcon
 import vn.abook.player.ui.components.DangerButton
+import vn.abook.player.ui.components.ConfirmPage
 import vn.abook.player.ui.components.MenuRow
 import vn.abook.player.ui.components.PlusIcon
 import vn.abook.player.ui.components.PrimaryButton
@@ -185,6 +186,13 @@ private fun FormPage(
             }
         }
     }
+    if (action == RecordAction.Delete) {
+        ConfirmPage(Records.title(action, active.name), "record_form", listOfNotNull(Records.description(action, records.size)), problem) {
+            DangerButton(Records.confirmLabel(action), { submit() }, "record_confirm", pending = busy)
+            QuietButton(S.s_huy_96732485, onCancel, "record_cancel")
+        }
+        return
+    }
     Column(Modifier.fillMaxWidth().imePadding().testTag("record_form")) {
         BasicText(Records.title(action, active.name), style = Abook.type.sectionTitle)
         Records.description(action, records.size)?.let { RowHint(it) }
@@ -208,13 +216,7 @@ private fun FormPage(
         ProblemLine(problem, "record_problem")
         Spacer(Modifier.height(Dim.s24))
         val label = Records.confirmLabel(action)
-        SwapContent(action, contentKey = { action -> action == RecordAction.Delete }, layout = ContentLayout.Column) { action ->
-            if (action == RecordAction.Delete) {
-                DangerButton(label, { submit() }, "record_confirm")
-            } else {
-                PrimaryButton(label, { submit() }, Modifier.fillMaxWidth().testTag("record_confirm"), enabled = ready)
-            }
-        }
+        PrimaryButton(label, { submit() }, Modifier.fillMaxWidth().testTag("record_confirm"), enabled = ready, pending = busy)
         QuietButton(S.s_huy_96732485, onCancel, "record_cancel")
     }
 }

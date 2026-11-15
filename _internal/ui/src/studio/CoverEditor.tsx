@@ -1,4 +1,5 @@
 import { Presence } from "@/shared/MotionPresence";
+import { useDestructiveConfirm } from "../shared/DestructiveConfirm";
 import { S } from "../shared/strings.generated";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Globe, ImagePlus, Trash2 } from "lucide-react";
@@ -59,6 +60,7 @@ export function CoverEditor({ book }: { book: BookSummary & { cover?: CoverImage
     },
     onError: (error: Error) => toast.error(S.s_chua_dat_duoc_anh_bia_a4afb9fa, { description: error.message }),
   });
+  const deletion = useDestructiveConfirm();
   const remove = useMutation({
     mutationFn: () => api(`/api/books/${book.id}/cover`, { method: "DELETE" }),
     onSuccess: () => {
@@ -89,6 +91,7 @@ export function CoverEditor({ book }: { book: BookSummary & { cover?: CoverImage
   const narrow = useMediaQuery("(max-width: 639px)");
   return (
     <div className="w-24 shrink-0 sm:w-44">
+      {deletion.dialog}
       <div
         className={cn("relative rounded-control transition-shadow duration-motion-fast", dragging && "ring-2 ring-accent ring-offset-2 ring-offset-bg")}
         onDragOver={(event) => {
@@ -136,7 +139,7 @@ export function CoverEditor({ book }: { book: BookSummary & { cover?: CoverImage
         <Reveal when={book.cover}><button
             type="button"
             disabled={busy}
-            onClick={() => remove.mutate()}
+            onClick={() => deletion.confirm({title: S.s_bo_anh_bia_696c6692, description: S.s_irreversible_detail(book.title), run: () => remove.mutateAsync()})}
             aria-label={S.s_bo_anh_bia_dung_lai_bia_ve_tu_ten_sach_95de3f45}
             title={S.s_bo_anh_bia_696c6692}
             className="touch-box grid size-8 place-items-center rounded-control text-fg-2 hover:bg-hover hover:text-fg disabled:opacity-50"

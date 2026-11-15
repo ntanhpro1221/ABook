@@ -13,6 +13,7 @@ Modal {
     // Giữ lời hỏi cuối để chữ không trống trong lúc hộp khép lại
     property var shownCopy: null
     onCopyChanged: if (copy) shownCopy = copy
+    onOpenChanged: if (open) Later.call(root, function() { cancel.forceActiveFocus(Qt.TabFocusReason) })
     signal choose(string choice)
     title: shownCopy ? shownCopy.title : ""
     dismissable: busyChoice === ""
@@ -61,23 +62,24 @@ Modal {
             enabled: root.busyChoice === "" || busy
             onActivated: root.choose("send")
         }
-        Button {
+        EditBookActions {
+          width: parent.width
+          Button {
+            id: cancel
+            objectName: "unpairCancel"
+            kind: "ghost"
+            text: root.shownCopy ? root.shownCopy.cancel : ""
+            enabled: root.busyChoice === ""
+            onActivated: root.dismiss()
+          }
+          Button {
             objectName: "unpairDiscard"
-            width: parent.width
             kind: "danger"
             text: root.shownCopy ? root.shownCopy.discard : ""
             busy: root.busyChoice === "discard"
             enabled: root.busyChoice === "" || busy
             onActivated: root.choose("discard")
-        }
-        // Máy kia tắt: nút chính là Huỷ (gửi lúc này sẽ hỏng), không phải "Gửi trước".
-        Button {
-            objectName: "unpairCancel"
-            width: parent.width
-            kind: root.shownCopy && root.shownCopy.send && !root.shownCopy.sendPrimary ? "primary" : "ghost"
-            text: root.shownCopy ? root.shownCopy.cancel : ""
-            enabled: root.busyChoice === ""
-            onClicked: root.dismiss()
+          }
         }
     }
 }

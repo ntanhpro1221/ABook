@@ -12,12 +12,14 @@ class AudioStub extends EventTarget {
   static instances: AudioStub[] = [];
   src = "";
   currentTime = 0;
+  duration = 180;
   preload = "";
   muted = false;
   volume = 1;
-  pause = vi.fn();
+  paused = true;
+  pause = vi.fn(() => { this.paused = true; });
   load = vi.fn();
-  play = vi.fn(() => Promise.resolve());
+  play = vi.fn(() => { this.paused = false; return Promise.resolve(); });
   removeAttribute(name: string) { if (name === "src") this.src = ""; }
   constructor() { super(); AudioStub.instances.push(this); }
 }
@@ -35,6 +37,16 @@ async function mounted() {
   await act(async () => root.render(<Panel />));
   return { get preview() { return preview; }, close: async () => { await act(async () => root.unmount()); host.remove(); } };
 }
+
+it("cancels a pending book start even before the book reports playing", async () => {
+  const view = await mounted();
+  player.pause.mockClear();
+  try {
+    await act(async () => view.preview.toggle({link: "https://music"}));
+    expect(player.playing).toBe(false);
+    expect(player.pause).toHaveBeenCalledOnce();
+  } finally { await view.close(); }
+});
 
 it.each([0, 4])("drops the previous track's pending metadata seek when switching to start=%s", async start => {
   const view = await mounted();
@@ -107,5 +119,35 @@ it("bounds silent loading and removes the deadline when stopped", async () => {
     await act(async () => view.preview.stop());
     await act(async () => vi.advanceTimersByTime(30_000));
     expect(view.preview.error).toBe("");
+  } finally { await view.close(); }
+});
+
+it("plays past thirty seconds, seeks, pauses and resumes, and stops only at the end", async () => {
+  const view = await mounted();
+  vi.useFakeTimers();
+  try {
+    await act(async () => view.preview.toggle({ link: "https://full-track", audibleStart: 2 }));
+    const audio = AudioStub.instances[0];
+    await act(async () => { audio.dispatchEvent(new Event("durationchange")); audio.dispatchEvent(new Event("playing")); });
+    await act(async () => vi.advanceTimersByTime(61_000));
+    audio.currentTime = 63;
+    await act(async () => audio.dispatchEvent(new Event("timeupdate")));
+    expect(view.preview.playing?.link).toBe("https://full-track");
+    expect(view.preview.position).toBe(63);
+    expect(view.preview.duration).toBe(180);
+    await act(async () => view.preview.seek(112));
+    expect(audio.currentTime).toBe(112);
+    await act(async () => view.preview.toggle({ link: "https://full-track" }));
+    expect(view.preview.paused).toBe(true);
+    await act(async () => view.preview.toggle({ link: "https://full-track" }));
+    expect(view.preview.paused).toBe(false);
+    expect(view.preview.loading).toBe(true);
+    await act(async () => audio.dispatchEvent(new Event("playing")));
+    await act(async () => audio.dispatchEvent(new Event("waiting")));
+    expect(view.preview.loading).toBe(true);
+    await act(async () => audio.dispatchEvent(new Event("playing")));
+    expect(view.preview.loading).toBe(false);
+    await act(async () => audio.dispatchEvent(new Event("ended")));
+    expect(view.preview.playing).toBe(null);
   } finally { await view.close(); }
 });

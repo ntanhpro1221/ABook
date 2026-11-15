@@ -183,13 +183,10 @@ Column {
                     first: model.index === 0
                     leaving: model.leaving
                     canImport: root.canImport
-                    confirming: root.removing === model.key
                     removing: root.removingNow && root.removing === model.key
                     picking: root.picking === model.key
                     entered: model.instant
-                    onAskRemove: root.removing = model.key
-                    onKeep: root.removing = ""
-                    onRemove: root.removeTrack(model.key)
+                    onRemove: { root.removing = model.key; root.removeTrack(model.key) }
                     onPick: next => root.pickAuto(track, next)
                 }
             }

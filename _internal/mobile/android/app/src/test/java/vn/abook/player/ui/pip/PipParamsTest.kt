@@ -40,6 +40,18 @@ class PipParamsTest {
     }
 
     @Test
+    fun bufferingNamesTheWaitAndDrawsADifferentSystemAction() {
+        for (playing in listOf(false, true)) {
+            val plan = PipParams.plan(playing, hasBook = true, switchOn = true, buffering = true)
+            assertEquals("Đang đệm", plan.buttons[1].label)
+            assertEquals(PlayerWidget.ACTION_TOGGLE, plan.buttons[1].action)
+            assertTrue(plan.buffering)
+            assertFalse(PipIcons.bitmap(context, PipKind.Toggle, playing, true)
+                .sameAs(PipIcons.bitmap(context, PipKind.Toggle, playing)))
+        }
+    }
+
+    @Test
     fun theButtonsGoTheSameWayAsTheWidgetButtons() {
         val actions = PipParams.plan(playing = true, hasBook = true, switchOn = true).buttons.map { it.action }
         assertEquals(listOf(PlayerWidget.ACTION_BACK, PlayerWidget.ACTION_TOGGLE, PlayerWidget.ACTION_FORWARD), actions)

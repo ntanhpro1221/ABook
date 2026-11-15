@@ -97,7 +97,7 @@ Collapse {
                 tip: Logic.dropLabel(root.item)
                 Accessible.name: Logic.dropLabel(root.item)
                 enabled: root.dropping === ""
-                onClicked: root.dropRequested(root.item)
+                onActivated: root.dropRequested(root.item)
             }
         }
     }

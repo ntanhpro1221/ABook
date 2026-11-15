@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { bookHeardBase, bookProgressText, chapterSubline, caughtUpDetail, caughtUpLine, chapterOpenProblem, retryChapterText, keepTogether, nextChapterLabel, otherBookLine, partialBookLine, PREPARING_VOICE, PREPARING_VOICE_AFTER_MS, primaryListenLabel, readerHint, resumeWhere, tapVerb, textBookLine, toggleLabel, unquoted } from "./labels";
+import { bookHeardBase, bookProgressText, chapterSubline, caughtUpDetail, caughtUpLine, chapterOpenProblem, retryChapterText, keepTogether, nextChapterLabel, otherBookLine, partialBookLine, PREPARING_VOICE_AFTER_MS, primaryListenLabel, readerHint, resumeWhere, tapVerb, textBookLine, toggleLabel, unquoted } from "./labels";
 
 const fresh = { playingHere: false, finished: false, point: { title: "Chương 1", at: 0 }, heard: 0, textOnly: false };
 
@@ -57,10 +57,10 @@ describe("phần đã nghe của cả cuốn", () => {
 
 describe("nút phát", () => {
   it("đang chờ giọng đọc: không nói 'Tạm dừng'", () => {
-    expect(toggleLabel(true, true, true)).toBe(PREPARING_VOICE);
-    expect(toggleLabel(true, true, false)).toBe("Đang tải âm thanh");
+    expect(toggleLabel(true, true, true)).toBe("Đang đệm");
+    expect(toggleLabel(true, true, false)).toBe("Đang đệm");
     expect(toggleLabel(true, false, true)).toBe("Tạm dừng");
-    expect(toggleLabel(false, true, true)).toBe("Phát");
+    expect(toggleLabel(false, true, true)).toBe("Đang đệm");
   });
 
   it("chương cuối nói là chương cuối", () => {

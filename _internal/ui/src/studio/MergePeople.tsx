@@ -77,7 +77,7 @@ export function MergeDialog({
   return (
     <Dialog footer={<DialogActions>
         <Button variant="ghost" onClick={close}>{S.s_thoi_e68f9e88}</Button>
-        <Button variant="primary" icon={GitMerge} disabled={!into} loading={busy} onClick={() => void merge()}>{S.s_gop_2380bed6}</Button>
+        <Button variant="primary" icon={GitMerge} disabled={!into} loading={busy} onClick={() => merge()}>{S.s_gop_2380bed6}</Button>
       </DialogActions>}
       open={person !== null}
       onOpenChange={(open) => !open && close()}

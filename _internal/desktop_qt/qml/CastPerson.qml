@@ -162,7 +162,7 @@ Item {
             hoverInk: Theme.text
             tip: S.s_doi_giong_bd515f96 + root.shownName
             Accessible.name: S.s_doi_giong_bd515f96 + root.shownName
-            onClicked: root.request("voice", root.person)
+            onActivated: root.request("voice", root.person)
         }
         IconButton {
             id: more
@@ -176,7 +176,7 @@ Item {
             hoverInk: Theme.text
             tip: S.s_them_tuy_chon_cho_0_82a2cf4d(root.shownName)
             Accessible.name: S.s_them_tuy_chon_cho_0_82a2cf4d(root.shownName)
-            onClicked: root.menuRequested(more, root.person)
+            onActivated: root.menuRequested(more, root.person)
         }
     }
 }

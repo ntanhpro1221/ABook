@@ -77,5 +77,5 @@ Modal {
             Text { width: parent.width; text: S.s_ban_doi_phan_doc_tren_may_lam_sach_9cc4c3a9; color: Theme.text2; wrapMode: Text.Wrap; font.pixelSize: Theme.sizeCaption }
         }
     }
-    footer: Button { text: S.s_dong_5d54c2a1; kind: "ghost"; onClicked: root.close() }
+    footer: Button { text: S.s_dong_5d54c2a1; kind: "ghost"; onActivated: root.close() }
 }

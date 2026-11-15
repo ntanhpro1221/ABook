@@ -339,23 +339,19 @@ Item {
         footer: Row {
             anchors.right: parent.right
             spacing: 8
-            Button { kind: "ghost"; text: S.s_de_sau_9be0a7ab; onClicked: studioDialog.dismiss() }
+            Button { kind: "ghost"; text: S.s_de_sau_9be0a7ab; onActivated: studioDialog.dismiss() }
             Button { text: S.s_cho_phep_f1a437f5; busy: root.pendingStudio !== null; onActivated: { root.setStudio(true); studioDialog.dismiss() } }
         }
     }
-    Modal {
+    DestructiveConfirm {
         id: removeDialog
         objectName: "removeDialog"
         property string targetId: ""
         property string targetName: ""
         title: S.s_bo_ghep_9139fc92 + (targetName || S.s_thiet_bi_37816a2c) + "?"
         description: S.s_dung_tai_va_dong_bo_giu_sach_da_tai_b948aef5
-        footer: Row {
-            anchors.right: parent.right
-            spacing: 8
-            Button { kind: "ghost"; text: S.s_de_nguyen_2f029b4a; onClicked: removeDialog.dismiss() }
-            Button { kind: "danger"; text: S.s_bo_ghep_64f921f9; onClicked: { root.revoke(removeDialog.targetId, removeDialog.targetName); removeDialog.dismiss() } }
-        }
+        actionText: S.s_bo_ghep_64f921f9
+        onAccepted: root.revoke(removeDialog.targetId, removeDialog.targetName)
     }
     Modal {
         id: renameDialog
@@ -369,7 +365,7 @@ Item {
         footer: Row {
             anchors.right: parent.right
             spacing: 8
-            Button { kind: "ghost"; text: S.s_de_nguyen_2f029b4a; onClicked: renameDialog.dismiss() }
+            Button { kind: "ghost"; text: S.s_de_nguyen_2f029b4a; onActivated: renameDialog.dismiss() }
             Button { objectName: "renameSave"; text: S.s_luu_e91f26c0; enabled: renameDialog.draft.trim() !== ""; busy: root.renameBusy; onActivated: renameDialog.save() }
         }
         function save() { if (draft.trim() !== "" && !root.renameBusy) root.rename(targetId, draft.trim()) }

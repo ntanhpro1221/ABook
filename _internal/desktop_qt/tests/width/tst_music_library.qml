@@ -12,6 +12,9 @@ Item {
     height: 900
     Rectangle { anchors.fill: parent; color: Theme.bg }
     Component { id: screenFactory; MusicScreen {} }
+    Component { id: confirmationFactory; DestructiveConfirm {
+        onAccepted: Api.call("DELETE", "/api/music/local/fixture", null)
+    } }
 
     TestCase {
         id: test
@@ -114,14 +117,41 @@ Item {
         function both(fn) { for (const mode of ["light", "dark"]) { Theme.mode = mode; fn() } }
 
         // ---- hành vi ----
+        function test_sharedConfirmationWaitsForAcknowledgementAndRetriesFailure() {
+            const dialog = createTemporaryObject(confirmationFactory, host)
+            dialog.show()
+            dialog.close()
+            compare(DesktopApi.requests.length, 0)
+            DesktopApi.delayed = true
+            DesktopApi.responses = {"DELETE /api/music/local/fixture": {status: 500, data: {error: "fixture failure"}}}
+            dialog.show()
+            dialog.accept(); dialog.accept()
+            compare(DesktopApi.requests.length, 1)
+            compare(dialog.sending, true)
+            dialog.close()
+            compare(dialog.open, true)
+            DesktopApi.finish()
+            compare(dialog.open, true)
+            verify(dialog.problem !== "")
+            DesktopApi.responses = {"DELETE /api/music/local/fixture": {status: 200, data: {}}}
+            dialog.accept()
+            compare(dialog.sending, true)
+            DesktopApi.finish()
+            compare(dialog.open, false)
+            compare(DesktopApi.requests.length, 2)
+        }
         function test_previewUsesActualOutputAndBoundsLoading() {
             Clip.stop()
-            Clip.toggle("library:probe", "/probe", 3.434, 33.434)
+            Clip.toggle("library:probe", "/probe", 3.434)
             compare(Clip.loading, true)
             compare(Clip.current, "library:probe")
             compare(DesktopApi.starts[DesktopApi.starts.length - 1], 3.434)
             DesktopApi.previewStarted()
             compare(Clip.loading, false)
+            DesktopApi.musicPosition = 65
+            Clip.tick.triggered()
+            compare(Clip.current, "library:probe")
+            compare(Clip.position, 65)
             Clip.stop()
             Clip.toggle("library:failure", "/failure")
             DesktopApi.previewFailed("HTTP 503")
@@ -152,6 +182,12 @@ Item {
             verify(DesktopApi.requests.some(r => r.path === "/api/music/library?saved=1"))
             compare(page.shown.length, 5)
             verify(named(page, "myMusic") !== null, "Nhạc của tôi là một phần của Đã lưu")
+        }
+        function test_stopUsesTheNonDestructiveCancelRoute() {
+            const page = make({part: 1})
+            page.cancelDownload([track(1).link])
+            verify(DesktopApi.requests.some(r => r.path === "/api/music/library/cancel" && r.body.links[0] === track(1).link))
+            verify(!DesktopApi.requests.some(r => r.path === "/api/music/library/unsave"))
         }
         function test_pickModeUsesTheTrackForTheScene() {
             const page = make({pickBook: "b", pickScene: "1:0"})

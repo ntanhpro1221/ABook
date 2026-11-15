@@ -145,7 +145,7 @@ private fun RenamePage(bookId: String, person: CastMember, source: BookSource, n
         person.originalName?.let { RowHint(S.s_ten_goc_0_b27cd007(Cast.cleanName(it)), Modifier.padding(top = Dim.s8)) }
         ProblemLine(problem, "person_rename_problem")
         Spacer(Modifier.height(Dim.s24))
-        PrimaryButton(if (busy) S.s_dang_luu_e93f245d else S.s_luu_e91f26c0, { if (value.isNotBlank()) save(value) }, Modifier.fillMaxWidth().testTag("person_rename_save"), enabled = value.isNotBlank() && !busy)
+        PrimaryButton(if (busy) S.s_dang_luu_e93f245d else S.s_luu_e91f26c0, { if (value.isNotBlank()) save(value) }, Modifier.fillMaxWidth().testTag("person_rename_save"), enabled = value.isNotBlank() && !busy, pending = busy)
         SwapContent(person, contentKey = { person -> person.originalName != null }, layout = ContentLayout.Column) { person ->
             if (person.originalName != null) QuietButton(S.s_ve_ten_goc_643cd2e0, { save("") }, "person_rename_original")
         }
@@ -194,7 +194,7 @@ private fun GenderPage(bookId: String, person: CastMember, source: BookSource, n
         BasicText(S.s_giong_doc_cua_0_chua_doi_ngay_studio_se_la_8778cee8(name), style = Abook.type.bodySmall.copy(color = Abook.colors.text))
         ProblemLine(problem, "person_gender_problem")
         Spacer(Modifier.height(Dim.s24))
-        PrimaryButton(if (busy) S.s_dang_ghi_68059375 else S.s_ghi_lai_923c1fd4, { save() }, Modifier.fillMaxWidth().testTag("person_gender_save"), enabled = choice != null && choice != current && !busy)
+        PrimaryButton(if (busy) S.s_dang_ghi_68059375 else S.s_ghi_lai_923c1fd4, { save() }, Modifier.fillMaxWidth().testTag("person_gender_save"), enabled = choice != null && choice != current && !busy, pending = busy)
         QuietButton(S.s_thoi_e68f9e88, onBack, "person_gender_cancel")
     }
 }

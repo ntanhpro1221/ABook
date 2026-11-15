@@ -2543,18 +2543,28 @@ class App:
         self.music_downloads.enqueue([link for link in wanted if not self._music_file(link).is_file()])
         return self.music_downloads.state()
 
-    def music_library_unsave(self, links: list[str]) -> dict[str, Any]:
-        """"Bỏ lưu" / "Xoá bản tải" / huỷ tải: thôi ghim, dừng tải, xoá file - trừ bài sách nào đó đang ghim hay mang theo (vẫn cần khi nghe)."""
+    def music_library_cancel(self, links: list[str]) -> dict[str, Any]:
+        """Stop transfers without deleting a committed track or its saved selection."""
         self.music_downloads.cancel(links)
-        self.music_saved.remove(links)
-        keep = self._music_pinned_names() | self.music_cache.owned()
+        with self._music_lock:
+            for link in links:
+                if link not in self._music_fetching:
+                    with contextlib.suppress(OSError):
+                        self._music_part(self._music_file(link)).unlink(missing_ok=True)
+        return self.music_downloads.state()
+
+    def music_library_unsave(self, links: list[str]) -> dict[str, Any]:
+        """Explicitly remove the cached copy after UI confirmation; embedded book sources remain intact."""
+        self.music_downloads.cancel(links)
         for link in links:
-            target = self._music_file(link)
-            if target.name in keep:
-                continue
-            for path in (target, target.with_suffix(music_plan.LUFS_SIDECAR), target.with_suffix(music_plan.MEASURE_SIDECAR)):
-                with contextlib.suppress(OSError):
-                    path.unlink(missing_ok=True)
+            with self._music_fetch(link):
+                target = self._music_file(link)
+                for path in (target, target.with_suffix(music_plan.LUFS_SIDECAR), target.with_suffix(music_plan.MEASURE_SIDECAR)):
+                    try:
+                        path.unlink(missing_ok=True)
+                    except OSError as exc:
+                        raise ApiError(HTTPStatus.CONFLICT, "Chưa xoá được bản tải. Bạn hãy dừng nghe rồi thử lại.") from exc
+        self.music_saved.remove(links)
         return self.music_downloads.state()
 
     def music_book_tracks(self, value: str) -> dict[str, Any]:
@@ -3333,6 +3343,9 @@ class App:
         for url in [link, *mirrors]:
             tries = 0
             while True:
+                if cancel is not None and cancel.is_set():
+                    live.discard(part)
+                    raise export_jobs.Cancelled()
                 start = self._music_part_size(part)
                 if start and size is not None and start >= size:
                     if start == size and self._music_matches_catalog(part, size, expected):
@@ -3357,6 +3370,8 @@ class App:
                         # buffering=0: khúc nào đã chép là đã nằm trong file, người đọc theo (`LiveTrack.chunks`) thấy ngay
                         with part.open("ab" if start else "wb", buffering=0) as sink:
                             self._music_copy(response, sink, copied, cancel, start)
+                    if cancel is not None and cancel.is_set():
+                        raise export_jobs.Cancelled()
                     # Mọi nguồn (cả bản gốc) phải khớp `bytes` / `sha1` danh mục ghi: bài cụt hay bị đổi mà Content-Length tự nhất quán không được cất như bài tốt.
                     if not self._music_matches_catalog(part, size, expected):
                         raise TrackMismatch(f"bài tải về khác danh mục: {url}")
@@ -5606,6 +5621,9 @@ class Handler(BaseHTTPRequestHandler):
     def post_music_library_unsave(self, _query: dict[str, list[str]]) -> None:
         self._send_json(HTTPStatus.OK, self.app.music_library_unsave(self._music_links()))
 
+    def post_music_library_cancel(self, _query: dict[str, list[str]]) -> None:
+        self._send_json(HTTPStatus.OK, self.app.music_library_cancel(self._music_links()))
+
     def get_music_book_tracks(self, _query: dict[str, list[str]], value: str) -> None:
         self._send_json(HTTPStatus.OK, self.app.music_book_tracks(value))
 
@@ -7503,6 +7521,7 @@ ROUTES: list[Route] = [
     ("GET", re.compile(r"/api/music/library/downloads"), Handler.get_music_library_downloads),
     ("POST", re.compile(r"/api/music/library/save"), Handler.post_music_library_save),
     ("POST", re.compile(r"/api/music/library/unsave"), Handler.post_music_library_unsave),
+    ("POST", re.compile(r"/api/music/library/cancel"), Handler.post_music_library_cancel),
     ("GET", re.compile(BOOK + r"/music/library"), Handler.get_music_book_tracks),
     ("GET", re.compile(r"/api/music/local"), Handler.get_my_music),
     ("POST", re.compile(r"/api/music/local/import"), Handler.post_my_music_import),

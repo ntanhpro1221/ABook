@@ -213,7 +213,7 @@ export function AudiobookDialogHost() {
   return (
     <Dialog footer={<DialogActions>
         <Button variant="ghost" onClick={() => setBook(null)}>{S.s_de_sau_9be0a7ab}</Button>
-        <Button variant="primary" icon={Headphones} loading={busy} disabled={!voice || !ready || Boolean(plan.error)} onClick={() => void start()}>{S.s_bat_dau_b3cacc46}</Button>
+        <Button variant="primary" icon={Headphones} loading={busy} disabled={!voice || !ready || Boolean(plan.error)} onClick={() => start()}>{S.s_bat_dau_b3cacc46}</Button>
       </DialogActions>}
       open={book !== null}
       onOpenChange={(open) => !open && setBook(null)}

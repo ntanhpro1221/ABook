@@ -1,5 +1,20 @@
 # Test report
 
+## 15-11-2026 — music controls, pending actions and destructive confirmations
+
+Compose, Qt and web use fixed download/stop/downloaded slots, shared confirmations, delayed pending indicators and stationary state icon transitions. Music playback runs to EOS with seek, position/duration and actual output buffering; native confirmation retains a returned Job before model busy state begins. Download cancellation preserves a committed file; explicit confirmed deletion serializes with its writer and reports failure. Default voice changes wait for persistence.
+
+Final focused Android verification: 912 passing tests including PiP buffering label/bitmap and geometry, snapshot verification and debug APK. Web: 359 files / 3449 tests, TypeScript; late focused verification: 132 tests. Python music/action regressions: 79 passing. Both final APK emulator videos passed on a dedicated windowless AVD: cancel/retry/confirm/delete and slowed-network buffering, playback beyond 30 seconds, seek and pause. No physical phone or hardware audio capture was used.
+
+Qt9 CTest result: PASS (disk cache disabled), 21/21 suites; full WidthTests: 1688 PASS, 0 FAIL, 2 SKIP. Its deeper runtime audit found five undefined binding sites. Final follow-up adds safe defaults for missing Select labels, chapter titles and cast history visibility; production rebuild and Cast/PlayerLine/Studio3 assertions and audits passed. Normal-runtime MusicLibrary still has intermittent Later.call/Math.min errors and NowPlayingGeometry intermittently crashes in QV4/QQmlConnections. A SmoothWheel property-renaming probe did not remove the crash and was reverted. The interpreter-only diagnostic result is PASS với interpreter: 113 PASS, 0 FAIL, 0 SKIP across 5 inputs. No production environment flag changed. Qt runtime remains red; assertion totals do not establish a clean runtime. The full21 suites were not repeated after these three small fallback edits. Source-rule result: 3 failed, 174 passed, 3 skipped, 1 warning in 306.45s (0:05:06). Earlier per-file checks: 860 passing, 0 failing, 1 skipped assertions across 32 QML inputs.
+
+Full Android is not claimed green: a separate bc2c72914 checkout reproduced 13 pre-existing rule/UI failures. New failures found during this task were fixed and covered by focused verification; the final full suite was not rerun. The three remaining Qt source-rule failures were also reproduced on that baseline (fixed waits, AudioFxPanel separator, SheetSection title). Strict design lint remains red with 2526 findings across 237 images and 237 real UI trees; all 16 new music_controls images have zero findings. The entire lint set is not established to be pre-existing or false positive.
+
+Strings/source/action checks and both parity --check gates passed; 1401 exact reviewed UI statements, zero unresolved. Reviews pin the full source file hash as well as statement identity; negative tests reject removed confirmation guards and direct/indirect icon slides. Source matching is a regression gate, not runtime proof for every listed action. Evidence and complete action-family tables remain in the task scratch result.md outside Git.
+
+Quality implementation hash before/after: `706789d2f6ff825ad6c92dd4f5d3dec7d4a6d2ea068fa2052a1245f2f3195ddf`. Precommit strict-audio scan had zero findings; the required scan of committed HEAD is recorded in external result.md.
+
+
 ## 15-11-2026 — visible actions across Compose, Qt and web
 
 Shared footer rows render an accent icon and label, choices keep a visible unselected mark, navigation rows disclose their destination, and static information uses information ink. The affordance audit reads actual Compose/Qt image-tree pairs and rendered gallery DOM, including window-level Qt overlays. It rejects missing/stale trees, plain text actions and static accent text; child buttons cannot hide an unmarked parent action.

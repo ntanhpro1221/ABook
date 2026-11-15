@@ -5,6 +5,8 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -21,7 +23,7 @@ data class ClipSpec(val computer: String, val path: String, val startMs: Int = 0
 enum class ClipFailure { Offline, Missing }
 
 /** `playing`: mã clip đang phát; `loading`: mã clip đang tải về; `failure`: lần bấm gần nhất hỏng vì sao (null = không hỏng). */
-data class ClipState(val playing: String? = null, val loading: String? = null, val failure: ClipFailure? = null)
+data class ClipState(val playing: String? = null, val loading: String? = null, val failure: ClipFailure? = null, val paused: Boolean = false, val position: Double = 0.0, val duration: Double = 0.0)
 
 /**
  * Nghe thử trong Studio từ xa (NATIVE_REMOTE_STUDIO.md §3.2-B): trình phát hệ thống không ghim được vân tay của máy tính nên clip được TẢI VỀ
@@ -36,11 +38,13 @@ class StudioClips(
     private val player: SamplePlayer,
     private val scope: CoroutineScope,
     private val limitBytes: Long = CACHE_BYTES,
+    private val pauseBook: () -> Unit = {},
 ) {
     private val dir: File by lazy(directory)
     private val flow = MutableStateFlow(ClipState())
     val state: StateFlow<ClipState> get() = flow
     private var job: Job? = null
+    private var clock: Job? = null
 
     /** Lượt bấm hiện tại: lời gọi lại của lượt cũ (tải xong muộn, phát hết sau khi đã bấm clip khác) bị bỏ. */
     private var turn = 0
@@ -51,10 +55,15 @@ class StudioClips(
      */
     fun toggle(id: String, spec: ClipSpec, onEnded: () -> Unit = {}) {
         if (flow.value.playing == id || flow.value.loading == id) {
-            stop()
+            if (id.startsWith("music-") && flow.value.playing == id) {
+                val paused = !flow.value.paused
+                flow.update { it.copy(paused = paused, loading = if (paused) null else id) }
+                if (paused) player.pause() else player.resume()
+            } else stop()
             return
         }
         stop()
+        if (id.startsWith("music-")) pauseBook()
         val mine = ++turn
         flow.value = ClipState(loading = id)
         job = scope.launch {
@@ -67,18 +76,36 @@ class StudioClips(
                 return@launch
             }
             if (mine != turn) return@launch
-            flow.value = ClipState(playing = id)
-            player.playRange(
+            player.playRangeWithState(
                 file.path, spec.startMs, spec.endMs,
                 onEnded = { if (mine == turn) { flow.value = ClipState(); onEnded() } },
                 onFailed = { if (mine == turn) flow.value = ClipState(failure = ClipFailure.Missing) },
+                onPlaying = { playing -> if (mine == turn) flow.update { it.copy(playing = if (playing) id else it.playing, loading = if (!playing && !it.paused) id else null) } },
             )
+            clock = scope.launch {
+                while (mine == turn && (flow.value.playing == id || flow.value.loading == id)) {
+                    delay(200)
+                    flow.update { it.copy(position = player.positionMs() / 1000.0, duration = player.durationMs() / 1000.0) }
+                }
+            }
         }
     }
 
+    fun seek(seconds: Double) {
+        val target = seconds.coerceIn(0.0, flow.value.duration.coerceAtLeast(0.0))
+        player.seek((target * 1000).toInt())
+        flow.update { it.copy(position = target) }
+    }
+
     /** Dừng clip đang phát / đang tải. */
+    fun stopMusic() {
+        val active = flow.value.playing ?: flow.value.loading
+        if (active?.startsWith("music-") == true) stop()
+    }
+
     fun stop() {
         turn++
+        clock?.cancel(); clock = null
         job?.cancel()
         job = null
         player.stop()

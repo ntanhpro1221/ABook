@@ -239,7 +239,7 @@ Item {
                     x: root.colX + root.colW - width
                     y: Theme.s16
                     icon: "ellipsis"; tip: S.s_them_tuy_chon_a0b4bb6e
-                    onClicked: more.toggle()
+                    onActivated: more.toggle()
                 }
                 Text {
                     x: root.colX + 44; y: Theme.s16 + 12
@@ -253,7 +253,7 @@ Item {
                     y: Theme.s16
                     icon: "chevron-down"
                     tip: S.s_thu_nho_esc_884a3a3e
-                    onClicked: root.close()
+                    onActivated: root.close()
                 }
                 PageSwitch {
                     visible: opacity > 0
@@ -339,7 +339,7 @@ Item {
                                 anchors.horizontalCenter: parent.horizontalCenter
                                 kind: "text"
                                 text: Player.error !== "" ? S.s_thu_lai_c58d068c : S.s_nghe_lai_tu_dau_e251d632
-                                onClicked: Player.error !== "" ? Player.retry() : Player.restart()
+                                onActivated: Player.error !== "" ? Player.retry() : Player.restart()
                             }
                         }
                         Collapse {
@@ -349,7 +349,7 @@ Item {
                                 anchors.horizontalCenter: parent.horizontalCenter
                                 kind: "ghost"; text: S.s_nghe_tiep_403b90a5
                                 tip: root.nextVolume ? root.nextVolume.title : ""
-                                onClicked: Player.playBook(root.nextVolume.bookId)
+                                onActivated: Player.playBook(root.nextVolume.bookId)
                             }
                         }
                         Collapse {
@@ -358,7 +358,7 @@ Item {
                                 objectName: "nowOtherBooks"
                                 anchors.horizontalCenter: parent.horizontalCenter
                                 kind: "ghost"; text: S.s_nghe_cuon_khac_cc5cf8a7
-                                onClicked: recommendations.show()
+                                onActivated: recommendations.show()
                             }
                         }
                     }
@@ -397,7 +397,7 @@ Item {
                             icon: "skip-back"
                             enabled: Player.loaded
                             tip: S.s_chuong_truoc_shift_9994756d
-                            onClicked: Player.previous()
+                            onActivated: Player.previous()
                             anchors.verticalCenter: parent.verticalCenter
                         }
                         SkipButton { forward: false; iconSize: 28; anchors.verticalCenter: parent.verticalCenter }
@@ -408,7 +408,7 @@ Item {
                             enabled: Player.loaded && Player.chapters.rowOf(Player.chapterId) < Player.chapters.count - 1
                             opacity: enabled ? 1 : 0.4
                             tip: Player.canNext ? S.s_chuong_sau_shift_20da5bb5 : Player.chapters.rowOf(Player.chapterId) >= Player.chapters.count - 1 ? S.s_day_la_chuong_cuoi_e4e693d4 : S.s_chuong_sau_chua_co_audio_e17e3d72
-                            onClicked: Player.next()
+                            onActivated: Player.next()
                             anchors.verticalCenter: parent.verticalCenter
                         }
                     }
@@ -585,10 +585,10 @@ Item {
                 Button {
                     required property var modelData
                     width: parent.width; wrap: true; kind: "ghost"; icon: "play"; text: modelData.title
-                    onClicked: { recommendations.close(); Player.playBook(modelData.bookId) }
+                    onActivated: { recommendations.close(); Player.playBook(modelData.bookId) }
                 }
             }
-            Button { text: S.s_ve_thu_vien_992fad7b; kind: "ghost"; onClicked: { recommendations.close(); root.close(); if (Nav.stack) Nav.stack.show(0) } }
+            Button { text: S.s_ve_thu_vien_992fad7b; kind: "ghost"; onActivated: { recommendations.close(); root.close(); if (Nav.stack) Nav.stack.show(0) } }
         }
     }
     Popover {

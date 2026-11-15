@@ -75,9 +75,13 @@ fun ClipProblem(clip: ClipState, modifier: Modifier = Modifier, tag: String = "s
 @Composable
 fun ClipButton(clipId: String, clip: ClipState, onClick: () -> Unit, tag: String, modifier: Modifier = Modifier) {
     val active = clip.playing == clipId || clip.loading == clipId
-    IconAction(if (active) WorkText.STOP else WorkText.PLAY, onClick, tag, modifier) {
-        SwapContent(active, contentKey = { active -> active }, layout = ContentLayout.Box) { active ->
-            if (active) StopIcon(Abook.colors.accentText) else PlayIcon(Abook.colors.accentText)
+    val music = clipId.startsWith("music-")
+    IconAction(if (clip.loading == clipId) vn.abook.player.S.s_buffering else if (active && !clip.paused) (if (music) vn.abook.player.S.s_tam_dung_67635815 else WorkText.STOP) else if (music && active) vn.abook.player.S.s_phat_343e7e48 else WorkText.PLAY, onClick, tag, modifier) {
+        vn.abook.player.ui.components.PendingIndicator(clip.loading == clipId) {
+            vn.abook.player.ui.components.StateIcon(active && !clip.paused) { on ->
+                if (on && music) vn.abook.player.ui.components.LucideIcon(vn.abook.player.ui.components.LucidePaths.PAUSE, Abook.colors.accentText)
+                else if (on) StopIcon(Abook.colors.accentText) else PlayIcon(Abook.colors.accentText)
+            }
         }
     }
 }

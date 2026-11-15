@@ -274,7 +274,7 @@ function RemoteBar({ phone, receivedAt, onDismiss }: { phone: RemotePhone; recei
             <Tooltip label={S.s_dung_0_nghe_tiep_o_may_nay_dung_cho_ay_578d8cb4(phone.name)}>
               <button
                 type="button"
-                onClick={() => void listenHere()}
+                onClick={() => listenHere()}
                 disabled={moving}
                 aria-label={S.s_nghe_o_day_f7f1d741}
                 className="inline-flex h-8 shrink-0 items-center gap-2 whitespace-nowrap rounded-control px-2 text-xs font-medium text-fg hover:bg-hover disabled:opacity-50"

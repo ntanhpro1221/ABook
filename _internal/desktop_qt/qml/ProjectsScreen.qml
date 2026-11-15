@@ -74,7 +74,7 @@ FocusScope {
             text: S.s_du_an_moi_992d22b2
             icon: "plus"
             kind: "ghost"
-            onClicked: root.newRequested()
+            onActivated: root.newRequested()
             Behavior on opacity { NumberAnimation { duration: Theme.reduceMotion ? Theme.motionReduced : Theme.motionFast } }
         }
         IconButton {
@@ -85,7 +85,7 @@ FocusScope {
             iconSize: 20
             tip: S.s_tuy_chon_studio_16c07366
             Accessible.name: S.s_tuy_chon_studio_16c07366
-            onClicked: { studioMenu.anchorItem = studioMore; studioMenu.show() }
+            onActivated: { studioMenu.anchorItem = studioMore; studioMenu.show() }
         }
     }
 
@@ -229,7 +229,7 @@ FocusScope {
             title: root.local && root.store && root.store.libraryData && root.store.libraryData.root
                    ? S.s_khong_thay_thu_muc_thu_vien_a160d7be + Logic.folderName(root.store.libraryData.root) + "”" : S.s_khong_thay_thu_muc_thu_vien_8c2af7eb
             text: S.s_o_chua_cam_hay_thu_muc_da_doi_ten_cam_lai_713e694c
-            Button { Reveal { shown: root.local } text: S.s_chon_thu_muc_1fe47e38; icon: "settings"; onClicked: if (Nav.stack) Nav.stack.show(2) }
+            Button { Reveal { shown: root.local } text: S.s_chon_thu_muc_1fe47e38; icon: "settings"; onActivated: if (Nav.stack) Nav.stack.show(2) }
             OnComputerPill { Reveal { shown: !root.local } verb: S.s_chon_lai_thu_muc_thu_vien_2d290748; computer: root.store ? root.store.computerName : S.s_may_tinh_8eafc226 }
         }
         EmptyState {
@@ -242,7 +242,7 @@ FocusScope {
             icon: "clapperboard"
             title: S.s_chua_co_du_an_dd6cd3d2
             text: S.s_bien_mot_truyen_thanh_sach_noi_nhieu_giong_3e0bcdc1
-            Button { objectName: "newProjectEmpty"; text: S.s_du_an_moi_992d22b2; icon: "plus"; size: "lg"; onClicked: root.newRequested() }
+            Button { objectName: "newProjectEmpty"; text: S.s_du_an_moi_992d22b2; icon: "plus"; size: "lg"; onActivated: root.newRequested() }
         }
 
     }

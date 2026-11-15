@@ -4,7 +4,8 @@ import vn.abook.player.ui.motion.SwapContent
 import vn.abook.player.ui.motion.ContentLayout
 
 import androidx.compose.foundation.layout.*
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
+import vn.abook.player.formatSize
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
@@ -26,6 +27,7 @@ fun TrackRow(track: MusicLibrary.Track, ui: LibraryUi, state: LibraryState, pick
     val colors = Abook.colors
     val playing = ui.previewing == track.link
     val canPlay = ui.online || track.link in ui.downloaded
+    Column(Modifier.fillMaxWidth()) {
     Row(
         Modifier.fillMaxWidth().heightIn(min = 64.dp).pressable(onClick = onOpen).padding(vertical = Dim.s8).testTag("track_${track.link.hashCode()}"),
         verticalAlignment = Alignment.CenterVertically,
@@ -34,9 +36,11 @@ fun TrackRow(track: MusicLibrary.Track, ui: LibraryUi, state: LibraryState, pick
         Spacer(Modifier.width(Dim.s8))
         Box(
             Modifier.size(40.dp).then(if (canPlay) Modifier.pressable { state.togglePreview(track.link) } else Modifier.semantics { disabled() })
-                .semantics { contentDescription = if (playing && ui.previewLoading) S.s_dang_tai_am_thanh_6c7cb62f else if (playing) S.s_dung_nghe_thu_41a2925b else S.s_nghe_thu_fa024065 }
+                .semantics { contentDescription = if (playing && ui.previewLoading) S.s_buffering else if (playing && !ui.previewPaused) S.s_tam_dung_67635815 else S.s_nghe_thu_fa024065 }
                 .testTag("preview_${track.link.hashCode()}"), contentAlignment = Alignment.Center,
-        ) { LucideIcon(if (playing) LucidePaths.SQUARE else LucidePaths.PLAY, if (!canPlay) colors.text3 else if (playing) colors.accentText else colors.text) }
+        ) { PendingIndicator(playing && ui.previewLoading) {
+            LucideIcon(if (playing && !ui.previewPaused) LucidePaths.PAUSE else LucidePaths.PLAY, if (!canPlay) colors.text3 else if (playing) colors.accentText else colors.text)
+        } }
         Spacer(Modifier.width(Dim.s8))
         Column(Modifier.weight(1f)) {
             // cắt-có-chủ-ý: owner requests at most two title lines in music rows; the sheet shows the full title.
@@ -49,9 +53,9 @@ fun TrackRow(track: MusicLibrary.Track, ui: LibraryUi, state: LibraryState, pick
                         BasicText(track.creator, style = Abook.type.bodySmall.copy(color = colors.text2), maxLines = 1, softWrap = false, overflow = TextOverflow.Ellipsis, modifier = Modifier.testTag("music_row_creator"))
                     }
                 }
-                track.duration?.let {
+                (ui.active[track.link]?.percent?.let { S.s_dang_tai_0_e9a97892(it) } ?: if (track.link in ui.failed) S.s_chua_tai_xong_b257419d else track.duration?.let(Fmt::clock))?.let {
                     Reveal(track.creator.isNotEmpty()) { BasicText("·", style = Abook.type.bodySmall.copy(color = colors.text2), modifier = Modifier.padding(horizontal = Dim.s4)) }
-                    ClockLabel(Fmt.clock(it), Modifier.testTag("music_row_duration"), Abook.type.bodySmall.copy(color = colors.text2))
+                    ClockLabel(it, Modifier.testTag("music_row_duration"), Abook.type.bodySmall.copy(color = if (track.link in ui.failed) colors.danger else colors.text2))
                 }
             }
         }
@@ -61,6 +65,8 @@ fun TrackRow(track: MusicLibrary.Track, ui: LibraryUi, state: LibraryState, pick
         }
         DownloadControl(track, ui, state, Modifier.padding(start = Dim.s8))
     }
+    Reveal(playing) { ListeningProgress(ui, state, Modifier.padding(start = 56.dp, bottom = Dim.s8)) }
+    }
 }
 
 /** Every row reserves the same download column, including tracks that have not been downloaded. */
@@ -69,24 +75,38 @@ private fun DownloadControl(track: MusicLibrary.Track, ui: LibraryUi, state: Lib
     val load = ui.active[track.link]
     val downloaded = track.link in ui.downloaded
     val failed = track.link in ui.failed
+    val pending = track.link in ui.pendingLinks
+    var askDelete by remember(track.link) { mutableStateOf(false) }
     val label = when {
-        load != null -> S.s_huy_tai_1a9ff73d
-        downloaded -> S.s_da_tai_b7362bbf
-        failed -> S.s_tai_tiep_1efbd854
+        pending -> if (downloaded) S.s_dang_xoa_71482e81 else S.s_dang_tai_465b1987
+        load != null -> S.s_stop_download
+        downloaded -> S.s_downloaded_delete
+        failed -> S.s_thu_lai_c58d068c
         else -> S.s_tai_ve_9b5bdb44
     }
     Box(
         modifier.size(Dim.touch).then(when {
+            pending -> Modifier.semantics { disabled() }
             load != null -> Modifier.pressable { state.cancel(listOf(track.link)) }
+            downloaded -> Modifier.pressable { askDelete = true }
             !downloaded && ui.online -> Modifier.pressable { state.save(listOf(track.link)) }
             else -> Modifier
         }).semantics { contentDescription = label }.testTag("download_${track.link.hashCode()}"),
         contentAlignment = Alignment.Center,
     ) {
-        SwapContent(load, contentKey = { load -> load != null }, layout = ContentLayout.Box) { load ->
-            if (load != null) DownloadRing(load.percent, S.s_dang_tai_0_e9a97892(load.percent ?: 0), Modifier.testTag("track_loading"))
-            else LucideIcon(when { downloaded -> LucidePaths.CIRCLE_CHECK; failed -> LucidePaths.CIRCLE_ALERT; else -> LucidePaths.DOWNLOAD },
-            when { downloaded -> Abook.colors.success; failed -> Abook.colors.danger; !ui.online -> Abook.colors.text3; else -> Abook.colors.text2 })
+        val waiting = pendingVisible(pending)
+        StateIcon(when { waiting -> "pending"; load != null -> "loading"; downloaded -> "downloaded"; failed -> "failed"; else -> "download" }) { shown ->
+            when (shown) {
+                "pending" -> BusyRing()
+                "loading" -> DownloadRing(load?.percent, load?.percent?.let { S.s_dang_tai_0_e9a97892(it) } ?: S.s_dang_tai_465b1987, Modifier.testTag("track_loading"))
+                "downloaded" -> DownloadedIcon()
+                else -> LucideIcon(LucidePaths.DOWNLOAD,
+                    if (shown == "failed") Abook.colors.danger else if (!ui.online) Abook.colors.text3 else Abook.colors.text2)
+            }
         }
     }
+    if (askDelete) DestructiveConfirm(S.s_delete_download_question,
+        S.s_delete_download_description(track.title, formatSize(track.bytes)), { askDelete = false },
+        { state.forget(track.link) }, pending = pending, problem = ui.actionError)
+
 }

@@ -151,7 +151,7 @@ Item {
                     icon: "x"
                     text: S.s_bo_qua_tat_ca_e736ef1f
                     enabled: root.busy === ""
-                    onClicked: { root.skipping = block.modelData; confirm.title = S.s_bo_qua_moi_viec_tu_863669f5 + (block.modelData.name || S.s_may_nay_e53e5d40) + "?"; confirm.description = S.s_bo_8d4fc41c + block.modelData.items.length + S.s_viec_khoi_hang_cho_khoi_phuc_duoc_o_da_bo_2e106212; confirm.show() }
+                    onActivated: { root.skipping = block.modelData; confirm.title = S.s_bo_qua_moi_viec_tu_863669f5 + (block.modelData.name || S.s_may_nay_e53e5d40) + "?"; confirm.description = S.s_bo_8d4fc41c + block.modelData.items.length + S.s_viec_khoi_hang_cho_khoi_phuc_duoc_o_da_bo_2e106212; confirm.show() }
                 }
             }
             Item { width: 1; height: 8 }
@@ -189,7 +189,7 @@ Item {
                             tip: S.s_ap_dung_viec_nay_76d8752a
                             Accessible.name: S.s_ap_dung_viec_nay_76d8752a
                             enabled: root.busy === ""
-                            onClicked: root.decide("apply", block.modelData, row.modelData)
+                            onActivated: root.decide("apply", block.modelData, row.modelData)
                         }
                         IconButton {
                             objectName: "inboxSkipOne"
@@ -202,7 +202,7 @@ Item {
                             tip: S.s_bo_qua_viec_nay_e6b2362b
                             Accessible.name: S.s_bo_qua_viec_nay_e6b2362b
                             enabled: root.busy === ""
-                            onClicked: root.decide("skip", block.modelData, row.modelData)
+                            onActivated: root.decide("skip", block.modelData, row.modelData)
                         }
                     }
                 }
@@ -239,7 +239,7 @@ Item {
                     icon: "rotate-ccw"
                     text: S.s_khoi_phuc_tat_ca_cc961492
                     enabled: root.busy === ""
-                    onClicked: root.decide("restore", block.modelData, null)
+                    onActivated: root.decide("restore", block.modelData, null)
                 }
             }
             StudioRows {
@@ -274,7 +274,7 @@ Item {
                             tip: S.s_khoi_phuc_viec_nay_8da3e2a8
                             Accessible.name: S.s_khoi_phuc_viec_nay_8da3e2a8
                             enabled: root.busy === ""
-                            onClicked: root.decide("restore", block.modelData, row.modelData)
+                            onActivated: root.decide("restore", block.modelData, row.modelData)
                         }
                     }
                 }

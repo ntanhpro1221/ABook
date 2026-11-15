@@ -217,7 +217,7 @@ object ReadingsText {
     const val CANCEL = S.s_huy_96732485
     const val TRY = S.s_nghe_thu_fa024065
     const val TRYING = S.s_may_tinh_dang_doc_thu_ebc9983a
-    const val TRY_STOP = S.s_dung_nghe_f20939be
+    const val TRY_STOP = S.s_huy_96732485
     const val FIELD = S.s_cach_doc_moi_39ce794c
     const val EVERYWHERE = S.s_dung_cho_moi_sach_fd10b5e6
     const val MORE = S.s_xem_them_e0ac1b1e

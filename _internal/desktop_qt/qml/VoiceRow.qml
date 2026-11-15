@@ -11,6 +11,7 @@ Item {
     property var voice: ({})
     property string shown: ""
     property bool selected: false
+    property bool saving: Api.savingVoice === voiceId
     property bool playing: false
     property bool loading: false
     property string failure: ""
@@ -48,7 +49,7 @@ Item {
                 Accessible.role: Accessible.RadioButton
                 Accessible.name: root.voice.name || ""
                 Accessible.checked: root.selected
-                onClicked: root.choose()
+                onClicked: if (Api.savingVoice === null) root.choose()
                 Keys.onDownPressed: root.step(1)
                 Keys.onRightPressed: root.step(1)
                 Keys.onUpPressed: root.step(-1)
@@ -60,8 +61,10 @@ Item {
                 SelectionMark {
                     id: mark
                     selected: root.selected
+                    visible: !saveWait.shown
                     anchors.verticalCenter: parent.verticalCenter
                 }
+                PendingIndicator { id: saveWait; anchors.verticalCenter: parent.verticalCenter; pending: root.saving }
                 Text {
                     id: name
                     x: 30

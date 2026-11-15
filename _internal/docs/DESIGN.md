@@ -175,6 +175,12 @@ Token có sẵn (`shared/motion.ts` = `--motion-*` trong `styles.css`): nhanh 12
   cho thanh vỏ trượt xuống mượt. Chọn tab từ màn con về gốc của tab đó. Không có hàng "Phát trên / Chọn nơi phát" thường trực: icon cast cạnh nút phát
   mở bộ chọn. Chỉ máy khác đang phát mới có dải một dòng ≤36 dp "Đang phát trên <tên> ›", hiện/ẩn có chuyển động.
 - **Căn giữa trục chéo**: thành phần dùng chung (bìa, icon) không tự mang `self-*`; hàng quyết định căn (máy dò CROSS CENTER).
+- **Icon trạng thái**: dùng StateIcon chung, mờ chéo và co nhẹ 0,8 → 1 trong 180 ms ngay tại ô của nó; không dịch ngang/dọc.
+  Phát/tạm dừng giữ phép biến hình đường nét đã có. Số %, đồng hồ và vị trí tua đổi tại chỗ, không khởi động lại hiệu ứng.
+  Vòng tải vào/ra cùng nhịp với icon, vùng bấm không đổi kích thước. Giảm chuyển động chỉ mờ theo clock giảm chuyển động.
+- **Thao tác phải chờ**: khoá bấm lặp ngay khung đầu; spinner tại nút sau 180 ms, nội dung chưa có dùng skeleton.
+  Trạng thái đích chỉ hiện sau kết quả thật. Mọi bộ phát công bố đang đệm trước tiếng đầu và khi thiếu dữ liệu giữa bài;
+  lỗi giữ đường thử lại. Web Button/IconButton giữ promise; Qt Button/IconButton giữ request; Compose nối pending của model vào điều khiển chung.
 - **Danh sách**: thêm/xoá hàng mở/khép tại chỗ (useListPresence), hàng khác trượt theo, không nhảy.
 - **Phản hồi chạm**: nhấn = thu 0,97 + tối nền 6 % trong 90 ms, thả = về trong 120 ms; nút phát đổi icon phát/dừng bằng mờ
   chéo tại chỗ. Không nảy, không vượt đích - sang trọng là dứt khoát (mọi `cubic-bezier` giữ tung độ trong [0, 1]).
@@ -301,7 +307,10 @@ giữ tên trong cột tối đa 640 px, thanh tua dùng phần rộng còn lạ
 - **Chân màn**: thanh đáy (thanh tab, thanh phát nhỏ, chân màn con) chừa dưới nó đúng thanh điều hướng khi máy có thanh; máy giấu thanh (ColorOS cử chỉ: inset 0)
   thì chừa vùng hệ thống nuốt chạm (`mandatorySystemGestures`, OPPO 4 dp) + 8 dp thở - không sàn cứng. Một chỗ duy nhất: điện thoại `bottomClearance`.
 - **Việc không lấy lại được** (xoá nhật ký, xoá khỏi máy, bỏ ghép, gỡ giọng, xoá khoá / bài nhạc, bỏ thay đổi): luôn hỏi lại bằng bước xác nhận chung (điện thoại
-  `ConfirmPage` + `DangerButton`, web `Dialog` + nút `danger`), nút "Giữ lại" là nút chữ. Máy dò `NativePolishTest.everyDestructiveActionOfTheScreensAsksFirst`.
+  `ConfirmPage` / `DestructiveConfirm`, web `useDestructiveConfirm` trên `Dialog`, Qt `DestructiveConfirm` trên `Modal`). Tiêu đề nêu
+  hành động và đối tượng, thân nói hậu quả; Huỷ mặc định bên trái, nút nguy hiểm bên phải. Back/Escape/chạm ngoài là huỷ.
+  Việc có hoàn tác dùng snackbar ghi rõ Hoàn tác và giữ đủ dữ liệu để khôi phục. Máy dò `scripts/check_ui_actions.py` giữ bản rà
+  từng lời gọi, chặn lời gọi mới chưa được xét; không coi việc quét chữ là chứng minh runtime.
 - **Vùng chạm**: tối thiểu 44×44 (điện thoại), 32×32 (máy tính, có tooltip).
 
 ## 6. Thành phần
@@ -402,12 +411,17 @@ giữ tên trong cột tối đa 640 px, thanh tua dùng phần rộng còn lạ
     "Bỏ lọc" và - khi lọc theo danh sách phát - "Tải cả danh sách (Z MB)" bên phải. Luật lọc / xếp một nguồn:
     tests/fixtures/music_library/cases.json (máy chủ, Android, Qt chạy cùng bảng).
   - *Dòng bài* (cao >= 64): nút nghe thử · tên (đậm, tối đa hai dòng, ellipsis) / người sáng tác · thời lượng (một dòng, chỉ người sáng tác
-    ellipsis) · cột trạng thái tải cố định (nút tải / vòng % chạm để huỷ / dấu đã tải / dấu cảnh báo "Chưa tải xong" chạm để tải tiếp).
+    ellipsis) · cột trạng thái tải cố định (mũi tên tải / vòng mảnh quanh ô vuông dừng / mũi tên xuống trong vòng đặc màu nhấn).
+    Nhãn lần lượt "Tải về", "Dừng tải", "Đã tải - bấm để xoá". Vòng không có chữ; % ở dòng phụ dùng chữ số đều.
+    Chưa biết tổng byte thì vòng quay quanh ô vuông dừng. Dừng bỏ phần dở ngay, không hỏi. Bản hoàn chỉnh chỉ xoá sau hộp
+    "Xoá bản tải?", tên bài + dung lượng giải phóng; Huỷ mặc định bên trái, Xoá màu nguy hiểm bên phải.
     Bỏ phong cách khỏi hàng trên cả ba nền tảng để giữ chỗ cho tên và cột tải; phong cách đầy đủ ở Thông tin. Đây là ngoại lệ cắt chữ
     có chủ ý theo soát musiclib2; sheet giữ nguyên tên đầy đủ. Danh sách ảo hoá (2.387 dòng).
     Mất mạng: bài chưa tải mờ nút nghe thử và nút tải; danh mục đã lưu vẫn mở được.
-  - *Nghe thử*: từ chỗ bắt đầu nghe được, tối đa 30 giây, cùng một độ to; sách đang phát thì TẠM DỪNG sách (không tự phát lại); một bài
-    một lúc; rời màn là dừng. Thanh nhỏ "Đang nghe thử · tên · ■" nổi ở đáy màn.
+  - *Nghe nhạc*: nghe trọn bài từ `audibleStart` (bỏ khoảng im đầu), cùng độ to; sách đang phát thì TẠM DỪNG sách (không tự phát lại);
+    một bài một lúc, rời màn là dừng. Hết bài dừng, không tự chọn bài khác. Bấm lại là tạm dừng/tiếp tục.
+    Dòng đang nghe mở ra thanh tua mảnh, vị trí/tổng thời lượng mm:ss, số đều; chạm/kéo/phím để tua theo cùng ngôn ngữ thanh tua sách.
+    Mở/khép dùng Reveal/Collapse, không làm nút tải đổi cột. Đang đệm hiện vòng chờ sau 180 ms; chưa ra tiếng không báo đang phát.
   - *Chi tiết bài* (sheet): ngay dưới tên + người sáng tác là một hàng hai nút cùng cao: Nghe thử (chính, icon phát/dừng) · Tải về |
     Xoá bản tải (viền, icon / tiến độ tải). Dùng biến thể chung của nút; nút viền chỉ đi cặp với nút chính (web `data-action-pair`),
     không dùng cho bộ lọc hay nút đơn. Chế độ chọn: Dùng, Không tự chọn bài này ở hàng phụ phía sau.

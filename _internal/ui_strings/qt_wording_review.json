@@ -274,5 +274,17 @@
     "qt": "Duyệt {} câu",
     "web": "Chưa có câu: {}",
     "reason": "Different states: Qt opens review for a selected count; web is the empty result of filtering by a speaker. Not a wording pair."
+  },
+  {
+    "screen": "Cài đặt",
+    "qt": "Xoá file ({})",
+    "web": "Xoá: {}",
+    "reason": "Different controls: Qt removes the optional emotion module files; the web phrase is the accessible name of deleting an imported music track. Both actions show their own object-specific confirmation."
+  },
+  {
+    "screen": "Cài đặt",
+    "qt": "Khoá",
+    "web": "Chưa có khoá",
+    "reason": "Different roles: Qt labels the provider key input and appends its provider name; the web phrase describes an empty provider key status."
   }
 ]

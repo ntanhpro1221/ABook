@@ -14,7 +14,11 @@ Interactive {
     property string kind: "primary"     // "primary" | "ghost" (= "text") | "danger"
     property string size: "md"          // "sm" | "md" | "lg"
     property bool wrap: false
+    property bool pending: false
     property bool busy: false
+    property int ownedRequest: 0
+    readonly property bool working: busy || ownedRequest > 0
+    Connections { target: Api; function onRequestDone(id) { if (root.ownedRequest === id) root.ownedRequest = 0 } }
     property var reserve: []
     readonly property real reservedWidth: reserve.reduce((widest, value) => Math.max(widest, metrics.advanceWidth(value)), 0)
     FontMetrics { id: metrics; font: label.font }
@@ -22,7 +26,7 @@ Interactive {
     readonly property bool danger: kind === "danger"
     readonly property bool outline: kind === "outline"
     readonly property int pad: size === "sm" ? 12 : size === "lg" ? 20 : 14
-    readonly property bool showsIcon: icon !== "" || busy
+    readonly property bool showsIcon: icon !== "" || working
     readonly property real iconBox: showsIcon ? 16 + (size === "sm" ? 6 : 8) : 0
     readonly property color ink: primary ? Theme.accentInk : danger ? Theme.danger : outline ? Theme.text : !enabled || busy ? Theme.text3 : Theme.accentText
     // `wrap`: dòng cao 1,25 mà Qt dồn phần dư xuống DƯỚI chữ - chữ nổi cao hơn tâm nút 1/8 dòng. Hạ khối chữ đúng phần ấy (leading-[1.25]
@@ -35,12 +39,17 @@ Interactive {
     Accessible.name: text
     implicitHeight: Math.max(Theme.buttonHeight, label.implicitHeight + 8)
     implicitWidth: Math.max(label.implicitWidth, reservedWidth) + iconBox + 2 * pad
-    opacity: enabled && !busy ? 1 : 0.45
+    opacity: enabled && !working ? 1 : 0.45
     // Mờ như MỘT nhóm như opacity của CSS (disabled:opacity-45): mờ từng lớp thì chữ 45% chồng lên nền 45% thành chữ nâu nhạt trên khối
     // nâu (Lead soát 0.4.151 lượt 2, "Lưu tên" tối); dựng nhóm vào một lớp rồi mới mờ - chữ vẫn đậm trên nền như web
     layer.enabled: opacity < 1
     Behavior on opacity { NumberAnimation { duration: Theme.motionFast } }
-    onClicked: if (!busy) root.activated()
+    onClicked: {
+        if (working) return
+        const before = Api.requestSerial
+        root.activated()
+        if (Api.requestSerial !== before && Api.requestsPending[Api.requestSerial]) root.ownedRequest = Api.requestSerial
+    }
 
     Rectangle {
         anchors.fill: parent
@@ -65,21 +74,14 @@ Interactive {
         width: 16
         height: 16
         y: root.wrap && label.lineCount > 1 ? label.y + root.slot / 2.5 - height / 2 : (root.height - height) / 2
-        Icon {
+        StateIcon {
             anchors.centerIn: parent
-            Reveal { shown: !root.busy }
+            Reveal { shown: !wait.shown }
             name: root.icon
             size: 16
             color: root.ink
         }
-        Icon {
-            anchors.centerIn: parent
-            Reveal { shown: root.busy }
-            name: "loader-circle"
-            size: 16
-            color: root.ink
-            RotationAnimator on rotation { running: root.busy && Nav.uiVisible && !Theme.reduceMotion; from: 0; to: 360; duration: Theme.spinMs; loops: Animation.Infinite }
-        }
+        PendingIndicator { id: wait; anchors.centerIn: parent; width: 16; height: 16; pending: root.working || root.pending; color: root.ink }
     }
     Text {
         id: label

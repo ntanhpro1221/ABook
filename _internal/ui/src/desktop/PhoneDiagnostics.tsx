@@ -77,8 +77,8 @@ export function PhoneDiagnostics({ computer, open, onOpenChange }: { computer: {
     >
       <div className="space-y-4">
         <div className="flex flex-wrap items-center gap-2">
-          <Button size="sm" variant="ghost" icon={RefreshCw} loading={query.isFetching} onClick={() => void query.refetch()}>{S.s_lam_moi_b4c61340}</Button>
-          <Button size="sm" variant="ghost" icon={Save} loading={saving} disabled={Boolean(query.error)} onClick={() => void save()}>{S.s_luu_nhat_ky_57df5372}</Button>
+          <Button size="sm" variant="ghost" icon={RefreshCw} loading={query.isFetching} onClick={() => query.refetch()}>{S.s_lam_moi_b4c61340}</Button>
+          <Button size="sm" variant="ghost" icon={Save} loading={saving} disabled={Boolean(query.error)} onClick={() => save()}>{S.s_luu_nhat_ky_57df5372}</Button>
         </div>
         <DiagnosticsBody report={query.data} error={query.error} loading={query.isLoading} onRetry={() => void query.refetch()} />
       </div>

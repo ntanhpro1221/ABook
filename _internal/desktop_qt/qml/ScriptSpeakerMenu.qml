@@ -70,7 +70,7 @@ Column {
                             size: "sm"
                             kind: "ghost"
                             text: modelData.label
-                            onClicked: root.picked({value: root.query, label: root.query, lines: 0, newGender: modelData.value})
+                            onActivated: root.picked({value: root.query, label: root.query, lines: 0, newGender: modelData.value})
                         }
                     }
                 }

@@ -33,6 +33,7 @@ import kotlin.math.roundToInt
 fun AudioFxPage(music: MusicState? = null, bookId: String = "", openMusic: () -> Unit = {}, openTone: () -> Unit = {}) {
     val context = LocalContext.current
     LaunchedEffect(context) { AudioFx.init(context) }
+    var askReset by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(false) }
     val fx by AudioFx.state.collectAsState()
     val bookOnly by AudioFx.bookOnly.collectAsState()
     val update: (AudioFxSettings) -> Unit = { AudioFx.update(it) }
@@ -70,10 +71,9 @@ fun AudioFxPage(music: MusicState? = null, bookId: String = "", openMusic: () ->
         }
         SheetSwitch(S.s_copy_0aedb2b2cf2b, bookOnly, AudioFx::setBookOnly, "audiofx_book")
         }
-        TextAction(S.s_ve_mac_dinh_4eb6b300, {
-            AudioFx.reset()
-            if (music != null && bookId.isNotEmpty()) music.setLevel(MusicLevels.DEFAULT_DB)
-        }, "audiofx_reset", align = Alignment.CenterStart)
+        TextAction(S.s_ve_mac_dinh_4eb6b300, { askReset = true }, "audiofx_reset", align = Alignment.CenterStart)
+        if (askReset) vn.abook.player.ui.components.DestructiveConfirm(S.s_reset_question, S.s_reset_detail,
+            { askReset = false }, { askReset = false; AudioFx.reset(); if (music != null && bookId.isNotEmpty()) music.setLevel(MusicLevels.DEFAULT_DB) }, S.s_ve_mac_dinh_4eb6b300)
     }
 }
 

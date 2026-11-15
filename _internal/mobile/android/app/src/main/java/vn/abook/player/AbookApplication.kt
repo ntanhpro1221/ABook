@@ -5,6 +5,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.collect
 import vn.abook.player.ui.data.AndroidPlaybackCore
 import vn.abook.player.ui.data.AndroidSettingsCore
 import vn.abook.player.ui.data.CoverLoader
@@ -47,8 +48,9 @@ class AbookApplication : Application(), androidx.work.Configuration.Provider {
     /** Studio từ xa của giao diện native: các phiên theo máy tính ghép, sống cùng tiến trình (quyền "chỉ nghe" đã biết không phải hỏi lại mỗi lần mở màn). */
     val studio by lazy {
         // Nghe thử trong Studio: clip tải về bộ nhớ đệm (nối lại được), tối đa 50 MB, dọn khi tiến trình khởi động.
-        val clips = StudioClips({ java.io.File(cacheDir, "studio_clips") }, { computer, path, partial -> StudioDownloads.fetch(this, computer, path, partial) }, vn.abook.player.ui.voice.AndroidSamplePlayer(this), uiScope)
+        val clips = StudioClips({ java.io.File(cacheDir, "studio_clips") }, { computer, path, partial -> StudioDownloads.fetch(this, computer, path, partial) }, vn.abook.player.ui.voice.AndroidSamplePlayer(this), uiScope, pauseBook = { player.pause() })
         uiScope.launch(Dispatchers.IO) { clips.trim() }
+        uiScope.launch { player.state.collect { if (it.playing || it.preparingBookId != null) clips.stopMusic() } }
         vn.abook.player.ui.studio.StudioHub(vn.abook.player.ui.studio.StudioRepo(this), uiScope, clips)
     }
     val uiPrefs by lazy { UiPrefs(this) }
@@ -124,7 +126,9 @@ class AbookApplication : Application(), androidx.work.Configuration.Provider {
      *  Nghe thử thì tạm dừng sách (không tự phát lại). */
     val musicLibrary by lazy {
         val source = vn.abook.player.ui.music.library.AndroidLibrarySource(this)
-        vn.abook.player.ui.music.library.LibraryState(source, uiScope, vn.abook.player.ui.music.library.ExoPreviewPlayer(this, source), pauseBook = { player.pause() })
+        vn.abook.player.ui.music.library.LibraryState(source, uiScope, vn.abook.player.ui.music.library.ExoPreviewPlayer(this, source), pauseBook = { player.pause() }).also { library ->
+            uiScope.launch { player.state.collect { if (it.playing || it.preparingBookId != null) library.stopPreview() } }
+        }
     }
 
     /** Cửa hỏi bạn trước khi đọc bằng giọng trực tuyến chưa được đồng ý (chữ chưa rời máy khi chưa có câu trả lời): trình phát qua nó, Activity vẽ câu hỏi. */

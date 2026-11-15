@@ -27,7 +27,8 @@ Column {
         if (index === 0) Player.setAudioFx({enabled:false,preset:0})
         else Player.setAudioFx({enabled:true,preset:index})
     }
-    function reset() {
+    function reset() { removeConfirm.show() }
+    function resetConfirmed() {
         Player.toneAction("select",{id:"off"})
         Player.setVolume(1)
         Player.setAudioFx({enabled:false,preset:0,bands:[0,0,0,0,0],bass:0,boost:0,pitch:0,mono:false,balance:0,skipSilence:false,silenceDb:-60,silenceSeconds:3,keepSeconds:1.5})
@@ -80,4 +81,6 @@ Column {
         }
         TextLink { objectName: "audioFxReset"; text: S.s_ve_mac_dinh_4eb6b300; accent: true; onClicked: root.reset() }
     }
+    DestructiveConfirm { id: removeConfirm; title: S.s_reset_question; description: S.s_reset_detail; onAccepted: root.resetConfirmed() }
+
 }

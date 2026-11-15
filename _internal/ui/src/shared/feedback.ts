@@ -91,10 +91,10 @@ export function setBookPlaying(playing: boolean): void {
 }
 
 /** Bọc một việc người dùng bấm: phản hồi trước, rồi làm việc ấy (onClick={withFeedback("playPause", toggle)}). */
-export function withFeedback<A extends unknown[]>(kind: FeedbackKind, action: (...args: A) => unknown): (...args: A) => void {
+export function withFeedback<A extends unknown[], R>(kind: FeedbackKind, action: (...args: A) => R): (...args: A) => R {
   return (...args) => {
     feedback(kind);
-    action(...args);
+    return action(...args);
   };
 }
 

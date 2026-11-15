@@ -167,7 +167,7 @@ private fun PrecastBody(state: StudioProjectState, book: StudioBook, sheets: She
                 SwapContent(step, contentKey = { step -> step == PrecastStep.Done }, layout = ContentLayout.Column, spacing = Dim.s8) { step ->
                     if (step == PrecastStep.Done) {
                         SwapContent(book, contentKey = { book -> book.precastHeld }, layout = ContentLayout.Column) { book ->
-                            if (book.precastHeld) PrimaryButton(PrecastText.RECORD, { state.send(StudioCommand.Pause(false)); onBack() }, Modifier.fillMaxWidth().testTag("studio_precast_record"), enabled = !state.busy)
+                            if (book.precastHeld) PrimaryButton(PrecastText.RECORD, { state.send(StudioCommand.Pause(false)); onBack() }, Modifier.fillMaxWidth().testTag("studio_precast_record"), pending = state.busy, enabled = !state.busy)
                             else PrimaryButton(PrecastText.FINISH, onBack, Modifier.fillMaxWidth().testTag("studio_precast_finish"))
                         }
                         QuietButton(PrecastText.BACK, onBack, "studio_precast_back")

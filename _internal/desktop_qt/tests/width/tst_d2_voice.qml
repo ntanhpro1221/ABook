@@ -196,7 +196,12 @@ Item {
             const page = make()
             const target = row(page, "edge:vi-VN-NamMinhNeural")
             verify(!target.selected)
+            DesktopApi.delayed = true
             click(target.radio)
+            compare(Api.savingVoice, "edge:vi-VN-NamMinhNeural")
+            verify(!target.selected)
+            DesktopApi.delayed = false
+            DesktopApi.finish()
             tryCompare(Api, "defaultVoice", "edge:vi-VN-NamMinhNeural")
             tryVerify(function() { return (Platform.setting("abook-readaloud-voice", "")) === ("edge:vi-VN-NamMinhNeural") })
             tryVerify(function() { return (last("PUT", "/api/preferences").body.readAloudVoice) === ("edge:vi-VN-NamMinhNeural") })
@@ -210,6 +215,8 @@ Item {
             DesktopApi.responses["PUT /api/preferences"] = {status: 500, data: {error: "đĩa đầy"}}
             click(row(page, "edge:vi-VN-HoaiMyNeural").radio)
             tryCompare(Api, "notice", "Chưa lưu được giọng mặc định. Bạn hãy chọn lại để thử lại.")
+            compare(Api.defaultVoice, "edge:vi-VN-NamMinhNeural")
+            DesktopApi.responses["PUT /api/preferences"] = {status: 200, data: {}}
         }
 
         function test_arrowKeysMoveTheChoice() {
@@ -316,6 +323,8 @@ Item {
             // gỡ khoá
             DesktopApi.requests = []
             find(azure, "keyRemove").activated()
+            compare(last("DELETE", "/api/readaloud/online/azure"), null)
+            overlay("keyRemoveConfirm").accept()
             tryVerify(function() { return last("DELETE", "/api/readaloud/online/azure") !== null })
             // sau mỗi việc, danh sách giọng + khoá hỏi lại
             verify(last("GET", "/api/readaloud/voices") !== null)

@@ -248,7 +248,7 @@ Item {
                             anchors.horizontalCenter: parent.horizontalCenter
                             text: S.s_chon_anh_41ecf092
                             kind: "ghost"
-                            onClicked: { root.cancel(); root.chooseFile() }
+                            onActivated: { root.cancel(); root.chooseFile() }
                         }
                     }
                 }

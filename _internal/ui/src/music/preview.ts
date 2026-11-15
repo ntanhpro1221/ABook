@@ -4,8 +4,7 @@ import { mediaUrl } from "../studio/api";
 import { previewPath } from "../studio/musicLocal";
 import { S } from "../shared/strings.generated";
 
-/** Nghe thử một bài của Kho nhạc: từ chỗ bắt đầu nghe được (`audibleStart`), tối đa 30 giây. */
-export const PREVIEW_SECONDS = 30;
+/** Full track from audibleStart. Only the media ended event ends a track. */
 /** Độ to nghe thử: đưa bài về cùng một mức (LUFS danh mục đo) - bài to không giật tai, bài nhỏ không phải vặn loa. */
 export const PREVIEW_LUFS = -18;
 
@@ -29,7 +28,10 @@ export function useLibraryPreview() {
   const playerRef = useRef(player);
   playerRef.current = player;
   const audio = useRef<HTMLAudioElement | null>(null);
-  const until = useRef(0);
+  const [position, setPosition] = useState(0);
+  const [duration, setDuration] = useState(0);
+  const [paused, setPaused] = useState(false);
+  const last = useRef<PreviewTrack | null>(null);
   const [playing, setPlaying] = useState<PreviewTrack | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -59,23 +61,34 @@ export function useLibraryPreview() {
   const fail = useCallback((message: string) => { stop(); setError(message); }, [stop]);
   const toggle = useCallback(
     (track: PreviewTrack) => {
-      if (current.current === track.link) {
-        stop();
+      if (current.current === track.link && audio.current) {
+        if (paused) {
+          setPaused(false); setLoading(true);
+          const token = request.current;
+          timeout.current = setTimeout(() => { if (request.current === token) fail(S.s_preview_timeout); }, 30_000);
+          void audio.current.play().catch(() => { if (request.current === token) fail(S.s_chua_nghe_thu_duoc_luc_nay_58b11ef5); });
+        } else { setPaused(true); setLoading(false); clearTimeoutRef(); audio.current.pause(); }
         return;
       }
-      if (playerRef.current.playing) playerRef.current.pause();
+      playerRef.current.pause();
       if (!audio.current) {
         const created = new Audio();
         created.preload = "auto";
         created.muted = new URLSearchParams(window.location.search).get("mute") === "1";
         created.addEventListener("timeupdate", () => {
-          if (created.currentTime >= until.current) stop();
+          setPosition(created.currentTime);
         });
+        created.addEventListener("durationchange", () => setDuration(Number.isFinite(created.duration) ? created.duration : 0));
         created.addEventListener("ended", stop);
         created.addEventListener("error", () => fail(S.s_chua_nghe_thu_duoc_luc_nay_58b11ef5));
         created.addEventListener("playing", () => { clearTimeoutRef(); setLoading(false); });
         created.addEventListener("waiting", () => {
-          if (!current.current) return;
+          if (!current.current || created.paused) return;
+          setLoading(true);
+          if (timeout.current === undefined) timeout.current = setTimeout(() => fail(S.s_preview_timeout), 30_000);
+        });
+        created.addEventListener("stalled", () => {
+          if (!current.current || created.paused) return;
           setLoading(true);
           if (timeout.current === undefined) timeout.current = setTimeout(() => fail(S.s_preview_timeout), 30_000);
         });
@@ -86,7 +99,7 @@ export function useLibraryPreview() {
       clearTimeoutRef();
       clearMetadataListener();
       const start = Math.max(0, track.audibleStart ?? 0);
-      until.current = start + PREVIEW_SECONDS;
+      last.current = track; setPosition(start); setDuration(0); setPaused(false);
       element.src = mediaUrl(previewPath(track.link));
       element.volume = previewVolume(track.lufs);
       element.currentTime = start;
@@ -103,14 +116,21 @@ export function useLibraryPreview() {
         if (request.current === token) fail(S.s_chua_nghe_thu_duoc_luc_nay_58b11ef5);
       });
     },
-    [stop, fail, clearMetadataListener, clearTimeoutRef],
+    [stop, fail, paused, clearMetadataListener, clearTimeoutRef],
   );
   // Sách bắt đầu phát lại (người nghe bấm phát ở thanh dưới): bài nghe thử nhường.
   useEffect(() => {
-    if (player.playing && current.current) stop();
-  }, [player.playing, stop]);
+    if ((player.playing || player.preparingBookId) && current.current) stop();
+  }, [player.playing, player.preparingBookId, stop]);
   useEffect(() => stop, [stop]);
-  return { playing, loading, error, toggle, stop };
+  const seek = useCallback((seconds: number) => {
+    const element = audio.current;
+    if (!element || !current.current) return;
+    const target = Math.max(0, Math.min(seconds, Number.isFinite(element.duration) ? element.duration : seconds));
+    element.currentTime = target; setPosition(target);
+  }, []);
+  const retry = () => { if (last.current) toggle(last.current); };
+  return { playing, loading, error, toggle, stop, paused, position, duration, seek, retry };
 }
 
 export type LibraryPreview = ReturnType<typeof useLibraryPreview>;

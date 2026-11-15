@@ -26,7 +26,7 @@ Item {
         tip: S.s_dung_bluetooth_a7d4c199
         enabled: !root.busy
         Accessible.name: S.s_dung_bluetooth_cho_1bd77035 + (root.computer.name || "")
-        onClicked: menu.toggle()
+        onActivated: menu.toggle()
     }
     Popover {
         id: menu

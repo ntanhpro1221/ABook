@@ -153,4 +153,26 @@ class StudioClipsTest {
         assertFalse(name.contains("/") || name.contains(".."))
         assertEquals(name, StudioClips.name(ClipSpec("m", "/media/../x", 5, 9)))
     }
+
+    @Test fun fullMusicPausesTheBookAtRequestAndHasNoFixedEnd() {
+        var pauses = 0
+        val music = StudioClips({ dir }, { _, _, partial -> partial.writeBytes(ByteArray(10)) },
+            player, CoroutineScope(Dispatchers.Unconfined), pauseBook = { pauses++ })
+        music.toggle("music-track", ClipSpec("", "/music"))
+        assertEquals(1, pauses)
+        until("music output") { player.ranges.isNotEmpty() }
+        assertEquals(0, player.ranges.single().third)
+        music.stop()
+    }
+
+    @Test fun bookTransportStopsMusicButRetainsVoiceSamples() {
+        clips.toggle("voice", ClipSpec("", "/voice"))
+        until("voice output") { player.ranges.isNotEmpty() }
+        val before = clips.state.value
+        clips.stopMusic()
+        assertEquals(before, clips.state.value)
+        clips.toggle("music-track", ClipSpec("", "/music"))
+        clips.stopMusic()
+        assertEquals(ClipState(), clips.state.value)
+    }
 }

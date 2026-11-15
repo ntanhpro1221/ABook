@@ -350,7 +350,7 @@ private fun RenameChapterPage(book: ListenBook, chapter: ChapterLine, source: Bo
         SheetField(value, { value = it.take(160) }, S.s_ten_chuong_9edb6c28, "chapter_rename_field", onDone = { if (value.isNotBlank()) save(false) })
         ProblemLine(problem, "chapter_rename_problem")
         Spacer(Modifier.height(Dim.s24))
-        PrimaryButton(if (busy) S.s_dang_luu_e93f245d else S.s_luu_e91f26c0, { if (value.isNotBlank()) save(false) }, Modifier.fillMaxWidth().testTag("chapter_rename_save"), enabled = value.isNotBlank() && !busy)
+        PrimaryButton(if (busy) S.s_dang_luu_e93f245d else S.s_luu_e91f26c0, { if (value.isNotBlank()) save(false) }, Modifier.fillMaxWidth().testTag("chapter_rename_save"), enabled = value.isNotBlank() && !busy, pending = busy)
         QuietButton(S.s_ve_ten_goc_643cd2e0, { save(true) }, "chapter_rename_original")
         QuietButton(S.s_thoi_e68f9e88, onBack, "chapter_rename_cancel")
     }

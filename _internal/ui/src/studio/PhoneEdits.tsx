@@ -160,7 +160,7 @@ export function PhoneEdits({ bookId }: { bookId: string }) {
             <h3 className="min-w-0 flex-1 truncate text-sm font-medium">
               {device.name} <span className="font-normal text-fg-3">{S.s_gui_665940fe}{formatWhen(device.at)}</span>
             </h3>
-            <Button size="sm" variant="primary" icon={Check} loading={busy === `${device.id}:all`} disabled={busy !== null} onClick={() => void decide("apply", device)}>{S.s_ap_dung_tat_ca_068378e0}</Button>
+            <Button size="sm" variant="primary" icon={Check} loading={busy === `${device.id}:all`} disabled={busy !== null} onClick={() => decide("apply", device)}>{S.s_ap_dung_tat_ca_068378e0}</Button>
             <Button size="sm" variant="ghost" icon={X} disabled={busy !== null} onClick={() => setConfirmSkipAll(device)}>{S.s_bo_qua_tat_ca_e736ef1f}</Button>
           </div>
           <AnimatedRows className="mt-2 divide-y divide-line overflow-hidden" items={device.items} keyOf={(item) => item.id}>
@@ -174,8 +174,8 @@ export function PhoneEdits({ bookId }: { bookId: string }) {
                     {item.chapter && <span className="text-fg-3"> · {item.chapter}</span>}
                     {item.conflict && <span className="mt-1 block text-xs text-warning">{item.conflict}</span>}
                   </span>
-                  <IconButton size="sm" icon={Check} label={S.s_ap_dung_viec_nay_76d8752a} className="-my-2" disabled={busy !== null} onClick={() => void decide("apply", device, item)} />
-                  <IconButton size="sm" icon={X} label={S.s_bo_qua_viec_nay_e6b2362b} className="-my-2 -mr-2" disabled={busy !== null} onClick={() => void decide("skip", device, item)} />
+                  <IconButton size="sm" icon={Check} label={S.s_ap_dung_viec_nay_76d8752a} className="-my-2" disabled={busy !== null} onClick={() => decide("apply", device, item)} />
+                  <IconButton size="sm" icon={X} label={S.s_bo_qua_viec_nay_e6b2362b} className="-my-2 -mr-2" disabled={busy !== null} onClick={() => decide("skip", device, item)} />
                 </MotionRegion>
               );
             }}
@@ -193,7 +193,7 @@ export function PhoneEdits({ bookId }: { bookId: string }) {
             <div className="pt-2">
               <div className="flex flex-wrap items-center gap-2">
                 <h3 className="min-w-0 flex-1 truncate text-sm font-medium text-fg">{device.name}</h3>
-                <Button size="sm" variant="ghost" icon={RotateCcw} disabled={busy !== null} onClick={() => void decide("restore", device)}>{S.s_khoi_phuc_tat_ca_cc961492}</Button>
+                <Button size="sm" variant="ghost" icon={RotateCcw} disabled={busy !== null} onClick={() => decide("restore", device)}>{S.s_khoi_phuc_tat_ca_cc961492}</Button>
               </div>
               <AnimatedRows className="mt-1 divide-y divide-line overflow-hidden" items={device.items} keyOf={(item) => item.id}>
                 {(item) => (
@@ -202,7 +202,7 @@ export function PhoneEdits({ bookId }: { bookId: string }) {
                       {item.label}
                       <Reveal when={item.chapter}><span className="text-fg-3"> · {item.chapter}</span></Reveal>
                     </span>
-                    <IconButton size="sm" icon={RotateCcw} label={S.s_khoi_phuc_viec_nay_8da3e2a8} className="-my-2 -mr-2" disabled={busy !== null} onClick={() => void decide("restore", device, item)} />
+                    <IconButton size="sm" icon={RotateCcw} label={S.s_khoi_phuc_viec_nay_8da3e2a8} className="-my-2 -mr-2" disabled={busy !== null} onClick={() => decide("restore", device, item)} />
                   </div>
                 )}
               </AnimatedRows>

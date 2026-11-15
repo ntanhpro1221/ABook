@@ -47,7 +47,7 @@ Column {
         Reveal { shown: root.status !== null && root.status.downloading }
         width: parent.width
         height: Math.max(40, percent.implicitHeight)
-        Button { id: halt; objectName: "ffmpegStop"; anchors.right: parent.right; anchors.verticalCenter: parent.verticalCenter; size: "sm"; kind: "ghost"; text: S.s_dung_11554138; onClicked: root.stop() }
+        Button { id: halt; objectName: "ffmpegStop"; anchors.right: parent.right; anchors.verticalCenter: parent.verticalCenter; size: "sm"; kind: "ghost"; text: S.s_dung_11554138; onActivated: root.stop() }
         ClockLabel {
             id: percent
             objectName: "ffmpegPercent"
@@ -95,7 +95,7 @@ Column {
             objectName: "ffmpegDownload"
             size: "sm"
             text: root.status && root.status.error ? S.s_thu_lai_c58d068c : root.outdated ? S.s_cap_nhat_cong_cu_20b092d6 : S.s_tai_cong_cu_83ce1fe8
-            onClicked: root.download()
+            onActivated: root.download()
         }
         Column {
             Reveal { shown: root.status !== null && Boolean(root.status.error) }

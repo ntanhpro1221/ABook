@@ -1311,7 +1311,7 @@ export function ProjectScreen() {
         className="mt-16"
         action={
           <div className="flex flex-wrap justify-center gap-2">
-            <Button variant="ghost" loading={isFetching} onClick={() => void refetch()}>{S.s_thu_lai_c58d068c}</Button>
+            <Button variant="ghost" loading={isFetching} onClick={() => refetch()}>{S.s_thu_lai_c58d068c}</Button>
             <Button onClick={() => navigate("/studio")}>{S.s_ve_studio_349a48c4}</Button>
           </div>
         }
@@ -1342,7 +1342,7 @@ export function ProjectScreen() {
           <span className="min-w-0 flex-1 text-pretty">
             {isOffline(error) ? S.s_mat_ket_noi_toi_abook_dang_thu_lai_3ea0ae2f : S.s_chua_tai_lai_duoc_sach_0_dang_thu_lai_cf6589ed(failureText(error))}
           </span>
-          <Button size="sm" variant="ghost" loading={isFetching} onClick={() => void refetch()}>{S.s_thu_lai_c58d068c}</Button>
+          <Button size="sm" variant="ghost" loading={isFetching} onClick={() => refetch()}>{S.s_thu_lai_c58d068c}</Button>
         </div></Reveal>
       {/* Màn hẹp (điện thoại): bìa nhỏ cạnh tên sách, hàng nút nằm dưới cả hai (soát UX a8 05-10: bìa to + tên + 3 hàng nút
           chiếm ~590 px, tab bắt đầu ở cuối màn). Từ sm trở lên: bìa bên trái, tên và nút bên phải. `contents` làm cột phải biến

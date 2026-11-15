@@ -15,7 +15,7 @@ import vn.abook.player.ui.theme.Dim
 fun PackageReviewScreen(state: ImportState, back: () -> Unit, keep: () -> Unit, replace: () -> Unit) {
     val review = state.packageReview ?: return
     BookForm(S.s_mo_sach_e84e9b67, back, "package_review", footer = {
-        PrimaryButton(S.s_mo_sach_e84e9b67, { if (!state.busy) keep() }, Modifier.fillMaxWidth().testTag("package_keep"), enabled = !state.busy)
+        PrimaryButton(S.s_mo_sach_e84e9b67, { if (!state.busy) keep() }, Modifier.fillMaxWidth().testTag("package_keep"), pending = state.busy, enabled = !state.busy)
         TextAction(S.s_thay_bang_file_nay_3140e07e, { if (!state.busy) replace() }, "package_replace", Modifier.fillMaxWidth())
     }) {
         // Như trang xác nhận ([ConfirmPage]): câu hỏi, rồi từng đoạn chữ 16 cách nhau 8 - Caption chỉ cho một dòng tin phụ, không xếp chồng thành đoạn văn.

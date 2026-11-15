@@ -60,7 +60,7 @@ Popover {
         }
         Collapse {
             width: parent.width; open: Player.sleepStoppedText !== "" && Player.sleepKind === "off"
-            Button { objectName: "sleepRestart"; text: S.s_bat_lai_0bad8bcf + Player.lastSleepMinutes + S.s_phut_cf728a6a; kind: "ghost"; onClicked: { Feedback.play("toggle"); Player.setSleep("minutes", Player.lastSleepMinutes); root.close() } }
+            Button { objectName: "sleepRestart"; text: S.s_bat_lai_0bad8bcf + Player.lastSleepMinutes + S.s_phut_cf728a6a; kind: "ghost"; onActivated: { Feedback.play("toggle"); Player.setSleep("minutes", Player.lastSleepMinutes); root.close() } }
         }
         Collapse {
             width: parent.width; open: Player.sleepKind !== "off"
@@ -86,7 +86,7 @@ Popover {
                 Reveal { target: sleepConfirm; shown: Player.sleepKind !== "minutes" }
                 text: S.s_xong_a6f4543a
                 kind: "text"
-                onClicked: { Feedback.play("toggle"); Player.setSleep("minutes", root.draftMinutes); root.close() }
+                onActivated: { Feedback.play("toggle"); Player.setSleep("minutes", root.draftMinutes); root.close() }
             }
             ValuePicker {
                 objectName: "sleepChapterPicker"
@@ -110,13 +110,13 @@ Popover {
                 kind: "text"
                 text: S.s_hen_lai_c2aae1b7 + root.extendMinutes + S.s_phut_cf728a6a
                 Reveal { shown: Player.sleepKind !== "off" }
-                onClicked: Player.extendSleep()
+                onActivated: Player.extendSleep()
             }
             Button {
                 objectName: "sleepOff"
                 kind: "text"
                 text: S.s_tat_hen_gio_fc8af231
-                onClicked: { Feedback.play("toggle"); Player.setSleep("off"); root.close() }
+                onActivated: { Feedback.play("toggle"); Player.setSleep("off"); root.close() }
             }
             }
         }

@@ -120,10 +120,80 @@ def test_saving_downloads_pins_and_unsaving_removes_the_copy(studio, tmp_path: P
     _status, saved = _call(server, "GET", "/api/music/library?downloaded=1")
     assert [item["link"] for item in saved["tracks"]] == [link] and saved["tracks"][0]["saved"] is True
     assert saved["saved"]["count"] == 1
+    # Ownership protects automatic eviction; an explicitly confirmed delete must still remove its cache copy.
+    app.music_cache.own([_cache_file(app, link).name])
     status, _state = _call(server, "POST", "/api/music/library/unsave", {"links": [link]})
     assert status == 200 and not _cache_file(app, link).exists() and app.music_saved.links() == []
     status, error = _call(server, "POST", "/api/music/library/save", {"links": "x"})
     assert status == 400
+
+
+def test_confirmed_delete_waits_for_the_last_writer_before_removing_the_copy(studio, tmp_path: Path, monkeypatch) -> None:  # noqa: F811
+    _paths, app, server, _runner = studio
+    _with_catalog(app, tmp_path)
+    _status, listing = _call(server, "GET", "/api/music/library")
+    link = listing["tracks"][0]["link"]
+    target = _cache_file(app, link)
+    target.parent.mkdir(parents=True, exist_ok=True)
+    cancelled = threading.Event()
+    original = app.music_downloads.cancel
+
+    def cancel(links):
+        original(links)
+        cancelled.set()
+
+    monkeypatch.setattr(app.music_downloads, "cancel", cancel)
+    response = []
+    with app._music_fetch(link):
+        worker = threading.Thread(target=lambda: response.append(_call(server, "POST", "/api/music/library/unsave", {"links": [link]})))
+        worker.start()
+        assert cancelled.wait(10)
+        target.write_bytes(b"committed at the boundary")
+    worker.join(10)
+    assert not worker.is_alive() and response[0][0] == 200
+    assert not target.exists()
+
+
+def test_a_failed_delete_retains_the_saved_selection_and_reports_retry(studio, tmp_path: Path, monkeypatch) -> None:  # noqa: F811
+    _paths, app, server, _runner = studio
+    _with_catalog(app, tmp_path)
+    app.music_downloads = music_library.Downloads(_fake_fetch(app), export_jobs.Cancelled)
+    _status, listing = _call(server, "GET", "/api/music/library")
+    link = listing["tracks"][0]["link"]
+    _call(server, "POST", "/api/music/library/save", {"links": [link]})
+    _wait(lambda: not app.music_downloads.busy())
+    target = _cache_file(app, link)
+    real_unlink = Path.unlink
+
+    def locked(path, *args, **kwargs):
+        if path == target:
+            raise PermissionError("in use")
+        return real_unlink(path, *args, **kwargs)
+
+    monkeypatch.setattr(Path, "unlink", locked)
+    status, _error = _call(server, "POST", "/api/music/library/unsave", {"links": [link]})
+    assert status == 409
+    assert target.is_file() and app.music_saved.links() == [link]
+
+
+def test_cancelling_a_completed_download_never_deletes_the_committed_copy(studio, tmp_path: Path) -> None:  # noqa: F811
+    _paths, app, server, _runner = studio
+    _with_catalog(app, tmp_path)
+    app.music_downloads = music_library.Downloads(_fake_fetch(app), export_jobs.Cancelled)
+    _status, listing = _call(server, "GET", "/api/music/library")
+    link = listing["tracks"][0]["link"]
+    status, _state = _call(server, "POST", "/api/music/library/save", {"links": [link]})
+    assert status == 200
+    _wait(lambda: not app.music_downloads.busy())
+    target = _cache_file(app, link)
+    before = target.read_bytes()
+    part = app._music_part(target)
+    part.write_bytes(b"unfinished")
+    status, state = _call(server, "POST", "/api/music/library/cancel", {"links": [link]})
+    assert status == 200 and state["active"] == {}
+    assert target.read_bytes() == before
+    assert app.music_saved.links() == [link]
+    assert not part.exists()
 
 
 def test_a_saved_track_survives_a_cache_prune(tmp_path: Path) -> None:
@@ -233,3 +303,31 @@ def test_the_book_page_lists_the_music_the_book_uses(studio, tmp_path: Path) -> 
     assert status == 200
     assert ("why" in track) == (music_library.why(scene.get("emotions"), track and app.music_catalog().lookup([first["link"]])[first["link"]].get("emotions"),
                                                   music_select.emotion_cosine) is not None)
+
+
+def test_cancel_hides_progress_immediately_and_retry_waits_for_the_old_writer() -> None:
+    import threading
+    entered = threading.Event()
+    release = threading.Event()
+    calls = []
+
+    def fetch(link, *, progress, cancel):
+        calls.append(link)
+        if len(calls) == 1:
+            entered.set()
+            assert release.wait(3)
+            assert cancel.is_set()
+            raise export_jobs.Cancelled()
+        return Path("completed.mp3")
+
+    downloads = music_library.Downloads(fetch, export_jobs.Cancelled)
+    downloads.enqueue(["https://x/a"])
+    assert entered.wait(3)
+    downloads.cancel(["https://x/a"])
+    assert downloads.state() == {"active": {}, "failed": {}}
+    downloads.enqueue(["https://x/a"])
+    assert calls == ["https://x/a"]
+    release.set()
+    _wait(lambda: not downloads.busy())
+    assert calls == ["https://x/a", "https://x/a"]
+    assert downloads.state() == {"active": {}, "failed": {}}

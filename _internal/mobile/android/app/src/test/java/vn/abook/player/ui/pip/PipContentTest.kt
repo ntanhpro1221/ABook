@@ -10,6 +10,9 @@ import androidx.compose.ui.test.getUnclippedBoundsInRoot
 import vn.abook.player.ui.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.onNodeWithContentDescription
+import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.test.performSemanticsAction
 import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.unit.Dp
@@ -50,6 +53,23 @@ class PipContentTest {
     }
 
     private fun count(tag: String) = rule.onAllNodesWithTag(tag).fetchSemanticsNodes().size
+
+    @Test
+    fun bufferingKeepsTheTitlesAndProgressInPlace() {
+        val state = mutableStateOf(PlayerState(bookId = "b1", bookTitle = "Tắt đèn", chapterId = 1,
+            chapterTitle = "Chương 1", playing = true, durationMs = 600_000, cover = CoverRef("/books/b1/cover.jpg", 1)))
+        rule.setContent { AbookTheme(false) {
+            Box(Modifier.size(240.dp, 360.dp)) { PipContent(state.value, { 150_000L }, CoverLoader(1 shl 20)) }
+        } }
+        rule.waitForIdle()
+        val names = listOf("pip_book_title", "pip_chapter_title", "pip_progress")
+        val before = names.map { rule.onNodeWithTag(it).getUnclippedBoundsInRoot() }
+        rule.runOnUiThread { state.value = state.value.copy(buffering = true, playing = false) }
+        rule.onNodeWithContentDescription("Đang đệm").assertIsDisplayed()
+        assertEquals(before, names.map { rule.onNodeWithTag(it).getUnclippedBoundsInRoot() })
+        rule.runOnUiThread { state.value = state.value.copy(buffering = false) }
+        rule.onNodeWithContentDescription("Đang đệm").assertDoesNotExist()
+    }
 
     private fun layout(tag: String): TextLayoutResult {
         val out = mutableListOf<TextLayoutResult>()

@@ -66,7 +66,7 @@ Column {
             onTextChanged: { root.problem = ""; root.suggestion = "" }
         }
         // "Huỷ" trước "Lưu": nút ở đúng chỗ nút "Sửa" vừa bấm là "Lưu" (mờ khi chưa đổi gì) - bấm đúp không huỷ ngay
-        Button { objectName: "nameCancel"; size: "sm"; kind: "ghost"; text: S.s_huy_96732485; onClicked: root.finish() }
+        Button { objectName: "nameCancel"; size: "sm"; kind: "ghost"; text: S.s_huy_96732485; onActivated: root.finish() }
         TryButton { objectName: "nameTry"; reading: tryIt }
         Button {
             objectName: "nameSave"

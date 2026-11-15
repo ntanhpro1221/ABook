@@ -1,3 +1,4 @@
+import { useDestructiveConfirm } from "../shared/DestructiveConfirm";
 import { S } from "../shared/strings.generated";
 import { MotionRegion } from "@/shared/MotionRegion";
 import { AnimatedRows, MotionPresence, Reveal } from "@/shared/MotionPresence";
@@ -52,6 +53,7 @@ export function SharedReadingsSettings() {
   const [problem, setProblem] = useState("");
   const [filter, setFilter] = useState("");
   const [shown, setShown] = useState(12);
+  const deletion = useDestructiveConfirm();
   const save = useMutation({
     mutationFn: (body: { surface: string; spokenForm?: string; remove?: boolean }) =>
       api<SharedReading | { removed: boolean }>("/api/readings", { method: "POST", body }),
@@ -72,6 +74,7 @@ export function SharedReadingsSettings() {
   return (
     // Nằm trong khối gập "Cách đọc chung" của Cài đặt › Studio: lời dẫn trước, ô tìm chỉ khi danh sách đủ dài để cần tìm.
     <MotionRegion as="div" className="py-3">
+      {deletion.dialog}
       <p className="text-body-small text-fg-2 text-pretty">{S.s_sua_cach_doc_mot_ten_mot_lan_sach_moi_tu_d_f1569d6e}</p>
       {entries.length > SEARCH_FROM && (
         <input aria-label={S.s_tim_cach_doc_690f3c7e} value={filter} onChange={(event) => { setFilter(event.target.value); setShown(12); }} className="mt-2 h-8 w-full rounded-control border border-line bg-panel px-3 text-sm outline-none focus-visible:border-focus" placeholder={S.s_tim_ten_260c6baf} />
@@ -88,7 +91,7 @@ export function SharedReadingsSettings() {
               <IconButton
                 label={S.s_bo_cach_doc_0_a883978b(entry.surface)}
                 icon={Trash2}
-                onClick={() => save.mutate({ surface: entry.surface, remove: true })}
+                onClick={() => deletion.confirm({title: S.s_destructive_question(entry.surface), description: S.s_irreversible_detail(entry.surface), run: () => save.mutateAsync({ surface: entry.surface, remove: true })})}
               />
             </div>
           )}

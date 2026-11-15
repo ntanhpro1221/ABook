@@ -1,4 +1,5 @@
 import { Presence } from "../shared/MotionPresence";
+import { useDestructiveConfirm } from "../shared/DestructiveConfirm";
 import { S } from "../shared/strings.generated";
 import { MotionRegion } from "@/shared/MotionRegion";
 import { useBackLayer } from "@/shared/backStack";
@@ -39,7 +40,7 @@ function TryButton({ aloud, surface, spoken }: { aloud: ReadAloudTry; surface: s
       size="sm"
       type="button"
       loading={aloud.loading(surface, spoken)}
-      onClick={() => void aloud.play(surface, spoken)}
+      onClick={() => aloud.play(surface, spoken)}
       aria-label={playing ? S.s_dung_nghe_thu_41a2925b : S.s_nghe_thu_0_1_a01c666d(surface, cleanSpoken(spoken) ? S.s_doc_la_0_1fc76b3f(cleanSpoken(spoken)) : "")}
     >
       {playing ? <Pause className="size-3.5" fill="currentColor" strokeWidth={0} /> : <Volume2 className="size-4" strokeWidth={2} />}
@@ -203,6 +204,7 @@ export function WordReadingDialog({ bookId, word, sentence, wordIndex, onClose }
 
 /** "Cách đọc tên" trong hộp "Sửa sách" (cuốn chỉ có chữ): các từ đã dạy giọng đọc, sửa / nghe thử / bỏ từng từ. */
 export function BookReadingsSection({ bookId }: { bookId: string }) {
+  const deletion = useDestructiveConfirm();
   const readings = useBookReadings(bookId);
   const aloud = useReadAloudTry(bookId);
   const save = useSaveReading(bookId);
@@ -222,6 +224,7 @@ export function BookReadingsSection({ bookId }: { bookId: string }) {
   }
   return (
     <MotionRegion as="ul" elementRef={editBox} className="divide-y divide-line">
+      {deletion.dialog}
       {list.map((item) => (
         <li key={item.surface} className="py-2">
           <div className="flex items-center gap-2">
@@ -235,7 +238,7 @@ export function BookReadingsSection({ bookId }: { bookId: string }) {
                 size="sm"
                 label={aloud.playing(item.surface, item.spoken) ? S.s_dung_nghe_thu_41a2925b : S.s_nghe_thu_0_65a85c4d(item.surface)}
                 icon={aloud.playing(item.surface, item.spoken) ? Pause : Volume2}
-                onClick={() => void aloud.play(item.surface, item.spoken)}
+                onClick={() => aloud.play(item.surface, item.spoken)}
               />
             )}</Presence>}
             {<Presence>{!listenOnly && <IconButton size="sm" label={S.s_sua_cach_doc_0_683b998a(item.surface)} icon={Pencil} onClick={() => setEditing(editing === item.surface ? null : item.surface)} />}</Presence>}
@@ -245,12 +248,8 @@ export function BookReadingsSection({ bookId }: { bookId: string }) {
                 label={S.s_bo_cach_doc_0_c3b9bf0d(item.surface)}
                 icon={Trash2}
                 disabled={save.isPending}
-                onClick={() =>
-                  save.mutate(
-                    { surface: item.surface, spoken: "" },
-                    { onError: (error) => toast.error(S.s_chua_bo_duoc_cach_doc_0fffff4e, { description: (error as Error).message }) },
-                  )
-                }
+                onClick={() => deletion.confirm({title: S.s_destructive_question(item.surface), description: S.s_irreversible_detail(item.surface), failureMessage: S.s_chua_bo_duoc_cach_doc_0fffff4e,
+                  run: () => save.mutateAsync({ surface: item.surface, spoken: "" })})}
               />
             )}</Presence>}
           </div>

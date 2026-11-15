@@ -25,7 +25,7 @@ Item {
         kind: "ghost"
         icon: "check"
         text: S.s_giu_d3777f80 + root.keepable.length + S.s_the_5d800d1c
-        onClicked: root.open()
+        onActivated: root.open()
     }
     function open() {
         confirm.title = W.bulkTitle(kind, keepable.length)
