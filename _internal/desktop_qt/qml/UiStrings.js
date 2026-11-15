@@ -1192,7 +1192,6 @@ var s_danh_sach_chuong_7fa755f9 = "Danh sách chương";
 var s_danh_sach_phat_26862e10 = "Danh sách phát";
 var s_danh_sach_u00a0_59498158 = "danh sách ·";
 var s_dat_anh_bia_dac4c265 = "Đặt ảnh bìa";
-var s_dat_bia_a7e3a9a7 = "Đặt bìa";
 var s_dat_cho_mau_mot_cai_ten_acc6e254 = "Đặt cho mẫu một cái tên";
 var s_dat_lai_51a46825 = "Đặt lại";
 var s_dat_nguoi_ke_d4ae9aa6 = "Đặt người kể";
@@ -2888,3 +2887,4 @@ function s_cast_history_alias_conflicts(p0) { return String(p0) + " bí danh xun
 function s_cast_history_row(p0, p1, p2) { return String(p0) + " → " + String(p1) + " · " + String(p2) + " câu"; }
 var s_cast_history_group = "Nhóm câu";
 var s_preview_timeout = "Mạng chậm, thử nghe lại.";
+var s_chua_co_bia = "Chưa có bìa";

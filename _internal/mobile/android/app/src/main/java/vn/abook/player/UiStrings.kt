@@ -2993,4 +2993,5 @@ internal object S {
     const val s_cast_history_undo = "Hoàn tác phân vai"
     const val s_cast_history_bad_wish = "Một ý muốn hoàn tác trong phần sửa không hợp lệ."
     const val s_preview_timeout = "Mạng chậm, thử nghe lại."
+    const val s_chua_co_bia = "Chưa có bìa"
 }

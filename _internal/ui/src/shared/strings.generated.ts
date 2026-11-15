@@ -1588,8 +1588,6 @@ export const S = {
   s_danh_sach_fdc39a79: " danh sách · ",
   s_danh_sach_nhac_nen_61c9c58b: "Danh sách nhạc nền",
   s_danh_sach_phat_26862e10: "Danh sách phát",
-  s_dat_anh_bia_dac4c265: "Đặt ảnh bìa",
-  s_dat_bia_a7e3a9a7: "Đặt bìa",
   s_dat_cho_mau_mot_cai_ten_acc6e254: "Đặt cho mẫu một cái tên",
   s_dat_lai_51a46825: "Đặt lại",
   s_dat_nguoi_ke_d4ae9aa6: "Đặt người kể",
@@ -3332,4 +3330,5 @@ export const S = {
   s_cast_history_row: (p0: unknown, p1: unknown, p2: unknown) => String(p0) + " → " + String(p1) + " · " + String(p2) + " câu",
   s_cast_history_group: "Nhóm câu",
   s_preview_timeout: "Mạng chậm, thử nghe lại.",
+  s_chua_co_bia: "Chưa có bìa",
 } as const;
