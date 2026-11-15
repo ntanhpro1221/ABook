@@ -139,10 +139,10 @@ def test_voice_portraits_cover_the_catalog_and_are_small():
     assert sum(p.stat().st_size for p in folder.glob("*.webp")) < 1024 * 1024
 
 
-def test_book_layer_is_version_six_only_with_pictures():
+def test_current_book_layer_supports_the_volume_tree_with_or_without_pictures():
     from abook.webui import bookfile
     files = {"texts/1.txt": b"x"}
-    assert bookfile.layer_version({}, files, {}) == 5
+    assert bookfile.layer_version({}, files, {}) == 6
     assert bookfile.layer_version({}, {**files, "avatars/" + "b" * 64 + ".webp": b"y"}, {}) == 6
 
 
