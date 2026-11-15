@@ -435,6 +435,9 @@ class NowPlayingUiTest {
         rule.runOnUiThread { model.skip(15) }
         rule.waitForIdle()
         rule.onNodeWithTag("return_place").assertIsDisplayed()
+        val chip = bounds("return_place")
+        val title = bounds("player_chapter")
+        assertTrue("return=$chip overlaps chapter=$title", chip.bottom <= title.top || chip.top >= title.bottom)
         shot("return_chip_light")
         assertBounds(before, bounds("transport"), 0.1f)
         rule.onNodeWithTag("return_place").performClick()

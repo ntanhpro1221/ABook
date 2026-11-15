@@ -182,7 +182,7 @@ private fun NowPlayingBody(
                     .testTag("player_cover")
                     .then(if (state.readAlongAvailable && !window.reading && !split) Modifier.pressable { setReading(true) } else Modifier)))
                 Column(Modifier.fillMaxWidth().padding(bottom = 8.dp)) {
-                    RollingLabel(state.chapterTitle, parts.element(NowPlayingPart.Chapter),
+                    RollingLabel(state.chapterTitle, parts.element(NowPlayingPart.Chapter, Modifier.testTag("player_chapter")),
                         Abook.type.bodyStrong.copy(fontSize = 20.sp, lineHeight = 28.sp, fontWeight = FontWeight.Bold))
                     Spacer(Modifier.height(4.dp))
                     // Tên sách là nút: chạm thì thu trình phát, tới trang sách. Dòng ấy đang nói việc khác (đang chuẩn bị giọng, đã nghe hết phần đã có) thì chỉ là chữ.
@@ -195,6 +195,9 @@ private fun NowPlayingBody(
                 }
                 Box(Modifier.testTag("player_cover_small").then(if (readingHere) Modifier
                     .pressable { setReading(false) }.semantics { contentDescription = S.s_ve_che_do_nghe_a0052a89 } else Modifier))
+                Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.BottomCenter) {
+                    ReturnChip(state.returnAvailable && !window.reading && !split, state.returnSerial, model::returnToPreviousPlace)
+                }
             }) { measurables, constraints ->
                 val width = constraints.maxWidth
                 val height = constraints.maxHeight
@@ -209,6 +212,8 @@ private fun NowPlayingBody(
                 val textTop = header + gap
                 val text = measurables[0].measure(Constraints.fixed(width, (height - textTop).coerceAtLeast(0)))
                 val thumbTarget = measurables[3].measure(Constraints.fixed(thumb, thumb))
+                val returnChip = measurables[4].measure(Constraints(maxWidth = width,
+                    maxHeight = (height - titles.height - gap).coerceAtLeast(0)))
                 val coverX = (width - coverSide) / 2
                 // Bìa nằm giữa khoảng trống phía trên khối tên, không dính trần để lại một hố giữa bìa và tên.
                 val coverY = ((height - titles.height - coverSide) / 2).coerceAtLeast(0)
@@ -243,6 +248,9 @@ private fun NowPlayingBody(
                         translationX = (thumb + gap) * p
                         translationY = (-titlesY + (header - titles.height * titleScale).coerceAtLeast(0f) / 2f) * p
                     }
+                    // Keep the transient action over artwork, clear of the title and
+                    // subtitle. The seek bar and transport never change coordinates.
+                    returnChip.place(0, (titlesY - returnChip.height - gap).coerceAtLeast(0))
                 }
             }
             Column(Modifier.fillMaxWidth().pointerInput(Unit) {
@@ -260,7 +268,7 @@ private fun NowPlayingBody(
                     val placeable = measurable.measure(constraints.copy(minHeight = 0, maxHeight = Constraints.Infinity))
                     layout(placeable.width, 0) { placeable.place(0, -placeable.height) }
                 }.padding(bottom = Dim.s8), contentAlignment = Alignment.BottomCenter) {
-                    ReturnChip(state.returnAvailable && !window.reading && !split, state.returnSerial, model::returnToPreviousPlace)
+                    ReturnChip(state.returnAvailable && !window.reading && !split && compactHeight, state.returnSerial, model::returnToPreviousPlace)
                 }
                 PlayerSeekBar(state.durationMs, model.position, model::seek, Modifier.playerReveal(windowProgress), compact = compactHeight)
                 Row(Modifier.fillMaxWidth().height(if (compactHeight) 72.dp else 88.dp).testTag("transport"),
