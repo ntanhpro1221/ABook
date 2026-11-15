@@ -44,7 +44,7 @@ fun SleepNotice(state: NowPlayingState, model: NowPlayingModel, modifier: Modifi
         Reveal(state.sleep.automaticReason.isNotEmpty() && state.sleep.kind != SleepKind.Off) {
             Row(Modifier.fillMaxWidth().padding(top = Dim.s8).testTag("sleep_automatic"), verticalAlignment = Alignment.CenterVertically) {
                 BasicText(vn.abook.player.AutoSleepText.reason(state.sleep.automaticReason), Modifier.weight(1f), style = Abook.type.bodySmall)
-                TextAction(vn.abook.player.AutoSleepText.CONTINUE, { model.setSleep(SleepKind.Off) }, "sleep_continue")
+                TextAction(vn.abook.player.AutoSleepText.CONTINUE, { model.extendSleep(); if (!state.playing) model.toggle() }, "sleep_continue")
             }
         }
         Reveal(fading) {

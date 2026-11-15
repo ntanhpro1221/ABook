@@ -81,6 +81,22 @@ class SleepKeepTest {
         assertEquals(SleepTimer.Mode.CHAPTER, SleepTimer.mode)
         assertEquals(1, SleepTimer.chapters)
     }
+    @Test fun chapterExpiryParksTheNextItemAndDoesNotCountThatTransition() {
+        voice.items = listOf(1, 2, 3).map { androidx.media3.common.MediaItem.Builder().setMediaId(it.toString()).build() }
+        voice.item = voice.items[0]
+        SleepTimer.setEndOfChapter(2)
+        SleepTimer.onChapterChanged()
+        assertEquals(1, SleepTimer.chapters)
+        SleepTimer.onPausedAtChapterEnd()
+        assertEquals(1, voice.index)
+        assertEquals(0L, voice.position)
+        SleepTimer.onChapterChanged(manual = true)
+        assertEquals(2, SleepTimer.chapters)
+        voice.playing = true
+        SleepTimer.onPlaying(true)
+        SleepTimer.onChapterChanged()
+        assertEquals(1, SleepTimer.chapters)
+    }
     @Test fun everyDeliberateSourceResetsTheFullCycleAndRestoresVolume() {
         for (source in listOf("resume", "touch", "screen-on", "screen-off", "unlock", "media-button", "widget", "auto", "bluetooth", "shake")) {
             SleepTimer.setMinutes(10)

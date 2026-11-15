@@ -17,4 +17,5 @@ it("restores schedule choices within their night, and remembers explicit cancell
   expect(readSleepSelection("book", undefined, "night-b").request.kind).toBe("off");
   saveSleepSelection("book", undefined, { request: { kind: "off" }, disabledWindow: "night-a" });
   expect(readSleepSelection("book", undefined, "night-a").disabledWindow).toBe("night-a");
+  expect(readSleepSelection("another-book", undefined, "night-a").disabledWindow).toBe("night-a");
 });

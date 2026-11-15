@@ -9,6 +9,7 @@ import android.os.Handler
 import android.os.Looper
 import android.os.SystemClock
 import org.json.JSONObject
+import vn.abook.player.readaloud.ReadAloud
 import vn.abook.player.ui.components.ValueSpecs
 import vn.abook.player.ui.nowplaying.SleepText
 import java.util.Calendar
@@ -365,6 +366,7 @@ object SleepTimer {
 
     private fun finish() {
         if (retained || mode == Mode.OFF) return
+        val finishedChapter = mode == Mode.CHAPTER
         val automatic = automaticReason.isNotEmpty()
         retained = true
         Playback.player?.pause()
@@ -381,6 +383,11 @@ object SleepTimer {
         stoppedAtMs = System.currentTimeMillis()
         restoreVolume()
         Bedtime.stopped()
+        // Park the next chapter while paused. Re-arming a held item before its
+        // transition can otherwise pause the already completed item again.
+        if (finishedChapter && !ReadAloud.inText()) {
+            Playback.player?.takeIf { it.hasNextMediaItem() }?.seekToNextMediaItem()
+        }
         // No sound or vibration at expiry: the listener may already be asleep (DESIGN 5.4).
         // Cảm biến còn nghe thêm 2 phút để "lắc để nghe tiếp" vẫn chạy.
         main.postDelayed({ Motion.refresh() }, SHAKE_RESUME_MS)

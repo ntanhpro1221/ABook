@@ -4,6 +4,8 @@
 
 Sleep expiry preserves the selected timer and restarts a full cycle on subsequent playback. Deliberate input resets the active cycle; paused timers have no inactivity expiry. The unattended safety timer is absent.
 
+Validation: TypeScript and 125 Vitest cases; 88 Android unit/Robolectric cases; 59 Qt player cases plus 23 Qt UI cases; 82 Python cases passed with 2 existing skips. A private headless emulator exercises actual Media3 countdowns, chapter restarts and Activity resume/touch. Measurements, UI screenshots and unchanged quality hash are recorded in the private validation report.
+
 Validation: TypeScript and 125 Vitest cases; 86 Android unit/Robolectric cases; 57 Qt player cases plus 23 Qt UI cases; 82 Python cases passed with 2 existing skips. A private headless emulator exercises actual Media3 countdowns and Activity resume/touch. Measurements, UI screenshots and unchanged quality hash are recorded in the private validation report.
 
 ## 15-11-2026 — answer authority and cover bytes

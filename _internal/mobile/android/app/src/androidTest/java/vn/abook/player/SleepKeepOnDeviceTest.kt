@@ -40,6 +40,49 @@ class SleepKeepOnDeviceTest {
         }
         fail(label)
     }
+    @Test fun chapterModeRestartsOnTheNextChapter() {
+        assertTrue("emulator only", Build.FINGERPRINT.contains("generic") || Build.MODEL.contains("sdk"))
+        Store.init(app)
+        val id = "sleepkeepchapters01234567"
+        val dir = Store.bookDir(id)
+        File(dir, "chapters").mkdirs()
+        val samples = 16_000 * 3
+        val wav = ByteBuffer.allocate(44 + samples * 2).order(ByteOrder.LITTLE_ENDIAN)
+        wav.put("RIFF".toByteArray()).putInt(36 + samples * 2).put("WAVEfmt ".toByteArray()).putInt(16)
+            .putShort(1).putShort(1).putInt(16_000).putInt(32_000).putShort(2).putShort(16)
+            .put("data".toByteArray()).putInt(samples * 2)
+        val chapters = JSONArray()
+        for (chapter in 1..3) {
+            File(dir, "chapters/$chapter.wav").writeBytes(wav.array())
+            chapters.put(JSONObject().put("id", chapter).put("fullTitle", "Chương thử $chapter")
+                .put("available", true).put("file", "chapters/$chapter.wav").put("duration", 3.0))
+        }
+        Store.writeAtomic(File(dir, "book.json"), JSONObject().put("id", id).put("title", "Thử hẹn theo chương")
+            .put("narrator", "Âm thử").put("chapters", chapters).toString())
+        val browser = MediaBrowser.Builder(app, SessionToken(app, ComponentName(app, PlaybackService::class.java)))
+            .setApplicationLooper(Looper.getMainLooper()).buildAsync().get(30, TimeUnit.SECONDS)
+        try {
+            main {
+                Feedback.sounds = false
+                SleepTimer.cancel()
+                browser.setMediaItem(MediaItem.Builder().setMediaId("book/$id").build())
+                browser.prepare()
+            }
+            await("chapter queue prepared", 10_000) { Playback.bookId == id && Playback.player?.playbackState == androidx.media3.common.Player.STATE_READY }
+            main { SleepTimer.setEndOfChapter(1); browser.play() }
+            await("first chapter starts", 5_000) { Playback.player?.isPlaying == true }
+            await("first chapter stops", 5_000) { Playback.player?.playWhenReady == false }
+            main { assertEquals(SleepTimer.Mode.CHAPTER, SleepTimer.mode); assertEquals(1, SleepTimer.chapters) }
+            val started = SystemClock.elapsedRealtime()
+            main { browser.play() }
+            await("second chapter starts", 3_000) { Playback.player?.isPlaying == true }
+            await("second chapter stops", 5_000) { Playback.player?.playWhenReady == false }
+            val elapsed = SystemClock.elapsedRealtime() - started
+            assertTrue("second chapter plays in full: $elapsed ms", elapsed >= 2_500)
+            main { assertEquals(SleepTimer.Mode.CHAPTER, SleepTimer.mode); assertEquals(1, SleepTimer.chapters) }
+            File(app.filesDir, "sleepkeep-chapters.json").writeText(JSONObject().put("secondChapterMs", elapsed).put("retained", true).toString())
+        } finally { main { browser.release() } }
+    }
     @Test fun twoRealMinuteCyclesKeepTheSelectedMode() {
         assertTrue("emulator only", Build.FINGERPRINT.contains("generic") || Build.MODEL.contains("sdk"))
         Store.init(app)

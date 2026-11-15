@@ -549,6 +549,33 @@ private slots:
         rig.player->tick();
         QCOMPARE(rig.player->sleepKind(), QStringLiteral("off"));
     }
+    void disablingTheNightScheduleIsSharedAcrossBooksAndPlayerRecreation() {
+        g_now = at(23, 0);
+        Rig rig;
+        rig.player->configure(night());
+        rig.player->open(QStringLiteral("a"), 1, 0, true);
+        rig.player->setSleep(QStringLiteral("off"));
+        rig.player.reset();
+        rig.player = std::make_unique<Player>(&rig.out, &rig.net, rig.dir.filePath(QStringLiteral("outbox.json")), nullptr, fakeNow);
+        rig.player->configure(night());
+        rig.player->setFreshSpotMs(0);
+        rig.player->setSystemIdleReader([] { return qint64(3'600'000); });
+        rig.player->open(QStringLiteral("b"), 1, 0, true);
+        g_now += 180'000;
+        rig.player->tick();
+        QCOMPARE(rig.player->sleepKind(), QStringLiteral("off"));
+    }
+    void continuingFromTheNightNoticeKeepsTheTimerEnabled() {
+        g_now = at(23, 0);
+        Rig rig;
+        rig.player->configure(night());
+        rig.player->open(QStringLiteral("a"), 1, 0, true);
+        rig.run(121);
+        QCOMPARE(rig.player->sleepKind(), QStringLiteral("minutes"));
+        rig.player->runNoticeAction();
+        QCOMPARE(rig.player->sleepKind(), QStringLiteral("minutes"));
+        QCOMPARE(rig.player->clock()->sleepLeft(), 1800.0);
+    }
 
     void removedSettingsCannotArmAfterThreeQuietHours() {
         for (int storedHours : {1, 2, 3}) {

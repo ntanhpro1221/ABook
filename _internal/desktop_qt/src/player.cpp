@@ -867,8 +867,10 @@ void Player::runNoticeAction() {
         goBack();
     else if (key == QLatin1String("restart"))
         restart();
-    else if (key == QLatin1String("stay"))
-        setSleep(QStringLiteral("off"));
+    else if (key == QLatin1String("stay")) {
+        extendSleep();
+        if (!m_playing) resume();
+    }
 }
 
 // ---- tốc độ ----
@@ -1058,21 +1060,21 @@ void Player::setSleep(const QString &kind, int minutes) {
 void Player::persistSleep() {
     if (m_trackBook.isEmpty()) return;
     QSettings stored(m_sleepStore, QSettings::IniFormat);
+    stored.setValue(QStringLiteral("disabledWindow"), m_scheduleOffFor);
     stored.beginGroup(QString::fromLatin1((m_trackBook + QChar(0) + m_trackRecord).toUtf8().toHex()));
     stored.setValue(QStringLiteral("kind"), int(m_selectedSleep.kind));
     stored.setValue(QStringLiteral("amount"), m_selectedSleep.minutes);
     stored.setValue(QStringLiteral("window"), m_sleepWindow);
     stored.setValue(QStringLiteral("retained"), m_sleepRetained);
-    stored.setValue(QStringLiteral("disabledWindow"), m_scheduleOffFor);
     stored.sync();
 }
 
 void Player::restoreSleep() {
     QSettings stored(m_sleepStore, QSettings::IniFormat);
+    m_scheduleOffFor = stored.value(QStringLiteral("disabledWindow")).toString();
     stored.beginGroup(QString::fromLatin1((m_trackBook + QChar(0) + m_trackRecord).toUtf8().toHex()));
     m_sleepWindow = stored.value(QStringLiteral("window")).toString();
     m_sleepRetained = stored.value(QStringLiteral("retained"), false).toBool();
-    m_scheduleOffFor = stored.value(QStringLiteral("disabledWindow")).toString();
     int kind = stored.value(QStringLiteral("kind"), 0).toInt();
     int amount = stored.value(QStringLiteral("amount"), 0).toInt();
     if ((!m_sleepWindow.isEmpty() && m_sleepWindow != scheduleWindow()) ||

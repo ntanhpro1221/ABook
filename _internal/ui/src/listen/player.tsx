@@ -1862,13 +1862,13 @@ export function PlayerProvider({
       automaticLastInput.current = requestedAt - osIdle!;
       toast(AUTO_SLEEP_SCHEDULE, {
         id: "automatic-sleep", duration: Infinity,
-        action: { label: AUTO_SLEEP_CONTINUE, onClick: () => awakeRef.current() },
+        action: { label: AUTO_SLEEP_CONTINUE, onClick: extendSleep },
       });
     };
     void check();
     const timer = window.setInterval(() => void check(), 1000);
     return () => { live = false; window.clearInterval(timer); };
-  }, [applySleep, engine, native, night, options.schedule, playing, position, systemIdleReader, rememberSleep]);
+  }, [applySleep, engine, extendSleep, native, night, options.schedule, playing, position, systemIdleReader, rememberSleep]);
 
   useEffect(() => {
     const onHide = () => {
