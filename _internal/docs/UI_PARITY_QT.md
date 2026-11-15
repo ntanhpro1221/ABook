@@ -185,12 +185,12 @@ Nhãn ngắn (<= 6 chữ). **Chỉ Qt**: không có ở web cùng màn; `*` = we
 ### Đang nghe
 
 - chỉ Qt (20): Tạm dừng {}* (`qt/ChapterList.qml:27`); Đọc {}* (`qt/ChapterList.qml:27`); Đọc chương này* (`qt/ChapterList.qml:46`); Đọc* (`qt/ChapterReader.qml:15`); Chưa có chương để đọc. (`qt/ChapterReader.qml:35`); Đang tải chương (`qt/ChapterReader.qml:89`); Đã nghe* (`qt/ChapterRow.qml:75`); Thêm tuỳ chọn: {}* (`qt/ChapterRow.qml:126`); Thêm tuỳ chọn* (`qt/NowPlaying.qml:241`); Giọng {}* (`qt/NowPlaying.qml:297`); Thử lại* (`qt/NowPlaying.qml:341`); Danh sách chương* (`qt/NowPlaying.qml:463`); Nhạc nền* (`qt/NowPlaying.qml:474`); Chỉnh* (`qt/NowPlaying.qml:612`); Âm thanh* (`qt/NowPlaying.qml:612`); Cửa sổ mini (`qt/NowPlaying.qml:621`); Gợi ý phần đọc* (`qt/ReadingSuggestions.qml:9`); Bỏ dòng (`qt/ReadingSuggestions.qml:57`); Đóng* (`qt/ReadingSuggestions.qml:80`); Số chương* (`qt/SleepPopover.qml:98`)
-- chỉ web (17): Shift+← (`278`); Đã chọn tốc độ đọc {} (`510`); Phím (`513`); Đã chọn giọng {} (`776`); Hẹn giờ đã tắt tiếng lúc (`995`); Bật lại (`1003`); Tiếng nhỏ dần (`1009`); Hẹn giờ ngủ trên {} (`1083`); Về chế độ nghe (`2151`); Chưa nghe · {} chương (`69`); Nghe tiếp · {} (`88`); Shift+→ (`106`); Chưa có audio (`116`); Chạm (`127`); Nghe bằng giọng đọc.{} (`149`); ...
+- chỉ web (17): Shift+← (`278`); Đã chọn tốc độ đọc {} (`510`); Phím (`513`); Đã chọn giọng {} (`776`); Hẹn giờ đã tắt tiếng lúc (`995`); Bật lại (`1003`); Tiếng nhỏ dần (`1009`); Hẹn giờ ngủ trên {} (`1083`); Về chế độ nghe (`2152`); Chưa nghe · {} chương (`69`); Nghe tiếp · {} (`88`); Shift+→ (`106`); Chưa có audio (`116`); Chạm (`127`); Nghe bằng giọng đọc.{} (`149`); ...
 
 ### Đọc theo
 
-- chỉ Qt (2): Đang tải kịch bản* (`qt/PlayerLineEditor.qml:115`); Đang mở văn bản chương (`qt/ReadAlongView.qml:401`)
-- chỉ web (12): Người nói: {} (`101`); Cách đọc câu - {} (`104`); Các từ trong câu (`165`); Cách đọc “{}”: “{}” (`398`); Đọc từ này là (`400`); Đang chờ máy làm sách (`418`); Sửa cách đọc “{}” (`424`); Bỏ: {} (`437`); Sửa cách đọc từ (`491`); Đang tải chữ (`1767`); Nghe từ “{}” (`59`); Shift F10: sửa cách đọc. (`376`)
+- chỉ Qt (2): Đang tải kịch bản* (`qt/PlayerLineEditor.qml:115`); Đang mở văn bản chương (`qt/ReadAlongView.qml:457`)
+- chỉ web (12): Người nói: {} (`101`); Cách đọc câu - {} (`104`); Các từ trong câu (`165`); Cách đọc “{}”: “{}” (`398`); Đọc từ này là (`400`); Đang chờ máy làm sách (`418`); Sửa cách đọc “{}” (`424`); Bỏ: {} (`437`); Sửa cách đọc từ (`491`); Đang tải chữ (`1767`); Nghe từ “{}” (`59`); Shift F10: sửa cách đọc. (`423`)
 
 ### Trang sách
 
