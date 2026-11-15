@@ -72,7 +72,7 @@ Mỗi cặp còn lại phải có giải thích trong ui_strings/qt_wording_revi
 
 | nhãn | web | Qt | nơi | giải thích |
 |---|---|---|---|---|
-| Bắt đầu | headphones | wand-sparkles | `qt/NewProjectScreen.qml:185` ~ `desktop/AudiobookDialog.tsx:215` | Different operations: Qt starts a Studio production job (wand-sparkles); the matched web dialog starts a read-aloud export (headphones). |
+| Bắt đầu | headphones | wand-sparkles | `qt/NewProjectScreen.qml:185` ~ `desktop/AudiobookDialog.tsx:216` | Different operations: Qt starts a Studio production job (wand-sparkles); the matched web dialog starts a read-aloud export (headphones). |
 | Chi tiết | info | chevron-right | `qt/MyMusicDetails.qml:29` (+1) ~ `studio/ProjectScreen.tsx:757` | Different controls: Qt rotates a disclosure chevron to expand the music details; the matched web item opens project information. |
 | Quay lại | chevron-left | arrow-left | `qt/ScreenHeader.qml:14` (+1) ~ `listen/LineWishes.tsx:224` (+2) | Different navigation depth: the web chevron returns one step inside a sentence editor; the Qt arrow returns to the previous screen. |
 | Tạm dừng {} | check, circle-dashed, play | pause | `qt/BookCell.qml:87` ~ `listen/BookScreen.tsx:186` (+3) | Scanner pairing ambiguity: the web book row has status check/circle icons beside its transport action. Its actual pause action and the Qt book cell use pause. |
@@ -159,7 +159,7 @@ Nhãn ngắn (<= 6 chữ). **Chỉ Qt**: không có ở web cùng màn; `*` = we
 
 ### Âm thanh
 
-- chỉ Qt (4): Tắt* (`qt/AudioFxPanel.qml:14`); Tự chỉnh (chưa lưu)* (`qt/AudioFxPanel.qml:14`); Âm thanh* (`qt/AudioFxPanel.qml:50`); Chọn nhạc* (`qt/AudioFxPanel.qml:64`)
+- chỉ Qt (4): Tắt* (`qt/AudioFxPanel.qml:14`); Tự chỉnh (chưa lưu)* (`qt/AudioFxPanel.qml:14`); Âm thanh* (`qt/AudioFxPanel.qml:50`); Chọn nhạc* (`qt/AudioFxPanel.qml:65`)
 - chỉ web (3): 1 kHz (`22`); 250 Hz (`22`); Kéo để sắp xếp (`66`)
 
 ### Khay và cửa sổ mini
