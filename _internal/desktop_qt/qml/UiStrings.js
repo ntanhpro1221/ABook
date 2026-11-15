@@ -1159,7 +1159,6 @@ var s_dang_tai_san_nhac_nen_48c7ad71 = "Đang tải sẵn nhạc nền: ";
 var s_dang_tai_thiet_bi_09ddbf1d = "Đang tải thiết bị";
 var s_dang_tai_tien_do_447cd8d8 = "Đang tải tiến độ";
 var s_dang_tai_viec_duyet_f68f3839 = "Đang tải việc duyệt";
-function s_dang_tam_dung_dong_ho_cung_dung_qua_0_phut_9e51c0d4(p0) { return "Đang tạm dừng - đồng hồ cũng dừng. Dừng quá " + String(p0) + " phút thì hẹn giờ tự tắt."; }
 var s_dang_tam_dung_e40cc1b7 = "Đang tạm dừng";
 var s_dang_tam_dung_nen_cuon_nay_chua_toi_luot_b_80e4ac97 = "” đang tạm dừng nên cuốn này chưa tới lượt - bấm “Tiếp tục” ở cuốn kia để hàng chạy tiếp.";
 var s_dang_tam_dung_vi_may_chay_pin_nen_cuon_nay_27a2cfc3 = "” đang tạm dừng vì máy chạy pin nên cuốn này chưa tới lượt - cắm sạc là cuốn kia tự làm tiếp, hay bấm “Tiếp tục” ở cuốn kia để làm tiếp ngay trên pin.";
@@ -2906,3 +2905,5 @@ var s_volume_all = "Cả sách";
 var s_volume_split_help = "Các quyển nằm trong cùng một sách, dùng chung nhân vật và giọng đọc.";
 var s_volume_invalid = "Mỗi quyển cần tên, số và chương đầu tăng dần trong sách.";
 var s_volume_no_changed = "Quyển này không có chương đã đổi để xuất.";
+var s_sleep_paused_keep = "Đang tạm dừng - đồng hồ cũng dừng.";
+var s_sleep_activity_resets = "Thao tác hẹn lại";

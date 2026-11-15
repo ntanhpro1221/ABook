@@ -1067,7 +1067,6 @@ export const S = {
   s_copy_24d15872aa59: "mất mạng",
   s_copy_289e1cff4cbc: "Bỏ khoảng lặng",
   s_copy_34fb8bbc7719: "Tiếng khẽ khi bạn chọn. Khi đang nghe, chỉ báo hẹn giờ và hẹn lại.",
-  s_copy_358b56a940b2: "lắc máy",
   s_copy_3674d38cc1fc: "6 phút ở 1,5×",
   s_copy_39388d5bbda7: "Tập 17",
   s_copy_3c36d421d6d3: "Phát trên điện thoại",
@@ -1542,7 +1541,6 @@ export const S = {
   s_dang_tai_viec_xuong_571590f2: "Đang tải việc xưởng",
   s_dang_tam_dung_0_47531a88: (p0: unknown) => "Đang tạm dừng" + String(p0),
   s_dang_tam_dung_0_b6363dfa: (p0: unknown) => "Đang tạm dừng " + String(p0),
-  s_dang_tam_dung_dong_ho_cung_dung_qua_0_phut_9e51c0d4: (p0: unknown) => "Đang tạm dừng - đồng hồ cũng dừng. Dừng quá " + String(p0) + " phút thì hẹn giờ tự tắt.",
   s_dang_tam_dung_e40cc1b7: "Đang tạm dừng",
   s_dang_tam_dung_may_dang_chay_pin_83cf9dae: "Đang tạm dừng · máy đang chạy pin",
   s_dang_tao_giong_doc_799156a0: "đang tạo giọng đọc",
@@ -3347,4 +3345,6 @@ export const S = {
   s_hako_paste: "Có thể dán đường dẫn sách Hako: mỗi tập thành một quyển, kèm bìa tập.",
   s_volume_invalid: "Mỗi quyển cần tên, số và chương đầu tăng dần trong sách.",
   s_volume_no_changed: "Quyển này không có chương đã đổi để xuất.",
+  s_sleep_paused_keep: "Đang tạm dừng - đồng hồ cũng dừng.",
+  s_sleep_activity_resets: "Thao tác hẹn lại",
 } as const;
