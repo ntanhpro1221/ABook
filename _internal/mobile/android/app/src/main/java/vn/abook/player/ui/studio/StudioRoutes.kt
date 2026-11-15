@@ -32,6 +32,7 @@ fun StudioSubRoute(
     hub: StudioHub, computer: String, book: String, kind: StudioSubKind, sheets: SheetHost, onBack: () -> Unit, openSub: (StudioSubKind) -> Unit, active: Boolean,
 ) {
     when (kind) {
+        StudioSubKind.Volumes -> StudioVolumesScreen(hub.session(computer), book, onBack)
         StudioSubKind.Precast -> {
             val state = remember(hub, computer, book) { StudioProjectState(hub.session(computer), book, StudioTab.Chapters) }
             PrecastScreen(state, sheets, onBack, { openSub(StudioSubKind.Readings) }, active)

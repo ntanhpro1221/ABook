@@ -22,6 +22,7 @@ import kotlin.coroutines.resume
 @Immutable
 data class ExportUi(
     val loaded: Boolean = false,
+    val volumes: List<ExportVolume> = emptyList(), val volumeId: Int? = null,
     val format: ExportFormat = ExportFormat.Mp3,
     val music: ExportMusic = ExportMusic(),
     /** Ô "Kèm nhạc nền" người dùng chọn (chỉ có nghĩa khi [music] có sẵn). */
@@ -154,6 +155,7 @@ class ExportState(
 
     private suspend fun load(book: ListenBook) {
         coroutineScope {
+            val volumes = attempt { source.volumes(book.id) }.getOrDefault(emptyList())
             val history = async { attempt { source.history(book.id) } }
             val folder = async { attempt { source.folder() } }
             val background = async { attempt { source.background() } }
@@ -166,7 +168,7 @@ class ExportState(
             val view = background.await().getOrNull()
             edit(book.id) {
                 it.copy(
-                    loaded = true, history = past.getOrDefault(it.history), folder = tree.getOrDefault(it.folder),
+                    loaded = true, volumes = volumes, history = past.getOrDefault(it.history), folder = tree.getOrDefault(it.folder),
                     background = view, voice = picked ?: it.voice, voiceChecked = it.voiceChecked || book.textOnly,
                     music = state ?: it.music, withMusic = if (it.loaded) it.withMusic else state?.enabled ?: false,
                     // Sách chỉ có chữ chỉ có M4B: MP3 không có chỗ nào để chọn.
@@ -190,7 +192,7 @@ class ExportState(
         plans[book.id] = scope.launch {
             // Khác mặc định của cuốn thì hỏi ước theo lựa chọn ấy; bằng mặc định thì lượt ước đầu (máy tự theo công tắc) đã đúng.
             val asked = if (ui.plan != null && ui.withMusic != ui.music.enabled) ui.withMusic else null
-            attempt { source.plan(book.id, voice.id, asked) }
+            attempt { source.volumePlan(book.id, voice.id, asked, ui.volumeId) }
                 .onSuccess { plan ->
                     edit(book.id) {
                         it.copy(plan = plan, planError = "", music = plan.music, withMusic = if (it.plan == null) plan.music.enabled else it.withMusic && plan.music.available)
@@ -211,6 +213,11 @@ class ExportState(
     }
 
     // ---- tuỳ chọn -------------------------------------------------------------------------------------------------------
+
+    fun setVolume(book: ListenBook, volumeId: Int?) {
+        edit(book.id) { it.copy(volumeId = volumeId) }
+        if (book.textOnly) loadPlan(book)
+    }
 
     fun setFormat(bookId: String, format: ExportFormat) = edit(bookId) { it.copy(format = format, problem = "") }
 
@@ -281,20 +288,24 @@ class ExportState(
         return when {
             book.textOnly -> {
                 val voice = ui.voice ?: throw ExportFailure(S.s_may_chua_co_giong_doc_nao_tai_giong_o_cai_b6713ac4)
-                val file = create(source.fileTitle(book, ExportKind.Audiobook)) ?: return null
-                source.startAudiobook(book, voice.id, file, music)
+                val file = create(source.fileVolumeTitle(book, ExportKind.Audiobook, ui.volumeId)) ?: return null
+                source.startVolumeAudiobook(book, voice.id, file, music, ui.volumeId)
             }
             ui.format == ExportFormat.M4b -> {
-                val file = create(source.fileTitle(book, ExportKind.M4b)) ?: return null
-                source.startM4b(book, file, music)
+                val file = create(source.fileVolumeTitle(book, ExportKind.M4b, ui.volumeId)) ?: return null
+                source.startVolumeM4b(book, file, music, ui.volumeId)
             }
             else -> {
-                source.fileTitle(book, ExportKind.Mp3) // sách không có gì để xuất thì từ chối TRƯỚC khi hỏi thư mục
+                val changed = ui.changedChapters.takeIf { ui.askScope && ui.onlyChanged }?.filter { id ->
+                    ui.volumes.firstOrNull { it.id == ui.volumeId }?.chapters?.contains(id) ?: true
+                }
+                if (changed?.isEmpty() == true) throw ExportFailure(S.s_volume_no_changed)
+                source.fileVolumeTitle(book, ExportKind.Mp3, ui.volumeId) // validate the selected volume before opening the folder picker
                 if (ui.folder == null) {
                     val tree = pick() ?: return null
                     if (!keepFolder(book.id, tree)) return null
                 }
-                source.startMp3(book, ui.changedChapters.takeIf { ui.askScope && ui.onlyChanged }, music)
+                source.startVolumeMp3(book, changed, music, ui.volumeId)
             }
         }
     }

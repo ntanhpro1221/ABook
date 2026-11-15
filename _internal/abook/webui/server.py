@@ -5282,7 +5282,7 @@ class Handler(BaseHTTPRequestHandler):
 
     # ---- xuất sách nói của sách Nghe ngay (listen_export.py) --------------------------------------------------------------
 
-    def _audiobook_inputs(self, value: str, voice: Any) -> tuple[Path, listen_export.Reading, list[listen_export.Chapter]]:
+    def _audiobook_inputs(self, value: str, voice: Any, volume_id: Any = None) -> tuple[Path, listen_export.Reading, list[listen_export.Chapter]]:
         """Cuốn, cách đọc (giọng + gốc Nhật / Hàn + cách đọc riêng - đúng thứ trình phát dùng) và các chương của một lượt xuất sách nói. Chỉ sách Nghe ngay
         (chỉ có chữ, nằm trên máy này); sách Studio đã có audio thì xuất MP3 / M4B có sẵn."""
         path = self.app._listenable(value)
@@ -5298,12 +5298,23 @@ class Handler(BaseHTTPRequestHandler):
             raise ApiError(HTTPStatus.BAD_REQUEST, str(error), reason=error.reason) from error
         body = {"bookId": value}
         reading = listen_export.Reading(voice, self._reading_origin(body), self._book_readings(body))
-        return path, reading, listen_export.load_chapters(path)
+        if volume_id is not None and (type(volume_id) is not int or volume_id <= 0):
+            raise ApiError(HTTPStatus.BAD_REQUEST, "Quyển được chọn không có trong sách.")
+        try:
+            chapters = listen_export.load_chapters(path, volume_id)
+        except listen_export.ExportError as error:
+            raise ApiError(HTTPStatus.BAD_REQUEST, str(error)) from error
+        return path, reading, chapters
 
     def get_audiobook_plan(self, query: dict[str, list[str]], value: str) -> None:
         # Cho hộp "Xuất sách nói": số chương / chữ / giờ nghe, ước thời gian máy làm (giọng đã đo tốc độ), phần đã có sẵn (chương đã ghép + clip trong bộ đệm Nghe ngay), và ffmpeg đã có chưa.
         voice = (query.get("voice") or [""])[0]
-        path, reading, chapters = self._audiobook_inputs(value, voice)
+        selected = (query.get("volumeId") or [None])[0]
+        try:
+            volume_id = int(selected) if selected is not None else None
+        except (TypeError, ValueError) as error:
+            raise ApiError(HTTPStatus.BAD_REQUEST, "Quyển được chọn không có trong sách.") from error
+        path, reading, chapters = self._audiobook_inputs(value, voice, volume_id)
         book = book_id(path)
         info = listen_export.plan(chapters, reading, listen_export.work_folder(self.app.export_work_dir, book), self.app.readaloud.speed(voice),
                                   listen_export.cached_lookup(self.app.readaloud, reading, book))
@@ -5316,7 +5327,7 @@ class Handler(BaseHTTPRequestHandler):
         fmt = body.get("format")
         if fmt not in listen_export.FORMATS:
             raise ApiError(HTTPStatus.BAD_REQUEST, "Chỉ xuất được MP3 hoặc M4B")
-        path, reading, chapters = self._audiobook_inputs(value, body.get("voice"))
+        path, reading, chapters = self._audiobook_inputs(value, body.get("voice"), body.get("volumeId"))
         if not chapters:
             raise ApiError(HTTPStatus.CONFLICT, "Sách chưa có chương nào có chữ để đọc")
         if not ffmpeg_setup.ready():
@@ -5331,7 +5342,8 @@ class Handler(BaseHTTPRequestHandler):
         def run() -> dict[str, Any]:
             result = listen_export.export_audiobook(
                 app.readaloud, path, root, app.export_work_dir, fmt=fmt, reading=reading, book_id=book_id(path), cover_drawn=cover,
-                progress=lambda **fields: jobs.update(key, **fields), cancelled=lambda: jobs.cancelled(key), music=music)
+                progress=lambda **fields: jobs.update(key, **fields), cancelled=lambda: jobs.cancelled(key), music=music,
+                volume_id=body.get("volumeId"))
             app.exports.add(result["folder"])
             return result
 
@@ -6254,6 +6266,11 @@ class Handler(BaseHTTPRequestHandler):
         if path is None:
             raise ApiError(HTTPStatus.NOT_FOUND, "Sách này chưa có ảnh bìa")
         self._send_file(path, cache=True)
+
+    def get_volumes(self, _query: dict[str, list[str]], value: str) -> None:
+        from .. import book_volumes
+        book = self.app.listen_book(value)
+        self._send_json(HTTPStatus.OK, {"chapters": book.get("chapters", []), "volumes": book_volumes.volumes_of(book)})
 
     def put_volumes(self, _query: dict[str, list[str]], value: str) -> None:
         from .. import book_volumes
@@ -7547,6 +7564,7 @@ ROUTES: list[Route] = [
     ("GET", re.compile(BOOK + r"/voices"), Handler.get_voice_choices),
     ("GET", re.compile(BOOK + r"/cover/search"), Handler.get_cover_search),
     ("PUT", re.compile(BOOK + r"/cover"), Handler.put_cover),
+    ("GET", re.compile(BOOK + r"/volumes"), Handler.get_volumes),
     ("PUT", re.compile(BOOK + r"/volumes"), Handler.put_volumes),
     ("PUT", re.compile(BOOK + r"/volumes/(\d+)/cover"), Handler.put_volume_cover),
     ("DELETE", re.compile(BOOK + r"/cover"), Handler.delete_cover),

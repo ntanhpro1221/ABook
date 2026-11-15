@@ -171,6 +171,31 @@ class ExportStateTest {
     }
 
     @Test
+    fun `changed chapters outside the selected volume never export the whole volume`() {
+        source.history = listOf(PastExport(ExportKind.Mp3, "x", listOf(5)))
+        source.volumeChoices = listOf(ExportVolume(1, "First", listOf(1, 2)), ExportVolume(2, "Second", listOf(5)))
+        val exports = state()
+        exports.open(book)
+        exports.setVolume(book, 1)
+        exports.start(book)
+        assertTrue(source.starts.isEmpty())
+        assertEquals(0, picks)
+        assertTrue(exports.ui(book.id).value.problem.isNotBlank())
+        assertEquals(ExportPhase.Idle, exports.phase())
+    }
+
+    @Test
+    fun `selecting a text volume refreshes its estimate and starts only that volume`() {
+        source.volumeChoices = listOf(ExportVolume(1, "First", listOf(1, 2)), ExportVolume(2, "Second", listOf(5)))
+        val exports = state()
+        exports.open(text)
+        exports.setVolume(text, 2)
+        assertEquals(2, source.plannedVolumes.last())
+        exports.start(text)
+        assertEquals(listOf(2), source.startedVolumes)
+    }
+
+    @Test
     fun `music is sent only when the book has it and the box is on`() {
         source.music = ExportMusic(available = true, enabled = true)
         val exports = state()

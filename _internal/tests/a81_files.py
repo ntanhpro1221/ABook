@@ -22,7 +22,7 @@ def sha(data: bytes) -> dict[str, Any]:
     return {"size": len(data), "sha256": hashlib.sha256(data).hexdigest()}
 
 
-def build(path: Path, entries: dict[str, bytes], book: dict[str, Any] | None = None, *, version: int = 1,
+def build(path: Path, entries: dict[str, bytes], book: dict[str, Any] | None = None, *, version: int = 6,
           raw_book: bytes | str | None = None, manifest: bool = True, deflate: tuple[str, ...] = (),
           omit_from_files: tuple[str, ...] = ()) -> Path:
     """Một file sách: `entries` là ruột (chapters/..., cast.json...), `book` là book.json (chưa có `package`). `manifest=False`: không có
@@ -30,6 +30,8 @@ def build(path: Path, entries: dict[str, bytes], book: dict[str, Any] | None = N
     book = dict(book if book is not None else {"title": "T", "chapters": [], "chaptersTotal": 0})
     book["package"] = {"format": "abook", "version": version, "createdAt": "2026-01-01T00:00:00+00:00", "producer": "x",
                        "files": {name: sha(data) for name, data in entries.items() if name not in omit_from_files}}
+    if "volumes" not in book:
+        book["volumes"] = [{"id": 1, "number": 1, "title": "Quyển 1", "cover": None, "chapters": book.pop("chapters", [])}]
     with zipfile.ZipFile(path, "w") as archive:
         archive.writestr(zipfile.ZipInfo("mimetype"), MIME)
         archive.writestr("book.json", raw_book if raw_book is not None else json.dumps(book))
@@ -117,9 +119,10 @@ def build_pending_project(path: Path, entries: dict[str, bytes], book: dict[str,
     if book is None:
         book, _ = simple_book(1)
     book = dict(book)
-    book["package"] = {"format": "abook", "version": 5, "createdAt": "2026-01-01T00:00:00+00:00", "producer": "x",
+    book["package"] = {"format": "abook", "version": 6, "createdAt": "2026-01-01T00:00:00+00:00", "producer": "x",
                        "files": {name: sha(data) for name, data in entries.items()}}
-    raw = json.dumps(book).encode("utf-8")
+    from abook.book_volumes import nested
+    raw = json.dumps(nested(book)).encode("utf-8")
     everything = {**entries, **(extra or {}), "book.json": raw}
     manifest = {"format": "abookproj", "version": 3, "createdAt": "2026-01-01T00:00:00+00:00", "producer": "x", "title": "Dự án thử",
                 "workshop": "pending", "projectRoot": "C:/Profiles/friend/ABook/proj", "sources": [], "missingSources": [],
@@ -142,5 +145,5 @@ def golden_cases() -> list[dict[str, Any]]:
 
 def build_golden(path: Path, case: dict[str, Any]) -> Path:
     entries = {name: bytes(data["zeros"]) if isinstance(data, dict) else data.encode("utf-8") for name, data in case["entries"].items()}
-    return build(path, entries, case["book"], version=case.get("version", 1), manifest=case.get("manifest", True),
+    return build(path, entries, case["book"], version=case.get("version", 6), manifest=case.get("manifest", True),
                  deflate=tuple(case.get("deflate", ())), omit_from_files=tuple(case.get("omitFromFiles", ())))

@@ -514,7 +514,7 @@ def test_every_allowed_route_exists_on_the_computer() -> None:
                (r"[0-9a-f]{64}\.webp", "c" * 64 + ".webp"), (music_plan.TRACK_NAME, "a" * 40 + ".mp3"),
                (r"[0-9a-f]{32}\.wav", "b" * 32 + ".wav"),
                ("[A-Za-z0-9_-]+", "YWJj"), (r"\d+", "7"),
-               ("[0-9a-f]+", "ab12"), ("[^/]+", "Duc"))
+                 ("[0-9a-f]+", "ab12"), ("[1-9][0-9]{0,8}", "7"), ("[^/]+", "Duc"))
     for method, pattern in remote_studio.ALLOWED:
         path = pattern.pattern
         for token, sample in samples:

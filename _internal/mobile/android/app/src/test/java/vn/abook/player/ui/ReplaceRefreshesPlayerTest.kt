@@ -82,7 +82,7 @@ class ReplaceRefreshesPlayerTest {
         }
         val book = JSONObject().put("title", "Your Story").put("sourceFingerprint", "same-source").put("audioUpdatedAt", at)
             .put("chaptersAvailable", lengths.size).put("chaptersTotal", lengths.size).put("chapters", chapters)
-        return PackageFixtures.abook(work, name, 1, content, book, at)
+        return PackageFixtures.abook(work, name, 6, content, book, at)
     }
 
     /** Lõi phát chỉ-đọc cho [PlayerRepo]: đọc thẳng [Playback] (lệnh không cần ở đây). */

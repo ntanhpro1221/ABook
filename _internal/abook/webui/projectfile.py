@@ -812,6 +812,8 @@ class ProjectFile:
         listed = package.get("files") if isinstance(package, dict) else None
         if not isinstance(listed, dict) or package.get("format") != bookfile.FORMAT:
             raise ProjectFileError("Phần nghe của dự án (book.json) không hợp lệ.")
+        if package.get("version") != bookfile.FORMAT_VERSION or "volumes" not in book or "chapters" in book:
+            raise ProjectFileError("File sách không dùng cấu trúc quyển hiện hành. Hãy dựng lại từ nguồn.")
         listening = {name for name in manifest["files"] if listening_name(name)}
         if set(listed) != listening or any(
                 not isinstance(meta, dict) or meta != manifest["files"][name] for name, meta in listed.items()):
@@ -822,6 +824,9 @@ class ProjectFile:
             bookfile.check_shape(book)
         except (ValueError, bookfile.BookFileError) as exc:
             raise ProjectFileError(str(exc)) from exc
+        for volume in book_volumes.volumes_of(book):
+            if volume.get("cover") and volume["cover"]["file"] not in listed:
+                raise ProjectFileError("File sách thiếu bìa của một quyển.")
         for chapter in book.get("chapters") or []:
             reference = chapter.get("file") if isinstance(chapter, dict) else None
             if reference and reference not in listed:

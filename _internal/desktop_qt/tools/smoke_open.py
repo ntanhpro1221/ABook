@@ -83,7 +83,8 @@ def check(exe: Path, seconds: float, logs: dict) -> str | None:
         for folder in (root / "local", root / "roaming", root / "temp", root / "library", incoming):
             folder.mkdir()
         first = incoming / "python_v4.abook"
-        shutil.copyfile(WRITTEN / first.name, first)
+        with smoke_play.zipfile.ZipFile(WRITTEN / first.name) as source:
+            smoke_play.write_package(first, source.read(smoke_play.CHAPTER))
         # Cuốn thứ hai phải là cuốn KHÁC (chương 1 khác): mở lại đúng cuốn đã có chỉ mở trang của nó, Thư viện không đổi.
         second = smoke_play.write_package(incoming / "Truyện khác.abook", os.urandom(4096))
         library = root / "library"

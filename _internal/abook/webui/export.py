@@ -287,7 +287,7 @@ def export_book(project_root: Path, target_root: Path, *, cover: str | None = No
     `cancelled()` True (người dùng bấm Huỷ): dừng trước chương kế / giữa lúc trộn, xoá thư mục bản xuất dở và ném `export_jobs.Cancelled`."""
     facts = book_facts(project_root, volume_id)
     title, narrator, chapters = facts.title, facts.narrator, facts.chapters
-    numbered ={chapter["id"]: index for index, chapter in enumerate(chapters, 1)}
+    numbered = {chapter["id"]: index for index, chapter in enumerate(chapters, 1)}
     total_available = len(chapters)
     if chapter_ids is not None:
         if not chapter_ids or any(type(key) is not int or key not in numbered for key in chapter_ids):
@@ -714,7 +714,7 @@ def export_m4b(project_root: Path, target_root: Path, *, cover: str | None = Non
         return pump_mixed(ffmpeg, mixer, ids[index], source, rate, channels, sink)
 
     from .export_jobs import audio_snapshot, remember_export
-    snapshot = {} if facts.package else audio_snapshot(project_root)
+    snapshot = {} if facts.package else {key: digest for key, digest in audio_snapshot(project_root).items() if int(key) in ids}
     final, count = m4b_from_files(ffmpeg, chapters, target_root, title=title, narrator=narrator,
                                   cover_for=lambda work: usable_cover(facts.cover) or drawn_cover(work, cover),
                                   decode=decode if mixer is not None else None, on_peaks=peaks, cancelled=cancelled,

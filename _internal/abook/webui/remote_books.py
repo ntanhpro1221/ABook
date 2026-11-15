@@ -1202,6 +1202,24 @@ def _refresh_book(entry: dict[str, Any], computer: str, folder: Path, book: str,
             manifest = {key: value for key, value in manifest.items() if key != "cover"}  # sổ vẫn nhận bìa của lần trước (nếu có)
             if old_cover is not None:
                 manifest["cover"] = old_cover
+    from .. import book_volumes, book_paths
+    old_volumes = {v["id"]: v for v in previous.get("volumes", [])}
+    for volume in book_volumes.volumes_of(manifest):
+        image = volume.get("cover")
+        if not image:
+            continue
+        name = image.get("file")
+        if not isinstance(name, str) or not book_volumes.COVER_FILE.fullmatch(name):
+            raise RemoteError("Đường dẫn bìa quyển không hợp lệ.")
+        destination = book_paths.inside(target, str((target / name).resolve()))
+        old = old_volumes.get(volume["id"], {}).get("cover")
+        if image != old or not destination.is_file():
+            try:
+                data = _request(_base(entry), "GET", f"/sync/v1/books/{book}/files/{name}", entry["token"], timeout=FILE_TIMEOUT)
+                destination.parent.mkdir(parents=True, exist_ok=True)
+                atomic_write_bytes(destination, data)
+            except RemoteError:
+                volume["cover"] = old
     if manifest != previous:
         _write_manifest(target, manifest)
 
@@ -1537,6 +1555,13 @@ def wanted(book: dict[str, Any]) -> list[tuple[str, int | None]]:
     add(book.get("cast"))
     for sample in book.get("samples") or []:
         add(sample)
+    from .. import book_volumes
+    for volume in book_volumes.volumes_of(book):
+        if volume.get("cover"):
+            name = volume["cover"].get("file")
+            if not isinstance(name, str) or not book_volumes.COVER_FILE.fullmatch(name):
+                raise RemoteError("Đường dẫn bìa quyển không hợp lệ.")
+            add(name)
     music = book.get("music") if isinstance(book.get("music"), dict) else {}
     for name, info in (music.get("tracks") or {}).items() if isinstance(music.get("tracks"), dict) else ():
         add(name, info.get("size") if isinstance(info, dict) else None)

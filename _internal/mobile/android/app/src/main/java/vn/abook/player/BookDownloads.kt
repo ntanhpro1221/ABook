@@ -329,6 +329,13 @@ object BookDownloads {
         // Ảnh bìa thật (webui/covers.py): tải lại mỗi lần (vài trăm KB); máy tính đã bỏ bìa thì xoá bản cũ.
         val cover = manifest.optJSONObject("cover")
         if (cover != null) files += cover.optString("file", "cover.jpg") to 0L
+        val volumes = manifest.optJSONArray("volumes") ?: JSONArray()
+        for (index in 0 until volumes.length()) {
+            val image = volumes.getJSONObject(index).optJSONObject("cover") ?: continue
+            val relative = image.getString("file")
+            require(Regex("covers/[1-9][0-9]{0,8}\\.jpg").matches(relative))
+            files += relative to 0L
+        }
         // Nhạc nền: đúng các bài mà một mốc đang dùng (BookMusic.tracks) - nghe được cả khi không có mạng, và chuyển tiếp được cho máy khác.
         val tracks = BookMusic.tracks(manifest.optJSONObject("music"))
         PeerTransfer.checkJob(files + tracks.map { it.name to it.size })

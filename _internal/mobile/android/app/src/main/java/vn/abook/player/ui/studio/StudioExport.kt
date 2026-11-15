@@ -346,6 +346,10 @@ class StudioExportState(private val project: StudioProjectState, pause: suspend 
     /** Bìa vẽ từ tên sách (data URL) cho M4B / MP3: chỉ Android vẽ được nên màn đặt vào; rỗng = không gửi bìa. */
     var drawCover: (String) -> String = { "" }
 
+    var volumes by mutableStateOf(emptyList<VolumeDraft>())
+        private set
+    var volumeId by mutableStateOf<Int?>(null)
+
     var kind by mutableStateOf(StudioExportKind.BookFile)
         private set
 
@@ -407,6 +411,7 @@ class StudioExportState(private val project: StudioProjectState, pause: suspend 
     private suspend fun reload() {
         try {
             options = session.source.exportOptions(session.computer, bookId)
+            volumes = StudioVolumes.drafts(session.source.volumes(session.computer, bookId))
             loaded = true
             problem = ""
         } catch (cancelled: CancellationException) {
@@ -457,6 +462,7 @@ class StudioExportState(private val project: StudioProjectState, pause: suspend 
         problem = ""
         stopping = false
         val body = StudioExportLogic.body(asked, musicOn, if (asked.audio) drawCover(book?.title.orEmpty()) else "")
+        if (asked.audio && volumeId != null) body.put("volumeId", volumeId)
         session.scope.launch {
             try {
                 session.source.exportStart(session.computer, bookId, asked, body)

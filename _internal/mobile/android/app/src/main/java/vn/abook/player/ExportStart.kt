@@ -30,10 +30,10 @@ object ExportStart {
     }
 
     /** Bắt đầu xuất cuốn `bookId` thành thư mục MP3 trong `tree`; `chapterIds`: chỉ các chương ấy; sách không có gì để xuất thì [Mp3Export.Refused] ngay, chưa bắt đầu việc nền. */
-    fun mp3(context: Context, bookId: String, tree: Uri, drawn: ByteArray?, chapterIds: List<Int>?, music: Boolean): Started {
-        val plan = Mp3Export.plan(bookId, drawn, chapterIds)
+    fun mp3(context: Context, bookId: String, tree: Uri, drawn: ByteArray?, chapterIds: List<Int>?, music: Boolean, volumeId: Int? = null): Started {
+        val plan = Mp3Export.plan(bookId, drawn, chapterIds, volumeId)
         val treeName = Mp3Exports.treeName(context, tree) ?: throw Mp3Export.Refused(S.s_chua_mo_duoc_thu_muc_da_chon_chon_lai_noi_23fb5dbe)
-        val run = Mp3Exports.start(context, bookId, tree, coverFile(context, "mp3-export", drawn), chapterIds, music)
+        val run = Mp3Exports.start(context, bookId, tree, coverFile(context, "mp3-export", drawn), chapterIds, music, volumeId)
         return Started(run, folder = "$treeName/${Mp3Export.folderName(plan.title)}", chapters = plan.chapters.size)
     }
 
@@ -46,11 +46,11 @@ object ExportStart {
     }
 
     /** Bắt đầu xuất cuốn `bookId` thành MỘT file M4B vào `file` (người dùng vừa tạo ở hộp "tạo file" của hệ thống). Không bắt đầu được thì file rỗng vừa tạo bị bỏ. */
-    fun m4b(context: Context, bookId: String, file: Uri, drawn: ByteArray?, music: Boolean): Started {
+    fun m4b(context: Context, bookId: String, file: Uri, drawn: ByteArray?, music: Boolean, volumeId: Int? = null): Started {
         try {
-            val plan = Mp3Export.plan(bookId, drawn)
+            val plan = Mp3Export.plan(bookId, drawn, volumeId = volumeId)
             M4bExports.remember(context, file)
-            val run = M4bExports.start(context, bookId, file, coverFile(context, "m4b-export", drawn), music)
+            val run = M4bExports.start(context, bookId, file, coverFile(context, "m4b-export", drawn), music, volumeId)
             return Started(run, name = M4bExport.fileName(plan.title), chapters = plan.chapters.size)
         } catch (error: Exception) {
             M4bExports.discard(context, file)
@@ -63,18 +63,18 @@ object ExportStart {
     private fun reading(id: String, voice: String) = ListenExport.Reading(voice, ReadAloud.originNow(id), ReadAloud.readingsOf(id))
 
     /** Tên sách để hệ thống hỏi tên file; sách chưa tải hay không có chương nào đọc được thì từ chối ngay, TRƯỚC khi hỏi chỗ lưu. */
-    fun audiobookTitle(bookId: String): String {
+    fun audiobookTitle(bookId: String, volumeId: Int? = null): String {
         val book = Store.manifest(bookId) ?: throw Mp3Export.Refused(S.s_sach_nay_chua_tai_ve_dien_thoai_bdad1754)
-        if (ListenExport.chapters(bookId).isEmpty()) throw Mp3Export.Refused(S.s_sach_chua_co_chuong_nao_co_chu_de_doc_8d6e72e1)
-        return book.optString("title").ifEmpty { bookId }
+        if (ListenExport.chapters(bookId, volumeId = volumeId).isEmpty()) throw Mp3Export.Refused(S.s_sach_chua_co_chuong_nao_co_chu_de_doc_8d6e72e1)
+        return vn.abook.player.ui.data.dotJoin(book.optString("title").ifEmpty { bookId }, BookVolumes.selected(book, volumeId)?.getString("title"))
     }
 
     /**
      * Cho màn Xuất sách nói: số chương, số chữ, giờ nghe (từ clip đã có + phần chưa có ước theo tốc độ đo), ước thời gian máy làm, phần đã có sẵn và chỗ trống cần, kèm ô nhạc
      * `music` {available, enabled}. `wanted`: ô "Kèm nhạc nền" người dùng chọn (null = mặc định theo cuốn). Đọc chữ nên gọi ở luồng nền, sau [Playback.init].
      */
-    fun audiobookPlan(context: Context, bookId: String, voice: String, wanted: Boolean?): JSONObject {
-        val chapters = ListenExport.chapters(bookId)
+    fun audiobookPlan(context: Context, bookId: String, voice: String, wanted: Boolean?, volumeId: Int? = null): JSONObject {
+        val chapters = ListenExport.chapters(bookId, volumeId = volumeId)
         val speed = runCatching { ReadAloud.speeds().secondsPerChar(voice) }.getOrNull()
         val (available, enabled) = BookMusic.exportState(bookId)
         val (music, extra) = if (available && (wanted ?: enabled)) ExportMusic.listenPlan(context, bookId, chapters) else emptyMap<Int, MusicExport.ChapterMusic>() to 0L
@@ -86,11 +86,11 @@ object ExportStart {
     }
 
     /** Bắt đầu đọc cả cuốn `bookId` bằng giọng `voice` rồi ghép thành MỘT file M4B vào `file`. Không bắt đầu được thì file rỗng vừa tạo bị bỏ. */
-    fun audiobook(context: Context, bookId: String, voice: String, file: Uri, drawn: ByteArray?, music: Boolean): Started {
+    fun audiobook(context: Context, bookId: String, voice: String, file: Uri, drawn: ByteArray?, music: Boolean, volumeId: Int? = null): Started {
         try {
-            val title = Store.manifest(bookId)?.optString("title").orEmpty().ifEmpty { bookId }
+            val title = audiobookTitle(bookId, volumeId)
             M4bExports.remember(context, file)
-            val run = ListenExports.start(context, bookId, voice, file, coverFile(context, "audiobook-export", drawn), music)
+            val run = ListenExports.start(context, bookId, voice, file, coverFile(context, "audiobook-export", drawn), music, volumeId)
             return Started(run, name = M4bExport.fileName(title))
         } catch (error: Exception) {
             M4bExports.discard(context, file)

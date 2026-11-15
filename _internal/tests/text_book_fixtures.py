@@ -16,6 +16,7 @@ from __future__ import annotations
 import json
 import sys
 import tempfile
+import zipfile
 from pathlib import Path
 from typing import Any
 
@@ -81,6 +82,23 @@ def cases() -> dict[str, Any]:
 
 def cases_bytes() -> bytes:
     return (json.dumps(cases(), ensure_ascii=False, indent=1) + "\n").encode("utf-8")
+
+
+def reference(path: Path, *, edited: bool = False) -> Path:
+    """Assemble the shared, explicit JSON/text reference without calling either book writer."""
+    expected = json.loads((FIXTURES / "cases.json").read_text(encoding="utf-8"))["cases"][0]["expected"]
+    book = json.loads(json.dumps(expected["book"]))
+    content = {name: text.encode("utf-8") for name, text in expected["texts"].items()}
+    if edited:
+        content["edits.json"] = bookfile.json_bytes({"format": "abook-edits", "version": 1, "title": "Tên tôi đặt"})
+    book["package"] = {"format": "abook", "version": 6, "files": {name: bookfile.describe(raw) for name, raw in content.items()}}
+    with zipfile.ZipFile(path, "w") as archive:
+        archive.writestr(zipfile.ZipInfo("mimetype"), bookfile.MIMETYPE)
+        archive.writestr("book.json", json.dumps(book, ensure_ascii=False))
+        archive.writestr("manifest.json", "{}")
+        for name, raw in content.items():
+            archive.writestr(name, raw)
+    return path
 
 
 def main() -> int:

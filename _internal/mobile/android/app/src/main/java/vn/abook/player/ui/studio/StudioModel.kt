@@ -23,7 +23,7 @@ enum class StudioTab(override val key: String, override val label: String) : Cho
 
 /** Các màn con của một dự án (S3: duyệt, kịch bản, cách đọc tên; S4: xuất, nhật ký, bìa), mở từ "Thêm" hay thông báo: đi sau tab, Back về lại dự án. `key` là giá trị `?tab=` của web. */
 enum class StudioSubKind(val key: String) {
-    Precast("precast"), Script("script"), Readings("readings"), Export("export"), Activity("activity"), Cover("cover");
+    Precast("precast"), Script("script"), Readings("readings"), Export("export"), Activity("activity"), Cover("cover"), Volumes("volumes");
 
     companion object {
         fun of(key: String?): StudioSubKind? = entries.firstOrNull { it.key == key }

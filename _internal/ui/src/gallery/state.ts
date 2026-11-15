@@ -2,6 +2,7 @@
 // scripts/gallery_shots.mjs và test (`window.__gallery`).
 
 export interface Scenario {
+  volumes?: boolean;
   /** Thư viện: đủ sách, rỗng, đang tải mãi, hay lỗi. */
   library: "full" | "empty" | "loading" | "error";
   /** Điện thoại đã ghép máy tính chưa (Cài đặt › Thiết bị). */

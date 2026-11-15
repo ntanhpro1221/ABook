@@ -55,7 +55,13 @@ class BookFileGoldenTest {
         val files = JSONObject()
         for ((entry, bytes) in entries) if (entry !in omitted) files.put(entry, JSONObject().put("size", bytes.size).put("sha256", sha256(bytes)))
         val book = JSONObject(case.getJSONObject("book").toString())
-        book.put("package", JSONObject().put("format", "abook").put("version", case.opt("version") ?: 1).put("files", files))
+        book.put("package", JSONObject().put("format", "abook").put("version", case.opt("version") ?: 6).put("files", files))
+        if (!book.has("volumes")) {
+            val chapters = book.opt("chapters")
+            book.remove("chapters")
+            book.put("volumes", org.json.JSONArray().put(JSONObject().put("id", 1).put("number", 1)
+                .put("title", S.s_volume_number(1)).put("chapters", chapters ?: org.json.JSONArray())))
+        }
         val target = File(work, name)
         ZipOutputStream(target.outputStream()).use { zip ->
             fun put(entry: String, bytes: ByteArray, stored: Boolean) {

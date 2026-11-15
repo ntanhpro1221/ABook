@@ -46,6 +46,33 @@ def test_hako_preserves_source_order_duplicate_titles_and_each_volume_cover():
     assert [c.text for c in book.chapters] == ['Red clock.', 'Blue clock.']
 
 
+def test_epub_toc_preserves_volumes_chapter_order_and_their_cover_images(tmp_path):
+    path = tmp_path / 'original.epub'
+    with zipfile.ZipFile(path, 'w') as archive:
+        archive.writestr('mimetype', 'application/epub+zip')
+        archive.writestr('META-INF/container.xml', '<container xmlns="urn:oasis:names:tc:opendocument:xmlns:container"><rootfiles><rootfile full-path="OPS/book.opf"/></rootfiles></container>')
+        archive.writestr('OPS/book.opf', '''<package xmlns="http://www.idpf.org/2007/opf" version="3.0" unique-identifier="id">
+        <metadata xmlns:dc="http://purl.org/dc/elements/1.1/"><dc:identifier id="id">original-clock</dc:identifier><dc:title>Clock fixture</dc:title><dc:language>vi</dc:language></metadata>
+        <manifest><item id="nav" href="nav.xhtml" media-type="application/xhtml+xml" properties="nav"/>
+        <item id="a" href="a.xhtml" media-type="application/xhtml+xml"/><item id="b" href="b.xhtml" media-type="application/xhtml+xml"/>
+        <item id="c" href="c.xhtml" media-type="application/xhtml+xml"/><item id="d" href="d.xhtml" media-type="application/xhtml+xml"/>
+        <item id="red" href="red.jpg" media-type="image/jpeg"/><item id="blue" href="blue.jpg" media-type="image/jpeg"/></manifest>
+        <spine><itemref idref="a"/><itemref idref="b"/><itemref idref="c"/><itemref idref="d"/></spine></package>''')
+        archive.writestr('OPS/nav.xhtml', '''<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops"><body><nav epub:type="toc"><ol>
+        <li><a href="a.xhtml">Tập 1</a></li><li><a href="b.xhtml">Chương 1</a></li>
+        <li><a href="c.xhtml">Tập 2</a></li><li><a href="d.xhtml">Chương 1</a></li></ol></nav></body></html>''')
+        for name, title, color in [('a', 'Tập 1', 'red'), ('b', 'Chương 1', None), ('c', 'Tập 2', 'blue'), ('d', 'Chương 1', None)]:
+            art = f'<img src="{color}.jpg"/>' if color else ''
+            archive.writestr(f'OPS/{name}.xhtml', f'<html xmlns="http://www.w3.org/1999/xhtml"><body><h1>{title}</h1>{art}<p>The clock beside the window has a quiet ticking sound.</p></body></html>')
+        archive.writestr('OPS/red.jpg', image('red'))
+        archive.writestr('OPS/blue.jpg', image('blue'))
+    book = importers.import_text(path)
+    assert [v.title for v in book.volumes] == ['Tập 1', 'Tập 2']
+    assert [c.volume for c in book.chapters] == [1, 1, 2, 2]
+    assert book.volumes[0].cover_bytes == image('red')
+    assert book.volumes[1].cover_bytes == image('blue')
+
+
 def test_nested_roundtrip_checks_covers_and_keeps_global_chapter_identity(tmp_path):
     path = textbook.build(imported(), tmp_path / 'book.abook')
     with zipfile.ZipFile(path) as archive:
@@ -66,7 +93,7 @@ def test_invalid_tree_is_refused(change):
     rows = book['volumes'][0]['chapters']
     if change == 'duplicate': rows[1]['id'] = 1
     if change == 'reorder': rows.reverse()
-    if change == 'empty': rows.clear()
+    if change == 'empty': book['volumes'].append({'id': 2, 'number': 2, 'title': 'Empty', 'chapters': []})
     if change == 'cover': book['volumes'][0]['cover'] = {'file': '../outside.jpg'}
     with pytest.raises(ValueError): bv.flatten(book)
 
@@ -164,16 +191,35 @@ def test_same_text_split_or_not_gives_identical_segments(tmp_path):
     assert rows(plain) == rows(split)
 
 
-def test_a_single_plain_volume_keeps_the_flat_format_and_the_lowest_version(tmp_path):
+def test_a_single_plain_volume_uses_the_same_tree_format(tmp_path):
     book = importers.ImportedBook('One volume', chapters=[importers.Chapter('A', 'Mot.'), importers.Chapter('B', 'Hai.')])
     path = textbook.build(book, tmp_path / 'one.abook')
     with zipfile.ZipFile(path) as archive:
         raw = json.loads(archive.read('book.json'))
-    assert 'volumes' not in raw and [c['id'] for c in raw['chapters']] == [1, 2]
-    assert all('volumeId' not in c for c in raw['chapters'])
-    assert raw['package']['version'] == 5, 'chương chỉ-chữ: phiên bản thấp nhất đủ chứa, không phải 6'
+    assert 'chapters' not in raw and [c['id'] for c in raw['volumes'][0]['chapters']] == [1, 2]
+    assert raw['package']['version'] == 6
     with bookfile.BookFile(path) as reader:
         assert [v['id'] for v in bv.volumes_of(reader.book)] == [1]
+
+
+def test_project_archive_reopens_volume_boundaries_and_cover_aliases(tmp_path):
+    from abook.webui import projectfile
+    from tests.test_project_file import _project
+    root = _project(tmp_path)
+    ids = [1, 2]
+    bv._write(root, [{'id': 1, 'number': 1, 'title': 'One', 'cover': None, 'start': None},
+                     {'id': 2, 'number': 2, 'title': 'Two', 'cover': None, 'start': 2}])
+    bv.save_cover(root, 2, image('blue'))
+    path = projectfile.pack(root, tmp_path / 'volumes.abookproj')
+    with projectfile.ProjectFile(path) as archive:
+        archive.verify()
+        assert [v['title'] for v in archive.book['volumes']] == ['One', 'Two']
+        assert archive.read('project/covers/2.jpg') == archive.read('covers/2.jpg')
+        restored, _ = archive.open_into(tmp_path / 'restored')
+    import sqlite3
+    with sqlite3.connect(restored / 'project.sqlite3') as connection:
+        chapters = [{'id': row[0]} for row in connection.execute('SELECT id FROM chapters ORDER BY chapter_index')]
+    assert [[c['id'] for c in v['chapters']] for v in bv.project(restored, chapters)] == [ids[:1], ids[1:]]
 
 
 def test_a_tree_in_an_older_version_is_refused(tmp_path):

@@ -20,6 +20,8 @@ import { pickFolder, useAppInfo } from "@/studio/data";
 import { RETRYING_NOTE } from "@/studio/musicLocal";
 import { OPEN_AUDIOBOOK_EVENT, startExport } from "./ExportBookFileJob";
 import { MusicMixOption, useMusicChoice } from "./musicMix";
+import { VolumeScope } from "./VolumeScope";
+import { api } from "@/studio/api";
 import {
   audiobookBody,
   fetchPlan,
@@ -152,20 +154,23 @@ export function AudiobookDialogHost() {
   const [book, setBook] = useState<ListenBook | null>(null);
   const [format, setFormat] = useMotionState<AudiobookFormat>("mp3");
   const [busy, setBusy] = useState(false);
+  const [volumeId, setVolumeId] = useState<number | null>(null);
+  const detail = useQuery({ queryKey: ["export-volume-detail", book?.id], enabled: book !== null,
+    queryFn: () => api<ListenBook>(`/api/listen/books/${book!.id}`) });
   const { data: info } = useAppInfo();
   const { data: voices } = useReadAloudVoices();
   const client = useQueryClient();
   useEffect(() => {
-    const listener = (event: Event) => setBook((event as CustomEvent<ListenBook>).detail);
+    const listener = (event: Event) => { setVolumeId(null); setBook((event as CustomEvent<ListenBook>).detail); };
     window.addEventListener(OPEN_AUDIOBOOK_EVENT, listener);
     return () => window.removeEventListener(OPEN_AUDIOBOOK_EVENT, listener);
   }, []);
 
   const voice = book && voices?.length ? resolveVoice(voices, chosenVoice(book.id)) : undefined;
   const plan = useQuery({
-    queryKey: ["audiobook-plan", book?.id, voice?.id],
+    queryKey: ["audiobook-plan", book?.id, voice?.id, volumeId],
     enabled: Boolean(book && voice),
-    queryFn: () => fetchPlan(book!.id, voice!.id),
+    queryFn: () => fetchPlan(book!.id, voice!.id, volumeId),
     staleTime: 0,
     gcTime: 0,
     retry: false,
@@ -196,7 +201,7 @@ export function AudiobookDialogHost() {
         chapters: plan.data?.chapters ?? book.chaptersTotal,
         target,
         cover: coverArtwork(book.title),
-        extra: audiobookBody(format, voice.id, music),
+        extra: audiobookBody(format, voice.id, music, volumeId),
       });
       setBook(null);
     } finally {
@@ -215,6 +220,7 @@ export function AudiobookDialogHost() {
       description={S.s_doc_ca_cuon_thanh_file_am_thanh_nghe_o_may_d043f850}
       width="max-w-[560px]"
     >
+      {(detail.data?.volumes?.length ?? 0) > 1 && <VolumeScope volumes={detail.data!.volumes!} value={volumeId} onChange={setVolumeId} />}
       <AudiobookForm
         format={format}
         onFormat={setFormat}

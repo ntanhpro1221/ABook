@@ -10,13 +10,15 @@ function formatLength(seconds) { return Cast.formatLength(seconds) }
 function volumeProgress(book, volume) {
     const rows = volume.chapters || []
     const states = book.state && book.state.chapters || {}
-    let heard = 0
+    let heard = 0, total = 0
     for (let i = 0; i < rows.length; ++i) {
         const row = rows[i], record = states[String(row.id)] || {}
         const duration = row.duration || record.duration || 0
-        heard += record.done ? 1 : duration > 0 ? Math.min(1, (record.heard || 0) / duration) : 0
+        const weight = duration > 0 ? duration : 1
+        total += weight
+        heard += (record.done ? 1 : duration > 0 ? Math.min(1, (record.heard || 0) / duration) : 0) * weight
     }
-    return rows.length ? heard / rows.length : 0
+    return total ? heard / total : 0
 }
 // Như formatLength nhưng làm tròn LÊN tới phút (thời gian còn lại).
 function formatLengthUp(seconds) {

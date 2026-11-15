@@ -121,7 +121,7 @@ object StudioPaths {
     )
 
     /** Các đường GHI bằng PUT (đúng tên `remote_studio.ALLOWED`): nhạc nền, "Chờ tôi duyệt", bỏ dòng ghi công khỏi phần đọc. */
-    val PUTS = setOf("music", "precast", "skip", "cover")
+    val PUTS = setOf("music", "precast", "skip", "cover", "volumes")
 
     /** Các đường XOÁ (đúng tên `remote_studio.ALLOWED`): chỉ ảnh bìa. */
     val DELETES = setOf("cover")
@@ -158,7 +158,7 @@ object StudioPaths {
     const val CREATE_BOOK = "/api/books"
 
     fun put(id: String, endpoint: String): String {
-        require(endpoint in PUTS) { S.s_duong_khong_hop_le_5a2f3cf7 }
+        require(endpoint in PUTS || Regex("volumes/[1-9][0-9]{0,8}/cover").matches(endpoint)) { S.s_duong_khong_hop_le_5a2f3cf7 }
         return book(id) + "/" + endpoint
     }
 

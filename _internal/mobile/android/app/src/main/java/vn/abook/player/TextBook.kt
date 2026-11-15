@@ -49,7 +49,7 @@ object TextBook {
         val used = book.chapters.map { it.volume }.toSet()
         val definitions = if (book.volumes.isEmpty()) listOf(BookImport.Volume(1, 1, S.s_volume_number(1))) else book.volumes
         result.put("volumes", JSONArray(definitions.filter { it.id in used }.map { volume ->
-            JSONObject().put("id", volume.id).put("number", volume.number).put("title", volume.title)
+            JSONObject().put("id", volume.id).put("number", volume.number).put("title", volume.title).put("cover", JSONObject.NULL)
         }))
         return BookVolumes.project(BookVolumes.nested(result))
     }
@@ -85,7 +85,18 @@ object TextBook {
             }
             cover?.let { files["cover.jpg"] = it.jpeg }
         }
-        return BookDocumentWriter.seal(bookJson(book, texts, cover), files, emptyMap(), BookEdits.empty(), 5, out)
+        val manifest = bookJson(book, texts, cover)
+        if (codec != null) for (volume in book.volumes) {
+            val source = volume.cover ?: continue
+            val definitions = manifest.getJSONArray("volumes")
+            val row = (0 until definitions.length()).map { definitions.getJSONObject(it) }.firstOrNull { it.getInt("id") == volume.id } ?: continue
+            val normalized = try { codec.normalize(source) } catch (_: CoverCodec.CoverError) { continue }
+            val file = "covers/${volume.id}.jpg"
+            files[file] = normalized.jpeg
+            row.put("cover", JSONObject().put("file", file).put("color", normalized.color).put("width", normalized.width)
+                .put("height", normalized.height).put("version", CoverVersion.of(normalized.jpeg)))
+        }
+        return BookDocumentWriter.seal(manifest, files, emptyMap(), BookEdits.empty(), BookVolumes.TREE_VERSION, out)
     }
 
     /**

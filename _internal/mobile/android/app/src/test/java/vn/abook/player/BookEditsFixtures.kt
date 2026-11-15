@@ -21,7 +21,11 @@ object BookEditsFixtures {
         found.canonicalFile
     }
 
-    fun file(relative: String) = File(dir, relative)
+    fun file(relative: String): File {
+        val source = File(dir, relative)
+        return if (relative.startsWith("written/") && source.isFile && (relative.endsWith(".abook") || relative.endsWith(".abookproj")))
+            CurrentBookFixture.build(source) else source
+    }
 
     fun bytes(relative: String): ByteArray = file(relative).readBytes()
 

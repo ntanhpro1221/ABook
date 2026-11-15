@@ -28,6 +28,35 @@ import vn.abook.player.ui.voice.VoiceText
  * lớp trung gian nào. Tin của việc nền đến qua [vn.abook.player.ExportLive.listen].
  */
 class ExportRepo(private val context: Context) : ExportSource {
+    override suspend fun fileVolumeTitle(book: ListenBook, kind: ExportKind, volumeId: Int?): String =
+        if (volumeId == null) fileTitle(book, kind) else io {
+            if (kind == ExportKind.Audiobook) ExportStart.audiobookTitle(book.id, volumeId) else Mp3Export.plan(book.id, volumeId = volumeId).title
+        }
+    override suspend fun volumePlan(bookId: String, voice: String, music: Boolean?, volumeId: Int?): AudiobookPlan = io {
+        Playback.init(context)
+        ExportJson.plan(ExportStart.audiobookPlan(context, bookId, voice, music, volumeId))
+    }
+    override suspend fun startVolumeAudiobook(book: ListenBook, voice: String, file: String, music: Boolean, volumeId: Int?): Started = io {
+        started(ExportStart.audiobook(context, book.id, voice, Uri.parse(file), drawn(book), music, volumeId))
+    }
+    override suspend fun volumes(bookId: String): List<ExportVolume> = io {
+        val book = Store.manifest(bookId) ?: return@io emptyList()
+        vn.abook.player.BookVolumes.project(book)
+        val array = book.optJSONArray("volumes") ?: return@io emptyList()
+        (0 until array.length()).map { index ->
+            val volume = array.getJSONObject(index)
+            val chapters = volume.getJSONArray("chapters")
+            ExportVolume(volume.getInt("id"), volume.getString("title"), (0 until chapters.length()).map { chapters.getJSONObject(it).getInt("id") })
+        }
+    }
+    override suspend fun startVolumeMp3(book: ListenBook, chapterIds: List<Int>?, music: Boolean, volumeId: Int?): Started = io {
+        val tree = Mp3Exports.remembered(context) ?: throw ExportFailure(S.s_chon_thu_muc_de_luu_truoc_8de01c85)
+        started(ExportStart.mp3(context, book.id, tree, drawn(book), chapterIds, music, volumeId))
+    }
+    override suspend fun startVolumeM4b(book: ListenBook, file: String, music: Boolean, volumeId: Int?): Started = io {
+        started(ExportStart.m4b(context, book.id, Uri.parse(file), drawn(book), music, volumeId))
+    }
+
     private suspend fun <T> io(block: () -> T): T = withContext(Dispatchers.IO) {
         Store.init(context)
         block()

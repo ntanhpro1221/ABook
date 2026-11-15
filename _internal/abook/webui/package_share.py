@@ -24,6 +24,7 @@ from pathlib import Path
 from typing import Any
 
 from ..io_utils import atomic_write_json
+from .. import book_volumes
 from . import audio_revision, book_edits, book_wishes, covers, edits_inbox, listen_view, music_plan, packages, store
 
 
@@ -135,6 +136,9 @@ def manifest(path: Path, key: str) -> dict[str, Any]:
         "cover": {**meta, "file": covers.COVER_FILE} if meta else None,
         **({"music": music} if music else {}),
     }
+    for chapter in chapters:
+        chapter.setdefault("volumeId", book_volumes.volumes_of(book)[0]["id"])
+    result["volumes"] = book_volumes.group(chapters, book_volumes.volumes_of(book))
     result["metaVersion"] = listen_view.metadata_version(result)
     return result
 
@@ -184,6 +188,10 @@ def resolve_file(path: Path, relative: str) -> Path | bytes | None:
     if music_plan.TRACK_FILE.fullmatch(relative):
         return packages.music_file(path, relative)
     book = packages.edited_manifest(path)
+    if book_volumes.COVER_FILE.fullmatch(relative):
+        if any(v.get("cover", {}).get("file") == relative for v in book_volumes.volumes_of(book) if v.get("cover")):
+            return packages._file(path, relative)
+        return None
     if relative in (book.get("samples") or []):
         return packages.sample_file(path, int(relative.split("/")[1].split(".")[0]))
     for chapter in book.get("chapters") or []:

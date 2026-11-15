@@ -27,7 +27,7 @@ enum class ExportKind(val wire: String) {
 
 /** Hai dạng file người nghe chọn cho sách đã có tiếng. Sách chỉ có chữ chỉ có M4B (máy đọc cả cuốn rồi ghép), nên không có lựa chọn. */
 enum class ExportFormat(override val key: String, override val label: String) : Choice {
-    Mp3("mp3", S.s_mp3_theo_chuong_a08d3a89), M4b("m4b", S.s_m4b_ca_cuon_2cba5ce9);
+    Mp3("mp3", S.s_mp3_theo_chuong_a08d3a89), M4b("m4b", S.s_m4b_c793d08a);
 
     fun kind(textOnly: Boolean): ExportKind = if (textOnly) ExportKind.Audiobook else if (this == Mp3) ExportKind.Mp3 else ExportKind.M4b
 }
@@ -422,3 +422,6 @@ sealed interface ExportPhase {
             is Done, is Stopped, is Failed -> 2
         }
 }
+
+@Immutable
+data class ExportVolume(val id: Int, val title: String, val chapters: List<Int>)

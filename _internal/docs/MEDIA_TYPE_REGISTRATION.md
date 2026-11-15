@@ -10,6 +10,12 @@ bảng cuối file. Cả hai đã gửi ngày 01-10 (`.abook` mã hồ sơ IANA 
 chính thức ngày 28-10-2026**: `application/vnd.ngdtuanh.abook+zip` và `application/vnd.ngdtuanh.abookproj+zip`, có trong
 sổ https://www.iana.org/assignments/media-types.
 
+Volume organization (15-11): `.abook` version 6 stores book → volumes → chapters, with optional `covers/<id>.jpg`.
+The `.abookproj` container keeps its existing generic project namespace and carries a version-6 listening layer plus
+`project/volumes.json`. The registered names `application/vnd.ngdtuanh.abook+zip` and
+`application/vnd.ngdtuanh.abookproj+zip`, their ZIP magic and both extensions remain unchanged. This is a specification
+revision under the existing registrations; this development task does not submit or rename a media type.
+
 ## Chủ sách làm (khoảng 10 phút)
 
 1. Mở https://www.iana.org/form/media-types

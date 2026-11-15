@@ -162,6 +162,13 @@ private fun OptionsPage(book: ListenBook, ui: ExportUi, exports: ExportState) {
                 }
             }
         }
+        item("volumes", "row") {
+            Reveal(ui.volumes.size > 1) {
+                val choices = listOf(vn.abook.player.ui.components.Option<Int?>(null, S.s_volume_all)) + ui.volumes.map { vn.abook.player.ui.components.Option<Int?>(it.id, it.title) }
+                ChoiceSetting(S.s_volumes, choices, choices.firstOrNull { it.value == ui.volumeId } ?: choices.first(),
+                    { choice, _ -> exports.setVolume(book, choice.value) }, "export_volume")
+            }
+        }
         item("music", "row") {
             Reveal(ui.music.available) {
                 Column(Modifier.fillMaxWidth()) {

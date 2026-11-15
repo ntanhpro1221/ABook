@@ -34,48 +34,59 @@
      "chaptersAvailable": 0,
      "complete": false,
      "version": "c3e5fbb23ea31b85",
-     "chapters": [
+     "samples": [],
+     "cover": null,
+     "volumes": [
       {
        "id": 1,
-       "index": 1,
-       "title": "Chương 1: Bến phà lúc bình minh",
-       "subtitle": "",
-       "fullTitle": "Chương 1: Bến phà lúc bình minh",
-       "duration": 0,
-       "available": false,
-       "size": 0,
-       "state": "text",
-       "text": "texts/1.txt"
-      },
-      {
-       "id": 2,
-       "index": 2,
-       "title": "Chương 2: Người khách lạ",
-       "subtitle": "",
-       "fullTitle": "Chương 2: Người khách lạ",
-       "duration": 0,
-       "available": false,
-       "size": 0,
-       "state": "text",
-       "text": "texts/2.txt"
-      },
-      {
-       "id": 3,
-       "index": 3,
-       "title": "Chương 3",
-       "subtitle": "",
-       "fullTitle": "Chương 3",
-       "duration": 0,
-       "available": false,
-       "size": 0,
-       "state": "text",
-       "text": "texts/3.txt"
+       "number": 1,
+       "title": "Quyển 1",
+       "cover": null,
+       "chapters": [
+        {
+         "id": 1,
+         "index": 1,
+         "volumeId": 1,
+         "title": "Chương 1: Bến phà lúc bình minh",
+         "subtitle": "",
+         "fullTitle": "Chương 1: Bến phà lúc bình minh",
+         "duration": 0,
+         "available": false,
+         "size": 0,
+         "state": "text",
+         "text": "texts/1.txt"
+        },
+        {
+         "id": 2,
+         "index": 2,
+         "volumeId": 1,
+         "title": "Chương 2: Người khách lạ",
+         "subtitle": "",
+         "fullTitle": "Chương 2: Người khách lạ",
+         "duration": 0,
+         "available": false,
+         "size": 0,
+         "state": "text",
+         "text": "texts/2.txt"
+        },
+        {
+         "id": 3,
+         "index": 3,
+         "volumeId": 1,
+         "title": "Chương 3",
+         "subtitle": "",
+         "fullTitle": "Chương 3",
+         "duration": 0,
+         "available": false,
+         "size": 0,
+         "state": "text",
+         "text": "texts/3.txt"
+        }
+       ]
       }
-     ],
-     "samples": [],
-     "cover": null
+     ]
     },
-    "version": 5,
+    "version": 6,
     "files": {
      "texts/1.txt": {
       "size": 648,
@@ -180,84 +191,98 @@
      "chaptersAvailable": 0,
      "complete": false,
      "version": "deb8f27a55ceb6b0",
-     "chapters": [
+     "samples": [],
+     "cover": null,
+     "volumes": [
       {
        "id": 1,
-       "index": 1,
-       "title": "Chương 1",
-       "subtitle": "",
-       "fullTitle": "Chương 1",
-       "duration": 0,
-       "available": false,
-       "size": 0,
-       "state": "text",
-       "text": "texts/1.txt"
-      },
-      {
-       "id": 2,
-       "index": 2,
-       "title": "Chương 1",
-       "subtitle": "",
-       "fullTitle": "Chương 1",
-       "duration": 0,
-       "available": false,
-       "size": 0,
-       "state": "text",
-       "text": "texts/2.txt"
-      },
-      {
-       "id": 3,
-       "index": 3,
-       "title": "Chương hai",
-       "subtitle": "",
-       "fullTitle": "Chương hai",
-       "duration": 0,
-       "available": false,
-       "size": 0,
-       "state": "text",
-       "text": "texts/3.txt"
-      },
-      {
-       "id": 4,
-       "index": 4,
-       "title": "9 Ngoại truyện",
-       "subtitle": "",
-       "fullTitle": "9 Ngoại truyện",
-       "duration": 0,
-       "available": false,
-       "size": 0,
-       "state": "text",
-       "text": "texts/4.txt"
-      },
-      {
-       "id": 5,
-       "index": 5,
-       "title": "Chương ba",
-       "subtitle": "",
-       "fullTitle": "Chương ba",
-       "duration": 0,
-       "available": false,
-       "size": 0,
-       "state": "text",
-       "text": "texts/5.txt"
-      },
-      {
-       "id": 6,
-       "index": 6,
-       "title": "Chương ١١",
-       "subtitle": "",
-       "fullTitle": "Chương ١١",
-       "duration": 0,
-       "available": false,
-       "size": 0,
-       "state": "text",
-       "text": "texts/6.txt"
+       "number": 1,
+       "title": "Quyển 1",
+       "cover": null,
+       "chapters": [
+        {
+         "id": 1,
+         "index": 1,
+         "volumeId": 1,
+         "title": "Chương 1",
+         "subtitle": "",
+         "fullTitle": "Chương 1",
+         "duration": 0,
+         "available": false,
+         "size": 0,
+         "state": "text",
+         "text": "texts/1.txt"
+        },
+        {
+         "id": 2,
+         "index": 2,
+         "volumeId": 1,
+         "title": "Chương 1",
+         "subtitle": "",
+         "fullTitle": "Chương 1",
+         "duration": 0,
+         "available": false,
+         "size": 0,
+         "state": "text",
+         "text": "texts/2.txt"
+        },
+        {
+         "id": 3,
+         "index": 3,
+         "volumeId": 1,
+         "title": "Chương hai",
+         "subtitle": "",
+         "fullTitle": "Chương hai",
+         "duration": 0,
+         "available": false,
+         "size": 0,
+         "state": "text",
+         "text": "texts/3.txt"
+        },
+        {
+         "id": 4,
+         "index": 4,
+         "volumeId": 1,
+         "title": "9 Ngoại truyện",
+         "subtitle": "",
+         "fullTitle": "9 Ngoại truyện",
+         "duration": 0,
+         "available": false,
+         "size": 0,
+         "state": "text",
+         "text": "texts/4.txt"
+        },
+        {
+         "id": 5,
+         "index": 5,
+         "volumeId": 1,
+         "title": "Chương ba",
+         "subtitle": "",
+         "fullTitle": "Chương ba",
+         "duration": 0,
+         "available": false,
+         "size": 0,
+         "state": "text",
+         "text": "texts/5.txt"
+        },
+        {
+         "id": 6,
+         "index": 6,
+         "volumeId": 1,
+         "title": "Chương ١١",
+         "subtitle": "",
+         "fullTitle": "Chương ١١",
+         "duration": 0,
+         "available": false,
+         "size": 0,
+         "state": "text",
+         "text": "texts/6.txt"
+        }
+       ]
       }
-     ],
-     "samples": [],
-     "cover": null
+     ]
     },
-    "version": 5,
+    "version": 6,
     "files": {
      "texts/1.txt": {
       "size": 73,
@@ -394,60 +419,72 @@
      "chaptersAvailable": 0,
      "complete": false,
      "version": "fb44664b529650f2",
-     "chapters": [
+     "samples": [],
+     "cover": null,
+     "volumes": [
       {
        "id": 1,
-       "index": 1,
-       "title": "Mở đầu",
-       "subtitle": "",
-       "fullTitle": "Mở đầu",
-       "duration": 0,
-       "available": false,
-       "size": 0,
-       "state": "text",
-       "text": "texts/1.txt"
-      },
-      {
-       "id": 2,
-       "index": 2,
-       "title": "Chương 1: Bến phà lúc bình minh",
-       "subtitle": "",
-       "fullTitle": "Chương 1: Bến phà lúc bình minh",
-       "duration": 0,
-       "available": false,
-       "size": 0,
-       "state": "text",
-       "text": "texts/2.txt"
-      },
-      {
-       "id": 3,
-       "index": 3,
-       "title": "Chương 2: Người khách lạ",
-       "subtitle": "",
-       "fullTitle": "Chương 2: Người khách lạ",
-       "duration": 0,
-       "available": false,
-       "size": 0,
-       "state": "text",
-       "text": "texts/3.txt"
-      },
-      {
-       "id": 4,
-       "index": 4,
-       "title": "Chương 3: Cơn mưa cuối mùa",
-       "subtitle": "",
-       "fullTitle": "Chương 3: Cơn mưa cuối mùa",
-       "duration": 0,
-       "available": false,
-       "size": 0,
-       "state": "text",
-       "text": "texts/4.txt"
+       "number": 1,
+       "title": "Quyển 1",
+       "cover": null,
+       "chapters": [
+        {
+         "id": 1,
+         "index": 1,
+         "volumeId": 1,
+         "title": "Mở đầu",
+         "subtitle": "",
+         "fullTitle": "Mở đầu",
+         "duration": 0,
+         "available": false,
+         "size": 0,
+         "state": "text",
+         "text": "texts/1.txt"
+        },
+        {
+         "id": 2,
+         "index": 2,
+         "volumeId": 1,
+         "title": "Chương 1: Bến phà lúc bình minh",
+         "subtitle": "",
+         "fullTitle": "Chương 1: Bến phà lúc bình minh",
+         "duration": 0,
+         "available": false,
+         "size": 0,
+         "state": "text",
+         "text": "texts/2.txt"
+        },
+        {
+         "id": 3,
+         "index": 3,
+         "volumeId": 1,
+         "title": "Chương 2: Người khách lạ",
+         "subtitle": "",
+         "fullTitle": "Chương 2: Người khách lạ",
+         "duration": 0,
+         "available": false,
+         "size": 0,
+         "state": "text",
+         "text": "texts/3.txt"
+        },
+        {
+         "id": 4,
+         "index": 4,
+         "volumeId": 1,
+         "title": "Chương 3: Cơn mưa cuối mùa",
+         "subtitle": "",
+         "fullTitle": "Chương 3: Cơn mưa cuối mùa",
+         "duration": 0,
+         "available": false,
+         "size": 0,
+         "state": "text",
+         "text": "texts/4.txt"
+        }
+       ]
       }
-     ],
-     "samples": [],
-     "cover": null
+     ]
     },
-    "version": 5,
+    "version": 6,
     "files": {
      "texts/1.txt": {
       "size": 42,
@@ -549,36 +586,46 @@
      "chaptersAvailable": 0,
      "complete": false,
      "version": "fb47b759eaa779b7",
-     "chapters": [
+     "samples": [],
+     "cover": null,
+     "volumes": [
       {
        "id": 1,
-       "index": 1,
-       "title": "Mở đầu",
-       "subtitle": "",
-       "fullTitle": "Mở đầu",
-       "duration": 0,
-       "available": false,
-       "size": 0,
-       "state": "text",
-       "text": "texts/1.txt"
-      },
-      {
-       "id": 2,
-       "index": 2,
-       "title": "Chương 2",
-       "subtitle": "",
-       "fullTitle": "Chương 2",
-       "duration": 0,
-       "available": false,
-       "size": 0,
-       "state": "text",
-       "text": "texts/2.txt"
+       "number": 1,
+       "title": "Quyển 1",
+       "cover": null,
+       "chapters": [
+        {
+         "id": 1,
+         "index": 1,
+         "volumeId": 1,
+         "title": "Mở đầu",
+         "subtitle": "",
+         "fullTitle": "Mở đầu",
+         "duration": 0,
+         "available": false,
+         "size": 0,
+         "state": "text",
+         "text": "texts/1.txt"
+        },
+        {
+         "id": 2,
+         "index": 2,
+         "volumeId": 1,
+         "title": "Chương 2",
+         "subtitle": "",
+         "fullTitle": "Chương 2",
+         "duration": 0,
+         "available": false,
+         "size": 0,
+         "state": "text",
+         "text": "texts/2.txt"
+        }
+       ]
       }
-     ],
-     "samples": [],
-     "cover": null
+     ]
     },
-    "version": 5,
+    "version": 6,
     "files": {
      "texts/1.txt": {
       "size": 42,
@@ -666,60 +713,72 @@
      "chaptersAvailable": 0,
      "complete": false,
      "version": "6b865993c3c17a22",
-     "chapters": [
+     "samples": [],
+     "cover": null,
+     "volumes": [
       {
        "id": 1,
-       "index": 1,
-       "title": "Bìa",
-       "subtitle": "",
-       "fullTitle": "Bìa",
-       "duration": 0,
-       "available": false,
-       "size": 0,
-       "state": "text",
-       "text": "texts/1.txt"
-      },
-      {
-       "id": 2,
-       "index": 2,
-       "title": "Mở đầu mới",
-       "subtitle": "",
-       "fullTitle": "Mở đầu mới",
-       "duration": 0,
-       "available": false,
-       "size": 0,
-       "state": "text",
-       "text": "texts/2.txt"
-      },
-      {
-       "id": 3,
-       "index": 3,
-       "title": "Chương 2",
-       "subtitle": "",
-       "fullTitle": "Chương 2",
-       "duration": 0,
-       "available": false,
-       "size": 0,
-       "state": "text",
-       "text": "texts/3.txt"
-      },
-      {
-       "id": 4,
-       "index": 4,
-       "title": "Bản quyền",
-       "subtitle": "",
-       "fullTitle": "Bản quyền",
-       "duration": 0,
-       "available": false,
-       "size": 0,
-       "state": "text",
-       "text": "texts/4.txt"
+       "number": 1,
+       "title": "Quyển 1",
+       "cover": null,
+       "chapters": [
+        {
+         "id": 1,
+         "index": 1,
+         "volumeId": 1,
+         "title": "Bìa",
+         "subtitle": "",
+         "fullTitle": "Bìa",
+         "duration": 0,
+         "available": false,
+         "size": 0,
+         "state": "text",
+         "text": "texts/1.txt"
+        },
+        {
+         "id": 2,
+         "index": 2,
+         "volumeId": 1,
+         "title": "Mở đầu mới",
+         "subtitle": "",
+         "fullTitle": "Mở đầu mới",
+         "duration": 0,
+         "available": false,
+         "size": 0,
+         "state": "text",
+         "text": "texts/2.txt"
+        },
+        {
+         "id": 3,
+         "index": 3,
+         "volumeId": 1,
+         "title": "Chương 2",
+         "subtitle": "",
+         "fullTitle": "Chương 2",
+         "duration": 0,
+         "available": false,
+         "size": 0,
+         "state": "text",
+         "text": "texts/3.txt"
+        },
+        {
+         "id": 4,
+         "index": 4,
+         "volumeId": 1,
+         "title": "Bản quyền",
+         "subtitle": "",
+         "fullTitle": "Bản quyền",
+         "duration": 0,
+         "available": false,
+         "size": 0,
+         "state": "text",
+         "text": "texts/4.txt"
+        }
+       ]
       }
-     ],
-     "samples": [],
-     "cover": null
+     ]
     },
-    "version": 5,
+    "version": 6,
     "files": {
      "texts/1.txt": {
       "size": 7,

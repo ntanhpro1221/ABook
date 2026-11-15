@@ -74,6 +74,7 @@ object StudioText {
         StudioSubKind.Export -> StudioExportText.TITLE
         StudioSubKind.Activity -> StudioLogText.TITLE
         StudioSubKind.Cover -> StudioCoverText.TITLE
+        StudioSubKind.Volumes -> S.s_volume_manage
     }
     const val NO_CHAPTERS = S.s_chua_co_chuong_nao_35e56dd1
 

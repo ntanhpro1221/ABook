@@ -306,19 +306,20 @@ export function ChapterGroups({ book, currentChapter, onDone, onRename, prepared
       <MotionPresence open={Boolean(onRename)}><VolumeEditor book={book} /></MotionPresence>
       {selected ? <>
         <Button variant="ghost" onClick={() => setSelectedVolume(null)}>{S.s_volumes}</Button>
-        <h3 className="mt-3 text-lg font-medium">{selected.title}</h3>
+        <h2 className="mt-3 text-lg font-medium">{selected.title}</h2>
         <ChapterGroupList {...list} chapters={chapters.filter(chapter => selected.chapters.some(c => c.id === chapter.id))} memory={`book.${book.id}.volume.${selected.id}`} />
       </> : <div role="list" aria-label={S.s_volumes} data-motion-live>
         {book.volumes?.map(volume => {
           const rows = chapters.filter(chapter => volume.chapters.some(c => c.id === chapter.id));
-          const progress = rows.length ? rows.reduce((total, chapter) => total + chapterHeard(book.state, chapter), 0) / rows.length : 0;
-          return <button key={volume.id} type="button" role="listitem" onClick={() => setSelectedVolume(volume.id)} className="flex w-full items-center gap-4 rounded-control p-3 text-left hover:bg-hover">
-            <BookCover title={volume.title} size="sm" image={volume.cover ?? book.cover} />
+          const weight = rows.reduce((total, chapter) => total + (chapter.duration || 1), 0);
+          const progress = weight ? rows.reduce((total, chapter) => total + chapterHeard(book.state, chapter) * (chapter.duration || 1), 0) / weight : 0;
+          return <div key={volume.id} role="listitem"><button type="button" onClick={() => setSelectedVolume(volume.id)} className="flex w-full items-center gap-4 rounded-control p-3 text-left hover:bg-hover">
+            <BookCover title={volume.cover ? volume.title : book.title} size="sm" image={volume.cover ?? book.cover} className="w-14 aspect-[2/3]" />
             <div className="min-w-0 flex-1"><div className="font-medium">{volume.title}</div>
               <div className="text-xs text-fg-2">{S.s_volume_progress(formatNumber(rows.length), formatNumber(Math.round(progress * 100)))}</div>
               <Progress value={progress} label={S.s_da_nghe_1e0f8d88} className="mt-2" />
             </div>
-          </button>;
+          </button></div>;
         })}
       </div>}
     </MotionRegion>;

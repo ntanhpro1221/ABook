@@ -54,7 +54,7 @@ def test_the_book_file_carries_the_producers_music(tmp_path: Path) -> None:
     with BookFile(path) as book:
         book.verify()
         manifest = json.loads(book.read("book.json"))
-        assert manifest["package"]["version"] == 2
+        assert manifest["package"]["version"] == 6
         music = manifest["music"]
         assert music["levelDb"] == -18.0 and set(music["tracks"]) == {calm, battle}
         assert music["tracks"][calm]["attribution"] == "Calm by A (CC BY 4.0)", "ghi công đi theo bài"
@@ -65,13 +65,13 @@ def test_the_book_file_carries_the_producers_music(tmp_path: Path) -> None:
                                           ], "hai đoạn liền cùng bài gộp"
 
 
-def test_a_book_without_music_keeps_the_old_format_so_older_apps_open_it(tmp_path: Path) -> None:
+def test_a_book_without_music_uses_the_current_volume_format(tmp_path: Path) -> None:
     project = make_project(tmp_path)
     _plan(project, enabled=False)
     path = bookfile.pack(project, tmp_path / f"sach{bookfile.EXTENSION}", music_track=_tracks(tmp_path), partial=True)
     with BookFile(path) as book:
         manifest = json.loads(book.read("book.json"))
-    assert manifest["package"]["version"] == 1 and "music" not in manifest
+    assert manifest["package"]["version"] == 6 and "music" not in manifest
     assert not any(name.startswith("music/") for name in manifest["package"]["files"])
 
 

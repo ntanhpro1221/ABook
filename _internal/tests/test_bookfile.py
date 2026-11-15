@@ -201,8 +201,22 @@ def test_the_file_never_carries_anyones_listening(tmp_path: Path) -> None:
     path = bookfile.pack(project, tmp_path / f"sach{bookfile.EXTENSION}", partial=True)
 
     with zipfile.ZipFile(path) as archive:
-        everything = "".join(archive.read(name).decode("utf-8") for name in archive.namelist() if name.endswith(".json"))
-    assert "42.5" not in everything and "1.37" not in everything and '"done": true' not in everything
+        documents = [json.loads(archive.read(name)) for name in archive.namelist() if name.endswith(".json")]
+
+    def no_listening(value):
+        if isinstance(value, dict):
+            assert value.get("done") is not True
+            for child in value.values():
+                no_listening(child)
+        elif isinstance(value, list):
+            for child in value:
+                no_listening(child)
+        else:
+            # A timestamp such as 00:15:01.371284 is metadata, not the listener's 1.37 rate.
+            assert value not in (42.5, 1.37, "42.5", "1.37")
+
+    for document in documents:
+        no_listening(document)
 
 
 def test_the_book_carries_no_id_of_any_app(tmp_path: Path) -> None:
@@ -454,7 +468,7 @@ def test_no_version_carries_the_machines_series_link(tmp_path: Path, series: boo
     with zipfile.ZipFile(path) as archive:
         book = json.loads(archive.read("book.json"))
         everything = "".join(archive.read(name).decode("utf-8") for name in archive.namelist() if name.endswith(".json"))
-    assert book["package"]["version"] == (bookfile.FORMAT_VERSION if series else 1) and "series" not in book
+    assert book["package"]["version"] == bookfile.FORMAT_VERSION and "series" not in book
     assert book_id(projects[0]) not in everything and book_id(projects[1]) not in everything
 
 

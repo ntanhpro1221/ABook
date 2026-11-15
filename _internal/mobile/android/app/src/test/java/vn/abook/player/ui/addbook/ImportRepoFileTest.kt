@@ -18,6 +18,7 @@ import org.robolectric.annotation.Config
 import org.robolectric.shadows.ShadowContentResolver
 import org.json.JSONObject
 import vn.abook.player.BookFileImport
+import vn.abook.player.BookVolumes
 import vn.abook.player.Store
 import java.io.File
 import java.util.zip.ZipEntry
@@ -45,7 +46,7 @@ class ImportRepoFileTest {
                 val files = JSONObject()
                 for ((name, bytes) in content) files.put(name, JSONObject().put("size", bytes.size)
                     .put("sha256", java.security.MessageDigest.getInstance("SHA-256").digest(bytes).joinToString("") { "%02x".format(it) }))
-                book.getJSONObject("package").put("files", files)
+                book.getJSONObject("package").put("files", files).put("version", 6)
                 val file = File(context.cacheDir, "Bản cập nhật.abook")
                 ZipOutputStream(file.outputStream()).use { zip ->
                     val mime = BookFileImport.MIMETYPE.toByteArray()
@@ -54,7 +55,7 @@ class ImportRepoFileTest {
                         crc = java.util.zip.CRC32().apply { update(mime) }.value
                     })
                     zip.write(mime); zip.closeEntry()
-                    for ((name, bytes) in content + ("book.json" to book.toString().toByteArray())) {
+                    for ((name, bytes) in content + ("book.json" to BookVolumes.nested(book).toString().toByteArray())) {
                         zip.putNextEntry(ZipEntry(name)); zip.write(bytes); zip.closeEntry()
                     }
                 }
@@ -117,7 +118,7 @@ class ImportRepoFileTest {
                 crc = java.util.zip.CRC32().apply { update(mime) }.value
             }
             zip.putNextEntry(entry); zip.write(mime); zip.closeEntry()
-            names.forEach { name -> zip.putNextEntry(ZipEntry(name)); zip.write(File(base,name).readBytes()); zip.closeEntry() }
+            names.forEach { name -> zip.putNextEntry(ZipEntry(name)); zip.write(if (name == "book.json") BookVolumes.nested(JSONObject(File(base, name).readText()).apply { getJSONObject("package").put("version", 6) }).toString().toByteArray() else File(base,name).readBytes()); zip.closeEntry() }
         }
         val prepared = ImportRepo(context).prepare(ImportItem(1,Uri.fromFile(file).toString()))
         assertEquals(file.name, prepared.name)

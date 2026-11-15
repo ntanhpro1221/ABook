@@ -2,6 +2,7 @@ import type { Cast, CastMember, ListenBook, ListenChapter, ListeningSession, Lis
 import type { ImportPreview, ImportPreviewChapter } from "@/listen/textImport";
 import { bookProgress, textBookProgress } from "./progress";
 import { NOW_SECONDS } from "./clock";
+import { galleryState } from "./state";
 
 // Thư viện giả của phòng trưng bày: mười cuốn tiếng Việt tự đặt tên, văn bản tự viết (không chép truyện thật). Một nguồn duy nhất,
 // hai hình dạng: `listenBook` cho máy chủ giả của máy tính (như webui/listen_view.py), `localBook` cho lõi giả của điện thoại (book.json).
@@ -186,12 +187,15 @@ const isComplete = (book: GalleryBook) => !book.producing && !book.imported && b
 /** Hình dạng `/api/listen/library` + `/api/listen/books/<id>` của máy chủ máy tính. */
 export function listenBook(book: GalleryBook, withChapters: boolean): ListenBook {
   const items = listenChapters(book);
+  const split = galleryState.scenario.volumes && book.id === "suong-mu-2";
+  const middle = Math.ceil(items.length / 2);
+  if (split) items.forEach((chapter, index) => { chapter.volumeId = index < middle ? 1 : 2; });
   const available = items.filter((chapter) => chapter.available);
   const textOnly = Boolean(book.imported && book.chapters.every((chapter) => chapter.text));
   const complete = isComplete(book) || textOnly;
   return {
     id: book.id,
-    title: book.title,
+    title: split ? "Đồng hồ bên cửa sổ" : book.title,
     remote: book.streamed ? { computer: "Máy phòng khách" } : false,
     author: book.author,
     narrator: book.narrator,
@@ -214,6 +218,10 @@ export function listenBook(book: GalleryBook, withChapters: boolean): ListenBook
     eta: book.eta ?? null,
     series: book.series ?? null,
     chapters: withChapters ? items : undefined,
+    volumes: split && withChapters ? [
+      { id: 1, number: 1, title: "Tập một", cover: { url: "./covers/suong-mu-1.svg", color: "#36506b", width: 600, height: 900, version: 1 }, chapters: items.slice(0, middle) },
+      { id: 2, number: 2, title: "Tập hai", cover: { url: "./covers/suong-mu-3.svg", color: "#2f5d58", width: 600, height: 900, version: 1 }, chapters: items.slice(middle) },
+    ] : undefined,
     parts: [],
     records: [{ id: "r1", name: "Của tôi", active: true, createdAt: book.addedAt, updatedAt: book.state.updatedAt ?? null }],
     capabilities: { toolchain: true, workshop: !book.imported, link: false, sync: false, local: true },

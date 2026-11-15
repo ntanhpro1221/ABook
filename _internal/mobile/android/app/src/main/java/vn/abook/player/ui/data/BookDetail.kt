@@ -75,7 +75,9 @@ class BookDetail(
                     val selected = chapters.filter { it.volumeId == id }
                     VolumeLine(id, definition.getInt("number"), definition.getString("title"),
                         definition.optJSONObject("cover")?.optString("file")?.let(volumeCoverOf) ?: book.cover,
-                        selected.map { it.id }, if (selected.isEmpty()) 0f else selected.sumOf { it.heard.toDouble() }.toFloat() / selected.size)
+                        selected.map { it.id }, if (selected.isEmpty()) 0f else
+                            (selected.sumOf { it.heard.toDouble() * (it.duration.takeIf { value -> value > 0 } ?: 1.0) } /
+                                selected.sumOf { it.duration.takeIf { value -> value > 0 } ?: 1.0 }).toFloat())
                 }
             }.orEmpty()
             return BookDetail(

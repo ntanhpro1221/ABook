@@ -1,3 +1,4 @@
+import { VolumeScope } from "@/desktop/VolumeScope";
 import { S } from "../shared/strings.generated";
 import { MotionRegion } from "@/shared/MotionRegion";
 import { AnimatedRows, MotionPresence, Reveal } from "@/shared/MotionPresence";
@@ -13,7 +14,7 @@ import { listenOnlyOwner } from "@/shared/peerStudio";
 import { coverArtwork } from "@/shared/cover";
 import { fileName, formatNumber, formatSize } from "@/shared/format";
 import { spokenProgress } from "@/shared/progressSpeech";
-import { DialogActions, Button, Dialog, LiveText, Progress, radioGroupKeys, radioTabIndex, Select } from "@/shared/ui";
+import { DialogActions, Button, Dialog, LiveText, Progress, radioGroupKeys, radioTabIndex } from "@/shared/ui";
 import type { ListenVolume } from "@/listen/model";
 import { FfmpegNeeded } from "@/desktop/AudiobookDialog";
 import { MusicMixOption, useMusicChoice } from "@/desktop/musicMix";
@@ -208,7 +209,8 @@ export function ExportDialog({
   const musicPending = estimate.data?.musicPending ?? 0;
   const byVolume = audioKind && !wholeSeries && volumes.length > 1;
   const chosenVolume = byVolume ? volumes.find((volume) => volume.id === volumeId) : undefined;
-  const selectedCount = kind === "mp3" && !wholeSeries && changedOnly && changedChapters.length ? changedChapters.length
+  const volumeChanged = chosenVolume ? changedChapters.filter(id => chosenVolume.chapters.some(chapter => chapter.id === id)) : changedChapters;
+  const selectedCount = kind === "mp3" && !wholeSeries && changedOnly && changedChapters.length ? volumeChanged.length
     : chosenVolume ? chosenVolume.chapters.filter((chapter) => chapter.available).length : ready;
   const countText = kind === "abookproj" ? undefined : wholeSeries ? S.s_0_phan_40e8af8c(parts.length) : S.s_0_chuong_04093412(selectedCount);
   // Chỗ lưu nói trước khi bấm "Xuất": có hộp chọn thư mục của máy thì người dùng tự chọn, không thì vào thư mục "Đã xuất" của thư viện.
@@ -237,6 +239,9 @@ export function ExportDialog({
   }, [open]);
   const run = async (attach = false, chosen: Kind = kind) => {
     const kind = chosen; // "attach": mở hộp lúc máy chủ đang gói dự án - `kind` của hộp chưa kịp đổi theo
+    if (kind === "mp3" && !wholeSeries && changedOnly && changedChapters.length && !volumeChanged.length) {
+      toast.error(S.s_volume_no_changed); return;
+    }
     let target = "";
     if (info?.dialogs && !attach) {
       const picked = await pickFolder(SAVING[kind][0], "").catch(() => null);
@@ -246,7 +251,7 @@ export function ExportDialog({
     if (kind === "m4b" || kind === "mp3") {
       // Việc nền do ExportJobHost (desktop/App.tsx) giữ: tiến độ, Huỷ và kết quả hiện ở thông báo nổi, nên đóng hộp ngay.
       const extra = { ...(mixes ? { music: true } : {}), ...(kind === "mp3" && wholeSeries ? { series: true } : {}),
-        ...(kind === "mp3" && !wholeSeries && changedOnly && changedChapters.length ? { chapterIds: changedChapters } : {}),
+        ...(kind === "mp3" && !wholeSeries && changedOnly && changedChapters.length ? { chapterIds: volumeChanged } : {}),
         ...(chosenVolume ? { volumeId: chosenVolume.id } : {}) };
       startExport(kind, { id: book.id, chapters: wholeSeries ? 0 : selectedCount, target, cover: coverArtwork(book.title), ...(Object.keys(extra).length ? { extra } : {}) });
       onOpenChange(false);
@@ -450,13 +455,7 @@ export function ExportDialog({
         </div>
       )}
       <MotionPresence open={byVolume}>
-        <label className="mb-3 flex items-center gap-3 text-sm">
-          <span className="font-medium">{S.s_volumes}</span>
-          <Select inline aria-label={S.s_volumes} value={chosenVolume?.id ?? ""} onChange={(event) => setVolumeId(event.target.value ? Number(event.target.value) : null)}>
-            <option value="">{S.s_volume_all}</option>
-            {volumes.map((volume) => <option key={volume.id} value={volume.id}>{volume.title}</option>)}
-          </Select>
-        </label>
+        <VolumeScope volumes={volumes} value={chosenVolume?.id ?? null} onChange={setVolumeId} />
       </MotionPresence>
       <div className="relative grid divide-y divide-line" role="radiogroup" aria-label={S.s_kieu_ban_xuat_c2b4cb1e} onKeyDown={radioGroupKeys(kindValues, kind, setKind)}>
         <SlidingIndicator variant="line" />

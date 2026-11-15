@@ -197,6 +197,9 @@ ALLOWED: tuple[tuple[str, re.Pattern[str]], ...] = LISTEN_ROUTES + tuple((method
     ("GET", _BOOK + r"/voices"),
     ("GET", _BOOK + r"/cover/search"),
     ("PUT", _BOOK + r"/cover"),
+    ("GET", _BOOK + r"/volumes"),
+    ("PUT", _BOOK + r"/volumes"),
+    ("PUT", _BOOK + r"/volumes/[1-9][0-9]{0,8}/cover"),
     ("DELETE", _BOOK + r"/cover"),
     # Tab Nhạc nền (MusicTab.tsx): xem, chỉnh, dựng lại, "Đổi bài".
     ("GET", _BOOK + r"/music"),

@@ -1430,12 +1430,14 @@
     },
     {
       "id": "export",
+      "web_also": ["studio/ExportBook.tsx"],
       "web": [
         "desktop/AudiobookDialog.tsx",
         "desktop/ExportBookFileJob.tsx",
         "desktop/bookFileExport.ts",
         "desktop/listenExport.ts",
-        "desktop/musicMix.tsx"
+        "desktop/musicMix.tsx",
+        "desktop/VolumeScope.tsx"
       ],
       "native": [
         "export/*.kt"

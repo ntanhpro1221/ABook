@@ -167,10 +167,13 @@ describe("the calls to the server", () => {
     const calls = record(plan());
     await fetchPlan("abc", "edge:vi-VN-HoaiMyNeural");
     expect(calls[0].path).toBe("/api/listen/books/abc/audiobook/plan?voice=edge%3Avi-VN-HoaiMyNeural");
+    await fetchPlan("abc", "edge:vi-VN-HoaiMyNeural", 2);
+    expect(calls[1].path).toBe("/api/listen/books/abc/audiobook/plan?voice=edge%3Avi-VN-HoaiMyNeural&volumeId=2");
   });
 
   it("starts with the format and the voice the dialog chose", () => {
     expect(audiobookBody("m4b", "vieneu:duc-tri")).toEqual({ format: "m4b", voice: "vieneu:duc-tri" });
+    expect(audiobookBody("m4b", "vieneu:duc-tri", false, 2)).toEqual({ format: "m4b", voice: "vieneu:duc-tri", volumeId: 2 });
   });
 
   it("cancels the run of the book and starts the ffmpeg download", async () => {

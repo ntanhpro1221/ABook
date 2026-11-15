@@ -38,6 +38,8 @@ interface StudioSource {
 
     suspend fun book(computer: String, id: String): StudioPage
 
+    suspend fun volumes(computer: String, id: String): JSONObject = JSONObject()
+
     /** Làm lệnh; trả bản mới của sách (máy tính trả lại nó). */
     suspend fun command(computer: String, id: String, command: StudioCommand): StudioBook
 
@@ -155,6 +157,8 @@ class StudioRepo(
     override suspend fun library(computer: String): List<StudioBook> = parsed { StudioJson.library(api(computer).getObject(StudioPaths.LIBRARY)) }
 
     override suspend fun book(computer: String, id: String): StudioPage = parsed { StudioJson.page(api(computer).getObject(StudioPaths.book(id))) }
+
+    override suspend fun volumes(computer: String, id: String): JSONObject = parsed { api(computer).getObject(StudioPaths.book(id) + "/volumes") }
 
     override suspend fun command(computer: String, id: String, command: StudioCommand): StudioBook = parsed {
         val client = api(computer)

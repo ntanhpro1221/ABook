@@ -414,7 +414,10 @@ def worker(name: str, confirm_hash: str | None = None) -> dict:
             require(path.resolve().is_relative_to(REPO.resolve()), "XML ra ngoài worktree")
             path.unlink()
         task = ":app:verifyRoborazziDebug" if baseline is not None else ":app:testDebugUnitTest"
-        command = [str(android / "gradlew.bat"), "--no-daemon", task, "--rerun-tasks", "-Proborazzi.test.record=false"]
+        java = Path(inputs.get("JAVA_HOME", os.environ.get("JAVA_HOME", "C:/Program Files/Android/Android Studio/jbr"))) / "bin/java.exe"
+        command = [str(java), "-classpath", "gradle/wrapper/gradle-wrapper.jar", "org.gradle.wrapper.GradleWrapperMain",
+                   "--no-daemon", "-Dorg.gradle.jvmargs=-Xmx6g -XX:MaxMetaspaceSize=768m", task,
+                   "--rerun-tasks", "-Proborazzi.test.record=false"]
         # Generate sentence phones from this desktop build outside the checkout;
         # the native contract consumes them in this same verification run.
         from scripts.generate_g2p_parity import occurrence_cases, write

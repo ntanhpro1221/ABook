@@ -48,10 +48,17 @@ it("sách một quyển: danh sách chương thẳng, không có tầng quyển"
   expect(host.textContent).toContain("Chương 3");
 });
 
+it("tiến độ quyển theo thời lượng khi hai chương dài khác nhau", async () => {
+  const chapters = [{ ...chapter(1), duration: 60 }, { ...chapter(2), duration: 120 }, chapter(3)];
+  const weighted = { ...book, chapters, volumes: volumes(chapters), state: { chapters: { "1": { done: true } } } } as unknown as ListenBook;
+  await render(<ChapterGroups book={weighted} onDone={() => {}} />);
+  expect(host.textContent).toContain("2 chương · Đã nghe 33%");
+});
+
 it("sách nhiều quyển: hàng quyển có số chương và tiến độ; chọn quyển ra chương của nó, quay lại về danh sách quyển", async () => {
   const many = { ...book, volumes: volumes(book.chapters!), state: { chapters: { "1": { done: true } } } } as unknown as ListenBook;
   await render(<ChapterGroups book={many} onDone={() => {}} />);
-  const rows = [...host.querySelectorAll<HTMLButtonElement>('[aria-label="Các quyển"] [role=listitem]')];
+  const rows = [...host.querySelectorAll<HTMLButtonElement>('[aria-label="Các quyển"] [role=listitem] button')];
   expect(rows.map((row) => row.textContent)).toEqual([expect.stringContaining("Tập một"), expect.stringContaining("Tập hai")]);
   expect(rows[0].textContent).toContain("2 chương · Đã nghe 50%");
   expect(host.textContent).not.toContain("Chương 3");

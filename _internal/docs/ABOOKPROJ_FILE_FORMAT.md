@@ -27,6 +27,7 @@ A ZIP archive (PKWARE APPNOTE, as used by EPUB and OOXML).
 |---|---|---|
 | `mimetype` | stored | the media type, see above |
 | `project.json` | deflate | format, version, producer, creation time, book title, `workshop`, the project's original folder, the chapter sources (original path and entry name), sources that were missing when packing, `aliases`, and the size and SHA-256 of every other entry (aliases included) |
+| `covers/<id>.jpg` | stored | per-volume cover, with book-cover fallback |
 | `cover.jpg` | stored | the cover, if any (also what file browsers show as a thumbnail) |
 | `project/<path>` | stored for audio and images, deflate otherwise | every file of the project folder. `project/project.sqlite3` is a consistent SQLite snapshot (no `-wal`/`-shm`), and so is `project/avatars.sqlite3` (character portraits: the producer's choice, prompt, seed and the book sentences used as appearance evidence; never copied into the listening layer), with the pictures under `project/avatars/<sha256>.webp`; logs, lock files, partial `.part` files and exported `.abook` files are left out. Absent when `workshop` is `"pending"` |
 | `sources/<n>_<name>` | deflate | chapter source text files that lived outside the project folder; `n` is the chapter number. Optional when `workshop` is `"pending"` (then they are what "Dựng xưởng" uses instead of rebuilding the text from the scripts) |
@@ -34,6 +35,22 @@ A ZIP archive (PKWARE APPNOTE, as used by EPUB and OOXML).
 | `book.json` | deflate | the listening layer's description, exactly the `book.json` of an `.abook` (`ABOOK_FILE_FORMAT.md`) without any identifier, with `package.files` listing the size and SHA-256 of each listening entry (aliases included). Present when at least one chapter was finished at packing time, and always when `workshop` is `"pending"` |
 | `chapters/<name>.mp3`, `cast.json`, `scripts/<n>.json`, `samples/<n>.wav`, `music/<sha1>.<ext>` | as in `.abook` | the listening layer: the audio of the finished chapters, the cast, the lines of each chapter, voice samples, and every background-music track the book's music plan uses (taken from the packing computer's music cache, downloaded if needed; a track that cannot be obtained is left out and its cues dropped, as for `.abook`) |
 | `edits.json`, `edits/cover.jpg` | as in `.abook` | the listener's edit layer (`ABOOK_FILE_FORMAT.md`, version 4 section), written by an app that has no workshop to put the edits in (the Android app, a Windows install without Studio), with the pinned tracks `music/<sha1>.<ext>`. Studio never writes them |
+
+## Volume organization
+
+The container remains version 3: its generic `project/<path>` namespace already carries new project metadata. Every
+listening layer uses `.abook` version 6 and the volume tree specified in `ABOOK_FILE_FORMAT.md`.
+
+`project/volumes.json` holds `{"volumes":[{"id":1,"number":1,"title":"First volume","cover":null,"start":null},
+{"id":2,"number":2,"title":"Second volume","cover":{"file":"covers/2.jpg"},"start":15}]}`. `start` is the first
+chapter id of a volume; the first volume has `start:null`. Omitting this optional organization file means one default
+volume. Covers live at `project/covers/<id>.jpg`; the listening layer shares them at `covers/<id>.jpg` through the usual
+aliases when the bytes match. Both namespaces are checked, hashed, backed up and restored by the existing container rules.
+
+Editing volume boundaries never changes SQLite rows, chapter ids or indices, segment ids, locked settings, voices or seeds.
+`volumes.json` is replaced atomically. A missing chapter boundary after a deliberate chapter redo folds into the preceding
+volume; chapter order always comes from SQLite. No data conversion runs when opening a project. Earlier listening layers
+are refused and the owner can rebuild from source files.
 
 ## `project.json`
 

@@ -279,7 +279,7 @@ def test_saving_carries_the_wishes_and_another_computer_sees_them_waiting(tmp_pa
     saved = bookfile.repack(folder, tmp_path / "ra.abook")
     with BookFile(saved) as opened:
         opened.verify()
-        assert opened.book["package"]["version"] == 4 and book_edits.count(opened.edits) == 3
+        assert opened.book["package"]["version"] == 6 and book_edits.count(opened.edits) == 3
         assert book_wishes.count(opened.edits["wishes"]) == 2
     other, other_folder, _ = _edited_library(tmp_path, "may_b")
     shutil.rmtree(other_folder)

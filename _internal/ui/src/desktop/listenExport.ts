@@ -20,7 +20,7 @@ export const AUDIOBOOK_COPY: ExportCopy = {
 
 export const FORMAT_CHOICES: { id: AudiobookFormat; label: string; hint: string }[] = [
   { id: "mp3", label: S.s_mp3_theo_chuong_a08d3a89, hint: S.s_mot_thu_muc_moi_chuong_mot_mp3_kem_danh_sa_d7562c0b },
-  { id: "m4b", label: S.s_m4b_ca_cuon_2cba5ce9, hint: S.s_mot_file_co_muc_luc_chuong_nho_cho_nghe_do_903bace3 },
+  { id: "m4b", label: S.s_m4b_c793d08a, hint: S.s_mot_file_co_muc_luc_chuong_nho_cho_nghe_do_903bace3 },
 ];
 
 /** Phần trả lời của GET /api/listen/books/<mã>/audiobook/plan. */
@@ -68,8 +68,8 @@ export interface FfmpegStatus {
   retrying?: boolean;
 }
 
-export const fetchPlan = (bookId: string, voice: string) =>
-  api<AudiobookPlan>(`/api/listen/books/${bookId}/audiobook/plan?voice=${encodeURIComponent(voice)}`);
+export const fetchPlan = (bookId: string, voice: string, volumeId: number | null = null) =>
+  api<AudiobookPlan>(`/api/listen/books/${bookId}/audiobook/plan?voice=${encodeURIComponent(voice)}${volumeId === null ? "" : `&volumeId=${volumeId}`}`);
 
 export const ffmpegStatus = () => api<FfmpegStatus>("/api/ffmpeg");
 export const ffmpegStart = () => api<FfmpegStatus>("/api/ffmpeg", { method: "POST", body: {} });
@@ -77,7 +77,8 @@ export const ffmpegCancel = () => api<FfmpegStatus>("/api/ffmpeg/cancel", { meth
 export const audiobookCancel = (bookId: string) => api<ExportJob>(`/api/listen/books/${bookId}/audiobook/cancel`, { method: "POST", body: {} });
 
 /** Thân yêu cầu bắt đầu xuất (ngoài `target` / `cover` do host thêm). */
-export const audiobookBody = (format: AudiobookFormat, voice: string, music = false) => ({ format, voice, ...(music ? { music: true } : {}) });
+export const audiobookBody = (format: AudiobookFormat, voice: string, music = false, volumeId: number | null = null) =>
+  ({ format, voice, ...(music ? { music: true } : {}), ...(volumeId === null ? {} : { volumeId }) });
 
 /** Chữ của giọng trực tuyến gửi CẢ CUỐN ra ngoài máy; rỗng khi giọng chạy trên máy. */
 export function wholeBookNotice(voice: Pick<ReadAloudVoice, "provider" | "online">): string {

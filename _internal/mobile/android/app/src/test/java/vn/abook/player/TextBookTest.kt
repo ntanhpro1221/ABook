@@ -50,6 +50,13 @@ class TextBookTest {
         return (0 until all.length()).map { all.getJSONObject(it) }
     }
 
+    private fun pythonBook(): File {
+        val expected = cases().first().getJSONObject("expected")
+        val texts = expected.getJSONObject("texts")
+        val content = texts.keys().asSequence().associateWith { texts.getString(it).toByteArray(Charsets.UTF_8) }
+        return PackageFixtures.abook(work, "python-reference.abook", 6, content, JSONObject(expected.getJSONObject("book").toString()))
+    }
+
     private fun bookOf(input: JSONObject): BookImport.Book {
         val chapters = input.getJSONArray("chapters")
         return BookImport.Book(
@@ -102,7 +109,7 @@ class TextBookTest {
 
     @Test
     fun the_file_python_wrote_opens_with_every_chapter_readable_and_no_audio() {
-        val imported = BookFileImport.importFile(File(shared, "python_text.abook"))
+        val imported = BookFileImport.importFile(pythonBook())
         val book = Store.manifest(imported.id)!!
         assertEquals("Chuyến phà cuối ngày", imported.title)
         val chapters = book.getJSONArray("chapters")
@@ -122,9 +129,9 @@ class TextBookTest {
 
     @Test
     fun opening_the_same_file_again_gives_the_same_book_and_keeps_the_edits() {
-        val first = BookFileImport.importFile(File(shared, "python_text.abook"))
+        val first = BookFileImport.importFile(pythonBook())
         BookEdits.setTitle(Store.bookDir(first.id), "Tên tôi đặt")
-        val again = BookFileImport.importFile(File(shared, "python_text.abook"))
+        val again = BookFileImport.importFile(pythonBook())
         assertEquals(first.id, again.id)
         assertEquals(1, again.keptEdits)
         assertEquals(1, Store.books().size)
@@ -133,7 +140,7 @@ class TextBookTest {
 
     @Test
     fun two_books_sharing_one_chapter_text_stay_two_books() {
-        val first = BookFileImport.importFile(File(shared, "python_text.abook"))
+        val first = BookFileImport.importFile(pythonBook())
         val input = cases().first { it.getString("name") == "epub3" }.getJSONObject("input")
         val other = bookOf(input).apply {
             title = "Cuốn khác"
@@ -150,18 +157,18 @@ class TextBookTest {
 
     @Test
     fun a_text_book_saves_back_as_a_text_book_file_with_the_listeners_edits() {
-        val imported = BookFileImport.importFile(File(shared, "python_text.abook"))
+        val imported = BookFileImport.importFile(pythonBook())
         val folder = Store.bookDir(imported.id)
         BookEdits.setTitle(folder, "Tên tôi đặt")
         val out = ByteArrayOutputStream()
         val written = BookDocumentWriter.write(folder, out)
-        assertEquals(5, written.version)
+        assertEquals(6, written.version)
         assertEquals(1, written.edits)
         val file = File(work, "luu.abook").apply { writeBytes(out.toByteArray()) }
         val parts = entries(file)
         assertTrue(parts.keys.containsAll(listOf("texts/1.txt", "texts/2.txt", "texts/3.txt", "edits.json")))
         val book = JSONObject(parts.getValue("book.json").toString(Charsets.UTF_8))
-        assertEquals(5, book.getJSONObject("package").getInt("version"))
+        assertEquals(6, book.getJSONObject("package").getInt("version"))
         assertEquals("Chuyến phà cuối ngày", book.getString("title"))
         assertEquals("Tên tôi đặt", JSONObject(parts.getValue("manifest.json").toString(Charsets.UTF_8)).getJSONObject("metadata").getString("title"))
         // Mở lại đúng file ấy: cùng cuốn, sửa đổi được hợp (máy này thắng), không nhân đôi.
@@ -176,10 +183,10 @@ class TextBookTest {
 
     @Test
     fun a_text_book_saved_as_a_project_file_waits_for_its_workshop_and_opens_again() {
-        val imported = BookFileImport.importFile(File(shared, "python_text.abook"))
+        val imported = BookFileImport.importFile(pythonBook())
         val out = ByteArrayOutputStream()
         val written = BookDocumentWriter.write(Store.bookDir(imported.id), out, asProject = true)
-        assertEquals(5, written.version)
+        assertEquals(6, written.version)
         val file = File(work, "du_an.abookproj").apply { writeBytes(out.toByteArray()) }
         val parts = entries(file)
         val project = JSONObject(parts.getValue("project.json").toString(Charsets.UTF_8))
@@ -246,10 +253,10 @@ class TextBookTest {
             BookFileImport.importFile(rewrite("cu.abook") { it.getJSONObject("package").put("version", 4) })
             fail("phiên bản 4 không có texts/")
         } catch (error: BookFileImport.Refused) {
-            assertTrue(error.message!!, error.message!!.startsWith("Gói có mục lạ"))
+            assertTrue(error.message!!, error.message!!.contains("cấu trúc quyển"))
         }
         try {
-            BookFileImport.importFile(rewrite("hong.abook") { it.getJSONArray("chapters").getJSONObject(0).put("text", "texts/99.txt") })
+            BookFileImport.importFile(rewrite("hong.abook") { it.getJSONArray("volumes").getJSONObject(0).getJSONArray("chapters").getJSONObject(0).put("text", "texts/99.txt") })
             fail("chương trỏ tới chữ không có")
         } catch (error: BookFileImport.Refused) {
             assertEquals("File sách thiếu chữ của một chương.", error.message)

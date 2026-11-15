@@ -33,15 +33,28 @@ class BookDocumentWriterTest {
 
     /** Các số vàng này kiểm lớp sửa; dấu truyền audio được kiểm riêng trong AudioRevisionTest. */
     private fun editingView(book: JSONObject): JSONObject = (BookEdits.deepCopy(book) as JSONObject).also { shown ->
-        listOf("id", "edits", "unsaved", "wishes", "capabilities", "projectFile", "package", "audioVersion").forEach(shown::remove)
+        listOf("id", "edits", "unsaved", "wishes", "capabilities", "projectFile", "package", "audioVersion", "volumes").forEach(shown::remove)
         shown.optJSONArray("chapters")?.let { chapters ->
-            for (index in 0 until chapters.length()) chapters.getJSONObject(index).remove("sha256")
+            for (index in 0 until chapters.length()) chapters.getJSONObject(index).apply { remove("sha256"); remove("volumeId") }
         }
+    }
+
+    private fun sameEditingView(expected: JSONObject, actual: JSONObject): Boolean {
+        if (!StrictJson.equal(expected, actual)) {
+            for (key in (expected.keys().asSequence().toSet() + actual.keys().asSequence().toSet()).sorted()) {
+                if (!StrictJson.equal(expected.opt(key), actual.opt(key))) println("EDIT_VIEW_DIFF $key expected=" + expected.opt(key) + " actual=" + actual.opt(key))
+            }
+            return false
+        }
+        return true
     }
 
     /** Một cuốn đã nhập (bản sao `base/`) mang phần sửa của ca `edits/<name>.json` (và bìa sửa của nó). */
     private fun bookWith(name: String?): File {
         val dir = BookEditsFixtures.copyBase(File(work, "book-${name ?: "none"}"))
+        val manifest = JSONObject(File(dir, "book.json").readText())
+        manifest.getJSONObject("package").put("version", 6)
+        File(dir, "book.json").writeText(BookVolumes.project(BookVolumes.nested(manifest)).toString())
         if (name != null) {
             File(dir, "edits.json").writeBytes(BookEditsFixtures.bytes("edits/$name.json"))
             val cover = BookEditsFixtures.file("edits/$name.cover.jpg")
@@ -93,11 +106,11 @@ class BookDocumentWriterTest {
     }
 
     @Test
-    fun a_book_without_edits_is_written_at_the_lowest_version_that_fits() {
+    fun every_book_uses_the_current_volume_tree_format() {
         val (file, written) = write(bookWith(null), "plain.abook")
         val book = verify(file)
-        assertEquals(2, book.getJSONObject("package").getInt("version")) // có nhạc nền
-        assertEquals(2, written.version)
+        assertEquals(6, book.getJSONObject("package").getInt("version")) // có nhạc nền
+        assertEquals(6, written.version)
         assertEquals(0, written.edits)
         assertEquals(file.length(), written.size)
         ZipFile(file).use { zip ->
@@ -109,12 +122,12 @@ class BookDocumentWriterTest {
     }
 
     @Test
-    fun every_edits_case_is_written_as_version_4_and_opens_again_with_its_edits() {
+    fun every_edits_case_is_written_as_version_6_and_opens_again_with_its_edits() {
         for (name in BookEditsFixtures.cases("edits")) {
             val edits = BookEdits.parse(BookEditsFixtures.bytes("edits/$name.json"))
             val (file, written) = write(bookWith(name), "$name.abook")
             val book = verify(file)
-            assertEquals("$name: phiên bản", 4, book.getJSONObject("package").getInt("version"))
+            assertEquals("$name: phiên bản", 6, book.getJSONObject("package").getInt("version"))
             assertEquals(BookEdits.count(edits), written.edits)
             ZipFile(file).use { zip ->
                 assertArrayEquals("$name: edits.json là phần sửa chuẩn", BookEdits.dump(edits), zip.getInputStream(zip.getEntry("edits.json")).readBytes())
@@ -133,7 +146,7 @@ class BookDocumentWriterTest {
             val imported = BookFileImport.importFile(file)
             assertTrue("$name: phần sửa còn nguyên", StrictJson.equal(edits, BookEdits.load(Store.bookDir(imported.id))))
             val shown = editingView(Store.manifest(imported.id)!!)
-            assertTrue("$name: sách người nghe thấy khớp bản Python", StrictJson.equal(BookEditsFixtures.obj("expected/$name.json").getJSONObject("manifest"), shown))
+            assertTrue("$name: sách người nghe thấy khớp bản Python", sameEditingView(BookEditsFixtures.obj("expected/$name.json").getJSONObject("manifest"), shown))
             assertEquals(imported.title, shown.getString("title"))
         }
     }
@@ -163,7 +176,7 @@ class BookDocumentWriterTest {
     }
 
     @Test
-    fun a_series_book_is_version_3_and_a_plain_one_is_version_1() {
+    fun a_series_and_a_plain_book_both_use_version_6() {
         fun mini(name: String, audio: String, music: Boolean): File {
             val dir = File(work, name)
             val bytes = "ID3-x".toByteArray()
@@ -176,10 +189,10 @@ class BookDocumentWriterTest {
             File(dir, "book.json").writeText(book.toString())
             return dir
         }
-        assertEquals(3, write(mini("series", "chapters/1/00001.mp3", false), "series.abook").second.version)
-        assertEquals(1, write(mini("flat", "chapters/00001.mp3", false), "flat.abook").second.version)
+        assertEquals(6, write(mini("series", "chapters/1/00001.mp3", false), "series.abook").second.version)
+        assertEquals(6, write(mini("flat", "chapters/00001.mp3", false), "flat.abook").second.version)
         val nullMusic = write(mini("flat2", "chapters/00001.mp3", true), "flat2.abook")
-        assertEquals("khoá music có mặt là phiên bản 2, như `\"music\" in book`", 2, nullMusic.second.version)
+        assertEquals("khoá music có mặt là phiên bản 6, như `\"music\" in book`", 6, nullMusic.second.version)
         verify(nullMusic.first)
         verify(write(mini("series2", "chapters/1/00001.mp3", false), "series2.abook").first)
     }
@@ -234,7 +247,7 @@ class BookDocumentWriterTest {
         val python = BookEditsFixtures.file("written/python_v4.abook")
         assertTrue("thiếu file bản Python ghi: ${python.absolutePath}", python.isFile)
         val book = verify(python)
-        assertEquals(4, book.getJSONObject("package").getInt("version"))
+        assertEquals(6, book.getJSONObject("package").getInt("version"))
         val library = BookEditsFixtures.tempDir("abook-python-v4")
         BookEditsFixtures.useStoreRoot(library)
         val imported = BookFileImport.importFile(python)
@@ -244,12 +257,12 @@ class BookDocumentWriterTest {
         assertEquals("Sách của tôi", imported.title)
         assertNotNull(Store.coverFile(imported.id))
         val shown = editingView(Store.manifest(imported.id)!!)
-        assertTrue(StrictJson.equal(BookEditsFixtures.obj("expected/everything.json").getJSONObject("manifest"), shown))
+        assertTrue(sameEditingView(BookEditsFixtures.obj("expected/everything.json").getJSONObject("manifest"), shown))
         assertEquals(BookEdits.count(edits), Store.manifest(imported.id)!!.getInt("edits"))
         // và mở lại bản vừa nhập: ghi ra lần nữa vẫn đúng từng mục
         val (again, written) = write(Store.bookDir(imported.id), "from-python.abook")
         verify(again)
-        assertEquals(4, written.version)
+        assertEquals(6, written.version)
         assertEquals(BookEdits.count(edits), written.edits)
     }
 
@@ -269,7 +282,7 @@ class BookDocumentWriterTest {
         val name = "music/$toneSha.wav"
         val (file, written) = write(pinnedBook(), "pins.abook")
         val book = verify(file)
-        assertEquals(4, book.getJSONObject("package").getInt("version"))
+        assertEquals(6, book.getJSONObject("package").getInt("version"))
         assertEquals(1, written.edits)
         ZipFile(file).use { zip ->
             val entry = zip.getEntry(name)
@@ -300,7 +313,7 @@ class BookDocumentWriterTest {
         assertTrue(StrictJson.equal(BookEdits.parse(BookEditsFixtures.bytes("edits/music_pin.json")), BookEdits.load(dir)))
         assertArrayEquals(BookEditsFixtures.bytes("track/tone.wav"), File(dir, "music/$toneSha.wav").readBytes())
         val shown = editingView(Store.manifest(imported.id)!!)
-        assertTrue(StrictJson.equal(BookEditsFixtures.obj("expected/music_pin.json").getJSONObject("manifest"), shown))
+        assertTrue(sameEditingView(BookEditsFixtures.obj("expected/music_pin.json").getJSONObject("manifest"), shown))
         // ghi lại bản vừa nhập: vẫn mang bài ghim
         ZipFile(write(dir, "again.abook").first).use { zip -> assertNotNull(zip.getEntry("music/$toneSha.wav")) }
     }
@@ -445,7 +458,7 @@ class BookDocumentWriterTest {
         val (file, written) = write(dir, "edited.abookproj", asProject = true)
         val project = verifyProject(file)
         assertEquals(1, written.edits)
-        assertEquals(4, written.version)
+        assertEquals(6, written.version)
         val sqlite = ZipFile(BookEditsFixtures.file("written/python_workshop.abookproj")).use { it.getInputStream(it.getEntry("project/project.sqlite3")).readBytes() }
         ZipFile(file).use { zip ->
             assertArrayEquals(sqlite, zip.getInputStream(zip.getEntry("project/project.sqlite3")).readBytes())
@@ -464,7 +477,7 @@ class BookDocumentWriterTest {
         assertEquals("pending", project.getString("workshop"))
         assertEquals("", project.getString("projectRoot"))
         assertEquals(0, project.getJSONArray("sources").length())
-        assertEquals(4, written.version)
+        assertEquals(6, written.version)
         assertTrue(project.getJSONObject("files").keys().asSequence().none { it.startsWith("project/") || it.startsWith("sources/") || it.startsWith("views/") })
         assertEquals("Sách của tôi", project.getString("title"))
         File("build").mkdirs()
@@ -483,7 +496,7 @@ class BookDocumentWriterTest {
         val (file, _) = write(Store.bookDir(imported.id), "again.abookproj", asProject = true)
         val project = verifyProject(file)
         assertEquals("pending", project.getString("workshop"))
-        assertEquals(4, ZipFile(file).use { JSONObject(it.getInputStream(it.getEntry("book.json")).readBytes().toString(Charsets.UTF_8)).getJSONObject("package").getInt("version") })
+        assertEquals(6, ZipFile(file).use { JSONObject(it.getInputStream(it.getEntry("book.json")).readBytes().toString(Charsets.UTF_8)).getJSONObject("package").getInt("version") })
     }
 
     @Test

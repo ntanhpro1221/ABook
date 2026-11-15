@@ -184,9 +184,13 @@ object Mp3Export {
      * Việc xuất cuốn `id` như người nghe thấy nó (Store.manifest: tên sách, tên chương, bìa đã sửa). Chỉ chương nghe được - như máy
      * tính, số thứ tự đếm trên các chương ấy. `drawnCover`: PNG bìa giao diện tự vẽ, chỉ dùng khi sách không có bìa thật.
      */
-    fun plan(id: String, drawnCover: ByteArray? = null, chapterIds: List<Int>? = null): Plan {
+    fun plan(id: String, drawnCover: ByteArray? = null, chapterIds: List<Int>? = null, volumeId: Int? = null): Plan {
         val book = Store.manifest(id) ?: throw Refused(S.s_khong_tim_thay_sach_nay_tren_dien_thoai_3503b770)
-        val chapters = book.optJSONArray("chapters")
+        BookVolumes.project(book)
+        val volume = volumeId?.let { wanted -> book.optJSONArray("volumes")?.let { array ->
+            (0 until array.length()).map { array.getJSONObject(it) }.firstOrNull { it.getInt("id") == wanted }
+        } ?: throw Refused(S.s_volume_invalid) }
+        val chapters = volume?.getJSONArray("chapters") ?: book.optJSONArray("chapters")
         val listenable = ArrayList<JSONObject>()
         for (index in 0 until (chapters?.length() ?: 0)) {
             val chapter = chapters!!.optJSONObject(index) ?: continue
@@ -199,13 +203,19 @@ object Mp3Export {
         }
         val selected = if (chapterIds == null) planned else planned.filter { it.id in chapterIds }
         if (selected.isEmpty() || chapterIds?.any { wanted -> planned.none { it.id == wanted } } == true) throw Refused(S.s_ban_hay_chon_cac_chuong_nghe_duoc_de_xuat_753d6d45)
-        val (cover, coverName) = coverOf(id, drawnCover)
+        val ownCover = volume?.optJSONObject("cover")?.getString("file")?.let { relative ->
+            require(Regex("covers/[1-9][0-9]{0,8}\\.jpg").matches(relative))
+            runCatching { Id3Tag.Cover.of(Store.contained(Store.bookDir(id), relative).readBytes()) }.getOrNull()
+        }
+        val (fallback, fallbackName) = coverOf(id, drawnCover)
+        val cover = ownCover ?: fallback
+        val coverName = if (ownCover != null) "cover.jpg" else fallbackName
         return Plan(
-            title = book.optString("title").ifEmpty { id },
+            title = vn.abook.player.ui.data.dotJoin(book.optString("title").ifEmpty { id }, volume?.getString("title")),
             narrator = book.optString("narrator"),
             chapters = selected,
             numbered = listenable.size,
-            chaptersTotal = book.optInt("chaptersTotal", chapters?.length() ?: 0),
+            chaptersTotal = if (volume != null) chapters?.length() ?: 0 else book.optInt("chaptersTotal", chapters?.length() ?: 0),
             cover = cover,
             coverName = coverName,
         )

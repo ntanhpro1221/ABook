@@ -57,6 +57,7 @@ internal fun unavailableTitle(destination: Destination): String = when (destinat
         StudioSubKind.Export -> StudioExportText.TITLE
         StudioSubKind.Activity -> StudioLogText.TITLE
         StudioSubKind.Cover -> StudioCoverText.TITLE
+        StudioSubKind.Volumes -> S.s_volume_manage
     }
     is Destination.MusicPick -> S.s_chon_bai_cho_doan_840afc40
 }

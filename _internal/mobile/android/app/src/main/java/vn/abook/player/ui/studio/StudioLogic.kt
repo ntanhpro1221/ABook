@@ -31,6 +31,7 @@ object StudioLogic {
         }
         if (book.chaptersTotal > 0 || book.chaptersCompleted > 0) add(StudioSubKind.Export)
         add(StudioSubKind.Cover)
+        if (book.chaptersTotal > 0) add(StudioSubKind.Volumes)
         add(StudioSubKind.Activity)
     }
 

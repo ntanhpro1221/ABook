@@ -7,6 +7,8 @@ Python là bản chuẩn của cuộc đối chiếu với app Android: các fil
 """
 from __future__ import annotations
 
+from tests.current_book_fixtures import current_fixture
+
 import json
 import shutil
 import sqlite3
@@ -174,7 +176,7 @@ def test_the_listener_edits_ride_in_the_project_file_and_the_book_is_not_rewritt
     with ProjectFile(saved) as opened:
         opened.verify()
         assert opened.workshop == PRESENT and opened.edits["title"] == "Tên mới" and book_edits.count(opened.edits) == 2
-        assert opened.book["package"]["version"] == 4 and "edits.json" in opened.book["package"]["files"]
+        assert opened.book["package"]["version"] == 6 and "edits.json" in opened.book["package"]["files"]
         assert opened.manifest["files"]["edits.json"] == opened.book["package"]["files"]["edits.json"]
         assert opened.book["title"] == "Sách thử · Tập 1", "lớp sách không bị sửa tại chỗ"
     with ProjectFile(packed) as before, ProjectFile(saved) as after:
@@ -507,12 +509,12 @@ EVERYTHING = book_edits.count(book_edits.parse((WRITTEN.parent / "edits" / "ever
 
 
 def test_the_project_files_python_wrote_for_the_android_app_are_valid_and_carry_no_local_path() -> None:
-    with ProjectFile(WRITTEN / "python_workshop.abookproj") as workshop_file:
+    with ProjectFile(current_fixture(WRITTEN / "python_workshop.abookproj")) as workshop_file:
         workshop_file.verify()
         assert workshop_file.workshop == PRESENT and workshop_file.views == ["work", "casting", "names"]
         assert set(workshop_file.aliases) == {"project/cover.jpg", "project/output/chapters/00001_645.mp3", "project/work/s3.wav"}
         assert workshop_file.manifest["projectRoot"] == r"D:\Studio\sach_thu"
-    with ProjectFile(WRITTEN / "python_pending.abookproj") as pending_file:
+    with ProjectFile(current_fixture(WRITTEN / "python_pending.abookproj")) as pending_file:
         pending_file.verify()
         assert pending_file.workshop == PENDING and book_edits.count(pending_file.edits) == EVERYTHING
     for name in ("python_workshop.abookproj", "python_pending.abookproj", "kotlin_workshop.abookproj", "kotlin_pending.abookproj"):
@@ -522,7 +524,7 @@ def test_the_project_files_python_wrote_for_the_android_app_are_valid_and_carry_
 
 
 def test_the_project_files_the_android_app_wrote_open_here_with_the_same_content() -> None:
-    with ProjectFile(WRITTEN / "python_workshop.abookproj") as expected, ProjectFile(WRITTEN / "kotlin_workshop.abookproj") as written:
+    with ProjectFile(current_fixture(WRITTEN / "python_workshop.abookproj")) as expected, ProjectFile(current_fixture(WRITTEN / "kotlin_workshop.abookproj")) as written:
         written.verify()
         assert written.workshop == PRESENT
         assert written.aliases == expected.aliases, "cùng luật bí danh ở hai bên"
@@ -531,14 +533,14 @@ def test_the_project_files_the_android_app_wrote_open_here_with_the_same_content
             n: m for n, m in expected.manifest["files"].items() if n not in skipped}
         assert (written.manifest["projectRoot"], written.manifest["sources"]) == (expected.manifest["projectRoot"], expected.manifest["sources"])
         assert written.view("work") == expected.view("work")
-    with ProjectFile(WRITTEN / "kotlin_pending.abookproj") as pending_written:
+    with ProjectFile(current_fixture(WRITTEN / "kotlin_pending.abookproj")) as pending_written:
         pending_written.verify()
         assert pending_written.workshop == PENDING and book_edits.count(pending_written.edits) == EVERYTHING
         assert pending_written.edits_cover() == (WRITTEN.parent / "edits" / "everything.cover.jpg").read_bytes()
 
 
 def test_a_project_file_the_android_app_wrote_opens_as_a_project_here(tmp_path: Path) -> None:
-    with ProjectFile(WRITTEN / "kotlin_workshop.abookproj") as written:
+    with ProjectFile(current_fixture(WRITTEN / "kotlin_workshop.abookproj")) as written:
         target, report = written.open_into(tmp_path / "thu_vien")
     assert store.is_project(target) and (target / "output" / "chapters" / "00001_645.mp3").is_file()
     assert (target / "work" / "s3.wav").is_file() and (target / "cover.jpg").is_file()

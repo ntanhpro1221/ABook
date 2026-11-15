@@ -219,6 +219,13 @@ Modal {
                     width: parent.width - x
                     EditBookSection {
                         width: parent.width
+                        title: S.s_volume_manage
+                        fold: "edit-book.volumes"
+                        shown: root.workshop
+                        VolumeEditor { width: parent.width; book: root.book }
+                    }
+                    EditBookSection {
+                        width: parent.width
                         title: S.s_anh_bia_f224644d
                         separator: 1 - root.wideT
                         // Bìa 112 + cột nút; hẹp thì cột nút xuống dưới bìa thay vì tràn khỏi hộp

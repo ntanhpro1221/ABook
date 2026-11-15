@@ -4,6 +4,7 @@ from pathlib import Path
 
 from abook.webui import bookfile, packages
 from abook.webui.fingerprints import Fingerprints
+from tests.current_book_fixtures import current_fixture
 
 
 def smoke_module(monkeypatch):
@@ -18,7 +19,7 @@ def smoke_module(monkeypatch):
 def test_open_gate_keeps_the_first_book_during_real_import_swaps(tmp_path, monkeypatch):
     smoke = smoke_module(monkeypatch)
     library = tmp_path / "library"
-    first_file = smoke.WRITTEN / "python_v4.abook"
+    first_file = current_fixture(smoke.WRITTEN / "python_v4.abook")
     second_file = smoke.smoke_play.write_package(tmp_path / "second.abook", b"a different chapter")
     snapshots = []
     swap = bookfile.swap_in

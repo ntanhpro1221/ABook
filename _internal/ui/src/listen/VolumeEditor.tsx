@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { api } from "@/studio/api";
 import { S } from "@/shared/strings.generated";
@@ -16,6 +16,7 @@ export function VolumeEditor({ book }: { book: ListenBook }) {
   const [rows, setRows] = useState<Draft[]>([]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const pickers = useRef<Record<number, HTMLInputElement | null>>({});
   const chapters = book.chapters ?? [];
   const edit = () => {
     setRows((book.volumes ?? [{ id: 1, number: 1, title: S.s_volume_number(1), chapters }]).map(volume => ({
@@ -28,6 +29,9 @@ export function VolumeEditor({ book }: { book: ListenBook }) {
   const save = async () => {
     setBusy(true); setError("");
     try {
+      if (!rows.length || rows[0].start !== 1 || rows.some((row, index) => !row.title.trim() || row.title.length > 240
+        || !Number.isInteger(row.number) || row.number < 1 || row.number > 9999 || !Number.isInteger(row.start)
+        || row.start > chapters.length || (index > 0 && row.start <= rows[index - 1].start))) throw new Error(S.s_volume_invalid);
       const definitions = rows.map((row, index) => ({ id: row.id, number: row.number, title: row.title,
         chapters: chapters.slice(row.start - 1, (rows[index + 1]?.start ?? chapters.length + 1) - 1).map(chapter => chapter.id) }));
       await api(`/api/books/${book.id}/volumes`, { method: "PUT", body: { volumes: definitions } });
@@ -46,10 +50,11 @@ export function VolumeEditor({ book }: { book: ListenBook }) {
             <label className="flex-1 text-sm">{S.s_volume_number(row.number)}<input type="number" min={1} max={9999} value={row.number} onChange={event => change(row.id, { number: Number(event.target.value) })} className="w-full rounded-control border border-line bg-panel p-2" /></label>
             <label className="flex-1 text-sm">{S.s_volume_first_chapter}<input type="number" min={1} max={chapters.length} disabled={row.id === rows[0]?.id} value={row.start} onChange={event => change(row.id, { start: Number(event.target.value) })} className="w-full rounded-control border border-line bg-panel p-2" /></label>
           </div>
-          <label className="block text-sm">{S.s_volume_cover}<input type="file" accept="image/*" disabled={busy} onChange={event => {
+          <Button size="sm" variant="ghost" disabled={busy} onClick={() => pickers.current[row.id]?.click()}>{S.s_volume_cover}</Button>
+          <input ref={input => { pickers.current[row.id] = input; }} className="hidden" aria-label={S.s_volume_cover} type="file" accept="image/*" disabled={busy} onChange={event => {
             const file = event.target.files?.[0]; if (!file) return;
             const reader = new FileReader(); reader.onload = () => change(row.id, { image: String(reader.result) }); reader.readAsDataURL(file);
-          }} /></label>
+          }} />
           <Button size="sm" variant="ghost" onClick={() => change(row.id, { image: null })}>{S.s_volume_book_cover}</Button>
           <MotionPresence open={row.id !== rows[0]?.id}><Button size="sm" variant="ghost" onClick={() => setRows(rows.filter(other => other.id !== row.id))}>{S.s_xoa_777195ab}</Button></MotionPresence>
         </div>}

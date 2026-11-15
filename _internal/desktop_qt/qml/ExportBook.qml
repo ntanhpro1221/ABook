@@ -43,6 +43,7 @@ StudioConfirm {
     readonly property bool audioKind: kind === "mp3" || kind === "m4b"
     readonly property bool byVolume: audioKind && !plan.wholeSeries && volumes.length > 1
     readonly property var chosenVolume: byVolume ? volumes.find(v => v.id === volumeId) || null : null
+    readonly property var volumeChanged: chosenVolume ? changedIds.filter(id => chosenVolume.chapters.some(c => c.id === id)) : changedIds
     readonly property bool withMusic: Logic.musicChecked(musicState, chosenMusic, book.id)
     readonly property bool mixes: audioKind && withMusic
     readonly property bool wantsFfmpeg: open && !job.running && (kind === "m4b" || mixes)
@@ -118,6 +119,9 @@ StudioConfirm {
     // ---- chọn nơi lưu rồi xuất ----
     function run() {
         if (plan.blocked || needsFfmpeg || job.running) return
+        if (kind === "mp3" && !plan.wholeSeries && changedOnly && changedIds.length && !volumeChanged.length) {
+            store.say(S.s_volume_no_changed); return
+        }
         if (dialogs) folders.choose(Logic.SAVING[kind][0], "")
         else go("")
     }
@@ -125,7 +129,7 @@ StudioConfirm {
         job.chapters = plan.wholeSeries ? 0 : chosenVolume ? chosenVolume.chapters.filter(c => c.available).length : plan.selectedCount
         job.countText = plan.countText
         finished = null
-        job.start(kind, Logic.startBody(kind, {target: target, mixes: mixes, wholeSeries: plan.wholeSeries, changedOnly: changedOnly, changedIds: changedIds, layout: layout, partial: partial, volumeId: chosenVolume ? chosenVolume.id : 0}), false)
+        job.start(kind, Logic.startBody(kind, {target: target, mixes: mixes, wholeSeries: plan.wholeSeries, changedOnly: changedOnly, changedIds: volumeChanged, layout: layout, partial: partial, volumeId: chosenVolume ? chosenVolume.id : 0}), false)
     }
     function jobEnded(error, result) {
         const made = job.kind

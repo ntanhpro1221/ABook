@@ -151,6 +151,46 @@ def test_an_m4b_is_one_file_with_a_chapter_list(tmp_path: Path) -> None:
     assert [file.name for file in (tmp_path / "xuat").iterdir()] == ["Truyện thử.m4b"], "không để lại file tạm"
 
 
+@pytest.mark.parametrize("fmt", ["mp3", "m4b"])
+def test_a_text_volume_export_reads_only_its_chapters_and_uses_its_cover(tmp_path, fmt):
+    from abook import book_volumes
+    from tests.test_book_volumes import image
+
+    app, identifier, path, voice = _library(tmp_path)
+    manifest = json.loads((path / "book.json").read_text(encoding="utf-8"))
+    book_volumes.flatten(manifest)
+    rows = manifest["chapters"]
+    manifest["volumes"] = [
+        {"id": 1, "number": 1, "title": "First", "cover": None, "chapters": rows[:1]},
+        {"id": 2, "number": 2, "title": "Second", "cover": {"file": "covers/2.jpg"}, "chapters": rows[1:]},
+    ]
+    for row in rows:
+        row["volumeId"] = row["id"]
+    (path / "covers").mkdir(exist_ok=True)
+    (path / "covers/2.jpg").write_bytes(image("blue"))
+    (path / "book.json").write_text(json.dumps(manifest, ensure_ascii=False), encoding="utf-8")
+    assert [chapter.id for chapter in listen_export.load_chapters(path, 2)] == [2]
+    with pytest.raises(listen_export.ExportError):
+        listen_export.load_chapters(path, 99)
+    server = Server(app, port=0).start()
+    try:
+        base = f"/api/listen/books/{identifier}/audiobook"
+        status, data, _ = _request(server.port, "GET", base + f"/plan?voice={VOICE}&volumeId=2", headers=TOKEN)
+        assert status == 200 and json.loads(data)["chapters"] == 1
+        for value in ("99", "bad", "-1"):
+            assert _request(server.port, "GET", base + f"/plan?voice={VOICE}&volumeId={value}", headers=TOKEN)[0] == 400
+        assert _request(server.port, "POST", base, headers=TOKEN, body={"voice": VOICE, "format": fmt, "volumeId": True})[0] == 400
+    finally:
+        server.stop()
+    result = _run(app, identifier, path, tmp_path / "selected", fmt, volume_id=2)
+    assert result["chapters"] == result["chaptersTotal"] == 1
+    assert sorted(voice.calls) == sorted(["Chương hai", "Sáu bảy tám chín."])
+    audio = Path(result["file"]) if fmt == "m4b" else next(Path(result["folder"]).glob("*.mp3"))
+    probe = _probe(audio)
+    assert probe["format"]["tags"]["album"] == "Truyện thử · Second"
+    assert any(stream.get("disposition", {}).get("attached_pic") for stream in probe["streams"])
+
+
 def test_a_clip_already_in_the_cache_is_not_read_again(tmp_path: Path) -> None:
     app, book_id, path, fake = _library(tmp_path)
     app.readaloud.clip(VOICE, "Một hai ba.")  # người nghe đã nghe đoạn này

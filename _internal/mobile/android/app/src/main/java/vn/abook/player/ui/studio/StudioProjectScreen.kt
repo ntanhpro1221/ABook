@@ -282,6 +282,7 @@ private fun MoreSheet(book: StudioBook, kind: PrimaryKind?, state: StudioProject
                             StudioSubKind.Export -> ExportIcon(it)
                             StudioSubKind.Activity -> HistoryIcon(it)
                             StudioSubKind.Cover -> ImageIcon(it)
+                            StudioSubKind.Volumes -> ReadAlongIcon(it)
                         }
                     }
                 }

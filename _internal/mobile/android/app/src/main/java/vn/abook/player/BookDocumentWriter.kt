@@ -84,15 +84,7 @@ object BookDocumentWriter {
                     ?: throw Refused(S.s_thieu_file_bai_nhac_nguoi_nghe_da_chon_tro_fec4fb4a)
             }
         }
-        val version = when {
-            files.keys.any { it.startsWith("avatars/") } -> 6
-            BookVolumes.needsTree(book) -> BookVolumes.TREE_VERSION
-            files.keys.any { TEXT_ENTRY.matches(it) } -> 5
-            changes > 0 -> 4
-            files.keys.any { PART_AUDIO.matches(it) } -> 3
-            book.has("music") -> 2
-            else -> 1
-        }
+        val version = BookVolumes.TREE_VERSION
         // File dự án không đòi chương nào có audio (phần nghe có thể còn thiếu); file .abook đòi audio hay chữ.
         if (asProject) return writeProject(bookDir, out, book, files, known, edits, version)
         return seal(book, files, known, edits, version, out)
@@ -115,7 +107,7 @@ object BookDocumentWriter {
         val format = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'+00:00'", Locale.ROOT).apply { timeZone = TimeZone.getTimeZone("UTC") }
         val packageInfo = LinkedHashMap<String, Any>()
         packageInfo["format"] = FORMAT
-        packageInfo["version"] = version
+        packageInfo["version"] = BookVolumes.TREE_VERSION
         packageInfo["createdAt"] = format.format(Date())
         packageInfo["producer"] = PRODUCER
         packageInfo["files"] = described
@@ -134,7 +126,7 @@ object BookDocumentWriter {
                 }
             }
         }
-        return Written(counting.written, BookEdits.count(edits), version)
+        return Written(counting.written, BookEdits.count(edits), BookVolumes.TREE_VERSION)
     }
 
     private fun rank(name: String) = RANK.indexOfFirst { name.startsWith(it) }
@@ -174,7 +166,7 @@ object BookDocumentWriter {
         for ((name, meta) in described) if (ProjectDocument.listeningName(name)) listed[name] = meta
         val packageInfo = LinkedHashMap<String, Any>()
         packageInfo["format"] = FORMAT
-        packageInfo["version"] = version
+        packageInfo["version"] = BookVolumes.TREE_VERSION
         packageInfo["createdAt"] = createdAt
         packageInfo["producer"] = PRODUCER
         packageInfo["files"] = listed
@@ -206,7 +198,7 @@ object BookDocumentWriter {
                 }
             }
         }
-        return Written(counting.written, BookEdits.count(edits), version)
+        return Written(counting.written, BookEdits.count(edits), BookVolumes.TREE_VERSION)
     }
 
     /** Thứ tự mục của file dự án (`projectfile._order`): mô tả, bìa, sổ dự án và chữ trước; audio sau cùng. */

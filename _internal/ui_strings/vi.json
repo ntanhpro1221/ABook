@@ -5928,7 +5928,11 @@
     "s_volume_title": "Tên quyển",
     "s_volume_all": "Cả sách",
     "s_volume_split_help": "Các quyển nằm trong cùng một sách, dùng chung nhân vật và giọng đọc.",
-    "s_hako_paste": "Có thể dán đường dẫn sách Hako: mỗi tập thành một quyển, kèm bìa tập."
+    "s_hako_paste": "Có thể dán đường dẫn sách Hako: mỗi tập thành một quyển, kèm bìa tập.",
+    "s_volume_rebuild": "File sách không dùng cấu trúc quyển hiện hành. Hãy dựng lại từ nguồn.",
+    "s_volume_invalid": "Mỗi quyển cần tên, số và chương đầu tăng dần trong sách.",
+    "s_volume_no_changed": "Quyển này không có chương đã đổi để xuất.",
+    "s_volume_cover_missing": "File sách thiếu bìa của một quyển."
   },
   "android_resources": {
     "app_name": "s_abook_1c37d334",

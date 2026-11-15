@@ -147,9 +147,10 @@ object Mp3Exports {
     // ---- việc nền ------------------------------------------------------------------------------------------------
 
     /** Bắt đầu xuất cuốn `bookId` vào thư mục `tree` (thay lượt đang chạy của cuốn ấy nếu có). Trả mã lượt - tin của lượt mang mã này. */
-    fun start(context: Context, bookId: String, tree: Uri, drawnCover: File?, chapterIds: List<Int>? = null, music: Boolean = false): String {
+    fun start(context: Context, bookId: String, tree: Uri, drawnCover: File?, chapterIds: List<Int>? = null, music: Boolean = false, volumeId: Int? = null): String {
         val data = Data.Builder().putString(KEY_BOOK, bookId).putString(KEY_TREE, tree.toString()).putBoolean(KEY_MUSIC, music)
         chapterIds?.let { data.putIntArray("chapterIds", it.toIntArray()) }
+        volumeId?.let { data.putInt("volumeId", it) }
         drawnCover?.let { data.putString(KEY_COVER, it.absolutePath) }
         val request = OneTimeWorkRequestBuilder<Mp3ExportWorker>()
             .setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)
@@ -353,7 +354,7 @@ class Mp3ExportWorker(context: Context, params: WorkerParameters) : Worker(conte
         var retrying = false
         var music: ExportMusic? = null
         try {
-            val base = Mp3Export.plan(bookId, cover?.takeIf { it.isFile }?.readBytes(), inputData.getIntArray("chapterIds")?.toList())
+            val base = Mp3Export.plan(bookId, cover?.takeIf { it.isFile }?.readBytes(), inputData.getIntArray("chapterIds")?.toList(), inputData.getInt("volumeId", -1).takeIf { it > 0 })
             val snapshot = ExportHistory.snapshot(base)
             title = base.title
             // Không vào được dịch vụ nền (Android 12+ khi app đã ở nền lúc việc bắt đầu): vẫn chạy, chỉ không có thông báo đứng.

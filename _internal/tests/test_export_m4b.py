@@ -55,6 +55,39 @@ def _probe(path: Path) -> dict:
     return json.loads(result.stdout.decode("utf-8"))
 
 
+@pytest.mark.parametrize('kind', ['mp3', 'm4b'])
+def test_export_one_volume_keeps_only_its_audio_chapter_and_cover(tmp_path: Path, kind: str) -> None:
+    import io
+    from PIL import Image
+    from abook import book_volumes
+    from abook.webui import export_jobs
+    root = _book(tmp_path)
+    book_volumes._write(root, [{'id': 1, 'number': 1, 'title': 'First', 'cover': None, 'start': None},
+                              {'id': 2, 'number': 2, 'title': 'Second', 'cover': None, 'start': 2}])
+    raw = io.BytesIO()
+    Image.new('RGB', (120, 180), '#357b89').save(raw, format='PNG')
+    book_volumes.save_cover(root, 2, raw.getvalue())
+    facts = export.book_facts(root, 2)
+    assert [chapter['id'] for chapter in facts.chapters] == [2]
+    assert facts.cover == root / 'covers' / '2.jpg'
+    output = tmp_path / 'exported'
+    if kind == 'm4b':
+        result = export.export_m4b(root, output, volume_id=2)
+        probe = _probe(Path(result['file']))
+        assert len(probe['chapters']) == 1
+        assert probe['chapters'][0]['tags']['title'] == 'Chương 647 · Trở về (2)'
+        assert float(probe['format']['duration']) < ONE + TWO - 0.5
+        assert any(stream.get('disposition', {}).get('attached_pic') for stream in probe['streams'])
+    else:
+        result = export.export_book(root, output, volume_id=2)
+        folder = Path(result['folder'])
+        assert len(list(folder.glob('*.mp3'))) == 1
+        assert (folder / 'cover.jpg').read_bytes() == (root / 'covers' / '2.jpg').read_bytes()
+    assert result['chaptersTotal'] == 1
+    history = export_jobs._history(root)
+    assert set(history[-1]['chapters']) == {'2'}
+
+
 def test_the_m4b_has_a_chapter_per_finished_chapter_with_real_boundaries_cover_and_tags(tmp_path: Path) -> None:
     project = _book(tmp_path)
     _ffmpeg("-f", "lavfi", "-i", "color=c=red:s=64x64", "-frames:v", "1", str(project / covers.COVER_FILE))

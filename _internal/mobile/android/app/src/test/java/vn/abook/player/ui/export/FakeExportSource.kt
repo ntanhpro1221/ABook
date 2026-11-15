@@ -7,6 +7,18 @@ import vn.abook.player.ui.data.ListenBook
 
 /** Nguồn Xuất giả: kho trong bộ nhớ, ghi lại mọi việc màn đã bảo lõi làm để test so lời gọi. */
 class FakeExportSource : ExportSource {
+    var volumeChoices = emptyList<ExportVolume>()
+    override suspend fun volumes(bookId: String) = volumeChoices
+    val plannedVolumes = ArrayList<Int?>()
+    val startedVolumes = ArrayList<Int?>()
+    override suspend fun volumePlan(bookId: String, voice: String, music: Boolean?, volumeId: Int?): AudiobookPlan {
+        plannedVolumes += volumeId
+        return plan(bookId, voice, music)
+    }
+    override suspend fun startVolumeAudiobook(book: ListenBook, voice: String, file: String, music: Boolean, volumeId: Int?): Started {
+        startedVolumes += volumeId
+        return startAudiobook(book, voice, file, music)
+    }
     var music = ExportMusic()
     var history = emptyList<PastExport>()
     var folder: String? = null

@@ -255,11 +255,11 @@ def test_the_project_file_carries_the_listening_layer_of_the_book(tmp_path: Path
         book = json.loads(archive.read("book.json"))
         sizes = {info.filename: info.file_size for info in archive.infolist()}
     assert {"book.json", "cast.json", "cover.jpg", "scripts/1.json", "samples/3.wav", "chapters/00001_645.mp3"} <= names
-    assert book["package"]["format"] == "abook" and book["package"]["version"] == 1 and "id" not in book
-    [chapter] = [item for item in book["chapters"] if item["file"]]
+    assert book["package"]["format"] == "abook" and book["package"]["version"] == 6 and "id" not in book
+    [chapter] = [item for item in book["volumes"][0]["chapters"] if item["file"]]
     assert chapter["id"] == 1 and chapter["available"] and chapter["script"] == "scripts/1.json"
     assert chapter["file"] == "chapters/00001_645.mp3", "đúng tên mục của file .abook"
-    assert [item["available"] for item in book["chapters"]] == [True, False] and book["chaptersAvailable"] == 1
+    assert [item["available"] for item in book["volumes"][0]["chapters"]] == [True, False] and book["chaptersAvailable"] == 1
     listed = book["package"]["files"]
     assert {"chapters/00001_645.mp3", "cast.json", "scripts/1.json", "scripts/2.json", "samples/3.wav",
             "cover.jpg"} == set(listed), "chữ đọc theo của cả chương chưa xong - như file .abook"
@@ -310,7 +310,7 @@ def test_the_project_file_carries_the_background_music(tmp_path: Path) -> None:
     packed = projectfile.pack(project, tmp_path / "du_an.abookproj", music_track=_tracks(tmp_path))
     calm, battle = music_plan.track_name(CALM), music_plan.track_name(BATTLE)
     book = _read_book(packed)
-    assert book["package"]["version"] == 2 and set(book["music"]["tracks"]) == {calm, battle}
+    assert book["package"]["version"] == 6 and set(book["music"]["tracks"]) == {calm, battle}
     assert {calm, battle} <= set(book["package"]["files"])
     with zipfile.ZipFile(packed) as archive:
         assert archive.read(calm).startswith(b"ID3") and archive.getinfo(calm).compress_type == zipfile.ZIP_STORED
@@ -364,7 +364,7 @@ def test_a_listening_layer_that_does_not_match_the_package_is_refused(tmp_path: 
     def change(name: str, data: bytes) -> bytes | None:
         if damage == "chapter" and name == "book.json":
             book = json.loads(data)
-            book["chapters"][0]["file"] = "project/output/chapters/khong_co.mp3"
+            book["volumes"][0]["chapters"][0]["file"] = "project/output/chapters/khong_co.mp3"
             return json.dumps(book).encode("utf-8")
         if damage in ("hash", "missing") and name == projectfile.MANIFEST:
             manifest = json.loads(data)

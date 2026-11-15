@@ -6,6 +6,8 @@ Phần đầu so với bộ ví dụ dùng chung với app Android (tests/fixtur
 """
 from __future__ import annotations
 
+from tests.current_book_fixtures import current_fixture
+
 import json
 import shutil
 import sqlite3
@@ -36,6 +38,10 @@ CASES = sorted(shared.CASES)
 def test_remove_cover_keeps_asset_if_json_commit_fails(tmp_path, monkeypatch):
     folder = tmp_path / "book"
     shutil.copytree(shared.BASE, folder)
+    from abook.book_volumes import nested
+    current = json.loads((folder / "book.json").read_text(encoding="utf-8"))
+    current["package"]["version"] = 6
+    (folder / "book.json").write_text(json.dumps(nested(current), ensure_ascii=False), encoding="utf-8")
     cover = folder / book_edits.EDITS_COVER
     cover.parent.mkdir(parents=True, exist_ok=True)
     cover.write_bytes(b"cover")
@@ -71,6 +77,10 @@ def imported(tmp_path: Path):
     library = tmp_path / "thu_vien"
     folder = library / packages.IMPORTED_FOLDER / "base"
     shutil.copytree(shared.BASE, folder)
+    from abook.book_volumes import nested
+    current = json.loads((folder / "book.json").read_text(encoding="utf-8"))
+    current["package"]["version"] = 6
+    (folder / "book.json").write_text(json.dumps(nested(current), ensure_ascii=False), encoding="utf-8")
     app = _app(tmp_path, library)
     server = Server(app, port=0).start()
     identifier = book_id(folder)
@@ -143,6 +153,10 @@ def test_sending_edits_follows_the_golden_file(name: str) -> None:
 def test_writers_store_the_minimum_and_a_noop_edit_never_counts(tmp_path: Path) -> None:
     folder = tmp_path / "base"
     shutil.copytree(shared.BASE, folder)
+    from abook.book_volumes import nested
+    current = json.loads((folder / "book.json").read_text(encoding="utf-8"))
+    current["package"]["version"] = 6
+    (folder / "book.json").write_text(json.dumps(nested(current), ensure_ascii=False), encoding="utf-8")
     book_edits.set_title(folder, "Sách thử · Tập 1")  # đúng tên người làm sách đặt
     book_edits.set_music(folder, {"enabled": True, "levelDb": -18})  # đúng mức của sách
     book_edits.set_chapter_title(folder, 1, "Chương 646", None)
@@ -379,6 +393,10 @@ def _edited_library(tmp_path: Path, name: str = "may_a") -> tuple[App, Path, str
     library = tmp_path / name
     folder = library / packages.IMPORTED_FOLDER / "base"
     shutil.copytree(shared.BASE, folder)
+    from abook.book_volumes import nested
+    current = json.loads((folder / "book.json").read_text(encoding="utf-8"))
+    current["package"]["version"] = 6
+    (folder / "book.json").write_text(json.dumps(nested(current), ensure_ascii=False), encoding="utf-8")
     return _app(tmp_path / name, library), folder, book_id(folder)
 
 
@@ -412,7 +430,7 @@ def test_saving_writes_a_version_4_file_another_computer_opens_with_the_edits(tm
         assert readium["metadata"]["title"] == "Sách của tôi", "app khác đọc Readium cũng thấy tên mới"
     with BookFile(saved["file"]) as opened:
         opened.verify()
-        assert opened.book["package"]["version"] == 4 and book_edits.count(opened.edits) == 4
+        assert opened.book["package"]["version"] == 6 and book_edits.count(opened.edits) == 4
         assert json.loads(opened.read("book.json"))["title"] == "Sách thử · Tập 1", "lớp sách không bị sửa tại chỗ"
     other, _other_folder, _ = _edited_library(tmp_path, "may_b")
     shutil.rmtree(_other_folder)
@@ -429,8 +447,8 @@ def test_a_book_without_edits_saves_in_the_producers_own_version(tmp_path: Path)
     out = bookfile.repack(folder, tmp_path / "ra.abook")
     with BookFile(out) as opened:
         opened.verify()
-        assert opened.book["package"]["version"] == 2 and book_edits.is_empty(opened.edits) and "edits.json" not in opened.content
-        assert opened.chapter_prints == BookFile(shared.FIXTURES / "written" / "python_v4.abook").chapter_prints
+        assert opened.book["package"]["version"] == 6 and book_edits.is_empty(opened.edits) and "edits.json" not in opened.content
+        assert opened.chapter_prints == BookFile(current_fixture(shared.FIXTURES / "written" / "python_v4.abook")).chapter_prints
 
 
 def test_opening_the_same_book_again_keeps_the_listeners_edits(tmp_path: Path) -> None:
@@ -462,7 +480,7 @@ def test_a_file_with_edits_merges_into_a_book_that_is_already_complete(tmp_path:
     app, folder, identifier = _edited_library(tmp_path)
     book_edits.set_title(folder, "Của tôi")
     book_edits.set_music(folder, {"silence": {"1:0": True}})
-    with_edits = shared.FIXTURES / "written" / "python_v4.abook"  # phần sửa `everything`: tên Sách của tôi, bìa, Lu-xi-en, ...
+    with_edits = current_fixture(shared.FIXTURES / "written" / "python_v4.abook")  # phần sửa `everything`: tên Sách của tôi, bìa, Lu-xi-en, ...
     # cùng cuốn, không nhiều chương hơn: không giải nén lại, nhưng phần sửa của file vẫn được hợp vào
     result = app.open_book_file(str(with_edits))
     assert result["how"] == "existing" and result["id"] == identifier and result["merge"]["conflicts"] >= 1
@@ -485,9 +503,9 @@ def test_opening_a_file_without_edits_still_reports_the_edits_kept_on_this_machi
     assert book_edits.load(folder)["title"] == "Của tôi"
 
 
-def _forged(tmp_path: Path, edits_bytes: bytes, *, cover: bytes | None = None, version: int = 4) -> Path:
+def _forged(tmp_path: Path, edits_bytes: bytes, *, cover: bytes | None = None, version: int = 6) -> Path:
     """File phiên bản `version` mang `edits.json` do người lạ viết: dựng từ file đúng rồi thay phần sửa và ghi lại mã băm."""
-    source = shared.FIXTURES / "written" / "python_v4.abook"
+    source = current_fixture(shared.FIXTURES / "written" / "python_v4.abook")
     target = tmp_path / "gia.abook"
     with zipfile.ZipFile(source) as archive, zipfile.ZipFile(target, "w") as sink:
         book = json.loads(archive.read("book.json"))
@@ -521,7 +539,7 @@ def test_a_file_with_a_malformed_edits_layer_is_refused_whole(tmp_path: Path) ->
         BookFile(_forged(tmp_path, cover_meta, cover=b"not a jpeg"))
     with pytest.raises(BookFileError, match="quá lớn"):
         BookFile(_forged(tmp_path, b" " * (book_edits.MAX_EDITS_BYTES + 1), cover=good_cover))
-    with pytest.raises(BookFileError, match="mục lạ"):
+    with pytest.raises(BookFileError, match="cấu trúc quyển"):
         BookFile(_forged(tmp_path, cover_meta, cover=good_cover, version=3))  # phiên bản cũ không có lớp sửa
     BookFile(_forged(tmp_path, cover_meta, cover=good_cover)).close()
 
@@ -529,7 +547,7 @@ def test_a_file_with_a_malformed_edits_layer_is_refused_whole(tmp_path: Path) ->
 def test_an_abook_never_carries_a_projects_private_parts(tmp_path: Path) -> None:
     for name in ("project/project.sqlite3", "sources/1_a.txt", "views/work.json"):
         target = tmp_path / "la.abook"
-        with zipfile.ZipFile(shared.FIXTURES / "written" / "python_v4.abook") as archive, zipfile.ZipFile(target, "w") as sink:
+        with zipfile.ZipFile(current_fixture(shared.FIXTURES / "written" / "python_v4.abook")) as archive, zipfile.ZipFile(target, "w") as sink:
             book = json.loads(archive.read("book.json"))
             book["package"]["files"][name] = bookfile.describe(b"x")
             for info in archive.infolist():
@@ -542,9 +560,9 @@ def test_an_abook_never_carries_a_projects_private_parts(tmp_path: Path) -> None
 def test_files_written_by_each_platform_open_on_the_other() -> None:
     written = shared.FIXTURES / "written"
     for path in sorted(written.glob("*.abook")):  # python_v4 (repack) và kotlin_v4 (BookDocumentWriter)
-        with BookFile(path) as opened:
+        with BookFile(current_fixture(path)) as opened:
             opened.verify()
-            assert opened.book["package"]["version"] == 4 and not book_edits.is_empty(opened.edits), path.name
+            assert opened.book["package"]["version"] == 6 and not book_edits.is_empty(opened.edits), path.name
             with zipfile.ZipFile(path) as archive:
                 assert archive.infolist()[0].filename == "mimetype" and archive.infolist()[0].compress_type == zipfile.ZIP_STORED
                 assert all(archive.getinfo(name).compress_type == zipfile.ZIP_STORED
@@ -635,7 +653,7 @@ def test_saving_carries_the_pinned_track_and_another_computer_plays_it(tmp_path:
         assert archive.getinfo(name).compress_type == zipfile.ZIP_STORED and archive.read(name) == shared.tone_wav()
     with BookFile(out) as opened:
         opened.verify()
-        assert opened.book["package"]["version"] == 4 and name in opened.content
+        assert opened.book["package"]["version"] == 6 and name in opened.content
         assert book_edits.pinned_files(opened.edits) == [name]
         assert name not in json.loads(opened.read("book.json")).get("music", {}).get("tracks", {}), "lớp sách không bị sửa tại chỗ"
     other, other_folder, _ = _edited_library(tmp_path, "may_b")
@@ -651,7 +669,7 @@ def test_saving_carries_the_pinned_track_and_another_computer_plays_it(tmp_path:
 
 
 def test_the_file_a_phone_wrote_is_opened_and_its_pinned_track_kept(tmp_path: Path) -> None:
-    pinned = shared.FIXTURES / "written" / "python_v4_pins.abook"
+    pinned = current_fixture(shared.FIXTURES / "written" / "python_v4_pins.abook")
     app, folder, identifier = _edited_library(tmp_path)
     book_edits.set_music(folder, {"levelDb": -30})
     result = app.open_book_file(str(pinned))  # cùng cuốn, không nhiều chương hơn: không giải nén lại, phần sửa được hợp vào
@@ -869,6 +887,10 @@ def test_a_pin_in_an_edited_file_reaches_the_producers_store_through_the_open_an
 def test_withdrawing_what_the_sender_dropped_only_removes_the_value_it_sent(tmp_path: Path) -> None:
     folder = tmp_path / "base"
     shutil.copytree(shared.BASE, folder)
+    from abook.book_volumes import nested
+    current = json.loads((folder / "book.json").read_text(encoding="utf-8"))
+    current["package"]["version"] = 6
+    (folder / "book.json").write_text(json.dumps(nested(current), ensure_ascii=False), encoding="utf-8")
     book_edits.save(folder, book_edits.validate({
         **shared.HEAD, "title": "Giữ",
         "skip": {"1": ["Dịch: Nhóm Thử", "Biên tập: Ai Đó"], "2": ["Dịch: Nhóm Thử"]},

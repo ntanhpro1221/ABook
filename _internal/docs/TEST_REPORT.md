@@ -1,5 +1,17 @@
 # Test report
 
+## 15-11-2026 — book volume organization
+
+Original Hako and EPUB fixtures preserve volume order, repeated chapter titles and per-volume covers. Tests cover
+version-6 tree round trips, checksum/path rejection, project restore/cover aliases, atomic volume edits, identical
+segmentation and generation seeds with/without volume boundaries, duration-weighted volume progress, playback across
+volumes and selected-volume MP3/M4B exports. Web gallery, Compose/Robolectric and Qt offscreen tests exercise actual
+book screens; one-volume books keep the direct chapter view. The task report outside Git records complete logs and
+final counts. Quality implementation files and their aggregate hash remain unchanged.
+Text-book exports also select a volume before estimating or synthesizing it. Real FFmpeg tests verify both MP3 and
+M4B contain only the selected global chapter ids, the selected album name and embedded volume artwork; API tests
+reject missing/invalid volume selections. Android tests check the same chapter filtering, estimate and worker input.
+
 ## 15-11-2026 — chapter display names
 
 Python and Android share the heading rules and original positive/negative fixtures in `chapter_titles.json`.

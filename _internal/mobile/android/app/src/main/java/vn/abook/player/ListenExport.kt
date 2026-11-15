@@ -117,10 +117,11 @@ object ListenExport {
      */
     fun chapters(
         id: String,
+        volumeId: Int? = null,
         parse: (String, List<Int>) -> Map<Int, Pair<String, List<Paragraphs.Paragraph>>> = ReadAloud::parsedChapters,
     ): List<Chapter> {
         val book = Store.manifest(id) ?: throw Mp3Export.Refused(S.s_khong_tim_thay_sach_nay_tren_dien_thoai_3503b770)
-        val array = book.optJSONArray("chapters") ?: JSONArray()
+        val array = BookVolumes.selected(book, volumeId)?.getJSONArray("chapters") ?: book.optJSONArray("chapters") ?: JSONArray()
         val items = (0 until array.length()).mapNotNull { array.optJSONObject(it) }.filter { it.optString("text").startsWith("texts/") }
         val parsed = parse(id, items.map { it.optInt("id") })
         return items.mapNotNull { item ->

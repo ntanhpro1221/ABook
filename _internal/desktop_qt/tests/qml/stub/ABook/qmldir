@@ -84,6 +84,7 @@ NativeFolders 1.0 NativeFolders.qml
 ThirdPartyText 1.0 ../../../../qml/ThirdPartyText.qml
 AddBook 1.0 ../../../../qml/AddBook.qml
 EditBook 1.0 ../../../../qml/EditBook.qml
+VolumeEditor 1.0 ../../../../qml/VolumeEditor.qml
 CoverSearch 1.0 ../../../../qml/CoverSearch.qml
 BookMusicSettings 1.0 ../../../../qml/BookMusicSettings.qml
 Collapse 1.0 ../../../../qml/Collapse.qml

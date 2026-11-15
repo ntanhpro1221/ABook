@@ -149,6 +149,34 @@ class BookScreenTest {
 
     private fun detail(state: JSONObject? = null, complete: Boolean = true) = BookDetail.of(manifest(complete = complete), state, { null }, canShare = true)
 
+    @Test
+    fun volumeRowsOpenTheirChaptersAndKeepTheGlobalBookIdentity() {
+        val raw = manifest(chapters = 3, title = "Đồng hồ bên cửa sổ").put("author", "")
+        val chapters = raw.getJSONArray("chapters")
+        chapters.remove(3)
+        raw.put("volumes", JSONArray()
+            .put(JSONObject().put("id", 1).put("number", 1).put("title", "Tập một").put("chapters", JSONArray().put(chapters.getJSONObject(0)).put(chapters.getJSONObject(1))))
+            .put(JSONObject().put("id", 2).put("number", 2).put("title", "Tập hai").put("chapters", JSONArray().put(chapters.getJSONObject(2)))))
+        show(BookDetail.of(raw, listening(), { null }))
+        rule.onNodeWithTag("volume_1").assertIsDisplayed()
+        rule.onNodeWithText("2 chương · Đã nghe 100%").assertExists()
+        run {
+            rule.onRoot().captureRoboImage("build/icon_probe/volumes/android-volumes.png", com.github.takahirom.roborazzi.RoborazziOptions(taskType = com.github.takahirom.roborazzi.RoborazziTaskType.Record))
+        }
+        rule.onNodeWithTag("volume_2").performClick()
+        rule.waitForIdle()
+        rule.onNodeWithTag("chapter_3").assertIsDisplayed()
+        rule.onNodeWithTag("chapter_1").assertDoesNotExist()
+        run {
+            rule.onRoot().captureRoboImage("build/icon_probe/volumes/android-chapters.png", com.github.takahirom.roborazzi.RoborazziOptions(taskType = com.github.takahirom.roborazzi.RoborazziTaskType.Record))
+        }
+        rule.onNodeWithTag("chapter_3").performClick()
+        assertEquals("chapter b1 3 600.0", played.last())
+        rule.onNodeWithText("Các quyển").performClick()
+        rule.waitForIdle()
+        rule.onNodeWithTag("volume_1").assertIsDisplayed()
+    }
+
     // ---- ảnh chụp ----
 
     @Test

@@ -581,11 +581,7 @@ def manifest(project_root: Path, book: str, listening: Listening,
         **({"wordsVersion": words} if words else {}),
     }
     volumes = book_volumes.project(project_root, chapters)
-    if book_volumes.needs_tree({"volumes": volumes}):  # same rule as book.json: one plain volume is just the chapter list
-        result["volumes"] = volumes
-    else:
-        for chapter in chapters:
-            chapter.pop("volumeId", None)
+    result["volumes"] = volumes
     result["metaVersion"] = listen_view.metadata_version(result)  # tên / người đọc / liên kết bộ / tên chương: điện thoại đã tải đổi riêng phần này mà giữ audio
     return result
 

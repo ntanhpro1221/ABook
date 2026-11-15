@@ -7,6 +7,7 @@ import android.provider.OpenableColumns
 import android.system.Os
 import android.system.OsConstants
 import org.json.JSONObject
+import org.json.JSONArray
 import java.io.File
 import java.security.MessageDigest
 import java.util.zip.ZipEntry
@@ -298,10 +299,8 @@ object BookFileImport {
             val version = if (declared is Int || declared is Long) (declared as Number).toInt() else -1
             if (version < 1) throw Refused(S.s_file_sach_co_phien_ban_dinh_dang_khong_hop_3dcef37b)
             if (version > FORMAT_VERSION) throw Refused(S.s_sach_nay_duoc_lam_bang_ban_app_moi_hon_hay_27f95a02)
-            if (book.has("volumes")) {
-                if (version < BookVolumes.TREE_VERSION) throw Refused(S.s_goi_co_muc_la_0_44ad5278("volumes"))
-                try { BookVolumes.project(book) } catch (_: Exception) { throw Refused(S.s_book_json_hong_c149af72) }
-            }
+            if (version != FORMAT_VERSION || !book.has("volumes") || book.has("chapters")) throw Refused(S.s_volume_rebuild)
+            try { BookVolumes.project(book) } catch (_: Exception) { throw Refused(S.s_book_json_hong_c149af72) }
             checkShape(book)
             BookEdits.scrubCoverColor(book) // màu bìa chỉ #rrggbb: `url(...)` trong file của người khác sẽ thành CSS gọi máy lạ
             // Thư mục phần chỉ có từ phiên bản 3, lớp sửa của người nghe từ phiên bản 4.
@@ -310,6 +309,11 @@ object BookFileImport {
             // File dự án: phần nghe là những mục logic mang tên của file .abook (bí danh cũng tính); phần còn lại của gói (sổ dự án,
             // bản thu từng câu, nguồn chương) chỉ được chép nguyên byte, không bao giờ mở.
             val content = layout?.listening ?: (names - DESCRIPTIONS)
+            val volumes = book.getJSONArray("volumes")
+            for (i in 0 until volumes.length()) {
+                val image = volumes.getJSONObject(i).optJSONObject("cover") ?: continue
+                if (image.getString("file") !in content) throw Refused(S.s_volume_cover_missing)
+            }
             if (files.keys().asSequence().toSet() != content) {
                 throw Refused(S.s_danh_sach_file_trong_sach_khong_khop_noi_d_5cc18ae2)
             }
@@ -451,6 +455,12 @@ object BookFileImport {
         val chapters = base.optJSONArray("chapters")
         for (index in 0 until (chapters?.length() ?: 0)) {
             chapters!!.getJSONObject(index).apply { remove("sha256"); remove("size") }
+        }
+        val volumes = base.optJSONArray("volumes")
+        for (i in 0 until (volumes?.length() ?: 0)) {
+            val volume = volumes!!.getJSONObject(i)
+            val rows = volume.optJSONArray("chapters") ?: JSONArray()
+            volume.put("chapters", JSONArray((0 until rows.length()).map { rows.getJSONObject(it).getInt("id") }))
         }
         return base
     }

@@ -71,8 +71,9 @@ object M4bExports {
      * Bắt đầu làm file M4B của cuốn `bookId` vào `file` (thay lượt đang chạy của cuốn ấy); `music` = ô "Kèm nhạc nền". Trả mã lượt - tin
      * của lượt mang mã này.
      */
-    fun start(context: Context, bookId: String, file: Uri, drawnCover: File?, music: Boolean = false): String {
+    fun start(context: Context, bookId: String, file: Uri, drawnCover: File?, music: Boolean = false, volumeId: Int? = null): String {
         val data = Data.Builder().putString(KEY_BOOK, bookId).putString(KEY_FILE, file.toString()).putBoolean(KEY_MUSIC, music)
+        volumeId?.let { data.putInt("volumeId", it) }
         drawnCover?.let { data.putString(KEY_COVER, it.absolutePath) }
         val request = OneTimeWorkRequestBuilder<M4bExportWorker>()
             .setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)
@@ -160,7 +161,7 @@ class M4bExportWorker(context: Context, params: WorkerParameters) : Worker(conte
         var retrying = false
         var music: ExportMusic? = null
         try {
-            val base = Mp3Export.plan(bookId, cover?.takeIf { it.isFile }?.readBytes())
+            val base = Mp3Export.plan(bookId, cover?.takeIf { it.isFile }?.readBytes(), volumeId = inputData.getInt("volumeId", -1).takeIf { it > 0 })
             title = base.title
             // Không vào được dịch vụ nền (Android 12+ khi app đã ở nền lúc việc bắt đầu): vẫn chạy, chỉ không có thông báo đứng.
             runCatching { setForegroundAsync(M4bExports.foreground(context, id, bookId, title, 0, base.chapters.size, 0.0)).get() }

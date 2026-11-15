@@ -24,12 +24,6 @@ def volumes_of(book: dict[str, Any]) -> list[dict[str, Any]]:
     return [{"id": 1, "number": 1, "title": DEFAULT_TITLE, "cover": None, "chapters": list(book.get("chapters") or [])}]
 
 
-def needs_tree(book: dict[str, Any]) -> bool:
-    """Only several volumes, or a volume with its own cover, are written as a tree; one plain volume stays a flat chapter list."""
-    volumes = book.get("volumes") or []
-    return len(volumes) > 1 or any(volume.get("cover") for volume in volumes)
-
-
 def group(chapters: list[dict[str, Any]], volumes: list[dict[str, Any]]) -> list[dict[str, Any]]:
     """Attach chapter objects without copying or changing the global sequence."""
     result = [{**volume, "chapters": []} for volume in volumes]
@@ -174,6 +168,18 @@ def flatten(book: dict[str, Any]) -> dict[str, Any]:
     volumes = book.get("volumes")
     if not isinstance(volumes, list) or not 1 <= len(volumes) <= MAX_VOLUMES:
         raise ValueError("Book volumes are missing or invalid")
+    # Local library/sync documents carry the current playback projection. Archives have only the tree.
+    if "chapters" in book:
+        projection = book["chapters"]
+        if not isinstance(projection, list) or any(not isinstance(row, dict) or type(row.get("id")) is not int for row in projection):
+            raise ValueError("Invalid chapter projection")
+        if any(not isinstance(volume, dict) for volume in volumes):
+            raise ValueError("Invalid volume")
+        membership = {row["id"]: volume["id"] for volume in volumes for row in volume.get("chapters", []) if isinstance(row, dict)}
+        for row in projection:
+            row.setdefault("volumeId", membership.get(row["id"], volumes[-1]["id"]))
+        volumes = group(projection, volumes)
+        book["volumes"] = volumes
     ids, chapters = set(), []
     for volume in volumes:
         if not isinstance(volume, dict):
@@ -183,7 +189,7 @@ def flatten(book: dict[str, Any]) -> dict[str, Any]:
         if (type(identifier) is not int or not 1 <= identifier <= 999999999 or identifier in ids
                 or type(number) is not int or not 1 <= number <= 9999
                 or not isinstance(title, str) or not title.strip() or len(title) > 240
-                or not isinstance(rows, list) or not rows):
+                or not isinstance(rows, list) or (not rows and len(volumes) > 1)):
             raise ValueError("Invalid volume metadata or empty volume")
         ids.add(identifier)
         cover = volume.get("cover")
@@ -216,12 +222,6 @@ def nested(book: dict[str, Any]) -> dict[str, Any]:
     chapters = result.pop("chapters", [])
     metadata = result.get("volumes") or [{"id": 1, "number": 1, "title": DEFAULT_TITLE, "cover": None}]
     result["volumes"] = group(chapters, metadata)
-    if not needs_tree(result):
-        # Same keys in the same order as before volumes existed: a one-volume book.json is byte-identical.
-        flat = copy.deepcopy({key: value for key, value in book.items() if key != "volumes"})
-        if "chapters" in flat:
-            flat["chapters"] = [{key: value for key, value in chapter.items() if key != "volumeId"} for chapter in flat["chapters"]]
-        return flat
     flatten(result)
     result.pop("chapters")
     return result

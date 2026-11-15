@@ -5,6 +5,7 @@ import org.json.JSONObject
 import org.junit.After
 import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertThrows
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertNotNull
@@ -148,6 +149,27 @@ class ListenExportTest {
         } catch (refused: Mp3Export.Refused) {
             assertEquals("Không tìm thấy sách này trên điện thoại", refused.message)
         }
+    }
+
+    @Test
+    fun selectingATextVolumeParsesOnlyItsOwnGlobalChapterIds() {
+        book(listOf(item(1, "First", null), item(2, "Second", null)))
+        val file = File(root, "books/sach/book.json")
+        val data = JSONObject(file.readText())
+        val rows = data.getJSONArray("chapters")
+        data.put("volumes", JSONArray().put(JSONObject().put("id", 1).put("number", 1).put("title", "One")
+            .put("chapters", JSONArray().put(rows.getJSONObject(0))))
+            .put(JSONObject().put("id", 2).put("number", 2).put("title", "Two")
+                .put("chapters", JSONArray().put(rows.getJSONObject(1)))))
+        file.writeText(data.toString())
+        val asked = ArrayList<Int>()
+        val selected = ListenExport.chapters("sach", volumeId = 2) { _, ids ->
+            asked += ids
+            mapOf(2 to ("Second" to Paragraphs.split("A blue clock.")))
+        }
+        assertEquals(listOf(2), asked)
+        assertEquals(listOf(2), selected.map { it.id })
+        assertThrows(Mp3Export.Refused::class.java) { ListenExport.chapters("sach", volumeId = 99) }
     }
 
     // ---- ghép chương ---------------------------------------------------------------------------------------------------

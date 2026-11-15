@@ -12,6 +12,13 @@ class ExportFailure(message: String) : Exception(message)
  * Nguồn thật: [ExportRepo]. Hàm suspend tự chạy ở luồng nền; lỗi ném [ExportFailure] (hay lỗi lõi với câu đã sẵn cho người nghe).
  */
 interface ExportSource {
+    suspend fun volumes(bookId: String): List<ExportVolume> = emptyList()
+    suspend fun fileVolumeTitle(book: ListenBook, kind: ExportKind, volumeId: Int?): String = fileTitle(book, kind)
+    suspend fun startVolumeMp3(book: ListenBook, chapterIds: List<Int>?, music: Boolean, volumeId: Int?): Started = startMp3(book, chapterIds, music)
+    suspend fun startVolumeM4b(book: ListenBook, file: String, music: Boolean, volumeId: Int?): Started = startM4b(book, file, music)
+    suspend fun volumePlan(bookId: String, voice: String, music: Boolean?, volumeId: Int?): AudiobookPlan = plan(bookId, voice, music)
+    suspend fun startVolumeAudiobook(book: ListenBook, voice: String, file: String, music: Boolean, volumeId: Int?): Started = startAudiobook(book, voice, file, music)
+
     /** Ô "Kèm nhạc nền" của cuốn. */
     suspend fun music(bookId: String): ExportMusic
 

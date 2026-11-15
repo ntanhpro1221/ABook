@@ -222,6 +222,7 @@ qt_add_qml_module(ABookDesk
         qml/ThirdPartyText.qml
         qml/AddBook.qml
         qml/EditBook.qml
+        qml/VolumeEditor.qml
         qml/CoverSearch.qml
         qml/BookMusicSettings.qml
         qml/Collapse.qml

@@ -32,7 +32,7 @@ beforeEach(() => {
 });
 afterEach(() => { cleanups.splice(0).forEach((clean) => clean()); vi.useRealTimers(); vi.unstubAllGlobals(); });
 async function settle() { for (let i = 0; i < 20; ++i) await Promise.resolve(); }
-function mount(extra: Partial<ListenSource> = {}) {
+function mount(extra: Partial<ListenSource> = {}, preparedBook: ListenBook = book) {
   let actions!: ReturnType<typeof usePlayer>;
   const listeners = new Map<string, (() => void)[]>();
   const fire = (kind: string) => listeners.get(kind)?.forEach((listener) => listener());
@@ -45,16 +45,26 @@ function mount(extra: Partial<ListenSource> = {}) {
   } as unknown as AudioEngine;
   const saveProgress = vi.fn().mockResolvedValue(undefined);
   const beginProgress = vi.fn().mockResolvedValue(undefined);
-  const source = { kind: "desktop", audioUrl: () => "/audio", saveProgress, beginProgress, setRate: async () => undefined, book: async () => book, ...extra } as unknown as ListenSource;
+  const source = { kind: "desktop", audioUrl: () => "/audio", saveProgress, beginProgress, setRate: async () => undefined, book: async () => preparedBook, ...extra } as unknown as ListenSource;
   function Capture() { actions = usePlayer(); return null; }
   renderToString(<QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { queryFn: async () => [], retry: false } } })}><SourceProvider source={source}><PlayerProvider engine={engine} keyboard={false}><Capture /></PlayerProvider></SourceProvider></QueryClientProvider>);
   // Chạy các effect nối sự kiện của engine và đường đóng trang; không khởi động truy vấn/nhạc.
   for (const effect of h.effects.filter((effect) => effect.deps.includes(engine) || effect.run.toString().includes('"pagehide"'))) {
     const cleanup = effect.run(); if (cleanup) cleanups.push(cleanup);
   }
-  actions.prepare(book, chapters, 1, 12);
+  actions.prepare(preparedBook, chapters, 1, 12);
   return { actions, engine, state, fire, saveProgress, beginProgress };
 }
+it("hết quyển thứ nhất tự phát chương đầu quyển sau trong cùng sách", async () => {
+  const split = { ...book, volumes: chapters.map((chapter, index) => ({ id: index + 1, number: index + 1, title: `Quyển ${index + 1}`, cover: null, chapters: [chapter] })) };
+  const { engine, state, fire, saveProgress } = mount({}, split);
+  await settle();
+  state.time = 100;
+  fire("ended");
+  await settle();
+  expect(engine.load).toHaveBeenLastCalledWith(expect.objectContaining({ title: "Chương 2", album: "A" }), 0, true);
+  expect(saveProgress).toHaveBeenCalledWith("a", 1, 100, 100, undefined, undefined, expect.any(Object));
+});
 it("tab đang dừng không di chuyển thì pagehide không gửi progress", async () => {
   const { saveProgress, beginProgress } = mount();
   await settle();

@@ -108,8 +108,8 @@
     "reason": "Pre-existing public regression fixture; exact bytes only, changes require renewed privacy review"
   },
   "_internal/tests/fixtures/text_books/cases.json": {
-    "sha256": "cc85333ad58e61ecfe18a1eff59f580772c5524035224803be44295a701b63f9",
-    "reason": "Pre-existing public regression fixture; exact bytes only, changes require renewed privacy review"
+    "sha256": "893b42d0f3c32be2344004a79f2c0586ae2d0aa5c8a0de9bb73f616627755678",
+    "reason": "Pre-existing public regression fixture; exact bytes only, changes require renewed privacy review Volume-tree format revision: reviewed unchanged original source text and numeric word counts; only expected volume metadata/layout changed."
   },
   "_internal/tests/fixtures/vieneu/android/audio.json": {
     "sha256": "73d2c6c32a21b22ed6e9e2cf7da74521dac021126dbdf054a66731bc1270c28e",

@@ -1,6 +1,6 @@
 # The ABook file format (`.abook`)
 
-Media type: `application/vnd.ngdtuanh.abook+zip` · File extension: `.abook` · Format versions: 1, 2, 3, 4, 5 (current: 5)
+Media type: `application/vnd.ngdtuanh.abook+zip` · File extension: `.abook` · Format version: 6 (the only version read)
 
 An `.abook` file is one finished audiobook produced by ABook (https://github.com/ntanhpro1221/ABook): the audio of every
 chapter, the text with who speaks each line, the cast of characters and the cover, in a single file that the ABook apps
@@ -29,35 +29,52 @@ A ZIP archive (PKWARE APPNOTE, as used by EPUB and OOXML).
 | Entry | Compression | Content |
 |---|---|---|
 | `mimetype` | stored | the media type, see above |
-| `book.json` | deflate | the book: title, author, chapters, durations, and a `package` object with the format version and the size and SHA-256 of every other entry |
+| `book.json` | deflate | the book: title, author, volumes with their chapters, durations, and a `package` object with the format version and the size and SHA-256 of every other entry |
 | `manifest.json` | deflate | the same book as a Readium Audiobook manifest, so other audiobook players can read the audio |
-| `cover.jpg` | deflate | cover image (optional) |
-| `cast.json` | deflate | characters and the voice each one speaks with; from version 6 each person may carry `avatar` (see "Version 6") |
+| `cover.jpg` | deflate | book cover image (optional) |
+| `covers/<id>.jpg` | deflate | per-volume cover image (optional, falls back to the book cover) |
+| `cast.json` | deflate | characters, their voices, and optional character portraits (`avatar`) |
 | `chapters/<name>.mp3` | stored | chapter audio, MP3; stored so players can seek inside the archive |
-| `chapters/<part>/<name>.mp3` | stored | version 3 only: chapter audio of part `<part>` (1-4 digits); two parts may use the same file name |
+| `chapters/<part>/<name>.mp3` | stored |  chapter audio of part `<part>` (1-4 digits); two parts may use the same file name |
 | `scripts/<n>.json` | deflate | the lines of chapter `n`: text, kind (narration / dialogue / thought / heading), speaker, emotion, intensity, pace, volume, and the time span inside the chapter MP3; since 2026-10-03 optionally the time of every word (`words`, see "Word timings") |
 | `samples/<n>.wav` | stored | short voice sample of a character |
 | `music/<sha1>.<ext>` | stored | version 2 and later: a background-music track the producer attached; `<sha1>` is 40 hex digits and the file is stored once however many chapters or parts use it. `<ext>` is `mp3` for catalogue tracks; a track the producer imported from their own files (`music.tracks[...].link` starts with `local:`) keeps its own format: `mp3`, `m4a`, `ogg`, `opus`, `flac` or `wav`, and `<sha1>` is then the hash of the file's content. Such a track carries no licence fields, only the title and artist read from the file's own tags |
-| `texts/<n>.txt` | deflate | version 5 only: the text of chapter `n` (1-9 digits, the same id as in `book.json`), UTF-8, the file Studio would read as that chapter's source; only for a chapter with `state: "text"` |
-| `avatars/<sha256>.webp` | stored | version 6 only: a character portrait, 256 x 256 WebP without metadata; `<sha256>` is the hash of the file and `cast.json` points at it |
+| `texts/<n>.txt` | deflate | text of chapter `n` (1-9 digits, the same id as in `book.json`), UTF-8; only for a chapter with `state: "text"` |
+| `avatars/<sha256>.webp` | stored | character portrait, 256 x 256 WebP without metadata; `<sha256>` is the file hash and `cast.json` points at it |
 | `edits.json` | deflate | version 4 and later: the listener's edit layer (see below), at most 1 MiB |
 | `edits/cover.jpg` | deflate | version 4 and later: a cover the listener chose, JPEG, at most 8 MiB; only with `edits.json` |
 
 A `.abook` never contains `project/`, `sources/` or `views/` (the producer's workshop): a reader refuses those names.
 
-## Versions
+## Book, volumes and chapters
 
-`package.version` is the **lowest** version able to hold the content: a one-part book without music is version 1, so
-older apps still open it.
+Every `book.json` stores one authoritative `volumes` tree, including a book with one volume. There is no top-level
+`chapters` array in the archive. Readers build a flat playback queue by concatenating the volume arrays in their stored
+order. The one-volume shortcut is presentation only: its chapters appear directly, without an extra navigation step.
+Earlier package versions and flat manifests are refused; rebuild a book from its sources.
 
-| Version | Adds |
-|---|---|
-| 1 | the layout above without `music/` and without part folders |
-| 2 | background music: the `music` object of `book.json` (`levelDb`, `tracks`, and per chapter the cue list `chapters[<chapterId>]` of `{start, end, track, gainDb}`, optionally with `steps` = `[{at, db}]`, volume steps inside a scene: from chapter second `at` the cue plays at `gainDb + db` (still capped at 0 dB), and `sibling: true` = the cue takes over from the previous track at its natural end inside the same scene, with a 6 s crossfade) and the `music/<sha1>.<ext>` entries |
-| 3 | a whole series in one file: parts, nested chapter paths and a series-wide chapter id scheme, described next |
-| 4 | the listener's edit layer: `edits.json` and `edits/cover.jpg`, described after version 3. Only written when the listener changed something; an unedited book stays at version 1-3 |
-| 5 | chapters that have only text: `texts/<n>.txt` entries and `chapters[i].state` / `chapters[i].text`, described after version 4. A book without a single audio chapter is valid. Only written when a chapter has text; an ordinary audiobook stays at version 1-4 |
-| 6 | character portraits: `avatars/<sha256>.webp` entries and `avatar` on people in `cast.json`, described after version 5. Only written when at least one portrait is a picture; a book whose people all use the drawn pattern stays at version 1-5 |
+```json
+{"title":"The window clock","cover":{"file":"cover.jpg"},
+ "volumes":[
+   {"id":1,"number":1,"title":"First volume","cover":{"file":"covers/1.jpg"},
+    "chapters":[{"id":11,"index":1,"title":"Chapter 1","file":"chapters/1.mp3"}]},
+   {"id":2,"number":2,"title":"Second volume","cover":null,
+    "chapters":[{"id":15,"index":2,"title":"Chapter 1","file":"chapters/2.mp3"}]}],
+ "package":{"format":"abook","version":6,"files":{"...":"size and SHA-256"}}}
+```
+
+- A book has 1-99 volumes. Each has a unique integer `id` (1-999999999), an integer `number` (1-9999), a nonblank
+  `title` of at most 240 characters, an optional `cover`, and its ordered `chapters` array. An empty chapter array is
+  allowed only for a single-volume draft listening layer in a project.
+- Chapters keep their ids and global production indices. Repeated chapter titles in different volumes are valid.
+  `volumeId` is the derived membership field in the playback projection; it cannot change the queue order or a generation seed.
+- A volume cover is `covers/<id>.jpg`, described in `package.files` with size and SHA-256, and must exist in the archive.
+  It has the same normalized JPEG/color/width/height metadata as the book cover. A missing/null volume cover uses the book cover.
+  The library shelf always uses the book cover.
+- End-of-chapter playback continues into the next volume using the same book id and listening record. Volume progress
+  uses chapter durations (text-only chapters have unit weight); whole-book progress keeps the complete queue.
+- Readium `readingOrder` remains flat across all volumes. `mimetype`, file extensions and both registered IANA media
+  type names are unchanged. All layouts described below are features of version 6, including music, parts, edits and plain text.
 
 ### `sharedWords`: what the book knows about words Vietnamese and English share
 
@@ -219,7 +236,7 @@ additive: the format version does not change, a reader that does not know `words
 - Reject the file if `mimetype` is not the first entry, is compressed, or does not hold the exact media type.
 - Reject entries whose size or SHA-256 differs from `book.json`, more than 20,000 entries, JSON entries over 32 MiB,
   or more than 64 GiB in total.
-- Reject a `package.version` greater than the version the reader supports (currently 5), and tell the user to update.
+- Accept only `package.version == 6` with a volume tree and no top-level chapter array. A newer version asks for an app update; an earlier layout asks for a rebuild from sources.
 - Reject a chapter whose `file` or `text` names an entry that is not in the package.
 - Check that the destination has room for the whole book before extracting, and extract and hash in one pass.
 - Nothing inside the file is executed. The file carries no listening data (position, history) and no

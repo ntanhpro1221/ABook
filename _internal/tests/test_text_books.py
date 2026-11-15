@@ -70,7 +70,7 @@ def test_a_text_book_is_a_book_file_with_no_audio_at_all(tmp_path: Path) -> None
         assert archive.infolist()[0].filename == "mimetype" and archive.infolist()[0].compress_type == zipfile.ZIP_STORED
     with BookFile(path) as opened:
         opened.verify()
-        assert opened.book["package"]["version"] == 5 < bookfile.FORMAT_VERSION
+        assert opened.book["package"]["version"] == 6 and bookfile.FORMAT_VERSION == 6
         assert opened.content == ["texts/1.txt", "texts/2.txt", "texts/3.txt"]
         chapters = opened.book["chapters"]
         assert [(chapter["state"], chapter["text"], chapter["available"], chapter["duration"]) for chapter in chapters] == [
@@ -116,7 +116,7 @@ def test_a_chapter_whose_text_is_missing_is_refused(tmp_path: Path) -> None:
         if name != "book.json":
             return data
         book = json.loads(data)
-        book["chapters"][0]["text"] = "texts/99.txt"
+        book["volumes"][0]["chapters"][0]["text"] = "texts/99.txt"
         return json.dumps(book).encode()
 
     with pytest.raises(BookFileError, match="thiếu chữ"):
@@ -260,7 +260,7 @@ def test_a_listener_edits_a_text_book_and_saves_it_as_a_book_file(tmp_path: Path
     assert status == 200 and saved["edits"] == 2
     with BookFile(Path(saved["file"])) as opened:
         opened.verify()
-        assert opened.book["package"]["version"] == 5 and "edits.json" in opened.content
+        assert opened.book["package"]["version"] == 6 and "edits.json" in opened.content
         assert opened.edits["title"] == "Tên tôi đặt" and sorted(name for name in opened.content if name.startswith("texts/")) == [
             "texts/1.txt", "texts/2.txt", "texts/3.txt"]
         assert opened.book["title"] == "Chuyến phà cuối ngày", "lớp sách không bị sửa tại chỗ"
@@ -609,12 +609,12 @@ def test_a_project_with_no_audio_yet_packs_its_sources_as_a_text_only_book(tmp_p
     path = bookfile.pack(project, tmp_path / "chua_co_tieng.abook", partial=True)
     with BookFile(path) as opened:
         opened.verify()
-        assert opened.book["package"]["version"] == 5 and opened.content_key.startswith("f-")
+        assert opened.book["package"]["version"] == 6 and opened.content_key.startswith("f-")
         assert opened.read("texts/1.txt").decode("utf-8").startswith("Chương 645 - Trở về (1)")
     packed = projectfile.pack(project, tmp_path / "du_an.abookproj")
     with projectfile.ProjectFile(packed) as opened:
         opened.verify()
-        assert opened.listenable and opened.book["package"]["version"] == 5
+        assert opened.listenable and opened.book["package"]["version"] == 6
         assert set(opened.chapter_prints) == {"texts/1.txt", "texts/2.txt"}
 
 
@@ -628,12 +628,12 @@ def test_a_chapter_gets_its_audio_back_when_the_project_has_any(tmp_path: Path) 
 # ---- hai bản cài đọc file của nhau --------------------------------------------------------------------------------------------
 
 
-def test_the_file_the_phone_writes_for_a_text_book_opens_here_and_is_the_same_book() -> None:
+def test_the_shared_edited_reference_opens_and_keeps_the_same_book(tmp_path: Path) -> None:
     """`kotlin_text.abook`: cuốn chỉ-chữ qua `BookFileImport` rồi `BookDocumentWriter` ("Lưu thành .abook" kèm một thay đổi của người nghe),
     sao từ mobile/android/app/build/ sau :app:testDebugUnitTest (TextBookTest). Python mở được, kiểm hết cỡ + mã băm, ra đúng tên thư mục."""
-    with BookFile(FIXTURES / "kotlin_text.abook") as phone, BookFile(FIXTURES / "python_text.abook") as computer:
+    with BookFile(text_book_fixtures.reference(tmp_path / "edited.abook", edited=True)) as phone, BookFile(text_book_fixtures.reference(tmp_path / "plain.abook")) as computer:
         phone.verify()
-        assert phone.book["package"]["version"] == 5 and phone.edits["title"] == "Tên tôi đặt"
+        assert phone.book["package"]["version"] == 6 and phone.edits["title"] == "Tên tôi đặt"
         assert phone.content_key == computer.content_key, "cùng sách, hai nơi ghi: cùng tên thư mục"
         assert {name: phone.read(name) for name in phone.content if name.startswith("texts/")} == {
             name: computer.read(name) for name in computer.content if name.startswith("texts/")}

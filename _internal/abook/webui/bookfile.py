@@ -95,10 +95,7 @@ def cover_warnings(book: dict[str, Any], files: Container[str], edits: dict[str,
     return [] if present else [MISSING_COVER]
 
 
-# 1 = sách không nhạc nền; 2 = có mục `music` + music/*.mp3 (02-10); 3 = cả bộ nhiều phần (`pack_series`); 4 = có lớp sửa của
-# người nghe (edits.json + edits/cover.jpg, `repack`); 5 = có chương chỉ-chữ (texts/<n>.txt, không audio); 6 = có ảnh nhân vật (avatars/<sha256>.webp). Gói ghi phiên bản THẤP
-# NHẤT đủ chứa nội dung: sách một phần không nhạc vẫn là 1, có nhạc là 2 - app cũ mở được; app cũ gặp file mới hơn thì từ chối kèm
-# Version 6 supports volume trees and character artwork.
+# Every book.json stores the volume tree. Chapter arrays are runtime projections only.
 FORMAT_VERSION = 6
 MANIFEST = "book.json"
 READIUM_MANIFEST = "manifest.json"
@@ -335,31 +332,13 @@ def repack(folder: Path, out: Path, *, producer: str = "ABook") -> Path:
 
 
 def layer_version(book: dict[str, Any], files: dict[str, Path | bytes], edits: dict[str, Any]) -> int:
-    """Phiên bản THẤP NHẤT đủ chứa một lớp sách đã nhập: có chữ chương là 5, có lớp sửa là 4, có thư mục phần là 3, còn lại theo
-    `package_version`."""
-    if any(AVATAR_ENTRY.fullmatch(name) for name in files):
-        return 6
-    from .. import book_volumes
-    if book_volumes.needs_tree(book):
-        return book_volumes.TREE_VERSION
-    if any(TEXT_ENTRY.fullmatch(name) for name in files):
-        return 5
-    if not book_edits.is_empty(edits):
-        return 4
-    if any(re.fullmatch(r"chapters/\d+/.+", name) for name in files):
-        return 3
-    return package_version(book)
+    """All listening layers use the current volume-tree format."""
+    return FORMAT_VERSION
 
 
 def package_version(book: dict[str, Any]) -> int:
-    """Phiên bản THẤP NHẤT đủ chứa sách một phần: nhiều quyển là 6, có chương chỉ-chữ là 5, có nhạc nền là 2, không thì 1 (cả bộ: 3,
-    `pack_series`)."""
-    from .. import book_volumes
-    if book_volumes.needs_tree(book):
-        return book_volumes.TREE_VERSION
-    if any(isinstance(chapter, dict) and chapter.get("text") for chapter in book.get("chapters") or []):
-        return 5
-    return 2 if "music" in book else 1
+    """The current on-disk format, independent of the number of volumes."""
+    return FORMAT_VERSION
 
 
 def pack_series(parts: Sequence[tuple[int, Path] | Path], out: Path, *, producer: str = "ABook",
@@ -542,8 +521,9 @@ def seal(book: dict[str, Any], files: dict[str, Path | bytes], out: Path, *, pro
     if progress is not None:
         progress("hash", hashed, total_hash)
     from .. import book_volumes
-    if book_volumes.needs_tree(book):
-        version = max(version, book_volumes.TREE_VERSION)
+    if "chapters" not in book:
+        book_volumes.flatten(book)
+    version = FORMAT_VERSION
     book["package"] = {
         "format": FORMAT,
         "version": version,
@@ -872,12 +852,12 @@ class BookFile:
         if version > FORMAT_VERSION:
             raise BookFileError("Sách này được làm bằng bản app mới hơn. Hãy cập nhật app để mở.")
         from .. import book_volumes
-        if "volumes" in book and version < book_volumes.TREE_VERSION:
-            raise BookFileError("File sách có mục lạ: quyển chỉ có từ định dạng 6.")
+        if version != FORMAT_VERSION or "volumes" not in book or "chapters" in book:
+            raise BookFileError("File sách không dùng cấu trúc quyển hiện hành. Hãy dựng lại từ nguồn.")
         try:
             book_volumes.flatten(book)
         except ValueError as error:
-            raise BookFileError(str(error)) from error
+            raise BookFileError("Quyển hoặc chương trong file sách không hợp lệ. Bạn hãy kiểm tra lại file nguồn.") from error
         check_shape(book)
         files = package.get("files")
         content = names - {"mimetype", MANIFEST, READIUM_MANIFEST}
@@ -1068,6 +1048,9 @@ def swap_in(staging: Path, target: Path) -> None:
 def base_layer(book: dict[str, Any], edits: dict[str, Any]) -> dict[str, Any]:
     """Compare the book layer, ignoring packaging timestamps, listener edits and locally derived audio fields."""
     base = json.loads(json.dumps(book))
+    from .. import book_volumes
+    if "chapters" not in base:
+        book_volumes.flatten(base)
     package = base.pop("package", {})
     for key in ("id", "audioVersion", "chaptersAvailable"):
         base.pop(key, None)

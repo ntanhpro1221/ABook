@@ -84,10 +84,22 @@ class Reading:
     readings: dict[str, str]
 
 
-def load_chapters(path: Path) -> list[Chapter]:
+def load_chapters(path: Path, volume_id: int | None = None) -> list[Chapter]:
     """Các chương có chữ của một cuốn Nghe ngay, đã bỏ các dòng người nghe chọn bỏ (lớp sửa `skip`) và cắt thành đoạn như trình phát; chương không có gì đọc được bị bỏ."""
     out: list[Chapter] = []
-    for chapter in packages.edited_manifest(path).get("chapters") or []:
+    from .. import book_volumes
+    manifest = packages.edited_manifest(path)
+    selected = None
+    if volume_id is not None:
+        volume = next((row for row in book_volumes.volumes_of(manifest) if type(volume_id) is int and row["id"] == volume_id), None)
+        if volume is None:
+            raise ExportError("Quyển được chọn không có trong sách.")
+        selected = {row["id"] for row in volume["chapters"]}
+    for chapter in manifest.get("chapters") or []:
+        if not isinstance(chapter, dict):
+            continue
+        if selected is not None and chapter.get("id") not in selected:
+            continue
         if not isinstance(chapter, dict) or not chapter.get("text") or not isinstance(chapter.get("id"), int):
             continue
         text = packages.chapter_text(path, chapter["id"]) or ""
@@ -404,7 +416,8 @@ class _Run:
 def export_audiobook(reader: ReadAloud, path: Path, target_root: Path, work_root: Path, *, fmt: str, reading: Reading, book_id: str,
                      cover_drawn: str | None = None, progress: Callable[..., None] = lambda **_fields: None,
                      cancelled: Callable[[], bool] = lambda: False, sleep: Callable[[float], None] = time.sleep,
-                     music: dict[int, ChapterMusic] | None = None, clock: Callable[[], float] = time.monotonic) -> dict[str, Any]:
+                     music: dict[int, ChapterMusic] | None = None, clock: Callable[[], float] = time.monotonic,
+                     volume_id: int | None = None) -> dict[str, Any]:
     """Cả cuốn Nghe ngay `path` thành sách nói trong `target_root`: `fmt` "mp3" (thư mục `<tên sách>` mỗi chương một file + .m3u8) hay "m4b" (một file có mục lục chương).
     `progress(**trường)` nhận tiến độ (xem `_Run.report`); `cancelled()` đúng thì dừng ở chỗ an toàn kế (ném `export_jobs.Cancelled`, phần đã làm được giữ trong
     `work_root`). Trả kết quả như xuất của Studio: MP3 {folder, files, chapters, chaptersTotal, size}; M4B {file, folder, size, chapters, chaptersTotal}.
@@ -415,9 +428,10 @@ def export_audiobook(reader: ReadAloud, path: Path, target_root: Path, work_root
     if not ffmpeg_available():
         raise ExportError("Thiếu công cụ ghép âm thanh — bạn tải trong hộp Xuất sách nói rồi thử lại.")
     manifest = packages.edited_manifest(path)
-    title = str(manifest.get("title") or path.name)
+    facts = export.book_facts(path, volume_id) if volume_id is not None else None
+    title = facts.title if facts else str(manifest.get("title") or path.name)
     author = str(manifest.get("author") or "")
-    chapters = load_chapters(path)
+    chapters = load_chapters(path, volume_id)
     if not chapters:
         raise ExportError("Sách chưa có chương nào có chữ để đọc")
     ffmpeg = ffmpeg_executable()
@@ -445,7 +459,7 @@ def export_audiobook(reader: ReadAloud, path: Path, target_root: Path, work_root
                 mixer.lost[chapter.id] = int(stamp.get("musicMissing") or 0)
             sources.append(_flac_path(work, chapter, chapter_music))
             rates.append(int(stamp["rate"]))
-    cover_source = book_edits.cover_file(path)
+    cover_source = facts.cover if facts else book_edits.cover_file(path)
     try:
         if fmt == "mp3":
             result = _write_mp3(run, chapters, sources, rates, target_root, title, author, cover_source, cover_drawn, mixer)
@@ -454,7 +468,7 @@ def export_audiobook(reader: ReadAloud, path: Path, target_root: Path, work_root
     except subprocess.CalledProcessError as error:
         raise ExportError(f"Không ghép được file âm thanh: {(error.stderr or '').strip()[-300:]}") from error
     shutil.rmtree(work, ignore_errors=True)
-    return {**result, "format": fmt, "chapters": len(chapters), "chaptersTotal": len(packages.edited_manifest(path).get("chapters") or []),
+    return {**result, "format": fmt, "chapters": len(chapters), "chaptersTotal": facts.total if facts else len(manifest.get("chapters") or []),
             **(mixer.note(chapter.id for chapter in chapters) if mixer is not None else {})}
 
 

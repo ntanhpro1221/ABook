@@ -576,7 +576,7 @@ Item {
                 header: Item {
                     width: list.width
                     height: (root.fullBook.volumes || []).length > 1 ? 48 : 0
-                    Button { text: S.s_volumes; visible: parent.height > 0; onClicked: bookDetail.selectedVolume = -1 }
+                    Button { objectName: "bookVolumeBack"; text: S.s_volumes; visible: parent.height > 0; onClicked: bookDetail.selectedVolume = -1 }
                 }
                 boundsBehavior: Flickable.StopAtBounds
                 bottomMargin: Theme.s16
@@ -632,13 +632,18 @@ Item {
                 delegate: Item {
                     required property var modelData
                     width: volumeList.width
-                    height: 112
+                    objectName: "bookVolume_" + modelData.id
+                    Accessible.role: Accessible.Button
+                    Accessible.name: modelData.title
+                    Accessible.onPressAction: bookDetail.selectedVolume = modelData.id
+                    height: Math.max(112, volumeInfo.implicitHeight + Theme.s32)
                     CoverView {
                         x: Theme.s8; y: Theme.s8; width: 56; height: 84
-                        title: modelData.title
+                        title: modelData.cover ? modelData.title : root.book.title || ""
                         coverKey: modelData.cover ? root.book.bookId + "/" + (modelData.cover.version || 0) + "/volumes/" + modelData.id : root.book.coverKey || ""
                     }
                     Column {
+                        id: volumeInfo
                         x: 80; y: Theme.s16; width: parent.width - x
                         Text { width: parent.width; text: TextWrap.keepDots(modelData.title); color: Theme.text; font.pixelSize: Theme.sizeBody; wrapMode: Text.Wrap }
                         Text { width: parent.width; text: S.s_volume_progress((modelData.chapters || []).length, Math.round(BookText.volumeProgress(root.fullBook, modelData) * 100)); color: Theme.text2; font.pixelSize: Theme.sizeBodySmall; wrapMode: Text.Wrap }

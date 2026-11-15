@@ -50,7 +50,7 @@ class BookFileImportTest {
                     content["cover.jpg"] = image
                     book.put("cover", JSONObject().put("file", "cover.jpg").put("color", "#112233").put("width", width).put("height", 24))
                 }
-                return abook("$name.abook", 1, content, book)
+                return abook("$name.abook", 6, content, book)
             }
             val first = BookFileImport.importFile(packed("first"))
             val folder = Store.bookDir(first.id)
@@ -107,7 +107,7 @@ class BookFileImportTest {
         val two = ByteArray(200_000) { (it % 241).toByte() }
         val book = JSONObject().put("title", "Dài").put("chaptersAvailable", 2).put("chaptersTotal", 2)
             .put("chapters", JSONArray().put(chapter(1, 0, "chapters/1.mp3")).put(chapter(2, 0, "chapters/2.mp3")))
-        val file = abook("dai.abook", 1, mapOf("chapters/1.mp3" to one, "chapters/2.mp3" to two), book)
+        val file = abook("dai.abook", 6, mapOf("chapters/1.mp3" to one, "chapters/2.mp3" to two), book)
         val seen = ArrayList<Work>()
         BookFileImport.importFile(file, progress = { seen += it }, from = 0.5f)
         assertTrue(seen.size > 8)
@@ -124,10 +124,10 @@ class BookFileImportTest {
     @Test
     fun a_corrupt_base_update_leaves_the_existing_book_untouched() {
         fun book(title: String) = JSONObject().put("title", title).put("chapters", JSONArray().put(chapter(1, 0, "chapters/1.mp3")))
-        val first = BookFileImport.importFile(abook("first.abook", 1, mapOf("chapters/1.mp3" to "audio".toByteArray()), book("Old")))
+        val first = BookFileImport.importFile(abook("first.abook", 6, mapOf("chapters/1.mp3" to "audio".toByteArray()), book("Old")))
         val folder = Store.bookDir(first.id)
         val before = folder.walkTopDown().filter { it.isFile }.associate { it.relativeTo(folder).path to it.readBytes().toList() }
-        val bad = abook("bad.abook", 1, mapOf("chapters/1.mp3" to "audio".toByteArray(), "cover.jpg" to jpeg), book("New"))
+        val bad = abook("bad.abook", 6, mapOf("chapters/1.mp3" to "audio".toByteArray(), "cover.jpg" to jpeg), book("New"))
         val entries = java.util.zip.ZipFile(bad).use { zip -> zip.entries().toList().map { it.name to zip.getInputStream(it).use { input -> input.readBytes() } } }
         ZipOutputStream(bad.outputStream()).use { zip ->
             for ((name, original) in entries) {
@@ -158,7 +158,7 @@ class BookFileImportTest {
         fun revision(name: String, bytes: String, at: String): File {
             val book = JSONObject().put("title", "Sách").put("chaptersAvailable", 2).put("chaptersTotal", 2)
                 .put("chapters", JSONArray().put(chapter(1, 0, "chapters/1.mp3")).put(chapter(2, 0, "chapters/2.mp3")))
-            return abook(name, 1, mapOf("chapters/1.mp3" to "same".toByteArray(), "chapters/2.mp3" to bytes.toByteArray(),
+            return abook(name, 6, mapOf("chapters/1.mp3" to "same".toByteArray(), "chapters/2.mp3" to bytes.toByteArray(),
                 "scripts/1.json" to "{}".toByteArray(), "scripts/2.json" to "{}".toByteArray()), book, at)
         }
         val old = revision("old.abook", "old", "2026-10-21T00:00:00Z")
@@ -190,7 +190,7 @@ class BookFileImportTest {
         fun revision(name: String, bytes: String, revision: String, exported: String): File {
             val book = JSONObject().put("title", "Sách").put("sourceFingerprint", "same-source").put("audioUpdatedAt", revision)
                 .put("chaptersAvailable", 1).put("chaptersTotal", 1).put("chapters", JSONArray().put(chapter(1, 0, "chapters/1.mp3")))
-            return abook(name, 1, mapOf("chapters/1.mp3" to bytes.toByteArray(), "scripts/1.json" to "{}".toByteArray()), book, exported)
+            return abook(name, 6, mapOf("chapters/1.mp3" to bytes.toByteArray(), "scripts/1.json" to "{}".toByteArray()), book, exported)
         }
         val old = revision("old-all.abook", "old", "2026-10-21T00:00:00Z", "2026-10-23T00:00:00Z")
         val new = revision("new-all.abook", "new", "2026-10-22T00:00:00Z", "2026-10-22T00:00:00Z")
@@ -206,7 +206,7 @@ class BookFileImportTest {
     fun a_file_whose_pinned_track_is_missing_is_refused_whole() {
         val edits = BookEdits.parse(BookEditsFixtures.bytes("edits/music_pin.json"))
         val book = JSONObject().put("title", "X").put("chaptersAvailable", 1).put("chapters", JSONArray().put(chapter(1, 0, "chapters/00001.mp3")))
-        val file = abook("pin.abook", 4, mapOf("cast.json" to "{}".toByteArray(), "chapters/00001.mp3" to "ID3-x".toByteArray(),
+        val file = abook("pin.abook", 6, mapOf("cast.json" to "{}".toByteArray(), "chapters/00001.mp3" to "ID3-x".toByteArray(),
             "scripts/1.json" to "{}".toByteArray(), "edits.json" to BookEdits.dump(edits)), book)
         try {
             BookFileImport.importFile(file)
@@ -219,7 +219,7 @@ class BookFileImportTest {
 
     private fun chapter(id: Int, part: Int, file: String) = PackageFixtures.chapter(id, part, file)
 
-    private fun seriesFile(name: String = "bo.abook", version: Int = 3): File {
+    private fun seriesFile(name: String = "bo.abook", version: Int = 6): File {
         val content = mapOf(
             "cast.json" to "{}".toByteArray(),
             "chapters/1/00001.mp3" to "ID3-phan-mot".toByteArray(),
@@ -299,13 +299,13 @@ class BookFileImportTest {
     @Test
     fun part_folders_belong_to_version_3_only() {
         val message = refusal { BookFileImport.importFile(seriesFile("cu.abook", version = 2)) }
-        assertTrue(message, "mục lạ" in message)
+        assertTrue(message, "cấu trúc quyển" in message)
     }
 
     @Test
     fun names_outside_the_layout_are_refused() {
         for (name in listOf("chapters/a/x.mp3", "chapters/1/2/x.mp3", "chapters/../x.mp3")) {
-            val file = abook("la.abook", 3, mapOf("chapters/1/00001.mp3" to byteArrayOf(1), name to byteArrayOf(2)),
+            val file = abook("la.abook", 6, mapOf("chapters/1/00001.mp3" to byteArrayOf(1), name to byteArrayOf(2)),
                 JSONObject().put("chapters", JSONArray()))
             assertTrue(name, "mục lạ" in refusal { BookFileImport.importFile(file) })
         }
@@ -354,7 +354,7 @@ class BookFileImportTest {
             .put("chapters", JSONObject().put("1", JSONArray().put(cue(0.0, 30.0, calm)).put(cue(30.0, 60.0, battle))))
         val book = JSONObject().put("title", "Nhạc hỏng").put("chaptersAvailable", 1)
             .put("chapters", JSONArray().put(JSONObject().put("id", 1).put("file", "chapters/00001.mp3"))).put("music", music)
-        val file = abook("nhac.abook", 2, mapOf("cast.json" to "{}".toByteArray(), "scripts/1.json" to "{}".toByteArray(),
+        val file = abook("nhac.abook", 6, mapOf("cast.json" to "{}".toByteArray(), "scripts/1.json" to "{}".toByteArray(),
             "chapters/00001.mp3" to "ID3-chuong".toByteArray(), calm to "ID3-calm".toByteArray(), battle to "ID3-battle".toByteArray()), book)
         for ((name, bytes) in listOf("cut.abook" to "ID3".toByteArray(), "same.abook" to "ID3-xxxxxx".toByteArray())) {
             val imported = BookFileImport.importFile(spoiled(file, name, battle, bytes), separate = true)
@@ -431,8 +431,8 @@ class BookFileImportTest {
         val manifest = book ?: JSONObject().put("title", "Dự án thử").put("chaptersAvailable", 1).put("chaptersTotal", 2)
             .put("chapters", JSONArray().put(chapter(1, 0, chapterEntry).also { it.remove("part") })
                 .put(JSONObject().put("id", 2).put("available", false).put("file", JSONObject.NULL)))
-        manifest.put("package", JSONObject().put("format", "abook").put("version", 1).put("files", listed))
-        val bookBytes = manifest.toString().toByteArray()
+        manifest.put("package", JSONObject().put("format", "abook").put("version", 6).put("files", listed))
+        val bookBytes = BookVolumes.nested(manifest).toString().toByteArray()
         if (withBook) described.put("book.json", metaOf(bookBytes))
         val project = JSONObject().put("format", "abookproj").put("version", projectVersion).put("workshop", workshopState)
             .put("projectRoot", if (workshopState == "present") "D:\\Studio\\sach_thu" else "")
@@ -591,7 +591,7 @@ class BookFileImportTest {
     @Test
     fun a_project_file_and_a_book_file_of_the_same_chapters_are_one_book() {
         val audio = "ID3-chuong-mot".toByteArray()
-        val flat = abook("sach.abook", 1, mapOf("chapters/00001_645.mp3" to audio),
+        val flat = abook("sach.abook", 6, mapOf("chapters/00001_645.mp3" to audio),
             JSONObject().put("title", "Dự án thử").put("chaptersAvailable", 1)
                 .put("chapters", JSONArray().put(chapter(1, 0, "chapters/00001_645.mp3").also { it.remove("part") })))
         val first = BookFileImport.importFile(flat)
@@ -736,7 +736,7 @@ class BookFileImportTest {
     private fun cover(color: String, version: Long) = JSONObject().put("color", color).put("width", 10L).put("height", 20L).put("version", version)
 
     /** Một file .abook có một chương nghe được (và một chưa có), cùng audio mỗi lần - nhập lại là nhập lại CÙNG một cuốn. */
-    private fun editedBook(name: String, version: Int = 4, edits: JSONObject? = null, cover: ByteArray? = null, available: Int = 1,
+    private fun editedBook(name: String, version: Int = 6, edits: JSONObject? = null, cover: ByteArray? = null, available: Int = 1,
                            editsBytes: ByteArray? = null): File {
         val content = linkedMapOf("cast.json" to "{}".toByteArray(), "chapters/00001.mp3" to "ID3-mot".toByteArray(),
             "scripts/1.json" to "{}".toByteArray(), "scripts/2.json" to "{}".toByteArray())
@@ -776,7 +776,7 @@ class BookFileImportTest {
 
     @Test
     fun reimporting_over_an_edited_book_keeps_the_local_edits_and_takes_the_rest_from_the_file() {
-        val first = BookFileImport.importFile(editedBook("v1.abook", version = 1))
+        val first = BookFileImport.importFile(editedBook("v1.abook", version = 6))
         val dir = dirOf(first)
         BookEdits.setTitle(dir, "Của tôi")
         BookEdits.setChapterTitle(dir, 1, null, "Phụ của tôi")
@@ -799,7 +799,7 @@ class BookFileImportTest {
 
     @Test
     fun the_local_cover_wins_over_the_files_cover() {
-        val first = BookFileImport.importFile(editedBook("v1.abook", version = 1))
+        val first = BookFileImport.importFile(editedBook("v1.abook", version = 6))
         val dir = dirOf(first)
         BookEdits.setCover(dir, otherJpeg, FakeCodec("#aabbcc"))
 
@@ -811,7 +811,7 @@ class BookFileImportTest {
 
     @Test
     fun a_file_with_fewer_chapters_than_the_phone_still_hands_over_its_edits() {
-        val first = BookFileImport.importFile(editedBook("full.abook", version = 1, available = 2))
+        val first = BookFileImport.importFile(editedBook("full.abook", version = 6, available = 2))
         val dir = dirOf(first)
         BookEdits.setTitle(dir, "Của tôi")
 
@@ -853,17 +853,17 @@ class BookFileImportTest {
         val edits = BookEdits.empty().put("title", "Tên khác")
         for (version in listOf(1, 2, 3)) {
             val message = refusal { BookFileImport.importFile(editedBook("cu$version.abook", version = version, edits = edits)) }
-            assertTrue("phiên bản $version: $message", "mục lạ" in message && "edits.json" in message)
+            assertTrue("phiên bản $version: $message", "cấu trúc quyển" in message)
         }
         val message = refusal { BookFileImport.importFile(editedBook("cover3.abook", version = 3, edits = BookEdits.empty().put("cover", cover("#112233", 5L)), cover = jpeg)) }
-        assertTrue(message, "mục lạ" in message)
+        assertTrue(message, "cấu trúc quyển" in message)
         assertTrue(File(root, "books").listFiles().orEmpty().none { it.isDirectory })
     }
 
     @Test
     fun a_file_still_cannot_carry_project_sources_or_views() {
         for (name in listOf("project/project.sqlite3", "sources/1.txt", "views/cast.json")) {
-            val file = abook("du.abook", 4, mapOf("chapters/00001.mp3" to byteArrayOf(1), name to byteArrayOf(2)), JSONObject().put("chapters", JSONArray()))
+            val file = abook("du.abook", 6, mapOf("chapters/00001.mp3" to byteArrayOf(1), name to byteArrayOf(2)), JSONObject().put("chapters", JSONArray()))
             assertTrue(name, "mục lạ" in refusal { BookFileImport.importFile(file) })
         }
     }

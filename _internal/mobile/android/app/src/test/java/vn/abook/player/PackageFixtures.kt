@@ -22,6 +22,12 @@ object PackageFixtures {
         for ((entry, bytes) in content) files.put(entry, JSONObject().put("size", bytes.size).put("sha256", sha256(bytes)))
         book.put("package", JSONObject().put("format", "abook").put("version", version).put("files", files))
         at?.let { book.getJSONObject("package").put("createdAt", it) }
+        if (version == BookVolumes.TREE_VERSION && !book.has("volumes")) {
+            val chapters = book.opt("chapters")
+            book.remove("chapters")
+            book.put("volumes", org.json.JSONArray().put(JSONObject().put("id", 1).put("number", 1)
+                .put("title", S.s_volume_number(1)).put("chapters", chapters ?: org.json.JSONArray())))
+        }
         val target = File(work, name)
         ZipOutputStream(target.outputStream()).use { zip ->
             fun put(entry: String, bytes: ByteArray, stored: Boolean) {

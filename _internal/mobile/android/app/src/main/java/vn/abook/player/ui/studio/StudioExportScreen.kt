@@ -29,6 +29,8 @@ import vn.abook.player.StudioError
 import vn.abook.player.ui.addbook.BookForm
 import vn.abook.player.ui.components.Caption
 import vn.abook.player.ui.components.ChoiceRow
+import vn.abook.player.ui.components.ChoiceSetting
+import vn.abook.player.ui.components.Option
 import vn.abook.player.ui.components.ClockLabel
 import vn.abook.player.ui.components.ConfirmPage
 import vn.abook.player.ui.components.DangerButton
@@ -114,6 +116,13 @@ private fun ExportBody(state: StudioProjectState, book: StudioBook, job: StudioE
                 val size = if (kind == StudioExportKind.BookFile) StudioExportLogic.sizeNote(options) else ""
                 Reveal(size.isNotEmpty()) { Caption(size, Modifier.testTag("studio_export_size")) }
                 Reveal(blocker.isNotEmpty()) { RowHint(blocker, Modifier.padding(top = Dim.s4).testTag("studio_export_blocker"), Abook.colors.accentText) }
+            }
+        }
+        item("volumes", "volumes") {
+            Reveal(kind.audio && export.volumes.size > 1) {
+                val choices = listOf(Option<Int?>(null, vn.abook.player.S.s_volume_all)) + export.volumes.map { Option<Int?>(it.id, it.title) }
+                ChoiceSetting(vn.abook.player.S.s_volumes, choices, choices.firstOrNull { it.value == export.volumeId } ?: choices.first(),
+                    { picked, _ -> export.volumeId = picked.value }, "studio_export_volume")
             }
         }
         item("music", "music") {

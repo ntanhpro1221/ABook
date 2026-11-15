@@ -34,6 +34,7 @@ object ListenExports {
     private const val KEY_FILE = "file"
     private const val KEY_COVER = "cover"
     private const val KEY_MUSIC = "music"
+    private const val KEY_VOLUME = "volumeId"
     private const val WORK_FOLDER = "export_work"
 
     /** Giao diện đang mở thì nghe tin của việc nền ("audiobookExport" của EbookLibrary): tiến độ, xong, dừng, lỗi. */
@@ -64,9 +65,10 @@ object ListenExports {
      * Bắt đầu xuất cuốn `bookId` bằng giọng `voice` vào `file` (thay lượt đang chạy của cuốn ấy); `music` = ô "Kèm nhạc nền". Trả mã lượt - tin của lượt mang
      * mã này.
      */
-    fun start(context: Context, bookId: String, voice: String, file: Uri, drawnCover: File?, music: Boolean = false): String {
+    fun start(context: Context, bookId: String, voice: String, file: Uri, drawnCover: File?, music: Boolean = false, volumeId: Int? = null): String {
         val data = Data.Builder().putString(KEY_BOOK, bookId).putString(KEY_VOICE, voice).putString(KEY_FILE, file.toString()).putBoolean(KEY_MUSIC, music)
         drawnCover?.let { data.putString(KEY_COVER, it.absolutePath) }
+        volumeId?.let { data.putInt(KEY_VOLUME, it) }
         val request = OneTimeWorkRequestBuilder<ListenExportWorker>()
             .setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)
             .setInputData(data.build())
@@ -85,11 +87,12 @@ object ListenExports {
 
     internal fun finished(context: Context, bookId: String, title: String, text: String) = Mp3Exports.finished(context, bookId, title, text, TAG)
 
-    internal class Inputs(val bookId: String?, val voice: String?, val file: Uri?, val cover: File?, val music: Boolean = false)
+    internal class Inputs(val bookId: String?, val voice: String?, val file: Uri?, val cover: File?, val music: Boolean = false, val volumeId: Int? = null)
 
     internal fun inputs(data: Data) = Inputs(
         data.getString(KEY_BOOK), data.getString(KEY_VOICE), data.getString(KEY_FILE)?.let(Uri::parse), data.getString(KEY_COVER)?.let(::File),
         data.getBoolean(KEY_MUSIC, false),
+        data.getInt(KEY_VOLUME, 0).takeIf { it > 0 },
     )
 
     /** Mở file vừa xuất bằng app nghe sách nói của máy; false khi không có app nào mở được (hay quyền đã hết). */
@@ -133,8 +136,9 @@ class ListenExportWorker(context: Context, params: WorkerParameters) : Worker(co
         ListenExports.active += bookId
         try {
             val book = Store.manifest(bookId) ?: throw Mp3Export.Refused(S.s_khong_tim_thay_sach_nay_tren_dien_thoai_3503b770)
-            title = book.optString("title").ifEmpty { bookId }
-            val chapters = ListenExport.chapters(bookId)
+            val volume = BookVolumes.selected(book, input.volumeId)
+            title = vn.abook.player.ui.data.dotJoin(book.optString("title").ifEmpty { bookId }, volume?.getString("title"))
+            val chapters = ListenExport.chapters(bookId, volumeId = input.volumeId)
             if (chapters.isEmpty()) throw Mp3Export.Refused(S.s_sach_chua_co_chuong_nao_co_chu_de_doc_8d6e72e1)
             val reading = ListenExport.Reading(voice, ReadAloud.originNow(bookId), ReadAloud.readingsOf(bookId))
             val work = ListenExport.workFolder(ListenExports.workRoot(context), bookId).apply { mkdirs() }
@@ -181,8 +185,14 @@ class ListenExportWorker(context: Context, params: WorkerParameters) : Worker(co
             )
             val stamps = IdleEngine.holding { runner.build() } // giọng trên máy giữ model trong lúc xuất, kể cả lúc đứng chờ người nghe
 
-            val (cover, coverName) = Mp3Export.coverOf(bookId, input.cover?.takeIf { it.isFile }?.readBytes())
-            val exportPlan = ListenExport.exportPlan(book, bookId, chapters, stamps, work, cover, coverName)
+            val (fallback, fallbackName) = Mp3Export.coverOf(bookId, input.cover?.takeIf { it.isFile }?.readBytes())
+            val ownCover = volume?.optJSONObject("cover")?.getString("file")?.let { relative ->
+                require(Regex("covers/[1-9][0-9]{0,8}\\.jpg").matches(relative))
+                runCatching { Id3Tag.Cover.of(Store.contained(Store.bookDir(bookId), relative).readBytes()) }.getOrNull()
+            }
+            val exportBook = JSONObject(book.toString()).put("title", title)
+            if (volume != null) exportBook.put("chaptersTotal", volume.getJSONArray("chapters").length())
+            val exportPlan = ListenExport.exportPlan(exportBook, bookId, chapters, stamps, work, ownCover ?: fallback, if (ownCover != null) "cover.jpg" else fallbackName)
             val joined = File(work, "all.m4a")
             val out = context.contentResolver.openOutputStream(file, "wt") ?: throw Mp3Export.Refused(S.s_chua_ghi_duoc_vao_cho_da_chon_6ff57f62)
             val result = out.buffered(256 * 1024).use { stream ->

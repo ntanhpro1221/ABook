@@ -627,6 +627,16 @@ Module chính:
 - GUI giữ một `QLocalServer` theo user session để khóa single-instance; lần mở sau gửi lệnh kích hoạt cửa sổ
   đang chạy rồi thoát sạch, không tạo thêm tray icon hoặc worker controller.
 
+## Book volume organization
+
+A book has ordered volumes with their own titles, numbers and optional covers. Project volume boundaries live in atomic
+`volumes.json` beside SQLite (`start` is the first chapter id), and covers in `covers/<volume id>.jpg`; no organization
+operation changes chapter ids/indices, segmentation, voices, locked settings or generation seeds. `.abook` and the
+listening layer of `.abookproj` write a version-6 volume tree, including one-volume books; only the UI skips the extra
+navigation level for one volume. Earlier/flat listening packages must be rebuilt from sources. Library shelves use the
+book cover; missing volume covers use it too. Playback keeps one flat queue across volumes. Web, Qt and Compose share
+`ui_strings/vi.json` labels for volume editors and whole-book/per-volume MP3/M4B export.
+
 ## Quy tắc thay đổi
 
 - Normalize chapter input to NFC per line after invisible-marker removal and before segmentation or stable IDs. Preserve raw source bytes and checksums. Normalize TTS/Reader tokens and reading maps at comparison boundaries; desktop and Android share the reading cache rule version.

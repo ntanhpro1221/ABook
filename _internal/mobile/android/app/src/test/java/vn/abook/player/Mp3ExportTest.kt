@@ -19,6 +19,32 @@ class Mp3ExportTest {
     private lateinit var out: File
 
     @Test
+    fun oneVolumeExportsOnlyItsChaptersAndUsesItsOwnCover() {
+        book("volume-book", cover = true, chapters = listOf("First" to true, "Second" to true, "Third" to true))
+        val dir = Store.bookDir("volume-book")
+        val manifest = JSONObject(File(dir, "book.json").readText())
+        val chapters = manifest.getJSONArray("chapters")
+        for (i in 0 until chapters.length()) chapters.getJSONObject(i).put("volumeId", if (i < 2) 1 else 2)
+        val own = byteArrayOf(0xff.toByte(), 0xd8.toByte(), 0x02, 0x03)
+        File(dir, "covers").mkdirs()
+        File(dir, "covers/2.jpg").writeBytes(own)
+        manifest.put("volumes", JSONArray()
+            .put(JSONObject().put("id", 1).put("number", 1).put("title", "First volume").put("cover", JSONObject.NULL))
+            .put(JSONObject().put("id", 2).put("number", 2).put("title", "Second volume").put("cover", JSONObject().put("file", "covers/2.jpg"))))
+        File(dir, "book.json").writeText(BookVolumes.nested(manifest).toString())
+        val plan = Mp3Export.plan("volume-book", volumeId = 2)
+        assertEquals(listOf(3), plan.chapters.map { it.id })
+        assertEquals(1, plan.chaptersTotal)
+        assertTrue(plan.title.endsWith(" · Second volume"))
+        assertArrayEquals(own, plan.cover!!.bytes)
+        val result = Mp3Export.run(plan, Mp3Export.FileDestination(out))
+        assertEquals(1, result.files)
+        val folder = out.listFiles()!!.single()
+        assertEquals(1, folder.listFiles()!!.count { it.extension == "mp3" })
+        assertArrayEquals(own, File(folder, "cover.jpg").readBytes())
+    }
+
+    @Test
     fun repeated_exports_keep_the_files_in_previous_folders() {
         val destination = Mp3Export.FileDestination(out)
         destination.folder("Sách").write("cover.jpg") { it.write(byteArrayOf(1)) }

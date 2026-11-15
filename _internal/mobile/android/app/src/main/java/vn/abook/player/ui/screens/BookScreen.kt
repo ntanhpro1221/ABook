@@ -378,12 +378,12 @@ private fun BookScreenBody(
                 }
                 if (volumePicker) items(detail?.volumes.orEmpty(), key = { "volume_${it.id}" }, contentType = { "volume" }) { item ->
                     Row(Modifier.animateItem(fadeInSpec = null, fadeOutSpec = null).fade { fade.value * arrival.value }
-                        .fillMaxWidth().pressable { selectedVolume = item.id }.padding(vertical = Dim.s12),
+                        .fillMaxWidth().testTag("volume_${item.id}").pressable { selectedVolume = item.id }.padding(vertical = Dim.s12),
                         verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(Dim.s16)) {
-                        BookCover(item.cover, item.title, null, covers, 56.dp, Modifier.width(56.dp), small = true)
+                        BookCover(item.cover, if (item.cover == book.cover) book.title else item.title, null, covers, 56.dp, Modifier.width(56.dp), small = true)
                         Column(Modifier.weight(1f)) {
                             BasicText(item.title, style = Abook.type.bodyStrong)
-                            BasicText(S.s_volume_progress(item.chapterIds.size, (item.progress * 100).toInt()), style = Abook.type.bodySmall)
+                            RowHint(S.s_volume_progress(item.chapterIds.size, kotlin.math.round(item.progress * 100).toInt()))
                         }
                     }
                 }
