@@ -24,20 +24,20 @@
     "reason": "Visually reviewed late fix168reveal layout: book_cast_light.png; explicit vertical groups restore intended spacing and keep every visible control separate. Old/new contact sheet inspected before adoption."
   },
   "_internal/mobile/android/app/src/test/snapshots/book_delete_dark.png": {
-    "sha256": "78f2c62a57fbe1ee24f09da2a3e5268be6ab4cde4dda235f002d21b797421798",
-    "reason": "Visually reviewed late fix168reveal layout: book_delete_dark.png; explicit vertical groups restore intended spacing and keep every visible control separate. Old/new contact sheet inspected before adoption."
+    "sha256": "def4a6274fcf777bb5273529ab3a9c89d11d360f7fcfa0747a7ad0171c3f203f",
+    "reason": "Visually reviewed the exact before/after snapshot pair on integration contact sheet 1. The rounded sheet surface, hairline and shadow share the panel edge; the stationary rectangular paint band is removed. Controls and labels remain readable with no new clipping."
   },
   "_internal/mobile/android/app/src/test/snapshots/book_delete_light.png": {
-    "sha256": "74e614e156c6d80ac7ab52ac206d5586b606d1839fbd02c59a66ac6b506e1930",
-    "reason": "Visually reviewed late fix168reveal layout: book_delete_light.png; explicit vertical groups restore intended spacing and keep every visible control separate. Old/new contact sheet inspected before adoption."
+    "sha256": "d2f27ea71611d0dd723bba9c429318ddd5a7771daa1595ce268a4fff12a79921",
+    "reason": "Visually reviewed the exact before/after snapshot pair on integration contact sheet 1. The rounded sheet surface, hairline and shadow share the panel edge; the stationary rectangular paint band is removed. Controls and labels remain readable with no new clipping."
   },
   "_internal/mobile/android/app/src/test/snapshots/book_expanded_light.png": {
     "sha256": "22d3f327ba5dbcb233647f40322acffc6cc3b6fc3b47a63f1ba7ed870cfd67ce",
     "reason": "Visually reviewed late fix168reveal layout: book_expanded_light.png; explicit vertical groups restore intended spacing and keep every visible control separate. Old/new contact sheet inspected before adoption."
   },
   "_internal/mobile/android/app/src/test/snapshots/book_find_light.png": {
-    "sha256": "be8bd9b5007749156e759c407cef3cfb7a434b9f8195f3d84d09a4e8c332e4bb",
-    "reason": "Visually reviewed late fix168reveal layout: book_find_light.png; explicit vertical groups restore intended spacing and keep every visible control separate. Old/new contact sheet inspected before adoption."
+    "sha256": "5ff62b8fab599d2b961cb1ca8e051907f2b59e3dbea10e83d7dff2c45bdf80a1",
+    "reason": "Visually reviewed the exact before/after snapshot pair on integration contact sheet 1. The rounded sheet surface, hairline and shadow share the panel edge; the stationary rectangular paint band is removed. Controls and labels remain readable with no new clipping."
   },
   "_internal/mobile/android/app/src/test/snapshots/book_finished_dark.png": {
     "sha256": "99b9d62173dc3253cc4c711342577e7a2cfdc8046718396d294ca74004e25da9",
@@ -80,24 +80,24 @@
     "reason": "Visually reviewed late fix168reveal layout: book_loading_light.png; explicit vertical groups restore intended spacing and keep every visible control separate. Old/new contact sheet inspected before adoption."
   },
   "_internal/mobile/android/app/src/test/snapshots/book_menu_light.png": {
-    "sha256": "d1a7709d11293bc87eaee39d29e013f04481f093b4413b7619a4fbd2cd9a1e92",
-    "reason": "Visually reviewed late fix168reveal layout: book_menu_light.png; explicit vertical groups restore intended spacing and keep every visible control separate. Old/new contact sheet inspected before adoption."
+    "sha256": "8ce2fddfae28b1bd4113b591d1b8d6d4e4dd3d6282b95006ff5fb08bc7e44a95",
+    "reason": "Visually reviewed the exact before/after snapshot pair on integration contact sheet 1. The rounded sheet surface, hairline and shadow share the panel edge; the stationary rectangular paint band is removed. Controls and labels remain readable with no new clipping."
   },
   "_internal/mobile/android/app/src/test/snapshots/book_partial_light.png": {
     "sha256": "d17f50201e0ca15cd2fa8dcf3c7171fe0ce8c1c90f83cf1d363e1ea88a20c345",
     "reason": "Visually reviewed late fix168reveal layout: book_partial_light.png; explicit vertical groups restore intended spacing and keep every visible control separate. Old/new contact sheet inspected before adoption."
   },
   "_internal/mobile/android/app/src/test/snapshots/book_person_sheet_light.png": {
-    "sha256": "fe35ab050ff8a43b5552dd6fccfc017072ec49032e5efde8803573a31f9a54d4",
-    "reason": "Visually reviewed late fix168reveal layout: book_person_sheet_light.png; explicit vertical groups restore intended spacing and keep every visible control separate. Old/new contact sheet inspected before adoption."
+    "sha256": "b23b2d50b035c4ed3af84f471e05a3c46f80de810f255f7f6fd0f3d269dfc5d5",
+    "reason": "Visually reviewed the exact before/after snapshot pair on integration contact sheet 1. The rounded sheet surface, hairline and shadow share the panel edge; the stationary rectangular paint band is removed. Controls and labels remain readable with no new clipping."
   },
   "_internal/mobile/android/app/src/test/snapshots/book_playing_light.png": {
     "sha256": "9e65cbc17061413c11f6beaeb9ec823ef0fc46ef95bfbaf9c72968be4ffcb3d3",
     "reason": "Visually reviewed late fix168reveal layout: book_playing_light.png; explicit vertical groups restore intended spacing and keep every visible control separate. Old/new contact sheet inspected before adoption."
   },
   "_internal/mobile/android/app/src/test/snapshots/book_save_as_light.png": {
-    "sha256": "b48fdf14fec4214b7fe9abef5c2027076a8d4f81445adb731a2a06bf81090080",
-    "reason": "Visually reviewed late fix168reveal layout: book_save_as_light.png; explicit vertical groups restore intended spacing and keep every visible control separate. Old/new contact sheet inspected before adoption."
+    "sha256": "bafa263a1cc6c6192111c0838bda53c89bc05bb7c9a917e2eae6c1040e949174",
+    "reason": "Visually reviewed the exact before/after snapshot pair on integration contact sheet 1. The rounded sheet surface, hairline and shadow share the panel edge; the stationary rectangular paint band is removed. Controls and labels remain readable with no new clipping."
   },
   "_internal/mobile/android/app/src/test/snapshots/cover_long_title.png": {
     "sha256": "1ee48d032b0a6407146604e1def501847b05e82d35c74f41937f2b64a143cae2",
@@ -128,24 +128,24 @@
     "reason": "Reviewed old/new devices_pair_working_light.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
   },
   "_internal/mobile/android/app/src/test/snapshots/devices_sheet_delete_light.png": {
-    "sha256": "bb7c8e4f15cf04da10538015ccb12fe65b3c1054a8d2eb5089303b96de2c9df8",
-    "reason": "Reviewed old/new devices_sheet_delete_light.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+    "sha256": "8c48205059063cee1642bdb6c608f29f162390686c1dc5b6b1c1f7b4fc5af4c1",
+    "reason": "Visually reviewed the exact before/after snapshot pair on integration contact sheet 1. The rounded sheet surface, hairline and shadow share the panel edge; the stationary rectangular paint band is removed. Controls and labels remain readable with no new clipping."
   },
   "_internal/mobile/android/app/src/test/snapshots/devices_sheet_device_light.png": {
-    "sha256": "602b29552ebde99ddb9772dcda4d363bf6f33db0d3d358a31a044ebd22d4e066",
-    "reason": "Reviewed old/new devices_sheet_device_light.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+    "sha256": "e0071e93234756056392504ffcfe78f287f0fe073d731fe9a9a76fcd8258c591",
+    "reason": "Visually reviewed the exact before/after snapshot pair on integration contact sheet 1. The rounded sheet surface, hairline and shadow share the panel edge; the stationary rectangular paint band is removed. Controls and labels remain readable with no new clipping."
   },
   "_internal/mobile/android/app/src/test/snapshots/devices_sheet_forget_dark.png": {
-    "sha256": "f33a661f6bb5346d29afba2f362a4fc054a56585667c623e1ede397c4da60e97",
-    "reason": "Reviewed old/new devices_sheet_forget_dark.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+    "sha256": "18b1406b9e4c6cd2a3e7fd72186a67474377e702fc3a8929f30a9e25c52e7dc4",
+    "reason": "Visually reviewed the exact before/after snapshot pair on integration contact sheet 1. The rounded sheet surface, hairline and shadow share the panel edge; the stationary rectangular paint band is removed. Controls and labels remain readable with no new clipping."
   },
   "_internal/mobile/android/app/src/test/snapshots/devices_sheet_rename_light.png": {
-    "sha256": "0f7768c53d8b1a81a218ba8a6e2a7bb8894190f20d05753ca3f70d4f966ce2b4",
-    "reason": "Reviewed old/new devices_sheet_rename_light.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+    "sha256": "7f67868edf4ee9d18717547397f0d3850b013d88dc17c65f01ba3bd41f30412e",
+    "reason": "Visually reviewed the exact before/after snapshot pair on integration contact sheet 1. The rounded sheet surface, hairline and shadow share the panel edge; the stationary rectangular paint band is removed. Controls and labels remain readable with no new clipping."
   },
   "_internal/mobile/android/app/src/test/snapshots/devices_sheet_revoke_light.png": {
-    "sha256": "2c7ba6fbe3ca1d4ef3d2c0d1c34eca4d111aff3a4901229edc35a14c54c07ca0",
-    "reason": "Reviewed old/new devices_sheet_revoke_light.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+    "sha256": "525455ccfec49527f53e7b426192bf96bb2f7c5550a68b6726edc4764313d0ba",
+    "reason": "Visually reviewed the exact before/after snapshot pair on integration contact sheet 1. The rounded sheet surface, hairline and shadow share the panel edge; the stationary rectangular paint band is removed. Controls and labels remain readable with no new clipping."
   },
   "_internal/mobile/android/app/src/test/snapshots/edit_book_dark.png": {
     "sha256": "24e63039236d5c07e7d0078a1c94f1ea27daf6fc744697bb9d34ce9f74d06e59",
@@ -176,24 +176,24 @@
     "reason": "Reviewed old/new edit_cover_search_none_light.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
   },
   "_internal/mobile/android/app/src/test/snapshots/edit_cover_sheet_dark.png": {
-    "sha256": "36dd2948828b8c9c9a7830fbc8a91adb0ea30bde09da40dbe8c3b108b1669bc7",
-    "reason": "Reviewed old/new edit_cover_sheet_dark.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+    "sha256": "be7487607512eb60f0db2b1320e586e93ce5ea9a80c952b42f39929711ad5c5a",
+    "reason": "Visually reviewed the exact before/after snapshot pair on integration contact sheet 1. The rounded sheet surface, hairline and shadow share the panel edge; the stationary rectangular paint band is removed. Controls and labels remain readable with no new clipping."
   },
   "_internal/mobile/android/app/src/test/snapshots/edit_cover_sheet_light.png": {
-    "sha256": "881166ce781a802a7ba8d3153a75800d80c4e36ba4b8a5661e3d90638d883624",
-    "reason": "Reviewed old/new edit_cover_sheet_light.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+    "sha256": "eaec8d77b420565ca10f79e65c36db2eba4099329d8c8d541c06aa645d09d515",
+    "reason": "Visually reviewed the exact before/after snapshot pair on integration contact sheet 1. The rounded sheet surface, hairline and shadow share the panel edge; the stationary rectangular paint band is removed. Controls and labels remain readable with no new clipping."
   },
   "_internal/mobile/android/app/src/test/snapshots/edit_cover_sheet_none_light.png": {
-    "sha256": "5a9a4ff59b77bfc71595d6199697f8bd9017b635ea2590994319d22a0b53f927",
-    "reason": "Reviewed old/new edit_cover_sheet_none_light.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+    "sha256": "350c0b5b08b27da85196f78605771535dd7a624f8d5b524093670722a1f92c49",
+    "reason": "Visually reviewed the exact before/after snapshot pair on integration contact sheet 1. The rounded sheet surface, hairline and shadow share the panel edge; the stationary rectangular paint band is removed. Controls and labels remain readable with no new clipping."
   },
   "_internal/mobile/android/app/src/test/snapshots/edit_discard_dark.png": {
-    "sha256": "374b765802c1b50b661d445601e7709734f2500d99e1f3f6a3460bd3cad78b68",
-    "reason": "Reviewed old/new edit_discard_dark.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+    "sha256": "049b3deb2b56a81bd3e22087c2f7d2099aaf939026cba646dc2227723b92cc37",
+    "reason": "Visually reviewed the exact before/after snapshot pair on integration contact sheet 1. The rounded sheet surface, hairline and shadow share the panel edge; the stationary rectangular paint band is removed. Controls and labels remain readable with no new clipping."
   },
   "_internal/mobile/android/app/src/test/snapshots/edit_discard_light.png": {
-    "sha256": "76171dbe031d72d3ae05ee285716b509d5c13a5e6120d240824d5ebcc8edf8ba",
-    "reason": "Reviewed old/new edit_discard_light.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+    "sha256": "0412d0f007494da55f1b3879ed9542589a4aa4c61cb52837815901fb5f151656",
+    "reason": "Visually reviewed the exact before/after snapshot pair on integration contact sheet 2. The rounded sheet surface, hairline and shadow share the panel edge; the stationary rectangular paint band is removed. Controls and labels remain readable with no new clipping."
   },
   "_internal/mobile/android/app/src/test/snapshots/edit_failed_light.png": {
     "sha256": "dd2dc3009b763d95fca74d48ac9d5a5d7a0a5b55390b642701e4e0969829df5c",
@@ -296,40 +296,40 @@
     "reason": "Visually reviewed tilename change: gap1_library_remote_light.png; drawn-cover tiles now show the two-line title under the cover like photo tiles (owner 15-11). Old/new contact sheet inspected before adoption."
   },
   "_internal/mobile/android/app/src/test/snapshots/gap1_remote_book_dark.png": {
-    "sha256": "d7bcc14740363fada3ebcb5b53442598f19e86ab6515485a01c5a69c808c9a8c",
-    "reason": "Reviewed old/new gap1_remote_book_dark.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+    "sha256": "1b3c8fdbc5214417c6960e0ac5c31802e15088472960538c0718078a536ecbff",
+    "reason": "Visually reviewed the exact before/after snapshot pair on integration contact sheet 2. The rounded sheet surface, hairline and shadow share the panel edge; the stationary rectangular paint band is removed. Controls and labels remain readable with no new clipping."
   },
   "_internal/mobile/android/app/src/test/snapshots/gap1_remote_book_light.png": {
-    "sha256": "ae9208bf327c9a66ad30792c6cf7e62ec7df6996fd3e4016bb7dcc00f0166782",
-    "reason": "Reviewed old/new gap1_remote_book_light.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+    "sha256": "a04d0fdc6a8c11ad115b5f56803f33c291a8f159f1fb7532fa999802e599688e",
+    "reason": "Visually reviewed the exact before/after snapshot pair on integration contact sheet 2. The rounded sheet surface, hairline and shadow share the panel edge; the stationary rectangular paint band is removed. Controls and labels remain readable with no new clipping."
   },
   "_internal/mobile/android/app/src/test/snapshots/gap1_remote_players_dark.png": {
-    "sha256": "169ffe1e77b10b0b3c5c55afdb8b864b4a27481a1b38799983255b7f7f77cef4",
-    "reason": "Reviewed old/new gap1_remote_players_dark.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+    "sha256": "4fdad00d7e3dc7f936e3a02c3606d0cf395e9d75e3fee44415783a8bc56ad441",
+    "reason": "Visually reviewed the exact before/after snapshot pair on integration contact sheet 2. The rounded sheet surface, hairline and shadow share the panel edge; the stationary rectangular paint band is removed. Controls and labels remain readable with no new clipping."
   },
   "_internal/mobile/android/app/src/test/snapshots/gap1_remote_players_light.png": {
-    "sha256": "c647220f0047a47f1257a92cb49a5a7d6190baee2473db5e2c93cea5e7c04afa",
-    "reason": "Reviewed old/new gap1_remote_players_light.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+    "sha256": "1a2b7995eda4fc9b40af9f1a62596958eb9ed44bb456ea7f5f217f0c7b1bf5f1",
+    "reason": "Visually reviewed the exact before/after snapshot pair on integration contact sheet 2. The rounded sheet surface, hairline and shadow share the panel edge; the stationary rectangular paint band is removed. Controls and labels remain readable with no new clipping."
   },
   "_internal/mobile/android/app/src/test/snapshots/gap1_remote_sleep_360_font130_light.png": {
-    "sha256": "980f0c5660fe8393775130b4c9a044980f8bcea686d2532ba28a8db7db93821e",
-    "reason": "Reviewed old/new gap1_remote_sleep_360_font130_light.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+    "sha256": "da1fdd8c6a7f08d8bbfe44b222e45ab1d86b22e6dcc76e569ca89c9555a6d785",
+    "reason": "Visually reviewed the exact before/after snapshot pair on integration contact sheet 2. The rounded sheet surface, hairline and shadow share the panel edge; the stationary rectangular paint band is removed. Controls and labels remain readable with no new clipping."
   },
   "_internal/mobile/android/app/src/test/snapshots/gap1_remote_sleep_411_font130_light.png": {
-    "sha256": "ef806e4dfcba5053c47433a1ebdda67e29ddc2b04aa607f4d3a3b7a4c0d81bce",
-    "reason": "Reviewed old/new gap1_remote_sleep_411_font130_light.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+    "sha256": "d90f0cff3481753ffb87921e6fe9b92c3c918ebc5f6b052563516a68f1f94576",
+    "reason": "Visually reviewed the exact before/after snapshot pair on integration contact sheet 2. The rounded sheet surface, hairline and shadow share the panel edge; the stationary rectangular paint band is removed. Controls and labels remain readable with no new clipping."
   },
   "_internal/mobile/android/app/src/test/snapshots/gap1_remote_sleep_411_light.png": {
-    "sha256": "04ff8223c89064aa38ee3a797dbf13cad1dea43c5923acb34d789afa3a012711",
-    "reason": "Reviewed old/new gap1_remote_sleep_411_light.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+    "sha256": "8e135d89f316f4751a47f3307040738abc368a4cec9627d3687a8af45547eb65",
+    "reason": "Visually reviewed the exact before/after snapshot pair on integration contact sheet 2. The rounded sheet surface, hairline and shadow share the panel edge; the stationary rectangular paint band is removed. Controls and labels remain readable with no new clipping."
   },
   "_internal/mobile/android/app/src/test/snapshots/gap1_remote_sleep_dark.png": {
-    "sha256": "1c51c855c192583c2af39074dc16c46733a65d60708b170198be4eb02e53e806",
-    "reason": "Reviewed old/new gap1_remote_sleep_dark.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+    "sha256": "6ba9b5ddc50ae93f5ef9622fe7430ef7446981079db4e8c1b9b731300d7014e6",
+    "reason": "Visually reviewed the exact before/after snapshot pair on integration contact sheet 2. The rounded sheet surface, hairline and shadow share the panel edge; the stationary rectangular paint band is removed. Controls and labels remain readable with no new clipping."
   },
   "_internal/mobile/android/app/src/test/snapshots/gap1_remote_sleep_light.png": {
-    "sha256": "ea3bb677680f50dddc085f148a9a5bd26d6ed176488e2257aabf01100de7248b",
-    "reason": "Reviewed old/new gap1_remote_sleep_light.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+    "sha256": "9fa3497734bed9d8ed7d3e1537a3199fef0e971976abeb2127de062ac508e16d",
+    "reason": "Visually reviewed the exact before/after snapshot pair on integration contact sheet 2. The rounded sheet surface, hairline and shadow share the panel edge; the stationary rectangular paint band is removed. Controls and labels remain readable with no new clipping."
   },
   "_internal/mobile/android/app/src/test/snapshots/gap1_undo_dark.png": {
     "sha256": "898a08ecabac76b9b4294668cd6fc7e86d83e744fae3acb347b88356ca04840f",
@@ -340,12 +340,12 @@
     "reason": "Visually reviewed tilename change: gap1_undo_light.png; drawn-cover tiles now show the two-line title under the cover like photo tiles (owner 15-11). Old/new contact sheet inspected before adoption."
   },
   "_internal/mobile/android/app/src/test/snapshots/gap1b_device_kinds_dark.png": {
-    "sha256": "8d4dd5f2836300440267f939881654b99705a83e19b8ad85cd290d27776d6d51",
-    "reason": "Reviewed old/new gap1b_device_kinds_dark.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+    "sha256": "b0699ddef4e3c7afbaed53e9a03100387559ff59b5af99f62798da469d8db855",
+    "reason": "Visually reviewed the exact before/after snapshot pair on integration contact sheet 2. The rounded sheet surface, hairline and shadow share the panel edge; the stationary rectangular paint band is removed. Controls and labels remain readable with no new clipping."
   },
   "_internal/mobile/android/app/src/test/snapshots/gap1b_device_kinds_light.png": {
-    "sha256": "0faff97e32d5a640809fd49e5317779f57b82e5403e6ab5b17f1bda6005ee595",
-    "reason": "Reviewed old/new gap1b_device_kinds_light.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+    "sha256": "1825a7bba68888bdc7d4204d7ac8ff6b60d939aa22a9131a4eb3e43a8193959e",
+    "reason": "Visually reviewed the exact before/after snapshot pair on integration contact sheet 2. The rounded sheet surface, hairline and shadow share the panel edge; the stationary rectangular paint band is removed. Controls and labels remain readable with no new clipping."
   },
   "_internal/mobile/android/app/src/test/snapshots/gap1b_shell_error_dark.png": {
     "sha256": "99756c5d04af7583e6f438d12939d4ac03b96312329eabf2c7fa6b1ee410cd43",
@@ -364,20 +364,20 @@
     "reason": "Visually reviewed tilename change: gap1b_shell_undo_light.png; drawn-cover tiles now show the two-line title under the cover like photo tiles (owner 15-11). Old/new contact sheet inspected before adoption."
   },
   "_internal/mobile/android/app/src/test/snapshots/gap1c_device_listen_only_dark.png": {
-    "sha256": "9466fdb0f890c5b2c67e4465d2326e18c7c70c4ed3b5ec7442da1c0acf2327ba",
-    "reason": "Reviewed old/new gap1c_device_listen_only_dark.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+    "sha256": "de914ed5ed01d35806d00c4bb9509df48ea5e2ca5fa708766082a53063a9cd5b",
+    "reason": "Visually reviewed the exact before/after snapshot pair on integration contact sheet 2. The rounded sheet surface, hairline and shadow share the panel edge; the stationary rectangular paint band is removed. Controls and labels remain readable with no new clipping."
   },
   "_internal/mobile/android/app/src/test/snapshots/gap1c_device_listen_only_light.png": {
-    "sha256": "e175b18657ee9fcf77261234e40a28ceb4088f0215395e09702f4769dc3024ec",
-    "reason": "Reviewed old/new gap1c_device_listen_only_light.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+    "sha256": "2bb943215ddc85dad52b70bf79e364dc12c99efc73c007a61092368a11a64733",
+    "reason": "Visually reviewed the exact before/after snapshot pair on integration contact sheet 2. The rounded sheet surface, hairline and shadow share the panel edge; the stationary rectangular paint band is removed. Controls and labels remain readable with no new clipping."
   },
   "_internal/mobile/android/app/src/test/snapshots/gap3_recovery_confirm_dark.png": {
-    "sha256": "c2fb4d56d1d5097301dae7ca8e52d98beda70025afd64cdc8fcbae97781184e3",
-    "reason": "Reviewed old/new gap3_recovery_confirm_dark.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+    "sha256": "889ee16016c374bbe9907dbb2afc5e4026cd270a3c1e92d5a2022cb93d805833",
+    "reason": "Visually reviewed the exact before/after snapshot pair on integration contact sheet 2. The rounded sheet surface, hairline and shadow share the panel edge; the stationary rectangular paint band is removed. Controls and labels remain readable with no new clipping."
   },
   "_internal/mobile/android/app/src/test/snapshots/gap3_recovery_confirm_light.png": {
-    "sha256": "dbf8d3bcf9269f5ff3e6fddd4c9fcd1acd752e94d6852ce4ed2af521f6b3d499",
-    "reason": "Reviewed old/new gap3_recovery_confirm_light.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+    "sha256": "9717e6316d7ca62bcf82d96d095e6fc25333819dff072ae3636e307912495fb0",
+    "reason": "Visually reviewed the exact before/after snapshot pair on integration contact sheet 2. The rounded sheet surface, hairline and shadow share the panel edge; the stationary rectangular paint band is removed. Controls and labels remain readable with no new clipping."
   },
   "_internal/mobile/android/app/src/test/snapshots/icon_sheet_light.png": {
     "sha256": "166b3369be760a5f66a395464de37cb105bead5a4a3874938953ba38d5dc2373",
@@ -460,20 +460,20 @@
     "reason": "Reviewed old/new mini_short_light.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
   },
   "_internal/mobile/android/app/src/test/snapshots/music_book_cues_dark.png": {
-    "sha256": "be9fce5016d6f74d87f5f1d0730e96e14597827e07891f92bd95d484271beff8",
-    "reason": "Reviewed old/new music_book_cues_dark.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+    "sha256": "12b003337f15755d90da7b3e8d822a7f763341cc5d3633c86b5eef68bb68f7a4",
+    "reason": "Visually reviewed the exact before/after snapshot pair on integration contact sheet 3. The rounded sheet surface, hairline and shadow share the panel edge; the stationary rectangular paint band is removed. Controls and labels remain readable with no new clipping."
   },
   "_internal/mobile/android/app/src/test/snapshots/music_book_cues_light.png": {
-    "sha256": "8810e38b0f32e30d6916fec591d1b661817795bf88ec8ff3f41d91f16f666cc8",
-    "reason": "Reviewed old/new music_book_cues_light.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+    "sha256": "434b7bc15be2589cd05ca9b50e96eabbb0c88e841c796b2da89b693fcd8a63ea",
+    "reason": "Visually reviewed the exact before/after snapshot pair on integration contact sheet 3. The rounded sheet surface, hairline and shadow share the panel edge; the stationary rectangular paint band is removed. Controls and labels remain readable with no new clipping."
   },
   "_internal/mobile/android/app/src/test/snapshots/music_book_menu_dark.png": {
-    "sha256": "9bb3631796b4be355d8bea28485cb3c7694573523422734da78ba0cf0e7d986f",
-    "reason": "Reviewed old/new music_book_menu_dark.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+    "sha256": "397292ef3d18f355ee051e7e1c4693631b4e8a611f32cd6e1ef8f8717bded711",
+    "reason": "Visually reviewed the exact before/after snapshot pair on integration contact sheet 3. The rounded sheet surface, hairline and shadow share the panel edge; the stationary rectangular paint band is removed. Controls and labels remain readable with no new clipping."
   },
   "_internal/mobile/android/app/src/test/snapshots/music_book_menu_light.png": {
-    "sha256": "3255c2bfc1a1bbe82bb7f9348c2f0c8751e9514d9620679911e875e7a57ec12a",
-    "reason": "Reviewed old/new music_book_menu_light.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+    "sha256": "830d8b20891945fd3358b2303e79cb1e9dbb3da5c532f416ab28a177074a5c48",
+    "reason": "Visually reviewed the exact before/after snapshot pair on integration contact sheet 3. The rounded sheet surface, hairline and shadow share the panel edge; the stationary rectangular paint band is removed. Controls and labels remain readable with no new clipping."
   },
   "_internal/mobile/android/app/src/test/snapshots/music_library_dark.png": {
     "sha256": "1e1b32724672b99e267c67d0df7848d73ef0b3b3a08e75c2b6b7097482064dd2",
@@ -544,16 +544,16 @@
     "reason": "Reviewed old/new np_paused_light.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
   },
   "_internal/mobile/android/app/src/test/snapshots/np_picker_sleep_chapters_light.png": {
-    "sha256": "f12d0b89f0eaa39964c458b3a61cb006cf9c9190b2018430d5195beecca99db5",
-    "reason": "Reviewed old/new np_picker_sleep_chapters_light.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+    "sha256": "4d7e16545fdaf4c833122cb30d1c031c9ab98cd031bf356b50f0de79778b2f57",
+    "reason": "Visually reviewed the exact before/after snapshot pair on integration contact sheet 5. The rounded sheet surface, hairline and shadow share the panel edge; the stationary rectangular paint band is removed. Controls and labels remain readable with no new clipping."
   },
   "_internal/mobile/android/app/src/test/snapshots/np_picker_sleep_font130_dark.png": {
-    "sha256": "5754a7fc0ca01fb09a3f519756ed8f097e3be550158a8d1bd5eb24b25585d69f",
-    "reason": "Reviewed old/new np_picker_sleep_font130_dark.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+    "sha256": "f6f43745558bad4b0436cfd0f75c4885277fb04ad74a8297f33d6679466a3ba2",
+    "reason": "Visually reviewed the exact before/after snapshot pair on integration contact sheet 5. The rounded sheet surface, hairline and shadow share the panel edge; the stationary rectangular paint band is removed. Controls and labels remain readable with no new clipping."
   },
   "_internal/mobile/android/app/src/test/snapshots/np_picker_sleep_font130_light.png": {
-    "sha256": "aef65f864cf710ccbbf4bb16a674c39c5dd1dc91aef35b4540112206ee954cf3",
-    "reason": "Reviewed old/new np_picker_sleep_font130_light.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+    "sha256": "e22c875fdaca3259aca5b103f82f65860427b97fa62e716983943196ae967cf0",
+    "reason": "Visually reviewed the exact before/after snapshot pair on integration contact sheet 5. The rounded sheet surface, hairline and shadow share the panel edge; the stationary rectangular paint band is removed. Controls and labels remain readable with no new clipping."
   },
   "_internal/mobile/android/app/src/test/snapshots/np_playing_dark.png": {
     "sha256": "304954708b1c7e68739f1435c5a898cdca816c5758b948fbb74c7fc14e628bf9",
@@ -584,12 +584,12 @@
     "reason": "Reviewed old/new np_return_chip_light.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
   },
   "_internal/mobile/android/app/src/test/snapshots/np_sleep_dark.png": {
-    "sha256": "dd711c0a3cb5b2f8e330c03ad514bbc26ea5b18fc4e41208bff2ce4560ff1316",
-    "reason": "Reviewed old/new np_sleep_dark.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+    "sha256": "c43acf0ada0294f185a1ef9cc452c1cd2df2da97bbd7c0704f44b779e01cd0f0",
+    "reason": "Visually reviewed the exact before/after snapshot pair on integration contact sheet 5. The rounded sheet surface, hairline and shadow share the panel edge; the stationary rectangular paint band is removed. Controls and labels remain readable with no new clipping."
   },
   "_internal/mobile/android/app/src/test/snapshots/np_sleep_light.png": {
-    "sha256": "2c49a2d6460222aba04cdc5ab5321dfcae18bd0c56f5be596ad65bfe6d678ceb",
-    "reason": "Reviewed old/new np_sleep_light.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+    "sha256": "09582074b52492ba4668c18bb496a806b0aa6ab6e97e76e1f1e299f97958ac9f",
+    "reason": "Visually reviewed the exact before/after snapshot pair on integration contact sheet 5. The rounded sheet surface, hairline and shadow share the panel edge; the stationary rectangular paint band is removed. Controls and labels remain readable with no new clipping."
   },
   "_internal/mobile/android/app/src/test/snapshots/picker_settings_sleep_dark.png": {
     "sha256": "36e641de5fe24112217f1139ee3d7cefbeac787c52cfc2ca27d5d5b28a6c87b2",
@@ -616,8 +616,8 @@
     "reason": "Reviewed old/new pip_content_light.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
   },
   "_internal/mobile/android/app/src/test/snapshots/settings_clear_sheet_light.png": {
-    "sha256": "c00c663e65570a39ef93628837475db071cf5b64b495677f74084ce284829796",
-    "reason": "Reviewed old/new settings_clear_sheet_light.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+    "sha256": "55c5ab4492b8f68ed0237678969db17258f085ec8bb6aad427bffe2f13cfba7c",
+    "reason": "Visually reviewed the exact before/after snapshot pair on integration contact sheet 6. The rounded sheet surface, hairline and shadow share the panel edge; the stationary rectangular paint band is removed. Controls and labels remain readable with no new clipping."
   },
   "_internal/mobile/android/app/src/test/snapshots/settings_expanded_light.png": {
     "sha256": "beb273fc54555dd32b12f8c1ddba7d61a07084c2438ce745114d6a2d1c5be5b4",
@@ -628,8 +628,8 @@
     "reason": "Visually reviewed 0.4.169 summary case fix: settings_large_dark.png; only the Listening row summary changed from \"nhạc tự chọn\" to \"Nhạc tự chọn\" (diff box (350, 569, 618, 610)). Old/new contact sheet inspected before adoption."
   },
   "_internal/mobile/android/app/src/test/snapshots/settings_log_sheet_dark.png": {
-    "sha256": "d07687d6a619deaf33b04b9d66aeb26f7b3ca97b4e81924b46ab7319f655071f",
-    "reason": "Reviewed old/new settings_log_sheet_dark.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+    "sha256": "eb7301a363a3b40135d934e6172fcebb755e97fff066ef05857d794a0d791651",
+    "reason": "Visually reviewed the exact before/after snapshot pair on integration contact sheet 6. The rounded sheet surface, hairline and shadow share the panel edge; the stationary rectangular paint band is removed. Controls and labels remain readable with no new clipping."
   },
   "_internal/mobile/android/app/src/test/snapshots/settings_root_dark.png": {
     "sha256": "fa3842a4355f9b9ef76e8b31f801da45b3ace21dfe6727d0085c0e43da68698c",
@@ -640,8 +640,8 @@
     "reason": "Visually reviewed 0.4.169 summary case fix: settings_root_light.png; only the Listening row summary changed from \"nhạc tự chọn\" to \"Nhạc tự chọn\" (diff box (170, 572, 438, 613)). Old/new contact sheet inspected before adoption."
   },
   "_internal/mobile/android/app/src/test/snapshots/settings_sleep_time_sheet_light.png": {
-    "sha256": "815ab8548937f54cb0f99a22859cdece8f40af7db3c99aaf986ac27d9ba26b5a",
-    "reason": "Reviewed old/new settings_sleep_time_sheet_light.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+    "sha256": "ef6b52b4762e06d2142868577ca2c8a915d861367f8adb0d9637240c9d598bac",
+    "reason": "Visually reviewed the exact before/after snapshot pair on integration contact sheet 6. The rounded sheet surface, hairline and shadow share the panel edge; the stationary rectangular paint band is removed. Controls and labels remain readable with no new clipping."
   },
   "_internal/mobile/android/app/src/test/snapshots/shell_book_light.png": {
     "sha256": "0e0c20b85b0b47804534fdad3d3a75409cd8001c3f0db2fd492100466c6a5f43",
@@ -708,80 +708,80 @@
     "reason": "Reviewed old/new tone_360_130_light_mine.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
   },
   "_internal/mobile/android/app/src/test/snapshots/voice_consent_sheet_dark.png": {
-    "sha256": "24f7638a342cb2f604ded7b7a097788562fc51d76b41b0c671d6ee405f7b386d",
-    "reason": "Reviewed old/new voice_consent_sheet_dark.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+    "sha256": "b6490975bc81cc5a48db59f191caf3e704a3bba7621f19b5c3afc76e352681a9",
+    "reason": "Visually reviewed the exact before/after snapshot pair on integration contact sheet 6. The rounded sheet surface, hairline and shadow share the panel edge; the stationary rectangular paint band is removed. Controls and labels remain readable with no new clipping."
   },
   "_internal/mobile/android/app/src/test/snapshots/voice_consent_sheet_light.png": {
-    "sha256": "98f45072f783e0bfec8e11386d6429ca912291d261543b6fa39c4bafb23f29c6",
-    "reason": "Reviewed old/new voice_consent_sheet_light.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+    "sha256": "bbe85820659de53ee2990fcdf1e37b3fb1f66c883c8c3ce523aa8792e523c3f2",
+    "reason": "Visually reviewed the exact before/after snapshot pair on integration contact sheet 6. The rounded sheet surface, hairline and shadow share the panel edge; the stationary rectangular paint band is removed. Controls and labels remain readable with no new clipping."
   },
   "_internal/mobile/android/app/src/test/snapshots/voice_key_consent_light.png": {
-    "sha256": "9cc1f7fabee8db7081655c844f93e1f6191e046d305bb72664b16c0fc92153be",
-    "reason": "Reviewed old/new voice_key_consent_light.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+    "sha256": "3cd917c9dba883708598720b9395163610144b278663b78725e0ffd52abea7b6",
+    "reason": "Visually reviewed the exact before/after snapshot pair on integration contact sheet 6. The rounded sheet surface, hairline and shadow share the panel edge; the stationary rectangular paint band is removed. Controls and labels remain readable with no new clipping."
   },
   "_internal/mobile/android/app/src/test/snapshots/voice_key_problem_light.png": {
-    "sha256": "b5026087b03390a645b28621fe1181e3ce036125434c30fb6e6b96d637a2891c",
-    "reason": "Visually reviewed late fix168reveal layout: voice_key_problem_light.png; explicit vertical groups restore intended spacing and keep every visible control separate. Old/new contact sheet inspected before adoption."
+    "sha256": "8dce47cb7894efe3807e2aa05f32effde0d1ea41ffef53c8426458e8eb7cacd2",
+    "reason": "Visually reviewed the exact before/after snapshot pair on integration contact sheet 6. The rounded sheet surface, hairline and shadow share the panel edge; the stationary rectangular paint band is removed. Controls and labels remain readable with no new clipping."
   },
   "_internal/mobile/android/app/src/test/snapshots/voice_key_refused_dark.png": {
-    "sha256": "7eac4fc0bb4a18bcf37dd3e77130f938bb7321a874aaac1a73e8957233e2c7b8",
-    "reason": "Visually reviewed late fix168reveal layout: voice_key_refused_dark.png; explicit vertical groups restore intended spacing and keep every visible control separate. Old/new contact sheet inspected before adoption."
+    "sha256": "59491239ecb540a1614fbfa4263e2e073c8b50883e43053473defba2c4cccf34",
+    "reason": "Visually reviewed the exact before/after snapshot pair on integration contact sheet 6. The rounded sheet surface, hairline and shadow share the panel edge; the stationary rectangular paint band is removed. Controls and labels remain readable with no new clipping."
   },
   "_internal/mobile/android/app/src/test/snapshots/voice_key_remove_dark.png": {
-    "sha256": "56452e29091f2738867d6758d5588356515a94c55a711afcf698fa19866d9031",
-    "reason": "Reviewed old/new voice_key_remove_dark.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+    "sha256": "6dec394815c7883381a2ccb3f754cb958a5b72f0774b7b223c692c92b27162ab",
+    "reason": "Visually reviewed the exact before/after snapshot pair on integration contact sheet 6. The rounded sheet surface, hairline and shadow share the panel edge; the stationary rectangular paint band is removed. Controls and labels remain readable with no new clipping."
   },
   "_internal/mobile/android/app/src/test/snapshots/voice_key_sheet_dark.png": {
-    "sha256": "c59e04233e02abe6e2a7679ee28eea04fa1a3b7357f3e47653544711418b90ee",
-    "reason": "Visually reviewed late fix168reveal layout: voice_key_sheet_dark.png; explicit vertical groups restore intended spacing and keep every visible control separate. Old/new contact sheet inspected before adoption."
+    "sha256": "9d460348290b4cea0820b21cc348cd3933ac0b6a5bfedc387035388d6cc5ba5f",
+    "reason": "Visually reviewed the exact before/after snapshot pair on integration contact sheet 6. The rounded sheet surface, hairline and shadow share the panel edge; the stationary rectangular paint band is removed. Controls and labels remain readable with no new clipping."
   },
   "_internal/mobile/android/app/src/test/snapshots/voice_key_sheet_light.png": {
-    "sha256": "e028c889ff3f120717a6f6246aacf9a603e72afa04fde8a91066a485e62afe5f",
-    "reason": "Visually reviewed late fix168reveal layout: voice_key_sheet_light.png; explicit vertical groups restore intended spacing and keep every visible control separate. Old/new contact sheet inspected before adoption."
+    "sha256": "b13007df6c3b22c150f30332e36e0fbf281356d52b4db8d52ab726f3fe642ba9",
+    "reason": "Visually reviewed the exact before/after snapshot pair on integration contact sheet 6. The rounded sheet surface, hairline and shadow share the panel edge; the stationary rectangular paint band is removed. Controls and labels remain readable with no new clipping."
   },
   "_internal/mobile/android/app/src/test/snapshots/voice_metered_sheet_light.png": {
-    "sha256": "f251189c5ddf47d626b78dde13a1bab8bddd9577cad3ed94ab58f1357a8cd7d2",
-    "reason": "Reviewed old/new voice_metered_sheet_light.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+    "sha256": "9f2657caf4940c01dcd17eda9621245b9337d37d19ad1546f9035713b16c0374",
+    "reason": "Visually reviewed the exact before/after snapshot pair on integration contact sheet 7. The rounded sheet surface, hairline and shadow share the panel edge; the stationary rectangular paint band is removed. Controls and labels remain readable with no new clipping."
   },
   "_internal/mobile/android/app/src/test/snapshots/voice_module_remove_dark.png": {
-    "sha256": "2ba69cb4ff4c97b62095dfc5c5efa1cf9bc8a3441b9f90b43304633441ddace6",
-    "reason": "Reviewed old/new voice_module_remove_dark.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+    "sha256": "d0512650910d93f39cb6dfaf6e0108e2c6faec5d0d7d4efd83120b64cb952ff5",
+    "reason": "Visually reviewed the exact before/after snapshot pair on integration contact sheet 7. The rounded sheet surface, hairline and shadow share the panel edge; the stationary rectangular paint band is removed. Controls and labels remain readable with no new clipping."
   },
   "_internal/mobile/android/app/src/test/snapshots/voice_module_sheet_light.png": {
-    "sha256": "27d82e1e8447d7f969d9b6abec9c9a06f62ea8ef82757c183499e27b98c2b7ef",
-    "reason": "Reviewed old/new voice_module_sheet_light.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+    "sha256": "93bd99240aa7affd9746808c8587ae0a560c8dad915046a4fc346f0a37b39dd2",
+    "reason": "Visually reviewed the exact before/after snapshot pair on integration contact sheet 7. The rounded sheet surface, hairline and shadow share the panel edge; the stationary rectangular paint band is removed. Controls and labels remain readable with no new clipping."
   },
   "_internal/mobile/android/app/src/test/snapshots/voice_music_remove_dark.png": {
-    "sha256": "ddf65c42bcf1ebdafff75e12ded5b29dbeedb2b7f3718912f6456ab11a2418aa",
-    "reason": "Reviewed old/new voice_music_remove_dark.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+    "sha256": "9fd61f85b17390117e0e94996e40a46d1a5f71576d0227b3181bace111ac690e",
+    "reason": "Visually reviewed the exact before/after snapshot pair on integration contact sheet 7. The rounded sheet surface, hairline and shadow share the panel edge; the stationary rectangular paint band is removed. Controls and labels remain readable with no new clipping."
   },
   "_internal/mobile/android/app/src/test/snapshots/voice_music_remove_light.png": {
-    "sha256": "d95f255898c6ee95de46d6332f905a4096216af817a65a15eab08a8037682123",
-    "reason": "Reviewed old/new voice_music_remove_light.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+    "sha256": "9611785127b57afa219ba834d493157916d22548c32b4421936f91c6443bc01b",
+    "reason": "Visually reviewed the exact before/after snapshot pair on integration contact sheet 7. The rounded sheet surface, hairline and shadow share the panel edge; the stationary rectangular paint band is removed. Controls and labels remain readable with no new clipping."
   },
   "_internal/mobile/android/app/src/test/snapshots/music_track_bottom_dark.png": {
-    "sha256": "1624c4546dfdcffbbcfca9023f6b2ac4bf0d865bd4f018d19391e3fe5bea1329",
-    "reason": "Reviewed corrected music_track_bottom_dark.png in corrected-01.png: emotion bars are separated vertically, all thirteen values remain reachable, and facts and credits remain readable."
+    "sha256": "c1449199e05a586ad951394699b6bd6a2ab39ff13e33a33c0a626b297a70ce05",
+    "reason": "Visually reviewed the exact before/after snapshot pair on integration contact sheet 4. The rounded sheet surface, hairline and shadow share the panel edge; the stationary rectangular paint band is removed. Controls and labels remain readable with no new clipping."
   },
   "_internal/mobile/android/app/src/test/snapshots/music_track_bottom_light.png": {
-    "sha256": "c694cef11261accccebedd0b52f7acfa1e84ec30c5c6129cb86cdb2ddfab6dbd",
-    "reason": "Reviewed corrected music_track_bottom_light.png in corrected-01.png: emotion bars are separated vertically, all thirteen values remain reachable, and facts and credits remain readable."
+    "sha256": "066b864eb08e62892394a1d8e7c1b30166d29fa53860a039e465b2cda1caf12e",
+    "reason": "Visually reviewed the exact before/after snapshot pair on integration contact sheet 4. The rounded sheet surface, hairline and shadow share the panel edge; the stationary rectangular paint band is removed. Controls and labels remain readable with no new clipping."
   },
   "_internal/mobile/android/app/src/test/snapshots/music_track_dark.png": {
-    "sha256": "747156f85d9e5afdf15fdeff0334a7a3085e591656f306f18f7c85e37fc94467",
-    "reason": "Reviewed corrected music_track_dark.png in corrected-01.png: emotion bars are separated vertically, all thirteen values remain reachable, and facts and credits remain readable."
+    "sha256": "e435420046e389ac7a9d8a5a067ee207a965d4383619ac129b23a49a7bcb3a10",
+    "reason": "Visually reviewed the exact before/after snapshot pair on integration contact sheet 4. The rounded sheet surface, hairline and shadow share the panel edge; the stationary rectangular paint band is removed. Controls and labels remain readable with no new clipping."
   },
   "_internal/mobile/android/app/src/test/snapshots/music_track_light.png": {
-    "sha256": "1ddd4bf31d26d2700f0e1f5d1da6e553d4410c0e7f8449b6fee1d70a82de05e5",
-    "reason": "Reviewed corrected music_track_light.png in corrected-01.png: emotion bars are separated vertically, all thirteen values remain reachable, and facts and credits remain readable."
+    "sha256": "973956bd4e5db0029013d2e2505af08ac4d4bb04cb66930d591a1ea26b5a0d23",
+    "reason": "Visually reviewed the exact before/after snapshot pair on integration contact sheet 4. The rounded sheet surface, hairline and shadow share the panel edge; the stationary rectangular paint band is removed. Controls and labels remain readable with no new clipping."
   },
   "_internal/mobile/android/app/src/test/snapshots/music_track_middle_dark.png": {
-    "sha256": "0c67197a7b971feeb05e03376e9f8194ce3d93d1845620b52c0c146debdd5dd2",
-    "reason": "Reviewed corrected music_track_middle_dark.png in corrected-01.png: emotion bars are separated vertically, all thirteen values remain reachable, and facts and credits remain readable."
+    "sha256": "110f45341976a57fad59c288e5da9a1d6e8ae25c9e2ed113bba5daf9901ac4d5",
+    "reason": "Visually reviewed the exact before/after snapshot pair on integration contact sheet 4. The rounded sheet surface, hairline and shadow share the panel edge; the stationary rectangular paint band is removed. Controls and labels remain readable with no new clipping."
   },
   "_internal/mobile/android/app/src/test/snapshots/music_track_middle_light.png": {
-    "sha256": "baf92888f5d67f6d63c1f86fc8a2596c53038e4960212c90108983754fa07707",
-    "reason": "Reviewed corrected music_track_middle_light.png in corrected-01.png: emotion bars are separated vertically, all thirteen values remain reachable, and facts and credits remain readable."
+    "sha256": "dbb0e4c4b34213bae8f8c363825fe31b0d6868738a1a1d5a7decb3435eae69ee",
+    "reason": "Visually reviewed the exact before/after snapshot pair on integration contact sheet 4. The rounded sheet surface, hairline and shadow share the panel edge; the stationary rectangular paint band is removed. Controls and labels remain readable with no new clipping."
   },
   "_internal/mobile/android/app/src/test/snapshots/devices_share_on_dark.png": {
     "sha256": "e253c7f74c6a7a3cc1547aa0cca9b1193de13ca61556a9182dabf4ccf657e0cb",
@@ -792,8 +792,8 @@
     "reason": "Reviewed corrected devices_share_on_light.png: full synthetic SHA-256 fingerprint and pairing string wrap readably; instructions and paired devices remain separated, with scrolling for the lower device."
   },
   "_internal/mobile/android/app/src/test/snapshots/book_records_light.png": {
-    "sha256": "4acbf777c45ca08f27662bb3f4992f56a5e3ac9ad1d0ac062f9c9cf54ef50749",
-    "reason": "Visually compared book_records_light.png after the reveal layout fix: book progress/controls have proper vertical spacing; profile sheet labels and actions remain separate and readable."
+    "sha256": "c525398dd15cb5e94037d97caa4944fe72b5b19eb81768fd603172949b920cd4",
+    "reason": "Visually reviewed the exact before/after snapshot pair on integration contact sheet 1. The rounded sheet surface, hairline and shadow share the panel edge; the stationary rectangular paint band is removed. Controls and labels remain readable with no new clipping."
   },
   "_internal/mobile/android/app/src/test/snapshots/icon_sheet_dark.png": {
     "sha256": "05b972d2b301dac115580abe1fc051552511ffcaa91edf085aafcab7224bfc37",
@@ -816,36 +816,36 @@
     "reason": "Reviewed music_book_menu_row_light.png in late contact sheets 01-03: current typography and header spacing retain readable labels, separated actions, and centered icon/number shapes; no settled overlap."
   },
   "_internal/mobile/android/app/src/test/snapshots/music_book_page_dark.png": {
-    "sha256": "be9fce5016d6f74d87f5f1d0730e96e14597827e07891f92bd95d484271beff8",
-    "reason": "Reviewed music_book_page_dark.png in late contact sheets 01-03: current typography and header spacing retain readable labels, separated actions, and centered icon/number shapes; no settled overlap."
+    "sha256": "12b003337f15755d90da7b3e8d822a7f763341cc5d3633c86b5eef68bb68f7a4",
+    "reason": "Visually reviewed the exact before/after snapshot pair on integration contact sheet 3. The rounded sheet surface, hairline and shadow share the panel edge; the stationary rectangular paint band is removed. Controls and labels remain readable with no new clipping."
   },
   "_internal/mobile/android/app/src/test/snapshots/music_book_page_light.png": {
-    "sha256": "8810e38b0f32e30d6916fec591d1b661817795bf88ec8ff3f41d91f16f666cc8",
-    "reason": "Reviewed music_book_page_light.png in late contact sheets 01-03: current typography and header spacing retain readable labels, separated actions, and centered icon/number shapes; no settled overlap."
+    "sha256": "434b7bc15be2589cd05ca9b50e96eabbb0c88e841c796b2da89b693fcd8a63ea",
+    "reason": "Visually reviewed the exact before/after snapshot pair on integration contact sheet 3. The rounded sheet surface, hairline and shadow share the panel edge; the stationary rectangular paint band is removed. Controls and labels remain readable with no new clipping."
   },
   "_internal/mobile/android/app/src/test/snapshots/music_cue_page_dark.png": {
-    "sha256": "ad5bc12fffc0e01132713c9dc8ee979e9be1ac0a783c0e259adabff244f5c265",
-    "reason": "Reviewed music_cue_page_dark.png in late contact sheets 01-03: current typography and header spacing retain readable labels, separated actions, and centered icon/number shapes; no settled overlap."
+    "sha256": "33c1d9e86e92dadec65ca5f855f682d1924b66765666bebced502b482bebb39a",
+    "reason": "Visually reviewed the exact before/after snapshot pair on integration contact sheet 3. The rounded sheet surface, hairline and shadow share the panel edge; the stationary rectangular paint band is removed. Controls and labels remain readable with no new clipping."
   },
   "_internal/mobile/android/app/src/test/snapshots/music_cue_page_light.png": {
-    "sha256": "b06e8aba4448e539ad4594e9a4ffd3d71b43673bace33e9a552fe6146ade9ba4",
-    "reason": "Reviewed music_cue_page_light.png in late contact sheets 01-03: current typography and header spacing retain readable labels, separated actions, and centered icon/number shapes; no settled overlap."
+    "sha256": "3569f56e280aada8979cd2973c9aa564378bdb55f3ed32a9416e8cdd1e65fb16",
+    "reason": "Visually reviewed the exact before/after snapshot pair on integration contact sheet 3. The rounded sheet surface, hairline and shadow share the panel edge; the stationary rectangular paint band is removed. Controls and labels remain readable with no new clipping."
   },
   "_internal/mobile/android/app/src/test/snapshots/music_cue_swap_dark.png": {
-    "sha256": "f7081daf7b834574a4553a77dd7d2f5e2948deeeb430cfcf6158c1a7b074f1e0",
-    "reason": "Reviewed music_cue_swap_dark.png in late contact sheets 01-03: current typography and header spacing retain readable labels, separated actions, and centered icon/number shapes; no settled overlap."
+    "sha256": "81006b6b1c6f6af86fde48c8797475bc30d2daca6364376355ce3023a6fe2556",
+    "reason": "Visually reviewed the exact before/after snapshot pair on integration contact sheet 3. The rounded sheet surface, hairline and shadow share the panel edge; the stationary rectangular paint band is removed. Controls and labels remain readable with no new clipping."
   },
   "_internal/mobile/android/app/src/test/snapshots/music_cue_swap_light.png": {
-    "sha256": "eab1cab88468091c167399efcac578b90d404647532b8c0e79248641be63f847",
-    "reason": "Reviewed music_cue_swap_light.png in late contact sheets 01-03: current typography and header spacing retain readable labels, separated actions, and centered icon/number shapes; no settled overlap."
+    "sha256": "9a9a2eee211f4e918fdf0e633a237974f6d7162bfc9a28ff0ed640e8cac86dec",
+    "reason": "Visually reviewed the exact before/after snapshot pair on integration contact sheet 3. The rounded sheet surface, hairline and shadow share the panel edge; the stationary rectangular paint band is removed. Controls and labels remain readable with no new clipping."
   },
   "_internal/mobile/android/app/src/test/snapshots/settings_logs_clear_sheet_light.png": {
-    "sha256": "d2742594acd287f4a2e2c76ff89a5a0c03116c16bc10304e6f35a7108797fb62",
-    "reason": "Reviewed settings_logs_clear_sheet_light.png in late contact sheets 01-03: current typography and header spacing retain readable labels, separated actions, and centered icon/number shapes; no settled overlap."
+    "sha256": "f8d270c1452442e0617f8a0bc30d3e3b80c2fe71d23a7878be26e49c9856f8ad",
+    "reason": "Visually reviewed the exact before/after snapshot pair on integration contact sheet 6. The rounded sheet surface, hairline and shadow share the panel edge; the stationary rectangular paint band is removed. Controls and labels remain readable with no new clipping."
   },
   "_internal/mobile/android/app/src/test/snapshots/settings_third_party_dark.png": {
-    "sha256": "72731b99df507a7a4ab7299f313d6f573f0efd4355647ed2fb1de46d121fdd5f",
-    "reason": "Reviewed settings_third_party_dark.png in late contact sheets 01-03: current typography and header spacing retain readable labels, separated actions, and centered icon/number shapes; no settled overlap."
+    "sha256": "f1877696394bb184c13b4bf57df3a9539a960cf2d3e0582bd8a174d25018db33",
+    "reason": "Visually reviewed the exact before/after snapshot pair on integration contact sheet 6. The rounded sheet surface, hairline and shadow share the panel edge; the stationary rectangular paint band is removed. Controls and labels remain readable with no new clipping."
   },
   "_internal/mobile/android/app/src/test/snapshots/skip_glyph_back_dark.png": {
     "sha256": "29bc1c98e4229d2e43bd6eab368d69b467cd036b33c20f3b120c633ebb76f5f3",
@@ -860,12 +860,12 @@
     "reason": "Reviewed skip_glyph_fwd_light.png in late contact sheets 01-03: current typography and header spacing retain readable labels, separated actions, and centered icon/number shapes; no settled overlap."
   },
   "_internal/mobile/android/app/src/test/snapshots/voice_key_verdict_light.png": {
-    "sha256": "df271630765b476bea6b1724c22b3d12120bb0210b6b7aaf5cf748f2f09b4997",
-    "reason": "Visually reviewed late fix168reveal layout: voice_key_verdict_light.png; explicit vertical groups restore intended spacing and keep every visible control separate. Old/new contact sheet inspected before adoption."
+    "sha256": "a3510260b4cef488f2a03885e53c2b6a5b280b9bda58e17df808549b22fb2737",
+    "reason": "Visually reviewed the exact before/after snapshot pair on integration contact sheet 6. The rounded sheet surface, hairline and shadow share the panel edge; the stationary rectangular paint band is removed. Controls and labels remain readable with no new clipping."
   },
   "_internal/mobile/android/app/src/test/snapshots/voice_module_remove_light.png": {
-    "sha256": "f8f94b0db4c06435fdb5b83ba4215622dae65746891442e548e3c848ca803bb9",
-    "reason": "Reviewed voice_module_remove_light.png in late contact sheets 01-03: current typography and header spacing retain readable labels, separated actions, and centered icon/number shapes; no settled overlap."
+    "sha256": "bee4988a10402b60d9bd0902dcf8d498750c01af3eaf72133dab1e20bf027615",
+    "reason": "Visually reviewed the exact before/after snapshot pair on integration contact sheet 7. The rounded sheet surface, hairline and shadow share the panel edge; the stationary rectangular paint band is removed. Controls and labels remain readable with no new clipping."
   },
   "_internal/mobile/android/app/src/test/snapshots/music_audio_sheet_130_dark.png": {
     "sha256": "dd0ff9e4b03b2683892ec9acf3a75ccab5d58bd49a04c282c59029cdf5df6ece",
@@ -930,5 +930,121 @@
   "_internal/mobile/android/app/src/test/snapshots/music_audio_sheet_light_off.png": {
     "sha256": "49196e565033df59d9ca49a671a37a67924d1563c58c947203a023b86164411a",
     "reason": "Reviewed sound sheet redesign: three flat sections, shared dense rulers, chevron navigation and animated music dependencies. Light/dark, 100/130 percent and complete content checked against before captures; native glyph audit has no intrinsic clipping or overlap."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/music_player_choices_dark.png": {
+    "sha256": "4bcb595f6730f077be0d25bd40244f3a79a635df7fc32d12af1ac37d09b03e06",
+    "reason": "Visually reviewed the exact before/after snapshot pair on integration contact sheet 3. The rounded sheet surface, hairline and shadow share the panel edge; the stationary rectangular paint band is removed. Controls and labels remain readable with no new clipping."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/music_player_choices_light.png": {
+    "sha256": "a969592b773099cea116f18412b72c64502b9385fe6ee3a951fbb30d6ba286f4",
+    "reason": "Visually reviewed the exact before/after snapshot pair on integration contact sheet 3. The rounded sheet surface, hairline and shadow share the panel edge; the stationary rectangular paint band is removed. Controls and labels remain readable with no new clipping."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/music_player_credit_dark.png": {
+    "sha256": "e6c505643e30adab1282472cad5dfa509d17c63b40f864344e8fb30256611856",
+    "reason": "Visually reviewed the exact before/after snapshot pair on integration contact sheet 3. The rounded sheet surface, hairline and shadow share the panel edge; the stationary rectangular paint band is removed. Controls and labels remain readable with no new clipping."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/music_player_credit_light.png": {
+    "sha256": "99356e090da7d3f792cf1630afede30728b111461dce3244927f2a4039cf9574",
+    "reason": "Visually reviewed the exact before/after snapshot pair on integration contact sheet 3. The rounded sheet surface, hairline and shadow share the panel edge; the stationary rectangular paint band is removed. Controls and labels remain readable with no new clipping."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/music_style_sheet_dark.png": {
+    "sha256": "8a9711eb7462ded780114625af83231d3ed954a7b7d6bf5b31c58d4ba2820e9c",
+    "reason": "Visually reviewed the exact before/after snapshot pair on integration contact sheet 3. The rounded sheet surface, hairline and shadow share the panel edge; the stationary rectangular paint band is removed. Controls and labels remain readable with no new clipping. This new light/dark style picker baseline shows the actual filter rows and selected item."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/music_style_sheet_light.png": {
+    "sha256": "c2a64aa431e3a5b0927b53c85ffc825fb8cbf7a1777d7fee6a3b432e890c473d",
+    "reason": "Visually reviewed the exact before/after snapshot pair on integration contact sheet 3. The rounded sheet surface, hairline and shadow share the panel edge; the stationary rectangular paint band is removed. Controls and labels remain readable with no new clipping. This new light/dark style picker baseline shows the actual filter rows and selected item."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/np_audio_412_light.png": {
+    "sha256": "6f2a9c639f4da77aff3e9ac78e4bb21333d67ef4959af8d152ade56c9b76e652",
+    "reason": "Visually reviewed the exact before/after snapshot pair on integration contact sheet 4. The rounded sheet surface, hairline and shadow share the panel edge; the stationary rectangular paint band is removed. Controls and labels remain readable with no new clipping. The audio controls retain the intentional soundsheet grouping and ruler layout; the pre-existing full-scroll snapshot extent is unchanged."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/np_audio_light.png": {
+    "sha256": "74487b743968f1b638d1b8206ab0db38f3155d62c74c753f0fa5905a2313aeb0",
+    "reason": "Visually reviewed the exact before/after snapshot pair on integration contact sheet 4. The rounded sheet surface, hairline and shadow share the panel edge; the stationary rectangular paint band is removed. Controls and labels remain readable with no new clipping. The audio controls retain the intentional soundsheet grouping and ruler layout; the pre-existing full-scroll snapshot extent is unchanged."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/np_chapters_dark.png": {
+    "sha256": "19a00a2351bb8e066c6f66b78e48d2adbe313ebac58e3df8fe57685e367bed33",
+    "reason": "Visually reviewed the exact before/after snapshot pair on integration contact sheet 4. The rounded sheet surface, hairline and shadow share the panel edge; the stationary rectangular paint band is removed. Controls and labels remain readable with no new clipping."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/np_chapters_light.png": {
+    "sha256": "b5e23a3db37f4a51e706fdda07ccbf53465a7a6002d2df1dec8f79b5c63d5c66",
+    "reason": "Visually reviewed the exact before/after snapshot pair on integration contact sheet 4. The rounded sheet surface, hairline and shadow share the panel edge; the stationary rectangular paint band is removed. Controls and labels remain readable with no new clipping."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/np_look_dark.png": {
+    "sha256": "4bee39fabe4b6ecefcdc2ad9633bb3cfd79905cb7d82f86cd2e2b40b7d0fa0bb",
+    "reason": "Visually reviewed the exact before/after snapshot pair on integration contact sheet 4. The rounded sheet surface, hairline and shadow share the panel edge; the stationary rectangular paint band is removed. Controls and labels remain readable with no new clipping."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/np_look_light.png": {
+    "sha256": "a93c85c898c68ee78195e8c304c375a286aeb66e7941551f99f4e896953e21d0",
+    "reason": "Visually reviewed the exact before/after snapshot pair on integration contact sheet 4. The rounded sheet surface, hairline and shadow share the panel edge; the stationary rectangular paint band is removed. Controls and labels remain readable with no new clipping."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/np_more_412_light.png": {
+    "sha256": "5a4bf2e391298e83b3ea87a8f5c12421f574d4375ef972fca88fe759329575ea",
+    "reason": "Visually reviewed the exact before/after snapshot pair on integration contact sheet 4. The rounded sheet surface, hairline and shadow share the panel edge; the stationary rectangular paint band is removed. Controls and labels remain readable with no new clipping."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/np_more_light.png": {
+    "sha256": "a3f9abdb629bc019473f7685f311d9b91b4285fd91d660b6e438eaa87474a5b1",
+    "reason": "Visually reviewed the exact before/after snapshot pair on integration contact sheet 4. The rounded sheet surface, hairline and shadow share the panel edge; the stationary rectangular paint band is removed. Controls and labels remain readable with no new clipping."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/np_more_progress_light.png": {
+    "sha256": "0a484234001bac0c92da6106674aa92efab3d5380252cd0663addf4aef124718",
+    "reason": "Visually reviewed the exact before/after snapshot pair on integration contact sheet 4. The rounded sheet surface, hairline and shadow share the panel edge; the stationary rectangular paint band is removed. Controls and labels remain readable with no new clipping."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/np_picker_audio_dark.png": {
+    "sha256": "6095cdc470510015b925e93eb27e4cc42cd279a8adb3004d02fab65b52203ae7",
+    "reason": "Visually reviewed the exact before/after snapshot pair on integration contact sheet 4. The rounded sheet surface, hairline and shadow share the panel edge; the stationary rectangular paint band is removed. Controls and labels remain readable with no new clipping. The audio controls retain the intentional soundsheet grouping and ruler layout; the pre-existing full-scroll snapshot extent is unchanged."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/np_picker_audio_font130_dark.png": {
+    "sha256": "b92b661f2ca292d45d929a2ffcfe297376c00554a810076d2096e543de4e6004",
+    "reason": "Visually reviewed the exact before/after snapshot pair on integration contact sheet 5. The rounded sheet surface, hairline and shadow share the panel edge; the stationary rectangular paint band is removed. Controls and labels remain readable with no new clipping. The audio controls retain the intentional soundsheet grouping and ruler layout; the pre-existing full-scroll snapshot extent is unchanged."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/np_picker_audio_font130_light.png": {
+    "sha256": "e9505e2130bbc576033584fb81bf22e421acf9b6ca3fbf278c016022da636bf8",
+    "reason": "Visually reviewed the exact before/after snapshot pair on integration contact sheet 5. The rounded sheet surface, hairline and shadow share the panel edge; the stationary rectangular paint band is removed. Controls and labels remain readable with no new clipping. The audio controls retain the intentional soundsheet grouping and ruler layout; the pre-existing full-scroll snapshot extent is unchanged."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/np_picker_audio_light.png": {
+    "sha256": "2ceb17867feb5610125128b0453100f69eb7f36bb6896e99b9a505c8751311eb",
+    "reason": "Visually reviewed the exact before/after snapshot pair on integration contact sheet 5. The rounded sheet surface, hairline and shadow share the panel edge; the stationary rectangular paint band is removed. Controls and labels remain readable with no new clipping. The audio controls retain the intentional soundsheet grouping and ruler layout; the pre-existing full-scroll snapshot extent is unchanged."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/np_picker_look_font130_dark.png": {
+    "sha256": "652bb15bab47b7938e1d089e45ff01c5eb214e7452a7603a25c1d3acbc33119f",
+    "reason": "Visually reviewed the exact before/after snapshot pair on integration contact sheet 5. The rounded sheet surface, hairline and shadow share the panel edge; the stationary rectangular paint band is removed. Controls and labels remain readable with no new clipping."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/np_picker_look_font130_light.png": {
+    "sha256": "b4e69fe1bde4d2399576fc36edf92c961f05bc7f2e99b2d1ddd748a5e3df7d82",
+    "reason": "Visually reviewed the exact before/after snapshot pair on integration contact sheet 5. The rounded sheet surface, hairline and shadow share the panel edge; the stationary rectangular paint band is removed. Controls and labels remain readable with no new clipping."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/np_picker_speed_font130_dark.png": {
+    "sha256": "e7c2b94950be13cb5b2f8e7e12d510ab11293a62b99daed981f709ee9fcd3e65",
+    "reason": "Visually reviewed the exact before/after snapshot pair on integration contact sheet 5. The rounded sheet surface, hairline and shadow share the panel edge; the stationary rectangular paint band is removed. Controls and labels remain readable with no new clipping."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/np_picker_speed_font130_light.png": {
+    "sha256": "f534e6ad47243b8144b50359398da20e834449f26cb4bcb453bf29f67e1e5802",
+    "reason": "Visually reviewed the exact before/after snapshot pair on integration contact sheet 5. The rounded sheet surface, hairline and shadow share the panel edge; the stationary rectangular paint band is removed. Controls and labels remain readable with no new clipping."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/np_prepare_light.png": {
+    "sha256": "f6388ac5365e21bcb608f34eb319944abcf85a789a000eed2b47d381a7afe1bd",
+    "reason": "Visually reviewed the exact before/after snapshot pair on integration contact sheet 5. The rounded sheet surface, hairline and shadow share the panel edge; the stationary rectangular paint band is removed. Controls and labels remain readable with no new clipping."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/np_prepare_waiting_light.png": {
+    "sha256": "0c0c53beebfc7f739c7c64e27bc195490db56a1ba71fe4c10acb0e31c7bd1a4e",
+    "reason": "Visually reviewed the exact before/after snapshot pair on integration contact sheet 5. The rounded sheet surface, hairline and shadow share the panel edge; the stationary rectangular paint band is removed. Controls and labels remain readable with no new clipping."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/np_speed_dark.png": {
+    "sha256": "336ec4d0bbf2f988c4694831e62d0cc738ab26c08ee996c52eb236b8a5c8efce",
+    "reason": "Visually reviewed the exact before/after snapshot pair on integration contact sheet 5. The rounded sheet surface, hairline and shadow share the panel edge; the stationary rectangular paint band is removed. Controls and labels remain readable with no new clipping."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/np_speed_light.png": {
+    "sha256": "c6d0afda602d1f8e873cf9a09f6bc0ab29511df17a7eee3bc0e691448defd59c",
+    "reason": "Visually reviewed the exact before/after snapshot pair on integration contact sheet 5. The rounded sheet surface, hairline and shadow share the panel edge; the stationary rectangular paint band is removed. Controls and labels remain readable with no new clipping."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/pip_now_playing_button_dark.png": {
+    "sha256": "d6ad8dfd9944e9c0b458855d615d416edb46c932015a9db1d899329321ac4291",
+    "reason": "Visually reviewed the exact before/after snapshot pair on integration contact sheet 6. The rounded sheet surface, hairline and shadow share the panel edge; the stationary rectangular paint band is removed. Controls and labels remain readable with no new clipping."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/pip_now_playing_button_light.png": {
+    "sha256": "cf98b1a24b898dbe9bef2249e769b6e4e7f91d960080c6797b8f679e5458dafa",
+    "reason": "Visually reviewed the exact before/after snapshot pair on integration contact sheet 6. The rounded sheet surface, hairline and shadow share the panel edge; the stationary rectangular paint band is removed. Controls and labels remain readable with no new clipping."
   }
 }
