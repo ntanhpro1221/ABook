@@ -109,7 +109,7 @@ WindowLayer {
         onPressed: root.close()
     }
 
-    Item {
+    FloatingPanel {
         id: panel
         objectName: "popoverPanel"
         width: Math.min(root.panelWidth, Math.max(0, root.width - 16))

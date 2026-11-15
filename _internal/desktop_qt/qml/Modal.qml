@@ -68,7 +68,7 @@ WindowLayer {
     Rectangle { anchors.fill: parent; color: Theme.scrim; opacity: root.shown }
     MouseArea { anchors.fill: parent; onPressed: if (root.dismissable) root.close() }
 
-    Item {
+    FloatingPanel {
         id: panel
         objectName: "modalPanel"
         width: Math.max(0, Math.min(root.panelWidth, root.width - 32))

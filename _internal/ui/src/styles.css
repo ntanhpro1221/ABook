@@ -1556,20 +1556,7 @@ details[data-motion-fallback="1"][data-motion="closing"] > :not(summary) { anima
 }
 .ui-switch[data-state="checked"] { background: var(--switch-on); }
 
-/* A sheet edge obscures the complete crossing line inside this shared 24 px band. The band lies over the dimmed page,
-   so it fades into the scrim laid over --bg (scrim layer on top of the page layer), never into the bright page alone. */
-.sheet-surface::before {
-  content: "";
-  position: absolute;
-  pointer-events: none;
-  left: 0;
-  right: 0;
-  top: -24px;
-  height: 24px;
-  background:
-    linear-gradient(to bottom, transparent, var(--scrim) 67%, var(--scrim)),
-    linear-gradient(to bottom, transparent, var(--bg) 67%, var(--bg));
-}
+/* Floating surfaces use their own rounded box shadow; no rectangular band over the backdrop. */
 .ui-switch-large {
   --switch-width: 3rem;
   --switch-height: 1.75rem;

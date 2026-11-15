@@ -38,7 +38,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
-import androidx.compose.ui.draw.shadow
+import vn.abook.player.ui.components.floatingSurface
+import vn.abook.player.ui.components.floatingMotionLayer
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.geometry.CornerRadius
@@ -315,16 +316,14 @@ fun SortMenu(ui: LibraryUiState, anchor: IntOffset, backEnabled: () -> Boolean =
             Modifier
                 .offset { IntOffset((anchor.x - menuWidth.roundToPx()).coerceIn(0, (maxWidth - menuWidth).roundToPx().coerceAtLeast(0)), menuTop.roundToPx()) }
                 .width(menuWidth).heightIn(max = (maxHeight - menuTop).coerceAtLeast(0.dp))
-                .graphicsLayer {
+                .floatingMotionLayer {
                     transformOrigin = TransformOrigin(1f, 0f)
                     val k = progress.value
                     scaleX = 0.95f + 0.05f * k
                     scaleY = scaleX
+                    alpha = k
                 }
-                .shadow(8.dp, shape)
-                .clip(shape)
-                .background(colors.panel)
-                .border(1.dp, colors.line, shape)
+                .floatingSurface(shape)
                 .pointerInput(Unit) { detectTapGestures { } }
                 .fadeEdges(scroll).verticalScroll(scroll).padding(vertical = Dim.s4),
         ) {

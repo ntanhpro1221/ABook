@@ -48,7 +48,8 @@ import vn.abook.player.ui.components.pressable
 import vn.abook.player.ui.music.MusicKind
 import vn.abook.player.ui.music.MusicPanel
 import vn.abook.player.ui.music.MusicText
-import vn.abook.player.ui.components.sheetEdge
+import vn.abook.player.ui.components.floatingSurface
+import vn.abook.player.ui.components.floatingMotionLayer
 import vn.abook.player.ui.components.sheetSurface
 import vn.abook.player.ui.components.rememberSheetDrag
 import vn.abook.player.ui.theme.Abook
@@ -102,9 +103,8 @@ fun PlayerSheets(state: NowPlayingState, model: NowPlayingModel, window: NowPlay
             Column(Modifier.fillMaxWidth().heightIn(max = if (floating) (maxHeight - Dim.s32).coerceAtLeast(0.dp) else maxHeight * 0.82f)
                 .testTag("player_sheet_${window.sheet.name.lowercase()}").semantics { paneTitle = sheetTitle(window.sheet) }
                 .sheetSurface(drag)
-                .graphicsLayer { translationY = drag.offset }
-                .clip(if (floating) RoundedCornerShape(Dim.radiusSheet) else RoundedCornerShape(topStart = Dim.radiusSheet, topEnd = Dim.radiusSheet)).background(Abook.colors.panel)
-                .then(if (Abook.colors.dark) Modifier.sheetEdge(Abook.colors.line) else Modifier)
+                .floatingMotionLayer { translationY = drag.offset; alpha = scrimShown }
+                .floatingSurface(if (floating) RoundedCornerShape(Dim.radiusSheet) else RoundedCornerShape(topStart = Dim.radiusSheet, topEnd = Dim.radiusSheet), sheet = true)
                 .gestureBarPadding().padding(horizontal = 20.dp).padding(top = 12.dp, bottom = 20.dp)) {
                 // Đóng bằng kéo xuống (cả tấm), chạm nền tối hay Back - không nút đóng riêng.
                 Column(Modifier.fillMaxWidth().testTag("player_sheet_grip")) {

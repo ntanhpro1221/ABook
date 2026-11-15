@@ -278,6 +278,8 @@ giữ tên trong cột tối đa 640 px, thanh tua dùng phần rộng còn lạ
 - **Bóng**: chỉ lớp nổi (thanh phát, bảng trượt, menu, hộp thoại). Bóng không thấy được trên nền tối (bảng `--panel` #1b1a18 chỉ hơn nền #121110 một bậc),
   nên bờ của bảng trượt / hộp ở chế độ tối do ba thứ: màn mờ `--scrim` tối rgb(6 5 4 / .62) (sáng rgb(20 17 13 / .45); điện thoại `AbookColors.scrim`), vạch 1 px
   `--line` theo mép trên (điện thoại `Modifier.sheetEdge`), và chính bóng (vô hình ở tối nhưng vẫn khai báo cho sáng).
+  Bóng, mặt và viền thuộc cùng lớp chuyển động: cùng dịch chuyển, phóng và alpha từ khung đầu đến khung cuối, kể cả khi kéo tay hay giảm chuyển động.
+  Lớp gộp alpha phải chừa đủ vùng bóng ngoài khung; không vẽ dải chữ nhật giả bóng trên scrim hay tại vị trí đứng yên cuối chuyển động.
 - **Chữ xuống dòng**: không để MỘT chữ lẻ ở dòng cuối (`text-wrap: pretty` / `balance` web; điện thoại `LineBreak.Strategy.Balanced` trong mọi kiểu chữ của
   `Theme.kt`, riêng chữ đọc dài của Đọc theo dùng `LineBreak.Paragraph`), không gạch nối giữa chữ; địa chỉ web đi nguyên một khối, chỉ khi rộng hơn cả dòng mới đứt ở dấu "/" (`keepUrlTogether`).
 - **Dấu ngăn "·"**: không bao giờ đứng đầu HAY cuối dòng, kể cả dấu có sẵn trong tên sách ("Thành Phố Sương Mù · Tập 2"). Web: mảnh ghép qua `DotJoin`, mọi

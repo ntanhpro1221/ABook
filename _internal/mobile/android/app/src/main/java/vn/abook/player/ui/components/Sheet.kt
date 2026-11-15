@@ -49,9 +49,6 @@ import androidx.compose.ui.graphics.drawscope.clipRect
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.compositeOver
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
@@ -130,13 +127,11 @@ fun SheetLayer(host: SheetHost) {
                 .then(if (floating) Modifier.padding(Dim.s16).widthIn(max = 560.dp).heightIn(max = (maxHeight - Dim.s32).coerceAtLeast(0.dp)) else Modifier)
                 .fillMaxWidth().statusBarsPadding().imePadding()
                 .sheetSurface(drag)
-                .graphicsLayer {
-                    translationY = if (reduced) 0f else (1f - progress.value) * size.height + drag.offset
-                    alpha = if (reduced) progress.value else 1f
+                .floatingMotionLayer { surfaceSize ->
+                    translationY = if (reduced) 0f else (1f - progress.value) * surfaceSize.height + drag.offset
+                    alpha = progress.value
                 }
-                .clip(if (floating) RoundedCornerShape(Dim.radiusSheet) else RoundedCornerShape(topStart = Dim.radiusSheet, topEnd = Dim.radiusSheet))
-                .background(colors.panel)
-                .then(if (colors.dark) Modifier.sheetEdge(colors.line) else Modifier),
+                .floatingSurface(if (floating) RoundedCornerShape(Dim.radiusSheet) else RoundedCornerShape(topStart = Dim.radiusSheet, topEnd = Dim.radiusSheet), sheet = true),
         ) {
             Box(Modifier.fillMaxWidth().height(Dim.s24), contentAlignment = Alignment.Center) {
                 Box(Modifier.width(40.dp).height(Dim.s4).clip(CircleShape).background(colors.lineStrong))  // tay nắm 40x4 --line-strong, như web
@@ -202,14 +197,7 @@ fun rememberSheetDrag(close: () -> Unit): SheetDrag {
  */
 @Composable
 fun Modifier.sheetSurface(drag: SheetDrag): Modifier {
-    // The band sits over the dimmed screen, so it fades into the scrim as composited on the page, not into the bright page itself.
-    val background = Abook.colors.scrim.compositeOver(Abook.colors.bg)
     return this
-    .drawBehind {
-        val edge = Dim.s24.toPx()
-        drawRect(Brush.verticalGradient(0f to Color.Transparent, .67f to background, 1f to background, startY = -edge, endY = 0f),
-            topLeft = Offset(0f, -edge), size = Size(size.width, edge))
-    }
     .onSizeChanged { drag.height = it.height.coerceAtLeast(1).toFloat() }
     .nestedScroll(object : NestedScrollConnection {
         override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset =

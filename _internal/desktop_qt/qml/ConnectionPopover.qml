@@ -30,7 +30,7 @@ WindowLayer {
         onPressed: root.close()
     }
 
-    Item {
+    FloatingPanel {
         id: panel
         width: 300
         height: content.implicitHeight + Theme.s12 + Theme.s8

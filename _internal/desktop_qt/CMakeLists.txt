@@ -161,6 +161,7 @@ qt_add_qml_module(ABookDesk
         qml/Button.qml
         qml/IconButton.qml
         qml/Shadow.qml
+        qml/FloatingPanel.qml
         qml/CoverButton.qml
         qml/InlineError.qml
         qml/FlowDetail.qml

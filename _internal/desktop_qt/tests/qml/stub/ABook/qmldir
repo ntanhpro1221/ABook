@@ -13,6 +13,7 @@ Interactive 1.0 ../../../../qml/Interactive.qml
 Icon 1.0 ../../../../qml/Icon.qml
 IconButton 1.0 ../../../../qml/IconButton.qml
 Shadow 1.0 ../../../../qml/Shadow.qml
+FloatingPanel 1.0 ../../../../qml/FloatingPanel.qml
 CoverButton 1.0 ../../../../qml/CoverButton.qml
 InlineError 1.0 ../../../../qml/InlineError.qml
 FlowDetail 1.0 ../../../../qml/FlowDetail.qml

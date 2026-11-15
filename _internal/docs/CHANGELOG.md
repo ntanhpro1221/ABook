@@ -7,6 +7,8 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+- Bóng và viền cửa sổ đi cùng bảng khi mở, đóng và kéo; bỏ dải tối đứng yên, đồng bộ ba nền.
+
 - Mở và đóng sách liền mạch, bìa trở về đúng ô Thư viện; đồng bộ chuyển cảnh trên điện thoại và máy tính.
 
 - Hẹn giờ ngủ giữ nguyên sau khi tự dừng; lần phát sau tự đếm lại.

@@ -59,7 +59,7 @@ Item {
         onTriggered: if (!hover.hovered) Api.dismissNotice(root.slot); else restart()
     }
 
-    Item {
+    FloatingPanel {
         id: card
         width: root.width
         height: Math.max(48, body.height + 2 * 14)

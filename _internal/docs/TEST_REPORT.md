@@ -2749,3 +2749,9 @@ includes up to ten failures with got/expected phonemes per path for each top-fiv
 category, and every mismatch in JSON. See [TEXT_NORMALIZATION.md](TEXT_NORMALIZATION.md).
 No normalization implementation or dependency changed; quality hash:
 `db6c9cb847dac2e536deca158114df29dcfedac4ab88b69885c08e1924876997`.
+# Sheet window boundaries (2026-11-15)
+
+- Common Android sheets and sort menus record their shadow, surface and hairline inside one padded motion layer. Both sheet hosts fade the whole layer to zero at their endpoints.
+- Qt floating panels composite through a transparent gutter, preserving their layout size and the full shadow extent. Modal, Popover, ConnectionPopover, Select and Toast share this component. Web sheets use their own rounded box shadow without the rectangular backdrop band.
+- `scripts/audit_surface_frames.py` measures recorded pixels independently from the animation implementation: scrim fitting, surface tracking, shadow offset/motion gain, rounded corner samples, edge profiles and straight cuts. It accepts variable-rate video or consecutive PNG captures. Missing/insufficient motion is UNKNOWN. Unit controls include a fixed shadow, a rectangular band, missing surfaces and static captures.
+- Owner video and emulator evidence, magnified comparisons and detailed before/after measurements remain outside Git in the sheetedge task folder. No owner media belongs in the repository. Snapshot updates replace the stationary 24 dp paint strip with the shared rounded shadow; all resting layouts remain unchanged.

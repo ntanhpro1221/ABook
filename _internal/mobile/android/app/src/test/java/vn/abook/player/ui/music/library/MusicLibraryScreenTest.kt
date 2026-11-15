@@ -186,6 +186,14 @@ class MusicLibraryScreenTest {
     @Test fun libraryLight() = library(false)
     @Test fun libraryDark() = library(true)
 
+    @Test fun styleSheetLight() = styleSheet(false)
+    @Test fun styleSheetDark() = styleSheet(true)
+    private fun styleSheet(dark: Boolean) {
+        show(dark)
+        tap("chip_style")
+        shot("music_style_sheet_${theme(dark)}")
+    }
+
     private fun saved(dark: Boolean) {
         show(dark, MusicPart.Saved)
         rule.onNodeWithTag("music_saved_summary").assertIsDisplayed()

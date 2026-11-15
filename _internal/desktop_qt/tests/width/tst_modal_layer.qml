@@ -189,9 +189,16 @@ Item {
         function test_everyLayerWearsTheSharedShadow(data) {
             for (const layer of build(data.factory)) {
                 const panel = ModalLayer.panelOf(layer)
-                const shadows = panel.children.filter(child => /^Shadow(_|\()/.test(String(child)))
+                // FloatingPanel records the surface in a padded composition item.
+                const paint = panel.surfaceData === undefined ? panel.children : panel.surfaceData
+                const shadows = paint.filter(child => /^Shadow(_|\()/.test(String(child)))
                 compare(shadows.length, 1, data.tag + " panel shadow")
                 compare(shadows[0].kind, "float", data.tag + " shadow kind")
+                const origin = shadows[0].mapToItem(panel, shadows[0].pad, shadows[0].pad)
+                fuzzyCompare(origin.x, 0, .01, data.tag + " shadow x")
+                fuzzyCompare(origin.y, 0, .01, data.tag + " shadow y")
+                fuzzyCompare(shadows[0].target.width, panel.width, .01, data.tag + " shadow width")
+                fuzzyCompare(shadows[0].target.height, panel.height, .01, data.tag + " shadow height")
             }
         }
         // Mỗi lớp tự đặt mình ở gốc cửa sổ, không để chỗ khai báo quyết định thứ tự vẽ
