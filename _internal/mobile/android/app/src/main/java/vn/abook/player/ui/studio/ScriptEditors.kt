@@ -20,6 +20,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.Dp
 import vn.abook.player.NameRules
 import vn.abook.player.S
 import vn.abook.player.ui.addbook.BookField
@@ -32,6 +33,7 @@ import vn.abook.player.ui.components.Reveal
 import vn.abook.player.ui.components.RowHint
 import vn.abook.player.ui.components.TextAction
 import vn.abook.player.ui.components.fadeEdges
+import vn.abook.player.ui.components.LocalSheetViewportHeight
 import vn.abook.player.ui.screens.PickRow
 import vn.abook.player.ui.studio.parts.AnswerButton
 import vn.abook.player.ui.studio.parts.SideBySide
@@ -93,7 +95,9 @@ internal fun ScriptDeliveryEditor(script: ChapterScript, line: ScriptLine, dismi
     var spoken by remember { mutableStateOf(line.lineWish?.spoken ?: line.spoken ?: line.text) }
     val needsPerson = line.kind == "narration" && kind != "narration"
     val scroll = rememberScrollState()
-    FieldGroup(modifier.fillMaxWidth().imePadding().fadeEdges(scroll).verticalScroll(scroll).testTag("studio_delivery_sheet")) {
+    val viewport = LocalSheetViewportHeight.current
+    val bounds = if (viewport == Dp.Unspecified) Modifier else Modifier.heightIn(max = viewport)
+    FieldGroup(modifier.then(bounds).fillMaxWidth().imePadding().fadeEdges(scroll).verticalScroll(scroll).testTag("studio_delivery_sheet")) {
         Reveal(showTitle) { BasicText(S.s_cach_doc_cau_nay_d8d0b9f1, style = Abook.type.sectionTitle) }
         RowHint(S.s_loai_doan_4c243930)
         val kinds = ScriptEdits.kinds.map { Option(it.first, it.second) }

@@ -195,6 +195,8 @@ class StudioEditScreenTest {
         tag("studio_delivery_sheet").assertIsDisplayed()
         tap("studio_delivery_emotion")
         tap("studio_emotion_sad")
+        tag("studio_emotion_sad").assertIsSelected()
+        tag("studio_delivery_save").assertIsEnabled()
         tap("studio_delivery_save")
         assertEquals("sad", state.decisions.held!!.decision.steps.single().body.getString("emotion"))
     }
