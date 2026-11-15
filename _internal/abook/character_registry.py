@@ -1253,13 +1253,19 @@ def _canonicalize_named_speakers(
     from .bracket_rule import load as bracket_speaker
 
     rule = bracket_speaker(Path(path).parent) if path else ""
+    from .speaker_labels import load as speaker_labels
+
+    authority = speaker_labels(db)
     if rule:
         with db.transaction() as conn:
-            moved = conn.execute(
-                "UPDATE segments SET speaker=? WHERE kind != 'narration' AND speaker != ?"
+            eligible = list(conn.execute(
+                "SELECT * FROM segments WHERE kind != 'narration' AND speaker != ?"
                 " AND substr(ltrim(text, ' ' || char(9) || char(10) || char(13)), 1, 1) = ?",
-                (rule, rule, OPENER),
-            ).rowcount
+                (rule, OPENER),
+            ))
+            ids = [int(row["id"]) for row in eligible if authority.allows(row, rule)]
+            conn.executemany("UPDATE segments SET speaker=? WHERE id=?", [(rule, segment_id) for segment_id in ids])
+            moved = len(ids)
         if moved:
             log(f"  {moved} câu trong 『』 là của {rule}: quy ước người nghe chọn cho cả cuốn.")
     counts = Counter(str(row["speaker"]) for row in db.list_segments())
@@ -1288,6 +1294,11 @@ def _canonicalize_named_speakers(
                 log(f"  {target} là {person}: người nghe đã gộp.")
             targets[original] = person
     aliases_by_target: dict[str, set[str]] = defaultdict(set)
+    # A guessed name merge must not redirect an answer to another person. Only
+    # spelling changes and identity links supplied by the replay adapter qualify.
+    for original, target in list(targets.items()):
+        if any(not authority.allows(row, target) for row in source_rows if str(row["speaker"]) == original):
+            targets[original] = original
     rewritten_segments = 0
     for original, target in targets.items():
         aliases_by_target[target].update((original, _canonical_speaker(original)))
@@ -2320,19 +2331,21 @@ def _repair_cross_batch_dialogue_continuations(
                 and not opens_a_new_turn(previous_text, text)
             )
             if continuation and current["speaker"] != previous["speaker"]:
-                repaired += db.rewrite_segment_speakers(
+                changed = db.rewrite_segment_speakers(
                     [int(row["id"])],
                     speaker=str(previous["speaker"]),
                     gender=str(previous["gender"]),
                     age=str(previous["age"]),
                 )
-                current.update(
-                    {
-                        "speaker": previous["speaker"],
-                        "gender": previous["gender"],
-                        "age": previous["age"],
-                    }
-                )
+                repaired += changed
+                if changed:
+                    current.update(
+                        {
+                            "speaker": previous["speaker"],
+                            "gender": previous["gender"],
+                            "age": previous["age"],
+                        }
+                    )
         previous = current
     if repaired:
         log(f"Đã giữ identity xuyên batch cho {repaired} câu thoại nối tiếp.")

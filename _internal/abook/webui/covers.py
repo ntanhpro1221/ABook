@@ -161,13 +161,15 @@ def save_cover(project_root: Path, data_url: str) -> dict[str, Any]:
 def render_cover(raw: bytes) -> tuple[bytes, dict[str, Any]]:
     """Chuẩn hoá một ảnh bìa từ byte thô: JPEG đã xoay theo EXIF, bỏ kênh trong suốt, cạnh dài tối đa `MAX_SIDE`, kèm
     {"color", "width", "height"}. Dùng chung cho bìa của dự án (`save_cover_bytes`) và bìa người nghe đặt cho sách
-    không có xưởng (book_edits.py)."""
+    không có xưởng (book_edits.py). JPEG RGB đã đúng chiều và kích thước giữ nguyên byte."""
     from PIL import Image, ImageOps, UnidentifiedImageError  # noqa: PLC0415 - Pillow chỉ cần khi có người đặt bìa
 
     if len(raw) > MAX_UPLOAD_BYTES:
         raise CoverError(f"Ảnh quá lớn (tối đa {MAX_UPLOAD_BYTES // 2**20} MB)")
     try:
         image = Image.open(io.BytesIO(raw), formats=("JPEG", "PNG", "WEBP", "GIF", "BMP"))
+        keep_bytes = (image.format == "JPEG" and image.mode == "RGB"
+                      and max(image.size) <= MAX_SIDE and image.getexif().get(274, 1) in (0, 1))
         image.seek(0)
         image.draft("RGB", (MAX_SIDE, MAX_SIDE))  # JPEG: giải mã ở 1/2, 1/4, 1/8 cỡ nếu vẫn đủ cho bìa; định dạng khác: không làm gì
         if image.width * image.height > MAX_PIXELS:
@@ -185,9 +187,12 @@ def render_cover(raw: bytes) -> tuple[bytes, dict[str, Any]]:
     if image.mode != "RGB":
         image = image.convert("RGB")
     image.thumbnail((MAX_SIDE, MAX_SIDE), Image.Resampling.LANCZOS)
+    meta = {"color": dominant_color(image), "width": image.width, "height": image.height}
+    if keep_bytes:
+        return raw, meta
     out = io.BytesIO()
     image.save(out, "JPEG", quality=88, optimize=True, progressive=True)
-    return out.getvalue(), {"color": dominant_color(image), "width": image.width, "height": image.height}
+    return out.getvalue(), meta
 
 
 def save_cover_bytes(project_root: Path, raw: bytes) -> dict[str, Any]:

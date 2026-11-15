@@ -302,6 +302,20 @@ private slots:
         QVERIFY(api->imageData(QUrl::fromLocalFile(QDir(dir.path()).filePath(QStringLiteral("không có.png")))).isEmpty());
         QVERIFY(api->clipboardImage().isEmpty());
     }
+    void coverJpegBytesSurviveFileSelection() {
+        QTemporaryDir dir;
+        QVERIFY(dir.isValid());
+        QImage image(600, 900, QImage::Format_RGB32);
+        image.fill(Qt::darkCyan);
+        const QString path = QDir(dir.path()).filePath(QStringLiteral("original.jpg"));
+        QVERIFY(image.save(path, "JPEG", 93));
+        QFile source(path);
+        QVERIFY(source.open(QIODevice::ReadOnly));
+        const QByteArray original = source.readAll();
+        const QString data = api->imageData(QUrl::fromLocalFile(path));
+        QVERIFY(data.startsWith(QStringLiteral("data:image/jpeg;base64,")));
+        QCOMPARE(QByteArray::fromBase64(data.mid(data.indexOf(',') + 1).toLatin1()), original);
+    }
     // ---- one wait policy for C++ and QML (hostwait.h): limit = no byte for N ms, one more attempt, then timeout ----
     void longWorkWaitsPastTheHostsOwnDeadline() {
         // Host Edge deadline: TOTAL_TIMEOUT 90 s + 1 s (abook/readaloud/edge.py): its error with a reason must come first.

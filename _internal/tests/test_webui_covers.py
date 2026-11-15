@@ -39,6 +39,36 @@ def test_transparency_becomes_white_not_black(tmp_path: Path) -> None:
     assert Image.open(tmp_path / covers.COVER_FILE).getpixel((10, 10))[0] > 240
 
 
+@pytest.mark.parametrize("size", [(64, 64), (600, 900), (1400, 1400)])
+def test_a_compliant_jpeg_keeps_every_byte_and_its_content_version(tmp_path, size):
+    source = io.BytesIO()
+    Image.new("RGB", size, (47, 103, 181)).save(source, "JPEG", quality=93, comment=b"keep original bytes")
+    raw = source.getvalue()
+    first = covers.save_cover_bytes(tmp_path, raw)
+    assert (tmp_path / covers.COVER_FILE).read_bytes() == raw
+    assert first["version"] == covers.content_version(raw)
+    assert covers.save_cover_bytes(tmp_path, raw) == first
+
+
+@pytest.mark.parametrize("mode,kind,size,orientation", [
+    ("RGB", "JPEG", (1800, 1600), 1), ("RGB", "PNG", (600, 900), 1),
+    ("RGB", "JPEG", (600, 900), 6), ("L", "JPEG", (600, 900), 1),
+    ("CMYK", "JPEG", (600, 900), 1),
+])
+def test_noncompliant_images_are_still_normalized(mode, kind, size, orientation):
+    source = io.BytesIO()
+    exif = Image.Exif()
+    exif[274] = orientation
+    Image.new(mode, size).save(source, kind, exif=exif)
+    raw = source.getvalue()
+    jpeg, meta = covers.render_cover(raw)
+    assert jpeg != raw
+    image = Image.open(io.BytesIO(jpeg))
+    assert image.format == "JPEG" and image.mode == "RGB" and max(image.size) <= covers.MAX_SIDE
+    assert image.getexif().get(274, 1) == 1
+    assert (meta["width"], meta["height"]) == image.size
+
+
 @pytest.mark.parametrize("bad", ["", "hello", "data:image/png;base64,####", "data:text/plain;base64,aGVsbG8="])
 def test_what_is_not_an_image_is_refused_with_a_reason(tmp_path: Path, bad: str) -> None:
     with pytest.raises(covers.CoverError):

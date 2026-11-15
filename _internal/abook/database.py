@@ -2896,9 +2896,16 @@ class ProjectDB:
             if conn.execute("SELECT 1 FROM speaker_pass_chapters WHERE chapter_id=?", (int(chapter_id),)).fetchone():
                 raise RuntimeError("Speaker pass already committed for this chapter")
             traits = self._speaker_pass_traits_conn(conn, labels)
+            from .speaker_labels import load
+
+            authority = load(self)
             for segment_id, old_speaker, new_speaker in labels:
                 if not str(new_speaker).strip():
                     raise ValueError("Speaker pass label must be non-empty")
+                if authority.labels:
+                    row = conn.execute("SELECT * FROM segments WHERE id=?", (int(segment_id),)).fetchone()
+                    if row is not None and not authority.allows(row, new_speaker):
+                        new_speaker = old_speaker
                 cursor = conn.execute(
                     "UPDATE segments SET speaker=?,updated_at=? WHERE id=? AND chapter_id=? AND speaker=? "
                     "AND kind IN ('dialogue','thought') AND status!='pending'",
@@ -7192,6 +7199,9 @@ class ProjectDB:
         if current is None:
             raise KeyError(f"Unknown segment id: {segment_id}")
         merged = self._merged_analysis_update_data(current, data)
+        from .speaker_labels import load
+
+        load(self).require(current, merged)
         values = self._analysis_update_values(
             merged,
             low_confidence_threshold,
@@ -7565,7 +7575,11 @@ class ProjectDB:
                     raise RuntimeError(
                         "Analysis batch differs from the durable candidate segment set"
                     )
+            from .speaker_labels import load
+
+            authority = load(self)
             for row in rows:
+                authority.require(row, dict(row["data"]))
                 if durable_commit_rows is not None:
                     stable_id = str(row["stable_id"])
                     durable_row = durable_commit_rows.get(stable_id)
@@ -14499,6 +14513,21 @@ class ProjectDB:
             where += " AND NOT (chapter_id=? AND seq BETWEEN ? AND ?)"
             params += [int(value) for value in span]
         with self.connect() as conn:
+            from .speaker_labels import load
+
+            authority = load(self)
+            if authority.labels:
+                conn.execute("BEGIN IMMEDIATE")
+                try:
+                    rows = list(conn.execute(f"SELECT * FROM segments WHERE {where}", params))
+                    ids = [int(row["id"]) for row in rows if authority.allows(row, canonical_name)]
+                    conn.executemany("UPDATE segments SET speaker=?,updated_at=? WHERE id=?",
+                                     [(canonical_name, time.time(), segment_id) for segment_id in ids])
+                    conn.execute("COMMIT")
+                except Exception:
+                    conn.execute("ROLLBACK")
+                    raise
+                return len(ids)
             cursor = conn.execute(
                 f"UPDATE segments SET speaker=?,updated_at=? WHERE {where}",
                 (canonical_name, time.time(), *params),
@@ -14523,7 +14552,7 @@ class ProjectDB:
             rows = list(
                 conn.execute(
                     f"""
-                    SELECT id,kind,emotion,intensity,pace,volume,analysis_notes
+                    SELECT *
                     FROM segments WHERE id IN ({placeholders}) ORDER BY id
                     """,
                     normalized_segment_ids,
@@ -14532,7 +14561,12 @@ class ProjectDB:
             if len(rows) != len(normalized_segment_ids):
                 raise KeyError("Segment speaker rewrite contains an unknown segment ID")
             notes_by_id: dict[int, str] = {}
+            from .speaker_labels import load
+
+            authority = load(self)
             for row in rows:
+                if not authority.allows(row, speaker):
+                    continue
                 current_delivery = {
                     "kind": str(row["kind"]),
                     "emotion": str(row["emotion"]),
@@ -14550,6 +14584,8 @@ class ProjectDB:
             now = time.time()
             rewritten = 0
             for segment_id in normalized_segment_ids:
+                if segment_id not in notes_by_id:
+                    continue
                 cursor = conn.execute(
                     """
                     UPDATE segments SET speaker=?,gender=?,age=?,analysis_notes=?,
@@ -14580,6 +14616,18 @@ class ProjectDB:
         voice to use.
         """
         with self.connect() as conn:
+            from .speaker_labels import load
+
+            authority = load(self)
+            if authority.labels:
+                rows = conn.execute("SELECT * FROM segments WHERE kind='thought' AND speaker IN ('UNKNOWN','')").fetchall()
+                ids = [int(row["id"]) for row in rows if authority.allows(row, "NARRATOR")]
+                conn.executemany(
+                    "UPDATE segments SET speaker='NARRATOR',gender='unknown',age='unknown',"
+                    "canonical_character_id=NULL,voice_profile_id=NULL,updated_at=? WHERE id=?",
+                    [(time.time(), segment_id) for segment_id in ids],
+                )
+                return len(ids)
             cursor = conn.execute(
                 """
                 UPDATE segments SET speaker='NARRATOR',gender='unknown',age='unknown',

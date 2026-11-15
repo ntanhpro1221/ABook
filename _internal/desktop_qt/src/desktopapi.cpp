@@ -125,6 +125,15 @@ QString pngDataUrl(const QImage &image) {
 QString DesktopApi::imageData(const QUrl &file) const {
     if (!file.isLocalFile()) return {};
     QImageReader reader(file.toLocalFile());
+    // Send the source bytes to the shared host normalizer. A compliant JPEG
+    // must survive file selection without a PNG round trip.
+    const QByteArray format = reader.format().toLower();
+    QFile source(file.toLocalFile());
+    if (format == "jpeg"
+        && source.size() <= 16 * 1024 * 1024 && source.open(QIODevice::ReadOnly)) {
+        return QStringLiteral("data:image/%1;base64,%2").arg(QString::fromLatin1(format),
+                    QString::fromLatin1(source.readAll().toBase64()));
+    }
     reader.setAutoTransform(true);
     const QSize size = reader.size();
     if (size.width() > 1600 || size.height() > 1600) reader.setScaledSize(size.scaled(1600, 1600, Qt::KeepAspectRatio));

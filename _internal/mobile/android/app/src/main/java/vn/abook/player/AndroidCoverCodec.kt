@@ -11,7 +11,8 @@ import java.io.ByteArrayOutputStream
 
 /**
  * [CoverCodec] thật trên điện thoại - `covers.render_cover` của máy tính bằng BitmapFactory: xoay theo EXIF, bỏ kênh trong
- * suốt (đặt lên nền trắng), cạnh dài tối đa 1400, JPEG chất lượng 88, cạnh ngắn dưới 64 điểm ảnh thì từ chối. Màu chủ đạo
+ * suốt (đặt lên nền trắng), cạnh dài tối đa 1400, JPEG chất lượng 88 khi cần đổi ảnh; JPEG đạt chuẩn giữ nguyên byte.
+ * Cạnh ngắn dưới 64 điểm ảnh thì từ chối. Màu chủ đạo
  * xấp xỉ `covers.dominant_color` (8 màu thay vì lượng tử hoá của Pillow): cùng cách chấm - nhiều điểm ảnh, ưu tiên có sắc, tránh
  * tối/sáng quá - rồi đưa độ sáng về dải đọc được; hai bên không cần ra đúng từng chữ số, chỉ cần màu nhuộm nền hợp ảnh.
  */
@@ -31,7 +32,14 @@ object AndroidCoverCodec : CoverCodec {
         while (maxOf(bounds.outWidth, bounds.outHeight) / (sample * 2) >= Covers.MAX_SIDE) sample *= 2
         val decoded = BitmapFactory.decodeByteArray(raw, 0, raw.size, BitmapFactory.Options().apply { inSampleSize = sample })
             ?: throw unreadable
-        val upright = rotated(decoded, orientation(raw))
+        val orientation = orientation(raw)
+        if (bounds.outMimeType == "image/jpeg" && maxOf(bounds.outWidth, bounds.outHeight) <= Covers.MAX_SIDE
+            && orientation in 0..ExifInterface.ORIENTATION_NORMAL && rgbJpeg(raw)) {
+            val result = CoverCodec.Normalized(raw.copyOf(), dominantColor(decoded), decoded.width, decoded.height)
+            decoded.recycle()
+            return result
+        }
+        val upright = rotated(decoded, orientation)
         val scale = minOf(1.0, Covers.MAX_SIDE.toDouble() / maxOf(upright.width, upright.height))
         val sized = if (scale < 1.0) {
             Bitmap.createScaledBitmap(upright, maxOf(1, Math.round(upright.width * scale).toInt()), maxOf(1, Math.round(upright.height * scale).toInt()), true)
@@ -52,6 +60,26 @@ object AndroidCoverCodec : CoverCodec {
     private fun orientation(raw: ByteArray): Int = runCatching {
         ExifInterface(ByteArrayInputStream(raw)).getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_NORMAL)
     }.getOrDefault(ExifInterface.ORIENTATION_NORMAL)
+
+    /** Three-component JPEG, matching Pillow's RGB mode (gray and CMYK need conversion). */
+    private fun rgbJpeg(raw: ByteArray): Boolean {
+        var pos = 2
+        fun byte(at: Int) = raw[at].toInt() and 255
+        while (pos + 3 < raw.size) {
+            if (byte(pos++) != 255) return false
+            while (pos < raw.size && byte(pos) == 255) pos++
+            if (pos + 2 >= raw.size) return false
+            val marker = byte(pos++)
+            if (marker == 0xda || marker == 0xd9) return false
+            val length = (byte(pos) shl 8) or byte(pos + 1)
+            if (length < 2 || pos + length > raw.size) return false
+            if (marker in 0xc0..0xcf && marker !in setOf(0xc4, 0xc8, 0xcc)) {
+                return length >= 8 && byte(pos + 7) == 3
+            }
+            pos += length
+        }
+        return false
+    }
 
     private fun rotated(bitmap: Bitmap, orientation: Int): Bitmap {
         val matrix = Matrix()

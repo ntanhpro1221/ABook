@@ -19,6 +19,7 @@ import requests
 
 from .config import ANALYSIS_RETRY_POLICY_VERSION
 from . import database as _database
+from . import speaker_labels as _speaker_labels
 from . import narrator_sections as _narrator_sections
 from . import speaker_logprobs as _speaker_logprobs
 from .database import (
@@ -1782,7 +1783,7 @@ def _repair_explicit_attribution(
     for index, row in enumerate(group):
         seg_id = str(row["stable_id"])
         data = result.get(seg_id)
-        if data is None:
+        if data is None or _speaker_labels.protected(data):
             continue
         attributed_speaker = _explicit_speaker_attribution(group, index, result, original_context)
         if attributed_speaker is None:
@@ -1870,7 +1871,7 @@ def _repair_addressee_speakers(
     rows_by_id = {str(row["stable_id"]): row for row in group}
     direct_replacements: dict[str, str] = {}
     for seg_id, data in result.items():
-        if data["kind"] != "dialogue":
+        if _speaker_labels.protected(data) or data["kind"] != "dialogue":
             continue
         if _has_host_note_marker(data, EXPLICIT_ATTRIBUTION_NOTE):
             continue
@@ -2138,7 +2139,7 @@ def _repair_in_sentence_quote_speakers(
     """Resolve embedded fragments while protecting evidence of an actual turn."""
     for index, row in enumerate(group):
         data = result.get(str(row["stable_id"]))
-        if data is None:
+        if data is None or _speaker_labels.protected(data):
             continue
         owner = normalize_speaker_name(str(data["speaker"]))
         if owner == "narrator":
@@ -2197,6 +2198,8 @@ def _repair_same_paragraph_speakers(
             continue
         anchor = anchors[0]
         for _row, data in entries:
+            if _speaker_labels.protected(data):
+                continue
             if str(data["speaker"]) == str(anchor["speaker"]):
                 continue
             if _has_host_note_marker(data, EXPLICIT_ATTRIBUTION_NOTE):
@@ -2233,7 +2236,7 @@ def _repair_continued_dialogue_speakers(
         row = group[index]
         previous = result.get(str(previous_row["stable_id"]))
         data = result.get(str(row["stable_id"]))
-        if previous is None or data is None:
+        if previous is None or data is None or _speaker_labels.protected(data):
             continue
         if previous["kind"] != "dialogue" or data["kind"] != "dialogue":
             continue
@@ -2308,6 +2311,7 @@ def _validate(
     payload: dict[str, Any],
     *,
     original_context: dict[str, dict[str, Any]] | None = None,
+    speaker_labels: _speaker_labels.SpeakerLabels | None = None,
 ) -> dict[str, dict[str, Any]]:
     expected = {str(row["stable_id"]) for row in group}
     rows_by_id = {str(row["stable_id"]): row for row in group}
@@ -2360,6 +2364,13 @@ def _validate(
             "personality_hint": "",
             "notes": "",
         }
+        # Only a trusted adapter can install labels; model JSON cannot opt out.
+        label = speaker_labels.label(rows_by_id[seg_id]) if speaker_labels else None
+        if label is not None:
+            result[seg_id]["speaker"] = _scope_local_speaker(
+                _canonical_speaker(label["speaker"]), rows_by_id[seg_id]
+            )
+            result[seg_id][_speaker_labels.MARKER] = True
     _repair_explicit_attribution(group, result, original_context)
     _repair_addressee_speakers(group, result)
     _repair_same_paragraph_speakers(group, result, original_context)
@@ -2367,6 +2378,8 @@ def _validate(
     # CUỐI chuỗi sửa: hai khoá trên (đoạn văn, thoại nối tiếp) sẽ ghi đè nếu chạy sau.
     _repair_in_sentence_quote_speakers(group, result, original_context)
     _canonicalize_analysis_notes(result)
+    for data in result.values():
+        data.pop(_speaker_labels.MARKER, None)
     return result
 
 
@@ -5418,6 +5431,8 @@ def _is_explicit_chapter_heading(row: Any) -> bool:
 def _apply_host_structural_locks(
     group: list[Any],
     validated: dict[str, dict[str, Any]],
+    *,
+    speaker_labels: _speaker_labels.SpeakerLabels | None = None,
 ) -> tuple[dict[str, Any], ...]:
     """Canonicalize structural delivery while retaining the generator's raw proposal."""
     locks: list[dict[str, Any]] = []
@@ -5425,6 +5440,8 @@ def _apply_host_structural_locks(
         stable_id = str(row["stable_id"])
         candidate = validated.get(stable_id)
         if candidate is None or not _is_explicit_chapter_heading(row):
+            continue
+        if speaker_labels is not None and not speaker_labels.allows(row, "NARRATOR"):
             continue
         generator_fields = {
             field: copy.deepcopy(candidate[field])
@@ -9357,6 +9374,7 @@ class OllamaBookAnalyzer:
                         validated = _validate(
                             group,
                             payload,
+                            speaker_labels=_speaker_labels.load(self.db),
                             original_context=original_context,
                         )
                         source_kind_issues = _source_kind_feedback_issues(
@@ -9371,6 +9389,7 @@ class OllamaBookAnalyzer:
                         host_structural_locks = _apply_host_structural_locks(
                             group,
                             validated,
+                            speaker_labels=_speaker_labels.load(self.db),
                         )
                         low_confidence_issues = (
                             _low_confidence_feedback_issues(

@@ -79,6 +79,7 @@ Không đổi sang phân tích cuốn chiếu nếu người dùng chưa thay đ
   `speaker_pass.py` là đổi hash khoá. Ledger `analysis_candidates` vẫn giữ projection của model phân tích (lượt ghi sau
   analysis, cùng tiền lệ speaker repair của casting).
 - Mọi process nền trên Windows dùng `pythonw`/`CREATE_NO_WINDOW`, redirect stdio UTF-8 vào log; POSIX dùng session riêng.
+- Trusted answer replay installs `speaker_labels.json` through `speaker_labels.install`, bound to each stable ID and source hash. Model JSON cannot request this authority. Every speaker repair and inferred identity merge must preserve those labels; only spelling changes and identity links supplied with the answers may rename them. Structural locks cannot replace their speaker; final analysis writes reject conflicting speaker/kind proposals atomically. Protection survives reopening without changing the database schema.
 - SQLite là source of truth; không dùng existence/mtime làm bằng chứng hoàn tất.
 - Phát tiếp/mở lại sách phải giữ đúng con trỏ nghe, không tự lùi theo thời gian tạm dừng (Android/Qt/web). Chỉ thao tác tua/nghe lại rõ ràng của người nghe mới được phát lại nội dung đã nghe. Qt pause phải tính cả đuôi mờ đã phát và con trỏ thiết bị tại lúc commit, không lưu lại con trỏ trước `awaitPull`.
 - QA nội dung phải chặn cụm đọc lặp cục bộ dù điểm CER/WER toàn đoạn vẫn đạt. Giữ `repeated_content` trong sổ decode/audio gate; cứu tên riêng hoặc ngữ cảnh ghép-3 không được xoá cờ này. Lượt thu thay thế dùng lịch seed hữu hạn, tất định có sẵn và phải qua hai lượt giải mã.

@@ -7,6 +7,8 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+- Dựng từ đáp án giữ đúng người nói qua mọi bước sửa nhãn; bìa JPEG đã đạt chuẩn giữ nguyên byte khi lưu trên máy tính và điện thoại.
+
 - Sách có thể gồm nhiều quyển, mỗi quyển có bìa riêng (như các tập trên Hako). Trang sách nhiều quyển hiện danh sách quyển kèm bìa và tiến độ; bấm vào một quyển để xem chương. Sách một quyển hiện như trước. Có ở web, máy tính và Android.
 - Nghe liền mạch qua các quyển: hết quyển tự sang chương đầu quyển sau; thứ tự chương, phân tích, giọng và seed của sách không đổi khi chia hay gộp quyển.
 - Studio: chia sách nhiều tập giờ tạo một sách nhiều quyển (không còn tạo các phần nối tiếp riêng); sửa tên, số, ranh giới và bìa từng quyển trong trang sách.

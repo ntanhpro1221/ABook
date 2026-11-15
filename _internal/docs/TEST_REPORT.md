@@ -1,5 +1,11 @@
 # Test report
 
+## 15-11-2026 — answer authority and cover bytes
+
+Original fixtures exercise all five batch speaker repairs, lead-in/address/continuation/crowd repairs, identity merges, first-person and near-name rules, source-hash binding, reopening, and rollback. Trusted replay labels live outside model JSON; unlabeled rows retain normal repairs.
+
+Final analysis writes also reject a conflicting speaker or narration kind before committing, including a batch rollback. Structural heading locks preserve answer speakers. Cover checks compare exact JPEG bytes across repeated saves, retain source-size/EXIF/color conversion gates, and run the Android bitmap codec and Qt file-selection path. Focused pytest: 101 passed; Android: 6 passed; Qt DesktopApiTests: 44 passed. Full-suite and read-only hand18 CPU replay results are recorded in the external goldwins handoff.
+
 ## 15-11-2026 — book volume organization
 
 Original Hako and EPUB fixtures preserve volume order, repeated chapter titles and per-volume covers. Tests cover

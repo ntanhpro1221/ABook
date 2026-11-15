@@ -42,6 +42,7 @@ TEXT_SEGMENTATION_IMPLEMENTATION_FILES = (
     "vietnamese_letters.py",
 )
 ANALYSIS_CASTING_IMPLEMENTATION_FILES = (
+    "speaker_labels.py",
     "analysis.py",
     "studio_names.py",
     "readaloud/english_policy.py",
@@ -62,6 +63,7 @@ ANALYSIS_CASTING_IMPLEMENTATION_FILES = (
     "voice_catalog.py",
 )
 QUALITY_IMPLEMENTATION_FILES = (
+    "speaker_labels.py",
     "book_paths.py",
     "analysis.py",
     "asr.py",
