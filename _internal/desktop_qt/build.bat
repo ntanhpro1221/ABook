@@ -125,6 +125,7 @@ if errorlevel 1 exit /b 1
 if not errorlevel 0 exit /b 1
 rem Music library filters/search: the shared case table tests/fixtures/music_library/cases.json
 call :test "%HERE%build\MusicLibraryTests.exe" "%HERE%build\musiclibrary-test.txt"
+call :test "%HERE%build\MusicArtTests.exe" "%HERE%build\musicart-test.txt"
 if errorlevel 1 exit /b 1
 if not errorlevel 0 exit /b 1
 rem Skip-15 icon pixel check (gap between stroke and digits, ink inside the box)
