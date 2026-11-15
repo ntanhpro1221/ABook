@@ -460,6 +460,15 @@ def test_r3_gaps_on_scale_green_off_scale_red():
     assert [f.rule for f in findings] == ["R3"] and "18.3" in findings[0].detail
 
 
+def test_r3_gap_with_a_painted_piece_between_is_two_gaps_not_one():
+    blocks = (n(0, 20, 100, 340, 124, text="Chưa có bìa"), n(0, 20, 190, 340, 210, text="Kéo hoặc dán ảnh"))
+    button = n(-1, 20, 140, 160, 180, icon="image")          # nút của nhánh khác nằm giữa hai khối
+    assert dt.rule_r3("k", tree(ROOT, *blocks, button)) == []
+    beside = n(-1, 360, 140, 400, 180, icon="image")        # vật vẽ không nằm giữa theo chiều ngang: khe 66 dp vẫn đỏ
+    findings = dt.rule_r3("k", tree(ROOT, *blocks, beside, width=420))
+    assert [f.rule for f in findings] == ["R3"] and "66" in findings[0].detail
+
+
 def test_r8_cut_text_and_overlap_red_clean_green():
     clean = tree(ROOT, n(0, 20, 100, 340, 124, text="Một"), n(0, 20, 130, 340, 150, text="Hai"))
     assert dt.rule_r8("k", clean) == []

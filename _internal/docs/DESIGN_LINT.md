@@ -49,7 +49,7 @@ Luật trên cây UI (bước 2, `scripts/design_lint_tree.py`):
 | Luật | Đỏ khi |
 |---|---|
 | R1 | nhóm anh em có `selected` không thuộc tab một hàng, choice (2-5 mục một hàng), hay list (mỗi dòng một mục), hoặc không chọn đúng một mục; vai native RadioButton được chuẩn hoá thành choice/list theo hình học, vai thiếu là đỏ |
-| R3 | khe dọc giữa hai khối anh em liền nhau cùng cột ngoài {0, 4, 8, 12, 16, 24, 32, 48, 64} ± 0,5 dp; khe > 64 vẫn đỏ |
+| R3 | khe dọc giữa hai khối anh em liền nhau cùng cột ngoài {0, 4, 8, 12, 16, 24, 32, 48, 64} ± 0,5 dp; khe > 64 vẫn đỏ; giữa hai khối có vật vẽ của nhánh khác (nút, icon, ảnh chồng theo chiều ngang) thì đó là hai khe, không đo |
 | R8 | mép cắt xuyên hộp một dòng chữ; hai hộp chữ chồng nhau kể cả nút nổi nằm trong hộp đọc; bỏ quan hệ cha-con của cùng nội dung; chữ khác lớp vẽ (trang dưới lớp `modal` đang mở) là bị che, không chồng; mép cắt nằm trong dải mờ đang hiện của vùng cuộn (Qt `scrollFadeTop` / `scrollFadeBottom`) cùng lớp là hàng đang cuộn ra, không cụt |
 | R9 | cặp ảnh `design_lint_parity.json` (gắn id của `ui_parity_pairs.json`): cùng nhãn mà khác vai / kiểu / số dòng / token chữ hoặc nền, hay cao lệch > 4 dp |
 | R11 | cỡ chữ ngoài {12, 14, 16, 18, 20, 24, 32} hay dưới 12; >= 2 hàng bấm được cùng cha trong một cột mà tên hàng khác cỡ / đậm / màu; chữ thuộc hình vẽ (bìa tự sinh, ảnh nhân vật, số trong icon tua) không xét, ảnh `font130` / `_130` so với thang × 1,3, hàng đang chọn / đang phát mang kiểu trạng thái riêng |

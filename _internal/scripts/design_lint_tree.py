@@ -170,6 +170,7 @@ def rule_r3(key: str, tree: dict) -> list[dl.Finding]:
     blocks = [n for n in nodes if not any(inside(n, m) and (width(m) * height(m) > width(n) * height(n) + 0.5
                                                         or m['id'] < n['id']) for m in nodes)]
     seen = set()
+    painted = nodes + [n for n in tree["nodes"] if shown(n) and (n.get("icon") or n.get("graphic"))]
     for a in blocks:
         below = [b for b in blocks if b["bounds"][1] >= a["bounds"][3] - 0.5
                  and b["parent"] == a["parent"] and b["id"] != a["id"]
@@ -178,6 +179,13 @@ def rule_r3(key: str, tree: dict) -> list[dl.Finding]:
             continue
         b = min(below, key=lambda n: n["bounds"][1])
         gap = round(b["bounds"][1] - a["bounds"][3], 2)
+        # Khe chỉ là khe khi giữa hai khối không có gì vẽ: một nút / thanh trượt / icon của nhánh cha khác nằm giữa
+        # (hàng "Chọn ảnh" giữa "Chưa có bìa" và "Kéo hoặc dán ảnh") thì khoảng ấy là hai khe, đo ở chỗ khác.
+        if any(c["id"] not in (a["id"], b["id"]) and c["bounds"][1] >= a["bounds"][3] - 0.5
+               and c["bounds"][3] <= b["bounds"][1] + 0.5 and height(c) > 0.5
+               and min(a["bounds"][2], c["bounds"][2]) - max(a["bounds"][0], c["bounds"][0]) > 0.5
+               for c in painted):
+            continue
         if (a["id"], b["id"]) in seen:
             continue
         seen.add((a["id"], b["id"]))
