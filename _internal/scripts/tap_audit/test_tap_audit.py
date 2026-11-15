@@ -62,7 +62,7 @@ def test_repository_scenarios():
     assert any(s['name'] == 'Player mobile - Chapters' for s in specs)
 
 
-@pytest.mark.parametrize('mutation', ['empty', 'duplicate', 'steps', 'probe', 'viewport', 'route', 'expect', 'touch', 'reopen'])
+@pytest.mark.parametrize('mutation', ['empty', 'duplicate', 'steps', 'probe', 'viewport', 'route', 'expect', 'touch', 'reopen', 'checked'])
 def test_reject_invalid_scenarios(tmp_path, mutation):
     specs = load_scenarios(Path(__file__).with_name('scenarios.json'))
     if mutation == 'empty': specs = []
@@ -74,6 +74,7 @@ def test_reject_invalid_scenarios(tmp_path, mutation):
     elif mutation == 'expect': specs[0]['probe']['expect'] = True
     elif mutation == 'touch': specs[0]['touchProbe'] = {'exact': True}
     elif mutation == 'reopen': specs[0]['reopenSteps'] = []
+    elif mutation == 'checked': specs[0]['steps'][0]['checked'] = 'true'
     path = tmp_path / 'scenarios.json'
     path.write_text(json.dumps(specs), encoding='utf-8')
     with pytest.raises(ValueError): load_scenarios(path)
@@ -84,6 +85,30 @@ def test_free_port_can_be_bound():
     assert 0 < port < 65536
     with socket.socket() as listener:
         listener.bind(('127.0.0.1', port))
+
+
+@pytest.mark.parametrize('initial,responds', [('true', True), ('false', True), ('false', False), (None, True)])
+def test_checked_preparation_uses_coordinates_and_requires_the_result(initial, responds):
+    class Switch(CDP):
+        def __init__(self):
+            super().__init__(None)
+            self.state,self.points=initial,[]
+        async def select(self, _spec):
+            return dict(hit=True,blockedInLayer=[],disabled=False,x=30,y=40)
+        async def evaluate(self, expression):
+            return False if expression=='innerWidth<600' else self.state
+        async def point(self, position, touch=False):
+            self.points.append(position)
+            if responds:self.state='true'
+        async def settle(self):pass
+    c=Switch()
+    operation=c.step(dict(selector='[role=switch]',checked=True))
+    if initial is None or not responds:
+        with pytest.raises(RuntimeError):asyncio.run(operation)
+    else:
+        asyncio.run(operation)
+        assert len(c.points)==int(initial=='false')
+        assert c.state=='true'
 
 
 def test_result_parser_fails_closed():

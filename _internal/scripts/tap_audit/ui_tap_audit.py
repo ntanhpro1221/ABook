@@ -156,7 +156,14 @@ class CDP:
     async def step(self,spec):
         p=await self.select(spec)
         if not p['hit'] or p['blockedInLayer'] or p['disabled']: raise RuntimeError('opening step cannot receive pointer: '+str(p))
+        state=f'tapAudit.find({json.dumps(spec,ensure_ascii=False)})?.getAttribute("aria-checked")'
+        if 'checked' in spec:
+            current=await self.evaluate(state)
+            if current not in ('true','false'): raise RuntimeError('checked step requires a checkable control')
+            if current==str(spec['checked']).lower(): return
         await self.point(p,touch=await self.evaluate('innerWidth<600'));await self.settle()
+        if 'checked' in spec and await self.evaluate(state)!=str(spec['checked']).lower():
+            raise RuntimeError('coordinate input did not set the requested checked state')
 
     async def close_layers(self):
         for _ in range(8):
@@ -184,7 +191,7 @@ def load_scenarios(path):
     def target(value):
         if not isinstance(value,dict) or not any(isinstance(value.get(k),str) and value[k] for k in ('selector','text')):
             raise ValueError('target requires selector or text')
-        for key in ('exact','closes'):
+        for key in ('exact','closes','checked'):
             if key in value and not isinstance(value[key],bool): raise ValueError(key+' must be boolean')
         if 'type' in value and value['type']!='input': raise ValueError('unsupported probe type')
         if 'expect' in value and (not isinstance(value['expect'],str) or not value['expect']): raise ValueError('expect must be an expression')

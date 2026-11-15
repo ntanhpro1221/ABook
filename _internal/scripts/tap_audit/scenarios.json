@@ -304,7 +304,11 @@
         "exact": true
       },
       {
-        "text": "Nhạc nền",
+        "selector": "[role=switch][aria-label=\"Bật\"]",
+        "checked": true
+      },
+      {
+        "text": "Chọn nhạc",
         "exact": true
       }
     ],
@@ -312,7 +316,7 @@
       "text": "Tắt",
       "exact": true,
       "closes": false,
-      "expect": "(!document.querySelector('[role=dialog][aria-label=\"Nhạc nền\"]')) && ![...document.querySelectorAll('[role=group][aria-label=\"Danh sách nhạc nền\"]')].some(e=>tapAudit.visible(e))"
+      "expect": "(!document.querySelector('[role=dialog][aria-label=\"Chọn nhạc\"]')) && ![...document.querySelectorAll('[role=group][aria-label=\"Danh sách nhạc nền\"]')].some(e=>tapAudit.visible(e))"
     },
     "background": {
       "text": "Thêm tuỳ chọn",
@@ -328,13 +332,21 @@
         "exact": true
       },
       {
-        "text": "Nhạc nền",
+        "selector": "[role=switch][aria-label=\"Bật\"]",
+        "checked": true
+      },
+      {
+        "text": "Chọn nhạc",
         "exact": true
       }
     ],
     "inlineReopen": [
       {
-        "text": "Nhạc nền",
+        "selector": "[role=switch][aria-label=\"Bật\"]",
+        "checked": true
+      },
+      {
+        "text": "Chọn nhạc",
         "exact": true
       }
     ]
@@ -486,7 +498,11 @@
         "exact": true
       },
       {
-        "text": "Nhạc nền",
+        "selector": "[role=switch][aria-label=\"Bật\"]",
+        "checked": true
+      },
+      {
+        "text": "Chọn nhạc",
         "exact": true
       }
     ],
@@ -494,7 +510,7 @@
       "text": "Tắt",
       "exact": true,
       "closes": false,
-      "expect": "(!document.querySelector('[role=dialog][aria-label=\"Nhạc nền\"]')) && ![...document.querySelectorAll('[role=group][aria-label=\"Danh sách nhạc nền\"]')].some(e=>tapAudit.visible(e))"
+      "expect": "(!document.querySelector('[role=dialog][aria-label=\"Chọn nhạc\"]')) && ![...document.querySelectorAll('[role=group][aria-label=\"Danh sách nhạc nền\"]')].some(e=>tapAudit.visible(e))"
     },
     "background": {
       "text": "Thêm tuỳ chọn",
@@ -514,13 +530,21 @@
         "exact": true
       },
       {
-        "text": "Nhạc nền",
+        "selector": "[role=switch][aria-label=\"Bật\"]",
+        "checked": true
+      },
+      {
+        "text": "Chọn nhạc",
         "exact": true
       }
     ],
     "inlineReopen": [
       {
-        "text": "Nhạc nền",
+        "selector": "[role=switch][aria-label=\"Bật\"]",
+        "checked": true
+      },
+      {
+        "text": "Chọn nhạc",
         "exact": true
       }
     ]
