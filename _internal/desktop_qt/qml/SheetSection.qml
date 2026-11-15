@@ -1,3 +1,4 @@
+import "TextWrap.js" as TextWrap
 import QtQuick
 import ABook
 
@@ -10,6 +11,6 @@ Column {
     width: parent.width
     topPadding: first ? 0 : Theme.s16
     spacing: Theme.s8
-    Text { width: parent.width; text: root.title; color: Theme.text2; font.pixelSize: Theme.sizeCaption; font.weight: Theme.weightMedium; wrapMode: Text.Wrap }
+    Text { width: parent.width; text: TextWrap.keepDots(root.title); color: Theme.text2; font.pixelSize: Theme.sizeCaption; font.weight: Theme.weightMedium; wrapMode: Text.Wrap }
     Column { id: body; width: parent.width; spacing: Theme.s8 }
 }

@@ -118,9 +118,8 @@ class ExoPreviewPlayer(context: Context, private val source: AndroidLibrarySourc
             fun attempt() {
                 clearDeadline()
                 player?.release()
-                val http = DefaultHttpDataSource.Factory().setConnectTimeoutMs(8000).setReadTimeoutMs(8000).setAllowCrossProtocolRedirects(true)
                 val made = ExoPlayer.Builder(app)
-                    .setMediaSourceFactory(DefaultMediaSourceFactory(DefaultDataSource.Factory(app, http))).build()
+                    .setMediaSourceFactory(vn.abook.player.Streaming.previewMediaSourceFactory(app)).build()
                 player = made
                 fun next(timedOut: Boolean) {
                     if (token != request || player !== made) return

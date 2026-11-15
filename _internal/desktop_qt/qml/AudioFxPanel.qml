@@ -51,7 +51,7 @@ Column {
         SheetSection {
             first: true; title: S.s_giong_doc_11f2548d
             AudioFxSlider { objectName: "audioFxVoice"; width: parent.width; label: S.s_am_luong_5dafca26; spec: Logic.SPECS.voice; value: Math.round(root.voice*100); suffix: "%"; onPicked: value => root.setVoice(value/100) }
-            SheetRow { objectName: "audioFxTones"; text: S.s_am_sac_8c2f4e1a; value: root.toneName + (root.library.scoped ? " · " + S.s_copy_0aedb2b2cf2b : ""); onActivated: root.toneOpen = true }
+            SheetRow { objectName: "audioFxTones"; text: S.s_am_sac_8c2f4e1a; value: root.toneName + (root.library.scoped ? "\u00a0·\u00a0" + S.s_copy_0aedb2b2cf2b : ""); onActivated: root.toneOpen = true }
             AudioFxSlider { objectName: "audioFxPitch"; width: parent.width; label: S.s_copy_519c2d65ca4c; spec: Logic.SPECS.pitch; value: root.fx.pitch; suffix: S.s_copy_e9d6329e8255; onPicked: value => Player.setAudioFx({pitch:value}) }
         }
         SheetSection {

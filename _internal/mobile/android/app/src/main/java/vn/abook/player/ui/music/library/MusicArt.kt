@@ -25,6 +25,7 @@ import vn.abook.player.MusicArtwork
 import vn.abook.player.MusicLibrary
 import vn.abook.player.DeviceMusic
 import org.json.JSONObject
+import vn.abook.player.ui.theme.Dim
 import vn.abook.player.ui.theme.Abook
 import java.io.File
 import java.net.HttpURLConnection
@@ -47,7 +48,7 @@ fun MusicArt(track: MusicLibrary.Track, modifier: Modifier = Modifier) {
             if (real != null) value = key to real
         }
     }
-    Box(modifier.size(40.dp).clip(RoundedCornerShape(vn.abook.player.ui.theme.Dim.radiusCover)).background(Abook.colors.text3).testTag("music_art")) {
+    Box(modifier.size(40.dp).clip(RoundedCornerShape(Dim.radiusCover)).background(Abook.colors.text3).testTag("music_art")) {
         image?.takeIf { it.first == key }?.second?.let { bitmap ->
             Image(bitmap.asImageBitmap(), contentDescription = null, contentScale = ContentScale.Crop, modifier = Modifier.matchParentSize().visualImage().testTag("music_art_image"))
         }
@@ -93,8 +94,7 @@ internal object ArtImages {
         val file = File(folder, "$sha.jpg")
         val held = if (file.isFile && file.length() <= 512*1024) file.readBytes() else null
         if (held != null && verified(held)) decode(held)?.let { real.put(sha, it); return@withPermit it }
-        val connection = URI(url).toURL().openConnection() as HttpURLConnection
-        connection.connectTimeout = 6000; connection.readTimeout = 6000
+        val connection = vn.abook.player.net.HostWait.open(url, 6000)
         connection.instanceFollowRedirects = false
         val raw = try {
             if (connection.responseCode != 200) return@withPermit null

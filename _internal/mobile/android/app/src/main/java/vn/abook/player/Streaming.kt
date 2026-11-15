@@ -7,6 +7,7 @@ import androidx.media3.common.C
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.database.StandaloneDatabaseProvider
 import androidx.media3.datasource.DataSource
+import androidx.media3.datasource.BaseDataSource
 import androidx.media3.datasource.DefaultDataSource
 import androidx.media3.datasource.DefaultHttpDataSource
 import androidx.media3.datasource.DataSpec
@@ -97,6 +98,11 @@ object Streaming {
         val routed = DataSource.Factory { LiveRoutingDataSource(LiveClipDataSource(), normal.createDataSource()) }
         return DefaultMediaSourceFactory(routed, liveAwareExtractors(exactMp3Seek))
     }
+
+    /** Catalog previews keep their HTTPS hostname while FastConnect races address families.
+     * Local files still use Media3's normal file source, without paired-device routing. */
+    fun previewMediaSourceFactory(context: Context): MediaSource.Factory =
+        DefaultMediaSourceFactory(DefaultDataSource.Factory(context, DataSource.Factory { PreviewHttpDataSource() }))
 
     /** Chỉ replay GET khi chưa giao byte audio nào; giữ nguyên Range/DataSpec và pin TLS. */
     internal class RetryingDataSource(private val upstream: DataSource,
@@ -265,4 +271,83 @@ object Streaming {
             connection.disconnect()
         }
     }.getOrNull()
+}
+
+
+/** A seekable catalog GET using the same connection race and idle policy as other I/O.
+ * FastConnect follows redirects without replacing the TLS hostname with an IP address. */
+@OptIn(UnstableApi::class)
+internal class PreviewHttpDataSource(
+    private val connect: (String, Map<String, String>) -> HttpURLConnection = { url, headers ->
+        FastConnect.get(url, 8000) { connection ->
+            connection.readTimeout = HostWait.IDLE_MS
+            headers.forEach { (name, value) -> connection.setRequestProperty(name, value) }
+        }
+    },
+) : BaseDataSource(true) {
+    private var connection: HttpURLConnection? = null
+    private var input: java.io.InputStream? = null
+    private var remaining = C.LENGTH_UNSET.toLong()
+    private var started = false
+
+    override fun open(dataSpec: DataSpec): Long {
+        require(dataSpec.httpMethod == DataSpec.HTTP_METHOD_GET)
+        transferInitializing(dataSpec)
+        val headers = dataSpec.httpRequestHeaders.toMutableMap()
+        headers["Accept-Encoding"] = "identity"
+        if (dataSpec.position > 0 || dataSpec.length != C.LENGTH_UNSET.toLong()) {
+            val end = if (dataSpec.length == C.LENGTH_UNSET.toLong()) "" else (dataSpec.position + dataSpec.length - 1).toString()
+            headers["Range"] = "bytes=${dataSpec.position}-$end"
+        }
+        try {
+            val opened = connect(dataSpec.uri.toString(), headers)
+            connection = opened
+            val status = opened.responseCode
+            if (status !in 200..299) throw java.io.IOException("Preview HTTP $status")
+            val skip = if (status == HttpURLConnection.HTTP_OK) dataSpec.position else 0L
+            val length = opened.getHeaderField("Content-Length")?.toLongOrNull()
+            remaining = if (dataSpec.length != C.LENGTH_UNSET.toLong()) dataSpec.length
+                else length?.let { (it - skip).coerceAtLeast(0L) } ?: C.LENGTH_UNSET.toLong()
+            input = opened.inputStream
+            started = true
+            transferStarted(dataSpec)
+            var left = skip
+            val buffer = ByteArray(4096)
+            while (left > 0) {
+                if (Thread.currentThread().isInterrupted) throw java.io.InterruptedIOException()
+                val count = input!!.read(buffer, 0, minOf(left, buffer.size.toLong()).toInt())
+                if (count < 0) throw java.io.EOFException()
+                left -= count
+                bytesTransferred(count)
+            }
+            return remaining
+        } catch (error: Exception) {
+            close()
+            throw error
+        }
+    }
+
+    override fun read(buffer: ByteArray, offset: Int, length: Int): Int {
+        if (length == 0) return 0
+        if (remaining == 0L) return C.RESULT_END_OF_INPUT
+        val count = input!!.read(buffer, offset, if (remaining < 0) length else minOf(remaining, length.toLong()).toInt())
+        if (count < 0) {
+            if (remaining > 0) throw java.io.EOFException()
+            return C.RESULT_END_OF_INPUT
+        }
+        if (remaining >= 0) remaining -= count
+        bytesTransferred(count)
+        return count
+    }
+
+    override fun getUri(): Uri? = connection?.url?.toString()?.let(Uri::parse)
+    override fun getResponseHeaders(): Map<String, List<String>> = connection?.headerFields.orEmpty().filterKeys { it != null }
+    override fun close() {
+        try { input?.close() } finally {
+            input = null
+            connection?.disconnect()
+            connection = null
+            if (started) { started = false; transferEnded() }
+        }
+    }
 }
