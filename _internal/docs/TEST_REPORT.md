@@ -2812,3 +2812,7 @@ Native preflight passed all 21 Qt suites (2375 passed, zero failures, 2 skipped)
 ## 0.4.173 integration: wait for deferred focus restoration
 
 Full gate7 web completed with 3484 passed and one failed immediate-focus assertion in confirmationBack; the isolated file passed both cases. Radix restores focus after the closing surface unmounts through a deferred task. The test now waits for that observable result while still requiring the original connected opener, so focus left on body or another control remains a failure. Application focus behavior is unchanged. Three consecutive focused runs cover confirmation, accessibility and Presence; TypeScript passes. The failed complete run is retained outside Git; final full gate must rerun on the committed test bytes.
+
+## 0.4.173 integration: shared scaled polling helpers
+
+Full gate8 pytest completed with 14181 passed and two failures, both from the test-flakiness scanner: CastCloseTest hand-rolled a nanoTime deadline loop and confirmationBack used a raw vi.waitFor with a setTimeout tick. TestTime.eventually is now the single JVM polling helper (scaled deadline, marked wallclock-ok in the helper only); CastClose, EdgePieces, VoiceState and FastConnect use it, and the web check uses eventually() so the Radix deferred focus task runs between polls. Scanner: 0 new sites; flakiness tests 21 passed; the four Kotlin classes and the web file pass; TypeScript passes. No application source change; quality hash unchanged.
