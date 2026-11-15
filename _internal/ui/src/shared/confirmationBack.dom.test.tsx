@@ -26,6 +26,15 @@ async function mount(child: React.ReactNode, data: [unknown[], unknown][]) {
 }
 const button = (name: string) => Array.from(document.querySelectorAll<HTMLButtonElement>("button")).find((el) => el.textContent?.trim() === name)!;
 async function click(name: string) { const el = button(name); await act(() => { el.focus(); el.click(); }); return el; }
+async function expectFocusReturnedTo(opener: HTMLElement) {
+  // Radix restores focus after its closing surface unmounts, on a deferred task.
+  // Waiting for that result still fails if focus stays on body or another control.
+  await vi.waitFor(async () => {
+    await act(async () => { await new Promise<void>(resolve => setTimeout(resolve, 0)); });
+    expect(opener.isConnected).toBe(true);
+    expect(document.activeElement).toBe(opener);
+  });
+}
 
 it("V3 đổi giới: Esc chỉ huỷ xác nhận, giữ Dialog và trả focus về giọng đã chọn", async () => {
   const close = vi.fn();
@@ -39,7 +48,7 @@ it("V3 đổi giới: Esc chỉ huỷ xác nhận, giữ Dialog và trả focus 
   await act(() => document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true, cancelable: true })));
   expect(button("Đổi giọng và giới")).toBeUndefined();
   expect(close).not.toHaveBeenCalled();
-  expect(document.activeElement).toBe(choose);
+  await expectFocusReturnedTo(choose);
 });
 
 // "Nhạc của tôi" chỉ còn MỘT thành phần (màn Nhạc › Đã lưu): bản sao trong Studio › Nhạc nền đã bỏ.
@@ -55,5 +64,5 @@ it("V3 xoá nhạc: Back huỷ riêng câu hỏi và focus nút Xoá được d�
   expect(document.activeElement?.textContent).toBe("Huỷ");
   await act(() => { expect(dismissTopLayer()).toBe(true); });
   expect(document.querySelector('[role="dialog"][data-state="open"]')).toBeNull();
-  expect(document.activeElement).toBe(opener);
+  await expectFocusReturnedTo(opener);
 });
