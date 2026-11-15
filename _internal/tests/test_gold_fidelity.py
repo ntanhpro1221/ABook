@@ -1,6 +1,8 @@
-"""Máy chặn "trung thành với đáp án" (scripts/gold_fidelity.py): sách dựng từ đáp án lệch người, tách giọng, sai giới, hay
-xếp NPC làm vai chính thì FAIL. castfix 15-11: chị gái nữ chính bị tách hai người, nửa sau giọng nam, không khâu nào kêu.
-Dữ liệu tự viết."""
+"""Gold fidelity rejects speaker drift, split voices, gender errors and main NPCs.
+
+Cover the regression where reversed name order split one woman into two
+people and assigned a male voice to the second owner. All fixtures are synthetic.
+"""
 from __future__ import annotations
 
 import importlib.util

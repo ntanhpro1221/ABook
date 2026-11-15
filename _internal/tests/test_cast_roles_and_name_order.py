@@ -1,8 +1,9 @@
-"""Dàn nhân vật xếp đúng Vai chính / Vai phụ, tra sổ theo khoá chuẩn, và một người viết đảo họ-tên không thành hai người.
+"""Keep cast roles, gender and age across normalized and reordered names.
 
-castfix 15-11: sổ nhân vật khoá chữ hoa ("FUKAMACHI") còn câu giữ cách viết hiển thị ("Fukamachi") - tra thô làm mọi nhân vật
-chính rơi xuống Vai phụ, mất giới tính và tuổi, còn nhãn viết hoa ("NPC MẸ ...") thành Vai chính. Cùng sách: chị gái của nữ
-chính lúc là "HAJIKANO AYA" (giọng nữ), lúc "Aya Hajikano" (giới chưa rõ -> giọng nam). Dữ liệu dưới đây tự viết.
+An uppercase registry key and a display-case speaker must resolve to one
+person. NPC labels remain extras. Reversed family/given-name spellings must
+not split a woman into two people with different gender or voice assignments.
+All dialogue fixtures below are synthetic.
 """
 from __future__ import annotations
 

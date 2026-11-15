@@ -1,8 +1,9 @@
-"""Tự phân vai chỉ lấy giọng ĐẠT; hết giọng đạt thì dùng chung giọng đạt giữa những người không bao giờ gặp nhau.
+"""Automatic casting uses approved voices and shares them across separated people.
 
-Chủ sách 15-11 ("Nơi mà hai ta đã gọi điện"): "kể cả không rõ thật mà lại dùng adam bựa? đó không phải giọng tốt, thiếu
-giọng à?". Sách ấy có Adam bựa, Hải Đăng, Quốc Tuấn, Thanh Bình, Thiện Minh (chưa ai xếp hạng) và Ngọc Huyền, Trúc Ly
-(NEVER_AUTO) ở vai tự phân.
+Cover exhaustion of the approved pool without admitting unranked presets or
+NEVER_AUTO voices. The reported rejected examples included Adam, Hai Dang,
+Quoc Tuan, Thanh Binh, Thien Minh, Ngoc Huyen and Truc Ly. Approval comes from
+the pinned owner tiers or calibrated machine scores, not catalog membership.
 """
 
 from __future__ import annotations

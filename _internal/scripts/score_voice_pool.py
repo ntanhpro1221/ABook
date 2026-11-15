@@ -1,20 +1,21 @@
-"""Máy chấm kho giọng: chấm mọi preset bằng audio sách đã thu, rồi xem máy có xếp đúng phán quyết cũ của chủ sách không.
+"""Score every voice preset using recorded books and held-out owner verdicts.
 
-    python scripts/score_voice_pool.py --out <thư mục nháp>/voice_scores.json [--per-voice 30] [--speechbrain-path <thư mục>]
+Usage: python scripts/score_voice_pool.py --out DIRECTORY/voice_scores.json
+       [--per-voice 30] [--speechbrain-path DIRECTORY]
 
-Chủ sách KHÔNG nghe (bộ nhớ "owner-never-labels", "no-more-listen-rounds"): kho giọng đạt chỉ được mở rộng bằng số. Nhưng
-số chỉ được tin khi chính nó xếp đúng những gì tai chủ sách đã phán (giọng có bậc trong `voice_rank.json` vs NEVER_AUTO +
-Adam bựa) - nên script này in cả phép hiệu chỉnh ấy, và `machine_approved` chỉ được ghi khi phép ấy qua.
+Expand the approved pool by measured scores without another owner listening
+round. Calibrate the ranking against owner tiers in voice_rank.json versus
+NEVER_AUTO and the rejected Adam preset; write machine_approved only when
+that calibration passes.
 
-Nguồn audio: `segments.wav_path` của các project sách (chỉ đọc), lấy tất định tối đa `--per-voice` câu mỗi preset, rải
-đều giữa các sách, 2-12 giây. Thêm bản nghe thử `assets/voice_previews` (cùng câu, cùng hạt giống cho mọi giọng).
-
-Đo mỗi câu:
-- UTMOSv2 (`perceptual_qa.UTMOSNaturalnessVerifier`, CPU, cùng cấu hình dây chuyền) - độ tự nhiên dự đoán;
-- ECAPA (speechbrain/spkrec-ecapa-voxceleb, dựng tay từ checkpoint đã cache - speechbrain cài ngoài venv bằng
-  `pip install --target <thư mục> --no-deps speechbrain hyperpyyaml ruamel.yaml`) - độ ổn định giọng qua các câu (cos tới
-  tâm của chính nó) và độ khác biệt (cos tới tâm giọng gần nhất);
-- WER của ASR lấy sẵn trong `segments.asr_wer` (dây chuyền đã chấm khi thu).
+Read segments.wav_path without modifying books. Select at most --per-voice
+deterministic samples per preset, spread across books, each 2-12 seconds.
+Also use assets/voice_previews, which holds the same text and seed per voice.
+Measure UTMOSv2 naturalness on CPU with the pipeline configuration, ECAPA
+speaker stability and nearest-other-voice separation by cosine to centroids,
+and existing ASR WER from segments.asr_wer. Load cached ECAPA checkpoints
+manually; optional speechbrain, hyperpyyaml and ruamel.yaml dependencies
+belong in the separate --speechbrain-path target, outside the runtime venv.
 """
 from __future__ import annotations
 

@@ -407,10 +407,11 @@ NEVER_AUTO = load_never_auto()
 
 
 def load_machine_approved(path: Path = VOICE_RANK_PATH) -> dict[str, dict[str, frozenset[str]]]:
-    """Giọng MÁY CHẤM cho qua (`voice_rank.json` -> `machine_approved`), theo vai và giới; không phải phán quyết chủ sách.
+    """Load machine-approved presets by role and gender, with source provenance.
 
-    Mục ấy ghi nguồn (`source`: bộ chấm, ngày, số); một tên đã có trong bậc của chủ sách hay nằm ở `never_auto` thì sai:
-    phán quyết của tai người đứng trên máy, và máy không được mở lại một giọng chủ sách đã chê.
+    These are machine verdicts, not owner approvals. Reject presets already
+    present in owner tiers or never_auto: an owner verdict outranks machine
+    scoring, and scoring cannot reopen a voice the owner rejected.
     """
     data = json.loads(path.read_text(encoding="utf-8"))
     section = data.get("machine_approved") or {}

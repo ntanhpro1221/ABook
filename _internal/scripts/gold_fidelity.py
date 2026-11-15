@@ -1,22 +1,18 @@
-"""Máy chặn "trung thành với đáp án": sách dựng từ đáp án phải nói đúng người, đúng giọng như đáp án.
+"""Check a recorded book against aligned gold speakers, voices and cast roles.
 
-    python scripts/gold_fidelity.py <project> [--gold <thư mục đáp án>] [--json <file báo cáo>]
+Usage: python scripts/gold_fidelity.py PROJECT [--gold GOLD_DIRECTORY] [--json REPORT]
 
-castfix 15-11: đáp án "Nơi mà hai ta đã gọi điện" đúng và nhất quán (chị gái nữ chính là MỘT người, nữ), nhưng sách app dựng
-từ nó tách chị ấy làm hai ("HAJIKANO AYA" giọng nữ, "Aya Hajikano" giới chưa rõ, giọng nam) mà không khâu nào kêu. Máy này
-đọc project đã phân tích + cấp giọng (chỉ đọc) và so với đáp án đã gióng theo đoạn của project:
+This read-only checker catches a canonical person split into two voice owners,
+including reversed Japanese name order with inconsistent gender assignment.
+Gold NNN.json files map project sequence numbers to kind/speaker records;
+cast.json supplies cast, NPC and label-to-person maps. The hand18 layout uses
+hand18_gold_replay/. Name matching ignores case, Japanese honorifics, NPC
+prefixes and family/given-name order. Identity is learned from gold, never
+from the book being checked, which would validate its own mistakes.
 
-- `<gold>/NNN.json`: {seq của project: {"kind", "speaker", ...}} mỗi chương, xếp theo thứ tự chương (bộ hand18:
-  `hand18_gold_replay/`); `<gold>/cast.json`: {"cast": {TÊN: {"gender", "aliases"}}, "npc": {NHÃN NPC: {"gender"}},
-  "map": {nhãn: TÊN}} - danh tính trong đáp án.
-- Bản đồ tên: nhãn (người nói trong sổ, nhãn đáp án, bí danh, khoá map) -> người trong đáp án, so không kể hoa/thường,
-  thứ tự chữ (họ-tên đảo), kính ngữ Nhật, tiền tố "NPC". Không tự học bản đồ từ chính sách - học thì lỗi tự hợp thức.
-
-FAIL (thoát mã 1, không được đóng sách) khi có một trong:
-  lệch người   câu mà người nói trong sổ (qua bản đồ tên) khác người nói đáp án;
-  tách giọng   một người của đáp án được đọc bằng hơn một giọng;
-  sai giới     giọng của một người khác giới đáp án ghi (giới chưa rõ thì không xét; trẻ con giọng nữ là luật);
-  NPC chính    người đáp án ghi NPC mà tab Nhân vật xếp Vai chính.
+Exit 1 blocks book completion on speaker mismatch, multiple voices for one
+gold person, voice/gold gender mismatch or an NPC promoted to the main cast.
+Unknown gold gender is exempt; children use female voices by casting policy.
 """
 from __future__ import annotations
 

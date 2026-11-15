@@ -5587,5 +5587,26 @@
       "ipa>=8"
     ],
     "reason": "_internal/docs/tn_benchmark/report.json: tnfix172 exact bytes reviewed as generated benchmark phoneme records. Original source samples are preserved. The 485 benchmark inputs/answers have zero eight-word overlap across 523400 Corpus files. Only the existing technical/IPA rules are covered; Corpus checks remain active."
+  },
+  "_internal/abook/webui/assets/chapter_titles.json": {
+    "sha256": "c7ed604c18cdec863e6582979c1797a063174da63808b7432c21efc72fffe06a",
+    "reason": "Chapter-heading parser configuration: regex alternations enumerate Vietnamese number words, heading labels and prose exclusion verbs; these are grammar tokens, not a narrative passage. Preserve the shared Python/Kotlin heading contract.",
+    "rules": [
+      "long-vietnamese"
+    ]
+  },
+  "_internal/docs/MUSIC_ART.md": {
+    "sha256": "5a3b6ad31a25e7a5a2b6972fbadf6171058e078b1010d0d1139f8ec7ab11af85",
+    "reason": "Original music artwork implementation documentation: image licensing fields, catalog preparation, deterministic RGB raster seeds, cache bounds and platform tests. The long Vietnamese paragraphs describe this implementation and contain no book excerpts.",
+    "rules": [
+      "long-vietnamese"
+    ]
+  },
+  "_internal/tests/fixtures/work_priority/contract.json": {
+    "sha256": "6cfbb010b9b28ceb0f659e70f6e55171547e5e05d26f09827a2234eb30d85811",
+    "reason": "Cross-platform work-priority contract: cases[].text repeats the authored UI summary of affected lines, recorded chapters, action estimates, overlap and apply timing. It is expected application output, not story dialogue; retain the exact shared fixture.",
+    "rules": [
+      "long-vietnamese"
+    ]
   }
 }
