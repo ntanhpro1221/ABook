@@ -9,7 +9,7 @@ Item {
     property string hint: ""
     property bool hintRich: false
     property color hintColor: Theme.text2
-    property real labelSize: 15
+    property real labelSize: Theme.sizeBody
     property real hintSize: Theme.sizeCaption
     property bool checked: false
     property string switchLabel: label

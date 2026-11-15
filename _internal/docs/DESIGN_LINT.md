@@ -52,7 +52,7 @@ Luật trên cây UI (bước 2, `scripts/design_lint_tree.py`):
 | R3 | khe dọc giữa hai khối anh em liền nhau cùng cột ngoài {0, 4, 8, 12, 16, 24, 32, 48, 64} ± 0,5 dp; khe > 64 vẫn đỏ |
 | R8 | mép cắt xuyên hộp một dòng chữ; hai hộp chữ chồng nhau kể cả nút nổi nằm trong hộp đọc; bỏ quan hệ cha-con của cùng nội dung |
 | R9 | cặp ảnh `design_lint_parity.json` (gắn id của `ui_parity_pairs.json`): cùng nhãn mà khác vai / kiểu / số dòng / token chữ hoặc nền, hay cao lệch > 4 dp |
-| R11 | cỡ chữ ngoài {12, 14, 16, 18, 20, 24, 32} hay dưới 12; >= 2 hàng bấm được cùng cha trong một cột mà tên hàng khác cỡ / đậm / màu |
+| R11 | cỡ chữ ngoài {12, 14, 16, 18, 20, 24, 32} hay dưới 12; >= 2 hàng bấm được cùng cha trong một cột mà tên hàng khác cỡ / đậm / màu; chữ thuộc hình vẽ (bìa tự sinh, ảnh nhân vật, số trong icon tua) không xét, ảnh `font130` / `_130` so với thang × 1,3, hàng đang chọn / đang phát mang kiểu trạng thái riêng |
 | R14 | chữ hiện trên nút / tab / mục menu / hộp chọn quá 4 chữ (bỏ số và đơn vị: dB, Hz, MB, %, phút...), hay không có cả chữ lẫn mô tả trợ năng; nút chỉ có biểu tượng thì mô tả trợ năng không bị đếm chữ, hàng danh sách mang dữ liệu không xét |
 
 Cây UI do bộ chụp ghi, đơn vị dp, gốc toạ độ là góc ảnh:

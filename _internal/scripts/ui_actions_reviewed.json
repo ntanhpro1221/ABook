@@ -16362,7 +16362,7 @@
     "line": 41,
     "statement": "Api.call(method, path, body, function(data, error) { if (error) Api.notice = before; done(data, error) })",
     "occurrence": 1,
-    "source_sha256": "e17e921cb5384940489b6f14b5120aaf5f15f2929895fa8e4fe67303d14b547e",
+    "source_sha256": "8d76d5b55aa5a97bef6f21fec21ccf7109974db5af75c3caca6f450792584fcf",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; busy, focusPending, pairBusy, pendingStudio, pendingWanted, renameBusy, studioBusy, studioDeviceBusy",
     "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads."
@@ -16374,7 +16374,7 @@
     "line": 63,
     "statement": "Api.call(\"POST\", \"/api/sync\", {enabled: enabled}, function(data, error) {",
     "occurrence": 1,
-    "source_sha256": "e17e921cb5384940489b6f14b5120aaf5f15f2929895fa8e4fe67303d14b547e",
+    "source_sha256": "8d76d5b55aa5a97bef6f21fec21ccf7109974db5af75c3caca6f450792584fcf",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; busy, focusPending, pairBusy, pendingStudio, pendingWanted, renameBusy, studioBusy, studioDeviceBusy",
     "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads."
@@ -16386,7 +16386,7 @@
     "line": 74,
     "statement": "Api.call(\"POST\", \"/api/sync/pairing\", null, function(data, error) { root.pairBusy = false; if (!error) root.take(data) })",
     "occurrence": 1,
-    "source_sha256": "e17e921cb5384940489b6f14b5120aaf5f15f2929895fa8e4fe67303d14b547e",
+    "source_sha256": "8d76d5b55aa5a97bef6f21fec21ccf7109974db5af75c3caca6f450792584fcf",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; busy, focusPending, pairBusy, pendingStudio, pendingWanted, renameBusy, studioBusy, studioDeviceBusy",
     "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads."
@@ -16398,7 +16398,7 @@
     "line": 78,
     "statement": "Api.call(\"DELETE\", \"/api/sync/pairing\", null, function(data, error) { root.pairBusy = false; if (!error) root.take(data) })",
     "occurrence": 1,
-    "source_sha256": "e17e921cb5384940489b6f14b5120aaf5f15f2929895fa8e4fe67303d14b547e",
+    "source_sha256": "8d76d5b55aa5a97bef6f21fec21ccf7109974db5af75c3caca6f450792584fcf",
     "disposition": "confirmation",
     "guard": "PhoneSync removeDialog; DeviceSheets revoke confirmation",
     "reason": "Revoking an existing device asks first. Cancelling an unused pairing code invalidates only an ephemeral handshake."
@@ -16410,7 +16410,7 @@
     "line": 78,
     "statement": "Api.call(\"DELETE\", \"/api/sync/pairing\", null, function(data, error) { root.pairBusy = false; if (!error) root.take(data) })",
     "occurrence": 1,
-    "source_sha256": "e17e921cb5384940489b6f14b5120aaf5f15f2929895fa8e4fe67303d14b547e",
+    "source_sha256": "8d76d5b55aa5a97bef6f21fec21ccf7109974db5af75c3caca6f450792584fcf",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; busy, focusPending, pairBusy, pendingStudio, pendingWanted, renameBusy, studioBusy, studioDeviceBusy",
     "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads."
@@ -16422,7 +16422,7 @@
     "line": 82,
     "statement": "Api.call(\"POST\", \"/api/sync/studio\", {enabled: enabled}, function(data, error) { root.pendingStudio = null; if (!error) root.take(data) })",
     "occurrence": 1,
-    "source_sha256": "e17e921cb5384940489b6f14b5120aaf5f15f2929895fa8e4fe67303d14b547e",
+    "source_sha256": "8d76d5b55aa5a97bef6f21fec21ccf7109974db5af75c3caca6f450792584fcf",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; busy, focusPending, pairBusy, pendingStudio, pendingWanted, renameBusy, studioBusy, studioDeviceBusy",
     "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads."
@@ -16434,7 +16434,7 @@
     "line": 86,
     "statement": "Api.call(\"POST\", \"/api/sync/devices/\" + id + \"/studio\", {enabled: enabled}, function(data, error) { root.studioDeviceBusy = false; if (!error) root.take(data) })",
     "occurrence": 1,
-    "source_sha256": "e17e921cb5384940489b6f14b5120aaf5f15f2929895fa8e4fe67303d14b547e",
+    "source_sha256": "8d76d5b55aa5a97bef6f21fec21ccf7109974db5af75c3caca6f450792584fcf",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; busy, focusPending, pairBusy, pendingStudio, pendingWanted, renameBusy, studioBusy, studioDeviceBusy",
     "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads."
@@ -16446,7 +16446,7 @@
     "line": 89,
     "statement": "Api.call(\"DELETE\", \"/api/sync/devices/\" + id, null, function(data, error) {",
     "occurrence": 1,
-    "source_sha256": "e17e921cb5384940489b6f14b5120aaf5f15f2929895fa8e4fe67303d14b547e",
+    "source_sha256": "8d76d5b55aa5a97bef6f21fec21ccf7109974db5af75c3caca6f450792584fcf",
     "disposition": "confirmation",
     "guard": "PhoneSync removeDialog; DeviceSheets revoke confirmation",
     "reason": "Revoking an existing device asks first. Cancelling an unused pairing code invalidates only an ephemeral handshake."
@@ -16458,7 +16458,7 @@
     "line": 89,
     "statement": "Api.call(\"DELETE\", \"/api/sync/devices/\" + id, null, function(data, error) {",
     "occurrence": 1,
-    "source_sha256": "e17e921cb5384940489b6f14b5120aaf5f15f2929895fa8e4fe67303d14b547e",
+    "source_sha256": "8d76d5b55aa5a97bef6f21fec21ccf7109974db5af75c3caca6f450792584fcf",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; busy, focusPending, pairBusy, pendingStudio, pendingWanted, renameBusy, studioBusy, studioDeviceBusy",
     "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads."
@@ -16470,7 +16470,7 @@
     "line": 98,
     "statement": "Api.call(\"POST\", \"/api/sync/devices/\" + id + \"/name\", {name: name}, function(data, error) {",
     "occurrence": 1,
-    "source_sha256": "e17e921cb5384940489b6f14b5120aaf5f15f2929895fa8e4fe67303d14b547e",
+    "source_sha256": "8d76d5b55aa5a97bef6f21fec21ccf7109974db5af75c3caca6f450792584fcf",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; busy, focusPending, pairBusy, pendingStudio, pendingWanted, renameBusy, studioBusy, studioDeviceBusy",
     "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads."
@@ -16482,7 +16482,7 @@
     "line": 354,
     "statement": "onAccepted: root.revoke(removeDialog.targetId, removeDialog.targetName)",
     "occurrence": 1,
-    "source_sha256": "e17e921cb5384940489b6f14b5120aaf5f15f2929895fa8e4fe67303d14b547e",
+    "source_sha256": "8d76d5b55aa5a97bef6f21fec21ccf7109974db5af75c3caca6f450792584fcf",
     "disposition": "confirmation",
     "guard": "PhoneSync removeDialog; DeviceSheets revoke confirmation",
     "reason": "Revoking an existing device asks first. Cancelling an unused pairing code invalidates only an ephemeral handshake."
@@ -16794,7 +16794,7 @@
     "line": 27,
     "statement": "Api.quiet(\"GET\", \"/api/readaloud/voices\", null, function(data, error) {",
     "occurrence": 1,
-    "source_sha256": "02f80176e4843de89f143e7e5c2c69d657a4d7d530c6b9e8e6e546b32073442a",
+    "source_sha256": "61f9b78f033fc9fd9ad41305539aeb9f9d1c325a1affc430de6ee9c0e81ffc10",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; loading",
     "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads. Devvoice review: device voice names, circled radio marks, one-line names and 8 dp text gaps leave this action and its guard unchanged."
@@ -16806,7 +16806,7 @@
     "line": 34,
     "statement": "Api.quiet(\"GET\", \"/api/readaloud/online\", null, function(data, error) { root.syncProviders(!error && Array.isArray(data) ? data : []) })",
     "occurrence": 1,
-    "source_sha256": "02f80176e4843de89f143e7e5c2c69d657a4d7d530c6b9e8e6e546b32073442a",
+    "source_sha256": "61f9b78f033fc9fd9ad41305539aeb9f9d1c325a1affc430de6ee9c0e81ffc10",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; loading",
     "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads. Devvoice review: device voice names, circled radio marks, one-line names and 8 dp text gaps leave this action and its guard unchanged."
@@ -17094,7 +17094,7 @@
     "line": 46,
     "statement": "Api.quiet(\"GET\", copy.path, null, function(data, error) { if (!error && data) root.status = data })",
     "occurrence": 1,
-    "source_sha256": "b84fd3e7beabbf44bb985cdb904513c423131d2ad158fcd3b3bdfb4a86a1dd56",
+    "source_sha256": "8be6820da94dabf654970cd2f1a236802a2ec78d3891afc52d7d98f7e6d1b807",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; ProgressBar, busy, downloading, onDownloadingChanged, onWorkingChanged, wasWorking, working",
     "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
@@ -17106,7 +17106,7 @@
     "line": 51,
     "statement": "Api.quiet(\"POST\", copy.path + suffix, body, function(data, error) {",
     "occurrence": 1,
-    "source_sha256": "b84fd3e7beabbf44bb985cdb904513c423131d2ad158fcd3b3bdfb4a86a1dd56",
+    "source_sha256": "8be6820da94dabf654970cd2f1a236802a2ec78d3891afc52d7d98f7e6d1b807",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; ProgressBar, busy, downloading, onDownloadingChanged, onWorkingChanged, wasWorking, working",
     "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
@@ -17118,7 +17118,7 @@
     "line": 70,
     "statement": "Api.quiet(\"GET\", \"/api/studio/supertonic/use\", null, function(data, error) {",
     "occurrence": 1,
-    "source_sha256": "b84fd3e7beabbf44bb985cdb904513c423131d2ad158fcd3b3bdfb4a86a1dd56",
+    "source_sha256": "8be6820da94dabf654970cd2f1a236802a2ec78d3891afc52d7d98f7e6d1b807",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; ProgressBar, busy, downloading, onDownloadingChanged, onWorkingChanged, wasWorking, working",
     "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
@@ -17130,7 +17130,7 @@
     "line": 84,
     "statement": "Api.quiet(\"GET\", \"/api/readaloud/voices\", null, function(voices, error) {",
     "occurrence": 1,
-    "source_sha256": "b84fd3e7beabbf44bb985cdb904513c423131d2ad158fcd3b3bdfb4a86a1dd56",
+    "source_sha256": "8be6820da94dabf654970cd2f1a236802a2ec78d3891afc52d7d98f7e6d1b807",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; ProgressBar, busy, downloading, onDownloadingChanged, onWorkingChanged, wasWorking, working",
     "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
@@ -17142,7 +17142,7 @@
     "line": 273,
     "statement": "onActivated: { if (choiceRow.choice.installed) root.ask(choiceRow.choice.id, choiceRow.choice.label); else root.remove(choiceRow.choice.id) }",
     "occurrence": 1,
-    "source_sha256": "b84fd3e7beabbf44bb985cdb904513c423131d2ad158fcd3b3bdfb4a86a1dd56",
+    "source_sha256": "8be6820da94dabf654970cd2f1a236802a2ec78d3891afc52d7d98f7e6d1b807",
     "disposition": "confirmation",
     "guard": "VoiceSheets ModuleRemovePage, KeyRemovePage, TrackSheet / VoiceModule confirmation",
     "reason": "Removing installed resources, credentials or imported music asks first; removing an incomplete package discards only temporary downloaded bytes. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
@@ -17154,7 +17154,7 @@
     "line": 411,
     "statement": "description: root.asking && root.asking.use === undefined ? S.s_dang_xem_cuon_nao_con_dung_giong_nay_1a2d4fa1 : VoiceLogic.removeAsk(root.asking ? root.asking.use : null)",
     "occurrence": 1,
-    "source_sha256": "b84fd3e7beabbf44bb985cdb904513c423131d2ad158fcd3b3bdfb4a86a1dd56",
+    "source_sha256": "8be6820da94dabf654970cd2f1a236802a2ec78d3891afc52d7d98f7e6d1b807",
     "disposition": "confirmation",
     "guard": "VoiceSheets ModuleRemovePage, KeyRemovePage, TrackSheet / VoiceModule confirmation",
     "reason": "Removing installed resources, credentials or imported music asks first; removing an incomplete package discards only temporary downloaded bytes. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
@@ -17166,7 +17166,7 @@
     "line": 424,
     "statement": "onActivated: { const id = root.asking.id; confirm.dismiss(); root.remove(id) }",
     "occurrence": 1,
-    "source_sha256": "b84fd3e7beabbf44bb985cdb904513c423131d2ad158fcd3b3bdfb4a86a1dd56",
+    "source_sha256": "8be6820da94dabf654970cd2f1a236802a2ec78d3891afc52d7d98f7e6d1b807",
     "disposition": "confirmation",
     "guard": "VoiceSheets ModuleRemovePage, KeyRemovePage, TrackSheet / VoiceModule confirmation",
     "reason": "Removing installed resources, credentials or imported music asks first; removing an incomplete package discards only temporary downloaded bytes. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."

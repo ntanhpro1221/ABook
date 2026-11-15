@@ -2,13 +2,13 @@ import QtQuick
 import ABook
 import "TextWrap.js" as TextWrap
 
-// Một đoạn chữ ngắn của thẻ giọng (p text-[0.8125rem] text-fg-2 text-pretty): hiện khi `text` không rỗng, mở / khép theo chiều cao; giữ chữ cũ
+// Một đoạn chữ ngắn của thẻ giọng (p text-body-small text-fg-2 text-pretty): hiện khi `text` không rỗng, mở / khép theo chiều cao; giữ chữ cũ
 // trong lúc khép. Không bao giờ cắt chữ.
 VoiceBlock {
     id: root
     property string text: ""
     property color ink: Theme.text2
-    property int px: 13
+    property int px: Theme.sizeBodySmall
     property int weight: Theme.weightRegular
     property string shown: ""
     property bool tabular: false         // chữ có giá trị tự đổi (% đang tải): chữ số đều độ rộng

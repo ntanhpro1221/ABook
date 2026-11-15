@@ -226,14 +226,36 @@ def nominal_size(n: dict) -> float | None:
     return next((s for s in FONT_SCALE if s * ONE_LINE_MIN_SCALE - 0.01 <= size <= s + 0.01), size)
 
 
+# Chữ là một phần của hình vẽ, co giãn theo hình: tên trên bìa tự sinh, chữ cái đầu trong ảnh nhân vật, số giây trong
+# icon lùi/tới. Chúng không phải chữ giao diện nên không theo thang cỡ chữ (DESIGN 5.5 "Chữ" là thang của chữ giao diện).
+ARTWORK_TYPES = ("GeneratedCover", "AvatarPortrait", "SkipGlyph")
+# Ảnh chụp ở cỡ chữ người dùng 130 % (tên ảnh có "_130" / "font130"): cỡ đo = cỡ thang × 1,3, làm tròn tới px.
+FONT_SCALE_SHOT = re.compile(r"(?:^|[_-])(?:font)?130(?=[_.-]|$)")
+
+
+def artwork(tree: dict, node: dict) -> bool:
+    while node is not None:
+        if node.get("graphic") or str(node.get("type", "")).startswith(ARTWORK_TYPES):
+            return True
+        node = tree["nodes"][node["parent"]] if node["parent"] >= 0 else None
+    return False
+
+
+def on_scale(size: float, user_scale: float) -> bool:
+    if user_scale == 1:
+        return size >= 12 and min(abs(size - s) for s in FONT_SCALE) <= 0.01
+    return min(abs(size - s * user_scale) for s in FONT_SCALE) <= 0.5 and size >= 12 * user_scale - 0.5
+
+
 def rule_r11(key: str, tree: dict) -> list[dl.Finding]:
     out = []
     nodes = tree["nodes"]
+    user_scale = 1.3 if FONT_SCALE_SHOT.search(Path(key).stem) else 1
     for n in nodes:
         size = nominal_size(n)
-        if size is None or not n.get("text") or not shown(n):
+        if size is None or not n.get("text") or not shown(n) or artwork(tree, n):
             continue
-        if size < 12 or min(abs(size - s) for s in FONT_SCALE) > 0.01:
+        if not on_scale(size, user_scale):
             out.append(dl.Finding("R11", key, f"cỡ chữ {size:g} ngoài thang ('{n['text'][:24]}')", [round(x) for x in n["bounds"]]))
     # Tên hàng: >= 3 hàng bấm được cùng cha, cao gần nhau -> chữ đầu của mỗi hàng cùng cỡ / đậm / màu.
     for parent in nodes:
@@ -246,7 +268,10 @@ def rule_r11(key: str, tree: dict) -> list[dl.Finding]:
             continue
         styles = {}
         for row in rows:
-            first = first_text(tree, row)
+            # Hàng đang chọn / đang phát mang kiểu trạng thái riêng (DESIGN §6 "Hàng đang phát: chữ hổ phách"): không so.
+            if row.get("selected"):
+                continue
+            first = first_text(tree, row, skip_artwork=True)
             if first is not None and first.get("font_size") is not None:
                 styles[row["id"]] = (nominal_size(first), first.get("font_weight"), first.get("color"))
         if len(styles) >= 2 and len(set(styles.values())) > 1:
@@ -257,11 +282,13 @@ def rule_r11(key: str, tree: dict) -> list[dl.Finding]:
     return out
 
 
-def first_text(tree: dict, node: dict) -> dict | None:
+def first_text(tree: dict, node: dict, skip_artwork: bool = False) -> dict | None:
+    if skip_artwork and (node.get("graphic") or str(node.get("type", "")).startswith(ARTWORK_TYPES)):
+        return None
     if node.get("text") and node.get("font_size") is not None:
         return node
     for child in node["children"]:
-        found = first_text(tree, tree["nodes"][child])
+        found = first_text(tree, tree["nodes"][child], skip_artwork)
         if found is not None:
             return found
     return None

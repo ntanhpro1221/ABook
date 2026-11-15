@@ -473,6 +473,28 @@ def test_r14_skips_data_names_in_one_line_fit():
     assert "chữ" in dt.rule_r14("k", label)[0].detail
 
 
+def test_r11_artwork_text_and_selected_row_and_user_font_scale():
+    # Chữ cái đầu trong ảnh nhân vật, tên trên bìa tự sinh, số trong icon lùi 15: hình vẽ co giãn, không theo thang chữ.
+    art = tree(ROOT, n(0, 20, 100, 44, 124, type="AvatarPortrait"), n(1, 26, 106, 38, 118, text="L", font_size=7),
+               n(0, 60, 100, 160, 240, type="GeneratedCover", graphic=True), n(3, 64, 110, 156, 130, text="Sách", font_size=17),
+               n(0, 200, 100, 232, 132, type="SkipGlyph"), n(5, 206, 108, 226, 124, text="15", font_size=16.92))
+    assert dt.rule_r11("k", art) == []
+    # Cùng cỡ 7 nhưng là chữ giao diện: vẫn đỏ.
+    assert "ngoài thang" in dt.rule_r11("k", tree(ROOT, n(0, 20, 100, 44, 124, text="L", font_size=7)))[0].detail
+    # Hàng đang chọn (chữ hổ phách đậm 500) không so kiểu với hàng thường; hai hàng thường khác kiểu vẫn đỏ.
+    rows = [n(0, 0, 100 + i * 56, 360, 156 + i * 56, clickable=True, selected=i == 1) for i in range(3)]
+    texts = [n(1 + i, 20, 110 + i * 56, 200, 130 + i * 56, text=f"Chương {i}", font_size=14,
+               font_weight=500 if i == 1 else 400, color="#8a5309" if i == 1 else "#1a1814") for i in range(3)]
+    assert dt.rule_r11("k", tree(ROOT, *rows, *texts)) == []
+    texts[2] = n(3, 20, 222, 200, 242, text="Chương 2", font_size=14, font_weight=700, color="#1a1814")
+    assert "khác kiểu" in dt.rule_r11("k", tree(ROOT, *rows, *texts))[0].detail
+    # Ảnh cỡ chữ 130 %: 18 × 1,3 = 23 px là thang; 13 × 1,3 = 17 px thì không. Ảnh cỡ thường: 23 px đỏ.
+    title = tree(ROOT, n(0, 20, 0, 340, 29, text="Âm thanh", font_size=23))
+    assert dt.rule_r11("qt/soundsheet_dark_130.png", title) == []
+    assert dt.rule_r11("qt/soundsheet_dark.png", title)
+    assert dt.rule_r11("qt/soundsheet_dark_130.png", tree(ROOT, n(0, 20, 0, 340, 29, text="Dùng", font_size=17)))
+
+
 def test_r14_label_word_count_ignores_numbers_and_units():
     good = tree(ROOT, n(0, 20, 100, 200, 148, role="button", text="Nghe tiếp · Chương 4"),
                 n(0, 20, 160, 200, 208, role="button", text="Tải (48 MB)"))

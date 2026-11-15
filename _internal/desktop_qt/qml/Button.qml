@@ -94,7 +94,7 @@ Interactive {
         wrapMode: root.wrap ? Text.WrapAtWordBoundaryOrAnywhere : Text.NoWrap
         horizontalAlignment: Text.AlignHCenter
         lineHeight: root.wrap ? 1.25 : 1
-        font.pixelSize: root.size === "sm" ? 13 : root.size === "lg" ? 15 : Theme.sizeBodySmall
+        font.pixelSize: root.size === "lg" ? Theme.sizeBody : Theme.sizeBodySmall   // như web: sm/md text-body-small, lg text-body
         font.weight: Theme.weightMedium
     }
 }
