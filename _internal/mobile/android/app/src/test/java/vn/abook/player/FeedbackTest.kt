@@ -24,8 +24,13 @@ class FeedbackTest {
             override fun sound(notes: List<Feedback.Note>, context: Context?) { calls += "sound:${notes.map { it.pitch }}" }
             override fun haptic(effect: String, view: View?, context: Context?) { calls += "haptic:$effect" }
         }
+        // A chosen 10-minute timer with two minutes left: deliberate input restarts the chosen cycle (selectedMode / selectedMinutes).
         field("mode").set(SleepTimer, SleepTimer.Mode.MINUTES)
         field("minutes").setInt(SleepTimer, 10)
+        field("selectedMode").set(SleepTimer, SleepTimer.Mode.MINUTES)
+        field("selectedMinutes").setInt(SleepTimer, 10)
+        field("retained").setBoolean(SleepTimer, false)
+        field("stoppedAtMs").setLong(SleepTimer, 0L)
         field("remainingMs").setLong(SleepTimer, 120_000L)
         field("runningSinceMs").setLong(SleepTimer, 0L)
         field("automaticReason").set(SleepTimer, "")
@@ -39,6 +44,7 @@ class FeedbackTest {
         Feedback.sounds = true; Feedback.haptics = true
         Playback.player = null
         field("mode").set(SleepTimer, SleepTimer.Mode.OFF)
+        field("selectedMode").set(SleepTimer, SleepTimer.Mode.OFF)
         field("warned").setBoolean(SleepTimer, false)
         Handler.reset()
     }
@@ -124,7 +130,12 @@ class FeedbackTest {
         assertTrue(Playback.fadeLevel < 1f)
         field("remainingMs").setLong(SleepTimer, 0L)
         Handler.advance(250L)
-        assertEquals(SleepTimer.Mode.OFF, SleepTimer.mode)
+        // Expiry keeps the chosen timer for the next listen: a full, stopped 10-minute cycle.
+        assertEquals(SleepTimer.Mode.MINUTES, SleepTimer.mode)
+        val kept = SleepTimer.describe()
+        assertEquals(600.0, kept.getDouble("remaining"), 1.0)
+        assertTrue(kept.has("stoppedAt"))
+        assertFalse(kept.getBoolean("counting"))
         assertFalse(voice.playing)
         assertEquals(listOf("sound:[220.0]"), calls)
     }

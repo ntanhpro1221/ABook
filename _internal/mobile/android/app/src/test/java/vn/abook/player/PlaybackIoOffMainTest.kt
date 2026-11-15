@@ -95,8 +95,9 @@ class PlaybackIoOffMainTest {
         val record = Store.activeRecord("io-book")
         field("recordId").set(Playback, record)
         val now = System.currentTimeMillis() // wallclock-ok: snapshot must share the running player's clock, not a timeout
-        SleepTimer.restore(JSONObject().put("source", "manual").put("bookId", "io-book").put("recordId", record)
-            .put("minutes", 30).put("remainingMs", 20 * 60_000L).put("savedAt", now), now)
+        // Stored timers hold the chosen selection, never a countdown (SleepTimer.persist).
+        SleepTimer.restore(JSONObject().put("selection", "minutes").put("source", "manual").put("bookId", "io-book").put("recordId", record)
+            .put("minutes", 30), now)
         field("sessionFrom").set(Playback, JSONObject().put("chapterId", 1).put("seconds", 800.0))
         field("sessionBook").set(Playback, "io-book")
         field("sessionRecord").set(Playback, record)
@@ -115,7 +116,10 @@ class PlaybackIoOffMainTest {
         assertEquals(1, sessions.length())
         assertTrue(sessions.getJSONObject(0).getDouble("listened") >= 20.0)
         val prefs = JSONObject(java.io.File(Store.root, "listen-prefs.json").readText())
-        assertEquals(20 * 60_000L, prefs.getJSONObject("timer").getLong("remainingMs"))
+        val timer = prefs.getJSONObject("timer")
+        assertEquals("minutes", timer.getString("selection"))
+        assertEquals(30, timer.getInt("minutes"))
+        assertTrue("the countdown is never stored", !timer.has("remainingMs"))
         val events = Bedtime.all().single().getJSONArray("events")
         assertEquals("pause", events.getJSONObject(events.length() - 1).getString("action"))
     }
