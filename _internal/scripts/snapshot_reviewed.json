@@ -16,88 +16,88 @@
     "reason": "Visually compared base and after in affordance review-01.jpg: action ink, navigation chevrons, persistent choice rings and read-along play cues; no frame or shadow change."
   },
   "_internal/mobile/android/app/src/test/snapshots/book_cast_dark.png": {
-    "sha256": "26790af4076be4e8cc8137dbbe4e731d46c6efc5467d49d01ce86461f848d5a7",
-    "reason": "Opened the before/after contact sheet in this integration session. Intentional action ink, radio outlines, chevrons and music artwork retained; labels and primary controls remain readable."
+    "sha256": "532577a64aefcdef8ca7464ecc34d3a9c198ae1dae1e91661ce758e773ec5c42",
+    "reason": "Inspected the combined-source before/after contact sheet and exact image bytes. Labels and controls remain inside their surfaces; selection marks, icons and shared confirmation rows reflect the integrated musicdl behavior. Book volume/title/portrait and chapter/history choices remain present. The cast light fixture is intentionally scrolled; existing cropped scroll extent is retained."
   },
   "_internal/mobile/android/app/src/test/snapshots/book_cast_light.png": {
-    "sha256": "686fb6dc48e1192c78901020cc40abf533c3e29b247022432bfd4d96a6ee718c",
-    "reason": "Opened the before/after contact sheet in this integration session. Intentional action ink, radio outlines, chevrons and music artwork retained; labels and primary controls remain readable."
+    "sha256": "1b25d688d5c8ca30f91f278f365959974b0a0d504e6f0621373925f61c0996d0",
+    "reason": "Inspected the combined-source before/after contact sheet and exact image bytes. Labels and controls remain inside their surfaces; selection marks, icons and shared confirmation rows reflect the integrated musicdl behavior. Book volume/title/portrait and chapter/history choices remain present. The cast light fixture is intentionally scrolled; existing cropped scroll extent is retained."
   },
   "_internal/mobile/android/app/src/test/snapshots/book_delete_dark.png": {
-    "sha256": "0d0fc541ca1ba58181529a887f77e2cf1677d3fa2fcec51d7c82ed6e156cf119",
-    "reason": "Opened the before/after contact sheet in this integration session. Intentional action ink, radio outlines, chevrons and music artwork retained; labels and primary controls remain readable."
+    "sha256": "2a05ef967f93d6e7fdb5ec9096ad87aa28f8056a5c45336a042b267ea1f83128",
+    "reason": "Inspected the combined-source before/after contact sheet and exact image bytes. Labels and controls remain inside their surfaces; selection marks, icons and shared confirmation rows reflect the integrated musicdl behavior. Book volume/title/portrait and chapter/history choices remain present. The cast light fixture is intentionally scrolled; existing cropped scroll extent is retained. The shared cancel and destructive choice remain distinct, with the consequence text fully wrapped."
   },
   "_internal/mobile/android/app/src/test/snapshots/book_delete_light.png": {
-    "sha256": "c3a936db9d0d678d0b4825433d7ef9c77a724d002f454497c309db215ecaa5db",
-    "reason": "Opened the before/after contact sheet in this integration session. Intentional action ink, radio outlines, chevrons and music artwork retained; labels and primary controls remain readable."
+    "sha256": "e410cf7e6b3ed82139dc7881cef73a88c91dd36a3919b41585e518475bee59e9",
+    "reason": "Inspected the combined-source before/after contact sheet and exact image bytes. Labels and controls remain inside their surfaces; selection marks, icons and shared confirmation rows reflect the integrated musicdl behavior. Book volume/title/portrait and chapter/history choices remain present. The cast light fixture is intentionally scrolled; existing cropped scroll extent is retained. The shared cancel and destructive choice remain distinct, with the consequence text fully wrapped."
   },
   "_internal/mobile/android/app/src/test/snapshots/book_expanded_light.png": {
-    "sha256": "50a12fcb1d72f888261958aba2e4fd14aa11cee1885178ec109d48065d24a0e0",
-    "reason": "Visually compared base and after in affordance review-01.jpg: action ink, navigation chevrons, persistent choice rings and read-along play cues; no frame or shadow change."
+    "sha256": "4a8d23076e12643689f158554108794cb9f00fb00f478e4e8360ba81a80e17e7",
+    "reason": "Inspected the combined-source before/after contact sheet and exact image bytes. Labels and controls remain inside their surfaces; selection marks, icons and shared confirmation rows reflect the integrated musicdl behavior. Book volume/title/portrait and chapter/history choices remain present. The cast light fixture is intentionally scrolled; existing cropped scroll extent is retained."
   },
   "_internal/mobile/android/app/src/test/snapshots/book_find_light.png": {
-    "sha256": "602b4739239140e759e2a1be62c08c87b90856f04b08ae24467b6717db5e90d9",
-    "reason": "Opened the before/after contact sheet in this integration session. Intentional action ink, radio outlines, chevrons and music artwork retained; labels and primary controls remain readable."
+    "sha256": "2db046ddb85ee18b4ab413dc9011f44057aa86edd30ef2813bf0851fd8cccd70",
+    "reason": "Inspected the combined-source before/after contact sheet and exact image bytes. Labels and controls remain inside their surfaces; selection marks, icons and shared confirmation rows reflect the integrated musicdl behavior. Book volume/title/portrait and chapter/history choices remain present. The cast light fixture is intentionally scrolled; existing cropped scroll extent is retained."
   },
   "_internal/mobile/android/app/src/test/snapshots/book_finished_dark.png": {
-    "sha256": "c75f05fd559be269661bcdd648f6d6eab628ca16513584bd37145588713d818f",
-    "reason": "Visually compared base and after in affordance review-01.jpg: action ink, navigation chevrons, persistent choice rings and read-along play cues; no frame or shadow change."
+    "sha256": "3c92f8492e15624a7486ccc1222f101a3f111ac268fbd4c160c442edc42ede54",
+    "reason": "Inspected the combined-source before/after contact sheet and exact image bytes. Labels and controls remain inside their surfaces; selection marks, icons and shared confirmation rows reflect the integrated musicdl behavior. Book volume/title/portrait and chapter/history choices remain present. The cast light fixture is intentionally scrolled; existing cropped scroll extent is retained."
   },
   "_internal/mobile/android/app/src/test/snapshots/book_fresh_dark.png": {
-    "sha256": "8eada2408bce34e1cfe0ca239ffe1dabdce00fda9056d13d2f35ae10b32994cd",
-    "reason": "Visually compared base and after in affordance review-01.jpg: action ink, navigation chevrons, persistent choice rings and read-along play cues; no frame or shadow change."
+    "sha256": "5109fa61d2278dd1d197f3ba8cc408b78e6074a00b2e012fee05726f02d26c2e",
+    "reason": "Inspected the combined-source before/after contact sheet and exact image bytes. Labels and controls remain inside their surfaces; selection marks, icons and shared confirmation rows reflect the integrated musicdl behavior. Book volume/title/portrait and chapter/history choices remain present. The cast light fixture is intentionally scrolled; existing cropped scroll extent is retained."
   },
   "_internal/mobile/android/app/src/test/snapshots/book_fresh_light.png": {
-    "sha256": "b7c251a6ba652c9f82289338bcb233100b797be5ab513a2b1fe754399c79840b",
-    "reason": "Visually compared base and after in affordance review-01.jpg: action ink, navigation chevrons, persistent choice rings and read-along play cues; no frame or shadow change."
+    "sha256": "f1cbbd526ff020ae6cc0a6932befdec5af3eba184e58de955309943414ed3e8b",
+    "reason": "Inspected the combined-source before/after contact sheet and exact image bytes. Labels and controls remain inside their surfaces; selection marks, icons and shared confirmation rows reflect the integrated musicdl behavior. Book volume/title/portrait and chapter/history choices remain present. The cast light fixture is intentionally scrolled; existing cropped scroll extent is retained."
   },
   "_internal/mobile/android/app/src/test/snapshots/book_gone_light.png": {
     "sha256": "c310cdded105be9255c335344f4b346aa77427930f5fadd97def91405edba9fe",
     "reason": "Reviewed old/new book_gone_light.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
   },
   "_internal/mobile/android/app/src/test/snapshots/book_head_light.png": {
-    "sha256": "2077c01a1a54ceb14179af5817af2e3c926f93d32c2edc1edaf75aaf907996bf",
-    "reason": "Visually compared base and after in affordance review-01.jpg: action ink, navigation chevrons, persistent choice rings and read-along play cues; no frame or shadow change."
+    "sha256": "0b401ccc643e113c6cf4888ed29f3d7626e964a0a7e0a11f81f183494acb5811",
+    "reason": "Inspected the combined-source before/after contact sheet and exact image bytes. Labels and controls remain inside their surfaces; selection marks, icons and shared confirmation rows reflect the integrated musicdl behavior. Book volume/title/portrait and chapter/history choices remain present. The cast light fixture is intentionally scrolled; existing cropped scroll extent is retained."
   },
   "_internal/mobile/android/app/src/test/snapshots/book_history_light.png": {
-    "sha256": "79f73059354228fea79a10d991c82e591416d332310e0438aeeaf76cc8ff245b",
-    "reason": "Visually compared base and after in affordance review-02.jpg: action ink, navigation chevrons, persistent choice rings and read-along play cues; no frame or shadow change."
+    "sha256": "bf86bd657a9a24220cb08940af6ce86e1d6ae462247db3ba282f265ab994ef4e",
+    "reason": "Inspected the combined-source before/after contact sheet and exact image bytes. Labels and controls remain inside their surfaces; selection marks, icons and shared confirmation rows reflect the integrated musicdl behavior. Book volume/title/portrait and chapter/history choices remain present. The cast light fixture is intentionally scrolled; existing cropped scroll extent is retained."
   },
   "_internal/mobile/android/app/src/test/snapshots/book_large_dark.png": {
-    "sha256": "88b33b868c3bc4f9cdc34b9d65c0a83b1349c4ebb9dd6210445d0ca8059922db",
-    "reason": "Visually compared base and after in affordance review-02.jpg: action ink, navigation chevrons, persistent choice rings and read-along play cues; no frame or shadow change."
+    "sha256": "a070add52cf0391b2a75780c2b5f7739b01a3062869c8e5020bff7acdbb5a573",
+    "reason": "Inspected the combined-source before/after contact sheet and exact image bytes. Labels and controls remain inside their surfaces; selection marks, icons and shared confirmation rows reflect the integrated musicdl behavior. Book volume/title/portrait and chapter/history choices remain present. The cast light fixture is intentionally scrolled; existing cropped scroll extent is retained."
   },
   "_internal/mobile/android/app/src/test/snapshots/book_listening_dark.png": {
-    "sha256": "3b5297044b0e21a42d03e0f41de545b91a5a063ea15ac6beab80e47a11a131b2",
-    "reason": "Visually compared base and after in affordance review-02.jpg: action ink, navigation chevrons, persistent choice rings and read-along play cues; no frame or shadow change."
+    "sha256": "9ddea576da8a4b4bfbd987b64ba4d188b62fa39fe672adb87be4cd3aee661b93",
+    "reason": "Inspected the combined-source before/after contact sheet and exact image bytes. Labels and controls remain inside their surfaces; selection marks, icons and shared confirmation rows reflect the integrated musicdl behavior. Book volume/title/portrait and chapter/history choices remain present. The cast light fixture is intentionally scrolled; existing cropped scroll extent is retained."
   },
   "_internal/mobile/android/app/src/test/snapshots/book_listening_light.png": {
-    "sha256": "63883e7f3edf87e0e5c522025fd2d68c11fe67cb268eb1fe1d0af0bb3f10c431",
-    "reason": "Visually compared base and after in affordance review-02.jpg: action ink, navigation chevrons, persistent choice rings and read-along play cues; no frame or shadow change."
+    "sha256": "30036bfce037133438e53228f2ff956e0599088434ede13f8db144a17a23f0f7",
+    "reason": "Inspected the combined-source before/after contact sheet and exact image bytes. Labels and controls remain inside their surfaces; selection marks, icons and shared confirmation rows reflect the integrated musicdl behavior. Book volume/title/portrait and chapter/history choices remain present. The cast light fixture is intentionally scrolled; existing cropped scroll extent is retained."
   },
   "_internal/mobile/android/app/src/test/snapshots/book_loading_light.png": {
-    "sha256": "5ce517a46c2ebe49f0aaf9642670057e4788e3c9a481191a94d6d53c1f51f97f",
-    "reason": "Visually compared base and after in affordance review-02.jpg: action ink, navigation chevrons, persistent choice rings and read-along play cues; no frame or shadow change."
+    "sha256": "93e60dd34156dcfcf5331db7111066c20afda65f89b62b88d8a33567fbcff0be",
+    "reason": "Inspected the combined-source before/after contact sheet and exact image bytes. Labels and controls remain inside their surfaces; selection marks, icons and shared confirmation rows reflect the integrated musicdl behavior. Book volume/title/portrait and chapter/history choices remain present. The cast light fixture is intentionally scrolled; existing cropped scroll extent is retained."
   },
   "_internal/mobile/android/app/src/test/snapshots/book_menu_light.png": {
     "sha256": "8e28dac00e0a51300998aaac2edf37dbd963105e41e23c6c441f780ec0604682",
     "reason": "Opened the before/after contact sheet in this integration session. Intentional action ink, radio outlines, chevrons and music artwork retained; labels and primary controls remain readable."
   },
   "_internal/mobile/android/app/src/test/snapshots/book_partial_light.png": {
-    "sha256": "198b769b8473d4191b385c395bdfc8e42bb4be34e85ac4ed15158e2938bbebdc",
-    "reason": "Visually compared base and after in affordance review-02.jpg: action ink, navigation chevrons, persistent choice rings and read-along play cues; no frame or shadow change."
+    "sha256": "2c2465c1ab913d45ce21f5f90b71efc4f21bcd15d171db68fd6207319acdd40c",
+    "reason": "Inspected the combined-source before/after contact sheet and exact image bytes. Labels and controls remain inside their surfaces; selection marks, icons and shared confirmation rows reflect the integrated musicdl behavior. Book volume/title/portrait and chapter/history choices remain present. The cast light fixture is intentionally scrolled; existing cropped scroll extent is retained."
   },
   "_internal/mobile/android/app/src/test/snapshots/book_person_sheet_light.png": {
-    "sha256": "503210aba5bd91d9261b0dd9c1137bf15cf5aeee0fface5ceda4904d5ed9c193",
-    "reason": "Opened the before/after contact sheet in this integration session. Intentional action ink, radio outlines, chevrons and music artwork retained; labels and primary controls remain readable."
+    "sha256": "f8cfe834ae91c99529094c5eafc91275eceb0b1ec938daeb3e5dc2ccb23a387f",
+    "reason": "Inspected the combined-source before/after contact sheet and exact image bytes. Labels and controls remain inside their surfaces; selection marks, icons and shared confirmation rows reflect the integrated musicdl behavior. Book volume/title/portrait and chapter/history choices remain present. The cast light fixture is intentionally scrolled; existing cropped scroll extent is retained."
   },
   "_internal/mobile/android/app/src/test/snapshots/book_playing_light.png": {
-    "sha256": "3f2d812f835f47405b281678381155d330f1e275d33f338ea8c63ee8d5a8a9d3",
-    "reason": "Visually compared base and after in affordance review-02.jpg: action ink, navigation chevrons, persistent choice rings and read-along play cues; no frame or shadow change."
+    "sha256": "49cf3914ce7ee1fcf9f97e4dde0620043807f5598b1cb62ff48d16abaa46f5c1",
+    "reason": "Inspected the combined-source before/after contact sheet and exact image bytes. Labels and controls remain inside their surfaces; selection marks, icons and shared confirmation rows reflect the integrated musicdl behavior. Book volume/title/portrait and chapter/history choices remain present. The cast light fixture is intentionally scrolled; existing cropped scroll extent is retained."
   },
   "_internal/mobile/android/app/src/test/snapshots/book_save_as_light.png": {
-    "sha256": "bb9752d0723ca27cd9992e99f24508dbb759ed4176f3b8be4d60070628a3946f",
-    "reason": "Opened the before/after contact sheet in this integration session. Intentional action ink, radio outlines, chevrons and music artwork retained; labels and primary controls remain readable."
+    "sha256": "43efcd73b409efad66dd2fc3b633a4407ccce03f84d8cc5182fd08a2ca9ad370",
+    "reason": "Inspected the combined-source before/after contact sheet and exact image bytes. Labels and controls remain inside their surfaces; selection marks, icons and shared confirmation rows reflect the integrated musicdl behavior. Book volume/title/portrait and chapter/history choices remain present. The cast light fixture is intentionally scrolled; existing cropped scroll extent is retained."
   },
   "_internal/mobile/android/app/src/test/snapshots/cover_long_title.png": {
     "sha256": "1ee48d032b0a6407146604e1def501847b05e82d35c74f41937f2b64a143cae2",
@@ -128,24 +128,24 @@
     "reason": "Visually compared base and after in affordance review-03.jpg: action ink, navigation chevrons, persistent choice rings and read-along play cues; no frame or shadow change."
   },
   "_internal/mobile/android/app/src/test/snapshots/devices_sheet_delete_light.png": {
-    "sha256": "c32c5398afed077b7004ede6aa441ea37975ffcd1852361c990f2d905f8be727",
-    "reason": "Opened the before/after contact sheet in this integration session. Intentional action ink, radio outlines, chevrons and music artwork retained; labels and primary controls remain readable."
+    "sha256": "adc45b2d72959056ddeb832748c6ec88254b1dec1233ee2a2ff61fd6a2a8af8a",
+    "reason": "Inspected the combined-source before/after contact sheet and exact image bytes. Labels and controls remain inside their surfaces; selection marks, icons and shared confirmation rows reflect the integrated musicdl behavior. The shared cancel and destructive choice remain distinct, with the consequence text fully wrapped."
   },
   "_internal/mobile/android/app/src/test/snapshots/devices_sheet_device_light.png": {
     "sha256": "e0071e93234756056392504ffcfe78f287f0fe073d731fe9a9a76fcd8258c591",
     "reason": "Visually reviewed the exact before/after snapshot pair on integration contact sheet 1. The rounded sheet surface, hairline and shadow share the panel edge; the stationary rectangular paint band is removed. Controls and labels remain readable with no new clipping."
   },
   "_internal/mobile/android/app/src/test/snapshots/devices_sheet_forget_dark.png": {
-    "sha256": "18b1406b9e4c6cd2a3e7fd72186a67474377e702fc3a8929f30a9e25c52e7dc4",
-    "reason": "Visually reviewed the exact before/after snapshot pair on integration contact sheet 1. The rounded sheet surface, hairline and shadow share the panel edge; the stationary rectangular paint band is removed. Controls and labels remain readable with no new clipping."
+    "sha256": "bc7ca6ab71e2edf652f7c4e6f7bd1c45afdbf4b1c5f9b4337e3fe5606472d169",
+    "reason": "Inspected the combined-source before/after contact sheet and exact image bytes. Labels and controls remain inside their surfaces; selection marks, icons and shared confirmation rows reflect the integrated musicdl behavior."
   },
   "_internal/mobile/android/app/src/test/snapshots/devices_sheet_rename_light.png": {
     "sha256": "7f67868edf4ee9d18717547397f0d3850b013d88dc17c65f01ba3bd41f30412e",
     "reason": "Visually reviewed the exact before/after snapshot pair on integration contact sheet 1. The rounded sheet surface, hairline and shadow share the panel edge; the stationary rectangular paint band is removed. Controls and labels remain readable with no new clipping."
   },
   "_internal/mobile/android/app/src/test/snapshots/devices_sheet_revoke_light.png": {
-    "sha256": "525455ccfec49527f53e7b426192bf96bb2f7c5550a68b6726edc4764313d0ba",
-    "reason": "Visually reviewed the exact before/after snapshot pair on integration contact sheet 1. The rounded sheet surface, hairline and shadow share the panel edge; the stationary rectangular paint band is removed. Controls and labels remain readable with no new clipping."
+    "sha256": "abc36f2a2c3d8730d744bb18876e3e4be8410f88dfe90540b3e09131c7b57e30",
+    "reason": "Inspected the combined-source before/after contact sheet and exact image bytes. Labels and controls remain inside their surfaces; selection marks, icons and shared confirmation rows reflect the integrated musicdl behavior."
   },
   "_internal/mobile/android/app/src/test/snapshots/edit_book_dark.png": {
     "sha256": "24e63039236d5c07e7d0078a1c94f1ea27daf6fc744697bb9d34ce9f74d06e59",
@@ -188,12 +188,12 @@
     "reason": "Opened the before/after contact sheet in this integration session. Intentional action ink, radio outlines, chevrons and music artwork retained; labels and primary controls remain readable."
   },
   "_internal/mobile/android/app/src/test/snapshots/edit_discard_dark.png": {
-    "sha256": "049b3deb2b56a81bd3e22087c2f7d2099aaf939026cba646dc2227723b92cc37",
-    "reason": "Visually reviewed the exact before/after snapshot pair on integration contact sheet 1. The rounded sheet surface, hairline and shadow share the panel edge; the stationary rectangular paint band is removed. Controls and labels remain readable with no new clipping."
+    "sha256": "f021097b54c3ca08678d43fb6771dea2ab03505cb019a3566fad21ee29a8702f",
+    "reason": "Inspected the combined-source before/after contact sheet and exact image bytes. Labels and controls remain inside their surfaces; selection marks, icons and shared confirmation rows reflect the integrated musicdl behavior. The shared cancel and destructive choice remain distinct, with the consequence text fully wrapped."
   },
   "_internal/mobile/android/app/src/test/snapshots/edit_discard_light.png": {
-    "sha256": "0412d0f007494da55f1b3879ed9542589a4aa4c61cb52837815901fb5f151656",
-    "reason": "Visually reviewed the exact before/after snapshot pair on integration contact sheet 2. The rounded sheet surface, hairline and shadow share the panel edge; the stationary rectangular paint band is removed. Controls and labels remain readable with no new clipping."
+    "sha256": "0d520ffe29cc0ad4638e505b7266fc78ef51cc6788d5a3ed31a2eabf3f9e9641",
+    "reason": "Inspected the combined-source before/after contact sheet and exact image bytes. Labels and controls remain inside their surfaces; selection marks, icons and shared confirmation rows reflect the integrated musicdl behavior. The shared cancel and destructive choice remain distinct, with the consequence text fully wrapped."
   },
   "_internal/mobile/android/app/src/test/snapshots/edit_failed_light.png": {
     "sha256": "dd2dc3009b763d95fca74d48ac9d5a5d7a0a5b55390b642701e4e0969829df5c",
@@ -372,12 +372,12 @@
     "reason": "Visually reviewed the exact before/after snapshot pair on integration contact sheet 2. The rounded sheet surface, hairline and shadow share the panel edge; the stationary rectangular paint band is removed. Controls and labels remain readable with no new clipping."
   },
   "_internal/mobile/android/app/src/test/snapshots/gap3_recovery_confirm_dark.png": {
-    "sha256": "889ee16016c374bbe9907dbb2afc5e4026cd270a3c1e92d5a2022cb93d805833",
-    "reason": "Visually reviewed the exact before/after snapshot pair on integration contact sheet 2. The rounded sheet surface, hairline and shadow share the panel edge; the stationary rectangular paint band is removed. Controls and labels remain readable with no new clipping."
+    "sha256": "b5ee4e0b33e481c024e6b12c9db85251702d284b4ad5fe577fcfdfb7871f1d72",
+    "reason": "Inspected the combined-source before/after contact sheet and exact image bytes. Labels and controls remain inside their surfaces; selection marks, icons and shared confirmation rows reflect the integrated musicdl behavior. The shared cancel and destructive choice remain distinct, with the consequence text fully wrapped."
   },
   "_internal/mobile/android/app/src/test/snapshots/gap3_recovery_confirm_light.png": {
-    "sha256": "9717e6316d7ca62bcf82d96d095e6fc25333819dff072ae3636e307912495fb0",
-    "reason": "Visually reviewed the exact before/after snapshot pair on integration contact sheet 2. The rounded sheet surface, hairline and shadow share the panel edge; the stationary rectangular paint band is removed. Controls and labels remain readable with no new clipping."
+    "sha256": "06b7211d02b5845f9ad96c62c6b0089877a440ddea747dc5f51753ae2204ec89",
+    "reason": "Inspected the combined-source before/after contact sheet and exact image bytes. Labels and controls remain inside their surfaces; selection marks, icons and shared confirmation rows reflect the integrated musicdl behavior. The shared cancel and destructive choice remain distinct, with the consequence text fully wrapped."
   },
   "_internal/mobile/android/app/src/test/snapshots/icon_sheet_light.png": {
     "sha256": "166b3369be760a5f66a395464de37cb105bead5a4a3874938953ba38d5dc2373",
@@ -480,12 +480,12 @@
     "reason": "Opened the before/after contact sheet in this integration session. Intentional action ink, radio outlines, chevrons and music artwork retained; labels and primary controls remain readable."
   },
   "_internal/mobile/android/app/src/test/snapshots/music_library_downloading_dark.png": {
-    "sha256": "4a8b7aa60443a4e5faf6f5fbc16896410cb30ead05547d458c7922882c9650ce",
-    "reason": "Opened the before/after contact sheet in this integration session. Intentional action ink, radio outlines, chevrons and music artwork retained; labels and primary controls remain readable."
+    "sha256": "e413c43c3e237c150d599a10adf77cab97ff0552843faff81c5be350e5a5f5d7",
+    "reason": "Inspected the combined-source before/after contact sheet and exact image bytes. Labels and controls remain inside their surfaces; selection marks, icons and shared confirmation rows reflect the integrated musicdl behavior."
   },
   "_internal/mobile/android/app/src/test/snapshots/music_library_downloading_light.png": {
-    "sha256": "577614c1e9f5521ab09c4df5666a6f8b1e3159a72343b0700404ac3031dcf523",
-    "reason": "Opened the before/after contact sheet in this integration session. Intentional action ink, radio outlines, chevrons and music artwork retained; labels and primary controls remain readable."
+    "sha256": "498e89b4491daaa2da9d1b77961ad751b15dc8b5072c713d3480a03654f7e9d2",
+    "reason": "Inspected the combined-source before/after contact sheet and exact image bytes. Labels and controls remain inside their surfaces; selection marks, icons and shared confirmation rows reflect the integrated musicdl behavior."
   },
   "_internal/mobile/android/app/src/test/snapshots/music_library_font130_light.png": {
     "sha256": "a5b6bd80f77172543810d2c4a67d4f08babb0b2f0425fad0d6542b033d6bd7a5",
@@ -616,16 +616,16 @@
     "reason": "Reviewed old/new pip_content_light.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
   },
   "_internal/mobile/android/app/src/test/snapshots/settings_clear_sheet_light.png": {
-    "sha256": "55c5ab4492b8f68ed0237678969db17258f085ec8bb6aad427bffe2f13cfba7c",
-    "reason": "Visually reviewed the exact before/after snapshot pair on integration contact sheet 6. The rounded sheet surface, hairline and shadow share the panel edge; the stationary rectangular paint band is removed. Controls and labels remain readable with no new clipping."
+    "sha256": "5330686c7b38b7f24737ba60880cb9f7c145d90bb42cc699f054a6d2c995a1ff",
+    "reason": "Inspected the combined-source before/after contact sheet and exact image bytes. Labels and controls remain inside their surfaces; selection marks, icons and shared confirmation rows reflect the integrated musicdl behavior."
   },
   "_internal/mobile/android/app/src/test/snapshots/settings_expanded_light.png": {
-    "sha256": "a7b9000901c9ffbfacb12750669a63a3c7bc3156e82c122cfe015c71a438dc3b",
-    "reason": "Visually compared base and after in affordance review-14.jpg: action ink, navigation chevrons, persistent choice rings and read-along play cues; no frame or shadow change."
+    "sha256": "922eaaa66da099d3dc0149fc00b9e34cad9f16a4d79900c22fef8e237af27f85",
+    "reason": "Inspected the combined-source before/after contact sheet and exact image bytes. Labels and controls remain inside their surfaces; selection marks, icons and shared confirmation rows reflect the integrated musicdl behavior. Wide two-column settings retain the section hierarchy and full-height content."
   },
   "_internal/mobile/android/app/src/test/snapshots/settings_large_dark.png": {
-    "sha256": "dbdbcd02ffb241dfd302be8716f3e6c378ae6e588dce6b67ad2a267a8745f832",
-    "reason": "Visually compared base and after in affordance review-15.jpg: action ink, navigation chevrons, persistent choice rings and read-along play cues; no frame or shadow change."
+    "sha256": "63d04d4a2606dca9a4ec412265b8e8f25e52e9ba774dbab75024ce00200d3be4",
+    "reason": "Inspected the combined-source before/after contact sheet and exact image bytes. Labels and controls remain inside their surfaces; selection marks, icons and shared confirmation rows reflect the integrated musicdl behavior. Wide two-column settings retain the section hierarchy and full-height content."
   },
   "_internal/mobile/android/app/src/test/snapshots/settings_log_sheet_dark.png": {
     "sha256": "eb7301a363a3b40135d934e6172fcebb755e97fff066ef05857d794a0d791651",
@@ -708,16 +708,16 @@
     "reason": "Visually compared base and after in affordance review-17.jpg: action ink, navigation chevrons, persistent choice rings and read-along play cues; no frame or shadow change."
   },
   "_internal/mobile/android/app/src/test/snapshots/voice_consent_sheet_dark.png": {
-    "sha256": "76eaa4da535351a5807055b5180ca14fcf5cf1af6df86c66aa4c47e074614c81",
-    "reason": "Opened the before/after contact sheet in this integration session. Intentional action ink, radio outlines, chevrons and music artwork retained; labels and primary controls remain readable."
+    "sha256": "e8323a4485d8b2181cb2d2ea191d14101f402536859b2129c76b47a8a081fbe1",
+    "reason": "Inspected the combined-source before/after contact sheet and exact image bytes. Labels and controls remain inside their surfaces; selection marks, icons and shared confirmation rows reflect the integrated musicdl behavior."
   },
   "_internal/mobile/android/app/src/test/snapshots/voice_consent_sheet_light.png": {
-    "sha256": "f018063b2d33106a3a25805977a3a503234ef8b71fec517417725daa0365def4",
-    "reason": "Opened the before/after contact sheet in this integration session. Intentional action ink, radio outlines, chevrons and music artwork retained; labels and primary controls remain readable."
+    "sha256": "e79b9e66086efc6b454ad67d8b2b18415fea79deaaef35b2aa00d91b92ac6c37",
+    "reason": "Inspected the combined-source before/after contact sheet and exact image bytes. Labels and controls remain inside their surfaces; selection marks, icons and shared confirmation rows reflect the integrated musicdl behavior."
   },
   "_internal/mobile/android/app/src/test/snapshots/voice_key_consent_light.png": {
-    "sha256": "3cd917c9dba883708598720b9395163610144b278663b78725e0ffd52abea7b6",
-    "reason": "Visually reviewed the exact before/after snapshot pair on integration contact sheet 6. The rounded sheet surface, hairline and shadow share the panel edge; the stationary rectangular paint band is removed. Controls and labels remain readable with no new clipping."
+    "sha256": "c8c18d3956363cc2d97a4a1b40adbcaa8714fd81ec862eaf136526d56efc1fb4",
+    "reason": "Inspected the combined-source before/after contact sheet and exact image bytes. Labels and controls remain inside their surfaces; selection marks, icons and shared confirmation rows reflect the integrated musicdl behavior."
   },
   "_internal/mobile/android/app/src/test/snapshots/voice_key_problem_light.png": {
     "sha256": "8dce47cb7894efe3807e2aa05f32effde0d1ea41ffef53c8426458e8eb7cacd2",
@@ -728,8 +728,8 @@
     "reason": "Visually reviewed the exact before/after snapshot pair on integration contact sheet 6. The rounded sheet surface, hairline and shadow share the panel edge; the stationary rectangular paint band is removed. Controls and labels remain readable with no new clipping."
   },
   "_internal/mobile/android/app/src/test/snapshots/voice_key_remove_dark.png": {
-    "sha256": "6dec394815c7883381a2ccb3f754cb958a5b72f0774b7b223c692c92b27162ab",
-    "reason": "Visually reviewed the exact before/after snapshot pair on integration contact sheet 6. The rounded sheet surface, hairline and shadow share the panel edge; the stationary rectangular paint band is removed. Controls and labels remain readable with no new clipping."
+    "sha256": "1ba12e27667724452de505784bfac8c743fcf67eab2fc751fbb92d6719e00e7f",
+    "reason": "Inspected the combined-source before/after contact sheet and exact image bytes. Labels and controls remain inside their surfaces; selection marks, icons and shared confirmation rows reflect the integrated musicdl behavior. The shared cancel and destructive choice remain distinct, with the consequence text fully wrapped."
   },
   "_internal/mobile/android/app/src/test/snapshots/voice_key_sheet_dark.png": {
     "sha256": "9d460348290b4cea0820b21cc348cd3933ac0b6a5bfedc387035388d6cc5ba5f",
@@ -740,24 +740,24 @@
     "reason": "Visually reviewed the exact before/after snapshot pair on integration contact sheet 6. The rounded sheet surface, hairline and shadow share the panel edge; the stationary rectangular paint band is removed. Controls and labels remain readable with no new clipping."
   },
   "_internal/mobile/android/app/src/test/snapshots/voice_metered_sheet_light.png": {
-    "sha256": "9f2657caf4940c01dcd17eda9621245b9337d37d19ad1546f9035713b16c0374",
-    "reason": "Visually reviewed the exact before/after snapshot pair on integration contact sheet 7. The rounded sheet surface, hairline and shadow share the panel edge; the stationary rectangular paint band is removed. Controls and labels remain readable with no new clipping."
+    "sha256": "c2ecad814c3f162d3d20f70580cc430fbf300d07e7dbb5abe3515f64047c64c3",
+    "reason": "Inspected the combined-source before/after contact sheet and exact image bytes. Labels and controls remain inside their surfaces; selection marks, icons and shared confirmation rows reflect the integrated musicdl behavior."
   },
   "_internal/mobile/android/app/src/test/snapshots/voice_module_remove_dark.png": {
-    "sha256": "d0512650910d93f39cb6dfaf6e0108e2c6faec5d0d7d4efd83120b64cb952ff5",
-    "reason": "Visually reviewed the exact before/after snapshot pair on integration contact sheet 7. The rounded sheet surface, hairline and shadow share the panel edge; the stationary rectangular paint band is removed. Controls and labels remain readable with no new clipping."
+    "sha256": "320b308a0b7150f71bc72d0203d05b7125fdbb400afd9428efaaceff85ccd781",
+    "reason": "Inspected the combined-source before/after contact sheet and exact image bytes. Labels and controls remain inside their surfaces; selection marks, icons and shared confirmation rows reflect the integrated musicdl behavior. The shared cancel and destructive choice remain distinct, with the consequence text fully wrapped."
   },
   "_internal/mobile/android/app/src/test/snapshots/voice_module_sheet_light.png": {
     "sha256": "93bd99240aa7affd9746808c8587ae0a560c8dad915046a4fc346f0a37b39dd2",
     "reason": "Visually reviewed the exact before/after snapshot pair on integration contact sheet 7. The rounded sheet surface, hairline and shadow share the panel edge; the stationary rectangular paint band is removed. Controls and labels remain readable with no new clipping."
   },
   "_internal/mobile/android/app/src/test/snapshots/voice_music_remove_dark.png": {
-    "sha256": "b8b2c7741799c252db8b95ff64e78d7e8ffb7a5be6f4b2ddabfd428e8154be57",
-    "reason": "Opened the before/after contact sheet in this integration session. Intentional action ink, radio outlines, chevrons and music artwork retained; labels and primary controls remain readable."
+    "sha256": "d5f5b87117ed5195660ede9d950e5f5c05943e8bb89d678b00d7809a53b007c9",
+    "reason": "Inspected the combined-source before/after contact sheet and exact image bytes. Labels and controls remain inside their surfaces; selection marks, icons and shared confirmation rows reflect the integrated musicdl behavior. The shared cancel and destructive choice remain distinct, with the consequence text fully wrapped."
   },
   "_internal/mobile/android/app/src/test/snapshots/voice_music_remove_light.png": {
-    "sha256": "6d163ea6f80f8c1078b78e5ecf544dc80e6d6c2505056b8c07ad37f9904f27af",
-    "reason": "Opened the before/after contact sheet in this integration session. Intentional action ink, radio outlines, chevrons and music artwork retained; labels and primary controls remain readable."
+    "sha256": "b9d72f8298f6cd03049e2fb8ee3a66dbc29cc57722954fbe1282b97c1df4af11",
+    "reason": "Inspected the combined-source before/after contact sheet and exact image bytes. Labels and controls remain inside their surfaces; selection marks, icons and shared confirmation rows reflect the integrated musicdl behavior. The shared cancel and destructive choice remain distinct, with the consequence text fully wrapped."
   },
   "_internal/mobile/android/app/src/test/snapshots/music_track_bottom_dark.png": {
     "sha256": "2dedb0388d4ca38dc4a77d5602a5988d55fb5a983d897f69cffb28d2e1852c65",
@@ -800,12 +800,12 @@
     "reason": "Reviewed icon_sheet_dark.png in late contact sheets 01-03: current typography and header spacing retain readable labels, separated actions, and centered icon/number shapes; no settled overlap."
   },
   "_internal/mobile/android/app/src/test/snapshots/link_np_book_dark.png": {
-    "sha256": "b0686be47380cdf8e452422a672bd39dbfac04b2e120dbf09177343756ff6f45",
-    "reason": "Visually compared base and after in affordance review-07.jpg: action ink, navigation chevrons, persistent choice rings and read-along play cues; no frame or shadow change."
+    "sha256": "90897bf1674a258c19ef0c90d0bd9a99b56fea90d9250cf310164652dcff55b4",
+    "reason": "Inspected the combined-source before/after contact sheet and exact image bytes. Labels and controls remain inside their surfaces; selection marks, icons and shared confirmation rows reflect the integrated musicdl behavior. Chapter title stays clear of artwork and transport; sleep selection uses the selected accent."
   },
   "_internal/mobile/android/app/src/test/snapshots/link_np_book_light.png": {
-    "sha256": "6a7beaf28771eb5b98af5407d0981fec9149c4e4e9d9e0d5b123fccbdd2d931b",
-    "reason": "Visually compared base and after in affordance review-07.jpg: action ink, navigation chevrons, persistent choice rings and read-along play cues; no frame or shadow change."
+    "sha256": "e980b181bc0083805455860c00bbc1417b3d77149f258fbd4a950ff8b30e4eb1",
+    "reason": "Inspected the combined-source before/after contact sheet and exact image bytes. Labels and controls remain inside their surfaces; selection marks, icons and shared confirmation rows reflect the integrated musicdl behavior. Chapter title stays clear of artwork and transport; sleep selection uses the selected accent."
   },
   "_internal/mobile/android/app/src/test/snapshots/music_book_menu_row_dark.png": {
     "sha256": "dff6fd6522002efdb6165a11c0b06ec0ea67e0e202c3fc72e12c6aca8361f345",
@@ -840,8 +840,8 @@
     "reason": "Opened the before/after contact sheet in this integration session. Intentional action ink, radio outlines, chevrons and music artwork retained; labels and primary controls remain readable."
   },
   "_internal/mobile/android/app/src/test/snapshots/settings_logs_clear_sheet_light.png": {
-    "sha256": "f8d270c1452442e0617f8a0bc30d3e3b80c2fe71d23a7878be26e49c9856f8ad",
-    "reason": "Visually reviewed the exact before/after snapshot pair on integration contact sheet 6. The rounded sheet surface, hairline and shadow share the panel edge; the stationary rectangular paint band is removed. Controls and labels remain readable with no new clipping."
+    "sha256": "f322f7f73dd1df76ba2c8695525f1ea7ad5b1f18e113e792ce9a00ed0fb47939",
+    "reason": "Inspected the combined-source before/after contact sheet and exact image bytes. Labels and controls remain inside their surfaces; selection marks, icons and shared confirmation rows reflect the integrated musicdl behavior."
   },
   "_internal/mobile/android/app/src/test/snapshots/settings_third_party_dark.png": {
     "sha256": "b47051bedd4b4724b8ae53a777070af614426aece07380266c072d2fc279024f",
@@ -864,8 +864,8 @@
     "reason": "Visually reviewed the exact before/after snapshot pair on integration contact sheet 6. The rounded sheet surface, hairline and shadow share the panel edge; the stationary rectangular paint band is removed. Controls and labels remain readable with no new clipping."
   },
   "_internal/mobile/android/app/src/test/snapshots/voice_module_remove_light.png": {
-    "sha256": "bee4988a10402b60d9bd0902dcf8d498750c01af3eaf72133dab1e20bf027615",
-    "reason": "Visually reviewed the exact before/after snapshot pair on integration contact sheet 7. The rounded sheet surface, hairline and shadow share the panel edge; the stationary rectangular paint band is removed. Controls and labels remain readable with no new clipping."
+    "sha256": "2cf9dd60dc5cec35f79a5c6685dedc6ed47d438fe02b386d902e92d33aeedadb",
+    "reason": "Inspected the combined-source before/after contact sheet and exact image bytes. Labels and controls remain inside their surfaces; selection marks, icons and shared confirmation rows reflect the integrated musicdl behavior. The shared cancel and destructive choice remain distinct, with the consequence text fully wrapped."
   },
   "_internal/mobile/android/app/src/test/snapshots/music_audio_sheet_130_dark.png": {
     "sha256": "094b8bd454ee172b6cc9196bb55096bc3b94d0a6e24619310623c1041b3df639",
@@ -1176,12 +1176,12 @@
     "reason": "Opened the before/after contact sheet in this integration session. Intentional action ink, radio outlines, chevrons and music artwork retained; labels and primary controls remain readable."
   },
   "_internal/mobile/android/app/src/test/snapshots/settings_voice_dark.png": {
-    "sha256": "f45515e0fbea74c5fb7520702e1308db70eb5faf75b5af559f5d3eab6c41a3c5",
-    "reason": "Visually compared base and after in affordance review-15.jpg: action ink, navigation chevrons, persistent choice rings and read-along play cues; no frame or shadow change."
+    "sha256": "c7f51e34a9c35d545c3105db7631e91edef0ca8c7bae34ca5347285649207b53",
+    "reason": "Inspected the combined-source before/after contact sheet and exact image bytes. Labels and controls remain inside their surfaces; selection marks, icons and shared confirmation rows reflect the integrated musicdl behavior."
   },
   "_internal/mobile/android/app/src/test/snapshots/settings_voice_light.png": {
-    "sha256": "4f30a04c302679109b0b5098b9908c4ecb33e32587fd298a0a5427d34f638c11",
-    "reason": "Visually compared base and after in affordance review-15.jpg: action ink, navigation chevrons, persistent choice rings and read-along play cues; no frame or shadow change."
+    "sha256": "d803725383e55fa0b068ba81149b660902ca7ed6b0b8b9a1182b746b884923be",
+    "reason": "Inspected the combined-source before/after contact sheet and exact image bytes. Labels and controls remain inside their surfaces; selection marks, icons and shared confirmation rows reflect the integrated musicdl behavior."
   },
   "_internal/mobile/android/app/src/test/snapshots/shell_settings_look_light.png": {
     "sha256": "726c5a8f833b0b1a126b69907e67bd337cd52c57d753f1def2608489565c777f",
@@ -1236,28 +1236,28 @@
     "reason": "Opened the before/after contact sheet in this integration session. Intentional action ink, radio outlines, chevrons and music artwork retained; labels and primary controls remain readable."
   },
   "_internal/mobile/android/app/src/test/snapshots/voice_sample_failed_dark.png": {
-    "sha256": "8c5eb12eccbc17be590af3b9be86e9f086e4c62c379a216aceeb1f4d46bbf385",
-    "reason": "Visually compared base and after in affordance review-18.jpg: action ink, navigation chevrons, persistent choice rings and read-along play cues; no frame or shadow change."
+    "sha256": "e045d882cab66ac8a522837d52eb991da87092481456e494d66d80b3ced0bb86",
+    "reason": "Inspected the combined-source before/after contact sheet and exact image bytes. Labels and controls remain inside their surfaces; selection marks, icons and shared confirmation rows reflect the integrated musicdl behavior."
   },
   "_internal/mobile/android/app/src/test/snapshots/voice_sample_failed_light.png": {
-    "sha256": "6efb8fe5ad9295492259a23f2eaf9cc141d0457265edc9a5f03874bc3a36de1a",
-    "reason": "Visually compared base and after in affordance review-18.jpg: action ink, navigation chevrons, persistent choice rings and read-along play cues; no frame or shadow change."
+    "sha256": "5863b51521ae1d02f6d28bcea20f59cc15e5c00fa1bdeb01c4251b3fdac0e9ab",
+    "reason": "Inspected the combined-source before/after contact sheet and exact image bytes. Labels and controls remain inside their surfaces; selection marks, icons and shared confirmation rows reflect the integrated musicdl behavior."
   },
   "_internal/mobile/android/app/src/test/snapshots/voice_sample_loading_dark.png": {
-    "sha256": "f49497d4de339ff3edaa33fd8afbc757313acec35b1434d6f935edd5bde1c873",
-    "reason": "Visually compared base and after in affordance review-18.jpg: action ink, navigation chevrons, persistent choice rings and read-along play cues; no frame or shadow change."
+    "sha256": "9585bb081bb3699ceddf8dda2f36b0dafb7d4edb21b3614f7a799750ca3197e4",
+    "reason": "Inspected the combined-source before/after contact sheet and exact image bytes. Labels and controls remain inside their surfaces; selection marks, icons and shared confirmation rows reflect the integrated musicdl behavior."
   },
   "_internal/mobile/android/app/src/test/snapshots/voice_sample_loading_light.png": {
-    "sha256": "d004a2d3ed7bbbbc9acb41e318d9f7b41d7d90d1a73a4d29c2c47b1d2d987ae4",
-    "reason": "Visually compared base and after in affordance review-18.jpg: action ink, navigation chevrons, persistent choice rings and read-along play cues; no frame or shadow change."
+    "sha256": "8039795eb16f4f6eda5056e331d75305985a96de63ccbd1db0d8c7fff93702f5",
+    "reason": "Inspected the combined-source before/after contact sheet and exact image bytes. Labels and controls remain inside their surfaces; selection marks, icons and shared confirmation rows reflect the integrated musicdl behavior."
   },
   "_internal/mobile/android/app/src/test/snapshots/voice_sample_playing_dark.png": {
-    "sha256": "da7a2d35aa569047997b422e7a1742118e69c4f5bc5df1262204275aaa9e738d",
-    "reason": "Visually compared base and after in affordance review-18.jpg: action ink, navigation chevrons, persistent choice rings and read-along play cues; no frame or shadow change."
+    "sha256": "e009d307ac2f74ec20eb72a942b0a48b7a2dedbac78d6c888b1bcaa54fcced3e",
+    "reason": "Inspected the combined-source before/after contact sheet and exact image bytes. Labels and controls remain inside their surfaces; selection marks, icons and shared confirmation rows reflect the integrated musicdl behavior."
   },
   "_internal/mobile/android/app/src/test/snapshots/voice_sample_playing_light.png": {
-    "sha256": "a32880d94856ddcf6236b44e6098c57b56ce39e8a2616131774a2feea5f5bf6f",
-    "reason": "Visually compared base and after in affordance review-19.jpg: action ink, navigation chevrons, persistent choice rings and read-along play cues; no frame or shadow change."
+    "sha256": "93a8e2d921f87e933bb2781cfe34f68858d7f0950b150def82cb2036044b4d93",
+    "reason": "Inspected the combined-source before/after contact sheet and exact image bytes. Labels and controls remain inside their surfaces; selection marks, icons and shared confirmation rows reflect the integrated musicdl behavior."
   },
   "_internal/mobile/android/app/src/test/snapshots/edit_cover_search_dark.png": {
     "sha256": "9b27c8c6bd2c49f37c9c3f24e35035be39bb8a6942029bbc3410d66ce8825d08",
@@ -1268,11 +1268,75 @@
     "reason": "Visually compared base and after in affordance review-delta/delta-01.jpg: action ink and persistent play/choice/navigation cues; loaded artwork visible in current fixture."
   },
   "_internal/mobile/android/app/src/test/snapshots/music_saved_dark.png": {
-    "sha256": "4d9c2510d52eb1f74b2d0b03d869701918584d906bda5ea4ad7edc2ab80e4965",
-    "reason": "Opened the before/after contact sheet in this integration session. Intentional action ink, radio outlines, chevrons and music artwork retained; labels and primary controls remain readable."
+    "sha256": "09346645ef54fd1a92e998d23e398f0a3930f26e416c529acb2dd8c0b5d5d62e",
+    "reason": "Inspected the combined-source before/after contact sheet and exact image bytes. Labels and controls remain inside their surfaces; selection marks, icons and shared confirmation rows reflect the integrated musicdl behavior."
   },
   "_internal/mobile/android/app/src/test/snapshots/music_saved_light.png": {
-    "sha256": "8081d88f4eb28828fa0c9b40ca806d5169c85cba5da41c2251895d2320274f54",
-    "reason": "Opened the before/after contact sheet in this integration session. Intentional action ink, radio outlines, chevrons and music artwork retained; labels and primary controls remain readable."
+    "sha256": "9332fa478a960ae38b4af86e154c203da53d5cfa06a68641873d861e14c796a7",
+    "reason": "Inspected the combined-source before/after contact sheet and exact image bytes. Labels and controls remain inside their surfaces; selection marks, icons and shared confirmation rows reflect the integrated musicdl behavior."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/music_controls_buffering_dark.png": {
+    "sha256": "a14b1d3e02781133c90bed063bb7d1a373eb0dbbf6aac2b4cc9b4d5d237bd924",
+    "reason": "Inspected the combined-source before/after contact sheet and exact image bytes. Labels and controls remain inside their surfaces; selection marks, icons and shared confirmation rows reflect the integrated musicdl behavior. New music fixture shows the requested download/connecting/buffering/full-playback state; seek/progress and explicit cancel/delete controls are visible."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/music_controls_buffering_light.png": {
+    "sha256": "133ac1bbcb50dfad6013dd62b169184ef8bdd4d650879686cf3fd79737fe22be",
+    "reason": "Inspected the combined-source before/after contact sheet and exact image bytes. Labels and controls remain inside their surfaces; selection marks, icons and shared confirmation rows reflect the integrated musicdl behavior. New music fixture shows the requested download/connecting/buffering/full-playback state; seek/progress and explicit cancel/delete controls are visible."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/music_controls_confirm_dark.png": {
+    "sha256": "a4ddd6f71b179d79da2f538350a4db88958181597087fc5a728f7a65d5dca17b",
+    "reason": "Inspected the combined-source before/after contact sheet and exact image bytes. Labels and controls remain inside their surfaces; selection marks, icons and shared confirmation rows reflect the integrated musicdl behavior. New music fixture shows the requested download/connecting/buffering/full-playback state; seek/progress and explicit cancel/delete controls are visible. The shared cancel and destructive choice remain distinct, with the consequence text fully wrapped."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/music_controls_confirm_light.png": {
+    "sha256": "930ace21e959c8807481b2ed33c3aee934dfe75668ea49ffda2af625abc252b8",
+    "reason": "Inspected the combined-source before/after contact sheet and exact image bytes. Labels and controls remain inside their surfaces; selection marks, icons and shared confirmation rows reflect the integrated musicdl behavior. New music fixture shows the requested download/connecting/buffering/full-playback state; seek/progress and explicit cancel/delete controls are visible. The shared cancel and destructive choice remain distinct, with the consequence text fully wrapped."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/music_controls_connecting_dark.png": {
+    "sha256": "5cda6131c9d0b7c57b143adebe134bdd18748ef073d10bd3e98286ad7e1c3c45",
+    "reason": "Inspected the combined-source before/after contact sheet and exact image bytes. Labels and controls remain inside their surfaces; selection marks, icons and shared confirmation rows reflect the integrated musicdl behavior. New music fixture shows the requested download/connecting/buffering/full-playback state; seek/progress and explicit cancel/delete controls are visible."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/music_controls_connecting_light.png": {
+    "sha256": "41c1b7c7be1fb1d641e73a8561b927ca51b2704e1c82ae353c10b8c7ea754e3c",
+    "reason": "Inspected the combined-source before/after contact sheet and exact image bytes. Labels and controls remain inside their surfaces; selection marks, icons and shared confirmation rows reflect the integrated musicdl behavior. New music fixture shows the requested download/connecting/buffering/full-playback state; seek/progress and explicit cancel/delete controls are visible."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/music_controls_download_dark.png": {
+    "sha256": "603e6db2a707706dfbdf80e2ec77c16ff4af7b14ee786dd054e689e2ed264abe",
+    "reason": "Inspected the combined-source before/after contact sheet and exact image bytes. Labels and controls remain inside their surfaces; selection marks, icons and shared confirmation rows reflect the integrated musicdl behavior. New music fixture shows the requested download/connecting/buffering/full-playback state; seek/progress and explicit cancel/delete controls are visible."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/music_controls_download_light.png": {
+    "sha256": "18e6db7f5d3abe7f4a16268077f368dd19bf82f2ba37e5d9edc48536842a4ac5",
+    "reason": "Inspected the combined-source before/after contact sheet and exact image bytes. Labels and controls remain inside their surfaces; selection marks, icons and shared confirmation rows reflect the integrated musicdl behavior. New music fixture shows the requested download/connecting/buffering/full-playback state; seek/progress and explicit cancel/delete controls are visible."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/music_controls_downloaded_dark.png": {
+    "sha256": "8da238e6dc56d7df22ddb55fbc06b5cc1969a0d8db0701301285cc8b8fabfd9b",
+    "reason": "Inspected the combined-source before/after contact sheet and exact image bytes. Labels and controls remain inside their surfaces; selection marks, icons and shared confirmation rows reflect the integrated musicdl behavior. New music fixture shows the requested download/connecting/buffering/full-playback state; seek/progress and explicit cancel/delete controls are visible."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/music_controls_downloaded_light.png": {
+    "sha256": "98f083a3ebbb518d61809b6db5a118a332c81ae22d3a4ef21d1dc2549d5f77b3",
+    "reason": "Inspected the combined-source before/after contact sheet and exact image bytes. Labels and controls remain inside their surfaces; selection marks, icons and shared confirmation rows reflect the integrated musicdl behavior. New music fixture shows the requested download/connecting/buffering/full-playback state; seek/progress and explicit cancel/delete controls are visible."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/music_controls_paused_dark.png": {
+    "sha256": "80c1ea98ddeaa4a5ad835efe19c63350867ceb19467ceb51f9114952b61ddb80",
+    "reason": "Inspected the combined-source before/after contact sheet and exact image bytes. Labels and controls remain inside their surfaces; selection marks, icons and shared confirmation rows reflect the integrated musicdl behavior. New music fixture shows the requested download/connecting/buffering/full-playback state; seek/progress and explicit cancel/delete controls are visible."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/music_controls_paused_light.png": {
+    "sha256": "3db9f2fe58a43e33a39d27da6b728d206fc8b4c7f891bb1aca52beef3dc4b808",
+    "reason": "Inspected the combined-source before/after contact sheet and exact image bytes. Labels and controls remain inside their surfaces; selection marks, icons and shared confirmation rows reflect the integrated musicdl behavior. New music fixture shows the requested download/connecting/buffering/full-playback state; seek/progress and explicit cancel/delete controls are visible."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/music_controls_playing_dark.png": {
+    "sha256": "62f2ac66c8dd16b9b0e264b1fa5c21bee76028d84d727df39f1aa74733997a10",
+    "reason": "Inspected the combined-source before/after contact sheet and exact image bytes. Labels and controls remain inside their surfaces; selection marks, icons and shared confirmation rows reflect the integrated musicdl behavior. New music fixture shows the requested download/connecting/buffering/full-playback state; seek/progress and explicit cancel/delete controls are visible."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/music_controls_playing_light.png": {
+    "sha256": "c0af1ef26c13bc7556f894ea5ccd4444d22ba047f3ede70a9de2fb9b6bee38bf",
+    "reason": "Inspected the combined-source before/after contact sheet and exact image bytes. Labels and controls remain inside their surfaces; selection marks, icons and shared confirmation rows reflect the integrated musicdl behavior. New music fixture shows the requested download/connecting/buffering/full-playback state; seek/progress and explicit cancel/delete controls are visible."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/music_controls_progress_dark.png": {
+    "sha256": "60e8c54151e95783c2f4ddae4803893d57b2a8ec2eda5950c767743fa14b14e4",
+    "reason": "Inspected the combined-source before/after contact sheet and exact image bytes. Labels and controls remain inside their surfaces; selection marks, icons and shared confirmation rows reflect the integrated musicdl behavior. New music fixture shows the requested download/connecting/buffering/full-playback state; seek/progress and explicit cancel/delete controls are visible."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/music_controls_progress_light.png": {
+    "sha256": "63c0846b0c223054f2e91ce3c88a6d9a46916d71c51594da0af06f62552845a0",
+    "reason": "Inspected the combined-source before/after contact sheet and exact image bytes. Labels and controls remain inside their surfaces; selection marks, icons and shared confirmation rows reflect the integrated musicdl behavior. New music fixture shows the requested download/connecting/buffering/full-playback state; seek/progress and explicit cancel/delete controls are visible."
   }
 }
