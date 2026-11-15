@@ -10998,7 +10998,7 @@
     "line": 77,
     "statement": "fun pop() { if(parents.isNotEmpty())window.openSheet(parents.removeAt(parents.lastIndex)) else window.closeSheet() }",
     "occurrence": 1,
-    "source_sha256": "135787d3ab93d54b7426a538abd62ce95395131d7c8334808a924f318981b147",
+    "source_sha256": "3121315415ef3cc659c591def703bc9e2864f965d86519fdcdbe41e3bb6b746f",
     "disposition": "internal",
     "guard": "Declaration; the invoked call site is independently inventoried",
     "reason": "A declaration/signature is not an executing UI action. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Devvoice review: device voice names, circled radio marks, one-line names and 8 dp text gaps leave this action and its guard unchanged."

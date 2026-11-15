@@ -262,7 +262,7 @@ private fun VoiceList(state: NowPlayingState, model: NowPlayingModel, window: No
             LazyColumn(Modifier.fadeEdges(voiceList), state = voiceList) {
                 items(state.voices, key = { it.id }, contentType = { "voice" }) { voice ->
                     val playing = sample.playing == voice.id
-                    Row(Modifier.fillMaxWidth().testTag("voice_${voice.id}"), horizontalArrangement = Arrangement.spacedBy(Dim.s12), verticalAlignment = Alignment.CenterVertically) {
+                    Row(Modifier.fillMaxWidth().testTag("voice_${voice.id}"), verticalAlignment = Alignment.CenterVertically) {
                         Box(Modifier.weight(1f)) {
                             SheetRow(voice.name, "",
                                 if (voice.id == state.voiceId) LucidePaths.CIRCLE_CHECK else LucidePaths.CIRCLE,
@@ -270,10 +270,15 @@ private fun VoiceList(state: NowPlayingState, model: NowPlayingModel, window: No
                                 model.setVoice(voice.id); window.closeSheet()
                             }
                         }
-                        // One captured source controls both presence and action; no outgoing Reveal child can outlive it.
-                        if (sampling != null) TextAction(if (playing) S.s_dung_11554138 else S.s_nghe_thu_fa024065, {
-                            if (playing) sampling.stopSample() else sampling.play(voice.id)
-                        }, "voice_try_${voice.id}", Modifier.semantics { contentDescription = S.s_0_giong_1_85dee2ac(if (playing) S.s_dung_11554138 else S.s_nghe_thu_fa024065, voice.name) })
+                        // The preview source is the swapped value: presence fades, and an outgoing button keeps the source it was shown with.
+                        SwapContent(sampling, contentKey = { source -> source != null }, layout = ContentLayout.Row) { source ->
+                            if (source != null) {
+                                Spacer(Modifier.width(Dim.s12))
+                                TextAction(if (playing) S.s_dung_11554138 else S.s_nghe_thu_fa024065, {
+                                    if (playing) source.stopSample() else source.play(voice.id)
+                                }, "voice_try_${voice.id}", Modifier.semantics { contentDescription = S.s_0_giong_1_85dee2ac(if (playing) S.s_dung_11554138 else S.s_nghe_thu_fa024065, voice.name) })
+                            }
+                        }
                     }
                 }
                 item(key = "add-voices") {
@@ -354,9 +359,11 @@ private fun SheetRow(label: String, value: String, icon: String? = null, enabled
         BasicText(label, Modifier.weight(1f), style = Abook.type.body,
             maxLines = if (singleLine) 1 else Int.MAX_VALUE, softWrap = !singleLine,
             overflow = if (singleLine) androidx.compose.ui.text.style.TextOverflow.Ellipsis else androidx.compose.ui.text.style.TextOverflow.Clip)
-        if (value.isNotEmpty()) {
-            Spacer(Modifier.width(Dim.s12))
-            RollingLabel(value, Modifier.widthIn(max = 144.dp), Abook.type.bodySmall)
+        Reveal(value.isNotEmpty()) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Spacer(Modifier.width(Dim.s12))
+                RollingLabel(value, Modifier.widthIn(max = 144.dp), Abook.type.bodySmall)
+            }
         }
         Reveal(role == Role.Button && enabled) {
             Row(verticalAlignment = Alignment.CenterVertically) {
