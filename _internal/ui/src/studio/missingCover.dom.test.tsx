@@ -4,6 +4,7 @@ import { createRoot } from 'react-dom/client';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { expect, it, vi } from 'vitest';
 import { CoverEditor } from './CoverEditor';
+import { MOTION } from '@/shared/motion';
 import type { BookSummary } from './api';
 
 const api = vi.hoisted(() => vi.fn());
@@ -32,6 +33,11 @@ it('suggests a local image only while artwork is missing, including narrow scree
     expect(click).toHaveBeenCalledOnce();
     expect(api).not.toHaveBeenCalled();
     await draw({ url: '/cover.jpg', version: 1 });
+    // Artwork arrived: the hint closes at once (inert, hidden from assistive tech), leaves through its exit motion, then is gone.
+    const leaving = host.querySelector('[data-testid="studio-missing-cover"]');
+    expect(leaving?.getAttribute('data-state')).toBe('closed');
+    expect(leaving?.hasAttribute('inert')).toBe(true);
+    await act(() => new Promise(resolve => setTimeout(resolve, MOTION.mediumOut + 120)));
     expect(host.querySelector('[data-testid="studio-missing-cover"]')).toBeNull();
   } finally {
     await act(() => root.unmount()); client.clear(); host.remove(); vi.restoreAllMocks();
