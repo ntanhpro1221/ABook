@@ -80,8 +80,8 @@ Theo nhóm (thô / nén riêng): Qt + CRT 55,9 / 16,4; `resources/app` 25,1 / 9,
   hỏng bản dựng nếu một binary cần DLL redist không có cạnh nó (máy dựng có VC++ trong System32 nên smoke không bắt được).
 - Style Qt Quick Controls không dùng + biến thể `+Style` của Dialogs: 0,07 MiB (phần lớn đã cắt ở Q1).
 - `tls\` + `networkinformation\`: 0,09 MiB - mọi yêu cầu của phía C++ là http://127.0.0.1 tới host.
-- QtQuick.Effects (+ Qt6QuickEffects.dll): 0,29 MiB - chỉ các style đã bỏ import nó.
-- Cộng bốn mục an toàn: **0,53 MiB** (solid nén nên nhỏ).
+- QtQuick.Effects (+ Qt6QuickEffects.dll): bản đo cũ bỏ được 0,29 MiB vì chỉ các style đã bỏ import nó. Từ 0.4.173 phải giữ module và DLL này: AvatarPortrait dùng MultiEffect để cắt ảnh tròn.
+- Cộng bốn mục ở bản đo cũ: **0,53 MiB** (solid nén nên nhỏ); số này không áp dụng cho gói 0.4.173.
 - `.pyc` không chở trong gói, biên dịch lúc cài (`compileall -j 0`, ~0,7 s cho ~250 file; bộ gỡ xoá cả `resources\`):
   **2,57 MiB**. test_installer đòi mỗi .py của `abook` có đúng một .pyc sau khi cài.
 - **Đo lại cả gói sau khi cắt: 32,21 MiB (33.772.115 byte), từ 35,30 MiB = −3,10 MiB**, đúng tổng hai dòng trên.
