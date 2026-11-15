@@ -1254,7 +1254,7 @@
     "line": 66,
     "statement": "export async function saveAuthor(bookId: string, author: string): Promise<string> {",
     "occurrence": 1,
-    "source_sha256": "a8b2e4052ddc5fb6abb6392d7278439304f8eb8c0151b4fb569c248c93804a7e",
+    "source_sha256": "9abe246f747255bc5c88a29aa0df8e9d4741946daac78fa8fcc998b52b7bbfd0",
     "disposition": "internal",
     "guard": "Async interface/helper boundary; concrete activation inventoried separately",
     "reason": "This signature supplies work to a model or component; declaring it starts no user operation."
@@ -1266,7 +1266,7 @@
     "line": 75,
     "statement": "async function imageToDataUrl(file: Blob): Promise<string> {",
     "occurrence": 1,
-    "source_sha256": "a8b2e4052ddc5fb6abb6392d7278439304f8eb8c0151b4fb569c248c93804a7e",
+    "source_sha256": "9abe246f747255bc5c88a29aa0df8e9d4741946daac78fa8fcc998b52b7bbfd0",
     "disposition": "internal",
     "guard": "Async interface/helper boundary; concrete activation inventoried separately",
     "reason": "This signature supplies work to a model or component; declaring it starts no user operation."
@@ -1278,7 +1278,7 @@
     "line": 340,
     "statement": "mutationFn: async (picked: Blob) => api(`/api/books/${book.id}/cover`, { method: \"PUT\", body: { image: await imageToDataUrl(picked) } }),",
     "occurrence": 1,
-    "source_sha256": "a8b2e4052ddc5fb6abb6392d7278439304f8eb8c0151b4fb569c248c93804a7e",
+    "source_sha256": "9abe246f747255bc5c88a29aa0df8e9d4741946daac78fa8fcc998b52b7bbfd0",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; busy, isLoading, isPending, loading, onBusy, saving, setBusy",
     "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering."
@@ -1290,7 +1290,7 @@
     "line": 346,
     "statement": "mutationFn: () => api(`/api/books/${book.id}/cover`, { method: \"DELETE\" }),",
     "occurrence": 1,
-    "source_sha256": "a8b2e4052ddc5fb6abb6392d7278439304f8eb8c0151b4fb569c248c93804a7e",
+    "source_sha256": "9abe246f747255bc5c88a29aa0df8e9d4741946daac78fa8fcc998b52b7bbfd0",
     "disposition": "confirmation",
     "guard": "EditBook cover DestructiveConfirm and DiscardSheet / discard dialog",
     "reason": "Cover removal and discarding saved edits have explicit object-specific confirmations."
@@ -1302,7 +1302,7 @@
     "line": 351,
     "statement": "mutationFn: () => api(`/api/books/${book.id}/edits`, { method: \"DELETE\" }),",
     "occurrence": 1,
-    "source_sha256": "a8b2e4052ddc5fb6abb6392d7278439304f8eb8c0151b4fb569c248c93804a7e",
+    "source_sha256": "9abe246f747255bc5c88a29aa0df8e9d4741946daac78fa8fcc998b52b7bbfd0",
     "disposition": "confirmation",
     "guard": "EditBook cover DestructiveConfirm and DiscardSheet / discard dialog",
     "reason": "Cover removal and discarding saved edits have explicit object-specific confirmations."
@@ -1314,7 +1314,7 @@
     "line": 445,
     "statement": "<Reveal when={book.cover}><Button variant=\"ghost\" className=\"justify-start text-left\" icon={Trash2} loading={busy} disabled={busy} onClick={() => deletion.confirm({ title: S.s_bo_anh_bia_696c6692, description: S.s_irreversible_detail(book.title), run: () => removeCover.mutateAsync() })}>{S.s_bo_anh_bia_696c6692}</Button></Reveal>",
     "occurrence": 1,
-    "source_sha256": "a8b2e4052ddc5fb6abb6392d7278439304f8eb8c0151b4fb569c248c93804a7e",
+    "source_sha256": "9abe246f747255bc5c88a29aa0df8e9d4741946daac78fa8fcc998b52b7bbfd0",
     "disposition": "confirmation",
     "guard": "EditBook cover DestructiveConfirm and DiscardSheet / discard dialog",
     "reason": "Cover removal and discarding saved edits have explicit object-specific confirmations."
@@ -1326,7 +1326,7 @@
     "line": 578,
     "statement": "const save = async (options?: { folder?: string; as?: \"abook\" | \"abookproj\"; ask?: boolean }): Promise<boolean> => {",
     "occurrence": 1,
-    "source_sha256": "a8b2e4052ddc5fb6abb6392d7278439304f8eb8c0151b4fb569c248c93804a7e",
+    "source_sha256": "9abe246f747255bc5c88a29aa0df8e9d4741946daac78fa8fcc998b52b7bbfd0",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; busy, isLoading, isPending, loading, onBusy, saving, setBusy",
     "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering."
@@ -1338,7 +1338,7 @@
     "line": 589,
     "statement": "? { label: S.s_mo_thu_muc_4bf5b127, onClick: () => void api(\"/api/reveal-export\", { method: \"POST\", body: { folder } }).catch(() => undefined) }",
     "occurrence": 1,
-    "source_sha256": "a8b2e4052ddc5fb6abb6392d7278439304f8eb8c0151b4fb569c248c93804a7e",
+    "source_sha256": "9abe246f747255bc5c88a29aa0df8e9d4741946daac78fa8fcc998b52b7bbfd0",
     "disposition": "internal",
     "guard": "Async interface/helper boundary; concrete activation inventoried separately",
     "reason": "This signature supplies work to a model or component; declaring it starts no user operation."
@@ -1350,7 +1350,7 @@
     "line": 607,
     "statement": "const share = async () => {",
     "occurrence": 1,
-    "source_sha256": "a8b2e4052ddc5fb6abb6392d7278439304f8eb8c0151b4fb569c248c93804a7e",
+    "source_sha256": "9abe246f747255bc5c88a29aa0df8e9d4741946daac78fa8fcc998b52b7bbfd0",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; busy, isLoading, isPending, loading, onBusy, saving, setBusy",
     "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering."
@@ -1362,7 +1362,7 @@
     "line": 647,
     "statement": "onClick={() => void save({ ...(folder ? { folder } : {}), as: kind, ask: true }).then((saved) => saved && onOpenChange(false))}",
     "occurrence": 1,
-    "source_sha256": "a8b2e4052ddc5fb6abb6392d7278439304f8eb8c0151b4fb569c248c93804a7e",
+    "source_sha256": "9abe246f747255bc5c88a29aa0df8e9d4741946daac78fa8fcc998b52b7bbfd0",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; busy, isLoading, isPending, loading, onBusy, saving, setBusy",
     "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering."
@@ -3066,7 +3066,7 @@
     "line": 328,
     "statement": "description: S.s_delete_download_description(title, formatSize(track.bytes ?? 0)), run: () => unsave.mutateAsync([track.link])})} />",
     "occurrence": 1,
-    "source_sha256": "806b623f8df21b69aef3eaad81c4304bce7caabef079ba9d720af85e7b7571c1",
+    "source_sha256": "5c913ecc93affa523e76b26a0bd3dbff0c17fdb637fbe73adbc9a2b54b74926f",
     "disposition": "confirmation",
     "guard": "DownloadControl / TrackRow / TrackSheet DestructiveConfirm; cancel incomplete transfer is exempt",
     "reason": "Complete music download removal is confirmed with track title and size. Cancelling an unfinished download discards partial bytes immediately. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
@@ -4362,7 +4362,7 @@
     "line": 114,
     "statement": "const decide = async (verb: Verb, device: InboxDevice, item?: InboxItem) => {",
     "occurrence": 1,
-    "source_sha256": "a2a8735689e49bd59a7a5576c1bf80fc03f7ac1254f5c6e36ab630e9831634df",
+    "source_sha256": "a5c05b7d0f1e59c19404326cd13c791bf44a8e7032eefd48bbbc709ef1537e40",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; busy, loading, setBusy",
     "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering."
@@ -4374,7 +4374,7 @@
     "line": 132,
     "statement": "action: { label: S.s_khoi_phuc_c652d9c0, onClick: () => void decide(\"restore\", device, item) },",
     "occurrence": 1,
-    "source_sha256": "a2a8735689e49bd59a7a5576c1bf80fc03f7ac1254f5c6e36ab630e9831634df",
+    "source_sha256": "a5c05b7d0f1e59c19404326cd13c791bf44a8e7032eefd48bbbc709ef1537e40",
     "disposition": "internal",
     "guard": "Async interface/helper boundary; concrete activation inventoried separately",
     "reason": "This signature supplies work to a model or component; declaring it starts no user operation."
@@ -15474,7 +15474,7 @@
     "line": 97,
     "statement": "Api.call(\"GET\", \"/api/listen/books/\" + id, null, function(fresh, error) {",
     "occurrence": 1,
-    "source_sha256": "04262842258e20d9c8133607554ab785cd71a9c6258ff15482b7342c92c237b3",
+    "source_sha256": "be1b2e9882d8d4d59b876b0390f1d7111f7de4d3d2285ecc717ace1f870b6311",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; busy, savingAuthor",
     "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
@@ -15486,7 +15486,7 @@
     "line": 107,
     "statement": "Api.call(method, \"/api/books/\" + bookId + suffix, body, function(data, error) {",
     "occurrence": 1,
-    "source_sha256": "04262842258e20d9c8133607554ab785cd71a9c6258ff15482b7342c92c237b3",
+    "source_sha256": "be1b2e9882d8d4d59b876b0390f1d7111f7de4d3d2285ecc717ace1f870b6311",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; busy, savingAuthor",
     "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
@@ -15498,7 +15498,7 @@
     "line": 271,
     "statement": "onActivated: root.removeCover()",
     "occurrence": 1,
-    "source_sha256": "04262842258e20d9c8133607554ab785cd71a9c6258ff15482b7342c92c237b3",
+    "source_sha256": "be1b2e9882d8d4d59b876b0390f1d7111f7de4d3d2285ecc717ace1f870b6311",
     "disposition": "confirmation",
     "guard": "EditBook cover DestructiveConfirm and DiscardSheet / discard dialog",
     "reason": "Cover removal and discarding saved edits have explicit object-specific confirmations. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
@@ -15510,7 +15510,7 @@
     "line": 420,
     "statement": "DestructiveConfirm { id: removeConfirm; objectName: \"editCoverRemoveConfirm\"; title: S.s_bo_anh_bia_696c6692; description: S.s_irreversible_detail(root.book ? root.book.title || \"\" : \"\"); onAccepted: root.removeCoverConfirmed() }",
     "occurrence": 1,
-    "source_sha256": "04262842258e20d9c8133607554ab785cd71a9c6258ff15482b7342c92c237b3",
+    "source_sha256": "be1b2e9882d8d4d59b876b0390f1d7111f7de4d3d2285ecc717ace1f870b6311",
     "disposition": "confirmation",
     "guard": "EditBook cover DestructiveConfirm and DiscardSheet / discard dialog",
     "reason": "Cover removal and discarding saved edits have explicit object-specific confirmations. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
@@ -16578,7 +16578,7 @@
     "line": 36,
     "statement": "Api.quiet(\"PUT\", path(), {key: secret.text.trim(), region: regionField.text.trim()}, function(data, error) {",
     "occurrence": 1,
-    "source_sha256": "7fd6c933d470cf9a091f10d9926c47389a7e02d998ac3618bea2046d869843b0",
+    "source_sha256": "2fc56b7661c86ab4c96ac9bb4be41975820f0c7ca7892de4dbe10ed219687ef2",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; busy",
     "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads."
@@ -16590,7 +16590,7 @@
     "line": 45,
     "statement": "Api.quiet(\"POST\", path() + \"/check\", {}, function(checked, error) {",
     "occurrence": 1,
-    "source_sha256": "7fd6c933d470cf9a091f10d9926c47389a7e02d998ac3618bea2046d869843b0",
+    "source_sha256": "2fc56b7661c86ab4c96ac9bb4be41975820f0c7ca7892de4dbe10ed219687ef2",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; busy",
     "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads."
@@ -16602,7 +16602,7 @@
     "line": 58,
     "statement": "Api.quiet(\"PUT\", path(), {key: secret.text.trim() || \"\", region: regionField.text.trim()}, function(data, error) {",
     "occurrence": 1,
-    "source_sha256": "7fd6c933d470cf9a091f10d9926c47389a7e02d998ac3618bea2046d869843b0",
+    "source_sha256": "2fc56b7661c86ab4c96ac9bb4be41975820f0c7ca7892de4dbe10ed219687ef2",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; busy",
     "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads."
@@ -16614,7 +16614,7 @@
     "line": 67,
     "statement": "Api.quiet(\"DELETE\", path(), null, function(data, error) {",
     "occurrence": 1,
-    "source_sha256": "7fd6c933d470cf9a091f10d9926c47389a7e02d998ac3618bea2046d869843b0",
+    "source_sha256": "2fc56b7661c86ab4c96ac9bb4be41975820f0c7ca7892de4dbe10ed219687ef2",
     "disposition": "confirmation",
     "guard": "VoiceSettings useDestructiveConfirm / ProviderKey removeConfirm / VoiceSheets key confirmation",
     "reason": "Provider credentials are deleted only after the object-specific confirmation."
@@ -16626,7 +16626,7 @@
     "line": 67,
     "statement": "Api.quiet(\"DELETE\", path(), null, function(data, error) {",
     "occurrence": 1,
-    "source_sha256": "7fd6c933d470cf9a091f10d9926c47389a7e02d998ac3618bea2046d869843b0",
+    "source_sha256": "2fc56b7661c86ab4c96ac9bb4be41975820f0c7ca7892de4dbe10ed219687ef2",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; busy",
     "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads."
@@ -16638,7 +16638,7 @@
     "line": 178,
     "statement": "onActivated: root.remove()",
     "occurrence": 1,
-    "source_sha256": "7fd6c933d470cf9a091f10d9926c47389a7e02d998ac3618bea2046d869843b0",
+    "source_sha256": "2fc56b7661c86ab4c96ac9bb4be41975820f0c7ca7892de4dbe10ed219687ef2",
     "disposition": "confirmation",
     "guard": "VoiceSettings useDestructiveConfirm / ProviderKey removeConfirm / VoiceSheets key confirmation",
     "reason": "Provider credentials are deleted only after the object-specific confirmation."
@@ -16650,7 +16650,7 @@
     "line": 197,
     "statement": "DestructiveConfirm { id: removeConfirm; objectName: \"keyRemoveConfirm\"; title: S.s_xoa_khoa_2ec6cb1a; description: S.s_khoa_0_se_bi_xoa_khoi_may_nay_va_cac_giong_735b6db2(root.info.name || \"\"); onAccepted: root.removeConfirmed() }",
     "occurrence": 1,
-    "source_sha256": "7fd6c933d470cf9a091f10d9926c47389a7e02d998ac3618bea2046d869843b0",
+    "source_sha256": "2fc56b7661c86ab4c96ac9bb4be41975820f0c7ca7892de4dbe10ed219687ef2",
     "disposition": "confirmation",
     "guard": "VoiceSettings useDestructiveConfirm / ProviderKey removeConfirm / VoiceSheets key confirmation",
     "reason": "Provider credentials are deleted only after the object-specific confirmation."

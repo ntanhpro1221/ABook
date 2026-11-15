@@ -162,6 +162,7 @@ Item {
                 Button {
                     objectName: "keyCheck"
                     text: S.s_kiem_tra_ff6e2891
+                    kind: "ghost"            // như web / điện thoại: mỗi khoá một nút phụ, không phải nút chính của màn
                     icon: "key-round"
                     busy: root.busy === "check"
                     enabled: root.busy === "" && (Boolean(root.info.hasKey) || secret.text.trim() !== "")

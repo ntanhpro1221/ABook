@@ -5,6 +5,7 @@ import json
 from pathlib import Path
 import sys
 
+import numpy as np
 from PIL import Image, ImageDraw
 import pytest
 
@@ -183,6 +184,75 @@ def test_r4_accent_soft_chip_is_not_a_button(tmp_path):
     button(draw, 900, 144)
     button(draw, 1500, 144, fill=(247, 234, 213))   # --accent-soft
     assert dl.rule_r4(analyse(tmp_path, im)) == []
+
+
+def scrimmed(colour, dark=False):
+    return tuple(int(round(v)) for v in dl.under_scrim(np.array(colour, float), dark))
+
+
+@pytest.mark.parametrize("track, red", [
+    (scrimmed((160, 96, 12)), False),             # --focus dưới màn mờ của sheet đang mở
+    (scrimmed((133, 126, 114)), False),           # --switch-off dưới màn mờ
+    (scrimmed((26, 24, 20)), True),               # rãnh đen dưới màn mờ vẫn sai
+])
+def test_r4_switch_under_scrim_compares_scrimmed_token(tmp_path, track, red):
+    im = Image.new("RGB", (W, H), scrimmed(BG))
+    draw = ImageDraw.Draw(im)
+    switch(draw, track, thumb=scrimmed((255, 255, 255)), on=True)
+    findings = [f for f in dl.rule_r4(analyse(tmp_path, im)) if "công tắc" in f.detail]
+    assert bool(findings) is red
+
+
+def test_r4_disabled_switch_is_faded_token_not_a_wrong_colour(tmp_path):
+    im, draw = canvas()
+    faded_off = tuple(int(0.5 * a + 0.5 * b) for a, b in zip((133, 126, 114), BG))
+    switch(draw, faded_off, on=False)
+    assert not [f for f in dl.rule_r4(analyse(tmp_path, im)) if "công tắc" in f.detail]
+
+
+def test_r4_skeleton_block_and_square_tile_are_not_switches(tmp_path):
+    im, draw = canvas()
+    bone = (227, 223, 215)                        # khối xương chờ tải: "núm" cùng màu "rãnh"
+    draw.rounded_rectangle([860, 600, 1016, 695], 48, fill=bone)
+    draw.rounded_rectangle([60, 900, 252, 995], 24, fill=(23, 60, 54))   # ô bìa 64 x 32 dp góc vuông bo 8
+    draw.ellipse([90, 912, 162, 984], fill=(255, 255, 255))
+    assert not [f for f in dl.rule_r4(analyse(tmp_path, im)) if "công tắc" in f.detail]
+
+
+def test_r4_main_button_height_follows_design_per_platform(tmp_path):
+    # DESIGN.md §6: nút chính cao 48 (điện thoại) / 40 (máy tính).
+    im = Image.new("RGB", (1280, 900), BG)
+    draw = ImageDraw.Draw(im)
+    draw.rounded_rectangle([500, 600, 700, 639], 8, fill=(212, 145, 43))      # 40 px = 40 dp trên Qt / web
+    path = tmp_path / "desk_light.png"
+    im.save(path)
+    for platform in ("qt", "web"):
+        assert dl.rule_r4(dl.Analysis(dl.Shot(platform, path))) == []
+    im, draw = canvas()
+    draw.rounded_rectangle([60, 1200, 1020, 1319], 24, fill=(212, 145, 43))  # 40 dp trên điện thoại
+    assert any("cao 40 dp" in f.detail for f in dl.rule_r4(analyse(tmp_path, im)))
+
+
+def test_r4_page_button_under_a_modal_is_not_a_second_main_button(tmp_path):
+    im = Image.new("RGB", (1280, 900), BG)
+    draw = ImageDraw.Draw(im)
+    draw.rounded_rectangle([1000, 20, 1200, 59], 8, fill=(212, 145, 43))     # nút chính của trang (dưới màn mờ)
+    draw.rounded_rectangle([400, 200, 880, 700], 20, fill=(255, 255, 255))   # hộp thoại
+    draw.rounded_rectangle([700, 640, 860, 679], 8, fill=(212, 145, 43))     # nút chính của hộp
+    path = tmp_path / "dialog_light.png"
+    im.save(path)
+    shot = dl.Shot("qt", path)
+    assert any("2 nút nền --accent" in f.detail for f in dl.rule_r4(dl.Analysis(shot)))   # chưa có cây: đo cả ảnh
+    nodes = [{"id": 0, "parent": -1, "bounds": [0, 0, 1280, 900]},
+             {"id": 1, "parent": 0, "bounds": [0, 0, 1280, 900], "modal": True, "z": 70},
+             {"id": 2, "parent": 1, "bounds": [0, 0, 1280, 900]},                  # màn mờ phủ cả màn
+             {"id": 3, "parent": 1, "bounds": [400, 200, 880, 700]}]
+    path.with_name("dialog_light.tree.json").write_text(json.dumps({"width": 1280, "height": 900, "nodes": nodes}))
+    assert not any("nút nền --accent" in f.detail for f in dl.rule_r4(dl.Analysis(shot)))
+    # Hai nút chính TRONG hộp thoại vẫn đỏ.
+    draw.rounded_rectangle([420, 640, 580, 679], 8, fill=(212, 145, 43))
+    im.save(path)
+    assert any("2 nút nền --accent" in f.detail for f in dl.rule_r4(dl.Analysis(shot)))
 
 
 # ---------------------------------------------------------------- R8 mép sheet cắt chữ

@@ -36,8 +36,8 @@ kênh). Dải = các hàng có mực liền nhau; cụm = cột mực tách nhau
 
 | Luật | Đo gì | Đỏ khi |
 |---|---|---|
-| R4 | rãnh công tắc (khối bo tròn 18-40 dp, rộng 1,4-2,2 lần cao, có núm `--switch-thumb`) | rãnh bật lệch `--focus` ΔE >= 3 (rãnh `--switch-off` là công tắc tắt) |
-| R4 | nút nền `--accent` (khối hổ phách đặc, mép thẳng, rộng >= 1,5 cao; tính cả hổ phách mờ của nút bị vô hiệu, không tính `--accent-soft`) | > 1 nút một màn; cao ngoài 44-56 dp trên cả ba nền tảng theo yêu cầu soát 10-11 |
+| R4 | rãnh công tắc (viên thuốc 18-40 dp, rộng 1,4-2,2 lần cao, bốn góc hộp là nền, có núm `--switch-thumb` khác rãnh ΔE >= 20) | rãnh bật lệch `--focus` ΔE >= 3 (rãnh `--switch-off` là công tắc tắt); token đã pha màn mờ `--scrim` (công tắc của trang dưới sheet) hay mờ trên nền với độ đục 0,3-1 (công tắc bị vô hiệu) vẫn là token |
+| R4 | nút nền `--accent` (khối hổ phách đặc, mép thẳng, rộng >= 1,5 cao; tính cả hổ phách mờ của nút bị vô hiệu, không tính `--accent-soft`) | > 1 nút một màn (có cây UI với lớp `modal`: chỉ đếm nút trong mặt nổi trên cùng, nút của trang dưới màn mờ thuộc màn khác); cao ngoài chuẩn DESIGN.md §6 "48 / 40" ± 4: điện thoại 44-56, máy tính (Qt, web) 36-44 dp |
 | R5 | lưới lựa chọn: hàng >= 3 ô cùng cỡ, bước đều, rồi hàng sau ít ô hơn (thẳng cột hay căn giữa) | hàng cuối thiếu ô |
 | R6 | mép trái các dải chữ trong mỗi vùng (tách vùng ở cột đổi màu trên >= 80 % chiều cao) | > 3 trục (mép mực cách nhau <= 3 dp là một trục: lề chữ cái 1-3 dp); hay một dòng căn giữa cạnh >= 2 dòng căn lề |
 | R7 | neo trong nhóm trạng thái (`design_lint_groups.json`): đỉnh/mép trái bìa, tâm x/y nút phát, thanh tiến độ, đỉnh/mép trái/cao nút chính, cao ảnh | lệch mốc chung của nhóm > 1 dp |

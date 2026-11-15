@@ -160,7 +160,7 @@ export function PhoneEdits({ bookId }: { bookId: string }) {
             <h3 className="min-w-0 flex-1 truncate text-sm font-medium">
               {device.name} <span className="font-normal text-fg-3">{S.s_gui_665940fe}{formatWhen(device.at)}</span>
             </h3>
-            <Button size="sm" variant="primary" icon={Check} loading={busy === `${device.id}:all`} disabled={busy !== null} onClick={() => decide("apply", device)}>{S.s_ap_dung_tat_ca_068378e0}</Button>
+            <Button size="sm" variant="outline" icon={Check} loading={busy === `${device.id}:all`} disabled={busy !== null} onClick={() => decide("apply", device)}>{S.s_ap_dung_tat_ca_068378e0}</Button>
             <Button size="sm" variant="ghost" icon={X} disabled={busy !== null} onClick={() => setConfirmSkipAll(device)}>{S.s_bo_qua_tat_ca_e736ef1f}</Button>
           </div>
           <AnimatedRows className="mt-2 divide-y divide-line overflow-hidden" items={device.items} keyOf={(item) => item.id}>

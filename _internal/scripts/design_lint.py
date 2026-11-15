@@ -52,8 +52,13 @@ TOKENS = {
     "switch-thumb": ("#ffffff", "#1b1204"),
 }
 
-# The audit requires the same measured range on every platform.
-BUTTON_HEIGHT = (44, 56)
+# Màn mờ dưới sheet / hộp thoại (DESIGN.md §5.5 "Bóng"): rgb + độ đục, (sáng, tối). Công tắc của trang nằm dưới màn mờ
+# mang màu rãnh đã pha với màn mờ; rãnh ấy vẫn là --focus / --switch-off.
+SCRIM = (((20, 17, 13), 0.45), ((6, 5, 4), 0.62))
+
+# Nút chính: DESIGN.md §6 "chính - nền hổ phách, cao 48 / 40" (điện thoại / máy tính) ± 4 dp, tức cùng một luật đo
+# trên ba nền tảng với chuẩn riêng của từng khổ. Qt và web là máy tính.
+BUTTON_HEIGHT = {"android": (44, 56), "qt": (36, 44), "web": (36, 44)}
 
 KEYLINE_SLACK_DP = 3
 INK = 40            # tổng |Δ| ba kênh so với nền của hàng: điểm có mực
@@ -110,6 +115,11 @@ def delta_e(a, b) -> float:
 
 def token(name: str, dark: bool) -> np.ndarray:
     return hex_rgb(TOKENS[name][int(dark)])
+
+
+def under_scrim(colour: np.ndarray, dark: bool) -> np.ndarray:
+    rgb, alpha = SCRIM[int(dark)]
+    return colour * (1 - alpha) + np.array(rgb, dtype=float) * alpha
 
 
 # ---------------------------------------------------------------- phân tích ảnh
@@ -514,6 +524,12 @@ def is_switch(a: Analysis, sl) -> tuple[bool, np.ndarray | None]:
     box = a.rgb[sl]
     thumb_colour = token("switch-thumb", a.shot.dark)
     bgc = a.bg[sl[0]].mean(axis=0)
+    # Rãnh công tắc là hình viên thuốc (DESIGN.md §5.5: công tắc = tròn): bốn góc hộp nằm NGOÀI rãnh, mang màu nền.
+    # Ô bìa / chữ cái đầu bo 8-12 dp có góc đặc nên không phải công tắc.
+    inset = max(1, int(0.1 * h))
+    corners = [box[y, x] for y in (inset, h - 1 - inset) for x in (inset, w - 1 - inset)]
+    if any(np.abs(c - bgc).sum() > INK for c in corners):
+        return False, None
     # Rãnh = điểm của thành phần khác hẳn núm và nền.
     for side in (0, 1):
         x0 = 0 if side == 0 else w - h
@@ -523,7 +539,8 @@ def is_switch(a: Analysis, sl) -> tuple[bool, np.ndarray | None]:
         if not disk.any():
             continue
         thumb = sq[disk]
-        if thumb.std(axis=0).max() > 10 or delta_e(thumb.mean(axis=0), thumb_colour) > 12:
+        if thumb.std(axis=0).max() > 10 or min(delta_e(thumb.mean(axis=0), thumb_colour),
+                                               delta_e(thumb.mean(axis=0), under_scrim(thumb_colour, a.shot.dark))) > 12:
             continue
         ring = (cy - h / 2) ** 2 + (cx - h / 2) ** 2 >= (0.5 * h) ** 2
         rest = np.ones((h, w), bool)
@@ -532,8 +549,22 @@ def is_switch(a: Analysis, sl) -> tuple[bool, np.ndarray | None]:
                     (np.abs(box - thumb_colour).sum(axis=2) > 60)]
         if len(track) < 0.25 * h * w:
             continue
-        return True, np.median(track, axis=0)
+        colour = np.median(track, axis=0)
+        # Núm phải nổi trên rãnh (núm trắng / đen trên rãnh --focus hay --switch-off, ΔE > 20 ở cả hai giao diện).
+        # Khối xương chờ tải hay bìa nhỏ có "núm" cùng màu "rãnh": không phải công tắc.
+        if delta_e(thumb.mean(axis=0), colour) < 20:
+            continue
+        return True, colour
     return False, None
+
+
+def is_token_track(track: np.ndarray, colour: np.ndarray, background: np.ndarray, dark: bool) -> bool:
+    """Rãnh mang đúng token: chính nó, nó dưới màn mờ của sheet, hay nó mờ đi trên nền (công tắc bị vô hiệu = độ đục 0,3-1)."""
+    if min(delta_e(track, colour), delta_e(track, under_scrim(colour, dark))) < 3:
+        return True
+    u = colour - background
+    alpha = float((track - background) @ u) / max(float(u @ u), 1.0)
+    return 0.3 <= alpha <= 1.0 and delta_e(track, background + alpha * u) < 3
 
 
 def accent_buttons(a: Analysis) -> list[tuple[list[int], int]]:
@@ -559,6 +590,39 @@ def accent_buttons(a: Analysis) -> list[tuple[list[int], int]]:
     return out
 
 
+def modal_panel(a: Analysis) -> list[int] | None:
+    """Hộp (px ảnh) của lớp modal trên cùng theo cây UI cạnh ảnh (Qt: sheet / hộp thoại / popover đang mở có `modal`).
+
+    Lớp modal phủ màn mờ lên trang: nút của trang nằm ngoài mặt nổi là nút của màn dưới, không phải nút thứ hai của màn
+    đang dùng. Không có cây hay không có modal: None (đo cả ảnh như cũ).
+    """
+    path = a.shot.path.with_name(a.shot.path.stem + ".tree.json")
+    if not path.is_file():
+        return None
+    try:
+        tree = json.loads(path.read_text(encoding="utf-8"))
+        nodes = tree["nodes"]
+        sx, sy = a.w / tree["width"], a.h / tree["height"]
+    except (OSError, ValueError, KeyError, ZeroDivisionError):
+        return None
+    modals = [n for n in nodes if n.get("modal")]
+    if not modals:
+        return None
+    top = max(modals, key=lambda n: (n.get("z", 0), n["id"]))
+    inside, boxes = {top["id"]}, []
+    screen = tree["width"] * tree["height"]
+    for n in nodes:
+        if n["parent"] in inside:
+            inside.add(n["id"])
+            x0, y0, x1, y1 = n.get("visible", n["bounds"])
+            if x1 - x0 > 0.5 and y1 - y0 > 0.5 and (x1 - x0) * (y1 - y0) < 0.9 * screen:
+                boxes.append((x0, y0, x1, y1))
+    if not boxes:
+        return None
+    return [int(min(b[0] for b in boxes) * sx), int(min(b[1] for b in boxes) * sy),
+            int(np.ceil(max(b[2] for b in boxes) * sx)), int(np.ceil(max(b[3] for b in boxes) * sy))]
+
+
 def rule_r4(a: Analysis) -> list[Finding]:
     out = []
     labels, objects = a.components()
@@ -576,7 +640,11 @@ def rule_r4(a: Analysis) -> list[Finding]:
         switch, track = is_switch(a, sl)
         box = [sl[1].start, sl[0].start, sl[1].stop, sl[0].stop]
         if switch:
-            if delta_e(track, off) < 6:
+            background = a.bg[sl[0]].mean(axis=0)
+            if delta_e(track, off) < 6 or is_token_track(track, off, background, dark):
+                continue
+            # Công tắc của trang dưới màn mờ của sheet đang mở, hay công tắc bị vô hiệu: --focus đã pha màn mờ / nền.
+            if is_token_track(track, focus, background, dark):
                 continue
             de = delta_e(track, focus)
             if de >= 3:
@@ -584,11 +652,15 @@ def rule_r4(a: Analysis) -> list[Finding]:
                 out.append(Finding("R4", a.shot.key, f"rãnh công tắc bật {colour} ≠ --focus (ΔE {de:.1f})", box))
             continue
     buttons = accent_buttons(a)
+    panel = modal_panel(a)
+    if panel is not None:
+        buttons = [b for b in buttons if b[0][0] >= panel[0] - 1 and b[0][1] >= panel[1] - 1
+                   and b[0][2] <= panel[2] + 1 and b[0][3] <= panel[3] + 1]
     if len(buttons) > 1:
         out.append(Finding("R4", a.shot.key, f"{len(buttons)} nút nền --accent trong một màn",
                            [min(b[0][0] for b in buttons), min(b[0][1] for b in buttons),
                             max(b[0][2] for b in buttons), max(b[0][3] for b in buttons)]))
-    low, high = BUTTON_HEIGHT
+    low, high = BUTTON_HEIGHT[a.shot.platform]
     for box, h in buttons:
         if not low <= a.dp(h) <= high:
             out.append(Finding("R4", a.shot.key, f"nút chính cao {a.dp(h):.0f} dp (chuẩn {low}-{high})", box))

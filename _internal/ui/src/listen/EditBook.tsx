@@ -407,7 +407,7 @@ export function EditBookDialog({
               onChange={(event) => setTitle(event.target.value)}
               className="touch-box h-[40px] min-w-0 flex-1 rounded-control border border-line bg-bg px-3 text-sm outline-none focus:border-focus"
             />
-            <Button type="submit" variant="primary" className="touch-box h-10 min-h-10 max-sm:min-h-[48px] pointer-coarse:min-h-[48px]" loading={rename.isPending} disabled={!title.trim() || title.trim() === book.title}>{S.s_luu_ten_0b3ef54a}</Button>
+            <Button type="submit" variant="outline" className="touch-box h-10 min-h-10 max-sm:min-h-[48px] pointer-coarse:min-h-[48px]" loading={rename.isPending} disabled={!title.trim() || title.trim() === book.title}>{S.s_luu_ten_0b3ef54a}</Button>
           </form>
         </Section>
         {/* Chỉ sách chữ (nhập từ file): sách Studio không có chỗ áp tác giả, sửa ở máy khác rồi gửi về là mất (fold_edits bỏ qua). */}
@@ -428,7 +428,7 @@ export function EditBookDialog({
                 onChange={(event) => setAuthor(event.target.value)}
                 className="touch-box h-[40px] min-w-0 flex-1 rounded-control border border-line bg-bg px-3 text-sm outline-none focus:border-focus"
               />
-              <Button type="submit" variant="primary" className="touch-box h-10 min-h-10 max-sm:min-h-[48px] pointer-coarse:min-h-[48px]" loading={changeAuthor.isPending} disabled={!authorSaveable(author, book.author)}>{S.s_luu_tac_gia_cd5c8008}</Button>
+              <Button type="submit" variant="outline" className="touch-box h-10 min-h-10 max-sm:min-h-[48px] pointer-coarse:min-h-[48px]" loading={changeAuthor.isPending} disabled={!authorSaveable(author, book.author)}>{S.s_luu_tac_gia_cd5c8008}</Button>
             </form>
           </Section>
         )}</Presence>}

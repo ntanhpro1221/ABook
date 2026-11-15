@@ -88,14 +88,18 @@ def test_missing_sidecar_is_reported_as_unmeasured(tmp_path):
     assert dt.coverage([dl.Shot("web", tmp_path / "x.png")])["web"] == {"images": 1, "sidecars": 0}
 
 
-@pytest.mark.parametrize("platform", ["android", "qt", "web"])
-def test_main_button_height_uses_audit_range_on_every_platform(tmp_path, platform):
+# DESIGN.md §6 "chính - nền hổ phách, cao 48 / 40" (điện thoại / máy tính) ± 4: 40 dp đỏ trên điện thoại, đúng chuẩn trên Qt / web;
+# 52 dp vượt chuẩn máy tính, 64 dp vượt chuẩn điện thoại.
+@pytest.mark.parametrize("platform, height, red", [("android", 120, True), ("android", 144, False), ("android", 192, True),
+                                                   ("qt", 120, False), ("qt", 156, True), ("web", 120, False), ("web", 156, True)])
+def test_main_button_height_follows_design_on_every_platform(tmp_path, platform, height, red):
     im, draw = canvas()
-    button(draw, 900, 120)  # 40 dp is outside the requested 44..56 range.
+    button(draw, 900, height)
     scaled = im if platform == "android" else im.resize((360, 780), Image.Resampling.NEAREST)
     path = tmp_path / "x_light.png"
     scaled.save(path)
-    assert any("cao 40" in f.detail for f in dl.rule_r4(dl.Analysis(dl.Shot(platform, path))))
+    found = [f for f in dl.rule_r4(dl.Analysis(dl.Shot(platform, path))) if f"cao {height // 3}" in f.detail]
+    assert bool(found) is red
 
 
 def test_horizontal_anchor_movement_is_red(tmp_path):
