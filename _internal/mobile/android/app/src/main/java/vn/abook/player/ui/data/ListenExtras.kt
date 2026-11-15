@@ -206,6 +206,8 @@ data class CastMember(
     val pendingVoice: PendingVoice?,
     val mergedInto: String?,
     val avatar: AvatarRef? = null,
+    /** Vì sao `gender` trống (store.cast_gender_note): "group" | "child" | "unknown". Hiện bằng `Cast.genderText`. */
+    val genderNote: String = "",
 )
 
 /** Một chương trong cast.json: mã chương và tên như tab Chương hiện. */
@@ -234,6 +236,15 @@ class CastView(val narrator: Narrator, val characters: List<CastMember>, val ext
 }
 
 object Cast {
+    /** Ô giới của một người: giới cast.json ghi; trống thì lý do (store.cast_gender_note) - "Nhóm", "Trẻ em" hay "Chưa rõ".
+     *  Không bao giờ để trống, không bao giờ bịa giới. Web: castNarrator.genderText, Qt: CastLogic.genderText - cùng chữ. */
+    fun genderText(person: CastMember): String = when {
+        person.gender.isNotEmpty() -> person.gender
+        person.genderNote == "group" -> S.s_cast_gender_group
+        person.genderNote == "child" -> S.s_cast_gender_child
+        else -> S.s_chua_ro_be464a5a
+    }
+
     /** `cast.json` như người nghe thấy (lớp sửa phủ lên) -> dàn nhân vật; null khi không đọc được. Sách chỉ có chữ (không có file) là dàn rỗng. */
     fun parse(text: String?): CastView? {
         if (text.isNullOrBlank()) return CastView(Narrator("", 0, 0.0, null, 0), emptyList(), emptyList())
@@ -330,6 +341,7 @@ object Cast {
                 pendingVoice = pending(item.optJSONObject("pendingVoice")),
                 mergedInto = item.optString("mergedInto").cleanNull().ifEmpty { null },
                 avatar = AvatarArt.parse(item.optJSONObject("avatar")),
+                genderNote = item.optString("genderNote").cleanNull(),
             )
         }
         return out

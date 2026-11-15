@@ -64,9 +64,9 @@ def _chapters(project_root: Path) -> list[dict[str, Any]]:
     out = []
     for chapter in store.chapters(project_root):
         duration = chapter["seconds"] if chapter["playable"] else 0.0
+        # Dấu QA ("Cần nghe lại"...) không bao giờ vào chữ người nghe thấy: tình trạng chương nằm ở qualityPassed/qualityWarning,
+        # Studio đọc hai trường ấy; tên phụ chỉ là tên phụ của chương (bookfile.listener_text_problems chặn lúc đóng gói).
         subtitle = chapter["subtitle"]
-        if chapter["statusLabel"] == "Cần nghe lại":
-            subtitle = " · ".join(value for value in (subtitle, "Cần nghe lại") if value)
         out.append({
             "id": chapter["id"],
             "index": chapter["index"],

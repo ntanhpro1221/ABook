@@ -166,10 +166,11 @@ def chapter_names(file_title: str, heading: str | None, index: int | None = None
 def person_name(name: str) -> str:
     """Tên chuẩn hoá của sổ nhân vật viết HOA HẾT ("VIỄN CỔ MỘC NÃI Y"); người đọc thấy "Viễn Cổ Mộc Nãi Y".
     Tên đã có chữ thường thì để nguyên - người viết sách đã chọn cách viết ấy. Vai phụ cục bộ mang nhãn nội bộ
-    "NPC_LOCAL::c00006::người lùn": người đọc chỉ thấy "người lùn"; gạch dưới thành dấu cách."""
+    "NPC_LOCAL::c00006::người lùn": người đọc chỉ thấy "người lùn"; gạch dưới thành dấu cách. Dấu NPC ("NPC Bà cụ",
+    "Npc: bác bảo vệ") là danh tính trong sổ ("NPC X" và "X" là hai người) nhưng là dấu nội bộ: người đọc chỉ thấy "Bà cụ"."""
     if "::" in name:
         name = name.rsplit("::", 1)[-1]
-    name = name.replace("_", " ").strip()
+    name = NPC_MARK.sub("", name.replace("_", " ").strip())
     if name != name.upper():
         # "LOUise": model gõ vài chữ đầu HOA rồi thường - không tên nào viết thế (soát UX 29-09); "McDonald", "LeBlanc" giữ.
         return " ".join(word[:1] + word[1:].lower() if _caps_glitch(word) else word for word in name.split(" "))
@@ -183,6 +184,7 @@ def person_name(name: str) -> str:
 
 
 _ROMAN_NUMERALS = frozenset({"I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X"})
+NPC_MARK = re.compile(r"^npc(?:\s*[:\-]\s*|\s+)(?=\S)", re.IGNORECASE)  # dấu NPC đầu nhãn người nói (đã đổi "_" thành dấu cách)
 
 
 def shown_reading(spoken: str) -> str:

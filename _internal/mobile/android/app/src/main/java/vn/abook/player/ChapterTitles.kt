@@ -61,6 +61,31 @@ internal object ChapterTitles {
         }
     }
 
+    /** chapter_titles.is_named_matter: the chapter's own heading names it as front/back matter or an extra ("Mở đầu"). */
+    fun isNamedMatter(heading: String): Boolean = heading.isNotEmpty() && named.matcher(clean(heading)).matches()
+
+    /** chapter_titles.fallback_numbers: book order counting only real chapters - "Mở đầu" takes no number. */
+    fun fallbackNumbers(positions: List<Int?>, namedMatter: List<Boolean>): List<Int?> {
+        var count = 0
+        return positions.mapIndexed { index, position ->
+            if (!namedMatter[index]) count++
+            if (position == null || namedMatter[index]) null else count
+        }
+    }
+
+    /** chapter_titles.distinct_fallbacks: a numbered fallback never repeats another chapter's name; it shows its file number,
+     *  then its file label. Headed names never change. */
+    fun distinctFallbacks(names: List<String>, fallback: List<Boolean>, stored: List<String>): List<String> {
+        val out = names.toMutableList()
+        for (at in out.indices) {
+            if (!fallback[at]) continue
+            val others = out.filterIndexed { other, _ -> other != at }.map { it.lowercase() }.toSet()
+            if (out[at].lowercase() !in others) continue
+            listOf(display(stored[at], "", null), clean(stored[at])).firstOrNull { it.isNotEmpty() && it.lowercase() !in others }?.let { out[at] = it }
+        }
+        return out
+    }
+
     fun display(stored: String, text: String, index: Int?): String {
         val heading = firstHeading(text)
         if (heading.isNotEmpty()) return heading

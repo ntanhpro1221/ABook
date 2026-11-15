@@ -16,6 +16,9 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 - Mở lại sách giữ nguyên bản thu đã chấp nhận kèm cảnh báo ở mép; kiểm tra bằng đúng lời đọc để không thu lại oan câu kéo dài. Bản thu mất, hỏng hoặc sai băm vẫn bị phát hiện.
 
 - Tab Nhân vật: vai chính và vai phụ chia đúng theo số câu, người nói nhiều qua nhiều chương luôn là vai chính, giới tính điền đủ; "Người kể chuyện" thành danh sách, mỗi giọng một hàng ghi rõ chương nó đọc, trên điện thoại, web và máy tính.
+- Tab Nhân vật: ô giới không còn trống - nhóm người ghi "Nhóm", trẻ em chưa rõ giới ghi "Trẻ em", còn lại "Chưa rõ"; không bao giờ đoán giới. Vai phụ không tên ("NPC bà cụ") và nhân vật cùng tên ("Bà cụ") là hai người, tên hiện ra không còn chữ "NPC".
+- Tên chương và thông tin sách không bao giờ mang dấu kiểm tra nội bộ (như "Cần nghe lại"); file sách có dấu ấy bị từ chối khi đóng gói.
+- Hai chương không còn trùng tên "Chương 1": phần "Mở đầu" không chiếm số chương, và tên theo số không trùng tên một chương khác.
 
 ## [0.4.173] - 2026-11-15
 

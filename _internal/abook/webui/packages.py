@@ -399,9 +399,8 @@ def listen(path: Path, book_id: str, state: dict[str, Any], *, with_chapters: bo
         promised = bool(chapter.get("available"))
         available = promised and (remote or _present(path, chapter.get("file")))
         lost = (promised and not available) or bool(chapter.get("text") and not remote and not _present(path, chapter["text"]))
+        # Dấu QA không bao giờ thành tên phụ người nghe thấy (xem listen_view._chapters).
         subtitle = chapter.get("subtitle") or ""
-        if chapter.get("qualityPassed") is False and chapter.get("qualityWarning") and not subtitle.endswith("Cần nghe lại"):
-            subtitle = " · ".join(value for value in (subtitle, "Cần nghe lại") if value)
         items.append({
             "id": chapter.get("id"),
             "index": chapter.get("index"),

@@ -56,8 +56,8 @@ Item {
                 font.weight: Theme.weightMedium
             }
             Text {
-                Reveal { shown: !!root.person.gender }
-                text: root.person.gender || ""
+                objectName: "castGender"
+                text: Logic.genderText(root.person)
                 color: Theme.text2
                 font.pixelSize: Theme.sizeCaption
             }

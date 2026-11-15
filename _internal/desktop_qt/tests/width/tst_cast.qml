@@ -2,6 +2,7 @@ import QtQuick
 import QtTest
 import "VisualReady.js" as VisualReady
 import "../../qml/TextWrap.js" as TextWrap
+import "../../qml/CastLogic.js" as Logic
 import ABook
 
 // Tab "Nhân vật" của trang sách (BookPage + CastList/CastPerson/CastSample + các hộp Gộp / Đổi tên / Giới tính / Giọng): danh sách, trạng thái trống, nghe thử,
@@ -126,6 +127,7 @@ Item {
             compare(findChild(page, "castNarratorPending").text, "Chờ áp dụng: giọng Hương")
             compare(all(page, "castName").map(item => item.text).join("|"), "Lan|Hạ Vy|Tuấn")
             const lan = rowOf("Lan")
+            compare(child(lan, "castGender").text, "Nữ")
             compare(child(lan, "castVoice").text, "Ngọc Linh")
             compare(child(lan, "castCounts").text.indexOf("40 câu"), 0)
             verify(child(lan, "castSample").visible)
@@ -138,6 +140,15 @@ Item {
             verify(!findChild(page, "castEmpty").visible)
             shot("cast_list", host)
         }
+        function test_emptyGenderSaysWhy() {
+            // cast.json để trống giới thì genderNote nói vì sao - không bao giờ ô trống, không bịa giới (web genderText, Android Cast.genderText)
+            compare(Logic.genderText({gender: "", genderNote: "group"}), "Nhóm")
+            compare(Logic.genderText({gender: "", genderNote: "child"}), "Trẻ em")
+            compare(Logic.genderText({gender: "", genderNote: "unknown"}), "Chưa rõ")
+            compare(Logic.genderText({gender: ""}), "Chưa rõ")
+            compare(Logic.genderText({gender: "Nam", genderNote: "group"}), "Nam")
+        }
+
         function test_waitingBookSaysMachineIsBusy() {
             server = waitingBook()
             openCast()

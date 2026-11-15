@@ -343,6 +343,8 @@ export interface CastMember {
   /** Tên gốc khi người nghe đã "Đổi tên" (displayName là tên đã đổi) - chỉ có khi đã đổi. */
   originalName?: string;
   gender: string;
+  /** Vì sao `gender` trống (store.cast_gender_note): "group" | "child" | "unknown". Hiện bằng `genderText`. */
+  genderNote?: string;
   age: string;
   lines: number;
   seconds: number;

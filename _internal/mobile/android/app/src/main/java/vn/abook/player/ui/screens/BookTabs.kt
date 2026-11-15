@@ -405,12 +405,8 @@ private fun PersonRow(person: CastMember, samples: CastSamples, onMore: (CastMem
         Column(Modifier.weight(1f)) {
             Row(verticalAlignment = Alignment.Bottom) {
                 BasicText(name, style = Abook.type.bodyStrong, modifier = Modifier.weight(1f, fill = false))
-                Reveal(person.gender.isNotEmpty()) {
-                    Row(verticalAlignment = Alignment.Bottom) {
-                        Spacer(Modifier.width(Dim.s8))
-                        BasicText(person.gender, style = Abook.type.caption.copy(color = colors.text2))
-                    }
-                }
+                Spacer(Modifier.width(Dim.s8))
+                BasicText(Cast.genderText(person), style = Abook.type.caption.copy(color = colors.text2))
             }
             person.originalName?.let { BasicText(S.s_ten_goc_0_dea1648c(Cast.cleanName(it)), style = Abook.type.caption) }
             Row(Modifier.padding(top = 4.dp), verticalAlignment = Alignment.Top) {

@@ -27,3 +27,11 @@ export function narratorRows(narrator: CastNarrator): NarratorRowView[] {
     scope: chapterList(entry.chapters), lines: entry.lines, seconds: entry.seconds,
   }))];
 }
+
+/** Ô giới của một người trong tab Nhân vật: giới cast.json ghi; trống thì lý do (store.cast_gender_note) - "Nhóm", "Trẻ em" hay
+ *  "Chưa rõ". Không bao giờ để trống, không bao giờ bịa giới. Android: Cast.genderText, Qt: CastLogic.genderText - cùng chữ. */
+export function genderText(person: { gender: string; genderNote?: string }): string {
+  if (person.gender) return person.gender;
+  if (person.genderNote === "group") return S.s_cast_gender_group;
+  return person.genderNote === "child" ? S.s_cast_gender_child : S.s_chua_ro_be464a5a;
+}

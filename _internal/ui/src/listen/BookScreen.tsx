@@ -35,7 +35,7 @@ import { FindInBook } from "./FindInBook";
 import { canEditBook, EditBlockedItem, EditBookDialog, refreshAfterEdit, RenameChapterDialog, SaveAsDialog, StudioOnlyItem, useSaveBook, useShareBook } from "./EditBook";
 import { bookStatusText, remoteUnfinishedLine, usePlayListenBook, useResumeTarget } from "./LibraryScreen";
 import { canPlay, chapterHeard, chapterResumeAt, chaptersByPart, type CastMember, type CastNarrator, type ListenBook, type ListenChapter, type NarratorRowView, voiceName } from "./model";
-import { narratorRows } from "./castNarrator";
+import { genderText, narratorRows } from "./castNarrator";
 import { chapterSubline, displayTitle, keepTogether, partialBookLine, primaryListenLabel, textBookLine } from "./labels";
 import { useNowPlaying, usePlayer } from "./player";
 import { usePreparedChapters } from "./PlayerViews";
@@ -448,7 +448,7 @@ export function PersonRow({
         <div className="flex items-baseline gap-2">
           {/* Tên và giọng xuống dòng thay vì cắt: "Thanh Bình · trầm hẳn" cắt giữa chừng là mất đúng chữ người nghe cần (soát UX a8). */}
           <span className="min-w-0 break-words font-medium">{name}</span>
-          {person.gender && <span className="shrink-0 text-xs text-fg-2">{person.gender}</span>}
+          <span className="shrink-0 text-xs text-fg-2">{genderText(person)}</span>
         </div>
         {person.originalName && <div className="break-words text-xs text-fg-3">{S.s_ten_goc_ece0e59a}{cleanName(person.originalName)})</div>}
         <div className="mt-1 break-words text-xs text-fg-2">

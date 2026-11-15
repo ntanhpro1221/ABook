@@ -299,18 +299,29 @@ def _finish(book: ImportedBook, keep_short: bool = False, source: str = "") -> I
         # tên (trang đề tựa) thì ở lại: người dùng quyết có tích nó không.
         book.notes += [f"Bỏ qua mục trống: {chapter.title}" for chapter in book.chapters if not chapter.text.strip() and not chapter.short]
         book.chapters = [chapter for chapter in book.chapters if chapter.text.strip() or chapter.short]
-    from .chapter_titles import explicit_heading, fallback_positions
+    from .chapter_titles import distinct_fallbacks, explicit_heading, fallback_numbers, fallback_positions, first_heading, is_named_matter
 
-    positions = fallback_positions([chapter.title for chapter in book.chapters])
+    # Cùng luật với store._chapter_names: "Mở đầu" không chiếm số; tên theo số không trùng tên chương khác.
+    positions = fallback_numbers(fallback_positions([chapter.title for chapter in book.chapters]),
+                                 [is_named_matter(first_heading(chapter.text)) for chapter in book.chapters])
+    numbered: list[int] = []
     for number, chapter in enumerate(book.chapters, start=1):
         # Tên hiển thị (siêu dữ liệu). "Mở đầu" là nhãn phần trước chương đầu: dòng đầu của nó thường là tên sách, không đặt lại.
         if not chapter.name and chapter.title != PREAMBLE:
             if book.text_has_title:
                 display = display_chapter_name(chapter.title, chapter.text, positions[number - 1])
+                if positions[number - 1] is not None and not first_heading(chapter.text):
+                    numbered.append(number - 1)
             else:
                 # Chương mang tên sách: chỉ nhận tiêu đề có từ khoá ("Đoạn kết", "Chương 3"), không nhận dòng đầu trang PDF.
                 display = explicit_heading(chapter.text) if chapter.title == book.title else ""
             chapter.name = display if display and display != chapter.title else ""
+    if numbered:
+        shown = distinct_fallbacks([chapter.name or chapter.title for chapter in book.chapters],
+                                   [at in numbered for at in range(len(book.chapters))], [chapter.title for chapter in book.chapters])
+        for at in numbered:
+            book.chapters[at].name = shown[at] if shown[at] != book.chapters[at].title else ""
+    for number, chapter in enumerate(book.chapters, start=1):
         # Tên chương tính là một dòng của chương (cửa sổ 6 dòng đầu), như file chương mà Studio đọc.
         for line, at_end in chapter_credit_suggestions(book.chapter_source(chapter)):
             book.credits.append((number, line))

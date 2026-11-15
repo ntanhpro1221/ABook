@@ -40,9 +40,10 @@ NPC_PREFIX = re.compile(r"^\s*npc\s*[*:_-]*\s*", re.IGNORECASE)
 
 
 def name_key(name: str) -> tuple[str, ...]:
-    """Khoá so tên: bỏ tiền tố NPC/NPC_LOCAL, kính ngữ, hoa/thường, gạch dưới; chữ xếp lại (họ-tên đảo vẫn một khoá)."""
-    text = local_speaker_label(name) if is_local_speaker(name) else str(name)
-    text = unicodedata.normalize("NFC", NPC_PREFIX.sub("", text)).replace("_", " ")
+    """Khoá so tên: bỏ kính ngữ, hoa/thường, gạch dưới; chữ xếp lại (họ-tên đảo vẫn một khoá). Tiền tố NPC là một phần danh
+    tính ("NPC X" và "X" là hai người): mọi cách viết (NPC, Npc:, NPC_LOCAL::...) thành cùng chữ "npc", không bỏ."""
+    text = "NPC " + local_speaker_label(name) if is_local_speaker(name) else str(name)
+    text = unicodedata.normalize("NFC", NPC_PREFIX.sub("npc ", text)).replace("_", " ")
     words = [strip_japanese_honorific(word) for word in text.split()]
     return tuple(sorted(word.casefold() for word in words if word))
 

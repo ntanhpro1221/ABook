@@ -583,10 +583,11 @@ def _chapter_names(connection: sqlite3.Connection,
     has_path = "input_path" in {row[1] for row in connection.execute("PRAGMA table_info(chapters)")}
     out: dict[int, dict[str, Any]] = {}
     rows = connection.execute(f"SELECT id, chapter_index, title{', input_path' if has_path else ''} FROM chapters ORDER BY chapter_index").fetchall()
-    from ..chapter_titles import fallback_positions, read_opening
+    from ..chapter_titles import (distinct_fallbacks, fallback_numbers, fallback_positions, first_heading, is_named_matter,
+                                  read_opening)
 
-    positions = fallback_positions([str(row["title"]) for row in rows])
-    for position, row in zip(positions, rows):
+    openings = []
+    for row in rows:
         heading = headings.get(int(row["id"]))
         if has_path and (heading is None or not humanize.is_heading(heading)):
             # Read the opening when its first segment cannot establish a title.
@@ -595,10 +596,21 @@ def _chapter_names(connection: sqlite3.Connection,
             source = book_paths.safe_source(project_root, row["input_path"])
             if source is not None and heading is None:
                 sources.append((str(source), _mtime_ns(source)))
-            heading = read_opening(source) or heading
-        name, subtitle = humanize.chapter_names(str(row["title"]), heading,
-                                               int(row["chapter_index"]) if position is not None else None)
-        name, subtitle = apply_chapter_title(name, subtitle, renamed.get(int(row["id"])))
+            heading = read_opening(source) or _segment_opening(connection, int(row["id"])) or heading
+        openings.append(heading)
+    # "Chương <số>" cho chương không tiêu đề đếm theo thứ tự sách, bỏ qua phần có tên riêng ("Mở đầu" không chiếm số 1).
+    positions = fallback_numbers(fallback_positions([str(row["title"]) for row in rows]),
+                                 [is_named_matter(first_heading(heading or "")) for heading in openings])
+    named: list[tuple[Any, str, str, bool]] = []
+    for position, row, heading in zip(positions, rows, openings):
+        name, subtitle = humanize.chapter_names(str(row["title"]), heading, position)
+        edit = renamed.get(int(row["id"]))
+        named.append((row, *apply_chapter_title(name, subtitle, edit),
+                      position is not None and not first_heading(heading or "") and not (edit or {}).get("title")))
+    # Chương không tiêu đề lấy "Chương <vị trí>" - không bao giờ trùng tên một chương khác (chapter_titles.distinct_fallbacks).
+    names = distinct_fallbacks([name for _row, name, _subtitle, _fallback in named], [fallback for *_rest, fallback in named],
+                               [str(row["title"]) for row, *_rest in named])
+    for (row, _name, subtitle, _fallback), name in zip(named, names):
         out[int(row["id"])] = {
             "index": int(row["chapter_index"]),
             "name": name,
@@ -606,6 +618,23 @@ def _chapter_names(connection: sqlite3.Connection,
             "full": chapter_full_title(name, subtitle),
         }
     return out, tuple(sources)
+
+
+def _segment_opening(connection: sqlite3.Connection, chapter_id: int) -> str:
+    """Đầu chương dựng lại từ sổ khi không đọc được file nguồn (nguồn ngoài thư mục sách, file dự án người khác gửi): đoạn đầu,
+    rồi dòng trống nếu còn đoạn sau. Đoạn của bộ tách câu là phần giữa hai dòng trống (text_processing.segment_chapter_text), nên
+    luật "tiêu đề đứng riêng phải có dòng trống theo sau" của chapter_titles.first_heading vẫn giữ nguyên nghĩa. Trước đây chỉ có
+    câu đầu: "Lần gặp thứ 92 - ..." không bao giờ là tiêu đề, chương lấy tên theo vị trí và trùng tên chương khác."""
+    rows = connection.execute("SELECT paragraph_index, text FROM segments WHERE chapter_id=? ORDER BY seq LIMIT 8",
+                              (chapter_id,)).fetchall()
+    if not rows:
+        return ""
+    first = rows[0]["paragraph_index"]
+    paragraph = [str(row["text"] or "") for row in rows if row["paragraph_index"] == first]
+    more = any(row["paragraph_index"] != first for row in rows)
+    if not more and len(paragraph) == len(rows) == 8:
+        return ""  # đoạn đầu dài hơn phần đã đọc: không phải một dòng tiêu đề
+    return " ".join(paragraph) + ("\n\nx" if more else "")
 
 
 def chapter_full_title(name: str, subtitle: str) -> str:
@@ -1911,7 +1940,40 @@ def cast_gender(speaker: str, record: Any, voice_gender: str) -> str:
     if gender:
         return gender
     age = str(record["age"] or "") if record is not None and "age" in record.keys() else ""
-    return voice_gender if voice_gender in ("male", "female") and age != "child" else ""
+    # Giọng nhóm/trẻ em là giọng cấp theo luật, không nói gì về giới của họ.
+    return voice_gender if voice_gender in ("male", "female") and age != "child" and not is_group_speaker(speaker, record) else ""
+
+
+# Nhãn người nói gọi một NHÓM người ("Nhóm trẻ ném tuyết", "Đám đông", "Bọn lính", "Mọi người", "Các cô gái"): chữ đầu nhãn.
+# Chỉ từ chắc là số nhiều - "Đội trưởng", "Đoàn Dự", "Toán" là một người nên không có ở đây.
+GROUP_LABEL = re.compile(
+    r"^(?:nhóm|đám|bọn|lũ|tốp|những|các|mọi người|người dân|dân (?:làng|chúng|nghèo|phố)|cả (?:lớp|nhà|làng|đám|bọn|nhóm|đội))(?:\s|$)",
+    re.IGNORECASE)
+
+
+def cast_gender_note(speaker: str, record: Any, gender: str) -> str:
+    """Vì sao ô giới trong cast.json trống (`gender` là kết quả `cast_gender`): "group" (nhãn gọi một nhóm người), "child" (sổ
+    ghi tuổi trẻ em - trẻ em đọc giọng nữ theo luật cấp giọng, không phải vì là nữ), "unknown" (không nguồn nào nói); rỗng khi đã
+    có giới. Không bao giờ bịa giới: ứng dụng hiện chữ của khoá này (vi.json: "Nhóm", "Trẻ em", "Chưa rõ") thay ô giới trống."""
+    if gender in ("male", "female"):
+        return ""
+    if is_group_speaker(speaker, record):
+        return "group"
+    age = str(record["age"] or "") if record is not None and "age" in record.keys() else ""
+    return "child" if age == "child" else "unknown"
+
+
+def is_group_speaker(speaker: str, record: Any = None) -> bool:
+    """Nhãn người nói (hay tên trong sổ) gọi một nhóm người (`GROUP_LABEL`), sau khi bỏ dấu NPC / vai cục bộ."""
+    from ..character_registry import is_local_speaker, local_speaker_label
+
+    names = [speaker] + ([str(record["display_name"] or "")] if record is not None else [])
+    for name in filter(None, names):
+        label = local_speaker_label(name) if is_local_speaker(name) else name
+        label = re.sub(r"^npc(?:[\s:_-]+|$)", "", label.strip(), flags=re.IGNORECASE).replace("_", " ").strip()
+        if GROUP_LABEL.match(label):
+            return True
+    return False
 
 
 def _speaker_scenes(connection: sqlite3.Connection) -> tuple[dict[str, int], int, dict[str, int]]:
@@ -2097,10 +2159,12 @@ def _cast(project_root: Path) -> dict[str, Any]:
         if speaker in ("", "NARRATOR"):
             continue
         record = characters.get(speaker_key(speaker))
+        gender = cast_gender(speaker, record, voice_gender_of(speaker))
         entry = {
             "name": speaker,
             **shown_name(speaker, speaker_label(str(record["display_name"] or speaker) if record else speaker)),
-            "gender": humanize.GENDER_LABELS.get(cast_gender(speaker, record, voice_gender_of(speaker)), ""),
+            "gender": humanize.GENDER_LABELS.get(gender, ""),
+            **({"genderNote": note} if (note := cast_gender_note(speaker, record, gender)) else {}),
             "age": humanize.AGE_LABELS.get(str(record["age"] if record else ""), ""),
             "lines": count,
             "seconds": round(seconds[speaker], 1),
@@ -2130,6 +2194,7 @@ def _cast(project_root: Path) -> dict[str, Any]:
             "name": name,
             **shown_name(name, speaker_label(str(record["display_name"] or name))),
             "gender": humanize.GENDER_LABELS.get(str(record["gender"] or ""), ""),
+            **({"genderNote": note} if (note := cast_gender_note(name, record, str(record["gender"] or ""))) else {}),
             "age": humanize.AGE_LABELS.get(str(record["age"] or ""), ""),
             "lines": 0,
             "seconds": 0.0,

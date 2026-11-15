@@ -95,6 +95,75 @@ def cover_warnings(book: dict[str, Any], files: Container[str], edits: dict[str,
     return [] if present else [MISSING_COVER]
 
 
+# Dấu nội bộ (QA, mã câu, mã lỗi máy, nhãn vai cục bộ thô) KHÔNG BAO GIỜ vào chữ người nghe thấy - luật chủ sách 15-11: "Cần nghe lại"
+# từng thành tên phụ của sáu chương Hello trong file đã phát hành. `seal` chặn mọi gói (đóng mới, đóng lại, file dự án) có dấu ấy.
+INTERNAL_MARKER = re.compile(
+    r"Cần nghe lại|Cần thu lại|listener_redo|Thiếu audio dòng|NPC_LOCAL|\bc\d{5}_s\d{4}\b|\b[A-Z]{2,}(?:_[A-Z0-9]{2,}){2,}\b")
+# Các trường chữ người nghe thấy (danh sách trắng): tên sách, tác giả, người kể, tên quyển/phần/chương, tên phụ; ở cast.json là tên
+# hiện, chương đầu, giới, tuổi, tên giọng và tên chương của người kể. Trường dữ liệu (qualityWarning, name...) không ra mặt người nghe.
+LISTENER_BOOK_FIELDS = ("title", "author", "narrator")
+LISTENER_CHAPTER_FIELDS = ("title", "subtitle", "fullTitle")
+LISTENER_PERSON_FIELDS = ("displayName", "originalName", "firstChapter", "gender", "age", "mergedInto")
+# Tên người hiện ra (tên trong cast.json, người nói trên dòng đọc theo của scripts/) không mang dấu NPC: "NPC X" là danh tính trong
+# sổ, người nghe thấy "X" (humanize.person_name). Chỉ xét tên người - "NPC" có thể đứng trong tên sách, tên chương thật.
+NPC_SHOWN = re.compile(r"^\s*npc\b", re.IGNORECASE)
+LISTENER_NAME_FIELDS = ("displayName", "originalName", "mergedInto")
+SCRIPT_SPEAKER = re.compile(rb'"speaker":\s*"((?:[^"\\]|\\.)*)"')
+
+
+def listener_text_problems(book: dict[str, Any], cast: dict[str, Any] | None) -> list[str]:
+    """Các chữ người nghe thấy có dấu nội bộ, dạng "chỗ: chữ" - rỗng là sạch."""
+    found: list[str] = []
+
+    def check(where: str, value: Any) -> None:
+        if isinstance(value, str) and INTERNAL_MARKER.search(value):
+            found.append(f"{where}: {value}")
+
+    for field in LISTENER_BOOK_FIELDS:
+        check(f"book.{field}", book.get(field))
+    for group in ("chapters", "volumes", "parts"):
+        for item in book.get(group) or []:
+            if not isinstance(item, dict):
+                continue
+            for field in LISTENER_CHAPTER_FIELDS:
+                check(f"{group}[{item.get('id', item.get('number'))}].{field}", item.get(field))
+            for chapter in item.get("chapters") or []:
+                if isinstance(chapter, dict):
+                    for field in LISTENER_CHAPTER_FIELDS:
+                        check(f"chapters[{chapter.get('id')}].{field}", chapter.get(field))
+    if isinstance(cast, dict):
+        narrator = cast.get("narrator") if isinstance(cast.get("narrator"), dict) else {}
+        check("cast.narrator.voice", narrator.get("voice"))
+        for voice in narrator.get("chapterVoices") or []:
+            if isinstance(voice, dict):
+                check("cast.narrator.chapterVoices.voice", voice.get("voice"))
+                for chapter in voice.get("chapters") or []:
+                    check("cast.narrator.chapterVoices.chapters", chapter.get("title") if isinstance(chapter, dict) else None)
+        for chapter in narrator.get("exceptChapters") or []:
+            check("cast.narrator.exceptChapters", chapter.get("title") if isinstance(chapter, dict) else None)
+        for group in ("characters", "extras", "carried"):
+            for person in cast.get(group) or []:
+                if isinstance(person, dict):
+                    for field in LISTENER_PERSON_FIELDS:
+                        check(f"cast.{group}.{field}", person.get(field))
+                    for field in LISTENER_NAME_FIELDS:
+                        value = person.get(field)
+                        if isinstance(value, str) and NPC_SHOWN.search(value):
+                            found.append(f"cast.{group}.{field}: {value}")
+    return found
+
+
+def script_speaker_problems(name: str, data: bytes) -> list[str]:
+    """Người nói trên dòng đọc theo (`scripts/<chương>.json`, người nghe thấy cạnh câu) có dấu nội bộ hay dấu NPC - rỗng là sạch.
+    Quét byte thô, không dựng JSON: cuốn nghìn chương vẫn rẻ."""
+    found = []
+    for raw in set(SCRIPT_SPEAKER.findall(data)):
+        speaker = json.loads(b'"' + raw + b'"')
+        if INTERNAL_MARKER.search(speaker) or NPC_SHOWN.search(speaker):
+            found.append(f"{name}.speaker: {speaker}")
+    return found
+
+
 # Every book.json stores the volume tree. Chapter arrays are runtime projections only.
 FORMAT_VERSION = 6
 MANIFEST = "book.json"
@@ -509,6 +578,17 @@ def seal(book: dict[str, Any], files: dict[str, Path | bytes], out: Path, *, pro
     known = known or {}
     for message in cover_warnings(book, files, edits):
         warnings.warn(message, MissingCoverWarning, stacklevel=2)
+    cast_source = files.get("cast.json")
+    try:
+        cast_view = json.loads(cast_source.read_bytes() if isinstance(cast_source, Path) else cast_source) if cast_source else None
+    except (OSError, ValueError):
+        cast_view = None
+    leaked = listener_text_problems(book, cast_view)
+    for name, source in files.items():
+        if name.startswith("scripts/") and name.endswith(".json") and not leaked:
+            leaked += script_speaker_problems(name, source.read_bytes() if isinstance(source, Path) else source)
+    if leaked:
+        raise BookFileError("Chữ người nghe thấy có dấu nội bộ (QA, mã máy) - không đóng gói: " + "; ".join(leaked[:3]))
     described_files = {}
     total_hash = sum(source.stat().st_size if isinstance(source, Path) else len(source) for source in files.values())
     hashed = 0

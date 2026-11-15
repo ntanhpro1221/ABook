@@ -2887,6 +2887,8 @@ function s_cast_history_conflicts(p0) { return String(p0) + " câu xung đột";
 function s_cast_history_alias_conflicts(p0) { return String(p0) + " bí danh xung đột"; }
 function s_cast_history_row(p0, p1, p2) { return String(p0) + " → " + String(p1) + " · " + String(p2) + " câu"; }
 var s_cast_history_group = "Nhóm câu";
+var s_cast_gender_group = "Nhóm";
+var s_cast_gender_child = "Trẻ em";
 var s_preview_timeout = "Mạng chậm, thử nghe lại.";
 var s_chua_co_bia = "Chưa có bìa";
 var s_avatar_portrait = "Ảnh nhân vật";

@@ -76,6 +76,12 @@ function countLine(person) {
     return formatNumber(person.lines) + S.s_cau_b07e1008 + (person.seconds > 0 ? "\u00a0·\u00a0" + formatLength(person.seconds) : "")
         + (person.firstChapter ? S.s_u00a0_u00a0tu_ce4ae8bc + keepTogether(person.firstChapter) : "")
 }
+// Ô giới: giới cast.json ghi; trống thì lý do (store.cast_gender_note) - "Nhóm", "Trẻ em" hay "Chưa rõ". Không bao giờ trống, không bịa giới (web genderText)
+function genderText(person) {
+    if (person.gender) return person.gender
+    if (person.genderNote === "group") return S.s_cast_gender_group
+    return person.genderNote === "child" ? S.s_cast_gender_child : S.s_chua_ro_be464a5a
+}
 // "Chương 5, 7" khi mọi tên là "Chương <số>"; không thì các tên nối bằng dấu phẩy. `lower`: đứng sau chữ khác ("… trừ chương 5, 7")
 function chapterList(chapters, lower) {
     const list = chapters || []

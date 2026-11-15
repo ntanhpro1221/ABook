@@ -49,12 +49,16 @@ def _gendered_book(tmp_path: Path) -> Path:
         (1, "dialogue", "Bé Tí", "“Con đây.”", 0),
         (2, "dialogue", "Soren", "“Chào.”", 0),
         (2, "dialogue", "Velia", "“Chào cậu.”", 0),
+        (2, "dialogue", "NPC Nhóm Trẻ Thả Diều", "“Lên rồi!”", 0),
+        (2, "dialogue", "Ông Lão Quét Sân", "“Hừm.”", 0),
+        (2, "dialogue", "Dân Làng", "“Hoan hô!”", 0),
     ]
     people = {
         "SOREN": ("Soren", "male", "teen", "main"),
         "NGƯỜI PHỤ NỮ ÁO ĐỎ": ("Người Phụ Nữ Áo Đỏ", "unknown", "adult", "minor"),
         "VELIA": ("Velia", "unknown", "teen", "main"),
         "BÉ TÍ": ("Bé Tí", "unknown", "child", "minor"),
+        "NPC NHÓM TRẺ THẢ DIỀU": ("NPC Nhóm Trẻ Thả Diều", "unknown", "child", "minor"),
     }
     root = _book(tmp_path, lines, people)
     with _writer(root) as connection:
@@ -62,6 +66,7 @@ def _gendered_book(tmp_path: Path) -> Path:
             connection.execute("INSERT INTO voice_profiles(id, voice_key, engine, preset_name, seed, created_at, updated_at)"
                                " VALUES(?, ?, 'vieneu', ?, 1, 0, 0)", (key, f"vieneu@test/{preset}", preset))
         connection.execute("UPDATE segments SET voice_profile_id = 1 WHERE speaker IN ('Velia', 'Bé Tí')")
+        connection.execute("UPDATE segments SET voice_profile_id = 2 WHERE speaker = 'Dân Làng'")
         connection.execute("UPDATE segments SET voice_profile_id = 2 WHERE speaker = 'Soren'")
         connection.commit()
     return root
@@ -74,6 +79,25 @@ def test_gender_comes_from_the_registry_then_the_label_then_the_voice_but_never_
     assert gender["Người Phụ Nữ Áo Đỏ"] == "Nữ", "chữ chỉ giới trong nhãn"
     assert gender["Velia"] == "Nữ", "giọng phân vai đã gán"
     assert gender["Bé Tí"] == "", "trẻ em đọc giọng nữ theo luật, không phải vì là nữ"
+
+
+def test_an_empty_gender_says_why_and_is_never_invented(tmp_path: Path) -> None:
+    """Groups and children keep an empty gender; `genderNote` tells the apps which word to show (vi.json "Nhóm" / "Trẻ em")."""
+    view = store.cast(_gendered_book(tmp_path))
+    people = {person["name"]: person for person in view["characters"] + view["extras"]}
+    assert (people["NPC Nhóm Trẻ Thả Diều"]["gender"], people["NPC Nhóm Trẻ Thả Diều"]["genderNote"]) == ("", "group")
+    assert (people["Bé Tí"]["gender"], people["Bé Tí"]["genderNote"]) == ("", "child")
+    assert people["Ông Lão Quét Sân"]["gender"] == "Nam" and "genderNote" not in people["Ông Lão Quét Sân"]
+    assert "genderNote" not in people["Soren"]
+    assert (people["Dân Làng"]["gender"], people["Dân Làng"]["genderNote"]) == ("", "group"), "giọng nam cấp cho nhóm không làm nhóm thành nam"
+
+
+def test_group_labels() -> None:
+    for label in ("Nhóm trẻ ném tuyết", "NPC Đám đông", "NPC_LOCAL::c00001::bọn lính gác", "Mọi người", "Các cô gái", "Dân làng"):
+        assert store.cast_gender_note(label, None, "") == "group", label
+    for label in ("Đội Trưởng", "Đoàn Dự", "Nhómxyz", "Cảnh Sát", "NPC Người Lạ"):
+        assert store.cast_gender_note(label, None, "") == "unknown", label
+    assert store.cast_gender_note("Nhóm trẻ", None, "male") == ""
 
 
 def test_narrator_chapter_voices_are_structured_and_name_the_chapters_as_titled() -> None:

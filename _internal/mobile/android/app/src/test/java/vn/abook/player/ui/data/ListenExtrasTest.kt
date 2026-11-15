@@ -146,6 +146,17 @@ class ListenExtrasTest {
         .put("characters", JSONArray(characters)).put("extras", JSONArray(extras)).toString()
 
     @Test
+    fun `an empty gender shows why and is never blank or invented`() {
+        val view = Cast.parse(cast(listOf(person("Vân")), listOf(
+            person("NPC Nhóm Trẻ Thả Diều") { put("gender", "").put("genderNote", "group") },
+            person("Bé Tí") { put("gender", "").put("genderNote", "child") },
+            person("Người Lạ") { put("gender", "") },
+        )))!!
+        assertEquals("Nữ", Cast.genderText(view.characters[0]))
+        assertEquals(listOf("Nhóm", "Trẻ em", "Chưa rõ"), view.extras.map { Cast.genderText(it) })
+    }
+
+    @Test
     fun `the cast is read with narrator characters and extras`() {
         val view = Cast.parse(cast(listOf(person("Thanh_Bình")), listOf(person("Lính gác 1", lines = 1))))!!
         assertEquals("Hoài My", Cast.narratorName(view.narrator))

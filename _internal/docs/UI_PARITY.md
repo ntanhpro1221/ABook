@@ -165,7 +165,7 @@ Một việc - một cách viết, cho web (máy tính + điện thoại), nativ
 
 <!-- ui_parity:begin (SINH TỰ ĐỘNG bởi scripts/ui_parity.py - không sửa tay, chạy lại script) -->
 
-Quét: web 6718 chữ (3145 khác nhau), 363 cặp nhãn-icon; native 2286 chữ (1670 khác nhau), 86 cặp nhãn-icon. Nhãn so theo khoá lỏng (hạ chữ, dấu thanh một kiểu, `...` = `…`, bỏ dấu câu cuối).
+Quét: web 6721 chữ (3147 khác nhau), 363 cặp nhãn-icon; native 2289 chữ (1672 khác nhau), 86 cặp nhãn-icon. Nhãn so theo khoá lỏng (hạ chữ, dấu thanh một kiểu, `...` = `…`, bỏ dấu câu cuối).
 
 ## a. Gợi ý gần chữ, đối chiếu với giao ước màn
 
@@ -690,7 +690,7 @@ Nhãn ngắn (<= 6 chữ) không có (theo khoá lỏng) ở phía kia - kể c�
 - `listen/labels.ts` (3): Nghe tiếp · {} (`88`); Shift+→ (`106`); Bấm (`127`)
 - `listen/liveClip.ts` (2): Đã bỏ đoạn này. (`157`); Giọng đọc không phản hồi. (`193`)
 - `listen/liveTestKit.ts` (1): QuotaExceeded (`12`)
-- `listen/model.ts` (2): Phần {} · {} (`407`); Đã nhập (`540`)
+- `listen/model.ts` (2): Phần {} · {} (`409`); Đã nhập (`542`)
 - `listen/onlineConsent.ts` (1): Microsoft (`15`)
 - `listen/player.tsx` (6): Đã tới câu chọn (`596`); Đã tới {} (`596`); Chưa tải được nhạc (`664`); Đọc chương ấy (`1232`); Chưa lưu được tốc độ. (`1261`); Chưa lưu được âm lượng. (`1281`)
 - `listen/playlistBed.ts` (1): Đã thêm {} bài (`369`)
@@ -771,23 +771,23 @@ Nhãn ngắn (<= 6 chữ) không có (theo khoá lỏng) ở phía kia - kể c�
 
 | kiểu | web | native |
 |---|---|---|
-| dấu ba chấm ASCII `...` | 6 / 6718 | 0 / 2286 |
-| dấu ba chấm `…` | 19 / 6718 | 0 / 2286 |
-| kết thúc bằng dấu chấm `.` | 1156 / 6718 | 432 / 2286 |
-| kết thúc bằng `!` | 0 / 6718 | 0 / 2286 |
-| kết thúc bằng `:` | 90 / 6718 | 6 / 2286 |
-| dấu thanh kiểu cũ `oà oá uý` | 530 / 6718 | 222 / 2286 |
-| dấu thanh kiểu mới `òa óa úy` | 1 / 6718 | 0 / 2286 |
-| số thập phân dấu phẩy `1,5` | 2 / 6718 | 0 / 2286 |
-| số thập phân dấu chấm `1.5` | 0 / 6718 | 0 / 2286 |
-| nhân bằng `×` | 0 / 6718 | 0 / 2286 |
-| nhân bằng `x` sau số | 0 / 6718 | 0 / 2286 |
-| ngăn cách `·` | 148 / 6718 | 39 / 2286 |
-| ngăn cách ` - ` | 275 / 6718 | 88 / 2286 |
-| gạch dài `—`/`–` | 17 / 6718 | 2 / 2286 |
-| giờ `1:30` hay `1 giờ 30` | 0 / 6718 | 2 / 2286 |
-| dấu `%` dính số | 0 / 6718 | 1 / 2286 |
-| dấu `%` cách số | 0 / 6718 | 0 / 2286 |
+| dấu ba chấm ASCII `...` | 6 / 6721 | 0 / 2289 |
+| dấu ba chấm `…` | 19 / 6721 | 0 / 2289 |
+| kết thúc bằng dấu chấm `.` | 1156 / 6721 | 432 / 2289 |
+| kết thúc bằng `!` | 0 / 6721 | 0 / 2289 |
+| kết thúc bằng `:` | 90 / 6721 | 6 / 2289 |
+| dấu thanh kiểu cũ `oà oá uý` | 530 / 6721 | 222 / 2289 |
+| dấu thanh kiểu mới `òa óa úy` | 1 / 6721 | 0 / 2289 |
+| số thập phân dấu phẩy `1,5` | 2 / 6721 | 0 / 2289 |
+| số thập phân dấu chấm `1.5` | 0 / 6721 | 0 / 2289 |
+| nhân bằng `×` | 0 / 6721 | 0 / 2289 |
+| nhân bằng `x` sau số | 0 / 6721 | 0 / 2289 |
+| ngăn cách `·` | 148 / 6721 | 39 / 2289 |
+| ngăn cách ` - ` | 275 / 6721 | 88 / 2289 |
+| gạch dài `—`/`–` | 17 / 6721 | 2 / 2289 |
+| giờ `1:30` hay `1 giờ 30` | 0 / 6721 | 2 / 2289 |
+| dấu `%` dính số | 0 / 6721 | 1 / 2289 |
+| dấu `%` cách số | 0 / 6721 | 0 / 2289 |
 
 **d3. Nhãn ngắn bắt đầu bằng chữ thường** (web 138, native 0); 15 đầu mỗi phía:
 
@@ -830,7 +830,7 @@ Nhãn ngắn (<= 6 chữ) không có (theo khoá lỏng) ở phía kia - kể c�
 - `Lùi 15 giây` | `Lùi {} giây` (`native/nowplaying/NowPlayingScreen.kt:277`, `native/pip/PipParams.kt:49`)
 - `Lưu thay đổi` | `Lưu thay đổi?` (`native/nowplaying/TonePage.kt:128`, `native/screens/BookSheets.kt:201`)
 - `Mở Cài đặt` | `Mở cài đặt` (`native/data/SettingsRepo.kt:133`, `native/devices/CompanionSurfaces.kt:153` (+2))
-- `Nữ` | `nữ` (`native/data/ListenExtras.kt:415`, `native/data/ListenExtras.kt:461` (+5))
+- `Nữ` | `nữ` (`native/data/ListenExtras.kt:427`, `native/data/ListenExtras.kt:473` (+5))
 - `Thử không được` | `Thử không được.` (`native/voice/VoicePickCard.kt:68`, `native/voice/VoiceState.kt:216`)
 - `Tới 15 giây` | `Tới {} giây` (`native/nowplaying/NowPlayingScreen.kt:279`, `native/pip/PipParams.kt:51`)
 - `Xoá bản tải` | `Xoá bản tải?` (`native/music/library/TrackRow.kt:108`, `native/music/library/TrackSheet.kt:140` (+1))
@@ -843,13 +843,13 @@ Trong một cặp, mỗi nhãn ngắn phải có ở cả hai phía (khoá lỏn
 | destructive-confirmation | 3 | 3 | 0 | 0 | 0 | 0 | 0 |
 | cast-history | 4 | 4 | 0 | 0 | 0 | 0 | 0 |
 | now-playing | 151 | 165 | 0 | 0 | 30 | 4 | 0 |
-| shared-labels | 33 | 1476 | 0 | 0 | 7 | 0 | 0 |
-| library-book | 208 | 218 | 0 | 0 | 63 | 10 | 0 |
+| shared-labels | 33 | 1478 | 0 | 0 | 7 | 0 | 0 |
+| library-book | 211 | 221 | 0 | 0 | 63 | 10 | 0 |
 | settings | 112 | 135 | 0 | 0 | 21 | 77 | 0 |
 | devices | 145 | 164 | 0 | 0 | 18 | 159 | 0 |
 | voice | 162 | 146 | 0 | 0 | 26 | 23 | 0 |
 | add-edit-book | 164 | 142 | 0 | 0 | 61 | 4 | 0 |
-| studio | 2241 | 532 | 0 | 0 | 59 | 88 | 0 |
+| studio | 2243 | 532 | 0 | 0 | 59 | 88 | 0 |
 | export | 80 | 83 | 0 | 0 | 28 | 44 | 0 |
 | music | 31 | 52 | 0 | 0 | 7 | 8 | 0 |
 | music-library | 75 | 77 | 0 | 0 | 6 | 1 | 0 |

@@ -227,7 +227,9 @@ def test_release_gate_real_audio_keeps_failed_chapter_and_blocks_missing_line(tm
         assert opened.book['chaptersAvailable'] == opened.book['chaptersTotal'] == 1
         assert opened.book['chapters'][0]['qualityPassed'] is False
         assert opened.book['chapters'][0]['failedLines']
-        assert 'Cần nghe lại' in opened.book['chapters'][0]['subtitle']
+        # Tình trạng QA đi theo dữ liệu (qualityPassed/failedLines), không bao giờ thành chữ người nghe thấy.
+        assert 'Cần nghe lại' not in opened.book['chapters'][0]['subtitle']
+        assert bookfile.listener_text_problems(opened.book, json.loads(opened.read('cast.json'))) == []
         concealed = copy.deepcopy(opened.book)
         concealed['chapters'][0]['qualityPassed'] = True
         with pytest.raises(ValueError, match='che dòng'):

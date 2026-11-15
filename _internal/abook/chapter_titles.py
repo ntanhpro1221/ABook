@@ -106,6 +106,42 @@ def chapter_name(stored: str, text: str = "", *, index: int | None = None) -> tu
     return stored, ""
 
 
+def is_named_matter(heading: str) -> bool:
+    """The chapter's own heading names it as front/back matter or an extra ("Mở đầu", "Phần kết", "Ngoại truyện")."""
+    return bool(heading) and _NAMED.fullmatch(clean_line(heading)) is not None
+
+
+def fallback_numbers(positions: list[int | None], named_matter: list[bool]) -> list[int | None]:
+    """Display numbers for chapters without a heading: book order counting only real chapters. A prologue headed "Mở đầu"
+    takes no number, so the first unheaded chapter after it is "Chương 1", not "Chương 2" (Hello, 15-11)."""
+    out: list[int | None] = []
+    count = 0
+    for position, matter in zip(positions, named_matter):
+        if not matter:
+            count += 1
+        # Named matter keeps its own heading; a named file label (position None) keeps its name.
+        out.append(None if position is None or matter else count)
+    return out
+
+
+def distinct_fallbacks(names: list[str], fallback: list[bool], stored: list[str]) -> list[str]:
+    """A position fallback ("Chương N", chapter without a heading) never repeats a name another chapter has: it shows its
+    file number instead ("000" -> "Chương 0"), and its file label when that clashes too. A prologue without a recognized
+    heading before a real "Chương 1" used to become a second "Chương 1" (Những gì em, 15-11). Headed names never change."""
+    out = list(names)
+    for at, is_fallback in enumerate(fallback):
+        if not is_fallback:
+            continue
+        others = {name.casefold() for other, name in enumerate(out) if other != at}
+        if out[at].casefold() not in others:
+            continue
+        for candidate in (full_name(chapter_name(stored[at])), clean_line(stored[at])):
+            if candidate and candidate.casefold() not in others:
+                out[at] = candidate
+                break
+    return out
+
+
 def full_name(parts: tuple[str, str]) -> str:
     name, subtitle = parts
     return f"{name} · {subtitle}" if subtitle else name
