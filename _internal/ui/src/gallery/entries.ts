@@ -125,6 +125,10 @@ const DESKTOP: Omit<Entry, "platform">[] = [
   { id: "desktop/player-voice", group: "Trình phát", title: "Hộp giọng đọc", route: "/book/gac-xep", act: async () => {
     await desktopTextMore(); await click(/^Giọng đọc:/);
   } },
+  { id: "desktop/player-device-voices", group: "Trình phát", title: "Tên giọng thiết bị", route: "/book/gac-xep", scenario: { deviceVoices: true }, act: async () => {
+    await click(/^Nghe(?! thử)/, document.querySelector("main")!);
+    await playerMore(); await click(/^Giọng đọc:/);
+  } },
   { id: "desktop/player-music", group: "Trình phát", title: "Hộp nhạc nền", route: "/book/gac-xep", scenario: { music: true }, act: async () => {
     await desktopTextMore(); await click("Âm thanh"); await click("Chọn nhạc");
   } },

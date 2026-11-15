@@ -262,17 +262,18 @@ private fun VoiceList(state: NowPlayingState, model: NowPlayingModel, window: No
             LazyColumn(Modifier.fadeEdges(voiceList), state = voiceList) {
                 items(state.voices, key = { it.id }, contentType = { "voice" }) { voice ->
                     val playing = sample.playing == voice.id
-                    Row(Modifier.fillMaxWidth().testTag("voice_${voice.id}"), verticalAlignment = Alignment.CenterVertically) {
-                        Box(Modifier.weight(1f).padding(end = if (sampling != null) Dim.s12 else 0.dp)) {
-                            SheetRow(voice.name, if (voice.id == state.voiceId) S.s_dang_chon_ad61dc23 else "",
+                    Row(Modifier.fillMaxWidth().testTag("voice_${voice.id}"), horizontalArrangement = Arrangement.spacedBy(Dim.s12), verticalAlignment = Alignment.CenterVertically) {
+                        Box(Modifier.weight(1f)) {
+                            SheetRow(voice.name, "",
                                 if (voice.id == state.voiceId) LucidePaths.CIRCLE_CHECK else LucidePaths.CIRCLE,
-                                role = Role.RadioButton, tag = "voice_choice_${voice.id}", valueBelow = sampling != null) {
+                                role = Role.RadioButton, tag = "voice_choice_${voice.id}", selected = voice.id == state.voiceId, singleLine = true) {
                                 model.setVoice(voice.id); window.closeSheet()
                             }
                         }
-                        Reveal(sampling != null) { TextAction(if (playing) S.s_dung_11554138 else S.s_nghe_thu_fa024065, {
-                            if (playing) sampling?.stopSample() else sampling?.play(voice.id)
-                        }, "voice_try_${voice.id}", Modifier.semantics { contentDescription = (if (playing) S.s_dung_11554138 else S.s_nghe_thu_fa024065) + S.s_giong_ded5e045 + voice.name }) }
+                        // One captured source controls both presence and action; no outgoing Reveal child can outlive it.
+                        if (sampling != null) TextAction(if (playing) S.s_dung_11554138 else S.s_nghe_thu_fa024065, {
+                            if (playing) sampling.stopSample() else sampling.play(voice.id)
+                        }, "voice_try_${voice.id}", Modifier.semantics { contentDescription = S.s_0_giong_1_85dee2ac(if (playing) S.s_dung_11554138 else S.s_nghe_thu_fa024065, voice.name) })
                     }
                 }
                 item(key = "add-voices") {
@@ -340,9 +341,9 @@ private fun SleepChapterChoice(sleep: PlayerSleep, onSet: (Int) -> Unit) {
 
 /** Một dòng của tấm: `icon` (Lucide, 20 dp, cách chữ 16 dp) - trong một tấm hoặc mọi dòng có icon hoặc không dòng nào có. */
 @Composable
-private fun SheetRow(label: String, value: String, icon: String? = null, enabled: Boolean = true, role: Role = Role.Button, tag: String? = null, valueBelow: Boolean = false, onClick: () -> Unit) {
+private fun SheetRow(label: String, value: String, icon: String? = null, enabled: Boolean = true, role: Role = Role.Button, tag: String? = null, selected: Boolean = false, singleLine: Boolean = false, onClick: () -> Unit) {
     Row(Modifier.fillMaxWidth().heightIn(min = Dim.s48).then(if (enabled) Modifier.pressable(role = role, onClick = onClick) else Modifier)
-        .semantics { if (!enabled) disabled(); if (role == Role.RadioButton) selected = value.isNotEmpty() }.then(if (tag != null) Modifier.testTag(tag) else Modifier).padding(vertical = 8.dp),
+        .semantics { if (!enabled) disabled(); if (role == Role.RadioButton) this.selected = selected }.then(if (tag != null) Modifier.testTag(tag) else Modifier).padding(vertical = 8.dp),
         verticalAlignment = Alignment.CenterVertically) {
         SwapContent(icon, contentKey = { icon -> icon != null }, layout = ContentLayout.Row, inPlace = true) { icon ->
             if (icon != null) {
@@ -350,14 +351,11 @@ private fun SheetRow(label: String, value: String, icon: String? = null, enabled
                 Spacer(Modifier.width(Dim.s16))
             }
         }
-        if (valueBelow) {
-            Column(Modifier.weight(1f)) {
-                BasicText(label, style = Abook.type.body)
-                Reveal(value.isNotEmpty()) { BasicText(value, style = Abook.type.caption) }
-            }
-        } else {
-            BasicText(label, Modifier.weight(1f), style = Abook.type.body)
-            Spacer(Modifier.width(12.dp))
+        BasicText(label, Modifier.weight(1f), style = Abook.type.body,
+            maxLines = if (singleLine) 1 else Int.MAX_VALUE, softWrap = !singleLine,
+            overflow = if (singleLine) androidx.compose.ui.text.style.TextOverflow.Ellipsis else androidx.compose.ui.text.style.TextOverflow.Clip)
+        if (value.isNotEmpty()) {
+            Spacer(Modifier.width(Dim.s12))
             RollingLabel(value, Modifier.widthIn(max = 144.dp), Abook.type.bodySmall)
         }
         Reveal(role == Role.Button && enabled) {

@@ -133,6 +133,7 @@ Item {
                 Flow {
                     id: outdated
                     objectName: "studioOutdated"
+                    spacing: Theme.s8
                     readonly property bool damaged: Boolean(root.status && root.status.damaged && root.status.damaged.length)
                     width: parent.width
                     topPadding: 4

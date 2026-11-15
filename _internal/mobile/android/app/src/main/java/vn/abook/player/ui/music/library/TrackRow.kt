@@ -54,7 +54,7 @@ fun TrackRow(track: MusicLibrary.Track, ui: LibraryUi, state: LibraryState, pick
                     }
                 }
                 (ui.active[track.link]?.percent?.let { S.s_dang_tai_0_e9a97892(it) } ?: if (track.link in ui.failed) S.s_chua_tai_xong_b257419d else track.duration?.let(Fmt::clock))?.let {
-                    Reveal(track.creator.isNotEmpty()) { BasicText("·", style = Abook.type.bodySmall.copy(color = colors.text2), modifier = Modifier.padding(horizontal = Dim.s4)) }
+                    Reveal(track.creator.isNotEmpty()) { BasicText("·", style = Abook.type.bodySmall.copy(color = colors.text2), modifier = Modifier.padding(horizontal = Dim.s8)) }
                     ClockLabel(it, Modifier.testTag("music_row_duration"), Abook.type.bodySmall.copy(color = if (track.link in ui.failed) colors.danger else colors.text2))
                 }
             }

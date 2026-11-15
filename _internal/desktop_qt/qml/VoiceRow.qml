@@ -3,9 +3,10 @@ import QtQuick
 import ABook
 import "VoiceLogic.js" as VoiceLogic
 
-// Một giọng trong danh sách Cài đặt › Giọng đọc (li của VoiceSettings.tsx): radio "chọn làm mặc định" (dấu tích 20, tên 14/500 xuống dòng ở bất kỳ
-// đâu, giới 12 mực phụ, "Mặc định" 12 màu nhấn) + nút "Nghe thử" / "Dừng" cỡ nhỏ bên phải; vạch chia với giọng trên; lỗi nghe thử nằm ngay dưới
-// hàng vừa bấm. Cả nhóm chỉ một điểm Tab (`tabbable`): mũi tên đổi chọn như radiogroup, nút thử chỉ vào vòng Tab ở đúng giọng ấy.
+// Settings and player share one radio row: one-line name, explicit selection
+// semantics and a separate preview action at least 12 logical pixels away.
+// Gender is shown only when supplied by the engine; failures stay below the row.
+// Each group keeps one radio in the Tab order; its preview is a separate action.
 Item {
     id: root
     property var voice: ({})
@@ -62,17 +63,20 @@ Item {
                     id: mark
                     selected: root.selected
                     visible: !saveWait.shown
+                    circled: true
                     anchors.verticalCenter: parent.verticalCenter
                 }
                 PendingIndicator { id: saveWait; anchors.verticalCenter: parent.verticalCenter; pending: root.saving }
                 Text {
                     id: name
                     x: 30
-                    width: Math.min(implicitWidth, Math.max(0, radio.width - 30 - (gender.visible ? gender.implicitWidth + 10 : 0) - (marker.visible ? marker.implicitWidth + 10 : 0)))
+                    objectName: "voiceName"
+                    width: Math.min(implicitWidth, Math.max(0, radio.width - 30 - (gender.visible ? gender.implicitWidth + 10 : 0)))
                     anchors.verticalCenter: parent.verticalCenter
                     text: root.shown
                     color: Theme.text
-                    wrapMode: Text.WrapAtWordBoundaryOrAnywhere
+                    wrapMode: Text.NoWrap
+                    elide: Text.ElideRight
                     font.pixelSize: Theme.sizeBodySmall
                     font.weight: Theme.weightMedium
                 }
@@ -85,18 +89,10 @@ Item {
                     color: Theme.text2
                     font.pixelSize: Theme.sizeCaption
                 }
-                Text {
-                    id: marker
-                    Reveal { shown: root.selected }
-                    x: (gender.visible ? gender.x + gender.implicitWidth : name.x + name.width) + 10
-                    anchors.verticalCenter: parent.verticalCenter
-                    text: S.s_mac_dinh_9a1af367
-                    color: Theme.accentText
-                    font.pixelSize: Theme.sizeCaption
-                }
             }
             Button {
                 id: sampleButton
+                objectName: "voiceTry"
                 anchors.right: parent.right
                 anchors.verticalCenter: parent.verticalCenter
                 size: "sm"
@@ -105,7 +101,7 @@ Item {
                 icon: root.playing ? "square" : "play"
                 busy: root.loading
                 activeFocusOnTab: root.tabbable || activeFocus
-                Accessible.name: (root.playing ? S.s_dung_11554138 : S.s_thu_77e1c0d9) + S.s_giong_ded5e045 + (root.voice.name || "")
+                Accessible.name: root.playing ? S.s_dung_nghe_thu_0_c63198da(root.voice.name || "") : S.s_nghe_thu_0_65a85c4d(root.voice.name || "")
                 onActivated: root.sample()
             }
         }

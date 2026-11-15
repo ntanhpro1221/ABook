@@ -354,6 +354,7 @@ fun ListItem(
     hintColor: Color = Abook.colors.text2,
     titleColor: Color = Abook.colors.text,
     titleStyle: TextStyle = Abook.type.body,
+    titleMaxLines: Int = Int.MAX_VALUE,
     leading: (@Composable () -> Unit)? = null,
     leadingWidth: Dp = Dim.s24,
     leadingGap: Dp = Dim.s12,
@@ -376,7 +377,8 @@ fun ListItem(
                 }
             }
             Column(Modifier.weight(1f).heightIn(min = if (below != null) 0.dp else 56.dp).padding(top = RowPad, bottom = if (below != null) 0.dp else RowPad)) {
-                BasicText(title, style = titleStyle.copy(color = titleColor), modifier = Modifier.testTag("row_title"))
+                BasicText(title, style = titleStyle.copy(color = titleColor), modifier = Modifier.testTag("row_title"), maxLines = titleMaxLines,
+                    overflow = if (titleMaxLines == Int.MAX_VALUE) androidx.compose.ui.text.style.TextOverflow.Clip else androidx.compose.ui.text.style.TextOverflow.Ellipsis)
                 SwapContent(hint, contentKey = { hint -> hint != null }, layout = ContentLayout.Column) { hint ->
                     if (hint != null) {
                         Spacer(Modifier.height(2.dp))

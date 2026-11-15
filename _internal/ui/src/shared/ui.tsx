@@ -7,7 +7,7 @@ import { S } from "./strings.generated";
 import * as DialogPrimitive from "@radix-ui/react-dialog";
 import * as TabsPrimitive from "@radix-ui/react-tabs";
 import * as TooltipPrimitive from "@radix-ui/react-tooltip";
-import { AlertTriangle, Check, Circle, ChevronLeft, ChevronRight, Loader2, Plus, RotateCw, WifiOff, X } from "lucide-react";
+import { AlertTriangle, Check, Circle, CircleCheck, ChevronLeft, ChevronRight, Loader2, Plus, RotateCw, WifiOff, X } from "lucide-react";
 import { cloneElement, useEffect, useLayoutEffect, useRef, useState } from "react";
 import type { ButtonHTMLAttributes, ComponentType, CSSProperties, FocusEvent, HTMLAttributes, ReactElement, ReactNode, Ref, SelectHTMLAttributes } from "react";
 import { cn } from "@/shared/cn";
@@ -31,10 +31,11 @@ export function Select({ className, inline, ...props }: SelectHTMLAttributes<HTM
 
 /** Dấu chọn giữ nguyên chỗ khi đổi mục; chỉ độ mờ đổi, không làm hàng nhảy ngang. Luôn đứng ĐẦU dòng của danh sách chọn (DESIGN 6; luật
  *  check-mark-trailing đọc `data-selection-mark`). */
-export function SelectionMark({ selected, className }: { selected: boolean; className?: string }) {
+export function SelectionMark({ selected, className, circled = false }: { selected: boolean; className?: string; circled?: boolean }) {
+  const SelectedIcon = circled ? CircleCheck : Check;
   return <span aria-hidden data-selection-mark className={cn("relative inline-grid size-4 shrink-0 place-items-center", className)}>
     <Circle className={cn("absolute size-4 text-fg-3 transition-opacity duration-motion-fast", selected ? "opacity-0" : "opacity-100")} />
-    <Check className={cn("absolute size-4 text-accent-text transition-opacity duration-motion-fast", selected ? "opacity-100" : "opacity-0")} />
+    <SelectedIcon className={cn("absolute size-4 text-accent-text transition-opacity duration-motion-fast", selected ? "opacity-100" : "opacity-0")} />
   </span>;
 }
 

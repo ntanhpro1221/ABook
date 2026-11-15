@@ -280,7 +280,7 @@ private fun SuggestionBlock(kind: ModuleKind, suggestion: ModuleSuggestion, voic
 
 /**
  * Một giọng trong danh sách chọn: dấu tích ĐẦU dòng (luôn giữ chỗ, nở / thu tại chỗ - không mờ) + tên; giọng đang chọn chữ hổ phách (DESIGN.md §6 "Hàng danh
- * sách"). Tên dài xuống dòng. Nút nghe thử ở cuối dòng đầu - ngay chỗ bạn quyết; đang lấy mẫu thì thanh tiến độ chạy dưới tên, mẫu không nghe được thì dòng đỏ kèm "Thử lại".
+ * sách"). Tên giữ một dòng. Nút nghe thử ở cuối dòng đầu - ngay chỗ bạn quyết; đang lấy mẫu thì thanh tiến độ chạy dưới tên, mẫu không nghe được thì dòng đỏ kèm "Thử lại".
  */
 @Composable
 private fun VoiceRow(
@@ -294,13 +294,14 @@ private fun VoiceRow(
     }
     ListItem(
         voice.name, Modifier.semantics { selected = chosen }, onChoose, "voice_${voice.id}",
-        hint = failure ?: if (loading) S.s_dang_lay_giong_330fa743 else listOfNotNull(VoiceText.gender(voice.gender), if (chosen) S.s_mac_dinh_9a1af367 else null).dotJoined().ifBlank { null },
+        hint = failure ?: if (loading) S.s_dang_lay_giong_330fa743 else VoiceText.gender(voice.gender),
+        titleMaxLines = 1,
         hintColor = if (failure != null) colors.danger else colors.text2,
         titleColor = if (chosen) colors.accentText else colors.text,
         leading = {
             Box(Modifier.size(Dim.s24)) { vn.abook.player.ui.components.PendingIndicator(saving) {
             Box(Modifier.size(Dim.s24), contentAlignment = Alignment.CenterStart) {
-                vn.abook.player.ui.components.SelectionMark(chosen)
+                vn.abook.player.ui.components.SelectionMark(chosen, circled = true)
             }
             } }
         },

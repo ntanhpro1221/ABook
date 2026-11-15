@@ -2,7 +2,7 @@ from pathlib import Path
 import sys
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'scripts'))
-from affordance_audit import audit
+from affordance_audit import audit, text_spacing
 import numpy as np
 
 
@@ -82,3 +82,55 @@ def test_qt_oversized_frame_is_clipped_without_horizontal_scaling():
     pixels = np.full((48,100,3),245,dtype=np.uint8)
     pixels[46:48,10:90] = [233,169,69]
     assert audit(sample,pixels)[1] == []
+
+
+def text_node(id, text, bounds, parent=-1):
+    return dict(id=id, parent=parent, text=text, bounds=bounds, lines=[dict(text=text, bounds=bounds)])
+
+
+def test_text_gap_detects_touching_overlap_and_below_eight_dp():
+    for gap in (-2, 0, 7):
+        nodes = [text_node(0, 'Chosen', [0, 0, 50, 20]), text_node(1, 'Try', [50+gap, 0, 90+gap, 20])]
+        assert text_spacing(nodes)[0]['gap_dp'] == gap
+
+
+def test_text_gap_accepts_eight_dp_and_different_rows():
+    a = text_node(0, 'Name', [0, 0, 50, 20])
+    assert text_spacing([a, text_node(1, 'Try', [58, 0, 90, 20])]) == []
+    assert text_spacing([a, text_node(1, 'Caption', [0, 24, 50, 44])]) == []
+
+
+def test_text_gap_uses_lines_not_fill_width_and_ignores_semantic_copies():
+    a = text_node(0, 'Name', [0, 0, 50, 20]); a['bounds'] = [0, 0, 200, 48]
+    b = text_node(1, 'Try', [62, 0, 100, 20])
+    assert text_spacing([a, b]) == []
+    assert text_spacing([a, text_node(1, 'Name', [0, 0, 50, 20], parent=0)]) == []
+    b['visible'] = [62, 30, 100, 40]
+    assert text_spacing([a, b]) == []
+
+
+def test_text_gap_respects_exposed_modal_and_qt_logical_scale():
+    nodes = [text_node(0, 'Background', [0, 0, 50, 20]), text_node(1, 'Try', [50, 0, 100, 20])]
+    assert text_spacing(nodes, exposed=lambda n: n['id'] == 1) == []
+    sample = dict(platform='qt', pixel_ratio=2, nodes=nodes, width=100, height=48)
+    assert audit(sample)[1][0]['rule'] == 'TEXT_GAP'
+
+
+def test_text_gap_ignores_hidden_ancestors_and_overlaid_surfaces():
+    sample = tree({}, {}, {})
+    sample['nodes'][1].update(bounds=[0, 0, 0, 0])
+    sample['nodes'] += [text_node(3, 'Hidden', [0, 0, 50, 20], parent=1), text_node(4, 'Visible', [50, 0, 100, 20], parent=2)]
+    assert not [f for f in audit(sample)[1] if f['rule'] == 'TEXT_GAP']
+    sample['nodes'][1]['bounds'] = [0, 0, 100, 200]
+    sample['nodes'][2]['bounds'] = [0, 0, 100, 200]
+    assert text_spacing(sample['nodes']) == []
+
+
+def test_text_gap_checks_painted_ink_not_padded_boxes():
+    sample = dict(width=100, height=48, nodes=[text_node(0, 'Name', [0, 0, 60, 20]), text_node(1, 'Try', [60, 0, 100, 20])])
+    for n in sample['nodes']: n['color'] = '#000000'
+    pixels = np.full((48, 100, 3), 255, dtype=np.uint8)
+    pixels[5:15, 5:50] = 0; pixels[5:15, 65:90] = 0
+    assert audit(sample, pixels)[1] == []
+    pixels[5:15, 55:60] = 0
+    assert audit(sample, pixels)[1][0]['gap_dp'] == 5

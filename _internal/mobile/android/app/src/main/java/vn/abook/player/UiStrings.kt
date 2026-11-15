@@ -120,6 +120,7 @@ internal object S {
     fun s_0_giay_daac30d3(p0: Any?): String = p0.toString() + " giây"
     fun s_0_gio_0341419e(p0: Any?): String = p0.toString() + " giờ"
     fun s_0_gio_1_phut_b72ee2eb(p0: Any?, p1: Any?): String = p0.toString() + " giờ " + p1.toString() + " phút"
+    fun s_0_giong_1_85dee2ac(p0: Any?, p1: Any?): String = p0.toString() + " giọng " + p1.toString()
     fun s_0_giong_7be1af23(p0: Any?): String = p0.toString() + " giọng"
     fun s_0_giong_dang_chon_cho_cuon_nay_doi_o_trinh_bc47c66f(p0: Any?): String = p0.toString() + " - giọng đang chọn cho cuốn này; đổi ở trình phát."
     fun s_0_giong_truc_tuyen_nhe_may_can_mang_be7ce311(p0: Any?): String = p0.toString() + " Giọng trực tuyến nhẹ máy (cần mạng)."
@@ -1153,7 +1154,6 @@ internal object S {
     const val s_dang_cho_may_lam_sach_bad9fc96 = "Chờ máy làm sách"
     fun s_dang_chon_0_1_cau_3dce2fb6(p0: Any?, p1: Any?): String = "Đang chọn " + p0.toString() + "/" + p1.toString() + " câu"
     const val s_dang_chon_4851f502 = " · đang chọn"
-    const val s_dang_chon_ad61dc23 = "Đang chọn"
     fun s_dang_chon_ca_0_cau_504a9b88(p0: Any?): String = "Đang chọn cả " + p0.toString() + " câu"
     const val s_dang_chon_lai_nhac_co_nua_phut_4166612f = "Đang chọn lại nhạc, cỡ nửa phút."
     const val s_dang_chuan_bi_597acedb = "Đang chuẩn bị"

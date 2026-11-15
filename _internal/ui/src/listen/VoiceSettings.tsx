@@ -329,12 +329,11 @@ export function VoiceSettings({ api, deviceHint, modules }: { api: VoiceSettings
                           >
                             <span className="flex size-5 shrink-0 text-accent-text">
                               <PendingIndicator pending={savingVoice === voice.id}>
-                                <SelectionMark selected={selected} className="ink-start [--icon-w:17.5px] size-5" />
+                                <SelectionMark selected={selected} circled className="ink-start [--icon-w:17.5px] size-5" />
                               </PendingIndicator>
                             </span>
-                            <span className="min-w-0 text-pretty text-sm font-medium [overflow-wrap:anywhere]">{shown}</span>
+                            <span className="min-w-0 truncate text-sm font-medium">{shown}</span>
                             {<Presence>{genderLabel(voice.gender) && <span className="shrink-0 text-xs text-fg-2">{genderLabel(voice.gender)}</span>}</Presence>}
-                            {<Presence>{selected && <span className="shrink-0 text-xs text-accent-text">{S.s_mac_dinh_9a1af367}</span>}</Presence>}
                           </button>
                           <Button
                             size="sm"

@@ -19,6 +19,7 @@ Column {
     }
     Flow {
         width: parent.width
+        spacing: Theme.s8
         Text {
             id: lead
             height: 24

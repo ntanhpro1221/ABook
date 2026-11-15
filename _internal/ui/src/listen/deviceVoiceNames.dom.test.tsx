@@ -26,6 +26,12 @@ it("renders device names and previews the exact selected engine voice", async ()
     expect(radios).toHaveLength(voices.length);
     expect(radios.map(row => voices.find(voice => row.textContent?.includes(voice.name))?.id)).toEqual(voices.map(voice => voice.id));
     expect(host.textContent).toContain("Theo bộ đọc hệ thống");
+    expect(host.textContent).not.toContain("Mặc định");
+    expect(radios.filter(row => row.getAttribute("aria-checked") === "true")).toHaveLength(1);
+    for (const row of radios) {
+      expect(row.querySelector(".truncate")).not.toBeNull();
+      expect(row.parentElement!.className).toContain("gap-3");
+    }
     for (const voice of voices) {
       const button = host.querySelector<HTMLButtonElement>(`button[aria-label="Nghe thử ${voice.name}"]`);
       expect(button).not.toBeNull();

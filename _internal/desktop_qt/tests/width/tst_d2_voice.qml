@@ -209,8 +209,8 @@ Item {
             tryVerify(function() { return (find(page, "voiceCurrent").text) === ("Đang dùng: Nam Minh (Edge)") })
             tryVerify(function() { return hasText(page, "trực tuyến, miễn phí\u00a0·\u00a02 giọng\u00a0·\u00a0đang dùng") })
             tryCompare(Api, "voiceName", "Nam Minh")
-            // chỉ giọng được chọn có "Mặc định"
-            tryVerify(function() { return findAll(page, node => node.text === "Mặc định" && node.visible).length === 1 })   // the old one fades out
+            verify(!hasText(page, "Mặc định"))
+            compare(target.radio.Accessible.checked, true)
             // lưu hỏng: lời báo cách thử lại, như web
             DesktopApi.responses["PUT /api/preferences"] = {status: 500, data: {error: "đĩa đầy"}}
             click(row(page, "edge:vi-VN-HoaiMyNeural").radio)
@@ -275,11 +275,16 @@ Item {
                 {id: "device:oem", name: "OPPO ngoại tuyến", provider: "device", gender: "", online: false}
             ]
             openAll()
+            Api.defaultVoice = host.voices[0].id
             const page = make()
             for (const voice of host.voices) {
                 const target = row(page, voice.id)
                 compare(target.shown, voice.name)
                 verify(textItem(target, "Nghe thử") !== null)
+                const name = find(target, "voiceName")
+                const sample = find(target, "voiceTry")
+                compare(name.lineCount, 1)
+                verify(sample.mapToItem(target, 0, 0).x - name.mapToItem(target, name.width, 0).x >= 12)
             }
             shot("settings_device", page)
             for (const voice of host.voices) {
@@ -519,7 +524,7 @@ Item {
             tryVerify(function() { return row(page, "edge:vi-VN-HoaiMyNeural") !== null })
         }
 
-        function test_longVoiceNamesWrap() {
+        function test_longVoiceNamesStayOnOneLine() {
             const longName = "Giọng có một cái tên rất rất dài để thử xem nó xuống dòng thay vì bị cắt mất chữ ở cuối dòng (Edge)"
             voices = fixtureVoices().concat([{id: "edge:long", name: longName, provider: "edge", gender: "female", online: true}])
             openAll()
@@ -527,7 +532,9 @@ Item {
             const longRow = row(page, "edge:long")
             const name = findAll(longRow, node => node.text === longName.replace(" (Edge)", ""))[0]
             verify(name !== undefined)
-            verify(name.height > 2 * 14, "tên dài phải xuống dòng, cao " + name.height)
+            compare(name.lineCount, 1)
+            compare(name.elide, Text.ElideRight)
+            compare(longRow.radio.Accessible.name, longName)
             verify(name.paintedWidth <= name.width + 1)
             verify(longRow.radio.height >= name.height)
             // nút thử vẫn nằm trong hàng, không bị đẩy ra ngoài

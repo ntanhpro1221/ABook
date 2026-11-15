@@ -4,6 +4,10 @@ Việc 10 của bản soát thiết kế 10-11. Các cổng cũ kiểm luật tr
 với ảnh vàng hôm qua (Roborazzi). Ảnh vàng xấu thì test vẫn xanh; không phép đo nào chạy trên ảnh đã vẽ của Android.
 `scripts/design_lint.py` đo chính điểm ảnh của cả ba nền tảng, và đọc cây UI mà bộ chụp ghi cạnh ảnh.
 
+`scripts/affordance_audit.py` cũng chặn `TEXT_GAP`: hai nút chữ cùng hàng cách nhau dưới 8 dp.
+Luật dùng hộp từng dòng và điểm ảnh mực chữ trong ảnh đã băm, bỏ phần khuất và các lớp phủ khác nhau;
+không dùng chiều rộng hộp chữ có padding để suy khoảng cách. Dòng giọng giữ ít nhất 12 dp trước nút Nghe thử.
+
 ## Chạy
 
 Từ `_internal`:

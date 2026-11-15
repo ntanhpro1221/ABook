@@ -6,6 +6,6 @@ import vn.abook.player.ui.theme.Abook
 
 /** Empty choices remain visible; the mark fades at the same position. */
 @Composable
-fun SelectionMark(selected: Boolean, modifier: Modifier = Modifier) {
-    StateIcon(if (selected) LucidePaths.CHECK else LucidePaths.CIRCLE, if (selected) Abook.colors.accentText else Abook.colors.text3, modifier)
+fun SelectionMark(selected: Boolean, modifier: Modifier = Modifier, circled: Boolean = false) {
+    StateIcon(if (selected) { if (circled) LucidePaths.CIRCLE_CHECK else LucidePaths.CHECK } else LucidePaths.CIRCLE, if (selected) Abook.colors.accentText else Abook.colors.text3, modifier)
 }

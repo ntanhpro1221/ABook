@@ -7,6 +7,8 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+- Dòng giọng đọc giữ tên trên một dòng, đánh dấu bằng biểu tượng chọn và chừa khoảng cách rõ với nút Nghe thử trên điện thoại, web và máy tính; nút quay lại chỗ vừa nghe không che tên chương.
+
 - Giọng đọc của thiết bị ghi tên bộ đọc và ngoại tuyến hay cần mạng, thay số tiếng Việt khó phân biệt; ưu tiên giọng ngoại tuyến có chất lượng cao và giữ nút nghe thử.
 
 - Mở lại sách giữ nguyên bản thu đã chấp nhận kèm cảnh báo ở mép; kiểm tra bằng đúng lời đọc để không thu lại oan câu kéo dài. Bản thu mất, hỏng hoặc sai băm vẫn bị phát hiện.

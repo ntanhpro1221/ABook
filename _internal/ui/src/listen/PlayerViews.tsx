@@ -767,7 +767,7 @@ export function VoiceMenu({ scope = "bar", look = "chip" }: { scope?: VoiceMenuS
                   const selected = voice.id === current?.id;
                   const playing = sample.playing === voice.id;
                   return (
-                    <div key={voice.id} data-sheet-choice data-sheet-current={selected ? "" : undefined} className="flex items-center gap-1">
+                    <div key={voice.id} data-sheet-choice data-sheet-current={selected ? "" : undefined} className="flex items-center gap-3">
                       <Popover.Close asChild>
                         <button
                           type="button"
@@ -789,9 +789,8 @@ export function VoiceMenu({ scope = "bar", look = "chip" }: { scope?: VoiceMenuS
                             selected ? "font-medium text-accent-text" : "text-fg",
                           )}
                         >
-                          <SelectionMark selected={selected} />
-                          {/* Tên giọng xuống dòng, không cắt "…": menu 252 px từng còn "An (Windo…" - chọn mà không đọc đủ tên (luật choice-label-truncated). */}
-                          <span className="min-w-0 text-pretty [overflow-wrap:anywhere]">{shown}</span>
+                          <SelectionMark selected={selected} circled />
+                          <span className="min-w-0 truncate">{shown}</span>
                           <Reveal when={genderLabel(voice.gender)}><span className="shrink-0 text-xs font-normal text-fg-2">{genderLabel(voice.gender)}</span></Reveal>
                         </button>
                       </Popover.Close>

@@ -30,6 +30,59 @@ def shown(node):
     r = node.get('visible', node.get('bounds', [0, 0, 0, 0]))
     return r[2] - r[0] > 1 and r[3] - r[1] > 1
 
+
+def text_spacing(nodes, exposed=lambda n: True, minimum=8):
+    """Compare rendered lines in logical dp, never padded text containers.
+
+    Only independent text nodes on the exposed surface count. Lines of one
+    paragraph and parent/child semantic copies are not adjacent labels.
+    """
+    by_id = {n['id']: n for n in nodes}
+    def chain(n):
+        result = []
+        while n['parent'] in by_id:
+            n = by_id[n['parent']]
+            result.append(n['id'])
+        return result
+    lines = []
+    for n in nodes:
+        if not shown(n) or not exposed(n) or not n.get('text', '').strip(): continue
+        visible = n.get('visible', n['bounds'])
+        for line in n.get('lines', []):
+            if not line.get('text', '').strip(): continue
+            b = line['bounds']
+            box = [max(b[0], visible[0]), max(b[1], visible[1]), min(b[2], visible[2]), min(b[3], visible[3])]
+            if box[2] > box[0] and box[3] > box[1]: lines.append((n, box, chain(n)))
+    findings = []
+    reported = set()
+    for i, (a, x, a_chain) in enumerate(lines):
+        for b, y, b_chain in lines[i+1:]:
+            if a['id'] == b['id'] or a['id'] in b_chain or b['id'] in a_chain: continue
+            # A fixed header, popup or drag target can cover a scrolling body.
+            # Those branches are overlapping surfaces, not adjacent row labels.
+            common = next((id for id in a_chain if id in b_chain), None)
+            if common is not None:
+                def branch(n, parents):
+                    i = parents.index(common)
+                    return by_id[parents[i-1]] if i else n
+                ab, bb = branch(a, a_chain), branch(b, b_chain)
+                ax, bx = ab['bounds'], bb['bounds']
+                if (min(ax[2], bx[2]) > max(ax[0], bx[0])+1 and min(ax[3], bx[3]) > max(ax[1], bx[1])+1
+                        and any(not node.get('text') and box[3]-box[1] > max(64, 3*max(x[3]-x[1], y[3]-y[1]))
+                                for node, box in [(ab, ax), (bb, bx)])):
+                    continue
+            overlap = min(x[3], y[3]) - max(x[1], y[1])
+            if overlap < min(x[3]-x[1], y[3]-y[1]) * .6: continue
+            left, right = (x, y) if x[0] <= y[0] else (y, x)
+            gap = right[0] - left[2]
+            key = tuple(sorted((a['id'], b['id'])))
+            if gap < minimum - .1 and key not in reported:
+                reported.add(key)
+                findings.append({'rule': 'TEXT_GAP', 'id': a['id'], 'other_id': b['id'],
+                                 'text': a['text'][:140], 'other_text': b['text'][:140],
+                                 'gap_dp': round(gap, 2), 'bounds': x, 'other_bounds': y})
+    return findings
+
 def audit(tree, image=None):
     nodes = tree['nodes']
     if image is not None and tree.get('platform') == 'qt':
@@ -74,6 +127,8 @@ def audit(tree, image=None):
               and not any(p.get('text', '').strip() for p in descendants(n))]
 
     def exposed(n):
+        if any(not shown(a) for a in ancestors(n)):
+            return False
         chain = {n['id'], *(a['id'] for a in ancestors(n))}
         if modal_layers and modal_layers[-1]['id'] not in chain:
             return False
@@ -189,12 +244,37 @@ def audit(tree, image=None):
                 findings.append({'rule': 'AFFORDANCE_CLICK', 'id': n['id'], 'tag': n.get('tag', ''), 'text': text[:140], 'bounds': n['bounds']})
         if n.get('text') and n.get('color', '').lower() in ACCENTS and not text_action(n):
             findings.append({'rule': 'AFFORDANCE_ACCENT', 'id': n['id'], 'tag': n.get('tag', ''), 'text': n['text'][:140], 'bounds': n['bounds']})
+    # Semantic trees can retain a fully covered outgoing text item. Verify its
+    # ink before comparing it with a foreground label, and trim whitespace from
+    # the measured line rather than treating its padded box as painted text.
+    spacing_nodes = nodes
+    if image is not None:
+        sx, sy = (tree.get('pixel_ratio', 1),)*2 if tree.get('platform') == 'qt' else (image.shape[1]/tree['width'], image.shape[0]/tree['height'])
+        spacing_nodes = []
+        for n in nodes:
+            lines = []
+            color = n.get('color', '')
+            for line in n.get('lines', []):
+                if len(color) != 7:
+                    lines.append(line); continue
+                b = line['bounds']; v = n.get('visible', n['bounds'])
+                x0,y0,x1,y1 = max(0,round(max(b[0],v[0])*sx)),max(0,round(max(b[1],v[1])*sy)),min(image.shape[1],round(min(b[2],v[2])*sx)),min(image.shape[0],round(min(b[3],v[3])*sy))
+                crop = image[y0:y1,x0:x1,:3]
+                if not crop.size: continue
+                rgb = np.array([int(color[i:i+2],16) for i in (1,3,5)])
+                yy,xx = np.where(np.max(abs(crop.astype(float)-rgb),axis=2)<12)
+                if len(xx) < 3: continue
+                lines.append(dict(line,bounds=[(x0+int(xx.min()))/sx,b[1],(x0+int(xx.max())+1)/sx,b[3]]))
+            spacing_nodes.append(dict(n,lines=lines))
+    findings.extend(text_spacing(spacing_nodes, exposed))
     return checked, findings
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('directories', nargs='+', type=Path)
     parser.add_argument('--out', type=Path, required=True)
+    parser.add_argument('--rules', nargs='+', choices=['AFFORDANCE_CLICK', 'AFFORDANCE_ACCENT', 'TEXT_GAP'],
+                        help='Run only these rules; image/tree integrity is always checked')
     args = parser.parse_args()
     report = {'screens': 0, 'controls': 0, 'findings': [], 'errors': []}
     for directory in args.directories:
@@ -214,7 +294,7 @@ def main():
                 count, findings = audit(tree, image)
                 report['screens'] += 1
                 report['controls'] += count
-                report['findings'].extend(dict(f, image=str(png)) for f in findings)
+                report['findings'].extend(dict(f, image=str(png)) for f in findings if not args.rules or f['rule'] in args.rules)
             except (OSError, ValueError, KeyError) as error:
                 report['errors'].append(f'{path}: {error}')
     args.out.parent.mkdir(parents=True, exist_ok=True)
