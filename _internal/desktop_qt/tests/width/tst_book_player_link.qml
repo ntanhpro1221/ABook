@@ -110,10 +110,12 @@ Item {
             const row = findChild(made, "bookChapterRow")
             Theme.reduceMotion = false
             made.transitionProgress = .5
-            fuzzyCompare(title.opacity, .5, .001)
+            fuzzyCompare(title.opacity, .5 / Theme.bookRevealEnd, .001)
             fuzzyCompare(actions.opacity, made.transitionReveal(Theme.bookActionDelay), .001)
             fuzzyCompare(row.opacity, made.transitionReveal(Theme.bookListDelay), .001)
             fuzzyCompare(row.transform[0].y, Theme.bookDrift * (1 - row.opacity), .001)
+            made.transitionProgress = Theme.bookRevealEnd   // content settled; only cover and page move after this
+            compare(title.opacity, 1); compare(actions.opacity, 1); compare(row.opacity, 1)
             Theme.reduceMotion = true
             compare(row.transform[0].y, 0)
             made.transitionProgress = 1

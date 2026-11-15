@@ -6,6 +6,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import vn.abook.player.ui.motion.BookMotion
+import vn.abook.player.ui.theme.MotionMs
 
 class BookMotionTest {
     @Test fun bothDirectionsUseTheSameDurationAndRetraceThePath() {
@@ -18,6 +19,14 @@ class BookMotionTest {
             val q = close.getValueFromNanos(time * 1_000_000L)
             assertEquals(1f, p + q, 0.0001f)
             assertTrue(BookMotion.libraryScale(p) in .985f..1f)
+        }
+    }
+
+    @Test fun contentSettlesBeforeTheTransformSoBothEndsMoveOnlyCoverAndPage() {
+        for (delay in listOf(0f, .06f, .12f)) {
+            for (p in listOf(MotionMs.BOOK_REVEAL_END, .98f, 1f)) assertEquals(1f, BookMotion.reveal(p, delay), 0f)
+            assertTrue(BookMotion.reveal(MotionMs.BOOK_REVEAL_END - .02f, delay) < 1f)
+            assertEquals(0f, BookMotion.reveal(delay, delay), 0f)
         }
     }
 

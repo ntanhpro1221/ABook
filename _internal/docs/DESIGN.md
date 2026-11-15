@@ -160,7 +160,8 @@ Token có sẵn (`shared/motion.ts` = `--motion-*` trong `styles.css`): nhanh 12
   (`timing.bookTransformMs`), cả hai chiều dùng emphasized cubic-bezier(0.4, 0, 0.2, 1). Bìa đo trong hệ tọa độ gốc, từ ô lưới thật
   (giữ chỗ cuộn) đến đầu trang; cùng bitmap suốt đường. Thư viện giữ dưới trang, lùi cỡ 1,5% (`bookRecede`), trang hiện đồng thời
   theo cùng tiến trình; không có pha nền trống. Tiêu đề → nút nghe → danh sách lệch nhịp 0 / 0,06 / 0,12 phần tiến trình
-  (`bookTitleDelay`, `bookActionDelay`, `bookListDelay`), dịch tối đa 12 dp (`bookDrift`). Đảo chiều, kéo Back và huỷ kéo dùng đúng
+  (`bookTitleDelay`, `bookActionDelay`, `bookListDelay`), xong hẳn ở 0,96 (`bookRevealEnd`) để đầu và cuối đường chỉ còn bìa và độ đục
+  trang (tuyến tính theo tiến trình) - mở và đóng rời / đáp cùng thời lượng; dịch tối đa 12 dp (`bookDrift`). Đảo chiều, kéo Back và huỷ kéo dùng đúng
   các hàm hình học ấy. Thanh tab / thanh phát nhỏ ở ngoài vùng biến đổi. Giảm chuyển động giữ mờ tối đa 120 ms, bỏ hình học.
 - **Đổi trang và bộ lọc**: hai trang dịch chuyển đồng thời trong hai vùng kề nhau, cùng thời lượng/đường cong. Không có khoảng chờ trang cũ ra hết,
   không bóp ngang bìa và không giữ các hàng đang thoát bên trong trang mới. Android dùng HorizontalPager cho bộ lọc; số cuốn theo kết quả đang chọn.

@@ -45,6 +45,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clipToBounds
+import androidx.compose.ui.graphics.CompositingStrategy
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.onPlaced
 import androidx.compose.ui.graphics.lerp
@@ -617,8 +618,16 @@ fun ScreenStack(nav: NavState, root: @Composable () -> Unit, insets: LayerInsets
                                 Layer.Top -> ScreenGeometry.topFraction(nav.progress.value)
                                 Layer.Below -> nav.progress.value.let { p -> if (p >= 1f) -1f else ScreenGeometry.belowFraction(p) }
                             }
-                            translationX = if (container) 0f else fraction * size.width
-                            alpha = if (container && layer == Layer.Top) ScreenGeometry.incomingAlpha(nav.progress.value) else 1f
+                            // A settled book page is opaque: the library under it moves off screen like any covered layer
+                            // instead of being redrawn (24 covers) under every page frame.
+                            translationX = if (!container) fraction * size.width else if (layer == Layer.Below && nav.progress.value >= 1f) -size.width else 0f
+                            alpha = when {
+                                !container || layer != Layer.Top -> 1f
+                                nav.preparing -> vn.abook.player.ui.motion.BookMotion.PREDRAW_ALPHA
+                                else -> ScreenGeometry.incomingAlpha(nav.progress.value)
+                            }
+                            // Fade each draw instead of compositing a page-sized offscreen layer on every frame of the transform.
+                            compositingStrategy = if (container) CompositingStrategy.ModulateAlpha else CompositingStrategy.Auto
                             val recede = if (container && layer == Layer.Below && !nav.reducedMotion)
                                 vn.abook.player.ui.motion.BookMotion.libraryScale(nav.progress.value) else 1f
                             scaleX = recede

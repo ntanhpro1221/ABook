@@ -118,6 +118,7 @@ QtObject {
     readonly property real bookTitleDelay: 0.0
     readonly property real bookActionDelay: 0.06
     readonly property real bookListDelay: 0.12
+    readonly property real bookRevealEnd: 0.96
     readonly property real skeletonLow: 0.6
     readonly property int skeletonPeriodMs: 1600
     readonly property int noticeMs: 4000

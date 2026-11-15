@@ -8,6 +8,7 @@
   --book-title-delay: 0.0;
   --book-action-delay: 0.06;
   --book-list-delay: 0.12;
+  --book-reveal-end: 0.96;
   --skeleton-low: 0.6;
   --skeleton-period-ms: 1600ms;
   --notice-ms: 4000ms;
