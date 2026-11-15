@@ -16,28 +16,28 @@
     "reason": "Visually compared base and after in affordance review-01.jpg: action ink, navigation chevrons, persistent choice rings and read-along play cues; no frame or shadow change."
   },
   "_internal/mobile/android/app/src/test/snapshots/book_cast_dark.png": {
-    "sha256": "8cf10ab293c058e4c5f31ed3ac8ef51d2497193347c9eb380d5eaad468330837",
-    "reason": "Visually compared base and after in affordance review-01.jpg: action ink, navigation chevrons, persistent choice rings and read-along play cues; no frame or shadow change."
+    "sha256": "26790af4076be4e8cc8137dbbe4e731d46c6efc5467d49d01ce86461f848d5a7",
+    "reason": "Opened the before/after contact sheet in this integration session. Intentional action ink, radio outlines, chevrons and music artwork retained; labels and primary controls remain readable."
   },
   "_internal/mobile/android/app/src/test/snapshots/book_cast_light.png": {
-    "sha256": "9f73a78c3f1e5756f6bb4576450dbd4f36bda0e31da878ebe80c65a7f070beed",
-    "reason": "Visually compared base and after in affordance review-01.jpg: action ink, navigation chevrons, persistent choice rings and read-along play cues; no frame or shadow change."
+    "sha256": "686fb6dc48e1192c78901020cc40abf533c3e29b247022432bfd4d96a6ee718c",
+    "reason": "Opened the before/after contact sheet in this integration session. Intentional action ink, radio outlines, chevrons and music artwork retained; labels and primary controls remain readable."
   },
   "_internal/mobile/android/app/src/test/snapshots/book_delete_dark.png": {
-    "sha256": "def4a6274fcf777bb5273529ab3a9c89d11d360f7fcfa0747a7ad0171c3f203f",
-    "reason": "Visually reviewed the exact before/after snapshot pair on integration contact sheet 1. The rounded sheet surface, hairline and shadow share the panel edge; the stationary rectangular paint band is removed. Controls and labels remain readable with no new clipping."
+    "sha256": "0d0fc541ca1ba58181529a887f77e2cf1677d3fa2fcec51d7c82ed6e156cf119",
+    "reason": "Opened the before/after contact sheet in this integration session. Intentional action ink, radio outlines, chevrons and music artwork retained; labels and primary controls remain readable."
   },
   "_internal/mobile/android/app/src/test/snapshots/book_delete_light.png": {
-    "sha256": "d2f27ea71611d0dd723bba9c429318ddd5a7771daa1595ce268a4fff12a79921",
-    "reason": "Visually reviewed the exact before/after snapshot pair on integration contact sheet 1. The rounded sheet surface, hairline and shadow share the panel edge; the stationary rectangular paint band is removed. Controls and labels remain readable with no new clipping."
+    "sha256": "c3a936db9d0d678d0b4825433d7ef9c77a724d002f454497c309db215ecaa5db",
+    "reason": "Opened the before/after contact sheet in this integration session. Intentional action ink, radio outlines, chevrons and music artwork retained; labels and primary controls remain readable."
   },
   "_internal/mobile/android/app/src/test/snapshots/book_expanded_light.png": {
     "sha256": "50a12fcb1d72f888261958aba2e4fd14aa11cee1885178ec109d48065d24a0e0",
     "reason": "Visually compared base and after in affordance review-01.jpg: action ink, navigation chevrons, persistent choice rings and read-along play cues; no frame or shadow change."
   },
   "_internal/mobile/android/app/src/test/snapshots/book_find_light.png": {
-    "sha256": "5ff62b8fab599d2b961cb1ca8e051907f2b59e3dbea10e83d7dff2c45bdf80a1",
-    "reason": "Visually reviewed the exact before/after snapshot pair on integration contact sheet 1. The rounded sheet surface, hairline and shadow share the panel edge; the stationary rectangular paint band is removed. Controls and labels remain readable with no new clipping."
+    "sha256": "602b4739239140e759e2a1be62c08c87b90856f04b08ae24467b6717db5e90d9",
+    "reason": "Opened the before/after contact sheet in this integration session. Intentional action ink, radio outlines, chevrons and music artwork retained; labels and primary controls remain readable."
   },
   "_internal/mobile/android/app/src/test/snapshots/book_finished_dark.png": {
     "sha256": "c75f05fd559be269661bcdd648f6d6eab628ca16513584bd37145588713d818f",
@@ -80,24 +80,24 @@
     "reason": "Visually compared base and after in affordance review-02.jpg: action ink, navigation chevrons, persistent choice rings and read-along play cues; no frame or shadow change."
   },
   "_internal/mobile/android/app/src/test/snapshots/book_menu_light.png": {
-    "sha256": "8ce2fddfae28b1bd4113b591d1b8d6d4e4dd3d6282b95006ff5fb08bc7e44a95",
-    "reason": "Visually reviewed the exact before/after snapshot pair on integration contact sheet 1. The rounded sheet surface, hairline and shadow share the panel edge; the stationary rectangular paint band is removed. Controls and labels remain readable with no new clipping."
+    "sha256": "8e28dac00e0a51300998aaac2edf37dbd963105e41e23c6c441f780ec0604682",
+    "reason": "Opened the before/after contact sheet in this integration session. Intentional action ink, radio outlines, chevrons and music artwork retained; labels and primary controls remain readable."
   },
   "_internal/mobile/android/app/src/test/snapshots/book_partial_light.png": {
     "sha256": "198b769b8473d4191b385c395bdfc8e42bb4be34e85ac4ed15158e2938bbebdc",
     "reason": "Visually compared base and after in affordance review-02.jpg: action ink, navigation chevrons, persistent choice rings and read-along play cues; no frame or shadow change."
   },
   "_internal/mobile/android/app/src/test/snapshots/book_person_sheet_light.png": {
-    "sha256": "b23b2d50b035c4ed3af84f471e05a3c46f80de810f255f7f6fd0f3d269dfc5d5",
-    "reason": "Visually reviewed the exact before/after snapshot pair on integration contact sheet 1. The rounded sheet surface, hairline and shadow share the panel edge; the stationary rectangular paint band is removed. Controls and labels remain readable with no new clipping."
+    "sha256": "503210aba5bd91d9261b0dd9c1137bf15cf5aeee0fface5ceda4904d5ed9c193",
+    "reason": "Opened the before/after contact sheet in this integration session. Intentional action ink, radio outlines, chevrons and music artwork retained; labels and primary controls remain readable."
   },
   "_internal/mobile/android/app/src/test/snapshots/book_playing_light.png": {
     "sha256": "3f2d812f835f47405b281678381155d330f1e275d33f338ea8c63ee8d5a8a9d3",
     "reason": "Visually compared base and after in affordance review-02.jpg: action ink, navigation chevrons, persistent choice rings and read-along play cues; no frame or shadow change."
   },
   "_internal/mobile/android/app/src/test/snapshots/book_save_as_light.png": {
-    "sha256": "bafa263a1cc6c6192111c0838bda53c89bc05bb7c9a917e2eae6c1040e949174",
-    "reason": "Visually reviewed the exact before/after snapshot pair on integration contact sheet 1. The rounded sheet surface, hairline and shadow share the panel edge; the stationary rectangular paint band is removed. Controls and labels remain readable with no new clipping."
+    "sha256": "bb9752d0723ca27cd9992e99f24508dbb759ed4176f3b8be4d60070628a3946f",
+    "reason": "Opened the before/after contact sheet in this integration session. Intentional action ink, radio outlines, chevrons and music artwork retained; labels and primary controls remain readable."
   },
   "_internal/mobile/android/app/src/test/snapshots/cover_long_title.png": {
     "sha256": "1ee48d032b0a6407146604e1def501847b05e82d35c74f41937f2b64a143cae2",
@@ -128,8 +128,8 @@
     "reason": "Visually compared base and after in affordance review-03.jpg: action ink, navigation chevrons, persistent choice rings and read-along play cues; no frame or shadow change."
   },
   "_internal/mobile/android/app/src/test/snapshots/devices_sheet_delete_light.png": {
-    "sha256": "8c48205059063cee1642bdb6c608f29f162390686c1dc5b6b1c1f7b4fc5af4c1",
-    "reason": "Visually reviewed the exact before/after snapshot pair on integration contact sheet 1. The rounded sheet surface, hairline and shadow share the panel edge; the stationary rectangular paint band is removed. Controls and labels remain readable with no new clipping."
+    "sha256": "c32c5398afed077b7004ede6aa441ea37975ffcd1852361c990f2d905f8be727",
+    "reason": "Opened the before/after contact sheet in this integration session. Intentional action ink, radio outlines, chevrons and music artwork retained; labels and primary controls remain readable."
   },
   "_internal/mobile/android/app/src/test/snapshots/devices_sheet_device_light.png": {
     "sha256": "e0071e93234756056392504ffcfe78f287f0fe073d731fe9a9a76fcd8258c591",
@@ -176,16 +176,16 @@
     "reason": "Reviewed old/new edit_cover_search_none_light.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
   },
   "_internal/mobile/android/app/src/test/snapshots/edit_cover_sheet_dark.png": {
-    "sha256": "be7487607512eb60f0db2b1320e586e93ce5ea9a80c952b42f39929711ad5c5a",
-    "reason": "Visually reviewed the exact before/after snapshot pair on integration contact sheet 1. The rounded sheet surface, hairline and shadow share the panel edge; the stationary rectangular paint band is removed. Controls and labels remain readable with no new clipping."
+    "sha256": "3e562de8b2cd1fd3c1a7ce98468823a73a5416d958998f6e57dba1e822534aa4",
+    "reason": "Opened the before/after contact sheet in this integration session. Intentional action ink, radio outlines, chevrons and music artwork retained; labels and primary controls remain readable."
   },
   "_internal/mobile/android/app/src/test/snapshots/edit_cover_sheet_light.png": {
-    "sha256": "eaec8d77b420565ca10f79e65c36db2eba4099329d8c8d541c06aa645d09d515",
-    "reason": "Visually reviewed the exact before/after snapshot pair on integration contact sheet 1. The rounded sheet surface, hairline and shadow share the panel edge; the stationary rectangular paint band is removed. Controls and labels remain readable with no new clipping."
+    "sha256": "b871756c05375fbf3a0283b917d12af8308560d8096546f0b76bd62487b5b4b4",
+    "reason": "Opened the before/after contact sheet in this integration session. Intentional action ink, radio outlines, chevrons and music artwork retained; labels and primary controls remain readable."
   },
   "_internal/mobile/android/app/src/test/snapshots/edit_cover_sheet_none_light.png": {
-    "sha256": "350c0b5b08b27da85196f78605771535dd7a624f8d5b524093670722a1f92c49",
-    "reason": "Visually reviewed the exact before/after snapshot pair on integration contact sheet 1. The rounded sheet surface, hairline and shadow share the panel edge; the stationary rectangular paint band is removed. Controls and labels remain readable with no new clipping."
+    "sha256": "2f493f877f820854842ff9f5e68843d92d5ecd68575d47bf0ec25bb0b9621c9f",
+    "reason": "Opened the before/after contact sheet in this integration session. Intentional action ink, radio outlines, chevrons and music artwork retained; labels and primary controls remain readable."
   },
   "_internal/mobile/android/app/src/test/snapshots/edit_discard_dark.png": {
     "sha256": "049b3deb2b56a81bd3e22087c2f7d2099aaf939026cba646dc2227723b92cc37",
@@ -288,12 +288,12 @@
     "reason": "Reviewed old/new export_running_light.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
   },
   "_internal/mobile/android/app/src/test/snapshots/gap1_library_remote_dark.png": {
-    "sha256": "f5beb9e76b2aee6b4a2c1b68ad6ef87a4583c03b2cb7aa5c5500d80150d08fd2",
-    "reason": "Visually reviewed tilename change: gap1_library_remote_dark.png; drawn-cover tiles now show the two-line title under the cover like photo tiles (owner 15-11). Old/new contact sheet inspected before adoption."
+    "sha256": "966d4795ebd68f714e8859a1c4d71e6166d529dc9086a1056dae78d199653e00",
+    "reason": "Opened the before/after contact sheet in this integration session. Intentional action ink, radio outlines, chevrons and music artwork retained; labels and primary controls remain readable."
   },
   "_internal/mobile/android/app/src/test/snapshots/gap1_library_remote_light.png": {
-    "sha256": "115583f29f4434d17a2f88966978e97cae3cd735d27a3f164c775c355b564cc8",
-    "reason": "Visually reviewed tilename change: gap1_library_remote_light.png; drawn-cover tiles now show the two-line title under the cover like photo tiles (owner 15-11). Old/new contact sheet inspected before adoption."
+    "sha256": "cf9cc199ff7309996516bbd51e3fa544ffe00b613407476e066b9fa0880b9d94",
+    "reason": "Opened the before/after contact sheet in this integration session. Intentional action ink, radio outlines, chevrons and music artwork retained; labels and primary controls remain readable."
   },
   "_internal/mobile/android/app/src/test/snapshots/gap1_remote_book_dark.png": {
     "sha256": "1b3c8fdbc5214417c6960e0ac5c31802e15088472960538c0718078a536ecbff",
@@ -312,32 +312,32 @@
     "reason": "Visually reviewed the exact before/after snapshot pair on integration contact sheet 2. The rounded sheet surface, hairline and shadow share the panel edge; the stationary rectangular paint band is removed. Controls and labels remain readable with no new clipping."
   },
   "_internal/mobile/android/app/src/test/snapshots/gap1_remote_sleep_360_font130_light.png": {
-    "sha256": "da1fdd8c6a7f08d8bbfe44b222e45ab1d86b22e6dcc76e569ca89c9555a6d785",
-    "reason": "Visually reviewed the exact before/after snapshot pair on integration contact sheet 2. The rounded sheet surface, hairline and shadow share the panel edge; the stationary rectangular paint band is removed. Controls and labels remain readable with no new clipping."
+    "sha256": "95a96ef5d75834ec8315ce5b9a437d4035e62b3a6ef8886e5fa65994ddc0679e",
+    "reason": "Opened the before/after contact sheet in this integration session. Intentional action ink, radio outlines, chevrons and music artwork retained; labels and primary controls remain readable."
   },
   "_internal/mobile/android/app/src/test/snapshots/gap1_remote_sleep_411_font130_light.png": {
-    "sha256": "d90f0cff3481753ffb87921e6fe9b92c3c918ebc5f6b052563516a68f1f94576",
-    "reason": "Visually reviewed the exact before/after snapshot pair on integration contact sheet 2. The rounded sheet surface, hairline and shadow share the panel edge; the stationary rectangular paint band is removed. Controls and labels remain readable with no new clipping."
+    "sha256": "a1fd3dde87c08423057fd5874f9d6c0c3e20ab6bb2e2211686359d42c6c2eefc",
+    "reason": "Opened the before/after contact sheet in this integration session. Intentional action ink, radio outlines, chevrons and music artwork retained; labels and primary controls remain readable."
   },
   "_internal/mobile/android/app/src/test/snapshots/gap1_remote_sleep_411_light.png": {
-    "sha256": "8e135d89f316f4751a47f3307040738abc368a4cec9627d3687a8af45547eb65",
-    "reason": "Visually reviewed the exact before/after snapshot pair on integration contact sheet 2. The rounded sheet surface, hairline and shadow share the panel edge; the stationary rectangular paint band is removed. Controls and labels remain readable with no new clipping."
+    "sha256": "8e30193882273c4336bdb371c7a7eccfed27bf75d6c46e32cee2619c394483e3",
+    "reason": "Opened the before/after contact sheet in this integration session. Intentional action ink, radio outlines, chevrons and music artwork retained; labels and primary controls remain readable."
   },
   "_internal/mobile/android/app/src/test/snapshots/gap1_remote_sleep_dark.png": {
-    "sha256": "6ba9b5ddc50ae93f5ef9622fe7430ef7446981079db4e8c1b9b731300d7014e6",
-    "reason": "Visually reviewed the exact before/after snapshot pair on integration contact sheet 2. The rounded sheet surface, hairline and shadow share the panel edge; the stationary rectangular paint band is removed. Controls and labels remain readable with no new clipping."
+    "sha256": "e8906c98ba6b4cd2161e8fa0e7d909e07a6ac68f7fa9b8c007fa51b220802bbd",
+    "reason": "Opened the before/after contact sheet in this integration session. Intentional action ink, radio outlines, chevrons and music artwork retained; labels and primary controls remain readable."
   },
   "_internal/mobile/android/app/src/test/snapshots/gap1_remote_sleep_light.png": {
-    "sha256": "9fa3497734bed9d8ed7d3e1537a3199fef0e971976abeb2127de062ac508e16d",
-    "reason": "Visually reviewed the exact before/after snapshot pair on integration contact sheet 2. The rounded sheet surface, hairline and shadow share the panel edge; the stationary rectangular paint band is removed. Controls and labels remain readable with no new clipping."
+    "sha256": "0c44f6c453a9530c96b478644ab735a0f5cc12352ed5c27dd8c36fcff092176a",
+    "reason": "Opened the before/after contact sheet in this integration session. Intentional action ink, radio outlines, chevrons and music artwork retained; labels and primary controls remain readable."
   },
   "_internal/mobile/android/app/src/test/snapshots/gap1_undo_dark.png": {
-    "sha256": "898a08ecabac76b9b4294668cd6fc7e86d83e744fae3acb347b88356ca04840f",
-    "reason": "Visually reviewed tilename change: gap1_undo_dark.png; drawn-cover tiles now show the two-line title under the cover like photo tiles (owner 15-11). Old/new contact sheet inspected before adoption."
+    "sha256": "17273d6c5c30cf8fd0e1f447d81191037bf9e50abcd69649356493f4b8f3a285",
+    "reason": "Opened the before/after contact sheet in this integration session. Intentional action ink, radio outlines, chevrons and music artwork retained; labels and primary controls remain readable."
   },
   "_internal/mobile/android/app/src/test/snapshots/gap1_undo_light.png": {
-    "sha256": "7fcbb3ac12607229ffb81fc5e6a55499d2bb3012f02ccdab2838a40e517bee35",
-    "reason": "Visually reviewed tilename change: gap1_undo_light.png; drawn-cover tiles now show the two-line title under the cover like photo tiles (owner 15-11). Old/new contact sheet inspected before adoption."
+    "sha256": "49b4239094ddb0c0e9f97c290e4f841155284f6a58fa061cc2cc18f9981c71b3",
+    "reason": "Opened the before/after contact sheet in this integration session. Intentional action ink, radio outlines, chevrons and music artwork retained; labels and primary controls remain readable."
   },
   "_internal/mobile/android/app/src/test/snapshots/gap1b_device_kinds_dark.png": {
     "sha256": "b0699ddef4e3c7afbaed53e9a03100387559ff59b5af99f62798da469d8db855",
@@ -348,20 +348,20 @@
     "reason": "Visually reviewed the exact before/after snapshot pair on integration contact sheet 2. The rounded sheet surface, hairline and shadow share the panel edge; the stationary rectangular paint band is removed. Controls and labels remain readable with no new clipping."
   },
   "_internal/mobile/android/app/src/test/snapshots/gap1b_shell_error_dark.png": {
-    "sha256": "99756c5d04af7583e6f438d12939d4ac03b96312329eabf2c7fa6b1ee410cd43",
-    "reason": "Visually reviewed tilename change: gap1b_shell_error_dark.png; drawn-cover tiles now show the two-line title under the cover like photo tiles (owner 15-11). Old/new contact sheet inspected before adoption."
+    "sha256": "c71316a836aaddca8e5082121d473c7c86076a5e1269cd42dee550c505bc564c",
+    "reason": "Opened the before/after contact sheet in this integration session. Intentional action ink, radio outlines, chevrons and music artwork retained; labels and primary controls remain readable."
   },
   "_internal/mobile/android/app/src/test/snapshots/gap1b_shell_error_light.png": {
-    "sha256": "db991db073dafd129d3af72f8ac0085621a13285c7ae5a0b2c45c7927a1472dd",
-    "reason": "Visually reviewed tilename change: gap1b_shell_error_light.png; drawn-cover tiles now show the two-line title under the cover like photo tiles (owner 15-11). Old/new contact sheet inspected before adoption."
+    "sha256": "92e9278b670de067395c033451c1cbb437c47766195327f99bfe92fbb5f07989",
+    "reason": "Opened the before/after contact sheet in this integration session. Intentional action ink, radio outlines, chevrons and music artwork retained; labels and primary controls remain readable."
   },
   "_internal/mobile/android/app/src/test/snapshots/gap1b_shell_undo_dark.png": {
-    "sha256": "0d21415269d5d6bec45109089390b00da21a93b8bfbe1c3c9d40354d22d35b13",
-    "reason": "Visually reviewed tilename change: gap1b_shell_undo_dark.png; drawn-cover tiles now show the two-line title under the cover like photo tiles (owner 15-11). Old/new contact sheet inspected before adoption."
+    "sha256": "e55f0f2825bd4274bc8443a5786593cefac156b6b17f738f3992bac343902edb",
+    "reason": "Opened the before/after contact sheet in this integration session. Intentional action ink, radio outlines, chevrons and music artwork retained; labels and primary controls remain readable."
   },
   "_internal/mobile/android/app/src/test/snapshots/gap1b_shell_undo_light.png": {
-    "sha256": "476d78ea311ef05610d3876d60f7286da733f6365701d4b3ec0368ef1a6d7827",
-    "reason": "Visually reviewed tilename change: gap1b_shell_undo_light.png; drawn-cover tiles now show the two-line title under the cover like photo tiles (owner 15-11). Old/new contact sheet inspected before adoption."
+    "sha256": "4faae98933db50d54f04f8e82e91e3a71c47ed21e59611cda35f9b97296b8624",
+    "reason": "Opened the before/after contact sheet in this integration session. Intentional action ink, radio outlines, chevrons and music artwork retained; labels and primary controls remain readable."
   },
   "_internal/mobile/android/app/src/test/snapshots/gap1c_device_listen_only_dark.png": {
     "sha256": "de914ed5ed01d35806d00c4bb9509df48ea5e2ca5fa708766082a53063a9cd5b",
@@ -384,12 +384,12 @@
     "reason": "Reviewed old/new icon_sheet_light.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
   },
   "_internal/mobile/android/app/src/test/snapshots/library_30_dark.png": {
-    "sha256": "ed9af9612b7692ecc88504aa7c64ae19616d6e234d684ce711cd9144ff6d6f87",
-    "reason": "Visually reviewed tilename change: library_30_dark.png; drawn-cover tiles now show the two-line title under the cover like photo tiles (owner 15-11). Old/new contact sheet inspected before adoption."
+    "sha256": "084ff68d009890db997ce52e07706b857f04d7792a54c54b85c533dffa7c1584",
+    "reason": "Opened the before/after contact sheet in this integration session. Intentional action ink, radio outlines, chevrons and music artwork retained; labels and primary controls remain readable."
   },
   "_internal/mobile/android/app/src/test/snapshots/library_30_light.png": {
-    "sha256": "840d2b94d5ba37521bf7f39c072a2396a5a4741f9c2d6d5e8a842e27c1abb8f9",
-    "reason": "Visually reviewed tilename change: library_30_light.png; drawn-cover tiles now show the two-line title under the cover like photo tiles (owner 15-11). Old/new contact sheet inspected before adoption."
+    "sha256": "4135439769e675df042f0cfcabd9b184756403b3060bc19aaf756311e62b4941",
+    "reason": "Opened the before/after contact sheet in this integration session. Intentional action ink, radio outlines, chevrons and music artwork retained; labels and primary controls remain readable."
   },
   "_internal/mobile/android/app/src/test/snapshots/library_empty_dark.png": {
     "sha256": "8e23b654e6809ca028392f5018ddac7c045106c9e8d2a4c77c8aaac70b9a00db",
@@ -400,32 +400,32 @@
     "reason": "Reviewed old/new library_empty_light.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
   },
   "_internal/mobile/android/app/src/test/snapshots/library_filter_finished_light.png": {
-    "sha256": "2c961c0306278e26ab6912177170226b865b499a4010ff2935ea9811cd3ddadf",
-    "reason": "Visually reviewed tilename change: library_filter_finished_light.png; drawn-cover tiles now show the two-line title under the cover like photo tiles (owner 15-11). Old/new contact sheet inspected before adoption."
+    "sha256": "88e5ed2b00a39bca9624caeb277c4f8d2de54daf5caa2746b79b90c4dea416c8",
+    "reason": "Opened the before/after contact sheet in this integration session. Intentional action ink, radio outlines, chevrons and music artwork retained; labels and primary controls remain readable."
   },
   "_internal/mobile/android/app/src/test/snapshots/library_listening_light.png": {
-    "sha256": "f8e0498440f5a32e4ef4714b4806abd5f2cb66a6b47839ae26bf2b5c7b3b5318",
-    "reason": "Visually reviewed tilename change: library_listening_light.png; drawn-cover tiles now show the two-line title under the cover like photo tiles (owner 15-11). Old/new contact sheet inspected before adoption."
+    "sha256": "0f19679a7f735e32cb2f27b44577b19fc61e264cb0224cb8423bd4453c4cf6e1",
+    "reason": "Opened the before/after contact sheet in this integration session. Intentional action ink, radio outlines, chevrons and music artwork retained; labels and primary controls remain readable."
   },
   "_internal/mobile/android/app/src/test/snapshots/library_one_dark.png": {
-    "sha256": "d44b3d3d36027498c6a08bdee338ab12b61c11817e27bead926b0c4c3a0dfbab",
-    "reason": "Visually reviewed tilename change: library_one_dark.png; drawn-cover tiles now show the two-line title under the cover like photo tiles (owner 15-11). Old/new contact sheet inspected before adoption."
+    "sha256": "abea1affe91bfba71de42353f79435a5bb123aa9b43afc75172f5d970ae1755d",
+    "reason": "Opened the before/after contact sheet in this integration session. Intentional action ink, radio outlines, chevrons and music artwork retained; labels and primary controls remain readable."
   },
   "_internal/mobile/android/app/src/test/snapshots/library_one_light.png": {
-    "sha256": "3be5c9d6ebf24b20d6f5ef61da3e17875734a7fdbd8cf48cc2d3ca61f796dc96",
-    "reason": "Visually reviewed tilename change: library_one_light.png; drawn-cover tiles now show the two-line title under the cover like photo tiles (owner 15-11). Old/new contact sheet inspected before adoption."
+    "sha256": "7cb775085842808d4e8d9ea48b1bb5fd1ff02670d8a9fc01197436289ce48e63",
+    "reason": "Opened the before/after contact sheet in this integration session. Intentional action ink, radio outlines, chevrons and music artwork retained; labels and primary controls remain readable."
   },
   "_internal/mobile/android/app/src/test/snapshots/library_search_light.png": {
-    "sha256": "b6a854d0b6b19ad26c710a27efa2e89f7a23d7f5af23c988897ce32b31122930",
-    "reason": "Visually reviewed tilename change: library_search_light.png; drawn-cover tiles now show the two-line title under the cover like photo tiles (owner 15-11). Old/new contact sheet inspected before adoption."
+    "sha256": "92ec10227fc38d3925f6c22e85f98a13155a45dfd5471b53f9a00a186cca42c7",
+    "reason": "Opened the before/after contact sheet in this integration session. Intentional action ink, radio outlines, chevrons and music artwork retained; labels and primary controls remain readable."
   },
   "_internal/mobile/android/app/src/test/snapshots/library_series_sheet_light.png": {
-    "sha256": "c91b95bca018272d786c6834de91bab0753296b83f9dd49b8c1275b7dd01e78f",
-    "reason": "Visually inspected the exact combined-render before/after image at native resolution. The library keeps the tile titles from tilename and all three series rows or all four sorting choices. The sheet and menu retain rounded edges and the shared shadow without the stationary band; labels remain unclipped. Recorded only the two binary-conflict test cases after merging sheetedge and fixing nested menu viewport."
+    "sha256": "2da975d01e64742f0702cd62fa8a2ff4782936195026fa5634154e23b0399863",
+    "reason": "Opened the before/after contact sheet in this integration session. Intentional action ink, radio outlines, chevrons and music artwork retained; labels and primary controls remain readable."
   },
   "_internal/mobile/android/app/src/test/snapshots/library_sort_menu_light.png": {
-    "sha256": "f6c8fd6c3326a784e6a154604b12a3aae944f0b9a85afb56265afa427abd292e",
-    "reason": "Visually inspected the exact combined-render before/after image at native resolution. The library keeps the tile titles from tilename and all three series rows or all four sorting choices. The sheet and menu retain rounded edges and the shared shadow without the stationary band; labels remain unclipped. Recorded only the two binary-conflict test cases after merging sheetedge and fixing nested menu viewport."
+    "sha256": "bb0787f9316d2e9fa3054ab9a4aeef9d039ca02384e7e98bd84d90a20bdad8eb",
+    "reason": "Opened the before/after contact sheet in this integration session. Intentional action ink, radio outlines, chevrons and music artwork retained; labels and primary controls remain readable."
   },
   "_internal/mobile/android/app/src/test/snapshots/link_book_mini_dark.png": {
     "sha256": "134a6e89bfb4fd5678d97a0afd22e7665f7c14ddaa3d170fa95dcad4d5cbc8fb",
@@ -460,12 +460,12 @@
     "reason": "Reviewed old/new mini_short_light.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
   },
   "_internal/mobile/android/app/src/test/snapshots/music_book_cues_dark.png": {
-    "sha256": "12b003337f15755d90da7b3e8d822a7f763341cc5d3633c86b5eef68bb68f7a4",
-    "reason": "Visually reviewed the exact before/after snapshot pair on integration contact sheet 3. The rounded sheet surface, hairline and shadow share the panel edge; the stationary rectangular paint band is removed. Controls and labels remain readable with no new clipping."
+    "sha256": "95f446dcf18699c89a68d75389789e5e18f417232e2d2b73dd71857cc7b93d1d",
+    "reason": "Opened the before/after contact sheet in this integration session. Intentional action ink, radio outlines, chevrons and music artwork retained; labels and primary controls remain readable. The test intentionally scrolls to cue 3; the enable row sits above the visible list viewport."
   },
   "_internal/mobile/android/app/src/test/snapshots/music_book_cues_light.png": {
-    "sha256": "434b7bc15be2589cd05ca9b50e96eabbb0c88e841c796b2da89b693fcd8a63ea",
-    "reason": "Visually reviewed the exact before/after snapshot pair on integration contact sheet 3. The rounded sheet surface, hairline and shadow share the panel edge; the stationary rectangular paint band is removed. Controls and labels remain readable with no new clipping."
+    "sha256": "be1e6d221606a9092e3f8d51f3236caf20f26780ddf57cd2ba42ebb84a02d9e4",
+    "reason": "Opened the before/after contact sheet in this integration session. Intentional action ink, radio outlines, chevrons and music artwork retained; labels and primary controls remain readable. The test intentionally scrolls to cue 3; the enable row sits above the visible list viewport."
   },
   "_internal/mobile/android/app/src/test/snapshots/music_book_menu_dark.png": {
     "sha256": "397292ef3d18f355ee051e7e1c4693631b4e8a611f32cd6e1ef8f8717bded711",
@@ -476,40 +476,40 @@
     "reason": "Visually reviewed the exact before/after snapshot pair on integration contact sheet 3. The rounded sheet surface, hairline and shadow share the panel edge; the stationary rectangular paint band is removed. Controls and labels remain readable with no new clipping."
   },
   "_internal/mobile/android/app/src/test/snapshots/music_library_dark.png": {
-    "sha256": "2528ff569d3620bc93e3f9076f206be34f25fbe19a83c12ce27ed8e13d28946a",
-    "reason": "Visually compared base and after in affordance review-delta/delta-01.jpg: action ink and persistent play/choice/navigation cues; loaded artwork visible in current fixture."
+    "sha256": "076229c2fc3882dde692da1774e03761a147930a9e7784d7bba6403760e19a3a",
+    "reason": "Opened the before/after contact sheet in this integration session. Intentional action ink, radio outlines, chevrons and music artwork retained; labels and primary controls remain readable."
   },
   "_internal/mobile/android/app/src/test/snapshots/music_library_downloading_dark.png": {
-    "sha256": "d1870959675cd2261c659d44838af3a6f116c7cccfa21313192cb1c7bb608bfd",
-    "reason": "Visually compared base and after in affordance review-delta/delta-01.jpg: action ink and persistent play/choice/navigation cues; loaded artwork visible in current fixture."
+    "sha256": "4a8b7aa60443a4e5faf6f5fbc16896410cb30ead05547d458c7922882c9650ce",
+    "reason": "Opened the before/after contact sheet in this integration session. Intentional action ink, radio outlines, chevrons and music artwork retained; labels and primary controls remain readable."
   },
   "_internal/mobile/android/app/src/test/snapshots/music_library_downloading_light.png": {
-    "sha256": "b3c5c5cb01c661847e2b168f407259fb6dd8b7beb7f648c6bc03893a97546214",
-    "reason": "Visually compared base and after in affordance review-delta/delta-01.jpg: action ink and persistent play/choice/navigation cues; loaded artwork visible in current fixture."
+    "sha256": "577614c1e9f5521ab09c4df5666a6f8b1e3159a72343b0700404ac3031dcf523",
+    "reason": "Opened the before/after contact sheet in this integration session. Intentional action ink, radio outlines, chevrons and music artwork retained; labels and primary controls remain readable."
   },
   "_internal/mobile/android/app/src/test/snapshots/music_library_font130_light.png": {
-    "sha256": "ef28e7018309b39cdf02b443fa6c73b42e6d6a98753ec60b8950a2577ebad1b4",
-    "reason": "Visually compared base and after in affordance review-delta/delta-01.jpg: action ink and persistent play/choice/navigation cues; loaded artwork visible in current fixture."
+    "sha256": "a5b6bd80f77172543810d2c4a67d4f08babb0b2f0425fad0d6542b033d6bd7a5",
+    "reason": "Opened the before/after contact sheet in this integration session. Intentional action ink, radio outlines, chevrons and music artwork retained; labels and primary controls remain readable."
   },
   "_internal/mobile/android/app/src/test/snapshots/music_library_light.png": {
-    "sha256": "679e6eff0b6764ca167f14c7d35d4179f8f5b8fe5c53a28e65f0d46a48d5b7c5",
-    "reason": "Visually compared base and after in affordance review-delta/delta-01.jpg: action ink and persistent play/choice/navigation cues; loaded artwork visible in current fixture."
+    "sha256": "345e8377fa441d14ce4e7c17963d4ba57633aae455a9dfb78be3b319ef50c428",
+    "reason": "Opened the before/after contact sheet in this integration session. Intentional action ink, radio outlines, chevrons and music artwork retained; labels and primary controls remain readable."
   },
   "_internal/mobile/android/app/src/test/snapshots/music_pick_dark.png": {
-    "sha256": "5c776861402c304ee111222d9e4c08a57203341d9ac5bf386dfe1333e07bbedd",
-    "reason": "Visually compared base and after in affordance review-delta/delta-01.jpg: action ink and persistent play/choice/navigation cues; loaded artwork visible in current fixture."
+    "sha256": "04869a5ac78fc9eb75178a2e532d29df28985dc12ab668bb4c5e8983b9bcf07a",
+    "reason": "Opened the before/after contact sheet in this integration session. Intentional action ink, radio outlines, chevrons and music artwork retained; labels and primary controls remain readable."
   },
   "_internal/mobile/android/app/src/test/snapshots/music_pick_light.png": {
-    "sha256": "515ff4c6aac9c7e2c0e2b6c87c5e5f0a76c00cd1fbae4443541f1bc4362736b7",
-    "reason": "Visually compared base and after in affordance review-delta/delta-02.jpg: action ink and persistent play/choice/navigation cues; loaded artwork visible in current fixture."
+    "sha256": "77b268aa706407fe6d5c09b96bfeb28d5a6779f2d71a38eac9f57b3d4b8f2f4e",
+    "reason": "Opened the before/after contact sheet in this integration session. Intentional action ink, radio outlines, chevrons and music artwork retained; labels and primary controls remain readable."
   },
   "_internal/mobile/android/app/src/test/snapshots/np_caught_up_light.png": {
-    "sha256": "19d8b87e98e4182c2e105807ea9d16c85217166bc4d5b896359db525a23d3aa8",
-    "reason": "Visually compared base and after in affordance review-10.jpg: action ink, navigation chevrons, persistent choice rings and read-along play cues; no frame or shadow change."
+    "sha256": "8fecba2c44e4fecb24c1cdc4a08d579e63a1a2ca1f71f430b0d8817d58d997f7",
+    "reason": "Opened the before/after contact sheet in this integration session. Intentional action ink, radio outlines, chevrons and music artwork retained; labels and primary controls remain readable."
   },
   "_internal/mobile/android/app/src/test/snapshots/np_ended_light.png": {
-    "sha256": "bffb19631b646f72551987d60f52ac05b933d937c4c65eeb19fc0bf2fbf03df7",
-    "reason": "Visually compared base and after in affordance review-10.jpg: action ink, navigation chevrons, persistent choice rings and read-along play cues; no frame or shadow change."
+    "sha256": "c65cbaf383ee85e0d7304c0f12a1f6915637a7df8989893fca87228f6516d521",
+    "reason": "Opened the before/after contact sheet in this integration session. Intentional action ink, radio outlines, chevrons and music artwork retained; labels and primary controls remain readable."
   },
   "_internal/mobile/android/app/src/test/snapshots/np_large_dark.png": {
     "sha256": "a3d326e2daeecc2f6b5d7a2281afa7a20f6d682d7c8e34ecbdb9a76b67e81bcc",
@@ -520,92 +520,92 @@
     "reason": "Visually compared base and after in affordance review-10.jpg: action ink, navigation chevrons, persistent choice rings and read-along play cues; no frame or shadow change."
   },
   "_internal/mobile/android/app/src/test/snapshots/np_long_dark.png": {
-    "sha256": "dd26253d516bc2060be87806884b9ee717fdeaf236539019e5de509c1a720180",
-    "reason": "Visually compared base and after in affordance review-10.jpg: action ink, navigation chevrons, persistent choice rings and read-along play cues; no frame or shadow change."
+    "sha256": "b181e90a6a03f14a470d514d0db8fe8738954c6b29bd00875ebc0719dc01199e",
+    "reason": "Opened the before/after contact sheet in this integration session. Intentional action ink, radio outlines, chevrons and music artwork retained; labels and primary controls remain readable."
   },
   "_internal/mobile/android/app/src/test/snapshots/np_long_light.png": {
-    "sha256": "a0a394b3ae9f40f1d86a84b6721a094fdbe40e96f8b7219d711d61adcb4fc634",
-    "reason": "Visually compared base and after in affordance review-10.jpg: action ink, navigation chevrons, persistent choice rings and read-along play cues; no frame or shadow change."
+    "sha256": "219ca84833cd74aadc19e7eaf5ed6213a92d642257fc366250f1b2b623e40cf8",
+    "reason": "Opened the before/after contact sheet in this integration session. Intentional action ink, radio outlines, chevrons and music artwork retained; labels and primary controls remain readable."
   },
   "_internal/mobile/android/app/src/test/snapshots/np_note_light.png": {
-    "sha256": "90518cfa35b2f4465d7bc91ccd2cd86ccf43dee5592c983c1873be8d7f898182",
-    "reason": "Visually compared base and after in affordance review-11.jpg: action ink, navigation chevrons, persistent choice rings and read-along play cues; no frame or shadow change."
+    "sha256": "611ab1a544d0a0fdc4f17f9fa69705a2309ec154a58b2a54dddb57b5a7bbe16f",
+    "reason": "Opened the before/after contact sheet in this integration session. Intentional action ink, radio outlines, chevrons and music artwork retained; labels and primary controls remain readable."
   },
   "_internal/mobile/android/app/src/test/snapshots/np_opening_start.png": {
     "sha256": "428e86fcad98e2408a66071add72ed5020a81319131a6815c4ff42e6cced90f9",
     "reason": "Reviewed old/new np_opening_start.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
   },
   "_internal/mobile/android/app/src/test/snapshots/np_paused_dark.png": {
-    "sha256": "112dc34c27e72a39324533e128337afaca100505458667351705ce5fa02b93ed",
-    "reason": "Visually compared base and after in affordance review-11.jpg: action ink, navigation chevrons, persistent choice rings and read-along play cues; no frame or shadow change."
+    "sha256": "2ba6812108a128bf0b11780c1fd1fc382e3389a9b10af44ecb99013eab1ad5fc",
+    "reason": "Opened the before/after contact sheet in this integration session. Intentional action ink, radio outlines, chevrons and music artwork retained; labels and primary controls remain readable."
   },
   "_internal/mobile/android/app/src/test/snapshots/np_paused_light.png": {
-    "sha256": "355a3f0946d517bb26f923c303bb911813a4ae2c9c45abf876018f91d129a90c",
-    "reason": "Visually compared base and after in affordance review-11.jpg: action ink, navigation chevrons, persistent choice rings and read-along play cues; no frame or shadow change."
+    "sha256": "69c647e14d8c29586a55af019f4835bedf4da2dd1b65345e3be365ab5ca80c36",
+    "reason": "Opened the before/after contact sheet in this integration session. Intentional action ink, radio outlines, chevrons and music artwork retained; labels and primary controls remain readable."
   },
   "_internal/mobile/android/app/src/test/snapshots/np_picker_sleep_chapters_light.png": {
-    "sha256": "4d7e16545fdaf4c833122cb30d1c031c9ab98cd031bf356b50f0de79778b2f57",
-    "reason": "Visually reviewed the exact before/after snapshot pair on integration contact sheet 5. The rounded sheet surface, hairline and shadow share the panel edge; the stationary rectangular paint band is removed. Controls and labels remain readable with no new clipping."
+    "sha256": "d1a015d61e67c98c25ee8dd2cff59cf59f52cee6026028c70f0e7c64df219b97",
+    "reason": "Opened the before/after contact sheet in this integration session. Intentional action ink, radio outlines, chevrons and music artwork retained; labels and primary controls remain readable."
   },
   "_internal/mobile/android/app/src/test/snapshots/np_picker_sleep_font130_dark.png": {
-    "sha256": "f6f43745558bad4b0436cfd0f75c4885277fb04ad74a8297f33d6679466a3ba2",
-    "reason": "Visually reviewed the exact before/after snapshot pair on integration contact sheet 5. The rounded sheet surface, hairline and shadow share the panel edge; the stationary rectangular paint band is removed. Controls and labels remain readable with no new clipping."
+    "sha256": "7f2e0dafa645d977704dbefa02f4b3c10fab25fe62309e3745add1b75ef12813",
+    "reason": "Opened the before/after contact sheet in this integration session. Intentional action ink, radio outlines, chevrons and music artwork retained; labels and primary controls remain readable."
   },
   "_internal/mobile/android/app/src/test/snapshots/np_picker_sleep_font130_light.png": {
-    "sha256": "e22c875fdaca3259aca5b103f82f65860427b97fa62e716983943196ae967cf0",
-    "reason": "Visually reviewed the exact before/after snapshot pair on integration contact sheet 5. The rounded sheet surface, hairline and shadow share the panel edge; the stationary rectangular paint band is removed. Controls and labels remain readable with no new clipping."
+    "sha256": "715d51baa47d984564114e5d73933d2f587b0a59e37e51eb97b963b45faab4d9",
+    "reason": "Opened the before/after contact sheet in this integration session. Intentional action ink, radio outlines, chevrons and music artwork retained; labels and primary controls remain readable."
   },
   "_internal/mobile/android/app/src/test/snapshots/np_playing_dark.png": {
-    "sha256": "9127a8768c04dd0a2ee2001655944377d25b1e6e0ab4015079f0082b0e42c180",
-    "reason": "Visually compared base and after in affordance review-12.jpg: action ink, navigation chevrons, persistent choice rings and read-along play cues; no frame or shadow change."
+    "sha256": "26daf02956bd4df62cd15ac8ac118d3450963a43c87f992a6201d8e7f60a283c",
+    "reason": "Opened the before/after contact sheet in this integration session. Intentional action ink, radio outlines, chevrons and music artwork retained; labels and primary controls remain readable."
   },
   "_internal/mobile/android/app/src/test/snapshots/np_playing_light.png": {
-    "sha256": "0a4953acd63bb480b00c877bacc0ae13d27d645bded1301312b1a742f4bc0b5c",
-    "reason": "Visually compared base and after in affordance review-12.jpg: action ink, navigation chevrons, persistent choice rings and read-along play cues; no frame or shadow change."
+    "sha256": "c80bb23336ab3d2bce43261445bcf56480342303d5b0039b9ab46d5d911fbf39",
+    "reason": "Opened the before/after contact sheet in this integration session. Intentional action ink, radio outlines, chevrons and music artwork retained; labels and primary controls remain readable."
   },
   "_internal/mobile/android/app/src/test/snapshots/np_reading_dark.png": {
-    "sha256": "2ff7b08b8c5ff897e154dd3dc101089c3fd0425fb8adb98371eeed99c4bffc67",
-    "reason": "Visually compared base and after in affordance review-12.jpg: action ink, navigation chevrons, persistent choice rings and read-along play cues; no frame or shadow change."
+    "sha256": "2322ca0b6d2d776689c917ba487fc545e395d3e403edfaef51336f151e93cb5d",
+    "reason": "Opened the before/after contact sheet in this integration session. Intentional action ink, radio outlines, chevrons and music artwork retained; labels and primary controls remain readable."
   },
   "_internal/mobile/android/app/src/test/snapshots/np_reading_follow_light.png": {
-    "sha256": "8abce82e74c667092c48864ec77f72a887c3bbeb9cf178a48be0f1daae94cfc9",
-    "reason": "Visually compared base and after in affordance review-13.jpg: action ink, navigation chevrons, persistent choice rings and read-along play cues; no frame or shadow change."
+    "sha256": "4fe15ba2ff97208e3f25e3871259f3bd791752258348c12e6cfe0db9be15d8a0",
+    "reason": "Opened the before/after contact sheet in this integration session. Intentional action ink, radio outlines, chevrons and music artwork retained; labels and primary controls remain readable."
   },
   "_internal/mobile/android/app/src/test/snapshots/np_reading_light.png": {
-    "sha256": "494972d36052cf53062aaeab72b5ce94d6be7b764500fe6d71d3cdea21e1b779",
-    "reason": "Visually compared base and after in affordance review-13.jpg: action ink, navigation chevrons, persistent choice rings and read-along play cues; no frame or shadow change."
+    "sha256": "bbe96b43a35e7ed179f24b30c2efa3ce1054234527b508e0cd127ee7799199af",
+    "reason": "Opened the before/after contact sheet in this integration session. Intentional action ink, radio outlines, chevrons and music artwork retained; labels and primary controls remain readable."
   },
   "_internal/mobile/android/app/src/test/snapshots/np_reading_mid.png": {
-    "sha256": "081b92bd35dd2dfea299e8f47fae29da1de8ce5c978733c4465dcfb52776c35e",
-    "reason": "Visually compared base and after in affordance review-13.jpg: action ink, navigation chevrons, persistent choice rings and read-along play cues; no frame or shadow change."
+    "sha256": "e81ea2209affa40a72ee45da57c84c2247210ae146f0064f630a5af9a457dcd8",
+    "reason": "Opened the before/after contact sheet in this integration session. Intentional action ink, radio outlines, chevrons and music artwork retained; labels and primary controls remain readable."
   },
   "_internal/mobile/android/app/src/test/snapshots/np_return_chip_light.png": {
-    "sha256": "0dd31ce0c749da67f258cb6d3aa59e679e2e2fc3932bce2ee2c774f77c068680",
-    "reason": "Visually compared base and after in affordance review-13.jpg: action ink, navigation chevrons, persistent choice rings and read-along play cues; no frame or shadow change."
+    "sha256": "169f25ccc3cac8eb15d577c4282f403dff5e8f3c3400ae4f4a92287dae9dcacf",
+    "reason": "Opened the freshly rendered full-resolution image after the no-title-overlap assertion passed. The return action floats at the lower artwork edge above the complete chapter title; seek, time labels and transport stay clear and retain their coordinates."
   },
   "_internal/mobile/android/app/src/test/snapshots/np_sleep_dark.png": {
-    "sha256": "c43acf0ada0294f185a1ef9cc452c1cd2df2da97bbd7c0704f44b779e01cd0f0",
-    "reason": "Visually reviewed the exact before/after snapshot pair on integration contact sheet 5. The rounded sheet surface, hairline and shadow share the panel edge; the stationary rectangular paint band is removed. Controls and labels remain readable with no new clipping."
+    "sha256": "e12b479eedbf07ed08d2b10b4ef08bc43b0d0b74b32377d2226f2edbd2821da0",
+    "reason": "Opened the before/after contact sheet in this integration session. Intentional action ink, radio outlines, chevrons and music artwork retained; labels and primary controls remain readable."
   },
   "_internal/mobile/android/app/src/test/snapshots/np_sleep_light.png": {
-    "sha256": "09582074b52492ba4668c18bb496a806b0aa6ab6e97e76e1f1e299f97958ac9f",
-    "reason": "Visually reviewed the exact before/after snapshot pair on integration contact sheet 5. The rounded sheet surface, hairline and shadow share the panel edge; the stationary rectangular paint band is removed. Controls and labels remain readable with no new clipping."
+    "sha256": "b167c72b3c8d05ef347aeb95665a43c252406a08cb73fb60123bf817d9cc37de",
+    "reason": "Opened the before/after contact sheet in this integration session. Intentional action ink, radio outlines, chevrons and music artwork retained; labels and primary controls remain readable."
   },
   "_internal/mobile/android/app/src/test/snapshots/picker_settings_sleep_dark.png": {
-    "sha256": "79834a02e1fa241f4cdf681758ff82701ba965f33ea88bdc53cd5bfecb1d9bb7",
-    "reason": "Visually compared base and after in affordance review-delta/delta-02.jpg: action ink and persistent play/choice/navigation cues; loaded artwork visible in current fixture."
+    "sha256": "0459127fd49e68450f77c392d37a8533aad80682fa01b70f65625442f30acd15",
+    "reason": "Opened the before/after contact sheet in this integration session. Intentional action ink, radio outlines, chevrons and music artwork retained; labels and primary controls remain readable."
   },
   "_internal/mobile/android/app/src/test/snapshots/picker_settings_sleep_font130_dark.png": {
-    "sha256": "8ed4b3913e416003ae1585519d1536c5126081c85e888f92ae569ee3235929af",
-    "reason": "Visually compared base and after in affordance review-delta/delta-03.jpg: action ink and persistent play/choice/navigation cues; loaded artwork visible in current fixture."
+    "sha256": "12826d153b9f6e1c93567cf1f1527ac5972c0ea6ccc9907cef188048325526cf",
+    "reason": "Opened the before/after contact sheet in this integration session. Intentional action ink, radio outlines, chevrons and music artwork retained; labels and primary controls remain readable."
   },
   "_internal/mobile/android/app/src/test/snapshots/picker_settings_sleep_font130_light.png": {
-    "sha256": "ebfa24d8caac84d88dd3f2883b75a65ba2be0fa894446f2eaf3c2e721782fd4c",
-    "reason": "Visually compared base and after in affordance review-delta/delta-03.jpg: action ink and persistent play/choice/navigation cues; loaded artwork visible in current fixture."
+    "sha256": "999a1c1d8b3e7f4d9f1f329051c1239648d55c1b0cb9b9be7796d8ce7dea0c3b",
+    "reason": "Opened the before/after contact sheet in this integration session. Intentional action ink, radio outlines, chevrons and music artwork retained; labels and primary controls remain readable."
   },
   "_internal/mobile/android/app/src/test/snapshots/picker_settings_sleep_light.png": {
-    "sha256": "afa5486a768654ad8315e7839bd339c8c6388d7adce91ef443f40c22c331c7cf",
-    "reason": "Visually compared base and after in affordance review-delta/delta-03.jpg: action ink and persistent play/choice/navigation cues; loaded artwork visible in current fixture."
+    "sha256": "c36de11b3ff0dc18c2eaccc5a811680b03b3069c9cf6e72a072773cc20c85261",
+    "reason": "Opened the before/after contact sheet in this integration session. Intentional action ink, radio outlines, chevrons and music artwork retained; labels and primary controls remain readable."
   },
   "_internal/mobile/android/app/src/test/snapshots/pip_content_dark.png": {
     "sha256": "c2bd655a22eac5e19cfd54de611b2d2370277b25dd54d9bc69474807bc4aa640",
@@ -640,8 +640,8 @@
     "reason": "Visually reviewed 0.4.169 summary case fix: settings_root_light.png; only the Listening row summary changed from \"nhạc tự chọn\" to \"Nhạc tự chọn\" (diff box (170, 572, 438, 613)). Old/new contact sheet inspected before adoption."
   },
   "_internal/mobile/android/app/src/test/snapshots/settings_sleep_time_sheet_light.png": {
-    "sha256": "ef6b52b4762e06d2142868577ca2c8a915d861367f8adb0d9637240c9d598bac",
-    "reason": "Visually reviewed the exact before/after snapshot pair on integration contact sheet 6. The rounded sheet surface, hairline and shadow share the panel edge; the stationary rectangular paint band is removed. Controls and labels remain readable with no new clipping."
+    "sha256": "01305cf8d2fe4c2c86160f7eeeab1f152d095af28c6ecbc0b36bb46dd3372edc",
+    "reason": "Opened the before/after contact sheet in this integration session. Intentional action ink, radio outlines, chevrons and music artwork retained; labels and primary controls remain readable."
   },
   "_internal/mobile/android/app/src/test/snapshots/shell_book_light.png": {
     "sha256": "1ae72d11c96c8c289757610e2eb646ecbcce624f658d2b6eef25bc4d034f9950",
@@ -652,36 +652,36 @@
     "reason": "Visually compared base and after in affordance review-16.jpg: action ink, navigation chevrons, persistent choice rings and read-along play cues; no frame or shadow change."
   },
   "_internal/mobile/android/app/src/test/snapshots/shell_library_dark.png": {
-    "sha256": "fde615f76cce0aa9757a2c0fd48122ceb9d19822e24ab611f26aec1478625d3b",
-    "reason": "Visually reviewed tilename change: shell_library_dark.png; drawn-cover tiles now show the two-line title under the cover like photo tiles (owner 15-11). Old/new contact sheet inspected before adoption."
+    "sha256": "915c18b7923872aee6c8d0f579d7051787fcf99fba68a064d22d7f1784626919",
+    "reason": "Opened the before/after contact sheet in this integration session. Intentional action ink, radio outlines, chevrons and music artwork retained; labels and primary controls remain readable."
   },
   "_internal/mobile/android/app/src/test/snapshots/shell_library_light.png": {
-    "sha256": "839b59a95a1eddfbbf6c5cedce5ab39e0b1b1e4575714e00d9b6eb0870928ced",
-    "reason": "Visually reviewed tilename change: shell_library_light.png; drawn-cover tiles now show the two-line title under the cover like photo tiles (owner 15-11). Old/new contact sheet inspected before adoption."
+    "sha256": "45619f19601a8ba471b7f3f27b8a8641ddade90537e9499865ce4ee8f330ad8d",
+    "reason": "Opened the before/after contact sheet in this integration session. Intentional action ink, radio outlines, chevrons and music artwork retained; labels and primary controls remain readable."
   },
   "_internal/mobile/android/app/src/test/snapshots/shell_mini_library_light.png": {
-    "sha256": "d400263d89d0aca968a6dab72f476f21f975fd73d4c00d1f0f5001b0e5f5bb8f",
-    "reason": "Visually reviewed tilename change: shell_mini_library_light.png; drawn-cover tiles now show the two-line title under the cover like photo tiles (owner 15-11). Old/new contact sheet inspected before adoption."
+    "sha256": "001d2f2ec9c442875053cd8e9de992c9b8c9fc7cc05c3ffac8525fecdc09bd50",
+    "reason": "Opened the before/after contact sheet in this integration session. Intentional action ink, radio outlines, chevrons and music artwork retained; labels and primary controls remain readable."
   },
   "_internal/mobile/android/app/src/test/snapshots/shell_mini_restored_light.png": {
-    "sha256": "4e72378636f4ff6cc50b689cd99b583dfdb6a3274e792930435e3221e9885d2e",
-    "reason": "Visually reviewed tilename change: shell_mini_restored_light.png; drawn-cover tiles now show the two-line title under the cover like photo tiles (owner 15-11). Old/new contact sheet inspected before adoption."
+    "sha256": "22fe957ca24561817557145b27a3fa1d51b5a60f56ee9a191007a49bd43dbda6",
+    "reason": "Opened the before/after contact sheet in this integration session. Intentional action ink, radio outlines, chevrons and music artwork retained; labels and primary controls remain readable."
   },
   "_internal/mobile/android/app/src/test/snapshots/shell_now_playing_mid_light.png": {
     "sha256": "ac71c5b8c47a8ff6fe3ef4262acdca3a3bb52fd5cc5489f164db87d33b00cc59",
     "reason": "Visually compared base and after in affordance review-16.jpg: action ink, navigation chevrons, persistent choice rings and read-along play cues; no frame or shadow change."
   },
   "_internal/mobile/android/app/src/test/snapshots/shell_now_playing_open_light.png": {
-    "sha256": "6a7beaf28771eb5b98af5407d0981fec9149c4e4e9d9e0d5b123fccbdd2d931b",
-    "reason": "Visually compared base and after in affordance review-16.jpg: action ink, navigation chevrons, persistent choice rings and read-along play cues; no frame or shadow change."
+    "sha256": "e980b181bc0083805455860c00bbc1417b3d77149f258fbd4a950ff8b30e4eb1",
+    "reason": "Opened the before/after contact sheet in this integration session. Intentional action ink, radio outlines, chevrons and music artwork retained; labels and primary controls remain readable."
   },
   "_internal/mobile/android/app/src/test/snapshots/shell_push_mid_light.png": {
-    "sha256": "9aa56074192efdcb28405ff1d8ffc26de41dfe7bcda133fbf07b6e93039d22b4",
-    "reason": "Visually compared base and after in affordance review-16.jpg: action ink, navigation chevrons, persistent choice rings and read-along play cues; no frame or shadow change."
+    "sha256": "4a158325da531e57f0e38ed18ab31f42ee4c1e8578f1e9d42625ad87c392aaf5",
+    "reason": "Opened the before/after contact sheet in this integration session. Intentional action ink, radio outlines, chevrons and music artwork retained; labels and primary controls remain readable. This is the deliberate intermediate book transition frame, with the library and incoming page both drawn."
   },
   "_internal/mobile/android/app/src/test/snapshots/shell_read_along_from_book_light.png": {
-    "sha256": "58924f72329f644c74215daba5604480d87a56b6081a7addcd361aa15535550e",
-    "reason": "Visually compared base and after in affordance review-16.jpg: action ink, navigation chevrons, persistent choice rings and read-along play cues; no frame or shadow change."
+    "sha256": "ff11a21ca3f42e01d6fee1641d73683f98117233cff9efbd161eb45fe3351cdf",
+    "reason": "Opened the before/after contact sheet in this integration session. Intentional action ink, radio outlines, chevrons and music artwork retained; labels and primary controls remain readable."
   },
   "_internal/mobile/android/app/src/test/snapshots/shell_settings_dark.png": {
     "sha256": "dd6d33d7986f17cc797af5a351f5cd8ac1e666a063b43f7233fb5a880641eab9",
@@ -708,12 +708,12 @@
     "reason": "Visually compared base and after in affordance review-17.jpg: action ink, navigation chevrons, persistent choice rings and read-along play cues; no frame or shadow change."
   },
   "_internal/mobile/android/app/src/test/snapshots/voice_consent_sheet_dark.png": {
-    "sha256": "b6490975bc81cc5a48db59f191caf3e704a3bba7621f19b5c3afc76e352681a9",
-    "reason": "Visually reviewed the exact before/after snapshot pair on integration contact sheet 6. The rounded sheet surface, hairline and shadow share the panel edge; the stationary rectangular paint band is removed. Controls and labels remain readable with no new clipping."
+    "sha256": "76eaa4da535351a5807055b5180ca14fcf5cf1af6df86c66aa4c47e074614c81",
+    "reason": "Opened the before/after contact sheet in this integration session. Intentional action ink, radio outlines, chevrons and music artwork retained; labels and primary controls remain readable."
   },
   "_internal/mobile/android/app/src/test/snapshots/voice_consent_sheet_light.png": {
-    "sha256": "bbe85820659de53ee2990fcdf1e37b3fb1f66c883c8c3ce523aa8792e523c3f2",
-    "reason": "Visually reviewed the exact before/after snapshot pair on integration contact sheet 6. The rounded sheet surface, hairline and shadow share the panel edge; the stationary rectangular paint band is removed. Controls and labels remain readable with no new clipping."
+    "sha256": "f018063b2d33106a3a25805977a3a503234ef8b71fec517417725daa0365def4",
+    "reason": "Opened the before/after contact sheet in this integration session. Intentional action ink, radio outlines, chevrons and music artwork retained; labels and primary controls remain readable."
   },
   "_internal/mobile/android/app/src/test/snapshots/voice_key_consent_light.png": {
     "sha256": "3cd917c9dba883708598720b9395163610144b278663b78725e0ffd52abea7b6",
@@ -752,36 +752,36 @@
     "reason": "Visually reviewed the exact before/after snapshot pair on integration contact sheet 7. The rounded sheet surface, hairline and shadow share the panel edge; the stationary rectangular paint band is removed. Controls and labels remain readable with no new clipping."
   },
   "_internal/mobile/android/app/src/test/snapshots/voice_music_remove_dark.png": {
-    "sha256": "9fd61f85b17390117e0e94996e40a46d1a5f71576d0227b3181bace111ac690e",
-    "reason": "Visually reviewed the exact before/after snapshot pair on integration contact sheet 7. The rounded sheet surface, hairline and shadow share the panel edge; the stationary rectangular paint band is removed. Controls and labels remain readable with no new clipping."
+    "sha256": "b8b2c7741799c252db8b95ff64e78d7e8ffb7a5be6f4b2ddabfd428e8154be57",
+    "reason": "Opened the before/after contact sheet in this integration session. Intentional action ink, radio outlines, chevrons and music artwork retained; labels and primary controls remain readable."
   },
   "_internal/mobile/android/app/src/test/snapshots/voice_music_remove_light.png": {
-    "sha256": "9611785127b57afa219ba834d493157916d22548c32b4421936f91c6443bc01b",
-    "reason": "Visually reviewed the exact before/after snapshot pair on integration contact sheet 7. The rounded sheet surface, hairline and shadow share the panel edge; the stationary rectangular paint band is removed. Controls and labels remain readable with no new clipping."
+    "sha256": "6d163ea6f80f8c1078b78e5ecf544dc80e6d6c2505056b8c07ad37f9904f27af",
+    "reason": "Opened the before/after contact sheet in this integration session. Intentional action ink, radio outlines, chevrons and music artwork retained; labels and primary controls remain readable."
   },
   "_internal/mobile/android/app/src/test/snapshots/music_track_bottom_dark.png": {
-    "sha256": "c1449199e05a586ad951394699b6bd6a2ab39ff13e33a33c0a626b297a70ce05",
-    "reason": "Visually reviewed the exact before/after snapshot pair on integration contact sheet 4. The rounded sheet surface, hairline and shadow share the panel edge; the stationary rectangular paint band is removed. Controls and labels remain readable with no new clipping."
+    "sha256": "2dedb0388d4ca38dc4a77d5602a5988d55fb5a983d897f69cffb28d2e1852c65",
+    "reason": "Opened the before/after contact sheet in this integration session. Intentional action ink, radio outlines, chevrons and music artwork retained; labels and primary controls remain readable."
   },
   "_internal/mobile/android/app/src/test/snapshots/music_track_bottom_light.png": {
-    "sha256": "066b864eb08e62892394a1d8e7c1b30166d29fa53860a039e465b2cda1caf12e",
-    "reason": "Visually reviewed the exact before/after snapshot pair on integration contact sheet 4. The rounded sheet surface, hairline and shadow share the panel edge; the stationary rectangular paint band is removed. Controls and labels remain readable with no new clipping."
+    "sha256": "6d4120496e22388eefd151d5ead9856398a5618b5ff3c82cf883f21b8d70b325",
+    "reason": "Opened the before/after contact sheet in this integration session. Intentional action ink, radio outlines, chevrons and music artwork retained; labels and primary controls remain readable."
   },
   "_internal/mobile/android/app/src/test/snapshots/music_track_dark.png": {
-    "sha256": "e435420046e389ac7a9d8a5a067ee207a965d4383619ac129b23a49a7bcb3a10",
-    "reason": "Visually reviewed the exact before/after snapshot pair on integration contact sheet 4. The rounded sheet surface, hairline and shadow share the panel edge; the stationary rectangular paint band is removed. Controls and labels remain readable with no new clipping."
+    "sha256": "aaa7c464418875fcf014cbbc69db9ba13cca5d96ad942379d3d424d9306ac0ab",
+    "reason": "Opened the before/after contact sheet in this integration session. Intentional action ink, radio outlines, chevrons and music artwork retained; labels and primary controls remain readable."
   },
   "_internal/mobile/android/app/src/test/snapshots/music_track_light.png": {
-    "sha256": "973956bd4e5db0029013d2e2505af08ac4d4bb04cb66930d591a1ea26b5a0d23",
-    "reason": "Visually reviewed the exact before/after snapshot pair on integration contact sheet 4. The rounded sheet surface, hairline and shadow share the panel edge; the stationary rectangular paint band is removed. Controls and labels remain readable with no new clipping."
+    "sha256": "6159c379be8f295560658f753206d0132b7b4755d4469cb0f0525ebe37c1edf0",
+    "reason": "Opened the before/after contact sheet in this integration session. Intentional action ink, radio outlines, chevrons and music artwork retained; labels and primary controls remain readable."
   },
   "_internal/mobile/android/app/src/test/snapshots/music_track_middle_dark.png": {
-    "sha256": "110f45341976a57fad59c288e5da9a1d6e8ae25c9e2ed113bba5daf9901ac4d5",
-    "reason": "Visually reviewed the exact before/after snapshot pair on integration contact sheet 4. The rounded sheet surface, hairline and shadow share the panel edge; the stationary rectangular paint band is removed. Controls and labels remain readable with no new clipping."
+    "sha256": "c500b040845b03615eb251c85db1879d5adac72eb2197c611086e5c5cae915c0",
+    "reason": "Opened the before/after contact sheet in this integration session. Intentional action ink, radio outlines, chevrons and music artwork retained; labels and primary controls remain readable."
   },
   "_internal/mobile/android/app/src/test/snapshots/music_track_middle_light.png": {
-    "sha256": "dbb0e4c4b34213bae8f8c363825fe31b0d6868738a1a1d5a7decb3435eae69ee",
-    "reason": "Visually reviewed the exact before/after snapshot pair on integration contact sheet 4. The rounded sheet surface, hairline and shadow share the panel edge; the stationary rectangular paint band is removed. Controls and labels remain readable with no new clipping."
+    "sha256": "fc9e1a4f37367fe9d8f1c5854c8e4193f5bf6cec67f7e07d7a6fd0de2ee3a512",
+    "reason": "Opened the before/after contact sheet in this integration session. Intentional action ink, radio outlines, chevrons and music artwork retained; labels and primary controls remain readable."
   },
   "_internal/mobile/android/app/src/test/snapshots/devices_share_on_dark.png": {
     "sha256": "e253c7f74c6a7a3cc1547aa0cca9b1193de13ca61556a9182dabf4ccf657e0cb",
@@ -792,8 +792,8 @@
     "reason": "Reviewed corrected devices_share_on_light.png: full synthetic SHA-256 fingerprint and pairing string wrap readably; instructions and paired devices remain separated, with scrolling for the lower device."
   },
   "_internal/mobile/android/app/src/test/snapshots/book_records_light.png": {
-    "sha256": "c525398dd15cb5e94037d97caa4944fe72b5b19eb81768fd603172949b920cd4",
-    "reason": "Visually reviewed the exact before/after snapshot pair on integration contact sheet 1. The rounded sheet surface, hairline and shadow share the panel edge; the stationary rectangular paint band is removed. Controls and labels remain readable with no new clipping."
+    "sha256": "1549c833efedef0cc14a149a694c46f1f979a37a85cbac74cca47d0a446b29a6",
+    "reason": "Opened the before/after contact sheet in this integration session. Intentional action ink, radio outlines, chevrons and music artwork retained; labels and primary controls remain readable."
   },
   "_internal/mobile/android/app/src/test/snapshots/icon_sheet_dark.png": {
     "sha256": "05b972d2b301dac115580abe1fc051552511ffcaa91edf085aafcab7224bfc37",
@@ -816,12 +816,12 @@
     "reason": "Reviewed music_book_menu_row_light.png in late contact sheets 01-03: current typography and header spacing retain readable labels, separated actions, and centered icon/number shapes; no settled overlap."
   },
   "_internal/mobile/android/app/src/test/snapshots/music_book_page_dark.png": {
-    "sha256": "12b003337f15755d90da7b3e8d822a7f763341cc5d3633c86b5eef68bb68f7a4",
-    "reason": "Visually reviewed the exact before/after snapshot pair on integration contact sheet 3. The rounded sheet surface, hairline and shadow share the panel edge; the stationary rectangular paint band is removed. Controls and labels remain readable with no new clipping."
+    "sha256": "1a314cd692805eb5e27ab33539ba809214c958112432389829ade9fedb0cbd83",
+    "reason": "Opened the before/after contact sheet in this integration session. Intentional action ink, radio outlines, chevrons and music artwork retained; labels and primary controls remain readable."
   },
   "_internal/mobile/android/app/src/test/snapshots/music_book_page_light.png": {
-    "sha256": "434b7bc15be2589cd05ca9b50e96eabbb0c88e841c796b2da89b693fcd8a63ea",
-    "reason": "Visually reviewed the exact before/after snapshot pair on integration contact sheet 3. The rounded sheet surface, hairline and shadow share the panel edge; the stationary rectangular paint band is removed. Controls and labels remain readable with no new clipping."
+    "sha256": "e984f44eee3f1585825ff5a52e9bdeed51d47a1961d2d83f317212387eafbb81",
+    "reason": "Opened the before/after contact sheet in this integration session. Intentional action ink, radio outlines, chevrons and music artwork retained; labels and primary controls remain readable."
   },
   "_internal/mobile/android/app/src/test/snapshots/music_cue_page_dark.png": {
     "sha256": "33c1d9e86e92dadec65ca5f855f682d1924b66765666bebced502b482bebb39a",
@@ -832,20 +832,20 @@
     "reason": "Visually reviewed the exact before/after snapshot pair on integration contact sheet 3. The rounded sheet surface, hairline and shadow share the panel edge; the stationary rectangular paint band is removed. Controls and labels remain readable with no new clipping."
   },
   "_internal/mobile/android/app/src/test/snapshots/music_cue_swap_dark.png": {
-    "sha256": "81006b6b1c6f6af86fde48c8797475bc30d2daca6364376355ce3023a6fe2556",
-    "reason": "Visually reviewed the exact before/after snapshot pair on integration contact sheet 3. The rounded sheet surface, hairline and shadow share the panel edge; the stationary rectangular paint band is removed. Controls and labels remain readable with no new clipping."
+    "sha256": "60532b800357ae8048a2b05f7616037b1f044d9fd4ac69f525449a7c1631a53c",
+    "reason": "Opened the before/after contact sheet in this integration session. Intentional action ink, radio outlines, chevrons and music artwork retained; labels and primary controls remain readable."
   },
   "_internal/mobile/android/app/src/test/snapshots/music_cue_swap_light.png": {
-    "sha256": "9a9a2eee211f4e918fdf0e633a237974f6d7162bfc9a28ff0ed640e8cac86dec",
-    "reason": "Visually reviewed the exact before/after snapshot pair on integration contact sheet 3. The rounded sheet surface, hairline and shadow share the panel edge; the stationary rectangular paint band is removed. Controls and labels remain readable with no new clipping."
+    "sha256": "adabe5d155acbd612735a4a282085893dad70baf72f77df43add14feb4a01b07",
+    "reason": "Opened the before/after contact sheet in this integration session. Intentional action ink, radio outlines, chevrons and music artwork retained; labels and primary controls remain readable."
   },
   "_internal/mobile/android/app/src/test/snapshots/settings_logs_clear_sheet_light.png": {
     "sha256": "f8d270c1452442e0617f8a0bc30d3e3b80c2fe71d23a7878be26e49c9856f8ad",
     "reason": "Visually reviewed the exact before/after snapshot pair on integration contact sheet 6. The rounded sheet surface, hairline and shadow share the panel edge; the stationary rectangular paint band is removed. Controls and labels remain readable with no new clipping."
   },
   "_internal/mobile/android/app/src/test/snapshots/settings_third_party_dark.png": {
-    "sha256": "f1877696394bb184c13b4bf57df3a9539a960cf2d3e0582bd8a174d25018db33",
-    "reason": "Visually reviewed the exact before/after snapshot pair on integration contact sheet 6. The rounded sheet surface, hairline and shadow share the panel edge; the stationary rectangular paint band is removed. Controls and labels remain readable with no new clipping."
+    "sha256": "b47051bedd4b4724b8ae53a777070af614426aece07380266c072d2fc279024f",
+    "reason": "Opened the before/after contact sheet in this integration session. Intentional action ink, radio outlines, chevrons and music artwork retained; labels and primary controls remain readable."
   },
   "_internal/mobile/android/app/src/test/snapshots/skip_glyph_back_dark.png": {
     "sha256": "29bc1c98e4229d2e43bd6eab368d69b467cd036b33c20f3b120c633ebb76f5f3",
@@ -868,184 +868,184 @@
     "reason": "Visually reviewed the exact before/after snapshot pair on integration contact sheet 7. The rounded sheet surface, hairline and shadow share the panel edge; the stationary rectangular paint band is removed. Controls and labels remain readable with no new clipping."
   },
   "_internal/mobile/android/app/src/test/snapshots/music_audio_sheet_130_dark.png": {
-    "sha256": "238984ca99459c1841afdc6c0c8be56571aaec0fbb58acacac7f9f87e74cb845",
-    "reason": "Visually compared base and after in affordance review-07.jpg: action ink, navigation chevrons, persistent choice rings and read-along play cues; no frame or shadow change."
+    "sha256": "094b8bd454ee172b6cc9196bb55096bc3b94d0a6e24619310623c1041b3df639",
+    "reason": "Opened the before/after contact sheet in this integration session. Intentional action ink, radio outlines, chevrons and music artwork retained; labels and primary controls remain readable."
   },
   "_internal/mobile/android/app/src/test/snapshots/music_audio_sheet_130_dark_bottom.png": {
-    "sha256": "36b14f69654bf462a44b626d2c6ef5bdce983ab91916c0c9549946a0b3db700c",
-    "reason": "Visually compared base and after in affordance review-07.jpg: action ink, navigation chevrons, persistent choice rings and read-along play cues; no frame or shadow change."
+    "sha256": "e18319337cc01d27b3b5f2349c41018e6ef3a9b999927fcef15d411ec3545c70",
+    "reason": "Opened the before/after contact sheet in this integration session. Intentional action ink, radio outlines, chevrons and music artwork retained; labels and primary controls remain readable."
   },
   "_internal/mobile/android/app/src/test/snapshots/music_audio_sheet_130_dark_off.png": {
-    "sha256": "622f474179a9d6a7ad41117b7c2a82c43d29ad39942c0c90ad6fd05a31ff29a1",
-    "reason": "Visually compared base and after in affordance review-08.jpg: action ink, navigation chevrons, persistent choice rings and read-along play cues; no frame or shadow change."
+    "sha256": "20be8e7a1245c070adfe822a419194bdfb23cf76d98a928324447b7aa058ccbe",
+    "reason": "Opened the before/after contact sheet in this integration session. Intentional action ink, radio outlines, chevrons and music artwork retained; labels and primary controls remain readable."
   },
   "_internal/mobile/android/app/src/test/snapshots/music_audio_sheet_130_light.png": {
-    "sha256": "6e2839f1c1cda1f8e97b33c711c211978206abd87a266a2eb97607aae53e393f",
-    "reason": "Visually compared base and after in affordance review-08.jpg: action ink, navigation chevrons, persistent choice rings and read-along play cues; no frame or shadow change."
+    "sha256": "82042a80c58db673c551d101c046cd674c0c5c63bf4c21a565a6b750b9c44bff",
+    "reason": "Opened the before/after contact sheet in this integration session. Intentional action ink, radio outlines, chevrons and music artwork retained; labels and primary controls remain readable."
   },
   "_internal/mobile/android/app/src/test/snapshots/music_audio_sheet_130_light_bottom.png": {
-    "sha256": "49fa27b3324a1697cf4bb4fccfe6366c6aa46d0650185cef725dc442706f3e29",
-    "reason": "Visually compared base and after in affordance review-08.jpg: action ink, navigation chevrons, persistent choice rings and read-along play cues; no frame or shadow change."
+    "sha256": "5a05e2c4d4427a356acb69d3fb21c38f168fecab670902d73c895acfee1f2b12",
+    "reason": "Opened the before/after contact sheet in this integration session. Intentional action ink, radio outlines, chevrons and music artwork retained; labels and primary controls remain readable."
   },
   "_internal/mobile/android/app/src/test/snapshots/music_audio_sheet_130_light_off.png": {
-    "sha256": "8a848bfe7c02ce90d87ef820ca711ad8a59833f166742a17361a48d5dafb3b95",
-    "reason": "Visually compared base and after in affordance review-08.jpg: action ink, navigation chevrons, persistent choice rings and read-along play cues; no frame or shadow change."
+    "sha256": "09df94e141d1f15c98f453670a2b6be9fcc1d7859c1ac187b0519150cdcff0a4",
+    "reason": "Opened the before/after contact sheet in this integration session. Intentional action ink, radio outlines, chevrons and music artwork retained; labels and primary controls remain readable."
   },
   "_internal/mobile/android/app/src/test/snapshots/music_audio_sheet_dark.png": {
-    "sha256": "7d88b651450dbf9524059e4f429428ded48e01751f67c49715a4fe7297e73210",
-    "reason": "Visually compared base and after in affordance review-08.jpg: action ink, navigation chevrons, persistent choice rings and read-along play cues; no frame or shadow change."
+    "sha256": "0dce6f6dd317f5aea70467586c40310472546d96ac56dd177da685d4f646be39",
+    "reason": "Opened the before/after contact sheet in this integration session. Intentional action ink, radio outlines, chevrons and music artwork retained; labels and primary controls remain readable."
   },
   "_internal/mobile/android/app/src/test/snapshots/music_audio_sheet_dark_bottom.png": {
-    "sha256": "31a64c409ecb63087b844beff0d07f3adca9c94cced4c313a7e860452e1626eb",
-    "reason": "Visually compared base and after in affordance review-08.jpg: action ink, navigation chevrons, persistent choice rings and read-along play cues; no frame or shadow change."
+    "sha256": "f940daad24feff932d1f0a9388537d3856f1f7c8c8d7eedf69c90b13dc39f0d8",
+    "reason": "Opened the before/after contact sheet in this integration session. Intentional action ink, radio outlines, chevrons and music artwork retained; labels and primary controls remain readable."
   },
   "_internal/mobile/android/app/src/test/snapshots/music_audio_sheet_dark_off.png": {
-    "sha256": "fde8d753bff2bca9950b363a36112fd5ee5424cd2ef5bc670449e708e54c137c",
-    "reason": "Visually compared base and after in affordance review-08.jpg: action ink, navigation chevrons, persistent choice rings and read-along play cues; no frame or shadow change."
+    "sha256": "e412f73e41a739b8b7f5887df128464a3b3f8d16457cf6c01bed4f85fe8aed54",
+    "reason": "Opened the before/after contact sheet in this integration session. Intentional action ink, radio outlines, chevrons and music artwork retained; labels and primary controls remain readable."
   },
   "_internal/mobile/android/app/src/test/snapshots/music_audio_sheet_full_130_dark.png": {
-    "sha256": "6bacd6bbb55ce297fc30ad62438f802b45f49605752e203d9c90df6e88798537",
-    "reason": "Visually compared base and after in affordance review-08.jpg: action ink, navigation chevrons, persistent choice rings and read-along play cues; no frame or shadow change."
+    "sha256": "4ea2d6752baf4f8a96e6ab2684a06994d2f8fe6070e65d0d21b3d11f8944f9ce",
+    "reason": "Opened the before/after contact sheet in this integration session. Intentional action ink, radio outlines, chevrons and music artwork retained; labels and primary controls remain readable."
   },
   "_internal/mobile/android/app/src/test/snapshots/music_audio_sheet_full_130_light.png": {
-    "sha256": "0f8b231cc46db086c83e363d8e5aa169397b5fbc5d503f6bfa3f4d9a72f63510",
-    "reason": "Visually compared base and after in affordance review-08.jpg: action ink, navigation chevrons, persistent choice rings and read-along play cues; no frame or shadow change."
+    "sha256": "6961d4677ac75f95c4c5ea62dfd4393abacaa6dfa76161714d9064e033defe08",
+    "reason": "Opened the before/after contact sheet in this integration session. Intentional action ink, radio outlines, chevrons and music artwork retained; labels and primary controls remain readable."
   },
   "_internal/mobile/android/app/src/test/snapshots/music_audio_sheet_full_dark.png": {
-    "sha256": "050079293b14c6741525e64476278198d8fab0f520c8786f0dacca288fa9297d",
-    "reason": "Visually compared base and after in affordance review-08.jpg: action ink, navigation chevrons, persistent choice rings and read-along play cues; no frame or shadow change."
+    "sha256": "915c9c90083f78a37895a2128997bc7f6c544fc382467a7a224b7e1cc6d557b4",
+    "reason": "Opened the before/after contact sheet in this integration session. Intentional action ink, radio outlines, chevrons and music artwork retained; labels and primary controls remain readable."
   },
   "_internal/mobile/android/app/src/test/snapshots/music_audio_sheet_full_light.png": {
-    "sha256": "c4fccb537e36558eaea4541f9e1a40a0989cf6099d3096b73b8e0d5acc7c3b3f",
-    "reason": "Visually compared base and after in affordance review-08.jpg: action ink, navigation chevrons, persistent choice rings and read-along play cues; no frame or shadow change."
+    "sha256": "2dd616c6d345d4c94c1f663b834ebc98860c09d879506b6cb5998acb66bab698",
+    "reason": "Opened the before/after contact sheet in this integration session. Intentional action ink, radio outlines, chevrons and music artwork retained; labels and primary controls remain readable."
   },
   "_internal/mobile/android/app/src/test/snapshots/music_audio_sheet_light.png": {
-    "sha256": "372fe202c13af15cf954776162138ece8873c8728cf82c294127dbe138b4a637",
-    "reason": "Visually compared base and after in affordance review-08.jpg: action ink, navigation chevrons, persistent choice rings and read-along play cues; no frame or shadow change."
+    "sha256": "d6d1f759280a0639429dafe16bf3fcf0f8cd4e67703cbfbf3ae9f04a85736a08",
+    "reason": "Opened the before/after contact sheet in this integration session. Intentional action ink, radio outlines, chevrons and music artwork retained; labels and primary controls remain readable."
   },
   "_internal/mobile/android/app/src/test/snapshots/music_audio_sheet_light_bottom.png": {
-    "sha256": "52d54e905fe5ad213f8c24d7c4c7185908efdfcb9840fe92420f26fff4d26f0b",
-    "reason": "Visually compared base and after in affordance review-09.jpg: action ink, navigation chevrons, persistent choice rings and read-along play cues; no frame or shadow change."
+    "sha256": "8963920e309dbcc59eca62d9be1534ebb7ef34bcb4ddc0cbaf13238282f082de",
+    "reason": "Opened the before/after contact sheet in this integration session. Intentional action ink, radio outlines, chevrons and music artwork retained; labels and primary controls remain readable."
   },
   "_internal/mobile/android/app/src/test/snapshots/music_audio_sheet_light_off.png": {
-    "sha256": "a8574571a5320bcccf83e586d7d3c220b43a689673c87025ad3503561d738cb8",
-    "reason": "Visually compared base and after in affordance review-09.jpg: action ink, navigation chevrons, persistent choice rings and read-along play cues; no frame or shadow change."
+    "sha256": "2c0e9a3b315329c7b1dd845ae382bae7eaf3785eb467d39fd10cb6ff64f0e2b6",
+    "reason": "Opened the before/after contact sheet in this integration session. Intentional action ink, radio outlines, chevrons and music artwork retained; labels and primary controls remain readable."
   },
   "_internal/mobile/android/app/src/test/snapshots/music_player_choices_dark.png": {
-    "sha256": "4bcb595f6730f077be0d25bd40244f3a79a635df7fc32d12af1ac37d09b03e06",
-    "reason": "Visually reviewed the exact before/after snapshot pair on integration contact sheet 3. The rounded sheet surface, hairline and shadow share the panel edge; the stationary rectangular paint band is removed. Controls and labels remain readable with no new clipping."
+    "sha256": "112169e08de5e080ce465fe06fd6e25df9303f57529988cb85dc2c1866091a65",
+    "reason": "Opened the before/after contact sheet in this integration session. Intentional action ink, radio outlines, chevrons and music artwork retained; labels and primary controls remain readable."
   },
   "_internal/mobile/android/app/src/test/snapshots/music_player_choices_light.png": {
-    "sha256": "a969592b773099cea116f18412b72c64502b9385fe6ee3a951fbb30d6ba286f4",
-    "reason": "Visually reviewed the exact before/after snapshot pair on integration contact sheet 3. The rounded sheet surface, hairline and shadow share the panel edge; the stationary rectangular paint band is removed. Controls and labels remain readable with no new clipping."
+    "sha256": "ed3f595fc57155620fc1f7d3efcca1ed7080017ccc87a88914f740946f7bdbcd",
+    "reason": "Opened the before/after contact sheet in this integration session. Intentional action ink, radio outlines, chevrons and music artwork retained; labels and primary controls remain readable."
   },
   "_internal/mobile/android/app/src/test/snapshots/music_player_credit_dark.png": {
-    "sha256": "e6c505643e30adab1282472cad5dfa509d17c63b40f864344e8fb30256611856",
-    "reason": "Visually reviewed the exact before/after snapshot pair on integration contact sheet 3. The rounded sheet surface, hairline and shadow share the panel edge; the stationary rectangular paint band is removed. Controls and labels remain readable with no new clipping."
+    "sha256": "15f2fc959f24dba017a03907728e5a300b2425ad20c8645ad801da5a0a128fc2",
+    "reason": "Opened the before/after contact sheet in this integration session. Intentional action ink, radio outlines, chevrons and music artwork retained; labels and primary controls remain readable."
   },
   "_internal/mobile/android/app/src/test/snapshots/music_player_credit_light.png": {
-    "sha256": "99356e090da7d3f792cf1630afede30728b111461dce3244927f2a4039cf9574",
-    "reason": "Visually reviewed the exact before/after snapshot pair on integration contact sheet 3. The rounded sheet surface, hairline and shadow share the panel edge; the stationary rectangular paint band is removed. Controls and labels remain readable with no new clipping."
+    "sha256": "267cf2b789a6d77353c100952bd457548363111b9d2e3f50e9b41cb57ad19161",
+    "reason": "Opened the before/after contact sheet in this integration session. Intentional action ink, radio outlines, chevrons and music artwork retained; labels and primary controls remain readable."
   },
   "_internal/mobile/android/app/src/test/snapshots/music_style_sheet_dark.png": {
-    "sha256": "8a9711eb7462ded780114625af83231d3ed954a7b7d6bf5b31c58d4ba2820e9c",
-    "reason": "Visually reviewed the exact before/after snapshot pair on integration contact sheet 3. The rounded sheet surface, hairline and shadow share the panel edge; the stationary rectangular paint band is removed. Controls and labels remain readable with no new clipping. This new light/dark style picker baseline shows the actual filter rows and selected item."
+    "sha256": "c7c870d024df616b6a91fe85a87cd2688c2206d2e4f64cba094c705b895efad4",
+    "reason": "Opened the before/after contact sheet in this integration session. Intentional action ink, radio outlines, chevrons and music artwork retained; labels and primary controls remain readable."
   },
   "_internal/mobile/android/app/src/test/snapshots/music_style_sheet_light.png": {
-    "sha256": "c2a64aa431e3a5b0927b53c85ffc825fb8cbf7a1777d7fee6a3b432e890c473d",
-    "reason": "Visually reviewed the exact before/after snapshot pair on integration contact sheet 3. The rounded sheet surface, hairline and shadow share the panel edge; the stationary rectangular paint band is removed. Controls and labels remain readable with no new clipping. This new light/dark style picker baseline shows the actual filter rows and selected item."
+    "sha256": "f06908bc272889a0edd86449bf5f3d7d770ca972f8efd1fb4c6991d21f673870",
+    "reason": "Opened the before/after contact sheet in this integration session. Intentional action ink, radio outlines, chevrons and music artwork retained; labels and primary controls remain readable."
   },
   "_internal/mobile/android/app/src/test/snapshots/np_audio_412_light.png": {
-    "sha256": "6f2a9c639f4da77aff3e9ac78e4bb21333d67ef4959af8d152ade56c9b76e652",
-    "reason": "Visually reviewed the exact before/after snapshot pair on integration contact sheet 4. The rounded sheet surface, hairline and shadow share the panel edge; the stationary rectangular paint band is removed. Controls and labels remain readable with no new clipping. The audio controls retain the intentional soundsheet grouping and ruler layout; the pre-existing full-scroll snapshot extent is unchanged."
+    "sha256": "410be732dcbb81901cf2e3d172c954a19ce902ec3f6b3354d2283ab57ea9a59a",
+    "reason": "Opened the before/after contact sheet in this integration session. Intentional action ink, radio outlines, chevrons and music artwork retained; labels and primary controls remain readable."
   },
   "_internal/mobile/android/app/src/test/snapshots/np_audio_light.png": {
-    "sha256": "74487b743968f1b638d1b8206ab0db38f3155d62c74c753f0fa5905a2313aeb0",
-    "reason": "Visually reviewed the exact before/after snapshot pair on integration contact sheet 4. The rounded sheet surface, hairline and shadow share the panel edge; the stationary rectangular paint band is removed. Controls and labels remain readable with no new clipping. The audio controls retain the intentional soundsheet grouping and ruler layout; the pre-existing full-scroll snapshot extent is unchanged."
+    "sha256": "a7eedb0cada44727812ddb9c89e9e318bb4bf5e012711962312817aea0710357",
+    "reason": "Opened the before/after contact sheet in this integration session. Intentional action ink, radio outlines, chevrons and music artwork retained; labels and primary controls remain readable."
   },
   "_internal/mobile/android/app/src/test/snapshots/np_chapters_dark.png": {
-    "sha256": "19a00a2351bb8e066c6f66b78e48d2adbe313ebac58e3df8fe57685e367bed33",
-    "reason": "Visually reviewed the exact before/after snapshot pair on integration contact sheet 4. The rounded sheet surface, hairline and shadow share the panel edge; the stationary rectangular paint band is removed. Controls and labels remain readable with no new clipping."
+    "sha256": "7d8593eacbca84125f3025c43412af35be172f0e1d8c5f9d39ef12a990f4bb44",
+    "reason": "Opened the before/after contact sheet in this integration session. Intentional action ink, radio outlines, chevrons and music artwork retained; labels and primary controls remain readable."
   },
   "_internal/mobile/android/app/src/test/snapshots/np_chapters_light.png": {
-    "sha256": "b5e23a3db37f4a51e706fdda07ccbf53465a7a6002d2df1dec8f79b5c63d5c66",
-    "reason": "Visually reviewed the exact before/after snapshot pair on integration contact sheet 4. The rounded sheet surface, hairline and shadow share the panel edge; the stationary rectangular paint band is removed. Controls and labels remain readable with no new clipping."
+    "sha256": "183b212aebe11fab62927c080f70b8b02ca6860126797d93bb9319519dda39ef",
+    "reason": "Opened the before/after contact sheet in this integration session. Intentional action ink, radio outlines, chevrons and music artwork retained; labels and primary controls remain readable."
   },
   "_internal/mobile/android/app/src/test/snapshots/np_look_dark.png": {
-    "sha256": "4bee39fabe4b6ecefcdc2ad9633bb3cfd79905cb7d82f86cd2e2b40b7d0fa0bb",
-    "reason": "Visually reviewed the exact before/after snapshot pair on integration contact sheet 4. The rounded sheet surface, hairline and shadow share the panel edge; the stationary rectangular paint band is removed. Controls and labels remain readable with no new clipping."
+    "sha256": "de5619d344ba97ce32096331a9425f715d17dab9b99c8d47bbc75de6a7255c93",
+    "reason": "Opened the before/after contact sheet in this integration session. Intentional action ink, radio outlines, chevrons and music artwork retained; labels and primary controls remain readable."
   },
   "_internal/mobile/android/app/src/test/snapshots/np_look_light.png": {
-    "sha256": "a93c85c898c68ee78195e8c304c375a286aeb66e7941551f99f4e896953e21d0",
-    "reason": "Visually reviewed the exact before/after snapshot pair on integration contact sheet 4. The rounded sheet surface, hairline and shadow share the panel edge; the stationary rectangular paint band is removed. Controls and labels remain readable with no new clipping."
+    "sha256": "620f409341ee2d595195bf6859ac7080e2736fcf4c008086e97f550772288c2b",
+    "reason": "Opened the before/after contact sheet in this integration session. Intentional action ink, radio outlines, chevrons and music artwork retained; labels and primary controls remain readable."
   },
   "_internal/mobile/android/app/src/test/snapshots/np_more_412_light.png": {
-    "sha256": "5a4bf2e391298e83b3ea87a8f5c12421f574d4375ef972fca88fe759329575ea",
-    "reason": "Visually reviewed the exact before/after snapshot pair on integration contact sheet 4. The rounded sheet surface, hairline and shadow share the panel edge; the stationary rectangular paint band is removed. Controls and labels remain readable with no new clipping."
+    "sha256": "70016fe39203e11f26074b98eb4c59c05dbaaf3cf85b23165b9da2c73b720c5c",
+    "reason": "Opened the before/after contact sheet in this integration session. Intentional action ink, radio outlines, chevrons and music artwork retained; labels and primary controls remain readable."
   },
   "_internal/mobile/android/app/src/test/snapshots/np_more_light.png": {
-    "sha256": "a3f9abdb629bc019473f7685f311d9b91b4285fd91d660b6e438eaa87474a5b1",
-    "reason": "Visually reviewed the exact before/after snapshot pair on integration contact sheet 4. The rounded sheet surface, hairline and shadow share the panel edge; the stationary rectangular paint band is removed. Controls and labels remain readable with no new clipping."
+    "sha256": "a09f80f93efe57e563146e1a40cb767b5f553f80ba6fae7a45ffede64f16d3d2",
+    "reason": "Opened the before/after contact sheet in this integration session. Intentional action ink, radio outlines, chevrons and music artwork retained; labels and primary controls remain readable."
   },
   "_internal/mobile/android/app/src/test/snapshots/np_more_progress_light.png": {
-    "sha256": "0a484234001bac0c92da6106674aa92efab3d5380252cd0663addf4aef124718",
-    "reason": "Visually reviewed the exact before/after snapshot pair on integration contact sheet 4. The rounded sheet surface, hairline and shadow share the panel edge; the stationary rectangular paint band is removed. Controls and labels remain readable with no new clipping."
+    "sha256": "d9231fbf46a2733a55ab51944a344e38ea282db77f0a037cbbdf1dfe5c2048a2",
+    "reason": "Opened the before/after contact sheet in this integration session. Intentional action ink, radio outlines, chevrons and music artwork retained; labels and primary controls remain readable."
   },
   "_internal/mobile/android/app/src/test/snapshots/np_picker_audio_dark.png": {
-    "sha256": "6095cdc470510015b925e93eb27e4cc42cd279a8adb3004d02fab65b52203ae7",
-    "reason": "Visually reviewed the exact before/after snapshot pair on integration contact sheet 4. The rounded sheet surface, hairline and shadow share the panel edge; the stationary rectangular paint band is removed. Controls and labels remain readable with no new clipping. The audio controls retain the intentional soundsheet grouping and ruler layout; the pre-existing full-scroll snapshot extent is unchanged."
+    "sha256": "a863b06472d77b3fa75af600c7a28341c7219f9822d67f15171a25ce3e9bb44d",
+    "reason": "Opened the before/after contact sheet in this integration session. Intentional action ink, radio outlines, chevrons and music artwork retained; labels and primary controls remain readable. The established full-scroll extent is retained; audio grouping and ruler controls remain present."
   },
   "_internal/mobile/android/app/src/test/snapshots/np_picker_audio_font130_dark.png": {
-    "sha256": "b92b661f2ca292d45d929a2ffcfe297376c00554a810076d2096e543de4e6004",
-    "reason": "Visually reviewed the exact before/after snapshot pair on integration contact sheet 5. The rounded sheet surface, hairline and shadow share the panel edge; the stationary rectangular paint band is removed. Controls and labels remain readable with no new clipping. The audio controls retain the intentional soundsheet grouping and ruler layout; the pre-existing full-scroll snapshot extent is unchanged."
+    "sha256": "4d73526fe8a648f7c789a02bfd54b5d7457fede1f9ea30f075e8abf47aa33c49",
+    "reason": "Opened the before/after contact sheet in this integration session. Intentional action ink, radio outlines, chevrons and music artwork retained; labels and primary controls remain readable. The established full-scroll extent is retained; audio grouping and ruler controls remain present."
   },
   "_internal/mobile/android/app/src/test/snapshots/np_picker_audio_font130_light.png": {
-    "sha256": "e9505e2130bbc576033584fb81bf22e421acf9b6ca3fbf278c016022da636bf8",
-    "reason": "Visually reviewed the exact before/after snapshot pair on integration contact sheet 5. The rounded sheet surface, hairline and shadow share the panel edge; the stationary rectangular paint band is removed. Controls and labels remain readable with no new clipping. The audio controls retain the intentional soundsheet grouping and ruler layout; the pre-existing full-scroll snapshot extent is unchanged."
+    "sha256": "d5a5eed6b0fa10a19ec7ebfe28aa4580d8c8f81def09cce687e82a13fc1831b5",
+    "reason": "Opened the before/after contact sheet in this integration session. Intentional action ink, radio outlines, chevrons and music artwork retained; labels and primary controls remain readable. The established full-scroll extent is retained; audio grouping and ruler controls remain present."
   },
   "_internal/mobile/android/app/src/test/snapshots/np_picker_audio_light.png": {
-    "sha256": "2ceb17867feb5610125128b0453100f69eb7f36bb6896e99b9a505c8751311eb",
-    "reason": "Visually reviewed the exact before/after snapshot pair on integration contact sheet 5. The rounded sheet surface, hairline and shadow share the panel edge; the stationary rectangular paint band is removed. Controls and labels remain readable with no new clipping. The audio controls retain the intentional soundsheet grouping and ruler layout; the pre-existing full-scroll snapshot extent is unchanged."
+    "sha256": "9214d916107d474ebc59b3562393e2a6eaba95a11b52baab5073df116fb99fc1",
+    "reason": "Opened the before/after contact sheet in this integration session. Intentional action ink, radio outlines, chevrons and music artwork retained; labels and primary controls remain readable. The established full-scroll extent is retained; audio grouping and ruler controls remain present."
   },
   "_internal/mobile/android/app/src/test/snapshots/np_picker_look_font130_dark.png": {
-    "sha256": "652bb15bab47b7938e1d089e45ff01c5eb214e7452a7603a25c1d3acbc33119f",
-    "reason": "Visually reviewed the exact before/after snapshot pair on integration contact sheet 5. The rounded sheet surface, hairline and shadow share the panel edge; the stationary rectangular paint band is removed. Controls and labels remain readable with no new clipping."
+    "sha256": "3925d6108ca691d69191ed9c901c1e7b017990b9f8684f7dc09efaaf8cc8f5a3",
+    "reason": "Opened the before/after contact sheet in this integration session. Intentional action ink, radio outlines, chevrons and music artwork retained; labels and primary controls remain readable."
   },
   "_internal/mobile/android/app/src/test/snapshots/np_picker_look_font130_light.png": {
-    "sha256": "b4e69fe1bde4d2399576fc36edf92c961f05bc7f2e99b2d1ddd748a5e3df7d82",
-    "reason": "Visually reviewed the exact before/after snapshot pair on integration contact sheet 5. The rounded sheet surface, hairline and shadow share the panel edge; the stationary rectangular paint band is removed. Controls and labels remain readable with no new clipping."
+    "sha256": "06bbe6769301c05a77e8169c222c64b7f45234486e9b4ee6bc08bf0f9a9f13cc",
+    "reason": "Opened the before/after contact sheet in this integration session. Intentional action ink, radio outlines, chevrons and music artwork retained; labels and primary controls remain readable."
   },
   "_internal/mobile/android/app/src/test/snapshots/np_picker_speed_font130_dark.png": {
-    "sha256": "e7c2b94950be13cb5b2f8e7e12d510ab11293a62b99daed981f709ee9fcd3e65",
-    "reason": "Visually reviewed the exact before/after snapshot pair on integration contact sheet 5. The rounded sheet surface, hairline and shadow share the panel edge; the stationary rectangular paint band is removed. Controls and labels remain readable with no new clipping."
+    "sha256": "205ced67dbd0489fc767f6c63e884c5b2ba252179307b3b8d39447203953361f",
+    "reason": "Opened the before/after contact sheet in this integration session. Intentional action ink, radio outlines, chevrons and music artwork retained; labels and primary controls remain readable."
   },
   "_internal/mobile/android/app/src/test/snapshots/np_picker_speed_font130_light.png": {
-    "sha256": "f534e6ad47243b8144b50359398da20e834449f26cb4bcb453bf29f67e1e5802",
-    "reason": "Visually reviewed the exact before/after snapshot pair on integration contact sheet 5. The rounded sheet surface, hairline and shadow share the panel edge; the stationary rectangular paint band is removed. Controls and labels remain readable with no new clipping."
+    "sha256": "1e34a95297146c65d1bb1656882972d2ae85d02c72cfadb64dc4aeaa6ec321d2",
+    "reason": "Opened the before/after contact sheet in this integration session. Intentional action ink, radio outlines, chevrons and music artwork retained; labels and primary controls remain readable."
   },
   "_internal/mobile/android/app/src/test/snapshots/np_prepare_light.png": {
-    "sha256": "f6388ac5365e21bcb608f34eb319944abcf85a789a000eed2b47d381a7afe1bd",
-    "reason": "Visually reviewed the exact before/after snapshot pair on integration contact sheet 5. The rounded sheet surface, hairline and shadow share the panel edge; the stationary rectangular paint band is removed. Controls and labels remain readable with no new clipping."
+    "sha256": "2b4e682aab0fb31102553d032eaf3eb2f6e73225a00e085c759c01d346692fcb",
+    "reason": "Opened the before/after contact sheet in this integration session. Intentional action ink, radio outlines, chevrons and music artwork retained; labels and primary controls remain readable."
   },
   "_internal/mobile/android/app/src/test/snapshots/np_prepare_waiting_light.png": {
-    "sha256": "0c0c53beebfc7f739c7c64e27bc195490db56a1ba71fe4c10acb0e31c7bd1a4e",
-    "reason": "Visually reviewed the exact before/after snapshot pair on integration contact sheet 5. The rounded sheet surface, hairline and shadow share the panel edge; the stationary rectangular paint band is removed. Controls and labels remain readable with no new clipping."
+    "sha256": "081f737f435d72b456e52ac243b469ad03a11bba26c052924f998e0ae8350464",
+    "reason": "Opened the before/after contact sheet in this integration session. Intentional action ink, radio outlines, chevrons and music artwork retained; labels and primary controls remain readable."
   },
   "_internal/mobile/android/app/src/test/snapshots/np_speed_dark.png": {
-    "sha256": "336ec4d0bbf2f988c4694831e62d0cc738ab26c08ee996c52eb236b8a5c8efce",
-    "reason": "Visually reviewed the exact before/after snapshot pair on integration contact sheet 5. The rounded sheet surface, hairline and shadow share the panel edge; the stationary rectangular paint band is removed. Controls and labels remain readable with no new clipping."
+    "sha256": "fe0a9de9e30133d49176b9c9725211975bffd9b59ffd544a1beda21c21dc9d80",
+    "reason": "Opened the before/after contact sheet in this integration session. Intentional action ink, radio outlines, chevrons and music artwork retained; labels and primary controls remain readable."
   },
   "_internal/mobile/android/app/src/test/snapshots/np_speed_light.png": {
-    "sha256": "c6d0afda602d1f8e873cf9a09f6bc0ab29511df17a7eee3bc0e691448defd59c",
-    "reason": "Visually reviewed the exact before/after snapshot pair on integration contact sheet 5. The rounded sheet surface, hairline and shadow share the panel edge; the stationary rectangular paint band is removed. Controls and labels remain readable with no new clipping."
+    "sha256": "ab18ea5c54da88720e5a4384ec55110cb91868b5c2d4018dc45329fac6996e52",
+    "reason": "Opened the before/after contact sheet in this integration session. Intentional action ink, radio outlines, chevrons and music artwork retained; labels and primary controls remain readable."
   },
   "_internal/mobile/android/app/src/test/snapshots/pip_now_playing_button_dark.png": {
-    "sha256": "d6ad8dfd9944e9c0b458855d615d416edb46c932015a9db1d899329321ac4291",
-    "reason": "Visually reviewed the exact before/after snapshot pair on integration contact sheet 6. The rounded sheet surface, hairline and shadow share the panel edge; the stationary rectangular paint band is removed. Controls and labels remain readable with no new clipping."
+    "sha256": "c4bb4a700e6958f91c788a0317c694d651964db28f0a9f05fb13c68fb968b056",
+    "reason": "Opened the before/after contact sheet in this integration session. Intentional action ink, radio outlines, chevrons and music artwork retained; labels and primary controls remain readable."
   },
   "_internal/mobile/android/app/src/test/snapshots/pip_now_playing_button_light.png": {
-    "sha256": "cf98b1a24b898dbe9bef2249e769b6e4e7f91d960080c6797b8f679e5458dafa",
-    "reason": "Visually reviewed the exact before/after snapshot pair on integration contact sheet 6. The rounded sheet surface, hairline and shadow share the panel edge; the stationary rectangular paint band is removed. Controls and labels remain readable with no new clipping."
+    "sha256": "9f8ae0098e12d31a3d1ecc3585fd56c0e777cec0a76532f74bb6be8a7742cae9",
+    "reason": "Opened the before/after contact sheet in this integration session. Intentional action ink, radio outlines, chevrons and music artwork retained; labels and primary controls remain readable."
   },
   "_internal/mobile/android/app/src/test/snapshots/devices_pair_bluetooth_denied_light.png": {
     "sha256": "2665465c731595cff2806e8a449e607d21762b3ecb078471beee34e19505da96",
@@ -1116,12 +1116,12 @@
     "reason": "Visually compared base and after in affordance review-10.jpg: action ink, navigation chevrons, persistent choice rings and read-along play cues; no frame or shadow change."
   },
   "_internal/mobile/android/app/src/test/snapshots/np_voice_affordance_dark.png": {
-    "sha256": "efc02d4edf1cd32cb4c951fbb05830e7da6aea94ae9a8e5111980f5f8cf2fc2c",
-    "reason": "Visually compared base and after in affordance review-delta/delta-02.jpg: action ink and persistent play/choice/navigation cues; loaded artwork visible in current fixture."
+    "sha256": "0ff4f13b823cffb434939fb14ae8d82b1f5ef5fed68f3fe08042ee3e54e31ee4",
+    "reason": "Opened the before/after contact sheet in this integration session. Intentional action ink, radio outlines, chevrons and music artwork retained; labels and primary controls remain readable."
   },
   "_internal/mobile/android/app/src/test/snapshots/np_voice_affordance_light.png": {
-    "sha256": "d59d99ac8ce34515ba085bf57c49102d396c72dc52b110298b1b61cf28deb674",
-    "reason": "Visually compared base and after in affordance review-delta/delta-02.jpg: action ink and persistent play/choice/navigation cues; loaded artwork visible in current fixture."
+    "sha256": "0fad0481f40a1713ac640e813de6c1f071da4697c7ff6d28002589df3345d8f2",
+    "reason": "Opened the before/after contact sheet in this integration session. Intentional action ink, radio outlines, chevrons and music artwork retained; labels and primary controls remain readable."
   },
   "_internal/mobile/android/app/src/test/snapshots/recap_light.png": {
     "sha256": "47e0317ec58f4f6d317f72654d2bd943ecb728da38329da97a3850e71aeac98a",
@@ -1140,8 +1140,8 @@
     "reason": "Visually compared base and after in affordance review-14.jpg: action ink, navigation chevrons, persistent choice rings and read-along play cues; no frame or shadow change."
   },
   "_internal/mobile/android/app/src/test/snapshots/settings_choice_sliding_light.png": {
-    "sha256": "cb2ca4d564c17c87d6e51bd9eaf04ed9a040d50361c8c86dec90affc0ecd0b26",
-    "reason": "Visually compared base and after in affordance review-14.jpg: action ink, navigation chevrons, persistent choice rings and read-along play cues; no frame or shadow change."
+    "sha256": "559677bb6b170013d7400bf722203ad3b9c042825418d2328355971735f94873",
+    "reason": "Opened the before/after contact sheet in this integration session. Intentional action ink, radio outlines, chevrons and music artwork retained; labels and primary controls remain readable."
   },
   "_internal/mobile/android/app/src/test/snapshots/settings_devices_pair_inline_light.png": {
     "sha256": "864b65229539e6ec59df680120adf904ec43d21d551700a53079f45c4f125285",
@@ -1168,12 +1168,12 @@
     "reason": "Visually compared base and after in affordance review-15.jpg: action ink, navigation chevrons, persistent choice rings and read-along play cues; no frame or shadow change."
   },
   "_internal/mobile/android/app/src/test/snapshots/settings_sleep_dark.png": {
-    "sha256": "87aea53caace6fa31b31795f685243b495270755cb686a0582a35b57dc47af99",
-    "reason": "Visually compared base and after in affordance review-15.jpg: action ink, navigation chevrons, persistent choice rings and read-along play cues; no frame or shadow change."
+    "sha256": "4854d6651142eee51116056bcc6a137cce24cb46419f377612d3232ac33ad336",
+    "reason": "Opened the before/after contact sheet in this integration session. Intentional action ink, radio outlines, chevrons and music artwork retained; labels and primary controls remain readable."
   },
   "_internal/mobile/android/app/src/test/snapshots/settings_sleep_light.png": {
-    "sha256": "4a1660af2eb30de6e1d610ccade3017469320945183db761464471f8a81cd9a3",
-    "reason": "Visually compared base and after in affordance review-15.jpg: action ink, navigation chevrons, persistent choice rings and read-along play cues; no frame or shadow change."
+    "sha256": "cbf501de279ecaafe002bce6bf9f78e35b99f284130b7bb7052211fe8e7c6fba",
+    "reason": "Opened the before/after contact sheet in this integration session. Intentional action ink, radio outlines, chevrons and music artwork retained; labels and primary controls remain readable."
   },
   "_internal/mobile/android/app/src/test/snapshots/settings_voice_dark.png": {
     "sha256": "f45515e0fbea74c5fb7520702e1308db70eb5faf75b5af559f5d3eab6c41a3c5",
@@ -1216,24 +1216,24 @@
     "reason": "Visually compared base and after in affordance review-17.jpg: action ink, navigation chevrons, persistent choice rings and read-along play cues; no frame or shadow change."
   },
   "_internal/mobile/android/app/src/test/snapshots/voice_music_files_dark.png": {
-    "sha256": "b06872e5fa922f2e6c6b3b752e7732c8b3bc55ee6ab8bd940d13d4311e494b6c",
-    "reason": "Visually compared base and after in affordance review-18.jpg: action ink, navigation chevrons, persistent choice rings and read-along play cues; no frame or shadow change."
+    "sha256": "460680c6fcc12d5ed18993f2462d4cbc2da7379143253efe6820fd18fd19ebb6",
+    "reason": "Opened the before/after contact sheet in this integration session. Intentional action ink, radio outlines, chevrons and music artwork retained; labels and primary controls remain readable."
   },
   "_internal/mobile/android/app/src/test/snapshots/voice_music_files_light.png": {
-    "sha256": "f59bd3f129e97fb7e65f7c03d3cafa10feb0f13f34c1443fafe9ccb3f8edc988",
-    "reason": "Visually compared base and after in affordance review-18.jpg: action ink, navigation chevrons, persistent choice rings and read-along play cues; no frame or shadow change."
+    "sha256": "6ffe14aeb0dce0b4f8befc5a5a9e570dd03467dcedcd72358f228c190678db42",
+    "reason": "Opened the before/after contact sheet in this integration session. Intentional action ink, radio outlines, chevrons and music artwork retained; labels and primary controls remain readable."
   },
   "_internal/mobile/android/app/src/test/snapshots/voice_music_imported_light.png": {
-    "sha256": "1b85740e36bd1f22b185b4b9aefb9bcfae6b5b81c07019029b4f483623a2aeee",
-    "reason": "Visually compared base and after in affordance review-18.jpg: action ink, navigation chevrons, persistent choice rings and read-along play cues; no frame or shadow change."
+    "sha256": "f3870ea3839e8e532b3080086ed8e683e0de572c448db1a995e2da540d2cd56c",
+    "reason": "Opened the before/after contact sheet in this integration session. Intentional action ink, radio outlines, chevrons and music artwork retained; labels and primary controls remain readable."
   },
   "_internal/mobile/android/app/src/test/snapshots/voice_music_importing_dark.png": {
-    "sha256": "d4ff3616673f456791079c47079515d6d855a6de71de4e20910bd900774bd4aa",
-    "reason": "Visually compared base and after in affordance review-18.jpg: action ink, navigation chevrons, persistent choice rings and read-along play cues; no frame or shadow change."
+    "sha256": "49c480cd2d51ab04eca91e8cbbf79f7576269bde321afc0fdaafdaaf60864651",
+    "reason": "Opened the before/after contact sheet in this integration session. Intentional action ink, radio outlines, chevrons and music artwork retained; labels and primary controls remain readable."
   },
   "_internal/mobile/android/app/src/test/snapshots/voice_music_importing_light.png": {
-    "sha256": "b971bd76acd01597bb7121864f390b5fcea984c7e5244fd99e3a855075975734",
-    "reason": "Visually compared base and after in affordance review-18.jpg: action ink, navigation chevrons, persistent choice rings and read-along play cues; no frame or shadow change."
+    "sha256": "d071c2a7ea57635b6570997832ffb4f90ed89aef909389dbf437bc0b30aad6ae",
+    "reason": "Opened the before/after contact sheet in this integration session. Intentional action ink, radio outlines, chevrons and music artwork retained; labels and primary controls remain readable."
   },
   "_internal/mobile/android/app/src/test/snapshots/voice_sample_failed_dark.png": {
     "sha256": "8c5eb12eccbc17be590af3b9be86e9f086e4c62c379a216aceeb1f4d46bbf385",
@@ -1268,11 +1268,11 @@
     "reason": "Visually compared base and after in affordance review-delta/delta-01.jpg: action ink and persistent play/choice/navigation cues; loaded artwork visible in current fixture."
   },
   "_internal/mobile/android/app/src/test/snapshots/music_saved_dark.png": {
-    "sha256": "db230ddb4d71a3aa8867aa33b959e9cc09e0d31d12bd74b7f46329775ae571e9",
-    "reason": "Visually compared base and after in affordance review-delta/delta-02.jpg: action ink and persistent play/choice/navigation cues; loaded artwork visible in current fixture."
+    "sha256": "4d9c2510d52eb1f74b2d0b03d869701918584d906bda5ea4ad7edc2ab80e4965",
+    "reason": "Opened the before/after contact sheet in this integration session. Intentional action ink, radio outlines, chevrons and music artwork retained; labels and primary controls remain readable."
   },
   "_internal/mobile/android/app/src/test/snapshots/music_saved_light.png": {
-    "sha256": "4e8fb687e5a5c9841908af14d9a51a83a48e4d660c25094606a96b3c78b0bb62",
-    "reason": "Visually compared base and after in affordance review-delta/delta-02.jpg: action ink and persistent play/choice/navigation cues; loaded artwork visible in current fixture."
+    "sha256": "8081d88f4eb28828fa0c9b40ca806d5169c85cba5da41c2251895d2320274f54",
+    "reason": "Opened the before/after contact sheet in this integration session. Intentional action ink, radio outlines, chevrons and music artwork retained; labels and primary controls remain readable."
   }
 }
