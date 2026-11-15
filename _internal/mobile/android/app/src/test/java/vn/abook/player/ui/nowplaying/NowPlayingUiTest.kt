@@ -324,7 +324,7 @@ class NowPlayingUiTest {
         rule.onNodeWithTag("player_sheet_more").assertDoesNotExist()
     }
 
-    /** Âm thanh: Giọng đọc 0-200 %, Âm sắc một hàng (không xuống dòng ở 360 dp), dải tần chỉ khi Tự chỉnh, Cao độ rồi Về mặc định ở cuối. */
+    /** Âm thanh: nhóm Giọng đọc có Âm lượng 0-200 %, Âm sắc một hàng, Cao độ rồi Về mặc định ở cuối. */
     @Test fun audioPageOrderAndToneRow() {
         vn.abook.player.AudioFx.update(vn.abook.player.AudioFxSettings())
         show(sheet = PlayerSheet.Audio)
@@ -353,7 +353,8 @@ class NowPlayingUiTest {
         val pitch = rule.onNodeWithTag("audiofx_pitch").getUnclippedBoundsInRoot()
         val reset = rule.onNodeWithTag("audiofx_reset").getUnclippedBoundsInRoot()
         assertTrue(voice.top < pitch.top && pitch.top < reset.top)
-        listOf("Equalizer", "Preset", "Tăng âm", "Âm lượng").forEach {
+        rule.onNodeWithText("Âm lượng").assertExists()
+        listOf("Equalizer", "Preset", "Tăng âm").forEach {
             assertTrue("còn \"$it\"", rule.onAllNodesWithText(it).fetchSemanticsNodes().isEmpty())
         }
         rule.onNodeWithTag("audiofx_reset").performScrollTo().performClick()
