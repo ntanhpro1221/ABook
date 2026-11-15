@@ -14,7 +14,7 @@ vi.mock("react", async (original) => {
   return { ...react, useEffect: (run: () => void, deps: readonly unknown[] = []) => h.effects.push({ run, deps }),
     useState: (initial: unknown) => react.useState(initial === false && h.falseIndex++ === 0 ? h.playing : h.playing && typeof initial === "object" && initial !== null && "kind" in initial && initial.kind === "off" ? { kind: "minutes", minutes: 1, leftMs: 60000, since: null } : initial) };
 });
-vi.mock("sonner", () => ({ toast: Object.assign(vi.fn(), { dismiss: h.dismiss, info: vi.fn(), success: vi.fn(), warning: vi.fn() }) }));
+vi.mock("sonner", () => ({ toast: Object.assign(vi.fn(), { dismiss: h.dismiss, info: vi.fn(), success: vi.fn(), warning: vi.fn(), error: vi.fn() }) }));
 vi.mock("./OnlineVoicePrompt", () => ({ OnlineVoicePrompt: () => null }));
 vi.mock("./readAloudVoice", async (original) => ({ ...await original<typeof import("./readAloudVoice")>(), voicesOf: async () => [] }));
 import { SourceProvider, type ListenSource } from "./source";
@@ -28,6 +28,9 @@ beforeEach(() => {
   vi.stubGlobal("window", Object.assign(new EventTarget(), { location: { href: "http://localhost/", search: "" },
     setInterval, clearInterval, setTimeout, clearTimeout, requestAnimationFrame: vi.fn(() => 1), cancelAnimationFrame: vi.fn() }));
   vi.stubGlobal("navigator", { mediaSession: {} });
+  const storage = new Map<string, string>();
+  vi.stubGlobal("localStorage", { getItem: (key: string) => storage.get(key) ?? null,
+    setItem: (key: string, value: string) => storage.set(key, value), removeItem: (key: string) => storage.delete(key), clear: () => storage.clear() });
   vi.stubGlobal("MediaMetadata", class { constructor(data: object) { Object.assign(this, data); } });
 });
 afterEach(() => { cleanups.splice(0).forEach((clean) => clean()); vi.useRealTimers(); vi.unstubAllGlobals(); });
