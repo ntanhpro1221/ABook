@@ -328,9 +328,9 @@ const InPlayerSheet = createContext(false);
 const InPlayerMenu = createContext(false);
 
 /** Dòng ghi chú đầu menu: hộp nổi (máy tính) không có tiêu đề nên kèm tên menu; bảng trượt có tiêu đề rồi thì chỉ ghi chú. */
-function MenuNote({ title, children }: { title: string; children: string }) {
+function MenuNote({ title, children, flush = false }: { title: string; children: string; flush?: boolean }) {
   const inSheet = useContext(InPlayerSheet);
-  return <div className="text-balance px-2 pb-1 pt-1 text-xs font-medium text-fg-2">{inSheet ? children.charAt(0).toUpperCase() + children.slice(1) : `${title} · ${children}`}</div>;
+  return <div className={cn("text-balance pb-1 pt-1 text-xs font-medium text-fg-2", !flush && "px-2")}>{inSheet ? children.charAt(0).toUpperCase() + children.slice(1) : `${title} · ${children}`}</div>;
 }
 
 export function MenuShell({
@@ -350,6 +350,7 @@ export function MenuShell({
   icon: RowIcon,
   side,
   footer,
+  chevron = true,
 }: {
   trigger: ReactNode;
   /** Kiểu nút mở: "chip" (thanh phát máy tính), "action" (nút phụ có nhãn của màn Đang nghe - `caption` là nhãn dưới), "row" (một dòng trong
@@ -360,6 +361,7 @@ export function MenuShell({
   icon?: typeof Gauge;
   side?: "top" | "bottom";
   footer?: ReactNode;
+  chevron?: boolean;
   /** Nút đổi theo một lựa chọn chỉ có số ("1,5×"): số không vào dấu đổi nội dung của MotionRegion, nên đưa lựa chọn làm khoá chuyển cảnh. */
   triggerKey?: unknown;
   label: string;
@@ -422,7 +424,7 @@ export function MenuShell({
       <Reveal when={look === "row"}><span className="flex min-w-0 flex-1 items-center gap-3">{<Presence>{RowIcon && <RowIcon className="size-4 shrink-0 text-fg-2" />}</Presence>}<span className="truncate">{caption}</span></span></Reveal>
       <MotionRegion as="span" motionKey={triggerKey} className={cn(look === "action" ? ACTION_GLYPH : "inline-flex items-center gap-1", look === "row" && cn("min-w-0 text-xs font-medium", actionTone(active)))}>{trigger}</MotionRegion>
       {look === "action" && <MotionRegion as="span" className={ACTION_LABEL} motionKey={typeof caption === "string" ? caption.replace(/\d+/g, "#") : undefined}>{caption}</MotionRegion>}
-      {look === "row" ? <DisclosureChevron expanded={inline ? isOpen : undefined} aria-hidden className="ink-end size-4 shrink-0 text-fg-3" /> : look !== "action" ? <ChevronDown aria-hidden className="size-3.5 shrink-0 text-fg-3" /> : null}
+      {look === "row" ? <DisclosureChevron expanded={inline ? isOpen : undefined} aria-hidden className="ink-end size-4 shrink-0 text-fg-3" /> : look !== "action" && chevron ? <ChevronDown aria-hidden className="size-3.5 shrink-0 text-fg-3" /> : null}
     </button>;
   if (inline && page) return <Popover.Root open={isOpen} onOpenChange={changeOpen}>
     <div ref={inlineRef} data-player-inline>{button}</div>
@@ -540,9 +542,9 @@ export function MusicMenu({ look = "chip", audio = false }: { look?: MenuLook; a
 
 /** S.s_muc_nhac_nen_a45588ff: thanh trượt chung (shared/MusicLevelSlider.tsx) dưới tên mục. Chung cho nhạc người làm sách gắn và nhạc nền của sách chữ;
  *  menu không đóng khi kéo, đang lưu vẫn kéo tiếp được. */
-export function MusicLevelRow({ level, disabled, saving = false, onChange }: { level: number; disabled: boolean; saving?: boolean; onChange: (levelDb: number) => void }) {
+export function MusicLevelRow({ level, disabled, saving = false, onChange, flush = false }: { level: number; disabled: boolean; saving?: boolean; onChange: (levelDb: number) => void; flush?: boolean }) {
   return (
-    <div className="px-2 pb-1 pt-1">
+    <div className={cn("pb-1 pt-1", !flush && "px-2")}>
       <div className="pb-1 text-xs font-medium text-fg-2">{LEVEL_TITLE}</div>
       <MusicLevelSlider value={level} disabled={disabled} saving={saving} onChange={onChange} />
     </div>
@@ -565,7 +567,7 @@ function PackagedMusicMenu({ bookId, look, audio = false }: { bookId: string; lo
       caption={audio ? S.s_chon_nhac_4e9b1d72 : S.s_nhac_nen_271fb292}
       icon={audio ? undefined : EighthNote}
       triggerKey={look === "row" ? music.enabled : undefined}
-      trigger={audio ? <DisclosureChevron className="ink-end [--icon-w:1rem] size-4 text-fg-2"/> : look === "row" ? (music.enabled ? S.s_bat_f26cbc4a : S.s_tat_3286064e) :
+      trigger={audio ? null : look === "row" ? (music.enabled ? S.s_bat_f26cbc4a : S.s_tat_3286064e) :
         // Tắt: gạch chéo trên nốt nhạc (lucide không có biểu tượng S.s_copy_50c73817bdd6).
         <span className="relative">
           <EighthNote className="size-4" />
@@ -603,12 +605,12 @@ function MusicMenuFor({ bookId, look, audio = false }: { bookId: string; look: M
       caption={audio ? S.s_chon_nhac_4e9b1d72 : S.s_nhac_nen_271fb292}
       icon={audio ? undefined : EighthNote}
       triggerKey={look === "row" ? [waiting, playing, label, known] : undefined}
-      trigger={audio ? <DisclosureChevron className="ink-end [--icon-w:1rem] size-4 text-fg-2"/> : look === "row"
+      trigger={audio ? null : look === "row"
         ? (waiting ? <Loader2 className="size-4 animate-spin" aria-hidden="true" /> : <span className="block max-w-32 truncate">{playing ? shortPlaylistLabel(label) : known ? S.s_tat_3286064e : ""}</span>)
         : <>{waiting ? <Loader2 className="size-4 animate-spin" aria-hidden="true" /> : <EighthNote className="size-4" />}<span className="max-w-40 truncate max-sm:hidden @max-[83rem]:hidden" title={playing ? label : undefined}>{playing ? shortPlaylistLabel(label) : ""}</span></>}
       width="w-72"
     ><MotionRegion>
-      <MenuNote title={S.s_nhac_nen_271fb292}>{S.s_nho_rieng_cho_cuon_nay_cc7f277b}</MenuNote>
+      <MenuNote title={S.s_nhac_nen_271fb292} flush={audio}>{S.s_nho_rieng_cho_cuon_nay_cc7f277b}</MenuNote>
       <div ref={scrollFade.ref} style={scrollFade.style} role="group" aria-label={S.s_danh_sach_nhac_nen_61c9c58b} className={cn("flex min-h-0 flex-col gap-1 overflow-y-auto", MENU_LIST)}>
         {options.map((option) => (
           <Popover.Close asChild key={JSON.stringify(option.id)}>
@@ -617,6 +619,7 @@ function MusicMenuFor({ bookId, look, audio = false }: { bookId: string; look: M
               disabled={option.disabled}
               aria-pressed={option.id === chosen}
               data-sheet-choice
+              data-flush-choice={audio || undefined}
               onClick={() => choose(option.id)}
               className={cn(
                 CHOICE_ROW, "disabled:opacity-50",
@@ -629,7 +632,7 @@ function MusicMenuFor({ bookId, look, audio = false }: { bookId: string; look: M
         ))}
         {canImport && (
           <Popover.Close asChild>
-            <button type="button" data-sheet-choice onClick={() => addMusic()} className={cn(CHOICE_ROW, "text-fg")}>
+            <button type="button" data-sheet-choice data-flush-choice={audio || undefined} onClick={() => addMusic()} className={cn(CHOICE_ROW, "text-fg")}>
               <Plus className="size-4 shrink-0" />
               {ADD_MUSIC_LABEL}
             </button>
@@ -638,7 +641,7 @@ function MusicMenuFor({ bookId, look, audio = false }: { bookId: string; look: M
         {loading && <p className="px-2 py-2 text-xs text-fg-2">{S.s_dang_tai_cac_danh_sach_nhac_b9297500}</p>}
       </div>
       {/* Chỉ khi cuốn đang có nhạc: tắt nhạc thì chỉnh mức chẳng nghe thấy gì. */}
-      {playing && <MusicLevelRow level={levelDb} disabled={false} saving={levelBusy} onChange={setLevel} />}
+      {playing && <MusicLevelRow level={levelDb} disabled={false} saving={levelBusy} onChange={setLevel} flush={audio} />}
       {playing && scene && musicBroken && <p className="px-2 pb-1 text-xs text-warning">{S.s_co_bai_nhac_chua_phat_duoc_may_se_thu_lai_27ed64dd}</p>}
       {(error || musicOffline) && <p className="px-2 pb-1 pt-2 text-xs text-fg-2">{error || musicOffline}</p>}
     </MotionRegion></MenuShell>
@@ -1565,6 +1568,7 @@ function MoreMenu({ scope, children }: { scope: VoiceMenuScope; children: ReactN
     <MenuShell
       label={S.s_them_tuy_chon_a0b4bb6e}
       trigger={<MoreHorizontal className="glyph" />}
+      chevron={false}
       // 20rem (280 px máy tính): 252 px làm tên lựa chọn gãy dòng (S.s_nhac_cua_toi_f65b7ac6, "An (Windows)") và ghi chú đầu mục gãy đôi.
       width="w-80 max-w-[calc(100vw-1.5rem)]"
       // Mở ra: tiêu điểm vào chính bảng, không vào nút đầu tiên - nút đầu bật chú thích và trông như S.s_copy_d4a85bafdad9.

@@ -194,6 +194,9 @@ export function inspectPage({ phone = false } = {}, h, layoutInspector) {
   }
   for (const text of texts) {
     const el = text.element, s = css(el);
+    // Initials inside an explicitly decorative SVG are artwork, not a UI label.
+    // Visible HTML cover titles and meaningful SVG text still use the text rules.
+    if (el.closest('svg') && el.closest('[aria-hidden="true"]')) continue;
     for (const graphic of graphics) {
       if (surface(el) !== surface(graphic.element)) continue;
       if (graphicOverlap(text, graphic)) once("TEXT-OVER-GRAPHIC", text, [text.rect, graphic.rect], { otherSelector: selector(graphic.element), graphic: graphic.element.localName });
@@ -389,7 +392,7 @@ export function inspectPage({ phone = false } = {}, h, layoutInspector) {
   function iconIdentity(el) {
     // A fixed slot is layout, not the glyph. Its contents can switch CSS VU bars to
     // a pause SVG without changing the wrapper's classes or child path.
-    const nested = !el.matches("svg") && el.querySelector("svg,img,canvas");
+    const nested = !el.matches("svg") && [...el.querySelectorAll("svg,img,canvas")].find(child => !hidden(child));
     if (nested) return `slot:${iconIdentity(nested)}`;
     const named = [...el.classList].find((c) => c.startsWith("lucide-") && c !== "lucide-icon");
     if (named) return named;

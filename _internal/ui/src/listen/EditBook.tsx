@@ -390,7 +390,7 @@ export function EditBookDialog({
         />
       </div>
     ) : (
-      <div ref={scrollFade.ref} style={scrollFade.style} className="focus-scroll max-h-[68vh] space-y-4 overflow-y-auto pr-1">
+      <div ref={scrollFade.ref} style={scrollFade.style} className="focus-scroll flex max-h-[68vh] flex-col gap-4 overflow-y-auto pr-1">
         <Section title={S.s_ten_sach_d54846eb}>
           <form
             className="flex gap-2"

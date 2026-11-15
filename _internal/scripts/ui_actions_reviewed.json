@@ -1254,7 +1254,7 @@
     "line": 66,
     "statement": "export async function saveAuthor(bookId: string, author: string): Promise<string> {",
     "occurrence": 1,
-    "source_sha256": "a8b2e4052ddc5fb6abb6392d7278439304f8eb8c0151b4fb569c248c93804a7e",
+    "source_sha256": "9e303111b8ce633baa83f8f598bb771251b8c900a07901daa15b213c2da73191",
     "disposition": "internal",
     "guard": "Async interface/helper boundary; concrete activation inventoried separately",
     "reason": "This signature supplies work to a model or component; declaring it starts no user operation."
@@ -1266,7 +1266,7 @@
     "line": 75,
     "statement": "async function imageToDataUrl(file: Blob): Promise<string> {",
     "occurrence": 1,
-    "source_sha256": "a8b2e4052ddc5fb6abb6392d7278439304f8eb8c0151b4fb569c248c93804a7e",
+    "source_sha256": "9e303111b8ce633baa83f8f598bb771251b8c900a07901daa15b213c2da73191",
     "disposition": "internal",
     "guard": "Async interface/helper boundary; concrete activation inventoried separately",
     "reason": "This signature supplies work to a model or component; declaring it starts no user operation."
@@ -1278,7 +1278,7 @@
     "line": 340,
     "statement": "mutationFn: async (picked: Blob) => api(`/api/books/${book.id}/cover`, { method: \"PUT\", body: { image: await imageToDataUrl(picked) } }),",
     "occurrence": 1,
-    "source_sha256": "a8b2e4052ddc5fb6abb6392d7278439304f8eb8c0151b4fb569c248c93804a7e",
+    "source_sha256": "9e303111b8ce633baa83f8f598bb771251b8c900a07901daa15b213c2da73191",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; busy, isLoading, isPending, loading, onBusy, saving, setBusy",
     "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering."
@@ -1290,7 +1290,7 @@
     "line": 346,
     "statement": "mutationFn: () => api(`/api/books/${book.id}/cover`, { method: \"DELETE\" }),",
     "occurrence": 1,
-    "source_sha256": "a8b2e4052ddc5fb6abb6392d7278439304f8eb8c0151b4fb569c248c93804a7e",
+    "source_sha256": "9e303111b8ce633baa83f8f598bb771251b8c900a07901daa15b213c2da73191",
     "disposition": "confirmation",
     "guard": "EditBook cover DestructiveConfirm and DiscardSheet / discard dialog",
     "reason": "Cover removal and discarding saved edits have explicit object-specific confirmations."
@@ -1302,7 +1302,7 @@
     "line": 351,
     "statement": "mutationFn: () => api(`/api/books/${book.id}/edits`, { method: \"DELETE\" }),",
     "occurrence": 1,
-    "source_sha256": "a8b2e4052ddc5fb6abb6392d7278439304f8eb8c0151b4fb569c248c93804a7e",
+    "source_sha256": "9e303111b8ce633baa83f8f598bb771251b8c900a07901daa15b213c2da73191",
     "disposition": "confirmation",
     "guard": "EditBook cover DestructiveConfirm and DiscardSheet / discard dialog",
     "reason": "Cover removal and discarding saved edits have explicit object-specific confirmations."
@@ -1314,7 +1314,7 @@
     "line": 445,
     "statement": "<Reveal when={book.cover}><Button variant=\"ghost\" className=\"justify-start text-left\" icon={Trash2} loading={busy} disabled={busy} onClick={() => deletion.confirm({ title: S.s_bo_anh_bia_696c6692, description: S.s_irreversible_detail(book.title), run: () => removeCover.mutateAsync() })}>{S.s_bo_anh_bia_696c6692}</Button></Reveal>",
     "occurrence": 1,
-    "source_sha256": "a8b2e4052ddc5fb6abb6392d7278439304f8eb8c0151b4fb569c248c93804a7e",
+    "source_sha256": "9e303111b8ce633baa83f8f598bb771251b8c900a07901daa15b213c2da73191",
     "disposition": "confirmation",
     "guard": "EditBook cover DestructiveConfirm and DiscardSheet / discard dialog",
     "reason": "Cover removal and discarding saved edits have explicit object-specific confirmations."
@@ -1326,7 +1326,7 @@
     "line": 578,
     "statement": "const save = async (options?: { folder?: string; as?: \"abook\" | \"abookproj\"; ask?: boolean }): Promise<boolean> => {",
     "occurrence": 1,
-    "source_sha256": "a8b2e4052ddc5fb6abb6392d7278439304f8eb8c0151b4fb569c248c93804a7e",
+    "source_sha256": "9e303111b8ce633baa83f8f598bb771251b8c900a07901daa15b213c2da73191",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; busy, isLoading, isPending, loading, onBusy, saving, setBusy",
     "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering."
@@ -1338,7 +1338,7 @@
     "line": 589,
     "statement": "? { label: S.s_mo_thu_muc_4bf5b127, onClick: () => void api(\"/api/reveal-export\", { method: \"POST\", body: { folder } }).catch(() => undefined) }",
     "occurrence": 1,
-    "source_sha256": "a8b2e4052ddc5fb6abb6392d7278439304f8eb8c0151b4fb569c248c93804a7e",
+    "source_sha256": "9e303111b8ce633baa83f8f598bb771251b8c900a07901daa15b213c2da73191",
     "disposition": "internal",
     "guard": "Async interface/helper boundary; concrete activation inventoried separately",
     "reason": "This signature supplies work to a model or component; declaring it starts no user operation."
@@ -1350,7 +1350,7 @@
     "line": 607,
     "statement": "const share = async () => {",
     "occurrence": 1,
-    "source_sha256": "a8b2e4052ddc5fb6abb6392d7278439304f8eb8c0151b4fb569c248c93804a7e",
+    "source_sha256": "9e303111b8ce633baa83f8f598bb771251b8c900a07901daa15b213c2da73191",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; busy, isLoading, isPending, loading, onBusy, saving, setBusy",
     "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering."
@@ -1362,7 +1362,7 @@
     "line": 647,
     "statement": "onClick={() => void save({ ...(folder ? { folder } : {}), as: kind, ask: true }).then((saved) => saved && onOpenChange(false))}",
     "occurrence": 1,
-    "source_sha256": "a8b2e4052ddc5fb6abb6392d7278439304f8eb8c0151b4fb569c248c93804a7e",
+    "source_sha256": "9e303111b8ce633baa83f8f598bb771251b8c900a07901daa15b213c2da73191",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; busy, isLoading, isPending, loading, onBusy, saving, setBusy",
     "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering."
@@ -1782,7 +1782,7 @@
     "line": 803,
     "statement": "onClick={() => (playing ? sample.stop() : void sample.play(voice.id))}",
     "occurrence": 1,
-    "source_sha256": "7223ff75b2cee61240791dd31f7767a81cad312de8689670de778a9e903c2e34",
+    "source_sha256": "03e835f3cb3ce08f23d4eaf5b529bacefa95bda08486039d13e23999d1a19644",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; BookProgressLine, CompactProgress, PendingIndicator, bookProgressText, busy, busyClick, isLoading, isPending, levelBusy, loading, musicLoading, pending",
     "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Gate repair: reviewed identity-key motion, explicit layout, token spacing or semantic navigation changes; existing guard retained."
@@ -1794,7 +1794,7 @@
     "line": 886,
     "statement": "const start = async () => {",
     "occurrence": 1,
-    "source_sha256": "7223ff75b2cee61240791dd31f7767a81cad312de8689670de778a9e903c2e34",
+    "source_sha256": "03e835f3cb3ce08f23d4eaf5b529bacefa95bda08486039d13e23999d1a19644",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; BookProgressLine, CompactProgress, PendingIndicator, bookProgressText, busy, busyClick, isLoading, isPending, levelBusy, loading, musicLoading, pending",
     "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Gate repair: reviewed identity-key motion, explicit layout, token spacing or semantic navigation changes; existing guard retained."
@@ -1806,7 +1806,7 @@
     "line": 914,
     "statement": "<button type=\"button\" data-focus-next className=\"touch-hit -ml-2 rounded-control px-2 py-1 font-medium text-fg hover:bg-hover\" onClick={() => void source.readAloudPrepareCancel?.().then(settle)}>{S.s_dung_lam_truoc_632af923}</button>",
     "occurrence": 1,
-    "source_sha256": "7223ff75b2cee61240791dd31f7767a81cad312de8689670de778a9e903c2e34",
+    "source_sha256": "03e835f3cb3ce08f23d4eaf5b529bacefa95bda08486039d13e23999d1a19644",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; BookProgressLine, CompactProgress, PendingIndicator, bookProgressText, busy, busyClick, isLoading, isPending, levelBusy, loading, musicLoading, pending",
     "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Gate repair: reviewed identity-key motion, explicit layout, token spacing or semantic navigation changes; existing guard retained."
@@ -1818,7 +1818,7 @@
     "line": 917,
     "statement": "<button type=\"button\" data-focus-next aria-disabled={busy || undefined} aria-busy={busy || undefined} className=\"touch-hit -ml-2 rounded-control px-2 py-1 font-medium text-accent-text hover:bg-hover aria-disabled:opacity-45\" onClick={busyClick(busy, () => void start())}>",
     "occurrence": 1,
-    "source_sha256": "7223ff75b2cee61240791dd31f7767a81cad312de8689670de778a9e903c2e34",
+    "source_sha256": "03e835f3cb3ce08f23d4eaf5b529bacefa95bda08486039d13e23999d1a19644",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; BookProgressLine, CompactProgress, PendingIndicator, bookProgressText, busy, busyClick, isLoading, isPending, levelBusy, loading, musicLoading, pending",
     "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Gate repair: reviewed identity-key motion, explicit layout, token spacing or semantic navigation changes; existing guard retained."
@@ -1830,7 +1830,7 @@
     "line": 945,
     "statement": "const clear = async () => {",
     "occurrence": 1,
-    "source_sha256": "7223ff75b2cee61240791dd31f7767a81cad312de8689670de778a9e903c2e34",
+    "source_sha256": "03e835f3cb3ce08f23d4eaf5b529bacefa95bda08486039d13e23999d1a19644",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; BookProgressLine, CompactProgress, PendingIndicator, bookProgressText, busy, busyClick, isLoading, isPending, levelBusy, loading, musicLoading, pending",
     "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Gate repair: reviewed identity-key motion, explicit layout, token spacing or semantic navigation changes; existing guard retained."
@@ -1842,7 +1842,7 @@
     "line": 1505,
     "statement": "return switchRecord(bookId, async () => undefined).then(() =>",
     "occurrence": 1,
-    "source_sha256": "7223ff75b2cee61240791dd31f7767a81cad312de8689670de778a9e903c2e34",
+    "source_sha256": "03e835f3cb3ce08f23d4eaf5b529bacefa95bda08486039d13e23999d1a19644",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; BookProgressLine, CompactProgress, PendingIndicator, bookProgressText, busy, busyClick, isLoading, isPending, levelBusy, loading, musicLoading, pending",
     "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Gate repair: reviewed identity-key motion, explicit layout, token spacing or semantic navigation changes; existing guard retained."
@@ -1854,7 +1854,7 @@
     "line": 2039,
     "statement": "function PlayerModeSwitch({ reading, onSelect }: { reading: boolean; onSelect: (reading: boolean) => void }) {",
     "occurrence": 1,
-    "source_sha256": "7223ff75b2cee61240791dd31f7767a81cad312de8689670de778a9e903c2e34",
+    "source_sha256": "03e835f3cb3ce08f23d4eaf5b529bacefa95bda08486039d13e23999d1a19644",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; BookProgressLine, CompactProgress, PendingIndicator, bookProgressText, busy, busyClick, isLoading, isPending, levelBusy, loading, musicLoading, pending",
     "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Gate repair: reviewed identity-key motion, explicit layout, token spacing or semantic navigation changes; existing guard retained."
@@ -2922,7 +2922,7 @@
     "line": 29,
     "statement": "const save = async () => {",
     "occurrence": 1,
-    "source_sha256": "386f99e1d3ec140d55bc706ef8bfb9e9f13d2a34d755a5b66dce835b77a0b918",
+    "source_sha256": "67d587857ff7b44b98f8dd0be613a0ff4c8a2ff5442484825319db70fb340dcf",
     "disposition": "pending",
     "guard": "save busy owner, disabled inputs, error/retry and finally/callback release; delayed Button/PrimaryButton indicator",
     "reason": "Volume writes serialize under the editor busy owner; QML generation guards reject stale callbacks. Draft removal changes only local boundaries before explicit save."
@@ -4542,7 +4542,7 @@
     "line": 35,
     "statement": "const apply = async () => {",
     "occurrence": 1,
-    "source_sha256": "ae6891015fb67c25ef3a136655c8cdacd0eac6701d0ec821803a521adf9ff110",
+    "source_sha256": "d34e772856caff48fd70da4a9ad1b4ee2f88671c0afd17e4ff146d4215837e77",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; busy, loading, pending, setBusy",
     "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."

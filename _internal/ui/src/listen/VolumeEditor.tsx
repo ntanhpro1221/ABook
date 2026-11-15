@@ -51,18 +51,18 @@ export function VolumeEditor({ book }: { book: ListenBook }) {
             <label className="flex-1 text-sm">{S.s_volume_number(row.number)}<input type="number" min={1} max={9999} value={row.number} onChange={event => change(row.id, { number: Number(event.target.value) })} className="w-full rounded-control border border-line bg-panel p-2" /></label>
             <label className="flex-1 text-sm">{S.s_volume_first_chapter}<input type="number" min={1} max={chapters.length} disabled={row.id === rows[0]?.id} value={row.start} onChange={event => change(row.id, { start: Number(event.target.value) })} className="w-full rounded-control border border-line bg-panel p-2" /></label>
           </div>
-          <Button size="sm" variant="ghost" disabled={busy} onClick={() => pickers.current[row.id]?.click()}>{S.s_volume_cover}</Button>
+          <Button size="sm" variant="ghost" className="flex w-fit justify-start px-0 text-left" disabled={busy} onClick={() => pickers.current[row.id]?.click()}>{S.s_volume_cover}</Button>
           <input ref={input => { pickers.current[row.id] = input; }} className="hidden" aria-label={S.s_volume_cover} type="file" accept="image/*" disabled={busy} onChange={event => {
             const file = event.target.files?.[0]; if (!file) return;
             const reader = new FileReader(); reader.onload = () => change(row.id, { image: String(reader.result) }); reader.readAsDataURL(file);
           }} />
-          <Button size="sm" variant="ghost" onClick={() => change(row.id, { image: null })}>{S.s_volume_book_cover}</Button>
-          <MotionPresence open={row.id !== rows[0]?.id}><Button size="sm" variant="ghost" onClick={() => setRows(rows.filter(other => other.id !== row.id))}>{S.s_xoa_777195ab}</Button></MotionPresence>
+          <Button size="sm" variant="ghost" className="flex w-fit justify-start px-0 text-left" onClick={() => change(row.id, { image: null })}>{S.s_volume_book_cover}</Button>
+          <MotionPresence open={row.id !== rows[0]?.id}><Button size="sm" variant="ghost" className="flex w-fit justify-start px-0 text-left" onClick={() => setRows(rows.filter(other => other.id !== row.id))}>{S.s_xoa_777195ab}</Button></MotionPresence>
         </div>}
       </AnimatedRows>
-      <Button variant="ghost" disabled={rows.length >= Math.min(99, chapters.length)} onClick={() => setRows([...rows, { id: Math.max(...rows.map(row => row.id)) + 1, number: rows.length + 1, title: S.s_volume_number(rows.length + 1), start: Math.min(chapters.length, (rows.at(-1)?.start ?? 0) + 1) }])}>{S.s_volume_add}</Button>
+      <Button variant="ghost" className="justify-start px-0" disabled={rows.length >= Math.min(99, chapters.length)} onClick={() => setRows([...rows, { id: Math.max(...rows.map(row => row.id)) + 1, number: rows.length + 1, title: S.s_volume_number(rows.length + 1), start: Math.min(chapters.length, (rows.at(-1)?.start ?? 0) + 1) }])}>{S.s_volume_add}</Button>
       <InlineError message={error} open={Boolean(error)} onRetry={() => void save()} />
-      <DialogActions><Button onClick={save} loading={busy} disabled={busy || !rows.length}>{S.s_volume_save}</Button></DialogActions>
+      <DialogActions><Button variant="primary" onClick={save} loading={busy} disabled={busy || !rows.length}>{S.s_volume_save}</Button></DialogActions>
     </Dialog>
   </>;
 }

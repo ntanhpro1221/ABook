@@ -5,6 +5,23 @@ import { layoutFixtures } from "./gallery_inspect_layout_fixture.mjs";
 import { browserAvailable } from "./gallery_browser.mjs";
 import { normalizeRule } from "./gallery_inspect.mjs";
 
+it.skipIf(!browserAvailable)("keeps wrapped controls, decorative portraits and separate navigation contexts distinct", async () => {
+  for (const result of await layoutFixtures({fixture: "integration-contexts.html"})) {
+    const found=(id,metric)=>result.findings.filter(f=>f.selector.startsWith(`#${id} >`) && f.metric===metric);
+    expect(found('wrapped-tabs','horizontal-ink-gap')).toHaveLength(0);
+    expect(found('wrapped-tabs-bad','horizontal-ink-gap')).toHaveLength(1);
+    expect(found('trailing-chevron','stacked-icon-center')).toHaveLength(0);
+    expect(found('stack-bad','stacked-icon-center')).toHaveLength(1);
+    expect(found('stack-absolute-bad','stacked-icon-center')).toHaveLength(1);
+    expect(found('scoped-tabs','control-duplicates-tab')).toHaveLength(0);
+    expect(found('duplicate-tabs','control-duplicates-tab')).toHaveLength(1);
+    expect(found('portraits','label-names-two-actions')).toHaveLength(0);
+    expect(found('different-actions','label-names-two-actions')).toHaveLength(1);
+    expect(found('reserved-mark','surface-ink-left')).toHaveLength(0);
+    expect(found('reserved-mark-bad','surface-ink-left')).toHaveLength(1);
+  }
+},60000);
+
 it.skipIf(!browserAvailable)("measures visible choices within their own popover body and catches real note offsets", async () => {
   for (const result of await layoutFixtures({ fixture: "popover-columns.html" })) {
     const findings = result.findings.filter(f => f.metric === "popover-note-left");

@@ -378,7 +378,7 @@ export function ValuePicker({
           }}
           onPointerCancel={() => setMoving(null)}
           onClick={event => { if (event.detail === 0) { feedback("toggle"); setClampNote(false); commit(typical); } }}
-          className={cn("absolute flex h-12 min-w-12 -translate-x-1/2 items-center justify-center rounded-control pt-4 hover:bg-hover", dense ? "top-2 text-xs" : "top-4 text-sm", disabled || busy ? "text-fg-3" : "text-accent-text", index === selected && "font-bold")}
+          className={cn("absolute flex h-12 min-w-12 -translate-x-1/2 items-center justify-center rounded-control pt-4 hover:bg-hover", dense ? "top-2 text-xs" : "top-4 text-sm", disabled || busy ? "text-fg-3" : index === selected ? "text-fg" : "text-accent-text", index === selected && "font-bold")}
           style={{left: `calc(${plan.inset}px + (100% - ${2 * plan.inset}px) * ${toFraction(spec, typical)})`}}
         ><span data-value-label>{labels[index]}</span></button>)}
         </div>
@@ -404,7 +404,7 @@ export function ValuePicker({
               className={cn(
                 "touch-row inline-flex items-center justify-center whitespace-nowrap rounded-control px-3 transition-colors duration-motion-medium hover:bg-hover disabled:opacity-40",
                 dense ? "h-7 text-xs" : "h-9 min-w-12 text-sm",
-                disabled || busy ? "text-fg-3" : "text-accent-text", index === selected && "font-bold",
+                disabled || busy ? "text-fg-3" : index === selected ? "text-fg" : "text-accent-text", index === selected && "font-bold",
               )}
             >
               <span data-value-chip-measure data-value-label className="inline-block">{(chipLabel ?? ((v: number) => formatNumber(spec, v)))(typical)}</span>

@@ -57,7 +57,7 @@ export function ScriptScope({ script: incoming, line, onClose, onApply }: {
         {person ? <Button variant="ghost" onClick={() => setPerson(null)}>{S.s_scope_target(person.label)}</Button>
           : <div>
             <input className="w-full rounded-control border border-control-line bg-bg p-3 text-body-small" aria-label={S.s_tim_nguoi_noi_70e3871e} placeholder={S.s_tim_nguoi_noi_70e3871e} value={query} onChange={(event) => setQuery(event.target.value)} />
-            <AnimatedRows items={found} keyOf={(item) => item.value}>{(item) => <button type="button" onClick={() => setPerson(item)} className="flex min-h-10 w-full items-center gap-3 rounded-control px-2 text-left text-body-small hover:bg-hover"><SelectionMark selected={item.value === line.current} />{item.label}</button>}</AnimatedRows>
+            <AnimatedRows items={found} keyOf={(item) => item.value}>{(item) => <button type="button" onClick={() => setPerson(item)} className="flex min-h-10 w-full items-center gap-3 rounded-control text-left text-body-small hover:bg-hover"><SelectionMark selected={item.value === line.current} />{item.label}</button>}</AnimatedRows>
             <MotionPresence open={query.trim() !== "" && found.length === 0}>
               <div className="flex gap-2">{([["male", S.s_nam_22dd59c8], ["female", S.s_nu_e15bc11c], ["unknown", S.s_khong_ro_8af7da78]] as const).map(([gender, label]) => <Button key={gender} variant="ghost" onClick={() => setPerson({ value: query.trim(), label: query.trim(), lines: 0, newGender: gender })}>{label}</Button>)}</div>
             </MotionPresence>
@@ -67,8 +67,8 @@ export function ScriptScope({ script: incoming, line, onClose, onApply }: {
         <p role="status" className="text-body-small">{S.s_scope_count(selected.length, conflicts)}</p>
         <p className="text-body-small text-fg-2">{S.s_scope_before_after(line.label, person?.label ?? S.s_scope_pick)}</p>
       </MotionRegion>
-      <div ref={fade.ref} style={fade.style} className="max-h-72 overflow-y-auto" data-motion-live>
-        <AnimatedRows items={candidates} keyOf={(item) => item.stableId}>{(item) => <button type="button" role="checkbox" aria-checked={selected.includes(item)} className="flex w-full items-start gap-2 rounded-control p-2 text-left hover:bg-hover"
+      <div ref={fade.ref} style={fade.style} className="-mx-1 max-h-72 overflow-y-auto p-1" data-motion-live>
+        <AnimatedRows items={candidates} keyOf={(item) => item.stableId}>{(item) => <button type="button" role="checkbox" aria-checked={selected.includes(item)} className="flex w-full items-start gap-2 rounded-control py-2 text-left hover:bg-hover"
           onClick={() => setToggled((old) => old.includes(item.stableId) ? old.filter((id) => id !== item.stableId) : [...old, item.stableId])}>
           <SelectionMark selected={selected.includes(item)} /><span className="text-body-small">{item.seq + 1}. {item.text}<Reveal when={scopeConflict(item)}><span className="block text-fg-2">{S.s_scope_conflict}</span></Reveal><span className="block text-fg-2">{S.s_scope_before_after(item.wish?.state === "pending" ? item.wish.label : item.label, person?.label ?? S.s_scope_pick)}</span></span>
         </button>}</AnimatedRows>

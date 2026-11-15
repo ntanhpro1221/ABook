@@ -165,7 +165,7 @@ export function inspectLayout({ all, texts, css, rect, union, visible, hidden, s
     // measures their rows and tick alignment instead of a prose column's left edge.
     if (el.closest('[data-value-picker]')) return null;
     const pieces = inkTexts.filter((t) => t.control === el).map((t) => precise ? t.rhythmInk : t.ink);
-    for (const svg of el.querySelectorAll("svg")) if (owner(svg) === el) pieces.push(iconInk(svg, svg.hasAttribute("data-selection-mark")));
+    for (const svg of el.querySelectorAll("svg")) if (owner(svg) === el) pieces.push(iconInk(svg, Boolean(svg.closest("[data-selection-mark]"))));
     return union(pieces.filter(Boolean));
   }
   function aligned(el, side, end) {
@@ -388,7 +388,8 @@ export function inspectLayout({ all, texts, css, rect, union, visible, hidden, s
   // Khối gập nối khối gập là một hàng của dãy gập (vạch chia 1px, sát nhau - styles.css), không phải phần mới.
   const role = (el) => el.matches(".settings-block[data-fold] + .settings-block[data-fold]") ? "settings-fold-run" : el.matches(".settings-block") ? "settings-block" : el.matches('section,[role="region"]') ? "section" : el.matches('.settings-row,li,[role="listitem"],button,a,[role="menuitem"],[role="option"]') ? `row:${el.getAttribute("role") ?? el.localName}` : null;
   for (const parent of all) {
-    const children = [...parent.children].filter((el) => visible(el, rect(el.getBoundingClientRect())) && !isHeader(el));
+    const boxes = (node) => [...node.children].flatMap(child => css(child).display === 'contents' ? boxes(child) : [child]);
+    const children = boxes(parent).filter((el) => visible(el, rect(el.getBoundingClientRect())) && !isHeader(el));
     const rows = new Map();
     for (const row of children) {
       if (!role(row)) continue;
@@ -471,10 +472,13 @@ export function inspectLayout({ all, texts, css, rect, union, visible, hidden, s
   // lòi khỏi lề và tách khỏi nhãn (audit140 C1). So ô svg chứ không mực: glyph lệch tâm (RotateCcw) vẫn đúng chỗ.
   for (const el of all) {
     if (!el.matches(controlSelector)) continue;
-    const svgs = [...el.querySelectorAll("svg")].filter((svg) => owner(svg) === el && !hidden(svg));
+    const svgs = [...el.querySelectorAll("svg")].filter(svg => owner(svg) === el && !hidden(svg));
     const labels = inkTexts.filter((t) => t.control === el && t.singleLine);
     if (svgs.length !== 1 || labels.length !== 1) continue;
     const icon = rect(svgs[0].getBoundingClientRect()), label = labels[0].ink;
+    // A trailing glyph can sit beside a wrapped title and above its metadata.
+    // Stacked icons must precede every text line, including wrapped labels.
+    if (inkTexts.some(t => t.control === el && icon.y + icon.height > t.first.y + 1)) continue;
     if (!icon.width || icon.y + icon.height > label.y + 1 || Math.min(right(icon), right(label)) - Math.max(icon.x, label.x) <= 0) continue;
     const delta = icon.x + icon.width / 2 - (label.x + label.width / 2);
     if (Math.abs(delta) > 1.01) add("INK EDGE", el, el.textContent, [icon, label], { metric: "stacked-icon-center", value: icon.x + icon.width / 2, referenceValue: label.x + label.width / 2,
@@ -656,7 +660,7 @@ export function inspectLayout({ all, texts, css, rect, union, visible, hidden, s
   // Cùng một nhãn, hai việc (soát 140): hai nút cùng hiện một chữ mà biểu tượng khác nhau là hai hành động - người nghe không phân biệt được.
   // Nút lặp theo hàng (cùng biểu tượng) không tính; nút của màn nằm dưới hộp thoại (aria-hidden / inert, nút Tìm của trang sách sau hộp Tìm
   // ảnh bìa) cũng không.
-  const iconSignature = (el) => [...el.querySelectorAll("svg")].filter((svg) => owner(svg) === el)
+  const iconSignature = (el) => [...el.querySelectorAll("svg")].filter((svg) => owner(svg) === el && !svg.querySelector('text') && !hidden(svg))
     .map((svg) => [...svg.querySelectorAll("path,rect,circle,ellipse,line,polyline,polygon")].map((p) => p.outerHTML.replace(/\s(class|style)="[^"]*"/g, "")).join("")).join("|");
   const labelled = all.filter((el) => el.matches(controlSelector) && shownChain(el) && !el.closest('[aria-hidden="true"],[inert]') && rect(el.getBoundingClientRect()).width > 0)
     .map((el) => ({ el, label: labelOf(el.textContent ?? ""), icon: iconSignature(el) })).filter((c) => c.label && c.icon);
@@ -851,7 +855,11 @@ export function inspectLayout({ all, texts, css, rect, union, visible, hidden, s
   for (const tab of tabs) {
     const name = controlName(tab);
     if (!name) continue;
-    const twin = all.find((e) => e !== tab && e.matches(controlSelector) && !e.closest('[role="tablist"]') && controlName(e) === name && shownChain(e) && visible(e, rect(e.getBoundingClientRect())));
+    const scope = tab.closest('[role="tablist"]')?.parentElement;
+    const twin = all.find((e) => e !== tab && scope?.contains(e) && e.matches(controlSelector) && !e.closest('[role="tablist"]')
+      && e.closest('nav') === tab.closest('nav')
+      && !(tab.hasAttribute('aria-controls') && e.hasAttribute('aria-controls') && tab.getAttribute('aria-controls') !== e.getAttribute('aria-controls'))
+      && controlName(e) === name && shownChain(e) && visible(e, rect(e.getBoundingClientRect())));
     if (!twin) continue;
     add("REPEATED LABEL", twin, name, [rect(twin.getBoundingClientRect()), rect(tab.getBoundingClientRect())],
       { metric: "control-duplicates-tab", otherSelector: selector(tab), reason: "a control repeats a visible tab of the same screen; the tab already does it" });

@@ -1105,10 +1105,12 @@ select[class~="border-line"] {
 .player-sheet .sheet-body [data-sheet-choice] > svg { width: 20px; height: 20px; }
 /* Dấu ✓ và + đầu dòng lựa chọn: mực bắt đầu 3/24 và 4/24 trong ô icon - kéo ra chừng ấy cho mực thẳng chữ ghi chú của bảng (ô 14 px; bảng
    trượt điện thoại 20 px). */
-[data-sheet-choice] > svg.lucide-check { margin-left: -1.75px; }
-[data-sheet-choice] > svg.lucide-plus { margin-left: -2.33px; }
-.player-sheet .sheet-body [data-sheet-choice] > svg.lucide-check { margin-left: -2.5px; }
-.player-sheet .sheet-body [data-sheet-choice] > svg.lucide-plus { margin-left: -3.33px; }
+[data-sheet-choice] > svg.lucide-check { translate: -1.75px 0; }
+[data-sheet-choice] > svg.lucide-plus { translate: -2.33px 0; }
+.player-sheet .sheet-body [data-flush-choice],
+[data-flush-choice] { margin-inline: 0; padding-inline: 0; }
+.player-sheet .sheet-body [data-sheet-choice] > svg.lucide-check { translate: -2.5px 0; }
+.player-sheet .sheet-body [data-sheet-choice] > svg.lucide-plus { translate: -3.33px 0; }
 /* Giọng đang chọn: nhấn chữ; dấu chọn ở hàng, không tô nền cả dòng. */
 [data-sheet-current] { color: var(--accent-text); }
 [data-sheet-current] > button { background: transparent; }
