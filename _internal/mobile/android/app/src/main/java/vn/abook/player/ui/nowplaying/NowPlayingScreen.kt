@@ -164,13 +164,13 @@ private fun NowPlayingBody(
             val textShown by remember { derivedStateOf { mode.value > 0f } }
             if (compactHeight) {
                 if (!titlesInHeader) coverTitles(Modifier.heightIn(min = 56.dp).padding(vertical = 4.dp), 48.dp)
-                if (!split && window.reading) {
+                Reveal(!split && window.reading) {
                     ReadAlongHost(state, model, window, Modifier.fillMaxWidth().height(240.dp)) { controlsDimmed = it }
                 }
             } else Layout(modifier = Modifier.weight(1f).fillMaxWidth(), content = {
                 Box(Modifier.fillMaxSize()) {
                   Reveal(!split && (window.reading || textShown) && window.shown) {
-                    if (!split) ReadAlongHost(state, model, window, Modifier.fillMaxSize()) { controlsDimmed = it }
+                    ReadAlongHost(state, model, window, Modifier.fillMaxSize()) { controlsDimmed = it }
                   }
                 }
                 // Chạm bìa cũng đổi chế độ: bìa lớn -> đọc theo, bìa nhỏ -> về nghe. Bìa là phần tử chung (bay bằng lớp vẽ, xem SharedPlayerParts);
@@ -299,7 +299,7 @@ private fun NowPlayingBody(
                 val controlsScroll = rememberScrollState()
                 Column(Modifier.fillMaxSize().then(if (compactHeight) Modifier.fadeEdges(controlsScroll).verticalScroll(controlsScroll) else Modifier).testTag("player_controls"), content = playerColumn)
                 Box(Modifier.fillMaxSize().testTag("player_read_side").padding(top = if (compactHeight) 0.dp else 64.dp), contentAlignment = Alignment.TopCenter) {
-                    Reveal(rightComposed && window.shown) { if (split) ReadAlongHost(state, model, window, Modifier.widthIn(max = ReadColumnMax).fillMaxSize()) {} }
+                    Reveal(rightComposed && window.shown) { ReadAlongHost(state, model, window, Modifier.widthIn(max = ReadColumnMax).fillMaxSize()) {} }
                 }
             },
         ) { measurables, constraints ->

@@ -1,5 +1,7 @@
 package vn.abook.player.ui.studio
 
+import vn.abook.player.ui.addbook.FieldGroup
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.border
@@ -100,12 +102,12 @@ fun ScriptScopeSheet(state: StudioScriptState, script: ChapterScript, line: Scri
     val reduced = rememberReducedMotion()
     val candidates = ScriptScopeLogic.candidates(script.lines, line.stableId, mode, (start.toIntOrNull() ?: 0) - 1, (end.toIntOrNull() ?: 0) - 1)
     val chosen = ScriptScopeLogic.selected(candidates, toggled)
-    Column(Modifier.fillMaxWidth().heightIn(max = 640.dp).testTag("script_scope"), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+    Column(Modifier.fillMaxWidth().imePadding().heightIn(max = 640.dp).testTag("script_scope"), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         BasicText(S.s_scope_title, style = Abook.type.sectionTitle)
         val list = rememberLazyListState()
         LazyColumn(Modifier.weight(1f, fill = false).fadeEdges(list), state = list, verticalArrangement = Arrangement.spacedBy(12.dp)) {
         item("controls") {
-        Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        FieldGroup(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         RowHint(if (line.scene == null) S.s_scope_no_markers else S.s_scope_marker_note)
         FlowRow(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         for (option in ScriptScopeMode.entries) {
@@ -122,7 +124,7 @@ fun ScriptScopeSheet(state: StudioScriptState, script: ChapterScript, line: Scri
                 }
             }
         }
-        SwapContent(person, contentKey = { it?.value }, layout = ContentLayout.Column) { picked ->
+        SwapContent(person, contentKey = { picked -> picked != null }, layout = ContentLayout.Column) { picked ->
             if (picked != null) TextAction(S.s_scope_target(picked.label), { person = null }, "scope_target", align = Alignment.CenterStart)
             else Column(Modifier.fillMaxWidth()) {
                 BookField(null, query, { query = it }, "scope_search", description = S.s_tim_nguoi_noi_70e3871e, placeholder = S.s_tim_nguoi_noi_70e3871e)
@@ -194,13 +196,15 @@ private fun ScopeRow(label: String, hint: String?, picked: Boolean, multiple: Bo
         .padding(8.dp).testTag(tag), verticalAlignment = Alignment.Top) {
         Box(Modifier.size(20.dp)) { vn.abook.player.ui.components.SelectionMark(picked) }
         Spacer(Modifier.width(8.dp))
-        if (avatarPerson != null) {
+        SwapContent(avatarPerson, contentKey = { avatarPerson -> avatarPerson != null }, layout = ContentLayout.Row) { avatarPerson ->
+          if (avatarPerson != null) {
             vn.abook.player.ui.components.PersonAvatar(avatarPerson.value, avatarPerson.avatar, size = 24.dp)
             Spacer(Modifier.width(8.dp))
+          }
         }
         Column(Modifier.weight(1f)) {
             BasicText(label, style = Abook.type.bodySmall)
-            Reveal(hint != null) { BasicText(hint.orEmpty(), style = Abook.type.bodySmall.copy(color = Abook.colors.text2)) }
+            Reveal(hint != null) { RowHint(hint.orEmpty()) }
         }
     }
 }

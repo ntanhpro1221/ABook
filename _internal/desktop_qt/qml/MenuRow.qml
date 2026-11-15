@@ -63,7 +63,7 @@ Interactive {
             }
             Text {
                 width: parent.width
-                visible: root.note !== ""
+                Reveal { shown: root.note !== "" }
                 text: root.note
                 wrapMode: Text.Wrap
                 color: Theme.text2

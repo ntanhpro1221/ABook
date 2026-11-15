@@ -55,7 +55,8 @@ Column {
             AudioFxSlider { objectName: "audioFxPitch"; width: parent.width; label: S.s_copy_519c2d65ca4c; spec: Logic.SPECS.pitch; value: root.fx.pitch; suffix: S.s_copy_e9d6329e8255; onPicked: value => Player.setAudioFx({pitch:value}) }
         }
         SheetSection {
-            Reveal { shown: root.openMusic !== null && Music.hasMusic }
+            id: musicSection
+            Reveal { target: musicSection; shown: root.openMusic !== null && Music.hasMusic }
             title: S.s_nhac_nen_271fb292
             SheetRow { objectName: "audioFxMusicSwitch"; text: S.s_bat_f26cbc4a; toggle: true; checked: Music.enabled; enabled: !Music.busy; onToggled: value => Music.setEnabled(value) }
             Collapse {

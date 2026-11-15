@@ -199,8 +199,8 @@ private fun SpeakerAnswers(item: WorkItem, state: StudioProjectState, sheets: Sh
     }
     Reveal(rangeOpen) {
         Column {
-            Caption(S.s_voice_range_note)
-            Caption(S.s_voice_range_window)
+            BasicText(S.s_voice_range_note, Modifier.padding(bottom = Dim.s8), style = Abook.type.bodySmall.copy(color = Abook.colors.text2))
+            BasicText(S.s_voice_range_window, Modifier.padding(bottom = Dim.s8), style = Abook.type.bodySmall.copy(color = Abook.colors.text2))
             SideBySide {
                 QuietButton(WorkText.PICK_ALL, { rangeIds = item.contextLines.map { it.stableId }.toSet() }, "studio_range_all", Modifier.weight(1f))
                 QuietButton(WorkText.PICK_NONE, { rangeIds = emptySet() }, "studio_range_none", Modifier.weight(1f))

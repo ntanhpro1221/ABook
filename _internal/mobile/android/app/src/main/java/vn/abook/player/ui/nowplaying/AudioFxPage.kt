@@ -1,5 +1,6 @@
 package vn.abook.player.ui.nowplaying
 
+import vn.abook.player.ui.data.dotJoin
 import vn.abook.player.ui.motion.SwapContent
 import vn.abook.player.ui.motion.ContentLayout
 
@@ -43,7 +44,7 @@ fun AudioFxPage(music: MusicState? = null, bookId: String = "", openMusic: () ->
         }
         val toneRevision by AudioFx.toneChanges.collectAsState()
         val tones = remember(toneRevision) { AudioFx.tones }
-        SheetLink(S.s_am_sac_8c2f4e1a, openTone, "audiofx_tones", tones.name + if (tones.scoped) " · " + S.s_copy_0aedb2b2cf2b else "")
+        SheetLink(S.s_am_sac_8c2f4e1a, openTone, "audiofx_tones", dotJoin(tones.name, if (tones.scoped) S.s_copy_0aedb2b2cf2b else ""))
         // Cao độ: kéo chỉ đổi số; giọng nghe giá trị cuối khi thả tay (hay tay dừng lâu) - mỗi lần đổi cao độ, máy phát phải xả hết tiếng đang xử lý.
         FxSlider(S.s_copy_519c2d65ca4c, ValueSpecs.pitch, fx.pitch, "audiofx_pitch", { S.s_copy_e4902bd61bb7(PlayerLabels.signed(it)) },
             onPreview = { AudioFx.update(fx.copy(pitch = it), AudioFx.DRAG_SETTLE_MS) }) { update(fx.copy(pitch = it)) }

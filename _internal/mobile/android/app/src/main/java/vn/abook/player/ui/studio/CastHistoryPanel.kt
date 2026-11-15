@@ -40,7 +40,7 @@ internal fun CastHistoryPanel(items: List<CastHistoryItem>, busy: String?, probl
                     Reveal(item.aliasConflicts > 0) { RowHint(S.s_cast_history_alias_conflicts(item.aliasConflicts)) }
                 }
                 Reveal(editable && item.state == "applied") {
-                    SwapContent(busy == null, contentKey = { it }) { available ->
+                    SwapContent(busy == null, contentKey = { available -> available }) { available ->
                         if (available) TextAction(S.s_hoan_tac_e72ff675, { undo(item.operationId) }, "cast_undo_${item.operationId}")
                         else RowHint(S.s_cho_ap_dung_77a52853)
                     }

@@ -220,7 +220,7 @@ fun LazyListScope.historyItems(detail: BookDetail?, loaded: Boolean, fade: () ->
     for (day in days) {
         foldItems(folds, day.label, "history_day_${day.label}", day.sessions, { it.id }, Modifier.fade(fade), summary = History.daySummary(day)) { n, session ->
             Column(Modifier.fade(fade)) {
-                if (n > 0) RowLine()
+                Reveal(n > 0) { RowLine() }
                 HistoryRow(session, { titles[it] }, onResume)
             }
         }
@@ -347,7 +347,7 @@ fun LazyListScope.castItems(
             }) else null,
         ) { n, person ->
             Column(Modifier.fade(fade)) {
-                if (n > 0) RowLine(start = PersonTextStart)
+                Reveal(n > 0) { RowLine(start = PersonTextStart) }
                 PersonRow(person, samples, onMore)
             }
         }
@@ -356,7 +356,7 @@ fun LazyListScope.castItems(
         foldItems(folds, S.s_vai_phu_6e7c6bce, "cast_extras", cast.extras, { it.name }, Modifier.fade(fade).padding(top = Dim.s8),
             summary = S.s_0_nguoi_trong_mot_canh_bb4fd602(cast.extras.size)) { n, person ->
             Column(Modifier.fade(fade)) {
-                if (n > 0) RowLine(start = PersonTextStart)
+                Reveal(n > 0) { RowLine(start = PersonTextStart) }
                 PersonRow(person, samples, onMore)
             }
         }

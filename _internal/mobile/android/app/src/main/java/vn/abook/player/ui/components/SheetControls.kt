@@ -30,7 +30,7 @@ fun SheetRow(label: String, modifier: Modifier = Modifier, hint: String? = null,
     Row(modifier.fillMaxWidth().heightIn(min = Dim.s48), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(Dim.s12)) {
         Column(Modifier.weight(1f)) {
             BasicText(label, style = Abook.type.bodySmall.copy(color = Abook.colors.text))
-            if (hint != null) RowHint(hint)
+            Reveal(hint != null) { RowHint(hint.orEmpty()) }
         }
         trailing()
     }
@@ -46,7 +46,7 @@ fun SheetSwitch(label: String, checked: Boolean, onChange: (Boolean) -> Unit, ta
 @Composable
 fun SheetLink(label: String, onClick: () -> Unit, tag: String, value: String? = null) {
     SheetRow(label, Modifier.pressable(onClick = onClick).testTag(tag)) {
-        if (value != null) BasicText(value, Modifier.widthIn(max = 180.dp), style = Abook.type.bodySmall.copy(color = Abook.colors.text2, textAlign = TextAlign.End))
+        Reveal(value != null) { BasicText(value.orEmpty(), Modifier.widthIn(max = 180.dp), style = Abook.type.bodySmall.copy(color = Abook.colors.text2, textAlign = TextAlign.End)) }
         ChevronIcon(Abook.colors.text2)
     }
 }

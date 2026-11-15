@@ -767,7 +767,7 @@ fun TabBar(tabs: TabState, modifier: Modifier = Modifier, onSelect: (Tab) -> Uni
                     .padding(horizontal = Dim.s12, vertical = Dim.s8), contentAlignment = Alignment.CenterStart) {
                     BasicText(tab.label, style = Abook.type.tab,
                         color = { lerp(colors.text2, colors.text, (1f - abs(tabs.position.value - tab.ordinal)).coerceIn(0f, 1f)) })
-                    if (tabs.selected == tab.ordinal) Box(Modifier.align(Alignment.BottomStart).width(28.dp).height(3.dp).background(colors.accent).testTag("tab_indicator"))
+                    Box(Modifier.align(Alignment.BottomStart)) { Reveal(tabs.selected == tab.ordinal) { Box(Modifier.width(28.dp).height(3.dp).background(colors.accent).testTag("tab_indicator")) } }
                 }
             }
         }
@@ -785,7 +785,7 @@ fun TabBar(tabs: TabState, modifier: Modifier = Modifier, onSelect: (Tab) -> Uni
                     .padding(horizontal = Dim.s16, vertical = Dim.s8), contentAlignment = Alignment.Center) {
                     BasicText(tab.label, style = Abook.type.tab, softWrap = false,
                         color = { lerp(colors.text2, colors.text, (1f - abs(tabs.position.value - tab.ordinal)).coerceIn(0f, 1f)) })
-                    if (tabs.selected == tab.ordinal) Box(Modifier.align(Alignment.BottomStart).width(28.dp).height(3.dp).background(colors.accent).testTag("tab_indicator"))
+                    Box(Modifier.align(Alignment.BottomStart)) { Reveal(tabs.selected == tab.ordinal) { Box(Modifier.width(28.dp).height(3.dp).background(colors.accent).testTag("tab_indicator")) } }
                 }
             }
             Box(Modifier.fillMaxWidth().height(clearance))

@@ -134,7 +134,7 @@ private fun ReadingsList(state: StudioReadingsState, data: NameReadings, clip: C
             foldItems(folds, ReadingsText.SUGGEST_TITLE, "studio_readings_credits", state.credits, { "${it.chapters}:${it.line}" },
                 Modifier.padding(top = Dim.s24), summary = ReadingsText.lineCount(state.credits.size)) { index, group ->
                 Column {
-                    if (index == 0) RowHint(ReadingsText.SUGGEST_LEAD, Modifier.padding(bottom = Dim.s8))
+                    Reveal(index == 0) { RowHint(ReadingsText.SUGGEST_LEAD, Modifier.padding(bottom = Dim.s8)) }
                     SwitchRow(ReadingsText.SUGGEST_SKIP, group.skipped, { state.skipLine(group, it) }, "studio_credit_$index",
                         hint = "“${group.line}” · ${ReadingsLogic.where(group)}")
                 }

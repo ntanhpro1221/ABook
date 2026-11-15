@@ -1,5 +1,6 @@
 package vn.abook.player.ui.studio
 
+import vn.abook.player.ui.data.dotJoined
 import vn.abook.player.S
 
 import androidx.compose.runtime.Stable
@@ -230,7 +231,7 @@ internal fun WorkLogic.elsewhere(endpoint: String, answer: JSONObject, names: Ma
                 ScriptEdits.kinds.firstOrNull { it.first == delivery.optString("kind") }?.second,
                 ScriptEdits.emotions.firstOrNull { it.first == delivery.optString("emotion") }?.second,
                 delivery.optString("spoken").takeIf { it.isNotEmpty() },
-            ).joinToString(" · ")
+            ).dotJoined()
         }.orEmpty())
         "review" -> if (theirs.length() == 0) null else theirs.length() to
             (if (theirs.keys().asSequence().any { theirs.optString(it) == "redo" }) S.s_thu_lai_cau_nay_034c2834 else "")

@@ -386,9 +386,13 @@ fun ListItem(
                     Box(Modifier.onFirstLine(), contentAlignment = Alignment.CenterEnd) {
                         Row(Modifier.testTag("row_trailing"), verticalAlignment = Alignment.CenterVertically) {
                             if (trailing != null) trailing()
+                            SwapContent(chevron, contentKey = { chevron -> chevron }, layout = ContentLayout.Row) { chevron ->
                             if (chevron) {
-                                if (trailing != null) Spacer(Modifier.width(Dim.s8))
+                                SwapContent(trailing, contentKey = { trailing -> trailing != null }, layout = ContentLayout.Row) { trailing ->
+                                    if (trailing != null) Spacer(Modifier.width(Dim.s8))
+                                }
                                 ChevronIcon(Abook.colors.text3)
+                            }
                             }
                         }
                     }

@@ -238,6 +238,7 @@ private fun LibraryPart(ui: LibraryUi, state: LibraryState, sheets: SheetHost, p
     }
     androidx.compose.foundation.layout.BoxWithConstraints(Modifier.fillMaxSize()) {
         val panes = vn.abook.player.ui.theme.windowLayout(maxWidth.value, maxHeight.value).twoPane
+        SwapContent(panes, contentKey = { panes -> panes }, modifier = Modifier.fillMaxSize()) { panes ->
         if (panes) {
             Row(Modifier.fillMaxSize()) {
                 val scroll = androidx.compose.foundation.rememberScrollState()
@@ -245,6 +246,7 @@ private fun LibraryPart(ui: LibraryUi, state: LibraryState, sheets: SheetHost, p
                 Box(Modifier.weight(1f).fillMaxHeight()) { tracks() }
             }
         } else Column(Modifier.fillMaxSize()) { controls(); tracks() }
+        }
     }
 }
 

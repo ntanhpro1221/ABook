@@ -1,3 +1,4 @@
+import { Presence } from "@/shared/MotionPresence";
 import { S } from "../shared/strings.generated";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Globe, ImagePlus, Trash2 } from "lucide-react";
@@ -109,7 +110,7 @@ export function CoverEditor({ book }: { book: BookSummary & { cover?: CoverImage
             <Skeleton className="h-full w-full" />
           </div>
       </div>
-      {!book.cover && <p data-testid="studio-missing-cover" className="mt-2 text-body-small text-fg-2">{S.s_chua_co_bia}</p>}
+      <Presence>{!book.cover && <p data-testid="studio-missing-cover" className="mt-2 text-body-small text-fg-2">{S.s_chua_co_bia}</p>}</Presence>
       {/* Biểu tượng / chữ đầu thẳng mép trái của bìa (soát 24-10): lề âm bù đệm của nút; điện thoại (chỉ biểu tượng, nền chạm 48 px) dồn biểu tượng về trái. */}
       <div className="mt-2 -ml-2 flex flex-wrap items-center gap-1 max-sm:ml-0">
         <button

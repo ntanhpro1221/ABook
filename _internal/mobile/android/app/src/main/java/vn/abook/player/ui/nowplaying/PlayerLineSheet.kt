@@ -49,7 +49,8 @@ internal fun PlayerLineSheet(editor: PlayerLineEditor, dismiss: () -> Unit) {
     val snapshot = editor.snapshot
     val line = editor.line
     val bodyLimit = LocalConfiguration.current.screenHeightDp.dp * 0.75f
-    Column(Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).testTag("player_line_editor"), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+    val scroll = rememberScrollState()
+    Column(Modifier.fillMaxWidth().fadeEdges(scroll).verticalScroll(scroll).testTag("player_line_editor"), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         BasicText(when (editor.step) {
             "speaker" -> if (line?.kind == "thought") S.s_ai_nghi_cau_nay_1d5dd20c else S.s_ai_noi_cau_nay_39d97e95
             "delivery" -> S.s_cach_doc_cau_nay_d8d0b9f1
@@ -89,6 +90,6 @@ internal fun PlayerLineSheet(editor: PlayerLineEditor, dismiss: () -> Unit) {
 private fun LineAction(label: String, icon: String, enabled: Boolean, tag: String, note: String? = null, chevron: Boolean = true, action: () -> Unit) {
     ListItem(label, onClick = { if (enabled) action() }, tag = tag, hint = note, chevron = chevron,
         modifier = Modifier.clip(RoundedCornerShape(Dim.radiusCover)).padding(horizontal = 12.dp).then(if (enabled) Modifier else Modifier.alpha(0.6f).semantics { disabled() }),
-        titleStyle = Abook.type.bodySmall.copy(fontWeight = FontWeight.Medium), leadingWidth = 16.dp, leadingGap = 12.dp,
-        leading = { LucideIcon(icon, Abook.colors.text2, size = 16.dp) })
+        titleStyle = Abook.type.bodySmall.copy(fontWeight = FontWeight.Medium), leadingWidth = 20.dp, leadingGap = 16.dp,
+        leading = { LucideIcon(icon, Abook.colors.text2) })
 }

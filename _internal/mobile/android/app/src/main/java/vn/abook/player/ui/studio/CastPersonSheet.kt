@@ -1,5 +1,7 @@
 package vn.abook.player.ui.studio
 
+import vn.abook.player.ui.components.fadeEdges
+import androidx.compose.foundation.layout.imePadding
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -50,7 +52,8 @@ internal fun CastPersonSheet(project: StudioProjectState, person: CastMember, pe
     }
     BackHandler(page != CastPersonPage.Menu) { page = CastPersonPage.Menu }
     SheetPages(page, { it.ordinal }, "studio_cast_person") { shown ->
-        FieldGroup(Modifier.fillMaxWidth().heightIn(max = 520.dp).verticalScroll(rememberScrollState()).testTag("studio_cast_person_${shown.name.lowercase()}")) {
+        val scroll = rememberScrollState()
+    FieldGroup(Modifier.fillMaxWidth().imePadding().heightIn(max = 520.dp).fadeEdges(scroll).verticalScroll(scroll).testTag("studio_cast_person_${shown.name.lowercase()}")) {
             when (shown) {
                 CastPersonPage.Menu -> {
                     BasicText(person.displayName, style = Abook.type.sectionTitle)

@@ -1,5 +1,6 @@
 package vn.abook.player.ui.motion
 
+import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.foundation.layout.Box
 import androidx.compose.animation.SharedTransitionScope
 import androidx.compose.foundation.layout.width
@@ -85,9 +86,9 @@ fun Modifier.bookCoverSource(id: String): Modifier {
     val flight = LocalBookCoverFlight.current ?: return this
     // Keep the source pixels until the incoming page covers them. A missing or
     // delayed destination must never leave an empty hole in the library.
-    return onGloballyPositioned { flight.source(id, it) }.graphicsLayer {
+    return onGloballyPositioned { flight.source(id, it) }.drawWithContent {
         // The overlay owns the selected artwork from departure through return.
-        alpha = if (flight.active(id) && !flight.reducedMotion() && flight.progress() > 0f) 0f else 1f
+        if (!(flight.active(id) && !flight.reducedMotion() && flight.progress() > 0f)) drawContent()
     }
 }
 

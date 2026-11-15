@@ -211,7 +211,7 @@ Modal {
                                     font.pixelSize: Theme.sizeBodySmall
                                 }
                             }
-                            Icon { anchors.right: parent.right; anchors.rightMargin: 6; anchors.verticalCenter: parent.verticalCenter; name: "chevron-right"; size: 16; color: Theme.text3 }
+                            Icon { anchors.right: parent.right; anchors.rightMargin: Theme.s8; anchors.verticalCenter: parent.verticalCenter; name: "chevron-right"; size: 16; color: Theme.text3 }
                         }
                     }
                 }

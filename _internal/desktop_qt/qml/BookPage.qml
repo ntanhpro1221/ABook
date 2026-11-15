@@ -590,7 +590,7 @@ Item {
                             objectName: "bookVolumeTitle"
                             width: parent.width
                             text: TextWrap.keepDots((root.fullBook.volumes || []).find(v => v.id === bookDetail.selectedVolume)?.title || "")
-                            color: Theme.text; font.pixelSize: Theme.sizeBody; font.weight: Font.DemiBold; wrapMode: Text.Wrap
+                            color: Theme.text; font.pixelSize: Theme.sizeBody; font.weight: Theme.weightMedium; wrapMode: Text.Wrap
                         }
                     }
                 }

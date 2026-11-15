@@ -582,7 +582,7 @@ function PackagedMusicMenu({ bookId, look, audio = false }: { bookId: string; lo
       <p className="px-2 pb-1 pt-2 text-xs text-fg-2">{music.project ? S.s_doi_luon_trong_studio_20c762a6 : S.s_chi_doi_tren_may_nay_93811b69}</p>
     </MotionRegion></MenuShell>}</MotionRegion>
   );
-  return audio ? <Reveal when={Boolean(music?.hasMusic)}><div>{music && <SheetMusic enabled={music.enabled} busy={change.isPending} level={music.levelDb} onToggle={enabled=>change.mutate({enabled})} onLevel={levelDb=>change.mutate({levelDb})}>{menu}</SheetMusic>}</div></Reveal> : menu;
+  return audio ? <Reveal when={Boolean(music?.hasMusic)}><div><Presence>{music && <SheetMusic enabled={music.enabled} busy={change.isPending} level={music.levelDb} onToggle={enabled=>change.mutate({enabled})} onLevel={levelDb=>change.mutate({levelDb})}>{menu}</SheetMusic>}</Presence></div></Reveal> : menu;
 }
 
 function MusicMenuFor({ bookId, look, audio = false }: { bookId: string; look: MenuLook; audio?: boolean }) {
@@ -1312,7 +1312,7 @@ function MusicCreditLine() {
         onClick={() => (catalogLink ? setSheet(catalogLink) : setOpen((value) => !value))}
         title={musicCreditText(musicCredit) || label}
         className="inline-flex max-w-full items-center gap-2 rounded-control outline-none focus-visible:ring-2 focus-visible:ring-focus"
-      >{catalogLink && <PlayingMusicArt link={catalogLink} />}<span className="truncate">{S.s_nhac_nen_198fce26}{label}</span>
+      ><Presence>{catalogLink && <PlayingMusicArt link={catalogLink} />}</Presence><span className="truncate">{S.s_nhac_nen_198fce26}{label}</span>
       </button>
       <Collapse open={open} className="mx-auto mt-1 max-w-sm break-words text-left">
           <p>{musicCreditText(musicCredit)}</p>

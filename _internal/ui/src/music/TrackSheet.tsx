@@ -113,7 +113,7 @@ function TrackBody({
   return (
     <div className="space-y-6 pb-2">
       <MusicArt track={track} className="mx-auto size-40" />
-      {track.art?.credit && <p className="text-xs text-fg-2 [overflow-wrap:anywhere]">{track.art.credit}</p>}
+      <Presence>{track.art?.credit && <p className="text-xs text-fg-2 [overflow-wrap:anywhere]">{track.art.credit}</p>}</Presence>
       {playing ? (
         <div className="flex flex-wrap gap-2">
           {/* "Lưu" = tải về + ghim vào Đã lưu; chạm lại = bỏ lưu. Đang tải thì vòng phần trăm trên chính nút. */}

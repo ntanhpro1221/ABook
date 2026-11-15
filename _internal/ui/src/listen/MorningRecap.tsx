@@ -229,7 +229,7 @@ export function MorningRecap({ className }: { className?: string }) {
               className="-mx-2 block w-[calc(100%+14px)] rounded-control px-2 py-3 text-left text-body leading-snug hover:bg-hover active:bg-hover"
             >
               {<Presence>{segment.speaker && <SpeakerLabel speaker={segment.speaker} sentence={segment.text} />}</Presence>}
-              <span className="flex items-start gap-2"><Play aria-hidden className="mt-0.5 size-4 shrink-0 text-fg-3" /><span className="min-w-0">{segment.text}</span></span>
+              <span className="flex items-start gap-2"><Play aria-hidden className="mt-1 size-4 shrink-0 text-fg-3" /><span className="min-w-0">{segment.text}</span></span>
             </button>
             ))}
           </section>)}

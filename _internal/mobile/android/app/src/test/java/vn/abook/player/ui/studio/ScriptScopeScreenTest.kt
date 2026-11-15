@@ -56,7 +56,7 @@ class ScriptScopeScreenTest {
         rule.onNodeWithTag("scope_person_OTHER").performScrollTo().performClick()
         rule.waitForIdle()
         System.getenv("M2G3_ARTIFACTS")?.let { dir ->
-            rule.onNodeWithTag("sheet_layer").captureRoboImage(File(dir, "scope_android.png").path, RoborazziOptions(taskType = RoborazziTaskType.Record))
+            rule.onNodeWithTag("sheet_layer").captureRoboImage("build/icon_probe/script_scope/scope_android.png", RoborazziOptions(taskType = RoborazziTaskType.Record))
         }
         rule.onNodeWithTag("scope_apply").performClick()
         rule.waitForIdle()

@@ -47,7 +47,7 @@ fun MusicArt(track: MusicLibrary.Track, modifier: Modifier = Modifier) {
             if (real != null) value = key to real
         }
     }
-    Box(modifier.size(40.dp).clip(RoundedCornerShape(6.dp)).background(Abook.colors.text3).testTag("music_art")) {
+    Box(modifier.size(40.dp).clip(RoundedCornerShape(vn.abook.player.ui.theme.Dim.radiusCover)).background(Abook.colors.text3).testTag("music_art")) {
         image?.takeIf { it.first == key }?.second?.let { bitmap ->
             Image(bitmap.asImageBitmap(), contentDescription = null, contentScale = ContentScale.Crop, modifier = Modifier.matchParentSize().visualImage().testTag("music_art_image"))
         }

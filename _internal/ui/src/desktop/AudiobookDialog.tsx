@@ -1,3 +1,4 @@
+import { Presence } from "@/shared/MotionPresence";
 import { S } from "../shared/strings.generated";
 import { MotionRegion } from "@/shared/MotionRegion";
 import { SlidingIndicator } from "@/shared/SlidingIndicator";
@@ -220,7 +221,7 @@ export function AudiobookDialogHost() {
       description={S.s_doc_ca_cuon_thanh_file_am_thanh_nghe_o_may_d043f850}
       width="max-w-[560px]"
     >
-      {(detail.data?.volumes?.length ?? 0) > 1 && <VolumeScope volumes={detail.data!.volumes!} value={volumeId} onChange={setVolumeId} />}
+      <Presence>{(detail.data?.volumes?.length ?? 0) > 1 && <VolumeScope volumes={detail.data!.volumes!} value={volumeId} onChange={setVolumeId} />}</Presence>
       <AudiobookForm
         format={format}
         onFormat={setFormat}

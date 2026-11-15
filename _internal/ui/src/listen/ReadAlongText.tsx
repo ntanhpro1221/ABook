@@ -592,7 +592,7 @@ const Paragraph = memo(function Paragraph({
     return (
       <Heading ref={node => { inkHost.current = node; }} {...props} className={cn('relative isolate', props.className, headingClassName)}>
         {ink}
-        {tappable && <Play aria-hidden className="mr-1 inline size-3 text-fg-3" />}
+        <Presence>{tappable && <Play aria-hidden className="mr-1 inline size-3 text-fg-3" />}</Presence>
         {first.segment.text}
       </Heading>
     );
@@ -608,7 +608,7 @@ const Paragraph = memo(function Paragraph({
             <SpeakerLabel speaker={segment.speaker} sentence={segment.text} avatar={segment.avatar} />
           )}</Presence>}
           <span {...sentence(index, segment)}>
-            {tappable && <Play aria-hidden className="mr-1 inline size-3 text-fg-3" />}
+            <Presence>{tappable && <Play aria-hidden className="mr-1 inline size-3 text-fg-3" />}</Presence>
             {index === playing && litWords ? <LitWords text={segment.text} words={litWords} rate={rate} /> : segment.text}
             {after?.(segment)}
           </span>{" "}

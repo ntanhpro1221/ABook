@@ -201,7 +201,7 @@ const ChapterLine = memo(function ChapterLine({
         className="touch-hit min-w-0 flex-1 text-left"
       >
         <div className={cn("flex items-start gap-2 break-words text-sm font-medium", current && "text-accent-text", (done || !canPlay(chapter)) && !current && "text-fg-2")}>
-          <span className="min-w-0 flex-1">{name}</span><ChevronRight aria-hidden className="ink-end mt-0.5 size-4 shrink-0 text-fg-3" />
+          <span className="min-w-0 flex-1">{name}</span><ChevronRight aria-hidden className="ink-end mt-1 size-4 shrink-0 text-fg-3" />
         </div>
         {/* min-h 1rem (= một dòng text-xs): dòng phụ luôn giữ chỗ - chương có audio rồi hàng không cao thêm, và mọi hàng cùng nhịp. */}
         <div className="min-h-[1rem] break-words text-xs text-fg-2">

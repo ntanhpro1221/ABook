@@ -69,6 +69,6 @@ fun StorageSummary(ui: StorageUi, empty: Boolean) {
             ClockLabel(formatSize(ui.storage.bytes), style = Abook.type.screenTitle)
             Caption(S.s_con_trong_0_78b8755a(formatSize(ui.storage.free)), ticking = true)
         }
-        if (empty) ListItem(S.s_chua_co_gi_tren_may_e57d2ed6, Modifier.testTag("storage_empty"))
+        Reveal(empty) { ListItem(S.s_chua_co_gi_tren_may_e57d2ed6, Modifier.testTag("storage_empty")) }
     }
 }

@@ -124,7 +124,7 @@ Item {
     Text {
         id: missingCover
         objectName: "studioMissingCover"
-        visible: !root.hasCover
+        Reveal { shown: !root.hasCover }
         y: art.height + 8
         width: parent.width
         text: S.s_chua_co_bia

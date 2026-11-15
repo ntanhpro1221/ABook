@@ -329,7 +329,7 @@ Item {
                 x: Math.round((del.width - del.textW) / 2)
                 width: del.textW
                 height: Math.max(implicitHeight, 20)
-                leftPadding: 26
+                leftPadding: Theme.s24
                 verticalAlignment: Text.AlignVCenter
                 text: del.speaker
                 color: root.surface.fg2

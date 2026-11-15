@@ -1,5 +1,6 @@
 package vn.abook.player.ui.studio
 
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -46,8 +47,9 @@ internal fun ScriptPeoplePicker(script: ChapterScript, current: String, allowNar
     var creating by remember { mutableStateOf(false) }
     var name by remember { mutableStateOf("") }
     val people = ScriptLogic.people(script).filter { allowNarrator || it.value != ScriptLogic.NARRATOR }
-    FieldGroup(Modifier.fillMaxWidth().heightIn(max = 520.dp).verticalScroll(rememberScrollState()).testTag("studio_script_people")) {
-        if (showTitle) BasicText(ScriptText.WHO, style = Abook.type.sectionTitle)
+    val scroll = rememberScrollState()
+    FieldGroup(Modifier.fillMaxWidth().imePadding().heightIn(max = 520.dp).fadeEdges(scroll).verticalScroll(scroll).testTag("studio_script_people")) {
+        Reveal(showTitle) { BasicText(ScriptText.WHO, style = Abook.type.sectionTitle) }
         BookField(null, query, { query = it }, "studio_people_search", description = S.s_tim_nguoi_noi_70e3871e, placeholder = S.s_tim_nguoi_noi_70e3871e)
         val list = rememberLazyListState()
         LazyColumn(Modifier.heightIn(max = 224.dp).fadeEdges(list), state = list) {
@@ -90,9 +92,10 @@ internal fun ScriptDeliveryEditor(script: ChapterScript, line: ScriptLine, dismi
     var person by remember { mutableStateOf<ScriptPerson?>(null) }
     var spoken by remember { mutableStateOf(line.lineWish?.spoken ?: line.spoken ?: line.text) }
     val needsPerson = line.kind == "narration" && kind != "narration"
-    Column(modifier.fillMaxWidth().verticalScroll(rememberScrollState()).testTag("studio_delivery_sheet")) {
-        if (showTitle) BasicText(S.s_cach_doc_cau_nay_d8d0b9f1, style = Abook.type.sectionTitle)
-        BasicText(S.s_loai_doan_4c243930, style = Abook.type.bodySmall)
+    val scroll = rememberScrollState()
+    FieldGroup(modifier.fillMaxWidth().imePadding().fadeEdges(scroll).verticalScroll(scroll).testTag("studio_delivery_sheet")) {
+        Reveal(showTitle) { BasicText(S.s_cach_doc_cau_nay_d8d0b9f1, style = Abook.type.sectionTitle) }
+        RowHint(S.s_loai_doan_4c243930)
         val kinds = ScriptEdits.kinds.map { Option(it.first, it.second) }
         ChoiceRow(kinds, kinds.first { it.value == kind }, { picked, _ -> kind = picked.value }, tag = "studio_delivery_kind")
         Reveal(needsPerson) {

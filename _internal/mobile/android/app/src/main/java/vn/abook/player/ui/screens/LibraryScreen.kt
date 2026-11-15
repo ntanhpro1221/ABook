@@ -186,7 +186,9 @@ private fun LibraryGrid(
     // Cửa sổ thấp: mỗi trang lọc có bản đầu màn riêng; chỉ trang đang hiện báo chỗ nút sắp xếp (menu neo vào đó).
     val chrome: @Composable (Boolean) -> Unit = { reports ->
         Column(Modifier.fillMaxWidth().padding(top = if (short) 0.dp else top, start = if (short) 0.dp else Dim.margin, end = if (short) 0.dp else Dim.margin)) {
+            SwapContent(short, contentKey = { short -> short }, layout = ContentLayout.Column) { short ->
             if (short) {
+                Column {
                 Row(Modifier.fillMaxWidth().heightIn(min = Dim.s48), verticalAlignment = Alignment.CenterVertically) {
                     BasicText(S.s_thu_vien_58145555, Modifier.weight(1f), style = Abook.type.sectionTitle)
                     AddBookButton(actions.addBook, iconOnly = compactWidth)
@@ -194,9 +196,11 @@ private fun LibraryGrid(
                     SearchBox(ui, Modifier.width(searchWidth))
                 }
                 FilterBar(ui, selected.shown, onSortCoordinates, compact = true)
-            } else {
+                }
+            } else Column {
                 ScreenHeader(S.s_thu_vien_58145555, trailing = { AddBookButton(actions.addBook) }, bottomGap = if (books.isEmpty()) Dim.s16 else 0.dp)
                 vn.abook.player.ui.components.Reveal(books.isNotEmpty()) { FilterBar(ui, selected.shown, onSortCoordinates) }
+            }
             }
         }
     }

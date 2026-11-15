@@ -100,10 +100,12 @@ fun AddBookButton(onClick: () -> Unit, modifier: Modifier = Modifier, iconOnly: 
         verticalAlignment = Alignment.CenterVertically,
     ) {
         PlusIcon(colors.accentText, size = 18.dp)
+        SwapContent(iconOnly, contentKey = { iconOnly -> !iconOnly }, layout = ContentLayout.Row) { iconOnly ->
         if (!iconOnly) {
             Spacer(Modifier.width(Dim.s4))
             BasicText(S.s_them_sach_2a9d3708, style = Abook.type.label.copy(color = colors.accentText))
         } else Spacer(Modifier.width(Dim.s24))
+        }
     }
 }
 
@@ -352,13 +354,14 @@ private val MenuWidth = 220.dp
 @Composable
 fun FilterBar(ui: LibraryUiState, count: Int, onSortCoordinates: (LayoutCoordinates) -> Unit, modifier: Modifier = Modifier, compact: Boolean = false) {
     Column(modifier.fillMaxWidth()) {
-        if (!compact) Box(Modifier.fillMaxWidth().height(Dim.s48)) {
+        Reveal(!compact) { Box(Modifier.fillMaxWidth().height(Dim.s48)) {
             BasicText(S.s_0_cuon_2356f2f6(count), style = Abook.type.bodySmall, modifier = Modifier.align(Alignment.CenterStart).testTag("library_count"))
             Row(Modifier.align(Alignment.CenterEnd)) {
                 SortButton(ui, onSortCoordinates)
                 Spacer(Modifier.width(Dim.touch))
             }
             SearchBox(ui, Modifier.align(Alignment.CenterEnd))
+        }
         }
         FilterRow(ui, Modifier.fillMaxWidth())
     }

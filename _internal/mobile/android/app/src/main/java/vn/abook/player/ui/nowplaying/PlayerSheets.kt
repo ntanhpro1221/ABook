@@ -353,9 +353,11 @@ private fun SheetRow(label: String, value: String, icon: String? = null, enabled
         BasicText(label, Modifier.weight(1f), style = Abook.type.body)
         Spacer(Modifier.width(12.dp))
         RollingLabel(value, Modifier.widthIn(max = 144.dp), Abook.type.bodySmall)
-        if (role == Role.Button && enabled) {
-            Spacer(Modifier.width(Dim.s8))
-            ChevronIcon(Abook.colors.text3)
+        Reveal(role == Role.Button && enabled) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Spacer(Modifier.width(Dim.s8))
+                ChevronIcon(Abook.colors.text3)
+            }
         }
     }
 }

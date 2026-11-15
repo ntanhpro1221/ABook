@@ -203,13 +203,13 @@ class StudioEditScreenTest {
         script()
         tap("studio_line_who_a")
         tap("studio_script_new")
-        rule.onRoot().captureRoboImage("build/m2g1/people_light.png", RoborazziOptions(taskType = RoborazziTaskType.Record))
+        rule.onRoot().captureRoboImage("build/icon_probe/m2g1/people_light.png", RoborazziOptions(taskType = RoborazziTaskType.Record))
     }
 
     @Test fun recordDarkEditingSheetForVisualReview() {
         script(dark = true)
         tap("studio_line_delivery_n")
         tap("studio_delivery_kind_thought")
-        rule.onRoot().captureRoboImage("build/m2g1/delivery_dark.png", RoborazziOptions(taskType = RoborazziTaskType.Record))
+        rule.onRoot().captureRoboImage("build/icon_probe/m2g1/delivery_dark.png", RoborazziOptions(taskType = RoborazziTaskType.Record))
     }
 }
