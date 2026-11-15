@@ -77,6 +77,14 @@ object HostWait {
     fun open(url: String, connectTimeoutMs: Int, idleMs: Int = if (idleOverrideMs > 0) idleOverrideMs else IDLE_MS): HttpURLConnection =
         FastConnect.open(url, connectTimeoutMs).also { it.readTimeout = idleMs }
 
+    /** Redirecting GET with the same idle limit on every connection. */
+    fun get(url: String, connectTimeoutMs: Int, idleMs: Int = if (idleOverrideMs > 0) idleOverrideMs else IDLE_MS,
+            configure: (HttpURLConnection) -> Unit = {}): HttpURLConnection =
+        FastConnect.get(url, connectTimeoutMs) { connection ->
+            configure(connection)
+            connection.readTimeout = idleMs
+        }
+
     /**
      * Chạy một lượt gửi + nhận. [Timeout] (từ [awaiting] / [writing]) thì gửi lại đúng lượt ấy một lần; `resend` false (tệp lên không phát lại được, hay lời gọi người gọi tự
      * đặt hạn riêng) thì báo ngay. Lỗi khác đi thẳng ra, không gửi lại.

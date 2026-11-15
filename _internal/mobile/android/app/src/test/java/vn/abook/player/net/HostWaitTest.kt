@@ -19,6 +19,26 @@ class HostWaitTest {
 
     private fun fast() { HostWait.idleOverrideMs = 300 }
 
+    @Test fun redirectingGetsKeepTheIdleLimitAndHeadersOnEveryHop() {
+        fast()
+        val requests = java.util.concurrent.CopyOnWriteArrayList<String>()
+        FakeHost { attempt, socket, head ->
+            requests.add(head)
+            if (attempt == 1) socket.getOutputStream().apply {
+                write("HTTP/1.1 302 Found\r\nLocation: /next\r\nContent-Length: 0\r\nConnection: close\r\n\r\n".toByteArray())
+                flush()
+            } else FakeHost.reply(socket, 200, "abc")
+        }.use { host ->
+            val connection = HostWait.get("${host.base}/start", 1000) { it.setRequestProperty("Range", "bytes=3-") }
+            try {
+                assertEquals(300, connection.readTimeout)
+                assertEquals("abc", connection.inputStream.bufferedReader().readText())
+                assertEquals(2, requests.size)
+                assertTrue(requests.all { it.contains("Range: bytes=3-", ignoreCase = true) })
+            } finally { connection.disconnect() }
+        }
+    }
+
     private fun statusOf(host: FakeHost, path: String = "/x"): Int =
         HostWait.call {
             val connection = HostWait.open("${host.base}$path", 1000)

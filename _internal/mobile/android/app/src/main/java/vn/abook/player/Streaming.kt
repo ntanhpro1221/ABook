@@ -279,8 +279,7 @@ object Streaming {
 @OptIn(UnstableApi::class)
 internal class PreviewHttpDataSource(
     private val connect: (String, Map<String, String>) -> HttpURLConnection = { url, headers ->
-        FastConnect.get(url, 8000) { connection ->
-            connection.readTimeout = HostWait.IDLE_MS
+        HostWait.get(url, 8000) { connection ->
             headers.forEach { (name, value) -> connection.setRequestProperty(name, value) }
         }
     },
