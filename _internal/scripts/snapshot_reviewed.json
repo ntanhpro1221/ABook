@@ -420,12 +420,12 @@
     "reason": "Visually reviewed tilename change: library_search_light.png; drawn-cover tiles now show the two-line title under the cover like photo tiles (owner 15-11). Old/new contact sheet inspected before adoption."
   },
   "_internal/mobile/android/app/src/test/snapshots/library_series_sheet_light.png": {
-    "sha256": "3a278bb2fefdb00713c689c38aac15513401d354f09d45c506dc50560f516f1e",
-    "reason": "Visually reviewed tilename change: library_series_sheet_light.png; drawn-cover tiles now show the two-line title under the cover like photo tiles (owner 15-11). Old/new contact sheet inspected before adoption."
+    "sha256": "c91b95bca018272d786c6834de91bab0753296b83f9dd49b8c1275b7dd01e78f",
+    "reason": "Visually inspected the exact combined-render before/after image at native resolution. The library keeps the tile titles from tilename and all three series rows or all four sorting choices. The sheet and menu retain rounded edges and the shared shadow without the stationary band; labels remain unclipped. Recorded only the two binary-conflict test cases after merging sheetedge and fixing nested menu viewport."
   },
   "_internal/mobile/android/app/src/test/snapshots/library_sort_menu_light.png": {
-    "sha256": "8d9a239c93a12984360f945faa5512024385f782346199d14494d3e7d562f117",
-    "reason": "Visually reviewed tilename change: library_sort_menu_light.png; drawn-cover tiles now show the two-line title under the cover like photo tiles (owner 15-11). Old/new contact sheet inspected before adoption."
+    "sha256": "f6c8fd6c3326a784e6a154604b12a3aae944f0b9a85afb56265afa427abd292e",
+    "reason": "Visually inspected the exact combined-render before/after image at native resolution. The library keeps the tile titles from tilename and all three series rows or all four sorting choices. The sheet and menu retain rounded edges and the shared shadow without the stationary band; labels remain unclipped. Recorded only the two binary-conflict test cases after merging sheetedge and fixing nested menu viewport."
   },
   "_internal/mobile/android/app/src/test/snapshots/link_book_mini_dark.png": {
     "sha256": "9a20e995ad4b9fcc47f55e3999c436665509edb6d50c0032f5bc6ce9ecb5f3f6",
