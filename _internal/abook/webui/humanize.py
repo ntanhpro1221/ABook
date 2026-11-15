@@ -151,15 +151,18 @@ def is_heading(text: str) -> bool:
     return len(text) <= 160 and _HEADING.match(text) is not None
 
 
-def chapter_names(file_title: str, heading: str | None, index: int | None = None) -> tuple[str, str]:
+def chapter_names(file_title: str, heading: str | None, index: int | None = None, *, decided: bool = False) -> tuple[str, str]:
     """(tên, phụ đề) của một chương cho người đọc.
 
     Tên file không phải tên chương: nguồn của cuốn 2 đánh số file lệch một so với truyện - file `645.txt` mở đầu
     bằng "Chương 646 - Trở về (1)". Người nghe thấy "Chương 645" trên danh sách rồi nghe đọc "Chương 646" là hai con
     số vênh nhau. Nên dòng tiêu đề trong văn bản thắng; tên file chỉ là đường lui khi chương không có tiêu đề.
+    `decided`: `heading` là tiêu đề đã quyết theo cả cuốn (chapter_titles.book_headings), rỗng = chương không tiêu đề.
     """
-    from ..chapter_titles import chapter_name
+    from ..chapter_titles import chapter_name, heading_name
 
+    if decided:
+        return heading_name(heading) if heading else chapter_name(file_title, index=index)
     return chapter_name(file_title, heading or "", index=index)
 
 

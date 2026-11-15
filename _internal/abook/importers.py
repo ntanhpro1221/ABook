@@ -299,18 +299,20 @@ def _finish(book: ImportedBook, keep_short: bool = False, source: str = "") -> I
         # tên (trang đề tựa) thì ở lại: người dùng quyết có tích nó không.
         book.notes += [f"Bỏ qua mục trống: {chapter.title}" for chapter in book.chapters if not chapter.text.strip() and not chapter.short]
         book.chapters = [chapter for chapter in book.chapters if chapter.text.strip() or chapter.short]
-    from .chapter_titles import distinct_fallbacks, explicit_heading, fallback_numbers, fallback_positions, first_heading, is_named_matter
+    from .chapter_titles import book_headings, distinct_fallbacks, explicit_heading, fallback_numbers, fallback_positions, is_named_matter
 
-    # Cùng luật với store._chapter_names: "Mở đầu" không chiếm số; tên theo số không trùng tên chương khác.
+    # Cùng luật với store._chapter_names: tiêu đề quyết theo cả cuốn (mẫu lặp "Lần gặp thứ N - …", không lẫn tên thật với tên số);
+    # "Mở đầu" không chiếm số; tên theo số không trùng tên chương khác.
+    headings = book_headings([chapter.text for chapter in book.chapters], [chapter.title for chapter in book.chapters])
     positions = fallback_numbers(fallback_positions([chapter.title for chapter in book.chapters]),
-                                 [is_named_matter(first_heading(chapter.text)) for chapter in book.chapters])
+                                 [is_named_matter(heading) for heading in headings])
     numbered: list[int] = []
     for number, chapter in enumerate(book.chapters, start=1):
         # Tên hiển thị (siêu dữ liệu). "Mở đầu" là nhãn phần trước chương đầu: dòng đầu của nó thường là tên sách, không đặt lại.
         if not chapter.name and chapter.title != PREAMBLE:
             if book.text_has_title:
-                display = display_chapter_name(chapter.title, chapter.text, positions[number - 1])
-                if positions[number - 1] is not None and not first_heading(chapter.text):
+                display = display_chapter_name(chapter.title, headings[number - 1], positions[number - 1])
+                if positions[number - 1] is not None and not headings[number - 1]:
                     numbered.append(number - 1)
             else:
                 # Chương mang tên sách: chỉ nhận tiêu đề có từ khoá ("Đoạn kết", "Chương 3"), không nhận dòng đầu trang PDF.
@@ -413,12 +415,13 @@ def title_from_filename(stem: str) -> str:
     return " ".join(re.sub(r"_+|-{2,}", " ", stem).split()) or stem
 
 
-def display_chapter_name(stored: str, text: str, index: int | None) -> str:
-    """Display metadata shared by Studio and file imports; source text stays intact. `index`: book position to show
-    when no heading is found, None to keep the file number (see chapter_titles.fallback_positions)."""
-    from .chapter_titles import chapter_name, first_heading, full_name
+def display_chapter_name(stored: str, heading: str, index: int | None) -> str:
+    """Display metadata shared by Studio and file imports; source text stays intact. `heading`: the chapter's heading as
+    chapter_titles.book_headings decided it for the whole book ("" = none). `index`: book position to show when there is no
+    heading, None to keep the file number (see chapter_titles.fallback_positions)."""
+    from .chapter_titles import chapter_name, full_name
 
-    return first_heading(text) or full_name(chapter_name(stored, index=index))
+    return heading or full_name(chapter_name(stored, index=index))
 
 
 def clip_title(text: str, limit: int) -> str:

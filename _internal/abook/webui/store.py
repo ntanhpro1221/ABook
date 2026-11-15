@@ -583,8 +583,7 @@ def _chapter_names(connection: sqlite3.Connection,
     has_path = "input_path" in {row[1] for row in connection.execute("PRAGMA table_info(chapters)")}
     out: dict[int, dict[str, Any]] = {}
     rows = connection.execute(f"SELECT id, chapter_index, title{', input_path' if has_path else ''} FROM chapters ORDER BY chapter_index").fetchall()
-    from ..chapter_titles import (distinct_fallbacks, fallback_numbers, fallback_positions, first_heading, is_named_matter,
-                                  read_opening)
+    from ..chapter_titles import book_headings, distinct_fallbacks, fallback_numbers, fallback_positions, is_named_matter, read_opening
 
     openings = []
     for row in rows:
@@ -598,15 +597,18 @@ def _chapter_names(connection: sqlite3.Connection,
                 sources.append((str(source), _mtime_ns(source)))
             heading = read_opening(source) or _segment_opening(connection, int(row["id"])) or heading
         openings.append(heading)
+    # Tiêu đề quyết theo CẢ cuốn (chapter_titles.book_headings): mẫu lặp "Lần gặp thứ N - …" nhận ở mọi chương, và một cuốn
+    # không bao giờ lẫn tên thật với "Chương N".
+    stored = [str(row["title"]) for row in rows]
+    decided = book_headings([heading or "" for heading in openings], stored)
     # "Chương <số>" cho chương không tiêu đề đếm theo thứ tự sách, bỏ qua phần có tên riêng ("Mở đầu" không chiếm số 1).
-    positions = fallback_numbers(fallback_positions([str(row["title"]) for row in rows]),
-                                 [is_named_matter(first_heading(heading or "")) for heading in openings])
+    positions = fallback_numbers(fallback_positions(stored), [is_named_matter(heading) for heading in decided])
     named: list[tuple[Any, str, str, bool]] = []
-    for position, row, heading in zip(positions, rows, openings):
-        name, subtitle = humanize.chapter_names(str(row["title"]), heading, position)
+    for position, row, heading in zip(positions, rows, decided):
+        name, subtitle = humanize.chapter_names(str(row["title"]), heading, position, decided=True)
         edit = renamed.get(int(row["id"]))
         named.append((row, *apply_chapter_title(name, subtitle, edit),
-                      position is not None and not first_heading(heading or "") and not (edit or {}).get("title")))
+                      position is not None and not heading and not (edit or {}).get("title")))
     # Chương không tiêu đề lấy "Chương <vị trí>" - không bao giờ trùng tên một chương khác (chapter_titles.distinct_fallbacks).
     names = distinct_fallbacks([name for _row, name, _subtitle, _fallback in named], [fallback for *_rest, fallback in named],
                                [str(row["title"]) for row, *_rest in named])

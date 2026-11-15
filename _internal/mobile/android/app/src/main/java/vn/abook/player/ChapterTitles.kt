@@ -13,6 +13,7 @@ internal object ChapterTitles {
     private val prose = pattern("prose")
     private val unsafe = pattern("unsafe")
     private val volume = pattern("volume")
+    private val structural = pattern("structural")
     private val numeric = Regex("(?:\\p{Nd}+|chương\\s+\\p{Nd}+)", RegexOption.IGNORE_CASE)
     private fun clean(line: String) = Normalizer.normalize(line.trimStart('\uFEFF').trim().replace(Regex("[\\s\\p{Z}]+"), " "), Normalizer.Form.NFC)
 
@@ -43,6 +44,68 @@ internal object ChapterTitles {
     }
 
     fun explicitHeading(text: String): String = firstHeading(text).takeIf { parts(it) != null }.orEmpty()
+
+    /** chapter_titles.opening_line: (first non-empty line, an empty line follows it); a volume wrapper is skipped. */
+    fun openingLine(text: String): Pair<String, Boolean> {
+        val lines = text.replace("\r\n", "\n").replace('\r', '\n').split('\n')
+        var at = lines.indexOfFirst { clean(it).isNotEmpty() }
+        if (at < 0) return "" to false
+        if (volume.matcher(clean(lines[at])).matches()) {
+            at = (at + 1 until lines.size).firstOrNull { clean(lines[it]).isNotEmpty() } ?: return "" to false
+        }
+        return clean(lines[at]) to (at + 1 < lines.size && lines[at + 1].isBlank())
+    }
+
+    private fun endsLikeProse(line: String) = line.last() in ".,;:" || !line[0].isLetter() || !line[0].isUpperCase()
+
+    /** chapter_titles.structural_parts: "Lần gặp thứ 92 - Lời hứa" -> ("lần gặp", "Lần gặp thứ 92", "Lời hứa"). */
+    fun structuralParts(line: String): Triple<String, String, String>? {
+        val text = clean(line)
+        if (text.isEmpty() || text.codePointCount(0, text.length) > rules.getInt("maxHeading") || endsLikeProse(text)) return null
+        val match = structural.matcher(text).takeIf { it.matches() } ?: return null
+        val lead = match.group(2)!!
+        if (!lead.split(' ').all { word -> word.any { it.isLetter() } }) return null
+        return Triple(lead.lowercase(), match.group(1)!!, (match.group(3) ?: "").trim())
+    }
+
+    private fun looseHeading(line: String) = line.isNotEmpty() && line.codePointCount(0, line.length) <= rules.getInt("maxHeading") &&
+        !endsLikeProse(line) && parts(line) == null && line[0] !in "-–—('\"“‘«"
+
+    /** chapter_titles.book_headings: headings decided for the whole book. A repeated structure that opens most untitled
+     *  chapters counts for all of them; a book never mixes real names with numbered fallbacks. */
+    fun bookHeadings(texts: List<String>, stored: List<String>): List<String> {
+        val base = texts.map(::firstHeading)
+        val lines = texts.map(::openingLine)
+        val open = texts.indices.filter { base[it].isEmpty() || parts(base[it]) == null }
+        val keys = LinkedHashMap<String, Int>()
+        for (at in open) {
+            val (line, blank) = lines[at]
+            val found = if (blank) structuralParts(line) else null
+            if (found != null) keys[found.first] = (keys[found.first] ?: 0) + 1
+        }
+        val out = base.toMutableList()
+        keys.entries.maxByOrNull { it.value }?.let { (key, count) ->
+            if (count >= 2 && count * 2 > open.size) {
+                for (at in open) {
+                    val (line, blank) = lines[at]
+                    if (blank && structuralParts(line)?.first == key) out[at] = line
+                }
+            }
+        }
+        val positions = fallbackPositions(stored)
+        val titled = open.filter { out[it].isNotEmpty() }
+        val untitled = open.filter { out[it].isEmpty() && positions[it] != null }
+        if (titled.isNotEmpty() && untitled.isNotEmpty()) {
+            if (titled.size > untitled.size) {
+                for (at in untitled) {
+                    val (line, blank) = lines[at]
+                    if (blank && looseHeading(line)) out[at] = line
+                }
+            }
+            if (untitled.any { out[it].isEmpty() }) for (at in titled) out[at] = ""
+        }
+        return out
+    }
 
     private val order = Regex("^0\\p{Nd}*(?:\\s*[-_.:]+\\s*|\\s+)(\\S.*)$")
     private val numberOnly = Regex("(?:chương\\s+)?(\\p{Nd}+)", RegexOption.IGNORE_CASE)
@@ -86,8 +149,10 @@ internal object ChapterTitles {
         return out
     }
 
-    fun display(stored: String, text: String, index: Int?): String {
-        val heading = firstHeading(text)
+    fun display(stored: String, text: String, index: Int?): String = displayHeading(stored, firstHeading(text), index)
+
+    /** importers.display_chapter_name: `heading` as bookHeadings decided it ("" = none), else the file label or book position. */
+    fun displayHeading(stored: String, heading: String, index: Int?): String {
         if (heading.isNotEmpty()) return heading
         val title = BookImport.chapterTitle(clean(stored))
         return if (index != null && (title.isEmpty() || numeric.matches(title))) BookImport.chapterTitle(index.toString()) else title

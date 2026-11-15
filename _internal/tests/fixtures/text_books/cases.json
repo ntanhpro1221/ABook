@@ -161,7 +161,7 @@
      {
       "title": "Chương 1",
       "text": "Sương sớm\n\nChuyến phà đầu tiên rời bến lúc năm giờ.\nCậu bé đứng ở mạn thuyền.",
-      "name": "Sương sớm"
+      "name": "Chương 2"
      },
      {
       "title": "Chương hai",
@@ -219,9 +219,9 @@
          "id": 2,
          "index": 2,
          "volumeId": 1,
-         "title": "Sương sớm",
+         "title": "Chương 2",
          "subtitle": "",
-         "fullTitle": "Sương sớm",
+         "fullTitle": "Chương 2",
          "duration": 0,
          "available": false,
          "size": 0,
@@ -336,7 +336,7 @@
       },
       {
        "index": 2,
-       "title": "Sương sớm",
+       "title": "Chương 2",
        "firstLine": "Sương sớm",
        "words": 17,
        "chars": 60,

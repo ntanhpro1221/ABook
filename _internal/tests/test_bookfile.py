@@ -605,7 +605,7 @@ def test_packing_work_grows_with_the_chapters_not_their_square(tmp_path: Path, m
 
     named = []
     real = humanize.chapter_names
-    monkeypatch.setattr(humanize, "chapter_names", lambda *args: named.append(1) or real(*args))
+    monkeypatch.setattr(humanize, "chapter_names", lambda *args, **kwargs: named.append(1) or real(*args, **kwargs))
     work = []
     for chapters in (300, 1200):
         named.clear()

@@ -18,6 +18,18 @@ class ChapterTitlesTest {
         }
     }
 
+    /** Same cases as tests/test_chapter_titles_by_book.py: titles decided by structure for the whole book, never mixed. */
+    @Test fun sharedBookCases() {
+        val cases = JSONArray(File("../../../tests/fixtures/chapter_title_books.json").readText())
+        for (i in 0 until cases.length()) {
+            val case = cases.getJSONObject(i)
+            fun strings(key: String) = case.getJSONArray(key).let { array -> (0 until array.length()).map { array.getString(it) } }
+            assertEquals(case.getString("name"), strings("expected"), ChapterTitles.bookHeadings(strings("texts"), strings("stored")))
+        }
+        assertEquals(Triple("lần gặp", "Lần gặp thứ 92", "Lời hứa"), ChapterTitles.structuralParts("Lần gặp thứ 92 - Lời hứa"))
+        assertEquals(null, ChapterTitles.structuralParts("Lần gặp thứ 92 - Tôi đã đến muộn."))
+    }
+
     @Test fun metadataKeepsTheSource() {
         val folder = java.nio.file.Files.createTempDirectory("chapter-titles").toFile()
         try {

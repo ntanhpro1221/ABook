@@ -261,14 +261,16 @@ object BookImport {
         }
         // Tên hiển thị (siêu dữ liệu), cùng luật với importers._finish: "Mở đầu" không đặt lại; chương mang tên sách chỉ nhận tiêu đề có từ khoá.
         // Cùng luật với store._chapter_names: "Mở đầu" không chiếm số; tên theo số không trùng tên chương khác.
+        // Tiêu đề quyết theo cả cuốn (ChapterTitles.bookHeadings): mẫu lặp "Lần gặp thứ N - …", không lẫn tên thật với tên số.
+        val headings = ChapterTitles.bookHeadings(book.chapters.map { it.text }, book.chapters.map { it.title })
         val positions = ChapterTitles.fallbackNumbers(ChapterTitles.fallbackPositions(book.chapters.map { it.title }),
-            book.chapters.map { ChapterTitles.isNamedMatter(ChapterTitles.firstHeading(it.text)) })
+            headings.map { ChapterTitles.isNamedMatter(it) })
         val numbered = mutableSetOf<Int>()
         for ((index, chapter) in book.chapters.withIndex()) {
             if (chapter.name.isNotEmpty() || chapter.title == PREAMBLE) continue
-            val display = if (book.textHasTitle) ChapterTitles.display(chapter.title, chapter.text, positions[index])
+            val display = if (book.textHasTitle) ChapterTitles.displayHeading(chapter.title, headings[index], positions[index])
                 else if (chapter.title == book.title) ChapterTitles.explicitHeading(chapter.text) else ""
-            if (book.textHasTitle && positions[index] != null && ChapterTitles.firstHeading(chapter.text).isEmpty()) numbered.add(index)
+            if (book.textHasTitle && positions[index] != null && headings[index].isEmpty()) numbered.add(index)
             if (display.isNotEmpty() && display != chapter.title) {
                 book.chapters[index] = Chapter(chapter.title, chapter.text, chapter.short, display, chapter.matter)
             }
