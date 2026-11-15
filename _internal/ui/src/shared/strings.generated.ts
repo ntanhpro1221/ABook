@@ -3334,6 +3334,6 @@ export const S = {
   s_avatar_portrait: "Ảnh nhân vật",
   s_avatar_generate: "Sinh lại ảnh",
   s_avatar_pattern: "Dùng hoạ tiết",
-  s_avatar_generating: "Đang sinh ảnh…",
+  s_avatar_generating: "Đang sinh ảnh",
   s_avatar_unavailable: "Chưa bật sinh ảnh",
 } as const;

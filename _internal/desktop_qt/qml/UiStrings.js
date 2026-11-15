@@ -2890,3 +2890,8 @@ function s_cast_history_row(p0, p1, p2) { return String(p0) + " → " + String(p
 var s_cast_history_group = "Nhóm câu";
 var s_preview_timeout = "Mạng chậm, thử nghe lại.";
 var s_chua_co_bia = "Chưa có bìa";
+var s_avatar_portrait = "Ảnh nhân vật";
+var s_avatar_generate = "Sinh lại ảnh";
+var s_avatar_pattern = "Dùng hoạ tiết";
+var s_avatar_generating = "Đang sinh ảnh";
+var s_avatar_unavailable = "Chưa bật sinh ảnh";

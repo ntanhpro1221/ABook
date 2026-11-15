@@ -2994,4 +2994,9 @@ internal object S {
     const val s_cast_history_bad_wish = "Một ý muốn hoàn tác trong phần sửa không hợp lệ."
     const val s_preview_timeout = "Mạng chậm, thử nghe lại."
     const val s_chua_co_bia = "Chưa có bìa"
+    const val s_avatar_portrait = "Ảnh nhân vật"
+    const val s_avatar_generate = "Sinh lại ảnh"
+    const val s_avatar_pattern = "Dùng hoạ tiết"
+    const val s_avatar_generating = "Đang sinh ảnh"
+    const val s_avatar_unavailable = "Chưa bật sinh ảnh"
 }
