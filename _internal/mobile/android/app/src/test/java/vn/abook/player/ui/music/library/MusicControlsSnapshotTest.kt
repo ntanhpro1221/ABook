@@ -43,6 +43,8 @@ class MusicControlsSnapshotTest {
         }
         val theme = if (dark) "dark" else "light"
         fun shot(name: String) {
+            // The generated artwork is drawn on Dispatchers.Default, which waitForIdle does not wait for.
+            rule.waitUntil(5_000) { rule.onAllNodesWithTag("music_art_image", useUnmergedTree = true).fetchSemanticsNodes().isNotEmpty() }
             rule.waitForIdle()
             val node = if (name == "confirm") rule.onNodeWithTag("destructive_confirm") else rule.onAllNodes(isRoot()).onFirst()
             node.captureRoboImage("src/test/snapshots/music_controls_${name}_$theme.png")
