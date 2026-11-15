@@ -10998,7 +10998,7 @@
     "line": 77,
     "statement": "fun pop() { if(parents.isNotEmpty())window.openSheet(parents.removeAt(parents.lastIndex)) else window.closeSheet() }",
     "occurrence": 1,
-    "source_sha256": "3121315415ef3cc659c591def703bc9e2864f965d86519fdcdbe41e3bb6b746f",
+    "source_sha256": "62e0dd6962074bde653d97275c5ee0353d9acb7c11d360b8f67ec9e8c55f9162",
     "disposition": "internal",
     "guard": "Declaration; the invoked call site is independently inventoried",
     "reason": "A declaration/signature is not an executing UI action. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Devvoice review: device voice names, circled radio marks, one-line names and 8 dp text gaps leave this action and its guard unchanged."
@@ -11574,7 +11574,7 @@
     "line": 276,
     "statement": "TextAction(label, { scope.launch { problem = voice.applySuggestion(kind).orEmpty() } }, \"suggestion_${kind.key}_action\", align = Alignment.CenterStart)",
     "occurrence": 1,
-    "source_sha256": "cdde99d99f2597e6ab8d8041d9a1bd7b129fa5e74c0ed74de37b8d100fcd8361",
+    "source_sha256": "1f1985dad1aa255fbe9990fbc9f3aa3824578555e5ecc1847d8baebe51461ad6",
     "disposition": "pending",
     "guard": "ViewModel/operation fields: Loading, PendingIndicator, WorkingProgress, loading, pending, progress, saving, savingSpeed, savingVoice, voices_loading; Components pending indicator",
     "reason": "The model retains the operation and locks repeats; UI uses the shared pending parameter, loading content or progress owner. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Devvoice review: device voice names, circled radio marks, one-line names and 8 dp text gaps leave this action and its guard unchanged."

@@ -356,9 +356,7 @@ private fun SheetRow(label: String, value: String, icon: String? = null, enabled
                 Spacer(Modifier.width(Dim.s16))
             }
         }
-        BasicText(label, Modifier.weight(1f), style = Abook.type.body,
-            maxLines = if (singleLine) 1 else Int.MAX_VALUE, softWrap = !singleLine,
-            overflow = if (singleLine) androidx.compose.ui.text.style.TextOverflow.Ellipsis else androidx.compose.ui.text.style.TextOverflow.Clip)
+        BasicText(label, Modifier.weight(1f), style = Abook.type.body, autoSize = if (singleLine) vn.abook.player.ui.components.OneLineFit.of(Abook.type.body) else null)
         Reveal(value.isNotEmpty()) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Spacer(Modifier.width(Dim.s12))

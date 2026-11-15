@@ -295,7 +295,7 @@ private fun VoiceRow(
     ListItem(
         voice.name, Modifier.semantics { selected = chosen }, onChoose, "voice_${voice.id}",
         hint = failure ?: if (loading) S.s_dang_lay_giong_330fa743 else VoiceText.gender(voice.gender),
-        titleMaxLines = 1,
+        titleOneLine = true,
         hintColor = if (failure != null) colors.danger else colors.text2,
         titleColor = if (chosen) colors.accentText else colors.text,
         leading = {

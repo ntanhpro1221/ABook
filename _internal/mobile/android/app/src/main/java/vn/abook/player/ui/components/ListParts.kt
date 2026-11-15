@@ -341,7 +341,7 @@ fun Modifier.onFirstLine(): Modifier {
 }
 
 /**
- * Hàng danh sách (DESIGN.md §6 "Hàng danh sách"): [leading] (biểu tượng) · tên (16, xuống dòng không cắt) + mô tả (14, [RowHint]) · [trailing] hay mũi tên. Cả hai bên thẳng dòng
+ * Hàng danh sách (DESIGN.md §6 "Hàng danh sách"): [leading] (biểu tượng) · tên (16, xuống dòng không cắt; `titleOneLine` thì thu cỡ cho vừa một dòng - [OneLineFit]) + mô tả (14, [RowHint]) · [trailing] hay mũi tên. Cả hai bên thẳng dòng
  * đầu của tên ([onFirstLine]); có `onClick` thì CẢ hàng là chỗ chạm. Hàng cao ít nhất 56, đệm trên dưới 16.
  */
 @Composable
@@ -354,7 +354,7 @@ fun ListItem(
     hintColor: Color = Abook.colors.text2,
     titleColor: Color = Abook.colors.text,
     titleStyle: TextStyle = Abook.type.body,
-    titleMaxLines: Int = Int.MAX_VALUE,
+    titleOneLine: Boolean = false,
     leading: (@Composable () -> Unit)? = null,
     leadingWidth: Dp = Dim.s24,
     leadingGap: Dp = Dim.s12,
@@ -377,8 +377,7 @@ fun ListItem(
                 }
             }
             Column(Modifier.weight(1f).heightIn(min = if (below != null) 0.dp else 56.dp).padding(top = RowPad, bottom = if (below != null) 0.dp else RowPad)) {
-                BasicText(title, style = titleStyle.copy(color = titleColor), modifier = Modifier.testTag("row_title"), maxLines = titleMaxLines,
-                    overflow = if (titleMaxLines == Int.MAX_VALUE) androidx.compose.ui.text.style.TextOverflow.Clip else androidx.compose.ui.text.style.TextOverflow.Ellipsis)
+                BasicText(title, style = titleStyle.copy(color = titleColor), modifier = Modifier.testTag("row_title"), autoSize = if (titleOneLine) OneLineFit.of(titleStyle) else null)
                 SwapContent(hint, contentKey = { hint -> hint != null }, layout = ContentLayout.Column) { hint ->
                     if (hint != null) {
                         Spacer(Modifier.height(2.dp))
