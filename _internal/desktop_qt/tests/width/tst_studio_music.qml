@@ -469,19 +469,22 @@ Item {
             all(row, "sceneSwap")[0].clicked()
             tryVerify(function() { return all(row, "musicPreview").filter(shown).length === 2 })
             const buttons = all(row, "musicPreview").filter(shown)
+            const stopsBefore = DesktopApi.stops
             buttons[0].clicked()
             compare(DesktopApi.previews, ["/api/music/track?link=" + encodeURIComponent(c)])
             compare(tab.previewing, c)
             tryCompare(buttons[0], "text", "Dừng nghe")
+            compare(DesktopApi.stops, stopsBefore, "first preview has no previous clip to stop")
             // bài khác: bài trước dừng, chỉ một bài kêu
             buttons[1].clicked()
             compare(tab.previewing, d)
             compare(buttons[0].text, "Nghe thử")
+            compare(DesktopApi.stops, stopsBefore + 1, "replacing a preview stops its previous output")
             // ~20 giây rồi tự dừng (rút ngắn để thử)
             tab.previewMs = 50
             DesktopApi.previewStarted()
             tryCompare(tab, "previewing", "")
-            compare(DesktopApi.stops, 1, "đổi bài nghe thử thay luôn, chỉ lần tự dừng gọi stop")
+            compare(DesktopApi.stops, stopsBefore + 2, "the duration limit also stops the active output")
             // đóng "Đổi bài" thì bài đang nghe dừng
             buttons[0].clicked()
             compare(tab.previewing, c)
