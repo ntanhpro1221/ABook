@@ -19,7 +19,7 @@ Item {
     signal recordRequested(string kind, var data)       // hộp / việc của hồ sơ nghe (RecordDialogs của Main.qml): "create" | "rename" | "move" | "delete" | "activate"
     property var book: ({})
     property real transitionProgress: 1
-    function transitionReveal(delay) { return Math.max(0, Math.min(1, (transitionProgress - delay) / (1 - delay))) }
+    function transitionReveal(delay) { return Math.max(0, Math.min(1, (transitionProgress - delay) / (Theme.bookRevealEnd - delay))) }
     readonly property bool expanded: width >= Theme.widthExpanded || (height < 480 && width >= Theme.widthMedium)
     property real split: expanded ? 1 : 0
     // First make room horizontally, then lift the chapter list beside the summary.

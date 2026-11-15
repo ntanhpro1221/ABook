@@ -1,6 +1,5 @@
 package vn.abook.player.ui.motion
 
-import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.foundation.layout.Box
 import androidx.compose.animation.SharedTransitionScope
 import androidx.compose.foundation.layout.width
@@ -8,11 +7,13 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.TransformOrigin
@@ -73,6 +74,7 @@ class BookCoverFlight(private val nav: NavState) {
     fun progress(): Float = nav.progress.value
     fun reducedMotion(): Boolean = nav.reducedMotion
     fun isTopBook(): Boolean = nav.stack.top?.destination is Destination.Book
+    fun preparing(): Boolean = nav.preparing
     fun image(id: String): ImageBitmap? = if (active(id)) artwork else null
     fun entryKey(id: String): Int? = nav.stack.top?.takeIf { (it.destination as? Destination.Book)?.book?.id == id }?.key
     fun destinationPlaced(key: Int?) { if (key != null) nav.entryReady(key) }
@@ -86,10 +88,10 @@ fun Modifier.bookCoverSource(id: String): Modifier {
     val flight = LocalBookCoverFlight.current ?: return this
     // Keep the source pixels until the incoming page covers them. A missing or
     // delayed destination must never leave an empty hole in the library.
-    return onGloballyPositioned { flight.source(id, it) }.drawWithContent {
-        // The overlay owns the selected artwork from departure through return.
-        if (!(flight.active(id) && !flight.reducedMotion() && flight.progress() > 0f)) drawContent()
-    }
+    // The overlay owns the selected artwork from departure through return: the cell is skipped, not faded. Derived, so
+    // the cell redraws only when it hides or returns, not on every frame of the clock.
+    val hidden = remember(flight, id) { derivedStateOf { flight.active(id) && !flight.reducedMotion() && flight.progress() > 0f } }
+    return onGloballyPositioned { flight.source(id, it) }.drawWithContent { if (!hidden.value) drawContent() }
 }
 
 /** A stable, untransformed wrapper supplies the target coordinates. Reading the

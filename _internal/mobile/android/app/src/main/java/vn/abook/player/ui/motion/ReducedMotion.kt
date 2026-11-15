@@ -1,5 +1,6 @@
 package vn.abook.player.ui.motion
 
+import android.content.ContentResolver
 import android.database.ContentObserver
 import android.os.Handler
 import android.os.Looper
@@ -18,17 +19,33 @@ import vn.abook.player.ui.theme.MotionMs
 /** Observe the OS setting live. Reduced transitions keep a short fade even when system animation scale is zero. */
 @Composable
 fun rememberReducedMotion(): Boolean {
-    val resolver = LocalContext.current.contentResolver
-    fun read() = Settings.Global.getFloat(resolver, Settings.Global.ANIMATOR_DURATION_SCALE, 1f) == 0f
-    var reduced by remember(resolver) { mutableStateOf(read()) }
-    DisposableEffect(resolver) {
+    val resolver = LocalContext.current.applicationContext.contentResolver
+    return remember(resolver) { ReducedMotionSetting.of(resolver) }.reduced.value
+}
+
+/**
+ * One observer per process (per resolver) shared by every call site. Each call used to register its own observer: a Binder
+ * round trip when a row entered and another when it left. A book page holds dozens (every SwapContent / Reveal), and
+ * unregistering them all cost 10-20 ms in the frame that closed the page (framestats + atrace, emulator, 2026-11-15).
+ */
+private class ReducedMotionSetting(private val resolver: ContentResolver) {
+    val reduced = mutableStateOf(read())
+
+    private fun read() = Settings.Global.getFloat(resolver, Settings.Global.ANIMATOR_DURATION_SCALE, 1f) == 0f
+
+    init {
         val observer = object : ContentObserver(Handler(Looper.getMainLooper())) {
-            override fun onChange(selfChange: Boolean) { reduced = read() }
+            override fun onChange(selfChange: Boolean) { reduced.value = read() }
         }
         resolver.registerContentObserver(Settings.Global.getUriFor(Settings.Global.ANIMATOR_DURATION_SCALE), false, observer)
-        onDispose { resolver.unregisterContentObserver(observer) }
     }
-    return reduced
+
+    companion object {
+        private var current: ReducedMotionSetting? = null
+
+        fun of(resolver: ContentResolver): ReducedMotionSetting =
+            current?.takeIf { it.resolver === resolver } ?: ReducedMotionSetting(resolver).also { current = it }
+    }
 }
 
 internal object FadeDurationScale : MotionDurationScale { override val scaleFactor = 1f }

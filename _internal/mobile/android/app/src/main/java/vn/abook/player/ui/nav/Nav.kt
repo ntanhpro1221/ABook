@@ -138,7 +138,10 @@ class NavState(private val scope: CoroutineScope) {
     val busy: Boolean get() = job?.isActive == true
 
     /** An entry may redirect while its initial layout is still being staged. */
-    private var staging = false
+    private var staging by mutableStateOf(false)
+
+    /** The incoming entry is composed and laid out but its transition has not started (read in the draw phase). */
+    val preparing: Boolean get() = staging
     private var entering: Pair<Int, CompletableDeferred<Unit>>? = null
 
     /** A keyed layout acknowledgment; a stale entry cannot start another entry's animation. */

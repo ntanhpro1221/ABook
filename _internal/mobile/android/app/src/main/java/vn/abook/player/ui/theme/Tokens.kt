@@ -134,6 +134,7 @@ internal object MotionMs {
     const val BOOK_TITLE_DELAY = 0f
     const val BOOK_ACTION_DELAY = 0.06f
     const val BOOK_LIST_DELAY = 0.12f
+    const val BOOK_REVEAL_END = 0.96f
     const val SKELETON_LOW = 0.6f
     const val SKELETON_PERIOD_MS = 1600
     const val NOTICE_MS = 4000
