@@ -60,6 +60,7 @@ Item {
         // Sample in the destination page's coordinates. Subtracting dx from a
         // root mapping can read Translate before its binding catches up.
         const tick = _in.dx
+        const frame = root.coverT
         return _coverBox(_coverTo, _in)
     }
 
