@@ -234,7 +234,7 @@ export function ValuePicker({
   const fraction = toFraction(spec, shown);
   const selected = current ? chipIndex(spec, shown) : -1;
   const big = (
-    <span className={cn(dense ? "text-sm text-fg-2" : "text-3xl font-medium leading-tight text-fg")}>{format(shown)}</span>
+    <span className={cn(disabled || busy ? "text-fg-3" : "text-accent-text", dense ? "text-sm" : "text-3xl font-medium leading-tight")}>{format(shown)}</span>
   );
   const valueField = typing ? (
     <input
@@ -378,7 +378,7 @@ export function ValuePicker({
           }}
           onPointerCancel={() => setMoving(null)}
           onClick={event => { if (event.detail === 0) { feedback("toggle"); setClampNote(false); commit(typical); } }}
-          className={cn("absolute flex h-12 min-w-12 -translate-x-1/2 items-center justify-center rounded-control pt-4 hover:bg-hover", dense ? "top-2 text-xs" : "top-4 text-sm", index === selected ? "font-bold text-fg" : "text-fg-2")}
+          className={cn("absolute flex h-12 min-w-12 -translate-x-1/2 items-center justify-center rounded-control pt-4 hover:bg-hover", dense ? "top-2 text-xs" : "top-4 text-sm", disabled || busy ? "text-fg-3" : "text-accent-text", index === selected && "font-bold")}
           style={{left: `calc(${plan.inset}px + (100% - ${2 * plan.inset}px) * ${toFraction(spec, typical)})`}}
         ><span data-value-label>{labels[index]}</span></button>)}
         </div>
@@ -404,7 +404,7 @@ export function ValuePicker({
               className={cn(
                 "touch-row inline-flex items-center justify-center whitespace-nowrap rounded-control px-3 transition-colors duration-motion-medium hover:bg-hover disabled:opacity-40",
                 dense ? "h-7 text-xs" : "h-9 min-w-12 text-sm",
-                index === selected ? "font-bold text-fg" : "text-fg",
+                disabled || busy ? "text-fg-3" : "text-accent-text", index === selected && "font-bold",
               )}
             >
               <span data-value-chip-measure data-value-label className="inline-block">{(chipLabel ?? ((v: number) => formatNumber(spec, v)))(typical)}</span>

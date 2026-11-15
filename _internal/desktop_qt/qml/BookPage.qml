@@ -412,7 +412,7 @@ Item {
                     Reveal { shown: bookStatusLine.text !== "" }
                     width: parent.width
                     text: root.loaded ? BookText.statusLine(root.fullBook, root.speaks) : ""
-                    color: root.textOnly ? Theme.text2 : Theme.accentText
+                    color: Theme.text2
                     wrapMode: Text.Wrap
                     font.pixelSize: Theme.sizeBodySmall
                 }

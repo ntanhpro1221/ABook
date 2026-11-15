@@ -52,6 +52,7 @@ Item {
             tryVerify(() => modal.person !== null)
             VisualReady.render(this, host.Window.window, host, qtVisualReady)
             grabImage(VisualReady.grabTarget(host.Window.window, host)).save(Qt.resolvedUrl("../../build/d2shots/scope_qt.png").toString().replace(/^file:\/\/\/([A-Za-z]:)/, "$1"))
+            verify(qtUiTree.save(Qt.resolvedUrl("../../build/d2shots/scope_qt.png").toString().replace(/^file:\/\/\/([A-Za-z]:)/, "$1"), VisualReady.grabTarget(host.Window.window, host)))
             const apply = findChild(modal, "scopeApply")
             verify(apply)
             mouseClick(apply, apply.width / 2, apply.height / 2)

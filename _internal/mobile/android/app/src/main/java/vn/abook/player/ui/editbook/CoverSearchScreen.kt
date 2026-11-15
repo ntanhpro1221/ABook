@@ -178,7 +178,7 @@ private fun FoundCoverTile(found: FoundCover, choosing: String?, choose: (FoundC
             image?.let { Image(it, null, Modifier.fillMaxSize(), contentScale = ContentScale.Crop) }
         }
         Reveal(busy) { Box(Modifier.fillMaxWidth().semantics { contentDescription = S.s_dang_dat_anh_bia_f4a60e45 }.testTag("cover_setting")) { WorkingProgress() } }
-        BasicText(found.title, style = Abook.type.caption.copy(color = colors.text), modifier = Modifier.padding(top = Dim.s8))
+        BasicText(found.title, style = Abook.type.caption.copy(color = if (choosing == null) colors.accentText else colors.text3), modifier = Modifier.padding(top = Dim.s8))
         BasicText(found.provider, style = Abook.type.caption.copy(color = colors.text3))
     }
 }

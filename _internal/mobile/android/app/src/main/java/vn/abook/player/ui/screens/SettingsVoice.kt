@@ -283,7 +283,6 @@ private fun VoiceRow(
     voice: VoiceOption, chosen: Boolean, canHear: Boolean, loading: Boolean, playing: Boolean, failure: String?, onChoose: () -> Unit, onHear: () -> Unit,
 ) {
     val colors = Abook.colors
-    val mark by animateFloatAsState(if (chosen) 1f else 0f, Motion.Expand, label = "mark")
     val trailing: (@Composable () -> Unit)? = when {
         !canHear -> null
         failure != null -> ({ TextAction(S.s_thu_lai_c58d068c, onHear, "sample_retry_${voice.id}") })
@@ -295,8 +294,8 @@ private fun VoiceRow(
         hintColor = if (failure != null) colors.danger else colors.text2,
         titleColor = if (chosen) colors.accentText else colors.text,
         leading = {
-            Box(Modifier.size(Dim.s24).graphicsLayer { scaleX = mark; scaleY = mark }, contentAlignment = Alignment.CenterStart) {
-                CheckIcon(colors.accentText)
+            Box(Modifier.size(Dim.s24), contentAlignment = Alignment.CenterStart) {
+                vn.abook.player.ui.components.SelectionMark(chosen)
             }
         },
         trailing = trailing,

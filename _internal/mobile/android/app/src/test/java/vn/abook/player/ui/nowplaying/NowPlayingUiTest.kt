@@ -61,7 +61,7 @@ class NowPlayingUiTest {
 
     private fun show(dark: Boolean = false, expanded: Boolean = true, reading: Boolean = false,
                      playing: Boolean = false, sheet: PlayerSheet? = null, longTitles: Boolean = false, base: NowPlayingState? = null,
-                     prepare: vn.abook.player.ui.data.PrepareState? = null, fontScale: Float = 1f) {
+                     prepare: vn.abook.player.ui.data.PrepareState? = null, fontScale: Float = 1f, voiceSettings: (() -> Unit)? = null) {
         val initial = (base ?: FakeNowPlayingModel.demoState()).copy(playing = playing,
             chapterTitle = if (longTitles) LONG_CHAPTER else FakeNowPlayingModel.demoState().chapterTitle,
             bookTitle = if (longTitles) LONG_BOOK else FakeNowPlayingModel.demoState().bookTitle)
@@ -72,6 +72,7 @@ class NowPlayingUiTest {
             AbookTheme(dark) {
                 scope = rememberCoroutineScope()
                 window = rememberNowPlayingWindowState()
+                window.voiceSettings = voiceSettings
                 LaunchedEffect(Unit) {
                     window.reading = reading
                     if (expanded) window.open()
@@ -140,6 +141,18 @@ class NowPlayingUiTest {
     @Test fun speedDark() { show(dark = true, sheet = PlayerSheet.Speed); shot("speed_dark") }
     @Test fun sleepLight() { show(sheet = PlayerSheet.Sleep); shot("sleep_light") }
     @Test fun sleepDark() { show(dark = true, sheet = PlayerSheet.Sleep); shot("sleep_dark") }
+
+    private fun voiceAffordance(dark: Boolean) {
+        var opened = false
+        show(dark = dark, reading = true, sheet = PlayerSheet.Voice, base = FakeNowPlayingModel.demoState().copy(
+            voices = List(6) { PlayerVoice("device:test$it", "Tiếng Việt ${it + 1}") }, voiceId = "device:test0"), voiceSettings = { opened = true })
+        rule.onNodeWithTag("voice_add").assertIsDisplayed()
+        shot(if (dark) "voice_affordance_dark" else "voice_affordance_light")
+        rule.onNodeWithTag("voice_add").performClick()
+        org.junit.Assert.assertTrue(opened)
+    }
+    @Test fun voiceAffordanceLight() = voiceAffordance(false)
+    @Test fun voiceAffordanceDark() = voiceAffordance(true)
     // Bộ chọn giá trị (DESIGN mục 6): ảnh gallery mỗi tấm đã chuyển, sáng / tối, 360 dp, chữ 130 %.
     @Test fun pickerSpeedLargeLight() { show(sheet = PlayerSheet.Speed, fontScale = 1.3f); shot("picker_speed_font130_light") }
     @Test fun pickerSpeedLargeDark() { show(dark = true, sheet = PlayerSheet.Speed, fontScale = 1.3f); shot("picker_speed_font130_dark") }

@@ -2,7 +2,7 @@ import QtQuick
 import ABook
 
 // Một hàng hành động trong bảng nổi (kiểu menu của Windows): biểu tượng + chữ thường, cả hàng là vùng bấm, rê chuột thì nền nhạt.
-// Không chữ màu nhấn: màu nhấn dành cho nút chính của màn. `danger`: việc không hoàn tác được ("Xoá hồ sơ…") - chữ và icon màu --danger.
+// Footer actions use accent ink; destructive actions use danger ink.
 Interactive {
     id: root
     property string text: ""
@@ -13,10 +13,12 @@ Interactive {
     property string value: ""
     property real valueLimit: 0
     property bool danger: false
+    property bool action: false
 
     property bool selected: false
-    implicitHeight: Math.max(Theme.buttonHeight, Math.max(words.implicitHeight, valueLabel.implicitHeight) + 2 * Theme.s8)
+    implicitHeight: Math.max(action ? 48 : Theme.buttonHeight, Math.max(words.implicitHeight, valueLabel.implicitHeight) + 2 * Theme.s8)
     Accessible.name: text
+    Accessible.role: Accessible.MenuItem
     Accessible.checked: selected
 
     Rectangle {
@@ -33,11 +35,17 @@ Interactive {
         anchors.leftMargin: Theme.s8
         spacing: Theme.s12
         Icon {
-            name: root.icon
+            name: root.icon !== "" ? root.icon : root.selected ? "circle-check" : "chevron-right"
             solid: root.solidIcon
             size: 16
-            color: root.danger ? Theme.danger : Theme.text2
+            color: root.danger ? Theme.danger : root.action ? Theme.accentText : Theme.text2
             anchors.verticalCenter: parent.verticalCenter
+            Icon {
+                anchors.centerIn: parent
+                name: "check"; size: 12; color: Theme.accentText
+                opacity: root.icon === "circle" && root.selected ? 1 : 0
+                Behavior on opacity { NumberAnimation { duration: Theme.reduceMotion ? Theme.motionReduced : Theme.motionFast } }
+            }
         }
         Column {
             id: words
@@ -49,8 +57,9 @@ Interactive {
                 width: parent.width
                 wrapMode: Text.Wrap
                 text: root.text
-                color: root.danger ? Theme.danger : Theme.text
+                color: root.danger ? Theme.danger : root.action ? Theme.accentText : Theme.text
                 font.pixelSize: Theme.sizeBodySmall
+                font.weight: root.action ? Theme.weightMedium : Theme.weightRegular
             }
             Text {
                 width: parent.width

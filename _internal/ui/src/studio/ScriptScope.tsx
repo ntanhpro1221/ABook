@@ -5,6 +5,7 @@ import { AnimatedRows, MotionPresence, Reveal } from "@/shared/MotionPresence";
 import { Button, Dialog, SelectionMark } from "@/shared/ui";
 import type { ChapterScript, Line, Person } from "./ScriptTab";
 import { scopeConflict, scopeLines, scopeSelected, type ScopeMode } from "./scopeLines";
+import { useFadeScroller } from "@/shared/scrollFade";
 
 export const scopeOptions: [ScopeMode, string][] = [
   ["line", S.s_cau_nay_ee66e104], ["scene", S.s_scope_scene], ["chapter", S.s_scope_chapter], ["manual", S.s_scope_manual],
@@ -14,6 +15,7 @@ export function ScriptScope({ script: incoming, line, onClose, onApply }: {
   script: ChapterScript; line: Line; onClose: () => void; onApply: (lines: Line[], person: Person, revision: string) => Promise<void>;
 }) {
   const [script] = useState(incoming);
+  const fade = useFadeScroller();
   const [mode, setMode] = useState<ScopeMode>(line.scene == null ? "line" : "scene");
   const initialRange = line.scene == null ? [line] : script.lines.filter((item) => item.scene === line.scene);
   const [start, setStart] = useState((initialRange[0]?.seq ?? line.seq) + 1);
@@ -42,7 +44,7 @@ export function ScriptScope({ script: incoming, line, onClose, onApply }: {
     <div className="space-y-3">
       <p className="text-body-small text-fg-2">{line.scene == null ? S.s_scope_no_markers : S.s_scope_marker_note}</p>
       <div className="flex flex-wrap gap-2">
-        {scopeOptions.map(([value, label]) => <Button key={value} size="sm" variant={value === mode ? "outline" : "ghost"}
+        {scopeOptions.map(([value, label]) => <Button key={value} size="sm" variant="ghost" aria-pressed={value === mode} className={value === mode ? "font-bold underline underline-offset-4" : undefined}
           disabled={busy || (value === "scene" && line.scene == null)} onClick={() => { setMode(value); setToggled([]); }}>{label}</Button>)}
       </div>
       <MotionRegion motionKey={mode}>
@@ -65,7 +67,7 @@ export function ScriptScope({ script: incoming, line, onClose, onApply }: {
         <p role="status" className="text-body-small">{S.s_scope_count(selected.length, conflicts)}</p>
         <p className="text-body-small text-fg-2">{S.s_scope_before_after(line.label, person?.label ?? S.s_scope_pick)}</p>
       </MotionRegion>
-      <div className="max-h-72 overflow-y-auto" data-motion-live>
+      <div ref={fade.ref} style={fade.style} className="max-h-72 overflow-y-auto" data-motion-live>
         <AnimatedRows items={candidates} keyOf={(item) => item.stableId}>{(item) => <button type="button" role="checkbox" aria-checked={selected.includes(item)} className="flex w-full items-start gap-2 rounded-control p-2 text-left hover:bg-hover"
           onClick={() => setToggled((old) => old.includes(item.stableId) ? old.filter((id) => id !== item.stableId) : [...old, item.stableId])}>
           <SelectionMark selected={selected.includes(item)} /><span className="text-body-small">{item.seq + 1}. {item.text}<Reveal when={scopeConflict(item)}><span className="block text-fg-2">{S.s_scope_conflict}</span></Reveal><span className="block text-fg-2">{S.s_scope_before_after(item.wish?.state === "pending" ? item.wish.label : item.label, person?.label ?? S.s_scope_pick)}</span></span>

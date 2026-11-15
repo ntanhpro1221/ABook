@@ -42,6 +42,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import vn.abook.player.ui.components.RowHint
 import vn.abook.player.ui.components.TextAction
+import vn.abook.player.ui.components.InlineActionRow
+import vn.abook.player.ui.components.ChevronIcon
 import vn.abook.player.ui.components.Reveal
 import vn.abook.player.ui.components.SheetPages
 import vn.abook.player.ui.components.pressable
@@ -178,7 +180,11 @@ fun PlayerSheets(state: NowPlayingState, model: NowPlayingModel, window: NowPlay
                                 val current = chapter.id == state.chapterId
                                 Column(Modifier.fillMaxWidth().pressable { model.jump(chapter.id); window.closeSheet() }
                                     .semantics { selected = current }.padding(vertical = 12.dp)) {
-                                    BasicText(chapter.title, style = Abook.type.body.copy(color = if (current) Abook.colors.accentText else Abook.colors.text))
+                                    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                                        BasicText(chapter.title, Modifier.weight(1f), style = Abook.type.body.copy(color = if (current) Abook.colors.accentText else Abook.colors.text))
+                                        Spacer(Modifier.width(Dim.s12))
+                                        ChevronIcon(Abook.colors.text3)
+                                    }
                                     RowHint(if (current) S.s_dang_nghe_9310d8cf else PlayerLabels.time(chapter.durationMs))
                                     Reveal(current) { Box(Modifier.fillMaxWidth().height(2.dp).drawBehind {
                                         val fraction = if (state.durationMs > 0) model.position.milliseconds.value.toFloat() / state.durationMs else 0f
@@ -258,7 +264,9 @@ private fun VoiceList(state: NowPlayingState, model: NowPlayingModel, window: No
                     val playing = sample.playing == voice.id
                     Row(Modifier.fillMaxWidth().testTag("voice_${voice.id}"), verticalAlignment = Alignment.CenterVertically) {
                         Box(Modifier.weight(1f)) {
-                            SheetRow(voice.name, if (voice.id == state.voiceId) S.s_dang_chon_ad61dc23 else "") {
+                            SheetRow(voice.name, if (voice.id == state.voiceId) S.s_dang_chon_ad61dc23 else "",
+                                if (voice.id == state.voiceId) LucidePaths.CIRCLE_CHECK else LucidePaths.CIRCLE,
+                                role = Role.RadioButton, tag = "voice_choice_${voice.id}") {
                                 model.setVoice(voice.id); window.closeSheet()
                             }
                         }
@@ -268,9 +276,9 @@ private fun VoiceList(state: NowPlayingState, model: NowPlayingModel, window: No
                     }
                 }
                 item(key = "add-voices") {
-                    Reveal(window.voiceSettings != null) { SheetRow(S.s_them_giong_15d3a618, "", role = Role.Button) {
+                    Reveal(window.voiceSettings != null) { InlineActionRow(S.s_them_giong_15d3a618, {
                         window.closeSheet(); window.voiceSettings?.invoke()
-                    } }
+                    }, "voice_add") }
                 }
             }
             BasicText(S.s_keo_xuong_con_giong_khac_d4bb507b, Modifier.align(Alignment.BottomCenter).padding(bottom = Dim.s8).graphicsLayer { alpha = hint; translationY = (1f - hint) * 8.dp.toPx() }
@@ -334,17 +342,21 @@ private fun SleepChapterChoice(sleep: PlayerSleep, onSet: (Int) -> Unit) {
 @Composable
 private fun SheetRow(label: String, value: String, icon: String? = null, enabled: Boolean = true, role: Role = Role.Button, tag: String? = null, onClick: () -> Unit) {
     Row(Modifier.fillMaxWidth().heightIn(min = Dim.s48).then(if (enabled) Modifier.pressable(role = role, onClick = onClick) else Modifier)
-        .semantics { if (!enabled) disabled() }.then(if (tag != null) Modifier.testTag(tag) else Modifier).padding(vertical = 8.dp),
+        .semantics { if (!enabled) disabled(); if (role == Role.RadioButton) selected = value.isNotEmpty() }.then(if (tag != null) Modifier.testTag(tag) else Modifier).padding(vertical = 8.dp),
         verticalAlignment = Alignment.CenterVertically) {
         SwapContent(icon, contentKey = { icon -> icon != null }, layout = ContentLayout.Row) { icon ->
             if (icon != null) {
-                LucideIcon(icon, Abook.colors.text, Modifier.testTag("sheet_row_icon"))
+                vn.abook.player.ui.components.StateIcon(icon, Abook.colors.text, Modifier.testTag("sheet_row_icon"))
                 Spacer(Modifier.width(Dim.s16))
             }
         }
         BasicText(label, Modifier.weight(1f), style = Abook.type.body)
         Spacer(Modifier.width(12.dp))
         RollingLabel(value, Modifier.widthIn(max = 144.dp), Abook.type.bodySmall)
+        if (role == Role.Button && enabled) {
+            Spacer(Modifier.width(Dim.s8))
+            ChevronIcon(Abook.colors.text3)
+        }
     }
 }
 

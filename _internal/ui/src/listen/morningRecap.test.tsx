@@ -20,7 +20,8 @@ beforeEach(()=>{
 });
 afterEach(()=>vi.useRealTimers());
 function buttons(){let tree:any;function Probe(){tree=MorningRecap({});return null;}renderToString(<Probe/>);return nodes(tree,n=>n.type==='button');}
-function choices(){return buttons().map(n=>n.props.children).filter(x=>typeof x==='object'&&Array.isArray(x)).flat().filter(x=>typeof x==='string'&&x.startsWith('Câu '));}
+function text(tree:any):string{if(typeof tree==='string')return tree;if(Array.isArray(tree))return tree.map(text).join('');return tree&&typeof tree==='object'?text(tree.props?.children):'';}
+function choices(){return buttons().map(n=>text(n.props.children)).filter(x=>x.startsWith('Câu '));}
 it('nhắc nghe nằm trên nền trang, không khung hay bóng',()=>{
   let tree:any;function Probe(){tree=MorningRecap({});return null;}renderToString(<Probe/>);
   expect(tree.props.className).not.toMatch(/\bborder\b|bg-panel|shadow-card/);
@@ -31,7 +32,7 @@ it('qua ranh giới chương: đủ câu đề xuất, cuối chương trước 
   expect(choices()).toContain('Câu 1 chương 2');
 });
 it('chọn câu chương sau phát đúng chương và mốc của câu ấy',async()=>{
-  const button=buttons().find(n=>n.props.children?.includes?.('Câu 1 chương 2'));
+  const button=buttons().find(n=>text(n.props.children)==='Câu 1 chương 2');
   expect(button).toBeTruthy();
   button.props.onClick();
   await Promise.resolve();

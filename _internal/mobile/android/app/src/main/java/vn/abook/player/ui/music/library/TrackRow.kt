@@ -55,6 +55,7 @@ fun TrackRow(track: MusicLibrary.Track, ui: LibraryUi, state: LibraryState, pick
                 }
             }
         }
+        ChevronIcon(colors.text3)
         SwapContent(pick, contentKey = { pick -> pick != null }, layout = ContentLayout.Row) { pick ->
             if (pick != null) TextAction(S.s_dung_7927ca4e, { pick.onUse(track.link) }, "use_${track.link.hashCode()}", Modifier.padding(start = Dim.s8))
         }

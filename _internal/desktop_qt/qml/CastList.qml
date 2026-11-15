@@ -179,7 +179,7 @@ Item {
                                     Reveal { shown: Boolean(root.caps.voice) && castNarratorPending.text !== "" }
                                     width: parent.width
                                     text: Logic.narratorPending(root.narrator)
-                                    color: Theme.accentText
+                                    color: Theme.text2
                                     wrapMode: Text.WrapAtWordBoundaryOrAnywhere
                                     font.pixelSize: Theme.sizeCaption
                                     font.weight: Theme.weightMedium

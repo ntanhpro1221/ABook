@@ -12,7 +12,7 @@ import { useBackLayer } from "@/shared/backStack";
 import { useMediaQuery } from "@/shared/media";
 import { LoadingCrossfade } from "@/shared/MotionPresence";
 import { useListPresence } from "@/shared/motion";
-import { ArrowDownWideNarrow, BookOpen, Headphones, Laptop, Pause, Play, Search, X } from "lucide-react";
+import { ArrowDownWideNarrow, BookOpen, ChevronRight, Headphones, Laptop, Pause, Play, Search, X } from "lucide-react";
 import { createContext, memo, useContext, useEffect, useMemo, useRef, useState, type ReactNode, type CSSProperties } from "react";
 import { useNavigate } from "react-router";
 import { toast } from "@/shared/toast";
@@ -234,7 +234,8 @@ const BookTile = memo(function BookTile({ book, badge, twin, current, playingHer
         )}
         {extras.cover?.(book)}
       </div>
-      <button type="button" onClick={() => actions.open(book)} className="touch-row mt-3 flex w-full flex-col text-left">
+      <button type="button" onClick={() => actions.open(book)} className="touch-row relative mt-3 flex w-full flex-col pr-5 text-left">
+        <ChevronRight aria-hidden className="ink-end absolute right-0 top-0.5 size-4 text-fg-3" />
         {/* Tên 2 dòng dành sẵn, dòng phụ 1 dòng cắt "…": mọi ô một hàng cao bằng nhau (DESIGN.md §6, soát 10-11 việc 4, như điện thoại và Qt).
             Bìa vẽ hay ảnh đều có tên dưới bìa (chủ sách 15-11: hàng ô phải đồng nhất). */}
         <TileName className={cn(current && "text-accent-text")}>{displayTitle(book.title)}</TileName>
@@ -578,7 +579,7 @@ export function LibraryScreen({
               <SlidingIndicator variant="line" />
               {LIBRARY_FILTER_OPTIONS.map((option, index) => [<Presence key={`gap-${option.value}`}>{index > 0 && <RowGap className="w-4" />}</Presence>, <button
                 key={option.value} type="button" aria-label={option.value === "finished" ? S.s_nghe_xong_9480636e : option.label} aria-pressed={filter === option.value} onClick={() => setFilter(option.value)}
-                className={cn("touch-hit min-h-[44px] shrink-0 border-b-2 border-transparent text-xs font-medium transition-colors duration-motion-medium sm:text-sm", filter === option.value ? "text-fg" : "text-fg-2 hover:text-fg")}>
+                className={cn("touch-hit min-h-[44px] shrink-0 border-b-2 border-transparent text-xs font-medium transition-colors duration-motion-medium sm:text-sm", filter === option.value ? "text-fg" : "text-accent-text hover:text-fg")}>
                 {option.label}
               </button>])}
             </div>

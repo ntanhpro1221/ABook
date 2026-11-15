@@ -91,7 +91,7 @@ Item {
             Reveal { shown: !!root.person.pendingVoice && root.showsPending }
             width: parent.width
             text: TextWrap.pretty(Logic.pendingVoiceLine(root.person, Boolean(root.caps.waiting)))
-            color: Theme.accentText
+            color: Theme.text2
             wrapMode: Text.WrapAtWordBoundaryOrAnywhere
             font.pixelSize: Theme.sizeCaption
             font.weight: Theme.weightMedium
@@ -104,7 +104,7 @@ Item {
             Text {
                 width: Math.min(implicitWidth, parent.width)
                 text: TextWrap.pretty(Logic.mergedLine(root.person, Boolean(root.caps.waiting)))
-                color: Theme.accentText
+                color: Theme.text2
                 wrapMode: Text.WrapAtWordBoundaryOrAnywhere
                 font.pixelSize: Theme.sizeCaption
                 font.weight: Theme.weightMedium

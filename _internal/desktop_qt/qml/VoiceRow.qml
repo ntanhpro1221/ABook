@@ -57,14 +57,10 @@ Item {
                     if (event.key === Qt.Key_Home) { root.jump(false); event.accepted = true }
                     else if (event.key === Qt.Key_End) { root.jump(true); event.accepted = true }
                 }
-                Icon {
+                SelectionMark {
                     id: mark
-                    name: "check"
-                    size: 20
-                    color: Theme.accentText
-                    opacity: root.selected ? 1 : 0
+                    selected: root.selected
                     anchors.verticalCenter: parent.verticalCenter
-                    Behavior on opacity { NumberAnimation { duration: Theme.motionFast } }
                 }
                 Text {
                     id: name

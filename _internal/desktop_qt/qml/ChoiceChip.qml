@@ -32,7 +32,7 @@ Interactive {
         id: label
         anchors.centerIn: parent
         text: root.text
-        color: root.selected ? root.selectedTextColor : Theme.text
+        color: !root.enabled ? Theme.text3 : root.selected ? root.selectedTextColor : Theme.accentText
         Behavior on color { ColorAnimation { duration: Theme.motionFast } }
         font.pixelSize: Theme.sizeBodySmall * root.textScale
         font.weight: root.selected ? root.selectedTextWeight : Theme.weightRegular

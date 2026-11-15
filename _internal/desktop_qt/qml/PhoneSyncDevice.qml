@@ -79,7 +79,7 @@ Collapse {
                         Text {
                             anchors.verticalCenter: parent.verticalCenter
                             text: S.s_dieu_khien_san_xuat_a7babdec
-                            color: Theme.text2
+                            color: root.studioBusy ? Theme.text3 : Theme.accentText
                             font.pixelSize: Theme.sizeCaption
                             TapHandler { enabled: !root.studioBusy; onTapped: root.studioToggled(root.rowId, !root.device.studio) }
                         }

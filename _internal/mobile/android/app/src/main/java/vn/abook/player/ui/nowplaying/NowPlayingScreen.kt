@@ -190,7 +190,7 @@ private fun NowPlayingBody(
                     RollingLabel(
                         if (toBook != null) subtitle + "\u00A0›" else subtitle,
                         parts.element(NowPlayingPart.Book, if (toBook != null) Modifier.pressable(onClick = toBook).semantics { contentDescription = S.s_mo_trang_sach_3f7bd955 }.testTag("player_book") else Modifier),
-                        Abook.type.bodySmall,
+                        Abook.type.bodySmall.copy(color = if (toBook != null) Abook.colors.accentText else Abook.colors.text2),
                     )
                 }
                 Box(Modifier.testTag("player_cover_small").then(if (readingHere) Modifier
@@ -426,7 +426,7 @@ fun PlayerModeSwitch(mode: State<Float>, onSelect: (Boolean) -> Unit, modifier: 
                     .testTag(if (reading) "mode_read" else "mode_listen"),
                     contentAlignment = Alignment.Center) {
                     BasicText(label, Modifier.padding(horizontal = 16.dp), style = style,
-                        color = { lerp(colors.text3, colors.text, if (reading) mode.value else 1f - mode.value) })
+                        color = { lerp(colors.accentText, colors.text, if (reading) mode.value else 1f - mode.value) })
                 }
             }
         }) { measurables, constraints ->

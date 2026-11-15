@@ -76,7 +76,7 @@ class ValuePickerUiTest {
             val density = LocalDensity.current
             CompositionLocalProvider(LocalDensity provides Density(density.density, scale.value)) {
                 AbookTheme(false) {
-                    expectedText = vn.abook.player.ui.theme.Abook.colors.text
+                    expectedText = vn.abook.player.ui.theme.Abook.colors.accentText
                     Box(Modifier.width(360.dp).padding(horizontal = 24.dp)) {
                         ValuePicker(selected.value, value.value, { value.value = it }, { ValuePickerLogic.format(selected.value, it) }, "Number", "probe", dense = dense.value)
                     }

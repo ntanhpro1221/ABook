@@ -60,7 +60,7 @@ class MusicArtOnDeviceTest {
             override fun online() = false
         }
         val preview = object : PreviewPlayer {
-            override fun play(link: String, startSeconds: Double, volume: Float, onEnd: () -> Unit) {}
+            override fun play(link: String, startSeconds: Double, volume: Float, onEnd: () -> Unit, onPlaying: (Boolean) -> Unit, onError: (String) -> Unit) {}
             override fun stop() {}
         }
         val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)

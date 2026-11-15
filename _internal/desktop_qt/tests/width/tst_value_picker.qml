@@ -38,6 +38,7 @@ Item {
         readonly property var fixture: JSON.parse(qtValuePickerCases)
 
         function init() {
+            picker.label = "Hẹn giờ ngủ"
             picker.stepperOnly = false
             picker.dense = false
             picker.fontScale = 1
@@ -130,7 +131,7 @@ Item {
             const at = display.mapToItem(picker, 0, 0)
             compare(at.y - label.y - label.height, 8)
             compare(display.height, 48)
-            compare(findChild(picker, "valueNumber").color, Theme.text)
+            compare(findChild(picker, "valueNumber").color, Theme.accentText)
             compare(findChild(picker, "valueNumber").font.weight, 600)
             mouseClick(findChild(picker, "valueCountUp")); compare(picker.value, 4)
             mouseClick(findChild(picker, "valueCountDown")); compare(picker.value, 3)
@@ -176,7 +177,7 @@ Item {
                     waitForRendering(picker)
                     const label = picker.labelPlan.aligned ? findChild(picker, "valueLabel_" + picker.spec.typical.indexOf(v)) : chip.children.find(child => child.text === Logic.formatNumber(picker.spec, v))
                     verify(label !== undefined && label !== null)
-                    tryCompare(label, "color", Theme.text)
+                    tryCompare(label, "color", Theme.accentText)
                     compare(label.font.weight, 600)
                 }
             }

@@ -823,7 +823,7 @@ private fun TabItem(tab: Tab, tabs: TabState, modifier: Modifier, onSelect: (Tab
         BasicText(
             tab.label,
             style = Abook.type.tab,
-            color = { lerp(colors.text2, colors.text, (1f - abs(tabs.position.value - tab.ordinal)).coerceIn(0f, 1f)) },
+            color = { lerp(colors.accentText, colors.text, (1f - abs(tabs.position.value - tab.ordinal)).coerceIn(0f, 1f)) },
         )
     }
 }

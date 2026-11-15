@@ -66,7 +66,7 @@ Item {
                     horizontalAlignment: Text.AlignHCenter
                     font.pixelSize: Theme.sizeBodySmall
                     font.weight: choice.selected ? Theme.weightBold : Theme.weightMedium
-                    color: choice.selected || choice.hovered ? Theme.text : Theme.text2
+                    color: choice.selected || choice.hovered ? Theme.text : Theme.accentText
                     Behavior on color { ColorAnimation { duration: Theme.motionMedium } }
                 }
             }

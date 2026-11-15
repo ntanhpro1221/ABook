@@ -172,7 +172,7 @@ Column {
                     objectName: "valueNumber"
                     anchors.centerIn: parent
                     text: root.format(root.shown)
-                    color: root.dense ? Theme.text2 : Theme.text
+                    color: root.enabled ? Theme.accentText : Theme.text3
                     font.pixelSize: root.dense ? Theme.sizeBodySmall : Theme.sizeTitlePhone
                     font.weight: root.dense ? Theme.weightRegular : 600
                 }
@@ -348,7 +348,7 @@ Column {
                         anchors.horizontalCenter: parent.horizontalCenter
                         y: 22
                         text: Logic.formatNumber(root.spec, tickLabel.modelData)
-                        color: tickLabel.selected ? Theme.text : Theme.text2
+                        color: root.enabled ? Theme.accentText : Theme.text3
                         font.pixelSize: (root.dense ? Theme.sizeCaption : Theme.sizeBodySmall) * root.fontScale
                         font.weight: tickLabel.selected ? 600 : Theme.weightRegular
                     }
@@ -399,7 +399,7 @@ Column {
                 Repeater {
                     model: chipRow.indices
                     ChoiceChip {
-                        selectedTextColor: Theme.text
+                        selectedTextColor: Theme.accentText
                         selectedTextWeight: 600
                         required property var modelData
                         required property int index

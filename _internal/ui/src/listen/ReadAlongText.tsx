@@ -1,6 +1,6 @@
 import { Presence } from "../shared/MotionPresence";
 import { S } from "../shared/strings.generated";
-import { Locate } from "lucide-react";
+import { Locate, Play } from "lucide-react";
 import { feedback } from "@/shared/feedback";
 import { memo, useCallback, useEffect, useId, useLayoutEffect, useMemo, useRef, useState, type KeyboardEvent, type MouseEvent, type ReactNode, type RefObject, type TouchEvent } from "react";
 import { cn } from "@/shared/cn";
@@ -426,7 +426,7 @@ export function ReadAlongText({
       {chunks.map((chunk) => (
         <Chunk key={chunk.first} chunk={chunk} {...narrow(marks, chunk.first, chunk.last)} {...shared} />
       ))}
-      <span ref={wordInk} aria-hidden data-word-glide data-underlay style={{ margin: 0 }} className="pointer-events-none absolute left-0 top-0 -z-10 rounded-[var(--radius-control)] bg-[var(--read-along-word)]" />
+      <span ref={wordInk} aria-hidden data-word-glide data-underlay style={{ margin: 0 }} className="pointer-events-none absolute left-0 top-0 -z-10 rounded-control bg-[var(--read-along-word)]" />
     </div>
   );
 }
@@ -571,7 +571,7 @@ const Paragraph = memo(function Paragraph({
     "aria-describedby": index === tabStop ? hint : undefined,
     "aria-current": index === playing ? ("true" as const) : undefined,
     onFocus: () => actions.focus(index),
-    onClick: (event: MouseEvent<HTMLElement>) => actions.click(event, index),
+    onClick: tappable ? (event: MouseEvent<HTMLElement>) => actions.click(event, index) : undefined,
     ...(menu ? actions.menu(index) : {}),
     className: cn(
       // scroll-mt: câu được cuộn tới không nằm khuất dưới thanh đầu dính (soát UX 29-09).
@@ -592,6 +592,7 @@ const Paragraph = memo(function Paragraph({
     return (
       <Heading ref={node => { inkHost.current = node; }} {...props} className={cn('relative isolate', props.className, headingClassName)}>
         {ink}
+        {tappable && <Play aria-hidden className="mr-1 inline size-3 text-fg-3" />}
         {first.segment.text}
       </Heading>
     );
@@ -607,6 +608,7 @@ const Paragraph = memo(function Paragraph({
             <SpeakerLabel speaker={segment.speaker} sentence={segment.text} avatar={segment.avatar} />
           )}</Presence>}
           <span {...sentence(index, segment)}>
+            {tappable && <Play aria-hidden className="mr-1 inline size-3 text-fg-3" />}
             {index === playing && litWords ? <LitWords text={segment.text} words={litWords} rate={rate} /> : segment.text}
             {after?.(segment)}
           </span>{" "}

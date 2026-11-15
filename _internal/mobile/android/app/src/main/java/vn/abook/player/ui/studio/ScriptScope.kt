@@ -177,11 +177,11 @@ private fun fold(text: String) = java.text.Normalizer.normalize(text, java.text.
 
 @Composable
 private fun ScopeChoice(label: String, active: Boolean, enabled: Boolean, tag: String, onClick: () -> Unit) {
-    Box(Modifier.heightIn(min = 40.dp).alpha(if (enabled) 1f else .5f)
+    Box(Modifier.heightIn(min = 40.dp)
         .border(if (active) 1.dp else 0.dp, if (active) Abook.colors.controlLine else androidx.compose.ui.graphics.Color.Transparent, RoundedCornerShape(Dim.radiusControl))
         .then(if (enabled) Modifier.pressable(Role.RadioButton, onClick = onClick) else Modifier.semantics { disabled() })
         .semantics { selected = active }.padding(horizontal = 12.dp, vertical = 8.dp).testTag(tag), contentAlignment = Alignment.Center) {
-        BasicText(label, style = Abook.type.label.copy(color = if (active) Abook.colors.text else Abook.colors.accentText))
+        BasicText(label, style = Abook.type.label.copy(color = if (!enabled) Abook.colors.text3 else if (active) Abook.colors.text else Abook.colors.accentText))
     }
 }
 
@@ -192,7 +192,7 @@ private fun ScopeRow(label: String, hint: String?, picked: Boolean, multiple: Bo
         .pressable(if (multiple) Role.Checkbox else Role.Button, onClick = onClick)
         .semantics { if (multiple) toggleableState = if (picked) ToggleableState.On else ToggleableState.Off }
         .padding(8.dp).testTag(tag), verticalAlignment = Alignment.Top) {
-        Box(Modifier.size(16.dp)) { Reveal(picked) { CheckIcon(Abook.colors.accentText, size = 16.dp) } }
+        Box(Modifier.size(20.dp)) { vn.abook.player.ui.components.SelectionMark(picked) }
         Spacer(Modifier.width(8.dp))
         if (avatarPerson != null) {
             vn.abook.player.ui.components.PersonAvatar(avatarPerson.value, avatarPerson.avatar, size = 24.dp)

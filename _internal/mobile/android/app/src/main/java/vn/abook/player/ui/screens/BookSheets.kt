@@ -458,7 +458,10 @@ private fun FindRow(hit: FindHit, chapterTitle: String, onPick: (FindHit) -> Uni
     Column(Modifier.fillMaxWidth().pressable { onPick(hit) }.padding(vertical = Dim.s12).testTag("find_hit")) {
         // Chạm là nghe từ đâu: giờ phút của câu (sách nói), hay đầu chương (chương chỉ có chữ).
         val where = hit.start?.let { "$chapterTitle · ${Fmt.clock(it)}" } ?: S.s_0_tu_dau_chuong_5df8329a(chapterTitle)
-        BasicText(where, style = Abook.type.caption.copy(color = colors.text2, fontWeight = FontWeight.Medium))
+        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+            BasicText(where, Modifier.weight(1f), style = Abook.type.caption.copy(color = colors.text2, fontWeight = FontWeight.Medium))
+            vn.abook.player.ui.components.ChevronIcon(colors.text3)
+        }
         Spacer(Modifier.height(Dim.s4))
         // Nền của chữ tìm thấy: SpanStyle.background chỉ vẽ được góc vuông, nên tự tô bo góc từ dàn chữ.
         var marks by remember(hit) { mutableStateOf<List<Rect>>(emptyList()) }

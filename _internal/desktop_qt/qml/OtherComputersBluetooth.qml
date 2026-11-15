@@ -72,7 +72,7 @@ Item {
                     Accessible.name: modelData.name + "\u00a0·\u00a0" + Logic.deviceKindLabel(modelData.kind) + (selected ? S.s_dang_chon_19938ba6 : "")
                     onClicked: { menu.close(); root.choose(modelData.address) }
                     Rectangle { anchors.fill: parent; radius: Theme.radiusControl; color: Theme.hover; opacity: row.hovered ? 1 : 0; Behavior on opacity { NumberAnimation { duration: Theme.motionFast } } }
-                    Icon { x: 8; y: 6 + 2; name: "check"; size: 16; color: Theme.accentText; opacity: row.selected ? 1 : 0; Behavior on opacity { NumberAnimation { duration: Theme.motionFast } } }
+                    SelectionMark { x: 8; y: 6 + 2; size: 16; selected: row.selected }
                     Text {
                         id: label
                         x: 8 + 16 + 8

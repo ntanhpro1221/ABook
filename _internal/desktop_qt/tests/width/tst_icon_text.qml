@@ -101,6 +101,14 @@ Item {
         id: inlineError
         InlineError { message: "Bạn hãy kiểm tra kết nối rồi tải lại danh sách giọng." }
     }
+    Component {
+        id: editedParagraph
+        Item {
+            width: 240; height: 120
+            Icon { name: "play"; size: 10; y: paragraph.positionToRectangle(0).y + paragraph.positionToRectangle(0).height / 2 - height / 2 }
+            TextEdit { id: paragraph; x: 18; width: 220; font.pixelSize: 18; wrapMode: TextEdit.Wrap; text: "Một đoạn đọc có thể nghe từ dòng đầu và kéo dài qua nhiều dòng." }
+        }
+    }
     TestCase {
         name: "IconText"
         when: windowShown
@@ -160,6 +168,9 @@ Item {
         function test_alignedRowAndSkipDigitsPass() {
             compare(hitsOf(aligned), [])
             compare(hitsOf(skip), [])
+        }
+        function test_textEditUsesItsActualFirstLineRectangle() {
+            compare(JSON.stringify(hitsOf(editedParagraph)), "[]")
         }
     }
 }

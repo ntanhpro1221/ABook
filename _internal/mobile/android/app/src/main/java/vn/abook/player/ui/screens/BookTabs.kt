@@ -407,8 +407,8 @@ private fun PersonRow(person: CastMember, samples: CastSamples, onMore: (CastMem
                 Spacer(Modifier.width(4.dp))
                 BasicText(Cast.voiceLine(person), style = Abook.type.caption.copy(color = colors.text2))
             }
-            Cast.pendingLine(person)?.let { BasicText(it, style = Abook.type.caption.copy(color = colors.accentText, fontWeight = FontWeight.Medium), modifier = Modifier.padding(top = 4.dp)) }
-            Cast.mergeLine(person)?.let { BasicText(it, style = Abook.type.caption.copy(color = colors.accentText, fontWeight = FontWeight.Medium), modifier = Modifier.padding(top = 4.dp)) }
+            Cast.pendingLine(person)?.let { BasicText(it, style = Abook.type.caption.copy(color = colors.text2, fontWeight = FontWeight.Medium), modifier = Modifier.padding(top = 4.dp)) }
+            Cast.mergeLine(person)?.let { BasicText(it, style = Abook.type.caption.copy(color = colors.text2, fontWeight = FontWeight.Medium), modifier = Modifier.padding(top = 4.dp)) }
             BasicText(Cast.countLine(person), style = Abook.type.caption.copy(color = colors.text2), modifier = Modifier.padding(top = Dim.s4))
         }
         person.sampleId?.let { sample -> SampleButton(samples.playing == sample, S.s_nghe_0_noi_e9307f6f(name)) { samples.toggle(sample) } }

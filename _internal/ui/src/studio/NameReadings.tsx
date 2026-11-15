@@ -12,7 +12,7 @@ import type { ReadAloudTry } from "@/listen/readings";
 import { useCast } from "@/listen/source";
 import { cn } from "@/shared/cn";
 import { formatNumber, shownReading } from "@/shared/format";
-import { Button } from "@/shared/ui";
+import { ActionRow, Button } from "@/shared/ui";
 import { api, suggestionOf, urls } from "./api";
 import { ReadingProblem } from "./ReadingProblem";
 import { neverText, reachSummary, useReach, type Reach } from "./readingReach";
@@ -164,7 +164,7 @@ export function NameReadings({ bookId, focus = false, name = "" }: { bookId: str
         <p className="mt-3 text-sm text-fg-2">{S.s_khong_khop_be597abb}{typed}{S.s_dung_them_cach_doc_cho_mot_tu_khac_a96aa798}</p>
       )}
       {found.length > limit && (
-        <button type="button" onClick={() => setLimit((value) => value + PAGE * 3)} className="mt-3 text-sm font-medium text-fg-2 hover:text-fg">{S.s_xem_them_58c3f515}{formatNumber(found.length - limit)}{S.s_ten_0fd957e9}</button>
+        <ActionRow onClick={() => setLimit((value) => value + PAGE * 3)} className="mt-3">{S.s_xem_them_58c3f515}{formatNumber(found.length - limit)}{S.s_ten_0fd957e9}</ActionRow>
       )}
       {data.unseen > 0 && !typed && (
         <p className="mt-2 text-xs text-fg-3">{formatNumber(data.unseen)}{S.s_ten_khac_cua_cuon_khong_co_cau_nao_trong_p_f3b0713b}</p>

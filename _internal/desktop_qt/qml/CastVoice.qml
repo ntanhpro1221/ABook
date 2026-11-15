@@ -318,7 +318,7 @@ CastModal {
                                         Text {
                                             width: Math.min(implicitWidth, parent.width)
                                             text: TextWrap.keepDots(row.voice.name)
-                                            color: row.voice.current ? Theme.accentText : Theme.text
+                                            color: Theme.text
                                             wrapMode: Text.WrapAtWordBoundaryOrAnywhere
                                             font.pixelSize: Theme.sizeBodySmall
                                             font.weight: Theme.weightMedium
@@ -326,7 +326,7 @@ CastModal {
                                         Text {
                                             Reveal { shown: Boolean(row.voice.current && root.choices.pending) }
                                             text: S.s_dang_dung_275ca289
-                                            color: Theme.accentText
+                                            color: Theme.text2
                                             font.pixelSize: 12
                                             font.weight: Theme.weightMedium
                                         }

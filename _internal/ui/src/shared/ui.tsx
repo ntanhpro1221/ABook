@@ -3,7 +3,7 @@ import { S } from "./strings.generated";
 import * as DialogPrimitive from "@radix-ui/react-dialog";
 import * as TabsPrimitive from "@radix-ui/react-tabs";
 import * as TooltipPrimitive from "@radix-ui/react-tooltip";
-import { AlertTriangle, Check, ChevronLeft, ChevronRight, Loader2, RotateCw, WifiOff, X } from "lucide-react";
+import { AlertTriangle, Check, Circle, ChevronLeft, ChevronRight, Loader2, Plus, RotateCw, WifiOff, X } from "lucide-react";
 import { cloneElement, useEffect, useLayoutEffect, useRef, useState } from "react";
 import type { ButtonHTMLAttributes, ComponentType, CSSProperties, FocusEvent, HTMLAttributes, ReactElement, ReactNode, Ref, SelectHTMLAttributes } from "react";
 import { cn } from "@/shared/cn";
@@ -28,7 +28,18 @@ export function Select({ className, inline, ...props }: SelectHTMLAttributes<HTM
 /** Dấu chọn giữ nguyên chỗ khi đổi mục; chỉ độ mờ đổi, không làm hàng nhảy ngang. Luôn đứng ĐẦU dòng của danh sách chọn (DESIGN 6; luật
  *  check-mark-trailing đọc `data-selection-mark`). */
 export function SelectionMark({ selected, className }: { selected: boolean; className?: string }) {
-  return <Check aria-hidden data-selection-mark className={cn("size-4 shrink-0 text-accent-text transition-opacity duration-motion-fast", selected ? "opacity-100" : "opacity-0", className)} />;
+  return <span aria-hidden data-selection-mark className={cn("relative inline-grid size-4 shrink-0 place-items-center", className)}>
+    <Circle className={cn("absolute size-4 text-fg-3 transition-opacity duration-motion-fast", selected ? "opacity-0" : "opacity-100")} />
+    <Check className={cn("absolute size-4 text-accent-text transition-opacity duration-motion-fast", selected ? "opacity-100" : "opacity-0")} />
+  </span>;
+}
+
+/** A footer action uses the same accent icon and text on every surface. */
+export function ActionRow({ children, icon: Icon = Plus, className, ...props }: ButtonHTMLAttributes<HTMLButtonElement> & { icon?: IconType }) {
+  return <button type="button" {...props} data-action-row className={cn("press flex min-h-12 w-full items-center gap-3 rounded-control px-2 py-2 text-left text-sm font-medium text-accent-text transition-colors duration-motion-fast hover:bg-hover focus-visible:outline-focus disabled:pointer-events-none disabled:text-fg-3 aria-disabled:text-fg-3", className)}>
+    <Icon aria-hidden className="size-5 shrink-0" />
+    <span className="min-w-0 text-pretty">{children}</span>
+  </button>;
 }
 
 // ---- Nút --------------------------------------------------------------------------------------------------
@@ -38,7 +49,7 @@ type Size = "sm" | "md" | "lg";
 
 const VARIANTS: Record<Variant, string> = {
   primary: "bg-accent text-accent-ink hover:bg-accent-hover [box-shadow:inset_0_1px_0_var(--button-shine)]",
-  ghost: "text-accent-text hover:bg-hover",
+  ghost: "text-accent-text hover:bg-hover disabled:text-fg-3 aria-disabled:text-fg-3",
   outline: "border border-control-line text-fg hover:bg-hover",
   danger: "bg-danger-soft text-danger hover:bg-danger hover:text-danger-ink",
 };
@@ -384,7 +395,7 @@ LiveText.motionLive = true;
 
 export function Vu({ className }: { className?: string }) {
   return (
-    <span className={cn("vu inline-flex h-3 items-end gap-[4px]", className)} aria-hidden>
+    <span role="img" className={cn("vu inline-flex h-3 items-end gap-[4px]", className)} aria-hidden>
       <span className="h-full w-[3px] rounded-full bg-current" />
       <span className="h-full w-[3px] rounded-full bg-current" />
       <span className="h-full w-[3px] rounded-full bg-current" />
@@ -547,7 +558,7 @@ export function TabsTrigger({ value, children, count }: { value: string; childre
   return (
     <TabsPrimitive.Trigger
       value={value}
-      className="touch-row relative -mb-px inline-flex h-11 shrink-0 items-center whitespace-nowrap border-b-2 border-transparent text-sm font-medium text-fg-2 transition-colors duration-motion-medium hover:text-fg data-[state=active]:text-fg"
+      className="touch-row relative -mb-px inline-flex h-11 shrink-0 items-center whitespace-nowrap border-b-2 border-transparent text-sm font-medium text-accent-text transition-colors duration-motion-medium hover:text-fg data-[state=active]:text-fg"
     >
       <TabLabel count={count}>{children}</TabLabel>
     </TabsPrimitive.Trigger>
@@ -1131,7 +1142,7 @@ export function ChoiceRow<T extends string>({
           onClick={() => onChange(option.value)}
           className={cn(
             "touch-hit touch-row relative min-h-10 whitespace-nowrap border-b-2 border-transparent text-sm font-medium transition-colors duration-motion-medium",
-            value === option.value ? "font-bold text-fg" : "text-fg-2 hover:text-fg",
+            value === option.value ? "font-bold text-fg" : "text-accent-text hover:text-fg",
             itemClassName,
           )}
         >
@@ -1196,7 +1207,7 @@ export function FilterRow<T extends string>({
           onClick={() => onChange(option.value)}
           className={cn(
             "touch-row h-9 shrink-0 whitespace-nowrap border-b-2 border-transparent text-sm font-medium transition-colors duration-motion-medium",
-            value === option.value ? "text-fg" : "text-fg-2 hover:text-fg",
+            value === option.value ? "text-fg" : "text-accent-text hover:text-fg",
           )}
         >
           <ChoiceLabel text={option.label} />

@@ -21,14 +21,14 @@ Popover {
                 objectName: "playerVoice_" + modelData.id
                 width: parent.width; text: VoiceLogic.spokenVoiceName(modelData.name)
                 selected: Player.voiceId === modelData.id || !Player.voiceId && modelData.default === true
-                icon: selected ? "check" : ""
+                icon: "circle"
                 onClicked: {
                     const resume = root.resumeAfter
                     consent.ask(modelData, function(picked) { if (picked) { Player.chooseVoice(picked.id, resume); root.close() } })
                 }
             }
         }
-        Button { width: parent.width; wrap: true; text: S.s_them_giong_15d3a618; icon: "plus"; kind: "ghost"; onClicked: { root.close(); root.settingsRequested() } }
+        InlineActionRow { objectName: "playerVoiceAdd"; width: parent.width; text: S.s_them_giong_15d3a618; onClicked: { root.close(); root.settingsRequested() } }
     }
     PlayerConsent { id: consent; parent: root.parent }
 }

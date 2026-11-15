@@ -125,7 +125,7 @@ private fun ReadingsList(state: StudioReadingsState, data: NameReadings, clip: C
             RowHint(ReadingsText.NO_MATCH, Modifier.padding(top = Dim.s12).testTag("studio_readings_nomatch"))
         }
         if (found.size > state.limit) item("more", "more") {
-            TextAction(ReadingsText.more(found.size - state.limit), state::more, "studio_readings_more", Modifier.fillMaxWidth(), Alignment.CenterStart)
+            vn.abook.player.ui.components.InlineActionRow(ReadingsText.more(found.size - state.limit), state::more, "studio_readings_more")
         }
         if (data.unseen > 0 && typed.isEmpty()) item("unseen", "status") {
             Caption(ReadingsText.unseen(data.unseen), Modifier.padding(top = Dim.s8).testTag("studio_readings_unseen"))

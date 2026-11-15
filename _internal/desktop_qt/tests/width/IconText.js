@@ -48,11 +48,13 @@ function textInk(item, root, probe) {
     const box = {x: p.x + dx, y: p.y + dy, w: item.paintedWidth, h: item.paintedHeight}
     // TextEdit nhiều dòng: dòng cuối chỉ dài tới chữ cuối
     if ((item.lineCount || 1) > 1 && typeof item.positionToRectangle === "function") {
+        const start = item.positionToRectangle(0)
         const end = item.positionToRectangle(item.length)
         return {rects: [{x: box.x, y: box.y, w: box.w, h: end.y}, {x: box.x, y: p.y + end.y, w: end.x, h: end.height}],
-                first: {x: box.x, y: box.y, w: box.w, h: lineHeight}}
+                first: {x: box.x, y: p.y + start.y, w: box.w, h: start.height}}
     }
-    return {rects: [box], first: {x: box.x, y: box.y, w: box.w, h: lineHeight}}
+    const start = typeof item.positionToRectangle === "function" ? item.positionToRectangle(0) : null
+    return {rects: [box], first: {x: box.x, y: start ? p.y + start.y : box.y, w: box.w, h: start ? start.height : lineHeight}}
 }
 // Icon lucide vẽ trong lưới 24 có lề 2 đơn vị: mực nằm trong ô thu 1/12 mỗi phía.
 function iconInk(item, root) { return boxOf(item, root, String(item).indexOf("Icon") === 0 ? item.width / 12 : 0) }

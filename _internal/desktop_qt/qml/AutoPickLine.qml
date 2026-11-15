@@ -29,7 +29,7 @@ Flow {
         Text {
             objectName: "autoPickLabel"
             text: Music.AUTO_PICK_LABEL + (root.note !== "" ? "\u00a0·\u00a0" + root.note : "")
-            color: Theme.text2
+            color: autoSwitch.enabled ? Theme.accentText : Theme.text3
             font.pixelSize: Theme.sizeCaption
             height: 24
             verticalAlignment: Text.AlignVCenter

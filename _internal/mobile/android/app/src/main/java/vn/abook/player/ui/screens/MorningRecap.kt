@@ -42,6 +42,8 @@ import vn.abook.player.ui.components.RowHint
 import vn.abook.player.ui.components.SleepIcon
 import vn.abook.player.ui.components.TextAction
 import vn.abook.player.ui.components.TimerResetIcon
+import vn.abook.player.ui.components.LucideIcon
+import vn.abook.player.ui.components.LucidePaths
 import vn.abook.player.ui.components.fadeEdges
 import vn.abook.player.ui.components.pressable
 import vn.abook.player.ui.data.Fmt
@@ -80,7 +82,7 @@ fun MorningRecap(night: NightState, books: List<ListenBook>, play: (bookId: Stri
                 SleepIcon(colors.accentText)
                 Spacer(Modifier.width(Dim.s8))
                 Column(Modifier.weight(1f)) {
-                    BasicText(NightRecap.sessionLabel(shown.endedAt, nowMs()), style = Abook.type.label.copy(color = colors.accentText))
+                    BasicText(NightRecap.sessionLabel(shown.endedAt, nowMs()), style = Abook.type.label.copy(color = colors.text2))
                     RowHint(shown.bookTitle)
                 }
                 Box(Modifier.size(Dim.touch).pressable { night.dismiss() }.semantics { contentDescription = S.s_an_the_nay_820c504e }.testTag("recap_dismiss"), contentAlignment = Alignment.Center) {
@@ -167,8 +169,11 @@ private fun Scrub(markers: List<NightMarker>, lines: Map<Int, List<ReadParagraph
             for ((chapterId, title, paragraphs) in groups) {
                 BasicText(title, Modifier.padding(top = Dim.s12, bottom = Dim.s4), style = Abook.type.caption.copy(color = colors.text2, fontWeight = FontWeight.Medium))
                 for (paragraph in paragraphs) {
-                    BasicText(paragraph.text.trim(), Modifier.fillMaxWidth().heightIn(min = Dim.s48).pressable { onPick(chapterId, paragraph.startMs / 1000.0) }.padding(vertical = Dim.s12)
-                        .testTag("recap_line_${chapterId}_${paragraph.id}"), style = Abook.type.bodySmall.copy(color = colors.text))
+                    Row(Modifier.fillMaxWidth().heightIn(min = Dim.s48).pressable { onPick(chapterId, paragraph.startMs / 1000.0) }.padding(vertical = Dim.s12)
+                        .testTag("recap_line_${chapterId}_${paragraph.id}"), verticalAlignment = Alignment.Top) {
+                        LucideIcon(LucidePaths.PLAY, colors.text3, Modifier.padding(end = Dim.s8))
+                        BasicText(paragraph.text.trim(), Modifier.weight(1f), style = Abook.type.bodySmall.copy(color = colors.text))
+                    }
                 }
             }
         }

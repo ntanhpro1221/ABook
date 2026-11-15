@@ -194,13 +194,13 @@ fun <T : Choice> ChoiceSetting(
 
 /** Nút chữ (DESIGN.md §6 "Nút (c)": màu chữ nhấn), cao 48, mép chữ chạm mép phải của cột. */
 @Composable
-fun TextAction(label: String, onClick: () -> Unit, tag: String, modifier: Modifier = Modifier, align: Alignment = Alignment.CenterEnd, danger: Boolean = false) {
+fun TextAction(label: String, onClick: () -> Unit, tag: String, modifier: Modifier = Modifier, align: Alignment = Alignment.CenterEnd, danger: Boolean = false, enabled: Boolean = true) {
     Box(
-        modifier.heightIn(min = Dim.s48).widthIn(min = Dim.touch).pressable(onClick = onClick).testTag(tag),
+        modifier.heightIn(min = Dim.s48).widthIn(min = Dim.touch).then(if (enabled) Modifier.pressable(onClick = onClick) else Modifier.semantics { disabled() }).testTag(tag),
         contentAlignment = align,
     ) {
         // Xoá / dọn: chữ màu nguy hiểm, không hổ phách như các việc thường cạnh nó (soát 10-11 L13).
-        BasicText(label, style = Abook.type.label.copy(color = if (danger) Abook.colors.danger else Abook.colors.accentText))
+        BasicText(label, style = Abook.type.label.copy(color = if (!enabled) Abook.colors.text3 else if (danger) Abook.colors.danger else Abook.colors.accentText))
     }
 }
 
@@ -354,7 +354,7 @@ fun ListItem(
     leadingWidth: Dp = Dim.s24,
     leadingGap: Dp = Dim.s12,
     trailing: (@Composable () -> Unit)? = null,
-    chevron: Boolean = false,
+    chevron: Boolean = onClick != null && leading == null,
     below: (@Composable ColumnScope.() -> Unit)? = null,
     role: Role = Role.Button,
     tickingHint: Boolean = false,
@@ -384,7 +384,13 @@ fun ListItem(
                 if (trailing != null || chevron) {
                     Spacer(Modifier.width(Dim.s12))
                     Box(Modifier.onFirstLine(), contentAlignment = Alignment.CenterEnd) {
-                        Box(Modifier.testTag("row_trailing")) { if (trailing != null) trailing() else ChevronIcon(Abook.colors.text3) }
+                        Row(Modifier.testTag("row_trailing"), verticalAlignment = Alignment.CenterVertically) {
+                            if (trailing != null) trailing()
+                            if (chevron) {
+                                if (trailing != null) Spacer(Modifier.width(Dim.s8))
+                                ChevronIcon(Abook.colors.text3)
+                            }
+                        }
                     }
                 }
             }

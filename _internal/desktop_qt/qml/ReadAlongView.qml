@@ -288,6 +288,12 @@ Item {
             width: list.width
             height: bodyY + edit.height + (heading ? Theme.s12 : Theme.s24)
 
+            Icon {
+                readonly property rect firstLine: { edit.contentHeight; edit.width; return edit.positionToRectangle(0) }
+                x: body.x - 14; y: body.y + firstLine.y + firstLine.height / 2 - height / 2
+                name: "play"; size: 10; color: Theme.text3
+            }
+
             function refresh() {
                 if (ReadAlong.currentPara === index) {
                     sentRects = ReadAlong.sentenceRects(edit.textDocument, index, ReadAlong.currentSegment)

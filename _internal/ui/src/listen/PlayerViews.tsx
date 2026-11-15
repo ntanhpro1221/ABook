@@ -55,7 +55,7 @@ import { cn } from "@/shared/cn";
 import { APP_TITLE } from "@/shared/title";
 import { useMediaQuery } from "@/shared/media";
 import { MUSIC_MODIFIED_NOTE, formatClock, licenseLabel, progressFill, musicCreditText, musicNeedsModifiedNote } from "@/shared/format";
-import { SelectionMark, announce, busyClick, heardBarProps, IconButton, menuArrowKeys, Sheet, Tooltip, useFocusFollows, Vu } from "@/shared/ui";
+import { ActionRow, SelectionMark, announce, busyClick, heardBarProps, IconButton, menuArrowKeys, Sheet, Tooltip, useFocusFollows, Vu } from "@/shared/ui";
 import { Switch } from "@/desktop/Switch";
 import { MusicLevelSlider } from "@/shared/MusicLevelSlider";
 import { LEVEL_TITLE } from "@/shared/musicLevels";
@@ -418,6 +418,7 @@ export function MenuShell({
       <Reveal when={look === "row"}><span className="flex min-w-0 flex-1 items-center gap-3">{<Presence>{RowIcon && <RowIcon className="size-4 shrink-0 text-fg-2" />}</Presence>}<span className="truncate">{caption}</span></span></Reveal>
       <MotionRegion as="span" motionKey={triggerKey} className={cn(look === "action" ? ACTION_GLYPH : "inline-flex items-center gap-1", look === "row" && cn("min-w-0 text-xs font-medium", actionTone(active)))}>{trigger}</MotionRegion>
       {look === "action" && <MotionRegion as="span" className={ACTION_LABEL} motionKey={typeof caption === "string" ? caption.replace(/\d+/g, "#") : undefined}>{caption}</MotionRegion>}
+      {look === "row" ? <ChevronRight aria-hidden className="ink-end size-4 shrink-0 text-fg-3" /> : look !== "action" ? <ChevronDown aria-hidden className="size-3.5 shrink-0 text-fg-3" /> : null}
     </button>;
   if (inline && page) return <Popover.Root open={isOpen} onOpenChange={changeOpen}>
     <div ref={inlineRef} data-player-inline>{button}</div>
@@ -814,12 +815,11 @@ export function VoiceMenu({ scope = "bar", look = "chip" }: { scope?: VoiceMenuS
         ))}
         {sample.failed && <p className="px-2 pb-1 text-xs text-danger text-pretty">{sample.failed.message}</p>}
       </ScrollHint>
-      <button
+      <ActionRow
         type="button"
         onClick={() => openVoiceSettings()}
         data-sheet-choice
-        className="flex min-h-9 w-full items-center rounded-control px-2 text-left text-sm text-accent-text hover:bg-hover max-sm:min-h-[48px]"
-      >{S.s_them_giong_15d3a618}</button>
+      >{S.s_them_giong_15d3a618}</ActionRow>
       {current?.online && <p className="px-2 pb-1 pt-2 text-xs text-fg-2">{onlineNotice(current)}</p>}
       {current && canPrepare(current, Boolean(source.readAloudPrepareOnline)) && (
         <PrepareAhead voice={current} bookId={track.bookId} chapterId={track.chapterId} />
@@ -1278,7 +1278,7 @@ function FadingNotice({ className }: { className?: string }) {
   const content = () => {
   if (!fading) return null;
   return (
-    <div className={cn("motion-appear flex items-center gap-3 rounded-cover px-3 py-2 text-sm text-accent-text", className)} role="status">
+    <div className={cn("motion-appear flex items-center gap-3 rounded-cover px-3 py-2 text-sm text-fg-2", className)} role="status">
       <Moon className="size-4 shrink-0" />
       <span className="min-w-0 flex-1">{S.s_sap_tat_e76c49b1}{EXTEND_GESTURE}{S.s_de_hen_lai_f1a3acdc}{again}{S.s_phut_cf728a6a}</span>
       <button type="button" onClick={() => extendSleep()} className="shrink-0 rounded-control bg-accent px-3 py-1 text-xs font-medium text-accent-ink">
@@ -1868,7 +1868,7 @@ const PanelChapterRow = memo(function PanelChapterRow({ chapter, current, playin
           <Vu className="h-3 text-accent" />
         ) : done ? (
           <Check className="size-4 text-success" aria-label={S.s_da_nghe_1e0f8d88} />
-        ) : <span aria-hidden />}
+        ) : <Play className="size-4 text-fg-3" aria-hidden />}
       </MotionRegion>
       <span className="min-w-0 flex-1">
         <span className={cn("block break-words text-sm font-medium transition-colors duration-motion-fast", current && "text-accent-text", !canPlay(chapter) && "text-fg-2")}>

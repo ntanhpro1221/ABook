@@ -10,6 +10,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorProducer
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.text
 import androidx.compose.ui.text.AnnotatedString
@@ -45,7 +46,8 @@ fun BasicText(
     val shaped = remember(text) { shapeForWrap(text) }
     val separated = remember(shaped) { hasSeparator(shaped) }
     val same = shaped == text
-    val keepOriginal = if (same) modifier else modifier.semantics { this.text = AnnotatedString(text) }
+    val painted = if (color == null) modifier else modifier.semantics { this[VisualTextColor] = color().toArgb() }
+    val keepOriginal = if (same) painted else painted.semantics { this.text = AnnotatedString(text) }
     if (!separated) {
         FoundationText(shaped, keepOriginal, style, onTextLayout, overflow, softWrap, maxLines, minLines, color, autoSize)
         return

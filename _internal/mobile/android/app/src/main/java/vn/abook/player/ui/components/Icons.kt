@@ -40,7 +40,7 @@ internal fun DrawScope.drawLucide(data: String, color: Color, unit: Float = size
 @Composable
 fun LucideIcon(data: String, color: Color, modifier: Modifier = Modifier, size: Dp = 20.dp, fill: String? = null) {
     Box(
-        modifier.size(size).drawWithCache {
+        modifier.size(size).visualIcon().drawWithCache {
             val path = lucidePath(data)
             val dots = fill?.let(::lucidePath)
             val unit = this.size.width / 24f

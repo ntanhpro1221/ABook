@@ -57,6 +57,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import vn.abook.player.ui.components.ClockLabel
 import vn.abook.player.ui.components.pressable
+import vn.abook.player.ui.components.visualIcon
+import vn.abook.player.ui.components.visualImage
 import vn.abook.player.ui.data.CoverLoader
 import vn.abook.player.ui.data.CoverRef
 import vn.abook.player.ui.components.LucideIcon
@@ -106,7 +108,7 @@ fun PlayerCover(ref: CoverRef?, title: String, modifier: Modifier = Modifier, de
     val covers = LocalPlayerCovers.current
     // Decode at the final display-slot bound, never at intermediate shared-element sizes.
     val requestPx = playerCoverRequestPx(decodeSize)
-    BoxWithConstraints(modifier.clip(BookCoverShape).background(Abook.colors.bgSunken), contentAlignment = Alignment.Center) {
+    BoxWithConstraints(modifier.visualImage().clip(BookCoverShape).background(Abook.colors.bgSunken), contentAlignment = Alignment.Center) {
         SwapContent(ref, contentKey = { ref -> ref == null }, layout = ContentLayout.Box) { ref ->
             if (ref == null) {
                 // The title below the cover supplies its accessibility name.
@@ -231,7 +233,7 @@ fun PlayMorph(
     }
         .semantics { contentDescription = description ?: if (playing) S.s_tam_dung_67635815 else S.s_phat_343e7e48 }
         .drawBehind { drawCircle(colors.accent) }, contentAlignment = Alignment.Center) {
-        Canvas(Modifier.size(if (large) 32.dp else 24.dp)) {
+        Canvas(Modifier.size(if (large) 32.dp else 24.dp).visualIcon()) {
             val p = morph.value
             val w = size.width; val h = size.height
             fun mix(a: Float, b: Float) = a + (b - a) * p
@@ -263,8 +265,8 @@ fun PlayerAction(label: String, glyph: String, onClick: () -> Unit, modifier: Mo
             SwapContent(glyph, contentKey = { glyph -> glyph == "◷" || glyph == "☷" || glyph == MINI_WINDOW_GLYPH }, layout = ContentLayout.Box) { glyph ->
                 if (glyph == "◷" || glyph == "☷" || glyph == MINI_WINDOW_GLYPH) PlayerGlyph(glyph)
                 else SwapContent(clock, contentKey = { clock -> clock }, layout = ContentLayout.Box) { clock ->
-                    if (clock) ClockLabel(glyph, style = Abook.type.sectionTitle)
-                    else RollingLabel(glyph, style = Abook.type.sectionTitle)
+                    if (clock) ClockLabel(glyph, style = Abook.type.sectionTitle.copy(color = Abook.colors.accentText))
+                    else RollingLabel(glyph, style = Abook.type.sectionTitle.copy(color = Abook.colors.accentText))
                 }
             }
         }
@@ -297,7 +299,7 @@ fun PlayerGlyph(glyph: String) {
     Box(Modifier.size(28.dp), contentAlignment = Alignment.Center) {
         SwapContent(data, contentKey = { data -> data != null }, layout = ContentLayout.Box) { data ->
             if (data != null) LucideIcon(data, color, size = 24.dp)
-            else Canvas(Modifier.fillMaxSize()) { drawSkip(glyph == "15↷", color, path, skipNumber) }
+            else Canvas(Modifier.fillMaxSize().visualIcon()) { drawSkip(glyph == "15↷", color, path, skipNumber) }
         }
     }
 }

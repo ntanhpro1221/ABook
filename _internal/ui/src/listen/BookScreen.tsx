@@ -8,7 +8,7 @@ import { FoldRows } from "@/shared/FoldRows";
 import { AnimatedRows, LoadingCrossfade, MotionPresence, Reveal } from "@/shared/MotionPresence";
 import * as DropdownMenu from "@/shared/DropdownMenu";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowRightLeft, AudioLines, BookOpen, BookOpenText, Check, CheckCheck, ChevronDown, CircleDashed, CloudDownload, FileDown, GitMerge, History, Hourglass, Laptop, Loader2, MoreHorizontal, Pause, Pencil, Play, Plus, RotateCcw, Save, Search, Share2, SlidersHorizontal, TextCursorInput, Trash2, UserRound } from "lucide-react";
+import { ArrowRightLeft, AudioLines, BookOpen, BookOpenText, Check, CheckCheck, ChevronDown, ChevronRight, CircleDashed, CloudDownload, FileDown, GitMerge, History, Hourglass, Laptop, Loader2, MoreHorizontal, Pause, Pencil, Play, Plus, RotateCcw, Save, Search, Share2, SlidersHorizontal, TextCursorInput, Trash2, UserRound } from "lucide-react";
 import { memo, useId, Fragment, useEffect, useLayoutEffect, useMemo, useRef, useState, type ButtonHTMLAttributes, type CSSProperties, type Dispatch, type ReactNode, type SetStateAction } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router";
 import { toast } from "@/shared/toast";
@@ -200,14 +200,14 @@ const ChapterLine = memo(function ChapterLine({
         tabIndex={canPlay(chapter) && !current ? -1 : undefined}
         className="touch-hit min-w-0 flex-1 text-left"
       >
-        <div className={cn("break-words text-sm font-medium", current && "text-accent-text", (done || !canPlay(chapter)) && !current && "text-fg-2")}>
-          {name}
+        <div className={cn("flex items-start gap-2 break-words text-sm font-medium", current && "text-accent-text", (done || !canPlay(chapter)) && !current && "text-fg-2")}>
+          <span className="min-w-0 flex-1">{name}</span><ChevronRight aria-hidden className="ink-end mt-0.5 size-4 shrink-0 text-fg-3" />
         </div>
         {/* min-h 1rem (= một dòng text-xs): dòng phụ luôn giữ chỗ - chương có audio rồi hàng không cao thêm, và mọi hàng cùng nhịp. */}
         <div className="min-h-[1rem] break-words text-xs text-fg-2">
           {chapterSubline(chapter, producing)}
           {prepared && (
-            <span className="ml-2 inline-flex items-center gap-1 rounded-control bg-accent-soft px-1 align-[1px] text-caption font-medium text-accent-text">
+            <span className="ml-2 inline-flex items-center gap-1 rounded-control bg-accent-soft px-1 align-[1px] text-caption font-medium text-fg-2">
               <CloudDownload className="size-3" aria-hidden />{S.s_da_lam_san_18d7d0da}</span>
           )}
         </div>
@@ -456,7 +456,7 @@ export function PersonRow({
         </div>
         {/* Việc của Studio (giọng người nghe đã chọn, chưa áp) - trang nghe không cần (soát UX 29-09). */}
         {person.pendingVoice && (onPickVoice || waiting) && (
-          <div className="mt-1 truncate text-xs font-medium text-accent-text">
+          <div className="mt-1 truncate text-xs font-medium text-fg-2">
             {waiting ? S.s_dang_cho_may_lam_sach_bad9fc96 : S.s_cho_ap_dung_77a52853}:{" "}
             {[person.pendingVoice.preset && S.s_giong_0_e048b478(voiceName(person.pendingVoice)), person.pendingVoice.gender.toLowerCase()]
               .filter(Boolean)
@@ -464,12 +464,12 @@ export function PersonRow({
           </div>
         )}
         {person.mergedInto && (onPickVoice || waiting) && (
-          <div className="mt-1 break-words text-xs font-medium text-accent-text">
+          <div className="mt-1 break-words text-xs font-medium text-fg-2">
             {waiting ? S.s_dang_cho_may_lam_sach_bad9fc96 : S.s_cho_ap_dung_77a52853}{S.s_gop_vao_6f4014d0}{cleanName(person.mergedInto)}
             {onUnmerge && typeof person.mergedAt === "number" && (
               <button
                 type="button"
-                className="ml-2 rounded-control font-medium underline underline-offset-2 hover:text-fg"
+                className="ml-2 rounded-control font-medium text-accent-text underline underline-offset-2 hover:text-fg"
                 aria-label={S.s_bo_gop_0_vao_1_46630ca2(name, cleanName(person.mergedInto))}
                 onClick={() => onUnmerge(person)}
               >{S.s_bo_gop_d7199137}</button>
@@ -574,7 +574,7 @@ export function CastList({ bookId, onPickVoice, onPickNarrator, onMerge, onUnmer
           <div className="mt-1 font-medium">{cast.narrator.voice || S.s_mac_dinh_9a1af367}</div>
           {cast.narrator.chapterVoices?.map(line => <div key={line} className="mt-1 text-xs text-fg-2">{line}</div>)}
           {onPickNarrator && cast.narrator.pendingVoice?.preset && (
-            <div className="mt-1 truncate text-xs font-medium text-accent-text">{S.s_cho_ap_dung_giong_82c96902}{voiceName(cast.narrator.pendingVoice)}</div>
+            <div className="mt-1 truncate text-xs font-medium text-fg-2">{S.s_cho_ap_dung_giong_82c96902}{voiceName(cast.narrator.pendingVoice)}</div>
           )}
           <div className="text-xs text-fg-2">{formatNumber(cast.narrator.lines)}{S.s_cau_dan_truyen_f0d4156b}{cast.narrator.seconds > 0 ? ` · ${formatLength(cast.narrator.seconds)}` : ""}
             {/* Sau "Áp dụng" đổi giọng kể: các câu đã thu chờ thu lại bằng giọng mới (soát UX a24). */}
@@ -1153,7 +1153,7 @@ function BookPage({ extraActions, dangerActions, studioLink, notice, editing = {
           </p>
           {/* Tình trạng của cuốn: một dòng chữ nhỏ, không hộp, không viên thuốc màu. */}
           <Reveal when={textOnly}><p className="mt-2 text-sm text-fg-2">{textBookLine(speaks)}</p></Reveal>
-          <Reveal when={!book.complete && !textOnly}><p className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-accent-text">
+          <Reveal when={!book.complete && !textOnly}><p className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-fg-2">
               {<Presence>{book.producing && <Vu className="h-2.5" />}</Presence>}
               {book.producing
                 ? S.s_dang_thu_chuong_moi_tu_hien_khi_xong_123d0db2

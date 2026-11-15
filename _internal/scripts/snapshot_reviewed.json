@@ -8,20 +8,20 @@
     "reason": "Visually reviewed late fix168reveal layout: add_chapter_name_light.png; explicit vertical groups restore intended spacing and keep every visible control separate. Old/new contact sheet inspected before adoption."
   },
   "_internal/mobile/android/app/src/test/snapshots/add_footnotes_dark.png": {
-    "sha256": "a83d239739e5e4722e8f437e0b341885ae940ff4878ca642446e2eb26f4f9899",
-    "reason": "Visually reviewed late fix168reveal layout: add_footnotes_dark.png; explicit vertical groups restore intended spacing and keep every visible control separate. Old/new contact sheet inspected before adoption."
+    "sha256": "76e876814d9ea7a468d21a7a6d7c5cbe2de147f4ea66040dd19fdc1670aec5db",
+    "reason": "Visually compared base and after in affordance review-01.jpg: action ink, navigation chevrons, persistent choice rings and read-along play cues; no frame or shadow change."
   },
   "_internal/mobile/android/app/src/test/snapshots/add_footnotes_light.png": {
-    "sha256": "40eae6649859c7ee8f54b4eca0af7856d5c072724818486714f05517ce9e310f",
-    "reason": "Visually reviewed late fix168reveal layout: add_footnotes_light.png; explicit vertical groups restore intended spacing and keep every visible control separate. Old/new contact sheet inspected before adoption."
+    "sha256": "2d013fdd0e56b46fd90b3e98a2d6454565153c247c8b12a8350e1e18c5702c18",
+    "reason": "Visually compared base and after in affordance review-01.jpg: action ink, navigation chevrons, persistent choice rings and read-along play cues; no frame or shadow change."
   },
   "_internal/mobile/android/app/src/test/snapshots/book_cast_dark.png": {
-    "sha256": "879eaa93763f43a2cc13d5742216f5226cf815af990cc3b8917ee80aa7a7003c",
-    "reason": "Visually reviewed late fix168reveal layout: book_cast_dark.png; explicit vertical groups restore intended spacing and keep every visible control separate. Old/new contact sheet inspected before adoption."
+    "sha256": "8cf10ab293c058e4c5f31ed3ac8ef51d2497193347c9eb380d5eaad468330837",
+    "reason": "Visually compared base and after in affordance review-01.jpg: action ink, navigation chevrons, persistent choice rings and read-along play cues; no frame or shadow change."
   },
   "_internal/mobile/android/app/src/test/snapshots/book_cast_light.png": {
-    "sha256": "b60395fc3356c01be16777159bc8d8055c62e554a680182c654c9460c7b32491",
-    "reason": "Visually reviewed late fix168reveal layout: book_cast_light.png; explicit vertical groups restore intended spacing and keep every visible control separate. Old/new contact sheet inspected before adoption."
+    "sha256": "9f73a78c3f1e5756f6bb4576450dbd4f36bda0e31da878ebe80c65a7f070beed",
+    "reason": "Visually compared base and after in affordance review-01.jpg: action ink, navigation chevrons, persistent choice rings and read-along play cues; no frame or shadow change."
   },
   "_internal/mobile/android/app/src/test/snapshots/book_delete_dark.png": {
     "sha256": "def4a6274fcf777bb5273529ab3a9c89d11d360f7fcfa0747a7ad0171c3f203f",
@@ -32,68 +32,68 @@
     "reason": "Visually reviewed the exact before/after snapshot pair on integration contact sheet 1. The rounded sheet surface, hairline and shadow share the panel edge; the stationary rectangular paint band is removed. Controls and labels remain readable with no new clipping."
   },
   "_internal/mobile/android/app/src/test/snapshots/book_expanded_light.png": {
-    "sha256": "22d3f327ba5dbcb233647f40322acffc6cc3b6fc3b47a63f1ba7ed870cfd67ce",
-    "reason": "Visually reviewed late fix168reveal layout: book_expanded_light.png; explicit vertical groups restore intended spacing and keep every visible control separate. Old/new contact sheet inspected before adoption."
+    "sha256": "50a12fcb1d72f888261958aba2e4fd14aa11cee1885178ec109d48065d24a0e0",
+    "reason": "Visually compared base and after in affordance review-01.jpg: action ink, navigation chevrons, persistent choice rings and read-along play cues; no frame or shadow change."
   },
   "_internal/mobile/android/app/src/test/snapshots/book_find_light.png": {
     "sha256": "5ff62b8fab599d2b961cb1ca8e051907f2b59e3dbea10e83d7dff2c45bdf80a1",
     "reason": "Visually reviewed the exact before/after snapshot pair on integration contact sheet 1. The rounded sheet surface, hairline and shadow share the panel edge; the stationary rectangular paint band is removed. Controls and labels remain readable with no new clipping."
   },
   "_internal/mobile/android/app/src/test/snapshots/book_finished_dark.png": {
-    "sha256": "99b9d62173dc3253cc4c711342577e7a2cfdc8046718396d294ca74004e25da9",
-    "reason": "Visually reviewed late fix168reveal layout: book_finished_dark.png; explicit vertical groups restore intended spacing and keep every visible control separate. Old/new contact sheet inspected before adoption."
+    "sha256": "c75f05fd559be269661bcdd648f6d6eab628ca16513584bd37145588713d818f",
+    "reason": "Visually compared base and after in affordance review-01.jpg: action ink, navigation chevrons, persistent choice rings and read-along play cues; no frame or shadow change."
   },
   "_internal/mobile/android/app/src/test/snapshots/book_fresh_dark.png": {
-    "sha256": "6d68f2f07b9c6e16798505d0f46494e681b5718554a976181a236588773f2994",
-    "reason": "Visually reviewed late fix168reveal layout: book_fresh_dark.png; explicit vertical groups restore intended spacing and keep every visible control separate. Old/new contact sheet inspected before adoption."
+    "sha256": "8eada2408bce34e1cfe0ca239ffe1dabdce00fda9056d13d2f35ae10b32994cd",
+    "reason": "Visually compared base and after in affordance review-01.jpg: action ink, navigation chevrons, persistent choice rings and read-along play cues; no frame or shadow change."
   },
   "_internal/mobile/android/app/src/test/snapshots/book_fresh_light.png": {
-    "sha256": "3c834e9c5b6076ec799160907e02470edecc4f641375f427445e9be52c8c19f5",
-    "reason": "Visually reviewed late fix168reveal layout: book_fresh_light.png; explicit vertical groups restore intended spacing and keep every visible control separate. Old/new contact sheet inspected before adoption."
+    "sha256": "b7c251a6ba652c9f82289338bcb233100b797be5ab513a2b1fe754399c79840b",
+    "reason": "Visually compared base and after in affordance review-01.jpg: action ink, navigation chevrons, persistent choice rings and read-along play cues; no frame or shadow change."
   },
   "_internal/mobile/android/app/src/test/snapshots/book_gone_light.png": {
     "sha256": "c310cdded105be9255c335344f4b346aa77427930f5fadd97def91405edba9fe",
     "reason": "Reviewed old/new book_gone_light.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
   },
   "_internal/mobile/android/app/src/test/snapshots/book_head_light.png": {
-    "sha256": "ca8533d54a16f2472a4777718eec6bc698ff2c16c7933b15ca64a861c2605b20",
-    "reason": "Visually reviewed late fix168reveal layout: book_head_light.png; explicit vertical groups restore intended spacing and keep every visible control separate. Old/new contact sheet inspected before adoption."
+    "sha256": "2077c01a1a54ceb14179af5817af2e3c926f93d32c2edc1edaf75aaf907996bf",
+    "reason": "Visually compared base and after in affordance review-01.jpg: action ink, navigation chevrons, persistent choice rings and read-along play cues; no frame or shadow change."
   },
   "_internal/mobile/android/app/src/test/snapshots/book_history_light.png": {
-    "sha256": "11eb941b6ee18ee049095597c14ef70222f08d03c8e59ff973bf0bb9dd4ff631",
-    "reason": "Visually reviewed late fix168reveal layout: book_history_light.png; explicit vertical groups restore intended spacing and keep every visible control separate. Old/new contact sheet inspected before adoption."
+    "sha256": "79f73059354228fea79a10d991c82e591416d332310e0438aeeaf76cc8ff245b",
+    "reason": "Visually compared base and after in affordance review-02.jpg: action ink, navigation chevrons, persistent choice rings and read-along play cues; no frame or shadow change."
   },
   "_internal/mobile/android/app/src/test/snapshots/book_large_dark.png": {
-    "sha256": "b1364936781c2f2894d49343228ae23fb569e6b63940bd532d7ca6f7bd027128",
-    "reason": "Visually reviewed late fix168reveal layout: book_large_dark.png; explicit vertical groups restore intended spacing and keep every visible control separate. Old/new contact sheet inspected before adoption."
+    "sha256": "88b33b868c3bc4f9cdc34b9d65c0a83b1349c4ebb9dd6210445d0ca8059922db",
+    "reason": "Visually compared base and after in affordance review-02.jpg: action ink, navigation chevrons, persistent choice rings and read-along play cues; no frame or shadow change."
   },
   "_internal/mobile/android/app/src/test/snapshots/book_listening_dark.png": {
-    "sha256": "a1a4153716b21c191f819c28c404366cafd5c53fd1e9ab82d6d231a0c62d88d1",
-    "reason": "Visually reviewed late fix168reveal layout: book_listening_dark.png; explicit vertical groups restore intended spacing and keep every visible control separate. Old/new contact sheet inspected before adoption."
+    "sha256": "3b5297044b0e21a42d03e0f41de545b91a5a063ea15ac6beab80e47a11a131b2",
+    "reason": "Visually compared base and after in affordance review-02.jpg: action ink, navigation chevrons, persistent choice rings and read-along play cues; no frame or shadow change."
   },
   "_internal/mobile/android/app/src/test/snapshots/book_listening_light.png": {
-    "sha256": "24e588f86a15668cbb425d88d13f3c0994199f86183c0eb93485f38798e69a3b",
-    "reason": "Visually reviewed late fix168reveal layout: book_listening_light.png; explicit vertical groups restore intended spacing and keep every visible control separate. Old/new contact sheet inspected before adoption."
+    "sha256": "63883e7f3edf87e0e5c522025fd2d68c11fe67cb268eb1fe1d0af0bb3f10c431",
+    "reason": "Visually compared base and after in affordance review-02.jpg: action ink, navigation chevrons, persistent choice rings and read-along play cues; no frame or shadow change."
   },
   "_internal/mobile/android/app/src/test/snapshots/book_loading_light.png": {
-    "sha256": "f7dde25644efa66112f61abfa07f7d161c6cdaef9b0aa5bad1992e02ba64dd78",
-    "reason": "Visually reviewed late fix168reveal layout: book_loading_light.png; explicit vertical groups restore intended spacing and keep every visible control separate. Old/new contact sheet inspected before adoption."
+    "sha256": "5ce517a46c2ebe49f0aaf9642670057e4788e3c9a481191a94d6d53c1f51f97f",
+    "reason": "Visually compared base and after in affordance review-02.jpg: action ink, navigation chevrons, persistent choice rings and read-along play cues; no frame or shadow change."
   },
   "_internal/mobile/android/app/src/test/snapshots/book_menu_light.png": {
     "sha256": "8ce2fddfae28b1bd4113b591d1b8d6d4e4dd3d6282b95006ff5fb08bc7e44a95",
     "reason": "Visually reviewed the exact before/after snapshot pair on integration contact sheet 1. The rounded sheet surface, hairline and shadow share the panel edge; the stationary rectangular paint band is removed. Controls and labels remain readable with no new clipping."
   },
   "_internal/mobile/android/app/src/test/snapshots/book_partial_light.png": {
-    "sha256": "d17f50201e0ca15cd2fa8dcf3c7171fe0ce8c1c90f83cf1d363e1ea88a20c345",
-    "reason": "Visually reviewed late fix168reveal layout: book_partial_light.png; explicit vertical groups restore intended spacing and keep every visible control separate. Old/new contact sheet inspected before adoption."
+    "sha256": "198b769b8473d4191b385c395bdfc8e42bb4be34e85ac4ed15158e2938bbebdc",
+    "reason": "Visually compared base and after in affordance review-02.jpg: action ink, navigation chevrons, persistent choice rings and read-along play cues; no frame or shadow change."
   },
   "_internal/mobile/android/app/src/test/snapshots/book_person_sheet_light.png": {
     "sha256": "b23b2d50b035c4ed3af84f471e05a3c46f80de810f255f7f6fd0f3d269dfc5d5",
     "reason": "Visually reviewed the exact before/after snapshot pair on integration contact sheet 1. The rounded sheet surface, hairline and shadow share the panel edge; the stationary rectangular paint band is removed. Controls and labels remain readable with no new clipping."
   },
   "_internal/mobile/android/app/src/test/snapshots/book_playing_light.png": {
-    "sha256": "9e65cbc17061413c11f6beaeb9ec823ef0fc46ef95bfbaf9c72968be4ffcb3d3",
-    "reason": "Visually reviewed late fix168reveal layout: book_playing_light.png; explicit vertical groups restore intended spacing and keep every visible control separate. Old/new contact sheet inspected before adoption."
+    "sha256": "3f2d812f835f47405b281678381155d330f1e275d33f338ea8c63ee8d5a8a9d3",
+    "reason": "Visually compared base and after in affordance review-02.jpg: action ink, navigation chevrons, persistent choice rings and read-along play cues; no frame or shadow change."
   },
   "_internal/mobile/android/app/src/test/snapshots/book_save_as_light.png": {
     "sha256": "bafa263a1cc6c6192111c0838bda53c89bc05bb7c9a917e2eae6c1040e949174",
@@ -104,28 +104,28 @@
     "reason": "Visually reviewed late fix168reveal layout: cover_long_title.png; explicit vertical groups restore intended spacing and keep every visible control separate. Old/new contact sheet inspected before adoption."
   },
   "_internal/mobile/android/app/src/test/snapshots/devices_pair_failed_dark.png": {
-    "sha256": "47dc73347769aac53052d424ae2f14d1caf52ac5d5bf8d6c944bf2153eda94a5",
-    "reason": "Reviewed old/new devices_pair_failed_dark.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+    "sha256": "31e65d06bac490b21711a92c5a664d717b823fad3e9df6de70048359e0a95104",
+    "reason": "Visually compared base and after in affordance review-03.jpg: action ink, navigation chevrons, persistent choice rings and read-along play cues; no frame or shadow change."
   },
   "_internal/mobile/android/app/src/test/snapshots/devices_pair_failed_light.png": {
-    "sha256": "49b251415bd4082aaffde20530712b83b928fd8d88d3caa2f371dbf7ebfb82e1",
-    "reason": "Reviewed old/new devices_pair_failed_light.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+    "sha256": "558b5cad94bc47190690418ae494c64980d2744228339436e6324fcfc6e7af9c",
+    "reason": "Visually compared base and after in affordance review-03.jpg: action ink, navigation chevrons, persistent choice rings and read-along play cues; no frame or shadow change."
   },
   "_internal/mobile/android/app/src/test/snapshots/devices_pair_pick_dark.png": {
-    "sha256": "ea5c25d546745f179b9221b01c3efeada482f99912751d564499e9e2e30b5118",
-    "reason": "Reviewed old/new devices_pair_pick_dark.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+    "sha256": "1fa17de116b0d405cd2577e97106420e4445250c37aa184c1fd4151bb19909ea",
+    "reason": "Visually compared base and after in affordance review-03.jpg: action ink, navigation chevrons, persistent choice rings and read-along play cues; no frame or shadow change."
   },
   "_internal/mobile/android/app/src/test/snapshots/devices_pair_pick_light.png": {
-    "sha256": "ab6b71ae5918309dac0bc88449c2d70cbc4bc472488f27a282ea98e950c7533c",
-    "reason": "Reviewed old/new devices_pair_pick_light.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+    "sha256": "48e9d008267ca6e0539a1cf990ce95e611311036aadfba2ad45e4ef7a8ac77b1",
+    "reason": "Visually compared base and after in affordance review-03.jpg: action ink, navigation chevrons, persistent choice rings and read-along play cues; no frame or shadow change."
   },
   "_internal/mobile/android/app/src/test/snapshots/devices_pair_working_dark.png": {
-    "sha256": "c44b00c84984f8500d229d1f2e92340dd7208f3a60d96a50c548e5b28dfed030",
-    "reason": "Reviewed old/new devices_pair_working_dark.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+    "sha256": "18cc1650b0b3e53a71d2c89aaf8c8b04dd88ca4cd0756623ead76e920801421c",
+    "reason": "Visually compared base and after in affordance review-03.jpg: action ink, navigation chevrons, persistent choice rings and read-along play cues; no frame or shadow change."
   },
   "_internal/mobile/android/app/src/test/snapshots/devices_pair_working_light.png": {
-    "sha256": "ef75d83212fca76d235cbc75229d3e8fa8a841dc21485395ad8cfaecdea8cba2",
-    "reason": "Reviewed old/new devices_pair_working_light.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+    "sha256": "4d93cb26852674290775e851160058b4e6672e6a6ebeeb4ca90703bddb8a327e",
+    "reason": "Visually compared base and after in affordance review-03.jpg: action ink, navigation chevrons, persistent choice rings and read-along play cues; no frame or shadow change."
   },
   "_internal/mobile/android/app/src/test/snapshots/devices_sheet_delete_light.png": {
     "sha256": "8c48205059063cee1642bdb6c608f29f162390686c1dc5b6b1c1f7b4fc5af4c1",
@@ -232,36 +232,36 @@
     "reason": "Reviewed old/new export_done_mp3_light.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
   },
   "_internal/mobile/android/app/src/test/snapshots/export_not_started_dark.png": {
-    "sha256": "187e015fb7d7a38a230793b05d6e512e9fa21e205cbe12a80bc1437a7bab2673",
-    "reason": "Reviewed old/new export_not_started_dark.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+    "sha256": "596e0614a93bc34eb216a9103573eaa463afe2d4563d9a71e5c4d5cd0bd6ced4",
+    "reason": "Visually compared base and after in affordance review-04.jpg: action ink, navigation chevrons, persistent choice rings and read-along play cues; no frame or shadow change."
   },
   "_internal/mobile/android/app/src/test/snapshots/export_not_started_light.png": {
-    "sha256": "113cd490edb1fe143c6172d33056d30d85b0e7bed40e51b8446cc95f8b26315f",
-    "reason": "Reviewed old/new export_not_started_light.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+    "sha256": "d3e09239c66576088fb6f03c4c09fe90847a5c797ece0c696a5fb869af775e55",
+    "reason": "Visually compared base and after in affordance review-04.jpg: action ink, navigation chevrons, persistent choice rings and read-along play cues; no frame or shadow change."
   },
   "_internal/mobile/android/app/src/test/snapshots/export_options_fresh_dark.png": {
-    "sha256": "d0f569466622d4e9f2ae5d7b059da4caad849953c79250b2f00d8139346a5b3e",
-    "reason": "Reviewed old/new export_options_fresh_dark.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+    "sha256": "1eda0915b1a2353d61cbc5a7f6360fc00704b8ffe68eaccdb411ad9d83491037",
+    "reason": "Visually compared base and after in affordance review-04.jpg: action ink, navigation chevrons, persistent choice rings and read-along play cues; no frame or shadow change."
   },
   "_internal/mobile/android/app/src/test/snapshots/export_options_fresh_light.png": {
-    "sha256": "fdf7af8a640129f4872172b7f22929c3bad2325c855ce02de78a62aa15a5db96",
-    "reason": "Reviewed old/new export_options_fresh_light.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+    "sha256": "9c3c53a3a12b70bcbb21e6d91511cf6632fcc13361e7defc65010c409dda41d8",
+    "reason": "Visually compared base and after in affordance review-04.jpg: action ink, navigation chevrons, persistent choice rings and read-along play cues; no frame or shadow change."
   },
   "_internal/mobile/android/app/src/test/snapshots/export_options_m4b_dark.png": {
-    "sha256": "a8debfc81180153e6feb82f771fd6cf31c57490c2c423f3d1f16087c94f78922",
-    "reason": "Reviewed old/new export_options_m4b_dark.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+    "sha256": "ce7a4b5e5d69d539f44fd4b1b3bcc979b64bfe53d53d95958957829c36c0e18a",
+    "reason": "Visually compared base and after in affordance review-04.jpg: action ink, navigation chevrons, persistent choice rings and read-along play cues; no frame or shadow change."
   },
   "_internal/mobile/android/app/src/test/snapshots/export_options_m4b_light.png": {
-    "sha256": "086161385c3fabe4d407bca343b7c47a05cd23e487256400b6936f77aa19d879",
-    "reason": "Reviewed old/new export_options_m4b_light.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+    "sha256": "5494fd864e80722f069daeb410f261348452b1da3baacaf201fb904a3b5bbe53",
+    "reason": "Visually compared base and after in affordance review-04.jpg: action ink, navigation chevrons, persistent choice rings and read-along play cues; no frame or shadow change."
   },
   "_internal/mobile/android/app/src/test/snapshots/export_options_mp3_dark.png": {
-    "sha256": "dbd4da8471ecf910e087e028d75c4c3e9ec829ce58ee115a94ff1acbc45d347e",
-    "reason": "Reviewed old/new export_options_mp3_dark.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+    "sha256": "43d8ea6810e5517e2fe5ff13eaf60bbbb6dd47a384908a2014cf7595e9ebe428",
+    "reason": "Visually compared base and after in affordance review-04.jpg: action ink, navigation chevrons, persistent choice rings and read-along play cues; no frame or shadow change."
   },
   "_internal/mobile/android/app/src/test/snapshots/export_options_mp3_light.png": {
-    "sha256": "5c0938be6a6a93674bafd905b075cf87180ea9af4dc95891cd4962d7b50aa9f5",
-    "reason": "Reviewed old/new export_options_mp3_light.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+    "sha256": "6b3297e82a4112c79372ef65b52e9a6b02adac2b42f95d0db7e73a0d83fb31ea",
+    "reason": "Visually compared base and after in affordance review-04.jpg: action ink, navigation chevrons, persistent choice rings and read-along play cues; no frame or shadow change."
   },
   "_internal/mobile/android/app/src/test/snapshots/export_options_no_voice_dark.png": {
     "sha256": "b3fa8f7e67192e02351dad2ea2d75d982d70d1e24c4d7ff6715131b0a7af8cc5",
@@ -428,12 +428,12 @@
     "reason": "Visually inspected the exact combined-render before/after image at native resolution. The library keeps the tile titles from tilename and all three series rows or all four sorting choices. The sheet and menu retain rounded edges and the shared shadow without the stationary band; labels remain unclipped. Recorded only the two binary-conflict test cases after merging sheetedge and fixing nested menu viewport."
   },
   "_internal/mobile/android/app/src/test/snapshots/link_book_mini_dark.png": {
-    "sha256": "9a20e995ad4b9fcc47f55e3999c436665509edb6d50c0032f5bc6ce9ecb5f3f6",
-    "reason": "Visually reviewed late fix168reveal layout: link_book_mini_dark.png; explicit vertical groups restore intended spacing and keep every visible control separate. Old/new contact sheet inspected before adoption."
+    "sha256": "134a6e89bfb4fd5678d97a0afd22e7665f7c14ddaa3d170fa95dcad4d5cbc8fb",
+    "reason": "Visually compared base and after in affordance review-07.jpg: action ink, navigation chevrons, persistent choice rings and read-along play cues; no frame or shadow change."
   },
   "_internal/mobile/android/app/src/test/snapshots/link_book_mini_light.png": {
-    "sha256": "077f5c8ef78f6132b2901de4c51c25730e3392b87d0205bf4f169d93d9312bb2",
-    "reason": "Visually reviewed late fix168reveal layout: link_book_mini_light.png; explicit vertical groups restore intended spacing and keep every visible control separate. Old/new contact sheet inspected before adoption."
+    "sha256": "b7b2256d1f7b98ce72ef6d79c7746b5e5964a64b6c71f5c26d6da19c0098c0b8",
+    "reason": "Visually compared base and after in affordance review-07.jpg: action ink, navigation chevrons, persistent choice rings and read-along play cues; no frame or shadow change."
   },
   "_internal/mobile/android/app/src/test/snapshots/mini_long_title_light.png": {
     "sha256": "f437e3aed9fa9bcf4bfc4301fb35f21bc4d15e69c3587207933e85e154893811",
@@ -476,72 +476,72 @@
     "reason": "Visually reviewed the exact before/after snapshot pair on integration contact sheet 3. The rounded sheet surface, hairline and shadow share the panel edge; the stationary rectangular paint band is removed. Controls and labels remain readable with no new clipping."
   },
   "_internal/mobile/android/app/src/test/snapshots/music_library_dark.png": {
-    "sha256": "1e1b32724672b99e267c67d0df7848d73ef0b3b3a08e75c2b6b7097482064dd2",
-    "reason": "Visually reviewed late fix168reveal layout: music_library_dark.png; explicit vertical groups restore intended spacing and keep every visible control separate. Old/new contact sheet inspected before adoption."
+    "sha256": "2528ff569d3620bc93e3f9076f206be34f25fbe19a83c12ce27ed8e13d28946a",
+    "reason": "Visually compared base and after in affordance review-delta/delta-01.jpg: action ink and persistent play/choice/navigation cues; loaded artwork visible in current fixture."
   },
   "_internal/mobile/android/app/src/test/snapshots/music_library_downloading_dark.png": {
-    "sha256": "f8b5ea5049c6fd607fe78bd70ec70bef94d301ab43b6efabf50559bf1c8e176a",
-    "reason": "Visually reviewed late fix168reveal layout: music_library_downloading_dark.png; explicit vertical groups restore intended spacing and keep every visible control separate. Old/new contact sheet inspected before adoption."
+    "sha256": "d1870959675cd2261c659d44838af3a6f116c7cccfa21313192cb1c7bb608bfd",
+    "reason": "Visually compared base and after in affordance review-delta/delta-01.jpg: action ink and persistent play/choice/navigation cues; loaded artwork visible in current fixture."
   },
   "_internal/mobile/android/app/src/test/snapshots/music_library_downloading_light.png": {
-    "sha256": "04a13565cc480462330ce3be6bc362544823b6897c8b9bb6011c99d71b76ec51",
-    "reason": "Visually reviewed late fix168reveal layout: music_library_downloading_light.png; explicit vertical groups restore intended spacing and keep every visible control separate. Old/new contact sheet inspected before adoption."
+    "sha256": "b3c5c5cb01c661847e2b168f407259fb6dd8b7beb7f648c6bc03893a97546214",
+    "reason": "Visually compared base and after in affordance review-delta/delta-01.jpg: action ink and persistent play/choice/navigation cues; loaded artwork visible in current fixture."
   },
   "_internal/mobile/android/app/src/test/snapshots/music_library_font130_light.png": {
-    "sha256": "3da94cbaa1ae044a94d6f9e4a5e1091a6b5fe5736e4569c186ce58558e6e6867",
-    "reason": "Visually reviewed late fix168reveal layout: music_library_font130_light.png; explicit vertical groups restore intended spacing and keep every visible control separate. Old/new contact sheet inspected before adoption."
+    "sha256": "ef28e7018309b39cdf02b443fa6c73b42e6d6a98753ec60b8950a2577ebad1b4",
+    "reason": "Visually compared base and after in affordance review-delta/delta-01.jpg: action ink and persistent play/choice/navigation cues; loaded artwork visible in current fixture."
   },
   "_internal/mobile/android/app/src/test/snapshots/music_library_light.png": {
-    "sha256": "436a586bdd1d7536a78679dd0ed09d91200b31365afb9dfb4d9540383e5adfca",
-    "reason": "Visually reviewed late fix168reveal layout: music_library_light.png; explicit vertical groups restore intended spacing and keep every visible control separate. Old/new contact sheet inspected before adoption."
+    "sha256": "679e6eff0b6764ca167f14c7d35d4179f8f5b8fe5c53a28e65f0d46a48d5b7c5",
+    "reason": "Visually compared base and after in affordance review-delta/delta-01.jpg: action ink and persistent play/choice/navigation cues; loaded artwork visible in current fixture."
   },
   "_internal/mobile/android/app/src/test/snapshots/music_pick_dark.png": {
-    "sha256": "68a0416f1b35810e16bf6280533dcaf235c435d9d4a271e7fbde3de796375d8c",
-    "reason": "Visually reviewed late fix168reveal layout: music_pick_dark.png; explicit vertical groups restore intended spacing and keep every visible control separate. Old/new contact sheet inspected before adoption."
+    "sha256": "5c776861402c304ee111222d9e4c08a57203341d9ac5bf386dfe1333e07bbedd",
+    "reason": "Visually compared base and after in affordance review-delta/delta-01.jpg: action ink and persistent play/choice/navigation cues; loaded artwork visible in current fixture."
   },
   "_internal/mobile/android/app/src/test/snapshots/music_pick_light.png": {
-    "sha256": "9b63a40fe37b63ea099382564ac86419ce518326a17c59738928bb92b87bafd3",
-    "reason": "Visually reviewed late fix168reveal layout: music_pick_light.png; explicit vertical groups restore intended spacing and keep every visible control separate. Old/new contact sheet inspected before adoption."
+    "sha256": "515ff4c6aac9c7e2c0e2b6c87c5e5f0a76c00cd1fbae4443541f1bc4362736b7",
+    "reason": "Visually compared base and after in affordance review-delta/delta-02.jpg: action ink and persistent play/choice/navigation cues; loaded artwork visible in current fixture."
   },
   "_internal/mobile/android/app/src/test/snapshots/np_caught_up_light.png": {
-    "sha256": "ea87254dc24d7ce768ce0435f8e719cbf3dea895388ee86f5626fb8b462dbb42",
-    "reason": "Reviewed old/new np_caught_up_light.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+    "sha256": "19d8b87e98e4182c2e105807ea9d16c85217166bc4d5b896359db525a23d3aa8",
+    "reason": "Visually compared base and after in affordance review-10.jpg: action ink, navigation chevrons, persistent choice rings and read-along play cues; no frame or shadow change."
   },
   "_internal/mobile/android/app/src/test/snapshots/np_ended_light.png": {
-    "sha256": "c35f2256c5d00ad68b202d3c5818b99838b9d416c0227ca55a33c768940d7cbb",
-    "reason": "Reviewed old/new np_ended_light.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+    "sha256": "bffb19631b646f72551987d60f52ac05b933d937c4c65eeb19fc0bf2fbf03df7",
+    "reason": "Visually compared base and after in affordance review-10.jpg: action ink, navigation chevrons, persistent choice rings and read-along play cues; no frame or shadow change."
   },
   "_internal/mobile/android/app/src/test/snapshots/np_large_dark.png": {
-    "sha256": "a513591be12e0015597a8b087a555e8bccdcb47fea6ac21a138a55b589f329bd",
-    "reason": "Reviewed old/new np_large_dark.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+    "sha256": "a3d326e2daeecc2f6b5d7a2281afa7a20f6d682d7c8e34ecbdb9a76b67e81bcc",
+    "reason": "Visually compared base and after in affordance review-10.jpg: action ink, navigation chevrons, persistent choice rings and read-along play cues; no frame or shadow change."
   },
   "_internal/mobile/android/app/src/test/snapshots/np_large_light.png": {
-    "sha256": "9a5ad8f60aed5cd5cb1cccab305e06a49ad61c6b5d9992ae0799dd79d204818c",
-    "reason": "Reviewed old/new np_large_light.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+    "sha256": "71275c44bfbf40acf212da572e672bdd70b896f62b0de63f2052e97d6f5750dc",
+    "reason": "Visually compared base and after in affordance review-10.jpg: action ink, navigation chevrons, persistent choice rings and read-along play cues; no frame or shadow change."
   },
   "_internal/mobile/android/app/src/test/snapshots/np_long_dark.png": {
-    "sha256": "18a78018e15756f8c6f7a11adc760c8171920883ffdf0942eb4bb4d178dace4b",
-    "reason": "Reviewed old/new np_long_dark.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+    "sha256": "dd26253d516bc2060be87806884b9ee717fdeaf236539019e5de509c1a720180",
+    "reason": "Visually compared base and after in affordance review-10.jpg: action ink, navigation chevrons, persistent choice rings and read-along play cues; no frame or shadow change."
   },
   "_internal/mobile/android/app/src/test/snapshots/np_long_light.png": {
-    "sha256": "a38adbed08e12f37bae414ff12604226f933e76ce93103ffa2d53b2a759de6f0",
-    "reason": "Reviewed old/new np_long_light.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+    "sha256": "a0a394b3ae9f40f1d86a84b6721a094fdbe40e96f8b7219d711d61adcb4fc634",
+    "reason": "Visually compared base and after in affordance review-10.jpg: action ink, navigation chevrons, persistent choice rings and read-along play cues; no frame or shadow change."
   },
   "_internal/mobile/android/app/src/test/snapshots/np_note_light.png": {
-    "sha256": "eb8c92cfd5aeb9904c30a1c6cf41019c8f5711172e51414bb803a59f050e9537",
-    "reason": "Reviewed old/new np_note_light.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+    "sha256": "90518cfa35b2f4465d7bc91ccd2cd86ccf43dee5592c983c1873be8d7f898182",
+    "reason": "Visually compared base and after in affordance review-11.jpg: action ink, navigation chevrons, persistent choice rings and read-along play cues; no frame or shadow change."
   },
   "_internal/mobile/android/app/src/test/snapshots/np_opening_start.png": {
     "sha256": "428e86fcad98e2408a66071add72ed5020a81319131a6815c4ff42e6cced90f9",
     "reason": "Reviewed old/new np_opening_start.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
   },
   "_internal/mobile/android/app/src/test/snapshots/np_paused_dark.png": {
-    "sha256": "2c9f651bf9581c71892ad2b11e219839cdacd13dd7b978f7070d8e607a627074",
-    "reason": "Reviewed old/new np_paused_dark.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+    "sha256": "112dc34c27e72a39324533e128337afaca100505458667351705ce5fa02b93ed",
+    "reason": "Visually compared base and after in affordance review-11.jpg: action ink, navigation chevrons, persistent choice rings and read-along play cues; no frame or shadow change."
   },
   "_internal/mobile/android/app/src/test/snapshots/np_paused_light.png": {
-    "sha256": "d5ce97f29d8373e1dd314db3f433f3a7941c6ed654c8ccfd0b647e61ac1c0f1b",
-    "reason": "Reviewed old/new np_paused_light.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+    "sha256": "355a3f0946d517bb26f923c303bb911813a4ae2c9c45abf876018f91d129a90c",
+    "reason": "Visually compared base and after in affordance review-11.jpg: action ink, navigation chevrons, persistent choice rings and read-along play cues; no frame or shadow change."
   },
   "_internal/mobile/android/app/src/test/snapshots/np_picker_sleep_chapters_light.png": {
     "sha256": "4d7e16545fdaf4c833122cb30d1c031c9ab98cd031bf356b50f0de79778b2f57",
@@ -556,32 +556,32 @@
     "reason": "Visually reviewed the exact before/after snapshot pair on integration contact sheet 5. The rounded sheet surface, hairline and shadow share the panel edge; the stationary rectangular paint band is removed. Controls and labels remain readable with no new clipping."
   },
   "_internal/mobile/android/app/src/test/snapshots/np_playing_dark.png": {
-    "sha256": "304954708b1c7e68739f1435c5a898cdca816c5758b948fbb74c7fc14e628bf9",
-    "reason": "Reviewed old/new np_playing_dark.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+    "sha256": "9127a8768c04dd0a2ee2001655944377d25b1e6e0ab4015079f0082b0e42c180",
+    "reason": "Visually compared base and after in affordance review-12.jpg: action ink, navigation chevrons, persistent choice rings and read-along play cues; no frame or shadow change."
   },
   "_internal/mobile/android/app/src/test/snapshots/np_playing_light.png": {
-    "sha256": "4b135aeb056b1b6af4f99307b23f55a2b2a142ccee1fe3f78edf0e29c9837952",
-    "reason": "Reviewed old/new np_playing_light.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+    "sha256": "0a4953acd63bb480b00c877bacc0ae13d27d645bded1301312b1a742f4bc0b5c",
+    "reason": "Visually compared base and after in affordance review-12.jpg: action ink, navigation chevrons, persistent choice rings and read-along play cues; no frame or shadow change."
   },
   "_internal/mobile/android/app/src/test/snapshots/np_reading_dark.png": {
-    "sha256": "8d1d0537a23cc9cfb552b0053ae568d0451abf44b292b533f24e30fa1fe46b42",
-    "reason": "Reviewed old/new np_reading_dark.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+    "sha256": "2ff7b08b8c5ff897e154dd3dc101089c3fd0425fb8adb98371eeed99c4bffc67",
+    "reason": "Visually compared base and after in affordance review-12.jpg: action ink, navigation chevrons, persistent choice rings and read-along play cues; no frame or shadow change."
   },
   "_internal/mobile/android/app/src/test/snapshots/np_reading_follow_light.png": {
-    "sha256": "f0ac4f5a6655a3f46cbcdb063e3d269c0fb8736310d4bf36a13741b11dae294e",
-    "reason": "Reviewed old/new np_reading_follow_light.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+    "sha256": "8abce82e74c667092c48864ec77f72a887c3bbeb9cf178a48be0f1daae94cfc9",
+    "reason": "Visually compared base and after in affordance review-13.jpg: action ink, navigation chevrons, persistent choice rings and read-along play cues; no frame or shadow change."
   },
   "_internal/mobile/android/app/src/test/snapshots/np_reading_light.png": {
-    "sha256": "6dd24f96c5d37586b3c9b946163ef51a6db5c6e53186ab11eed6b62232be5053",
-    "reason": "Reviewed old/new np_reading_light.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+    "sha256": "494972d36052cf53062aaeab72b5ce94d6be7b764500fe6d71d3cdea21e1b779",
+    "reason": "Visually compared base and after in affordance review-13.jpg: action ink, navigation chevrons, persistent choice rings and read-along play cues; no frame or shadow change."
   },
   "_internal/mobile/android/app/src/test/snapshots/np_reading_mid.png": {
-    "sha256": "88afcd09e1716197c7b3b43609898bd4f053570366bcb2fe6c9f353174dd0f6b",
-    "reason": "Reviewed old/new np_reading_mid.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+    "sha256": "081b92bd35dd2dfea299e8f47fae29da1de8ce5c978733c4465dcfb52776c35e",
+    "reason": "Visually compared base and after in affordance review-13.jpg: action ink, navigation chevrons, persistent choice rings and read-along play cues; no frame or shadow change."
   },
   "_internal/mobile/android/app/src/test/snapshots/np_return_chip_light.png": {
-    "sha256": "845bf13660f99a643257e6846a15e58aee297c82fededf1cb4b18f31cf42fbaf",
-    "reason": "Reviewed old/new np_return_chip_light.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+    "sha256": "0dd31ce0c749da67f258cb6d3aa59e679e2e2fc3932bce2ee2c774f77c068680",
+    "reason": "Visually compared base and after in affordance review-13.jpg: action ink, navigation chevrons, persistent choice rings and read-along play cues; no frame or shadow change."
   },
   "_internal/mobile/android/app/src/test/snapshots/np_sleep_dark.png": {
     "sha256": "c43acf0ada0294f185a1ef9cc452c1cd2df2da97bbd7c0704f44b779e01cd0f0",
@@ -592,20 +592,20 @@
     "reason": "Visually reviewed the exact before/after snapshot pair on integration contact sheet 5. The rounded sheet surface, hairline and shadow share the panel edge; the stationary rectangular paint band is removed. Controls and labels remain readable with no new clipping."
   },
   "_internal/mobile/android/app/src/test/snapshots/picker_settings_sleep_dark.png": {
-    "sha256": "36e641de5fe24112217f1139ee3d7cefbeac787c52cfc2ca27d5d5b28a6c87b2",
-    "reason": "Reviewed old/new picker_settings_sleep_dark.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+    "sha256": "79834a02e1fa241f4cdf681758ff82701ba965f33ea88bdc53cd5bfecb1d9bb7",
+    "reason": "Visually compared base and after in affordance review-delta/delta-02.jpg: action ink and persistent play/choice/navigation cues; loaded artwork visible in current fixture."
   },
   "_internal/mobile/android/app/src/test/snapshots/picker_settings_sleep_font130_dark.png": {
-    "sha256": "4747d870e47d37b7817704a7ad2d8a9841fa9888effc519fe3e0945cde3fa84b",
-    "reason": "Reviewed old/new picker_settings_sleep_font130_dark.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+    "sha256": "8ed4b3913e416003ae1585519d1536c5126081c85e888f92ae569ee3235929af",
+    "reason": "Visually compared base and after in affordance review-delta/delta-03.jpg: action ink and persistent play/choice/navigation cues; loaded artwork visible in current fixture."
   },
   "_internal/mobile/android/app/src/test/snapshots/picker_settings_sleep_font130_light.png": {
-    "sha256": "7ba91c18f60f0ba714be7fe7ceda43222883024724930769bceff9eda7de3277",
-    "reason": "Reviewed old/new picker_settings_sleep_font130_light.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+    "sha256": "ebfa24d8caac84d88dd3f2883b75a65ba2be0fa894446f2eaf3c2e721782fd4c",
+    "reason": "Visually compared base and after in affordance review-delta/delta-03.jpg: action ink and persistent play/choice/navigation cues; loaded artwork visible in current fixture."
   },
   "_internal/mobile/android/app/src/test/snapshots/picker_settings_sleep_light.png": {
-    "sha256": "65fe58664720afc7a504253d0ea2f45e3acd0b81b41cc9f676f60d1c8edba8c7",
-    "reason": "Reviewed old/new picker_settings_sleep_light.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+    "sha256": "afa5486a768654ad8315e7839bd339c8c6388d7adce91ef443f40c22c331c7cf",
+    "reason": "Visually compared base and after in affordance review-delta/delta-03.jpg: action ink and persistent play/choice/navigation cues; loaded artwork visible in current fixture."
   },
   "_internal/mobile/android/app/src/test/snapshots/pip_content_dark.png": {
     "sha256": "c2bd655a22eac5e19cfd54de611b2d2370277b25dd54d9bc69474807bc4aa640",
@@ -620,12 +620,12 @@
     "reason": "Visually reviewed the exact before/after snapshot pair on integration contact sheet 6. The rounded sheet surface, hairline and shadow share the panel edge; the stationary rectangular paint band is removed. Controls and labels remain readable with no new clipping."
   },
   "_internal/mobile/android/app/src/test/snapshots/settings_expanded_light.png": {
-    "sha256": "beb273fc54555dd32b12f8c1ddba7d61a07084c2438ce745114d6a2d1c5be5b4",
-    "reason": "Visually reviewed 0.4.169 summary case fix: settings_expanded_light.png; only the Listening row summary changed from \"nhạc tự chọn\" to \"Nhạc tự chọn\" (diff box (170, 569, 438, 610)). Old/new contact sheet inspected before adoption."
+    "sha256": "a7b9000901c9ffbfacb12750669a63a3c7bc3156e82c122cfe015c71a438dc3b",
+    "reason": "Visually compared base and after in affordance review-14.jpg: action ink, navigation chevrons, persistent choice rings and read-along play cues; no frame or shadow change."
   },
   "_internal/mobile/android/app/src/test/snapshots/settings_large_dark.png": {
-    "sha256": "a2589a25af3ff5d205a7c58a0117ae5f0fb478b178d8715267d91f20149a4230",
-    "reason": "Visually reviewed 0.4.169 summary case fix: settings_large_dark.png; only the Listening row summary changed from \"nhạc tự chọn\" to \"Nhạc tự chọn\" (diff box (350, 569, 618, 610)). Old/new contact sheet inspected before adoption."
+    "sha256": "dbdbcd02ffb241dfd302be8716f3e6c378ae6e588dce6b67ad2a267a8745f832",
+    "reason": "Visually compared base and after in affordance review-15.jpg: action ink, navigation chevrons, persistent choice rings and read-along play cues; no frame or shadow change."
   },
   "_internal/mobile/android/app/src/test/snapshots/settings_log_sheet_dark.png": {
     "sha256": "eb7301a363a3b40135d934e6172fcebb755e97fff066ef05857d794a0d791651",
@@ -644,12 +644,12 @@
     "reason": "Visually reviewed the exact before/after snapshot pair on integration contact sheet 6. The rounded sheet surface, hairline and shadow share the panel edge; the stationary rectangular paint band is removed. Controls and labels remain readable with no new clipping."
   },
   "_internal/mobile/android/app/src/test/snapshots/shell_book_light.png": {
-    "sha256": "0e0c20b85b0b47804534fdad3d3a75409cd8001c3f0db2fd492100466c6a5f43",
-    "reason": "Visually reviewed late fix168reveal layout: shell_book_light.png; explicit vertical groups restore intended spacing and keep every visible control separate. Old/new contact sheet inspected before adoption."
+    "sha256": "1ae72d11c96c8c289757610e2eb646ecbcce624f658d2b6eef25bc4d034f9950",
+    "reason": "Visually compared base and after in affordance review-15.jpg: action ink, navigation chevrons, persistent choice rings and read-along play cues; no frame or shadow change."
   },
   "_internal/mobile/android/app/src/test/snapshots/shell_empty_light.png": {
-    "sha256": "d30608f1998fa778cd8c4dedf1e7ea9fd442a6cc1c56fa57f07be76a51d698a7",
-    "reason": "Reviewed old/new shell_empty_light.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+    "sha256": "73ce37a365b65d72d5491b9c1f7613497161bf399f5f7e8361352787034a9059",
+    "reason": "Visually compared base and after in affordance review-16.jpg: action ink, navigation chevrons, persistent choice rings and read-along play cues; no frame or shadow change."
   },
   "_internal/mobile/android/app/src/test/snapshots/shell_library_dark.png": {
     "sha256": "fde615f76cce0aa9757a2c0fd48122ceb9d19822e24ab611f26aec1478625d3b",
@@ -668,44 +668,44 @@
     "reason": "Visually reviewed tilename change: shell_mini_restored_light.png; drawn-cover tiles now show the two-line title under the cover like photo tiles (owner 15-11). Old/new contact sheet inspected before adoption."
   },
   "_internal/mobile/android/app/src/test/snapshots/shell_now_playing_mid_light.png": {
-    "sha256": "a4eb97f58d3a7bda601a3dec463c9ff06fa060329cc01ba3958b0547eae3d951",
-    "reason": "Reviewed old/new shell_now_playing_mid_light.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+    "sha256": "ac71c5b8c47a8ff6fe3ef4262acdca3a3bb52fd5cc5489f164db87d33b00cc59",
+    "reason": "Visually compared base and after in affordance review-16.jpg: action ink, navigation chevrons, persistent choice rings and read-along play cues; no frame or shadow change."
   },
   "_internal/mobile/android/app/src/test/snapshots/shell_now_playing_open_light.png": {
-    "sha256": "67db609a502a804b99a0b34b7eced475dca2acabaa3be2999695991905bdb3cc",
-    "reason": "Reviewed old/new shell_now_playing_open_light.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+    "sha256": "6a7beaf28771eb5b98af5407d0981fec9149c4e4e9d9e0d5b123fccbdd2d931b",
+    "reason": "Visually compared base and after in affordance review-16.jpg: action ink, navigation chevrons, persistent choice rings and read-along play cues; no frame or shadow change."
   },
   "_internal/mobile/android/app/src/test/snapshots/shell_push_mid_light.png": {
-    "sha256": "2d71b6a2c14a8abde41d23df264425b802b8b039d70e201d9231f55073edc686",
-    "reason": "Visually reviewed late fix168reveal layout: shell_push_mid_light.png; explicit vertical groups restore intended spacing and keep every visible control separate. Old/new contact sheet inspected before adoption."
+    "sha256": "9aa56074192efdcb28405ff1d8ffc26de41dfe7bcda133fbf07b6e93039d22b4",
+    "reason": "Visually compared base and after in affordance review-16.jpg: action ink, navigation chevrons, persistent choice rings and read-along play cues; no frame or shadow change."
   },
   "_internal/mobile/android/app/src/test/snapshots/shell_read_along_from_book_light.png": {
-    "sha256": "29fc4169de9d907e35dcc8a0311873684fb2c820a30b96f0f8e103f37d46517c",
-    "reason": "Reviewed old/new shell_read_along_from_book_light.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+    "sha256": "58924f72329f644c74215daba5604480d87a56b6081a7addcd361aa15535550e",
+    "reason": "Visually compared base and after in affordance review-16.jpg: action ink, navigation chevrons, persistent choice rings and read-along play cues; no frame or shadow change."
   },
   "_internal/mobile/android/app/src/test/snapshots/shell_settings_dark.png": {
-    "sha256": "9a67e3d38867d6e5969ec70cc439a4c1bd0c781f0aec723715f68ac0dc148107",
-    "reason": "Visually reviewed 0.4.169 summary case fix: shell_settings_dark.png; only the Listening row summary changed from \"nhạc tự chọn\" to \"Nhạc tự chọn\" (diff box (170, 572, 438, 613)). Old/new contact sheet inspected before adoption."
+    "sha256": "dd6d33d7986f17cc797af5a351f5cd8ac1e666a063b43f7233fb5a880641eab9",
+    "reason": "Visually compared base and after in affordance review-16.jpg: action ink, navigation chevrons, persistent choice rings and read-along play cues; no frame or shadow change."
   },
   "_internal/mobile/android/app/src/test/snapshots/shell_studio_paired_light.png": {
-    "sha256": "bd2682fd70d8de11da169215185af3cfe210c9929ff5bed3c3dfd43fe52d4453",
-    "reason": "Reviewed old/new shell_studio_paired_light.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+    "sha256": "226a42e0eb64eb43108aaeb7c7aead502c1ac18f334b8f0f0e807f0533cbe9ac",
+    "reason": "Visually compared base and after in affordance review-17.jpg: action ink, navigation chevrons, persistent choice rings and read-along play cues; no frame or shadow change."
   },
   "_internal/mobile/android/app/src/test/snapshots/shell_studio_single_light.png": {
-    "sha256": "b5eab8f6617c57a7e8d869366d24511eac4c6770f0b5e3cc58efec53b8b33084",
-    "reason": "Reviewed old/new shell_studio_single_light.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+    "sha256": "5247bcf3c62e458008f117e141cd4efe146c9c89ea5b3a1319615b960d60b676",
+    "reason": "Visually compared base and after in affordance review-17.jpg: action ink, navigation chevrons, persistent choice rings and read-along play cues; no frame or shadow change."
   },
   "_internal/mobile/android/app/src/test/snapshots/skip_glyph_back_light.png": {
     "sha256": "b0cbd64c35b2f39686aac4c271dc7fb5c6b6f1791be886311503e1bc09e0b505",
     "reason": "Reviewed old/new skip_glyph_back_light.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
   },
   "_internal/mobile/android/app/src/test/snapshots/tone_360_130_dark_mine.png": {
-    "sha256": "c3d875339e6ec5a88a3331f9e2b508d748ff82deec570e0185af58bfcc20b29b",
-    "reason": "Reviewed old/new tone_360_130_dark_mine.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+    "sha256": "7b62b18fdea883a3dfaec9aafa9fd5bc12358b32a3f748abe1a90c994b68231f",
+    "reason": "Visually compared base and after in affordance review-17.jpg: action ink, navigation chevrons, persistent choice rings and read-along play cues; no frame or shadow change."
   },
   "_internal/mobile/android/app/src/test/snapshots/tone_360_130_light_mine.png": {
-    "sha256": "004d26874367e1f90a19260c62a9837f5ba7247a8aea594e0275ea30cf84bf18",
-    "reason": "Reviewed old/new tone_360_130_light_mine.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
+    "sha256": "e35138cb69b91f6bc95093ea71510e06d2aaeb1fda3bb55206e6ad10b82eca04",
+    "reason": "Visually compared base and after in affordance review-17.jpg: action ink, navigation chevrons, persistent choice rings and read-along play cues; no frame or shadow change."
   },
   "_internal/mobile/android/app/src/test/snapshots/voice_consent_sheet_dark.png": {
     "sha256": "b6490975bc81cc5a48db59f191caf3e704a3bba7621f19b5c3afc76e352681a9",
@@ -800,12 +800,12 @@
     "reason": "Reviewed icon_sheet_dark.png in late contact sheets 01-03: current typography and header spacing retain readable labels, separated actions, and centered icon/number shapes; no settled overlap."
   },
   "_internal/mobile/android/app/src/test/snapshots/link_np_book_dark.png": {
-    "sha256": "0292aa595f2b0a991df0630d2b1feae28a4eccda2e21e43f7de7721f3b70b155",
-    "reason": "Reviewed link_np_book_dark.png in late contact sheets 01-03: current typography and header spacing retain readable labels, separated actions, and centered icon/number shapes; no settled overlap."
+    "sha256": "b0686be47380cdf8e452422a672bd39dbfac04b2e120dbf09177343756ff6f45",
+    "reason": "Visually compared base and after in affordance review-07.jpg: action ink, navigation chevrons, persistent choice rings and read-along play cues; no frame or shadow change."
   },
   "_internal/mobile/android/app/src/test/snapshots/link_np_book_light.png": {
-    "sha256": "67db609a502a804b99a0b34b7eced475dca2acabaa3be2999695991905bdb3cc",
-    "reason": "Reviewed link_np_book_light.png in late contact sheets 01-03: current typography and header spacing retain readable labels, separated actions, and centered icon/number shapes; no settled overlap."
+    "sha256": "6a7beaf28771eb5b98af5407d0981fec9149c4e4e9d9e0d5b123fccbdd2d931b",
+    "reason": "Visually compared base and after in affordance review-07.jpg: action ink, navigation chevrons, persistent choice rings and read-along play cues; no frame or shadow change."
   },
   "_internal/mobile/android/app/src/test/snapshots/music_book_menu_row_dark.png": {
     "sha256": "dff6fd6522002efdb6165a11c0b06ec0ea67e0e202c3fc72e12c6aca8361f345",
@@ -868,68 +868,68 @@
     "reason": "Visually reviewed the exact before/after snapshot pair on integration contact sheet 7. The rounded sheet surface, hairline and shadow share the panel edge; the stationary rectangular paint band is removed. Controls and labels remain readable with no new clipping."
   },
   "_internal/mobile/android/app/src/test/snapshots/music_audio_sheet_130_dark.png": {
-    "sha256": "dd0ff9e4b03b2683892ec9acf3a75ccab5d58bd49a04c282c59029cdf5df6ece",
-    "reason": "Reviewed sound sheet redesign: three flat sections, shared dense rulers, chevron navigation and animated music dependencies. Light/dark, 100/130 percent and complete content checked against before captures; native glyph audit has no intrinsic clipping or overlap."
+    "sha256": "238984ca99459c1841afdc6c0c8be56571aaec0fbb58acacac7f9f87e74cb845",
+    "reason": "Visually compared base and after in affordance review-07.jpg: action ink, navigation chevrons, persistent choice rings and read-along play cues; no frame or shadow change."
   },
   "_internal/mobile/android/app/src/test/snapshots/music_audio_sheet_130_dark_bottom.png": {
-    "sha256": "254bb6b2e8810fab84411f1d39192cf7bdd34ab62e8c8e10b95c48de6e022c2b",
-    "reason": "Reviewed sound sheet redesign: three flat sections, shared dense rulers, chevron navigation and animated music dependencies. Light/dark, 100/130 percent and complete content checked against before captures; native glyph audit has no intrinsic clipping or overlap."
+    "sha256": "36b14f69654bf462a44b626d2c6ef5bdce983ab91916c0c9549946a0b3db700c",
+    "reason": "Visually compared base and after in affordance review-07.jpg: action ink, navigation chevrons, persistent choice rings and read-along play cues; no frame or shadow change."
   },
   "_internal/mobile/android/app/src/test/snapshots/music_audio_sheet_130_dark_off.png": {
-    "sha256": "f7dc46d01f3926cdb205be2a7f671892828855772f8e2b78e434b406ed5a5b00",
-    "reason": "Reviewed sound sheet redesign: three flat sections, shared dense rulers, chevron navigation and animated music dependencies. Light/dark, 100/130 percent and complete content checked against before captures; native glyph audit has no intrinsic clipping or overlap."
+    "sha256": "622f474179a9d6a7ad41117b7c2a82c43d29ad39942c0c90ad6fd05a31ff29a1",
+    "reason": "Visually compared base and after in affordance review-08.jpg: action ink, navigation chevrons, persistent choice rings and read-along play cues; no frame or shadow change."
   },
   "_internal/mobile/android/app/src/test/snapshots/music_audio_sheet_130_light.png": {
-    "sha256": "6388be39a21309859408423588eb1617a88dc46ea772f9b7e8b4b82c78830e87",
-    "reason": "Reviewed sound sheet redesign: three flat sections, shared dense rulers, chevron navigation and animated music dependencies. Light/dark, 100/130 percent and complete content checked against before captures; native glyph audit has no intrinsic clipping or overlap."
+    "sha256": "6e2839f1c1cda1f8e97b33c711c211978206abd87a266a2eb97607aae53e393f",
+    "reason": "Visually compared base and after in affordance review-08.jpg: action ink, navigation chevrons, persistent choice rings and read-along play cues; no frame or shadow change."
   },
   "_internal/mobile/android/app/src/test/snapshots/music_audio_sheet_130_light_bottom.png": {
-    "sha256": "6711d189ecc0785d84c343a3f7cc5c7b3d7ab4d22a8a3119b8b93ce03277dd04",
-    "reason": "Reviewed sound sheet redesign: three flat sections, shared dense rulers, chevron navigation and animated music dependencies. Light/dark, 100/130 percent and complete content checked against before captures; native glyph audit has no intrinsic clipping or overlap."
+    "sha256": "49fa27b3324a1697cf4bb4fccfe6366c6aa46d0650185cef725dc442706f3e29",
+    "reason": "Visually compared base and after in affordance review-08.jpg: action ink, navigation chevrons, persistent choice rings and read-along play cues; no frame or shadow change."
   },
   "_internal/mobile/android/app/src/test/snapshots/music_audio_sheet_130_light_off.png": {
-    "sha256": "339a1fc99952ac530aad02b243909e47d7e63e11768ac912e4e5f13aa73548d1",
-    "reason": "Reviewed sound sheet redesign: three flat sections, shared dense rulers, chevron navigation and animated music dependencies. Light/dark, 100/130 percent and complete content checked against before captures; native glyph audit has no intrinsic clipping or overlap."
+    "sha256": "8a848bfe7c02ce90d87ef820ca711ad8a59833f166742a17361a48d5dafb3b95",
+    "reason": "Visually compared base and after in affordance review-08.jpg: action ink, navigation chevrons, persistent choice rings and read-along play cues; no frame or shadow change."
   },
   "_internal/mobile/android/app/src/test/snapshots/music_audio_sheet_dark.png": {
-    "sha256": "47b18d19ff864ff75ad6bcbff8a0746ba4709444018458cee7dd61b074586aef",
-    "reason": "Reviewed sound sheet redesign: three flat sections, shared dense rulers, chevron navigation and animated music dependencies. Light/dark, 100/130 percent and complete content checked against before captures; native glyph audit has no intrinsic clipping or overlap."
+    "sha256": "7d88b651450dbf9524059e4f429428ded48e01751f67c49715a4fe7297e73210",
+    "reason": "Visually compared base and after in affordance review-08.jpg: action ink, navigation chevrons, persistent choice rings and read-along play cues; no frame or shadow change."
   },
   "_internal/mobile/android/app/src/test/snapshots/music_audio_sheet_dark_bottom.png": {
-    "sha256": "90d57a514446ce915b64e830a6ce05d0521701f4320c21c84bb7a9a40772b13f",
-    "reason": "Reviewed sound sheet redesign: three flat sections, shared dense rulers, chevron navigation and animated music dependencies. Light/dark, 100/130 percent and complete content checked against before captures; native glyph audit has no intrinsic clipping or overlap."
+    "sha256": "31a64c409ecb63087b844beff0d07f3adca9c94cced4c313a7e860452e1626eb",
+    "reason": "Visually compared base and after in affordance review-08.jpg: action ink, navigation chevrons, persistent choice rings and read-along play cues; no frame or shadow change."
   },
   "_internal/mobile/android/app/src/test/snapshots/music_audio_sheet_dark_off.png": {
-    "sha256": "17510a13f992516e76fa8df773680989fc94c86c5f6f248601131f30d3779983",
-    "reason": "Reviewed sound sheet redesign: three flat sections, shared dense rulers, chevron navigation and animated music dependencies. Light/dark, 100/130 percent and complete content checked against before captures; native glyph audit has no intrinsic clipping or overlap."
+    "sha256": "fde8d753bff2bca9950b363a36112fd5ee5424cd2ef5bc670449e708e54c137c",
+    "reason": "Visually compared base and after in affordance review-08.jpg: action ink, navigation chevrons, persistent choice rings and read-along play cues; no frame or shadow change."
   },
   "_internal/mobile/android/app/src/test/snapshots/music_audio_sheet_full_130_dark.png": {
-    "sha256": "7e6b90c1b0a13ab7eccf2b2f3df65e5e8a26f985ae1f4a1053a6217008c66cda",
-    "reason": "Reviewed sound sheet redesign: three flat sections, shared dense rulers, chevron navigation and animated music dependencies. Light/dark, 100/130 percent and complete content checked against before captures; native glyph audit has no intrinsic clipping or overlap."
+    "sha256": "6bacd6bbb55ce297fc30ad62438f802b45f49605752e203d9c90df6e88798537",
+    "reason": "Visually compared base and after in affordance review-08.jpg: action ink, navigation chevrons, persistent choice rings and read-along play cues; no frame or shadow change."
   },
   "_internal/mobile/android/app/src/test/snapshots/music_audio_sheet_full_130_light.png": {
-    "sha256": "311958aaec9fc372c4822e8b293082b46ee2d447a9e5673eb3a38c966b068127",
-    "reason": "Reviewed sound sheet redesign: three flat sections, shared dense rulers, chevron navigation and animated music dependencies. Light/dark, 100/130 percent and complete content checked against before captures; native glyph audit has no intrinsic clipping or overlap."
+    "sha256": "0f8b231cc46db086c83e363d8e5aa169397b5fbc5d503f6bfa3f4d9a72f63510",
+    "reason": "Visually compared base and after in affordance review-08.jpg: action ink, navigation chevrons, persistent choice rings and read-along play cues; no frame or shadow change."
   },
   "_internal/mobile/android/app/src/test/snapshots/music_audio_sheet_full_dark.png": {
-    "sha256": "33ea4ae8cb6005a21463b09f7a784a0866a70fdae3df142bcc6d205a46bb2ce0",
-    "reason": "Reviewed sound sheet redesign: three flat sections, shared dense rulers, chevron navigation and animated music dependencies. Light/dark, 100/130 percent and complete content checked against before captures; native glyph audit has no intrinsic clipping or overlap."
+    "sha256": "050079293b14c6741525e64476278198d8fab0f520c8786f0dacca288fa9297d",
+    "reason": "Visually compared base and after in affordance review-08.jpg: action ink, navigation chevrons, persistent choice rings and read-along play cues; no frame or shadow change."
   },
   "_internal/mobile/android/app/src/test/snapshots/music_audio_sheet_full_light.png": {
-    "sha256": "e5eb1fd19e78d8cfc4a0a1ba8e9ec9b9efbcf62bd5c3b9b3115da5368efc1532",
-    "reason": "Reviewed sound sheet redesign: three flat sections, shared dense rulers, chevron navigation and animated music dependencies. Light/dark, 100/130 percent and complete content checked against before captures; native glyph audit has no intrinsic clipping or overlap."
+    "sha256": "c4fccb537e36558eaea4541f9e1a40a0989cf6099d3096b73b8e0d5acc7c3b3f",
+    "reason": "Visually compared base and after in affordance review-08.jpg: action ink, navigation chevrons, persistent choice rings and read-along play cues; no frame or shadow change."
   },
   "_internal/mobile/android/app/src/test/snapshots/music_audio_sheet_light.png": {
-    "sha256": "8fd57d4505ed586a9a8879f1b5fd896e5642c4b282f6b395bed8fe3de21eeac2",
-    "reason": "Reviewed sound sheet redesign: three flat sections, shared dense rulers, chevron navigation and animated music dependencies. Light/dark, 100/130 percent and complete content checked against before captures; native glyph audit has no intrinsic clipping or overlap."
+    "sha256": "372fe202c13af15cf954776162138ece8873c8728cf82c294127dbe138b4a637",
+    "reason": "Visually compared base and after in affordance review-08.jpg: action ink, navigation chevrons, persistent choice rings and read-along play cues; no frame or shadow change."
   },
   "_internal/mobile/android/app/src/test/snapshots/music_audio_sheet_light_bottom.png": {
-    "sha256": "b33888ad35aa29ac344bdf361798bceb820751f8b2c8e0159d316e6499d0831d",
-    "reason": "Reviewed sound sheet redesign: three flat sections, shared dense rulers, chevron navigation and animated music dependencies. Light/dark, 100/130 percent and complete content checked against before captures; native glyph audit has no intrinsic clipping or overlap."
+    "sha256": "52d54e905fe5ad213f8c24d7c4c7185908efdfcb9840fe92420f26fff4d26f0b",
+    "reason": "Visually compared base and after in affordance review-09.jpg: action ink, navigation chevrons, persistent choice rings and read-along play cues; no frame or shadow change."
   },
   "_internal/mobile/android/app/src/test/snapshots/music_audio_sheet_light_off.png": {
-    "sha256": "49196e565033df59d9ca49a671a37a67924d1563c58c947203a023b86164411a",
-    "reason": "Reviewed sound sheet redesign: three flat sections, shared dense rulers, chevron navigation and animated music dependencies. Light/dark, 100/130 percent and complete content checked against before captures; native glyph audit has no intrinsic clipping or overlap."
+    "sha256": "a8574571a5320bcccf83e586d7d3c220b43a689673c87025ad3503561d738cb8",
+    "reason": "Visually compared base and after in affordance review-09.jpg: action ink, navigation chevrons, persistent choice rings and read-along play cues; no frame or shadow change."
   },
   "_internal/mobile/android/app/src/test/snapshots/music_player_choices_dark.png": {
     "sha256": "4bcb595f6730f077be0d25bd40244f3a79a635df7fc32d12af1ac37d09b03e06",
@@ -1046,5 +1046,233 @@
   "_internal/mobile/android/app/src/test/snapshots/pip_now_playing_button_light.png": {
     "sha256": "cf98b1a24b898dbe9bef2249e769b6e4e7f91d960080c6797b8f679e5458dafa",
     "reason": "Visually reviewed the exact before/after snapshot pair on integration contact sheet 6. The rounded sheet surface, hairline and shadow share the panel edge; the stationary rectangular paint band is removed. Controls and labels remain readable with no new clipping."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/devices_pair_bluetooth_denied_light.png": {
+    "sha256": "2665465c731595cff2806e8a449e607d21762b3ecb078471beee34e19505da96",
+    "reason": "Visually compared base and after in affordance review-02.jpg: action ink, navigation chevrons, persistent choice rings and read-along play cues; no frame or shadow change."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/devices_pair_empty_dark.png": {
+    "sha256": "379399eaed8212c3c5283356fcd57382e8f3df1af45acd09c807cd3a70a43612",
+    "reason": "Visually compared base and after in affordance review-03.jpg: action ink, navigation chevrons, persistent choice rings and read-along play cues; no frame or shadow change."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/devices_pair_empty_light.png": {
+    "sha256": "b0826c7ed5dda568fdad43553b7eff14894733f5b0ba27325eaac63bf4ff2534",
+    "reason": "Visually compared base and after in affordance review-03.jpg: action ink, navigation chevrons, persistent choice rings and read-along play cues; no frame or shadow change."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/devices_pair_install_dark.png": {
+    "sha256": "28b507a1b17a5f444de6713d0fe1bee3c68093cd3eab6138c077282d1e56bb27",
+    "reason": "Visually compared base and after in affordance review-03.jpg: action ink, navigation chevrons, persistent choice rings and read-along play cues; no frame or shadow change."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/devices_pair_install_light.png": {
+    "sha256": "2f35ffbfc8c23e9d41ca69c86ee565f26efc79bd23532e80ca80149785bd7e6b",
+    "reason": "Visually compared base and after in affordance review-03.jpg: action ink, navigation chevrons, persistent choice rings and read-along play cues; no frame or shadow change."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/devices_storage_dark.png": {
+    "sha256": "b7a8e65379e58444c4df175a1cb1470590c28dd44cd98703d5a5256cccdc37c7",
+    "reason": "Visually compared base and after in affordance review-03.jpg: action ink, navigation chevrons, persistent choice rings and read-along play cues; no frame or shadow change."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/devices_storage_light.png": {
+    "sha256": "b5e59ed17acd0e0a9eecad71cc4e06a29596fb37588a88376a0a39a7676ec26c",
+    "reason": "Visually compared base and after in affordance review-04.jpg: action ink, navigation chevrons, persistent choice rings and read-along play cues; no frame or shadow change."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/export_options_past_dark.png": {
+    "sha256": "45e52491f30692d97f29ea6289edbdccf21d08266c906d63416183bbeeee9516",
+    "reason": "Visually compared base and after in affordance review-05.jpg: action ink, navigation chevrons, persistent choice rings and read-along play cues; no frame or shadow change."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/export_options_past_light.png": {
+    "sha256": "551ddba78c881b1bdb5585e68e844af4d17ba857fcf9494eaef38631c7ab71a8",
+    "reason": "Visually compared base and after in affordance review-05.jpg: action ink, navigation chevrons, persistent choice rings and read-along play cues; no frame or shadow change."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/filters_360_dark.png": {
+    "sha256": "f83cac0e4969b45910a8f7f5a2c835ab1acc79a0edf0497086cb3e1b1073f8ff",
+    "reason": "Visually compared base and after in affordance review-05.jpg: action ink, navigation chevrons, persistent choice rings and read-along play cues; no frame or shadow change."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/filters_360_font130_dark.png": {
+    "sha256": "d90b0f602de24e336a9ccc21931d927d6af84df22bacd4120ff9352380fdcd4a",
+    "reason": "Visually compared base and after in affordance review-05.jpg: action ink, navigation chevrons, persistent choice rings and read-along play cues; no frame or shadow change."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/filters_360_light.png": {
+    "sha256": "ee385df7bd878f58b4db2951fdfb9d83de07be2b0f85fef2863b0dea4785360b",
+    "reason": "Visually compared base and after in affordance review-05.jpg: action ink, navigation chevrons, persistent choice rings and read-along play cues; no frame or shadow change."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/gap3_bluetooth_dark.png": {
+    "sha256": "9834dd8468e9d951df9844f500b0f9faec4ec596a20780fc6960aa1e04eeb877",
+    "reason": "Visually compared base and after in affordance review-06.jpg: action ink, navigation chevrons, persistent choice rings and read-along play cues; no frame or shadow change."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/gap3_bluetooth_light.png": {
+    "sha256": "68559741654e86f9ba3a81554c3faf319cb6d7c29f9797a76db6fb0342046d55",
+    "reason": "Visually compared base and after in affordance review-06.jpg: action ink, navigation chevrons, persistent choice rings and read-along play cues; no frame or shadow change."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/gap3_connection_methods_411.png": {
+    "sha256": "61dc71766407086573086b0a81bac035e572f185a2397239d4872645517982c5",
+    "reason": "Visually compared base and after in affordance review-06.jpg: action ink, navigation chevrons, persistent choice rings and read-along play cues; no frame or shadow change."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/music_player_levels_dark.png": {
+    "sha256": "7fdfda196c214a073c5a99f724a2898879ec45eb9c8d761bd8641cbe48138b92",
+    "reason": "Visually compared base and after in affordance review-10.jpg: action ink, navigation chevrons, persistent choice rings and read-along play cues; no frame or shadow change."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/music_player_levels_light.png": {
+    "sha256": "9c1d5be68e4fb8307f20e1afc36db92086bc9c74897bbb5ac0c594902444a7d8",
+    "reason": "Visually compared base and after in affordance review-10.jpg: action ink, navigation chevrons, persistent choice rings and read-along play cues; no frame or shadow change."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/np_voice_affordance_dark.png": {
+    "sha256": "efc02d4edf1cd32cb4c951fbb05830e7da6aea94ae9a8e5111980f5f8cf2fc2c",
+    "reason": "Visually compared base and after in affordance review-delta/delta-02.jpg: action ink and persistent play/choice/navigation cues; loaded artwork visible in current fixture."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/np_voice_affordance_light.png": {
+    "sha256": "d59d99ac8ce34515ba085bf57c49102d396c72dc52b110298b1b61cf28deb674",
+    "reason": "Visually compared base and after in affordance review-delta/delta-02.jpg: action ink and persistent play/choice/navigation cues; loaded artwork visible in current fixture."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/recap_light.png": {
+    "sha256": "47e0317ec58f4f6d317f72654d2bd943ecb728da38329da97a3850e71aeac98a",
+    "reason": "Visually compared base and after in affordance review-14.jpg: action ink, navigation chevrons, persistent choice rings and read-along play cues; no frame or shadow change."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/recap_scrub_dark.png": {
+    "sha256": "f03e2b56d1122e75a3ec7765cc35d5dbad4fd54180c71987cff37649046ef4e3",
+    "reason": "Visually compared base and after in affordance review-delta/delta-03.jpg: action ink and persistent play/choice/navigation cues; loaded artwork visible in current fixture."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/settings_advanced_dark.png": {
+    "sha256": "9ef4ba40940bbde8bcfddf6f48909a81e260661f83fdbb42246fb4b2ecea84fe",
+    "reason": "Visually compared base and after in affordance review-14.jpg: action ink, navigation chevrons, persistent choice rings and read-along play cues; no frame or shadow change."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/settings_advanced_light.png": {
+    "sha256": "5eff19a2d6c90844883ffdc36e8392ed21068c34f9eb36412be2bbecb4f55bea",
+    "reason": "Visually compared base and after in affordance review-14.jpg: action ink, navigation chevrons, persistent choice rings and read-along play cues; no frame or shadow change."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/settings_choice_sliding_light.png": {
+    "sha256": "cb2ca4d564c17c87d6e51bd9eaf04ed9a040d50361c8c86dec90affc0ecd0b26",
+    "reason": "Visually compared base and after in affordance review-14.jpg: action ink, navigation chevrons, persistent choice rings and read-along play cues; no frame or shadow change."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/settings_devices_pair_inline_light.png": {
+    "sha256": "864b65229539e6ec59df680120adf904ec43d21d551700a53079f45c4f125285",
+    "reason": "Visually compared base and after in affordance review-14.jpg: action ink, navigation chevrons, persistent choice rings and read-along play cues; no frame or shadow change."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/settings_devices_share_inline_light.png": {
+    "sha256": "9bcbb0cfa8f2e3d8419bf2fce8824fb41c7b6570c527903f8353463b45e8e9aa",
+    "reason": "Visually compared base and after in affordance review-14.jpg: action ink, navigation chevrons, persistent choice rings and read-along play cues; no frame or shadow change."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/settings_keys_inline_light.png": {
+    "sha256": "e5c4dbdda058dead6c63816ea4129011e8aa55cbb285896a2d21f309e69ef14c",
+    "reason": "Visually compared base and after in affordance review-15.jpg: action ink, navigation chevrons, persistent choice rings and read-along play cues; no frame or shadow change."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/settings_look_dark.png": {
+    "sha256": "00c3550bbb1326285f9c1de8a556092c6a424525ef3a2f5a570f31ce6d1af440",
+    "reason": "Visually compared base and after in affordance review-15.jpg: action ink, navigation chevrons, persistent choice rings and read-along play cues; no frame or shadow change."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/settings_look_light.png": {
+    "sha256": "bf323008d4b77379fc788f70645cf8a1a1fd58059e52f8261d055b01deef384f",
+    "reason": "Visually compared base and after in affordance review-15.jpg: action ink, navigation chevrons, persistent choice rings and read-along play cues; no frame or shadow change."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/settings_memory_inline_dark.png": {
+    "sha256": "96313d8686f092d651809dbef94daca39f8a81a0a70c09338bf8517af0dfeb45",
+    "reason": "Visually compared base and after in affordance review-15.jpg: action ink, navigation chevrons, persistent choice rings and read-along play cues; no frame or shadow change."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/settings_sleep_dark.png": {
+    "sha256": "87aea53caace6fa31b31795f685243b495270755cb686a0582a35b57dc47af99",
+    "reason": "Visually compared base and after in affordance review-15.jpg: action ink, navigation chevrons, persistent choice rings and read-along play cues; no frame or shadow change."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/settings_sleep_light.png": {
+    "sha256": "4a1660af2eb30de6e1d610ccade3017469320945183db761464471f8a81cd9a3",
+    "reason": "Visually compared base and after in affordance review-15.jpg: action ink, navigation chevrons, persistent choice rings and read-along play cues; no frame or shadow change."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/settings_voice_dark.png": {
+    "sha256": "f45515e0fbea74c5fb7520702e1308db70eb5faf75b5af559f5d3eab6c41a3c5",
+    "reason": "Visually compared base and after in affordance review-15.jpg: action ink, navigation chevrons, persistent choice rings and read-along play cues; no frame or shadow change."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/settings_voice_light.png": {
+    "sha256": "4f30a04c302679109b0b5098b9908c4ecb33e32587fd298a0a5427d34f638c11",
+    "reason": "Visually compared base and after in affordance review-15.jpg: action ink, navigation chevrons, persistent choice rings and read-along play cues; no frame or shadow change."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/shell_settings_look_light.png": {
+    "sha256": "726c5a8f833b0b1a126b69907e67bd337cd52c57d753f1def2608489565c777f",
+    "reason": "Visually compared base and after in affordance review-16.jpg: action ink, navigation chevrons, persistent choice rings and read-along play cues; no frame or shadow change."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/shell_studio_dark.png": {
+    "sha256": "233a01fbd0ccff150c57a054bd77c30add0f1e529af7836e894703f6d367e753",
+    "reason": "Visually compared base and after in affordance review-16.jpg: action ink, navigation chevrons, persistent choice rings and read-along play cues; no frame or shadow change."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/shell_studio_light.png": {
+    "sha256": "5045ced0e8f5c2849b4169c5f8ab4767fd348e6ba95fe3ec97080a144786e351",
+    "reason": "Visually compared base and after in affordance review-17.jpg: action ink, navigation chevrons, persistent choice rings and read-along play cues; no frame or shadow change."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/shell_unavailable_dark.png": {
+    "sha256": "41dcdacdf5a1ae45fdb3513e29bf52243b75dd4f46c9b9f912a70b6ec1cba5eb",
+    "reason": "Visually compared base and after in affordance review-17.jpg: action ink, navigation chevrons, persistent choice rings and read-along play cues; no frame or shadow change."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/skip_widget_back.png": {
+    "sha256": "d14015e263b7ccaa8bdd0d7f272ae118c1ae2c6bcb71746852d68d2d357e8ebe",
+    "reason": "Visually compared base and after in affordance review-17.jpg: action ink, navigation chevrons, persistent choice rings and read-along play cues; no frame or shadow change."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/skip_widget_fwd.png": {
+    "sha256": "2ff699daf845d5d06f8b045bc23ac75dcc30972ebd00633bf4a34fba1f867b1d",
+    "reason": "Visually compared base and after in affordance review-17.jpg: action ink, navigation chevrons, persistent choice rings and read-along play cues; no frame or shadow change."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/tabs_studio_360_big_dark.png": {
+    "sha256": "dd1a9918eacc53fa148aa6638e9430bc4e559f636e298a8956d140891ca621c2",
+    "reason": "Visually compared base and after in affordance review-17.jpg: action ink, navigation chevrons, persistent choice rings and read-along play cues; no frame or shadow change."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/tabs_studio_360_dark.png": {
+    "sha256": "d6d4301d9f397300acba9084c1ea0c6e2acb259ba3a6da80a42f19c7af7bbfdb",
+    "reason": "Visually compared base and after in affordance review-17.jpg: action ink, navigation chevrons, persistent choice rings and read-along play cues; no frame or shadow change."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/voice_music_files_dark.png": {
+    "sha256": "b06872e5fa922f2e6c6b3b752e7732c8b3bc55ee6ab8bd940d13d4311e494b6c",
+    "reason": "Visually compared base and after in affordance review-18.jpg: action ink, navigation chevrons, persistent choice rings and read-along play cues; no frame or shadow change."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/voice_music_files_light.png": {
+    "sha256": "f59bd3f129e97fb7e65f7c03d3cafa10feb0f13f34c1443fafe9ccb3f8edc988",
+    "reason": "Visually compared base and after in affordance review-18.jpg: action ink, navigation chevrons, persistent choice rings and read-along play cues; no frame or shadow change."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/voice_music_imported_light.png": {
+    "sha256": "1b85740e36bd1f22b185b4b9aefb9bcfae6b5b81c07019029b4f483623a2aeee",
+    "reason": "Visually compared base and after in affordance review-18.jpg: action ink, navigation chevrons, persistent choice rings and read-along play cues; no frame or shadow change."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/voice_music_importing_dark.png": {
+    "sha256": "d4ff3616673f456791079c47079515d6d855a6de71de4e20910bd900774bd4aa",
+    "reason": "Visually compared base and after in affordance review-18.jpg: action ink, navigation chevrons, persistent choice rings and read-along play cues; no frame or shadow change."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/voice_music_importing_light.png": {
+    "sha256": "b971bd76acd01597bb7121864f390b5fcea984c7e5244fd99e3a855075975734",
+    "reason": "Visually compared base and after in affordance review-18.jpg: action ink, navigation chevrons, persistent choice rings and read-along play cues; no frame or shadow change."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/voice_sample_failed_dark.png": {
+    "sha256": "8c5eb12eccbc17be590af3b9be86e9f086e4c62c379a216aceeb1f4d46bbf385",
+    "reason": "Visually compared base and after in affordance review-18.jpg: action ink, navigation chevrons, persistent choice rings and read-along play cues; no frame or shadow change."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/voice_sample_failed_light.png": {
+    "sha256": "6efb8fe5ad9295492259a23f2eaf9cc141d0457265edc9a5f03874bc3a36de1a",
+    "reason": "Visually compared base and after in affordance review-18.jpg: action ink, navigation chevrons, persistent choice rings and read-along play cues; no frame or shadow change."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/voice_sample_loading_dark.png": {
+    "sha256": "f49497d4de339ff3edaa33fd8afbc757313acec35b1434d6f935edd5bde1c873",
+    "reason": "Visually compared base and after in affordance review-18.jpg: action ink, navigation chevrons, persistent choice rings and read-along play cues; no frame or shadow change."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/voice_sample_loading_light.png": {
+    "sha256": "d004a2d3ed7bbbbc9acb41e318d9f7b41d7d90d1a73a4d29c2c47b1d2d987ae4",
+    "reason": "Visually compared base and after in affordance review-18.jpg: action ink, navigation chevrons, persistent choice rings and read-along play cues; no frame or shadow change."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/voice_sample_playing_dark.png": {
+    "sha256": "da7a2d35aa569047997b422e7a1742118e69c4f5bc5df1262204275aaa9e738d",
+    "reason": "Visually compared base and after in affordance review-18.jpg: action ink, navigation chevrons, persistent choice rings and read-along play cues; no frame or shadow change."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/voice_sample_playing_light.png": {
+    "sha256": "a32880d94856ddcf6236b44e6098c57b56ce39e8a2616131774a2feea5f5bf6f",
+    "reason": "Visually compared base and after in affordance review-19.jpg: action ink, navigation chevrons, persistent choice rings and read-along play cues; no frame or shadow change."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/edit_cover_search_dark.png": {
+    "sha256": "9b27c8c6bd2c49f37c9c3f24e35035be39bb8a6942029bbc3410d66ce8825d08",
+    "reason": "Visually compared base and after in affordance review-delta/delta-01.jpg: action ink and persistent play/choice/navigation cues; loaded artwork visible in current fixture."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/edit_cover_search_light.png": {
+    "sha256": "21677a1d11368ce960eca73436a4498d9e3476beb558c39b3612bcf03a8027c6",
+    "reason": "Visually compared base and after in affordance review-delta/delta-01.jpg: action ink and persistent play/choice/navigation cues; loaded artwork visible in current fixture."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/music_saved_dark.png": {
+    "sha256": "db230ddb4d71a3aa8867aa33b959e9cc09e0d31d12bd74b7f46329775ae571e9",
+    "reason": "Visually compared base and after in affordance review-delta/delta-02.jpg: action ink and persistent play/choice/navigation cues; loaded artwork visible in current fixture."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/music_saved_light.png": {
+    "sha256": "4e8fb687e5a5c9841908af14d9a51a83a48e4d660c25094606a96b3c78b0bb62",
+    "reason": "Visually compared base and after in affordance review-delta/delta-02.jpg: action ink and persistent play/choice/navigation cues; loaded artwork visible in current fixture."
   }
 }

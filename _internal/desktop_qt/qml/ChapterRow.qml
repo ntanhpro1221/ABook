@@ -46,6 +46,7 @@ Interactive {
         x: Theme.s12
         width: 20
         height: parent.height
+        Icon { anchors.centerIn: parent; name: "play"; size: 16; color: Theme.text3; Reveal { shown: !root.current && !root.done } }
         Vu { anchors.centerIn: parent; Reveal { shown: root.current && (!root.opensPlayer || Player.playing) } color: Theme.accent }
         Icon {
             anchors.centerIn: parent

@@ -11,7 +11,7 @@ import { toast } from "@/shared/toast";
 import { useClip } from "@/listen/clip";
 import { cn } from "@/shared/cn";
 import { formatNumber } from "@/shared/format";
-import { DialogActions, DecisionButton, Button, ContentSkeleton, Dialog, EmptyState, FilterRow, InlineError, Kbd, ChoiceRow, Tooltip } from "@/shared/ui";
+import { ActionRow, DialogActions, DecisionButton, Button, ContentSkeleton, Dialog, EmptyState, FilterRow, InlineError, Kbd, ChoiceRow, Tooltip } from "@/shared/ui";
 import { api, suggestionOf, urls, type BookSummary } from "./api";
 import { ReadingProblem } from "./ReadingProblem";
 import { retryUnlessGone } from "./polling";
@@ -1291,7 +1291,7 @@ function WorkInboxBody({ book, onOpenReview, onOpenScript, onOpenNames, onPickVo
       </AnimatedRows>
       </MotionRegion>
       <MotionPresence open={items.length > shown}>
-        <Button variant="ghost" size="sm" className="mt-4" onClick={() => setShown(shown + PAGE)}>{S.s_xem_them_58c3f515}{Math.min(PAGE, items.length - shown)}{S.s_viec_1c50ca93}</Button>
+        <ActionRow className="mt-4" onClick={() => setShown(shown + PAGE)}>{S.s_xem_them_58c3f515}{Math.min(PAGE, items.length - shown)}{S.s_viec_1c50ca93}</ActionRow>
       </MotionPresence>
       <MotionPresence open={!open.length && atReview === 0}>
         <p id="work-end" tabIndex={-1} className="mt-4 text-sm text-fg-2">

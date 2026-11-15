@@ -1,4 +1,5 @@
 package vn.abook.player.ui.music.library
+import vn.abook.player.ui.components.visualImage
 
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
@@ -48,7 +49,7 @@ fun MusicArt(track: MusicLibrary.Track, modifier: Modifier = Modifier) {
     }
     Box(modifier.size(40.dp).clip(RoundedCornerShape(6.dp)).background(Abook.colors.text3).testTag("music_art")) {
         image?.takeIf { it.first == key }?.second?.let { bitmap ->
-            Image(bitmap.asImageBitmap(), contentDescription = null, contentScale = ContentScale.Crop, modifier = Modifier.matchParentSize().testTag("music_art_image"))
+            Image(bitmap.asImageBitmap(), contentDescription = null, contentScale = ContentScale.Crop, modifier = Modifier.matchParentSize().visualImage().testTag("music_art_image"))
         }
     }
 }

@@ -37,10 +37,13 @@ it("TimeSelect dùng cùng Select, giữ giờ lẻ và không đổi khi đang 
 it("dấu chọn chuyển độ mờ tại chỗ, quyết định có icon và cỡ Button", async () => {
   const choose = vi.fn();
   await act(() => root.render(<><SelectionMark selected={false} /><DecisionButton onClick={choose}>Ổn</DecisionButton></>));
-  const mark = host.querySelector("svg")!;
+  const mark = host.querySelector("[data-selection-mark] .lucide-check")!;
+  const empty = host.querySelector("[data-selection-mark] .lucide-circle")!;
   expect(mark.classList.contains("opacity-0")).toBe(true);
+  expect(empty.classList.contains("opacity-100")).toBe(true);
   await act(() => root.render(<><SelectionMark selected /><DecisionButton onClick={choose}>Ổn</DecisionButton></>));
-  expect(host.querySelector("svg")).toBe(mark); expect(mark.classList.contains("opacity-100")).toBe(true);
+  expect(host.querySelector("[data-selection-mark] .lucide-check")).toBe(mark); expect(mark.classList.contains("opacity-100")).toBe(true);
+  expect(empty.classList.contains("opacity-0")).toBe(true);
   const decision = host.querySelector<HTMLButtonElement>("[data-decision]")!;
   expect(decision.querySelector("svg")).not.toBeNull(); expect(decision.classList.contains("shared-button")).toBe(true);
   await act(() => decision.click()); expect(choose).toHaveBeenCalledOnce();

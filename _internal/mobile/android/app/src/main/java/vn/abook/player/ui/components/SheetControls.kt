@@ -1,7 +1,6 @@
 package vn.abook.player.ui.components
 
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.text.BasicText
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -31,7 +30,7 @@ fun SheetRow(label: String, modifier: Modifier = Modifier, hint: String? = null,
     Row(modifier.fillMaxWidth().heightIn(min = Dim.s48), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(Dim.s12)) {
         Column(Modifier.weight(1f)) {
             BasicText(label, style = Abook.type.bodySmall.copy(color = Abook.colors.text))
-            if (hint != null) BasicText(hint, style = Abook.type.caption.copy(color = Abook.colors.text2))
+            if (hint != null) RowHint(hint)
         }
         trailing()
     }
@@ -48,6 +47,6 @@ fun SheetSwitch(label: String, checked: Boolean, onChange: (Boolean) -> Unit, ta
 fun SheetLink(label: String, onClick: () -> Unit, tag: String, value: String? = null) {
     SheetRow(label, Modifier.pressable(onClick = onClick).testTag(tag)) {
         if (value != null) BasicText(value, Modifier.widthIn(max = 180.dp), style = Abook.type.bodySmall.copy(color = Abook.colors.text2, textAlign = TextAlign.End))
-        LucideIcon(LucidePaths.CHEVRON_RIGHT, Abook.colors.text2, size = 16.dp)
+        ChevronIcon(Abook.colors.text2)
     }
 }

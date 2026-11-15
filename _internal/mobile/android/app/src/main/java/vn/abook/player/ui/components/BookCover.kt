@@ -93,7 +93,7 @@ fun BookCover(
     val sunken = Abook.colors.bgSunken
     SwapContent(path, contentKey = { path -> path != null }, layout = ContentLayout.Box, modifier = modifier.aspectRatio(2f / 3f).clip(shape)) { path ->
         if (path != null) {
-            Box(Modifier.fillMaxSize().background(sunken).drawBehind { image.value?.let { drawCover(it) } })
+            Box(Modifier.fillMaxSize().then(if (image.value != null) Modifier.visualImage() else Modifier).background(sunken).drawBehind { image.value?.let { drawCover(it) } })
         } else {
             GeneratedCover(title, part, width, Modifier.fillMaxSize(), small)
         }
@@ -111,7 +111,7 @@ fun GeneratedCover(title: String, part: Int?, width: Dp, modifier: Modifier = Mo
     val to = Color(style.to)
     val ink = Color(style.ink)
     Box(
-        modifier.drawBehind {
+        modifier.visualImage().drawBehind {
             drawRect(Brush.linearGradient(listOf(from, to), start = Offset.Zero, end = Offset(size.width * 0.42f, size.height)))
             val center = Offset(if (style.arcsFromRight) size.width else 0f, size.height)
             for ((index, radius) in ARCS.withIndex()) {

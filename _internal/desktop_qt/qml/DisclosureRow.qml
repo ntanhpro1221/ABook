@@ -46,7 +46,7 @@ Interactive {
         Text {
             width: parent.width
             text: TextWrap.keepDots(root.title)
-            color: Theme.text
+            color: root.enabled ? Theme.accentText : Theme.text3
             wrapMode: Text.Wrap
             font.pixelSize: root.section ? Theme.sizeSection : Theme.sizeBody
             font.weight: root.section ? Theme.weightMedium : (root.current ? 600 : Theme.weightMedium)

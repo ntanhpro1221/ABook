@@ -319,7 +319,7 @@ export function VoicePicker({
                 ) : null}
                 <ul className="space-y-1">
             {group.voices.map((voice) => (
-              <li key={voice.key} className={cn("flex items-center gap-3 rounded-cover px-2 py-2", voice.current ? "text-accent-text" : "hover:bg-hover")}>
+              <li key={voice.key} className={cn("flex items-center gap-3 rounded-cover px-2 py-2", !voice.current && "hover:bg-hover")}>
                 <PreviewButton voice={voice} />
                 <PersonAvatar name={voice.key} voice size={32} />
                 {data.tryLine &&
@@ -330,9 +330,9 @@ export function VoicePicker({
                   })}
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-center gap-2">
-                    <SelectionMark selected={voice.current} /><span className={cn("font-medium", voice.current ? "text-accent-text" : voice.takenBy?.length && "text-fg-2")}>{voice.name}</span>
+                    <SelectionMark selected={voice.current} /><span className={cn("font-medium", voice.takenBy?.length && "text-fg-2")}>{voice.name}</span>
                     {/* Viên "Đang dùng" chỉ khi nút bên phải là "Giữ giọng này"; còn lại nút đã nói đúng chữ ấy (soát 25-10: nói hai lần một hàng). */}
-                    <Reveal when={voice.current && data.pending}><span className="rounded-full bg-panel px-2 py-px text-caption font-medium text-accent-text">{S.s_dang_dung_275ca289}</span></Reveal>
+                    <Reveal when={voice.current && data.pending}><span className="rounded-full bg-panel px-2 py-px text-caption font-medium text-fg-2">{S.s_dang_dung_275ca289}</span></Reveal>
                     <Reveal when={voice.pending && !voice.current}><span className="rounded-full bg-warning-soft px-2 py-px text-caption font-medium text-warning">{S.s_cho_ap_dung_77a52853}</span></Reveal>
                     <Reveal when={voice.suggested && !voice.current && !voice.pending}><span className="rounded-full bg-info-soft px-2 py-px text-caption font-medium text-info">{S.s_may_goi_y_1e7f4cfa}</span></Reveal>
                   </div>

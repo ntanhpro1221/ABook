@@ -2,7 +2,7 @@ import { Presence } from "../shared/MotionPresence";
 import { MusicArt } from "./MusicArt";
 import * as DropdownMenu from "@/shared/DropdownMenu";
 import { useQueryClient } from "@tanstack/react-query";
-import { Check, ChevronDown, CircleAlert, Download, Loader2, Music2, Play, Search, Square, X } from "lucide-react";
+import { Check, ChevronDown, ChevronRight, CircleAlert, Download, Loader2, Music2, Play, Search, Square, X } from "lucide-react";
 import { useDeferredValue, useEffect, useMemo, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router";
 import { toast } from "../shared/toast";
@@ -309,7 +309,8 @@ export function TrackRow({
         onClick={() => preview.toggle(track)}
         className={cn("music-row-preview", previewing && "text-accent-text")}
       />
-      <button type="button" onClick={() => onOpen(track.link)} className="min-w-0 flex-1 rounded-control py-2 text-left outline-none focus-visible:ring-2 focus-visible:ring-focus">
+      <button type="button" onClick={() => onOpen(track.link)} className="relative min-w-0 flex-1 rounded-control py-2 pr-5 text-left outline-none focus-visible:ring-2 focus-visible:ring-focus">
+        <ChevronRight aria-hidden className="ink-end absolute right-0 top-2.5 size-4 text-fg-3" />
         <span className="line-clamp-2 text-sm font-medium">{title}</span>
         <DotJoin singleLine className="mt-1 text-xs text-fg-2" parts={[track.creator, typeof track.duration === "number" ? formatClock(track.duration) : null]} />
       </button>

@@ -944,7 +944,7 @@ function ChapterRow({ book, chapter, rowIndex }: { book: BookSummary; chapter: C
       onDoubleClick={onPlay}
       className={cn(
         "group grid h-14 grid-cols-[40px_minmax(0,1fr)_auto_32px] lg:grid-cols-[48px_minmax(0,1fr)_150px_110px_96px_32px] items-baseline gap-3 rounded-control px-2 text-sm",
-        current ? "text-accent-text" : "hover:bg-hover",
+        current ? "text-fg" : "hover:bg-hover",
       )}
     >
       <div role="cell" className="flex">
@@ -962,10 +962,7 @@ function ChapterRow({ book, chapter, rowIndex }: { book: BookSummary; chapter: C
                 <Pause className="absolute left-[5.5px] top-1/2 size-4 -translate-y-1/2 opacity-0 transition-opacity duration-motion-fast group-hover:opacity-100" fill="currentColor" strokeWidth={0} />
               </>
             ) : (
-              <>
-                <span className="tabular-cell w-[var(--chapter-number)] text-left text-xs text-fg-3 transition-opacity duration-motion-fast group-hover:opacity-0">{chapter.index}</span>
-                <Play className="absolute left-[5.5px] top-1/2 size-4 -translate-y-1/2 opacity-0 transition-opacity duration-motion-fast group-hover:opacity-100" fill="currentColor" strokeWidth={0} />
-              </>
+              <Play className="size-4" fill="currentColor" strokeWidth={0} />
             )}
           </button>
         ) : (
@@ -973,7 +970,7 @@ function ChapterRow({ book, chapter, rowIndex }: { book: BookSummary; chapter: C
         )}
       </div>
       <div role="cell" className="min-w-0">
-        <div className={cn("truncate font-medium", current && "text-accent-text")}>{chapter.displayTitle}</div>
+        <div className="truncate font-medium">{chapter.displayTitle}</div>
         {chapter.lastError ? (
           <ChapterError raw={chapter.lastError} studio={hasStudio} />
         ) : chapter.subtitle ? (

@@ -237,7 +237,7 @@ Item {
                                             id: badge
                                             anchors.centerIn: parent
                                             text: S.s_khuyen_dung_b1d3dec8
-                                            color: Theme.accentText
+                                            color: Theme.text2
                                             font.pixelSize: 12
                                             font.weight: Theme.weightMedium
                                         }

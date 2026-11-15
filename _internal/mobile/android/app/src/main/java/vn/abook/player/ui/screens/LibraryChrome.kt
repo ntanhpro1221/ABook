@@ -157,7 +157,7 @@ fun FilterRow(ui: LibraryUiState, modifier: Modifier = Modifier) {
                     BasicText(
                         filter.label,
                         style = Abook.type.label,
-                        color = { lerp(colors.text2, colors.text, (1f - abs(ui.position.value - filter.ordinal)).coerceIn(0f, 1f)) },
+                        color = { lerp(colors.accentText, colors.text, (1f - abs(ui.position.value - filter.ordinal)).coerceIn(0f, 1f) * (1f - ui.search.value)) },
                         softWrap = false,
                     )
                 }
@@ -334,7 +334,7 @@ fun SortMenu(ui: LibraryUiState, anchor: IntOffset, backEnabled: () -> Boolean =
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Box(Modifier.size(Dim.s24), contentAlignment = Alignment.CenterStart) {
-                        Reveal(chosen) { CheckIcon(colors.accentText) }
+                        vn.abook.player.ui.components.SelectionMark(chosen)
                     }
                     BasicText(option.label, style = Abook.type.body.copy(color = if (chosen) colors.accentText else colors.text))
                 }

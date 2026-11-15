@@ -177,6 +177,8 @@ qt_add_qml_module(ABookDesk
         qml/SheetRow.qml
         qml/SheetSection.qml
         qml/MenuRow.qml
+        qml/InlineActionRow.qml
+        qml/SelectionMark.qml
         qml/ScreenStack.qml
         qml/ContentSlide.qml
         qml/ScreenHeader.qml

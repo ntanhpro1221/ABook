@@ -792,7 +792,7 @@ Item {
                                 bookId: root.bookId
                                 peer: root.store ? root.store.peer : ""
                             }
-                            Text { objectName: "legendName"; anchors.verticalCenter: parent.verticalCenter; text: chip.modelData.person.label; color: Theme.text; font.pixelSize: 14; font.weight: Theme.weightMedium }
+                            Text { objectName: "legendName"; anchors.verticalCenter: parent.verticalCenter; text: chip.modelData.person.label; color: Theme.accentText; font.pixelSize: 14; font.weight: Theme.weightMedium }
                             Text { anchors.verticalCenter: parent.verticalCenter; text: Studio.formatNumber(chip.modelData.person.lines); color: Theme.text3; font.pixelSize: 14 }
                         }
                     }

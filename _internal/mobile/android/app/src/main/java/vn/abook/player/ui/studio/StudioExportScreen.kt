@@ -115,7 +115,7 @@ private fun ExportBody(state: StudioProjectState, book: StudioBook, job: StudioE
                 }
                 val size = if (kind == StudioExportKind.BookFile) StudioExportLogic.sizeNote(options) else ""
                 Reveal(size.isNotEmpty()) { Caption(size, Modifier.testTag("studio_export_size")) }
-                Reveal(blocker.isNotEmpty()) { RowHint(blocker, Modifier.padding(top = Dim.s4).testTag("studio_export_blocker"), Abook.colors.accentText) }
+                Reveal(blocker.isNotEmpty()) { RowHint(blocker, Modifier.padding(top = Dim.s4).testTag("studio_export_blocker"), Abook.colors.danger) }
             }
         }
         item("volumes", "volumes") {

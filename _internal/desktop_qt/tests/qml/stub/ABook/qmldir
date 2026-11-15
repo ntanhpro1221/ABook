@@ -1,4 +1,5 @@
 module ABook
+SelectionMark 1.0 ../../../../qml/SelectionMark.qml
 CastHistory 1.0 ../../../../qml/CastHistory.qml
 WindowedRows 1.0 ../../../../qml/WindowedRows.qml
 WindowMode 1.0 ../../../../qml/WindowMode.qml
@@ -65,6 +66,7 @@ Popover 1.0 ../../../../qml/Popover.qml
 ChoiceChip 1.0 ../../../../qml/ChoiceChip.qml
 Switch 1.0 ../../../../qml/Switch.qml
 MenuRow 1.0 ../../../../qml/MenuRow.qml
+InlineActionRow 1.0 ../../../../qml/InlineActionRow.qml
 ReadAlongView 1.0 ../../../../qml/ReadAlongView.qml
 PlayerLineEditor 1.0 ../../../../qml/PlayerLineEditor.qml
 FormLabel 1.0 ../../../../qml/FormLabel.qml

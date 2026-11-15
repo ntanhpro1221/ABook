@@ -283,7 +283,7 @@ private fun VoiceRow(sheet: VoiceSheetState, voice: VoiceEntry, clip: ClipState,
                 else -> WorkText.VOICE_CHOOSE
             }
             val enabled = !taken && voice.installed && !chosen && !(voice.current && pending == null)
-            TextAction(label, { if (enabled && sheet.choose(voice)) dismiss() }, "studio_voice_choose_${voice.key}", Modifier, Alignment.CenterEnd)
+            TextAction(label, { if (sheet.choose(voice)) dismiss() }, "studio_voice_choose_${voice.key}", Modifier, Alignment.CenterEnd, enabled = enabled)
         }
         RowLine(Modifier.padding(top = Dim.s4))
     }

@@ -29,6 +29,14 @@ class MotionScanTest {
         assertTrue(flagged("AnimatedContent(state) { }"))
     }
 
+    @Test fun `only the shared small state icon may crossfade`() {
+        val source = "fun StateIcon(icon: String, color: Color, modifier: Modifier = Modifier) { Crossfade(targetState = icon, modifier = modifier.size(20.dp), animationSpec = tween(duration), label = \"icon_state\") { } }"
+        assertTrue(MotionScan.scan("StateIcon.kt", source).isEmpty())
+        assertTrue(MotionScan.scan("Screen.kt", source).isNotEmpty())
+        assertTrue(MotionScan.scan("StateIcon.kt", source.replace("20.dp", "200.dp")).isNotEmpty())
+        assertTrue(MotionScan.scan("StateIcon.kt", source + "\nCrossfade(page) {}").isNotEmpty())
+    }
+
     @Test
     fun `fade combined with geometry in one expression passes`() {
         assertEquals(emptyList<MotionScan.Finding>(), MotionScan.scan("t.kt", "val a = fadeIn() + slideInHorizontally { it }"))

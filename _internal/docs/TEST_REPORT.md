@@ -1,5 +1,13 @@
 # Test report
 
+## 15-11-2026 — visible actions across Compose, Qt and web
+
+Shared footer rows render an accent icon and label, choices keep a visible unselected mark, navigation rows disclose their destination, and static information uses information ink. The affordance audit reads actual Compose/Qt image-tree pairs and rendered gallery DOM, including window-level Qt overlays. It rejects missing/stale trees, plain text actions and static accent text; child buttons cannot hide an unmarked parent action.
+
+The full Android Verify run completed 3,859 tests: 3,829 passed, 11 failed source rules, 19 skipped; no screenshot comparison failed. The remaining rule failures and base-source hashes are recorded under `affordance/evidence/final`. Full Qt completed 1,691 passed, one existing music preview stop-count failure, two skipped; affected UI suites then passed separately. A headless emulator captured all settings groups and player sheets using fake data and enforced an emulator hardware guard. TypeScript, Vitest, parity checks, detector results, design-lint limitations and enlarged before/after evidence are recorded in `affordance/result.md`.
+
+The quality implementation hash is unchanged: `706789d2f6ff825ad6c92dd4f5d3dec7d4a6d2ea068fa2052a1245f2f3195ddf`. No audio pipeline implementation changed.
+
 ## 15-11-2026 — reversible book navigation
 
 Android: 96 related JVM tests pass with snapshot verification, including bitmap reuse,

@@ -70,9 +70,9 @@ Column {
                         x: 4.76
                         objectName: "pairingCode"
                         Accessible.name: S.s_ma_ghep_noi_c00b217d + (root.sync.pairing ? root.sync.pairing.code.split("").join(" ") : "")
-                        Text { text: root.sync.pairing ? root.sync.pairing.code.slice(0, 3) : ""; color: Theme.accentText; font.pixelSize: 32; font.weight: Theme.weightMedium; font.letterSpacing: 4.76 }
+                        Text { text: root.sync.pairing ? root.sync.pairing.code.slice(0, 3) : ""; color: Theme.text; font.pixelSize: 32; font.weight: Theme.weightMedium; font.letterSpacing: 4.76 }
                         Item { width: 12; height: 1 }
-                        Text { text: root.sync.pairing ? root.sync.pairing.code.slice(3) : ""; color: Theme.accentText; font.pixelSize: 32; font.weight: Theme.weightMedium; font.letterSpacing: 4.76 }
+                        Text { text: root.sync.pairing ? root.sync.pairing.code.slice(3) : ""; color: Theme.text; font.pixelSize: 32; font.weight: Theme.weightMedium; font.letterSpacing: 4.76 }
                     }
                     ClockLabel {
                         objectName: "pairingExpiry"

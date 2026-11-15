@@ -106,7 +106,7 @@ private fun PrecastBody(state: StudioProjectState, book: StudioBook, sheets: She
     LazyColumn(Modifier.fillMaxSize().fadeEdges(list).testTag("studio_precast_list"), state = list, contentPadding = PaddingValues(bottom = Dim.s16)) {
         item("head", "head") {
             Column(Modifier.fillMaxWidth().padding(top = Dim.s8)) {
-                Reveal(book.precastHeld) { RowHint(PrecastText.HELD, Modifier.testTag("studio_precast_held"), Abook.colors.accentText) }
+                Reveal(book.precastHeld) { RowHint(PrecastText.HELD, Modifier.testTag("studio_precast_held"), Abook.colors.text2) }
                 RowHint(PrecastText.LEAD, Modifier.padding(top = Dim.s4))
                 Reveal(PrecastLogic.showWait(data)) {
                     SwitchRow(PrecastText.WAIT, data.wait, { precast.setWait(it) }, "studio_precast_wait", hint = PrecastLogic.waitHint(data))

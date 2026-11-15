@@ -194,7 +194,7 @@ fun SleepSettings(repo: SettingsRepo, sheets: SheetHost, onBack: () -> Unit, mod
 private fun TimeField(label: String, value: String, tag: String, modifier: Modifier = Modifier, onClick: () -> Unit) {
     Column(modifier.heightIn(min = 56.dp).pressable(onClick = onClick).testTag(tag).padding(vertical = Dim.s8)) {
         BasicText(label, style = Abook.type.caption.copy(color = Abook.colors.text2))
-        BasicText(value, style = Abook.type.sectionTitle)
+        BasicText(value, style = Abook.type.sectionTitle.copy(color = Abook.colors.accentText))
     }
 }
 
@@ -215,7 +215,7 @@ private fun TimeSheet(title: String, value: String, onPick: (String) -> Unit) {
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Box(Modifier.size(Dim.s24), contentAlignment = Alignment.CenterStart) {
-                        Reveal(chosen) { CheckIcon(Abook.colors.accentText) }
+                        vn.abook.player.ui.components.SelectionMark(chosen)
                     }
                     BasicText(time, style = Abook.type.body.copy(color = if (chosen) Abook.colors.accentText else Abook.colors.text))
                 }

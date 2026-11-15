@@ -35,7 +35,7 @@ Rectangle {
         x: lead.x + lead.width + 6
         anchors.verticalCenter: parent.verticalCenter
         text: root.label
-        color: root.ink
+        color: root.tone === "accent" ? Theme.text2 : root.ink
         wrapMode: Text.NoWrap
         font.pixelSize: Theme.sizeCaption
         font.weight: Theme.weightMedium

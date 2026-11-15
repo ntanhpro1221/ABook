@@ -351,7 +351,7 @@ fun ValuePicker(
 @Composable
 private fun PickerLabel(text: String, style: androidx.compose.ui.text.TextStyle, chosen: Boolean, modifier: Modifier) {
     val colors = Abook.colors
-    val color by animateColorAsState(if (chosen) colors.text else colors.text2, tween(MotionMs.MEDIUM), label = "chip")
+    val color = colors.accentText
     BasicText(text, modifier, style = style.copy(color = color, fontWeight = if (chosen) FontWeight.Bold else FontWeight.Normal))
 }
 
@@ -419,7 +419,7 @@ private fun StepButton(steps: Int, enabled: Boolean, tag: String, nudge: (Int) -
 private fun ValueDisplay(text: String, typing: Boolean, dense: Boolean, enabled: Boolean, description: String, number: String, tag: String,
                          onStart: () -> Unit, onDone: (String?) -> Unit) {
     val colors = Abook.colors
-    val style = if (dense) Abook.type.bodySmall.copy(color = colors.text2) else Abook.type.screenTitle
+    val style = (if (dense) Abook.type.bodySmall else Abook.type.screenTitle).copy(color = if (enabled) colors.accentText else colors.text3)
     SwapContent(typing, contentKey = { typing -> !typing }, layout = ContentLayout.Box) { typing ->
         if (!typing) {
             Box(Modifier.widthIn(min = 48.dp).heightIn(min = if (dense) 20.dp else Dim.s48).then(if (enabled) Modifier.pressable(onClick = onStart) else Modifier)

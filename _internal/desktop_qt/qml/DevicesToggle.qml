@@ -26,7 +26,7 @@ Item {
         Text {
             width: parent.width
             text: root.label
-            color: Theme.text
+            color: toggle.enabled ? Theme.accentText : Theme.text3
             wrapMode: Text.Wrap
             font.pixelSize: root.labelSize
             font.weight: Theme.weightMedium

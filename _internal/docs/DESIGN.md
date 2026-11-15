@@ -96,6 +96,16 @@ Hẹn giờ ngủ là lựa chọn được giữ trên Android, Qt và web: h�
 
 ## 5. Token
 
+### Tín hiệu bấm được (soát 15-11)
+
+- **Hàng hành động** cuối danh sách (Thêm…, Tải thêm, Xem tất cả): dùng `InlineActionRow` (Compose/Qt) hoặc `ActionRow` (web), icon chỉ việc + chữ `accentText`, cả hàng nhận chạm. Không dùng hàng chữ thân thường. Tối thiểu 48 dp, có tên trợ năng và phản hồi nhấn chuẩn §5.2.
+- **Liên kết chữ** mở trang hoặc ngữ cảnh: chữ `accentText`, mũi tên › khi điều hướng; đường ngoài có icon mở liên kết. Tên sách dưới tên chương có › và chữ nhấn khi bấm được; thông tin thay vào chỗ đó dùng mực phụ.
+- **Nút văn bản** làm việc tại chỗ: chữ nhấn, kiểu label, vùng chạm chuẩn; việc nguy hiểm dùng màu danger. Lựa chọn chưa chọn có vòng chọn/icon hoặc chữ nhấn; lựa chọn hiện tại giữ gạch chân/dấu chọn. Tab và bộ lọc giữ chữ đậm + gạch chân ở mục hiện tại, các mục còn lại chữ nhấn.
+- **Nút phụ** đi cùng nút chính: viền `controlLine`, chữ thường, cùng chiều cao. Mục menu có icon hoặc mũi tên; hàng dẫn tới màn/sheet có ›. Không thêm viền/thẻ quanh nhóm nội dung.
+- Nội dung đọc có thao tác nghe từ đây mang icon phát nhỏ ở đầu câu/đoạn; chữ truyện vẫn dùng mực đọc. Đoạn không nghe được không khai báo hành động nghe trong cây trợ năng.
+- Chữ thông tin, tên phần/tập, trạng thái chờ và mô tả không có hành động dùng `text`/`text2`/`text3` hoặc màu trạng thái có nghĩa; không dùng `accentText` hay kiểu nút. Icon trạng thái, tiến độ và vùng tô câu đang đọc vẫn theo token riêng. Điều khiển bị vô hiệu hoá dùng mực phụ, giữ giải thích trạng thái.
+- Máy dò: `scripts/affordance_audit.py` đọc cây Compose/Qt cạnh ảnh (kiểm checksum); `ui/scripts/probes/affordance.js` đọc DOM gallery. Chữ thân có onClick mà thiếu icon/màu nhấn/viền/mũi tên bị FAIL; chữ nhấn ngoài hành động bị FAIL. Icon của nút con không được dùng để che lỗi của hàng cha.
+
 ### 5.1 Màu - "phòng nghe ấm"
 
 Bộ hiện có (xám lạnh #f4f5f7 + hổ phách) chỉnh lại có chủ đích: nền ấm như giấy, mực gần đen hơi nâu, hổ phách sẫm như

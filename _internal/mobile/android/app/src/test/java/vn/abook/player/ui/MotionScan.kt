@@ -172,7 +172,13 @@ object MotionScan {
                 found += Finding(file, lineOf(text, m.range.first), "${m.value.trim()} đứng một mình: ghép với slide / scale / expand / shrink")
             }
         }
-        for (m in Regex("""\bCrossfade\s*\(""").findAll(text)) found += Finding(file, lineOf(text, m.range.first), "Crossfade là mờ chéo")
+        for (m in Regex("""\bCrossfade\s*\(""").findAll(text)) {
+            // DESIGN 5.2 allows only the shared 20 dp glyph swap to fade in place.
+            val call = expressionAround(text, m.range.first)
+            val stateIcon = file == "StateIcon.kt" && text.contains("fun StateIcon(icon: String, color: Color, modifier: Modifier = Modifier)") &&
+                call.startsWith("Crossfade(targetState = icon, modifier = modifier.size(20.dp), animationSpec = tween(duration), label = \"icon_state\")")
+            if (!stateIcon) found += Finding(file, lineOf(text, m.range.first), "Crossfade là mờ chéo")
+        }
         for (m in Regex("""\bAnimatedContent\s*\(""").findAll(text)) {
             val open = text.indexOf('(', m.range.first)
             if (!text.substring(open, matchForward(text, open, '(', ')')).contains("transitionSpec")) {

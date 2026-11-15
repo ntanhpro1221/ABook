@@ -145,7 +145,7 @@ Item {
                                     enabled: false
                                     readOnly: true
                                     text: row.title
-                                    color: rename.hovered ? Theme.accentText : Theme.text
+                                    color: rename.enabled ? Theme.accentText : Theme.text3
                                     wrapMode: TextEdit.WrapAtWordBoundaryOrAnywhere
                                     textFormat: TextEdit.PlainText
                                     font.family: Theme.family

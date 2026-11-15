@@ -50,7 +50,7 @@ fun PlayPauseGlyph(playing: Boolean, color: Color, size: Dp, modifier: Modifier 
     LaunchedEffect(playing) { morph.animateTo(if (playing) 1f else 0f, Motion.GlyphMorph) }
     val points = remember { FloatArray(PlayPauseGeometry.POINTS) }
     val path = remember { Path() }
-    Canvas(modifier.size(size)) { drawPlayPause(morph.value, color, points, path) }
+    Canvas(modifier.size(size).visualIcon()) { drawPlayPause(morph.value, color, points, path) }
 }
 
 /** Hình nút phát <-> dừng ở tiến trình `t` trong ô vuông của DrawScope; `points` và `path` là đồ dùng lại của nơi gọi (không cấp phát khi vẽ). Cửa sổ nhỏ PiP vẽ nút hệ thống bằng cùng hàm này. */

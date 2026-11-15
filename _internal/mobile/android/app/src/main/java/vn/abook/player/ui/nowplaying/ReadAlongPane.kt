@@ -33,6 +33,10 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.onClick
 import androidx.compose.ui.semantics.onLongClick
 import androidx.compose.ui.semantics.semantics
+import vn.abook.player.ui.components.drawLucide
+import vn.abook.player.ui.components.LucidePaths
+import vn.abook.player.ui.components.visualIcon
+import androidx.compose.ui.graphics.drawscope.translate
 import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.text.font.FontWeight
@@ -160,7 +164,7 @@ fun ReadAlongPane(
             state.error.isNotEmpty() -> Column(Modifier.align(Alignment.Center)) {
                 BasicText(state.error, style = Abook.type.bodySmall)
                 Box(Modifier.height(48.dp).pressable(onClick = onRetry), contentAlignment = Alignment.Center) {
-                    BasicText(S.s_thu_lai_c58d068c, style = Abook.type.label)
+                    BasicText(S.s_thu_lai_c58d068c, style = Abook.type.label.copy(color = Abook.colors.accentText))
                 }
             }
             else -> LazyColumn(
@@ -207,13 +211,15 @@ fun ReadAlongPane(
                             }
                         }
                     }
+                    val cueColor = Abook.colors.text3
                     BasicText(
                         paragraph.text,
                         Modifier.widthIn(max = 680.dp).fillMaxWidth().testTag("paragraph_${paragraph.id}")
                             .semantics {
-                                onClick(S.s_nghe_tu_day_6a7ff4ab) { onListen(paragraph.startMs); following = true; true }
+                                if (paragraph.timed) onClick(S.s_nghe_tu_day_6a7ff4ab) { onListen(paragraph.startMs); following = true; true }
                                 if (onEdit != null) onLongClick(S.s_sua_cau_nay_a82aec43) { following = false; onEdit(paragraph); true }
                             }
+                            .then(if (paragraph.timed) Modifier.visualIcon() else Modifier)
                             .pointerInput(paragraph, onEdit) {
                                 detectTapGestures(onLongPress = if (onEdit == null) null else { _ -> following = false; onEdit(paragraph) }, onTap = { at ->
                                     onTap()
@@ -222,7 +228,11 @@ fun ReadAlongPane(
                                         following = true
                                     }
                                 })
-                            }.drawBehind {
+                            }.padding(start = if (paragraph.timed) 14.dp else 0.dp).drawBehind {
+                            val firstLineCenter = layout?.let { (it.getLineTop(0) + it.getLineBottom(0)) / 2f } ?: 12.dp.toPx()
+                            if (paragraph.timed) translate(left = -12.dp.toPx(), top = firstLineCenter - 5.dp.toPx()) {
+                                drawLucide(LucidePaths.PLAY, cueColor, 10.dp.toPx() / 24f)
+                            }
                             if (active.value) {
                                 val ink = geometry
                                 if (ink != null) {

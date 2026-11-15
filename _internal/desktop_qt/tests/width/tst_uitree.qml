@@ -28,6 +28,7 @@ Item {
             const tree = JSON.parse(request.responseText)
             compare(tree.schema, 1)
             compare(tree.width, 360)
+            verify(tree.pixel_ratio > 0)
             compare(tree.image_sha256.length, 64)
             const text = tree.nodes.find(n => n.text === "Play")
             verify(text !== undefined)

@@ -365,7 +365,7 @@ Item {
                 id: deliveryText
                 objectName: "deliveryText"
                 text: Script.deliveryChip(root.line)
-                color: delivery.waiting ? Theme.text2 : delivery.hovered ? Theme.text : Theme.text3
+                color: delivery.waiting ? Theme.text2 : Theme.accentText
                 font.pixelSize: 12
                 font.weight: Theme.weightMedium
             }

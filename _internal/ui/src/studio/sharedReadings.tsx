@@ -6,7 +6,7 @@ import { BookOpenCheck, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "@/shared/toast";
 import { shownReading } from "@/shared/format";
-import { Button, IconButton } from "@/shared/ui";
+import { ActionRow, Button, IconButton } from "@/shared/ui";
 import { api } from "./api";
 import { refreshAfterDecision } from "./decisions";
 
@@ -94,7 +94,7 @@ export function SharedReadingsSettings() {
           )}
         </AnimatedRows>
       </div>
-      <MotionPresence open={filtered.length > shown}><Button size="sm" variant="ghost" onClick={() => setShown(shown + 12)}>{S.s_xem_them_e0ac1b1e}</Button></MotionPresence>
+      <MotionPresence open={filtered.length > shown}><ActionRow onClick={() => setShown(shown + 12)}>{S.s_xem_them_e0ac1b1e}</ActionRow></MotionPresence>
       <form
         className="mt-2 flex flex-wrap items-center gap-2"
         onSubmit={(event) => {

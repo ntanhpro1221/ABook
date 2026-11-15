@@ -158,7 +158,7 @@ export function MorningRecap({ className }: { className?: string }) {
         <X className="size-4" />
       </button>
       {/* Nhãn HOA chỉ ≤ 3 chữ (DESIGN 5.5): tên sách xuống chữ thường 12 px - không thành một dòng HOA dài; tên dài xuống dòng, không cắt. */}
-      <div className="flex items-baseline gap-2 pr-12 text-accent-text">
+      <div className="flex items-baseline gap-2 pr-12 text-fg-2">
         <Moon className="size-3.5 shrink-0 self-center" />
         <span className="label-section shrink-0">{sessionLabel(session.endedAt)}</span>
         <span className="min-w-0 break-words text-xs font-medium text-fg-2">· {session.bookTitle}</span>
@@ -229,7 +229,7 @@ export function MorningRecap({ className }: { className?: string }) {
               className="-mx-2 block w-[calc(100%+14px)] rounded-control px-2 py-3 text-left text-body leading-snug hover:bg-hover active:bg-hover"
             >
               {<Presence>{segment.speaker && <SpeakerLabel speaker={segment.speaker} sentence={segment.text} />}</Presence>}
-              {segment.text}
+              <span className="flex items-start gap-2"><Play aria-hidden className="mt-0.5 size-4 shrink-0 text-fg-3" /><span className="min-w-0">{segment.text}</span></span>
             </button>
             ))}
           </section>)}

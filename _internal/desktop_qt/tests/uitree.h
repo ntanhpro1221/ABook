@@ -10,6 +10,7 @@
 #include <QJsonObject>
 #include <QObject>
 #include <QQuickItem>
+#include <QQuickWindow>
 #include <QRegularExpression>
 #include <QtQuick/private/qquickaccessibleattached_p.h>
 #include "visualready.h"
@@ -27,13 +28,16 @@ public:
             return false;
         QJsonArray nodes;
         const QRectF all(0, 0, root->width(), root->height());
-        walk(root, root, -1, all, nodes);
+        // WindowLayer moves popovers beside the captured item. QtTest's grab
+        // includes those pixels, so traverse the same window and clip to the crop.
+        walk(root->window() ? root->window()->contentItem() : root, root, -1, all, nodes);
         QFile image(png);
         if (!image.open(QIODevice::ReadOnly)) return false;
         const QJsonObject doc{{QStringLiteral("schema"), 1}, {QStringLiteral("platform"), QStringLiteral("qt")},
             {QStringLiteral("image_sha256"), QString::fromLatin1(QCryptographicHash::hash(image.readAll(), QCryptographicHash::Sha256).toHex())},
             {QStringLiteral("image"), QFileInfo(png).fileName()}, {QStringLiteral("unit"), QStringLiteral("px")},
             {QStringLiteral("width"), root->width()}, {QStringLiteral("height"), root->height()},
+            {QStringLiteral("pixel_ratio"), root->window() ? root->window()->devicePixelRatio() : 1.0},
             {QStringLiteral("nodes"), nodes}};
         QString path = png;
         path.replace(QRegularExpression(QStringLiteral("\\.png$")), QStringLiteral(".tree.json"));
@@ -114,6 +118,16 @@ private:
                 node.insert(QStringLiteral("background_color"), color.value<QColor>().name(QColor::HexArgb));
         }
         if (!item->objectName().isEmpty()) node.insert(QStringLiteral("tag"), item->objectName());
+        if (item->property("scene").isValid() && item->property("open").toBool()) {
+            node.insert(QStringLiteral("modal"), true);
+            node.insert(QStringLiteral("z"), item->z());
+        }
+        if (item->property("path").isValid() && !item->property("path").toString().isEmpty())
+            node.insert(QStringLiteral("icon"), true);
+        if (QString::fromUtf8(item->metaObject()->className()).startsWith(QStringLiteral("GeneratedCover")))
+            node.insert(QStringLiteral("graphic"), true);
+        if (item->inherits("QQuickImage") && !item->property("source").toUrl().isEmpty()) node.insert(QStringLiteral("graphic"), true);
+        if (!item->isEnabled()) node.insert(QStringLiteral("disabled"), true);
         for (const char *flag : {"checked", "selected", "current", "highlighted"}) {
             const QVariant value = item->property(flag);
             if (value.typeId() == QMetaType::Bool && (QByteArray(flag) != "checked" || item->property("checkable").toBool())) {
@@ -121,7 +135,13 @@ private:
                 break;
             }
         }
-        if (item->acceptedMouseButtons() != Qt::NoButton)
+        bool tap = false;
+        for (QObject *child : item->children()) {
+            if (child->inherits("QQuickTapHandler") && child->property("enabled").toBool()) tap = true;
+        }
+        const bool mouseArea = item->inherits("QQuickMouseArea") && item->acceptedMouseButtons() != Qt::NoButton;
+        const bool textLink = item->property("linkCount").toInt() > 0;
+        if (item->isEnabled() && (tap || mouseArea || textLink || item->property("pressScaling").isValid()))
             node.insert(QStringLiteral("clickable"), true);
         out.append(node);
         const QRectF inner = item->clip() ? visible : clip;

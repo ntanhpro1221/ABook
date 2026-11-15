@@ -187,7 +187,7 @@ private fun LineRow(state: StudioScriptState, script: ChapterScript, row: ShownL
         }
         val hint = line.hint
         SwapContent(hint, row, contentKey = { hint, row -> hint != null && !row.context }, layout = ContentLayout.Column) { hint, row ->
-            if (hint != null && !row.context) RowHint(ScriptText.suggest(hint.note, hint.suggest), Modifier.padding(top = Dim.s4).testTag("studio_line_hint_${line.stableId}"), Abook.colors.accentText)
+            if (hint != null && !row.context) RowHint(ScriptText.suggest(hint.note, hint.suggest), Modifier.padding(top = Dim.s4).testTag("studio_line_hint_${line.stableId}"), Abook.colors.text2)
         }
         SwapContent(editing, contentKey = { editing -> editing }, layout = ContentLayout.Column) { editing ->
             if (editing) SpokenEditor(state, line) { onEdit(false) }

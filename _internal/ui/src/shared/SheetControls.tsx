@@ -5,7 +5,7 @@ import { Switch } from '@/desktop/Switch';
 /** Flat groups and rows shared by player sheets. */
 export function SheetSection({ title, children, first = false }: { title: string; children: ReactNode; first?: boolean }) {
   return <section className={`flex min-w-0 flex-col gap-2 ${first ? '' : 'pt-4'}`} aria-label={title}>
-    <h3 className="text-xs font-medium text-fg-2">{title}</h3>{children}
+    <h2 className="text-xs font-medium text-fg-2">{title}</h2>{children}
   </section>;
 }
 export function SheetSwitch({ label, checked, disabled, hint, onChange }: {

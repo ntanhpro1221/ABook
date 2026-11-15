@@ -1,4 +1,5 @@
 package vn.abook.player.ui.nowplaying
+import vn.abook.player.ui.components.visualIcon
 
 import vn.abook.player.ui.motion.SwapContent
 import vn.abook.player.ui.motion.ContentLayout
@@ -119,12 +120,7 @@ fun TonePage(onBack: () -> Unit, leaveGuard: (((() -> Unit) -> Unit)?) -> Unit =
                 }
             }
         }
-        Row(Modifier.fillMaxWidth().heightIn(min=Dim.s48).pressable { target="";name=suggest;form="save" }.testTag("tone_add"),
-            verticalAlignment=Alignment.CenterVertically) {
-            PlusIcon(Abook.colors.accentText)
-            Spacer(Modifier.width(Dim.s12))
-            BasicText(S.s_tone_add,style=Abook.type.label.copy(color=Abook.colors.accentText))
-        }
+        vn.abook.player.ui.components.InlineActionRow(S.s_tone_add, { target="";name=suggest;form="save" }, "tone_add")
         Spacer(Modifier.height(Dim.s8))
         SwitchRow(S.s_copy_0aedb2b2cf2b,lib.scoped,{enabled->AudioFx.changeTone { it.scope(enabled) }},"tone_scope")
         SwapContent(pending, contentKey = { pending -> pending!=null }, layout = ContentLayout.Column) { pending ->
@@ -169,7 +165,7 @@ private fun ToneRow(preset: TonePreset, chosen: Boolean, modifier: Modifier = Mo
     Row(modifier.fillMaxWidth().heightIn(min=56.dp).pressable(Role.RadioButton) { AudioFx.changeTone { it.select(preset.id) } }
         .semantics { selected=chosen }.testTag("tone_${preset.id}"),verticalAlignment=Alignment.CenterVertically) {
         val dot by animateFloatAsState(if(chosen)1f else 0f,tween(MotionMs.FAST),label="tone-dot")
-        Canvas(Modifier.size(20.dp)) {
+        Canvas(Modifier.size(20.dp).visualIcon()) {
             drawCircle(if(chosen)colors.accent else colors.text2,size.minDimension/2-1.dp.toPx(),style=Stroke(2.dp.toPx()))
             if(dot>0f)drawCircle(colors.accent,5.dp.toPx()*dot)
         }

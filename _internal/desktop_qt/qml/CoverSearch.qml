@@ -199,7 +199,7 @@ Item {
                                     x: 6; y: photo.y + photo.height + 6
                                     width: parent.width - 12
                                     text: TextWrap.keepDots(tile.modelData.title)
-                                    color: Theme.text
+                                    color: root.choosing ? Theme.text3 : Theme.accentText
                                     wrapMode: Text.WrapAtWordBoundaryOrAnywhere
                                     font.pixelSize: Theme.sizeCaption
                                     font.weight: Theme.weightMedium

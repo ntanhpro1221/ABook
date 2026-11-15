@@ -102,7 +102,7 @@ Item {
             Text {
                 anchors.centerIn: parent
                 text: tab.text
-                color: tab.current ? Theme.text : Theme.text2
+                color: tab.current ? Theme.text : Theme.accentText
                 font.pixelSize: Theme.sizeBodySmall
                 font.weight: tab.current ? Theme.weightMedium : Theme.weightRegular
             }

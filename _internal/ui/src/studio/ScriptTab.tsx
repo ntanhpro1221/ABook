@@ -1772,7 +1772,7 @@ export function ScriptTab({ bookId }: { bookId: string }) {
                 title={person.value === UNNAMED ? S.s_cau_may_chua_biet_ai_noi_va_vai_phu_khong_2bf6e97f : undefined}
                 onClick={() => setWho(who === person.value ? null : person.value)}
                 className={cn(
-                  "inline-flex h-7 items-center gap-2 rounded-full py-0 pl-1 pr-3 text-body-small font-medium transition-[opacity,background-color]",
+                  "inline-flex h-7 items-center gap-2 rounded-full py-0 pl-1 pr-3 text-body-small font-medium text-accent-text transition-[opacity,background-color]",
                   who === person.value ? "bg-hover" : "hover:bg-hover",
                   who && who !== person.value && "opacity-50",
                 )}

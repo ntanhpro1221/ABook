@@ -190,7 +190,7 @@ Modal {
                                 id: words
                                 x: 6
                                 y: 10
-                                width: parent.width - 12
+                                width: parent.width - 36
                                 spacing: 4
                                 Text {
                                     width: parent.width
@@ -211,6 +211,7 @@ Modal {
                                     font.pixelSize: Theme.sizeBodySmall
                                 }
                             }
+                            Icon { anchors.right: parent.right; anchors.rightMargin: 6; anchors.verticalCenter: parent.verticalCenter; name: "chevron-right"; size: 16; color: Theme.text3 }
                         }
                     }
                 }

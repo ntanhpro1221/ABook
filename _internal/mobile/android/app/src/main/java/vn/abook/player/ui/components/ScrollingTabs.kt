@@ -111,7 +111,7 @@ fun <T> ScrollingTabs(
                     BasicText(
                         label(tab),
                         style = Abook.type.tab,
-                        color = { lerp(colors.text2, colors.text, (1f - kotlin.math.abs(position.value - i)).coerceIn(0f, 1f)) },
+                        color = { lerp(colors.accentText, colors.text, (1f - kotlin.math.abs(position.value - i)).coerceIn(0f, 1f)) },
                     )
                     suffix?.invoke(tab)
                 }

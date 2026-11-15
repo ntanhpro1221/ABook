@@ -16,7 +16,7 @@ Item {
         id: label
         anchors.verticalCenter: parent.verticalCenter
         text: root.text
-        color: root.active || root.hovered ? Theme.text : Theme.text2
+        color: root.active || root.hovered ? Theme.text : Theme.accentText
         font.pixelSize: Theme.sizeBodySmall
         font.weight: Theme.weightMedium
         Behavior on color { ColorAnimation { duration: Theme.reduceMotion ? Theme.motionReduced : Theme.motionFast } }

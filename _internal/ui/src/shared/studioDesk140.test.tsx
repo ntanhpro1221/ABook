@@ -47,7 +47,7 @@ describe("FilterRow", () => {
     const [selected, other] = html.match(/<button[^>]*role="radio"[^>]*>/g)!;
     expect(selected).toMatch(/border-b-2 border-transparent[^"]* text-fg"/);
     expect(selected).not.toMatch(/text-accent-text|text-fg-2/);
-    expect(other).toMatch(/ text-fg-2/);
+    expect(other).toMatch(/ text-accent-text/);
     expect(html).not.toMatch(/border-accent/);
   });
 });

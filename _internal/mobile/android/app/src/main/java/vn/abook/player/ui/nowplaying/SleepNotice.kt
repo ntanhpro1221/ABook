@@ -51,7 +51,7 @@ fun SleepNotice(state: NowPlayingState, model: NowPlayingModel, modifier: Modifi
             Row(Modifier.fillMaxWidth().padding(top = Dim.s8).testTag("sleep_fading"), verticalAlignment = Alignment.CenterVertically) {
                 SleepIcon(Abook.colors.accentText)
                 Spacer(Modifier.width(Dim.s12))
-                BasicText(SleepText.fadingLine(again), Modifier.weight(1f), style = Abook.type.bodySmall.copy(color = Abook.colors.accentText))
+                BasicText(SleepText.fadingLine(again), Modifier.weight(1f), style = Abook.type.bodySmall.copy(color = Abook.colors.text2))
                 TextAction(SleepText.extendLabel(again), model::extendSleep, "sleep_extend_now")
             }
         }

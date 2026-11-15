@@ -517,7 +517,7 @@ private fun BookHead(
     val info: @Composable ColumnScope.() -> Unit = {
         Reveal(sub.isNotEmpty()) {
             Column {
-                BasicText(sub, style = Abook.type.caption.copy(color = colors.accentText, fontWeight = FontWeight.Medium))
+                BasicText(sub, style = Abook.type.caption.copy(color = colors.text2, fontWeight = FontWeight.Medium))
                 Spacer(Modifier.height(Dim.s4))
             }
         }
@@ -863,7 +863,7 @@ private fun PreparedMark() {
         verticalAlignment = Alignment.CenterVertically) {
         CloudDownloadIcon(Abook.colors.accentText)
         Spacer(Modifier.width(Dim.s4))
-        BasicText(S.s_da_lam_san_18d7d0da, style = Abook.type.caption.copy(color = Abook.colors.accentText))
+        BasicText(S.s_da_lam_san_18d7d0da, style = Abook.type.caption.copy(color = Abook.colors.text2))
     }
 }
 

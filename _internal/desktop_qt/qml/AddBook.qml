@@ -991,7 +991,7 @@ Modal {
                             bottomPadding: 12
                             text: TextWrap.keepDots(root.existing ? S.s_cuon_nay_da_co_trong_thu_vien_1d0cdfca + root.existing.title + "”."
                                 : root.sameSource ? S.s_ban_da_them_file_nay_thanh_cfc38264 + root.sameSource.title + "” (" + root.sameSource.chapters + S.s_chuong_7aae2c68 : "")
-                            color: Theme.accentText
+                            color: Theme.text2
                             wrapMode: Text.WrapAtWordBoundaryOrAnywhere
                             font.pixelSize: Theme.sizeBodySmall
                             textFormat: Text.PlainText

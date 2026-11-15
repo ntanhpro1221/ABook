@@ -359,7 +359,6 @@ private fun AddRow(ui: BookMusicUi, onAdd: () -> Unit) {
 @Composable
 private fun OptionRow(option: MusicOption, chosen: Boolean, enabled: Boolean, onChoose: () -> Unit) {
     val colors = Abook.colors
-    val mark by animateFloatAsState(if (chosen) 1f else 0f, Motion.Expand, label = "mark")
     val ink by animateColorAsState(
         when {
             chosen -> colors.accentText
@@ -380,8 +379,8 @@ private fun OptionRow(option: MusicOption, chosen: Boolean, enabled: Boolean, on
         hintColor = colors.text3,
         titleColor = ink,
         leading = {
-            Box(Modifier.size(Dim.s24).graphicsLayer { scaleX = mark; scaleY = mark }, contentAlignment = Alignment.CenterStart) {
-                CheckIcon(colors.accentText)
+            Box(Modifier.size(Dim.s24), contentAlignment = Alignment.CenterStart) {
+                vn.abook.player.ui.components.SelectionMark(chosen)
             }
         },
         trailing = if (option.hint.isNotEmpty()) ({ BasicText(option.hint, style = Abook.type.caption.copy(color = colors.text2)) }) else null,
@@ -401,7 +400,7 @@ fun LevelMeter(level: Double, enabled: Boolean = true, onPick: (Double) -> Unit,
             (slideInVertically(tween(MotionMs.MEDIUM, easing = Motion.Decelerate)) { it / 8 } + fadeIn(tween(MotionMs.MEDIUM)))
                 .togetherWith(slideOutVertically(tween(MotionMs.FAST_OUT, easing = Motion.Accelerate)) { -it / 8 } + fadeOut(tween(MotionMs.FAST_OUT)))
         }, label = "music-level-zone") { label ->
-            BasicText(label, style = Abook.type.bodySmall.copy(color = Abook.colors.accentText))
+            BasicText(label, style = Abook.type.bodySmall.copy(color = Abook.colors.text2))
         }
         vn.abook.player.ui.components.ClockLabel(MusicLevels.number(shown), style = Abook.type.caption, modifier = Modifier.testTag("music_level_value"))
         vn.abook.player.ui.components.RangeSlider(

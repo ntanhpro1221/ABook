@@ -154,7 +154,7 @@ fun BackButton(onClick: () -> Unit, modifier: Modifier = Modifier) {
         contentAlignment = Alignment.CenterStart,
     ) {
         // lucide ArrowLeft như bản web; mũi nhọn (x 4 kể cả nửa nét) dời về mép trái ô để thẳng mép nội dung.
-        Canvas(Modifier.size(24.dp)) {
+        Canvas(Modifier.size(24.dp).visualIcon()) {
             val unit = size.width / 24f
             translate(-4f * unit, 0f) { drawLucide(LucidePaths.ARROW_LEFT, ink, unit) }
         }

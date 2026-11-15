@@ -87,7 +87,7 @@ fun Switch(checked: Boolean, modifier: Modifier = Modifier) {
     val colors = Abook.colors
     val knob = remember { Animatable(if (checked) 1f else 0f) }
     LaunchedEffect(checked) { knob.animateTo(if (checked) 1f else 0f, Motion.Expand) }
-    Canvas(modifier.size(48.dp, 28.dp)) {
+    Canvas(modifier.size(48.dp, 28.dp).visualIcon()) {
         val k = knob.value
         val inset = 2.dp.toPx()
         val radius = size.height / 2 - inset
@@ -146,7 +146,7 @@ fun <T : Choice> ChoiceRow(
                         option.label,
                         style = Abook.type.label,
                         onTextLayout = { inks[i] = it.size.width.toFloat() },
-                        color = { lerp(colors.text2, colors.text, (1f - abs(position.value - i)).coerceIn(0f, 1f)) },
+                        color = { lerp(colors.accentText, colors.text, (1f - abs(position.value - i)).coerceIn(0f, 1f)) },
                     )
                 }
             }
@@ -203,7 +203,7 @@ fun <T : Choice> ChoiceRow(
  */
 @Composable
 fun ChevronIcon(color: androidx.compose.ui.graphics.Color, modifier: Modifier = Modifier, turn: (() -> Float)? = null) {
-    Canvas(modifier.size(16.dp)) {
+    Canvas(modifier.size(16.dp).visualIcon()) {
         val unit = 20.dp.toPx() / 24f
         // Mực trên lưới 24 (kể cả nửa nét): ChevronRight x 8..16, ChevronDown x 5..19.
         translate(size.width - (if (turn == null) 16f else 19f) * unit, size.height / 2 - 12f * unit) {

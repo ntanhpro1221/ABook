@@ -476,7 +476,7 @@ Item {
             // chương xong có độ dài; chưa thu thì số câu
             verify(hasText(page, "5 phút"))
             verify(hasText(page, "10 câu"))
-            compare(all(page, "chapterNumber").filter(shown).map(t => t.text).slice(0, 2), ["1", "2"])
+            compare(all(page, "chapterNumber").filter(shown).map(t => t.text).slice(0, 2), ["2", "3"])
             // hàng không đổi chỗ khi dữ liệu đổi (nhịp hỏi 3 giây)
             const first = page.projectScreenList.itemAtIndex(0)
             page.studioStore.loadBook()

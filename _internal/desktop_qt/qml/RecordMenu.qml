@@ -46,14 +46,11 @@ Column {
                 opacity: row.pressed ? 0.10 : (row.hovered ? 0.06 : 0)
                 Behavior on opacity { NumberAnimation { duration: Theme.motionFast } }
             }
-            Icon {
+            SelectionMark {
                 x: Theme.s8
                 y: 6 + 2
-                name: "check"
                 size: 16
-                color: Theme.accentText
-                opacity: row.selected ? 1 : 0
-                Behavior on opacity { NumberAnimation { duration: Theme.motionFast } }
+                selected: row.selected
             }
             Column {
                 id: texts

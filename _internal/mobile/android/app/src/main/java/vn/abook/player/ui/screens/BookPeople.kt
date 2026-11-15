@@ -330,7 +330,7 @@ internal fun PickRow(title: String, hint: String?, selected: Boolean, onClick: (
         verticalAlignment = Alignment.Top,
     ) {
         Box(Modifier.size(Dim.s24, 24.dp), contentAlignment = Alignment.CenterStart) {
-            Reveal(selected) { CheckIcon(colors.accentText) }
+            vn.abook.player.ui.components.SelectionMark(selected)
         }
         Spacer(Modifier.width(Dim.s12))
         Column(Modifier.weight(1f)) {

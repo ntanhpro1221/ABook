@@ -135,7 +135,7 @@ Column {
             width: parent.width - x - tail.width - 16
             anchors.verticalCenter: parent.verticalCenter
             text: option.current ? S.s_dung_la_8cf18603 + option.person.label : option.person.label
-            color: Theme.text
+            color: Theme.accentText
             wrapMode: Text.WrapAtWordBoundaryOrAnywhere
             font.pixelSize: Theme.sizeBodySmall
         }

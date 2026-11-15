@@ -63,7 +63,7 @@ Item {
         height: 20
         Text {
             objectName: "chapterNumber"
-            Reveal { shown: !(root.playable && root.hot) && !(root.current && Player.playing) }
+            Reveal { shown: !root.playable }
             text: root.chapter.index
             color: root.current ? Theme.accentText : Theme.text3
             font.pixelSize: Theme.sizeCaption
@@ -72,7 +72,7 @@ Item {
         }
         Item { Reveal { shown: root.current && Player.playing && !(root.playable && root.hot) } width: 16; height: 16; anchors.verticalCenter: parent.verticalCenter
                Vu { anchors.centerIn: parent; color: Theme.accent } }
-        Icon { Reveal { shown: root.playable && root.hot } name: root.current && Player.playing ? "pause" : "play"; size: 16; color: Theme.text; anchors.verticalCenter: parent.verticalCenter }
+        Icon { Reveal { shown: root.playable && (!(root.current && Player.playing) || root.hot) } name: root.current && Player.playing ? "pause" : "play"; size: 16; color: Theme.text; anchors.verticalCenter: parent.verticalCenter }
     }
     Column {
         id: titleBlock

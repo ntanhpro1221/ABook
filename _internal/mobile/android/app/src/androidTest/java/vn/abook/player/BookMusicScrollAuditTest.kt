@@ -78,7 +78,7 @@ class BookMusicScrollAuditTest {
             AbookTheme(false) {
                 val scope = rememberCoroutineScope()
                 val library = remember { LibraryState(source, scope, object : PreviewPlayer {
-                    override fun play(link: String, startSeconds: Double, volume: Float, onEnd: () -> Unit) {}
+                    override fun play(link: String, startSeconds: Double, volume: Float, onEnd: () -> Unit, onPlaying: (Boolean) -> Unit, onError: (String) -> Unit) {}
                     override fun stop() {}
                 }) }
                 val sheets = remember { SheetHost() }

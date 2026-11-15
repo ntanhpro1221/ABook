@@ -44,7 +44,7 @@ Item {
                         anchors.verticalCenter: parent.verticalCenter
                         width: parent.width - 28
                         text: root.shownTitle
-                        color: Theme.text2
+                        color: Theme.accentText
                         wrapMode: Text.Wrap
                         font.pixelSize: Theme.sizeBodySmall
                         font.weight: Theme.weightMedium
