@@ -23,13 +23,21 @@ Interactive {
             id: labels; anchors.verticalCenter: parent.verticalCenter
             width: parent.width - control.width - parent.spacing - (root.value ? valueLabel.width + parent.spacing : 0)
             Text { width: parent.width; text: root.text; color: Theme.text; font.pixelSize: Theme.sizeBodySmall; wrapMode: Text.Wrap }
-            Text { id: hintLabel; width: parent.width; text: TextWrap.pretty(root.hint); Reveal { shown: hintLabel.text !== "" }; color: Theme.text2; font.pixelSize: Theme.sizeCaption; wrapMode: Text.Wrap }
+            Text { id: hintLabel; width: parent.width; text: TextWrap.pretty(root.hint); color: Theme.text2; font.pixelSize: Theme.sizeCaption; wrapMode: Text.Wrap
+                Reveal { shown: hintLabel.text !== "" }
+            }
         }
-        Text { id: valueLabel; width: Math.min(implicitWidth, root.width * .5); Reveal { shown: root.value !== "" }; text: root.value; color: Theme.text2; font.pixelSize: Theme.sizeBodySmall; horizontalAlignment: Text.AlignRight; wrapMode: Text.Wrap; anchors.verticalCenter: parent.verticalCenter }
+        Text { id: valueLabel; width: Math.min(implicitWidth, root.width * .5); text: root.value; color: Theme.text2; font.pixelSize: Theme.sizeBodySmall; horizontalAlignment: Text.AlignRight; wrapMode: Text.Wrap; anchors.verticalCenter: parent.verticalCenter
+            Reveal { shown: root.value !== "" }
+        }
         Item {
             id: control; width: root.toggle ? toggleControl.width : 16; height: Theme.s48
-            Switch { id: toggleControl; Reveal { shown: root.toggle }; anchors.verticalCenter: parent.verticalCenter; label: root.text; checked: root.checked; onToggled: value => root.toggled(value) }
-            Icon { Reveal { shown: !root.toggle }; name: "chevron-right"; size: 16; color: Theme.text2; anchors.centerIn: parent }
+            Switch { id: toggleControl; anchors.verticalCenter: parent.verticalCenter; label: root.text; checked: root.checked; onToggled: value => root.toggled(value)
+                Reveal { shown: root.toggle }
+            }
+            Icon { name: "chevron-right"; size: 16; color: Theme.text2; anchors.centerIn: parent
+                Reveal { shown: !root.toggle }
+            }
         }
     }
 }
