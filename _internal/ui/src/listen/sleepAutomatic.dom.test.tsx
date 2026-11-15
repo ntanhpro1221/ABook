@@ -30,7 +30,7 @@ beforeEach(() => {
   (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
   vi.useFakeTimers();
   clock = new Date(2026, 10, 7, 23).getTime(); vi.setSystemTime(clock);
-  vi.clearAllMocks(); listeners.clear(); paused = true; osIdle = 0;
+  vi.clearAllMocks(); localStorage.clear(); listeners.clear(); paused = true; osIdle = 0;
   vi.stubGlobal("navigator", Object.assign(Object.create(navigator), { mediaSession: { setActionHandler: vi.fn() } }));
   vi.stubGlobal("MediaMetadata", class { constructor(data: object) { Object.assign(this, data); } });
   engine = { time: 12, duration: 100, get paused() { return paused; }, ended: false,
@@ -76,7 +76,7 @@ it("the extend button makes exactly one timer confirmation and an off timer stay
   expect(h.feedback).toHaveBeenCalledExactlyOnceWith("sleepExtend");
 });
 
-it("a key during chapter fade confirms once and stops the fade", async () => {
+it("a key during chapter fade resets its chapters and restores volume", async () => {
   await mount();
   await act(async () => actions.setSleep({ kind: "chapter" }));
   Object.assign(engine, { time: 95 });
@@ -85,9 +85,9 @@ it("a key during chapter fade confirms once and stops the fade", async () => {
   expect(h.feedback).toHaveBeenCalledExactlyOnceWith("sleepWarn");
   h.feedback.mockClear();
   await act(async () => { window.dispatchEvent(new KeyboardEvent("keydown", { key: "+", cancelable: true })); });
-  expect(h.feedback).toHaveBeenCalledExactlyOnceWith("sleepExtend");
+  expect(h.feedback).not.toHaveBeenCalledWith("sleepExtend");
   expect(actions.fading).toBe(false);
-  expect(actions.sleep.kind).toBe("minutes");
+  expect(actions.sleep.kind).toBe("chapter");
 });
 
 it("three hours in another app cannot arm any timer", async () => {
@@ -107,22 +107,22 @@ it("a delayed OS reply cannot arm a timer using stale evidence", async () => {
   await act(async () => { answer(2 * 3_600_000); });
   expect(actions.sleep.kind).toBe("off");
 });
-it("input in another app cancels an existing automatic timer, including a missed immediate event", async () => {
+it("observed OS input resets the scheduled timer", async () => {
   await mount(true); osIdle = 121_000;
   await elapsed(121_000);
   expect(actions.sleep.kind).toBe("minutes");
   osIdle = 5000;
   await elapsed(5000);
-  expect(actions.sleep.kind).toBe("off");
+  expect(actions.sleep).toMatchObject({ kind: "minutes", leftMs: 30 * 60_000 });
 });
 it("media seek and chapter controls count as awake without DOM input", async () => {
   await mount(true); osIdle = 121_000;
   await elapsed(121_000);
   expect(actions.sleep.kind).toBe("minutes");
   await act(async () => { actions.skip(15); actions.next(); });
-  expect(actions.sleep.kind).toBe("off");
+  expect(actions.sleep.kind).toBe("minutes");
   await elapsed(1000);
-  expect(actions.sleep.kind).toBe("off");
+  expect(actions.sleep.kind).toBe("minutes");
 });
 it("manual timers survive OS and app activity", async () => {
   await mount();

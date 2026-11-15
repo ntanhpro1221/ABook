@@ -588,6 +588,7 @@ export function App() {
           engine={engine}
           defaultRate={info.playbackRate}
           defaultVolume={info.volume}
+          activityResets={preferences?.sleepActivityResets ?? true}
           fadeSeconds={preferences?.sleepFadeSeconds ?? info.sleepFadeSeconds}
           extendMinutes={preferences?.sleepExtendMinutes ?? info.sleepExtendMinutes}
           systemIdleReader={!info.remote && !currentPeer() ? readLocalSystemIdleMs : undefined}

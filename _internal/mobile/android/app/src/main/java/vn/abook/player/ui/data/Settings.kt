@@ -75,6 +75,7 @@ data class AppSettings(
     /** "Tự mở cửa sổ mini": rời app lúc có sách mở thì nghe tiếp trong cửa sổ nhỏ (PiP). Chỉ điện thoại native. */
     val autoPip: Boolean = false,
     val schedule: SleepSchedule? = null,
+    val sleepActivityResets: Boolean = true,
     val shakeToExtend: Boolean = true,
     val shakeSensitivity: ShakeSensitivity = ShakeSensitivity.Normal,
     val flipToPause: Boolean = false,
@@ -123,6 +124,7 @@ data class AppSettings(
             autoMusic = flag(json, "autoMusic", Default.autoMusic),
             autoPip = flag(json, "autoPip", Default.autoPip),
             schedule = schedule(json.opt("schedule")),
+            sleepActivityResets = flag(json, "sleepActivityResets", Default.sleepActivityResets),
             shakeToExtend = flag(json, "shakeToExtend", Default.shakeToExtend),
             shakeSensitivity = word(json, "shakeSensitivity", Default.shakeSensitivity),
             flipToPause = flag(json, "flipToPause", Default.flipToPause),
@@ -148,6 +150,7 @@ data class AppSettings(
         if (schedule != before.schedule) {
             out.put("schedule", schedule?.let { JSONObject().put("from", it.from).put("to", it.to).put("minutes", it.minutes) } ?: JSONObject.NULL)
         }
+        if (sleepActivityResets != before.sleepActivityResets) out.put("sleepActivityResets", sleepActivityResets)
         if (shakeToExtend != before.shakeToExtend) out.put("shakeToExtend", shakeToExtend)
         if (shakeSensitivity != before.shakeSensitivity) out.put("shakeSensitivity", shakeSensitivity.key)
         if (flipToPause != before.flipToPause) out.put("flipToPause", flipToPause)

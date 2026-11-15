@@ -30,6 +30,16 @@ Column {
         width: parent.width
         SettingRow {
             width: parent.width
+            label: S.s_sleep_activity_resets
+            Switch {
+                label: S.s_sleep_activity_resets
+                checked: root.prefs.sleepActivityResets ?? true
+                enabled: Api.loaded
+                onToggled: value => store.update({sleepActivityResets: value})
+            }
+        }
+        SettingRow {
+            width: parent.width
             label: S.s_lich_dem_5f61612f
             hint: S.s_may_ranh_2_phut_trong_khung_gio_nay_moi_tu_93ce72b6
             Switch {

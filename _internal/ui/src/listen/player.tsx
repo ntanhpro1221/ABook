@@ -27,8 +27,6 @@ import {
   sleepExtended,
   sleepFrom,
   sleepAfterChapter,
-  sleepExpired,
-  SLEEP_PAUSED_EXPIRES_MS,
   type SleepMode,
   type SleepRequest,
   type SleepSchedule,
@@ -48,6 +46,7 @@ import { letterShortcutsOn } from "@/shared/letterShortcuts";
 import { feedback, setBookPlaying } from "@/shared/feedback";
 import { AUTO_SLEEP_SCHEDULE, AUTO_SLEEP_CONTINUE, NIGHT_IDLE_MS, automaticSleepAllowed, type AutoSleepReason } from "./sleepActivity";
 import { MORPH } from "./nowPlayingMorph";
+import { readSleepSelection, saveSleepSelection, type SleepSelection } from "./sleepSelection";
 
 export type { SleepMode, SleepRequest } from "./sleep";
 
@@ -254,6 +253,7 @@ export function PlayerProvider({
   keyboard = true,
   fadeSeconds = DEFAULT_FADE_SECONDS,
   extendMinutes = DEFAULT_EXTEND_MINUTES,
+  activityResets = true,
   sleepSchedule = null,
   systemIdleReader,
   plainOpen = false,
@@ -265,6 +265,7 @@ export function PlayerProvider({
   keyboard?: boolean;
   fadeSeconds?: number;
   extendMinutes?: number;
+  activityResets?: boolean;
   sleepSchedule?: SleepSchedule | null;
   systemIdleReader?: () => Promise<number | null>;
   /** Mở / đóng S.s_dang_nghe_9310d8cf chỉ bằng hoạt ảnh CSS (trượt + mờ, chạy trên GPU), không qua View Transition: điện thoại (WebView tầm trung) - một chuyển
@@ -276,8 +277,9 @@ export function PlayerProvider({
   const native = isNative(engine) ? engine : null;
   const clock = useMemo(() => new Clock(), []);
   const automaticSleep = useRef<AutoSleepReason | null>(null);
+  const selectedSleep = useRef<SleepSelection>({ request: { kind: "off" } });
   const automaticLastInput = useRef(0);
-  const awakeRef = useRef(() => {});
+  const awakeRef = useRef<(source?: string) => void>(() => {});
   const night = useMemo(
     () => new NightRecorder(source.saveNight ? (bookId, session, record) => source.saveNight!(bookId, session, record) : undefined),
     [source],
@@ -371,12 +373,19 @@ export function PlayerProvider({
   );
 
   const sleepWarned = useRef(false);
-  /** Lúc hẹn giờ bắt đầu đứng vì tạm dừng (null = đang phát / không hẹn) - xem hiệu ứng hết hạn bên dưới. */
-  const sleepPausedAt = useRef<number | null>(null);
   const applySleep = useCallback((mode: SleepMode) => {
     sleepWarned.current = false;
     refs.current.sleep = mode;
     setSleepState(mode);
+  }, []);
+
+  const rememberSleep = useCallback((value: SleepSelection) => {
+    selectedSleep.current = value;
+    const book = refs.current.book;
+    if (book) {
+      try { saveSleepSelection(book.id, book.record, value); }
+      catch (error) { reportSaveFailure(error); }
+    }
   }, []);
 
   const refreshLists = useCallback((bookId: string) => {
@@ -898,6 +907,13 @@ export function PlayerProvider({
 
   const adoptBook = useCallback((book: BookRef, chapters: ListenChapter[], purposeValue: Purpose, _carriedRate?: number) => {
     const current = refs.current.track;
+    if (!native && (!current || current.bookId !== book.id || current.recordId !== activeRecord(book))) {
+      selectedSleep.current = readSleepSelection(book.id, activeRecord(book), scheduleWindow(options.schedule));
+      automaticSleep.current = selectedSleep.current.window ? "schedule" : null;
+      refs.current.scheduleOffFor = selectedSleep.current.disabledWindow ?? "";
+      applySleep(sleepFrom(selectedSleep.current.request, false, Date.now()));
+      if (selectedSleep.current.request.kind === "minutes") setLastSleepMinutes(selectedSleep.current.request.minutes);
+    }
     if (current && (current.bookId !== book.id || current.recordId !== activeRecord(book))) {
       refs.current.history = [];
       setCanGoBack(false);
@@ -913,7 +929,7 @@ export function PlayerProvider({
     // Điện thoại: tốc độ đi cùng lệnh nạp cuốn (loadQueue); đặt trước lệnh ấy thì lõi ghi nó vào cuốn ĐANG nạp - cuốn cũ mất tốc độ riêng.
     if (bookRate !== refs.current.rate) applyRate(bookRate, !native);
     return bookRate;
-  }, [applyRate, native, source]);
+  }, [applyRate, applySleep, native, source, options.schedule]);
 
   const playNow = useCallback((book: BookRef, chapters: ListenChapter[], chapter: ListenChapter, at: number | undefined, extra: Parameters<PlayerActions["play"]>[4]) => {
     refs.current.wantsPlay = true;
@@ -1281,6 +1297,7 @@ export function PlayerProvider({
       native.setSleep(request);
       return;
     }
+    rememberSleep({ request, disabledWindow: request.kind === "off" ? scheduleWindow(options.schedule) ?? "" : refs.current.scheduleOffFor });
     endFade();
     refs.current.sleepMark = { at: Date.now(), seconds: engine.time };
     applySleep(sleepFrom(request, refs.current.audible && !engine.paused, Date.now()));
@@ -1294,10 +1311,7 @@ export function PlayerProvider({
     if (request.kind === "minutes") setLastSleepMinutes(request.minutes);
     setSleepStoppedAt(null);
     if (book && refs.current.purpose === "listen") night.start(book, request.kind === "minutes" ? request.minutes : null, position());
-  }, [applySleep, endFade, engine, native, night, options.schedule, position]);
-
-  const setSleepRef = useRef(setSleep);
-  setSleepRef.current = setSleep;
+  }, [applySleep, endFade, engine, native, night, options.schedule, position, rememberSleep]);
 
   const extendSleep = useCallback(() => {
     if (native) {
@@ -1309,15 +1323,18 @@ export function PlayerProvider({
       automaticSleep.current = null;
       refs.current.lastActivity = Date.now();
       refs.current.scheduleOffFor = scheduleWindow(options.schedule) ?? "";
+      rememberSleep({ ...selectedSleep.current, window: undefined, disabledWindow: refs.current.scheduleOffFor });
       toast.dismiss("automatic-sleep");
     }
     const minutes = sleepExtendMinutes(refs.current.sleep, options.extendMinutes);
+    if (selectedSleep.current.retained && refs.current.book) night.start(refs.current.book, minutes, position());
+    rememberSleep({ ...selectedSleep.current, retained: false });
     endFade();
     applySleep(sleepExtended(refs.current.sleep, options.extendMinutes, refs.current.audible && !engine.paused, Date.now()));
     night.extend(minutes, position());
     feedback("sleepExtend");
     toast.success(sleepExtendLabel(minutes), { id: "sleep-extend", duration: 2500 });
-  }, [applySleep, endFade, engine, native, night, options.extendMinutes, options.schedule, position]);
+  }, [applySleep, endFade, engine, native, night, options.extendMinutes, options.schedule, position, rememberSleep]);
 
   const close = useCallback(() => {
     if (!native) publishTrackMetadata(null);
@@ -1481,14 +1498,14 @@ export function PlayerProvider({
     stopPeerWatch.current();
     refs.current.wantsPlay = false;
     night.stop(position());
-    automaticSleep.current = null;
+    rememberSleep({ ...selectedSleep.current, retained: true });
     toast.dismiss("automatic-sleep");
     engine.pause();
     endFade();
-    applySleep({ kind: "off" });
+    applySleep(sleepFrom(selectedSleep.current.request, false, Date.now()));
     setSleepStoppedAt(Date.now());
     save(true);
-  }, [applySleep, endFade, engine, night, position, save]);
+  }, [applySleep, endFade, engine, night, position, save, rememberSleep]);
 
   // ---- sự kiện của bộ máy phát ----------------------------------------------------------------------------
 
@@ -1559,8 +1576,13 @@ export function PlayerProvider({
       }),
       engine.on("seeked", () => { refs.current.sleepMark = { at: Date.now(), seconds: engine.time }; syncClock(); save(true); }),
       engine.on("play", () => {
-        // Hẹn giờ đã đứng quá hạn (tối qua dừng giữa chừng): tắt trước khi đồng hồ chạy tiếp - nhịp hẹn bên dưới có thể đã bị trình duyệt / máy ngủ hoãn.
-        if (!native && sleepExpired(refs.current.sleep, sleepPausedAt.current, Date.now())) applySleep({ kind: "off" });
+        if (!native && selectedSleep.current.retained) {
+          applySleep(sleepFrom(selectedSleep.current.request, false, Date.now()));
+          rememberSleep({ ...selectedSleep.current, retained: false });
+          const book = refs.current.book;
+          if (book) night.start(book, selectedSleep.current.request.kind === "minutes" ? selectedSleep.current.request.minutes : null, position(), automaticSleep.current ?? undefined);
+          setSleepStoppedAt(null);
+        }
         refs.current.wantsPlay = true;
         setPlaying(true);
         setError(""); // phát lại được (vd có mạng lại khi nghe thẳng): thông báo lỗi cũ không còn đúng
@@ -1687,27 +1709,12 @@ export function PlayerProvider({
       }),
       engine.on("sleep", () => {
         if (!native) return;
-        const previousKind = refs.current.sleep.kind;
         applySleep(native.sleep);
-        if (previousKind !== "off" && native.sleep.kind === "off" && native.paused) setSleepStoppedAt(Date.now());
+        setSleepStoppedAt(native.sleep.stoppedAt ? native.sleep.stoppedAt * 1000 : null);
       }),
     ];
     return () => offs.forEach((off) => off());
   }, [applyRate, applySleep, caughtUpToast, clock, closeSession, engine, finishedToast, load, native, openSession, refreshLists, save, source, stopBySleep, withConsent]);
-
-  // Hẹn giờ đứng vì tạm dừng (bộ máy web; điện thoại tự lo trong lõi native): tới SLEEP_PAUSED_EXPIRES_MS thì tắt. Mỗi lần hẹn / hẹn lại khi đang dừng tính lại từ đầu.
-  useEffect(() => {
-    if (native || playing || sleep.kind === "off") {
-      sleepPausedAt.current = null;
-      return;
-    }
-    const pausedAt = Date.now();
-    sleepPausedAt.current = pausedAt;
-    const timer = window.setTimeout(() => {
-      if (sleepExpired(refs.current.sleep, sleepPausedAt.current, Date.now())) applySleep({ kind: "off" });
-    }, SLEEP_PAUSED_EXPIRES_MS);
-    return () => window.clearTimeout(timer);
-  }, [applySleep, native, playing, sleep]);
 
   // Đồng hồ chạy theo khung hình khi đang phát: nhãn giây đổi đúng nhịp 1 giây thay vì theo timeupdate (~4 lần/giây,
   // lệch tới 270 ms). Chỉ component nào chọn giá trị đổi mới render lại.
@@ -1741,7 +1748,7 @@ export function PlayerProvider({
         refs.current.sleep = updated;
         if (Math.ceil(left / 1000) !== Math.ceil(mode.leftMs / 1000) || (updated.since === null) !== (mode.since === null)) setSleepState(updated);
       }
-      else if (mode.kind === "chapter" && engine.duration > 0) {
+      else if (mode.kind === "chapter" && mode.chapters === 1 && engine.duration > 0) {
         left = ((engine.duration - engine.time) / Math.max(0.25, refs.current.rate)) * 1000;
       }
       if (left === null) return;
@@ -1774,33 +1781,38 @@ export function PlayerProvider({
     return () => window.clearInterval(timer);
   }, [bed, endFade, engine, native, night, options.fadeSeconds, playing, position, sleep.kind, stopBySleep]);
 
-  // Máy tính: chạm phím/chuột lúc đang nhỏ dần = S.s_copy_358b56a940b2 - nghe thêm. Phím ấy không làm gì khác (không tạm dừng).
-  useEffect(() => {
-    if (native || !fading) return;
-    const names = ["keydown", "pointerdown", "pointermove", "wheel"] as const;
-    const onActivity = (event: Event) => {
-      if (event.type === "keydown") {
-        event.preventDefault();
-        event.stopPropagation();
-      }
-      extendSleep();
-    };
-    names.forEach((name) => window.addEventListener(name, onActivity, { capture: true, once: true }));
-    return () => names.forEach((name) => window.removeEventListener(name, onActivity, { capture: true }));
-  }, [extendSleep, fading, native]);
-
-  // One awake path for app, media-session and system input. Explicit timers are unaffected.
-  awakeRef.current = () => {
-    refs.current.lastActivity = Date.now();
+  // Deliberate input resets one cycle; automatic playback events never enter this path.
+  awakeRef.current = (source = "control") => {
+    const now = Date.now();
+    refs.current.lastActivity = now;
     if (refs.current.track) refs.current.lastActivityPosition = position();
-    if (automaticSleep.current) setSleepRef.current({ kind: "off" });
+    if (!native && automaticSleep.current && selectedSleep.current.window !== scheduleWindow(options.schedule)) {
+      automaticSleep.current = null;
+      rememberSleep({ request: { kind: "off" }, disabledWindow: refs.current.scheduleOffFor });
+      endFade();
+      applySleep({ kind: "off" });
+      return;
+    }
+    if (native || !activityResets || refs.current.sleep.kind === "off") return;
+    endFade();
+    refs.current.sleepMark = { at: now, seconds: engine.time };
+    const current = refs.current.sleep;
+    const request = !selectedSleep.current.retained && current.kind === "minutes" && selectedSleep.current.request.kind === "chapter"
+      ? { kind: "minutes" as const, minutes: current.minutes } : selectedSleep.current.request;
+    applySleep(sleepFrom(request, refs.current.audible && !engine.paused, now));
+    night.touch(source, position());
   };
   useEffect(() => {
     if (native) return;
-    const onActivity = () => awakeRef.current();
-    const names = ["keydown", "pointerdown", "pointermove", "wheel", "focus"] as const;
+    const onActivity = (event: Event) => awakeRef.current(event.type);
+    const visible = () => { if (document.visibilityState === "visible") awakeRef.current("visible"); };
+    const names = ["keydown", "pointerdown", "pointermove", "wheel", "touchmove", "focus"] as const;
     names.forEach((name) => window.addEventListener(name, onActivity, { passive: true }));
-    return () => names.forEach((name) => window.removeEventListener(name, onActivity));
+    document.addEventListener("visibilitychange", visible);
+    return () => {
+      names.forEach((name) => window.removeEventListener(name, onActivity));
+      document.removeEventListener("visibilitychange", visible);
+    };
   }, [native]);
 
   // Browser input alone cannot establish OS idleness; the local desktop supplies that evidence.
@@ -1819,8 +1831,17 @@ export function PlayerProvider({
       const now = Date.now();
       const appIdle = now - Math.max(startedAt, refs.current.lastActivity);
       if (automaticSleep.current) {
+        if (selectedSleep.current.window !== scheduleWindow(options.schedule)) {
+          automaticSleep.current = null;
+          rememberSleep({ request: { kind: "off" } });
+          applySleep({ kind: "off" });
+          return;
+        }
         // A failed/stale probe cannot justify stopping someone who may have resumed using the OS.
-        if (osIdle === null || !Number.isFinite(osIdle) || requestedAt - osIdle > automaticLastInput.current + 100 || now - requestedAt > 2000) awakeRef.current();
+        if (osIdle !== null && Number.isFinite(osIdle) && requestedAt - osIdle > automaticLastInput.current + 100 && now - requestedAt <= 2000) {
+          automaticLastInput.current = requestedAt - osIdle;
+          awakeRef.current("system-input");
+        }
         return;
       }
       if (refs.current.sleep.kind !== "off" || now - requestedAt > 2000) return;
@@ -1837,6 +1858,7 @@ export function PlayerProvider({
       }
       applySleep(sleepFrom({ kind: "minutes", minutes }, true, now));
       automaticSleep.current = reason;
+      rememberSleep({ request: { kind: "minutes", minutes }, window: window! });
       automaticLastInput.current = requestedAt - osIdle!;
       toast(AUTO_SLEEP_SCHEDULE, {
         id: "automatic-sleep", duration: Infinity,
@@ -1846,7 +1868,7 @@ export function PlayerProvider({
     void check();
     const timer = window.setInterval(() => void check(), 1000);
     return () => { live = false; window.clearInterval(timer); };
-  }, [applySleep, engine, native, night, options.schedule, playing, position, systemIdleReader]);
+  }, [applySleep, engine, native, night, options.schedule, playing, position, systemIdleReader, rememberSleep]);
 
   useEffect(() => {
     const onHide = () => {

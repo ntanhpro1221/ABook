@@ -75,6 +75,10 @@ Tab đang mở của thanh tab đáy điện thoại: icon + chữ hổ phách (
 
 ## 4. Nguyên tắc
 
+Hẹn giờ ngủ là lựa chọn được giữ trên Android, Qt và web: hết lượt thì nhỏ dần, dừng phát, giữ nút mặt trăng sáng và trả số đếm về đủ mức đã chọn, đứng chờ phát tiếp. Chỉ thao tác tắt hẹn giờ mới bỏ lựa chọn. Không có hạn tự tắt khi tạm dừng, không tự hẹn vì lâu không tương tác. Dòng dưới “Tắt sau” khi dừng: **Đang tạm dừng - đồng hồ cũng dừng.**
+
+“Thao tác hẹn lại” mặc định bật: chạm, cuộn, phím, mở lại app và điều khiển media đưa lượt đếm về đủ mức đã chọn, trả âm lượng ngay. Hẹn theo chương tính lại đủ số chương từ chương hiện tại. Thay đổi này dùng các chuyển động hiện có của nút mặt trăng, số đếm và bảng chọn; không rung hoặc phát âm khi tự dừng. Lịch đêm chỉ giữ trong khung đêm đã hẹn; tắt tay thì đêm ấy không tự hẹn lại.
+
 1. **Một việc chính mỗi màn** - đúng MỘT nút chính (nền hổ phách). Còn lại là phụ.
 2. **Khoảng trắng thay khung** - không thẻ/viền/bóng quanh nhóm trừ vật thể độc lập (bìa, thanh phát, hộp thoại, bảng
    trượt, menu). Nhóm bằng khoảng cách + tiêu đề nhỏ. Không thẻ lồng thẻ.

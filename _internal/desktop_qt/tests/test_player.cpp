@@ -193,7 +193,7 @@ private slots:
         QVERIFY(rig.out.volume > 0);
         rig.run(9);
         QVERIFY(!rig.player->playing());
-        QCOMPARE(rig.player->sleepKind(), QStringLiteral("off"));
+        QCOMPARE(rig.player->sleepKind(), QStringLiteral("minutes"));
         QVERIFY(!rig.player->fading());
         QCOMPARE(rig.out.volume, 1.0);
         QVERIFY(!rig.player->sleepStoppedText().isEmpty());
@@ -254,6 +254,7 @@ private slots:
 
     void sleepCountsOnlyWhilePlaying() {
         Rig rig;
+        rig.player->configure({{QStringLiteral("sleepActivityResets"), false}});
         rig.player->open(QStringLiteral("a"), -1, -1, true);
         rig.player->setSleep(QStringLiteral("minutes"), 5);
         rig.run(10);
@@ -266,49 +267,80 @@ private slots:
         QVERIFY(rig.player->clock()->sleepLeft() < before);
     }
 
-    // Soát Android 12-11 mục 2: hẹn giờ đứng vì tạm dừng tới 30 phút thì tự tắt - tối mai nghe tiếp không bị hẹn giờ cũ tắt tiếng.
-    void sleepPausedForThirtyMinutesTurnsOff() {
-        QCOMPARE(PlayerLogic::kSleepPausedExpiresMs, qint64(30 * 60'000));
-        for (const QString kind : {QStringLiteral("minutes"), QStringLiteral("chapter")}) {
-            Rig rig;
-            rig.player->open(QStringLiteral("a"), -1, -1, true);
-            rig.player->setSleep(kind, 30);
-            rig.run(5);
-            rig.player->pause();
-            rig.run(29 * 60);
-            QCOMPARE(rig.player->sleepKind(), kind); // chưa tới hạn: vẫn hẹn
-            rig.run(61);
-            QCOMPARE(rig.player->sleepKind(), QStringLiteral("off"));
-            QVERIFY(rig.player->sleepStoppedText().isEmpty()); // không phải "Hẹn giờ đã tắt tiếng lúc ..."
-            rig.player->resume();
-            rig.run(5);
-            QCOMPARE(rig.player->sleepKind(), QStringLiteral("off"));
-        }
-    }
-
-    void sleepPauseClockRestartsOnPlayAndOnANewTimer() {
+    void sleepStaysSelectedAcrossExpiryAndLongPauses() {
         Rig rig;
-        rig.player->open(QStringLiteral("a"), -1, -1, true);
-        rig.player->setSleep(QStringLiteral("minutes"), 30);
-        rig.player->pause();
-        rig.run(20 * 60);
-        rig.player->resume(); // phát lại trước hạn: hạn đứng tính lại từ lần dừng sau
-        rig.run(5);
-        rig.player->pause();
-        rig.run(20 * 60);
+        rig.out.dur = 2000;
+        rig.player->open(QStringLiteral("a"), 1, 0, true);
+        rig.player->setSleep(QStringLiteral("minutes"), 1);
+        rig.run(61);
+        QVERIFY(!rig.player->playing());
         QCOMPARE(rig.player->sleepKind(), QStringLiteral("minutes"));
-        rig.player->setSleep(QStringLiteral("minutes"), 15); // hẹn lại khi đang dừng: tính lại từ bây giờ
-        rig.run(20 * 60);
+        QCOMPARE(rig.player->clock()->sleepLeft(), 60.0);
+        QVERIFY(!rig.player->sleepStoppedText().isEmpty());
+        rig.run(12 * 3600);
         QCOMPARE(rig.player->sleepKind(), QStringLiteral("minutes"));
-        rig.run(11 * 60);
+        rig.player->resume();
+        rig.run(58);
+        QVERIFY(rig.player->playing());
+        rig.run(3);
+        QVERIFY(!rig.player->playing());
+        QCOMPARE(rig.player->clock()->sleepLeft(), 60.0);
+        rig.player->setSleep(QStringLiteral("off"));
         QCOMPARE(rig.player->sleepKind(), QStringLiteral("off"));
     }
 
-    void sleepPausedExpiryIsAPureRule() {
-        QVERIFY(!PlayerLogic::sleepPausedExpired(false, 1, 1 + PlayerLogic::kSleepPausedExpiresMs));
-        QVERIFY(!PlayerLogic::sleepPausedExpired(true, 0, PlayerLogic::kSleepPausedExpiresMs * 2));
-        QVERIFY(!PlayerLogic::sleepPausedExpired(true, 1000, 1000 + PlayerLogic::kSleepPausedExpiresMs - 1));
-        QVERIFY(PlayerLogic::sleepPausedExpired(true, 1000, 1000 + PlayerLogic::kSleepPausedExpiresMs));
+    void sleepSelectionSurvivesPlayerRecreation() {
+        Rig rig;
+        rig.player->open(QStringLiteral("a"), 1, 0, true);
+        rig.player->setSleep(QStringLiteral("minutes"), 10);
+        rig.run(60);
+        rig.player.reset();
+        rig.player = std::make_unique<Player>(&rig.out, &rig.net, rig.dir.filePath(QStringLiteral("outbox.json")), nullptr, fakeNow);
+        rig.player->open(QStringLiteral("a"), 1, 0, false);
+        QCOMPARE(rig.player->sleepKind(), QStringLiteral("minutes"));
+        QCOMPARE(rig.player->clock()->sleepLeft(), 600.0);
+    }
+    void extendingAParkedChapterTimerOnlyChangesThisCycle() {
+        Rig rig;
+        rig.out.dur = 2000;
+        rig.player->open(QStringLiteral("a"), 1, 0, true);
+        rig.player->setSleep(QStringLiteral("chapter"), 1);
+        rig.out.finish();
+        rig.player->extendSleep();
+        rig.player->resume();
+        QCOMPARE(rig.player->sleepKind(), QStringLiteral("minutes"));
+        rig.run(601);
+        QVERIFY(!rig.player->playing());
+        QCOMPARE(rig.player->sleepKind(), QStringLiteral("chapter"));
+        QCOMPARE(rig.player->sleepChapters(), 1);
+    }
+
+    void activityRestartsTheSelectedCycle() {
+        Rig rig;
+        rig.out.dur = 2000;
+        rig.player->open(QStringLiteral("a"), 1, 0, true);
+        rig.player->setSleep(QStringLiteral("minutes"), 10);
+        rig.run(360);
+        QVERIFY(rig.player->clock()->sleepLeft() < 241);
+        rig.player->watchInput();
+        for (auto type : {QEvent::WindowActivate, QEvent::MouseButtonPress, QEvent::KeyPress, QEvent::Wheel}) {
+            QEvent event(type);
+            QCoreApplication::sendEvent(QCoreApplication::instance(), &event);
+            QCOMPARE(rig.player->clock()->sleepLeft(), 600.0);
+            rig.run(1);
+        }
+    }
+
+    void choosingCountsCannotEndPlayback() {
+        Rig rig;
+        rig.player->open(QStringLiteral("a"), 1, 0, true);
+        for (const auto &kind : {QStringLiteral("chapter"), QStringLiteral("minutes")}) {
+            for (int count : {2, 1, 2, 3, 2, 1, 2}) {
+                rig.player->setSleep(kind, count);
+                QCOMPARE(rig.player->sleepKind(), kind);
+                QVERIFY(rig.player->playing());
+            }
+        }
     }
 
     // "Hết N chương" (bộ chọn giá trị): mỗi chương hết là đếm xuống và nghe tiếp; chương cuối của hẹn mới dừng.
@@ -326,7 +358,7 @@ private slots:
         QCOMPARE(rig.player->sleepChapters(), 1);
         rig.out.finish();
         QVERIFY(!rig.player->playing());
-        QCOMPARE(rig.player->sleepKind(), QStringLiteral("off"));
+        QCOMPARE(rig.player->sleepKind(), QStringLiteral("chapter"));
         QCOMPARE(rig.player->chapterId(), 4);
         rig.player->setSleep(QStringLiteral("chapter"), 99);
         QCOMPARE(rig.player->sleepChapters(), 10);
@@ -359,7 +391,7 @@ private slots:
         QCOMPARE(rig.player->sleepKind(), QStringLiteral("chapter"));
         rig.out.finish();
         QVERIFY(!rig.player->playing());
-        QCOMPARE(rig.player->sleepKind(), QStringLiteral("off"));
+        QCOMPARE(rig.player->sleepKind(), QStringLiteral("chapter"));
         QCOMPARE(rig.player->chapterId(), 3); // chương kế đã nạp, đứng ở 0:00
         QCOMPARE(rig.out.pos, 0.0);
         const auto saves = rig.net.callsTo(QStringLiteral("/progress"));
@@ -502,7 +534,7 @@ private slots:
         rig.lastOsInput = g_now;
         g_now += 5000; // Detect input even if the UI was suspended and missed the immediate event.
         rig.player->tick();
-        QCOMPARE(rig.player->sleepKind(), QStringLiteral("off"));
+        QCOMPARE(rig.player->sleepKind(), QStringLiteral("minutes"));
         rig.player->setSleep(QStringLiteral("minutes"), 30);
         rig.lastOsInput = g_now;
         rig.player->tick();

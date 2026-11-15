@@ -159,6 +159,7 @@ fun SleepSettings(repo: SettingsRepo, sheets: SheetHost, onBack: () -> Unit, mod
             }
         }
         ListSection(S.s_cu_chi_0ae3f7ba) {
+            SwitchRow(S.s_sleep_activity_resets, settings.sleepActivityResets, { on -> repo.change { it.copy(sleepActivityResets = on) } }, "sleep_activity")
             SwitchRow(S.s_lac_de_nghe_them_405614ff, settings.shakeToExtend, { on -> repo.change { it.copy(shakeToExtend = on) } }, "shake", GroupCopy.SHAKE)
             Reveal(settings.shakeToExtend) {
                 Column {

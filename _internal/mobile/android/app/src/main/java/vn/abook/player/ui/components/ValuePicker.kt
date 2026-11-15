@@ -401,8 +401,13 @@ private fun StepButton(steps: Int, enabled: Boolean, tag: String, nudge: (Int) -
                     delay(REPEAT_DELAY_MS)
                     while (true) { step(steps); delay(REPEAT_EVERY_MS) }
                 }
-                waitForUpOrCancellation()
-                repeat.cancel()
+                try {
+                    waitForUpOrCancellation()
+                } finally {
+                    // Reaching min/max disables this pointer handler before pointer-up.
+                    // Its repeat job must not survive to undo the next button press.
+                    repeat.cancel()
+                }
             }
         }, contentAlignment = Alignment.Center) {
         LucideIcon(if (steps < 0) LucidePaths.MINUS else LucidePaths.PLUS, if (enabled) colors.text2 else colors.text3)

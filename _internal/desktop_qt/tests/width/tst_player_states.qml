@@ -41,6 +41,20 @@ Item {
             WidthNet.setBook({id: "text-state", title: longText + longText, complete: true, chapters: [{id: 1, title: longText + longText, state: "text", available: false}], state: {voice: "local"}})
             Player.open("text-state", 1, 0, true)
         }
+        function test_sleep_keeps_its_selection_after_expiry() {
+            Player.resume(); Player.setSleep("minutes", 1); WidthNet.advance(61)
+            compare(Player.playing, false)
+            compare(Player.sleepKind, "minutes")
+            compare(Player.clock.sleepLeft, 60)
+            const menu = createTemporaryObject(sleepComponent, host)
+            menu.show(); tryCompare(menu, "shown", 1); ready()
+            compare(findChild(menu, "sleepCountdown").text, "1:00")
+            const path = Qt.resolvedUrl("../../build/d2shots/sleepkeep_paused.png").toString().replace(/^file:\/\/\/([A-Za-z]:)/,"$1").replace(/^file:\/\//,"")
+            grabImage(findChild(menu, "popoverPanel")).save(path)
+            Nav.back(); tryCompare(menu, "open", false)
+            Player.seek(0); Player.resume(); WidthNet.advance(58); compare(Player.playing, true)
+            WidthNet.advance(3); compare(Player.playing, false); compare(Player.clock.sleepLeft, 60)
+        }
         function test_device_select_reject_revert_and_back() {
             const menu = createTemporaryObject(outputComponent, host, {width: 1024, height: 768})
             const before = OutputDevices.refreshes

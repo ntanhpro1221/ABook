@@ -90,7 +90,7 @@ object Bedtime {
     /** Hẹn giờ tự dừng: ghi mốc cuối rồi đóng đêm. */
     fun stopped() = close("stopped")
 
-    /** Hẹn giờ tắt (người nghe tắt, đổi sách, hẹn tự động bị huỷ) hay tự bỏ vì dừng quá lâu: đóng đêm, không ghi thêm gì sau đó. */
+    /** Hẹn giờ tắt (người nghe tắt, đổi sách, hẹn tự động bị huỷ): đóng đêm, không ghi thêm gì sau đó. */
     fun timerOff() = close("cancel")
 
     @Synchronized private fun close(kind: String) {

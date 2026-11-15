@@ -267,6 +267,10 @@ function SleepGroup() {
   return (
     <SettingsBlock>
       <SleepSchedule />
+      <SettingsRow label={S.s_sleep_activity_resets}>
+        <Switch checked={preferences?.sleepActivityResets ?? true} label={S.s_sleep_activity_resets}
+          onCheckedChange={(value) => update({ sleepActivityResets: value })} />
+      </SettingsRow>
       <ValuePicker
         dense
         className="py-3"

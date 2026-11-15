@@ -21,6 +21,11 @@ class SleepExtendTest {
     /** Đặt thẳng trạng thái "hẹn `picked` phút, còn `leftMin` phút, đang dừng" (setMinutes đụng cảm biến / nhật ký đêm - cần Android thật). */
     private fun timer(picked: Int, leftMin: Double) {
         field("mode").set(SleepTimer, SleepTimer.Mode.MINUTES)
+        field("selectedMode").set(SleepTimer, SleepTimer.Mode.MINUTES)
+        field("selectedMinutes").setInt(SleepTimer, picked)
+        field("retained").setBoolean(SleepTimer, false)
+        field("ownerBook").set(SleepTimer, Playback.bookId)
+        field("ownerRecord").set(SleepTimer, Playback.recordId)
         field("minutes").setInt(SleepTimer, picked)
         field("remainingMs").setLong(SleepTimer, (leftMin * 60_000).toLong())
         field("runningSinceMs").setLong(SleepTimer, 0L)
@@ -32,6 +37,9 @@ class SleepExtendTest {
         Playback.player = voice.player
         SleepTimer.extendMinutes = 10
         SleepTimer.shakeEnabled = true
+        SleepTimer.activityResets = true
+        field("selectedMode").set(SleepTimer, SleepTimer.Mode.OFF)
+        field("retained").setBoolean(SleepTimer, false)
         field("stoppedAutomatically").setBoolean(SleepTimer, false)
         field("mode").set(SleepTimer, SleepTimer.Mode.OFF)
         field("automaticReason").set(SleepTimer, "")
@@ -84,16 +92,13 @@ class SleepExtendTest {
         assertEquals("nhãn nút thông báo", "Hẹn lại 30 phút", SleepText.extendLabel(SleepTimer.extendTarget()))
     }
 
-    @Test fun chapterModeGoesToTheSettingsStepAndThenStaysThere() {
-        SleepTimer.extendMinutes = 15
-        field("mode").set(SleepTimer, SleepTimer.Mode.CHAPTER)
-        assertEquals(15, SleepTimer.extendTarget())
-        assertTrue(SleepTimer.applyShake(System.currentTimeMillis()))
-        assertEquals(SleepTimer.Mode.MINUTES, SleepTimer.mode)
-        assertEquals(15 * 60.0, left(), 1.0)
-        repeat(2) { SleepTimer.applyShake(System.currentTimeMillis()) }
-        assertEquals("lắc tiếp không cộng dồn", 15 * 60.0, left(), 1.0)
-        assertEquals(15, SleepTimer.describe().getInt("minutes"))
+    @Test fun shakingAChapterTimerRestartsTheSelectedChapterCount() = withSensors {
+        SleepTimer.setEndOfChapter(3)
+        SleepTimer.onChapterChanged()
+        assertEquals(2, SleepTimer.chapters)
+        repeat(3) { assertTrue(SleepTimer.applyShake(System.currentTimeMillis())) }
+        assertEquals(SleepTimer.Mode.CHAPTER, SleepTimer.mode)
+        assertEquals(3, SleepTimer.chapters)
     }
 
     @Test fun anOffTimerIgnoresTheNotificationButtonAndAnOldShake() {
@@ -122,13 +127,9 @@ class SleepExtendTest {
         }
     }
 
-    @Test fun aShakeJustAfterTheTimerStoppedStartsExtendMinutesFresh() = withSensors {
-        SleepTimer.extendMinutes = 15
-        field("stoppedAtMs").setLong(SleepTimer, 1_000_000L)
-        assertTrue(SleepTimer.applyShake(1_000_000L + 60_000L))
-        assertEquals(SleepTimer.Mode.MINUTES, SleepTimer.mode)
-        assertEquals(15 * 60.0, left(), 1.0)
-        assertEquals(15, SleepTimer.describe().getInt("minutes"))
+    @Test fun explicitlyOffTimersCannotBeRearmedByShaking() {
+        assertFalse(SleepTimer.applyShake(1_060_000L))
+        assertEquals(SleepTimer.Mode.OFF, SleepTimer.mode)
     }
 
     @Test fun awakeExtensionConvertsTheScheduleToAManualTimerWithThePromisedMinutes() = withSensors {
@@ -155,15 +156,6 @@ class SleepExtendTest {
         assertEquals(SleepTimer.Mode.OFF, SleepTimer.mode)
     }
 
-    @Test fun shakingAfterAnAutomaticStopResumesWithoutCreatingATimer() = withSensors {
-        field("stoppedAtMs").setLong(SleepTimer, 1_000_000L)
-        field("stoppedAutomatically").setBoolean(SleepTimer, true)
-        assertTrue(SleepTimer.applyShake(1_060_000L))
-        assertEquals(SleepTimer.Mode.OFF, SleepTimer.mode)
-        assertTrue(voice.playWhenReady)
-        assertFalse(SleepTimer.applyShake(1_061_000L))
-    }
-
     @Test fun actualPlaybackCommandsCancelAutomaticTimersButPreserveManualOnes() = withSensors {
         val commands = listOf<() -> Unit>(
             { Playback.seekTo(12.0) }, { Playback.skip(15.0) }, { Playback.next() },
@@ -174,7 +166,7 @@ class SleepExtendTest {
             timer(30, 1.0)
             field("automaticReason").set(SleepTimer, "schedule")
             command()
-            assertEquals(SleepTimer.Mode.OFF, SleepTimer.mode)
+            assertEquals(SleepTimer.Mode.MINUTES, SleepTimer.mode)
             timer(30, 12.0)
             command()
             assertEquals(SleepTimer.Mode.MINUTES, SleepTimer.mode)
@@ -182,21 +174,21 @@ class SleepExtendTest {
     }
 
     @Test fun manualChapterSelectionDoesNotFinishTheNewChapterImmediately() = withSensors {
-        field("mode").set(SleepTimer, SleepTimer.Mode.CHAPTER)
+        SleepTimer.setEndOfChapter(1)
         SleepTimer.onChapterChanged(manual = true)
         assertEquals(SleepTimer.Mode.CHAPTER, SleepTimer.mode)
     }
 
     /** "Hết N chương" (bộ chọn giá trị): tự sang chương thì đếm xuống, người nghe tự chuyển chương thì giữ nguyên số chương còn lại. */
     @Test fun endOfThreeChaptersCountsDownOnlyOnNaturalChapterEnds() = withSensors {
-        field("mode").set(SleepTimer, SleepTimer.Mode.CHAPTER)
-        field("chapters").setInt(SleepTimer, 3)
+        SleepTimer.setEndOfChapter(3)
         try {
             SleepTimer.onChapterChanged()
             assertEquals(SleepTimer.Mode.CHAPTER, SleepTimer.mode)
             assertEquals(2, SleepTimer.chapters)
             SleepTimer.onChapterChanged(manual = true)
-            assertEquals("tự chuyển chương không đếm", 2, SleepTimer.chapters)
+            assertEquals("manual selection restarts the chosen count", 3, SleepTimer.chapters)
+            SleepTimer.onChapterChanged()
             SleepTimer.onChapterChanged()
             assertEquals(1, SleepTimer.chapters)
             assertEquals(1, SleepTimer.describe().getInt("chapters"))

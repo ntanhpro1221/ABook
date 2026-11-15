@@ -242,8 +242,9 @@ object Playback {
         DiskWrites.post("ABookSession") { Store.addSession(book, session, record) }
     }
 
-    fun touched() {
-        SleepTimer.onAwake()
+    fun touched(source: String = "control") {
+        ListenerActivity.inputObserved()
+        SleepTimer.onUserActivity(source)
     }
 
     private var initializedContext: Context? = null
@@ -885,7 +886,7 @@ object Playback {
      * ExoPlayer sang mục khác. Đoạn đọc to (có `ReadAloud.Slot`) mà cùng chương với đoạn trước chỉ là đổi đoạn - không phải đổi chương, nên không báo "chapter" và
      * không kết thúc hẹn giờ "hết chương" (ReadAloud tự dừng nạp ở cuối chương). Mọi mục khác như cũ.
      */
-    fun onMediaTransition(item: MediaItem?, manual: Boolean = false) {
+    fun onMediaTransition(item: MediaItem?, manual: Boolean = false, naturalEnd: Boolean = !manual) {
         if (item == null) return // hàng đợi vừa được xoá (ReadAloud bắt đầu lại ở chỗ khác): chưa có mục nào để báo
         val slot = item?.localConfiguration?.tag as? ReadAloud.Slot
         if (slot == null && item.mediaId == reloadedChapter) {
@@ -897,7 +898,7 @@ object Playback {
             lastClipChapter = -1
             ReadAloud.onClipChanged()
             applyVolume()
-            onChapterChanged(manual)
+            if (manual || naturalEnd) onChapterChanged(manual) else emit("chapter")
             if (slot == null) item.mediaId.toLongOrNull()?.let { Streaming.keepScript(appContext, bookId, it) }
             return
         }
@@ -907,7 +908,7 @@ object Playback {
         ReadAloud.onClipChanged()
         applyVolume()
         // "Hết N chương" khi đọc to: đọc sang chương kế là một chương đã nghe hết - đếm xuống (chương cuối của hẹn thì ReadAloud tự dừng nạp, không tới đây).
-        if (crossed && SleepTimer.mode == SleepTimer.Mode.CHAPTER && (manual || SleepTimer.chapters > 1)) SleepTimer.onChapterChanged(manual)
+        if (crossed && (manual || naturalEnd) && SleepTimer.mode == SleepTimer.Mode.CHAPTER && (manual || SleepTimer.chapters > 1)) SleepTimer.onChapterChanged(manual)
         if (!sameChapter) emit("chapter")
     }
 

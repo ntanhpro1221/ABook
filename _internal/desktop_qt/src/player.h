@@ -103,7 +103,6 @@ class Player : public QObject {
     Q_PROPERTY(int sleepChapters READ sleepChapters NOTIFY sleepChanged)   // "Hết N chương": số chương còn phải nghe hết (1 = chương này), 0 khi không hẹn chương
     Q_PROPERTY(int lastSleepMinutes READ lastSleepMinutes NOTIFY sleepChanged)
     Q_PROPERTY(int sleepExtendMinutes READ sleepExtendMinutes NOTIFY sleepChanged) // N của nút "Hẹn lại N phút"
-    Q_PROPERTY(int sleepPausedExpiresMinutes READ sleepPausedExpiresMinutes CONSTANT) // "Dừng quá N phút thì hẹn giờ tự tắt"
     Q_PROPERTY(QString sleepStoppedText READ sleepStoppedText NOTIFY sleepChanged) // "23:42" khi hẹn giờ vừa tắt tiếng, không thì ""
     Q_PROPERTY(bool fading READ fading NOTIFY fadingChanged)
     Q_PROPERTY(QString error READ error NOTIFY errorChanged)
@@ -162,7 +161,6 @@ public:
     int sleepChapters() const { return m_sleep.kind == Sleep::Chapter ? std::max(1, m_sleep.minutes) : 0; }
     int lastSleepMinutes() const { return m_lastSleepMinutes; }
     int sleepExtendMinutes() const;
-    int sleepPausedExpiresMinutes() const { return int(PlayerLogic::kSleepPausedExpiresMs / 60'000); }
     QString sleepStoppedText() const;
     bool fading() const { return m_fading; }
     QString error() const { return m_error; }
@@ -320,7 +318,6 @@ private:
     void step(int direction);
     void tickSleep(qint64 now);
     void stopBySleep();
-    bool expireSleepIfPaused(qint64 now);
     void endFade();
     void applyRate(double rate);
     void remember(const Spot &from, const Spot &to, const QString &note);
@@ -329,6 +326,8 @@ private:
     void markPaused(bool saveNow);
     void resetSleepMark();
     void applySleepState(Sleep::Kind kind, int minutes, double leftMs);
+    void persistSleep();
+    void restoreSleep();
     void setPlaying(bool playing);
     void setBuffering(bool buffering);
     void checkStall();
@@ -379,9 +378,12 @@ private:
     QString m_noticeKey;
     QString m_atEnd = QStringLiteral("none");
     Sleep m_sleep;
+    Sleep m_selectedSleep;
+    QString m_sleepWindow;
+    bool m_sleepRetained = false;
+    QString m_sleepStore;
     int m_lastSleepMinutes = 30;
     qint64 m_sleepStoppedAt = 0;
-    qint64 m_sleepPausedAt = 0; // lúc hẹn giờ bắt đầu đứng vì tạm dừng (0 = đang phát / không hẹn): kSleepPausedExpiresMs
     int m_fadeSeconds = PlayerLogic::kDefaultFadeSeconds;
     int m_extendMinutes = 10;
     QVariantMap m_schedule;
@@ -398,7 +400,8 @@ private:
     std::function<qint64()> m_systemIdle;
     QString m_automaticSleep;
     qint64 m_automaticLastInput = 0;
-    void noteInteraction();
+    void noteInteraction(const QString &source = QStringLiteral("control"));
+    bool m_activityResets = true;
     std::optional<Spot> m_savedSpot;
     QList<Spot> m_history;
     std::shared_ptr<Session> m_session;

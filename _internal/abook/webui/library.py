@@ -42,6 +42,7 @@ DEFAULT_PREFERENCES: dict[str, Any] = {
     # Studio từ xa (remote_studio.py): thiết bị đã ghép được điều khiển sản xuất. Tắt mặc định, tách khỏi quyền nghe.
     "remoteStudio": False,
     # Hẹn giờ ngủ: nhỏ dần bao lâu trước khi tắt, và mỗi lần "nghe thêm" cộng bao nhiêu phút.
+    "sleepActivityResets": True,
     "sleepFadeSeconds": 30,
     "sleepExtendMinutes": 10,
     # Lịch đêm tự hẹn giờ: {"from": "22:00", "to": "06:00", "minutes": 30} hoặc None.

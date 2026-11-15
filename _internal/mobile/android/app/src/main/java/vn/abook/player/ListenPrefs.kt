@@ -7,16 +7,16 @@ import org.json.JSONObject
 import java.io.File
 
 /**
- * Tuỳ chọn nghe mà phần Kotlin cần NGAY khi tiến trình dậy, trước cả khi có giao diện: nút tai nghe, tự lùi, lắc / úp máy, lịch đêm, số phút "nghe thêm", mờ dần, dừng an toàn.
+ * Tuỳ chọn nghe mà phần Kotlin cần NGAY khi tiến trình dậy, trước cả khi có giao diện: nút tai nghe, tự lùi, lắc / úp máy, lịch đêm, số phút "nghe thêm", mờ dần, thao tác thì hẹn lại.
  * Giao diện đẩy xuống mỗi lần mở app ([apply]); tiến trình khởi động lại từ tai nghe / widget / Android Auto (không có giao diện)
  * trước đây quay về mặc định (soát a77 #6). Nay mỗi lần giao diện đẩy xuống, các trường ấy được ghi vào `listen-prefs.json` ở kho native và nạp lại ở [load].
- * Cùng file giữ hẹn giờ ngủ đang chạy (`timer`, [SleepTimer.persist]): mốc kết thúc tuyệt đối, khôi phục nếu chưa quá.
+ * Cùng file giữ hẹn giờ ngủ đang chạy (`timer`, [SleepTimer.persist]): lựa chọn được giữ, khôi phục đủ một lượt và đứng chờ phát.
  */
 object ListenPrefs {
     private const val FILE = "listen-prefs.json"
     private val KEYS = listOf(
         "sleepExtendMinutes", "sleepFadeSeconds", "shakeToExtend", "shakeSensitivity", "flipToPause",
-        "headsetSkips", "schedule", "theme",
+        "headsetSkips", "schedule", "theme", "sleepActivityResets",
         // Feedback is also used by screen-off gestures in the playback process.
         "touchSounds", "haptics", "readingSurface",
         // Chỉ giao diện của điện thoại: tự vào cửa sổ nhỏ (PiP) khi rời app lúc có sách mở; bảng chung ranges.json không liệt kê.
@@ -38,7 +38,7 @@ object ListenPrefs {
     private val THEMES = listOf("system", "light", "dark")
     private val READING_SURFACES = listOf("auto", "paper", "ivory", "night")
     private val CLOCK = Regex("""([01]\d|2[0-3]):[0-5]\d""")
-    private val SWITCHES = mapOf("shakeToExtend" to true, "flipToPause" to false, "headsetSkips" to true, "touchSounds" to true, "haptics" to true, "autoPip" to false)
+    private val SWITCHES = mapOf("sleepActivityResets" to true, "shakeToExtend" to true, "flipToPause" to false, "headsetSkips" to true, "touchSounds" to true, "haptics" to true, "autoPip" to false)
 
     /** Số nguyên trong miền `spec`, đúng lưới bước; không thì null. */
     private fun onGrid(value: Any?, spec: ValueSpec): Int? {
@@ -95,6 +95,7 @@ object ListenPrefs {
             PlaybackService.instance?.applyForegroundGrace()
             if (!startup) Motion.refresh()
         }
+        if (json.has("sleepActivityResets")) SleepTimer.activityResets = json.getBoolean("sleepActivityResets")
         if (json.has("headsetSkips")) Playback.headsetSkips = json.getBoolean("headsetSkips")
         if (json.has("flipToPause")) {
             Motion.flipEnabled = json.getBoolean("flipToPause")

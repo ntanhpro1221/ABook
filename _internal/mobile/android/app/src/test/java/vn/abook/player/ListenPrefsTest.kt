@@ -27,12 +27,14 @@ class ListenPrefsTest {
         SleepTimer.schedule = null
         Motion.flipEnabled = false
         sleep("mode").set(SleepTimer, SleepTimer.Mode.OFF)
+        sleep("selectedMode").set(SleepTimer, SleepTimer.Mode.OFF)
         sleep("automaticReason").set(SleepTimer, "")
         sleep("ownerBook").set(SleepTimer, "test-book")
         sleep("ownerRecord").set(SleepTimer, "test-record")
         sleep("remainingMs").setLong(SleepTimer, 0L)
         sleep("runningSinceMs").setLong(SleepTimer, 0L)
-        sleep("pausedAtMs").setLong(SleepTimer, 0L)
+        sleep("selectedMode").set(SleepTimer, SleepTimer.Mode.OFF)
+        sleep("retained").setBoolean(SleepTimer, false)
         sleep("minutes").setInt(SleepTimer, 0)
     }
 
@@ -104,6 +106,8 @@ class ListenPrefsTest {
     @Test fun aRunningSleepTimerComesBackUntilItsAbsoluteEnd() {
         val now = 1_000_000_000L
         sleep("mode").set(SleepTimer, SleepTimer.Mode.MINUTES)
+        sleep("selectedMode").set(SleepTimer, SleepTimer.Mode.MINUTES)
+        sleep("selectedMinutes").setInt(SleepTimer, 30)
         sleep("minutes").setInt(SleepTimer, 30)
         sleep("remainingMs").setLong(SleepTimer, 30 * 60_000L)
         sleep("runningSinceMs").setLong(SleepTimer, now - 5 * 60_000L) // đang phát, đã chạy 5 phút
@@ -111,27 +115,27 @@ class ListenPrefsTest {
         defaults() // tiến trình chết
         ListenPrefs.load(now + 2 * 60_000L) // dậy 2 phút sau
         assertEquals(SleepTimer.Mode.MINUTES, SleepTimer.mode)
-        assertEquals("còn 30 - 5 - 2 = 23 phút", 23 * 60.0, SleepTimer.describe(now + 2 * 60_000L).getDouble("remaining"), 1.0)
+        assertEquals("full selected cycle", 30 * 60.0, SleepTimer.describe(now + 2 * 60_000L).getDouble("remaining"), 1.0)
         assertFalse("chưa phát nên đồng hồ chưa chạy", SleepTimer.describe(now).getBoolean("counting"))
     }
 
-    @Test fun anExpiredTimerIsNotBroughtBack() {
+    @Test fun timerSelectionHasNoWallClockExpiry() {
         val now = 1_000_000_000L
         sleep("mode").set(SleepTimer, SleepTimer.Mode.MINUTES)
-        sleep("minutes").setInt(SleepTimer, 10)
-        sleep("remainingMs").setLong(SleepTimer, 10 * 60_000L)
-        sleep("runningSinceMs").setLong(SleepTimer, now)
+        sleep("selectedMode").set(SleepTimer, SleepTimer.Mode.MINUTES)
+        sleep("selectedMinutes").setInt(SleepTimer, 10)
         SleepTimer.persist(now)
         defaults()
-        ListenPrefs.load(now + 11 * 60_000L)
-        assertEquals(SleepTimer.Mode.OFF, SleepTimer.mode)
-        ListenPrefs.load(now + 1000) // đã bỏ khỏi kho, không sống lại ở lần nạp sau
-        assertEquals(SleepTimer.Mode.OFF, SleepTimer.mode)
+        ListenPrefs.load(now + 24 * 3_600_000L)
+        assertEquals(SleepTimer.Mode.MINUTES, SleepTimer.mode)
+        assertEquals(600.0, SleepTimer.describe().getDouble("remaining"), 0.01)
     }
 
     @Test fun aPausedTimerKeepsItsRemainingTimeNotAnEndTime() {
         val now = 1_000_000_000L
         sleep("mode").set(SleepTimer, SleepTimer.Mode.MINUTES)
+        sleep("selectedMode").set(SleepTimer, SleepTimer.Mode.MINUTES)
+        sleep("selectedMinutes").setInt(SleepTimer, 30)
         sleep("minutes").setInt(SleepTimer, 30)
         sleep("remainingMs").setLong(SleepTimer, 12 * 60_000L)
         sleep("runningSinceMs").setLong(SleepTimer, 0L) // đang tạm dừng: đồng hồ đứng
@@ -139,7 +143,7 @@ class ListenPrefsTest {
         defaults()
         ListenPrefs.load(now + 10 * 60_000L) // still within the paused timer lifetime
         assertEquals(SleepTimer.Mode.MINUTES, SleepTimer.mode)
-        assertEquals(12 * 60.0, SleepTimer.describe(now).getDouble("remaining"), 1.0)
+        assertEquals(30 * 60.0, SleepTimer.describe(now).getDouble("remaining"), 1.0)
     }
 
     @Test fun orderedTimerAndPreferenceWritesKeepTheNewestValues() {
@@ -158,6 +162,7 @@ class ListenPrefsTest {
         sleep("remainingMs").setLong(SleepTimer, 10 * 60_000L)
         SleepTimer.persist(now)
         sleep("mode").set(SleepTimer, SleepTimer.Mode.OFF)
+        sleep("selectedMode").set(SleepTimer, SleepTimer.Mode.OFF)
         sleep("automaticReason").set(SleepTimer, "")
         sleep("ownerBook").set(SleepTimer, "test-book")
         sleep("ownerRecord").set(SleepTimer, "test-record")
@@ -169,13 +174,13 @@ class ListenPrefsTest {
     @Test fun staleUnownedAndAutomaticSnapshotsCannotRestoreATimer() {
         val now = 1_000_000_000L
         val valid = JSONObject().put("source", "manual").put("bookId", "a").put("recordId", "r")
-            .put("savedAt", now).put("minutes", 30).put("remainingMs", 600_000L)
+            .put("selection", "minutes").put("minutes", 30).put("chapters", 1)
         for (bad in listOf(
             JSONObject().put("endsAt", now + 60_000L),
             JSONObject(valid.toString()).put("source", "schedule"),
-            JSONObject(valid.toString()).put("savedAt", now - 25 * 3_600_000L),
+            JSONObject(valid.toString()).put("minutes", 241),
             JSONObject(valid.toString()).put("bookId", ""),
-            JSONObject(valid.toString()).put("remainingMs", 31 * 60_000L),
+            JSONObject(valid.toString()).put("chapters", 11),
         )) {
             defaults()
             SleepTimer.restore(bad, now)

@@ -5932,7 +5932,9 @@
     "s_volume_rebuild": "File sách không dùng cấu trúc quyển hiện hành. Hãy dựng lại từ nguồn.",
     "s_volume_invalid": "Mỗi quyển cần tên, số và chương đầu tăng dần trong sách.",
     "s_volume_no_changed": "Quyển này không có chương đã đổi để xuất.",
-    "s_volume_cover_missing": "File sách thiếu bìa của một quyển."
+    "s_volume_cover_missing": "File sách thiếu bìa của một quyển.",
+    "s_sleep_paused_keep": "Đang tạm dừng - đồng hồ cũng dừng.",
+    "s_sleep_activity_resets": "Thao tác hẹn lại"
   },
   "android_resources": {
     "app_name": "s_abook_1c37d334",

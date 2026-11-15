@@ -73,9 +73,13 @@ import vn.abook.player.ui.theme.ThemeRevealHost
  * Màn mở app (docs/NATIVE_PHONE_UI.md): một Activity, Compose; nhận cả "Mở bằng" / chia sẻ file (manifest).
  */
 class NativeActivity : ComponentActivity() {
+    override fun dispatchTouchEvent(event: android.view.MotionEvent): Boolean {
+        if (!demo && event.actionMasked == android.view.MotionEvent.ACTION_MOVE) vn.abook.player.Playback.touched("scroll")
+        return super.dispatchTouchEvent(event)
+    }
     override fun onUserInteraction() {
         super.onUserInteraction()
-        if (!demo && vn.abook.player.PlaybackService.instance != null) vn.abook.player.Playback.touched()
+        if (!demo) vn.abook.player.Playback.touched("touch")
     }
 
     private val app get() = application as AbookApplication
@@ -225,6 +229,7 @@ class NativeActivity : ComponentActivity() {
     override fun onResume() {
         super.onResume()
         vn.abook.player.Remote.foreground = true
+        if (!demo) vn.abook.player.SleepTimer.onUserActivity("resume")
     }
 
     override fun onPause() {

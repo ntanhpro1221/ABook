@@ -202,20 +202,18 @@ class PlaybackService : MediaLibraryService() {
             .build()
         player.addListener(object : Player.Listener {
             override fun onIsPlayingChanged(isPlaying: Boolean) {
-                if (!isPlaying && player.playbackState == Player.STATE_READY && player.pauseAtEndOfMediaItems &&
-                    player.duration - player.currentPosition < 1500
-                ) {
-                    SleepTimer.onPausedAtChapterEnd()
-                }
                 Playback.onPlayingChanged(isPlaying)
             }
 
-            override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) = Playback.onMediaTransition(mediaItem, reason == Player.MEDIA_ITEM_TRANSITION_REASON_SEEK)
+            override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) = Playback.onMediaTransition(
+                mediaItem, manual = reason == Player.MEDIA_ITEM_TRANSITION_REASON_SEEK,
+                naturalEnd = reason == Player.MEDIA_ITEM_TRANSITION_REASON_AUTO)
 
             override fun onPositionDiscontinuity(oldPosition: Player.PositionInfo, newPosition: Player.PositionInfo, reason: Int) = Playback.onSeekSettled(reason)
 
             // Người nghe bấm phát / dừng bằng đường nào cũng được (thông báo, tai nghe, xe hơi): đọc to cần biết ở luồng nền để bỏ lần thử lại khi chẳng ai nghe.
             override fun onPlayWhenReadyChanged(playWhenReady: Boolean, reason: Int) {
+                if (!playWhenReady && reason == Player.PLAY_WHEN_READY_CHANGE_REASON_END_OF_MEDIA_ITEM) SleepTimer.onPausedAtChapterEnd()
                 ReadAloud.onPlayWhenReadyChanged(playWhenReady, userRequested = reason == Player.PLAY_WHEN_READY_CHANGE_REASON_USER_REQUEST)
                 Playback.onWantsChanged()
             }
@@ -399,7 +397,7 @@ class PlaybackService : MediaLibraryService() {
 
     private inner class Callback : MediaLibrarySession.Callback {
         override fun onMediaButtonEvent(session: MediaSession, controllerInfo: MediaSession.ControllerInfo, intent: Intent): Boolean {
-            Playback.touched()
+            Playback.touched("media-button")
             return false
         }
 
@@ -411,7 +409,7 @@ class PlaybackService : MediaLibraryService() {
                     Player.COMMAND_SEEK_TO_NEXT_MEDIA_ITEM, Player.COMMAND_SEEK_TO_PREVIOUS_MEDIA_ITEM,
                     Player.COMMAND_SEEK_BACK, Player.COMMAND_SEEK_FORWARD, Player.COMMAND_SET_SPEED_AND_PITCH,
                     Player.COMMAND_SET_VOLUME, Player.COMMAND_SET_DEVICE_VOLUME, Player.COMMAND_ADJUST_DEVICE_VOLUME,
-                    Player.COMMAND_SET_DEVICE_VOLUME_WITH_FLAGS, Player.COMMAND_ADJUST_DEVICE_VOLUME_WITH_FLAGS)) Playback.touched()
+                    Player.COMMAND_SET_DEVICE_VOLUME_WITH_FLAGS, Player.COMMAND_ADJUST_DEVICE_VOLUME_WITH_FLAGS)) Playback.touched("media-command")
             return SessionResult.RESULT_SUCCESS
         }
 

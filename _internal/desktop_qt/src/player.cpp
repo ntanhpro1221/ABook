@@ -6,9 +6,12 @@
 
 #include <QCoreApplication>
 #include <QDateTime>
+#include <QDir>
 #include <QEvent>
 #include <QEventLoop>
 #include <QJsonObject>
+#include <QFileInfo>
+#include <QSettings>
 #include <QPointer>
 #include <QRegularExpression>
 #include <QUuid>
@@ -102,6 +105,7 @@ void PlayerClock::setSuspended(bool suspended) {
 Player::Player(AudioOut *out, PlayerNet *net, const QString &outboxPath, QObject *parent, std::function<qint64()> nowMs)
     : QObject(parent), m_out(out), m_net(net), m_now(nowMs ? std::move(nowMs) : [] { return QDateTime::currentMSecsSinceEpoch(); }),
       m_clock(this), m_chapters(this) {
+    m_sleepStore = QFileInfo(outboxPath).dir().filePath(QStringLiteral("sleep-selection.ini"));
     m_lastActivity = m_now();
     m_systemIdle = listenerSystemIdleMs;
     m_outbox = std::make_unique<ProgressOutbox>([this](const ProgressSpot &spot, ProgressOutbox::Done done) { sendSpot(spot, std::move(done)); },
@@ -157,9 +161,14 @@ void Player::watchInput() {
         QCoreApplication::instance()->installEventFilter(this);
 }
 
-void Player::noteInteraction() {
+void Player::noteInteraction(const QString &source) {
+    Q_UNUSED(source);
     m_lastActivity = m_now();
-    if (!m_automaticSleep.isEmpty()) setSleep(QStringLiteral("off"));
+    if (!m_activityResets || m_sleep.kind == Sleep::Off) return;
+    const Sleep cycle = !m_sleepRetained && m_sleep.kind == Sleep::Minutes && m_selectedSleep.kind == Sleep::Chapter ? m_sleep : m_selectedSleep;
+    endFade();
+    resetSleepMark();
+    applySleepState(cycle.kind, cycle.minutes, cycle.kind == Sleep::Minutes ? cycle.minutes * 60'000.0 : 0);
 }
 
 bool Player::eventFilter(QObject *, QEvent *event) {
@@ -168,17 +177,11 @@ bool Player::eventFilter(QObject *, QEvent *event) {
     case QEvent::MouseButtonPress:
     case QEvent::Wheel:
     case QEvent::TouchBegin:
-        noteInteraction();
-        // Máy tính: chạm phím / chuột lúc đang nhỏ dần = "lắc máy" - hẹn lại. Phím ấy không làm gì khác.
-        if (m_fading) {
-            extendSleep();
-            return event->type() == QEvent::KeyPress;
-        }
-        break;
+    case QEvent::TouchUpdate:
     case QEvent::MouseMove:
-        noteInteraction();
-        if (m_fading)
-            extendSleep();
+    case QEvent::WindowActivate:
+    case QEvent::ApplicationActivate:
+        noteInteraction(QString::number(int(event->type())));
         break;
     default:
         break;
@@ -223,7 +226,7 @@ QString Player::sleepKind() const {
 }
 
 QString Player::sleepStoppedText() const {
-    if (m_sleep.kind != Sleep::Off || !m_sleepStoppedAt)
+    if (!m_sleepStoppedAt)
         return {};
     // Chỉ đáng nhắc trong nửa giờ sau khi hẹn giờ tắt tiếng.
     if (m_now() - m_sleepStoppedAt >= 30 * 60'000)
@@ -266,12 +269,14 @@ void Player::changed() {
 void Player::setPlaying(bool playing) {
     if (m_playing == playing)
         return;
-    // Hẹn giờ đã đứng quá hạn (tối qua dừng giữa chừng) thì tắt trước khi đồng hồ chạy tiếp; dừng thì bắt đầu đếm hạn.
-    if (playing) {
-        expireSleepIfPaused(m_now());
-        m_sleepPausedAt = 0;
-    } else if (m_sleep.kind != Sleep::Off) {
-        m_sleepPausedAt = m_now();
+    if (playing && m_sleepRetained) {
+        endFade();
+        resetSleepMark();
+        applySleepState(m_selectedSleep.kind, m_selectedSleep.minutes,
+                        m_selectedSleep.kind == Sleep::Minutes ? m_selectedSleep.minutes * 60'000.0 : 0);
+        m_sleepRetained = false;
+        m_sleepStoppedAt = 0;
+        persistSleep();
     }
     m_playing = playing;
     changed();
@@ -363,6 +368,7 @@ void Player::updateTicker() {
 void Player::configure(const QVariantMap &p) {
     const QString voice = p.value(QStringLiteral("readAloudVoice")).toString();
     if (voice != m_defaultVoice) { m_defaultVoice = voice; emit bookChanged(); }
+    m_activityResets = p.value(QStringLiteral("sleepActivityResets"), true).toBool();
     m_fadeSeconds = std::clamp(p.value(QStringLiteral("sleepFadeSeconds"), 30).toInt(), kFadeSecondsMin, kFadeSecondsMax);
     const int extendMinutes = std::clamp(p.value(QStringLiteral("sleepExtendMinutes"), 10).toInt(), 1, kExtendMinutesMax);
     if (extendMinutes != m_extendMinutes) {
@@ -560,6 +566,7 @@ void Player::load(int chapterId, double at, bool autoplay) {
     const bool wasLoaded = m_loaded;
     m_trackBook = m_book.id;
     m_trackRecord = m_book.record;
+    if (!sameTrack) restoreSleep();
     m_chapterId = chapterId;
     m_loaded = true;
     m_savedSpot = moved ? std::nullopt : std::optional<Spot>(Spot{chapterId, at});
@@ -1017,8 +1024,6 @@ void Player::applySleepState(Sleep::Kind kind, int minutes, double leftMs) {
     m_sleep.minutes = minutes;
     m_sleep.leftMs = leftMs;
     m_sleepWarned = false;
-    // Hẹn / hẹn lại khi đang dừng: hạn đứng tính lại từ bây giờ.
-    m_sleepPausedAt = kind != Sleep::Off && !m_playing ? m_now() : 0;
     changed();
     emit sleepChanged();
     m_clock.setSleepLeft(sleepLeftSeconds());
@@ -1044,6 +1049,40 @@ void Player::setSleep(const QString &kind, int minutes) {
         m_scheduleOffFor = scheduleWindow();
         applySleepState(Sleep::Off, 0, 0);
     }
+    m_selectedSleep = m_sleep;
+    m_sleepWindow.clear();
+    m_sleepRetained = false;
+    persistSleep();
+}
+
+void Player::persistSleep() {
+    if (m_trackBook.isEmpty()) return;
+    QSettings stored(m_sleepStore, QSettings::IniFormat);
+    stored.beginGroup(QString::fromLatin1((m_trackBook + QChar(0) + m_trackRecord).toUtf8().toHex()));
+    stored.setValue(QStringLiteral("kind"), int(m_selectedSleep.kind));
+    stored.setValue(QStringLiteral("amount"), m_selectedSleep.minutes);
+    stored.setValue(QStringLiteral("window"), m_sleepWindow);
+    stored.setValue(QStringLiteral("retained"), m_sleepRetained);
+    stored.setValue(QStringLiteral("disabledWindow"), m_scheduleOffFor);
+    stored.sync();
+}
+
+void Player::restoreSleep() {
+    QSettings stored(m_sleepStore, QSettings::IniFormat);
+    stored.beginGroup(QString::fromLatin1((m_trackBook + QChar(0) + m_trackRecord).toUtf8().toHex()));
+    m_sleepWindow = stored.value(QStringLiteral("window")).toString();
+    m_sleepRetained = stored.value(QStringLiteral("retained"), false).toBool();
+    m_scheduleOffFor = stored.value(QStringLiteral("disabledWindow")).toString();
+    int kind = stored.value(QStringLiteral("kind"), 0).toInt();
+    int amount = stored.value(QStringLiteral("amount"), 0).toInt();
+    if ((!m_sleepWindow.isEmpty() && m_sleepWindow != scheduleWindow()) ||
+        (kind == Sleep::Minutes && (amount < 1 || amount > kSleepMinutesMax)) ||
+        (kind == Sleep::Chapter && (amount < 1 || amount > kSleepChaptersMax)) || kind < Sleep::Off || kind > Sleep::Chapter) kind = Sleep::Off;
+    m_automaticSleep = kind != Sleep::Off && !m_sleepWindow.isEmpty() ? QStringLiteral("schedule") : QString();
+    applySleepState(Sleep::Kind(kind), amount, kind == Sleep::Minutes ? amount * 60'000.0 : 0);
+    m_selectedSleep = m_sleep;
+    m_sleepStoppedAt = 0;
+    endFade();
 }
 
 int Player::sleepExtendMinutes() const {
@@ -1058,14 +1097,18 @@ void Player::extendSleep() {
         m_lastActivity = m_now();
         m_scheduleOffFor = scheduleWindow();
         setNotice(QString());
+        m_sleepWindow.clear();
+        persistSleep();
     }
     if (m_sleep.kind == Sleep::Off)
         return;
     const int minutes = sleepExtendMinutes();
+    m_sleepRetained = false;
     endFade();
     const double left = m_sleep.kind == Sleep::Minutes ? m_sleep.leftMs : 0;
     resetSleepMark();
     applySleepState(Sleep::Minutes, minutes, std::max(left, minutes * 60'000.0));
+    persistSleep();
     setNotice(UiStrings::s_copy_6cd66479f6e6.arg(minutes));
     emit sleepExtended();
 }
@@ -1118,27 +1161,16 @@ void Player::tickSleep(qint64 now) {
     }
 }
 
-// Hẹn giờ đứng vì tạm dừng quá kSleepPausedExpiresMs thì tắt - không phải "tắt hẹn giờ" của người nghe: lịch đêm vẫn tự hẹn lại được đêm ấy.
-bool Player::expireSleepIfPaused(qint64 now) {
-    if (!sleepPausedExpired(m_sleep.kind != Sleep::Off, m_sleepPausedAt, now))
-        return false;
-    if (!m_automaticSleep.isEmpty()) {
-        m_automaticSleep.clear();
-        setNotice(QString());
-    }
-    endFade();
-    applySleepState(Sleep::Off, 0, 0);
-    return true;
-}
-
 void Player::stopBySleep() {
     ++m_intent;
     m_wantsPlay = false;
     m_out->pause();
     markPaused(false);
     endFade();
-    applySleepState(Sleep::Off, 0, 0);
-    m_automaticSleep.clear();
+    applySleepState(m_selectedSleep.kind, m_selectedSleep.minutes,
+                    m_selectedSleep.kind == Sleep::Minutes ? m_selectedSleep.minutes * 60'000.0 : 0);
+    m_sleepRetained = true;
+    persistSleep();
     setNotice(QString());
     m_sleepStoppedAt = m_now();
     emit sleepChanged();
@@ -1374,19 +1406,29 @@ void Player::onEnded() {
 
 void Player::tick() {
     const qint64 now = m_now();
+    if (!m_sleepWindow.isEmpty() && m_sleepWindow != scheduleWindow()) {
+        m_automaticSleep.clear();
+        m_sleepWindow.clear();
+        m_selectedSleep = Sleep();
+        endFade();
+        applySleepState(Sleep::Off, 0, 0);
+        persistSleep();
+    }
     checkStall();
     if (now - m_lastFlush >= kSaveEveryMs) {
         m_lastFlush = now;
         m_outbox->flush();
     }
     if (!m_loaded || !m_playing) {
-        expireSleepIfPaused(now);
         updateTicker();
         return;
     }
     const qint64 idle = m_systemIdle ? m_systemIdle() : -1;
     // An OS input, or a failed probe, also cancels an automatic countdown already in progress.
-    if (!m_automaticSleep.isEmpty() && (idle < 0 || now - idle > m_automaticLastInput + 100)) noteInteraction();
+    if (!m_automaticSleep.isEmpty() && idle >= 0 && now - idle > m_automaticLastInput + 100) {
+        m_automaticLastInput = now - idle;
+        noteInteraction(QStringLiteral("system-input"));
+    }
     save();
     if (m_sleep.kind != Sleep::Off) {
         tickSleep(now);
@@ -1399,6 +1441,10 @@ void Player::tick() {
             const int minutes = m_schedule.value(QStringLiteral("minutes")).toInt();
             applySleepState(Sleep::Minutes, minutes, minutes * 60'000.0);
             m_automaticSleep = QStringLiteral("schedule");
+            m_selectedSleep = m_sleep;
+            m_sleepWindow = night;
+            m_sleepRetained = false;
+            persistSleep();
             m_automaticLastInput = now - idle;
             setNotice(QString::fromUtf8(AutoSleepText::Schedule),
                       QString::fromUtf8(AutoSleepText::Continue), QStringLiteral("stay"));

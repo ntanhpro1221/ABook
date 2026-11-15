@@ -343,6 +343,7 @@ export interface AppInfo {
 }
 
 export interface Preferences {
+  sleepActivityResets?: boolean;
   readAloudVoice: string;
   libraryRoot: string;
   theme: "system" | "light" | "dark";

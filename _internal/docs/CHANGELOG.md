@@ -7,6 +7,8 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+- Hẹn giờ ngủ giữ nguyên sau khi tự dừng; lần phát sau tự đếm lại.
+
 - Dựng từ đáp án giữ đúng người nói qua mọi bước sửa nhãn; bìa JPEG đã đạt chuẩn giữ nguyên byte khi lưu trên máy tính và điện thoại.
 
 - Sách có thể gồm nhiều quyển, mỗi quyển có bìa riêng (như các tập trên Hako). Trang sách nhiều quyển hiện danh sách quyển kèm bìa và tiến độ; bấm vào một quyển để xem chương. Sách một quyển hiện như trước. Có ở web, máy tính và Android.

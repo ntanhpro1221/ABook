@@ -25,6 +25,29 @@ import vn.abook.player.ui.theme.AbookTheme
 class ValuePickerUiTest {
     @get:Rule val rule = createAndroidComposeRule<ComponentActivity>()
 
+    @Test fun alternatingStepsAtTheMinimumCancelsTheOldRepeatJob() {
+        val spec = mutableStateOf(ValueSpecs.sleepChapters)
+        val value = mutableStateOf(1.0)
+        rule.setContent { AbookTheme(false) {
+            Box(Modifier.width(360.dp)) {
+                ValuePicker(spec.value, value.value, { value.value = it }, { it.toInt().toString() }, "Count", "steps", stepperOnly = true)
+            }
+        } }
+        for (selected in listOf(ValueSpecs.sleepChapters, ValueSpecs.sleepMinutes)) {
+            rule.runOnIdle { spec.value = selected; value.value = 1.0 }
+            repeat(3) {
+                rule.onNodeWithTag("steps_up").performTouchInput { click() }
+                rule.runOnIdle { assertEquals(2.0, value.value, 0.0) }
+                rule.onNodeWithTag("steps_down").performTouchInput { click() }
+                rule.runOnIdle { assertEquals(1.0, value.value, 0.0) }
+                rule.onNodeWithTag("steps_up").performTouchInput { click() }
+                rule.mainClock.advanceTimeBy(1_000)
+                rule.runOnIdle { assertEquals(2.0, value.value, 0.0) }
+                rule.onNodeWithTag("steps_down").performTouchInput { click() }
+            }
+        }
+    }
+
     @Test fun countUsesTheSameValueFieldAndEightDpLabelGap() {
         val value = mutableStateOf(3.0)
         rule.setContent { AbookTheme(false) {
