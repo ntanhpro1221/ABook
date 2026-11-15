@@ -79,9 +79,9 @@ fun ClipButton(clipId: String, clip: ClipState, onClick: () -> Unit, tag: String
     val music = clipId.startsWith("music-")
     IconAction(if (clip.loading == clipId) vn.abook.player.S.s_buffering else if (active && !clip.paused) (if (music) vn.abook.player.S.s_tam_dung_67635815 else WorkText.STOP) else if (music && active) vn.abook.player.S.s_phat_343e7e48 else WorkText.PLAY, onClick, tag, modifier) {
         vn.abook.player.ui.components.PendingIndicator(clip.loading == clipId) {
-            vn.abook.player.ui.components.StateIcon(active && !clip.paused) { on ->
-                if (on && music) vn.abook.player.ui.components.LucideIcon(vn.abook.player.ui.components.LucidePaths.PAUSE, Abook.colors.accentText)
-                else if (on) StopIcon(Abook.colors.accentText) else PlayIcon(Abook.colors.accentText)
+            vn.abook.player.ui.motion.SwapContent((active && !clip.paused) to music, contentKey = { it }, inPlace = true) { icon ->
+                if (icon.first && icon.second) vn.abook.player.ui.components.LucideIcon(vn.abook.player.ui.components.LucidePaths.PAUSE, Abook.colors.accentText)
+                else if (icon.first) StopIcon(Abook.colors.accentText) else PlayIcon(Abook.colors.accentText)
             }
         }
     }
@@ -140,7 +140,7 @@ fun AnswerButton(label: String, onClick: () -> Unit, tag: String, modifier: Modi
                 contentAlignment = Alignment.Center,
                 ) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        if (pending) { PendingIndicator(true); Spacer(Modifier.width(Dim.s8)) }
+                        Reveal(pending) { Row { PendingIndicator(true); Spacer(Modifier.width(Dim.s8)) } }
                         BasicText(label, style = Abook.type.bodyStrong.copy(color = if (enabled) Abook.colors.text else Abook.colors.text3))
                     }
                 }

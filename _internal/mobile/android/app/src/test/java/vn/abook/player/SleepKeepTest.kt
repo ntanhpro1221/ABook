@@ -64,7 +64,7 @@ class SleepKeepTest {
         SleepTimer.persist()
         assertTrue(DiskWrites.flush(TestTime.ms(5_000)))
         reset()
-        ListenPrefs.load(System.currentTimeMillis() + 24 * 3_600_000L)
+        ListenPrefs.load(System.currentTimeMillis() + 24 * 3_600_000L) // wallclock-ok: next-day restore timestamp is input data, not a wait budget
         assertEquals(SleepTimer.Mode.MINUTES, SleepTimer.mode)
         assertEquals(600.0, SleepTimer.describe().getDouble("remaining"), 0.01)
         assertFalse(SleepTimer.describe().getBoolean("counting"))

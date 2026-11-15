@@ -8,6 +8,7 @@ import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { MemoryRouter, Route, Routes } from "react-router";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { TooltipProvider } from "@/shared/ui";
+import { eventually } from "@/testing/eventually";
 import { Clock, ClockContext } from "./clock";
 import type { ListenBook, ListenChapter } from "./model";
 
@@ -119,7 +120,11 @@ it.each(["ready", "empty", "error"])("the music tab exposes its %s state without
     return new Response(JSON.stringify(data), { status: bookTracks && mode === "error" ? 503 : 200, headers: { "Content-Type": "application/json" } });
   });
   await open(700);
-  await act(async () => { await new Promise((resolve) => setTimeout(resolve, 100)); });
+  await eventually(() => {
+    if (mode === "ready") expect(host.textContent).toContain("Audit melody");
+    else if (mode === "empty") expect(host.textContent).toContain("Chưa có nhạc");
+    else expect(host.querySelector('[role="alert"]')?.textContent).toContain("Chưa tải được kho nhạc");
+  });
   expect(host.querySelector("[data-chapter]")).toBeNull();
   if (mode === "ready") {
     expect(host.textContent).toContain("Audit melody");

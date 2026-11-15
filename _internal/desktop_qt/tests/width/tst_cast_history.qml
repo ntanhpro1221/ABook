@@ -32,13 +32,15 @@ Item {
             // First click opens the actual disclosure; second clicks the actual undo control.
             mouseClick(view.children[0])
             tryCompare(view, "expanded", true)
-            wait(300)
+            const body = view.children.find(item => item.settled !== undefined && item.open !== undefined)
+            verify(body !== undefined)
+            tryVerify(() => body.open && body.settled && body.height > 0)
             const actions = []
             function collect(item) {
                 if (item.text === "Hoàn tác" && item.kind === "ghost") actions.push(item)
                 for (const child of item.children || []) collect(child)
             }
-            collect(view)
+            tryVerify(function() { actions.length = 0; collect(view); return actions.length === 1 && actions[0].visible && actions[0].height > 0 })
             compare(actions.length, 1)
             mouseClick(actions[0])
             compare(transport.calls, 1)
@@ -49,7 +51,9 @@ Item {
             const view = createTemporaryObject(factory, host, {bookId: "book1", history: {items: []}, editable: true, store: transport})
             verify(view)
             view.expanded = true
-            wait(300)
+            let turn = false
+            Later.call(view, function() { turn = true })
+            tryVerify(() => turn)
             compare(transport.calls, 0)
         }
     }

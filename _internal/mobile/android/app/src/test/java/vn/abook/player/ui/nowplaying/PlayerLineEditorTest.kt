@@ -21,7 +21,7 @@ class PlayerLineEditorTest {
     private val cases get() = JSONArray(File("../../../tests/fixtures/player_line/cases.json").readText())
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Unconfined)
     private val id = "f-0123456789abcdef01234567"
-    @After fun resetClock() { LocalStudio.now = { System.currentTimeMillis() / 1000.0 }; scope.cancel() }
+    @After fun resetClock() { LocalStudio.now = { System.currentTimeMillis() / 1000.0 }; scope.cancel() } // wallclock-ok: restore the production clock after the fake-clock fixture
 
     private class Source(val case: JSONObject, val persist: Boolean = false) : PlayerLineSource {
         val writes = ArrayList<Pair<String, JSONObject>>()

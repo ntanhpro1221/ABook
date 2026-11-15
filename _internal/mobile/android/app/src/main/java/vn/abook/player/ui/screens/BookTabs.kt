@@ -429,7 +429,7 @@ private fun SampleButton(active: Boolean, label: String, onClick: () -> Unit) {
         Modifier.size(Dim.touch).pressable(onClick = onClick).semantics { contentDescription = if (active) S.s_dung_nghe_thu_41a2925b else label }.testTag("person_sample"),
         contentAlignment = Alignment.Center,
     ) {
-        StateIcon(active) { active ->
+        vn.abook.player.ui.motion.SwapContent(active, contentKey = { it }, inPlace = true) { active ->
             if (active) StopIcon(colors.accentText, size = 14.dp) else PlayIcon(colors.text2, size = 14.dp)
         }
     }

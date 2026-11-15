@@ -1,3 +1,4 @@
+import { DisclosureChevron } from "@/shared/DisclosureRow";
 import { hasPresentContent, Presence } from "../shared/MotionPresence";
 import { S } from "../shared/strings.generated";
 import { TickingValue } from "@/shared/TickingValue";
@@ -8,7 +9,7 @@ import { FoldRows } from "@/shared/FoldRows";
 import { AnimatedRows, LoadingCrossfade, MotionPresence, Reveal } from "@/shared/MotionPresence";
 import * as DropdownMenu from "@/shared/DropdownMenu";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowRightLeft, AudioLines, BookOpen, BookOpenText, Check, CheckCheck, ChevronDown, ChevronRight, CircleDashed, CloudDownload, FileDown, GitMerge, History, Hourglass, Laptop, Loader2, MoreHorizontal, Pause, Pencil, Play, Plus, RotateCcw, Save, Search, Share2, SlidersHorizontal, TextCursorInput, Trash2, UserRound } from "lucide-react";
+import { ArrowRightLeft, AudioLines, BookOpen, BookOpenText, Check, CheckCheck, ChevronDown, CircleDashed, CloudDownload, FileDown, GitMerge, History, Hourglass, Laptop, Loader2, MoreHorizontal, Pause, Pencil, Play, Plus, RotateCcw, Save, Search, Share2, SlidersHorizontal, TextCursorInput, Trash2, UserRound } from "lucide-react";
 import { memo, useId, Fragment, useEffect, useLayoutEffect, useMemo, useRef, useState, type ButtonHTMLAttributes, type CSSProperties, type Dispatch, type ReactNode, type SetStateAction } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router";
 import { toast } from "@/shared/toast";
@@ -201,7 +202,7 @@ const ChapterLine = memo(function ChapterLine({
         className="touch-hit min-w-0 flex-1 text-left"
       >
         <div className={cn("flex items-start gap-2 break-words text-sm font-medium", current && "text-accent-text", (done || !canPlay(chapter)) && !current && "text-fg-2")}>
-          <span className="min-w-0 flex-1">{name}</span><ChevronRight aria-hidden className="ink-end mt-1 size-4 shrink-0 text-fg-3" />
+          <span className="min-w-0 flex-1">{name}</span><DisclosureChevron aria-hidden className="ink-end mt-1 size-4 shrink-0 text-fg-3" />
         </div>
         {/* min-h 1rem (= một dòng text-xs): dòng phụ luôn giữ chỗ - chương có audio rồi hàng không cao thêm, và mọi hàng cùng nhịp. */}
         <div className="min-h-[1rem] break-words text-xs text-fg-2">

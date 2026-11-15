@@ -433,11 +433,22 @@ def _kt_inside_motion(clean: str, offset: int, condition: str, source: str | Non
                     if call[1] == 'SwapContent':
                         key = re.search(r'\bcontentKey\s*=\s*\{\s*([\w, ]+)\s*->\s*(.*?)\s*\}', original_args, re.S)
                         if not key:
-                            return False
-                        expression = key[2]
-                        for bound, held in zip(key[1].split(','), reads.split(',')):
+                            implicit = re.search(r'\bcontentKey\s*=\s*\{\s*(it)\s*\}', original_args)
+                            if not implicit:
+                                return False
+                            bound_names, expression = 'it', implicit[1]
+                        else:
+                            bound_names, expression = key[1], key[2]
+                        for bound, held in zip(bound_names.split(','), reads.split(',')):
                             expression = re.sub(r'(?<![.\w])' + re.escape(bound.strip()) + r'\b', held.strip(), expression)
-                        return re.sub(r'\s+', '', expression) == re.sub(r'\s+', '', condition)
+                        if re.sub(r'\s+', '', expression) == re.sub(r'\s+', '', condition):
+                            return True
+                        # An identity key changes whenever its retained value
+                        # changes. A branch using only that value is covered;
+                        # another mutable input is still an unanimated toggle.
+                        held = {name.strip() for name in reads.split(',')}
+                        names = set(re.findall(r'(?<![.\w])([a-z_]\w*)', condition)) - {'true', 'false', 'null', 'is', 'in'}
+                        return expression.strip() in held and bool(names) and names <= held
                     if call[1] == 'AnimatedVisibility' or call[1] == 'Reveal':
                         return re.sub(r'\s+', '', args.removeprefix('visible').lstrip(' =')) == re.sub(r'\s+', '', condition)
                     return any(re.search(r'(?<![.\w])' + name.strip() + r'\b', condition) for name in reads.split(','))

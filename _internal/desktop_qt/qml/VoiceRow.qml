@@ -61,7 +61,8 @@ Item {
                 SelectionMark {
                     id: mark
                     selected: root.selected
-                    visible: !saveWait.shown
+                    opacity: saveWait.shown ? 0 : 1
+                Behavior on opacity { NumberAnimation { duration: Theme.motionFast } }
                     anchors.verticalCenter: parent.verticalCenter
                 }
                 PendingIndicator { id: saveWait; anchors.verticalCenter: parent.verticalCenter; pending: root.saving }

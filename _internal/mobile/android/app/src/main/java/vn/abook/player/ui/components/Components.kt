@@ -195,9 +195,11 @@ private fun ActionButton(label: String, onClick: () -> Unit, modifier: Modifier,
         contentAlignment = Alignment.Center,
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            if (icon != null || pending) {
-                PendingIndicator(pending, color = ink) { icon?.invoke(ink) }
-                Spacer(Modifier.width(Dim.s8))
+            Reveal(icon != null || pending) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    PendingIndicator(pending, color = ink) { icon?.invoke(ink) }
+                    Spacer(Modifier.width(Dim.s8))
+                }
             }
             BasicText(label, style = (if (compact) Abook.type.label else Abook.type.bodyStrong).copy(color = ink))
         }

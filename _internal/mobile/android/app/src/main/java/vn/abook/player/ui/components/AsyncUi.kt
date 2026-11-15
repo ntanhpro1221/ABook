@@ -26,5 +26,5 @@ fun <T> StateIcon(state: T, modifier: Modifier = Modifier, content: @Composable 
 @Composable
 fun PendingIndicator(pending: Boolean, modifier: Modifier = Modifier, color: Color = Abook.colors.accentText, content: @Composable () -> Unit = {}) {
     val visible = pendingVisible(pending)
-    StateIcon(visible, modifier.size(20.dp)) { if (it) BusyRing(color = color) else content() }
+    vn.abook.player.ui.motion.SwapContent(visible, contentKey = { it }, modifier = modifier.size(20.dp), inPlace = true) { if (it) BusyRing(color = color) else content() }
 }

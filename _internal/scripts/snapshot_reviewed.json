@@ -1276,12 +1276,12 @@
     "reason": "Inspected the combined-source before/after contact sheet and exact image bytes. Labels and controls remain inside their surfaces; selection marks, icons and shared confirmation rows reflect the integrated musicdl behavior."
   },
   "_internal/mobile/android/app/src/test/snapshots/music_controls_buffering_dark.png": {
-    "sha256": "a14b1d3e02781133c90bed063bb7d1a373eb0dbbf6aac2b4cc9b4d5d237bd924",
-    "reason": "Inspected the combined-source before/after contact sheet and exact image bytes. Labels and controls remain inside their surfaces; selection marks, icons and shared confirmation rows reflect the integrated musicdl behavior. New music fixture shows the requested download/connecting/buffering/full-playback state; seek/progress and explicit cancel/delete controls are visible."
+    "sha256": "567d30b14cba6797623ca0e5524a55dcba6a51a50faef0e7cdcc40f037d30017",
+    "reason": "Inspected all ten exact combined-source before/after images on the gate-repair contact sheet; additionally opened buffering dark at full native resolution. Token spacing aligns the listening ruler with the play control; download/stop rings stay inside their fixed slots. Titles, metadata, seek track and all state controls remain visible without clipping or overlap. The buffering ring is present after advancing the Compose test clock."
   },
   "_internal/mobile/android/app/src/test/snapshots/music_controls_buffering_light.png": {
-    "sha256": "133ac1bbcb50dfad6013dd62b169184ef8bdd4d650879686cf3fd79737fe22be",
-    "reason": "Inspected the combined-source before/after contact sheet and exact image bytes. Labels and controls remain inside their surfaces; selection marks, icons and shared confirmation rows reflect the integrated musicdl behavior. New music fixture shows the requested download/connecting/buffering/full-playback state; seek/progress and explicit cancel/delete controls are visible."
+    "sha256": "c257313466cfbb377fe3b6a64a0bac73ce29342d622c8075f2212deed0d00c73",
+    "reason": "Inspected all ten exact combined-source before/after images on the gate-repair contact sheet; additionally opened buffering dark at full native resolution. Token spacing aligns the listening ruler with the play control; download/stop rings stay inside their fixed slots. Titles, metadata, seek track and all state controls remain visible without clipping or overlap. The buffering ring is present after advancing the Compose test clock."
   },
   "_internal/mobile/android/app/src/test/snapshots/music_controls_confirm_dark.png": {
     "sha256": "a4ddd6f71b179d79da2f538350a4db88958181597087fc5a728f7a65d5dca17b",
@@ -1292,12 +1292,12 @@
     "reason": "Inspected the combined-source before/after contact sheet and exact image bytes. Labels and controls remain inside their surfaces; selection marks, icons and shared confirmation rows reflect the integrated musicdl behavior. New music fixture shows the requested download/connecting/buffering/full-playback state; seek/progress and explicit cancel/delete controls are visible. The shared cancel and destructive choice remain distinct, with the consequence text fully wrapped."
   },
   "_internal/mobile/android/app/src/test/snapshots/music_controls_connecting_dark.png": {
-    "sha256": "5cda6131c9d0b7c57b143adebe134bdd18748ef073d10bd3e98286ad7e1c3c45",
-    "reason": "Inspected the combined-source before/after contact sheet and exact image bytes. Labels and controls remain inside their surfaces; selection marks, icons and shared confirmation rows reflect the integrated musicdl behavior. New music fixture shows the requested download/connecting/buffering/full-playback state; seek/progress and explicit cancel/delete controls are visible."
+    "sha256": "71b9a587e9643426d519bffa47f2a2a63b3c82cc5034afd6852d5b4dfaf00396",
+    "reason": "Inspected all ten exact combined-source before/after images on the gate-repair contact sheet; additionally opened buffering dark at full native resolution. Token spacing aligns the listening ruler with the play control; download/stop rings stay inside their fixed slots. Titles, metadata, seek track and all state controls remain visible without clipping or overlap. The buffering ring is present after advancing the Compose test clock."
   },
   "_internal/mobile/android/app/src/test/snapshots/music_controls_connecting_light.png": {
-    "sha256": "41c1b7c7be1fb1d641e73a8561b927ca51b2704e1c82ae353c10b8c7ea754e3c",
-    "reason": "Inspected the combined-source before/after contact sheet and exact image bytes. Labels and controls remain inside their surfaces; selection marks, icons and shared confirmation rows reflect the integrated musicdl behavior. New music fixture shows the requested download/connecting/buffering/full-playback state; seek/progress and explicit cancel/delete controls are visible."
+    "sha256": "403227c3b4b20e4666b7972eeba3504eefa716451a540fda0fcd7f973713714a",
+    "reason": "Inspected all ten exact combined-source before/after images on the gate-repair contact sheet; additionally opened buffering dark at full native resolution. Token spacing aligns the listening ruler with the play control; download/stop rings stay inside their fixed slots. Titles, metadata, seek track and all state controls remain visible without clipping or overlap. The buffering ring is present after advancing the Compose test clock."
   },
   "_internal/mobile/android/app/src/test/snapshots/music_controls_download_dark.png": {
     "sha256": "603e6db2a707706dfbdf80e2ec77c16ff4af7b14ee786dd054e689e2ed264abe",
@@ -1316,27 +1316,27 @@
     "reason": "Inspected the combined-source before/after contact sheet and exact image bytes. Labels and controls remain inside their surfaces; selection marks, icons and shared confirmation rows reflect the integrated musicdl behavior. New music fixture shows the requested download/connecting/buffering/full-playback state; seek/progress and explicit cancel/delete controls are visible."
   },
   "_internal/mobile/android/app/src/test/snapshots/music_controls_paused_dark.png": {
-    "sha256": "80c1ea98ddeaa4a5ad835efe19c63350867ceb19467ceb51f9114952b61ddb80",
-    "reason": "Inspected the combined-source before/after contact sheet and exact image bytes. Labels and controls remain inside their surfaces; selection marks, icons and shared confirmation rows reflect the integrated musicdl behavior. New music fixture shows the requested download/connecting/buffering/full-playback state; seek/progress and explicit cancel/delete controls are visible."
+    "sha256": "37d1eae0ad5858df401b38d96dd798c94f7ca0967fb673f4686b375b1527ced9",
+    "reason": "Inspected all ten exact combined-source before/after images on the gate-repair contact sheet; additionally opened buffering dark at full native resolution. Token spacing aligns the listening ruler with the play control; download/stop rings stay inside their fixed slots. Titles, metadata, seek track and all state controls remain visible without clipping or overlap. The buffering ring is present after advancing the Compose test clock."
   },
   "_internal/mobile/android/app/src/test/snapshots/music_controls_paused_light.png": {
-    "sha256": "3db9f2fe58a43e33a39d27da6b728d206fc8b4c7f891bb1aca52beef3dc4b808",
-    "reason": "Inspected the combined-source before/after contact sheet and exact image bytes. Labels and controls remain inside their surfaces; selection marks, icons and shared confirmation rows reflect the integrated musicdl behavior. New music fixture shows the requested download/connecting/buffering/full-playback state; seek/progress and explicit cancel/delete controls are visible."
+    "sha256": "020f5b8bf89ee67473504f17a27ec99b9eee3249d850a6c0c67e0922f100864a",
+    "reason": "Inspected all ten exact combined-source before/after images on the gate-repair contact sheet; additionally opened buffering dark at full native resolution. Token spacing aligns the listening ruler with the play control; download/stop rings stay inside their fixed slots. Titles, metadata, seek track and all state controls remain visible without clipping or overlap. The buffering ring is present after advancing the Compose test clock."
   },
   "_internal/mobile/android/app/src/test/snapshots/music_controls_playing_dark.png": {
-    "sha256": "62f2ac66c8dd16b9b0e264b1fa5c21bee76028d84d727df39f1aa74733997a10",
-    "reason": "Inspected the combined-source before/after contact sheet and exact image bytes. Labels and controls remain inside their surfaces; selection marks, icons and shared confirmation rows reflect the integrated musicdl behavior. New music fixture shows the requested download/connecting/buffering/full-playback state; seek/progress and explicit cancel/delete controls are visible."
+    "sha256": "b970d479073f06084d295d64ed8a693a70d7bd728168198ea3315d0ae5e42ac9",
+    "reason": "Inspected all ten exact combined-source before/after images on the gate-repair contact sheet; additionally opened buffering dark at full native resolution. Token spacing aligns the listening ruler with the play control; download/stop rings stay inside their fixed slots. Titles, metadata, seek track and all state controls remain visible without clipping or overlap. The buffering ring is present after advancing the Compose test clock."
   },
   "_internal/mobile/android/app/src/test/snapshots/music_controls_playing_light.png": {
-    "sha256": "c0af1ef26c13bc7556f894ea5ccd4444d22ba047f3ede70a9de2fb9b6bee38bf",
-    "reason": "Inspected the combined-source before/after contact sheet and exact image bytes. Labels and controls remain inside their surfaces; selection marks, icons and shared confirmation rows reflect the integrated musicdl behavior. New music fixture shows the requested download/connecting/buffering/full-playback state; seek/progress and explicit cancel/delete controls are visible."
+    "sha256": "9fea5dd910e4b6fc48d5df36e616546be7f77224d68804d56271bf5921bb044a",
+    "reason": "Inspected all ten exact combined-source before/after images on the gate-repair contact sheet; additionally opened buffering dark at full native resolution. Token spacing aligns the listening ruler with the play control; download/stop rings stay inside their fixed slots. Titles, metadata, seek track and all state controls remain visible without clipping or overlap. The buffering ring is present after advancing the Compose test clock."
   },
   "_internal/mobile/android/app/src/test/snapshots/music_controls_progress_dark.png": {
-    "sha256": "60e8c54151e95783c2f4ddae4803893d57b2a8ec2eda5950c767743fa14b14e4",
-    "reason": "Inspected the combined-source before/after contact sheet and exact image bytes. Labels and controls remain inside their surfaces; selection marks, icons and shared confirmation rows reflect the integrated musicdl behavior. New music fixture shows the requested download/connecting/buffering/full-playback state; seek/progress and explicit cancel/delete controls are visible."
+    "sha256": "ca0e64d4d2f99d68683f6477d474f4cd844fa1998b6421aaf3b99bff30495a21",
+    "reason": "Inspected all ten exact combined-source before/after images on the gate-repair contact sheet; additionally opened buffering dark at full native resolution. Token spacing aligns the listening ruler with the play control; download/stop rings stay inside their fixed slots. Titles, metadata, seek track and all state controls remain visible without clipping or overlap. The buffering ring is present after advancing the Compose test clock."
   },
   "_internal/mobile/android/app/src/test/snapshots/music_controls_progress_light.png": {
-    "sha256": "63c0846b0c223054f2e91ce3c88a6d9a46916d71c51594da0af06f62552845a0",
-    "reason": "Inspected the combined-source before/after contact sheet and exact image bytes. Labels and controls remain inside their surfaces; selection marks, icons and shared confirmation rows reflect the integrated musicdl behavior. New music fixture shows the requested download/connecting/buffering/full-playback state; seek/progress and explicit cancel/delete controls are visible."
+    "sha256": "a20309ba89ebf5e684cdb1ce22ea4b98ebdf3fb6a5c827cdd38aa38229c40a15",
+    "reason": "Inspected all ten exact combined-source before/after images on the gate-repair contact sheet; additionally opened buffering dark at full native resolution. Token spacing aligns the listening ruler with the play control; download/stop rings stay inside their fixed slots. Titles, metadata, seek track and all state controls remain visible without clipping or overlap. The buffering ring is present after advancing the Compose test clock."
   }
 }

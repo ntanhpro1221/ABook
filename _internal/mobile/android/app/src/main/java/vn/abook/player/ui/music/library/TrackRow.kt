@@ -65,7 +65,7 @@ fun TrackRow(track: MusicLibrary.Track, ui: LibraryUi, state: LibraryState, pick
         }
         DownloadControl(track, ui, state, Modifier.padding(start = Dim.s8))
     }
-    Reveal(playing) { ListeningProgress(ui, state, Modifier.padding(start = 56.dp, bottom = Dim.s8)) }
+    Reveal(playing) { ListeningProgress(ui, state, Modifier.padding(start = Dim.s48, bottom = Dim.s8)) }
     }
 }
 
@@ -105,8 +105,10 @@ private fun DownloadControl(track: MusicLibrary.Track, ui: LibraryUi, state: Lib
             }
         }
     }
-    if (askDelete) DestructiveConfirm(S.s_delete_download_question,
+    vn.abook.player.ui.motion.SwapContent(askDelete, contentKey = { it }, inPlace = true) { shown ->
+        if (shown) DestructiveConfirm(S.s_delete_download_question,
         S.s_delete_download_description(track.title, formatSize(track.bytes)), { askDelete = false },
         { state.forget(track.link) }, pending = pending, problem = ui.actionError)
+    }
 
 }

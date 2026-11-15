@@ -3344,7 +3344,7 @@ export const S = {
   s_sleep_paused_keep: "Đang tạm dừng - đồng hồ cũng dừng.",
   s_sleep_activity_resets: "Thao tác hẹn lại",
   s_stop_download: "Dừng tải",
-  s_downloaded_delete: "Đã tải - bấm để xoá",
+  s_downloaded_delete: "Đã tải, xoá",
   s_delete_download_question: "Xoá bản tải?",
   s_buffering: "Đang đệm",
   s_action_failed_retry: "Chưa thực hiện được. Bấm thử lại.",

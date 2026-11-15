@@ -223,7 +223,7 @@ fun DownloadRing(percent: Int?, label: String, modifier: Modifier = Modifier) {
         androidx.compose.animation.core.rememberInfiniteTransition(label = "download").animateFloat(
             0f, 360f, androidx.compose.animation.core.infiniteRepeatable(androidx.compose.animation.core.tween(1000, easing = androidx.compose.animation.core.LinearEasing)), label = "download-turn").value
     Box(modifier.size(36.dp).semantics { contentDescription = label; progressBarRangeInfo = percent?.let { ProgressBarRangeInfo(it / 100f, 0f..1f) } ?: ProgressBarRangeInfo.Indeterminate }, contentAlignment = Alignment.Center) {
-        Canvas(Modifier.fillMaxSize().padding(2.dp)) {
+        Canvas(Modifier.fillMaxSize().padding(Dim.s4)) {
             val stroke = Stroke(2.dp.toPx(), cap = StrokeCap.Round)
             drawArc(colors.line, 0f, 360f, false, style = stroke)
             drawArc(colors.accent, turn - 90f, (percent ?: 25) * 3.6f, false, style = stroke)

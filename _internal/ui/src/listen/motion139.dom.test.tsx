@@ -367,7 +367,8 @@ it("W2 màn đọc: thanh chọn câu hiện dần ngoài vùng của cả chư�
   expect(snapshotWith("Câu một.")).toBeUndefined();
 });
 
-it("fix139 1.2 nút phát / dừng lớn: glyph (cả vòng chờ đệm) mờ chéo trong vùng riêng của nút, không nảy (icon-pop) và không mờ cả hàng nút", async () => {
+  it("fix139 1.2 nút phát / dừng lớn: glyph (cả vòng chờ đệm) mờ chéo trong vùng riêng của nút, không nảy (icon-pop) và không mờ cả hàng nút", async () => {
+    vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] });
   state.expanded = true;
   await render(<NowPlaying mobile />);
   const toggle = host.querySelector<HTMLButtonElement>("[data-player-toggle]")!;
@@ -379,7 +380,7 @@ it("fix139 1.2 nút phát / dừng lớn: glyph (cả vòng chờ đệm) mờ c
     animate.mockClear();
     player(patch);
     await render(<NowPlaying mobile />);
-    if (patch.buffering) await act(async () => { await new Promise(resolve => setTimeout(resolve, 200)); });
+    if (patch.buffering) await act(async () => { await vi.advanceTimersByTimeAsync(200); });
     expect(toggle.querySelector("[data-motion-region]")).toBe(glyph);
     expect(animated((element) => element === glyph)).toHaveLength(1);
     expect(animated((element) => element === transport)).toHaveLength(0);

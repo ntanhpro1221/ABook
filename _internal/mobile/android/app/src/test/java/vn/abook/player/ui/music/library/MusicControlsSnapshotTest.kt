@@ -69,7 +69,8 @@ class MusicControlsSnapshotTest {
         rule.onNodeWithTag("destructive_accept").performClick()
         assertFalse(source.onDisk.contains(track.link))
         rule.runOnUiThread { ui.value = ui.value.copy(previewing = track.link, previewLoading = true, previewPosition = 32.0, previewDuration = track.duration ?: 180.0) }
-        Thread.sleep(200)
+        rule.mainClock.advanceTimeBy(vn.abook.player.ui.components.PENDING_DELAY_MS + 32L)
+        rule.waitForIdle()
         shot("buffering")
         rule.runOnUiThread { ui.value = ui.value.copy(previewLoading = false) }
         rule.onNodeWithContentDescription(S.s_music_seek).assertExists()

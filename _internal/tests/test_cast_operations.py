@@ -377,16 +377,17 @@ def test_listen_only_can_read_history_but_cannot_queue_undo():
     assert permitted("POST", "/api/books/b1/cast-history/undo", producing=True)
 
 
-def test_pipeline_counts_undo_pending_until_worker_applies_it(book):
+def test_pipeline_counts_undo_pending_until_worker_applies_it(book, monkeypatch):
     from tests.test_listener_overrides import _Pipeline
     from abook.webui import store
 
     paths, db, settings = book
+    monkeypatch.setattr(time, "time", lambda: 1000.0)
     original = merge(book)
     pipeline = _Pipeline(paths, db)
     pipeline.settings = settings
     pipeline._apply_listener_overrides()
-    ops.request_undo(paths.root, original, now=time.time() + 1)
+    ops.request_undo(paths.root, original, now=1001.0)
     assert store.pending_changes(paths.root, 0) == 1
     assert store.pending_details(paths.root, 0)["items"][0]["section"] == "cast_undos"
     pipeline._apply_listener_overrides()

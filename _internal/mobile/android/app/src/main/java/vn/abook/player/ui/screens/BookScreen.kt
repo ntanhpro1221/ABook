@@ -673,7 +673,7 @@ private fun ListenButton(label: String, detail: String?, playing: Boolean, buffe
         .padding(horizontal = Dim.s16).testTag("book_primary"), contentAlignment = Alignment.Center) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             vn.abook.player.ui.components.PendingIndicator(buffering, Modifier.size(22.dp), color = colors.accentInk) {
-                vn.abook.player.ui.components.StateIcon(restart) { retry ->
+                vn.abook.player.ui.motion.SwapContent(restart, contentKey = { it }, inPlace = true) { retry ->
                     if (retry) RestartIcon(colors.accentInk) else PlayPauseGlyph(playing && !buffering, colors.accentInk, 22.dp)
                 }
             }

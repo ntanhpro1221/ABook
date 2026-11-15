@@ -1,3 +1,4 @@
+import { WIDTH_FROM } from "@/shared/widthClass.generated";
 import { Presence } from "../shared/MotionPresence";
 import { S } from "../shared/strings.generated";
 import { DisclosureRow } from "@/shared/DisclosureRow";
@@ -502,7 +503,7 @@ export function SettingsScreen() {
   const touchOnly = useMediaQuery("(hover: none) and (pointer: coarse)");
   // Hai truy vấn riêng: danh sách truy vấn có dấu phẩy không được mọi bộ dựng hiểu (happy-dom luôn trả "không khớp").
   const wideWindow = useMediaQuery("(min-width: 1024px)");
-  const shortWideWindow = useMediaQuery(`(min-width: 600px) and ${SHORT_WINDOW}`);
+  const shortWideWindow = useMediaQuery(`(min-width: ${WIDTH_FROM.medium}px) and ${SHORT_WINDOW}`);
   const wide = wideWindow || shortWideWindow;
   const groups = desktopGroups(info, touchOnly);
   const rows = useRows(groups, info);

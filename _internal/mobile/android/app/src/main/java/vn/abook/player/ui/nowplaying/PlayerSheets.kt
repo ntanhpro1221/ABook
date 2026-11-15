@@ -115,6 +115,7 @@ fun PlayerSheets(state: NowPlayingState, model: NowPlayingModel, window: NowPlay
                     SheetTitle(sheetTitle(window.sheet), if (parents.isNotEmpty()) ::back else null)
                 }
                 SheetPages(window.sheet, { it.ordinal }, "player_sheet_pages") { shown ->
+                    Box(Modifier.fillMaxWidth()) {
                     val simplePage = shown in listOf(PlayerSheet.Speed, PlayerSheet.Sleep, PlayerSheet.More, PlayerSheet.Look) ||
                         shown == PlayerSheet.Voice && state.voices.isEmpty()
                     val scroll = rememberScrollState()
@@ -224,7 +225,9 @@ fun PlayerSheets(state: NowPlayingState, model: NowPlayingModel, window: NowPlay
                                     else VoiceList(state, model, window)
                                 }
                     }
-                } } }
+                }
+                    }
+                } }
             }
         }
     }

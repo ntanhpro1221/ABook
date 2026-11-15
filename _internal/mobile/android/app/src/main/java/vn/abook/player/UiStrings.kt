@@ -3015,7 +3015,7 @@ internal object S {
     const val s_sleep_paused_keep = "Đang tạm dừng - đồng hồ cũng dừng."
     const val s_sleep_activity_resets = "Thao tác hẹn lại"
     const val s_stop_download = "Dừng tải"
-    const val s_downloaded_delete = "Đã tải - bấm để xoá"
+    const val s_downloaded_delete = "Đã tải, xoá"
     const val s_delete_download_question = "Xoá bản tải?"
     const val s_buffering = "Đang đệm"
     const val s_action_failed_retry = "Chưa thực hiện được. Bấm thử lại."

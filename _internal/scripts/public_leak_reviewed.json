@@ -814,7 +814,7 @@
     "reason": "desktop_qt/qml/StudioPanels.qml: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
   },
   "_internal/desktop_qt/qml/UiStrings.js": {
-    "sha256": "457246f6d5bf91b045cec71e7fe2525a92b7c50b93459031fa43e0482b890720",
+    "sha256": "2f1d8515de50bab5da9fa25ed2c472e0514bbb92093c6710ff5a8f7637493a7b",
     "reason": "desktop_qt/qml/UiStrings.js: all flagged strings match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data. Re-pinned for 0.4.169: its added lines were reviewed as engineering text, no story or phoneme strings. Integration phase 1: combined authored implementation, expectations or technical documentation; exact inherited Corpus sequences rechecked; no new Corpus approval. Integration phase 2: combined authored implementation, expectations or technical documentation; exact inherited Corpus sequences rechecked; no new Corpus approval."
   },
   "_internal/desktop_qt/qml/WorkStore.qml": {
@@ -1263,11 +1263,11 @@
     "reason": "docs/UI.md: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
   },
   "_internal/docs/UI_PARITY.md": {
-    "sha256": "7290881bfe9edf30601015c8b124cbf587b8b33d094adc9e4c990fccfa6cac65",
+    "sha256": "54c2cd9d0668074e62b7629d4583e81faa50948695631643323672d04d1422eb",
     "reason": "_internal/docs/UI_PARITY.md: reviewed integration-only layout, generated parity inventory or pinned asset URL edits; existing scrubbed prose preserved. Re-pinned for 0.4.169: its added lines were reviewed as engineering text, no story or phoneme strings. Integration phase 1: combined authored implementation, expectations or technical documentation; exact inherited Corpus sequences rechecked; no new Corpus approval. Integration phase 2: combined authored implementation, expectations or technical documentation; exact inherited Corpus sequences rechecked; no new Corpus approval."
   },
   "_internal/docs/UI_PARITY_QT.md": {
-    "sha256": "b7a0d0e5399f74c7b79333be5b1ed5e7aab8d39b6e97a1207b2a6a058be4b8ab",
+    "sha256": "1f73758c146255371327c8c0b8e7333f079816a39e0b19d7f77d8a15d4c6e8cc",
     "reason": "_internal/docs/UI_PARITY_QT.md: reviewed integration-only layout, generated parity inventory or pinned asset URL edits; existing scrubbed prose preserved. Re-pinned for 0.4.169: its added lines were reviewed as engineering text, no story or phoneme strings. Integration phase 1: combined authored implementation, expectations or technical documentation; exact inherited Corpus sequences rechecked; no new Corpus approval. Integration phase 2: combined authored implementation, expectations or technical documentation; exact inherited Corpus sequences rechecked; no new Corpus approval."
   },
   "_internal/docs/UI_PARITY_TRIAGE.md": {
@@ -1450,11 +1450,11 @@
     "reason": "mobile/android/app/src/main/java/vn/abook/player/SyncLink.kt: all flagged strings match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
   },
   "_internal/mobile/android/app/src/main/java/vn/abook/player/UiStrings.kt": {
-    "sha256": "c24f59a1ed48e26c5292a1314aba8f99214535031018a9b0ba5e9912c51f0aa8",
+    "sha256": "aa81423bdd84f3e0589dcb28c89ab6c5b162237f30c51f7e7eca6d679b946415",
     "reason": "_internal/mobile/android/app/src/main/java/vn/abook/player/UiStrings.kt: 0.4.170 retains 0.4.169 UI capitalization and the removed duplicate empty-list string; exact prior contextual shingle approvals remain unchanged. Integration phase 1: combined authored implementation, expectations or technical documentation; exact inherited Corpus sequences rechecked; no new Corpus approval. Integration phase 2: combined authored implementation, expectations or technical documentation; exact inherited Corpus sequences rechecked; no new Corpus approval.",
     "corpus_review": {
       "classification": "i",
-      "file_sha256": "c24f59a1ed48e26c5292a1314aba8f99214535031018a9b0ba5e9912c51f0aa8",
+      "file_sha256": "aa81423bdd84f3e0589dcb28c89ab6c5b162237f30c51f7e7eca6d679b946415",
       "reason": "_internal/mobile/android/app/src/main/java/vn/abook/player/UiStrings.kt: 0.4.170 retains 0.4.169 UI capitalization and the removed duplicate empty-list string; exact prior contextual shingle approvals remain unchanged. Only the inherited individual shingle hashes remain approved as category i.",
       "shingles": [
         "8316d21834562c14",
@@ -1540,7 +1540,7 @@
     "reason": "mobile/android/app/src/main/java/vn/abook/player/ui/components/WrapText.kt: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data. Integration phase 2: combined authored implementation, expectations or technical documentation; exact inherited Corpus sequences rechecked; no new Corpus approval."
   },
   "_internal/mobile/android/app/src/main/java/vn/abook/player/ui/nowplaying/PlayerSheets.kt": {
-    "sha256": "84787a9123a780c2cf84989de26b145f78216f5540237d1fbaa74e07a7d9c8fd",
+    "sha256": "f0d8b1f88aa3c37903f57ce76f02293000547dcdf20c4cd2b3796f130e7d667e",
     "reason": "mobile/android/app/src/main/java/vn/abook/player/ui/nowplaying/PlayerSheets.kt: all flagged strings match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data. Integration phase 1: combined authored implementation, expectations or technical documentation; exact inherited Corpus sequences rechecked; no new Corpus approval. Integration phase 2: combined authored implementation, expectations or technical documentation; exact inherited Corpus sequences rechecked; no new Corpus approval."
   },
   "_internal/mobile/android/app/src/main/java/vn/abook/player/ui/nowplaying/ReadAlongPane.kt": {
@@ -5066,7 +5066,7 @@
     "reason": "ui/src/gallery/README.md: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
   },
   "_internal/ui/src/listen/PlayerViews.tsx": {
-    "sha256": "e5aa80310189b2e3ce9520903e64cb36badebf2d33415f8560792df5238adf8f",
+    "sha256": "7223ff75b2cee61240791dd31f7767a81cad312de8689670de778a9e903c2e34",
     "reason": "_internal/ui/src/listen/PlayerViews.tsx: reviewed integration-only layout, generated parity inventory or pinned asset URL edits; existing scrubbed prose preserved. Integration phase 1: combined authored implementation, expectations or technical documentation; exact inherited Corpus sequences rechecked; no new Corpus approval. Integration phase 2: combined authored implementation, expectations or technical documentation; exact inherited Corpus sequences rechecked; no new Corpus approval."
   },
   "_internal/ui/src/listen/liveClip.ts": {
@@ -5122,7 +5122,7 @@
     "reason": "ui/src/shared/scrollFadeRules.test.ts: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
   },
   "_internal/ui/src/shared/strings.generated.ts": {
-    "sha256": "f330e06c552de8a16c6b3d73cb44d3439521ae8085eb8fb9931999a53a005184",
+    "sha256": "f9d24b208767c477b8c20bc680c1722401c08cc2d479c2108f80d036bd724b25",
     "reason": "ui/src/shared/strings.generated.ts: all flagged strings match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data. Re-pinned for 0.4.169: its added lines were reviewed as engineering text, no story or phoneme strings. Integration phase 1: combined authored implementation, expectations or technical documentation; exact inherited Corpus sequences rechecked; no new Corpus approval. Integration phase 2: combined authored implementation, expectations or technical documentation; exact inherited Corpus sequences rechecked; no new Corpus approval."
   },
   "_internal/ui/src/studio/ProjectScreen.tsx": {
@@ -5138,11 +5138,11 @@
     "reason": "ui/src/studio/liveRefresh.ts: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
   },
   "_internal/ui_strings/vi.json": {
-    "sha256": "76c085f724e3f67fd102a703b43c39f863cb47382a9c8b9f9310f3d92522df1d",
+    "sha256": "70391842ce63591b30dd7bf83168e490fe52bb834c893efeddd8944af069a791",
     "reason": "_internal/ui_strings/vi.json: 0.4.170 retains 0.4.169 UI capitalization and the removed duplicate empty-list string; exact prior contextual shingle approvals remain unchanged. Integration phase 1: combined authored implementation, expectations or technical documentation; exact inherited Corpus sequences rechecked; no new Corpus approval. Integration phase 2: combined authored implementation, expectations or technical documentation; exact inherited Corpus sequences rechecked; no new Corpus approval.",
     "corpus_review": {
       "classification": "i",
-      "file_sha256": "76c085f724e3f67fd102a703b43c39f863cb47382a9c8b9f9310f3d92522df1d",
+      "file_sha256": "70391842ce63591b30dd7bf83168e490fe52bb834c893efeddd8944af069a791",
       "reason": "_internal/ui_strings/vi.json: 0.4.170 retains 0.4.169 UI capitalization and the removed duplicate empty-list string; exact prior contextual shingle approvals remain unchanged. Only the inherited individual shingle hashes remain approved as category i.",
       "shingles": [
         "8316d21834562c14",

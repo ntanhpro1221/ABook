@@ -186,12 +186,13 @@ private fun FormPage(
             }
         }
     }
+    vn.abook.player.ui.motion.SwapContent(action, contentKey = { it }, inPlace = true) { action ->
     if (action == RecordAction.Delete) {
         ConfirmPage(Records.title(action, active.name), "record_form", listOfNotNull(Records.description(action, records.size)), problem) {
             DangerButton(Records.confirmLabel(action), { submit() }, "record_confirm", pending = busy)
             QuietButton(S.s_huy_96732485, onCancel, "record_cancel")
         }
-        return
+        return@SwapContent
     }
     Column(Modifier.fillMaxWidth().imePadding().testTag("record_form")) {
         BasicText(Records.title(action, active.name), style = Abook.type.sectionTitle)
@@ -218,5 +219,6 @@ private fun FormPage(
         val label = Records.confirmLabel(action)
         PrimaryButton(label, { submit() }, Modifier.fillMaxWidth().testTag("record_confirm"), enabled = ready, pending = busy)
         QuietButton(S.s_huy_96732485, onCancel, "record_cancel")
+    }
     }
 }

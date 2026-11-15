@@ -59,7 +59,7 @@ class SleepExtendTest {
 
     @Test fun shakingThreeTimesAtSevenMinutesLeftGoesBackToTenNotThirtySeven() {
         timer(picked = 10, leftMin = 7.0)
-        repeat(3) { assertTrue(SleepTimer.applyShake(System.currentTimeMillis())) }
+        repeat(3) { assertTrue(SleepTimer.applyShake(System.currentTimeMillis())) } // wallclock-ok: event timestamps supplied directly; no elapsed-time assertion
         assertEquals(SleepTimer.Mode.MINUTES, SleepTimer.mode)
         assertEquals(10 * 60.0, left(), 1.0)
         assertEquals("số đã chọn không đổi", 10, SleepTimer.describe().getInt("minutes"))

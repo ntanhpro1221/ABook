@@ -1,3 +1,4 @@
+import { Presence } from "../shared/MotionPresence";
 import { useDestructiveConfirm } from "../shared/DestructiveConfirm";
 import { S } from "../shared/strings.generated";
 import { MusicArt } from "../music/MusicArt";
@@ -165,8 +166,8 @@ export function MyMusicSection() {
                 {/* Nhãn ngắn như tab Nhạc của dự án; công tắc Tự chọn chỉ ở máy tính (điện thoại không tự chọn). */}
                 <AutoPickNote track={track} canOverride={canImport && !hasNativeMusicImport()} onView={refresh} />
               </span>
-              {canImport && <Button size="sm" variant="ghost" icon={Trash2} aria-label={S.s_xoa_0_179508ae(track.title)}
-                onClick={() => deletion.confirm({ title: S.s_xoa_bai_nay_412d7001, description: S.s_0_se_bi_xoa_khoi_nhac_cua_toi_a41656b0(track.title), run: () => remove.mutateAsync(track.link) })}>{S.s_xoa_777195ab}</Button>}
+              <Presence>{canImport && <Button size="sm" variant="ghost" icon={Trash2} aria-label={S.s_xoa_0_179508ae(track.title)}
+                onClick={() => deletion.confirm({ title: S.s_xoa_bai_nay_412d7001, description: S.s_0_se_bi_xoa_khoi_nhac_cua_toi_a41656b0(track.title), run: () => remove.mutateAsync(track.link) })}>{S.s_xoa_777195ab}</Button>}</Presence>
             </div></li>
           ))}
         </ul>

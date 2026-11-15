@@ -27,3 +27,8 @@ export function DisclosureRow({ title, summary, icon, expanded, controls, onClic
   return to !== undefined ? <Link to={to} replace={replace} state={state} aria-current={current ? "page" : undefined} className={rowClass}>{body}</Link>
     : <button {...rest} ref={ref} data-section-heading={section ? "" : undefined} type="button" aria-expanded={expanded} aria-controls={controls} onClick={onClick} className={rowClass}>{body}</button>;
 }
+
+export function DisclosureChevron({ expanded, ...props }: import("react").ComponentProps<typeof ChevronRight> & { expanded?: boolean }) {
+  const Chevron = expanded === undefined ? ChevronRight : ChevronDown;
+  return <Chevron {...props} className={cn(props.className, expanded && "rotate-180")} />;
+}

@@ -1,3 +1,4 @@
+import { DisclosureChevron } from "@/shared/DisclosureRow";
 import { SheetMusic } from '@/shared/SheetMusic';
 import { useDestructiveConfirm } from "../shared/DestructiveConfirm";
 import { PendingIndicator } from "../shared/PendingIndicator";
@@ -9,7 +10,7 @@ import { AudioFxPanel } from './AudioFxPanel';
 import { createPortal } from "react-dom";
 import { BackButton } from "@/shared/ScreenHeader";
 import { SheetPageDepth, SheetPages, useSheetPage, useSheetPageStack } from './sheetPages';
-import { SlidersHorizontal, ChevronRight } from 'lucide-react';
+import { SlidersHorizontal } from 'lucide-react';
 import { SlidingIndicator } from "@/shared/SlidingIndicator";
 import { MotionPresence, Reveal } from "@/shared/MotionPresence";
 import { Collapse } from "@/shared/Collapse";
@@ -421,7 +422,7 @@ export function MenuShell({
       <Reveal when={look === "row"}><span className="flex min-w-0 flex-1 items-center gap-3">{<Presence>{RowIcon && <RowIcon className="size-4 shrink-0 text-fg-2" />}</Presence>}<span className="truncate">{caption}</span></span></Reveal>
       <MotionRegion as="span" motionKey={triggerKey} className={cn(look === "action" ? ACTION_GLYPH : "inline-flex items-center gap-1", look === "row" && cn("min-w-0 text-xs font-medium", actionTone(active)))}>{trigger}</MotionRegion>
       {look === "action" && <MotionRegion as="span" className={ACTION_LABEL} motionKey={typeof caption === "string" ? caption.replace(/\d+/g, "#") : undefined}>{caption}</MotionRegion>}
-      {look === "row" ? <ChevronRight aria-hidden className="ink-end size-4 shrink-0 text-fg-3" /> : look !== "action" ? <ChevronDown aria-hidden className="size-3.5 shrink-0 text-fg-3" /> : null}
+      {look === "row" ? <DisclosureChevron expanded={inline ? isOpen : undefined} aria-hidden className="ink-end size-4 shrink-0 text-fg-3" /> : look !== "action" ? <ChevronDown aria-hidden className="size-3.5 shrink-0 text-fg-3" /> : null}
     </button>;
   if (inline && page) return <Popover.Root open={isOpen} onOpenChange={changeOpen}>
     <div ref={inlineRef} data-player-inline>{button}</div>
@@ -564,7 +565,7 @@ function PackagedMusicMenu({ bookId, look, audio = false }: { bookId: string; lo
       caption={audio ? S.s_chon_nhac_4e9b1d72 : S.s_nhac_nen_271fb292}
       icon={audio ? undefined : EighthNote}
       triggerKey={look === "row" ? music.enabled : undefined}
-      trigger={audio ? <ChevronRight className="ink-end [--icon-w:1rem] size-4 text-fg-2"/> : look === "row" ? (music.enabled ? S.s_bat_f26cbc4a : S.s_tat_3286064e) :
+      trigger={audio ? <DisclosureChevron className="ink-end [--icon-w:1rem] size-4 text-fg-2"/> : look === "row" ? (music.enabled ? S.s_bat_f26cbc4a : S.s_tat_3286064e) :
         // Tắt: gạch chéo trên nốt nhạc (lucide không có biểu tượng S.s_copy_50c73817bdd6).
         <span className="relative">
           <EighthNote className="size-4" />
@@ -602,7 +603,7 @@ function MusicMenuFor({ bookId, look, audio = false }: { bookId: string; look: M
       caption={audio ? S.s_chon_nhac_4e9b1d72 : S.s_nhac_nen_271fb292}
       icon={audio ? undefined : EighthNote}
       triggerKey={look === "row" ? [waiting, playing, label, known] : undefined}
-      trigger={audio ? <ChevronRight className="ink-end [--icon-w:1rem] size-4 text-fg-2"/> : look === "row"
+      trigger={audio ? <DisclosureChevron className="ink-end [--icon-w:1rem] size-4 text-fg-2"/> : look === "row"
         ? (waiting ? <Loader2 className="size-4 animate-spin" aria-hidden="true" /> : <span className="block max-w-32 truncate">{playing ? shortPlaylistLabel(label) : known ? S.s_tat_3286064e : ""}</span>)
         : <>{waiting ? <Loader2 className="size-4 animate-spin" aria-hidden="true" /> : <EighthNote className="size-4" />}<span className="max-w-40 truncate max-sm:hidden @max-[83rem]:hidden" title={playing ? label : undefined}>{playing ? shortPlaylistLabel(label) : ""}</span></>}
       width="w-72"

@@ -300,7 +300,7 @@ fun PlayerGlyph(glyph: String) {
         else -> null
     }
     Box(Modifier.size(28.dp), contentAlignment = Alignment.Center) {
-        vn.abook.player.ui.components.StateIcon(data) { data ->
+        vn.abook.player.ui.motion.SwapContent(data, contentKey = { it }, inPlace = true) { data ->
             if (data != null) LucideIcon(data, color, size = 24.dp)
             else Canvas(Modifier.fillMaxSize().visualIcon()) { drawSkip(glyph == "15↷", color, path, skipNumber) }
         }

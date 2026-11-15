@@ -593,11 +593,11 @@ export function MusicTab({ bookId, chapterTitle }: { bookId: string; chapterTitl
                     </span>
                     {/* Một nút chính + "…": cột nút thẳng hàng ở mọi dòng (trước đây bốn nút, dòng có "Bỏ ghim" lệch cột). */}
                     <span className="flex basis-full items-center gap-1 sm:w-44 sm:shrink-0 sm:basis-auto sm:justify-end">
-                      {!follows && scene.link && <IconButton
+                      <Presence>{!follows && scene.link && <IconButton
                         label={preview.playing === scene.link ? preview.loading ? S.s_buffering : preview.paused ? S.s_phat_343e7e48 : S.s_tam_dung_67635815 : S.s_nghe_thu_fa024065}
                         icon={preview.playing === scene.link && !preview.paused ? Pause : Play}
                         pending={preview.playing === scene.link && preview.loading}
-                        onClick={() => preview.toggle(scene.link!)} />}
+                        onClick={() => preview.toggle(scene.link!)} />}</Presence>
                       <Button size="sm" variant="ghost" icon={Shuffle} aria-expanded={swapping === scene.key} title={swap.title}
                         onClick={(event) => { swapTrigger.current = event.currentTarget; setSwapping(swapping === scene.key ? null : scene.key); }}>
                         {swap.text}

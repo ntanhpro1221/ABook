@@ -326,7 +326,7 @@ export function TrackRow({
         onSave={() => save.mutate([track.link])} onStop={() => cancel.mutate([track.link])}
         onDelete={() => deletion.confirm({title: S.s_delete_download_question,
           description: S.s_delete_download_description(title, formatSize(track.bytes ?? 0)), run: () => unsave.mutateAsync([track.link])})} />
-      <Reveal when={previewing}><div className="basis-full pl-14"><ListeningProgress preview={preview} /></div></Reveal>
+      <Reveal when={previewing}><div className="basis-full pl-12"><ListeningProgress preview={preview} /></div></Reveal>
       {deletion.dialog}
     </Item>
   );
