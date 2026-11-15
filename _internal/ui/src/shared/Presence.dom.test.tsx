@@ -18,7 +18,11 @@ function View({ value }: { value: { name: string } | null }) {
 beforeEach(() => {
   vi.useFakeTimers();
   (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
-  animate = vi.fn(() => ({ cancel: vi.fn() }));
+  animate = vi.fn(() => {
+    let reject!: (reason: DOMException) => void;
+    const finished = new Promise<void>((_resolve, fail) => { reject = fail; });
+    return { finished, cancel: vi.fn(() => reject(new DOMException("Animation canceled", "AbortError"))) };
+  });
   Object.defineProperty(Element.prototype, "animate", { configurable: true, value: animate });
   host = document.createElement("div"); document.body.append(host); root = createRoot(host);
 });

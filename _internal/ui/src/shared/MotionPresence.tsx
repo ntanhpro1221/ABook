@@ -57,12 +57,15 @@ export function Presence({ children }: { children: ReactNode }) {
     const animations = Array.from(host.current?.children ?? []).map(element => {
       const alpha = Number.parseFloat(getComputedStyle(element).opacity);
       const opacity = Number.isFinite(alpha) ? alpha : 1;
-      return element.animate?.(
+      const animation = element.animate?.(
         open
           ? [{ opacity: 0, transform: reduced ? "none" : "translateY(8px)" }, { opacity, transform: "none" }]
           : [{ opacity, transform: "none" }, { opacity: 0, transform: reduced ? "none" : "translateY(-8px)" }],
         { duration, easing: open ? EASE.decelerate : EASE.accelerate, fill: open ? "backwards" : "forwards" },
       );
+      // Cancellation during reopen/unmount rejects the Web Animation promise.
+      void animation?.finished?.catch(() => undefined);
+      return animation;
     });
     return () => animations.forEach(animation => animation?.cancel());
   }, [open]);

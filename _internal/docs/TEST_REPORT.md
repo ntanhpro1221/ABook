@@ -6,6 +6,8 @@ Integrated the 17 phase-one branches and volumes, authoritative speaker labels a
 
 The first development packaging attempt caught an obsolete trim rule: portrait masks now import QtQuick.Effects. Packaging retains that QML module and Qt6QuickEffects.dll; checks for unused Controls styles and native plugins remain active. Exact-HEAD package and gate results are recorded in the external integration report.
 
+The first complete web gate found one stale immediate-removal expectation and 24 unhandled animation cancellation rejections. Presence consumes its Web Animation completion promise before cleanup; its tests now reject that promise on cancellation. The missing-cover test checks immediate inert/hidden state and removal after the exit completes. No animation duration or gate threshold was relaxed.
+
 ## 15-11-2026 — music controls, pending actions and destructive confirmations
 
 Compose, Qt and web use fixed download/stop/downloaded slots, shared confirmations, delayed pending indicators and stationary state icon transitions. Music playback runs to EOS with seek, position/duration and actual output buffering; native confirmation retains a returned Job before model busy state begins. Download cancellation preserves a committed file; explicit confirmed deletion serializes with its writer and reports failure. Default voice changes wait for persistence.
