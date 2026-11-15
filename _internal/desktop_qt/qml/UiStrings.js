@@ -15,6 +15,7 @@ function s_0_giay_daac30d3(p0) { return String(p0) + " giây"; }
 function s_0_nhip_phut_3c154e09(p0) { return String(p0) + " nhịp/phút"; }
 function s_0_phut_2596d212(p0) { return String(p0) + " phút"; }
 var s_0_phut_66a3b36a = "0 phút";
+function s_0_se_bi_xoa_khoi_nhac_cua_toi_a41656b0(p0) { return "“" + String(p0) + "” sẽ bị xoá khỏi Nhạc của tôi."; }
 function s_0_so_goi_trong_chu_bo_cac_con_so_nhu_2_hay_10ac572b(p0) { return String(p0) + " số gọi trong chữ. Bỏ các con số như ² hay [3] khỏi phần đọc; lời chú không đổi."; }
 function s_0_thiet_bi_da_ghep_2fe2b8a5(p0) { return String(p0) + " thiết bị đã ghép"; }
 var s_192_168_1_20_hoac_dia_chi_bluetooth_326669dc = "192.168.1.20 hoặc địa chỉ Bluetooth";
@@ -677,6 +678,7 @@ var s_chua_tai_duoc_phan_doc_khong_khi_95a9edf6 = "Chưa tải được phần �
 var s_chua_tai_duoc_thu_vien_e20e0f11 = "Chưa tải được thư viện";
 var s_chua_tai_lai_duoc_sach_01a64552 = "Chưa tải lại được sách: ";
 var s_chua_tai_them_duoc_cau_35372122 = "Chưa tải thêm được câu";
+var s_chua_tai_xong_b257419d = "Chưa tải xong";
 var s_chua_tam_dung_duoc_18ca46fa = "Chưa tạm dừng được";
 var s_chua_tao_duoc_sach_2d0ce411 = "Chưa tạo được sách";
 var s_chua_thay_thiet_bi_192c6e9e = "Chưa thấy thiết bị";
@@ -1122,11 +1124,11 @@ var s_dang_phan_tich_nhac_da_them_a2a6a13b = "Đang phân tích nhạc đã thê
 var s_dang_phat_e3baf7da = "đang phát";
 var s_dang_phat_u00a0_u00a0_6c88d17d = "Đang phát · ";
 var s_dang_sua_thiet_lap_cua_e2a5f0e6 = "Đang sửa thiết lập của ";
+function s_dang_tai_0_e9a97892(p0) { return "Đang tải " + String(p0) + " %"; }
 var s_dang_tai_1fd8b1ef = "đang tải";
 var s_dang_tai_4568372a = "Đang tải ";
 var s_dang_tai_465b1987 = "Đang tải";
 var s_dang_tai_abook_36a50850 = "Đang tải ABook ";
-var s_dang_tai_am_thanh_6c7cb62f = "Đang tải âm thanh";
 var s_dang_tai_bai_khac_2c0e1ec8 = "Đang tải bài khác";
 var s_dang_tai_bai_nhac_0c9498d1 = "Đang tải bài nhạc";
 var s_dang_tai_ban_moi_ee824efa = "Đang tải bản mới";
@@ -1542,8 +1544,6 @@ var s_giu_f2a9d747 = "Giữ “";
 var s_giu_file_goc_4cf6140f = ", giữ file gốc";
 var s_giu_giong_nay_2bc52cde = "Giữ giọng này";
 var s_giu_giong_va_cach_doc_ten_993d1078 = ", giữ giọng và cách đọc tên";
-var s_giu_lai_28cdd2d4 = "Giữ lại: ";
-var s_giu_lai_3c3ba2db = "Giữ lại";
 var s_giu_mot_bo_cac_file_kia_5cddf0c1 = ") - giữ một, bỏ các file kia.";
 var s_giu_nguoi_noi_khong_thu_lai_co_the_hoan_ta_602c8451 = "Giữ người nói, không thu lại; có thể hoàn tác.";
 var s_giu_nguyen_1b550a12 = "Giữ nguyên";
@@ -1665,6 +1665,7 @@ var s_khi_ket_noi_audio_va_chu_cua_nguoi_lam_sac_100e8418 = " khi kết nối - 
 var s_khi_o_ngoai_thiet_bi_kia_vao_cung_mang_rie_d9eb417b = " khi ở ngoài (thiết bị kia vào cùng mạng riêng ảo)";
 var s_khi_tao_07d6f63b = "Khi tạo";
 var s_kho_nhac_94affa81 = "Kho nhạc";
+function s_khoa_0_se_bi_xoa_khoi_may_nay_va_cac_giong_735b6db2(p0) { return "Khoá " + String(p0) + " sẽ bị xoá khỏi máy này và các giọng của nó không còn trong danh sách."; }
 var s_khoa_abf42d2a = " khoá";
 var s_khoa_chi_luu_tren_may_dich_vu_co_the_tinh_a894acea = "Khoá chỉ lưu trên máy. Dịch vụ có thể tính phí; lỗi khoá thì tạm dùng Edge hoặc giọng máy.";
 var s_khoa_chua_dung_duoc_2ae17f08 = "Khoá chưa dùng được.";
@@ -2785,8 +2786,7 @@ var s_xep_theo_2b280cd9 = "Xếp theo";
 var s_xin_chao_toi_se_doc_sach_cho_ban_nghe_ban_885b35e2 = "Xin chào, tôi sẽ đọc sách cho bạn nghe. Bạn thấy giọng này thế nào?";
 var s_xoa_777195ab = "Xoá";
 var s_xoa_81a43b8a = "Xoá: ";
-var s_xoa_bai_ccd757ca = "Xoá bài: ";
-var s_xoa_bai_d554a496 = "Xoá bài";
+var s_xoa_bai_nay_412d7001 = "Xoá bài này?";
 var s_xoa_ban_tai_4b461f4a = "Xoá bản tải";
 var s_xoa_du_an_6b9e7c0b = "Xoá dự án";
 var s_xoa_du_an_eb3cb62d = "Xoá dự án “";
@@ -2907,3 +2907,16 @@ var s_volume_invalid = "Mỗi quyển cần tên, số và chương đầu tăng
 var s_volume_no_changed = "Quyển này không có chương đã đổi để xuất.";
 var s_sleep_paused_keep = "Đang tạm dừng - đồng hồ cũng dừng.";
 var s_sleep_activity_resets = "Thao tác hẹn lại";
+var s_stop_download = "Dừng tải";
+var s_downloaded_delete = "Đã tải - bấm để xoá";
+var s_delete_download_question = "Xoá bản tải?";
+var s_buffering = "Đang đệm";
+var s_action_failed_retry = "Chưa thực hiện được. Bấm thử lại.";
+function s_destructive_question(p0) { return "Xoá “" + String(p0) + "”?"; }
+function s_irreversible_detail(p0) { return "“" + String(p0) + "” sẽ bị xoá khỏi máy. Không thể hoàn tác."; }
+var s_reset_question = "Đặt lại cài đặt?";
+var s_reset_detail = "Các tuỳ chỉnh hiện tại sẽ mất. Không thể hoàn tác.";
+function s_delete_download_description(p0, p1) { return "“" + String(p0) + "” sẽ bị xoá khỏi máy, giải phóng " + String(p1) + ". Muốn nghe khi mất mạng, bạn cần tải lại."; }
+var s_music_seek = "Tua nhạc";
+var s_music_paused = "Đã tạm dừng";
+function s_unpair_detail(p0) { return "Máy này sẽ quên kết nối với “" + String(p0) + "”. Muốn nối lại, bạn cần ghép lại thiết bị."; }
