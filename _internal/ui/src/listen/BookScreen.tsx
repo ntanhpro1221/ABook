@@ -54,6 +54,7 @@ import { DotJoin } from "@/shared/DotJoin";
 import { WIDTH_FROM, widthAtLeast } from "@/shared/widthClass.generated";
 import { SHORT_WINDOW, twoPaneWindow } from "@/shared/windowLayout";
 import { useMediaQuery } from "@/shared/media";
+import { BookMetadataDetails } from "./BookMetadata";
 
 /** Trang sách chia hai cột từ khổ expanded của bề rộng NỘI DUNG (sau thanh bên): bìa + thông tin một bên, danh sách chương một bên, cuộn riêng từng bên.
  *  Cùng ngưỡng, cùng tỉ lệ với Qt (BookPage.qml: Theme.widthExpanded, leftWidth, listMeasure). Hẹp hơn: một cột như cũ. */
@@ -1138,10 +1139,10 @@ function BookPage({ extraActions, dangerActions, studioLink, notice, editing = {
         </div>
         <div className={cn("min-w-0", split && "mt-5")}>
           <h1 data-content-title="" className={cn(SCREEN_TITLE, "leading-tight")}>{displayTitle(book.title)}</h1>
+          <BookMetadataDetails book={book} />
           <p className="mt-2 text-sm text-fg-2">
             <DotJoin
               parts={[
-                book.author,
                 book.narrator && S.s_giong_0_c554bb1b(book.narrator),
                 ...(textOnly
                   ? [S.s_0_chuong_04093412(book.chaptersTotal)]

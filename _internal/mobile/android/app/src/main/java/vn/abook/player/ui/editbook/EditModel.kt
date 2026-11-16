@@ -4,6 +4,7 @@ import vn.abook.player.S
 
 import androidx.compose.runtime.Immutable
 import vn.abook.player.ui.data.CoverRef
+import vn.abook.player.ui.data.BookMetadata
 
 @Immutable
 data class EditChapter(val id: Long, val title: String, val subtitle: String = "", val original: String = "") {
@@ -20,14 +21,15 @@ data class EditSnapshot(
     val holder: String = S.s_may_tinh_8eafc226, val pending: Int = 0, val syncNote: String = "",
     /** Số thay đổi của người nghe trên cuốn này (áp ngay + chờ Studio, `BookEdits.count`): "Bỏ mọi thay đổi (N)" chỉ hiện khi khác 0. */
     val edits: Int = 0,
+    val metadata: BookMetadata = BookMetadata(),
 )
 
 @Immutable
-data class EditDraft(val title: String, val author: String, val chapters: List<EditChapter>)
+data class EditDraft(val title: String, val author: String, val chapters: List<EditChapter>, val metadata: BookMetadata = BookMetadata())
 
 @Immutable
-data class EditDiff(val title: String? = null, val author: String? = null, val chapters: List<EditChapter> = emptyList()) {
-    val empty: Boolean get() = title == null && author == null && chapters.isEmpty()
+data class EditDiff(val title: String? = null, val author: String? = null, val chapters: List<EditChapter> = emptyList(), val metadata: BookMetadata? = null) {
+    val empty: Boolean get() = title == null && author == null && chapters.isEmpty() && metadata == null
 }
 
 @Immutable
@@ -40,12 +42,12 @@ data class EditState(
 object EditLogic {
     private val spaces = Regex("\\s+")
     fun tidy(value: String) = value.trim().replace(spaces, " ")
-    fun draft(snapshot: EditSnapshot) = EditDraft(snapshot.title, snapshot.author, snapshot.chapters)
+    fun draft(snapshot: EditSnapshot) = EditDraft(snapshot.title, snapshot.author, snapshot.chapters, snapshot.metadata)
     fun rebase(previous: EditSnapshot?, draft: EditDraft?, latest: EditSnapshot): EditDraft {
         if (previous == null || draft == null) return EditLogic.draft(latest)
         val pending = diff(previous, draft)
         return EditDraft(pending.title ?: latest.title, pending.author ?: latest.author,
-            latest.chapters.map { row -> pending.chapters.firstOrNull { it.id == row.id } ?: row })
+            latest.chapters.map { row -> pending.chapters.firstOrNull { it.id == row.id } ?: row }, pending.metadata ?: latest.metadata)
     }
     fun diff(saved: EditSnapshot, draft: EditDraft) = EditDiff(
         draft.title.takeIf { tidy(it) != tidy(saved.title) },
@@ -53,6 +55,7 @@ object EditLogic {
         draft.chapters.filter { next -> saved.chapters.firstOrNull { it.id == next.id }?.let {
             tidy(next.title) != tidy(it.title) || tidy(next.subtitle) != tidy(it.subtitle)
         } == true },
+        draft.metadata.takeIf { it != saved.metadata },
     )
 
     fun validate(diff: EditDiff): String? {
@@ -66,7 +69,8 @@ object EditLogic {
     /** Câu đầu của lời lỗi khi lưu hỏng, theo thứ đang lưu (cùng chữ với lời báo của web, listen/EditBook.tsx). */
     fun failure(diff: EditDiff): String = when {
         diff.title != null -> S.s_chua_doi_duoc_ten_sach_cbfa6bb5
-        diff.author != null -> S.s_chua_doi_duoc_tac_gia_3e777e8e
+        diff.author != null -> S.s_bookmeta_save_error
+        diff.metadata != null -> S.s_bookmeta_save_error
         else -> S.s_chua_doi_duoc_ten_chuong_01cae915
     }
 }

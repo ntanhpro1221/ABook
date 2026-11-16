@@ -30,6 +30,7 @@ import { seriesOf, type ListenBook, type ListenChapter } from "./model";
 import { useSource } from "./source";
 import { BookReadingsSection } from "./WordReadings";
 import { useFadeScroller } from "@/shared/scrollFade";
+import { BookMetadataFields, metadataOf, type BookMetadata } from "./BookMetadata";
 
 import { Reveal } from "../shared/MotionPresence";
 // Sửa sách "áp ngay" ngay trên trang nghe (docs/EDITING.md): tên sách, tác giả, bìa, tên nhân vật, tên chương, nhạc nền. Cùng một bộ
@@ -299,7 +300,7 @@ export function EditBookDialog({
   const scrollFade = useFadeScroller<HTMLDivElement>();
   const client = useQueryClient();
   const [title, setTitle] = useState(book.title);
-  const [author, setAuthor] = useState(book.author ?? "");
+  const [metadata, setMetadata] = useState<BookMetadata>(() => metadataOf(book));
   const file = useRef<HTMLInputElement | null>(null);
   const [confirmRevert, setConfirmRevert] = useState(false);
   const revertBox = useRef<HTMLDivElement>(null);
@@ -313,13 +314,12 @@ export function EditBookDialog({
   useEffect(() => {
     if (open) {
       setTitle(book.title);
-      setAuthor(book.author ?? "");
+      setMetadata(metadataOf(book));
       setConfirmRevert(false);
       setSearching(false);
     }
   }, [open]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => setTitle(book.title), [book.title]);
-  useEffect(() => setAuthor(book.author ?? ""), [book.author]);
   const workshop = Boolean(book.capabilities?.workshop);
   const done = (message: string) => {
     refreshAfterEdit(client, book.id);
@@ -332,9 +332,9 @@ export function EditBookDialog({
     onError: (error: Error) => toast.error(S.s_chua_doi_duoc_ten_sach_d845e696, { description: error.message }),
   });
   const changeAuthor = useMutation({
-    mutationFn: (next: string) => saveAuthor(book.id, next),
-    onSuccess: (saved) => done(saved ? S.s_da_doi_tac_gia_cc6c70a5 : S.s_da_bo_ten_tac_gia_538a5212),
-    onError: (error: Error) => toast.error(S.s_chua_doi_duoc_tac_gia_32e393fb, { description: error.message }),
+    mutationFn: (next: BookMetadata) => api(`/api/books/${book.id}/metadata`, { method: "PUT", body: next }),
+    onSuccess: () => done(S.s_bookmeta_saved),
+    onError: (error: Error) => toast.error(S.s_bookmeta_save_error, { description: error.message }),
   });
   const setCover = useMutation({
     mutationFn: async (picked: Blob) => api(`/api/books/${book.id}/cover`, { method: "PUT", body: { image: await imageToDataUrl(picked) } }),
@@ -410,28 +410,10 @@ export function EditBookDialog({
             <Button type="submit" variant="primary" className="touch-box h-10 min-h-10 max-sm:min-h-[48px] pointer-coarse:min-h-[48px]" loading={rename.isPending} disabled={!title.trim() || title.trim() === book.title}>{S.s_luu_ten_0b3ef54a}</Button>
           </form>
         </Section>
-        {/* Chỉ sách chữ (nhập từ file): sách Studio không có chỗ áp tác giả, sửa ở máy khác rồi gửi về là mất (fold_edits bỏ qua). */}
-        {<Presence>{book.stage === "text" && !workshop && (
-          <Section title={S.s_tac_gia_0ec4731b}>
-            <form
-              className="flex gap-2"
-              onSubmit={(event) => {
-                event.preventDefault();
-                if (authorSaveable(author, book.author)) changeAuthor.mutate(author);
-              }}
-            >
-              <input
-                value={author}
-                maxLength={160}
-                aria-label={S.s_tac_gia_0ec4731b}
-                placeholder={S.s_khong_ro_tac_gia_baaa8118}
-                onChange={(event) => setAuthor(event.target.value)}
-                className="touch-box h-[40px] min-w-0 flex-1 rounded-control border border-line bg-bg px-3 text-sm outline-none focus:border-focus"
-              />
-              <Button type="submit" variant="primary" className="touch-box h-10 min-h-10 max-sm:min-h-[48px] pointer-coarse:min-h-[48px]" loading={changeAuthor.isPending} disabled={!authorSaveable(author, book.author)}>{S.s_luu_tac_gia_cd5c8008}</Button>
-            </form>
-          </Section>
-        )}</Presence>}
+        <form className="space-y-3" onSubmit={event => { event.preventDefault(); changeAuthor.mutate(metadata); }}>
+          <BookMetadataFields value={metadata} onChange={setMetadata} />
+          <Button type="submit" variant="primary" loading={changeAuthor.isPending} disabled={JSON.stringify(metadata) === JSON.stringify(metadataOf(book))}>{S.s_bookmeta_save}</Button>
+        </form>
         <Section title={S.s_anh_bia_f224644d}>
           {/* flex-wrap: ở 375 px cột nút (rộng ~190 px) không vừa cạnh bìa 112 px - xuống dưới bìa thay vì tràn khỏi hộp (soát UX a17). */}
           <div className="flex flex-wrap items-start gap-x-4 gap-y-3">

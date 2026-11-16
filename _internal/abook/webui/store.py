@@ -27,7 +27,7 @@ from collections.abc import Callable
 from typing import Any, ClassVar, Iterable, Iterator
 
 from . import humanize, listing_cache, word_timing
-from .. import book_paths
+from .. import book_paths, book_metadata
 from .. import names as renames
 from ..database import validate_project_schema
 from ..io_utils import atomic_write_bytes
@@ -1376,6 +1376,7 @@ def _summarize(project_root: Path, *, running: bool = False, lease_after: float 
     return {
         "path": str(project_root),
         "title": display_title(project_root, str(book["title"])),
+        **book_metadata.present(book_metadata.load(project_root)),
         "status": status,
         "stage": stage,
         "phase": phase,

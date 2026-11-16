@@ -179,6 +179,16 @@ fun EditBookScreen(
                         }
                     }
                 }
+                item("metadata", "metadata") {
+                    Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(Dim.s12)) {
+                        BookField(S.s_bookmeta_illustrator, draft.metadata.illustrator, { value -> change { it.copy(metadata = it.metadata.copy(illustrator = value)) } }, "edit_illustrator", !state.sending)
+                        BookField(S.s_bookmeta_alt_titles, draft.metadata.altTitles.joinToString("\n"), { value -> change { it.copy(metadata = it.metadata.copy(altTitles = value.split("\n"))) } }, "edit_alt_titles", !state.sending)
+                        BookField(S.s_bookmeta_genres, draft.metadata.genres.joinToString("\n"), { value -> change { it.copy(metadata = it.metadata.copy(genres = value.split("\n"))) } }, "edit_genres", !state.sending)
+                        BookField(S.s_tom_tat_b4bb3064, draft.metadata.summary, { value -> change { it.copy(metadata = it.metadata.copy(summary = value)) } }, "edit_summary", !state.sending)
+                        BookField(S.s_nguon_c76d57b3, draft.metadata.sourceUrl, { value -> change { it.copy(metadata = it.metadata.copy(sourceUrl = value)) } }, "edit_source", !state.sending)
+                        BookField(S.s_bookmeta_source_site, draft.metadata.sourceSite, { value -> change { it.copy(metadata = it.metadata.copy(sourceSite = value)) } }, "edit_source_site", !state.sending)
+                    }
+                }
                 item("problem", "problem") { InlineProblem(state.problem, retry, "edit_problem") }
                 item("notice", "notice") { Reveal(state.notice.isNotBlank()) { Caption(state.notice) } }
                 if (book.sendable && (book.pending > 0 || state.sending)) item("send", "send") {

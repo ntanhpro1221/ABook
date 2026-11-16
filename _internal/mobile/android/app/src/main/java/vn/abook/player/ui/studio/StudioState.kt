@@ -183,6 +183,22 @@ class StudioProjectState(
         }
     }
 
+    fun saveMetadata(body: org.json.JSONObject) {
+        if (busy) return
+        busy = true
+        problem = ""
+        session.scope.launch {
+            try {
+                session.source.put(session.computer, bookId, "metadata", body)
+                poller.refresh()
+            } catch (cancelled: CancellationException) {
+                throw cancelled
+            } catch (error: Throwable) {
+                problem = vn.abook.player.S.s_bookmeta_save_error + ": " + StudioText.failure(StudioErrors.of(error))
+            } finally { busy = false }
+        }
+    }
+
     /** "Thử lại" dưới lỗi của lệnh. */
     fun retryLast() {
         last?.let(::send)

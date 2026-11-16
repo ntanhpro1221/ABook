@@ -48,6 +48,12 @@ A `.abook` never contains `project/`, `sources/` or `views/` (the producer's wor
 
 ## Book, volumes and chapters
 
+Optional descriptive fields on `book.json`: `author` and `illustrator` are strings; `altTitles` and `genres` are arrays of strings;
+`summary` is the complete source description, with paragraphs separated by `\n\n`; `source` is `{ "url": "…", "site": "…" }`.
+Missing or empty fields have no visible label. Descriptions are never shortened or rewritten in storage. These fields belong
+to `metaVersion`, independently of `version` and `audioVersion`. Updating them never changes audio or cast entries.
+Listener edits carry the same optional fields, including empty values to clear a field, and fold back into Studio metadata.
+
 Every `book.json` stores one authoritative `volumes` tree, including a book with one volume. There is no top-level
 `chapters` array in the archive. Readers build a flat playback queue by concatenating the volume arrays in their stored
 order. The one-volume shortcut is presentation only: its chapters appear directly, without an extra navigation step.

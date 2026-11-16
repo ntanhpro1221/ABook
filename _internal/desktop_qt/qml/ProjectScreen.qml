@@ -42,6 +42,26 @@ FocusScope {
     property var rowByKey: ({})
     readonly property alias list: list
     readonly property alias dialogs: dialogs
+    property var metadataDraft: ({})
+    property bool metadataBusy: false
+    property string metadataProblem: ""
+    function beginMetadata() {
+        const b = root.book || {}
+        root.metadataDraft = {author: b.author || "", illustrator: b.illustrator || "", altTitles: b.altTitles || [], genres: b.genres || [], summary: b.summary || "", source: b.source || {url: "", site: ""}}
+        metadataEditor.show()
+    }
+    function saveMetadata() {
+        if (metadataBusy) return
+        metadataBusy = true
+        metadataProblem = ""
+        const id = book.id
+        store.request("PUT", "/api/books/" + book.id + "/metadata", metadataDraft, function(status, data) {
+            root.metadataBusy = false
+            if (!root.book || root.book.id !== id) return
+            if (root.store.ok(status)) { metadataEditor.close(); root.store.loadBook() }
+            else root.metadataProblem = S.s_bookmeta_save_error
+        })
+    }
 
     // ---- tab ----
     // Đổi tab ở hàng tab bỏ hết dấu vết lần nhảy trước (bộ lọc, thẻ, nơi về) như đổi địa chỉ của bản web; NHẢY từ một thẻ sang tab khác thì nhớ tab cũ, thẻ và bộ lọc để "Về màn trước" trả về đúng chỗ
@@ -370,6 +390,8 @@ FocusScope {
                         id: headRest
                         width: parent.width - (Boolean(root.book) ? (root.narrowHead ? 96 : 176) + headRow.spacing : 0)
                         spacing: 12
+                        BookMetadataDetails { width: parent.width; book: root.book || ({}) }
+                        Button { kind: "ghost"; text: S.s_sua_thong_tin_17e4a8a6; icon: "pencil"; onActivated: root.beginMetadata() }
                         Flow {
                             width: parent.width
                             spacing: 12
@@ -883,6 +905,56 @@ FocusScope {
             width: parent.width
             label: S.s_thu_lai_chuong_c286c5e4
             HintText { width: parent.width; text: S.s_dung_hat_giong_moi_cho_ca_chuong_sai_nguoi_a37ff623 }
+        }
+    }
+    Modal {
+        id: metadataEditor
+        title: S.s_sua_thong_tin_17e4a8a6
+        Column {
+            width: parent.width
+            spacing: Theme.s12
+            Repeater {
+                model: [{key: "author", label: S.s_tac_gia_0ec4731b}, {key: "illustrator", label: S.s_bookmeta_illustrator}, {key: "altTitles", label: S.s_bookmeta_alt_titles}, {key: "genres", label: S.s_bookmeta_genres}, {key: "summary", label: S.s_tom_tat_b4bb3064}]
+                Column {
+                    required property var modelData
+                    width: parent.width
+                    spacing: Theme.s8
+                    Text { text: modelData.label; color: Theme.text; font.pixelSize: Theme.sizeBodySmall }
+                    FormField {
+                        width: parent.width
+                        label: modelData.label
+                        multiline: modelData.key !== "author" && modelData.key !== "illustrator"
+                        readonly property string draftText: Array.isArray(root.metadataDraft[modelData.key]) ? root.metadataDraft[modelData.key].join("\n") : root.metadataDraft[modelData.key] || ""
+                        text: draftText
+                        onTextChanged: {
+                            if (text === draftText) return
+                            const change = {}
+                            change[modelData.key] = modelData.key === "altTitles" || modelData.key === "genres" ? text.split("\n") : text
+                            root.metadataDraft = Object.assign({}, root.metadataDraft, change)
+                        }
+                    }
+                }
+            }
+            FormField {
+                width: parent.width
+                label: S.s_nguon_c76d57b3
+                text: (root.metadataDraft.source || {}).url || ""
+                onTextChanged: if (text !== ((root.metadataDraft.source || {}).url || "")) root.metadataDraft = Object.assign({}, root.metadataDraft, {source: {url: text, site: (root.metadataDraft.source || {}).site || ""}})
+            }
+            Text {
+                id: metadataError
+                Reveal { target: metadataError; shown: root.metadataProblem !== "" }
+                text: root.metadataProblem
+                color: Theme.danger
+                font.pixelSize: Theme.sizeBodySmall
+            }
+            FormField {
+                width: parent.width
+                label: S.s_bookmeta_source_site
+                text: (root.metadataDraft.source || {}).site || ""
+                onTextChanged: if (text !== ((root.metadataDraft.source || {}).site || "")) root.metadataDraft = Object.assign({}, root.metadataDraft, {source: {url: (root.metadataDraft.source || {}).url || "", site: text}})
+            }
+            Button { text: S.s_bookmeta_save; busy: root.metadataBusy; onActivated: root.saveMetadata() }
         }
     }
     StudioDialogs {

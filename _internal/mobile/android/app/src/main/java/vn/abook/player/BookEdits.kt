@@ -51,7 +51,7 @@ object BookEdits {
     private const val LEVEL_MIN = BuildConfig.levelMinDb
     private const val LEVEL_MAX = BuildConfig.levelMaxDb
     internal const val DEFAULT_LEVEL_DB = BuildConfig.levelDefaultDb // music_plan.DEFAULT_LEVEL_DB
-    private val TOP_KEYS = setOf("format", "version", "title", "author", "cover", "characters", "chapters", "skip", "readings", "music", "wishes")
+    private val TOP_KEYS = setOf("format", "version", "title", "cover", "characters", "chapters", "skip", "readings", "music", "wishes") + BookMetadata.fields
     const val TOO_BIG = S.s_qua_nhieu_sua_doi_dang_cho_ban_luu_va_ap_b_fbd9b57e
     private val COVER_KEYS = setOf("color", "width", "height", "version")
     private val MUSIC_KEYS = setOf("enabled", "levelDb", "silenced", "pins", "tracks", "playlist", "mine")
@@ -164,7 +164,7 @@ object BookEdits {
      */
     fun countApplied(edits: JSONObject): Int {
         val music = edits.optJSONObject("music")
-        return (if (edits.has("title")) 1 else 0) + (if (edits.has("author")) 1 else 0) + (if (edits.has("cover")) 1 else 0) +
+        return (if (edits.has("title")) 1 else 0) + BookMetadata.fields.count { edits.has(it) } + (if (edits.has("cover")) 1 else 0) +
             (edits.optJSONObject("characters")?.length() ?: 0) + (edits.optJSONObject("chapters")?.length() ?: 0) +
             // Một dòng bỏ ở trăm chương: một thay đổi.
             (edits.optJSONObject("skip")?.let { skip -> names(skip).flatMap { skipLines(skip, it) }.toSet().size } ?: 0) +
@@ -196,7 +196,7 @@ object BookEdits {
         }
 
         val out = empty()
-        for (key in listOf("title", "author", "cover")) if (after.has(key) && differs(key, after, before)) out.put(key, after.opt(key))
+        for (key in listOf("title") + BookMetadata.fields + "cover") if (after.has(key) && differs(key, after, before)) out.put(key, after.opt(key))
         for (key in listOf("characters", "readings")) part(after.optJSONObject(key), before.optJSONObject(key)).takeIf { it.length() > 0 }?.let { out.put(key, it) }
         val chapters = JSONObject()
         after.optJSONObject("chapters")?.let { ours ->
@@ -278,12 +278,11 @@ object BookEdits {
             if (title !is String || title.isEmpty() || !isClean(title, TITLE_MAX)) throw EditsError(S.s_ten_sach_trong_phan_sua_khong_hop_le_66e42690)
             out.put("title", title)
         }
-        if (raw.has("author")) {
-            val author = raw.opt("author")
-            // Trống được: sách không rõ tác giả.
-            if (author !is String || !isClean(author, AUTHOR_MAX)) throw EditsError(S.s_tac_gia_trong_phan_sua_khong_hop_le_1ecaa99c)
-            out.put("author", author)
-        }
+        try {
+            val metadata = BookMetadata.select(raw)
+            for (key in metadata.keys()) out.put(key, metadata.get(key))
+            if (raw.has("author") && !isClean(raw.getString("author"), AUTHOR_MAX)) throw EditsError(S.s_tac_gia_trong_phan_sua_khong_hop_le_1ecaa99c)
+        } catch (error: IllegalArgumentException) { throw EditsError(error.message.orEmpty()) }
         if (raw.has("cover")) out.put("cover", validateCover(raw.opt("cover")))
         if (raw.has("characters")) {
             val people = raw.opt("characters")
@@ -505,7 +504,7 @@ object BookEdits {
         val out = LinkedHashMap<String, Any?>()
         out["format"] = FORMAT
         out["version"] = VERSION
-        for (key in listOf("title", "author", "cover")) if (edits.has(key)) out[key] = edits.opt(key).let { if (key == "cover") orderedCover(it) else it }
+        for (key in listOf("title") + BookMetadata.fields + "cover") if (edits.has(key)) out[key] = edits.opt(key).let { if (key == "cover") orderedCover(it) else it }
         edits.optJSONObject("characters")?.takeIf { it.length() > 0 }?.let { people ->
             out["characters"] = names(people).sortedWith { a, b -> byCodePoints(a, b) }.associateWith { people.opt(it) }
         }
@@ -583,7 +582,7 @@ object BookEdits {
     fun merge(local: JSONObject, incoming: JSONObject): Pair<JSONObject, JSONObject> {
         val out = empty()
         var conflicts = 0
-        for (key in listOf("title", "author", "cover")) {
+        for (key in listOf("title") + BookMetadata.fields + "cover") {
             if (local.has(key)) {
                 out.put(key, deepCopy(local.opt(key)))
                 if (incoming.has(key) && !StrictJson.equal(incoming.opt(key), local.opt(key))) conflicts++
@@ -738,10 +737,9 @@ object BookEdits {
                 out.put("parts", renamed)
             }
         }
-        if (edits.has("author")) {
-            // Trống: người nghe đã bỏ tên tác giả - sách không rõ tác giả.
-            val author = edits.getString("author")
-            if (author.isEmpty()) out.remove("author") else out.put("author", author)
+        for (key in BookMetadata.fields) if (edits.has(key)) {
+            val value = edits.get(key)
+            if (value == "" || value is JSONArray && value.length() == 0) out.remove(key) else out.put(key, value)
         }
         val renamed = edits.optJSONObject("chapters")
         val skip = edits.optJSONObject("skip")
@@ -1126,6 +1124,17 @@ object BookEdits {
         return cleaned
     }
 
+    fun setMetadata(folder: File, changes: JSONObject): JSONObject = synchronized(lock) {
+        val cleaned = BookMetadata.validate(changes)
+        val edits = load(folder)
+        val base = rawBook(folder)
+        for (key in cleaned.keys()) {
+            if (StrictJson.equal(base.opt(key), cleaned.opt(key))) edits.remove(key) else edits.put(key, cleaned.get(key))
+        }
+        write(folder, edits)
+        cleaned
+    }
+
     /**
      * Đặt ảnh bìa từ byte ảnh thô: chuẩn hoá như bìa dự án (`codec`), cất ở edits/cover.jpg. Phiên bản = băm nội dung ([CoverVersion]): ảnh mới
      * luôn có địa chỉ mới, giao diện không giữ ảnh cũ. Trả mô tả bìa {color, width, height, version}.
@@ -1477,7 +1486,7 @@ object BookEdits {
         val edits = load(folder)
         val book = rawBookOrNull(folder)
         val before = pinnedFiles(edits)
-        for (key in listOf("title", "author", "cover")) {
+        for (key in listOf("title") + BookMetadata.fields + "cover") {
             if (!sent.has(key) || !edits.has(key) || !StrictJson.equal(edits.opt(key), sent.opt(key))) continue
             if (key == "cover" && sent.opt(key) is JSONObject && !File(folder, EDITS_COVER).let { it.isFile && sentCover != null && it.readBytes().contentEquals(sentCover) }) continue
             edits.remove(key)

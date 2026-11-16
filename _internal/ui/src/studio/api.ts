@@ -3,6 +3,7 @@ import type { Capabilities } from "@/shared/capabilities";
 import type { CoverImage } from "@/shared/cover";
 import type { VolumeProposal } from "@/studio/volumes";
 import type { BookTemplate } from "@/studio/bookTemplates";
+import type { BookMetadata } from "@/listen/BookMetadata";
 import { LISTEN_ONLY_EVENT, PEER_SILENT_EVENT, peerOf, throughPeer } from "@/shared/peerStudio";
 import { HostTimeout, idleMs, readText, watchedCall } from "@/shared/hostWait";
 // Hợp đồng với server Python (abook/webui/server.py). Mọi chữ hiển thị đã được server dịch sẵn
@@ -17,7 +18,7 @@ export interface Position {
   at: number;
 }
 
-export interface BookSummary {
+export interface BookSummary extends BookMetadata {
   id: string;
   path: string;
   title: string;

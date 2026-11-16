@@ -66,6 +66,7 @@ object BookJson {
             id = id,
             title = manifest.optString("title"),
             author = manifest.optString("author").takeIf { it != "null" }.orEmpty(),
+            metadata = BookMetadata.from(manifest),
             narrator = manifest.optString("narrator").takeIf { it != "null" }.orEmpty(),
             duration = audio.sumOf { it.duration },
             chaptersTotal = manifest.optInt("chaptersTotal", entries?.length() ?: all.size),

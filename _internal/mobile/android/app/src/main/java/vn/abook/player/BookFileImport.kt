@@ -171,6 +171,7 @@ object BookFileImport {
             }
         }
         check(book, BOOK_FIELDS)
+        try { BookMetadata.select(book) } catch (error: IllegalArgumentException) { throw Refused(error.message.orEmpty()) }
         book.optJSONArray("chapters")?.let { for (index in 0 until it.length()) check(it.opt(index), CHAPTER_FIELDS) }
         book.optJSONArray("parts")?.let { for (index in 0 until it.length()) check(it.opt(index), PART_FIELDS) }
     }

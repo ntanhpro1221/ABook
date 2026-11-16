@@ -25,7 +25,7 @@ Interactive {
     readonly property real coverHeight: Math.round(coverWidth * Theme.coverRatio)
     readonly property string subLine: [root.source !== "" ? (root.remoteSeries ? S.s_co_sach_tren_may_khac_3b7cdd88 : S.s_tren_54f68805 + root.source) : "", root.subtitle]
         .filter(part => part !== "").join("\u00a0·\u00a0")
-    readonly property real textBlock: 12 + root.titleHeight + 4 + subtitleText.height
+    readonly property real textBlock: 12 + root.titleHeight + authorText.height + 4 + subtitleText.height
 
     activeFocusOnTab: false
     ringRadius: Theme.radiusCover
@@ -120,10 +120,23 @@ Interactive {
         font.weight: Theme.weightMedium
     }
     Text {
+        id: authorText
+        objectName: "bookCellAuthor"
+        x: 0
+        y: titleText.y + titleText.height
+        width: root.coverWidth
+        height: text !== "" ? implicitHeight : 0
+        text: root.book.author || ""
+        color: Theme.text2
+        font.pixelSize: Theme.sizeCaption
+        maximumLineCount: 1   // text-cut-ok: one author line below the two-line title
+        elide: Text.ElideRight   // text-cut-ok: full author appears on the book page
+    }
+    Text {
         id: subtitleText
         objectName: "bookCellSubtitle"
         x: root.source !== "" ? 18 : 0
-        y: titleText.y + titleText.height + 4
+        y: authorText.y + authorText.height + 4
         width: root.coverWidth - x
         text: TextWrap.keepDots(root.subLine)
         color: Theme.text3

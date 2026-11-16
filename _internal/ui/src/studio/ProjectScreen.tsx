@@ -91,6 +91,7 @@ import { ProjectInfoDialog } from "./ProjectInfo";
 import { ApplyChangesDialog } from "./ApplyChanges";
 import { useUnmerge } from "./useUnmerge";
 import { CoverEditor } from "./CoverEditor";
+import { BookMetadataEditor } from "./BookMetadataEditor";
 import { ChapterError } from "./ChapterError";
 import { friendlyError } from "./errorText";
 import { ANALYSIS_CUT_COST, ANALYSIS_STOP_FACT, asksBeforeResume, queueWaitNotice, stopAnalysisAdvice } from "./stopText";
@@ -1352,6 +1353,7 @@ export function ProjectScreen() {
         <div className="contents sm:block sm:min-w-0 sm:flex-1 sm:pt-1">
           <div className="min-w-0 sm:contents">
           <h1 data-content-title="" className={cn(SCREEN_TITLE, "leading-tight")}>{book.title}</h1>
+          <BookMetadataEditor book={book} />
           <DotJoin className="mt-2 text-sm text-fg-2" parts={meta} />
           <PartLinks id={book.id} />
           <HeaderProgress book={book} />

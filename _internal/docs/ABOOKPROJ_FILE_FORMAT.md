@@ -15,6 +15,11 @@ refused with a message to re-pack it with the app that wrote it.
 
 ## Container
 
+Project book information is stored atomically in `book_metadata.json`, carried as `project/book_metadata.json` in the workshop.
+It contains the optional `author`, `illustrator`, `altTitles`, `genres`, `summary` and `source` fields described in
+`ABOOK_FILE_FORMAT.md`. The listening layer copies these fields into `book.json` and includes them in `metaVersion`.
+Studio and players may edit this information without changing story text, audio bytes or `audioVersion`.
+
 A ZIP archive (PKWARE APPNOTE, as used by EPUB and OOXML).
 
 1. The **first** entry is named `mimetype`, stored **uncompressed**, and contains exactly the ASCII string

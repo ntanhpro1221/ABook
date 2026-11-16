@@ -90,6 +90,12 @@ class LibraryScreenTest {
         assertTrue("tên ở trên dòng phụ như ô có ảnh", name.bottom <= sub.top + 0.5f)
     }
 
+    @Test fun authorHasItsOwnEllipsizedLine() {
+        show(listOf(ListenBook("paper-lake", "Hồ giấy", "Người Viết Có Một Tên Hiển Thị Rất Dài")))
+        rule.onNodeWithTag("tile_author", useUnmergedTree = true).assertIsDisplayed()
+        rule.onRoot().captureRoboImage("src/test/snapshots/bookmeta_library.png")
+    }
+
     private fun assertGridTextSlots() {
         show(listOf(
             ListenBook("short", "Chí Phèo", "Nam Cao"),

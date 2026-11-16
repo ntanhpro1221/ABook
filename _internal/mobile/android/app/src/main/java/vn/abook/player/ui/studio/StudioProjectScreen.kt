@@ -170,6 +170,7 @@ private fun ProjectBody(page: StudioPage, kind: PrimaryKind?, state: StudioProje
                 InlineProblem(state.problem, state::retryLast, "studio_problem")
             }
         }
+        item("metadata", "metadata") { StudioMetadataEditor(book, state) }
         item("progress", "progress") { ProgressBlock(book) }
         if (book.cover == null) {
             item("missing_cover", "suggestion") {

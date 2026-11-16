@@ -382,14 +382,7 @@ Item {
                     font.pixelSize: Theme.sizeSection + (Theme.sizeTitlePhone - Theme.sizeSection) * root.summaryT
                     font.weight: Theme.weightBold
                 }
-                Text {
-                    Reveal { shown: !!root.book.author }
-                    width: parent.width
-                    text: TextWrap.keepDots(root.book.author || "")
-                    color: Theme.text2
-                    wrapMode: Text.Wrap
-                    font.pixelSize: Theme.sizeBody
-                }
+                BookMetadataDetails { width: parent.width; book: root.fullBook }
                 // Mỗi cụm giữa hai "·" là một khối: Flow chỉ xuống hàng giữa hai khối ("5 giờ 45 phút" không gãy), khối dài hơn cả hàng mới gãy bên trong (FlowDetail).
                 Flow { id: bookMeta;
                     objectName: "bookMeta"

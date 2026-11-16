@@ -3,8 +3,12 @@
   "pairs": [
     {
       "id": "destructive-confirmation",
-      "web": ["shared/destructiveConfirm.tsx"],
-      "native": ["components/DestructiveConfirm.kt"],
+      "web": [
+        "shared/destructiveConfirm.tsx"
+      ],
+      "native": [
+        "components/DestructiveConfirm.kt"
+      ],
       "allow": [],
       "missing": []
     },
@@ -213,6 +217,7 @@
       "web": [
         "listen/LibraryScreen.tsx",
         "listen/BookScreen.tsx",
+        "listen/BookMetadata.tsx",
         "studio/CastEdits.tsx",
         "studio/MergePeople.tsx",
         "listen/bookMenu.ts",
@@ -231,6 +236,7 @@
         "screens/LibrarySheets.kt",
         "screens/LibraryUiState.kt",
         "screens/BookScreen.kt",
+        "components/BookMetadataDetails.kt",
         "screens/BookSheets.kt",
         "screens/BookTabs.kt",
         "screens/BookPeople.kt",
@@ -397,6 +403,7 @@
         "listen/sleep.ts",
         "listen/PlayerViews.tsx",
         "listen/EditBook.tsx",
+        "listen/BookMetadata.tsx",
         "listen/AddBook.tsx",
         "desktop/ExportBookFileJob.tsx",
         "desktop/AudiobookDialog.tsx",
@@ -1084,6 +1091,7 @@
       "web": [
         "listen/AddBook.tsx",
         "listen/EditBook.tsx",
+        "listen/BookMetadataFields.tsx",
         "listen/SendEdits.tsx",
         "listen/importQueue.ts",
         "listen/textImport.ts",
@@ -1098,6 +1106,10 @@
         "addbook/*.kt",
         "editbook/*.kt",
         "!editbook/EditBooks.kt"
+      ],
+      "native_also": [
+        "screens/BookSheets.kt",
+        "music/MusicModel.kt"
       ],
       "sentences": true,
       "missing": [
@@ -1115,7 +1127,7 @@
       "allow": [
         {
           "side": "web",
-          "match": "^(lưu|lưu\\ tên|lưu\\ tác\\ giả|đã\\ đổi\\ tên\\ sách|đã\\ đổi\\ tác\\ giả|đã\\ bỏ\\ tên\\ tác\\ giả|đã\\ đặt\\ ảnh\\ bìa|đã\\ đổi\\ tên\\ chương:\\ \\{\\})$",
+          "match": "^(lưu|lưu\\ tên|lưu\\ tác\\ giả|lưu\\ thông\\ tin|đã\\ lưu\\ thông\\ tin|lưu\\ thông\\ tin|đã\\ lưu\\ thông\\ tin|lưu\\ thông\\ tin|đã\\ lưu\\ thông\\ tin|lưu\\ thông\\ tin|đã\\ lưu\\ thông\\ tin|lưu\\ thông\\ tin|đã\\ lưu\\ thông\\ tin|lưu\\ thông\\ tin|đã\\ lưu\\ thông\\ tin|lưu\\ thông\\ tin|đã\\ lưu\\ thông\\ tin|lưu\\ thông\\ tin|đã\\ lưu\\ thông\\ tin|đã\\ đổi\\ tên\\ sách|đã\\ đổi\\ tác\\ giả|đã\\ bỏ\\ tên\\ tác\\ giả|đã\\ đặt\\ ảnh\\ bìa|đã\\ đổi\\ tên\\ chương:\\ \\{\\})$",
           "reason": "máy tính lưu từng ô bằng nút (Enter) rồi báo đã lưu; điện thoại lưu khi đang gõ, không nút, không chữ \"Đã lưu\" (EditBookScreen.kt, BookFormsTest editSavesSilently)"
         },
         {
@@ -1331,10 +1343,6 @@
         "listen/WordReadings.tsx",
         "desktop/App.tsx",
         "desktop/bookFileExport.ts"
-      ],
-      "native_also": [
-        "screens/BookSheets.kt",
-        "music/MusicModel.kt"
       ]
     },
     {
@@ -1437,7 +1445,9 @@
     },
     {
       "id": "export",
-      "web_also": ["studio/ExportBook.tsx"],
+      "web_also": [
+        "studio/ExportBook.tsx"
+      ],
       "web": [
         "desktop/AudiobookDialog.tsx",
         "desktop/ExportBookFileJob.tsx",

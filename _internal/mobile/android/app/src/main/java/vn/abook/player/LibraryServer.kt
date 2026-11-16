@@ -713,6 +713,7 @@ object LibraryServer {
         }
         copy.put("chaptersAvailable", availableChapters(id, manifest))
         copy.put("audioVersion", AudioRevision.version(chapters))
+        copy.put("metaVersion", BookMetadata.version(copy))
         copy.put("version", "${copy.optString("version")}:${copy.getString("audioVersion")}")
         // Nhạc nền như người nghe nghe ở đây (đã qua lớp sửa: tắt, mức, im lặng, bài họ ghim), cùng hình `music` của file sách /
         // gói máy tính (music_plan.package): chỉ mốc có file bài thật, và chỉ các bài ấy.

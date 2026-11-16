@@ -1,6 +1,13 @@
 {
   "_doc": "Single Vietnamese UI copy source. {0}, {1}, ... are ordered value slots. Edit here, then run scripts/gen_ui_strings.py.",
   "strings": {
+    "s_bookmeta_illustrator": "Hoạ sĩ",
+    "s_bookmeta_alt_titles": "Tên khác",
+    "s_bookmeta_genres": "Thể loại",
+    "s_bookmeta_source_site": "Tên nguồn",
+    "s_bookmeta_save": "Lưu thông tin",
+    "s_bookmeta_saved": "Đã lưu thông tin",
+    "s_bookmeta_save_error": "Chưa lưu được thông tin",
     "s_device_engine_google": "Google",
     "s_device_engine_samsung": "Samsung",
     "s_device_engine_default": "Máy",

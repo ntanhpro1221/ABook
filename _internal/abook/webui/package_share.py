@@ -139,6 +139,8 @@ def manifest(path: Path, key: str) -> dict[str, Any]:
     for chapter in chapters:
         chapter.setdefault("volumeId", book_volumes.volumes_of(book)[0]["id"])
     result["volumes"] = book_volumes.group(chapters, book_volumes.volumes_of(book))
+    from .. import book_metadata
+    result.update(book_metadata.present(view))
     result["metaVersion"] = listen_view.metadata_version(result)
     return result
 

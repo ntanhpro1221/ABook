@@ -84,6 +84,8 @@ data class StudioBook(
     val segmentsRecorded: Int? = null,
     /** Phiên bản ảnh bìa thật của sách (đổi khi đổi ảnh); null = chưa có, sách dùng bìa vẽ từ tên. */
     val cover: String? = null,
+    val author: String = "",
+    val metadata: vn.abook.player.ui.data.BookMetadata = vn.abook.player.ui.data.BookMetadata(),
 ) {
     /** Máy đang làm sách này (kể cả lúc đang khởi động). */
     val working: Boolean get() = running || starting

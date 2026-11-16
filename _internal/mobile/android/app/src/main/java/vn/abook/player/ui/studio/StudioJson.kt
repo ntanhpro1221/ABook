@@ -26,6 +26,8 @@ internal object StudioJson {
         return StudioBook(
             id = json.getString("id"),
             title = json.text("title"),
+            author = json.text("author"),
+            metadata = vn.abook.player.ui.data.BookMetadata.from(json),
             phase = json.text("phase"),
             statusLabel = json.text("statusLabel"),
             running = json.optBoolean("running"),

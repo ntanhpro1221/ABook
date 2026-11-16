@@ -355,6 +355,7 @@ private fun BookTile(
             }
         }
         name()
+        Reveal(lead.author.isNotEmpty()) { BasicText(lead.author, Modifier.fillMaxWidth().semantics { if (active()) testTag = "tile_author" }, style = Abook.type.caption, maxLines = 1, overflow = TextOverflow.Ellipsis) }
         line()
     }
 }

@@ -38,6 +38,7 @@ from urllib.parse import unquote, urlsplit
 from xml.etree import ElementTree
 
 from .io_utils import atomic_write_bytes, decode_text, discover_txt_files
+from . import book_metadata
 
 IMPORT_SUFFIXES = (".epub", ".docx", ".pdf")  # file sách mà `import_text` mở (cùng .txt và thư mục TXT)
 MAX_MEMBER = 20 * 1024 * 1024  # một mục XHTML / XML lớn hơn thế là bất thường
@@ -166,6 +167,14 @@ class ImportedBook:
     default_skips: set[str] = field(default_factory=set)  # đề xuất PDF chắc chắn; chữ nguồn vẫn nguyên
     edge_lines: list[str] = field(default_factory=list)  # PDF: dòng lặp ở mép trang (tiêu đề chạy, số trang) còn nằm trong chữ chương; `default_skips` là phần chắc chắn của chúng
     volumes: list[Volume] = field(default_factory=list)
+    illustrator: str = ""
+    altTitles: list[str] = field(default_factory=list)
+    genres: list[str] = field(default_factory=list)
+    summary: str = ""
+    source: dict[str, str] = field(default_factory=dict)
+
+    def metadata(self) -> dict[str, Any]:
+        return book_metadata.present({key: getattr(self, key) for key in book_metadata.FIELDS})
 
     def volume_metadata(self) -> list[dict[str, Any]]:
         used = {chapter.volume for chapter in self.chapters}
@@ -247,7 +256,7 @@ def import_text(path: Path | str, *, split_chapters: bool = False, keep_short: b
             return import_pdf_pages(pages, title_from_filename(path.stem), title, author)
         choice = footnotes or FootnoteChoice()
         reader = {".epub": lambda file: _epub(file, choice), ".docx": lambda file: _docx(file, choice),
-                  ".txt": lambda file: _txt_file(file, split_chapters)}.get(suffix)
+                  ".txt": lambda file: _txt_file(file, split_chapters), ".md": lambda file: _txt_file(file, split_chapters)}.get(suffix)
         if reader is None:
             raise ImportFailed(f"Chưa đọc được file {suffix or 'không có đuôi'} - dùng .epub, .docx, .pdf, .txt hay một thư mục TXT")
         book = reader(path)
@@ -570,6 +579,8 @@ def _txt_folder(folder: Path) -> ImportedBook:
     read = [_txt_chapter(file) for file in files]
     result = ImportedBook(title=title_from_filename(folder.resolve().name), chapters=[chapter for chapter, _ in read], text_has_title=True, keep_matter=True,
                           notes=_encoding_notes(encoding for _, encoding in read))
+    for key, value in book_metadata.from_folder(folder).items():
+        setattr(result, key, value)
     sidecar = folder / SIDECAR
     if sidecar.is_file():
         info = json.loads(sidecar.read_text(encoding="utf-8"))
@@ -609,6 +620,8 @@ def _txt_file(path: Path, split: bool = False) -> ImportedBook:
     # Tác giả: phần đầu của Project Gutenberg, không thì dòng "Tác giả: X" ngay dưới tên truyện. Chỉ điền ô tác giả (siêu dữ liệu) - dòng ấy vẫn nằm trong chữ,
     # chỉ bỏ khỏi phần đọc khi người nghe nhận gợi ý bỏ dòng ghi công.
     book.title, book.author = title or book.title, author or author_line(chapter.text) or None
+    for key, value in book_metadata.text_header(chapter.text).items():
+        setattr(book, key, value)
     if split and parts:
         book.chapters = parts
     elif from_text and not title:
@@ -1498,6 +1511,18 @@ def _epub(path: Path, choice: FootnoteChoice = NO_FOOTNOTES) -> ImportedBook:
             listed_in.setdefault(toc_href, []).append((toc_fragment, toc_label))
         result = ImportedBook(title=_meta_text(opf, "title") or title_from_filename(path.stem), author=_meta_text(opf, "creator"),
                               language=_meta_text(opf, "language"))
+        description = opf.find("opf:metadata/dc:description", NS)
+        if description is not None:
+            raw = (description.text or "") + "".join(ElementTree.tostring(child, encoding="unicode") for child in description)
+            result.summary = book_metadata.description(raw)
+        result.genres = ["".join(node.itertext()).strip() for node in opf.findall("opf:metadata/dc:subject", NS) if "".join(node.itertext()).strip()]
+        for node in opf.findall("opf:metadata/dc:contributor", NS):
+            role = node.get("{" + NS["opf"] + "}role", "")
+            roles = [meta.text or "" for meta in opf.findall("opf:metadata/opf:meta", NS)
+                     if meta.get("refines") == "#" + node.get("id", "") and meta.get("property") == "role"]
+            if role == "ill" or "ill" in roles:
+                result.illustrator = "".join(node.itertext()).strip()
+                break
         volume_of = {}
         current_volume = 1
         for toc_href, _fragment, label in toc:
@@ -2133,6 +2158,7 @@ def extract(path: Path | str, folder_root: Path) -> tuple[Path, dict[str, Any]]:
             cover = "cover" + {"image/png": ".png", "image/gif": ".gif", "image/webp": ".webp"}.get(book.cover_type or "", ".jpg")
             (staging / cover).write_bytes(book.cover_bytes)
         info = {"title": book.title, "author": book.author, "language": book.language, "notes": _studio_notes(book), "cover": cover, "matter": matter}
+        info.update(book.metadata())
         info["volumes"] = []
         for volume in book.volumes:
             volume_cover = ""

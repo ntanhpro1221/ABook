@@ -159,6 +159,9 @@ def create_or_open_project(
                 input_manifest_hash=manifest_hash,
             )
             db.ensure_chapters(manifest)
+            from . import book_metadata
+            if not (paths.root / book_metadata.FILE).exists():
+                book_metadata.save(paths.root, book_metadata.from_folder(input_files[0].parent))
             from .continuation import SOURCE_HINT_FILE, save_source_hint
 
             if not inside(project_root, project_root / SOURCE_HINT_FILE).exists():

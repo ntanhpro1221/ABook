@@ -32,6 +32,14 @@ beforeEach(() => {
 });
 afterEach(async () => { await act(() => root.unmount()); vi.runAllTimers(); vi.useRealTimers(); vi.restoreAllMocks(); document.body.replaceChildren(); });
 
+it("shows an ellipsized author line directly below the library title", async () => {
+  state.books = [{ ...state.books[0], author: "Người Viết Có Tên Dài" }];
+  await act(() => root.render(<MemoryRouter><LibraryScreen /></MemoryRouter>));
+  const author = [...main.querySelectorAll("p")].find(element => element.textContent === "Người Viết Có Tên Dài");
+  expect(author?.classList.contains("truncate")).toBe(true);
+  expect(author?.previousElementSibling?.textContent).toBe("Book 0");
+});
+
 it.each(["filter", "sort", "search"])("%s fades results without copying library header, continue card or controls", async change => {
   await act(() => root.render(<MemoryRouter><LibraryScreen /></MemoryRouter>));
   await act(() => {

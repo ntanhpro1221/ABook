@@ -68,6 +68,7 @@ object BookImport {
         val keepMatter: Boolean = false,
         val defaultSkips: MutableSet<String> = mutableSetOf(),
         val volumes: MutableList<Volume> = mutableListOf(),
+        val metadata: org.json.JSONObject = org.json.JSONObject(),
     )
 
     /**
@@ -158,7 +159,7 @@ object BookImport {
         }
         val credits = book.credits.mapNotNull { (number, line) -> renumbered[number]?.let { it to line } }.toMutableList()
         return Book(book.title, book.author, book.language, book.cover, book.coverType, chapters, book.notes.toMutableList(), book.textHasTitle, credits, book.splitOffer, book.splitHeadings,
-            book.footnoteFound, book.footnoteMarks, book.footnoteExamples.toMutableList(), book.keepMatter, book.defaultSkips.toMutableSet(), book.volumes.toMutableList())
+            book.footnoteFound, book.footnoteMarks, book.footnoteExamples.toMutableList(), book.keepMatter, book.defaultSkips.toMutableSet(), book.volumes.toMutableList(), book.metadata)
     }
 
     /** PDF có lớp chữ: `pages` là các dòng CÓ CHỮ của từng trang (như file pages trong bộ ví dụ). */
@@ -462,6 +463,9 @@ object BookImport {
         if (title.isNotEmpty()) book.title = title
         // Tác giả: phần đầu của Project Gutenberg, không thì dòng "Tác giả: X" ngay dưới tên truyện (importers._txt_file); chỉ điền ô tác giả, dòng ấy vẫn ở trong chữ.
         book.author = author.ifEmpty { authorLine(chapter.text) }.ifEmpty { null }
+        val metadata = headerMetadata(chapter.text)
+        for (key in metadata.keys()) book.metadata.put(key, metadata.get(key))
+        if (metadata.has("author")) book.author = metadata.getString("author")
         if (split && parts.isNotEmpty()) {
             book.chapters.clear()
             book.chapters.addAll(parts)
@@ -485,6 +489,48 @@ object BookImport {
     }
 
     private val AUTHOR_KEYS = listOf(S.s_tac_gia_81708ac5, "author")
+
+    internal fun headerMetadata(text: String): org.json.JSONObject {
+        val keys = mapOf("tác giả" to "author", "author" to "author", "h\u1ecda sĩ" to "illustrator", "hoạ sĩ" to "illustrator",
+            "illustrator" to "illustrator", "tên khác" to "altTitles", "thể loại" to "genres", "tóm tắt" to "summary")
+        val pattern = Regex("^\\s*(?:#+\\s*)?([^:：]+)\\s*[:：]\\s*(.*)$")
+        val lines = text.lines()
+        val out = org.json.JSONObject()
+        for ((index, line) in lines.take(64).withIndex()) {
+            if (Regex("^\\s*(?:Chương|Chapter)\\s+", RegexOption.IGNORE_CASE).containsMatchIn(line)) break
+            val match = pattern.matchEntire(line) ?: continue
+            val key = keys[match.groupValues[1].trim().lowercase()] ?: continue
+            var value = match.groupValues[2].trim()
+            if (key == "summary") {
+                val parts = mutableListOf(value)
+                for (next in lines.drop(index + 1)) {
+                    if (Regex("^\\s*(?:#+\\s|(?:Chương|Chapter)\\s+)", RegexOption.IGNORE_CASE).containsMatchIn(next) ||
+                        pattern.matchEntire(next)?.groupValues?.get(1)?.trim()?.lowercase() in keys) break
+                    parts.add(next)
+                }
+                value = parts.joinToString("\n").trim()
+            }
+            if (value.isNotEmpty()) out.put(key, if (key == "altTitles" || key == "genres") org.json.JSONArray(value.split(Regex(if (key == "altTitles") "[;|]" else "[,;|]")).map { it.trim() }.filter { it.isNotEmpty() }) else value)
+        }
+        return out
+    }
+
+    internal fun descriptionMetadata(html: String): String {
+        val text = StringBuilder()
+        var hidden = 0
+        for (token in Markup.tokenize(html)) when (token) {
+            is Markup.Start -> {
+                if (token.name in setOf("script", "style")) hidden++
+                if (token.name.substringAfter(':') in setOf("p", "div", "br", "li", "section", "blockquote")) text.append("\n\n")
+            }
+            is Markup.End -> {
+                if (token.name in setOf("script", "style")) hidden = maxOf(0, hidden - 1)
+                if (token.name.substringAfter(':') in setOf("p", "div", "li", "section", "blockquote")) text.append("\n\n")
+            }
+            is Markup.Text -> if (hidden == 0) text.append(token.text)
+        }
+        return text.toString().split("\n\n").map { it.replace(Regex("[ \\t\\r\\n]+"), " ").trim() }.filter { it.isNotEmpty() }.joinToString("\n\n")
+    }
     private val AUTHOR_SEPARATOR = Regex("[ \t]*(?::|：|[-–—])[ \t]*(.+)")
     private const val AUTHOR_HEAD_LINES = 4
     private const val AUTHOR_MAX_CHARS = 60
@@ -1884,6 +1930,17 @@ object BookImport {
         for (entry in tocEntries) titles.putIfAbsent(entry.href, entry.label)
         val listedIn = tocEntries.groupBy { it.href }
         val result = Book(metaText(opf, "title") ?: titleFromFilename(stemOf(file.name)), author = metaText(opf, "creator"), language = metaText(opf, "language"))
+        val description = opf.descendants().firstOrNull { it.name == "dc:description" }
+        if (description != null) {
+            fun render(node: Markup.Node): String = "<${node.local}>" + node.parts.joinToString("") { if (it is String) it else render(it as Markup.Node) } + "</${node.local}>"
+            result.metadata.put("summary", descriptionMetadata(if (description.children.isEmpty()) description.text else render(description)))
+        }
+        val subjects = opf.descendants().filter { it.name == "dc:subject" }.map { it.allText().trim() }.filter { it.isNotEmpty() }.toList()
+        if (subjects.isNotEmpty()) result.metadata.put("genres", org.json.JSONArray(subjects))
+        for (node in opf.descendants().filter { it.name == "dc:contributor" }) {
+            val roles = opf.descendants().filter { it.local == "meta" && it.attrs["refines"] == "#" + node.attrs["id"] && it.attrs["property"] == "role" }.map { it.allText() }.toList()
+            if (node.attrs["opf:role"] == "ill" || "ill" in roles) { result.metadata.put("illustrator", node.allText().trim()); break }
+        }
         val volumeOf = HashMap<String, Int>()
         var currentVolume = 1
         for (entry in tocEntries) {

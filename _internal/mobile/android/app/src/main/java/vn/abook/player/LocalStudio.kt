@@ -172,6 +172,7 @@ object LocalStudio {
         return when (method to path) {
             "PUT" to "/title" -> ::title
             "PUT" to "/author" -> ::author
+            "PUT" to "/metadata" -> { dir, body -> BookEdits.setMetadata(dir, body) }
             "PUT" to "/cover" -> ::cover
             "DELETE" to "/cover" -> { dir, _ -> BookEdits.removeCover(dir); JSONObject().put("cover", JSONObject.NULL) }
             "POST" to "/characters/rename" -> ::renameCharacter

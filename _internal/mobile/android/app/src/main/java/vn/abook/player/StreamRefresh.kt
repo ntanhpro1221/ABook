@@ -24,7 +24,7 @@ internal object StreamRefresh {
      */
     fun withMetadata(local: JSONObject, fresh: JSONObject): JSONObject {
         val out = JSONObject(local.toString())
-        for (key in listOf("title", "author", "narrator", "series", "metaVersion")) {
+        for (key in listOf("title", "narrator", "series", "metaVersion") + BookMetadata.fields) {
             val value = fresh.opt(key)
             if (value == null || value == JSONObject.NULL) out.remove(key) else out.put(key, value)
         }

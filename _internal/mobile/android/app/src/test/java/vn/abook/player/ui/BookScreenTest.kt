@@ -149,6 +149,21 @@ class BookScreenTest {
 
     private fun detail(state: JSONObject? = null, complete: Boolean = true) = BookDetail.of(manifest(complete = complete), state, { null }, canShare = true)
 
+    @Test fun bookMetadataExpandsWithoutLosingTheSource() {
+        val summary = "Một chiếc thuyền giấy trôi quanh hồ nhỏ. ".repeat(16) + "\n\nĐoạn cuối nguyên vẹn."
+        val data = manifest().put("author", "Người Viết").put("illustrator", "Người Vẽ")
+            .put("altTitles", JSONArray(listOf("Paper Lake"))).put("genres", JSONArray(listOf("Fantasy", "Adventure"))).put("summary", summary)
+        show(BookDetail.of(data, null, { null }))
+        rule.onNodeWithText("Tác giả Người Viết").assertExists()
+        rule.onNodeWithText("Hoạ sĩ Người Vẽ").assertExists()
+        shot("bookmeta_details")
+        rule.onNodeWithTag("book_list").performScrollToNode(hasTestTag("book_summary_toggle"))
+        rule.onNodeWithTag("book_summary_toggle").performClick()
+        rule.waitForIdle()
+        rule.onNodeWithText("Thu gọn").assertExists()
+        shot("bookmeta_details_expanded")
+    }
+
     @Test
     fun volumeRowsOpenTheirChaptersAndKeepTheGlobalBookIdentity() {
         val raw = manifest(chapters = 3, title = "Đồng hồ bên cửa sổ").put("author", "")

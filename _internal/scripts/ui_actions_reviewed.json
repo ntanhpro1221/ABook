@@ -1122,7 +1122,7 @@
     "line": 786,
     "statement": "if (dialog.kind === \"delete\") switchTo(() => mutations.removeRecord.mutateAsync(active.id), S.s_da_xoa_ho_so_0_54dabd55(active.name));",
     "occurrence": 1,
-    "source_sha256": "1e26b067594ea500ca6a819f840028db69a3e2771f3935dcb728baa0f7a499c3",
+    "source_sha256": "74351acf0b199d602996b532e77f3e8f01109a325f8e82b893ec5b27348964b9",
     "disposition": "confirmation",
     "guard": "BookRecords ConfirmPage / BookScreen record Dialog / RecordDialogs Modal / DeleteBookPage",
     "reason": "Deleting a listening profile explicitly describes loss of progress and history. Deleting a book uses the book confirmation. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
@@ -1134,7 +1134,7 @@
     "line": 1087,
     "statement": "const restart = async () => {",
     "occurrence": 1,
-    "source_sha256": "1e26b067594ea500ca6a819f840028db69a3e2771f3935dcb728baa0f7a499c3",
+    "source_sha256": "74351acf0b199d602996b532e77f3e8f01109a325f8e82b893ec5b27348964b9",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; LoadingCrossfade, Progress, busy, isLoading, loading, pending, pendingVoice, preparingBookId, progress, progressFill",
     "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
@@ -1146,7 +1146,7 @@
     "line": 1102,
     "statement": "action: { label: S.s_quay_lai_cho_cu_fea69b14, onClick: () => void playBook(book, before.chapter.id, before.at) },",
     "occurrence": 1,
-    "source_sha256": "1e26b067594ea500ca6a819f840028db69a3e2771f3935dcb728baa0f7a499c3",
+    "source_sha256": "74351acf0b199d602996b532e77f3e8f01109a325f8e82b893ec5b27348964b9",
     "disposition": "internal",
     "guard": "Async interface/helper boundary; concrete activation inventoried separately",
     "reason": "This signature supplies work to a model or component; declaring it starts no user operation. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
@@ -1158,7 +1158,7 @@
     "line": 1108,
     "statement": "const listenNow = async () => {",
     "occurrence": 1,
-    "source_sha256": "1e26b067594ea500ca6a819f840028db69a3e2771f3935dcb728baa0f7a499c3",
+    "source_sha256": "74351acf0b199d602996b532e77f3e8f01109a325f8e82b893ec5b27348964b9",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; LoadingCrossfade, Progress, busy, isLoading, loading, pending, pendingVoice, preparingBookId, progress, progressFill",
     "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
@@ -1170,7 +1170,7 @@
     "line": 1254,
     "statement": "onSelect={() => void saver.save()}",
     "occurrence": 1,
-    "source_sha256": "1e26b067594ea500ca6a819f840028db69a3e2771f3935dcb728baa0f7a499c3",
+    "source_sha256": "74351acf0b199d602996b532e77f3e8f01109a325f8e82b893ec5b27348964b9",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; LoadingCrossfade, Progress, busy, isLoading, loading, pending, pendingVoice, preparingBookId, progress, progressFill",
     "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
@@ -1182,7 +1182,7 @@
     "line": 1263,
     "statement": "onSelect={() => void sharer.share()}",
     "occurrence": 1,
-    "source_sha256": "1e26b067594ea500ca6a819f840028db69a3e2771f3935dcb728baa0f7a499c3",
+    "source_sha256": "74351acf0b199d602996b532e77f3e8f01109a325f8e82b893ec5b27348964b9",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; LoadingCrossfade, Progress, busy, isLoading, loading, pending, pendingVoice, preparingBookId, progress, progressFill",
     "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
@@ -1254,7 +1254,7 @@
     "line": 66,
     "statement": "export async function saveAuthor(bookId: string, author: string): Promise<string> {",
     "occurrence": 1,
-    "source_sha256": "a8b2e4052ddc5fb6abb6392d7278439304f8eb8c0151b4fb569c248c93804a7e",
+    "source_sha256": "5b9e0711df7d8e0f7d3aedb7753fd7bfe68367842823b7944799a95368b3ae84",
     "disposition": "internal",
     "guard": "Async interface/helper boundary; concrete activation inventoried separately",
     "reason": "This signature supplies work to a model or component; declaring it starts no user operation."
@@ -1266,7 +1266,7 @@
     "line": 75,
     "statement": "async function imageToDataUrl(file: Blob): Promise<string> {",
     "occurrence": 1,
-    "source_sha256": "a8b2e4052ddc5fb6abb6392d7278439304f8eb8c0151b4fb569c248c93804a7e",
+    "source_sha256": "5b9e0711df7d8e0f7d3aedb7753fd7bfe68367842823b7944799a95368b3ae84",
     "disposition": "internal",
     "guard": "Async interface/helper boundary; concrete activation inventoried separately",
     "reason": "This signature supplies work to a model or component; declaring it starts no user operation."
@@ -1278,7 +1278,7 @@
     "line": 340,
     "statement": "mutationFn: async (picked: Blob) => api(`/api/books/${book.id}/cover`, { method: \"PUT\", body: { image: await imageToDataUrl(picked) } }),",
     "occurrence": 1,
-    "source_sha256": "a8b2e4052ddc5fb6abb6392d7278439304f8eb8c0151b4fb569c248c93804a7e",
+    "source_sha256": "5b9e0711df7d8e0f7d3aedb7753fd7bfe68367842823b7944799a95368b3ae84",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; busy, isLoading, isPending, loading, onBusy, saving, setBusy",
     "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering."
@@ -1290,7 +1290,7 @@
     "line": 346,
     "statement": "mutationFn: () => api(`/api/books/${book.id}/cover`, { method: \"DELETE\" }),",
     "occurrence": 1,
-    "source_sha256": "a8b2e4052ddc5fb6abb6392d7278439304f8eb8c0151b4fb569c248c93804a7e",
+    "source_sha256": "5b9e0711df7d8e0f7d3aedb7753fd7bfe68367842823b7944799a95368b3ae84",
     "disposition": "confirmation",
     "guard": "EditBook cover DestructiveConfirm and DiscardSheet / discard dialog",
     "reason": "Cover removal and discarding saved edits have explicit object-specific confirmations."
@@ -1302,7 +1302,7 @@
     "line": 351,
     "statement": "mutationFn: () => api(`/api/books/${book.id}/edits`, { method: \"DELETE\" }),",
     "occurrence": 1,
-    "source_sha256": "a8b2e4052ddc5fb6abb6392d7278439304f8eb8c0151b4fb569c248c93804a7e",
+    "source_sha256": "5b9e0711df7d8e0f7d3aedb7753fd7bfe68367842823b7944799a95368b3ae84",
     "disposition": "confirmation",
     "guard": "EditBook cover DestructiveConfirm and DiscardSheet / discard dialog",
     "reason": "Cover removal and discarding saved edits have explicit object-specific confirmations."
@@ -1314,7 +1314,7 @@
     "line": 445,
     "statement": "<Reveal when={book.cover}><Button variant=\"ghost\" className=\"justify-start text-left\" icon={Trash2} loading={busy} disabled={busy} onClick={() => deletion.confirm({ title: S.s_bo_anh_bia_696c6692, description: S.s_irreversible_detail(book.title), run: () => removeCover.mutateAsync() })}>{S.s_bo_anh_bia_696c6692}</Button></Reveal>",
     "occurrence": 1,
-    "source_sha256": "a8b2e4052ddc5fb6abb6392d7278439304f8eb8c0151b4fb569c248c93804a7e",
+    "source_sha256": "5b9e0711df7d8e0f7d3aedb7753fd7bfe68367842823b7944799a95368b3ae84",
     "disposition": "confirmation",
     "guard": "EditBook cover DestructiveConfirm and DiscardSheet / discard dialog",
     "reason": "Cover removal and discarding saved edits have explicit object-specific confirmations."
@@ -1326,7 +1326,7 @@
     "line": 578,
     "statement": "const save = async (options?: { folder?: string; as?: \"abook\" | \"abookproj\"; ask?: boolean }): Promise<boolean> => {",
     "occurrence": 1,
-    "source_sha256": "a8b2e4052ddc5fb6abb6392d7278439304f8eb8c0151b4fb569c248c93804a7e",
+    "source_sha256": "5b9e0711df7d8e0f7d3aedb7753fd7bfe68367842823b7944799a95368b3ae84",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; busy, isLoading, isPending, loading, onBusy, saving, setBusy",
     "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering."
@@ -1338,7 +1338,7 @@
     "line": 589,
     "statement": "? { label: S.s_mo_thu_muc_4bf5b127, onClick: () => void api(\"/api/reveal-export\", { method: \"POST\", body: { folder } }).catch(() => undefined) }",
     "occurrence": 1,
-    "source_sha256": "a8b2e4052ddc5fb6abb6392d7278439304f8eb8c0151b4fb569c248c93804a7e",
+    "source_sha256": "5b9e0711df7d8e0f7d3aedb7753fd7bfe68367842823b7944799a95368b3ae84",
     "disposition": "internal",
     "guard": "Async interface/helper boundary; concrete activation inventoried separately",
     "reason": "This signature supplies work to a model or component; declaring it starts no user operation."
@@ -1350,7 +1350,7 @@
     "line": 607,
     "statement": "const share = async () => {",
     "occurrence": 1,
-    "source_sha256": "a8b2e4052ddc5fb6abb6392d7278439304f8eb8c0151b4fb569c248c93804a7e",
+    "source_sha256": "5b9e0711df7d8e0f7d3aedb7753fd7bfe68367842823b7944799a95368b3ae84",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; busy, isLoading, isPending, loading, onBusy, saving, setBusy",
     "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering."
@@ -1362,7 +1362,7 @@
     "line": 647,
     "statement": "onClick={() => void save({ ...(folder ? { folder } : {}), as: kind, ask: true }).then((saved) => saved && onOpenChange(false))}",
     "occurrence": 1,
-    "source_sha256": "a8b2e4052ddc5fb6abb6392d7278439304f8eb8c0151b4fb569c248c93804a7e",
+    "source_sha256": "5b9e0711df7d8e0f7d3aedb7753fd7bfe68367842823b7944799a95368b3ae84",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; busy, isLoading, isPending, loading, onBusy, saving, setBusy",
     "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering."
@@ -1422,7 +1422,7 @@
     "line": 130,
     "statement": "return async (book: ListenBook, chapterId?: number, at?: number, extra?: { word?: WordTarget; rate?: number }) => {",
     "occurrence": 1,
-    "source_sha256": "9c5c9a065dde3067448ff4e16c15e3c68b46ee33ae9f0813a2dc0e5456a2b01d",
+    "source_sha256": "0b2b932a91df0ecebdac16f14ed03d844f494fcd95d85c2f216c380bcc725721",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; LoadingCrossfade, Progress, isLoading, loading, progress, progressFill, progressText",
     "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
@@ -1434,7 +1434,7 @@
     "line": 292,
     "statement": "onClick={withFeedback(\"playPause\", () => (current ? player.toggle() : void playBook(book)))}",
     "occurrence": 1,
-    "source_sha256": "9c5c9a065dde3067448ff4e16c15e3c68b46ee33ae9f0813a2dc0e5456a2b01d",
+    "source_sha256": "0b2b932a91df0ecebdac16f14ed03d844f494fcd95d85c2f216c380bcc725721",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; LoadingCrossfade, Progress, isLoading, loading, progress, progressFill, progressText",
     "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
@@ -3978,7 +3978,7 @@
     "line": 444,
     "statement": "async function call<T>(path: string, init: ApiInit | undefined, read: (response: Response, alive: () => void) => Promise<T>): Promise<T> {",
     "occurrence": 1,
-    "source_sha256": "d8a8a0d9714e0d20cc23c5ea1ab8c1e18c346083622ab928d648c27c59cf871a",
+    "source_sha256": "aa46d040de6093682fae42099fba7f1046c7735a7fd732d1b742713150685fbe",
     "disposition": "internal",
     "guard": "Async interface/helper boundary; concrete activation inventoried separately",
     "reason": "This signature supplies work to a model or component; declaring it starts no user operation. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
@@ -3990,7 +3990,7 @@
     "line": 468,
     "statement": "export async function api<T>(path: string, init?: ApiInit): Promise<T> {",
     "occurrence": 1,
-    "source_sha256": "d8a8a0d9714e0d20cc23c5ea1ab8c1e18c346083622ab928d648c27c59cf871a",
+    "source_sha256": "aa46d040de6093682fae42099fba7f1046c7735a7fd732d1b742713150685fbe",
     "disposition": "internal",
     "guard": "Async interface/helper boundary; concrete activation inventoried separately",
     "reason": "This signature supplies work to a model or component; declaring it starts no user operation. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
@@ -4002,7 +4002,7 @@
     "line": 470,
     "statement": "return call(path, init, async (response, alive) => settle<T>(response, await readText(response, alive)));",
     "occurrence": 1,
-    "source_sha256": "d8a8a0d9714e0d20cc23c5ea1ab8c1e18c346083622ab928d648c27c59cf871a",
+    "source_sha256": "aa46d040de6093682fae42099fba7f1046c7735a7fd732d1b742713150685fbe",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; busy, narratorPending, pending, pendingChanges, pendingVoice, pending_changes, progress, seedPending, working",
     "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
@@ -4014,7 +4014,7 @@
     "line": 479,
     "statement": "export async function apiOrStream<T, S>(path: string, init: ApiInit, streamType: string, onStream: (response: Response) => Promise<S>): Promise<T | S> {",
     "occurrence": 1,
-    "source_sha256": "d8a8a0d9714e0d20cc23c5ea1ab8c1e18c346083622ab928d648c27c59cf871a",
+    "source_sha256": "aa46d040de6093682fae42099fba7f1046c7735a7fd732d1b742713150685fbe",
     "disposition": "internal",
     "guard": "Async interface/helper boundary; concrete activation inventoried separately",
     "reason": "This signature supplies work to a model or component; declaring it starts no user operation. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
@@ -4026,7 +4026,7 @@
     "line": 480,
     "statement": "return call<T | S>(path, init, async (response, alive) =>",
     "occurrence": 1,
-    "source_sha256": "d8a8a0d9714e0d20cc23c5ea1ab8c1e18c346083622ab928d648c27c59cf871a",
+    "source_sha256": "aa46d040de6093682fae42099fba7f1046c7735a7fd732d1b742713150685fbe",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; busy, narratorPending, pending, pendingChanges, pendingVoice, pending_changes, progress, seedPending, working",
     "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
@@ -4398,7 +4398,7 @@
     "line": 121,
     "statement": "return async (bookId: string, chapterId: number) => {",
     "occurrence": 1,
-    "source_sha256": "a1e8cdcb18ebb227360d42a905184c4f9d8faac33f90dd7ff84ee93cdc8d845f",
+    "source_sha256": "ab0f39bb55258aaed6bf3a59907ccb7811462daf9c0737bdfeb47a8c31658cb8",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; HeaderProgress, LoadingCrossfade, Progress, busy, isFetching, isLoading, isPending, loading, pending, pendingChanges, progress, progressNote",
     "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
@@ -4410,7 +4410,7 @@
     "line": 519,
     "statement": "mutationFn: () => api<{ ok: boolean; undo?: string }>(`/api/books/${book.id}`, { method: \"DELETE\" }),",
     "occurrence": 1,
-    "source_sha256": "a1e8cdcb18ebb227360d42a905184c4f9d8faac33f90dd7ff84ee93cdc8d845f",
+    "source_sha256": "ab0f39bb55258aaed6bf3a59907ccb7811462daf9c0737bdfeb47a8c31658cb8",
     "disposition": "confirmation",
     "guard": "Delete dialog / StudioConfirm or DeleteBookPage; trashUndo / UndoDelete after acceptance",
     "reason": "Book/project deletion is explicitly confirmed and the existing recoverable trash token remains available. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
@@ -4422,7 +4422,7 @@
     "line": 523,
     "statement": "client.removeQueries({ queryKey: [\"book\", book.id] });",
     "occurrence": 1,
-    "source_sha256": "a1e8cdcb18ebb227360d42a905184c4f9d8faac33f90dd7ff84ee93cdc8d845f",
+    "source_sha256": "ab0f39bb55258aaed6bf3a59907ccb7811462daf9c0737bdfeb47a8c31658cb8",
     "disposition": "confirmation",
     "guard": "Delete dialog / StudioConfirm or DeleteBookPage; trashUndo / UndoDelete after acceptance",
     "reason": "Book/project deletion is explicitly confirmed and the existing recoverable trash token remains available. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
@@ -4434,7 +4434,7 @@
     "line": 550,
     "statement": "remove.mutate();",
     "occurrence": 1,
-    "source_sha256": "a1e8cdcb18ebb227360d42a905184c4f9d8faac33f90dd7ff84ee93cdc8d845f",
+    "source_sha256": "ab0f39bb55258aaed6bf3a59907ccb7811462daf9c0737bdfeb47a8c31658cb8",
     "disposition": "confirmation",
     "guard": "Delete dialog / StudioConfirm or DeleteBookPage; trashUndo / UndoDelete after acceptance",
     "reason": "Book/project deletion is explicitly confirmed and the existing recoverable trash token remains available. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
@@ -4446,7 +4446,7 @@
     "line": 572,
     "statement": "onSelect: () => void;",
     "occurrence": 1,
-    "source_sha256": "a1e8cdcb18ebb227360d42a905184c4f9d8faac33f90dd7ff84ee93cdc8d845f",
+    "source_sha256": "ab0f39bb55258aaed6bf3a59907ccb7811462daf9c0737bdfeb47a8c31658cb8",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; HeaderProgress, LoadingCrossfade, Progress, busy, isFetching, isLoading, isPending, loading, pending, pendingChanges, progress, progressNote",
     "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
@@ -4458,7 +4458,7 @@
     "line": 1411,
     "statement": "here.delete(\"card\");",
     "occurrence": 1,
-    "source_sha256": "a1e8cdcb18ebb227360d42a905184c4f9d8faac33f90dd7ff84ee93cdc8d845f",
+    "source_sha256": "ab0f39bb55258aaed6bf3a59907ccb7811462daf9c0737bdfeb47a8c31658cb8",
     "disposition": "internal",
     "guard": "In-memory collection entry lifecycle",
     "reason": "The statement releases a listener, request, UI row, selection or cache entry; it does not delete its persisted source. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
@@ -4470,7 +4470,7 @@
     "line": 1434,
     "statement": "if (value === \"all\") here.delete(\"kind\");",
     "occurrence": 1,
-    "source_sha256": "a1e8cdcb18ebb227360d42a905184c4f9d8faac33f90dd7ff84ee93cdc8d845f",
+    "source_sha256": "ab0f39bb55258aaed6bf3a59907ccb7811462daf9c0737bdfeb47a8c31658cb8",
     "disposition": "internal",
     "guard": "In-memory collection entry lifecycle",
     "reason": "The statement releases a listener, request, UI row, selection or cache entry; it does not delete its persisted source. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
@@ -4482,7 +4482,7 @@
     "line": 1436,
     "statement": "here.delete(\"card\");",
     "occurrence": 2,
-    "source_sha256": "a1e8cdcb18ebb227360d42a905184c4f9d8faac33f90dd7ff84ee93cdc8d845f",
+    "source_sha256": "ab0f39bb55258aaed6bf3a59907ccb7811462daf9c0737bdfeb47a8c31658cb8",
     "disposition": "internal",
     "guard": "In-memory collection entry lifecycle",
     "reason": "The statement releases a listener, request, UI row, selection or cache entry; it does not delete its persisted source. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
@@ -8778,7 +8778,7 @@
     "line": 28,
     "statement": "suspend fun load(id: String): EditSnapshot",
     "occurrence": 1,
-    "source_sha256": "a9de0257b4c87be8ca6d088cd0432b502e97e0ad3827197c6256689d104d5633",
+    "source_sha256": "ec37625dc9f081d056713510b2f2330fb45462ac7b3f9486ee1bb581b15535aa",
     "disposition": "internal",
     "guard": "Async interface/helper boundary; concrete activation inventoried separately",
     "reason": "This signature supplies work to a model or component; declaring it starts no user operation."
@@ -8790,7 +8790,7 @@
     "line": 29,
     "statement": "suspend fun save(id: String, diff: EditDiff): EditSnapshot",
     "occurrence": 1,
-    "source_sha256": "a9de0257b4c87be8ca6d088cd0432b502e97e0ad3827197c6256689d104d5633",
+    "source_sha256": "ec37625dc9f081d056713510b2f2330fb45462ac7b3f9486ee1bb581b15535aa",
     "disposition": "internal",
     "guard": "Async interface/helper boundary; concrete activation inventoried separately",
     "reason": "This signature supplies work to a model or component; declaring it starts no user operation."
@@ -8802,7 +8802,7 @@
     "line": 30,
     "statement": "suspend fun cover(id: String, image: ByteArray?): EditSnapshot",
     "occurrence": 1,
-    "source_sha256": "a9de0257b4c87be8ca6d088cd0432b502e97e0ad3827197c6256689d104d5633",
+    "source_sha256": "ec37625dc9f081d056713510b2f2330fb45462ac7b3f9486ee1bb581b15535aa",
     "disposition": "internal",
     "guard": "Async interface/helper boundary; concrete activation inventoried separately",
     "reason": "This signature supplies work to a model or component; declaring it starts no user operation."
@@ -8814,7 +8814,7 @@
     "line": 31,
     "statement": "suspend fun revertChapter(id: String, chapterId: Long): EditSnapshot",
     "occurrence": 1,
-    "source_sha256": "a9de0257b4c87be8ca6d088cd0432b502e97e0ad3827197c6256689d104d5633",
+    "source_sha256": "ec37625dc9f081d056713510b2f2330fb45462ac7b3f9486ee1bb581b15535aa",
     "disposition": "internal",
     "guard": "Async interface/helper boundary; concrete activation inventoried separately",
     "reason": "This signature supplies work to a model or component; declaring it starts no user operation."
@@ -8826,7 +8826,7 @@
     "line": 32,
     "statement": "suspend fun send(id: String): EditSnapshot",
     "occurrence": 1,
-    "source_sha256": "a9de0257b4c87be8ca6d088cd0432b502e97e0ad3827197c6256689d104d5633",
+    "source_sha256": "ec37625dc9f081d056713510b2f2330fb45462ac7b3f9486ee1bb581b15535aa",
     "disposition": "internal",
     "guard": "Async interface/helper boundary; concrete activation inventoried separately",
     "reason": "This signature supplies work to a model or component; declaring it starts no user operation."
@@ -8838,7 +8838,7 @@
     "line": 35,
     "statement": "suspend fun discardAll(id: String): EditSnapshot = load(id)",
     "occurrence": 1,
-    "source_sha256": "a9de0257b4c87be8ca6d088cd0432b502e97e0ad3827197c6256689d104d5633",
+    "source_sha256": "ec37625dc9f081d056713510b2f2330fb45462ac7b3f9486ee1bb581b15535aa",
     "disposition": "internal",
     "guard": "Declaration; the invoked call site is independently inventoried",
     "reason": "A declaration/signature is not an executing UI action."
@@ -8850,7 +8850,7 @@
     "line": 35,
     "statement": "suspend fun discardAll(id: String): EditSnapshot = load(id)",
     "occurrence": 1,
-    "source_sha256": "a9de0257b4c87be8ca6d088cd0432b502e97e0ad3827197c6256689d104d5633",
+    "source_sha256": "ec37625dc9f081d056713510b2f2330fb45462ac7b3f9486ee1bb581b15535aa",
     "disposition": "internal",
     "guard": "Async interface/helper boundary; concrete activation inventoried separately",
     "reason": "This signature supplies work to a model or component; declaring it starts no user operation."
@@ -8862,7 +8862,7 @@
     "line": 38,
     "statement": "suspend fun readings(id: String): List<WordReading> = emptyList()",
     "occurrence": 1,
-    "source_sha256": "a9de0257b4c87be8ca6d088cd0432b502e97e0ad3827197c6256689d104d5633",
+    "source_sha256": "ec37625dc9f081d056713510b2f2330fb45462ac7b3f9486ee1bb581b15535aa",
     "disposition": "internal",
     "guard": "Async interface/helper boundary; concrete activation inventoried separately",
     "reason": "This signature supplies work to a model or component; declaring it starts no user operation."
@@ -8874,7 +8874,7 @@
     "line": 41,
     "statement": "suspend fun setReading(id: String, surface: String, spoken: String): List<WordReading> = readings(id)",
     "occurrence": 1,
-    "source_sha256": "a9de0257b4c87be8ca6d088cd0432b502e97e0ad3827197c6256689d104d5633",
+    "source_sha256": "ec37625dc9f081d056713510b2f2330fb45462ac7b3f9486ee1bb581b15535aa",
     "disposition": "internal",
     "guard": "Async interface/helper boundary; concrete activation inventoried separately",
     "reason": "This signature supplies work to a model or component; declaring it starts no user operation."
@@ -8886,7 +8886,7 @@
     "line": 44,
     "statement": "suspend fun findCovers(id: String, query: String): CoverResults = CoverResults(query)",
     "occurrence": 1,
-    "source_sha256": "a9de0257b4c87be8ca6d088cd0432b502e97e0ad3827197c6256689d104d5633",
+    "source_sha256": "ec37625dc9f081d056713510b2f2330fb45462ac7b3f9486ee1bb581b15535aa",
     "disposition": "internal",
     "guard": "Async interface/helper boundary; concrete activation inventoried separately",
     "reason": "This signature supplies work to a model or component; declaring it starts no user operation."
@@ -8898,7 +8898,7 @@
     "line": 47,
     "statement": "suspend fun coverFromUrl(id: String, url: String): EditSnapshot = load(id)",
     "occurrence": 1,
-    "source_sha256": "a9de0257b4c87be8ca6d088cd0432b502e97e0ad3827197c6256689d104d5633",
+    "source_sha256": "ec37625dc9f081d056713510b2f2330fb45462ac7b3f9486ee1bb581b15535aa",
     "disposition": "internal",
     "guard": "Async interface/helper boundary; concrete activation inventoried separately",
     "reason": "This signature supplies work to a model or component; declaring it starts no user operation."
@@ -8910,7 +8910,7 @@
     "line": 50,
     "statement": "suspend fun thumbnail(url: String): ImageBitmap? = null",
     "occurrence": 1,
-    "source_sha256": "a9de0257b4c87be8ca6d088cd0432b502e97e0ad3827197c6256689d104d5633",
+    "source_sha256": "ec37625dc9f081d056713510b2f2330fb45462ac7b3f9486ee1bb581b15535aa",
     "disposition": "internal",
     "guard": "Async interface/helper boundary; concrete activation inventoried separately",
     "reason": "This signature supplies work to a model or component; declaring it starts no user operation."
@@ -8922,7 +8922,7 @@
     "line": 55,
     "statement": "suspend fun load(url: String): ImageBitmap? = withContext(Dispatchers.IO) {",
     "occurrence": 1,
-    "source_sha256": "a9de0257b4c87be8ca6d088cd0432b502e97e0ad3827197c6256689d104d5633",
+    "source_sha256": "ec37625dc9f081d056713510b2f2330fb45462ac7b3f9486ee1bb581b15535aa",
     "disposition": "internal",
     "guard": "Async interface/helper boundary; concrete activation inventoried separately",
     "reason": "This signature supplies work to a model or component; declaring it starts no user operation."
@@ -8934,7 +8934,7 @@
     "line": 67,
     "statement": "override suspend fun load(id: String): EditSnapshot = withContext(Dispatchers.IO) {",
     "occurrence": 1,
-    "source_sha256": "a9de0257b4c87be8ca6d088cd0432b502e97e0ad3827197c6256689d104d5633",
+    "source_sha256": "ec37625dc9f081d056713510b2f2330fb45462ac7b3f9486ee1bb581b15535aa",
     "disposition": "internal",
     "guard": "Async interface/helper boundary; concrete activation inventoried separately",
     "reason": "This signature supplies work to a model or component; declaring it starts no user operation."
@@ -8946,7 +8946,7 @@
     "line": 93,
     "statement": "override suspend fun save(id: String, diff: EditDiff): EditSnapshot = withContext(Dispatchers.IO) {",
     "occurrence": 1,
-    "source_sha256": "a9de0257b4c87be8ca6d088cd0432b502e97e0ad3827197c6256689d104d5633",
+    "source_sha256": "ec37625dc9f081d056713510b2f2330fb45462ac7b3f9486ee1bb581b15535aa",
     "disposition": "internal",
     "guard": "Async interface/helper boundary; concrete activation inventoried separately",
     "reason": "This signature supplies work to a model or component; declaring it starts no user operation."
@@ -8958,7 +8958,7 @@
     "line": 102,
     "statement": "override suspend fun cover(id: String, image: ByteArray?): EditSnapshot = withContext(Dispatchers.IO) {",
     "occurrence": 1,
-    "source_sha256": "a9de0257b4c87be8ca6d088cd0432b502e97e0ad3827197c6256689d104d5633",
+    "source_sha256": "ec37625dc9f081d056713510b2f2330fb45462ac7b3f9486ee1bb581b15535aa",
     "disposition": "internal",
     "guard": "Async interface/helper boundary; concrete activation inventoried separately",
     "reason": "This signature supplies work to a model or component; declaring it starts no user operation."
@@ -8970,7 +8970,7 @@
     "line": 103,
     "statement": "if (image == null) BookEdits.removeCover(Store.bookDir(id)) else BookEdits.setCover(Store.bookDir(id), image, AndroidCoverCodec)",
     "occurrence": 1,
-    "source_sha256": "a9de0257b4c87be8ca6d088cd0432b502e97e0ad3827197c6256689d104d5633",
+    "source_sha256": "ec37625dc9f081d056713510b2f2330fb45462ac7b3f9486ee1bb581b15535aa",
     "disposition": "confirmation",
     "guard": "EditBook cover DestructiveConfirm and DiscardSheet / discard dialog",
     "reason": "Cover removal and discarding saved edits have explicit object-specific confirmations."
@@ -8982,7 +8982,7 @@
     "line": 107,
     "statement": "override suspend fun revertChapter(id: String, chapterId: Long): EditSnapshot = withContext(Dispatchers.IO) {",
     "occurrence": 1,
-    "source_sha256": "a9de0257b4c87be8ca6d088cd0432b502e97e0ad3827197c6256689d104d5633",
+    "source_sha256": "ec37625dc9f081d056713510b2f2330fb45462ac7b3f9486ee1bb581b15535aa",
     "disposition": "internal",
     "guard": "Async interface/helper boundary; concrete activation inventoried separately",
     "reason": "This signature supplies work to a model or component; declaring it starts no user operation."
@@ -8994,7 +8994,7 @@
     "line": 112,
     "statement": "private suspend fun changed(id: String): EditSnapshot {",
     "occurrence": 1,
-    "source_sha256": "a9de0257b4c87be8ca6d088cd0432b502e97e0ad3827197c6256689d104d5633",
+    "source_sha256": "ec37625dc9f081d056713510b2f2330fb45462ac7b3f9486ee1bb581b15535aa",
     "disposition": "internal",
     "guard": "Async interface/helper boundary; concrete activation inventoried separately",
     "reason": "This signature supplies work to a model or component; declaring it starts no user operation."
@@ -9006,7 +9006,7 @@
     "line": 131,
     "statement": "override suspend fun discardAll(id: String): EditSnapshot = withContext(Dispatchers.IO) {",
     "occurrence": 1,
-    "source_sha256": "a9de0257b4c87be8ca6d088cd0432b502e97e0ad3827197c6256689d104d5633",
+    "source_sha256": "ec37625dc9f081d056713510b2f2330fb45462ac7b3f9486ee1bb581b15535aa",
     "disposition": "internal",
     "guard": "Declaration; the invoked call site is independently inventoried",
     "reason": "A declaration/signature is not an executing UI action."
@@ -9018,7 +9018,7 @@
     "line": 131,
     "statement": "override suspend fun discardAll(id: String): EditSnapshot = withContext(Dispatchers.IO) {",
     "occurrence": 1,
-    "source_sha256": "a9de0257b4c87be8ca6d088cd0432b502e97e0ad3827197c6256689d104d5633",
+    "source_sha256": "ec37625dc9f081d056713510b2f2330fb45462ac7b3f9486ee1bb581b15535aa",
     "disposition": "internal",
     "guard": "Async interface/helper boundary; concrete activation inventoried separately",
     "reason": "This signature supplies work to a model or component; declaring it starts no user operation."
@@ -9030,7 +9030,7 @@
     "line": 136,
     "statement": "override suspend fun readings(id: String): List<WordReading> = withContext(Dispatchers.IO) { readingsOf(studio(\"GET\", id, \"/readings\")) }",
     "occurrence": 1,
-    "source_sha256": "a9de0257b4c87be8ca6d088cd0432b502e97e0ad3827197c6256689d104d5633",
+    "source_sha256": "ec37625dc9f081d056713510b2f2330fb45462ac7b3f9486ee1bb581b15535aa",
     "disposition": "internal",
     "guard": "Async interface/helper boundary; concrete activation inventoried separately",
     "reason": "This signature supplies work to a model or component; declaring it starts no user operation."
@@ -9042,7 +9042,7 @@
     "line": 138,
     "statement": "override suspend fun setReading(id: String, surface: String, spoken: String): List<WordReading> = withContext(Dispatchers.IO) {",
     "occurrence": 1,
-    "source_sha256": "a9de0257b4c87be8ca6d088cd0432b502e97e0ad3827197c6256689d104d5633",
+    "source_sha256": "ec37625dc9f081d056713510b2f2330fb45462ac7b3f9486ee1bb581b15535aa",
     "disposition": "internal",
     "guard": "Async interface/helper boundary; concrete activation inventoried separately",
     "reason": "This signature supplies work to a model or component; declaring it starts no user operation."
@@ -9054,7 +9054,7 @@
     "line": 142,
     "statement": "override suspend fun findCovers(id: String, query: String): CoverResults = withContext(Dispatchers.IO) {",
     "occurrence": 1,
-    "source_sha256": "a9de0257b4c87be8ca6d088cd0432b502e97e0ad3827197c6256689d104d5633",
+    "source_sha256": "ec37625dc9f081d056713510b2f2330fb45462ac7b3f9486ee1bb581b15535aa",
     "disposition": "internal",
     "guard": "Async interface/helper boundary; concrete activation inventoried separately",
     "reason": "This signature supplies work to a model or component; declaring it starts no user operation."
@@ -9066,7 +9066,7 @@
     "line": 154,
     "statement": "override suspend fun coverFromUrl(id: String, url: String): EditSnapshot = withContext(Dispatchers.IO) {",
     "occurrence": 1,
-    "source_sha256": "a9de0257b4c87be8ca6d088cd0432b502e97e0ad3827197c6256689d104d5633",
+    "source_sha256": "ec37625dc9f081d056713510b2f2330fb45462ac7b3f9486ee1bb581b15535aa",
     "disposition": "internal",
     "guard": "Async interface/helper boundary; concrete activation inventoried separately",
     "reason": "This signature supplies work to a model or component; declaring it starts no user operation."
@@ -9078,7 +9078,7 @@
     "line": 159,
     "statement": "override suspend fun thumbnail(url: String): ImageBitmap? = CoverThumbnails.load(url)",
     "occurrence": 1,
-    "source_sha256": "a9de0257b4c87be8ca6d088cd0432b502e97e0ad3827197c6256689d104d5633",
+    "source_sha256": "ec37625dc9f081d056713510b2f2330fb45462ac7b3f9486ee1bb581b15535aa",
     "disposition": "internal",
     "guard": "Async interface/helper boundary; concrete activation inventoried separately",
     "reason": "This signature supplies work to a model or component; declaring it starts no user operation."
@@ -9090,7 +9090,7 @@
     "line": 161,
     "statement": "override suspend fun send(id: String): EditSnapshot = withContext(Dispatchers.IO) {",
     "occurrence": 1,
-    "source_sha256": "a9de0257b4c87be8ca6d088cd0432b502e97e0ad3827197c6256689d104d5633",
+    "source_sha256": "ec37625dc9f081d056713510b2f2330fb45462ac7b3f9486ee1bb581b15535aa",
     "disposition": "internal",
     "guard": "Async interface/helper boundary; concrete activation inventoried separately",
     "reason": "This signature supplies work to a model or component; declaring it starts no user operation."
@@ -9102,7 +9102,7 @@
     "line": 20,
     "statement": "override suspend fun load(id: String) = saved",
     "occurrence": 1,
-    "source_sha256": "635484b5a7024cbb970be2de7b5b36059a65051928dc5774698538319b9ce84f",
+    "source_sha256": "c13367d48c656f9c735f24e9142f9085018937138a93fabef31e9a5b733227a5",
     "disposition": "internal",
     "guard": "Async interface/helper boundary; concrete activation inventoried separately",
     "reason": "This signature supplies work to a model or component; declaring it starts no user operation."
@@ -9114,7 +9114,7 @@
     "line": 21,
     "statement": "override suspend fun save(id: String, diff: EditDiff): EditSnapshot {",
     "occurrence": 1,
-    "source_sha256": "635484b5a7024cbb970be2de7b5b36059a65051928dc5774698538319b9ce84f",
+    "source_sha256": "c13367d48c656f9c735f24e9142f9085018937138a93fabef31e9a5b733227a5",
     "disposition": "internal",
     "guard": "Async interface/helper boundary; concrete activation inventoried separately",
     "reason": "This signature supplies work to a model or component; declaring it starts no user operation."
@@ -9126,7 +9126,7 @@
     "line": 26,
     "statement": "override suspend fun cover(id: String, image: ByteArray?) = saved",
     "occurrence": 1,
-    "source_sha256": "635484b5a7024cbb970be2de7b5b36059a65051928dc5774698538319b9ce84f",
+    "source_sha256": "c13367d48c656f9c735f24e9142f9085018937138a93fabef31e9a5b733227a5",
     "disposition": "internal",
     "guard": "Async interface/helper boundary; concrete activation inventoried separately",
     "reason": "This signature supplies work to a model or component; declaring it starts no user operation."
@@ -9138,7 +9138,7 @@
     "line": 27,
     "statement": "override suspend fun revertChapter(id: String, chapterId: Long) = saved",
     "occurrence": 1,
-    "source_sha256": "635484b5a7024cbb970be2de7b5b36059a65051928dc5774698538319b9ce84f",
+    "source_sha256": "c13367d48c656f9c735f24e9142f9085018937138a93fabef31e9a5b733227a5",
     "disposition": "internal",
     "guard": "Async interface/helper boundary; concrete activation inventoried separately",
     "reason": "This signature supplies work to a model or component; declaring it starts no user operation."
@@ -9150,7 +9150,7 @@
     "line": 28,
     "statement": "override suspend fun send(id: String) = saved",
     "occurrence": 1,
-    "source_sha256": "635484b5a7024cbb970be2de7b5b36059a65051928dc5774698538319b9ce84f",
+    "source_sha256": "c13367d48c656f9c735f24e9142f9085018937138a93fabef31e9a5b733227a5",
     "disposition": "internal",
     "guard": "Async interface/helper boundary; concrete activation inventoried separately",
     "reason": "This signature supplies work to a model or component; declaring it starts no user operation."
@@ -11406,7 +11406,7 @@
     "line": 184,
     "statement": "suspend fun load() {",
     "occurrence": 1,
-    "source_sha256": "afe465c3d8d38ef7833f799b25fb46883247dd2a2884d2cc7bc61df4bb29ed14",
+    "source_sha256": "b1d06464cba1f1ae31978b658639bbe03c744c7b5e328ca9c5e2e92e4a2af10e",
     "disposition": "internal",
     "guard": "Async interface/helper boundary; concrete activation inventoried separately",
     "reason": "This signature supplies work to a model or component; declaring it starts no user operation. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Devvoice review: device voice names, circled radio marks, one-line names and 8 dp text gaps leave this action and its guard unchanged."
@@ -11418,7 +11418,7 @@
     "line": 195,
     "statement": "suspend fun wantCast() {",
     "occurrence": 1,
-    "source_sha256": "afe465c3d8d38ef7833f799b25fb46883247dd2a2884d2cc7bc61df4bb29ed14",
+    "source_sha256": "b1d06464cba1f1ae31978b658639bbe03c744c7b5e328ca9c5e2e92e4a2af10e",
     "disposition": "internal",
     "guard": "Async interface/helper boundary; concrete activation inventoried separately",
     "reason": "This signature supplies work to a model or component; declaring it starts no user operation. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Devvoice review: device voice names, circled radio marks, one-line names and 8 dp text gaps leave this action and its guard unchanged."
@@ -11430,7 +11430,7 @@
     "line": 200,
     "statement": "private suspend fun loadCast() {",
     "occurrence": 1,
-    "source_sha256": "afe465c3d8d38ef7833f799b25fb46883247dd2a2884d2cc7bc61df4bb29ed14",
+    "source_sha256": "b1d06464cba1f1ae31978b658639bbe03c744c7b5e328ca9c5e2e92e4a2af10e",
     "disposition": "internal",
     "guard": "Async interface/helper boundary; concrete activation inventoried separately",
     "reason": "This signature supplies work to a model or component; declaring it starts no user operation. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Devvoice review: device voice names, circled radio marks, one-line names and 8 dp text gaps leave this action and its guard unchanged."
@@ -11442,7 +11442,7 @@
     "line": 398,
     "statement": "ChapterJump(below) { currentItem?.let { scope.launch { list.animateScrollToItem((it - 1).coerceAtLeast(0)) } } }",
     "occurrence": 1,
-    "source_sha256": "afe465c3d8d38ef7833f799b25fb46883247dd2a2884d2cc7bc61df4bb29ed14",
+    "source_sha256": "b1d06464cba1f1ae31978b658639bbe03c744c7b5e328ca9c5e2e92e4a2af10e",
     "disposition": "pending",
     "guard": "ViewModel/operation fields: PendingIndicator, loading, preparingBookId, progress, progressLine; Components pending indicator",
     "reason": "The model retains the operation and locks repeats; UI uses the shared pending parameter, loading content or progress owner. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Devvoice review: device voice names, circled radio marks, one-line names and 8 dp text gaps leave this action and its guard unchanged."
@@ -12174,7 +12174,7 @@
     "line": 123,
     "statement": "val rest = path.removePrefix(\"/#/studio/\")",
     "occurrence": 1,
-    "source_sha256": "c40fa29840cdd3645d7ba66a82f79a2f606c28478111547951cc3c641eafcfaa",
+    "source_sha256": "8d320431d3adbf687fda56ee23afd6bec63e634a02a81d20d0804272203db2f5",
     "disposition": "internal",
     "guard": "String transformation / event subscription ownership",
     "reason": "No persisted user data is removed. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
@@ -12186,7 +12186,7 @@
     "line": 126,
     "statement": "val tab = rest.substringAfter('?', \"\").split('&').firstOrNull { it.startsWith(\"tab=\") }?.removePrefix(\"tab=\")",
     "occurrence": 1,
-    "source_sha256": "c40fa29840cdd3645d7ba66a82f79a2f606c28478111547951cc3c641eafcfaa",
+    "source_sha256": "8d320431d3adbf687fda56ee23afd6bec63e634a02a81d20d0804272203db2f5",
     "disposition": "internal",
     "guard": "String transformation / event subscription ownership",
     "reason": "No persisted user data is removed. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
@@ -13710,7 +13710,7 @@
     "line": 64,
     "statement": "suspend fun run() {",
     "occurrence": 1,
-    "source_sha256": "47ab909e3b9c0491236a9b0174c70815176dd5df105e77030bdf9fbfcc67bd9b",
+    "source_sha256": "fbc0c8542970b9ab265d8526b702877a23117b19978ca6db193c03f569d90626",
     "disposition": "internal",
     "guard": "Async interface/helper boundary; concrete activation inventoried separately",
     "reason": "This signature supplies work to a model or component; declaring it starts no user operation."
@@ -13722,7 +13722,7 @@
     "line": 73,
     "statement": "suspend fun refresh() = poller.refresh()",
     "occurrence": 1,
-    "source_sha256": "47ab909e3b9c0491236a9b0174c70815176dd5df105e77030bdf9fbfcc67bd9b",
+    "source_sha256": "fbc0c8542970b9ab265d8526b702877a23117b19978ca6db193c03f569d90626",
     "disposition": "internal",
     "guard": "Async interface/helper boundary; concrete activation inventoried separately",
     "reason": "This signature supplies work to a model or component; declaring it starts no user operation."
@@ -13734,7 +13734,7 @@
     "line": 77,
     "statement": "session.scope.launch { poller.refresh() }",
     "occurrence": 1,
-    "source_sha256": "47ab909e3b9c0491236a9b0174c70815176dd5df105e77030bdf9fbfcc67bd9b",
+    "source_sha256": "fbc0c8542970b9ab265d8526b702877a23117b19978ca6db193c03f569d90626",
     "disposition": "pending",
     "guard": "ViewModel/operation fields: busy, poller; Components pending indicator",
     "reason": "The model retains the operation and locks repeats; UI uses the shared pending parameter, loading content or progress owner."
@@ -13746,7 +13746,7 @@
     "line": 138,
     "statement": "private suspend fun afterSend(sent: Boolean) {",
     "occurrence": 1,
-    "source_sha256": "47ab909e3b9c0491236a9b0174c70815176dd5df105e77030bdf9fbfcc67bd9b",
+    "source_sha256": "fbc0c8542970b9ab265d8526b702877a23117b19978ca6db193c03f569d90626",
     "disposition": "internal",
     "guard": "Async interface/helper boundary; concrete activation inventoried separately",
     "reason": "This signature supplies work to a model or component; declaring it starts no user operation."
@@ -13758,7 +13758,7 @@
     "line": 156,
     "statement": "suspend fun run() = poller.run()",
     "occurrence": 1,
-    "source_sha256": "47ab909e3b9c0491236a9b0174c70815176dd5df105e77030bdf9fbfcc67bd9b",
+    "source_sha256": "fbc0c8542970b9ab265d8526b702877a23117b19978ca6db193c03f569d90626",
     "disposition": "internal",
     "guard": "Async interface/helper boundary; concrete activation inventoried separately",
     "reason": "This signature supplies work to a model or component; declaring it starts no user operation."
@@ -13770,7 +13770,7 @@
     "line": 158,
     "statement": "suspend fun refresh() = poller.refresh()",
     "occurrence": 2,
-    "source_sha256": "47ab909e3b9c0491236a9b0174c70815176dd5df105e77030bdf9fbfcc67bd9b",
+    "source_sha256": "fbc0c8542970b9ab265d8526b702877a23117b19978ca6db193c03f569d90626",
     "disposition": "internal",
     "guard": "Async interface/helper boundary; concrete activation inventoried separately",
     "reason": "This signature supplies work to a model or component; declaring it starts no user operation."
@@ -13782,7 +13782,7 @@
     "line": 161,
     "statement": "session.scope.launch { poller.refresh() }",
     "occurrence": 2,
-    "source_sha256": "47ab909e3b9c0491236a9b0174c70815176dd5df105e77030bdf9fbfcc67bd9b",
+    "source_sha256": "fbc0c8542970b9ab265d8526b702877a23117b19978ca6db193c03f569d90626",
     "disposition": "pending",
     "guard": "ViewModel/operation fields: busy, poller; Components pending indicator",
     "reason": "The model retains the operation and locks repeats; UI uses the shared pending parameter, loading content or progress owner."
@@ -13794,7 +13794,7 @@
     "line": 169,
     "statement": "session.scope.launch {",
     "occurrence": 1,
-    "source_sha256": "47ab909e3b9c0491236a9b0174c70815176dd5df105e77030bdf9fbfcc67bd9b",
+    "source_sha256": "fbc0c8542970b9ab265d8526b702877a23117b19978ca6db193c03f569d90626",
     "disposition": "pending",
     "guard": "ViewModel/operation fields: busy, poller; Components pending indicator",
     "reason": "The model retains the operation and locks repeats; UI uses the shared pending parameter, loading content or progress owner."
@@ -15246,7 +15246,7 @@
     "line": 64,
     "statement": "Api.call(\"GET\", \"/api/listen/books/\" + id, null, function(data, error) { if (!error && id === root.book.bookId) root.fullBook = data })",
     "occurrence": 1,
-    "source_sha256": "b0a4b376221dab8894bfbaa1a3e171e1383544ef35abd0d4bac9a222d9a2b5ef",
+    "source_sha256": "19bde1f8502d47262f501a7818b4580f4b6fbad9db1775501c3cc14a6c7b872d",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; ProgressBar, bookProgress, bookProgressLine, progress, progressLine, progressOf",
     "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
@@ -15258,7 +15258,7 @@
     "line": 72,
     "statement": "Api.call(\"GET\", \"/api/listen/books/\" + bookId, null, function(data, error) {",
     "occurrence": 1,
-    "source_sha256": "b0a4b376221dab8894bfbaa1a3e171e1383544ef35abd0d4bac9a222d9a2b5ef",
+    "source_sha256": "19bde1f8502d47262f501a7818b4580f4b6fbad9db1775501c3cc14a6c7b872d",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; ProgressBar, bookProgress, bookProgressLine, progress, progressLine, progressOf",
     "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
@@ -15270,7 +15270,7 @@
     "line": 140,
     "statement": "Api.call(\"POST\", \"/api/listen/books/\" + id + \"/finished\", active ? {finished: finished, record: active.id} : {finished: finished}, function(data, error) {",
     "occurrence": 1,
-    "source_sha256": "b0a4b376221dab8894bfbaa1a3e171e1383544ef35abd0d4bac9a222d9a2b5ef",
+    "source_sha256": "19bde1f8502d47262f501a7818b4580f4b6fbad9db1775501c3cc14a6c7b872d",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; ProgressBar, bookProgress, bookProgressLine, progress, progressLine, progressOf",
     "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
@@ -15282,7 +15282,7 @@
     "line": 271,
     "statement": "Api.call(\"POST\", \"/api/listen/books/\" + id + \"/chapters/\" + chapterId + \"/done\", body, function(data, error) {",
     "occurrence": 1,
-    "source_sha256": "b0a4b376221dab8894bfbaa1a3e171e1383544ef35abd0d4bac9a222d9a2b5ef",
+    "source_sha256": "19bde1f8502d47262f501a7818b4580f4b6fbad9db1775501c3cc14a6c7b872d",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; ProgressBar, bookProgress, bookProgressLine, progress, progressLine, progressOf",
     "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
@@ -15474,7 +15474,7 @@
     "line": 97,
     "statement": "Api.call(\"GET\", \"/api/listen/books/\" + id, null, function(fresh, error) {",
     "occurrence": 1,
-    "source_sha256": "04262842258e20d9c8133607554ab785cd71a9c6258ff15482b7342c92c237b3",
+    "source_sha256": "bf51dfffb0ddf0a88292b6e58d52ccd9aa7fe297433d7c40d5cdef40d6d50777",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; busy, savingAuthor",
     "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
@@ -15486,7 +15486,7 @@
     "line": 107,
     "statement": "Api.call(method, \"/api/books/\" + bookId + suffix, body, function(data, error) {",
     "occurrence": 1,
-    "source_sha256": "04262842258e20d9c8133607554ab785cd71a9c6258ff15482b7342c92c237b3",
+    "source_sha256": "bf51dfffb0ddf0a88292b6e58d52ccd9aa7fe297433d7c40d5cdef40d6d50777",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; busy, savingAuthor",
     "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
@@ -15498,7 +15498,7 @@
     "line": 271,
     "statement": "onActivated: root.removeCover()",
     "occurrence": 1,
-    "source_sha256": "04262842258e20d9c8133607554ab785cd71a9c6258ff15482b7342c92c237b3",
+    "source_sha256": "bf51dfffb0ddf0a88292b6e58d52ccd9aa7fe297433d7c40d5cdef40d6d50777",
     "disposition": "confirmation",
     "guard": "EditBook cover DestructiveConfirm and DiscardSheet / discard dialog",
     "reason": "Cover removal and discarding saved edits have explicit object-specific confirmations. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
@@ -15510,7 +15510,7 @@
     "line": 420,
     "statement": "DestructiveConfirm { id: removeConfirm; objectName: \"editCoverRemoveConfirm\"; title: S.s_bo_anh_bia_696c6692; description: S.s_irreversible_detail(root.book ? root.book.title || \"\" : \"\"); onAccepted: root.removeCoverConfirmed() }",
     "occurrence": 1,
-    "source_sha256": "04262842258e20d9c8133607554ab785cd71a9c6258ff15482b7342c92c237b3",
+    "source_sha256": "bf51dfffb0ddf0a88292b6e58d52ccd9aa7fe297433d7c40d5cdef40d6d50777",
     "disposition": "confirmation",
     "guard": "EditBook cover DestructiveConfirm and DiscardSheet / discard dialog",
     "reason": "Cover removal and discarding saved edits have explicit object-specific confirmations. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
@@ -17278,5 +17278,29 @@
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; pending, pendingNote",
     "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads."
+  },
+  {
+    "id": "ea80ba34c4ae38dba126",
+    "kind": "pending",
+    "path": "mobile/android/app/src/main/java/vn/abook/player/ui/studio/StudioState.kt",
+    "line": 190,
+    "statement": "session.scope.launch {",
+    "occurrence": 2,
+    "disposition": "pending",
+    "guard": "StudioProjectState.busy blocks a second metadata write; the save button is disabled while busy.",
+    "reason": "The session scope retains the request, refreshes the project after success and reports a failed write inline; audio and story text are untouched.",
+    "source_sha256": "fbc0c8542970b9ab265d8526b702877a23117b19978ca6db193c03f569d90626"
+  },
+  {
+    "id": "6a755871f6b8af687a36",
+    "kind": "pending",
+    "path": "desktop_qt/qml/ProjectScreen.qml",
+    "line": 58,
+    "statement": "store.request(\"PUT\", \"/api/books/\" + book.id + \"/metadata\", metadataDraft, function(status, data) {",
+    "occurrence": 1,
+    "disposition": "pending",
+    "guard": "metadataBusy blocks duplicate writes and drives the save-button pending state.",
+    "reason": "Only optional descriptive fields are submitted. Failure stays in the open editor; success refreshes project metadata without changing audio.",
+    "source_sha256": "a6e96965ea9044ddabe1e941a5ba115fda25bfafccd436a54568bdb8739375d1"
   }
 ]

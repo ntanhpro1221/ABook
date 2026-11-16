@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from pathlib import Path
 from typing import Any
-from .. import book_volumes
+from .. import book_volumes, book_metadata
 
 from . import covers, store, word_timing
 from .listening import HEAVY_KEYS, book_progress
@@ -28,7 +28,7 @@ def metadata_version(book: dict[str, Any]) -> str:
                 for chapter in book.get("chapters") or [] if isinstance(chapter, dict)]
     return hashlib.sha256(json.dumps([book.get("title") or "", book.get("author") or "", book.get("narrator") or "",
                                       [series.get("root"), series.get("part")] if isinstance(series, dict) else None, chapters,
-                                      [[v.get("id"), v.get("number"), v.get("title"), v.get("cover"),
+                                      book_metadata.present(book), [[v.get("id"), v.get("number"), v.get("title"), v.get("cover"),
                                         [c["id"] for c in v.get("chapters", [])]] for v in book.get("volumes", [])]],
                                      ensure_ascii=False).encode()).hexdigest()[:16]
 
@@ -115,6 +115,7 @@ def book(project_root: Path, book_id: str, summary: dict[str, Any], state: dict[
     # Phần nối tiếp của "Làm tiếp cuốn này": phần đầu + thứ tự phần theo continues.json - thư viện gom các phần theo chuỗi,
     # không theo tên (soát UX 29-09, N10). Phần đầu không mang gì: giao diện nhận ra nó là sách mà các phần khác trỏ về.
     result["series"] = series(project_root)
+    result.update(book_metadata.present(book_metadata.load(project_root)))
     result["volumes"] = book_volumes.project(project_root, items)
     for volume in result["volumes"]:
         if volume.get("cover"):
