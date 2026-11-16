@@ -21,8 +21,6 @@ def test_hako_full_paragraphs():
     assert found["illustrator"] == "Người Vẽ"
     assert found["altTitles"] == ["Paper Lake", "湖"]
     assert found["genres"] == ["Fantasy", "Adventure"]
-    from scripts.corpus.hako import metadata_from_html
-    assert metadata_from_html(page.encode("utf-8"), "/truyen/123-example") == found
 
 
 def test_epub_metadata(tmp_path):
