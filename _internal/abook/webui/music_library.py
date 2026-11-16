@@ -145,7 +145,8 @@ def detail(link: str, info: dict[str, Any], playlists: list[dict[str, Any]]) -> 
 def why(scene_emotions: Any, track_emotions: Any, cosine: Callable[[Any, Any], float | None], count: int = 3) -> dict[str, Any] | None:
     """Khối "Vì sao bài này": cảm xúc máy đọc được ở đoạn (bộ chọn nhạc theo cảnh, plan["scenes"][i]["emotions"]) đặt cạnh cảm xúc của bài,
     `count` cảm xúc khớp nhất (tích điểm đoạn x điểm bài lớn nhất - đúng các số hạng của độ khớp cosine bộ chọn dùng: music_select.emotion_cosine).
-    Đoạn không có cảm xúc (sách chọn theo danh sách phát, sách đóng gói) -> None: ẩn khối."""
+    Sách đóng gói: cảm xúc cảnh đi theo mốc (`emotions`, music_plan.package). Đoạn không có cảm xúc (sách chọn theo danh sách phát,
+    gói không mang) -> None: ẩn khối."""
     if not isinstance(scene_emotions, dict) or not isinstance(track_emotions, dict):
         return None
     fit = cosine(scene_emotions, track_emotions)

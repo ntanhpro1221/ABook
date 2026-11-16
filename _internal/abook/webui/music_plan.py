@@ -26,7 +26,7 @@ from typing import Any, Callable, Iterable
 
 from ..config import DEFAULT_SETTINGS
 from ..io_utils import atomic_write_json, ffmpeg_available, ffmpeg_executable, run_hidden
-from . import music_bounds, music_mix, music_moods, music_nnlite, music_select, store
+from . import music_bounds, music_mix, music_moods, music_nnlite, music_scenes, music_select, store
 
 PLAN_FILE = "music_plan.json"
 OVERRIDES_FILE = "music_overrides.json"
@@ -388,7 +388,7 @@ def chapter_durations(project_root: Path, chapter_ids: Iterable[int]) -> dict[in
     return out
 
 
-_number = music_mix.number
+_number = number = music_mix.number
 
 
 def stereo_lufs(audio: Any, sample_rate: int) -> float | None:
@@ -664,6 +664,7 @@ def package(project_root: Path, chapter_ids: Iterable[int],
 
     # Mốc trước, độ dài sau: chỉ chương có nhạc mới đọc độ dài, và đọc hàng loạt.
     planned = {chapter_id: chapter_cues(plan, chapter_id) for chapter_id in chapter_ids}
+    moods = {scene.get("key"): scene.get("emotions") for scene in plan.get("scenes") or [] if isinstance(scene, dict)}
     lengths = chapter_durations(project_root, [chapter_id for chapter_id, cues in planned.items() if cues])
     for chapter_id, planned_cues in planned.items():
         kept = []
@@ -695,7 +696,7 @@ def package(project_root: Path, chapter_ids: Iterable[int],
             kept.append({"start": round(cue["start"], 3), "end": round(cue["end"], 3), "track": name,
                          "gainDb": cue_gain_db(level_db, _number(tracks[name].get("lufs")),
                                                _number(tracks[name].get("speechBand")), _number(tracks[name].get("s95"))),
-                         **_cue_shape({**cue, **audible[name]})})
+                         **_cue_shape({**cue, **audible[name], "emotions": moods.get(cue.get("key"))})})
         if kept:
             chapters[str(chapter_id)] = kept
     if not chapters:
@@ -779,13 +780,30 @@ def packaged_playable(music: dict[str, Any] | None, chapter_id: int) -> tuple[li
     return cues, level, by_link
 
 
+def cue_emotions(raw: Any) -> dict[str, float]:
+    """Cảm xúc cảnh của một mốc gói sách: {lớp: cường độ} chỉ các lớp của `music_scenes.EMOTION_CLASSES` có số trong (0, 1], làm
+    tròn 3 chữ số. Không phải dict, hay không còn lớp nào -> {} (mốc không mang `emotions`, khối "Vì sao bài này" ẩn)."""
+    if not isinstance(raw, dict):
+        return {}
+    out: dict[str, float] = {}
+    for name in music_scenes.EMOTION_CLASSES:
+        value = _number(raw.get(name))
+        if value is not None and value > 0:
+            out[name] = round(min(1.0, value), 3)
+    return {name: score for name, score in out.items() if score > 0}
+
+
 def _cue_shape(cue: dict[str, Any]) -> dict[str, Any]:
     """Phần hình dạng của một mốc ngoài bài và độ to: `sibling` (nối bài anh em trong cảnh), `tail` (mốc kết đúng ở điểm kết
     bài - `chapter_cues`), `steps` (bước âm lượng [{at, db}], `at` tăng dần) và đoạn nghe được của bài (`audibleStart` /
     `audibleEnd`, giây trong bài - trình phát lặp mờ chéo trong đó; sách cũ không có thì trình phát dùng 0 và độ dài thật), điểm
-    vòng (`loopStart` / `loopEnd`, music_mix - trình phát tự kiểm hợp lệ) - chỉ khoá nào có, bước hỏng bị bỏ. Một chỗ cho gói
-    sách (`package`) lẫn sách đã đóng gói (`packaged_cues`)."""
+    vòng (`loopStart` / `loopEnd`, music_mix - trình phát tự kiểm hợp lệ), cảm xúc máy đọc được ở cảnh của mốc (`emotions`, cường độ
+    0-1 của các lớp `music_scenes.EMOTION_CLASSES` lớn hơn 0 - khối "Vì sao bài này" của sách đóng gói) - chỉ khoá nào có, bước hỏng bị
+    bỏ. Một chỗ cho gói sách (`package`) lẫn sách đã đóng gói (`packaged_cues`)."""
     out: dict[str, Any] = {}
+    emotions = cue_emotions(cue.get("emotions"))
+    if emotions:
+        out["emotions"] = emotions
     for flag in ("sibling", "tail"):
         if cue.get(flag) is True:
             out[flag] = True

@@ -607,6 +607,26 @@ def cue_key(chapter_id: Any, start: float) -> str:
     return f"{int(chapter_id)}:{int(round(float(start) * 1000))}"
 
 
+def packaged_scenes(music: Any) -> list[dict[str, Any]]:
+    """Các mốc nhạc của sách đã đóng gói theo thứ tự chương rồi mốc: [{key (`cue_key`), track (tên file trong gói), link, emotions}] -
+    "Nhạc trong sách" và "Vì sao bài này" của sách đóng gói (`emotions` = cảm xúc cảnh của mốc, {} khi gói không mang)."""
+    if not isinstance(music, dict) or not isinstance(music.get("chapters"), dict):
+        return []
+    tracks = music.get("tracks") if isinstance(music.get("tracks"), dict) else {}
+    out = []
+    for chapter in sorted(music["chapters"], key=lambda name: (int(name) if str(name).isdigit() else 10 ** 12, str(name))):
+        if not str(chapter).isdigit():
+            continue
+        for cue in music["chapters"][chapter] or []:
+            track = tracks.get(cue.get("track")) if isinstance(cue, dict) else None
+            if not isinstance(track, dict) or not isinstance(track.get("link"), str):
+                continue
+            start = music_plan.number(cue.get("start"))
+            out.append({"key": cue_key(chapter, start or 0.0), "track": cue["track"], "link": track["link"],
+                        "emotions": music_plan.cue_emotions(cue.get("emotions"))})
+    return out
+
+
 def apply_chapter(chapter: dict[str, Any], edit: dict[str, str] | None) -> dict[str, Any]:
     """Một mục `chapters` của book.json sau khi đổi tên: `title`, `subtitle`, `fullTitle`."""
     if not edit:
