@@ -290,8 +290,7 @@ class MusicStore(
         private const val TEMPORARY = ".nhap-"
         private val SHA1 = Regex("[0-9a-f]{40}")
         private val FAMILIES = setOf("eastern", "orchestral", "piano", "ambient", "acoustic", "electronic", "other") // music_plan.FAMILIES
-        private val EMOTIONS = listOf("peacefulness", "tenderness", "nostalgia", "sadness", "joy", "playful", "power", "wonder", "tension",
-            "fear", "anger", "mystery", "moved") // music_scenes.EMOTION_CLASSES
+        private val EMOTIONS = MusicLibrary.EMOTION_CLASSES
         const val NO_ANALYZER = S.s_chua_co_bo_phan_tich_nhac_ban_van_chon_bai_a4664edd
 
         /** Mã sha1 (40 hex) của file trong link `local:<sha1>`; link khác dạng -> null. */

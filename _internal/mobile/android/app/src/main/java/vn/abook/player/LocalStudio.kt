@@ -361,6 +361,11 @@ object LocalStudio {
         }
     }
 
+    /** "Vì sao bài này" của sách đóng gói: {khoá mốc: cảm xúc cảnh} từ các mốc nhạc của gói (`emotions`, music_plan.package). */
+    fun sceneMoods(id: String): Map<String, Map<String, Double>> = synchronized(lock) {
+        MusicLibrary.sceneMoods(BookEdits.rawBook(editable(id)).optJSONObject("music"))
+    }
+
     /** PUT /music của giao diện native; lỗi sửa ném [BookEdits.EditsError] (câu cho người nghe). */
     fun setBookMusic(id: String, body: JSONObject): JSONObject = synchronized(lock) { music(editable(id), body) }
 

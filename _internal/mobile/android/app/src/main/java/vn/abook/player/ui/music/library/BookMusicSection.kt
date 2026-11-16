@@ -43,7 +43,13 @@ data class BookMusicRows(
 
 /** The book's Music tab contributes lazy rows, never a whole eagerly measured Column. */
 @Composable
-fun BookMusicSection(state: LibraryState, sheets: SheetHost, entries: Result<List<MusicLibrary.BookTrack>>?, retry: () -> Unit): LazyListScope.() -> Unit {
+fun BookMusicSection(
+    state: LibraryState,
+    sheets: SheetHost,
+    entries: Result<List<MusicLibrary.BookTrack>>?,
+    moods: Map<String, Map<String, Double>> = emptyMap(),
+    retry: () -> Unit,
+): LazyListScope.() -> Unit {
     val ui by state.ui.collectAsState()
     val found = entries?.getOrNull()
     val snapshot = ui
@@ -70,7 +76,7 @@ fun BookMusicSection(state: LibraryState, sheets: SheetHost, entries: Result<Lis
                 items(ready.tracks, key = { "book_music_${it.first.link}" }, contentType = { "music_track" }) { (track, entry) ->
                     Column {
                         Row(verticalAlignment = Alignment.CenterVertically) {
-                            Column(Modifier.weight(1f)) { TrackRow(track, ui, state, onOpen = { openTrack(sheets, state, track.link, null) }) }
+                            Column(Modifier.weight(1f)) { TrackRow(track, ui, state, onOpen = { openTrack(sheets, state, track.link, null, entry.scene?.let(moods::get).orEmpty()) }) }
                             Caption(S.s_0_doan_c2eb5200(entry.scenes), Modifier.padding(start = Dim.s8))
                         }
                         RowLine(start = Dim.s48)
