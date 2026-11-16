@@ -611,7 +611,7 @@ class BookPipeline:
             if decision.critical and self.resources.is_ram_only_critical(snapshot):
                 before_ram_gb = snapshot.free_ram_gb
                 self.log(
-                    f"RAM khả dụng chỉ còn {before_ram_gb:.1f} GB; "
+                    f"RAM khả dụng chỉ còn {before_ram_gb:.1f}\u00a0GB; "
                     "đang giải phóng model và cache trước khi quyết định dừng."
                 )
                 if release_active is not None:
@@ -628,7 +628,7 @@ class BookPipeline:
                 decision = self.resources.decide(snapshot)
                 self.log(
                     f"Đã đo lại RAM sau thu hồi: {before_ram_gb:.1f} → "
-                    f"{snapshot.free_ram_gb:.1f} GB khả dụng."
+                    f"{snapshot.free_ram_gb:.1f}\u00a0GB khả dụng."
                 )
                 if decision.critical and self.resources.is_ram_only_critical(snapshot):
                     snapshot, decision = self._wait_for_foreign_ram(
@@ -710,22 +710,22 @@ class BookPipeline:
                 announced = True
                 self.log(
                     f"Đang chờ RAM tại checkpoint an toàn ({checkpoint}): còn "
-                    f"{snapshot.free_ram_gb:.1f} GB, cần trên "
-                    f"{float(self.settings['resources']['critical_free_ram_gb']):.1f} GB. "
+                    f"{snapshot.free_ram_gb:.1f}\u00a0GB, cần trên "
+                    f"{float(self.settings['resources']['critical_free_ram_gb']):.1f}\u00a0GB. "
                     "Model đã nhả hết; sẽ tự chạy tiếp khi chương trình khác trả lại bộ nhớ."
                 )
                 self.emit(
                     "resource",
                     {
                         "level": ResourceLevel.PAUSE_NEW_WORK.value,
-                        "reason": f"chờ RAM: {snapshot.free_ram_gb:.1f} GB khả dụng",
+                        "reason": f"chờ RAM: {snapshot.free_ram_gb:.1f}\u00a0GB khả dụng",
                         "gpu_scale": 0.0,
                     },
                 )
                 if self.settings["safety"].get("notify_on_critical_stop", True):
                     self.notifier.notify(
                         "ABook đang chờ RAM",
-                        f"Chỉ còn {snapshot.free_ram_gb:.1f} GB khả dụng. Pipeline đã nhả "
+                        f"Chỉ còn {snapshot.free_ram_gb:.1f}\u00a0GB khả dụng. Pipeline đã nhả "
                         "hết model và sẽ tự chạy tiếp khi có bộ nhớ.",
                         project_path=self.paths.root,
                     )
@@ -735,7 +735,7 @@ class BookPipeline:
             decision = self.resources.decide(snapshot)
             if not decision.critical:
                 self.log(
-                    f"RAM đã hồi phục lên {snapshot.free_ram_gb:.1f} GB sau "
+                    f"RAM đã hồi phục lên {snapshot.free_ram_gb:.1f}\u00a0GB sau "
                     f"{time.monotonic() - started:.0f}s chờ; chạy tiếp."
                 )
                 return snapshot, decision
@@ -747,11 +747,11 @@ class BookPipeline:
             if waited - last_logged >= CRITICAL_RAM_WAIT_LOG_SECONDS:
                 last_logged = waited
                 self.log(
-                    f"Vẫn đang chờ RAM: {snapshot.free_ram_gb:.1f} GB khả dụng sau "
-                    f"{waited / 60:.0f} phút."
+                    f"Vẫn đang chờ RAM: {snapshot.free_ram_gb:.1f}\u00a0GB khả dụng sau "
+                    f"{waited / 60:.0f}\u00a0phút."
                 )
         self.log(
-            f"Đã chờ RAM {CRITICAL_RAM_WAIT_TIMEOUT_SECONDS / 60:.0f} phút mà không hồi "
+            f"Đã chờ RAM {CRITICAL_RAM_WAIT_TIMEOUT_SECONDS / 60:.0f}\u00a0phút mà không hồi "
             "phục; dừng tại checkpoint an toàn."
         )
         return snapshot, decision
@@ -814,10 +814,10 @@ class BookPipeline:
                 last_logged = waited
                 self.log(
                     f"Vẫn đang chờ VRAM: {snapshot.gpu_free_mb} MiB khả dụng sau "
-                    f"{waited / 60:.0f} phút."
+                    f"{waited / 60:.0f}\u00a0phút."
                 )
         self.log(
-            f"Đã chờ VRAM {CRITICAL_RAM_WAIT_TIMEOUT_SECONDS / 60:.0f} phút mà không hồi "
+            f"Đã chờ VRAM {CRITICAL_RAM_WAIT_TIMEOUT_SECONDS / 60:.0f}\u00a0phút mà không hồi "
             "phục; coi như lỗi engine."
         )
         return False
@@ -2177,7 +2177,7 @@ class BookPipeline:
             # built for, and leaves nothing in the log to say why. Roughly four gigabytes
             # free is where this starts paying.
             self.log(
-                f"Bỏ qua chấm sẵn perceptual song song với ASR: chỉ {free_ram_gb:.1f} GB "
+                f"Bỏ qua chấm sẵn perceptual song song với ASR: chỉ {free_ram_gb:.1f}\u00a0GB "
                 f"RAM trống cho {len(wav_paths)} đoạn, không đủ cho hai tiến trình."
             )
             return
@@ -4974,8 +4974,8 @@ class BookPipeline:
             if by_ram < workers:
                 self.log(
                     f"Pool TTS thu còn {by_ram}/{workers} worker: RAM trống "
-                    f"{snapshot.free_ram_gb:.1f} GB, sàn {floor_ram_gb:.1f} GB, "
-                    f"mỗi worker ~{TTS_WORKER_RAM_GB:.1f} GB."
+                    f"{snapshot.free_ram_gb:.1f}\u00a0GB, sàn {floor_ram_gb:.1f}\u00a0GB, "
+                    f"mỗi worker ~{TTS_WORKER_RAM_GB:.1f}\u00a0GB."
                 )
                 workers = by_ram
             if workers < 2:
@@ -4993,7 +4993,7 @@ class BookPipeline:
                 self.log(
                     f"{short} không đủ cho pool TTS ({ceiling} worker mong muốn): "
                     f"VRAM còn {snapshot.gpu_free_mb} MiB, RAM trống "
-                    f"{snapshot.free_ram_gb:.1f} GB trên sàn {floor_ram_gb:.1f} GB; "
+                    f"{snapshot.free_ram_gb:.1f}\u00a0GB trên sàn {floor_ram_gb:.1f}\u00a0GB; "
                     "tổng hợp tuần tự chương này."
                 )
                 return None

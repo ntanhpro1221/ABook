@@ -418,7 +418,7 @@ class SynthesisPool:
             if self._lost_worker(original):
                 reason = "một tiến trình TTS bị mất giữa chừng"
             elif time.monotonic() - last_progress > self.stall_seconds:
-                reason = f"không có kết quả nào trong {self.stall_seconds:.0f} giây"
+                reason = f"không có kết quả nào trong {self.stall_seconds:.0f}\u00a0giây"
             else:
                 continue
             self._abandon()

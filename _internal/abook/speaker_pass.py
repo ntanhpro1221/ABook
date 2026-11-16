@@ -540,7 +540,7 @@ class SpeakerPass:
         path = find_tokenizer(self.runtime_root)
         if path is None and self.allow_downloads:
             target = self.runtime_root / "models" / TOKENIZER_FOLDER / TOKENIZER_FILE
-            self.log("Đang tải bộ đếm token của model người nói (11 MB) theo policy đã cho phép.")
+            self.log("Đang tải bộ đếm token của model người nói (11\u00a0MB) theo policy đã cho phép.")
             (self._tokenizer_fetch or _download_tokenizer)(target)
             path = find_tokenizer(self.runtime_root)
         if path is None:

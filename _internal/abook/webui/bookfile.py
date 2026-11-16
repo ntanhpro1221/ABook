@@ -1139,7 +1139,7 @@ def ensure_room(library: Path, size: int) -> None:
 
 
 def _gigabytes(size: int) -> str:
-    return f"{size / 1024**3:.1f} GB".replace(".", ",")
+    return f"{size / 1024**3:.1f}\u00a0GB".replace(".", ",")
 
 
 def _order(name: str) -> tuple[int, str]:

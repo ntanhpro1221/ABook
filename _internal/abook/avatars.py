@@ -135,7 +135,7 @@ def image_files(root: Path, cast: dict[str, Any]) -> dict[str, Path]:
 def normalize_image(data: bytes) -> bytes:
     """Decode bounded raster input, strip metadata, crop a square and encode 256px WebP."""
     if len(data) > MAX_IMAGE_BYTES:
-        raise ValueError("Ảnh quá lớn. Bạn chọn ảnh dưới 4 MB.")
+        raise ValueError("Ảnh quá lớn. Bạn chọn ảnh dưới 4\u00a0MB.")
     from PIL import Image, ImageOps
     with Image.open(io.BytesIO(data), formats=("PNG", "JPEG", "WEBP")) as image:
         if image.width * image.height > 16_000_000:

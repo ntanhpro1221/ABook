@@ -302,7 +302,7 @@ class Aligner:
         self.vocab: dict[str, int] = json.loads((folder / "vocab.json").read_text(encoding="utf-8"))
         config = json.loads((folder / "preprocessor_config.json").read_text(encoding="utf-8"))
         if not config.get("do_normalize") or config.get("sampling_rate") != SAMPLE_RATE or self.vocab.get("<pad>") != 0 or "|" not in self.vocab:
-            raise ValueError("model căn chữ không phải loại word_timing đã chép cứng (blank = <pad> = 0, dấu cách |, chuẩn hoá, 16 kHz)")
+            raise ValueError("model căn chữ không phải loại word_timing đã chép cứng (blank = <pad> = 0, dấu cách |, chuẩn hoá, 16\u00a0kHz)")
         self.blank = self.vocab["<pad>"]
         options = onnxruntime.SessionOptions()
         options.intra_op_num_threads = threads or max(1, min(8, (os.cpu_count() or 2) // 2))  # nửa số lõi logic, tối đa 8: máy vẫn dùng được trong lúc căn

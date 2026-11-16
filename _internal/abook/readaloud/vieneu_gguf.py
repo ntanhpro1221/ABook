@@ -192,7 +192,7 @@ def mono_samples(wav_bytes: bytes) -> Any:
     except (wave.Error, EOFError) as error:
         raise GgufError(f"server trả về không phải WAV ({error})") from error
     if width != 2 or rate != SAMPLE_RATE:
-        raise GgufError(f"WAV của server không phải 16-bit {SAMPLE_RATE} Hz ({width * 8}-bit {rate} Hz)")
+        raise GgufError(f"WAV của server không phải 16-bit {SAMPLE_RATE}\u00a0Hz ({width * 8}-bit {rate}\u00a0Hz)")
     data = np.frombuffer(frames, dtype="<i2").astype(np.float32) / 32768.0
     return data.reshape(-1, channels).mean(axis=1).astype(np.float32) if channels > 1 else data
 
@@ -249,7 +249,7 @@ class GgufEngine:
             except (OSError, urllib.error.URLError, http.client.HTTPException):
                 time.sleep(0.1)
         self._kill()
-        raise GgufError(f"server không sẵn sàng sau {START_TIMEOUT:.0f} giây")
+        raise GgufError(f"server không sẵn sàng sau {START_TIMEOUT:.0f}\u00a0giây")
 
     def _kill(self) -> None:
         process, self._process = self._process, None

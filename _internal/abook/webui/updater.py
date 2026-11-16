@@ -235,7 +235,7 @@ class Updater:
             size = part.stat().st_size
             if expected is not None and size != int(expected):
                 raise ConnectionError(f"gói tải dở: {size} / {expected} byte")
-            self.log(f"tải bản mới xong: {size} byte trong {time.monotonic() - started:.1f} s")
+            self.log(f"tải bản mới xong: {size} byte trong {time.monotonic() - started:.1f}\u00a0s")
             os.replace(part, target)
         finally:
             _discard(part)

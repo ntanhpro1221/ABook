@@ -104,8 +104,8 @@ FAST = "fast"  # "Bản tăng tốc": chỉ hiện trên máy chạy được (`
 NEEDS = {"turbo": ("libs", "g2p", "voices", "turbo"), "nano": ("libs", "g2p", "voices", "nano"), "aligner": ("libs", "aligner"),
          FAST: ("libs", "g2p", "voices", "turbo", "gguf")}
 CHOICE_TEXT = {
-    "turbo": ("Giọng VieNeu", "25 giọng, âm thanh 48 kHz - hay nhất"),
-    "nano": ("Giọng VieNeu Nano", "11 giọng, 24 kHz; ít tốn bộ nhớ, hợp máy ít lõi hơn VieNeu; tải nặng hơn."),
+    "turbo": ("Giọng VieNeu", "25 giọng, âm thanh 48\u00a0kHz - hay nhất"),
+    "nano": ("Giọng VieNeu Nano", "11 giọng, 24\u00a0kHz; ít tốn bộ nhớ, hợp máy ít lõi hơn VieNeu; tải nặng hơn."),
     "aligner": ("Tô từng chữ", "Chỉ đúng chữ đang đọc; chưa tải thì ước theo âm tiết, đôi khi lệch nhịp."),
     FAST: ("Bản tăng tốc", "Tạo giọng nhanh hơn, dùng ít bộ nhớ; cần VieNeu và máy Windows tương thích."),
 }

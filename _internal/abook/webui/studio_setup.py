@@ -202,18 +202,18 @@ SPEAKER_TOKENIZER = Download(TOKENIZER_FILE, TOKENIZER_URL, TOKENIZER_SHA256, TO
 # (mã, nhãn cho người dùng, ước lượng cho người dùng)
 STEPS: tuple[tuple[str, str, str], ...] = (
     ("check", "Kiểm tra máy", "card NVIDIA, chỗ trống trên ổ đĩa"),
-    ("assets", "Từ điển phát âm và giọng nghe thử", "15 MB"),
-    ("uv", "Công cụ cài đặt", "18 MB"),
-    ("git", "Git nhúng", "39 MB"),
-    ("python", "Python 3.11", "30 MB"),
-    ("vcruntime", "Thư viện C++ của Microsoft", "2 MB - đi kèm bộ cài"),
-    ("packages", "Thư viện làm sách", "~6 GB - bước lâu nhất"),
-    ("ollama", "Ollama", "1,5 GB - bản riêng của Studio"),
-    ("llm", "Model phân tích truyện và model xác định người nói", "~9 GB"),
-    ("voice", "Model giọng đọc", "~1 GB"),
-    ("asr", "Model nghe lại (Whisper)", "~3 GB"),
-    ("qa", "Model chấm chất lượng", "~1 GB"),
-    ("wordalign", "Model căn từng chữ khi nghe", "122 MB"),
+    ("assets", "Từ điển phát âm và giọng nghe thử", "15\u00a0MB"),
+    ("uv", "Công cụ cài đặt", "18\u00a0MB"),
+    ("git", "Git nhúng", "39\u00a0MB"),
+    ("python", "Python 3.11", "30\u00a0MB"),
+    ("vcruntime", "Thư viện C++ của Microsoft", "2\u00a0MB - đi kèm bộ cài"),
+    ("packages", "Thư viện làm sách", "~6\u00a0GB - bước lâu nhất"),
+    ("ollama", "Ollama", "1,5\u00a0GB - bản riêng của Studio"),
+    ("llm", "Model phân tích truyện và model xác định người nói", "~9\u00a0GB"),
+    ("voice", "Model giọng đọc", "~1\u00a0GB"),
+    ("asr", "Model nghe lại (Whisper)", "~3\u00a0GB"),
+    ("qa", "Model chấm chất lượng", "~1\u00a0GB"),
+    ("wordalign", "Model căn từng chữ khi nghe", "122\u00a0MB"),
     ("verify", "Kiểm tra lần cuối", "thử nạp mọi thứ"),
 )
 
@@ -243,7 +243,7 @@ class NoSpace(SetupError):
 
 
 def _megabytes(size: int) -> str:
-    return f"{(max(size, 0) + (1 << 20) - 1) >> 20} MB"
+    return f"{(max(size, 0) + (1 << 20) - 1) >> 20}\u00a0MB"
 
 
 # Lần tải không tới được máy chủ (không phân giải tên máy, hết giờ, kết nối bị ngắt) - cùng câu với điện thoại (PinnedFiles.NETWORK_FAILURE).
@@ -1276,7 +1276,7 @@ class StudioSetup:
         self.root.mkdir(parents=True, exist_ok=True)
         free = shutil.disk_usage(self.root).free
         if free < MIN_FREE_BYTES:
-            raise SetupError(f"Ổ đĩa của {self.root} còn {free / 1024**3:.0f} GB - Studio cần khoảng 35 GB trống.")
+            raise SetupError(f"Ổ đĩa của {self.root} còn {free / 1024**3:.0f}\u00a0GB - Studio cần khoảng 35\u00a0GB trống.")
 
     def ensure_assets(self) -> None:
         """Dữ liệu của Studio (ASSET_PATHS) có mặt trong mã của app: lúc cài xong, mỗi lần bắt đầu một cuốn, mỗi lần host mở -
@@ -1672,7 +1672,7 @@ class StudioSetup:
             step = int(done * 20 / max(1, total))
             if step != last[0]:
                 last[0] = step
-                report(f"  {self._detail or name}: {done / 1e9:.2f}/{total / 1e9:.2f} GB")
+                report(f"  {self._detail or name}: {done / 1e9:.2f}/{total / 1e9:.2f}\u00a0GB")
 
         self._set_progress = progress  # type: ignore[method-assign]
         self._install_published(model)

@@ -219,7 +219,7 @@ def ram_bytes() -> int:
 def cannot_use() -> str:
     """Rỗng nếu máy này bật được tuỳ chọn; không thì lý do (tiếng Việt)."""
     if ram_bytes() < MIN_RAM_BYTES:
-        return "cần máy có từ 8 GB RAM"
+        return "cần máy có từ 8\u00a0GB RAM"
     if music_student.package_dir() is None:
         return "chưa có chỗ đặt model trên máy này"
     return ""
