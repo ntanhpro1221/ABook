@@ -73,20 +73,37 @@ Item {
         }
         // Phần tử lặp ở các hàng anh em của một danh sách (cùng objectName: công tắc, nút, nhãn) phải đứng cùng một cột - một nhãn dài ngắn
         // khác nhau đứng trước đẩy mỗi hàng một x (01-11: "Tự chọn" ở 444/486/541 trên ảnh 1440).
+        // "Hàng anh em" = hai nhánh con cùng loại thành phần của cùng một cha (các delegate của một Repeater, các VoiceRow của một cột):
+        // cùng tên dưới hai nhánh KHÁC loại (đầu khối gập "Nhạc của tôi" và hàng trợ giúp MoreInfo "Nhạc riêng" có icon trong thân khối)
+        // không phải hai hàng của một danh sách, nên không so cột với nhau.
+        function kindOf(item) { return String(item).replace(/\(0x[0-9a-f]+.*$/i, "") }
         function sameColumn(list) {
             const groups = {}
-            function walk(item) {
+            function walk(item, path) {
                 if (!item.visible || item.opacity === 0) return
-                if (item !== list && item.objectName) (groups[item.objectName] = groups[item.objectName] || []).push(item.mapToItem(list, 0, 0).x)
-                for (const child of item.children || []) walk(child)
+                const here = path.concat([item])
+                if (item !== list && item.objectName)
+                    (groups[item.objectName] = groups[item.objectName] || []).push({x: item.mapToItem(list, 0, 0).x, path: here})
+                for (const child of item.children || []) walk(child, here)
             }
-            walk(list)
+            walk(list, [])
+            function siblingRows(a, b) {
+                let k = 0
+                while (k < a.path.length && k < b.path.length && a.path[k] === b.path[k]) ++k
+                return k < a.path.length && k < b.path.length && kindOf(a.path[k]) === kindOf(b.path[k])
+            }
             let compared = 0
             for (const name in groups) {
-                const xs = groups[name]
-                if (xs.length < 2) continue
-                ++compared
-                verify(Math.max(...xs) - Math.min(...xs) <= 0.5, list.objectName + ": '" + name + "' của các hàng lệch cột: " + xs.map(x => Math.round(x)).join("/"))
+                const hits = groups[name]
+                let paired = false
+                for (let i = 0; i < hits.length; ++i)
+                    for (let j = i + 1; j < hits.length; ++j) {
+                        if (!siblingRows(hits[i], hits[j])) continue
+                        paired = true
+                        verify(Math.abs(hits[i].x - hits[j].x) <= 0.5, list.objectName + ": '" + name + "' của các hàng lệch cột: "
+                            + hits.map(h => Math.round(h.x)).join("/"))
+                    }
+                if (paired) ++compared
             }
             return compared
         }
