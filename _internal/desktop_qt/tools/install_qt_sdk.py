@@ -106,6 +106,21 @@ def extract(archive: Path, destination: Path, version: str) -> None:
     print(f"EXTRACTED {archive.name}: {len(names)} entries", flush=True)
 
 
+def relocate_pkgconfig(root: Path) -> None:
+    """Point each .pc file at this SDK, using the build prefix the file itself declares.
+
+    .prl files already refer to $$[QT_INSTALL_LIBS], so they need no rewrite.
+    """
+    for path in root.glob("lib/pkgconfig/*.pc"):
+        text = path.read_text(encoding="utf-8")
+        declared = re.search(r"^prefix=(.*)$", text, flags=re.M)
+        if not declared or not declared.group(1).strip():
+            continue
+        fixed = text.replace(declared.group(1).strip(), root.as_posix())
+        if fixed != text:
+            path.write_text(fixed, encoding="utf-8", newline="\n")
+
+
 def configure(root: Path) -> dict:
     (root / "bin/qt.conf").write_text("[Paths]\nPrefix=..\n", encoding="ascii", newline="\n")
     config = root / "mkspecs/qconfig.pri"
@@ -113,13 +128,7 @@ def configure(root: Path) -> dict:
     text = re.sub(r"^QT_EDITION =.*$", "QT_EDITION = OpenSource", text, flags=re.M)
     text = re.sub(r"^QT_LICHECK =.*$", "QT_LICHECK =", text, flags=re.M)
     config.write_text(text, encoding="utf-8", newline="\n")
-    for pattern in ("lib/**/*.prl", "lib/pkgconfig/*.pc"):
-        for path in root.glob(pattern):
-            text = path.read_text(encoding="utf-8")
-            fixed = text.replace("c:/Users/qt/work/install/lib", "$$[QT_INSTALL_LIBS]" if path.suffix == ".prl" else str(root / "lib"))
-            fixed = fixed.replace("c:/Users/qt/work/install", str(root))
-            if fixed != text:
-                path.write_text(fixed, encoding="utf-8", newline="\n")
+    relocate_pkgconfig(root)
     target = root / "bin/target_qt.conf"
     if target.exists():
         raise ValueError(f"Unexpected cross-target configuration: inspect {target}")

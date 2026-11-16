@@ -84,3 +84,17 @@ def test_support_dll_is_installed_in_bin(tmp_path, monkeypatch):
     monkeypatch.setitem(sys.modules, 'py7zr', SimpleNamespace(SevenZipFile=lambda _: Packed()))
     installer.extract(tmp_path / 'd3dcompiler_47-x64.7z', tmp_path / 'sdk', installer.qt_version())
     assert destinations == [tmp_path / 'sdk/bin']
+
+
+def test_pkgconfig_prefix_is_read_from_the_file_not_assumed(tmp_path):
+    root = tmp_path / 'sdk'
+    (root / 'lib/pkgconfig').mkdir(parents=True)
+    build = 'Z:/build-host/qt-install'
+    pc = root / 'lib/pkgconfig/Qt6Core.pc'
+    pc.write_text(f'prefix={build}\nlibdir={build}/lib\nincludedir=${{prefix}}/include\n', encoding='utf-8')
+    plain = root / 'lib/pkgconfig/Other.pc'
+    plain.write_text('Name: other\n', encoding='utf-8')
+    installer.relocate_pkgconfig(root)
+    assert pc.read_text(encoding='utf-8') == (f'prefix={root.as_posix()}\nlibdir={root.as_posix()}/lib\n'
+                                              'includedir=${prefix}/include\n')
+    assert plain.read_text(encoding='utf-8') == 'Name: other\n'

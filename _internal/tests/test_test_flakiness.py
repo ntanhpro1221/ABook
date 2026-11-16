@@ -52,6 +52,17 @@ started.wait(5)
 ''')) == []
 
 
+def test_string_join_and_boolean_flags_are_not_thread_timeouts():
+    # tests/test_qt_keep_anchor.py 0.4.173: `found = True` elsewhere in the module made "\n".join(found) look like join(1).
+    assert list(python_patterns('''
+found = True
+done = True
+"\\n".join(found)
+worker.join(done)
+''')) == []
+    assert [rule for _, rule, _ in python_patterns("LIMIT = 1\nworker.join(LIMIT)\n")] == ["short-thread-timeout"]
+
+
 @pytest.mark.parametrize(("suffix", "source", "expected"), [
     (".kt", '''Thread.sleep(20)
 System.currentTimeMillis()

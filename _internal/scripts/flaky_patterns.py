@@ -100,10 +100,12 @@ def python_patterns(text):
             rules.append("wall-clock")
         if name in {"time.monotonic", "time.perf_counter", "time.monotonic_ns", "time.perf_counter_ns"}:
             rules.append("elapsed-clock")
-        if name.endswith((".wait", ".join", ".result")):
+        string_join = isinstance(node.func, ast.Attribute) and isinstance(node.func.value, ast.Constant) \
+            and isinstance(node.func.value.value, str)
+        if name.endswith((".wait", ".join", ".result")) and not string_join:
             duration = next((k.value for k in node.keywords if k.arg == "timeout"), node.args[0] if node.args else None)
             seconds = value(duration)
-            if isinstance(seconds, (int, float)) and 0 < seconds <= 1:
+            if isinstance(seconds, (int, float)) and not isinstance(seconds, bool) and 0 < seconds <= 1:
                 rules.append("short-thread-timeout")
             if isinstance(node.func, ast.Attribute) and isinstance(node.func.value, ast.Call) and _name(node.func.value.func).endswith("Event"):
                 rules.append("fixed-delay")
