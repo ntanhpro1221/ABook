@@ -49,7 +49,7 @@ Item {
             const player = createTemporaryObject(fakePlayerFactory, host)
             const tray = createTemporaryObject(trayFactory, host, {player: player, loaded: false})
             verify(tray)
-            compare(tray.actions.map(a => a.separator ? "|" : a.label), ["Mở ABook", "|", "Phát", "Lùi 15 giây", "Tới 15 giây", "Chương trước", "Chương sau", "|", "Cửa sổ mini", "|", "Thoát ABook"])
+            compare(tray.actions.map(a => a.separator ? "|" : a.label), ["Mở ABook", "|", "Phát", "Lùi 15\u00a0giây", "Tới 15\u00a0giây", "Chương trước", "Chương sau", "|", "Cửa sổ mini", "|", "Thoát ABook"])
             for (let i of [2, 3, 4, 5, 6, 8]) compare(tray.actions[i].enabled, false)
             tray.loaded = true; tray.playing = true
             compare(tray.actions[2].label, "Tạm dừng")

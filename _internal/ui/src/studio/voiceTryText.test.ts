@@ -17,20 +17,20 @@ describe("byGender", () => {
 
 describe("estimateText", () => {
   it("says the book's own pace is from this machine", () => {
-    expect(estimateText(25 * 60, true)).toBe("khoảng 25 phút trên máy này");
-    expect(estimateText(25 * 60)).toBe("khoảng 25 phút trên máy này");
+    expect(estimateText(25 * 60, true)).toBe("khoảng 25\u00a0phút trên máy này");
+    expect(estimateText(25 * 60)).toBe("khoảng 25\u00a0phút trên máy này");
   });
 
   it("says a guess is a guess, and a short job is under a minute", () => {
-    expect(estimateText(3 * 3600, false)).toBe("khoảng 3 giờ - ước chừng, vì cuốn chưa xong chương nào để đo");
-    expect(estimateText(30, true)).toBe("chưa tới 1 phút trên máy này");
+    expect(estimateText(3 * 3600, false)).toBe("khoảng 3\u00a0giờ - ước chừng, vì cuốn chưa xong chương nào để đo");
+    expect(estimateText(30, true)).toBe("chưa tới 1\u00a0phút trên máy này");
   });
 });
 
 describe("rerecordText", () => {
   it("names how many recorded lines a change records again", () => {
     expect(rerecordText("Noah", { lines: 1200, seconds: 2 * 3600, measured: true })).toBe(
-      "Đổi giọng là thu lại 1.200 câu đã thu của Noah, khoảng 2 giờ trên máy này.",
+      "Đổi giọng là thu lại 1.200 câu đã thu của Noah, khoảng 2\u00a0giờ trên máy này.",
     );
   });
 

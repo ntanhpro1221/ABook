@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
@@ -205,7 +206,8 @@ private fun Bar(label: String, score: Double, modifier: Modifier = Modifier) {
     Row(modifier.fillMaxWidth().heightIn(min = 28.dp), verticalAlignment = Alignment.CenterVertically) {
         BasicText(label, style = Abook.type.bodySmall.copy(color = colors.text2), modifier = Modifier.width(104.dp))
         LinearProgress(Modifier.weight(1f).height(6.dp)) { fraction }
-        ClockLabel("${MusicLibrary.percent(score)} %", style = Abook.type.bodySmall.copy(color = colors.text2), modifier = Modifier.width(48.dp).padding(start = Dim.s8))
+        // The score column grows with the text size (130 %): the value never wraps away from its unit.
+        ClockLabel(S.s_percent(MusicLibrary.percent(score)), style = Abook.type.bodySmall.copy(color = colors.text2), modifier = Modifier.widthIn(min = 48.dp).padding(start = Dim.s8).testTag("emotion_score"))
     }
 }
 
@@ -215,7 +217,7 @@ private fun Facts(track: MusicLibrary.Track, index: LibraryIndex) {
     val playlists = index.playlists.filter { track.link in it.links }.map { it.name }
     val vocals = (info.opt("vocals") as? Number)?.toDouble() ?: 0.0
     val rows: List<Pair<String, String?>> = listOfNotNull(
-        MusicLibrary.energyPercent(track.arousal)?.let { S.s_nang_luong_1b9cc9af to "$it %" },
+        MusicLibrary.energyPercent(track.arousal)?.let { S.s_nang_luong_1b9cc9af to S.s_percent(it) },
         track.bpm?.takeIf { it > 0 }?.let { S.s_nhip_8a75919d to S.s_0_nhip_phut_3c154e09(Math.round(it)) },
         track.style.takeIf { it.isNotEmpty() }?.let { S.s_phong_cach_d80ae8d9 to index.styleLabel(it) },
         track.duration?.let { S.s_do_dai_5e055f59 to Fmt.clock(it) },

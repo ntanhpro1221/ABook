@@ -23,7 +23,7 @@ it("shows each engine's numbers, marks the measured pick and offers the others",
   const html = renderToStaticMarkup(<QueryClientProvider client={client}><VoicePickCard backend={backend} /></QueryClientProvider>);
   expect(html).toContain("Giọng theo máy");
   expect(html).toContain("Máy chọn");
-  expect(html).toContain("Rõ 98% · Tự nhiên 3,2/5 · Nhanh gấp 5,0 lần · RAM đỉnh 830 MB");
+  expect(html).toContain("Rõ 98% · Tự nhiên 3,2/5 · Nhanh gấp 5,0 lần · RAM đỉnh 830\u00a0MB");
   expect(html).toContain("Chậm");
   expect(html.match(/Dùng giọng này/g)).toHaveLength(1); // bộ đang làm mặc định không có nút
   expect(html).toContain("Thử lại");

@@ -13,7 +13,7 @@ export function SheetMusic({ enabled, busy, level, onToggle, onLevel, children }
   return <SheetSection title={S.s_nhac_nen_271fb292}>
     <SheetSwitch label={S.s_bat_f26cbc4a} checked={enabled} disabled={busy} onChange={onToggle}/>
     <Collapse open={enabled}><div className="flex min-w-0 flex-col gap-2 [&_[data-player-menu-row]]:px-0">
-      <ValuePicker dense label={S.s_muc_nhac_nen_a45588ff} spec={{ min: LEVEL_MIN_DB, max: LEVEL_MAX_DB, step: LEVEL_STEP_DB, typical: [-30, -20, -10] }} value={level} format={v=>`${signedNumber(v)} dB`} onChange={onLevel}/>
+      <ValuePicker dense label={S.s_muc_nhac_nen_a45588ff} spec={{ min: LEVEL_MIN_DB, max: LEVEL_MAX_DB, step: LEVEL_STEP_DB, typical: [-30, -20, -10] }} value={level} format={v=>S.s_tone_db(signedNumber(v))} onChange={onLevel}/>
       {children}
     </div></Collapse>
   </SheetSection>;

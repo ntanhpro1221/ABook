@@ -240,7 +240,7 @@ Item {
             mouseRelease(ruler, x, ruler.height / 2)
             compare(picks.count, 1)
             compare(picker.value, 23)
-            compare(findChild(picker, "valueDisplay").Accessible.name, "Hẹn giờ ngủ: 23 phút. Chạm để gõ số")
+            compare(findChild(picker, "valueDisplay").Accessible.name, "Hẹn giờ ngủ: 23\u00a0phút. Chạm để gõ số")
         }
 
         function test_stepButtonsAndKeys() {

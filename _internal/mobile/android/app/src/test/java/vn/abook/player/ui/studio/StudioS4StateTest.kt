@@ -72,7 +72,7 @@ class StudioS4StateTest {
         assertEquals(UploadStatus.Waiting, StudioNewLogic.initial("a.epub", StudioNewLogic.UPLOAD_LIMIT))
         assertEquals(UploadStatus.TooBig, StudioNewLogic.initial("a.pdf", StudioNewLogic.UPLOAD_LIMIT + 1))
         assertEquals(UploadStatus.NotStory, StudioNewLogic.initial("anh.jpg", 10))
-        assertTrue(StudioNewText.LIMIT_NOTE.contains("17 MB"))
+        assertTrue(StudioNewText.LIMIT_NOTE.contains("17\u00a0MB"))
     }
 
     @Test fun twoFilesWithTheSameNameDoNotOverwriteEachOther() {
@@ -131,7 +131,7 @@ class StudioS4StateTest {
         state.add(listOf(PickedFile("lon.txt", StudioNewLogic.UPLOAD_LIMIT + 1) { ByteArrayInputStream(ByteArray(0)) }, pickText("anh.jpg", "x")))
         assertTrue(source.uploads.isEmpty())
         assertEquals(listOf(UploadStatus.TooBig, UploadStatus.NotStory), state.rows.map { it.status })
-        assertTrue(state.rows[0].problem.contains("17 MB"))
+        assertTrue(state.rows[0].problem.contains("17\u00a0MB"))
         assertFalse(state.canScan)
     }
 

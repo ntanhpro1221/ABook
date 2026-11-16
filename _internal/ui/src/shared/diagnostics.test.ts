@@ -41,10 +41,10 @@ describe("summaryRows", () => {
     expect(rows["Điện thoại"]).toBe("OPPO CPH2573 · Android 14 (API 34)");
     expect(rows["Pin"]).toBe("63%");
     expect(rows["Mạng"]).toBe("di động + VPN · tính cước");
-    expect(rows["Chỗ trống"]).toContain("12 GB");
+    expect(rows["Chỗ trống"]).toContain("12\u00a0GB");
     expect(rows["Thông báo"]).toBe("đang bật");
     expect(rows["Chạy nền"]).toBe("miễn tối ưu pin: không · bị hạn chế chạy nền");
-    expect(rows["Đang nghe"]).toBe("Tắt đèn · chương 3 · 2 phút 5 giây · đang phát");
+    expect(rows["Đang nghe"]).toBe("Tắt đèn · chương 3 · 2\u00a0phút 5\u00a0giây · đang phát");
     expect(rows["Việc nền"]).toBe("1 đang chạy · 1 đang chờ · 1 hỏng");
     expect(rows["Cho máy khác nghe thư viện"]).toBe("đang bật · 2 máy đã ghép");
     expect(rows["Lần tắt gần nhất"]).toContain("LOW_MEMORY");

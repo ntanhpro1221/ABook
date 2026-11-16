@@ -638,7 +638,7 @@ class NowPlayingUiTest {
 
     @Test fun controlsUseRealModelActionsAndValuesApplyAtOnce() {
         show()
-        rule.onNodeWithContentDescription("Tới 15 giây").performClick()
+        rule.onNodeWithContentDescription("Tới 15\u00a0giây").performClick()
         assertTrue(model.actions.contains("skip:15"))
         rule.onNodeWithTag("player_speed").performClick()
         rule.onNodeWithTag("speed_picker_chip_1,5").performClick()
@@ -861,7 +861,7 @@ class NowPlayingUiTest {
         val prepare = PrepareState(source, CoroutineScope(Dispatchers.Unconfined))
         show(sheet = PlayerSheet.Voice, base = prepareScene(), prepare = prepare)
         rule.onNodeWithText(PrepareText.INTRO).assertIsDisplayed()
-        rule.onNodeWithText("30 phút nghe · máy cần khoảng 25 phút.").assertIsDisplayed()
+        rule.onNodeWithText("30\u00a0phút nghe · máy cần khoảng 25\u00a0phút.").assertIsDisplayed()
         rule.onNodeWithText("Làm trước 2 chương").assertIsDisplayed()
         rule.onNodeWithText("Chỉ khi đang sạc").assertIsDisplayed()
         shot("prepare_light")

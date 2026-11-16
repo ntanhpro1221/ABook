@@ -24,7 +24,7 @@ describe("tải sẵn nhạc nền (soát UX a23 B12)", () => {
   it("báo MB đã tải / tổng khi biết cỡ, không thì đếm bài", () => {
     const mb = 1024 * 1024;
     const known = { active: true, done: 1, total: 3, doneBytes: 12 * mb, totalBytes: 30 * mb };
-    expect(downloadText(known)).toBe("Đang tải sẵn nhạc nền: 12 MB / 30 MB (bài 2/3)");
+    expect(downloadText(known)).toBe("Đang tải sẵn nhạc nền: 12\u00a0MB / 30\u00a0MB (bài 2/3)");
     expect(downloadShare(known)).toBeCloseTo(0.4);
     const unknown = { active: true, done: 2, total: 2, doneBytes: 0, totalBytes: 0 };
     expect(downloadText(unknown)).toBe("Đang tải sẵn nhạc nền: bài 2/2");

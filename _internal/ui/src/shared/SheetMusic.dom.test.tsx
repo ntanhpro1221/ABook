@@ -23,7 +23,7 @@ it('keeps the music range and commits only on confirmation, with a collapsible n
     const slider = host.querySelector('[role="slider"]')!;
     expect(slider.getAttribute('aria-valuemin')).toBe('-40');
     expect(slider.getAttribute('aria-valuemax')).toBe('-6');
-    expect(slider.getAttribute('aria-valuetext')).toBe('−20 dB');
+    expect(slider.getAttribute('aria-valuetext')).toBe('−20\u00a0dB');
     await act(async () => slider.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true })));
     expect(commits).toHaveBeenLastCalledWith(-19);
     const link = host.querySelector<HTMLButtonElement>('button[aria-label="Chọn nhạc"]')!;

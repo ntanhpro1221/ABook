@@ -18,11 +18,11 @@ function studioFit(gpu) {
     }
     if (!(gpu.memory > 0)) return {level: "maybe", line: "Card " + gpu.name + S.s_chua_doc_duoc_bo_nho_cua_card_chua_biet_co_6aad987d}
     const gb = gpu.memory / Math.pow(2, 30)
-    const shown = gpu.name + " (" + Math.round(gb) + " GB)"
-    if (gb >= TESTED_GB - 0.5) return {level: "ok", line: "Card " + shown + S.s_du_de_lam_sach_noi_da_thu_tren_card_da727240 + TESTED_GB + " GB)."}
+    const shown = gpu.name + " (" + Math.round(gb) + "\u00a0GB)"
+    if (gb >= TESTED_GB - 0.5) return {level: "ok", line: "Card " + shown + S.s_du_de_lam_sach_noi_da_thu_tren_card_da727240 + TESTED_GB + "\u00a0GB)."}
     if (gb >= MIN_GB - 0.5) return {level: "maybe", line: "Card " + shown + S.s_co_the_chay_duoc_nhung_chua_thu_tren_card_68d4fe61 + TESTED_GB + S.s_gb_co_the_cham_cd510682}
-    const reason = "card " + shown + S.s_it_bo_nho_hon_muc_toi_thieu_f038c1c3 + MIN_GB + " GB"
-    return {level: "no", line: "Card " + shown + S.s_it_bo_nho_hon_muc_toi_thieu_d079c3f4 + MIN_GB + " GB.", reason: reason}
+    const reason = "card " + shown + S.s_it_bo_nho_hon_muc_toi_thieu_f038c1c3 + MIN_GB + "\u00a0GB"
+    return {level: "no", line: "Card " + shown + S.s_it_bo_nho_hon_muc_toi_thieu_d079c3f4 + MIN_GB + "\u00a0GB.", reason: reason}
 }
 /** Câu nói thật khi máy không làm sách nói được - MỘT câu cho trình tạo sách, bước cuối và thẻ Cài Studio. */
 function noStudioLine(reason) { return S.s_may_nay_khong_lam_sach_noi_duoc_d4aa86af + reason + S.s_ban_van_nghe_ngay_moi_sach_8376f422 }

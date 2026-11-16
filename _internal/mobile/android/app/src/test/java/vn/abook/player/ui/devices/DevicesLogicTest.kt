@@ -58,9 +58,9 @@ class DevicesLogicTest {
     @Test
     fun `a book line gives chapters, length and the size to download`() {
         val book = RemoteBook("a", title = "A", chaptersAvailable = 3, chaptersTotal = 10, duration = 5400.0, bytes = 40L * 1024 * 1024)
-        assertEquals("3/10 chương · 1 giờ 30 phút · 40 MB", book.detail)
-        assertEquals("3/10 chương · 1 giờ 30 phút", book.copy(downloaded = true).detail)
-        assertEquals("3/10 chương · 1 giờ 30 phút · 40 MB · đang làm", book.copy(producing = true).detail)
+        assertEquals("3/10 chương · 1\u00a0giờ 30\u00a0phút · 40\u00a0MB", book.detail)
+        assertEquals("3/10 chương · 1\u00a0giờ 30\u00a0phút", book.copy(downloaded = true).detail)
+        assertEquals("3/10 chương · 1\u00a0giờ 30\u00a0phút · 40\u00a0MB · đang làm", book.copy(producing = true).detail)
     }
 
     // ---- ghép ----
@@ -115,7 +115,7 @@ class DevicesLogicTest {
         assertEquals("Vẫn bỏ ghép, bỏ thay đổi", copy.discard)
         assertTrue(copy.edited)
         assertTrue(copy.lines.any { it.contains("2 cuốn có 3 thay đổi chưa gửi về Máy phụ sẽ mất: “Sách A”, “Sách B”.") })
-        assertTrue(copy.lines.any { it.startsWith("2 cuốn của Máy phụ sẽ rời Thư viện, và 80 MB đã tải về điện thoại này sẽ bị xoá.") })
+        assertTrue(copy.lines.any { it.startsWith("2 cuốn của Máy phụ sẽ rời Thư viện, và 80\u00a0MB đã tải về điện thoại này sẽ bị xoá.") })
         assertTrue(copy.lines.any { it.startsWith("Chỗ nghe của 1 cuốn vẫn giữ") })
     }
 
@@ -139,7 +139,7 @@ class DevicesLogicTest {
         assertEquals("Bỏ ghép", copy.discard)
         assertFalse(copy.edited)
         assertNull(copy.send)
-        assertTrue(copy.lines.single().contains("dưới 1 MB"))
+        assertTrue(copy.lines.single().contains("dưới 1\u00a0MB"))
     }
 
     @Test

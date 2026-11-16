@@ -411,7 +411,7 @@ private slots:
         QCOMPARE(rig.player->clock()->sleepLeft(), 300.0);
         QCOMPARE(rig.player->sleepMinutes(), 5);
         QCOMPARE(rig.player->sleepExtendMinutes(), 5);
-        QCOMPARE(rig.player->notice(), QStringLiteral("Hẹn lại 5 phút"));
+        QCOMPARE(rig.player->notice(), QStringLiteral("Hẹn lại 5\u00a0phút"));
     }
 
     void extendSleepInChapterModeCountsTheSettingsStep() {
@@ -600,7 +600,7 @@ private slots:
         rig.player->setSleep(QStringLiteral("chapter"));
         rig.player->extendSleep();
         QCOMPARE(rig.player->clock()->sleepLeft(), 900.0); // hết chương: về "Mỗi lần nghe thêm"
-        QCOMPARE(rig.player->notice(), QStringLiteral("Hẹn lại 15 phút"));
+        QCOMPARE(rig.player->notice(), QStringLiteral("Hẹn lại 15\u00a0phút"));
         rig.run(60);
         rig.player->pause();
         const double stopped = rig.out.pos;

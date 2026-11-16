@@ -36,7 +36,7 @@ export function studioFit(gpu: StudioGpu | null): StudioFit {
   }
   if (!(gpu.memory > 0)) return { level: "maybe", line: S.s_card_0_chua_doc_duoc_bo_nho_cua_card_chua_4cd85240(gpu.name) };
   const gb = cardGb(gpu.memory);
-  const shown = `${gpu.name} (${Math.round(gb)} GB)`;
+  const shown = `${gpu.name} (${Math.round(gb)}\u00a0GB)`;
   if (gb >= STUDIO_TESTED_GB - 0.5) return { level: "ok", line: S.s_card_0_du_de_lam_sach_noi_da_thu_tren_card_b5a4639b(shown, STUDIO_TESTED_GB) };
   if (gb >= STUDIO_MIN_GB - 0.5) {
     return { level: "maybe", line: S.s_card_0_co_the_chay_duoc_nhung_chua_thu_tre_de6af127(shown, STUDIO_TESTED_GB) };

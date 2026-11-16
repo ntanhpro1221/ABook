@@ -70,8 +70,8 @@ QVariantList modelActions() {
     };
     auto separator = [] { return QVariant(QVariantMap{{QStringLiteral("separator"), true}}); };
     return {item(QStringLiteral("open"), QStringLiteral("Mở ABook"), true), separator(),
-            item(QStringLiteral("play"), QStringLiteral("Phát"), true), item(QStringLiteral("back"), QStringLiteral("Lùi 15 giây"), true),
-            item(QStringLiteral("forward"), QStringLiteral("Tới 15 giây"), true), item(QStringLiteral("previous"), QStringLiteral("Chương trước"), false),
+            item(QStringLiteral("play"), QStringLiteral("Phát"), true), item(QStringLiteral("back"), QStringLiteral("Lùi 15\u00a0giây"), true),
+            item(QStringLiteral("forward"), QStringLiteral("Tới 15\u00a0giây"), true), item(QStringLiteral("previous"), QStringLiteral("Chương trước"), false),
             item(QStringLiteral("next"), QStringLiteral("Chương sau"), true), separator(),
             item(QStringLiteral("mini"), QStringLiteral("Cửa sổ mini"), true), separator(),
             item(QStringLiteral("quit"), QStringLiteral("Thoát ABook"), true)};

@@ -47,12 +47,12 @@ it("queues reset after the pending write and keeps the final server value and th
     await act(async () => writes[0].finish());
     await flush();
     expect(writes.map((w) => w.level)).toEqual([-19, -20]);
-    expect(host.textContent).toContain("-20 dB (mặc định)");
+    expect(host.textContent).toContain("-20\u00a0dB (mặc định)");
     await act(async () => writes[1].finish());
     await flush();
     expect(server).toBe(-20);
     expect(client.getQueryData(["listen", "edit-music", "book"])).toMatchObject({ levelDb: -20 });
-    expect(host.textContent).toContain("-20 dB (mặc định)");
+    expect(host.textContent).toContain("-20\u00a0dB (mặc định)");
   } finally {
     await act(async () => root.unmount());
     client.clear();

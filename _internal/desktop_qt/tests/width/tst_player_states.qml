@@ -115,7 +115,7 @@ Item {
             WidthNet.advance(2); verify(countdown.text !== before)
             Player.pause(); const paused = countdown.text; WidthNet.advance(2); compare(countdown.text, paused)
             Nav.back(); tryCompare(sleep, "open", false)
-            compare(findChild(fade, "playerFadeExtend").text, "Hẹn lại 1 phút")
+            compare(findChild(fade, "playerFadeExtend").text, "Hẹn lại 1\u00a0phút")
             click(findChild(fade, "playerFadeExtend")); verify(!Player.fading); verify(Player.clock.sleepLeft > 55 && Player.clock.sleepLeft <= 60)
         }
         function test_sidebar_loading_failure_states_and_no_hidden_polling() {

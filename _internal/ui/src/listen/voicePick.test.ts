@@ -28,9 +28,9 @@ describe("Giọng theo máy", () => {
   });
 
   it("writes the numbers as the listener reads them", () => {
-    expect(rowNumbers(row())).toBe("Rõ 97% · Tự nhiên 3,3/5 · Nhanh gấp 4,0 lần · RAM +530 MB");
-    expect(rowNumbers(row({ peakRamMb: 830 }))).toContain("RAM đỉnh 830 MB");
-    expect(rowNumbers(row({ rtf: 1.2, cer: null, natural: null }))).toBe("Độ rõ: chưa đo · Tự nhiên: chưa đo · Chậm: 1,2 giây cho mỗi giây nghe · RAM +530 MB");
+    expect(rowNumbers(row())).toBe("Rõ 97% · Tự nhiên 3,3/5 · Nhanh gấp 4,0 lần · RAM +530\u00a0MB");
+    expect(rowNumbers(row({ peakRamMb: 830 }))).toContain("RAM đỉnh 830\u00a0MB");
+    expect(rowNumbers(row({ rtf: 1.2, cer: null, natural: null }))).toBe("Độ rõ: chưa đo · Tự nhiên: chưa đo · Chậm: 1,2\u00a0giây cho mỗi giây nghe · RAM +530\u00a0MB");
     expect(rowNumbers(row({ verdict: "error", error: "model hỏng" }))).toBe("Thử không được: model hỏng");
     expect(rowNumbers(row({ measured: false }))).toBe("Chưa thử trên máy này.");
   });

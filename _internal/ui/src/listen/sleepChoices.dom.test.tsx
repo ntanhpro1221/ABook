@@ -79,7 +79,7 @@ it("số phút tự do: gõ 23 rồi Enter là đặt 23 phút; ngoài biên th�
   again.value = "999";
   await act(async () => again.dispatchEvent(new KeyboardEvent("keydown", { key: "Enter", bubbles: true })));
   expect(onSet).toHaveBeenLastCalledWith({ kind: "minutes", minutes: 240 });
-  expect(document.querySelector("[data-value-clamped]")?.textContent).toBe("Trong khoảng 1 phút–240 phút");
+  expect(document.querySelector("[data-value-clamped]")?.textContent).toBe("Trong khoảng 1\u00a0phút–240\u00a0phút");
 });
 
 it("phím trên thước: mũi tên một bước, PageUp mười bước", async () => {

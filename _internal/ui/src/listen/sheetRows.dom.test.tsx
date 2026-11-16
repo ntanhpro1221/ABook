@@ -21,7 +21,7 @@ it("V2 mức nhạc: thanh trượt liên tục thay cho nút từng mức", () 
   const html = renderToStaticMarkup(<MusicLevelRow level={-12} disabled={false} onChange={() => undefined} />);
   const host = document.createElement("div");
   host.innerHTML = html;
-  expect(host.querySelector('[role="slider"]')?.getAttribute("aria-valuetext")).toBe("To, -12 dB");
+  expect(host.querySelector('[role="slider"]')?.getAttribute("aria-valuetext")).toBe("To, -12\u00a0dB");
   expect(host.querySelectorAll("[data-sheet-choice]")).toHaveLength(0);
 });
 

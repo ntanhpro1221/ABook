@@ -35,18 +35,20 @@ export function AudioFxPanel({setVolume,music,leaveGuard}:{setVolume:(value:numb
     <FxSlider label={S.s_can_bang_8b88211d} spec={VALUE_SPECS.balance} value={Math.round(fx.balance*100)} format={formatBalance} onChange={v=>update({balance:v/100})}/>
     <FxSwitch label={S.s_copy_289e1cff4cbc} checked={fx.skipSilence} hint={S.s_copy_b09b5fb2264a} onChange={skipSilence=>update({skipSilence})}/>
     <Collapse open={fx.skipSilence}>
-      <FxSlider label={S.s_copy_8e18e6dd7fd9} spec={VALUE_SPECS.silenceDb} value={fx.silenceDb} suffix=" dBFS" onChange={silenceDb=>update({silenceDb})}/>
-      <FxSlider label={S.s_copy_19adc1b298a9} spec={VALUE_SPECS.silenceSeconds} value={fx.silenceSeconds} suffix=" s" onChange={silenceSeconds=>update({silenceSeconds})}/>
-      <FxSlider label={S.s_copy_483cdfec9d5f} spec={capped(VALUE_SPECS.keepSeconds,fx.silenceSeconds)} value={fx.keepSeconds} suffix=" s" onChange={keepSeconds=>update({keepSeconds})}/>
+      <FxSlider label={S.s_copy_8e18e6dd7fd9} spec={VALUE_SPECS.silenceDb} value={fx.silenceDb} suffix="\u00a0dBFS" onChange={silenceDb=>update({silenceDb})}/>
+      <FxSlider label={S.s_copy_19adc1b298a9} spec={VALUE_SPECS.silenceSeconds} value={fx.silenceSeconds} suffix={SECONDS} onChange={silenceSeconds=>update({silenceSeconds})}/>
+      <FxSlider label={S.s_copy_483cdfec9d5f} spec={capped(VALUE_SPECS.keepSeconds,fx.silenceSeconds)} value={fx.keepSeconds} suffix={SECONDS} onChange={keepSeconds=>update({keepSeconds})}/>
     </Collapse>
     <FxSwitch label={S.s_copy_0aedb2b2cf2b} checked={audioBookOnly()} onChange={value=>{try{setAudioBookOnly(value);}catch{toast.error(S.s_copy_c669a3bf438d);}}}/>
     </SheetSection>
     <Button variant="ghost" size="sm" className="self-start px-0" onClick={()=>deletion.confirm({title:S.s_reset_question,description:S.s_reset_detail,label:S.s_ve_mac_dinh_4eb6b300,run:()=>{resetAudioFx();setVolume(1);}})}>{S.s_ve_mac_dinh_4eb6b300}</Button>
   </>}</div></MotionRegion>;
 }
+/** Đơn vị dính số (DESIGN "Số và đơn vị"): không xuống dòng giữa số và đơn vị. */
+const DECIBELS = '\u00a0dB', SECONDS = '\u00a0s';
 /** Núm âm thanh = bộ chọn giá trị hàng gọn (DESIGN mục 6): tên + giá trị (chạm để gõ), thước giữa -/+, chip tiêu biểu.
  *  Thanh có hai phía (Cao độ, ngưỡng dBFS): số đang chọn có dấu, dấu trừ thật. */
-function FxSlider({format,label,spec,value,suffix=' dB',disabled=false,onChange}:{label:string;spec:ValueSpec;value:number;suffix?:string;format?:(v:number)=>string;disabled?:boolean;onChange:(value:number)=>void}) {
+function FxSlider({format,label,spec,value,suffix=DECIBELS,disabled=false,onChange}:{label:string;spec:ValueSpec;value:number;suffix?:string;format?:(v:number)=>string;disabled?:boolean;onChange:(value:number)=>void}) {
   return <ValuePicker dense spec={spec} value={value} disabled={disabled} label={label} format={format ?? (v=>`${spec.min<0?signedNumber(v):formatNumber(spec,v)}${suffix}`)} chipLabel={v=>formatNumber(spec,v)} onPreview={onChange} onChange={onChange}/>;
 }
 /** "Giữ khoảng nghỉ" không quá "Dài tối thiểu". */

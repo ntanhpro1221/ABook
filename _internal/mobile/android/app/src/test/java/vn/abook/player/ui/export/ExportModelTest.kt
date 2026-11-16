@@ -28,10 +28,10 @@ class ExportModelTest {
 
     @Test
     fun `spoken duration`() {
-        assertEquals("dưới 1 phút", ExportText.spokenDuration(20))
-        assertEquals("khoảng 12 phút", ExportText.spokenDuration(12 * 60L))
-        assertEquals("khoảng 1 giờ 20 phút", ExportText.spokenDuration(80 * 60L))
-        assertEquals("khoảng 2 giờ", ExportText.spokenDuration(2 * 3600L))
+        assertEquals("dưới 1\u00a0phút", ExportText.spokenDuration(20))
+        assertEquals("khoảng 12\u00a0phút", ExportText.spokenDuration(12 * 60L))
+        assertEquals("khoảng 1\u00a0giờ 20\u00a0phút", ExportText.spokenDuration(80 * 60L))
+        assertEquals("khoảng 2\u00a0giờ", ExportText.spokenDuration(2 * 3600L))
     }
 
     @Test
@@ -47,8 +47,8 @@ class ExportModelTest {
 
     @Test
     fun `space text names the free space needed`() {
-        assertTrue(ExportText.spaceText(plan(bytes = 600L * 1048576)).contains("600 MB"))
-        assertTrue(ExportText.spaceText(plan(bytes = 3L * 1073741824)).contains("3 GB"))
+        assertTrue(ExportText.spaceText(plan(bytes = 600L * 1048576)).contains("600\u00a0MB"))
+        assertTrue(ExportText.spaceText(plan(bytes = 3L * 1073741824)).contains("3\u00a0GB"))
     }
 
     @Test
@@ -105,7 +105,7 @@ class ExportModelTest {
     fun `audiobook progress names the chapter, the percent and what it waits for`() {
         val base = event(ExportKind.Audiobook) { copy(phase = "voice", chapter = 3, chapters = 12, percent = 27) }
         assertEquals("Chương 3/12 · 27%", ExportText.progress(base).text)
-        assertEquals("Chương 3/12 · 27% · còn khoảng 2 giờ", ExportText.progress(base.copy(secondsLeft = 7200)).text)
+        assertEquals("Chương 3/12 · 27% · còn khoảng 2\u00a0giờ", ExportText.progress(base.copy(secondsLeft = 7200)).text)
         assertEquals("Chương 3/12 · 27% · nhường cho chương đang nghe", ExportText.progress(base.copy(waiting = "listening")).text)
         assertEquals("Chương 3/12 · 27% · Đang chờ mạng", ExportText.progress(base.copy(waiting = "network")).text)
         assertEquals("Tạm nhường cho chương đang nghe", ExportText.progress(base.copy(waiting = "listening")).spoken)
@@ -153,7 +153,7 @@ class ExportModelTest {
     fun `m4b finished names the file and its size`() {
         val done = ExportText.finished(event { copy(finished = true, name = "Truyện.m4b", size = 3L * 1048576, chapters = 6, chaptersTotal = 6) })
         assertEquals("Đã xuất M4B", done.title)
-        assertEquals(listOf("Truyện.m4b · 3 MB"), done.lines)
+        assertEquals(listOf("Truyện.m4b · 3\u00a0MB"), done.lines)
         assertTrue(done.notes.isEmpty())
     }
 

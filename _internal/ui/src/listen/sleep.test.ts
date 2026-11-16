@@ -32,10 +32,10 @@ describe("nhãn trên nút hẹn giờ", () => {
   it("có đơn vị, không giống giờ đồng hồ", () => {
     const at = 1_000_000;
     const mode = remoteSleepMode({ kind: "minutes", minutes: 15, left: 891, counting: true }, at); // 14:51
-    expect(sleepButtonLabel(mode, at)).toBe("15 phút");
-    expect(sleepButtonLabel(mode, at + 40_000)).toBe("15 phút");
-    expect(sleepButtonLabel(mode, at + 120_000)).toBe("13 phút");
-    expect(sleepButtonLabel(mode, at + 850_000)).toBe("41 giây");
+    expect(sleepButtonLabel(mode, at)).toBe("15\u00a0phút");
+    expect(sleepButtonLabel(mode, at + 40_000)).toBe("15\u00a0phút");
+    expect(sleepButtonLabel(mode, at + 120_000)).toBe("13\u00a0phút");
+    expect(sleepButtonLabel(mode, at + 850_000)).toBe("41\u00a0giây");
     expect(sleepButtonLabel({ kind: "chapter", chapters: 1 }, at)).toBe("Hết chương");
     expect(sleepButtonLabel({ kind: "off" }, at)).toBe("");
   });
@@ -44,11 +44,11 @@ describe("nhãn trên nút hẹn giờ", () => {
     const at = 1_000_000;
     const mode = remoteSleepMode({ kind: "minutes", minutes: 5, left: 59.5, counting: false }, at);
     expect(sleepLabel(mode, at)).toBe("1:00");
-    expect(sleepButtonLabel(mode, at)).toBe("1 phút");
-    expect(sleepSpoken(mode, at)).toBe("Hẹn giờ ngủ: còn 1 phút");
+    expect(sleepButtonLabel(mode, at)).toBe("1\u00a0phút");
+    expect(sleepSpoken(mode, at)).toBe("Hẹn giờ ngủ: còn 1\u00a0phút");
     const later = remoteSleepMode({ kind: "minutes", minutes: 5, left: 59, counting: false }, at);
-    expect(sleepButtonLabel(later, at)).toBe("59 giây");
-    expect(sleepSpoken(later, at)).toBe("Hẹn giờ ngủ: còn 59 giây");
+    expect(sleepButtonLabel(later, at)).toBe("59\u00a0giây");
+    expect(sleepSpoken(later, at)).toBe("Hẹn giờ ngủ: còn 59\u00a0giây");
   });
 });
 
@@ -74,7 +74,7 @@ describe("nghe thêm là hẹn lại, không cộng dồn", () => {
     const longer = sleepExtended(mode, 5, false, at);
     expect(minutesLeft(longer, at)).toBeCloseTo(30, 5);
     expect(sleepExtendMinutes(mode, 5)).toBe(30);
-    expect(sleepExtendLabel(sleepExtendMinutes(mode, 5))).toBe("Hẹn lại 30 phút");
+    expect(sleepExtendLabel(sleepExtendMinutes(mode, 5))).toBe("Hẹn lại 30\u00a0phút");
   });
 
   it("đồng hồ đang dừng vẫn về đúng số đã hẹn và vẫn dừng", () => {
@@ -93,7 +93,7 @@ describe("nghe thêm là hẹn lại, không cộng dồn", () => {
 
 
   it("nhãn nút chung một chữ cho mọi nơi", () => {
-    expect(sleepExtendLabel(10)).toBe("Hẹn lại 10 phút");
+    expect(sleepExtendLabel(10)).toBe("Hẹn lại 10\u00a0phút");
   });
 });
 

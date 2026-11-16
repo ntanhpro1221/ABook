@@ -6,7 +6,7 @@ import { attachSilenceSkip } from './silenceSkip';
 import { createStereoMatrix } from './audioFxProcessor.js';
 
 export const FX_FREQUENCIES = TONE_CATALOG.frequencies;
-export const FX_BANDS = ['80 Hz','250 Hz','1 kHz','4 kHz','12 kHz'];
+export const FX_BANDS = [S.s_tone_band_0,S.s_tone_band_1,S.s_tone_band_2,S.s_tone_band_3,S.s_tone_band_4];
 export const FX_LABELS = BUILTIN_TONES.map(p=>p.name);
 export const FX_PRESETS = BUILTIN_TONES.map(p=>p.bands);
 export interface AudioFxSettings { enabled:boolean; preset:number; bands:number[]; bass:number; boost:number; pitch:number; volume:number; speed:number; mono:boolean; balance:number; skipSilence:boolean; silenceDb:number; silenceSeconds:number; keepSeconds:number }

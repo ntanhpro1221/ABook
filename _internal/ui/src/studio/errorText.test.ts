@@ -46,10 +46,10 @@ describe("friendlyError", () => {
   it("đĩa đầy của SQLite và cổng tài nguyên được nhận là thiếu đĩa, nói số GB còn lại (a96)", () => {
     expect(friendlyError("sqlite3.OperationalError: database or disk is full").summary).toBe("Ổ đĩa hết chỗ trống.");
     const gate = friendlyError("disk free 4.0 GB", true);
-    expect(gate.summary).toBe("Ổ đĩa chứa thư viện sách chỉ còn 4 GB.");
-    expect(friendlyError("disk free 4.1 GB", true).summary).toBe("Ổ đĩa chứa thư viện sách chỉ còn 4,1 GB.");
+    expect(gate.summary).toBe("Ổ đĩa chứa thư viện sách chỉ còn 4\u00a0GB.");
+    expect(friendlyError("disk free 4.1 GB", true).summary).toBe("Ổ đĩa chứa thư viện sách chỉ còn 4,1\u00a0GB.");
     expect(gate.hint).toContain("Giải phóng thêm dung lượng");
-    expect(friendlyError("disk free 8.0 GB", true, true).hint).not.toMatch(/[Bb]ấm Tiếp tục/);
+    expect(friendlyError("disk free 8.0\u00a0GB", true, true).hint).not.toMatch(/[Bb]ấm Tiếp tục/);
   });
 
   it("model phân tích không sẵn sàng: không khẳng định là lỗi kết nối; Studio biết model mất thì nói thẳng và chỉ Sửa Studio (a96)", () => {

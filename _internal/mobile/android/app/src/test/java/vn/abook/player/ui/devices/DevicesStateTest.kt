@@ -513,7 +513,7 @@ class DevicesStateTest {
         val summary = devices.summary.value
         assertEquals("Đã nối Máy bàn", summary.pair)
         assertEquals("Đang bật · 2 máy", summary.sharing)
-        assertEquals("Sách 300 MB · còn trống 10 GB", summary.storageLine)
+        assertEquals("Sách 300\u00a0MB · còn trống 10\u00a0GB", summary.storageLine)
         assertEquals("Điện thoại của tôi", summary.deviceName)
     }
 

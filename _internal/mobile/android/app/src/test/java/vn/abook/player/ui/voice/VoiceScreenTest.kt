@@ -117,7 +117,7 @@ class VoiceScreenTest {
         showVoice(dark)
         scrollTo("voice_keys")
         rule.onNodeWithTag("module_vieneu_turbo").assertIsDisplayed()
-        rule.onNodeWithText("Tải (189 MB)").assertIsDisplayed()
+        rule.onNodeWithText("Tải (189\u00a0MB)").assertIsDisplayed()
         rule.onNodeWithTag("voice_keys").assertIsDisplayed()
         shot("modules_missing_${theme(dark)}")
     }
@@ -130,7 +130,7 @@ class VoiceScreenTest {
         showVoice(dark)
         scrollTo("voice_keys")
         rule.onNodeWithTag("module_vieneu_turbo_cancel", useUnmergedTree = true).assertIsDisplayed()
-        rule.onNodeWithText("Đang tải 189 MB · 40%").assertIsDisplayed()
+        rule.onNodeWithText("Đang tải 189\u00a0MB · 40%").assertIsDisplayed()
         shot("modules_downloading_${theme(dark)}")
     }
 
@@ -154,7 +154,7 @@ class VoiceScreenTest {
         showVoice(dark)
         scrollTo("voice_keys")
         rule.onNodeWithText("Đọc trực tiếp được · nhanh gấp 2,0 lần").assertIsDisplayed()
-        rule.onNodeWithText("Có bản mới · 11 MB").assertIsDisplayed()
+        rule.onNodeWithText("Có bản mới · 11\u00a0MB").assertIsDisplayed()
         shot("modules_installed_${theme(dark)}")
     }
 

@@ -127,15 +127,15 @@ Item {
             compare(BookText.progressLine(book(), false, false), "Chưa nghe")
             compare(BookText.progressLine(book(), true, false), "Đang nghe")
             compare(BookText.progressLine(book(), true, true), "Chưa phát được")
-            compare(BookText.progressLine(book({progress: {heardSeconds: 1800}}), false, false), "Đã nghe 30 phút\u00a0·\u00a0còn 1 giờ 30 phút chưa nghe")
+            compare(BookText.progressLine(book({progress: {heardSeconds: 1800}}), false, false), "Đã nghe 30\u00a0phút\u00a0·\u00a0còn 1\u00a0giờ 30\u00a0phút chưa nghe")
             compare(BookText.progressLine(book({progress: {heardSeconds: 7200, finished: true}}), false, false), "Đã nghe xong")
             compare(BookText.progressLine(book({complete: false, producing: true, progress: {heardSeconds: 10, caughtUp: true}}), false, false), "Đã nghe hết phần đã có\u00a0·\u00a03/5 chương")
             compare(BookText.progressLine(book({remote: {computer: "Laptop"}, progress: {finished: true}}), false, false), "Trên Laptop\u00a0·\u00a0Đã nghe xong")
         }
         function test_lengthsAndReadLabel() {
-            compare(BookText.formatLengthUp(129), "3 phút")
-            compare(BookText.formatLengthUp(0), "0 phút")
-            compare(BookText.progressText(book({progress: {heardSeconds: 3600}, state: {rate: 2}}), false), "Còn 30 phút")
+            compare(BookText.formatLengthUp(129), "3\u00a0phút")
+            compare(BookText.formatLengthUp(0), "0\u00a0phút")
+            compare(BookText.progressText(book({progress: {heardSeconds: 3600}, state: {rate: 2}}), false), "Còn 30\u00a0phút")
             compare(BookText.progressText(book({stage: "text", author: "Nam Cao"}), true), "Nam Cao\u00a0·\u00a05 chương")
             compare(BookText.progressText(book({stage: "text"}), false), "Chỉ có chữ\u00a0·\u00a05 chương")
             compare(BookText.readLabel(book(), false), "Đọc")
@@ -240,7 +240,7 @@ Item {
         function test_secondaryRowLabelsAndStates() {
             ready()
             compare(one(page, "bookPrimary").text, "Nghe tiếp\u00a0·\u00a0Chương 2")
-            compare(one(page, "bookProgressLine").text, "Đã nghe 1 phút\u00a0·\u00a0còn 29 phút chưa nghe")
+            compare(one(page, "bookProgressLine").text, "Đã nghe 1\u00a0phút\u00a0·\u00a0còn 29\u00a0phút chưa nghe")
             compare(one(page, "bookStatusLine").visible, false)
             const row = one(page, "bookSecondary")
             compare(row.Accessible.name, "Việc với sách")

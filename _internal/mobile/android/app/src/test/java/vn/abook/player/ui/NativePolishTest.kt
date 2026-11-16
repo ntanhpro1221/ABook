@@ -215,9 +215,9 @@ class NativePolishTest {
 
     @Test
     fun storageLineSaysThereAreNoBooksInsteadOfOneKilobyte() {
-        assertEquals("Chưa có sách · còn trống 20 GB", Storage(bytes = 0, free = 20L * 1024 * 1024 * 1024).line)
-        assertEquals("Chưa có sách · còn trống 20 GB", Storage(bytes = 300, free = 20L * 1024 * 1024 * 1024).line)
-        assertEquals("Sách 2 MB · còn trống 10 GB", Storage(bytes = 2L * 1024 * 1024, free = 10L * 1024 * 1024 * 1024).line)
+        assertEquals("Chưa có sách · còn trống 20\u00a0GB", Storage(bytes = 0, free = 20L * 1024 * 1024 * 1024).line)
+        assertEquals("Chưa có sách · còn trống 20\u00a0GB", Storage(bytes = 300, free = 20L * 1024 * 1024 * 1024).line)
+        assertEquals("Sách 2\u00a0MB · còn trống 10\u00a0GB", Storage(bytes = 2L * 1024 * 1024, free = 10L * 1024 * 1024 * 1024).line)
     }
 
     // ---- chữ lẻ ở dòng cuối + địa chỉ web ----
@@ -226,8 +226,8 @@ class NativePolishTest {
     fun orphanDetectorAndUrlGlue() {
         assertTrue(hasOrphanLastLine(listOf("Ngô Tất Tố · 12 chương ·", "giờ")))
         assertTrue(hasOrphanLastLine(listOf("Dàn nhân vật hiện ra khi truyện đã được phân", "vai.")))
-        assertFalse(hasOrphanLastLine(listOf("Ngô Tất Tố · 12 chương", "· 2 giờ")))
-        assertFalse(hasOrphanLastLine(listOf("Ngô Tất Tố · 12", "chương · 2 giờ")))
+        assertFalse(hasOrphanLastLine(listOf("Ngô Tất Tố · 12 chương", "· 2\u00a0giờ")))
+        assertFalse(hasOrphanLastLine(listOf("Ngô Tất Tố · 12", "chương · 2\u00a0giờ")))
         assertFalse(hasOrphanLastLine(listOf("một dòng")))
         val glued = keepUrlTogether("Giấy phép MIT - github.com/ntanhpro1221/ABook")
         assertEquals("Giấy phép MIT - github.com/\u2060ntanhpro1221/\u2060ABook", glued)
@@ -276,7 +276,7 @@ class NativePolishTest {
 
     @Test
     fun numberAndUnitAreNeverSplitAcrossLines() {
-        assertEquals("Ngô Tất Tố · 12 chương · 2 giờ", keepUnitsTogether("Ngô Tất Tố · 12 chương · 2 giờ"))
+        assertEquals("Ngô Tất Tố · 12 chương · 2 giờ", keepUnitsTogether("Ngô Tất Tố · 12 chương · 2\u00a0giờ"))
         assertEquals("không số thì không đổi", "Giọng đọc chương trình", keepUnitsTogether("Giọng đọc chương trình"))
         for (width in listOf(190, 205, 215, 225, 240, 260, 280)) {
             val lines = linesAt(keepUnitsTogether("Ngô Tất Tố · 12 chương · 2 giờ"), width.dp)

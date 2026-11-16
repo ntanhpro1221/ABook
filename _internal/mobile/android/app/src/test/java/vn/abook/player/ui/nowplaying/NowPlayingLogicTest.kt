@@ -68,10 +68,10 @@ class NowPlayingLogicTest {
     // Matching listen/sleep.test.ts button cases; the time left now comes straight from the one clock.
     @Test fun sleepButtonHasUnitsAndRoundsUp() {
         val sleep = PlayerSleep(SleepKind.Minutes, 15, true)
-        assertEquals("15 phút", PlayerLabels.sleep(sleep, 891_000))
-        assertEquals("15 phút", PlayerLabels.sleep(sleep, 851_000))
-        assertEquals("13 phút", PlayerLabels.sleep(sleep, 771_000))
-        assertEquals("41 giây", PlayerLabels.sleep(sleep, 41_000))
+        assertEquals("15\u00a0phút", PlayerLabels.sleep(sleep, 891_000))
+        assertEquals("15\u00a0phút", PlayerLabels.sleep(sleep, 851_000))
+        assertEquals("13\u00a0phút", PlayerLabels.sleep(sleep, 771_000))
+        assertEquals("41\u00a0giây", PlayerLabels.sleep(sleep, 41_000))
         assertEquals("0:41", PlayerLabels.sleep(sleep, 41_000, clock = true))
         assertEquals("Hết chương", PlayerLabels.sleep(PlayerSleep(SleepKind.Chapter), 0))
         assertEquals("Hẹn giờ", PlayerLabels.sleep(PlayerSleep(), 0))
@@ -82,7 +82,7 @@ class NowPlayingLogicTest {
     }
     @Test fun sleepSubsecondUsesCeiling() {
         assertEquals("0:01", PlayerLabels.sleep(PlayerSleep(SleepKind.Minutes), 1, true))
-        assertEquals("1 giây", PlayerLabels.sleep(PlayerSleep(SleepKind.Minutes), 0))
+        assertEquals("1\u00a0giây", PlayerLabels.sleep(PlayerSleep(SleepKind.Minutes), 0))
     }
 
     private val sentenceText = "Trời vừa hửng sáng, sương mù."

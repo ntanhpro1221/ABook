@@ -46,7 +46,7 @@ class ToneGalleryTest {
         show(dark,mine=true);val theme=if(dark)"dark" else "light"
         rule.onNodeWithTag("tone_clear").assertIsSelected()
         rule.onNodeWithTag("sheet_back").assertIsDisplayed()
-        rule.onNodeWithText("−4 dB").assertExists()
+        rule.onNodeWithText("−4\u00a0dB").assertExists()
         rule.onRoot().captureRoboImage("src/test/snapshots/tone_360_130_${theme}_top.png")
         rule.onNodeWithTag("tone_more_1").performScrollTo()
         rule.onRoot().captureRoboImage("src/test/snapshots/tone_360_130_${theme}_presets.png")
@@ -55,7 +55,7 @@ class ToneGalleryTest {
         rule.onNodeWithTag("tone_scope").performScrollTo()
         rule.onNodeWithTag("tone_rename").assertIsDisplayed()
         rule.onRoot().captureRoboImage("src/test/snapshots/tone_360_130_${theme}_mine.png")
-        rule.onNodeWithTag("tone_band_1 kHz").performSemanticsAction(androidx.compose.ui.semantics.SemanticsActions.SetProgress) { it(5f) }
+        rule.onNodeWithTag("tone_band_1\u00a0kHz").performSemanticsAction(androidx.compose.ui.semantics.SemanticsActions.SetProgress) { it(5f) }
         rule.onNodeWithTag("tone_save").assertExists()
     }
     @Test fun light130(){gallery(false)}

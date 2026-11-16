@@ -34,6 +34,6 @@ export function levelLabel(value: number): string {
 
 /** Số của mức như người Việt viết: "-18,5 dB"; đúng mức mặc định thì thêm "(mặc định)". */
 export function levelNumber(value: number): string {
-  const text = `${formatDecimal(value)} dB`;
+  const text = S.s_tone_db(formatDecimal(value));
   return value === DEFAULT_LEVEL_DB ? S.s_0_mac_dinh_8b7237cd(text) : text;
 }

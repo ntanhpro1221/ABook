@@ -73,9 +73,9 @@ Column {
             SheetRow { text: S.s_copy_289e1cff4cbc; hint: S.s_copy_b09b5fb2264a; toggle: true; checked: root.fx.skipSilence; onToggled: value => Player.setAudioFx({skipSilence:value}) }
             Collapse {
                 width: parent.width; open: root.fx.skipSilence; spacing: Theme.s8
-                AudioFxSlider { width: parent.width; label: S.s_copy_8e18e6dd7fd9; spec: Logic.SPECS.silenceDb; value: root.fx.silenceDb; suffix: " dBFS"; onPicked: value => Player.setAudioFx({silenceDb:value}) }
-                AudioFxSlider { width: parent.width; label: S.s_copy_19adc1b298a9; spec: Logic.SPECS.silenceSeconds; value: root.fx.silenceSeconds; suffix: " s"; onPicked: value => Player.setAudioFx({silenceSeconds:value}) }
-                AudioFxSlider { width: parent.width; label: S.s_copy_483cdfec9d5f; spec: Logic.capped(Logic.SPECS.keepSeconds, root.fx.silenceSeconds); value: root.fx.keepSeconds; suffix: " s"; onPicked: value => Player.setAudioFx({keepSeconds:value}) }
+                AudioFxSlider { width: parent.width; label: S.s_copy_8e18e6dd7fd9; spec: Logic.SPECS.silenceDb; value: root.fx.silenceDb; suffix: "\u00a0dBFS"; onPicked: value => Player.setAudioFx({silenceDb:value}) }
+                AudioFxSlider { width: parent.width; label: S.s_copy_19adc1b298a9; spec: Logic.SPECS.silenceSeconds; value: root.fx.silenceSeconds; suffix: "\u00a0s"; onPicked: value => Player.setAudioFx({silenceSeconds:value}) }
+                AudioFxSlider { width: parent.width; label: S.s_copy_483cdfec9d5f; spec: Logic.capped(Logic.SPECS.keepSeconds, root.fx.silenceSeconds); value: root.fx.keepSeconds; suffix: "\u00a0s"; onPicked: value => Player.setAudioFx({keepSeconds:value}) }
             }
             SheetRow { text: S.s_copy_0aedb2b2cf2b; toggle: true; checked: root.fx.bookOnly; onToggled: value => Player.setAudioFx({bookOnly:value}) }
         }

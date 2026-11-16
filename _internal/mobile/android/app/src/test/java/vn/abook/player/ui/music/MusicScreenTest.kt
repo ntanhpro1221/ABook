@@ -244,7 +244,7 @@ class MusicScreenTest {
         rule.onNodeWithTag("menu_music").performClick()
         rule.waitForIdle()
         rule.onNodeWithTag("music_enabled").assertIsDisplayed()
-        rule.onNodeWithText("-18 dB").assertIsDisplayed()
+        rule.onNodeWithText("-18\u00a0dB").assertIsDisplayed()
         shot("book_page_${if (dark) "dark" else "light"}")
     }
 

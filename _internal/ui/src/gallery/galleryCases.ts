@@ -100,7 +100,7 @@ export function galleryCases(platform: Platform): void {
           expect(document.querySelector('[data-sleep-chapters]')).not.toBeNull();
           expect(choices.every(el => !/(?:^|\s)bg-|\bborder\b/.test(el.className))).toBe(true);
           expect(document.querySelector('input[type="number"]')).toBeNull();
-          if (entry.id.endsWith('sleep-active')) expect(choices.find(el => el.getAttribute('aria-pressed') === 'true')?.getAttribute('aria-label')).toBe('15 phút');
+          if (entry.id.endsWith('sleep-active')) expect(choices.find(el => el.getAttribute('aria-pressed') === 'true')?.getAttribute('aria-label')).toBe('15\u00a0phút');
         }
         if (entry.id === 'desktop/toast') {
           const toast = document.querySelector('[data-sonner-toast]')!;

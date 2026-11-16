@@ -21,7 +21,7 @@ it('shows all built-in names, creates a named preset, duplicates, reorders and d
   for(const name of ['Tắt','Giọng rõ','Ấm','Sáng','Bớt xì','Tai nghe nhỏ','Loa ngoài'])expect(button(name)).toBeDefined();
   await click('Giọng rõ');expect(button('Giọng rõ').getAttribute('aria-checked')).toBe('true');expect(button('Ấm').getAttribute('aria-checked')).toBe('false');
   // Số âm là dấu trừ thật, không gạch nối.
-  expect(host.textContent).toContain('−4 dB');expect(host.textContent).not.toMatch(/-\d+ dB/);
+  expect(host.textContent).toContain('−4\u00a0dB');expect(host.textContent).not.toMatch(/-\d+ dB/);
   await act(async()=>changeTone(l=>l.edit(0,8)));expect(host.textContent).toContain('Tự chỉnh (chưa lưu)');
   await click('Lưu âm sắc');expect((host.querySelector('input[maxlength]') as HTMLInputElement).value).toBe('Của tôi 1');await submit();
   expect(getTones().data.mine).toHaveLength(1);await click('Thêm tuỳ chọn: Của tôi 1');await click('Nhân bản');await submit();expect(getTones().data.mine).toHaveLength(2);

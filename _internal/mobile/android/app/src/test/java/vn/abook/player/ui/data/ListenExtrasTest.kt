@@ -67,7 +67,7 @@ class ListenExtrasTest {
     fun `a session line shows one clock when it starts and ends in the same minute`() {
         val long = History.sessions(state(session("a", nowSeconds - 3600, minutes = 23.0)))[0]
         assertEquals("11:00-11:23", History.clockRange(long, utc))
-        assertEquals("11:00-11:23 · 23 phút", History.headline(long, utc))
+        assertEquals("11:00-11:23 · 23\u00a0phút", History.headline(long, utc))
         val blink = History.sessions(state(session("b", nowSeconds - 3600, minutes = 0.2)))[0]
         assertEquals("11:00", History.clockRange(blink, utc))
     }
@@ -84,7 +84,7 @@ class ListenExtrasTest {
     fun `the week total counts only sessions started in the last seven days`() {
         val sessions = History.sessions(state(session("recent", nowSeconds - 86_400, minutes = 30.0), session("stale", nowSeconds - 9 * 86_400, minutes = 60.0)))
         assertEquals(1800.0, History.weekListened(sessions, now), 0.0)
-        assertEquals("7 ngày qua: 30 phút nghe cuốn này.", History.weekLine(1800.0))
+        assertEquals("7 ngày qua: 30\u00a0phút nghe cuốn này.", History.weekLine(1800.0))
     }
 
     // ---- hồ sơ ----
@@ -149,14 +149,14 @@ class ListenExtrasTest {
     fun `the cast is read with narrator characters and extras`() {
         val view = Cast.parse(cast(listOf(person("Thanh_Bình")), listOf(person("Lính gác 1", lines = 1))))!!
         assertEquals("Hoài My", Cast.narratorName(view.narrator))
-        assertEquals("40 câu dẫn truyện · 1 giờ · 2 câu chờ thu lại", Cast.narratorCountLine(view.narrator))
+        assertEquals("40 câu dẫn truyện · 1\u00a0giờ · 2 câu chờ thu lại", Cast.narratorCountLine(view.narrator))
         assertEquals(1, view.characters.size)
         assertEquals(1, view.extras.size)
         assertFalse(view.isEmpty)
         val first = view.characters[0]
         // Presets keep their original voice; tone metadata must not alter the label.
         assertEquals("Bảo Trang", Cast.voiceLine(first))
-        assertEquals("12 câu · 2 phút · từ Chương 1", Cast.countLine(first))
+        assertEquals("12 câu · 2\u00a0phút · từ Chương 1", Cast.countLine(first))
         assertEquals(3, first.sampleId)
     }
 

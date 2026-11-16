@@ -113,7 +113,7 @@ function studioCast(item: GalleryBook): StudioCast {
 function activity(item: GalleryBook): ActivityItem[] {
   const lines: [number, ActivityItem["level"], string][] = [
     [5, "info", "Bắt đầu thu âm Chương 6"],
-    [40, "success", "Xong Chương 5 · 21 phút 14 giây"],
+    [40, "success", "Xong Chương 5 · 21\u00a0phút 14\u00a0giây"],
     [95, "warning", "Chương 3: 2 câu đọc chưa chuẩn, đã đưa vào Cần nghe lại"],
     [180, "success", "Xong phân tích cả truyện · 4 nhân vật chính"],
     [600, "info", "Bắt đầu phân tích"],

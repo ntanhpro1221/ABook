@@ -254,7 +254,7 @@ class VieneuModuleTest {
         module.join()
         val status = module.status()
         assertEquals("nano", status.getString("recommended"))
-        assertEquals("25 giọng, âm thanh 48 kHz - hay nhất, cần điện thoại mạnh. Cần 1,3 GB RAM, dễ bị Android tắt — bạn nên chọn Nano.", choice(status, "turbo").getString("detail"))
+        assertEquals("25 giọng, âm thanh 48\u00a0kHz - hay nhất, cần điện thoại mạnh. Cần 1,3\u00a0GB RAM, dễ bị Android tắt — bạn nên chọn Nano.", choice(status, "turbo").getString("detail"))
         assertFalse(choice(status, "nano").getString("detail").contains("RAM"))
     }
 

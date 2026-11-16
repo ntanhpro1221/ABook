@@ -84,8 +84,8 @@ describe("mô-đun Giọng VieNeu", () => {
 
   it("nói kết quả tự đo bằng tốc độ nghe", () => {
     expect(benchmarkLabel("turbo", { rtf: 0.25, firstAudioMs: 1500 })).toContain("nhanh gấp 4,0 lần");
-    expect(benchmarkLabel("nano", { rtf: 1.25, firstAudioMs: 5000 })).toContain("không kịp đọc trực tiếp (1,3 giây");
-    expect(benchmarkLabel("turbo", { rtf: 0.85, firstAudioMs: 5000 })).toContain("~51 phút");
+    expect(benchmarkLabel("nano", { rtf: 1.25, firstAudioMs: 5000 })).toContain("không kịp đọc trực tiếp (1,3\u00a0giây");
+    expect(benchmarkLabel("turbo", { rtf: 0.85, firstAudioMs: 5000 })).toContain("~51\u00a0phút");
   });
 
   it("đề nghị đổi giọng, không tự đổi", () => {
@@ -96,7 +96,7 @@ describe("mô-đun Giọng VieNeu", () => {
 
   it("câu chính theo trạng thái", () => {
     expect(vieneuLabel(status({ state: "downloading", done: 50, total: 100 * MB }))).toContain("0%");
-    expect(vieneuLabel(status({ state: "outdated", outdatedBytes: 3 * MB }))).toContain("2,9 MB");
+    expect(vieneuLabel(status({ state: "outdated", outdatedBytes: 3 * MB }))).toContain("2,9\u00a0MB");
     expect(vieneuLabel(status({ state: "error", error: "Chưa tải được." }))).toBe("Chưa tải được.");
     expect(vieneuLabel(status())).toContain("không cần mạng");
   });
@@ -135,12 +135,12 @@ describe("mô-đun Giọng VieNeu", () => {
     expect(selectionBytes(one, ["supertonic"])).toBe(406 * MB);
     expect(vieneuLabel(one, SUPERTONIC_COPY)).toContain("Mười giọng nam nữ");
     expect(vieneuLabel({ ...one, state: "ready" }, SUPERTONIC_COPY)).toBe("Giọng Supertonic đã có trên máy: chọn trong nút Giọng đọc khi nghe sách chỉ có chữ.");
-    expect(vieneuLabel({ ...one, state: "downloading", done: 40, total: 100 * MB }, SUPERTONIC_COPY)).toMatch(/^Đang tải 95 MB · \d+%$/);
+    expect(vieneuLabel({ ...one, state: "downloading", done: 40, total: 100 * MB }, SUPERTONIC_COPY)).toMatch(/^Đang tải 95\u00a0MB · \d+%$/);
     // Mạng hỏng giữa chừng, máy đang chờ thử lại: nói ra, không đứng ở "Đang tải x%" (soát a64).
     expect(vieneuLabel({ ...one, state: "downloading", done: 62, total: 100, retrying: true }, SUPERTONIC_COPY)).toBe("Mạng chập chờn - đang thử lại (giọng Supertonic, 62%)");
     expect(benchmarkLabel("supertonic", { rtf: 0.2, firstAudioMs: 1400 })).toContain("nhanh gấp 5,0 lần");
     expect(benchmarkLabel("supertonic", { rtf: 1.9, firstAudioMs: 9000 })).toBe(
-      "Giọng Supertonic: máy này không kịp đọc trực tiếp (1,9 giây cho mỗi giây nghe). Dùng “Làm trước”: mỗi giờ nghe cần ~114 phút.",
+      "Giọng Supertonic: máy này không kịp đọc trực tiếp (1,9\u00a0giây cho mỗi giây nghe). Dùng “Làm trước”: mỗi giờ nghe cần ~114\u00a0phút.",
     );
     const slow = suggestionText({ tier: "supertonic", rtf: 1.1, switchTo: "online", installed: true });
     expect(slow.message).toContain("Giọng Supertonic đọc chậm");

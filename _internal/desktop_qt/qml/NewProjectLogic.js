@@ -327,7 +327,7 @@ function foldersIn(files) {
 }
 
 // ---- timeEstimate.ts ----
-var MEASURED_ON = "RTX 5060 Laptop 8 GB"
+var MEASURED_ON = "RTX 5060 Laptop 8\u00a0GB"
 var ANALYSIS_PER_KILOWORD = 2.1 * 60
 var SYNTHESIS_PER_KILOWORD = [2.5 * 60, 3.8 * 60]
 var WIDER = {low: 0.6, high: 3}

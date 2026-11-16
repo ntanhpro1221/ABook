@@ -62,7 +62,7 @@ export function rowNumbers(row: VoicePickRow, live = 0.8): string {
     row.cer === null ? S.s_do_ro_chua_do_0986efe7 : S.s_ro_0_68776af2(Math.round((1 - row.cer) * 100)),
     row.natural === null ? S.s_tu_nhien_chua_do_3eaed012 : S.s_tu_nhien_0_5_876223ac(seconds(row.natural)),
     row.rtf === null ? "" : row.rtf >= live ? S.s_cham_0_giay_cho_moi_giay_nghe_3439900c(seconds(row.rtf)) : S.s_nhanh_gap_0_lan_fd951c7d(seconds(1 / Math.max(row.rtf, 0.01))),
-    row.peakRamMb == null ? (row.ramMb === null ? "" : `RAM +${row.ramMb} MB`) : S.s_ram_dinh_0_mb_077d5736(row.peakRamMb),
+    row.peakRamMb == null ? (row.ramMb === null ? "" : `RAM +${row.ramMb}\u00a0MB`) : S.s_ram_dinh_0_mb_077d5736(row.peakRamMb),
   ];
   return parts.filter(Boolean).join(" · ");
 }

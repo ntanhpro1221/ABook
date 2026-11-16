@@ -7,8 +7,8 @@
     <string name="custom_url_scheme" formatted="false">com.ngdtuanh.abook</string>
     <string name="widget_description" formatted="false">Trình phát thu nhỏ</string>
     <string name="widget_cover" formatted="false">Bìa sách</string>
-    <string name="widget_back" formatted="false">Lùi 15 giây</string>
-    <string name="widget_forward" formatted="false">Tới 15 giây</string>
+    <string name="widget_back" formatted="false">Lùi 15 giây</string>
+    <string name="widget_forward" formatted="false">Tới 15 giây</string>
     <string name="widget_toggle" formatted="false">Phát/tạm dừng</string>
     <string name="widget_sleep" formatted="false">Hẹn giờ ngủ</string>
     <string name="default_notification_channel_name" formatted="false">Đang phát</string>

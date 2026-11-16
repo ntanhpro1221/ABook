@@ -89,7 +89,7 @@ Item {
             const now = open()
             const chip = findChild(now, "nowSleep"), flow = chip.parent
             Player.resume(); Player.setSleep("minutes", 1); ready()
-            compare(chip.text, "1 phút")
+            compare(chip.text, "1\u00a0phút")
             const width = chip.width, places = []
             for (let i = 0; i < flow.children.length; ++i) places.push(flow.children[i].x)
             const texts = [chip.text]
@@ -101,7 +101,7 @@ Item {
                 fuzzyCompare(chip.width, width, 0.5)
                 for (let i = 0; i < flow.children.length; ++i) fuzzyCompare(flow.children[i].x, places[i], 0.5)
             }
-            verify(texts.some(text => /^\d\d giây$/.test(text)) && texts.some(text => /^\d giây$/.test(text)), texts.join(", "))
+            verify(texts.some(text => /^\d\d\u00a0giây$/.test(text)) && texts.some(text => /^\d\u00a0giây$/.test(text)), texts.join(", "))
         }
     }
 }

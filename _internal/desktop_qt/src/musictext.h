@@ -26,7 +26,7 @@ inline QString levelLabel(double value) {
     return UiStrings::s_rat_nho_ro_loi_0afefef2;
 }
 inline QString levelNumber(double value) {
-    return QString::number(value, 'g', 15).replace(QLatin1Char('.'), QLatin1Char(',')) + QStringLiteral(" dB")
+    return QString::number(value, 'g', 15).replace(QLatin1Char('.'), QLatin1Char(',')) + QStringLiteral("\u00a0dB")
         + (value == DEFAULT_LEVEL_DB ? UiStrings::s_mac_dinh_2a963068 : QString());
 }
 

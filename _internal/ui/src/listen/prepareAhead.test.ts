@@ -29,7 +29,7 @@ describe("bản đọc đã làm (máy tính)", () => {
 
   it("hỏi lại trước khi xoá, nói điều sẽ xảy ra", () => {
     const question = clearCacheQuestion({ book: 5 * 1024 ** 2, total: 9 * 1024 ** 2 });
-    expect(question).toContain("5 MB");
+    expect(question).toContain("5\u00a0MB");
     expect(question).toContain("đọc lại");
   });
 });
@@ -107,15 +107,15 @@ describe("Làm trước", () => {
   });
 
   it("nói thời gian bằng lời", () => {
-    expect(spokenDuration(20)).toBe("dưới 1 phút");
-    expect(spokenDuration(12 * 60)).toBe("khoảng 12 phút");
-    expect(spokenDuration(80 * 60)).toBe("khoảng 1 giờ 20 phút");
+    expect(spokenDuration(20)).toBe("dưới 1\u00a0phút");
+    expect(spokenDuration(12 * 60)).toBe("khoảng 12\u00a0phút");
+    expect(spokenDuration(80 * 60)).toBe("khoảng 1\u00a0giờ 20\u00a0phút");
     expect(prepareSeconds(14 * 3600, 1.75)).toBe(1.75 * 3600);
   });
 
   it("câu tiến độ", () => {
     expect(prepareLabel({ state: "running", label: "3 chương tới", total: 10, done: 4, audioSeconds: 3600, secondsLeft: 600 })).toBe(
-      "Đang làm trước 3 chương tới (1 giờ nghe): 4/10 đoạn, còn khoảng 10 phút.",
+      "Đang làm trước 3 chương tới (1\u00a0giờ nghe): 4/10 đoạn, còn khoảng 10\u00a0phút.",
     );
     expect(prepareLabel({ state: "done", label: "Chương 2", total: 5, offered: 9 })).toContain("phần còn lại");
   });
@@ -140,12 +140,12 @@ describe("Làm trước trên điện thoại", () => {
   });
 
   it("tiến độ theo chương, còn bao lâu, đang chờ gì", () => {
-    expect(prepareLabel({ state: "running", chapters: chapters(3), secondsLeft: 12 * 60 })).toBe("Đã sẵn sàng 3/5 chương · còn khoảng 12 phút");
+    expect(prepareLabel({ state: "running", chapters: chapters(3), secondsLeft: 12 * 60 })).toBe("Đã sẵn sàng 3/5 chương · còn khoảng 12\u00a0phút");
     expect(prepareLabel({ state: "running", chapters: chapters(1), secondsLeft: 600, waitingFor: "charging" })).toBe("Đã sẵn sàng 1/5 chương · chờ cắm sạc");
     expect(prepareLabel({ state: "running", chapters: chapters(1), waitingFor: "wifi" })).toBe("Đã sẵn sàng 1/5 chương · chờ Wi-Fi");
     expect(prepareLabel({ state: "running", chapters: chapters(0), secondsLeft: null })).toBe("Đã sẵn sàng 0/5 chương");
     expect(prepareLabel({ state: "done", label: "5 chương tới", online: true, chapters: chapters(5), audioSeconds: 3600, total: 20, offered: 20 })).toBe(
-      "Đã làm trước 5 chương tới (1 giờ nghe): nghe được cả khi không có mạng.",
+      "Đã làm trước 5 chương tới (1\u00a0giờ nghe): nghe được cả khi không có mạng.",
     );
     expect(prepareLabel({ state: "done", chapters: chapters(3), total: 20, offered: 20 })).toBe("Đã sẵn sàng 3/5 chương - phần còn lại làm tiếp khi bạn nghe tới.");
     expect(prepareLabel({ state: "cancelled", chapters: chapters(2) })).toBe("Đã dừng làm trước (đã sẵn sàng 2/5 chương).");
@@ -153,8 +153,8 @@ describe("Làm trước trên điện thoại", () => {
   });
 
   it("ước trước khi bấm", () => {
-    expect(planLabel({ chapters: 5, offered: 5, audioSeconds: 2 * 3600, secondsEstimate: 110 * 60 })).toBe("2 giờ nghe · máy cần khoảng 1 giờ 50 phút.");
-    expect(planLabel({ chapters: 3, offered: 5, audioSeconds: 40 * 60, secondsEstimate: null })).toBe("Vừa chỗ trống cho 3 chương: 40 phút nghe.");
+    expect(planLabel({ chapters: 5, offered: 5, audioSeconds: 2 * 3600, secondsEstimate: 110 * 60 })).toBe("2\u00a0giờ nghe · máy cần khoảng 1\u00a0giờ 50\u00a0phút.");
+    expect(planLabel({ chapters: 3, offered: 5, audioSeconds: 40 * 60, secondsEstimate: null })).toBe("Vừa chỗ trống cho 3 chương: 40\u00a0phút nghe.");
     expect(planLabel({ chapters: 0, offered: 0, audioSeconds: 0, secondsEstimate: null })).toBe("");
   });
 

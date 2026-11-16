@@ -61,11 +61,11 @@ describe("jobView", () => {
   });
 
   it("says where the file is once done, or the folder when every part has its own file", () => {
-    expect(jobView(done)).toEqual({ kind: "success", title: "Đã xuất file sách", description: "Truyện.abook · 5 MB", place: "D:/Sách/Đã xuất/Truyện.abook" });
+    expect(jobView(done)).toEqual({ kind: "success", title: "Đã xuất file sách", description: "Truyện.abook · 5\u00a0MB", place: "D:/Sách/Đã xuất/Truyện.abook" });
     expect(jobView({ state: "done", result: { folder: "D:/Sách/Bộ", parts: [{}, {}] } })).toMatchObject({ description: "Bộ · 2 file", place: "D:/Sách/Bộ" });
     // Sách nói MP3: thư mục tên sách + số file + cỡ; đường dài của Windows không bày cả ra thông báo.
     const mp3 = { folder: "C:\\Profiles\\An\\Audiobooks\\Đã xuất\\Bến sông mùa lũ", files: 6, size: 3 * 1048576 };
-    expect(jobView({ state: "done", result: mp3 })).toMatchObject({ description: "Bến sông mùa lũ · 6 file · 3 MB", place: mp3.folder });
+    expect(jobView({ state: "done", result: mp3 })).toMatchObject({ description: "Bến sông mùa lũ · 6 file · 3\u00a0MB", place: mp3.folder });
   });
 
   it("reports an error with the server's words", () => {
@@ -76,7 +76,7 @@ describe("jobView", () => {
     const at = (phase: string, done: number, total: number) => jobView({ state: "running", elapsed: 42, phase, done, total } as ExportJob, 3000);
     expect(at("listen", 120, 3000)).toMatchObject({ kind: "loading", title: "Đang đóng gói (120/3000 chương)", description: "đã 0:42" });
     expect(at("listen", 120, 3000)).toMatchObject({ progress: expect.closeTo(0.02 + 0.83 * (120 / 3000)) });
-    expect(at("write", 50 * 1048576, 200 * 1048576)).toMatchObject({ title: "Đang đóng gói (50 MB/200 MB)…" });
+    expect(at("write", 50 * 1048576, 200 * 1048576)).toMatchObject({ title: "Đang đóng gói (50\u00a0MB/200\u00a0MB)…" });
     expect(at("write", 1, 1)).toMatchObject({ progress: 1 });
     expect(jobView({ state: "cancelled" })).toEqual({ kind: "info", title: "Đã dừng xuất", description: "Chưa có file sách nào được ghi." });
   });
@@ -206,14 +206,14 @@ describe("M4B export", () => {
 
   it("speaks with its own words while running, when done and when failing", () => {
     expect(jobView({ state: "running", elapsed: 5 }, 2, false, M4B_COPY)).toMatchObject({ kind: "loading", title: "Đang làm file M4B" });
-    expect(jobView(m4b(6, 6), 0, false, M4B_COPY)).toEqual({ kind: "success", title: "Đã xuất M4B", description: "Truyện.m4b · 3 MB", place: "D:/x/Truyện.m4b" });
+    expect(jobView(m4b(6, 6), 0, false, M4B_COPY)).toEqual({ kind: "success", title: "Đã xuất M4B", description: "Truyện.m4b · 3\u00a0MB", place: "D:/x/Truyện.m4b" });
     expect(jobView({ state: "error", error: "x" }, 0, false, M4B_COPY)).toMatchObject({ title: "Chưa xuất được M4B" });
     expect(lastExportHint({ state: "running" }, M4B_COPY)).toBe("Đang làm file M4B - xem thông báo ở góc màn hình");
   });
 
   it("says when unfinished chapters were left out of the file", () => {
     expect(jobView(m4b(4, 6), 0, false, M4B_COPY)).toMatchObject({
-      description: "Truyện.m4b · 3 MB · 4/6 chương - chương chưa xong không có trong file",
+      description: "Truyện.m4b · 3\u00a0MB · 4/6 chương - chương chưa xong không có trong file",
     });
     expect(missingChaptersNote({ folder: "D:/x", chapters: 6, chaptersTotal: 6 })).toBe("");
     expect(missingChaptersNote({ folder: "D:/x", file: "D:/x/a.abook" })).toBe("");
@@ -264,7 +264,7 @@ describe("project file export (.abookproj)", () => {
     expect(jobView(done, 0, false, PROJECT_FILE_COPY)).toEqual({
       kind: "success",
       title: "Đã gói dự án",
-      description: "Truyện.abookproj · 2 MB · 2 file nguồn chương đã bị dời hay xoá nên không có trong gói",
+      description: "Truyện.abookproj · 2\u00a0MB · 2 file nguồn chương đã bị dời hay xoá nên không có trong gói",
       note: "2 file nguồn chương đã bị dời hay xoá nên không có trong gói",
       place: "D:/x/Truyện.abookproj",
     });

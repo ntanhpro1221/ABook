@@ -48,11 +48,11 @@ class PlayerTextTest {
 
     @Test
     fun `book progress line`() {
-        assertEquals("Đã nghe 10% cả cuốn · còn 54 phút", PlayerText.bookProgress(true, 360.0, 3600.0, 1.0, false))
-        assertEquals("Đã nghe 10% phần đã có · còn khoảng 36 phút ở tốc độ 1,5×", PlayerText.bookProgress(false, 360.0, 3600.0, 1.5, false))
+        assertEquals("Đã nghe 10% cả cuốn · còn 54\u00a0phút", PlayerText.bookProgress(true, 360.0, 3600.0, 1.0, false))
+        assertEquals("Đã nghe 10% phần đã có · còn khoảng 36\u00a0phút ở tốc độ 1,5×", PlayerText.bookProgress(false, 360.0, 3600.0, 1.5, false))
         assertEquals("Đã nghe hết cả cuốn", PlayerText.bookProgress(true, 3590.0, 3600.0, 1.0, true))
         // Còn chừng một phút: không "khoảng ... ở tốc độ" cho vài chục giây.
-        assertEquals("Đã nghe 99% cả cuốn · còn 1 phút", PlayerText.bookProgress(true, 3570.0, 3600.0, 2.0, false))
+        assertEquals("Đã nghe 99% cả cuốn · còn 1\u00a0phút", PlayerText.bookProgress(true, 3570.0, 3600.0, 2.0, false))
     }
 
     @Test

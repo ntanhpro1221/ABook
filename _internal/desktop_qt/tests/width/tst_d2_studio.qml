@@ -145,7 +145,7 @@ Item {
             compare(remove.text, "Gỡ Studio")
             verify(one(host.Window.window.contentItem, "studioRemoveConfirm").open)
             compare(Nav.layers.length, 1)
-            compare(one(host.Window.window.contentItem, "studioRemoveConfirm").description, "Xoá runtime/model (15–20 GB), giữ sách và hồ sơ; cuốn đang làm phải làm lại sau khi cài.")
+            compare(one(host.Window.window.contentItem, "studioRemoveConfirm").description, "Xoá runtime/model (15–20\u00a0GB), giữ sách và hồ sơ; cuốn đang làm phải làm lại sau khi cài.")
             compare(requestsOf("DELETE", "/api/studio/setup").length, 0)
             // Back huỷ lần hỏi lại, không gỡ
             verify(Nav.back())
@@ -195,8 +195,8 @@ Item {
             store.status = freshStatus()
             const page = make()
             compare(one(page, "studioState").text, "Chưa cài.")
-            verify(has(page, "NVIDIA từ 8 GB\u00a0·\u00a0tải ~25 GB\u00a0·\u00a0trống 35 GB\u00a0·\u00a0~7–10 phút/chương."))
-            verify(has(page, "Card NVIDIA GeForce RTX 3060 (12 GB): đủ để làm sách nói (đã thử trên card 8 GB)."))
+            verify(has(page, "NVIDIA từ 8\u00a0GB\u00a0·\u00a0tải ~25\u00a0GB\u00a0·\u00a0trống 35\u00a0GB\u00a0·\u00a0~7–10\u00a0phút/chương."))
+            verify(has(page, "Card NVIDIA GeForce RTX 3060 (12\u00a0GB): đủ để làm sách nói (đã thử trên card 8\u00a0GB)."))
             verify(has(page, "Tuỳ chọn ở trang này dùng khi đã cài Studio."))
             const install = one(page, "studioInstall")
             compare(install.text, "Cài Studio")
@@ -219,11 +219,11 @@ Item {
             compare(install.size, "sm")
             store.status = freshStatus({gpu: {name: "GTX 1060", memory: 6 * 1073741824}})
             const maybe = make()
-            verify(has(maybe, "Card GTX 1060 (6 GB): có thể chạy được nhưng chưa thử trên card dưới 8 GB, có thể chậm."))
+            verify(has(maybe, "Card GTX 1060 (6\u00a0GB): có thể chạy được nhưng chưa thử trên card dưới 8\u00a0GB, có thể chậm."))
             compare(one(maybe, "studioInstall").text, "Cài Studio")
             store.status = freshStatus({gpu: {name: "GT 710", memory: 2 * 1073741824}})
             const low = make()
-            verify(has(low, "Máy này không làm sách nói được (card GT 710 (2 GB) ít bộ nhớ hơn mức tối thiểu 6 GB). Bạn vẫn nghe ngay mọi sách."))
+            verify(has(low, "Máy này không làm sách nói được (card GT 710 (2\u00a0GB) ít bộ nhớ hơn mức tối thiểu 6\u00a0GB). Bạn vẫn nghe ngay mọi sách."))
         }
         function test_installFailureKeepsButton() {
             Api.info = {version: "0.4.40", studio: {installed: false}}

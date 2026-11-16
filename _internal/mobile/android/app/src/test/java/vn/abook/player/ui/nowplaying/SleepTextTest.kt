@@ -21,7 +21,7 @@ class SleepTextTest {
     @Test
     fun `note names fade seconds and promises a fresh start, and the morning card only for a listener who has one`() {
         val options = SleepOptions(fadeSeconds = 60, extendMinutes = 5)
-        assertEquals("Tiếng nhỏ dần 60 giây trước khi dừng. Lúc đó lắc máy hoặc bấm nút trên thông báo để hẹn lại từ đầu.", SleepText.note(options, false))
+        assertEquals("Tiếng nhỏ dần 60\u00a0giây trước khi dừng. Lúc đó lắc máy hoặc bấm nút trên thông báo để hẹn lại từ đầu.", SleepText.note(options, false))
         assertTrue(SleepText.note(options, true).endsWith("Sáng hôm sau, thẻ “Tối qua” giúp tìm lại đoạn còn nhớ."))
     }
 
@@ -38,7 +38,7 @@ class SleepTextTest {
     fun `stopped line shows the clock in 24 hour form`() {
         val utc = TimeZone.getTimeZone("UTC")
         assertEquals("Hẹn giờ đã tắt tiếng lúc 22:05.", SleepText.stoppedAt(22 * 3_600_000L + 5 * 60_000L, utc))
-        assertEquals("Bật lại 30 phút", SleepText.restart(30))
+        assertEquals("Bật lại 30\u00a0phút", SleepText.restart(30))
     }
 
     @Test
@@ -55,8 +55,8 @@ class SleepTextTest {
 
     @Test
     fun `fading line promises the extend gesture and the minutes it goes back to`() {
-        assertEquals("Sắp tắt · lắc máy hoặc bấm nút trên thông báo để hẹn lại 10 phút", SleepText.fadingLine(10))
-        assertEquals("Hẹn lại 10 phút", SleepText.extendLabel(10))
+        assertEquals("Sắp tắt · lắc máy hoặc bấm nút trên thông báo để hẹn lại 10\u00a0phút", SleepText.fadingLine(10))
+        assertEquals("Hẹn lại 10\u00a0phút", SleepText.extendLabel(10))
     }
 
     @Test

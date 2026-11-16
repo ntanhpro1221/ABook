@@ -54,8 +54,8 @@ class PlayerEndTest {
 
     @Test
     fun `line under an offered book`() {
-        assertEquals("Đã nghe 25% cả cuốn · còn 45 phút", PlayerEnd.line(book("a", "t", heard = 900.0, total = 3600.0)))
-        assertEquals("Chưa nghe · 1 giờ", PlayerEnd.line(book("a", "t", duration = 3600.0)))
+        assertEquals("Đã nghe 25% cả cuốn · còn 45\u00a0phút", PlayerEnd.line(book("a", "t", heard = 900.0, total = 3600.0)))
+        assertEquals("Chưa nghe · 1\u00a0giờ", PlayerEnd.line(book("a", "t", duration = 3600.0)))
         assertEquals("Chưa nghe · 3 chương", PlayerEnd.line(book("a", "t", duration = 0.0)))
     }
 

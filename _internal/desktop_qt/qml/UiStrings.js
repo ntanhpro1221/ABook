@@ -7,15 +7,15 @@ var s_pair_fingerprint_help = "Bạn so mã nhận máy với mã trên máy kia
 var s_pair_fingerprint_confirm = "Đúng, ghép";
 var s_pair_code_or_string = "Mã 6 số hoặc chuỗi ghép";
 var s_pair_string = "Chuỗi ghép: ";
-var s_00_giay_27015af3 = "00 giây";
-var s_00_phut_347ed245 = "00 phút";
+var s_00_giay_27015af3 = "00 giây";
+var s_00_phut_347ed245 = "00 phút";
 function s_0_bai_1e392237(p0) { return String(p0) + " bài"; }
 function s_0_chu_de_nghe_tu_do_f3859cf4(p0) { return String(p0) + " chữ để nghe từ đó."; }
 function s_0_doan_c2eb5200(p0) { return String(p0) + " đoạn"; }
-function s_0_giay_daac30d3(p0) { return String(p0) + " giây"; }
-function s_0_nhip_phut_3c154e09(p0) { return String(p0) + " nhịp/phút"; }
-function s_0_phut_2596d212(p0) { return String(p0) + " phút"; }
-var s_0_phut_66a3b36a = "0 phút";
+function s_0_giay_daac30d3(p0) { return String(p0) + " giây"; }
+function s_0_nhip_phut_3c154e09(p0) { return String(p0) + " nhịp/phút"; }
+function s_0_phut_2596d212(p0) { return String(p0) + " phút"; }
+var s_0_phut_66a3b36a = "0 phút";
 function s_0_se_bi_xoa_khoi_nhac_cua_toi_a41656b0(p0) { return "“" + String(p0) + "” sẽ bị xoá khỏi Nhạc của tôi."; }
 function s_0_so_goi_trong_chu_bo_cac_con_so_nhu_2_hay_10ac572b(p0) { return String(p0) + " số gọi trong chữ. Bỏ các con số như ² hay [3] khỏi phần đọc; lời chú không đổi."; }
 function s_0_thiet_bi_da_ghep_2fe2b8a5(p0) { return String(p0) + " thiết bị đã ghép"; }
@@ -23,7 +23,7 @@ var s_192_168_1_20_hoac_dia_chi_bluetooth_326669dc = "192.168.1.20 hoặc địa
 var s_1_bai_nhac_nen_trong_sach_bi_hong_doan_ay_0a679d5d = "1 bài nhạc nền trong sách bị hỏng - đoạn ấy sẽ không có nhạc.";
 var s_1_chuong_dang_cho_thu_lai_b9da1ca4 = "1 chương đang chờ thu lại";
 var s_1am_lam_lai_phan_tich_tu_dau_af1d00bc = "$1ấm Làm lại phân tích từ đầu";
-var s_2_5_phut_29244d26 = "2-5 phút";
+var s_2_5_phut_29244d26 = "2-5 phút";
 var s_7_ngay_qua_01662a56 = "7 ngày qua:";
 var s_7_ngay_qua_70c6d33d = "7 ngày qua: ";
 function s_abook_0_555fc57e(p0) { return "ABook " + String(p0); }
@@ -693,7 +693,7 @@ var s_chua_thu_cau_nay_nen_chua_co_gi_de_thu_lai_d2bc2550 = "Chưa thu câu này
 var s_chua_thu_chuong_nao_sua_bay_gio_khong_phai_e0dc8283 = "Chưa thu chương nào - sửa bây giờ không phải thu lại câu nào.";
 var s_chua_thu_khong_ton_gi_d0da00cf = "chưa thu - không tốn gì";
 var s_chua_tim_duoc_9359cd73 = "Chưa tìm được";
-var s_chua_toi_1_phut_e8b7904f = "chưa tới 1 phút";
+var s_chua_toi_1_phut_e8b7904f = "chưa tới 1 phút";
 var s_chua_xac_nhan_duoc_0804addb = "Chưa xác nhận được";
 var s_chua_xem_2fb1e370 = "Chưa xem";
 var s_chua_xoa_duoc_b872fff6 = "Chưa xoá được";
@@ -788,7 +788,7 @@ var s_coi_nguoi_noi_cua_cac_cau_chua_ai_quyet_la_08ff324b = "Coi người nói c
 var s_con_71d0e2b2 = "Còn ";
 var s_con_c697bae9 = "còn ";
 var s_con_dang_lam_chuong_moi_hien_o_day_khi_xon_f1c5da10 = " còn đang làm, chương mới hiện ở đây khi xong";
-var s_con_duoi_2_phut_41c172a6 = "còn dưới 2 phút";
+var s_con_duoi_2_phut_41c172a6 = "còn dưới 2 phút";
 var s_con_fe156350 = " (còn ";
 var s_con_khoang_f88c6a5c = "còn khoảng ";
 var s_cong_cu_ghep_am_thanh_f56c00a0 = "Ghép âm thanh";
@@ -805,10 +805,10 @@ var s_copy_4d4dd0d13c5f = "Trúc Ly";
 var s_copy_519c2d65ca4c = "Cao độ";
 var s_copy_51a4599e02f8 = "Ngọc Trân";
 var s_copy_520e2e7d18eb = "Ngọc Huyền";
-var s_copy_521d621b4996 = "14 phút";
+var s_copy_521d621b4996 = "14 phút";
 function s_copy_69e49650d87d(p0) { return "Đã có mẫu “" + String(p0) + "”"; }
 var s_copy_6f00156cec07 = "Mono";
-var s_copy_7bb79ab52e37 = "40 giây";
+var s_copy_7bb79ab52e37 = "40 giây";
 var s_copy_7d21bf1340d9 = "Hoài My";
 var s_copy_8e18e6dd7fd9 = "Ngưỡng lặng";
 var s_copy_8f79b50d9ab1 = "Thục Đoan";
@@ -1125,7 +1125,7 @@ var s_dang_phan_tich_nhac_da_them_a2a6a13b = "Đang phân tích nhạc đã thê
 var s_dang_phat_e3baf7da = "đang phát";
 var s_dang_phat_u00a0_u00a0_6c88d17d = "Đang phát · ";
 var s_dang_sua_thiet_lap_cua_e2a5f0e6 = "Đang sửa thiết lập của ";
-function s_dang_tai_0_e9a97892(p0) { return "Đang tải " + String(p0) + " %"; }
+function s_dang_tai_0_e9a97892(p0) { return "Đang tải " + String(p0) + " %"; }
 var s_dang_tai_1fd8b1ef = "đang tải";
 var s_dang_tai_4568372a = "Đang tải ";
 var s_dang_tai_465b1987 = "Đang tải";
@@ -1395,13 +1395,13 @@ var s_dung_sau_chuong_5385c5b1 = " đứng sau chương ";
 var s_dung_sau_phan_tich_de_ban_duyet_roi_bam_th_0ca451d3 = "Dừng sau phân tích để bạn duyệt, rồi bấm “Thu âm”.";
 var s_dung_sau_phan_tich_de_doi_roi_tiep_tuc_tam_2623587f = "Dừng sau phân tích để đổi, rồi Tiếp tục; Tạm dừng chưa đủ.";
 var s_dung_tai_va_dong_bo_giu_sach_da_tai_b948aef5 = "Dừng tải và đồng bộ; giữ sách đã tải.";
-var s_dung_tat_may_cho_may_ngu_hoac_bam_dung_tro_98270a3d = "Đừng tắt máy, cho máy ngủ hoặc bấm Dừng trong lúc phân tích. Dừng hoặc nạp lại model có thể đổi phân vai và audio; bản cũ cần tạo dự án mới nếu bị ngắt. Tạm dừng quá 30 phút cũng có thể dỡ model. Sau phân tích, bạn có thể dừng và tiếp tục.";
+var s_dung_tat_may_cho_may_ngu_hoac_bam_dung_tro_98270a3d = "Đừng tắt máy, cho máy ngủ hoặc bấm Dừng trong lúc phân tích. Dừng hoặc nạp lại model có thể đổi phân vai và audio; bản cũ cần tạo dự án mới nếu bị ngắt. Tạm dừng quá 30 phút cũng có thể dỡ model. Sau phân tích, bạn có thể dừng và tiếp tục.";
 var s_dung_them_cach_doc_cho_mot_tu_khac_a96aa798 = "”; dùng “Thêm cách đọc” cho một từ khác.";
 var s_dung_thu_am_c0b08972 = "Dừng thu âm?";
 var s_duoc_thu_doi_giong_khong_phai_thu_lai_gi_de7215ae = " được thu - đổi giọng không phải thu lại gì.";
-var s_duoi_1_mb_b59395ae = "dưới 1 MB";
-var s_duoi_1_phut_a1dd4f60 = "dưới 1 phút";
-var s_duoi_2_phut_c8f6f04e = "Dưới 2 phút";
+var s_duoi_1_mb_b59395ae = "dưới 1 MB";
+var s_duoi_1_phut_a1dd4f60 = "dưới 1 phút";
+var s_duoi_2_phut_c8f6f04e = "Dưới 2 phút";
 var s_duong_dan_file_hay_thu_muc_4a384785 = "File hoặc thư mục";
 var s_duong_dan_thu_muc_d8f9678b = "Đường dẫn thư mục";
 var s_duyet_272ec77c = "Duyệt";
@@ -1428,7 +1428,7 @@ var s_file_nay_chua_co_chuong_nao_de_them_83a1704f = "File này chưa có chươ
 var s_file_nay_chua_co_ten_sach_them_rieng_de_da_ec9e7d95 = "File này chưa có tên sách - thêm riêng để đặt tên.";
 var s_file_nay_co_ban_thu_khac_6036a451 = "File này có bản thu khác";
 var s_file_nay_cu_hon_ban_dang_co_afc4d520 = "File này cũ hơn bản đang có";
-var s_file_nay_se_lon_hon_4_gb_the_nho_hay_usb_d_3b80695c = "File này sẽ lớn hơn 4 GB - thẻ nhớ hay USB định dạng FAT32 không chứa nổi.";
+var s_file_nay_se_lon_hon_4_gb_the_nho_hay_usb_d_3b80695c = "File này sẽ lớn hơn 4 GB - thẻ nhớ hay USB định dạng FAT32 không chứa nổi.";
 var s_file_nguon_chuong_da_bi_doi_hay_xoa_nen_kh_7f896e29 = " file nguồn chương đã bị dời hay xoá nên không có trong gói";
 var s_file_nguon_chuong_thu_lai_chuong_ay_thi_ca_c813f633 = " file nguồn chương - thu lại chương ấy thì cần chép nguồn vào.";
 var s_file_sach_679b88e4 = " file sách";
@@ -1441,7 +1441,7 @@ var s_font_weight_600_nbsp_nbsp_se_doi_span_b8ad82a9 = "; font-weight:600\">&nbs
 var s_gan_cho_6fe48d05 = "Gán cho ";
 var s_gan_nguoi_theo_so_roi_sang_cau_ke_u00a0_fa4d3d49 = "gán người theo số rồi sang câu kế ·";
 var s_gap_loi_32d9771f = "Gặp lỗi";
-var s_gb_co_the_cham_cd510682 = " GB, có thể chậm.";
+var s_gb_co_the_cham_cd510682 = " GB, có thể chậm.";
 var s_ghep_may_601e4c98 = "Ghép máy";
 var s_ghep_thiet_bi_8de1f23c = "Ghép thiết bị";
 var s_ghep_thiet_bi_moi_e22fb590 = "Ghép thiết bị mới";
@@ -1456,24 +1456,24 @@ var s_ghi_de_bang_cac_lua_chon_hien_tai_c2f33cd5 = "”. Ghi đè bằng các l�
 var s_ghi_lai_923c1fd4 = "Ghi lại";
 var s_ghim_tren_cung_2407176d = "Ghim trên cùng";
 var s_giai_phong_dung_luong_o_o_chua_thu_vien_sa_f1ab2981 = "Giải phóng dung lượng ở ổ chứa thư viện sách rồi bấm Tiếp tục.";
-var s_giai_phong_them_dung_luong_o_o_do_lam_sach_0ae5c6e8 = "Giải phóng thêm dung lượng ở ổ đó (làm sách cần chừng 12 GB trống; dây chuyền tự làm tiếp khi đủ chỗ) rồi bấm Tiếp tục.";
+var s_giai_phong_them_dung_luong_o_o_do_lam_sach_0ae5c6e8 = "Giải phóng thêm dung lượng ở ổ đó (làm sách cần chừng 12 GB trống; dây chuyền tự làm tiếp khi đủ chỗ) rồi bấm Tiếp tục.";
 var s_giam_a6c2901a = "Giảm";
 var s_giam_tang_toc_do_doc_484ba2e5 = "Giảm/tăng tốc độ";
 var s_gian_19da03ba = "Giận";
 var s_gian_du_1565d541 = "giận dữ";
 var s_giao_dien_0813b59e = "Giao diện";
 var s_giay_702e14de = "Giấy";
-var s_giay_9f6b3e22 = " giây";
-var s_giay_cho_moi_giay_nghe_dung_lam_truoc_moi_45e9decc = " giây cho mỗi giây nghe). Dùng “Làm trước”: mỗi giờ nghe cần ~";
-var s_giay_cho_moi_giay_nghe_giu_giong_nay_thi_d_ac1058c1 = " giây cho mỗi giây nghe). Giữ giọng này thì dùng “Làm trước”.";
-var s_giay_e95d4212 = " giây.";
+var s_giay_9f6b3e22 = " giây";
+var s_giay_cho_moi_giay_nghe_dung_lam_truoc_moi_45e9decc = " giây cho mỗi giây nghe). Dùng “Làm trước”: mỗi giờ nghe cần ~";
+var s_giay_cho_moi_giay_nghe_giu_giong_nay_thi_d_ac1058c1 = " giây cho mỗi giây nghe). Giữ giọng này thì dùng “Làm trước”.";
+var s_giay_e95d4212 = " giây.";
 var s_giay_phep_14b585a0 = "Giấy phép: ";
 var s_giay_phep_b609ade1 = "Giấy phép";
-var s_giay_truoc_khi_dung_luc_do_cham_phim_hoac_00cc036f = " giây trước khi dừng. Lúc đó chạm phím hoặc chuột để hẹn lại từ đầu.";
-var s_gio_9e4dcadb = " giờ";
-var s_gio_fbaccc8e = " giờ ";
+var s_giay_truoc_khi_dung_luc_do_cham_phim_hoac_00cc036f = " giây trước khi dừng. Lúc đó chạm phím hoặc chuột để hẹn lại từ đầu.";
+var s_gio_9e4dcadb = " giờ";
+var s_gio_fbaccc8e = " giờ ";
 var s_gio_tren_may_6a6cdf95 = "Giờ trên máy";
-var s_gio_truoc_44858c63 = " giờ trước";
+var s_gio_truoc_44858c63 = " giờ trước";
 var s_gioi_bam_de_luu_e314c934 = "Giới (bấm để lưu):";
 var s_gioi_giong_a5c7c7b7 = "Giới / giọng";
 var s_gioi_thieu_0c84d33f = "Giới thiệu";
@@ -1595,9 +1595,9 @@ var s_hen_244e495e = "Hẹn";
 var s_hen_gio_39d9ca26 = "Hẹn giờ";
 var s_hen_gio_da_tat_tieng_luc_5d5e4231 = "Hẹn giờ đã tắt tiếng lúc ";
 var s_hen_gio_ngu_21073488 = "Hẹn giờ ngủ";
-function s_hen_gio_tat_con_0_giay_ae60de9d(p0) { return "Hẹn giờ tắt: còn " + String(p0) + " giây"; }
-function s_hen_gio_tat_con_0_phut_e53bab94(p0) { return "Hẹn giờ tắt: còn " + String(p0) + " phút"; }
-function s_hen_lai_0_phut_d6009aba(p0) { return "Hẹn lại " + String(p0) + " phút"; }
+function s_hen_gio_tat_con_0_giay_ae60de9d(p0) { return "Hẹn giờ tắt: còn " + String(p0) + " giây"; }
+function s_hen_gio_tat_con_0_phut_e53bab94(p0) { return "Hẹn giờ tắt: còn " + String(p0) + " phút"; }
+function s_hen_lai_0_phut_d6009aba(p0) { return "Hẹn lại " + String(p0) + " phút"; }
 var s_hen_lai_c2aae1b7 = "Hẹn lại ";
 function s_het_0_chuong_79433c77(p0) { return "Hết " + String(p0) + " chương"; }
 var s_het_chuong_f1d590bb = "Hết chương";
@@ -1610,7 +1610,7 @@ var s_hien_chuong_sau_81aa431a = "Hiện chương sau";
 var s_hien_dang_la_nhan_vat_e19de586 = "Hiện đang là nhân vật ";
 function s_hien_la_0_d6cdb2e8(p0) { return "Hiện là " + String(p0); }
 var s_hieu_nang_8c7b7526 = "Hiệu năng";
-var s_hieu_ngu_canh_de_chon_nhac_1_phut_moi_gio_1ed08581 = "Hiểu ngữ cảnh để chọn nhạc; ~1 phút mỗi giờ sách.";
+var s_hieu_ngu_canh_de_chon_nhac_1_phut_moi_gio_1ed08581 = "Hiểu ngữ cảnh để chọn nhạc; ~1 phút mỗi giờ sách.";
 var s_ho_so_moi_5dfda9aa = "Hồ sơ mới";
 var s_ho_so_moi_73f39686 = "Hồ sơ mới “";
 var s_ho_so_moi_nghe_tu_dau_ho_so_cu_van_giu_ngu_38f1a4a4 = "Hồ sơ mới nghe từ đầu; hồ sơ cũ vẫn giữ nguyên.";
@@ -1805,9 +1805,9 @@ var s_lua_chon_499eda35 = "Lựa chọn";
 var s_lua_chon_mac_dinh_2b7a4461 = "lựa chọn mặc định";
 var s_luc_dang_nho_dan_7102c304 = "Lúc đang nhỏ dần: ";
 var s_luc_thu_that_se_nghe_gan_nhu_vay_u00a0_u00_7dab492d = "Lúc thu thật sẽ nghe gần như vậy · câu “";
-function s_lui_0_giay_718bdd89(p0) { return "Lùi " + String(p0) + " giây"; }
-function s_lui_0_giay_e2e1aee1(p0) { return "Lùi " + String(p0) + " giây (←)"; }
-var s_lui_toi_15_giay_5f952fd6 = "Lùi / tới 15 giây";
+function s_lui_0_giay_718bdd89(p0) { return "Lùi " + String(p0) + " giây"; }
+function s_lui_0_giay_e2e1aee1(p0) { return "Lùi " + String(p0) + " giây (←)"; }
+var s_lui_toi_15_giay_5f952fd6 = "Lùi / tới 15 giây";
 var s_luon_doc_ban_hay_nhat_may_cham_co_the_phai_2de7d693 = "Luôn đọc bản hay nhất; máy chậm có thể phải chờ.";
 var s_luot_cai_luc_f7b49d0c = "Lượt cài lúc ";
 var s_luot_doi_dap_a2c055e0 = "Lượt đối đáp";
@@ -1914,7 +1914,7 @@ var s_may_nghe_ky_hon_tung_bai_ban_them_de_chon_b1ad40b1 = "Máy nghe kỹ hơn 
 var s_may_nghe_lai_khop_979c637f = "máy nghe lại khớp ";
 var s_may_nghe_ra_31219589 = "Máy nghe ra: “";
 var s_may_nghi_u00a0_u00a0_c4362d4a = "Máy nghi · ";
-var s_may_ranh_2_phut_trong_khung_gio_nay_moi_tu_93ce72b6 = "Máy rảnh 2 phút trong khung giờ này mới tự hẹn.";
+var s_may_ranh_2_phut_trong_khung_gio_nay_moi_tu_93ce72b6 = "Máy rảnh 2 phút trong khung giờ này mới tự hẹn.";
 var s_may_thay_ed1e7e9f = "Máy thấy ";
 var s_may_thieu_cau_hinh_df5ae9ef = "Máy thiếu cấu hình";
 var s_may_thoi_hoi_ctrl_z_de_hoan_tac_a01ae5fa = ": máy thôi hỏi; Ctrl+Z để hoàn tác.";
@@ -1922,8 +1922,8 @@ var s_may_tinh_8eafc226 = "máy tính";
 var s_may_tinh_chua_cho_ban_sua_6a5d6567 = "Máy tính chưa cho bạn sửa";
 var s_may_tinh_khac_8c7c9cae = "Máy tính khác";
 var s_may_tu_chon_nhac_hop_tung_doan_8c88a607 = "Máy tự chọn nhạc hợp từng đoạn.";
-var s_mb_moi_file_af437f1b = " MB mỗi file.";
-var s_mb_nen_khong_gui_qua_mang_duoc_ban_hay_tac_835a3c8c = " MB nên không gửi qua mạng được. Bạn hãy tách thành vài file nhỏ hơn rồi gửi lại, hoặc chép file vào máy tính rồi mở nó ngay trên máy tính.";
+var s_mb_moi_file_af437f1b = " MB mỗi file.";
+var s_mb_nen_khong_gui_qua_mang_duoc_ban_hay_tac_835a3c8c = " MB nên không gửi qua mạng được. Bạn hãy tách thành vài file nhỏ hơn rồi gửi lại, hoặc chép file vào máy tính rồi mở nó ngay trên máy tính.";
 var s_met_moi_304a36cf = "Mệt mỏi";
 var s_mia_mai_729f7055 = "Mỉa mai";
 var s_mien_030e1e49 = "Miền ";
@@ -2157,7 +2157,7 @@ var s_nu_316c30fd = "nữ";
 var s_nu_e15bc11c = "Nữ";
 var s_nut_sach_doc_cau_cua_d9dd6eec = "Nút sách đọc câu của ";
 var s_nut_van_nghe_duoc_cau_mau_chung_cua_giong_3f21e848 = " - nút ▶ vẫn nghe được câu mẫu chung của giọng";
-var s_nvidia_tu_8_gb_u00a0_u00a0tai_25_gb_u00a0_7eecc929 = "NVIDIA từ 8 GB · tải ~25 GB · trống 35 GB · ~7–10 phút/chương.";
+var s_nvidia_tu_8_gb_u00a0_u00a0tai_25_gb_u00a0_7eecc929 = "NVIDIA từ 8 GB · tải ~25 GB · trống 35 GB · ~7–10 phút/chương.";
 var s_o_ce0ade07 = " ở ";
 var s_o_chua_cam_hay_thu_muc_da_doi_ten_cam_lai_713e694c = "Ổ chưa cắm, hay thư mục đã đổi tên. Cắm lại ổ hoặc chọn chỗ mới; chỗ đang nghe vẫn giữ.";
 var s_o_dia_chua_thu_vien_sach_chi_con_29f74a91 = "Ổ đĩa chứa thư viện sách chỉ còn ";
@@ -2225,10 +2225,10 @@ var s_phim_tat_chu_f1e88b8a = "Phím tắt chữ";
 var s_phim_va_de_giam_tang_b1dca426 = "Phím [ và ] để giảm, tăng.";
 var s_phong_cach_d80ae8d9 = "Phong cách";
 var s_phuc_hoi_du_lieu_7dde2059 = "Phục hồi dữ liệu";
-var s_phut_756e57f3 = " phút ";
-var s_phut_cf728a6a = " phút";
-var s_phut_dd766870 = " phút.";
-var s_phut_truoc_d6b7b9dc = " phút trước";
+var s_phut_756e57f3 = " phút ";
+var s_phut_cf728a6a = " phút";
+var s_phut_dd766870 = " phút.";
+var s_phut_truoc_d6b7b9dc = " phút trước";
 var s_qua_bluetooth_983cecc1 = "Qua Bluetooth";
 var s_quay_lai_6d793582 = "Quay lại";
 var s_quay_lai_cho_cu_fea69b14 = "Quay lại chỗ cũ";
@@ -2279,7 +2279,7 @@ var s_sai_5_lan_chi_tao_ma_moi_khi_ban_dang_ghep_6f3c0e90 = "Sai 5 lần; chỉ 
 var s_san_sang_d654065d = "Sẵn sàng";
 var s_sang_8f0c677d = "Sáng";
 var s_sang_cuon_khac_741d5ffa = "” sang cuốn khác";
-function s_sap_tat_u00a0_u00a0cham_phim_hoac_chuot_de_7b680793(p0) { return "Sắp tắt · chạm phím hoặc chuột để hẹn lại " + String(p0) + " phút"; }
+function s_sap_tat_u00a0_u00a0cham_phim_hoac_chuot_de_7b680793(p0) { return "Sắp tắt · chạm phím hoặc chuột để hẹn lại " + String(p0) + " phút"; }
 var s_sap_toi_luot_4fcc9331 = "Sắp tới lượt";
 var s_sap_xong_7d5cfa0f = "sắp xong";
 var s_se_bo_976be2fb = "Sẽ bỏ ";
@@ -2365,7 +2365,7 @@ var s_tai_nhac_con_thieu_d1ac2c2f = "Tải nhạc còn thiếu; ";
 var s_tai_phan_doc_khong_khi_tren_may_tinh_chu_s_f52208a6 = "Tải phần đọc không khí trên máy tính chủ sách.";
 var s_tai_sach_3c83e586 = "Tải sách";
 var s_tai_san_nhac_nen_4474e87f = "Tải sẵn nhạc nền";
-var s_tai_them_3_2_gb_338f648d = "Tải thêm (3,2 GB)";
+var s_tai_them_3_2_gb_338f648d = "Tải thêm (3,2 GB)";
 var s_tai_them_76c4650b = "Tải thêm ";
 var s_tai_tiep_1efbd854 = "Tải tiếp";
 var s_tai_tiep_d672e973 = "Tải tiếp (";
@@ -2573,8 +2573,8 @@ var s_to_tung_chu_dang_doc_theo_uoc_luong_b0de406b = "Tô từng chữ đang đ�
 var s_toc_do_16ee0914 = "Tốc độ";
 var s_toc_do_doc_3657e59d = "Tốc độ đọc";
 var s_toc_do_doc_u00a0_u00a0nho_rieng_cho_cuon_n_de460f94 = "Tốc độ đọc · nhớ riêng cho cuốn này";
-function s_toi_0_giay_793cdbb9(p0) { return "Tới " + String(p0) + " giây (→)"; }
-function s_toi_0_giay_84234225(p0) { return "Tới " + String(p0) + " giây"; }
+function s_toi_0_giay_793cdbb9(p0) { return "Tới " + String(p0) + " giây (→)"; }
+function s_toi_0_giay_84234225(p0) { return "Tới " + String(p0) + " giây"; }
 var s_toi_4ac2d267 = "Tối";
 var s_toi_cau_dang_nghe_4526cf38 = "Tới câu đang nghe";
 var s_toi_da_99_phan_9661ebdc = "Tối đa 99 phần.";
@@ -2594,7 +2594,7 @@ var s_trang_thai_abook_110b1681 = "Trạng thái ABook";
 var s_trang_thai_cb31de81 = "Trạng thái";
 var s_trao_cho_moi_nhan_vat_mot_giong_rieng_va_k_9788a813 = "Trao cho mỗi nhân vật một giọng riêng và khoá cách đọc tên.";
 var s_tren_54f68805 = "Trên ";
-var s_tren_5_phut_42aafebc = "Trên 5 phút";
+var s_tren_5_phut_42aafebc = "Trên 5 phút";
 var s_tren_console_fpt_ai_dang_nhap_mo_muc_text_4010b0be = "Trên console.fpt.ai: đăng nhập, mở mục “Text to Speech” (Chuyển văn bản thành giọng nói), chép “API key” (khoá API).";
 var s_tren_dien_thoai_cai_dat_thiet_bi_dien_thoa_210864ae = "Trên điện thoại: Cài đặt › Thiết bị › Điện thoại này › bật “Chia sẻ thư viện”. Cùng Wi-Fi hay Tailscale.";
 var s_tren_may_kia_cai_dat_thiet_bi_chon_3c0003fa = "Trên máy kia: Cài đặt › Thiết bị › chọn ";
@@ -2797,7 +2797,7 @@ var s_xoa_ho_so_nay_27fc6264 = "Xoá hồ sơ này";
 var s_xoa_khoa_2ec6cb1a = "Xoá khoá";
 var s_xoa_o_tim_0bafa7ad = "Xoá ô tìm";
 var s_xoa_phan_da_tai_9f9ae26f = "Xoá phần đã tải";
-var s_xoa_runtime_model_1520_gb_giu_sach_va_ho_s_66d08224 = "Xoá runtime/model (15–20 GB), giữ sách và hồ sơ; cuốn đang làm phải làm lại sau khi cài.";
+var s_xoa_runtime_model_1520_gb_giu_sach_va_ho_s_66d08224 = "Xoá runtime/model (15–20 GB), giữ sách và hồ sơ; cuốn đang làm phải làm lại sau khi cài.";
 var s_xong_a6f4543a = "Xong";
 var s_xong_file_sach_cua_du_an_da_duoc_lam_lai_k_a150d813 = "Xong - file sách của dự án đã được làm lại kèm chữ sáng theo giọng đọc.";
 var s_xong_luc_e527f5af = "Xong lúc";
@@ -2834,17 +2834,18 @@ var s_tone_back = "Trở lại";
 var s_tone_deleted = "Đã xoá âm sắc";
 var s_tone_leave = "Lưu thay đổi?";
 function s_tone_suggest(p0) { return "Của tôi " + String(p0); }
-var s_tone_reset = "Chạm đúp để về 0 dB";
+var s_tone_reset = "Chạm đúp để về 0 dB";
 var s_tone_discard = "Bỏ thay đổi";
-function s_tone_db(p0) { return String(p0) + " dB"; }
-var s_tone_band_0 = "80 Hz";
-var s_tone_band_1 = "250 Hz";
-var s_tone_band_2 = "1 kHz";
-var s_tone_band_3 = "4 kHz";
-var s_tone_band_4 = "12 kHz";
+function s_percent(p0) { return String(p0) + " %"; }
+function s_tone_db(p0) { return String(p0) + " dB"; }
+var s_tone_band_0 = "80 Hz";
+var s_tone_band_1 = "250 Hz";
+var s_tone_band_2 = "1 kHz";
+var s_tone_band_3 = "4 kHz";
+var s_tone_band_4 = "12 kHz";
 var s_value_middle = "Giữa";
-function s_value_left(p0) { return "Trái " + String(p0) + " %"; }
-function s_value_right(p0) { return "Phải " + String(p0) + " %"; }
+function s_value_left(p0) { return "Trái " + String(p0) + " %"; }
+function s_value_right(p0) { return "Phải " + String(p0) + " %"; }
 var s_continuation_choose = "Chọn chương mới";
 function s_continuation_hint(p0) { return "Gợi ý thư mục: " + String(p0) + ". Bạn chọn lại các chương cần làm tiếp."; }
 var s_scope_title = "Tách nhóm";

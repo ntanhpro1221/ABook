@@ -26,9 +26,9 @@ it.each(["reset", "keyboard"])("sends the old value again during a save via %s a
     else await key("ArrowLeft");
     expect(save.mock.calls).toEqual([[-19], [-20]]);
     await act(async () => render(-19, true));
-    expect(host.textContent).toContain("-20 dB (mặc định)");
+    expect(host.textContent).toContain("-20\u00a0dB (mặc định)");
     await act(async () => render(-20, false));
-    expect(host.textContent).toContain("-20 dB (mặc định)");
+    expect(host.textContent).toContain("-20\u00a0dB (mặc định)");
   } finally {
     await act(async () => root.unmount());
     host.remove();
@@ -46,7 +46,7 @@ it("reset saves the default once, including a book's fractional level", async ()
     expect(reset.textContent).toBe("Về mặc định");
     await act(async () => reset.click());
     expect(save.mock.calls).toEqual([[-20]]);
-    expect(host.textContent).toContain("-20 dB (mặc định)");
+    expect(host.textContent).toContain("-20\u00a0dB (mặc định)");
   } finally {
     await act(async () => root.unmount());
     host.remove();
