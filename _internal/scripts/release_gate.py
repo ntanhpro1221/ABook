@@ -714,7 +714,8 @@ def qt_tests() -> dict:
     print(built.output)
     require(built.returncode == 0 and not built.timed_out, "Qt: configure/build lỗi hoặc timeout")
     validator = load_module(qt / "tools/check_test_results.py", "gate_qt_results")
-    counts = {"passed": 0, "failed": 0, "skipped": 0, "suites": 0, "timeouts": 0, "missing_summaries": 0, "lint_failed": 0}
+    counts = {"passed": 0, "failed": 0, "skipped": 0, "suites": 0, "timeouts": 0, "missing_summaries": 0, "lint_failed": 0,
+              "member_data_errors": 0}
     failures = []
     for arguments in (("selftest", str(build)), (str(build),)):
         lint = run_process(py(str(qt / "tools/check_qml_members.py"), *arguments), qt, 120)
@@ -739,6 +740,7 @@ def qt_tests() -> dict:
         totals = re.findall(r"Totals: (\d+) passed, (\d+) failed, (\d+) skipped", result.output)
         counts["timeouts"] += int(result.timed_out)
         counts["missing_summaries"] += int(not totals)
+        counts["member_data_errors"] += result.output.count("Cannot find member data")
         # Qt tính cả initTestCase/cleanupTestCase là passed; hai mục ấy chưa chứng minh có bài thử.
         if not (result.returncode == 0 and not result.timed_out and validator.check(log) and totals
                 and all(int(t[0]) > 2 for t in totals)):

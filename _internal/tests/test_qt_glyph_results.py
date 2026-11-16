@@ -55,3 +55,11 @@ def test_packaging_gate(tmp_path, capsys, log, ok):
         assert "QML_TYPE_ERROR qml/" in output or "QML_TYPE_ERROR tests/" in output     # path from desktop_qt/ on
     if "GLYPH_MISSING" in log:
         assert "U+2192" in output and "qml/HistoryList.qml" in output
+
+
+def test_lost_qml_member_data_blocks_green_totals(tmp_path, capsys):
+    path = tmp_path / "width-test.txt"
+    path.write_text("QWARN : QML SmoothWheel: Cannot find member data\n"
+                    "Totals: 10 passed, 0 failed, 0 skipped\n", encoding="utf-8")
+    assert results.check(path) is False
+    assert "QML_MEMBER_DATA_ERROR 1" in capsys.readouterr().out

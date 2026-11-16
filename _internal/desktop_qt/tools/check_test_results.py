@@ -1,4 +1,4 @@
-"""Fail loudly on Qt failures, missing glyphs, QML binding errors or JS values leaked onto the screen, even when the process returned zero."""
+"""Reject Qt failures, lost QML storage, missing glyphs, binding errors and leaked JS values."""
 import argparse
 from pathlib import Path
 import re
@@ -27,9 +27,14 @@ def check(path: Path) -> bool:
     leaks = [line for line in text.splitlines() if "TEXT_LEAK {" in line]
     for leak in leaks:
         print(leak, flush=True)
+    # Qt lost a live object's QML property storage (qqmlvmemetaobject.cpp): it reads 0 / undefined, and in 0.4.173 the next
+    # createObject crashed in QQmlConnections::connectSignalsToMethods. Green totals around it are not a pass.
+    member_errors = [line for line in text.splitlines() if "Cannot find member data" in line]
+    for error in member_errors:
+        print("QML_MEMBER_DATA_ERROR " + error, flush=True)
     print(f"TEST_TOTALS {passed} passed, {failed} failed, {skipped} skipped; GLYPH_MISSING {len(hits)}; "
-          f"QML_TYPE_ERROR {len(type_errors)}; TEXT_LEAK {len(leaks)}", flush=True)
-    return bool(totals) and not hits and not type_errors and not leaks and not failed and not re.search(r"^FAIL", text, re.MULTILINE)
+          f"QML_TYPE_ERROR {len(type_errors)}; TEXT_LEAK {len(leaks)}; QML_MEMBER_DATA_ERROR {len(member_errors)}", flush=True)
+    return bool(totals) and not hits and not type_errors and not leaks and not member_errors and not failed and not re.search(r"^FAIL", text, re.MULTILINE)
 
 
 if __name__ == "__main__":
