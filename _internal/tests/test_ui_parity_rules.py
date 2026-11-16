@@ -244,6 +244,27 @@ def test_l7_retained_presence_and_snapshot_swaps(planted):
     assert got[("Lib.kt", 8)] == "a-hard"
 
 
+def test_l7_state_icon_and_inline_reveal_own_their_branch(planted):
+    """StateIcon is the one in-place icon swap (keyed on its whole state); RevealInline is Reveal's horizontal twin. A branch
+    inside either that reads its own value is animated; the same branch outside, or a different condition, still bites."""
+    (planted.ROOT / "mobile/android/app/src/main/java/vn/abook/player/ui/Lib.kt").write_text("""package vn.abook.player.ui
+@Composable fun Note(text: String) {}
+@Composable fun Lib(active: Boolean, busy: Boolean) {
+    StateIcon(active) { on ->
+        if (on) Note("stop") else Note("play")
+    }
+    StateIcon(active) { if (it) Note("ring") else Note("glyph") }
+    RevealInline(busy) { if (busy) Note("spinner") }
+    RevealInline(busy) { if (active) Note("unrelated") }
+    if (active) Note("stop") else Note("play")
+}
+""", encoding="utf-8")
+    got = _categories(planted)
+    assert got[("Lib.kt", 5)] == "b-parent-motion" and got[("Lib.kt", 7)] == "b-parent-motion"
+    assert got[("Lib.kt", 8)] == "b-parent-motion" and got[("Lib.kt", 9)] == "a-hard"
+    assert got[("Lib.kt", 10)] == "a-swap"
+
+
 def test_l7_snapshot_mask_must_erase_the_surface_on_a_real_clock(planted):
     path = planted.ROOT / "mobile/android/app/src/main/java/vn/abook/player/ui/Lib.kt"
     source = """package vn.abook.player.ui

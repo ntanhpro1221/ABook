@@ -223,10 +223,14 @@ fun DownloadRing(percent: Int?, label: String, modifier: Modifier = Modifier) {
         androidx.compose.animation.core.rememberInfiniteTransition(label = "download").animateFloat(
             0f, 360f, androidx.compose.animation.core.infiniteRepeatable(androidx.compose.animation.core.tween(1000, easing = androidx.compose.animation.core.LinearEasing)), label = "download-turn").value
     Box(modifier.size(36.dp).semantics { contentDescription = label; progressBarRangeInfo = percent?.let { ProgressBarRangeInfo(it / 100f, 0f..1f) } ?: ProgressBarRangeInfo.Indeterminate }, contentAlignment = Alignment.Center) {
-        Canvas(Modifier.fillMaxSize().padding(2.dp)) {
+        Canvas(Modifier.fillMaxSize()) {
+            // Same geometry as the web SVG (viewBox 36, r 16, stroke 2): the ring is drawn on its radius, not inset by padding.
+            val radius = 16.dp.toPx()
+            val box = androidx.compose.ui.geometry.Size(radius * 2, radius * 2)
+            val corner = androidx.compose.ui.geometry.Offset(center.x - radius, center.y - radius)
             val stroke = Stroke(2.dp.toPx(), cap = StrokeCap.Round)
-            drawArc(colors.line, 0f, 360f, false, style = stroke)
-            drawArc(colors.accent, turn - 90f, (percent ?: 25) * 3.6f, false, style = stroke)
+            drawArc(colors.line, 0f, 360f, false, topLeft = corner, size = box, style = stroke)
+            drawArc(colors.accent, turn - 90f, (percent ?: 25) * 3.6f, false, topLeft = corner, size = box, style = stroke)
         }
         androidx.compose.foundation.Canvas(Modifier.size(8.dp)) { drawRect(colors.accentText) }
     }

@@ -1650,7 +1650,7 @@
     "line": 111,
     "statement": "const importFiles = async () => {",
     "occurrence": 1,
-    "source_sha256": "90c3ad78a0615afb6a62b51e156968d2e253e524a8911335b92e5c2836c69097",
+    "source_sha256": "ea3fef04301ec91c2ab0546d84ff252a477f037d323e5a56b7a80d484d773519",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; busy, isLoading, loading, progress, setProgress",
     "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering."
@@ -1662,19 +1662,7 @@
     "line": 129,
     "statement": "mutationFn: (link: string) => api<LocalMusicView>(`/api/music/local/${link.slice(LOCAL_PREFIX.length)}`, { method: \"DELETE\" }),",
     "occurrence": 1,
-    "source_sha256": "90c3ad78a0615afb6a62b51e156968d2e253e524a8911335b92e5c2836c69097",
-    "disposition": "confirmation",
-    "guard": "MyMusic useDestructiveConfirm / MyMusicTrack removeConfirm / VoiceSheets TrackSheet",
-    "reason": "The local imported music file is removed only after the shared confirmation."
-  },
-  {
-    "id": "d26e2ef2f91ce112668d",
-    "kind": "destructive",
-    "path": "ui/src/listen/MyMusic.tsx",
-    "line": 169,
-    "statement": "onClick={() => deletion.confirm({ title: S.s_xoa_bai_nay_412d7001, description: S.s_0_se_bi_xoa_khoi_nhac_cua_toi_a41656b0(track.title), run: () => remove.mutateAsync(track.link) })}>{S.s_xoa_777195ab}</Button>}",
-    "occurrence": 1,
-    "source_sha256": "90c3ad78a0615afb6a62b51e156968d2e253e524a8911335b92e5c2836c69097",
+    "source_sha256": "ea3fef04301ec91c2ab0546d84ff252a477f037d323e5a56b7a80d484d773519",
     "disposition": "confirmation",
     "guard": "MyMusic useDestructiveConfirm / MyMusicTrack removeConfirm / VoiceSheets TrackSheet",
     "reason": "The local imported music file is removed only after the shared confirmation."
@@ -2984,7 +2972,7 @@
     "occurrence": 1,
     "source_sha256": "896870aa7444aa8223c1726e252a0cd007074c62387c722c302794edeeca39d6",
     "disposition": "confirmation",
-    "guard": "DownloadControl / TrackRow / TrackSheet DestructiveConfirm; cancel incomplete transfer is exempt",
+    "guard": "Track details (TrackSheet / MusicTrackDetail) DestructiveConfirm; the row shows Downloaded as a status, never a delete button; cancel incomplete transfer is exempt",
     "reason": "Complete music download removal is confirmed with track title and size. Cancelling an unfinished download discards partial bytes immediately."
   },
   {
@@ -3060,18 +3048,6 @@
     "reason": "The action releases an object URL or cached discovery/failure/request state, not a saved artifact or credential."
   },
   {
-    "id": "8a76257707c70fd5b46d",
-    "kind": "destructive",
-    "path": "ui/src/music/MusicScreen.tsx",
-    "line": 328,
-    "statement": "description: S.s_delete_download_description(title, formatSize(track.bytes ?? 0)), run: () => unsave.mutateAsync([track.link])})} />",
-    "occurrence": 1,
-    "source_sha256": "806b623f8df21b69aef3eaad81c4304bce7caabef079ba9d720af85e7b7571c1",
-    "disposition": "confirmation",
-    "guard": "DownloadControl / TrackRow / TrackSheet DestructiveConfirm; cancel incomplete transfer is exempt",
-    "reason": "Complete music download removal is confirmed with track title and size. Cancelling an unfinished download discards partial bytes immediately. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
-  },
-  {
     "id": "8461b0dc9cda345bf15e",
     "kind": "destructive",
     "path": "ui/src/music/preview.ts",
@@ -3092,7 +3068,7 @@
     "occurrence": 1,
     "source_sha256": "ab79412babaab51bc878e5e1f5605f96973af831a73b96b8c057c91ee1e32d2a",
     "disposition": "confirmation",
-    "guard": "DownloadControl / TrackRow / TrackSheet DestructiveConfirm; cancel incomplete transfer is exempt",
+    "guard": "Track details (TrackSheet / MusicTrackDetail) DestructiveConfirm; the row shows Downloaded as a status, never a delete button; cancel incomplete transfer is exempt",
     "reason": "Complete music download removal is confirmed with track title and size. Cancelling an unfinished download discards partial bytes immediately. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
   },
   {
@@ -3243,10 +3219,10 @@
     "id": "6068489068342cabff92",
     "kind": "pending",
     "path": "ui/src/shared/DestructiveConfirm.tsx",
-    "line": 14,
+    "line": 15,
     "statement": "const accept = async () => {",
     "occurrence": 1,
-    "source_sha256": "f91a783dec3fe2d1e24fe4f5cf03910e8e1af974bff16587a793cb77b84cfaf4",
+    "source_sha256": "2a4d576808c4decef30142ccd6e769c048bad0cdc53b663dcbbe169ee7b0018e",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; busy, loading, setBusy",
     "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering."
@@ -5178,7 +5154,7 @@
     "line": 132,
     "statement": "ConfirmPage(if (holder != null) S.s_xoa_phan_da_tai_cua_0_6f21ef48(title) else S.s_bo_0_khoi_thu_vien_fe842224(title), \"delete_confirm\", listOf(deleteBookLine(title, holder)), problem) {",
     "occurrence": 1,
-    "source_sha256": "72de1b3acd6afddd3eefda61f306d427b89227fbd9eb4fa192ecbe839c2f2e2b",
+    "source_sha256": "54667c29474ea574e8f891a8e884c01e125db91265a0c7acdd9e215ce651b4a7",
     "disposition": "confirmation",
     "guard": "ConfirmPage DeleteBookPage -> DangerButton acceptance only",
     "reason": "The loss callback exists inside the common confirmed action, with cancel focus and destructive action on the right."
@@ -5190,7 +5166,7 @@
     "line": 136,
     "statement": "scope.launch {",
     "occurrence": 1,
-    "source_sha256": "72de1b3acd6afddd3eefda61f306d427b89227fbd9eb4fa192ecbe839c2f2e2b",
+    "source_sha256": "54667c29474ea574e8f891a8e884c01e125db91265a0c7acdd9e215ce651b4a7",
     "disposition": "pending",
     "guard": "ViewModel/operation fields: BusyRing, pending, pendingVisible, working; Components pending indicator",
     "reason": "The model retains the operation and locks repeats; UI uses the shared pending parameter, loading content or progress owner."
@@ -5202,7 +5178,7 @@
     "line": 137,
     "statement": "val error = delete()",
     "occurrence": 1,
-    "source_sha256": "72de1b3acd6afddd3eefda61f306d427b89227fbd9eb4fa192ecbe839c2f2e2b",
+    "source_sha256": "54667c29474ea574e8f891a8e884c01e125db91265a0c7acdd9e215ce651b4a7",
     "disposition": "confirmation",
     "guard": "ConfirmPage DeleteBookPage -> DangerButton acceptance only",
     "reason": "The loss callback exists inside the common confirmed action, with cancel focus and destructive action on the right."
@@ -9944,7 +9920,7 @@
     "occurrence": 1,
     "source_sha256": "2839fc358cd191e852aa4d6a671e513124abd6661c1dcbcf673a47743288bda4",
     "disposition": "confirmation",
-    "guard": "DownloadControl / TrackRow / TrackSheet DestructiveConfirm; cancel incomplete transfer is exempt",
+    "guard": "Track details (TrackSheet / MusicTrackDetail) DestructiveConfirm; the row shows Downloaded as a status, never a delete button; cancel incomplete transfer is exempt",
     "reason": "Complete music download removal is confirmed with track title and size. Cancelling an unfinished download discards partial bytes immediately. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
   },
   {
@@ -9956,7 +9932,7 @@
     "occurrence": 1,
     "source_sha256": "2839fc358cd191e852aa4d6a671e513124abd6661c1dcbcf673a47743288bda4",
     "disposition": "confirmation",
-    "guard": "DownloadControl / TrackRow / TrackSheet DestructiveConfirm; cancel incomplete transfer is exempt",
+    "guard": "Track details (TrackSheet / MusicTrackDetail) DestructiveConfirm; the row shows Downloaded as a status, never a delete button; cancel incomplete transfer is exempt",
     "reason": "Complete music download removal is confirmed with track title and size. Cancelling an unfinished download discards partial bytes immediately. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
   },
   {
@@ -10076,7 +10052,7 @@
     "occurrence": 1,
     "source_sha256": "c2055dd1260d163bf5297086860cc6b3ad51cdf4becca804fc5607f60e6e7698",
     "disposition": "confirmation",
-    "guard": "DownloadControl / TrackRow / TrackSheet DestructiveConfirm; cancel incomplete transfer is exempt",
+    "guard": "Track details (TrackSheet / MusicTrackDetail) DestructiveConfirm; the row shows Downloaded as a status, never a delete button; cancel incomplete transfer is exempt",
     "reason": "Complete music download removal is confirmed with track title and size. Cancelling an unfinished download discards partial bytes immediately."
   },
   {
@@ -10088,7 +10064,7 @@
     "occurrence": 1,
     "source_sha256": "c2055dd1260d163bf5297086860cc6b3ad51cdf4becca804fc5607f60e6e7698",
     "disposition": "confirmation",
-    "guard": "DownloadControl / TrackRow / TrackSheet DestructiveConfirm; cancel incomplete transfer is exempt",
+    "guard": "Track details (TrackSheet / MusicTrackDetail) DestructiveConfirm; the row shows Downloaded as a status, never a delete button; cancel incomplete transfer is exempt",
     "reason": "Complete music download removal is confirmed with track title and size. Cancelling an unfinished download discards partial bytes immediately."
   },
   {
@@ -10100,7 +10076,7 @@
     "occurrence": 1,
     "source_sha256": "c2055dd1260d163bf5297086860cc6b3ad51cdf4becca804fc5607f60e6e7698",
     "disposition": "confirmation",
-    "guard": "DownloadControl / TrackRow / TrackSheet DestructiveConfirm; cancel incomplete transfer is exempt",
+    "guard": "Track details (TrackSheet / MusicTrackDetail) DestructiveConfirm; the row shows Downloaded as a status, never a delete button; cancel incomplete transfer is exempt",
     "reason": "Complete music download removal is confirmed with track title and size. Cancelling an unfinished download discards partial bytes immediately."
   },
   {
@@ -10148,7 +10124,7 @@
     "occurrence": 1,
     "source_sha256": "c2055dd1260d163bf5297086860cc6b3ad51cdf4becca804fc5607f60e6e7698",
     "disposition": "confirmation",
-    "guard": "DownloadControl / TrackRow / TrackSheet DestructiveConfirm; cancel incomplete transfer is exempt",
+    "guard": "Track details (TrackSheet / MusicTrackDetail) DestructiveConfirm; the row shows Downloaded as a status, never a delete button; cancel incomplete transfer is exempt",
     "reason": "Complete music download removal is confirmed with track title and size. Cancelling an unfinished download discards partial bytes immediately."
   },
   {
@@ -10160,7 +10136,7 @@
     "occurrence": 1,
     "source_sha256": "c2055dd1260d163bf5297086860cc6b3ad51cdf4becca804fc5607f60e6e7698",
     "disposition": "confirmation",
-    "guard": "DownloadControl / TrackRow / TrackSheet DestructiveConfirm; cancel incomplete transfer is exempt",
+    "guard": "Track details (TrackSheet / MusicTrackDetail) DestructiveConfirm; the row shows Downloaded as a status, never a delete button; cancel incomplete transfer is exempt",
     "reason": "Complete music download removal is confirmed with track title and size. Cancelling an unfinished download discards partial bytes immediately."
   },
   {
@@ -10200,27 +10176,15 @@
     "reason": "Only a transient node, source attribute, cache image, listener, collection entry or display text is affected. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
   },
   {
-    "id": "43bff5ff64630114ee28",
-    "kind": "destructive",
-    "path": "mobile/android/app/src/main/java/vn/abook/player/ui/music/library/TrackRow.kt",
-    "line": 110,
-    "statement": "{ state.forget(track.link) }, pending = pending, problem = ui.actionError)",
-    "occurrence": 1,
-    "source_sha256": "e4d1f260ec2564fc3de023ba287bac1feb5e26adae21ae3aa6a9ea42e55f7c4e",
-    "disposition": "confirmation",
-    "guard": "DownloadControl / TrackRow / TrackSheet DestructiveConfirm; cancel incomplete transfer is exempt",
-    "reason": "Complete music download removal is confirmed with track title and size. Cancelling an unfinished download discards partial bytes immediately. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Devvoice review: device voice names, circled radio marks, one-line names and 8 dp text gaps leave this action and its guard unchanged."
-  },
-  {
     "id": "acdce9447837d66fe3d1",
     "kind": "destructive",
     "path": "mobile/android/app/src/main/java/vn/abook/player/ui/music/library/TrackSheet.kt",
     "line": 142,
     "statement": "{ state.forget(link) }, pending = link in ui.pendingLinks, problem = ui.actionError)",
     "occurrence": 1,
-    "source_sha256": "8bb699e3d0bbcd562eaf2e7db7c0364eeaa3412f240123c441275601431ae741",
+    "source_sha256": "0db1ee02f3b952f56e89fa2d16149263fecc6ab91870a3ba82fcea5a255ffeba",
     "disposition": "confirmation",
-    "guard": "DownloadControl / TrackRow / TrackSheet DestructiveConfirm; cancel incomplete transfer is exempt",
+    "guard": "Track details (TrackSheet / MusicTrackDetail) DestructiveConfirm; the row shows Downloaded as a status, never a delete button; cancel incomplete transfer is exempt",
     "reason": "Complete music download removal is confirmed with track title and size. Cancelling an unfinished download discards partial bytes immediately."
   },
   {
@@ -11319,10 +11283,10 @@
     "id": "daa9d6573bb5c01bf347",
     "kind": "pending",
     "path": "mobile/android/app/src/main/java/vn/abook/player/ui/screens/BookRecords.kt",
-    "line": 117,
+    "line": 127,
     "statement": "scope.launch {",
     "occurrence": 1,
-    "source_sha256": "1f2e29388127a55f5f54316b20352c9b18608209151b929ba614456f1f80d7de",
+    "source_sha256": "1f7ef929ba79f74730f4865d532bbf1590dc9add4f978a7897734695f6efba46",
     "disposition": "pending",
     "guard": "ViewModel/operation fields: busy, pending; Components pending indicator",
     "reason": "The model retains the operation and locks repeats; UI uses the shared pending parameter, loading content or progress owner."
@@ -11331,10 +11295,10 @@
     "id": "05399cf210e5d8e5e377",
     "kind": "pending",
     "path": "mobile/android/app/src/main/java/vn/abook/player/ui/screens/BookRecords.kt",
-    "line": 166,
+    "line": 175,
     "statement": "scope.launch {",
     "occurrence": 2,
-    "source_sha256": "1f2e29388127a55f5f54316b20352c9b18608209151b929ba614456f1f80d7de",
+    "source_sha256": "1f7ef929ba79f74730f4865d532bbf1590dc9add4f978a7897734695f6efba46",
     "disposition": "pending",
     "guard": "ViewModel/operation fields: busy, pending; Components pending indicator",
     "reason": "The model retains the operation and locks repeats; UI uses the shared pending parameter, loading content or progress owner."
@@ -11343,10 +11307,10 @@
     "id": "4dc1538a1df9adfe194a",
     "kind": "destructive",
     "path": "mobile/android/app/src/main/java/vn/abook/player/ui/screens/BookRecords.kt",
-    "line": 171,
+    "line": 180,
     "statement": "RecordAction.Delete -> source.deleteRecord(book.id, active.id)",
     "occurrence": 1,
-    "source_sha256": "1f2e29388127a55f5f54316b20352c9b18608209151b929ba614456f1f80d7de",
+    "source_sha256": "1f7ef929ba79f74730f4865d532bbf1590dc9add4f978a7897734695f6efba46",
     "disposition": "confirmation",
     "guard": "BookRecords ConfirmPage / BookScreen record Dialog / RecordDialogs Modal / DeleteBookPage",
     "reason": "Deleting a listening profile explicitly describes loss of progress and history. Deleting a book uses the book confirmation."
@@ -11355,10 +11319,10 @@
     "id": "ed0fc4193286e655bfa3",
     "kind": "destructive",
     "path": "mobile/android/app/src/main/java/vn/abook/player/ui/screens/BookRecords.kt",
-    "line": 182,
+    "line": 191,
     "statement": "RecordAction.Delete -> notes.say(Records.deletedNote(active.name))",
     "occurrence": 1,
-    "source_sha256": "1f2e29388127a55f5f54316b20352c9b18608209151b929ba614456f1f80d7de",
+    "source_sha256": "1f7ef929ba79f74730f4865d532bbf1590dc9add4f978a7897734695f6efba46",
     "disposition": "confirmation",
     "guard": "BookRecords ConfirmPage / BookScreen record Dialog / RecordDialogs Modal / DeleteBookPage",
     "reason": "Deleting a listening profile explicitly describes loss of progress and history. Deleting a book uses the book confirmation."
@@ -11874,7 +11838,7 @@
     "line": 68,
     "statement": "private suspend fun snapshot(id: String): EditSnapshot = guard {",
     "occurrence": 1,
-    "source_sha256": "e98d256277a72ae532b0ca13b3300c5a34ae6ac570e001613bda28922adbfd9f",
+    "source_sha256": "305e37260b0ffb9b06900a48cff0854edab5519bfdb911850c023408e426806e",
     "disposition": "internal",
     "guard": "Async interface/helper boundary; concrete activation inventoried separately",
     "reason": "This signature supplies work to a model or component; declaring it starts no user operation. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
@@ -11886,7 +11850,7 @@
     "line": 74,
     "statement": "private suspend fun <T> guard(block: suspend () -> T): T = try {",
     "occurrence": 1,
-    "source_sha256": "e98d256277a72ae532b0ca13b3300c5a34ae6ac570e001613bda28922adbfd9f",
+    "source_sha256": "305e37260b0ffb9b06900a48cff0854edab5519bfdb911850c023408e426806e",
     "disposition": "internal",
     "guard": "Async interface/helper boundary; concrete activation inventoried separately",
     "reason": "This signature supplies work to a model or component; declaring it starts no user operation. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
@@ -11898,7 +11862,7 @@
     "line": 84,
     "statement": "override suspend fun load(id: String) = snapshot(id)",
     "occurrence": 1,
-    "source_sha256": "e98d256277a72ae532b0ca13b3300c5a34ae6ac570e001613bda28922adbfd9f",
+    "source_sha256": "305e37260b0ffb9b06900a48cff0854edab5519bfdb911850c023408e426806e",
     "disposition": "internal",
     "guard": "Async interface/helper boundary; concrete activation inventoried separately",
     "reason": "This signature supplies work to a model or component; declaring it starts no user operation. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
@@ -11910,7 +11874,7 @@
     "line": 86,
     "statement": "override suspend fun save(id: String, diff: EditDiff) = snapshot(id)",
     "occurrence": 1,
-    "source_sha256": "e98d256277a72ae532b0ca13b3300c5a34ae6ac570e001613bda28922adbfd9f",
+    "source_sha256": "305e37260b0ffb9b06900a48cff0854edab5519bfdb911850c023408e426806e",
     "disposition": "internal",
     "guard": "Async interface/helper boundary; concrete activation inventoried separately",
     "reason": "This signature supplies work to a model or component; declaring it starts no user operation. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
@@ -11922,7 +11886,7 @@
     "line": 88,
     "statement": "override suspend fun cover(id: String, image: ByteArray?): EditSnapshot {",
     "occurrence": 1,
-    "source_sha256": "e98d256277a72ae532b0ca13b3300c5a34ae6ac570e001613bda28922adbfd9f",
+    "source_sha256": "305e37260b0ffb9b06900a48cff0854edab5519bfdb911850c023408e426806e",
     "disposition": "internal",
     "guard": "Async interface/helper boundary; concrete activation inventoried separately",
     "reason": "This signature supplies work to a model or component; declaring it starts no user operation. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
@@ -11934,7 +11898,7 @@
     "line": 90,
     "statement": "if (image == null) session.source.delete(session.computer, id, \"cover\")",
     "occurrence": 1,
-    "source_sha256": "e98d256277a72ae532b0ca13b3300c5a34ae6ac570e001613bda28922adbfd9f",
+    "source_sha256": "305e37260b0ffb9b06900a48cff0854edab5519bfdb911850c023408e426806e",
     "disposition": "confirmation",
     "guard": "CoverEditor removeConfirm / StudioCover DestructiveConfirm",
     "reason": "Removing the cover asks before changing the persisted image. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
@@ -11946,7 +11910,7 @@
     "line": 96,
     "statement": "override suspend fun revertChapter(id: String, chapterId: Long) = snapshot(id)",
     "occurrence": 1,
-    "source_sha256": "e98d256277a72ae532b0ca13b3300c5a34ae6ac570e001613bda28922adbfd9f",
+    "source_sha256": "305e37260b0ffb9b06900a48cff0854edab5519bfdb911850c023408e426806e",
     "disposition": "internal",
     "guard": "Async interface/helper boundary; concrete activation inventoried separately",
     "reason": "This signature supplies work to a model or component; declaring it starts no user operation. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
@@ -11958,7 +11922,7 @@
     "line": 98,
     "statement": "override suspend fun send(id: String) = snapshot(id)",
     "occurrence": 1,
-    "source_sha256": "e98d256277a72ae532b0ca13b3300c5a34ae6ac570e001613bda28922adbfd9f",
+    "source_sha256": "305e37260b0ffb9b06900a48cff0854edab5519bfdb911850c023408e426806e",
     "disposition": "internal",
     "guard": "Async interface/helper boundary; concrete activation inventoried separately",
     "reason": "This signature supplies work to a model or component; declaring it starts no user operation. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
@@ -11970,7 +11934,7 @@
     "line": 100,
     "statement": "override suspend fun findCovers(id: String, query: String): CoverResults = guard { session.source.coverSearch(session.computer, id, query) }",
     "occurrence": 1,
-    "source_sha256": "e98d256277a72ae532b0ca13b3300c5a34ae6ac570e001613bda28922adbfd9f",
+    "source_sha256": "305e37260b0ffb9b06900a48cff0854edab5519bfdb911850c023408e426806e",
     "disposition": "internal",
     "guard": "Async interface/helper boundary; concrete activation inventoried separately",
     "reason": "This signature supplies work to a model or component; declaring it starts no user operation. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
@@ -11982,7 +11946,7 @@
     "line": 102,
     "statement": "override suspend fun coverFromUrl(id: String, url: String): EditSnapshot {",
     "occurrence": 1,
-    "source_sha256": "e98d256277a72ae532b0ca13b3300c5a34ae6ac570e001613bda28922adbfd9f",
+    "source_sha256": "305e37260b0ffb9b06900a48cff0854edab5519bfdb911850c023408e426806e",
     "disposition": "internal",
     "guard": "Async interface/helper boundary; concrete activation inventoried separately",
     "reason": "This signature supplies work to a model or component; declaring it starts no user operation. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
@@ -11994,7 +11958,7 @@
     "line": 107,
     "statement": "override suspend fun thumbnail(url: String): ImageBitmap? = CoverThumbnails.load(url)",
     "occurrence": 1,
-    "source_sha256": "e98d256277a72ae532b0ca13b3300c5a34ae6ac570e001613bda28922adbfd9f",
+    "source_sha256": "305e37260b0ffb9b06900a48cff0854edab5519bfdb911850c023408e426806e",
     "disposition": "internal",
     "guard": "Async interface/helper boundary; concrete activation inventoried separately",
     "reason": "This signature supplies work to a model or component; declaring it starts no user operation. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
@@ -15714,7 +15678,7 @@
     "line": 32,
     "statement": "Api.quiet(\"GET\", \"/api/books/\" + encodeURIComponent(bookId) + \"/music/library\", null, function(next, error) {",
     "occurrence": 1,
-    "source_sha256": "03c3cb84ec007683593f93c37aa6b97fb5fe8434e4015155b496a989caae8fb7",
+    "source_sha256": "b4416572189340e1e6cff72d552b2da1bf4ee4a32565bff1f06ec787f7e08879",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; busy, loading, previewLoading",
     "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads."
@@ -15726,7 +15690,7 @@
     "line": 37,
     "statement": "function pollDownloads() { Api.quiet(\"GET\", \"/api/music/library/downloads\", null, function(next, problem) { if (!problem) { const was = busy; downloads = next; if (was && !busy) refresh() } }) }",
     "occurrence": 1,
-    "source_sha256": "03c3cb84ec007683593f93c37aa6b97fb5fe8434e4015155b496a989caae8fb7",
+    "source_sha256": "b4416572189340e1e6cff72d552b2da1bf4ee4a32565bff1f06ec787f7e08879",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; busy, loading, previewLoading",
     "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads."
@@ -15738,7 +15702,7 @@
     "line": 39,
     "statement": "Api.quiet(\"POST\", path, {links: links}, function(next, problem) {",
     "occurrence": 1,
-    "source_sha256": "03c3cb84ec007683593f93c37aa6b97fb5fe8434e4015155b496a989caae8fb7",
+    "source_sha256": "b4416572189340e1e6cff72d552b2da1bf4ee4a32565bff1f06ec787f7e08879",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; busy, loading, previewLoading",
     "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads."
@@ -15750,7 +15714,7 @@
     "line": 45,
     "statement": "Component.onCompleted: { refresh(); pollDownloads(); Api.quiet(\"GET\", \"/api/music/library/meta\", null, function(next, problem) { if (!problem) meta = next }) }",
     "occurrence": 1,
-    "source_sha256": "03c3cb84ec007683593f93c37aa6b97fb5fe8434e4015155b496a989caae8fb7",
+    "source_sha256": "b4416572189340e1e6cff72d552b2da1bf4ee4a32565bff1f06ec787f7e08879",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; busy, loading, previewLoading",
     "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads."
@@ -15786,7 +15750,7 @@
     "line": 38,
     "statement": "Api.quiet(\"GET\", \"/api/music/library\" + Logic.libraryQuery(forSaved ? Logic.noFilters() : effective, forSaved), null, function(data, problem) {",
     "occurrence": 1,
-    "source_sha256": "2951d0e18c280c2eaa63103b25ff401c0ec86a4edc6c2b35886fe554d8c4607f",
+    "source_sha256": "6c4ee409224fd2cbefc2eca68e53222a000e913c7fbdbc65bdea9d4d729d4fd8",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; busy, loading, previewLoading",
     "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads."
@@ -15798,7 +15762,7 @@
     "line": 46,
     "statement": "function loadMeta() { Api.quiet(\"GET\", \"/api/music/library/meta\", null, function(data, problem) { if (!problem) meta = data }) }",
     "occurrence": 1,
-    "source_sha256": "2951d0e18c280c2eaa63103b25ff401c0ec86a4edc6c2b35886fe554d8c4607f",
+    "source_sha256": "6c4ee409224fd2cbefc2eca68e53222a000e913c7fbdbc65bdea9d4d729d4fd8",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; busy, loading, previewLoading",
     "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads."
@@ -15810,7 +15774,7 @@
     "line": 47,
     "statement": "function pollDownloads() { Api.quiet(\"GET\", \"/api/music/library/downloads\", null, function(data, problem) { if (!problem) { const was = busy; downloads = data; if (was && !busy) refresh() } }) }",
     "occurrence": 1,
-    "source_sha256": "2951d0e18c280c2eaa63103b25ff401c0ec86a4edc6c2b35886fe554d8c4607f",
+    "source_sha256": "6c4ee409224fd2cbefc2eca68e53222a000e913c7fbdbc65bdea9d4d729d4fd8",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; busy, loading, previewLoading",
     "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads."
@@ -15822,7 +15786,7 @@
     "line": 51,
     "statement": "Api.quiet(\"POST\", \"/api/music/library/save\", {links: links}, function(data, problem) {",
     "occurrence": 1,
-    "source_sha256": "2951d0e18c280c2eaa63103b25ff401c0ec86a4edc6c2b35886fe554d8c4607f",
+    "source_sha256": "6c4ee409224fd2cbefc2eca68e53222a000e913c7fbdbc65bdea9d4d729d4fd8",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; busy, loading, previewLoading",
     "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads."
@@ -15834,7 +15798,7 @@
     "line": 56,
     "statement": "function unsave(links) {",
     "occurrence": 1,
-    "source_sha256": "2951d0e18c280c2eaa63103b25ff401c0ec86a4edc6c2b35886fe554d8c4607f",
+    "source_sha256": "6c4ee409224fd2cbefc2eca68e53222a000e913c7fbdbc65bdea9d4d729d4fd8",
     "disposition": "internal",
     "guard": "Declaration; the invoked call site is independently inventoried",
     "reason": "A declaration/signature is not an executing UI action."
@@ -15846,7 +15810,7 @@
     "line": 57,
     "statement": "Api.quiet(\"POST\", \"/api/music/library/unsave\", {links: links}, function(data, problem) {",
     "occurrence": 1,
-    "source_sha256": "2951d0e18c280c2eaa63103b25ff401c0ec86a4edc6c2b35886fe554d8c4607f",
+    "source_sha256": "6c4ee409224fd2cbefc2eca68e53222a000e913c7fbdbc65bdea9d4d729d4fd8",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; busy, loading, previewLoading",
     "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads."
@@ -15858,7 +15822,7 @@
     "line": 63,
     "statement": "Api.quiet(\"POST\", \"/api/music/library/cancel\", {links: links}, function(data, problem) {",
     "occurrence": 1,
-    "source_sha256": "2951d0e18c280c2eaa63103b25ff401c0ec86a4edc6c2b35886fe554d8c4607f",
+    "source_sha256": "6c4ee409224fd2cbefc2eca68e53222a000e913c7fbdbc65bdea9d4d729d4fd8",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; busy, loading, previewLoading",
     "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads."
@@ -15870,7 +15834,7 @@
     "line": 74,
     "statement": "Api.quiet(\"PUT\", \"/api/books/\" + encodeURIComponent(pickBook) + \"/music\", {pins: (function() { const pins = {}; pins[pickScene] = link; return pins })()}, function(data, problem) {",
     "occurrence": 1,
-    "source_sha256": "2951d0e18c280c2eaa63103b25ff401c0ec86a4edc6c2b35886fe554d8c4607f",
+    "source_sha256": "6c4ee409224fd2cbefc2eca68e53222a000e913c7fbdbc65bdea9d4d729d4fd8",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; busy, loading, previewLoading",
     "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads."
@@ -15882,33 +15846,21 @@
     "line": 82,
     "statement": "Api.quiet(\"PUT\", \"/api/books/\" + encodeURIComponent(pickBook) + \"/music\", {ban: [link]}, function(data, problem) {",
     "occurrence": 1,
-    "source_sha256": "2951d0e18c280c2eaa63103b25ff401c0ec86a4edc6c2b35886fe554d8c4607f",
+    "source_sha256": "6c4ee409224fd2cbefc2eca68e53222a000e913c7fbdbc65bdea9d4d729d4fd8",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; busy, loading, previewLoading",
     "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads."
   },
   {
-    "id": "9e8eb9cacd8e40789546",
-    "kind": "destructive",
-    "path": "desktop_qt/qml/MusicScreen.qml",
-    "line": 216,
-    "statement": "onDeleteDownload: root.unsave([modelData.link])",
-    "occurrence": 1,
-    "source_sha256": "2951d0e18c280c2eaa63103b25ff401c0ec86a4edc6c2b35886fe554d8c4607f",
-    "disposition": "confirmation",
-    "guard": "DownloadControl / TrackRow / TrackSheet DestructiveConfirm; cancel incomplete transfer is exempt",
-    "reason": "Complete music download removal is confirmed with track title and size. Cancelling an unfinished download discards partial bytes immediately."
-  },
-  {
     "id": "c4ccff7e968500ed6810",
     "kind": "destructive",
     "path": "desktop_qt/qml/MusicScreen.qml",
-    "line": 264,
+    "line": 263,
     "statement": "onUnsave: root.unsave([detail.link])",
     "occurrence": 1,
-    "source_sha256": "2951d0e18c280c2eaa63103b25ff401c0ec86a4edc6c2b35886fe554d8c4607f",
+    "source_sha256": "6c4ee409224fd2cbefc2eca68e53222a000e913c7fbdbc65bdea9d4d729d4fd8",
     "disposition": "confirmation",
-    "guard": "DownloadControl / TrackRow / TrackSheet DestructiveConfirm; cancel incomplete transfer is exempt",
+    "guard": "Track details (TrackSheet / MusicTrackDetail) DestructiveConfirm; the row shows Downloaded as a status, never a delete button; cancel incomplete transfer is exempt",
     "reason": "Complete music download removal is confirmed with track title and size. Cancelling an unfinished download discards partial bytes immediately."
   },
   {
@@ -15944,31 +15896,7 @@
     "occurrence": 1,
     "source_sha256": "fd0ab2f349bc9fd42f81d6c2084869d36c5f8adeec52aeab6569e6b54a409106",
     "disposition": "confirmation",
-    "guard": "DownloadControl / TrackRow / TrackSheet DestructiveConfirm; cancel incomplete transfer is exempt",
-    "reason": "Complete music download removal is confirmed with track title and size. Cancelling an unfinished download discards partial bytes immediately."
-  },
-  {
-    "id": "4b19453ac0e453cd5b89",
-    "kind": "destructive",
-    "path": "desktop_qt/qml/MusicTrackRow.qml",
-    "line": 25,
-    "statement": "signal deleteDownload()",
-    "occurrence": 1,
-    "source_sha256": "c84c27776cba47fb9a609c6e037efd9420bea45680cc552526b222d15aa68976",
-    "disposition": "internal",
-    "guard": "Declaration; the invoked call site is independently inventoried",
-    "reason": "A declaration/signature is not an executing UI action."
-  },
-  {
-    "id": "b5de8a356f266f7504cd",
-    "kind": "destructive",
-    "path": "desktop_qt/qml/MusicTrackRow.qml",
-    "line": 125,
-    "statement": "onAccepted: root.deleteDownload()",
-    "occurrence": 1,
-    "source_sha256": "c84c27776cba47fb9a609c6e037efd9420bea45680cc552526b222d15aa68976",
-    "disposition": "confirmation",
-    "guard": "DownloadControl / TrackRow / TrackSheet DestructiveConfirm; cancel incomplete transfer is exempt",
+    "guard": "Track details (TrackSheet / MusicTrackDetail) DestructiveConfirm; the row shows Downloaded as a status, never a delete button; cancel incomplete transfer is exempt",
     "reason": "Complete music download removal is confirmed with track title and size. Cancelling an unfinished download discards partial bytes immediately."
   },
   {
@@ -17278,5 +17206,17 @@
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; pending, pendingNote",
     "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads."
+  },
+  {
+    "id": "ad28300aace5700cda63",
+    "kind": "destructive",
+    "path": "ui/src/listen/MyMusic.tsx",
+    "line": 169,
+    "statement": "onClick={() => deletion.confirm({ title: S.s_xoa_bai_nay_412d7001, description: S.s_0_se_bi_xoa_khoi_nhac_cua_toi_a41656b0(track.title), run: () => remove.mutateAsync(track.link) })}>{S.s_xoa_777195ab}</Button>}</Presence>",
+    "occurrence": 1,
+    "source_sha256": "ea3fef04301ec91c2ab0546d84ff252a477f037d323e5a56b7a80d484d773519",
+    "disposition": "confirmation",
+    "guard": "MyMusic useDestructiveConfirm / MyMusicTrack removeConfirm / VoiceSheets TrackSheet",
+    "reason": "The local imported music file is removed only after the shared confirmation."
   }
 ]

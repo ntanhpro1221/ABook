@@ -58,7 +58,7 @@ import vn.abook.player.ui.theme.Dim
  * "Thêm" và mở thẳng trang biểu mẫu của bảng này (`start`). Cuốn đang ở trình phát thì trình phát theo sang hồ sơ mới (lõi: ListeningRecords).
  */
 
-private enum class RecordPage { Pick, Form }
+private enum class RecordPage { Pick, Form, Delete }
 
 /** Biểu mẫu đang mở: việc, tên đang gõ, cuốn nhận (chuyển hồ sơ). */
 private class RecordForm(val action: RecordAction, val name: String, val target: ListenBook? = null)
@@ -86,13 +86,23 @@ fun RecordSheet(
     // Lúc trang biểu mẫu trượt ra (Back), `form` đã null: giữ biểu mẫu cuối để trang đang trượt không trống.
     val last = remember { arrayOfNulls<RecordForm>(1) }
     form?.let { last[0] = it }
-    SheetPages(if (form == null) RecordPage.Pick else RecordPage.Form, { it.ordinal }, "record_sheet") { page ->
+    // Deleting is its own page (a confirmation, not a form): SheetPages owns the slide between every pair of pages.
+    val current = when {
+        form == null -> RecordPage.Pick
+        form?.action == RecordAction.Delete -> RecordPage.Delete
+        else -> RecordPage.Form
+    }
+    SheetPages(current, { it.ordinal }, "record_sheet") { page ->
+        val cancel: () -> Unit = { if (start == null) form = null else dismiss() }
         when (page) {
             RecordPage.Pick -> PickPage(book, records, active, source, notes, dismiss, onForm = { form = formFor(it, active, records.size) })
+            RecordPage.Delete -> (form ?: last[0])?.let { shown ->
+                DeletePage(records, active, rememberRecordSubmit(book, active, source, notes, shown, openBook, dismiss), onCancel = cancel)
+            }
             RecordPage.Form -> (form ?: last[0])?.let { shown ->
                 FormPage(
-                    book, records, active, others, source, notes, shown, openBook, dismiss,
-                    onChange = { form = it }, onCancel = { if (start == null) form = null else dismiss() },
+                    records, active, others, shown, rememberRecordSubmit(book, active, source, notes, shown, openBook, dismiss),
+                    onChange = { form = it }, onCancel = cancel,
                 )
             }
         }
@@ -136,20 +146,19 @@ private fun PickPage(
     }
 }
 
+/** One submit of a record form: busy and problem live with the page that shows them. */
+private class RecordSubmit(val busy: Boolean, val problem: String, val ready: Boolean, val submit: () -> Unit)
+
 @Composable
-private fun FormPage(
+private fun rememberRecordSubmit(
     book: ListenBook,
-    records: List<ListenRecord>,
     active: ListenRecord,
-    others: List<ListenBook>,
     source: BookSource,
     notes: BookNotes,
     form: RecordForm,
     openBook: (String) -> Unit,
     dismiss: () -> Unit,
-    onChange: (RecordForm) -> Unit,
-    onCancel: () -> Unit,
-) {
+): RecordSubmit {
     val scope = rememberCoroutineScope()
     var busy by remember { mutableStateOf(false) }
     var problem by remember { mutableStateOf("") }
@@ -186,13 +195,30 @@ private fun FormPage(
             }
         }
     }
-    if (action == RecordAction.Delete) {
-        ConfirmPage(Records.title(action, active.name), "record_form", listOfNotNull(Records.description(action, records.size)), problem) {
-            DangerButton(Records.confirmLabel(action), { submit() }, "record_confirm", pending = busy)
-            QuietButton(S.s_huy_96732485, onCancel, "record_cancel")
-        }
-        return
+    return RecordSubmit(busy, problem, ready, submit)
+}
+
+@Composable
+private fun DeletePage(records: List<ListenRecord>, active: ListenRecord, run: RecordSubmit, onCancel: () -> Unit) {
+    val action = RecordAction.Delete
+    ConfirmPage(Records.title(action, active.name), "record_form", listOfNotNull(Records.description(action, records.size)), run.problem) {
+        DangerButton(Records.confirmLabel(action), { run.submit() }, "record_confirm", pending = run.busy)
+        QuietButton(S.s_huy_96732485, onCancel, "record_cancel")
     }
+}
+
+@Composable
+private fun FormPage(
+    records: List<ListenRecord>,
+    active: ListenRecord,
+    others: List<ListenBook>,
+    form: RecordForm,
+    run: RecordSubmit,
+    onChange: (RecordForm) -> Unit,
+    onCancel: () -> Unit,
+) {
+    val action = form.action
+    val submit = run.submit
     Column(Modifier.fillMaxWidth().imePadding().testTag("record_form")) {
         BasicText(Records.title(action, active.name), style = Abook.type.sectionTitle)
         Records.description(action, records.size)?.let { RowHint(it) }
@@ -213,10 +239,10 @@ private fun FormPage(
             }
             RecordAction.Delete -> Unit
         }
-        ProblemLine(problem, "record_problem")
+        ProblemLine(run.problem, "record_problem")
         Spacer(Modifier.height(Dim.s24))
         val label = Records.confirmLabel(action)
-        PrimaryButton(label, { submit() }, Modifier.fillMaxWidth().testTag("record_confirm"), enabled = ready, pending = busy)
+        PrimaryButton(label, { submit() }, Modifier.fillMaxWidth().testTag("record_confirm"), enabled = run.ready, pending = run.busy)
         QuietButton(S.s_huy_96732485, onCancel, "record_cancel")
     }
 }

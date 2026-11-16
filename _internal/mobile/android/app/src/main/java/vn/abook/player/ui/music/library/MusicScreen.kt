@@ -138,7 +138,9 @@ fun MusicScreen(
                 }
             }
             PreviewProblem(ui, Modifier.padding(horizontal = Dim.margin), state::retryPreview)
-            if (ui.actionError.isNotEmpty()) InlineProblem(ui.actionError, state::retryAction, "music_action_error", Modifier.padding(horizontal = Dim.margin))
+            SwapContent(ui.actionError, contentKey = { error -> error.isNotEmpty() }, layout = ContentLayout.Column) { error ->
+                if (error.isNotEmpty()) InlineProblem(error, state::retryAction, "music_action_error", Modifier.padding(horizontal = Dim.margin))
+            }
             when {
                 ui.loading -> Caption(S.s_dang_tai_465b1987, Modifier.padding(horizontal = Dim.margin).testTag("music_loading"))
                 ui.error.isNotEmpty() -> InlineProblem(ui.error, state::open, "music_error", Modifier.padding(horizontal = Dim.margin))
@@ -159,11 +161,11 @@ fun MusicScreen(
 }
 
 @Composable
-internal fun PreviewProblem(ui: LibraryUi, modifier: Modifier = Modifier, retry: (() -> Unit)? = null) {
+internal fun PreviewProblem(ui: LibraryUi, modifier: Modifier = Modifier, retry: () -> Unit) {
     Reveal(ui.previewError.isNotEmpty()) {
         Caption(if (ui.previewError == S.s_preview_timeout) S.s_preview_timeout else S.s_chua_nghe_thu_duoc_luc_nay_58b11ef5,
             modifier.testTag("preview_error"), color = Abook.colors.danger)
-        if (retry != null) vn.abook.player.ui.components.TextAction(S.s_thu_lai_c58d068c, retry, "preview_retry")
+        vn.abook.player.ui.components.TextAction(S.s_thu_lai_c58d068c, retry, "preview_retry")
     }
 }
 

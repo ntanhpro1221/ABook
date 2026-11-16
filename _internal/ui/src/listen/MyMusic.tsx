@@ -20,7 +20,7 @@ import { AutoPickNote } from "@/studio/AutoPickNote";
 import { MusicModuleNotice } from "@/studio/MusicModuleNotice";
 import { MUSIC_CHANGED_ALL, MUSIC_CHANGED_EVENT } from "./musicBed";
 
-import { Reveal } from "../shared/MotionPresence";
+import { Presence, Reveal } from "../shared/MotionPresence";
 // "Nhạc của tôi" trên trang sửa sách (docs/MUSIC_IMPORT.md): nhạc bạn tự có làm nhạc nền. Nhập, xem, xoá ở đây; "Đổi bài" ở từng đoạn
 // nhạc của sách. Cùng JSON ở máy tính (server.py) và điện thoại (LocalStudio.kt, MusicStore.kt).
 
@@ -165,8 +165,8 @@ export function MyMusicSection() {
                 {/* Nhãn ngắn như tab Nhạc của dự án; công tắc Tự chọn chỉ ở máy tính (điện thoại không tự chọn). */}
                 <AutoPickNote track={track} canOverride={canImport && !hasNativeMusicImport()} onView={refresh} />
               </span>
-              {canImport && <Button size="sm" variant="ghost" icon={Trash2} aria-label={S.s_xoa_0_179508ae(track.title)}
-                onClick={() => deletion.confirm({ title: S.s_xoa_bai_nay_412d7001, description: S.s_0_se_bi_xoa_khoi_nhac_cua_toi_a41656b0(track.title), run: () => remove.mutateAsync(track.link) })}>{S.s_xoa_777195ab}</Button>}
+              <Presence>{canImport && <Button size="sm" variant="ghost" icon={Trash2} aria-label={S.s_xoa_0_179508ae(track.title)}
+                onClick={() => deletion.confirm({ title: S.s_xoa_bai_nay_412d7001, description: S.s_0_se_bi_xoa_khoi_nhac_cua_toi_a41656b0(track.title), run: () => remove.mutateAsync(track.link) })}>{S.s_xoa_777195ab}</Button>}</Presence>
             </div></li>
           ))}
         </ul>

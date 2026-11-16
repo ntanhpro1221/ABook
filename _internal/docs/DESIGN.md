@@ -416,9 +416,10 @@ giữ tên trong cột tối đa 640 px, thanh tua dùng phần rộng còn lạ
     tests/fixtures/music_library/cases.json (máy chủ, Android, Qt chạy cùng bảng).
   - *Dòng bài* (cao >= 64): nút nghe thử · tên (đậm, tối đa hai dòng, ellipsis) / người sáng tác · thời lượng (một dòng, chỉ người sáng tác
     ellipsis) · cột trạng thái tải cố định (mũi tên tải / vòng mảnh quanh ô vuông dừng / mũi tên xuống trong vòng đặc màu nhấn).
-    Nhãn lần lượt "Tải về", "Dừng tải", "Đã tải - bấm để xoá". Vòng không có chữ; % ở dòng phụ dùng chữ số đều.
-    Chưa biết tổng byte thì vòng quay quanh ô vuông dừng. Dừng bỏ phần dở ngay, không hỏi. Bản hoàn chỉnh chỉ xoá sau hộp
-    "Xoá bản tải?", tên bài + dung lượng giải phóng; Huỷ mặc định bên trái, Xoá màu nguy hiểm bên phải.
+    Nhãn lần lượt "Tải về", "Dừng tải" (nút) và "Đã tải" (trạng thái, KHÔNG bấm được - không phải nút xoá ngầm). Vòng không có chữ;
+    % ở dòng phụ dùng chữ số đều. Chưa biết tổng byte thì vòng quay quanh ô vuông dừng. Dừng bỏ phần dở ngay, không hỏi. Bản hoàn chỉnh
+    chỉ xoá ở chi tiết bài ("Xoá bản tải") sau hộp "Xoá bản tải?", tên bài + dung lượng giải phóng; Huỷ mặc định bên trái, Xoá màu nguy
+    hiểm bên phải. Thanh nghe của dòng bắt đầu dưới nút nghe thử (ảnh 40 + khe 8).
     Bỏ phong cách khỏi hàng trên cả ba nền tảng để giữ chỗ cho tên và cột tải; phong cách đầy đủ ở Thông tin. Đây là ngoại lệ cắt chữ
     có chủ ý theo soát musiclib2; sheet giữ nguyên tên đầy đủ. Danh sách ảo hoá (2.387 dòng).
     Mất mạng: bài chưa tải mờ nút nghe thử và nút tải; danh mục đã lưu vẫn mở được.

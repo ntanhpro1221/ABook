@@ -11,7 +11,11 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.expandHorizontally
 import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkHorizontally
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
@@ -189,7 +193,8 @@ fun <T : Choice> ChoiceSetting(
     Column(Modifier.fillMaxWidth().padding(top = Dim.s12, bottom = Dim.s4).testTag(tag)) {
         Box(Modifier.fillMaxWidth()) {
             RowLabel(label, hint, Modifier.fillMaxWidth().padding(end = if (pending != null) Dim.s24 else 0.dp))
-            if (pending != null) PendingIndicator(pending, Modifier.align(Alignment.CenterEnd))
+            // The slot is always there; PendingIndicator fades its spinner in and out (an idle slot draws nothing).
+            PendingIndicator(pending == true, Modifier.align(Alignment.CenterEnd))
         }
         Spacer(Modifier.height(Dim.s4))
         ChoiceRow(options, value, { option, offset -> if (pending != true) onPick(option, offset) }, Modifier.fillMaxWidth(), tag = tag)
@@ -315,6 +320,25 @@ fun Reveal(visible: Boolean, content: @Composable () -> Unit) {
             slideInVertically(tween(MotionMs.MEDIUM, easing = Motion.Decelerate)) { -it / 4 },
         exit = shrinkVertically(tween(MotionMs.MEDIUM_OUT, easing = Motion.Accelerate), shrinkTowards = Alignment.Top) +
             slideOutVertically(tween(MotionMs.MEDIUM_OUT, easing = Motion.Accelerate)) { -it / 4 },
+    ) {
+        content()
+    }
+}
+
+/** Reveal's horizontal twin for an inline slot (a button's leading spinner): opens / closes its width with a fade, never a hard jump.
+ * Reduced motion: the shared short fade. */
+@Composable
+fun RevealInline(visible: Boolean, content: @Composable () -> Unit) {
+    if (vn.abook.player.ui.motion.rememberReducedMotion()) {
+        vn.abook.player.ui.motion.ReducedFade(visible, content)
+        return
+    }
+    AnimatedVisibility(
+        visible = visible,
+        enter = expandHorizontally(tween(MotionMs.FAST, easing = Motion.Decelerate), expandFrom = Alignment.Start) +
+            fadeIn(tween(MotionMs.FAST, easing = Motion.Decelerate)),
+        exit = shrinkHorizontally(tween(MotionMs.FAST_OUT, easing = Motion.Accelerate), shrinkTowards = Alignment.Start) +
+            fadeOut(tween(MotionMs.FAST_OUT, easing = Motion.Accelerate)),
     ) {
         content()
     }

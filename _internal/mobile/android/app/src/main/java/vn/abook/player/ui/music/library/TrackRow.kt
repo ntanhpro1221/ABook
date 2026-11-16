@@ -5,7 +5,6 @@ import vn.abook.player.ui.motion.ContentLayout
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.runtime.*
-import vn.abook.player.formatSize
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
@@ -65,22 +64,24 @@ fun TrackRow(track: MusicLibrary.Track, ui: LibraryUi, state: LibraryState, pick
         }
         DownloadControl(track, ui, state, Modifier.padding(start = Dim.s8))
     }
-    Reveal(playing) { ListeningProgress(ui, state, Modifier.padding(start = 56.dp, bottom = Dim.s8)) }
+    // The listening bar starts under the preview button (art 40 + gap 8), as on web and Qt.
+    Reveal(playing) { ListeningProgress(ui, state, Modifier.padding(start = Dim.s48, bottom = Dim.s8)) }
     }
 }
 
-/** Every row reserves the same download column, including tracks that have not been downloaded. */
+/** Every row reserves the same download column, including tracks that have not been downloaded. Download, stop and retry
+ * are actions; "downloaded" is a status (no click): removing a download is "Xoá bản tải" in the track sheet, behind the confirmation. */
 @Composable
 private fun DownloadControl(track: MusicLibrary.Track, ui: LibraryUi, state: LibraryState, modifier: Modifier = Modifier) {
     val load = ui.active[track.link]
     val downloaded = track.link in ui.downloaded
     val failed = track.link in ui.failed
-    val pending = track.link in ui.pendingLinks
-    var askDelete by remember(track.link) { mutableStateOf(false) }
+    // A removal runs (and shows its wait) in the track sheet's confirmation; the row only waits for its own download request.
+    val pending = track.link in ui.pendingLinks && !downloaded
     val label = when {
-        pending -> if (downloaded) S.s_dang_xoa_71482e81 else S.s_dang_tai_465b1987
+        pending -> S.s_dang_tai_465b1987
         load != null -> S.s_stop_download
-        downloaded -> S.s_downloaded_delete
+        downloaded -> S.s_da_tai_b7362bbf
         failed -> S.s_thu_lai_c58d068c
         else -> S.s_tai_ve_9b5bdb44
     }
@@ -88,8 +89,8 @@ private fun DownloadControl(track: MusicLibrary.Track, ui: LibraryUi, state: Lib
         modifier.size(Dim.touch).then(when {
             pending -> Modifier.semantics { disabled() }
             load != null -> Modifier.pressable { state.cancel(listOf(track.link)) }
-            downloaded -> Modifier.pressable { askDelete = true }
-            !downloaded && ui.online -> Modifier.pressable { state.save(listOf(track.link)) }
+            downloaded -> Modifier
+            ui.online -> Modifier.pressable { state.save(listOf(track.link)) }
             else -> Modifier
         }).semantics { contentDescription = label }.testTag("download_${track.link.hashCode()}"),
         contentAlignment = Alignment.Center,
@@ -105,8 +106,4 @@ private fun DownloadControl(track: MusicLibrary.Track, ui: LibraryUi, state: Lib
             }
         }
     }
-    if (askDelete) DestructiveConfirm(S.s_delete_download_question,
-        S.s_delete_download_description(track.title, formatSize(track.bytes)), { askDelete = false },
-        { state.forget(track.link) }, pending = pending, problem = ui.actionError)
-
 }

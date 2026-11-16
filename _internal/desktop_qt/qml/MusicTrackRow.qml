@@ -3,11 +3,10 @@ import QtQuick
 import ABook
 import "MusicLibraryLogic.js" as Logic
 import "TextWrap.js" as TextWrap
-import "SizeFormat.js" as Size
 
 // Một dòng của Kho nhạc (TrackRow của ui/src/music/MusicScreen.tsx): nút nghe thử · tên (xuống dòng, không cắt) + người sáng tác · thời lượng
 // · phong cách · trạng thái tải (phần trăm / dấu tích / lỗi), chế độ chọn thêm nút "Dùng". Bấm dòng mở chi tiết. Mất mạng: nút nghe thử của bài
-// chưa tải mờ đi, không bấm được.
+// chưa tải mờ đi, không bấm được. "Đã tải" là trạng thái, không phải nút xoá ngầm: xoá bản tải nằm ở chi tiết ("Xoá bản tải" + hộp xác nhận).
 Interactive {
     id: root
     property var track: ({})
@@ -22,7 +21,6 @@ Interactive {
     signal use()
     signal save()
     signal cancelDownload()
-    signal deleteDownload()
     readonly property var load: Logic.loadOf(track, downloads)
     readonly property bool canPlay: online || !!track.downloaded
     implicitHeight: Math.max(words.height, 40) + 2 * Theme.s12 + 1 + (progress.open ? progress.implicitHeight : 0)
@@ -97,32 +95,41 @@ Interactive {
             Accessible.name: S.s_dung_7927ca4e + ": " + (root.track.title || "")
             onActivated: root.use()
         }
-        IconButton {
-            objectName: "musicRowDownload"
-            indicateRequest: root.load.kind !== "loading"
-            icon: root.load.kind === "done" || root.load.kind === "loading" ? "" : "download"
-            ink: root.load.kind === "done" ? Theme.accentText : root.load.kind === "failed" ? Theme.danger : Theme.text2
-            enabled: root.online || root.load.kind === "loading" || root.load.kind === "done"
-            opacity: enabled || root.load.kind === "done" ? 1 : 0.45
-            tip: root.load.kind === "loading" ? S.s_stop_download : root.load.kind === "done" ? S.s_downloaded_delete : root.load.kind === "failed" ? S.s_thu_lai_c58d068c : S.s_tai_ve_9b5bdb44
-            onActivated: root.load.kind === "loading" ? root.cancelDownload() : root.load.kind === "done" ? remove.show() : root.save()
-            Rectangle { anchors.centerIn: parent; width: 20; height: 20; radius: width / 2; color: Theme.accent
-                Reveal { shown: root.load.kind === "done" }
-                StateIcon { anchors.centerIn: parent; name: "arrow-down"; size: 14; color: Theme.accentInk }
+        // One fixed slot: the download / stop / retry button and the "downloaded" status cross-fade in place.
+        Item {
+            width: Theme.buttonHeight
+            height: Theme.buttonHeight
+            IconButton {
+                objectName: "musicRowDownload"
+                anchors.fill: parent
+                Reveal { shown: root.load.kind !== "done" }
+                indicateRequest: root.load.kind !== "loading"
+                icon: root.load.kind === "loading" || root.load.kind === "done" ? "" : "download"
+                ink: root.load.kind === "failed" ? Theme.danger : Theme.text2
+                enabled: root.load.kind !== "done" && (root.online || root.load.kind === "loading")
+                opacity: enabled ? 1 : 0.45
+                tip: root.load.kind === "loading" ? S.s_stop_download : root.load.kind === "failed" ? S.s_thu_lai_c58d068c : S.s_tai_ve_9b5bdb44
+                onActivated: root.load.kind === "loading" ? root.cancelDownload() : root.save()
+                DownloadRing {
+                    objectName: "musicRowLoading"
+                    anchors.centerIn: parent; Reveal { shown: root.load.kind === "loading" }
+                    percent: root.load.kind === "loading" && root.load.percent !== null && root.load.percent !== undefined ? root.load.percent : -1
+                }
             }
-            DownloadRing {
-                objectName: "musicRowLoading"
-                anchors.centerIn: parent; Reveal { shown: root.load.kind === "loading" }
-                percent: root.load.kind === "loading" && root.load.percent !== null && root.load.percent !== undefined ? root.load.percent : -1
+            Item {
+                objectName: "musicRowDownloaded"
+                anchors.fill: parent
+                Reveal { shown: root.load.kind === "done" }
+                Accessible.role: Accessible.Graphic
+                Accessible.name: S.s_da_tai_b7362bbf
+                Rectangle { anchors.centerIn: parent; width: 20; height: 20; radius: width / 2; color: Theme.accent
+                    StateIcon { anchors.centerIn: parent; name: "arrow-down"; size: 14; color: Theme.accentInk }
+                }
             }
         }
     }
-    Collapse { id: progress; x: words.x; y: Math.max(words.height, 40) + 2 * Theme.s12; width: root.width - x; open: root.previewing
+    // The listening bar starts under the preview button (art 40 + gap 8), as on web and the phone.
+    Collapse { id: progress; x: play.x; y: Math.max(words.height, 40) + 2 * Theme.s12; width: root.width - x; open: root.previewing
         MusicListeningProgress { width: parent.width }
     }
-    DestructiveConfirm { id: remove; title: S.s_delete_download_question
-        description: S.s_delete_download_description(root.track.title || "", Size.formatSize(root.track.bytes || 0))
-        onAccepted: root.deleteDownload()
-    }
-
 }
