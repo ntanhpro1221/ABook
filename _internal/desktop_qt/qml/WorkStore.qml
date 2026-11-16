@@ -13,6 +13,7 @@ import "PrecastLogic.js" as P
 // (refreshAfterDecision) và hiện lời báo kèm "Hoàn tác" 15 giây qua Api.toast.
 QtObject {
     id: root
+    Component.onCompleted: Keep.hold(root)
     property var store: null
     property var book: null
     property string bookId: ""

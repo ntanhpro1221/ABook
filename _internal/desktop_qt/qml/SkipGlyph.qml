@@ -46,13 +46,11 @@ Item {
             ctx.lineTo(17.34 * u, 7.53 * u)
             ctx.stroke()
         }
-        Connections {
-            target: root
-            function onColorChanged() { stroke.requestPaint() }
-            function onForwardChanged() { stroke.requestPaint() }
-            function onSizeChanged() { stroke.requestPaint() }
-        }
     }
+    // Own signals of the root: no Connections (SkipGlyphTests loads this file outside the ABook module, where Listen/Keep do not exist).
+    onColorChanged: stroke.requestPaint()
+    onForwardChanged: stroke.requestPaint()
+    onSizeChanged: stroke.requestPaint()
     Text {
         id: digits
         visible: root.showDigits

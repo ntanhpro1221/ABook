@@ -7,6 +7,7 @@ import ABook
 // `handle(event)` trả true khi đã dùng phím (Main.qml đặt event.accepted).
 QtObject {
     id: root
+    Component.onCompleted: Keep.hold(root)
     property bool letters: true
     signal shortcutsRequested()
 

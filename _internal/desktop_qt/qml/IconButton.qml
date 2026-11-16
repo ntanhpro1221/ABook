@@ -8,7 +8,7 @@ Interactive {
     property bool indicateRequest: true
     property int ownedRequest: 0
     signal activated()
-    Connections { target: Api; function onRequestDone(id) { if (root.ownedRequest === id) root.ownedRequest = 0 } }
+    Listen { target: Api; function onRequestDone(id) { if (root.ownedRequest === id) root.ownedRequest = 0 } }
     onClicked: {
         if (ownedRequest > 0) return
         const before = Api.requestSerial

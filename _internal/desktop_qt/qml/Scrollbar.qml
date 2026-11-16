@@ -19,7 +19,7 @@ Item {
     Behavior on opacity { NumberAnimation { duration: active ? Theme.motionFast : Theme.motionSlow } }
 
     Timer { id: recent; interval: 1000 }
-    Connections {
+    Listen {
         target: root.target
         function onContentYChanged() { recent.restart() }
     }
@@ -41,6 +41,7 @@ Item {
             : 0
         DragHandler {
             id: drag
+            Component.onCompleted: Keep.hold(drag)
             target: null
             yAxis.enabled: true
             xAxis.enabled: false

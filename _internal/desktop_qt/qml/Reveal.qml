@@ -9,6 +9,9 @@ import ABook
 // contentItem), name the item explicitly: Reveal { target: someId; shown: ... }.
 // Once created it leaves the visual tree (the QObject parent keeps it alive):
 // the item's children, childrenRect and positioners stay what the caller wrote.
+// Outside the visual tree nothing strong marks its property storage, so it
+// anchors its wrapper first (Keep.hold, src/keep.h); without that a collection
+// could zero `progress` and leave the target half faded.
 Item {
     id: reveal
     property Item target: parent
@@ -19,6 +22,7 @@ Item {
     height: 0
     Component.onCompleted: {
         target = target   // freeze the default `parent` binding before leaving it
+        Keep.hold(reveal)
         parent = null
     }
     Behavior on progress {

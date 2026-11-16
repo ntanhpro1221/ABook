@@ -90,7 +90,7 @@ StudioConfirm {
                 id: sayText
                 objectName: "applyTryNote"
                 property var kept: ({text: "", status: false})
-                Connections { target: tryVoice; function onSaidChanged() { if (tryVoice.said) sayText.kept = tryVoice.said } }
+                Listen { target: tryVoice; function onSaidChanged() { if (tryVoice.said) sayText.kept = tryVoice.said } }
                 width: parent.width
                 text: kept.text
                 color: kept.status ? Theme.text2 : Theme.text3

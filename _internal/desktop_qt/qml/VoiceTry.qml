@@ -9,6 +9,7 @@ import "CastLogic.js" as Logic
 // (bản vừa phát theo `tag` của nút, để nút biết bản nào đang ra tiếng). Bản đã nghe trong phiên (Logic.heard) bấm lại là phát lại, không hỏi máy chủ.
 QtObject {
     id: root
+    Component.onCompleted: Keep.hold(root)
     property var store: null                // Studio: mọi lời gọi đi qua StudioStore (cả máy tính ghép); không có thì là trang sách của máy này
     property string bookId: ""
     property string asking: ""

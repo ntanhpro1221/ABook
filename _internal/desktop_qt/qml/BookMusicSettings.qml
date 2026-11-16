@@ -47,6 +47,7 @@ Column {
     }
     QtObject {
         id: swapLayer
+        Component.onCompleted: Keep.hold(swapLayer)
         property bool on: false
         function close() { root.closeSwap() }
     }

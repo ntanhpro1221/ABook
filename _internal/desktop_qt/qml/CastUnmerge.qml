@@ -8,6 +8,7 @@ import "EditBookLogic.js" as Edit
 // Dùng chung cho trang sách (Api, máy này) và Studio (`store`: đi đúng máy, kể cả máy tính ghép).
 QtObject {
     id: root
+    Component.onCompleted: Keep.hold(root)
     property var store: null
     function ask(method, path, body, done) { return store ? store.quiet(method, path, body, done) : Api.quiet(method, path, body, done) }
     function run(id, person) {

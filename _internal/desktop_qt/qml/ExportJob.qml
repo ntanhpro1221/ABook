@@ -7,6 +7,7 @@ import "ExportLogic.js" as Logic
 // hiện lại hỏi tiếp - việc vẫn chạy ở máy chủ. Hỏi hụt 5 lần liền mới coi là hỏng (mạng chớp không phải việc hỏng). `ended(lỗi, kết quả)` báo một lần.
 QtObject {
     id: root
+    Component.onCompleted: Keep.hold(root)
     property var store: null
     property string bookId: ""
     property string kind: ""                // kiểu của hộp đang chạy: mp3 | m4b | abook | abookproj

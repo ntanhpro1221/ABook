@@ -64,7 +64,7 @@ Item {
         Api.call("GET", "/api/listen/books/" + id, null, function(data, error) { if (!error && id === root.book.bookId) root.fullBook = data })
     }
     onBookChanged: if (root.book.bookId && root.book.bookId !== fullBook.id) loadFull()
-    Connections {
+    Listen {
         target: Api
         function onEdited(bookId) {
             if (bookId !== root.book.bookId) return

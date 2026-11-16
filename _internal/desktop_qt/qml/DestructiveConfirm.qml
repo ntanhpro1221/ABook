@@ -27,7 +27,7 @@ Modal {
         accepting = false
         if (!requestSeen) { sending = false; close() }
     }
-    Connections { target: Api;
+    Listen { target: Api;
         function onRequestBegan(id) { if (root.accepting && !root.requestSeen) { root.requestSeen = true; root.ownedRequest = id } }
         function onRequestDone(id, status) { if (root.ownedRequest === id) root.settled(status) }
     }

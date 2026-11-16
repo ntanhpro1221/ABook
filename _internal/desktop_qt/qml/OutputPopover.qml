@@ -7,7 +7,7 @@ Popover {
     objectName: "outputPicker"
     panelWidth: 320
     onOpenChanged: if (open) OutputDevices.refresh()
-    Connections { target: Player; function onLoadedChanged() { if (!Player.loaded) root.close() } }
+    Listen { target: Player; function onLoadedChanged() { if (!Player.loaded) root.close() } }
     Column {
         width: parent.width; spacing: Theme.s8
         Text { width: parent.width; text: S.s_phat_tren_681e16e1; wrapMode: Text.Wrap; color: Theme.text; font.pixelSize: Theme.sizeBodySmall }

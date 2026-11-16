@@ -8,7 +8,7 @@ Item {
     implicitWidth: 36
     implicitHeight: 36
     onPercentChanged: ring.requestPaint()
-    Connections { target: Theme; function onDarkChanged() { ring.requestPaint() } }
+    Listen { target: Theme; function onDarkChanged() { ring.requestPaint() } }
     Canvas {
         id: ring
         anchors.fill: parent

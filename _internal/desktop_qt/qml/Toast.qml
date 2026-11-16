@@ -38,7 +38,7 @@ Item {
         duration = message.duration > 0 ? message.duration : defaultDuration
         clock.restart()
     }
-    Connections {
+    Listen {
         target: Api
         function onNoticeChanged() { if (!root.slot) { if (root.shown) root.take(); else clock.stop() } }
         function onElsewhereNoticeChanged() { if (root.slot === "edited-elsewhere") { if (root.shown) root.take(); else clock.stop() } }

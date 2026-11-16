@@ -224,6 +224,7 @@ Column {
             onPressedChanged: downRepeat.hold(pressed)
             Timer {
                 id: downRepeat
+                Component.onCompleted: Keep.hold(downRepeat)
                 property bool fired: false
                 function hold(on) { if (on) { fired = false; interval = 400; start() } else stop() }
                 repeat: true
@@ -368,6 +369,7 @@ Column {
             onPressedChanged: upRepeat.hold(pressed)
             Timer {
                 id: upRepeat
+                Component.onCompleted: Keep.hold(upRepeat)
                 property bool fired: false
                 function hold(on) { if (on) { fired = false; interval = 400; start() } else stop() }
                 repeat: true

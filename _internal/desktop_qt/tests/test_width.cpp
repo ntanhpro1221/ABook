@@ -6,6 +6,7 @@
 #include "mediacontrols.h"
 #include "readalong.h"
 #include "glyphaudit.h"
+#include "keep.h"
 #include "later.h"
 #include "appfonts.h"
 #include "visualready.h"
@@ -17,6 +18,11 @@
 #include <QQmlEngine>
 #include <QQmlContext>
 #include <QtQml/private/qqmldata_p.h>
+#include <QtQml/private/qqmlvmemetaobject_p.h>
+#include <QtCore/private/qhooks_p.h>
+#include <QMutex>
+#include <QSet>
+#include <QThread>
 #include <QQuickImageProvider>
 #include <QDir>
 #include <QTemporaryDir>
@@ -160,6 +166,85 @@ public:
     }
 };
 
+// ABOOK_QML_LIFETIME_DIAGNOSTICS: at each "Cannot find member data" warning, list every live QML object whose
+// property storage is gone, with the QObject parent chain and the flags the V4 collector reads (qv4mm.cpp markWeakValues).
+namespace LifetimeProbe {
+// Never destroyed: static QObjects still call the RemoveQObject hook during process exit.
+QMutex &mutex = *new QMutex;
+QSet<QObject *> &live = *new QSet<QObject *>;
+QSet<QObject *> &reported = *new QSet<QObject *>;
+QtMessageHandler previous = nullptr;
+QHooks::AddQObjectCallback previousAdd = nullptr;
+QHooks::RemoveQObjectCallback previousRemove = nullptr;
+bool scanning = false;
+void add(QObject *object) {
+    { QMutexLocker lock(&mutex); live.insert(object); }
+    if (previousAdd) previousAdd(object);
+}
+void remove(QObject *object) {
+    { QMutexLocker lock(&mutex); live.remove(object); reported.remove(object); }
+    if (previousRemove) previousRemove(object);
+}
+QString describe(QObject *object) {
+    QString text;
+    QDebug out(&text);
+    out.nospace() << object;
+    const auto *data = QQmlData::get(object);
+    out << " indestructible=" << (data && data->indestructible) << " explicit=" << (data && data->explicitIndestructibleSet)
+        << " queued=" << (data && data->isQueuedForDeletion) << " deleted=" << QQmlData::wasDeleted(object)
+        << " creating=" << (data && data->rootObjectInCreation) << " wrapper=" << (data && !data->jsWrapper.isNullOrUndefined())
+        << " tainted=" << (data && data->hasTaintedV4Object) << " keepAlive=" << QQmlData::keepAliveDuringGarbageCollection(object);
+    if (auto *vme = QQmlVMEMetaObject::get(object)) out << " storage=" << bool(vme->propertyAndMethodStorageAsMemberData());
+    if (auto *item = qobject_cast<QQuickItem *>(object)) out << " parentItem=" << item->parentItem() << " window=" << item->window();
+    if (data) out << " line=" << data->lineNumber;
+    if (auto *context = qmlContext(object)) out << " url=" << context->baseUrl().fileName();
+    return text;
+}
+void scan() {
+    QList<QObject *> objects;
+    { QMutexLocker lock(&mutex); objects = live.values(); }
+    int lost = 0;
+    for (QObject *object : objects) {
+        {
+            QMutexLocker lock(&mutex);
+            if (!live.contains(object) || reported.contains(object)) continue;
+        }
+        if (object->thread() != QThread::currentThread()) continue;
+        auto *vme = QQmlVMEMetaObject::get(object);
+        if (!vme || vme->propertyAndMethodStorageAsMemberData()) continue;
+        { QMutexLocker lock(&mutex); reported.insert(object); }
+        ++lost;
+        qWarning().noquote() << "QML_LOST" << describe(object);
+        for (QObject *parent = object->parent(); parent; parent = parent->parent())
+            qWarning().noquote() << "QML_LOST_PARENT" << describe(parent);
+    }
+    qWarning() << "QML_LOST_SCAN" << objects.size() << "objects" << lost << "new";
+}
+void handler(QtMsgType type, const QMessageLogContext &context, const QString &message) {
+    if (previous) previous(type, context, message);
+    if (scanning || !message.contains(QStringLiteral("Cannot find member data"))) return;
+    scanning = true;
+    scan();
+    scanning = false;
+}
+void installHooks() {
+    previousAdd = reinterpret_cast<QHooks::AddQObjectCallback>(qtHookData[QHooks::AddQObject]);
+    previousRemove = reinterpret_cast<QHooks::RemoveQObjectCallback>(qtHookData[QHooks::RemoveQObject]);
+    qtHookData[QHooks::AddQObject] = reinterpret_cast<quintptr>(&add);
+    qtHookData[QHooks::RemoveQObject] = reinterpret_cast<quintptr>(&remove);
+}
+void removeHooks() {
+    qtHookData[QHooks::AddQObject] = reinterpret_cast<quintptr>(previousAdd);
+    qtHookData[QHooks::RemoveQObject] = reinterpret_cast<quintptr>(previousRemove);
+}
+void installHandler() {
+    static bool installed = false;
+    if (installed) return;
+    installed = true;
+    previous = qInstallMessageHandler(handler);
+}
+}
+
 class WidthSetup : public QObject {
     Q_OBJECT
     QTemporaryDir dir;
@@ -175,26 +260,7 @@ class WidthSetup : public QObject {
     FullRepaint repaint;
 public slots:
     void qmlEngineAvailable(QQmlEngine *engine) {
-        // Capture lifetime flags at the warning itself, without a periodic GC scan.
-        if (qEnvironmentVariableIsSet("ABOOK_QML_LIFETIME_DIAGNOSTICS")) {
-            connect(engine, &QQmlEngine::warnings, engine, [](const QList<QQmlError> &errors) {
-                for (const auto &error : errors) {
-                    if (!error.description().contains(QStringLiteral("Cannot find member data")))
-                        continue;
-                    qWarning() << "QML_LIFETIME_BEGIN" << error.url() << error.line();
-                    for (auto *object = error.object(); object; object = object->parent()) {
-                        const auto *data = QQmlData::get(object);
-                        qWarning() << "QML_LIFETIME_OBJECT" << object
-                                   << "ownership" << QQmlEngine::objectOwnership(object)
-                                   << "qmlData" << bool(data)
-                                   << "queued" << (data && data->isQueuedForDeletion)
-                                   << "deleted" << QQmlData::wasDeleted(object)
-                                   << "creating" << (data && data->rootObjectInCreation);
-                    }
-                    qWarning() << "QML_LIFETIME_END";
-                }
-            });
-        }
+        if (qEnvironmentVariableIsSet("ABOOK_QML_LIFETIME_DIAGNOSTICS")) LifetimeProbe::installHandler();
         engine->rootContext()->setContextProperty(QStringLiteral("qtVisualReady"), new VisualReady(engine));
         engine->rootContext()->setContextProperty(QStringLiteral("qtAnimationClock"), new TestAnimationClock(engine));
         engine->rootContext()->setContextProperty(QStringLiteral("qtGlyphAudit"), audit.get());
@@ -241,6 +307,7 @@ public slots:
         QObject::connect(player.get(), &Player::sleepExtended, feedback.get(), [this] { feedback->play(QStringLiteral("sleepExtend")); });
         qmlRegisterType<BookDetail>("ABook", 1, 0, "BookDetail");
         qmlRegisterSingletonType<Later>("ABook", 1, 0, "Later", [](QQmlEngine *, QJSEngine *) -> QObject * { return new Later; });
+        qmlRegisterSingletonType<Keep>("ABook", 1, 0, "Keep", [](QQmlEngine *, QJSEngine *) -> QObject * { return new Keep; });
         qmlRegisterSingletonInstance("ABook", 1, 0, "Player", player.get());
         qmlRegisterSingletonInstance("ABook", 1, 0, "ReadAlong", read.get());
         qmlRegisterSingletonInstance("ABook", 1, 0, "Music", music.get());
@@ -259,8 +326,10 @@ int main(int argc, char **argv) {
     qputenv("QT_QPA_FONTDIR", WIDTH_SOURCE_DIR "/fonts");
     qputenv("QML_XHR_ALLOW_FILE_READ", "1");   // tst_uitree reads back the tree file it just wrote
     QDir().mkpath(QStringLiteral(WIDTH_SOURCE_DIR "/build/d2shots"));     // ảnh của tst_d2_*.qml
+    if (qEnvironmentVariableIsSet("ABOOK_QML_LIFETIME_DIAGNOSTICS")) LifetimeProbe::installHooks();
     WidthSetup setup;
     const int result = quick_test_main_with_setup(argc, argv, "width", QUICK_TEST_SOURCE_DIR, &setup);
+    if (qEnvironmentVariableIsSet("ABOOK_QML_LIFETIME_DIAGNOSTICS")) LifetimeProbe::removeHooks();
     const auto file = qEnvironmentVariable("ABOOK_GLYPH_AUDIT", QStringLiteral(WIDTH_SOURCE_DIR "/build/glyph-audit.json"));
     const bool glyphs = setup.audit && setup.audit->finish(file);
     return result ? result : glyphs ? 0 : 1;

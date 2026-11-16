@@ -45,7 +45,7 @@ FocusScope {
         Later.call(root, function() { source.chooseFiles(false) })
     }
     Component.onCompleted: { maybePick(); maybePickContinuation() }
-    Connections {
+    Listen {
         target: root.form
         function onPickRequested() { root.maybePickContinuation() }
     }

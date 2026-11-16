@@ -167,7 +167,7 @@ Column {
                                     }
                                     onAccepted: root.finishRename(row.modelData.name)
                                     onEscaped: root.cancelRename()
-                                    Connections { target: row; function onEditingChanged() { if (row.editing) { nameField.text = root.typed; nameField.forceActiveFocus(); nameField.selectAll() } } }
+                                    Listen { target: row; function onEditingChanged() { if (row.editing) { nameField.text = root.typed; nameField.forceActiveFocus(); nameField.selectAll() } } }
                                 }
                                 Row {
                                     id: buttonLine

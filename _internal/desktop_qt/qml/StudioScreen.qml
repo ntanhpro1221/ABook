@@ -113,7 +113,7 @@ Item {
     }
     QtObject { id: routeLayer; readonly property bool route: true; function close() { root.goList() } }
     Component.onDestruction: if (layerOpen) Nav.closedLayer(routeLayer)
-    Connections { target: Nav.stack; function onReselected(index) { if (index === 1) root.goList() } }
+    Listen { target: Nav.stack; function onReselected(index) { if (index === 1) root.goList() } }
 
     // Capture the old page and slide both pages on one clock. Initial creation has no outgoing page.
     readonly property string screenKey: (view === "own" || view === "open") ? "route:" + route : view

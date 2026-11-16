@@ -181,7 +181,7 @@ CastModal {
                         spacing: 8
                         Accessible.role: Accessible.AlertMessage
                         property var keptVoice: null
-                        Connections { target: root; function onCrossingChanged() { if (root.crossing) crossingBox.keptVoice = root.crossing } }
+                        Listen { target: root; function onCrossingChanged() { if (root.crossing) crossingBox.keptVoice = root.crossing } }
                         Text {
                             width: parent.width
                             text: crossingBox.keptVoice && root.choices
@@ -223,7 +223,7 @@ CastModal {
                         id: sayText
                         objectName: "voiceTryNote"
                         property var kept: ({text: "", status: false})
-                        Connections { target: root; function onSaidChanged() { if (root.said) sayText.kept = root.said } }
+                        Listen { target: root; function onSaidChanged() { if (root.said) sayText.kept = root.said } }
                         width: parent.width
                         text: kept.text
                         color: kept.status ? Theme.text2 : Theme.text3

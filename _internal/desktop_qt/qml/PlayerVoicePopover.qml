@@ -10,7 +10,7 @@ Popover {
     panelWidth: 320
     function fromAlert() { resumeAfter = true; show() }
     onOpenChanged: { if (open) Api.loadVoiceName(); else { resumeAfter = false; consent.dismiss() } }
-    Connections { target: Player; function onLoadedChanged() { if (!Player.loaded) root.close() } }
+    Listen { target: Player; function onLoadedChanged() { if (!Player.loaded) root.close() } }
     Column {
         width: parent.width; spacing: Theme.s8
         Text { width: parent.width; text: S.s_giong_doc_u00a0_u00a0nho_rieng_cho_cuon_na_ae337d03; wrapMode: Text.Wrap; color: Theme.text2; font.pixelSize: Theme.sizeCaption }

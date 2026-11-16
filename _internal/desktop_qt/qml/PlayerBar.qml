@@ -26,7 +26,7 @@ Item {
     property real appear: Player.loaded ? 1 : 0
     signal openRequested()
     signal bookRequested()
-    Connections {
+    Listen {
         target: Player
         function onLoadedChanged() {
             if (!Player.loaded) { more.close(); sleep.close(); music.close(); voice.close(); output.close() }

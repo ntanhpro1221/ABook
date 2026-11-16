@@ -53,7 +53,7 @@ Item {
 
     Timer { id: openTimer; interval: 150; onTriggered: if (hover.hovered && !root.expanded && !root.peekBlocked) root.peek = true }
     Timer { id: closeTimer; interval: 300; onTriggered: if (!hover.hovered) root.peek = false }
-    Connections {
+    Listen {
         target: hover
         function onHoveredChanged() {
             if (hover.hovered) {

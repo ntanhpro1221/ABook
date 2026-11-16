@@ -8,6 +8,7 @@ import "StudioLogic.js" as Logic
 // Đổi máy (store.peer) hay đổi đường thì bỏ dữ liệu cũ - của máy trước không thuộc máy sau.
 QtObject {
     id: root
+    Component.onCompleted: Keep.hold(root)
     property var store: null
     property string path: ""
     property bool wanted: false

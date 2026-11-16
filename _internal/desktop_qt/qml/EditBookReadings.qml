@@ -52,6 +52,7 @@ Column {
     }
     QtObject {
         id: layer
+        Component.onCompleted: Keep.hold(layer)
         property bool on: false
         function close() { root.closeEdit() }
     }

@@ -87,7 +87,7 @@ Window {
     Component { id: studioScreen; StudioScreen {} }
     Component { id: settingsScreen; SettingsScreen { onStudioRequested: stack.show(1) } }
     Component { id: musicScreen; MusicScreen {} }
-    Connections {
+    Listen {
         target: Nav
         // Từ Bài đang phát (trong Đang nghe): đóng Đang nghe trước để thấy màn Nhạc
         function onMusicRequested(query) { if (win.nowPlaying) win.nowPlaying.close(); stack.show(3); if (query !== "") stack.rootContent(3).search(query) }
@@ -185,7 +185,7 @@ Window {
                     interval: 8000
                     onTriggered: if (nowLoader.item && nowLoader.item.p <= 0) nowLoader.alive = false
                 }
-                Connections {
+                Listen {
                     target: nowLoader.item
                     function onPChanged() {
                         if (nowLoader.item.p > 0) dropTimer.stop()
@@ -193,7 +193,7 @@ Window {
                         else dropTimer.restart()
                     }
                 }
-                Connections {
+                Listen {
                     target: win
                     function onVisibilityChanged() { if (win.visibility === Window.Minimized && nowLoader.item && nowLoader.item.p <= 0) nowLoader.alive = false }
                 }
@@ -246,7 +246,7 @@ Window {
         id: popover
         anchorItem: sidebar.chip
     }
-    Connections { target: Nav; function onBookRequested(id) { win.openBookId(id) } }
+    Listen { target: Nav; function onBookRequested(id) { win.openBookId(id) } }
     AddBook { id: addBook; onOpenBook: id => win.openBookId(id); onOpenStudio: id => stack.show(1) }
     // Construct book actions on first use, then retain their state and pending
     // requests for the window's lifetime. Loading is synchronous before begin().
@@ -280,11 +280,11 @@ Window {
         function begin(kind, data) { active = true; item.begin(kind, data) }
     }
     // Câu mẫu của một người bắt đầu phát thì sách đang nghe tạm dừng (hai tiếng không chồng lên nhau)
-    Connections { target: Clip;
+    Listen { target: Clip;
         function onStarted() { if (Player.playing) Player.pause() }
         function onCurrentChanged() { if (Clip.music) Player.pause() }
     }
-    Connections { target: Player;
+    Listen { target: Player;
         function onPlayingChanged() { if (Player.playing && Clip.music) Clip.stop() }
         function onBufferingChanged() { if (Player.buffering && Clip.music) Clip.stop() }
     }
@@ -302,7 +302,7 @@ Window {
     ShortcutsDialog { id: shortcuts; letters: win.letterShortcuts }
     Binding { target: Feedback; property: "sounds"; value: Api.preferences.touchSounds !== false }
     Binding { target: Theme; property: "readingSurface"; value: ["paper", "ivory", "night"].indexOf(Api.preferences.readingSurface) >= 0 ? Api.preferences.readingSurface : "auto" }
-    Connections {
+    Listen {
         target: Backend
         function onStateChanged() {
             if (Backend.state !== Backend.Ready) return
@@ -323,8 +323,8 @@ Window {
         Narration.configure(Api.voiceList, Array.isArray(allowed) ? allowed : [])
     }
     PlayerConsent { id: onlineVoice }
-    Connections { target: Player; function onLoadedChanged() { if (!Player.loaded) onlineVoice.dismiss() } }
-    Connections {
+    Listen { target: Player; function onLoadedChanged() { if (!Player.loaded) onlineVoice.dismiss() } }
+    Listen {
         target: Narration
         function onConsentRequested(voice) {
             onlineVoice.ask(voice, function(picked) {
@@ -335,7 +335,7 @@ Window {
             })
         }
     }
-    Connections {
+    Listen {
         target: Api
         function onPreferencesChanged() { win.configurePlayer() }
         function onVoiceListChanged() { win.configurePlayer() }
@@ -343,7 +343,7 @@ Window {
     }
     // Sự kiện host chuyển lên vỏ (UpdateListener của desktop/App.tsx): vừa có bản mới thì đọc lại /api/app để hiện "Cập nhật ABook";
     // tải bản mới hỏng thì nói lời vỏ đã viết sẵn
-    Connections {
+    Listen {
         target: Backend
         function onHostEvent(name, detail) {
             if (name === "abook-update") Api.call("GET", "/api/app", null, function(data, error) { if (!error) Api.info = data })
@@ -357,7 +357,7 @@ Window {
         anchors.rightMargin: 16
         y: titleBar.height + 16
     }
-    Connections {
+    Listen {
         target: sidebar.chip
         function onClicked() { popover.open ? popover.close() : popover.show() }
     }
@@ -396,7 +396,7 @@ Window {
         if (saved[4] === 1) visibility = Window.Maximized
     }
     onClosing: close => windowMode.closeRequested(close, tray && tray.available && !Bench.enabled)
-    Connections {
+    Listen {
         target: Qt.application
         function onStateChanged() { if (Qt.application.state === Qt.ApplicationActive) Platform.refresh() }
     }

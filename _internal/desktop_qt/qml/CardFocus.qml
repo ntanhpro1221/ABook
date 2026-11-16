@@ -40,7 +40,7 @@ Item {
         }
         revealRequested(card)
     }
-    Connections {
+    Listen {
         target: root.Window.window
         function onActiveFocusItemChanged() {
             const now = root.Window.window.activeFocusItem

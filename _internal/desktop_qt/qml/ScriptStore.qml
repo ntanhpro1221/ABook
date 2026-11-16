@@ -10,6 +10,7 @@ import "DecisionLogic.js" as D
 // Đi qua StudioStore nên Studio của máy khác tự đi đường /api/peers/<mã>/studio.
 QtObject {
     id: root
+    Component.onCompleted: Keep.hold(root)
     property var store: null
     property var work: null                     // WorkStore của dự án: Hoàn tác, lời báo hai máy cùng sửa, số việc
     property string bookId: ""

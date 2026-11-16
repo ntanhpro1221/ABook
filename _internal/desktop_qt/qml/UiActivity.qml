@@ -1,4 +1,5 @@
 import QtQuick
+import ABook
 
 // Window visibility, not focus: an inactive visible window still needs updates.
 QtObject {
@@ -10,5 +11,5 @@ QtObject {
                                    && target.Window.visibility !== Window.Minimized && target.Window.visibility !== Window.Hidden
     signal resumed()
     onRunningChanged: if (ready && running) resumed()
-    Component.onCompleted: ready = true
+    Component.onCompleted: { Keep.hold(root); ready = true }
 }

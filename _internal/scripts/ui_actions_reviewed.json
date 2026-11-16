@@ -15198,7 +15198,7 @@
     "line": 33,
     "statement": "Api.call(\"POST\", \"/api/app/update\", {}, function(data, error) {",
     "occurrence": 1,
-    "source_sha256": "27cb69ca0a6922e095fb694755b524e8731dbe3ddd8b1acbc3a61323a62ce14d",
+    "source_sha256": "527141ddedbb78f4a1595febaec9367fe2c92aca82d501f4d8ac52090cd733de",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; ",
     "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads."
@@ -15210,7 +15210,7 @@
     "line": 46,
     "statement": "Api.call(\"POST\", \"/api/app/check-update\", {}, function(data, error) {",
     "occurrence": 1,
-    "source_sha256": "27cb69ca0a6922e095fb694755b524e8731dbe3ddd8b1acbc3a61323a62ce14d",
+    "source_sha256": "527141ddedbb78f4a1595febaec9367fe2c92aca82d501f4d8ac52090cd733de",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; ",
     "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads."
@@ -15222,7 +15222,7 @@
     "line": 26,
     "statement": "Api.call(\"GET\", \"/api/books/\" + bookId + \"/music\", null, function(data, error) {",
     "occurrence": 1,
-    "source_sha256": "6ad74eb76db9d9327568375ed85a10916e9d98b3cfdc775ad91ad12c3094461b",
+    "source_sha256": "aaf6e9dc393f05c771d3edbe3563dcce88cd7df411c50ebeb7aa3965cd4bd115",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; busy, loading",
     "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads."
@@ -15234,7 +15234,7 @@
     "line": 39,
     "statement": "Api.call(\"PUT\", \"/api/books/\" + bookId + \"/music\", body, function(data, error) {",
     "occurrence": 1,
-    "source_sha256": "6ad74eb76db9d9327568375ed85a10916e9d98b3cfdc775ad91ad12c3094461b",
+    "source_sha256": "aaf6e9dc393f05c771d3edbe3563dcce88cd7df411c50ebeb7aa3965cd4bd115",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; busy, loading",
     "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads."
@@ -15246,7 +15246,7 @@
     "line": 64,
     "statement": "Api.call(\"GET\", \"/api/listen/books/\" + id, null, function(data, error) { if (!error && id === root.book.bookId) root.fullBook = data })",
     "occurrence": 1,
-    "source_sha256": "b5f1ee50b65b71079f5487d3c8252e9d1714eda4c1b5f59cfc9721463949c5e7",
+    "source_sha256": "e811c5c453238110f8aed1926f2d4f9223f5ae6557522bcb197daae6bea63b10",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; ProgressBar, bookProgress, bookProgressLine, progress, progressLine, progressOf",
     "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
@@ -15258,7 +15258,7 @@
     "line": 72,
     "statement": "Api.call(\"GET\", \"/api/listen/books/\" + bookId, null, function(data, error) {",
     "occurrence": 1,
-    "source_sha256": "b5f1ee50b65b71079f5487d3c8252e9d1714eda4c1b5f59cfc9721463949c5e7",
+    "source_sha256": "e811c5c453238110f8aed1926f2d4f9223f5ae6557522bcb197daae6bea63b10",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; ProgressBar, bookProgress, bookProgressLine, progress, progressLine, progressOf",
     "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
@@ -15270,7 +15270,7 @@
     "line": 140,
     "statement": "Api.call(\"POST\", \"/api/listen/books/\" + id + \"/finished\", active ? {finished: finished, record: active.id} : {finished: finished}, function(data, error) {",
     "occurrence": 1,
-    "source_sha256": "b5f1ee50b65b71079f5487d3c8252e9d1714eda4c1b5f59cfc9721463949c5e7",
+    "source_sha256": "e811c5c453238110f8aed1926f2d4f9223f5ae6557522bcb197daae6bea63b10",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; ProgressBar, bookProgress, bookProgressLine, progress, progressLine, progressOf",
     "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
@@ -15282,7 +15282,7 @@
     "line": 271,
     "statement": "Api.call(\"POST\", \"/api/listen/books/\" + id + \"/chapters/\" + chapterId + \"/done\", body, function(data, error) {",
     "occurrence": 1,
-    "source_sha256": "b5f1ee50b65b71079f5487d3c8252e9d1714eda4c1b5f59cfc9721463949c5e7",
+    "source_sha256": "e811c5c453238110f8aed1926f2d4f9223f5ae6557522bcb197daae6bea63b10",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; ProgressBar, bookProgress, bookProgressLine, progress, progressLine, progressOf",
     "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
@@ -15294,7 +15294,7 @@
     "line": 135,
     "statement": "Button { id: removeButton; objectName: \"deleteTemplate\"; text: S.s_xoa_777195ab; kind: \"ghost\"; size: \"sm\"; onActivated: root.removeTemplate(row.modelData) }",
     "occurrence": 1,
-    "source_sha256": "082b457d4b981d42de8724186e77f4dab9e34d328ec2b9481d5aa9e69ecf7221",
+    "source_sha256": "2aba3c58f7e7d0ab55cbd9993ee1d3e511b185099c76b85bd2348b61e1e36b52",
     "disposition": "undo",
     "guard": "BookTemplates.remove / removeTemplate: restore template and original index from the toast",
     "reason": "The complete template and its index are retained for the ten-second undo action."
@@ -15342,7 +15342,7 @@
     "line": 47,
     "statement": "else Api.quiet(\"GET\", \"/api/books/\" + bookId + \"/cast\", null, answer)",
     "occurrence": 1,
-    "source_sha256": "072c1934928fc49073a3b32e8f464394c6b656c7430b7efc3b8d808d495398fd",
+    "source_sha256": "7abb14d7bfe37a6232659281be02664df0c5423bf2ab54311d1fb1b10772d788",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; castNarratorPending, loading, narratorPending",
     "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
@@ -15363,10 +15363,10 @@
     "id": "51be21929241fbb12feb",
     "kind": "pending",
     "path": "desktop_qt/qml/CastUnmerge.qml",
-    "line": 12,
+    "line": 13,
     "statement": "function ask(method, path, body, done) { return store ? store.quiet(method, path, body, done) : Api.quiet(method, path, body, done) }",
     "occurrence": 1,
-    "source_sha256": "ebb600324462660169467b744df94f138fb1fe26b2117cc3156a12937e9352d5",
+    "source_sha256": "ffcab4cf622271e08719b69a59fbb2b4c1e795ccc6ce4d6fd2f9829b665c4d5d",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; pending",
     "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads."
@@ -15522,7 +15522,7 @@
     "line": 22,
     "statement": "Api.call(\"GET\", \"/api/books/\" + bookId + \"/readings\", null, function(data, error) {",
     "occurrence": 1,
-    "source_sha256": "4f05629a973b3e4fb6e5d67d394215b5f5ac469ce5e5891825a202d8878c1354",
+    "source_sha256": "c454b259a4b0724ab1a3a27d73e22e9846ba2ba0d4e8042ff72740138e896a0b",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; busy, loading, saving",
     "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads."
@@ -15534,7 +15534,7 @@
     "line": 32,
     "statement": "Api.call(\"PUT\", \"/api/books/\" + bookId + \"/readings\", {surface: surface, spoken: said}, function(data, error) {",
     "occurrence": 1,
-    "source_sha256": "4f05629a973b3e4fb6e5d67d394215b5f5ac469ce5e5891825a202d8878c1354",
+    "source_sha256": "c454b259a4b0724ab1a3a27d73e22e9846ba2ba0d4e8042ff72740138e896a0b",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; busy, loading, saving",
     "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads."
@@ -15546,7 +15546,7 @@
     "line": 46,
     "statement": "Api.call(\"PUT\", \"/api/books/\" + bookId + \"/readings\", {surface: surface, spoken: \"\"}, function(data, error) {",
     "occurrence": 1,
-    "source_sha256": "4f05629a973b3e4fb6e5d67d394215b5f5ac469ce5e5891825a202d8878c1354",
+    "source_sha256": "c454b259a4b0724ab1a3a27d73e22e9846ba2ba0d4e8042ff72740138e896a0b",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; busy, loading, saving",
     "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads."
@@ -15555,10 +15555,10 @@
     "id": "ba4d0fb00f72a4d3466d",
     "kind": "destructive",
     "path": "desktop_qt/qml/EditBookReadings.qml",
-    "line": 127,
+    "line": 128,
     "statement": "onActivated: root.remove(entry.modelData.surface)",
     "occurrence": 1,
-    "source_sha256": "4f05629a973b3e4fb6e5d67d394215b5f5ac469ce5e5891825a202d8878c1354",
+    "source_sha256": "c454b259a4b0724ab1a3a27d73e22e9846ba2ba0d4e8042ff72740138e896a0b",
     "disposition": "confirmation",
     "guard": "EditBookReadings removeConfirm",
     "reason": "Removing the stored pronunciation for a word asks and names the word."
@@ -15567,10 +15567,10 @@
     "id": "250ec4a2ca363e0df3d8",
     "kind": "destructive",
     "path": "desktop_qt/qml/EditBookReadings.qml",
-    "line": 175,
+    "line": 176,
     "statement": "description: S.s_irreversible_detail(root.removingSurface); onAccepted: root.removeConfirmed(root.removingSurface)",
     "occurrence": 1,
-    "source_sha256": "4f05629a973b3e4fb6e5d67d394215b5f5ac469ce5e5891825a202d8878c1354",
+    "source_sha256": "c454b259a4b0724ab1a3a27d73e22e9846ba2ba0d4e8042ff72740138e896a0b",
     "disposition": "confirmation",
     "guard": "EditBookReadings removeConfirm",
     "reason": "Removing the stored pronunciation for a word asks and names the word."
@@ -15627,10 +15627,10 @@
     "id": "eda96b2e375120a09b34",
     "kind": "pending",
     "path": "desktop_qt/qml/ExportJob.qml",
-    "line": 37,
+    "line": 38,
     "statement": "function request(method, path, body, done) { return store.request(method, path, body, done) }",
     "occurrence": 1,
-    "source_sha256": "338511bc856b470b9db03652aef764e204dfff211467a5372d0e4da7d42d6483",
+    "source_sha256": "cc81e735350e440edddc1308cc63b78db3ed2cb456883516e074c0643a7a270d",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; busyView, downloading",
     "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads."
@@ -15690,7 +15690,7 @@
     "line": 70,
     "statement": "Api.call(\"GET\", \"/api/listen/books/\" + id, null, function(data, error) {",
     "occurrence": 1,
-    "source_sha256": "199d4e68237db4e9213c5d14f036cbfb9299f6fef21314aae6890569737892a7",
+    "source_sha256": "17336c57d53ca34826979c6ea030496736621e50558eb3b204e2d31b1464fcba",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; Loading, pending, pendingFiles",
     "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads."
@@ -15702,7 +15702,7 @@
     "line": 349,
     "statement": "if (name === \"abook-update\") Api.call(\"GET\", \"/api/app\", null, function(data, error) { if (!error) Api.info = data })",
     "occurrence": 1,
-    "source_sha256": "199d4e68237db4e9213c5d14f036cbfb9299f6fef21314aae6890569737892a7",
+    "source_sha256": "17336c57d53ca34826979c6ea030496736621e50558eb3b204e2d31b1464fcba",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; Loading, pending, pendingFiles",
     "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads."
@@ -15762,7 +15762,7 @@
     "line": 22,
     "statement": "Api.quiet(\"GET\", \"/api/music/library/track?link=\" + encodeURIComponent(link), null, function(data, error) {",
     "occurrence": 1,
-    "source_sha256": "d233117eff4c15a8ffb0d92ecdb09778eff085adc89533537e4f596349323bc9",
+    "source_sha256": "dbaff31d3bcc7d32d340eaf3f58bf82a2a0d79ba970b9f3729716756451fef35",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; ",
     "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads."
@@ -15774,7 +15774,7 @@
     "line": 127,
     "statement": "function change(path) { Api.quiet(\"POST\", path, {links: [playingSheet.link]}, function(data, problem) { if (problem) Api.notice = problem; else playingSheet.reload() }) }",
     "occurrence": 1,
-    "source_sha256": "d233117eff4c15a8ffb0d92ecdb09778eff085adc89533537e4f596349323bc9",
+    "source_sha256": "dbaff31d3bcc7d32d340eaf3f58bf82a2a0d79ba970b9f3729716756451fef35",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; ",
     "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads."
@@ -16158,7 +16158,7 @@
     "line": 59,
     "statement": "function request(method, path, body, done) { return store ? store.request(method, path, body, done) : 0 }",
     "occurrence": 1,
-    "source_sha256": "eaeb09a10af27968669fd7033f18bed83f2acd7814300b119b81a140cfa0ea0d",
+    "source_sha256": "fcc52b84c6d056813f9724756ae4e071ade8aaeecc39dfa01f1cc29e027a656e",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; continuationPickPending, hintLoading, progress, templateBusy, uploading",
     "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads."
@@ -16722,7 +16722,7 @@
     "line": 88,
     "statement": "work.store.request(\"GET\", root.pathFor(cursor), null, function(status, page) {",
     "occurrence": 1,
-    "source_sha256": "7228b7c2822837c538357b9fd83ec9c24e512736de436e4f2d72b144b9a0772b",
+    "source_sha256": "0f57d271a9beb6008b28b487fae324055ca55357d414a681072d82cfc8ff96a2",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; fetchingNext, loading, pending",
     "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads."
@@ -16734,7 +16734,7 @@
     "line": 100,
     "statement": "work.store.request(\"GET\", pathFor(last.nextCursor), null, function(status, page) {",
     "occurrence": 1,
-    "source_sha256": "7228b7c2822837c538357b9fd83ec9c24e512736de436e4f2d72b144b9a0772b",
+    "source_sha256": "0f57d271a9beb6008b28b487fae324055ca55357d414a681072d82cfc8ff96a2",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; fetchingNext, loading, pending",
     "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads."
@@ -16755,10 +16755,10 @@
     "id": "5924d79f12fbe40299d2",
     "kind": "pending",
     "path": "desktop_qt/qml/ScriptStore.qml",
-    "line": 84,
+    "line": 85,
     "statement": "store.request(method, path(rest), body, function(status, data) {",
     "occurrence": 1,
-    "source_sha256": "7933a94c155e090c6cefd6a569ad3f2be2c08adc2ba70000ebb7749de8acafcd",
+    "source_sha256": "7eda5bb3af863354d12dafad15492bb91b2b2cc494d426be6dcac4674b0d1b55",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; pending",
     "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads."
@@ -16770,7 +16770,7 @@
     "line": 122,
     "statement": "for (let i = lineModel.count - 1; i >= 0; --i) if (!next[lineModel.get(i).key]) lineModel.remove(i)",
     "occurrence": 1,
-    "source_sha256": "108e35fd82af0d9855aff559e89450793371b13e80508820ffb2db777f78a70c",
+    "source_sha256": "1efc3b0368a18611016306bd6480a469b30003cd3c3b1b42b1d95edc31cdb348",
     "disposition": "internal",
     "guard": "In-memory collection entry lifecycle",
     "reason": "The statement releases a listener, request, UI row, selection or cache entry; it does not delete its persisted source. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
@@ -16830,7 +16830,7 @@
     "line": 34,
     "statement": "Timer { id: prune; interval: Theme.reduceMotion ? Theme.motionFast : Theme.motionMediumOut; onTriggered: { for (let i = rows.count - 1; i >= 0; --i) if (!rows.get(i).alive) rows.remove(i) } }",
     "occurrence": 1,
-    "source_sha256": "6c7f49bb24eb7e1fbaa0c884119fb205c5048e22a8df7441cf1f5d43961313aa",
+    "source_sha256": "4b2d64b444ca0d5403e0ac493f178debb21b1fa3b95844545c4b4d193f6b2615",
     "disposition": "internal",
     "guard": "In-memory collection entry lifecycle",
     "reason": "The statement releases a listener, request, UI row, selection or cache entry; it does not delete its persisted source."
@@ -16878,7 +16878,7 @@
     "line": 48,
     "statement": "store.request(\"GET\", \"/api/books/\" + bookId + \"/music\", null, function(status, data) {",
     "occurrence": 1,
-    "source_sha256": "082b9718ba503e5061fa17e52306d6bab8386b73bdebdbc84f571e11690317a8",
+    "source_sha256": "47716997b9a3cdaa485d544fc0498b5b70e4dd9468111872557ce29ac8c6ed99",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; busy, musicBusy, pending, spokenProgress",
     "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads."
@@ -16890,7 +16890,7 @@
     "line": 88,
     "statement": "store.request(\"PUT\", \"/api/books/\" + bookId + \"/music\", body, function(status, data) {",
     "occurrence": 1,
-    "source_sha256": "082b9718ba503e5061fa17e52306d6bab8386b73bdebdbc84f571e11690317a8",
+    "source_sha256": "47716997b9a3cdaa485d544fc0498b5b70e4dd9468111872557ce29ac8c6ed99",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; busy, musicBusy, pending, spokenProgress",
     "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads."
@@ -16902,7 +16902,7 @@
     "line": 102,
     "statement": "store.request(\"POST\", \"/api/books/\" + bookId + \"/music/rebuild\", null, function(status, data) {",
     "occurrence": 1,
-    "source_sha256": "082b9718ba503e5061fa17e52306d6bab8386b73bdebdbc84f571e11690317a8",
+    "source_sha256": "47716997b9a3cdaa485d544fc0498b5b70e4dd9468111872557ce29ac8c6ed99",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; busy, musicBusy, pending, spokenProgress",
     "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads."
@@ -16914,7 +16914,7 @@
     "line": 113,
     "statement": "store.request(\"POST\", \"/api/books/\" + bookId + \"/music/download/cancel\", null, function(status, data) {",
     "occurrence": 1,
-    "source_sha256": "082b9718ba503e5061fa17e52306d6bab8386b73bdebdbc84f571e11690317a8",
+    "source_sha256": "47716997b9a3cdaa485d544fc0498b5b70e4dd9468111872557ce29ac8c6ed99",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; busy, musicBusy, pending, spokenProgress",
     "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads."
@@ -16971,10 +16971,10 @@
     "id": "de7e10b4f0df780c0991",
     "kind": "pending",
     "path": "desktop_qt/qml/StudioQuery.qml",
-    "line": 31,
+    "line": 32,
     "statement": "store.request(\"GET\", path, null, function(status, answer) {",
     "occurrence": 1,
-    "source_sha256": "136df3792913ff2d2f00cded776b0eef5df299c27ee47ccae92a41da5e3136ec",
+    "source_sha256": "9460d6f29972ab5d169476f7a1de25c1d775a446646b2a6f6ed8aeb7af54a381",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; loading",
     "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads."
@@ -17046,7 +17046,7 @@
     "line": 24,
     "statement": "if (store) store.request(method, path, body, done)",
     "occurrence": 1,
-    "source_sha256": "47fbda9c41cd3a369e1d30b730328d49ee61a83bf477f75e5b9ea937e4becd7f",
+    "source_sha256": "c913b953aa58e87ea5d9683eb6396808241bc70c2469b3336f8947b0f044828c",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; busy",
     "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads."
@@ -17058,7 +17058,7 @@
     "line": 52,
     "statement": "function refreshInfo() { if (!store) Api.call(\"GET\", \"/api/app\", null, function(data, error) { if (!error) Api.info = data }) }",
     "occurrence": 1,
-    "source_sha256": "47fbda9c41cd3a369e1d30b730328d49ee61a83bf477f75e5b9ea937e4becd7f",
+    "source_sha256": "c913b953aa58e87ea5d9683eb6396808241bc70c2469b3336f8947b0f044828c",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; busy",
     "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads."
@@ -17067,10 +17067,10 @@
     "id": "02b458d3f0ac064b2903",
     "kind": "destructive",
     "path": "desktop_qt/qml/StudioStore.qml",
-    "line": 195,
+    "line": 196,
     "statement": "request(\"DELETE\", \"/api/books/\" + id, null, function(status, data) {",
     "occurrence": 1,
-    "source_sha256": "a0fea1ad994da28ddb487e23c9f0fea181dcb8864c5f89b3b40a1e56e203e983",
+    "source_sha256": "0ee18543cb9e4f883483eec1ef125fb8286f32d573e4553f25451468d003cbb2",
     "disposition": "confirmation",
     "guard": "Delete dialog / StudioConfirm or DeleteBookPage; trashUndo / UndoDelete after acceptance",
     "reason": "Book/project deletion is explicitly confirmed and the existing recoverable trash token remains available."
@@ -17190,7 +17190,7 @@
     "line": 21,
     "statement": "Api.quiet(\"GET\", \"/api/readaloud/voice-speed\", null, function(data, error) { if (!error && data) root.status = data })",
     "occurrence": 1,
-    "source_sha256": "4adffc1b9fe133d48c3898639c4bfc58f3eef056ae62519adbdc2a9549491a34",
+    "source_sha256": "7abc66b645027f667b7ef952aae8c89c384e442be6122e922049f361e8ab030d",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; PendingIndicator, busy, downloading, pending, working",
     "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads."
@@ -17202,7 +17202,7 @@
     "line": 26,
     "statement": "Api.quiet(\"POST\", \"/api/readaloud/voice-speed\", {choice: choice}, function(data, error) {",
     "occurrence": 1,
-    "source_sha256": "4adffc1b9fe133d48c3898639c4bfc58f3eef056ae62519adbdc2a9549491a34",
+    "source_sha256": "7abc66b645027f667b7ef952aae8c89c384e442be6122e922049f361e8ab030d",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; PendingIndicator, busy, downloading, pending, working",
     "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads."
@@ -17211,10 +17211,10 @@
     "id": "c74c5b741fd2cc55d671",
     "kind": "pending",
     "path": "desktop_qt/qml/VoiceTry.qml",
-    "line": 19,
+    "line": 20,
     "statement": "function quiet(method, path, body, done) { return store ? store.quiet(method, path, body, done) : Api.quiet(method, path, body, done) }",
     "occurrence": 1,
-    "source_sha256": "94134e32c7f4560f646a2931514615b73c6f61a82b8869303f162c612cb9b5a9",
+    "source_sha256": "c5348ca445c830a57eaf23e668fcf336eb5f2a5c16456264fc4d37795bfcb0dd",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; busyBook",
     "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads."
@@ -17247,10 +17247,10 @@
     "id": "5e7c03e5aab0c23affa4",
     "kind": "pending",
     "path": "desktop_qt/qml/WorkStore.qml",
-    "line": 56,
+    "line": 57,
     "statement": "function post(rest, body, done) { return store.request(\"POST\", path(rest), body, done) }",
     "occurrence": 1,
-    "source_sha256": "a9872325a1ce0998c74d889edd80e7ad7d4b444af511ad4474ad618b8d4beeaa",
+    "source_sha256": "faaeeb5842a33cec2234338a6c6057b389b5715a15b9c636a78db82edf10a3ab",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; pending, pendingNote",
     "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads."
@@ -17259,10 +17259,10 @@
     "id": "2772dabf06a15ab0661e",
     "kind": "pending",
     "path": "desktop_qt/qml/WorkStore.qml",
-    "line": 93,
+    "line": 94,
     "statement": "root.store.request(\"POST\", root.path(\"/\" + steps[i].endpoint), Object.assign({}, steps[i].decision, {withdraw: true}), function(status, data) {",
     "occurrence": 1,
-    "source_sha256": "a9872325a1ce0998c74d889edd80e7ad7d4b444af511ad4474ad618b8d4beeaa",
+    "source_sha256": "faaeeb5842a33cec2234338a6c6057b389b5715a15b9c636a78db82edf10a3ab",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; pending, pendingNote",
     "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads."
@@ -17271,10 +17271,10 @@
     "id": "d59727ed72cadc7555c7",
     "kind": "pending",
     "path": "desktop_qt/qml/WorkStore.qml",
-    "line": 269,
+    "line": 270,
     "statement": "store.request(\"GET\", url, null, function(status, data) {",
     "occurrence": 1,
-    "source_sha256": "a9872325a1ce0998c74d889edd80e7ad7d4b444af511ad4474ad618b8d4beeaa",
+    "source_sha256": "faaeeb5842a33cec2234338a6c6057b389b5715a15b9c636a78db82edf10a3ab",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; pending, pendingNote",
     "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads."

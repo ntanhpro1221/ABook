@@ -5,6 +5,7 @@ import ABook
 // (pixelDelta) vẫn do Flickable xử lý.
 WheelHandler {
     id: root
+    Component.onCompleted: Keep.hold(root)
     required property Flickable flick
     property real step: 110
     property real target: 0

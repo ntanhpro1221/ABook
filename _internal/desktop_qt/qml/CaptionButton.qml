@@ -34,7 +34,7 @@ Item {
         height: 10
     }
     HoverHandler { id: hover }
-    Connections {
+    Listen {
         target: hover
         function onHoveredChanged() {
             if (hover.hovered) { root.latched = false; latchTimer.stop() }

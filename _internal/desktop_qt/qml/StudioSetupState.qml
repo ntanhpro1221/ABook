@@ -59,5 +59,5 @@ QtObject {
     }
     onPresentChanged: if (present && status === null) load()
     onWantedChanged: if (wanted && status === null) load()
-    Component.onCompleted: load()
+    Component.onCompleted: { Keep.hold(root); load() }
 }

@@ -95,7 +95,7 @@ Item {
     Component.onCompleted: { initialized = true; restorePosition(target || remembered) }
     onActiveChanged: if (!restoring && script) positionChanged(script.chapterId, active)
     // Đổi chương thì bỏ chọn, bỏ menu (useEffect theo chapterId)
-    Connections {
+    Listen {
         target: scripts
         function onChapterIdChanged() {
             root.restoring = true
@@ -170,7 +170,7 @@ Item {
         const top = root.mapToItem(flick.contentItem, 0, 0).y + headerSlot.y
         stick = Math.max(0, Math.min(flick.contentY - top, page.height - headerSlot.y - header.height))
     }
-    Connections {
+    Listen {
         target: root.flick
         function onContentYChanged() { root.updateStick() }
         function onHeightChanged() { root.updateStick() }

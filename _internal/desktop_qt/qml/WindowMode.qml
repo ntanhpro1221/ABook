@@ -34,7 +34,7 @@ Item {
         onTriggered: if (!root.mini && !root.transitioning && root.window.visibility === Window.Windowed)
             root.fullRect = Qt.rect(root.window.x, root.window.y, root.window.width, root.window.height)
     }
-    Connections {
+    Listen {
         target: root.window
         function onXChanged() { rememberFull.restart() }
         function onYChanged() { rememberFull.restart() }
@@ -144,7 +144,7 @@ Item {
     }
     // Cập nhật (Backend::runInstaller) thoát bằng QCoreApplication::exit, không qua quit() hay closeRequested: aboutToQuit vẫn
     // phát, nên vị trí + cỡ cửa sổ vẫn được lưu như khi người dùng thoát.
-    Connections {
+    Listen {
         target: Qt.application
         function onAboutToQuit() { if (!root.quitting) root.save() }
     }

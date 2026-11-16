@@ -18,7 +18,7 @@ Interactive {
     property bool busy: false
     property int ownedRequest: 0
     readonly property bool working: busy || ownedRequest > 0
-    Connections { target: Api; function onRequestDone(id) { if (root.ownedRequest === id) root.ownedRequest = 0 } }
+    Listen { target: Api; function onRequestDone(id) { if (root.ownedRequest === id) root.ownedRequest = 0 } }
     property var reserve: []
     readonly property real reservedWidth: reserve.reduce((widest, value) => Math.max(widest, metrics.advanceWidth(value)), 0)
     FontMetrics { id: metrics; font: label.font }

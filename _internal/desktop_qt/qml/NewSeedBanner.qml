@@ -20,7 +20,7 @@ Item {
         open: Boolean(root.seed)
         // Giữ nội dung cuối trong lúc khép
         property var last: null
-        Connections { target: root; function onSeedChanged() { if (root.seed) shown.last = root.seed } }
+        Listen { target: root; function onSeedChanged() { if (root.seed) shown.last = root.seed } }
         Component.onCompleted: last = root.seed
         Item {
             id: box

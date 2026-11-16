@@ -88,7 +88,7 @@ QtObject {
         ignoreUnknownSignals: true
         function onPeerChanged() { root.reset(); root.voices = []; root.prefs = null; root.prefsAsked = false; root.models = null; root.hints = ({}); root.profileApplied = false; if (root.active) root.open() }
     }
-    Component.onCompleted: open()
+    Component.onCompleted: { Keep.hold(root); open() }
 
     readonly property string preferredNarrator: prefs && prefs.newBookNarrator ? prefs.newBookNarrator : ""
     readonly property var templates: Templates.templatesOf(prefs ? prefs.bookTemplates : null)

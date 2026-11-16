@@ -11,6 +11,7 @@ import "PeerStudio.js" as Peer
 // (`active` = UiActivity.running): ẩn / thu nhỏ thì không hỏi, hiện lại thì hỏi ngay một lần.
 QtObject {
     id: root
+    Component.onCompleted: Keep.hold(root)
     property string peer: ""
     property var peerInfo: null                     // /api/app của máy kia (Studio của máy khác)
     property bool active: true

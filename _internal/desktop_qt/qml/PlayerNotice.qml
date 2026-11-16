@@ -13,7 +13,7 @@ Item {
     visible: pill.opacity > 0
 
     onShownChanged: if (shown) { text = Player.notice; action = Player.noticeAction }
-    Connections {
+    Listen {
         target: Player
         function onNoticeChanged() {
             if (Player.notice !== "") { root.text = Player.notice; root.action = Player.noticeAction }

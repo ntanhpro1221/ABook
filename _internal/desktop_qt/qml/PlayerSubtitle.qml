@@ -19,7 +19,7 @@ Column {
     onPreparingChanged: { delayed = false; if (preparing && Nav.uiVisible && visible) delay.restart(); else delay.stop() }
     onVisibleChanged: { if (visible && preparing && Nav.uiVisible) delay.restart(); else { delay.stop(); delayed = false } }
     Timer { id: delay; interval: 1500; onTriggered: root.delayed = root.preparing }
-    Connections { target: Nav; function onUiVisibleChanged() { if (Nav.uiVisible && root.preparing && root.visible) delay.restart(); else { delay.stop(); root.delayed = false } } }
+    Listen { target: Nav; function onUiVisibleChanged() { if (Nav.uiVisible && root.preparing && root.visible) delay.restart(); else { delay.stop(); root.delayed = false } } }
     Text { width: parent.width; horizontalAlignment: root.horizontalAlignment; wrapMode: Text.Wrap; Reveal { shown: Player.purpose === "review" } text: S.s_nghe_kiem_f9c474bb; color: Theme.text2; font.pixelSize: Theme.sizeCaption }
     Text {
         id: bookLabel

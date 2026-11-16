@@ -133,7 +133,7 @@ Item {
         anim.start()
     }
     // Đang mở mà sách bị đóng (không còn gì để nghe): thu lại ngay
-    Connections {
+    Listen {
         target: Player
         function onLoadedChanged() { if (!Player.loaded && root.open) root.close() }
     }

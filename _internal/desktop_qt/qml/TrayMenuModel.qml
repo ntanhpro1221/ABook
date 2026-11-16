@@ -5,6 +5,7 @@ import ABook
 // Mô hình chung cho khay native và bộ thử; tự nó không tạo icon hay cửa sổ hệ thống.
 QtObject {
     id: root
+    Component.onCompleted: Keep.hold(root)
     property var windowMode: null
     property var player: Player
     property bool loaded: player.loaded

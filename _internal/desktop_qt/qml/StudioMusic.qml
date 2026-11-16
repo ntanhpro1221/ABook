@@ -74,7 +74,7 @@ Column {
         onTriggered: root.load()
     }
     // Cửa sổ hiện lại (hay đổi máy): hỏi ngay một lần
-    Connections {
+    Listen {
         target: root.store
         function onActiveChanged() { if (root.store.active) root.load() }
     }
@@ -130,6 +130,7 @@ Column {
     // ---- "Đổi bài": một đoạn mở một lúc, là một lớp của ngăn xếp Back ----
     QtObject {
         id: swapLayer
+        Component.onCompleted: Keep.hold(swapLayer)
         property bool on: false
         function close() { root.closeSwap() }
     }

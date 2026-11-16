@@ -43,7 +43,7 @@ Item {
             Api.toast(Precast.inviteText(book), {duration: 30000, action: {label: S.s_duyet_272ec77c, run: () => root.precastRequested(id)}})
         }
     }
-    Connections { target: Nav; function onUiVisibleChanged() { if (Nav.uiVisible && root.visible) store.loadLibrary() } }
+    Listen { target: Nav; function onUiVisibleChanged() { if (Nav.uiVisible && root.visible) store.loadLibrary() } }
     Column {
         id: column; width: parent.width; spacing: Theme.s4
         Collapse {

@@ -53,7 +53,7 @@ Item {
     }
     Timer { id: silent; interval: root.waitMs; onTriggered: root.heard(null) }
     // Kênh của vỏ (Backend đọc dòng JSON của host, như vỏ Tauri phát sự kiện cửa sổ): kết quả kiểm, tải hỏng
-    Connections {
+    Listen {
         target: Backend
         function onUpdateChecked(detail) { root.heard(detail) }
         function onHostEvent(name, detail) { if (name === "abook-update-failed") root.failed() }

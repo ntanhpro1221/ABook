@@ -9,6 +9,7 @@ import "ReviewLogic.js" as R
 // lại là phát lại, không hỏi máy chủ.
 QtObject {
     id: root
+    Component.onCompleted: Keep.hold(root)
     property var work: null
     property string surface: ""
     property string spoken: ""

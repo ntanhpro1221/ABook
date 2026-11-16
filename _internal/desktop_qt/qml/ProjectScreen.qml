@@ -186,7 +186,7 @@ FocusScope {
         running: root.store && root.store.active && root.wantsActivity && root.book && root.book.running
         onTriggered: root.loadActivity()
     }
-    Connections {
+    Listen {
         target: root.store
         function onBookIdChanged() {
             root.activityData = null; root.activityError = ""; root.next = 0

@@ -27,7 +27,7 @@ Item {
     }
     function esc(value) { return String(value || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/\u00a0/g, "&nbsp;").split('"').join("&quot;") }
     Component.onCompleted: refresh()
-    Connections {
+    Listen {
         target: Music
         function onCreditChanged() { root.refresh() }
     }

@@ -48,11 +48,11 @@ Item {
     }
     onActiveChanged: if (active && status === "idle") load()
     onBookIdChanged: { generation++; cast = null; status = "idle"; later = false; if (active) load() }
-    Connections {
+    Listen {
         target: Api
         function onEdited(id) { if (!root.store && id === root.bookId && root.status !== "idle") root.load() }
     }
-    Connections {
+    Listen {
         target: root.store
         function onCastEdited(id) { if (id === root.bookId && root.status !== "idle") root.load() }
     }

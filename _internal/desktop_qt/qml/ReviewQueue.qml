@@ -71,7 +71,7 @@ Item {
         onLoaded: answer => root.adopt(answer)
         onDataChanged: if (data === null) { root.generation++; root.pages = []; root.fetchingNext = false }
     }
-    Connections {
+    Listen {
         target: root.work
         ignoreUnknownSignals: true
         function onReviewChanged() { first.invalidate() }
@@ -181,7 +181,7 @@ Item {
         const still = indexOfId(was)
         playAt(still >= 0 ? still + 1 : playingIndex)
     }
-    Connections { target: Clip; function onCurrentChanged() { root.heardClip() } }
+    Listen { target: Clip; function onCurrentChanged() { root.heardClip() } }
     function judgePlaying(value) {
         const index = indexOfId(playingId)
         if (index < 0) return

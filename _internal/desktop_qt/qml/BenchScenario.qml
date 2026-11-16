@@ -161,13 +161,13 @@ Item {
             else if (!root.listenHeard && root.listenIdle >= root.listenStallLimit) root.listenEnd("listen_stalled:" + root.listenIdle)
         }
     }
-    Connections {
+    Listen {
         target: Music
         enabled: root.listenScenario
         function onCreditChanged() { Bench.notePlayback("music:" + String(Music.credit && Music.credit.label || "").replace(/["\\:]/g, "")) }
     }
     // Lỗi và lời nhắn người nghe thấy: listen_audit coi lượt có lỗi là hỏng. Lỗi làm Player dừng hẳn, nên lượt dừng luôn.
-    Connections {
+    Listen {
         target: Player
         enabled: root.listenScenario
         function onErrorChanged() { if (Player.error) { Bench.note("player_error:" + root.benchText(Player.error)); root.listenEnd("listen_failed") } }
@@ -214,6 +214,8 @@ Item {
 
     // Thử riêng đường thu nhỏ/khôi phục trước khi đo dài; không cần tải sách hay phát tiếng.
     Timer {
+        id: focusProbeTimer
+        Component.onCompleted: Keep.hold(focusProbeTimer)
         running: Bench.enabled && root.focusProbe
         interval: 200
         repeat: true

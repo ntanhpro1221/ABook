@@ -9,7 +9,7 @@ Collapse {
     property string shown: ""
     property bool warns: false
     open: !!reading && reading.note !== ""
-    Connections {
+    Listen {
         target: root.reading
         ignoreUnknownSignals: true
         function onNoteChanged() { if (root.reading.note !== "") { root.shown = root.reading.note; root.warns = root.reading.warns } }

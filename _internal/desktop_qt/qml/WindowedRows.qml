@@ -30,7 +30,7 @@ Column {
     onYChanged: refresh()
     onWidthChanged: Later.call(root, refresh)
     onVisibleChanged: Later.call(root, refresh)
-    Connections {
+    Listen {
         target: root.viewport
         ignoreUnknownSignals: true
         function onContentYChanged() { root.refresh() }
@@ -61,7 +61,7 @@ Column {
                     settled.restart()
                 }
             }
-            Connections {
+            Listen {
                 target: loader.item
                 function onHeightChanged() { if (loader.item) settled.restart() }
             }

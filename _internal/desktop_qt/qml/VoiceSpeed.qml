@@ -33,7 +33,7 @@ VoiceFold {
     }
     Component.onCompleted: refresh()
     // Thẻ Supertonic tải / đo xong: số đo hay bản nhanh hơn vừa đổi - hỏi lại dòng này
-    Connections { target: root.supertonic; function onChanged() { root.refresh() } }
+    Listen { target: root.supertonic; function onChanged() { root.refresh() } }
 
     Column {
         width: parent.width

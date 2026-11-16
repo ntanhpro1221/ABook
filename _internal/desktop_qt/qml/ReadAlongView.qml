@@ -16,7 +16,7 @@ Item {
     property bool following: true
     property bool tapped: false
     PlayerLineEditor { id: lineEditor }
-    Connections { target: lineEditor; function onOpenChanged() { if (lineEditor.open) followAnim.stop() } }
+    Listen { target: lineEditor; function onOpenChanged() { if (lineEditor.open) followAnim.stop() } }
     // Retain the paragraph at the viewport edge while its preceding text wraps.
     // Playback following still owns placement when following is enabled.
     property var viewportAnchor: null
@@ -40,12 +40,12 @@ Item {
             restoringViewport = true
         }
     }
-    Connections {
+    Listen {
         target: root.Window.window
         function onFrameSwapped() { if (root.restoringViewport) Later.call(root, root.restoreViewport) }
     }
-    Connections { target: Player; function onChapterChanged() { root.tapped = false; root.viewportAnchor = null } }
-    Connections { target: ReadAlong; function onListened() { root.tapped = true } }
+    Listen { target: Player; function onChapterChanged() { root.tapped = false; root.viewportAnchor = null } }
+    Listen { target: ReadAlong; function onListened() { root.tapped = true } }
     Text {
         id: hint; objectName: "readerHint"
         x: Theme.s24; y: Theme.s12; width: Math.max(0, parent.width - 2 * Theme.s24)
@@ -224,7 +224,7 @@ Item {
         easing.type: Easing.BezierSpline
         easing.bezierCurve: Theme.easeStandard
     }
-    Connections {
+    Listen {
         target: ReadAlong
         function onCurrentSegmentChanged() { Later.call(root, root.afterSegment) }
         function onCurrentWordChanged() { Later.call(root, root.wordChanged) }
@@ -236,7 +236,7 @@ Item {
             }
         }
     }
-    Connections {
+    Listen {
         target: Theme
         function onDarkChanged() { root.shadeAll() }
         function onReadChanged() { root.shadeAll() }
@@ -386,7 +386,7 @@ Item {
                     }
                 }
             }
-            Connections {
+            Listen {
                 target: ReadAlong
                 function onCurrentSegmentChanged() {
                     if (ReadAlong.currentPara === del.index) del.shade()
@@ -400,7 +400,7 @@ Item {
             }
             onWordRectsChanged: if (ReadAlong.currentPara === index) Later.call(root, root.placeInk)
             onYChanged: if (ReadAlong.currentPara === index) Later.call(root, root.placeInk)
-            Connections {
+            Listen {
                 target: root
                 function onShadeAll() { del.shade() }
             }
@@ -417,6 +417,8 @@ Item {
                 onHoveredChanged: if (!hovered) del.hoverSeg = -1
             }
             TapHandler {
+                id: lineTap
+                Component.onCompleted: Keep.hold(lineTap)
                 acceptedButtons: Qt.LeftButton
                 property bool editingGesture: false
                 onPressedChanged: if (pressed) editingGesture = false
