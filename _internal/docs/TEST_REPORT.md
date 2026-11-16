@@ -1,5 +1,22 @@
 # Test report
 
+## 17-11-2026 — Qt draws CJK names with Windows fallback fonts
+
+Book, author, character and music names in Japanese, Chinese or Korean no longer render as
+boxes in the Qt app. `desktop_qt/src/appfonts.h` registers the fonts every Windows 10/11 install
+ships as per-script application fallbacks: Han -> Microsoft YaHei UI, Yu Gothic UI, Malgun Gothic;
+kana -> Yu Gothic UI, Microsoft YaHei UI; Hangul -> Malgun Gothic. Nothing is bundled, so the
+installer size is unchanged. The offscreen test platform only sees `QT_QPA_FONTDIR`, so there the
+same system files are registered by path. Common-script symbols keep the bundled symbol fonts.
+
+The music-library fixture carries real catalogue names again (魔王魂 plus Japanese, Chinese and
+Korean titles and artists), and `tst_glyph_audit` adds 24 CJK name cases across three weights. The
+glyph audit has no exclusions. Negative control without the fallback: 21 failed, GLYPH_MISSING 49.
+With it: WidthTests 1763 passed / 8 failed / 2 skipped, GLYPH_MISSING 0; MusicTests 89/0,
+MusicLibraryTests 9/0, MusicArtTests 4/0, SkipGlyphTests 6/0, HitlTests 7/0. The eight failures are
+`tst_list_measure` music_lists (`disclosureTitle` columns 0/34) and fail identically without this
+change. They predate it.
+
 ## 16-11-2026 — complete device and listening-profile names
 
 Device, phone, playback-destination and listening-profile names use the shared OneLineFit
