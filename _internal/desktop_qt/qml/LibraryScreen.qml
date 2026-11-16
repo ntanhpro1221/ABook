@@ -57,19 +57,9 @@ FocusScope {
     Behavior on contentOpacity { NumberAnimation { duration: Theme.motionMedium } }
     readonly property var continuing: LibraryLogic.listening(books, Player.loaded ? Player.bookId : "")
     function shapeOf(list) { return list.map(s => s.key + ":" + s.books.map(b => b.bookId).join(",")).join("|") }
-    property real resultProgress: 1
+    readonly property real resultProgress: resultSlide.phase
     property int resultDirection: 1
-    property var resultImage: null
-    property var settledImage: null
-    property int resultGeneration: 0
     property int appliedFilter: 0
-    function cacheResults() {
-        const generation = resultGeneration
-        if (!resultViewport.width || !resultViewport.height || resultMotion.running) return
-        resultViewport.grabToImage(function(result) {
-            if (generation === root.resultGeneration && !resultMotion.running) root.settledImage = result
-        })
-    }
     function selectedFilterIndex() { return ["all", "listening", "new", "finished"].indexOf(filter) }
     readonly property int filterIndex: selectedFilterIndex()
     function applyResults() {
@@ -85,26 +75,15 @@ FocusScope {
     onSectionsChanged: {
         const selection = selectionKey()
         if (selection === appliedSelection && shapeOf(sections) === shapeOf(shownSections)) { shownSections = sections; return }
-        ++resultGeneration
-        resultMotion.stop()
-        // Capture while idle. A selection must never wait for asynchronous GPU readback.
-        resultImage = settledImage
         resultDirection = selectedFilterIndex() >= appliedFilter ? 1 : -1
-        applyResults()
         if (!resultViewport.width || !resultViewport.height || loading) {
-            resultProgress = 1
-            Later.call(root, function() { root.cacheResults() })
+            resultSlide.complete()
+            applyResults()
             return
         }
-        resultProgress = 0
-        resultMotion.start()
-    }
-    NumberAnimation {
-        id: resultMotion
-        target: root; property: "resultProgress"; to: 1
-        duration: Theme.reduceMotion ? Theme.motionFast : Theme.motionMedium
-        easing.type: Easing.BezierSpline; easing.bezierCurve: Theme.easeStandard
-        onFinished: { root.resultImage = null; root.cacheResults() }
+        // Shared demand capture keeps the old page painted until readback;
+        // its image is owned only for the transition, never while idle.
+        resultSlide.change(function() { root.applyResults() }, resultDirection < 0)
     }
     readonly property bool libraryError: Backend.library.error !== ""
     property int current: 0              // ô đang giữ tiêu điểm bàn phím (chỉ số trong danh sách)
@@ -113,10 +92,10 @@ FocusScope {
     // Changing the grid's column count replaces its numeric ListView model.
     // Restore the live viewport after that reset rather than jumping to row 0.
     onColsChanged: {
-        if (resultMotion.running) return
+        if (resultSlide.running) return
         const previousY = list.contentY
         const selection = appliedSelection
-        Later.call(root, function() { if (!resultMotion.running && root.appliedSelection === selection) list.contentY = previousY })
+        Later.call(root, function() { if (!resultSlide.running && root.appliedSelection === selection) list.contentY = previousY })
     }
 
     function select(index) {
@@ -284,13 +263,11 @@ FocusScope {
                 root.filter = filters[Math.max(0, Math.min(3, root.filterIndex + (translation.x < 0 ? 1 : -1)))]
             }
         }
-        Image {
-            objectName: "libraryPreviousPage"
-            source: root.resultImage ? root.resultImage.url : ""
-            width: parent.width; height: parent.height
-            visible: root.resultProgress < 1 && root.resultImage !== null
-            x: Theme.reduceMotion ? 0 : -root.resultDirection * width * root.resultProgress
-            opacity: Theme.reduceMotion ? 1 - root.resultProgress : 1
+        ContentSlide {
+            id: resultSlide
+            objectName: "libraryResultSlide"
+            anchors.fill: parent
+            sourceItem: resultViewport
         }
     }
     ListView {
@@ -308,7 +285,6 @@ FocusScope {
         boundsBehavior: Flickable.StopAtBounds
         keyNavigationEnabled: false
         reuseItems: true
-        onMovementEnded: root.cacheResults()
         Accessible.role: Accessible.List
         Accessible.name: S.s_sach_0c2b3e9b
 

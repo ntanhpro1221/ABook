@@ -19,6 +19,7 @@ DestructiveConfirm 1.0 ../../../../qml/DestructiveConfirm.qml
 IconButton 1.0 ../../../../qml/IconButton.qml
 Shadow 1.0 ../../../../qml/Shadow.qml
 FloatingPanel 1.0 ../../../../qml/FloatingPanel.qml
+LazyPopup 1.0 ../../../../qml/LazyPopup.qml
 CoverButton 1.0 ../../../../qml/CoverButton.qml
 InlineError 1.0 ../../../../qml/InlineError.qml
 FlowDetail 1.0 ../../../../qml/FlowDetail.qml

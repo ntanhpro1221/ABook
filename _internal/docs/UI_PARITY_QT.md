@@ -106,8 +106,8 @@ Mỗi cặp còn lại phải có giải thích trong ui_strings/qt_wording_revi
 | Thêm sách | book-plus | Thả để thêm sách | Thêm vào thư viện | `qt/ImportDrop.qml:49` |
 | Thư viện | play | Nghe tiếp | Đọc {} | `qt/LibraryContinue.qml:46` |
 | Thư viện | pause | Tạm dừng | Đọc {} | `qt/LibraryContinue.qml:46` |
-| Thư viện | x | Đóng ô tìm | Xoá ô tìm | `qt/LibraryScreen.qml:212` |
-| Thư viện | search | Chưa có cuốn nào nghe xong. | Thử tên sách hoặc tác giả khác., Tìm sách | `qt/LibraryScreen.qml:519` |
+| Thư viện | x | Đóng ô tìm | Xoá ô tìm | `qt/LibraryScreen.qml:191` |
+| Thư viện | search | Chưa có cuốn nào nghe xong. | Thử tên sách hoặc tác giả khác., Tìm sách | `qt/LibraryScreen.qml:495` |
 | Nhạc | square | Dừng nghe | Dừng nghe thử, Dừng tải | `qt/MusicScreen.qml:252` |
 | Nhạc | download | Tải tiếp | Lưu tất cả ({}), Tải cả danh sách ({}), Tải tiếp / Tải về | `qt/MusicTrackDetail.qml:106` |
 | Nhạc | download | Tải về | Lưu tất cả ({}), Tải cả danh sách ({}), Tải tiếp / Tải về | `qt/MusicTrackDetail.qml:106` |
@@ -175,12 +175,12 @@ Nhãn ngắn (<= 6 chữ). **Chỉ Qt**: không có ở web cùng màn; `*` = we
 
 ### Thư viện
 
-- chỉ Qt (9): Tạm dừng* (`qt/LibraryContinue.qml:44`); Mới thêm* (`qt/LibraryScreen.qml:48`); Tác giả* (`qt/LibraryScreen.qml:48`); Tên sách* (`qt/LibraryScreen.qml:48`); Đang mở ABook* (`qt/LibraryScreen.qml:416`); Chưa mở được ABook (`qt/LibraryScreen.qml:465`); Chưa tải được thư viện (`qt/LibraryScreen.qml:465`); Thử lại* (`qt/LibraryScreen.qml:483`); Không thấy “{}”* (`qt/LibraryScreen.qml:520`)
+- chỉ Qt (9): Tạm dừng* (`qt/LibraryContinue.qml:44`); Mới thêm* (`qt/LibraryScreen.qml:48`); Tác giả* (`qt/LibraryScreen.qml:48`); Tên sách* (`qt/LibraryScreen.qml:48`); Đang mở ABook* (`qt/LibraryScreen.qml:392`); Chưa mở được ABook (`qt/LibraryScreen.qml:441`); Chưa tải được thư viện (`qt/LibraryScreen.qml:441`); Thử lại* (`qt/LibraryScreen.qml:459`); Không thấy “{}”* (`qt/LibraryScreen.qml:496`)
 - chỉ web (7): Đang tạm dừng {} (`334`); Đang làm {} (`335`); Đang tạm dừng{} (`339`); Chưa có chương nghe được{} (`341`); Đang làm · {} (`341`); Thư viện chưa có sách nào. (`462`); Chữ bìa trên hoạ tiết sóng (`86`)
 
 ### Thanh phát
 
-- chỉ Qt (11): Không có mạng - (`qt/PlayerAlert.qml:10`); Giọng {} đang không dùng được.* (`qt/PlayerAlert.qml:25`); Cửa sổ mini (`qt/PlayerBar.qml:128`); Chỉnh* (`qt/PlayerBar.qml:156`); Âm thanh* (`qt/PlayerBar.qml:156`); Hẹn giờ* (`qt/PlayerBar.qml:157`); Giọng đọc* (`qt/PlayerBar.qml:160`); Hẹn lại {} phút* (`qt/PlayerFade.qml:16`); Nghe bằng giọng đọc. (`qt/PlayerLabels.js:18`); Thêm giọng* (`qt/PlayerVoicePopover.qml:31`); Tua nhạc (`qt/SeekBar.qml:29`)
+- chỉ Qt (11): Không có mạng - (`qt/PlayerAlert.qml:10`); Giọng {} đang không dùng được.* (`qt/PlayerAlert.qml:25`); Cửa sổ mini (`qt/PlayerBar.qml:128`); Chỉnh* (`qt/PlayerBar.qml:158`); Âm thanh* (`qt/PlayerBar.qml:158`); Hẹn giờ* (`qt/PlayerBar.qml:159`); Giọng đọc* (`qt/PlayerBar.qml:162`); Hẹn lại {} phút* (`qt/PlayerFade.qml:16`); Nghe bằng giọng đọc. (`qt/PlayerLabels.js:18`); Thêm giọng* (`qt/PlayerVoicePopover.qml:31`); Tua nhạc (`qt/SeekBar.qml:29`)
 - chỉ web (8): Shift+← (`284`); Sắp tắt · (`1264`); Chưa nghe · {} chương (`69`); Nghe tiếp · {} (`88`); Shift+→ (`106`); Chưa có audio (`116`); Chạm (`127`); Nghe bằng giọng đọc.{} (`149`)
 
 ### Đang nghe
@@ -255,7 +255,7 @@ Nhãn ngắn (<= 6 chữ). **Chỉ Qt**: không có ở web cùng màn; `*` = we
 
 ### Thanh tiêu đề
 
-- chỉ Qt (2): ABook vẫn chạy ở khay (`qt/Main.qml:28`); Chưa tải được bản mới* (`qt/Main.qml:348`)
+- chỉ Qt (2): ABook vẫn chạy ở khay (`qt/Main.qml:28`); Chưa tải được bản mới* (`qt/Main.qml:368`)
 - chỉ web (3): Mở rộng (Ctrl+B) (`260`); Thu gọn (Ctrl+B) (`260`); Điều hướng (`277`)
 
 ### Chung

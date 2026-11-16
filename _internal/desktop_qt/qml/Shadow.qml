@@ -17,7 +17,9 @@ Image {
     y: -pad
     width: frameWidth + 2 * pad
     height: frameHeight + 2 * pad
-    source: frameWidth > 0 && frameHeight > 0
+    // Hidden surfaces must not rasterize every intermediate layout size.
+    // Visibility includes ancestors and stays true throughout exit fades.
+    source: visible && frameWidth > 0 && frameHeight > 0
             ? "image://shadow/%1/%2/%3/%4/%5/%6".arg(kind).arg(Theme.dark ? 1 : 0).arg(frameWidth).arg(frameHeight).arg(Math.round(radius)).arg(pad)
             : ""
     fillMode: Image.Stretch

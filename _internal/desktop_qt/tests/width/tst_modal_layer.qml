@@ -117,6 +117,12 @@ Item {
         function root() { return host.Window.window.contentItem }
         function waitShown(layer, value) { tryCompare(layer, "shown", value, 3000) }
 
+        // LazyPopup builds its layer on first use; build every one so each layer is still checked
+        function materialize(item) {
+            if (!item) return
+            if (typeof item.ensure === "function" && item.sourceComponent !== undefined) item.ensure()
+            for (const child of item.children || []) materialize(child)
+        }
         // Dựng `factory` trong cảnh khó và trả các lớp (Modal / Popover) mới sinh ra, dù còn dưới `made` hay đã tự dời lên gốc cửa sổ
         function build(factory) {
             const scene = createTemporaryObject(sceneFactory, host, {width: host.width, height: host.height})
@@ -125,6 +131,7 @@ Item {
             const made = createTemporaryObject(factory, scene.holder, {})
             verify(made !== null)
             if (made.width === 0) { made.width = host.width; made.height = host.height }      // màn dựng riêng không có chỗ neo: cho đủ khổ cửa sổ
+            materialize(made)
             const own = ModalLayer.layersIn(root(), []).filter(layer => known.indexOf(layer) < 0)
             verify(own.length > 0, "no Modal or Popover found inside the component")
             for (const layer of own) if (layer.anchorItem !== undefined && !layer.anchorItem) layer.anchorItem = scene.anchor

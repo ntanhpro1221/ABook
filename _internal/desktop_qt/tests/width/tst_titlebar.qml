@@ -96,6 +96,40 @@ TestCase {
         return out
     }
 
+    function test_0_globalActionsLoadOnFirstUseAndRetainState() {
+        const add = findChild(win, "addBookLoader")
+        const shortcuts = findChild(win, "shortcutsLoader")
+        const consent = findChild(win, "onlineVoiceLoader")
+        verify(add !== null && shortcuts !== null && consent !== null)
+        for (const loader of [add, shortcuts, consent]) {
+            compare(loader.active, false)
+            compare(loader.item, null)
+        }
+        compare(add.opening, false)
+        add.openFile()
+        verify(add.item !== null)
+        const importer = add.item
+        tryVerify(function() { return !add.opening })
+        add.openFile()
+        compare(add.item, importer, "pending imports keep the same owner")
+        tryVerify(function() { return !add.opening })
+        shortcuts.show()
+        verify(shortcuts.item.open)
+        const dialog = shortcuts.item
+        dialog.close()
+        tryCompare(dialog, "shown", 0)
+        shortcuts.show()
+        compare(shortcuts.item, dialog)
+        dialog.close()
+        tryCompare(dialog, "shown", 0)
+        let answer = "pending"
+        consent.ask({id: "local", online: false}, function(voice) { answer = voice.id })
+        compare(answer, "local", "first-use action forwards its callback synchronously")
+        verify(consent.item !== null)
+        consent.dismiss()
+        Api.notice = ""
+    }
+
     function test_1_stripFillsTopOfWindowAndIsFortyHigh() {
         compare(Theme.buttonHeight, 40)
         compare(bar.height, 40)

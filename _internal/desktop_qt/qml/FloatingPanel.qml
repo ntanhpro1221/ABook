@@ -13,7 +13,9 @@ Item {
         y: -root.shadowPadding
         width: root.width + 2 * root.shadowPadding
         height: root.height + 2 * root.shadowPadding
-        layer.enabled: true
+        // A closed surface has no pixels to composite. Keep the layer until
+        // the exit fade has finished, then release its render target.
+        layer.enabled: root.visible
         Item {
             id: surface
             x: root.shadowPadding

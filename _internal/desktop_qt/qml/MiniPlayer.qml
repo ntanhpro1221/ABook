@@ -98,5 +98,5 @@ Rectangle {
         anchors.bottom: parent.bottom
         height: 12
     }
-    OutputPopover { id: output; anchorItem: deviceButton }
+    LazyPopup { id: output; sourceComponent: OutputPopover { anchorItem: deviceButton } }
 }

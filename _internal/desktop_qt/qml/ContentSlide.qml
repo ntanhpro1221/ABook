@@ -17,6 +17,7 @@ Item {
     readonly property real incomingShift: Theme.reduceMotion ? 0 : direction * width * (1 - phase)
     clip: true
     z: 90
+    onVisibleChanged: if (!visible) complete()
 
     function complete() {
         generation++
@@ -45,6 +46,7 @@ Item {
         if (!started) { pending = null; capturing = false; apply(); phase = 1 }
     }
     Image {
+        cache: false
         source: root.image ? root.image.url : ""
         x: root.from.x - (Theme.reduceMotion ? 0 : root.direction * root.width * root.phase)
         y: root.from.y; width: root.from.width; height: root.from.height

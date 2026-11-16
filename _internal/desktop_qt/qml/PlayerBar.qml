@@ -146,11 +146,13 @@ Item {
     Column {
         id: alerts; x: Theme.margin; width: parent.width - 2 * Theme.margin
         PlayerFade { width: parent.width }
-        PlayerAlert { width: parent.width; onVoiceRequested: { root.openRequested(); voice.fromAlert() } onSettingsRequested: root.settingsRequested("voice") }
+        PlayerAlert { width: parent.width; onVoiceRequested: { root.openRequested(); voice.ensure().fromAlert() } onSettingsRequested: root.settingsRequested("voice") }
     }
     // Bảng nổi của nút "…": Popover tự đặt ở gốc cửa sổ nên phủ cả bề mặt nội dung, Back / tiêu điểm khớp với các bảng của NowPlaying
-    Popover {
-        id: more; objectName: "barMoreMenu"; anchorItem: moreButton; panelWidth: 320
+    LazyPopup {
+        id: more; objectName: "barMoreMenu"
+        sourceComponent: Popover {
+        anchorItem: moreButton; panelWidth: 320
         Column {
             width: parent.width
             MenuRow { width: parent.width; text: S.s_copy_c1303271503d; value: S.s_copy_cc27613e0895; icon: "sliders-horizontal"; onClicked: { more.close(); audioFx.show() } }
@@ -162,10 +164,11 @@ Item {
             MenuRow { objectName: "barClose"; width: parent.width; text: S.s_dong_trinh_phat_8a833838; icon: "x"; onClicked: { more.close(); Player.close() } }
             MenuRow { objectName: "barOutput"; width: parent.width; text: S.s_phat_tren_681e16e1; icon: "cast"; onClicked: { more.close(); output.show() } }
         }
+        }
     }
-    SleepPopover { id: sleep; anchorItem: moreButton }
-    MusicPopover { id: music; anchorItem: moreButton }
-    PlayerVoicePopover { id: voice; anchorItem: moreButton; onSettingsRequested: root.settingsRequested("voice") }
-    OutputPopover { id: output; anchorItem: deviceButton }
-    Popover { id: audioFx; closeGuard: action => audioSettings.requestClose(action); anchorItem: moreButton; panelWidth: 360; maxHeight: 760; AudioFxPanel { id:audioSettings; openMusic: () => { audioFx.close(); music.show() } } }
+    LazyPopup { id: sleep; sourceComponent: SleepPopover { anchorItem: moreButton } }
+    LazyPopup { id: music; sourceComponent: MusicPopover { anchorItem: moreButton } }
+    LazyPopup { id: voice; sourceComponent: PlayerVoicePopover { anchorItem: moreButton; onSettingsRequested: root.settingsRequested("voice") } }
+    LazyPopup { id: output; sourceComponent: OutputPopover { anchorItem: deviceButton } }
+    LazyPopup { id: audioFx; sourceComponent: Popover { closeGuard: action => audioSettings.requestClose(action); anchorItem: moreButton; panelWidth: 360; maxHeight: 760; AudioFxPanel { id:audioSettings; openMusic: () => { audioFx.close(); music.show() } } } }
 }
