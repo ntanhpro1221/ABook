@@ -143,10 +143,10 @@ def test_labels_are_read_correctly_from_the_real_sources():
     """Chữ đọc ra phải là chữ thật (nếu đọc ra rỗng thì phép so ở trên vô nghĩa)."""
     qml = read(QML / "MiniPlayer.qml")
     pip = pip_labels(read(KT / "ui" / "pip" / "PipParams.kt"))
-    assert qt_label(qml, "miniBack") == ("Lùi {N} giây",)
-    assert qt_label(qml, "miniForward") == ("Tới {N} giây",)
+    assert qt_label(qml, "miniBack") == ("Lùi {N}\u00a0giây",)
+    assert qt_label(qml, "miniForward") == ("Tới {N}\u00a0giây",)
     assert qt_label(qml, "miniPlay") == ("Đang đệm", "Tạm dừng", "Phát")
-    assert pip["miniBack"] == ("Lùi {N} giây",) and pip["miniForward"] == ("Tới {N} giây",)
+    assert pip["miniBack"] == ("Lùi {N}\u00a0giây",) and pip["miniForward"] == ("Tới {N}\u00a0giây",)
     assert pip["miniPlay"] == ("Đang đệm", "Tạm dừng", "Phát")
 
 
