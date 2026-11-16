@@ -1806,8 +1806,8 @@
     "reason": "scripts/fix_source_quotes.py: all flagged strings match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
   },
   "_internal/scripts/flaky_patterns.py": {
-    "sha256": "185a0f8d494c878895ec196f40f651853382ef70cb1141328721a23332784a40",
-    "reason": "scripts/flaky_patterns.py: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
+    "sha256": "94b734b30be3ee0702da1be1c64ca0680f2c5048b0ae45312a58266fbb6440b6",
+    "reason": "scripts/flaky_patterns.py: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data. Integration phase 2: combined authored implementation, expectations or technical documentation; exact inherited Corpus sequences rechecked; no new Corpus approval."
   },
   "_internal/scripts/foreground_watch.py": {
     "sha256": "7b8c792ba85a12cfb1a4d7bd8e907edcaa6128a522b5cd1d847ad426070cc02d",
