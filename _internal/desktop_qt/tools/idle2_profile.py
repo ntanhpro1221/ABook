@@ -1,5 +1,6 @@
 """Build/run the offline decoder profile under the existing owner-safe guard."""
 from pathlib import Path
+from qt_sdk import qt_root
 import hashlib
 import json
 import os
@@ -12,7 +13,7 @@ root=Path(__file__).resolve().parents[1]
 label=sys.argv[1]
 out=root/"build/idlecpu2-evidence"/label
 out.mkdir(parents=True,exist_ok=True)
-qt="D:/Novels/native_desk_proto/qt611/6.10.3/msvc2022_64"
+qt=str(qt_root())
 env=dict(os.environ,QT_QPA_PLATFORM="offscreen",PATH=qt+"/bin"+os.pathsep+os.environ["PATH"])
 bat=out/"profile-build.bat"
 bat.write_bytes((f'call "{root}/tools/find_vcvars.bat"\nif not defined VCVARS exit /b 1\ncall "%VCVARS%" >nul\n'

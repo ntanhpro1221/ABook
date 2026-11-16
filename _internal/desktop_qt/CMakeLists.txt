@@ -41,9 +41,11 @@ foreach(pair fadeSeconds:FADE_SECONDS siblingFadeSeconds:SIBLING_FADE_SECONDS st
     add_compile_definitions(ABOOK_MIX_${name}=${value})
 endforeach()
 
-# Qt >= 6.10.3, liên kết ĐỘNG (LGPL): DLL Qt nằm cạnh file chạy do windeployqt chép, người dùng thay được.
-find_package(Qt6 6.10 REQUIRED COMPONENTS Quick Network Test QuickTest CorePrivate GuiPrivate QmlPrivate QuickPrivate)   # *Private: QWindowKit cần
-qt_standard_project_setup(REQUIRES 6.10)
+# Qt version is pinned in QT_VERSION; liên kết ĐỘNG (LGPL): DLL Qt nằm cạnh file chạy do windeployqt chép, người dùng thay được.
+file(STRINGS "${CMAKE_CURRENT_SOURCE_DIR}/QT_VERSION" ABOOK_QT_VERSION LIMIT_COUNT 1)
+set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/QT_VERSION")
+find_package(Qt6 ${ABOOK_QT_VERSION} EXACT REQUIRED COMPONENTS Quick Network Test QuickTest CorePrivate GuiPrivate QmlPrivate QuickPrivate)   # *Private: QWindowKit cần
+qt_standard_project_setup(REQUIRES ${ABOOK_QT_VERSION})
 file(GLOB ABOOK_VOICE_PORTRAITS "${CMAKE_CURRENT_SOURCE_DIR}/../abook/assets/voice_avatars/*.webp")
 
 qt_add_executable(AudioFxTests tests/test_audiofx.cpp src/timestretch.cpp third_party/sonic/sonic.c)
@@ -57,7 +59,7 @@ add_test(NAME TonePresetTests COMMAND TonePresetTests)
 
 # App chỉ dựng trên Windows (Media Foundation, QWindowKit); máy khác (Linux CI, cloud) dựng và chạy mọi bộ thử.
 if(WIN32)
-# Khung cửa sổ tự vẽ (Apache-2.0, liên kết TĨNH, không thêm DLL): tools/build_qwindowkit.bat dựng vào QWK_ROOT/inst.
+# Khung cửa sổ tự vẽ (Apache-2.0, liên kết TĨNH, không thêm DLL): tools/build_qwindowkit.bat dựng vào QWK_ROOT/inst-<QT_VERSION>.
 find_package(QWindowKit CONFIG REQUIRED)
 endif()
 

@@ -4,6 +4,7 @@ import hashlib
 import json
 import os
 from pathlib import Path
+from qt_sdk import qt_root
 import shutil
 import time
 
@@ -66,7 +67,7 @@ def main():
         data.setdefault("music", {})["enabled"] = not args.music_off
         path.write_text(json.dumps(data, ensure_ascii=False), encoding="utf-8", newline="\n")
     books = json.loads((fixture / "audio_books.json").read_bytes())
-    qt = Path("D:/Novels/native_desk_proto/qt611/6.10.3/msvc2022_64")
+    qt = qt_root()
     local = EVIDENCE / (args.label + "-local")
     local.mkdir(exist_ok=True)
     env = {"ABOOK_PREFERENCES": str(fixture / "prefs.json"),

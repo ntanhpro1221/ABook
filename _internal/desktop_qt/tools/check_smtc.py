@@ -2,6 +2,7 @@
 import json
 import os
 from pathlib import Path
+from qt_sdk import qt_root
 import subprocess
 import time
 import ctypes
@@ -11,7 +12,7 @@ folder = Path("D:/Novels/native_desk_proto/smtc_task")
 folder.mkdir(parents=True, exist_ok=True)
 result = folder / "hidden_host.json"
 env = dict(os.environ, ABOOK_SMTC_HOST_RESULT=str(result))
-env["PATH"] = "D:/Novels/native_desk_proto/qt611/6.10.3/msvc2022_64/bin;" + env["PATH"]
+env["PATH"] = str(qt_root() / "bin") + os.pathsep + env["PATH"]
 ctypes.windll.kernel32.SetErrorMode(0x0001 | 0x0002 | 0x8000)
 log = []
 with (folder / "hidden_host.log").open("wb") as output:

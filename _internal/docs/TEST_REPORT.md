@@ -2,6 +2,8 @@
 
 ## 15-11-2026 — 0.4.173 integration
 
+Desktop SDK selection now reads `desktop_qt/QT_VERSION` (Qt 6.11.3, QTBUG-148459). The architecture repository installer verified SHA-256 for ten archives, and qmake/qtpaths report the selected prefix/version. QWindowKit 1.5.0 rebuilt into its version-specific install. Build scripts validate the SDK header and discard stale SDK cache paths; a source guard rejects copied Qt version literals. BookPage volume progress uses ClockLabel; the tick audit passes 321 QML files and 33 derived text functions. Four unchanged BookPage API action reviews were checked and their file hashes refreshed. Focused pytest: 132 passed; build source/parity pytest: 192 passed, 2 skipped. The optional WidthTests probe records queued/deleted flags at each lost-storage warning. The full rebuild, live Qt regressions and packaging remain pending the required 6 GiB free RAM; no Qt runtime pass is claimed yet.
+
 Integrated the 17 phase-one branches and volumes, authoritative speaker labels and cover-byte preservation, retained sleep timers, book transitions, floating surfaces, music downloads and UI affordances. Branch-focused checks passed before the release commit. The full guarded release gate uses the exact implementation hash explicitly approved by Lead; private reports, recordings, database observations and release assets remain outside Git.
 
 The first development packaging attempt caught an obsolete trim rule: portrait masks now import QtQuick.Effects. Packaging retains that QML module and Qt6QuickEffects.dll; checks for unused Controls styles and native plugins remain active. Exact-HEAD package and gate results are recorded in the external integration report.

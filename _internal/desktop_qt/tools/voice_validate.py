@@ -7,6 +7,7 @@ import hashlib
 import json
 import os
 from pathlib import Path
+from qt_sdk import qt_root
 import subprocess
 import sys
 from guarded_process import run_guarded
@@ -61,7 +62,7 @@ def main():
     book = next(p for p in (fixture / "library").rglob("book.json") if json.loads(p.read_bytes()).get("title") == "Chuyện Thử Nghe")
     data = json.loads(book.read_bytes())
     music = book.parent / next(iter(data["music"]["tracks"]))
-    qt = Path("D:/Novels/native_desk_proto/qt611/6.10.3/msvc2022_64")
+    qt = qt_root()
     env = dict(os.environ, ABOOK_MUTE="1", QT_QPA_PLATFORM="offscreen", PATH=str(qt / "bin") + os.pathsep + os.environ["PATH"])
     with (OUT / "offline-render.log").open("wb") as stream:
         result = run_guarded([str(ROOT / "build/VoiceRender.exe"), "D:/Novels/Audiobooks/book2/_book/001.mp3", str(music), str(OUT / "chapter")],

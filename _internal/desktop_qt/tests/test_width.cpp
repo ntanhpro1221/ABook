@@ -16,6 +16,7 @@
 #include <QCoreApplication>
 #include <QQmlEngine>
 #include <QQmlContext>
+#include <QtQml/private/qqmldata_p.h>
 #include <QQuickImageProvider>
 #include <QDir>
 #include <QTemporaryDir>
@@ -174,6 +175,26 @@ class WidthSetup : public QObject {
     FullRepaint repaint;
 public slots:
     void qmlEngineAvailable(QQmlEngine *engine) {
+        // Capture lifetime flags at the warning itself, without a periodic GC scan.
+        if (qEnvironmentVariableIsSet("ABOOK_QML_LIFETIME_DIAGNOSTICS")) {
+            connect(engine, &QQmlEngine::warnings, engine, [](const QList<QQmlError> &errors) {
+                for (const auto &error : errors) {
+                    if (!error.description().contains(QStringLiteral("Cannot find member data")))
+                        continue;
+                    qWarning() << "QML_LIFETIME_BEGIN" << error.url() << error.line();
+                    for (auto *object = error.object(); object; object = object->parent()) {
+                        const auto *data = QQmlData::get(object);
+                        qWarning() << "QML_LIFETIME_OBJECT" << object
+                                   << "ownership" << QQmlEngine::objectOwnership(object)
+                                   << "qmlData" << bool(data)
+                                   << "queued" << (data && data->isQueuedForDeletion)
+                                   << "deleted" << QQmlData::wasDeleted(object)
+                                   << "creating" << (data && data->rootObjectInCreation);
+                    }
+                    qWarning() << "QML_LIFETIME_END";
+                }
+            });
+        }
         engine->rootContext()->setContextProperty(QStringLiteral("qtVisualReady"), new VisualReady(engine));
         engine->rootContext()->setContextProperty(QStringLiteral("qtAnimationClock"), new TestAnimationClock(engine));
         engine->rootContext()->setContextProperty(QStringLiteral("qtGlyphAudit"), audit.get());

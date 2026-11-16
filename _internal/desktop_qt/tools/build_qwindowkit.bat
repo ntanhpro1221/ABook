@@ -1,30 +1,35 @@
 @echo off
 rem QWindowKit (Apache-2.0, https://github.com/stdware/qwindowkit) gives the app its own title bar with the native behaviour kept
 rem (drag, double-click, Aero Snap, Windows 11 Snap Layouts, resize borders, shadow, rounded corners, Alt+Space menu).
-rem Built STATIC (no extra DLL), Quick module only, from the pinned tag below, into %QWK_ROOT%\inst. build.bat calls this when %QWK_ROOT%\inst is missing.
+rem Built STATIC (no extra DLL), Quick module only, from the pinned tag below, into %QWK_ROOT%\inst-%QT_VERSION%. build.bat calls this when %QWK_ROOT%\inst-%QT_VERSION% is missing.
 rem Override with env vars: QWK_ROOT, QWK_TAG, QT_ROOT, CMAKE_BIN, NINJA_BIN, VCVARS.
 setlocal
 if not defined ABOOK_PYTHON set ABOOK_PYTHON=D:\Novels\ABook\_internal\runtime\.venv\Scripts\python.exe
 if not defined QWK_ROOT set QWK_ROOT=D:\Novels\native_desk_proto\qwk
 if not defined QWK_TAG set QWK_TAG=1.5.0
-if not defined QT_ROOT set QT_ROOT=D:\Novels\native_desk_proto\qt611\6.10.3\msvc2022_64
+set "QT_VERSION="
+set /p "QT_VERSION="=<"%~dp0..\QT_VERSION"
+if not defined QT_VERSION exit /b 1
+if not defined QT_ROOT set QT_ROOT=D:\Novels\native_desk_proto\qt611\%QT_VERSION%\msvc2022_64
 if not defined CMAKE_BIN set CMAKE_BIN=D:\Novels\native_desk_proto\qt\Tools\CMake_64\bin
 if not defined NINJA_BIN set NINJA_BIN=D:\Novels\native_desk_proto\qt\Tools\Ninja
 if not defined VCVARS call "%~dp0find_vcvars.bat"
 if not defined VCVARS exit /b 1
 if not defined VSCMD_ARG_TGT_ARCH call "%VCVARS%" >nul
+"%ABOOK_PYTHON%" -X utf8 "%~dp0qt_sdk.py" --check-root "%QT_ROOT%"
+if errorlevel 1 exit /b 1
 set PATH=%CMAKE_BIN%;%NINJA_BIN%;%QT_ROOT%\bin;%PATH%
 
 if not exist "%QWK_ROOT%\src\CMakeLists.txt" (
   git clone --depth 1 --branch %QWK_TAG% --recurse-submodules --shallow-submodules https://github.com/stdware/qwindowkit.git "%QWK_ROOT%\src"
   if errorlevel 1 exit /b 1
 )
-"%ABOOK_PYTHON%" -X utf8 "%~dp0drop_stale_cmake_cache.py" "%QWK_ROOT%\build"
+"%ABOOK_PYTHON%" -X utf8 "%~dp0drop_stale_cmake_cache.py" "%QWK_ROOT%\build-%QT_VERSION%" --qt-root "%QT_ROOT%"
 if errorlevel 1 exit /b 1
-cmake -S "%QWK_ROOT%\src" -B "%QWK_ROOT%\build" -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="%QT_ROOT%" -DCMAKE_MAKE_PROGRAM="%NINJA_BIN%\ninja.exe" -DCMAKE_INSTALL_PREFIX="%QWK_ROOT%\inst" -DQWINDOWKIT_BUILD_STATIC=ON -DQWINDOWKIT_BUILD_WIDGETS=OFF -DQWINDOWKIT_BUILD_QUICK=ON -DQWINDOWKIT_ENABLE_STYLE_AGENT=OFF -DQWINDOWKIT_BUILD_EXAMPLES=OFF -DQWINDOWKIT_BUILD_TESTS=OFF
+cmake -S "%QWK_ROOT%\src" -B "%QWK_ROOT%\build-%QT_VERSION%" -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="%QT_ROOT%" -DCMAKE_MAKE_PROGRAM="%NINJA_BIN%\ninja.exe" -DCMAKE_INSTALL_PREFIX="%QWK_ROOT%\inst-%QT_VERSION%" -DQWINDOWKIT_BUILD_STATIC=ON -DQWINDOWKIT_BUILD_WIDGETS=OFF -DQWINDOWKIT_BUILD_QUICK=ON -DQWINDOWKIT_ENABLE_STYLE_AGENT=OFF -DQWINDOWKIT_BUILD_EXAMPLES=OFF -DQWINDOWKIT_BUILD_TESTS=OFF
 if errorlevel 1 exit /b 1
-cmake --build "%QWK_ROOT%\build"
+cmake --build "%QWK_ROOT%\build-%QT_VERSION%"
 if errorlevel 1 exit /b 1
-cmake --install "%QWK_ROOT%\build"
+cmake --install "%QWK_ROOT%\build-%QT_VERSION%"
 if errorlevel 1 exit /b 1
-echo OK: QWindowKit %QWK_TAG% in %QWK_ROOT%\inst
+echo OK: QWindowKit %QWK_TAG% in %QWK_ROOT%\inst-%QT_VERSION%

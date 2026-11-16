@@ -1,5 +1,6 @@
 """Run selected existing test executables safely; does not rebuild or modify output paths."""
 from pathlib import Path
+from qt_sdk import qt_root
 import json
 import os
 import sys
@@ -8,7 +9,7 @@ from hidden_suite import wait_for_machine
 root=Path(__file__).resolve().parents[1]
 label=sys.argv[1]
 out=root/"build/idlecpu2-evidence"/label;out.mkdir(parents=True,exist_ok=True)
-qt="D:/Novels/native_desk_proto/qt611/6.10.3/msvc2022_64"
+qt=str(qt_root())
 native="--native" in sys.argv
 env=dict(os.environ,QT_QPA_PLATFORM="windows" if native else "offscreen",PATH=qt+"/bin"+os.pathsep+os.environ["PATH"])
 if native:env.update(ABOOK_GUARDED_NATIVE="1",QT_D3D_NO_VBLANK_THREAD="1")

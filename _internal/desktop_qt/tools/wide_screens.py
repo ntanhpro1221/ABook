@@ -3,6 +3,7 @@ import argparse
 import json
 import os
 from pathlib import Path
+from qt_sdk import qt_root
 
 from hidden_suite import wait_for_machine
 from guarded_process import run_guarded
@@ -13,7 +14,7 @@ ROOT = Path(__file__).resolve().parents[1]
 def run(folder, tests, capture=True, probe=False, expected_images=72):
     folder.mkdir(parents=True, exist_ok=True)
     waited = wait_for_machine()
-    qt = Path("D:/Novels/native_desk_proto/qt611/6.10.3/msvc2022_64")
+    qt = qt_root()
     if not (qt / "plugins/platforms/qoffscreen.dll").is_file():
         raise RuntimeError("Offscreen plugin missing")
     env = dict(os.environ, QT_QPA_PLATFORM="offscreen", QT_QUICK_BACKEND="software", QT_SCALE_FACTOR="1",

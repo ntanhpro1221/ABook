@@ -1,7 +1,9 @@
 cmake_minimum_required(VERSION 3.21)
 project(DecodeProfile LANGUAGES C CXX)
 set(CMAKE_CXX_STANDARD 20)
-find_package(Qt6 REQUIRED COMPONENTS Core Network)
+file(STRINGS "${CMAKE_CURRENT_SOURCE_DIR}/../../QT_VERSION" ABOOK_QT_VERSION LIMIT_COUNT 1)
+set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/../../QT_VERSION")
+find_package(Qt6 ${ABOOK_QT_VERSION} EXACT REQUIRED COMPONENTS Core Network)
 set(APP "${CMAKE_CURRENT_SOURCE_DIR}/../..")
 add_executable(DecodeProfile main.cpp raw_float.cpp raw_int16.cpp
     ${APP}/src/mp3source.cpp ${APP}/src/streamsource.cpp ${APP}/src/timestretch.cpp

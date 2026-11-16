@@ -4,6 +4,7 @@ import hashlib
 import json
 import os
 from pathlib import Path
+from qt_sdk import qt_root
 import shutil
 import statistics
 import sys
@@ -63,7 +64,7 @@ def main():
         print(fixture)
         return
     books = json.loads((fixture / "audio_books.json").read_bytes())
-    qt = Path("D:/Novels/native_desk_proto/qt611/6.10.3/msvc2022_64")
+    qt = qt_root()
     if not (qt / "plugins/platforms/qoffscreen.dll").is_file():
         raise RuntimeError("Thiếu plugin offscreen, không được chạy app")
     local = root / ("build/mini-background-local" if args.background else "build/mini-local")

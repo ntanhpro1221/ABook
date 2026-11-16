@@ -4,12 +4,15 @@ rem   build.bat           build
 rem   build.bat package   build, then dist\resources (embedded Python + app) and a packaged smoke (scripts\build_windows_qt.ps1)
 rem   build.bat installer package, then the NSIS installer (installer\abook.nsi) tested in a fake profile, signed for the updater
 rem   build.bat clean     remove build\ and dist\ with Python shutil
-rem Override with env vars: QWK_ROOT (QWindowKit, built by tools\build_qwindowkit.bat when missing), QT_ROOT (Qt >= 6.10.3 msvc2022_64), CMAKE_BIN, NINJA_BIN, VCVARS, ABOOK_PYTHON.
+rem Override with env vars: QWK_ROOT (QWindowKit, built by tools\build_qwindowkit.bat when missing), QT_ROOT (Qt from QT_VERSION, msvc2022_64), CMAKE_BIN, NINJA_BIN, VCVARS, ABOOK_PYTHON.
 setlocal
 set HERE=%~dp0
 rem Owner 27-10: test windows never appear on the screen
 set QT_QPA_PLATFORM=offscreen
-if not defined QT_ROOT set QT_ROOT=D:\Novels\native_desk_proto\qt611\6.10.3\msvc2022_64
+set "QT_VERSION="
+set /p "QT_VERSION="=<"%HERE%QT_VERSION"
+if not defined QT_VERSION exit /b 1
+if not defined QT_ROOT set QT_ROOT=D:\Novels\native_desk_proto\qt611\%QT_VERSION%\msvc2022_64
 if not defined CMAKE_BIN set CMAKE_BIN=D:\Novels\native_desk_proto\qt\Tools\CMake_64\bin
 if not defined NINJA_BIN set NINJA_BIN=D:\Novels\native_desk_proto\qt\Tools\Ninja
 if not defined VCVARS call "%~dp0tools\find_vcvars.bat"
@@ -30,10 +33,12 @@ if /i "%1"=="clean" (
 call "%VCVARS%" >nul
 if errorlevel 1 exit /b 1
 if not errorlevel 0 exit /b 1
+"%ABOOK_PYTHON%" -X utf8 "%HERE%tools\qt_sdk.py" --check-root "%QT_ROOT%"
+if errorlevel 1 exit /b 1
 set PATH=%CMAKE_BIN%;%NINJA_BIN%;%QT_ROOT%\bin;%PATH%
 
-rem Own title bar: QWindowKit (Apache-2.0, static). Built once into %QWK_ROOT%\inst
-if not exist "%QWK_ROOT%\inst\lib\cmake\QWindowKit\QWindowKitConfig.cmake" (
+rem Own title bar: QWindowKit (Apache-2.0, static). Built once into %QWK_ROOT%\inst-%QT_VERSION%
+if not exist "%QWK_ROOT%\inst-%QT_VERSION%\lib\cmake\QWindowKit\QWindowKitConfig.cmake" (
   call "%HERE%tools\build_qwindowkit.bat"
   if errorlevel 1 exit /b 1
 if not errorlevel 0 exit /b 1
@@ -72,9 +77,9 @@ rem Owner rule 30-10: self-changing values (clock, countdown, %, ETA) change in 
 if errorlevel 1 exit /b 1
 if not errorlevel 0 exit /b 1
 
-"%ABOOK_PYTHON%" -X utf8 "%HERE%tools\drop_stale_cmake_cache.py" "%HERE%build"
+"%ABOOK_PYTHON%" -X utf8 "%HERE%tools\drop_stale_cmake_cache.py" "%HERE%build" --qt-root "%QT_ROOT%" --qwk-install "%QWK_ROOT%\inst-%QT_VERSION%"
 if errorlevel 1 exit /b 1
-cmake -S "%HERE%." -B "%HERE%build" -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="%QT_ROOT%;%QWK_ROOT%\inst" -DCMAKE_MAKE_PROGRAM="%NINJA_BIN%\ninja.exe"
+cmake -S "%HERE%." -B "%HERE%build" -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="%QT_ROOT%;%QWK_ROOT%\inst-%QT_VERSION%" -DCMAKE_MAKE_PROGRAM="%NINJA_BIN%\ninja.exe"
 if errorlevel 1 exit /b 1
 if not errorlevel 0 exit /b 1
 cmake --build "%HERE%build"
@@ -164,7 +169,7 @@ if errorlevel 1 exit /b 1
 if not errorlevel 0 exit /b 1
 rem Dynamic Qt DLLs (LGPL): windeployqt copies DLLs + plugins next to the exe
 rem Trim: D3D11 backend only (no dxc / d3d compiler / software GL), no debugger plugins, no touch plugin, no 18 MB vc_redist installer
-windeployqt --release --qmldir "%HERE%qml" --no-translations --no-system-d3d-compiler --no-system-dxc-compiler --no-opengl-sw --no-compiler-runtime --skip-plugin-types qmltooling,generic "%HERE%dist\ABookDesk.exe"
+windeployqt --force --release --qmldir "%HERE%qml" --no-translations --no-system-d3d-compiler --no-system-dxc-compiler --no-opengl-sw --no-compiler-runtime --skip-plugin-types qmltooling,generic "%HERE%dist\ABookDesk.exe"
 if errorlevel 1 exit /b 1
 if not errorlevel 0 exit /b 1
 "%ABOOK_PYTHON%" -X utf8 "%HERE%tools\check_dist_deps.py" "%HERE%dist" "%HERE%qml"

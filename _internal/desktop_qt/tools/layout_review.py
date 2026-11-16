@@ -1,5 +1,6 @@
 """Offscreen review runner; normal priority, isolated desktop, no benchmarks."""
 from pathlib import Path
+from qt_sdk import qt_root
 import argparse
 import json
 import os
@@ -20,7 +21,7 @@ def main():
     folder = root / "build/layout-review"
     folder.mkdir(parents=True, exist_ok=True)
     env = dict(os.environ, QT_QPA_PLATFORM="offscreen", CMAKE_BUILD_PARALLEL_LEVEL="2")
-    env["PATH"] = r"D:\Novels\native_desk_proto\qt611\6.10.3\msvc2022_64\bin;" + env["PATH"]
+    env["PATH"] = str(qt_root() / "bin") + os.pathsep + env["PATH"]
     env["ABOOK_GLYPH_AUDIT"] = str(folder / f"{args.label}-glyphs.json")
     if args.shots:
         env["ABOOK_WIDE_SHOTS"] = args.shots

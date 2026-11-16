@@ -685,12 +685,13 @@ def qt_tests() -> dict:
     build_text = (qt / "build.bat").read_text(encoding="ascii")
     targets = re.findall(r'^call :test "%HERE%build\\([^"\n]+\.exe)"', build_text, re.M)
     require(bool(targets), "Qt: không tìm được suite trong build.bat")
-    qt_root = Path(os.environ.get("QT_ROOT", "D:/Novels/native_desk_proto/qt611/6.10.3/msvc2022_64"))
-    qwk_root = Path(os.environ.get("QWK_ROOT", "D:/Novels/native_desk_proto/qwk"))
+    sdk = load_module(qt / "tools/qt_sdk.py", "gate_qt_sdk")
+    qt_root = sdk.validate_qt_root()
+    qwk_install = sdk.qwk_install_root()
     cmake_bin = Path(os.environ.get("CMAKE_BIN", "D:/Novels/native_desk_proto/qt/Tools/CMake_64/bin"))
     ninja_bin = Path(os.environ.get("NINJA_BIN", "D:/Novels/native_desk_proto/qt/Tools/Ninja"))
     vcvars = find_vcvars()
-    require((qwk_root / "inst/lib/cmake/QWindowKit/QWindowKitConfig.cmake").is_file(), "Qt: cần QWindowKit đã dựng (không tự ghi worktree khác)")
+    require((qwk_install / "lib/cmake/QWindowKit/QWindowKitConfig.cmake").is_file(), "Qt: cần QWindowKit đã dựng (không tự ghi worktree khác)")
     for path in (qt_root / "bin", cmake_bin / "cmake.exe", ninja_bin / "ninja.exe", vcvars):
         require(path.exists(), f"Qt: thiếu {path}")
     # build.bat truyền SDK cho cả qmllint; biến trong file cmd không quay về process Python.
@@ -704,9 +705,9 @@ def qt_tests() -> dict:
     build_jobs = max(1, min(4, int(os.environ.get("CMAKE_BUILD_PARALLEL_LEVEL", "4"))))
     commands = ["@echo off", f'call "{vcvars}" >nul', "if errorlevel 1 exit /b 1",
                 f'set "PATH={qt_root / "bin"};{cmake_bin};{ninja_bin};%PATH%"',
-                f'"{sys.executable}" -X utf8 "{qt / "tools/drop_stale_cmake_cache.py"}" "{build}"',
+                f'"{sys.executable}" -X utf8 "{qt / "tools/drop_stale_cmake_cache.py"}" "{build}" --qt-root "{qt_root}" --qwk-install "{qwk_install}"',
                 "if errorlevel 1 exit /b 1",
-                f'cmake -S "{qt}" -B "{build}" -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="{qt_root};{qwk_root / "inst"}" -DCMAKE_MAKE_PROGRAM="{ninja_bin / "ninja.exe"}"',
+                f'cmake -S "{qt}" -B "{build}" -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="{qt_root};{qwk_install}" -DCMAKE_MAKE_PROGRAM="{ninja_bin / "ninja.exe"}"',
                 "if errorlevel 1 exit /b 1", 'cmake --build "' + str(build) + '" --parallel ' + str(build_jobs) + ' --target ABookDesk_qmltyperegistration ' + " ".join(Path(t.replace("\\", "/")).stem for t in targets),
                 "exit /b %errorlevel%"]
     command_file.write_bytes(("\r\n".join(commands) + "\r\n").encode("utf-8"))

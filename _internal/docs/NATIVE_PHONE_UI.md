@@ -192,7 +192,7 @@ Bản thử và số liệu thô: `D:/Novels/native_desk_proto` (`results/tables
 - Slint và Qt hoà về khung và mở nguội. Qt thắng ở Đọc theo: lấy được hình chữ nhật từng dòng chính xác để tô câu và từ, CPU mỗi khung thấp hơn 7 lần, RAM thấp hơn.
 - Số Qt 15,5 ms/khung đo trước đó là sai đo: cửa sổ bị một cửa sổ phóng to (Edge) che kín, Windows 11 hạ độ phân giải đồng hồ, Qt 6.8 chuyển bộ dẫn hoạt ảnh sang chế độ đồng hồ. Qt 6.10.3 hết hẳn (5/5 lần 5,6 ms khi bị che). Với 6.8.3 thì tự tắt bằng `SetProcessInformation(ProcessPowerThrottling, IGNORE_TIMER_RESOLUTION)` cho riêng tiến trình.
 
-**Chọn: Qt Quick (QML + C++), Qt ≥ 6.10.3, backend mặc định (D3D11, vòng render luồng riêng, flip model).** Không đặt QSG_RHI_BACKEND, không dùng vòng basic. Liên kết động các DLL Qt (LGPL) và ghi vào THIRD_PARTY. Đo khung luôn ghi cửa sổ trên cùng và bỏ lượt bị che.
+**Chọn: Qt Quick (QML + C++), SDK trong `desktop_qt/QT_VERSION`, backend mặc định (D3D11, vòng render luồng riêng, flip model).** Cách cài SDK và dựng QWindowKit theo đúng phiên bản ở [QT_INSTALLER.md](QT_INSTALLER.md#sdk-qt-dùng-để-dựng-04173). Không đặt QSG_RHI_BACKEND, không dùng vòng basic. Liên kết động các DLL Qt (LGPL) và ghi vào THIRD_PARTY. Đo khung luôn ghi cửa sổ trên cùng và bỏ lượt bị che.
 
 **Lõi âm thanh (D1, 26-10):** hai ứng viên sau cùng giao diện `AudioOut`, đo bằng `_internal/desktop_qt/tools/audiobench` (sách thật 192 kbps mono 48 kHz, tiến trình riêng không cửa sổ, GPU đang bận):
 

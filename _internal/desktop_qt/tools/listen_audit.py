@@ -32,6 +32,7 @@ import sys
 import tempfile
 import urllib.request
 from pathlib import Path
+from qt_sdk import qt_root
 from urllib.parse import parse_qs, urlparse
 
 import numpy as np
@@ -41,7 +42,7 @@ from audio_sink import decode, frame_db, parse_marks, read_pairs, read_wav
 ROOT = Path(__file__).resolve().parents[1]
 INTERNAL = ROOT.parent
 PYTHON = "D:/Novels/ABook/_internal/runtime/.venv/Scripts/python.exe"
-QT = Path("D:/Novels/native_desk_proto/qt611/6.10.3/msvc2022_64")
+QT = qt_root()
 
 HOP_S = 0.05            # khung đo mức
 VOICE_FLOOR_DB = -45.0  # lượt B: khung trên mức này là giọng

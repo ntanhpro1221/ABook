@@ -4,6 +4,7 @@ import hashlib
 import json
 import os
 from pathlib import Path
+from qt_sdk import qt_root
 import re
 import shutil
 import statistics
@@ -145,7 +146,7 @@ def run(label,exe,speed=1,native=False,event_audit=False):
     data=cleaned
     dump(fixture/"_base/listening.json",data)
     books=json.loads((fixture/"audio_books.json").read_bytes())
-    qt=Path("D:/Novels/native_desk_proto/qt611/6.10.3/msvc2022_64")
+    qt=qt_root()
     local=stage/"local";local.mkdir(exist_ok=True)
     env=dict(ABOOK_PREFERENCES=str(fixture/"prefs.json"),ABOOK_HOST_PYTHON="D:/Novels/ABook/_internal/runtime/.venv/Scripts/python.exe",
         ABOOK_HOST_APP=str(ROOT.parent),ABOOK_BENCH_SCENARIO="mini",ABOOK_BENCH_BOOK=books["a"],

@@ -10,6 +10,9 @@ import sys
 import time
 
 ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT / "desktop_qt/tools"))
+from qt_sdk import qt_root
+
 OUT = ROOT / "runtime" / "bookmusic"
 SDK = Path(os.environ.get("LOCALAPPDATA", "")) / "Android/Sdk"
 JAVA = Path("C:/Program Files/Android/Android Studio/jbr/bin/java.exe")
@@ -84,7 +87,7 @@ def main():
     if job == "rules":
         return run([PYTHON, "-X", "utf8", "scripts/ui_parity_rules.py"], ROOT, job, env)
     if job == "qt":
-        qt = Path("D:/Novels/native_desk_proto/qt611/6.10.3/msvc2022_64/bin")
+        qt = qt_root() / "bin"
         env.update(PATH=str(qt) + os.pathsep + env["PATH"], QT_QPA_PLATFORM="offscreen", QT_QUICK_BACKEND="software",
                    QML2_IMPORT_PATH=str(ROOT / "desktop_qt/tests/qml/stub"), QML_IMPORT_PATH=str(ROOT / "desktop_qt/tests/qml/stub"),
                    ABOOK_GLYPH_AUDIT=str(OUT / "qt-glyph.json"))

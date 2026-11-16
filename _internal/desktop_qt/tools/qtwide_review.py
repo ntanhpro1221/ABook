@@ -1,5 +1,6 @@
 """Reproducible width review, isolated profile and copied fixture; never the owner's library."""
 from pathlib import Path
+from qt_sdk import qt_root
 import json
 import os
 import shutil
@@ -110,7 +111,7 @@ def main():
         env.update(ABOOK_HOST_PYTHON='D:/Novels/ABook/_internal/runtime/.venv/Scripts/pythonw.exe',
                    ABOOK_HOST_APP=str(HERE.parent), ABOOK_MUTE='1', QT_SCREEN_SCALE_FACTORS='1',
                    QT_ENABLE_HIGHDPI_SCALING='0', QT_SCALE_FACTOR='1',
-                   PATH='D:/Novels/native_desk_proto/qt611/6.10.3/msvc2022_64/bin;' + env['PATH'])
+                   PATH=str(qt_root() / "bin") + os.pathsep + env['PATH'])
         samples = []
         for i in range(3):
             (FIXTURE / 'listening.json').write_bytes((FIXTURE / 'listening.clean.json').read_bytes())

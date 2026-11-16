@@ -587,7 +587,8 @@ def run(label, exe):
     books = json.loads((fixture / "audio_books.json").read_bytes())
     chapter = json.loads((stage / "chapter-input.json").read_bytes())
     source = chapter["source"]
-    qt = Path("D:/Novels/native_desk_proto/qt611/6.10.3/msvc2022_64")
+    from qt_sdk import qt_root
+    qt = qt_root()
     local = stage / "local"
     local.mkdir(exist_ok=True)
     sink = stage / "sink.wav"
