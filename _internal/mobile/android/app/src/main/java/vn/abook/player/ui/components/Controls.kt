@@ -225,12 +225,13 @@ fun DownloadRing(percent: Int?, label: String, modifier: Modifier = Modifier) {
     Box(modifier.size(36.dp).semantics { contentDescription = label; progressBarRangeInfo = percent?.let { ProgressBarRangeInfo(it / 100f, 0f..1f) } ?: ProgressBarRangeInfo.Indeterminate }, contentAlignment = Alignment.Center) {
         Canvas(Modifier.fillMaxSize()) {
             // Same geometry as the web SVG (viewBox 36, r 16, stroke 2): the ring is drawn on its radius, not inset by padding.
-            val radius = 16.dp.toPx()
-            val box = androidx.compose.ui.geometry.Size(radius * 2, radius * 2)
-            val corner = androidx.compose.ui.geometry.Offset(center.x - radius, center.y - radius)
+            // The radius follows the box (half of 36 less one stroke), so the ring stays a ring, not a hand-written corner value.
             val stroke = Stroke(2.dp.toPx(), cap = StrokeCap.Round)
-            drawArc(colors.line, 0f, 360f, false, topLeft = corner, size = box, style = stroke)
-            drawArc(colors.accent, turn - 90f, (percent ?: 25) * 3.6f, false, topLeft = corner, size = box, style = stroke)
+            val ring = size.minDimension / 2 - stroke.width
+            val box = androidx.compose.ui.geometry.Size(ring * 2, ring * 2)
+            val topLeft = androidx.compose.ui.geometry.Offset(center.x - ring, center.y - ring)
+            drawArc(colors.line, 0f, 360f, false, topLeft = topLeft, size = box, style = stroke)
+            drawArc(colors.accent, turn - 90f, (percent ?: 25) * 3.6f, false, topLeft = topLeft, size = box, style = stroke)
         }
         androidx.compose.foundation.Canvas(Modifier.size(8.dp)) { drawRect(colors.accentText) }
     }
