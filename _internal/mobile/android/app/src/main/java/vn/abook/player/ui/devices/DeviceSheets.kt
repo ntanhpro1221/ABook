@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import vn.abook.player.ui.components.BasicText
+import vn.abook.player.ui.components.OneLineFit
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -79,7 +80,7 @@ private fun DeviceActions(device: Paired, studio: StudioComputer?, state: Device
     var opening by remember { mutableStateOf(false) }
     var problem by remember { mutableStateOf("") }
     SheetMenu() {
-        BasicText(device.name, style = Abook.type.sectionTitle)
+        BasicText(device.name, style = Abook.type.sectionTitle, autoSize = OneLineFit.of(Abook.type.sectionTitle))
         Spacer(Modifier.height(Dim.s8))
         SwapContent(studio, contentKey = { studio -> studio != null }, layout = ContentLayout.Column) { studio ->
             if (studio != null) {

@@ -39,7 +39,7 @@ Interactive {
             solid: root.solidIcon
             size: 16
             color: root.danger ? Theme.danger : root.action ? Theme.accentText : Theme.text2
-            anchors.verticalCenter: parent.verticalCenter
+            y: words.y + label.firstLineHeight / 2 - height / 2
             Icon {
                 anchors.centerIn: parent
                 name: "check"; size: 12; color: Theme.accentText
@@ -52,13 +52,13 @@ Interactive {
             width: parent.width - 16 - parent.spacing - (root.value !== "" ? valueLabel.width + parent.spacing : 0)
             anchors.verticalCenter: parent.verticalCenter
             spacing: root.note ? 2 : 0
-            Text {
+            OneLineFit {
                 id: label
-                width: parent.width
-                wrapMode: Text.Wrap
+                objectName: "menuRowName"
+                room: parent.width
                 text: root.text
                 color: root.danger ? Theme.danger : root.action ? Theme.accentText : Theme.text
-                font.pixelSize: Theme.sizeBodySmall
+                baseSize: Theme.sizeBodySmall
                 font.weight: root.action ? Theme.weightMedium : Theme.weightRegular
             }
             Text {

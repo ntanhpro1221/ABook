@@ -4,6 +4,7 @@ Cấm trên mọi phần tử:      elide khác Text.ElideNone, maximumLineCount
 Cấm trên phần tử chữ:      clip: true  (Text / Label / TextEdit / TextInput - chữ tràn thì phải xuống dòng hay thu cỡ, không xén)
 Chữ dài thì: wrapMode: Text.Wrap (hàng/ô cao theo chữ) hoặc fontSizeMode: Text.Fit + minimumPixelSize (bìa vẽ).
 Ngoại lệ có chủ đích: dòng có chú thích  // text-cut-ok: <lý do>  (chỉ cho chữ KHÔNG phải của người dùng).
+Device and listening-profile names cannot use that generic exemption.
 
   python -X utf8 check_text_cut.py [thư mục qml]       thoát 1 nếu có vi phạm (build.bat chạy nó như gen_theme --check)
 """
@@ -15,6 +16,10 @@ from pathlib import Path
 
 NL = chr(10)
 TEXT_TYPES = {"Text", "Label", "TextEdit", "TextInput"}
+PROTECTED_NAME = re.compile(
+    r"\b(?:device|computer|peer|target|profile|record|modelData|root)\s*\.\s*(?:name|displayName)\b"
+    r"|\b(?:shownName|targetName|computerName|deviceName|profileName|recordName)\b"
+)
 BANNED_ANY = [
     (re.compile(r"^elide$"), lambda v: v.replace(" ", "") != "Text.ElideNone", "elide cắt chữ bằng dấu ..."),
     (re.compile(r"^maximumLineCount$"), lambda v: True, "maximumLineCount cắt bớt dòng"),
@@ -57,7 +62,14 @@ def scan(path: Path) -> list[str]:
     text = re.sub(r"^[ \t]*(import|pragma)\b[^\n]*$", lambda m: " " * len(m.group()), text, flags=re.M)   # import / pragma không phải mệnh đề
     errors: list[str] = []
     # Duyệt ký tự, giữ ngăn xếp khối: ("type", Tên) phần tử, ("group", tên) thuộc tính nhóm (font { }), ("js", None) khối lệnh
-    stack: list[tuple[str, str | None]] = []
+    stack: list[tuple[str, str | None, int]] = []
+    braces: dict[int, int] = {}
+    pending_braces: list[int] = []
+    for offset, char in enumerate(text):
+        if char == "{":
+            pending_braces.append(offset)
+        elif char == "}" and pending_braces:
+            braces[pending_braces.pop()] = offset
     i, n = 0, len(text)
     token_start = 0          # đầu "mệnh đề" hiện tại (sau { ; hoặc xuống dòng ở mức phần tử)
     line = 1
@@ -69,9 +81,11 @@ def scan(path: Path) -> list[str]:
             return
         name, value = m.group(1), m.group(2).strip()
         base = name.split(".")[-1]
-        owner = next((t[1] for t in reversed(stack) if t[0] == "type"), None)
+        element = next((t for t in reversed(stack) if t[0] == "type"), None)
+        owner = element[1] if element else None
+        protected_name = element is not None and PROTECTED_NAME.search(text[element[2]:braces.get(element[2], n)]) is not None
         marker = raw_lines[ln - 1] if 0 < ln <= len(raw_lines) else ""
-        if "text-cut-ok" in marker:
+        if "text-cut-ok" in marker and not protected_name:
             return
         for pattern, bad, why in BANNED_ANY:
             if pattern.match(base) and bad(value):
@@ -88,13 +102,13 @@ def scan(path: Path) -> list[str]:
             hm = re.search(r"([A-Za-z_][\w.]*)\s*$", head)
             before = head[:hm.start()] if hm else head
             if hm and re.search(r":\s*$", before) is None and re.match(r"^\s*$", before.rsplit(";", 1)[-1]) is not None and hm.group(1)[0].isupper():
-                stack.append(("type", hm.group(1)))                 # "Text {"
+                stack.append(("type", hm.group(1), i))              # "Text {"
             elif hm and re.search(r":\s*$", before) is not None and hm.group(1)[0].isupper():
-                stack.append(("type", hm.group(1)))                 # "delegate: Item {"
+                stack.append(("type", hm.group(1), i))              # "delegate: Item {"
             elif hm and hm.group(1)[0].islower() and re.search(r":\s*$", before) is None and re.match(r"^\s*$", before.rsplit(";", 1)[-1]):
-                stack.append(("group", hm.group(1)))                # "font {"
+                stack.append(("group", hm.group(1), i))             # "font {"
             else:
-                stack.append(("js", None))                          # "onClicked: {", "function f() {", literal object
+                stack.append(("js", None, i))                       # "onClicked: {", "function f() {", literal object
             token_start = i + 1
         elif c == "}":
             if stack and stack[-1][0] in ("type", "group"):

@@ -52,7 +52,7 @@ export const FIRST_LINE_ICON = "[:has(>[data-fit=wrap])>&]:mt-line-icon";
 /** Chữ phụ đứng sau OneLineFit trong FIRST_LINE_ROW (giới tính, số câu): tên xuống dòng thì cùng đường chân chữ với dòng đầu của tên (máy dò BASELINE). */
 export const FIRST_LINE_TEXT = "[:has(>[data-fit=wrap])>&]:self-baseline";
 
-/** Tên một dòng (tên giọng, tên nhân vật trong danh sách chọn) mà không cắt chữ - DESIGN.md §5.5 "Tên một dòng". Mặc định (chưa đo, không có JS) chữ xuống
+/** Tên một dòng (giọng, nhân vật, máy / điện thoại, thiết bị phát, hồ sơ) mà không cắt chữ - DESIGN.md §5.5 "Tên một dòng". Mặc định (chưa đo, không có JS) chữ xuống
  *  dòng; đo lại khi chữ đổi, khi khung cha / ông đổi bề ngang và khi phông nạp xong. */
 export function OneLineFit({ children, className, ...rest }: Omit<HTMLAttributes<HTMLSpanElement>, "children"> & { children: string }) {
   const ref = useRef<HTMLSpanElement>(null);

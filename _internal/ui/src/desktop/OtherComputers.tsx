@@ -17,6 +17,7 @@ import type { UnsentEdits } from "@/shared/unpair";
 import { useUnpair } from "@/shared/useUnpair";
 import { bluetoothAddress, deviceKindLabel, isBluetoothHost, routeLine, wakingLine, type PairedDevice, type Waking } from "./computerRoutes";
 import { PhoneDiagnostics } from "./PhoneDiagnostics";
+import { FIRST_LINE_ICON, FIRST_LINE_ROW, FIRST_LINE_TEXT, OneLineFit } from "@/shared/OneLineFit";
 
 // Máy tính khác (webui/remote_books.py): ghép bằng địa chỉ + mã 6 số đang hiện trên máy ấy - đúng mã điện thoại dùng - rồi
 // thư viện của máy ấy hiện trong Thư viện của máy này ("Trên <máy>"). Chương tải về lần đầu nghe tới và được giữ lại, nên
@@ -177,7 +178,7 @@ export function OtherComputers() {
         <AnimatedRows className="divide-y divide-line" items={data.computers} keyOf={(computer) => computer.id}>
           {(computer) => (
             <MotionRegion>
-              <Fold storageKey={`other-computers.${computer.id}`} title={computer.name} heading="h3" summary={computer.waking ? S.s_dang_cho_4257d45b : computer.error ? S.s_can_kiem_tra_d549619d : S.s_da_ghep_2bd0972f} bodyClassName="flex flex-wrap items-center gap-3 pb-3">
+              <Fold storageKey={`other-computers.${computer.id}`} title={<OneLineFit>{computer.name}</OneLineFit>} heading="h3" summary={computer.waking ? S.s_dang_cho_4257d45b : computer.error ? S.s_can_kiem_tra_d549619d : S.s_da_ghep_2bd0972f} bodyClassName="flex flex-wrap items-center gap-3 pb-3">
               <Laptop className="size-5 shrink-0 text-fg-2" />
               <div className="min-w-0 flex-1">
                 {computer.waking ? (
@@ -246,14 +247,14 @@ export function OtherComputers() {
           (discover.data.found.length ? (
             <ul className="divide-y divide-line">
               {discover.data.found.map((found) => (
-                <li key={`${found.host}:${found.port}`} className="flex items-center gap-3 py-2">
+                <li key={`${found.host}:${found.port}`} className="flex items-start gap-3 py-2">
                   {found.kind === "phone" ? (
-                    <Smartphone className="size-5 shrink-0 text-fg-2" aria-label={S.s_dien_thoai_2f73f175} />
+                    <Smartphone className="mt-line-icon size-5 shrink-0 text-fg-2 [--icon-w:20px]" aria-label={S.s_dien_thoai_2f73f175} />
                   ) : (
-                    <Laptop className="size-5 shrink-0 text-fg-2" aria-label={S.s_may_tinh_8eafc226} />
+                    <Laptop className="mt-line-icon size-5 shrink-0 text-fg-2 [--icon-w:20px]" aria-label={S.s_may_tinh_8eafc226} />
                   )}
                   <div className="min-w-0 flex-1">
-                    <div className="truncate text-sm font-medium">{found.name}</div>
+                    <OneLineFit className="text-sm font-medium">{found.name}</OneLineFit>
                     <div className="truncate text-xs text-fg-2">
                       {found.host}:{found.port}
                     </div>
@@ -318,8 +319,8 @@ export function OtherComputers() {
           <ul className="flex flex-wrap gap-2">
             {unpaired.map((device) => (
               <li key={device.address}>
-                <Button size="sm" variant="ghost" icon={Bluetooth} onClick={() => chooseDevice(device)}>
-                  {device.name} · {deviceKindLabel(device.kind)}
+                <Button size="sm" variant="ghost" icon={Bluetooth} className="h-auto min-h-8 max-w-full items-start whitespace-normal py-2 [&>span:first-child]:mt-line-icon" onClick={() => chooseDevice(device)}>
+                  <OneLineFit>{`${device.name} · ${deviceKindLabel(device.kind)}`}</OneLineFit>
                 </Button>
               </li>
             ))}
@@ -327,9 +328,9 @@ export function OtherComputers() {
         </div>
       )}
       {unpairedDev.map((device) => (
-        <Button key={`${device.address}@dev`} size="sm" variant="ghost" icon={Bluetooth}
+        <Button key={`${device.address}@dev`} size="sm" variant="ghost" icon={Bluetooth} className="h-auto min-h-8 max-w-full items-start whitespace-normal py-2 [&>span:first-child]:mt-line-icon"
           onClick={() => { setAddress(`${device.address}@dev`); codeInput.current?.focus(); }}>
-          {device.name}{S.s_ban_thu_7ef7942e}</Button>
+          <OneLineFit>{`${device.name}${S.s_ban_thu_7ef7942e}`}</OneLineFit></Button>
       ))}
       <p className="text-xs text-fg-2">{S.s_may_kia_cai_dat_thiet_bi_bat_daa5df50}{SYNC_SWITCH_LABEL}{S.s_de_lay_ma_ghep_mot_chieu_de_nghe_thu_vien_bea7e639}</p>
       </Fold>
@@ -374,12 +375,11 @@ export function BluetoothFallback({
             <p className="px-2 py-2 text-xs text-fg-3">{S.s_ghep_thiet_bi_trong_cai_dat_windows_truoc_53fc93c2}</p>
           )}
           {devices.map((device) => (
-            <DropdownMenu.Item key={device.address} onSelect={() => onChoose(device.address)} className={MENU_ITEM}>
-              <SelectionMark selected={device.address === current} />
-              <span className="min-w-0 flex-1 text-pretty [overflow-wrap:anywhere]">
-                {device.name} <span className="text-fg-3">· {deviceKindLabel(device.kind)}</span>
-                {device.address === current && <span className="sr-only">{S.s_dang_chon_19938ba6}</span>}
-              </span>
+            <DropdownMenu.Item key={device.address} onSelect={() => onChoose(device.address)} className={cn(MENU_ITEM, "items-center", FIRST_LINE_ROW)}>
+              <SelectionMark selected={device.address === current} className={FIRST_LINE_ICON} />
+              <OneLineFit className="flex-1">{device.name}</OneLineFit>
+              <span className={cn("text-fg-3", FIRST_LINE_TEXT)}>· {deviceKindLabel(device.kind)}</span>
+              {device.address === current && <span className="sr-only">{S.s_dang_chon_19938ba6}</span>}
             </DropdownMenu.Item>
           ))}
           <DropdownMenu.Item disabled={!current} onSelect={() => onChoose("")} className={cn(MENU_ITEM, "text-fg-2")}>{S.s_khong_dung_30db3c31}</DropdownMenu.Item>

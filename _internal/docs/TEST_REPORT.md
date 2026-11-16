@@ -1,5 +1,42 @@
 # Test report
 
+## 16-11-2026 — complete device and listening-profile names
+
+Device, phone, playback-destination and listening-profile names use the shared OneLineFit
+rule on web, Qt and Android: shrink to 0.75 of the original size, then restore the original
+size and wrap when needed. Rows and the remote playback strip grow with their content;
+web toast placement follows the strip's measured height. The fixed 48/56px web phone-session
+control row retains ShortName with its complete-name tooltip and a documented reason.
+
+Before the UI changes, the expanded web detector found six real truncations (3 passed,
+1 failed), and the Android JVM detector found the single-line playback-strip caption
+(3 passed, 1 failed). Qt had no device-name elision on the initial revision; its scanner
+now also rejects generic exemptions on device/profile names. Invented long names exercise
+actual DOM, QML and Compose components; no phone or emulator is used.
+
+Focused validation passed 28 Vitest cases and 76 Android JVM cases with no failures or
+skips, including normal shared-UI preparation. Parity and design-lint pytest suites passed
+171 cases with two skips; the Qt scanner checked 323 QML files with no findings. The UI
+action gate passed 1,435 statements, and its eight regression tests passed. Changed-file
+review hashes were refreshed only after proving that the action ID inventories matched
+the initial revision. TypeScript and whitespace checks passed. The design-lint archive
+report completed without measurement errors but still contains existing red findings,
+one stale exception and missing Android sidecars; it is not a fresh visual pass.
+
+The complete Vitest run passed 3,510 cases across 368 files with no failures or skips
+(573.80s, one thread worker). Its Python-backed suite uses ABOOK_TEST_PYTHON pointing to
+the existing shared runtime; the initial run failed that suite's setup because the
+worktree has no separate runtime. Native child checks are hidden by the scratch harness.
+
+The configured Qt WidthTests target built successfully after available RAM reached
+6.012 GiB. The new long-name QML suite passed nine checks, and the existing OneLineFit
+suite passed ten, all offscreen. The first long-name run exposed a test assumption:
+wrapped RichText reports lineCount=1 even when its painted document spans multiple
+lines. That case now compares document height with the actual single-line FontMetrics;
+the full-name, no-elide and row-growth assertions remain in place.
+The related device suite passed 26 checks and the listening-profile suite passed 19,
+with no failures or skips. RAM was checked before each native suite.
+
 ## 15-11-2026 — device voice names
 
 Android device voices use the configured engine name and the Voice network flag. Colliding labels get stable numbers; offline voices precede online voices and higher reported quality comes first within each group. No gender or accent is inferred from Android identifiers. Windows preserves the supplied vendor and proper name for both Qt and web. The shared device-group description allows engines with network voices. Voice rows keep individual preview actions; the Android selection status sits below the name when a preview button is present.

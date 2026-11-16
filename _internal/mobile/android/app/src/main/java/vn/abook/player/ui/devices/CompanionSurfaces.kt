@@ -41,13 +41,11 @@ fun OtherPlayersEntry(repo: CompanionRepo, sheets: SheetHost, player: PlayerRepo
     val names = remember { arrayOf("") }
     if (active.isNotEmpty()) names[0] = active.joinToString { it.name }
     Reveal(active.isNotEmpty()) {
-        Row(Modifier.fillMaxWidth().height(36.dp).background(Abook.colors.panel)
+        Row(Modifier.fillMaxWidth().heightIn(min = 36.dp).background(Abook.colors.panel)
             .pressable { sheets.show { dismiss -> OtherPlayersSheet(repo, player, dismiss) } }
             .padding(horizontal = Dim.margin).testTag("other_players"), verticalAlignment = Alignment.CenterVertically) {
-            // cắt-có-chủ-ý: the requested one-line strip opens the sheet with full device names.
             BasicText(S.s_dang_phat_tren_0_62a989a1(names[0]), Modifier.weight(1f),
-                // cắt-có-chủ-ý: the full names remain available in the device sheet.
-                style = Abook.type.caption, maxLines = 1)
+                style = Abook.type.caption, autoSize = OneLineFit.of(Abook.type.caption))
             ChevronIcon(Abook.colors.text2)
         }
     }
@@ -77,7 +75,7 @@ fun OtherPlayersSheet(repo: CompanionRepo, local: PlayerRepo, dismiss: () -> Uni
                 val remote = row.item
                 Column(Modifier.fillMaxWidth()) {
                     ListItem(
-                        remote.name, tag = "remote_${remote.device}", titleStyle = Abook.type.bodyStrong,
+                        remote.name, tag = "remote_${remote.device}", titleStyle = Abook.type.bodyStrong, titleOneLine = true,
                         hint = if (remote.book.isEmpty()) S.s_chua_phat_sach_f18215d2 else if (remote.playing) S.s_dang_phat_ac2dd0c2 else S.s_dang_dung_9b35aeb5,
                         leading = { OtherPlayerIcon(remote) },
                         below = {

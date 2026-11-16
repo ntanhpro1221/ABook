@@ -50,7 +50,7 @@ fun FoundRow(found: Found, selected: Boolean, onPick: () -> Unit) {
     val ink = if (selected) colors.accentText else colors.text2
     ListItem(
         found.shown, Modifier.semantics { this.selected = selected }, onPick, "found_${found.address}", hint = found.detail,
-        titleColor = if (selected) colors.accentText else colors.text,
+        titleColor = if (selected) colors.accentText else colors.text, titleOneLine = true,
         leading = { SwapContent(found, contentKey = { found -> found.bluetooth }, layout = ContentLayout.Box, inPlace = true) { found ->
             if (found.bluetooth) BluetoothIcon(ink) else DeviceIcon(found.kind, ink)
         } },
@@ -65,7 +65,7 @@ fun DeviceRow(device: Paired, onOpen: () -> Unit, onRetry: () -> Unit) {
     val failed = device.failed
     ListItem(
         device.name, Modifier, onOpen, "device_${device.key.ifEmpty { "main" }}", hint = device.state,
-        tickingHint = true,
+        tickingHint = true, titleOneLine = true,
         hintColor = if (failed) colors.danger else colors.text2,
         leading = { DeviceIcon(device.kind, colors.text2) },
         trailing = if (failed && device.reach !is Reach.Unpaired) ({ TextAction(S.s_thu_lai_c58d068c, onRetry, "retry_${device.key.ifEmpty { "main" }}") }) else null,
@@ -115,7 +115,7 @@ fun SharerRow(sharer: Sharer, onOpen: () -> Unit) {
     val colors = Abook.colors
     ListItem(
         sharer.name, Modifier, onOpen, "sharer_${sharer.id}", hint = DeviceText.seen(sharer.lastSeen), tickingHint = true,
-        leading = { DevicesIcon(colors.text2) }, chevron = true,
+        leading = { DevicesIcon(colors.text2) }, chevron = true, titleOneLine = true,
     )
 }
 

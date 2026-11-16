@@ -5,7 +5,7 @@ import { MotionPresence, Reveal } from "@/shared/MotionPresence";
 import * as DropdownMenu from "@/shared/DropdownMenu";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Cast, Laptop, Loader2, MonitorSmartphone, MonitorSpeaker, Pause, Play, RefreshCw, Smartphone, Speaker, Tv, X } from "lucide-react";
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState, type RefObject } from "react";
 import { toast, toastOffset } from "@/shared/toast";
 import { noteCastHasNoMusic } from "@/listen/castMusic";
 import { useClockReader } from "@/listen/clock";
@@ -19,6 +19,7 @@ import { cn } from "@/shared/cn";
 import type { CoverImage } from "@/shared/cover";
 import { formatClock } from "@/shared/format";
 import { ShortName } from "@/shared/ShortName";
+import { FIRST_LINE_ICON, FIRST_LINE_ROW, FIRST_LINE_TEXT, OneLineFit } from "@/shared/OneLineFit";
 import { announce, Dialog, IconButton, Tooltip } from "@/shared/ui";
 import { api } from "@/studio/api";
 
@@ -164,13 +165,16 @@ function useFailedCommands(view: RemoteView | undefined) {
 }
 
 /** Thông báo nổi (góc dưới phải) đứng trên thanh phát; có thanh điện thoại thì phải đứng cao thêm từng ấy. */
-function useToastsAbove(bars: number) {
+function useToastsAbove(bars: number, strip: RefObject<HTMLButtonElement | null>) {
   useLayoutEffect(() => {
     if (!bars) return;
     const offset = toastOffset("bottom");
-    offset.set(`${96 + 36}px`);
-    return () => offset.dispose();
-  }, [bars]);
+    const measure = () => offset.set(`${96 + (strip.current?.getBoundingClientRect().height || 36)}px`);
+    measure();
+    const observer = typeof ResizeObserver === "undefined" ? null : new ResizeObserver(measure);
+    if (strip.current) observer?.observe(strip.current);
+    return () => { observer?.disconnect(); offset.dispose(); };
+  }, [bars, strip]);
 }
 
 function useTicking(active: boolean) {
@@ -233,7 +237,7 @@ function RemoteBar({ phone, receivedAt, onDismiss }: { phone: RemotePhone; recei
           <div className="min-w-0">
             <div className="flex items-center gap-2 text-xs font-medium text-accent-text">
               <DeviceIcon kind={phone.kind} className="size-3.5 shrink-0" />
-              {/* Tên máy là chỗ phân biệt máy: câu dẫn không co, tên co sau cùng (và có tooltip), cách phát chỉ hiện khi rộng. */}
+              {/* Hàng điều khiển cố định cao 48 / 56 px: chỉ tên máy dùng ShortName, tên đầy đủ ở tooltip; cách phát chỉ hiện khi rộng. */}
               <span className="shrink-0 whitespace-nowrap">{phone.playing ? S.s_dang_phat_tren_1088c6da : S.s_dang_dung_tren_2fa8df8a}</span>
               <ShortName name={phone.name} short={13} className="shrink" />
               {protocolLabel(phone) && <span className="hidden shrink-0 font-normal text-fg-3 lg:inline"> · {protocolLabel(phone)}</span>}
@@ -331,16 +335,17 @@ export function RemoteBars() {
   };
   const visible = (data?.phones ?? []).filter((phone) => phone.playing && phone.bookId && phone.chapterId !== null && !hidden(phone));
   const names = useRef("");
+  const strip = useRef<HTMLButtonElement>(null);
   if (visible.length) names.current = visible.map(phone => phone.name).join(", ");
-  useToastsAbove(visible.length ? 1 : 0);
+  useToastsAbove(visible.length ? 1 : 0, strip);
   return (
     <>
     <MotionPresence open={visible.length > 0}>
-      <button type="button" data-remote-strip onClick={() => setOpen(true)}
-        className="flex h-9 w-full items-center gap-2 border-t border-line bg-panel px-4 text-left text-xs text-fg-2">
-        <Cast className="size-4 shrink-0" />
-        <span className="min-w-0 flex-1 truncate">{S.s_dang_phat_tren_0_62a989a1(names.current)}</span>
-        <span aria-hidden>›</span>
+      <button ref={strip} type="button" data-remote-strip onClick={() => setOpen(true)}
+        className={cn("flex min-h-9 w-full items-center gap-2 border-t border-line bg-panel px-4 py-2 text-left text-xs text-fg-2", FIRST_LINE_ROW)}>
+        <Cast className={cn("size-4 shrink-0", FIRST_LINE_ICON)} />
+        <OneLineFit className="flex-1">{S.s_dang_phat_tren_0_62a989a1(names.current)}</OneLineFit>
+        <span aria-hidden className={FIRST_LINE_TEXT}>›</span>
       </button>
     </MotionPresence>
     <Dialog open={open} onOpenChange={setOpen} title={S.s_phat_tren_681e16e1}>
@@ -357,7 +362,7 @@ export function RemoteBars() {
   );
 }
 
-const MENU_ITEM = "flex h-9 cursor-default items-center gap-2 rounded-control px-2 text-sm outline-none data-[highlighted]:bg-hover";
+const MENU_ITEM = cn("flex min-h-9 cursor-default items-center gap-2 rounded-control px-2 py-2 text-sm outline-none data-[highlighted]:bg-hover", FIRST_LINE_ROW);
 
 /**
  * "Phát trên…" ở thanh phát máy tính: máy nào nghe được cuốn đang phát - điện thoại đang kết nối (nghe thẳng, hoặc đã
@@ -429,7 +434,7 @@ export function HandOffButton({ className }: { className?: string }) {
   if (slot && targets.length === 1 && !menuOpen) {
     const [only] = targets;
     const label = S.s_phat_tren_0_1_757da6a7(only.name, protocolLabel(only) ? ` (${protocolLabel(only)})` : "");
-    if (slot) return <MotionRegion as="span" className="block"><SlotFace aria-label={label} value={only.name} onClick={() => handOff(only)} /></MotionRegion>;
+    if (slot) return <MotionRegion as="span" className="block"><SlotFace aria-label={label} value={<OneLineFit>{only.name}</OneLineFit>} onClick={() => handOff(only)} /></MotionRegion>;
     return (
       <MotionRegion as="span"><IconButton
         label={label}
@@ -488,10 +493,10 @@ export function HandOffButton({ className }: { className?: string }) {
           )}
           {targets.map((target) => (
             <DropdownMenu.Item key={target.device} onSelect={() => handOff(target)} className={MENU_ITEM}>
-              <DeviceIcon kind={target.kind} className="size-4 shrink-0 text-fg-2" />
-              <span className="min-w-0 flex-1 truncate">{target.name}</span>
-              <Reveal when={protocolLabel(target)}><span className="shrink-0 text-xs text-fg-3">{protocolLabel(target)}</span></Reveal>
-              <Reveal when={target.bookId && target.playing}><span className="shrink-0 text-xs text-fg-3">{S.s_dang_phat_e3baf7da}</span></Reveal>
+              <DeviceIcon kind={target.kind} className={cn("size-4 shrink-0 text-fg-2", FIRST_LINE_ICON)} />
+              <OneLineFit className="flex-1">{target.name}</OneLineFit>
+              <Reveal when={protocolLabel(target)}><span className={cn("shrink-0 text-xs text-fg-3", FIRST_LINE_TEXT)}>{protocolLabel(target)}</span></Reveal>
+              <Reveal when={target.bookId && target.playing}><span className={cn("shrink-0 text-xs text-fg-3", FIRST_LINE_TEXT)}>{S.s_dang_phat_e3baf7da}</span></Reveal>
             </DropdownMenu.Item>
           ))}
         </MotionRegion></DropdownMenu.Content>

@@ -54,6 +54,7 @@ import { DotJoin } from "@/shared/DotJoin";
 import { WIDTH_FROM, widthAtLeast } from "@/shared/widthClass.generated";
 import { SHORT_WINDOW, twoPaneWindow } from "@/shared/windowLayout";
 import { useMediaQuery } from "@/shared/media";
+import { FIRST_LINE_ICON, FIRST_LINE_ROW, FIRST_LINE_TEXT, OneLineFit } from "@/shared/OneLineFit";
 
 /** Trang sách chia hai cột từ khổ expanded của bề rộng NỘI DUNG (sau thanh bên): bìa + thông tin một bên, danh sách chương một bên, cuộn riêng từng bên.
  *  Cùng ngưỡng, cùng tỉ lệ với Qt (BookPage.qml: Theme.widthExpanded, leftWidth, listMeasure). Hẹp hơn: một cột như cũ. */
@@ -805,12 +806,12 @@ function RecordPicker({ book, dialog, setDialog }: { book: ListenBook; dialog: R
         <DropdownMenu.Trigger asChild>
           <button
             type="button"
-            className="mt-3 inline-flex min-h-8 max-w-full items-center gap-2 rounded-full border-line px-3 py-1 text-left text-xs text-fg-2 hover:bg-hover hover:text-fg"
+            className={cn("mt-3 inline-flex min-h-8 max-w-full items-center gap-2 rounded-full border-line px-3 py-1 text-left text-xs text-fg-2 hover:bg-hover hover:text-fg", FIRST_LINE_ROW)}
           >
-            <UserRound className="size-3.5 shrink-0" />
-            <span className="shrink-0">{S.s_ho_so_nghe_a80cbba0}</span>
-            <span className="min-w-0 break-words font-medium text-fg">{active.name}</span>
-            <ChevronDown className="size-3.5 shrink-0" />
+            <UserRound className={cn("size-3.5 shrink-0 [--icon-w:14px]", FIRST_LINE_ICON)} />
+            <span className={cn("shrink-0", FIRST_LINE_TEXT)}>{S.s_ho_so_nghe_a80cbba0}</span>
+            <OneLineFit className="font-medium text-fg">{active.name}</OneLineFit>
+            <ChevronDown className={cn("size-3.5 shrink-0 [--icon-w:14px]", FIRST_LINE_ICON)} />
           </button>
         </DropdownMenu.Trigger>
         <DropdownMenu.Portal>
@@ -822,11 +823,11 @@ function RecordPicker({ book, dialog, setDialog }: { book: ListenBook; dialog: R
                 onSelect={() => {
                   if (!record.active) switchTo(() => mutations.activateRecord.mutateAsync(record.id), S.s_dang_dung_ho_so_0_59e7b339(record.name));
                 }}
-                className={cn(MENU_ITEM, "h-auto py-2")}
+                className={cn(MENU_ITEM, "h-auto items-start py-2")}
               >
-                <SelectionMark selected={record.active} />
+                <SelectionMark selected={record.active} className="mt-line-icon" />
                 <span className="min-w-0 flex-1">
-                  <span className="block text-pretty [overflow-wrap:anywhere]">{record.name}</span>
+                  <OneLineFit>{record.name}</OneLineFit>
                   <span className="block text-xs text-fg-3">
                     {record.last
                       ? `${book.chapters?.find((chapter) => chapter.id === record.last!.chapterId)?.title ?? S.s_chuong_2d157977} · ${formatClock(record.last.seconds)} · `

@@ -13,6 +13,34 @@ import java.io.File
 class TextCutScanTest {
     data class Finding(val file: String, val line: Int, val why: String)
 
+    private val nameText = Regex("""\b(?:device|peer|target|remote|sharer|session|profile|computer|phone|preset|lib|voice)\??\.(?:name|displayName|label)\b|\b(?:deviceName|phoneName|profileName|machineName|displayName)\b|\bnames(?:\[|\.current)|\bfound\.shown\b""")
+
+    /** Name-bearing text cannot use the generic exemption: a shortened mini label needs its own full-name surface. */
+    fun scanNames(file: String, source: String): List<Finding> {
+        val code = source.replace(Regex("""(?s)/\*.*?\*/|//[^\n]*""")) { match ->
+            match.value.map { if (it == '\n' || it == '\r') it else ' ' }.joinToString("")
+        }
+        return Regex("""\b(?:BasicText|Text)\s*\(""").findAll(code).mapNotNull { start ->
+            var depth = 1
+            var index = start.range.last + 1
+            var quoted = false
+            var escaped = false
+            while (index < code.length && depth > 0) {
+                val ch = code[index++]
+                if (quoted) {
+                    if (escaped) escaped = false else if (ch == '\\') escaped = true else if (ch == '"') quoted = false
+                } else when (ch) {
+                    '"' -> quoted = true
+                    '(' -> depth++
+                    ')' -> depth--
+                }
+            }
+            val call = code.substring(start.range.first, index)
+            if (nameText.containsMatchIn(call) && Regex("""\bmaxLines\s*=|TextOverflow\.(?:Ellipsis|Clip|StartEllipsis|MiddleEllipsis)|\bsoftWrap\s*=\s*false|\.(?:take|takeLast|drop|dropLast|substring|slice)\s*\(""").containsMatchIn(call))
+                Finding(file, source.take(start.range.first).count { it == '\n' } + 1, "tên thiết bị hoặc hồ sơ phải đọc trọn") else null
+        }.toList()
+    }
+
     private val rules = listOf(
         Regex("""\bmaxLines\s*=""") to "maxLines giới hạn số dòng - chữ dài sẽ bị cắt",
         Regex("""TextOverflow\.(Ellipsis|Clip|StartEllipsis|MiddleEllipsis)""") to "TextOverflow cắt chữ",
@@ -37,6 +65,27 @@ class TextCutScanTest {
         assertTrue("quét được quá ít file: ${files.size}", files.size >= 8)
         val findings = files.flatMap { scan(it.name, it.readText()) }
         assertEquals(findings.joinToString("\n") { "${it.file}:${it.line} ${it.why}" }, emptyList<Finding>(), findings)
+    }
+
+    @Test
+    fun `device and profile names cannot hide clipping behind a generic exemption`() {
+        val dir = File("src/main/java/vn/abook/player")
+        assertTrue("không thấy ${dir.absolutePath}", dir.isDirectory)
+        val findings = dir.walkTopDown().filter { it.extension == "kt" }.flatMap { scanNames(it.relativeTo(dir).path, it.readText()) }.toList()
+        assertEquals(findings.joinToString("\n") { "${it.file}:${it.line} ${it.why}" }, emptyList<Finding>(), findings)
+    }
+
+    @Test
+    fun `name clipping is detected across multiline calls and exemptions`() {
+        for (name in listOf("device.name", "peer.name", "target.name", "remote.name", "sharer.name", "session.name", "profile.label", "preset.name", "lib.name", "voice.name", "phoneName", "deviceName", "names[0]", "names.current", "found.shown")) {
+            assertEquals(name, 1, scanNames("t.kt", "// cắt-có-chủ-ý: fixed strip\nBasicText(S.label($name),\n maxLines = 1)").size)
+            assertEquals(name, 1, scanNames("t.kt", "BasicText($name, overflow = TextOverflow.Ellipsis)").size)
+            assertEquals(name, 1, scanNames("t.kt", "BasicText($name, softWrap = false)").size)
+            assertEquals(name, 1, scanNames("t.kt", "BasicText($name.take(20))").size)
+            assertEquals(name, 0, scanNames("t.kt", "BasicText($name, autoSize = OneLineFit.of(style))").size)
+        }
+        assertEquals(0, scanNames("t.kt", "// BasicText(device.name, maxLines = 1)").size)
+        assertEquals(4, scanNames("t.kt", "/* a\n b\n */\nBasicText(device.name, maxLines = 1)").single().line)
     }
 
     @Test

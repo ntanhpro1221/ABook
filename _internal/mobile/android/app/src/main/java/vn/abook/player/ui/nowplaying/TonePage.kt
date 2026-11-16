@@ -76,7 +76,7 @@ fun TonePage(onBack: () -> Unit, leaveGuard: (((() -> Unit) -> Unit)?) -> Unit =
     fun closeForm() { form = null }
     Column(Modifier.fillMaxWidth().fadeEdges(scroll).verticalScroll(scroll).testTag("tone_page")) {
         Row(Modifier.fillMaxWidth().heightIn(min=Dim.s48),verticalAlignment=Alignment.CenterVertically) {
-            BasicText(lib.name,style=Abook.type.bodyStrong,modifier=Modifier.weight(1f).semantics { liveRegion=LiveRegionMode.Polite })
+            BasicText(lib.name,style=Abook.type.bodyStrong,autoSize=OneLineFit.of(Abook.type.bodyStrong),modifier=Modifier.weight(1f).semantics { liveRegion=LiveRegionMode.Polite })
             Reveal(lib.selected.id=="draft"||lib.dirty) { TextAction(S.s_tone_save,{target="";name=suggest;form="save"},"tone_save") }
         }
         val bands=lib.selected.bands
@@ -170,7 +170,7 @@ private fun ToneRow(preset: TonePreset, chosen: Boolean, modifier: Modifier = Mo
             if(dot>0f)drawCircle(colors.accent,5.dp.toPx()*dot)
         }
         Spacer(Modifier.width(Dim.s12))
-        BasicText(preset.name,style=Abook.type.body,modifier=Modifier.weight(1f).padding(vertical=Dim.s8))
+        BasicText(preset.name,style=Abook.type.body,autoSize=OneLineFit.of(Abook.type.body),modifier=Modifier.weight(1f).padding(vertical=Dim.s8))
         Spacer(Modifier.width(Dim.s8))
         Canvas(Modifier.size(48.dp,24.dp)) { drawTone(preset.bands,if(chosen)colors.accent else colors.text2,1.5.dp,dots=false) }
         if(trailing!=null)trailing() else Spacer(Modifier.width(Dim.s4))

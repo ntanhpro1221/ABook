@@ -43,6 +43,7 @@ import vn.abook.player.ui.components.ChoiceRow
 import vn.abook.player.ui.components.Fold
 import vn.abook.player.ui.components.InlineProblem
 import vn.abook.player.ui.components.ListItem
+import vn.abook.player.ui.components.OneLineFit
 import vn.abook.player.ui.components.MoreInfo
 import vn.abook.player.ui.components.Option
 import vn.abook.player.ui.components.RowHint
@@ -117,7 +118,7 @@ internal fun LazyListScope.castTab(cast: StudioCastState, data: CastData, state:
                 narrator.profile?.label ?: narrator.voice.ifEmpty { WorkText.CAST_NO_VOICE },
                 Modifier, { openVoiceSheet(state, sheets, "NARRATOR", WorkText.CAST_NARRATOR) }, "studio_cast_narrator",
                 hint = narrator.pendingVoice?.let { WorkText.pendingVoice(it.label) } ?: WorkText.castLines(narrator.lines),
-                hintColor = Abook.colors.text2, chevron = true,
+                hintColor = Abook.colors.text2, chevron = true, titleOneLine = true,
             )
             narrator.chapterVoices.forEach { RowHint(it) }
             RowLine()
@@ -268,7 +269,7 @@ private fun VoiceRow(sheet: VoiceSheetState, voice: VoiceEntry, clip: ClipState,
             vn.abook.player.ui.components.PersonAvatar(voice.key, size = 32.dp, voice = true)
             Spacer(Modifier.padding(end = Dim.s12))
             Column(Modifier.weight(1f)) {
-                BasicText(voice.name, style = Abook.type.bodyStrong)
+                BasicText(voice.name, style = Abook.type.bodyStrong, autoSize = OneLineFit.of(Abook.type.bodyStrong))
                 val meta = VoiceLogic.meta(voice, filter == GenderFilter.All)
                 Reveal(meta.isNotEmpty()) { RowHint(meta, Modifier.padding(top = 4.dp)) }
                 Reveal(!voice.installed) { Caption(WorkText.VOICE_NOT_INSTALLED, Modifier.padding(top = Dim.s4)) }

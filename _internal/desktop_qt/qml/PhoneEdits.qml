@@ -123,15 +123,15 @@ Item {
             Flow {
                 width: parent.width
                 spacing: 8
-                Text {
-                    width: Math.max(160, parent.width - allApply.width - allSkip.width - 16)
-                    height: allApply.height
+                OneLineFit {
+                    objectName: "inboxDeviceName"
+                    room: Math.max(Math.min(160, parent.width), parent.width - allApply.width - allSkip.width - 16)
+                    height: Math.max(implicitHeight, allApply.height)
                     verticalAlignment: Text.AlignVCenter
                     textFormat: Text.RichText
                     text: "<span style=\"font-weight:500\">" + W.esc(TextWrap.keepDots(block.modelData.name)) + "</span><span style=\"color:" + W.cssColor(Theme.text3) + S.s_nbsp_nbsp_gui_862864dc + W.esc(Studio.formatWhen(block.modelData.at)) + "</span>"
                     color: Theme.text
-                    wrapMode: Text.Wrap
-                    font.pixelSize: Theme.sizeBodySmall
+                    baseSize: Theme.sizeBodySmall
                 }
                 Button {
                     id: allApply
@@ -221,14 +221,14 @@ Item {
             Flow {
                 width: parent.width
                 spacing: 8
-                Text {
-                    width: Math.max(160, parent.width - restoreAll.width - 8)
-                    height: restoreAll.height
+                OneLineFit {
+                    objectName: "inboxSkippedDeviceName"
+                    room: Math.max(Math.min(160, parent.width), parent.width - restoreAll.width - 8)
+                    height: Math.max(implicitHeight, restoreAll.height)
                     verticalAlignment: Text.AlignVCenter
                     text: TextWrap.keepDots(block.modelData.name)
                     color: Theme.text
-                    wrapMode: Text.Wrap
-                    font.pixelSize: Theme.sizeBodySmall
+                    baseSize: Theme.sizeBodySmall
                     font.weight: Theme.weightMedium
                 }
                 Button {

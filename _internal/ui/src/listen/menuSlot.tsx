@@ -39,7 +39,7 @@ export function MenuSlot({ label, children, icon = Cast }: { label: string; chil
   );
 }
 /** Mặt của một dòng MenuSlot: biểu tượng · tên · `value` (chữ trạng thái, bên phải). Là nút trọn dòng - Radix Trigger dùng được qua asChild. */
-export function SlotFace({ value, ref, ...rest }: ButtonHTMLAttributes<HTMLButtonElement> & { ref?: Ref<HTMLButtonElement>; value?: ReactNode }) {
+export function SlotFace({ value, ref, ...rest }: Omit<ButtonHTMLAttributes<HTMLButtonElement>, "value"> & { ref?: Ref<HTMLButtonElement>; value?: ReactNode }) {
   const slot = useContext(MenuSlotContext);
   if (!slot) return null;
   const Icon = slot.icon;

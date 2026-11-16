@@ -16,16 +16,15 @@ Rectangle {
     height: implicitHeight
     radius: height / 2
     color: Theme.sunken
-    Icon { id: icon; x: 10; y: (root.height - 14) / 2; name: "monitor"; size: 14; color: Theme.text2 }
-    Text {
+    Icon { id: icon; x: 10; y: line.y + line.firstLineHeight / 2 - 7; name: "monitor"; size: 14; color: Theme.text2 }
+    OneLineFit {
         id: line
         objectName: "onComputerText"
         x: icon.x + icon.width + 6
         y: (root.height - height) / 2
-        width: root.width - x - 10
+        room: root.width - x - 10
         text: Logic.onComputerLine(root.verb, root.computer)
         color: Theme.text2
-        wrapMode: Text.Wrap
-        font.pixelSize: Theme.sizeCaption
+        baseSize: Theme.sizeCaption
     }
 }
