@@ -3882,10 +3882,10 @@
     "line": 88,
     "statement": "export function busyClick<E extends { preventDefault: () => void }>(loading: boolean | undefined, onClick: ((event: E) => void) | undefined) {",
     "occurrence": 1,
-    "source_sha256": "2533be31394dbf91a7dc2bdf7d69e7979227c3f5040ddc9441a6d016d26fa867",
+    "source_sha256": "725ce61d529dc59fbfdf2b2f61e8c7db2089ce4359a947923b706dc8907e8004",
     "disposition": "internal",
     "guard": "Async interface/helper boundary; concrete activation inventoried separately",
-    "reason": "This signature supplies work to a model or component; declaring it starts no user operation. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
+    "reason": "This signature supplies work to a model or component; declaring it starts no user operation. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Sheet focus return without scrolling (0.4.173 gate 10) leaves this boundary unchanged."
   },
   {
     "id": "55eac8835610195bed03",

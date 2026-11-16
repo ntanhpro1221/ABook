@@ -210,6 +210,9 @@ async function widthRun(cdp, base, width, injected, classes) {
     for (const story of ['desktop/player-playing', 'desktop/book-text']) {
       await visit(cdp, session, `${base}?frame=${story}&theme=light`, 30000, async pending => { await click(pending.selector); return false; });
       if (story === 'desktop/book-text') {
+        // The book page arrives through a cover transform; under load it can still be moving when visit() returns, leaving the
+        // play button outside the viewport (gate 0.4.173, 1080 px: "occluded by undefined"). Locate it only once the page is still.
+        await stable(cdp, session);
         const start = await ev(cdp, session, `(()=>{const e=[...document.querySelectorAll('main button')].find(e=>e.textContent.trim().startsWith('Nghe'));if(!e)throw Error('Text book play button missing');e.dataset.sheetgeoStart='';return '[data-sheetgeo-start]'})()`);
         await click(start); await stable(cdp, session);
         const consent = await ev(cdp, session, `(()=>{const e=[...document.querySelectorAll('[role=dialog] button')].find(e=>e.textContent.trim()==='Nghe');if(!e)throw Error('Speech consent missing');e.dataset.sheetgeoConsent='';return '[data-sheetgeo-consent]'})()`);

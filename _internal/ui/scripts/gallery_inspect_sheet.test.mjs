@@ -32,6 +32,36 @@ it.skipIf(!browserAvailable)('geometry baseline waits for a measured anchor\'s a
   } finally {cdp?.close();await browser?.close();}
 });
 
+it.skipIf(!browserAvailable)("settling is counted in rendered frames, so slow frames under load do not fail a still page", async () => {
+  let browser, cdp;
+  try {
+    browser = await launch(findBrowser(), { disableGpu: true });
+    cdp = await connect(browser.endpoint);
+    const page = await openPage(cdp, { width: 800, height: 600, scale: 1, mobile: false, theme: "light", isolated: true });
+    await cdp.send("Page.navigate", { url: "data:text/html,<main><h1 id=t>Still</h1></main>" }, page.sessionId);
+    await evaluate(cdp, page.sessionId, `crypto.randomUUID ??= () => "frames-fixture"; (${installGeometryProbe.toString()})(); __sheetProbe.capture(true)`);
+    // Frames arrive 700 ms apart while timers run freely, as on a loaded machine: the still frames take longer than 2 s of wall time.
+    const slow = await evaluate(cdp, page.sessionId, `(async () => {
+      const frame = window.requestAnimationFrame;
+      window.requestAnimationFrame = callback => setTimeout(() => frame(callback), 700);
+      try { return await __sheetProbe.stable(); } finally { window.requestAnimationFrame = frame; }
+    })()`);
+    expect(slow.stable).toBe(true);
+    expect(slow.elapsed).toBeGreaterThan(2000);
+    const moving = await evaluate(cdp, page.sessionId, `(async () => {
+      const t = document.getElementById("t"); let n = 0, on = true;
+      const shift = () => { if (!on) return; t.style.marginLeft = (++n % 2) + "px"; requestAnimationFrame(shift); };
+      requestAnimationFrame(shift);
+      const result = await __sheetProbe.stable();
+      on = false;
+      return result;
+    })()`);
+    expect(moving.stable).toBe(false);
+    expect(moving.ticks).toBe(120);
+    expect(moving.changed.length).toBeGreaterThan(0);
+  } finally { cdp?.close(); await browser?.close(); }
+}, 60000);
+
 it.skipIf(!browserAvailable)("isolated headless windows: native scrollbar, trusted pointer, clean and broken geometry", async () => {
   const server = createServer((_request, response) => response.end(`<!doctype html><meta charset="utf-8">
     <style>main{height:2600px}#open{position:fixed;top:12px;left:12px} [role=dialog]{position:fixed;top:100px;left:100px;width:240px;height:180px;background:white}</style>

@@ -76,3 +76,17 @@ it("vuốt nội dung chỉ đóng khi vùng cuộn đã ở đầu", async () =
   await act(() => { touch("touchstart", 0); touch("touchmove", 90); touch("touchend", 90); }); await wait();
   expect(dialog()).toBeNull();
 });
+
+it("đóng tấm có nút mở: tiêu điểm về nút mở mà không cuộn trang (gallery 0.4.173: main 0 -> 43 px)", async () => {
+  await act(() => root.render(<Example />));
+  const opener = document.querySelector<HTMLButtonElement>("button")!;
+  await act(() => { opener.focus(); opener.click(); }); await wait();
+  expect(dialog()).not.toBeNull();
+  const focus = vi.spyOn(HTMLElement.prototype, "focus");
+  await act(() => { dialog()!.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true })); }); await wait();
+  expect(dialog()).toBeNull();
+  expect(document.activeElement).toBe(opener);
+  const calls = focus.mock.calls.filter((_, index) => focus.mock.contexts[index] === opener);
+  expect(calls.length).toBeGreaterThan(0);
+  expect(calls.every(([options]) => (options as FocusOptions | undefined)?.preventScroll === true)).toBe(true);
+});

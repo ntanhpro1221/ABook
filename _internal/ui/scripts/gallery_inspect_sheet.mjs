@@ -124,23 +124,25 @@ export function installGeometryProbe() {
       return { scrollTop: document.scrollingElement.scrollTop, scrollbarWidth: innerWidth - document.documentElement.clientWidth, styles,
         anchors: window.__sheetProbe.anchors.map(({ el, selector }) => ({ selector, rect: el.isConnected ? box(el) : null, scrollTop: el.scrollTop, scrollLeft: el.scrollLeft })) };
     },
+    // Budget in rendered frames, not wall time: under machine load frames arrive late, and a 2 s deadline then failed pages
+    // that never moved (gate 0.4.173: player-tone, `moving: []`). 120 frames is 2 s at 60 Hz on an idle machine.
     stable: ({ tolerance = 0, geometryOnly = false } = {}) => new Promise(resolve => {
       const start = performance.now();
-      let previous = [], frames = 0, done = false;
+      let previous = [], frames = 0, ticks = 0, changed = [], done = false;
       const finish = stable => {
         if (done) return;
         done = true;
-        clearTimeout(timer);
-        resolve({ stable, elapsed: performance.now() - start, visibility: document.visibilityState, tolerance,
+        resolve({ stable, elapsed: performance.now() - start, ticks, visibility: document.visibilityState, tolerance, changed,
           exiting: stable ? [] : [...document.querySelectorAll('[role="dialog"][data-state="closed"], .now-playing[data-state="closed"]')].map(el => ({ tag: el.tagName, rect: box(el), html: el.outerHTML.slice(0, 200) })),
           moving: stable ? [] : document.getAnimations().filter(a => a.playState === 'running').map(a => ({ name: a.animationName || a.id, end: a.effect?.getComputedTiming().endTime })) });
       };
-      const timer = setTimeout(() => finish(false), 2000);
       const tick = () => {
         if (done) return;
+        ticks += 1;
         const measured = [...surfaces(), ...(window.__sheetProbe.anchors ?? []).map(anchor => anchor.el).filter(el => el?.isConnected)];
         const current = measured.map(el => box(el));
         const same = current.length === previous.length && current.every((r, i) => ['x', 'y', 'width', 'height'].every(k => Math.abs(r[k] - previous[i][k]) <= tolerance));
+        if (!same) changed = measured.filter((el, i) => !previous[i] || ['x', 'y', 'width', 'height'].some(k => Math.abs(current[i][k] - previous[i][k]) > tolerance)).slice(0, 5).map(el => path(el));
         const moving = document.getAnimations().some(a => a.playState === 'running' && a.effect?.getComputedTiming().endTime !== Infinity
           && (!geometryOnly || measured.includes(a.effect?.target) || measured.some(node => a.effect?.target?.contains?.(node))
             || a.effect?.pseudoElement?.startsWith('::view-transition')));
@@ -149,6 +151,7 @@ export function installGeometryProbe() {
         const exiting = document.querySelector('[role="dialog"][data-state="closed"], .now-playing[data-state="closed"]');
         frames = same && !moving && !exiting ? frames + 1 : 0;
         if (frames >= 3) return finish(true);
+        if (ticks >= 120) return finish(false);
         previous = current;
         requestAnimationFrame(tick);
       };
@@ -161,7 +164,7 @@ export function installGeometryProbe() {
       if (reached) return reached;
       const x = r.x + r.width / 2, y = r.y + r.height / 2, hit = document.elementFromPoint(x, y);
       if (hit && !el.contains(hit) && hit.closest('[data-sonner-toast]')) return null;
-      throw new Error(`Pointer target occluded: ${selector} by ${hit?.outerHTML.slice(0, 180)}`);
+      throw new Error(`Pointer target occluded: ${selector} by ${hit ? hit.outerHTML.slice(0, 180) : `nothing: point ${x},${y} is outside the ${innerWidth}x${innerHeight} viewport`}`);
     },
     closeControl: () => {
       const el = surfaces().at(-1);
@@ -199,7 +202,7 @@ export async function pointerTouch(cdp, session, selector) {
 
 export async function stable(cdp, session, options = {}) {
   const result = await probe(cdp, session, `stable(${JSON.stringify(options)})`);
-  if (!result.stable) throw new Error(`Sheet geometry did not settle within 2 s (3 frames required): ${JSON.stringify(result)}`);
+  if (!result.stable) throw new Error(`Sheet geometry did not settle within 120 frames (3 still frames required): ${JSON.stringify(result)}`);
 }
 
 /** Replay catalog actions through CDP, pausing before a selected opener when requested. */

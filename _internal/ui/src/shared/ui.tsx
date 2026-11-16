@@ -802,6 +802,7 @@ export function Sheet({
   if (open) lastContent.current = { title, children, description, footer, leading };
   const shown = open ? { title, children, description, footer, leading } : lastContent.current;
   const opener = useRef<Element | null>(null);
+  const triggerRef = useRef<HTMLElement | null>(null);
   const start = useRef<number | null>(null);
   const dragged = useRef(false);
   const [drag, setDrag] = useState(0);
@@ -845,7 +846,7 @@ export function Sheet({
   useLayoutEffect(() => { if (open) opener.current = lastFocus; }, [open]);
   return (
     <DialogPrimitive.Root open={open} onOpenChange={onOpenChange}>
-      {<Presence>{trigger && <DialogPrimitive.Trigger asChild>{trigger}</DialogPrimitive.Trigger>}</Presence>}
+      {<Presence>{trigger && <DialogPrimitive.Trigger asChild ref={triggerRef as React.Ref<HTMLButtonElement>}>{trigger}</DialogPrimitive.Trigger>}</Presence>}
       <DialogPrimitive.Portal>
         <DialogPrimitive.Overlay inert={!open} style={open ? undefined : CLOSING} className="motion-scrim fixed inset-0 z-40 bg-scrim" />
         <DialogPrimitive.Content
@@ -855,10 +856,10 @@ export function Sheet({
           style={!open ? CLOSING : drag ? { transform: `translateY(${drag}px)`, animation: "none", transition: "none" } : undefined}
           onCloseAutoFocus={(event) => {
             if (keepNewLayerFocus(event)) return;
-            if (!trigger) {
-              const target = focusReturnTarget(opener.current, document.body);
-              if (target) { event.preventDefault(); target.focus({ preventScroll: true }); }
-            }
+            // Radix tự trả tiêu điểm về Trigger bằng focus() không preventScroll: nút mở nằm sát mép vùng cuộn thì trang bị cuộn khi đóng
+            // (gallery 0.4.173: main 0 -> 43 px ở 400 px). Trả về đây, không cuộn - vẫn là nút mở, không rơi về BODY (soát a31 K1).
+            const target = focusReturnTarget(trigger ? triggerRef.current : opener.current, document.body);
+            if (target) { event.preventDefault(); target.focus({ preventScroll: true }); }
           }}
           onOpenAutoFocus={(event) => {
             const target = (event.currentTarget as HTMLElement).querySelector<HTMLElement>(focusSelector ?? "[data-autofocus]");
@@ -867,7 +868,7 @@ export function Sheet({
             if (target instanceof HTMLInputElement) target.select();
           }}
           onKeyDown={onKeyDown}
-          // Đóng (Esc, nút Đóng, chạm nền): Radix tự trả tiêu điểm về nút mở (Trigger) - trước đây chặn việc ấy nên tiêu điểm rơi về BODY (soát a31 K1).
+          // Đóng (Esc, nút Đóng, chạm nền): tiêu điểm về nút mở (Trigger) - trước đây chặn việc ấy nên tiêu điểm rơi về BODY (soát a31 K1).
           onEscapeKeyDown={onEscapeKeyDown}
           onInteractOutside={keepOpenForToasts}
           className={cn("motion-sheet sheet-surface fixed inset-x-0 bottom-0 z-50 flex max-h-[min(85dvh,calc(100dvh-env(safe-area-inset-top)-0.5rem))] min-w-0 flex-col rounded-t-sheet bg-panel pl-[max(env(safe-area-inset-left),20px)] pr-[max(env(safe-area-inset-right),20px)] pb-[max(env(safe-area-inset-bottom),20px)] shadow-float focus:outline-none", className)}
