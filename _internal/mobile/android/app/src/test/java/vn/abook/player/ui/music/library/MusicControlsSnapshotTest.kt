@@ -50,7 +50,8 @@ class MusicControlsSnapshotTest {
             node.captureRoboImage("src/test/snapshots/music_controls_${name}_$theme.png")
         }
         shot("download")
-        val button = rule.onNodeWithTag("download_${track.link.hashCode()}")
+        // Unmerged: "downloaded" is a status, so it merges into its clickable row instead of standing as its own button.
+        val button = rule.onNodeWithTag("download_${track.link.hashCode()}", useUnmergedTree = true)
         val initialBounds = button.fetchSemanticsNode().boundsInRoot
         rule.runOnUiThread { ui.value = ui.value.copy(active = mapOf(track.link to Loading(320, 1000))) }
         rule.onNodeWithContentDescription(S.s_stop_download).assertHasClickAction()
