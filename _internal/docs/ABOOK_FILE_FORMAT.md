@@ -137,7 +137,9 @@ rewritten by a listener's app. What a listener changes lives next to it in `edit
 |---|---|
 | `format`, `version` | `"abook-edits"`, `1` |
 | `title` | book title shown instead of the one in `book.json` |
-| `author` | author shown instead of the one in `book.json`; `""` = the listener cleared it (no author); absent = the book's author. Clean text, at most 160 code points |
+| `author`, `illustrator`, `summary` | descriptive strings shown instead of the corresponding `book.json` fields; `""` clears a field. Summary text keeps its complete paragraphs |
+| `altTitles`, `genres` | arrays of descriptive strings; an empty array clears the field |
+| `source` | source object with string `url` and `site` fields |
 | `cover` | absent: the book's cover; `{color, width, height, version}` and `edits/cover.jpg`: the listener's cover |
 | `characters` | `{canonical name: display name}` |
 | `chapters` | `{chapter id: {title?, subtitle?}}` |

@@ -23,7 +23,17 @@ Interactive {
     property bool onPlayButton: false
     property real coverWidth: Theme.coverMin
     readonly property real coverHeight: Math.round(coverWidth * Theme.coverRatio)
-    readonly property string subLine: [root.source !== "" ? (root.remoteSeries ? S.s_co_sach_tren_may_khac_3b7cdd88 : S.s_tren_54f68805 + root.source) : "", root.subtitle]
+    readonly property string statusText: {
+        const author = String(root.book.author || "").trim()
+        const subtitle = root.subtitle.trim()
+        if (author && subtitle === author) return ""
+        if (author && subtitle.startsWith(author)) {
+            const rest = subtitle.slice(author.length).trim()
+            if (rest.startsWith("·")) return rest.slice(1).trim()
+        }
+        return subtitle
+    }
+    readonly property string subLine: [root.source !== "" ? (root.remoteSeries ? S.s_co_sach_tren_may_khac_3b7cdd88 : S.s_tren_54f68805 + root.source) : "", root.statusText]
         .filter(part => part !== "").join("\u00a0·\u00a0")
     readonly property real textBlock: 12 + root.titleHeight + authorText.height + 4 + subtitleText.height
 

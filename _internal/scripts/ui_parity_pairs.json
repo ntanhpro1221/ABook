@@ -1127,7 +1127,7 @@
       "allow": [
         {
           "side": "web",
-          "match": "^(lưu|lưu\\ tên|lưu\\ tác\\ giả|lưu\\ thông\\ tin|đã\\ lưu\\ thông\\ tin|lưu\\ thông\\ tin|đã\\ lưu\\ thông\\ tin|lưu\\ thông\\ tin|đã\\ lưu\\ thông\\ tin|lưu\\ thông\\ tin|đã\\ lưu\\ thông\\ tin|lưu\\ thông\\ tin|đã\\ lưu\\ thông\\ tin|lưu\\ thông\\ tin|đã\\ lưu\\ thông\\ tin|lưu\\ thông\\ tin|đã\\ lưu\\ thông\\ tin|lưu\\ thông\\ tin|đã\\ lưu\\ thông\\ tin|đã\\ đổi\\ tên\\ sách|đã\\ đổi\\ tác\\ giả|đã\\ bỏ\\ tên\\ tác\\ giả|đã\\ đặt\\ ảnh\\ bìa|đã\\ đổi\\ tên\\ chương:\\ \\{\\})$",
+          "match": "^(lưu|lưu\\ tên|lưu\\ tác\\ giả|lưu\\ thông\\ tin|đã\\ lưu\\ thông\\ tin|đã\\ đổi\\ tên\\ sách|đã\\ đổi\\ tác\\ giả|đã\\ bỏ\\ tên\\ tác\\ giả|đã\\ đặt\\ ảnh\\ bìa|đã\\ đổi\\ tên\\ chương:\\ \\{\\})$",
           "reason": "máy tính lưu từng ô bằng nút (Enter) rồi báo đã lưu; điện thoại lưu khi đang gõ, không nút, không chữ \"Đã lưu\" (EditBookScreen.kt, BookFormsTest editSavesSilently)"
         },
         {

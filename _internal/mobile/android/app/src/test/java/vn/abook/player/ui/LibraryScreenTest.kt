@@ -11,6 +11,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertTextEquals
 import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.longClick
 import androidx.compose.ui.test.onAllNodesWithTag
@@ -91,8 +92,9 @@ class LibraryScreenTest {
     }
 
     @Test fun authorHasItsOwnEllipsizedLine() {
-        show(listOf(ListenBook("paper-lake", "Hồ giấy", "Người Viết Có Một Tên Hiển Thị Rất Dài")))
+        show(listOf(ListenBook("paper-lake", "Hồ giấy", "Người Viết Có Một Tên Hiển Thị Rất Dài", textOnly = true, chaptersTotal = 1)))
         rule.onNodeWithTag("tile_author", useUnmergedTree = true).assertIsDisplayed()
+        rule.onNodeWithTag("tile_sub", useUnmergedTree = true).assertTextEquals("1 chương")
         rule.onRoot().captureRoboImage("src/test/snapshots/bookmeta_library.png")
     }
 

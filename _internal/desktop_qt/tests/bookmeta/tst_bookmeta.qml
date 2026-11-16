@@ -47,6 +47,12 @@ Item {
             verify(value !== null)
             compare(findChild(value, "bookCellAuthor").text, book.author)
             verify(findChild(value, "bookCellAuthor").height > 0)
+            value.subtitle = book.author + " · 1 chương"
+            compare(value.statusText, "1 chương")
+            value.subtitle = book.author
+            compare(value.statusText, "")
+            value.subtitle = "1 chương"
+            compare(value.statusText, "1 chương")
             waitForRendering(host)
             capture("card")
         }

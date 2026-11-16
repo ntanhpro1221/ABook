@@ -8,6 +8,8 @@ export writes them into book.json without replacing audio. React, Compose and Qt
 three-line summary previews, using shared labels, icons and corner tokens.
 
 Focused functional Python, Vitest, Android unit/Roborazzi Verify, TypeScript and Qt offscreen checks were run manually.
+Final focused counts: Python 490/0, Vitest 29/0, Android 92/0 and Qt 8/0 (passed/failed). Library regressions check
+that the dedicated author line does not repeat in the status, including text books and enlarged text slots.
 The Qt runner reuses integ174's binary after verifying all 103 handwritten C++ files are identical, and loads this
 worktree's QML imports and tests. New sample descriptions and pictures contain original fixture text.
 

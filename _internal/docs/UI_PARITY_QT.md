@@ -11,7 +11,7 @@ icon `LucidePaths.js` sinh bởi `scripts/gen_lucide_icons.py --qml`. Bảng dư
 
 <!-- ui_parity_qt:begin (SINH TỰ ĐỘNG bởi scripts/ui_parity_qt.py - không sửa tay, chạy lại script) -->
 
-Quét: web máy tính 6258 chữ (2880 khác nhau), 355 cặp nhãn-icon; Qt 3709 chữ (2722 khác nhau), 293 cặp nhãn-icon (icon dùng ở 415 chỗ). Khoá so lỏng như UI_PARITY.md (hạ chữ, dấu thanh một kiểu, `...` = `…`, bỏ dấu câu cuối); phím tắt trong chú thích Qt (`Thu nhỏ (Esc)`) tách khỏi nhãn.
+Quét: web máy tính 6257 chữ (2879 khác nhau), 355 cặp nhãn-icon; Qt 3709 chữ (2722 khác nhau), 293 cặp nhãn-icon (icon dùng ở 415 chỗ). Khoá so lỏng như UI_PARITY.md (hạ chữ, dấu thanh một kiểu, `...` = `…`, bỏ dấu câu cuối); phím tắt trong chú thích Qt (`Thu nhỏ (Esc)`) tách khỏi nhãn.
 
 ## a. Cùng việc, khác chữ
 
@@ -73,7 +73,7 @@ Mỗi cặp còn lại phải có giải thích trong ui_strings/qt_wording_revi
 | Bắt đầu | headphones | wand-sparkles | `qt/NewProjectScreen.qml:185` ~ `desktop/AudiobookDialog.tsx:216` | Different operations: Qt starts a Studio production job (wand-sparkles); the matched web dialog starts a read-aloud export (headphones). |
 | Chi tiết | info | chevron-right | `qt/MyMusicDetails.qml:29` (+1) ~ `studio/ProjectScreen.tsx:758` | Different controls: Qt rotates a disclosure chevron to expand the music details; the matched web item opens project information. |
 | Quay lại | chevron-left | arrow-left | `qt/ScreenHeader.qml:14` (+1) ~ `listen/LineWishes.tsx:224` (+2) | Different navigation depth: the web chevron returns one step inside a sentence editor; the Qt arrow returns to the previous screen. |
-| Tạm dừng {} | check, circle-dashed, play | pause | `qt/BookCell.qml:87` ~ `listen/BookScreen.tsx:187` (+3) | Scanner pairing ambiguity: the web book row has status check/circle icons beside its transport action. Its actual pause action and the Qt book cell use pause. |
+| Tạm dừng {} | check, circle-dashed, play | pause | `qt/BookCell.qml:97` ~ `listen/BookScreen.tsx:187` (+3) | Scanner pairing ambiguity: the web book row has status check/circle icons beside its transport action. Its actual pause action and the Qt book cell use pause. |
 
 **Cùng icon, khác nhãn** (69 cặp Qt; web cùng màn dùng cùng icon với nhãn khác):
 
@@ -85,9 +85,9 @@ Mỗi cặp còn lại phải có giải thích trong ui_strings/qt_wording_revi
 | Thêm sách | file-text | Đang đọc | Đang đọc / Chọn file sách | `qt/AddBook.qml:551` |
 | Cài đặt | download | Cập nhật ABook | Cài Studio, Cài tiếp, Có ABook {} | `qt/AdvancedUpdate.qml:96` |
 | Cài đặt | download | Đang tải bản mới | Cài Studio, Cài tiếp, Có ABook {} | `qt/AdvancedUpdate.qml:96` |
-| Thư viện | play | Nghe ngay {} | Đọc {} | `qt/BookCell.qml:87` |
-| Thư viện | play | Nghe {} | Đọc {} | `qt/BookCell.qml:87` |
-| Thư viện | pause | Tạm dừng {} | Đọc {} | `qt/BookCell.qml:87` |
+| Thư viện | play | Nghe ngay {} | Đọc {} | `qt/BookCell.qml:97` |
+| Thư viện | play | Nghe {} | Đọc {} | `qt/BookCell.qml:97` |
+| Thư viện | pause | Tạm dừng {} | Đọc {} | `qt/BookCell.qml:97` |
 | Trang sách | chevron-up | Thu gọn | Thu gọn / Xem thêm | `qt/BookMetadataDetails.qml:73` |
 | Trang sách | chevron-down | Xem thêm | Thu gọn / Xem thêm | `qt/BookMetadataDetails.qml:73` |
 | Trang sách | check-check | Chưa nghe xong | Chưa nghe / Đã nghe xong, Chưa nghe xong / Đã nghe xong | `qt/BookPage.qml:173` |
@@ -178,7 +178,7 @@ Nhãn ngắn (<= 6 chữ). **Chỉ Qt**: không có ở web cùng màn; `*` = we
 ### Thư viện
 
 - chỉ Qt (9): Tạm dừng* (`qt/LibraryContinue.qml:44`); Mới thêm* (`qt/LibraryScreen.qml:48`); Tác giả* (`qt/LibraryScreen.qml:48`); Tên sách* (`qt/LibraryScreen.qml:48`); Đang mở ABook* (`qt/LibraryScreen.qml:416`); Chưa mở được ABook (`qt/LibraryScreen.qml:465`); Chưa tải được thư viện (`qt/LibraryScreen.qml:465`); Thử lại* (`qt/LibraryScreen.qml:483`); Không thấy “{}”* (`qt/LibraryScreen.qml:520`)
-- chỉ web (7): Đang tạm dừng {} (`334`); Đang làm {} (`335`); Đang tạm dừng{} (`339`); Chưa có chương nghe được{} (`341`); Đang làm · {} (`341`); Thư viện chưa có sách nào. (`462`); Chữ bìa trên hoạ tiết sóng (`86`)
+- chỉ web (7): Đang tạm dừng {} (`331`); Đang làm {} (`332`); Đang tạm dừng{} (`336`); Chưa có chương nghe được{} (`338`); Đang làm · {} (`338`); Thư viện chưa có sách nào. (`459`); Chữ bìa trên hoạ tiết sóng (`86`)
 
 ### Thanh phát
 

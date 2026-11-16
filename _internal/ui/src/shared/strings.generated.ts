@@ -591,7 +591,6 @@ export const S = {
   s_chi_ap_khi_phan_tich_lai_khong_chan_sach_c_56e246b0: "Chỉ áp khi phân tích lại; không chặn sách chạy tiếp.",
   s_chi_bo_khoi_phan_doc_giu_nguyen_file_truye_94c7dd67: "Chỉ bỏ khỏi phần đọc, giữ nguyên file truyện.",
   s_chi_chon_ban_khac_khi_muon_thu_tren_cuon_n_d2d4143b: "Chỉ chọn bản khác khi muốn thử trên cuốn này.",
-  s_chi_co_chu_bf879f2c: "Chỉ có chữ",
   s_chi_co_chu_may_nay_chua_co_giong_doc_5203960b: "Chỉ có chữ · máy này chưa có giọng đọc",
   s_chi_co_chu_nghe_bang_giong_doc_edf36d64: "Chỉ có chữ · nghe bằng giọng đọc",
   s_chi_co_phan_nghe_va_thay_doi_cua_ban_studi_09cd637e: "Chỉ có phần nghe và thay đổi của bạn. Studio dựng lại được dự án từ file này.",
