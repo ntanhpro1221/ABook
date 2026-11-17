@@ -1,6 +1,9 @@
 package vn.abook.player.ui.components
 
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.mandatorySystemGestures
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.union
@@ -11,7 +14,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import vn.abook.player.ui.motion.Motion
 import vn.abook.player.ui.theme.Dim
+import vn.abook.player.ui.theme.MotionMs
 
 /**
  * Khoảng thở giữa thứ bấm được và vùng đáy mà hệ thống nuốt chạm (`mandatorySystemGestures`), để ngón tay không chạm sát vùng ấy.
@@ -46,6 +51,25 @@ private fun systemClearance(): Dp {
 /** [bottomClearance] của cửa sổ hiện tại; 0 khi bên dưới đã có thanh của khung ([LocalBottomCovered]). */
 @Composable
 fun navigationClearance(): Dp = if (LocalBottomCovered.current) 0.dp else systemClearance()
+
+/**
+ * Khoảng thở dưới thứ cuối cùng ở đáy (chân ghim của màn, đáy bảng trượt, hàng nút cuối của Đang nghe), tính GỘP với chỗ chừa đáy: chỗ chừa đáy đã là một khoảng tới mép,
+ * nên chỉ bù phần còn thiếu cho đủ `breath`. Hàm thuần để test kiểm. Trước đây cộng `breath` lên TRÊN chỗ chừa đáy: chân "Thêm sách" có 12 dp trống thừa dưới nút cuối
+ * ở mọi máy (chủ sách 15-11: "sao ở dưới đáy cứ có khoảng trống nhất định nhỉ? nhiều view cũng bị như thế").
+ */
+fun breathAbove(clearance: Dp, breath: Dp): Dp = (breath - clearance).coerceAtLeast(0.dp)
+
+/**
+ * [breathAbove] của cửa sổ hiện tại. Đáy đang có thanh của khung ([LocalBottomCovered]) hay bàn phím: không có chỗ chừa đáy nào ở dưới, giữ nguyên `breath` để hai mặt
+ * không dính nhau. Đổi giữa hai trường hợp (bàn phím mở / đóng) thì khoảng ấy trượt, không nhảy.
+ */
+@Composable
+fun bottomBreath(breath: Dp): Dp {
+    val density = LocalDensity.current
+    val clearance = systemClearance()
+    val target = if (LocalBottomCovered.current || WindowInsets.ime.getBottom(density) > 0) breath else breathAbove(clearance, breath)
+    return animateDpAsState(target, tween(MotionMs.MEDIUM, easing = Motion.Standard), label = "bottom-breath").value
+}
 
 /** Vùng inset đáy: `insets` (mặc định thanh điều hướng) nhưng đáy không dưới [navigationClearance]. */
 @Composable

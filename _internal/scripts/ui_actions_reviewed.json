@@ -1744,7 +1744,7 @@
     "kind": "destructive",
     "path": "ui/src/listen/player.tsx",
     "line": 1078,
-    "statement": "forgetVoiceTrouble(); // S.s_thu_lai_c58d068c gọi lại dịch vụ thật, không nhắc lại lỗi cũ của giọng trực tuyến",
+    "statement": "forgetVoiceTrouble(); // S.s_thu_lai_c58d068c g\u1ecdi l\u1ea1i d\u1ecbch v\u1ee5 th\u1eadt, kh\u00f4ng nh\u1eafc l\u1ea1i l\u1ed7i c\u0169 c\u1ee7a gi\u1ecdng tr\u1ef1c tuy\u1ebfn",
     "occurrence": 1,
     "source_sha256": "565c1756686d3516f258a5077ab5ae9ea5079cb1422e7f4899a70718fbb77eeb",
     "disposition": "internal",
@@ -4926,7 +4926,7 @@
     "line": 31,
     "statement": "suspend fun replace(item: ImportItem, progress: WorkSink = {}): PreparedImport = error(S.s_chua_thay_duoc_sach_8eebed8f)",
     "occurrence": 1,
-    "source_sha256": "c97ec65743f01d1b7e2ef9adff5ebda9ed5e8d81fe7d7631704b4625612c98ea",
+    "source_sha256": "c8796567a224ec859f2ddc222f4e3421803661fdd21b56355948a40624378163",
     "disposition": "internal",
     "guard": "Async interface/helper boundary; concrete activation inventoried separately",
     "reason": "This signature supplies work to a model or component; declaring it starts no user operation."
@@ -4938,7 +4938,7 @@
     "line": 32,
     "statement": "suspend fun describe(item: ImportItem): String = item.name",
     "occurrence": 1,
-    "source_sha256": "c97ec65743f01d1b7e2ef9adff5ebda9ed5e8d81fe7d7631704b4625612c98ea",
+    "source_sha256": "c8796567a224ec859f2ddc222f4e3421803661fdd21b56355948a40624378163",
     "disposition": "internal",
     "guard": "Async interface/helper boundary; concrete activation inventoried separately",
     "reason": "This signature supplies work to a model or component; declaring it starts no user operation."
@@ -4950,7 +4950,7 @@
     "line": 33,
     "statement": "suspend fun prepare(item: ImportItem, progress: WorkSink = {}): PreparedImport",
     "occurrence": 1,
-    "source_sha256": "c97ec65743f01d1b7e2ef9adff5ebda9ed5e8d81fe7d7631704b4625612c98ea",
+    "source_sha256": "c8796567a224ec859f2ddc222f4e3421803661fdd21b56355948a40624378163",
     "disposition": "internal",
     "guard": "Async interface/helper boundary; concrete activation inventoried separately",
     "reason": "This signature supplies work to a model or component; declaring it starts no user operation."
@@ -4962,7 +4962,7 @@
     "line": 34,
     "statement": "suspend fun revise(ref: String, choices: ImportChoices): ImportPreview",
     "occurrence": 1,
-    "source_sha256": "c97ec65743f01d1b7e2ef9adff5ebda9ed5e8d81fe7d7631704b4625612c98ea",
+    "source_sha256": "c8796567a224ec859f2ddc222f4e3421803661fdd21b56355948a40624378163",
     "disposition": "internal",
     "guard": "Async interface/helper boundary; concrete activation inventoried separately",
     "reason": "This signature supplies work to a model or component; declaring it starts no user operation."
@@ -4974,7 +4974,7 @@
     "line": 35,
     "statement": "suspend fun add(ref: String, preview: ImportPreview, choices: ImportChoices): Pair<String, Boolean>",
     "occurrence": 1,
-    "source_sha256": "c97ec65743f01d1b7e2ef9adff5ebda9ed5e8d81fe7d7631704b4625612c98ea",
+    "source_sha256": "c8796567a224ec859f2ddc222f4e3421803661fdd21b56355948a40624378163",
     "disposition": "internal",
     "guard": "Async interface/helper boundary; concrete activation inventoried separately",
     "reason": "This signature supplies work to a model or component; declaring it starts no user operation."
@@ -4986,7 +4986,7 @@
     "line": 36,
     "statement": "suspend fun discard(ref: String)",
     "occurrence": 1,
-    "source_sha256": "c97ec65743f01d1b7e2ef9adff5ebda9ed5e8d81fe7d7631704b4625612c98ea",
+    "source_sha256": "c8796567a224ec859f2ddc222f4e3421803661fdd21b56355948a40624378163",
     "disposition": "internal",
     "guard": "Declaration; the invoked call site is independently inventoried",
     "reason": "A declaration/signature is not an executing UI action."
@@ -4998,7 +4998,7 @@
     "line": 36,
     "statement": "suspend fun discard(ref: String)",
     "occurrence": 1,
-    "source_sha256": "c97ec65743f01d1b7e2ef9adff5ebda9ed5e8d81fe7d7631704b4625612c98ea",
+    "source_sha256": "c8796567a224ec859f2ddc222f4e3421803661fdd21b56355948a40624378163",
     "disposition": "internal",
     "guard": "Async interface/helper boundary; concrete activation inventoried separately",
     "reason": "This signature supplies work to a model or component; declaring it starts no user operation."
@@ -5010,7 +5010,7 @@
     "line": 43,
     "statement": "override suspend fun describe(item: ImportItem): String = withContext(Dispatchers.IO) { name(document(item)) ?: item.name }",
     "occurrence": 1,
-    "source_sha256": "c97ec65743f01d1b7e2ef9adff5ebda9ed5e8d81fe7d7631704b4625612c98ea",
+    "source_sha256": "c8796567a224ec859f2ddc222f4e3421803661fdd21b56355948a40624378163",
     "disposition": "internal",
     "guard": "Async interface/helper boundary; concrete activation inventoried separately",
     "reason": "This signature supplies work to a model or component; declaring it starts no user operation."
@@ -5022,7 +5022,7 @@
     "line": 50,
     "statement": "override suspend fun prepare(item: ImportItem, progress: WorkSink): PreparedImport = withContext(Dispatchers.IO) {",
     "occurrence": 1,
-    "source_sha256": "c97ec65743f01d1b7e2ef9adff5ebda9ed5e8d81fe7d7631704b4625612c98ea",
+    "source_sha256": "c8796567a224ec859f2ddc222f4e3421803661fdd21b56355948a40624378163",
     "disposition": "internal",
     "guard": "Async interface/helper boundary; concrete activation inventoried separately",
     "reason": "This signature supplies work to a model or component; declaring it starts no user operation."
@@ -5034,7 +5034,7 @@
     "line": 78,
     "statement": "TextImports.discard(staged.ref)",
     "occurrence": 1,
-    "source_sha256": "c97ec65743f01d1b7e2ef9adff5ebda9ed5e8d81fe7d7631704b4625612c98ea",
+    "source_sha256": "c8796567a224ec859f2ddc222f4e3421803661fdd21b56355948a40624378163",
     "disposition": "internal",
     "guard": "ImportQueue staging / new-project selected-files and volume-boundary draft",
     "reason": "Deselecting input or cancelling staging retains the original user files and existing projects; the draft can be reselected."
@@ -5046,7 +5046,7 @@
     "line": 79,
     "statement": "pdfPages.remove(staged.ref)",
     "occurrence": 1,
-    "source_sha256": "c97ec65743f01d1b7e2ef9adff5ebda9ed5e8d81fe7d7631704b4625612c98ea",
+    "source_sha256": "c8796567a224ec859f2ddc222f4e3421803661fdd21b56355948a40624378163",
     "disposition": "internal",
     "guard": "In-memory collection entry lifecycle",
     "reason": "The statement releases a listener, request, UI row, selection or cache entry; it does not delete its persisted source."
@@ -5058,7 +5058,7 @@
     "line": 84,
     "statement": "override suspend fun revise(ref: String, choices: ImportChoices): ImportPreview = withContext(Dispatchers.IO) { read(ref, choices) }",
     "occurrence": 1,
-    "source_sha256": "c97ec65743f01d1b7e2ef9adff5ebda9ed5e8d81fe7d7631704b4625612c98ea",
+    "source_sha256": "c8796567a224ec859f2ddc222f4e3421803661fdd21b56355948a40624378163",
     "disposition": "internal",
     "guard": "Async interface/helper boundary; concrete activation inventoried separately",
     "reason": "This signature supplies work to a model or component; declaring it starts no user operation."
@@ -5070,7 +5070,7 @@
     "line": 105,
     "statement": "override suspend fun add(ref: String, preview: ImportPreview, choices: ImportChoices): Pair<String, Boolean> = withContext(Dispatchers.IO) {",
     "occurrence": 1,
-    "source_sha256": "c97ec65743f01d1b7e2ef9adff5ebda9ed5e8d81fe7d7631704b4625612c98ea",
+    "source_sha256": "c8796567a224ec859f2ddc222f4e3421803661fdd21b56355948a40624378163",
     "disposition": "internal",
     "guard": "Async interface/helper boundary; concrete activation inventoried separately",
     "reason": "This signature supplies work to a model or component; declaring it starts no user operation."
@@ -5082,7 +5082,7 @@
     "line": 113,
     "statement": "pdfPages.remove(ref)",
     "occurrence": 1,
-    "source_sha256": "c97ec65743f01d1b7e2ef9adff5ebda9ed5e8d81fe7d7631704b4625612c98ea",
+    "source_sha256": "c8796567a224ec859f2ddc222f4e3421803661fdd21b56355948a40624378163",
     "disposition": "internal",
     "guard": "In-memory collection entry lifecycle",
     "reason": "The statement releases a listener, request, UI row, selection or cache entry; it does not delete its persisted source."
@@ -5094,7 +5094,7 @@
     "line": 114,
     "statement": "created.remove(ref)",
     "occurrence": 1,
-    "source_sha256": "c97ec65743f01d1b7e2ef9adff5ebda9ed5e8d81fe7d7631704b4625612c98ea",
+    "source_sha256": "c8796567a224ec859f2ddc222f4e3421803661fdd21b56355948a40624378163",
     "disposition": "internal",
     "guard": "In-memory collection entry lifecycle",
     "reason": "The statement releases a listener, request, UI row, selection or cache entry; it does not delete its persisted source."
@@ -5106,7 +5106,7 @@
     "line": 118,
     "statement": "override suspend fun discard(ref: String) = withContext(Dispatchers.IO) {",
     "occurrence": 1,
-    "source_sha256": "c97ec65743f01d1b7e2ef9adff5ebda9ed5e8d81fe7d7631704b4625612c98ea",
+    "source_sha256": "c8796567a224ec859f2ddc222f4e3421803661fdd21b56355948a40624378163",
     "disposition": "internal",
     "guard": "Declaration; the invoked call site is independently inventoried",
     "reason": "A declaration/signature is not an executing UI action."
@@ -5118,7 +5118,7 @@
     "line": 118,
     "statement": "override suspend fun discard(ref: String) = withContext(Dispatchers.IO) {",
     "occurrence": 1,
-    "source_sha256": "c97ec65743f01d1b7e2ef9adff5ebda9ed5e8d81fe7d7631704b4625612c98ea",
+    "source_sha256": "c8796567a224ec859f2ddc222f4e3421803661fdd21b56355948a40624378163",
     "disposition": "internal",
     "guard": "Async interface/helper boundary; concrete activation inventoried separately",
     "reason": "This signature supplies work to a model or component; declaring it starts no user operation."
@@ -5130,7 +5130,7 @@
     "line": 119,
     "statement": "TextImports.discard(ref)",
     "occurrence": 1,
-    "source_sha256": "c97ec65743f01d1b7e2ef9adff5ebda9ed5e8d81fe7d7631704b4625612c98ea",
+    "source_sha256": "c8796567a224ec859f2ddc222f4e3421803661fdd21b56355948a40624378163",
     "disposition": "internal",
     "guard": "ImportQueue staging / new-project selected-files and volume-boundary draft",
     "reason": "Deselecting input or cancelling staging retains the original user files and existing projects; the draft can be reselected."
@@ -5142,7 +5142,7 @@
     "line": 120,
     "statement": "pdfPages.remove(ref)",
     "occurrence": 2,
-    "source_sha256": "c97ec65743f01d1b7e2ef9adff5ebda9ed5e8d81fe7d7631704b4625612c98ea",
+    "source_sha256": "c8796567a224ec859f2ddc222f4e3421803661fdd21b56355948a40624378163",
     "disposition": "internal",
     "guard": "In-memory collection entry lifecycle",
     "reason": "The statement releases a listener, request, UI row, selection or cache entry; it does not delete its persisted source."
@@ -5154,7 +5154,7 @@
     "line": 121,
     "statement": "created.remove(ref)",
     "occurrence": 2,
-    "source_sha256": "c97ec65743f01d1b7e2ef9adff5ebda9ed5e8d81fe7d7631704b4625612c98ea",
+    "source_sha256": "c8796567a224ec859f2ddc222f4e3421803661fdd21b56355948a40624378163",
     "disposition": "internal",
     "guard": "In-memory collection entry lifecycle",
     "reason": "The statement releases a listener, request, UI row, selection or cache entry; it does not delete its persisted source."
@@ -5166,7 +5166,7 @@
     "line": 125,
     "statement": "override suspend fun replace(item: ImportItem, progress: WorkSink): PreparedImport = withContext(Dispatchers.IO) {",
     "occurrence": 1,
-    "source_sha256": "c97ec65743f01d1b7e2ef9adff5ebda9ed5e8d81fe7d7631704b4625612c98ea",
+    "source_sha256": "c8796567a224ec859f2ddc222f4e3421803661fdd21b56355948a40624378163",
     "disposition": "internal",
     "guard": "Async interface/helper boundary; concrete activation inventoried separately",
     "reason": "This signature supplies work to a model or component; declaring it starts no user operation."
@@ -5235,10 +5235,10 @@
     "id": "dd56227569fbd70da160",
     "kind": "pending",
     "path": "mobile/android/app/src/main/java/vn/abook/player/ui/components/Sheet.kt",
-    "line": 183,
+    "line": 187,
     "statement": "settle = scope.launch {",
     "occurrence": 1,
-    "source_sha256": "5384c841bd7056d877e14cac09c6aa65bbaab7e7b34d5a4adba14ba4515ff10d",
+    "source_sha256": "63a12ca647b3a915fa9d8bfa93e4ce890467f5c4b06e4ff1548b3007501a6882",
     "disposition": "pending",
     "guard": "ViewModel/operation fields: progress; Components pending indicator",
     "reason": "The model retains the operation and locks repeats; UI uses the shared pending parameter, loading content or progress owner. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
@@ -5247,10 +5247,10 @@
     "id": "33b42bb1aaca28e5111c",
     "kind": "pending",
     "path": "mobile/android/app/src/main/java/vn/abook/player/ui/components/Sheet.kt",
-    "line": 212,
+    "line": 216,
     "statement": "override suspend fun onPreFling(available: Velocity): Velocity {",
     "occurrence": 1,
-    "source_sha256": "5384c841bd7056d877e14cac09c6aa65bbaab7e7b34d5a4adba14ba4515ff10d",
+    "source_sha256": "63a12ca647b3a915fa9d8bfa93e4ce890467f5c4b06e4ff1548b3007501a6882",
     "disposition": "internal",
     "guard": "Async interface/helper boundary; concrete activation inventoried separately",
     "reason": "This signature supplies work to a model or component; declaring it starts no user operation. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
@@ -7264,7 +7264,7 @@
     "kind": "pending",
     "path": "mobile/android/app/src/main/java/vn/abook/player/ui/devices/CompanionSurfaces.kt",
     "line": 91,
-    "statement": "IconAction(S.s_lui_15_giay_tren_0_ef9cea4b(remote.name), { if (!ui.busy) scope.launch { repo.send(remote, \"skip\", -15.0) } }, \"remote_back_${remote.device}\") { PlayerGlyph(\"↶15\") }",
+    "statement": "IconAction(S.s_lui_15_giay_tren_0_ef9cea4b(remote.name), { if (!ui.busy) scope.launch { repo.send(remote, \"skip\", -15.0) } }, \"remote_back_${remote.device}\") { PlayerGlyph(\"\u21b615\") }",
     "occurrence": 1,
     "source_sha256": "0c9e14c66f3a2f5a81c1981908069f108640a5ef9f42f34301bba1d3a641a6c9",
     "disposition": "pending",
@@ -7288,7 +7288,7 @@
     "kind": "pending",
     "path": "mobile/android/app/src/main/java/vn/abook/player/ui/devices/CompanionSurfaces.kt",
     "line": 98,
-    "statement": "IconAction(S.s_toi_15_giay_tren_0_4023d456(remote.name), { if (!ui.busy) scope.launch { repo.send(remote, \"skip\", 15.0) } }, \"remote_forward_${remote.device}\") { PlayerGlyph(\"15↷\") }",
+    "statement": "IconAction(S.s_toi_15_giay_tren_0_4023d456(remote.name), { if (!ui.busy) scope.launch { repo.send(remote, \"skip\", 15.0) } }, \"remote_forward_${remote.device}\") { PlayerGlyph(\"15\u21b7\") }",
     "occurrence": 1,
     "source_sha256": "0c9e14c66f3a2f5a81c1981908069f108640a5ef9f42f34301bba1d3a641a6c9",
     "disposition": "pending",
@@ -10803,10 +10803,10 @@
     "id": "1a7aa906907f8c98cbe0",
     "kind": "pending",
     "path": "mobile/android/app/src/main/java/vn/abook/player/ui/nowplaying/NowPlayingScreen.kt",
-    "line": 346,
+    "line": 347,
     "statement": "onRetry = { onDim(false); scope.launch { model.loadReadAlong() } },",
     "occurrence": 1,
-    "source_sha256": "28679c906a8890a7d69fc407c0d10ad7197f4503c6eea2f10ecbef992faeff67",
+    "source_sha256": "faa069b041feea02be80537bdccb33fb2290855debaf1d5abd2ccbccec0f7729",
     "disposition": "pending",
     "guard": "ViewModel/operation fields: pending, preparing, progress, windowProgress; Components pending indicator",
     "reason": "The model retains the operation and locks repeats; UI uses the shared pending parameter, loading content or progress owner. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
@@ -10995,10 +10995,10 @@
     "id": "6b3cbb2a48258077c161",
     "kind": "destructive",
     "path": "mobile/android/app/src/main/java/vn/abook/player/ui/nowplaying/PlayerSheets.kt",
-    "line": 77,
+    "line": 78,
     "statement": "fun pop() { if(parents.isNotEmpty())window.openSheet(parents.removeAt(parents.lastIndex)) else window.closeSheet() }",
     "occurrence": 1,
-    "source_sha256": "62e0dd6962074bde653d97275c5ee0353d9acb7c11d360b8f67ec9e8c55f9162",
+    "source_sha256": "cd784aa2d21f6a04e821477a3151758624c1ee19a0e891f53558681b72558556",
     "disposition": "internal",
     "guard": "Declaration; the invoked call site is independently inventoried",
     "reason": "A declaration/signature is not an executing UI action. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Devvoice review: device voice names, circled radio marks, one-line names and 8 dp text gaps leave this action and its guard unchanged."

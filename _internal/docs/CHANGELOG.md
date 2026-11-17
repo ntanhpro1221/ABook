@@ -7,6 +7,8 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+- Điện thoại: bỏ dải trống cố định dưới đáy màn Thêm sách, Xem trước, Sửa sách, Xuất, bảng trượt và Đang nghe - nút cuối đứng ngay trên vạch cử chỉ (khoảng thở gộp với khoảng tránh vạch, không cộng thêm); khi nhập sách, thanh tiến độ chạy theo đúng bước mà dòng chữ đang nói ("Đang chép · 1,3 GB / 1,4 GB" là thanh gần đầy).
+
 - Điện thoại, web và máy tính: tên giọng (và tên nhân vật khi gộp người) quá dài không còn bị cắt bằng "…" - chữ thu nhỏ vừa một dòng, dài quá nữa thì xuống dòng để luôn đọc trọn tên.
 
 - Dòng giọng đọc giữ tên trên một dòng, đánh dấu bằng biểu tượng chọn và chừa khoảng cách rõ với nút Nghe thử trên điện thoại, web và máy tính; nút quay lại chỗ vừa nghe không che tên chương.

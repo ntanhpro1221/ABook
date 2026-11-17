@@ -8,6 +8,7 @@ import vn.abook.player.S
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.WindowInsets
+import vn.abook.player.ui.components.bottomBreath
 import vn.abook.player.ui.components.gestureSafe
 import vn.abook.player.ui.components.fadeEdges
 import vn.abook.player.ui.components.ClockLabel
@@ -302,7 +303,7 @@ private fun NowPlayingBody(
         val sideT = animateFloatAsState(if (split) 1f else 0f, tween(MotionMs.MEDIUM, easing = Motion.Standard), label = "now-playing-split")
         val rightComposed by remember { derivedStateOf { split || sideT.value > 0f } }
         Layout(
-            modifier = Modifier.fillMaxSize().windowInsetsPadding(gestureSafe(WindowInsets.systemBars)).padding(horizontal = 20.dp).padding(bottom = 12.dp),
+            modifier = Modifier.fillMaxSize().windowInsetsPadding(gestureSafe(WindowInsets.systemBars)).padding(horizontal = 20.dp).padding(bottom = bottomBreath(12.dp)),
             content = {
                 val controlsScroll = rememberScrollState()
                 Column(Modifier.fillMaxSize().then(if (compactHeight) Modifier.fadeEdges(controlsScroll).verticalScroll(controlsScroll) else Modifier).testTag("player_controls"), content = playerColumn)

@@ -72,7 +72,7 @@ class ImportRepo(private val context: Context) : ImportSource {
         try {
             staged.pdf?.let { pdfPages[staged.ref] = readPdf(it, progress) }
             // Tách chương, tìm lời chú: không có số đo trước được - thanh chạy liên tục, chữ nói "Đang đọc".
-            progress(Work(WorkStep.Read, 0, 0, TextImports.STAGE_SHARE, 1f))
+            progress(Work(WorkStep.Read))
             PreparedImport(staged.ref, shown, preview = read(staged.ref, ImportChoices()))
         } catch (error: Exception) {
             TextImports.discard(staged.ref)
@@ -169,7 +169,7 @@ class ImportRepo(private val context: Context) : ImportSource {
             var chars = 0L
             val pages = pdf.pageCount.toLong()
             (0 until pdf.pageCount).map { index ->
-                progress(Work(WorkStep.Read, index.toLong(), pages, TextImports.STAGE_SHARE, 1f, bytes = false))
+                progress(Work(WorkStep.Read, index.toLong(), pages, bytes = false))
                 pdf.openPage(index).use { page ->
                     page.textContents.flatMap { it.text.lines() }.also { lines ->
                         chars += lines.sumOf { it.length.toLong() }

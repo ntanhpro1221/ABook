@@ -135,12 +135,9 @@ object TextImports {
         return size
     }
 
-    /** Phần của thanh dành cho bước chép file chữ vào máy; phần còn lại là bước đọc (tách chương, lấy chữ PDF). */
-    const val STAGE_SHARE = 0.7f
-
     /**
      * Chép MỘT file (EPUB / DOCX / PDF / TXT). `open` trả luồng đọc file (content:// của hệ thống). `progress`: byte đã chép / `total`
-     * (cỡ file theo hệ thống; <= 0 = chưa biết, thanh chạy liên tục), chiếm [0, [STAGE_SHARE]] của thanh.
+     * (cỡ file theo hệ thống; <= 0 = chưa biết, thanh chạy liên tục).
      */
     fun stageFile(name: String, total: Long = 0, progress: WorkSink = {}, open: () -> InputStream?): Staged {
         val clean = safeName(name, "sach")
@@ -150,8 +147,8 @@ object TextImports {
         val target = File(dir(ref), clean)
         try {
             val input = open() ?: throw BookImport.Failed(S.s_chua_doc_duoc_file_6575d76b)
-            progress(Work(WorkStep.Copy, 0, total, 0f, STAGE_SHARE))
-            input.use { copy(it, target, MAX_SOURCE_BYTES) { done -> progress(copyWork(done, total, STAGE_SHARE)) } }
+            progress(Work(WorkStep.Copy, 0, total))
+            input.use { copy(it, target, MAX_SOURCE_BYTES) { done -> progress(copyWork(done, total)) } }
         } catch (error: Exception) {
             dir(ref).deleteRecursively()
             throw error
@@ -172,7 +169,7 @@ object TextImports {
             val names = JSONObject()
             for ((index, pair) in texts.withIndex()) {
                 val (fileName, open) = pair
-                progress(Work(WorkStep.Copy, index.toLong(), texts.size.toLong(), 0f, STAGE_SHARE, bytes = false))
+                progress(Work(WorkStep.Copy, index.toLong(), texts.size.toLong(), bytes = false))
                 try {
                     val input = open() ?: throw BookImport.Failed(S.s_chua_mo_duoc_file_8895249d)
                     val diskName = uniqueName(safeName(fileName, "chuong.txt"), used)
@@ -182,7 +179,7 @@ object TextImports {
                     throw BookImport.Failed(S.s_chua_doc_duoc_0_ban_kiem_tra_quyen_doc_va_9145df31(fileName))
                 }
             }
-            progress(Work(WorkStep.Copy, texts.size.toLong(), texts.size.toLong(), 0f, STAGE_SHARE, bytes = false))
+            progress(Work(WorkStep.Copy, texts.size.toLong(), texts.size.toLong(), bytes = false))
             File(folder, FOLDER_NAMES).writeText(names.toString(), Charsets.UTF_8)
         } catch (error: Exception) {
             dir(ref).deleteRecursively()

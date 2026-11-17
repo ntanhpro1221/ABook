@@ -109,15 +109,16 @@ class BookFileImportTest {
             .put("chapters", JSONArray().put(chapter(1, 0, "chapters/1.mp3")).put(chapter(2, 0, "chapters/2.mp3")))
         val file = abook("dai.abook", 6, mapOf("chapters/1.mp3" to one, "chapters/2.mp3" to two), book)
         val seen = ArrayList<Work>()
-        BookFileImport.importFile(file, progress = { seen += it }, from = 0.5f)
+        BookFileImport.importFile(file, progress = { seen += it })
         assertTrue(seen.size > 8)
-        assertTrue(seen.all { it.step == WorkStep.Check && it.from == 0.5f && it.to == 1f })
+        assertTrue(seen.all { it.step == WorkStep.Check })
         val total = seen.first().total
         assertTrue(total >= one.size + two.size)
         assertEquals(0L, seen.first().done)
         assertEquals(seen.map { it.done }.sorted(), seen.map { it.done })
         assertEquals(total, seen.last().done)
-        assertEquals(0.5f, seen.first().fraction!!, 1e-6f)
+        // Thanh của bước kiểm đi từ 0 tới đầy theo chính bước ấy: cùng con số với chữ "Đang kiểm tra · x / y" của hàng.
+        assertEquals(0f, seen.first().fraction!!, 1e-6f)
         assertEquals(1f, seen.last().fraction!!, 1e-6f)
     }
 
