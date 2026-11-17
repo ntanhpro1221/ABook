@@ -2,8 +2,9 @@
 nhạc (thẻ + độ dài đọc bằng tinytag). ffmpeg chỉ phục vụ phần phân tích: giải mã cho model (music_mel.py) và đo độ to (music_plan.py).
 Đường tải ghim cứng (URL + SHA-256 + cỡ), qua studio_setup.download (.part, kiểm băm, rồi mới đổi tên).
 
-Nguồn: ZIP FFmpeg-Builds (BtbN) n8.1.3-35-gf1acb0a266 win64-gpl-8.1 (nhánh release/8.1), Windows x64 tĩnh GPL-3.0-or-later,
-thẻ có ngày autobuild-2026-11-16-15-29 (không dùng `latest`).
+Nguồn: ZIP FFmpeg-Builds (BtbN) n8.1.3-27-g8dca1586f4 win64-gpl-8.1 (nhánh release/8.1), Windows x64 tĩnh GPL-3.0-or-later,
+thẻ autobuild-2026-10-31-12-59 = bản CUỐI THÁNG (FFmpeg-Builds giữ bản cuối mỗi tháng 2 năm, bản ngày chỉ 14 ngày rồi xoá, URL 404).
+Đổi pin: chỉ chọn thẻ ngày cuối tháng (test_ffmpeg_setup kiểm), rồi chạy scripts/ffmpeg_pinned_codecs.py với exe mới.
 Chỉ tải phần nén của ffmpeg.exe bằng HTTP Range; ghim SHA-256/cỡ cả phần nén và exe, kiểm CRC (docs/THIRD_PARTY.md). Chỉ Windows x86_64 có đường tải; nền tảng khác phải tự
 cài ffmpeg (lý do nói rõ). Máy đã có ffmpeg không phải của mình (imageio_ffmpeg, hay trong PATH) thì `external()` đúng và mô-đun không
 tải gì. Việc tải/đặt trạng thái do music_module.py lo; ở đây chỉ có `install` (đồng bộ) và các phép kiểm.
@@ -26,15 +27,15 @@ from . import studio_setup, zip_range
 # Giữ tên WHEEL cho caller: cỡ/băm của phần DEFLATE, URL của ZIP có tag cố định.
 WHEEL = studio_setup.Download(
     "bộ đọc nhạc (ffmpeg)",
-    "https://github.com/FFmpeg-Builds/FFmpeg-Builds/releases/download/autobuild-2026-11-16-15-29/ffmpeg-n8.1.3-35-gf1acb0a266-win64-gpl-8.1.zip",
-    "64728b8cb89b5158b8d31f9420f91f95273a68ed7189cd51ef8c71a8de25e882",
-    63_682_111,
+    "https://github.com/FFmpeg-Builds/FFmpeg-Builds/releases/download/autobuild-2026-10-31-12-59/ffmpeg-n8.1.3-27-g8dca1586f4-win64-gpl-8.1.zip",
+    "7ec86ab76b06d90656139025394513670c2ff8b6404b957be24bf1ec09792520",
+    63_753_164,
 )
-MEMBER = "ffmpeg-n8.1.3-35-gf1acb0a266-win64-gpl-8.1/bin/ffmpeg.exe"
-ARCHIVE_SIZE = 193_986_342
-EXE_SIZE = 165_433_344
-EXE_SHA256 = "9312adcd5592cebccfa0c9236d306eab847c307be15e19dcdf560bdc685db12f"
-EXE_CRC = 235974328
+MEMBER = "ffmpeg-n8.1.3-27-g8dca1586f4-win64-gpl-8.1/bin/ffmpeg.exe"
+ARCHIVE_SIZE = 194_182_300
+EXE_SIZE = 165_577_728
+EXE_SHA256 = "c46215f8889634396f0ac0acac738ef2145175e5b6caf28b3daa8ac9a9980c5f"
+EXE_CRC = 876847253
 ENV_DOWNLOAD = "ABOOK_FFMPEG_DOWNLOAD"  # "0" = không bao giờ tải
 NOUN = "bộ đọc nhạc (ffmpeg)"  # trong câu báo lỗi tải
 FOLDER = Path("tools") / "ffmpeg"  # dưới thư mục dữ liệu của app (server.py)

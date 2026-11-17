@@ -54,10 +54,23 @@ def test_install_unpacks_the_exe_removes_the_archive_and_registers_it(bare_machi
 
 
 def test_the_archive_is_pinned_and_only_the_member_is_taken() -> None:
-    assert ffmpeg_setup.WHEEL.url.startswith("https://github.com/FFmpeg-Builds/FFmpeg-Builds/releases/download/autobuild-2026-11-16-15-29/")
+    assert ffmpeg_setup.WHEEL.url.startswith("https://github.com/FFmpeg-Builds/FFmpeg-Builds/releases/download/autobuild-2026-10-31-12-59/")
     assert len(ffmpeg_setup.WHEEL.sha256) == 64 and ffmpeg_setup.WHEEL.size > 0
-    assert ffmpeg_setup.MEMBER == "ffmpeg-n8.1.3-35-gf1acb0a266-win64-gpl-8.1/bin/ffmpeg.exe"
+    assert ffmpeg_setup.MEMBER == "ffmpeg-n8.1.3-27-g8dca1586f4-win64-gpl-8.1/bin/ffmpeg.exe"
+    assert ffmpeg_setup.WHEEL.url.endswith("/" + ffmpeg_setup.MEMBER.split("/")[0] + ".zip"), "exe nằm trong đúng ZIP đã ghim"
     assert ffmpeg_setup.pin() == ffmpeg_setup.WHEEL.sha256
+
+
+def test_the_pinned_build_is_a_month_end_build_that_is_not_deleted() -> None:
+    """FFmpeg-Builds giữ bản cuối mỗi tháng 2 năm nhưng xoá bản ngày sau 14 ngày (README "The last build of each month is kept for
+    two years"): ghim bản ngày thì đường tải 404 sau hai tuần. Thẻ ghim phải là ngày cuối tháng."""
+    import calendar
+    import re
+
+    found = re.search(r"/releases/download/autobuild-(\d{4})-(\d{2})-(\d{2})-\d{2}-\d{2}/", ffmpeg_setup.WHEEL.url)
+    assert found, "thẻ có ngày, không phải `latest`"
+    year, month, day = (int(part) for part in found.groups())
+    assert day == calendar.monthrange(year, month)[1], f"autobuild-{year}-{month:02d}-{day:02d} không phải bản cuối tháng: sẽ bị xoá sau 14 ngày"
 
 
 @pytest.mark.parametrize("stamp", [None, "old-export-pin", "current", "invalid-utf8"])

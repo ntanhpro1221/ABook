@@ -155,31 +155,32 @@ def test_every_platform_accepts_the_same_music_extensions() -> None:
     assert "&[" + ", ".join(f'"{e}"' for e in expected) + "]" in tauri
 
 
-def _listed(exe: str, kind: str) -> set[str]:
-    lines = subprocess.run([exe, "-hide_banner", f"-{kind}"], capture_output=True, text=True, check=True).stdout.splitlines()
-    return {parts[1] for parts in (line.split() for line in lines) if len(parts) >= 2 and not parts[0].startswith("-")}
-
-
 def test_the_pinned_ffmpeg_decodes_every_extension_the_app_accepts() -> None:
-    """Chạy trên đúng exe ghim trong ffmpeg_setup (băm khớp EXE_SHA256), do ABOOK_TEST_FFMPEG trỏ tới. Không có thì bỏ qua - đổi
-    bản ffmpeg phải chạy test này với exe mới."""
-    import hashlib
+    """Bộ tách + bộ giải của exe ffmpeg đang ghim, ghi ở tests/fixtures/ffmpeg_pinned_codecs.json bởi scripts/ffmpeg_pinned_codecs.py
+    (kèm SHA-256 của exe): luôn chạy, không cần exe. Đổi pin mà quên ghi lại fixture thì đỏ. ABOOK_TEST_FFMPEG=<exe ghim> thì kiểm
+    thêm fixture đúng với exe thật."""
+    import json
     import os
+    import sys
 
     from abook.webui import ffmpeg_setup
 
-    exe = os.environ.get("ABOOK_TEST_FFMPEG", "")
-    if not exe or not Path(exe).is_file():
-        pytest.skip("không có exe ffmpeg ghim (ABOOK_TEST_FFMPEG)")
-    digest = hashlib.sha256()
-    with open(exe, "rb") as handle:
-        while chunk := handle.read(1 << 20):
-            digest.update(chunk)
-    assert digest.hexdigest() == ffmpeg_setup.EXE_SHA256, "ABOOK_TEST_FFMPEG phải là đúng exe đang ghim"
-    demuxers, decoders = _listed(exe, "demuxers"), _listed(exe, "decoders")
+    recorded = json.loads((_ROOT / "tests/fixtures/ffmpeg_pinned_codecs.json").read_text(encoding="utf-8"))
+    assert recorded["exe_sha256"] == ffmpeg_setup.EXE_SHA256 and recorded["member"] == ffmpeg_setup.MEMBER, \
+        "fixture thuộc exe khác pin: chạy lại scripts/ffmpeg_pinned_codecs.py với exe mới"
+    demuxers, decoders = set(recorded["demuxers"]), set(recorded["audio_decoders"])
     for extension, (demuxer, needed) in TRACK_DECODERS.items():
         assert demuxer in demuxers, f".{extension}: thiếu bộ tách {demuxer}"
         assert not set(needed) - decoders, f".{extension}: thiếu bộ giải {sorted(set(needed) - decoders)}"
+
+    exe = os.environ.get("ABOOK_TEST_FFMPEG", "")
+    if exe:  # phần kiểm thêm khi có exe thật; không có thì phần fixture ở trên đã là phép kiểm
+        sys.path.insert(0, str(_ROOT / "scripts"))
+        import ffmpeg_pinned_codecs
+
+        assert ffmpeg_pinned_codecs.sha256(Path(exe)) == ffmpeg_setup.EXE_SHA256, "ABOOK_TEST_FFMPEG phải là đúng exe đang ghim"
+        live = ffmpeg_pinned_codecs.listing(Path(exe))
+        assert {key: recorded[key] for key in live} == live, "fixture phải khớp đúng exe đang ghim"
 
 
 def test_removing_a_track_deletes_its_file_and_loudness(tmp_path: Path, songs) -> None:

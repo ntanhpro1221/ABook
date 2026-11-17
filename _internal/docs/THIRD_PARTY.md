@@ -28,10 +28,10 @@ phần ấy.
   [minimp3](https://github.com/lieff/minimp3) (CC0 1.0, commit a2ad968c, `desktop_qt/third_party/minimp3/` kèm LICENSE) - giải mã mp3 cho
   đường âm thanh WASAPI (rẻ hơn Media Foundation ~4 lần).
 - FFmpeg / imageio-ffmpeg (LGPL hoặc GPL tuỳ bản build). Bản app chỉ-nghe KHÔNG mang ffmpeg trong bộ cài: mô-đun "Phân tích nhạc" và việc "Xuất sách nói" (MP3 / M4B)
-  đều do người dùng bấm mới tải (`webui/music_module.py`, hộp xuất sách nói), cùng lấy riêng `bin/ffmpeg.exe` trong ZIP [FFmpeg-Builds n8.1.3-35-gf1acb0a266 win64-gpl-8.1](https://github.com/FFmpeg-Builds/FFmpeg-Builds/releases/tag/autobuild-2026-11-16-15-29)
-  bằng HTTP Range (~64 MB thay vì cả ZIP 194 MB; Windows x64 tĩnh, GPL-3.0-or-later; thẻ có ngày, không dùng `latest`).
+  đều do người dùng bấm mới tải (`webui/music_module.py`, hộp xuất sách nói), cùng lấy riêng `bin/ffmpeg.exe` trong ZIP [FFmpeg-Builds n8.1.3-27-g8dca1586f4 win64-gpl-8.1](https://github.com/FFmpeg-Builds/FFmpeg-Builds/releases/tag/autobuild-2026-10-31-12-59)
+  bằng HTTP Range (~64 MB thay vì cả ZIP 194 MB; Windows x64 tĩnh, GPL-3.0-or-later; thẻ bản cuối tháng, FFmpeg-Builds giữ 2 năm; bản ngày bị xoá sau 14 ngày; không dùng `latest`).
   `webui/ffmpeg_setup.py` ghim URL có tag, cỡ ZIP, SHA-256/cỡ phần nén và exe; kiểm thêm CRC trước khi thay exe.
-  [Mã nguồn FFmpeg n8.1.3-35-gf1acb0a266](https://github.com/FFmpeg/FFmpeg/commit/f1acb0a2666c78d92688f4c3d2803a132f5590f6) (nhánh release/8.1), [kịch bản build và thư viện của FFmpeg-Builds](https://github.com/FFmpeg-Builds/FFmpeg-Builds).
+  [Mã nguồn FFmpeg n8.1.3-27-g8dca1586f4](https://github.com/FFmpeg/FFmpeg/commit/8dca1586f468bfcbb78ae3ed618af1361d9f140a) (nhánh release/8.1), [kịch bản build và phiên bản từng thư viện tĩnh của FFmpeg-Builds ở commit 5031c6f1](https://github.com/FFmpeg-Builds/FFmpeg-Builds/tree/5031c6f1082414e53688d39e521849905071070d) (commit của thẻ autobuild-2026-10-31-12-59).
   Studio hoặc máy có sẵn `imageio-ffmpeg` vẫn có thể dùng binary của gói đó; phần bọc imageio-ffmpeg là BSD-2-Clause.
   Tải về thư mục dữ liệu của app (`tools/ffmpeg`), gỡ app là gỡ nó.
 - CMU Pronouncing Dictionary (`cmudict.dict`, dữ liệu từ CMU Sphinx; sử dụng và phân phối không hạn chế, yêu cầu ghi nhận
