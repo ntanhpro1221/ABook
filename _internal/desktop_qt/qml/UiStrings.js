@@ -1607,6 +1607,7 @@ function s_hen_gio_tat_con_0_phut_e53bab94(p0) { return "Hẹn giờ tắt: còn
 function s_hen_lai_0_phut_d6009aba(p0) { return "Hẹn lại " + String(p0) + " phút"; }
 var s_hen_lai_c2aae1b7 = "Hẹn lại ";
 function s_het_0_chuong_79433c77(p0) { return "Hết " + String(p0) + " chương"; }
+function s_het_0_chuong_b59210aa(p0) { return "hết " + String(p0) + " chương"; }
 var s_het_chuong_f1d590bb = "Hết chương";
 var s_het_chuong_nay_8ccc288f = "hết chương này";
 var s_het_han_sau_34497ee1 = "Hết hạn sau ";

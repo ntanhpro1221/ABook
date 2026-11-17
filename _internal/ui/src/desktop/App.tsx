@@ -39,7 +39,8 @@ import { setExternalOpener } from "@/shared/openExternal";
 import { toastRemoved } from "@/shared/trashUndo";
 import { homePage, LISTEN_ONLY_EVENT, listenOnlyLine, listenOnlyOwner, peerPage } from "@/shared/peerStudio";
 import { watchUntilBack } from "@/listen/peerBack";
-import { api, ApiError, currentPeer, type AppInfo } from "@/studio/api";
+import { api, ApiError, currentPeer, type AppInfo, type Preferences } from "@/studio/api";
+import type { LastSleep } from "@/listen/sleep";
 import { pickFolder, useAppInfo, useLibrary, usePreferences } from "@/studio/data";
 import { LibraryMoveRecovery } from "./LibraryMoveRecovery";
 import { PICK_SOURCE } from "@/studio/pickSource";
@@ -540,6 +541,13 @@ export function App() {
   const retry = useCallback(() => void refetch(), [refetch]);
   const { data: preferences, error: preferencesError, refetch: reloadPreferences } = usePreferences();
   const [voiceReady, setVoiceReady] = useState(false);
+  // Lần hẹn giờ cuối (chủ sách 17-11): nhớ qua các lần mở app, lần sau hộp hẹn giờ mở sẵn ở mốc này. Không lưu được thì vẫn dùng cho phiên này.
+  const client = useQueryClient();
+  const saveLastSleep = useCallback((lastSleep: LastSleep) => {
+    void api<Preferences>("/api/preferences", { method: "PUT", body: { lastSleep } })
+      .then((saved) => client.setQueryData(["preferences"], saved))
+      .catch(() => undefined);
+  }, [client]);
   useEffect(() => {
     if (!preferences || info?.remote) return;
     restoreDefaultVoice(preferences.readAloudVoice ?? "");
@@ -592,6 +600,8 @@ export function App() {
           extendMinutes={preferences?.sleepExtendMinutes ?? info.sleepExtendMinutes}
           systemIdleReader={!info.remote && !currentPeer() ? readLocalSystemIdleMs : undefined}
           sleepSchedule={preferences ? preferences.sleepSchedule : info.sleepSchedule}
+          lastSleep={preferences ? preferences.lastSleep : info.lastSleep}
+          onLastSleep={info.remote ? undefined : saveLastSleep}
         >
           <ClipBridge>
             <MotionHashRouter>

@@ -27,6 +27,10 @@ import {
   sleepExtended,
   sleepFrom,
   sleepAfterChapter,
+  LAST_SLEEP_DEFAULT,
+  cleanLastSleep,
+  lastSleepAfter,
+  type LastSleep,
   type SleepMode,
   type SleepRequest,
   type SleepSchedule,
@@ -128,7 +132,8 @@ interface PlayerState {
   fading: boolean;
   /** Lúc hẹn giờ vừa dừng phát (ms) - để nói S.s_copy_3e0e261e4faa và mời bật lại. */
   sleepStoppedAt: number | null;
-  lastSleepMinutes: number;
+  /** Lần hẹn giờ cuối người nghe tự đặt (tuỳ chọn `lastSleep`; chưa từng đặt: 30 phút): mốc mở sẵn của hộp hẹn giờ và nút "Bật lại". */
+  lastSleep: LastSleep;
   purpose: Purpose;
   /** Phát hết chương cuối đã có: "finished" nếu cuốn đã đủ, "caughtUp" nếu cuốn còn đang làm. */
   atEnd: "none" | "caughtUp" | "finished";
@@ -256,6 +261,8 @@ export function PlayerProvider({
   extendMinutes = DEFAULT_EXTEND_MINUTES,
   activityResets = true,
   sleepSchedule = null,
+  lastSleep: storedLastSleep = null,
+  onLastSleep,
   systemIdleReader,
   plainOpen = false,
 }: {
@@ -268,6 +275,10 @@ export function PlayerProvider({
   extendMinutes?: number;
   activityResets?: boolean;
   sleepSchedule?: SleepSchedule | null;
+  /** Lần hẹn giờ cuối đã lưu (tuỳ chọn `lastSleep`, chưa làm sạch); null = chưa từng đặt. */
+  lastSleep?: unknown;
+  /** Người nghe vừa tự đặt hẹn giờ: lưu lần hẹn này làm mốc cho lần mở sau (PUT /api/preferences). */
+  onLastSleep?: (value: LastSleep) => void;
   systemIdleReader?: () => Promise<number | null>;
   /** Mở / đóng S.s_dang_nghe_9310d8cf chỉ bằng hoạt ảnh CSS (trượt + mờ, chạy trên GPU), không qua View Transition: điện thoại (WebView tầm trung) - một chuyển
    *  cảnh RỖNG đã chiếm khung 70-140 ms vì phải chụp và dọn cả tài liệu (đo 6x chậm, docs/DESIGN.md 5.2 "60 fps"). Đổi lại bìa không bay. */
@@ -302,7 +313,15 @@ export function PlayerProvider({
   const [sleep, setSleepState] = useState<SleepMode>({ kind: "off" });
   const [fading, setFading] = useState(false);
   const [sleepStoppedAt, setSleepStoppedAt] = useState<number | null>(null);
-  const [lastSleepMinutes, setLastSleepMinutes] = useState(30);
+  const storedLastSleepKey = JSON.stringify(cleanLastSleep(storedLastSleep));
+  const [lastSleep, setLastSleep] = useState<LastSleep>(() => cleanLastSleep(storedLastSleep) ?? LAST_SLEEP_DEFAULT);
+  // Tuỳ chọn đến sau (tải xong, máy khác vừa đổi): lấy theo bản đã lưu.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => { const stored = cleanLastSleep(storedLastSleep); if (stored) setLastSleep(stored); }, [storedLastSleepKey]);
+  const lastSleepRef = useRef(lastSleep);
+  lastSleepRef.current = lastSleep;
+  const onLastSleepRef = useRef(onLastSleep);
+  onLastSleepRef.current = onLastSleep;
   const [purpose, setPurpose] = useState<Purpose>("listen");
   const [atEnd, setAtEnd] = useState<PlayerState["atEnd"]>("none");
   const [canGoBack, setCanGoBack] = useState(false);
@@ -918,7 +937,6 @@ export function PlayerProvider({
       automaticSleep.current = selectedSleep.current.window ? "schedule" : null;
       refs.current.scheduleOffFor = selectedSleep.current.disabledWindow ?? "";
       applySleep(sleepFrom(selectedSleep.current.request, false, Date.now()));
-      if (selectedSleep.current.request.kind === "minutes") setLastSleepMinutes(selectedSleep.current.request.minutes);
     }
     if (current && (current.bookId !== book.id || current.recordId !== activeRecord(book))) {
       refs.current.history = [];
@@ -1300,6 +1318,12 @@ export function PlayerProvider({
     automaticSleep.current = null;
     refs.current.lastActivity = Date.now();
     toast.dismiss("automatic-sleep");
+    if (request.kind !== "off") {
+      const next = lastSleepAfter(lastSleepRef.current, request);
+      lastSleepRef.current = next;
+      setLastSleep(next);
+      onLastSleepRef.current?.(next);
+    }
     if (native) {
       native.setSleep(request);
       return;
@@ -1315,7 +1339,6 @@ export function PlayerProvider({
       refs.current.scheduleOffFor = scheduleWindow(options.schedule) ?? "";
       return;
     }
-    if (request.kind === "minutes") setLastSleepMinutes(request.minutes);
     setSleepStoppedAt(null);
     if (book && refs.current.purpose === "listen") night.start(book, request.kind === "minutes" ? request.minutes : null, position());
   }, [applySleep, endFade, engine, native, night, options.schedule, position, rememberSleep]);
@@ -2021,11 +2044,11 @@ export function PlayerProvider({
   }, []);
 
   const value = useMemo<PlayerValue>(() => ({
-    track, queue, playing, buffering: buffering || preparingBookId !== null, preparingBookId, rate, volume, sleep, fading, sleepStoppedAt, lastSleepMinutes, purpose, atEnd,
+    track, queue, playing, buffering: buffering || preparingBookId !== null, preparingBookId, rate, volume, sleep, fading, sleepStoppedAt, lastSleep, purpose, atEnd,
     canGoBack, error, errorRepeat, notice, options, musicCredit, musicBroken, musicOffline, musicLoading,
     play, prepare, toggle, resume, retry, dismissError, wantsPlay, pause, seek, skip, next, previous, jumpTo, goBack, restart, setRate, setVolume, setSleep,
     extendSleep, close, switchRecord, positionStamp, setContinues,
-  }), [track, queue, playing, buffering, preparingBookId, rate, volume, sleep, fading, sleepStoppedAt, lastSleepMinutes, purpose, atEnd,
+  }), [track, queue, playing, buffering, preparingBookId, rate, volume, sleep, fading, sleepStoppedAt, lastSleep, purpose, atEnd,
     canGoBack, error, errorRepeat, notice, options, musicCredit, musicBroken, musicOffline, musicLoading, play, prepare, toggle, resume, retry, dismissError, wantsPlay, pause, seek, skip, next, previous, jumpTo, goBack, restart,
     setRate, setVolume, setSleep, extendSleep, close, switchRecord, positionStamp, setContinues]);
 

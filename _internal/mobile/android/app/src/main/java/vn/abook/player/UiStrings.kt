@@ -1716,6 +1716,7 @@ internal object S {
     const val s_hen_kho_5490c924 = "Hên-khơ"
     fun s_hen_lai_0_phut_d6009aba(p0: Any?): String = "Hẹn lại " + p0.toString() + " phút"
     fun s_het_0_chuong_79433c77(p0: Any?): String = "Hết " + p0.toString() + " chương"
+    fun s_het_0_chuong_b59210aa(p0: Any?): String = "hết " + p0.toString() + " chương"
     const val s_het_17348fa3 = "hết"
     const val s_het_6_gio_giu_phan_da_doc_ban_bam_xuat_lai_81c30b27 = "Hết 6 giờ; giữ phần đã đọc — bạn bấm Xuất lại."
     const val s_het_cho_trong_tren_dien_thoai_hoac_o_noi_l_b00cd071 = "Hết chỗ trống trên điện thoại hoặc ở nơi lưu - dọn bớt rồi xuất lại"

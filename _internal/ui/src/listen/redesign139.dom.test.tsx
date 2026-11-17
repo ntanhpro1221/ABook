@@ -58,7 +58,7 @@ const player = (patch: Record<string, unknown> = {}) => {
     musicBroken: false, musicOffline: false, musicLoading: false, toggle: vi.fn(), close: vi.fn(), skip: vi.fn(), next: vi.fn(), previous: vi.fn(),
     setRate: vi.fn(), setVolume: vi.fn(), jumpTo: vi.fn(), goBack: vi.fn(), resume: vi.fn(), retry: vi.fn(), dismissError: vi.fn(), setSleep: vi.fn(), extendSleep: vi.fn(),
     positionStamp: () => 0, switchRecord: vi.fn(), setContinues: vi.fn(), pause: vi.fn(), play: vi.fn(), seek: vi.fn(),
-    sleepStoppedAt: null, lastSleepMinutes: 20,
+    sleepStoppedAt: null, lastSleep: { kind: "minutes", minutes: 20, chapters: 1 },
     ...patch,
   };
 };

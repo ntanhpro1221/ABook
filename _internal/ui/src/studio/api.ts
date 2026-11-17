@@ -338,6 +338,8 @@ export interface AppInfo {
   sleepFadeSeconds: number;
   sleepExtendMinutes: number;
   sleepSchedule: { from: string; to: string; minutes: number } | null;
+  /** Lần hẹn giờ cuối người nghe tự đặt (listen/sleep.ts LastSleep); null = chưa từng đặt. */
+  lastSleep?: import("@/listen/sleep").LastSleep | null;
   /** File trạng thái hỏng đã được giữ lại lúc mở app (webui/notices.py): mỗi dòng báo một lần. */
   notices?: { id: string; text: string }[];
   libraryMoveRecovery?: import("@/desktop/LibraryMoveRecovery").LibraryMoveRecoveryState | null;
@@ -353,6 +355,8 @@ export interface Preferences {
   sleepFadeSeconds: number;
   sleepExtendMinutes: number;
   sleepSchedule: { from: string; to: string; minutes: number } | null;
+  /** Lần hẹn giờ cuối người nghe tự đặt (listen/sleep.ts LastSleep); null = chưa từng đặt. */
+  lastSleep?: import("@/listen/sleep").LastSleep | null;
   /** Máy tính xách tay rút sạc: tạm dừng tạo sách (abook/power_source.py). */
   pauseOnBattery?: boolean;
   /** Máy tự chọn nhạc nền cho sách chỉ có chữ chưa chọn nhạc (mặc định bật; listen/playlistBed.ts AUTO_MUSIC_LABEL). */
