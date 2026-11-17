@@ -461,6 +461,41 @@ Item {
             answer.modules = {zerotts: {state: "missing", bytes: 52428800, cancellable: false}}
             return answer
         }
+        // 0.4.173 soát tay: ảnh chân dung WebP không hiện trên máy tính (thiếu qwebp) và chữ dự phòng 28 px chỉ cao ~8 px.
+        // Danh sách giọng dùng 32 px như web (VoicePicker) / Android (CastTab); giọng có ảnh (khoá = tên preset thật) phải hiện ảnh.
+        function test_voicePortraitsAre32AndDecode() {
+            const answer = voicesFixture()
+            answer.voices = [{key: "Ngọc Linh", name: "Ngọc Linh", gender: "female", genderLabel: "Nữ", engine: "vieneu", installed: true, current: true, preview: true},
+                             {key: "Mai Anh", name: "Mai Anh", gender: "female", genderLabel: "Nữ", engine: "vieneu", installed: true, preview: true},
+                             {key: "no-portrait", name: "Không ảnh", gender: "female", genderLabel: "Nữ", engine: "vieneu", installed: true, preview: true}]
+            const dlg = openVoices(answer)
+            const portraits = all(dlg, "voicePortrait")
+            compare(portraits.length, 3)
+            for (const portrait of portraits) {
+                compare(portrait.width, 32)
+                compare(portrait.height, 32)
+            }
+            const photos = all(dlg, "portraitPhoto")
+            tryVerify(function() { return photos.filter(p => p.status === Image.Ready).length === 2 }, 5000, "hai ảnh WebP có trong qrc phải giải được")
+            // ...và phải hiện ra cả trong ảnh chụp backend phần mềm (mặt nạ shader cũ không vẽ ở đây): ẩn ảnh đi thì điểm ảnh phải đổi
+            const target = VisualReady.grabTarget(host.Window.window, host)
+            function centres(frame) {
+                return portraits.slice(0, 2).map(function(p) {
+                    const c = p.mapToItem(target, p.width / 2, p.height / 4)
+                    return frame.pixel(Math.round(c.x), Math.round(c.y))
+                })
+            }
+            tryVerify(function() { return photos.filter(p => p.status === Image.Ready && p.opacity === 1).length === 2 }, 3000, "ảnh hiện hết")
+            const shown = centres(grabImage(target))
+            for (const p of photos) p.visible = false
+            const hidden = centres(grabImage(target))
+            for (const p of photos) p.visible = true
+            for (let i = 0; i < 2; i++) verify(!Qt.colorEqual(shown[i], hidden[i]), "ảnh chân dung " + i + " phải được vẽ (" + shown[i] + ")")
+            const letter = all(portraits[2], "").filter(item => typeof item.text === "string" && item.text.length > 0)[0]
+            verify(letter !== undefined, "chữ cái dự phòng của giọng không ảnh")
+            verify(letter.font.pixelSize >= 9.5, "chữ dự phòng " + letter.font.pixelSize + " px")
+            shot("cast_voice_portraits", host)
+        }
         function test_singleEngineHasNoModuleHeader() {
             const dlg = openVoices(withLine())
             compare(all(dlg, "voiceEngine").filter(item => item.visible).length, 0)

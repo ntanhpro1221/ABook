@@ -503,6 +503,25 @@ Item {
                 .replace(/^file:\/\/\/([A-Za-z]:)/, "$1").replace(/^file:\/\//, "")
             img.save(path)
             verify(qtUiTree.save(path, VisualReady.grabTarget(host.Window.window, target)))   // cây UI cạnh ảnh cho scripts/design_lint.py
+            marginNotBlack(img, VisualReady.grabTarget(host.Window.window, target))
+        }
+        // 0.4.173 soát tay: lề bóng của FloatingPanel (lớp ghép rộng hơn hộp shadowPadding mỗi bên) ra đen đặc ở bộ vẽ phần mềm
+        function panelsIn(item, out) {
+            if (item.visible && item.shadowPadding !== undefined && item.composition !== undefined) out.push(item)
+            for (const child of item.children) panelsIn(child, out)
+            return out
+        }
+        function marginNotBlack(img, target) {
+            for (const panel of panelsIn(target, [])) {
+                const pad = panel.shadowPadding / 2
+                const at = panel.mapToItem(target, 0, 0)
+                for (const p of [[at.x - pad, at.y + panel.height / 2], [at.x + panel.width / 2, at.y - pad],
+                                 [at.x + panel.width + pad, at.y + panel.height / 2], [at.x + panel.width / 2, at.y + panel.height + pad]]) {
+                    if (p[0] < 0 || p[1] < 0 || p[0] >= img.width || p[1] >= img.height) continue
+                    const c = img.pixel(Math.round(p[0]), Math.round(p[1]))
+                    verify(!Qt.colorEqual(c, "#000000"), "lề bóng của hộp ở " + p + " đen đặc")
+                }
+            }
         }
         function both(make) { for (const mode of ["light", "dark"]) { Theme.mode = mode; init(); make() } }
         function fixtureResults() {

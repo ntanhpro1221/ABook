@@ -47,6 +47,17 @@ Item {
             compare(list.count, 2)
             VisualReady.render(this, host.Window.window, host, qtVisualReady)
             shot("qt_volumes")
+            // 0.4.173 soát tay: bìa ảnh của quyển 1 vuông, bìa vẽ của quyển 2 bo góc - cả hai phải bo Theme.radiusCover
+            const frame = grabImage(VisualReady.grabTarget(host.Window.window, host))
+            for (const id of [1, 2]) {
+                const cover = findChild(findChild(made, "bookVolume_" + id), "bookVolumeCover")
+                compare(cover.radius, Theme.radiusCover)
+                const at = cover.mapToItem(host, 0, 0)
+                const corner = frame.pixel(Math.round(at.x) + 1, Math.round(at.y) + 1)
+                const inside = frame.pixel(Math.round(at.x + cover.width / 2), Math.round(at.y + cover.height - 3))
+                verify(Qt.colorEqual(corner, Theme.bg), "góc bìa quyển " + id + " phải là nền (bo góc), không phải " + corner)
+                verify(!Qt.colorEqual(inside, Theme.bg), "bìa quyển " + id + " có vẽ")
+            }
             mouseClick(findChild(made, "bookVolume_2"))
             tryCompare(made, "volumePicker", false)
             compare(findChild(made, "bookVolumeTitle").text, "Tập hai")

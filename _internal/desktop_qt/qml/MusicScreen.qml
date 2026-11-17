@@ -142,6 +142,7 @@ FocusScope {
                     width: 180
                     label: modelData.label
                     placeholder: modelData.label
+                    unsetShowsPlaceholder: true
                     options: [{value: "", label: S.s_tat_ca_49c73a31}].concat(modelData.options)
                     value: root.filters[modelData.key] || ""
                     onPicked: value => root.setFilter(modelData.key, value)

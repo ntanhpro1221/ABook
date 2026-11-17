@@ -4,6 +4,8 @@ from __future__ import annotations
 import importlib.util
 from pathlib import Path
 import re
+import subprocess
+import sys
 
 import pytest
 
@@ -88,11 +90,54 @@ def test_matching_sdk_preserves_configuration(tmp_path):
     assert cache.read_bytes() == before
 
 
-def test_sdk_header_must_match_the_version_file(tmp_path):
-    header = tmp_path / "include/QtCore/qtcoreversion.h"
+def fake_sdk(root, skip=()):
+    header = root / "include/QtCore/qtcoreversion.h"
     header.parent.mkdir(parents=True)
     header.write_text(f'#define QTCORE_VERSION_STR "{sdk.qt_version()}"\n', encoding="ascii")
+    for module, path in sdk.REQUIRED_MODULE_FILES.items():
+        if module not in skip:
+            (root / path).parent.mkdir(parents=True, exist_ok=True)
+            (root / path).write_bytes(b"MZ")
+    return header
+
+
+def test_sdk_header_must_match_the_version_file(tmp_path):
+    header = fake_sdk(tmp_path)
     assert sdk.validate_qt_root(tmp_path) == tmp_path
     header.write_text('#define QTCORE_VERSION_STR "' + '6.' + '99.1"\n', encoding="ascii")
     with pytest.raises(ValueError, match="must match"):
         sdk.validate_qt_root(tmp_path)
+
+
+def test_sdk_without_the_webp_plugin_is_refused(tmp_path):
+    fake_sdk(tmp_path, skip={"qtimageformats"})
+    with pytest.raises(ValueError, match="qtimageformats"):
+        sdk.validate_qt_root(tmp_path)
+    assert sdk.validate_qt_root(tmp_path, require_modules=False) == tmp_path
+
+
+def check_root(root):
+    return subprocess.run([sys.executable, "-X", "utf8", str(QT / "tools/qt_sdk.py"), "--check-root", str(root)],
+                          capture_output=True, text=True, encoding="utf-8")
+
+
+def test_check_root_command_fails_on_an_incomplete_sdk(tmp_path):
+    fake_sdk(tmp_path, skip={"qtimageformats"})
+    done = check_root(tmp_path)
+    assert done.returncode != 0 and "qwebp.dll" in done.stderr
+    plugin = tmp_path / sdk.REQUIRED_MODULE_FILES["qtimageformats"]
+    plugin.parent.mkdir(parents=True, exist_ok=True)
+    plugin.write_bytes(b"MZ")
+    done = check_root(tmp_path)
+    assert done.returncode == 0, done.stderr
+
+
+def test_build_refuses_an_incomplete_sdk_and_ships_webp():
+    bat = (QT / "build.bat").read_text(encoding="ascii")
+    assert 'tools\\qt_sdk.py" --check-root "%QT_ROOT%"' in bat
+    deploy = next(line for line in bat.splitlines() if line.startswith("windeployqt "))
+    excluded = deploy.split("--exclude-plugins ", 1)[1].split()[0].split(",")
+    assert "--include-plugins qwebp " in deploy and "qwebp" not in excluded
+    assert "ImageFormatTests.exe" in bat
+    assert '"imageformats/qwebp.dll"' in (QT / "tools/check_dist_deps.py").read_text(encoding="utf-8")
+    assert "imageformats/qwebp.dll" in (QT / "tools/smoke_packaged.py").read_text(encoding="utf-8")

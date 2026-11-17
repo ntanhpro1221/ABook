@@ -1,5 +1,4 @@
 import QtQuick
-import QtQuick.Effects
 import ABook
 import "AvatarLogic.js" as Art
 import "CastLogic.js" as Cast
@@ -36,7 +35,6 @@ Item {
         }
     }
     Text { anchors.centerIn: parent; text: root.mark || root.fallback.initials; color: "white"; font.pixelSize: root.width * 0.30; font.weight: Font.Bold }
-    Image { id: photo; anchors.fill: parent; source: root.imageUrl; sourceSize: Qt.size(256,256); asynchronous: true; cache: true; fillMode: Image.PreserveAspectCrop; visible: false }
-    Item { id: circleMask; anchors.fill: parent; layer.enabled: true; visible: false; Rectangle { anchors.fill: parent; radius: width/2; color: "white" } }
-    MultiEffect { anchors.fill: parent; source: photo; maskEnabled: true; maskSource: circleMask; opacity: photo.status === Image.Ready ? 1 : 0; Behavior on opacity { NumberAnimation { duration: Theme.motionFast } } }
+    // Cắt tròn không shader (RoundedImage): mặt nạ MultiEffect không vẽ ở backend phần mềm nên ảnh chụp soát chỉ còn chữ dự phòng
+    RoundedImage { id: photo; objectName: "portraitPhoto"; anchors.fill: parent; radius: width / 2; source: root.imageUrl; sourceSize: Qt.size(256,256); cache: true; opacity: status === Image.Ready ? 1 : 0; Behavior on opacity { NumberAnimation { duration: Theme.motionFast } } }
 }

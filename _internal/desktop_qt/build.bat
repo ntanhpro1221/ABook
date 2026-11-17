@@ -130,7 +130,13 @@ if errorlevel 1 exit /b 1
 if not errorlevel 0 exit /b 1
 rem Music library filters/search: the shared case table tests/fixtures/music_library/cases.json
 call :test "%HERE%build\MusicLibraryTests.exe" "%HERE%build\musiclibrary-test.txt"
+if errorlevel 1 exit /b 1
+if not errorlevel 0 exit /b 1
 call :test "%HERE%build\MusicArtTests.exe" "%HERE%build\musicart-test.txt"
+if errorlevel 1 exit /b 1
+if not errorlevel 0 exit /b 1
+rem WebP decodes (qwebp from qtimageformats): every voice portrait in qrc, and a QML Image of one reaches Ready
+call :test "%HERE%build\ImageFormatTests.exe" "%HERE%build\imageformat-test.txt"
 if errorlevel 1 exit /b 1
 if not errorlevel 0 exit /b 1
 rem Skip-15 icon pixel check (gap between stroke and digits, ink inside the box)
@@ -169,7 +175,8 @@ if errorlevel 1 exit /b 1
 if not errorlevel 0 exit /b 1
 rem Dynamic Qt DLLs (LGPL): windeployqt copies DLLs + plugins next to the exe
 rem Trim: D3D11 backend only (no dxc / d3d compiler / software GL), no debugger plugins, no touch plugin, no 18 MB vc_redist installer
-windeployqt --force --release --qmldir "%HERE%qml" --no-translations --no-system-d3d-compiler --no-system-dxc-compiler --no-opengl-sw --no-compiler-runtime --skip-plugin-types qmltooling,generic "%HERE%dist\ABookDesk.exe"
+rem Image formats: qwebp is required (voice portraits, character avatars); icns/tga/tiff/wbmp are never read
+windeployqt --force --release --qmldir "%HERE%qml" --no-translations --no-system-d3d-compiler --no-system-dxc-compiler --no-opengl-sw --no-compiler-runtime --skip-plugin-types qmltooling,generic --include-plugins qwebp --exclude-plugins qicns,qtga,qtiff,qwbmp "%HERE%dist\ABookDesk.exe"
 if errorlevel 1 exit /b 1
 if not errorlevel 0 exit /b 1
 "%ABOOK_PYTHON%" -X utf8 "%HERE%tools\check_dist_deps.py" "%HERE%dist" "%HERE%qml"

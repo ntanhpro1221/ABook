@@ -177,11 +177,43 @@ Item {
             for (const name of ["musicArtGenerated", "musicArtSupplied"]) {
                 const art = named(page, name)
                 compare(art.fillMode, Image.PreserveAspectCrop, name)
-                verify(art.clip, name)
+                compare(art.radius, Theme.radiusCover, name)
             }
+            // 0.4.173 soát tay: ảnh nhạc góc vuông trên Qt, bo Theme.radiusCover trên web / Android - và phải hiện cả ở backend
+            // phần mềm của ảnh chụp (mặt nạ shader thì không): góc là nền, giữa là ảnh
+            const art = named(page, "musicArt")
+            compare(art.radius, Theme.radiusCover)
+            // chụp cả cửa sổ rồi đọc theo toạ độ (grabImage(item) đi qua lớp riêng, không thấy nội dung Canvas ở backend phần mềm)
+            const at = art.mapToItem(host, 0, 0)
+            const back = grabImage(host).pixel(Math.round(at.x) - 4, Math.round(at.y) + 20)
+            tryVerify(function() {
+                return !Qt.colorEqual(grabImage(host).pixel(Math.round(at.x + art.width / 2), Math.round(at.y + art.height / 2)), back)
+            }, 3000, "ảnh nhạc phải được vẽ")
+            const corner = grabImage(host).pixel(Math.round(at.x), Math.round(at.y))
+            verify(Qt.colorEqual(corner, back), "góc ảnh nhạc phải là nền, không phải " + corner)
             // danh sách ảo hoá: không dựng đủ 24 hàng cùng lúc ở 900 px
             const rows = named(page, "musicList")
             verify(rows.count === 24)
+        }
+        // 0.4.173 soát tay: năm ô lọc đều ghi "Tất cả"; web / Android ghi tên bộ lọc khi chưa lọc, tên mục khi đã lọc
+        function test_filtersShowTheirNameUntilOneIsChosen() {
+            const page = make({part: 1})
+            const names = {playlist: "Danh sách phát", style: "Phong cách", emotion: "Cảm xúc", tempo: "Nhịp", length: "Độ dài"}
+            for (const key in names) {
+                const box = named(page, "musicFilter_" + key)
+                verify(box !== null, key)
+                compare(box.currentLabel, "", key)
+                verify(find(box, i => i.text === names[key] && i.visible) !== null, key + " hiện tên bộ lọc")
+                verify(find(box, i => i.text === "Tất cả" && i.visible && i.parent === box) === null, key + " không ghi Tất cả")
+            }
+            // đổi thẳng bộ lọc (không gọi refresh: máy giả không có danh sách cho từng bộ lọc)
+            const none = page.filters
+            page.filters = Object.assign({}, none, {tempo: "slow"})
+            const tempo = named(page, "musicFilter_tempo")
+            compare(tempo.currentLabel, "Chậm")
+            verify(find(tempo, i => i.text === "Chậm" && i.parent === tempo) !== null)
+            page.filters = none
+            compare(named(page, "musicFilter_tempo").currentLabel, "")
         }
         function test_savedPartAsksTheServerForSavedTracks() {
             const page = make({part: 0})
