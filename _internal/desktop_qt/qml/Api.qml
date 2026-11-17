@@ -133,11 +133,37 @@ QtObject {
     }
     // Đặt giọng mặc định từ Cài đặt (chooseDefaultVoice + App.tsx: lưu tuỳ chọn readAloudVoice, lỗi thì báo cách thử lại)
     property var savingVoice: null
-    // Lần hẹn giờ cuối (Player.lastSleepChosen): ghi riêng, không qua `update` (đang lưu Cài đặt thì `update` bỏ lời gọi). Không lưu được: phiên này vẫn dùng.
-    function rememberLastSleep(value) {
-        call("PUT", "/api/preferences", {lastSleep: value}, function(data, error) {
-            if (!error && data) preferences = Object.assign({}, preferences, {lastSleep: data.lastSleep})
+    // Lần hẹn giờ cuối (Player.lastSleepChosen): ghi riêng, không qua `update` (đang lưu Cài đặt thì `update` bỏ lời gọi). Không lưu được: im lặng
+    // (Api.quiet, như web), phiên này vẫn dùng. Giữ +/- đổi số liên tục: gom như web (latestSave.ts - 800 ms sau lần đổi cuối, mỗi lúc một lần gửi),
+    // bản máy chủ trả về chỉ áp khi không còn lần lưu mới hơn - phản hồi muộn không kéo mốc lùi. `done` gọi khi không còn lần lưu nào chờ / đang bay.
+    property var lastSleepQueued: null
+    property bool lastSleepFlying: false
+    property var lastSleepWaiting: []
+    property Timer lastSleepTimer: Timer { interval: 800; onTriggered: root.sendLastSleep() }
+    function rememberLastSleep(value, done) {
+        lastSleepQueued = value
+        if (done) lastSleepWaiting = lastSleepWaiting.concat([done])
+        lastSleepTimer.restart()
+    }
+    function settleLastSleep() {
+        if (lastSleepFlying || lastSleepQueued !== null || lastSleepTimer.running) return
+        const waiting = lastSleepWaiting
+        lastSleepWaiting = []
+        for (const done of waiting) done()
+    }
+    function sendLastSleep() {
+        if (lastSleepFlying || lastSleepQueued === null) return
+        const value = lastSleepQueued
+        lastSleepQueued = null
+        lastSleepFlying = true
+        const sent = quiet("PUT", "/api/preferences", {lastSleep: value}, function(data, error) {
+            lastSleepFlying = false
+            const newer = lastSleepQueued !== null || lastSleepTimer.running
+            if (!error && data && !newer) preferences = Object.assign({}, preferences, {lastSleep: data.lastSleep})
+            if (lastSleepQueued !== null && !lastSleepTimer.running) sendLastSleep()
+            settleLastSleep()
         })
+        if (!sent) { lastSleepFlying = false; settleLastSleep() }
     }
     function chooseDefaultVoice(id) {
         if (savingVoice !== null || defaultVoice === id) return

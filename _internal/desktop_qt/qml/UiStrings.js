@@ -18,6 +18,7 @@ var s_00_giay_27015af3 = "00 giây";
 var s_00_phut_347ed245 = "00 phút";
 function s_0_bai_1e392237(p0) { return String(p0) + " bài"; }
 function s_0_chu_de_nghe_tu_do_f3859cf4(p0) { return String(p0) + " chữ để nghe từ đó."; }
+function s_0_chuong_04093412(p0) { return String(p0) + " chương"; }
 function s_0_doan_c2eb5200(p0) { return String(p0) + " đoạn"; }
 function s_0_giay_daac30d3(p0) { return String(p0) + " giây"; }
 function s_0_nhip_phut_3c154e09(p0) { return String(p0) + " nhịp/phút"; }
@@ -1607,7 +1608,6 @@ function s_hen_gio_tat_con_0_phut_e53bab94(p0) { return "Hẹn giờ tắt: còn
 function s_hen_lai_0_phut_d6009aba(p0) { return "Hẹn lại " + String(p0) + " phút"; }
 var s_hen_lai_c2aae1b7 = "Hẹn lại ";
 function s_het_0_chuong_79433c77(p0) { return "Hết " + String(p0) + " chương"; }
-function s_het_0_chuong_b59210aa(p0) { return "hết " + String(p0) + " chương"; }
 var s_het_chuong_f1d590bb = "Hết chương";
 var s_het_chuong_nay_8ccc288f = "hết chương này";
 var s_het_han_sau_34497ee1 = "Hết hạn sau ";

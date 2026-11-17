@@ -15,10 +15,14 @@ Popover {
     property int draftMinutes: Player.lastSleepMinutes
     property int draftChapters: Player.lastSleepChapters
     onOpenChanged: if (open) { draftMinutes = Player.lastSleepMinutes; draftChapters = Player.sleepKind === "chapter" ? Player.sleepChapters : Player.lastSleepChapters }
-    // Nhãn nút "Bật lại": "Bật lại 45 phút", "Bật lại hết chương này", "Bật lại hết 2 chương" (sleep.ts lastSleepRestartLabel).
+    // Mốc tới muộn (tuỳ chọn tải xong khi hộp đang mở): bộ chọn đứng ở mốc mới, như useEffect của web SleepPicker / SleepChapterChoice.
+    readonly property int lastMinutes: Player.lastSleepMinutes
+    readonly property int lastChapters: Player.lastSleepChapters
+    onLastMinutesChanged: draftMinutes = lastMinutes
+    onLastChaptersChanged: if (Player.sleepKind !== "chapter") draftChapters = lastChapters
+    // Nhãn nút "Bật lại" (tối đa 4 chữ): "Bật lại 45 phút", "Bật lại 1 chương", "Bật lại 2 chương" (sleep.ts lastSleepRestartLabel).
     readonly property string restartLabel: S.s_bat_lai_0bad8bcf + (Player.lastSleepKind === "chapter"
-        ? (Player.lastSleepChapters > 1 ? S.s_het_0_chuong_b59210aa(Player.lastSleepChapters) : S.s_het_chuong_nay_8ccc288f)
-        : Player.lastSleepMinutes + S.s_phut_cf728a6a)
+        ? S.s_0_chuong_04093412(Player.lastSleepChapters) : S.s_0_phut_2596d212(Player.lastSleepMinutes))
 
     ClockUser { wanted: root.visible }
 

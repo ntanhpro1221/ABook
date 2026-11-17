@@ -294,7 +294,8 @@ Window {
     }
     Listen { target: Player;
         // Lần hẹn giờ người nghe vừa tự đặt: nhớ qua các lần mở app (tuỳ chọn `lastSleep`), lần sau hộp hẹn giờ mở sẵn ở mốc này.
-        function onLastSleepChosen(value) { Api.rememberLastSleep(value) }
+        // Lưu xong hết thì Player lại nhận mốc từ tuỳ chọn (trong lúc còn lưu, bản cũ về muộn không kéo mốc lùi).
+        function onLastSleepChosen(value) { Api.rememberLastSleep(value, function() { Player.lastSleepSaved() }) }
         function onPlayingChanged() { if (Player.playing && Clip.music) Clip.stop() }
         function onBufferingChanged() { if (Player.buffering && Clip.music) Clip.stop() }
     }

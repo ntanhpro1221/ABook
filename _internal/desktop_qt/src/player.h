@@ -167,6 +167,8 @@ public:
     int lastSleepChapters() const { return m_lastSleep.chapters; }
     /// Nút "Bật lại": đặt lại đúng lần hẹn cuối (số phút hay số chương).
     Q_INVOKABLE void restartLastSleep();
+    /// Main.qml: mọi lần lưu `lastSleep` đã về (xong hay hỏng) - từ giờ `configure` lại nhận mốc đã lưu khi nó đổi.
+    Q_INVOKABLE void lastSleepSaved();
     int sleepExtendMinutes() const;
     QString sleepStoppedText() const;
     bool fading() const { return m_fading; }
@@ -392,6 +394,8 @@ private:
     bool m_sleepRetained = false;
     QString m_sleepStore;
     PlayerLogic::LastSleep m_lastSleep;
+    std::optional<PlayerLogic::LastSleep> m_lastSleepStored; // bản `lastSleep` đã lưu nhận ở lần configure trước
+    bool m_lastSleepSaving = false;                          // còn lần chọn chưa lưu xong (lastSleepSaved)
     qint64 m_sleepStoppedAt = 0;
     int m_fadeSeconds = PlayerLogic::kDefaultFadeSeconds;
     int m_extendMinutes = 10;

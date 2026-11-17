@@ -1037,6 +1037,27 @@ private slots:
         QCOMPARE(reopened.player->sleepChapters(), 2);
     }
 
+    // Soát sleeplast 18-11 (lỗi 1): giữ +/- gửi nhiều lần lưu; phản hồi của lần trước về muộn không kéo mốc lùi.
+    void aLateSaveReplyDoesNotPullTheLastSleepBack() {
+        const auto minutes = [](int value) { return QVariantMap{{QStringLiteral("lastSleep"), QVariantMap{{QStringLiteral("kind"), QStringLiteral("minutes")}, {QStringLiteral("minutes"), value}, {QStringLiteral("chapters"), 1}}}}; };
+        Rig rig;
+        rig.player->configure(minutes(30));
+        rig.player->open(QStringLiteral("a"), -1, -1, true);
+        rig.player->setSleep(QStringLiteral("minutes"), 31);
+        rig.player->setSleep(QStringLiteral("minutes"), 32);
+        rig.player->configure(minutes(31)); // phản hồi của lần 31 về sau khi đã chọn 32
+        QCOMPARE(rig.player->lastSleepMinutes(), 32);
+        rig.player->setSleep(QStringLiteral("chapter"), 2); // "hết 2 chương" lúc ấy giữ số phút MỚI
+        QCOMPARE(rig.player->lastSleepMinutes(), 32);
+        rig.player->lastSleepSaved();
+        rig.player->configure(minutes(31)); // bản đã lưu không đổi (lưu hỏng): không lùi
+        QCOMPARE(rig.player->lastSleepKind(), QStringLiteral("chapter"));
+        QCOMPARE(rig.player->lastSleepMinutes(), 32);
+        rig.player->configure(minutes(50)); // lưu xong hết, máy chủ có bản mới: theo
+        QCOMPARE(rig.player->lastSleepKind(), QStringLiteral("minutes"));
+        QCOMPARE(rig.player->lastSleepMinutes(), 50);
+    }
+
     void aBrokenLastSleepFallsBackToThirtyMinutes() {
         const QList<QVariant> broken{
             QVariantMap{{QStringLiteral("kind"), QStringLiteral("minutes")}, {QStringLiteral("minutes"), 999}, {QStringLiteral("chapters"), 1}},
