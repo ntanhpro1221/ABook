@@ -8,6 +8,7 @@
     {"name": "two blank lines close the summary", "text": "Truyện ngắn\nTóm tắt: Một chiếc thuyền.\nNó trôi.\n\n\n", "filler": 500, "expected": {"summary": "Một chiếc thuyền.\nNó trôi."}},
     {"name": "two blank lines before the story close the summary", "text": "Truyện ngắn\nTóm tắt: Một chiếc thuyền.\n\n\nNgày xưa có một bến sông.\n", "filler": 500, "expected": {"summary": "Một chiếc thuyền."}},
     {"name": "control characters are dropped, never fatal", "text": "\u001aTruyện ngắn\nTóm tắt: Một\u0001 chiếc thuyền.\u001a\n", "filler": 0, "expected": {"summary": "Một chiếc thuyền."}},
+    {"name": "an empty author line keeps the author read before it", "text": "Truyện ngắn\nTác giả: Người Viết\nTác giả:\nThể loại: Fantasy\nThể loại: , ;\n", "filler": 0, "expected": {"author": "Người Viết", "genres": ["Fantasy"]}},
     {"name": "*** closes the summary", "text": "Truyện ngắn\nTóm tắt: Một chiếc thuyền.\nNó trôi.\n***\n", "filler": 500, "expected": {"summary": "Một chiếc thuyền.\nNó trôi."}},
     {"name": "--- closes the summary", "text": "Truyện ngắn\nTóm tắt: Một chiếc thuyền.\nNó trôi.\n---\n", "filler": 500, "expected": {"summary": "Một chiếc thuyền.\nNó trôi."}},
     {"name": "* * * closes the summary", "text": "Truyện ngắn\nTóm tắt: Một chiếc thuyền.\nNó trôi.\n* * *\n", "filler": 500, "expected": {"summary": "Một chiếc thuyền.\nNó trôi."}},

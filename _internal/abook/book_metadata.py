@@ -175,7 +175,8 @@ def text_header(text: str) -> dict[str, Any]:
             value = "\n".join(parts).strip()
         elif key in ("altTitles", "genres"):
             value = [item.strip() for item in re.split(r"[;|]" if key == "altTitles" else r"[,;|]", value) if item.strip()]
-        result[key] = value
+        if not blank(value):  # an empty "Tác giả:" line keeps what an earlier line gave, like Kotlin headerMetadata
+            result[key] = value
     return present(result)
 
 

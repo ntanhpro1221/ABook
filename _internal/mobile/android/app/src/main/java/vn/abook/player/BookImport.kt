@@ -521,7 +521,11 @@ object BookImport {
                 }
                 value = parts.joinToString("\n").trim()
             }
-            if (value.isNotEmpty()) out.put(key, if (key == "altTitles" || key == "genres") org.json.JSONArray(value.split(Regex(if (key == "altTitles") "[;|]" else "[,;|]")).map { it.trim() }.filter { it.isNotEmpty() }) else value)
+            // A blank value ("Tác giả:" alone, "Thể loại: , ,") keeps what an earlier line gave (Python book_metadata.text_header).
+            if (key == "altTitles" || key == "genres") {
+                val items = value.split(Regex(if (key == "altTitles") "[;|]" else "[,;|]")).map { it.trim() }.filter { it.isNotEmpty() }
+                if (items.isNotEmpty()) out.put(key, org.json.JSONArray(items))
+            } else if (value.isNotEmpty()) out.put(key, value)
         }
         return out
     }
