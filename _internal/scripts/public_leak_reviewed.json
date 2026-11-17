@@ -766,7 +766,7 @@
     "reason": "abook/worker.py: all flagged strings match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data. Integration phase 1: combined authored implementation, expectations or technical documentation; exact inherited Corpus sequences rechecked; no new Corpus approval."
   },
   "_internal/desktop_qt/CMakeLists.txt": {
-    "sha256": "c32b28e08476c1212b147637ee718b29d00c8179c847acccf70b46e45b9d5e05",
+    "sha256": "12ac2768cb2d236c065276a9cd5bc7700f39a073d17414b3e841d6b40cefc083",
     "reason": "desktop_qt/CMakeLists.txt: all flagged strings match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data. Integration phase 1: combined authored implementation, expectations or technical documentation; exact inherited Corpus sequences rechecked; no new Corpus approval. Integration phase 2: combined authored implementation, expectations or technical documentation; exact inherited Corpus sequences rechecked; no new Corpus approval."
   },
   "_internal/desktop_qt/installer/files.py": {
@@ -994,8 +994,8 @@
     "reason": "docs/CHILD_VOICE_TRANSFORM.md: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
   },
   "_internal/docs/DEPENDENCIES.md": {
-    "sha256": "79d507cb05a5046a1bebc4666ed1e34c1ed46ad5b8be42fff5bc518c84f604ab",
-    "reason": "docs/DEPENDENCIES.md: all flagged strings match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
+    "sha256": "82f90d17446d181f9454e9876df967323a41d8e54610a0b3faea66d1c2816ab7",
+    "reason": "docs/DEPENDENCIES.md: all flagged strings match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data. Integration phase 2: combined authored implementation, expectations or technical documentation; exact inherited Corpus sequences rechecked; no new Corpus approval."
   },
   "_internal/docs/DESIGN.md": {
     "sha256": "10b0f671e04dfd3f8ae7fcc47a88863f91f239b24c4acddca90b69866fd6aa07",
@@ -1165,7 +1165,7 @@
     "reason": "docs/PRONUNCIATION_VARIANT_DRIFT.md: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
   },
   "_internal/docs/QT_INSTALLER.md": {
-    "sha256": "a3d456ea17e64e47ee1335cf129fa1c8d158bbe2beb41989d6a24eacde8a5f7b",
+    "sha256": "c70536ab354dc90f34d1bdc433b95f463d32a0de40b5f12b23e7dfa90bb491fa",
     "reason": "docs/QT_INSTALLER.md: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data. Integration phase 2: combined authored implementation, expectations or technical documentation; exact inherited Corpus sequences rechecked; no new Corpus approval."
   },
   "_internal/docs/READING_A_BOUNDARY_LOG.md": {
@@ -1267,7 +1267,7 @@
     "reason": "_internal/docs/UI_PARITY.md: reviewed integration-only layout, generated parity inventory or pinned asset URL edits; existing scrubbed prose preserved. Re-pinned for 0.4.169: its added lines were reviewed as engineering text, no story or phoneme strings. Integration phase 1: combined authored implementation, expectations or technical documentation; exact inherited Corpus sequences rechecked; no new Corpus approval. Integration phase 2: combined authored implementation, expectations or technical documentation; exact inherited Corpus sequences rechecked; no new Corpus approval. Re-pinned for the 0.4.173 review fixes (dev/fix173): added lines reviewed as engineering text (validation messages, docstrings, UI strings, test names); no story or phoneme strings. fix173d: regenerated parity inventory (line refs and native string count after the Android heard bar); generated counts only."
   },
   "_internal/docs/UI_PARITY_QT.md": {
-    "sha256": "b32fe4b54a8f4e8dd218c64c7416aaee282e5e59baf314a6dd7d5f1454197b12",
+    "sha256": "52a8cbb6ea4ff840fdfb5eb5c745986d65b77a80152e5442ac30a11fedee79ec",
     "reason": "_internal/docs/UI_PARITY_QT.md: reviewed integration-only layout, generated parity inventory or pinned asset URL edits; existing scrubbed prose preserved. Re-pinned for 0.4.169: its added lines were reviewed as engineering text, no story or phoneme strings. Integration phase 1: combined authored implementation, expectations or technical documentation; exact inherited Corpus sequences rechecked; no new Corpus approval. Integration phase 2: combined authored implementation, expectations or technical documentation; exact inherited Corpus sequences rechecked; no new Corpus approval. Re-pinned for the 0.4.173 review fixes (dev/fix173): added lines reviewed as engineering text (validation messages, docstrings, UI strings, test names); no story or phoneme strings."
   },
   "_internal/docs/UI_PARITY_TRIAGE.md": {
@@ -5162,10 +5162,10 @@
   "_internal/desktop_qt/tests/test_width.cpp": {
     "reason": "_internal/desktop_qt/tests/test_width.cpp: individually classified contextual coincidences only. Integration phase 1: combined authored implementation, expectations or technical documentation; exact inherited Corpus sequences rechecked; no new Corpus approval. Integration phase 2: combined authored implementation, expectations or technical documentation; exact inherited Corpus sequences rechecked; no new Corpus approval.",
     "rules": [],
-    "sha256": "b87c033e07c5a41fe47e6db537a4b8119d6745d934b00ff53c0e20c8b751e103",
+    "sha256": "04854d0156505533a25289cc97726a63b0fac529a6db6929c76ad652f7fe6a6a",
     "corpus_review": {
       "classification": "i",
-      "file_sha256": "b87c033e07c5a41fe47e6db537a4b8119d6745d934b00ff53c0e20c8b751e103",
+      "file_sha256": "04854d0156505533a25289cc97726a63b0fac529a6db6929c76ad652f7fe6a6a",
       "reason": "_internal/desktop_qt/tests/test_width.cpp: Short generic test/UI prose or literal bridge. Lead approved category (i) only; each hash was classified in round two.",
       "shingles": [
         "34c39778d36c91e5"
