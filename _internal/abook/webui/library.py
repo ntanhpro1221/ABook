@@ -47,6 +47,10 @@ DEFAULT_PREFERENCES: dict[str, Any] = {
     "sleepExtendMinutes": 10,
     # Lịch đêm tự hẹn giờ: {"from": "22:00", "to": "06:00", "minutes": 30} hoặc None.
     "sleepSchedule": None,
+    # Lần hẹn giờ ngủ cuối người nghe tự đặt (chủ sách 17-11): {"kind": "minutes"|"chapter", "minutes": 1-240, "chapters": 1-10} - `kind` là loại của
+    # lần cuối, hai số còn lại là số phút / số chương gần nhất của từng loại. Hộp hẹn giờ mở sẵn ở mốc này, nút "Bật lại" đặt lại đúng nó. None = chưa
+    # từng đặt: giao diện dùng 30 phút (LAST_SLEEP_DEFAULT).
+    "lastSleep": None,
     # Máy tính xách tay rút sạc: tạm dừng tạo sách (supervisor đọc thẳng khoá này - power_source.PREFERENCE_KEY).
     "pauseOnBattery": True,
     # Trình tạo sách điền sẵn cho sách MỚI (Cài đặt > Studio; soát UX a5 01-10): giọng kể ("" = giọng máy đề xuất) và chất
@@ -333,6 +337,11 @@ SLEEP_RANGES: dict[str, tuple[int, int, int]] = {
     "sleepExtendMinutes": (1, 60, 1),
 }
 SCHEDULE_MINUTES: tuple[int, int, int] = (5, 240, 5)
+# Lần hẹn giờ cuối (`lastSleep`): miền của bộ chọn số phút / số chương (VALUE_SPECS.sleepMinutes / sleepChapters - tests/fixtures/settings/ranges.json).
+LAST_SLEEP_KINDS: tuple[str, ...] = ("minutes", "chapter")
+LAST_SLEEP_MINUTES: tuple[int, int, int] = (1, 240, 1)
+LAST_SLEEP_CHAPTERS: tuple[int, int, int] = (1, 10, 1)
+LAST_SLEEP_DEFAULT: dict[str, Any] = {"kind": "minutes", "minutes": 30, "chapters": 1}
 NUMBER_RANGES: dict[str, tuple[float, float]] = {"playbackRate": (0.5, 3.0), "volume": (0.0, 1.0)}
 _CLOCK = re.compile(r"([01]\d|2[0-3]):[0-5]\d")
 
@@ -360,6 +369,17 @@ def clean_sleep_schedule(value: Any) -> dict[str, Any] | None:
     return {"from": start, "to": end, "minutes": minutes}
 
 
+def clean_last_sleep(value: Any) -> dict[str, Any] | None:
+    """Lần hẹn giờ cuối `{"kind", "minutes", "chapters"}` đã làm sạch (khoá thừa bỏ đi), hay None: thiếu khoá, sai kiểu, ngoài miền ở bất kỳ khoá nào
+    - cả giá trị coi như chưa từng đặt, giao diện về 30 phút."""
+    if not isinstance(value, dict) or value.get("kind") not in LAST_SLEEP_KINDS:
+        return None
+    minutes, chapters = value.get("minutes"), value.get("chapters")
+    if not (on_grid(minutes, LAST_SLEEP_MINUTES) and on_grid(chapters, LAST_SLEEP_CHAPTERS)):
+        return None
+    return {"kind": value["kind"], "minutes": minutes, "chapters": chapters}
+
+
 def _fits(key: str, value: Any) -> bool:
     """Giá trị `value` của tuỳ chọn `key` đúng kiểu chưa (file sửa tay, bản app khác ghi: `[1]`, `null`, `"libraryRoot": 5` - soát a28
     lỗi 3), và trong miền giao diện đưa ra (soát a100 V2). Khoá lạ (không có trong DEFAULT_PREFERENCES) không xét."""
@@ -368,6 +388,8 @@ def _fits(key: str, value: Any) -> bool:
         return value in CHOICES[key]
     if key == "sleepSchedule":
         return value is None or clean_sleep_schedule(value) == value
+    if key == "lastSleep":
+        return value is None or clean_last_sleep(value) == value
     if key in SLEEP_RANGES:
         return on_grid(value, SLEEP_RANGES[key])
     if key in NUMBER_RANGES:

@@ -52,3 +52,14 @@ def test_the_music_level_range_is_one_source_and_clamps_at_both_ends(tmp_path: P
     for value, _label, _text in RANGES["musicLevel"]["labels"]:
         assert music_plan.LEVEL_MIN_DB <= value <= music_plan.LEVEL_MAX_DB
         assert music_plan.write_overrides(tmp_path, {"levelDb": value})["levelDb"] == value, "giữa miền thì giữ đúng số, kể cả nửa dB"
+
+
+def test_the_last_sleep_contract_matches_the_shared_fixture() -> None:
+    table = RANGES["lastSleep"]
+    assert list(library.LAST_SLEEP_KINDS) == table["kinds"]
+    assert library.LAST_SLEEP_MINUTES == (table["minutes"]["min"], table["minutes"]["max"], table["minutes"]["step"])
+    assert library.LAST_SLEEP_CHAPTERS == (table["chapters"]["min"], table["chapters"]["max"], table["chapters"]["step"])
+    assert library.LAST_SLEEP_DEFAULT == table["default"]
+    assert DEFAULT_PREFERENCES["lastSleep"] is None
+    for given, cleaned in table["cases"]:
+        assert library.clean_last_sleep(given) == cleaned, given
