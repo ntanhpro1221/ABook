@@ -29,7 +29,8 @@ Interactive {
         if (author && subtitle === author) return ""
         if (author && subtitle.startsWith(author)) {
             const rest = subtitle.slice(author.length).trim()
-            if (rest.startsWith("·")) return rest.slice(1).trim()
+            // Reads the server's separator off the subtitle (never shown): the shown line joins with " · " below.
+            if (/^·/.test(rest)) return rest.slice(1).trim()
         }
         return subtitle
     }
