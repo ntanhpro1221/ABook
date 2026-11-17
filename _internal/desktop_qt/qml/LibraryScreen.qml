@@ -326,7 +326,7 @@ FocusScope {
                         }
                         coverWidth: root.coverW
                         title: section.books.length > 1 ? section.title : info.title || ""
-                        subtitle: section.books.length > 1 ? section.books.length + S.s_tap_269b0b3d : info.subtitle || ""
+                        subtitle: section.books.length > 1 ? section.books.length + S.s_tap_269b0b3d : ""
                         Accessible.name: section.books.length > 1 ? S.s_mo_bo_0_676ecc6b(section.title) : title
                         Accessible.description: section.remote && section.books.length > 1 ? S.s_co_sach_tren_may_khac_3b7cdd88 : ""
                         book: info

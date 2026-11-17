@@ -31,7 +31,11 @@ function metaParts(detail, chapters) {
     return String(detail || "").split(/\s·\s/).concat(chapters ? [chapters] : []).filter(function(part) { return part !== "" })
 }
 
-function progressOf(book) { return book && book.progress && typeof book.progress === "object" ? book.progress : {} }
+// A library row (LibraryModel.book) keeps the structured progress as `listeningProgress`; its `progress` is the display fraction.
+function progressOf(book) {
+    const progress = book ? book.listeningProgress || book.progress : null
+    return progress && typeof progress === "object" ? progress : {}
+}
 
 function textBookLine(speaks) { return speaks ? S.s_chi_co_chu_u00a0_u00a0nghe_bang_giong_doc_9734cee8 : S.s_chi_co_chu_u00a0_u00a0may_nay_chua_co_gion_3f3880c2 }
 
@@ -43,9 +47,10 @@ function remoteUnfinishedLine(book) {
     return name.charAt(0).toUpperCase() + name.slice(1) + S.s_con_dang_lam_chuong_moi_hien_o_day_khi_xon_f1c5da10
 }
 
-function progressText(book, speaks) {
+// `includeAuthor` false: a library cell, which has its own author line (web LibraryScreen progressText(book, speaks, false)).
+function progressText(book, speaks, includeAuthor) {
     if (book.stage === "text") {
-        const lead = String(book.author || "").trim() || (speaks ? "" : S.s_chi_co_chu_bf879f2c)
+        const lead = includeAuthor === false ? "" : String(book.author || "").trim() || (speaks ? "" : S.s_chi_co_chu_bf879f2c)
         return (lead ? lead + "\u00a0·\u00a0" : "") + book.chaptersTotal + S.s_chuong_9e6a01dc
     }
     const p = progressOf(book)
