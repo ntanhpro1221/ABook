@@ -165,7 +165,7 @@ Một việc - một cách viết, cho web (máy tính + điện thoại), nativ
 
 <!-- ui_parity:begin (SINH TỰ ĐỘNG bởi scripts/ui_parity.py - không sửa tay, chạy lại script) -->
 
-Quét: web 6718 chữ (3145 khác nhau), 361 cặp nhãn-icon; native 2290 chữ (1673 khác nhau), 85 cặp nhãn-icon. Nhãn so theo khoá lỏng (hạ chữ, dấu thanh một kiểu, `...` = `…`, bỏ dấu câu cuối).
+Quét: web 6718 chữ (3145 khác nhau), 361 cặp nhãn-icon; native 2291 chữ (1673 khác nhau), 85 cặp nhãn-icon. Nhãn so theo khoá lỏng (hạ chữ, dấu thanh một kiểu, `...` = `…`, bỏ dấu câu cuối).
 
 ## a. Gợi ý gần chữ, đối chiếu với giao ước màn
 
@@ -509,7 +509,7 @@ Quét: web 6718 chữ (3145 khác nhau), 361 cặp nhãn-icon; native 2290 chữ
 | Đang tải phần đọc không khí{} | Đang tải giọng ({}) {}% | 0.58 | `native/studio/StudioMusic.kt:307` ~ `studio/voiceEngines.ts:81` | shared-labels: chữ có bản khớp trong màn đã ghép; nhãn gần giống ở cột kia không phải cặp thao tác được xác nhận; studio.allow: same words as the web (reviewed by hand): the web string is a template cut at its placeholder / a sentence with a trailing part, so the scanner sees a different label | studio: chữ có bản khớp trong màn đã ghép; nhãn gần giống ở cột kia không phải cặp thao tác được xác nhận |
 | Mở sách | Chưa mở được sách | 0.58 | `native/addbook/PackageReviewScreen.kt:17` (+1) ~ `studio/ProjectScreen.tsx:1308` (+2) | shared-labels: chữ có bản khớp trong màn đã ghép; nhãn gần giống ở cột kia không phải cặp thao tác được xác nhận; add-edit-book.missing: native review screen after opening a .abook that carries another recording: the web toast (desktop/App.tsx:255) has no 'keep' button, closing the toast keeps the current copy | studio: chữ có bản khớp trong màn đã ghép; nhãn gần giống ở cột kia không phải cặp thao tác được xác nhận |
 | Đã gom {}/{} chương | Gồm câu này: {} | 0.58 | `native/studio/StudioExport.kt:200` ~ `studio/WorkInbox.tsx:224` (+1) | shared-labels: chữ có bản khớp trong màn đã ghép; nhãn gần giống ở cột kia không phải cặp thao tác được xác nhận; studio.missing: phone's remote Studio sentences about work that happens on the computer (export tool, ambience reader, cover, log, pause, version, permission): the computer's own Studio never has to say them | studio: chữ có bản khớp trong màn đã ghép; nhãn gần giống ở cột kia không phải cặp thao tác được xác nhận |
-| Tới chỗ đang nghe | Đang nghe liền: | 0.58 | `native/screens/BookScreen.kt:745` ~ `studio/ReviewQueue.tsx:456` | shared-labels: chữ có bản khớp trong màn đã ghép; nhãn gần giống ở cột kia không phải cặp thao tác được xác nhận; library-book.missing: web chapter list has no 'jump to the chapter being heard' link | studio: chữ có bản khớp trong màn đã ghép; nhãn gần giống ở cột kia không phải cặp thao tác được xác nhận |
+| Tới chỗ đang nghe | Đang nghe liền: | 0.58 | `native/screens/BookScreen.kt:756` ~ `studio/ReviewQueue.tsx:456` | shared-labels: chữ có bản khớp trong màn đã ghép; nhãn gần giống ở cột kia không phải cặp thao tác được xác nhận; library-book.missing: web chapter list has no 'jump to the chapter being heard' link | studio: chữ có bản khớp trong màn đã ghép; nhãn gần giống ở cột kia không phải cặp thao tác được xác nhận |
 | Đã xoá nhật ký | Chậm nhất, kỹ nhất | 0.58 | `native/data/SettingsRepo.kt:270` (+1) ~ `studio/NewProjectScreen.tsx:110` | shared-labels: chữ có bản khớp trong màn đã ghép; nhãn gần giống ở cột kia không phải cặp thao tác được xác nhận; settings.missing: in-app log viewer of the phone (see, refresh, delete, crash records); the computer only saves a diagnostics package (desktop/OwnDiagnostics.tsx) | studio: chữ có bản khớp trong màn đã ghép; nhãn gần giống ở cột kia không phải cặp thao tác được xác nhận |
 | Chưa đọc được các khoá | Chưa gọi được giọng đọc. | 0.58 | `native/voice/KeysScreen.kt:46` ~ `desktop/httpSource.ts:178` | shared-labels: chữ có bản khớp trong màn đã ghép; nhãn gần giống ở cột kia không phải cặp thao tác được xác nhận; voice.missing: web toasts or writes inline without these titles (save / load failures of the voice list, voice change, key list) | studio: chữ có bản khớp trong màn đã ghép; nhãn gần giống ở cột kia không phải cặp thao tác được xác nhận |
 | Chia sẻ thư viện | Thư viện mới | 0.57 | `native/devices/ShareScreen.kt:56` (+1) ~ `desktop/LibraryMoveRecovery.tsx:38` | shared-labels: chữ có bản khớp trong màn đã ghép; nhãn gần giống ở cột kia không phải cặp thao tác được xác nhận; devices.missing: phone's own share page: a 'Chi tiết' fold with name and address, the hint that points to it, and the share page title | studio: chữ có bản khớp trong màn đã ghép; nhãn gần giống ở cột kia không phải cặp thao tác được xác nhận |
@@ -631,7 +631,7 @@ Nhãn ngắn (<= 6 chữ) không có (theo khoá lỏng) ở phía kia - kể c�
 - `native/nowplaying/PlayerSheets.kt` (3): Chọn giọng (`206`); Giọng thu sẵn (`206`); Cửa sổ mini (`220`)
 - `native/screens/BookPeople.kt` (5): Tên gốc: {} (`145`); Đang lưu (`148`); Đang ghi (`197`); Không có ai khớp “{}”. (`238`); Đang gộp (`261`)
 - `native/screens/BookSaveUi.kt` (1): Đang lưu (`136`)
-- `native/screens/BookScreen.kt` (1): Tới chỗ đang nghe (`745`)
+- `native/screens/BookScreen.kt` (1): Tới chỗ đang nghe (`756`)
 - `native/screens/BookSheets.kt` (4): Đang lưu (`202`); Đang đóng file sách (`209`); Chiếm {} (`273`); Chương này chưa có audio. (`314`)
 - `native/screens/LibraryScreen.kt` (1): Nối máy (`238`)
 - `native/screens/OtherScreens.kt` (1): Nối máy tính (`70`)
@@ -768,23 +768,23 @@ Nhãn ngắn (<= 6 chữ) không có (theo khoá lỏng) ở phía kia - kể c�
 
 | kiểu | web | native |
 |---|---|---|
-| dấu ba chấm ASCII `...` | 6 / 6718 | 0 / 2290 |
-| dấu ba chấm `…` | 19 / 6718 | 0 / 2290 |
-| kết thúc bằng dấu chấm `.` | 1156 / 6718 | 433 / 2290 |
-| kết thúc bằng `!` | 0 / 6718 | 0 / 2290 |
-| kết thúc bằng `:` | 90 / 6718 | 6 / 2290 |
-| dấu thanh kiểu cũ `oà oá uý` | 529 / 6718 | 221 / 2290 |
-| dấu thanh kiểu mới `òa óa úy` | 1 / 6718 | 0 / 2290 |
-| số thập phân dấu phẩy `1,5` | 2 / 6718 | 0 / 2290 |
-| số thập phân dấu chấm `1.5` | 0 / 6718 | 0 / 2290 |
-| nhân bằng `×` | 0 / 6718 | 0 / 2290 |
-| nhân bằng `x` sau số | 0 / 6718 | 0 / 2290 |
-| ngăn cách `·` | 148 / 6718 | 38 / 2290 |
-| ngăn cách ` - ` | 274 / 6718 | 87 / 2290 |
-| gạch dài `—`/`–` | 17 / 6718 | 2 / 2290 |
-| giờ `1:30` hay `1 giờ 30` | 0 / 6718 | 2 / 2290 |
-| dấu `%` dính số | 0 / 6718 | 1 / 2290 |
-| dấu `%` cách số | 0 / 6718 | 0 / 2290 |
+| dấu ba chấm ASCII `...` | 6 / 6718 | 0 / 2291 |
+| dấu ba chấm `…` | 19 / 6718 | 0 / 2291 |
+| kết thúc bằng dấu chấm `.` | 1156 / 6718 | 433 / 2291 |
+| kết thúc bằng `!` | 0 / 6718 | 0 / 2291 |
+| kết thúc bằng `:` | 90 / 6718 | 6 / 2291 |
+| dấu thanh kiểu cũ `oà oá uý` | 529 / 6718 | 221 / 2291 |
+| dấu thanh kiểu mới `òa óa úy` | 1 / 6718 | 0 / 2291 |
+| số thập phân dấu phẩy `1,5` | 2 / 6718 | 0 / 2291 |
+| số thập phân dấu chấm `1.5` | 0 / 6718 | 0 / 2291 |
+| nhân bằng `×` | 0 / 6718 | 0 / 2291 |
+| nhân bằng `x` sau số | 0 / 6718 | 0 / 2291 |
+| ngăn cách `·` | 148 / 6718 | 38 / 2291 |
+| ngăn cách ` - ` | 274 / 6718 | 87 / 2291 |
+| gạch dài `—`/`–` | 17 / 6718 | 2 / 2291 |
+| giờ `1:30` hay `1 giờ 30` | 0 / 6718 | 2 / 2291 |
+| dấu `%` dính số | 0 / 6718 | 1 / 2291 |
+| dấu `%` cách số | 0 / 6718 | 0 / 2291 |
 
 **d3. Nhãn ngắn bắt đầu bằng chữ thường** (web 138, native 0); 15 đầu mỗi phía:
 

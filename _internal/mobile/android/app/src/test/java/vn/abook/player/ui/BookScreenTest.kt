@@ -165,6 +165,11 @@ class BookScreenTest {
         show(BookDetail.of(raw, listening(), { null }))
         rule.onNodeWithTag("volume_1").assertIsDisplayed()
         rule.onNodeWithText("2 chương · Đã nghe 100%").assertExists()
+        // Soát 0.4.173 B6: mỗi hàng quyển có thanh "Đã nghe" như web (`Progress` dưới dòng số chương), cùng bề ngang cột chữ.
+        for (id in listOf(1, 2)) {
+            val bar = rule.onNodeWithTag("volume_progress_$id", useUnmergedTree = true).assertExists().getUnclippedBoundsInRoot()
+            assertEquals(8f, (bar.bottom - bar.top).value, 0.5f)
+        }
         run {
             rule.onRoot().captureRoboImage("build/icon_probe/volumes/android-volumes.png", com.github.takahirom.roborazzi.RoborazziOptions(taskType = com.github.takahirom.roborazzi.RoborazziTaskType.Record))
         }

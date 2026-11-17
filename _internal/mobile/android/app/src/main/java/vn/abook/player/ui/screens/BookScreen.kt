@@ -386,6 +386,17 @@ private fun BookScreenBody(
                         Column(Modifier.weight(1f)) {
                             BasicText(item.title, style = Abook.type.bodyStrong)
                             RowHint(S.s_volume_progress(item.chapterIds.size, kotlin.math.round(item.progress * 100).toInt()))
+                            // Thanh "Đã nghe" của quyển: cùng thanh 8 dp bo tròn, cách 8 dp như `Progress` của web.
+                            val fill = vn.abook.player.ui.components.ProgressFill.of(item.progress)
+                            val track = Abook.colors.line
+                            val ink = Abook.colors.accent
+                            Box(Modifier.padding(top = Dim.s8).fillMaxWidth().height(8.dp).clip(CircleShape)
+                                .semantics { contentDescription = S.s_da_nghe_1e0f8d88 }.testTag("volume_progress_${item.id}")
+                                .drawBehind {
+                                    drawRect(track)
+                                    val corner = androidx.compose.ui.geometry.CornerRadius(size.height / 2)
+                                    if (fill > 0f) drawRoundRect(ink, size = Size(size.width * fill, size.height), cornerRadius = corner)
+                                })
                         }
                     }
                 }

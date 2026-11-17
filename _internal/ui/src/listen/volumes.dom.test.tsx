@@ -88,3 +88,13 @@ it("a new volume never reuses a removed id and cannot start on the last volume's
   expect(canAddVolume([{ start: 1 }, { start: 2 }], 3)).toBe(true);
   expect(canAddVolume(Array.from({ length: 99 }, (_, index) => ({ start: index + 1 })), 500)).toBe(false);
 });
+
+// Soát 0.4.173 B6: hàng quyển giống nhau trên web và Android - quyển không có ảnh riêng dùng bìa sách (sách không ảnh: bìa vẽ nhỏ, chữ cái đầu
+// của tên sách), mỗi hàng một thanh "Đã nghe" (Android: volume_progress_<id>).
+it("volume rows without artwork reuse the book's drawn cover and show a heard bar", async () => {
+  const many = { ...book, volumes: volumes(book.chapters!), state: { chapters: { "1": { done: true } } } } as unknown as ListenBook;
+  await render(<ChapterGroups book={many} onDone={() => {}} />);
+  const rows = [...host.querySelectorAll<HTMLButtonElement>('[aria-label="Các quyển"] [role=listitem] button')];
+  expect(rows.map((row) => row.querySelector("[aria-hidden] span")?.textContent)).toEqual(["S", "S"]);
+  expect(rows.map((row) => row.querySelector('[role="progressbar"]')?.getAttribute("aria-valuenow"))).toEqual(["50", "0"]);
+});

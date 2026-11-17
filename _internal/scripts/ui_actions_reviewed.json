@@ -11406,10 +11406,10 @@
     "line": 185,
     "statement": "suspend fun load() {",
     "occurrence": 1,
-    "source_sha256": "65cc4bec0d453bfbb6b48505bac19f3cc8d59017e7205d97eeacde5cb0f494a7",
+    "source_sha256": "e454f4fd2efc573d4810d088197b03ff6372172536528e356860b5c8f3a9b204",
     "disposition": "internal",
     "guard": "Async interface/helper boundary; concrete activation inventoried separately",
-    "reason": "This signature supplies work to a model or component; declaring it starts no user operation. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Gate repair: reviewed identity-key motion, explicit layout, token spacing or semantic navigation changes; existing guard retained. 0.4.173 fixes (sleep stopped line, activity-off extend, night continue, word reading row, per-book timers, volume editor id and add rule) leave this statement and its guard unchanged."
+    "reason": "This signature supplies work to a model or component; declaring it starts no user operation. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Gate repair: reviewed identity-key motion, explicit layout, token spacing or semantic navigation changes; existing guard retained. 0.4.173 fixes (sleep stopped line, activity-off extend, night continue, word reading row, per-book timers, volume editor id and add rule) leave this statement and its guard unchanged. Re-pinned for fix173d: the edit only fits the Nghe/Đọc theo labels on one line and adds the volume heard bar; this statement and its guard are unchanged."
   },
   {
     "id": "3fe3465713164a2d2bd5",
@@ -11418,10 +11418,10 @@
     "line": 196,
     "statement": "suspend fun wantCast() {",
     "occurrence": 1,
-    "source_sha256": "65cc4bec0d453bfbb6b48505bac19f3cc8d59017e7205d97eeacde5cb0f494a7",
+    "source_sha256": "e454f4fd2efc573d4810d088197b03ff6372172536528e356860b5c8f3a9b204",
     "disposition": "internal",
     "guard": "Async interface/helper boundary; concrete activation inventoried separately",
-    "reason": "This signature supplies work to a model or component; declaring it starts no user operation. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Gate repair: reviewed identity-key motion, explicit layout, token spacing or semantic navigation changes; existing guard retained. 0.4.173 fixes (sleep stopped line, activity-off extend, night continue, word reading row, per-book timers, volume editor id and add rule) leave this statement and its guard unchanged."
+    "reason": "This signature supplies work to a model or component; declaring it starts no user operation. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Gate repair: reviewed identity-key motion, explicit layout, token spacing or semantic navigation changes; existing guard retained. 0.4.173 fixes (sleep stopped line, activity-off extend, night continue, word reading row, per-book timers, volume editor id and add rule) leave this statement and its guard unchanged. Re-pinned for fix173d: the edit only fits the Nghe/Đọc theo labels on one line and adds the volume heard bar; this statement and its guard are unchanged."
   },
   {
     "id": "cdb975d60b510da0614d",
@@ -11430,22 +11430,22 @@
     "line": 201,
     "statement": "private suspend fun loadCast() {",
     "occurrence": 1,
-    "source_sha256": "65cc4bec0d453bfbb6b48505bac19f3cc8d59017e7205d97eeacde5cb0f494a7",
+    "source_sha256": "e454f4fd2efc573d4810d088197b03ff6372172536528e356860b5c8f3a9b204",
     "disposition": "internal",
     "guard": "Async interface/helper boundary; concrete activation inventoried separately",
-    "reason": "This signature supplies work to a model or component; declaring it starts no user operation. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Gate repair: reviewed identity-key motion, explicit layout, token spacing or semantic navigation changes; existing guard retained. 0.4.173 fixes (sleep stopped line, activity-off extend, night continue, word reading row, per-book timers, volume editor id and add rule) leave this statement and its guard unchanged."
+    "reason": "This signature supplies work to a model or component; declaring it starts no user operation. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Gate repair: reviewed identity-key motion, explicit layout, token spacing or semantic navigation changes; existing guard retained. 0.4.173 fixes (sleep stopped line, activity-off extend, night continue, word reading row, per-book timers, volume editor id and add rule) leave this statement and its guard unchanged. Re-pinned for fix173d: the edit only fits the Nghe/Đọc theo labels on one line and adds the volume heard bar; this statement and its guard are unchanged."
   },
   {
     "id": "a1779010345e9c7c4091",
     "kind": "pending",
     "path": "mobile/android/app/src/main/java/vn/abook/player/ui/screens/BookScreen.kt",
-    "line": 399,
+    "line": 410,
     "statement": "ChapterJump(below) { currentItem?.let { scope.launch { list.animateScrollToItem((it - 1).coerceAtLeast(0)) } } }",
     "occurrence": 1,
-    "source_sha256": "65cc4bec0d453bfbb6b48505bac19f3cc8d59017e7205d97eeacde5cb0f494a7",
+    "source_sha256": "e454f4fd2efc573d4810d088197b03ff6372172536528e356860b5c8f3a9b204",
     "disposition": "pending",
     "guard": "ViewModel/operation fields: PendingIndicator, loading, preparingBookId, progress, progressLine; Components pending indicator",
-    "reason": "The model retains the operation and locks repeats; UI uses the shared pending parameter, loading content or progress owner. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Gate repair: reviewed identity-key motion, explicit layout, token spacing or semantic navigation changes; existing guard retained. 0.4.173 fixes (sleep stopped line, activity-off extend, night continue, word reading row, per-book timers, volume editor id and add rule) leave this statement and its guard unchanged."
+    "reason": "The model retains the operation and locks repeats; UI uses the shared pending parameter, loading content or progress owner. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Gate repair: reviewed identity-key motion, explicit layout, token spacing or semantic navigation changes; existing guard retained. 0.4.173 fixes (sleep stopped line, activity-off extend, night continue, word reading row, per-book timers, volume editor id and add rule) leave this statement and its guard unchanged. Re-pinned for fix173d: the edit only fits the Nghe/Đọc theo labels on one line and adds the volume heard bar; this statement and its guard are unchanged."
   },
   {
     "id": "7a85018d5968a539b205",
