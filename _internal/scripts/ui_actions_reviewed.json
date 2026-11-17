@@ -1110,10 +1110,10 @@
     "line": 44,
     "statement": "<Button variant=\"ghost\" size=\"sm\" className=\"self-start px-0\" onClick={()=>deletion.confirm({title:S.s_reset_question,description:S.s_reset_detail,label:S.s_ve_mac_dinh_4eb6b300,run:()=>{resetAudioFx();setVolume(1);}})}>{S.s_ve_mac_dinh_4eb6b300}</Button>",
     "occurrence": 1,
-    "source_sha256": "ef7ff267bce491b289b6706ea19e5527892dc90c7b030ea749b72c88ddbc50b4",
+    "source_sha256": "9f68bd63c6f2ea8c297b564ef92d746f43a6f4f5e137c0c133bb0588d1a97d15",
     "disposition": "confirmation",
     "guard": "AudioFxPanel useDestructiveConfirm / AudioFxPage DestructiveConfirm",
-    "reason": "Resetting all device audio preferences asks before replacing the user settings; graph cleanup is transient audio infrastructure."
+    "reason": "Resetting all device audio preferences asks before replacing the user settings; graph cleanup is transient audio infrastructure. Combined-source review: unit suffixes moved to NBSP constants (DECIBELS/DBFS/SECONDS); this reset action and its confirmation guard are unchanged."
   },
   {
     "id": "0eb6ef1238f0213bb9f6",
