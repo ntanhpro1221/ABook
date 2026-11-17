@@ -14,6 +14,20 @@ kéo hai gói mà dev đã nâng về lại bản có lỗ:
 Hai gói này đã về lại 1.2.1 / 81.0.0 trên `dev/deps175`, đo trên venv thử riêng. setuptools vẫn phải <82 chừng nào torch
 còn ở 2.11. Bài học: khi kéo ghim về theo runtime, phải đối chiếu từng gói bị lùi với bảng CVE, không chỉ với số phiên bản.
 
+**ctranslate2 4.8.2 → 4.9.0 và PySide6 6.11.2 → 6.11.3** (gồm Addons, Essentials, shiboken6):
+- 4.8.3 sửa lỗi Ruy treo/rò khi tắt trên Windows. Ruy là backend CPU int8 mà bước thử Whisper của Studio dùng. Từ 4.8.5 tới
+  4.9.0 còn có ba sửa độ chính xác FP16.
+- Đo trên 200 bản thu khoá (cách chọn của `LLM_Train/ct2`, dự án `text_tmp_50_chapters_aab0b7b9b4`), hai venv thử chỉ khác
+  lock:
+  - CUDA fp16: 4.8.2 tự tất định 200/200, 4.9.0 trùng từng byte 200/200. Thời gian 99.0/89.3 s (4.8.2) và 91.9 s (4.9.0).
+  - CPU int8: chạy 100 bản đầu cùng thứ tự, vì mỗi bản mất ~7 s. 4.8.2 tự tất định 100/100, 4.9.0 trùng 100/100.
+- Thoát sạch sau CPU int8: chạy 10 tiến trình lạnh mỗi bản, không tiến trình nào treo hay trả mã khác 0. Tiến trình kết thúc
+  chậm nhất 0.19 s sau khi phiên âm xong.
+- Transcript không đổi nên không cần đo WER/verdict.
+- PySide6 6.11.3 nâng mức vá Chromium của WebEngine từ 151.0.7922.71 lên 155.0.8059.85 (lõi 140.0.7339.264). Đã kiểm:
+  `test_gui_layout.py`, `test_one_click_startup.py` và các test lock/cài đặt đều qua; import `abook.desktop`/`gui`/`desktop_shell`
+  được; `QWebEngineView` nạp trang cục bộ ngoài màn hình và chạy JS.
+
 **Ollama 0.33.2 vẫn giữ ghim, dù có ba CVE chạm đúng bản này** (bản soát 12-11 bỏ sót vì chỉ đọc release notes v0.40.x):
 
 | CVE | Lỗi | Điều kiện | Bản sửa (theo bên thứ ba) |

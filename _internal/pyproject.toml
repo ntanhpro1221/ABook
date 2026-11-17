@@ -8,7 +8,7 @@ version = "0.4.173"
 description = "Offline Vietnamese expressive audiobook workstation with crash-safe checkpoints"
 requires-python = ">=3.11,<3.13"
 dependencies = [
-  "PySide6==6.11.2",
+  "PySide6==6.11.3",
   "requests==2.34.2",
   "psutil==7.2.2",
   "numpy==2.4.6",
@@ -26,7 +26,7 @@ dependencies = [
   # still select it and because docs/DEPENDENCIES.md treats an engine swap as a version
   # event worth being able to reverse.
   "faster-whisper==1.2.1",
-  "ctranslate2==4.8.2",
+  "ctranslate2==4.9.0",
   "torch==2.11.0",
   "torchaudio==2.11.0",
   "torchvision==0.26.0",

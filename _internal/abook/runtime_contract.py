@@ -134,7 +134,7 @@ CRITICAL_RUNTIME_DISTRIBUTIONS: dict[str, tuple[str, str]] = {
     # vieneu` mid-book would silently re-cast the rest of the chapters.
     "vieneu": ("vieneu", "3.8.3"),
     # Both engines and their installed versions belong to the book's ASR provenance.
-    "ctranslate2": ("ctranslate2", "4.8.2"),
+    "ctranslate2": ("ctranslate2", "4.9.0"),
     "faster-whisper": ("faster_whisper", "1.2.1"),
     "brotli": ("brotli", "1.2.1"),
     # Same silent class: sea-g2p decides the pronunciation of locked names.
