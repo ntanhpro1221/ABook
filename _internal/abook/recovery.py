@@ -248,12 +248,22 @@ def recover_project(
             if checksum_ok and spoken_text_for_segment is not None:
                 # The writer validates materialized speech: stretched vowels, symbols and
                 # locked readings can have very different duration/rate budgets from source.
+                # A missing reading or odd data must not stop the whole batch from resuming
+                # (the same contract as `pipeline._spoken_text_drifted`): note it and judge
+                # this one take against its source text; the pipeline handles it per segment.
+                derived = True
                 try:
                     text = spoken_text_for_segment(dict(row))
-                except Exception as exc:
-                    raise RecoveryError(f"Cannot reconstruct recorded speech for {row['stable_id']}") from exc
+                except Exception as exc:  # noqa: BLE001 - see comment above
+                    db.event(
+                        "warning",
+                        "SPOKEN_TEXT_RECONSTRUCT_FAILED",
+                        "Recovery could not derive the spoken text for this segment; checked it against its source text",
+                        {"stable_id": str(row["stable_id"] or ""), "error": f"{type(exc).__name__}: {exc}"},
+                    )
+                    derived = False
                 spoken_hash = signal.get("spoken_text_sha256") if isinstance(signal, dict) else None
-                if same_take and spoken_hash and hashlib.sha256(text.encode("utf-8")).hexdigest() != spoken_hash:
+                if derived and same_take and spoken_hash and hashlib.sha256(text.encode("utf-8")).hexdigest() != spoken_hash:
                     db.reset_segment_pending(int(row["id"]), "Recovery found a recording made from a different spoken text")
                     report.reset_spoken_text_drift += 1
                     continue
