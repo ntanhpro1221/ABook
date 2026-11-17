@@ -18,6 +18,7 @@ import codecs
 import hashlib
 import html.entities
 import json
+import logging
 import lzma
 import os
 import posixpath
@@ -579,24 +580,43 @@ def _txt_folder(folder: Path) -> ImportedBook:
     read = [_txt_chapter(file) for file in files]
     result = ImportedBook(title=title_from_filename(folder.resolve().name), chapters=[chapter for chapter, _ in read], text_has_title=True, keep_matter=True,
                           notes=_encoding_notes(encoding for _, encoding in read))
-    for key, value in book_metadata.from_folder(folder).items():
+    for key, value in book_metadata.from_sources(files).items():
         setattr(result, key, value)
     sidecar = folder / SIDECAR
     if sidecar.is_file():
-        info = json.loads(sidecar.read_text(encoding="utf-8"))
-        result.title = str(info.get("title") or result.title)
-        for definition in info.get("volumes", []):
-            identifier = int(definition["id"])
-            cover = definition.get("cover")
-            raw = None
-            if cover:
-                from . import book_paths
-                raw = book_paths.inside(folder, str((folder / cover).resolve())).read_bytes()
-            result.volumes.append(Volume(identifier, int(definition["number"]), str(definition["title"]), raw, "image/jpeg"))
-            for file, chapter in zip(files, result.chapters):
-                if file.name in definition["chapters"]:
-                    chapter.volume = identifier
+        # A broken sidecar costs the volume split and the title, never the import (book_metadata skips it the same way).
+        try:
+            title, volumes = _sidecar_volumes(folder, sidecar.read_text(encoding="utf-8"))
+        except (OSError, UnicodeDecodeError, ValueError, TypeError, KeyError, AttributeError) as error:
+            logging.getLogger(__name__).warning("Skipped %s: %s", sidecar, error)
+        else:
+            result.title = title or result.title
+            for volume, names in volumes:
+                result.volumes.append(volume)
+                for file, chapter in zip(files, result.chapters):
+                    if file.name in names:
+                        chapter.volume = volume.id
     return result
+
+
+def _sidecar_volumes(folder: Path, text: str) -> tuple[str, list[tuple[Volume, list[str]]]]:
+    """Title and volumes of an `extract` sidecar; raises on any shape it does not expect, before anything is applied."""
+    info = json.loads(text)
+    if not isinstance(info, dict):
+        raise ValueError("not a JSON object")
+    volumes = []
+    for definition in info.get("volumes", []):
+        identifier = int(definition["id"])
+        cover = definition.get("cover")
+        raw = None
+        if cover:
+            from . import book_paths
+            raw = book_paths.inside(folder, str((folder / cover).resolve())).read_bytes()
+        names = definition["chapters"]
+        if not isinstance(names, list):
+            raise ValueError("volume chapters must be a list")
+        volumes.append((Volume(identifier, int(definition["number"]), str(definition["title"]), raw, "image/jpeg"), [str(name) for name in names]))
+    return str(info.get("title") or ""), volumes
 
 
 def _txt_file(path: Path, split: bool = False) -> ImportedBook:

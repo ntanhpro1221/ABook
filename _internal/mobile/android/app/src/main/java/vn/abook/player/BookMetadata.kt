@@ -27,7 +27,19 @@ object BookMetadata {
         }
         return out
     }
-    fun select(raw: JSONObject): JSONObject = validate(JSONObject().apply { for (key in fields) if (raw.has(key)) put(key, raw.get(key)) })
+    /**
+     * Nothing to show: absent, "", [] or a source whose url and site are both empty. The same rule as Python
+     * `book_metadata.blank` (shared cases: tests/fixtures/book_metadata/set_metadata.json) - an untouched draft is no edit.
+     */
+    fun blank(value: Any?): Boolean = when (value) {
+        null, JSONObject.NULL -> true
+        is String -> value.isBlank()
+        is JSONArray -> (0 until value.length()).all { value.opt(it).toString().isBlank() }
+        is JSONObject -> value.keys().asSequence().all { key -> value.opt(key).let { it == null || it == JSONObject.NULL || it.toString().isBlank() } }
+        else -> false
+    }
+    fun same(a: Any?, b: Any?): Boolean = (blank(a) && blank(b)) || StrictJson.equal(a, b)
+    fun select(raw: JSONObject): JSONObject =validate(JSONObject().apply { for (key in fields) if (raw.has(key)) put(key, raw.get(key)) })
 
     fun version(raw: JSONObject): String {
         val values = JSONArray()

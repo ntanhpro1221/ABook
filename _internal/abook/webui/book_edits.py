@@ -632,7 +632,7 @@ def apply_manifest(book: dict[str, Any], edits: dict[str, Any]) -> dict[str, Any
                             for part in book["parts"]]
     for key in book_metadata.FIELDS:
         if key in edits:
-            if edits[key]:
+            if not book_metadata.blank(edits[key]):
                 out[key] = edits[key]
             else:
                 out.pop(key, None)
@@ -928,14 +928,13 @@ def set_author(folder: Path, author: str) -> str:
 
 
 def set_metadata(folder: Path, changes: dict[str, Any]) -> dict[str, Any]:
-    changes = book_metadata.validate(changes)
-    if "author" in changes:
-        changes["author"] = clean_text(changes["author"], AUTHOR_MAX)
+    changes = book_metadata.clean(changes)
     with _LOCK:
         edits = load(folder)
         base = _base(folder)
         for key, value in changes.items():
-            if value == base.get(key, [] if key in ("altTitles", "genres") else {} if key == "source" else ""):
+            # Empty equals absent (book_metadata.same): saving a draft with an empty field the book never had is not an edit.
+            if book_metadata.same(value, clean_text(base.get(key), AUTHOR_MAX) if key == "author" else base.get(key)):
                 edits.pop(key, None)
             else:
                 edits[key] = value

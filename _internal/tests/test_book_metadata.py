@@ -1,5 +1,6 @@
 import json
 import zipfile
+from pathlib import Path
 
 import pytest
 
@@ -48,8 +49,8 @@ def test_txt_and_folder(tmp_path):
     assert book.summary == "Một chiếc thuyền."
     assert book.chapters[0].text == story.strip()
     details = {"author": "Người Khác", "summary": "Đoạn một.\n\nĐoạn hai.", "genres": ["Adventure"]}
-    (tmp_path / "metadata.json").write_text(json.dumps(details), encoding="utf-8")
-    assert importers.import_text(tmp_path).metadata() == details
+    (tmp_path / "metadata.json").write_text(json.dumps({**details, "path": "/truyen/1-ho-giay"}), encoding="utf-8")
+    assert importers.import_text(tmp_path).metadata() == {**details, "source": {"url": "https://docln.net/truyen/1-ho-giay", "site": "Hako"}}
 
 
 def test_metadata_edits_preserve_audio_and_cast(tmp_path):
@@ -119,3 +120,87 @@ def test_project_metadata_has_a_separate_revision_and_travels_in_project_file(tm
     with zipfile.ZipFile(packed) as archive:
         assert json.loads(archive.read("project/book_metadata.json")) == details
         assert all(json.loads(archive.read("book.json"))[key] == value for key, value in details.items())
+
+
+HEADER = "Hồ giấy\nTác giả: Người Viết\nTóm tắt: Một chiếc thuyền.\n\nChương 1\n" + "Câu chuyện tự viết. " * 20
+# Another app's metadata.json, a wrong type, a non-object and broken JSON: none of them is ours to read.
+FOREIGN = ['{"author": 5}', "[1, 2]", "not json", '{"title": "Other app", "author": "Some Studio Inc"}']
+
+
+@pytest.mark.parametrize("name", [book_metadata.FILE, "import.json", "metadata.json"])
+@pytest.mark.parametrize("content", FOREIGN)
+def test_a_foreign_or_broken_sidecar_is_skipped_not_fatal(tmp_path, name, content, caplog):
+    if name != "metadata.json" and content == FOREIGN[3]:
+        pytest.skip("only metadata.json needs a Hako marker; an ABook sidecar with a plain author is valid")
+    source = tmp_path / "book.txt"
+    source.write_text(HEADER, encoding="utf-8")
+    (tmp_path / name).write_text(content, encoding="utf-8")
+    found = book_metadata.from_sources([source])
+    assert found == {"author": "Người Viết", "summary": "Một chiếc thuyền."}
+    if name != "metadata.json":
+        assert name in caplog.text, "a skipped sidecar of ours leaves a warning"
+    assert importers.import_text(tmp_path).author == "Người Viết", "importing the folder must not fail either"
+
+
+def test_a_hako_sidecar_with_a_wrong_field_is_skipped_with_a_warning(tmp_path, caplog):
+    source = tmp_path / "book.txt"
+    source.write_text(HEADER, encoding="utf-8")
+    (tmp_path / "metadata.json").write_text('{"path": "/truyen/1-x", "author": 5}', encoding="utf-8")
+    assert book_metadata.from_sources([source])["author"] == "Người Viết"
+    assert "metadata.json" in caplog.text
+
+
+def test_a_broken_sidecar_does_not_leave_a_half_made_project(tmp_path):
+    from abook.config import build_settings
+    from abook.project import create_or_open_project
+    source = tmp_path / "book.txt"
+    source.write_text(HEADER, encoding="utf-8")
+    (tmp_path / "metadata.json").write_text('{"author": 5}', encoding="utf-8")
+    paths, _db, _settings = create_or_open_project([source], tmp_path / "out", build_settings(), "Hồ giấy")
+    assert book_metadata.load(paths.root) == {"author": "Người Viết", "summary": "Một chiếc thuyền."}
+
+
+def test_metadata_comes_from_the_chosen_file_not_its_neighbour(tmp_path):
+    from abook.config import build_settings
+    from abook.project import create_or_open_project
+    (tmp_path / "a_other.txt").write_text("Khác\nTác giả: Người Khác\nTóm tắt: Sách khác hẳn.\n\nChương 1\nChữ.", encoding="utf-8")
+    story = tmp_path / "story.txt"
+    story.write_text(HEADER, encoding="utf-8")
+    assert book_metadata.from_sources([story])["author"] == "Người Viết"
+    paths, _db, _settings = create_or_open_project([story], tmp_path / "out", build_settings(), "Hồ giấy")
+    assert book_metadata.load(paths.root)["author"] == "Người Viết"
+
+
+FIXTURES = Path(__file__).parent / "fixtures" / "book_metadata"
+HEADER_CASES = json.loads((FIXTURES / "header.json").read_text(encoding="utf-8"))
+SET_CASES = json.loads((FIXTURES / "set_metadata.json").read_text(encoding="utf-8"))["cases"]
+
+
+@pytest.mark.parametrize("case", HEADER_CASES["cases"], ids=lambda case: case["name"])
+def test_a_summary_ends_at_the_header_structure_not_at_the_end_of_the_story(case):
+    filler = "\n".join(HEADER_CASES["fillerLine"].replace("{n}", str(n)) for n in range(case["filler"]))
+    found = book_metadata.text_header(case["text"] + filler)
+    if "expected" in case:
+        assert found == case["expected"]
+    else:
+        assert len(found["summary"].splitlines()) < case["summaryLinesBelow"]
+
+
+@pytest.mark.parametrize("case", SET_CASES, ids=lambda case: case["name"])
+def test_saving_metadata_records_only_real_changes(tmp_path, case):
+    book = {"format": "abook-book/1", "title": "Hồ giấy", "version": "v", "chapters": [], **case["base"]}
+    (tmp_path / "book.json").write_text(json.dumps(book, ensure_ascii=False), encoding="utf-8")
+    book_edits.set_metadata(tmp_path, case["changes"])
+    edits = book_edits.load(tmp_path)
+    assert {key: edits[key] for key in book_metadata.FIELDS if key in edits} == case["edits"]
+    assert book_edits.count(edits) == len(case["edits"])
+    shown = book_edits.apply_manifest(book, edits)
+    assert {key: shown[key] for key in book_metadata.FIELDS if key in shown} == case["shown"]
+
+
+def test_a_project_author_is_cleaned_like_an_imported_one(tmp_path):
+    """PUT /metadata on a Studio project goes through book_metadata.save: the same one-line author rule."""
+    saved = book_metadata.save(tmp_path, {"author": "  Người\nViết   Khác ", "summary": "Đoạn một.\n\nĐoạn hai."})
+    assert saved == {"author": "Người Viết Khác", "summary": "Đoạn một.\n\nĐoạn hai."}
+    assert book_metadata.load(tmp_path)["author"] == "Người Viết Khác"
+    assert book_metadata.present({"source": {"url": "", "site": ""}, "author": " "}) == {}

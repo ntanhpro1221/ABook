@@ -1474,7 +1474,7 @@ class App:
         self._mutating()
         path = self._editable(value)
         try:
-            changes = book_metadata.validate(changes)
+            changes = book_metadata.clean(changes)
             return (book_metadata.save(path, changes) if store.is_project(path) else book_edits.set_metadata(path, changes))
         except ValueError as exc:
             raise ApiError(HTTPStatus.BAD_REQUEST, str(exc)) from exc

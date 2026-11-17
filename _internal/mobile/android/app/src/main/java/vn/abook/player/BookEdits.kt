@@ -739,7 +739,7 @@ object BookEdits {
         }
         for (key in BookMetadata.fields) if (edits.has(key)) {
             val value = edits.get(key)
-            if (value == "" || value is JSONArray && value.length() == 0) out.remove(key) else out.put(key, value)
+            if (BookMetadata.blank(value)) out.remove(key) else out.put(key, value)
         }
         val renamed = edits.optJSONObject("chapters")
         val skip = edits.optJSONObject("skip")
@@ -1126,10 +1126,14 @@ object BookEdits {
 
     fun setMetadata(folder: File, changes: JSONObject): JSONObject = synchronized(lock) {
         val cleaned = BookMetadata.validate(changes)
+        // The author rule of every typed author (setAuthor, Python book_metadata.clean): an unclean one would make load() refuse edits.json.
+        if (cleaned.has("author")) cleaned.put("author", cleanText(cleaned.get("author"), AUTHOR_MAX))
         val edits = load(folder)
         val base = rawBook(folder)
         for (key in cleaned.keys()) {
-            if (StrictJson.equal(base.opt(key), cleaned.opt(key))) edits.remove(key) else edits.put(key, cleaned.get(key))
+            // Empty equals absent (BookMetadata.same): saving a draft with an empty field the book never had is not an edit.
+            val before = if (key == "author") cleanText(base.opt("author"), AUTHOR_MAX) else base.opt(key)
+            if (BookMetadata.same(before, cleaned.opt(key))) edits.remove(key) else edits.put(key, cleaned.get(key))
         }
         write(folder, edits)
         cleaned

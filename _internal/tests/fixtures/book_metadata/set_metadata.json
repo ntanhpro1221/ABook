@@ -1,0 +1,40 @@
+{
+  "about": "Shared by tests/test_book_metadata.py and Android BookMetadataParityTest: saving descriptive fields on an imported book. 'edits' is the metadata part of edits.json after the save, 'shown' the metadata of book.json with the edits applied. Empty equals absent: an unchanged draft is no edit.",
+  "cases": [
+    {
+      "name": "untouched draft of a book without metadata",
+      "base": {},
+      "changes": {"author": "", "illustrator": "", "altTitles": [], "genres": [], "summary": "", "source": {"url": "", "site": ""}},
+      "edits": {},
+      "shown": {}
+    },
+    {
+      "name": "only the summary changed",
+      "base": {},
+      "changes": {"author": "", "illustrator": "", "altTitles": [], "genres": [], "summary": "Một đoạn tóm tắt mới.", "source": {"url": "", "site": ""}},
+      "edits": {"summary": "Một đoạn tóm tắt mới."},
+      "shown": {"summary": "Một đoạn tóm tắt mới."}
+    },
+    {
+      "name": "untouched draft of a book with metadata",
+      "base": {"author": "Người Viết", "genres": ["Fantasy"], "source": {"url": "https://example.org/b/1", "site": "Example"}},
+      "changes": {"author": "Người Viết", "illustrator": "", "altTitles": [], "genres": ["Fantasy"], "summary": "", "source": {"url": "https://example.org/b/1", "site": "Example"}},
+      "edits": {},
+      "shown": {"author": "Người Viết", "genres": ["Fantasy"], "source": {"url": "https://example.org/b/1", "site": "Example"}}
+    },
+    {
+      "name": "clearing a source the book has is an edit that hides it",
+      "base": {"author": "Người Viết", "source": {"url": "https://example.org/b/1", "site": "Example"}},
+      "changes": {"author": "Người Viết", "source": {"url": "", "site": ""}},
+      "edits": {"source": {"url": "", "site": ""}},
+      "shown": {"author": "Người Viết"}
+    },
+    {
+      "name": "a typed author is one clean line",
+      "base": {},
+      "changes": {"author": "  Người\nViết   Khác "},
+      "edits": {"author": "Người Viết Khác"},
+      "shown": {"author": "Người Viết Khác"}
+    }
+  ]
+}
