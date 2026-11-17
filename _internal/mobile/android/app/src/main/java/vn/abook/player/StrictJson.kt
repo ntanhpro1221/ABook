@@ -177,10 +177,11 @@ object StrictJson {
 
     // ---- ghi ra -------------------------------------------------------------------------------------------------
 
-    /** Như `json.dumps(value, ensure_ascii=False, indent=indent)`: khoá theo thứ tự `keys()` / `Map`, rỗng là `{}` / `[]`. */
-    fun dumps(value: Any?, indent: Int = 1): String = StringBuilder().also { write(it, value, indent, 0) }.toString()
+    /** Như `json.dumps(value, ensure_ascii=False, indent=indent)`: khoá theo thứ tự `keys()` / `Map`, rỗng là `{}` / `[]`.
+     *  `indent = null` là `json.dumps(value, ensure_ascii=False)` mặc định: một dòng, ", " giữa các mục, ": " sau khoá. */
+    fun dumps(value: Any?, indent: Int? = 1): String = StringBuilder().also { write(it, value, indent, 0) }.toString()
 
-    private fun write(out: StringBuilder, value: Any?, indent: Int, level: Int) {
+    private fun write(out: StringBuilder, value: Any?, indent: Int?, level: Int) {
         when {
             value == null || value === JSONObject.NULL -> out.append("null")
             value is Boolean -> out.append(if (value) "true" else "false")
@@ -195,14 +196,14 @@ object StrictJson {
         }
     }
 
-    private fun writeMap(out: StringBuilder, entries: List<Pair<String, Any?>>, indent: Int, level: Int) {
+    private fun writeMap(out: StringBuilder, entries: List<Pair<String, Any?>>, indent: Int?, level: Int) {
         if (entries.isEmpty()) {
             out.append("{}")
             return
         }
         out.append('{')
         entries.forEachIndexed { index, (key, item) ->
-            if (index > 0) out.append(',')
+            if (index > 0) out.append(if (indent == null) ", " else ",")
             newline(out, indent, level + 1)
             quote(out, key)
             out.append(": ")
@@ -212,14 +213,14 @@ object StrictJson {
         out.append('}')
     }
 
-    private fun writeList(out: StringBuilder, items: List<Any?>, indent: Int, level: Int) {
+    private fun writeList(out: StringBuilder, items: List<Any?>, indent: Int?, level: Int) {
         if (items.isEmpty()) {
             out.append("[]")
             return
         }
         out.append('[')
         items.forEachIndexed { index, item ->
-            if (index > 0) out.append(',')
+            if (index > 0) out.append(if (indent == null) ", " else ",")
             newline(out, indent, level + 1)
             write(out, item, indent, level + 1)
         }
@@ -227,7 +228,8 @@ object StrictJson {
         out.append(']')
     }
 
-    private fun newline(out: StringBuilder, indent: Int, level: Int) {
+    private fun newline(out: StringBuilder, indent: Int?, level: Int) {
+        if (indent == null) return
         out.append('\n')
         repeat(indent * level) { out.append(' ') }
     }

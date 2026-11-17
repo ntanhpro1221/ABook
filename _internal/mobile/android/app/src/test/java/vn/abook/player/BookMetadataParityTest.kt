@@ -64,6 +64,18 @@ class BookMetadataParityTest {
         }
     }
 
+    /** Python `listen_view.metadata_version` / `book_metadata.overlay` on the same book.json give the same digest and document. */
+    @Test fun metaVersionAndOverlayMatchPython() {
+        val cases = fixture("meta_version.json").getJSONArray("cases")
+        for (index in 0 until cases.length()) {
+            val case = cases.getJSONObject(index)
+            val name = case.getString("name")
+            assertEquals(name, case.getString("version"), BookMetadata.version(case.getJSONObject("book")))
+            val overlaid = BookMetadata.overlay(JSONObject(case.getJSONObject("book").toString()), case.getJSONObject("edits"))
+            assertTrue("$name: ${StrictJson.dumps(overlaid)}", StrictJson.equal(case.getJSONObject("overlaid"), overlaid))
+        }
+    }
+
     /** The real import path (chapter text already cleaned, which folds blank lines) ends the summary where the parser does. */
     @Test fun headerSummaryThroughTheRealImportMatchesTheParser() {
         val root = fixture("header.json")

@@ -202,6 +202,16 @@ def test_a_summary_read_through_the_real_import_paths_matches_the_parser(tmp_pat
         assert len(imported["summary"].splitlines()) < case["summaryLinesBelow"]
 
 
+META_CASES = json.loads((FIXTURES / "meta_version.json").read_text(encoding="utf-8"))["cases"]
+
+
+@pytest.mark.parametrize("case", META_CASES, ids=lambda case: case["name"])
+def test_meta_version_and_overlay_match_the_shared_cases(case):
+    """Android BookMetadataParityTest reads the same cases: one book.json and one metaVersion whichever device exports."""
+    assert listen_view.metadata_version(case["book"]) == case["version"]
+    assert book_metadata.overlay(json.loads(json.dumps(case["book"])), case["edits"]) == case["overlaid"]
+
+
 def test_a_header_that_cannot_be_read_never_stops_a_project(tmp_path, monkeypatch):
     """A DOS end-of-file mark and a stray control inside the summary are dropped; any header the parser still rejects is
     skipped with a warning, never raised into project creation."""
