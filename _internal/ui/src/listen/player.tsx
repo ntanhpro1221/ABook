@@ -277,8 +277,9 @@ export function PlayerProvider({
   sleepSchedule?: SleepSchedule | null;
   /** Lần hẹn giờ cuối đã lưu (tuỳ chọn `lastSleep`, chưa làm sạch); null = chưa từng đặt. */
   lastSleep?: unknown;
-  /** Người nghe vừa tự đặt hẹn giờ: lưu lần hẹn này làm mốc cho lần mở sau (PUT /api/preferences). */
-  onLastSleep?: (value: LastSleep) => void;
+  /** Người nghe vừa tự đặt hẹn giờ: lưu lần hẹn này làm mốc cho lần mở sau (PUT /api/preferences). Trả lời hứa thì `lastSleep` máy chủ
+   *  đưa về trong lúc nó chưa xong bị bỏ qua - bản cũ không kéo mốc vừa chọn lùi lại. */
+  onLastSleep?: (value: LastSleep) => unknown;
   systemIdleReader?: () => Promise<number | null>;
   /** Mở / đóng S.s_dang_nghe_9310d8cf chỉ bằng hoạt ảnh CSS (trượt + mờ, chạy trên GPU), không qua View Transition: điện thoại (WebView tầm trung) - một chuyển
    *  cảnh RỖNG đã chiếm khung 70-140 ms vì phải chụp và dọn cả tài liệu (đo 6x chậm, docs/DESIGN.md 5.2 "60 fps"). Đổi lại bìa không bay. */
@@ -315,9 +316,15 @@ export function PlayerProvider({
   const [sleepStoppedAt, setSleepStoppedAt] = useState<number | null>(null);
   const storedLastSleepKey = JSON.stringify(cleanLastSleep(storedLastSleep));
   const [lastSleep, setLastSleep] = useState<LastSleep>(() => cleanLastSleep(storedLastSleep) ?? LAST_SLEEP_DEFAULT);
-  // Tuỳ chọn đến sau (tải xong, máy khác vừa đổi): lấy theo bản đã lưu.
+  // Lần lưu mốc đang chờ / đang bay (số thứ tự lần chọn mới nhất chưa lưu xong; 0 = không còn).
+  const savingLastSleep = useRef(0);
+  const lastSleepChoices = useRef(0);
+  // Tuỳ chọn đến sau (tải xong, máy khác vừa đổi): lấy theo bản đã lưu - trừ khi lần chọn của chính người nghe còn chưa lưu xong.
+  useEffect(() => {
+    const stored = cleanLastSleep(storedLastSleep);
+    if (stored && !savingLastSleep.current) setLastSleep(stored);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  useEffect(() => { const stored = cleanLastSleep(storedLastSleep); if (stored) setLastSleep(stored); }, [storedLastSleepKey]);
+  }, [storedLastSleepKey]);
   const lastSleepRef = useRef(lastSleep);
   lastSleepRef.current = lastSleep;
   const onLastSleepRef = useRef(onLastSleep);
@@ -1322,7 +1329,13 @@ export function PlayerProvider({
       const next = lastSleepAfter(lastSleepRef.current, request);
       lastSleepRef.current = next;
       setLastSleep(next);
-      onLastSleepRef.current?.(next);
+      const saving = onLastSleepRef.current?.(next);
+      if (saving instanceof Promise) {
+        const choice = ++lastSleepChoices.current;
+        savingLastSleep.current = choice;
+        const settled = () => { if (savingLastSleep.current === choice) savingLastSleep.current = 0; };
+        void saving.then(settled, settled);
+      }
     }
     if (native) {
       native.setSleep(request);

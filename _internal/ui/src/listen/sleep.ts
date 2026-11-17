@@ -189,10 +189,10 @@ export function lastSleepRequest(last: LastSleep): SleepRequest {
   return last.kind === "chapter" ? { kind: "chapter", chapters: last.chapters } : { kind: "minutes", minutes: last.minutes };
 }
 
-/** Nhãn nút "Bật lại": "Bật lại 45 phút", "Bật lại hết chương này", "Bật lại hết 2 chương". Điện thoại: SleepText.restart, Qt: SleepPopover.qml. */
+/** Nhãn nút "Bật lại" (tối đa 4 chữ, một khuôn cho hai loại): "Bật lại 45 phút", "Bật lại 1 chương", "Bật lại 2 chương".
+ *  Điện thoại: SleepText.restart, Qt: SleepPopover.qml - cùng từng chữ. */
 export function lastSleepRestartLabel(last: LastSleep): string {
-  if (last.kind === "minutes") return S.s_bat_lai_0bad8bcf + last.minutes + S.s_phut_cf728a6a;
-  return S.s_bat_lai_0bad8bcf + (last.chapters > 1 ? S.s_het_0_chuong_b59210aa(last.chapters) : S.s_het_chuong_nay_8ccc288f);
+  return S.s_bat_lai_0bad8bcf + (last.kind === "minutes" ? S.s_0_phut_2596d212(last.minutes) : S.s_0_chuong_04093412(last.chapters));
 }
 
 // Hợp đồng của các tuỳ chọn hẹn giờ ngủ: miền tự do của bộ chọn giá trị (VALUE_SPECS), cùng bảng với webui/library.py (SLEEP_RANGES,

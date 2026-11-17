@@ -1993,7 +1993,6 @@ export const S = {
   s_hen_gio_ngu_tren_0_2cac5015: (p0: unknown) => "Hẹn giờ ngủ trên " + String(p0),
   s_hen_lai_0_phut_d6009aba: (p0: unknown) => "Hẹn lại " + String(p0) + " phút",
   s_het_0_chuong_79433c77: (p0: unknown) => "Hết " + String(p0) + " chương",
-  s_het_0_chuong_b59210aa: (p0: unknown) => "hết " + String(p0) + " chương",
   s_het_chuong_13b507b4: "hết chương",
   s_het_chuong_f1d590bb: "Hết chương",
   s_het_chuong_nay_8ccc288f: "hết chương này",

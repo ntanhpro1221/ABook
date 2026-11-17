@@ -111,8 +111,39 @@ for (const broken of [{ kind: "minutes", minutes: 999, chapters: 1 }, { kind: "c
 it("nút Bật lại đặt lại đúng lần cuối: số phút hay số chương", async () => {
   const { lastSleepRestartLabel, lastSleepRequest } = await import("./sleep");
   expect(lastSleepRestartLabel({ kind: "minutes", minutes: 45, chapters: 1 })).toBe("Bật lại 45\u00a0phút");
-  expect(lastSleepRestartLabel({ kind: "chapter", minutes: 45, chapters: 1 })).toBe("Bật lại hết chương này");
-  expect(lastSleepRestartLabel({ kind: "chapter", minutes: 45, chapters: 2 })).toBe("Bật lại hết 2 chương");
+  expect(lastSleepRestartLabel({ kind: "chapter", minutes: 45, chapters: 1 })).toBe("Bật lại 1 chương");
+  expect(lastSleepRestartLabel({ kind: "chapter", minutes: 45, chapters: 2 })).toBe("Bật lại 2 chương");
   expect(lastSleepRequest({ kind: "chapter", minutes: 45, chapters: 2 })).toEqual({ kind: "chapter", chapters: 2 });
   expect(lastSleepRequest({ kind: "minutes", minutes: 45, chapters: 2 })).toEqual({ kind: "minutes", minutes: 45 });
+});
+
+// Soát sleeplast 18-11 (lỗi 1): giữ +/- gửi nhiều lần lưu; bản máy chủ cũ về muộn không được kéo mốc vừa chọn lùi lại.
+it("lần lưu còn bay: tuỳ chọn cũ về muộn không kéo mốc lùi; lưu xong thì lại theo máy chủ", async () => {
+  const { latestSave } = await import("@/shared/latestSave");
+  const answers: ((saved: LastSleep) => void)[] = [];
+  const saver = latestSave((value: LastSleep) => new Promise<LastSleep>(resolve => answers.push(() => resolve(value))), { delay: 0 });
+  const source = { kind: "desktop", audioUrl: () => "/audio", saveProgress: async () => {}, beginProgress: async () => {},
+    setRate: async () => {}, book: async () => book } as unknown as ListenSource;
+  const client = new QueryClient({ defaultOptions: { queries: { queryFn: async () => [], retry: false } } });
+  const render = (stored: unknown) => act(() => root.render(<QueryClientProvider client={client}>
+    <SourceProvider source={source}><TooltipProvider><PlayerProvider engine={engine} keyboard={false} lastSleep={stored} onLastSleep={value => saver.save(value)}>
+      <Probe /><SleepMenu />
+    </PlayerProvider></TooltipProvider></SourceProvider>
+  </QueryClientProvider>));
+  await render({ kind: "minutes", minutes: 30, chapters: 1 });
+  await act(async () => actions.prepare(book, chapters, 1, 0));
+  for (const minutes of [31, 32, 33]) await act(async () => actions.setSleep({ kind: "minutes", minutes }));
+  await act(async () => { await new Promise(resolve => setTimeout(resolve, 0)); });
+  // Phản hồi cũ (31 - lần gửi trước, hay một lần đọc lại tuỳ chọn) đến khi 33 còn chưa lưu xong.
+  await render({ kind: "minutes", minutes: 31, chapters: 1 });
+  expect(actions.lastSleep).toEqual({ kind: "minutes", minutes: 33, chapters: 1 });
+  await act(async () => actions.setSleep({ kind: "chapter", chapters: 2 }));
+  expect(actions.lastSleep).toEqual({ kind: "chapter", minutes: 33, chapters: 2 });
+  // Lưu xong hết: tuỳ chọn mới của máy chủ (máy khác vừa đổi) lại được theo.
+  for (let round = 0; round < 3 && answers.length; round++) {
+    await act(async () => { answers.splice(0).forEach(answer => answer({} as LastSleep)); await new Promise(resolve => setTimeout(resolve, 0)); });
+  }
+  expect(saver.pending).toBe(false);
+  await render({ kind: "minutes", minutes: 50, chapters: 1 });
+  expect(actions.lastSleep).toEqual({ kind: "minutes", minutes: 50, chapters: 1 });
 });
