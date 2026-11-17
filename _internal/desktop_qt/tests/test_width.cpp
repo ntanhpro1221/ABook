@@ -12,6 +12,7 @@
 #include "visualready.h"
 #include "uitree.h"
 #include "shadowprovider.h"
+#include "musicartprovider.h"
 #include <QFontDatabase>
 #include <QAbstractAnimation>
 #include <QCoreApplication>
@@ -278,6 +279,7 @@ public slots:
             cases.open(QIODevice::ReadOnly) ? QString::fromUtf8(cases.readAll()) : QString());
         engine->addImageProvider(QStringLiteral("cover"), new WidthCovers);
         engine->addImageProvider(QStringLiteral("shadow"), new ShadowProvider);
+        engine->addImageProvider(QStringLiteral("musicart"), new MusicArtProvider);
     }
     void applicationAvailable() {
         audit = std::make_unique<GlyphAudit>();

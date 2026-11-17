@@ -1,5 +1,6 @@
 #include "uistrings.generated.h"
 #include "bookdetail.h"
+#include <QPointer>
 
 using namespace PlayerLogic;
 
@@ -23,6 +24,11 @@ BookDetail::BookDetail(QObject *parent) : QObject(parent), m_chapters(this) {
     }
 }
 
+BookDetail::~BookDetail() {
+    ++m_seq;
+    if (m_cancel) m_cancel();
+}
+
 void BookDetail::setBookId(const QString &bookId) {
     if (bookId == m_bookId)
         return;
@@ -35,12 +41,16 @@ void BookDetail::setBookId(const QString &bookId) {
 }
 
 void BookDetail::reload() {
+    const quint64 seq = ++m_seq;
+    // A view can disappear or switch books before its network reply arrives.
+    auto previous = std::move(m_cancel);
+    if (previous) previous();
     Player *player = Player::instance();
     if (!player || m_bookId.isEmpty())
         return;
-    const quint64 seq = ++m_seq;
-    player->net()->request("GET", QStringLiteral("/api/listen/books/%1").arg(m_bookId), {}, [this, seq](int status, const QJsonObject &body) {
-        if (seq != m_seq)
+    const QPointer<BookDetail> alive(this);
+    auto cancel = player->net()->requestCancelable("GET", QStringLiteral("/api/listen/books/%1").arg(m_bookId), {}, [this, alive, seq](int status, const QJsonObject &body) {
+        if (!alive || seq != m_seq)
             return;
         if (status < 200 || status >= 300 || body.isEmpty()) {
             if (!m_hasBook) {
@@ -56,6 +66,8 @@ void BookDetail::reload() {
         m_status = QStringLiteral("ready");
         recompute();
     }, false);
+    if (alive && seq == m_seq) m_cancel = std::move(cancel);
+    else if (cancel) cancel();
 }
 
 void BookDetail::setSelectedVolume(int id) {

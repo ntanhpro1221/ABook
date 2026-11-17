@@ -15,6 +15,7 @@
 #include <QThreadPool>
 #include <QTimer>
 #include <atomic>
+#include <algorithm>
 #include <memory>
 
 namespace {
@@ -22,8 +23,48 @@ QThreadPool &pool() {
     static auto *p = [] { auto *p = new QThreadPool; p->setMaxThreadCount(3); return p; }();
     return *p;
 }
+
+// Keep the shared raster's exact integer pixels without building a data URL on the GUI thread.
+QImage generatedImage(const QString &value, const std::shared_ptr<std::atomic_bool> &cancelled) {
+    bool valid = false;
+    const qlonglong input = value.toLongLong(&valid);
+    const int seed = valid && input >= 0 ? int(input % 1638025) : 7;
+    constexpr int palettes[5][3][3] = {
+        {{24, 46, 48}, {73, 127, 125}, {226, 190, 132}},
+        {{48, 37, 59}, {129, 103, 141}, {230, 190, 164}},
+        {{48, 40, 30}, {159, 113, 64}, {236, 211, 165}},
+        {{29, 42, 64}, {88, 124, 159}, {214, 203, 170}},
+        {{46, 51, 38}, {115, 133, 90}, {223, 206, 152}}
+    };
+    const auto &palette = palettes[seed % 5];
+    const int cx = 22 + seed % 51, cy = 20 + (seed / 53) % 39;
+    const int radius = 20 + (4 - (seed / 5) % 5) * 3, rr = radius * radius;
+    QImage image(96, 96, QImage::Format_RGB32);
+    if (image.isNull()) return {};
+    for (int y = 0; y < 96; ++y) {
+        if (cancelled->load()) return {};
+        auto *row = reinterpret_cast<QRgb *>(image.scanLine(y));
+        for (int x = 0; x < 96; ++x) {
+            const int d = (x - cx) * (x - cx) + (y - cy) * (y - cy);
+            const int glow = std::max(0, 96 - d / 90);
+            const int wave = 64 + (x - 48) * (x - 48) / 100 - seed % 13;
+            int channels[3];
+            for (int c = 0; c < 3; ++c) {
+                int color = (palette[0][c] * (192 - glow) + palette[1][c] * glow) / 192;
+                if (d <= rr) color = (palette[2][c] * 4 + color) / 5;
+                if (d > rr + 130 && d < rr + 210) color = (palette[1][c] + color) / 2;
+                if (y >= wave) color = (color * 3 + palette[1][c]) / 4;
+                channels[c] = color;
+            }
+            row[x] = qRgb(channels[0], channels[1], channels[2]);
+        }
+    }
+    return image;
+}
+
 QImage load(const QString &id, QSize box, const std::shared_ptr<std::atomic_bool> &cancelled) {
     if (cancelled->load()) return {};
+    if (id.startsWith(QLatin1String("generated/"))) return generatedImage(id.mid(10), cancelled);
     const int slash = id.indexOf(QLatin1Char('/'));
     const QByteArray sha = id.left(slash).toLatin1();
     const QUrl url(QUrl::fromPercentEncoding(id.mid(slash + 1).toUtf8()));

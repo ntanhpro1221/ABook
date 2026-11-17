@@ -24,21 +24,24 @@ Item {
             const window = createTemporaryObject(data.factory, host)
             if (window.anchorItem !== undefined) window.anchorItem = anchor
             waitForRendering(host)
+            const panel = findChild(window, data.name)
+            verify(panel !== null)
+            compare(panel.composition.layer.enabled, false, "closed surfaces retain no compositing target")
             const folder = Qt.resolvedUrl("../../build/surface_frames/").toString().replace(/^file:\/\/\/([A-Za-z]:)/, "$1").replace(/^file:\/\//, "")
             grabImage(host.Window.window.contentItem).save(folder + data.tag + "-baseline.png")
             qtAnimationClock.begin()
             window.show()
-            const panel = findChild(window, data.name)
-            verify(panel !== null)
-            verify(panel.composition.layer.enabled, "surface and shadow must fade as one group")
             verify(panel.composition.x <= -96, "layer must retain the shadow extent")
-            const shadow = panel.surfaceData.find(child => child.source !== undefined && String(child.source).indexOf("image://shadow/") === 0)
-            verify(shadow !== undefined)
             const offsets = []
             const positions = []
             for (let i = 0; i < 16; ++i) {
                 qtAnimationClock.step(16)
                 waitForRendering(host)
+                // The first animation tick may still be at shown 0: nothing paints then.
+                compare(panel.composition.layer.enabled, panel.visible, "surface and shadow must fade as one group")
+                if (!panel.visible) continue
+                const shadow = panel.surfaceData.find(child => child.source !== undefined && String(child.source).indexOf("image://shadow/") === 0)
+                verify(shadow !== undefined)
                 const p = panel.mapToItem(host, 0, 0)
                 const s = shadow.mapToItem(host, shadow.pad, shadow.pad)
                 offsets.push(Math.abs(s.y - p.y) + Math.abs(s.x - p.x))
@@ -51,10 +54,19 @@ Item {
             window.close()
             for (let i = 0; i < 12; ++i) {
                 qtAnimationClock.step(16)
+                const shadow = panel.surfaceData.find(child => child.kind !== undefined && child.pad !== undefined)
                 const p = panel.mapToItem(host, 0, 0), s = shadow.mapToItem(host, shadow.pad, shadow.pad)
                 fuzzyCompare(s.x, p.x, .01); fuzzyCompare(s.y, p.y, .01)
             }
             compare(window.visible, false)
+            compare(panel.composition.layer.enabled, false)
+            window.show()
+            for (let i = 0; i < 4 && !panel.visible; ++i) {
+                compare(panel.composition.layer.enabled, false)
+                qtAnimationClock.step(16)
+            }
+            verify(panel.visible)
+            verify(panel.composition.layer.enabled, "reopening restores group composition before painting")
         }
     }
 }

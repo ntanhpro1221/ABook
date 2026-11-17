@@ -837,7 +837,7 @@
     "source_sha256": "64cfb89d4187ce982efd461a12bf872f28ca1d7eaba12b93b9638bc3c7d06d16",
     "disposition": "confirmation",
     "guard": "VoiceSettings useDestructiveConfirm / ProviderKey removeConfirm / VoiceSheets key confirmation",
-    "reason": "Provider credentials are deleted only after the object-specific confirmation. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
+    "reason": "Provider credentials are deleted only after the object-specific confirmation. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Gate repair: reviewed identity-key motion, explicit layout, token spacing or semantic navigation changes; existing guard retained."
   },
   {
     "id": "32f43e4126455dbefcf7",
@@ -849,7 +849,7 @@
     "source_sha256": "64cfb89d4187ce982efd461a12bf872f28ca1d7eaba12b93b9638bc3c7d06d16",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; busy, loading, setBusy",
-    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
+    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Gate repair: reviewed identity-key motion, explicit layout, token spacing or semantic navigation changes; existing guard retained."
   },
   {
     "id": "0dd78303454f077d29d4",
@@ -861,7 +861,7 @@
     "source_sha256": "64cfb89d4187ce982efd461a12bf872f28ca1d7eaba12b93b9638bc3c7d06d16",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; busy, loading, setBusy",
-    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
+    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Gate repair: reviewed identity-key motion, explicit layout, token spacing or semantic navigation changes; existing guard retained."
   },
   {
     "id": "b9eba6dc8cef2043667b",
@@ -873,7 +873,7 @@
     "source_sha256": "64cfb89d4187ce982efd461a12bf872f28ca1d7eaba12b93b9638bc3c7d06d16",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; busy, loading, setBusy",
-    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
+    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Gate repair: reviewed identity-key motion, explicit layout, token spacing or semantic navigation changes; existing guard retained."
   },
   {
     "id": "d3efc5b2c2b58701a12d",
@@ -1125,7 +1125,7 @@
     "source_sha256": "d1a4c0f7d3464deb7f0aa3c7923467e7a2b9c013bbcb6f859216ed8207ab7d98",
     "disposition": "confirmation",
     "guard": "BookRecords ConfirmPage / BookScreen record Dialog / RecordDialogs Modal / DeleteBookPage",
-    "reason": "Deleting a listening profile explicitly describes loss of progress and history. Deleting a book uses the book confirmation. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
+    "reason": "Deleting a listening profile explicitly describes loss of progress and history. Deleting a book uses the book confirmation. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Gate repair: reviewed identity-key motion, explicit layout, token spacing or semantic navigation changes; existing guard retained."
   },
   {
     "id": "9afb04bc8bcc92ca4b0c",
@@ -1137,7 +1137,7 @@
     "source_sha256": "d1a4c0f7d3464deb7f0aa3c7923467e7a2b9c013bbcb6f859216ed8207ab7d98",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; LoadingCrossfade, Progress, busy, isLoading, loading, pending, pendingVoice, preparingBookId, progress, progressFill",
-    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
+    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Gate repair: reviewed identity-key motion, explicit layout, token spacing or semantic navigation changes; existing guard retained."
   },
   {
     "id": "0cff7a6337a7b77585a3",
@@ -1149,7 +1149,7 @@
     "source_sha256": "d1a4c0f7d3464deb7f0aa3c7923467e7a2b9c013bbcb6f859216ed8207ab7d98",
     "disposition": "internal",
     "guard": "Async interface/helper boundary; concrete activation inventoried separately",
-    "reason": "This signature supplies work to a model or component; declaring it starts no user operation. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
+    "reason": "This signature supplies work to a model or component; declaring it starts no user operation. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Gate repair: reviewed identity-key motion, explicit layout, token spacing or semantic navigation changes; existing guard retained."
   },
   {
     "id": "066bfd62238e7b1506cd",
@@ -1161,7 +1161,7 @@
     "source_sha256": "d1a4c0f7d3464deb7f0aa3c7923467e7a2b9c013bbcb6f859216ed8207ab7d98",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; LoadingCrossfade, Progress, busy, isLoading, loading, pending, pendingVoice, preparingBookId, progress, progressFill",
-    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
+    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Gate repair: reviewed identity-key motion, explicit layout, token spacing or semantic navigation changes; existing guard retained."
   },
   {
     "id": "1d74793870f93603ba4e",
@@ -1173,7 +1173,7 @@
     "source_sha256": "d1a4c0f7d3464deb7f0aa3c7923467e7a2b9c013bbcb6f859216ed8207ab7d98",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; LoadingCrossfade, Progress, busy, isLoading, loading, pending, pendingVoice, preparingBookId, progress, progressFill",
-    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
+    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Gate repair: reviewed identity-key motion, explicit layout, token spacing or semantic navigation changes; existing guard retained."
   },
   {
     "id": "1d071d9ad59632b02e8b",
@@ -1185,7 +1185,7 @@
     "source_sha256": "d1a4c0f7d3464deb7f0aa3c7923467e7a2b9c013bbcb6f859216ed8207ab7d98",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; LoadingCrossfade, Progress, busy, isLoading, loading, pending, pendingVoice, preparingBookId, progress, progressFill",
-    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
+    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Gate repair: reviewed identity-key motion, explicit layout, token spacing or semantic navigation changes; existing guard retained."
   },
   {
     "id": "d2780dded4db9ad89245",
@@ -1425,7 +1425,7 @@
     "source_sha256": "58898c833a5a33cfb2aa35ccf586432f063d803c90374b5074435df3527c5a84",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; LoadingCrossfade, Progress, isLoading, loading, progress, progressFill, progressText",
-    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
+    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Gate repair: reviewed identity-key motion, explicit layout, token spacing or semantic navigation changes; existing guard retained."
   },
   {
     "id": "8e6269fe3f7bbd02cacc",
@@ -1437,7 +1437,7 @@
     "source_sha256": "58898c833a5a33cfb2aa35ccf586432f063d803c90374b5074435df3527c5a84",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; LoadingCrossfade, Progress, isLoading, loading, progress, progressFill, progressText",
-    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
+    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Gate repair: reviewed identity-key motion, explicit layout, token spacing or semantic navigation changes; existing guard retained."
   },
   {
     "id": "7a75357ddc0dd98439a5",
@@ -1653,7 +1653,7 @@
     "source_sha256": "ea3fef04301ec91c2ab0546d84ff252a477f037d323e5a56b7a80d484d773519",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; busy, isLoading, loading, progress, setProgress",
-    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering."
+    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Gate repair: reviewed identity-key motion, explicit layout, token spacing or semantic navigation changes; existing guard retained."
   },
   {
     "id": "9352b07062c4b3475c3b",
@@ -1665,7 +1665,7 @@
     "source_sha256": "ea3fef04301ec91c2ab0546d84ff252a477f037d323e5a56b7a80d484d773519",
     "disposition": "confirmation",
     "guard": "MyMusic useDestructiveConfirm / MyMusicTrack removeConfirm / VoiceSheets TrackSheet",
-    "reason": "The local imported music file is removed only after the shared confirmation."
+    "reason": "The local imported music file is removed only after the shared confirmation. Gate repair: reviewed identity-key motion, explicit layout, token spacing or semantic navigation changes; existing guard retained."
   },
   {
     "id": "ad28300aace5700cda63",
@@ -1676,8 +1676,8 @@
     "occurrence": 1,
     "source_sha256": "ea3fef04301ec91c2ab0546d84ff252a477f037d323e5a56b7a80d484d773519",
     "disposition": "confirmation",
-    "guard": "MyMusic useDestructiveConfirm / MyMusicTrack removeConfirm / VoiceSheets TrackSheet",
-    "reason": "The local imported music file is removed only after the shared confirmation."
+    "guard": "Existing confirmation boundary and pending lock, now retained inside identity-key SwapContent; callbacks and cancellation are unchanged.",
+    "reason": "Reviewed the exact wrapped confirmation call against the pre-repair source. The wrapper changes presence ownership only and does not execute the destructive callback before acceptance."
   },
   {
     "id": "3f47fb2226631084f9f3",
@@ -1785,7 +1785,7 @@
     "source_sha256": "b19aaafabcbf836e8b8e068cd8eb47a037028dc49ecf64205bf86c07b9cf8883",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; BookProgressLine, CompactProgress, PendingIndicator, bookProgressText, busy, busyClick, isLoading, isPending, levelBusy, loading, musicLoading, pending",
-    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Devvoice review: device voice names, circled radio marks, one-line names and 8 dp text gaps leave this action and its guard unchanged."
+    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Gate repair: reviewed identity-key motion, explicit layout, token spacing or semantic navigation changes; existing guard retained."
   },
   {
     "id": "f014459f7e3244b9fbb4",
@@ -1797,7 +1797,7 @@
     "source_sha256": "b19aaafabcbf836e8b8e068cd8eb47a037028dc49ecf64205bf86c07b9cf8883",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; BookProgressLine, CompactProgress, PendingIndicator, bookProgressText, busy, busyClick, isLoading, isPending, levelBusy, loading, musicLoading, pending",
-    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Devvoice review: device voice names, circled radio marks, one-line names and 8 dp text gaps leave this action and its guard unchanged."
+    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Gate repair: reviewed identity-key motion, explicit layout, token spacing or semantic navigation changes; existing guard retained."
   },
   {
     "id": "3a79393defa6f77f9bcb",
@@ -1809,7 +1809,7 @@
     "source_sha256": "b19aaafabcbf836e8b8e068cd8eb47a037028dc49ecf64205bf86c07b9cf8883",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; BookProgressLine, CompactProgress, PendingIndicator, bookProgressText, busy, busyClick, isLoading, isPending, levelBusy, loading, musicLoading, pending",
-    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Devvoice review: device voice names, circled radio marks, one-line names and 8 dp text gaps leave this action and its guard unchanged."
+    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Gate repair: reviewed identity-key motion, explicit layout, token spacing or semantic navigation changes; existing guard retained."
   },
   {
     "id": "b0dcdbfe651ac29eeb28",
@@ -1821,7 +1821,7 @@
     "source_sha256": "b19aaafabcbf836e8b8e068cd8eb47a037028dc49ecf64205bf86c07b9cf8883",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; BookProgressLine, CompactProgress, PendingIndicator, bookProgressText, busy, busyClick, isLoading, isPending, levelBusy, loading, musicLoading, pending",
-    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Devvoice review: device voice names, circled radio marks, one-line names and 8 dp text gaps leave this action and its guard unchanged."
+    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Gate repair: reviewed identity-key motion, explicit layout, token spacing or semantic navigation changes; existing guard retained."
   },
   {
     "id": "5d21139a7aa11bae8a5b",
@@ -1833,7 +1833,7 @@
     "source_sha256": "b19aaafabcbf836e8b8e068cd8eb47a037028dc49ecf64205bf86c07b9cf8883",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; BookProgressLine, CompactProgress, PendingIndicator, bookProgressText, busy, busyClick, isLoading, isPending, levelBusy, loading, musicLoading, pending",
-    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Devvoice review: device voice names, circled radio marks, one-line names and 8 dp text gaps leave this action and its guard unchanged."
+    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Gate repair: reviewed identity-key motion, explicit layout, token spacing or semantic navigation changes; existing guard retained."
   },
   {
     "id": "d91727560f169d121388",
@@ -1845,7 +1845,7 @@
     "source_sha256": "b19aaafabcbf836e8b8e068cd8eb47a037028dc49ecf64205bf86c07b9cf8883",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; BookProgressLine, CompactProgress, PendingIndicator, bookProgressText, busy, busyClick, isLoading, isPending, levelBusy, loading, musicLoading, pending",
-    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Devvoice review: device voice names, circled radio marks, one-line names and 8 dp text gaps leave this action and its guard unchanged."
+    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Gate repair: reviewed identity-key motion, explicit layout, token spacing or semantic navigation changes; existing guard retained."
   },
   {
     "id": "048072df29fe02577ac4",
@@ -1857,7 +1857,7 @@
     "source_sha256": "b19aaafabcbf836e8b8e068cd8eb47a037028dc49ecf64205bf86c07b9cf8883",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; BookProgressLine, CompactProgress, PendingIndicator, bookProgressText, busy, busyClick, isLoading, isPending, levelBusy, loading, musicLoading, pending",
-    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Devvoice review: device voice names, circled radio marks, one-line names and 8 dp text gaps leave this action and its guard unchanged."
+    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Gate repair: reviewed identity-key motion, explicit layout, token spacing or semantic navigation changes; existing guard retained."
   },
   {
     "id": "bf54d84f837e1fca0fd4",
@@ -2793,7 +2793,7 @@
     "source_sha256": "38467ed9817dd3204eb03e3c6f6d44ae5219093462f77882eac9ab1929b1ea15",
     "disposition": "confirmation",
     "guard": "VoiceSettings useDestructiveConfirm / ProviderKey removeConfirm / VoiceSheets key confirmation",
-    "reason": "Provider credentials are deleted only after the object-specific confirmation. Devvoice review: device voice names, circled radio marks, one-line names and 8 dp text gaps leave this action and its guard unchanged."
+    "reason": "Provider credentials are deleted only after the object-specific confirmation."
   },
   {
     "id": "ac569ba46ded7bdd0b79",
@@ -2805,7 +2805,7 @@
     "source_sha256": "38467ed9817dd3204eb03e3c6f6d44ae5219093462f77882eac9ab1929b1ea15",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; PendingIndicator, busy, loading, pending, savingVoice, setBusy, setLoading, setSavingVoice, usePendingAction",
-    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Devvoice review: device voice names, circled radio marks, one-line names and 8 dp text gaps leave this action and its guard unchanged."
+    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering."
   },
   {
     "id": "7174707a5103518db27f",
@@ -2817,7 +2817,7 @@
     "source_sha256": "38467ed9817dd3204eb03e3c6f6d44ae5219093462f77882eac9ab1929b1ea15",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; PendingIndicator, busy, loading, pending, savingVoice, setBusy, setLoading, setSavingVoice, usePendingAction",
-    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Devvoice review: device voice names, circled radio marks, one-line names and 8 dp text gaps leave this action and its guard unchanged."
+    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering."
   },
   {
     "id": "8de02973bb503c48fead",
@@ -2829,7 +2829,7 @@
     "source_sha256": "38467ed9817dd3204eb03e3c6f6d44ae5219093462f77882eac9ab1929b1ea15",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; PendingIndicator, busy, loading, pending, savingVoice, setBusy, setLoading, setSavingVoice, usePendingAction",
-    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Devvoice review: device voice names, circled radio marks, one-line names and 8 dp text gaps leave this action and its guard unchanged."
+    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering."
   },
   {
     "id": "3bee06542385deac81c0",
@@ -2841,7 +2841,7 @@
     "source_sha256": "38467ed9817dd3204eb03e3c6f6d44ae5219093462f77882eac9ab1929b1ea15",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; PendingIndicator, busy, loading, pending, savingVoice, setBusy, setLoading, setSavingVoice, usePendingAction",
-    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Devvoice review: device voice names, circled radio marks, one-line names and 8 dp text gaps leave this action and its guard unchanged."
+    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering."
   },
   {
     "id": "6b9042f79a6faf8a0ac4",
@@ -2853,7 +2853,7 @@
     "source_sha256": "38467ed9817dd3204eb03e3c6f6d44ae5219093462f77882eac9ab1929b1ea15",
     "disposition": "confirmation",
     "guard": "VoiceSettings useDestructiveConfirm / ProviderKey removeConfirm / VoiceSheets key confirmation",
-    "reason": "Provider credentials are deleted only after the object-specific confirmation. Devvoice review: device voice names, circled radio marks, one-line names and 8 dp text gaps leave this action and its guard unchanged."
+    "reason": "Provider credentials are deleted only after the object-specific confirmation."
   },
   {
     "id": "a4d39ce872f726368bbe",
@@ -2865,7 +2865,7 @@
     "source_sha256": "38467ed9817dd3204eb03e3c6f6d44ae5219093462f77882eac9ab1929b1ea15",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; PendingIndicator, busy, loading, pending, savingVoice, setBusy, setLoading, setSavingVoice, usePendingAction",
-    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Devvoice review: device voice names, circled radio marks, one-line names and 8 dp text gaps leave this action and its guard unchanged."
+    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering."
   },
   {
     "id": "1baa90435fef45a13f36",
@@ -2877,7 +2877,7 @@
     "source_sha256": "38467ed9817dd3204eb03e3c6f6d44ae5219093462f77882eac9ab1929b1ea15",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; PendingIndicator, busy, loading, pending, savingVoice, setBusy, setLoading, setSavingVoice, usePendingAction",
-    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Devvoice review: device voice names, circled radio marks, one-line names and 8 dp text gaps leave this action and its guard unchanged."
+    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering."
   },
   {
     "id": "18204298c4c90b8f9d0d",
@@ -2889,7 +2889,7 @@
     "source_sha256": "38467ed9817dd3204eb03e3c6f6d44ae5219093462f77882eac9ab1929b1ea15",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; PendingIndicator, busy, loading, pending, savingVoice, setBusy, setLoading, setSavingVoice, usePendingAction",
-    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Devvoice review: device voice names, circled radio marks, one-line names and 8 dp text gaps leave this action and its guard unchanged."
+    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering."
   },
   {
     "id": "5c3be57cbf989a854c67",
@@ -3066,10 +3066,10 @@
     "line": 328,
     "statement": "description: S.s_delete_download_description(title, formatSize(track.bytes ?? 0)), run: () => unsave.mutateAsync([track.link])})} />",
     "occurrence": 1,
-    "source_sha256": "806b623f8df21b69aef3eaad81c4304bce7caabef079ba9d720af85e7b7571c1",
+    "source_sha256": "ab3ab8325ac298784cff5a313ef705ff227151b049f091a8af2534f9fd1d8506",
     "disposition": "confirmation",
     "guard": "DownloadControl / TrackRow / TrackSheet DestructiveConfirm; cancel incomplete transfer is exempt",
-    "reason": "Complete music download removal is confirmed with track title and size. Cancelling an unfinished download discards partial bytes immediately. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
+    "reason": "Complete music download removal is confirmed with track title and size. Cancelling an unfinished download discards partial bytes immediately. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Gate repair: reviewed identity-key motion, explicit layout, token spacing or semantic navigation changes; existing guard retained."
   },
   {
     "id": "8461b0dc9cda345bf15e",
@@ -3249,7 +3249,7 @@
     "source_sha256": "5a8e289f5945afeef67ec0d7e5b0e89b304046448c27efa4d9f3df93aec90eb2",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; busy, loading, setBusy",
-    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering."
+    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Gate repair: reviewed identity-key motion, explicit layout, token spacing or semantic navigation changes; existing guard retained."
   },
   {
     "id": "8e7e2271fc1c238d622f",
@@ -3885,7 +3885,7 @@
     "source_sha256": "c73b9f234201534628ae328a42a066fcdd6dc6e9e0d614ff6fe54f2128a0e8d4",
     "disposition": "internal",
     "guard": "Async interface/helper boundary; concrete activation inventoried separately",
-    "reason": "This signature supplies work to a model or component; declaring it starts no user operation. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Devvoice review: device voice names, circled radio marks, one-line names and 8 dp text gaps leave this action and its guard unchanged."
+    "reason": "This signature supplies work to a model or component; declaring it starts no user operation. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
   },
   {
     "id": "55eac8835610195bed03",
@@ -5181,7 +5181,7 @@
     "source_sha256": "54667c29474ea574e8f891a8e884c01e125db91265a0c7acdd9e215ce651b4a7",
     "disposition": "confirmation",
     "guard": "ConfirmPage DeleteBookPage -> DangerButton acceptance only",
-    "reason": "The loss callback exists inside the common confirmed action, with cancel focus and destructive action on the right."
+    "reason": "The loss callback exists inside the common confirmed action, with cancel focus and destructive action on the right. Gate repair: reviewed identity-key motion, explicit layout, token spacing or semantic navigation changes; existing guard retained."
   },
   {
     "id": "83bf070e9c21d26b75be",
@@ -5193,7 +5193,7 @@
     "source_sha256": "54667c29474ea574e8f891a8e884c01e125db91265a0c7acdd9e215ce651b4a7",
     "disposition": "pending",
     "guard": "ViewModel/operation fields: BusyRing, pending, pendingVisible, working; Components pending indicator",
-    "reason": "The model retains the operation and locks repeats; UI uses the shared pending parameter, loading content or progress owner."
+    "reason": "The model retains the operation and locks repeats; UI uses the shared pending parameter, loading content or progress owner. Gate repair: reviewed identity-key motion, explicit layout, token spacing or semantic navigation changes; existing guard retained."
   },
   {
     "id": "610f39d26c0ad734bf83",
@@ -5205,7 +5205,7 @@
     "source_sha256": "54667c29474ea574e8f891a8e884c01e125db91265a0c7acdd9e215ce651b4a7",
     "disposition": "confirmation",
     "guard": "ConfirmPage DeleteBookPage -> DangerButton acceptance only",
-    "reason": "The loss callback exists inside the common confirmed action, with cancel focus and destructive action on the right."
+    "reason": "The loss callback exists inside the common confirmed action, with cancel focus and destructive action on the right. Gate repair: reviewed identity-key motion, explicit layout, token spacing or semantic navigation changes; existing guard retained."
   },
   {
     "id": "06720285381e1f3c77a7",
@@ -6705,7 +6705,7 @@
     "source_sha256": "1f93cdc4b196f118316a7f523c1250d9483ce2d80e13a0930b39c45bb69d4d05",
     "disposition": "internal",
     "guard": "Declaration; the invoked call site is independently inventoried",
-    "reason": "A declaration/signature is not an executing UI action. Devvoice review: device voice names, circled radio marks, one-line names and 8 dp text gaps leave this action and its guard unchanged."
+    "reason": "A declaration/signature is not an executing UI action."
   },
   {
     "id": "d4a356857d1ed4b9c6f5",
@@ -6717,7 +6717,7 @@
     "source_sha256": "1f93cdc4b196f118316a7f523c1250d9483ce2d80e13a0930b39c45bb69d4d05",
     "disposition": "internal",
     "guard": "Declaration; the invoked call site is independently inventoried",
-    "reason": "A declaration/signature is not an executing UI action. Devvoice review: device voice names, circled radio marks, one-line names and 8 dp text gaps leave this action and its guard unchanged."
+    "reason": "A declaration/signature is not an executing UI action."
   },
   {
     "id": "94fb94385f1c8214d0dc",
@@ -6729,7 +6729,7 @@
     "source_sha256": "1f93cdc4b196f118316a7f523c1250d9483ce2d80e13a0930b39c45bb69d4d05",
     "disposition": "internal",
     "guard": "Async interface/helper boundary; concrete activation inventoried separately",
-    "reason": "This signature supplies work to a model or component; declaring it starts no user operation. Devvoice review: device voice names, circled radio marks, one-line names and 8 dp text gaps leave this action and its guard unchanged."
+    "reason": "This signature supplies work to a model or component; declaring it starts no user operation."
   },
   {
     "id": "56906c7a0f18b0327fae",
@@ -6741,7 +6741,7 @@
     "source_sha256": "1f93cdc4b196f118316a7f523c1250d9483ce2d80e13a0930b39c45bb69d4d05",
     "disposition": "pending",
     "guard": "ViewModel/operation fields: Loading, maintenanceBusy, savingSpeed, savingVoice; Components pending indicator",
-    "reason": "The model retains the operation and locks repeats; UI uses the shared pending parameter, loading content or progress owner. Devvoice review: device voice names, circled radio marks, one-line names and 8 dp text gaps leave this action and its guard unchanged."
+    "reason": "The model retains the operation and locks repeats; UI uses the shared pending parameter, loading content or progress owner."
   },
   {
     "id": "f661f42d7f2546024efc",
@@ -6753,7 +6753,7 @@
     "source_sha256": "1f93cdc4b196f118316a7f523c1250d9483ce2d80e13a0930b39c45bb69d4d05",
     "disposition": "pending",
     "guard": "ViewModel/operation fields: Loading, maintenanceBusy, savingSpeed, savingVoice; Components pending indicator",
-    "reason": "The model retains the operation and locks repeats; UI uses the shared pending parameter, loading content or progress owner. Devvoice review: device voice names, circled radio marks, one-line names and 8 dp text gaps leave this action and its guard unchanged."
+    "reason": "The model retains the operation and locks repeats; UI uses the shared pending parameter, loading content or progress owner."
   },
   {
     "id": "04df4cc5d642242bf8ae",
@@ -6765,7 +6765,7 @@
     "source_sha256": "1f93cdc4b196f118316a7f523c1250d9483ce2d80e13a0930b39c45bb69d4d05",
     "disposition": "internal",
     "guard": "Async interface/helper boundary; concrete activation inventoried separately",
-    "reason": "This signature supplies work to a model or component; declaring it starts no user operation. Devvoice review: device voice names, circled radio marks, one-line names and 8 dp text gaps leave this action and its guard unchanged."
+    "reason": "This signature supplies work to a model or component; declaring it starts no user operation."
   },
   {
     "id": "a814c01a7e1cdf5c62f6",
@@ -6777,7 +6777,7 @@
     "source_sha256": "1f93cdc4b196f118316a7f523c1250d9483ce2d80e13a0930b39c45bb69d4d05",
     "disposition": "pending",
     "guard": "ViewModel/operation fields: Loading, maintenanceBusy, savingSpeed, savingVoice; Components pending indicator",
-    "reason": "The model retains the operation and locks repeats; UI uses the shared pending parameter, loading content or progress owner. Devvoice review: device voice names, circled radio marks, one-line names and 8 dp text gaps leave this action and its guard unchanged."
+    "reason": "The model retains the operation and locks repeats; UI uses the shared pending parameter, loading content or progress owner."
   },
   {
     "id": "ad9ea8f816535fbf7a7c",
@@ -6789,7 +6789,7 @@
     "source_sha256": "1f93cdc4b196f118316a7f523c1250d9483ce2d80e13a0930b39c45bb69d4d05",
     "disposition": "pending",
     "guard": "ViewModel/operation fields: Loading, maintenanceBusy, savingSpeed, savingVoice; Components pending indicator",
-    "reason": "The model retains the operation and locks repeats; UI uses the shared pending parameter, loading content or progress owner. Devvoice review: device voice names, circled radio marks, one-line names and 8 dp text gaps leave this action and its guard unchanged."
+    "reason": "The model retains the operation and locks repeats; UI uses the shared pending parameter, loading content or progress owner."
   },
   {
     "id": "9f6fd0f69d0c1662b693",
@@ -6801,7 +6801,7 @@
     "source_sha256": "1f93cdc4b196f118316a7f523c1250d9483ce2d80e13a0930b39c45bb69d4d05",
     "disposition": "pending",
     "guard": "ViewModel/operation fields: Loading, maintenanceBusy, savingSpeed, savingVoice; Components pending indicator",
-    "reason": "The model retains the operation and locks repeats; UI uses the shared pending parameter, loading content or progress owner. Devvoice review: device voice names, circled radio marks, one-line names and 8 dp text gaps leave this action and its guard unchanged."
+    "reason": "The model retains the operation and locks repeats; UI uses the shared pending parameter, loading content or progress owner."
   },
   {
     "id": "eedff2c169b27864f48c",
@@ -6813,7 +6813,7 @@
     "source_sha256": "1f93cdc4b196f118316a7f523c1250d9483ce2d80e13a0930b39c45bb69d4d05",
     "disposition": "pending",
     "guard": "ViewModel/operation fields: Loading, maintenanceBusy, savingSpeed, savingVoice; Components pending indicator",
-    "reason": "The model retains the operation and locks repeats; UI uses the shared pending parameter, loading content or progress owner. Devvoice review: device voice names, circled radio marks, one-line names and 8 dp text gaps leave this action and its guard unchanged."
+    "reason": "The model retains the operation and locks repeats; UI uses the shared pending parameter, loading content or progress owner."
   },
   {
     "id": "cd7a331ddeac6cf2acb5",
@@ -6825,7 +6825,7 @@
     "source_sha256": "1f93cdc4b196f118316a7f523c1250d9483ce2d80e13a0930b39c45bb69d4d05",
     "disposition": "pending",
     "guard": "ViewModel/operation fields: Loading, maintenanceBusy, savingSpeed, savingVoice; Components pending indicator",
-    "reason": "The model retains the operation and locks repeats; UI uses the shared pending parameter, loading content or progress owner. Devvoice review: device voice names, circled radio marks, one-line names and 8 dp text gaps leave this action and its guard unchanged."
+    "reason": "The model retains the operation and locks repeats; UI uses the shared pending parameter, loading content or progress owner."
   },
   {
     "id": "7fa5c9ed6a152a2de08c",
@@ -6837,7 +6837,7 @@
     "source_sha256": "1f93cdc4b196f118316a7f523c1250d9483ce2d80e13a0930b39c45bb69d4d05",
     "disposition": "internal",
     "guard": "Declaration; the invoked call site is independently inventoried",
-    "reason": "A declaration/signature is not an executing UI action. Devvoice review: device voice names, circled radio marks, one-line names and 8 dp text gaps leave this action and its guard unchanged."
+    "reason": "A declaration/signature is not an executing UI action."
   },
   {
     "id": "8482e68c4f0a741ef84d",
@@ -6849,7 +6849,7 @@
     "source_sha256": "1f93cdc4b196f118316a7f523c1250d9483ce2d80e13a0930b39c45bb69d4d05",
     "disposition": "confirmation",
     "guard": "SettingsAdvanced ClearSheet and ClearLogsSheet / SettingsMaintenance old-delete / AdvancedStorage clearDialog",
-    "reason": "Cache, diagnostic logs and recovery saves are cleared only after their respective confirmations. Devvoice review: device voice names, circled radio marks, one-line names and 8 dp text gaps leave this action and its guard unchanged."
+    "reason": "Cache, diagnostic logs and recovery saves are cleared only after their respective confirmations."
   },
   {
     "id": "3c8c0bb0a50464924e90",
@@ -6861,7 +6861,7 @@
     "source_sha256": "1f93cdc4b196f118316a7f523c1250d9483ce2d80e13a0930b39c45bb69d4d05",
     "disposition": "pending",
     "guard": "ViewModel/operation fields: Loading, maintenanceBusy, savingSpeed, savingVoice; Components pending indicator",
-    "reason": "The model retains the operation and locks repeats; UI uses the shared pending parameter, loading content or progress owner. Devvoice review: device voice names, circled radio marks, one-line names and 8 dp text gaps leave this action and its guard unchanged."
+    "reason": "The model retains the operation and locks repeats; UI uses the shared pending parameter, loading content or progress owner."
   },
   {
     "id": "8d336a5f369abf3f0ce7",
@@ -6873,7 +6873,7 @@
     "source_sha256": "1f93cdc4b196f118316a7f523c1250d9483ce2d80e13a0930b39c45bb69d4d05",
     "disposition": "internal",
     "guard": "Async interface/helper boundary; concrete activation inventoried separately",
-    "reason": "This signature supplies work to a model or component; declaring it starts no user operation. Devvoice review: device voice names, circled radio marks, one-line names and 8 dp text gaps leave this action and its guard unchanged."
+    "reason": "This signature supplies work to a model or component; declaring it starts no user operation."
   },
   {
     "id": "9ee4588a2684b22bfe39",
@@ -6885,7 +6885,7 @@
     "source_sha256": "1f93cdc4b196f118316a7f523c1250d9483ce2d80e13a0930b39c45bb69d4d05",
     "disposition": "internal",
     "guard": "Declaration; the invoked call site is independently inventoried",
-    "reason": "A declaration/signature is not an executing UI action. Devvoice review: device voice names, circled radio marks, one-line names and 8 dp text gaps leave this action and its guard unchanged."
+    "reason": "A declaration/signature is not an executing UI action."
   },
   {
     "id": "530dd958113c5af70e78",
@@ -6897,7 +6897,7 @@
     "source_sha256": "1f93cdc4b196f118316a7f523c1250d9483ce2d80e13a0930b39c45bb69d4d05",
     "disposition": "confirmation",
     "guard": "SettingsAdvanced ClearSheet and ClearLogsSheet / SettingsMaintenance old-delete / AdvancedStorage clearDialog",
-    "reason": "Cache, diagnostic logs and recovery saves are cleared only after their respective confirmations. Devvoice review: device voice names, circled radio marks, one-line names and 8 dp text gaps leave this action and its guard unchanged."
+    "reason": "Cache, diagnostic logs and recovery saves are cleared only after their respective confirmations."
   },
   {
     "id": "cdd06ceb88f01b3ffc28",
@@ -6909,7 +6909,7 @@
     "source_sha256": "1f93cdc4b196f118316a7f523c1250d9483ce2d80e13a0930b39c45bb69d4d05",
     "disposition": "internal",
     "guard": "Async interface/helper boundary; concrete activation inventoried separately",
-    "reason": "This signature supplies work to a model or component; declaring it starts no user operation. Devvoice review: device voice names, circled radio marks, one-line names and 8 dp text gaps leave this action and its guard unchanged."
+    "reason": "This signature supplies work to a model or component; declaring it starts no user operation."
   },
   {
     "id": "f8c1e96c013fc26f132a",
@@ -6921,7 +6921,7 @@
     "source_sha256": "1f93cdc4b196f118316a7f523c1250d9483ce2d80e13a0930b39c45bb69d4d05",
     "disposition": "internal",
     "guard": "String transformation / event subscription ownership",
-    "reason": "No persisted user data is removed. Devvoice review: device voice names, circled radio marks, one-line names and 8 dp text gaps leave this action and its guard unchanged."
+    "reason": "No persisted user data is removed."
   },
   {
     "id": "a01eb0dd1aac4985a517",
@@ -10203,25 +10203,25 @@
     "id": "43bff5ff64630114ee28",
     "kind": "destructive",
     "path": "mobile/android/app/src/main/java/vn/abook/player/ui/music/library/TrackRow.kt",
-    "line": 110,
+    "line": 111,
     "statement": "{ state.forget(track.link) }, pending = pending, problem = ui.actionError)",
     "occurrence": 1,
-    "source_sha256": "e4d1f260ec2564fc3de023ba287bac1feb5e26adae21ae3aa6a9ea42e55f7c4e",
+    "source_sha256": "3d3fc5577f9004c6039f5095d62c4e80453af45e05197f22e09d4335e7a0b637",
     "disposition": "confirmation",
     "guard": "DownloadControl / TrackRow / TrackSheet DestructiveConfirm; cancel incomplete transfer is exempt",
-    "reason": "Complete music download removal is confirmed with track title and size. Cancelling an unfinished download discards partial bytes immediately. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Devvoice review: device voice names, circled radio marks, one-line names and 8 dp text gaps leave this action and its guard unchanged."
+    "reason": "Complete music download removal is confirmed with track title and size. Cancelling an unfinished download discards partial bytes immediately. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Gate repair: reviewed identity-key motion, explicit layout, token spacing or semantic navigation changes; existing guard retained."
   },
   {
     "id": "acdce9447837d66fe3d1",
     "kind": "destructive",
     "path": "mobile/android/app/src/main/java/vn/abook/player/ui/music/library/TrackSheet.kt",
-    "line": 142,
+    "line": 143,
     "statement": "{ state.forget(link) }, pending = link in ui.pendingLinks, problem = ui.actionError)",
     "occurrence": 1,
     "source_sha256": "1d50d357109e8d3810674103e39057ccc94f1f243be0f955166a1b67db2f47ae",
     "disposition": "confirmation",
     "guard": "DownloadControl / TrackRow / TrackSheet DestructiveConfirm; cancel incomplete transfer is exempt",
-    "reason": "Complete music download removal is confirmed with track title and size. Cancelling an unfinished download discards partial bytes immediately."
+    "reason": "Complete music download removal is confirmed with track title and size. Cancelling an unfinished download discards partial bytes immediately. Gate repair: reviewed identity-key motion, explicit layout, token spacing or semantic navigation changes; existing guard retained."
   },
   {
     "id": "9c0121b431f4dd924cac",
@@ -11001,7 +11001,7 @@
     "source_sha256": "36b37e78ccc0b942b922d545ec7af1b4460f6a7d8f11adc922bc27a347c337c1",
     "disposition": "internal",
     "guard": "Declaration; the invoked call site is independently inventoried",
-    "reason": "A declaration/signature is not an executing UI action. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Devvoice review: device voice names, circled radio marks, one-line names and 8 dp text gaps leave this action and its guard unchanged."
+    "reason": "A declaration/signature is not an executing UI action. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Gate repair: reviewed identity-key motion, explicit layout, token spacing or semantic navigation changes; existing guard retained."
   },
   {
     "id": "41d49281785c0f3be740",
@@ -11325,7 +11325,7 @@
     "source_sha256": "1f7ef929ba79f74730f4865d532bbf1590dc9add4f978a7897734695f6efba46",
     "disposition": "pending",
     "guard": "ViewModel/operation fields: busy, pending; Components pending indicator",
-    "reason": "The model retains the operation and locks repeats; UI uses the shared pending parameter, loading content or progress owner."
+    "reason": "The model retains the operation and locks repeats; UI uses the shared pending parameter, loading content or progress owner. Gate repair: reviewed identity-key motion, explicit layout, token spacing or semantic navigation changes; existing guard retained."
   },
   {
     "id": "05399cf210e5d8e5e377",
@@ -11337,7 +11337,7 @@
     "source_sha256": "1f7ef929ba79f74730f4865d532bbf1590dc9add4f978a7897734695f6efba46",
     "disposition": "pending",
     "guard": "ViewModel/operation fields: busy, pending; Components pending indicator",
-    "reason": "The model retains the operation and locks repeats; UI uses the shared pending parameter, loading content or progress owner."
+    "reason": "The model retains the operation and locks repeats; UI uses the shared pending parameter, loading content or progress owner. Gate repair: reviewed identity-key motion, explicit layout, token spacing or semantic navigation changes; existing guard retained."
   },
   {
     "id": "4dc1538a1df9adfe194a",
@@ -11349,7 +11349,7 @@
     "source_sha256": "1f7ef929ba79f74730f4865d532bbf1590dc9add4f978a7897734695f6efba46",
     "disposition": "confirmation",
     "guard": "BookRecords ConfirmPage / BookScreen record Dialog / RecordDialogs Modal / DeleteBookPage",
-    "reason": "Deleting a listening profile explicitly describes loss of progress and history. Deleting a book uses the book confirmation."
+    "reason": "Deleting a listening profile explicitly describes loss of progress and history. Deleting a book uses the book confirmation. Gate repair: reviewed identity-key motion, explicit layout, token spacing or semantic navigation changes; existing guard retained."
   },
   {
     "id": "ed0fc4193286e655bfa3",
@@ -11361,7 +11361,7 @@
     "source_sha256": "1f7ef929ba79f74730f4865d532bbf1590dc9add4f978a7897734695f6efba46",
     "disposition": "confirmation",
     "guard": "BookRecords ConfirmPage / BookScreen record Dialog / RecordDialogs Modal / DeleteBookPage",
-    "reason": "Deleting a listening profile explicitly describes loss of progress and history. Deleting a book uses the book confirmation."
+    "reason": "Deleting a listening profile explicitly describes loss of progress and history. Deleting a book uses the book confirmation. Gate repair: reviewed identity-key motion, explicit layout, token spacing or semantic navigation changes; existing guard retained."
   },
   {
     "id": "3cee94643e760e94b23d",
@@ -11409,7 +11409,7 @@
     "source_sha256": "f25be5829d13c18df1d81d73afebc3a8a263572909330354b932f896be430ccf",
     "disposition": "internal",
     "guard": "Async interface/helper boundary; concrete activation inventoried separately",
-    "reason": "This signature supplies work to a model or component; declaring it starts no user operation. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Devvoice review: device voice names, circled radio marks, one-line names and 8 dp text gaps leave this action and its guard unchanged."
+    "reason": "This signature supplies work to a model or component; declaring it starts no user operation. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Gate repair: reviewed identity-key motion, explicit layout, token spacing or semantic navigation changes; existing guard retained."
   },
   {
     "id": "3fe3465713164a2d2bd5",
@@ -11421,7 +11421,7 @@
     "source_sha256": "f25be5829d13c18df1d81d73afebc3a8a263572909330354b932f896be430ccf",
     "disposition": "internal",
     "guard": "Async interface/helper boundary; concrete activation inventoried separately",
-    "reason": "This signature supplies work to a model or component; declaring it starts no user operation. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Devvoice review: device voice names, circled radio marks, one-line names and 8 dp text gaps leave this action and its guard unchanged."
+    "reason": "This signature supplies work to a model or component; declaring it starts no user operation. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Gate repair: reviewed identity-key motion, explicit layout, token spacing or semantic navigation changes; existing guard retained."
   },
   {
     "id": "cdb975d60b510da0614d",
@@ -11433,7 +11433,7 @@
     "source_sha256": "f25be5829d13c18df1d81d73afebc3a8a263572909330354b932f896be430ccf",
     "disposition": "internal",
     "guard": "Async interface/helper boundary; concrete activation inventoried separately",
-    "reason": "This signature supplies work to a model or component; declaring it starts no user operation. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Devvoice review: device voice names, circled radio marks, one-line names and 8 dp text gaps leave this action and its guard unchanged."
+    "reason": "This signature supplies work to a model or component; declaring it starts no user operation. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Gate repair: reviewed identity-key motion, explicit layout, token spacing or semantic navigation changes; existing guard retained."
   },
   {
     "id": "a1779010345e9c7c4091",
@@ -11445,7 +11445,7 @@
     "source_sha256": "f25be5829d13c18df1d81d73afebc3a8a263572909330354b932f896be430ccf",
     "disposition": "pending",
     "guard": "ViewModel/operation fields: PendingIndicator, loading, preparingBookId, progress, progressLine; Components pending indicator",
-    "reason": "The model retains the operation and locks repeats; UI uses the shared pending parameter, loading content or progress owner. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Devvoice review: device voice names, circled radio marks, one-line names and 8 dp text gaps leave this action and its guard unchanged."
+    "reason": "The model retains the operation and locks repeats; UI uses the shared pending parameter, loading content or progress owner. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Gate repair: reviewed identity-key motion, explicit layout, token spacing or semantic navigation changes; existing guard retained."
   },
   {
     "id": "7a85018d5968a539b205",
@@ -11517,7 +11517,7 @@
     "source_sha256": "c504c56065dc7097de000a4d9dd09cbd19e442eba7f0992b97506ccbd0ce3946",
     "disposition": "internal",
     "guard": "suspend service boundary; awaited by existing export/cast UI state owner",
-    "reason": "Volume export and portrait source methods are awaited service adapters. ExportState/StudioCastState retain progress and errors; byte reads use the existing IO boundary."
+    "reason": "Volume export and portrait source methods are awaited service adapters. ExportState/StudioCastState retain progress and errors; byte reads use the existing IO boundary. Gate repair: reviewed identity-key motion, explicit layout, token spacing or semantic navigation changes; existing guard retained."
   },
   {
     "id": "68e91ce63dcab41321cb",
@@ -11529,7 +11529,7 @@
     "source_sha256": "c504c56065dc7097de000a4d9dd09cbd19e442eba7f0992b97506ccbd0ce3946",
     "disposition": "internal",
     "guard": "Animation/frame clock or test harness lifecycle",
-    "reason": "The coroutine advances presentation or test fixtures, not a user-triggered network/file operation. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
+    "reason": "The coroutine advances presentation or test fixtures, not a user-triggered network/file operation. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Gate repair: reviewed identity-key motion, explicit layout, token spacing or semantic navigation changes; existing guard retained."
   },
   {
     "id": "a64361490e5fb37eb655",
@@ -11577,7 +11577,7 @@
     "source_sha256": "1f1985dad1aa255fbe9990fbc9f3aa3824578555e5ecc1847d8baebe51461ad6",
     "disposition": "pending",
     "guard": "ViewModel/operation fields: Loading, PendingIndicator, WorkingProgress, loading, pending, progress, saving, savingSpeed, savingVoice, voices_loading; Components pending indicator",
-    "reason": "The model retains the operation and locks repeats; UI uses the shared pending parameter, loading content or progress owner. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Devvoice review: device voice names, circled radio marks, one-line names and 8 dp text gaps leave this action and its guard unchanged."
+    "reason": "The model retains the operation and locks repeats; UI uses the shared pending parameter, loading content or progress owner. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
   },
   {
     "id": "76dc12b9598bdb85c87f",
@@ -11877,7 +11877,7 @@
     "source_sha256": "305e37260b0ffb9b06900a48cff0854edab5519bfdb911850c023408e426806e",
     "disposition": "internal",
     "guard": "Async interface/helper boundary; concrete activation inventoried separately",
-    "reason": "This signature supplies work to a model or component; declaring it starts no user operation. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
+    "reason": "This signature supplies work to a model or component; declaring it starts no user operation. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Gate repair: reviewed identity-key motion, explicit layout, token spacing or semantic navigation changes; existing guard retained."
   },
   {
     "id": "3066b6c0010da6a69c80",
@@ -11889,7 +11889,7 @@
     "source_sha256": "305e37260b0ffb9b06900a48cff0854edab5519bfdb911850c023408e426806e",
     "disposition": "internal",
     "guard": "Async interface/helper boundary; concrete activation inventoried separately",
-    "reason": "This signature supplies work to a model or component; declaring it starts no user operation. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
+    "reason": "This signature supplies work to a model or component; declaring it starts no user operation. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Gate repair: reviewed identity-key motion, explicit layout, token spacing or semantic navigation changes; existing guard retained."
   },
   {
     "id": "5487a47eb5f9eb64515a",
@@ -11901,7 +11901,7 @@
     "source_sha256": "305e37260b0ffb9b06900a48cff0854edab5519bfdb911850c023408e426806e",
     "disposition": "internal",
     "guard": "Async interface/helper boundary; concrete activation inventoried separately",
-    "reason": "This signature supplies work to a model or component; declaring it starts no user operation. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
+    "reason": "This signature supplies work to a model or component; declaring it starts no user operation. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Gate repair: reviewed identity-key motion, explicit layout, token spacing or semantic navigation changes; existing guard retained."
   },
   {
     "id": "ca93c9746fe92eb80b6e",
@@ -11913,7 +11913,7 @@
     "source_sha256": "305e37260b0ffb9b06900a48cff0854edab5519bfdb911850c023408e426806e",
     "disposition": "internal",
     "guard": "Async interface/helper boundary; concrete activation inventoried separately",
-    "reason": "This signature supplies work to a model or component; declaring it starts no user operation. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
+    "reason": "This signature supplies work to a model or component; declaring it starts no user operation. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Gate repair: reviewed identity-key motion, explicit layout, token spacing or semantic navigation changes; existing guard retained."
   },
   {
     "id": "a86f76363f41dd4c650d",
@@ -11925,7 +11925,7 @@
     "source_sha256": "305e37260b0ffb9b06900a48cff0854edab5519bfdb911850c023408e426806e",
     "disposition": "internal",
     "guard": "Async interface/helper boundary; concrete activation inventoried separately",
-    "reason": "This signature supplies work to a model or component; declaring it starts no user operation. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
+    "reason": "This signature supplies work to a model or component; declaring it starts no user operation. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Gate repair: reviewed identity-key motion, explicit layout, token spacing or semantic navigation changes; existing guard retained."
   },
   {
     "id": "75acd9ef92810f08c42a",
@@ -11937,7 +11937,7 @@
     "source_sha256": "305e37260b0ffb9b06900a48cff0854edab5519bfdb911850c023408e426806e",
     "disposition": "confirmation",
     "guard": "CoverEditor removeConfirm / StudioCover DestructiveConfirm",
-    "reason": "Removing the cover asks before changing the persisted image. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
+    "reason": "Removing the cover asks before changing the persisted image. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Gate repair: reviewed identity-key motion, explicit layout, token spacing or semantic navigation changes; existing guard retained."
   },
   {
     "id": "0c441bdd9446ad68b279",
@@ -11949,7 +11949,7 @@
     "source_sha256": "305e37260b0ffb9b06900a48cff0854edab5519bfdb911850c023408e426806e",
     "disposition": "internal",
     "guard": "Async interface/helper boundary; concrete activation inventoried separately",
-    "reason": "This signature supplies work to a model or component; declaring it starts no user operation. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
+    "reason": "This signature supplies work to a model or component; declaring it starts no user operation. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Gate repair: reviewed identity-key motion, explicit layout, token spacing or semantic navigation changes; existing guard retained."
   },
   {
     "id": "2ef677785c5e321d81b6",
@@ -11961,7 +11961,7 @@
     "source_sha256": "305e37260b0ffb9b06900a48cff0854edab5519bfdb911850c023408e426806e",
     "disposition": "internal",
     "guard": "Async interface/helper boundary; concrete activation inventoried separately",
-    "reason": "This signature supplies work to a model or component; declaring it starts no user operation. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
+    "reason": "This signature supplies work to a model or component; declaring it starts no user operation. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Gate repair: reviewed identity-key motion, explicit layout, token spacing or semantic navigation changes; existing guard retained."
   },
   {
     "id": "d4c3e00c99f4f24c4bc2",
@@ -11973,7 +11973,7 @@
     "source_sha256": "305e37260b0ffb9b06900a48cff0854edab5519bfdb911850c023408e426806e",
     "disposition": "internal",
     "guard": "Async interface/helper boundary; concrete activation inventoried separately",
-    "reason": "This signature supplies work to a model or component; declaring it starts no user operation. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
+    "reason": "This signature supplies work to a model or component; declaring it starts no user operation. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Gate repair: reviewed identity-key motion, explicit layout, token spacing or semantic navigation changes; existing guard retained."
   },
   {
     "id": "bf6872ebac81b2e618d2",
@@ -11985,7 +11985,7 @@
     "source_sha256": "305e37260b0ffb9b06900a48cff0854edab5519bfdb911850c023408e426806e",
     "disposition": "internal",
     "guard": "Async interface/helper boundary; concrete activation inventoried separately",
-    "reason": "This signature supplies work to a model or component; declaring it starts no user operation. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
+    "reason": "This signature supplies work to a model or component; declaring it starts no user operation. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Gate repair: reviewed identity-key motion, explicit layout, token spacing or semantic navigation changes; existing guard retained."
   },
   {
     "id": "8abd71618f9546293c70",
@@ -11997,7 +11997,7 @@
     "source_sha256": "305e37260b0ffb9b06900a48cff0854edab5519bfdb911850c023408e426806e",
     "disposition": "internal",
     "guard": "Async interface/helper boundary; concrete activation inventoried separately",
-    "reason": "This signature supplies work to a model or component; declaring it starts no user operation. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
+    "reason": "This signature supplies work to a model or component; declaring it starts no user operation. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Gate repair: reviewed identity-key motion, explicit layout, token spacing or semantic navigation changes; existing guard retained."
   },
   {
     "id": "0396006bab184ab0806f",
@@ -15669,7 +15669,7 @@
     "source_sha256": "f8a9a94dc4e89eb1c30e5fd5ab21f4bea43ea2e7353f506a2d0d7cd4c08baa46",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; LoadingCrossfade, loading",
-    "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Devvoice review: device voice names, circled radio marks, one-line names and 8 dp text gaps leave this action and its guard unchanged."
+    "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
   },
   {
     "id": "a1e319eb0a2d8e545b4f",
@@ -15690,7 +15690,7 @@
     "line": 70,
     "statement": "Api.call(\"GET\", \"/api/listen/books/\" + id, null, function(data, error) {",
     "occurrence": 1,
-    "source_sha256": "17336c57d53ca34826979c6ea030496736621e50558eb3b204e2d31b1464fcba",
+    "source_sha256": "58d3aafd2d6e577aa9f3b9c7db218518fa409d4330e2e350e8596d5f65523a09",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; Loading, pending, pendingFiles",
     "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads."
@@ -15699,10 +15699,10 @@
     "id": "154fb23af149d009c2b5",
     "kind": "pending",
     "path": "desktop_qt/qml/Main.qml",
-    "line": 349,
+    "line": 369,
     "statement": "if (name === \"abook-update\") Api.call(\"GET\", \"/api/app\", null, function(data, error) { if (!error) Api.info = data })",
     "occurrence": 1,
-    "source_sha256": "17336c57d53ca34826979c6ea030496736621e50558eb3b204e2d31b1464fcba",
+    "source_sha256": "58d3aafd2d6e577aa9f3b9c7db218518fa409d4330e2e350e8596d5f65523a09",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; Loading, pending, pendingFiles",
     "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads."
@@ -15711,10 +15711,10 @@
     "id": "839fcd74729978555a9e",
     "kind": "pending",
     "path": "desktop_qt/qml/MusicBookSection.qml",
-    "line": 32,
+    "line": 34,
     "statement": "Api.quiet(\"GET\", \"/api/books/\" + encodeURIComponent(bookId) + \"/music/library\", null, function(next, error) {",
     "occurrence": 1,
-    "source_sha256": "b4416572189340e1e6cff72d552b2da1bf4ee4a32565bff1f06ec787f7e08879",
+    "source_sha256": "213694488a873094dee815bf283061bc3c9caf64820b62eade679fa038156b3c",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; busy, loading, previewLoading",
     "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads."
@@ -15723,10 +15723,10 @@
     "id": "256092c02fcaf5d8d392",
     "kind": "pending",
     "path": "desktop_qt/qml/MusicBookSection.qml",
-    "line": 37,
+    "line": 39,
     "statement": "function pollDownloads() { Api.quiet(\"GET\", \"/api/music/library/downloads\", null, function(next, problem) { if (!problem) { const was = busy; downloads = next; if (was && !busy) refresh() } }) }",
     "occurrence": 1,
-    "source_sha256": "b4416572189340e1e6cff72d552b2da1bf4ee4a32565bff1f06ec787f7e08879",
+    "source_sha256": "213694488a873094dee815bf283061bc3c9caf64820b62eade679fa038156b3c",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; busy, loading, previewLoading",
     "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads."
@@ -15735,10 +15735,10 @@
     "id": "6dbf48c864ff1241db5e",
     "kind": "pending",
     "path": "desktop_qt/qml/MusicBookSection.qml",
-    "line": 39,
+    "line": 41,
     "statement": "Api.quiet(\"POST\", path, {links: links}, function(next, problem) {",
     "occurrence": 1,
-    "source_sha256": "b4416572189340e1e6cff72d552b2da1bf4ee4a32565bff1f06ec787f7e08879",
+    "source_sha256": "213694488a873094dee815bf283061bc3c9caf64820b62eade679fa038156b3c",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; busy, loading, previewLoading",
     "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads."
@@ -15747,10 +15747,10 @@
     "id": "97ec77903ced3a215414",
     "kind": "pending",
     "path": "desktop_qt/qml/MusicBookSection.qml",
-    "line": 45,
+    "line": 47,
     "statement": "Component.onCompleted: { refresh(); pollDownloads(); Api.quiet(\"GET\", \"/api/music/library/meta\", null, function(next, problem) { if (!problem) meta = next }) }",
     "occurrence": 1,
-    "source_sha256": "b4416572189340e1e6cff72d552b2da1bf4ee4a32565bff1f06ec787f7e08879",
+    "source_sha256": "213694488a873094dee815bf283061bc3c9caf64820b62eade679fa038156b3c",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; busy, loading, previewLoading",
     "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads."
@@ -15954,7 +15954,7 @@
     "line": 25,
     "statement": "signal deleteDownload()",
     "occurrence": 1,
-    "source_sha256": "c84c27776cba47fb9a609c6e037efd9420bea45680cc552526b222d15aa68976",
+    "source_sha256": "a6de489ee92b96deac7f790f2c07290d031430bb758ea5d2122195d3a6e7af56",
     "disposition": "internal",
     "guard": "Declaration; the invoked call site is independently inventoried",
     "reason": "A declaration/signature is not an executing UI action."
@@ -15963,10 +15963,10 @@
     "id": "b5de8a356f266f7504cd",
     "kind": "destructive",
     "path": "desktop_qt/qml/MusicTrackRow.qml",
-    "line": 125,
+    "line": 132,
     "statement": "onAccepted: root.deleteDownload()",
     "occurrence": 1,
-    "source_sha256": "c84c27776cba47fb9a609c6e037efd9420bea45680cc552526b222d15aa68976",
+    "source_sha256": "a6de489ee92b96deac7f790f2c07290d031430bb758ea5d2122195d3a6e7af56",
     "disposition": "confirmation",
     "guard": "DownloadControl / TrackRow / TrackSheet DestructiveConfirm; cancel incomplete transfer is exempt",
     "reason": "Complete music download removal is confirmed with track title and size. Cancelling an unfinished download discards partial bytes immediately."
@@ -16797,7 +16797,7 @@
     "source_sha256": "02f80176e4843de89f143e7e5c2c69d657a4d7d530c6b9e8e6e546b32073442a",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; loading",
-    "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads. Devvoice review: device voice names, circled radio marks, one-line names and 8 dp text gaps leave this action and its guard unchanged."
+    "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads."
   },
   {
     "id": "2355ab56c47e68ae3ca7",
@@ -16809,7 +16809,7 @@
     "source_sha256": "02f80176e4843de89f143e7e5c2c69d657a4d7d530c6b9e8e6e546b32073442a",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; loading",
-    "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads. Devvoice review: device voice names, circled radio marks, one-line names and 8 dp text gaps leave this action and its guard unchanged."
+    "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads."
   },
   {
     "id": "8e77e82a57d6aea8c5f9",
@@ -17001,7 +17001,7 @@
     "source_sha256": "aadc4fbbaa32a3f700b33ccffcb001dbafde071cd3da4b0613230bdd374b8cf2",
     "disposition": "confirmation",
     "guard": "StudioSetup useDestructiveConfirm / StudioSettings removeConfirm",
-    "reason": "Uninstalling optional Studio runtime asks and describes which files and books are retained. Devvoice review: device voice names, circled radio marks, one-line names and 8 dp text gaps leave this action and its guard unchanged."
+    "reason": "Uninstalling optional Studio runtime asks and describes which files and books are retained."
   },
   {
     "id": "5b6fe5ddffc91d3e0ebf",
@@ -17013,7 +17013,7 @@
     "source_sha256": "aadc4fbbaa32a3f700b33ccffcb001dbafde071cd3da4b0613230bdd374b8cf2",
     "disposition": "confirmation",
     "guard": "StudioSetup useDestructiveConfirm / StudioSettings removeConfirm",
-    "reason": "Uninstalling optional Studio runtime asks and describes which files and books are retained. Devvoice review: device voice names, circled radio marks, one-line names and 8 dp text gaps leave this action and its guard unchanged."
+    "reason": "Uninstalling optional Studio runtime asks and describes which files and books are retained."
   },
   {
     "id": "78a32f6dcb04274ae91d",
@@ -17025,7 +17025,7 @@
     "source_sha256": "aadc4fbbaa32a3f700b33ccffcb001dbafde071cd3da4b0613230bdd374b8cf2",
     "disposition": "confirmation",
     "guard": "StudioSetup useDestructiveConfirm / StudioSettings removeConfirm",
-    "reason": "Uninstalling optional Studio runtime asks and describes which files and books are retained. Devvoice review: device voice names, circled radio marks, one-line names and 8 dp text gaps leave this action and its guard unchanged."
+    "reason": "Uninstalling optional Studio runtime asks and describes which files and books are retained."
   },
   {
     "id": "2b4dbe010e89b66356b1",

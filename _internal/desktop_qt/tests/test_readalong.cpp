@@ -71,6 +71,45 @@ class ReadAlongTest : public QObject {
 private slots:
     void init() { g_now = 1'800'000'000'000; }
 
+    void bookReplyCanArriveAfterItsViewIsDestroyed() {
+        Rig rig;
+        rig.net.hold = true;
+        auto detail = std::make_unique<BookDetail>();
+        QSignalSpy changes(detail.get(), &BookDetail::changed);
+        detail->setBookId(QStringLiteral("a"));
+        QCOMPARE(rig.net.heldCount(), 1);
+        detail.reset();
+        rig.net.releaseHeld();
+        QCOMPARE(changes.count(), 0);
+    }
+
+    void supersededBookReplyCannotReplaceTheCurrentBook() {
+        Rig rig;
+        rig.net.books.insert(QStringLiteral("b"), makeBook(QStringLiteral("b"), 5, true));
+        rig.net.hold = true;
+        BookDetail detail;
+        detail.setBookId(QStringLiteral("a"));
+        detail.setBookId(QStringLiteral("b"));
+        QCOMPARE(rig.net.heldCount(), 2);
+        rig.net.releaseFirst();
+        QCOMPARE(detail.status(), QStringLiteral("loading"));
+        rig.net.releaseFirst();
+        QCOMPARE(detail.status(), QStringLiteral("ready"));
+        QCOMPARE(detail.chapters()->rowCount(), 5);
+    }
+
+    void clearingBookIdRejectsAnOutstandingReply() {
+        Rig rig;
+        rig.net.hold = true;
+        BookDetail detail;
+        detail.setBookId(QStringLiteral("a"));
+        detail.setBookId(QString());
+        rig.net.releaseHeld();
+        QVERIFY(detail.bookId().isEmpty());
+        QCOMPARE(detail.status(), QStringLiteral("loading"));
+        QCOMPARE(detail.chapters()->rowCount(), 0);
+    }
+
     void selectedLineRetainsItsSourceIdentityWithoutSeeking() {
         Rig rig;
         QJsonObject script = sampleScript();

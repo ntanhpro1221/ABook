@@ -24,17 +24,28 @@ Item {
         ]
         function init() { Theme.reduceMotion = false; Nav.layers = []; Platform.reset(); DesktopApi.reset(); Api.bind(DesktopApi, Theme) }
         function cleanup() { Nav.layers = []; Theme.reduceMotion = false }
-        function test_selectionAppliesBeforeAsynchronousImageCapture() {
+        function test_selectionCapturesOnDemandAndReleasesAfterMotion() {
             const page = createTemporaryObject(library, host, {width: 792, height: 700, books: fixture})
             ready()
+            const slide = findChild(page, "libraryResultSlide")
+            verify(slide !== null)
+            tryVerify(function() { return !slide.running })
+            compare(slide.image, null, "idle results retain no capture")
             page.filter = "listening"
             compare(page.sections.length, 1)
-            compare(page.appliedFilter, 1)
-            compare(page.shownSections.length, 1)
+            verify(slide.capturing, "capture starts only when selection changes")
+            // A second selection during readback must invalidate the first
+            // image, display the latest results, and release both captures.
             page.filter = "finished"
             compare(page.sections.length, 1)
-            compare(page.appliedFilter, 3)
-            compare(page.shownSections.length, 1)
+            tryCompare(page, "appliedFilter", 3)
+            tryVerify(function() { return !slide.running })
+            compare(page.shownSections[0].books[0].bookId, "b")
+            compare(slide.image, null)
+            page.filter = "listening"
+            tryVerify(function() { return slide.image !== null && page.resultProgress < 1 })
+            page.visible = false
+            compare(slide.image, null, "hiding a page releases an active capture")
         }
         function test_filters_search_sort() {
             compare(fixture.filter(b => Logic.matches(b, "listening", "")).length, 1)

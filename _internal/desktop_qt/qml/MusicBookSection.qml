@@ -22,6 +22,8 @@ ListView {
     readonly property string previewing: Clip.current.indexOf("library:") === 0 ? Clip.current.slice(8) : ""
     clip: true
     boundsBehavior: Flickable.StopAtBounds
+    reuseItems: true
+    cacheBuffer: 600
     model: root.tracks
     bottomMargin: Theme.s16
 

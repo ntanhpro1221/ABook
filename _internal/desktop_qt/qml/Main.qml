@@ -247,7 +247,15 @@ Window {
         anchorItem: sidebar.chip
     }
     Listen { target: Nav; function onBookRequested(id) { win.openBookId(id) } }
-    AddBook { id: addBook; onOpenBook: id => win.openBookId(id); onOpenStudio: id => stack.show(1) }
+    Loader {
+        id: addBook
+        objectName: "addBookLoader"
+        active: false
+        readonly property bool opening: item ? item.opening : false
+        sourceComponent: AddBook { onOpenBook: id => win.openBookId(id); onOpenStudio: id => stack.show(1) }
+        function begin(paths) { active = true; item.begin(paths) }
+        function openFile() { active = true; item.openFile() }
+    }
     // Construct book actions on first use, then retain their state and pending
     // requests for the window's lifetime. Loading is synchronous before begin().
     Loader {
@@ -299,7 +307,12 @@ Window {
     // Cài đặt › Giao diện: "Phím tắt chữ" (M, [ ], ?), "Âm thanh chạm", "Nền đọc" - có hiệu lực ngay khi đổi (desktop/App.tsx)
     readonly property bool letterShortcuts: Api.preferences.letterShortcuts !== false
     PlayerKeys { id: keys; letters: win.letterShortcuts; onShortcutsRequested: shortcuts.show() }
-    ShortcutsDialog { id: shortcuts; letters: win.letterShortcuts }
+    LazyPopup {
+        id: shortcuts
+        objectName: "shortcutsLoader"
+        active: false
+        sourceComponent: ShortcutsDialog { letters: win.letterShortcuts }
+    }
     Binding { target: Feedback; property: "sounds"; value: Api.preferences.touchSounds !== false }
     Binding { target: Theme; property: "readingSurface"; value: ["paper", "ivory", "night"].indexOf(Api.preferences.readingSurface) >= 0 ? Api.preferences.readingSurface : "auto" }
     Listen {
@@ -322,7 +335,14 @@ Window {
         try { allowed = JSON.parse(Api.store("abook-readaloud-online-ok") || "[]") } catch (error) {}
         Narration.configure(Api.voiceList, Array.isArray(allowed) ? allowed : [])
     }
-    PlayerConsent { id: onlineVoice }
+    Loader {
+        id: onlineVoice
+        objectName: "onlineVoiceLoader"
+        active: false
+        sourceComponent: PlayerConsent {}
+        function ask(voice, done) { active = true; item.ask(voice, done) }
+        function dismiss() { if (item) item.dismiss() }
+    }
     Listen { target: Player; function onLoadedChanged() { if (!Player.loaded) onlineVoice.dismiss() } }
     Listen {
         target: Narration

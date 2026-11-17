@@ -13,7 +13,7 @@ Item {
     Image {
         objectName: "musicArtGenerated"
         anchors.fill: parent
-        source: "data:image/bmp;base64," + Raster.base64(root.seed)
+        source: "image://musicart/generated/" + root.seed
         asynchronous: true
         fillMode: Image.PreserveAspectFit
         smooth: true

@@ -15,6 +15,35 @@
 class MusicArtTests : public QObject {
     Q_OBJECT
 private slots:
+    void generatedTilesMatchCanonicalPixels() {
+        QFile file(QStringLiteral(MUSICART_DIR "/../tests/fixtures/music_art/cases.json"));
+        QVERIFY(file.open(QIODevice::ReadOnly));
+        const auto cases = QJsonDocument::fromJson(file.readAll()).array();
+        QCOMPARE(cases.size(), 8);
+        MusicArtProvider provider;
+        for (const auto &entry : cases) {
+            const auto item = entry.toObject();
+            std::unique_ptr<QQuickImageResponse> response(provider.requestImageResponse(
+                QStringLiteral("generated/%1").arg(item.value("seed").toInt()), QSize(40, 40)));
+            QSignalSpy ready(response.get(), &QQuickImageResponse::finished);
+            QTRY_COMPARE_WITH_TIMEOUT(ready.count(), 1, 3000);
+            std::unique_ptr<QQuickTextureFactory> texture(response->textureFactory());
+            QVERIFY(texture);
+            const auto image = texture->image();
+            QCOMPARE(image.size(), QSize(96, 96));
+            QByteArray rgb;
+            rgb.reserve(96 * 96 * 3);
+            for (int y = 0; y < image.height(); ++y) {
+                for (int x = 0; x < image.width(); ++x) {
+                    const auto pixel = image.pixel(x, y);
+                    QCOMPARE(qAlpha(pixel), 255);
+                    rgb.append(char(qRed(pixel))); rgb.append(char(qGreen(pixel))); rgb.append(char(qBlue(pixel)));
+                }
+            }
+            QCOMPARE(QString::fromLatin1(QCryptographicHash::hash(rgb, QCryptographicHash::Sha256).toHex()),
+                     item.value("rgbSha256").toString());
+        }
+    }
     void verifiedDiskImageWorksWithoutASourceConnection() {
         QStandardPaths::setTestModeEnabled(true);
         QImage image(96, 96, QImage::Format_RGB32);
