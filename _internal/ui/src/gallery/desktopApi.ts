@@ -176,6 +176,15 @@ function appInfo(): AppInfo {
   };
 }
 
+/** Loa phòng khách đang phát Thành Phố Sương Mù · Tập 2 (scenario castSpeaker). */
+function castSpeaker() {
+  return {
+    device: "cast-living-room", name: "Loa phòng khách", kind: "speaker", via: "cast", protocol: "dlna", localBookId: "suong-mu-2",
+    bookId: "suong-mu-2", bookTitle: "Thành Phố Sương Mù · Tập 2", chapterId: 4, chapterTitle: "Chương 4", position: 312, duration: 1480,
+    playing: true, buffering: false, rate: 1, books: [], stream: true, acks: [], age: 0, known: true, cover: null, sleep: null,
+  };
+}
+
 const listenLibrary = () => {
   const mode = galleryState.scenario.library;
   if (mode === "loading") return never();
@@ -438,7 +447,8 @@ const ROUTES: [string, RegExp, Handler][] = [
     ],
   })],
   ["GET", /^\/api\/export-jobs$/, () => ({ jobs: [] })],
-  ["GET", /^\/api\/remote$/, () => ({ phones: [] })],
+  ["GET", /^\/api\/remote$/, () => ({ phones: galleryState.scenario.castSpeaker ? [castSpeaker()] : [] })],
+  ["POST", /^\/api\/remote\/[^/]+$/, () => ({ id: "gallery" })],
   ["POST", /^\/api\/cast\/scan$/, () => ({ ok: true })],
   ["POST", /^\/api\/player\/report$/, () => ({ commands: [], idle: true })],
   ["GET", /^\/api\/host\/opened$/, () => ({ opened: [] })],
