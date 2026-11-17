@@ -538,7 +538,7 @@ object Motion : SensorEventListener {
 
     fun start(context: Context) {
         if (running) return
-        manager = context.getSystemService(Context.SENSOR_SERVICE) as SensorManager
+        manager = context.getSystemService(Context.SENSOR_SERVICE) as? SensorManager
         val sensor = manager?.getDefaultSensor(Sensor.TYPE_ACCELEROMETER)
         available = sensor != null
         if (sensor == null) return
