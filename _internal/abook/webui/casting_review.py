@@ -320,7 +320,7 @@ def casting_chapter(project_root: Path, chapter_id: int) -> dict[str, Any] | Non
     from .. import avatars
     portraits = avatars.entries(project_root)
     for person in cast + others:
-        person["avatar"] = portraits.get(person["value"]) or avatars.fallback(person["value"])
+        person["avatar"] = avatars.portrait(portraits, person["value"])
     voices = store.read_settings(project_root).get("voices")
     voices = voices if isinstance(voices, dict) else {}
     first_person = str(voices.get("first_person_identity") or "")

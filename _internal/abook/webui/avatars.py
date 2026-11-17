@@ -18,25 +18,30 @@ _JOBS: dict[tuple[str, str], dict[str, Any]] = {}
 
 def status(root: Path, name: str) -> dict[str, Any]:
     with _LOCK:
-        job = dict(_JOBS.get((str(root), name), {}))
+        job = dict(_JOBS.get((str(root), avatars.portrait_key(name)), {}))
     return {"available": avatars.service_config(root) is not None, **job}
 
 
 def person(root: Path, name: str) -> dict[str, Any]:
+    """The character the cast row names: the cast sends the speaker as shown ("Lucien"), the book keys "LUCIEN"."""
     with closing(store.connect(root)) as connection:
-        row = connection.execute("SELECT canonical_name,display_name,gender,age FROM characters WHERE canonical_name=?", (name,)).fetchone()
+        rows = {avatars.portrait_key(str(row["canonical_name"])): row for row in connection.execute(
+            "SELECT canonical_name,display_name,gender,age FROM characters")}
+    row = rows.get(avatars.portrait_key(name))
     if row is None:
         raise ValueError("Nhân vật không có trong sách.")
     return dict(row)
 
 
 def update(root: Path, body: dict[str, Any]) -> dict[str, Any]:
-    name = str(body.get("character") or "")
-    record = person(root, name)
+    shown = str(body.get("character") or "")
+    record = person(root, shown)
+    name = avatars.portrait_key(record["canonical_name"])
     action = body.get("action")
     if action in ("upload", "pattern"):
         data = base64.b64decode(str(body.get("data") or ""), validate=True) if action == "upload" else None
-        return {"avatar": avatars.choose(root, name, data), "pending": False}
+        # Stored under the shared key; a chosen pattern is the one every client draws from the shown name.
+        return {"avatar": avatars.choose(root, shown, data), "pending": False}
     if action != "generate":
         raise ValueError("Chọn ảnh, sinh lại hoặc dùng hoạ tiết.")
     with closing(store.connect(root)) as connection:

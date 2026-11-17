@@ -29,6 +29,8 @@ import time
 from pathlib import Path
 from typing import Any
 
+from .io_utils import sqlite_read_only_uri
+
 TTS_POOL_WORKERS_DEFAULT = 3
 """Three, from measurement rather than from the core count.
 
@@ -172,7 +174,7 @@ class ReadOnlyVoiceDB:
 
     def _connect(self) -> sqlite3.Connection:
         connection = sqlite3.connect(
-            f"file:{self.path.as_posix()}?mode=ro",
+            sqlite_read_only_uri(self.path),
             uri=True,
             timeout=30.0,
         )

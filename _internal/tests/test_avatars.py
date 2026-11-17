@@ -152,3 +152,52 @@ def test_without_an_image_service_nothing_is_stored_so_a_later_service_still_run
     assert not (tmp_path / avatars.DB).exists()
     picture = avatars.generate(tmp_path, person(), [], renderer=lambda *_: raster())
     assert picture["kind"] == "image"
+
+
+# ---- one key for every write and read (soát 0.4.173 B3) / any folder name (B4) ---------------------------------------------
+
+
+def _png_b64(color="red"):
+    import base64
+    return base64.b64encode(raster(color)).decode()
+
+
+def _lucien(cast_view):
+    return next(p for p in cast_view["characters"] + cast_view["extras"] if p["name"].casefold() == "lucien")
+
+
+@pytest.mark.parametrize("sent", ["shown", "LUCIEN", "  lucien "])
+def test_a_portrait_uploaded_by_any_spelling_of_the_name_is_saved_and_shown(tmp_path, sent):
+    from abook.webui import avatars as studio_avatars
+    from tests.test_listener_speakers import _book
+
+    paths, _db = _book(tmp_path)
+    shown = _lucien(avatars.cast(paths.root))["name"]
+    name = shown if sent == "shown" else sent
+    result = studio_avatars.update(paths.root, {"character": name, "action": "upload", "data": _png_b64()})
+    assert result["avatar"]["kind"] == "image"
+    assert _lucien(avatars.cast(paths.root))["avatar"] == result["avatar"], "the cast row shows what was just saved"
+    # Back to the pattern: the same one every client draws from the shown name.
+    studio_avatars.update(paths.root, {"character": shown, "action": "pattern"})
+    assert _lucien(avatars.cast(paths.root))["avatar"] == avatars.fallback(shown)
+
+
+def test_an_unknown_character_is_still_refused(tmp_path):
+    from abook.webui import avatars as studio_avatars
+    from tests.test_listener_speakers import _book
+
+    paths, _db = _book(tmp_path)
+    with pytest.raises(ValueError):
+        studio_avatars.update(paths.root, {"character": "Không Ai", "action": "upload", "data": _png_b64()})
+
+
+@pytest.mark.parametrize("folder", ["Sach #2", "Sach 100%", "Sach  co  dau cach", "Sách #ổ"])
+def test_portraits_read_from_a_book_whose_folder_name_has_url_characters(tmp_path, folder):
+    from tests.test_listener_speakers import _book
+
+    paths, _db = _book(tmp_path / folder)
+    saved = avatars.choose(paths.root, "LUCIEN", raster("blue"))
+    before = sorted(path.name for path in paths.root.parent.iterdir())
+    assert _lucien(avatars.cast(paths.root))["avatar"] == saved
+    assert sorted(path.name for path in paths.root.parent.iterdir()) == before, "no stray database next to the book"
+    assert sorted(path.name for path in (tmp_path / folder).parent.iterdir()) == [folder]
