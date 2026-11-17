@@ -286,8 +286,8 @@
         },
         {
           "side": "web",
-          "match": "^(chưa mang theo chỗ nghe)$",
-          "reason": "computer only: restoring a deleted book on the computer can leave its listening spot behind; the phone keeps listening records outside the book folder and restores the book to the same place, so nothing is ever left behind"
+          "match": "^(chưa mang theo chỗ nghe|chỉ có chữ)$",
+          "reason": "computer only: restoring a deleted book on the computer can leave its listening spot behind; the phone keeps listening records outside the book folder and restores the book to the same place, so nothing is ever left behind. Also computer only: a text-only book without an author on a computer that has no reading voice yet says 'Chỉ có chữ · N chương' (Qt BookLogic.progressText says the same); the phone always has its on-device voice, so it says only the chapter count"
         },
         {
           "side": "web",

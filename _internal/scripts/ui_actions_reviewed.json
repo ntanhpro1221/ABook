@@ -1419,25 +1419,25 @@
     "id": "eb5a41a0c4c81383f5cb",
     "kind": "pending",
     "path": "ui/src/listen/LibraryScreen.tsx",
-    "line": 129,
+    "line": 130,
     "statement": "return async (book: ListenBook, chapterId?: number, at?: number, extra?: { word?: WordTarget; rate?: number }) => {",
     "occurrence": 1,
-    "source_sha256": "e98ff33af3326cc9efccbeb5add58ebbaac18c07d838cb9172dbde570b7fa84d",
+    "source_sha256": "d088a213995c7f90ed4b19f2bdc5f9b430b61a40fd783910b9ef3352df1f91dc",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; LoadingCrossfade, Progress, isLoading, loading, progress, progressFill, progressText",
-    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Gate repair: reviewed identity-key motion, explicit layout, token spacing or semantic navigation changes; existing guard retained. Combined-source review: the author line now uses OneLineFit (no ellipsis); this action and its guard are unchanged."
+    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Gate repair: reviewed identity-key motion, explicit layout, token spacing or semantic navigation changes; existing guard retained. Combined-source review: the author line now uses OneLineFit (no ellipsis); this action and its guard are unchanged. Combined-source review: progressText again says 'Chỉ có chữ' for a text-only book without author on a computer without a voice; this action and its guard are unchanged."
   },
   {
     "id": "8e6269fe3f7bbd02cacc",
     "kind": "pending",
     "path": "ui/src/listen/LibraryScreen.tsx",
-    "line": 293,
+    "line": 294,
     "statement": "onClick={withFeedback(\"playPause\", () => (current ? player.toggle() : void playBook(book)))}",
     "occurrence": 1,
-    "source_sha256": "e98ff33af3326cc9efccbeb5add58ebbaac18c07d838cb9172dbde570b7fa84d",
+    "source_sha256": "d088a213995c7f90ed4b19f2bdc5f9b430b61a40fd783910b9ef3352df1f91dc",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; LoadingCrossfade, Progress, isLoading, loading, progress, progressFill, progressText",
-    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Gate repair: reviewed identity-key motion, explicit layout, token spacing or semantic navigation changes; existing guard retained. Combined-source review: the author line now uses OneLineFit (no ellipsis); this action and its guard are unchanged."
+    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Gate repair: reviewed identity-key motion, explicit layout, token spacing or semantic navigation changes; existing guard retained. Combined-source review: the author line now uses OneLineFit (no ellipsis); this action and its guard are unchanged. Combined-source review: progressText again says 'Chỉ có chữ' for a text-only book without author on a computer without a voice; this action and its guard are unchanged."
   },
   {
     "id": "7a75357ddc0dd98439a5",

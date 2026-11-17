@@ -11,7 +11,7 @@ icon `LucidePaths.js` sinh bởi `scripts/gen_lucide_icons.py --qml`. Bảng dư
 
 <!-- ui_parity_qt:begin (SINH TỰ ĐỘNG bởi scripts/ui_parity_qt.py - không sửa tay, chạy lại script) -->
 
-Quét: web máy tính 6248 chữ (2876 khác nhau), 351 cặp nhãn-icon; Qt 3700 chữ (2716 khác nhau), 292 cặp nhãn-icon (icon dùng ở 415 chỗ). Khoá so lỏng như UI_PARITY.md (hạ chữ, dấu thanh một kiểu, `...` = `…`, bỏ dấu câu cuối); phím tắt trong chú thích Qt (`Thu nhỏ (Esc)`) tách khỏi nhãn.
+Quét: web máy tính 6249 chữ (2877 khác nhau), 351 cặp nhãn-icon; Qt 3700 chữ (2716 khác nhau), 292 cặp nhãn-icon (icon dùng ở 415 chỗ). Khoá so lỏng như UI_PARITY.md (hạ chữ, dấu thanh một kiểu, `...` = `…`, bỏ dấu câu cuối); phím tắt trong chú thích Qt (`Thu nhỏ (Esc)`) tách khỏi nhãn.
 
 ## a. Cùng việc, khác chữ
 
@@ -175,7 +175,7 @@ Nhãn ngắn (<= 6 chữ). **Chỉ Qt**: không có ở web cùng màn; `*` = we
 ### Thư viện
 
 - chỉ Qt (9): Tạm dừng* (`qt/LibraryContinue.qml:44`); Mới thêm* (`qt/LibraryScreen.qml:48`); Tác giả* (`qt/LibraryScreen.qml:48`); Tên sách* (`qt/LibraryScreen.qml:48`); Đang mở ABook* (`qt/LibraryScreen.qml:394`); Chưa mở được ABook (`qt/LibraryScreen.qml:443`); Chưa tải được thư viện (`qt/LibraryScreen.qml:443`); Thử lại* (`qt/LibraryScreen.qml:461`); Không thấy “{}”* (`qt/LibraryScreen.qml:498`)
-- chỉ web (7): Đang tạm dừng {} (`334`); Đang làm {} (`335`); Đang tạm dừng{} (`339`); Chưa có chương nghe được{} (`341`); Đang làm · {} (`341`); Thư viện chưa có sách nào. (`462`); Chữ bìa trên hoạ tiết sóng (`86`)
+- chỉ web (7): Đang tạm dừng {} (`335`); Đang làm {} (`336`); Đang tạm dừng{} (`340`); Chưa có chương nghe được{} (`342`); Đang làm · {} (`342`); Thư viện chưa có sách nào. (`463`); Chữ bìa trên hoạ tiết sóng (`86`)
 
 ### Thanh phát
 
