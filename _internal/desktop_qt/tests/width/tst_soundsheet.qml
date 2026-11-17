@@ -10,8 +10,11 @@ Item {
     Component {
         id: factory
         Flickable {
+            id: sheetScroll
             width: host.width; height: host.height; contentHeight: page.height; clip: true
             AudioFxPanel { id: page; width: parent.width - 40; x: 20; openMusic: () => {} }
+            // Như khung thật của bảng (Modal: ScrollEdges trên nền panel) - ảnh chụp không cắt cứng dòng ở mép cuộn.
+            ScrollEdges { parent: host; z: 1; target: sheetScroll; color: Theme.panel; width: host.width; height: host.height }
         }
     }
     TestCase {

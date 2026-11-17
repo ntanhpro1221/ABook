@@ -14,6 +14,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.test.*
 import vn.abook.player.ui.createAndroidComposeRule
+import vn.abook.player.ui.assertNoTextOverflow
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.DpRect
@@ -202,6 +203,28 @@ class NowPlayingUiTest {
     @Test fun chaptersDark() { show(dark = true, sheet = PlayerSheet.Chapters); shot("chapters_dark") }
     @Test fun longTitlesLight() { show(longTitles = true); rule.onNode(inWindow(hasText(LONG_CHAPTER))).assertIsDisplayed(); shot("long_light") }
     @Test fun longTitlesDark() { show(dark = true, longTitles = true); rule.onNode(inWindow(hasText(LONG_BOOK))).assertIsDisplayed(); shot("long_dark") }
+
+    @Test fun titlesAndNoticesKeepThePlayerAnchorsAtLargeFontScale() {
+        show(fontScale = 1.3f)
+        shot("anchors_font130_light")
+        val tags = listOf("player_cover", "player_chapter", "player_seek", "transport")
+        val original = tags.associateWith(::bounds)
+        val base = model.state.value
+        val variants = listOf(
+            "long" to base.copy(chapterTitle = LONG_CHAPTER, bookTitle = LONG_BOOK),
+            "sleep" to base.copy(sleep = PlayerSleep(SleepKind.Minutes, 30, true)),
+            "error" to base.copy(error = "Không đọc được chương này. Hãy thử lại."),
+            "ended" to base.copy(ended = true),
+            "caught_up" to base.copy(ended = true, whole = false),
+        )
+        for ((name, state) in variants) {
+            rule.runOnUiThread { model.update(state) }
+            rule.waitForIdle()
+            for (tag in tags) assertBounds(original.getValue(tag), bounds(tag))
+            shot("anchor_${name}_font130_light")
+            assertTrue(rule.assertNoTextOverflow() > 8)
+        }
+    }
 
     @Test fun secondaryActionsShareOneLabelLineAndEqualColumns() {
         show()
@@ -737,11 +760,15 @@ class NowPlayingUiTest {
     }
 
     @Test fun caughtUpBookNamesWhatIsLeftAndReplacesTheBookTitleInTheSubtitle() {
-        show(base = endedState(whole = false))
+        caughtUp(false)
+    }
+    @Test fun caughtUpBookDarkNamesWhatIsLeftAndReplacesTheBookTitleInTheSubtitle() = caughtUp(true)
+    private fun caughtUp(dark: Boolean) {
+        show(dark = dark, base = endedState(whole = false))
         rule.onNodeWithTag("end_caught_up").assertIsDisplayed()
         rule.onNodeWithText("${PlayerText.CAUGHT_UP_HEAD}. ${PlayerText.CAUGHT_UP_DETAIL}").assertIsDisplayed()
         rule.onAllNodesWithText(PlayerText.CAUGHT_UP_HEAD, substring = true, useUnmergedTree = true).assertCountEquals(2)
-        shot("caught_up_light")
+        shot(if (dark) "caught_up_dark" else "caught_up_light")
     }
 
     private fun oneChapter() = FakeNowPlayingModel.demoState().let { it.copy(chapters = it.chapters.take(1)) }
@@ -767,11 +794,15 @@ class NowPlayingUiTest {
     }
 
     @Test fun aNoteShowsItsActionAndTappingRunsIt() {
-        show()
+        note(false)
+    }
+    @Test fun aDarkNoteShowsItsActionAndTappingRunsIt() = note(true)
+    private fun note(dark: Boolean) {
+        show(dark = dark)
         model.say(PlayerNote("Máy khác đã nghe tới Chương 5 · 12:04", PlayerText.ELSEWHERE_ACTION, serial = 1, lifeMs = 20_000))
         rule.waitForIdle()
         rule.onNodeWithText("Máy khác đã nghe tới Chương 5 · 12:04").assertIsDisplayed()
-        shot("note_light")
+        shot(if (dark) "note_dark" else "note_light")
         rule.onNodeWithTag("player_note_action").performClick()
         assertTrue(model.actions.contains("note"))
         rule.waitForIdle()

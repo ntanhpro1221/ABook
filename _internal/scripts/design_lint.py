@@ -50,10 +50,16 @@ TOKENS = {
     "focus": ("#a0600c", "#e9a945"),
     "switch-off": ("#857e72", "#75706a"),
     "switch-thumb": ("#ffffff", "#1b1204"),
+    "bg": ("#f5f3ef", "#121110"),
 }
 
-# The audit requires the same measured range on every platform.
-BUTTON_HEIGHT = (44, 56)
+# Màn mờ dưới sheet / hộp thoại (DESIGN.md §5.5 "Bóng"): rgb + độ đục, (sáng, tối). Công tắc của trang nằm dưới màn mờ
+# mang màu rãnh đã pha với màn mờ; rãnh ấy vẫn là --focus / --switch-off.
+SCRIM = (((20, 17, 13), 0.45), ((6, 5, 4), 0.62))
+
+# Nút chính: DESIGN.md §6 "chính - nền hổ phách, cao 48 / 40" (điện thoại / máy tính) ± 4 dp, tức cùng một luật đo
+# trên ba nền tảng với chuẩn riêng của từng khổ. Qt và web là máy tính.
+BUTTON_HEIGHT = {"android": (44, 56), "qt": (36, 44), "web": (36, 44)}
 
 KEYLINE_SLACK_DP = 3
 INK = 40            # tổng |Δ| ba kênh so với nền của hàng: điểm có mực
@@ -110,6 +116,11 @@ def delta_e(a, b) -> float:
 
 def token(name: str, dark: bool) -> np.ndarray:
     return hex_rgb(TOKENS[name][int(dark)])
+
+
+def under_scrim(colour: np.ndarray, dark: bool) -> np.ndarray:
+    rgb, alpha = SCRIM[int(dark)]
+    return colour * (1 - alpha) + np.array(rgb, dtype=float) * alpha
 
 
 # ---------------------------------------------------------------- phân tích ảnh
@@ -292,20 +303,67 @@ class Analysis:
 
 # ---------------------------------------------------------------- luật trên ảnh
 
+# Ít nhất chừng này dòng mực phía trên dải trống thì dải ấy là đuôi của một danh sách / mẫu điền vừa hết mục (lượng dữ
+# liệu, không phải bố cục); ít hơn là màn thưa - trạng thái trống dồn góc mà DESIGN L1 muốn dựng thành lời mời có nút chính.
+R10_LIST_ROWS = 6
+R10_PINNED_DP = 160     # thanh đáy ghim (thanh điều hướng, trình phát nhỏ, nút hành động đáy) nằm trong chừng này dp cuối màn
+
+
+def is_page(a: Analysis) -> bool:
+    """Ảnh là một màn: nền màn là --bg của DESIGN (không phải màn mờ quanh sheet tách riêng) và có tiêu đề ở góc trên trái.
+    Ảnh thành phần chụp riêng (trình phát nhỏ, toast, sheet trên màn mờ) không có bố cục màn để xét R10."""
+    bg = token("bg", a.shot.dark)
+    if delta_e(a.page_bg, bg) > 6:
+        return False
+    top = a.ink[:a.px(96), :int(a.w * 0.4)]
+    return bool(top.sum(axis=1).max(initial=0) > 1)
+
+
 def rule_r10(a: Analysis) -> list[Finding]:
-    """Vùng trống: dải ngang không mực > 40 % chiều cao; khổ rộng: dải dọc trống > 40 % bề ngang."""
-    if not a.full_screen:
+    """Vùng trống: dải ngang không mực > 40 % chiều cao; khổ rộng: dải dọc trống > 40 % bề ngang.
+
+    Dải chạy tới đáy màn (hay tới thanh đáy ghim) sau >= R10_LIST_ROWS dòng là đuôi danh sách, không đỏ."""
+    if not a.full_screen or not is_page(a):
         return []
     out = []
-    empty_rows = runs(~(a.ink.sum(axis=1) > 1) & a.page_rows)
+    rows = a.ink.sum(axis=1) > 1
+    empty_rows = runs(~rows & a.page_rows)
     if empty_rows:
         top, bottom = max(empty_rows, key=lambda r: r[1] - r[0])
         share = (bottom - top + 1) / a.h
-        if share > 0.40:
+        tail = not rows[bottom + 1:a.h - a.px(R10_PINNED_DP)].any()
+        listed = sum(1 for b in a.bands() if b.bottom < top and b.height >= a.px(4)) >= R10_LIST_ROWS
+        # Màn trạng thái căn giữa (soát 10-11 L10: tâm khối ở 35-50 % chiều cao dùng được): khối đứng giữa hai dải trống, dải trên ít
+        # nhất 55 % dải dưới, khối căn giữa ngang - dải dưới ấy là nửa kia của lề đều, không phải chỗ trống bỏ phí. Khối dính đỉnh
+        # (dải trên nhỏ) hay lệch trái vẫn đỏ.
+        above = [r for r in empty_rows if r[1] < top]
+        centred_state = False
+        if above:
+            a_top, a_bottom = max(above, key=lambda r: r[1] - r[0])
+            block = a.ink[a_bottom + 1:top]
+            cols = np.flatnonzero(block.sum(axis=0) > 0)
+            centred_state = (a_bottom - a_top + 1 >= 0.55 * (bottom - top + 1) and cols.size > 0
+                             and any(x0 <= cols[0] and cols[-1] < x1 and abs((cols[0] + cols[-1]) / 2 - (x0 + x1 - 1) / 2) <= a.px(48)
+                                     for x0, x1 in a.panes()))
+        if share > 0.40 and not (tail and listed) and not centred_state:
             out.append(Finding("R10", a.shot.key, f"dải trống {share:.0%} chiều cao (y {top}-{bottom})",
                                [0, top, a.w, bottom]))
     if a.w / a.s >= 600:
-        empty_cols = runs(~(a.ink.sum(axis=0) > 1))
+        # Khe giữa chữ đầu hàng và việc cuối hàng (công tắc, ›, ⌄, cột dữ liệu) của hàng chạy hết cột (DESIGN §4: "mọi hàng chạy hết
+        # cột") không phải nội dung dồn trái: có dòng mực cao >= 4 dp nằm cả hai bên khe thì khe ở TRONG hàng. Dồn trái là khe
+        # chạy tới mép mà bên kia không còn gì của cùng các hàng.
+        def inside_rows(left: int, right: int) -> bool:
+            both = (a.ink[:, :left].sum(axis=1) > 0) & (a.ink[:, right + 1:].sum(axis=1) > 0)
+            return any(b - t + 1 >= a.px(4) for t, b in runs(both))
+        # Khối căn giữa vùng (màn trạng thái: rỗng, lỗi - soát 10-11 L10 "căn giữa toàn bộ") để trống đều hai bên, không dồn trái:
+        # nội dung dưới đầu màn của vùng chứa khe có tâm ngang lệch tâm vùng <= 48 dp thì khe ấy là lề của khối giữa.
+        def centred_pane(left: int, right: int) -> bool:
+            for x0, x1 in a.panes():
+                if x0 <= left < x1:
+                    cols = np.flatnonzero(a.ink[a.px(96):, x0:x1].sum(axis=0) > 1)
+                    return cols.size > 0 and abs((cols[0] + cols[-1]) / 2 - (x1 - x0) / 2) <= a.px(48)
+            return False
+        empty_cols = [r for r in runs(~(a.ink.sum(axis=0) > 1)) if not inside_rows(*r) and not centred_pane(*r)]
         if empty_cols:
             left, right = max(empty_cols, key=lambda r: r[1] - r[0])
             share = (right - left + 1) / a.w
@@ -323,7 +381,9 @@ def keylines(a: Analysis, bands: list[Band], x0: int, width: int) -> list[float]
     """
     edges = sorted({round(a.dp(b.left - x0)) for b in bands
                     if b.height >= a.px(4) and b.right - b.left > a.px(10)
-                    and a.px(1) < b.left - x0 < width * 0.4})
+                    and a.px(1) < b.left - x0 < width * 0.4
+                    and not distributed(a, b, x0, width) and not inside_filled(a, b, x0)
+                    and not centred_in(a, b, x0, x0 + width)})
     groups: list[list[int]] = []
     for e in edges:
         if groups and e - groups[-1][-1] <= KEYLINE_SLACK_DP:
@@ -331,6 +391,26 @@ def keylines(a: Analysis, bands: list[Band], x0: int, width: int) -> list[float]
         else:
             groups.append([e])
     return [g[0] for g in groups]
+
+
+def centred_in(a: Analysis, band: Band, x0: int, x1: int) -> bool:
+    """Khối căn giữa vùng (lệch tâm <= 2 dp): mép trái của nó đổi theo độ dài chữ, không phải trục.
+    Trộn căn giữa với căn trái có phép thử riêng trong rule_r6."""
+    return abs((band.left - x0) - (x1 - 1 - band.right)) <= a.px(2)
+
+
+def distributed(a: Analysis, band: Band, x0: int, width: int) -> bool:
+    """Hàng chia ô đều (thanh nút đáy trình phát, hàng nhãn dưới icon, vạch số dưới thanh trượt, hàng −/thanh/+):
+    >= 3 cụm trải >= 60 % bề ngang vùng, hay >= 3 cụm ngắn (<= 48 dp) có tâm cách đều (thang số 50 100 150 200
+    dưới thanh trượt). Mép trái của cụm đầu là mép ô, không phải trục chữ của cột."""
+    if len(band.segments) < 3:
+        return False
+    if band.right - band.left >= 0.6 * width:
+        return True
+    if any(b - s > a.px(48) for s, b in band.segments):
+        return False
+    pitch = np.diff([(s + b) / 2 for s, b in band.segments])
+    return bool(pitch.min() >= a.px(16) and pitch.max() - pitch.min() <= max(a.px(4), 0.15 * pitch.mean()))
 
 
 def inside_filled(a: Analysis, band: Band, x0: int) -> bool:
@@ -343,9 +423,13 @@ def rule_r6(a: Analysis) -> list[Finding]:
     if not a.full_screen:
         return []
     out = []
-    for x0, x1 in a.panes():
+    # Hộp thoại mở (cây Qt / lớp web): chữ của trang dưới màn mờ là màn khác - chỉ đo trục trong mặt hộp thoại.
+    panel = modal_panel(a)
+    for x0, x1 in a.panes() if panel is None else [(panel[0], panel[2])]:
         width = x1 - x0
         bands = a.bands(x0, x1)
+        if panel is not None:
+            bands = [b for b in bands if b.top >= panel[1] - 1 and b.bottom <= panel[3] + 1]
         keys = keylines(a, bands, x0, width)
         if len(keys) > 3:
             out.append(Finding("R6", a.shot.key, f"{len(keys)} trục mép trái (dp: {' '.join(map(str, keys))})",
@@ -362,6 +446,10 @@ def rule_r6(a: Analysis) -> list[Finding]:
         # Nút chữ phụ căn giữa ngay dưới nút tô nền tràn ngang (cụm hành động ở đáy) là một khối, không phải trộn căn.
         buttons = [b for b in bands if inside_filled(a, b, x0)]
         centred = [b for b in centred if not any(0 <= b.top - f.bottom <= a.px(64) for f in buttons)]
+        # Số đọc trên thanh trượt (1× trên thang 0,8 1 1,25), chú thích dưới bộ chỉnh âm: cùng nhóm căn giữa với hàng ô đều sát nó.
+        cells = [b for b in bands if distributed(a, b, x0, width) and centred_in(a, b, x0, x1)]
+        centred = [b for b in centred if not any(b.top - c.bottom <= a.px(64) and c.top - b.bottom <= a.px(64)
+                                                 for c in cells)]
         flush = [b for b in bands if abs(b.left - margin) <= a.px(1) and b.height >= a.px(4)
                  and b.right - b.left > a.px(10)]
         if centred and len(flush) >= 2:
@@ -369,6 +457,40 @@ def rule_r6(a: Analysis) -> list[Finding]:
             out.append(Finding("R6", a.shot.key,
                                f"trộn căn giữa ({len(centred)} khối, đầu tiên y {b.top}) với căn trái ({len(flush)} khối)",
                                [b.left, b.top, b.right, b.bottom]))
+        out += artwork_off_text(a, bands, x0, x1)
+    return out
+
+
+def artwork_off_text(a: Analysis, bands: list[Band], x0: int, x1: int) -> list[Finding]:
+    """Bìa / ảnh lớn (mặt đặc >= 120 dp) mà dòng chữ ngay dưới nó không chung mép trái cũng không chung tâm: bìa căn giữa,
+    tên chương căn trái (np_large). Chỉ xét trên nền --bg: hộp thoại trên màn mờ là mặt nổi, không phải ảnh."""
+    if delta_e(a.page_bg, token("bg", a.shot.dark)) > 6:
+        return []
+    labels, objects = a.surface_components()
+    out = []
+    for index, sl in enumerate(objects, start=1):
+        if sl is None:
+            continue
+        top, bottom, left, right = sl[0].start, sl[0].stop, sl[1].start, sl[1].stop
+        if (bottom - top < a.px(120) or right - left < a.px(120) or right - left > 0.9 * (x1 - x0)
+                or left < x0 or right > x1 or (labels[sl] == index).mean() < 0.8):
+            continue
+        # Dòng chữ đầu tiên dưới ảnh có cụm nằm trong bề ngang ảnh (cột bên cạnh có dòng riêng của nó); cụm chạm mép vùng là mặt nổi.
+        segs = []
+        for b in bands:
+            if bottom <= b.top <= bottom + a.px(96) and b.height <= a.px(48):
+                segs = [s for s in b.segments if s[1] >= left and s[0] <= right]
+                if segs:
+                    break
+        if not segs or segs[0][0] - x0 <= a.px(1):
+            continue
+        s0, s1 = segs[0][0], segs[-1][1]
+        # Chữ thò ra trái ảnh (ảnh thụt vào giữa, chữ bám lề) - chữ thụt so với ảnh là tầng lồng, không xét ở đây.
+        if (left - s0 > a.px(16) and abs((s0 + s1) - (left + right)) / 2 > a.px(16)
+                and s1 - s0 <= 1.5 * (right - left)):
+            out.append(Finding("R6", a.shot.key, f"ảnh mép trái {round(a.dp(left - x0))} dp, chữ ngay dưới mép trái "
+                                                  f"{round(a.dp(s0 - x0))} dp: không chung mép, không chung tâm",
+                               [left, top, right, bottom]))
     return out
 
 
@@ -514,6 +636,12 @@ def is_switch(a: Analysis, sl) -> tuple[bool, np.ndarray | None]:
     box = a.rgb[sl]
     thumb_colour = token("switch-thumb", a.shot.dark)
     bgc = a.bg[sl[0]].mean(axis=0)
+    # Rãnh công tắc là hình viên thuốc (DESIGN.md §5.5: công tắc = tròn): bốn góc hộp nằm NGOÀI rãnh, mang màu nền.
+    # Ô bìa / chữ cái đầu bo 8-12 dp có góc đặc nên không phải công tắc.
+    inset = max(1, int(0.1 * h))
+    corners = [box[y, x] for y in (inset, h - 1 - inset) for x in (inset, w - 1 - inset)]
+    if any(np.abs(c - bgc).sum() > INK for c in corners):
+        return False, None
     # Rãnh = điểm của thành phần khác hẳn núm và nền.
     for side in (0, 1):
         x0 = 0 if side == 0 else w - h
@@ -523,7 +651,8 @@ def is_switch(a: Analysis, sl) -> tuple[bool, np.ndarray | None]:
         if not disk.any():
             continue
         thumb = sq[disk]
-        if thumb.std(axis=0).max() > 10 or delta_e(thumb.mean(axis=0), thumb_colour) > 12:
+        if thumb.std(axis=0).max() > 10 or min(delta_e(thumb.mean(axis=0), thumb_colour),
+                                               delta_e(thumb.mean(axis=0), under_scrim(thumb_colour, a.shot.dark))) > 12:
             continue
         ring = (cy - h / 2) ** 2 + (cx - h / 2) ** 2 >= (0.5 * h) ** 2
         rest = np.ones((h, w), bool)
@@ -532,8 +661,22 @@ def is_switch(a: Analysis, sl) -> tuple[bool, np.ndarray | None]:
                     (np.abs(box - thumb_colour).sum(axis=2) > 60)]
         if len(track) < 0.25 * h * w:
             continue
-        return True, np.median(track, axis=0)
+        colour = np.median(track, axis=0)
+        # Núm phải nổi trên rãnh (núm trắng / đen trên rãnh --focus hay --switch-off, ΔE > 20 ở cả hai giao diện).
+        # Khối xương chờ tải hay bìa nhỏ có "núm" cùng màu "rãnh": không phải công tắc.
+        if delta_e(thumb.mean(axis=0), colour) < 20:
+            continue
+        return True, colour
     return False, None
+
+
+def is_token_track(track: np.ndarray, colour: np.ndarray, background: np.ndarray, dark: bool) -> bool:
+    """Rãnh mang đúng token: chính nó, nó dưới màn mờ của sheet, hay nó mờ đi trên nền (công tắc bị vô hiệu = độ đục 0,3-1)."""
+    if min(delta_e(track, colour), delta_e(track, under_scrim(colour, dark))) < 3:
+        return True
+    u = colour - background
+    alpha = float((track - background) @ u) / max(float(u @ u), 1.0)
+    return 0.3 <= alpha <= 1.0 and delta_e(track, background + alpha * u) < 3
 
 
 def accent_buttons(a: Analysis) -> list[tuple[list[int], int]]:
@@ -559,6 +702,51 @@ def accent_buttons(a: Analysis) -> list[tuple[list[int], int]]:
     return out
 
 
+def modal_panel(a: Analysis) -> list[int] | None:
+    """Hộp (px ảnh) của lớp modal trên cùng theo cây UI cạnh ảnh (Qt: sheet / hộp thoại / popover đang mở có `modal`).
+
+    Lớp modal phủ màn mờ lên trang: nút của trang nằm ngoài mặt nổi là nút của màn dưới, không phải nút thứ hai của màn
+    đang dùng. Không có cây hay không có modal: None (đo cả ảnh như cũ).
+    Ảnh web không có cây: ui/scripts/gallery_shots.mjs ghi `<tên>.layers.json` ({width, height, modal: [x0, y0, x1, y1] | null},
+    px CSS) - hộp thoại mở trên cùng (`role=dialog|alertdialog` / `aria-modal`); trang dưới màn mờ của nó là màn khác.
+    """
+    layers = a.shot.path.with_name(a.shot.path.stem + ".layers.json")
+    if layers.is_file():
+        try:
+            doc = json.loads(layers.read_text(encoding="utf-8"))
+            box, sx, sy = doc.get("modal"), a.w / doc["width"], a.h / doc["height"]
+        except (OSError, ValueError, KeyError, TypeError, ZeroDivisionError):
+            return None
+        if not box:
+            return None
+        return [int(box[0] * sx), int(box[1] * sy), int(np.ceil(box[2] * sx)), int(np.ceil(box[3] * sy))]
+    path = a.shot.path.with_name(a.shot.path.stem + ".tree.json")
+    if not path.is_file():
+        return None
+    try:
+        tree = json.loads(path.read_text(encoding="utf-8"))
+        nodes = tree["nodes"]
+        sx, sy = a.w / tree["width"], a.h / tree["height"]
+    except (OSError, ValueError, KeyError, ZeroDivisionError):
+        return None
+    modals = [n for n in nodes if n.get("modal")]
+    if not modals:
+        return None
+    top = max(modals, key=lambda n: (n.get("z", 0), n["id"]))
+    inside, boxes = {top["id"]}, []
+    screen = tree["width"] * tree["height"]
+    for n in nodes:
+        if n["parent"] in inside:
+            inside.add(n["id"])
+            x0, y0, x1, y1 = n.get("visible", n["bounds"])
+            if x1 - x0 > 0.5 and y1 - y0 > 0.5 and (x1 - x0) * (y1 - y0) < 0.9 * screen:
+                boxes.append((x0, y0, x1, y1))
+    if not boxes:
+        return None
+    return [int(min(b[0] for b in boxes) * sx), int(min(b[1] for b in boxes) * sy),
+            int(np.ceil(max(b[2] for b in boxes) * sx)), int(np.ceil(max(b[3] for b in boxes) * sy))]
+
+
 def rule_r4(a: Analysis) -> list[Finding]:
     out = []
     labels, objects = a.components()
@@ -576,7 +764,11 @@ def rule_r4(a: Analysis) -> list[Finding]:
         switch, track = is_switch(a, sl)
         box = [sl[1].start, sl[0].start, sl[1].stop, sl[0].stop]
         if switch:
-            if delta_e(track, off) < 6:
+            background = a.bg[sl[0]].mean(axis=0)
+            if delta_e(track, off) < 6 or is_token_track(track, off, background, dark):
+                continue
+            # Công tắc của trang dưới màn mờ của sheet đang mở, hay công tắc bị vô hiệu: --focus đã pha màn mờ / nền.
+            if is_token_track(track, focus, background, dark):
                 continue
             de = delta_e(track, focus)
             if de >= 3:
@@ -584,11 +776,15 @@ def rule_r4(a: Analysis) -> list[Finding]:
                 out.append(Finding("R4", a.shot.key, f"rãnh công tắc bật {colour} ≠ --focus (ΔE {de:.1f})", box))
             continue
     buttons = accent_buttons(a)
+    panel = modal_panel(a)
+    if panel is not None:
+        buttons = [b for b in buttons if b[0][0] >= panel[0] - 1 and b[0][1] >= panel[1] - 1
+                   and b[0][2] <= panel[2] + 1 and b[0][3] <= panel[3] + 1]
     if len(buttons) > 1:
         out.append(Finding("R4", a.shot.key, f"{len(buttons)} nút nền --accent trong một màn",
                            [min(b[0][0] for b in buttons), min(b[0][1] for b in buttons),
                             max(b[0][2] for b in buttons), max(b[0][3] for b in buttons)]))
-    low, high = BUTTON_HEIGHT
+    low, high = BUTTON_HEIGHT[a.shot.platform]
     for box, h in buttons:
         if not low <= a.dp(h) <= high:
             out.append(Finding("R4", a.shot.key, f"nút chính cao {a.dp(h):.0f} dp (chuẩn {low}-{high})", box))
@@ -625,16 +821,21 @@ def anchors(a: Analysis) -> dict[str, float]:
         found["button_top"] = a.dp(box[1])
         found["button_left"] = a.dp(box[0])
         found["button_height"] = a.dp(h)
-    # Thanh tiến độ: dải mảnh (<= 4 dp) có nền hàng khác nền màn, kẹp giữa hai hàng nền màn.
+    # Thanh tiến độ: dải mảnh liên tục qua ít nhất nửa bề ngang màn.
+    # Dấu tiếng Việt rời nhau cũng có thể đổi trung vị hàng, nhưng không là thanh.
     for top, bottom in runs(~a.page_rows):
         if bottom - top + 1 <= a.px(4) and top > a.h * 0.1 and 0 < top and bottom + 1 < a.h:
-            found["track_y"] = a.dp(top)
-            spans = runs(a.page_diff[top] > INK)
-            if spans:
+            for row in range(top, bottom + 1):
+                spans = runs(a.page_diff[row] > INK)
+                if not spans:
+                    continue
                 left, right = max(spans, key=lambda span: span[1] - span[0])
+                if right - left < a.w * 0.5:
+                    continue
+                found["track_y"] = a.dp(row)
                 found["track_left"] = a.dp(left)
                 found["track_right"] = a.dp(right)
-            break
+                return found
     return found
 
 

@@ -450,9 +450,11 @@ Item {
         Scrollbar { target: list; onDraggingChanged: if (dragging) root.manual() }
     }
 
-    // Mép trên / dưới mờ dần: chữ cuộn không bị cắt ngang sát mép
+    // Mép trên / dưới mờ dần: chữ cuộn không bị cắt ngang sát mép - đúng mép khung cuộn (dưới dòng gợi ý khi nó hiện, không phải đỉnh
+    // của cả khung: dòng cắt ở mép khung cuộn từng lộ ra dưới dải mờ đặt quá cao).
     Rectangle {
-        anchors.top: parent.top
+        objectName: "scrollFadeTop"
+        y: list.y
         width: parent.width
         height: 24
         gradient: Gradient {
@@ -461,8 +463,8 @@ Item {
         }
     }
     Rectangle {
-        anchors.bottom: parent.bottom
-        anchors.bottomMargin: Theme.s8
+        objectName: "scrollFadeBottom"
+        y: list.y + list.height - height
         width: parent.width
         height: 24
         gradient: Gradient {

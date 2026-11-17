@@ -111,8 +111,8 @@ class DevicesLogicTest {
     fun `unsent edits offer sending first when the other side can take them`() {
         val copy = DeviceText.forgetCopy("Máy phụ", edited, reachable = true)!!
         assertEquals("Bỏ ghép Máy phụ?", copy.title)
-        assertEquals("Gửi trước rồi bỏ ghép", copy.send)
-        assertEquals("Vẫn bỏ ghép, bỏ thay đổi", copy.discard)
+        assertEquals("Gửi rồi bỏ ghép", copy.send)
+        assertEquals("Bỏ ghép luôn", copy.discard)
         assertTrue(copy.edited)
         assertTrue(copy.lines.any { it.contains("2 cuốn có 3 thay đổi chưa gửi về Máy phụ sẽ mất: “Sách A”, “Sách B”.") })
         assertTrue(copy.lines.any { it.startsWith("2 cuốn của Máy phụ sẽ rời Thư viện, và 80\u00a0MB đã tải về điện thoại này sẽ bị xoá.") })
@@ -122,7 +122,7 @@ class DevicesLogicTest {
     @Test
     fun `an unreachable device only gets a try-to-send`() {
         val copy = DeviceText.forgetCopy("Máy phụ", edited, reachable = false)!!
-        assertEquals("Thử gửi trước rồi bỏ ghép", copy.send)
+        assertEquals("Thử gửi, bỏ ghép", copy.send)
         assertTrue(copy.lines.any { it.contains("đang tắt hay khác mạng") })
     }
 

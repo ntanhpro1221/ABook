@@ -744,8 +744,9 @@ Item {
                         Accessible.role: Accessible.StaticText
                     }
                 }
-                ChoiceRow {
+                FilterRow {
                     objectName: "scriptFilter"
+                    width: Math.min(implicitWidth, parent.width)
                     label: S.s_hien_cau_nao_959e6c6b
                     value: root.filter
                     options: [{value: "all", label: S.s_ca_chuong_46eb4e7a}, {value: "speech", label: S.s_chi_loi_noi_a7c5728f}, {value: "doubt", label: S.s_may_nghi_u00a0_u00a0_c4362d4a + root.doubts}]
@@ -849,6 +850,19 @@ Item {
                     LookKbd { text: "Z" }
                     Kbd_ { text: S.s_hoan_tac_ada0d6cc; plain: true }
                 }
+            }
+        }
+        // Mép dưới thanh dính là mép cuộn của các câu chui xuống dưới nó (DESIGN 5.5 "mọi vùng cuộn dọc"): câu mờ dần vào nền thanh,
+        // không bị cắt cứng ngang dòng. Chỉ hiện khi thanh đang dính (có câu đi dưới nó), như ScrollEdges.
+        Rectangle {
+            objectName: "scrollFadeTop"
+            y: parent.height
+            width: parent.width
+            height: Theme.s16
+            Reveal { shown: root.stick > 0 }
+            gradient: Gradient {
+                GradientStop { position: 0; color: Theme.bg }
+                GradientStop { position: 1; color: Qt.alpha(Theme.bg, 0) }
             }
         }
     }

@@ -136,6 +136,7 @@ Item {
                 Button {
                     id: allApply
                     objectName: "inboxApplyAll"
+                    kind: "outline"          // việc phụ trong khối; nút chính của trang là Nghe trong Thư viện (DESIGN §4.1)
                     size: "sm"
                     icon: "check"
                     text: S.s_ap_dung_tat_ca_068378e0

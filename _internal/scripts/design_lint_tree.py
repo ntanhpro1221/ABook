@@ -15,6 +15,7 @@ line_count, color, selected, clickable.
 """
 from __future__ import annotations
 
+import html
 import json
 import hashlib
 import math
@@ -121,16 +122,31 @@ def label(tree: dict, node: dict) -> str:
 
 
 def words(text: str) -> list[str]:
-    return [w for w in re.split(r"\s+", text.strip()) if w and not UNIT.match(w.strip("()·,."))]
+    # Chữ giàu định dạng của Qt (Text.StyledText: <span style=...>, &nbsp;): đếm chữ hiện, không đếm thẻ.
+    text = html.unescape(re.sub(r"<[^>]*>", " ", text))
+    # Dấu ngăn đứng riêng ("Ai nói câu này · 1": dấu chấm giữa trước số đếm) không phải chữ.
+    return [w for w in re.split(r"\s+", text.strip()) if w.strip("()·,.–—-|/") and not UNIT.match(w.strip("()·,."))]
 
 
 # ---------------------------------------------------------------- luật
+
+def has_role(tree: dict, node: dict, role: str) -> bool:
+    stack = [node]
+    while stack:
+        n = stack.pop()
+        if n.get("role") == role:
+            return True
+        stack += [tree["nodes"][c] for c in n["children"]]
+    return False
+
 
 def rule_r1(key: str, tree: dict) -> list[dl.Finding]:
     out = []
     nodes = tree["nodes"]
     for parent in nodes:
-        items = [nodes[c] for c in parent["children"] if nodes[c].get("selected") is not None and shown(nodes[c])]
+        # Thanh trượt (ValuePicker: `current` = giá trị đang hiện) không phải mục chọn-một: bỏ nút chứa một slider.
+        items = [nodes[c] for c in parent["children"] if nodes[c].get("selected") is not None and shown(nodes[c])
+                 and not has_role(tree, nodes[c], "slider")]
         if len(items) < 2 or not (parent.get("selectable_group") or any(n["selected"] for n in items)):
             continue
         roles = {n.get("role") for n in items}
@@ -143,7 +159,8 @@ def rule_r1(key: str, tree: dict) -> list[dl.Finding]:
             continue
         if roles <= {"radiobutton", "choice"} and one_row and 2 <= len(items) <= 5 and selection_count == 1:
             continue
-        if roles <= {"radiobutton", "listitem"} and one_column and selection_count == 1:
+        # Danh sách một cột: hàng, ô radio, hay mục menu có dấu chọn (menu giọng, menu hồ sơ nghe) - mỗi dòng một mục.
+        if roles <= {"radiobutton", "listitem", "menuitem"} and one_column and selection_count == 1:
             continue
         shape = "một hàng" if one_row else "một cột" if one_column else f"lưới {rows} hàng"
         names = ", ".join(sorted(str(r) for r in roles))
@@ -160,6 +177,21 @@ def content_nodes(tree: dict) -> list[dict]:
     return [n for n in nodes if width(n) * height(n) < 0.5 * area]
 
 
+def filled(node: dict) -> bool:
+    """Rectangle tô màu thấy được (alpha > 0, không phải dải màu mờ dần)."""
+    colour = str(node.get("background_color", "")).lower()
+    return (str(node.get("type", "")).endswith("Rectangle") and not node.get("gradient")
+            and len(colour) == 9 and colour[1:3] != "00")
+
+
+def row_edges(blocks: list[dict], node: dict) -> tuple[float, float]:
+    """Đỉnh và đáy của hàng ngang chứa `node`: chính nó cùng các anh em cùng cha chồng với nó theo chiều dọc, tách theo chiều ngang."""
+    x0, y0, x1, y1 = node["bounds"]
+    mates = [m for m in blocks if m["parent"] == node["parent"] and min(y1, m["bounds"][3]) - max(y0, m["bounds"][1]) > 0.5
+             and (m["bounds"][2] <= x0 + 0.5 or m["bounds"][0] >= x1 - 0.5)]
+    return min([y0] + [m["bounds"][1] for m in mates]), max([y1] + [m["bounds"][3] for m in mates])
+
+
 def rule_r3(key: str, tree: dict) -> list[dl.Finding]:
     out = []
     nodes = content_nodes(tree)
@@ -170,6 +202,8 @@ def rule_r3(key: str, tree: dict) -> list[dl.Finding]:
     blocks = [n for n in nodes if not any(inside(n, m) and (width(m) * height(m) > width(n) * height(n) + 0.5
                                                         or m['id'] < n['id']) for m in nodes)]
     seen = set()
+    # Vật vẽ: icon, ảnh, và mặt tô màu (thanh tiến độ mảnh, vạch chia: Rectangle nền không trong suốt, không dải màu).
+    painted = nodes + [n for n in tree["nodes"] if shown(n) and (n.get("icon") or n.get("graphic") or filled(n))]
     for a in blocks:
         below = [b for b in blocks if b["bounds"][1] >= a["bounds"][3] - 0.5
                  and b["parent"] == a["parent"] and b["id"] != a["id"]
@@ -177,7 +211,20 @@ def rule_r3(key: str, tree: dict) -> list[dl.Finding]:
         if not below:
             continue
         b = min(below, key=lambda n: n["bounds"][1])
-        gap = round(b["bounds"][1] - a["bounds"][3], 2)
+        # Hàng ngang (flex-wrap căn giữa: ô nhập 36 cạnh nút 40): khe giữa hai hàng đo từ đáy hàng trên tới đỉnh hàng dưới,
+        # không từ đáy ô thấp hơn. Bạn cùng hàng = anh em cùng cha, chồng theo chiều dọc, tách nhau theo chiều ngang; hàng
+        # trên còn thò xuống ngang khối dưới (ảnh cao cạnh hai dòng chữ) thì không phải hai hàng, đo thẳng hai khối.
+        top, bottom = row_edges(blocks, b)[0], row_edges(blocks, a)[1]
+        if bottom > b["bounds"][1] + 0.5 or top < a["bounds"][3] - 0.5:
+            top, bottom = b["bounds"][1], a["bounds"][3]
+        gap = round(top - bottom, 2)
+        # Khe chỉ là khe khi giữa hai khối không có gì vẽ: một nút / thanh trượt / icon của nhánh cha khác nằm giữa
+        # (hàng "Chọn ảnh" giữa "Chưa có bìa" và "Kéo hoặc dán ảnh") thì khoảng ấy là hai khe, đo ở chỗ khác.
+        if any(c["id"] not in (a["id"], b["id"]) and c["bounds"][1] >= a["bounds"][3] - 0.5
+               and c["bounds"][3] <= b["bounds"][1] + 0.5 and height(c) > 0.5
+               and min(a["bounds"][2], c["bounds"][2]) - max(a["bounds"][0], c["bounds"][0]) > 0.5
+               for c in painted):
+            continue
         if (a["id"], b["id"]) in seen:
             continue
         seen.add((a["id"], b["id"]))
@@ -187,23 +234,115 @@ def rule_r3(key: str, tree: dict) -> list[dl.Finding]:
     return out
 
 
+def modal_layer(tree: dict) -> list[int]:
+    """Lớp vẽ của từng nút: id của lớp modal gần nhất chứa nó (sheet, hộp thoại, menu đang mở: `modal` trong cây), -1 = trang.
+
+    Lớp modal phủ màn mờ + mặt nổi lên trên trang: chữ của trang nằm DƯỚI mặt nổi là bị che, không phải hai hộp chữ chồng nhau.
+    """
+    nodes = tree["nodes"]
+    layer = [-1] * len(nodes)
+    for node in nodes:   # cha luôn đứng trước con
+        parent = node["parent"]
+        layer[node["id"]] = node["id"] if node.get("modal") else (layer[parent] if parent >= 0 else -1)
+    return layer
+
+
+def paints_above(tree: dict, cover: dict, node: dict) -> bool:
+    """`cover` vẽ đè lên `node`: con vẽ trên cha; hai nhánh anh em thì nhánh z lớn hơn, cùng z thì nhánh khai báo sau (id lớn hơn).
+    `cover` là tổ tiên của `node` thì `node` nằm TRÊN nó (chữ trên nền thẻ của chính mình)."""
+    nodes = tree["nodes"]
+
+    def path(n):
+        ids = [n["id"]]
+        while n["parent"] >= 0:
+            n = nodes[n["parent"]]
+            ids.append(n["id"])
+        return ids[::-1]
+    pc, pn = path(cover), path(node)
+    i = 0
+    while i < min(len(pc), len(pn)) and pc[i] == pn[i]:
+        i += 1
+    if i == len(pc):
+        return False
+    if i == len(pn):
+        return True
+    a, b = nodes[pc[i]], nodes[pn[i]]
+    return (a.get("z", 0), a["id"]) > (b.get("z", 0), b["id"])
+
+
+def opaque_surfaces(tree: dict) -> list[dict]:
+    """Mặt đục: Rectangle nền màu đặc (alpha ff), không dải màu, cao >= 12 dp - thanh dính đầu cột, thẻ báo, lớp thả file.
+    Vạch mảnh (gạch chân tab, vạch chia, thanh tiến độ) là nét trang trí, không phải mặt che chữ."""
+    return [n for n in tree["nodes"] if str(n.get("type", "")).endswith("Rectangle") and not n.get("gradient")
+            and n.get("opacity", 1) >= 1 - 0.001
+            and str(n.get("background_color", "")).lower().startswith("#ff") and shown(n) and height(n) >= 12]
+
+
 def rule_r8(key: str, tree: dict) -> list[dl.Finding]:
     out = []
+    layer = modal_layer(tree)
     texts = [n for n in tree["nodes"] if n.get("text") and shown(n)]
+    # Chữ đi dưới một mặt đục vẽ sau nó (thanh dính của cột kịch bản, thẻ báo nổi) bị che: phần bị che không phải chữ chồng
+    # nhau; mép mặt đục cắt ngang dòng chữ thì là mép cuộn, phải có dải mờ như mọi mép cuộn khác (DESIGN 5.5).
+    surfaces = opaque_surfaces(tree)
+
+    def inside(c, n) -> bool:
+        while c["parent"] >= 0:
+            if c["parent"] == n["id"]:
+                return True
+            c = tree["nodes"][c["parent"]]
+        return False
+
+    # Mặt đục là con cháu của chính điều khiển (gạch chân tab đang chọn, nền viên chip) là trang trí của nó, không che nhãn.
+    def above(n) -> list[dict]:
+        return [c for c in surfaces if layer[c["id"]] == layer[n["id"]] and not inside(c, n) and paints_above(tree, c, n)]
+
+    def seen(n) -> list[float] | None:
+        v = list(n["visible"])
+        for c in above(n):
+            cv = c["visible"]
+            if cv[0] > v[0] + 0.5 or cv[2] < v[2] - 0.5:
+                continue
+            if cv[1] <= v[1] + 0.5 and cv[3] >= v[3] - 0.5:
+                return None
+            if cv[1] <= v[1] + 0.5 < cv[3]:
+                v[1] = cv[3]
+            elif cv[1] < v[3] - 0.5 <= cv[3]:
+                v[3] = cv[1]
+        return v
+    boxes = {n["id"]: seen(n) for n in texts}
+    texts = [n for n in texts if boxes[n["id"]] is not None]
+    # Mép mờ của vùng cuộn (DESIGN 5.5 "Mọi vùng cuộn dọc"; Qt ScrollEdges: scrollFadeTop / scrollFadeBottom): hàng đi dưới
+    # lớp mờ là hàng đang cuộn ra khỏi khung, không phải chữ cụt cứng. Mép cắt phải nằm trong dải mờ đang hiện, cùng lớp vẽ.
+    fades = {side: [f for f in tree["nodes"] if f.get("tag") == tag and shown(f)]
+             for side, tag in (("top", "scrollFadeTop"), ("bottom", "scrollFadeBottom"))}
+
+    def faded(n, side: str, y: float) -> bool:
+        v = n["visible"]
+        return any(layer[f["id"]] == layer[n["id"]] and f["visible"][1] - 0.5 <= y <= f["visible"][3] + 0.5
+                   and min(f["visible"][2], v[2]) - max(f["visible"][0], v[0]) > 0.5 for f in fades[side])
+
     for n in texts:
-        v, b = n["visible"], n["bounds"]
+        v, b = boxes[n["id"]], n["bounds"]
         lines = [line["bounds"] for line in n.get("lines", [])] or [b]
-        cut = any((line[1] < v[1] - 0.5 < line[3] or line[1] < v[3] + 0.5 < line[3])
-                  and min(line[3], v[3]) - max(line[1], v[1]) > 0.5 for line in lines)
+        shown_lines = [line for line in lines if min(line[3], v[3]) - max(line[1], v[1]) > 0.5]
+        cut = any((line[1] < v[1] - 0.5 < line[3] and not faded(n, "top", v[1]))
+                  or (line[1] < v[3] + 0.5 < line[3] and not faded(n, "bottom", v[3])) for line in shown_lines)
         if cut:
             out.append(dl.Finding("R8", key, f"chữ '{n['text'][:30]}' bị cắt: thấy {v[3] - v[1]:g}/{b[3] - b[1]:g} dp",
                                   [round(x) for x in v]))
     for i, a in enumerate(texts):
         for c in texts[i + 1:]:
-            va, vc = a["visible"], c["visible"]
+            va, vc = boxes[a["id"]], boxes[c["id"]]
             w = min(va[2], vc[2]) - max(va[0], vc[0])
             h = min(va[3], vc[3]) - max(va[1], vc[1])
-            if w <= 1 or h <= 1:
+            if w <= 1 or h <= 1 or layer[a["id"]] != layer[c["id"]]:
+                continue
+            # Chỗ chồng nằm trọn trong một mặt đục vẽ đè lên đúng một trong hai (thẻ báo nổi trên nút của trang): nút bị che,
+            # không thấy hai chữ đè nhau.
+            box = [max(va[0], vc[0]), max(va[1], vc[1]), min(va[2], vc[2]), min(va[3], vc[3])]
+            if any(s["visible"][0] <= box[0] + 0.5 and s["visible"][1] <= box[1] + 0.5 and s["visible"][2] >= box[2] - 0.5
+                   and s["visible"][3] >= box[3] - 0.5 and (s in above(a)) != (s in above(c)) for s in surfaces):
                 continue
             def ancestor(parent, child):
                 while child["parent"] >= 0:
@@ -221,19 +360,44 @@ def rule_r8(key: str, tree: dict) -> list[dl.Finding]:
 def nominal_size(n: dict) -> float | None:
     """Cỡ chữ theo thang của một nút: chữ OneLineFit đang thu cho vừa một dòng tính theo cỡ gốc trong thang (cỡ nhỏ nhất s mà s * ONE_LINE_MIN_SCALE <= cỡ <= s)."""
     size = n.get("font_size")
+    base = n.get("font_base_size")
+    if size is not None and isinstance(base, (int, float)) and base in FONT_SCALE and base * ONE_LINE_MIN_SCALE - 0.01 <= size <= base + 0.01:
+        return base
     if size is None or n.get("type") != "OneLineFit" or n.get("line_count", 1) != 1:
         return size
     return next((s for s in FONT_SCALE if s * ONE_LINE_MIN_SCALE - 0.01 <= size <= s + 0.01), size)
 
 
+# Chữ là một phần của hình vẽ, co giãn theo hình: tên trên bìa tự sinh, chữ cái đầu trong ảnh nhân vật, số giây trong
+# icon lùi/tới. Chúng không phải chữ giao diện nên không theo thang cỡ chữ (DESIGN 5.5 "Chữ" là thang của chữ giao diện).
+ARTWORK_TYPES = ("GeneratedCover", "AvatarPortrait", "SkipGlyph")
+# Ảnh chụp ở cỡ chữ người dùng 130 % (tên ảnh có "_130" / "font130"): cỡ đo = cỡ thang × 1,3, làm tròn tới px.
+FONT_SCALE_SHOT = re.compile(r"(?:^|[_-])(?:font)?130(?=[_.-]|$)")
+
+
+def artwork(tree: dict, node: dict) -> bool:
+    while node is not None:
+        if node.get("graphic") or str(node.get("type", "")).startswith(ARTWORK_TYPES):
+            return True
+        node = tree["nodes"][node["parent"]] if node["parent"] >= 0 else None
+    return False
+
+
+def on_scale(size: float, user_scale: float) -> bool:
+    if user_scale == 1:
+        return size >= 12 and min(abs(size - s) for s in FONT_SCALE) <= 0.01
+    return min(abs(size - s * user_scale) for s in FONT_SCALE) <= 0.5 and size >= 12 * user_scale - 0.5
+
+
 def rule_r11(key: str, tree: dict) -> list[dl.Finding]:
     out = []
     nodes = tree["nodes"]
+    user_scale = 1.3 if FONT_SCALE_SHOT.search(Path(key).stem) else 1
     for n in nodes:
         size = nominal_size(n)
-        if size is None or not n.get("text") or not shown(n):
+        if size is None or not n.get("text") or not shown(n) or artwork(tree, n):
             continue
-        if size < 12 or min(abs(size - s) for s in FONT_SCALE) > 0.01:
+        if not on_scale(size, user_scale):
             out.append(dl.Finding("R11", key, f"cỡ chữ {size:g} ngoài thang ('{n['text'][:24]}')", [round(x) for x in n["bounds"]]))
     # Tên hàng: >= 3 hàng bấm được cùng cha, cao gần nhau -> chữ đầu của mỗi hàng cùng cỡ / đậm / màu.
     for parent in nodes:
@@ -246,7 +410,10 @@ def rule_r11(key: str, tree: dict) -> list[dl.Finding]:
             continue
         styles = {}
         for row in rows:
-            first = first_text(tree, row)
+            # Hàng đang chọn / đang phát mang kiểu trạng thái riêng (DESIGN §6 "Hàng đang phát: chữ hổ phách"): không so.
+            if row.get("selected"):
+                continue
+            first = first_text(tree, row, skip_artwork=True)
             if first is not None and first.get("font_size") is not None:
                 styles[row["id"]] = (nominal_size(first), first.get("font_weight"), first.get("color"))
         if len(styles) >= 2 and len(set(styles.values())) > 1:
@@ -257,11 +424,13 @@ def rule_r11(key: str, tree: dict) -> list[dl.Finding]:
     return out
 
 
-def first_text(tree: dict, node: dict) -> dict | None:
+def first_text(tree: dict, node: dict, skip_artwork: bool = False) -> dict | None:
+    if skip_artwork and (node.get("graphic") or str(node.get("type", "")).startswith(ARTWORK_TYPES)):
+        return None
     if node.get("text") and node.get("font_size") is not None:
         return node
     for child in node["children"]:
-        found = first_text(tree, tree["nodes"][child])
+        found = first_text(tree, tree["nodes"][child], skip_artwork)
         if found is not None:
             return found
     return None
@@ -278,6 +447,9 @@ def rule_r14(key: str, tree: dict) -> list[dl.Finding]:
             continue
         # Nhãn là TÊN dữ liệu (tên giọng, tên nhân vật qua OneLineFit), không phải chữ giao diện: không đếm chữ.
         if holds_one_line_fit(tree, n):
+            continue
+        # Hộp chọn hiện GIÁ TRỊ đang chọn (tên chương, thể loại), không phải nhãn của nó: chỉ đỏ khi rỗng cả chữ lẫn mô tả.
+        if n["role"] == "dropdownlist" and text.strip():
             continue
         count = len(words(text))
         if count > 4 or not text.strip():

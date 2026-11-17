@@ -193,7 +193,7 @@ Item {
                                     width: parent.width
                                     label: S.s_dieu_khien_tu_xa_1db316de
                                     labelSize: Theme.sizeBodySmall
-                                    hintSize: 13
+                                    hintSize: Theme.sizeBodySmall
                                     hintRich: root.studioWanted
                                     hint: root.studioWanted ? S.s_mo_05587fd6 + Logic.whereHtml(root.sync || ({}), true, String(Theme.text)) + S.s_tren_thiet_bi_da_ghep_de_lam_sach_tu_xa_b780f10e
                                         : S.s_tat_thiet_bi_da_ghep_chi_tai_va_nghe_sach_284777c7

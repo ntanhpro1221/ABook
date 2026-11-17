@@ -245,7 +245,7 @@ Item {
                                 }
                                 Text {
                                     width: parent.width
-                                    text: choiceRow.choice.detail || ""
+                                    text: TextWrap.pretty(choiceRow.choice.detail || "")
                                     color: Theme.text2
                                     wrapMode: Text.WrapAtWordBoundaryOrAnywhere
                                     font.pixelSize: 14

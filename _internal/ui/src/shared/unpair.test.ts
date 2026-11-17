@@ -20,8 +20,8 @@ describe("gỡ ghép khi còn sửa chưa gửi", () => {
     const copy = unpairCopy("Máy bàn", "điện thoại", two, true)!;
     expect(copy.title).toBe("Bỏ ghép Máy bàn?");
     expect(copy.lines[0]).toBe("2 cuốn có 3 thay đổi chưa gửi về Máy bàn sẽ mất: “Sách một”, “Sách hai”.");
-    expect(copy.send).toBe("Gửi trước rồi bỏ ghép");
-    expect(copy.discard).toBe("Vẫn bỏ ghép, bỏ thay đổi");
+    expect(copy.send).toBe("Gửi rồi bỏ ghép");
+    expect(copy.discard).toBe("Bỏ ghép luôn");
     expect(copy.cancel).toBe("Huỷ");
   });
 
@@ -31,7 +31,7 @@ describe("gỡ ghép khi còn sửa chưa gửi", () => {
 
   it("máy kia đang tắt thì “Gửi trước” vẫn có nhưng không là nút chính, kèm dòng nói máy ấy tắt", () => {
     const copy = unpairCopy("Máy bàn", "điện thoại", two, false)!;
-    expect(copy.send).toBe("Thử gửi trước rồi bỏ ghép");
+    expect(copy.send).toBe("Thử gửi, bỏ ghép");
     expect(copy.sendPrimary).toBe(false);
     expect(copy.lines[1]).toContain("Máy bàn đang tắt");
   });

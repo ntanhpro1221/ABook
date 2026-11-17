@@ -243,6 +243,7 @@ qt_add_qml_module(ABookDesk
         qml/DisclosureRow.qml
         qml/SettingsItem.qml
         qml/ChoiceRow.qml
+        qml/FilterRow.qml
         qml/Select.qml
         qml/MoreInfo.qml
         qml/HintText.qml
@@ -385,6 +386,7 @@ qt_add_qml_module(ABookDesk
         qml/VoiceRow.qml
         qml/VoiceSample.qml
         qml/OneLineFit.qml
+        qml/MarqueeLine.qml
         qml/VoiceModules.qml
         qml/VoiceSpeed.qml
         qml/ListenSave.qml

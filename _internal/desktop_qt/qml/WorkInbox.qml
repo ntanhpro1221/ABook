@@ -170,7 +170,7 @@ FocusScope {
                 }
             }
             Item { width: 1; height: 16 }
-            ChoiceRow {
+            FilterRow {
                 objectName: "workFilter"
                 width: parent.width
                 label: S.s_loai_viec_19d758cd

@@ -101,6 +101,7 @@ Listen 1.0 ../../../../qml/Listen.qml
 DisclosureRow 1.0 ../../../../qml/DisclosureRow.qml
 SettingsItem 1.0 ../../../../qml/SettingsItem.qml
 ChoiceRow 1.0 ../../../../qml/ChoiceRow.qml
+FilterRow 1.0 ../../../../qml/FilterRow.qml
 Select 1.0 ../../../../qml/Select.qml
 MoreInfo 1.0 ../../../../qml/MoreInfo.qml
 HintText 1.0 ../../../../qml/HintText.qml
@@ -190,6 +191,7 @@ VoiceDetails 1.0 ../../../../qml/VoiceDetails.qml
 VoiceRow 1.0 ../../../../qml/VoiceRow.qml
 VoiceSample 1.0 ../../../../qml/VoiceSample.qml
 OneLineFit 1.0 ../../../../qml/OneLineFit.qml
+MarqueeLine 1.0 ../../../../qml/MarqueeLine.qml
 VoiceModules 1.0 ../../../../qml/VoiceModules.qml
 VoiceSpeed 1.0 ../../../../qml/VoiceSpeed.qml
 ListenSave 1.0 ../../../../qml/ListenSave.qml

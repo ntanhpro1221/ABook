@@ -112,7 +112,8 @@ Column {
         objectName: "speakerOption"
         width: parent ? parent.width : 0
         height: Math.max(36, label.implicitHeight + 12)
-        Accessible.role: Accessible.Button
+        // Mục của menu chọn người nói, người đang nói có dấu tích: một cột mục menu, một mục là hiện tại (danh sách chọn-một).
+        Accessible.role: Accessible.MenuItem
         Accessible.name: label.text
         onClicked: root.picked(person)
         Keys.onReturnPressed: root.picked(person)

@@ -4,10 +4,9 @@ import vn.abook.player.S
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
 import vn.abook.player.ui.addbook.BookForm
-import vn.abook.player.ui.components.BasicText
+import vn.abook.player.ui.components.EmptyState
+import vn.abook.player.ui.components.LucidePaths
 import vn.abook.player.ui.devices.DevicesPage
 import vn.abook.player.ui.nav.Destination
 import vn.abook.player.ui.studio.PrecastText
@@ -19,8 +18,6 @@ import vn.abook.player.ui.studio.StudioLogText
 import vn.abook.player.ui.studio.StudioNewText
 import vn.abook.player.ui.studio.StudioSubKind
 import vn.abook.player.ui.studio.StudioText
-import vn.abook.player.ui.theme.Abook
-import vn.abook.player.ui.theme.Dim
 import vn.abook.player.ui.voice.VoicePage
 
 /**
@@ -30,8 +27,9 @@ import vn.abook.player.ui.voice.VoicePage
  */
 @Composable
 internal fun Unavailable(destination: Destination, onBack: () -> Unit) {
+    // Màn trạng thái (DESIGN §2): cùng EmptyState web / Qt, đứng giữa phần trang dưới đầu màn - không một dòng dính góc trên.
     BookForm(unavailableTitle(destination), onBack, "unavailable_screen") {
-        BasicText(UNAVAILABLE_LINE, style = Abook.type.body.copy(color = Abook.colors.text2), modifier = Modifier.fillMaxWidth().padding(top = Dim.s8))
+        EmptyState(LucidePaths.CIRCLE_ALERT, UNAVAILABLE_LINE, Modifier.weight(1f), fill = true)
     }
 }
 

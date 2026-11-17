@@ -942,8 +942,10 @@ export function ContentSkeleton({ shape = "rows", count = 3, label = S.s_dang_ta
 /** Lỗi ở ngay vùng bị ảnh hưởng; nội dung đã có vẫn dùng được. `open`: chỗ gọi hiện / ẩn lỗi theo điều kiện - truyền điều kiện vào đây
  *  thay vì dựng / gỡ cả phần tử theo điều kiện ấy, để lỗi mở / khép tại chỗ (MotionPresence) chứ không bật tắt (soát chuyển động 139; motionLint.test.ts
  *  chặn kiểu viết cũ). */
-export function InlineError({ message, onRetry, className, open }: { message: string; onRetry: () => void; className?: string; open?: boolean }) {
-  if (open !== undefined) return <MotionPresence open={open}><InlineError message={message} onRetry={onRetry} className={className} /></MotionPresence>;
+export function InlineError({ message, onRetry, className, open, fill }: { message: string; onRetry: () => void; className?: string; open?: boolean; fill?: boolean }) {
+  if (open !== undefined) return <MotionPresence open={open}><InlineError message={message} onRetry={onRetry} className={className} fill={fill} /></MotionPresence>;
+  // Lỗi là cả màn (chưa có gì khác để hiện): khối lỗi đứng giữa vùng còn lại như màn trạng thái (STATE_FILL), không dính góc trên trái.
+  if (fill) return <div className={cn(STATE_FILL, "flex flex-col items-center justify-center", className)}><InlineError message={message} onRetry={onRetry} /></div>;
   // Nút đứng ngay sau câu (màn rộng không đẩy nó ra mép phải); màn hẹp xuống dòng thì thẳng mép với chữ - -ml bù phần đệm của nút ghost.
   // Câu đệm trên dưới cho dòng đầu đứng giữa chiều cao nút (--button-h), icon đứng giữa dòng ấy - cả khi câu gãy dòng hay nút xuống dòng
   // (từng là mt-[4px] theo chữ trần: hàng cao bằng nút đẩy chữ xuống, icon treo trên dòng - soát 25-10, máy dò icon-off-first-line).
@@ -977,30 +979,37 @@ export function OfflineStrip({ offline: forced, message = S.s_mat_mang_ban_van_d
   </MotionPresence>;
 }
 
+/** Màn trạng thái (rỗng / lỗi chiếm cả màn, DESIGN §2): khối đứng giữa phần màn còn lại dưới đầu màn - không dính góc trên, không để
+ *  một dải trống quá nửa màn bên dưới (design_lint R10). Chiều cao tính theo khung nhìn vì vùng cuộn của màn không cho chiều cao cố định. */
+export const STATE_FILL = "min-h-[max(16rem,calc(100dvh-16rem))]";
+
 export function EmptyState({
   icon: Icon,
   title,
   children,
   action,
   className,
+  fill,
 }: {
   icon: IconType;
   title: string;
   children?: ReactNode;
   action?: ReactNode;
   className?: string;
+  /** Trạng thái là cả màn: đứng giữa phần màn còn lại (STATE_FILL). Trống trong một mục / hộp thì để mặc định. */
+  fill?: boolean;
 }) {
   // Tự là một vùng: đổi tiêu đề / lời / nút lúc đang hiện (tìm chữ khác, lọc khác) mờ qua tại chỗ, không đổi cứng; hiện / ẩn cả khối thì chỗ
   // gọi bọc MotionPresence (motionLint.test.ts).
   return (
-    <MotionRegion className={cn("motion-reveal flex flex-col items-center px-6 py-16 text-center", className)}>
+    <MotionRegion className={cn("motion-reveal flex flex-col items-center px-6 py-16 text-center", fill && cn(STATE_FILL, "justify-center"), className)}>
       <div className="mb-4 grid size-14 place-items-center rounded-cover bg-accent-soft text-accent-text">
         <Icon className="size-7" strokeWidth={1.75} />
       </div>
       {/* h2: lời mời đứng ngay dưới tiêu đề màn (h1), không nhảy cấp (axe heading-order). */}
       <h2 className="text-base font-medium">{title}</h2>
       {children && <p className="mt-2 max-w-md text-sm leading-relaxed text-fg-2">{children}</p>}
-      {action && <div className="mt-5">{action}</div>}
+      {action && <div className="mt-6">{action}</div>}
     </MotionRegion>
   );
 }
@@ -1011,8 +1020,8 @@ export function failedEmpty(query: { isError: boolean; data?: readonly unknown[]
   return query.isError && !query.data?.length;
 }
 
-export function LoadError({ what, onRetry, className, open }: { what: string; error?: unknown; onRetry: () => void; className?: string; open?: boolean }) {
-  return <InlineError message={S.s_chua_tai_duoc_0_ban_hay_kiem_tra_ket_noi_r_fb4c8be5(what)} onRetry={onRetry} className={className} open={open} />;
+export function LoadError({ what, onRetry, className, open, fill }: { what: string; error?: unknown; onRetry: () => void; className?: string; open?: boolean; fill?: boolean }) {
+  return <InlineError message={S.s_chua_tai_duoc_0_ban_hay_kiem_tra_ket_noi_r_fb4c8be5(what)} onRetry={onRetry} className={className} open={open} fill={fill} />;
 }
 
 export function Kbd({ children }: { children: ReactNode }) {

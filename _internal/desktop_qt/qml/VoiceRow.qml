@@ -12,6 +12,8 @@ Item {
     property var voice: ({})
     property string shown: ""
     property bool selected: false
+    Accessible.role: Accessible.ListItem          // một giọng trong danh sách (DESIGN R1: list)
+    Accessible.name: voice.name || ""
     property bool saving: Api.savingVoice === voiceId
     property bool playing: false
     property bool loading: false

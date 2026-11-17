@@ -15,6 +15,9 @@ Interactive {
     readonly property bool toggles: expanded !== undefined
     property bool current: false
     property bool section: false
+    // Tên là DỮ LIỆU người dùng (tên máy, tên thiết bị): một dòng qua OneLineFit (thu tới Theme.oneLineMinScale, vẫn không vừa thì xuống
+    // dòng, không “…”) như web <OneLineFit> và điện thoại titleOneLine - máy dò R14 không đếm chữ của tên, vẫn soát tràn / chồng chữ.
+    property bool nameTitle: false
     Accessible.role: Accessible.Button
     Accessible.name: title
     implicitHeight: Math.max(56, words.height + (section ? 0 : 12))
@@ -44,11 +47,23 @@ Interactive {
         width: Math.min(640, root.width - x - 14 - 16)
         anchors.verticalCenter: parent.verticalCenter
         OneLineFit {
-            objectName: "disclosureTitle"
+            objectName: root.nameTitle ? "disclosureTitle" : ""
+            visible: root.nameTitle
             room: parent.width
             text: TextWrap.keepDots(root.title)
             color: root.enabled ? Theme.accentText : Theme.text3
             baseSize: root.section ? Theme.sizeSection : Theme.sizeBody
+            font.weight: root.section ? Theme.weightMedium : (root.current ? 600 : Theme.weightMedium)
+            lineHeight: root.section ? 24 : 1
+            lineHeightMode: root.section ? Text.FixedHeight : Text.ProportionalHeight
+        }
+        Text {
+            visible: !root.nameTitle
+            width: parent.width
+            text: TextWrap.keepDots(root.title)
+            color: root.enabled ? Theme.accentText : Theme.text3
+            wrapMode: Text.Wrap
+            font.pixelSize: root.section ? Theme.sizeSection : Theme.sizeBody
             font.weight: root.section ? Theme.weightMedium : (root.current ? 600 : Theme.weightMedium)
             lineHeight: root.section ? 24 : 1
             lineHeightMode: root.section ? Text.FixedHeight : Text.ProportionalHeight

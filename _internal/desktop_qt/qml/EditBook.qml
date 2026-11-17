@@ -174,6 +174,7 @@ Modal {
                             Button {
                                 id: saveTitleButton
                                 objectName: "editSaveTitle"
+                                kind: "outline"   // lưu từng ô là việc phụ: màn sửa sách không có nút chính (DESIGN §4.1)
                                 text: S.s_luu_ten_0b3ef54a
                                 busy: root.renaming
                                 enabled: root.titleDraft.trim() !== "" && root.titleDraft.trim() !== root.book.title
@@ -206,6 +207,7 @@ Modal {
                             Button {
                                 id: saveAuthorButton
                                 objectName: "editSaveAuthor"
+                                kind: "outline"   // lưu từng ô là việc phụ: màn sửa sách không có nút chính (DESIGN §4.1)
                                 text: S.s_luu_tac_gia_cd5c8008
                                 busy: root.savingAuthor
                                 enabled: Logic.authorSaveable(root.authorDraft, root.book.author)
@@ -269,6 +271,7 @@ Modal {
                             }
                             Button {
                                 objectName: "editSaveMetadata"
+                                kind: "outline"   // lưu từng ô là việc phụ: màn sửa sách không có nút chính (DESIGN §4.1)
                                 text: S.s_bookmeta_save
                                 busy: root.savingAuthor
                                 onActivated: root.call("savingAuthor", "PUT", "/metadata", root.metadataDraft, function() { root.done(S.s_bookmeta_saved) }, S.s_bookmeta_save_error)

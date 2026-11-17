@@ -16,6 +16,9 @@
   --reduced-fade-ms: 120ms;
   --indeterminate-ms: 1400ms;
   --spin-ms: 1000ms;
+  --marquee-delay-ms: 2000ms;
+  --marquee-speed: 30;
+  --marquee-gap: 48;
   --radius-control: 8px;
   --radius-cover: 12px;
   --radius-sheet: 20px;

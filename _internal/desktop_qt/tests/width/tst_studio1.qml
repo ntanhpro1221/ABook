@@ -3,6 +3,7 @@ import QtTest
 import "../../qml/TextWrap.js" as TextWrap
 import "ModalLayer.js" as ModalLayer
 import "VisualReady.js" as VisualReady
+import "CaptureSize.js" as CaptureSize
 import ABook
 
 // Studio S1: danh sách dự án (bảng gọn, các trạng thái rỗng / chờ / lỗi), trang một dự án (MỘT nút chính theo trạng thái, "Tạm dừng" gọi lệnh tạm dừng
@@ -39,7 +40,7 @@ Item {
             VisualReady.render(this, host.Window.window, target, qtVisualReady)
             const path = Qt.resolvedUrl("../../build/d2shots/s1_" + name + "_" + (Theme.dark ? "dark" : "light") + ".png").toString()
                 .replace(/^file:\/\/\/([A-Za-z]:)/, "$1").replace(/^file:\/\//, "")
-            grabImage(VisualReady.grabTarget(host.Window.window, target)).save(path)
+            CaptureSize.grab(this, VisualReady.grabTarget(host.Window.window, target)).save(path)
             verify(qtUiTree.save(path, VisualReady.grabTarget(host.Window.window, target)))   // cây UI cạnh ảnh cho scripts/design_lint.py
         }
         function both(name, item) { for (const mode of ["light", "dark"]) { Theme.mode = mode; shot(name, item) } Theme.mode = "auto" }
@@ -95,11 +96,13 @@ Item {
             Theme.reduceMotion = false
         }
         function cleanup() {
+            CaptureSize.resize(this, host, host.Window.window, 1280, 900)
             Theme.mode = "auto"; Theme.reduceMotion = false
             Nav.layers = []; Nav.studioPeer = ""; Api.notice = ""
             DesktopApi.delayed = false
         }
         function makeStudio(width, height) {
+            CaptureSize.resize(this, host, host.Window.window, width || 1280, height || 900)
             const page = createTemporaryObject(studioFactory, host, {width: width || 1280, height: height || 900})
             verify(page !== null)
             return page

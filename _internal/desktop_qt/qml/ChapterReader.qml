@@ -131,6 +131,8 @@ Modal {
             }
             Rectangle { anchors.fill: parent; z: -1; color: Theme.read.bg }
             SmoothWheel { flick: reading }
+            // DESIGN 5.5: mọi vùng cuộn dọc mờ ở mép còn nội dung, không cắt cứng ngang dòng chữ.
+            ScrollEdges { parent: reading; target: reading; color: Theme.read.bg; width: reading.width; height: reading.height }
             Scrollbar { parent: reading; target: reading }
         }
     }

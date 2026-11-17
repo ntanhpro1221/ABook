@@ -54,5 +54,7 @@ Item {
         }
         SmoothWheel { flick: scroll }
     }
+    // DESIGN 5.5: mọi vùng cuộn dọc mờ ở mép còn nội dung, không cắt cứng ngang dòng chữ.
+    ScrollEdges { target: scroll; color: Theme.bg; x: scroll.x; y: scroll.y; width: scroll.width; height: scroll.height }
     Scrollbar { target: scroll }
 }

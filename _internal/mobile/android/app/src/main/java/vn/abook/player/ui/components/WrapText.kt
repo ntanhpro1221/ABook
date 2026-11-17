@@ -24,6 +24,9 @@ import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.style.TextOverflow
 
+private fun Modifier.fitSemantics(autoSize: TextAutoSize?): Modifier =
+    if (autoSize is OneLineFit) semantics { this[OneLineFitMarker] = true } else this
+
 /**
  * Chữ của app: thay cho `androidx.compose.foundation.text.BasicText` ở MỌI nơi (TextWrapRulesTest quét import) để hai luật xuống dòng chạy một chỗ - chữ + số ngắn đi
  * liền ("số 1"), dấu ngăn không mở dòng và không đóng dòng (cuối dòng thì vẽ trong suốt). Cây trợ năng và test vẫn thấy chữ GỐC; chỉ phần vẽ đổi.
@@ -46,7 +49,8 @@ fun BasicText(
     val shaped = remember(text) { shapeForWrap(text) }
     val separated = remember(shaped) { hasSeparator(shaped) }
     val same = shaped == text
-    val painted = if (color == null) modifier else modifier.semantics { this[VisualTextColor] = color().toArgb() }
+    val fitted = modifier.fitSemantics(autoSize)
+    val painted = if (color == null) fitted else fitted.semantics { this[VisualTextColor] = color().toArgb() }
     val keepOriginal = if (same) painted else painted.semantics { this.text = AnnotatedString(text) }
     if (!separated) {
         FoundationText(shaped, keepOriginal, style, onTextLayout, overflow, softWrap, maxLines, minLines, color, autoSize)
@@ -101,4 +105,4 @@ fun BasicText(
     minLines: Int = 1,
     color: ColorProducer? = null,
     autoSize: TextAutoSize? = null,
-) = FoundationText(text, modifier, style, onTextLayout, overflow, softWrap, maxLines, minLines, emptyMap<String, InlineTextContent>(), color, autoSize)
+) = FoundationText(text, modifier.fitSemantics(autoSize), style, onTextLayout, overflow, softWrap, maxLines, minLines, emptyMap<String, InlineTextContent>(), color, autoSize)

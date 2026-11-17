@@ -42,6 +42,8 @@ Item {
                     required property int index
                     readonly property var modelData: root.items[index] || ({})
                     readonly property bool current: modelData.state === "waiting" && modelData.id === root.spot.id
+                    Accessible.role: Accessible.ListItem   // một dòng của hàng chờ (DESIGN R1: list)
+                    Accessible.name: modelData.name || ""
                     readonly property bool seen: line.y >= view.contentY && line.y + 16 <= view.contentY + view.height   // Shape không theo khung cắt của bộ vẽ phần mềm
                     readonly property string said: Queue.rowSaid(modelData, root.spot)
                     width: column.width

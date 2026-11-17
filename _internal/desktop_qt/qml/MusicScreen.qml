@@ -228,6 +228,8 @@ FocusScope {
             MyMusicSettings { Reveal { shown: root.part === 0 } width: parent.width }
         }
     }
+    // DESIGN 5.5 "Mọi vùng cuộn dọc": mép mờ ở phía còn cuộn được, hàng không cụt cứng ở mép danh sách.
+    ScrollEdges { target: rows; x: rows.x; y: rows.y; width: rows.width; height: rows.height }
     Scrollbar { target: rows }
     SmoothWheel { flick: rows }
     // "Đang nghe thử · tên · ■"

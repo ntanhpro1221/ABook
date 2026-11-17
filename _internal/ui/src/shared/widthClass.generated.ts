@@ -39,7 +39,10 @@ export const TIMING = {
   "undoMs": 28000,
   "reducedFadeMs": 120,
   "indeterminateMs": 1400,
-  "spinMs": 1000
+  "spinMs": 1000,
+  "marqueeDelayMs": 2000,
+  "marqueeSpeed": 30,
+  "marqueeGap": 48
 } as const;
 
 /** Tên một dòng (OneLineFit): thu cỡ tới tỉ lệ này cho vừa một dòng, không vừa thì xuống dòng ở cỡ gốc. */

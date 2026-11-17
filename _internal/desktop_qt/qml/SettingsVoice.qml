@@ -162,7 +162,7 @@ Column {
                                 summary: (groupBlock.modelData.detail ? groupBlock.modelData.detail + "\u00a0·\u00a0" : "") + groupBlock.list.length + S.s_giong_17cc0855
                                          + (root.current && root.current.provider === groupBlock.modelData.provider ? S.s_u00a0_u00a0dang_dung_3b84da76 : "")
                                 // Chưa có giọng nào của nhóm (máy chưa cài giọng tiếng Việt của hệ điều hành)
-                                VoiceNote { width: parent.width; gap: 0; text: groupBlock.list.length === 0 ? VoiceLogic.DEVICE_HINT : ""; px: 13 }
+                                VoiceNote { width: parent.width; gap: 0; text: groupBlock.list.length === 0 ? VoiceLogic.DEVICE_HINT : ""; px: Theme.sizeBodySmall }
                                 Column {
                                     width: parent.width
                                     Accessible.role: Accessible.Grouping

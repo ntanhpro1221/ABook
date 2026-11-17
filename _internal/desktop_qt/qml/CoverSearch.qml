@@ -152,7 +152,7 @@ Item {
                                 height: photo.height + caption.height + provider.height + 12 + 6 + 2
                                 enabled: !root.choosing
                                 opacity: enabled ? 1 : 0.5
-                                Accessible.role: Accessible.Button
+                                Accessible.role: Accessible.ListItem   // một kết quả tìm bìa (tên sách là dữ liệu)
                                 Accessible.name: Logic.coverTitle(modelData)
                                 tip: Logic.coverTitle(modelData)
                                 pressScaling: false

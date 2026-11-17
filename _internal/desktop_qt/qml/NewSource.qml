@@ -79,7 +79,7 @@ Column {
             width: parent.width
             topPadding: 24
             Text { width: parent.width; text: S.s_ten_sach_d54846eb; color: Theme.text; font.pixelSize: Theme.sizeBodySmall; font.weight: Theme.weightMedium }
-            Item { width: 1; height: 6 }
+            Item { width: 1; height: 8 }
             FormField {
                 id: titleField
                 objectName: "newTitleField"

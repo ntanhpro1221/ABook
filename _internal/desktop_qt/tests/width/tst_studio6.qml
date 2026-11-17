@@ -2,6 +2,7 @@ import QtQuick
 import QtTest
 import "../../qml/TextWrap.js" as TextWrap
 import "VisualReady.js" as VisualReady
+import "CaptureSize.js" as CaptureSize
 import "ModalLayer.js" as ModalLayer
 import ABook
 import "../../qml/ScriptLogic.js" as S
@@ -125,7 +126,7 @@ Item {
             VisualReady.render(this, host.Window.window, target, qtVisualReady)
             const path = Qt.resolvedUrl("../../build/d2shots/s6_" + name + "_" + (Theme.dark ? "dark" : "light") + ".png").toString()
                 .replace(/^file:\/\/\/([A-Za-z]:)/, "$1").replace(/^file:\/\//, "")
-            grabImage(VisualReady.grabTarget(host.Window.window, target)).save(path)
+            CaptureSize.grab(this, VisualReady.grabTarget(host.Window.window, target)).save(path)
             verify(qtUiTree.save(path, VisualReady.grabTarget(host.Window.window, target)))   // cây UI cạnh ảnh cho scripts/design_lint.py
         }
         function both(name, item) { for (const mode of ["light", "dark"]) { Theme.mode = mode; shot(name, item) } Theme.mode = "auto" }
@@ -225,6 +226,7 @@ Item {
             Clip.stop()
         }
         function cleanup() {
+            CaptureSize.resize(this, host, host.Window.window, 1280, 900)
             host.frameTab = null
             Api.elsewhereNotice = null
             Theme.mode = "auto"; Theme.reduceMotion = false
@@ -233,6 +235,7 @@ Item {
             Clip.stop()
         }
         function makeStudio(width) {
+            CaptureSize.resize(this, host, host.Window.window, width || 1280, 900)
             const page = createTemporaryObject(studioFactory, host, {width: width || 1280, height: 900})
             verify(page !== null)
             return page

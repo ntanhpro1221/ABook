@@ -222,7 +222,8 @@ Item {
             id: studioClosed
             objectName: "studioClosed"
             Reveal { target: studioClosed; shown: root.shownView === "closed" }
-            y: 96          // mt-24 của web; EmptyState tự đệm 56 trên dưới
+            y: 0           // màn trạng thái: khối đứng giữa thân màn (web `fill`)
+            fillHeight: parent.height
             width: parent.width
             icon: "clapperboard"
             title: Peer.listenOnlyLine(Peer.listenOnlyOwner(root.peerInfo))
@@ -234,7 +235,8 @@ Item {
             id: peerTrouble
             objectName: "peerTrouble"
             Reveal { target: peerTrouble; shown: root.shownView === "trouble" }
-            y: 96          // mt-24 của web; EmptyState tự đệm 56 trên dưới
+            y: 0           // màn trạng thái: khối đứng giữa thân màn (web `fill`)
+            fillHeight: parent.height
             width: parent.width
             icon: "laptop"
             title: root.trouble

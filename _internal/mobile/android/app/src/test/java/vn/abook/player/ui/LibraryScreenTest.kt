@@ -177,7 +177,9 @@ class LibraryScreenTest {
     fun emptyLight() {
         show(emptyList())
         rule.onNodeWithText("Chưa có sách").assertIsDisplayed()
-        rule.onNodeWithTag("add_book").assertIsDisplayed()
+        // Thư viện trống: lời mời giữa màn là nút chính duy nhất, đầu màn không lặp nút "Thêm sách" (cùng web, soát UX a9).
+        rule.onNodeWithTag("library_empty_add").assertIsDisplayed()
+        rule.onNodeWithTag("add_book").assertDoesNotExist()
         shot("library_empty_light")
     }
 

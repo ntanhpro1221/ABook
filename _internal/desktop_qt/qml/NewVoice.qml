@@ -120,7 +120,7 @@ Column {
                 }
             }
             Prose { topPadding: 12; text: S.s_ten_nguoi_ke_d492ccfb }
-            Item { width: 1; height: 6 }
+            Item { width: 1; height: 8 }
             FormField {
                 id: whoField
                 objectName: "newFirstPersonName"

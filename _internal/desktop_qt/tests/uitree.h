@@ -7,6 +7,7 @@
 #include <QFont>
 #include <QJsonArray>
 #include <QJsonDocument>
+#include <QJSValue>
 #include <QJsonObject>
 #include <QObject>
 #include <QQuickItem>
@@ -97,6 +98,14 @@ private:
                 node.insert(QStringLiteral("font_size"), f.pixelSize() > 0 ? double(f.pixelSize()) : f.pointSizeF() * 96.0 / 72.0);
                 node.insert(QStringLiteral("font_weight"), f.weight());
             }
+            // Marquee text keeps its base token while its painted copy shrinks.
+            // Record the token explicitly for R11, including the inner Text nodes.
+            for (QQuickItem *owner = item; owner; owner = owner->parentItem()) {
+                if (QString::fromUtf8(owner->metaObject()->className()).startsWith(QStringLiteral("MarqueeLine"))) {
+                    node.insert(QStringLiteral("font_base_size"), owner->property("baseSize").toInt());
+                    break;
+                }
+            }
             const QVariant lines = item->property("lineCount");
             if (lines.isValid())
                 node.insert(QStringLiteral("line_count"), lines.toInt());
@@ -121,6 +130,19 @@ private:
         if (item->property("scene").isValid() && item->property("open").toBool()) {
             node.insert(QStringLiteral("modal"), true);
             node.insert(QStringLiteral("z"), item->z());
+        }
+        // Thứ tự vẽ (design_lint R8: chữ nằm dưới một mặt đục vẽ sau nó - thanh dính, thẻ báo - là bị che, không phải chồng chữ):
+        // anh em vẽ theo z rồi theo thứ tự khai báo (thứ tự nút trong cây); nền dải màu (gradient) không đục dù `color` là màu đặc.
+        if (item->z() != 0 && !node.contains(QStringLiteral("z")))
+            node.insert(QStringLiteral("z"), item->z());
+        qreal opacity = 1;
+        for (QQuickItem *owner = item; owner; owner = owner->parentItem())
+            opacity *= owner->opacity();
+        node.insert(QStringLiteral("opacity"), opacity);
+        if (const QVariant gradient = item->property("gradient"); gradient.isValid()) {
+            const QJSValue value = gradient.value<QJSValue>();
+            if (!value.isUndefined() && !value.isNull())
+                node.insert(QStringLiteral("gradient"), true);
         }
         if (item->property("path").isValid() && !item->property("path").toString().isEmpty())
             node.insert(QStringLiteral("icon"), true);

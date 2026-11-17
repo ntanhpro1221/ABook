@@ -135,7 +135,7 @@ Item {
                                 enabled: !root.locked
                                 tip: S.s_bam_de_doi_ten_chuong_10c942c5
                                 ringMargin: 2
-                                Accessible.role: Accessible.Button
+                                Accessible.role: Accessible.ListItem   // hàng dữ liệu (tên chương), không phải nhãn nút; việc bấm nằm ở tip
                                 Accessible.name: row.title
                                 onClicked: root.startEdit(row.chapter.index)
                                 // Bút nằm ngay sau chữ cuối, kể cả khi tên xuống dòng

@@ -319,7 +319,7 @@ export function TrackRow({
         <span className="line-clamp-2 text-sm font-medium">{title}</span>
         <DotJoin singleLine className="mt-1 text-xs text-fg-2" parts={[track.creator, load.kind === "failed" ? <span className="text-danger">{S.s_chua_tai_xong_b257419d}</span> : load.kind === "loading" && load.percent !== null ? <TickingValue>{S.s_dang_tai_0_e9a97892(load.percent)}</TickingValue> : typeof track.duration === "number" ? <TickingValue>{formatClock(track.duration)}</TickingValue> : null]} />
       </button>
-      {<Presence>{onUse && <Button size="sm" variant="primary" onClick={() => onUse(track.link)}>{S.s_dung_7927ca4e}</Button>}</Presence>}
+      {<Presence>{onUse && <Button size="sm" variant="ghost" onClick={() => onUse(track.link)}>{S.s_dung_7927ca4e}</Button>}</Presence>}
       <DownloadControl load={load} online={online} busy={save.isPending || cancel.isPending}
         onSave={() => save.mutate([track.link])} onStop={() => cancel.mutate([track.link])} />
       {/* Thanh nghe bắt đầu dưới nút nghe thử (ảnh 40 + khe 8), như Qt và điện thoại. */}

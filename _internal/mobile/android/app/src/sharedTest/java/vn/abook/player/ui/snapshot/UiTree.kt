@@ -64,6 +64,8 @@ internal object UiTree {
         if (config.contains(SemanticsActions.OnClick)) entry.put("clickable", true)
         if (config.getOrNull(vn.abook.player.ui.components.VisualIcon) == true) entry.put("icon", true)
         if (config.getOrNull(vn.abook.player.ui.components.VisualImage) == true) entry.put("graphic", true)
+        if (config.getOrNull(vn.abook.player.ui.components.OneLineFitMarker) == true) entry.put("type", "OneLineFit")
+        config.getOrNull(vn.abook.player.ui.components.MarqueeBaseSize)?.let { entry.put("font_base_size", it.toDouble()) }
         if (config.contains(SemanticsProperties.Disabled)) entry.put("disabled", true)
         if (text != null) layout(node)?.let { result ->
             val style = result.layoutInput.style

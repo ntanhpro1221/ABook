@@ -150,6 +150,8 @@ Item {
     readonly property real colW: Math.max(0, blend(Math.min(width - 2 * Theme.margin, 520), Math.min(440, Math.floor((width - 2 * Theme.margin - gap) * 0.42))))
     readonly property real colX: blend((width - colW) / 2, Theme.margin)
     readonly property real titlesH: titles.implicitHeight
+    // Lời nhắn đứng trong cột (không nổi trên bìa) khi bìa đã ẩn: Đọc theo ở cửa sổ hẹp
+    readonly property bool notesInFlow: !wide && page === 1
     readonly property real controlsH: controls.implicitHeight
     readonly property real coverAvail: blend(height - 24 - controlsH - 16 - topH - titlesH - 16,
                                              height - topH - 24 - titlesH - 16 - controlsH - 24 - 24)
@@ -274,16 +276,16 @@ Item {
                     y: root.displayedTitlesY - root.topH
                     width: root.colW
                     spacing: 4
-                    Text {
+                    // Tên chương MỘT dòng cố định (MarqueeLine): thu cỡ rồi chạy chữ - bìa, thanh tua, nút phát không dời theo tên dài ngắn
+                    MarqueeLine {
                         id: chapterTitle
                         objectName: "nowChapterTitle"
                         width: parent.width
                         horizontalAlignment: Text.AlignHCenter
                         text: TextWrap.keepDots([Player.chapterTitle, Player.chapterSubtitle].filter(s => s !== "").join("\u00a0·\u00a0"))
                         color: Theme.text
-                        wrapMode: Text.Wrap
-                        font.pixelSize: Theme.sizeSection
-                        font.weight: Theme.weightBold
+                        baseSize: Theme.sizeSection
+                        weight: Theme.weightBold
                         opacity: root.g >= 1 ? 1 : 0
                     }
                     PlayerSubtitle { id: bookSubtitle; width: parent.width; horizontalAlignment: Text.AlignHCenter; chevron: true; opacity: root.g >= 1 ? 1 : 0; onBookRequested: root.bookRequested() }
@@ -302,16 +304,31 @@ Item {
                     MusicCredit { width: parent.width; transform: Translate { y: Theme.reduceMotion ? 0 : (1 - root.fade) * 8 } }
                 }
 
-                // ---- điều khiển ----
+                // ---- lời nhắn ----
+                // Hẹn giờ, sắp tắt, lỗi phát, đã nghe hết: NỔI trên phần dưới bìa, ngay trên tên (cùng chỗ với điện thoại NowPlayingScreen, web data-np-notes) -
+                // không chiếm chỗ trong cột nên bìa, tên, thanh tua và nút phát không bao giờ dời khi lời nhắn hiện / ẩn (máy dò R7). Đọc theo ở cửa sổ hẹp
+                // (bìa đã ẩn): đứng trong cột ngay trên thanh tua. Không có lời nhắn thì cột cao 0, nền mờ đi.
+                Rectangle {
+                    parent: columnScroll.contentItem
+                    x: notes.x - Theme.s12
+                    y: notes.y - Theme.s8
+                    width: notes.width + 2 * Theme.s12
+                    height: notes.height + 2 * Theme.s8
+                    radius: Theme.radiusCover
+                    color: Theme.panel
+                    opacity: notes.height > 0 && !root.notesInFlow ? 0.95 * root.fade : 0
+                    visible: opacity > 0
+                    Behavior on opacity { NumberAnimation { duration: Theme.reduceMotion ? Theme.motionReduced : Theme.motionMedium } }
+                }
                 Column {
-                    id: controls; objectName: "nowControls"
+                    id: notes; objectName: "nowNotes"
                     parent: columnScroll.contentItem
                     x: root.colX
-                    y: root.controlsY - root.topH
+                    y: root.notesInFlow ? root.controlsY - root.topH
+                        : Math.max(root.coverY - root.topH + Theme.s8, root.displayedTitlesY - root.topH - height - Theme.s16)
                     width: root.colW
                     opacity: root.fade
-                    spacing: Theme.s12
-
+                    spacing: Theme.s8
                     Collapse {
                         id: status
                         open: Player.atEnd !== "none"
@@ -368,6 +385,20 @@ Item {
                         width: parent.width; open: Player.sleepKind === "chapter" && !Player.fading
                         Text { width: parent.width; text: S.s_se_dung_khi_het_chuong_nay_9c1f8c30; horizontalAlignment: Text.AlignHCenter; wrapMode: Text.Wrap; color: Theme.text2; font.pixelSize: Theme.sizeCaption }
                     }
+                }
+
+                // ---- điều khiển ----
+                Column {
+                    id: controls; objectName: "nowControls"
+                    parent: columnScroll.contentItem
+                    x: root.colX
+                    y: root.controlsY - root.topH
+                    width: root.colW
+                    opacity: root.fade
+                    spacing: Theme.s12
+
+                    // Chỗ của lời nhắn khi chúng đứng trong cột (Đọc theo, cửa sổ hẹp): bìa đã ẩn, lời nhắn ngay trên thanh tua
+                    Item { width: parent.width; height: root.notesInFlow ? notes.height : 0; visible: height > 0 }
                     SeekBar {
                         id: seek
                         width: parent.width
@@ -537,6 +568,7 @@ Item {
                         required property var modelData
                         required property int index
                         objectName: index === 0 ? "nowChapterMorph" : "nowBookMorph"
+                        clip: true
                         x: modelData.from.x + (modelData.to.x - modelData.from.x) * root.g
                         y: modelData.from.y + (modelData.to.y - modelData.from.y) * root.g
                         width: modelData.from.width + (modelData.to.width - modelData.from.width) * root.g
@@ -545,10 +577,12 @@ Item {
                             width: parent.width; height: parent.height
                             x: (1 - root.g) * (parent.modelData.fromAlign === Text.AlignLeft ? -1 : parent.modelData.fromAlign === Text.AlignRight ? 1 : 0)
                                 * Math.max(0, parent.modelData.from.width - parent.modelData.fromInk) / 2
-                            text: parent.modelData.text; wrapMode: Text.Wrap
+                            text: parent.modelData.text
                             font.pixelSize: parent.modelData.fromSize + (parent.modelData.toSize - parent.modelData.fromSize) * root.g
                             font.weight: parent.modelData.fromWeight + (parent.modelData.toWeight - parent.modelData.fromWeight) * root.g
-                            horizontalAlignment: parent.modelData.toAlign
+                            // Hai đầu là ô một dòng (MarqueeLine): tên dài hơn khung thì bay từ mép trái như lúc chạy chữ bắt đầu
+                            horizontalAlignment: implicitWidth > width ? Text.AlignLeft : parent.modelData.toAlign
+                            verticalAlignment: Text.AlignVCenter
                             color: Qt.rgba(parent.modelData.fromColor.r + (parent.modelData.toColor.r - parent.modelData.fromColor.r) * root.g,
                                            parent.modelData.fromColor.g + (parent.modelData.toColor.g - parent.modelData.fromColor.g) * root.g,
                                            parent.modelData.fromColor.b + (parent.modelData.toColor.b - parent.modelData.fromColor.b) * root.g, 1)

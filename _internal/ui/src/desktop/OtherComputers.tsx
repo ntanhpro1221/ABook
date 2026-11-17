@@ -319,6 +319,7 @@ export function OtherComputers() {
           <ul className="flex flex-wrap gap-2">
             {unpaired.map((device) => (
               <li key={device.address}>
+                {/* Tên thiết bị là dữ liệu người dùng: một dòng qua OneLineFit, vẫn không vừa thì xuống dòng trong nút (như Qt nameText). */}
                 <Button size="sm" variant="ghost" icon={Bluetooth} className="h-auto min-h-8 max-w-full items-start whitespace-normal py-2 [&>span:first-child]:mt-line-icon" onClick={() => chooseDevice(device)}>
                   <OneLineFit>{`${device.name} · ${deviceKindLabel(device.kind)}`}</OneLineFit>
                 </Button>

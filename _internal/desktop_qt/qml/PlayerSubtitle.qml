@@ -21,22 +21,28 @@ Column {
     Timer { id: delay; interval: 1500; onTriggered: root.delayed = root.preparing }
     Listen { target: Nav; function onUiVisibleChanged() { if (Nav.uiVisible && root.preparing && root.visible) delay.restart(); else { delay.stop(); root.delayed = false } } }
     Text { width: parent.width; horizontalAlignment: root.horizontalAlignment; wrapMode: Text.Wrap; Reveal { shown: Player.purpose === "review" } text: S.s_nghe_kiem_f9c474bb; color: Theme.text2; font.pixelSize: Theme.sizeCaption }
-    Text {
-        id: bookLabel
-        objectName: "playerSubtitleText"; width: parent.width; wrapMode: Text.Wrap
-        horizontalAlignment: root.horizontalAlignment
-        text: TextWrap.keepDots(root.delayed ? S.s_dang_chuan_bi_giong_doc_69f1b51a : Player.atEnd === "caughtUp" ? S.s_da_nghe_het_phan_da_co_1aa0a8e0 : Player.bookTitle + (root.chevron ? "\u00a0›" : ""))
-        color: root.showsBook && bookLabel.text !== "" ? Theme.accentText : Theme.text2; font.pixelSize: Theme.sizeCaption
-        font.underline: bookLink.hovered
+    // Tên sách MỘT dòng cố định (MarqueeLine - DESIGN.md 5.5 "Tên một dòng"): thu cỡ rồi chạy chữ, không xuống dòng làm dời bìa / nút phát.
+    // Hộp chạm là anh em của dòng chữ (MarqueeLine cắt phần vẽ ra ngoài dòng; hộp chạm cao 24 không bị cắt).
+    Item {
+        width: parent.width
+        height: bookLabel.height
+        MarqueeLine {
+            id: bookLabel
+            objectName: "playerSubtitleText"; width: parent.width
+            horizontalAlignment: root.horizontalAlignment
+            text: TextWrap.keepDots(root.delayed ? S.s_dang_chuan_bi_giong_doc_69f1b51a : Player.atEnd === "caughtUp" ? S.s_da_nghe_het_phan_da_co_1aa0a8e0 : Player.bookTitle + (root.chevron ? "\u00a0›" : ""))
+            color: root.showsBook && bookLabel.text !== "" ? Theme.accentText : Theme.text2; baseSize: Theme.sizeCaption
+            underline: bookLink.hovered
+        }
         Interactive {
             id: bookLink
             objectName: "playerBookLink"
             Reveal { shown: root.showsBook && bookLabel.text !== "" }
             // Vừa khít phần chữ: chỗ trống cạnh tên vẫn thuộc việc của nền (thanh phát: mở Đang nghe). Thấp hơn hộp chạm thì giãn đều lên dưới.
             width: Math.min(bookLabel.width, bookLabel.paintedWidth)
-            height: Math.max(bookLabel.paintedHeight, 24)
+            height: Math.max(bookLabel.height, 24)
             x: root.horizontalAlignment === Text.AlignHCenter ? (bookLabel.width - width) / 2 : 0
-            y: (bookLabel.paintedHeight - height) / 2
+            y: (bookLabel.height - height) / 2
             Accessible.role: Accessible.Button
             Accessible.name: S.s_mo_trang_sach_3f7bd955
             tip: S.s_mo_trang_sach_3f7bd955

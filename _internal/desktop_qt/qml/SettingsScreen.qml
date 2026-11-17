@@ -167,5 +167,7 @@ FocusScope {
             }
         }
     }
+    // DESIGN 5.5: mọi vùng cuộn dọc mờ ở mép còn nội dung, không cắt cứng ngang dòng chữ.
+    ScrollEdges { target: page; color: Theme.bg; x: page.x; y: page.y; width: page.width; height: page.height }
     Scrollbar { target: page }
 }

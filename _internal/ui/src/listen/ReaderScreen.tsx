@@ -266,7 +266,7 @@ export function ReaderScreen(edit: SentenceEditing) {
 
   if (!chapter || !script) {
     return (
-      <EmptyState icon={BookOpenText} title={S.s_chua_mo_duoc_chuong_nay_d7a0396b} className="mt-16" action={<Button onClick={() => navigate(`/book/${id}`)}>{S.s_ve_trang_sach_52317a7e}</Button>}>
+      <EmptyState icon={BookOpenText} title={S.s_chua_mo_duoc_chuong_nay_d7a0396b} fill action={<Button onClick={() => navigate(`/book/${id}`)}>{S.s_ve_trang_sach_52317a7e}</Button>}>
         {chapterOpenProblem(scriptError)}
       </EmptyState>
     );

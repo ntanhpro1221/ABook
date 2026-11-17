@@ -42,6 +42,7 @@ Collapse {
             id: fold
             y: root.first ? 0 : 1
             width: parent.width
+            nameTitle: true
             storageKey: "phone-sync.device." + root.rowId
             title: root.device.name || ""
             summary: S.s_lan_cuoi_b70cb038 + Logic.formatRelative(root.device.lastSeen, root.clock)

@@ -17,7 +17,7 @@ Item {
     Component { id: records; RecordMenu {} }
     Component { id: inbox; PhoneEdits {} }
     Component { id: output; OutputPopover {} }
-    Component { id: deviceButton; Button { fitName: true; icon: "bluetooth"; kind: "ghost"; size: "sm" } }
+    Component { id: deviceButton; Button { nameText: true; icon: "bluetooth"; kind: "ghost"; size: "sm" } }
 
     TestCase {
         name: "RemoteProfileNames"

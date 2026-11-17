@@ -122,7 +122,7 @@ Column {
                 y: 16
                 width: parent.width - 32 - 12 - again.width
                 Text { width: parent.width; text: S.s_ma_bi_khoa_48579bd8; color: Theme.text; wrapMode: Text.Wrap; font.pixelSize: Theme.sizeBodySmall; font.weight: Theme.weightMedium }
-                Item { width: 1; height: 2 }
+                Item { width: 1; height: 4 }
                 Text { width: parent.width; text: S.s_sai_5_lan_chi_tao_ma_moi_khi_ban_dang_ghep_6f3c0e90; color: Theme.text2; wrapMode: Text.WrapAtWordBoundaryOrAnywhere; font.pixelSize: 14 }
             }
             Button {

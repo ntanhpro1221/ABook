@@ -92,15 +92,14 @@ Item {
             anchors.verticalCenter: parent.verticalCenter
             width: transport.x - Theme.s24 - x
             spacing: 4
-            Text {
+            MarqueeLine {
                 id: chapterLabel
                 objectName: "barChapterTitle"
                 width: parent.width
                 text: TextWrap.keepDots([Player.chapterTitle, Player.chapterSubtitle].filter(s => s !== "").join("\u00a0·\u00a0"))
                 color: Theme.text
-                wrapMode: Text.Wrap
-                font.pixelSize: Theme.sizeBodySmall
-                font.weight: Theme.weightMedium
+                baseSize: Theme.sizeBodySmall
+                weight: Theme.weightMedium
                 opacity: root.sharedShown ? 1 : 0
             }
             PlayerSubtitle {

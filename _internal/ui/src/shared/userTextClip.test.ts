@@ -1,5 +1,5 @@
 // Chữ của người dùng không bao giờ bị cắt (luật cứng của chủ sách): tên sách, tên chương, tên hồ sơ, tên file đã chọn xuống dòng, không "…" (truncate) và không
-// cắt sau N dòng (line-clamp). Máy quét mã giao diện máy tính / phần Nghe: mọi khối có truncate / line-clamp mà chữ bên trong là tên sách / chương.
+// cắt sau N dòng (line-clamp); ô một dòng cố định (thanh phát, màn Đang nghe) thì qua MarqueeLine - thu cỡ rồi chạy chữ. Máy quét mã giao diện máy tính / phần Nghe: mọi khối có truncate / line-clamp mà chữ bên trong là tên sách / chương.
 import { readdirSync, readFileSync, statSync } from "node:fs";
 import { cwd } from "node:process";
 import { expect, it } from "vitest";
@@ -16,9 +16,6 @@ const USER_TEXT = /book\.title|bookTitle|\.author\b|^\{author\}$|chapterTitle|ch
 const DEVICE_PROFILE_TEXT = /\b(?:target|only|phone|device|computer|found|peer|profile|record|remote|sharer|session|push|active|sync)\??\.(?:name|displayName|label)\b|\bnames\.current\b|\b(?:deviceName|phoneName|profileName|machineName|recordName)\b/;
 /** Derived location/status lines also contain the remote computer's name. */
 const DEVICE_LINE = /\b(?:remoteName|remotePlace|computerOf|peerBarLine|onComputerLine)\(|^\{?status\}?$/;
-/** Chỗ còn cắt có lý do (đã ghi trong báo cáo, chờ chủ sách quyết): thanh phát thu nhỏ cao cố định một dòng tên chương + một dòng tên sách (DESIGN 6),
- *  tên đầy đủ ở tooltip `title` của nút. */
-const ALLOWED = new Set(["listen/PlayerViews.tsx:{track.chapterTitle}#mini", "listen/PlayerViews.tsx:{track.bookTitle}#mini"]);
 /** Tên máy trong chỗ hẹp (ShortName): rút có chủ đích, tên đầy đủ ở tooltip - tên máy không phải chữ của sách. */
 const ALLOWED_ANYWHERE = new Set(["shared/ShortName.tsx:{name}"]);
 
@@ -37,11 +34,6 @@ it("không khối nào cắt tên sách / tên chương / tên người dùng đ
         if (dir === "studio" && !DEVICE_PROFILE_TEXT.test(expression)) continue;
         const where = `${dir}/${file}:${expression}`;
         if (ALLOWED_ANYWHERE.has(where)) continue;
-        // Thanh phát thu nhỏ: khối MotionRegion của tên chương ngay trong nút "Mở trình phát".
-        const before = source.slice(Math.max(0, (match.index ?? 0) - 900), match.index);
-        if (ALLOWED.has(`${where}#mini`) && before.includes('aria-label={S.s_mo_man_hinh_dang_nghe_')) continue;
-        // Dòng tên sách của cùng thanh thu nhỏ (nút `data-track-book`, chỉ look="bar" cắt; tên đầy đủ ở tooltip `title`).
-        if (ALLOWED.has(`${where}#mini`) && before.includes('data-track-book') && /look === "bar" && "[^"]*truncate/.test(source.slice(match.index ?? 0, (match.index ?? 0) + 400))) continue;
         clipped.push(`${where} (dòng ${source.slice(0, match.index).split("\n").length})`);
       }
     }

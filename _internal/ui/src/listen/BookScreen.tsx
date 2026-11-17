@@ -1051,7 +1051,7 @@ function BookPage({ extraActions, dangerActions, studioLink, notice, editing = {
   // "Không tìm thấy" và hộp thoại đang sửa dở mất theo.
   if (!book || isMissing(error)) {
     return (
-      <EmptyState icon={BookOpenText} title={S.s_khong_tim_thay_sach_nay_0836038e} className="mt-16" action={<Button onClick={() => navigate("/")}>{S.s_ve_thu_vien_7bb3f8c2}</Button>}>{S.s_sach_co_the_da_bi_chuyen_sang_thu_muc_khac_b74249d0}</EmptyState>
+      <EmptyState icon={BookOpenText} title={S.s_khong_tim_thay_sach_nay_0836038e} fill action={<Button onClick={() => navigate("/")}>{S.s_ve_thu_vien_7bb3f8c2}</Button>}>{S.s_sach_co_the_da_bi_chuyen_sang_thu_muc_khac_b74249d0}</EmptyState>
     );
   }
   const chapters = book.chapters ?? [];

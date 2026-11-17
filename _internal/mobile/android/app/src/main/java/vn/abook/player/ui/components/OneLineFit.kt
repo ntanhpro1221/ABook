@@ -4,9 +4,13 @@ import androidx.compose.foundation.text.TextAutoSize
 import androidx.compose.foundation.text.modifiers.TextAutoSizeLayoutScope
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.semantics.SemanticsPropertyKey
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.sp
+
+/** Component identity for the UI tree; data names retain all other text checks. */
+val OneLineFitMarker = SemanticsPropertyKey<Boolean>("one_line_fit")
 
 /**
  * Một dòng mà không cắt chữ (luật TextCutScanTest: không "…", không cắt im lặng): chữ thu cỡ dần từ [maxSize] tới [minSize] cho tới khi nằm gọn một dòng.

@@ -373,6 +373,8 @@ FocusScope {
         SmoothWheel { flick: list }
         Scrollbar { target: list }
     }
+    // DESIGN 5.5: mọi vùng cuộn dọc mờ ở mép còn nội dung, không cắt cứng ngang dòng chữ.
+    ScrollEdges { parent: resultViewport; target: list; color: Theme.bg; x: list.x; y: list.y; width: list.width; height: list.height }
     ChapterReader { id: reader }
     onReadRequested: book => reader.begin(book.bookId, -1)
 

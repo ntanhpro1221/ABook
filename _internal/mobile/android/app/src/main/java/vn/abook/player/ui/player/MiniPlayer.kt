@@ -9,12 +9,11 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
-import vn.abook.player.ui.components.BasicText
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
@@ -38,6 +37,7 @@ import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import vn.abook.player.ui.components.BookCover
+import vn.abook.player.ui.components.MarqueeLine
 import vn.abook.player.ui.components.PlayPauseGlyph
 import vn.abook.player.ui.components.pressable
 import vn.abook.player.ui.data.CoverLoader
@@ -49,7 +49,7 @@ import vn.abook.player.ui.theme.Abook
 import vn.abook.player.ui.theme.Dim
 import kotlin.math.roundToInt
 
-/** Chiều cao TỐI THIỂU của thanh phát nhỏ (token khoảng cách 64); tên dài thì thanh cao thêm theo số dòng, không cắt chữ. */
+/** Chiều cao CỐ ĐỊNH của thanh phát nhỏ (token khoảng cách 64): tên dài nằm một dòng ([MarqueeLine]: thu cỡ rồi chạy chữ), thanh không cao thêm, bìa và nút phát không dời. */
 val MiniPlayerHeight: Dp = 64.dp
 
 /**
@@ -84,7 +84,7 @@ fun MiniPlayer(
         androidx.compose.runtime.derivedStateOf { if (durationMs > 0) (positionMs() * 100 / durationMs).toInt().coerceIn(0, 100) / 5 * 5 else 0 }
     }
     Row(
-        modifier.fillMaxWidth().heightIn(min = MiniPlayerHeight)
+        modifier.fillMaxWidth().height(MiniPlayerHeight)
             .drawBehind {
                 // Bóng nhẹ phía trên (lớp nổi) rồi nền, cuối cùng vạch tiến độ.
                 val lift = 8.dp.toPx()
@@ -101,14 +101,14 @@ fun MiniPlayer(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Row(
-            Modifier.weight(1f).heightIn(min = MiniPlayerHeight).pressable { onOpenNowPlaying() }.semantics { contentDescription = S.s_mo_man_hinh_dang_nghe_2426b4ad }.padding(start = Dim.s12, top = Dim.s4, bottom = Dim.s4).testTag("mini_open"),
+            Modifier.weight(1f).height(MiniPlayerHeight).pressable { onOpenNowPlaying() }.semantics { contentDescription = S.s_mo_man_hinh_dang_nghe_2426b4ad }.padding(start = Dim.s12, top = Dim.s4, bottom = Dim.s4).testTag("mini_open"),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             BookCover(state.cover, state.bookTitle, null, covers, 36.dp, sharedModifier(NowPlayingPart.Cover).width(36.dp), small = true)
             Spacer(Modifier.width(Dim.s12))
             Column(Modifier.weight(1f)) {
-                BasicText(title, sharedModifier(NowPlayingPart.Chapter), Abook.type.label)
-                BasicText(state.bookTitle, sharedModifier(NowPlayingPart.Book), Abook.type.caption)
+                MarqueeLine(title, sharedModifier(NowPlayingPart.Chapter), Abook.type.label)
+                MarqueeLine(state.bookTitle, sharedModifier(NowPlayingPart.Book), Abook.type.caption)
             }
         }
         onDevices?.let { open ->

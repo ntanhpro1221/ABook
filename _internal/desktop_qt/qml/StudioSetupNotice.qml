@@ -99,7 +99,7 @@ Item {
                         icon: "clapperboard"
                         kind: "ghost"
                         size: "sm"
-                        fitName: true
+                        nameText: true
                         width: Math.min(implicitWidth, root.width - 28)
                         onActivated: root.peerRequested(modelData.id)
                     }

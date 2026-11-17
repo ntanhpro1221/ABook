@@ -16,6 +16,9 @@ Interactive {
     property bool playable: true
     property bool done: false
     property bool current: false
+    // Hàng của danh sách chương (DESIGN R1: list), chương đang phát là mục đang chọn.
+    Accessible.role: Accessible.ListItem
+    Accessible.name: fullTitle || title
     property real progress: 0
     property bool hasMenu: false
     property bool menuOpen: false

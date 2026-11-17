@@ -163,7 +163,7 @@ Item {
             verify(all(choices[0], "recordChoiceLine")[0].text.indexOf("Chương 2\u00a0·\u00a01:15\u00a0·\u00a0nghe gần nhất ") === 0)
             compare(all(choices[1], "recordChoiceLine")[0].text, "chưa nghe")
             compare(findChild(scene(), "recordAction.create").text, "Hồ sơ mới")
-            compare(findChild(scene(), "recordAction.rename").text, "Đổi tên hồ sơ này")
+            compare(findChild(scene(), "recordAction.rename").text, "Đổi tên hồ sơ")
             compare(findChild(scene(), "recordAction.move").text, "Chuyển sang cuốn khác")
             compare(findChild(scene(), "recordAction.delete").text, "Xoá hồ sơ này")
             verify(findChild(scene(), "recordAction.delete").danger)

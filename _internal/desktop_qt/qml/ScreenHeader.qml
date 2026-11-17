@@ -42,7 +42,7 @@ Item {
     Text {
         Reveal { shown: root.subtitle !== "" }
         x: titleText.x
-        y: Theme.s32 + titleText.height + 2
+        y: Theme.s32 + titleText.height + Theme.s4          // như web ScreenHeader mt-[4px]: khe thuộc thang (DESIGN 5.5)
         text: root.subtitle
         color: Theme.text2
         font.pixelSize: Theme.sizeBodySmall

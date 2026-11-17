@@ -6,7 +6,7 @@
     "line": 180,
     "statement": "const remove = async () => {",
     "occurrence": 1,
-    "source_sha256": "7ee095a6ddde4d5849d904b12a7bf5850597917bf6ede053ac36f970aaa9b5d2",
+    "source_sha256": "4379220d2c2a6c2585209d4995279fc31b240bd2241c1bfbdaf3fc5e4e46b407",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; busy, loading, setBusy, trash_pending",
     "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
@@ -18,7 +18,7 @@
     "line": 186,
     "statement": "const result = await api<{ ok: boolean; undo?: string }>(`/api/listen/books/${book.id}`, { method: \"DELETE\" });",
     "occurrence": 1,
-    "source_sha256": "7ee095a6ddde4d5849d904b12a7bf5850597917bf6ede053ac36f970aaa9b5d2",
+    "source_sha256": "4379220d2c2a6c2585209d4995279fc31b240bd2241c1bfbdaf3fc5e4e46b407",
     "disposition": "confirmation",
     "guard": "Delete dialog / StudioConfirm or DeleteBookPage; trashUndo / UndoDelete after acceptance",
     "reason": "Book/project deletion is explicitly confirmed and the existing recoverable trash token remains available. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
@@ -30,7 +30,7 @@
     "line": 206,
     "statement": "<Button variant=\"danger\" icon={Trash2} loading={busy} onClick={() => remove()}>{S.s_xoa_khoi_thu_vien_79dbd32b}</Button>",
     "occurrence": 1,
-    "source_sha256": "7ee095a6ddde4d5849d904b12a7bf5850597917bf6ede053ac36f970aaa9b5d2",
+    "source_sha256": "4379220d2c2a6c2585209d4995279fc31b240bd2241c1bfbdaf3fc5e4e46b407",
     "disposition": "confirmation",
     "guard": "Delete dialog / StudioConfirm or DeleteBookPage; trashUndo / UndoDelete after acceptance",
     "reason": "Book/project deletion is explicitly confirmed and the existing recoverable trash token remains available. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
@@ -42,7 +42,7 @@
     "line": 211,
     "statement": "description={book ? removeAsk(book) : \"\"}",
     "occurrence": 1,
-    "source_sha256": "7ee095a6ddde4d5849d904b12a7bf5850597917bf6ede053ac36f970aaa9b5d2",
+    "source_sha256": "4379220d2c2a6c2585209d4995279fc31b240bd2241c1bfbdaf3fc5e4e46b407",
     "disposition": "confirmation",
     "guard": "Delete dialog / StudioConfirm or DeleteBookPage; trashUndo / UndoDelete after acceptance",
     "reason": "Book/project deletion is explicitly confirmed and the existing recoverable trash token remains available. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
@@ -54,7 +54,7 @@
     "line": 363,
     "statement": "const replay = async () => {",
     "occurrence": 1,
-    "source_sha256": "7ee095a6ddde4d5849d904b12a7bf5850597917bf6ede053ac36f970aaa9b5d2",
+    "source_sha256": "4379220d2c2a6c2585209d4995279fc31b240bd2241c1bfbdaf3fc5e4e46b407",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; busy, loading, setBusy, trash_pending",
     "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
@@ -66,7 +66,7 @@
     "line": 413,
     "statement": "async (path: string, session?: ReadSession) => {",
     "occurrence": 1,
-    "source_sha256": "7ee095a6ddde4d5849d904b12a7bf5850597917bf6ede053ac36f970aaa9b5d2",
+    "source_sha256": "4379220d2c2a6c2585209d4995279fc31b240bd2241c1bfbdaf3fc5e4e46b407",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; busy, loading, setBusy, trash_pending",
     "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
@@ -78,7 +78,7 @@
     "line": 434,
     "statement": "const run = async () => {",
     "occurrence": 1,
-    "source_sha256": "7ee095a6ddde4d5849d904b12a7bf5850597917bf6ede053ac36f970aaa9b5d2",
+    "source_sha256": "4379220d2c2a6c2585209d4995279fc31b240bd2241c1bfbdaf3fc5e4e46b407",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; busy, loading, setBusy, trash_pending",
     "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
@@ -642,10 +642,10 @@
     "line": 130,
     "statement": "run: async (computer, choice) => {",
     "occurrence": 1,
-    "source_sha256": "3df349926599d81f165386cdb58a276f632ececd5de7deb8a7fecad6f03a931f",
+    "source_sha256": "094dd1d791529b7326f6607a29a782eb3819b5ecc04191eab400e0233763d5b1",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; busy, isLoading, isPending, loading",
-    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering."
+    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review (merge174 lintfix): both sides' changes to this file keep this statement and its guard unchanged."
   },
   {
     "id": "af580ffdb499584df487",
@@ -654,10 +654,10 @@
     "line": 132,
     "statement": "done(await api<ComputersView>(`/api/computers/${computer.id}${edits}`, { method: \"DELETE\" }));",
     "occurrence": 1,
-    "source_sha256": "3df349926599d81f165386cdb58a276f632ececd5de7deb8a7fecad6f03a931f",
+    "source_sha256": "094dd1d791529b7326f6607a29a782eb3819b5ecc04191eab400e0233763d5b1",
     "disposition": "confirmation",
     "guard": "useUnpair / DevicesUnpair / DeviceSheets ForgetPage and revoke confirmation",
-    "reason": "The preflight names unsent edits and cached books; even an empty device now asks before forgetting its identity."
+    "reason": "The preflight names unsent edits and cached books; even an empty device now asks before forgetting its identity. Combined-source review (merge174 lintfix): both sides' changes to this file keep this statement and its guard unchanged."
   },
   {
     "id": "c3ae9e109268a3a26f2b",
@@ -1122,10 +1122,10 @@
     "line": 803,
     "statement": "if (dialog.kind === \"delete\") switchTo(() => mutations.removeRecord.mutateAsync(active.id), S.s_da_xoa_ho_so_0_54dabd55(active.name));",
     "occurrence": 1,
-    "source_sha256": "95e1ca833f6ee2d62359b28fd6f1427ac5c2612385b295f19a26612a6e0f1e40",
+    "source_sha256": "273d8cc370f480ff85df279f7feefdffcd9efeac78c54f8cc596b2523a19fe77",
     "disposition": "confirmation",
     "guard": "BookRecords ConfirmPage / BookScreen record Dialog / RecordDialogs Modal / DeleteBookPage",
-    "reason": "Deleting a listening profile explicitly describes loss of progress and history. Deleting a book uses the book confirmation. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Gate repair: reviewed identity-key motion, explicit layout, token spacing or semantic navigation changes; existing guard retained. Combined-source review (merge174 castview): both sides' changes to this file keep this statement and its guard unchanged."
+    "reason": "Deleting a listening profile explicitly describes loss of progress and history. Deleting a book uses the book confirmation. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Gate repair: reviewed identity-key motion, explicit layout, token spacing or semantic navigation changes; existing guard retained. Combined-source review (merge174 castview): both sides' changes to this file keep this statement and its guard unchanged. Combined-source review (merge174 lintfix): both sides' changes to this file keep this statement and its guard unchanged."
   },
   {
     "id": "9afb04bc8bcc92ca4b0c",
@@ -1134,10 +1134,10 @@
     "line": 1104,
     "statement": "const restart = async () => {",
     "occurrence": 1,
-    "source_sha256": "95e1ca833f6ee2d62359b28fd6f1427ac5c2612385b295f19a26612a6e0f1e40",
+    "source_sha256": "273d8cc370f480ff85df279f7feefdffcd9efeac78c54f8cc596b2523a19fe77",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; LoadingCrossfade, Progress, busy, isLoading, loading, pending, pendingVoice, preparingBookId, progress, progressFill",
-    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Gate repair: reviewed identity-key motion, explicit layout, token spacing or semantic navigation changes; existing guard retained. Combined-source review (merge174 castview): both sides' changes to this file keep this statement and its guard unchanged."
+    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Gate repair: reviewed identity-key motion, explicit layout, token spacing or semantic navigation changes; existing guard retained. Combined-source review (merge174 castview): both sides' changes to this file keep this statement and its guard unchanged. Combined-source review (merge174 lintfix): both sides' changes to this file keep this statement and its guard unchanged."
   },
   {
     "id": "0cff7a6337a7b77585a3",
@@ -1146,10 +1146,10 @@
     "line": 1119,
     "statement": "action: { label: S.s_quay_lai_cho_cu_fea69b14, onClick: () => void playBook(book, before.chapter.id, before.at) },",
     "occurrence": 1,
-    "source_sha256": "95e1ca833f6ee2d62359b28fd6f1427ac5c2612385b295f19a26612a6e0f1e40",
+    "source_sha256": "273d8cc370f480ff85df279f7feefdffcd9efeac78c54f8cc596b2523a19fe77",
     "disposition": "internal",
     "guard": "Async interface/helper boundary; concrete activation inventoried separately",
-    "reason": "This signature supplies work to a model or component; declaring it starts no user operation. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Gate repair: reviewed identity-key motion, explicit layout, token spacing or semantic navigation changes; existing guard retained. Combined-source review (merge174 castview): both sides' changes to this file keep this statement and its guard unchanged."
+    "reason": "This signature supplies work to a model or component; declaring it starts no user operation. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Gate repair: reviewed identity-key motion, explicit layout, token spacing or semantic navigation changes; existing guard retained. Combined-source review (merge174 castview): both sides' changes to this file keep this statement and its guard unchanged. Combined-source review (merge174 lintfix): both sides' changes to this file keep this statement and its guard unchanged."
   },
   {
     "id": "066bfd62238e7b1506cd",
@@ -1158,10 +1158,10 @@
     "line": 1125,
     "statement": "const listenNow = async () => {",
     "occurrence": 1,
-    "source_sha256": "95e1ca833f6ee2d62359b28fd6f1427ac5c2612385b295f19a26612a6e0f1e40",
+    "source_sha256": "273d8cc370f480ff85df279f7feefdffcd9efeac78c54f8cc596b2523a19fe77",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; LoadingCrossfade, Progress, busy, isLoading, loading, pending, pendingVoice, preparingBookId, progress, progressFill",
-    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Gate repair: reviewed identity-key motion, explicit layout, token spacing or semantic navigation changes; existing guard retained. Combined-source review (merge174 castview): both sides' changes to this file keep this statement and its guard unchanged."
+    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Gate repair: reviewed identity-key motion, explicit layout, token spacing or semantic navigation changes; existing guard retained. Combined-source review (merge174 castview): both sides' changes to this file keep this statement and its guard unchanged. Combined-source review (merge174 lintfix): both sides' changes to this file keep this statement and its guard unchanged."
   },
   {
     "id": "1d74793870f93603ba4e",
@@ -1170,10 +1170,10 @@
     "line": 1271,
     "statement": "onSelect={() => void saver.save()}",
     "occurrence": 1,
-    "source_sha256": "95e1ca833f6ee2d62359b28fd6f1427ac5c2612385b295f19a26612a6e0f1e40",
+    "source_sha256": "273d8cc370f480ff85df279f7feefdffcd9efeac78c54f8cc596b2523a19fe77",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; LoadingCrossfade, Progress, busy, isLoading, loading, pending, pendingVoice, preparingBookId, progress, progressFill",
-    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Gate repair: reviewed identity-key motion, explicit layout, token spacing or semantic navigation changes; existing guard retained. Combined-source review (merge174 castview): both sides' changes to this file keep this statement and its guard unchanged."
+    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Gate repair: reviewed identity-key motion, explicit layout, token spacing or semantic navigation changes; existing guard retained. Combined-source review (merge174 castview): both sides' changes to this file keep this statement and its guard unchanged. Combined-source review (merge174 lintfix): both sides' changes to this file keep this statement and its guard unchanged."
   },
   {
     "id": "1d071d9ad59632b02e8b",
@@ -1182,10 +1182,10 @@
     "line": 1280,
     "statement": "onSelect={() => void sharer.share()}",
     "occurrence": 1,
-    "source_sha256": "95e1ca833f6ee2d62359b28fd6f1427ac5c2612385b295f19a26612a6e0f1e40",
+    "source_sha256": "273d8cc370f480ff85df279f7feefdffcd9efeac78c54f8cc596b2523a19fe77",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; LoadingCrossfade, Progress, busy, isLoading, loading, pending, pendingVoice, preparingBookId, progress, progressFill",
-    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Gate repair: reviewed identity-key motion, explicit layout, token spacing or semantic navigation changes; existing guard retained. Combined-source review (merge174 castview): both sides' changes to this file keep this statement and its guard unchanged."
+    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Gate repair: reviewed identity-key motion, explicit layout, token spacing or semantic navigation changes; existing guard retained. Combined-source review (merge174 castview): both sides' changes to this file keep this statement and its guard unchanged. Combined-source review (merge174 lintfix): both sides' changes to this file keep this statement and its guard unchanged."
   },
   {
     "id": "d2780dded4db9ad89245",
@@ -1254,10 +1254,10 @@
     "line": 67,
     "statement": "export async function saveAuthor(bookId: string, author: string): Promise<string> {",
     "occurrence": 1,
-    "source_sha256": "c1e6304300133dd1c1b5a28f1b68f6fd6fb5f898f8bce9a01e1a0c0e1f48eee6",
+    "source_sha256": "39e426d927e58a9c6fc766fb08c02fae9e73c3ff5afde566fcb70fe313b16377",
     "disposition": "internal",
     "guard": "Async interface/helper boundary; concrete activation inventoried separately",
-    "reason": "This signature supplies work to a model or component; declaring it starts no user operation."
+    "reason": "This signature supplies work to a model or component; declaring it starts no user operation. Combined-source review (merge174 lintfix): both sides' changes to this file keep this statement and its guard unchanged."
   },
   {
     "id": "ba51e141b1ceb781f2d5",
@@ -1266,10 +1266,10 @@
     "line": 76,
     "statement": "async function imageToDataUrl(file: Blob): Promise<string> {",
     "occurrence": 1,
-    "source_sha256": "c1e6304300133dd1c1b5a28f1b68f6fd6fb5f898f8bce9a01e1a0c0e1f48eee6",
+    "source_sha256": "39e426d927e58a9c6fc766fb08c02fae9e73c3ff5afde566fcb70fe313b16377",
     "disposition": "internal",
     "guard": "Async interface/helper boundary; concrete activation inventoried separately",
-    "reason": "This signature supplies work to a model or component; declaring it starts no user operation."
+    "reason": "This signature supplies work to a model or component; declaring it starts no user operation. Combined-source review (merge174 lintfix): both sides' changes to this file keep this statement and its guard unchanged."
   },
   {
     "id": "efefcba7081a2e1a029f",
@@ -1278,10 +1278,10 @@
     "line": 340,
     "statement": "mutationFn: async (picked: Blob) => api(`/api/books/${book.id}/cover`, { method: \"PUT\", body: { image: await imageToDataUrl(picked) } }),",
     "occurrence": 1,
-    "source_sha256": "c1e6304300133dd1c1b5a28f1b68f6fd6fb5f898f8bce9a01e1a0c0e1f48eee6",
+    "source_sha256": "39e426d927e58a9c6fc766fb08c02fae9e73c3ff5afde566fcb70fe313b16377",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; busy, isLoading, isPending, loading, onBusy, saving, setBusy",
-    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering."
+    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review (merge174 lintfix): both sides' changes to this file keep this statement and its guard unchanged."
   },
   {
     "id": "edeafb7a83eca97b6bcc",
@@ -1290,10 +1290,10 @@
     "line": 346,
     "statement": "mutationFn: () => api(`/api/books/${book.id}/cover`, { method: \"DELETE\" }),",
     "occurrence": 1,
-    "source_sha256": "c1e6304300133dd1c1b5a28f1b68f6fd6fb5f898f8bce9a01e1a0c0e1f48eee6",
+    "source_sha256": "39e426d927e58a9c6fc766fb08c02fae9e73c3ff5afde566fcb70fe313b16377",
     "disposition": "confirmation",
     "guard": "EditBook cover DestructiveConfirm and DiscardSheet / discard dialog",
-    "reason": "Cover removal and discarding saved edits have explicit object-specific confirmations."
+    "reason": "Cover removal and discarding saved edits have explicit object-specific confirmations. Combined-source review (merge174 lintfix): both sides' changes to this file keep this statement and its guard unchanged."
   },
   {
     "id": "c4f7b6125021e7241870",
@@ -1302,10 +1302,10 @@
     "line": 351,
     "statement": "mutationFn: () => api(`/api/books/${book.id}/edits`, { method: \"DELETE\" }),",
     "occurrence": 1,
-    "source_sha256": "c1e6304300133dd1c1b5a28f1b68f6fd6fb5f898f8bce9a01e1a0c0e1f48eee6",
+    "source_sha256": "39e426d927e58a9c6fc766fb08c02fae9e73c3ff5afde566fcb70fe313b16377",
     "disposition": "confirmation",
     "guard": "EditBook cover DestructiveConfirm and DiscardSheet / discard dialog",
-    "reason": "Cover removal and discarding saved edits have explicit object-specific confirmations."
+    "reason": "Cover removal and discarding saved edits have explicit object-specific confirmations. Combined-source review (merge174 lintfix): both sides' changes to this file keep this statement and its guard unchanged."
   },
   {
     "id": "6aa9020be238fcbbe12b",
@@ -1314,10 +1314,10 @@
     "line": 427,
     "statement": "<Reveal when={book.cover}><Button variant=\"ghost\" className=\"justify-start text-left\" icon={Trash2} loading={busy} disabled={busy} onClick={() => deletion.confirm({ title: S.s_bo_anh_bia_696c6692, description: S.s_irreversible_detail(book.title), run: () => removeCover.mutateAsync() })}>{S.s_bo_anh_bia_696c6692}</Button></Reveal>",
     "occurrence": 1,
-    "source_sha256": "c1e6304300133dd1c1b5a28f1b68f6fd6fb5f898f8bce9a01e1a0c0e1f48eee6",
+    "source_sha256": "39e426d927e58a9c6fc766fb08c02fae9e73c3ff5afde566fcb70fe313b16377",
     "disposition": "confirmation",
     "guard": "EditBook cover DestructiveConfirm and DiscardSheet / discard dialog",
-    "reason": "Cover removal and discarding saved edits have explicit object-specific confirmations."
+    "reason": "Cover removal and discarding saved edits have explicit object-specific confirmations. Combined-source review (merge174 lintfix): both sides' changes to this file keep this statement and its guard unchanged."
   },
   {
     "id": "eafc2242132e1aa8dc2b",
@@ -1326,10 +1326,10 @@
     "line": 560,
     "statement": "const save = async (options?: { folder?: string; as?: \"abook\" | \"abookproj\"; ask?: boolean }): Promise<boolean> => {",
     "occurrence": 1,
-    "source_sha256": "c1e6304300133dd1c1b5a28f1b68f6fd6fb5f898f8bce9a01e1a0c0e1f48eee6",
+    "source_sha256": "39e426d927e58a9c6fc766fb08c02fae9e73c3ff5afde566fcb70fe313b16377",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; busy, isLoading, isPending, loading, onBusy, saving, setBusy",
-    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering."
+    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review (merge174 lintfix): both sides' changes to this file keep this statement and its guard unchanged."
   },
   {
     "id": "8b39fd322ec8cf5d736e",
@@ -1338,10 +1338,10 @@
     "line": 571,
     "statement": "? { label: S.s_mo_thu_muc_4bf5b127, onClick: () => void api(\"/api/reveal-export\", { method: \"POST\", body: { folder } }).catch(() => undefined) }",
     "occurrence": 1,
-    "source_sha256": "c1e6304300133dd1c1b5a28f1b68f6fd6fb5f898f8bce9a01e1a0c0e1f48eee6",
+    "source_sha256": "39e426d927e58a9c6fc766fb08c02fae9e73c3ff5afde566fcb70fe313b16377",
     "disposition": "internal",
     "guard": "Async interface/helper boundary; concrete activation inventoried separately",
-    "reason": "This signature supplies work to a model or component; declaring it starts no user operation."
+    "reason": "This signature supplies work to a model or component; declaring it starts no user operation. Combined-source review (merge174 lintfix): both sides' changes to this file keep this statement and its guard unchanged."
   },
   {
     "id": "8a684bedbf4b9227cdf9",
@@ -1350,10 +1350,10 @@
     "line": 589,
     "statement": "const share = async () => {",
     "occurrence": 1,
-    "source_sha256": "c1e6304300133dd1c1b5a28f1b68f6fd6fb5f898f8bce9a01e1a0c0e1f48eee6",
+    "source_sha256": "39e426d927e58a9c6fc766fb08c02fae9e73c3ff5afde566fcb70fe313b16377",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; busy, isLoading, isPending, loading, onBusy, saving, setBusy",
-    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering."
+    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review (merge174 lintfix): both sides' changes to this file keep this statement and its guard unchanged."
   },
   {
     "id": "6a60663a9579fe096344",
@@ -1362,10 +1362,10 @@
     "line": 629,
     "statement": "onClick={() => void save({ ...(folder ? { folder } : {}), as: kind, ask: true }).then((saved) => saved && onOpenChange(false))}",
     "occurrence": 1,
-    "source_sha256": "c1e6304300133dd1c1b5a28f1b68f6fd6fb5f898f8bce9a01e1a0c0e1f48eee6",
+    "source_sha256": "39e426d927e58a9c6fc766fb08c02fae9e73c3ff5afde566fcb70fe313b16377",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; busy, isLoading, isPending, loading, onBusy, saving, setBusy",
-    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering."
+    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review (merge174 lintfix): both sides' changes to this file keep this statement and its guard unchanged."
   },
   {
     "id": "8834d2d9de93c9904cda",
@@ -1422,10 +1422,10 @@
     "line": 129,
     "statement": "return async (book: ListenBook, chapterId?: number, at?: number, extra?: { word?: WordTarget; rate?: number }) => {",
     "occurrence": 1,
-    "source_sha256": "e98ff33af3326cc9efccbeb5add58ebbaac18c07d838cb9172dbde570b7fa84d",
+    "source_sha256": "58841ad762ef7376f39d833ee1af59c3d504d6dd37d80ebd2f22d6d1855d3617",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; LoadingCrossfade, Progress, isLoading, loading, progress, progressFill, progressText",
-    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Gate repair: reviewed identity-key motion, explicit layout, token spacing or semantic navigation changes; existing guard retained. Combined-source review: the author line now uses OneLineFit (no ellipsis); this action and its guard are unchanged."
+    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Gate repair: reviewed identity-key motion, explicit layout, token spacing or semantic navigation changes; existing guard retained. Combined-source review: the author line now uses OneLineFit (no ellipsis); this action and its guard are unchanged. Combined-source review (merge174 lintfix): both sides' changes to this file keep this statement and its guard unchanged."
   },
   {
     "id": "8e6269fe3f7bbd02cacc",
@@ -1434,10 +1434,10 @@
     "line": 293,
     "statement": "onClick={withFeedback(\"playPause\", () => (current ? player.toggle() : void playBook(book)))}",
     "occurrence": 1,
-    "source_sha256": "e98ff33af3326cc9efccbeb5add58ebbaac18c07d838cb9172dbde570b7fa84d",
+    "source_sha256": "58841ad762ef7376f39d833ee1af59c3d504d6dd37d80ebd2f22d6d1855d3617",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; LoadingCrossfade, Progress, isLoading, loading, progress, progressFill, progressText",
-    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Gate repair: reviewed identity-key motion, explicit layout, token spacing or semantic navigation changes; existing guard retained. Combined-source review: the author line now uses OneLineFit (no ellipsis); this action and its guard are unchanged."
+    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Gate repair: reviewed identity-key motion, explicit layout, token spacing or semantic navigation changes; existing guard retained. Combined-source review: the author line now uses OneLineFit (no ellipsis); this action and its guard are unchanged. Combined-source review (merge174 lintfix): both sides' changes to this file keep this statement and its guard unchanged."
   },
   {
     "id": "7a75357ddc0dd98439a5",
@@ -1779,85 +1779,85 @@
     "id": "83613ccbd44e125ebf71",
     "kind": "pending",
     "path": "ui/src/listen/PlayerViews.tsx",
-    "line": 807,
+    "line": 808,
     "statement": "onClick={() => (playing ? sample.stop() : void sample.play(voice.id))}",
     "occurrence": 1,
-    "source_sha256": "b19aaafabcbf836e8b8e068cd8eb47a037028dc49ecf64205bf86c07b9cf8883",
+    "source_sha256": "9693941f99ed3473dd81fe9865c55958dead2db506b69bab5e78291b7353237f",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; BookProgressLine, CompactProgress, PendingIndicator, bookProgressText, busy, busyClick, isLoading, isPending, levelBusy, loading, musicLoading, pending",
-    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Gate repair: reviewed identity-key motion, explicit layout, token spacing or semantic navigation changes; existing guard retained."
+    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Gate repair: reviewed identity-key motion, explicit layout, token spacing or semantic navigation changes; existing guard retained. Combined-source review (merge174 lintfix): both sides' changes to this file keep this statement and its guard unchanged."
   },
   {
     "id": "f014459f7e3244b9fbb4",
     "kind": "pending",
     "path": "ui/src/listen/PlayerViews.tsx",
-    "line": 890,
+    "line": 891,
     "statement": "const start = async () => {",
     "occurrence": 1,
-    "source_sha256": "b19aaafabcbf836e8b8e068cd8eb47a037028dc49ecf64205bf86c07b9cf8883",
+    "source_sha256": "9693941f99ed3473dd81fe9865c55958dead2db506b69bab5e78291b7353237f",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; BookProgressLine, CompactProgress, PendingIndicator, bookProgressText, busy, busyClick, isLoading, isPending, levelBusy, loading, musicLoading, pending",
-    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Gate repair: reviewed identity-key motion, explicit layout, token spacing or semantic navigation changes; existing guard retained."
+    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Gate repair: reviewed identity-key motion, explicit layout, token spacing or semantic navigation changes; existing guard retained. Combined-source review (merge174 lintfix): both sides' changes to this file keep this statement and its guard unchanged."
   },
   {
     "id": "3a79393defa6f77f9bcb",
     "kind": "pending",
     "path": "ui/src/listen/PlayerViews.tsx",
-    "line": 918,
+    "line": 919,
     "statement": "<button type=\"button\" data-focus-next className=\"touch-hit -ml-2 rounded-control px-2 py-1 font-medium text-fg hover:bg-hover\" onClick={() => void source.readAloudPrepareCancel?.().then(settle)}>{S.s_dung_lam_truoc_632af923}</button>",
     "occurrence": 1,
-    "source_sha256": "b19aaafabcbf836e8b8e068cd8eb47a037028dc49ecf64205bf86c07b9cf8883",
+    "source_sha256": "9693941f99ed3473dd81fe9865c55958dead2db506b69bab5e78291b7353237f",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; BookProgressLine, CompactProgress, PendingIndicator, bookProgressText, busy, busyClick, isLoading, isPending, levelBusy, loading, musicLoading, pending",
-    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Gate repair: reviewed identity-key motion, explicit layout, token spacing or semantic navigation changes; existing guard retained."
+    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Gate repair: reviewed identity-key motion, explicit layout, token spacing or semantic navigation changes; existing guard retained. Combined-source review (merge174 lintfix): both sides' changes to this file keep this statement and its guard unchanged."
   },
   {
     "id": "b0dcdbfe651ac29eeb28",
     "kind": "pending",
     "path": "ui/src/listen/PlayerViews.tsx",
-    "line": 921,
+    "line": 922,
     "statement": "<button type=\"button\" data-focus-next aria-disabled={busy || undefined} aria-busy={busy || undefined} className=\"touch-hit -ml-2 rounded-control px-2 py-1 font-medium text-accent-text hover:bg-hover aria-disabled:opacity-45\" onClick={busyClick(busy, () => void start())}>",
     "occurrence": 1,
-    "source_sha256": "b19aaafabcbf836e8b8e068cd8eb47a037028dc49ecf64205bf86c07b9cf8883",
+    "source_sha256": "9693941f99ed3473dd81fe9865c55958dead2db506b69bab5e78291b7353237f",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; BookProgressLine, CompactProgress, PendingIndicator, bookProgressText, busy, busyClick, isLoading, isPending, levelBusy, loading, musicLoading, pending",
-    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Gate repair: reviewed identity-key motion, explicit layout, token spacing or semantic navigation changes; existing guard retained."
+    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Gate repair: reviewed identity-key motion, explicit layout, token spacing or semantic navigation changes; existing guard retained. Combined-source review (merge174 lintfix): both sides' changes to this file keep this statement and its guard unchanged."
   },
   {
     "id": "5d21139a7aa11bae8a5b",
     "kind": "pending",
     "path": "ui/src/listen/PlayerViews.tsx",
-    "line": 949,
+    "line": 950,
     "statement": "const clear = async () => {",
     "occurrence": 1,
-    "source_sha256": "b19aaafabcbf836e8b8e068cd8eb47a037028dc49ecf64205bf86c07b9cf8883",
+    "source_sha256": "9693941f99ed3473dd81fe9865c55958dead2db506b69bab5e78291b7353237f",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; BookProgressLine, CompactProgress, PendingIndicator, bookProgressText, busy, busyClick, isLoading, isPending, levelBusy, loading, musicLoading, pending",
-    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Gate repair: reviewed identity-key motion, explicit layout, token spacing or semantic navigation changes; existing guard retained."
+    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Gate repair: reviewed identity-key motion, explicit layout, token spacing or semantic navigation changes; existing guard retained. Combined-source review (merge174 lintfix): both sides' changes to this file keep this statement and its guard unchanged."
   },
   {
     "id": "d91727560f169d121388",
     "kind": "pending",
     "path": "ui/src/listen/PlayerViews.tsx",
-    "line": 1509,
+    "line": 1511,
     "statement": "return switchRecord(bookId, async () => undefined).then(() =>",
     "occurrence": 1,
-    "source_sha256": "b19aaafabcbf836e8b8e068cd8eb47a037028dc49ecf64205bf86c07b9cf8883",
+    "source_sha256": "9693941f99ed3473dd81fe9865c55958dead2db506b69bab5e78291b7353237f",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; BookProgressLine, CompactProgress, PendingIndicator, bookProgressText, busy, busyClick, isLoading, isPending, levelBusy, loading, musicLoading, pending",
-    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Gate repair: reviewed identity-key motion, explicit layout, token spacing or semantic navigation changes; existing guard retained."
+    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Gate repair: reviewed identity-key motion, explicit layout, token spacing or semantic navigation changes; existing guard retained. Combined-source review (merge174 lintfix): both sides' changes to this file keep this statement and its guard unchanged."
   },
   {
     "id": "048072df29fe02577ac4",
     "kind": "pending",
     "path": "ui/src/listen/PlayerViews.tsx",
-    "line": 2044,
+    "line": 2046,
     "statement": "function PlayerModeSwitch({ reading, onSelect }: { reading: boolean; onSelect: (reading: boolean) => void }) {",
     "occurrence": 1,
-    "source_sha256": "b19aaafabcbf836e8b8e068cd8eb47a037028dc49ecf64205bf86c07b9cf8883",
+    "source_sha256": "9693941f99ed3473dd81fe9865c55958dead2db506b69bab5e78291b7353237f",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; BookProgressLine, CompactProgress, PendingIndicator, bookProgressText, busy, busyClick, isLoading, isPending, levelBusy, loading, musicLoading, pending",
-    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Gate repair: reviewed identity-key motion, explicit layout, token spacing or semantic navigation changes; existing guard retained."
+    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Gate repair: reviewed identity-key motion, explicit layout, token spacing or semantic navigation changes; existing guard retained. Combined-source review (merge174 lintfix): both sides' changes to this file keep this statement and its guard unchanged."
   },
   {
     "id": "bf54d84f837e1fca0fd4",
@@ -2310,7 +2310,7 @@
     "line": 179,
     "statement": "const flushReading = useCallback(async () => {",
     "occurrence": 1,
-    "source_sha256": "349b7ac0e8245b19f272b3bbf9cddc104b125858ed4d836fa5a75f2a73e4d730",
+    "source_sha256": "e9a172177cf273f104d8085789e052eed05a2f5d447998759c9a81e551ac9c1b",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; LoadingCrossfade, isLoading, loading, pending, saving",
     "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering."
@@ -3882,10 +3882,10 @@
     "line": 89,
     "statement": "export function busyClick<E extends { preventDefault: () => void }>(loading: boolean | undefined, onClick: ((event: E) => void) | undefined) {",
     "occurrence": 1,
-    "source_sha256": "c73b9f234201534628ae328a42a066fcdd6dc6e9e0d614ff6fe54f2128a0e8d4",
+    "source_sha256": "c3f3c6b6f412a628be568bd4271063d15f4addf1f8eda1ac966fc21a67ea7724",
     "disposition": "internal",
     "guard": "Async interface/helper boundary; concrete activation inventoried separately",
-    "reason": "This signature supplies work to a model or component; declaring it starts no user operation. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
+    "reason": "This signature supplies work to a model or component; declaring it starts no user operation. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Combined-source review (merge174 lintfix): both sides' changes to this file keep this statement and its guard unchanged."
   },
   {
     "id": "55eac8835610195bed03",
@@ -4362,10 +4362,10 @@
     "line": 116,
     "statement": "const decide = async (verb: Verb, device: InboxDevice, item?: InboxItem) => {",
     "occurrence": 1,
-    "source_sha256": "adc6466b22427bbe123a845b4bda1585f7e542b44eefb123534bcac015abe31d",
+    "source_sha256": "71b7025a198ba998f0163bd8f4f59dcb7c7c86fd8df6b17eb80a81dd2d48e449",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; busy, loading, setBusy",
-    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering."
+    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review (merge174 lintfix): both sides' changes to this file keep this statement and its guard unchanged."
   },
   {
     "id": "ed582c4ffef8f23b3e4d",
@@ -4374,10 +4374,10 @@
     "line": 134,
     "statement": "action: { label: S.s_khoi_phuc_c652d9c0, onClick: () => void decide(\"restore\", device, item) },",
     "occurrence": 1,
-    "source_sha256": "adc6466b22427bbe123a845b4bda1585f7e542b44eefb123534bcac015abe31d",
+    "source_sha256": "71b7025a198ba998f0163bd8f4f59dcb7c7c86fd8df6b17eb80a81dd2d48e449",
     "disposition": "internal",
     "guard": "Async interface/helper boundary; concrete activation inventoried separately",
-    "reason": "This signature supplies work to a model or component; declaring it starts no user operation."
+    "reason": "This signature supplies work to a model or component; declaring it starts no user operation. Combined-source review (merge174 lintfix): both sides' changes to this file keep this statement and its guard unchanged."
   },
   {
     "id": "266b0183ebb1101605e5",
@@ -4494,7 +4494,7 @@
     "line": 79,
     "statement": "<IconButton label={S.s_thu_lai_c58d068c} icon={RotateCw} onClick={() => void client.invalidateQueries({ queryKey: [\"library\"] })} />",
     "occurrence": 1,
-    "source_sha256": "57bc4fd961a85cf93e69e5791a96eb8feb7a6e354f7fdf0efcd53f7c5a3224e2",
+    "source_sha256": "3d9e7ac88f551630ff319836f3dffe1db9605035cf578711ed0ebdcbc91676b3",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; Progress, busy, isLoading, isPending, loading, pendingChanges, progress",
     "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering."
@@ -4506,7 +4506,7 @@
     "line": 263,
     "statement": "const openExisting = async () => {",
     "occurrence": 1,
-    "source_sha256": "57bc4fd961a85cf93e69e5791a96eb8feb7a6e354f7fdf0efcd53f7c5a3224e2",
+    "source_sha256": "3d9e7ac88f551630ff319836f3dffe1db9605035cf578711ed0ebdcbc91676b3",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; Progress, busy, isLoading, isPending, loading, pendingChanges, progress",
     "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering."
@@ -10803,13 +10803,13 @@
     "id": "1a7aa906907f8c98cbe0",
     "kind": "pending",
     "path": "mobile/android/app/src/main/java/vn/abook/player/ui/nowplaying/NowPlayingScreen.kt",
-    "line": 347,
+    "line": 364,
     "statement": "onRetry = { onDim(false); scope.launch { model.loadReadAlong() } },",
     "occurrence": 1,
-    "source_sha256": "faa069b041feea02be80537bdccb33fb2290855debaf1d5abd2ccbccec0f7729",
+    "source_sha256": "2f40794c1d0f5b712388b8f3ce48f37354c425736d279a1dc92ed57b14eba448",
     "disposition": "pending",
     "guard": "ViewModel/operation fields: pending, preparing, progress, windowProgress; Components pending indicator",
-    "reason": "The model retains the operation and locks repeats; UI uses the shared pending parameter, loading content or progress owner. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
+    "reason": "The model retains the operation and locks repeats; UI uses the shared pending parameter, loading content or progress owner. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Combined-source review (merge174 lintfix): both sides' changes to this file keep this statement and its guard unchanged."
   },
   {
     "id": "ace48ea02e5d8fec927b",
@@ -11274,7 +11274,7 @@
     "line": 127,
     "statement": "scope.launch {",
     "occurrence": 1,
-    "source_sha256": "8f40eabd62fbf23b080f7b280bbca2e1af74112e813dea813d43b6ea2af65fd5",
+    "source_sha256": "1fae5d28d3ec6eab1673d5e9902444d831283c1e0b9428cc2b9bfa56bf19e675",
     "disposition": "pending",
     "guard": "ViewModel/operation fields: busy, pending; Components pending indicator",
     "reason": "The model retains the operation and locks repeats; UI uses the shared pending parameter, loading content or progress owner. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
@@ -11286,7 +11286,7 @@
     "line": 168,
     "statement": "scope.launch {",
     "occurrence": 2,
-    "source_sha256": "8f40eabd62fbf23b080f7b280bbca2e1af74112e813dea813d43b6ea2af65fd5",
+    "source_sha256": "1fae5d28d3ec6eab1673d5e9902444d831283c1e0b9428cc2b9bfa56bf19e675",
     "disposition": "pending",
     "guard": "ViewModel/operation fields: busy, pending; Components pending indicator",
     "reason": "The model retains the operation and locks repeats; UI uses the shared pending parameter, loading content or progress owner. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
@@ -11298,7 +11298,7 @@
     "line": 175,
     "statement": "scope.launch {",
     "occurrence": 3,
-    "source_sha256": "8f40eabd62fbf23b080f7b280bbca2e1af74112e813dea813d43b6ea2af65fd5",
+    "source_sha256": "1fae5d28d3ec6eab1673d5e9902444d831283c1e0b9428cc2b9bfa56bf19e675",
     "disposition": "pending",
     "guard": "ViewModel/operation fields: busy, pending; Components pending indicator",
     "reason": "The model retains the operation and locks repeats; UI uses the shared pending parameter, loading content or progress owner. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
@@ -11310,7 +11310,7 @@
     "line": 217,
     "statement": "scope.launch {",
     "occurrence": 4,
-    "source_sha256": "8f40eabd62fbf23b080f7b280bbca2e1af74112e813dea813d43b6ea2af65fd5",
+    "source_sha256": "1fae5d28d3ec6eab1673d5e9902444d831283c1e0b9428cc2b9bfa56bf19e675",
     "disposition": "pending",
     "guard": "ViewModel/operation fields: busy, pending; Components pending indicator",
     "reason": "The model retains the operation and locks repeats; UI uses the shared pending parameter, loading content or progress owner. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
@@ -15246,10 +15246,10 @@
     "line": 64,
     "statement": "Api.call(\"GET\", \"/api/listen/books/\" + id, null, function(data, error) { if (!error && id === root.book.bookId) root.fullBook = data })",
     "occurrence": 1,
-    "source_sha256": "def15105d7a5c4778e320005a05562cff1707a8cb7425ac4ed2425d601cd8b2a",
+    "source_sha256": "d396581b5644f87a30322d33d50f7f88ab16e3315328a0d42bb4f23a7bf1d2fa",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; ProgressBar, bookProgress, bookProgressLine, progress, progressLine, progressOf",
-    "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
+    "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Combined-source review (merge174 lintfix): both sides' changes to this file keep this statement and its guard unchanged."
   },
   {
     "id": "7d25ff271ae75b3e8573",
@@ -15258,10 +15258,10 @@
     "line": 72,
     "statement": "Api.call(\"GET\", \"/api/listen/books/\" + bookId, null, function(data, error) {",
     "occurrence": 1,
-    "source_sha256": "def15105d7a5c4778e320005a05562cff1707a8cb7425ac4ed2425d601cd8b2a",
+    "source_sha256": "d396581b5644f87a30322d33d50f7f88ab16e3315328a0d42bb4f23a7bf1d2fa",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; ProgressBar, bookProgress, bookProgressLine, progress, progressLine, progressOf",
-    "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
+    "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Combined-source review (merge174 lintfix): both sides' changes to this file keep this statement and its guard unchanged."
   },
   {
     "id": "bbe3ef32dfbb09cf74a9",
@@ -15270,10 +15270,10 @@
     "line": 140,
     "statement": "Api.call(\"POST\", \"/api/listen/books/\" + id + \"/finished\", active ? {finished: finished, record: active.id} : {finished: finished}, function(data, error) {",
     "occurrence": 1,
-    "source_sha256": "def15105d7a5c4778e320005a05562cff1707a8cb7425ac4ed2425d601cd8b2a",
+    "source_sha256": "d396581b5644f87a30322d33d50f7f88ab16e3315328a0d42bb4f23a7bf1d2fa",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; ProgressBar, bookProgress, bookProgressLine, progress, progressLine, progressOf",
-    "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
+    "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Combined-source review (merge174 lintfix): both sides' changes to this file keep this statement and its guard unchanged."
   },
   {
     "id": "6fee1b77cd5db713d5b8",
@@ -15282,10 +15282,10 @@
     "line": 271,
     "statement": "Api.call(\"POST\", \"/api/listen/books/\" + id + \"/chapters/\" + chapterId + \"/done\", body, function(data, error) {",
     "occurrence": 1,
-    "source_sha256": "def15105d7a5c4778e320005a05562cff1707a8cb7425ac4ed2425d601cd8b2a",
+    "source_sha256": "d396581b5644f87a30322d33d50f7f88ab16e3315328a0d42bb4f23a7bf1d2fa",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; ProgressBar, bookProgress, bookProgressLine, progress, progressLine, progressOf",
-    "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
+    "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Combined-source review (merge174 lintfix): both sides' changes to this file keep this statement and its guard unchanged."
   },
   {
     "id": "5c92264f2dc698b8f35c",
@@ -15378,7 +15378,7 @@
     "line": 41,
     "statement": "Api.quiet(\"GET\", \"/api/listen/books/\" + encodeURIComponent(id), null, function(data, err) {",
     "occurrence": 1,
-    "source_sha256": "04741ef52daa8f3703626d7452f45a969b54214f08050f2ef303284958d6d1e5",
+    "source_sha256": "28735ff307ef59e8cc3ea646c77bd85ea1f444d4f42a481603c3c52a3a970ac4",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; Reloading, loading, pendingParagraphs",
     "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads."
@@ -15390,7 +15390,7 @@
     "line": 56,
     "statement": "Api.quiet(\"GET\", path + (next.state === \"text\" ? \"/text\" : \"/script\"), null, function(data, err) {",
     "occurrence": 1,
-    "source_sha256": "04741ef52daa8f3703626d7452f45a969b54214f08050f2ef303284958d6d1e5",
+    "source_sha256": "28735ff307ef59e8cc3ea646c77bd85ea1f444d4f42a481603c3c52a3a970ac4",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; Reloading, loading, pendingParagraphs",
     "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads."
@@ -15474,10 +15474,10 @@
     "line": 99,
     "statement": "Api.call(\"GET\", \"/api/listen/books/\" + id, null, function(fresh, error) {",
     "occurrence": 1,
-    "source_sha256": "e708dd65f598b52bca09d3faf604d6e5dc53a155eb5aebb4b30d4dbafe09e4b6",
+    "source_sha256": "d6b78ec7bd69bcac3f9c6704cbb66cebd1bbc67692347d8aa542c0a3cd128cb4",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; busy, savingAuthor",
-    "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Combined-source review: the metadata field delegate now sizes from its column by id (null parent during Repeater teardown); this action and its guard are unchanged."
+    "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Combined-source review: the metadata field delegate now sizes from its column by id (null parent during Repeater teardown); this action and its guard are unchanged. Combined-source review (merge174 lintfix): both sides' changes to this file keep this statement and its guard unchanged."
   },
   {
     "id": "7d61c4ce9b357f430ab1",
@@ -15486,34 +15486,34 @@
     "line": 109,
     "statement": "Api.call(method, \"/api/books/\" + bookId + suffix, body, function(data, error) {",
     "occurrence": 1,
-    "source_sha256": "e708dd65f598b52bca09d3faf604d6e5dc53a155eb5aebb4b30d4dbafe09e4b6",
+    "source_sha256": "d6b78ec7bd69bcac3f9c6704cbb66cebd1bbc67692347d8aa542c0a3cd128cb4",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; busy, savingAuthor",
-    "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Combined-source review: the metadata field delegate now sizes from its column by id (null parent during Repeater teardown); this action and its guard are unchanged."
+    "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Combined-source review: the metadata field delegate now sizes from its column by id (null parent during Repeater teardown); this action and its guard are unchanged. Combined-source review (merge174 lintfix): both sides' changes to this file keep this statement and its guard unchanged."
   },
   {
     "id": "245ccc206eb79582a95b",
     "kind": "destructive",
     "path": "desktop_qt/qml/EditBook.qml",
-    "line": 328,
+    "line": 331,
     "statement": "onActivated: root.removeCover()",
     "occurrence": 1,
-    "source_sha256": "e708dd65f598b52bca09d3faf604d6e5dc53a155eb5aebb4b30d4dbafe09e4b6",
+    "source_sha256": "d6b78ec7bd69bcac3f9c6704cbb66cebd1bbc67692347d8aa542c0a3cd128cb4",
     "disposition": "confirmation",
     "guard": "EditBook cover DestructiveConfirm and DiscardSheet / discard dialog",
-    "reason": "Cover removal and discarding saved edits have explicit object-specific confirmations. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Combined-source review: the metadata field delegate now sizes from its column by id (null parent during Repeater teardown); this action and its guard are unchanged."
+    "reason": "Cover removal and discarding saved edits have explicit object-specific confirmations. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Combined-source review: the metadata field delegate now sizes from its column by id (null parent during Repeater teardown); this action and its guard are unchanged. Combined-source review (merge174 lintfix): both sides' changes to this file keep this statement and its guard unchanged."
   },
   {
     "id": "16933171519c1e852e5e",
     "kind": "destructive",
     "path": "desktop_qt/qml/EditBook.qml",
-    "line": 477,
+    "line": 480,
     "statement": "DestructiveConfirm { id: removeConfirm; objectName: \"editCoverRemoveConfirm\"; title: S.s_bo_anh_bia_696c6692; description: S.s_irreversible_detail(root.book ? root.book.title || \"\" : \"\"); onAccepted: root.removeCoverConfirmed() }",
     "occurrence": 1,
-    "source_sha256": "e708dd65f598b52bca09d3faf604d6e5dc53a155eb5aebb4b30d4dbafe09e4b6",
+    "source_sha256": "d6b78ec7bd69bcac3f9c6704cbb66cebd1bbc67692347d8aa542c0a3cd128cb4",
     "disposition": "confirmation",
     "guard": "EditBook cover DestructiveConfirm and DiscardSheet / discard dialog",
-    "reason": "Cover removal and discarding saved edits have explicit object-specific confirmations. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Combined-source review: the metadata field delegate now sizes from its column by id (null parent during Repeater teardown); this action and its guard are unchanged."
+    "reason": "Cover removal and discarding saved edits have explicit object-specific confirmations. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Combined-source review: the metadata field delegate now sizes from its column by id (null parent during Repeater teardown); this action and its guard are unchanged. Combined-source review (merge174 lintfix): both sides' changes to this file keep this statement and its guard unchanged."
   },
   {
     "id": "253585c3c7f1d48cd2a3",
@@ -15678,7 +15678,7 @@
     "line": 190,
     "statement": "onTextChanged: if (length > 160) remove(160, length)",
     "occurrence": 1,
-    "source_sha256": "d9ddd216adb864475b9161521da594e70c2830ab16a90c19f311dcdba3186c45",
+    "source_sha256": "2dfacb5f6f3e3dc1ceda1dad4cccfc64a3d901296f1b8119bae1482078253366",
     "disposition": "internal",
     "guard": "Temporary DOM/audio/image lifecycle or string/UI bookkeeping",
     "reason": "Only a transient node, source attribute, cache image, listener, collection entry or display text is affected. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
@@ -15786,10 +15786,10 @@
     "line": 38,
     "statement": "Api.quiet(\"GET\", \"/api/music/library\" + Logic.libraryQuery(forSaved ? Logic.noFilters() : effective, forSaved), null, function(data, problem) {",
     "occurrence": 1,
-    "source_sha256": "6c4ee409224fd2cbefc2eca68e53222a000e913c7fbdbc65bdea9d4d729d4fd8",
+    "source_sha256": "50858d0f2139ce31a07761190358e15d98b2d42e76287db40c6aabde6dc31668",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; busy, loading, previewLoading",
-    "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads."
+    "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads. Combined-source review (merge174 lintfix): both sides' changes to this file keep this statement and its guard unchanged."
   },
   {
     "id": "485fb14a64c3b24b2dfd",
@@ -15798,10 +15798,10 @@
     "line": 46,
     "statement": "function loadMeta() { Api.quiet(\"GET\", \"/api/music/library/meta\", null, function(data, problem) { if (!problem) meta = data }) }",
     "occurrence": 1,
-    "source_sha256": "6c4ee409224fd2cbefc2eca68e53222a000e913c7fbdbc65bdea9d4d729d4fd8",
+    "source_sha256": "50858d0f2139ce31a07761190358e15d98b2d42e76287db40c6aabde6dc31668",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; busy, loading, previewLoading",
-    "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads."
+    "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads. Combined-source review (merge174 lintfix): both sides' changes to this file keep this statement and its guard unchanged."
   },
   {
     "id": "63580d02e9c71debd82d",
@@ -15810,10 +15810,10 @@
     "line": 47,
     "statement": "function pollDownloads() { Api.quiet(\"GET\", \"/api/music/library/downloads\", null, function(data, problem) { if (!problem) { const was = busy; downloads = data; if (was && !busy) refresh() } }) }",
     "occurrence": 1,
-    "source_sha256": "6c4ee409224fd2cbefc2eca68e53222a000e913c7fbdbc65bdea9d4d729d4fd8",
+    "source_sha256": "50858d0f2139ce31a07761190358e15d98b2d42e76287db40c6aabde6dc31668",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; busy, loading, previewLoading",
-    "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads."
+    "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads. Combined-source review (merge174 lintfix): both sides' changes to this file keep this statement and its guard unchanged."
   },
   {
     "id": "fd59f89de875c0fc3d1f",
@@ -15822,10 +15822,10 @@
     "line": 51,
     "statement": "Api.quiet(\"POST\", \"/api/music/library/save\", {links: links}, function(data, problem) {",
     "occurrence": 1,
-    "source_sha256": "6c4ee409224fd2cbefc2eca68e53222a000e913c7fbdbc65bdea9d4d729d4fd8",
+    "source_sha256": "50858d0f2139ce31a07761190358e15d98b2d42e76287db40c6aabde6dc31668",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; busy, loading, previewLoading",
-    "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads."
+    "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads. Combined-source review (merge174 lintfix): both sides' changes to this file keep this statement and its guard unchanged."
   },
   {
     "id": "06db7e2ac926d73ec0dc",
@@ -15834,10 +15834,10 @@
     "line": 56,
     "statement": "function unsave(links) {",
     "occurrence": 1,
-    "source_sha256": "6c4ee409224fd2cbefc2eca68e53222a000e913c7fbdbc65bdea9d4d729d4fd8",
+    "source_sha256": "50858d0f2139ce31a07761190358e15d98b2d42e76287db40c6aabde6dc31668",
     "disposition": "internal",
     "guard": "Declaration; the invoked call site is independently inventoried",
-    "reason": "A declaration/signature is not an executing UI action."
+    "reason": "A declaration/signature is not an executing UI action. Combined-source review (merge174 lintfix): both sides' changes to this file keep this statement and its guard unchanged."
   },
   {
     "id": "c151ddb7ac9e880a865a",
@@ -15846,10 +15846,10 @@
     "line": 57,
     "statement": "Api.quiet(\"POST\", \"/api/music/library/unsave\", {links: links}, function(data, problem) {",
     "occurrence": 1,
-    "source_sha256": "6c4ee409224fd2cbefc2eca68e53222a000e913c7fbdbc65bdea9d4d729d4fd8",
+    "source_sha256": "50858d0f2139ce31a07761190358e15d98b2d42e76287db40c6aabde6dc31668",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; busy, loading, previewLoading",
-    "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads."
+    "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads. Combined-source review (merge174 lintfix): both sides' changes to this file keep this statement and its guard unchanged."
   },
   {
     "id": "1a1eba6d678aa67c99b8",
@@ -15858,10 +15858,10 @@
     "line": 63,
     "statement": "Api.quiet(\"POST\", \"/api/music/library/cancel\", {links: links}, function(data, problem) {",
     "occurrence": 1,
-    "source_sha256": "6c4ee409224fd2cbefc2eca68e53222a000e913c7fbdbc65bdea9d4d729d4fd8",
+    "source_sha256": "50858d0f2139ce31a07761190358e15d98b2d42e76287db40c6aabde6dc31668",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; busy, loading, previewLoading",
-    "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads."
+    "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads. Combined-source review (merge174 lintfix): both sides' changes to this file keep this statement and its guard unchanged."
   },
   {
     "id": "a40120169b36a3ff8bcb",
@@ -15870,10 +15870,10 @@
     "line": 74,
     "statement": "Api.quiet(\"PUT\", \"/api/books/\" + encodeURIComponent(pickBook) + \"/music\", {pins: (function() { const pins = {}; pins[pickScene] = link; return pins })()}, function(data, problem) {",
     "occurrence": 1,
-    "source_sha256": "6c4ee409224fd2cbefc2eca68e53222a000e913c7fbdbc65bdea9d4d729d4fd8",
+    "source_sha256": "50858d0f2139ce31a07761190358e15d98b2d42e76287db40c6aabde6dc31668",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; busy, loading, previewLoading",
-    "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads."
+    "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads. Combined-source review (merge174 lintfix): both sides' changes to this file keep this statement and its guard unchanged."
   },
   {
     "id": "2b1d1f7131525e8ff40e",
@@ -15882,10 +15882,10 @@
     "line": 82,
     "statement": "Api.quiet(\"PUT\", \"/api/books/\" + encodeURIComponent(pickBook) + \"/music\", {ban: [link]}, function(data, problem) {",
     "occurrence": 1,
-    "source_sha256": "6c4ee409224fd2cbefc2eca68e53222a000e913c7fbdbc65bdea9d4d729d4fd8",
+    "source_sha256": "50858d0f2139ce31a07761190358e15d98b2d42e76287db40c6aabde6dc31668",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; busy, loading, previewLoading",
-    "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads."
+    "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads. Combined-source review (merge174 lintfix): both sides' changes to this file keep this statement and its guard unchanged."
   },
   {
     "id": "9e8eb9cacd8e40789546",
@@ -15894,7 +15894,7 @@
     "line": 216,
     "statement": "onDeleteDownload: root.unsave([modelData.link])",
     "occurrence": 1,
-    "source_sha256": "2951d0e18c280c2eaa63103b25ff401c0ec86a4edc6c2b35886fe554d8c4607f",
+    "source_sha256": "83fcd560785a97940f5e94e140ee49a180c368395b05aa99efcc8d508f535e06",
     "disposition": "confirmation",
     "guard": "DownloadControl / TrackRow / TrackSheet DestructiveConfirm; cancel incomplete transfer is exempt",
     "reason": "Complete music download removal is confirmed with track title and size. Cancelling an unfinished download discards partial bytes immediately."
@@ -15903,13 +15903,13 @@
     "id": "c4ccff7e968500ed6810",
     "kind": "destructive",
     "path": "desktop_qt/qml/MusicScreen.qml",
-    "line": 263,
+    "line": 265,
     "statement": "onUnsave: root.unsave([detail.link])",
     "occurrence": 1,
-    "source_sha256": "6c4ee409224fd2cbefc2eca68e53222a000e913c7fbdbc65bdea9d4d729d4fd8",
+    "source_sha256": "50858d0f2139ce31a07761190358e15d98b2d42e76287db40c6aabde6dc31668",
     "disposition": "confirmation",
     "guard": "DownloadControl / TrackRow / TrackSheet DestructiveConfirm; cancel incomplete transfer is exempt",
-    "reason": "Complete music download removal is confirmed with track title and size. Cancelling an unfinished download discards partial bytes immediately."
+    "reason": "Complete music download removal is confirmed with track title and size. Cancelling an unfinished download discards partial bytes immediately. Combined-source review (merge174 lintfix): both sides' changes to this file keep this statement and its guard unchanged."
   },
   {
     "id": "59c233eed2e5c73b6eb9",
@@ -16182,10 +16182,10 @@
     "line": 48,
     "statement": "Api.call(method, path, body, function(result, error) { if (error) Api.notice = before; done(result, error) })",
     "occurrence": 1,
-    "source_sha256": "44bbdd8d16ba1a424278a5aebfaf4d0825e4adc200e1cbc72bf93f533d838cd1",
+    "source_sha256": "d093b21a0b5bbefa7350d9341a62048aca054b6fb46c5a85e9ea03b253cba040",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; bluetoothBusy, busy, busyChoice, pairBusy, refreshBusy",
-    "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads."
+    "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads. Combined-source review (merge174 lintfix): both sides' changes to this file keep this statement and its guard unchanged."
   },
   {
     "id": "dd50425e71dfeb0ff65c",
@@ -16194,10 +16194,10 @@
     "line": 73,
     "statement": "Api.quiet(\"POST\", \"/api/computers\", {address: address, code: code, fingerprint: fingerprint || \"\"}, function(view, error, detail) {",
     "occurrence": 1,
-    "source_sha256": "44bbdd8d16ba1a424278a5aebfaf4d0825e4adc200e1cbc72bf93f533d838cd1",
+    "source_sha256": "d093b21a0b5bbefa7350d9341a62048aca054b6fb46c5a85e9ea03b253cba040",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; bluetoothBusy, busy, busyChoice, pairBusy, refreshBusy",
-    "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads."
+    "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads. Combined-source review (merge174 lintfix): both sides' changes to this file keep this statement and its guard unchanged."
   },
   {
     "id": "e30047a0d0e444b95d93",
@@ -16206,10 +16206,10 @@
     "line": 89,
     "statement": "Api.call(\"POST\", \"/api/computers/refresh\", null, function(view, error) { root.refreshBusy = false; if (!error) root.done(view) })",
     "occurrence": 1,
-    "source_sha256": "44bbdd8d16ba1a424278a5aebfaf4d0825e4adc200e1cbc72bf93f533d838cd1",
+    "source_sha256": "d093b21a0b5bbefa7350d9341a62048aca054b6fb46c5a85e9ea03b253cba040",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; bluetoothBusy, busy, busyChoice, pairBusy, refreshBusy",
-    "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads."
+    "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads. Combined-source review (merge174 lintfix): both sides' changes to this file keep this statement and its guard unchanged."
   },
   {
     "id": "320564825957a408c90c",
@@ -16218,10 +16218,10 @@
     "line": 93,
     "statement": "Api.call(\"POST\", \"/api/computers/\" + id + \"/stop-waiting\", null, function(view, error) { root.refreshBusy = false; if (!error) root.done(view) })",
     "occurrence": 1,
-    "source_sha256": "44bbdd8d16ba1a424278a5aebfaf4d0825e4adc200e1cbc72bf93f533d838cd1",
+    "source_sha256": "d093b21a0b5bbefa7350d9341a62048aca054b6fb46c5a85e9ea03b253cba040",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; bluetoothBusy, busy, busyChoice, pairBusy, refreshBusy",
-    "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads."
+    "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads. Combined-source review (merge174 lintfix): both sides' changes to this file keep this statement and its guard unchanged."
   },
   {
     "id": "088d87b8a5c00ae07fb7",
@@ -16230,10 +16230,10 @@
     "line": 97,
     "statement": "Api.call(\"POST\", \"/api/computers/\" + id + \"/bluetooth\", {address: bluetoothAddress}, function(view, error) {",
     "occurrence": 1,
-    "source_sha256": "44bbdd8d16ba1a424278a5aebfaf4d0825e4adc200e1cbc72bf93f533d838cd1",
+    "source_sha256": "d093b21a0b5bbefa7350d9341a62048aca054b6fb46c5a85e9ea03b253cba040",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; bluetoothBusy, busy, busyChoice, pairBusy, refreshBusy",
-    "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads."
+    "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads. Combined-source review (merge174 lintfix): both sides' changes to this file keep this statement and its guard unchanged."
   },
   {
     "id": "bec31e9a7220212196d7",
@@ -16242,10 +16242,10 @@
     "line": 106,
     "statement": "Api.call(\"GET\", \"/api/computers/discover\", null, function(result, error) {",
     "occurrence": 1,
-    "source_sha256": "44bbdd8d16ba1a424278a5aebfaf4d0825e4adc200e1cbc72bf93f533d838cd1",
+    "source_sha256": "d093b21a0b5bbefa7350d9341a62048aca054b6fb46c5a85e9ea03b253cba040",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; bluetoothBusy, busy, busyChoice, pairBusy, refreshBusy",
-    "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads."
+    "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads. Combined-source review (merge174 lintfix): both sides' changes to this file keep this statement and its guard unchanged."
   },
   {
     "id": "3e8284706ddbe9b78202",
@@ -16254,10 +16254,10 @@
     "line": 124,
     "statement": "Api.call(\"DELETE\", \"/api/computers/\" + computer.id + edits, null, function(view, error) {",
     "occurrence": 1,
-    "source_sha256": "44bbdd8d16ba1a424278a5aebfaf4d0825e4adc200e1cbc72bf93f533d838cd1",
+    "source_sha256": "d093b21a0b5bbefa7350d9341a62048aca054b6fb46c5a85e9ea03b253cba040",
     "disposition": "confirmation",
     "guard": "useUnpair / DevicesUnpair / DeviceSheets ForgetPage and revoke confirmation",
-    "reason": "The preflight names unsent edits and cached books; even an empty device now asks before forgetting its identity."
+    "reason": "The preflight names unsent edits and cached books; even an empty device now asks before forgetting its identity. Combined-source review (merge174 lintfix): both sides' changes to this file keep this statement and its guard unchanged."
   },
   {
     "id": "fddf260a6b07cb7df129",
@@ -16266,10 +16266,10 @@
     "line": 124,
     "statement": "Api.call(\"DELETE\", \"/api/computers/\" + computer.id + edits, null, function(view, error) {",
     "occurrence": 1,
-    "source_sha256": "44bbdd8d16ba1a424278a5aebfaf4d0825e4adc200e1cbc72bf93f533d838cd1",
+    "source_sha256": "d093b21a0b5bbefa7350d9341a62048aca054b6fb46c5a85e9ea03b253cba040",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; bluetoothBusy, busy, busyChoice, pairBusy, refreshBusy",
-    "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads."
+    "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads. Combined-source review (merge174 lintfix): both sides' changes to this file keep this statement and its guard unchanged."
   },
   {
     "id": "777bdee01bb073fedd3a",
@@ -16278,10 +16278,10 @@
     "line": 131,
     "statement": "Api.call(\"GET\", \"/api/computers/\" + computer.id + \"/unsent\", null, function(unsent, error) {",
     "occurrence": 1,
-    "source_sha256": "44bbdd8d16ba1a424278a5aebfaf4d0825e4adc200e1cbc72bf93f533d838cd1",
+    "source_sha256": "d093b21a0b5bbefa7350d9341a62048aca054b6fb46c5a85e9ea03b253cba040",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; bluetoothBusy, busy, busyChoice, pairBusy, refreshBusy",
-    "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads."
+    "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads. Combined-source review (merge174 lintfix): both sides' changes to this file keep this statement and its guard unchanged."
   },
   {
     "id": "f613cb4300e26956b187",
@@ -16290,10 +16290,10 @@
     "line": 133,
     "statement": "if (Logic.unpairCopy(computer.name, S.s_may_tinh_8eafc226, unsent, root.reachable(computer)) === null) {",
     "occurrence": 1,
-    "source_sha256": "44bbdd8d16ba1a424278a5aebfaf4d0825e4adc200e1cbc72bf93f533d838cd1",
+    "source_sha256": "d093b21a0b5bbefa7350d9341a62048aca054b6fb46c5a85e9ea03b253cba040",
     "disposition": "confirmation",
     "guard": "useUnpair / DevicesUnpair / DeviceSheets ForgetPage and revoke confirmation",
-    "reason": "The preflight names unsent edits and cached books; even an empty device now asks before forgetting its identity."
+    "reason": "The preflight names unsent edits and cached books; even an empty device now asks before forgetting its identity. Combined-source review (merge174 lintfix): both sides' changes to this file keep this statement and its guard unchanged."
   },
   {
     "id": "3481851a21d7a7833439",
@@ -16302,10 +16302,10 @@
     "line": 134,
     "statement": "root.runUnpair(computer, null, function(problem) { root.say(problem ? S.s_chua_bo_ghep_duoc_7e3c5ca4 : Logic.unpairDone(computer.name)) })",
     "occurrence": 1,
-    "source_sha256": "44bbdd8d16ba1a424278a5aebfaf4d0825e4adc200e1cbc72bf93f533d838cd1",
+    "source_sha256": "d093b21a0b5bbefa7350d9341a62048aca054b6fb46c5a85e9ea03b253cba040",
     "disposition": "confirmation",
     "guard": "useUnpair / DevicesUnpair / DeviceSheets ForgetPage and revoke confirmation",
-    "reason": "The preflight names unsent edits and cached books; even an empty device now asks before forgetting its identity."
+    "reason": "The preflight names unsent edits and cached books; even an empty device now asks before forgetting its identity. Combined-source review (merge174 lintfix): both sides' changes to this file keep this statement and its guard unchanged."
   },
   {
     "id": "46ff431f064cd0402c0a",
@@ -16314,22 +16314,22 @@
     "line": 150,
     "statement": "root.say(Logic.unpairDone(target.name))",
     "occurrence": 1,
-    "source_sha256": "44bbdd8d16ba1a424278a5aebfaf4d0825e4adc200e1cbc72bf93f533d838cd1",
+    "source_sha256": "d093b21a0b5bbefa7350d9341a62048aca054b6fb46c5a85e9ea03b253cba040",
     "disposition": "confirmation",
     "guard": "useUnpair / DevicesUnpair / DeviceSheets ForgetPage and revoke confirmation",
-    "reason": "The preflight names unsent edits and cached books; even an empty device now asks before forgetting its identity."
+    "reason": "The preflight names unsent edits and cached books; even an empty device now asks before forgetting its identity. Combined-source review (merge174 lintfix): both sides' changes to this file keep this statement and its guard unchanged."
   },
   {
     "id": "575789e967921b283925",
     "kind": "destructive",
     "path": "desktop_qt/qml/OtherComputers.qml",
-    "line": 408,
+    "line": 407,
     "statement": "copy: root.asking ? Logic.unpairCopy(root.asking.computer.name, S.s_may_tinh_8eafc226, root.asking.unsent, root.reachable(root.asking.computer)) : null",
     "occurrence": 1,
-    "source_sha256": "44bbdd8d16ba1a424278a5aebfaf4d0825e4adc200e1cbc72bf93f533d838cd1",
+    "source_sha256": "d093b21a0b5bbefa7350d9341a62048aca054b6fb46c5a85e9ea03b253cba040",
     "disposition": "confirmation",
     "guard": "useUnpair / DevicesUnpair / DeviceSheets ForgetPage and revoke confirmation",
-    "reason": "The preflight names unsent edits and cached books; even an empty device now asks before forgetting its identity."
+    "reason": "The preflight names unsent edits and cached books; even an empty device now asks before forgetting its identity. Combined-source review (merge174 lintfix): both sides' changes to this file keep this statement and its guard unchanged."
   },
   {
     "id": "6bf832a7cb3ab05d34ed",
@@ -16338,7 +16338,7 @@
     "line": 28,
     "statement": "signal unpair(var computer)",
     "occurrence": 1,
-    "source_sha256": "5968260b0049952b32a56cd4cff6b39b4946f4b803786654df04d00888029a1e",
+    "source_sha256": "edfd6ed7870f407404956178fb045b39c4db7538cffa09e15ff81fb9f4fef351",
     "disposition": "internal",
     "guard": "Declaration; the invoked call site is independently inventoried",
     "reason": "A declaration/signature is not an executing UI action."
@@ -16347,10 +16347,10 @@
     "id": "09fcb5fb114f68e3ae68",
     "kind": "destructive",
     "path": "desktop_qt/qml/OtherComputersRow.qml",
-    "line": 122,
+    "line": 123,
     "statement": "IconButton { objectName: \"unpairComputer\"; icon: \"unplug\"; tip: S.s_bo_ghep_9139fc92 + (root.computer.name || \"\"); Accessible.name: S.s_bo_ghep_9139fc92 + (root.computer.name || \"\"); onActivated: root.unpair(root.computer) }",
     "occurrence": 1,
-    "source_sha256": "5968260b0049952b32a56cd4cff6b39b4946f4b803786654df04d00888029a1e",
+    "source_sha256": "edfd6ed7870f407404956178fb045b39c4db7538cffa09e15ff81fb9f4fef351",
     "disposition": "confirmation",
     "guard": "useUnpair / DevicesUnpair / DeviceSheets ForgetPage and revoke confirmation",
     "reason": "The preflight names unsent edits and cached books; even an empty device now asks before forgetting its identity."
@@ -16362,7 +16362,7 @@
     "line": 41,
     "statement": "Api.call(method, path, body, function(data, error) { if (error) Api.notice = before; done(data, error) })",
     "occurrence": 1,
-    "source_sha256": "e17e921cb5384940489b6f14b5120aaf5f15f2929895fa8e4fe67303d14b547e",
+    "source_sha256": "8d76d5b55aa5a97bef6f21fec21ccf7109974db5af75c3caca6f450792584fcf",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; busy, focusPending, pairBusy, pendingStudio, pendingWanted, renameBusy, studioBusy, studioDeviceBusy",
     "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads."
@@ -16374,7 +16374,7 @@
     "line": 63,
     "statement": "Api.call(\"POST\", \"/api/sync\", {enabled: enabled}, function(data, error) {",
     "occurrence": 1,
-    "source_sha256": "e17e921cb5384940489b6f14b5120aaf5f15f2929895fa8e4fe67303d14b547e",
+    "source_sha256": "8d76d5b55aa5a97bef6f21fec21ccf7109974db5af75c3caca6f450792584fcf",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; busy, focusPending, pairBusy, pendingStudio, pendingWanted, renameBusy, studioBusy, studioDeviceBusy",
     "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads."
@@ -16386,7 +16386,7 @@
     "line": 74,
     "statement": "Api.call(\"POST\", \"/api/sync/pairing\", null, function(data, error) { root.pairBusy = false; if (!error) root.take(data) })",
     "occurrence": 1,
-    "source_sha256": "e17e921cb5384940489b6f14b5120aaf5f15f2929895fa8e4fe67303d14b547e",
+    "source_sha256": "8d76d5b55aa5a97bef6f21fec21ccf7109974db5af75c3caca6f450792584fcf",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; busy, focusPending, pairBusy, pendingStudio, pendingWanted, renameBusy, studioBusy, studioDeviceBusy",
     "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads."
@@ -16398,7 +16398,7 @@
     "line": 78,
     "statement": "Api.call(\"DELETE\", \"/api/sync/pairing\", null, function(data, error) { root.pairBusy = false; if (!error) root.take(data) })",
     "occurrence": 1,
-    "source_sha256": "e17e921cb5384940489b6f14b5120aaf5f15f2929895fa8e4fe67303d14b547e",
+    "source_sha256": "8d76d5b55aa5a97bef6f21fec21ccf7109974db5af75c3caca6f450792584fcf",
     "disposition": "confirmation",
     "guard": "PhoneSync removeDialog; DeviceSheets revoke confirmation",
     "reason": "Revoking an existing device asks first. Cancelling an unused pairing code invalidates only an ephemeral handshake."
@@ -16410,7 +16410,7 @@
     "line": 78,
     "statement": "Api.call(\"DELETE\", \"/api/sync/pairing\", null, function(data, error) { root.pairBusy = false; if (!error) root.take(data) })",
     "occurrence": 1,
-    "source_sha256": "e17e921cb5384940489b6f14b5120aaf5f15f2929895fa8e4fe67303d14b547e",
+    "source_sha256": "8d76d5b55aa5a97bef6f21fec21ccf7109974db5af75c3caca6f450792584fcf",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; busy, focusPending, pairBusy, pendingStudio, pendingWanted, renameBusy, studioBusy, studioDeviceBusy",
     "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads."
@@ -16422,7 +16422,7 @@
     "line": 82,
     "statement": "Api.call(\"POST\", \"/api/sync/studio\", {enabled: enabled}, function(data, error) { root.pendingStudio = null; if (!error) root.take(data) })",
     "occurrence": 1,
-    "source_sha256": "e17e921cb5384940489b6f14b5120aaf5f15f2929895fa8e4fe67303d14b547e",
+    "source_sha256": "8d76d5b55aa5a97bef6f21fec21ccf7109974db5af75c3caca6f450792584fcf",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; busy, focusPending, pairBusy, pendingStudio, pendingWanted, renameBusy, studioBusy, studioDeviceBusy",
     "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads."
@@ -16434,7 +16434,7 @@
     "line": 86,
     "statement": "Api.call(\"POST\", \"/api/sync/devices/\" + id + \"/studio\", {enabled: enabled}, function(data, error) { root.studioDeviceBusy = false; if (!error) root.take(data) })",
     "occurrence": 1,
-    "source_sha256": "e17e921cb5384940489b6f14b5120aaf5f15f2929895fa8e4fe67303d14b547e",
+    "source_sha256": "8d76d5b55aa5a97bef6f21fec21ccf7109974db5af75c3caca6f450792584fcf",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; busy, focusPending, pairBusy, pendingStudio, pendingWanted, renameBusy, studioBusy, studioDeviceBusy",
     "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads."
@@ -16446,7 +16446,7 @@
     "line": 89,
     "statement": "Api.call(\"DELETE\", \"/api/sync/devices/\" + id, null, function(data, error) {",
     "occurrence": 1,
-    "source_sha256": "e17e921cb5384940489b6f14b5120aaf5f15f2929895fa8e4fe67303d14b547e",
+    "source_sha256": "8d76d5b55aa5a97bef6f21fec21ccf7109974db5af75c3caca6f450792584fcf",
     "disposition": "confirmation",
     "guard": "PhoneSync removeDialog; DeviceSheets revoke confirmation",
     "reason": "Revoking an existing device asks first. Cancelling an unused pairing code invalidates only an ephemeral handshake."
@@ -16458,7 +16458,7 @@
     "line": 89,
     "statement": "Api.call(\"DELETE\", \"/api/sync/devices/\" + id, null, function(data, error) {",
     "occurrence": 1,
-    "source_sha256": "e17e921cb5384940489b6f14b5120aaf5f15f2929895fa8e4fe67303d14b547e",
+    "source_sha256": "8d76d5b55aa5a97bef6f21fec21ccf7109974db5af75c3caca6f450792584fcf",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; busy, focusPending, pairBusy, pendingStudio, pendingWanted, renameBusy, studioBusy, studioDeviceBusy",
     "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads."
@@ -16470,7 +16470,7 @@
     "line": 98,
     "statement": "Api.call(\"POST\", \"/api/sync/devices/\" + id + \"/name\", {name: name}, function(data, error) {",
     "occurrence": 1,
-    "source_sha256": "e17e921cb5384940489b6f14b5120aaf5f15f2929895fa8e4fe67303d14b547e",
+    "source_sha256": "8d76d5b55aa5a97bef6f21fec21ccf7109974db5af75c3caca6f450792584fcf",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; busy, focusPending, pairBusy, pendingStudio, pendingWanted, renameBusy, studioBusy, studioDeviceBusy",
     "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads."
@@ -16482,7 +16482,7 @@
     "line": 354,
     "statement": "onAccepted: root.revoke(removeDialog.targetId, removeDialog.targetName)",
     "occurrence": 1,
-    "source_sha256": "e17e921cb5384940489b6f14b5120aaf5f15f2929895fa8e4fe67303d14b547e",
+    "source_sha256": "8d76d5b55aa5a97bef6f21fec21ccf7109974db5af75c3caca6f450792584fcf",
     "disposition": "confirmation",
     "guard": "PhoneSync removeDialog; DeviceSheets revoke confirmation",
     "reason": "Revoking an existing device asks first. Cancelling an unused pairing code invalidates only an ephemeral handshake."
@@ -16494,22 +16494,22 @@
     "line": 24,
     "statement": "signal remove(string id, string name)",
     "occurrence": 1,
-    "source_sha256": "635a32538bf88472fdeb3908b3e35d9ef960ea8edf98f1bebb56b85a228dee6e",
+    "source_sha256": "2fddda65ce60fd69966849dc5b1849fcd4ffa5b72bdf90789f60542e714315ec",
     "disposition": "internal",
     "guard": "Declaration; the invoked call site is independently inventoried",
-    "reason": "A declaration/signature is not an executing UI action. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
+    "reason": "A declaration/signature is not an executing UI action. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Combined-source review (merge174 lintfix): both sides' changes to this file keep this statement and its guard unchanged."
   },
   {
     "id": "fe5c0b6498baf17f76da",
     "kind": "destructive",
     "path": "desktop_qt/qml/PhoneSyncDevice.qml",
-    "line": 95,
+    "line": 96,
     "statement": "Button { size: \"sm\"; kind: \"ghost\"; text: S.s_bo_ghep_64f921f9; onActivated: root.remove(root.rowId, root.device.name || \"\") }",
     "occurrence": 1,
-    "source_sha256": "635a32538bf88472fdeb3908b3e35d9ef960ea8edf98f1bebb56b85a228dee6e",
+    "source_sha256": "2fddda65ce60fd69966849dc5b1849fcd4ffa5b72bdf90789f60542e714315ec",
     "disposition": "confirmation",
     "guard": "PhoneSync removeDialog; DeviceSheets revoke confirmation",
-    "reason": "Revoking an existing device asks first. Cancelling an unused pairing code invalidates only an ephemeral handshake. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
+    "reason": "Revoking an existing device asks first. Cancelling an unused pairing code invalidates only an ephemeral handshake. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Combined-source review (merge174 lintfix): both sides' changes to this file keep this statement and its guard unchanged."
   },
   {
     "id": "08069e103fd1f13ad299",
@@ -16566,7 +16566,7 @@
     "line": 45,
     "statement": "for (let i = rowModel.count - 1; i >= 0; --i) if (!byKey[rowModel.get(i).key]) rowModel.remove(i)",
     "occurrence": 1,
-    "source_sha256": "f41570ba658a18feae82601ff55846d4a5ab42e0228becf1e5294e4338411cba",
+    "source_sha256": "dd850f989db62dff189161c20ad635a3376c7a8f0b843fa126683fc1dc95a442",
     "disposition": "internal",
     "guard": "In-memory collection entry lifecycle",
     "reason": "The statement releases a listener, request, UI row, selection or cache entry; it does not delete its persisted source."
@@ -16578,7 +16578,7 @@
     "line": 36,
     "statement": "Api.quiet(\"PUT\", path(), {key: secret.text.trim(), region: regionField.text.trim()}, function(data, error) {",
     "occurrence": 1,
-    "source_sha256": "7fd6c933d470cf9a091f10d9926c47389a7e02d998ac3618bea2046d869843b0",
+    "source_sha256": "2fc56b7661c86ab4c96ac9bb4be41975820f0c7ca7892de4dbe10ed219687ef2",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; busy",
     "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads."
@@ -16590,7 +16590,7 @@
     "line": 45,
     "statement": "Api.quiet(\"POST\", path() + \"/check\", {}, function(checked, error) {",
     "occurrence": 1,
-    "source_sha256": "7fd6c933d470cf9a091f10d9926c47389a7e02d998ac3618bea2046d869843b0",
+    "source_sha256": "2fc56b7661c86ab4c96ac9bb4be41975820f0c7ca7892de4dbe10ed219687ef2",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; busy",
     "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads."
@@ -16602,7 +16602,7 @@
     "line": 58,
     "statement": "Api.quiet(\"PUT\", path(), {key: secret.text.trim() || \"\", region: regionField.text.trim()}, function(data, error) {",
     "occurrence": 1,
-    "source_sha256": "7fd6c933d470cf9a091f10d9926c47389a7e02d998ac3618bea2046d869843b0",
+    "source_sha256": "2fc56b7661c86ab4c96ac9bb4be41975820f0c7ca7892de4dbe10ed219687ef2",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; busy",
     "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads."
@@ -16614,7 +16614,7 @@
     "line": 67,
     "statement": "Api.quiet(\"DELETE\", path(), null, function(data, error) {",
     "occurrence": 1,
-    "source_sha256": "7fd6c933d470cf9a091f10d9926c47389a7e02d998ac3618bea2046d869843b0",
+    "source_sha256": "2fc56b7661c86ab4c96ac9bb4be41975820f0c7ca7892de4dbe10ed219687ef2",
     "disposition": "confirmation",
     "guard": "VoiceSettings useDestructiveConfirm / ProviderKey removeConfirm / VoiceSheets key confirmation",
     "reason": "Provider credentials are deleted only after the object-specific confirmation."
@@ -16626,7 +16626,7 @@
     "line": 67,
     "statement": "Api.quiet(\"DELETE\", path(), null, function(data, error) {",
     "occurrence": 1,
-    "source_sha256": "7fd6c933d470cf9a091f10d9926c47389a7e02d998ac3618bea2046d869843b0",
+    "source_sha256": "2fc56b7661c86ab4c96ac9bb4be41975820f0c7ca7892de4dbe10ed219687ef2",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; busy",
     "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads."
@@ -16635,10 +16635,10 @@
     "id": "790b421226fb95a91084",
     "kind": "destructive",
     "path": "desktop_qt/qml/ProviderKey.qml",
-    "line": 178,
+    "line": 179,
     "statement": "onActivated: root.remove()",
     "occurrence": 1,
-    "source_sha256": "7fd6c933d470cf9a091f10d9926c47389a7e02d998ac3618bea2046d869843b0",
+    "source_sha256": "2fc56b7661c86ab4c96ac9bb4be41975820f0c7ca7892de4dbe10ed219687ef2",
     "disposition": "confirmation",
     "guard": "VoiceSettings useDestructiveConfirm / ProviderKey removeConfirm / VoiceSheets key confirmation",
     "reason": "Provider credentials are deleted only after the object-specific confirmation."
@@ -16647,10 +16647,10 @@
     "id": "1a86817bd7d2426f391a",
     "kind": "destructive",
     "path": "desktop_qt/qml/ProviderKey.qml",
-    "line": 197,
+    "line": 198,
     "statement": "DestructiveConfirm { id: removeConfirm; objectName: \"keyRemoveConfirm\"; title: S.s_xoa_khoa_2ec6cb1a; description: S.s_khoa_0_se_bi_xoa_khoi_may_nay_va_cac_giong_735b6db2(root.info.name || \"\"); onAccepted: root.removeConfirmed() }",
     "occurrence": 1,
-    "source_sha256": "7fd6c933d470cf9a091f10d9926c47389a7e02d998ac3618bea2046d869843b0",
+    "source_sha256": "2fc56b7661c86ab4c96ac9bb4be41975820f0c7ca7892de4dbe10ed219687ef2",
     "disposition": "confirmation",
     "guard": "VoiceSettings useDestructiveConfirm / ProviderKey removeConfirm / VoiceSheets key confirmation",
     "reason": "Provider credentials are deleted only after the object-specific confirmation."
@@ -16710,7 +16710,7 @@
     "line": 98,
     "statement": "if (kind === \"delete\") return {method: \"DELETE\", path: base(bookId) + \"/\" + active.id, body: null}",
     "occurrence": 1,
-    "source_sha256": "d7849caf3d2480723c5ef51cc511e4c9f53f202c2a39a707319fc12073ed32b1",
+    "source_sha256": "2cfb872bb34a2a2ce7a66c0eac06eafe5779ab5d3b271721049052d4c3cf29e0",
     "disposition": "confirmation",
     "guard": "BookRecords ConfirmPage / BookScreen record Dialog / RecordDialogs Modal / DeleteBookPage",
     "reason": "Deleting a listening profile explicitly describes loss of progress and history. Deleting a book uses the book confirmation."
@@ -16722,10 +16722,10 @@
     "line": 88,
     "statement": "work.store.request(\"GET\", root.pathFor(cursor), null, function(status, page) {",
     "occurrence": 1,
-    "source_sha256": "0f57d271a9beb6008b28b487fae324055ca55357d414a681072d82cfc8ff96a2",
+    "source_sha256": "e5df5e2ee1454475a21dcc2721216fc1b6d8432a215f60f2854d8464f538f442",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; fetchingNext, loading, pending",
-    "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads."
+    "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads. Combined-source review (merge174 lintfix): both sides' changes to this file keep this statement and its guard unchanged."
   },
   {
     "id": "59148ca25b07a891e322",
@@ -16734,10 +16734,10 @@
     "line": 100,
     "statement": "work.store.request(\"GET\", pathFor(last.nextCursor), null, function(status, page) {",
     "occurrence": 1,
-    "source_sha256": "0f57d271a9beb6008b28b487fae324055ca55357d414a681072d82cfc8ff96a2",
+    "source_sha256": "e5df5e2ee1454475a21dcc2721216fc1b6d8432a215f60f2854d8464f538f442",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; fetchingNext, loading, pending",
-    "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads."
+    "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads. Combined-source review (merge174 lintfix): both sides' changes to this file keep this statement and its guard unchanged."
   },
   {
     "id": "6eefaf3a9979ac809e65",
@@ -16770,10 +16770,10 @@
     "line": 122,
     "statement": "for (let i = lineModel.count - 1; i >= 0; --i) if (!next[lineModel.get(i).key]) lineModel.remove(i)",
     "occurrence": 1,
-    "source_sha256": "1efc3b0368a18611016306bd6480a469b30003cd3c3b1b42b1d95edc31cdb348",
+    "source_sha256": "9d29767b405c016e2807e9704d163e649d6ec9ed1c0642b75b01b3e5b64822c1",
     "disposition": "internal",
     "guard": "In-memory collection entry lifecycle",
-    "reason": "The statement releases a listener, request, UI row, selection or cache entry; it does not delete its persisted source. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
+    "reason": "The statement releases a listener, request, UI row, selection or cache entry; it does not delete its persisted source. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Combined-source review (merge174 lintfix): both sides' changes to this file keep this statement and its guard unchanged."
   },
   {
     "id": "667a39e364701bf232be",
@@ -16782,7 +16782,7 @@
     "line": 60,
     "statement": "Api.call(\"GET\", \"/api/sync\", null, function(data, error) { if (!error) root.sync = data })",
     "occurrence": 1,
-    "source_sha256": "5074a8f5ae663e163e78f2a397f76ce1acf83db03c81c54aa2d8c4ad7b8a43c2",
+    "source_sha256": "1833cc5c28416f52ca98695cdeecdc8c9392a57a9befa651a595974f7387a829",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; ",
     "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
@@ -16794,7 +16794,7 @@
     "line": 27,
     "statement": "Api.quiet(\"GET\", \"/api/readaloud/voices\", null, function(data, error) {",
     "occurrence": 1,
-    "source_sha256": "02f80176e4843de89f143e7e5c2c69d657a4d7d530c6b9e8e6e546b32073442a",
+    "source_sha256": "61f9b78f033fc9fd9ad41305539aeb9f9d1c325a1affc430de6ee9c0e81ffc10",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; loading",
     "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads."
@@ -16806,7 +16806,7 @@
     "line": 34,
     "statement": "Api.quiet(\"GET\", \"/api/readaloud/online\", null, function(data, error) { root.syncProviders(!error && Array.isArray(data) ? data : []) })",
     "occurrence": 1,
-    "source_sha256": "02f80176e4843de89f143e7e5c2c69d657a4d7d530c6b9e8e6e546b32073442a",
+    "source_sha256": "61f9b78f033fc9fd9ad41305539aeb9f9d1c325a1affc430de6ee9c0e81ffc10",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; loading",
     "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads."
@@ -17034,10 +17034,10 @@
     "line": 28,
     "statement": "Api.call(\"GET\", \"/api/computers\", null, function(data, error) {",
     "occurrence": 1,
-    "source_sha256": "a679be4c42e8fe93dbe4173b0b4933668f8c0043be359f2c8b162dd3c868ecbf",
+    "source_sha256": "28bcabd7aa947a23b99972e171c0d64d7c0c0f68c3ce28b169f3496a06284bf2",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; ",
-    "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads."
+    "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads. Merge review (merge174 lintfix): the peer button's name flag is renamed from fitName to lintfix's Button.nameText; this statement and its guard are unchanged."
   },
   {
     "id": "6dff2b736026065134fb",
@@ -17106,7 +17106,7 @@
     "line": 46,
     "statement": "Api.quiet(\"GET\", copy.path, null, function(data, error) { if (!error && data) root.status = data })",
     "occurrence": 1,
-    "source_sha256": "b84fd3e7beabbf44bb985cdb904513c423131d2ad158fcd3b3bdfb4a86a1dd56",
+    "source_sha256": "8be6820da94dabf654970cd2f1a236802a2ec78d3891afc52d7d98f7e6d1b807",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; ProgressBar, busy, downloading, onDownloadingChanged, onWorkingChanged, wasWorking, working",
     "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
@@ -17118,7 +17118,7 @@
     "line": 51,
     "statement": "Api.quiet(\"POST\", copy.path + suffix, body, function(data, error) {",
     "occurrence": 1,
-    "source_sha256": "b84fd3e7beabbf44bb985cdb904513c423131d2ad158fcd3b3bdfb4a86a1dd56",
+    "source_sha256": "8be6820da94dabf654970cd2f1a236802a2ec78d3891afc52d7d98f7e6d1b807",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; ProgressBar, busy, downloading, onDownloadingChanged, onWorkingChanged, wasWorking, working",
     "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
@@ -17130,7 +17130,7 @@
     "line": 70,
     "statement": "Api.quiet(\"GET\", \"/api/studio/supertonic/use\", null, function(data, error) {",
     "occurrence": 1,
-    "source_sha256": "b84fd3e7beabbf44bb985cdb904513c423131d2ad158fcd3b3bdfb4a86a1dd56",
+    "source_sha256": "8be6820da94dabf654970cd2f1a236802a2ec78d3891afc52d7d98f7e6d1b807",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; ProgressBar, busy, downloading, onDownloadingChanged, onWorkingChanged, wasWorking, working",
     "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
@@ -17142,7 +17142,7 @@
     "line": 84,
     "statement": "Api.quiet(\"GET\", \"/api/readaloud/voices\", null, function(voices, error) {",
     "occurrence": 1,
-    "source_sha256": "b84fd3e7beabbf44bb985cdb904513c423131d2ad158fcd3b3bdfb4a86a1dd56",
+    "source_sha256": "8be6820da94dabf654970cd2f1a236802a2ec78d3891afc52d7d98f7e6d1b807",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; ProgressBar, busy, downloading, onDownloadingChanged, onWorkingChanged, wasWorking, working",
     "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
@@ -17154,7 +17154,7 @@
     "line": 273,
     "statement": "onActivated: { if (choiceRow.choice.installed) root.ask(choiceRow.choice.id, choiceRow.choice.label); else root.remove(choiceRow.choice.id) }",
     "occurrence": 1,
-    "source_sha256": "b84fd3e7beabbf44bb985cdb904513c423131d2ad158fcd3b3bdfb4a86a1dd56",
+    "source_sha256": "8be6820da94dabf654970cd2f1a236802a2ec78d3891afc52d7d98f7e6d1b807",
     "disposition": "confirmation",
     "guard": "VoiceSheets ModuleRemovePage, KeyRemovePage, TrackSheet / VoiceModule confirmation",
     "reason": "Removing installed resources, credentials or imported music asks first; removing an incomplete package discards only temporary downloaded bytes. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
@@ -17166,7 +17166,7 @@
     "line": 411,
     "statement": "description: root.asking && root.asking.use === undefined ? S.s_dang_xem_cuon_nao_con_dung_giong_nay_1a2d4fa1 : VoiceLogic.removeAsk(root.asking ? root.asking.use : null)",
     "occurrence": 1,
-    "source_sha256": "b84fd3e7beabbf44bb985cdb904513c423131d2ad158fcd3b3bdfb4a86a1dd56",
+    "source_sha256": "8be6820da94dabf654970cd2f1a236802a2ec78d3891afc52d7d98f7e6d1b807",
     "disposition": "confirmation",
     "guard": "VoiceSheets ModuleRemovePage, KeyRemovePage, TrackSheet / VoiceModule confirmation",
     "reason": "Removing installed resources, credentials or imported music asks first; removing an incomplete package discards only temporary downloaded bytes. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
@@ -17178,7 +17178,7 @@
     "line": 424,
     "statement": "onActivated: { const id = root.asking.id; confirm.dismiss(); root.remove(id) }",
     "occurrence": 1,
-    "source_sha256": "b84fd3e7beabbf44bb985cdb904513c423131d2ad158fcd3b3bdfb4a86a1dd56",
+    "source_sha256": "8be6820da94dabf654970cd2f1a236802a2ec78d3891afc52d7d98f7e6d1b807",
     "disposition": "confirmation",
     "guard": "VoiceSheets ModuleRemovePage, KeyRemovePage, TrackSheet / VoiceModule confirmation",
     "reason": "Removing installed resources, credentials or imported music asks first; removing an incomplete package discards only temporary downloaded bytes. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."

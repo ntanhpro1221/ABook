@@ -266,6 +266,14 @@ class BookScreenTest {
     }
 
     @Test
+    fun playingHereDark() {
+        val player = PlayerState(bookId = "b1", chapterId = 3, chapterTitle = "Chương 3", playing = true, durationMs = 1_500_000)
+        show(detail(listening()), dark = true, player = player)
+        rule.onNodeWithText("Tạm dừng").assertIsDisplayed()
+        shot("book_playing_dark")
+    }
+
+    @Test
     fun finishedDark() {
         show(detail(finished()), dark = true)
         rule.onNodeWithText("Nghe lại từ đầu").assertIsDisplayed()
@@ -277,6 +285,13 @@ class BookScreenTest {
         show(detail(complete = false))
         rule.onNodeWithText("Sách này có 12/15 chương đã thu - các chương sau chưa có audio").assertIsDisplayed()
         shot("book_partial_light")
+    }
+
+    @Test
+    fun partialBookDark() {
+        show(detail(complete = false), dark = true)
+        rule.onNodeWithText("Sách này có 12/15 chương đã thu - các chương sau chưa có audio").assertIsDisplayed()
+        shot("book_partial_dark")
     }
 
     @Test

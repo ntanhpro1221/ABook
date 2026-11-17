@@ -275,6 +275,11 @@ export async function openPage(cdp, { width, height, scale, mobile, theme, newWi
 }
 
 export const STILL = `new Promise((resolve) => {
+  // Chạy chữ (MarqueeLine, vòng vô hạn): đứng ở đầu cho ảnh tất định - như Qt VisualReady.rest đặt still, điện thoại dừng vòng vô hạn trong test
+  for (const a of document.getAnimations()) {
+    const target = a.effect && a.effect.target;
+    if (target && target.closest && target.closest("[data-marquee-line]")) { a.pause(); a.currentTime = 0; }
+  }
   const moving = () => document.getAnimations().some((a) => a.playState === "running" && a.effect && a.effect.getComputedTiming().endTime !== Infinity);
   const started = performance.now();
   const tick = () => (!moving() || performance.now() - started > 5000 ? requestAnimationFrame(() => requestAnimationFrame(() => resolve(true))) : setTimeout(tick, 50));

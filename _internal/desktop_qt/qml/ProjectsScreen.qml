@@ -224,6 +224,7 @@ FocusScope {
             Reveal { target: projectsMissing; shown: root.rootMissing }
             x: 0
             y: 48 - 56
+            fillHeight: parent.height - y      // màn trạng thái (web `fill`)
             width: root.contentW
             icon: "folder-x"
             title: root.local && root.store && root.store.libraryData && root.store.libraryData.root
@@ -238,6 +239,7 @@ FocusScope {
             Reveal { target: projectsEmpty; shown: root.empty }
             x: 0
             y: 48 - 56
+            fillHeight: parent.height - y      // màn trạng thái (web `fill`)
             width: root.contentW
             icon: "clapperboard"
             title: S.s_chua_co_du_an_dd6cd3d2
