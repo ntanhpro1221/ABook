@@ -105,7 +105,9 @@ fun OtherPlayersSheet(repo: CompanionRepo, local: PlayerRepo, dismiss: () -> Uni
                                                 Column {
                                                     // Bộ chọn giá trị (DESIGN mục 6): chip tiêu biểu + chọn tự do 1-240 phút; mỗi lần đổi là hẹn lại trên máy kia.
                                                     // Mốc mở sẵn: lần hẹn cuối người nghe tự đặt trên máy này (chưa từng đặt: 30 phút), như tấm Hẹn giờ.
-                                                    var remoteMinutes by remember { mutableIntStateOf(vn.abook.player.SleepTimer.last.minutes) }
+                                                    // Đọc mốc qua StateFlow: tấm mở trước khi lõi nạp xong thì bộ chọn nhảy theo mốc vừa nạp (soát sleeplast lỗi 6).
+                                                    val lastMinutes = vn.abook.player.SleepTimer.lastFlow.collectAsState().value.minutes
+                                                    var remoteMinutes by remember(lastMinutes) { mutableIntStateOf(lastMinutes) }
                                                     ValuePicker(
                                                         ValueSpecs.sleepMinutes, remoteMinutes.toDouble(),
                                                         { minutes -> remoteMinutes = minutes.toInt(); if (!ui.busy) scope.launch { repo.send(remote, "sleep", minutes = minutes.toInt()) } },

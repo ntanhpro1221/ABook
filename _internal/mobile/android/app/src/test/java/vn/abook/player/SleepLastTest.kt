@@ -100,11 +100,22 @@ class SleepLastTest {
         SleepTimer.setEndOfChapter(2)
         reopen()
         assertEquals(LastSleep(LastSleep.CHAPTER, 45, 2), SleepTimer.last)
-        assertEquals("Bật lại hết 2 chương", SleepText.restart(SleepTimer.last))
-        assertEquals("Bật lại hết chương này", SleepText.restart(LastSleep(LastSleep.CHAPTER, 45, 1)))
+        assertEquals("Bật lại 2 chương", SleepText.restart(SleepTimer.last))
+        assertEquals("Bật lại 1 chương", SleepText.restart(LastSleep(LastSleep.CHAPTER, 45, 1)))
         SleepTimer.restartLast()
         assertEquals(SleepTimer.Mode.CHAPTER, SleepTimer.mode)
         assertEquals(2, SleepTimer.chapters)
+    }
+
+    // Soát sleeplast 18-11 (lỗi 6): mốc nạp ở luồng IO (Playback.init), giao diện đọc ở luồng khác - qua StateFlow, thấy ngay giá trị đã nạp.
+    @Test fun theLastChoiceLoadedOnAnotherThreadReachesTheFlow() {
+        File(root, "listen-prefs.json").writeText("""{"lastSleep":{"kind":"chapter","minutes":50,"chapters":3}}""", Charsets.UTF_8)
+        val seen = SleepTimer.lastFlow.value
+        assertEquals(LastSleep(), seen)
+        val loader = Thread { ListenPrefs.load() }
+        loader.start(); loader.join(5_000)
+        assertEquals(LastSleep(LastSleep.CHAPTER, 50, 3), SleepTimer.lastFlow.value)
+        assertEquals(SleepTimer.lastFlow.value, SleepTimer.last)
     }
 
     @Test fun theNightScheduleDoesNotChangeTheLastChoice() {

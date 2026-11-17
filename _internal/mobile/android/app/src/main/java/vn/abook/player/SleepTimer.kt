@@ -8,6 +8,9 @@ import android.hardware.SensorManager
 import android.os.Handler
 import android.os.Looper
 import android.os.SystemClock
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import org.json.JSONObject
 import vn.abook.player.readaloud.ReadAloud
 import vn.abook.player.ui.components.ValueSpecs
@@ -73,9 +76,14 @@ object SleepTimer {
     }
 
     /** Lần hẹn cuối người nghe tự đặt (chưa từng đặt: 30 phút): mốc mở sẵn của tấm Hẹn giờ và nút "Bật lại". Nạp ở [ListenPrefs.load], nhớ ở
-     *  [ListenPrefs.saveLastSleep] mỗi lần người nghe tự đặt ([setMinutes] không có `reason`, [setEndOfChapter]); lịch đêm tự hẹn không đổi nó. */
-    var last = LastSleep()
-        internal set
+     *  [ListenPrefs.saveLastSleep] mỗi lần người nghe tự đặt ([setMinutes] không có `reason`, [setEndOfChapter]); lịch đêm tự hẹn không đổi nó.
+     *  Ghi từ luồng nạp (Playback.init chạy ở IO) và luồng chính, đọc từ giao diện: giữ trong StateFlow (an toàn luồng); giao diện đọc [lastFlow]
+     *  để đứng ở mốc vừa nạp nếu tấm mở trước khi lõi nạp xong (soát sleeplast lỗi 6). */
+    private val lastState = MutableStateFlow(LastSleep())
+    val lastFlow: StateFlow<LastSleep> = lastState.asStateFlow()
+    var last: LastSleep
+        get() = lastState.value
+        internal set(value) { lastState.value = value }
 
     private fun remember(choice: LastSleep) {
         last = choice
