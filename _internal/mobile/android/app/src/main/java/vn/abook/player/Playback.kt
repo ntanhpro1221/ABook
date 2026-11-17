@@ -244,6 +244,7 @@ object Playback {
 
     fun touched(source: String = "control") {
         ListenerActivity.inputObserved()
+        if (source == "scroll" && !ScrollActivity.due(SystemClock.elapsedRealtime())) return
         SleepTimer.onUserActivity(source)
     }
 

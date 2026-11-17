@@ -61,4 +61,20 @@ class SleepActivityTest {
         send(Intent.ACTION_SCREEN_OFF)
         assertEquals(240.0, SleepTimer.describe().getDouble("remaining"), 0.01)
     }
+    @Test fun aDragRestartsTheCycleOncePerSecondAndTapsEveryTime() {
+        ScrollActivity.reset()
+        // One drag = one MOVE per input frame; only the first restarts the countdown (each restart persists, emits and logs).
+        for (move in 0 until 60) {
+            if (move == 1) field("remainingMs").setLong(SleepTimer, 240_000)
+            Playback.touched("scroll")
+            if (move == 0) assertEquals(600.0, SleepTimer.describe().getDouble("remaining"), 0.01)
+        }
+        assertEquals(240.0, SleepTimer.describe().getDouble("remaining"), 0.01)
+        Playback.touched("touch")
+        assertEquals(600.0, SleepTimer.describe().getDouble("remaining"), 0.01)
+        field("remainingMs").setLong(SleepTimer, 240_000)
+        shadowOf(android.os.Looper.getMainLooper()).idleFor(java.time.Duration.ofMillis(ScrollActivity.INTERVAL_MS))
+        Playback.touched("scroll")
+        assertEquals(600.0, SleepTimer.describe().getDouble("remaining"), 0.01)
+    }
 }
