@@ -814,8 +814,8 @@
     "reason": "desktop_qt/qml/StudioPanels.qml: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
   },
   "_internal/desktop_qt/qml/UiStrings.js": {
-    "sha256": "2f1d8515de50bab5da9fa25ed2c472e0514bbb92093c6710ff5a8f7637493a7b",
-    "reason": "desktop_qt/qml/UiStrings.js: all flagged strings match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data. Re-pinned for 0.4.169: its added lines were reviewed as engineering text, no story or phoneme strings. Integration phase 1: combined authored implementation, expectations or technical documentation; exact inherited Corpus sequences rechecked; no new Corpus approval. Integration phase 2: combined authored implementation, expectations or technical documentation; exact inherited Corpus sequences rechecked; no new Corpus approval."
+    "sha256": "d6ea03db99145cccfb5f9938d3159bf1d83c9448d02670a98fe9f5ea7c066312",
+    "reason": "desktop_qt/qml/UiStrings.js: all flagged strings match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data. Re-pinned for 0.4.169: its added lines were reviewed as engineering text, no story or phoneme strings. Integration phase 1: combined authored implementation, expectations or technical documentation; exact inherited Corpus sequences rechecked; no new Corpus approval. Integration phase 2: combined authored implementation, expectations or technical documentation; exact inherited Corpus sequences rechecked; no new Corpus approval. left174: edited for volume rows / never-cut book text / ABOOK_TOOLS_ROOT; added lines are app-authored code, UI wording or build documentation, no story or phoneme strings."
   },
   "_internal/desktop_qt/qml/WorkStore.qml": {
     "sha256": "faaeeb5842a33cec2234338a6c6057b389b5715a15b9c636a78db82edf10a3ab",
@@ -998,8 +998,8 @@
     "reason": "docs/DEPENDENCIES.md: all flagged strings match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
   },
   "_internal/docs/DESIGN.md": {
-    "sha256": "10b0f671e04dfd3f8ae7fcc47a88863f91f239b24c4acddca90b69866fd6aa07",
-    "reason": "Interface design specifications listing typography, spacing and platform component rules. Re-pinned for 0.4.169: its added lines were reviewed as engineering text, no story or phoneme strings. Integration phase 1: combined authored implementation, expectations or technical documentation; exact inherited Corpus sequences rechecked; no new Corpus approval. Integration phase 2: combined authored implementation, expectations or technical documentation; exact inherited Corpus sequences rechecked; no new Corpus approval."
+    "sha256": "5046f58005833ee0b3adafa083ad345f36252121c8f1ff311b914308a400def6",
+    "reason": "Interface design specifications listing typography, spacing and platform component rules. Re-pinned for 0.4.169: its added lines were reviewed as engineering text, no story or phoneme strings. Integration phase 1: combined authored implementation, expectations or technical documentation; exact inherited Corpus sequences rechecked; no new Corpus approval. Integration phase 2: combined authored implementation, expectations or technical documentation; exact inherited Corpus sequences rechecked; no new Corpus approval. left174: edited for volume rows / never-cut book text / ABOOK_TOOLS_ROOT; added lines are app-authored code, UI wording or build documentation, no story or phoneme strings."
   },
   "_internal/docs/DESIGN_LINT.md": {
     "sha256": "22b9adaadc6beca5c49200097d137050579ca24d9281dc2abcdcea0acfd61cb9",
@@ -1165,8 +1165,8 @@
     "reason": "docs/PRONUNCIATION_VARIANT_DRIFT.md: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
   },
   "_internal/docs/QT_INSTALLER.md": {
-    "sha256": "a3d456ea17e64e47ee1335cf129fa1c8d158bbe2beb41989d6a24eacde8a5f7b",
-    "reason": "docs/QT_INSTALLER.md: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data. Integration phase 2: combined authored implementation, expectations or technical documentation; exact inherited Corpus sequences rechecked; no new Corpus approval."
+    "sha256": "0635ba9f18fac7d73c34ec9845fb0e261168793d9325033b72ffdcae20641c18",
+    "reason": "docs/QT_INSTALLER.md: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data. Integration phase 2: combined authored implementation, expectations or technical documentation; exact inherited Corpus sequences rechecked; no new Corpus approval. left174: edited for volume rows / never-cut book text / ABOOK_TOOLS_ROOT; added lines are app-authored code, UI wording or build documentation, no story or phoneme strings."
   },
   "_internal/docs/READING_A_BOUNDARY_LOG.md": {
     "sha256": "796b860231e7bdd2ab6006254376e577063654b85ab66cd8822fc101a6372af3",
@@ -1263,12 +1263,12 @@
     "reason": "docs/UI.md: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
   },
   "_internal/docs/UI_PARITY.md": {
-    "sha256": "b7bbbf6f37a9e1c7a24c2332fa5bcb66c9cdce95e0ea4d8a2967d59d9fc71729",
-    "reason": "_internal/docs/UI_PARITY.md: reviewed integration-only layout, generated parity inventory or pinned asset URL edits; existing scrubbed prose preserved. Re-pinned for 0.4.169: its added lines were reviewed as engineering text, no story or phoneme strings. Integration phase 1: combined authored implementation, expectations or technical documentation; exact inherited Corpus sequences rechecked; no new Corpus approval. Integration phase 2: combined authored implementation, expectations or technical documentation; exact inherited Corpus sequences rechecked; no new Corpus approval."
+    "sha256": "67856be2a70d8b2a9c6b9b20648bcc7e7a0a3a2974353ae541463d3ba36914b4",
+    "reason": "_internal/docs/UI_PARITY.md: reviewed integration-only layout, generated parity inventory or pinned asset URL edits; existing scrubbed prose preserved. Re-pinned for 0.4.169: its added lines were reviewed as engineering text, no story or phoneme strings. Integration phase 1: combined authored implementation, expectations or technical documentation; exact inherited Corpus sequences rechecked; no new Corpus approval. Integration phase 2: combined authored implementation, expectations or technical documentation; exact inherited Corpus sequences rechecked; no new Corpus approval. left174: edited for volume rows / never-cut book text / ABOOK_TOOLS_ROOT; added lines are app-authored code, UI wording or build documentation, no story or phoneme strings."
   },
   "_internal/docs/UI_PARITY_QT.md": {
-    "sha256": "fff434b9674d5ac060fd9490e8d472f8ab62a417e3cff019b2d86f2de47837c7",
-    "reason": "_internal/docs/UI_PARITY_QT.md: reviewed integration-only layout, generated parity inventory or pinned asset URL edits; existing scrubbed prose preserved. Re-pinned for 0.4.169: its added lines were reviewed as engineering text, no story or phoneme strings. Integration phase 1: combined authored implementation, expectations or technical documentation; exact inherited Corpus sequences rechecked; no new Corpus approval. Integration phase 2: combined authored implementation, expectations or technical documentation; exact inherited Corpus sequences rechecked; no new Corpus approval."
+    "sha256": "16c1b9e59a10b34a81613c85229c04149fb836b981b02f21f2ab8766dc22f659",
+    "reason": "_internal/docs/UI_PARITY_QT.md: reviewed integration-only layout, generated parity inventory or pinned asset URL edits; existing scrubbed prose preserved. Re-pinned for 0.4.169: its added lines were reviewed as engineering text, no story or phoneme strings. Integration phase 1: combined authored implementation, expectations or technical documentation; exact inherited Corpus sequences rechecked; no new Corpus approval. Integration phase 2: combined authored implementation, expectations or technical documentation; exact inherited Corpus sequences rechecked; no new Corpus approval. left174: edited for volume rows / never-cut book text / ABOOK_TOOLS_ROOT; added lines are app-authored code, UI wording or build documentation, no story or phoneme strings."
   },
   "_internal/docs/UI_PARITY_TRIAGE.md": {
     "sha256": "24f93291c2c48a672ae24b56afe4efb32faa60f2bd7e13f5893b2168b3cace18",
@@ -5066,8 +5066,8 @@
     "reason": "ui/src/gallery/README.md: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
   },
   "_internal/ui/src/listen/PlayerViews.tsx": {
-    "sha256": "03e835f3cb3ce08f23d4eaf5b529bacefa95bda08486039d13e23999d1a19644",
-    "reason": "_internal/ui/src/listen/PlayerViews.tsx: reviewed integration-only layout, generated parity inventory or pinned asset URL edits; existing scrubbed prose preserved. Integration phase 1: combined authored implementation, expectations or technical documentation; exact inherited Corpus sequences rechecked; no new Corpus approval. Integration phase 2: combined authored implementation, expectations or technical documentation; exact inherited Corpus sequences rechecked; no new Corpus approval."
+    "sha256": "2b467d85052ff9d578911ab32148d23043e592c6bc2f266bbf77471b6134071d",
+    "reason": "_internal/ui/src/listen/PlayerViews.tsx: reviewed integration-only layout, generated parity inventory or pinned asset URL edits; existing scrubbed prose preserved. Integration phase 1: combined authored implementation, expectations or technical documentation; exact inherited Corpus sequences rechecked; no new Corpus approval. Integration phase 2: combined authored implementation, expectations or technical documentation; exact inherited Corpus sequences rechecked; no new Corpus approval. left174: edited for volume rows / never-cut book text / ABOOK_TOOLS_ROOT; added lines are app-authored code, UI wording or build documentation, no story or phoneme strings."
   },
   "_internal/ui/src/listen/liveClip.ts": {
     "sha256": "382606e4304701b44ba31e9e27d1cb659ff37cd33e4d10e0abc6e41c812097e7",
@@ -5126,8 +5126,8 @@
     "reason": "ui/src/shared/strings.generated.ts: all flagged strings match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data. Re-pinned for 0.4.169: its added lines were reviewed as engineering text, no story or phoneme strings. Integration phase 1: combined authored implementation, expectations or technical documentation; exact inherited Corpus sequences rechecked; no new Corpus approval. Integration phase 2: combined authored implementation, expectations or technical documentation; exact inherited Corpus sequences rechecked; no new Corpus approval."
   },
   "_internal/ui/src/studio/ProjectScreen.tsx": {
-    "sha256": "a1e8cdcb18ebb227360d42a905184c4f9d8faac33f90dd7ff84ee93cdc8d845f",
-    "reason": "ui/src/studio/ProjectScreen.tsx: all flagged strings match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data. Integration phase 2: combined authored implementation, expectations or technical documentation; exact inherited Corpus sequences rechecked; no new Corpus approval."
+    "sha256": "cf3596def97d2bfa7b8b75f98c1df1d19c6586611eb6d71dcec98abb9d0513ec",
+    "reason": "ui/src/studio/ProjectScreen.tsx: all flagged strings match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data. Integration phase 2: combined authored implementation, expectations or technical documentation; exact inherited Corpus sequences rechecked; no new Corpus approval. left174: edited for volume rows / never-cut book text / ABOOK_TOOLS_ROOT; added lines are app-authored code, UI wording or build documentation, no story or phoneme strings."
   },
   "_internal/ui/src/studio/api.ts": {
     "sha256": "d8a8a0d9714e0d20cc23c5ea1ab8c1e18c346083622ab928d648c27c59cf871a",
