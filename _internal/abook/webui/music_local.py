@@ -39,6 +39,10 @@ MAX_TRACK_BYTES = 1 << 30  # 1 GiB: một bản nhạc dài hơn thế không ph
 _TAG_MAX = 200
 _CHUNK = 1 << 20
 AUTO_VALUES = ("on", "off")  # công tắc `auto` của một bài; vắng = mặc định (tự chọn được, trừ bài có vẻ có lời)
+# Codec nằm trong một đuôi app nhận (.ogg) mà trình phát không giải được: Speex trong Ogg. ffmpeg của gói nhạc giải được (bộ giải
+# `speex` có sẵn của FFmpeg), nhưng Media Foundation + Web Media Extensions của bản Windows và MediaCodec của điện thoại thì không -
+# điện thoại vốn đã từ chối lúc nhập (MediaMetadataRetriever không đọc được), máy tính từ chối cùng lý do để hai bên nhận y nhau.
+UNPLAYABLE_CODECS = ("speex",)
 
 
 class MusicImportError(Exception):
@@ -176,6 +180,8 @@ def read_tags(path: Path) -> dict[str, Any]:
         raise MusicImportError("không đọc được như một bản nhạc") from exc
     if not tag.samplerate and not tag.duration:
         raise MusicImportError("không đọc được như một bản nhạc")
+    if any(f'codecs="{codec}"' in (tag.mime_type or "") for codec in UNPLAYABLE_CODECS):
+        raise MusicImportError("không đọc được như một bản nhạc")  # cùng lý do điện thoại báo (MediaMetadataRetriever không đọc được)
     duration = float(tag.duration or 0)
     if not math.isfinite(duration) or duration <= 0:
         raise MusicImportError("không biết bài dài bao lâu")

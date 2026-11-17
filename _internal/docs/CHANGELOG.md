@@ -12,6 +12,7 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 - Bảo mật: app Windows mang Python 3.14.10 (chặn khoá CA emSign đã lộ trong kết nối mã hoá, vá giải nén tar).
 - Bảo mật: bộ đọc nhạc tải thêm (ffmpeg) lên bản 8.1.3 dựng sẵn của FFmpeg-Builds, có các bản vá kiểm biên khi đọc file nhạc; tải về ~64 MB thay vì ~36 MB, máy đã có bản cũ được mời cập nhật khi mở Xuất hay Phân tích nhạc.
 - Kỹ thuật: Gradle wrapper 8.14.7 (vá bảo mật daemon của máy dựng Android).
+- Sửa: "Nhạc của tôi" trên máy tính không nhận file .ogg chứa Speex nữa (trình phát của Windows và điện thoại đều không phát được); điện thoại vốn đã không nhận, nay hai bên báo cùng một lý do.
 
 ## [0.4.173] - 2026-11-15
 

@@ -17,6 +17,10 @@ bộ. Giai đoạn B (cuối file): nhập nhạc ngay trên điện thoại, gh
 - Độ to đo bằng đúng mã của bài danh mục (`music_plan.measured_lufs`, hai kênh, ghi `<sha1>.lufs2` cạnh file), nên `gainDb` của
   mốc nhạc tính bằng cùng một công thức (`cue_gain_db`) - bài nhập to hay nhỏ đều nằm đúng `levelDb` dưới giọng.
 - File không phải nhạc / đuôi lạ / không thấy / quá 1 GB: bị từ chối kèm lý do bằng tiếng Việt, các file khác trong lượt vẫn vào.
+  Speex trong .ogg cũng bị từ chối ("không đọc được như một bản nhạc", `music_local.UNPLAYABLE_CODECS`): ffmpeg giải được nhưng Media
+  Foundation và điện thoại thì không, điện thoại vốn đã từ chối nó ở MediaMetadataRetriever. Đuôi nhận giống hệt ở Python, Android, hộp
+  chọn file Qt và Tauri; exe ffmpeg ghim phải có bộ tách + bộ giải cho từng đuôi (`tests/test_music_local.py`, chạy với
+  `ABOOK_TEST_FFMPEG` trỏ tới exe mới mỗi lần đổi bản ffmpeg).
 
 ## Link `local:<sha1>`
 

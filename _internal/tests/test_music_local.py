@@ -114,6 +114,74 @@ def test_files_that_are_not_music_are_refused_with_a_reason(tmp_path: Path, song
     assert store.entries() == [] and not list((tmp_path / "mine").glob("files/*"))
 
 
+def test_speex_in_an_ogg_file_is_refused_like_the_phone_refuses_it(tmp_path: Path, songs) -> None:
+    """tinytag đọc được Speex trong .ogg, nhưng không trình phát nào của app giải được nó (music_local.UNPLAYABLE_CODECS)."""
+    speex = tmp_path / "noi.ogg"
+    made = subprocess.run([ffmpeg_executable(), "-hide_banner", "-nostdin", "-y", "-i", str(songs["short"]), "-c:a", "libspeex", str(speex)],
+                          capture_output=True)
+    if made.returncode != 0:
+        pytest.skip("ffmpeg của máy này không có bộ mã hoá libspeex để dựng file thử")
+    from abook.vendor.tinytag import TinyTag
+
+    assert 'codecs="speex"' in (TinyTag.get(str(speex)).mime_type or ""), "file thử đúng là Speex trong Ogg"
+    store = LocalMusic(tmp_path / "mine")
+    with pytest.raises(MusicImportError, match="không đọc được như một bản nhạc") as error:
+        store.import_file(speex)
+    assert speex.name in str(error.value) and store.entries() == []
+    assert store.import_file(songs["ogg"])[0]["title"] == "Gió", "Vorbis trong .ogg vẫn nhận"
+
+
+# Đuôi app nhận -> (bộ tách luồng, bộ giải) ffmpeg của gói nhạc phải có để phân tích / đo bài nhập (music_mel, music_plan).
+TRACK_DECODERS = {
+    "mp3": ("mp3", ("mp3float",)),
+    "m4a": ("mov,mp4,m4a,3gp,3g2,mj2", ("aac", "alac")),
+    "ogg": ("ogg", ("vorbis", "opus", "flac")),
+    "opus": ("ogg", ("opus",)),
+    "flac": ("flac", ("flac",)),
+    "wav": ("wav", ("pcm_s16le", "pcm_s24le", "pcm_s32le", "pcm_f32le", "pcm_u8")),
+}
+_ROOT = Path(__file__).resolve().parents[1]
+
+
+def test_every_platform_accepts_the_same_music_extensions() -> None:
+    """Một danh sách đuôi cho mọi nơi: Python, Android, hộp chọn file của Qt và Tauri - và mỗi đuôi có dòng giải mã ở TRACK_DECODERS."""
+    expected = list(music_plan.TRACK_EXTENSIONS)
+    assert list(TRACK_DECODERS) == expected
+    android = (_ROOT / "mobile/android/app/src/main/java/vn/abook/player/MusicStore.kt").read_text(encoding="utf-8")
+    assert 'val EXTENSIONS = listOf(' + ", ".join(f'"{e}"' for e in expected) + ")" in android
+    qt = (_ROOT / "desktop_qt/qml/UiStrings.js").read_text(encoding="utf-8")
+    assert '"Nhạc (' + " ".join(f"*.{e}" for e in expected) + ')"' in qt
+    tauri = (_ROOT / "shell/src-tauri/src/main.rs").read_text(encoding="utf-8")
+    assert "&[" + ", ".join(f'"{e}"' for e in expected) + "]" in tauri
+
+
+def _listed(exe: str, kind: str) -> set[str]:
+    lines = subprocess.run([exe, "-hide_banner", f"-{kind}"], capture_output=True, text=True, check=True).stdout.splitlines()
+    return {parts[1] for parts in (line.split() for line in lines) if len(parts) >= 2 and not parts[0].startswith("-")}
+
+
+def test_the_pinned_ffmpeg_decodes_every_extension_the_app_accepts() -> None:
+    """Chạy trên đúng exe ghim trong ffmpeg_setup (băm khớp EXE_SHA256), do ABOOK_TEST_FFMPEG trỏ tới. Không có thì bỏ qua - đổi
+    bản ffmpeg phải chạy test này với exe mới."""
+    import hashlib
+    import os
+
+    from abook.webui import ffmpeg_setup
+
+    exe = os.environ.get("ABOOK_TEST_FFMPEG", "")
+    if not exe or not Path(exe).is_file():
+        pytest.skip("không có exe ffmpeg ghim (ABOOK_TEST_FFMPEG)")
+    digest = hashlib.sha256()
+    with open(exe, "rb") as handle:
+        while chunk := handle.read(1 << 20):
+            digest.update(chunk)
+    assert digest.hexdigest() == ffmpeg_setup.EXE_SHA256, "ABOOK_TEST_FFMPEG phải là đúng exe đang ghim"
+    demuxers, decoders = _listed(exe, "demuxers"), _listed(exe, "decoders")
+    for extension, (demuxer, needed) in TRACK_DECODERS.items():
+        assert demuxer in demuxers, f".{extension}: thiếu bộ tách {demuxer}"
+        assert not set(needed) - decoders, f".{extension}: thiếu bộ giải {sorted(set(needed) - decoders)}"
+
+
 def test_removing_a_track_deletes_its_file_and_loudness(tmp_path: Path, songs) -> None:
     store = LocalMusic(tmp_path / "mine")
     track, _ = store.import_file(songs["mp3"])
