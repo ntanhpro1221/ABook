@@ -690,15 +690,9 @@ private fun ListenButton(label: String, detail: String?, playing: Boolean, buffe
 private fun ListenLabel(text: String, sub: String?, playing: Boolean, restart: Boolean) {
     val colors = Abook.colors
     val ink = Abook.type.bodyStrong.copy(color = colors.accentInk)
-    Row(verticalAlignment = Alignment.CenterVertically) {
-        BasicText(text, style = ink, softWrap = false)
-        SwapContent(sub, contentKey = { sub -> sub != null }, layout = ContentLayout.Row) { sub ->
-            if (sub != null) {
-                BasicText("\u00a0·\u00a0" + sub, Modifier.padding(start = Dim.s8).weight(1f, fill = false).testTag("book_primary_chapter"), style = ink,
-                    autoSize = vn.abook.player.ui.components.OneLineFit.of(ink))
-            }
-        }
-    }
+    // Một khối chữ: động từ rồi " · chương"; xuống dòng thì dòng sau chảy dưới cả nhãn (không thành cột hẹp cạnh động từ).
+    val label = text + if (sub != null) "\u00a0·\u00a0" + sub else ""
+    BasicText(label, Modifier.testTag("book_primary_label"), style = ink, autoSize = vn.abook.player.ui.components.OneLineFit.of(ink))
 }
 
 /** Nút phụ (DESIGN.md §6 "Nút (b)"): biểu tượng trơn trong ô chạm 44 + nhãn nhỏ dưới. Nhãn rỗng (nút ⋯): vẫn chừa dòng nhãn để các biểu tượng thẳng hàng; tên đọc màn hình ở `description`. */

@@ -212,7 +212,7 @@ class BookScreenTest {
     @Test
     fun listeningLight() {
         show(detail(listening()))
-        rule.onNodeWithText("Nghe tiếp").assertIsDisplayed()
+        rule.onNodeWithText("Nghe tiếp", substring = true).assertIsDisplayed()
         rule.onNode(hasText("Chương 3: Một cái tên chương khá dài để xuống dòng", substring = true) and hasAnyAncestor(hasTestTag("book_primary")), useUnmergedTree = true)
             .assertIsDisplayed()
         rule.onNodeWithTag("chapter_3").assertIsSelected()
@@ -261,14 +261,14 @@ class BookScreenTest {
     fun playingHereLight() {
         val player = PlayerState(bookId = "b1", chapterId = 3, chapterTitle = "Chương 3", playing = true, durationMs = 1_500_000)
         show(detail(listening()), player = player)
-        rule.onNodeWithText("Tạm dừng").assertIsDisplayed()
+        rule.onNodeWithText("Tạm dừng", substring = true).assertIsDisplayed()
         shot("book_playing_light")
     }
 
     @Test
     fun finishedDark() {
         show(detail(finished()), dark = true)
-        rule.onNodeWithText("Nghe lại từ đầu").assertIsDisplayed()
+        rule.onNodeWithText("Nghe lại từ đầu", substring = true).assertIsDisplayed()
         shot("book_finished_dark")
     }
 
@@ -310,22 +310,22 @@ class BookScreenTest {
         setBook(detail(listening()), player = { player })
         repeat(2) { rule.mainClock.advanceTimeByFrame() }
         // The label follows actual player state through the shared transition.
-        rule.onNodeWithText("Nghe tiếp").assertExists()
+        rule.onNodeWithText("Nghe tiếp", substring = true).assertExists()
         player = PlayerState(bookId = "b1", chapterId = 3, chapterTitle = "Chương 3", playing = true, durationMs = 1_500_000)
         rule.mainClock.advanceTimeByFrame()
         rule.waitForIdle()
         rule.mainClock.advanceTimeBy(1_000)
-        rule.onNodeWithText("Tạm dừng").assertExists()
-        rule.onAllNodesWithText("Nghe tiếp").assertCountEquals(0)
+        rule.onNodeWithText("Tạm dừng", substring = true).assertExists()
+        rule.onAllNodesWithText("Nghe tiếp", substring = true).assertCountEquals(0)
         // A later state change settles on the new label as well.
         repeat(6) { rule.mainClock.advanceTimeByFrame() }
-        rule.onNodeWithText("Tạm dừng").assertExists()
+        rule.onNodeWithText("Tạm dừng", substring = true).assertExists()
         player = PlayerState(bookId = "b1", chapterId = 3, chapterTitle = "Chương 3", playing = false, durationMs = 1_500_000)
         rule.mainClock.advanceTimeByFrame()
         rule.waitForIdle()
         rule.mainClock.advanceTimeBy(1_000)
-        rule.onNodeWithText("Nghe tiếp").assertExists()
-        rule.onAllNodesWithText("Tạm dừng").assertCountEquals(0)
+        rule.onNodeWithText("Nghe tiếp", substring = true).assertExists()
+        rule.onAllNodesWithText("Tạm dừng", substring = true).assertCountEquals(0)
     }
 
     // ---- kịch bản bấm ----
@@ -533,9 +533,9 @@ class BookScreenTest {
         for ((name, _, top) in oneLine) assertEquals("$name: tab Chương đứng yên", first, top, 1f)
     }
 
-    /** Số dòng của " · tên chương" trong nút chính (0: nhãn không có tên chương). */
+    /** Số dòng của nhãn nút chính (động từ + " · tên chương"). */
     private fun primaryChapterLines(): Int {
-        val nodes = rule.onAllNodesWithTag("book_primary_chapter", useUnmergedTree = true).fetchSemanticsNodes()
+        val nodes = rule.onAllNodesWithTag("book_primary_label", useUnmergedTree = true).fetchSemanticsNodes()
         return nodes.maxOfOrNull { node ->
             val layouts = mutableListOf<androidx.compose.ui.text.TextLayoutResult>()
             node.config[androidx.compose.ui.semantics.SemanticsActions.GetTextLayoutResult].action!!(layouts)
@@ -543,10 +543,10 @@ class BookScreenTest {
         } ?: 0
     }
 
-    /** Tên chương trong nút chính đọc trọn: không dòng nào bị "…", chữ nằm trong khung và trong nút. */
+    /** Nhãn nút chính (động từ + tên chương) đọc trọn: không dòng nào bị "…", chữ nằm trong nút. */
     private fun assertPrimaryChapterWhole(name: String) {
         val button = rule.onNodeWithTag("book_primary").getUnclippedBoundsInRoot()
-        for (node in rule.onAllNodesWithTag("book_primary_chapter", useUnmergedTree = true).fetchSemanticsNodes()) {
+        for (node in rule.onAllNodesWithTag("book_primary_label", useUnmergedTree = true).fetchSemanticsNodes()) {
             val layouts = mutableListOf<androidx.compose.ui.text.TextLayoutResult>()
             node.config[androidx.compose.ui.semantics.SemanticsActions.GetTextLayoutResult].action!!(layouts)
             for (layout in layouts) {
