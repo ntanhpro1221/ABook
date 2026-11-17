@@ -412,6 +412,7 @@ int main(int argc, char **argv) {
     qputenv("QT_QPA_FONTDIR", WIDTH_SOURCE_DIR "/fonts");
     qputenv("QML_XHR_ALLOW_FILE_READ", "1");   // tst_uitree reads back the tree file it just wrote
     QDir().mkpath(QStringLiteral(WIDTH_SOURCE_DIR "/build/d2shots"));     // ảnh của tst_d2_*.qml
+    QDir().mkpath(QStringLiteral(WIDTH_SOURCE_DIR "/build/surface_frames"));   // khung của tst_surface_motion (thư mục build mới không có)
     if (qEnvironmentVariableIsSet("ABOOK_QML_LIFETIME_DIAGNOSTICS")) LifetimeProbe::installHooks();
     WidthSetup setup;
     const int result = quick_test_main_with_setup(argc, argv, "width", QUICK_TEST_SOURCE_DIR, &setup);
