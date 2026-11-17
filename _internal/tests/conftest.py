@@ -133,6 +133,10 @@ def pytest_configure(config: pytest.Config) -> None:
         "markers",
         "perf: đo hiệu năng bằng ngưỡng giờ thật cố định - ngoài cổng thường (bỏ qua trừ khi chạy `pytest -m perf`)",
     )
+    config.addinivalue_line(
+        "markers",
+        "real_resources: AdaptiveResourceManager.snapshot() đo máy thật (tắt fixture _ample_machine_resources)",
+    )
 
 
 def pytest_collection_modifyitems(config: pytest.Config, items: list[pytest.Item]) -> None:
@@ -278,6 +282,42 @@ def _enough_ram_for_the_gate(monkeypatch: pytest.MonkeyPatch) -> None:
         return memory._replace(available=_RAM_FLOOR, free=max(memory.free, _RAM_FLOOR))
 
     monkeypatch.setattr(psutil, "virtual_memory", virtual_memory)
+
+
+# Một máy rảnh, đủ chỗ - hằng số. Cùng số với `snapshot()` trong tests/test_resource_manager.py và `resource_snapshot()` trong
+# tests/test_pipeline_mock.py; ổ trống bằng DISK_FREE_BYTES của `_roomy_disk` bên dưới.
+AMPLE_RESOURCES = dict(
+    cpu_percent=20.0,
+    free_ram_gb=12.0,
+    disk_free_gb=512.0,
+    disk_active_percent=5.0,
+    gpu_temp_c=70,
+    gpu_free_mb=6000,
+    gpu_total_mb=8151,
+    foreground_cpu_percent=5.0,
+    foreground_gpu_percent=0.0,
+    seconds_since_user_input=30.0,
+)
+
+
+@pytest.fixture(autouse=True)
+def _ample_machine_resources(request: pytest.FixtureRequest, monkeypatch: pytest.MonkeyPatch) -> None:
+    """Cổng tài nguyên của pipeline (`BookPipeline._resource_gate`) không được đọc máy đang chạy test. Nó lặp `sleep(2)` không hạn
+    giờ tới khi `AdaptiveResourceManager.decide` cho phép, và `snapshot()` thật đọc nhiệt độ GPU + VRAM (nvidia-smi), % GPU/CPU
+    của cửa sổ đang đứng trước, CPU toàn máy, ổ bận - `_enough_ram_for_the_gate` mới che RAM, `_roomy_disk` mới che chỗ trống.
+    18-11 cả bộ đứng ở 56 % (test_locked_name_repair_alternates_canonical_then_source_and_promotes, qua `_verify_chapter_audio`)
+    khi máy gánh Gradle + việc GPU: GPU >= 86 °C hay cửa sổ trước dùng GPU >= 25 % là cổng chờ mãi, CPU phẳng, không lỗi.
+    Mọi `AdaptiveResourceManager.snapshot()` trả AMPLE_RESOURCES, không gọi nvidia-smi hay psutil. Bài kiểm cổng thì tự đặt số của
+    nó lên chính đối tượng (`monkeypatch.setattr(pipeline.resources, "snapshot", ...)`) - vá trên thể hiện nên thắng vá trên lớp
+    này. Bài cần phép đo thật: `@pytest.mark.real_resources`."""
+    if request.node.get_closest_marker("real_resources") is not None:
+        return
+    from abook.resource_manager import AdaptiveResourceManager, ResourceSnapshot
+
+    def snapshot(self, force: bool = False) -> ResourceSnapshot:  # noqa: ANN001, ARG001
+        return ResourceSnapshot(**AMPLE_RESOURCES)
+
+    monkeypatch.setattr(AdaptiveResourceManager, "snapshot", snapshot)
 
 
 # Ổ đĩa mà mọi bài thử nhìn thấy: 1 TB, còn trống một nửa - hằng số, không đọc gì của máy đang chạy test.
