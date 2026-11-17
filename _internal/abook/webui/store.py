@@ -1928,22 +1928,18 @@ def cast_role(speaker: str, record: Any, lines: int, scenes: int, book_scenes: i
     return "characters" if scenes >= MAIN_ROLE_MIN_SCENES else "extras"
 
 
-def cast_gender(speaker: str, record: Any, voice_gender: str) -> str:
+def cast_gender(speaker: str, record: Any) -> str:
     """Giới ("male" / "female" / "") của một người trong cast.json, từ nguồn có sẵn theo thứ tự: sổ nhân vật (phân vai, kể cả giới
-    người nghe đã đổi và đã áp), chữ chỉ giới trong nhãn ("Người phụ nữ…", "Mẹ…"), rồi giới của giọng đã gán (phán quyết phân vai) -
-    trừ trẻ em, vì trẻ em đọc giọng nữ theo luật cấp giọng chứ không phải vì là nữ. Không nguồn nào nói thì để trống."""
+    người nghe đã đổi và đã áp), rồi chữ chỉ giới trong nhãn ("Người phụ nữ…", "Mẹ…"). Không bao giờ đoán: giọng đã cấp KHÔNG nói
+    giới - người chưa rõ giới được cấp giọng bằng hoà phiếu giữa hai kho (`character_registry._choose_unknown`), trẻ em đọc giọng
+    nữ theo luật. Không nguồn nào nói thì để trống, ô giới hiện "Chưa rõ" (`cast_gender_note`)."""
     from ..character_registry import gender_from_name
 
     gender = str(record["gender"] or "") if record is not None else ""
     if gender in ("male", "female"):
         return gender
     names = [speaker] + ([str(record["display_name"] or "")] if record is not None else [])
-    gender = gender_from_name(name for name in names if name) or ""
-    if gender:
-        return gender
-    age = str(record["age"] or "") if record is not None and "age" in record.keys() else ""
-    # Giọng nhóm/trẻ em là giọng cấp theo luật, không nói gì về giới của họ.
-    return voice_gender if voice_gender in ("male", "female") and age != "child" and not is_group_speaker(speaker, record) else ""
+    return gender_from_name(name for name in names if name) or ""
 
 
 # Nhãn người nói gọi một NHÓM người ("Nhóm trẻ ném tuyết", "Đám đông", "Bọn lính", "Mọi người", "Các cô gái"): chữ đầu nhãn.
@@ -2114,14 +2110,6 @@ def _cast(project_root: Path) -> dict[str, Any]:
             return None
         return _voice_view(profiles.get(votes.most_common(1)[0][0]))
 
-    def voice_gender_of(speaker: str) -> str:
-        """Giới của giọng đọc phần lớn câu người này - giọng phân vai đã chọn cho họ."""
-        from ..teller_voice import profile_gender
-
-        votes = voice_votes.get(speaker)
-        profile = profiles.get(votes.most_common(1)[0][0]) if votes else None
-        return profile_gender(profile) if profile is not None else ""
-
     chapter_voices, except_chapters = _narrator_chapter_voices(narrator_reads, profiles, chapter_numbers)
     narrator = {
         "voice": narrator_now,
@@ -2168,7 +2156,7 @@ def _cast(project_root: Path) -> dict[str, Any]:
         if speaker in ("", "NARRATOR"):
             continue
         record = characters.get(speaker_key(speaker))
-        gender = cast_gender(speaker, record, voice_gender_of(speaker))
+        gender = cast_gender(speaker, record)
         entry = {
             "name": speaker,
             **shown_name(speaker, speaker_label(str(record["display_name"] or speaker) if record else speaker)),
