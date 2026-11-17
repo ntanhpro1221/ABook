@@ -5550,10 +5550,10 @@
   "_internal/ui/src/listen/player.tsx": {
     "reason": "_internal/ui/src/listen/player.tsx: individually classified contextual coincidences only. Integration phase 2: combined authored implementation, expectations or technical documentation; exact inherited Corpus sequences rechecked; no new Corpus approval.",
     "rules": [],
-    "sha256": "565c1756686d3516f258a5077ab5ae9ea5079cb1422e7f4899a70718fbb77eeb",
+    "sha256": "c59f2a27f3c41c42ce118d6dee3d02981bed1de4f282df5e445549393ed4caa0",
     "corpus_review": {
       "classification": "i",
-      "file_sha256": "565c1756686d3516f258a5077ab5ae9ea5079cb1422e7f4899a70718fbb77eeb",
+      "file_sha256": "c59f2a27f3c41c42ce118d6dee3d02981bed1de4f282df5e445549393ed4caa0",
       "reason": "_internal/ui/src/listen/player.tsx: Short generic test/UI prose or literal bridge. Lead approved category (i) only; each hash was classified in round two.",
       "shingles": [
         "cebf58e770e0bac2"
