@@ -4297,6 +4297,101 @@ def test_the_gate_carries_on_when_borrowed_memory_comes_back(
     assert notifier.critical_calls == []
 
 
+def _busy_machine(monkeypatch) -> None:
+    """Every probe AdaptiveResourceManager.snapshot reads, set to the machine that stalled the suite on 18-11: RAM under
+    `min_free_ram_gb` (above the critical floor, so it waits instead of stopping), GPU hot enough for the thermal hold, a
+    foreground program on the GPU and CPU, the user typing. Each one alone keeps `allow_new_gpu_batch` False."""
+    import psutil
+
+    from abook import resource_manager
+
+    memory = psutil.virtual_memory()
+    low = int(2.5 * 1024**3)
+    monkeypatch.setattr(psutil, "virtual_memory", lambda: memory._replace(available=low, free=low))
+    monkeypatch.setattr(psutil, "cpu_percent", lambda interval=None: 100.0)
+    monkeypatch.setattr(resource_manager.NvidiaProbe, "gpu_temperature", lambda _self: 88)
+    monkeypatch.setattr(resource_manager.NvidiaProbe, "gpu_memory", lambda _self: (300, 8151))
+    monkeypatch.setattr(resource_manager.NvidiaProbe, "process_gpu_percent", lambda _self, _pid: 90.0)
+    monkeypatch.setattr(resource_manager.WindowsActivityProbe, "foreground_pid", staticmethod(lambda: 4242))
+    monkeypatch.setattr(resource_manager.WindowsActivityProbe, "process_cpu", lambda _self, _pid: 95.0)
+    monkeypatch.setattr(resource_manager.WindowsActivityProbe, "seconds_since_input", staticmethod(lambda: 0.0))
+
+
+@pytest.mark.real_resources
+def test_the_busy_machine_really_holds_the_gate(tmp_path: Path, monkeypatch) -> None:
+    """The readings `_busy_machine` sets are below the gate's thresholds, measured through the real snapshot - otherwise the
+    test below would pass with or without the conftest fixture and guard nothing."""
+    from abook.resource_manager import AdaptiveResourceManager
+
+    _busy_machine(monkeypatch)
+    manager = AdaptiveResourceManager(build_settings(), tmp_path)
+
+    snapshot = manager.snapshot(force=True)
+    decision = manager.decide(snapshot)
+
+    assert snapshot.free_ram_gb == pytest.approx(2.5)
+    assert snapshot.gpu_temp_c == 88
+    assert decision.allow_new_gpu_batch is False
+    assert decision.critical is False
+
+
+def test_mock_pipeline_finishes_on_a_busy_machine(tmp_path: Path, monkeypatch) -> None:
+    """A whole mock book on the machine above. The gate there sleeps two seconds and asks again with no time limit, so
+    without conftest's `_ample_machine_resources` this run never ends; the suite stood at 56 % on 18-11 for that reason. A
+    stop request after two minutes turns a regression into a failure instead of a hung suite."""
+    _busy_machine(monkeypatch)
+    source = tmp_path / "001.txt"
+    source.write_text("Rầm! Cánh cửa mở ra.\n\nĐây là một đoạn kể chuyện đủ dài để kiểm tra pipeline.", encoding="utf-8")
+    settings = build_settings(profile="balanced", overrides={
+        "analysis": {"enabled": False},
+        "asr": {"enabled": False, "required": False, "failure_policy": "warning_continue"},
+        "tts": {"min_seconds_per_100_chars": 0.2},
+    })
+    paths, db, settings = create_or_open_project([source], tmp_path / "out", settings, "Test Book")
+    monkeypatch.setattr(
+        "abook.analysis.OllamaBookAnalyzer.reconcile_name_pronunciations", lambda *_args, **_kwargs: 0
+    )
+
+    def fake_chapter(wavs, output, settings, **kwargs):
+        output.parent.mkdir(parents=True, exist_ok=True)
+        output.write_bytes(b"ID3" + b"x" * 5000)
+        quality = SimpleNamespace(
+            to_dict=lambda: {"hard_failures": [], "review_flags": []}, hard_failures=(), review_flags=()
+        )
+        return SimpleNamespace(checksum="chapterhash", quality=quality, timeline=())
+
+    monkeypatch.setattr("abook.pipeline.assemble_chapter_atomic_with_metrics", fake_chapter)
+    monkeypatch.setattr("abook.pipeline.verify_mp3", lambda path: (path.exists(), "ok"))
+    monkeypatch.setattr(
+        "abook.pipeline.WhisperVerifier.verify",
+        lambda _verifier, expected, _wav, *, confirmation=False: {
+            "passed": True, "transcript": expected, "similarity": 1.0, "wer": 0.0, "reason": "ok", "repairable": True,
+        },
+    )
+    monkeypatch.setattr(
+        "abook.pipeline.WhisperVerifier.can_verify_repeated_short", lambda _verifier, _expected: False
+    )
+    import time
+
+    deadline = time.monotonic() + 120.0
+    events = []
+    pipeline = BookPipeline(
+        paths=paths,
+        db=db,
+        settings=settings,
+        pause_requested=lambda: False,
+        stop_requested=lambda: time.monotonic() > deadline,
+        emit=lambda kind, payload: events.append((kind, payload)),
+    )
+    pipeline.tts = FakeTTS(settings, db)
+    pipeline.run()
+
+    assert time.monotonic() <= deadline, "the resource gate waited on the machine running the tests"
+    assert db.book()["status"] == "completed"
+    assert db.list_chapters()[0]["status"] == "completed"
+    assert not [payload for kind, payload in events if kind == "resource" and payload["level"] != "maximum"]
+
+
 @pytest.mark.parametrize("ordinary_content_is_clean", [True, False])
 def test_locked_name_failure_evidence_stays_self_consistent(
     ordinary_content_is_clean: bool,
