@@ -6,8 +6,8 @@ function books() {
             progress: 0.3, listeningProgress: {fraction: 0.3, heardSeconds: 60, totalSeconds: 200}, state: {last: {at: 1793000000, chapterId: 1, seconds: 40}}, lastChapter: "Chương 1\u00a0·\u00a0Lên đường"},
         {id: "next", bookId: "next", title: "Miền đất\u00a0·\u00a0Tập 2", author: "Đặng An", subtitle: "Đặng An", chaptersTotal: 3, chaptersAvailable: 3, duration: 300, complete: true, progress: 0, listeningProgress: {}},
         {id: "fresh", bookId: "fresh", title: "Những ngày bình yên", author: "Nguyễn Bình", subtitle: "Nguyễn Bình\u00a0·\u00a02 chương", stage: "text", chaptersTotal: 2, chaptersAvailable: 0, progress: 0, listeningProgress: {}},
-        {id: "finished", bookId: "finished", title: "Con đường bên sông", author: "Người kể chuyện", subtitle: "Đã nghe xong", chaptersAvailable: 2, duration: 300, complete: true, progress: 1, listeningProgress: {finished: true, heardSeconds: 300, totalSeconds: 300}},
-        {id: "remote", bookId: "remote", title: "Chuyện kể đêm mưa", subtitle: "4 giờ\u00a0·\u00a012 chương", source: "Máy của bạn", remote: {computer: "Máy của bạn"}, progress: 0, chaptersAvailable: 12, listeningProgress: {}}
+        {id: "finished", bookId: "finished", title: "Con đường bên sông", author: "Người kể chuyện", subtitle: "Đã nghe xong", chaptersTotal: 2, chaptersAvailable: 2, duration: 300, complete: true, progress: 1, listeningProgress: {finished: true, heardSeconds: 300, totalSeconds: 300}},
+        {id: "remote", bookId: "remote", title: "Chuyện kể đêm mưa", subtitle: "4 giờ\u00a0·\u00a012 chương", source: "Máy của bạn", remote: {computer: "Máy của bạn"}, progress: 0, chaptersTotal: 12, chaptersAvailable: 12, duration: 14400, complete: true, listeningProgress: {}}
     ]
 }
 function playerBook(complete) {

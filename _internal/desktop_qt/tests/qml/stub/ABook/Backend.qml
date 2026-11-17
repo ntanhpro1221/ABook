@@ -19,6 +19,8 @@ QtObject {
         property int revision: 0
         property string error: ""
         property var items: null
-        function book(i) { return items ? items[i] || {} : {title: "Sách " + (i + 1), subtitle: "Tác giả", coverKey: "", progress: 0, source: ""} }
+        // Dòng thư viện như LibraryModel.book: tác giả có dòng riêng, tình trạng tính từ chaptersTotal / duration / listeningProgress
+        function book(i) { return items ? items[i] || {} : {id: "s" + i, bookId: "s" + i, title: "Sách " + (i + 1), author: "Tác giả", stage: "done", chaptersTotal: 12, chaptersAvailable: 12,
+                                                             complete: true, duration: 3600, coverKey: "", progress: 0, listeningProgress: {}, source: ""} }
     }
 }

@@ -492,7 +492,7 @@ Item {
             title.text = longName.repeat(2).slice(0, 160)
             verify(title.height > 60)
             const author = findChild(dialog, "editMeta_author")
-            author.text = "Tác giả " + longName
+            author.text = "Tác giả " + longName.repeat(2)
             verify(author.height > 60)
             verify(findChild(dialog, "editSaveTitle").x + findChild(dialog, "editSaveTitle").width <= dialog.bodyWidth + 1)
         }

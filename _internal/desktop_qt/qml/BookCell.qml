@@ -25,9 +25,9 @@ Interactive {
     property real coverWidth: Theme.coverMin
     readonly property real coverHeight: Math.round(coverWidth * Theme.coverRatio)
     // Dòng tình trạng như web / điện thoại ("Còn 2 giờ", "Đã nghe xong", "12 chương"): tính từ chính cuốn, không kèm tác giả (tác giả có dòng
-    // riêng ở trên). `subtitle` chỉ để ô một bộ nhiều tập ghi "N tập".
+    // riêng ở trên). `subtitle` chỉ để ô một bộ nhiều tập ghi "N tập". Chỉ dòng thư viện thật (có chaptersTotal) mới có tình trạng.
     readonly property string statusText: root.subtitle !== "" ? root.subtitle
-        : root.book && root.book.bookId ? BookLogic.progressText(root.book, Api.voiceList.length > 0, false) : ""
+        : root.book && root.book.bookId && typeof root.book.chaptersTotal === "number" ? BookLogic.progressText(root.book, Api.voiceList.length > 0, false) : ""
     readonly property string subLine: [root.source !== "" ? (root.remoteSeries ? S.s_co_sach_tren_may_khac_3b7cdd88 : S.s_tren_54f68805 + root.source) : "", root.statusText]
         .filter(part => part !== "").join("\u00a0·\u00a0")
     readonly property real textBlock: 12 + root.titleHeight + authorText.height + 4 + subtitleText.height
