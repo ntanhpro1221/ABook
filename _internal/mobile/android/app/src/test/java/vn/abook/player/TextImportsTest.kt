@@ -88,7 +88,7 @@ class TextImportsTest {
         assertEquals(file.map { it.done }.sorted(), file.map { it.done })
         assertEquals(0L, file.first().done)
         assertEquals(bytes.size.toLong(), file.last().done)
-        assertEquals(TextImports.STAGE_SHARE, file.last().fraction!!, 1e-6f)
+        assertEquals(1f, file.last().fraction!!, 1e-6f)
         // Không biết cỡ: không có số nào, thanh chạy liên tục.
         val unknown = ArrayList<Work>()
         TextImports.stageFile("Truyện.txt", 0, { unknown += it }) { bytes.inputStream() }

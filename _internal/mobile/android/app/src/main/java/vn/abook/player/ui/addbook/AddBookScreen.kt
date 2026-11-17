@@ -193,10 +193,21 @@ private fun ImportRow(
         trailing = if (failed) ({ TextAction(S.s_thu_lai_c58d068c, { retry(item.id) }, "retry_${item.id}") }) else null,
         chevron = open != null,
         below = if (working) ({
-            // Thanh theo việc thật: phần đã xong của cả hàng; bước chưa biết tổng thì chạy liên tục.
+            // Thanh theo việc thật, đúng BƯỚC mà chữ trên nó đang nói ("Đang chép · 1,3 GB / 1,4 GB" = thanh ~93 %); bước chưa biết tổng thì chạy liên tục.
+            // Sang bước mới: thanh của bước cũ trượt đi với con số cuối của nó, thanh mới vào từ phần của bước mới - không tụt cứng về 0.
             val bar = work!!
-            val known by remember { derivedStateOf { bar.value.fraction != null } }
-            StageProgress(known) { bar.value.fraction ?: 0f }
+            val step by remember { derivedStateOf { bar.value.step } }
+            // Giữ ngoài nhánh: đường giảm chuyển động dựng lại nhánh cũ khi bắt đầu mờ đi.
+            val last = remember(bar) { FloatArray(WorkStep.entries.size) { -1f } }
+            SwapContent(step, contentKey = { it }, layout = ContentLayout.Column) { shownStep ->
+                val now: () -> Float? = {
+                    val current = bar.value
+                    if (current.step == shownStep) last[shownStep.ordinal] = current.fraction ?: -1f
+                    last[shownStep.ordinal].takeIf { it >= 0f }
+                }
+                val known by remember(shownStep, bar) { derivedStateOf { now() != null } }
+                StageProgress(known) { now() ?: 0f }
+            }
         }) else null,
     )
 }

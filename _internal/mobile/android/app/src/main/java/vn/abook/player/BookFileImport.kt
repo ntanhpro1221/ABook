@@ -200,8 +200,8 @@ object BookFileImport {
             size?.let { requireRoom(context.cacheDir, it + ROOM_MARGIN) }
             val total = size ?: 0L
             val input = context.contentResolver.openInputStream(uri) ?: throw Refused(S.s_chua_doc_duoc_file_6575d76b)
-            input.use { source -> copy.outputStream().use { sink -> copyCounting(source, sink) { done -> progress(copyWork(done, total, COPY_SHARE)) } } }
-            return importFile(copy, allowOlder = allowOlder, progress = progress, from = COPY_SHARE, checkpoint = checkpoint)
+            input.use { source -> copy.outputStream().use { sink -> copyCounting(source, sink) { done -> progress(copyWork(done, total)) } } }
+            return importFile(copy, allowOlder = allowOlder, progress = progress, checkpoint = checkpoint)
         } finally {
             copy.delete()
         }
@@ -231,9 +231,6 @@ object BookFileImport {
         return descriptor
     }
 
-    /** Phần của thanh dành cho bước chép (phần còn lại là bước kiểm): hai bước đi qua cùng chừng ấy byte. */
-    private const val COPY_SHARE = 0.5f
-
     /**
      * Cỡ file: độ dài thật của bộ mô tả (fstat) trước, không có thì cột SIZE của trình quản lý file. Cột SIZE có thể cũ (MediaStore quét
      * lúc file còn đang chép vào máy báo 918 MB cho file 1,46 GB - máy ảo 11-11), nên không đi trước số của chính file.
@@ -258,9 +255,9 @@ object BookFileImport {
 
     /** `separate`: người dùng chọn "Thêm bản riêng" dù cuốn đã có - không tìm cuốn trùng, luôn là cuốn mới với mã riêng.
      *  `refreshBase = false` chỉ giữ lớp nền khi nhập lại chữ từ EPUB/TXT; gói có audio luôn so và cập nhật lớp nền. */
-    /** `progress`: byte đã giải và kiểm mã băm / tổng phần cần giải, chiếm khoảng [from, 1] của thanh. */
+    /** `progress`: byte đã giải và kiểm mã băm / tổng phần cần giải (bước kiểm). */
     fun importFile(file: File, separate: Boolean = false, allowOlder: Boolean = false, refreshBase: Boolean = true,
-                   progress: WorkSink = {}, from: Float = 0f, checkpoint: () -> Unit = {}, freeSpace: (File) -> Long = { it.usableSpace }): Imported {
+                   progress: WorkSink = {}, checkpoint: () -> Unit = {}, freeSpace: (File) -> Long = { it.usableSpace }): Imported {
         checkpoint()
         // File không còn / không đọc được là lỗi đọc, không phải "không phải file sách": lời ấy chỉ dành cho nội dung đã đọc được mà sai.
         if (!file.canRead()) throw Refused(S.s_chua_doc_duoc_file_6575d76b)
@@ -402,13 +399,13 @@ object BookFileImport {
                 // Bước kiểm: byte thật đọc qua mã băm trên tổng cỡ giải nén của những mục sẽ giải.
                 val checkTotal = wanted.sumOf { maxOf(0L, zip.getEntry(resolve(it))?.size ?: 0L) }
                 var checked = 0L
-                progress(Work(WorkStep.Check, 0, checkTotal, from, 1f))
+                progress(Work(WorkStep.Check, 0, checkTotal))
                 for (name in wanted) {
                     val expected = expectedFiles.optJSONObject(name)
                     val previous = if (name.startsWith("chapters/")) Store.file(target, name) else null
                     val reuse = previous?.takeIf { expected != null && AudioRevision.matches(it, expected.optLong("size", -1), expected.optString("sha256")) }
                     val base = checked
-                    val (size, sha256) = extract(zip, resolve(name), File(staging, name), reuse) { read -> progress(Work(WorkStep.Check, base + read, checkTotal, from, 1f)) }
+                    val (size, sha256) = extract(zip, resolve(name), File(staging, name), reuse) { read -> progress(Work(WorkStep.Check, base + read, checkTotal)) }
                     checked = base + size
                     if (expected == null) continue
                     if (size != expected.optLong("size", -1) || sha256 != expected.optString("sha256")) {

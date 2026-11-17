@@ -36,6 +36,30 @@ class BottomInsetScanTest {
         assertTrue("Chừa đáy phải qua components/Insets.kt (gestureBarPadding / gestureSafe / navigationClearance):\n" + found.joinToString("\n"), found.isEmpty())
     }
 
+    /** Đệm đáy cố định cộng ngay sau chỗ chừa đáy (cùng chuỗi modifier): `.gestureBarPadding().padding(bottom = 16.dp)`, `gestureSafe(...)).padding(vertical = ...)`. */
+    private val stacked = Regex("""(gestureBarPadding\(|gestureSafe\().*\.padding\((?:[^)]*\b(?:bottom|vertical|all)\s*=\s*+(?!bottomBreath|if\b)[^,)]+|\s*[A-Za-z0-9_.]+\s*\))""")
+
+    @Test
+    fun noFixedBreathIsStackedOnTopOfTheBottomClearance() {
+        // Chủ sách 15-11: "sao ở dưới đáy cứ có khoảng trống nhất định nhỉ? nhiều view cũng bị như thế" - khoảng thở cộng LÊN TRÊN chỗ chừa đáy thành dải trống
+        // cố định. Khoảng dưới thứ cuối cùng phải đi qua `bottomBreath` (gộp với chỗ chừa đáy), không phải một số cứng ngay sau gestureBarPadding / gestureSafe.
+        val found = ArrayList<String>()
+        for (file in sources()) file.readLines().forEachIndexed { index, raw ->
+            val code = raw.trim().substringBefore("//")
+            if (code.startsWith("*") || code.startsWith("import ")) return@forEachIndexed
+            if (stacked.containsMatchIn(code)) found += "${file.path}:${index + 1}: ${code.take(160)}"
+        }
+        assertTrue("Đệm đáy cố định chồng lên chỗ chừa đáy - dùng bottomBreath(...):\n" + found.joinToString("\n"), found.isEmpty())
+        // Chống "xanh vì mù": đúng dạng lỗi cũ (Sheet.kt, PlayerSheets.kt, NowPlayingScreen.kt trước 15-11) bị bắt; dạng đã sửa thì không.
+        assertTrue(stacked.containsMatchIn("BoxWithConstraints(Modifier.gestureBarPadding().padding(horizontal = Dim.margin).padding(bottom = Dim.s16)) {"))
+        assertTrue(stacked.containsMatchIn(".gestureBarPadding().padding(horizontal = 20.dp).padding(top = 12.dp, bottom = 20.dp)) {"))
+        assertTrue(stacked.containsMatchIn("Modifier.fillMaxSize().windowInsetsPadding(gestureSafe(WindowInsets.systemBars)).padding(horizontal = 20.dp).padding(bottom = 12.dp),"))
+        assertTrue(stacked.containsMatchIn("Modifier.gestureBarPadding().padding(Dim.s16)"))
+        assertTrue(!stacked.containsMatchIn("Modifier.gestureBarPadding().padding(horizontal = Dim.margin)) {"))
+        assertTrue(!stacked.containsMatchIn("gestureSafe(WindowInsets.systemBars)).padding(horizontal = 20.dp).padding(bottom = bottomBreath(12.dp)),"))
+        assertTrue(!stacked.containsMatchIn(".gestureBarPadding().padding(horizontal = 20.dp).padding(top = 12.dp, bottom = if (floating) 20.dp else bottomBreath(20.dp))) {"))
+    }
+
     @Test
     fun theScannerSeesTheKindOfLineItGuardsAgainst() {
         // Chống "xanh vì mù": chính file dùng chung phải chứa các dòng mà máy dò cấm ở nơi khác.

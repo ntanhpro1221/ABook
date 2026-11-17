@@ -897,7 +897,7 @@
     "source_sha256": "0aaf1e5a2fb78e2b9b29d8308a7b34556e0835dbe1d4809dc3c7de5345e42a2d",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; busy, loading, setBusy, setWorking, working",
-    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Merge review (merge174, dev/bgimport): the dialog became a viewer of the server import job; closing during a single add detaches the viewer while the job continues and the app-level watcher reports it. This statement and its guard are unchanged."
+    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering."
   },
   {
     "id": "3c567e6dc42c757abe91",
@@ -909,7 +909,7 @@
     "source_sha256": "0aaf1e5a2fb78e2b9b29d8308a7b34556e0835dbe1d4809dc3c7de5345e42a2d",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; busy, loading, setBusy, setWorking, working",
-    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Merge review (merge174, dev/bgimport): the dialog became a viewer of the server import job; closing during a single add detaches the viewer while the job continues and the app-level watcher reports it. This statement and its guard are unchanged."
+    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering."
   },
   {
     "id": "a25f36b0cb3cb6b55a82",
@@ -921,7 +921,7 @@
     "source_sha256": "0aaf1e5a2fb78e2b9b29d8308a7b34556e0835dbe1d4809dc3c7de5345e42a2d",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; busy, loading, setBusy, setWorking, working",
-    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Merge review (merge174, dev/bgimport): the dialog became a viewer of the server import job; closing during a single add detaches the viewer while the job continues and the app-level watcher reports it. This statement and its guard are unchanged."
+    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering."
   },
   {
     "id": "b391d0e20253bec874d7",
@@ -933,7 +933,7 @@
     "source_sha256": "0aaf1e5a2fb78e2b9b29d8308a7b34556e0835dbe1d4809dc3c7de5345e42a2d",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; busy, loading, setBusy, setWorking, working",
-    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Merge review (merge174, dev/bgimport): the dialog became a viewer of the server import job; closing during a single add detaches the viewer while the job continues and the app-level watcher reports it. This statement and its guard are unchanged."
+    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering."
   },
   {
     "id": "16f562874927b2d2f1b7",
@@ -945,7 +945,7 @@
     "source_sha256": "0aaf1e5a2fb78e2b9b29d8308a7b34556e0835dbe1d4809dc3c7de5345e42a2d",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; busy, loading, setBusy, setWorking, working",
-    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Merge review (merge174, dev/bgimport): the dialog became a viewer of the server import job; closing during a single add detaches the viewer while the job continues and the app-level watcher reports it. This statement and its guard are unchanged."
+    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering."
   },
   {
     "id": "f9bf114a3e9eb89c030e",
@@ -957,7 +957,7 @@
     "source_sha256": "0aaf1e5a2fb78e2b9b29d8308a7b34556e0835dbe1d4809dc3c7de5345e42a2d",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; busy, loading, setBusy, setWorking, working",
-    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Merge review (merge174, dev/bgimport): the dialog became a viewer of the server import job; closing during a single add detaches the viewer while the job continues and the app-level watcher reports it. This statement and its guard are unchanged."
+    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering."
   },
   {
     "id": "a9573142c5f92af45592",
@@ -969,7 +969,7 @@
     "source_sha256": "0aaf1e5a2fb78e2b9b29d8308a7b34556e0835dbe1d4809dc3c7de5345e42a2d",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; busy, loading, setBusy, setWorking, working",
-    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Merge review (merge174, dev/bgimport): the dialog became a viewer of the server import job; closing during a single add detaches the viewer while the job continues and the app-level watcher reports it. This statement and its guard are unchanged."
+    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering."
   },
   {
     "id": "604a9bd715760d03354d",
@@ -981,7 +981,7 @@
     "source_sha256": "0aaf1e5a2fb78e2b9b29d8308a7b34556e0835dbe1d4809dc3c7de5345e42a2d",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; busy, loading, setBusy, setWorking, working",
-    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Merge review (merge174, dev/bgimport): the dialog became a viewer of the server import job; closing during a single add detaches the viewer while the job continues and the app-level watcher reports it. This statement and its guard are unchanged."
+    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering."
   },
   {
     "id": "4dadf34889039e7a7fd1",
@@ -993,7 +993,7 @@
     "source_sha256": "0aaf1e5a2fb78e2b9b29d8308a7b34556e0835dbe1d4809dc3c7de5345e42a2d",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; busy, loading, setBusy, setWorking, working",
-    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Merge review (merge174, dev/bgimport): the dialog became a viewer of the server import job; closing during a single add detaches the viewer while the job continues and the app-level watcher reports it. This statement and its guard are unchanged."
+    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering."
   },
   {
     "id": "7d327f94722b39a5dbf5",
@@ -1005,7 +1005,7 @@
     "source_sha256": "0aaf1e5a2fb78e2b9b29d8308a7b34556e0835dbe1d4809dc3c7de5345e42a2d",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; busy, loading, setBusy, setWorking, working",
-    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Merge review (merge174, dev/bgimport): the dialog became a viewer of the server import job; closing during a single add detaches the viewer while the job continues and the app-level watcher reports it. This statement and its guard are unchanged."
+    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering."
   },
   {
     "id": "f335b44e3a47b1ad40a6",
@@ -1017,7 +1017,7 @@
     "source_sha256": "0aaf1e5a2fb78e2b9b29d8308a7b34556e0835dbe1d4809dc3c7de5345e42a2d",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; busy, loading, setBusy, setWorking, working",
-    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Merge review (merge174, dev/bgimport): the dialog became a viewer of the server import job; closing during a single add detaches the viewer while the job continues and the app-level watcher reports it. This statement and its guard are unchanged."
+    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering."
   },
   {
     "id": "07760328322c8dd9e2f7",
@@ -1029,7 +1029,7 @@
     "source_sha256": "0aaf1e5a2fb78e2b9b29d8308a7b34556e0835dbe1d4809dc3c7de5345e42a2d",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; busy, loading, setBusy, setWorking, working",
-    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Merge review (merge174, dev/bgimport): the dialog became a viewer of the server import job; closing during a single add detaches the viewer while the job continues and the app-level watcher reports it. This statement and its guard are unchanged."
+    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering."
   },
   {
     "id": "db37cb3692811ba66199",
@@ -1041,7 +1041,7 @@
     "source_sha256": "0aaf1e5a2fb78e2b9b29d8308a7b34556e0835dbe1d4809dc3c7de5345e42a2d",
     "disposition": "internal",
     "guard": "In-memory collection entry lifecycle",
-    "reason": "The statement releases a listener, request, UI row, selection or cache entry; it does not delete its persisted source. Merge review (merge174, dev/bgimport): the dialog became a viewer of the server import job; closing during a single add detaches the viewer while the job continues and the app-level watcher reports it. This statement and its guard are unchanged."
+    "reason": "The statement releases a listener, request, UI row, selection or cache entry; it does not delete its persisted source."
   },
   {
     "id": "c34fc9be3251ba618f21",
@@ -1053,7 +1053,7 @@
     "source_sha256": "0aaf1e5a2fb78e2b9b29d8308a7b34556e0835dbe1d4809dc3c7de5345e42a2d",
     "disposition": "internal",
     "guard": "In-memory collection entry lifecycle",
-    "reason": "The statement releases a listener, request, UI row, selection or cache entry; it does not delete its persisted source. Merge review (merge174, dev/bgimport): the dialog became a viewer of the server import job; closing during a single add detaches the viewer while the job continues and the app-level watcher reports it. This statement and its guard are unchanged."
+    "reason": "The statement releases a listener, request, UI row, selection or cache entry; it does not delete its persisted source."
   },
   {
     "id": "e30313177d650a98b1ea",
@@ -4785,7 +4785,7 @@
     "source_sha256": "03308206047617fc7ab488e99c0a12891a747871bf0c9755c5aec6ab5ecad28c",
     "disposition": "pending",
     "guard": "ViewModel/operation fields: busy, progress; Components pending indicator",
-    "reason": "The model retains the operation and locks repeats; UI uses the shared pending parameter, loading content or progress owner. Merge review (merge174, dev/bgimport): the queue mirrors background import jobs and staging refs are bound to the row that read them, so discard only touches that row's own staging. This statement and its guard are unchanged."
+    "reason": "The model retains the operation and locks repeats; UI uses the shared pending parameter, loading content or progress owner."
   },
   {
     "id": "90296b013d7f2b25fe95",
@@ -4797,7 +4797,7 @@
     "source_sha256": "03308206047617fc7ab488e99c0a12891a747871bf0c9755c5aec6ab5ecad28c",
     "disposition": "pending",
     "guard": "ViewModel/operation fields: busy, progress; Components pending indicator",
-    "reason": "The model retains the operation and locks repeats; UI uses the shared pending parameter, loading content or progress owner. Merge review (merge174, dev/bgimport): the queue mirrors background import jobs and staging refs are bound to the row that read them, so discard only touches that row's own staging. This statement and its guard are unchanged."
+    "reason": "The model retains the operation and locks repeats; UI uses the shared pending parameter, loading content or progress owner."
   },
   {
     "id": "50881c0985139dfcd08e",
@@ -4809,7 +4809,7 @@
     "source_sha256": "03308206047617fc7ab488e99c0a12891a747871bf0c9755c5aec6ab5ecad28c",
     "disposition": "pending",
     "guard": "ViewModel/operation fields: busy, progress; Components pending indicator",
-    "reason": "The model retains the operation and locks repeats; UI uses the shared pending parameter, loading content or progress owner. Merge review (merge174, dev/bgimport): the queue mirrors background import jobs and staging refs are bound to the row that read them, so discard only touches that row's own staging. This statement and its guard are unchanged."
+    "reason": "The model retains the operation and locks repeats; UI uses the shared pending parameter, loading content or progress owner."
   },
   {
     "id": "25fe5623ca634c3b1ff2",
@@ -4821,7 +4821,7 @@
     "source_sha256": "03308206047617fc7ab488e99c0a12891a747871bf0c9755c5aec6ab5ecad28c",
     "disposition": "internal",
     "guard": "ImportQueue staging / new-project selected-files and volume-boundary draft",
-    "reason": "Deselecting input or cancelling staging retains the original user files and existing projects; the draft can be reselected. Merge review (merge174, dev/bgimport): the queue mirrors background import jobs and staging refs are bound to the row that read them, so discard only touches that row's own staging. This statement and its guard are unchanged."
+    "reason": "Deselecting input or cancelling staging retains the original user files and existing projects; the draft can be reselected."
   },
   {
     "id": "d7fa86fffe8a64742207",
@@ -4833,7 +4833,7 @@
     "source_sha256": "03308206047617fc7ab488e99c0a12891a747871bf0c9755c5aec6ab5ecad28c",
     "disposition": "internal",
     "guard": "ImportQueue staging / new-project selected-files and volume-boundary draft",
-    "reason": "Deselecting input or cancelling staging retains the original user files and existing projects; the draft can be reselected. Merge review (merge174, dev/bgimport): the queue mirrors background import jobs and staging refs are bound to the row that read them, so discard only touches that row's own staging. This statement and its guard are unchanged."
+    "reason": "Deselecting input or cancelling staging retains the original user files and existing projects; the draft can be reselected."
   },
   {
     "id": "6e54e53e3f5fe4942edb",
@@ -4845,7 +4845,7 @@
     "source_sha256": "03308206047617fc7ab488e99c0a12891a747871bf0c9755c5aec6ab5ecad28c",
     "disposition": "pending",
     "guard": "ViewModel/operation fields: busy, progress; Components pending indicator",
-    "reason": "The model retains the operation and locks repeats; UI uses the shared pending parameter, loading content or progress owner. Merge review (merge174, dev/bgimport): the queue mirrors background import jobs and staging refs are bound to the row that read them, so discard only touches that row's own staging. This statement and its guard are unchanged."
+    "reason": "The model retains the operation and locks repeats; UI uses the shared pending parameter, loading content or progress owner."
   },
   {
     "id": "75f88413269deeef7aee",
@@ -4857,7 +4857,7 @@
     "source_sha256": "03308206047617fc7ab488e99c0a12891a747871bf0c9755c5aec6ab5ecad28c",
     "disposition": "pending",
     "guard": "ViewModel/operation fields: busy, progress; Components pending indicator",
-    "reason": "The model retains the operation and locks repeats; UI uses the shared pending parameter, loading content or progress owner. Merge review (merge174, dev/bgimport): the queue mirrors background import jobs and staging refs are bound to the row that read them, so discard only touches that row's own staging. This statement and its guard are unchanged."
+    "reason": "The model retains the operation and locks repeats; UI uses the shared pending parameter, loading content or progress owner."
   },
   {
     "id": "d63536b427222cd3b5dd",
@@ -4881,7 +4881,7 @@
     "source_sha256": "03308206047617fc7ab488e99c0a12891a747871bf0c9755c5aec6ab5ecad28c",
     "disposition": "pending",
     "guard": "ViewModel/operation fields: busy, progress; Components pending indicator",
-    "reason": "The model retains the operation and locks repeats; UI uses the shared pending parameter, loading content or progress owner. Merge review (merge174, dev/bgimport): the queue mirrors background import jobs and staging refs are bound to the row that read them, so discard only touches that row's own staging. This statement and its guard are unchanged."
+    "reason": "The model retains the operation and locks repeats; UI uses the shared pending parameter, loading content or progress owner."
   },
   {
     "id": "2bd16240bdeb3ac9e885",
@@ -4893,7 +4893,7 @@
     "source_sha256": "03308206047617fc7ab488e99c0a12891a747871bf0c9755c5aec6ab5ecad28c",
     "disposition": "internal",
     "guard": "ImportQueue staging / new-project selected-files and volume-boundary draft",
-    "reason": "Deselecting input or cancelling staging retains the original user files and existing projects; the draft can be reselected. Merge review (merge174, dev/bgimport): the queue mirrors background import jobs and staging refs are bound to the row that read them, so discard only touches that row's own staging. This statement and its guard are unchanged."
+    "reason": "Deselecting input or cancelling staging retains the original user files and existing projects; the draft can be reselected."
   },
   {
     "id": "34981df386708bc0bf5d",
@@ -4905,7 +4905,7 @@
     "source_sha256": "03308206047617fc7ab488e99c0a12891a747871bf0c9755c5aec6ab5ecad28c",
     "disposition": "pending",
     "guard": "ViewModel/operation fields: busy, progress; Components pending indicator",
-    "reason": "The model retains the operation and locks repeats; UI uses the shared pending parameter, loading content or progress owner. Merge review (merge174, dev/bgimport): the queue mirrors background import jobs and staging refs are bound to the row that read them, so discard only touches that row's own staging. This statement and its guard are unchanged."
+    "reason": "The model retains the operation and locks repeats; UI uses the shared pending parameter, loading content or progress owner."
   },
   {
     "id": "9c858ef56f781a088f91",
@@ -4917,7 +4917,7 @@
     "source_sha256": "03308206047617fc7ab488e99c0a12891a747871bf0c9755c5aec6ab5ecad28c",
     "disposition": "internal",
     "guard": "ImportQueue staging / new-project selected-files and volume-boundary draft",
-    "reason": "Deselecting input or cancelling staging retains the original user files and existing projects; the draft can be reselected. Merge review (merge174, dev/bgimport): the queue mirrors background import jobs and staging refs are bound to the row that read them, so discard only touches that row's own staging. This statement and its guard are unchanged."
+    "reason": "Deselecting input or cancelling staging retains the original user files and existing projects; the draft can be reselected."
   },
   {
     "id": "1b531e2c7156e2a8aa53",
@@ -4926,10 +4926,10 @@
     "line": 32,
     "statement": "suspend fun replace(item: ImportItem, progress: WorkSink = {}): PreparedImport = error(S.s_chua_thay_duoc_sach_8eebed8f)",
     "occurrence": 1,
-    "source_sha256": "2b9564bc6090070c633b0380f516e641722cf15611f89e08686f69b74b9bb168",
+    "source_sha256": "37705ce3982801b4fa7a5c6fd44c581137badf980b9f21954d48bd4745f282e4",
     "disposition": "internal",
     "guard": "Async interface/helper boundary; concrete activation inventoried separately",
-    "reason": "This signature supplies work to a model or component; declaring it starts no user operation. Merge review (merge174, dev/bgimport): book-file imports go through the shared BookImports background job; staging discard and in-memory removals are unchanged."
+    "reason": "This signature supplies work to a model or component; declaring it starts no user operation. Combined-source review (merge174 bottomgap): both sides' changes to this file keep this statement and its guard unchanged."
   },
   {
     "id": "cc7827ef894ba1b49c33",
@@ -4938,10 +4938,10 @@
     "line": 33,
     "statement": "suspend fun describe(item: ImportItem): String = item.name",
     "occurrence": 1,
-    "source_sha256": "2b9564bc6090070c633b0380f516e641722cf15611f89e08686f69b74b9bb168",
+    "source_sha256": "37705ce3982801b4fa7a5c6fd44c581137badf980b9f21954d48bd4745f282e4",
     "disposition": "internal",
     "guard": "Async interface/helper boundary; concrete activation inventoried separately",
-    "reason": "This signature supplies work to a model or component; declaring it starts no user operation. Merge review (merge174, dev/bgimport): book-file imports go through the shared BookImports background job; staging discard and in-memory removals are unchanged."
+    "reason": "This signature supplies work to a model or component; declaring it starts no user operation. Combined-source review (merge174 bottomgap): both sides' changes to this file keep this statement and its guard unchanged."
   },
   {
     "id": "b6c4b541f7ed93d358d8",
@@ -4950,10 +4950,10 @@
     "line": 34,
     "statement": "suspend fun prepare(item: ImportItem, progress: WorkSink = {}): PreparedImport",
     "occurrence": 1,
-    "source_sha256": "2b9564bc6090070c633b0380f516e641722cf15611f89e08686f69b74b9bb168",
+    "source_sha256": "37705ce3982801b4fa7a5c6fd44c581137badf980b9f21954d48bd4745f282e4",
     "disposition": "internal",
     "guard": "Async interface/helper boundary; concrete activation inventoried separately",
-    "reason": "This signature supplies work to a model or component; declaring it starts no user operation. Merge review (merge174, dev/bgimport): book-file imports go through the shared BookImports background job; staging discard and in-memory removals are unchanged."
+    "reason": "This signature supplies work to a model or component; declaring it starts no user operation. Combined-source review (merge174 bottomgap): both sides' changes to this file keep this statement and its guard unchanged."
   },
   {
     "id": "6c05639ca13447b5cf3e",
@@ -4962,10 +4962,10 @@
     "line": 35,
     "statement": "suspend fun revise(ref: String, choices: ImportChoices): ImportPreview",
     "occurrence": 1,
-    "source_sha256": "2b9564bc6090070c633b0380f516e641722cf15611f89e08686f69b74b9bb168",
+    "source_sha256": "37705ce3982801b4fa7a5c6fd44c581137badf980b9f21954d48bd4745f282e4",
     "disposition": "internal",
     "guard": "Async interface/helper boundary; concrete activation inventoried separately",
-    "reason": "This signature supplies work to a model or component; declaring it starts no user operation. Merge review (merge174, dev/bgimport): book-file imports go through the shared BookImports background job; staging discard and in-memory removals are unchanged."
+    "reason": "This signature supplies work to a model or component; declaring it starts no user operation. Combined-source review (merge174 bottomgap): both sides' changes to this file keep this statement and its guard unchanged."
   },
   {
     "id": "cdbd2360af0c34bd27a1",
@@ -4974,10 +4974,10 @@
     "line": 36,
     "statement": "suspend fun add(ref: String, preview: ImportPreview, choices: ImportChoices): Pair<String, Boolean>",
     "occurrence": 1,
-    "source_sha256": "2b9564bc6090070c633b0380f516e641722cf15611f89e08686f69b74b9bb168",
+    "source_sha256": "37705ce3982801b4fa7a5c6fd44c581137badf980b9f21954d48bd4745f282e4",
     "disposition": "internal",
     "guard": "Async interface/helper boundary; concrete activation inventoried separately",
-    "reason": "This signature supplies work to a model or component; declaring it starts no user operation. Merge review (merge174, dev/bgimport): book-file imports go through the shared BookImports background job; staging discard and in-memory removals are unchanged."
+    "reason": "This signature supplies work to a model or component; declaring it starts no user operation. Combined-source review (merge174 bottomgap): both sides' changes to this file keep this statement and its guard unchanged."
   },
   {
     "id": "62c3b5bb7276f582c063",
@@ -4986,10 +4986,10 @@
     "line": 37,
     "statement": "suspend fun discard(ref: String)",
     "occurrence": 1,
-    "source_sha256": "2b9564bc6090070c633b0380f516e641722cf15611f89e08686f69b74b9bb168",
+    "source_sha256": "37705ce3982801b4fa7a5c6fd44c581137badf980b9f21954d48bd4745f282e4",
     "disposition": "internal",
     "guard": "Declaration; the invoked call site is independently inventoried",
-    "reason": "A declaration/signature is not an executing UI action. Merge review (merge174, dev/bgimport): book-file imports go through the shared BookImports background job; staging discard and in-memory removals are unchanged."
+    "reason": "A declaration/signature is not an executing UI action. Combined-source review (merge174 bottomgap): both sides' changes to this file keep this statement and its guard unchanged."
   },
   {
     "id": "4b6557c9243b1cb93bb4",
@@ -4998,10 +4998,10 @@
     "line": 37,
     "statement": "suspend fun discard(ref: String)",
     "occurrence": 1,
-    "source_sha256": "2b9564bc6090070c633b0380f516e641722cf15611f89e08686f69b74b9bb168",
+    "source_sha256": "37705ce3982801b4fa7a5c6fd44c581137badf980b9f21954d48bd4745f282e4",
     "disposition": "internal",
     "guard": "Async interface/helper boundary; concrete activation inventoried separately",
-    "reason": "This signature supplies work to a model or component; declaring it starts no user operation. Merge review (merge174, dev/bgimport): book-file imports go through the shared BookImports background job; staging discard and in-memory removals are unchanged."
+    "reason": "This signature supplies work to a model or component; declaring it starts no user operation. Combined-source review (merge174 bottomgap): both sides' changes to this file keep this statement and its guard unchanged."
   },
   {
     "id": "62555e2bf98123bd11b8",
@@ -5010,10 +5010,10 @@
     "line": 44,
     "statement": "override suspend fun describe(item: ImportItem): String = withContext(Dispatchers.IO) { name(document(item)) ?: item.name }",
     "occurrence": 1,
-    "source_sha256": "2b9564bc6090070c633b0380f516e641722cf15611f89e08686f69b74b9bb168",
+    "source_sha256": "37705ce3982801b4fa7a5c6fd44c581137badf980b9f21954d48bd4745f282e4",
     "disposition": "internal",
     "guard": "Async interface/helper boundary; concrete activation inventoried separately",
-    "reason": "This signature supplies work to a model or component; declaring it starts no user operation. Merge review (merge174, dev/bgimport): book-file imports go through the shared BookImports background job; staging discard and in-memory removals are unchanged."
+    "reason": "This signature supplies work to a model or component; declaring it starts no user operation. Combined-source review (merge174 bottomgap): both sides' changes to this file keep this statement and its guard unchanged."
   },
   {
     "id": "d60b908c7aa99178d049",
@@ -5022,10 +5022,10 @@
     "line": 51,
     "statement": "override suspend fun prepare(item: ImportItem, progress: WorkSink): PreparedImport = withContext(Dispatchers.IO) {",
     "occurrence": 1,
-    "source_sha256": "2b9564bc6090070c633b0380f516e641722cf15611f89e08686f69b74b9bb168",
+    "source_sha256": "37705ce3982801b4fa7a5c6fd44c581137badf980b9f21954d48bd4745f282e4",
     "disposition": "internal",
     "guard": "Async interface/helper boundary; concrete activation inventoried separately",
-    "reason": "This signature supplies work to a model or component; declaring it starts no user operation. Merge review (merge174, dev/bgimport): book-file imports go through the shared BookImports background job; staging discard and in-memory removals are unchanged."
+    "reason": "This signature supplies work to a model or component; declaring it starts no user operation. Combined-source review (merge174 bottomgap): both sides' changes to this file keep this statement and its guard unchanged."
   },
   {
     "id": "67164d3a2f772298a483",
@@ -5034,10 +5034,10 @@
     "line": 81,
     "statement": "TextImports.discard(staged.ref)",
     "occurrence": 1,
-    "source_sha256": "2b9564bc6090070c633b0380f516e641722cf15611f89e08686f69b74b9bb168",
+    "source_sha256": "37705ce3982801b4fa7a5c6fd44c581137badf980b9f21954d48bd4745f282e4",
     "disposition": "internal",
     "guard": "ImportQueue staging / new-project selected-files and volume-boundary draft",
-    "reason": "Deselecting input or cancelling staging retains the original user files and existing projects; the draft can be reselected. Merge review (merge174, dev/bgimport): book-file imports go through the shared BookImports background job; staging discard and in-memory removals are unchanged."
+    "reason": "Deselecting input or cancelling staging retains the original user files and existing projects; the draft can be reselected. Combined-source review (merge174 bottomgap): both sides' changes to this file keep this statement and its guard unchanged."
   },
   {
     "id": "7497c5435f8cdfc38eff",
@@ -5046,10 +5046,10 @@
     "line": 82,
     "statement": "pdfPages.remove(staged.ref)",
     "occurrence": 1,
-    "source_sha256": "2b9564bc6090070c633b0380f516e641722cf15611f89e08686f69b74b9bb168",
+    "source_sha256": "37705ce3982801b4fa7a5c6fd44c581137badf980b9f21954d48bd4745f282e4",
     "disposition": "internal",
     "guard": "In-memory collection entry lifecycle",
-    "reason": "The statement releases a listener, request, UI row, selection or cache entry; it does not delete its persisted source. Merge review (merge174, dev/bgimport): book-file imports go through the shared BookImports background job; staging discard and in-memory removals are unchanged."
+    "reason": "The statement releases a listener, request, UI row, selection or cache entry; it does not delete its persisted source. Combined-source review (merge174 bottomgap): both sides' changes to this file keep this statement and its guard unchanged."
   },
   {
     "id": "06cc16c1c31926cae398",
@@ -5058,10 +5058,10 @@
     "line": 87,
     "statement": "override suspend fun revise(ref: String, choices: ImportChoices): ImportPreview = withContext(Dispatchers.IO) { read(ref, choices) }",
     "occurrence": 1,
-    "source_sha256": "2b9564bc6090070c633b0380f516e641722cf15611f89e08686f69b74b9bb168",
+    "source_sha256": "37705ce3982801b4fa7a5c6fd44c581137badf980b9f21954d48bd4745f282e4",
     "disposition": "internal",
     "guard": "Async interface/helper boundary; concrete activation inventoried separately",
-    "reason": "This signature supplies work to a model or component; declaring it starts no user operation. Merge review (merge174, dev/bgimport): book-file imports go through the shared BookImports background job; staging discard and in-memory removals are unchanged."
+    "reason": "This signature supplies work to a model or component; declaring it starts no user operation. Combined-source review (merge174 bottomgap): both sides' changes to this file keep this statement and its guard unchanged."
   },
   {
     "id": "62d0e072c5a1964e0f8a",
@@ -5070,10 +5070,10 @@
     "line": 108,
     "statement": "override suspend fun add(ref: String, preview: ImportPreview, choices: ImportChoices): Pair<String, Boolean> = withContext(Dispatchers.IO) {",
     "occurrence": 1,
-    "source_sha256": "2b9564bc6090070c633b0380f516e641722cf15611f89e08686f69b74b9bb168",
+    "source_sha256": "37705ce3982801b4fa7a5c6fd44c581137badf980b9f21954d48bd4745f282e4",
     "disposition": "internal",
     "guard": "Async interface/helper boundary; concrete activation inventoried separately",
-    "reason": "This signature supplies work to a model or component; declaring it starts no user operation. Merge review (merge174, dev/bgimport): book-file imports go through the shared BookImports background job; staging discard and in-memory removals are unchanged."
+    "reason": "This signature supplies work to a model or component; declaring it starts no user operation. Combined-source review (merge174 bottomgap): both sides' changes to this file keep this statement and its guard unchanged."
   },
   {
     "id": "0f04535991e92931af4b",
@@ -5082,10 +5082,10 @@
     "line": 116,
     "statement": "pdfPages.remove(ref)",
     "occurrence": 1,
-    "source_sha256": "2b9564bc6090070c633b0380f516e641722cf15611f89e08686f69b74b9bb168",
+    "source_sha256": "37705ce3982801b4fa7a5c6fd44c581137badf980b9f21954d48bd4745f282e4",
     "disposition": "internal",
     "guard": "In-memory collection entry lifecycle",
-    "reason": "The statement releases a listener, request, UI row, selection or cache entry; it does not delete its persisted source. Merge review (merge174, dev/bgimport): book-file imports go through the shared BookImports background job; staging discard and in-memory removals are unchanged."
+    "reason": "The statement releases a listener, request, UI row, selection or cache entry; it does not delete its persisted source. Combined-source review (merge174 bottomgap): both sides' changes to this file keep this statement and its guard unchanged."
   },
   {
     "id": "8d27867f029d0ca73152",
@@ -5094,10 +5094,10 @@
     "line": 117,
     "statement": "created.remove(ref)",
     "occurrence": 1,
-    "source_sha256": "2b9564bc6090070c633b0380f516e641722cf15611f89e08686f69b74b9bb168",
+    "source_sha256": "37705ce3982801b4fa7a5c6fd44c581137badf980b9f21954d48bd4745f282e4",
     "disposition": "internal",
     "guard": "In-memory collection entry lifecycle",
-    "reason": "The statement releases a listener, request, UI row, selection or cache entry; it does not delete its persisted source. Merge review (merge174, dev/bgimport): book-file imports go through the shared BookImports background job; staging discard and in-memory removals are unchanged."
+    "reason": "The statement releases a listener, request, UI row, selection or cache entry; it does not delete its persisted source. Combined-source review (merge174 bottomgap): both sides' changes to this file keep this statement and its guard unchanged."
   },
   {
     "id": "1a1069d696c15be8c352",
@@ -5106,10 +5106,10 @@
     "line": 121,
     "statement": "override suspend fun discard(ref: String) = withContext(Dispatchers.IO) {",
     "occurrence": 1,
-    "source_sha256": "2b9564bc6090070c633b0380f516e641722cf15611f89e08686f69b74b9bb168",
+    "source_sha256": "37705ce3982801b4fa7a5c6fd44c581137badf980b9f21954d48bd4745f282e4",
     "disposition": "internal",
     "guard": "Declaration; the invoked call site is independently inventoried",
-    "reason": "A declaration/signature is not an executing UI action. Merge review (merge174, dev/bgimport): book-file imports go through the shared BookImports background job; staging discard and in-memory removals are unchanged."
+    "reason": "A declaration/signature is not an executing UI action. Combined-source review (merge174 bottomgap): both sides' changes to this file keep this statement and its guard unchanged."
   },
   {
     "id": "dce31c1daa756af2f9cc",
@@ -5118,10 +5118,10 @@
     "line": 121,
     "statement": "override suspend fun discard(ref: String) = withContext(Dispatchers.IO) {",
     "occurrence": 1,
-    "source_sha256": "2b9564bc6090070c633b0380f516e641722cf15611f89e08686f69b74b9bb168",
+    "source_sha256": "37705ce3982801b4fa7a5c6fd44c581137badf980b9f21954d48bd4745f282e4",
     "disposition": "internal",
     "guard": "Async interface/helper boundary; concrete activation inventoried separately",
-    "reason": "This signature supplies work to a model or component; declaring it starts no user operation. Merge review (merge174, dev/bgimport): book-file imports go through the shared BookImports background job; staging discard and in-memory removals are unchanged."
+    "reason": "This signature supplies work to a model or component; declaring it starts no user operation. Combined-source review (merge174 bottomgap): both sides' changes to this file keep this statement and its guard unchanged."
   },
   {
     "id": "1451d30d67624fbb94b5",
@@ -5130,10 +5130,10 @@
     "line": 122,
     "statement": "TextImports.discard(ref)",
     "occurrence": 1,
-    "source_sha256": "2b9564bc6090070c633b0380f516e641722cf15611f89e08686f69b74b9bb168",
+    "source_sha256": "37705ce3982801b4fa7a5c6fd44c581137badf980b9f21954d48bd4745f282e4",
     "disposition": "internal",
     "guard": "ImportQueue staging / new-project selected-files and volume-boundary draft",
-    "reason": "Deselecting input or cancelling staging retains the original user files and existing projects; the draft can be reselected. Merge review (merge174, dev/bgimport): book-file imports go through the shared BookImports background job; staging discard and in-memory removals are unchanged."
+    "reason": "Deselecting input or cancelling staging retains the original user files and existing projects; the draft can be reselected. Combined-source review (merge174 bottomgap): both sides' changes to this file keep this statement and its guard unchanged."
   },
   {
     "id": "342fcf966197646ece65",
@@ -5142,10 +5142,10 @@
     "line": 123,
     "statement": "pdfPages.remove(ref)",
     "occurrence": 2,
-    "source_sha256": "2b9564bc6090070c633b0380f516e641722cf15611f89e08686f69b74b9bb168",
+    "source_sha256": "37705ce3982801b4fa7a5c6fd44c581137badf980b9f21954d48bd4745f282e4",
     "disposition": "internal",
     "guard": "In-memory collection entry lifecycle",
-    "reason": "The statement releases a listener, request, UI row, selection or cache entry; it does not delete its persisted source. Merge review (merge174, dev/bgimport): book-file imports go through the shared BookImports background job; staging discard and in-memory removals are unchanged."
+    "reason": "The statement releases a listener, request, UI row, selection or cache entry; it does not delete its persisted source. Combined-source review (merge174 bottomgap): both sides' changes to this file keep this statement and its guard unchanged."
   },
   {
     "id": "a37ff179fd13114d79bd",
@@ -5154,10 +5154,10 @@
     "line": 124,
     "statement": "created.remove(ref)",
     "occurrence": 2,
-    "source_sha256": "2b9564bc6090070c633b0380f516e641722cf15611f89e08686f69b74b9bb168",
+    "source_sha256": "37705ce3982801b4fa7a5c6fd44c581137badf980b9f21954d48bd4745f282e4",
     "disposition": "internal",
     "guard": "In-memory collection entry lifecycle",
-    "reason": "The statement releases a listener, request, UI row, selection or cache entry; it does not delete its persisted source. Merge review (merge174, dev/bgimport): book-file imports go through the shared BookImports background job; staging discard and in-memory removals are unchanged."
+    "reason": "The statement releases a listener, request, UI row, selection or cache entry; it does not delete its persisted source. Combined-source review (merge174 bottomgap): both sides' changes to this file keep this statement and its guard unchanged."
   },
   {
     "id": "7fd73d861862bb34cc06",
@@ -5166,10 +5166,10 @@
     "line": 128,
     "statement": "override suspend fun replace(item: ImportItem, progress: WorkSink): PreparedImport = withContext(Dispatchers.IO) {",
     "occurrence": 1,
-    "source_sha256": "2b9564bc6090070c633b0380f516e641722cf15611f89e08686f69b74b9bb168",
+    "source_sha256": "37705ce3982801b4fa7a5c6fd44c581137badf980b9f21954d48bd4745f282e4",
     "disposition": "internal",
     "guard": "Async interface/helper boundary; concrete activation inventoried separately",
-    "reason": "This signature supplies work to a model or component; declaring it starts no user operation. Merge review (merge174, dev/bgimport): book-file imports go through the shared BookImports background job; staging discard and in-memory removals are unchanged."
+    "reason": "This signature supplies work to a model or component; declaring it starts no user operation. Combined-source review (merge174 bottomgap): both sides' changes to this file keep this statement and its guard unchanged."
   },
   {
     "id": "9f5279007405569087f5",
@@ -5235,10 +5235,10 @@
     "id": "dd56227569fbd70da160",
     "kind": "pending",
     "path": "mobile/android/app/src/main/java/vn/abook/player/ui/components/Sheet.kt",
-    "line": 183,
+    "line": 187,
     "statement": "settle = scope.launch {",
     "occurrence": 1,
-    "source_sha256": "5384c841bd7056d877e14cac09c6aa65bbaab7e7b34d5a4adba14ba4515ff10d",
+    "source_sha256": "63a12ca647b3a915fa9d8bfa93e4ce890467f5c4b06e4ff1548b3007501a6882",
     "disposition": "pending",
     "guard": "ViewModel/operation fields: progress; Components pending indicator",
     "reason": "The model retains the operation and locks repeats; UI uses the shared pending parameter, loading content or progress owner. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
@@ -5247,10 +5247,10 @@
     "id": "33b42bb1aaca28e5111c",
     "kind": "pending",
     "path": "mobile/android/app/src/main/java/vn/abook/player/ui/components/Sheet.kt",
-    "line": 212,
+    "line": 216,
     "statement": "override suspend fun onPreFling(available: Velocity): Velocity {",
     "occurrence": 1,
-    "source_sha256": "5384c841bd7056d877e14cac09c6aa65bbaab7e7b34d5a4adba14ba4515ff10d",
+    "source_sha256": "63a12ca647b3a915fa9d8bfa93e4ce890467f5c4b06e4ff1548b3007501a6882",
     "disposition": "internal",
     "guard": "Async interface/helper boundary; concrete activation inventoried separately",
     "reason": "This signature supplies work to a model or component; declaring it starts no user operation. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
@@ -10803,10 +10803,10 @@
     "id": "1a7aa906907f8c98cbe0",
     "kind": "pending",
     "path": "mobile/android/app/src/main/java/vn/abook/player/ui/nowplaying/NowPlayingScreen.kt",
-    "line": 346,
+    "line": 347,
     "statement": "onRetry = { onDim(false); scope.launch { model.loadReadAlong() } },",
     "occurrence": 1,
-    "source_sha256": "28679c906a8890a7d69fc407c0d10ad7197f4503c6eea2f10ecbef992faeff67",
+    "source_sha256": "faa069b041feea02be80537bdccb33fb2290855debaf1d5abd2ccbccec0f7729",
     "disposition": "pending",
     "guard": "ViewModel/operation fields: pending, preparing, progress, windowProgress; Components pending indicator",
     "reason": "The model retains the operation and locks repeats; UI uses the shared pending parameter, loading content or progress owner. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
@@ -10995,13 +10995,13 @@
     "id": "6b3cbb2a48258077c161",
     "kind": "destructive",
     "path": "mobile/android/app/src/main/java/vn/abook/player/ui/nowplaying/PlayerSheets.kt",
-    "line": 77,
+    "line": 78,
     "statement": "fun pop() { if(parents.isNotEmpty())window.openSheet(parents.removeAt(parents.lastIndex)) else window.closeSheet() }",
     "occurrence": 1,
-    "source_sha256": "36b37e78ccc0b942b922d545ec7af1b4460f6a7d8f11adc922bc27a347c337c1",
+    "source_sha256": "ce5fd30a8604239b9ab483fc4ebeb917f13af843f0aad3303dcf9b4c1d961c6d",
     "disposition": "internal",
     "guard": "Declaration; the invoked call site is independently inventoried",
-    "reason": "A declaration/signature is not an executing UI action. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Gate repair: reviewed identity-key motion, explicit layout, token spacing or semantic navigation changes; existing guard retained."
+    "reason": "A declaration/signature is not an executing UI action. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Gate repair: reviewed identity-key motion, explicit layout, token spacing or semantic navigation changes; existing guard retained. Combined-source review (merge174 bottomgap): both sides' changes to this file keep this statement and its guard unchanged."
   },
   {
     "id": "41d49281785c0f3be740",
@@ -15129,7 +15129,7 @@
     "source_sha256": "b199275384e9894b4ecb01e1c7fa75657fb3fec6e68ccb4d411d006d159dc550",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; busy, pending, working",
-    "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Merge review (merge174, dev/bgimport): the dialog became a viewer of the server import job (Api.importScreens / watchImports); closing during a single add detaches the viewer while the job continues. This statement and its guard are unchanged."
+    "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
   },
   {
     "id": "af49df2e4950153e0d85",
@@ -15141,7 +15141,7 @@
     "source_sha256": "b199275384e9894b4ecb01e1c7fa75657fb3fec6e68ccb4d411d006d159dc550",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; busy, pending, working",
-    "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Merge review (merge174, dev/bgimport): the dialog became a viewer of the server import job (Api.importScreens / watchImports); closing during a single add detaches the viewer while the job continues. This statement and its guard are unchanged."
+    "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
   },
   {
     "id": "8a873b33a644eb4c58fb",

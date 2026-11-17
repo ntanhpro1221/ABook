@@ -5,6 +5,7 @@ import vn.abook.player.ui.motion.ContentLayout
 
 import vn.abook.player.S
 
+import vn.abook.player.ui.components.bottomBreath
 import vn.abook.player.ui.components.gestureBarPadding
 import vn.abook.player.ui.components.ClockLabel
 import vn.abook.player.ui.components.IconAction
@@ -107,7 +108,7 @@ fun PlayerSheets(state: NowPlayingState, model: NowPlayingModel, window: NowPlay
                 .sheetSurface(drag)
                 .floatingMotionLayer { translationY = drag.offset; alpha = scrimShown }
                 .floatingSurface(if (floating) RoundedCornerShape(Dim.radiusSheet) else RoundedCornerShape(topStart = Dim.radiusSheet, topEnd = Dim.radiusSheet), sheet = true)
-                .gestureBarPadding().padding(horizontal = 20.dp).padding(top = 12.dp, bottom = 20.dp)) {
+                .gestureBarPadding().padding(horizontal = 20.dp).padding(top = 12.dp, bottom = if (floating) 20.dp else bottomBreath(20.dp))) {
                 // Đóng bằng kéo xuống (cả tấm), chạm nền tối hay Back - không nút đóng riêng.
                 Column(Modifier.fillMaxWidth().testTag("player_sheet_grip")) {
                     Box(Modifier.align(Alignment.CenterHorizontally).width(32.dp).height(4.dp)

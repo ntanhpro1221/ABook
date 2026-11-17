@@ -5,6 +5,7 @@ import vn.abook.player.ui.motion.ContentLayout
 
 import vn.abook.player.S
 
+import vn.abook.player.ui.components.bottomBreath
 import vn.abook.player.ui.components.gestureSafe
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
@@ -61,8 +62,10 @@ fun BookForm(
     ) {
         PageHeader(title, onBack, trailing = trailing)
         Column(Modifier.weight(1f), content = content)
+        // Dưới chân: chỉ chỗ chừa đáy (đã trừ ở khung), không cộng thêm khoảng thở lên trên nó (components/Insets.kt `bottomBreath`).
+        val below = bottomBreath(Dim.s12)
         SwapContent(footer, contentKey = { footer -> footer != null }, layout = ContentLayout.Column) { footer ->
-            if (footer != null) Column(Modifier.fillMaxWidth().padding(vertical = Dim.s12)) { footer() }
+            if (footer != null) Column(Modifier.fillMaxWidth().padding(top = Dim.s12, bottom = below)) { footer() }
         }
     }
 }

@@ -4,12 +4,15 @@ package vn.abook.player
 enum class WorkStep { Copy, Check, Read, Add }
 
 /**
- * Một lần báo tiến độ theo việc THẬT: bước đang làm, `done` / `total` của bước (byte; trang hay số file khi `bytes` = false; `total` <= 0 = chưa biết tổng),
- * và khoảng [from, to] của cả thanh mà bước ấy chiếm. Không có số đoán: chưa biết tổng thì [fraction] là null và thanh chạy liên tục.
+ * Một lần báo tiến độ theo việc THẬT: bước đang làm, `done` / `total` của bước (byte; trang hay số file khi `bytes` = false; `total` <= 0 = chưa biết tổng).
+ * Không có số đoán: chưa biết tổng thì [fraction] là null và thanh chạy liên tục.
  */
-data class Work(val step: WorkStep, val done: Long = 0, val total: Long = 0, val from: Float = 0f, val to: Float = 1f, val bytes: Boolean = true) {
-    /** Phần đã xong của cả việc (0..1), hay null khi bước chưa biết tổng. */
-    val fraction: Float? get() = if (total > 0) from + (to - from) * (done.coerceIn(0, total).toFloat() / total) else null
+data class Work(val step: WorkStep, val done: Long = 0, val total: Long = 0, val bytes: Boolean = true) {
+    /**
+     * Phần đã xong của BƯỚC đang hiện (0..1) - đúng con số mà chữ của hàng nói ("Đang chép · 1,3 GB / 1,4 GB" thì thanh ~93 %), hay null khi bước chưa biết tổng.
+     * Trước đây thanh là phần của cả việc (chép chiếm nửa đầu, kiểm nửa sau): chữ nói gần xong mà thanh mới tới giữa (chủ sách 15-11, OPPO 0.4.172).
+     */
+    val fraction: Float? get() = if (total > 0) done.coerceIn(0, total).toFloat() / total else null
 }
 
 /** Nơi nhận tiến độ; việc chạy ở luồng nền gọi nó thường xuyên (mỗi khối 64 KB), nên phía nhận tự thưa lại ([WorkThrottle]). */
@@ -27,7 +30,7 @@ class WorkThrottle(private val sink: WorkSink, private val minMs: Long = 100, pr
     override fun invoke(work: Work) {
         val previous = last
         val time = now()
-        val turn = previous == null || previous.step != work.step || previous.from != work.from || previous.total != work.total
+        val turn = previous == null || previous.step != work.step || previous.total != work.total
         val finished = work.total > 0 && work.done >= work.total
         if (!turn && !finished && time - at < minMs) return
         last = work
@@ -37,10 +40,10 @@ class WorkThrottle(private val sink: WorkSink, private val minMs: Long = 100, pr
 }
 
 /**
- * Lời báo của bước chép: `done` byte trên cỡ hệ thống báo, chiếm [0, `to`] của thanh. Đã chép quá cỡ ấy thì cỡ ấy sai (cột SIZE cũ):
+ * Lời báo của bước chép: `done` byte trên cỡ hệ thống báo. Đã chép quá cỡ ấy thì cỡ ấy sai (cột SIZE cũ):
  * bỏ tổng, thanh chạy liên tục thay vì đứng ở "918 MB / 918 MB" trong khi việc vẫn đang chạy.
  */
-fun copyWork(done: Long, total: Long, to: Float): Work = Work(WorkStep.Copy, done, if (done > total) 0 else total, 0f, to)
+fun copyWork(done: Long, total: Long): Work = Work(WorkStep.Copy, done, if (done > total) 0 else total)
 
 /** Chép `input` sang `output`, báo số byte đã chép sau mỗi khối; trả số byte đã chép. */
 fun copyCounting(input: java.io.InputStream, output: java.io.OutputStream, report: (Long) -> Unit): Long {
