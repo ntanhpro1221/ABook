@@ -2513,7 +2513,8 @@ class App:
     def music_library_track(self, link: str, book: str | None = None, scene: str | None = None) -> dict[str, Any]:
         """Sheet chi tiết bài: 13 cảm xúc, bpm, phong cách, giấy phép / ghi công / nguồn, danh sách phát chứa bài, đã lưu / đã tải.
         Mở từ bài đang phát hay "Nhạc trong sách" (`book` + `scene` = khoá đoạn): thêm `why` - cảm xúc máy đọc được ở đoạn ấy
-        cạnh cảm xúc bài (music_library.why); đoạn không có dữ liệu cảm xúc thì không có `why`."""
+        cạnh cảm xúc bài (music_library.why); sách đóng gói lấy cảm xúc cảnh từ mốc trong gói (`emotions`, music_plan.package).
+        Đoạn không có dữ liệu cảm xúc thì không có `why`."""
         try:
             info = self.music_catalog().lookup([link]).get(link)
             playlists = self.music_catalog().playlists()
@@ -2527,8 +2528,11 @@ class App:
         if book and scene:
             with contextlib.suppress(ApiError, OSError, ValueError):
                 path = self._listenable(book)
-                plan = None if packages.is_package(path) else music_plan.read_plan(path)
-                found = next((item for item in (plan or {}).get("scenes") or [] if item.get("key") == scene), None)
+                if packages.is_package(path):  # khoá mốc (`book_edits.cue_key`), hay tên file bài - khoá đoạn của trình phát web
+                    scenes = book_edits.packaged_scenes(packages.edited_manifest(path).get("music"))
+                    found = next((item for item in scenes if scene in (item["key"], item["track"])), None)
+                else:
+                    found = next((item for item in (music_plan.read_plan(path) or {}).get("scenes") or [] if item.get("key") == scene), None)
                 reason = music_library.why((found or {}).get("emotions"), info.get("emotions"), music_select.emotion_cosine)
                 if reason is not None:
                     out["why"] = reason
@@ -2577,14 +2581,7 @@ class App:
         path = self._listenable(value)
         scenes: list[dict[str, Any]] = []
         if packages.is_package(path):
-            music = packages.edited_manifest(path).get("music")
-            if isinstance(music, dict):
-                carried = music.get("tracks") if isinstance(music.get("tracks"), dict) else {}
-                for cues in (music.get("chapters") or {}).values():
-                    for cue in cues or []:
-                        track = carried.get(cue.get("track")) if isinstance(cue, dict) else None
-                        if isinstance(track, dict) and isinstance(track.get("link"), str):
-                            scenes.append({"link": track["link"]})
+            scenes = book_edits.packaged_scenes(packages.edited_manifest(path).get("music"))
         else:
             scenes = (music_plan.read_plan(path) or {}).get("scenes") or []
         used = [item for item in music_library.book_tracks(scenes) if str(item["link"]).startswith("https://")]

@@ -146,6 +146,38 @@ object MusicLibrary {
         return Why(dot / norm, matches)
     }
 
+    /** 13 lớp cảm xúc của bộ chọn nhạc theo cảnh (`music_scenes.EMOTION_CLASSES`). */
+    val EMOTION_CLASSES = listOf("peacefulness", "tenderness", "nostalgia", "sadness", "joy", "playful", "power", "wonder", "tension",
+        "fear", "anger", "mystery", "moved")
+
+    /** `music_plan.cue_emotions`: cảm xúc cảnh của một mốc gói sách - chỉ lớp biết, số trong (0, 1] (kẹp về 1), 3 chữ số; không có -> rỗng (ẩn "Vì sao bài này"). */
+    fun cueEmotions(raw: JSONObject?): Map<String, Double> {
+        raw ?: return emptyMap()
+        val out = LinkedHashMap<String, Double>()
+        for (name in EMOTION_CLASSES) {
+            val value = raw.opt(name) as? Number ?: continue // true/false là Boolean, không phải Number
+            val score = Math.round(value.toDouble().coerceAtMost(1.0) * 1000) / 1000.0
+            if (score.isFinite() && score > 0) out[name] = score
+        }
+        return out
+    }
+
+    /** `book_edits.packaged_scenes`: {khoá mốc "<chương>:<ms>": cảm xúc cảnh} của mục `music` trong book.json - mốc không mang `emotions` thì không có mục. */
+    fun sceneMoods(music: JSONObject?): Map<String, Map<String, Double>> {
+        val chapters = music?.optJSONObject("chapters") ?: return emptyMap()
+        val out = HashMap<String, Map<String, Double>>()
+        for (chapter in chapters.keys()) {
+            val cues = chapters.optJSONArray(chapter) ?: continue
+            for (index in 0 until cues.length()) {
+                val cue = cues.optJSONObject(index) ?: continue
+                val emotions = cueEmotions(cue.optJSONObject("emotions")).takeIf { it.isNotEmpty() } ?: continue
+                val key = BookEdits.cueKey(chapter, cue.optDouble("start", 0.0)).takeIf { it.isNotEmpty() } ?: continue
+                out.putIfAbsent(key, emotions)
+            }
+        }
+        return out
+    }
+
     /** "Nhạc trong sách": các bài một cuốn dùng (gộp trùng theo lần đầu), số đoạn mỗi bài, khoá đoạn đầu tiên. `scenes`: (khoá đoạn, link). */
     data class BookTrack(val link: String, val scenes: Int, val scene: String?)
 

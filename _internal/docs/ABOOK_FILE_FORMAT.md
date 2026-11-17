@@ -128,6 +128,20 @@ Optional, any version, written by Studio only when it has something to say (`rea
 - **Size.** A series can be several gigabytes. A single file larger than 4 GiB cannot be stored on FAT32 media (some SD
   cards and USB sticks), so the producing app also offers one file per part (each a normal version 1 or 2 file).
 
+### Background music (`music` in `book.json`)
+
+Version 2 and later, only when the producer attached music: `{"levelDb", "tracks": {"music/<sha1>.<ext>": {file, link, title?,
+creator?, license?, licenseUrl?, attribution?, landing?, lufs?, speechBand?, s95?, size?}}, "chapters": {"<chapter id>": [cue, ...]}}`.
+A cue is `{start, end, track, gainDb}` (seconds inside the chapter MP3, the track entry name, the gain in dB) plus, only when present,
+`sibling`, `tail`, `steps` (`[{at, db}]`), `audibleStart` / `audibleEnd`, `loopStart` / `loopEnd`, and `emotions`. A cue's key for the
+edit layer is `"<chapter id>:<start in ms>"`.
+
+`emotions` is the mood the producer's app read in the scene the cue plays under: `{"<class>": intensity}` with intensity in (0, 1],
+three decimals, only classes above 0, from the 13 classes `peacefulness`, `tenderness`, `nostalgia`, `sadness`, `joy`, `playful`,
+`power`, `wonder`, `tension`, `fear`, `anger`, `mystery`, `moved` (`music_scenes.EMOTION_CLASSES`). A player sets it next to the
+catalogue's emotions of the track to explain the pick ("Vì sao bài này", `music_library.why`). A cue without `emotions` (a scene
+picked from a playlist, a book without analysed scenes) shows no explanation; a reader ignores classes it does not know.
+
 ### Version 4: the edit layer
 
 The book layer (`book.json`, `cast.json`, `scripts/`, `cover.jpg`, `music/`, audio) is the producer's and is never

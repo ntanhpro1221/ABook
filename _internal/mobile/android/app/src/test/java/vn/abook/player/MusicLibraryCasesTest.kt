@@ -81,6 +81,29 @@ class MusicLibraryCasesTest {
     }
 
     @Test
+    fun aPackagedCueCarriesTheMoodOfItsScene() {
+        // Cùng luật với music_plan.cue_emotions (test_bookfile_music.py): lớp biết, số trong (0, 1], kẹp về 1, 3 chữ số.
+        val raw = JSONObject("{\"tenderness\":0.61234,\"peacefulness\":0.4,\"anger\":0,\"joy\":-0.2,\"unknown\":0.9,\"wonder\":\"x\",\"tension\":1.4,\"fear\":true}")
+        assertEquals(mapOf("peacefulness" to 0.4, "tenderness" to 0.612, "tension" to 1.0), MusicLibrary.cueEmotions(raw))
+        assertEquals(emptyMap<String, Double>(), MusicLibrary.cueEmotions(null))
+        val track = "music/" + "a".repeat(40) + ".mp3"
+        val music = JSONObject().put("tracks", JSONObject().put(track, JSONObject().put("file", track).put("link", "https://a/1")))
+            .put("chapters", JSONObject()
+                .put("1", org.json.JSONArray()
+                    .put(JSONObject().put("start", 0.0).put("end", 60.0).put("track", track).put("emotions", JSONObject().put("sadness", 0.9)))
+                    .put(JSONObject().put("start", 60.0).put("end", 90.0).put("track", track)))
+                .put("2", org.json.JSONArray().put(JSONObject().put("start", 12.3456).put("end", 30.0).put("track", track)
+                    .put("emotions", JSONObject().put("joy", 0.5).put("bogus", 1.0)))))
+        val moods = MusicLibrary.sceneMoods(music)
+        assertEquals("khoá mốc như BookEdits.cueKey / book_edits.cue_key", setOf("1:0", "2:12346"), moods.keys)
+        assertEquals(mapOf("sadness" to 0.9), moods["1:0"])
+        assertEquals(mapOf("joy" to 0.5), moods["2:12346"])
+        assertTrue("mốc không mang cảm xúc: ẩn khối", "1:60000" !in moods)
+        assertNull(MusicLibrary.why(moods["1:60000"].orEmpty(), mapOf("sadness" to 0.8)))
+        assertEquals(emptyMap<String, Map<String, Double>>(), MusicLibrary.sceneMoods(null))
+    }
+
+    @Test
     fun bookTracksMergeRepeatsAndCountScenes() {
         val got = MusicLibrary.bookTracks(listOf("1:1" to "https://a/1", "1:2" to "https://a/2", "2:1" to "https://a/1", null to ""))
         assertEquals(listOf(MusicLibrary.BookTrack("https://a/1", 2, "1:1"), MusicLibrary.BookTrack("https://a/2", 1, "1:2")), got)

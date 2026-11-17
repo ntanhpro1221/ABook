@@ -282,3 +282,60 @@ def test_a_series_book_plays_the_music_of_its_second_part(studio, tmp_path: Path
     assert status == 200 and len(cues["cues"]) == 2 and cues["cues"][0]["start"] == 0.0
     status, none = _call(server, "GET", f"/api/books/{book}/music/chapters/100001")
     assert status == 200 and none["cues"] == []
+
+
+def _moods(project: Path, moods: dict[str, object], links: dict[str, str] | None = None) -> None:
+    """Gắn cảm xúc máy đọc được (13 lớp, music_scenes.EMOTION_CLASSES) vào các cảnh của plan thử, theo khoá cảnh."""
+    plan = json.loads((project / music_plan.PLAN_FILE).read_text(encoding="utf-8"))
+    for scene in plan["scenes"]:
+        if scene["key"] in moods:
+            scene["emotions"] = moods[scene["key"]]
+        scene["link"] = (links or {}).get(scene["link"], scene["link"])
+    for old, new in (links or {}).items():
+        plan["tracks"][new] = plan["tracks"].pop(old)
+    (project / music_plan.PLAN_FILE).write_text(json.dumps(plan), encoding="utf-8")
+
+
+def test_each_packaged_cue_carries_the_mood_of_its_scene(tmp_path: Path) -> None:
+    """"Vì sao bài này" của sách đóng gói (điện thoại không có plan): mốc nhạc mang cảm xúc cảnh của nó; gói lại không đổi audio."""
+    project = make_project(tmp_path)
+    _plan(project)
+    before = bookfile.pack(project, tmp_path / f"truoc{bookfile.EXTENSION}", music_track=_tracks(tmp_path), partial=True)
+    _moods(project, {"1:1": {"tenderness": 0.61234, "peacefulness": 0.4, "anger": 0.0, "joy": -0.2, "unknown": 0.9, "wonder": "x"},
+                     "1:9": {"tension": 1.4, "fear": 0.5}})
+    after = bookfile.pack(project, tmp_path / f"sau{bookfile.EXTENSION}", music_track=_tracks(tmp_path), partial=True)
+    with BookFile(before) as old, BookFile(after) as new:
+        new.verify()
+        first, second = (json.loads(book.read("book.json")) for book in (old, new))
+    cues = second["music"]["chapters"]["1"]
+    assert cues[0]["emotions"] == {"peacefulness": 0.4, "tenderness": 0.612}, "chỉ lớp biết, số trong (0, 1], 3 chữ số"
+    assert cues[1]["emotions"] == {"tension": 1.0, "fear": 0.5}, "kẹp về 1"
+    assert all("emotions" not in cue for cue in first["music"]["chapters"]["1"]), "cảnh không có cảm xúc: mốc không mang khoá"
+    assert [{k: v for k, v in cue.items() if k != "emotions"} for cue in cues] == first["music"]["chapters"]["1"]
+    audio = {name: entry for name, entry in second["package"]["files"].items() if name.startswith(("chapters/", "music/"))}
+    assert audio and audio == {name: first["package"]["files"][name] for name in audio}, "audio chương và bài nhạc giữ nguyên từng byte"
+
+
+def test_a_packaged_book_explains_why_its_track_fits_the_scene(studio, tmp_path: Path) -> None:  # noqa: F811
+    """Web / Qt mở "Vì sao bài này" của sách đóng gói từ cảm xúc cảnh trong gói, khoá đoạn là khoá mốc hay tên file bài."""
+    from urllib.parse import quote
+
+    from tests.test_music_api import _with_catalog
+
+    _paths, app, server, _runner = studio
+    _with_catalog(app, tmp_path)
+    sad = "https://x/sad.mp3"
+    project = make_project(tmp_path / "may_khac")
+    _plan(project)
+    _moods(project, {"1:1": {"sadness": 0.9, "nostalgia": 0.2, "joy": 0.3}}, {CALM: sad})
+    book = app.open_book_file(str(bookfile.pack(project, tmp_path / f"sach{bookfile.EXTENSION}",
+                                                music_track=_tracks(tmp_path), partial=True)))["id"]
+    status, listed = _call(server, "GET", f"/api/books/{book}/music/library")
+    assert status == 200 and listed["tracks"][0]["link"] == sad and listed["tracks"][0]["scene"] == "1:0"
+    for scene in ("1:0", music_plan.track_name(sad)):
+        status, track = _call(server, "GET", f"/api/music/library/track?link={quote(sad, safe='')}&book={book}&scene={quote(scene, safe='')}")
+        assert status == 200
+        assert [match["id"] for match in track["why"]["matches"]] == ["sadness", "nostalgia"]
+        assert track["why"]["matches"][0] == {"id": "sadness", "scene": 0.9, "track": 0.8}
+    status, track = _call(server, "GET", f"/api/music/library/track?link={quote(sad, safe='')}&book={book}&scene=1:60000")
+    assert status == 200 and "why" not in track, "mốc không có cảm xúc: ẩn khối"

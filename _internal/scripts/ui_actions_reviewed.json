@@ -11586,7 +11586,7 @@
     "line": 144,
     "statement": "scope.launch { page.load() }",
     "occurrence": 1,
-    "source_sha256": "bf21a170c9ddf77584ccea0d2ea02285b70b32f8498a5eb7c1babc6ddefc4254",
+    "source_sha256": "29d7faac2fba290a876f5643336704963c90699c9daa6778e8de760cccce71ac",
     "disposition": "pending",
     "guard": "ViewModel/operation fields: busy, pending, progress; Components pending indicator",
     "reason": "The model retains the operation and locks repeats; UI uses the shared pending parameter, loading content or progress owner. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
@@ -11598,7 +11598,7 @@
     "line": 159,
     "statement": "suspend fun receive(queue: ImportQueue, sources: List<String>) {",
     "occurrence": 1,
-    "source_sha256": "bf21a170c9ddf77584ccea0d2ea02285b70b32f8498a5eb7c1babc6ddefc4254",
+    "source_sha256": "29d7faac2fba290a876f5643336704963c90699c9daa6778e8de760cccce71ac",
     "disposition": "internal",
     "guard": "Async interface/helper boundary; concrete activation inventoried separately",
     "reason": "This signature supplies work to a model or component; declaring it starts no user operation. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
@@ -11610,7 +11610,7 @@
     "line": 168,
     "statement": "suspend fun showBookPage(book: vn.abook.player.ui.data.ListenBook) {",
     "occurrence": 1,
-    "source_sha256": "bf21a170c9ddf77584ccea0d2ea02285b70b32f8498a5eb7c1babc6ddefc4254",
+    "source_sha256": "29d7faac2fba290a876f5643336704963c90699c9daa6778e8de760cccce71ac",
     "disposition": "internal",
     "guard": "Async interface/helper boundary; concrete activation inventoried separately",
     "reason": "This signature supplies work to a model or component; declaring it starts no user operation. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
@@ -11622,7 +11622,7 @@
     "line": 180,
     "statement": "suspend fun openStudio(request: StudioRequest) {",
     "occurrence": 1,
-    "source_sha256": "bf21a170c9ddf77584ccea0d2ea02285b70b32f8498a5eb7c1babc6ddefc4254",
+    "source_sha256": "29d7faac2fba290a876f5643336704963c90699c9daa6778e8de760cccce71ac",
     "disposition": "internal",
     "guard": "Async interface/helper boundary; concrete activation inventoried separately",
     "reason": "This signature supplies work to a model or component; declaring it starts no user operation. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
@@ -11634,7 +11634,7 @@
     "line": 329,
     "statement": "(libraryNow.value as? LibraryState.Ready)?.books?.firstOrNull { it.id == id }?.let { book -> shell.scope.launch { shell.showBookPage(book) } }",
     "occurrence": 1,
-    "source_sha256": "bf21a170c9ddf77584ccea0d2ea02285b70b32f8498a5eb7c1babc6ddefc4254",
+    "source_sha256": "29d7faac2fba290a876f5643336704963c90699c9daa6778e8de760cccce71ac",
     "disposition": "pending",
     "guard": "ViewModel/operation fields: busy, pending, progress; Components pending indicator",
     "reason": "The model retains the operation and locks repeats; UI uses the shared pending parameter, loading content or progress owner. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
@@ -11646,7 +11646,7 @@
     "line": 340,
     "statement": "readAlong = { book -> shell.scope.launch { if (player.prepare(book)) window.openReading() } },",
     "occurrence": 1,
-    "source_sha256": "bf21a170c9ddf77584ccea0d2ea02285b70b32f8498a5eb7c1babc6ddefc4254",
+    "source_sha256": "29d7faac2fba290a876f5643336704963c90699c9daa6778e8de760cccce71ac",
     "disposition": "pending",
     "guard": "ViewModel/operation fields: busy, pending, progress; Components pending indicator",
     "reason": "The model retains the operation and locks repeats; UI uses the shared pending parameter, loading content or progress owner. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
@@ -11658,7 +11658,7 @@
     "line": 345,
     "statement": "openNowPlaying = { id -> shell.scope.launch { if (player.awaitLoaded(id)) window.open() } },",
     "occurrence": 1,
-    "source_sha256": "bf21a170c9ddf77584ccea0d2ea02285b70b32f8498a5eb7c1babc6ddefc4254",
+    "source_sha256": "29d7faac2fba290a876f5643336704963c90699c9daa6778e8de760cccce71ac",
     "disposition": "pending",
     "guard": "ViewModel/operation fields: busy, pending, progress; Components pending indicator",
     "reason": "The model retains the operation and locks repeats; UI uses the shared pending parameter, loading content or progress owner. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."

@@ -282,6 +282,51 @@ class MusicLibraryScreenTest {
     @Test fun detailLight() = detail(false)
     @Test fun detailDark() = detail(true)
 
+    /** "Nhạc trong sách" của một cuốn đóng gói: cảm xúc cảnh đi trong mốc của book.json (music_plan.package) -> MusicLibrary.sceneMoods ->
+     *  chạm bài mở chi tiết có "Vì sao bài này" (trước đây khối này luôn ẩn trên điện thoại). */
+    private fun bookWhy(dark: Boolean, name: String) {
+        state = LibraryState(source, CoroutineScope(Dispatchers.Unconfined), preview, pauseBook = { paused++ }, io = Dispatchers.Unconfined)
+        val file = "music/" + "b".repeat(40) + ".mp3"
+        val music = JSONObject().put("tracks", JSONObject().put(file, JSONObject().put("file", file).put("link", link(5))))
+            .put("chapters", JSONObject().put("3", org.json.JSONArray()
+                .put(JSONObject().put("start", 0.0).put("end", 40.0).put("track", file)
+                    .put("emotions", JSONObject().put("joy", 0.8).put("power", 0.6).put("peacefulness", 0.3)))
+                .put(JSONObject().put("start", 40.0).put("end", 80.0).put("track", file))))
+        val moods = MusicLibrary.sceneMoods(music)
+        val entries = Result.success(listOf(MusicLibrary.BookTrack(link(5), 2, "3:0")))
+        rule.setContent {
+            AbookTheme(dark) {
+                Box(Modifier.fillMaxSize().background(Abook.colors.bg)) {
+                    val rows = BookMusicSection(state, sheets, entries, moods) {}
+                    androidx.compose.foundation.lazy.LazyColumn(Modifier.fillMaxSize(), content = rows)
+                    SheetLayer(sheets)
+                }
+            }
+        }
+        // Hàng bài dựng trên Dispatchers.IO thật (BookMusicRows.build) - waitForIdle không đợi nó.
+        rule.waitUntil(10_000) { rule.onAllNodesWithTag("track_${link(5).hashCode()}").fetchSemanticsNodes().isNotEmpty() }
+        tap("track_${link(5).hashCode()}")
+        rule.onNodeWithTag("track_title").assertIsDisplayed()
+        rule.onNodeWithTag("track_fit").performScrollTo().assertIsDisplayed()
+        shot(name)
+    }
+
+    @Test fun bookWhyLight() = bookWhy(false, "music_book_why_light")
+    @Test fun bookWhyDark() = bookWhy(true, "music_book_why_dark")
+
+    @Test
+    @Config(sdk = [35], qualifiers = "w360dp-h780dp-xxhdpi", fontScale = 1.3f)
+    fun bookWhyLargeText() = bookWhy(false, "music_book_why_font130_light")
+
+    @Test
+    fun aCueWithoutMoodHidesTheWhyBlock() {
+        show()
+        rule.runOnUiThread { openTrack(sheets, state, link(5), null, MusicLibrary.sceneMoods(JSONObject())["3:0"].orEmpty()) }
+        rule.waitForIdle()
+        rule.onNodeWithTag("track_title").assertIsDisplayed()
+        assertEquals(0, rule.onAllNodesWithTag("track_fit").fetchSemanticsNodes().size)
+    }
+
     private fun downloading(dark: Boolean) {
         source.stallAt = 44
         show(dark)

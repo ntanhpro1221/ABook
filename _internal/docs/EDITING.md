@@ -428,8 +428,8 @@ Python ones and writes them again (`BookFileImportTest`, `BookDocumentWriterTest
 The plan said "phone later = TS port of `music_select`". Checked against the code, there is nothing to rank, on either platform:
 
 - `music_select.rank` scores a SCENE (valence / arousal / tension / sd / confidence, from the analysis of the text) against catalogue
-  tracks. A packaged book (`.abook`, `.abookproj` on the phone) carries only the producer's cues (`start`, `end`, `track`, `gainDb`):
-  no scene mood. The desktop therefore does not rank for a book without a workshop either: `server._packaged_alternatives` answers
+  tracks. A packaged book (`.abook`, `.abookproj` on the phone) carries only the producer's cues (`start`, `end`, `track`, `gainDb`,
+  and since 2026-11-17 the scene's 13 emotion intensities `emotions` for "Vì sao bài này"): no valence / arousal / tension to rank with. The desktop therefore does not rank for a book without a workshop either: `server._packaged_alternatives` answers
   `alternatives: []` and only the "Nhạc của tôi" group. That is exactly what P1 built on the phone (`LocalStudio.alternatives`, contract
   case `music_pins`), so "Đổi bài" for a book without a workshop is already the same on both platforms: swap a cue to one of the
   listener's own tracks, stored as an `edits.json` `music.pins` entry (L edit), folded by the producer. "Chọn lại nhạc" (re-pick the whole

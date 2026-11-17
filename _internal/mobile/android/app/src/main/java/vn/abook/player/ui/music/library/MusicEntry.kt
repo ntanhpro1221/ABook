@@ -34,18 +34,38 @@ fun MusicCredit.inCatalog(): Boolean = link.isNotEmpty() && !link.startsWith("lo
 /**
  * Load and group scenes on IO, then contribute lazy rows to the dedicated Music tab.
  * Empty books and read failures have distinct states; retry never runs on the UI thread.
+ * `moodsOf`: {khoá mốc: cảm xúc cảnh} của cuốn (LocalStudio.sceneMoods) - chạm bài mở "Vì sao bài này" của đoạn đầu tiên dùng bài.
  */
 @Composable
-fun BookMusicFor(state: LibraryState, sheets: SheetHost, bookId: String, scenesOf: (String) -> List<Pair<String?, String>>): LazyListScope.() -> Unit {
+fun BookMusicFor(
+    state: LibraryState,
+    sheets: SheetHost,
+    bookId: String,
+    moodsOf: (String) -> Map<String, Map<String, Double>> = { emptyMap() },
+    scenesOf: (String) -> List<Pair<String?, String>>,
+): LazyListScope.() -> Unit {
     DisposableEffect(state, bookId) { onDispose { state.stopPreview() } }
     var retry by remember(bookId) { mutableIntStateOf(0) }
-    val entries by produceState<Result<List<MusicLibrary.BookTrack>>?>(null, bookId, retry) {
+    val loaded by produceState<Result<Pair<List<MusicLibrary.BookTrack>, Map<String, Map<String, Double>>>>?>(null, bookId, retry) {
         value = null
         value = withContext(Dispatchers.IO) {
-            try { Result.success(MusicLibrary.bookTracks(scenesOf(bookId))) }
+            try { Result.success(MusicLibrary.bookTracks(scenesOf(bookId)) to sceneMoods(moodsOf, bookId)) }
             catch (error: CancellationException) { throw error }
             catch (error: Exception) { Result.failure(error) }
         }
     }
-    return BookMusicSection(state, sheets, entries) { retry++; state.open() }
+    return BookMusicSection(state, sheets, loaded?.map { it.first }, loaded?.getOrNull()?.second.orEmpty()) { retry++; state.open() }
+}
+
+/** Cảm xúc cảnh là phần thêm: đọc hỏng thì "Vì sao bài này" ẩn, danh sách bài vẫn hiện. */
+private fun sceneMoods(moodsOf: (String) -> Map<String, Map<String, Double>>, bookId: String): Map<String, Map<String, Double>> =
+    try { moodsOf(bookId) } catch (error: CancellationException) { throw error } catch (_: Exception) { emptyMap() }
+
+/** Cảm xúc cảnh của đoạn `scene` (khoá mốc) trong cuốn `bookId`, đọc trên IO - sheet "Bài đang phát"; chưa đọc xong / không có -> rỗng (ẩn khối). */
+@Composable
+fun rememberSceneMood(bookId: String, scene: String, moodsOf: (String) -> Map<String, Map<String, Double>>): Map<String, Double> {
+    val mood by produceState(emptyMap<String, Double>(), bookId, scene) {
+        if (bookId.isNotEmpty() && scene.isNotEmpty()) value = withContext(Dispatchers.IO) { sceneMoods(moodsOf, bookId)[scene].orEmpty() }
+    }
+    return mood
 }
