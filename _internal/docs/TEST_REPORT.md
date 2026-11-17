@@ -28,6 +28,23 @@ FFmpeg-Builds n8.1.3-35-gf1acb0a266 win64-gpl-8.1 (tag autobuild-2026-11-16-15-2
   (10-minute mp3: 0.56-0.71 s both). Download grows from 35.7 MB to 63.7 MB (exe 102 -> 165 MB). ffmpeg/music/export pytest
   (54 files): 886 passed, 7 skipped, 0 failed (the nine `test_ui_parity_rules` L7 failures of the first run were a missing
   `ui/node_modules`; after the junction the file is 36 passed).
+- Heavy run 2 (16:15-17:12, slot GOT 16:19): `desktop_qt\build.bat package` rc 0 - every Qt suite 0 failed, WidthTests
+  1732 passed / 0 failed / 2 skipped with `QML_MEMBER_DATA_ERROR 0`, `QML_TYPE_ERROR 0` (VoiceTests 65 including
+  `hostileVbrTagEndsCleanly`, MixTests 93); dist trimmed 90.1 -> 72.3 MB of Qt files, whole `desktop_qt\dist` 120.4 MB;
+  `smoke_packaged` SMOKE_OK for Main.qml first frame (twice), packaged host Ready from the bundled Python 3.14.10, a Library
+  book played (2.7 s at 440 Hz heard, broken chapter exit 6), single-instance hand-off, and self-update refusing the test-key
+  package. Gradle 8.14.7 `:app:testDebugUnitTest --rerun-tasks`: 3910 passed, 0 failed, 19 skipped in 483 suites (counted from
+  the XML); `:app:assembleRelease` BUILD SUCCESSFUL. Round 1 failures were environment only: the fresh worktree had no
+  `desktop_qt/build/surface_frames/` (4 SurfaceMotion PNG saves failed, with the NowPlayingGeometry member-data noise) and
+  no `mobile/android/local.properties` (Gradle could not find the SDK); both are gitignored and were created for round 2.
+- Speex: the new build has no libspeex, but FFmpeg's own `speex` decoder is in both builds and a Speex Ogg decodes to
+  identical PCM with the old and new exe (likewise GSM in WAV without libgsm). No platform lists `.spx`; the six accepted
+  extensions are the same on Python, Android, the Qt file dialog and Tauri (now pinned by
+  `test_every_platform_accepts_the_same_music_extensions`), and
+  `test_the_pinned_ffmpeg_decodes_every_extension_the_app_accepts` checks the demuxer and decoders for each extension on the
+  exe whose SHA-256 equals `ffmpeg_setup.EXE_SHA256` (`ABOOK_TEST_FFMPEG`; passed on the n8.1.3 exe). Speex inside a `.ogg`
+  was the one gap: the desktop importer (tinytag) accepted it although neither Media Foundation nor the phone can play it, and
+  the phone already refused it; desktop import now refuses it with the phone's reason (`music_local.UNPLAYABLE_CODECS`).
 - Quality implementation hash unchanged after every commit: `6d5817d28678d2f85dcc3c8f5158638907a6f9f463bdb8e1a83b3c46c9a68fa8`.
 
 ## 15-11-2026 — 0.4.173 integration
