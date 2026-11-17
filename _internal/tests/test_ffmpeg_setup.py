@@ -54,9 +54,9 @@ def test_install_unpacks_the_exe_removes_the_archive_and_registers_it(bare_machi
 
 
 def test_the_archive_is_pinned_and_only_the_member_is_taken() -> None:
-    assert ffmpeg_setup.WHEEL.url.startswith("https://github.com/GyanD/codexffmpeg/releases/download/8.1.2/")
+    assert ffmpeg_setup.WHEEL.url.startswith("https://github.com/FFmpeg-Builds/FFmpeg-Builds/releases/download/autobuild-2026-11-16-15-29/")
     assert len(ffmpeg_setup.WHEEL.sha256) == 64 and ffmpeg_setup.WHEEL.size > 0
-    assert ffmpeg_setup.MEMBER == "ffmpeg-8.1.2-essentials_build/bin/ffmpeg.exe"
+    assert ffmpeg_setup.MEMBER == "ffmpeg-n8.1.3-35-gf1acb0a266-win64-gpl-8.1/bin/ffmpeg.exe"
     assert ffmpeg_setup.pin() == ffmpeg_setup.WHEEL.sha256
 
 

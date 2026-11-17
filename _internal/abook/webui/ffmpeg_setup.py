@@ -2,7 +2,8 @@
 nhạc (thẻ + độ dài đọc bằng tinytag). ffmpeg chỉ phục vụ phần phân tích: giải mã cho model (music_mel.py) và đo độ to (music_plan.py).
 Đường tải ghim cứng (URL + SHA-256 + cỡ), qua studio_setup.download (.part, kiểm băm, rồi mới đổi tên).
 
-Nguồn: ZIP GyanD/codexffmpeg 8.1.2 essentials, Windows x64 tĩnh GPL-3.0-or-later, tag cố định 8.1.2.
+Nguồn: ZIP FFmpeg-Builds (BtbN) n8.1.3-35-gf1acb0a266 win64-gpl-8.1 (nhánh release/8.1), Windows x64 tĩnh GPL-3.0-or-later,
+thẻ có ngày autobuild-2026-11-16-15-29 (không dùng `latest`).
 Chỉ tải phần nén của ffmpeg.exe bằng HTTP Range; ghim SHA-256/cỡ cả phần nén và exe, kiểm CRC (docs/THIRD_PARTY.md). Chỉ Windows x86_64 có đường tải; nền tảng khác phải tự
 cài ffmpeg (lý do nói rõ). Máy đã có ffmpeg không phải của mình (imageio_ffmpeg, hay trong PATH) thì `external()` đúng và mô-đun không
 tải gì. Việc tải/đặt trạng thái do music_module.py lo; ở đây chỉ có `install` (đồng bộ) và các phép kiểm.
@@ -25,15 +26,15 @@ from . import studio_setup, zip_range
 # Giữ tên WHEEL cho caller: cỡ/băm của phần DEFLATE, URL của ZIP có tag cố định.
 WHEEL = studio_setup.Download(
     "bộ đọc nhạc (ffmpeg)",
-    "https://github.com/GyanD/codexffmpeg/releases/download/8.1.2/ffmpeg-8.1.2-essentials_build.zip",
-    "fcc9bb26d29ef695533bec19e0b2e15f0d3745cb900d260d8b6c97eab07277aa",
-    35_710_575,
+    "https://github.com/FFmpeg-Builds/FFmpeg-Builds/releases/download/autobuild-2026-11-16-15-29/ffmpeg-n8.1.3-35-gf1acb0a266-win64-gpl-8.1.zip",
+    "64728b8cb89b5158b8d31f9420f91f95273a68ed7189cd51ef8c71a8de25e882",
+    63_682_111,
 )
-MEMBER = "ffmpeg-8.1.2-essentials_build/bin/ffmpeg.exe"
-ARCHIVE_SIZE = 109_728_040
-EXE_SIZE = 101_897_728
-EXE_SHA256 = "1326dde4c84ff1f96fe6b8916c5bed29e163e9b5dccf995f6f3db069d143ec5e"
-EXE_CRC = 1558300500
+MEMBER = "ffmpeg-n8.1.3-35-gf1acb0a266-win64-gpl-8.1/bin/ffmpeg.exe"
+ARCHIVE_SIZE = 193_986_342
+EXE_SIZE = 165_433_344
+EXE_SHA256 = "9312adcd5592cebccfa0c9236d306eab847c307be15e19dcdf560bdc685db12f"
+EXE_CRC = 235974328
 ENV_DOWNLOAD = "ABOOK_FFMPEG_DOWNLOAD"  # "0" = không bao giờ tải
 NOUN = "bộ đọc nhạc (ffmpeg)"  # trong câu báo lỗi tải
 FOLDER = Path("tools") / "ffmpeg"  # dưới thư mục dữ liệu của app (server.py)
@@ -145,7 +146,7 @@ def _install(progress: Callable[[int, int], None], cancelled: Callable[[], bool]
 
 
 # ---- tải riêng ffmpeg (xuất sách nói: hộp Xuất mời tải khi máy chưa có) ---------------------------------------------------------
-# Mô-đun "Phân tích nhạc" tải ffmpeg cùng thư viện + model; xuất sách nói chỉ cần ffmpeg (~36 MB) nên có đường tải riêng, cùng `install` và cùng thư mục.
+# Mô-đun "Phân tích nhạc" tải ffmpeg cùng thư viện + model; xuất sách nói chỉ cần ffmpeg (~64 MB) nên có đường tải riêng, cùng `install` và cùng thư mục.
 
 _state: dict[str, object] = {"downloading": False, "done": 0, "total": 0, "error": ""}
 _cancel = threading.Event()
