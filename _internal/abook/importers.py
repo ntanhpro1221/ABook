@@ -481,12 +481,8 @@ def text_matter(title: str, text: str) -> str:
 
 # --- Thư mục TXT -------------------------------------------------------------------------------------------------------
 
-_C0 = re.compile(r"[\x00-\x08\x0b\x0e-\x1f]")
-
-
-def _text_controls(text: str) -> str:
-    """Chỉ bỏ điều khiển vô hình; form feed là ngắt đoạn, giữ mọi chữ thấy được."""
-    return _C0.sub("", re.sub(r"[\x0b\x1c-\x1f]", "\n\n", text)).replace("\x0c", "\n\n")
+_C0 = book_metadata.C0_CONTROLS
+_text_controls = book_metadata.text_controls  # chỉ bỏ điều khiển vô hình; form feed là ngắt đoạn, giữ mọi chữ thấy được
 
 
 def _clean_text(text: str) -> str:
@@ -546,9 +542,10 @@ def legacy_note(kind: str, names: list[str]) -> str:
     return (f"{who} dùng mã {LEGACY_NAMES[kind]}, chưa đổi chữ — bạn đổi sang UTF-8 bằng UniKey rồi nhập lại.")
 
 
-def _txt_chapter(path: Path) -> tuple[Chapter, str]:
+def _txt_chapter(path: Path) -> tuple[Chapter, str, str]:
     """Một file TXT là một chương (cùng bảng mã đã đọc). Tên chương: dòng đầu nếu nó là dòng tiêu đề ("Chương 1: Buổi sáng" - đúng thứ
-    người nghe thấy ở đầu chương), không thì tên file ("01.txt" -> "Chương 1")."""
+    người nghe thấy ở đầu chương), không thì tên file ("01.txt" -> "Chương 1"). Thứ ba: chữ đã giải mã, CHƯA làm sạch - phần đầu
+    (`book_metadata.text_header`) đọc trên chữ này để hai dòng trống còn đóng được tóm tắt."""
     from .webui.humanize import chapter_title
 
     try:
@@ -557,13 +554,13 @@ def _txt_chapter(path: Path) -> tuple[Chapter, str]:
     except UnicodeDecodeError as error:
         raise ImportFailed(f"File “{path.name}” hỏng chữ — bạn lưu lại dạng UTF-8 hoặc tải lại.") from error
     encoding = legacy_encoding(raw, encoding) or encoding
-    text = _clean_text(_text_controls(text))
+    decoded, text = text, _clean_text(_text_controls(text))
     first = next((line.strip() for line in text.split("\n") if line.strip()), "")
     if is_heading_line(first):
-        return Chapter(first, text), encoding
+        return Chapter(first, text), encoding, decoded
     # Tên file vô nghĩa ("index_split_003", "Untitled") mà dòng đầu trông là tiêu đề ("Sương sớm"): tên chương là dòng ấy.
     named = MEANINGLESS_NAME.fullmatch(path.stem) and title_from_line(first)
-    return Chapter(named or chapter_title(path.stem), text), encoding
+    return Chapter(named or chapter_title(path.stem), text), encoding, decoded
 
 
 def _encoding_notes(encodings: Iterable[str]) -> list[str]:
@@ -578,8 +575,8 @@ def _txt_folder(folder: Path) -> ImportedBook:
     if not files:
         raise ImportFailed("Thư mục này không có file .txt nào nằm ngay bên trong")
     read = [_txt_chapter(file) for file in files]
-    result = ImportedBook(title=title_from_filename(folder.resolve().name), chapters=[chapter for chapter, _ in read], text_has_title=True, keep_matter=True,
-                          notes=_encoding_notes(encoding for _, encoding in read))
+    result = ImportedBook(title=title_from_filename(folder.resolve().name), chapters=[chapter for chapter, _, _ in read], text_has_title=True, keep_matter=True,
+                          notes=_encoding_notes(encoding for _, encoding, _ in read))
     for key, value in book_metadata.from_sources(files).items():
         setattr(result, key, value)
     sidecar = folder / SIDECAR
@@ -621,7 +618,7 @@ def _sidecar_volumes(folder: Path, text: str) -> tuple[str, list[tuple[Volume, l
 
 def _txt_file(path: Path, split: bool = False) -> ImportedBook:
     """Một file TXT là một chương - trừ khi nó là CẢ truyện (>= 2 dòng "Chương N") và người dùng tích tách: `split_txt_chapters`."""
-    chapter, encoding = _txt_chapter(path)
+    chapter, encoding, decoded = _txt_chapter(path)
     book = ImportedBook(title=title_from_filename(path.stem), chapters=[chapter], text_has_title=True, keep_matter=True, notes=_encoding_notes([encoding]))
     parts = split_txt_chapters(chapter.text)
     book.split_offer = len(parts)
@@ -640,7 +637,7 @@ def _txt_file(path: Path, split: bool = False) -> ImportedBook:
     # Tác giả: phần đầu của Project Gutenberg, không thì dòng "Tác giả: X" ngay dưới tên truyện. Chỉ điền ô tác giả (siêu dữ liệu) - dòng ấy vẫn nằm trong chữ,
     # chỉ bỏ khỏi phần đọc khi người nghe nhận gợi ý bỏ dòng ghi công.
     book.title, book.author = title or book.title, author or author_line(chapter.text) or None
-    for key, value in book_metadata.text_header(chapter.text).items():
+    for key, value in book_metadata.text_header(decoded).items():  # chữ chưa làm sạch, như `book_metadata.from_sources` của Studio
         setattr(book, key, value)
     if split and parts:
         book.chapters = parts

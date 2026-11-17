@@ -186,6 +186,22 @@ def test_a_summary_ends_at_the_header_structure_not_at_the_end_of_the_story(case
         assert len(found["summary"].splitlines()) < case["summaryLinesBelow"]
 
 
+@pytest.mark.parametrize("case", HEADER_CASES["cases"], ids=lambda case: case["name"])
+def test_a_summary_read_through_the_real_import_paths_matches_the_parser(tmp_path, case):
+    """Import to listen (`import_text`, chapter text already cleaned) and a Studio project (`from_sources`, decoded file)
+    give the same header fields as the parser on the raw text: cleaning folds blank lines and must not move the summary end."""
+    filler = "\n".join(HEADER_CASES["fillerLine"].replace("{n}", str(n)) for n in range(case["filler"]))
+    path = tmp_path / "story.txt"
+    path.write_bytes((case["text"] + filler).encode("utf-8"))
+    imported = importers.import_text(path).metadata()
+    studio = book_metadata.from_sources([path])
+    assert imported == studio
+    if "expected" in case:
+        assert imported == case["expected"]
+    else:
+        assert len(imported["summary"].splitlines()) < case["summaryLinesBelow"]
+
+
 @pytest.mark.parametrize("case", SET_CASES, ids=lambda case: case["name"])
 def test_saving_metadata_records_only_real_changes(tmp_path, case):
     book = {"format": "abook-book/1", "title": "Hồ giấy", "version": "v", "chapters": [], **case["base"]}

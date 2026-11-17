@@ -132,12 +132,23 @@ _SUMMARY_END = re.compile(r"^\s*(?:#+\s|(?:Chương|Chapter)\s+)", re.I)
 # A scene or section break ("***", "---", "* * *", "===", "~~~") closes the header block.
 _BREAK = re.compile(r"^\s*(?:[*\-=~_#]\s*){3,}$")
 HEADER_LINES = 64
+C0_CONTROLS = re.compile(r"[\x00-\x08\x0b\x0e-\x1f]")
+
+
+def text_controls(text: str) -> str:
+    """Drops invisible control characters; a form feed or separator control is a paragraph break. Every visible character stays."""
+    return C0_CONTROLS.sub("", re.sub(r"[\x0b\x1c-\x1f]", "\n\n", text)).replace("\x0c", "\n\n")
 
 
 def text_header(text: str) -> dict[str, Any]:
-    """Header fields ("Tác giả: X", "Tóm tắt: ...") read from the first HEADER_LINES lines of a TXT."""
+    """Header fields ("Tác giả: X", "Tóm tắt: ...") read from the first HEADER_LINES lines of a TXT.
+
+    `text` is the decoded file, NOT the cleaned chapter text: cleaning folds runs of blank lines into one, and two blank lines
+    are what close a summary. Import to listen and a Studio project both pass the decoded file and get the same fields.
+    Lines split on \\n, \\r\\n and \\r only, like Kotlin `lines()` (BookImport.headerMetadata).
+    """
     result = {}
-    lines = text.splitlines()[:HEADER_LINES]
+    lines = text_controls(text).replace("﻿", "").replace("\r\n", "\n").replace("\r", "\n").split("\n")[:HEADER_LINES]
     summary_end = -1
     for index, line in enumerate(lines):
         if index <= summary_end:
@@ -152,12 +163,12 @@ def text_header(text: str) -> dict[str, Any]:
             # A header summary ends at a chapter heading, metadata key, Markdown section, scene break or two blank lines,
             # and never runs past the header window: a short story with no "Chương" line is not its own summary.
             parts = [value] if value else []
-            blank = 0
+            blanks = 0
             for end, next_line in enumerate(lines[index + 1:], index + 1):
                 if _HEAD.fullmatch(next_line) or _SUMMARY_END.match(next_line) or _BREAK.match(next_line):
                     break
-                blank = blank + 1 if not next_line.strip() else 0
-                if blank >= 2:
+                blanks = blanks + 1 if not next_line.strip() else 0
+                if blanks >= 2:
                     break
                 parts.append(next_line)
                 summary_end = end

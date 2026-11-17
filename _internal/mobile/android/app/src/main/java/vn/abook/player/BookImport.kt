@@ -436,14 +436,14 @@ object BookImport {
         if (files.isEmpty()) throw Failed(S.s_thu_muc_nay_khong_co_file_txt_nao_nam_ngay_ba76d525)
         val read = files.map { txtChapter(it, originalNames[it.name] ?: it.name) }
         return Book(
-            titleFromFilename(folder.canonicalFile.name), chapters = read.map { it.first }.toMutableList(), notes = encodingNotes(read.map { it.second }),
+            titleFromFilename(folder.canonicalFile.name), chapters = read.map { it.chapter }.toMutableList(), notes = encodingNotes(read.map { it.encoding }),
             textHasTitle = true, keepMatter = true,
         )
     }
 
     /** Một file TXT là một chương - trừ khi nó là CẢ truyện (>= 2 dòng "Chương N") và người dùng tích tách (`importers._txt_file`). */
     private fun txtFile(file: File, split: Boolean): Book {
-        val (chapter, encoding) = txtChapter(file)
+        val (chapter, encoding, decoded) = txtChapter(file)
         val book = Book(titleFromFilename(stemOf(file.name)), chapters = mutableListOf(chapter), notes = encodingNotes(listOf(encoding)), textHasTitle = true, keepMatter = true)
         val parts = splitTxtChapters(chapter.text)
         book.splitOffer = parts.size
@@ -463,7 +463,7 @@ object BookImport {
         if (title.isNotEmpty()) book.title = title
         // Tác giả: phần đầu của Project Gutenberg, không thì dòng "Tác giả: X" ngay dưới tên truyện (importers._txt_file); chỉ điền ô tác giả, dòng ấy vẫn ở trong chữ.
         book.author = author.ifEmpty { authorLine(chapter.text) }.ifEmpty { null }
-        val metadata = headerMetadata(chapter.text)
+        val metadata = headerMetadata(decoded) // chữ chưa làm sạch, như `importers._txt_file` / `book_metadata.from_sources`
         for (key in metadata.keys()) book.metadata.put(key, metadata.get(key))
         if (metadata.has("author")) book.author = metadata.getString("author")
         if (split && parts.isNotEmpty()) {
@@ -495,7 +495,8 @@ object BookImport {
             "illustrator" to "illustrator", "tên khác" to "altTitles", "thể loại" to "genres", "tóm tắt" to "summary")
         val pattern = Regex("^\\s*(?:#+\\s*)?([^:：]+)\\s*[:：]\\s*(.*)$")
         // Only the header window (Python book_metadata.HEADER_LINES; shared cases tests/fixtures/book_metadata/header.json).
-        val lines = text.lines().take(64)
+        // `text` is the decoded file, not the cleaned chapter text: cleaning folds blank lines, and two blank lines close a summary.
+        val lines = textControls(text).replace(BOM, "").lines().take(64)
         val out = org.json.JSONObject()
         val sceneBreak = Regex("^\\s*(?:[*\\-=~_#]\\s*){3,}$")
         var summaryEnd = -1
@@ -642,17 +643,20 @@ object BookImport {
     }
 
     /** Một file TXT là một chương (`importers._txt_chapter`), cùng bảng mã đã đọc. Tên chương: dòng đầu nếu nó là dòng tiêu đề ("Chương 1:
-     *  Buổi sáng" - đúng thứ người nghe thấy ở đầu chương), không thì tên file ("01.txt" -> "Chương 1"). */
-    private fun txtChapter(file: File, originalName: String = file.name): Pair<Chapter, String> {
+     *  Buổi sáng" - đúng thứ người nghe thấy ở đầu chương), không thì tên file ("01.txt" -> "Chương 1"). `decoded`: chữ đã giải mã, CHƯA làm sạch -
+     *  phần đầu ([headerMetadata]) đọc trên chữ này để hai dòng trống còn đóng được tóm tắt. */
+    private data class TxtRead(val chapter: Chapter, val encoding: String, val decoded: String)
+
+    private fun txtChapter(file: File, originalName: String = file.name): TxtRead {
         val (decoded, encoding) = try { decodeText(file.readBytes()) } catch (_: Failed) {
             throw Failed(S.s_file_0_hong_chu_ban_luu_lai_dang_utf_8_hoa_5deed037(file.name))
         }
         val text = cleanText(textControls(decoded))
         val first = text.split("\n").map(::pyStrip).firstOrNull { it.isNotEmpty() }.orEmpty()
-        if (isHeadingLine(first)) return Chapter(first, text) to encoding
+        if (isHeadingLine(first)) return TxtRead(Chapter(first, text), encoding, decoded)
         // Tên file vô nghĩa ("index_split_003", "Untitled") mà dòng đầu trông là tiêu đề ("Sương sớm"): tên chương là dòng ấy.
         val named = if (MEANINGLESS_NAME.matcher(stemOf(originalName)).matches()) titleFromLine(first) else ""
-        return Chapter(named.ifEmpty { chapterTitle(stemOf(originalName)) }, text) to encoding
+        return TxtRead(Chapter(named.ifEmpty { chapterTitle(stemOf(originalName)) }, text), encoding, decoded)
     }
 
     /** `importers.MEANINGLESS_NAME`: tên file do công cụ đặt. */
