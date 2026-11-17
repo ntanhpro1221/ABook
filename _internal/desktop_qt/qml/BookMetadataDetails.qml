@@ -59,15 +59,17 @@ Column {
         Reveal { target: summaryRegion; shown: root.summary !== "" }
         objectName: "bookSummaryRegion"
         width: root.width
-        height: root.expanded ? summaryText.implicitHeight : summaryPreview.implicitHeight
+        // Thu gọn = đúng 3 dòng đầu (mọi dòng cao bằng nhau: lineHeight tỉ lệ), khung clip phần dưới; nút Xem thêm mở trọn - như web và điện thoại.
+        // Đo từ chính summaryText, không cần một Text ẩn có maximumLineCount/elide (máy dò cắt chữ check_text_cut.py).
+        readonly property real collapsedHeight: summaryText.lineCount > 0 ? summaryText.implicitHeight * Math.min(3, summaryText.lineCount) / summaryText.lineCount : 0
+        height: root.expanded ? summaryText.implicitHeight : collapsedHeight
         clip: true
         Behavior on height { NumberAnimation { duration: Theme.reduceMotion ? 0 : root.expanded ? Theme.motionMedium : Theme.motionMediumOut; easing.type: Easing.BezierSpline; easing.bezierCurve: root.expanded ? Theme.easeStandard : Theme.easeAccelerate } }
         Text { id: summaryText; width: parent.width; text: root.summary; color: Theme.text2; font.family: Theme.family; font.pixelSize: Theme.sizeBodySmall; lineHeight: 1.5; wrapMode: Text.Wrap }
     }
-    Text { id: summaryPreview; visible: false; width: root.width; text: root.summary; font: summaryText.font; lineHeight: 1.5; wrapMode: Text.Wrap; maximumLineCount: 3; elide: Text.ElideRight }
     InlineActionRow {
         id: summaryToggle
-        Reveal { target: summaryToggle; shown: summaryText.implicitHeight > summaryPreview.implicitHeight }
+        Reveal { target: summaryToggle; shown: summaryText.lineCount > 3 }
         width: root.width
         text: root.expanded ? S.s_thu_gon_1f6bf2c3 : S.s_xem_them_e0ac1b1e
         icon: root.expanded ? "chevron-up" : "chevron-down"

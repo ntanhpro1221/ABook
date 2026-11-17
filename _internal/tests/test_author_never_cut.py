@@ -56,6 +56,17 @@ def test_detectors_see_a_cut_author_and_pass_a_fitted_one():
     assert line_findings("BasicText(lead.author, autoSize = OneLineFit.of(style))", KT_CUT) == []
 
 
+def test_qt_text_cut_check_passes_without_a_qt_build():
+    """build.bat runs desktop_qt/tools/check_text_cut.py; running it here catches a QML cut before anyone builds Qt
+    (the collapsed-summary measurer of BookMetadataDetails.qml once failed it unnoticed)."""
+    import importlib.util
+    spec = importlib.util.spec_from_file_location("check_text_cut", ROOT / "desktop_qt/tools/check_text_cut.py")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    errors = [error for path in sorted((ROOT / "desktop_qt/qml").glob("*.qml")) for error in module.scan(path)]
+    assert errors == []
+
+
 def test_no_platform_cuts_the_author():
     found = []
     for path in sorted((ROOT / "desktop_qt/qml").glob("*.qml")):
