@@ -2873,11 +2873,11 @@
     "reason": "tests/catalog_signing.py: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
   },
   "_internal/tests/conftest.py": {
-    "sha256": "dd7004d88be48245f6bc7bf752720f56f5e9bd58b4e2f361441d36a52d8cdd49",
-    "reason": "tests/conftest.py: all flagged strings match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data.",
+    "sha256": "b4c039a530c00479ff735ab2a5663129f159a9c8f3881411b32b64a8998c4e7f",
+    "reason": "tests/conftest.py: all flagged strings match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data. Integration phase 2: combined authored implementation, expectations or technical documentation; exact inherited Corpus sequences rechecked; no new Corpus approval.",
     "corpus_review": {
       "classification": "i",
-      "file_sha256": "dd7004d88be48245f6bc7bf752720f56f5e9bd58b4e2f361441d36a52d8cdd49",
+      "file_sha256": "b4c039a530c00479ff735ab2a5663129f159a9c8f3881411b32b64a8998c4e7f",
       "reason": "_internal/tests/conftest.py: Short generic test/UI prose or literal bridge. Lead approved category (i) only; each hash was classified in round two.",
       "shingles": [
         "8f809a112b05be5f"
@@ -4417,8 +4417,8 @@
     "reason": "tests/test_pin_the_book_cast.py: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
   },
   "_internal/tests/test_pipeline_mock.py": {
-    "sha256": "c25117e9f251e47ee06cb74960f51139998e5a3d21c5e1f27b8b0f82609547ff",
-    "reason": "tests/test_pipeline_mock.py: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
+    "sha256": "3f5bec573386ae3b3d7f183054acce0fe45ba8858000d3e3a9efa1c87c791566",
+    "reason": "tests/test_pipeline_mock.py: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data. Integration phase 2: combined authored implementation, expectations or technical documentation; exact inherited Corpus sequences rechecked; no new Corpus approval."
   },
   "_internal/tests/test_pool_counts_its_own_ram.py": {
     "sha256": "d118b2390b8459947f46fa3e838264797021334f2bc4821deadb533f6a5e77c5",
