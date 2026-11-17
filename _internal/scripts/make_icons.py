@@ -202,9 +202,13 @@ def write_ico(path: Path, full: str, small: str) -> None:
 # Chỉ những gì glyph() dùng: <g transform="translate() scale()">, <path> (nét / tô, opacity), <circle>.
 
 ANDROID_NS = 'xmlns:android="http://schemas.android.com/apk/res/android"'
-# Màn chờ Android 12+ (và core-splashscreen ở bản cũ): khung 240 dp, hệ thống chỉ giữ vòng tròn 160 dp giữa khung. Logo là icon app
-# tròn vẽ đúng trong vòng ấy: hãng nào cắt ô vuông bo góc (OPPO) cũng thấy trọn hình, và vector thì không nhoè khi phóng.
+# Màn chờ Android 12+ (và core-splashscreen ở bản cũ): khung 240 dp, hệ thống chỉ giữ vòng tròn 160 dp giữa khung. Logo là hình
+# sách-loa TRẦN đặt thẳng trên nền app (chủ sách 17-11: "chỉ icon thôi, bỏ cái bao nền đi") - không vòng xanh rừng của icon app.
+# Mọi nét của hình nằm trong vòng ấy: hãng nào cắt ô vuông bo góc (OPPO) cũng thấy trọn hình, và vector thì không nhoè khi phóng.
 SPLASH_FRAME_DP, SPLASH_LOGO_DP = 240.0, 160.0
+# Điểm mực xa nhất của glyph() tính từ GLYPH_CENTRE, ở tỉ lệ 1 (đo bằng rasterize, tests/test_splash_icon.py đo lại); hình chiếm
+# SPLASH_FILL bán kính vòng an toàn - chừa một chút để nét tròn đầu sóng không chạm mép vòng.
+GLYPH_REACH, SPLASH_FILL = 330.0, 0.94
 # Nút Đóng trên thông báo phát (Lucide "x", khung 24).
 CLOSE_PATH = "M18,6L6,18M6,6L18,18"
 
@@ -260,25 +264,26 @@ def _vector_body(markup: str, depth: int = 1) -> str:
     return "\n".join(out)
 
 
-def _vector(note: str, size_dp: float, body: str, viewport: float = 1024.0, aapt: bool = False) -> str:
-    extra = '\n    xmlns:aapt="http://schemas.android.com/aapt"' if aapt else ""
+def _vector(note: str, size_dp: float, body: str, viewport: float = 1024.0) -> str:
     return ('<?xml version="1.0" encoding="utf-8"?>\n'
             f'<!-- {note} Sinh bởi scripts/make_icons.py - đừng sửa tay. -->\n'
-            f'<vector {ANDROID_NS}{extra}\n    android:width="{size_dp:g}dp" android:height="{size_dp:g}dp"\n'
+            f'<vector {ANDROID_NS}\n    android:width="{size_dp:g}dp" android:height="{size_dp:g}dp"\n'
             f'    android:viewportWidth="{viewport:g}" android:viewportHeight="{viewport:g}">\n{body}\n</vector>\n')
 
 
+def splash_scale() -> float:
+    """Tỉ lệ của glyph() trong khung 1024 của màn chờ: điểm xa nhất nằm ở SPLASH_FILL bán kính vòng 160 dp."""
+    return 512 * SPLASH_LOGO_DP / SPLASH_FRAME_DP * SPLASH_FILL / GLYPH_REACH
+
+
+def splash_body() -> str:
+    """Hình màn chờ dạng SVG (khung 1024 = 240 dp): chỉ glyph, nền trong suốt - nền là app_bg của theme."""
+    return _placed(glyph(), splash_scale())
+
+
 def splash_icon() -> str:
-    scale = SPLASH_LOGO_DP / SPLASH_FRAME_DP
-    offset = 1024 * (1 - scale) / 2
-    circle = ('        <path android:pathData="M0,512A512,512 0 1,1 1024,512A512,512 0 1,1 0,512Z">\n'
-              '            <aapt:attr name="android:fillColor">\n'
-              '                <gradient android:type="linear" android:startX="0" android:startY="0" android:endX="0" android:endY="1024"\n'
-              f'                    android:startColor="{FOREST_TOP}" android:endColor="{FOREST_BOTTOM}" />\n'
-              '            </aapt:attr>\n        </path>')
-    body = (f'    <group android:translateX="{offset:.2f}" android:translateY="{offset:.2f}" android:scaleX="{scale:.4f}" android:scaleY="{scale:.4f}">\n'
-            f'{circle}\n{_vector_body(_placed(glyph(), 0.92), depth=2)}\n    </group>')
-    return _vector("Màn chờ: icon app tròn trong vòng 160 dp của khung 240 dp (Android 12+ chỉ giữ vòng ấy).", SPLASH_FRAME_DP, body, aapt=True)
+    return _vector("Màn chờ: chỉ hình sách-loa, không vòng nền, nằm trọn trong vòng 160 dp của khung 240 dp (Android 12+ chỉ giữ vòng ấy).",
+                   SPLASH_FRAME_DP, _vector_body(splash_body()))
 
 
 def notification_icon() -> str:
