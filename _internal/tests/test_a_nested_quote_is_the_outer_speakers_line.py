@@ -56,3 +56,20 @@ def test_a_missing_closer_still_recovers_when_a_quote_follows_in_narration():
 def test_a_pair_that_only_wraps_another_pair_is_not_a_quotation():
     rows = segment_chapter_text(1, '" "(Đừng có đùn việc cho tôi!!)" "')
     assert [row["kind_hint"] for row in rows] == ["narration"]
+
+
+@pytest.mark.parametrize("name", [case["name"] for case in CASES if case["name"].startswith("giu_thieu_dong")])
+def test_a_stray_closer_far_away_does_not_swallow_the_narration_or_the_warning(name):
+    # Ngoặc thiếu đóng + “…” giữa dòng + một dấu đóng lạc vài đoạn sau ("…” gõ lẫn, ”, ’ trong "McDonald’s"): tầm nhìn lồng có hạn,
+    # nên vẫn hồi phục (có cảnh báo) và lời kể ở giữa vẫn là lời kể.
+    case = next(case for case in CASES if case["name"] == name)
+    warnings: list[str] = []
+    rows = segment_chapter_text(1, case["text"], warnings=warnings)
+    assert warnings
+    # Đoạn thứ hai mở bằng lời kể, không bị gộp vào lời của đoạn mở.
+    assert next(row for row in rows if row["paragraph_index"] == 1)["kind_hint"] == "narration"
+
+
+def test_an_apostrophe_inside_a_word_does_not_close_a_thought():
+    rows = segment_chapter_text(1, "‘Cậu bảo “don’t go” cơ mà.’\n\nLan cười.")
+    assert [(row["kind_hint"], row["text"]) for row in rows] == [("thought", "‘Cậu bảo “don’t go” cơ mà.’"), ("narration", "Lan cười.")]

@@ -22,9 +22,10 @@ object SceneSegmenter {
     private val NEWLINE_RUN = Regex("\n{3,}")
 
     private val QUOTE = Py.rx("""([“"][^”"]{1,1600}[”"])""", dotAll = true)
-    private const val THOUGHT_CLOSING_SOURCE = """’|(?<=\S)'(?!\w)"""
+    /** ’ kẹp giữa hai chữ là dấu nháy trong từ ("McDonald’s", "don’t"), không đóng ‘ (`THOUGHT_CLOSING_PATTERN`). */
+    private const val THOUGHT_CLOSING_SOURCE = """(?<!\w)’|’(?!\w)|(?<=\S)'(?!\w)"""
     private val THOUGHT_CLOSING = Py.rx(THOUGHT_CLOSING_SOURCE)
-    private val THOUGHT_QUOTE = Py.rx("(‘[^’]{1,1600}?(?:$THOUGHT_CLOSING_SOURCE))", dotAll = true)
+    private val THOUGHT_QUOTE = Py.rx("""(‘(?:[^’]|(?<=\w)’(?=\w)){1,1600}?(?:$THOUGHT_CLOSING_SOURCE))""", dotAll = true)
     private val WHITE_CORNER_LINE = Py.rx("""『[^』]{1,1600}』""")
     private val LETTERED_VOICE_LINES = listOf(Py.rx("""\[[^\]]{1,1600}\]"""), Py.rx("""【[^】]{1,1600}】"""))
     private val TRANSLATOR_NOTE_LABEL = Py.rx(
@@ -228,7 +229,14 @@ object SceneSegmenter {
                 val wasOpen = state != null
                 if (state != null && paragraphIndex != openedAt) {
                     var fresh = freshQuoteOpening(line, state)
-                    if (fresh > 0 && quoteRunsOnPastNested(chapterLines.subList(lineNumber, chapterLines.size), state)) fresh = -1
+                    if (fresh > 0 &&
+                        quoteRunsOnPastNested(
+                            chapterLines.subList(lineNumber, minOf(chapterLines.size, lineNumber + NESTED_RUN_ON_MAX_LINES + 1)),
+                            state,
+                        )
+                    ) {
+                        fresh = -1
+                    }
                     if (fresh > 0 || (fresh == 0 && ranOnUnmarked)) return Walk(rows, state, openedAt)
                     if (fresh < 0) ranOnUnmarked = true
                 }
@@ -419,7 +427,7 @@ object SceneSegmenter {
         return "unknown"
     }
 
-    private const val STRAIGHT_QUOTE_OPEN_BEFORE = "([{“‘«—–-:/"
+    private const val STRAIGHT_QUOTE_OPEN_BEFORE = "([{“‘«—–-:/\""
     private const val STRAIGHT_QUOTE_CLOSE_AFTER = ",.;:!?…)]}”’»—–-~*"
 
     private class PairedSpan(val start: Int, val end: Int, val nested: Boolean)
@@ -585,7 +593,9 @@ object SceneSegmenter {
                 val char = line[index]
                 if (char == '“' || char == '‘') {
                     stack.add(if (char == '“') "”" else "’")
-                } else if (char.toString() == stack.last() || (stack.last() == "’" && char == '\'' && thoughtClosingAt(line, index))) {
+                } else if ((char.toString() == stack.last() && char != '’') ||
+                    (stack.last() == "’" && (char == '’' || char == '\'') && thoughtClosingAt(line, index))
+                ) {
                     stack.removeAt(stack.size - 1)
                     if (stack.isEmpty()) return index to emptyList()
                 }
@@ -752,14 +762,52 @@ object SceneSegmenter {
         return before.indexOfFirst { it in openers }
     }
 
-    /** `_quote_runs_on_past_nested`: “ giữa dòng khi ngoặc còn mở là trích dẫn LỒNG nếu có dấu đóng ngoài phía sau trước mọi dấu hiệu thiếu đóng. */
+    /**
+     * `_quote_runs_on_past_nested`: “ giữa dòng khi ngoặc còn mở là trích dẫn LỒNG nếu dấu đóng ngoài có ngay trong dòng ấy hay trong
+     * vài đoạn tiếp theo của CÙNG lời (tối đa [NESTED_RUN_ON_MAX_LINES]; dòng sau có dấu lạc hay lượt thoại mới thì không).
+     */
     private fun quoteRunsOnPastNested(lines: List<String>, state: State): Boolean {
-        for ((position, line) in lines.withIndex()) {
-            if (position > 0 && freshQuoteOpening(line, state) == 0) return false
-            val (closingIndex, remaining) = scanQuoteClosing(line, state.closers)
-            if (closingIndex >= 0) return true
-            if (remaining.size > state.closers.size) return false
+        val (closingIndex, remaining) = scanQuoteClosing(lines[0], state.closers)
+        if (closingIndex >= 0) return true
+        if (remaining.size > state.closers.size) return false
+        for (line in lines.drop(1).take(NESTED_RUN_ON_MAX_LINES)) {
+            val index = scanQuoteClosing(line, state.closers).first
+            if (lineLeavesTheQuote(if (index < 0) line else line.substring(0, index), index < 0)) return false
+            if (index >= 0) return true
         }
         return false
+    }
+
+    private const val NESTED_RUN_ON_MAX_LINES = 4
+
+    /**
+     * `_line_leaves_the_quote`: dòng sau (phần trước dấu đóng ngoài) có dấu ngoặc lạc / không cân, hay mở lượt thoại mới (cặp mở sau
+     * `:` hoặc đóng ở cuối dòng). ’ kẹp giữa hai chữ là dấu nháy trong từ.
+     */
+    private fun lineLeavesTheQuote(text: String, wholeLine: Boolean): Boolean {
+        val stack = ArrayList<Char>()
+        for ((index, char) in text.withIndex()) {
+            if (char == '’' && index > 0 && index < text.length - 1 &&
+                Py.isAlnum(Character.codePointBefore(text, index)) && Py.isAlnum(text.codePointAt(index + 1))
+            ) {
+                continue
+            }
+            if (char == '“' || char == '‘' || char == '«' || (char == '"' && !(stack.isNotEmpty() && stack.last() == '"'))) {
+                if (stack.isEmpty() && Py.rstrip(text.substring(0, index)).endsWith(":")) return true
+                stack.add(
+                    when (char) {
+                        '“' -> '”'
+                        '‘' -> '’'
+                        '«' -> '»'
+                        else -> '"'
+                    },
+                )
+            } else if (char == '”' || char == '’' || char == '»' || char == '"') {
+                if (stack.isEmpty() || stack.last() != char) return true
+                stack.removeAt(stack.size - 1)
+                if (stack.isEmpty() && wholeLine && Py.strip(text.substring(index + 1)).isEmpty()) return true
+            }
+        }
+        return stack.isNotEmpty()
     }
 }

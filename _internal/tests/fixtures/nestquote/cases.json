@@ -585,6 +585,264 @@
      "\"“Thôi đủ rồi.” \""
     ]
    ]
+  },
+  {
+   "name": "giu_thieu_dong_dau_go_lan_o_xa",
+   "text": "“Đi thôi.\n\nTôi nhớ lời mẹ dặn “về sớm” nên gật đầu.\n\nTôi bước ra cửa.\n\nCô ấy nói: \"Mai gặp nhé.”\n\nHết.",
+   "segments": [
+    [
+     "dialogue",
+     "“Đi thôi."
+    ],
+    [
+     "narration",
+     "Tôi nhớ lời mẹ dặn “về sớm” nên gật đầu."
+    ],
+    [
+     "narration",
+     "Tôi bước ra cửa."
+    ],
+    [
+     "narration",
+     "Cô ấy nói:"
+    ],
+    [
+     "dialogue",
+     "\"Mai gặp nhé.”"
+    ],
+    [
+     "narration",
+     "Hết."
+    ]
+   ]
+  },
+  {
+   "name": "giu_thieu_dong_dau_dong_lac_o_xa",
+   "text": "“Đi thôi.\n\nTôi nghe cô bảo “đi thôi” rồi bước ra.\n\nLan hỏi: “Đi đâu?”\n\nTôi đáp: “Về nhà.”\n\nNam lẩm bẩm: Thôi được rồi.”\n\nHết.",
+   "segments": [
+    [
+     "dialogue",
+     "“Đi thôi."
+    ],
+    [
+     "narration",
+     "Tôi nghe cô bảo"
+    ],
+    [
+     "dialogue",
+     "“đi thôi”"
+    ],
+    [
+     "narration",
+     "rồi bước ra."
+    ],
+    [
+     "narration",
+     "Lan hỏi:"
+    ],
+    [
+     "dialogue",
+     "“Đi đâu?”"
+    ],
+    [
+     "narration",
+     "Tôi đáp:"
+    ],
+    [
+     "dialogue",
+     "“Về nhà.”"
+    ],
+    [
+     "narration",
+     "Nam lẩm bẩm: Thôi được rồi.”"
+    ],
+    [
+     "narration",
+     "Hết."
+    ]
+   ]
+  },
+  {
+   "name": "giu_thieu_dong_noi_tam_nhay_trong_tu",
+   "text": "‘Mình phải đi.\n\nTôi nghe cô bảo “đi thôi” rồi bước ra.\n\nChúng tôi vào quán McDonald’s gần đó.\n\nHết.",
+   "segments": [
+    [
+     "thought",
+     "‘Mình phải đi."
+    ],
+    [
+     "narration",
+     "Tôi nghe cô bảo"
+    ],
+    [
+     "dialogue",
+     "“đi thôi”"
+    ],
+    [
+     "narration",
+     "rồi bước ra."
+    ],
+    [
+     "narration",
+     "Chúng tôi vào quán McDonald’s gần đó."
+    ],
+    [
+     "narration",
+     "Hết."
+    ]
+   ]
+  },
+  {
+   "name": "giu_thieu_dong_loi_dan_truoc",
+   "text": "“Đi thôi.\n\nLan hỏi: “Đi đâu?”\n\nTôi đáp: “Về nhà.”\n\nHết.",
+   "segments": [
+    [
+     "dialogue",
+     "“Đi thôi."
+    ],
+    [
+     "narration",
+     "Lan hỏi:"
+    ],
+    [
+     "dialogue",
+     "“Đi đâu?”"
+    ],
+    [
+     "narration",
+     "Tôi đáp:"
+    ],
+    [
+     "dialogue",
+     "“Về nhà.”"
+    ],
+    [
+     "narration",
+     "Hết."
+    ]
+   ]
+  },
+  {
+   "name": "giu_long_o_xa_qua_tam_nhin",
+   "text": "“Nghe này.\n\nHôm qua cậu nói “trời đẹp nhỉ” cơ mà.\n\nMột.\n\nHai.\n\nBa.\n\nBốn.\n\nNăm.”\n\nLan thở dài.",
+   "segments": [
+    [
+     "dialogue",
+     "“Nghe này."
+    ],
+    [
+     "narration",
+     "Hôm qua cậu nói"
+    ],
+    [
+     "dialogue",
+     "“trời đẹp nhỉ”"
+    ],
+    [
+     "narration",
+     "cơ mà."
+    ],
+    [
+     "narration",
+     "Một."
+    ],
+    [
+     "narration",
+     "Hai."
+    ],
+    [
+     "narration",
+     "Ba."
+    ],
+    [
+     "narration",
+     "Bốn."
+    ],
+    [
+     "narration",
+     "Năm.”"
+    ],
+    [
+     "narration",
+     "Lan thở dài."
+    ]
+   ]
+  },
+  {
+   "name": "cong_nhieu_doan_long_dong_sau_hai_doan",
+   "text": "“Nghe này.\n\nHôm qua cậu nói “trời đẹp nhỉ” cơ mà.\n\nVậy mà hôm nay lại mưa.\n\nThật chẳng hiểu nổi.”\n\nLan thở dài.",
+   "segments": [
+    [
+     "dialogue",
+     "“Nghe này."
+    ],
+    [
+     "dialogue",
+     "Hôm qua cậu nói “trời đẹp nhỉ” cơ mà."
+    ],
+    [
+     "dialogue",
+     "Vậy mà hôm nay lại mưa."
+    ],
+    [
+     "dialogue",
+     "Thật chẳng hiểu nổi.”"
+    ],
+    [
+     "narration",
+     "Lan thở dài."
+    ]
+   ]
+  },
+  {
+   "name": "noi_tam_nhieu_doan_thuat_ngu_long",
+   "text": "‘Nơi này lạ quá.\n\nHọ gọi tôi là “Thần Gió” nữa.\n\nAi bày ra cái lễ ‘cầu mưa’ này nhỉ, rồi còn cả ‘Sổ tay gọi thần’. Thật là.\n\nChắc phải đi thôi.’\n\nLan đứng dậy.",
+   "segments": [
+    [
+     "thought",
+     "‘Nơi này lạ quá."
+    ],
+    [
+     "thought",
+     "Họ gọi tôi là “Thần Gió” nữa."
+    ],
+    [
+     "thought",
+     "Ai bày ra cái lễ ‘cầu mưa’ này nhỉ, rồi còn cả ‘Sổ tay gọi thần’. Thật là."
+    ],
+    [
+     "thought",
+     "Chắc phải đi thôi.’"
+    ],
+    [
+     "narration",
+     "Lan đứng dậy."
+    ]
+   ]
+  },
+  {
+   "name": "thang_long_ngay_dau_cau",
+   "text": "\"\"Đi\" là cậu nói đấy,\" Lan bảo.",
+   "segments": [
+    [
+     "dialogue",
+     "\"\"Đi\" là cậu nói đấy,\""
+    ],
+    [
+     "narration",
+     "Lan bảo."
+    ]
+   ]
+  },
+  {
+   "name": "noi_tam_nhay_trong_tu",
+   "text": "‘Cậu bảo “don’t go” cơ mà.’",
+   "segments": [
+    [
+     "thought",
+     "‘Cậu bảo “don’t go” cơ mà.’"
+    ]
+   ]
   }
  ]
 }

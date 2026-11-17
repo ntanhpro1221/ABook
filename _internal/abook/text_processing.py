@@ -15,9 +15,11 @@ QUOTE_PATTERN = re.compile(r"([“\"][^”\"]{1,1600}[”\"])", re.DOTALL)
 # Bản dịch hay mở ‘ rồi đóng bằng dấu ' thẳng ("được gọi là ‘tổng hợp ý kiến'."): dấu ' bám cuối chữ và theo sau là khoảng
 # trắng / dấu câu / hết dòng thì đóng ‘. Dấu ' nằm GIỮA chữ (tên phiên âm "Ma'at", "I'm") không đóng gì. Không nhận nó
 # thì nội tâm không bao giờ đóng và khoá giọng nội tâm tràn sang mọi câu kể phía sau.
-THOUGHT_CLOSING_PATTERN = re.compile(r"’|(?<=\S)'(?!\w)")
+# Dấu ’ kẹp giữa hai chữ cũng là dấu nháy trong từ ("McDonald’s", "don’t"), không đóng ‘: đọc nó là dấu đóng thì nội tâm
+# bị cắt giữa từ.
+THOUGHT_CLOSING_PATTERN = re.compile(r"(?<!\w)’|’(?!\w)|(?<=\S)'(?!\w)")
 THOUGHT_QUOTE_PATTERN = re.compile(
-    rf"(‘[^’]{{1,1600}}?(?:{THOUGHT_CLOSING_PATTERN.pattern}))",
+    rf"(‘(?:[^’]|(?<=\w)’(?=\w)){{1,1600}}?(?:{THOUGHT_CLOSING_PATTERN.pattern}))",
     re.DOTALL,
 )
 CURLY_QUOTE_SPECS = (
@@ -1041,10 +1043,10 @@ def _join_fragments(left: str, right: str) -> str:
 _WHOLE_SPAN_PATTERN = re.compile(r"(.+)", re.DOTALL)
 
 
-# Dấu " thẳng không tự nói nó mở hay đóng; vị trí nói hộ. Mở: đứng đầu dòng / sau khoảng trắng / sau ngoặc mở, dấu
-# hai chấm, gạch - và dính chữ phía sau. Đóng: dính chữ / dấu câu phía trước và theo sau là khoảng trắng, dấu câu,
-# hết dòng. Còn lại (hai bên đều trắng, hay đều dính chữ) là "chưa rõ".
-_STRAIGHT_QUOTE_OPEN_BEFORE = "([{“‘«—–-:/"
+# Dấu " thẳng không tự nói nó mở hay đóng; vị trí nói hộ. Mở: đứng đầu dòng / sau khoảng trắng / sau ngoặc mở (cả " -
+# `""Đi" là cậu nói đấy,"` mở lồng ngay đầu câu), dấu hai chấm, gạch - và dính chữ phía sau. Đóng: dính chữ / dấu
+# câu phía trước và theo sau là khoảng trắng, dấu câu, hết dòng. Còn lại (hai bên đều trắng, hay đều dính chữ) là "chưa rõ".
+_STRAIGHT_QUOTE_OPEN_BEFORE = "([{“‘«—–-:/\""
 _STRAIGHT_QUOTE_CLOSE_AFTER = ",.;:!?…)]}”’»—–-~*"
 _NESTING_CLOSERS = {"“": "”", "«": "»", '"': '"'}
 
@@ -1235,8 +1237,8 @@ def _scan_quote_closing(line: str, closers: tuple[str, ...], start: int = 0) -> 
             char = line[index]
             if char in ("“", "‘"):
                 stack.append("”" if char == "“" else "’")
-            elif char == stack[-1] or (
-                stack[-1] == "’" and char == "'"
+            elif (char == stack[-1] and char != "’") or (
+                stack[-1] == "’" and char in "’'"
                 and THOUGHT_CLOSING_PATTERN.match(line, index) is not None
             ):
                 stack.pop()
@@ -1451,23 +1453,57 @@ def _fresh_quote_opening(line: str, quote_state: QuoteState) -> int:
 
 def _quote_runs_on_past_nested(lines: list[str], quote_state: QuoteState) -> bool:
     """`lines[0]` mở “ giữa dòng khi ngoặc `quote_state` còn mở: đó là trích dẫn LỒNG trong lời nói kéo dài, không phải
-    ngoặc mới, nếu từ đây có dấu đóng ngoặc ngoài (đếm cặp lồng) trước mọi dấu hiệu ngoặc ấy đã thiếu dấu đóng.
+    ngoặc mới, nếu dấu đóng ngoặc ngoài (đếm cặp lồng) có ngay trong dòng ấy hay trong vài đoạn tiếp theo của CÙNG lời.
 
     “Nghe này. / Hôm qua cậu nói “trời đẹp nhỉ” cơ mà. / Vậy mà giờ lại thế.” - đoạn giữa thuật lại lời người khác trong
     lời của cùng một người. `_fresh_quote_opening` thấy “ giữa dòng là cho rằng ngoặc trước thiếu dấu đóng; ở đây lồng
-    cân trong dòng và dấu đóng ngoài có thật ở phía sau. Dấu hiệu thiếu đóng (trả False, hồi phục như cũ): một dòng sau
-    mở bằng ngoặc, một ngoặc mở không đóng trong dòng của nó, hay hết chương mà chưa gặp dấu đóng ngoài.
+    cân trong dòng và dấu đóng ngoài có thật ngay phía sau.
+
+    Tầm nhìn có hạn, vì một dấu đóng lạc ở xa (”, gõ lẫn "…”, ’ trong từ) sẽ biến cả dải lời kể ở giữa thành thoại và
+    nuốt mất cảnh báo hồi phục. Trả False (hồi phục như cũ) khi: `lines[0]` có ngoặc mở không đóng; một dòng sau không
+    còn là phần tiếp của cùng lời (`_line_leaves_the_quote`); hay quá `NESTED_RUN_ON_MAX_LINES` dòng mà chưa gặp dấu
+    đóng ngoài. Kho Corpus 18-11 (4.330 chương): mọi lần lồng thật đóng trong <= 3 dòng sau.
     """
     _hint, _closing_mark, closers = quote_state
-    for position, line in enumerate(lines):
-        if position and _fresh_quote_opening(line, quote_state) == 0:
+    closing_index, remaining = _scan_quote_closing(lines[0], closers)
+    if closing_index >= 0:
+        return True
+    if len(remaining) > len(closers):
+        return False
+    for line in lines[1 : NESTED_RUN_ON_MAX_LINES + 1]:
+        closing_index, _remaining = _scan_quote_closing(line, closers)
+        if _line_leaves_the_quote(line if closing_index < 0 else line[:closing_index], closing_index < 0):
             return False
-        closing_index, remaining = _scan_quote_closing(line, closers)
         if closing_index >= 0:
             return True
-        if len(remaining) > len(closers):
-            return False
     return False
+
+
+NESTED_RUN_ON_MAX_LINES = 4
+_LATER_LINE_CLOSERS = {"“": "”", "‘": "’", "«": "»"}
+
+
+def _line_leaves_the_quote(text: str, whole_line: bool) -> bool:
+    """`text` (một dòng sau, phần trước dấu đóng ngoặc ngoài) cho thấy ngoặc ngoài đã thiếu dấu đóng: một dấu ngoặc lạc
+    / không cân ("Cô ấy nói: "Mai gặp nhé.” gõ lẫn), hay một lượt thoại MỚI - cặp ngoặc mở sau dấu hai chấm (`Lan hỏi:
+    “Đi đâu?”`) hoặc đóng ở cuối dòng. Cặp lồng cân giữa câu (thuật ngữ ‘học’, “miếng phô mai”) là phần tiếp của lời.
+    ’ kẹp giữa hai chữ là dấu nháy trong từ ("McDonald’s"), không phải dấu ngoặc.
+    """
+    stack: list[str] = []
+    for index, char in enumerate(text):
+        if char == "’" and 0 < index < len(text) - 1 and text[index - 1].isalnum() and text[index + 1].isalnum():
+            continue
+        if char in _LATER_LINE_CLOSERS or (char == '"' and not (stack and stack[-1] == '"')):
+            if not stack and text[:index].rstrip().endswith(":"):
+                return True
+            stack.append(_LATER_LINE_CLOSERS.get(char, '"'))
+        elif char in "”’»\"":
+            if not stack or stack[-1] != char:
+                return True
+            stack.pop()
+            if not stack and whole_line and not text[index + 1 :].strip():
+                return True
+    return bool(stack)
 
 
 def _chapter_writes_dialogue_in_quotes(paragraphs: list[str]) -> bool:
@@ -1581,7 +1617,9 @@ def _walk_paragraphs(
             was_open = quote_state is not None
             if quote_state is not None and paragraph_index != opened_at:
                 fresh_opening = _fresh_quote_opening(line, quote_state)
-                if fresh_opening > 0 and _quote_runs_on_past_nested(chapter_lines[line_number:], quote_state):
+                if fresh_opening > 0 and _quote_runs_on_past_nested(
+                    chapter_lines[line_number : line_number + NESTED_RUN_ON_MAX_LINES + 1], quote_state
+                ):
                     fresh_opening = -1
                 if fresh_opening > 0 or (fresh_opening == 0 and ran_on_unmarked):
                     # Ngoặc mở ở `opened_at` thiếu dấu đóng; để nó trôi tới đây thì lời kể ở giữa thành lời

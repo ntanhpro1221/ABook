@@ -2073,6 +2073,357 @@
      "kind": "dialogue"
     }
    ]
+  },
+  {
+   "text": "“Đi thôi.\n\nTôi nhớ lời mẹ dặn “về sớm” nên gật đầu.\n\nTôi bước ra cửa.\n\nCô ấy nói: \"Mai gặp nhé.”\n\nHết.",
+   "segments": [
+    {
+     "id": 0,
+     "text": "“Đi thôi.",
+     "sceneBreak": false,
+     "kind": "dialogue"
+    },
+    {
+     "id": 1,
+     "text": "Tôi nhớ lời mẹ dặn “về sớm” nên gật đầu.",
+     "sceneBreak": false,
+     "kind": "narration"
+    },
+    {
+     "id": 2,
+     "text": "Tôi bước ra cửa.",
+     "sceneBreak": false,
+     "kind": "narration"
+    },
+    {
+     "id": 3,
+     "text": "Cô ấy nói:",
+     "sceneBreak": false,
+     "kind": "narration"
+    },
+    {
+     "id": 4,
+     "text": "\"Mai gặp nhé.”",
+     "sceneBreak": false,
+     "kind": "dialogue"
+    },
+    {
+     "id": 5,
+     "text": "Hết.",
+     "sceneBreak": false,
+     "kind": "narration"
+    }
+   ]
+  },
+  {
+   "text": "“Đi thôi.\n\nTôi nghe cô bảo “đi thôi” rồi bước ra.\n\nLan hỏi: “Đi đâu?”\n\nTôi đáp: “Về nhà.”\n\nNam lẩm bẩm: Thôi được rồi.”\n\nHết.",
+   "segments": [
+    {
+     "id": 0,
+     "text": "“Đi thôi.",
+     "sceneBreak": false,
+     "kind": "dialogue"
+    },
+    {
+     "id": 1,
+     "text": "Tôi nghe cô bảo",
+     "sceneBreak": false,
+     "kind": "narration"
+    },
+    {
+     "id": 2,
+     "text": "“đi thôi”",
+     "sceneBreak": false,
+     "kind": "dialogue"
+    },
+    {
+     "id": 3,
+     "text": "rồi bước ra.",
+     "sceneBreak": false,
+     "kind": "narration"
+    },
+    {
+     "id": 4,
+     "text": "Lan hỏi:",
+     "sceneBreak": false,
+     "kind": "narration"
+    },
+    {
+     "id": 5,
+     "text": "“Đi đâu?”",
+     "sceneBreak": false,
+     "kind": "dialogue"
+    },
+    {
+     "id": 6,
+     "text": "Tôi đáp:",
+     "sceneBreak": false,
+     "kind": "narration"
+    },
+    {
+     "id": 7,
+     "text": "“Về nhà.”",
+     "sceneBreak": false,
+     "kind": "dialogue"
+    },
+    {
+     "id": 8,
+     "text": "Nam lẩm bẩm: Thôi được rồi.”",
+     "sceneBreak": false,
+     "kind": "narration"
+    },
+    {
+     "id": 9,
+     "text": "Hết.",
+     "sceneBreak": false,
+     "kind": "narration"
+    }
+   ]
+  },
+  {
+   "text": "‘Mình phải đi.\n\nTôi nghe cô bảo “đi thôi” rồi bước ra.\n\nChúng tôi vào quán McDonald’s gần đó.\n\nHết.",
+   "segments": [
+    {
+     "id": 0,
+     "text": "‘Mình phải đi.",
+     "sceneBreak": false,
+     "kind": "thought"
+    },
+    {
+     "id": 1,
+     "text": "Tôi nghe cô bảo",
+     "sceneBreak": false,
+     "kind": "narration"
+    },
+    {
+     "id": 2,
+     "text": "“đi thôi”",
+     "sceneBreak": false,
+     "kind": "dialogue"
+    },
+    {
+     "id": 3,
+     "text": "rồi bước ra.",
+     "sceneBreak": false,
+     "kind": "narration"
+    },
+    {
+     "id": 4,
+     "text": "Chúng tôi vào quán McDonald’s gần đó.",
+     "sceneBreak": false,
+     "kind": "narration"
+    },
+    {
+     "id": 5,
+     "text": "Hết.",
+     "sceneBreak": false,
+     "kind": "narration"
+    }
+   ]
+  },
+  {
+   "text": "“Đi thôi.\n\nLan hỏi: “Đi đâu?”\n\nTôi đáp: “Về nhà.”\n\nHết.",
+   "segments": [
+    {
+     "id": 0,
+     "text": "“Đi thôi.",
+     "sceneBreak": false,
+     "kind": "dialogue"
+    },
+    {
+     "id": 1,
+     "text": "Lan hỏi:",
+     "sceneBreak": false,
+     "kind": "narration"
+    },
+    {
+     "id": 2,
+     "text": "“Đi đâu?”",
+     "sceneBreak": false,
+     "kind": "dialogue"
+    },
+    {
+     "id": 3,
+     "text": "Tôi đáp:",
+     "sceneBreak": false,
+     "kind": "narration"
+    },
+    {
+     "id": 4,
+     "text": "“Về nhà.”",
+     "sceneBreak": false,
+     "kind": "dialogue"
+    },
+    {
+     "id": 5,
+     "text": "Hết.",
+     "sceneBreak": false,
+     "kind": "narration"
+    }
+   ]
+  },
+  {
+   "text": "“Nghe này.\n\nHôm qua cậu nói “trời đẹp nhỉ” cơ mà.\n\nMột.\n\nHai.\n\nBa.\n\nBốn.\n\nNăm.”\n\nLan thở dài.",
+   "segments": [
+    {
+     "id": 0,
+     "text": "“Nghe này.",
+     "sceneBreak": false,
+     "kind": "dialogue"
+    },
+    {
+     "id": 1,
+     "text": "Hôm qua cậu nói",
+     "sceneBreak": false,
+     "kind": "narration"
+    },
+    {
+     "id": 2,
+     "text": "“trời đẹp nhỉ”",
+     "sceneBreak": false,
+     "kind": "dialogue"
+    },
+    {
+     "id": 3,
+     "text": "cơ mà.",
+     "sceneBreak": false,
+     "kind": "narration"
+    },
+    {
+     "id": 4,
+     "text": "Một.",
+     "sceneBreak": false,
+     "kind": "narration"
+    },
+    {
+     "id": 5,
+     "text": "Hai.",
+     "sceneBreak": false,
+     "kind": "narration"
+    },
+    {
+     "id": 6,
+     "text": "Ba.",
+     "sceneBreak": false,
+     "kind": "narration"
+    },
+    {
+     "id": 7,
+     "text": "Bốn.",
+     "sceneBreak": false,
+     "kind": "narration"
+    },
+    {
+     "id": 8,
+     "text": "Năm.”",
+     "sceneBreak": false,
+     "kind": "narration"
+    },
+    {
+     "id": 9,
+     "text": "Lan thở dài.",
+     "sceneBreak": false,
+     "kind": "narration"
+    }
+   ]
+  },
+  {
+   "text": "“Nghe này.\n\nHôm qua cậu nói “trời đẹp nhỉ” cơ mà.\n\nVậy mà hôm nay lại mưa.\n\nThật chẳng hiểu nổi.”\n\nLan thở dài.",
+   "segments": [
+    {
+     "id": 0,
+     "text": "“Nghe này.",
+     "sceneBreak": false,
+     "kind": "dialogue"
+    },
+    {
+     "id": 1,
+     "text": "Hôm qua cậu nói “trời đẹp nhỉ” cơ mà.",
+     "sceneBreak": false,
+     "kind": "dialogue"
+    },
+    {
+     "id": 2,
+     "text": "Vậy mà hôm nay lại mưa.",
+     "sceneBreak": false,
+     "kind": "dialogue"
+    },
+    {
+     "id": 3,
+     "text": "Thật chẳng hiểu nổi.”",
+     "sceneBreak": false,
+     "kind": "dialogue"
+    },
+    {
+     "id": 4,
+     "text": "Lan thở dài.",
+     "sceneBreak": false,
+     "kind": "narration"
+    }
+   ]
+  },
+  {
+   "text": "‘Nơi này lạ quá.\n\nHọ gọi tôi là “Thần Gió” nữa.\n\nAi bày ra cái lễ ‘cầu mưa’ này nhỉ, rồi còn cả ‘Sổ tay gọi thần’. Thật là.\n\nChắc phải đi thôi.’\n\nLan đứng dậy.",
+   "segments": [
+    {
+     "id": 0,
+     "text": "‘Nơi này lạ quá.",
+     "sceneBreak": false,
+     "kind": "thought"
+    },
+    {
+     "id": 1,
+     "text": "Họ gọi tôi là “Thần Gió” nữa.",
+     "sceneBreak": false,
+     "kind": "thought"
+    },
+    {
+     "id": 2,
+     "text": "Ai bày ra cái lễ ‘cầu mưa’ này nhỉ, rồi còn cả ‘Sổ tay gọi thần’. Thật là.",
+     "sceneBreak": false,
+     "kind": "thought"
+    },
+    {
+     "id": 3,
+     "text": "Chắc phải đi thôi.’",
+     "sceneBreak": false,
+     "kind": "thought"
+    },
+    {
+     "id": 4,
+     "text": "Lan đứng dậy.",
+     "sceneBreak": false,
+     "kind": "narration"
+    }
+   ]
+  },
+  {
+   "text": "\"\"Đi\" là cậu nói đấy,\" Lan bảo.",
+   "segments": [
+    {
+     "id": 0,
+     "text": "\"\"Đi\" là cậu nói đấy,\"",
+     "sceneBreak": false,
+     "kind": "dialogue"
+    },
+    {
+     "id": 1,
+     "text": "Lan bảo.",
+     "sceneBreak": false,
+     "kind": "narration"
+    }
+   ]
+  },
+  {
+   "text": "‘Cậu bảo “don’t go” cơ mà.’",
+   "segments": [
+    {
+     "id": 0,
+     "text": "‘Cậu bảo “don’t go” cơ mà.’",
+     "sceneBreak": false,
+     "kind": "thought"
+    }
+   ]
   }
  ]
 }
