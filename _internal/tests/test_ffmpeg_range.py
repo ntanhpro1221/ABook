@@ -152,9 +152,11 @@ def test_ffmpeg_range_payload_requires_exact_206_before_appending(remote_zip, mo
 @pytest.mark.parametrize("failure", ["compressed_sha", "exe_sha", "crc", "size"])
 def test_ffmpeg_range_integrity_failure_preserves_previous_exe_and_stamp(remote_zip, monkeypatch, failure):
     r = remote_zip
-    r.folder.mkdir()
-    (r.folder / "ffmpeg.exe").write_bytes(b"old executable")
-    (r.folder / "installed.sha256").write_text("old stamp")
+    old_stamp = "0123456789abcdef" + "0" * 48
+    old = r.folder / old_stamp[:16] / "ffmpeg.exe"
+    old.parent.mkdir(parents=True)
+    old.write_bytes(b"old executable")
+    (r.folder / "installed.sha256").write_text(old_stamp)
     if failure == "compressed_sha":
         monkeypatch.setattr(ff, "WHEEL", setup.Download(r.item.name, r.item.url, "0" * 64, r.item.size))
     else:
@@ -162,8 +164,8 @@ def test_ffmpeg_range_integrity_failure_preserves_previous_exe_and_stamp(remote_
         monkeypatch.setattr(ff, attr, "0" * 64 if failure == "exe_sha" else 1)
     with pytest.raises(setup.SetupError, match="tải về sai bản" if failure == "compressed_sha" else "ghim"):
         ff.install(lambda *_: None)
-    assert (r.folder / "ffmpeg.exe").read_bytes() == b"old executable"
-    assert (r.folder / "installed.sha256").read_text() == "old stamp"
+    assert old.read_bytes() == b"old executable"
+    assert (r.folder / "installed.sha256").read_text() == old_stamp
     assert not list(r.folder.rglob("*.exe.part"))
     assert not (r.folder / r.item.sha256[:16] / "ffmpeg.exe").exists()
 
@@ -206,15 +208,11 @@ def _hold_like_a_running_exe(path: Path):
     return handle.close, lambda: None
 
 
-@pytest.mark.parametrize("layout", ["before-0.4.175", "older-pin"])
-def test_an_update_never_overwrites_the_old_exe_while_it_runs(remote_zip, layout):
+def test_an_update_never_overwrites_the_old_exe_while_it_runs(remote_zip):
     r = remote_zip
     r.folder.mkdir()
-    if layout == "before-0.4.175":
-        old, stamp = r.folder / "ffmpeg.exe", "old stamp"
-    else:
-        stamp = "0123456789abcdef" + "0" * 48
-        old = r.folder / stamp[:16] / "ffmpeg.exe"
+    stamp = "0123456789abcdef" + "0" * 48
+    old = r.folder / stamp[:16] / "ffmpeg.exe"
     stop, wait = _hold_like_a_running_exe(old)
     try:
         (r.folder / "installed.sha256").write_text(stamp, encoding="utf-8")
@@ -231,6 +229,27 @@ def test_an_update_never_overwrites_the_old_exe_while_it_runs(remote_zip, layout
         wait()
     ff.configure(r.folder)  # lần mở app sau: bản cũ không còn ai giữ thì bị dọn
     assert not old.exists() and exe.read_bytes() == r.payload
+    assert sorted(p.name for p in r.folder.iterdir()) == sorted([r.item.sha256[:16], "install.lock", "installed.sha256"])
+
+
+def test_anything_else_in_the_folder_is_removed_once_nothing_holds_it(remote_zip):
+    """Luật dọn chung: ngoài thư mục pin hiện tại, con trỏ, khoá và file tải dở của pin hiện tại, mọi thứ bị xoá khi xoá được.
+    Một file lạ đang chạy thì còn nguyên (không lỗi), hết chạy thì bị dọn ở lần mở app sau."""
+    r = remote_zip
+    r.folder.mkdir()
+    stray = r.folder / "stray.exe"
+    (r.folder / "other").mkdir()
+    (r.folder / "other" / "note.txt").write_text("x", encoding="utf-8")
+    stop, wait = _hold_like_a_running_exe(stray)
+    try:
+        exe = ff.install(lambda *_: None)
+        assert exe.read_bytes() == r.payload and not (r.folder / "other").exists()
+        if sys.platform == "win32":
+            assert stray.is_file(), "file đang chạy để nguyên, cài vẫn xong"
+    finally:
+        stop()
+        wait()
+    ff.configure(r.folder)
     assert sorted(p.name for p in r.folder.iterdir()) == sorted([r.item.sha256[:16], "install.lock", "installed.sha256"])
 
 

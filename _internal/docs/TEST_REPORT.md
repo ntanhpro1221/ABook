@@ -67,6 +67,10 @@ month-end builds for two years, so the pin moved to the October month-end build 
   now all pass. The month-end test also checks that the pinned tag is the latest of its month from the tag list recorded
   in the fixture (a later tag on the same day turns it red). pytest on the 23 ffmpeg/export/music/release files: 394 passed,
   0 failed, 2 skipped (test_music_valence needs the local model package, as before).
+- One cleanup rule for `tools/ffmpeg`: everything except the current pin's folder, the pointer, the install lock and the
+  current pin's partial download is deleted when deletion succeeds; a locked file stays until next time. A new test runs a
+  stray copy of ping.exe in the folder: install still succeeds and leaves it intact, and the next app start removes it once
+  it has stopped. The 6 ffmpeg/music/listen_export test files: 108 passed, 0 failed, 0 skipped.
 - Quality implementation hash unchanged after every commit: `6d5817d28678d2f85dcc3c8f5158638907a6f9f463bdb8e1a83b3c46c9a68fa8`.
 
 ## 15-11-2026 — 0.4.173 integration

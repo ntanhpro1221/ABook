@@ -12,8 +12,9 @@ tải gì. Việc tải/đặt trạng thái do music_module.py lo; ở đây ch
 Bố cục `tools/ffmpeg`: mỗi pin một thư mục `<16 ký tự đầu của pin>/ffmpeg.exe`; `installed.sha256` (ghi nguyên tử SAU khi exe đã nằm
 đúng chỗ) là con trỏ tới bản đang dùng. Cập nhật không bao giờ ghi đè exe đang chạy (Windows khoá file của tiến trình đang chạy:
 một lượt xuất dùng bản cũ trong lúc bản mới tải xong): bản mới vào thư mục riêng, con trỏ đổi, bản cũ để lại và chỉ bị xoá khi
-xoá được (không còn tiến trình nào giữ) - ngay sau khi cài và mỗi lần app mở. `ffmpeg.exe` nằm thẳng trong thư mục là bố cục trước
-0.4.175 (Gyan 8.1.2): vẫn nhận ra để mời cập nhật. File tải dở mang tên theo pin, nên phần dở của pin khác không bao giờ bị nối vào.
+xoá được (không còn tiến trình nào giữ) - ngay sau khi cài và mỗi lần app mở. Luật dọn chung: trong thư mục chỉ giữ thư mục của pin
+hiện tại, con trỏ, khoá cài đặt và file tải dở của pin hiện tại; mọi thứ khác bị xoá khi xoá được, file đang bị khoá để lần sau.
+File tải dở mang tên theo pin, nên phần dở của pin khác không bao giờ bị nối vào.
 
 ABOOK_FFMPEG_DOWNLOAD=0: không bao giờ tải (bộ kiểm đặt sẵn).
 """
@@ -58,8 +59,8 @@ def configure(folder: Path | str | None) -> None:
         _folder = Path(folder) if folder is not None else None
         exe = _exe()
         io_utils.use_downloaded_ffmpeg(exe if exe is not None and exe.is_file() else None)
-        if exe is not None and exe.is_file() and _installed_current():
-            _prune(exe)
+        if _installed_current():
+            _prune()
 
 
 def _slot(stamp: str) -> str:
@@ -77,30 +78,32 @@ def _stamp() -> str:
 
 
 def _exe() -> Path | None:
-    """Exe con trỏ `installed.sha256` chỉ tới; không có thì `ffmpeg.exe` của bố cục cũ (để còn mời cập nhật)."""
+    """Exe trong thư mục của pin mà con trỏ `installed.sha256` chỉ tới (không có con trỏ hợp lệ thì của pin hiện tại)."""
     if _folder is None:
         return None
     stamp = _stamp()
-    if len(stamp) == 64 and all(c in "0123456789abcdef" for c in stamp):
-        pinned = _folder / _slot(stamp) / EXE_NAME
-        if pinned.is_file():
-            return pinned
-    return _folder / EXE_NAME
+    valid = len(stamp) == 64 and all(c in "0123456789abcdef" for c in stamp)
+    return _folder / _slot(stamp if valid else pin()) / EXE_NAME
 
 
-def _prune(keep: Path) -> None:
-    """Xoá các bản ffmpeg khác `keep` (thư mục pin khác, `ffmpeg.exe` bố cục cũ) và phần tải dở của pin khác. Bản nào đang chạy
-    thì Windows không cho xoá: để đó, lần sau dọn. Không bao giờ ném lỗi."""
+def _keeps() -> set[str]:
+    """Tên được giữ trong thư mục: thư mục pin hiện tại, con trỏ, khoá cài đặt, file tải dở của pin hiện tại."""
+    archive = f"ffmpeg-{_slot(pin())}.deflate"
+    return {_slot(pin()), "installed.sha256", "install.lock", archive, archive + ".part"}
+
+
+def _prune() -> None:
+    """Luật dọn chung: xoá mọi thứ trong thư mục ngoài `_keeps()`. File đang bị khoá (exe đang chạy) thì Windows không cho xoá:
+    để đó, lần sau dọn. Không bao giờ ném lỗi."""
     assert _folder is not None
-    current = _slot(pin())
+    keeps = _keeps()
     for path in list(_folder.iterdir()) if _folder.is_dir() else []:
+        if path.name in keeps:
+            continue
         try:
-            if path.is_dir() and path != keep.parent and len(path.name) == 16 and all(c in "0123456789abcdef" for c in path.name):
-                for child in path.iterdir():
-                    child.unlink()
-                path.rmdir()
-            elif path.is_file() and path != keep and (path.name in (EXE_NAME, EXE_NAME + ".part", "ffmpeg.deflate", "ffmpeg.deflate.part")
-                                                     or (path.name.startswith("ffmpeg-") and ".deflate" in path.name and current not in path.name)):
+            if path.is_dir() and not path.is_symlink():
+                shutil.rmtree(path, ignore_errors=True)
+            else:
                 path.unlink()
         except OSError:
             continue
@@ -172,7 +175,7 @@ def install(progress: Callable[[int, int], None], cancelled: Callable[[], bool] 
         # Con trỏ đổi SAU khi exe mới đã kiểm xong và nằm đúng chỗ; bản cũ (có thể đang chạy) không bị chạm tới
         io_utils.atomic_write_text(_folder / "installed.sha256", pin())
         io_utils.use_downloaded_ffmpeg(result)
-        _prune(result)
+        _prune()
         return result
 
 

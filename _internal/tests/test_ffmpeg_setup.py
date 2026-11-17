@@ -86,16 +86,13 @@ def test_the_pinned_build_is_a_month_end_build_that_is_not_deleted() -> None:
     assert recorded["checked_utc"] > f"{year}-{month:02d}-31", "danh sách thẻ phải đọc sau khi tháng đã hết"
 
 
-@pytest.mark.parametrize("stamp", [None, "old-export-pin", "current", "invalid-utf8"])
+@pytest.mark.parametrize("stamp", ["older-pin", "current"])
 def test_export_reports_own_stamp_and_updates_only_after_click(bare_machine, monkeypatch, stamp):
-    # "current": bản của đúng pin trong thư mục của nó; còn lại: ffmpeg.exe bố cục trước 0.4.175 với dấu cũ / hỏng / không có
-    exe = bare_machine / ffmpeg_setup.pin()[:16] / "ffmpeg.exe" if stamp == "current" else bare_machine / "ffmpeg.exe"
+    pointer = ffmpeg_setup.pin() if stamp == "current" else "0123456789abcdef" + "0" * 48
+    exe = bare_machine / pointer[:16] / "ffmpeg.exe"
     exe.parent.mkdir(parents=True)
     exe.write_bytes(b"MZ old ffmpeg")
-    if stamp == "invalid-utf8":
-        (bare_machine / "installed.sha256").write_bytes(b"\xff")
-    elif stamp is not None:
-        (bare_machine / "installed.sha256").write_text(ffmpeg_setup.pin() if stamp == "current" else stamp, encoding="utf-8")
+    (bare_machine / "installed.sha256").write_text(pointer, encoding="utf-8")
     calls = []
     monkeypatch.setattr(studio_setup, "download", _fake_download(calls))
     monkeypatch.setattr(ffmpeg_setup, "_state", {"downloading": False, "done": 0, "total": 0, "error": ""})
@@ -111,17 +108,21 @@ def test_export_reports_own_stamp_and_updates_only_after_click(bare_machine, mon
 
 
 def test_an_exe_already_downloaded_is_registered_at_startup(bare_machine: Path) -> None:
-    (bare_machine).mkdir(parents=True)
-    (bare_machine / "ffmpeg.exe").write_bytes(b"MZ")
+    exe = bare_machine / ffmpeg_setup.pin()[:16] / "ffmpeg.exe"
+    exe.parent.mkdir(parents=True)
+    exe.write_bytes(b"MZ")
+    (bare_machine / "installed.sha256").write_text(ffmpeg_setup.pin(), encoding="utf-8")
     ffmpeg_setup.configure(bare_machine)
+    assert io_utils.ffmpeg_executable() == str(exe)
     assert ffmpeg_setup.ready() and ffmpeg_setup.downloaded() and not ffmpeg_setup.external(), "của mô-đun, không phải ffmpeg có sẵn"
 
 
 def test_imageio_ffmpeg_still_wins_when_it_exists(bare_machine: Path, monkeypatch, tmp_path: Path) -> None:
     exe = tmp_path / "ffmpeg.exe"
     exe.write_bytes(b"MZ")
-    (bare_machine).mkdir(parents=True)
-    (bare_machine / "ffmpeg.exe").write_bytes(b"MZ")
+    (bare_machine / ffmpeg_setup.pin()[:16]).mkdir(parents=True)
+    (bare_machine / ffmpeg_setup.pin()[:16] / "ffmpeg.exe").write_bytes(b"MZ")
+    (bare_machine / "installed.sha256").write_text(ffmpeg_setup.pin(), encoding="utf-8")
     ffmpeg_setup.configure(bare_machine)
 
     class Fake:

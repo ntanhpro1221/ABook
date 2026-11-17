@@ -90,9 +90,10 @@ def _names(parts: list[dict[str, Any]]) -> dict[str, str]:
 
 def test_export_only_ffmpeg_stamp_controls_music_update_without_module_stamp(machine, tmp_path):
     folder = tmp_path / "tools" / "ffmpeg"
-    folder.mkdir(parents=True)
-    (folder / "ffmpeg.exe").write_bytes(b"MZ old")
-    (folder / "installed.sha256").write_text("old-export-pin", encoding="utf-8")
+    pointer = "0123456789abcdef" + "0" * 48  # bản Xuất đã tải ở một pin trước
+    (folder / pointer[:16]).mkdir(parents=True)
+    (folder / pointer[:16] / "ffmpeg.exe").write_bytes(b"MZ old")
+    (folder / "installed.sha256").write_text(pointer, encoding="utf-8")
     ffmpeg_setup.configure(folder)
     assert music_module._read_stamp() == {}
     assert _names(music_module.status()["parts"])["ffmpeg"] == "outdated"
