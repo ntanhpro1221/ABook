@@ -15246,10 +15246,10 @@
     "line": 64,
     "statement": "Api.call(\"GET\", \"/api/listen/books/\" + id, null, function(data, error) { if (!error && id === root.book.bookId) root.fullBook = data })",
     "occurrence": 1,
-    "source_sha256": "def15105d7a5c4778e320005a05562cff1707a8cb7425ac4ed2425d601cd8b2a",
+    "source_sha256": "5904634504ab3f75d421cf585dcf80cc6a57e5f17e0cf357e41285c1d76d0cac",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; ProgressBar, bookProgress, bookProgressLine, progress, progressLine, progressOf",
-    "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
+    "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Re-pinned for left174: the edit only restyles the volume rows (initials cover, medium title, heard bar); this statement and its guard are unchanged."
   },
   {
     "id": "7d25ff271ae75b3e8573",
@@ -15258,10 +15258,10 @@
     "line": 72,
     "statement": "Api.call(\"GET\", \"/api/listen/books/\" + bookId, null, function(data, error) {",
     "occurrence": 1,
-    "source_sha256": "def15105d7a5c4778e320005a05562cff1707a8cb7425ac4ed2425d601cd8b2a",
+    "source_sha256": "5904634504ab3f75d421cf585dcf80cc6a57e5f17e0cf357e41285c1d76d0cac",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; ProgressBar, bookProgress, bookProgressLine, progress, progressLine, progressOf",
-    "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
+    "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Re-pinned for left174: the edit only restyles the volume rows (initials cover, medium title, heard bar); this statement and its guard are unchanged."
   },
   {
     "id": "bbe3ef32dfbb09cf74a9",
@@ -15270,10 +15270,10 @@
     "line": 140,
     "statement": "Api.call(\"POST\", \"/api/listen/books/\" + id + \"/finished\", active ? {finished: finished, record: active.id} : {finished: finished}, function(data, error) {",
     "occurrence": 1,
-    "source_sha256": "def15105d7a5c4778e320005a05562cff1707a8cb7425ac4ed2425d601cd8b2a",
+    "source_sha256": "5904634504ab3f75d421cf585dcf80cc6a57e5f17e0cf357e41285c1d76d0cac",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; ProgressBar, bookProgress, bookProgressLine, progress, progressLine, progressOf",
-    "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
+    "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Re-pinned for left174: the edit only restyles the volume rows (initials cover, medium title, heard bar); this statement and its guard are unchanged."
   },
   {
     "id": "6fee1b77cd5db713d5b8",
@@ -15282,10 +15282,10 @@
     "line": 271,
     "statement": "Api.call(\"POST\", \"/api/listen/books/\" + id + \"/chapters/\" + chapterId + \"/done\", body, function(data, error) {",
     "occurrence": 1,
-    "source_sha256": "def15105d7a5c4778e320005a05562cff1707a8cb7425ac4ed2425d601cd8b2a",
+    "source_sha256": "5904634504ab3f75d421cf585dcf80cc6a57e5f17e0cf357e41285c1d76d0cac",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; ProgressBar, bookProgress, bookProgressLine, progress, progressLine, progressOf",
-    "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
+    "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Re-pinned for left174: the edit only restyles the volume rows (initials cover, medium title, heard bar); this statement and its guard are unchanged."
   },
   {
     "id": "5c92264f2dc698b8f35c",
