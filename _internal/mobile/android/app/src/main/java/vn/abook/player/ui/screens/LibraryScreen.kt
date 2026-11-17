@@ -332,9 +332,7 @@ private fun BookTile(
         val detail = when {
             !lead.textOnly && lead.chaptersAvailable == 0 -> vn.abook.player.ui.data.ProductionText.upcoming(lead)
             lead.producing -> vn.abook.player.ui.data.ProductionText.upcoming(lead)
-            lead.textOnly && lead.author.isBlank() -> S.s_chi_co_chu_bf879f2c
-            single != null && single.twin -> ListenLogic.progressText(lead)
-            else -> lead.author
+            else -> ListenLogic.progressText(lead, includeAuthor = false)
         }
         // Sách ở máy khác: dấu máy tính nhỏ đầu dòng phụ như web/Qt (không đè lên bìa); nơi để nằm trong tên đọc màn hình của dấu ấy.
         val remote = series?.hasRemote ?: (lead.remote != null)
@@ -355,6 +353,7 @@ private fun BookTile(
             }
         }
         name()
+        Reveal(lead.author.isNotEmpty()) { BasicText(lead.author, Modifier.fillMaxWidth().semantics { if (active()) testTag = "tile_author" }, style = Abook.type.caption, maxLines = 1, overflow = TextOverflow.Ellipsis) }
         line()
     }
 }

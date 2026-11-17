@@ -522,6 +522,7 @@ private fun BookHead(
             }
         }
         BasicText(main, style = if (compact) Abook.type.sectionTitle else Abook.type.screenTitle, modifier = Modifier.bookReveal(MotionMs.BOOK_TITLE_DELAY).testTag("book_title"))
+        vn.abook.player.ui.components.BookMetadataDetails(book)
         Spacer(Modifier.height(Dim.s8))
         ClusterLabel(BookPage.metaLine(book), style = Abook.type.bodySmall)
     }

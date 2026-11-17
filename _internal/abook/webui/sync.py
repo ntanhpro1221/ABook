@@ -580,6 +580,8 @@ def manifest(project_root: Path, book: str, listening: Listening,
         **({"music": music} if music else {}),
         **({"wordsVersion": words} if words else {}),
     }
+    from .. import book_metadata
+    result.update(book_metadata.present(view))
     volumes = book_volumes.project(project_root, chapters)
     result["volumes"] = volumes
     result["metaVersion"] = listen_view.metadata_version(result)  # tên / người đọc / liên kết bộ / tên chương: điện thoại đã tải đổi riêng phần này mà giữ audio
@@ -888,6 +890,8 @@ class SyncApp:
             shared_book = manifest(path, identifier, self.listening, self.music_track)
             entry["audioVersion"] = shared_book["audioVersion"]
             entry["metaVersion"] = shared_book["metaVersion"]
+            from .. import book_metadata
+            entry.update(book_metadata.present(shared_book))
             meta = covers.cover_meta(path)
             entry["cover"] = {"color": meta["color"], "version": meta["version"]} if meta else None
             if words := word_timing.stamp(path):  # điện thoại đã tải sách thấy chữ sáng theo giọng đọc là bản mới (cùng dấu với manifest)

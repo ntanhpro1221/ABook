@@ -127,6 +127,7 @@ ALLOWED: tuple[tuple[str, re.Pattern[str]], ...] = LISTEN_ROUTES + tuple((method
     # Đổi tên / tác giả sách: chỉ nhận chữ, không mang đường dẫn nào (cùng loại với tên chương ở trên).
     ("PUT", _BOOK + r"/title"),
     ("PUT", _BOOK + r"/author"),
+    ("PUT", _BOOK + r"/metadata"),
     # Sửa phần ĐỌC của sách chữ (ReadingSuggestions.tsx, WordReadings.tsx): "Đọc từ này là…" và bỏ / đọc lại một dòng ghi công - chỉ nhận chữ, chữ của sách
     # không đổi. Cùng loại với tên chương ở trên nên chỉ thiết bị được điều khiển sản xuất; chỉ nghe vẫn 403. Hai GET cùng trang nằm ở LISTEN_ROUTES.
     ("PUT", _BOOK + r"/readings"),

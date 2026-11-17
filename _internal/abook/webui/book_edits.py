@@ -51,6 +51,7 @@ from pathlib import Path
 from typing import Any, Callable, Iterable
 
 from .. import listener_overrides
+from .. import book_metadata
 from .. import names as renames
 from ..io_utils import atomic_write_bytes
 from ..readaloud import readings as book_readings
@@ -76,7 +77,7 @@ MAX_READINGS = 2000  # cách đọc riêng của một cuốn
 READING_WORD_MAX = NAME_MAX  # chữ hiện của một cách đọc (một từ)
 READING_SPOKEN_MAX = 200  # chữ đọc
 LEVEL_RANGE = (music_plan.LEVEL_MIN_DB, music_plan.LEVEL_MAX_DB)  # miền thanh trượt "Mức nhạc nền" (music_mix.json)
-_TOP_KEYS = {"format", "version", "title", "author", "cover", "characters", "chapters", "skip", "readings", "music", "wishes"}
+_TOP_KEYS = {"format", "version", "title", "cover", "characters", "chapters", "skip", "readings", "music", "wishes", *book_metadata.FIELDS}
 _COVER_KEYS = {"color", "width", "height", "version"}
 _MUSIC_KEYS = {"enabled", "levelDb", "silenced", "pins", "tracks", "playlist", "mine"}
 MAX_MINE = 100  # số bài tối đa của "Nhạc của tôi" mang theo sách (mỗi bài là một file trong gói)
@@ -130,7 +131,7 @@ def count_applied(edits: dict[str, Any]) -> int:
     nhạc, mỗi đoạn nhạc im lặng, mỗi đoạn nhạc đổi sang bài của người nghe, danh sách phát đã chọn. Không kể ý muốn chờ Studio (`wishes`) -
     chúng chưa áp vào đâu cả."""
     music = edits.get("music") or {}
-    return (("title" in edits) + ("author" in edits) + ("cover" in edits) + len(edits.get("characters") or {}) + len(edits.get("chapters") or {})
+    return (("title" in edits) + sum(key in edits for key in book_metadata.FIELDS) + ("cover" in edits) + len(edits.get("characters") or {}) + len(edits.get("chapters") or {})
             + len({line for lines in (edits.get("skip") or {}).values() for line in lines})  # một dòng bỏ ở trăm chương: một thay đổi
             + len(edits.get("readings") or {})
             + ("enabled" in music) + ("levelDb" in music) + len(music.get("silenced") or []) + len(music.get("pins") or {})
@@ -161,7 +162,7 @@ def delta(before: dict[str, Any], after: dict[str, Any], *, gone: bool = False) 
         return {key: value for key, value in ours.items() if differs(key, ours, theirs)}
 
     out = empty()
-    out.update({key: after[key] for key in ("title", "author", "cover") if key in after and differs(key, after, before)})
+    out.update({key: after[key] for key in ("title", *book_metadata.FIELDS, "cover") if key in after and differs(key, after, before)})
     for key in ("characters", "readings"):
         if found := part(after.get(key), before.get(key)):
             out[key] = found
@@ -241,11 +242,12 @@ def validate(raw: Any) -> dict[str, Any]:
         if not isinstance(title, str) or not title or not _is_clean(title, TITLE_MAX):
             raise EditsError("Tên sách trong phần sửa không hợp lệ.")
         out["title"] = title
-    if "author" in raw:
-        author = raw["author"]
-        if not isinstance(author, str) or not _is_clean(author, AUTHOR_MAX):  # trống được: sách không rõ tác giả
-            raise EditsError("Tác giả trong phần sửa không hợp lệ.")
-        out["author"] = author
+    try:
+        out.update(book_metadata.validate({key: raw[key] for key in book_metadata.FIELDS if key in raw}))
+        if "author" in raw and not _is_clean(raw["author"], AUTHOR_MAX):
+            raise ValueError("Invalid book author")
+    except ValueError as exc:
+        raise EditsError(str(exc)) from exc
     if "cover" in raw:
         out["cover"] = _validate_cover(raw["cover"])
     if "characters" in raw:
@@ -419,7 +421,7 @@ def dump(edits: dict[str, Any]) -> bytes:
 
 def _ordered(edits: dict[str, Any]) -> dict[str, Any]:
     out: dict[str, Any] = {"format": FORMAT, "version": VERSION}
-    for key in ("title", "author", "cover"):
+    for key in ("title", *book_metadata.FIELDS, "cover"):
         if key in edits:
             out[key] = edits[key]
     if edits.get("characters"):
@@ -502,7 +504,7 @@ def merge_clashes(local: dict[str, Any], incoming: dict[str, Any]) -> tuple[dict
     def clash(kind: str, key: str, kept: Any = None, lost: Any = None) -> None:
         clashes.append({"kind": kind, "key": key, "kept": kept, "lost": lost})
 
-    for key in ("title", "author", "cover"):
+    for key in ("title", *book_metadata.FIELDS, "cover"):
         if key in local:
             out[key] = copy.deepcopy(local[key])
             conflicts += key in incoming and incoming[key] != local[key]
@@ -628,11 +630,12 @@ def apply_manifest(book: dict[str, Any], edits: dict[str, Any]) -> dict[str, Any
             out["parts"] = [{**part, "title": continuation.continued_title(edits["title"], part["part"])}
                             if isinstance(part, dict) and isinstance(part.get("part"), int) else part
                             for part in book["parts"]]
-    if "author" in edits:
-        if edits["author"]:
-            out["author"] = edits["author"]
-        else:
-            out.pop("author", None)  # đã bỏ tên tác giả: sách không rõ tác giả
+    for key in book_metadata.FIELDS:
+        if key in edits:
+            if edits[key]:
+                out[key] = edits[key]
+            else:
+                out.pop(key, None)
     renamed, skip = edits.get("chapters") or {}, edits.get("skip") or {}
     if (renamed or skip) and isinstance(book.get("chapters"), list):
         # `skip` của chương: dòng người nghe bỏ khỏi phần đọc (màn đọc và đọc to - listen/textScript.ts `withoutLines`).
@@ -922,6 +925,22 @@ def set_author(folder: Path, author: str) -> str:
             edits["author"] = cleaned
         _write(folder, edits)
     return cleaned
+
+
+def set_metadata(folder: Path, changes: dict[str, Any]) -> dict[str, Any]:
+    changes = book_metadata.validate(changes)
+    if "author" in changes:
+        changes["author"] = clean_text(changes["author"], AUTHOR_MAX)
+    with _LOCK:
+        edits = load(folder)
+        base = _base(folder)
+        for key, value in changes.items():
+            if value == base.get(key, [] if key in ("altTitles", "genres") else {} if key == "source" else ""):
+                edits.pop(key, None)
+            else:
+                edits[key] = value
+        _write(folder, edits)
+    return changes
 
 
 def set_cover(folder: Path, raw: bytes) -> dict[str, Any]:
@@ -1269,7 +1288,7 @@ def subtract(folder: Path, sent: dict[str, Any], sent_cover: bytes | None) -> in
     with _LOCK:
         edits = load(folder)
         before = pinned_files(edits)
-        for key in ("title", "author", "cover"):
+        for key in ("title", *book_metadata.FIELDS, "cover"):
             if key not in sent or key not in edits or edits[key] != sent[key]:
                 continue
             if key == "cover" and isinstance(sent[key], dict):
@@ -1784,7 +1803,10 @@ def fold_edits(project: Path, edits: dict[str, Any], *, cover: bytes | None = No
     if "title" in edits:
         store.set_display_title(project, edits["title"])
         applied += 1
-    skipped += "author" in edits  # dự án Studio không có tác giả (chỉ sách nhập từ file mới có)
+    metadata = {key: edits[key] for key in book_metadata.FIELDS if key in edits}
+    if metadata:
+        book_metadata.save(project, metadata)
+        applied += len(metadata)
     if "cover" in edits:
         try:
             if edits["cover"] is None:

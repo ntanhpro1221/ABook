@@ -19,6 +19,7 @@ Modal {
     property var book: ({})
     property string titleDraft: ""
     property string authorDraft: ""
+    property var metadataDraft: ({})
     property string computer: ""                // Studio từ xa: tên máy tính đang giữ sách
     property bool canOpenStudio: false          // máy tính, cuốn có xưởng: nút "Mở tab Nhạc nền"
     property bool searching: false
@@ -52,6 +53,7 @@ Modal {
         book = data
         titleDraft = data.title || ""
         authorDraft = data.author || ""
+        metadataDraft = {illustrator: data.illustrator || "", altTitles: data.altTitles || [], genres: data.genres || [], summary: data.summary || "", source: data.source || {url: "", site: ""}}
         searching = false; confirmRevert = false
         renaming = false; savingAuthor = false; settingCover = false; removingCover = false; reverting = false
         show()
@@ -184,7 +186,7 @@ Modal {
                         width: parent.width
                         title: S.s_tac_gia_0ec4731b
                         hint: S.s_de_trong_neu_khong_ro_tac_gia_hien_o_thu_v_04875479
-                        shown: root.textBook && !root.workshop
+                        shown: true
                         Row {
                             width: parent.width
                             spacing: 8
@@ -218,6 +220,59 @@ Modal {
                     x: (sections.width + Theme.s32) * Math.min(1, root.wideT * 2)
                     y: sections.height * (1 - Math.max(0, root.wideT * 2 - 1))
                     width: parent.width - x
+                    EditBookSection {
+                        width: parent.width
+                        title: S.s_sua_thong_tin_17e4a8a6
+                        Column {
+                            width: parent.width
+                            spacing: Theme.s12
+                            Repeater {
+                                model: [
+                                    {key: "illustrator", label: S.s_bookmeta_illustrator},
+                                    {key: "altTitles", label: S.s_bookmeta_alt_titles},
+                                    {key: "genres", label: S.s_bookmeta_genres},
+                                    {key: "summary", label: S.s_tom_tat_b4bb3064}
+                                ]
+                                Column {
+                                    required property var modelData
+                                    width: parent.width
+                                    spacing: Theme.s8
+                                    Text { text: modelData.label; color: Theme.text; font.pixelSize: Theme.sizeBodySmall }
+                                    FormField {
+                                        width: parent.width
+                                        label: modelData.label
+                                        multiline: modelData.key !== "illustrator"
+                                        readonly property string draftText: Array.isArray(root.metadataDraft[modelData.key]) ? root.metadataDraft[modelData.key].join("\n") : root.metadataDraft[modelData.key] || ""
+                                        text: draftText
+                                        onTextChanged: {
+                                            if (text === draftText) return
+                                            const change = {}
+                                            change[modelData.key] = modelData.key === "altTitles" || modelData.key === "genres" ? text.split("\n") : text
+                                            root.metadataDraft = Object.assign({}, root.metadataDraft, change)
+                                        }
+                                    }
+                                }
+                            }
+                            FormField {
+                                width: parent.width
+                                label: S.s_nguon_c76d57b3
+                                text: (root.metadataDraft.source || {}).url || ""
+                                onTextChanged: if (text !== ((root.metadataDraft.source || {}).url || "")) root.metadataDraft = Object.assign({}, root.metadataDraft, {source: {url: text, site: (root.metadataDraft.source || {}).site || ""}})
+                            }
+                            FormField {
+                                width: parent.width
+                                label: S.s_bookmeta_source_site
+                                text: (root.metadataDraft.source || {}).site || ""
+                                onTextChanged: if (text !== ((root.metadataDraft.source || {}).site || "")) root.metadataDraft = Object.assign({}, root.metadataDraft, {source: {url: (root.metadataDraft.source || {}).url || "", site: text}})
+                            }
+                            Button {
+                                objectName: "editSaveMetadata"
+                                text: S.s_bookmeta_save
+                                busy: root.savingAuthor
+                                onActivated: root.call("savingAuthor", "PUT", "/metadata", root.metadataDraft, function() { root.done(S.s_bookmeta_saved) }, S.s_bookmeta_save_error)
+                            }
+                        }
+                    }
                     EditBookSection {
                         width: parent.width
                         title: S.s_volume_manage

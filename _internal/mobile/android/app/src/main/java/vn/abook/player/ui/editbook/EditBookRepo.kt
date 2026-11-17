@@ -87,7 +87,7 @@ class EditBookRepo(private val context: Context, private val library: LibraryRep
         val last = sync.optJSONObject("last")
         EditSnapshot(id, book.optString("title"), book.optString("author").takeUnless { it == "null" }.orEmpty(), chapters,
             LibraryRepo.coverOf(id), Playlists.isTextBook(book), Store.editDestination(id) != null,
-            holder, pending, SyncText.note(sync, holder), BookEdits.count(edits))
+            holder, pending, SyncText.note(sync, holder), BookEdits.count(edits), vn.abook.player.ui.data.BookMetadata.from(book))
     }
 
     override suspend fun save(id: String, diff: EditDiff): EditSnapshot = withContext(Dispatchers.IO) {
@@ -95,6 +95,7 @@ class EditBookRepo(private val context: Context, private val library: LibraryRep
         val dir = Store.bookDir(id)
         diff.title?.let { BookEdits.setTitle(dir, it) }
         diff.author?.let { BookEdits.setAuthor(dir, it) }
+        diff.metadata?.let { BookEdits.setMetadata(dir, it.json()) }
         for (chapter in diff.chapters) BookEdits.setChapterTitle(dir, chapter.id, chapter.title, chapter.subtitle)
         changed(id)
     }

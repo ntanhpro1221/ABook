@@ -99,6 +99,8 @@ def edited_manifest(path: Path) -> dict[str, Any]:
     if cached and cached[0] == stamp:
         return cached[1]
     result = book_edits.apply_manifest(base, book_edits.load(path))
+    from .listen_view import metadata_version
+    result = {**result, "metaVersion": metadata_version(result)}
     _EDITED[str(path)] = (stamp, result)
     return result
 
@@ -462,6 +464,8 @@ def listen(path: Path, book_id: str, state: dict[str, Any], *, with_chapters: bo
         # Cả bộ trong một file (bookfile.pack_series): các phần theo thứ tự; sách một phần thì rỗng.
         "parts": _parts(book),
     }
+    from .. import book_metadata
+    result.update(book_metadata.present(book))
     result["volumes"] = book_volumes.group(items, book_volumes.volumes_of(book))
     for volume in result["volumes"]:
         if volume.get("cover"):

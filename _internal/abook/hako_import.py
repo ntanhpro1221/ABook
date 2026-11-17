@@ -112,8 +112,11 @@ def load(url: str, get: Callable[[str], bytes] | None = None) -> ImportedBook:
     get = get or fetch
     if urlsplit(url).hostname not in HOSTS:
         raise ImportFailed("Chỉ nhận đường dẫn sách Hako")
-    title, volumes, cover = parse(get(url).decode("utf-8"), url)
+    page = get(url).decode("utf-8")
+    title, volumes, cover = parse(page, url)
     result = ImportedBook(title)
+    for key, value in metadata(page, url).items():
+        setattr(result, key, value)
     if cover:
         result.cover_bytes, result.cover_type = get(cover), "image/jpeg"
     for number, definition in enumerate(volumes, 1):
@@ -139,3 +142,28 @@ def load(url: str, get: Callable[[str], bytes] | None = None) -> ImportedBook:
             text = "\n\n".join(_page(page[start:end].encode("utf-8")).lines)
             result.chapters.append(Chapter(name, text, volume=number))
     return result
+
+
+def metadata(page: str, url: str) -> dict:
+    from .book_metadata import present, description
+    root = Tree(page).root
+    result = {"source": {"url": url, "site": "Hako"}}
+    labels = {"tác giả": "author", "họa sĩ": "illustrator", "hoạ sĩ": "illustrator", "tên khác": "altTitles"}
+    for node in root.walk():
+        if node.has("info-item"):
+            label, sep, value = node.text().partition(":")
+            key = labels.get(label.strip().casefold())
+            if sep and key:
+                result[key] = [part.strip() for part in re.split(r"[;|]", value) if part.strip()] if key == "altTitles" else value.strip()
+        if node.has("series-gernes") or node.has("series-genres"):
+            result["genres"] = [item.text() for item in node.walk() if item.tag == "a" and item.text()]
+        if node.has("summary-content"):
+            def render(item):
+                if isinstance(item, str):
+                    import html
+                    return html.escape(item)
+                return f"<{item.tag}>" + "".join(render(c) for c in item.children) + f"</{item.tag}>"
+            result["summary"] = description(render(node))
+        if node.has("alternative-name") or node.has("series-alt"):
+            result.setdefault("altTitles", [node.text()])
+    return present(result)

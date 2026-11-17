@@ -121,7 +121,7 @@ object StudioPaths {
     )
 
     /** Các đường GHI bằng PUT (đúng tên `remote_studio.ALLOWED`): nhạc nền, "Chờ tôi duyệt", bỏ dòng ghi công khỏi phần đọc. */
-    val PUTS = setOf("music", "precast", "skip", "cover", "volumes")
+    val PUTS = setOf("music", "precast", "skip", "cover", "volumes", "metadata")
 
     /** Các đường XOÁ (đúng tên `remote_studio.ALLOWED`): chỉ ảnh bìa. */
     val DELETES = setOf("cover")

@@ -11,6 +11,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertTextEquals
 import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.longClick
 import androidx.compose.ui.test.onAllNodesWithTag
@@ -88,6 +89,13 @@ class LibraryScreenTest {
         rule.onNodeWithText("Hello, Hello and Hello").assertExists()
         val sub = rule.onNodeWithTag("tile_sub", useUnmergedTree = true).fetchSemanticsNode().boundsInRoot
         assertTrue("tên ở trên dòng phụ như ô có ảnh", name.bottom <= sub.top + 0.5f)
+    }
+
+    @Test fun authorHasItsOwnEllipsizedLine() {
+        show(listOf(ListenBook("paper-lake", "Hồ giấy", "Người Viết Có Một Tên Hiển Thị Rất Dài", textOnly = true, chaptersTotal = 1)))
+        rule.onNodeWithTag("tile_author", useUnmergedTree = true).assertIsDisplayed()
+        rule.onNodeWithTag("tile_sub", useUnmergedTree = true).assertTextEquals("1 chương")
+        rule.onRoot().captureRoboImage("src/test/snapshots/bookmeta_library.png")
     }
 
     private fun assertGridTextSlots() {

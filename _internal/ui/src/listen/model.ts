@@ -100,6 +100,11 @@ export interface ListenBook {
   title: string;
   /** Tác giả ghi trong file sách (EPUB / DOCX / PDF); trống khi không có. */
   author?: string;
+  illustrator?: string;
+  altTitles?: string[];
+  genres?: string[];
+  summary?: string;
+  source?: { url: string; site: string };
   narrator: string;
   duration: number;
   chaptersTotal: number;

@@ -276,6 +276,8 @@ def repack(folder: Path, out: Path, *, producer: str = "ABook") -> Path:
     for view in project_views.available(folder):
         files[project_views.entry(view)] = folder / project_views.entry(view)
     title = str(book_edits.apply_manifest(book, edits).get("title") or folder.name)
+    from .. import book_metadata
+    book = book_metadata.overlay(book, edits)
     return _seal(Path(out), files, book, producer=producer, title=title, workshop=workshop, project_root=project_root,
                  sources=sources, missing=missing, version=bookfile.layer_version(book, files, edits), known=known)
 

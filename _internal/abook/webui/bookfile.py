@@ -413,6 +413,8 @@ def pack_series(parts: Sequence[tuple[int, Path] | Path], out: Path, *, producer
         },
     }
     music = _merge_music(musics)
+    from .. import book_metadata
+    merged.update(book_metadata.present(first))
     if music is not None:
         merged["music"] = music
     sealed = seal(merged, files, Path(out), producer=producer, version=3, progress=progress)
@@ -523,6 +525,8 @@ def seal(book: dict[str, Any], files: dict[str, Path | bytes], out: Path, *, pro
     from .. import book_volumes
     if "chapters" not in book:
         book_volumes.flatten(book)
+    from .. import book_metadata
+    book = book_metadata.overlay(book, edits or {})
     version = FORMAT_VERSION
     book["package"] = {
         "format": FORMAT,
@@ -961,6 +965,11 @@ def check_shape(book: dict[str, Any]) -> None:
                 raise BookFileError(f"{UNREADABLE} ({where}: «{key}» sai kiểu).")
 
     check(book, _BOOK_FIELDS, "book.json")
+    from .. import book_metadata
+    try:
+        book_metadata.validate({key: book[key] for key in book_metadata.FIELDS if key in book})
+    except ValueError as exc:
+        raise BookFileError(f"{UNREADABLE} (book metadata).") from exc
     for chapter in book.get("chapters") or []:
         check(chapter, _CHAPTER_FIELDS, "một chương")
     for part in book.get("parts") or []:

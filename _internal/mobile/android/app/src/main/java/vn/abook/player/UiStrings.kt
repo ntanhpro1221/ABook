@@ -2,6 +2,12 @@
 package vn.abook.player
 
 internal object S {
+    const val s_bookmeta_illustrator = "Hoạ sĩ"
+    const val s_bookmeta_alt_titles = "Tên khác"
+    const val s_bookmeta_genres = "Thể loại"
+    const val s_bookmeta_source_site = "Tên nguồn"
+    const val s_bookmeta_save = "Lưu thông tin"
+    const val s_bookmeta_save_error = "Chưa lưu được thông tin"
     const val s_device_engine_google = "Google"
     const val s_device_engine_samsung = "Samsung"
     const val s_device_engine_default = "Máy"
@@ -519,7 +525,6 @@ internal object S {
     fun s_chi_0_chuong_doi_9bd4c5f8(p0: Any?): String = "Chỉ " + p0.toString() + " chương đổi"
     const val s_chi_cau_lech_nhieu_b3763bc7 = "Chỉ câu lệch nhiều"
     const val s_chi_chon_ban_khac_khi_muon_thu_tren_cuon_n_d2d4143b = "Chỉ chọn bản khác khi muốn thử trên cuốn này."
-    const val s_chi_co_chu_bf879f2c = "Chỉ có chữ"
     const val s_chi_co_chu_nghe_bang_giong_doc_edf36d64 = "Chỉ có chữ · nghe bằng giọng đọc"
     const val s_chi_co_phan_nghe_va_thay_doi_cua_ban_studi_09cd637e = "Chỉ có phần nghe và thay đổi của bạn. Studio dựng lại được dự án từ file này."
     const val s_chi_doc_duoc_thu_tu_c_087035f9 = "chỉ đọc được thứ tự C"
@@ -701,7 +706,6 @@ internal object S {
     const val s_chua_doi_duoc_giong_nhan_vat_nay_0b88253d = "Chưa đổi được giọng nhân vật này"
     const val s_chua_doi_duoc_nguoi_noi_cau_nay_82bcc30b = "Chưa đổi được người nói câu này"
     const val s_chua_doi_duoc_nhac_nen_b5d19c42 = "Chưa đổi được nhạc nền"
-    const val s_chua_doi_duoc_tac_gia_3e777e8e = "Chưa đổi được tác giả."
     const val s_chua_doi_duoc_ten_ad5b4df1 = "Chưa đổi được tên"
     const val s_chua_doi_duoc_ten_chuong_01cae915 = "Chưa đổi được tên chương."
     const val s_chua_doi_duoc_ten_chuong_1ff36fe9 = "Chưa đổi được tên chương"
@@ -2739,6 +2743,7 @@ internal object S {
     fun s_toi_qua_0_dbb7ff0b(p0: Any?): String = "tối qua " + p0.toString()
     const val s_toi_qua_920edeaa = "Tối qua"
     const val s_tokenizer_json_khong_phai_bytelevel_bpe_nf_008360a0 = "tokenizer.json không phải ByteLevel-BPE + NFC như VieNeu 3.8.1"
+    const val s_tom_tat_b4bb3064 = "Tóm tắt"
     const val s_tra_cho_ket_noi_qua_so_da_giu_a86b0a3c = "Trả chỗ kết nối quá số đã giữ"
     const val s_tra_loi_qua_lon_1c99a5e8 = "trả lời quá lớn"
     const val s_trang_ban_quyen_6da8bd2c = "Trang bản quyền"

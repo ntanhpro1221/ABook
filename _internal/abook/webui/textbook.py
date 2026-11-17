@@ -54,6 +54,7 @@ def book_json(book: importers.ImportedBook, texts: dict[str, bytes], cover: dict
     })
     from ..book_volumes import group
     result["volumes"] = group(chapters, book.volume_metadata())
+    result.update(book.metadata())
     return result
 
 

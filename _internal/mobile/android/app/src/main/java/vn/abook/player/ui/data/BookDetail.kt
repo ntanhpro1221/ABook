@@ -155,7 +155,6 @@ object BookPage {
     /** Dòng dưới tên sách: tác giả · giọng · số chương · thời lượng (thiếu phần nào thì bỏ phần ấy). */
     fun metaLine(book: ListenBook): String {
         val parts = ArrayList<String>(4)
-        if (book.author.isNotBlank()) parts += book.author.trim()
         if (book.narrator.isNotBlank()) parts += S.s_giong_0_c554bb1b(book.narrator.trim())
         when {
             book.textOnly -> parts += S.s_0_chuong_04093412(book.chaptersTotal)

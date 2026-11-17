@@ -37,6 +37,25 @@ the full-name, no-elide and row-growth assertions remain in place.
 The related device suite passed 26 checks and the listening-profile suite passed 19,
 with no failures or skips. RAM was checked before each native suite.
 
+## 16-11-2026 — descriptive book metadata
+
+Optional author, illustrator, alternate titles, genres, complete paragraph-preserving summary and source now travel from
+EPUB/TXT/Markdown/Hako imports into projects and listening packages. Studio and players can edit the descriptive fields;
+export writes them into book.json without replacing audio. React, Compose and Qt show author shelf lines and animated
+three-line summary previews, using shared labels, icons and corner tokens.
+
+Focused functional Python, Vitest, Android unit/Roborazzi Verify, TypeScript and Qt offscreen checks were run manually.
+Final focused counts: Python 490/0, Vitest 29/0, Android 92/0 and Qt 8/0 (passed/failed). Library regressions check
+that the dedicated author line does not repeat in the status, including text books and enlarged text slots.
+The Qt runner reuses integ174's binary after verifying all 103 handwritten C++ files are identical, and loads this
+worktree's QML imports and tests. New sample descriptions and pictures contain original fixture text.
+
+Source-rule L4/L7/L9 failures reproduce on the untouched integ174 worktree; metadata adds no remaining hard-visibility
+sites. Shared UI preparation passes. Actual design lint measured seven Android/Qt images with their UI trees and reports
+screen-control and sparse/sample-layout findings; it is not reported as passing. The web screenshot step is blocked by
+the unavailable Astera browser CLI. Detailed counts, commands, screenshot paths and private package SHA comparisons
+are recorded locally in CX/bookmeta/result.md.
+
 ## 15-11-2026 — device voice names
 
 Android device voices use the configured engine name and the Voice network flag. Colliding labels get stable numbers; offline voices precede online voices and higher reported quality comes first within each group. No gender or accent is inferred from Android identifiers. Windows preserves the supplied vendor and proper name for both Qt and web. The shared device-group description allows engines with network voices. Voice rows keep individual preview actions; the Android selection status sits below the name when a preview button is present.

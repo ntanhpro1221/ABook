@@ -48,6 +48,12 @@ A `.abook` never contains `project/`, `sources/` or `views/` (the producer's wor
 
 ## Book, volumes and chapters
 
+Optional descriptive fields on `book.json`: `author` and `illustrator` are strings; `altTitles` and `genres` are arrays of strings;
+`summary` is the complete source description, with paragraphs separated by `\n\n`; `source` is `{ "url": "…", "site": "…" }`.
+Missing or empty fields have no visible label. Descriptions are never shortened or rewritten in storage. These fields belong
+to `metaVersion`, independently of `version` and `audioVersion`. Updating them never changes audio or cast entries.
+Listener edits carry the same optional fields, including empty values to clear a field, and fold back into Studio metadata.
+
 Every `book.json` stores one authoritative `volumes` tree, including a book with one volume. There is no top-level
 `chapters` array in the archive. Readers build a flat playback queue by concatenating the volume arrays in their stored
 order. The one-volume shortcut is presentation only: its chapters appear directly, without an extra navigation step.
@@ -131,7 +137,9 @@ rewritten by a listener's app. What a listener changes lives next to it in `edit
 |---|---|
 | `format`, `version` | `"abook-edits"`, `1` |
 | `title` | book title shown instead of the one in `book.json` |
-| `author` | author shown instead of the one in `book.json`; `""` = the listener cleared it (no author); absent = the book's author. Clean text, at most 160 code points |
+| `author`, `illustrator`, `summary` | descriptive strings shown instead of the corresponding `book.json` fields; `""` clears a field. Summary text keeps its complete paragraphs |
+| `altTitles`, `genres` | arrays of descriptive strings; an empty array clears the field |
+| `source` | source object with string `url` and `site` fields |
 | `cover` | absent: the book's cover; `{color, width, height, version}` and `edits/cover.jpg`: the listener's cover |
 | `characters` | `{canonical name: display name}` |
 | `chapters` | `{chapter id: {title?, subtitle?}}` |

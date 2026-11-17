@@ -1466,13 +1466,18 @@ class App:
         return self.summary(path)
 
     def set_author(self, value: str, author: str) -> dict[str, Any]:
-        """Đặt lại tác giả của một cuốn nhập từ file (lớp sửa của người nghe, book_edits); tên trống là "không rõ tác giả". Dự án Studio
-        không có tác giả để sửa."""
+        """Update the author independently of story text and audio."""
+        return self.set_metadata(value, {"author": book_edits.clean_text(author, book_edits.AUTHOR_MAX)})
+
+    def set_metadata(self, value: str, changes: dict[str, Any]) -> dict[str, Any]:
+        from .. import book_metadata
         self._mutating()
         path = self._editable(value)
-        if store.is_project(path):
-            raise ApiError(HTTPStatus.BAD_REQUEST, "Sách làm trong Studio chưa có mục tác giả")
-        return {"author": book_edits.set_author(path, author)}
+        try:
+            changes = book_metadata.validate(changes)
+            return (book_metadata.save(path, changes) if store.is_project(path) else book_edits.set_metadata(path, changes))
+        except ValueError as exc:
+            raise ApiError(HTTPStatus.BAD_REQUEST, str(exc)) from exc
 
     def delete(self, value: str, *, undo: bool = False) -> dict[str, Any]:
         """Xoá một dự án: chuyển CẢ thư mục dự án vào Thùng rác (khôi phục được). File truyện gốc người dùng chọn lúc tạo
@@ -4924,6 +4929,9 @@ class Handler(BaseHTTPRequestHandler):
     def put_author(self, _query: dict[str, list[str]], value: str) -> None:
         self._send_json(HTTPStatus.OK, self.app.set_author(value, str(self._body().get("author") or "")))
 
+    def put_metadata(self, _query: dict[str, list[str]], value: str) -> None:
+        self._send_json(HTTPStatus.OK, self.app.set_metadata(value, self._body()))
+
     def put_chapter_title(self, _query: dict[str, list[str]], value: str, chapter: str) -> None:
         # Đổi tên một chương (trang nghe, điện thoại): `title` (nhãn, "Chương 12") và/hay `subtitle` (tên phụ, "" là bỏ);
         # `revert` hay cả hai trống là trở về tên gốc. Dự án: chapter_titles.json cạnh sổ; cuốn nhập từ file: lớp sửa.
@@ -7473,6 +7481,7 @@ ROUTES: list[Route] = [
     # Đổi tên / tác giả chỉ nhận chữ: Studio từ xa (remote_studio.ALLOWED) có cả hai.
     ("PUT", re.compile(BOOK + r"/title"), Handler.put_title),
     ("PUT", re.compile(BOOK + r"/author"), Handler.put_author),
+    ("PUT", re.compile(BOOK + r"/metadata"), Handler.put_metadata),
     ("PUT", re.compile(BOOK + r"/chapters/(\d+)/title"), Handler.put_chapter_title),
     ("GET", re.compile(BOOK + r"/suggestions"), Handler.get_suggestions),
     ("PUT", re.compile(BOOK + r"/skip"), Handler.put_skip_line),

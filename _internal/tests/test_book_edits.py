@@ -275,10 +275,12 @@ def test_the_listener_sets_clears_or_restores_the_author_and_every_view_follows(
     assert not (folder / book_edits.EDITS_FILE).exists() and app.listen_book(identifier)["author"] == "Người làm sách"
 
 
-def test_a_project_has_no_author_to_edit_and_the_producer_skips_one_that_arrives(tmp_path: Path) -> None:
+def test_a_project_accepts_the_author_from_the_listener(tmp_path: Path) -> None:
     project = make_project(tmp_path / "du_an")
     report = book_edits.fold_edits(project, book_edits.validate({**shared.HEAD, "author": "Ai Đó"}))
-    assert report["applied"] == 0 and report["skipped"] == 1
+    assert report["applied"] == 1 and report["skipped"] == 0
+    from abook import book_metadata
+    assert book_metadata.load(project)["author"] == "Ai Đó"
 
 
 def test_removing_the_cover_draws_one_from_the_title_and_the_book_layer_keeps_its_own(imported) -> None:

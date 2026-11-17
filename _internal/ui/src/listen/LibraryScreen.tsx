@@ -102,13 +102,10 @@ export function remoteUnfinishedLine(book: ListenBook): string {
   return S.s_0_1_con_dang_lam_chuong_moi_hien_o_day_khi_9adfb0f7(name.charAt(0).toUpperCase(), name.slice(1));
 }
 
-function progressText(book: ListenBook, speaks: boolean): string {
-  // Sách mới nhập từ EPUB / DOCX / PDF / TXT: có chữ, máy có giọng thì giọng máy đọc (docs/LISTEN_ANYTHING.md mục 1) - cùng lời với trang
-  // sách (labels.textBookLine), không ghi "Chỉ có chữ" ngay dưới nút "Nghe ngay".
-  // Dòng phụ là NGƯỜI VIẾT sách (tìm sách theo tác giả được, thẻ cũng phải nói). Không có tác giả thì chỉ số chương: tên giọng không phải thông tin về cuốn sách
-  // (cuốn nào cũng cùng một giọng), và "Hoài My (Edge)" còn là chuyện kỹ thuật (soát UX a10, a15). Máy chưa có giọng đọc thì nói "Chỉ có chữ".
+function progressText(book: ListenBook, _speaks: boolean, includeAuthor = true): string {
+  // Cards have a dedicated author line. Other compact statuses may include it.
   if (book.stage === "text") {
-    const lead = book.author?.trim() || (speaks ? "" : S.s_chi_co_chu_bf879f2c);
+    const lead = includeAuthor ? book.author?.trim() : "";
     return S.s_0_1_chuong_2ba5a353(lead ? lead + " · " : "", book.chaptersTotal);
   }
   const chapters = S.s_0_1_chuong_8d58e1df(book.chaptersAvailable, book.chaptersTotal);
@@ -241,11 +238,12 @@ const BookTile = memo(function BookTile({ book, badge, twin, current, playingHer
         {/* Tên 2 dòng dành sẵn, dòng phụ 1 dòng cắt "…": mọi ô một hàng cao bằng nhau (DESIGN.md §6, soát 10-11 việc 4, như điện thoại và Qt).
             Bìa vẽ hay ảnh đều có tên dưới bìa (chủ sách 15-11: hàng ô phải đồng nhất). */}
         <TileName className={cn(current && "text-accent-text")}>{displayTitle(book.title)}</TileName>
+        {book.author && <p className="truncate text-xs text-fg-2">{book.author}</p>}
         {/* Cuốn ở máy khác: dấu máy tính đầu dòng trạng thái, không đè lên bìa - nhãn góc trên từng che tên sách của bìa vẽ (audit140 V8).
             Hai cuốn cùng tên: nhãn "Dự án" / "Đã nhập" và ngày vào thư viện nối vào cùng dòng để biết cuốn nào là cuốn nào. */}
         <div data-tile-sub="" className="mt-1 flex h-[1rem] items-center gap-1 text-xs leading-4 text-fg-2">
           {book.remote && <Laptop role="img" aria-label={typeof book.remote === "object" && book.remote.downloaded ? S.s_0_da_tai_ve_may_nay_a4649b44(remotePlace(book)) : remotePlace(book)} className="size-3 shrink-0" />}
-          <TickingValue className="min-w-0 truncate">{[progressText(book, speaks), ...(twin ? [twinKind(book), book.addedAt ? S.s_them_0_07ca4c38(formatWhen(book.addedAt)) : ""] : [])].filter(Boolean).join(" · ")}</TickingValue>
+          <TickingValue className="min-w-0 truncate">{[progressText(book, speaks, false), ...(twin ? [twinKind(book), book.addedAt ? S.s_them_0_07ca4c38(formatWhen(book.addedAt)) : ""] : [])].filter(Boolean).join(" · ")}</TickingValue>
         </div>
       </button>
       {extras.actions?.(book)}

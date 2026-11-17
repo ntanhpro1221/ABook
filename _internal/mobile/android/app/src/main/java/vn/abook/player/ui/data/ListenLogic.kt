@@ -244,9 +244,9 @@ object ListenLogic {
     // ---- dòng trạng thái ---------------------------------------------------------------------------------
 
     /** Dòng trạng thái của một cuốn (androidSource-side `progressText`), không kèm dấu nguồn. */
-    fun progressText(book: ListenBook): String {
+    fun progressText(book: ListenBook, includeAuthor: Boolean = true): String {
         if (book.textOnly) {
-            val lead = book.author.trim()
+            val lead = if (includeAuthor) book.author.trim() else ""
             return (if (lead.isNotEmpty()) "$lead · " else "") + S.s_0_chuong_04093412(book.chaptersTotal)
         }
         val chapters = S.s_0_1_chuong_8d58e1df(book.chaptersAvailable, book.chaptersTotal)

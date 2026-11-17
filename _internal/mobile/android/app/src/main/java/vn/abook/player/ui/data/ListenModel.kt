@@ -110,6 +110,7 @@ class ListenBook(
     val pauseReason: String? = null,
     val etaPhase: String? = null,
     val etaSeconds: Double? = null,
+    val metadata: BookMetadata = BookMetadata(),
 ) : SeriesItem {
     override val isText: Boolean get() = textOnly
 
@@ -121,7 +122,7 @@ class ListenBook(
 
     /** Chỉ lưu trong bộ nhớ app: so hai cuốn bằng nội dung hiển thị (mã + mốc cập nhật + tiến độ). */
     override fun equals(other: Any?): Boolean = other is ListenBook && other.id == id && other.title == title && other.author == author &&
-        other.updatedAt == updatedAt && other.progress == progress && other.cover == cover && other.state.last == state.last &&
+        other.metadata == metadata && other.updatedAt == updatedAt && other.progress == progress && other.cover == cover && other.state.last == state.last &&
         other.resume == resume && other.remote == remote && other.chaptersAvailable == chaptersAvailable && other.series == series &&
         other.producing == producing && other.paused == paused && other.pauseReason == pauseReason && other.etaSeconds == etaSeconds &&
         other.etaPhase == etaPhase && other.complete == complete && other.textOnly == textOnly && other.chaptersTotal == chaptersTotal

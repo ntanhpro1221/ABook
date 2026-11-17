@@ -40,6 +40,7 @@ object TextBook {
         }
         val result = JSONObject().put("format", FORMAT).put("title", cleanTitle(book.title, S.s_sach_0c2b3e9b))
         book.author?.takeIf { it.isNotEmpty() }?.let { result.put("author", it) }
+        for (key in book.metadata.keys()) result.put(key, book.metadata.get(key))
         book.language?.takeIf { it.isNotEmpty() }?.let { result.put("language", it) }
         val digest = sha256(texts.values.joinToString("") { sha256(it) }.toByteArray(Charsets.UTF_8))
         result.put("narrator", "").put("duration", 0).put("chaptersTotal", chapters.length()).put("chaptersAvailable", 0).put("complete", false)

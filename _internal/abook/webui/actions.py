@@ -780,6 +780,9 @@ def create_book(library_root: Path, paths: list[str], title: str, profile: str, 
         if teller_mode:
             teller_voice.set_mode(paths_created.root, "teller")
     from .. import book_volumes, importers
+    from .. import book_metadata
+    if files and not (paths_created.root / book_metadata.FILE).exists():
+        book_metadata.save(paths_created.root, book_metadata.from_folder(files[0].parent))
     # Volume boundaries come from the import sidecar next to each chosen chapter file. The project keeps copies, so pair the
     # chosen files with the stored chapters in the manifest's own order (text_processing.build_chapter_manifest).
     with db.connect() as connection:
