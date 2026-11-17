@@ -179,7 +179,7 @@ Nhãn ngắn (<= 6 chữ). **Chỉ Qt**: không có ở web cùng màn; `*` = we
 
 ### Thanh phát
 
-- chỉ Qt (11): Không có mạng - (`qt/PlayerAlert.qml:10`); Giọng {} đang không dùng được.* (`qt/PlayerAlert.qml:25`); Cửa sổ mini (`qt/PlayerBar.qml:128`); Chỉnh* (`qt/PlayerBar.qml:158`); Âm thanh* (`qt/PlayerBar.qml:158`); Hẹn giờ* (`qt/PlayerBar.qml:159`); Giọng đọc* (`qt/PlayerBar.qml:162`); Hẹn lại {} phút* (`qt/PlayerFade.qml:16`); Nghe bằng giọng đọc. (`qt/PlayerLabels.js:18`); Thêm giọng* (`qt/PlayerVoicePopover.qml:48`); Tua nhạc (`qt/SeekBar.qml:29`)
+- chỉ Qt (11): Không có mạng - (`qt/PlayerAlert.qml:10`); Giọng {} đang không dùng được.* (`qt/PlayerAlert.qml:25`); Cửa sổ mini (`qt/PlayerBar.qml:128`); Chỉnh* (`qt/PlayerBar.qml:158`); Âm thanh* (`qt/PlayerBar.qml:158`); Hẹn giờ* (`qt/PlayerBar.qml:159`); Giọng đọc* (`qt/PlayerBar.qml:162`); Hẹn lại {} phút* (`qt/PlayerFade.qml:16`); Nghe bằng giọng đọc. (`qt/PlayerLabels.js:18`); Thêm giọng* (`qt/PlayerVoicePopover.qml:49`); Tua nhạc (`qt/SeekBar.qml:29`)
 - chỉ web (8): Shift+← (`285`); Sắp tắt · (`1268`); Chưa nghe · {} chương (`69`); Nghe tiếp · {} (`88`); Shift+→ (`106`); Chưa có audio (`116`); Chạm (`127`); Nghe bằng giọng đọc.{} (`149`)
 
 ### Đang nghe

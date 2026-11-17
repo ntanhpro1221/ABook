@@ -17286,7 +17286,7 @@
     "line": 28,
     "statement": "Api.quiet(\"POST\", \"/api/readaloud/clip\", {voice: id, text: VoiceLogic.SAMPLE_TEXT}, function(data, error) {",
     "occurrence": 1,
-    "source_sha256": "d92235376adea73160879f86015214702886e807558aaece64824da1865eeb14",
+    "source_sha256": "cd62142b0ee18fd486c74608206f96c07548ee6d59c594fec0e4c62ebaf6d8c1",
     "disposition": "pending",
     "guard": "VoiceSample turn token drops late replies; loading/playing/failedVoice state shown on each VoiceRow; stopSample on popover close and destruction",
     "reason": "Moved verbatim from SettingsVoice.qml so Settings and the player voice popover share one preview owner. Each press starts a new turn; stale replies are ignored and failures are shown on the row."

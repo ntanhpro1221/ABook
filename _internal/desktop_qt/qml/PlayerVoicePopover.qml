@@ -14,6 +14,7 @@ Popover {
         const count = choices.count
         if (count) choices.itemAt((index + count) % count).radio.forceActiveFocus(Qt.TabFocusReason)
     }
+    // Closing stops only this popover's own sample (VoiceSample.stopSample): a sample playing in Settings keeps playing.
     onOpenChanged: { if (open) Api.loadVoiceName(); else { resumeAfter = false; consent.dismiss(); samples.stopSample() } }
     Listen { target: Player; function onLoadedChanged() { if (!Player.loaded) root.close() } }
     Column {
