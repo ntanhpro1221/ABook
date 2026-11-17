@@ -9,6 +9,19 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [0.4.173] - 2026-11-15
 
+### Sửa lỗi (soát 0.4.173)
+
+- Studio: chia sách thành nhiều quyển từ nhiều thư mục có tên file trùng nhau (Tập 1/001.txt, Tập 2/001.txt…) giữ đúng thứ tự đã chọn, mỗi quyển trọn chương của mình; thứ tự mơ hồ (file trùng, thư mục, file không còn) bị từ chối trước khi tạo gì. Nhập nhiều EPUB một lần cũng giữ đúng thứ tự.
+- Tên quyển dài quá 240 ký tự hay danh sách tên quyển sai bị từ chối trước khi tạo sách; tạo sách, chia quyển và dựng xưởng hỏng giữa chừng không còn để lại sách hay dự án dở.
+- Sách mở từ file .abook sắp xếp lại quyển được; máy không bao giờ báo đã lưu mà quyển vẫn như cũ.
+- Ảnh nhân vật tải lên theo tên hiện hay tên gốc đều được lưu và hiện đúng; thư mục sách có `#`, `%` hay dấu cách không còn làm hỏng danh sách nhân vật.
+- Bìa quyển hiện trên máy ghép từ xa.
+- Hẹn giờ ngủ trên Android nhớ theo từng sách như máy tính và web: đổi sách rồi quay lại không còn tắt hẹn giờ hay khoá lịch đêm. Dòng "Hẹn giờ đã tắt tiếng lúc…" hiện trên cả ba nền sau khi tự dừng; nút "Bật lại" chỉ khi đã tắt hẳn.
+- Tắt "Thao tác hẹn lại": thao tác lúc tiếng đang nhỏ dần vẫn hẹn lại trên máy tính và web, như lắc máy trên điện thoại. Nút "Nghe tiếp" của lịch đêm trên web phát tiếp khi đang tạm dừng.
+- Sửa câu trong trình phát: Android và máy tính có hàng "Sửa cách đọc một từ" như web, dùng được cả với file ABook bản cũ; "Nghe thử" trên máy tính chỉ cần câu có audio.
+- Web: sách một quyển chia nhiều phần mở được "Sắp xếp quyển"; quyển mới không còn thừa hưởng bìa của quyển vừa xoá (cả ba nền) và không thêm được quyển trùng chương đầu.
+- Kỹ thuật: bộ chụp gallery trả kết quả kèm chẩn đoán khi trang không vẽ khung nào, thay vì treo tới hết giờ CDP.
+
 - Kỹ thuật: desktop dùng Qt 6.11.3 để nhận bản sửa QML/V4 cho QTBUG-148459 (MethodStorage null gây crash WidthTests). Phiên bản SDK có một nguồn cấu hình; QWindowKit được dựng riêng theo phiên bản Qt.
 
 - Máy tính: nút và khối không còn có thể kẹt nửa mờ hay mất sau một lượt dọn bộ nhớ; cuộn bánh xe giữ quán tính và các phần màn tự cập nhật không ngừng theo dõi.
