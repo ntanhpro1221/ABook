@@ -133,6 +133,12 @@ QtObject {
     }
     // Đặt giọng mặc định từ Cài đặt (chooseDefaultVoice + App.tsx: lưu tuỳ chọn readAloudVoice, lỗi thì báo cách thử lại)
     property var savingVoice: null
+    // Lần hẹn giờ cuối (Player.lastSleepChosen): ghi riêng, không qua `update` (đang lưu Cài đặt thì `update` bỏ lời gọi). Không lưu được: phiên này vẫn dùng.
+    function rememberLastSleep(value) {
+        call("PUT", "/api/preferences", {lastSleep: value}, function(data, error) {
+            if (!error && data) preferences = Object.assign({}, preferences, {lastSleep: data.lastSleep})
+        })
+    }
     function chooseDefaultVoice(id) {
         if (savingVoice !== null || defaultVoice === id) return
         savingVoice = id

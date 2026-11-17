@@ -30,7 +30,8 @@ Item {
         function init() {
             Theme.reduceMotion = false; Nav.layers = []
             Platform.reset(); DesktopApi.reset(); Api.bind(DesktopApi, Theme)
-            Api.preferences = {sleepFadeSeconds: 45, sleepExtendMinutes: 15}
+            // Player là singleton sống qua các ca: đưa lần hẹn cuối về "chưa từng đặt" (30 phút) cho mỗi ca.
+            Api.preferences = {sleepFadeSeconds: 45, sleepExtendMinutes: 15, lastSleep: {kind: "minutes", minutes: 30, chapters: 1}}
             Player.configure(Api.preferences)
             Player.open("width", 1, 0, true); Player.pause(); Player.setVolume(0.7); Player.setSleep("off")
             DesktopApi.responses = {
@@ -81,6 +82,28 @@ Item {
             compare(picker.value, 42)
             clickReady(findChild(menu, "sleepConfirm"))
             compare(Player.sleepKind, "minutes"); compare(Player.sleepMinutes, 42)
+        }
+        // Chủ sách 17-11: hộp hẹn giờ mở sẵn ở lần đặt cuối (tuỳ chọn `lastSleep`), nút "Bật lại" đặt lại đúng lần ấy - số phút hay số chương.
+        function test_sleep_opens_at_the_last_choice_and_restarts_it() {
+            const menu = createTemporaryObject(sleep, host, {width: 792, height: 700})
+            Player.configure({lastSleep: {kind: "minutes", minutes: 45, chapters: 3}})
+            menu.show(); tryCompare(menu, "open", true); ready()
+            compare(findChild(menu, "sleepPicker").value, 45)
+            compare(findChild(menu, "sleepChapterPicker").value, 3)
+            menu.close()
+            Player.resume(); Player.setSleep("chapter", 2)
+            compare(Player.lastSleepKind, "chapter"); compare(Player.lastSleepChapters, 2); compare(Player.lastSleepMinutes, 45)
+            Player.setSleep("minutes", 1); WidthNet.advance(70)
+            verify(Player.sleepStoppedText !== "")
+            menu.show(); tryCompare(menu, "open", true); ready()
+            compare(findChild(menu, "sleepRestart").text, "Bật lại 1\u00a0phút")
+            Player.configure({lastSleep: {kind: "chapter", minutes: 45, chapters: 2}})
+            compare(findChild(menu, "sleepRestart").text, "Bật lại hết 2 chương")
+            clickReady(findChild(menu, "sleepRestart"))
+            compare(Player.sleepKind, "chapter"); compare(Player.sleepChapters, 2)
+            // Giá trị lưu hỏng: giữ mốc đang có, không văng.
+            Player.configure({lastSleep: {kind: "minutes", minutes: 999, chapters: 1}})
+            compare(Player.lastSleepKind, "chapter"); compare(Player.lastSleepChapters, 2)
         }
         function test_fade_restart_and_geometric_bounds() {
             const menu = createTemporaryObject(sleep, host, {width: 792, height: 700})

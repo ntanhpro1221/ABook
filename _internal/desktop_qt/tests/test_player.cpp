@@ -4,6 +4,7 @@
 #include "player.h"
 #include "hostwait.h"
 
+#include <QFile>
 #include <QJsonDocument>
 #include <QSignalSpy>
 #include <QTemporaryDir>
@@ -954,6 +955,103 @@ private slots:
         QCOMPARE(calls.size(), 1);
         QCOMPARE(calls[0].path, QStringLiteral("/api/listen/books/t/voice"));
         QCOMPARE(calls[0].body.value(QStringLiteral("record")).toString(), QStringLiteral("r1"));
+    }
+
+    // ---- lần hẹn giờ cuối (tuỳ chọn `lastSleep`, chủ sách 17-11): mốc mở sẵn là lần đặt cuối, không cố định 30 phút ----
+    void lastSleepContractMatchesTheSharedFixture() {
+        QFile file(QStringLiteral(SETTINGS_RANGES_FIXTURE));
+        QVERIFY(file.open(QIODevice::ReadOnly));
+        const QJsonObject table = QJsonDocument::fromJson(file.readAll()).object().value(QStringLiteral("lastSleep")).toObject();
+        QCOMPARE(table.value(QStringLiteral("default")).toObject().toVariantMap(), PlayerLogic::LastSleep().toMap());
+        QCOMPARE(table.value(QStringLiteral("minutes")).toObject().value(QStringLiteral("max")).toInt(), PlayerLogic::kSleepMinutesMax);
+        QCOMPARE(table.value(QStringLiteral("chapters")).toObject().value(QStringLiteral("max")).toInt(), PlayerLogic::kSleepChaptersMax);
+        const QJsonArray cases = table.value(QStringLiteral("cases")).toArray();
+        QVERIFY(cases.size() > 10);
+        for (const QJsonValue &item : cases) {
+            const QJsonArray pair = item.toArray();
+            const auto cleaned = PlayerLogic::cleanLastSleep(pair.at(0).toVariant());
+            const QString given = QString::fromUtf8(QJsonDocument(QJsonArray{pair.at(0)}).toJson(QJsonDocument::Compact));
+            if (pair.at(1).isNull()) QVERIFY2(!cleaned, qPrintable(given));
+            else {
+                QVERIFY2(cleaned.has_value(), qPrintable(given));
+                QCOMPARE(cleaned->toMap(), pair.at(1).toObject().toVariantMap());
+            }
+        }
+    }
+
+    void lastSleepIsThirtyMinutesUntilTheListenerSetsOne() {
+        Rig rig;
+        rig.player->configure({});
+        QCOMPARE(rig.player->lastSleepKind(), QStringLiteral("minutes"));
+        QCOMPARE(rig.player->lastSleepMinutes(), 30);
+        QCOMPARE(rig.player->lastSleepChapters(), 1);
+        rig.player->configure({{QStringLiteral("lastSleep"), QVariant()}});
+        QCOMPARE(rig.player->lastSleepMinutes(), 30);
+    }
+
+    void lastSleepOfFortyFiveMinutesSurvivesAReopen() {
+        QVariantMap saved;
+        {
+            Rig rig;
+            QSignalSpy chosen(rig.player.get(), &Player::lastSleepChosen);
+            rig.player->open(QStringLiteral("a"), -1, -1, true);
+            rig.player->setSleep(QStringLiteral("minutes"), 45);
+            QCOMPARE(chosen.size(), 1);
+            saved = chosen.takeFirst().at(0).toMap();
+            rig.player->setSleep(QStringLiteral("off"));
+            QCOMPARE(chosen.size(), 0); // tắt hẹn giờ không phải một lần đặt
+        }
+        QCOMPARE(saved, (QVariantMap{{QStringLiteral("kind"), QStringLiteral("minutes")}, {QStringLiteral("minutes"), 45}, {QStringLiteral("chapters"), 1}}));
+        Rig reopened; // mở lại app: Main.qml đưa tuỳ chọn đã lưu vào configure
+        reopened.player->configure({{QStringLiteral("lastSleep"), saved}});
+        QCOMPARE(reopened.player->lastSleepKind(), QStringLiteral("minutes"));
+        QCOMPARE(reopened.player->lastSleepMinutes(), 45);
+        reopened.player->open(QStringLiteral("a"), -1, -1, true);
+        reopened.player->restartLastSleep();
+        QCOMPARE(reopened.player->sleepKind(), QStringLiteral("minutes"));
+        QCOMPARE(reopened.player->sleepMinutes(), 45);
+    }
+
+    void lastSleepOfTwoChaptersSurvivesAReopen() {
+        QVariantMap saved;
+        {
+            Rig rig;
+            rig.player->configure({{QStringLiteral("lastSleep"), QVariantMap{{QStringLiteral("kind"), QStringLiteral("minutes")}, {QStringLiteral("minutes"), 45}, {QStringLiteral("chapters"), 1}}}});
+            QSignalSpy chosen(rig.player.get(), &Player::lastSleepChosen);
+            rig.player->open(QStringLiteral("a"), -1, -1, true);
+            rig.player->setSleep(QStringLiteral("chapter"), 2);
+            QCOMPARE(chosen.size(), 1);
+            saved = chosen.takeFirst().at(0).toMap();
+        }
+        QCOMPARE(saved, (QVariantMap{{QStringLiteral("kind"), QStringLiteral("chapter")}, {QStringLiteral("minutes"), 45}, {QStringLiteral("chapters"), 2}}));
+        Rig reopened;
+        reopened.player->configure({{QStringLiteral("lastSleep"), saved}});
+        QCOMPARE(reopened.player->lastSleepKind(), QStringLiteral("chapter"));
+        QCOMPARE(reopened.player->lastSleepChapters(), 2);
+        QCOMPARE(reopened.player->lastSleepMinutes(), 45);
+        reopened.player->open(QStringLiteral("a"), -1, -1, true);
+        reopened.player->restartLastSleep();
+        QCOMPARE(reopened.player->sleepKind(), QStringLiteral("chapter"));
+        QCOMPARE(reopened.player->sleepChapters(), 2);
+    }
+
+    void aBrokenLastSleepFallsBackToThirtyMinutes() {
+        const QList<QVariant> broken{
+            QVariantMap{{QStringLiteral("kind"), QStringLiteral("minutes")}, {QStringLiteral("minutes"), 999}, {QStringLiteral("chapters"), 1}},
+            QVariantMap{{QStringLiteral("kind"), QStringLiteral("chapter")}, {QStringLiteral("minutes"), 30}, {QStringLiteral("chapters"), 0}},
+            QVariantMap{{QStringLiteral("kind"), QStringLiteral("off")}, {QStringLiteral("minutes"), 30}, {QStringLiteral("chapters"), 1}},
+            QVariantMap{{QStringLiteral("kind"), QStringLiteral("minutes")}, {QStringLiteral("minutes"), QStringLiteral("45")}, {QStringLiteral("chapters"), 1}},
+            QVariantMap{{QStringLiteral("kind"), QStringLiteral("minutes")}, {QStringLiteral("minutes"), 45.5}, {QStringLiteral("chapters"), 1}},
+            QVariantMap{{QStringLiteral("kind"), QStringLiteral("minutes")}, {QStringLiteral("minutes"), true}, {QStringLiteral("chapters"), 1}},
+            QVariantMap{{QStringLiteral("kind"), QStringLiteral("minutes")}},
+            QStringLiteral("45"), 45, QVariantList{45}};
+        for (const QVariant &value : broken) {
+            Rig rig;
+            rig.player->configure({{QStringLiteral("lastSleep"), value}});
+            QCOMPARE(rig.player->lastSleepKind(), QStringLiteral("minutes"));
+            QCOMPARE(rig.player->lastSleepMinutes(), 30);
+            QCOMPARE(rig.player->lastSleepChapters(), 1);
+        }
     }
 
     void listeningSessionPostedAfterTwentySeconds() {

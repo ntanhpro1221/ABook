@@ -11,9 +11,14 @@ Popover {
     readonly property int fadeSeconds: Logic.quantize(Logic.SPECS.sleepFadeSeconds, Number(Api.preferences.sleepFadeSeconds || 30))
     // N của nút "Hẹn lại N phút": số đã chọn khi hẹn phút, "Mỗi lần nghe thêm" khi hẹn theo chương (một nơi: Player::sleepExtendMinutes)
     readonly property int extendMinutes: Player.sleepExtendMinutes
+    // Mốc mở sẵn: lần hẹn giờ cuối người nghe tự đặt (tuỳ chọn `lastSleep`, nhớ qua các lần mở app; chưa từng đặt: 30 phút).
     property int draftMinutes: Player.lastSleepMinutes
-    property int draftChapters: 1
-    onOpenChanged: if (open) { draftMinutes = Player.lastSleepMinutes; draftChapters = Player.sleepKind === "chapter" ? Player.sleepChapters : 1 }
+    property int draftChapters: Player.lastSleepChapters
+    onOpenChanged: if (open) { draftMinutes = Player.lastSleepMinutes; draftChapters = Player.sleepKind === "chapter" ? Player.sleepChapters : Player.lastSleepChapters }
+    // Nhãn nút "Bật lại": "Bật lại 45 phút", "Bật lại hết chương này", "Bật lại hết 2 chương" (sleep.ts lastSleepRestartLabel).
+    readonly property string restartLabel: S.s_bat_lai_0bad8bcf + (Player.lastSleepKind === "chapter"
+        ? (Player.lastSleepChapters > 1 ? S.s_het_0_chuong_b59210aa(Player.lastSleepChapters) : S.s_het_chuong_nay_8ccc288f)
+        : Player.lastSleepMinutes + S.s_phut_cf728a6a)
 
     ClockUser { wanted: root.visible }
 
@@ -60,7 +65,7 @@ Popover {
         }
         Collapse {
             width: parent.width; open: Player.sleepStoppedText !== "" && Player.sleepKind === "off"
-            Button { objectName: "sleepRestart"; text: S.s_bat_lai_0bad8bcf + Player.lastSleepMinutes + S.s_phut_cf728a6a; kind: "ghost"; onActivated: { Feedback.play("toggle"); Player.setSleep("minutes", Player.lastSleepMinutes); root.close() } }
+            Button { objectName: "sleepRestart"; text: root.restartLabel; kind: "ghost"; onActivated: { Feedback.play("toggle"); Player.restartLastSleep(); root.close() } }
         }
         Collapse {
             width: parent.width; open: Player.sleepKind !== "off"
