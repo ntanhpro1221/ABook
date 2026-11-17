@@ -1003,7 +1003,9 @@ private slots:
         }
         QCOMPARE(saved, (QVariantMap{{QStringLiteral("kind"), QStringLiteral("minutes")}, {QStringLiteral("minutes"), 45}, {QStringLiteral("chapters"), 1}}));
         Rig reopened; // mở lại app: Main.qml đưa tuỳ chọn đã lưu vào configure
+        QSignalSpy redraw(reopened.player.get(), &Player::sleepChanged);
         reopened.player->configure({{QStringLiteral("lastSleep"), saved}});
+        QVERIFY(redraw.size() >= 1); // tuỳ chọn đến sau khi hộp đã vẽ: QML phải được báo
         QCOMPARE(reopened.player->lastSleepKind(), QStringLiteral("minutes"));
         QCOMPARE(reopened.player->lastSleepMinutes(), 45);
         reopened.player->open(QStringLiteral("a"), -1, -1, true);

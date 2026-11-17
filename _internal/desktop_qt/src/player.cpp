@@ -371,7 +371,10 @@ void Player::configure(const QVariantMap &p) {
     m_activityResets = p.value(QStringLiteral("sleepActivityResets"), true).toBool();
     m_fadeSeconds = std::clamp(p.value(QStringLiteral("sleepFadeSeconds"), 30).toInt(), kFadeSecondsMin, kFadeSecondsMax);
     // Lần hẹn cuối đã lưu: hỏng / chưa có thì giữ mốc hiện tại (chưa từng đặt: 30 phút) - lần lưu vừa gửi chưa về cũng không bị kéo lùi.
-    if (const auto last = cleanLastSleep(p.value(QStringLiteral("lastSleep")))) m_lastSleep = *last;
+    if (const auto last = cleanLastSleep(p.value(QStringLiteral("lastSleep"))); last && !(*last == m_lastSleep)) {
+        m_lastSleep = *last;
+        emit sleepChanged(); // hộp hẹn giờ và nút "Bật lại" đọc mốc này
+    }
     const int extendMinutes = std::clamp(p.value(QStringLiteral("sleepExtendMinutes"), 10).toInt(), 1, kExtendMinutesMax);
     if (extendMinutes != m_extendMinutes) {
         m_extendMinutes = extendMinutes;
