@@ -235,6 +235,7 @@ Column {
                 title: S.s_ghep_may_601e4c98
                 summary: S.s_co_sach_tren_may_khac_3b7cdd88
                 Column {
+                    id: columnOfButton
                     width: parent.width
                     spacing: 12
                     Column {
@@ -245,6 +246,7 @@ Column {
                             width: parent.width
                             open: root.found !== null && root.found.length > 0
                             Column {
+                                id: columnOfItem
                                 width: Theme.listWidth(parent, parent.width)
                                 Repeater {
                                     model: root.found || []
@@ -252,7 +254,7 @@ Column {
                                         id: foundRow
                                         required property var modelData
                                         required property int index
-                                        width: parent.width
+                                        width: columnOfItem.width
                                         implicitHeight: Math.max(foundWords.height, 40) + 16 + (index > 0 ? 1 : 0)
                                         height: implicitHeight
                                         Rectangle { width: parent.width; height: 1; color: Theme.line; Reveal { shown: foundRow.index > 0 }}
@@ -363,6 +365,7 @@ Column {
                             spacing: 8
                             HintText { width: parent.width; text: S.s_khac_wi_fi_chon_may_da_ghep_bluetooth_f451876c }
                             Flow {
+                                id: flowOfButton
                                 width: parent.width
                                 spacing: 8
                                 Repeater {
@@ -374,7 +377,7 @@ Column {
                                         icon: "bluetooth"
                                         wrap: true
                                         fitName: true
-                                        width: Math.min(implicitWidth, parent.width)
+                                        width: Math.min(implicitWidth, flowOfButton.width)
                                         text: modelData.name + "\u00a0·\u00a0" + Logic.deviceKindLabel(modelData.kind)
                                         onActivated: root.choose(modelData.address)
                                     }
@@ -390,7 +393,7 @@ Column {
                             kind: "ghost"
                             icon: "bluetooth"
                             fitName: true
-                            width: Math.min(implicitWidth, parent.width)
+                            width: Math.min(implicitWidth, columnOfButton.width)
                             text: modelData.name + S.s_u00a0_u00a0ban_thu_175857e0
                             onActivated: root.choose(modelData.address + "@dev")
                         }

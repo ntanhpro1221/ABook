@@ -30,6 +30,7 @@ Column {
     Prose { topPadding: 4; text: S.s_co_dinh_sau_khi_tao_de_moi_chuong_doc_gion_165eeae2 }
     Item { width: 1; height: 24 }
     Column {
+        id: columnOfInteractive
         width: parent.width
         Accessible.role: Accessible.RadioButton
         Accessible.name: S.s_chat_luong_a12ed26c
@@ -42,7 +43,7 @@ Column {
                 required property int index
                 readonly property bool selected: modelData.value === root.profile
                 objectName: "newProfile"
-                width: parent.width
+                width: columnOfInteractive.width
                 height: 16 + col.height + 16 + 1
                 activeFocusOnTab: selected
                 pressScaling: false
@@ -97,6 +98,7 @@ Column {
     }
     Item { width: 1; height: 16 }
     ImportFold {
+        id: importFoldOfItem
         width: parent.width
         storageKey: "quality"
         prefix: "fold.new-project."
@@ -107,7 +109,7 @@ Column {
             model: root.chosen ? root.chosen.points : []
             delegate: Item {
                 required property string modelData
-                width: parent.width
+                width: importFoldOfItem.width
                 height: pointText.height + 8
                 LineIcon { line: pointText; name: "check"; size: 14; color: Theme.success }
                 Text { id: pointText; x: 22; width: parent.width - 22; text: modelData; color: Theme.text; wrapMode: Text.WrapAtWordBoundaryOrAnywhere; font.pixelSize: Theme.sizeBodySmall; lineHeight: 1.4 }

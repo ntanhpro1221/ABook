@@ -10,6 +10,7 @@ Item {
     property int gap: 16                     // khoảng cách phía trên (mt-4)
     property int pad: 16                     // đệm trên / dưới (py-4)
     default property alias content: body.data
+    readonly property alias contentWidth: body.width   // bề ngang phần nội dung (chừa cột biểu tượng): cho delegate Repeater đặt bên trong
     implicitHeight: gap + pad + body.height + pad
     height: implicitHeight
     Icon { x: 0; y: root.gap + root.pad + 2; name: root.icon; size: 16; color: root.tone }

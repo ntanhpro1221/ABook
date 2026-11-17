@@ -36,12 +36,13 @@ Modal {
     }
     onClosed: { if (answer) { const done = answer; answer = null; done(null) } }
     Column {
+        id: columnOfMenuRow
         width: parent.width; spacing: Theme.s8
         Repeater {
             model: root.choosing ? Api.voiceList : []
             MenuRow {
                 required property var modelData
-                width: parent.width; text: VoiceLogic.spokenVoiceName(modelData.name)
+                width: columnOfMenuRow.width; text: VoiceLogic.spokenVoiceName(modelData.name)
                 selected: root.voice.id === modelData.id; icon: selected ? "check" : ""
                 onClicked: root.finish(modelData)
             }

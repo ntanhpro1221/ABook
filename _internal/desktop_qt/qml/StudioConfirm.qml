@@ -17,6 +17,7 @@ Modal {
         spacing: 12
         Icon { Reveal { shown: root.warn } name: "triangle-alert"; size: 20; color: Theme.warning; y: 2 }
         Column {
+            id: columnOfText
             width: parent.width - (root.warn ? 20 + 12 : 0)
             spacing: 8
             Repeater {
@@ -24,7 +25,7 @@ Modal {
                 delegate: Text {
                     required property var modelData
                     objectName: "confirmLine"
-                    width: parent.width
+                    width: columnOfText.width
                     text: modelData.text
                     textFormat: Text.PlainText
                     wrapMode: Text.Wrap

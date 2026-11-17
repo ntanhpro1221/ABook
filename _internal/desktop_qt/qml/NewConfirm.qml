@@ -60,6 +60,7 @@ Column {
     Text { width: parent.width; text: S.s_tom_tat_b4bb3064; color: Theme.text; wrapMode: Text.WrapAtWordBoundaryOrAnywhere; font.pixelSize: Theme.sizeBody; font.weight: Theme.weightBold }
     Item { width: 1; height: 8 }
     Column {
+        id: columnOfItem
         objectName: "newSummary"
         width: parent.width
         Accessible.role: Accessible.List
@@ -70,7 +71,7 @@ Column {
                 id: row
                 required property var modelData
                 required property int index
-                width: parent.width
+                width: columnOfItem.width
                 height: 16 + (root.wide ? Math.max(label.height, value.height) : label.height + 2 + value.height)
                 Rectangle { Reveal { shown: row.index > 0 } width: parent.width; height: 1; color: Theme.line }
                 Text {

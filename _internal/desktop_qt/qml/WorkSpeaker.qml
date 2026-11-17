@@ -103,6 +103,7 @@ Column {
         width: parent.width
         open: root.rangeOpen
         Column {
+            id: columnOfWorkExample
             width: parent.width
             spacing: 8
             Text { width: parent.width; text: S.s_voice_range_note; wrapMode: Text.Wrap; color: Theme.text2; font.pixelSize: Theme.sizeCaption }
@@ -138,7 +139,7 @@ Column {
                     required property var modelData
                     required property int index
                     objectName: "voiceRangeExample_" + index
-                    width: parent.width
+                    width: columnOfWorkExample.width
                     work: root.work
                     example: modelData
                     picks: true

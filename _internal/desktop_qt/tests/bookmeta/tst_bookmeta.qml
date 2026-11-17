@@ -96,8 +96,10 @@ Item {
         function test_studioMetadataEditorOpens() {
             const value = createTemporaryObject(project, host, {width: 1000, height: 900})
             verify(value !== null)
+            value.metadataProblem = "Lỗi của lần lưu trước"
             value.beginMetadata()
             compare(value.metadataDraft.summary, "")
+            compare(value.metadataProblem, "")
         }
         function test_completeBookPageShowsMetadata() {
             const data = Object.assign(Fixture.playerBook(true), book, {id: "width"})

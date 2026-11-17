@@ -136,6 +136,7 @@ Modal {
         Collapse { width: parent.width; open: root.previewing; MusicListeningProgress { width: parent.width } }
         // Vì sao bài này
         Column {
+            id: columnOfItem
             Reveal { shown: !!(root.detail && root.detail.why && root.detail.why.matches.length) }
             width: parent.width
             spacing: Theme.s8
@@ -162,7 +163,7 @@ Modal {
                 model: root.detail && root.detail.why ? root.detail.why.matches : []
                 delegate: Item {
                     required property var modelData
-                    width: parent ? parent.width : 0
+                    width: columnOfItem.width
                     height: Math.max(28, whyLabel.implicitHeight)
                     Text { id: whyLabel; width: 120; anchors.verticalCenter: parent.verticalCenter; text: Logic.labelOf(root.meta ? root.meta.emotions : [], modelData.id); color: Theme.text2; font.pixelSize: Theme.sizeBodySmall; wrapMode: Text.Wrap }
                     Column {
@@ -189,6 +190,7 @@ Modal {
             }
         }
         Column {
+            id: columnOfItem2
             Reveal { shown: !!root.detail }
             width: parent.width
             Text { text: S.s_thong_tin_4aa16c92; color: Theme.text; font.pixelSize: Theme.sizeBody; font.weight: Theme.weightMedium; bottomPadding: Theme.s8 }
@@ -211,7 +213,7 @@ Modal {
                 }
                 delegate: Item {
                     required property var modelData
-                    width: parent ? parent.width : 0
+                    width: columnOfItem2.width
                     height: Math.max(name.height, modelData[2] ? source.height : value.height) + Theme.s8
                     Text { id: name; width: 140; text: modelData[0]; color: Theme.text2; font.pixelSize: Theme.sizeBodySmall; wrapMode: Text.Wrap }
                     Text { id: value; x: 140; width: parent.width - 140; Reveal { shown: modelData[1] !== null && !modelData[2] } text: modelData[1] || ""; color: Theme.text; font.pixelSize: Theme.sizeBodySmall; wrapMode: Text.Wrap }

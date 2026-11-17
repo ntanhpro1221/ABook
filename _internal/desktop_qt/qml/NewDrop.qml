@@ -195,6 +195,7 @@ Item {
                 spacing: 8
                 Prose { objectName: "newSourceProblemText"; tone: Theme.danger; text: root.problem ? root.problem.text : "" }
                 Column {
+                    id: columnOfInteractive
                     width: parent.width
                     Reveal { shown: Boolean(root.problem) && root.problem.subfolders.length > 0 }
                     spacing: 4
@@ -225,7 +226,7 @@ Item {
                         delegate: Interactive {
                             required property string modelData
                             objectName: "newSubfolder"
-                            width: parent.width
+                            width: columnOfInteractive.width
                             height: Math.max(40, folderText.height + 16)
                             Accessible.role: Accessible.Button
                             Accessible.name: Logic.sourceName(modelData)

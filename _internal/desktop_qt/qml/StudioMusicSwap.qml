@@ -66,6 +66,7 @@ Column {
             Text { width: parent.width; text: Logic.SAVING; color: Theme.text2; wrapMode: Text.Wrap; font.pixelSize: Theme.sizeBodySmall; Accessible.role: Accessible.StaticText }
         }
         Column {
+            id: columnOfStudioMusicTrackRow
             objectName: "musicAlternatives"
             width: parent.width
             spacing: 4
@@ -73,7 +74,7 @@ Column {
                 model: root.alternatives
                 StudioMusicTrackRow {
                     required property var modelData
-                    width: parent.width
+                    width: columnOfStudioMusicTrackRow.width
                     item: modelData
                     busy: root.busy
                     choosing: root.choosing
@@ -92,6 +93,7 @@ Column {
             }
         }
         Column {
+            id: columnOfStudioMusicTrackRow2
             width: parent.width
             spacing: 4
             Text { text: S.s_nhac_cua_toi_f65b7ac6; color: Theme.text; font.pixelSize: Theme.sizeBodySmall; font.weight: Theme.weightMedium; Accessible.role: Accessible.Heading }
@@ -100,7 +102,7 @@ Column {
                 StudioMusicTrackRow {
                     required property var modelData
                     objectName: "musicMine"
-                    width: parent.width
+                    width: columnOfStudioMusicTrackRow2.width
                     item: modelData
                     note: Music.mineNote(modelData)
                     canPreview: root.canPreviewMine

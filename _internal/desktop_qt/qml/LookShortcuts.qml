@@ -23,6 +23,7 @@ Column {
         {keys: ["?"], label: S.s_xem_cac_phim_tat_nay_bdc607f4, letter: true}
     ]
     Column {
+        id: columnOfItem
         width: parent.width
         spacing: 12
         Repeater {
@@ -31,7 +32,7 @@ Column {
                 id: entry
                 required property var modelData
                 readonly property bool off: modelData.letter && !root.letters
-                width: parent ? parent.width : 0
+                width: columnOfItem.width
                 height: Math.max(label.implicitHeight, 20)
                 Text {
                     id: label

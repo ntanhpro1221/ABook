@@ -10,12 +10,13 @@ Popover {
     panelWidth: 248
     pad: Theme.s8
     Column {
+        id: columnOfLoader
         width: parent.width
         Repeater {
             model: root.items
             delegate: Loader {
                 required property var modelData
-                width: parent ? parent.width : 0
+                width: columnOfLoader.width
                 sourceComponent: modelData.sep ? line : row
                 Component {
                     id: row

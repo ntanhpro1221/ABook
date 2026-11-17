@@ -152,6 +152,7 @@ Item {
             }
             // Từng bước (khi đang cài hay đã cài dở)
             Grid {
+                id: gridOfRow
                 objectName: "studioSetupSteps"
                 Reveal { shown: !!root.status && (root.status.running || Setup.started(root.status)) }
                 width: parent.width
@@ -164,7 +165,7 @@ Item {
                     delegate: Row {
                         required property var modelData
                         readonly property bool activeStep: !!root.status && !!root.status.running && modelData.id === root.status.step
-                        width: (parent.width - (root.wide ? 32 : 0)) / (root.wide ? 2 : 1)
+                        width: (gridOfRow.width - (root.wide ? 32 : 0)) / (root.wide ? 2 : 1)
                         spacing: 12
                         Item {
                             width: 16; height: 20

@@ -17,6 +17,7 @@ Popover {
     onOpenChanged: { if (open) Api.loadVoiceName(); else { resumeAfter = false; consent.dismiss(); samples.stopSample() } }
     Listen { target: Player; function onLoadedChanged() { if (!Player.loaded) root.close() } }
     Column {
+        id: columnOfVoiceRow
         width: parent.width; spacing: Theme.s8
         Text { width: parent.width; text: S.s_giong_doc_u00a0_u00a0nho_rieng_cho_cuon_na_ae337d03; wrapMode: Text.Wrap; color: Theme.text2; font.pixelSize: Theme.sizeCaption }
         Repeater {
@@ -26,7 +27,7 @@ Popover {
                 required property var modelData
                 required property int index
                 objectName: "playerVoice_" + modelData.id
-                width: parent.width
+                width: columnOfVoiceRow.width
                 voice: modelData
                 shown: VoiceLogic.spokenVoiceName(modelData.name)
                 selected: root.currentVoice !== undefined && root.currentVoice.id === modelData.id

@@ -47,6 +47,7 @@ FocusScope {
     property string metadataProblem: ""
     function beginMetadata() {
         const b = root.book || {}
+        root.metadataProblem = ""   // lỗi của lần lưu trước không theo sang lần mở sau
         root.metadataDraft = {author: b.author || "", illustrator: b.illustrator || "", altTitles: b.altTitles || [], genres: b.genres || [], summary: b.summary || "", source: b.source || {url: "", site: ""}}
         metadataEditor.show()
     }
@@ -459,6 +460,7 @@ FocusScope {
                         }
                         // Lời nói thêm dưới hàng nút: hàng chờ, đang dừng, phân tích bị ngắt, chương chờ thu lại, tạm dừng vì pin, Studio chưa cài, lỗi lần làm sách
                         Column {
+                            id: projectNotesColumn
                             objectName: "projectNotes"
                             width: parent.width
                             spacing: 8
@@ -467,7 +469,7 @@ FocusScope {
                                 delegate: Text {
                                     required property string modelData
                                     objectName: "projectNote"
-                                    width: parent.width
+                                    width: projectNotesColumn.width
                                     text: modelData
                                     color: Theme.text2
                                     wrapMode: Text.Wrap
@@ -911,13 +913,14 @@ FocusScope {
         id: metadataEditor
         title: S.s_sua_thong_tin_17e4a8a6
         Column {
+            id: metadataFields
             width: parent.width
             spacing: Theme.s12
             Repeater {
                 model: [{key: "author", label: S.s_tac_gia_0ec4731b}, {key: "illustrator", label: S.s_bookmeta_illustrator}, {key: "altTitles", label: S.s_bookmeta_alt_titles}, {key: "genres", label: S.s_bookmeta_genres}, {key: "summary", label: S.s_tom_tat_b4bb3064}]
                 Column {
                     required property var modelData
-                    width: parent.width
+                    width: metadataFields.width
                     spacing: Theme.s8
                     Text { text: modelData.label; color: Theme.text; font.pixelSize: Theme.sizeBodySmall }
                     FormField {
@@ -941,18 +944,20 @@ FocusScope {
                 text: (root.metadataDraft.source || {}).url || ""
                 onTextChanged: if (text !== ((root.metadataDraft.source || {}).url || "")) root.metadataDraft = Object.assign({}, root.metadataDraft, {source: {url: text, site: (root.metadataDraft.source || {}).site || ""}})
             }
-            Text {
-                id: metadataError
-                Reveal { target: metadataError; shown: root.metadataProblem !== "" }
-                text: root.metadataProblem
-                color: Theme.danger
-                font.pixelSize: Theme.sizeBodySmall
-            }
             FormField {
                 width: parent.width
                 label: S.s_bookmeta_source_site
                 text: (root.metadataDraft.source || {}).site || ""
                 onTextChanged: if (text !== ((root.metadataDraft.source || {}).site || "")) root.metadataDraft = Object.assign({}, root.metadataDraft, {source: {url: (root.metadataDraft.source || {}).url || "", site: text}})
+            }
+            Text {
+                id: metadataError
+                Reveal { target: metadataError; shown: root.metadataProblem !== "" }
+                text: root.metadataProblem
+                color: Theme.danger
+                width: parent.width
+                wrapMode: Text.Wrap
+                font.pixelSize: Theme.sizeBodySmall
             }
             Button { text: S.s_bookmeta_save; busy: root.metadataBusy; onActivated: root.saveMetadata() }
         }

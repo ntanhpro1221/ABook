@@ -195,13 +195,14 @@ FocusScope {
     Popover {
         id: sortMenu; objectName: "librarySortMenu"; anchorItem: order; panelWidth: 232
         Column {
+            id: columnOfChoiceChip
             width: parent.width
             Repeater {
                 model: root.sortOptions
                 ChoiceChip {
                     required property var modelData
                     fullWidthReason: "Single-column menu (DESIGN 6)"
-                    width: parent ? parent.width : 0; text: modelData.label; selected: root.sortOrder === modelData.value
+                    width: columnOfChoiceChip.width; text: modelData.label; selected: root.sortOrder === modelData.value
                     onClicked: { root.sortOrder = modelData.value; Api.store("abook-library-sort", modelData.value); sortMenu.close() }
                 }
             }
@@ -213,12 +214,13 @@ FocusScope {
         title: group.title
         panelWidth: 560
         Column {
+            id: columnOfButton
             width: parent.width; spacing: Theme.s8
             Repeater {
                 model: seriesDialog.group.books
                 Button {
                     required property var modelData
-                    width: parent.width; wrap: true; kind: "ghost"; text: modelData.title
+                    width: columnOfButton.width; wrap: true; kind: "ghost"; text: modelData.title
                     onActivated: { seriesDialog.close(); root.openBook(modelData, null) }
                 }
             }

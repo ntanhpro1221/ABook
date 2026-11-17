@@ -787,6 +787,7 @@ Modal {
                                 title: S.s_dinh_dang_36b746b6
                                 summary: root.notes.length + S.s_ghi_chu_305e0316
                                 Column {
+                                    id: columnOfText
                                     width: parent.width
                                     leftPadding: 12
                                     rightPadding: 12
@@ -805,7 +806,7 @@ Modal {
                                         model: root.notes.slice(0, 6)
                                         Text {
                                             required property string modelData
-                                            width: parent.width - 24
+                                            width: columnOfText.width - 24
                                             text: modelData
                                             color: Theme.text2
                                             wrapMode: Text.WrapAtWordBoundaryOrAnywhere

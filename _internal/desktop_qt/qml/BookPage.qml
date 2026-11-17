@@ -153,13 +153,14 @@ Item {
         panelWidth: 280
         pad: Theme.s8
         Column {
+            id: columnOfMenuRow
             width: parent.width
             Repeater {
                 model: root.recordRows.filter(row => !row.danger)
                 MenuRow {
                     required property var modelData
                     objectName: "recordRow." + modelData.key
-                    width: parent.width
+                    width: columnOfMenuRow.width
                     icon: modelData.icon
                     text: modelData.label
                     onClicked: { more.close(); root.recordRequest(modelData.key, modelData.dialog, null) }
@@ -193,7 +194,7 @@ Item {
                 MenuRow {
                     required property var modelData
                     objectName: "recordRow." + modelData.key
-                    width: parent.width
+                    width: columnOfMenuRow.width
                     icon: modelData.icon
                     text: modelData.label
                     danger: true

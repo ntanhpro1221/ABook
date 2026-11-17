@@ -15126,7 +15126,7 @@
     "line": 85,
     "statement": "Api.call(method, route, body, function(data, error) {",
     "occurrence": 1,
-    "source_sha256": "33e718f8cd67a460e27f4bd3adcbe5a18da653c1731c9e6dfc4cbdb61302062b",
+    "source_sha256": "662884a00a67f90f7ee88e1d266f543354bd595db170e48a1ab0d38aeb303432",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; busy, pending, working",
     "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
@@ -15138,7 +15138,7 @@
     "line": 212,
     "statement": "Api.quiet(\"GET\", \"/api/listen/books/\" + encodeURIComponent(outcome.id), null, function(book, error) {",
     "occurrence": 1,
-    "source_sha256": "33e718f8cd67a460e27f4bd3adcbe5a18da653c1731c9e6dfc4cbdb61302062b",
+    "source_sha256": "662884a00a67f90f7ee88e1d266f543354bd595db170e48a1ab0d38aeb303432",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; busy, pending, working",
     "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
@@ -15246,7 +15246,7 @@
     "line": 64,
     "statement": "Api.call(\"GET\", \"/api/listen/books/\" + id, null, function(data, error) { if (!error && id === root.book.bookId) root.fullBook = data })",
     "occurrence": 1,
-    "source_sha256": "def15105d7a5c4778e320005a05562cff1707a8cb7425ac4ed2425d601cd8b2a",
+    "source_sha256": "6a63e593700b0aefb97aa4f277c4f8390f2aa61d8a95934a39c44dd15477744c",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; ProgressBar, bookProgress, bookProgressLine, progress, progressLine, progressOf",
     "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
@@ -15258,7 +15258,7 @@
     "line": 72,
     "statement": "Api.call(\"GET\", \"/api/listen/books/\" + bookId, null, function(data, error) {",
     "occurrence": 1,
-    "source_sha256": "def15105d7a5c4778e320005a05562cff1707a8cb7425ac4ed2425d601cd8b2a",
+    "source_sha256": "6a63e593700b0aefb97aa4f277c4f8390f2aa61d8a95934a39c44dd15477744c",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; ProgressBar, bookProgress, bookProgressLine, progress, progressLine, progressOf",
     "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
@@ -15270,7 +15270,7 @@
     "line": 140,
     "statement": "Api.call(\"POST\", \"/api/listen/books/\" + id + \"/finished\", active ? {finished: finished, record: active.id} : {finished: finished}, function(data, error) {",
     "occurrence": 1,
-    "source_sha256": "def15105d7a5c4778e320005a05562cff1707a8cb7425ac4ed2425d601cd8b2a",
+    "source_sha256": "6a63e593700b0aefb97aa4f277c4f8390f2aa61d8a95934a39c44dd15477744c",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; ProgressBar, bookProgress, bookProgressLine, progress, progressLine, progressOf",
     "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
@@ -15282,7 +15282,7 @@
     "line": 271,
     "statement": "Api.call(\"POST\", \"/api/listen/books/\" + id + \"/chapters/\" + chapterId + \"/done\", body, function(data, error) {",
     "occurrence": 1,
-    "source_sha256": "def15105d7a5c4778e320005a05562cff1707a8cb7425ac4ed2425d601cd8b2a",
+    "source_sha256": "6a63e593700b0aefb97aa4f277c4f8390f2aa61d8a95934a39c44dd15477744c",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; ProgressBar, bookProgress, bookProgressLine, progress, progressLine, progressOf",
     "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
@@ -15330,7 +15330,7 @@
     "line": 36,
     "statement": "else Api.quiet(\"POST\", path, {operationId: operationId}, answer)",
     "occurrence": 1,
-    "source_sha256": "0c5ea5ae9f61f4427e8030396057c9e9bc45236be03802375374e1258c7654de",
+    "source_sha256": "5722c09de8b11215acfb1b5b3a93b4ad9fd622692738fb866389a44d5a18cd97",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; busy, pending",
     "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads."
@@ -15918,7 +15918,7 @@
     "line": 28,
     "statement": "signal unsave()",
     "occurrence": 1,
-    "source_sha256": "3e47ef15aa3203462289d5abe4b1fac806a254d241e04e16834762976c98e8c1",
+    "source_sha256": "25453dac8e2b48728fcf67a7de4e3c13278969318a8a98f84e956e2eade8a3bf",
     "disposition": "internal",
     "guard": "Declaration; the invoked call site is independently inventoried",
     "reason": "A declaration/signature is not an executing UI action. Combined-source review: the download button gained tabular digits (check_ticks T4); this action and its guard are unchanged."
@@ -15930,7 +15930,7 @@
     "line": 52,
     "statement": "Api.quiet(\"GET\", path, null, function(data, error) {",
     "occurrence": 1,
-    "source_sha256": "3e47ef15aa3203462289d5abe4b1fac806a254d241e04e16834762976c98e8c1",
+    "source_sha256": "25453dac8e2b48728fcf67a7de4e3c13278969318a8a98f84e956e2eade8a3bf",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; MusicListeningProgress, loading, pending, previewLoading",
     "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads. Combined-source review: the download button gained tabular digits (check_ticks T4); this action and its guard are unchanged."
@@ -15942,7 +15942,7 @@
     "line": 62,
     "statement": "onAccepted: root.unsave()",
     "occurrence": 1,
-    "source_sha256": "3e47ef15aa3203462289d5abe4b1fac806a254d241e04e16834762976c98e8c1",
+    "source_sha256": "25453dac8e2b48728fcf67a7de4e3c13278969318a8a98f84e956e2eade8a3bf",
     "disposition": "confirmation",
     "guard": "DownloadControl / TrackRow / TrackSheet DestructiveConfirm; cancel incomplete transfer is exempt",
     "reason": "Complete music download removal is confirmed with track title and size. Cancelling an unfinished download discards partial bytes immediately. Combined-source review: the download button gained tabular digits (check_ticks T4); this action and its guard are unchanged."
@@ -16182,7 +16182,7 @@
     "line": 48,
     "statement": "Api.call(method, path, body, function(result, error) { if (error) Api.notice = before; done(result, error) })",
     "occurrence": 1,
-    "source_sha256": "44bbdd8d16ba1a424278a5aebfaf4d0825e4adc200e1cbc72bf93f533d838cd1",
+    "source_sha256": "f694f5777c824fcabe6b52cf076799ba7fbf452c6b2154e8639c3b2fe5c74683",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; bluetoothBusy, busy, busyChoice, pairBusy, refreshBusy",
     "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads."
@@ -16194,7 +16194,7 @@
     "line": 73,
     "statement": "Api.quiet(\"POST\", \"/api/computers\", {address: address, code: code, fingerprint: fingerprint || \"\"}, function(view, error, detail) {",
     "occurrence": 1,
-    "source_sha256": "44bbdd8d16ba1a424278a5aebfaf4d0825e4adc200e1cbc72bf93f533d838cd1",
+    "source_sha256": "f694f5777c824fcabe6b52cf076799ba7fbf452c6b2154e8639c3b2fe5c74683",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; bluetoothBusy, busy, busyChoice, pairBusy, refreshBusy",
     "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads."
@@ -16206,7 +16206,7 @@
     "line": 89,
     "statement": "Api.call(\"POST\", \"/api/computers/refresh\", null, function(view, error) { root.refreshBusy = false; if (!error) root.done(view) })",
     "occurrence": 1,
-    "source_sha256": "44bbdd8d16ba1a424278a5aebfaf4d0825e4adc200e1cbc72bf93f533d838cd1",
+    "source_sha256": "f694f5777c824fcabe6b52cf076799ba7fbf452c6b2154e8639c3b2fe5c74683",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; bluetoothBusy, busy, busyChoice, pairBusy, refreshBusy",
     "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads."
@@ -16218,7 +16218,7 @@
     "line": 93,
     "statement": "Api.call(\"POST\", \"/api/computers/\" + id + \"/stop-waiting\", null, function(view, error) { root.refreshBusy = false; if (!error) root.done(view) })",
     "occurrence": 1,
-    "source_sha256": "44bbdd8d16ba1a424278a5aebfaf4d0825e4adc200e1cbc72bf93f533d838cd1",
+    "source_sha256": "f694f5777c824fcabe6b52cf076799ba7fbf452c6b2154e8639c3b2fe5c74683",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; bluetoothBusy, busy, busyChoice, pairBusy, refreshBusy",
     "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads."
@@ -16230,7 +16230,7 @@
     "line": 97,
     "statement": "Api.call(\"POST\", \"/api/computers/\" + id + \"/bluetooth\", {address: bluetoothAddress}, function(view, error) {",
     "occurrence": 1,
-    "source_sha256": "44bbdd8d16ba1a424278a5aebfaf4d0825e4adc200e1cbc72bf93f533d838cd1",
+    "source_sha256": "f694f5777c824fcabe6b52cf076799ba7fbf452c6b2154e8639c3b2fe5c74683",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; bluetoothBusy, busy, busyChoice, pairBusy, refreshBusy",
     "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads."
@@ -16242,7 +16242,7 @@
     "line": 106,
     "statement": "Api.call(\"GET\", \"/api/computers/discover\", null, function(result, error) {",
     "occurrence": 1,
-    "source_sha256": "44bbdd8d16ba1a424278a5aebfaf4d0825e4adc200e1cbc72bf93f533d838cd1",
+    "source_sha256": "f694f5777c824fcabe6b52cf076799ba7fbf452c6b2154e8639c3b2fe5c74683",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; bluetoothBusy, busy, busyChoice, pairBusy, refreshBusy",
     "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads."
@@ -16254,7 +16254,7 @@
     "line": 124,
     "statement": "Api.call(\"DELETE\", \"/api/computers/\" + computer.id + edits, null, function(view, error) {",
     "occurrence": 1,
-    "source_sha256": "44bbdd8d16ba1a424278a5aebfaf4d0825e4adc200e1cbc72bf93f533d838cd1",
+    "source_sha256": "f694f5777c824fcabe6b52cf076799ba7fbf452c6b2154e8639c3b2fe5c74683",
     "disposition": "confirmation",
     "guard": "useUnpair / DevicesUnpair / DeviceSheets ForgetPage and revoke confirmation",
     "reason": "The preflight names unsent edits and cached books; even an empty device now asks before forgetting its identity."
@@ -16266,7 +16266,7 @@
     "line": 124,
     "statement": "Api.call(\"DELETE\", \"/api/computers/\" + computer.id + edits, null, function(view, error) {",
     "occurrence": 1,
-    "source_sha256": "44bbdd8d16ba1a424278a5aebfaf4d0825e4adc200e1cbc72bf93f533d838cd1",
+    "source_sha256": "f694f5777c824fcabe6b52cf076799ba7fbf452c6b2154e8639c3b2fe5c74683",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; bluetoothBusy, busy, busyChoice, pairBusy, refreshBusy",
     "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads."
@@ -16278,7 +16278,7 @@
     "line": 131,
     "statement": "Api.call(\"GET\", \"/api/computers/\" + computer.id + \"/unsent\", null, function(unsent, error) {",
     "occurrence": 1,
-    "source_sha256": "44bbdd8d16ba1a424278a5aebfaf4d0825e4adc200e1cbc72bf93f533d838cd1",
+    "source_sha256": "f694f5777c824fcabe6b52cf076799ba7fbf452c6b2154e8639c3b2fe5c74683",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; bluetoothBusy, busy, busyChoice, pairBusy, refreshBusy",
     "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads."
@@ -16290,7 +16290,7 @@
     "line": 133,
     "statement": "if (Logic.unpairCopy(computer.name, S.s_may_tinh_8eafc226, unsent, root.reachable(computer)) === null) {",
     "occurrence": 1,
-    "source_sha256": "44bbdd8d16ba1a424278a5aebfaf4d0825e4adc200e1cbc72bf93f533d838cd1",
+    "source_sha256": "f694f5777c824fcabe6b52cf076799ba7fbf452c6b2154e8639c3b2fe5c74683",
     "disposition": "confirmation",
     "guard": "useUnpair / DevicesUnpair / DeviceSheets ForgetPage and revoke confirmation",
     "reason": "The preflight names unsent edits and cached books; even an empty device now asks before forgetting its identity."
@@ -16302,7 +16302,7 @@
     "line": 134,
     "statement": "root.runUnpair(computer, null, function(problem) { root.say(problem ? S.s_chua_bo_ghep_duoc_7e3c5ca4 : Logic.unpairDone(computer.name)) })",
     "occurrence": 1,
-    "source_sha256": "44bbdd8d16ba1a424278a5aebfaf4d0825e4adc200e1cbc72bf93f533d838cd1",
+    "source_sha256": "f694f5777c824fcabe6b52cf076799ba7fbf452c6b2154e8639c3b2fe5c74683",
     "disposition": "confirmation",
     "guard": "useUnpair / DevicesUnpair / DeviceSheets ForgetPage and revoke confirmation",
     "reason": "The preflight names unsent edits and cached books; even an empty device now asks before forgetting its identity."
@@ -16314,7 +16314,7 @@
     "line": 150,
     "statement": "root.say(Logic.unpairDone(target.name))",
     "occurrence": 1,
-    "source_sha256": "44bbdd8d16ba1a424278a5aebfaf4d0825e4adc200e1cbc72bf93f533d838cd1",
+    "source_sha256": "f694f5777c824fcabe6b52cf076799ba7fbf452c6b2154e8639c3b2fe5c74683",
     "disposition": "confirmation",
     "guard": "useUnpair / DevicesUnpair / DeviceSheets ForgetPage and revoke confirmation",
     "reason": "The preflight names unsent edits and cached books; even an empty device now asks before forgetting its identity."
@@ -16326,7 +16326,7 @@
     "line": 408,
     "statement": "copy: root.asking ? Logic.unpairCopy(root.asking.computer.name, S.s_may_tinh_8eafc226, root.asking.unsent, root.reachable(root.asking.computer)) : null",
     "occurrence": 1,
-    "source_sha256": "44bbdd8d16ba1a424278a5aebfaf4d0825e4adc200e1cbc72bf93f533d838cd1",
+    "source_sha256": "f694f5777c824fcabe6b52cf076799ba7fbf452c6b2154e8639c3b2fe5c74683",
     "disposition": "confirmation",
     "guard": "useUnpair / DevicesUnpair / DeviceSheets ForgetPage and revoke confirmation",
     "reason": "The preflight names unsent edits and cached books; even an empty device now asks before forgetting its identity."
@@ -16662,7 +16662,7 @@
     "line": 21,
     "statement": "Api.quiet(\"GET\", \"/api/books/\" + encodeURIComponent(id) + \"/suggestions\", null, function(data, err) {",
     "occurrence": 1,
-    "source_sha256": "686d28093a41a86bc87f411332371a9df1fd5537f07a0ceb59e97e4d8635c71b",
+    "source_sha256": "4629c9d3ea267e5d730a32b2c03ed4248b18046a06bda48468e189b48ce84004",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; loading, saving",
     "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads."
@@ -16674,7 +16674,7 @@
     "line": 38,
     "statement": "Api.quiet(\"PUT\", \"/api/books/\" + encodeURIComponent(id) + \"/skip\", {line: group.line, chapters: group.chapters, skip: on}, function(data, err) {",
     "occurrence": 1,
-    "source_sha256": "686d28093a41a86bc87f411332371a9df1fd5537f07a0ceb59e97e4d8635c71b",
+    "source_sha256": "4629c9d3ea267e5d730a32b2c03ed4248b18046a06bda48468e189b48ce84004",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; loading, saving",
     "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads."
@@ -16746,7 +16746,7 @@
     "line": 45,
     "statement": "store.request(\"GET\", \"/api/books/\" + bookId + \"/casting/\" + snapshot.chapterId, null, function(status, data) {",
     "occurrence": 1,
-    "source_sha256": "1df3233bc3de0f6405b9fb3d014e35ce7d1067fd3051b56b5c6ad2d538f1550d",
+    "source_sha256": "3c5f68b361c557cc0d3e2708acbd171506076284c5b897401263edeaec9cedc0",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; busy, pending",
     "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads."
@@ -16794,7 +16794,7 @@
     "line": 27,
     "statement": "Api.quiet(\"GET\", \"/api/readaloud/voices\", null, function(data, error) {",
     "occurrence": 1,
-    "source_sha256": "02f80176e4843de89f143e7e5c2c69d657a4d7d530c6b9e8e6e546b32073442a",
+    "source_sha256": "46df2828a6d4dff9caeb7cd1fa6dca80e0e601145e0edaed830291f55706bab3",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; loading",
     "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads."
@@ -16806,7 +16806,7 @@
     "line": 34,
     "statement": "Api.quiet(\"GET\", \"/api/readaloud/online\", null, function(data, error) { root.syncProviders(!error && Array.isArray(data) ? data : []) })",
     "occurrence": 1,
-    "source_sha256": "02f80176e4843de89f143e7e5c2c69d657a4d7d530c6b9e8e6e546b32073442a",
+    "source_sha256": "46df2828a6d4dff9caeb7cd1fa6dca80e0e601145e0edaed830291f55706bab3",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; loading",
     "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads."
@@ -16878,7 +16878,7 @@
     "line": 48,
     "statement": "store.request(\"GET\", \"/api/books/\" + bookId + \"/music\", null, function(status, data) {",
     "occurrence": 1,
-    "source_sha256": "47716997b9a3cdaa485d544fc0498b5b70e4dd9468111872557ce29ac8c6ed99",
+    "source_sha256": "5e611abef28d06b7dd535c5ad4063070bce0c941a7870d50a0048f8b40244677",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; busy, musicBusy, pending, spokenProgress",
     "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads."
@@ -16890,7 +16890,7 @@
     "line": 88,
     "statement": "store.request(\"PUT\", \"/api/books/\" + bookId + \"/music\", body, function(status, data) {",
     "occurrence": 1,
-    "source_sha256": "47716997b9a3cdaa485d544fc0498b5b70e4dd9468111872557ce29ac8c6ed99",
+    "source_sha256": "5e611abef28d06b7dd535c5ad4063070bce0c941a7870d50a0048f8b40244677",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; busy, musicBusy, pending, spokenProgress",
     "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads."
@@ -16902,7 +16902,7 @@
     "line": 102,
     "statement": "store.request(\"POST\", \"/api/books/\" + bookId + \"/music/rebuild\", null, function(status, data) {",
     "occurrence": 1,
-    "source_sha256": "47716997b9a3cdaa485d544fc0498b5b70e4dd9468111872557ce29ac8c6ed99",
+    "source_sha256": "5e611abef28d06b7dd535c5ad4063070bce0c941a7870d50a0048f8b40244677",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; busy, musicBusy, pending, spokenProgress",
     "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads."
@@ -16914,7 +16914,7 @@
     "line": 113,
     "statement": "store.request(\"POST\", \"/api/books/\" + bookId + \"/music/download/cancel\", null, function(status, data) {",
     "occurrence": 1,
-    "source_sha256": "47716997b9a3cdaa485d544fc0498b5b70e4dd9468111872557ce29ac8c6ed99",
+    "source_sha256": "5e611abef28d06b7dd535c5ad4063070bce0c941a7870d50a0048f8b40244677",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; busy, musicBusy, pending, spokenProgress",
     "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads."
@@ -16962,7 +16962,7 @@
     "line": 36,
     "statement": "store.request(\"GET\", \"/api/books/\" + bookId + \"/music/scenes/\" + encodeURIComponent(sceneKey) + \"/alternatives\", null, function(status, data) {",
     "occurrence": 1,
-    "source_sha256": "c3e643fe01de0b4c584b1a5a3aa4d4ea88a0abd5e2957a8a6c62369cddb91ecb",
+    "source_sha256": "e58c233d77c00cf19000d09b49d8484b738e711fa3fefd460952e21f19f3f98f",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; busy, loading",
     "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads."
@@ -17106,7 +17106,7 @@
     "line": 46,
     "statement": "Api.quiet(\"GET\", copy.path, null, function(data, error) { if (!error && data) root.status = data })",
     "occurrence": 1,
-    "source_sha256": "b84fd3e7beabbf44bb985cdb904513c423131d2ad158fcd3b3bdfb4a86a1dd56",
+    "source_sha256": "79e86e82eb9c8ff99ff348b8b57052385e4f59d14ff1be47e48b74674ee18d5d",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; ProgressBar, busy, downloading, onDownloadingChanged, onWorkingChanged, wasWorking, working",
     "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
@@ -17118,7 +17118,7 @@
     "line": 51,
     "statement": "Api.quiet(\"POST\", copy.path + suffix, body, function(data, error) {",
     "occurrence": 1,
-    "source_sha256": "b84fd3e7beabbf44bb985cdb904513c423131d2ad158fcd3b3bdfb4a86a1dd56",
+    "source_sha256": "79e86e82eb9c8ff99ff348b8b57052385e4f59d14ff1be47e48b74674ee18d5d",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; ProgressBar, busy, downloading, onDownloadingChanged, onWorkingChanged, wasWorking, working",
     "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
@@ -17130,7 +17130,7 @@
     "line": 70,
     "statement": "Api.quiet(\"GET\", \"/api/studio/supertonic/use\", null, function(data, error) {",
     "occurrence": 1,
-    "source_sha256": "b84fd3e7beabbf44bb985cdb904513c423131d2ad158fcd3b3bdfb4a86a1dd56",
+    "source_sha256": "79e86e82eb9c8ff99ff348b8b57052385e4f59d14ff1be47e48b74674ee18d5d",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; ProgressBar, busy, downloading, onDownloadingChanged, onWorkingChanged, wasWorking, working",
     "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
@@ -17142,7 +17142,7 @@
     "line": 84,
     "statement": "Api.quiet(\"GET\", \"/api/readaloud/voices\", null, function(voices, error) {",
     "occurrence": 1,
-    "source_sha256": "b84fd3e7beabbf44bb985cdb904513c423131d2ad158fcd3b3bdfb4a86a1dd56",
+    "source_sha256": "79e86e82eb9c8ff99ff348b8b57052385e4f59d14ff1be47e48b74674ee18d5d",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; ProgressBar, busy, downloading, onDownloadingChanged, onWorkingChanged, wasWorking, working",
     "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
@@ -17154,7 +17154,7 @@
     "line": 273,
     "statement": "onActivated: { if (choiceRow.choice.installed) root.ask(choiceRow.choice.id, choiceRow.choice.label); else root.remove(choiceRow.choice.id) }",
     "occurrence": 1,
-    "source_sha256": "b84fd3e7beabbf44bb985cdb904513c423131d2ad158fcd3b3bdfb4a86a1dd56",
+    "source_sha256": "79e86e82eb9c8ff99ff348b8b57052385e4f59d14ff1be47e48b74674ee18d5d",
     "disposition": "confirmation",
     "guard": "VoiceSheets ModuleRemovePage, KeyRemovePage, TrackSheet / VoiceModule confirmation",
     "reason": "Removing installed resources, credentials or imported music asks first; removing an incomplete package discards only temporary downloaded bytes. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
@@ -17166,7 +17166,7 @@
     "line": 411,
     "statement": "description: root.asking && root.asking.use === undefined ? S.s_dang_xem_cuon_nao_con_dung_giong_nay_1a2d4fa1 : VoiceLogic.removeAsk(root.asking ? root.asking.use : null)",
     "occurrence": 1,
-    "source_sha256": "b84fd3e7beabbf44bb985cdb904513c423131d2ad158fcd3b3bdfb4a86a1dd56",
+    "source_sha256": "79e86e82eb9c8ff99ff348b8b57052385e4f59d14ff1be47e48b74674ee18d5d",
     "disposition": "confirmation",
     "guard": "VoiceSheets ModuleRemovePage, KeyRemovePage, TrackSheet / VoiceModule confirmation",
     "reason": "Removing installed resources, credentials or imported music asks first; removing an incomplete package discards only temporary downloaded bytes. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
@@ -17178,7 +17178,7 @@
     "line": 424,
     "statement": "onActivated: { const id = root.asking.id; confirm.dismiss(); root.remove(id) }",
     "occurrence": 1,
-    "source_sha256": "b84fd3e7beabbf44bb985cdb904513c423131d2ad158fcd3b3bdfb4a86a1dd56",
+    "source_sha256": "79e86e82eb9c8ff99ff348b8b57052385e4f59d14ff1be47e48b74674ee18d5d",
     "disposition": "confirmation",
     "guard": "VoiceSheets ModuleRemovePage, KeyRemovePage, TrackSheet / VoiceModule confirmation",
     "reason": "Removing installed resources, credentials or imported music asks first; removing an incomplete package discards only temporary downloaded bytes. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
@@ -17190,7 +17190,7 @@
     "line": 21,
     "statement": "Api.quiet(\"GET\", \"/api/readaloud/voice-speed\", null, function(data, error) { if (!error && data) root.status = data })",
     "occurrence": 1,
-    "source_sha256": "7abc66b645027f667b7ef952aae8c89c384e442be6122e922049f361e8ab030d",
+    "source_sha256": "f861c587aebb9878430757a80c1e52a0638e76e00ed9ae8622cb953b91b36a23",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; PendingIndicator, busy, downloading, pending, working",
     "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads."
@@ -17202,7 +17202,7 @@
     "line": 26,
     "statement": "Api.quiet(\"POST\", \"/api/readaloud/voice-speed\", {choice: choice}, function(data, error) {",
     "occurrence": 1,
-    "source_sha256": "7abc66b645027f667b7ef952aae8c89c384e442be6122e922049f361e8ab030d",
+    "source_sha256": "f861c587aebb9878430757a80c1e52a0638e76e00ed9ae8622cb953b91b36a23",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; PendingIndicator, busy, downloading, pending, working",
     "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads."
@@ -17325,6 +17325,6 @@
     "disposition": "pending",
     "guard": "metadataBusy blocks duplicate writes and drives the save-button pending state.",
     "reason": "Only optional descriptive fields are submitted. Failure stays in the open editor; success refreshes project metadata without changing audio.",
-    "source_sha256": "133d3cfafcb8637ed680b96881d47f7c323494171a33e5fda5850f28e1f9fdb5"
+    "source_sha256": "f1ea92046c073fa5b33b65a6d3a6638922711f9ed95e61b9f4a70f3a8296361b"
   }
 ]

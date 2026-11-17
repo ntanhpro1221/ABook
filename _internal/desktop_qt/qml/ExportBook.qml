@@ -279,6 +279,7 @@ StudioConfirm {
         }
         // Hỏi lại mỗi 5 giây: xuất lại xong thì hàng khép tại chỗ, hết hàng thì cả khung khép
         Collapse {
+            id: collapseOfColumn
             width: parent.width
             open: root.stale.length > 0
             spacing: 8
@@ -288,7 +289,7 @@ StudioConfirm {
                 delegate: Column {
                     required property var modelData
                     objectName: "exportStale"
-                    width: parent.width
+                    width: collapseOfColumn.width
                     spacing: 8
                     Text {
                         width: parent.width
@@ -337,6 +338,7 @@ StudioConfirm {
             }
         }
         Collapse {
+            id: collapseOfItem
             width: parent.width
             open: root.plan.warnings.length > 0 || (!root.plan.whole && Boolean(root.book.pendingChanges))
             spacing: 8
@@ -345,7 +347,7 @@ StudioConfirm {
                 delegate: Item {
                     required property string modelData
                     objectName: "exportWarning"
-                    width: parent.width
+                    width: collapseOfItem.width
                     height: line.height
                     Icon { x: 0; y: 2; name: "triangle-alert"; size: 16; color: Theme.warning }
                     Text { id: line; x: 24; width: parent.width - 24; text: modelData; color: Theme.text; wrapMode: Text.Wrap; font.pixelSize: Theme.sizeBodySmall }

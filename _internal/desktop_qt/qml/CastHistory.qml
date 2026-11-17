@@ -51,7 +51,7 @@ DevicesFold {
             id: entry
             required property var modelData
             readonly property string state: modelData.state === "applied" && root.queued[modelData.operationId] ? "pending" : modelData.state
-            width: parent.width
+            width: root.width
             topPadding: Theme.s12
             bottomPadding: Theme.s12
             Row {

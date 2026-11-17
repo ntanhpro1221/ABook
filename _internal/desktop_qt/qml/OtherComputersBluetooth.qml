@@ -35,6 +35,7 @@ Item {
         panelWidth: 288
         pad: 6
         Column {
+            id: columnOfInteractive
             width: parent.width
             Text {
                 x: 8
@@ -64,7 +65,7 @@ Item {
                     id: row
                     required property var modelData
                     readonly property bool selected: String(modelData.address).toUpperCase() === root.current
-                    width: parent.width
+                    width: columnOfInteractive.width
                     implicitHeight: label.height + 12
                     height: implicitHeight
                     pressScaling: false

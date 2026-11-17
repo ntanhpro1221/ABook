@@ -136,6 +136,7 @@ CastModal {
             width: parent.width
             open: root.status === "ready"
             Column {
+                id: columnOfColumn
                 width: parent.width
                 spacing: 12
                 // Đã chọn giọng khác mà chưa vào sách
@@ -237,7 +238,7 @@ CastModal {
                         id: group
                         required property var modelData
                         required property int index
-                        width: parent.width
+                        width: columnOfColumn.width
                         spacing: 4
                         // Nhóm của máy đọc khác (hay khi có từ hai nhóm): đầu nhóm có nút tải giọng khi máy đọc ấy chưa có trên máy này
                         CastEngine {

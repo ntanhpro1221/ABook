@@ -169,6 +169,7 @@ Item {
             }
         }
         Column {
+            id: columnOfItem
             objectName: "voiceDownloadList"
             width: Theme.listWidth(parent, parent.width)
             topPadding: 12
@@ -182,7 +183,7 @@ Item {
                     readonly property bool editable: root.canPick && !choice.installed
                     readonly property real size: choice.installed ? -1 : (root.downloading ? (root.sizes[choice.id] !== undefined ? root.sizes[choice.id] : choice.bytes) : choice.bytes)
                     readonly property bool removable: Boolean(choice.removable) && root.canPick
-                    width: parent ? parent.width : 0
+                    width: columnOfItem.width
                     height: rowColumn.height
                     Column {
                         id: rowColumn
