@@ -1,5 +1,6 @@
 package vn.abook.player.ui.nowplaying
 
+import vn.abook.player.ui.components.MarqueeLine
 import vn.abook.player.ui.motion.SwapContent
 import vn.abook.player.ui.motion.ContentLayout
 
@@ -178,10 +179,10 @@ private class Roll(first: String) {
  * Every label replacement travels vertically through a clipped aperture (chữ mới trồi từ dưới 220 ms, chữ cũ đi lên 150 ms, khung đổi cỡ theo). No default cross-fades.
  * Không dùng AnimatedContent: mỗi nhãn tĩnh của Đang nghe (tên chương, tên sách, giờ, nhãn nút...) mang một AnimatedContent, ~0,8 ms dựng lần đầu mỗi cái trong trace
  * Perfetto (NATIVE_POLISH) và cả chục cái cùng lúc ở khung đầu của cửa sổ. Ở đây lúc đứng yên chỉ là một BasicText; hai chữ chỉ có trong lúc chạy,
- * toạ độ đọc trong pha dàn trang.
+ * toạ độ đọc trong pha dàn trang. `oneLine`: tên trong ô một dòng cố định ([MarqueeLine]: thu cỡ rồi chạy chữ) - khối tên không cao thêm, bìa và nút không dời.
  */
 @Composable
-fun RollingLabel(text: String, modifier: Modifier = Modifier, style: TextStyle = Abook.type.body) {
+fun RollingLabel(text: String, modifier: Modifier = Modifier, style: TextStyle = Abook.type.body, oneLine: Boolean = false) {
     val roll = remember { Roll(text) }
     LaunchedEffect(text) {
         if (roll.shown == text) return@LaunchedEffect
@@ -193,8 +194,8 @@ fun RollingLabel(text: String, modifier: Modifier = Modifier, style: TextStyle =
     }
     Layout(
         content = {
-            BasicText(roll.shown, style = style)
-            roll.leaving?.let { BasicText(it, style = style) }
+            if (oneLine) MarqueeLine(roll.shown, style = style) else BasicText(roll.shown, style = style)
+            roll.leaving?.let { if (oneLine) MarqueeLine(it, style = style) else BasicText(it, style = style) }
         },
         modifier = modifier.clipToBounds(),
     ) { measurables, constraints ->

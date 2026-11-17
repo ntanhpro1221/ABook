@@ -315,6 +315,11 @@ giữ tên trong cột tối đa 640 px, thanh tua dùng phần rộng còn lạ
 - **Tên một dòng** (tên giọng, tên nhân vật trong danh sách chọn): chữ thu cỡ tới 0.75 cỡ gốc cho vừa một dòng; thu tới đó vẫn không vừa thì
   xuống dòng ở cỡ gốc - không bao giờ "…". Một thành phần: điện thoại `OneLineFit`, web `OneLineFit`, Qt `OneLineFit.qml`; máy dò `TextCutScanTest`,
   `check_text_cut.py`, `shared/userTextClip.test.ts`.
+  Ô tên CAO CỐ ĐỊNH (thanh phát thu nhỏ, thanh phát, màn Đang nghe: tên chương, tên sách): cùng luật thu cỡ, nhưng thu tới 0.75 vẫn không vừa thì
+  CHẠY CHỮ thay vì xuống dòng - đứng `marqueeDelayMs` ở đầu, trượt chậm `marqueeSpeed` px/giây, bản chép thứ hai cách `marqueeGap`, rồi lại đứng;
+  giảm chuyển động thì nhảy từng đoạn, không trượt, không mờ đuôi. Ô luôn cao đúng một dòng ở cỡ gốc nên bìa và nút phát không bao giờ dời (máy dò
+  R7). Lời nhắn của màn Đang nghe (hẹn giờ, sắp tắt, lỗi phát, đã nghe hết) nổi trên phần dưới bìa, ngay trên tên - không chiếm chỗ trong cột;
+  chế độ Đọc theo thì ở cuối cột. Một thành phần: điện thoại `MarqueeLine`, web `MarqueeLine`, Qt `MarqueeLine.qml`.
 - **Vùng chạm**: tối thiểu 44×44 (điện thoại), 32×32 (máy tính, có tooltip).
 
 ## 6. Thành phần

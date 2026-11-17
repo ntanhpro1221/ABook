@@ -144,6 +144,9 @@ internal object MotionMs {
     const val REDUCED_FADE_MS = 120
     const val INDETERMINATE_MS = 1400
     const val SPIN_MS = 1000
+    const val MARQUEE_DELAY_MS = 2000
+    const val MARQUEE_SPEED = 30
+    const val MARQUEE_GAP = 48
     const val FAST = 120
     const val FAST_OUT = 90
     const val MEDIUM = 220

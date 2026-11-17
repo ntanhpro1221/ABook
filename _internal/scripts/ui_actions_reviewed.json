@@ -1782,7 +1782,7 @@
     "line": 803,
     "statement": "onClick={() => (playing ? sample.stop() : void sample.play(voice.id))}",
     "occurrence": 1,
-    "source_sha256": "e92ff53c7b8aab4a9345b7f13ff09f9c2ab996c73deaa8431f274c03f928dce1",
+    "source_sha256": "d918a405b68829dce71111c12ea4fcb26d819c76229aafa8b06def0874936604",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; BookProgressLine, CompactProgress, PendingIndicator, bookProgressText, busy, busyClick, isLoading, isPending, levelBusy, loading, musicLoading, pending",
     "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Devvoice review: device voice names, circled radio marks, one-line names and 8 dp text gaps leave this action and its guard unchanged."
@@ -1794,7 +1794,7 @@
     "line": 886,
     "statement": "const start = async () => {",
     "occurrence": 1,
-    "source_sha256": "e92ff53c7b8aab4a9345b7f13ff09f9c2ab996c73deaa8431f274c03f928dce1",
+    "source_sha256": "d918a405b68829dce71111c12ea4fcb26d819c76229aafa8b06def0874936604",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; BookProgressLine, CompactProgress, PendingIndicator, bookProgressText, busy, busyClick, isLoading, isPending, levelBusy, loading, musicLoading, pending",
     "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Devvoice review: device voice names, circled radio marks, one-line names and 8 dp text gaps leave this action and its guard unchanged."
@@ -1806,7 +1806,7 @@
     "line": 914,
     "statement": "<button type=\"button\" data-focus-next className=\"touch-hit -ml-2 rounded-control px-2 py-1 font-medium text-fg hover:bg-hover\" onClick={() => void source.readAloudPrepareCancel?.().then(settle)}>{S.s_dung_lam_truoc_632af923}</button>",
     "occurrence": 1,
-    "source_sha256": "e92ff53c7b8aab4a9345b7f13ff09f9c2ab996c73deaa8431f274c03f928dce1",
+    "source_sha256": "d918a405b68829dce71111c12ea4fcb26d819c76229aafa8b06def0874936604",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; BookProgressLine, CompactProgress, PendingIndicator, bookProgressText, busy, busyClick, isLoading, isPending, levelBusy, loading, musicLoading, pending",
     "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Devvoice review: device voice names, circled radio marks, one-line names and 8 dp text gaps leave this action and its guard unchanged."
@@ -1818,7 +1818,7 @@
     "line": 917,
     "statement": "<button type=\"button\" data-focus-next aria-disabled={busy || undefined} aria-busy={busy || undefined} className=\"touch-hit -ml-2 rounded-control px-2 py-1 font-medium text-accent-text hover:bg-hover aria-disabled:opacity-45\" onClick={busyClick(busy, () => void start())}>",
     "occurrence": 1,
-    "source_sha256": "e92ff53c7b8aab4a9345b7f13ff09f9c2ab996c73deaa8431f274c03f928dce1",
+    "source_sha256": "d918a405b68829dce71111c12ea4fcb26d819c76229aafa8b06def0874936604",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; BookProgressLine, CompactProgress, PendingIndicator, bookProgressText, busy, busyClick, isLoading, isPending, levelBusy, loading, musicLoading, pending",
     "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Devvoice review: device voice names, circled radio marks, one-line names and 8 dp text gaps leave this action and its guard unchanged."
@@ -1830,7 +1830,7 @@
     "line": 945,
     "statement": "const clear = async () => {",
     "occurrence": 1,
-    "source_sha256": "e92ff53c7b8aab4a9345b7f13ff09f9c2ab996c73deaa8431f274c03f928dce1",
+    "source_sha256": "d918a405b68829dce71111c12ea4fcb26d819c76229aafa8b06def0874936604",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; BookProgressLine, CompactProgress, PendingIndicator, bookProgressText, busy, busyClick, isLoading, isPending, levelBusy, loading, musicLoading, pending",
     "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Devvoice review: device voice names, circled radio marks, one-line names and 8 dp text gaps leave this action and its guard unchanged."
@@ -1842,7 +1842,7 @@
     "line": 1505,
     "statement": "return switchRecord(bookId, async () => undefined).then(() =>",
     "occurrence": 1,
-    "source_sha256": "e92ff53c7b8aab4a9345b7f13ff09f9c2ab996c73deaa8431f274c03f928dce1",
+    "source_sha256": "d918a405b68829dce71111c12ea4fcb26d819c76229aafa8b06def0874936604",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; BookProgressLine, CompactProgress, PendingIndicator, bookProgressText, busy, busyClick, isLoading, isPending, levelBusy, loading, musicLoading, pending",
     "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Devvoice review: device voice names, circled radio marks, one-line names and 8 dp text gaps leave this action and its guard unchanged."
@@ -1854,7 +1854,7 @@
     "line": 2039,
     "statement": "function PlayerModeSwitch({ reading, onSelect }: { reading: boolean; onSelect: (reading: boolean) => void }) {",
     "occurrence": 1,
-    "source_sha256": "e92ff53c7b8aab4a9345b7f13ff09f9c2ab996c73deaa8431f274c03f928dce1",
+    "source_sha256": "d918a405b68829dce71111c12ea4fcb26d819c76229aafa8b06def0874936604",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; BookProgressLine, CompactProgress, PendingIndicator, bookProgressText, busy, busyClick, isLoading, isPending, levelBusy, loading, musicLoading, pending",
     "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Devvoice review: device voice names, circled radio marks, one-line names and 8 dp text gaps leave this action and its guard unchanged."
@@ -10806,7 +10806,7 @@
     "line": 346,
     "statement": "onRetry = { onDim(false); scope.launch { model.loadReadAlong() } },",
     "occurrence": 1,
-    "source_sha256": "28679c906a8890a7d69fc407c0d10ad7197f4503c6eea2f10ecbef992faeff67",
+    "source_sha256": "5d61d63944cd29f8e4f441e6ceeed57236d6154bd0beeb79f09dd4ac9e093196",
     "disposition": "pending",
     "guard": "ViewModel/operation fields: pending, preparing, progress, windowProgress; Components pending indicator",
     "reason": "The model retains the operation and locks repeats; UI uses the shared pending parameter, loading content or progress owner. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."

@@ -379,6 +379,7 @@ qt_add_qml_module(ABookDesk
         qml/VoiceRow.qml
         qml/VoiceSample.qml
         qml/OneLineFit.qml
+        qml/MarqueeLine.qml
         qml/VoiceModules.qml
         qml/VoiceSpeed.qml
         qml/ListenSave.qml

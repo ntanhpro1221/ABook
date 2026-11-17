@@ -3,7 +3,8 @@ import QtQuick
 import ABook
 import "TextWrap.js" as TextWrap
 
-// Cùng bìa và nút của trình phát; chữ luôn xuống dòng, chiều cao theo nội dung.
+// Cùng bìa và nút của trình phát. Tên sách / tên chương mỗi thứ MỘT dòng cố định (MarqueeLine: thu cỡ rồi chạy chữ, không "…"): cửa sổ cao
+// không đổi theo tên, bìa và nút phát không bao giờ dời.
 Rectangle {
     id: root
     property var windowMode: null
@@ -68,15 +69,15 @@ Rectangle {
         y: 36
         width: Math.min(640, root.width - x - 12 - (playback.width + Theme.s24) * Math.min(1, root.wideT * 2))
         spacing: 4
-        Text {
+        MarqueeLine {
             objectName: "miniBookTitle"
-            width: parent.width; text: TextWrap.keepDots(root.bookTitle); wrapMode: Text.Wrap
-            color: Theme.text; font.pixelSize: Theme.sizeBody; font.weight: Theme.weightBold
+            width: parent.width; text: root.bookTitle
+            color: Theme.text; baseSize: Theme.sizeBody; weight: Theme.weightBold
         }
-        Text {
+        MarqueeLine {
             objectName: "miniChapterTitle"
-            width: parent.width; text: TextWrap.keepDots(root.chapterTitle); wrapMode: Text.Wrap
-            color: Theme.text2; font.pixelSize: Theme.sizeCaption
+            width: parent.width; text: root.chapterTitle
+            color: Theme.text2; baseSize: Theme.sizeCaption
         }
     }
     Row {

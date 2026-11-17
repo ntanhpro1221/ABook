@@ -1,4 +1,5 @@
 import { SheetMusic } from '@/shared/SheetMusic';
+import { MarqueeLine } from "@/shared/MarqueeLine";
 import { useDestructiveConfirm } from "../shared/DestructiveConfirm";
 import { PendingIndicator } from "../shared/PendingIndicator";
 import { Presence } from "../shared/MotionPresence";
@@ -1334,7 +1335,8 @@ function useOpenTrackBook(bookId: string | undefined) {
 }
 
 /** Dòng dưới tên chương: tên sách - hay đang chờ giọng máy đọc đoạn đầu. Lỗi KHÔNG nằm ở đây (PlayerAlert).
- *  Tên sách là nút tới trang sách; dòng đang nói việc khác thì chỉ là chữ. `look`: "bar" một dòng ở thanh phát, "screen" ở màn Đang nghe (có dấu ›), "reading" một dòng cạnh bìa nhỏ. */
+ *  Tên sách là nút tới trang sách; dòng đang nói việc khác thì chỉ là chữ. `look`: "bar" ở thanh phát, "screen" ở màn Đang nghe (có dấu ›), "reading" cạnh bìa nhỏ.
+ *  Mọi look là MỘT dòng cố định (MarqueeLine - DESIGN.md §5.5 "Tên một dòng"): thu cỡ rồi chạy chữ, không "…", không xuống dòng làm dời bìa / nút phát. */
 function TrackSubtitle({ look }: { look: "bar" | "screen" | "reading" }) {
   const { track, purpose, atEnd, playing, buffering } = usePlayer();
   const speaking = useSpeaking();
@@ -1347,16 +1349,16 @@ function TrackSubtitle({ look }: { look: "bar" | "screen" | "reading" }) {
       {purpose === "review" && (
         <span className="mr-2 inline-block rounded-control bg-info-soft px-2 text-xs font-medium text-info">{S.s_nghe_kiem_f9c474bb}</span>
       )}
-      {preparing ? <span className={look === "bar" ? "block truncate" : undefined}>{PREPARING_VOICE}</span> : atEnd === "caughtUp" ? <span className={look === "bar" ? "block truncate" : undefined}>{S.s_da_nghe_het_phan_da_co_1aa0a8e0}</span> : (
+      {preparing ? <MarqueeLine>{PREPARING_VOICE}</MarqueeLine> : atEnd === "caughtUp" ? <MarqueeLine>{S.s_da_nghe_het_phan_da_co_1aa0a8e0}</MarqueeLine> : (
         <button
           type="button"
           data-track-book
           onClick={openBook}
           aria-label={S.s_mo_trang_sach_3f7bd955}
           title={track.bookTitle}
-          className={cn("touch-hit pointer-events-auto relative z-[1] rounded-control text-left underline-offset-2 hover:text-fg hover:underline", look === "screen" && "inline-block max-w-full break-words", look === "bar" && "inline-block max-w-full truncate align-top")}
+          className="touch-hit pointer-events-auto relative z-[1] block max-w-full rounded-control text-left underline-offset-2 hover:text-fg hover:underline"
         >
-          {track.bookTitle}{look === "screen" && <span aria-hidden>{"\u00a0›"}</span>}
+          <span className="flex min-w-0 items-center"><MarqueeLine className="min-w-0">{track.bookTitle}</MarqueeLine>{look === "screen" && <span aria-hidden className="shrink-0">{"\u00a0›"}</span>}</span>
         </button>
       )}
     </MotionRegion>
@@ -1626,8 +1628,8 @@ export function PlayerBar({
             />
             <div className="pointer-events-none flex min-w-0 flex-1 items-center gap-3">
               <BookCover title={track.bookTitle} image={track.bookCover} size="sm" label={false} morph="cover" className="size-11" />
-              <div className="min-w-0">
-                <MotionRegion motionKey={[track.bookId, track.chapterId, track.chapterTitle]} data-np="chapter" className="truncate text-sm font-medium">{track.chapterTitle}</MotionRegion>
+              <div className="min-w-0 flex-1">
+                <MotionRegion motionKey={[track.bookId, track.chapterId, track.chapterTitle]} data-np="chapter" className="text-sm font-medium"><MarqueeLine>{track.chapterTitle}</MarqueeLine></MotionRegion>
                 <div data-np="book" className="text-xs text-fg-2">
                   <TrackSubtitle look="bar" />
                 </div>
@@ -1678,8 +1680,8 @@ export function PlayerBar({
           />
           <div className="pointer-events-none flex min-w-0 items-center gap-3">
             <BookCover title={track.bookTitle} image={track.bookCover} size="sm" label={false} morph="cover" className="size-12" />
-            <div className="min-w-0">
-              <MotionRegion motionKey={[track.bookId, track.chapterId, track.chapterTitle]} data-np="chapter" className="truncate text-sm font-medium">{track.chapterTitle}</MotionRegion>
+            <div className="min-w-0 flex-1">
+              <MotionRegion motionKey={[track.bookId, track.chapterId, track.chapterTitle]} data-np="chapter" className="text-sm font-medium"><MarqueeLine>{track.chapterTitle}</MarqueeLine></MotionRegion>
               <div data-np="book" className="text-xs text-fg-2">
                 <TrackSubtitle look="bar" />
               </div>
@@ -2093,6 +2095,15 @@ const NowPlayingColumn = memo(function NowPlayingColumn({
   if (!track) return null;
   // Trang sách của cuốn đang nghe: thu màn Đang nghe; đang ở đúng trang ấy thì không mở chồng thêm một lần.
   const bookPage = `/book/${encodeURIComponent(track.bookId)}`;
+  const notes = (
+    <>
+      {/* Đang nhỏ dần thì S.s_copy_920dc24f8105 đã nói thay - hai dòng cùng lúc ở chương rất ngắn đọc như mâu thuẫn. */}
+      <MotionPresence open={sleep.kind === "chapter" && !fading}><p className="py-2 text-center text-xs text-fg-2">{S.s_se_dung_khi_het_chuong_nay_9c1f8c30}</p></MotionPresence>
+      <FadingNotice />
+      <PlayerAlert overlay />
+      <CaughtUpNotice />
+    </>
+  );
   return (
     // Chỉ cột điện thoại cuộn (máy tính: cột cố định có viền phải - mặt nạ sẽ xoá cả viền).
     <aside data-player-column ref={mobile ? scrollFade.ref : undefined} style={mobile ? scrollFade.style : undefined}
@@ -2134,16 +2145,19 @@ const NowPlayingColumn = memo(function NowPlayingColumn({
               <BookCover title={track.bookTitle} image={track.bookCover} size="xs" morph="cover" className="size-12 rounded-control" />
             </button>
           ) : (
-            <div key="cover" data-motion-content className="motion-reveal mt-4 flex min-h-16 min-w-0 flex-1 items-center justify-center [container-type:size]">
+            <div key="cover" data-motion-content className="motion-reveal relative mt-4 flex min-h-16 min-w-0 flex-1 items-center justify-center [container-type:size]">
               {/* Chạm bìa để phát/dừng (SABP): mục tiêu lớn nhất màn hình, dễ trúng khi đang nằm và mắt nhắm mắt mở. */}
               <CoverToggle title={track.bookTitle} image={track.bookCover} />
+              {/* Lời nhắn (hẹn giờ, sắp tắt, lỗi phát, đã nghe hết) NỔI trên phần dưới bìa, ngay trên tên: không chiếm chỗ trong cột nên bìa, tên, thanh tua
+                  và nút phát không bao giờ dời khi lời nhắn hiện / ẩn (máy dò R7; cùng chỗ với điện thoại NowPlayingScreen). Không có lời nhắn thì khối biến mất. */}
+              <div data-np-notes className="absolute inset-x-0 bottom-0 z-[1] rounded-cover bg-panel/95 px-3 empty:hidden">{notes}</div>
             </div>
           )}
           <div className={cn("min-w-0", reading ? "flex-1" : "mt-6 w-full")}>
-            <h2 data-np="chapter" className={cn("break-words font-bold leading-snug", reading ? "line-clamp-2 text-base" : "text-xl")}>
-              <MotionRegion as="span" motionKey={[track.bookId, track.chapterId, track.chapterTitle]} className="block">{track.chapterTitle}</MotionRegion>
+            <h2 data-np="chapter" className={cn("font-bold leading-snug", reading ? "text-base" : "text-xl")}>
+              <MotionRegion as="span" motionKey={[track.bookId, track.chapterId, track.chapterTitle]} className="block"><MarqueeLine>{track.chapterTitle}</MarqueeLine></MotionRegion>
             </h2>
-            <div data-np="book" className={cn("mt-1 break-words text-fg-2", reading ? "truncate text-xs" : "text-sm")}>
+            <div data-np="book" className={cn("mt-1 text-fg-2", reading ? "text-xs" : "text-sm")}>
               <TrackSubtitle look={reading ? "reading" : "screen"} />
             </div>
             {<Presence>{!reading && <MusicCreditLine />}</Presence>}
@@ -2168,11 +2182,8 @@ const NowPlayingColumn = memo(function NowPlayingColumn({
         <SleepMenu look="action" />
         {<Presence>{mobile && <ActionButton icon={ListOrdered} label={S.s_chuong_2d157977} aria-pressed={selected === "chapters"} active={selected === "chapters"} {...keepFocus} onClick={() => onToggle("chapters")} />}</Presence>}
       </div>
-      {/* Đang nhỏ dần thì S.s_copy_920dc24f8105 đã nói thay - hai dòng cùng lúc ở chương rất ngắn đọc như mâu thuẫn. */}
-      <MotionPresence open={sleep.kind === "chapter" && !fading}><p className="mt-2 text-center text-xs text-fg-2">{S.s_se_dung_khi_het_chuong_nay_9c1f8c30}</p></MotionPresence>
-      <FadingNotice className="mt-3" />
-      <PlayerAlert className="mt-3" overlay />
-      <CaughtUpNotice />
+      {/* Chế độ Đọc theo: bìa đã thu về ô nhỏ, lời nhắn ở cuối cột (không nổi lên chữ đang đọc). */}
+      {reading && notes}
     </aside>
   );
 });

@@ -81,15 +81,23 @@ class MiniPlayerTest {
         rule.onNodeWithTag("mini_player").assertHeightIsEqualTo(MiniPlayerHeight)
     }
 
+    /** Tên dài nằm một dòng (MarqueeLine: thu cỡ rồi chạy chữ, không "…"): thanh không cao thêm, bìa và nút phát không dời (neo R7, DESIGN 5.5). */
     @Test
-    fun longTitleWrapsInsteadOfCutting() {
+    fun longTitleKeepsTheBarAndItsAnchors() {
+        longTitle(false)
+    }
+
+    @Test fun longTitleDarkKeepsTheBarAndItsAnchors() = longTitle(true)
+
+    private fun longTitle(dark: Boolean) {
         val long = "Chương 128: Trận chiến cuối cùng trên đỉnh núi tuyết, nơi mọi lời thề cũ được nhắc lại lần nữa"
-        show(state.copy(chapterTitle = long))
-        rule.onNodeWithText(long).assertIsDisplayed()
-        val bar = rule.onNodeWithTag("mini_player").fetchSemanticsNode().size.height
-        val min = with(rule.density) { MiniPlayerHeight.roundToPx() }
-        assertTrue("thanh phải cao thêm để chứa tên dài: $bar <= $min", bar > min)
-        shot("mini_long_title_light")
+        show(state.copy(chapterTitle = long), dark = dark)
+        rule.onNodeWithText(long).assertExists()
+        rule.onNodeWithTag("mini_player").assertHeightIsEqualTo(MiniPlayerHeight)
+        val bar = rule.onNodeWithTag("mini_player").fetchSemanticsNode().boundsInRoot
+        val play = rule.onNodeWithTag("mini_play").fetchSemanticsNode().boundsInRoot
+        assertEquals("nút phát đứng giữa thanh", bar.center.y, play.center.y, 1f)
+        shot(if (dark) "mini_long_title_dark" else "mini_long_title_light")
     }
 
     @Test
@@ -115,6 +123,13 @@ class MiniPlayerTest {
         show(PlayerState(bookId = "b2", bookTitle = "Chí Phèo", chapterId = 1, chapterTitle = "", playing = false, durationMs = 0))
         rule.onNodeWithTag("mini_open").assertIsDisplayed()
         shot("mini_short_light")
+    }
+
+    @Test
+    fun shortTitlesDarkAndNoChapterFallBackToTheBookTitle() {
+        show(PlayerState(bookId = "b2", bookTitle = "Chí Phèo", chapterId = 1, chapterTitle = "", playing = false, durationMs = 0), dark = true)
+        rule.onNodeWithTag("mini_open").assertIsDisplayed()
+        shot("mini_short_dark")
     }
 
     @Test

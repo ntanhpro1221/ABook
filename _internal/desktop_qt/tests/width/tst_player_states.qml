@@ -177,8 +177,9 @@ Item {
             verify(message.implicitHeight > message.font.pixelSize * 2); verify(message.width <= alert.width); compare(message.truncated, false)
             const now = createTemporaryObject(nowComponent, host, {width: data.pixels - 232, height: 1000})
             now.show(); tryCompare(now, "open", true); ready()
+            // Tên chương / tên sách trên thanh phát và màn Đang nghe: MỘT dòng cố định (MarqueeLine) - tên dài thu cỡ rồi chạy chữ, không xuống dòng, không "…"
             for (const text of [findChild(bar, "barChapterTitle"), findChild(now, "playerSubtitleText"), findChild(now, "nowChapterTitle")]) {
-                verify(text.width > 0); verify(text.implicitHeight > text.font.pixelSize * 2); compare(text.truncated, false)
+                verify(text.width > 0); compare(text.fit, "scroll"); verify(text.height < text.baseSize * 2); compare(text.height, text.implicitHeight)
             }
             const scroll = findChild(now, "nowColumnScroll")
             verify(scroll.contentHeight >= scroll.height)

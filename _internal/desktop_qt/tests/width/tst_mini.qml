@@ -6,6 +6,7 @@ Item {
     id: host
     width: 900; height: 900
     Component { id: miniFactory; MiniPlayer { width: 360; height: naturalHeight } }
+    Component { id: marqueeFactory; MarqueeLine { width: 200; baseSize: Theme.sizeBody } }
     Component { id: modeFactory; WindowMode {} }
     Component { id: exitModeFactory; WindowMode { onExitRequested: {} } }
     Component { id: trayFactory; TrayMenuModel {} }
@@ -289,7 +290,31 @@ Item {
             const mode = createTemporaryObject(modeFactory, host, {window: win, loaded: false})
             mode.enter(); compare(mode.mini, false); win.hide()
         }
-        function test_titleWrapAndShots() {
+        // MarqueeLine: vừa -> giữ cỡ; hơi dài -> thu cỡ (>= oneLineMinScale); dài hẳn -> cỡ đáy + chạy chữ; ô luôn cao đúng một dòng cỡ gốc.
+        // Giảm chuyển động: nhảy từng đoạn, đoạn cuối canh cuối tên vào mép phải rồi về đầu.
+        function test_marqueeFitsThenScrolls() {
+            const line = createTemporaryObject(marqueeFactory, host, {text: "Chương 1"})
+            compare(line.fit, "one")
+            const oneHeight = line.height
+            line.text = "Những cuộc gặp gỡ trên đường"
+            tryVerify(() => line.fit !== "one")
+            if (line.fit === "shrunk") verify(line.shownSize >= line.minSize && line.shownSize < line.baseSize)
+            compare(line.height, oneHeight)
+            line.text = "Chương một trăm hai mươi ba · Những cuộc gặp gỡ trên con đường trở về nhà vào một ngày trời đầy nắng"
+            tryCompare(line, "fit", "scroll")
+            compare(line.shownSize, line.minSize)
+            compare(line.height, oneHeight)
+            compare(line.offset, 0)
+            Theme.reduceMotion = true
+            try {
+                tryVerify(() => line.offset > 0, Theme.marqueeDelayMs + 1000)
+                tryVerify(() => line.offset === 0, 20 * Theme.marqueeDelayMs)
+            } finally { Theme.reduceMotion = false }
+            line.still = true
+            compare(line.offset, 0)
+        }
+        // Tên dài không làm thanh cao thêm hay dời bìa / nút phát (DESIGN 5.5 "Tên một dòng", neo R7): một dòng cố định, thu cỡ rồi chạy chữ.
+        function test_titleOneLineAndShots() {
             mouseMove(host, host.width - 1, host.height - 1)
             Nav.hideTip()
             for (const theme of ["light", "dark"]) {
@@ -298,15 +323,22 @@ Item {
                 mini.Window.window.update()
                 verify(waitForRendering(mini))
                 const shortHeight = mini.naturalHeight
+                const coverY = findChild(mini, "miniCover").y
+                const playY = findChild(mini, "miniPlay").mapToItem(mini, 0, 0).y
                 for (const length of ["short", "long"]) {
                     if (length === "long") {
                         mini.bookTitle = "Tôi đã đi qua những ngày rất dài để tìm lại câu chuyện còn dang dở bên bờ sông trong buổi sáng đầu mùa của chúng ta"
                         mini.chapterTitle = "Chương một trăm hai mươi ba\u00a0·\u00a0Những cuộc gặp gỡ trên con đường trở về nhà vào một ngày trời đầy nắng"
-                        tryVerify(() => mini.naturalHeight > shortHeight)
                         const title = findChild(mini, "miniBookTitle")
-                        verify(title.lineCount > 1)
-                        verify(title.paintedWidth <= title.width + 1)
+                        tryCompare(title, "fit", "scroll")
+                        compare(title.shownSize, title.minSize)
+                        compare(findChild(mini, "miniChapterTitle").fit, "scroll")
+                        compare(mini.naturalHeight, shortHeight)
+                        compare(findChild(mini, "miniCover").y, coverY)
+                        compare(findChild(mini, "miniPlay").mapToItem(mini, 0, 0).y, playY)
                     }
+                    findChild(mini, "miniBookTitle").still = true
+                    findChild(mini, "miniChapterTitle").still = true
                     waitForRendering(mini)
                     const path = Qt.resolvedUrl("../../build/d2shots/mini_" + length + "_" + theme + ".png").toString().replace(/^file:\/\/\/([A-Za-z]:)/, "$1").replace(/^file:\/\//, "")
                     qtGlyphAudit.scan()

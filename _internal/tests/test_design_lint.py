@@ -513,6 +513,26 @@ def test_r7_same_anchors_green_moved_cover_red(tmp_path):
     assert dl.rule_r7(same, {"g": list(same)}) == []
 
 
+def test_r7_track_requires_a_continuous_horizontal_surface(tmp_path):
+    keys = {}
+    for name, track_top in (("short", 1659), ("long", 1659), ("moved", 1719)):
+        im, draw = canvas()
+        if name != "short":
+            # A thin row of disconnected accents changes the median row colour,
+            # but belongs to a title above the slider.
+            for x in range(60, 1020, 30):
+                draw.rectangle([x, 1464, x + 18, 1466], fill=TEXT)
+        draw.rectangle([72, track_top, 1008, track_top + 5], fill=(220, 216, 209))
+        s = shot(tmp_path, im, name + "_light.png")
+        keys[s.key] = dl.anchors(dl.Analysis(s))
+        assert keys[s.key]["track_y"] == pytest.approx(track_top / 3)
+        assert keys[s.key]["track_left"] == pytest.approx(24)
+        assert keys[s.key]["track_right"] == pytest.approx(336)
+    findings = dl.rule_r7(keys, {"g": list(keys)})
+    assert {f.image for f in findings} == {"android/moved_light.png"}
+    assert all("track_y" in f.detail for f in findings)
+
+
 # ---------------------------------------------------------------- ngoại lệ và cả lượt
 
 def test_exceptions_must_name_one_image_with_a_reason(tmp_path):
@@ -756,6 +776,17 @@ def test_r11_one_line_fit_shrink_is_on_the_scale():
                 *[n(1 + i, 20, 110 + i * 56, 200, 130 + i * 56, text=f"Giọng {i}", font_size=13 if i == 1 else 14, type="OneLineFit",
                     line_count=1, font_weight=500, color="#1a1814") for i in range(3)])
     assert dt.rule_r11("k", rows) == []
+
+
+def test_r11_marquee_uses_its_declared_base_token():
+    for kind in ("MarqueeLine", "QQuickText"):
+        line = tree(ROOT, n(0, 20, 100, 300, 116, text="Tên rất dài", font_size=9, font_base_size=12, type=kind))
+        assert dt.rule_r11("k", line) == []
+        line["nodes"][1]["font_size"] = 8
+        assert "ngoài thang" in dt.rule_r11("k", line)[0].detail
+        line["nodes"][1]["font_size"] = 9
+        line["nodes"][1]["font_base_size"] = 13
+        assert "ngoài thang" in dt.rule_r11("k", line)[0].detail
 
 
 def test_r14_skips_data_names_in_one_line_fit():

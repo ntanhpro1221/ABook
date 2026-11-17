@@ -1,5 +1,21 @@
 # Test report
 
+## 17-11-2026 — design lint and stable player titles
+
+Qt, Android and web share one-line title fitting and marquee behavior with fixed player anchors. Player notices float over the cover instead of moving the title, seek track or controls. Device and profile names carry a component marker for label-length checks while remaining subject to overflow checks. Qt filters use accessible scrolling tabs. Detector changes cover painted occlusion, wrapped-row spacing, modal layers and continuous seek tracks.
+
+Web TypeScript and build passed; 19 focused Vitest files passed 149 tests. The gallery produced 226 PNG/layer pairs with zero capture problems, plus four font-130 frames. Detector/capture/gate regressions passed 98 tests. The disconnected-letter seek-track regression fails with the base detector and passes with the corrected detector.
+
+Qt configured and built successfully with this worktree's cached SDK 6.10.3. Nineteen native suites passed 643 checks and HitlTests passed seven. The initial full WidthTests run reported 1741 passed, one failed and two skipped: the mini reflow guard descended into deliberately wider marquee text. After correcting the guard, eight focused inputs passed 50 checks, including mini reflow, Mini, PlayerStates and five capture inputs. The full WidthTests suite was not repeated after the guard and capture-fixture edits; these totals include QtTest setup/cleanup. This does not establish SDK 6.11.3 validation.
+
+All 467 Qt PNG/tree pairs now have matching viewport dimensions. Nine formerly cropped 1920px frames and two device-name frames were recaptured and inspected at full size and in enlarged crops. The separate s6, sm, volume and tone review covered 36 fresh frames and enlarged text regions. No new text collision was observed in the reviewed visible regions. Four diagnostic PNGs have no trees. Empty-state images and content outside the scroll viewport do not establish populated or offscreen coverage; an existing offscreen modal-shadow artifact remains visible.
+
+Android ran twelve focused suites (mini player, now playing, devices, name rows, font scale, text cut scan, marquee fitting, book screens, sheet menu). The final record and Roborazzi verify both passed 275 tests with zero failures and no golden changes on verify. An earlier record failed the large-font anchor test on the centred "Nghe" mode label: its paragraph was laid out on the full cell width while the text node was only as wide as the word. The label now fills its cell, which keeps the strict overflow check unchanged and moves the glyphs by about one pixel; 38 player goldens were re-recorded for that shift only. Five new font-130 anchor frames (long titles, sleep, error, ended, caught up) were inspected: cover, titles, seek track and transport stay in place.
+
+Final corpus: 1108 images (412 Android, 470 Qt, 226 web), 466 trees, zero detector errors. Red images with the final detector: R1 0, R3 0, R4 6, R6 21, R7 0, R8 15, R10 62, R11 0, R14 0. The same images with the base detector give R3 29, R7 2, R8 29, R11 2, R14 2. Strict design lint is not green: the remaining R4, R6, R8 and R10 findings are real interface issues or acceptance cases. The five R7 acceptance cases and the R6 np_ended case are now green and were removed from the audit list. Detector regressions passed 97 tests after the removal.
+
+Quality implementation hash before this work: `b8427253ddefd326206651ae32406e83da1003c038a486ca69823ed07623e1d9`.
+
 ## 15-11-2026 — device voice names
 
 Android device voices use the configured engine name and the Voice network flag. Colliding labels get stable numbers; offline voices precede online voices and higher reported quality comes first within each group. No gender or accent is inferred from Android identifiers. Windows preserves the supplied vendor and proper name for both Qt and web. The shared device-group description allows engines with network voices. Voice rows keep individual preview actions; the Android selection status sits below the name when a preview button is present.

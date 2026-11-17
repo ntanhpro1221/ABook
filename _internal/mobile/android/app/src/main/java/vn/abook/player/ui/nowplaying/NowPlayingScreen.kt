@@ -33,6 +33,8 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.CompositingStrategy
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.TransformOrigin
@@ -127,6 +129,17 @@ private fun NowPlayingBody(
     // whose recorded drawing stays untouched while the window moves.
     Box(modifier.drawBehind { drawRect(lerp(panel, background.value, windowProgress.value)) }) {
       Box(Modifier.fillMaxSize().graphicsLayer {}) {
+        // Gạt lời báo đi tới lần lỗi mới (web: "Đóng lời báo"): người đang làm việc khác không bị nó đè mãi.
+        val errorOpen = state.error.isNotBlank() && window.shown
+        var dismissed by remember(state.error, errorOpen) { mutableStateOf(false) }
+        val notes: @Composable () -> Unit = {
+            SleepNotice(state, model, Modifier.playerReveal(windowProgress))
+            PlayerNoteLine(model, Modifier.playerReveal(windowProgress))
+            EndNotice(state, model, window, Modifier.playerReveal(windowProgress))
+            Reveal(state.error.isNotBlank() && !dismissed) {
+                PlayerAlert(state, model, window, Modifier.playerReveal(windowProgress), onDismiss = { dismissed = true })
+            }
+        }
         val playerColumn: @Composable ColumnScope.() -> Unit = {
             val setReading = { on: Boolean -> if (on != window.reading) { window.reading = on; controlsDimmed = false } }
             // Cửa sổ thấp: bìa gọn + tên đứng ở thanh trên thay chữ "Đang nghe" (khi thanh trên không cần công tắc chế độ),
@@ -137,9 +150,9 @@ private fun NowPlayingBody(
                     PlayerCover(state.cover, state.bookTitle, parts.element(NowPlayingPart.Cover, Modifier.size(coverSize).testTag("player_cover")))
                     Spacer(Modifier.width(12.dp))
                     Column(Modifier.weight(1f)) {
-                        RollingLabel(state.chapterTitle, parts.element(NowPlayingPart.Chapter), Abook.type.bodyStrong)
+                        RollingLabel(state.chapterTitle, parts.element(NowPlayingPart.Chapter), Abook.type.bodyStrong, oneLine = true)
                         RollingLabel(subtitle, parts.element(NowPlayingPart.Book,
-                            window.bookPage?.let { Modifier.pressable(onClick = it).testTag("player_book") } ?: Modifier), Abook.type.bodySmall)
+                            window.bookPage?.let { Modifier.pressable(onClick = it).testTag("player_book") } ?: Modifier), Abook.type.bodySmall, oneLine = true)
                     }
                 }
             }
@@ -183,7 +196,7 @@ private fun NowPlayingBody(
                     .then(if (state.readAlongAvailable && !window.reading && !split) Modifier.pressable { setReading(true) } else Modifier)))
                 Column(Modifier.fillMaxWidth().padding(bottom = 8.dp)) {
                     RollingLabel(state.chapterTitle, parts.element(NowPlayingPart.Chapter, Modifier.testTag("player_chapter")),
-                        Abook.type.bodyStrong.copy(fontSize = 20.sp, lineHeight = 28.sp, fontWeight = FontWeight.Bold))
+                        Abook.type.bodyStrong.copy(fontSize = 20.sp, lineHeight = 28.sp, fontWeight = FontWeight.Bold), oneLine = true)
                     Spacer(Modifier.height(4.dp))
                     // Tên sách là nút: chạm thì thu trình phát, tới trang sách. Dòng ấy đang nói việc khác (đang chuẩn bị giọng, đã nghe hết phần đã có) thì chỉ là chữ.
                     val toBook = window.bookPage.takeIf { subtitle == state.bookTitle }
@@ -191,12 +204,22 @@ private fun NowPlayingBody(
                         if (toBook != null) subtitle + "\u00A0›" else subtitle,
                         parts.element(NowPlayingPart.Book, if (toBook != null) Modifier.pressable(onClick = toBook).semantics { contentDescription = S.s_mo_trang_sach_3f7bd955 }.testTag("player_book") else Modifier),
                         Abook.type.bodySmall.copy(color = if (toBook != null) Abook.colors.accentText else Abook.colors.text2),
+                        oneLine = true,
                     )
                 }
                 Box(Modifier.testTag("player_cover_small").then(if (readingHere) Modifier
                     .pressable { setReading(false) }.semantics { contentDescription = S.s_ve_che_do_nghe_a0052a89 } else Modifier))
-                Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.BottomCenter) {
+                Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
                     ReturnChip(state.returnAvailable && !window.reading && !split, state.returnSerial, model::returnToPreviousPlace)
+                    // Lời báo (hẹn giờ, máy khác đã nghe, hết phần đã có, lỗi phát) nổi trên phần dưới của bìa, ngay trên khối tên: không lấy chỗ
+                    // của cột nên bìa, tên, thanh tua và nút phát đứng nguyên một chỗ ở mọi trạng thái (neo R7). Nền tấm vẽ quanh chữ, khối rỗng thì không có.
+                    val surface = Abook.colors.panel
+                    Column(Modifier.fillMaxWidth().drawBehind {
+                        if (size.height >= 1f) {
+                            val pad = Dim.s12.toPx()
+                            drawRoundRect(surface, Offset(-pad, 0f), Size(size.width + 2 * pad, size.height + Dim.s8.toPx()), CornerRadius(Dim.s12.toPx()))
+                        }
+                    }) { if (!window.reading) notes() }
                 }
             }) { measurables, constraints ->
                 val width = constraints.maxWidth
@@ -288,15 +311,9 @@ private fun NowPlayingBody(
                     PlayerAction(S.s_chuong_2d157977, "☷", { window.openSheet(PlayerSheet.Chapters) }, Modifier.weight(1f).testTag("player_chapters"))
                 }
             }
-            SleepNotice(state, model, Modifier.playerReveal(windowProgress))
-            PlayerNoteLine(model, Modifier.playerReveal(windowProgress))
-            EndNotice(state, model, window, Modifier.playerReveal(windowProgress))
-            // Gạt lời báo đi tới lần lỗi mới (web: "Đóng lời báo"): người đang làm việc khác không bị nó đè mãi.
-            val errorOpen = state.error.isNotBlank() && window.shown
-            var dismissed by remember(state.error, errorOpen) { mutableStateOf(false) }
-            Reveal(state.error.isNotBlank() && !dismissed) {
-                PlayerAlert(state, model, window, Modifier.playerReveal(windowProgress), onDismiss = { dismissed = true })
-            }
+            // Cửa sổ thấp (cột cuộn) và chế độ Đọc theo (vùng bìa là chữ đọc - không gì nổi trên chữ đọc): lời báo ở cuối cột như cũ.
+            // Còn lại: lời báo nổi trên vùng bìa, ngay trên khối tên.
+            if (compactHeight || window.reading) notes()
         }
         // Cột phải mở bằng bề ngang: 0 -> (cả phần còn lại sau cột trái và khe 32 dp). Đọc ở pha đo, không recompose theo từng khung.
         val sideT = animateFloatAsState(if (split) 1f else 0f, tween(MotionMs.MEDIUM, easing = Motion.Standard), label = "now-playing-split")
@@ -431,9 +448,11 @@ fun PlayerModeSwitch(mode: State<Float>, onSelect: (Boolean) -> Unit, modifier: 
                 Box(Modifier
                     .pressable(role = Role.Tab) { onSelect(reading) }
                     .semantics { selected = (mode.value >= 0.5f) == reading }
-                    .testTag(if (reading) "mode_read" else "mode_listen"),
+                    .testTag(if (reading) "mode_read" else "mode_listen")
+                    .padding(horizontal = 16.dp),
                     contentAlignment = Alignment.Center) {
-                    BasicText(label, Modifier.padding(horizontal = 16.dp), style = style,
+                    // Ô chữ lấp đủ bề ngang ô (trừ lề 16): đoạn chữ căn giữa đo trên đúng bề ngang ấy, nên khung chữ và dòng chữ cùng hệ toạ độ.
+                    BasicText(label, Modifier.fillMaxWidth(), style = style,
                         color = { lerp(colors.accentText, colors.text, if (reading) mode.value else 1f - mode.value) })
                 }
             }

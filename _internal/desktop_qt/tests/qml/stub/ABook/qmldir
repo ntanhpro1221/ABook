@@ -189,6 +189,7 @@ VoiceDetails 1.0 ../../../../qml/VoiceDetails.qml
 VoiceRow 1.0 ../../../../qml/VoiceRow.qml
 VoiceSample 1.0 ../../../../qml/VoiceSample.qml
 OneLineFit 1.0 ../../../../qml/OneLineFit.qml
+MarqueeLine 1.0 ../../../../qml/MarqueeLine.qml
 VoiceModules 1.0 ../../../../qml/VoiceModules.qml
 VoiceSpeed 1.0 ../../../../qml/VoiceSpeed.qml
 ListenSave 1.0 ../../../../qml/ListenSave.qml

@@ -120,8 +120,8 @@ Mỗi cặp còn lại phải có giải thích trong ui_strings/qt_wording_revi
 | Studio tạo sách | layers | Chọn {} tập | Chia thành nhiều phần, Chia thành {} phần / Chia thành mấy phần? | `qt/NewDrop.qml:211` |
 | Studio tạo sách | scissors | Tách thành {} chương | Tách thành chương | `qt/NewHints.qml:94` |
 | Studio tạo sách | wand-sparkles | Bắt đầu | Bắt đầu / Tạo sách | `qt/NewProjectScreen.qml:199` |
-| Đang nghe | moon | Hẹn giờ | {} trên {} | `qt/NowPlaying.qml:440` |
-| Đang nghe | moon | Hết chương | {} trên {} | `qt/NowPlaying.qml:440` |
+| Đang nghe | moon | Hẹn giờ | {} trên {} | `qt/NowPlaying.qml:471` |
+| Đang nghe | moon | Hết chương | {} trên {} | `qt/NowPlaying.qml:471` |
 | Cài đặt | bluetooth | Dùng Bluetooth | Dùng Bluetooth cho {}, · bản thử | `qt/OtherComputersBluetooth.qml:23` |
 | Cài đặt | refresh-cw | Làm mới | Hỏi lại, Hỏi lại thư viện | `qt/PhoneDiagnostics.qml:68` |
 | Cài đặt | save | Lưu nhật ký | Gửi nhật ký | `qt/PhoneDiagnostics.qml:69` |
@@ -165,7 +165,7 @@ Nhãn ngắn (<= 6 chữ). **Chỉ Qt**: không có ở web cùng màn; `*` = we
 
 ### Khay và cửa sổ mini
 
-- chỉ Qt (13): Ghim trên cùng (`qt/MiniPlayer.qml:54`); Mở rộng (`qt/MiniPlayer.qml:60`); Lùi {} giây* (`qt/MiniPlayer.qml:89`); Phát* (`qt/MiniPlayer.qml:90`); Tạm dừng* (`qt/MiniPlayer.qml:90`); Đang đệm* (`qt/MiniPlayer.qml:90`); Phát trên* (`qt/MiniPlayer.qml:91`); Tới {} giây* (`qt/MiniPlayer.qml:92`); Chương sau* (`qt/TrayMenuModel.qml:13`); Chương trước* (`qt/TrayMenuModel.qml:13`); Cửa sổ mini (`qt/TrayMenuModel.qml:13`); Mở ABook (`qt/TrayMenuModel.qml:13`); Thoát ABook (`qt/TrayMenuModel.qml:13`)
+- chỉ Qt (13): Ghim trên cùng (`qt/MiniPlayer.qml:55`); Mở rộng (`qt/MiniPlayer.qml:61`); Lùi {} giây* (`qt/MiniPlayer.qml:90`); Phát* (`qt/MiniPlayer.qml:91`); Tạm dừng* (`qt/MiniPlayer.qml:91`); Đang đệm* (`qt/MiniPlayer.qml:91`); Phát trên* (`qt/MiniPlayer.qml:92`); Tới {} giây* (`qt/MiniPlayer.qml:93`); Chương sau* (`qt/TrayMenuModel.qml:13`); Chương trước* (`qt/TrayMenuModel.qml:13`); Cửa sổ mini (`qt/TrayMenuModel.qml:13`); Mở ABook (`qt/TrayMenuModel.qml:13`); Thoát ABook (`qt/TrayMenuModel.qml:13`)
 - chỉ web (0): (không có)
 
 ### Nhạc
@@ -180,18 +180,18 @@ Nhãn ngắn (<= 6 chữ). **Chỉ Qt**: không có ở web cùng màn; `*` = we
 
 ### Thanh phát
 
-- chỉ Qt (11): Không có mạng - (`qt/PlayerAlert.qml:10`); Giọng {} đang không dùng được.* (`qt/PlayerAlert.qml:25`); Cửa sổ mini (`qt/PlayerBar.qml:128`); Chỉnh* (`qt/PlayerBar.qml:156`); Âm thanh* (`qt/PlayerBar.qml:156`); Hẹn giờ* (`qt/PlayerBar.qml:157`); Giọng đọc* (`qt/PlayerBar.qml:160`); Hẹn lại {} phút* (`qt/PlayerFade.qml:16`); Nghe bằng giọng đọc. (`qt/PlayerLabels.js:18`); Thêm giọng* (`qt/PlayerVoicePopover.qml:47`); Tua nhạc (`qt/SeekBar.qml:29`)
-- chỉ web (8): Shift+← (`284`); Sắp tắt · (`1264`); Chưa nghe · {} chương (`69`); Nghe tiếp · {} (`88`); Shift+→ (`106`); Chưa có audio (`116`); Chạm (`127`); Nghe bằng giọng đọc.{} (`149`)
+- chỉ Qt (11): Không có mạng - (`qt/PlayerAlert.qml:10`); Giọng {} đang không dùng được.* (`qt/PlayerAlert.qml:25`); Cửa sổ mini (`qt/PlayerBar.qml:127`); Chỉnh* (`qt/PlayerBar.qml:155`); Âm thanh* (`qt/PlayerBar.qml:155`); Hẹn giờ* (`qt/PlayerBar.qml:156`); Giọng đọc* (`qt/PlayerBar.qml:159`); Hẹn lại {} phút* (`qt/PlayerFade.qml:16`); Nghe bằng giọng đọc. (`qt/PlayerLabels.js:18`); Thêm giọng* (`qt/PlayerVoicePopover.qml:47`); Tua nhạc (`qt/SeekBar.qml:29`)
+- chỉ web (8): Shift+← (`285`); Sắp tắt · (`1265`); Chưa nghe · {} chương (`69`); Nghe tiếp · {} (`88`); Shift+→ (`106`); Chưa có audio (`116`); Chạm (`127`); Nghe bằng giọng đọc.{} (`149`)
 
 ### Đang nghe
 
-- chỉ Qt (20): Tạm dừng {}* (`qt/ChapterList.qml:27`); Đọc {}* (`qt/ChapterList.qml:27`); Đọc chương này* (`qt/ChapterList.qml:46`); Đọc* (`qt/ChapterReader.qml:15`); Chưa có chương để đọc. (`qt/ChapterReader.qml:35`); Đang tải chương (`qt/ChapterReader.qml:89`); Đã nghe* (`qt/ChapterRow.qml:79`); Thêm tuỳ chọn: {}* (`qt/ChapterRow.qml:130`); Thêm tuỳ chọn* (`qt/NowPlaying.qml:241`); Giọng {}* (`qt/NowPlaying.qml:297`); Thử lại* (`qt/NowPlaying.qml:341`); Danh sách chương* (`qt/NowPlaying.qml:463`); Nhạc nền* (`qt/NowPlaying.qml:474`); Chỉnh* (`qt/NowPlaying.qml:611`); Âm thanh* (`qt/NowPlaying.qml:611`); Cửa sổ mini (`qt/NowPlaying.qml:620`); Gợi ý phần đọc* (`qt/ReadingSuggestions.qml:9`); Bỏ dòng (`qt/ReadingSuggestions.qml:57`); Đóng* (`qt/ReadingSuggestions.qml:80`); Số chương* (`qt/SleepPopover.qml:98`)
-- chỉ web (17): Shift+← (`284`); Đã chọn tốc độ đọc {} (`517`); Phím (`520`); Đã chọn giọng {} (`783`); Hẹn giờ đã tắt tiếng lúc (`978`); Bật lại (`986`); Tiếng nhỏ dần (`992`); Hẹn giờ ngủ trên {} (`1066`); Về chế độ nghe (`2133`); Chưa nghe · {} chương (`69`); Nghe tiếp · {} (`88`); Shift+→ (`106`); Chưa có audio (`116`); Chạm (`127`); Nghe bằng giọng đọc.{} (`149`); ...
+- chỉ Qt (20): Tạm dừng {}* (`qt/ChapterList.qml:27`); Đọc {}* (`qt/ChapterList.qml:27`); Đọc chương này* (`qt/ChapterList.qml:46`); Đọc* (`qt/ChapterReader.qml:15`); Chưa có chương để đọc. (`qt/ChapterReader.qml:35`); Đang tải chương (`qt/ChapterReader.qml:89`); Đã nghe* (`qt/ChapterRow.qml:79`); Thêm tuỳ chọn: {}* (`qt/ChapterRow.qml:130`); Thêm tuỳ chọn* (`qt/NowPlaying.qml:243`); Giọng {}* (`qt/NowPlaying.qml:299`); Thử lại* (`qt/NowPlaying.qml:358`); Danh sách chương* (`qt/NowPlaying.qml:494`); Nhạc nền* (`qt/NowPlaying.qml:505`); Chỉnh* (`qt/NowPlaying.qml:645`); Âm thanh* (`qt/NowPlaying.qml:645`); Cửa sổ mini (`qt/NowPlaying.qml:654`); Gợi ý phần đọc* (`qt/ReadingSuggestions.qml:9`); Bỏ dòng (`qt/ReadingSuggestions.qml:57`); Đóng* (`qt/ReadingSuggestions.qml:80`); Số chương* (`qt/SleepPopover.qml:98`)
+- chỉ web (17): Shift+← (`285`); Đã chọn tốc độ đọc {} (`518`); Phím (`521`); Đã chọn giọng {} (`784`); Hẹn giờ đã tắt tiếng lúc (`979`); Bật lại (`987`); Tiếng nhỏ dần (`993`); Hẹn giờ ngủ trên {} (`1067`); Về chế độ nghe (`2144`); Chưa nghe · {} chương (`69`); Nghe tiếp · {} (`88`); Shift+→ (`106`); Chưa có audio (`116`); Chạm (`127`); Nghe bằng giọng đọc.{} (`149`); ...
 
 ### Đọc theo
 
 - chỉ Qt (2): Đang tải kịch bản* (`qt/PlayerLineEditor.qml:115`); Đang mở văn bản chương (`qt/ReadAlongView.qml:480`)
-- chỉ web (12): Người nói: {} (`101`); Cách đọc câu - {} (`104`); Các từ trong câu (`165`); Cách đọc “{}”: “{}” (`398`); Đọc từ này là (`400`); Đang chờ máy làm sách (`418`); Sửa cách đọc “{}” (`424`); Bỏ: {} (`437`); Sửa cách đọc từ (`491`); Đang tải chữ (`1748`); Nghe từ “{}” (`59`); Shift F10: sửa cách đọc. (`423`)
+- chỉ web (12): Người nói: {} (`101`); Cách đọc câu - {} (`104`); Các từ trong câu (`165`); Cách đọc “{}”: “{}” (`398`); Đọc từ này là (`400`); Đang chờ máy làm sách (`418`); Sửa cách đọc “{}” (`424`); Bỏ: {} (`437`); Sửa cách đọc từ (`491`); Đang tải chữ (`1750`); Nghe từ “{}” (`59`); Shift F10: sửa cách đọc. (`423`)
 
 ### Trang sách
 
@@ -289,9 +289,9 @@ Chú thích Qt ghi phím tắt sau nhãn; web ghép bằng `withShortcut(nhãn, 
 
 | nhãn | Qt | web | nơi |
 |---|---|---|---|
-| Thu nhỏ | `Esc` | (không ghi) | `qt/NowPlaying.qml:255` |
-| Chương trước | `Shift+←` | (không ghi) | `qt/NowPlaying.qml:399` |
-| Chương sau | `Shift+→` | (không ghi) | `qt/NowPlaying.qml:410` |
+| Thu nhỏ | `Esc` | (không ghi) | `qt/NowPlaying.qml:257` |
+| Chương trước | `Shift+←` | (không ghi) | `qt/NowPlaying.qml:430` |
+| Chương sau | `Shift+→` | (không ghi) | `qt/NowPlaying.qml:441` |
 | Phát | `Space` | (không ghi) | `qt/PlayButton.qml:14` |
 | Tạm dừng | `Space` | (không ghi) | `qt/PlayButton.qml:14` |
 | {} | `Esc` | (không ghi) | `qt/ScreenHeader.qml:26` |

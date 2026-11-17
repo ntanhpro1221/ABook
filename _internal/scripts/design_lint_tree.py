@@ -360,6 +360,9 @@ def rule_r8(key: str, tree: dict) -> list[dl.Finding]:
 def nominal_size(n: dict) -> float | None:
     """Cỡ chữ theo thang của một nút: chữ OneLineFit đang thu cho vừa một dòng tính theo cỡ gốc trong thang (cỡ nhỏ nhất s mà s * ONE_LINE_MIN_SCALE <= cỡ <= s)."""
     size = n.get("font_size")
+    base = n.get("font_base_size")
+    if size is not None and isinstance(base, (int, float)) and base in FONT_SCALE and base * ONE_LINE_MIN_SCALE - 0.01 <= size <= base + 0.01:
+        return base
     if size is None or n.get("type") != "OneLineFit" or n.get("line_count", 1) != 1:
         return size
     return next((s for s in FONT_SCALE if s * ONE_LINE_MIN_SCALE - 0.01 <= size <= s + 0.01), size)

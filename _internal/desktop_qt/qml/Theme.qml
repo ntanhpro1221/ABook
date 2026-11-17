@@ -128,6 +128,9 @@ QtObject {
     readonly property int motionReduced: 120
     readonly property int indeterminateMs: 1400
     readonly property int spinMs: 1000
+    readonly property int marqueeDelayMs: 2000
+    readonly property int marqueeSpeed: 30
+    readonly property int marqueeGap: 48
     readonly property int skeletonHalf: skeletonPeriodMs / 2
     readonly property int motionFast: Nav.uiVisible ? 120 : 0
     readonly property int motionFastOut: Nav.uiVisible ? 90 : 0

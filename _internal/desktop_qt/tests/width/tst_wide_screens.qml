@@ -62,6 +62,17 @@ Item {
                 const ink = item.mapToItem(column, offset, 0)
                 verify(ink.x >= -1 && ink.x + item.paintedWidth <= column.width + 1,
                        "text leaves column: " + label)
+                // MarqueeLine exposes the painted size of its clipped one-line viewport. Its two
+                // moving Text copies are deliberately wider than that viewport, so validate the
+                // component contract here instead of treating those copies as layout columns.
+                if (item.fit !== undefined && item.shownSize !== undefined && item.minSize !== undefined) {
+                    verify(item.clip, "marquee must clip its moving text: " + label)
+                    verify(item.shownSize >= item.minSize && item.shownSize <= item.baseSize,
+                           "marquee font outside its fit range: " + label)
+                    verify(["one", "shrunk", "scroll"].indexOf(item.fit) >= 0,
+                           "unknown marquee fit: " + label)
+                    return
+                }
             } else if (item.text !== undefined && item.contentWidth !== undefined && item.wrapMode !== undefined) {
                 const pad = (item.leftPadding || 0) + (item.rightPadding || 0)
                 verify(item.width <= column.width + 1, "field wider than column: " + column.objectName)

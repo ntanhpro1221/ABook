@@ -821,16 +821,21 @@ def anchors(a: Analysis) -> dict[str, float]:
         found["button_top"] = a.dp(box[1])
         found["button_left"] = a.dp(box[0])
         found["button_height"] = a.dp(h)
-    # Thanh tiến độ: dải mảnh (<= 4 dp) có nền hàng khác nền màn, kẹp giữa hai hàng nền màn.
+    # Thanh tiến độ: dải mảnh liên tục qua ít nhất nửa bề ngang màn.
+    # Dấu tiếng Việt rời nhau cũng có thể đổi trung vị hàng, nhưng không là thanh.
     for top, bottom in runs(~a.page_rows):
         if bottom - top + 1 <= a.px(4) and top > a.h * 0.1 and 0 < top and bottom + 1 < a.h:
-            found["track_y"] = a.dp(top)
-            spans = runs(a.page_diff[top] > INK)
-            if spans:
+            for row in range(top, bottom + 1):
+                spans = runs(a.page_diff[row] > INK)
+                if not spans:
+                    continue
                 left, right = max(spans, key=lambda span: span[1] - span[0])
+                if right - left < a.w * 0.5:
+                    continue
+                found["track_y"] = a.dp(row)
                 found["track_left"] = a.dp(left)
                 found["track_right"] = a.dp(right)
-            break
+                return found
     return found
 
 

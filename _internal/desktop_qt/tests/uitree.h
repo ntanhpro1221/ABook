@@ -98,6 +98,14 @@ private:
                 node.insert(QStringLiteral("font_size"), f.pixelSize() > 0 ? double(f.pixelSize()) : f.pointSizeF() * 96.0 / 72.0);
                 node.insert(QStringLiteral("font_weight"), f.weight());
             }
+            // Marquee text keeps its base token while its painted copy shrinks.
+            // Record the token explicitly for R11, including the inner Text nodes.
+            for (QQuickItem *owner = item; owner; owner = owner->parentItem()) {
+                if (QString::fromUtf8(owner->metaObject()->className()).startsWith(QStringLiteral("MarqueeLine"))) {
+                    node.insert(QStringLiteral("font_base_size"), owner->property("baseSize").toInt());
+                    break;
+                }
+            }
             const QVariant lines = item->property("lineCount");
             if (lines.isValid())
                 node.insert(QStringLiteral("line_count"), lines.toInt());
