@@ -14556,6 +14556,15 @@ class ProjectDB:
                     ids = [int(row["id"]) for row in rows if authority.allows(row, canonical_name)]
                     conn.executemany("UPDATE segments SET speaker=?,updated_at=? WHERE id=?",
                                      [(canonical_name, time.time(), segment_id) for segment_id in ids])
+                    if len(ids) < len(rows):
+                        # Nhãn có thẩm quyền giữ các câu ấy: không lặng lẽ - ghi lại ai bị giữ, bao nhiêu câu.
+                        kept = [str(row["stable_id"]) for row in rows if int(row["id"]) not in set(ids)]
+                        conn.execute(
+                            "INSERT INTO runtime_events(timestamp,level,code,message,details_json) VALUES(?,?,?,?,?)",
+                            (time.time(), "warning", "SPEAKER_REWRITE_HELD_BY_LABEL",
+                             f"{len(kept)} câu của {old_name!r} giữ nguyên: nhãn có thẩm quyền không cho thành {canonical_name!r}",
+                             json.dumps({"from": old_name, "to": canonical_name, "stable_ids": kept[:50], "held": len(kept)},
+                                        ensure_ascii=False)))
                     conn.execute("COMMIT")
                 except Exception:
                     conn.execute("ROLLBACK")

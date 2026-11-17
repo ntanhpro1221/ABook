@@ -1997,6 +1997,13 @@ def _speaker_scenes(connection: sqlite3.Connection) -> tuple[dict[str, int], int
             {speaker: len({chapter for chapter, _scene in places}) for speaker, places in scenes.items()})
 
 
+def speaker_presence(project_root: Path) -> tuple[dict[str, int], int, dict[str, int]]:
+    """Số cảnh / chương mỗi người lên tiếng (`_speaker_scenes`) - dữ kiện `cast_role` dùng. scripts/gold_fidelity xếp vai người
+    đáp án ghi NPC bằng đúng hàm này, nên cổng gold và tab Nhân vật không bao giờ có hai luật."""
+    with closing(connect(project_root)) as connection:
+        return _speaker_scenes(connection)
+
+
 def voice_samples(connection: sqlite3.Connection) -> dict[str, int]:
     """{người nói: mã một câu thoại đã thu của họ} - câu nghe thử giọng (dài gần 4 giây nhất, đã kiểm). Tab Nhân vật và nút nghe
     thử cạnh mỗi người được đề xuất trên thẻ "Ai nói câu này" dùng chung một câu. Sổ chưa có cột thu âm: không ai có câu."""

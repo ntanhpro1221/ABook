@@ -40,10 +40,9 @@ NPC_PREFIX = re.compile(r"^\s*npc\s*[*:_-]*\s*", re.IGNORECASE)
 
 
 def name_key(name: str) -> tuple[str, ...]:
-    """Khoá so tên: bỏ kính ngữ, hoa/thường, gạch dưới; chữ xếp lại (họ-tên đảo vẫn một khoá). Tiền tố NPC là một phần danh
-    tính ("NPC X" và "X" là hai người): mọi cách viết (NPC, Npc:, NPC_LOCAL::...) thành cùng chữ "npc", không bỏ."""
-    text = "NPC " + local_speaker_label(name) if is_local_speaker(name) else str(name)
-    text = unicodedata.normalize("NFC", NPC_PREFIX.sub("npc ", text)).replace("_", " ")
+    """Khoá so tên: bỏ tiền tố NPC/NPC_LOCAL, kính ngữ, hoa/thường, gạch dưới; chữ xếp lại (họ-tên đảo vẫn một khoá)."""
+    text = local_speaker_label(name) if is_local_speaker(name) else str(name)
+    text = unicodedata.normalize("NFC", NPC_PREFIX.sub("", text)).replace("_", " ")
     words = [strip_japanese_honorific(word) for word in text.split()]
     return tuple(sorted(word.casefold() for word in words if word))
 
@@ -170,17 +169,26 @@ def check(project: Path, gold: Path | None = None) -> dict[str, Any]:
 
 
 def _npc_in_main_cast(project: Path, cast: GoldCast) -> list[str]:
-    """Người đáp án ghi NPC mà tab Nhân vật (cast.json của app, cùng luật cho ba nền) xếp Vai chính."""
+    """Người đáp án ghi NPC mà tab Nhân vật (cast.json của app, cùng luật cho ba nền) xếp Vai chính TRÁI luật của app.
+
+    Vai do `store.cast_role` quyết - đúng hàm app dùng khi xuất cast.json, với người ấy coi là NPC (nhãn "NPC"): NPC vài câu
+    là vai phụ, nhưng NPC nói từ MAIN_ROLE_MAJOR_LINES câu ở từ MAIN_ROLE_MAJOR_CHAPTERS chương là vai chính ở cả app lẫn cổng."""
     try:
         from abook.webui import store
         view = store.cast(project)
+        scenes_of, book_scenes, chapters_of = store.speaker_presence(project)
     except Exception as exc:  # noqa: BLE001 - project thiếu phần UI cần thì báo, không đoán
         return [f"(không đọc được dàn nhân vật: {exc})"]
     out = []
     for person in view.get("characters", []):
-        found = cast.resolve(str(person["name"]))
-        if cast.people.get(found, {}).get("npc"):
-            out.append(f"{person['name']} ({found})")
+        name = str(person["name"])
+        found = cast.resolve(name)
+        if not cast.people.get(found, {}).get("npc"):
+            continue
+        role = store.cast_role("NPC", None, int(person.get("lines") or 0), scenes_of.get(name, 0), book_scenes,
+                               chapters_of.get(name, 0))
+        if role != "characters":
+            out.append(f"{name} ({found})")
     return out
 
 

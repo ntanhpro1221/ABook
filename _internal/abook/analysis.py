@@ -1211,8 +1211,13 @@ def _calibrated_intensity(text: str, kind: str, emotion: str, requested: Any) ->
 def _canonical_speaker(value: Any) -> str:
     speaker = str(value or "UNKNOWN").strip()[:120] or "UNKNOWN"
     speaker = re.sub(r"(?<=[A-Za-z]),(?=[A-Za-z])", "", speaker)
-    # "NPC X" và "X" là hai người khác nhau ở mọi nơi: không bao giờ bỏ tiền tố NPC, kể cả khi phần sau là tên La-tinh viết
-    # hoa ("NPC Sergeant Bell"). Bỏ nó thì vai phụ thành nhân vật có tên, lên Vai chính và mượn giọng của người khác.
+    npc_named = re.fullmatch(
+        r"NPC(?:[\s:_-]+)([A-Z][A-Za-z]*(?:[\s'-][A-Z][A-Za-z]*)*)",
+        speaker,
+        flags=re.IGNORECASE,
+    )
+    if npc_named and any(character.isupper() for character in npc_named.group(1)):
+        speaker = npc_named.group(1)
     return RESERVED_SPEAKERS.get(speaker.casefold(), speaker)
 
 
