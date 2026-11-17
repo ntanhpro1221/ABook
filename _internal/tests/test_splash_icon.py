@@ -169,3 +169,44 @@ def test_desktop_and_web_loading_screens_show_no_background_icon():
         body = text[text.lower().index("<body"):]  # <head> giữ favicon / icon cài lên màn hình chính - những icon đó cần nền
         hits += [f"{page.relative_to(ROOT).as_posix()}: {m.group(0)}" for m in boxed.finditer(body)]
     assert hits == [], f"màn chờ dùng icon có nền: {hits}"
+
+
+def test_design_describes_the_bare_theme_splash():
+    """Soát tapthru5 S2: DESIGN.md tả đúng màn chờ hiện có, không còn "icon tròn"."""
+    text = DESIGN.read_text(encoding="utf-8")
+    line = next(row for row in text.splitlines() if row.startswith("- Icon nhỏ của mọi thông báo"))
+    assert "icon tròn" not in line and "hình sách-loa trần (không vòng nền)" in line and "theo theme" in line
+    assert "theo giao diện chọn trong app" in line and "AppNightMode" in line
+
+
+def test_installed_web_app_splash_is_the_bare_glyph_on_the_app_background():
+    """Soát tapthru5 S3: Chrome trên Android dựng màn chờ của trang web đã cài từ manifest (background_color + icon "any"). Nền là
+    --bg sáng của app (không phải #0e1115), icon "any" là hình trần nền trong suốt; "maskable" (launcher tự cắt) giữ ô xanh rừng."""
+    import json
+    from abook.webui import remote_studio
+    make_icons = _make_icons()
+    public = ROOT / "ui" / "public"
+    manifest = json.loads((public / "manifest.webmanifest").read_text(encoding="utf-8"))
+    bg = _design_bg()["light"]
+    assert manifest["background_color"].lower() == bg and manifest["theme_color"].lower() == bg
+    by_purpose = {}
+    for icon in manifest["icons"]:
+        by_purpose.setdefault(icon["purpose"], []).append(icon["src"])
+    assert sorted(by_purpose["any"]) == sorted(name for name, _ in make_icons.WEB_GLYPHS)
+    assert sorted(by_purpose["maskable"]) == ["icon-192.png", "icon-512.png"]
+    for icon in manifest["icons"]:  # trình duyệt chưa ghép vẫn tải được mọi icon của manifest
+        assert "/" + icon["src"] in remote_studio.PUBLIC_STATIC
+    from PIL import Image, ImageChops
+    for name, size in make_icons.WEB_GLYPHS:
+        image = Image.open(public / name)
+        assert image.size == (size, size) and image.mode == "RGBA"
+        alpha = image.getchannel("A")
+        assert alpha.getpixel((0, 0)) == alpha.getpixel((size - 1, size - 1)) == 0, "icon màn chờ web có nền"
+        expected = make_icons.rasterize(make_icons.web_glyph(), size)
+        assert ImageChops.difference(image, expected).getbbox() is None, f"{name} không phải bản make_icons.py ghi"
+        # Không ô xanh rừng: pixel đục ở góc ô nội dung không có
+        assert alpha.getpixel((size // 10, size // 10)) == 0
+    for name in ("icon-192.png", "icon-512.png"):
+        image = Image.open(public / name).convert("RGB")
+        assert image.getpixel((0, 0)) != (0, 0, 0) and image.getpixel((2, 2))[1] > image.getpixel((2, 2))[0], "icon maskable mất ô xanh rừng"
+    assert "on_light" not in make_icons.web_glyph() and make_icons._placed(make_icons.glyph(on_light=True), 512 * make_icons.WEB_GLYPH_FILL / make_icons.GLYPH_REACH) in make_icons.web_glyph()

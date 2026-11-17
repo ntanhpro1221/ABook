@@ -356,6 +356,16 @@ def write_android() -> list[Path]:
 
 # Trang nghe qua trình duyệt (apple-touch-icon + web app manifest trong ui/index.html): tên file cố định vì index.html trỏ tới.
 WEB_ICONS = (("apple-touch-icon.png", 180), ("icon-192.png", 192), ("icon-512.png", 512))
+# Màn chờ của trang web cài lên màn hình chính (Chrome trên Android dựng nó từ manifest: background_color + icon "any"): hình sách-loa
+# TRẦN như màn chờ app, nền trong suốt, bản trên nền sáng vì background_color là --bg sáng (#f5f3ef). Icon "maskable" (launcher tự cắt
+# khuôn) vẫn là ô xanh rừng icon-*.png. Lead 18-11 (soát tapthru5 S3).
+WEB_GLYPHS = (("glyph-192.png", 192), ("glyph-512.png", 512))
+# Điểm mực xa nhất ở WEB_GLYPH_FILL nửa cạnh ô: Chrome vẽ icon "any" của màn chờ không cắt khuôn.
+WEB_GLYPH_FILL = 0.94
+
+
+def web_glyph() -> str:
+    return _svg(_placed(glyph(on_light=True), 512 * WEB_GLYPH_FILL / GLYPH_REACH))
 
 
 def write_web() -> list[Path]:
@@ -363,7 +373,9 @@ def write_web() -> list[Path]:
     target.mkdir(parents=True, exist_ok=True)
     for name, size in WEB_ICONS:
         rasterize(app_icon(square=True), size).convert("RGB").save(target / name)
-    return [target / name for name, _ in WEB_ICONS]
+    for name, size in WEB_GLYPHS:
+        rasterize(web_glyph(), size).save(target / name)
+    return [target / name for name, _ in (*WEB_ICONS, *WEB_GLYPHS)]
 
 
 def preview(folder: Path) -> None:

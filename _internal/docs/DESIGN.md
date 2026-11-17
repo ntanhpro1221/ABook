@@ -509,7 +509,7 @@ Hồ sơ UI165: xem [review theo thao tác](UI_PARITY_TRIAGE.md). Các cặp g�
 ### Thẻ phát ở thanh thông báo (Android)
 
 - Lùi 15 · Phát/Dừng · Tới 15 nổi bật; ngay sau là **Đóng** (X) rồi Chương trước, Chương sau - thẻ media Android 13+ và ColorOS chỉ vẽ năm ô, nút thứ sáu không hiện. Đóng: dừng, lưu chỗ nghe, cất sách, thẻ biến mất. Đang dừng thì vuốt bỏ được.
-- Icon nhỏ của mọi thông báo là hình ABook đơn sắc vector (`drawable/ic_notification`, sinh từ `scripts/make_icons.py`). Màn chờ dùng vector riêng: khung 240 dp, icon tròn trong vòng 160 dp, nền app_bg - không phóng icon launcher (nhoè trên OPPO).
+- Icon nhỏ của mọi thông báo là hình ABook đơn sắc vector (`drawable/ic_notification`, sinh từ `scripts/make_icons.py`). Màn chờ dùng vector riêng: khung 240 dp, hình sách-loa trần (không vòng nền) nằm trọn trong vòng 160 dp, theo theme - sáng: giấy kem viền và sóng mực xanh rừng; tối: giấy và sóng kem; bìa cam cả hai (bìa cam trên nền sáng 2,76:1, dưới 3:1 - Lead 18-11 giữ nguyên màu nhận diện) - nền app_bg, không phóng icon launcher (nhoè trên OPPO). Sáng / tối theo giao diện chọn trong app (Android 12+: `AppNightMode`), không theo máy. Trang web cài lên màn hình chính: màn chờ của Chrome dựng từ manifest - nền `--bg` sáng, icon "any" là hình trần `glyph-*.png`; icon "maskable" của launcher giữ ô xanh rừng.
 
 ### Danh sách kiểm giao diện
 
