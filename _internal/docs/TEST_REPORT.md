@@ -4,7 +4,9 @@
 
 Five pins moved, one commit each, on top of faa841749: vendored pypdf 6.16.2 -> 6.21.4, desktop minimp3 afb604c0 -> a2ad968c,
 embedded Python 3.14.8 -> 3.14.10, Gradle wrapper 8.14.6 -> 8.14.7, and the downloaded ffmpeg Gyan 8.1.2 essentials ->
-FFmpeg-Builds n8.1.3-35-gf1acb0a266 win64-gpl-8.1 (tag autobuild-2026-11-16-15-29).
+FFmpeg-Builds n8.1.3-27-g8dca1586f4 win64-gpl-8.1 (month-end tag autobuild-2026-10-31-12-59). The first pin was the daily
+build n8.1.3-35-gf1acb0a266 (autobuild-2026-11-16-15-29); FFmpeg-Builds deletes daily builds after 14 days and keeps
+month-end builds for two years, so the pin moved to the October month-end build (see the ffmpeg bullet).
 
 - pypdf: text, metadata and `importers.pdf_pages` output of the three PDF fixtures plus the four PDFs the import tests generate
   (40- and 300-page text PDFs, two broken files) are byte-identical between 6.16.2 and 6.21.4; locked and broken files give the
@@ -42,9 +44,21 @@ FFmpeg-Builds n8.1.3-35-gf1acb0a266 win64-gpl-8.1 (tag autobuild-2026-11-16-15-2
   extensions are the same on Python, Android, the Qt file dialog and Tauri (now pinned by
   `test_every_platform_accepts_the_same_music_extensions`), and
   `test_the_pinned_ffmpeg_decodes_every_extension_the_app_accepts` checks the demuxer and decoders for each extension on the
-  exe whose SHA-256 equals `ffmpeg_setup.EXE_SHA256` (`ABOOK_TEST_FFMPEG`; passed on the n8.1.3 exe). Speex inside a `.ogg`
+  exe whose SHA-256 equals `ffmpeg_setup.EXE_SHA256`, from `tests/fixtures/ffmpeg_pinned_codecs.json` (written by
+  `scripts/ffmpeg_pinned_codecs.py` from the pinned exe; with `ABOOK_TEST_FFMPEG` it also compares the fixture with the exe). Speex inside a `.ogg`
   was the one gap: the desktop importer (tinytag) accepted it although neither Media Foundation nor the phone can play it, and
   the phone already refused it; desktop import now refuses it with the phone's reason (`music_local.UNPLAYABLE_CODECS`).
+- Month-end repin (review fix): ZIP 194,182,300 B, SHA-256 401dffcf... = release `checksums.sha256` = GitHub asset digest;
+  member DEFLATE 63,753,164 B, exe 165,577,728 B, CRC 876847253 (the same script reproduces the n8.1.3-35 pin from its ZIP).
+  Against the n8.1.3-35 exe, the same 37 inputs through the four app decode command lines: 148 identical PCM cases, 16 cases
+  where both reject the same 4 non-audio fixtures; the 12 encoder outputs (flac, aac, libmp3lame 64k mono and 128k) are
+  byte-identical. The 8 FFmpeg commits between the two builds are Ogg muxer/Vorbis chained-stream, LCEVC, CBS size
+  checks (32-bit), H.264, 4xm and aarch64 fixes. The Qt and web Studio export dialogs now offer the update when the
+  downloaded ffmpeg is outdated (export stays enabled), as the Listen audiobook dialog already did.
+  Checks: pytest on 39 related files 721 passed, 1 skipped (perf marker), 1 failed (stale UI_PARITY_QT.md, regenerated;
+  rerun of that file with the parity, action and ffmpeg files: 104 passed, 1 skipped), `test_music_local` +
+  `test_ffmpeg_setup` 42 passed, 0 skipped without `ABOOK_TEST_FFMPEG`; tsc rc 0; vitest (src/studio + export tests)
+  474 passed; Qt WidthTests `tst_studio5.qml` 69 passed, 0 failed, 0 skipped, no member-data warning.
 - Quality implementation hash unchanged after every commit: `6d5817d28678d2f85dcc3c8f5158638907a6f9f463bdb8e1a83b3c46c9a68fa8`.
 
 ## 15-11-2026 — 0.4.173 integration

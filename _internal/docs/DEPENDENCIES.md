@@ -3,6 +3,21 @@
 File này là trách nhiệm thường trực của người dev project, không phải một lần rà soát. Mỗi phiên bản
 phải kiểm lại bảng dưới và ghi kết quả vào `VERSIONS.md`.
 
+## 17-11 — năm bản vá bảo mật cho 0.4.175 (`dev/deps175`)
+
+| Thành phần | Cũ → mới | Vì sao | Kiểm |
+|---|---|---|---|
+| pypdf (chép trong app nghe) | 6.16.2 → 6.21.4 | 26 GHSA PDF độc làm treo / ăn hết RAM | chữ, metadata, `pdf_pages` của 7 PDF trùng byte; lỗi mật khẩu/hỏng giữ nguyên |
+| minimp3 (Qt) | afb604c0 → a2ad968c | đọc tràn ở thẻ VBR, tua, khung lỗi | PCM 18 mp3 của repo và 82/83 vector thượng nguồn trùng; vector thứ 83 chính là lỗi được vá (thành `VoiceTests::hostileVbrTagEndsCleanly`) |
+| Python nhúng (Windows) | 3.14.8 → 3.14.10 | CVE-2026-115557 (ssl, CA emSign), CVE-2026-114583 (tarfile) | SHA-256 zip = python.org; smoke bản nhúng đã cắt; `smoke_packaged` OK |
+| Gradle wrapper | 8.14.6 → 8.14.7 | vá bảo mật daemon | SHA-256 -all.zip = services.gradle.org; testDebugUnitTest 3910/0/19, assembleRelease OK |
+| ffmpeg tải về (Phân tích nhạc, Xuất M4B / MP3 có nhạc) | Gyan 8.1.2 essentials → FFmpeg-Builds `n8.1.3-27-g8dca1586f4` win64-gpl-8.1, thẻ `autobuild-2026-10-31-12-59` | 8.1.3 gom các bản vá kiểm biên / tràn số khi đọc file nhạc người dùng nhập; Gyan không dựng 8.1.3 | 37 file nhạc qua 4 lệnh giải mã của app: PCM trùng hệt bản 8.1.2 và bản n8.1.3-35 |
+
+Luật ghim ffmpeg: chỉ dùng thẻ **bản cuối tháng** của FFmpeg-Builds. Theo README của họ, bản cuối mỗi tháng được giữ 2 năm,
+còn bản ngày chỉ giữ 14 ngày rồi bị xoá (URL tải 404). `tests/test_ffmpeg_setup.py` kiểm luật này. Pin hiện tại hết hạn
+khoảng 10-2028, phải đổi trước mốc đó. Đổi pin thì chạy lại `scripts/ffmpeg_pinned_codecs.py <exe mới>` để ghi fixture bộ
+tách / bộ giải mà `tests/test_music_local.py` kiểm. Hash chất lượng không đổi (`6d5817d2…`).
+
 ## 0.4.168 — measured runtime declarations
 
 The release records the packages installed in the shared Studio runtime. The

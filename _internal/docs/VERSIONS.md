@@ -6,6 +6,16 @@ chỉ là danh sách commit.
 
 ## Quy ước
 
+### 17-11-2026 — năm bản vá bảo mật cho 0.4.175 (`dev/deps175`, chưa phát hành)
+
+pypdf 6.16.2 → 6.21.4, minimp3 afb604c0 → a2ad968c, Python nhúng 3.14.8 → 3.14.10, Gradle wrapper 8.14.6 → 8.14.7, ffmpeg tải
+về từ Gyan 8.1.2 sang FFmpeg-Builds n8.1.3-27-g8dca1586f4 (thẻ cuối tháng `autobuild-2026-10-31-12-59`). Lý do và cách kiểm
+từng mục ghi ở `DEPENDENCIES.md`, số đo ở `TEST_REPORT.md`. Đầu ra không đổi: chữ PDF trùng byte, PCM minimp3 trùng, PCM ffmpeg
+trùng trên 37 file nhạc. Riêng libmp3lame của ffmpeg mới mã hoá MP3 khác ở mức mẫu so với 8.1.2 (lệch -20 đến -41 dB, độ to
+lệch tối đa 0,04 LU). Lần soát đầu đã ghim bản ngày `autobuild-2026-11-16-15-29` (n8.1.3-35). Bản ngày bị FFmpeg-Builds xoá
+sau 14 ngày nên đã đổi sang bản cuối tháng 10. Tám commit khác nhau giữa hai bản không chạm đường giải mã của app: PCM của 4
+lệnh trên 37 file trùng hệt, 12 file mã hoá trùng từng byte. Hash chất lượng không đổi.
+
 ### 09-11-2026 — rà dependency khi chuẩn bị 0.4.166
 
 Chạy `scripts/check_dependency_updates.py --pins-ref HEAD` trên `dev/integ166`: không lỗi truy vấn,
