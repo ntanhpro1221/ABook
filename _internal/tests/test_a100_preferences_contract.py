@@ -170,3 +170,20 @@ def test_the_server_put_ignores_a_broken_last_sleep_choice(tmp_path: Path) -> No
     for broken in ({"kind": "minutes", "minutes": 241, "chapters": 1}, None, "45", {"kind": "chapter", "minutes": 20}):
         _put(prefs, {"lastSleep": broken})
         assert Preferences(prefs.path).get()["lastSleep"] == good, broken
+
+
+_LAST_SLEEP_CASES = json.loads((Path(__file__).parent / "fixtures/settings/ranges.json").read_text(encoding="utf-8"))["lastSleep"]["cases"]
+
+
+@pytest.mark.parametrize(("stored", "cleaned"), _LAST_SLEEP_CASES)
+def test_reading_the_file_follows_the_shared_last_sleep_table(tmp_path: Path, stored, cleaned) -> None:
+    """Soát sleeplast 18-11 (lỗi 3): đọc file theo đúng bảng ca chung như web / Qt / Android - khoá thừa bỏ đi, 45.0 nhận như 45, không coi
+    cả giá trị là hỏng; chỉ giá trị thật sự hỏng mới giữ bản hỏng + báo."""
+    prefs, _ = _load(tmp_path, {"lastSleep": stored, "theme": "dark"})
+    data = prefs.get()
+    assert data["lastSleep"] == cleaned and data["theme"] == "dark"
+    if cleaned is not None:
+        assert all(type(data["lastSleep"][key]) is int for key in ("minutes", "chapters"))
+    assert bool(list(tmp_path.glob("preferences.json.hong-*"))) == (stored is not None and cleaned is None)
+    _put(prefs, {"theme": "light"})
+    assert json.loads(prefs.path.read_text(encoding="utf-8"))["lastSleep"] == cleaned

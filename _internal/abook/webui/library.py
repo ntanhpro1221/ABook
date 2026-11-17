@@ -369,12 +369,17 @@ def clean_sleep_schedule(value: Any) -> dict[str, Any] | None:
     return {"from": start, "to": end, "minutes": minutes}
 
 
+def _whole(value: Any) -> Any:
+    """Số thực nguyên (`45.0` - file sửa tay, bản app khác ghi) thành số nguyên, như JSON của web / Qt / Android vốn không phân biệt hai kiểu."""
+    return int(value) if isinstance(value, float) and value.is_integer() else value
+
+
 def clean_last_sleep(value: Any) -> dict[str, Any] | None:
-    """Lần hẹn giờ cuối `{"kind", "minutes", "chapters"}` đã làm sạch (khoá thừa bỏ đi), hay None: thiếu khoá, sai kiểu, ngoài miền ở bất kỳ khoá nào
-    - cả giá trị coi như chưa từng đặt, giao diện về 30 phút."""
+    """Lần hẹn giờ cuối `{"kind", "minutes", "chapters"}` đã làm sạch (khoá thừa bỏ đi, `45.0` nhận như 45), hay None: thiếu khoá, sai kiểu,
+    ngoài miền ở bất kỳ khoá nào - cả giá trị coi như chưa từng đặt, giao diện về 30 phút. Cùng luật khi PUT lẫn khi đọc file (ranges.json `lastSleep`)."""
     if not isinstance(value, dict) or value.get("kind") not in LAST_SLEEP_KINDS:
         return None
-    minutes, chapters = value.get("minutes"), value.get("chapters")
+    minutes, chapters = _whole(value.get("minutes")), _whole(value.get("chapters"))
     if not (on_grid(minutes, LAST_SLEEP_MINUTES) and on_grid(chapters, LAST_SLEEP_CHAPTERS)):
         return None
     return {"kind": value["kind"], "minutes": minutes, "chapters": chapters}
@@ -389,7 +394,7 @@ def _fits(key: str, value: Any) -> bool:
     if key == "sleepSchedule":
         return value is None or clean_sleep_schedule(value) == value
     if key == "lastSleep":
-        return value is None or clean_last_sleep(value) == value
+        return value is None or clean_last_sleep(value) is not None
     if key in SLEEP_RANGES:
         return on_grid(value, SLEEP_RANGES[key])
     if key in NUMBER_RANGES:
@@ -428,6 +433,8 @@ class Preferences:
         if raw is None:
             return None
         bad = [key for key, value in raw.items() if key in DEFAULT_PREFERENCES and not _fits(key, value)]
+        if raw.get("lastSleep") is not None and "lastSleep" not in bad:
+            raw["lastSleep"] = clean_last_sleep(raw["lastSleep"])  # khoá thừa bỏ đi, 45.0 thành 45: không phải hỏng, không báo
         if not bad:
             return raw
         clean = {key: value for key, value in raw.items() if key not in bad}
@@ -482,7 +489,7 @@ class Preferences:
     def _apply(self, changes: dict[str, Any]) -> None:
         for key, value in changes.items():
             if key in DEFAULT_PREFERENCES and _fits(key, value) and not (key == "libraryRoot" and not value.strip()):
-                self._data[key] = value
+                self._data[key] = clean_last_sleep(value) if key == "lastSleep" and value is not None else value
 
     def update(self, changes: dict[str, Any]) -> dict[str, Any]:
         with self._changing():

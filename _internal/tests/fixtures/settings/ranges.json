@@ -22,7 +22,7 @@
     "clock": "^([01]\\d|2[0-3]):[0-5]\\d$"
   },
   "lastSleep": {
-    "_": "Lần hẹn giờ ngủ cuối người nghe tự đặt (chủ sách 17-11): mốc mở sẵn của hộp hẹn giờ và nút \"Bật lại\". null = chưa từng đặt -> default. Ba khoá (khoá thừa bỏ đi); thiếu khoá, sai kiểu / ngoài miền ở BẤT KỲ khoá nào thì cả giá trị coi như chưa đặt (cleaned null). Python (library.clean_last_sleep), giao diện (sleep.ts cleanLastSleep), Qt (playerlogic.h cleanLastSleep) và lõi Kotlin (LastSleep.parse) cùng chạy bảng cases.",
+    "_": "Lần hẹn giờ ngủ cuối người nghe tự đặt (chủ sách 17-11): mốc mở sẵn của hộp hẹn giờ và nút \"Bật lại\". null = chưa từng đặt -> default. Ba khoá (khoá thừa bỏ đi - cả khi PUT lẫn khi đọc file, không coi là hỏng); số thực nguyên (45.0) nhận như số nguyên; thiếu khoá, sai kiểu / ngoài miền ở BẤT KỲ khoá nào thì cả giá trị coi như chưa đặt (cleaned null). Python (library.clean_last_sleep), giao diện (sleep.ts cleanLastSleep), Qt (playerlogic.h cleanLastSleep) và lõi Kotlin (LastSleep.parse) cùng chạy bảng cases.",
     "kinds": ["minutes", "chapter"],
     "minutes": { "min": 1, "max": 240, "step": 1 },
     "chapters": { "min": 1, "max": 10, "step": 1 },
@@ -33,6 +33,8 @@
       [{ "kind": "minutes", "minutes": 1, "chapters": 10 }, { "kind": "minutes", "minutes": 1, "chapters": 10 }],
       [{ "kind": "minutes", "minutes": 240, "chapters": 1 }, { "kind": "minutes", "minutes": 240, "chapters": 1 }],
       [{ "kind": "chapter", "minutes": 20, "chapters": 3, "extra": 1 }, { "kind": "chapter", "minutes": 20, "chapters": 3 }],
+      [{ "kind": "minutes", "minutes": 45.0, "chapters": 1 }, { "kind": "minutes", "minutes": 45, "chapters": 1 }],
+      [{ "kind": "chapter", "minutes": 30, "chapters": 2.0 }, { "kind": "chapter", "minutes": 30, "chapters": 2 }],
       [null, null],
       [{ "kind": "minutes", "minutes": 0, "chapters": 1 }, null],
       [{ "kind": "minutes", "minutes": 241, "chapters": 1 }, null],
