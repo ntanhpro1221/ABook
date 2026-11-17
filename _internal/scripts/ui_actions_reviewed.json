@@ -1419,13 +1419,13 @@
     "id": "eb5a41a0c4c81383f5cb",
     "kind": "pending",
     "path": "ui/src/listen/LibraryScreen.tsx",
-    "line": 130,
+    "line": 128,
     "statement": "return async (book: ListenBook, chapterId?: number, at?: number, extra?: { word?: WordTarget; rate?: number }) => {",
     "occurrence": 1,
-    "source_sha256": "72bfc9fb05b9001a88b2933b9bc86a3ab5ebb0c40aeaf78b6d711ec52487b167",
+    "source_sha256": "d87d02fdd6007e534215e1b2c41a0e39fcb6099d84031f4fdd2de4f0866965e6",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; LoadingCrossfade, Progress, isLoading, loading, progress, progressFill, progressText",
-    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
+    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Combined-source review: the author line now uses OneLineFit (no ellipsis); this action and its guard are unchanged."
   },
   {
     "id": "8e6269fe3f7bbd02cacc",
@@ -1434,10 +1434,10 @@
     "line": 292,
     "statement": "onClick={withFeedback(\"playPause\", () => (current ? player.toggle() : void playBook(book)))}",
     "occurrence": 1,
-    "source_sha256": "72bfc9fb05b9001a88b2933b9bc86a3ab5ebb0c40aeaf78b6d711ec52487b167",
+    "source_sha256": "d87d02fdd6007e534215e1b2c41a0e39fcb6099d84031f4fdd2de4f0866965e6",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; LoadingCrossfade, Progress, isLoading, loading, progress, progressFill, progressText",
-    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
+    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Combined-source review: the author line now uses OneLineFit (no ellipsis); this action and its guard are unchanged."
   },
   {
     "id": "7a75357ddc0dd98439a5",
