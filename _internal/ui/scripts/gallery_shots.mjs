@@ -22,6 +22,23 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { parseArgs, findBrowser, serve, launch, connect, evaluate, waitUntil, openPage, STILL, escapeHtml } from "./gallery_browser.mjs";
 
+// Lớp của màn cho scripts/design_lint.py (như `modal` trong cây UI của Qt): hộp thoại MODAL mở trên cùng - role dialog / alertdialog
+// mà trang còn lại đã bị khoá (aria-modal, hay Radix hideOthers đặt aria-hidden / inert lên phần khác của body); popover không khoá
+// trang thì không phải lớp. Phần trang dưới màn mờ là màn khác, máy dò không đếm nút / trục chữ ở đó. px CSS.
+const LAYERS = `(() => {
+  const muted = [...document.body.children].filter((el) => el.getAttribute("aria-hidden") === "true" || el.hasAttribute("inert"));
+  const open = [...document.querySelectorAll('[role="dialog"], [role="alertdialog"], [aria-modal="true"]')].filter((el) => {
+    const box = el.getBoundingClientRect(), style = getComputedStyle(el);
+    return box.width > 1 && box.height > 1 && style.display !== "none" && style.visibility !== "hidden" && Number(style.opacity) > 0
+      && !el.closest("[inert], [aria-hidden='true']") && el.getAttribute("data-state") !== "closed"
+      && (el.getAttribute("aria-modal") === "true" || muted.length > 0);
+  });
+  const top = open[open.length - 1];
+  const box = top && top.getBoundingClientRect();
+  return { schema: 1, platform: "web", width: innerWidth, height: innerHeight,
+    modal: box ? [box.left, box.top, box.right, box.bottom].map((v) => Math.round(v * 100) / 100) : null };
+})()`;
+
 function writeIndex(out, shots) {
   const groups = [];
   for (const shot of shots) {
@@ -88,8 +105,10 @@ async function main() {
           const probe = args.probe ? await evaluate(cdp, page.sessionId, args.probe) : [];
           problems.push(...(Array.isArray(probe) ? probe : [probe]).map((item) => `dò: ${item}`));
           problems.push(...report.errors.map((error) => `lỗi: ${error.split("\n")[0]}`), ...report.missing.map((name) => `chưa giả: ${name}`));
+          const layers = await evaluate(cdp, page.sessionId, LAYERS);
           const { data } = await cdp.send("Page.captureScreenshot", { format: "png", captureBeyondViewport: false }, page.sessionId);
           writeFileSync(path.join(out, file), Buffer.from(data, "base64"));
+          writeFileSync(path.join(out, file.replace(/\.png$/, ".layers.json")), JSON.stringify(layers));
         } catch (error) {
           problems.push(`không chụp được: ${error.message}`);
         } finally {

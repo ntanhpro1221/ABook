@@ -423,9 +423,13 @@ def rule_r6(a: Analysis) -> list[Finding]:
     if not a.full_screen:
         return []
     out = []
-    for x0, x1 in a.panes():
+    # Hộp thoại mở (cây Qt / lớp web): chữ của trang dưới màn mờ là màn khác - chỉ đo trục trong mặt hộp thoại.
+    panel = modal_panel(a)
+    for x0, x1 in a.panes() if panel is None else [(panel[0], panel[2])]:
         width = x1 - x0
         bands = a.bands(x0, x1)
+        if panel is not None:
+            bands = [b for b in bands if b.top >= panel[1] - 1 and b.bottom <= panel[3] + 1]
         keys = keylines(a, bands, x0, width)
         if len(keys) > 3:
             out.append(Finding("R6", a.shot.key, f"{len(keys)} trục mép trái (dp: {' '.join(map(str, keys))})",
@@ -703,7 +707,19 @@ def modal_panel(a: Analysis) -> list[int] | None:
 
     Lớp modal phủ màn mờ lên trang: nút của trang nằm ngoài mặt nổi là nút của màn dưới, không phải nút thứ hai của màn
     đang dùng. Không có cây hay không có modal: None (đo cả ảnh như cũ).
+    Ảnh web không có cây: ui/scripts/gallery_shots.mjs ghi `<tên>.layers.json` ({width, height, modal: [x0, y0, x1, y1] | null},
+    px CSS) - hộp thoại mở trên cùng (`role=dialog|alertdialog` / `aria-modal`); trang dưới màn mờ của nó là màn khác.
     """
+    layers = a.shot.path.with_name(a.shot.path.stem + ".layers.json")
+    if layers.is_file():
+        try:
+            doc = json.loads(layers.read_text(encoding="utf-8"))
+            box, sx, sy = doc.get("modal"), a.w / doc["width"], a.h / doc["height"]
+        except (OSError, ValueError, KeyError, TypeError, ZeroDivisionError):
+            return None
+        if not box:
+            return None
+        return [int(box[0] * sx), int(box[1] * sy), int(np.ceil(box[2] * sx)), int(np.ceil(box[3] * sy))]
     path = a.shot.path.with_name(a.shot.path.stem + ".tree.json")
     if not path.is_file():
         return None

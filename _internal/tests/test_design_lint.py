@@ -102,6 +102,30 @@ def test_r6_many_axes_is_red(tmp_path):
     assert any("5 trục" in f.detail for f in findings)
 
 
+def test_r6_page_under_an_open_dialog_is_another_screen(tmp_path):
+    # Ảnh web có lớp (gallery_shots.mjs ghi <tên>.layers.json): chữ của trang dưới màn mờ không tính trục; chỉ đo trong hộp thoại.
+    im, draw = canvas()
+    for i, x in enumerate((60, 120, 200, 260, 330)):
+        column(draw, x, top=120 + i * 420, rows=2)
+    draw.rectangle([90, 900, 990, 1500], fill=(255, 255, 255))      # hộp thoại
+    column(draw, 150, top=960, rows=3, pitch=150)
+    path = tmp_path / "dialog_light.png"
+    im.save(path)
+    shot = dl.Shot("android", path)
+    assert any("trục" in f.detail for f in dl.rule_r6(dl.Analysis(shot)))
+    # Lớp tính bằng px CSS (360 × 780 dp): hộp [30, 300, 330, 500] dp = [90, 900, 990, 1500] px ảnh.
+    path.with_name("dialog_light.layers.json").write_text(json.dumps({"width": 360, "height": 780, "modal": [30, 300, 330, 500]}))
+    assert not any("trục" in f.detail for f in dl.rule_r6(dl.Analysis(shot)))
+    # Trong hộp thoại có 5 trục thì vẫn đỏ.
+    for x, y in ((230, 1035), (310, 1185), (390, 1335), (470, 1420)):
+        text(draw, x, y, words=1)
+    im.save(path)
+    assert any("trục" in f.detail for f in dl.rule_r6(dl.Analysis(shot)))
+    # Không có hộp thoại mở (modal null): đo cả trang như cũ.
+    path.with_name("dialog_light.layers.json").write_text(json.dumps({"width": 360, "height": 780, "modal": None}))
+    assert any("trục" in f.detail for f in dl.rule_r6(dl.Analysis(shot)))
+
+
 def test_r6_centred_block_among_left_blocks_is_red(tmp_path):
     im, draw = canvas()
     column(draw, 60, rows=6)
@@ -304,6 +328,23 @@ def test_r4_page_button_under_a_modal_is_not_a_second_main_button(tmp_path):
     # Hai nút chính TRONG hộp thoại vẫn đỏ.
     draw.rounded_rectangle([420, 640, 580, 679], 8, fill=(212, 145, 43))
     im.save(path)
+    assert any("2 nút nền --accent" in f.detail for f in dl.rule_r4(dl.Analysis(shot)))
+
+
+def test_r4_web_layers_sidecar_marks_the_open_dialog(tmp_path):
+    # Ảnh web không có cây: gallery_shots.mjs ghi hộp của hộp thoại đang mở (px CSS) vào <tên>.layers.json.
+    im = Image.new("RGB", (1280, 900), BG)
+    draw = ImageDraw.Draw(im)
+    draw.rounded_rectangle([1000, 20, 1200, 59], 8, fill=(212, 145, 43))     # nút chính của trang (dưới màn mờ)
+    draw.rounded_rectangle([400, 200, 880, 700], 20, fill=(255, 255, 255))
+    draw.rounded_rectangle([700, 640, 860, 679], 8, fill=(212, 145, 43))
+    path = tmp_path / "desktop__dialog-light.png"
+    im.save(path)
+    shot = dl.Shot("web", path)
+    assert any("2 nút nền --accent" in f.detail for f in dl.rule_r4(dl.Analysis(shot)))
+    path.with_name("desktop__dialog-light.layers.json").write_text(json.dumps({"width": 1280, "height": 900, "modal": [400, 200, 880, 700]}))
+    assert not any("nút nền --accent" in f.detail for f in dl.rule_r4(dl.Analysis(shot)))
+    path.with_name("desktop__dialog-light.layers.json").write_text(json.dumps({"width": 1280, "height": 900, "modal": None}))
     assert any("2 nút nền --accent" in f.detail for f in dl.rule_r4(dl.Analysis(shot)))
 
 
