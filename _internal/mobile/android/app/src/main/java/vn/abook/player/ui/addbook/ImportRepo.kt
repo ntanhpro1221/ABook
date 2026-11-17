@@ -15,6 +15,7 @@ import vn.abook.player.AndroidCoverCodec
 import vn.abook.player.BookEdits
 import vn.abook.player.BookFileImport
 import vn.abook.player.BookImport
+import vn.abook.player.BookImports
 import vn.abook.player.Store
 import vn.abook.player.TextBook
 import vn.abook.player.TextImports
@@ -59,12 +60,14 @@ class ImportRepo(private val context: Context) : ImportSource {
         if (!item.folder) TextImports.refuseShared(mime, shown, head)?.let { throw BookImport.Failed(it) }
         val packageFile = !item.folder && (TextImports.isAppBookFile(mime, shown) || (incoming == null && BookFileImport.looksLikeBookFile(head() ?: ByteArray(0))))
         if (packageFile) {
-            val result = BookFileImport.import(context, uri, progress = progress)
-            if (result.how in setOf("older", "conflict")) return@withContext PreparedImport(null, shown,
-                packageReview = PackageReview(result.id, result.title, result.incomingTitle, result.how))
+            // File sách đi qua việc nền dùng chung ([BookImports]): rời app, đóng màn giữa lúc chép / kiểm vẫn chạy tới xong; màn này chỉ xem tiến độ.
+            val result = BookImports.importNow(context, item.source, shown, progress = progress)
+            val id = requireNotNull(result.bookId)
+            if (result.needsChoice) return@withContext PreparedImport(null, shown,
+                packageReview = PackageReview(id, result.title, result.incomingTitle, result.how))
             val notice = if (result.incomingTitle.isNotBlank() && result.incomingTitle != result.title) S.s_ten_trong_file_la_0_khac_ten_dang_dung_f6042eec(result.incomingTitle)
                 else if (result.how == "updated") S.s_da_cap_nhat_0_627a2681(result.title) else S.s_da_them_0_ea40abe7(result.title)
-            return@withContext PreparedImport(null, shown, bookId = result.id, existing = result.how == "existing", notice = notice)
+            return@withContext PreparedImport(null, shown, bookId = id, existing = result.how == "existing", notice = notice)
         }
         val staged = if (item.folder) stageFolder(uri, progress) else TextImports.stageFile(incoming ?: shown, sizeOf(uri), progress) {
             context.contentResolver.openInputStream(uri)
@@ -123,8 +126,8 @@ class ImportRepo(private val context: Context) : ImportSource {
     }
 
     override suspend fun replace(item: ImportItem, progress: WorkSink): PreparedImport = withContext(Dispatchers.IO) {
-        val result = BookFileImport.import(context, Uri.parse(item.source), allowOlder = true, progress = progress)
-        PreparedImport(null, item.name, bookId = result.id, notice = S.s_da_them_0_ea40abe7(result.title))
+        val result = BookImports.importNow(context, item.source, item.name, allowOlder = true, progress = progress)
+        PreparedImport(null, item.name, bookId = requireNotNull(result.bookId), notice = S.s_da_them_0_ea40abe7(result.title))
     }
 
     private fun name(uri: Uri): String? {

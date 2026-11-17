@@ -25,7 +25,11 @@ class AbookApplication : Application(), androidx.work.Configuration.Provider {
     override val workManagerConfiguration: androidx.work.Configuration
         get() = androidx.work.Configuration.Builder().build()
 
-    val imports by lazy { vn.abook.player.ui.addbook.ImportQueue(vn.abook.player.ui.addbook.ImportRepo(this), uiScope) { library.refresh() } }
+    /** "Thêm sách": hàng đợi của màn, và người xem các lượt nhập nền ([BookImports]) - kể cả lượt màn không xếp (lệnh adb, nút trên thông báo). */
+    val imports by lazy {
+        vn.abook.player.ui.addbook.ImportQueue(vn.abook.player.ui.addbook.ImportRepo(this), uiScope, changed = { library.refresh() }, background = BookImports.jobs.jobs,
+            retryJob = { id -> BookImports.jobs[id]?.let { BookImports.start(this, it.source, it.name, it.owned, it.allowOlder) } })
+    }
     val editors by lazy {
         val repository = vn.abook.player.ui.editbook.EditBookRepo(this, library)
         val editors = vn.abook.player.ui.editbook.EditBooks(repository, uiScope)

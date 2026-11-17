@@ -18,6 +18,8 @@ enum class ImportStage(val label: String) {
 data class ImportItem(
     val id: Long, val source: String, val name: String = S.s_file_da_chon_e29eb975, val folder: Boolean = false,
     val stage: ImportStage = ImportStage.Waiting, val problem: String = "", val bookId: String? = null,
+    /** Hàng chỉ xem một lượt nhập nền mà màn này không xếp (lệnh adb, nút trên thông báo): đóng màn không làm mất nó nên không tính vào [ImportLogic.unfinished]. */
+    val background: Boolean = false,
 )
 
 @Immutable
@@ -95,7 +97,7 @@ object ImportLogic {
     }
 
     /** Số cuốn còn trong hàng mà chưa vào Thư viện (chờ, đang đọc, đang xem): đóng Thêm sách lúc còn hơn một cuốn như vậy thì hỏi trước (web AddBook `unfinished`). */
-    fun unfinished(items: List<ImportItem>) = items.count { it.stage == ImportStage.Waiting || it.stage == ImportStage.Reading || it.stage == ImportStage.Review }
+    fun unfinished(items: List<ImportItem>) = items.count { !it.background && (it.stage == ImportStage.Waiting || it.stage == ImportStage.Reading || it.stage == ImportStage.Review) }
 
     /** Lời hỏi khi đóng Thêm sách giữa hàng (cùng câu với web). */
     fun leaveQuestion(count: Int) = S.s_con_0_cuon_chua_them_vao_thu_vien_dong_bay_91cf24f8(count)

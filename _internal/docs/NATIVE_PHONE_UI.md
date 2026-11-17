@@ -62,6 +62,35 @@ trang heap/`.art` do một lượt GC chạm vào và driver GL, app không gi�
   không thư viện ảnh.
 - **Chữ**: Be Vietnam Pro 400/500/700 trong `res/font`. Màu, cỡ, khoảng cách, bo góc: hằng số Kotlin sinh từ DESIGN.md §5 (một nguồn).
 
+### 2.1 Nhập sách ngầm (việc nền + lệnh adb)
+
+Mọi file .abook / .abookproj (bộ chọn file, "Mở bằng", lệnh adb, nút trên thông báo) đi qua một việc nền dùng chung: `BookImports` +
+`BookImportWorker` (`BookImportWorker.kt`, sổ trạng thái `ImportJobs.kt`). WorkManager việc gấp (expedited), dịch vụ nền loại dataSync khi
+Android cho phép (nếu hệ thống từ chối mở dịch vụ nền, việc vẫn chạy kiểu gấp, thông báo tiến độ đăng thường); các lượt đi tuần tự trong
+một chuỗi việc. Màn "Thêm sách" chỉ là một người xem của `BookImports.jobs`: rời app / đóng màn giữa chừng không làm mất lượt, mở lại thấy đúng
+bước và byte. Thông báo: tiến độ (bấm mở Thêm sách), "Đã thêm" (bấm mở sách), lỗi ("Thử lại"), sách trong máy khác bản trong file
+("Thay bằng file này"). Không có quyền thông báo thì vẫn nhập.
+
+Lệnh cho người phát triển / máy khác - app KHÔNG nhảy lên màn hình (gói `com.ngdtuanh.abook`, bản debug `com.ngdtuanh.abook.dev`):
+
+```sh
+ADB="adb -P 5038 -s <máy>"   # không dùng adb trần (cổng 5037), xem bộ nhớ adb-private-port
+PKG=com.ngdtuanh.abook
+$ADB shell mkdir -p /sdcard/Android/data/$PKG/files/import
+$ADB push "Sách.abook" /sdcard/Android/data/$PKG/files/import/
+# một file (bỏ --es path = mọi file sách trong thư mục nhập); --ez replace true = thay cả khi sách trong máy mới hơn / khác
+$ADB shell am broadcast -a com.ngdtuanh.abook.action.IMPORT -n $PKG/vn.abook.player.ImportReceiver -f 0x20 \
+    --es path /sdcard/Android/data/$PKG/files/import/Sách.abook
+```
+
+- `-f 0x20` (FLAG_INCLUDE_STOPPED_PACKAGES): app vừa cài hay đã force-stop vẫn nhận lệnh.
+- Kết quả ở dòng `Broadcast completed: result=-1, data="queued 1: Sách.abook; ..."` (`result=1` = không có gì / bị từ chối, kèm lý do).
+- Receiver xuất ra ngoài nhưng đòi quyền `android.permission.DUMP`: chỉ shell / hệ thống gửi được, app khác không.
+- Chỉ nhận file nằm NGAY trong thư mục nhập của chính app (đường dẫn ngoài, `..`, liên kết mềm bị từ chối; kiểm lại lúc chạy). Nhập xong thì xoá
+  file nguồn ở thư mục nhập (không tốn chỗ gấp đôi); lỗi hay cần chọn thì giữ để thử lại. File người dùng chọn bằng bộ chọn file không bao giờ bị xoá.
+- File trong thư mục nhập được đọc tại chỗ (bước "Đang kiểm tra" thẳng, không chép sang bộ nhớ đệm trước).
+- Theo dõi: `$ADB shell dumpsys window windows | grep mCurrentFocus` không đổi; nhật ký `scripts/phone_diag.py` có dòng `BookImport`.
+
 ## 3. Quy tắc hiệu năng khi viết Compose
 
 - State là lớp bất biến (`@Immutable`, danh sách `ImmutableList`/`List` không đổi); màn nhận đúng phần state nó vẽ.
@@ -216,4 +245,3 @@ Chọn **Media Foundation**: nhẹ hơn mọi mặt (bằng 0 MB phân phối, R
 - Thiết kế: token DESIGN.md (màu, chữ, khoảng, chuyển động §5) sinh ra một `Theme.qml` duy nhất. Luật chung với điện thoại: không fade thuần, Back đối xứng, không cắt chữ người dùng.
 - Không bê giao diện web sang: mỗi màn thiết kế lại cho chuột + bàn phím + cửa sổ rộng. Chủ sách 26-10 nhắc với "Đọc theo" trên điện thoại: điều khiển cũ không được gán vào chỗ mới khi cách tương tác đã đổi.
 - Thứ tự: D0 khung (cửa sổ, theme, ngăn xếp màn, khởi chạy backend, script đo RAM / mở nguội / khung) -> D1 Thư viện + thanh phát + Đang nghe + Đọc theo -> D2 Trang sách, Thêm / Sửa sách, Cài đặt -> D3 Studio, Xuất, phần còn lại -> D4 gỡ Tauri.
-

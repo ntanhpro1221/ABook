@@ -55,6 +55,7 @@ class ReplaceRefreshesPlayerTest {
     private fun field(name: String) = Playback::class.java.getDeclaredField(name).also { it.isAccessible = true }
 
     @Before fun setUp() {
+        vn.abook.player.BookImports.inline = true
         Store.init(context)
         booksBefore = booksDir().list()?.toSet() ?: emptySet()
         work = Files.createTempDirectory("replace-refresh").toFile()
@@ -63,6 +64,7 @@ class ReplaceRefreshesPlayerTest {
     }
 
     @After fun tearDown() {
+        vn.abook.player.BookImports.inline = false
         booksDir().listFiles()?.filter { it.name !in booksBefore }?.forEach { it.deleteRecursively() }
         work.deleteRecursively()
         field("bookId").set(Playback, "")

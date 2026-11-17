@@ -5955,7 +5955,11 @@
     "s_delete_download_description": "“{0}” sẽ bị xoá khỏi máy, giải phóng {1}. Muốn nghe khi mất mạng, bạn cần tải lại.",
     "s_music_seek": "Tua nhạc",
     "s_music_paused": "Đã tạm dừng",
-    "s_unpair_detail": "Máy này sẽ quên kết nối với “{0}”. Muốn nối lại, bạn cần ghép lại thiết bị."
+    "s_unpair_detail": "Máy này sẽ quên kết nối với “{0}”. Muốn nối lại, bạn cần ghép lại thiết bị.",
+    "s_import_channel_note": "Tiến độ khi thêm sách từ file vào điện thoại",
+    "s_import_running_title": "Đang thêm sách",
+    "s_import_open_hint": "Bấm để mở sách.",
+    "s_import_interrupted": "App đóng giữa lúc thêm, sách chưa vào thư viện."
   },
   "android_resources": {
     "app_name": "s_abook_1c37d334",

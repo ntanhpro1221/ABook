@@ -872,6 +872,7 @@ var s_da_bo_xep_hang_cuon_nay_khong_tu_bat_dau_n_f9ec176f = "Đã bỏ xếp hà
 var s_da_bo_yeu_cau_nay_5eec8a27 = "Đã bỏ yêu cầu này";
 var s_da_bo_yeu_cau_thu_lai_c5881de5 = "Đã bỏ yêu cầu thu lại";
 var s_da_cai_e0159635 = "Đã cài";
+function s_da_cap_nhat_0_627a2681(p0) { return "Đã cập nhật “" + String(p0) + "”"; }
 var s_da_cap_nhat_9ca1e681 = "Đã cập nhật";
 var s_da_cap_nhat_mo_lai_abook_de_dung_ban_moi_f196ad36 = " đã cập nhật - mở lại ABook để dùng bản mới.";
 var s_da_cap_nhat_sach_giu_nguyen_578dc3b4 = "Đã cập nhật sách - giữ nguyên ";
@@ -992,6 +993,7 @@ var s_da_tao_lai_sach_voi_thiet_lap_moi_cd546877 = "Đã tạo lại sách với
 var s_da_tao_sach_15431889 = "Đã tạo sách";
 var s_da_tat_chia_se_qua_wi_fi_c818faf6 = "Đã tắt chia sẻ qua Wi-Fi";
 var s_da_tat_tu_chon_nhac_nen_5489759c = "Đã tắt tự chọn nhạc nền";
+function s_da_them_0_ea40abe7(p0) { return "Đã thêm “" + String(p0) + "”"; }
 var s_da_them_14852134 = "Đã thêm ";
 var s_da_them_c5aaf773 = "Đã thêm “";
 var s_da_them_e26b2fcb = "Đã thêm";
@@ -2919,3 +2921,5 @@ function s_delete_download_description(p0, p1) { return "“" + String(p0) + "�
 var s_music_seek = "Tua nhạc";
 var s_music_paused = "Đã tạm dừng";
 function s_unpair_detail(p0) { return "Máy này sẽ quên kết nối với “" + String(p0) + "”. Muốn nối lại, bạn cần ghép lại thiết bị."; }
+var s_import_running_title = "Đang thêm sách";
+var s_import_interrupted = "App đóng giữa lúc thêm, sách chưa vào thư viện.";
