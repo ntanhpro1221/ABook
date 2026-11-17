@@ -101,7 +101,7 @@ Item {
             const drawn = findChild(findChild(findChild(made, "bookVolume_2"), "bookVolumeCover"), "coverInitials")
             verify(drawn !== null && drawn.visible)
             compare(drawn.text, "ĐB")
-            compare(drawn.font.pixelSize, 17)
+            compare(drawn.font.pixelSize, Theme.sizeSection)
             compare(drawn.font.weight, Theme.weightBold)
             VisualReady.render(this, host.Window.window, host, qtVisualReady)
             shot("qt_volumes_rows")

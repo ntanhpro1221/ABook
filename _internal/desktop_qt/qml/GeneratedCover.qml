@@ -9,7 +9,7 @@ Rectangle {
     id: root
     property string title: ""
     // Bìa nhỏ trong hàng danh sách (hàng quyển): chỉ một nhãn ngắn ở giữa - số tập hay hai chữ cái đầu - như BookCover size "sm" của web
-    // (chữ 17 px đậm, màu điểm của bảng màu) và `small` của Android.
+    // (chữ đậm cỡ Theme.sizeSection, màu điểm của bảng màu) và `small` của Android.
     property bool initials: false
     radius: Theme.radiusCover
 
@@ -46,15 +46,15 @@ Rectangle {
     readonly property bool compact: width < 64
     Text {
         objectName: "coverInitials"
-        visible: root.initials
+        Reveal { shown: root.initials }
         anchors.centerIn: parent
         text: root.label
         color: root.palette[2]
-        font.pixelSize: 17
+        font.pixelSize: Theme.sizeSection     // web 17 px, Android 0,34 x bề ngang (19 dp ở bìa 56): token gần nhất
         font.weight: Theme.weightBold
     }
     Text {
-        visible: !root.initials
+        Reveal { shown: !root.initials }
         readonly property real pad: root.compact ? 4 : Math.max(8, root.width * 0.08)
         x: pad
         y: pad
