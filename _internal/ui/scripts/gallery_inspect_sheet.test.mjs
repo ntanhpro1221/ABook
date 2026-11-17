@@ -59,6 +59,14 @@ it.skipIf(!browserAvailable)("settling is counted in rendered frames, so slow fr
     expect(moving.stable).toBe(false);
     expect(moving.ticks).toBe(120);
     expect(moving.changed.length).toBeGreaterThan(0);
+    // Review 0.4.173 B12: a page that renders no frame (hidden, background) still answers within the wall-clock cap, with diagnostics.
+    const frozen = await evaluate(cdp, page.sessionId, `(async () => {
+      const frame = window.requestAnimationFrame;
+      window.requestAnimationFrame = () => 0;
+      try { return await __sheetProbe.stable({ maxMs: 400 }); } finally { window.requestAnimationFrame = frame; }
+    })()`);
+    expect(frozen).toMatchObject({ stable: false, timedOut: true, ticks: 0, visibility: expect.any(String), moving: expect.any(Array) });
+    expect(frozen.elapsed).toBeGreaterThanOrEqual(390);
   } finally { cdp?.close(); await browser?.close(); }
 }, 60000);
 
