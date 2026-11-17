@@ -13,7 +13,10 @@ Item {
         y: -root.shadowPadding
         width: root.width + 2 * root.shadowPadding
         height: root.height + 2 * root.shadowPadding
-        layer.enabled: true
+        // Bộ vẽ phần mềm (QT_QUICK_BACKEND=software - bộ chụp ảnh soát WidthTests) để lại phần lớp không được vẽ lại thành ĐEN
+        // đặc: cả lề bóng quanh hộp thoại hoá khung đen (0.4.173 soát tay). App thật chạy RHI (D3D11) không bị - đã chụp cùng
+        // cảnh bằng D3D11 ẩn (ABOOK_WIDTH_REAL_BACKEND=1): lề bóng đúng. Ở bộ vẽ phần mềm bỏ lớp: ảnh tĩnh y hệt, chỉ khác lúc mờ dần.
+        layer.enabled: root.GraphicsInfo.api !== GraphicsInfo.Software
         Item {
             id: surface
             x: root.shadowPadding
