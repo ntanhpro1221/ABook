@@ -7,6 +7,12 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+- Bảo mật: nhập PDF dùng pypdf 6.21.4 (vá 26 lỗi PDF độc làm treo hay ăn hết RAM); chữ trích ra từ PDF không đổi.
+- Bảo mật: máy tính giải mã MP3 bằng minimp3 mới (vá đọc tràn bộ nhớ ở thẻ VBR, tua và khung lỗi); âm thanh giải ra không đổi.
+- Bảo mật: app Windows mang Python 3.14.10 (chặn khoá CA emSign đã lộ trong kết nối mã hoá, vá giải nén tar).
+- Bảo mật: bộ đọc nhạc tải thêm (ffmpeg) lên bản 8.1.3 dựng sẵn của FFmpeg-Builds, có các bản vá kiểm biên khi đọc file nhạc; tải về ~64 MB thay vì ~36 MB, máy đã có bản cũ được mời cập nhật khi mở Xuất hay Phân tích nhạc.
+- Kỹ thuật: Gradle wrapper 8.14.7 (vá bảo mật daemon của máy dựng Android).
+
 ## [0.4.173] - 2026-11-15
 
 - Kỹ thuật: desktop dùng Qt 6.11.3 để nhận bản sửa QML/V4 cho QTBUG-148459 (MethodStorage null gây crash WidthTests). Phiên bản SDK có một nguồn cấu hình; QWindowKit được dựng riêng theo phiên bản Qt.

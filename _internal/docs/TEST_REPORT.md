@@ -1,5 +1,35 @@
 # Test report
 
+## 17-11-2026 — dependency security updates for 0.4.175 (`dev/deps175`)
+
+Five pins moved, one commit each, on top of faa841749: vendored pypdf 6.16.2 -> 6.21.4, desktop minimp3 afb604c0 -> a2ad968c,
+embedded Python 3.14.8 -> 3.14.10, Gradle wrapper 8.14.6 -> 8.14.7, and the downloaded ffmpeg Gyan 8.1.2 essentials ->
+FFmpeg-Builds n8.1.3-35-gf1acb0a266 win64-gpl-8.1 (tag autobuild-2026-11-16-15-29).
+
+- pypdf: text, metadata and `importers.pdf_pages` output of the three PDF fixtures plus the four PDFs the import tests generate
+  (40- and 300-page text PDFs, two broken files) are byte-identical between 6.16.2 and 6.21.4; locked and broken files give the
+  same errors. Import-related pytest (13 files): 507 passed, 1 skipped, 0 failed.
+- minimp3: a harness decoding through both paths `mp3source.cpp` uses (`mp3dec_ex_*` with seeks, and frame-by-frame after
+  `mp3dec_check_vbrtag`) gives bit-identical float PCM for all 18 repo mp3 fixtures and 82 of 83 upstream vectors, with both
+  MSVC (/O2) and MinGW g++. The 83rd is `l3-nonstandard-vbrtag-oob-read`: the old header read past the 104-byte buffer under
+  MSVC (claimed 728064 samples, read 0); the new one rejects the tag and decodes the single frame. That vector is now a
+  VoiceTests fixture (`hostileVbrTagEndsCleanly`).
+- Python 3.14.10: embed zip SHA-256 equals python.org's release-file API value. Build-Python + Copy-App + Test-Layout +
+  Test-Python on the trimmed build: 112/115 webui modules load (three need numpy/librosa as before), covers, importer with
+  vendored pypdf, ssl (OpenSSL 3.5.9), sqlite3, requests, psutil. A real ranged ffmpeg download over HTTPS through
+  `ffmpeg_setup.install` with this embedded Python matched the pinned exe hash.
+- Gradle: `distributionSha256Sum` is the -all.zip checksum from services.gradle.org.
+- ffmpeg: ZIP SHA-256 equals the release's `checksums.sha256` and GitHub asset digest; recomputing the member pin from the old
+  ZIP reproduces the old pin. Through the four app decode command lines (`music_mel.decode` at 48 kHz and 22.05 kHz,
+  `music_plan` pcm_f32le WAV, export `pump_pcm` s16le) PCM is bit-identical for 37 inputs (repo mp3s plus flac, ogg/vorbis,
+  opus, aac, alac, wma, aiff, wav derived from the music_student fixtures and a synthetic track): 148 identical cases, 16 cases
+  where both versions reject the same non-audio fixtures. Encoders: flac and aac decode back bit-identical; libmp3lame output
+  differs at the sample level (same byte size, loudness within 0.04 LU, difference -20 to -41 dB relative). Decode speed equal
+  (10-minute mp3: 0.56-0.71 s both). Download grows from 35.7 MB to 63.7 MB (exe 102 -> 165 MB). ffmpeg/music/export pytest
+  (54 files): 886 passed, 7 skipped, 0 failed (the nine `test_ui_parity_rules` L7 failures of the first run were a missing
+  `ui/node_modules`; after the junction the file is 36 passed).
+- Quality implementation hash unchanged after every commit: `6d5817d28678d2f85dcc3c8f5158638907a6f9f463bdb8e1a83b3c46c9a68fa8`.
+
 ## 15-11-2026 — 0.4.173 integration
 
 QML objects outside the visual tree now hold their JS wrapper for their whole life (`Keep.hold`, `desktop_qt/src/keep.h`). The collector marks QML property storage only through the wrapper; outside the visual tree only the weak QObject-wrapper pass keeps it, and that pass drops it under a JS-owned top ancestor (WidthTests run 6: 18 Reveal "Cannot find member data", Studio2 transition never finished). Reveal, SmoothWheel, 14 non-singleton QtObject components, every child Connections (now `Listen`, 64 sites) and 8 child timers/handlers/stores with their own properties anchor themselves. `tests/width/tst_keep.qml` reproduces the loss deterministically (JS-owned owner dropped, visible part kept, two `gc()`): previous QML 2 passed / 4 failed in each of 5 runs, fixed 7 passed / 0 failed in each of 5 runs. `tests/test_qt_keep_anchor.py` rejects unanchored shapes and anchor users without `import ABook` (88 findings on the previous QML, 0 now). The first `release_gate.qt_tests()` failed once (Studio1: `UiActivity.qml` lacked `import ABook`, 2381 passed / 1 failed); after the fix: 21 suites, 2382 passed, 0 failed, 2 skipped, 0 member-data warnings. WidthTests three consecutive clean runs: 1732/0/2 each (in the gate, 1250.6 s, 1296.0 s), no crash, no member-data warning. ABookDesk offscreen smoke exits 0. Focused pytest: 109 passed; Qt source pytest: 216 passed, 1 skipped.
