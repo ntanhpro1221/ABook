@@ -149,7 +149,7 @@ Interactive {
         // Thu cỡ chữ không làm ô thấp đi: dòng giữ chiều cao một dòng ở cỡ gốc (mọi ô một hàng cao bằng nhau), chữ thu cỡ canh giữa.
         height: Math.max(implicitHeight, slot.implicitHeight)
         verticalAlignment: Text.AlignVCenter
-        Text { id: slot; visible: false; text: "Ag"; font.family: subtitleText.font.family; font.pixelSize: Theme.sizeCaption }
+        Text { id: slot; visible: false; text: subtitleText.text; font.family: subtitleText.font.family; font.pixelSize: Theme.sizeCaption }
     }
     // Same laptop mark as web, leading the one subtitle line.
     Icon {
