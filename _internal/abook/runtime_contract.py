@@ -136,7 +136,7 @@ CRITICAL_RUNTIME_DISTRIBUTIONS: dict[str, tuple[str, str]] = {
     # Both engines and their installed versions belong to the book's ASR provenance.
     "ctranslate2": ("ctranslate2", "4.8.2"),
     "faster-whisper": ("faster_whisper", "1.2.1"),
-    "brotli": ("brotli", "1.2.0"),
+    "brotli": ("brotli", "1.2.1"),
     # Same silent class: sea-g2p decides the pronunciation of locked names.
     "sea-g2p": ("sea_g2p", "0.10.0"),
 }
