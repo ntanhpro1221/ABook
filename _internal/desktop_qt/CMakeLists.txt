@@ -674,6 +674,8 @@ target_compile_definitions(WidthTests PRIVATE QUICK_TEST_SOURCE_DIR="${CMAKE_CUR
     WIDTH_SOURCE_DIR="${CMAKE_CURRENT_SOURCE_DIR}")
 target_link_libraries(WidthTests PRIVATE Qt6::QuickTest Qt6::Quick Qt6::QuickPrivate Qt6::QmlPrivate Qt6::Network windowsapp shell32)   # QuickPrivate: FullRepaint, QmlPrivate: Later
 set_target_properties(WidthTests PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/width_tests")
+# Ảnh chân dung giọng thật (qrc như ABookDesk): AvatarPortrait trong test và ảnh d2shots giải đúng WebP thay vì chỉ hiện chữ dự phòng
+qt_add_resources(WidthTests VoicePortraitsWidth PREFIX "/voiceavatars" BASE "${CMAKE_CURRENT_SOURCE_DIR}/../abook/assets/voice_avatars" FILES ${ABOOK_VOICE_PORTRAITS})
 if(MSVC)
     target_compile_options(WidthTests PRIVATE /W3 /utf-8)
 endif()
@@ -717,6 +719,15 @@ qt_add_executable(MusicArtTests tests/test_musicart.cpp src/musicartprovider.cpp
 target_compile_definitions(MusicArtTests PRIVATE MUSICART_DIR="${CMAKE_CURRENT_SOURCE_DIR}")
 target_link_libraries(MusicArtTests PRIVATE Qt6::Test Qt6::Qml Qt6::Quick Qt6::Network)
 add_test(NAME MusicArtTests COMMAND MusicArtTests)
+# WebP phải giải được: mọi ảnh chân dung giọng (qrc /voiceavatars) và ảnh nhân vật đều là WebP (plugin qwebp của qtimageformats)
+qt_add_executable(ImageFormatTests tests/test_imageformats.cpp)
+qt_add_resources(ImageFormatTests VoicePortraitsTest PREFIX "/voiceavatars" BASE "${CMAKE_CURRENT_SOURCE_DIR}/../abook/assets/voice_avatars" FILES ${ABOOK_VOICE_PORTRAITS})
+target_compile_definitions(ImageFormatTests PRIVATE VOICE_AVATAR_DIR="${CMAKE_CURRENT_SOURCE_DIR}/../abook/assets/voice_avatars")
+target_link_libraries(ImageFormatTests PRIVATE Qt6::Test Qt6::Gui Qt6::Qml Qt6::Quick)
+if(MSVC)
+    target_compile_options(ImageFormatTests PRIVATE /W3 /utf-8)
+endif()
+add_test(NAME ImageFormatTests COMMAND ImageFormatTests)
 # Khay Win32 tự viết (thay Qt.labs.platform, bỏ Qt6Widgets.dll): menu, tooltip, lệnh chọn trên khay GIẢ, không icon nào vào khay thật
 qt_add_executable(TrayTests tests/test_tray.cpp src/trayicon.cpp src/trayicon.h)
 target_include_directories(TrayTests PRIVATE src)

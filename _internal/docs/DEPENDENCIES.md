@@ -3,6 +3,16 @@
 File này là trách nhiệm thường trực của người dev project, không phải một lần rà soát. Mỗi phiên bản
 phải kiểm lại bảng dưới và ghi kết quả vào `VERSIONS.md`.
 
+## 0.4.173 — Qt C++ SDK của app máy tính
+
+App máy tính phát hành (`desktop_qt/`, ABookDesk.exe) liên kết động Qt C++ (LGPL); windeployqt chép DLL và plugin vào bộ cài.
+Đây là phụ thuộc đóng gói, khác PySide6 (vỏ dev). Không có trong `uv.lock`, nên ghim riêng như dưới.
+
+| Thành phần | Phiên bản | Module | Nguồn | Ghim / kiểm |
+|---|---|---|---|---|
+| Qt C++ SDK (Windows, MSVC 2022 x64) | **6.11.3** (`desktop_qt/QT_VERSION`; CMake `EXACT`) | gói nền `qt.qt6.6113.win64_msvc2022_64` (qtbase, qtsvg, qtdeclarative, qtdoc, qttools, qttranslations, d3dcompiler_47, opengl32sw) + addon **qtmultimedia**, **qttasktree**, **qtimageformats** (`imageformats/qwebp.dll` cho ảnh chân dung WebP) | kho kiến trúc `download.qt.io/online/qtsdkrepository/windows_x86/desktop/qt6_6113/qt6_6113_msvc2022_64`, cài bằng `desktop_qt/tools/install_qt_sdk.py` | SHA-256 + số byte từng archive ghim trong `desktop_qt/qt_sdk_pins.json`, không tin file hash của máy chủ, không nhận SHA-1; 11 archive đã khớp khi tải lại từ mirror độc lập ftp.fau.de (17-11). `qt_sdk.py --check-root` từ chối SDK thiếu addon; `check_dist_deps.py` và `smoke_packaged.py` đòi `imageformats/qwebp.dll` trong dist; `ImageFormatTests` giải mọi ảnh chân dung trong qrc |
+| py7zr (chỉ công cụ cài SDK, không đóng gói) | **1.1.4** | cùng texttable 1.7.2, pycryptodomex 3.24.1, brotli 1.2.1, psutil 7.2.2, backports-zstd 1.8.0, pyppmd 1.3.1, pybcj 1.0.8, multivolumefile 0.2.3, inflate64 1.0.4 | PyPI, wheel cp311 win_amd64 | `desktop_qt/tools/qt_sdk_requirements.txt` kèm `--hash=sha256`; `install_qt_sdk.py` từ chối py7zr khác bản ghim |
+
 ## 0.4.168 — measured runtime declarations
 
 The release records the packages installed in the shared Studio runtime. The
