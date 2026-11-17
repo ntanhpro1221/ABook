@@ -366,6 +366,10 @@ def _seal(out: Path, files: dict[str, Path | bytes], book: dict[str, Any] | None
           known: dict[str, dict[str, Any]] | None = None, progress: Progress | None = None) -> Path:
     """Ghi `book.package` và `project.json` rồi gói ZIP: file tạm cạnh đích, thay nguyên tử. Mục trùng byte thành bí danh.
     `progress`: xem `Progress` (pha "hash" rồi "write"); dừng giữa chừng thì file tạm bị xoá."""
+    # Phần nghe trong file dự án là một .abook: trạng thái QA ở sổ (project/), không ở book.json (bookfile.PACKAGE_BOOK_KEYS).
+    internal = bookfile.package_field_problems(book) if book is not None else []
+    if internal:
+        raise ProjectFileError("book.json có trường QA / nội bộ chỉ thuộc dự án: " + "; ".join(internal[:3]))
     described = _described(files, known or {}, progress)
     aliases = aliases_for(described)
     created = datetime.now(UTC).isoformat(timespec="seconds")

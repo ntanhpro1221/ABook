@@ -38,7 +38,11 @@ data class CastMember(
 
 /** Người kể: giọng đang dùng và lựa chọn đang chờ. */
 @Immutable
-data class CastNarrator(val voice: String, val lines: Int, val seconds: Double, val profile: VoiceProfile?, val pendingVoice: PendingVoice?, val redo: Int, val chapterVoices: List<String> = emptyList())
+data class CastNarrator(
+    val voice: String, val lines: Int, val seconds: Double, val profile: VoiceProfile?, val pendingVoice: PendingVoice?, val redo: Int,
+    val chapterVoices: List<vn.abook.player.ui.data.NarratorVoice> = emptyList(), val exceptChapters: List<vn.abook.player.ui.data.CastChapter> = emptyList(),
+    val voiceLines: Int = lines, val voiceSeconds: Double = seconds,
+)
 
 /** Lời đáp của `GET /api/books/<id>/cast`: người kể, nhân vật chính, vai phụ, và dàn mang từ phần trước. */
 @Immutable
@@ -143,7 +147,10 @@ internal object StudioCastJson {
                 profile = profile(narrator.optJSONObject("profile")),
                 pendingVoice = pendingVoice(narrator.optJSONObject("pendingVoice")),
                 redo = narrator.optInt("redo"),
-                chapterVoices = narrator.optJSONArray("chapterVoices").let { list -> (0 until (list?.length() ?: 0)).map { list!!.optString(it) } },
+                chapterVoices = vn.abook.player.ui.data.Cast.narratorVoices(narrator.optJSONArray("chapterVoices")),
+                exceptChapters = vn.abook.player.ui.data.Cast.chapters(narrator.optJSONArray("exceptChapters")),
+                voiceLines = narrator.optInt("voiceLines", narrator.optInt("lines")),
+                voiceSeconds = narrator.optDouble("voiceSeconds", narrator.optDouble("seconds", 0.0)).let { if (it.isFinite()) it else 0.0 },
             ),
             characters = json.optJSONArray("characters").objects().map(::member),
             extras = json.optJSONArray("extras").objects().map(::member),

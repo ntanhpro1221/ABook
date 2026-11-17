@@ -194,6 +194,33 @@ class BookTabsScreenTest {
         snap("book_cast_dark")
     }
 
+    private fun chapterNarrators(dark: Boolean) {
+        val chapters = JSONArray(listOf(
+            JSONObject().put("id", 4).put("title", "Chương 4"),
+            JSONObject().put("id", 6).put("title", "Chương 6"),
+        ))
+        val narrator = JSONObject().put("voice", "Minh Quân").put("lines", 2196).put("seconds", 12600.0)
+            .put("voiceLines", 1599).put("voiceSeconds", 9000.0).put("exceptChapters", chapters)
+            .put("chapterVoices", JSONArray(listOf(JSONObject().put("voice", "Ngọc Linh").put("profile", JSONObject().put("preset", "ngoc-linh").put("label", "Ngọc Linh"))
+                .put("lines", 597).put("seconds", 3600.0).put("chapters", chapters))))
+        val fixture = Cast.parse(JSONObject().put("narrator", narrator)
+            .put("characters", JSONArray(listOf(person("An", "Nữ", 40, title(1)))))
+            .put("extras", JSONArray()).toString())
+        show(detail(), fixture, dark = dark)
+        open("book_tab_cast")
+        rule.waitUntil(5_000) { rule.onAllNodesWithTag("cast_narrator_chapter").fetchSemanticsNodes().isNotEmpty() }
+        rule.onNodeWithText("Toàn sách trừ chương 4, 6").assertIsDisplayed()
+        rule.onNodeWithText("Chương 4, 6").assertIsDisplayed()
+        rule.onNodeWithText("Ngọc Linh").assertIsDisplayed()
+        snap(if (dark) "book_cast_chapter_narrators_dark" else "book_cast_chapter_narrators_light")
+    }
+
+    @Test
+    fun chapterNarratorsLight() = chapterNarrators(dark = false)
+
+    @Test
+    fun chapterNarratorsDark() = chapterNarrators(dark = true)
+
     /** Kho đọc xong mà không có trang (nguồn không có dữ liệu): "Lịch sử" kết thúc bằng câu "Chưa nghe lần nào", không khung chờ mãi (soát điện thoại 02-11). */
     @Test
     fun historyEndsAsAnEmptyNoteWhenTheSourceHasNoPage() {

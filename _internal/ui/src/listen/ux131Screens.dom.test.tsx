@@ -50,11 +50,27 @@ const chapter = (id: number) => ({ id, index: id - 1, subtitle: "", title: `Chư
 const book = (id = "book", title = "Truyện thử", count = 8) => ({ id, title, narrator: "Giọng thử", duration: 60 * count, chaptersTotal: count, chaptersAvailable: count, complete: true, producing: false, updatedAt: null,
   state: { chapters: {} }, progress: { heardSeconds: 0, totalSeconds: 60 * count, fraction: 0, chaptersDone: 0, finished: false }, chapters: Array.from({ length: count }, (_, i) => chapter(i + 1)) }) as ListenBook;
 
-it("shows chapter narrator exceptions beside the book narrator", async () => {
-  state.cast = { narrator: { voice: "Đức Trí", lines: 10, seconds: 0, chapterVoices: ["Chương 8: Đoan Trang"] }, characters: [{ name: "TOUKA", displayName: "Touka", lines: 1, seconds: 0, firstChapter: "now" }], extras: [] };
+it("lists every narrator voice as its own row with the chapters it reads", async () => {
+  state.cast = { narrator: { voice: "Đức Trí", lines: 10, seconds: 0, voiceLines: 7, voiceSeconds: 0, exceptChapters: [{ id: 8, title: "Chương 8" }],
+    chapterVoices: [{ voice: "Đoan Trang", profile: { preset: "Đoan Trang" }, chapters: [{ id: 8, title: "Chương 8" }], lines: 3, seconds: 0 }] },
+    characters: [{ name: "TOUKA", displayName: "Touka", lines: 1, seconds: 0, firstChapter: "now" }], extras: [] };
   await render(<CastList bookId="b" reached={new Set()} onPickVoice={() => {}} />);
-  expect(host.textContent).toContain("Đức Trí");
-  expect(host.textContent).toContain("Chương 8: Đoan Trang");
+  const rows = [...host.querySelectorAll('[data-testid="cast-narrator-row"]')].map(row => row.textContent);
+  expect(rows).toHaveLength(2);
+  expect(rows[0]).toContain("Đức Trí"); expect(rows[0]).toContain("Toàn sách trừ chương 8"); expect(rows[0]).toContain("7 câu dẫn truyện");
+  expect(rows[1]).toContain("Đoan Trang"); expect(rows[1]).toContain("Chương 8"); expect(rows[1]).toContain("3 câu dẫn truyện");
+});
+
+it("one narrator voice is one row without a chapter scope; the extras fold counts people and lines", async () => {
+  state.cast = { narrator: { voice: "Đức Trí", lines: 10, seconds: 0, chapterVoices: [], exceptChapters: [], voiceLines: 10, voiceSeconds: 0 },
+    characters: [{ name: "TOUKA", displayName: "Touka", lines: 1, seconds: 0, firstChapter: "now" }],
+    extras: [{ name: "A", displayName: "A", lines: 2, seconds: 0, firstChapter: "" }, { name: "B", displayName: "B", lines: 3, seconds: 0, firstChapter: "" }] };
+  await render(<CastList bookId="b2" reached={new Set()} onPickVoice={() => {}} />);
+  const rows = [...host.querySelectorAll('[data-testid="cast-narrator-row"]')].map(row => row.textContent);
+  expect(rows).toHaveLength(1);
+  expect(rows[0]).not.toContain("Toàn sách");
+  expect(host.textContent).toContain("2 người · 5 câu");
+  expect(host.textContent).not.toContain("trong một cảnh");
 });
 
 for (const photo of [false, true]) it(`huy hiệu bìa vào/ra có ảnh cũ inert, ảnh thật=${photo}`, async () => {

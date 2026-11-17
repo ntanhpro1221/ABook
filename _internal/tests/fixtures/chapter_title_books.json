@@ -1,0 +1,188 @@
+[
+  {
+    "name": "long titles with a repeated pattern",
+    "texts": [
+      "Mở đầu - Một buổi sáng\n\nChiếc hộp nằm trên bàn.\n",
+      "Lần gặp thứ 9 - Một lời hứa ở nơi không có tên trên bản đồ cũ\n\nChiếc hộp nằm trên bàn.\n",
+      "Lần gặp thứ 41 - Buổi chiều dài nhất của mùa hè năm ấy ở nhà ga\n\nChiếc hộp nằm trên bàn.\n",
+      "Lần gặp số không - Đôi mắt màu xám của con mèo hoang trên mái ngói\n\nChiếc hộp nằm trên bàn.\n",
+      "Lần gặp thứ 77 - Đây là, câu chuyện về chiếc ô màu vàng bị bỏ quên\n\nChiếc hộp nằm trên bàn.\n",
+      "Chương kết - Tuyết đầu mùa\n\nChiếc hộp nằm trên bàn.\n"
+    ],
+    "stored": [
+      "000",
+      "001",
+      "002",
+      "003",
+      "004",
+      "005"
+    ],
+    "expected": [
+      "Mở đầu - Một buổi sáng",
+      "Lần gặp thứ 9 - Một lời hứa ở nơi không có tên trên bản đồ cũ",
+      "Lần gặp thứ 41 - Buổi chiều dài nhất của mùa hè năm ấy ở nhà ga",
+      "Lần gặp số không - Đôi mắt màu xám của con mèo hoang trên mái ngói",
+      "Lần gặp thứ 77 - Đây là, câu chuyện về chiếc ô màu vàng bị bỏ quên",
+      "Chương kết - Tuyết đầu mùa"
+    ]
+  },
+  {
+    "name": "long prose without a pattern is never a title",
+    "texts": [
+      "Cơn gió thổi qua cánh đồng lúa sau làng và ai đó gọi tên tôi từ phía bên kia con sông rộng, giọng nhỏ dần rồi tắt hẳn trong tiếng mưa.\n\nChiếc hộp nằm trên bàn.\n",
+      "Cơn gió thổi qua cánh đồng lúa sau làng và ai đó gọi tên cô ấy từ phía bên kia con sông rộng, giọng nhỏ dần rồi tắt hẳn trong tiếng mưa.\n\nChiếc hộp nằm trên bàn.\n",
+      "Năm 1990 tôi rời làng và đi mãi và đi mãi và đi mãi và đi mãi và đi mãi và đi mãi\n\nChiếc hộp nằm trên bàn.\n"
+    ],
+    "stored": [
+      "001",
+      "002",
+      "003"
+    ],
+    "expected": [
+      "",
+      "",
+      ""
+    ]
+  },
+  {
+    "name": "a pattern line without an empty line after it does not count",
+    "texts": [
+      "Lần gặp thứ 9 - Một lời hứa ở nơi không có tên trên bản đồ cũ\nChiếc hộp nằm trên bàn.\n",
+      "Lần gặp thứ 41 - Buổi chiều dài nhất của mùa hè năm ấy ở nhà ga\nChiếc hộp nằm trên bàn.\n",
+      "Lần gặp số không - Đôi mắt màu xám của con mèo hoang trên mái ngói\nChiếc hộp nằm trên bàn.\n"
+    ],
+    "stored": [
+      "001",
+      "002",
+      "003"
+    ],
+    "expected": [
+      "",
+      "",
+      ""
+    ]
+  },
+  {
+    "name": "a pattern in a minority of chapters is not a book pattern",
+    "texts": [
+      "Lần gặp thứ 9 - Một lời hứa ở nơi không có tên trên bản đồ cũ\n\nChiếc hộp nằm trên bàn.\n",
+      "Lần gặp thứ 41 - Buổi chiều dài nhất của mùa hè năm ấy ở nhà ga\n\nChiếc hộp nằm trên bàn.\n",
+      "Cơn gió thổi qua cánh đồng lúa sau làng và ai đó gọi tên tôi từ phía bên kia con sông rộng, giọng nhỏ dần rồi tắt hẳn trong tiếng mưa.\n\nChiếc hộp nằm trên bàn.\n",
+      "Cơn gió thổi qua cánh đồng lúa sau làng và ai đó gọi tên tôi từ phía bên kia con sông rộng, giọng nhỏ dần rồi tắt hẳn trong tiếng mưa.\n\nChiếc hộp nằm trên bàn.\n",
+      "Cơn gió thổi qua cánh đồng lúa sau làng và ai đó gọi tên tôi từ phía bên kia con sông rộng, giọng nhỏ dần rồi tắt hẳn trong tiếng mưa.\n\nChiếc hộp nằm trên bàn.\n"
+    ],
+    "stored": [
+      "001",
+      "002",
+      "003",
+      "004",
+      "005"
+    ],
+    "expected": [
+      "",
+      "",
+      "",
+      "",
+      ""
+    ]
+  },
+  {
+    "name": "mixed book: one guessed title among numbered chapters gives way to numbers",
+    "texts": [
+      "Cơn gió thổi qua cánh đồng lúa sau làng và ai đó gọi tên tôi từ phía bên kia con sông rộng, giọng nhỏ dần rồi tắt hẳn trong tiếng mưa.\n\nChiếc hộp nằm trên bàn.\n",
+      "Đảo pha lê\n\nChiếc hộp nằm trên bàn.\n",
+      "Cơn gió thổi qua cánh đồng lúa sau làng và ai đó gọi tên tôi từ phía bên kia con sông rộng, giọng nhỏ dần rồi tắt hẳn trong tiếng mưa.\n\nChiếc hộp nằm trên bàn.\n",
+      "Cơn gió thổi qua cánh đồng lúa sau làng và ai đó gọi tên tôi từ phía bên kia con sông rộng, giọng nhỏ dần rồi tắt hẳn trong tiếng mưa.\n\nChiếc hộp nằm trên bàn.\n"
+    ],
+    "stored": [
+      "001",
+      "002",
+      "003",
+      "004"
+    ],
+    "expected": [
+      "",
+      "",
+      "",
+      ""
+    ]
+  },
+  {
+    "name": "mixed book: most chapters titled, the last one's standalone line counts too",
+    "texts": [
+      "Đảo pha lê\n\nChiếc hộp nằm trên bàn.\n",
+      "Rừng gió\n\nChiếc hộp nằm trên bàn.\n",
+      "Cầu đá cũ\n\nChiếc hộp nằm trên bàn.\n",
+      "Ngày mưa, ngày nắng\n\nChiếc hộp nằm trên bàn.\n"
+    ],
+    "stored": [
+      "001",
+      "002",
+      "003",
+      "004"
+    ],
+    "expected": [
+      "Đảo pha lê",
+      "Rừng gió",
+      "Cầu đá cũ",
+      "Ngày mưa, ngày nắng"
+    ]
+  },
+  {
+    "name": "mixed book: most chapters titled but one has no title line, so all are numbered",
+    "texts": [
+      "Đảo pha lê\n\nChiếc hộp nằm trên bàn.\n",
+      "Rừng gió\n\nChiếc hộp nằm trên bàn.\n",
+      "Cầu đá cũ\n\nChiếc hộp nằm trên bàn.\n",
+      "Cơn gió thổi qua cánh đồng lúa sau làng và ai đó gọi tên tôi từ phía bên kia con sông rộng, giọng nhỏ dần rồi tắt hẳn trong tiếng mưa.\n\nChiếc hộp nằm trên bàn.\n"
+    ],
+    "stored": [
+      "001",
+      "002",
+      "003",
+      "004"
+    ],
+    "expected": [
+      "",
+      "",
+      "",
+      ""
+    ]
+  },
+  {
+    "name": "keyword headings never change",
+    "texts": [
+      "Chương 1: Chiếc hộp xanh\n\nChiếc hộp nằm trên bàn.\n",
+      "Chương 2\n\nChiếc hộp nằm trên bàn.\n",
+      "Cơn gió thổi qua cánh đồng lúa sau làng và ai đó gọi tên tôi từ phía bên kia con sông rộng, giọng nhỏ dần rồi tắt hẳn trong tiếng mưa.\n\nChiếc hộp nằm trên bàn.\n",
+      "Đảo pha lê\n\nChiếc hộp nằm trên bàn.\n"
+    ],
+    "stored": [
+      "001",
+      "002",
+      "003",
+      "004"
+    ],
+    "expected": [
+      "Chương 1: Chiếc hộp xanh",
+      "Chương 2",
+      "",
+      ""
+    ]
+  },
+  {
+    "name": "named file labels are not numbered fallbacks",
+    "texts": [
+      "Đảo pha lê\n\nChiếc hộp nằm trên bàn.\n",
+      "Cơn gió thổi qua cánh đồng lúa sau làng và ai đó gọi tên tôi từ phía bên kia con sông rộng, giọng nhỏ dần rồi tắt hẳn trong tiếng mưa.\n\nChiếc hộp nằm trên bàn.\n"
+    ],
+    "stored": [
+      "001",
+      "Tên đã đặt"
+    ],
+    "expected": [
+      "Đảo pha lê",
+      ""
+    ]
+  }
+]

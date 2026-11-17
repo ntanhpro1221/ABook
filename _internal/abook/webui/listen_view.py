@@ -64,9 +64,9 @@ def _chapters(project_root: Path) -> list[dict[str, Any]]:
     out = []
     for chapter in store.chapters(project_root):
         duration = chapter["seconds"] if chapter["playable"] else 0.0
+        # Trạng thái QA ("Cần nghe lại", chương đạt hay chưa, lỗi máy) không vào phần nghe: nó ở sổ dự án, Studio đọc từ store.chapters
+        # (statusLabel...). Phần nghe này là nguồn của book.json trong gói và của điện thoại (bookfile.PACKAGE_CHAPTER_KEYS).
         subtitle = chapter["subtitle"]
-        if chapter["statusLabel"] == "Cần nghe lại":
-            subtitle = " · ".join(value for value in (subtitle, "Cần nghe lại") if value)
         out.append({
             "id": chapter["id"],
             "index": chapter["index"],
@@ -75,8 +75,6 @@ def _chapters(project_root: Path) -> list[dict[str, Any]]:
             "fullTitle": chapter["fullTitle"],
             "duration": round(float(duration), 1),
             "available": bool(chapter["playable"]),
-            "qualityPassed": chapter["status"] == "completed" and chapter["segments"]["failed"] == 0,
-            "qualityWarning": chapter["lastError"],
             "audioVersion": str(chapter["completedAt"] or ""),
         })
     return out

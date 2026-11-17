@@ -35,7 +35,8 @@ import { useClip } from "./clip";
 import { FindInBook } from "./FindInBook";
 import { canEditBook, EditBlockedItem, EditBookDialog, refreshAfterEdit, RenameChapterDialog, SaveAsDialog, StudioOnlyItem, useSaveBook, useShareBook } from "./EditBook";
 import { bookStatusText, remoteUnfinishedLine, usePlayListenBook, useResumeTarget } from "./LibraryScreen";
-import { canPlay, chapterHeard, chapterResumeAt, chaptersByPart, type CastMember, type ListenBook, type ListenChapter, voiceName } from "./model";
+import { canPlay, chapterHeard, chapterResumeAt, chaptersByPart, type CastMember, type CastNarrator, type ListenBook, type ListenChapter, type NarratorRowView, voiceName } from "./model";
+import { genderText, narratorRows } from "./castNarrator";
 import { chapterSubline, displayTitle, keepTogether, partialBookLine, primaryListenLabel, textBookLine } from "./labels";
 import { useNowPlaying, usePlayer } from "./player";
 import { usePreparedChapters } from "./PlayerViews";
@@ -450,7 +451,7 @@ export function PersonRow({
         <div className="flex items-baseline gap-2">
           {/* Tên và giọng xuống dòng thay vì cắt: "Thanh Bình · trầm hẳn" cắt giữa chừng là mất đúng chữ người nghe cần (soát UX a8). */}
           <span className="min-w-0 break-words font-medium">{name}</span>
-          {person.gender && <span className="shrink-0 text-xs text-fg-2">{person.gender}</span>}
+          <span className="shrink-0 text-xs text-fg-2">{genderText(person)}</span>
         </div>
         {person.originalName && <div className="break-words text-xs text-fg-3">{S.s_ten_goc_ece0e59a}{cleanName(person.originalName)})</div>}
         <div className="mt-1 break-words text-xs text-fg-2">
@@ -539,6 +540,32 @@ function reachedTitles(chapters: ListenChapter[], until: number | undefined): Se
   return titles;
 }
 
+/** Một giọng kể: vòng sách, tên giọng, phạm vi chương (khi có hơn một giọng), số câu · thời lượng; nghe thử, và ở Studio nút đổi giọng
+ *  người kể trên hàng giọng chính (giọng kể theo chương đi theo người kể "tôi" của chương ấy, không đổi riêng). */
+function NarratorRow({ row, narrator, onPickNarrator }: { row: NarratorRowView; narrator: CastNarrator; onPickNarrator?: () => void }) {
+  const source = useSource();
+  return (
+    <MotionRegion as="div" className="flex min-w-0 items-center gap-3 py-3" data-testid="cast-narrator-row">
+      <div className="grid size-10 shrink-0 place-items-center rounded-full bg-accent-soft text-accent-text">
+        <BookOpenText className="size-5" />
+      </div>
+      <div className="min-w-0 flex-1">
+        <div className="break-words font-medium">{row.voice}</div>
+        {row.scope && <div className="mt-1 break-words text-xs text-fg-2">{row.scope}</div>}
+        {row.main && onPickNarrator && narrator.pendingVoice?.preset && (
+          <div className="mt-1 break-words text-xs font-medium text-fg-2">{S.s_cho_ap_dung_giong_82c96902}{voiceName(narrator.pendingVoice)}</div>
+        )}
+        {/* Số câu / thời lượng tăng khi cuốn đang thu: chữ đổi tại chỗ (TickingValue), không trượt cả hàng. */}
+        <TickingValue className="mt-1 block break-words text-xs text-fg-2">{formatNumber(row.lines)}{S.s_cau_dan_truyen_f0d4156b}{row.seconds > 0 ? ` · ${formatLength(row.seconds)}` : ""}
+          {/* Sau "Áp dụng" đổi giọng kể: các câu đã thu chờ thu lại bằng giọng mới (soát UX a24). */}
+          {row.main && narrator.redo ? S.s_0_cau_cho_thu_lai_e42ce3ef(formatNumber(narrator.redo)) : ""}</TickingValue>
+      </div>
+      {row.preset && <SampleButton id={`voice-${row.preset}`} url={source.voiceUrl(row.preset)} label={S.s_nghe_giong_0_1b667018(row.voice)} />}
+      {row.main && onPickNarrator && <IconButton label={S.s_doi_giong_nguoi_ke_c2afb757} icon={SlidersHorizontal} size="sm" onClick={onPickNarrator} />}
+    </MotionRegion>
+  );
+}
+
 /** `reached`: tên các chương tới chỗ đang nghe (trang nghe) - người chỉ xuất hiện SAU đó bị ẩn tới khi bấm hiện, để dàn nhân
  *  vật không lộ nội dung ("Douglas · từ Chương 738" khi đang nghe Chương 725 - soát UX 29-09). Studio không truyền: hiện hết. */
 export function CastList({ bookId, onPickVoice, onPickNarrator, onMerge, onUnmerge, onRename, onGender, reached, waiting, narratorNote }: {
@@ -556,7 +583,6 @@ export function CastList({ bookId, onPickVoice, onPickNarrator, onMerge, onUnmer
   /** Cuốn không có xưởng: đổi giới tính, gộp người ghi thành ý muốn chờ Studio (docs/EDITING.md, P2a). */
   waiting?: boolean;
 }) {
-  const source = useSource();
   const { data: cast, isLoading } = useCast(bookId);
   const [later, setLater] = useState(false);
   const carriedPeople = onPickVoice ? (cast?.carried ?? []) : [];
@@ -568,24 +594,12 @@ export function CastList({ bookId, onPickVoice, onPickNarrator, onMerge, onUnmer
   }
   return (
     <MotionRegion as="div" className="motion-reveal mt-4">
-      <div className="flex items-center gap-3 py-2">
-        <div className="grid size-10 place-items-center rounded-full bg-accent-soft text-accent-text">
-          <BookOpenText className="size-5" />
-        </div>
-        <div className="min-w-0 flex-1">
-          <div className="label-section text-fg-2">{S.s_nguoi_ke_chuyen_c0c2c504}</div>
-          <div className="mt-1 font-medium">{cast.narrator.voice || S.s_mac_dinh_9a1af367}</div>
-          {cast.narrator.chapterVoices?.map(line => <div key={line} className="mt-1 text-xs text-fg-2">{line}</div>)}
-          {onPickNarrator && cast.narrator.pendingVoice?.preset && (
-            <div className="mt-1 break-words text-xs font-medium text-fg-2">{S.s_cho_ap_dung_giong_82c96902}{voiceName(cast.narrator.pendingVoice)}</div>
-          )}
-          <div className="text-xs text-fg-2">{formatNumber(cast.narrator.lines)}{S.s_cau_dan_truyen_f0d4156b}{cast.narrator.seconds > 0 ? ` · ${formatLength(cast.narrator.seconds)}` : ""}
-            {/* Sau "Áp dụng" đổi giọng kể: các câu đã thu chờ thu lại bằng giọng mới (soát UX a24). */}
-            {cast.narrator.redo ? S.s_0_cau_cho_thu_lai_e42ce3ef(formatNumber(cast.narrator.redo)) : ""}</div>
-        </div>
-        {cast.narrator.voice && <SampleButton id={`voice-${cast.narrator.voice}`} url={source.voiceUrl(cast.narrator.voice)} label={S.s_nghe_giong_0_1b667018(cast.narrator.voice)} />}
-        {onPickNarrator && <IconButton label={S.s_doi_giong_nguoi_ke_c2afb757} icon={SlidersHorizontal} size="sm" onClick={onPickNarrator} />}
-      </div>
+      {/* Người kể chuyện là một danh sách như Vai chính: mỗi giọng kể một hàng (giọng chính, rồi giọng kể riêng vài chương). */}
+      <Fold storageKey={`book.${bookId}.narrator`} title={S.s_nguoi_ke_chuyen_c0c2c504} summary={S.s_0_giong_7be1af23(narratorRows(cast.narrator).length)} defaultOpen>
+        <FoldRows items={narratorRows(cast.narrator)} keyOf={(row) => row.key} className="grid gap-x-8 sm:grid-cols-2 xl:grid-cols-3">
+          {(row) => <NarratorRow row={row} narrator={cast.narrator} onPickNarrator={onPickNarrator} />}
+        </FoldRows>
+      </Fold>
       {narratorNote && <div className="mt-2 text-xs text-fg-2">{narratorNote}</div>}
       <CastHistory key={bookId} bookId={bookId} history={cast.castHistory} editable={Boolean(onMerge || onUnmerge)} />
       <Fold storageKey={`book.${bookId}.cast`} title={S.s_vai_chinh_b84f4098} summary={S.s_0_nguoi_co_loi_thoai_1e48f89a(cast.characters.length)} defaultOpen={cast.characters.length <= 4} className="mt-4">
@@ -606,7 +620,7 @@ export function CastList({ bookId, onPickVoice, onPickNarrator, onMerge, onUnmer
       </MotionPresence>
       </Fold>
       {cast.extras.length > 0 && (
-        <Fold storageKey={`book.${bookId}.extras`} title={S.s_vai_phu_6e7c6bce} summary={S.s_0_nguoi_trong_mot_canh_bb4fd602(cast.extras.length)} className="mt-4">
+        <Fold storageKey={`book.${bookId}.extras`} title={S.s_vai_phu_6e7c6bce} summary={S.s_0_nguoi_1_cau_0a0bbce4(cast.extras.length, formatNumber(cast.extras.reduce((sum, person) => sum + person.lines, 0)))} className="mt-4">
           <FoldRows items={cast.extras} keyOf={(person) => person.name} className="grid gap-x-8 sm:grid-cols-2 xl:grid-cols-3">{(person) => <PersonRow bookId={bookId} person={person} onPickVoice={onPickVoice} onMerge={onMerge} onUnmerge={onUnmerge} onRename={onRename} onGender={onGender} waiting={waiting} />}</FoldRows>
         </Fold>
       )}

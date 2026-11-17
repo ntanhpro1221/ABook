@@ -1,6 +1,7 @@
 import { S } from "../shared/strings.generated";
 import type { Capabilities } from "@/shared/capabilities";
 import type { CoverImage } from "@/shared/cover";
+import type { CastNarrator } from "@/listen/model";
 import type { VolumeProposal } from "@/studio/volumes";
 import type { BookTemplate } from "@/studio/bookTemplates";
 import type { BookMetadata } from "@/listen/BookMetadata";
@@ -149,7 +150,7 @@ export interface CastMember {
 }
 
 export interface Cast {
-  narrator: { chapterVoices?: string[]; voice: string; lines: number; seconds: number; profile: VoiceProfile | null; pendingVoice?: { preset: string; label?: string; gender: string } | null };
+  narrator: CastNarrator & { profile: VoiceProfile | null };
   characters: CastMember[];
   extras: CastMember[];
 }

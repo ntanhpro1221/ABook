@@ -598,9 +598,10 @@ def scan_inputs(paths: list[str], epub_root: Path | None = None, *, continuation
     total_words = 0
     total_seconds = 0.0
     estimated = False
-    from ..chapter_titles import fallback_positions
+    from ..chapter_titles import book_headings, fallback_positions
 
     positions = fallback_positions([path.stem for path in files])
+    openings: list[tuple[str, str, int | None]] = []  # (đầu chương, tên file, vị trí) - tên chương quyết theo cả cuốn sau vòng quét
     for position, path in zip(positions, files):
         try:
             head, tail, size, sha256 = _read_chapter(path)
@@ -631,7 +632,7 @@ def scan_inputs(paths: list[str], epub_root: Path | None = None, *, continuation
         rows.append({
             "path": str(path),
             "name": path.name,
-            "title": importers.display_chapter_name(path.stem, text, position),
+            "title": "",  # đặt sau vòng quét: chapter_titles.book_headings nhìn cả cuốn
             # Không tích sẵn (bìa, bản quyền, mục lục, mục rất ngắn của EPUB / DOCX): cùng luật với Nghe ngay (importers.default_picks); vẫn tích lại được.
             **({"matter": reason} if reason else {}),
             **({"estimated": True} if truncated else {}),
@@ -652,6 +653,10 @@ def scan_inputs(paths: list[str], epub_root: Path | None = None, *, continuation
             # cả nghìn file chương của một thư mục bình thường.
             "split": txt_split.plan(path) if len(files) <= 3 else None,
         })
+        openings.append((text[:4096], path.stem, position))
+    headings = book_headings([text for text, _stem, _position in openings], [stem for _text, stem, _position in openings])
+    for row, heading, (_text, stem, position) in zip(rows, headings, openings):
+        row["title"] = importers.display_chapter_name(stem, heading, position)
     notes = [*found["notes"], *(importers.legacy_note(kind, names) for kind, names in legacy.items())]
     title = found["bookTitle"]
     if files and not title:

@@ -387,7 +387,7 @@ Item {
             tryVerify(function() { return rowOf(page, "Lan") !== undefined && rowOf(page, "Lan") !== null }, 3000)
             // giới tính
             openMenu(page, "Lan")
-            findChild(page, "castGender").clicked()
+            findChild(findChild(page, "castMenu"), "castGender").clicked()
             tryVerify(function() { return dialog(page, "castGenderDialog").open })
             all(dialog(page, "castGenderDialog"), "genderChoice")[0].picked("male")
             all(dialog(page, "castGenderDialog"), "genderSave")[0].activated()

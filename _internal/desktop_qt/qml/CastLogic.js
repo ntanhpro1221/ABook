@@ -76,9 +76,38 @@ function countLine(person) {
     return formatNumber(person.lines) + S.s_cau_b07e1008 + (person.seconds > 0 ? "\u00a0·\u00a0" + formatLength(person.seconds) : "")
         + (person.firstChapter ? S.s_u00a0_u00a0tu_ce4ae8bc + keepTogether(person.firstChapter) : "")
 }
-function narratorLine(narrator) {
-    return formatNumber(narrator.lines) + S.s_cau_dan_truyen_f0d4156b + (narrator.seconds > 0 ? "\u00a0·\u00a0" + formatLength(narrator.seconds) : "")
-        + (narrator.redo ? "\u00a0·\u00a0" + formatNumber(narrator.redo) + S.s_cau_cho_thu_lai_98956e55 : "")
+// Ô giới: giới cast.json ghi; trống thì lý do (store.cast_gender_note) - "Nhóm", "Trẻ em" hay "Chưa rõ". Không bao giờ trống, không bịa giới (web genderText)
+function genderText(person) {
+    if (person.gender) return person.gender
+    if (person.genderNote === "group") return S.s_cast_gender_group
+    return person.genderNote === "child" ? S.s_cast_gender_child : S.s_chua_ro_be464a5a
+}
+// "Chương 5, 7" khi mọi tên là "Chương <số>"; không thì các tên nối bằng dấu phẩy. `lower`: đứng sau chữ khác ("… trừ chương 5, 7")
+function chapterList(chapters, lower) {
+    const list = chapters || []
+    const numbers = list.map(chapter => { const found = /^Chương\s+(\d+)$/.exec(String(chapter.title || "").trim()); return found ? found[1] : null })
+    const joined = numbers.join(", ")
+    if (list.length && numbers.every(Boolean)) return lower ? S.s_chuong_0_55d256d1(joined) : S.s_chuong_0_268b0521(joined)
+    return list.map(chapter => chapter.title).join(", ")
+}
+// Danh sách "Người kể chuyện" đúng như cast.json ghi (web narratorRows): giọng chính rồi từng giọng kể theo chương; mục không đúng dạng thì bỏ qua
+function narratorRows(narrator) {
+    const others = (narrator.chapterVoices || []).filter(entry => entry && typeof entry === "object" && Array.isArray(entry.chapters))
+    const except = narrator.exceptChapters || []
+    const main = { key: "main", voice: narrator.voice || S.s_mac_dinh_9a1af367, preset: narrator.voice || "", main: true,
+                   scope: others.length && except.length ? S.s_toan_sach_tru_0_baff4d91(chapterList(except, true)) : "",
+                   lines: narrator.voiceLines !== undefined ? narrator.voiceLines : (narrator.lines || 0),
+                   seconds: narrator.voiceSeconds !== undefined ? narrator.voiceSeconds : (narrator.seconds || 0) }
+    return [main].concat(others.map((entry, index) => ({
+        key: "chapter-" + index + "-" + entry.voice, voice: voiceName(entry.profile) || entry.voice, preset: (entry.profile && entry.profile.preset) || entry.voice,
+        main: false, scope: chapterList(entry.chapters, false), lines: entry.lines || 0, seconds: entry.seconds || 0 })))
+}
+function narratorRowLine(row, redo) {
+    return formatNumber(row.lines) + S.s_cau_dan_truyen_f0d4156b + (row.seconds > 0 ? "\u00a0·\u00a0" + formatLength(row.seconds) : "")
+        + (row.main && redo ? "\u00a0·\u00a0" + formatNumber(redo) + S.s_cau_cho_thu_lai_98956e55 : "")
+}
+function extrasSummary(extras) {
+    return S.s_0_nguoi_1_cau_0a0bbce4(extras.length, formatNumber(extras.reduce((sum, person) => sum + (person.lines || 0), 0)))
 }
 function narratorPending(narrator) {
     return narrator.pendingVoice && narrator.pendingVoice.preset ? S.s_cho_ap_dung_giong_82c96902 + voiceName(narrator.pendingVoice) : ""

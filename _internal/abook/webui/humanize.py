@@ -151,25 +151,29 @@ def is_heading(text: str) -> bool:
     return len(text) <= 160 and _HEADING.match(text) is not None
 
 
-def chapter_names(file_title: str, heading: str | None, index: int | None = None) -> tuple[str, str]:
+def chapter_names(file_title: str, heading: str | None, index: int | None = None, *, decided: bool = False) -> tuple[str, str]:
     """(tên, phụ đề) của một chương cho người đọc.
 
     Tên file không phải tên chương: nguồn của cuốn 2 đánh số file lệch một so với truyện - file `645.txt` mở đầu
     bằng "Chương 646 - Trở về (1)". Người nghe thấy "Chương 645" trên danh sách rồi nghe đọc "Chương 646" là hai con
     số vênh nhau. Nên dòng tiêu đề trong văn bản thắng; tên file chỉ là đường lui khi chương không có tiêu đề.
+    `decided`: `heading` là tiêu đề đã quyết theo cả cuốn (chapter_titles.book_headings), rỗng = chương không tiêu đề.
     """
-    from ..chapter_titles import chapter_name
+    from ..chapter_titles import chapter_name, heading_name
 
+    if decided:
+        return heading_name(heading) if heading else chapter_name(file_title, index=index)
     return chapter_name(file_title, heading or "", index=index)
 
 
 def person_name(name: str) -> str:
     """Tên chuẩn hoá của sổ nhân vật viết HOA HẾT ("VIỄN CỔ MỘC NÃI Y"); người đọc thấy "Viễn Cổ Mộc Nãi Y".
     Tên đã có chữ thường thì để nguyên - người viết sách đã chọn cách viết ấy. Vai phụ cục bộ mang nhãn nội bộ
-    "NPC_LOCAL::c00006::người lùn": người đọc chỉ thấy "người lùn"; gạch dưới thành dấu cách."""
+    "NPC_LOCAL::c00006::người lùn": người đọc chỉ thấy "người lùn"; gạch dưới thành dấu cách. Dấu NPC ("NPC Bà cụ",
+    "Npc: bác bảo vệ") là danh tính trong sổ ("NPC X" và "X" là hai người) nhưng là dấu nội bộ: người đọc chỉ thấy "Bà cụ"."""
     if "::" in name:
         name = name.rsplit("::", 1)[-1]
-    name = name.replace("_", " ").strip()
+    name = NPC_MARK.sub("", name.replace("_", " ").strip())
     if name != name.upper():
         # "LOUise": model gõ vài chữ đầu HOA rồi thường - không tên nào viết thế (soát UX 29-09); "McDonald", "LeBlanc" giữ.
         return " ".join(word[:1] + word[1:].lower() if _caps_glitch(word) else word for word in name.split(" "))
@@ -183,6 +187,7 @@ def person_name(name: str) -> str:
 
 
 _ROMAN_NUMERALS = frozenset({"I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X"})
+NPC_MARK = re.compile(r"^npc(?:\s*[:\-]\s*|\s+)(?=\S)", re.IGNORECASE)  # dấu NPC đầu nhãn người nói (đã đổi "_" thành dấu cách)
 
 
 def shown_reading(spoken: str) -> str:

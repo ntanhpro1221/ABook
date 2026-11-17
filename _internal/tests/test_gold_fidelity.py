@@ -37,7 +37,7 @@ CAST = {
 }
 
 
-def _book(tmp_path: Path, lines: list[tuple[str, str, str, str]]) -> tuple[Path, Path]:
+def _book(tmp_path: Path, lines: list[tuple[str, str, str, str]], mapping: dict[str, str] | None = None) -> tuple[Path, Path]:
     paths = ProjectPaths.build(tmp_path / "project")
     settings = build_settings()
     db = ProjectDB(paths.db)
@@ -62,7 +62,7 @@ def _book(tmp_path: Path, lines: list[tuple[str, str, str, str]]) -> tuple[Path,
                          (kind, app, voices[voice], f"s{seq}"))
     gold = tmp_path / "gold"
     gold.mkdir()
-    (gold / "cast.json").write_text(json.dumps(CAST, ensure_ascii=False), encoding="utf-8")
+    (gold / "cast.json").write_text(json.dumps({**CAST, "map": mapping or {}}, ensure_ascii=False), encoding="utf-8")
     (gold / "000.json").write_text(json.dumps({str(seq): {"kind": kind, "speaker": speaker}
                                                for seq, (kind, speaker, _app, _voice) in enumerate(lines)},
                                               ensure_ascii=False), encoding="utf-8")
@@ -89,10 +89,11 @@ def test_one_person_split_in_two_with_a_male_voice_fails(tmp_path: Path) -> None
         "'Aya' là bí danh trong đáp án: cùng người, chỉ giọng là sai"
 
 
-def test_the_names_key_ignores_order_case_honorifics_and_the_npc_prefix() -> None:
+def test_the_names_key_ignores_order_case_and_honorifics_but_keeps_the_npc_mark() -> None:
     key = gold_fidelity.name_key
     assert key("HAJIKANO AYA") == key("Aya Hajikano") == key("Aya-san Hajikano")
-    assert key("NPC bác bảo vệ") == key("Bác Bảo Vệ") == key("NPC_LOCAL::c00001::bác bảo vệ")
+    assert key("NPC bác bảo vệ") == key("Npc: Bác Bảo Vệ") == key("NPC_LOCAL::c00001::bác bảo vệ")
+    assert key("NPC bác bảo vệ") != key("Bác Bảo Vệ"), "NPC X và X là hai người"
     assert key("Yui Hajikano") != key("Aya Hajikano")
 
 
@@ -102,3 +103,30 @@ def test_the_cli_exits_one_on_fail(tmp_path: Path) -> None:
     out = tmp_path / "report.json"
     assert gold_fidelity.main([str(project), "--gold", str(gold), "--json", str(out)]) == 1
     assert json.loads(out.read_text(encoding="utf-8"))["speaker_mismatches"] == 1
+
+
+def _set_record(project: Path, canonical: str, display: str, importance: str, mentions: int) -> None:
+    with ProjectDB(ProjectPaths.build(project).db).connect() as conn:
+        conn.execute("INSERT INTO characters(canonical_name,display_name,gender,age,personality,importance,"
+                     "mention_count,confidence,locked,created_at,updated_at) VALUES(?,?,'male','elderly','',?,?,1,0,0,0)",
+                     (canonical, display, importance, mentions))
+
+
+def test_a_gold_npc_whose_prefix_was_dropped_upstream_is_a_speaker_mismatch(tmp_path: Path) -> None:
+    """Bộ tiêm cũ bỏ tiền tố "NPC ": sách ghi một người có tên khác hẳn người đáp án - bắt được, không chấp nhận tay."""
+    lines = [*LINES[:4], ("dialogue", "NPC bác bảo vệ", "Bác Bảo Vệ", "Xuân Vĩnh"), LINES[5]]
+    project, gold = _book(tmp_path, lines)
+    report = gold_fidelity.check(project, gold)
+    assert [(item["gold"], item["app"]) for item in report["mismatches"]] == [("NPC BÁC BẢO VỆ", "Bác Bảo Vệ")]
+    assert not report["pass"]
+
+
+def test_a_gold_npc_promoted_to_the_main_cast_fails(tmp_path: Path) -> None:
+    """Đáp án tự gọi nhãn trần là NPC (map) nhưng sổ của app xếp người ấy vai chính: cast.json sai, cổng chặn."""
+    lines = [*LINES[:4], *[("dialogue", "NPC bác bảo vệ", "Bác Bảo Vệ", "Xuân Vĩnh")] * 3, LINES[5]]
+    project, gold = _book(tmp_path, lines, mapping={"BÁC BẢO VỆ": "NPC BÁC BẢO VỆ"})
+    _set_record(project, "BÁC BẢO VỆ", "Bác Bảo Vệ", "main", 40)
+    report = gold_fidelity.check(project, gold)
+    assert report["speaker_mismatches"] == 0, report["mismatches"]
+    assert report["npc_in_main_cast"] == ["Bác Bảo Vệ (NPC BÁC BẢO VỆ)"], report["npc_in_main_cast"]
+    assert not report["pass"]

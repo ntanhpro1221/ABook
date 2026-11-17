@@ -28,6 +28,13 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 - Kỹ thuật: kiểm phát hành chỉ chạy từng bước (kể cả `npm ci` của UI) khi máy cắm sạc. Chạy pin thì chờ, ghi trạng thái chờ vào `power-wait.json` của lượt kiểm; thời gian chờ không tính vào hạn giờ hay số giây của bước. Chờ quá `ABOOK_GATE_BATTERY_WAIT_MAX` (mặc định 12 giờ) thì các bước còn lại ghi NOT_RUN. Bước hết giờ trong lúc có chạy pin được chạy lại một lần khi có sạc; bước nào có lúc chạy pin đều ghi các lần chạy vào báo cáo. `ABOOK_GATE_ALLOW_BATTERY=1` bỏ chờ.
 
+- Tab Nhân vật: vai chính và vai phụ chia đúng theo số câu, người nói nhiều qua nhiều chương luôn là vai chính, giới tính điền đủ; "Người kể chuyện" thành danh sách, mỗi giọng một hàng ghi rõ chương nó đọc, trên điện thoại, web và máy tính.
+- Tab Nhân vật: ô giới không còn trống - nhóm người ghi "Nhóm", trẻ em chưa rõ giới ghi "Trẻ em", còn lại "Chưa rõ"; không bao giờ đoán giới. Vai phụ không tên ("NPC bà cụ") và nhân vật cùng tên ("Bà cụ") là hai người, tên hiện ra không còn chữ "NPC".
+- Tên chương và thông tin sách không bao giờ mang dấu kiểm tra nội bộ (như "Cần nghe lại"); file sách có dấu ấy bị từ chối khi đóng gói.
+- Hai chương không còn trùng tên "Chương 1": phần "Mở đầu" không chiếm số chương, và tên theo số không trùng tên một chương khác.
+- File sách nghe (.abook) không còn mang trạng thái kiểm tra (chương đạt hay chưa, dòng lỗi, báo cáo mức âm): những thứ ấy chỉ ở dự án; file còn trường ấy bị từ chối khi đóng gói.
+- Tên chương nhận theo mẫu lặp lại trong cả cuốn ("Lần gặp thứ N - …"), kể cả tiêu đề dài; một cuốn không bao giờ lẫn tên thật với "Chương N", và đoạn văn thường không bị nhận nhầm thành tên chương.
+
 ## [0.4.173] - 2026-11-15
 
 - Kỹ thuật: desktop dùng Qt 6.11.3 để nhận bản sửa QML/V4 cho QTBUG-148459 (MethodStorage null gây crash WidthTests). Phiên bản SDK có một nguồn cấu hình; QWindowKit được dựng riêng theo phiên bản Qt.

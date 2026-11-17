@@ -146,10 +146,24 @@ class ListenExtrasTest {
         .put("characters", JSONArray(characters)).put("extras", JSONArray(extras)).toString()
 
     @Test
+    fun `an empty gender shows why and is never blank or invented`() {
+        val view = Cast.parse(cast(listOf(person("Vân")), listOf(
+            person("NPC Nhóm Trẻ Thả Diều") { put("gender", "").put("genderNote", "group") },
+            person("Bé Tí") { put("gender", "").put("genderNote", "child") },
+            person("Người Lạ") { put("gender", "") },
+        )))!!
+        assertEquals("Nữ", Cast.genderText(view.characters[0]))
+        assertEquals(listOf("Nhóm", "Trẻ em", "Chưa rõ"), view.extras.map { Cast.genderText(it) })
+    }
+
+    @Test
     fun `the cast is read with narrator characters and extras`() {
         val view = Cast.parse(cast(listOf(person("Thanh_Bình")), listOf(person("Lính gác 1", lines = 1))))!!
         assertEquals("Hoài My", Cast.narratorName(view.narrator))
-        assertEquals("40 câu dẫn truyện · 1\u00a0giờ · 2 câu chờ thu lại", Cast.narratorCountLine(view.narrator))
+        val rows = Cast.narratorRows(view.narrator)
+        assertEquals(1, rows.size)
+        assertEquals("", rows[0].scope)
+        assertEquals("40 câu dẫn truyện · 1\u00a0giờ · 2 câu chờ thu lại", Cast.narratorRowCount(rows[0], view.narrator.redo))
         assertEquals(1, view.characters.size)
         assertEquals(1, view.extras.size)
         assertFalse(view.isEmpty)
@@ -169,9 +183,21 @@ class ListenExtrasTest {
     }
 
     @Test
-    fun `chapter narrator voices survive cast parsing`() {
-        val view = Cast.parse("""{"narrator":{"chapterVoices":["Chương 8: Đoan Trang"]}}""")!!
-        assertEquals(listOf("Chương 8: Đoan Trang"), view.narrator.chapterVoices)
+    fun `every narrator voice is its own row with the chapters it reads`() {
+        val view = Cast.parse("""{"narrator":{"voice":"Đức Trí","lines":10,"seconds":0,"voiceLines":7,"voiceSeconds":0,
+            "exceptChapters":[{"id":5,"title":"Chương 5"},{"id":7,"title":"Chương 7"}],
+            "chapterVoices":[{"voice":"Đoan Trang","profile":{"key":"k","preset":"Đoan Trang"},"chapters":[{"id":5,"title":"Chương 5"},{"id":7,"title":"Chương 7"}],"lines":3,"seconds":0}]}}""")!!
+        val rows = Cast.narratorRows(view.narrator)
+        assertEquals(listOf("Đức Trí", "Đoan Trang"), rows.map { it.voice })
+        assertEquals(listOf("Toàn sách trừ chương 5, 7", "Chương 5, 7"), rows.map { it.scope })
+        assertEquals(listOf("7 câu dẫn truyện", "3 câu dẫn truyện"), rows.map { Cast.narratorRowCount(it) })
+    }
+
+    @Test
+    fun `chapter lists keep titles that are not numbered and skip entries that are not objects`() {
+        assertEquals("Mở đầu, Chương 2", Cast.chapterList(listOf(CastChapter(1, "Mở đầu"), CastChapter(2, "Chương 2"))))
+        val view = Cast.parse("""{"narrator":{"voice":"Đức Trí","chapterVoices":["Chương 8: Đoan Trang"]}}""")!!
+        assertEquals(1, Cast.narratorRows(view.narrator).size)
     }
 
     @Test

@@ -20,6 +20,8 @@ function s_0_bai_1e392237(p0) { return String(p0) + " bài"; }
 function s_0_chu_de_nghe_tu_do_f3859cf4(p0) { return String(p0) + " chữ để nghe từ đó."; }
 function s_0_doan_c2eb5200(p0) { return String(p0) + " đoạn"; }
 function s_0_giay_daac30d3(p0) { return String(p0) + " giây"; }
+function s_0_giong_7be1af23(p0) { return String(p0) + " giọng"; }
+function s_0_nguoi_1_cau_0a0bbce4(p0, p1) { return String(p0) + " người · " + String(p1) + " câu"; }
 function s_0_nhip_phut_3c154e09(p0) { return String(p0) + " nhịp/phút"; }
 function s_0_phut_2596d212(p0) { return String(p0) + " phút"; }
 var s_0_phut_66a3b36a = "0 phút";
@@ -709,6 +711,8 @@ var s_chua_xuat_duoc_file_sach_43236ec7 = "Chưa xuất được file sách";
 var s_chua_xuat_duoc_m4b_5a39de4c = "Chưa xuất được M4B";
 var s_chua_xuat_duoc_mp3_1550e65a = "Chưa xuất được MP3";
 var s_chung_giong_a58df5cc = "Chung giọng";
+function s_chuong_0_268b0521(p0) { return "Chương " + String(p0); }
+function s_chuong_0_55d256d1(p0) { return "chương " + String(p0); }
 var s_chuong_1c106b8b = " chương (";
 var s_chuong_1d138181 = " chương.";
 var s_chuong_2721c3eb = " chương. ";
@@ -2105,7 +2109,6 @@ var s_nguoi_nay_chua_co_cau_nao_de_doc_thu_dang_85cfd8f2 = "Người này chưa 
 var s_nguoi_nghi_ce1afa0f = "Người nghĩ";
 var s_nguoi_noi_9620707b = "Người nói";
 var s_nguoi_noi_trong_chuong_bam_de_chi_xem_cau_b5f0aad7 = "Lọc theo người nói";
-var s_nguoi_trong_mot_canh_516e46e7 = " người trong một cảnh";
 var s_nguon_c76d57b3 = "Nguồn";
 var s_nguon_truyen_ddecd9bb = "Nguồn truyện";
 var s_nhac_0e4413e9 = "Nhạc";
@@ -2592,6 +2595,7 @@ var s_toi_la_90e4c35d = " - “tôi” là ";
 var s_toi_la_ai_efbf5a65 = "“Tôi” là ai?";
 var s_toi_noi_dung_501e7d8d = "Tới nội dung";
 var s_toi_qua_aa87cbc4 = "tối qua ";
+function s_toan_sach_tru_0_baff4d91(p0) { return "Toàn sách trừ " + String(p0); }
 var s_tom_tat_b4bb3064 = "Tóm tắt";
 var s_tong_37dd36d0 = "tổng ";
 var s_tra_ve_chu_cua_sach_0451f8ec = "trả về chữ của sách";
@@ -2893,6 +2897,8 @@ function s_cast_history_conflicts(p0) { return String(p0) + " câu xung đột";
 function s_cast_history_alias_conflicts(p0) { return String(p0) + " bí danh xung đột"; }
 function s_cast_history_row(p0, p1, p2) { return String(p0) + " → " + String(p1) + " · " + String(p2) + " câu"; }
 var s_cast_history_group = "Nhóm câu";
+var s_cast_gender_group = "Nhóm";
+var s_cast_gender_child = "Trẻ em";
 var s_preview_timeout = "Mạng chậm, thử nghe lại.";
 var s_chua_co_bia = "Chưa có bìa";
 var s_avatar_portrait = "Ảnh nhân vật";

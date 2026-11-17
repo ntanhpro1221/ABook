@@ -91,6 +91,7 @@ import vn.abook.player.ui.data.BookSource
 import vn.abook.player.ui.data.Cast
 import vn.abook.player.ui.data.CastMember
 import vn.abook.player.ui.data.CastView
+import vn.abook.player.ui.data.NarratorLine
 import vn.abook.player.ui.data.Fmt
 import vn.abook.player.ui.data.History
 import vn.abook.player.ui.data.ListenRecord
@@ -337,7 +338,15 @@ fun LazyListScope.castItems(
         }
         return
     }
-    item(key = "cast_narrator", contentType = "narrator") { NarratorRow(cast, Modifier.fade(fade)) }
+    // Người kể chuyện là một danh sách như Vai chính: mỗi giọng kể một hàng (giọng chính, rồi giọng kể riêng vài chương).
+    val narrators = Cast.narratorRows(cast.narrator)
+    foldItems(folds, S.s_nguoi_ke_chuyen_c0c2c504, "cast_narrators", narrators, { it.key }, Modifier.fade(fade),
+        summary = S.s_0_giong_7be1af23(narrators.size), defaultOpen = true) { n, row ->
+        Column(Modifier.fade(fade)) {
+            Reveal(n > 0) { RowLine(start = PersonTextStart) }
+            NarratorRow(row, cast.narrator.redo)
+        }
+    }
     if (cast.characters.isNotEmpty()) {
         val ahead = if (reached != null) Cast.ahead(cast.characters, reached) else 0
         val shown = Cast.visible(cast.characters, reached, later)
@@ -356,7 +365,7 @@ fun LazyListScope.castItems(
     }
     if (cast.extras.isNotEmpty()) {
         foldItems(folds, S.s_vai_phu_6e7c6bce, "cast_extras", cast.extras, { it.name }, Modifier.fade(fade).padding(top = Dim.s8),
-            summary = S.s_0_nguoi_trong_mot_canh_bb4fd602(cast.extras.size)) { n, person ->
+            summary = S.s_0_nguoi_1_cau_0a0bbce4(cast.extras.size, Fmt.number(cast.extras.sumOf { it.lines.toLong() }))) { n, person ->
             Column(Modifier.fade(fade)) {
                 Reveal(n > 0) { RowLine(start = PersonTextStart) }
                 PersonRow(person, samples, onMore)
@@ -370,17 +379,18 @@ private const val CAST_SKELETON = 6
 /** Chữ của hàng người bắt đầu sau vòng chữ cái (40) và khoảng cách (12): vạch chia hàng thụt theo chữ. */
 private val PersonTextStart = 52.dp
 
+/** Một giọng kể (web `NarratorRow`): vòng sách, tên giọng, phạm vi chương khi có hơn một giọng, số câu · thời lượng. */
 @Composable
-private fun NarratorRow(cast: CastView, modifier: Modifier) {
+private fun NarratorRow(row: NarratorLine, redo: Int) {
     val colors = Abook.colors
-    Row(modifier.fillMaxWidth().padding(top = Dim.s8, bottom = Dim.s8).testTag("cast_narrator"), verticalAlignment = Alignment.CenterVertically) {
+    Row(Modifier.fillMaxWidth().padding(vertical = Dim.s12).testTag(if (row.main) "cast_narrator" else "cast_narrator_chapter"), verticalAlignment = Alignment.Top) {
         Box(Modifier.size(40.dp).clip(CircleShape).background(colors.accentSoft), contentAlignment = Alignment.Center) { BookOpenTextIcon(colors.accentText) }
         Spacer(Modifier.width(Dim.s12))
         Column(Modifier.weight(1f)) {
-            BasicText(S.s_nguoi_ke_chuyen_c0c2c504, style = Abook.type.caption.copy(color = colors.text2))
-            BasicText(Cast.narratorName(cast.narrator), style = Abook.type.bodyStrong, modifier = Modifier.padding(top = 4.dp))
-            cast.narrator.chapterVoices.forEach { RowHint(it) }
-            RowHint(Cast.narratorCountLine(cast.narrator))
+            BasicText(row.voice, style = Abook.type.bodyStrong)
+            // Dòng phụ dưới tên giọng: RowHint như mọi hàng; số câu · thời lượng đổi khi làm lại nên ticking (web TickingValue).
+            Reveal(row.scope.isNotEmpty()) { RowHint(row.scope, Modifier.padding(top = Dim.s4)) }
+            RowHint(Cast.narratorRowCount(row, redo), Modifier.padding(top = Dim.s4), ticking = true)
         }
     }
 }
@@ -396,12 +406,8 @@ private fun PersonRow(person: CastMember, samples: CastSamples, onMore: (CastMem
         Column(Modifier.weight(1f)) {
             Row(verticalAlignment = Alignment.Bottom) {
                 BasicText(name, style = Abook.type.bodyStrong, modifier = Modifier.weight(1f, fill = false))
-                Reveal(person.gender.isNotEmpty()) {
-                    Row(verticalAlignment = Alignment.Bottom) {
-                        Spacer(Modifier.width(Dim.s8))
-                        BasicText(person.gender, style = Abook.type.caption.copy(color = colors.text2))
-                    }
-                }
+                Spacer(Modifier.width(Dim.s8))
+                BasicText(Cast.genderText(person), style = Abook.type.caption.copy(color = colors.text2))
             }
             person.originalName?.let { BasicText(S.s_ten_goc_0_dea1648c(Cast.cleanName(it)), style = Abook.type.caption) }
             Row(Modifier.padding(top = 4.dp), verticalAlignment = Alignment.Top) {
