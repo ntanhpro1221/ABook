@@ -143,7 +143,7 @@ Item {
             DesktopApi.responses = {"/api/listen/books/edit": {status:200,data:{id:"edit",stage:"text",title:"Tên mới",author:"Tác giả cũ"}}}
             const dialog = make(editFactory)
             dialog.begin({id:"edit",stage:"text",title:"Tên cũ",author:"Tác giả cũ",capabilities:{editLayer:true}})
-            const title = findChild(dialog,"editTitle"), author = findChild(dialog,"editAuthor")
+            const title = findChild(dialog,"editTitle"), author = findChild(dialog,"editMeta_author")
             author.text = "Bản nháp tác giả " .repeat(9)
             title.text = "Tên mới " .repeat(40)
             const typed = title.text

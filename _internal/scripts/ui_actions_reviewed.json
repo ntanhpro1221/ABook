@@ -15474,9 +15474,9 @@
     "line": 99,
     "statement": "Api.call(\"GET\", \"/api/listen/books/\" + id, null, function(fresh, error) {",
     "occurrence": 1,
-    "source_sha256": "e708dd65f598b52bca09d3faf604d6e5dc53a155eb5aebb4b30d4dbafe09e4b6",
+    "source_sha256": "fcd5ba19951eb0ff157e965732156287d7b3a9ce0f39c487f8aadcb2321bd02b",
     "disposition": "pending",
-    "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; busy, savingAuthor",
+    "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; busy, savingMetadata",
     "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Combined-source review: the metadata field delegate now sizes from its column by id (null parent during Repeater teardown); this action and its guard are unchanged."
   },
   {
@@ -15486,9 +15486,9 @@
     "line": 109,
     "statement": "Api.call(method, \"/api/books/\" + bookId + suffix, body, function(data, error) {",
     "occurrence": 1,
-    "source_sha256": "e708dd65f598b52bca09d3faf604d6e5dc53a155eb5aebb4b30d4dbafe09e4b6",
+    "source_sha256": "fcd5ba19951eb0ff157e965732156287d7b3a9ce0f39c487f8aadcb2321bd02b",
     "disposition": "pending",
-    "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; busy, savingAuthor",
+    "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; busy, savingMetadata",
     "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Combined-source review: the metadata field delegate now sizes from its column by id (null parent during Repeater teardown); this action and its guard are unchanged."
   },
   {
@@ -15498,7 +15498,7 @@
     "line": 328,
     "statement": "onActivated: root.removeCover()",
     "occurrence": 1,
-    "source_sha256": "e708dd65f598b52bca09d3faf604d6e5dc53a155eb5aebb4b30d4dbafe09e4b6",
+    "source_sha256": "fcd5ba19951eb0ff157e965732156287d7b3a9ce0f39c487f8aadcb2321bd02b",
     "disposition": "confirmation",
     "guard": "EditBook cover DestructiveConfirm and DiscardSheet / discard dialog",
     "reason": "Cover removal and discarding saved edits have explicit object-specific confirmations. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Combined-source review: the metadata field delegate now sizes from its column by id (null parent during Repeater teardown); this action and its guard are unchanged."
@@ -15510,7 +15510,7 @@
     "line": 477,
     "statement": "DestructiveConfirm { id: removeConfirm; objectName: \"editCoverRemoveConfirm\"; title: S.s_bo_anh_bia_696c6692; description: S.s_irreversible_detail(root.book ? root.book.title || \"\" : \"\"); onAccepted: root.removeCoverConfirmed() }",
     "occurrence": 1,
-    "source_sha256": "e708dd65f598b52bca09d3faf604d6e5dc53a155eb5aebb4b30d4dbafe09e4b6",
+    "source_sha256": "fcd5ba19951eb0ff157e965732156287d7b3a9ce0f39c487f8aadcb2321bd02b",
     "disposition": "confirmation",
     "guard": "EditBook cover DestructiveConfirm and DiscardSheet / discard dialog",
     "reason": "Cover removal and discarding saved edits have explicit object-specific confirmations. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Combined-source review: the metadata field delegate now sizes from its column by id (null parent during Repeater teardown); this action and its guard are unchanged."

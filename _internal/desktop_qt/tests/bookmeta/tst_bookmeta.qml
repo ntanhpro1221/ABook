@@ -90,7 +90,8 @@ Item {
             verify(value !== null)
             value.begin(Object.assign({id: "sample"}, book))
             compare(value.metadataDraft.summary, book.summary)
-            compare(value.authorDraft, book.author)
+            compare(value.metadataDraft.author, book.author)
+            verify(!findChild(value, "editSaveMetadata").enabled)   // một nút "Lưu thông tin", khoá khi chưa đổi gì
             value.close()
         }
         function test_studioMetadataEditorOpens() {

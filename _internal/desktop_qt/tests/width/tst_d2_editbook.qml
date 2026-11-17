@@ -46,10 +46,10 @@ Item {
             Api.notice = ""
             Nav.layers = []
             server = textBook()
-            // Máy chủ giả: GET sách trả bản hiện tại; PUT tên / tác giả sửa nó rồi trả lời như thật
+            // Máy chủ giả: GET sách trả bản hiện tại; PUT tên / thông tin sửa nó rồi trả lời như thật
             reply("GET /api/listen/books/b1", function() { return {status: 200, data: server} })
             reply("PUT /api/books/b1/title", function(body) { server = Object.assign({}, server, {title: body.title.trim().replace(/\s+/g, " ")}); return {status: 200, data: {}} })
-            reply("PUT /api/books/b1/author", function(body) { server = Object.assign({}, server, {author: body.author.trim().replace(/\s+/g, " ")}); return {status: 200, data: {author: server.author}} })
+            reply("PUT /api/books/b1/metadata", function(body) { server = Object.assign({}, server, body, {author: body.author.trim().replace(/\s+/g, " ")}); return {status: 200, data: {}} })
             reply("PUT /api/books/b1/cover", function(body) { server = Object.assign({}, server, {cover: {version: 5}}); return {status: 200, data: {}} })
             reply("DELETE /api/books/b1/cover", function() { server = Object.assign({}, server, {cover: null}); return {status: 200, data: {}} })
             reply("DELETE /api/books/b1/edits", function() { server = Object.assign({}, server, {edits: 0}); return {status: 200, data: {}} })
@@ -70,7 +70,7 @@ Item {
         function test_titleSaveKeepsAuthorDraft() {
             const dialog = make(editFactory)
             dialog.begin(server)
-            const title = findChild(dialog, "editTitle"), author = findChild(dialog, "editAuthor")
+            const title = findChild(dialog, "editTitle"), author = findChild(dialog, "editMeta_author")
             title.text = "  Tên   mới  "
             author.text = "Tác giả đang gõ dở"
             const save = findChild(dialog, "editSaveTitle")
@@ -85,36 +85,41 @@ Item {
             compare(Api.notice, "Đã đổi tên sách")
             verify(dialog.open)
         }
+        // Một form như web: tác giả nằm cùng các ô thông tin, một nút "Lưu thông tin" (PUT /metadata)
         function test_authorSaveKeepsTitleDraft() {
             const dialog = make(editFactory)
             dialog.begin(server)
-            const title = findChild(dialog, "editTitle"), author = findChild(dialog, "editAuthor")
+            const title = findChild(dialog, "editTitle"), author = findChild(dialog, "editMeta_author")
             title.text = "Tên đang gõ dở"
             author.text = "Tác giả mới"
-            findChild(dialog, "editSaveAuthor").activated()
-            const call = calls("PUT", "/api/books/b1/author")
+            findChild(dialog, "editSaveMetadata").activated()
+            const call = calls("PUT", "/api/books/b1/metadata")
             compare(call.length, 1)
             compare(call[0].body.author, "Tác giả mới")
             compare(title.text, "Tên đang gõ dở")
             compare(dialog.book.author, "Tác giả mới")
-            compare(Api.notice, "Đã đổi tác giả")
+            compare(Api.notice, "Đã lưu thông tin")
+            verify(!findChild(dialog, "editSaveMetadata").enabled)  // đã lưu: bản nháp bằng thông tin mới
         }
         function test_emptyAuthorRemovesName() {
             const dialog = make(editFactory)
             dialog.begin(server)
-            findChild(dialog, "editAuthor").text = "   "
-            verify(findChild(dialog, "editSaveAuthor").enabled)     // sách đang có tác giả: trống cũng là một thay đổi
-            findChild(dialog, "editSaveAuthor").activated()
-            compare(Api.notice, "Đã bỏ tên tác giả")
+            findChild(dialog, "editMeta_author").text = ""
+            verify(findChild(dialog, "editSaveMetadata").enabled)   // sách đang có tác giả: trống cũng là một thay đổi
+            findChild(dialog, "editSaveMetadata").activated()
+            compare(calls("PUT", "/api/books/b1/metadata")[0].body.author, "")
+            compare(Api.notice, "Đã lưu thông tin")
         }
         function test_saveButtonsFollowRealChange() {
             const dialog = make(editFactory)
             dialog.begin(server)
-            const title = findChild(dialog, "editTitle"), author = findChild(dialog, "editAuthor")
+            const title = findChild(dialog, "editTitle"), author = findChild(dialog, "editMeta_author")
             verify(!findChild(dialog, "editSaveTitle").enabled)
-            verify(!findChild(dialog, "editSaveAuthor").enabled)
-            author.text = "  Tác giả   cũ "                          // cùng chữ sau khi làm sạch
-            verify(!findChild(dialog, "editSaveAuthor").enabled)
+            verify(!findChild(dialog, "editSaveMetadata").enabled)  // chưa đổi gì: khoá, như web
+            author.text = "Tác giả khác"
+            verify(findChild(dialog, "editSaveMetadata").enabled)
+            author.text = "Tác giả cũ"
+            verify(!findChild(dialog, "editSaveMetadata").enabled)
             title.text = "   "
             verify(!findChild(dialog, "editSaveTitle").enabled)     // tên trống không lưu được
             title.text = "x".repeat(200)
@@ -135,11 +140,11 @@ Item {
             const dialog = make(editFactory)
             dialog.begin(server)                                    // sách chữ
             verify(dialog.textBook)
-            tryVerify(function() { return findChild(dialog, "editAuthor").visible })
+            tryVerify(function() { return findChild(dialog, "editMeta_author").visible })
             compare(Api.notice, "")
             const audio = make(editFactory)
-            audio.begin(studioBook())                               // sách đã có giọng: không có ô tác giả, có mục nhạc nền
-            tryVerify(function() { return !findChild(audio, "editAuthor").visible || findChild(audio, "editAuthor").height === 0 || findChild(audio, "editAuthor").parent.height === 0 })
+            audio.begin(studioBook())                               // sách đã có giọng: cùng một form thông tin, có cả ô tác giả
+            tryVerify(function() { return findChild(audio, "editMeta_author").visible })
         }
 
         // ---------- ảnh bìa ----------
@@ -486,7 +491,7 @@ Item {
             verify(title.height > 40)
             title.text = longName.repeat(2).slice(0, 160)
             verify(title.height > 60)
-            const author = findChild(dialog, "editAuthor")
+            const author = findChild(dialog, "editMeta_author")
             author.text = "Tác giả " + longName
             verify(author.height > 60)
             verify(findChild(dialog, "editSaveTitle").x + findChild(dialog, "editSaveTitle").width <= dialog.bodyWidth + 1)

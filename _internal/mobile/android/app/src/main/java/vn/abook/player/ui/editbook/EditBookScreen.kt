@@ -173,14 +173,14 @@ fun EditBookScreen(
                         Spacer(Modifier.width(Dim.s16))
                         Column(Modifier.weight(1f)) {
                             BookField(S.s_ten_sach_d54846eb, draft.title, { value -> change { it.copy(title = value) } }, "edit_title", !state.sending)
-                            Spacer(Modifier.height(Dim.s16))
-                            BookField(S.s_tac_gia_0ec4731b, draft.author, { value -> change { it.copy(author = value) } }, "edit_author", !state.sending,
-                                placeholder = S.s_khong_ro_tac_gia_baaa8118)
                         }
                     }
                 }
+                // One form with the author first, as web EditBook.tsx and Qt EditBook.qml (BookMetadataFields); saved with the rest of the draft.
                 item("metadata", "metadata") {
-                    Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(Dim.s12)) {
+                    Column(Modifier.fillMaxWidth().padding(top = Dim.s16), verticalArrangement = Arrangement.spacedBy(Dim.s12)) {
+                        BookField(S.s_tac_gia_0ec4731b, draft.author, { value -> change { it.copy(author = value) } }, "edit_author", !state.sending,
+                            placeholder = S.s_khong_ro_tac_gia_baaa8118)
                         BookField(S.s_bookmeta_illustrator, draft.metadata.illustrator, { value -> change { it.copy(metadata = it.metadata.copy(illustrator = value)) } }, "edit_illustrator", !state.sending)
                         BookField(S.s_bookmeta_alt_titles, draft.metadata.altTitles.joinToString("\n"), { value -> change { it.copy(metadata = it.metadata.copy(altTitles = value.split("\n"))) } }, "edit_alt_titles", !state.sending)
                         BookField(S.s_bookmeta_genres, draft.metadata.genres.joinToString("\n"), { value -> change { it.copy(metadata = it.metadata.copy(genres = value.split("\n"))) } }, "edit_genres", !state.sending)

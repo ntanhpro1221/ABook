@@ -8,8 +8,13 @@
 // Chữ người gõ như máy chủ làm sạch: khoảng trắng gộp một dấu cách, bỏ đầu cuối.
 function tidy(text) { return String(text || "").trim().replace(/\s+/g, " ") }
 
-// Ô "Tác giả" lưu được không: chữ gõ khác tác giả đang hiện (trống cũng là một thay đổi nếu sách đang có tác giả).
-function authorSaveable(typed, shown) { return tidy(typed) !== tidy(shown || "") }
+// Phần thông tin của form "Sửa sách" (BookMetadata.tsx metadataOf): tác giả cùng các ô mô tả, lưu một lần bằng "Lưu thông tin".
+function metadataOf(book) {
+    return {author: book.author || "", illustrator: book.illustrator || "", altTitles: book.altTitles || [], genres: book.genres || [],
+            summary: book.summary || "", source: book.source || {url: "", site: ""}}
+}
+// Nút "Lưu thông tin" chỉ bấm được khi bản nháp khác thông tin đang có (EditBook.tsx: JSON.stringify(metadata) !== JSON.stringify(metadataOf(book))).
+function metadataSaveable(draft, book) { return JSON.stringify(draft) !== JSON.stringify(metadataOf(book || {})) }
 
 // ---- capabilities.ts ----
 var LINK_BOOK = S.s_sach_nay_lay_tu_may_tinh_khac_muon_sua_thi_d2a5136b
