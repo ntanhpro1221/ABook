@@ -1,11 +1,17 @@
 # ABook
 
-Ứng dụng sách nói tiếng Việt: **làm** sách nói có phân vai và cảm xúc từ các chương truyện `.txt` ngay trên máy tính
-Windows của bạn, rồi **nghe** trên máy tính, điện thoại Android hay trình duyệt của bất kỳ thiết bị nào trong nhà. Mỗi cuốn
+Ứng dụng sách nói tiếng Việt: **làm** sách nói có phân vai và cảm xúc từ các chương truyện `.txt`, EPUB hay đường dẫn
+sách trên Hako ngay trên máy tính Windows của bạn, rồi **nghe** trên máy tính, điện thoại Android hay trình duyệt của bất kỳ thiết bị nào trong nhà. Mỗi cuốn
 làm xong là một file `.abook` (bìa, văn bản đọc theo, âm thanh, nhân vật) - gửi sang máy khác là nghe được.
 
-Làm sách chạy hoàn toàn trên máy của bạn: văn bản truyện và âm thanh không bị gửi lên dịch vụ nào, không cần tài khoản.
-Chỉ khi bạn chọn một giọng trực tuyến cho "Nghe ngay" thì chữ của đoạn đang đọc mới được gửi tới dịch vụ ấy - app hỏi trước.
+Làm sách chạy hoàn toàn trên máy của bạn, không cần tài khoản: văn bản truyện và âm thanh không bị gửi lên dịch vụ nào, trừ
+hai trường hợp do chính bạn bật:
+
+- Chọn một giọng trực tuyến cho "Nghe ngay": chữ của đoạn đang đọc được gửi tới dịch vụ giọng ấy - app hỏi trước.
+- Bật dịch vụ ảnh nhân vật cho một dự án Studio (tắt sẵn; xem "Ảnh nhân vật" ở mục Làm một cuốn sách nói): sau bước phân
+  tích, và mỗi lần bạn bấm sinh lại ảnh, với mỗi nhân vật có tên Studio gửi tới địa chỉ HTTPS do bạn đặt tối đa bốn câu tả ngoại hình trích nguyên từ truyện,
+  kèm giới tính, độ tuổi máy đoán và một câu tả kiểu vẽ cố định, để nhận về một ảnh. Không gửi chương, lời thoại hay âm thanh. Không bật thì nhân vật
+  dùng hoạ tiết vẽ sẵn trên máy và không có gì rời máy.
 
 ## Tính năng chính
 
@@ -25,6 +31,12 @@ Chỉ khi bạn chọn một giọng trực tuyến cho "Nghe ngay" thì chữ c
   là nhạc của chính bạn, thêm ngay từ menu nhạc ("Thêm nhạc của bạn"). Tên Nhật / Hàn đọc theo cách người Việt quen ("Haruto-kun" thành "Ha-ru-tô-cun"),
   viết tắt đọc bằng tên chữ cái ("HP" thành "hát pê"), tiếng kêu kéo dài thành tiếng ngân ("Aaaa" thành "a… a") - chỉ đổi
   cách đọc, không bao giờ tự sửa chữ của truyện.
+- **Sách nhiều quyển**: một bộ truyện là một cuốn sách gồm nhiều quyển, mỗi quyển một bìa (như các tập trên Hako); trang
+  sách liệt kê quyển kèm bìa và tiến độ, nghe hết quyển này tự sang quyển sau. Studio nhận thẳng đường dẫn sách trên Hako
+  (mỗi tập một quyển, kèm bìa tập), EPUB hay TXT có mục "Tập/Quyển", hoặc nhiều thư mục chương; xuất MP3/M4B cả sách hay
+  từng quyển.
+- **Ảnh chân dung**: mỗi giọng có sẵn một ảnh minh hoạ ở danh sách giọng của Studio; mỗi nhân vật một hoạ tiết kèm chữ cái
+  đầu, màu riêng, hoặc ảnh bạn chọn - hay ảnh sinh từ câu tả ngoại hình trong truyện nếu bạn tự bật dịch vụ ảnh.
 - **Làm sách nói (Studio)**: đọc cả truyện để nhận ra lời thoại, ai đang nói và cảm xúc từng câu; mỗi nhân vật một giọng
   riêng giữ nguyên suốt cuốn, các giọng đứng cạnh nhau đều tốc độ và độ to (mỗi giọng một bộ hằng số đo sẵn, cảm xúc từng
   câu vẫn giữ); thu từng câu rồi tự nghe lại bằng nhận dạng giọng nói và thu lại câu lệch. Truyện kể ngôi
@@ -117,7 +129,9 @@ Android Auto bật chế độ nhà phát triển (chạm nhiều lần vào s�
 
 ## Làm một cuốn sách nói
 
-1. Studio → **Dự án mới**, chọn các chương `.txt` của truyện (hoặc cả thư mục). Chương xếp theo tên file.
+1. Studio → **Dự án mới**, chọn các chương `.txt` của truyện (hoặc cả thư mục), một file EPUB, hay dán đường dẫn sách trên
+   Hako vào ô đường dẫn. Trong một thư mục, chương xếp theo tên file; chọn nhiều thư mục ("Tập 1", "Tập 2"...) thì mỗi thư
+   mục thành một quyển theo đúng thứ tự bạn chọn. EPUB/TXT có mục "Tập/Quyển" và sách Hako cũng chia quyển sẵn.
 2. Chọn giọng kể chuyện và mức chất lượng; truyện kể ngôi thứ nhất thì trả lời "Tôi" là ai? (Studio gợi ý cả những
    chương đổi người kể).
 3. Bấm "Bắt đầu" (tắt "Bắt đầu tạo ngay" thì nút là "Tạo sách", rồi bạn bấm "Bắt đầu" ở trang dự án). Studio đọc cả
@@ -133,6 +147,12 @@ nghỉ giữa chừng thì bấm **"Tạm dừng"** thay vì "Dừng" (nằm tro
 đúng chỗ, an toàn cả lúc phân tích (bộ nhớ card đồ hoạ vẫn được giữ).
 Máy tính xách tay rút sạc thì Studio tự tạm dừng (chạy pin làm sách rất chậm mà hao pin) và tự làm tiếp khi cắm lại; tắt
 ở Cài đặt → Studio → "Tạm dừng dùng pin".
+
+**Ảnh nhân vật** (tuỳ chọn, tắt sẵn): Studio không kèm dịch vụ sinh ảnh nào. Muốn sinh ảnh nhân vật từ câu tả trong truyện,
+đặt file `avatar_service.json` vào thư mục dự án với `{"enabled": true, "url": "https://<dịch vụ của bạn>"}` (thêm
+`"tokenEnv": "<tên biến môi trường>"` nếu dịch vụ cần khoá: khoá đọc từ biến ấy, không lưu trong dự án hay file sách).
+Dịch vụ nhận `{"prompt", "seed"}` và trả `{"image": <ảnh base64>}`; những gì được gửi đi ghi ở đầu README. Ảnh bạn tự chọn
+cho từng nhân vật trong Studio không cần dịch vụ này.
 
 **Truyện dài, làm nhiều đợt**: khi thư mục truyện có chương mới (truyện còn ra tiếp, hay lần đầu chỉ làm vài chục chương),
 menu "…" của trang dự án có mục **"Làm tiếp cuốn này"** (và "Thêm N chương" khi app thấy chương mới). Phần mới
