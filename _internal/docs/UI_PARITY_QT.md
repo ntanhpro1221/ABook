@@ -88,8 +88,8 @@ Mỗi cặp còn lại phải có giải thích trong ui_strings/qt_wording_revi
 | Thư viện | play | Nghe ngay {} | Đọc {} | `qt/BookCell.qml:97` |
 | Thư viện | play | Nghe {} | Đọc {} | `qt/BookCell.qml:97` |
 | Thư viện | pause | Tạm dừng {} | Đọc {} | `qt/BookCell.qml:97` |
-| Trang sách | chevron-up | Thu gọn | Thu gọn / Xem thêm | `qt/BookMetadataDetails.qml:73` |
-| Trang sách | chevron-down | Xem thêm | Thu gọn / Xem thêm | `qt/BookMetadataDetails.qml:73` |
+| Trang sách | chevron-up | Thu gọn | Thu gọn / Xem thêm | `qt/BookMetadataDetails.qml:75` |
+| Trang sách | chevron-down | Xem thêm | Thu gọn / Xem thêm | `qt/BookMetadataDetails.qml:75` |
 | Trang sách | check-check | Chưa nghe xong | Chưa nghe / Đã nghe xong, Chưa nghe xong / Đã nghe xong | `qt/BookPage.qml:173` |
 | Trang sách | check-check | Đã nghe xong | Chưa nghe / Đã nghe xong, Chưa nghe xong / Đã nghe xong | `qt/BookPage.qml:173` |
 | Trang sách | circle-dashed | Chưa nghe | Chưa nghe / Đã nghe xong, Tạm dừng {} | `qt/BookPage.qml:304` |
@@ -178,7 +178,7 @@ Nhãn ngắn (<= 6 chữ). **Chỉ Qt**: không có ở web cùng màn; `*` = we
 ### Thư viện
 
 - chỉ Qt (9): Tạm dừng* (`qt/LibraryContinue.qml:44`); Mới thêm* (`qt/LibraryScreen.qml:48`); Tác giả* (`qt/LibraryScreen.qml:48`); Tên sách* (`qt/LibraryScreen.qml:48`); Đang mở ABook* (`qt/LibraryScreen.qml:416`); Chưa mở được ABook (`qt/LibraryScreen.qml:465`); Chưa tải được thư viện (`qt/LibraryScreen.qml:465`); Thử lại* (`qt/LibraryScreen.qml:483`); Không thấy “{}”* (`qt/LibraryScreen.qml:520`)
-- chỉ web (7): Đang tạm dừng {} (`331`); Đang làm {} (`332`); Đang tạm dừng{} (`336`); Chưa có chương nghe được{} (`338`); Đang làm · {} (`338`); Thư viện chưa có sách nào. (`459`); Chữ bìa trên hoạ tiết sóng (`86`)
+- chỉ web (7): Đang tạm dừng {} (`333`); Đang làm {} (`334`); Đang tạm dừng{} (`338`); Chưa có chương nghe được{} (`340`); Đang làm · {} (`340`); Thư viện chưa có sách nào. (`461`); Chữ bìa trên hoạ tiết sóng (`86`)
 
 ### Thanh phát
 
