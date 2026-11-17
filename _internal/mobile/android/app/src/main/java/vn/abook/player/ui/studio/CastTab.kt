@@ -5,6 +5,7 @@ import vn.abook.player.ui.motion.ContentLayout
 
 import vn.abook.player.S
 import vn.abook.player.ui.components.foldItems
+import vn.abook.player.ui.components.LazyFoldState
 import vn.abook.player.ui.components.rememberLazyFoldState
 
 import vn.abook.player.ui.data.dotJoined
@@ -84,7 +85,7 @@ internal fun openVoiceSheet(state: StudioProjectState, sheets: SheetHost, charac
  * Tab "Nhân vật" (NATIVE_REMOTE_STUDIO.md §6.6): người kể, nhân vật chính, vai phụ; mỗi người một hàng với giọng đang đọc và nút nghe một câu của họ. Chạm hàng mở
  * bảng giọng. Dàn mang từ phần trước chỉ để xem (giọng đã khoá).
  */
-internal fun LazyListScope.castTab(cast: StudioCastState, data: CastData, state: StudioProjectState, sheets: SheetHost, slide: Modifier) {
+internal fun LazyListScope.castTab(cast: StudioCastState, data: CastData, state: StudioProjectState, sheets: SheetHost, slide: Modifier, folds: LazyFoldState) {
     val loaded = data.poll.data
     item("cast_notice", "cast_notice") {
         Column(Modifier.fillMaxWidth().then(slide)) {
@@ -109,20 +110,29 @@ internal fun LazyListScope.castTab(cast: StudioCastState, data: CastData, state:
             }
         }
     }
-    // Người kể là một danh sách như các vai: mỗi giọng kể một hàng. Hàng giọng chính mở "Đổi giọng" người kể; giọng kể theo chương
+    // Người kể là một danh sách như các vai (web/Qt CastList, cùng chữ): fold "Người kể chuyện · N giọng", mỗi giọng kể một hàng - tên giọng,
+    // phạm vi chương, "N câu dẫn truyện · thời lượng", nút nghe thử giọng. Hàng giọng chính mở "Đổi giọng" người kể; giọng kể theo chương
     // đi theo người kể "tôi" của chương ấy, không đổi riêng.
     val narrator = loaded.narrator
     val narrators = vn.abook.player.ui.data.Cast.narratorRows(narrator.voice, narrator.chapterVoices, narrator.exceptChapters, narrator.voiceLines, narrator.voiceSeconds)
-    item("cast_narrator_title", "section") { SectionTitle(WorkText.CAST_NARRATOR, first = true, modifier = Modifier.then(slide)) }
-    items(narrators, key = { "cast_narrator_${it.key}" }, contentType = { "member" }) { row ->
+    foldItems(folds, S.s_nguoi_ke_chuyen_c0c2c504, "studio_cast_narrators", narrators, { "cast_narrator_${it.key}" }, Modifier.then(slide),
+        summary = S.s_0_giong_7be1af23(narrators.size), defaultOpen = true, contentType = "member") { _, row ->
         Column(Modifier.fillMaxWidth().then(slide)) {
             ListItem(
-                if (row.main) narrator.profile?.label ?: narrator.voice.ifEmpty { WorkText.CAST_NO_VOICE } else row.voice,
+                row.voice,
                 Modifier, if (row.main) ({ openVoiceSheet(state, sheets, "NARRATOR", WorkText.CAST_NARRATOR) }) else null,
                 if (row.main) "studio_cast_narrator" else "studio_cast_narrator_${row.key}",
-                hint = (if (row.main) narrator.pendingVoice?.let { WorkText.pendingVoice(it.label) } else null)
-                    ?: listOf(row.scope, WorkText.castLines(row.lines)).dotJoined(),
-                hintColor = Abook.colors.text2, chevron = row.main,
+                hint = listOfNotNull(
+                    row.scope.ifEmpty { null },
+                    if (row.main) narrator.pendingVoice?.let { WorkText.pendingVoice(it.label) } else null,
+                    vn.abook.player.ui.data.Cast.narratorRowCount(row, narrator.redo),
+                ).joinToString("\n"),
+                hintColor = Abook.colors.text2,
+                trailing = if (row.preset.isNotEmpty()) ({
+                    ClipButton(StudioCastState.voiceClip(row.preset), data.clip, { cast.playVoice(row.preset) },
+                        if (row.main) "studio_cast_narrator_play" else "studio_cast_narrator_play_${row.key}")
+                }) else null,
+                chevron = row.main && row.preset.isEmpty(),
             )
             RowLine()
         }
@@ -171,8 +181,9 @@ private fun LazyListScope.members(
 
 private fun dataForPeople(cast: StudioCastState): List<CastMember> = cast.poll.value.data?.let { it.characters + it.extras }.orEmpty()
 
-/** Dòng phụ của một hàng: giọng đang đọc, số câu, rồi điều đang chờ (giọng mới chọn, chờ gộp, tên gốc). */
-private fun memberHint(member: CastMember): String = listOfNotNull(
+/** Dòng phụ của một hàng: ô giới (web/Qt cạnh tên: giới, hay "Nhóm" / "Trẻ em" / "Chưa rõ" - không bao giờ đoán), rồi giọng đang đọc,
+ *  số câu và điều đang chờ (giọng mới chọn, chờ gộp, tên gốc). */
+private fun memberHint(member: CastMember): String = vn.abook.player.ui.data.Cast.genderText(member.gender, member.genderNote) + "\n" + listOfNotNull(
     member.voice?.label ?: WorkText.CAST_NO_VOICE,
     WorkText.castLines(member.lines),
     member.pendingVoice?.let { WorkText.pendingVoice(it.label) },

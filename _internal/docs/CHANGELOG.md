@@ -18,6 +18,8 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 - Tab Nhân vật: vai chính và vai phụ chia đúng theo số câu, người nói nhiều qua nhiều chương luôn là vai chính, giới tính điền đủ; "Người kể chuyện" thành danh sách, mỗi giọng một hàng ghi rõ chương nó đọc, trên điện thoại, web và máy tính.
 - Tab Nhân vật: ô giới không còn trống - nhóm người ghi "Nhóm", trẻ em chưa rõ giới ghi "Trẻ em", còn lại "Chưa rõ"; không bao giờ đoán giới. Vai phụ không tên ("NPC bà cụ") và nhân vật cùng tên ("Bà cụ") là hai người, tên hiện ra không còn chữ "NPC".
 - Tên chương và thông tin sách không bao giờ mang dấu kiểm tra nội bộ (như "Cần nghe lại"); file sách có dấu ấy bị từ chối khi đóng gói.
+- Studio trên điện thoại: tab Nhân vật ghi "Người kể chuyện · N giọng" như máy tính, mỗi giọng kể một hàng có chương nó đọc, số câu dẫn truyện, thời lượng và nút nghe thử; mỗi người có ô giới ("Nhóm", "Trẻ em", "Chưa rõ" khi chưa biết).
+- Lưu sách thành file trên điện thoại từ chối sách còn dấu kiểm tra nội bộ hay trạng thái kiểm tra, đúng như máy tính.
 - Hai chương không còn trùng tên "Chương 1": phần "Mở đầu" không chiếm số chương, và tên theo số không trùng tên một chương khác.
 - File sách nghe (.abook) không còn mang trạng thái kiểm tra (chương đạt hay chưa, dòng lỗi, báo cáo mức âm): những thứ ấy chỉ ở dự án; file còn trường ấy bị từ chối khi đóng gói. File sách đã xuất trước đây còn mang dấu ấy (như Hello, Hello and Hello) được đóng lại sạch từ dự án ở lần chạy kế tiếp.
 - Tên chương nhận theo mẫu lặp lại trong cả cuốn ("Lần gặp thứ N - …"), kể cả tiêu đề dài; một cuốn không bao giờ lẫn tên thật với "Chương N", và đoạn văn thường không bị nhận nhầm thành tên chương.

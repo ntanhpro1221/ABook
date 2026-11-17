@@ -323,9 +323,9 @@ function member(name: string, gender: string, age: string, lines: number, voice:
 }
 
 export function bookCast(book: GalleryBook): Cast {
-  if (book.imported) return { narrator: { voice: "", lines: 0, seconds: 0 }, characters: [], extras: [] };
+  if (book.imported) return { narrator: { voice: "", lines: 0, seconds: 0, chapterVoices: [], exceptChapters: [], voiceLines: 0, voiceSeconds: 0 }, characters: [], extras: [] };
   return {
-    narrator: { voice: book.narrator, lines: 1840, seconds: 23_400 },
+    narrator: { voice: book.narrator, lines: 1840, seconds: 23_400, chapterVoices: [], exceptChapters: [], voiceLines: 1840, voiceSeconds: 23_400 },
     characters: [
       member("Minh Khuê", "female", "young", 412, "Bảo Trang", 4002),
       member("Ông Tư", "male", "elderly", 236, "Hữu Phước", 4004),

@@ -142,7 +142,8 @@ class ListenExtrasTest {
         .put("sampleId", 3).apply(extra)
 
     private fun cast(characters: List<JSONObject>, extras: List<JSONObject> = emptyList()) = JSONObject()
-        .put("narrator", JSONObject().put("voice", "Hoài My").put("lines", 40).put("seconds", 3600.0).put("redo", 2))
+        .put("narrator", JSONObject().put("voice", "Hoài My").put("lines", 40).put("seconds", 3600.0).put("redo", 2)
+            .put("chapterVoices", JSONArray()).put("exceptChapters", JSONArray()).put("voiceLines", 40).put("voiceSeconds", 3600.0))
         .put("characters", JSONArray(characters)).put("extras", JSONArray(extras)).toString()
 
     @Test
@@ -194,10 +195,15 @@ class ListenExtrasTest {
     }
 
     @Test
-    fun `chapter lists keep titles that are not numbered and skip entries that are not objects`() {
+    fun `chapter lists keep titles that are not numbered`() {
         assertEquals("Mở đầu, Chương 2", Cast.chapterList(listOf(CastChapter(1, "Mở đầu"), CastChapter(2, "Chương 2"))))
-        val view = Cast.parse("""{"narrator":{"voice":"Đức Trí","chapterVoices":["Chương 8: Đoan Trang"]}}""")!!
-        assertEquals(1, Cast.narratorRows(view.narrator).size)
+    }
+
+    @Test
+    fun `a cast json not in the shape store cast writes is unreadable, never half shown`() {
+        // App chỉ đọc dạng hiện hành (luật không mã tương thích cũ): cast.json thiếu trường hay mục không phải đối tượng -> "không đọc được".
+        assertNull(Cast.parse("""{"narrator":{"voice":"Đức Trí","lines":3,"chapterVoices":["Chương 8: Đoan Trang"],"exceptChapters":[],"voiceLines":3,"voiceSeconds":0}}"""))
+        assertNull(Cast.parse("""{"narrator":{"voice":"Đức Trí","lines":3,"seconds":0}}"""))
     }
 
     @Test

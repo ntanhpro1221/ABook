@@ -28,7 +28,7 @@ Item {
     readonly property bool hasPeople: characters.length > 0 || extras.length > 0 || carried.length > 0
     readonly property bool isEmpty: status === "failed" || (status === "ready" && !hasPeople)
     readonly property var narrator: cast && cast.narrator ? cast.narrator : ({})
-    readonly property var narratorRows: Logic.narratorRows(narrator)
+    readonly property var narratorRows: cast && cast.narrator ? Logic.narratorRows(cast.narrator) : []
     property int generation: 0
     implicitHeight: embedded ? flick.contentHeight : 0
     signal request(string kind, var person)

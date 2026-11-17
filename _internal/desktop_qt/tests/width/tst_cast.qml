@@ -38,7 +38,8 @@ Item {
         }
         function castFixture() {
             return {
-                narrator: {voice: "Minh Quân", lines: 120, seconds: 3600, redo: 4, pendingVoice: {preset: "huong", label: "Hương"}},
+                narrator: {voice: "Minh Quân", lines: 120, seconds: 3600, chapterVoices: [], exceptChapters: [], voiceLines: 120, voiceSeconds: 3600,
+                           redo: 4, pendingVoice: {preset: "huong", label: "Hương"}},
                 characters: [
                     {name: "Lan", displayName: "Lan", gender: "Nữ", voice: {preset: "ngoc-linh", label: "Ngọc Linh"}, lines: 40, seconds: 300, firstChapter: "Chương 1", sampleId: 3},
                     {name: "Hạ_Vy", displayName: "Hạ Vy", gender: "Nữ", voice: {preset: "hoai-my", label: "Hoài My"}, lines: 25, seconds: 150, firstChapter: "Chương 1", sampleId: 4,
@@ -150,6 +151,35 @@ Item {
             compare(Logic.genderText({gender: "Nam", genderNote: "group"}), "Nam")
         }
 
+        // Một đầu ra thật của máy chủ (tests/fixtures/cast_contract/cast.json, sinh từ avatars.cast bởi tests/test_cast_contract_fixture.py):
+        // đúng chữ expected.json ghi - web castContract.dom.test.tsx và Android CastContractTest.kt đọc cùng hai file.
+        function contractFile(name) {
+            const request = new XMLHttpRequest()
+            request.open("GET", Qt.resolvedUrl("../../../tests/fixtures/cast_contract/" + name), false)
+            request.send()
+            return JSON.parse(request.responseText)
+        }
+        function test_serverCastContract() {
+            const expected = contractFile("expected.json")
+            castReply = contractFile("cast.json")
+            openCast()
+            const plain = text => String(text).replace(/ /g, " ")
+            const rows = findChild(page, "castList").narratorRows
+            compare(rows.map(row => ({voice: row.voice, preset: row.preset, scope: row.scope, line: plain(Logic.narratorRowLine(row, 0))})),
+                    expected.narratorRows)
+            const shown = all(page, "castNarrator").concat(all(page, "castNarratorChapter"))
+            compare(shown.length, expected.narratorRows.length)
+            expected.narratorRows.forEach((want, index) => {
+                const row = shown[index]
+                compare(child(row, index === 0 ? "castNarratorVoice" : "castNarratorChapterVoice").text, want.voice)
+                compare(child(row, "castNarratorScope").text, want.scope)
+                compare(plain(child(row, "castNarratorCount").text), want.line)
+                verify(child(row, index === 0 ? "castNarratorSample" : "castNarratorChapterSample").visible, "nút nghe thử giọng")
+            })
+            for (const name of Object.keys(expected.genders))
+                compare(child(rowOf(name), "castGender").text, expected.genders[name], name)
+        }
+
         function test_chapterNarratorsKeepTheirScopeAndCounts_data() {
             return [{tag: "light", dark: false}, {tag: "dark", dark: true}]
         }
@@ -185,7 +215,8 @@ Item {
             verify(child(rowOf("Lan"), "castMore").visible)               // đổi tên / giới tính / gộp vẫn có
         }
         function test_emptyCast() {
-            castReply = {narrator: {}, characters: [], extras: [], carried: []}
+            castReply = {narrator: {voice: "", lines: 0, seconds: 0, chapterVoices: [], exceptChapters: [], voiceLines: 0, voiceSeconds: 0},
+                         characters: [], extras: [], carried: []}
             openCast()
             const empty = findChild(page, "castEmpty")
             tryVerify(function() { return empty.visible })

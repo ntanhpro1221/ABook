@@ -123,7 +123,7 @@ Item {
         function castFixture() {
             const voice = (preset, label) => ({preset: preset, label: label})
             return {
-                narrator: {voice: "Minh Quân", lines: 120, seconds: 3600, redo: 0},
+                narrator: {voice: "Minh Quân", lines: 120, seconds: 3600, chapterVoices: [], exceptChapters: [], voiceLines: 120, voiceSeconds: 3600, redo: 0},
                 characters: [
                     {name: "Lan", displayName: "Lan", gender: "Nữ", voice: voice("ngoc-linh", "Ngọc Linh"), lines: 40, seconds: 300, firstChapter: "Chương 1", sampleId: 3},
                     {name: "Hạ_Vy", displayName: "Hạ Vy", gender: "Nữ", voice: voice("hoai-my", "Hoài My"), lines: 25, seconds: 150, firstChapter: "Chương 1", sampleId: 4, pendingVoice: voice("huong", "Hương")},

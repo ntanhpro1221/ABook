@@ -73,6 +73,11 @@ class StudioCastState(private val project: StudioProjectState, pause: suspend (L
         session.clips?.toggle(sampleId(member), ClipSpec(session.computer, StudioPaths.sample(project.bookId, id)))
     }
 
+    /** Nghe câu mẫu chung của một giọng kể (hàng "Người kể chuyện"); bấm lại để dừng. */
+    fun playVoice(preset: String) {
+        session.clips?.toggle(voiceClip(preset), ClipSpec(session.computer, StudioPaths.voiceSample(preset)))
+    }
+
     fun release() {
         session.clips?.stop()
     }
@@ -86,6 +91,7 @@ class StudioCastState(private val project: StudioProjectState, pause: suspend (L
 
     companion object {
         fun sampleId(member: CastMember) = "cast-${member.name}"
+        fun voiceClip(preset: String) = "voice-$preset"
     }
 }
 

@@ -1,0 +1,151 @@
+{
+ "narrator": {
+  "voice": "Phạm Tuyên",
+  "chapterVoices": [
+   {
+    "voice": "Ngọc Linh",
+    "profile": {
+     "key": "vieneu@test/narrator-2",
+     "preset": "Ngọc Linh"
+    },
+    "chapters": [
+     {
+      "id": 2,
+      "title": "Chương 2"
+     }
+    ],
+    "lines": 2,
+    "seconds": 3000.0
+   }
+  ],
+  "exceptChapters": [
+   {
+    "id": 2,
+    "title": "Chương 2"
+   }
+  ],
+  "voiceLines": 3,
+  "voiceSeconds": 4500.0,
+  "lines": 5,
+  "seconds": 7500.0,
+  "profile": {
+   "key": "narrator",
+   "preset": "Phạm Tuyên"
+  },
+  "pendingVoice": null,
+  "redo": 0,
+  "avatar": {
+   "kind": "voice",
+   "file": "voice-fed1eccf.webp",
+   "key": "Phạm Tuyên"
+  }
+ },
+ "characters": [
+  {
+   "name": "Soren",
+   "displayName": "Soren",
+   "gender": "Nam",
+   "age": "Thiếu niên",
+   "lines": 2,
+   "seconds": 3000.0,
+   "recorded": 0,
+   "voice": {
+    "key": "vieneu@test/soren",
+    "preset": "Thái Sơn"
+   },
+   "sampleId": null,
+   "firstChapter": "Chương 1",
+   "pendingVoice": null,
+   "mergedInto": null,
+   "mergedAt": null,
+   "avatar": {
+    "kind": "pattern",
+    "key": "Soren",
+    "initials": "S",
+    "color": "#66607a",
+    "bits": 3488
+   }
+  },
+  {
+   "name": "Velia",
+   "displayName": "Velia",
+   "gender": "",
+   "genderNote": "unknown",
+   "age": "Thiếu niên",
+   "lines": 2,
+   "seconds": 3000.0,
+   "recorded": 0,
+   "voice": {
+    "key": "vieneu@test/velia",
+    "preset": "Thục Đoan"
+   },
+   "sampleId": null,
+   "firstChapter": "Chương 1",
+   "pendingVoice": null,
+   "mergedInto": null,
+   "mergedAt": null,
+   "avatar": {
+    "kind": "pattern",
+    "key": "Velia",
+    "initials": "V",
+    "color": "#66607a",
+    "bits": 27046
+   }
+  }
+ ],
+ "extras": [
+  {
+   "name": "Bé Tí",
+   "displayName": "Bé Tí",
+   "gender": "",
+   "genderNote": "child",
+   "age": "Trẻ em",
+   "lines": 1,
+   "seconds": 1500.0,
+   "recorded": 0,
+   "voice": {
+    "key": "vieneu@test/velia",
+    "preset": "Thục Đoan"
+   },
+   "sampleId": null,
+   "firstChapter": "Chương 1",
+   "pendingVoice": null,
+   "mergedInto": null,
+   "mergedAt": null,
+   "avatar": {
+    "kind": "pattern",
+    "key": "Bé Tí",
+    "initials": "BT",
+    "color": "#4c6963",
+    "bits": 12525
+   }
+  },
+  {
+   "name": "Dân Làng",
+   "displayName": "Dân Làng",
+   "gender": "",
+   "genderNote": "group",
+   "age": "",
+   "lines": 1,
+   "seconds": 1500.0,
+   "recorded": 0,
+   "voice": {
+    "key": "vieneu@test/soren",
+    "preset": "Thái Sơn"
+   },
+   "sampleId": null,
+   "firstChapter": "Chương 2",
+   "pendingVoice": null,
+   "mergedInto": null,
+   "mergedAt": null,
+   "avatar": {
+    "kind": "pattern",
+    "key": "Dân Làng",
+    "initials": "DL",
+    "color": "#805c38",
+    "bits": 15988
+   }
+  }
+ ],
+ "carried": []
+}

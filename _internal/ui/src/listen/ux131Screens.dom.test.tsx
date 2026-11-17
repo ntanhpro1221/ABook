@@ -149,7 +149,7 @@ it("trang sách dài: nhóm chương gập, mở lại giữ thao tác đúng ch
 
 it("nhân vật dài: chia ba Fold và không lộ người ở chương sau", async () => {
   const people = Array.from({ length: 8 }, (_, i) => ({ name: `P${i}`, displayName: `Người ${i}`, lines: 3, seconds: 0, firstChapter: i > 3 ? "later" : "now" }));
-  state.cast = { narrator: { voice: "", lines: 1, seconds: 0 }, characters: people, extras: people.slice(0, 2), carried: people.slice(0, 2) };
+  state.cast = { narrator: { voice: "", lines: 1, seconds: 0, chapterVoices: [], exceptChapters: [], voiceLines: 1, voiceSeconds: 0 }, characters: people, extras: people.slice(0, 2), carried: people.slice(0, 2) };
   await render(<CastList bookId="b" reached={new Set(["now"])} onPickVoice={() => {}} />);
   for (const label of ["Vai chính", "Vai phụ", "Từ phần trước"]) expect(body(fold(label)).hasAttribute("inert")).toBe(true);
   await act(() => fold("Vai chính").click());

@@ -85,7 +85,8 @@ class BookTabsScreenTest {
 
     private fun cast() = Cast.parse(
         JSONObject()
-            .put("narrator", JSONObject().put("voice", "Hoài My").put("lines", 120).put("seconds", 900.0))
+            .put("narrator", JSONObject().put("voice", "Hoài My").put("lines", 120).put("seconds", 900.0)
+                .put("chapterVoices", JSONArray()).put("exceptChapters", JSONArray()).put("voiceLines", 120).put("voiceSeconds", 900.0))
             .put("characters", JSONArray(listOf(person("An", "Nữ", 40, title(1)), person("Bình", "Nam", 25, title(9)))))
             .put("extras", JSONArray())
             .toString(),

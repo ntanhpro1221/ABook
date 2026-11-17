@@ -189,7 +189,7 @@ private fun ProjectBody(page: StudioPage, kind: PrimaryKind?, state: StudioProje
             StudioTab.Chapters -> chapters(page.chapters, slide)
             StudioTab.Work -> item("work", "work") { WorkDeck(state, book, sheets, { state.tab = StudioTab.Review }, slide) }
             StudioTab.Review -> if (reviewData != null) reviewTab(state.review, reviewData, book, slide)
-            StudioTab.Cast -> if (castData != null) castTab(state.cast, castData, state, sheets, slide)
+            StudioTab.Cast -> if (castData != null) castTab(state.cast, castData, state, sheets, slide, folds)
             StudioTab.Music -> if (musicData != null) musicTab(state.music, musicData, page.chapters, sheets, slide, folds)
         }
     }
