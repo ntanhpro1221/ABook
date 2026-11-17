@@ -101,7 +101,7 @@ MUSIC_RESUME_TRIES = 8                 # một lượt tải: nguồn đứt sau
 MUSIC_TRACK_MAX_MB = 40
 MUSIC_TRACK_MAX_BYTES = MUSIC_TRACK_MAX_MB * 1024 * 1024
 MUSIC_OFFLINE_MESSAGE = "Không tải được nhạc vì mất mạng - giữ nguyên nhạc hiện tại, bạn thử lại sau nhé"
-TOO_BIG_TRACK = f"Bài nhạc này quá lớn (trên {MUSIC_TRACK_MAX_MB} MB) nên máy này không dùng - máy chọn bài khác"
+TOO_BIG_TRACK = f"Bài nhạc này quá lớn (trên {MUSIC_TRACK_MAX_MB}\u00a0MB) nên máy này không dùng - máy chọn bài khác"
 MAX_BODY = 1024 * 1024
 REFRESH_PATIENCE_SECONDS = 8  # "Hỏi lại thư viện": máy thức trả lời trong ngần này; máy đang ngủ thì chờ tiếp ở nền
 # "Tìm trong sách" (get_search_texts): một lần hỏi tối đa ngần này chương (= bookSearch.ts BULK); chữ quá ngần này ký tự thì trả trước phần đã đọc.
@@ -252,7 +252,7 @@ class TrackTooBig(OSError):
     """Bài nhạc lớn hơn MUSIC_TRACK_MAX_MB (Content-Length hay số byte đã đếm) - dừng tải, không phải lỗi mạng."""
 
     def __init__(self, size: int) -> None:
-        super().__init__(f"bài nhạc {size} byte, quá {MUSIC_TRACK_MAX_MB} MB")
+        super().__init__(f"bài nhạc {size} byte, quá {MUSIC_TRACK_MAX_MB}\u00a0MB")
         self.size = size
 
 

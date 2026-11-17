@@ -750,7 +750,7 @@ def start_background(
         _terminate_owned_launch(process)
         log_tail = tail_log(paths.project_root, lines=30)
         detail = (
-            f"Supervisor không gửi READY trong {float(startup_timeout):g} giây."
+            f"Supervisor không gửi READY trong {float(startup_timeout):g}\u00a0giây."
             + (f"\n{log_tail}" if log_tail else "")
         )
         _record_launch_failure(paths, instance_id, detail)
@@ -1115,7 +1115,7 @@ def run_supervisor(
             elif worker.is_alive():
                 bootstrap_detail = (
                     f"worker không gửi {WORKER_READY_EVENT} trong "
-                    f"{WORKER_BOOTSTRAP_TIMEOUT_SECONDS:g} giây"
+                    f"{WORKER_BOOTSTRAP_TIMEOUT_SECONDS:g}\u00a0giây"
                 )
             else:
                 bootstrap_detail = (

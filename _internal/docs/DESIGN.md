@@ -320,7 +320,9 @@ giữ tên trong cột tối đa 640 px, thanh tua dùng phần rộng còn lạ
   và tên đầy đủ trong tooltip; các hàng và menu có thể tăng chiều cao dùng `OneLineFit`. Chữ hiển thị và mẫu câu lấy cùng kho chữ ở cả ba nền.
 - **Số và đơn vị** (%, giờ/phút/giây/ms/s, KB/MB/GB/TB, Hz/kHz, dB/dBFS, nhịp/phút): số và đơn vị nối bằng khoảng trắng không ngắt U+00A0, không bao giờ
   xuống dòng thành "97" / "%". Kho chữ chung giữ sẵn U+00A0 (một chuỗi `s_percent` cho mọi phần trăm), bộ định dạng dung lượng của cả ba nền cũng vậy;
-  cột số (điểm cảm xúc) rộng theo chữ khi chữ to 130 %. Máy dò `scripts/check_unit_spacing.py` (kho chữ + chuỗi trong code web, điện thoại, Qt).
+  cột số (điểm cảm xúc) rộng theo chữ khi chữ to 130 %. Máy dò `scripts/check_unit_spacing.py` (kho chữ + chuỗi trong code web, điện thoại, Qt
+  + chữ máy chủ Python đưa ra app: lỗi, tiến độ, nhật ký kỹ thuật, thông báo; không tính docstring, `print`/`logging`, chữ tiếng Anh cho lập trình viên
+  và số đã đọc thành chữ cho máy đọc).
 - **Vùng chạm**: tối thiểu 44×44 (điện thoại), 32×32 (máy tính, có tooltip).
 
 ## 6. Thành phần

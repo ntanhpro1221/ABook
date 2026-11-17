@@ -118,7 +118,7 @@ def upload_source(library_root: Path, folder: str, name: str, data: bytes) -> Pa
     if str(library_root) in ("", ".") or not library_root.is_dir():
         raise ValueError("Máy tính chưa có thư mục thư viện")
     if len(data) > MAX_SOURCE_UPLOAD:
-        raise ValueError(f"File vượt {MAX_SOURCE_UPLOAD // 2 ** 20} MB — bạn tách nhỏ để gửi hoặc mở ngay trên máy tính.")
+        raise ValueError(f"File vượt {MAX_SOURCE_UPLOAD // 2 ** 20}\u00a0MB — bạn tách nhỏ để gửi hoặc mở ngay trên máy tính.")
     parts = [part for part in (_upload_name(piece, 60) for piece in folder.replace("\\", "/").split("/")) if part]
     parts = parts[:3] or ["Tải lên"]
     file_name = _upload_name(name.replace("\\", "/").rsplit("/", 1)[-1], 120)
@@ -262,7 +262,7 @@ class StudioRunner(BackgroundRunner):
 
     def start(self, project_root: Path) -> None:
         if not self.setup.installed():
-            raise RuntimeError("Máy này chưa cài Studio - vào Dự án, bấm \"Cài Studio\" (một lần, khoảng 25 GB).")
+            raise RuntimeError("Máy này chưa cài Studio - vào Dự án, bấm \"Cài Studio\" (một lần, khoảng 25\u00a0GB).")
         status = self.setup.status()
         if status["damaged"]:
             raise RuntimeError(f"Studio thiếu {', '.join(status['damaged'])} — bạn bấm “Sửa Studio” ở Dự án.")

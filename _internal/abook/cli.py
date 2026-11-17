@@ -1305,7 +1305,7 @@ def _headroom_checks() -> dict[str, dict[str, Any]]:
     checks["headroom:ram"] = {
         "ok": total_ram_gb >= required_ram_gb,
         "detail": (
-            f"{total_ram_gb:.1f} GB tổng; cần {required_ram_gb:.1f} GB "
+            f"{total_ram_gb:.1f}\u00a0GB tổng; cần {required_ram_gb:.1f}\u00a0GB "
             f"({minimum_free:.1f} ngưỡng nhường + 2 x {PERCEPTUAL_WORKER_RAM_GB:.2f} worker chấm điểm)"
         ),
     }

@@ -326,7 +326,7 @@ class LocalMusic:
         if extension not in music_plan.TRACK_EXTENSIONS:
             raise MusicImportError(f"“{source.name}”: chưa thêm được định dạng này - dùng {', '.join('.' + e for e in music_plan.TRACK_EXTENSIONS)}.")
         if source.stat().st_size > MAX_TRACK_BYTES:
-            raise MusicImportError(f"“{source.name}”: file quá lớn để làm nhạc nền (tối đa 1 GB).")
+            raise MusicImportError(f"“{source.name}”: file quá lớn để làm nhạc nền (tối đa 1\u00a0GB).")
         digest = _sha1(source)
         with self._lock:
             known = self._tracks().get(digest)

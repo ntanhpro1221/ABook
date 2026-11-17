@@ -503,7 +503,7 @@ def compute(project_root: Path | str, stretches: Iterable[tuple[str, str]], rost
         save(False)
     save(True)
     log(f"Chữ trùng Việt / Anh và gốc tên: {len(found)} chỗ nghi ngờ, {len(named)} tên; hỏi {asked} ({failed} không trả lời được) "
-        f"trong {time.monotonic() - started:.0f} giây")
+        f"trong {time.monotonic() - started:.0f}\u00a0giây")
     return counts()
 
 

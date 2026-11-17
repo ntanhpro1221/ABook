@@ -779,7 +779,7 @@ def _blocked_voice_wishes(project_root: Path, overrides: dict[str, Any], charact
             if key not in character_ids or preset not in narrated:
                 continue
             who, now = speaker_label(key), voice_label(voice_of.get(key, ""))
-            why = f"Giọng {voice_label(preset)} giờ là giọng người kể - nhân vật cần giọng khác."
+            why = f"Giọng {voice_label(preset)} nay là giọng người kể - nhân vật cần giọng khác."
             affected = lines_of.get(character_ids[key], 0)
         cards.append({
             "kind": "voice-wish",

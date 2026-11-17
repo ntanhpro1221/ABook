@@ -251,8 +251,8 @@ def test_the_option_is_for_machines_with_enough_ram_and_off_by_default(worker, m
     monkeypatch.setattr(music_valence, "ram_bytes", lambda: 4 * 1024 ** 3)
     monkeypatch.setattr(music_valence, "present", lambda directory=None: False)
     status = music_valence.status()
-    assert status["state"] == "unavailable" and "8 GB" in status["reason"]
-    with pytest.raises(ValueError, match="8 GB"):
+    assert status["state"] == "unavailable" and "8\u00a0GB" in status["reason"]
+    with pytest.raises(ValueError, match="8\u00a0GB"):
         music_valence.enable()
     assert flag["on"] is False, "máy không đủ sức thì không bật"
     from abook.webui.library import DEFAULT_PREFERENCES

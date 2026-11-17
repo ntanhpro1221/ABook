@@ -76,7 +76,7 @@ CHOICE = "supertonic"
 FAST_CHOICE = "supertonic_fast"
 CHOICES = (CHOICE, FAST_CHOICE)
 NEEDS = {CHOICE: ("libs", "g2p", "supertonic"), FAST_CHOICE: ("libs", "g2p", "supertonic", FAST_CHOICE)}
-CHOICE_TEXT = {CHOICE: ("Giọng Supertonic", "10 giọng nam nữ, 44 kHz; nhẹ máy, đọc nhanh; tự đổi số và ngày giờ thành chữ."),
+CHOICE_TEXT = {CHOICE: ("Giọng Supertonic", "10 giọng nam nữ, 44\u00a0kHz; nhẹ máy, đọc nhanh; tự đổi số và ngày giờ thành chữ."),
                FAST_CHOICE: ("Bản nhanh hơn", "Tạo giọng nhanh hơn, tiếng kém chút; xuất sách vẫn dùng bản tốt nhất.")}
 PART_LABEL = {"supertonic": "Giọng Supertonic", "g2p": "Bộ đọc tiếng Việt", FAST_CHOICE: "Bản nhanh hơn"}
 # Cho "Tốc độ giọng trên máy" (voice_speed.status).

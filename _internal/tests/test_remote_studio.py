@@ -381,7 +381,7 @@ def test_a_browser_on_the_computer_uploads_too(studio) -> None:
     big = base64.b64encode(b"a" * (actions.MAX_SOURCE_UPLOAD + 1)).decode("ascii")
     status, raw, _ = _request(app.local_port, "POST", "/api/sources/upload", headers=local, body={
         "folder": "Lần gửi d4", "name": "to.txt", "data": big})
-    assert status == 400 and f"{actions.MAX_SOURCE_UPLOAD // 2**20} MB" in json.loads(raw)["error"]
+    assert status == 400 and f"{actions.MAX_SOURCE_UPLOAD // 2**20}\u00a0MB" in json.loads(raw)["error"]
 
 
 # ---- soát bảo mật 28-09: mỗi test tái hiện đúng một cách tấn công của báo cáo ------------------------------------------

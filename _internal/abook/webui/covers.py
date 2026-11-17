@@ -128,7 +128,7 @@ def _decode(data_url: str) -> bytes:
     except (binascii.Error, ValueError) as exc:
         raise CoverError("Dữ liệu ảnh bị hỏng") from exc
     if len(raw) > MAX_UPLOAD_BYTES:
-        raise CoverError(f"Ảnh quá lớn (tối đa {MAX_UPLOAD_BYTES // 2**20} MB)")
+        raise CoverError(f"Ảnh quá lớn (tối đa {MAX_UPLOAD_BYTES // 2**20}\u00a0MB)")
     return raw
 
 
@@ -165,7 +165,7 @@ def render_cover(raw: bytes) -> tuple[bytes, dict[str, Any]]:
     from PIL import Image, ImageOps, UnidentifiedImageError  # noqa: PLC0415 - Pillow chỉ cần khi có người đặt bìa
 
     if len(raw) > MAX_UPLOAD_BYTES:
-        raise CoverError(f"Ảnh quá lớn (tối đa {MAX_UPLOAD_BYTES // 2**20} MB)")
+        raise CoverError(f"Ảnh quá lớn (tối đa {MAX_UPLOAD_BYTES // 2**20}\u00a0MB)")
     try:
         image = Image.open(io.BytesIO(raw), formats=("JPEG", "PNG", "WEBP", "GIF", "BMP"))
         keep_bytes = (image.format == "JPEG" and image.mode == "RGB"

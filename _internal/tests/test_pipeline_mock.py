@@ -4207,7 +4207,7 @@ def test_critical_ram_unloads_models_and_continues_after_recovery(
     assert notifier.critical_calls == []
     assert db.book()["status"] != "stopped"
     assert any(
-        kind == "log" and "0.8 → 8.0 GB" in str(payload["text"])
+        kind == "log" and "0.8 → 8.0\u00a0GB" in str(payload["text"])
         for kind, payload in events
     )
 
