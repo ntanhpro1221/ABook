@@ -72,6 +72,7 @@ import vn.abook.player.ui.components.SearchIcon
 import vn.abook.player.ui.components.SheetHost
 import vn.abook.player.ui.components.TextAction
 import vn.abook.player.ui.components.fadeEdges
+import vn.abook.player.ui.components.floatingLayer
 import vn.abook.player.ui.components.navigationClearance
 import vn.abook.player.ui.components.pressable
 import vn.abook.player.ui.data.Fmt
@@ -149,7 +150,7 @@ fun MusicScreen(
             }
         }
         }
-        PreviewBar(ui, state, Modifier.align(Alignment.BottomCenter))
+        PreviewBar(ui, state, Modifier.align(Alignment.BottomCenter).floatingLayer()) { link -> openTrack(sheets, state, link, pick) }
         if (ui.meteredAsk.isNotEmpty()) {
             LaunchedEffect(ui.meteredAsk) {
                 val links = ui.meteredAsk
@@ -372,14 +373,18 @@ private fun ChipOptions(title: String, options: List<Label>, value: String, onPi
     }
 }
 
-/** Thanh "Đang nghe thử · tên · ■" ở đáy màn (nổi trên danh sách). */
+/**
+ * Thanh "Đang nghe thử · tên · ■" ở đáy màn (nổi trên danh sách). Chạm thân thanh mở chi tiết của chính bài đang nghe thử - cùng [openTrack] mà dòng bài
+ * gọi; nút ■ chỉ dừng nghe thử. Nơi gọi đặt [floatingLayer] NGOÀI CÙNG `modifier`: cả khung (lề hai bên, chỗ chừa đáy) nuốt chạm, không cú bấm nào lọt xuống dòng bài.
+ */
 @Composable
-private fun PreviewBar(ui: LibraryUi, state: LibraryState, modifier: Modifier = Modifier) {
+private fun PreviewBar(ui: LibraryUi, state: LibraryState, modifier: Modifier = Modifier, onOpen: (String) -> Unit) {
     val link = ui.previewing ?: return
     val track = ui.index?.byLink?.get(link) ?: return
     val colors = Abook.colors
     Row(
         modifier.padding(horizontal = Dim.margin).padding(bottom = navigationClearance() + Dim.s8).fillMaxWidth()
+            .pressable { onOpen(link) }.semantics { contentDescription = S.s_mo_0_7a5716e0(track.title) }
             .clip(RoundedCornerShape(Dim.radiusControl)).background(colors.panel).border(1.dp, colors.line, RoundedCornerShape(Dim.radiusControl))
             .padding(start = Dim.s16).testTag("preview_bar"),
         verticalAlignment = Alignment.CenterVertically,

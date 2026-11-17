@@ -165,6 +165,7 @@ qt_add_qml_module(ABookDesk
         qml/LucidePaths.js
         qml/ReadingInk.js
         qml/Interactive.qml
+        qml/TapShield.qml
         qml/Button.qml
         qml/IconButton.qml
         qml/Shadow.qml
@@ -400,6 +401,7 @@ qt_add_qml_module(ABookDesk
         qml/MyMusicTrack.qml
         qml/MusicScreen.qml
         qml/MusicTrackRow.qml
+        qml/MusicPreviewBar.qml
         qml/MusicArt.qml
         qml/MusicArtRaster.mjs
         qml/DownloadRing.qml

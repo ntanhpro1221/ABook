@@ -186,6 +186,7 @@ Item {
             color: Theme.bg
             opacity: Math.min(1, root.g * 2.5)
         }
+        TapShield {}      // Đang nghe phủ lên thư viện: bấm chỗ trống của nó không trúng bìa / dòng nằm dưới
         Item {
             id: stage
             y: -panel.y

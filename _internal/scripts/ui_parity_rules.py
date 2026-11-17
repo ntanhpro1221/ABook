@@ -1,8 +1,9 @@
-"""Eleven cross-platform UI rules (L1-L11) for web, Qt and Android, read straight from the sources.
+"""Twelve cross-platform UI rules (L1-L12) for web, Qt and Android, read straight from the sources.
 
 docs/UI_PARITY.md keeps the shared dictionary and the existing web <-> native detectors; this file adds what they never compared:
 Qt <-> Android directly, the dictionary's "Thay cho" column, colour tokens, the spacing/type scale, component radius roles, motion
-tokens, hard show/hide, the "…" button's spoken name, label length and same-control pairs. Exceptions and the remaining-work lists
+tokens, hard show/hide, the "…" button's spoken name, label length, same-control pairs, row summary case (L11) and floating layers
+that swallow taps (L12). Exceptions and the remaining-work lists
 live in scripts/ui_parity_rules.json, each with a reason. Every check returns a list of readable problems; tests/test_ui_parity_rules.py
 asserts they are empty and that each rule bites a planted violation.
 
@@ -691,10 +692,171 @@ def l11_summary_case() -> list[str]:
     return problems
 
 
+# --- L12: a floating layer over scrolling content swallows every tap in its frame -------------------------------------------------
+# Chủ sách 17-11 (Kho nhạc trên OPPO): bấm thanh "Đang nghe thử" thì cú bấm lọt xuống dòng bài nằm dưới. Mọi lớp nổi đè lên nội dung cuộn - thanh
+# nổi, thanh phát nhỏ, lời báo, chip, tấm, dải nút... - phải nuốt cú bấm ở cả vùng trống và phần đệm của nó.
+#  Android: một phần tử đặt bằng `.align(Alignment.Bottom…)` mang trong chính chuỗi Modifier của nó một chỗ bắt chạm (floatingLayer() ngoài cùng,
+#           pressable/clickable/pointerInput/sheetSurface).
+#  Web:     một lớp `fixed` / `sticky` / `absolute` không được `pointer-events-none` (trừ trang trí aria-hidden), vì khi ấy cú bấm đi xuyên.
+#  Qt:      một Item nổi (`z:` dương, hay dính đáy `y: root.height - height`) chứa TapShield / MouseArea, hoặc chính nó / kiểu của nó bấm được.
+# Ngoại lệ có lý do riêng ở scripts/ui_parity_rules.json "L12".
+
+L12_ANDROID_CATCH = re.compile(r"\bfloatingLayer\(|\bpressable\b|\bclickable\b|\bcombinedClickable\b|\bpointerInput\b|\bsheetSurface\(")
+L12_QT_CATCH = re.compile(r"TapShield|MouseArea|Interactive|IconButton|Button|TapHandler")
+L12_QT_FLOAT = re.compile(r"^[ \t]*(?:z:\s*[1-9]\d*\b|y:\s*(?:root|parent)\.height\s*-\s*height\s*(?:$|;|-))", re.M)
+
+
+def _code_only(text: str) -> str:
+    """Comments blanked (same length) so a bracket inside a comment does not move an argument's edge."""
+    return re.sub(r"//[^\n]*|/\*[\s\S]*?\*/", lambda m: re.sub(r"[^\n]", " ", m.group(0)), text)
+
+
+def _argument(text: str, at: int) -> tuple[int, int]:
+    """The call argument (or `x = …` value) around position `at`: [start, end)."""
+    depth, start = 0, at
+    while start > 0:
+        c = text[start - 1]
+        if c in ")]}":
+            depth += 1
+        elif c in "([{":
+            if depth == 0:
+                break
+            depth -= 1
+        elif depth == 0 and (c == "," or (c == "=" and text[start - 2] not in "=!<>" and text[start] != "=")):
+            break
+        start -= 1
+    depth, end = 0, at
+    while end < len(text):
+        c = text[end]
+        if c in "([{":
+            depth += 1
+        elif c in ")]}":
+            if depth == 0:
+                break
+            depth -= 1
+        elif c == "," and depth == 0:
+            break
+        end += 1
+    return start, end
+
+
+def l12_android_hits() -> list[tuple[str, int, str, bool]]:
+    hits = []
+    for path in and_files():
+        text = _code_only(path.read_text(encoding="utf-8"))
+        for m in re.finditer(r"\.align\(", text):
+            _arg_start, arg_end = _argument(text, m.end())
+            if "Alignment.Bottom" not in text[m.end():arg_end]:
+                continue
+            start, end = _argument(text, m.start())
+            chain = " ".join(text[start:end].split())
+            hits.append((rel(path), text.count("\n", 0, m.start()) + 1, chain, bool(L12_ANDROID_CATCH.search(chain))))
+    return hits
+
+
+def l12_web_hits() -> list[tuple[str, int, str]]:
+    hits = []
+    for path in web_files():
+        text = path.read_text(encoding="utf-8")
+        for m in re.finditer(r"([\"'`])((?:(?!\1)[^\n])*\bpointer-events-none\b(?:(?!\1)[^\n])*)\1", text):
+            classes = m.group(2)
+            if not re.search(r"(?<![-\w:\[])(?:fixed|sticky|absolute)\b", classes):
+                continue
+            tag = text[text.rfind("<", 0, m.start()):text.find(">", m.end()) + 1]
+            if "aria-hidden" in tag:
+                continue
+            hits.append((rel(path), text.count("\n", 0, m.start()) + 1, classes))
+    return hits
+
+
+def _qt_block(text: str, at: int) -> tuple[str, str]:
+    """Type name and full text of the QML object whose direct property sits at `at`."""
+    depth, i = 0, at
+    while i > 0:
+        i -= 1
+        if text[i] == "}":
+            depth += 1
+        elif text[i] == "{":
+            if depth == 0:
+                break
+            depth -= 1
+    head = re.search(r"([A-Za-z_][\w.]*)\s*$", text[:i])
+    depth, j = 0, i
+    while j < len(text):
+        if text[j] == "{":
+            depth += 1
+        elif text[j] == "}":
+            depth -= 1
+            if depth == 0:
+                break
+        j += 1
+    return (head.group(1) if head else ""), text[i:j + 1]
+
+
+def _qt_catches(name: str, seen: set[str] | None = None) -> bool:
+    """Kiểu QML `name` tự bắt cú bấm: là / dựng trên nút, hay tệp của nó có TapShield / MouseArea."""
+    if L12_QT_CATCH.fullmatch(name):
+        return True
+    seen = seen if seen is not None else set()
+    path = ROOT / QT / f"{name}.qml"
+    if name in seen or not path.exists():
+        return False
+    seen.add(name)
+    text = _code_only(path.read_text(encoding="utf-8"))
+    if re.search(r"\b(?:TapShield|MouseArea)\b", text):
+        return True
+    root = re.search(r"^([A-Z]\w*)\s*\{", text, re.M)
+    return bool(root and _qt_catches(root.group(1), seen))
+
+
+def l12_qt_hits() -> list[tuple[str, int, str, bool]]:
+    hits = []
+    for path in qt_files():
+        text = _code_only(path.read_text(encoding="utf-8"))
+        for m in L12_QT_FLOAT.finditer(text):
+            kind, block = _qt_block(text, m.start())
+            name = re.search(r"^\s*(?:id|objectName):\s*\"?(\w+)", block[1:], re.M)
+            label = f"{kind}#{name.group(1)}" if name else kind
+            caught = _qt_catches(kind) or any(_qt_catches(t) for t in re.findall(r"\b([A-Z]\w*)\s*\{", block))
+            hits.append((rel(path), text.count("\n", 0, m.start()) + 1, label, caught))
+    return hits
+
+
+def l12_floating_layers() -> list[str]:
+    cfg = config().get("L12", {})
+    problems, used = [], set()
+    allow = {(a["platform"], a["file"], a["what"]) for a in cfg.get("allow", [])}
+    components = ROOT / AND / "components/Components.kt"
+    if not components.exists() or "fun Modifier.floatingLayer()" not in components.read_text(encoding="utf-8"):
+        problems.append("L12 Android: thiếu Modifier.floatingLayer() ở components/Components.kt")
+    if not (ROOT / QT / "TapShield.qml").exists():
+        problems.append("L12 Qt: thiếu desktop_qt/qml/TapShield.qml")
+    for path, line, chain, caught in l12_android_hits():
+        key = ("android", path, chain)
+        if key in allow:
+            used.add(key)
+        elif not caught:
+            problems.append(f"L12 {path}:{line}: lớp nổi đáy không nuốt chạm (thêm .floatingLayer() ngoài cùng): {chain[:120]}")
+    for path, line, classes in l12_web_hits():
+        key = ("web", path, classes)
+        if key in allow:
+            used.add(key)
+        else:
+            problems.append(f"L12 {path}:{line}: lớp nổi `pointer-events-none` cho cú bấm đi xuyên: {classes[:120]}")
+    for path, line, label, caught in l12_qt_hits():
+        key = ("qt", path, label)
+        if key in allow:
+            used.add(key)
+        elif not caught:
+            problems.append(f"L12 {path}:{line}: Item nổi {label} không có TapShield / MouseArea: cú bấm vào chỗ trống lọt xuống dưới")
+    problems += [f"L12 allow thừa (đã hết vi phạm): {p} {f} {w}" for p, f, w in sorted(allow - used)]
+    return problems
+
+
 RULES = {
     "L1": l1_cross_platform, "L2": l2_banned_words, "L3": l3_tokens, "L4": l4_scale, "L5": l5_radius_roles,
     "L6": l6_motion_tokens, "L7": l7_instant, "L8": l8_ellipsis_names, "L9": l9_label_length, "L10": l10_control_pairs,
-    "L11": l11_summary_case,
+    "L11": l11_summary_case, "L12": l12_floating_layers,
 }
 
 

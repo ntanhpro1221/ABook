@@ -10995,13 +10995,13 @@
     "id": "6b3cbb2a48258077c161",
     "kind": "destructive",
     "path": "mobile/android/app/src/main/java/vn/abook/player/ui/nowplaying/PlayerSheets.kt",
-    "line": 78,
+    "line": 79,
     "statement": "fun pop() { if(parents.isNotEmpty())window.openSheet(parents.removeAt(parents.lastIndex)) else window.closeSheet() }",
     "occurrence": 1,
-    "source_sha256": "ce5fd30a8604239b9ab483fc4ebeb917f13af843f0aad3303dcf9b4c1d961c6d",
+    "source_sha256": "bf07f1be118c7667b41c98070ac273c8194304fec2249d59cac2cbdccfeba10b",
     "disposition": "internal",
     "guard": "Declaration; the invoked call site is independently inventoried",
-    "reason": "A declaration/signature is not an executing UI action. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Gate repair: reviewed identity-key motion, explicit layout, token spacing or semantic navigation changes; existing guard retained. Combined-source review (merge174 bottomgap): both sides' changes to this file keep this statement and its guard unchanged."
+    "reason": "A declaration/signature is not an executing UI action. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Gate repair: reviewed identity-key motion, explicit layout, token spacing or semantic navigation changes; existing guard retained. Combined-source review (merge174 bottomgap): both sides' changes to this file keep this statement and its guard unchanged. Combined-source review: floating layers now swallow taps (tapthru: preview bar opens its track, TapShield / floatingLayer); this action and its guard are unchanged. Combined-source review (merge174 tapthru): both sides' changes to this file keep this statement and its guard unchanged."
   },
   {
     "id": "41d49281785c0f3be740",
@@ -11583,85 +11583,85 @@
     "id": "76dc12b9598bdb85c87f",
     "kind": "pending",
     "path": "mobile/android/app/src/main/java/vn/abook/player/ui/shell/Shell.kt",
-    "line": 144,
+    "line": 145,
     "statement": "scope.launch { page.load() }",
     "occurrence": 1,
-    "source_sha256": "8f4c581adfbb1a2886835767960954a9cf1f8be9aacb3d2206273ce2b696c9b0",
+    "source_sha256": "a66321f16ba435d7a796e9621497b0740c40d559df77ddfb9e19177f05559e5f",
     "disposition": "pending",
     "guard": "ViewModel/operation fields: busy, pending, progress; Components pending indicator",
-    "reason": "The model retains the operation and locks repeats; UI uses the shared pending parameter, loading content or progress owner. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Combined-source review (merge174 bgimport): both sides' changes to this file keep this statement and its guard unchanged."
+    "reason": "The model retains the operation and locks repeats; UI uses the shared pending parameter, loading content or progress owner. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Combined-source review (merge174 bgimport): both sides' changes to this file keep this statement and its guard unchanged. Combined-source review: floating layers now swallow taps (tapthru: preview bar opens its track, TapShield / floatingLayer); this action and its guard are unchanged. Combined-source review (merge174 tapthru): both sides' changes to this file keep this statement and its guard unchanged."
   },
   {
     "id": "39d74cac0534bba005ae",
     "kind": "pending",
     "path": "mobile/android/app/src/main/java/vn/abook/player/ui/shell/Shell.kt",
-    "line": 159,
+    "line": 160,
     "statement": "suspend fun receive(queue: ImportQueue, sources: List<String>) {",
     "occurrence": 1,
-    "source_sha256": "8f4c581adfbb1a2886835767960954a9cf1f8be9aacb3d2206273ce2b696c9b0",
+    "source_sha256": "a66321f16ba435d7a796e9621497b0740c40d559df77ddfb9e19177f05559e5f",
     "disposition": "internal",
     "guard": "Async interface/helper boundary; concrete activation inventoried separately",
-    "reason": "This signature supplies work to a model or component; declaring it starts no user operation. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Combined-source review (merge174 bgimport): both sides' changes to this file keep this statement and its guard unchanged."
+    "reason": "This signature supplies work to a model or component; declaring it starts no user operation. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Combined-source review (merge174 bgimport): both sides' changes to this file keep this statement and its guard unchanged. Combined-source review: floating layers now swallow taps (tapthru: preview bar opens its track, TapShield / floatingLayer); this action and its guard are unchanged. Combined-source review (merge174 tapthru): both sides' changes to this file keep this statement and its guard unchanged."
   },
   {
     "id": "d0ef5000b187ceda1175",
     "kind": "pending",
     "path": "mobile/android/app/src/main/java/vn/abook/player/ui/shell/Shell.kt",
-    "line": 178,
+    "line": 179,
     "statement": "suspend fun showBookPage(book: vn.abook.player.ui.data.ListenBook) {",
     "occurrence": 1,
-    "source_sha256": "8f4c581adfbb1a2886835767960954a9cf1f8be9aacb3d2206273ce2b696c9b0",
+    "source_sha256": "a66321f16ba435d7a796e9621497b0740c40d559df77ddfb9e19177f05559e5f",
     "disposition": "internal",
     "guard": "Async interface/helper boundary; concrete activation inventoried separately",
-    "reason": "This signature supplies work to a model or component; declaring it starts no user operation. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Combined-source review (merge174 bgimport): both sides' changes to this file keep this statement and its guard unchanged."
+    "reason": "This signature supplies work to a model or component; declaring it starts no user operation. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Combined-source review (merge174 bgimport): both sides' changes to this file keep this statement and its guard unchanged. Combined-source review: floating layers now swallow taps (tapthru: preview bar opens its track, TapShield / floatingLayer); this action and its guard are unchanged. Combined-source review (merge174 tapthru): both sides' changes to this file keep this statement and its guard unchanged."
   },
   {
     "id": "d66254934903cf00c88a",
     "kind": "pending",
     "path": "mobile/android/app/src/main/java/vn/abook/player/ui/shell/Shell.kt",
-    "line": 190,
+    "line": 191,
     "statement": "suspend fun openStudio(request: StudioRequest) {",
     "occurrence": 1,
-    "source_sha256": "8f4c581adfbb1a2886835767960954a9cf1f8be9aacb3d2206273ce2b696c9b0",
+    "source_sha256": "a66321f16ba435d7a796e9621497b0740c40d559df77ddfb9e19177f05559e5f",
     "disposition": "internal",
     "guard": "Async interface/helper boundary; concrete activation inventoried separately",
-    "reason": "This signature supplies work to a model or component; declaring it starts no user operation. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Combined-source review (merge174 bgimport): both sides' changes to this file keep this statement and its guard unchanged."
+    "reason": "This signature supplies work to a model or component; declaring it starts no user operation. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Combined-source review (merge174 bgimport): both sides' changes to this file keep this statement and its guard unchanged. Combined-source review: floating layers now swallow taps (tapthru: preview bar opens its track, TapShield / floatingLayer); this action and its guard are unchanged. Combined-source review (merge174 tapthru): both sides' changes to this file keep this statement and its guard unchanged."
   },
   {
     "id": "5dd4b24cc34afb624403",
     "kind": "pending",
     "path": "mobile/android/app/src/main/java/vn/abook/player/ui/shell/Shell.kt",
-    "line": 339,
+    "line": 340,
     "statement": "(libraryNow.value as? LibraryState.Ready)?.books?.firstOrNull { it.id == id }?.let { book -> shell.scope.launch { shell.showBookPage(book) } }",
     "occurrence": 1,
-    "source_sha256": "8f4c581adfbb1a2886835767960954a9cf1f8be9aacb3d2206273ce2b696c9b0",
+    "source_sha256": "a66321f16ba435d7a796e9621497b0740c40d559df77ddfb9e19177f05559e5f",
     "disposition": "pending",
     "guard": "ViewModel/operation fields: busy, pending, progress; Components pending indicator",
-    "reason": "The model retains the operation and locks repeats; UI uses the shared pending parameter, loading content or progress owner. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Combined-source review (merge174 bgimport): both sides' changes to this file keep this statement and its guard unchanged."
+    "reason": "The model retains the operation and locks repeats; UI uses the shared pending parameter, loading content or progress owner. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Combined-source review (merge174 bgimport): both sides' changes to this file keep this statement and its guard unchanged. Combined-source review: floating layers now swallow taps (tapthru: preview bar opens its track, TapShield / floatingLayer); this action and its guard are unchanged. Combined-source review (merge174 tapthru): both sides' changes to this file keep this statement and its guard unchanged."
   },
   {
     "id": "b4139ce6b925740feaa0",
     "kind": "pending",
     "path": "mobile/android/app/src/main/java/vn/abook/player/ui/shell/Shell.kt",
-    "line": 350,
+    "line": 351,
     "statement": "readAlong = { book -> shell.scope.launch { if (player.prepare(book)) window.openReading() } },",
     "occurrence": 1,
-    "source_sha256": "8f4c581adfbb1a2886835767960954a9cf1f8be9aacb3d2206273ce2b696c9b0",
+    "source_sha256": "a66321f16ba435d7a796e9621497b0740c40d559df77ddfb9e19177f05559e5f",
     "disposition": "pending",
     "guard": "ViewModel/operation fields: busy, pending, progress; Components pending indicator",
-    "reason": "The model retains the operation and locks repeats; UI uses the shared pending parameter, loading content or progress owner. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Combined-source review (merge174 bgimport): both sides' changes to this file keep this statement and its guard unchanged."
+    "reason": "The model retains the operation and locks repeats; UI uses the shared pending parameter, loading content or progress owner. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Combined-source review (merge174 bgimport): both sides' changes to this file keep this statement and its guard unchanged. Combined-source review: floating layers now swallow taps (tapthru: preview bar opens its track, TapShield / floatingLayer); this action and its guard are unchanged. Combined-source review (merge174 tapthru): both sides' changes to this file keep this statement and its guard unchanged."
   },
   {
     "id": "820cd3ca713805723ec4",
     "kind": "pending",
     "path": "mobile/android/app/src/main/java/vn/abook/player/ui/shell/Shell.kt",
-    "line": 355,
+    "line": 356,
     "statement": "openNowPlaying = { id -> shell.scope.launch { if (player.awaitLoaded(id)) window.open() } },",
     "occurrence": 1,
-    "source_sha256": "8f4c581adfbb1a2886835767960954a9cf1f8be9aacb3d2206273ce2b696c9b0",
+    "source_sha256": "a66321f16ba435d7a796e9621497b0740c40d559df77ddfb9e19177f05559e5f",
     "disposition": "pending",
     "guard": "ViewModel/operation fields: busy, pending, progress; Components pending indicator",
-    "reason": "The model retains the operation and locks repeats; UI uses the shared pending parameter, loading content or progress owner. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Combined-source review (merge174 bgimport): both sides' changes to this file keep this statement and its guard unchanged."
+    "reason": "The model retains the operation and locks repeats; UI uses the shared pending parameter, loading content or progress owner. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Combined-source review (merge174 bgimport): both sides' changes to this file keep this statement and its guard unchanged. Combined-source review: floating layers now swallow taps (tapthru: preview bar opens its track, TapShield / floatingLayer); this action and its guard are unchanged. Combined-source review (merge174 tapthru): both sides' changes to this file keep this statement and its guard unchanged."
   },
   {
     "id": "a779ea84a03842ecaadb",
@@ -15786,10 +15786,10 @@
     "line": 38,
     "statement": "Api.quiet(\"GET\", \"/api/music/library\" + Logic.libraryQuery(forSaved ? Logic.noFilters() : effective, forSaved), null, function(data, problem) {",
     "occurrence": 1,
-    "source_sha256": "50858d0f2139ce31a07761190358e15d98b2d42e76287db40c6aabde6dc31668",
+    "source_sha256": "d38ef383c0207ddc4210784d689edbe4697de04feb7407e55e4fce5f0522f0d5",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; busy, loading, previewLoading",
-    "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads. Combined-source review (merge174 lintfix): both sides' changes to this file keep this statement and its guard unchanged."
+    "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads. Combined-source review (merge174 lintfix): both sides' changes to this file keep this statement and its guard unchanged. Combined-source review: floating layers now swallow taps (tapthru: preview bar opens its track, TapShield / floatingLayer); this action and its guard are unchanged. Combined-source review (merge174 tapthru): both sides' changes to this file keep this statement and its guard unchanged."
   },
   {
     "id": "485fb14a64c3b24b2dfd",
@@ -15798,10 +15798,10 @@
     "line": 46,
     "statement": "function loadMeta() { Api.quiet(\"GET\", \"/api/music/library/meta\", null, function(data, problem) { if (!problem) meta = data }) }",
     "occurrence": 1,
-    "source_sha256": "50858d0f2139ce31a07761190358e15d98b2d42e76287db40c6aabde6dc31668",
+    "source_sha256": "d38ef383c0207ddc4210784d689edbe4697de04feb7407e55e4fce5f0522f0d5",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; busy, loading, previewLoading",
-    "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads. Combined-source review (merge174 lintfix): both sides' changes to this file keep this statement and its guard unchanged."
+    "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads. Combined-source review (merge174 lintfix): both sides' changes to this file keep this statement and its guard unchanged. Combined-source review: floating layers now swallow taps (tapthru: preview bar opens its track, TapShield / floatingLayer); this action and its guard are unchanged. Combined-source review (merge174 tapthru): both sides' changes to this file keep this statement and its guard unchanged."
   },
   {
     "id": "63580d02e9c71debd82d",
@@ -15810,10 +15810,10 @@
     "line": 47,
     "statement": "function pollDownloads() { Api.quiet(\"GET\", \"/api/music/library/downloads\", null, function(data, problem) { if (!problem) { const was = busy; downloads = data; if (was && !busy) refresh() } }) }",
     "occurrence": 1,
-    "source_sha256": "50858d0f2139ce31a07761190358e15d98b2d42e76287db40c6aabde6dc31668",
+    "source_sha256": "d38ef383c0207ddc4210784d689edbe4697de04feb7407e55e4fce5f0522f0d5",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; busy, loading, previewLoading",
-    "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads. Combined-source review (merge174 lintfix): both sides' changes to this file keep this statement and its guard unchanged."
+    "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads. Combined-source review (merge174 lintfix): both sides' changes to this file keep this statement and its guard unchanged. Combined-source review: floating layers now swallow taps (tapthru: preview bar opens its track, TapShield / floatingLayer); this action and its guard are unchanged. Combined-source review (merge174 tapthru): both sides' changes to this file keep this statement and its guard unchanged."
   },
   {
     "id": "fd59f89de875c0fc3d1f",
@@ -15822,10 +15822,10 @@
     "line": 51,
     "statement": "Api.quiet(\"POST\", \"/api/music/library/save\", {links: links}, function(data, problem) {",
     "occurrence": 1,
-    "source_sha256": "50858d0f2139ce31a07761190358e15d98b2d42e76287db40c6aabde6dc31668",
+    "source_sha256": "d38ef383c0207ddc4210784d689edbe4697de04feb7407e55e4fce5f0522f0d5",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; busy, loading, previewLoading",
-    "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads. Combined-source review (merge174 lintfix): both sides' changes to this file keep this statement and its guard unchanged."
+    "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads. Combined-source review (merge174 lintfix): both sides' changes to this file keep this statement and its guard unchanged. Combined-source review: floating layers now swallow taps (tapthru: preview bar opens its track, TapShield / floatingLayer); this action and its guard are unchanged. Combined-source review (merge174 tapthru): both sides' changes to this file keep this statement and its guard unchanged."
   },
   {
     "id": "06db7e2ac926d73ec0dc",
@@ -15834,10 +15834,10 @@
     "line": 56,
     "statement": "function unsave(links) {",
     "occurrence": 1,
-    "source_sha256": "50858d0f2139ce31a07761190358e15d98b2d42e76287db40c6aabde6dc31668",
+    "source_sha256": "d38ef383c0207ddc4210784d689edbe4697de04feb7407e55e4fce5f0522f0d5",
     "disposition": "internal",
     "guard": "Declaration; the invoked call site is independently inventoried",
-    "reason": "A declaration/signature is not an executing UI action. Combined-source review (merge174 lintfix): both sides' changes to this file keep this statement and its guard unchanged."
+    "reason": "A declaration/signature is not an executing UI action. Combined-source review (merge174 lintfix): both sides' changes to this file keep this statement and its guard unchanged. Combined-source review: floating layers now swallow taps (tapthru: preview bar opens its track, TapShield / floatingLayer); this action and its guard are unchanged. Combined-source review (merge174 tapthru): both sides' changes to this file keep this statement and its guard unchanged."
   },
   {
     "id": "c151ddb7ac9e880a865a",
@@ -15846,10 +15846,10 @@
     "line": 57,
     "statement": "Api.quiet(\"POST\", \"/api/music/library/unsave\", {links: links}, function(data, problem) {",
     "occurrence": 1,
-    "source_sha256": "50858d0f2139ce31a07761190358e15d98b2d42e76287db40c6aabde6dc31668",
+    "source_sha256": "d38ef383c0207ddc4210784d689edbe4697de04feb7407e55e4fce5f0522f0d5",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; busy, loading, previewLoading",
-    "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads. Combined-source review (merge174 lintfix): both sides' changes to this file keep this statement and its guard unchanged."
+    "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads. Combined-source review (merge174 lintfix): both sides' changes to this file keep this statement and its guard unchanged. Combined-source review: floating layers now swallow taps (tapthru: preview bar opens its track, TapShield / floatingLayer); this action and its guard are unchanged. Combined-source review (merge174 tapthru): both sides' changes to this file keep this statement and its guard unchanged."
   },
   {
     "id": "1a1eba6d678aa67c99b8",
@@ -15858,10 +15858,10 @@
     "line": 63,
     "statement": "Api.quiet(\"POST\", \"/api/music/library/cancel\", {links: links}, function(data, problem) {",
     "occurrence": 1,
-    "source_sha256": "50858d0f2139ce31a07761190358e15d98b2d42e76287db40c6aabde6dc31668",
+    "source_sha256": "d38ef383c0207ddc4210784d689edbe4697de04feb7407e55e4fce5f0522f0d5",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; busy, loading, previewLoading",
-    "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads. Combined-source review (merge174 lintfix): both sides' changes to this file keep this statement and its guard unchanged."
+    "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads. Combined-source review (merge174 lintfix): both sides' changes to this file keep this statement and its guard unchanged. Combined-source review: floating layers now swallow taps (tapthru: preview bar opens its track, TapShield / floatingLayer); this action and its guard are unchanged. Combined-source review (merge174 tapthru): both sides' changes to this file keep this statement and its guard unchanged."
   },
   {
     "id": "a40120169b36a3ff8bcb",
@@ -15870,10 +15870,10 @@
     "line": 74,
     "statement": "Api.quiet(\"PUT\", \"/api/books/\" + encodeURIComponent(pickBook) + \"/music\", {pins: (function() { const pins = {}; pins[pickScene] = link; return pins })()}, function(data, problem) {",
     "occurrence": 1,
-    "source_sha256": "50858d0f2139ce31a07761190358e15d98b2d42e76287db40c6aabde6dc31668",
+    "source_sha256": "d38ef383c0207ddc4210784d689edbe4697de04feb7407e55e4fce5f0522f0d5",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; busy, loading, previewLoading",
-    "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads. Combined-source review (merge174 lintfix): both sides' changes to this file keep this statement and its guard unchanged."
+    "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads. Combined-source review (merge174 lintfix): both sides' changes to this file keep this statement and its guard unchanged. Combined-source review: floating layers now swallow taps (tapthru: preview bar opens its track, TapShield / floatingLayer); this action and its guard are unchanged. Combined-source review (merge174 tapthru): both sides' changes to this file keep this statement and its guard unchanged."
   },
   {
     "id": "2b1d1f7131525e8ff40e",
@@ -15882,10 +15882,10 @@
     "line": 82,
     "statement": "Api.quiet(\"PUT\", \"/api/books/\" + encodeURIComponent(pickBook) + \"/music\", {ban: [link]}, function(data, problem) {",
     "occurrence": 1,
-    "source_sha256": "50858d0f2139ce31a07761190358e15d98b2d42e76287db40c6aabde6dc31668",
+    "source_sha256": "d38ef383c0207ddc4210784d689edbe4697de04feb7407e55e4fce5f0522f0d5",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; busy, loading, previewLoading",
-    "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads. Combined-source review (merge174 lintfix): both sides' changes to this file keep this statement and its guard unchanged."
+    "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads. Combined-source review (merge174 lintfix): both sides' changes to this file keep this statement and its guard unchanged. Combined-source review: floating layers now swallow taps (tapthru: preview bar opens its track, TapShield / floatingLayer); this action and its guard are unchanged. Combined-source review (merge174 tapthru): both sides' changes to this file keep this statement and its guard unchanged."
   },
   {
     "id": "9e8eb9cacd8e40789546",
@@ -15903,13 +15903,13 @@
     "id": "c4ccff7e968500ed6810",
     "kind": "destructive",
     "path": "desktop_qt/qml/MusicScreen.qml",
-    "line": 265,
+    "line": 261,
     "statement": "onUnsave: root.unsave([detail.link])",
     "occurrence": 1,
-    "source_sha256": "50858d0f2139ce31a07761190358e15d98b2d42e76287db40c6aabde6dc31668",
+    "source_sha256": "d38ef383c0207ddc4210784d689edbe4697de04feb7407e55e4fce5f0522f0d5",
     "disposition": "confirmation",
     "guard": "DownloadControl / TrackRow / TrackSheet DestructiveConfirm; cancel incomplete transfer is exempt",
-    "reason": "Complete music download removal is confirmed with track title and size. Cancelling an unfinished download discards partial bytes immediately. Combined-source review (merge174 lintfix): both sides' changes to this file keep this statement and its guard unchanged."
+    "reason": "Complete music download removal is confirmed with track title and size. Cancelling an unfinished download discards partial bytes immediately. Combined-source review (merge174 lintfix): both sides' changes to this file keep this statement and its guard unchanged. Combined-source review: floating layers now swallow taps (tapthru: preview bar opens its track, TapShield / floatingLayer); this action and its guard are unchanged. Combined-source review (merge174 tapthru): both sides' changes to this file keep this statement and its guard unchanged."
   },
   {
     "id": "59c233eed2e5c73b6eb9",
@@ -16770,10 +16770,10 @@
     "line": 122,
     "statement": "for (let i = lineModel.count - 1; i >= 0; --i) if (!next[lineModel.get(i).key]) lineModel.remove(i)",
     "occurrence": 1,
-    "source_sha256": "9d29767b405c016e2807e9704d163e649d6ec9ed1c0642b75b01b3e5b64822c1",
+    "source_sha256": "511cc784a8a55d73db1f8a917f1123439ab452da00c73f76e302ea192e65ed3e",
     "disposition": "internal",
     "guard": "In-memory collection entry lifecycle",
-    "reason": "The statement releases a listener, request, UI row, selection or cache entry; it does not delete its persisted source. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Combined-source review (merge174 lintfix): both sides' changes to this file keep this statement and its guard unchanged."
+    "reason": "The statement releases a listener, request, UI row, selection or cache entry; it does not delete its persisted source. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Combined-source review (merge174 lintfix): both sides' changes to this file keep this statement and its guard unchanged. Combined-source review: floating layers now swallow taps (tapthru: preview bar opens its track, TapShield / floatingLayer); this action and its guard are unchanged. Combined-source review (merge174 tapthru): both sides' changes to this file keep this statement and its guard unchanged."
   },
   {
     "id": "667a39e364701bf232be",
@@ -17355,13 +17355,13 @@
     "id": "400b49b3903d5175af53",
     "kind": "pending",
     "path": "mobile/android/app/src/main/java/vn/abook/player/ui/shell/Shell.kt",
-    "line": 168,
+    "line": 169,
     "statement": "suspend fun showImports() {",
     "occurrence": 1,
-    "source_sha256": "8f4c581adfbb1a2886835767960954a9cf1f8be9aacb3d2206273ce2b696c9b0",
+    "source_sha256": "a66321f16ba435d7a796e9621497b0740c40d559df77ddfb9e19177f05559e5f",
     "disposition": "pending",
     "guard": "ShellState.showImports: waits for nav.busy, no push when Add book is already on top",
-    "reason": "Navigation to the Add book viewer from an import notification; idempotent and cancellable without side effects. Combined-source review (merge174 bgimport): both sides' changes to this file keep this statement and its guard unchanged."
+    "reason": "Navigation to the Add book viewer from an import notification; idempotent and cancellable without side effects. Combined-source review (merge174 bgimport): both sides' changes to this file keep this statement and its guard unchanged. Combined-source review (merge174 tapthru): both sides' changes to this file keep this statement and its guard unchanged."
   },
   {
     "id": "830c9d0e2c850548e79e",

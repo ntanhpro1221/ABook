@@ -60,7 +60,7 @@ export function BookMusic({ bookId }: { bookId: string }) {
             </div>
           )} />
         </div>
-        <PreviewBar preview={preview} />
+        <PreviewBar preview={preview} onOpen={(link) => setOpen(tracks.find((track) => track.link === link) ?? null)} />
         <TrackSheet
           link={open?.link ?? null}
           onClose={() => setOpen(null)}

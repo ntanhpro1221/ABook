@@ -39,6 +39,8 @@ export function MusicScreen() {
   const [tab, setTab] = useState<"saved" | "library">(picking || params.get("tab") === "library" ? "library" : "saved");
   const preview = useLibraryPreview();
   const navigate = useNavigate();
+  // Bài đang mở chi tiết: một chỗ cho cả dòng bài lẫn thanh "Đang nghe thử" (bấm thân thanh mở đúng bài đang nghe thử, như bấm dòng của nó).
+  const [open, setOpen] = useState<string | null>(null);
   return (
     <div className="page-x mx-auto max-w-[1180px] pb-16">
       <ScreenHeader
@@ -46,37 +48,43 @@ export function MusicScreen() {
         back={picking ? { label: S.s_quay_lai_6d793582, onClick: () => navigate(-1) } : undefined}
       />
       {picking ? (
-        <div className="mt-6"><PickerLibrary preview={preview} picking={picking} /></div>
+        <div className="mt-6"><PickerLibrary preview={preview} picking={picking} open={open} onOpen={setOpen} /></div>
       ) : (
-        <Tabs value={tab} onValueChange={(value) => setTab(value as "saved" | "library")} className="mt-6">
+        <Tabs value={tab} onValueChange={(value) => { setOpen(null); setTab(value as "saved" | "library"); }} className="mt-6">
           <TabsList label={S.s_nhac_0e4413e9}>
             <TabsTrigger value="saved">{S.s_da_luu_6379aeba}</TabsTrigger>
             <TabsTrigger value="library">{S.s_kho_nhac_94affa81}</TabsTrigger>
           </TabsList>
           <TabsPanels value={tab} className="mt-6">
-            <TabsContent value="saved"><Saved preview={preview} onBrowse={() => setTab("library")} /></TabsContent>
-            <TabsContent value="library"><Library preview={preview} /></TabsContent>
+            <TabsContent value="saved"><Saved preview={preview} onBrowse={() => { setOpen(null); setTab("library"); }} open={tab === "saved" ? open : null} onOpen={setOpen} /></TabsContent>
+            <TabsContent value="library"><Library preview={preview} open={tab === "library" ? open : null} onOpen={setOpen} /></TabsContent>
           </TabsPanels>
         </Tabs>
       )}
-      <PreviewBar preview={preview} />
+      <PreviewBar preview={preview} onOpen={setOpen} />
     </div>
   );
 }
 
-/** Thanh nhỏ "Đang nghe thử · tên · ■" ở đáy màn trong lúc nghe thử. */
-export function PreviewBar({ preview }: { preview: LibraryPreview }) {
+/** Thanh nhỏ "Đang nghe thử · tên · ■" ở đáy màn trong lúc nghe thử. Bấm thân thanh mở chi tiết của chính bài đang nghe thử - cùng `onOpen` mà dòng bài
+ *  gọi; nút ■ chỉ dừng nghe thử. Thanh là lớp nổi đè lên danh sách: không lớp nào của nó được `pointer-events-none` (luật L12, scripts/ui_parity_rules.py),
+ *  nên cú bấm vào chỗ trống / phần đệm của thanh không lọt xuống dòng bài nằm dưới. */
+export function PreviewBar({ preview, onOpen }: { preview: LibraryPreview; onOpen: (link: string) => void }) {
   const playing = preview.playing;
   return (
     <>
     {preview.error ? <InlineError message={preview.error} onRetry={preview.retry} /> : null}
     <MotionPresence open={playing !== null} className="sticky bottom-3 z-10 mt-4">
-      <div role="status" className="mx-auto flex max-w-[560px] items-center gap-3 rounded-cover border border-line bg-panel px-4 py-2 shadow-float">
-        <Music2 aria-hidden className="size-4 shrink-0 text-accent-text" />
-        <p className="min-w-0 flex-1 truncate text-sm">
-          <span className="text-fg-2">{preview.loading ? S.s_buffering : preview.paused ? S.s_music_paused : S.s_dang_nghe_thu_f1fb4cba}</span>
-          {playing?.title ? <span className="font-medium"> · {playing.title}</span> : null}
-        </p>
+      <div role="status" data-preview-bar className="mx-auto flex max-w-[560px] items-center gap-1 rounded-cover border border-line bg-panel py-1 pl-1 pr-2 shadow-float">
+        <button type="button" data-preview-open onClick={() => { if (playing) onOpen(playing.link); }}
+          aria-label={S.s_mo_0_7a5716e0(playing?.title || S.s_bai_nay_d9683a01)}
+          className="press flex min-h-10 min-w-0 flex-1 items-center gap-3 rounded-control px-3 py-1 text-left outline-none transition-colors duration-motion-fast hover:bg-hover focus-visible:ring-2 focus-visible:ring-focus">
+          <Music2 aria-hidden className="size-4 shrink-0 text-accent-text" />
+          <span className="min-w-0 flex-1 truncate text-sm">
+            <span className="text-fg-2">{preview.loading ? S.s_buffering : preview.paused ? S.s_music_paused : S.s_dang_nghe_thu_f1fb4cba}</span>
+            {playing?.title ? <span className="font-medium"> · {playing.title}</span> : null}
+          </span>
+        </button>
         <IconButton size="sm" label={S.s_dung_nghe_thu_41a2925b} icon={Square} onClick={preview.stop} />
       </div>
     </MotionPresence>
@@ -96,9 +104,8 @@ function useOnline(): boolean {
   return online;
 }
 
-function Saved({ preview, onBrowse }: { preview: LibraryPreview; onBrowse: () => void }) {
+function Saved({ preview, onBrowse, open, onOpen }: { preview: LibraryPreview; onBrowse: () => void; open: string | null; onOpen: (link: string | null) => void }) {
   const { data, isLoading, error, refetch } = useLibrary(NO_FILTERS, true);
-  const [open, setOpen] = useState<string | null>(null);
   const online = useOnline();
   const { data: downloads } = useDownloads();
   const { data: meta } = useLibraryMeta();
@@ -115,7 +122,7 @@ function Saved({ preview, onBrowse }: { preview: LibraryPreview; onBrowse: () =>
         ) : data?.tracks.length ? (
           <ul aria-label={S.s_da_luu_6379aeba}>
             {data.tracks.map((track) => (
-              <TrackRow key={track.link} track={track} preview={preview} downloads={downloads} online={online} styles={meta?.styles} onOpen={setOpen} />
+              <TrackRow key={track.link} track={track} preview={preview} downloads={downloads} online={online} styles={meta?.styles} onOpen={onOpen} />
             ))}
           </ul>
         ) : (
@@ -125,19 +132,22 @@ function Saved({ preview, onBrowse }: { preview: LibraryPreview; onBrowse: () =>
       </section>
       {/* "Nhạc của tôi" (nhạc tự nhập) là một phần của "Đã lưu": cùng thành phần trước đây nằm ở Cài đặt (gộp làm một, không bản sao). */}
       <MyMusicSection />
-      <TrackSheet link={open} onClose={() => setOpen(null)} preview={preview} />
+      <TrackSheet link={open} onClose={() => onOpen(null)} preview={preview} />
     </div>
   );
 }
 
 /** Kho nhạc ở chế độ chọn cho một đoạn: "Dùng" ghim bài cho đoạn qua đúng đường của "Đổi bài" (useBookMusic), "Không tự chọn bài này" =
  *  bỏ bài cho cuốn này (cơ chế "Bài đã bỏ" sẵn có của tab Nhạc). */
-function PickerLibrary({ preview, picking }: { preview: LibraryPreview; picking: { book: string; scene: string } }) {
+function PickerLibrary({ preview, picking, open, onOpen }: {
+  preview: LibraryPreview; picking: { book: string; scene: string }; open: string | null; onOpen: (link: string | null) => void;
+}) {
   const navigate = useNavigate();
   const client = useQueryClient();
   const [closeSheet, setCloseSheet] = useState(0);
   const { change } = useBookMusic(picking.book, () => {
     toast.success(S.s_da_chon_bai_cho_doan_nay_774deab2);
+    onOpen(null);
     setCloseSheet((value) => value + 1);
     navigate(-1);
   });
@@ -149,10 +159,12 @@ function PickerLibrary({ preview, picking }: { preview: LibraryPreview; picking:
       })
       .catch((problem: Error) => toast.error(problem.message));
   };
-  return <Library key={closeSheet} preview={preview} use={(link) => change.mutate({ pins: { [picking.scene]: link } })} ban={ban} busy={change.isPending} />;
+  return <Library key={closeSheet} preview={preview} open={open} onOpen={onOpen} use={(link) => change.mutate({ pins: { [picking.scene]: link } })} ban={ban} busy={change.isPending} />;
 }
 
-function Library({ preview, use, ban, busy }: { preview: LibraryPreview; use?: (link: string) => void; ban?: (link: string) => void; busy?: boolean }) {
+function Library({ preview, open, onOpen, use, ban, busy }: {
+  preview: LibraryPreview; open: string | null; onOpen: (link: string | null) => void; use?: (link: string) => void; ban?: (link: string) => void; busy?: boolean;
+}) {
   const [params] = useSearchParams();
   const [filters, setFilters] = useState<LibraryFilters>(NO_FILTERS);
   const [text, setText] = useState(() => params.get("q") ?? ""); // "Xem trong kho" từ bài đang phát: tìm sẵn tên bài
@@ -162,7 +174,6 @@ function Library({ preview, use, ban, busy }: { preview: LibraryPreview; use?: (
   const { data: meta } = useLibraryMeta();
   const { data: downloads } = useDownloads();
   const { save } = useSaveTracks();
-  const [open, setOpen] = useState<string | null>(null);
   const online = useOnline();
   const set = (patch: Partial<LibraryFilters>) => setFilters((old) => ({ ...old, ...patch }));
   const playlist = meta?.playlists.find((item) => item.id === filters.playlist);
@@ -220,7 +231,7 @@ function Library({ preview, use, ban, busy }: { preview: LibraryPreview; use?: (
             items={tracks}
             estimate={64}
             row={(track) => (
-              <TrackRow key={track.link} track={track} preview={preview} downloads={downloads} online={online} styles={meta?.styles} onOpen={setOpen}
+              <TrackRow key={track.link} track={track} preview={preview} downloads={downloads} online={online} styles={meta?.styles} onOpen={onOpen}
                 onUse={use} as="div" />
             )}
           />
@@ -229,7 +240,7 @@ function Library({ preview, use, ban, busy }: { preview: LibraryPreview; use?: (
         <EmptyState icon={Music2} title={S.s_khong_co_bai_nao_hop_5b5b11b5}
           action={filtering(filters) || text ? <Button onClick={() => { setFilters(NO_FILTERS); setText(""); }}>{S.s_bo_loc_74de0064}</Button> : undefined} />
       )}
-      <TrackSheet link={open} onClose={() => setOpen(null)} preview={preview} onUse={use} onBan={ban} busy={busy} />
+      <TrackSheet link={open} onClose={() => onOpen(null)} preview={preview} onUse={use} onBan={ban} busy={busy} />
     </div>
   );
 }

@@ -17,6 +17,8 @@ import androidx.compose.ui.graphics.drawscope.scale
 import androidx.compose.ui.input.pointer.PointerEvent
 import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.PointerEventType
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.ui.node.DrawModifierNode
 import androidx.compose.ui.node.ModifierNodeElement
 import androidx.compose.ui.node.PointerInputModifierNode
@@ -128,6 +130,13 @@ private class PressScaleNode : Modifier.Node(), DrawModifierNode, PointerInputMo
         val SLOP = 8.dp
     }
 }
+
+/**
+ * Lớp nổi đè lên nội dung cuộn (thanh nghe thử, gợi ý, dải nút đáy...): nuốt mọi cú chạm trong CẢ khung của nó - kể cả vùng trống và phần đệm -
+ * để cú bấm không lọt xuống dòng nằm dưới. Đặt NGOÀI CÙNG chuỗi Modifier (trước `padding`), phần bấm được bên trong vẫn nhận chạm như thường.
+ * Máy dò: scripts/ui_parity_rules.py (floating_layer_swallows).
+ */
+fun Modifier.floatingLayer(): Modifier = pointerInput(Unit) { detectTapGestures { } }
 
 /** Đầu màn gốc: tiêu đề 24 + dòng phụ ngay dưới (DESIGN.md §6 "Đầu màn"). */
 @Composable

@@ -1,5 +1,6 @@
 package vn.abook.player.ui.shell
 
+import vn.abook.player.ui.components.floatingLayer
 import vn.abook.player.ui.motion.SwapContent
 import vn.abook.player.ui.motion.ContentLayout
 
@@ -540,13 +541,14 @@ private fun ShellFrame(
     val rail = vn.abook.player.ui.theme.windowLayout(config.screenWidthDp.toFloat(), config.screenHeightDp.toFloat()).let { it.short && it.twoPane }
     Layout(
         content = {
-            Box(Modifier.layoutId(TAB_BAR).semantics { if (tabBarShown(nav) <= 0f) hideFromAccessibility() }) { Column(Modifier.fillMaxWidth()) { tabBar() } }
-            Column(Modifier.layoutId(MINI_BAR).fillMaxWidth().semantics { if (miniBarShown(nav) <= 0f) hideFromAccessibility() }) {
+            // Ba lớp chrome đè lên nội dung cuộn (thanh tab, thanh phát nhỏ + dải chừa đáy, thanh báo/hoàn tác): nuốt chạm ở cả vùng trống của chúng.
+            Box(Modifier.layoutId(TAB_BAR).floatingLayer().semantics { if (tabBarShown(nav) <= 0f) hideFromAccessibility() }) { Column(Modifier.fillMaxWidth()) { tabBar() } }
+            Column(Modifier.layoutId(MINI_BAR).floatingLayer().fillMaxWidth().semantics { if (miniBarShown(nav) <= 0f) hideFromAccessibility() }) {
                 miniBar()
                 Box(Modifier.fillMaxWidth().height(clearance).background(colors.panel))
             }
             Box(Modifier.layoutId(STACK)) { stack(insets) }
-            Column(Modifier.layoutId(BARS).fillMaxWidth()) { bars() }
+            Column(Modifier.layoutId(BARS).floatingLayer().fillMaxWidth()) { bars() }
         },
         modifier = Modifier.fillMaxSize(),
     ) { measurables, constraints ->

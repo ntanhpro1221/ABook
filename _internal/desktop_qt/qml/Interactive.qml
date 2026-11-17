@@ -13,6 +13,8 @@ Item {
     property real ringHeight: -1          // >= 0: vòng chỉ bao phần cao này (ô có chữ dưới bìa chỉ bao bìa)
     property bool pressScaling: true
     property bool externalFocus: false     // ô trong lưới / danh sách: danh sách giữ tiêu điểm, ô chỉ được tô vòng
+    // Nút của lớp nổi đè lên một thứ bấm được khác (thanh nghe thử trên dòng bài): giữ riêng cú bấm từ lúc nhấn, không để nó đi tiếp xuống dưới.
+    property bool exclusiveTap: false
     signal clicked()
     signal rightClicked()
 
@@ -36,6 +38,7 @@ Item {
     }
     TapHandler {
         id: tap
+        gesturePolicy: root.exclusiveTap ? TapHandler.ReleaseWithinBounds : TapHandler.DragThreshold
         onTapped: { root.forceActiveFocus(Qt.MouseFocusReason); root.clicked() }
         onPressedChanged: if (pressed) Nav.hideTip(root)
     }
