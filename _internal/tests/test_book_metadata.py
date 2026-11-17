@@ -202,6 +202,20 @@ def test_a_summary_read_through_the_real_import_paths_matches_the_parser(tmp_pat
         assert len(imported["summary"].splitlines()) < case["summaryLinesBelow"]
 
 
+def test_a_header_that_cannot_be_read_never_stops_a_project(tmp_path, monkeypatch):
+    """A DOS end-of-file mark and a stray control inside the summary are dropped; any header the parser still rejects is
+    skipped with a warning, never raised into project creation."""
+    path = tmp_path / "story.txt"
+    path.write_bytes("Truyện ngắn\nTóm tắt: Một\x01 chiếc thuyền.\x1a".encode("utf-8"))
+    assert book_metadata.from_sources([path]) == {"summary": "Một chiếc thuyền."}
+
+    def broken(_text):
+        raise ValueError("Invalid book metadata text: summary")
+
+    monkeypatch.setattr(book_metadata, "text_header", broken)
+    assert book_metadata.from_sources([path]) == {}
+
+
 @pytest.mark.parametrize("case", SET_CASES, ids=lambda case: case["name"])
 def test_saving_metadata_records_only_real_changes(tmp_path, case):
     book = {"format": "abook-book/1", "title": "Hồ giấy", "version": "v", "chapters": [], **case["base"]}

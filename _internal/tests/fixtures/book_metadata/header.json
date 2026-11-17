@@ -7,6 +7,7 @@
     {"name": "multi-paragraph summary", "text": "Tóm tắt: Đoạn một.\n\nĐoạn hai.\n\n\nChương 1\nChữ.", "filler": 0, "expected": {"summary": "Đoạn một.\n\nĐoạn hai."}},
     {"name": "two blank lines close the summary", "text": "Truyện ngắn\nTóm tắt: Một chiếc thuyền.\nNó trôi.\n\n\n", "filler": 500, "expected": {"summary": "Một chiếc thuyền.\nNó trôi."}},
     {"name": "two blank lines before the story close the summary", "text": "Truyện ngắn\nTóm tắt: Một chiếc thuyền.\n\n\nNgày xưa có một bến sông.\n", "filler": 500, "expected": {"summary": "Một chiếc thuyền."}},
+    {"name": "control characters are dropped, never fatal", "text": "\u001aTruyện ngắn\nTóm tắt: Một\u0001 chiếc thuyền.\u001a\n", "filler": 0, "expected": {"summary": "Một chiếc thuyền."}},
     {"name": "*** closes the summary", "text": "Truyện ngắn\nTóm tắt: Một chiếc thuyền.\nNó trôi.\n***\n", "filler": 500, "expected": {"summary": "Một chiếc thuyền.\nNó trôi."}},
     {"name": "--- closes the summary", "text": "Truyện ngắn\nTóm tắt: Một chiếc thuyền.\nNó trôi.\n---\n", "filler": 500, "expected": {"summary": "Một chiếc thuyền.\nNó trôi."}},
     {"name": "* * * closes the summary", "text": "Truyện ngắn\nTóm tắt: Một chiếc thuyền.\nNó trôi.\n* * *\n", "filler": 500, "expected": {"summary": "Một chiếc thuyền.\nNó trôi."}},

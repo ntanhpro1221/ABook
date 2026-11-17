@@ -228,4 +228,8 @@ def from_sources(files: list[Path] | tuple[Path, ...]) -> dict[str, Any]:
     except OSError as error:
         _LOG.warning("Skipped the TXT header of %s: %s", first, error)
         return {}
-    return text_header(text)
+    try:
+        return text_header(text)
+    except ValueError as error:
+        _LOG.warning("Skipped the TXT header of %s: %s", first, error)
+        return {}
