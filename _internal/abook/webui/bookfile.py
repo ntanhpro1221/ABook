@@ -48,7 +48,7 @@ nhắc cập nhật. Trong gói không có gì được "chạy".
 """
 from __future__ import annotations
 
-from collections.abc import Container
+from collections.abc import Collection, Container
 import argparse
 import contextlib
 import hashlib
@@ -223,6 +223,23 @@ def script_speaker_problems(name: str, data: bytes) -> list[str]:
         if INTERNAL_MARKER.search(speaker) or NPC_SHOWN.search(speaker):
             found.append(f"{name}.speaker: {speaker}")
     return found
+
+
+def listener_package_problems(book: dict[str, Any], names: Collection[str], read: Callable[[str], bytes]
+                              ) -> tuple[list[str], list[str]]:
+    """(chữ người nghe thấy có dấu nội bộ, trường book.json ngoài danh sách trắng) của một gói - đúng phép `seal` từ chối, dùng
+    chung cho dây chuyền khi xét gói đang có còn dùng được không (pipeline._export_book_file). Rỗng cả hai là sạch."""
+    cast_view = None
+    if "cast.json" in names:
+        try:
+            cast_view = json.loads(read("cast.json"))
+        except (OSError, ValueError):
+            cast_view = None
+    leaked = listener_text_problems(book, cast_view)
+    for name in names:
+        if name.startswith("scripts/") and name.endswith(".json") and not leaked:
+            leaked += script_speaker_problems(name, read(name))
+    return leaked, package_field_problems({key: value for key, value in book.items() if key != "package"})
 
 
 # Every book.json stores the volume tree. Chapter arrays are runtime projections only.
@@ -439,7 +456,6 @@ def book_layer(folder: Path) -> tuple[dict[str, Any], dict[str, Path | bytes], d
             raise BookFileError(f"Thư mục sách thiếu file {name}.")
         files[name], known[name] = source, meta
     book.pop("package", None)
-    listener_book(book)  # gói cũ còn mang trạng thái QA: đóng lại thì bỏ
     edits = book_edits.load(folder)
     try:
         layer = book_edits.layer_files(folder, edits)
@@ -638,18 +654,10 @@ def seal(book: dict[str, Any], files: dict[str, Path | bytes], out: Path, *, pro
     known = known or {}
     for message in cover_warnings(book, files, edits):
         warnings.warn(message, MissingCoverWarning, stacklevel=2)
-    cast_source = files.get("cast.json")
-    try:
-        cast_view = json.loads(cast_source.read_bytes() if isinstance(cast_source, Path) else cast_source) if cast_source else None
-    except (OSError, ValueError):
-        cast_view = None
-    leaked = listener_text_problems(book, cast_view)
-    for name, source in files.items():
-        if name.startswith("scripts/") and name.endswith(".json") and not leaked:
-            leaked += script_speaker_problems(name, source.read_bytes() if isinstance(source, Path) else source)
+    leaked, internal = listener_package_problems(
+        book, files, lambda name: files[name].read_bytes() if isinstance(files[name], Path) else files[name])
     if leaked:
         raise BookFileError("Chữ người nghe thấy có dấu nội bộ (QA, mã máy) - không đóng gói: " + "; ".join(leaked[:3]))
-    internal = package_field_problems({key: value for key, value in book.items() if key != "package"})
     if internal:
         raise BookFileError("book.json có trường QA / nội bộ chỉ thuộc dự án - không đóng gói: " + "; ".join(internal[:3]))
     described_files = {}

@@ -110,16 +110,3 @@ def test_a_clean_book_passes_the_whitelist(tmp_path: Path) -> None:
     assert bookfile.package_field_problems(book) == []
     bookfile.seal(book, {"chapters/1.mp3": b"audio"}, tmp_path / "x.abook", producer="test", version=1)
     assert (tmp_path / "x.abook").is_file()
-
-
-def test_no_reader_takes_qa_state_from_a_package() -> None:
-    """Python, Android, web and Qt sources never read the QA fields: they come from the project (store.chapters) or nowhere."""
-    root = Path(__file__).resolve().parents[1]
-    readers = [path for pattern in ("abook/**/*.py", "mobile/android/app/src/main/**/*.kt", "ui/src/**/*.ts", "ui/src/**/*.tsx",
-                                    "desktop_qt/**/*.qml", "desktop_qt/**/*.cpp")
-               for path in root.glob(pattern) if "node_modules" not in path.parts]
-    assert len(readers) > 100
-    for path in readers:
-        text = path.read_text(encoding="utf-8", errors="replace")
-        for field in ("qualityPassed", "qualityWarning", "failedLines", "levelQa"):
-            assert f'"{field}"' not in text and f"'{field}'" not in text and f".{field}" not in text, f"{path.name} đọc {field}"

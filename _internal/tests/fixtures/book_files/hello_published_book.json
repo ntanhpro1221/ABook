@@ -1,0 +1,455 @@
+{
+ "source": "Hello, Hello and Hello.abook (hand18, đóng gói 12-11, trước khi seal chặn dấu QA); audioCoverage.expected[].segments cắt còn 2 câu; bỏ samples, music",
+ "book": {
+  "format": "abook-book/1",
+  "title": "Hello, Hello and Hello",
+  "narrator": "Đức Trí",
+  "duration": 19298.5,
+  "chaptersTotal": 9,
+  "chaptersAvailable": 9,
+  "complete": true,
+  "version": "f98a188e38c8a268",
+  "audioVersion": "08e7f859912741db3d82a557f3d99cce17730b696e8edafea264e6ab1fa0efcf",
+  "audioUpdatedAt": "2026-11-15T05:11:42.457852+00:00",
+  "sourceFingerprint": "ecae3d3263354c27b37d574309cc1c9e113713bc2506aa38752d731de312c897",
+  "chapters": [
+   {
+    "id": 1,
+    "index": 1,
+    "title": "Chương 0",
+    "subtitle": "",
+    "fullTitle": "Chương 0",
+    "duration": 337.0,
+    "available": true,
+    "qualityPassed": true,
+    "qualityWarning": "",
+    "audioVersion": "1794478829.8889992",
+    "wordsVersion": "0c57c485dd24",
+    "file": "chapters/00001_000.mp3",
+    "size": 8088850,
+    "sha256": "c2006f6c42fd62a31006755730bda8297e4def4259114506407a228d0eb454d1",
+    "script": "scripts/1.json",
+    "failedLines": []
+   },
+   {
+    "id": 2,
+    "index": 2,
+    "title": "Chương 1",
+    "subtitle": "Cần nghe lại",
+    "fullTitle": "Chương 1",
+    "duration": 2068.4,
+    "available": true,
+    "qualityPassed": false,
+    "qualityWarning": "Cần nghe lại: c00002_s0000017_1f725bbe2c7c, c00002_s0000119_e63d7e3ee2f3; loudness delta 0.31 LU; audio đầy đủ",
+    "audioVersion": "",
+    "wordsVersion": "0c57c485dd24",
+    "file": "chapters/00002_001.mp3",
+    "size": 49630546,
+    "sha256": "3ada1eeb979f4f35b55dceeae6d8b0d88ea62db70e6a004916f3ac883a083a95",
+    "script": "scripts/2.json",
+    "failedLines": [
+     {
+      "id": 77,
+      "reason": "failed"
+     },
+     {
+      "id": 179,
+      "reason": "failed"
+     }
+    ]
+   },
+   {
+    "id": 3,
+    "index": 3,
+    "title": "Chương 2",
+    "subtitle": "Cần nghe lại",
+    "fullTitle": "Chương 2",
+    "duration": 2688.6,
+    "available": true,
+    "qualityPassed": false,
+    "qualityWarning": "Cần nghe lại: c00003_s0000033_5b807bbb1a8c, c00003_s0000412_403130906c58; loudness delta 0.41 LU; audio đầy đủ",
+    "audioVersion": "",
+    "wordsVersion": "0c57c485dd24",
+    "file": "chapters/00003_002.mp3",
+    "size": 64507474,
+    "sha256": "3c6206258fcdb216cfd1c4285f1c2356ea90b839a13a87dd3b3fc97b60c02446",
+    "script": "scripts/3.json",
+    "failedLines": [
+     {
+      "id": 468,
+      "reason": "failed"
+     },
+     {
+      "id": 847,
+      "reason": "failed"
+     }
+    ]
+   },
+   {
+    "id": 4,
+    "index": 4,
+    "title": "Chương 3",
+    "subtitle": "",
+    "fullTitle": "Chương 3",
+    "duration": 2785.2,
+    "available": true,
+    "qualityPassed": true,
+    "qualityWarning": "",
+    "audioVersion": "1794502704.3657882",
+    "wordsVersion": "0c57c485dd24",
+    "file": "chapters/00004_003.mp3",
+    "size": 66809746,
+    "sha256": "16daf59910ff10b3e56448dbc649cafa271e8cb91d7ed16791c326e76d1f6f20",
+    "script": "scripts/4.json",
+    "failedLines": []
+   },
+   {
+    "id": 5,
+    "index": 5,
+    "title": "Chương 4",
+    "subtitle": "Cần nghe lại",
+    "fullTitle": "Chương 4",
+    "duration": 1956.5,
+    "available": true,
+    "qualityPassed": false,
+    "qualityWarning": "Cần nghe lại: QA chương; loudness delta 2.82 LU; join discontinuity 0.343; audio đầy đủ",
+    "audioVersion": "",
+    "wordsVersion": "0c57c485dd24",
+    "file": "chapters/00005_004.mp3",
+    "size": 46956754,
+    "sha256": "447b5f323bc4bcd2ca0485c2ea660869980f6da0a24b6be8e4ce70e401da3129",
+    "script": "scripts/5.json",
+    "failedLines": []
+   },
+   {
+    "id": 6,
+    "index": 6,
+    "title": "Chương 5",
+    "subtitle": "Cần nghe lại",
+    "fullTitle": "Chương 5",
+    "duration": 2389.1,
+    "available": true,
+    "qualityPassed": false,
+    "qualityWarning": "Cần nghe lại: c00006_s0000063_8b91dc309e8f, c00006_s0000213_7d92ff0c115b, c00006_s0000247_328d7e4798be, c00006_s0000301_820133eac1d2; audio đầy đủ",
+    "audioVersion": "",
+    "wordsVersion": "0c57c485dd24",
+    "file": "chapters/00006_005.mp3",
+    "size": 57325906,
+    "sha256": "1b8fb7f0c43764afa1a9b24632dfe0c951ef5c0089c7e640909509e110e7bba6",
+    "script": "scripts/6.json",
+    "failedLines": [
+     {
+      "id": 1915,
+      "reason": "failed"
+     },
+     {
+      "id": 2065,
+      "reason": "failed"
+     },
+     {
+      "id": 2099,
+      "reason": "failed"
+     },
+     {
+      "id": 2153,
+      "reason": "failed"
+     }
+    ]
+   },
+   {
+    "id": 7,
+    "index": 7,
+    "title": "Chương 6",
+    "subtitle": "Cần nghe lại",
+    "fullTitle": "Chương 6",
+    "duration": 2131.6,
+    "available": true,
+    "qualityPassed": false,
+    "qualityWarning": "Cần nghe lại: c00007_s0000214_a79b6a64ba00, c00007_s0000247_59ec5b24a042; loudness delta 2.67 LU; join discontinuity 0.529; audio đầy đủ",
+    "audioVersion": "",
+    "wordsVersion": "0c57c485dd24",
+    "file": "chapters/00007_006.mp3",
+    "size": 51157522,
+    "sha256": "44ca320a190294b29eccdcc21173238fced21a5b5de4999669a710598e4b860d",
+    "script": "scripts/7.json",
+    "failedLines": [
+     {
+      "id": 2519,
+      "reason": "failed"
+     },
+     {
+      "id": 2552,
+      "reason": "failed"
+     }
+    ]
+   },
+   {
+    "id": 8,
+    "index": 8,
+    "title": "Chương 7",
+    "subtitle": "",
+    "fullTitle": "Chương 7",
+    "duration": 4332.1,
+    "available": true,
+    "qualityPassed": true,
+    "qualityWarning": "",
+    "audioVersion": "1794697575.2011335",
+    "wordsVersion": "0c57c485dd24",
+    "file": "chapters/00008_007.mp3",
+    "size": 103952530,
+    "sha256": "7407ad7e2037a8e591256c13072c58e1772d360f797c7795c0a217b9a60eec90",
+    "script": "scripts/8.json",
+    "failedLines": []
+   },
+   {
+    "id": 9,
+    "index": 9,
+    "title": "Chương 8",
+    "subtitle": "Cần nghe lại",
+    "fullTitle": "Chương 8",
+    "duration": 610.0,
+    "available": true,
+    "qualityPassed": false,
+    "qualityWarning": "Cần nghe lại: c00009_s0000013_24c40abbb5c2; audio đầy đủ",
+    "audioVersion": "",
+    "wordsVersion": "0c57c485dd24",
+    "file": "chapters/00009_008.mp3",
+    "size": 14627026,
+    "sha256": "f2228a801096a34d1e446e91d60dc6622d55feacf202755812f88df8700c72dc",
+    "script": "scripts/9.json",
+    "failedLines": [
+     {
+      "id": 3498,
+      "reason": "failed"
+     }
+    ]
+   }
+  ],
+  "cast": "cast.json",
+  "cover": {
+   "version": 8458330669,
+   "color": "#b78591",
+   "width": 845,
+   "height": 1200,
+   "file": "cover.jpg"
+  },
+  "metaVersion": "d441fd7036160cb4",
+  "audioCoverage": {
+   "expected": [
+    {
+     "id": 1,
+     "title": "000",
+     "qualityPassed": true,
+     "qualityWarning": "",
+     "audioSha256": "c2006f6c42fd62a31006755730bda8297e4def4259114506407a228d0eb454d1",
+     "segments": [
+      {
+       "id": 1,
+       "textSha256": "811b4462bdfd86f447d0aaebd061e3b606fc3c7dc148d31b64c0e94d70e70fbc"
+      },
+      {
+       "id": 2,
+       "textSha256": "5484865db73d5906c4d41b54561e848e4b6c263153da452c66e9119795f62844"
+      }
+     ],
+     "failedLines": []
+    },
+    {
+     "id": 2,
+     "title": "001",
+     "qualityPassed": false,
+     "qualityWarning": "Cần nghe lại: c00002_s0000017_1f725bbe2c7c, c00002_s0000119_e63d7e3ee2f3; loudness delta 0.31 LU; audio đầy đủ",
+     "audioSha256": "3ada1eeb979f4f35b55dceeae6d8b0d88ea62db70e6a004916f3ac883a083a95",
+     "segments": [
+      {
+       "id": 60,
+       "textSha256": "f511d53003b2419f81f7bfd5f6e4b41989e5afc6de354549d53d4299cddd8489"
+      },
+      {
+       "id": 61,
+       "textSha256": "fe342c33029fccb31b2a05691d66a78e7591e8cefe047d470e3f166bd4bd244e"
+      }
+     ],
+     "failedLines": [
+      {
+       "id": 77,
+       "reason": "failed"
+      },
+      {
+       "id": 179,
+       "reason": "failed"
+      }
+     ]
+    },
+    {
+     "id": 3,
+     "title": "002",
+     "qualityPassed": false,
+     "qualityWarning": "Cần nghe lại: c00003_s0000033_5b807bbb1a8c, c00003_s0000412_403130906c58; loudness delta 0.41 LU; audio đầy đủ",
+     "audioSha256": "3c6206258fcdb216cfd1c4285f1c2356ea90b839a13a87dd3b3fc97b60c02446",
+     "segments": [
+      {
+       "id": 435,
+       "textSha256": "365a974285d54e4af46cb11a94866693cc8e70075c9d9642eeda9c5466c648ce"
+      },
+      {
+       "id": 436,
+       "textSha256": "de5bf7024106ffb9a3791fa0e175a86150065d5996cecb723a62b229268ed08d"
+      }
+     ],
+     "failedLines": [
+      {
+       "id": 468,
+       "reason": "failed"
+      },
+      {
+       "id": 847,
+       "reason": "failed"
+      }
+     ]
+    },
+    {
+     "id": 4,
+     "title": "003",
+     "qualityPassed": true,
+     "qualityWarning": "",
+     "audioSha256": "16daf59910ff10b3e56448dbc649cafa271e8cb91d7ed16791c326e76d1f6f20",
+     "segments": [
+      {
+       "id": 921,
+       "textSha256": "8651b784fb4319f16440e5377e5d43da89e6da7a36fc9011f6e79f2830b9a467"
+      },
+      {
+       "id": 922,
+       "textSha256": "5f85491469f647b0183d7bf3a98b4a6d19ae460ebb26d14517a16b0833eda981"
+      }
+     ],
+     "failedLines": []
+    },
+    {
+     "id": 5,
+     "title": "004",
+     "qualityPassed": false,
+     "qualityWarning": "Cần nghe lại: QA chương; loudness delta 2.82 LU; join discontinuity 0.343; audio đầy đủ",
+     "audioSha256": "447b5f323bc4bcd2ca0485c2ea660869980f6da0a24b6be8e4ce70e401da3129",
+     "segments": [
+      {
+       "id": 1452,
+       "textSha256": "b4a432221407ef01ab6617e507243712e445e9af8ccc41091a2f6752f1655cf9"
+      },
+      {
+       "id": 1453,
+       "textSha256": "21c0e9b404e32c3ef901c4b86ca1a350cda4e03695d85421d362e376cf6d3a2a"
+      }
+     ],
+     "failedLines": []
+    },
+    {
+     "id": 6,
+     "title": "005",
+     "qualityPassed": false,
+     "qualityWarning": "Cần nghe lại: c00006_s0000063_8b91dc309e8f, c00006_s0000213_7d92ff0c115b, c00006_s0000247_328d7e4798be, c00006_s0000301_820133eac1d2; audio đầy đủ",
+     "audioSha256": "1b8fb7f0c43764afa1a9b24632dfe0c951ef5c0089c7e640909509e110e7bba6",
+     "segments": [
+      {
+       "id": 1852,
+       "textSha256": "9040576242d1f9c43cd34b22f97e7a606a53d817113477cb997e4d7c1c28e1a7"
+      },
+      {
+       "id": 1853,
+       "textSha256": "a731c6f1fd1f139c8787bc53024af4acf68f96df08def9d854ad0ad023658e23"
+      }
+     ],
+     "failedLines": [
+      {
+       "id": 1915,
+       "reason": "failed"
+      },
+      {
+       "id": 2065,
+       "reason": "failed"
+      },
+      {
+       "id": 2099,
+       "reason": "failed"
+      },
+      {
+       "id": 2153,
+       "reason": "failed"
+      }
+     ]
+    },
+    {
+     "id": 7,
+     "title": "006",
+     "qualityPassed": false,
+     "qualityWarning": "Cần nghe lại: c00007_s0000214_a79b6a64ba00, c00007_s0000247_59ec5b24a042; loudness delta 2.67 LU; join discontinuity 0.529; audio đầy đủ",
+     "audioSha256": "44ca320a190294b29eccdcc21173238fced21a5b5de4999669a710598e4b860d",
+     "segments": [
+      {
+       "id": 2305,
+       "textSha256": "51c3125c03b4024d7c25f2a326ae94490881cbd364a2ce781dcfac4aaaddcb60"
+      },
+      {
+       "id": 2306,
+       "textSha256": "724b771db6101502cb2ab65b1dd7711fc0106896b6bbc8259a3a3eb348a1c561"
+      }
+     ],
+     "failedLines": [
+      {
+       "id": 2519,
+       "reason": "failed"
+      },
+      {
+       "id": 2552,
+       "reason": "failed"
+      }
+     ]
+    },
+    {
+     "id": 8,
+     "title": "007",
+     "qualityPassed": true,
+     "qualityWarning": "",
+     "audioSha256": "7407ad7e2037a8e591256c13072c58e1772d360f797c7795c0a217b9a60eec90",
+     "segments": [
+      {
+       "id": 2714,
+       "textSha256": "a19100f753d2b482db885dbcf820b73abf0fc423ccfa61199836fdf1f9c74278"
+      },
+      {
+       "id": 2715,
+       "textSha256": "e3da7f82ff8328c236621161856011b6a3825ec4e1729890265bd9b324fe6e79"
+      }
+     ],
+     "failedLines": []
+    },
+    {
+     "id": 9,
+     "title": "008",
+     "qualityPassed": false,
+     "qualityWarning": "Cần nghe lại: c00009_s0000013_24c40abbb5c2; audio đầy đủ",
+     "audioSha256": "f2228a801096a34d1e446e91d60dc6622d55feacf202755812f88df8700c72dc",
+     "segments": [
+      {
+       "id": 3485,
+       "textSha256": "abff88bab1eb431798e396334f73ba55ed8154d5029798a6e162358d8500e765"
+      },
+      {
+       "id": 3486,
+       "textSha256": "e570e6772ced5da14ff18193bae9d14b20389db20f358cc8406c5cd18e25eb91"
+      }
+     ],
+     "failedLines": [
+      {
+       "id": 3498,
+       "reason": "failed"
+      }
+     ]
+    }
+   ],
+   "missing": [],
+   "partial": false
+  }
+ }
+}
