@@ -146,3 +146,27 @@ def test_the_pipeline_hands_recovery_its_own_ruler() -> None:
 
     assert "spoken_text_drifted=self._spoken_text_drifted" in source
     assert "reset_spoken_text_drift" in source, "số đoạn bị đặt lại phải hiện trong log recovery"
+
+
+def test_a_missing_reading_does_not_stop_recovery_either(tmp_path: Path) -> None:
+    """Hợp đồng ở trên phải giữ qua CẢ HAI lần recovery dẫn chuỗi nói, không chỉ lần hỏi lệch.
+
+    Recovery dẫn chuỗi nói hai lần: một lần hỏi lệch (`spoken_text_drifted`, nuốt lỗi khác) và
+    một lần lấy chuỗi để đo thời lượng (`spoken_text_for_segment`). Lỗi bị nuốt ở lần một mà
+    nổ ở lần hai thì cả lô vẫn không resume được - đúng điều docstring kia cấm.
+    """
+    paths, settings, db, row = setup_db(tmp_path)
+    _recorded(paths, db, settings, row)
+
+    for exception in (RuntimeError("thiếu cách đọc cho 'Hearthmeer'"), KeyError("voice_key")):
+        pipeline = _Pipeline(exception)
+        report = recover_project(
+            paths, db, settings,
+            spoken_text_drifted=pipeline._spoken_text_drifted,
+            spoken_text_for_segment=lambda segment: pipeline._spoken_text_and_anchors(segment)[0],
+        )
+
+        assert report.reset_spoken_text_drift == 0
+        assert db.list_segments()[0]["status"] == "signal_passed"
+        codes = [str(event["code"]) for event in db.list_events()]
+        assert "SPOKEN_TEXT_RECONSTRUCT_FAILED" in codes, "lỗi phải để lại dấu trong sổ dự án"
