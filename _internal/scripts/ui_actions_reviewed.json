@@ -15471,49 +15471,49 @@
     "id": "63be433d1ccda08ccf66",
     "kind": "pending",
     "path": "desktop_qt/qml/EditBook.qml",
-    "line": 97,
+    "line": 99,
     "statement": "Api.call(\"GET\", \"/api/listen/books/\" + id, null, function(fresh, error) {",
     "occurrence": 1,
-    "source_sha256": "bf51dfffb0ddf0a88292b6e58d52ccd9aa7fe297433d7c40d5cdef40d6d50777",
+    "source_sha256": "e708dd65f598b52bca09d3faf604d6e5dc53a155eb5aebb4b30d4dbafe09e4b6",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; busy, savingAuthor",
-    "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
+    "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Combined-source review: the metadata field delegate now sizes from its column by id (null parent during Repeater teardown); this action and its guard are unchanged."
   },
   {
     "id": "7d61c4ce9b357f430ab1",
     "kind": "pending",
     "path": "desktop_qt/qml/EditBook.qml",
-    "line": 107,
+    "line": 109,
     "statement": "Api.call(method, \"/api/books/\" + bookId + suffix, body, function(data, error) {",
     "occurrence": 1,
-    "source_sha256": "bf51dfffb0ddf0a88292b6e58d52ccd9aa7fe297433d7c40d5cdef40d6d50777",
+    "source_sha256": "e708dd65f598b52bca09d3faf604d6e5dc53a155eb5aebb4b30d4dbafe09e4b6",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; busy, savingAuthor",
-    "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
+    "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Combined-source review: the metadata field delegate now sizes from its column by id (null parent during Repeater teardown); this action and its guard are unchanged."
   },
   {
     "id": "245ccc206eb79582a95b",
     "kind": "destructive",
     "path": "desktop_qt/qml/EditBook.qml",
-    "line": 271,
+    "line": 328,
     "statement": "onActivated: root.removeCover()",
     "occurrence": 1,
-    "source_sha256": "bf51dfffb0ddf0a88292b6e58d52ccd9aa7fe297433d7c40d5cdef40d6d50777",
+    "source_sha256": "e708dd65f598b52bca09d3faf604d6e5dc53a155eb5aebb4b30d4dbafe09e4b6",
     "disposition": "confirmation",
     "guard": "EditBook cover DestructiveConfirm and DiscardSheet / discard dialog",
-    "reason": "Cover removal and discarding saved edits have explicit object-specific confirmations. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
+    "reason": "Cover removal and discarding saved edits have explicit object-specific confirmations. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Combined-source review: the metadata field delegate now sizes from its column by id (null parent during Repeater teardown); this action and its guard are unchanged."
   },
   {
     "id": "16933171519c1e852e5e",
     "kind": "destructive",
     "path": "desktop_qt/qml/EditBook.qml",
-    "line": 420,
+    "line": 477,
     "statement": "DestructiveConfirm { id: removeConfirm; objectName: \"editCoverRemoveConfirm\"; title: S.s_bo_anh_bia_696c6692; description: S.s_irreversible_detail(root.book ? root.book.title || \"\" : \"\"); onAccepted: root.removeCoverConfirmed() }",
     "occurrence": 1,
-    "source_sha256": "bf51dfffb0ddf0a88292b6e58d52ccd9aa7fe297433d7c40d5cdef40d6d50777",
+    "source_sha256": "e708dd65f598b52bca09d3faf604d6e5dc53a155eb5aebb4b30d4dbafe09e4b6",
     "disposition": "confirmation",
     "guard": "EditBook cover DestructiveConfirm and DiscardSheet / discard dialog",
-    "reason": "Cover removal and discarding saved edits have explicit object-specific confirmations. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
+    "reason": "Cover removal and discarding saved edits have explicit object-specific confirmations. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Combined-source review: the metadata field delegate now sizes from its column by id (null parent during Repeater teardown); this action and its guard are unchanged."
   },
   {
     "id": "253585c3c7f1d48cd2a3",

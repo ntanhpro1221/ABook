@@ -224,6 +224,7 @@ Modal {
                         width: parent.width
                         title: S.s_sua_thong_tin_17e4a8a6
                         Column {
+                            id: metadataFields
                             width: parent.width
                             spacing: Theme.s12
                             Repeater {
@@ -235,7 +236,8 @@ Modal {
                                 ]
                                 Column {
                                     required property var modelData
-                                    width: parent.width
+                                    // A Repeater delegate has no parent while it is created or torn down: size from the column by id.
+                                    width: metadataFields.width
                                     spacing: Theme.s8
                                     Text { text: modelData.label; color: Theme.text; font.pixelSize: Theme.sizeBodySmall }
                                     FormField {

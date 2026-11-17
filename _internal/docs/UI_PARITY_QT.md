@@ -101,8 +101,8 @@ Mỗi cặp còn lại phải có giải thích trong ui_strings/qt_wording_revi
 | Studio tạo sách | image-plus | Đổi bìa | Đổi ảnh bìa | `qt/CoverEditor.qml:146` |
 | Studio tạo sách | image-plus | Đặt ảnh bìa | Đổi ảnh bìa | `qt/CoverEditor.qml:155` |
 | Studio tạo sách | trash | Bỏ ảnh bìa | Bỏ chương {}, Bỏ cắt trước {}, Dùng bìa vẽ | `qt/CoverEditor.qml:182` |
-| Sửa sách | image-plus | Chọn ảnh bìa | Đổi ảnh bìa / Chọn ảnh bìa | `qt/EditBook.qml:303` |
-| Sửa sách | image-plus | Đổi ảnh bìa | Đổi ảnh bìa / Chọn ảnh bìa | `qt/EditBook.qml:303` |
+| Sửa sách | image-plus | Chọn ảnh bìa | Đổi ảnh bìa / Chọn ảnh bìa | `qt/EditBook.qml:305` |
+| Sửa sách | image-plus | Đổi ảnh bìa | Đổi ảnh bìa / Chọn ảnh bìa | `qt/EditBook.qml:305` |
 | Sửa sách | file-down | Lưu thành | Lưu | `qt/EditBookItems.qml:82` |
 | Sửa sách | trash | Bỏ cách đọc {} | Bỏ ảnh bìa | `qt/EditBookReadings.qml:123` |
 | Thêm sách | book-plus | Thả để thêm sách | Thêm vào thư viện | `qt/ImportDrop.qml:49` |
@@ -212,7 +212,7 @@ Nhãn ngắn (<= 6 chữ). **Chỉ Qt**: không có ở web cùng màn; `*` = we
 
 ### Sửa sách
 
-- chỉ Qt (26): Mức nhạc nền* (`qt/BookMusicSettings.qml:113`); Chưa đổi được tác giả (`qt/EditBook.qml:120`); Đã bỏ tên tác giả (`qt/EditBook.qml:120`); Đã đổi tác giả (`qt/EditBook.qml:120`); Lưu tác giả (`qt/EditBook.qml:209`); Sắp xếp quyển* (`qt/EditBook.qml:278`); Chưa đọc được file ảnh* (`qt/EditBook.qml:469`); Lưu thay đổi* (`qt/EditBookItems.qml:71`); Chưa nối được {} (`qt/EditBookLogic.js:68`); Chưa bỏ được cách đọc* (`qt/EditBookReadings.qml:28`); Chưa lưu được cách đọc* (`qt/EditBookReadings.qml:28`); Đang tải cách đọc* (`qt/EditBookReadings.qml:70`); Sửa cách đọc {}* (`qt/EditBookReadings.qml:115`); Bỏ cách đọc {}* (`qt/EditBookReadings.qml:125`); Cách đọc cho {}* (`qt/EditBookReadings.qml:144`); Lưu cho cả cuốn* (`qt/EditBookReadings.qml:155`); Đọc nguyên chữ (`qt/EditBookReadings.qml:163`); Xoá “{}”?* (`qt/EditBookReadings.qml:174`); Đổi tên chương* (`qt/EditBookRename.qml:19`); Số chương hay nhãn (`qt/EditBookRename.qml:44`); Tên chương (tuỳ chọn) (`qt/EditBookRename.qml:44`); Chọn nơi lưu* (`qt/EditBookSaveAs.qml:52`); Đang tải* (`qt/EditBookSkeleton.qml:11`); Đang tải bài nhạc* (`qt/EditBookSwap.qml:39`); Chọn* (`qt/EditBookSwap.qml:93`); Xem cả kho (`qt/EditBookSwap.qml:109`)
+- chỉ Qt (26): Mức nhạc nền* (`qt/BookMusicSettings.qml:113`); Chưa đổi được tác giả (`qt/EditBook.qml:120`); Đã bỏ tên tác giả (`qt/EditBook.qml:120`); Đã đổi tác giả (`qt/EditBook.qml:120`); Lưu tác giả (`qt/EditBook.qml:209`); Sắp xếp quyển* (`qt/EditBook.qml:280`); Chưa đọc được file ảnh* (`qt/EditBook.qml:471`); Lưu thay đổi* (`qt/EditBookItems.qml:71`); Chưa nối được {} (`qt/EditBookLogic.js:68`); Chưa bỏ được cách đọc* (`qt/EditBookReadings.qml:28`); Chưa lưu được cách đọc* (`qt/EditBookReadings.qml:28`); Đang tải cách đọc* (`qt/EditBookReadings.qml:70`); Sửa cách đọc {}* (`qt/EditBookReadings.qml:115`); Bỏ cách đọc {}* (`qt/EditBookReadings.qml:125`); Cách đọc cho {}* (`qt/EditBookReadings.qml:144`); Lưu cho cả cuốn* (`qt/EditBookReadings.qml:155`); Đọc nguyên chữ (`qt/EditBookReadings.qml:163`); Xoá “{}”?* (`qt/EditBookReadings.qml:174`); Đổi tên chương* (`qt/EditBookRename.qml:19`); Số chương hay nhãn (`qt/EditBookRename.qml:44`); Tên chương (tuỳ chọn) (`qt/EditBookRename.qml:44`); Chọn nơi lưu* (`qt/EditBookSaveAs.qml:52`); Đang tải* (`qt/EditBookSkeleton.qml:11`); Đang tải bài nhạc* (`qt/EditBookSwap.qml:39`); Chọn* (`qt/EditBookSwap.qml:93`); Xem cả kho (`qt/EditBookSwap.qml:109`)
 - chỉ web (6): Bỏ thay đổi ({}) (`456`); Nhãn (`530`); Tên (`540`); Chưa chia sẻ được sách (`595`); Google Books (`14`); Open Library (`14`)
 
 ### Thanh bên
