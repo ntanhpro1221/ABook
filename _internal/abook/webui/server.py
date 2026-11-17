@@ -1713,7 +1713,7 @@ class App:
 
     def _create_book(self, body: dict[str, Any], paths: list[str], title: str,
                      first_person_chapters: dict[str, str] | None, *, overrides: dict[str, Any] | None = None,
-                     reuse_project: Path | None = None) -> Path:
+                     reuse_project: Path | None = None, in_order: bool = False) -> Path:
         """Tạo một dự án từ các lựa chọn của trình tạo sách - dùng chung cho sách thường và từng tập của "Tạo nhiều tập".
         `overrides`: cài đặt riêng đã kiểm sẵn (`_analysis_overrides`) - không có thì kiểm ở đây."""
         self.require_library_root()
@@ -1727,6 +1727,7 @@ class App:
             drop_credit_lines=body["dropCreditLines"] if isinstance(body.get("dropCreditLines"), bool) else None,
             drop_tail_credit_lines=body["dropTailCreditLines"] if isinstance(body.get("dropTailCreditLines"), bool) else None,
             reuse_project=reuse_project,
+            in_order=in_order,
         )
         if body.get("precastWait") is True:
             precast.set_wait(root, True)  # "Chờ tôi duyệt trước khi thu" chọn ngay lúc tạo (mỗi tập của "Tạo nhiều tập")
@@ -1751,8 +1752,17 @@ class App:
     def create(self, body: dict[str, Any]) -> dict[str, Any]:
         self._mutating()
         paths = [str(item) for item in body.get("paths", [])]
+        # Everything a volume split needs is checked BEFORE anything is created or moved to the Trash: a refusal later would
+        # leave a half-made book behind (soát 0.4.173 B5/B6).
+        volume_labels: list[str] = []
         try:
             split = volumes.split_paths(paths, body.get("volumeStarts"))
+            in_order = len(split) > 1
+            if in_order:
+                # Cuts count chapters in the order the reader saw (folder by folder); the book keeps exactly that order
+                # (actions.create_book `in_order`). An entry that is not exactly one chapter would make the cut ambiguous.
+                actions.chapters_in_order(paths)
+                volume_labels = volumes.check_labels(body.get("volumeLabels"), len(split))
         except ValueError as error:
             raise ApiError(HTTPStatus.BAD_REQUEST, str(error)) from error
         # "Làm tiếp cuốn này": phần mới gieo từ phần trước (continuation.py) - tìm phần trước TRƯỚC khi tạo, để id sai
@@ -1777,7 +1787,7 @@ class App:
                 # Copy them before holding it; failure still restores the draft.
                 redo_sources = tempfile.TemporaryDirectory(prefix="abook-redo-")
                 copied = []
-                for index, source in enumerate(actions.input_files(paths)):
+                for index, source in enumerate(actions.chapters_in_order(paths) if in_order else actions.input_files(paths)):
                     destination = Path(redo_sources.name) / str(index) / source.name
                     destination.parent.mkdir(parents=True)
                     shutil.copyfile(source, destination)
@@ -1791,8 +1801,12 @@ class App:
                         kept_covers[name] = (replaced / name).read_bytes()
                 held = self.delete(replaces, undo=True).get("undo")
                 replaced = None
-            root = self._create_book(body, paths, str(body.get("title", "")), self._first_person_chapters(body),
-                                     overrides=overrides, reuse_project=replaced)
+            with self._undo_new_books() as made:
+                root = self._create_book(body, paths, str(body.get("title", "")), self._first_person_chapters(body),
+                                         overrides=overrides, reuse_project=replaced, in_order=in_order)
+                made.append(root)
+                if in_order:
+                    self._organize_split(root, [int(value) for value in body["volumeStarts"]], volume_labels)
         except BaseException:
             if held:
                 try:
@@ -1832,26 +1846,6 @@ class App:
                 raise ApiError(HTTPStatus.CONFLICT,
                                f"Đã tạo sách nhưng không mang được gì từ phần trước: {error}") from error
         shared = self._apply_shared_readings(root, [str(path) for path in continuation._input_paths(root)])
-        if len(split) > 1:
-            from .. import book_volumes
-            with contextlib.closing(store.connect(root)) as connection:
-                chapter_ids = [row[0] for row in connection.execute("SELECT id FROM chapters ORDER BY chapter_index")]
-            # A volume the import already named (Hako / EPUB / TXT headings) keeps its id, title and cover when a cut starts there.
-            named = {volume["chapters"][0]["id"]: (volume["id"], volume["number"], volume["title"])
-                     for volume in book_volumes.project(root, [{"id": identifier} for identifier in chapter_ids]) if volume["chapters"]}
-            starts = [int(value) for value in body["volumeStarts"]]
-            labels = body.get("volumeLabels") or []
-            definitions, used = [], set()
-            for position, (start, end) in enumerate(zip(starts, [*starts[1:], len(chapter_ids) + 1])):
-                identifier, number, title = named.get(chapter_ids[start - 1], (None, position + 1, f"Quyển {position + 1}"))
-                if position < len(labels) and str(labels[position]).strip():
-                    title = str(labels[position]).strip()
-                definitions.append({"id": identifier, "number": number, "title": title, "chapters": chapter_ids[start - 1:end - 1]})
-                used.add(identifier)
-            free = (candidate for candidate in range(1, 1000) if candidate not in used)
-            for definition in definitions:
-                definition["id"] = definition["id"] or next(free)
-            book_volumes.organize(root, definitions)
         if body.get("start"):
             # Qua hàng đợi như nút "Bắt đầu": cuốn đang chạy thì cuốn mới xếp hàng, không tranh GPU (soát 28-09 - trước
             # đây "Tạo + bắt đầu ngay" chạy song song với cuốn đang sản xuất).
@@ -1861,6 +1855,47 @@ class App:
         return {"id": book_id(root), "sharedReadings": shared, "queued": queued,
                 **({"replaceError": replace_error} if replace_error else {}),
                 **({"unchanged": True} if unchanged else {})}
+
+    @contextlib.contextmanager
+    def _undo_new_books(self) -> Iterator[list[Path]]:
+        """A book creation of several steps: books appended to the yielded list that did not exist before go to the Trash again
+        when a later step fails - a refusal never leaves a half-made book in the library (soát 0.4.173 B5/B6). A book that
+        already existed (the same book reopened) is never touched."""
+        existing = {path.resolve() for path in self.library.projects()}
+        made: list[Path] = []
+        try:
+            yield made
+        except BaseException:
+            for root in made:
+                if root.resolve() not in existing:
+                    try:
+                        self.delete(book_id(root))
+                    except ApiError:
+                        pass
+            raise
+
+    @staticmethod
+    def _organize_split(root: Path, starts: list[int], labels: list[str]) -> None:
+        """Volume boundaries of a split book: chapter N is the N-th chapter of the book (the reading order kept at creation)."""
+        from .. import book_volumes
+        with contextlib.closing(store.connect(root)) as connection:
+            chapter_ids = [row[0] for row in connection.execute("SELECT id FROM chapters ORDER BY chapter_index")]
+        if starts[-1] > len(chapter_ids):
+            raise ApiError(HTTPStatus.BAD_REQUEST, f"Chỗ cắt chương {starts[-1]} vượt quá số chương ({len(chapter_ids)})")
+        # A volume the import already named (Hako / EPUB / TXT headings) keeps its id, title and cover when a cut starts there.
+        named = {volume["chapters"][0]["id"]: (volume["id"], volume["number"], volume["title"])
+                 for volume in book_volumes.project(root, [{"id": identifier} for identifier in chapter_ids]) if volume["chapters"]}
+        definitions, used = [], set()
+        for position, (start, end) in enumerate(zip(starts, [*starts[1:], len(chapter_ids) + 1])):
+            identifier, number, title = named.get(chapter_ids[start - 1], (None, position + 1, f"Quyển {position + 1}"))
+            if position < len(labels) and labels[position]:
+                title = labels[position]
+            definitions.append({"id": identifier, "number": number, "title": title, "chapters": chapter_ids[start - 1:end - 1]})
+            used.add(identifier)
+        free = (candidate for candidate in range(1, 1000) if candidate not in used)
+        for definition in definitions:
+            definition["id"] = definition["id"] or next(free)
+        book_volumes.organize(root, definitions)
 
     def shared_readings_view(self) -> dict[str, Any]:
         return {"entries": self.shared_readings.entries()}
@@ -4045,8 +4080,13 @@ class App:
         if not self.capabilities()["toolchain"]:
             raise ApiError(HTTPStatus.CONFLICT, "Cần cài Studio để dựng xưởng")
         try:
-            result = workshop.build(path, self.library.root, lambda paths, title, narrator: self._create_book(
-                {"narrator": narrator}, paths, title, None))
+            with self._undo_new_books() as made:
+                # Voices, names, cover and wishes are written after the project is made: a failure there removes it again.
+                def create(paths: list[str], title: str, narrator: str) -> Path:
+                    made.append(self._create_book({"narrator": narrator}, paths, title, None))
+                    return made[-1]
+
+                result = workshop.build(path, self.library.root, create)
         except workshop.WorkshopError as error:
             raise ApiError(HTTPStatus.CONFLICT, str(error)) from error
         except ValueError as error:  # dây chuyền từ chối tạo (không có chữ nào dùng được...)
@@ -6300,16 +6340,7 @@ class Handler(BaseHTTPRequestHandler):
                 raise ApiError(HTTPStatus.CONFLICT, "Đợi sách đang làm xong rồi sắp xếp quyển.")
             try:
                 if packages.is_package(root):
-                    book = dict(packages.manifest(root))
-                    definitions = body.get("volumes")
-                    old = {v["id"]: v for v in book_volumes.volumes_of(book)}
-                    chapters = {c["id"]: c for c in book["chapters"]}
-                    proposed = [{**v, "cover": old.get(v["id"], {}).get("cover"),
-                                 "chapters": [chapters[c] for c in v["chapters"]]} for v in definitions]
-                    candidate = {**book, "volumes": proposed}
-                    book_volumes.flatten(candidate)
-                    if [c["id"] for c in candidate["chapters"]] != list(chapters):
-                        raise ValueError("Thứ tự chương phải giữ nguyên")
+                    candidate = book_volumes.rearrange(packages.manifest(root), body.get("volumes"))
                     atomic_write_bytes(root / packages.MANIFEST, bookfile.json_bytes(book_volumes.nested(candidate)))
                 else:
                     book_volumes.organize(root, body.get("volumes"))

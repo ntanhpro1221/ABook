@@ -259,7 +259,112 @@ def test_volumes_across_two_folders_with_the_same_file_names_follow_the_book_ord
     status, data = _call(server, "POST", "/api/books", {
         "paths": files, "title": "Hai thư mục", "profile": "fast", "narrator": "", "firstPerson": "", "volumeStarts": [1, 4]})
     assert status == 201, data
-    assert [len(files) for _title, files in _volumes(app, data["id"])] == [3, 3]
+    # Each volume holds exactly its own folder's chapters, in the order chosen (soát 0.4.173 B1: chương hai tập từng xen nhau).
+    root = app.library.resolve(data["id"])
+    chapters = [dict(row) for row in ProjectDB(root / "project.sqlite3").list_chapters()]
+    from abook import book_volumes
+
+    def origin(chapter: dict) -> str:
+        return Path(chapter["input_path"]).read_text(encoding="utf-8").splitlines()[0] + "@" + str(chapter["chapter_index"])
+
+    volumes_seen = [[origin(chapter) for chapter in volume["chapters"]] for volume in book_volumes.project(root, chapters)]
+    assert volumes_seen == [["Chương 1@1", "Chương 2@2", "Chương 3@3"], ["Chương 1@4", "Chương 2@5", "Chương 3@6"]]
+    sources = [Path(chapter["input_path"]).read_bytes() for chapter in chapters]
+    assert sources == [Path(path).read_bytes() for path in files], "the book keeps the order of `paths`, file by file"
+
+
+def test_volumes_across_three_folders_with_the_same_names_keep_every_folder_whole(studio, tmp_path: Path) -> None:  # noqa: F811
+    _paths, app, server, _runner = studio
+    folders = [tmp_path / f"Tập {n}" for n in (1, 2, 3)]
+    files: list[str] = []
+    for number, folder in enumerate(folders, start=1):
+        folder.mkdir()
+        for chapter in (1, 2):
+            (folder / f"{chapter:03d}.txt").write_text(f"Tập {number} chương {chapter}\n\nLucien đi tiếp.\n", encoding="utf-8")
+            files.append(str(folder / f"{chapter:03d}.txt"))
+    status, data = _call(server, "POST", "/api/books", {
+        "paths": files, "title": "Ba thư mục", "profile": "fast", "narrator": "", "firstPerson": "", "volumeStarts": [1, 3, 5],
+        "volumeLabels": ["Tập 1", "Tập 2", "Tập 3"]})
+    assert status == 201, data
+    from abook import book_volumes
+
+    root = app.library.resolve(data["id"])
+    chapters = [dict(row) for row in ProjectDB(root / "project.sqlite3").list_chapters()]
+    seen = [(volume["title"], [Path(c["input_path"]).read_text(encoding="utf-8").splitlines()[0] for c in volume["chapters"]])
+            for volume in book_volumes.project(root, chapters)]
+    assert seen == [("Tập 1", ["Tập 1 chương 1", "Tập 1 chương 2"]), ("Tập 2", ["Tập 2 chương 1", "Tập 2 chương 2"]),
+                    ("Tập 3", ["Tập 3 chương 1", "Tập 3 chương 2"])]
+
+
+def test_an_ambiguous_split_is_refused_before_anything_is_created(studio, tmp_path: Path) -> None:  # noqa: F811
+    _paths, app, server, _runner = studio
+    folder = _chapters(tmp_path / "truyen", [f"Chương {n}" for n in range(1, 4)])
+    files = sorted(str(path) for path in folder.glob("*.txt"))
+    before = len(app.library.projects())
+    for paths, starts in ((files + [files[0]], [1, 4]),      # a chapter twice (soát 0.4.173 B5: 500 IndexError, book still made)
+                          ([str(folder), *files], [1, 2]),   # a folder is not one chapter: "chapter 2" would mean nothing
+                          ([*files, str(tmp_path / "missing.txt")], [1, 2])):
+        status, data = _call(server, "POST", "/api/books", {
+            "paths": paths, "title": "Mơ hồ", "profile": "fast", "narrator": "", "firstPerson": "", "volumeStarts": starts})
+        assert status == 400, (paths, data)
+    assert len(app.library.projects()) == before
+
+
+def test_a_volume_title_that_would_be_refused_creates_nothing(studio, tmp_path: Path) -> None:  # noqa: F811
+    _paths, app, server, _runner = studio
+    folder = _chapters(tmp_path / "truyen", [f"Chương {n}" for n in range(1, 5)])
+    files = sorted(str(path) for path in folder.glob("*.txt"))
+    before = len(app.library.projects())
+    for labels in (["Tập 1", "x" * 300], ["Tập 1", "Tập 2", "Tập 3"], "Tập 1", [1, 2]):
+        status, data = _call(server, "POST", "/api/books", {
+            "paths": files, "title": "Dài", "profile": "fast", "narrator": "", "firstPerson": "", "volumeStarts": [1, 3],
+            "volumeLabels": labels})
+        assert status == 400, (labels, data)
+    assert len(app.library.projects()) == before, "soát 0.4.173 B6: 400 nhưng sách vẫn được tạo"
+    status, data = _call(server, "POST", "/api/books", {
+        "paths": files, "title": "Dài", "profile": "fast", "narrator": "", "firstPerson": "", "volumeStarts": [1, 3],
+        "volumeLabels": ["Tập 1", "y" * 240]})
+    assert status == 201, data
+
+
+def test_a_failure_while_organizing_volumes_removes_the_book_it_just_made(studio, tmp_path: Path, monkeypatch) -> None:  # noqa: F811
+    from abook import book_volumes
+
+    _paths, app, server, _runner = studio
+    folder = _chapters(tmp_path / "truyen", [f"Chương {n}" for n in range(1, 5)])
+    before = len(app.library.projects())
+
+    def broken(_root, _definitions):
+        raise ValueError("disk said no")
+
+    monkeypatch.setattr(book_volumes, "organize", broken)
+    status, data = _call(server, "POST", "/api/books", {
+        "paths": sorted(str(path) for path in folder.glob("*.txt")), "title": "Hỏng giữa chừng", "profile": "fast",
+        "narrator": "", "firstPerson": "", "volumeStarts": [1, 3]})
+    assert status >= 400, data
+    assert len(app.library.projects()) == before
+
+
+def test_chapters_in_order_takes_each_entry_as_one_chapter(tmp_path: Path) -> None:
+    one = _chapters(tmp_path / "a", ["Chương 1", "Chương 2"])
+    two = _chapters(tmp_path / "b", ["Chương 1"])
+    chosen = [str(two / "001.txt"), str(one / "002.txt"), f'"{one / "001.txt"}"']
+    assert actions.chapters_in_order(chosen) == [(two / "001.txt").resolve(), (one / "002.txt").resolve(), (one / "001.txt").resolve()]
+    for bad in ([str(one)], [str(one / "001.txt"), str(one / "001.txt")], [str(tmp_path / "nope.txt")]):
+        with pytest.raises(ValueError):
+            actions.chapters_in_order(bad)
+
+
+def test_an_ordinary_book_keeps_the_file_name_order_and_its_identity(tmp_path: Path) -> None:
+    from abook.project import chapter_manifest
+    from abook.text_processing import build_chapter_manifest
+
+    folder = _chapters(tmp_path / "truyen", [f"Chương {n}" for n in range(1, 12)])
+    files = actions.input_files([str(folder)])
+    assert chapter_manifest(files, tmp_path, ordered=True) == build_chapter_manifest(files, tmp_path)
+    other = _chapters(tmp_path / "khac", ["Chương 1"])
+    mixed = [*files, other / "001.txt"]
+    assert [row["input_path"] for row in chapter_manifest(mixed, tmp_path, ordered=True)] == [str(p.resolve()) for p in mixed]
 
 
 # ---- phần nối tiếp chờ gieo ("Làm tiếp cuốn này") ----------------------------------------------------------------------

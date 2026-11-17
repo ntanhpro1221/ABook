@@ -482,6 +482,25 @@ def test_building_needs_the_studio_and_a_pending_book(tmp_path: Path, monkeypatc
         plain.build_workshop(book["id"])
 
 
+def test_a_failure_after_the_project_is_made_leaves_no_half_built_workshop(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    from abook.webui.server import ApiError
+
+    studio = _app(tmp_path / "studio", tmp_path / "thu_vien_studio")
+    opened = studio.open_book_file(str(_pending_file(tmp_path)))
+    before = list(studio.library.projects())
+
+    def broken(*_args: Any, **_kwargs: Any) -> Any:
+        raise ValueError("cover broke")
+
+    monkeypatch.setattr(workshop.covers, "save_cover_bytes", broken)
+    monkeypatch.setattr(workshop.book_edits, "cover_file", lambda folder: Path(__file__))
+    with pytest.raises(ApiError):
+        studio.build_workshop(opened["id"])
+    assert list(studio.library.projects()) == before, "soát 0.4.173: lỗi sau khi tạo dự án không để lại dự án dở"
+    assert not list((studio.library.root / workshop.SOURCE_FOLDER).glob("*")), "và không để lại bản chép chương"
+    assert studio.listen_book(opened["id"])["projectFile"]["built"] is None
+
+
 def test_wishes_that_still_make_sense_become_requests_in_the_new_workshop(tmp_path: Path) -> None:
     from abook.webui import book_wishes
 

@@ -14,6 +14,7 @@ MAX_VOLUMES = 99
 COVER_FILE = re.compile(r"covers/[1-9][0-9]{0,8}\.jpg")
 TREE_VERSION = 6  # first `.abook` version whose book.json may carry `volumes` (bookfile.FORMAT_VERSION)
 DEFAULT_TITLE = "Quyển 1"
+MAX_TITLE = 240  # one limit for every volume title: Studio split, volume editor, .abook (webui/volumes.check_labels)
 
 
 def volumes_of(book: dict[str, Any]) -> list[dict[str, Any]]:
@@ -53,7 +54,7 @@ def _check(volume: Any, ids: set[int]) -> None:
     identifier, number, title = volume.get("id"), volume.get("number"), volume.get("title")
     if (type(identifier) is not int or not 1 <= identifier <= 999999999 or identifier in ids
             or type(number) is not int or not 1 <= number <= 9999
-            or not isinstance(title, str) or not title.strip() or len(title) > 240):
+            or not isinstance(title, str) or not title.strip() or len(title) > MAX_TITLE):
         raise ValueError("Volumes require a unique id, number and title")
     cover = volume.get("cover")
     if cover is not None and (not isinstance(cover, dict) or not isinstance(cover.get("file"), str)
@@ -188,7 +189,7 @@ def flatten(book: dict[str, Any]) -> dict[str, Any]:
         rows = volume.get("chapters")
         if (type(identifier) is not int or not 1 <= identifier <= 999999999 or identifier in ids
                 or type(number) is not int or not 1 <= number <= 9999
-                or not isinstance(title, str) or not title.strip() or len(title) > 240
+                or not isinstance(title, str) or not title.strip() or len(title) > MAX_TITLE
                 or not isinstance(rows, list) or (not rows and len(volumes) > 1)):
             raise ValueError("Invalid volume metadata or empty volume")
         ids.add(identifier)
@@ -214,6 +215,36 @@ def flatten(book: dict[str, Any]) -> dict[str, Any]:
         raise ValueError("Chapter projection differs from volumes")
     book["chapters"] = chapters
     return book
+
+
+def rearrange(book: dict[str, Any], definitions: Any) -> dict[str, Any]:
+    """An imported book (`book.json`, flattened) with new volume boundaries, titles and numbers - the `.abook` counterpart of
+    `organize`. Membership comes ONLY from `definitions`: the old `volumeId` of each chapter is dropped first, or the book
+    would quietly keep its old volumes (soát 0.4.173 B2). Works on a copy; the cached manifest is never touched."""
+    if not isinstance(definitions, list) or not 1 <= len(definitions) <= MAX_VOLUMES:
+        raise ValueError("Choose between 1 and 99 volumes")
+    current = copy.deepcopy(book)
+    old = {volume["id"]: volume for volume in volumes_of(current)}
+    chapters = {chapter["id"]: chapter for chapter in current.get("chapters") or []}
+    proposed = []
+    for volume in definitions:
+        if not isinstance(volume, dict) or not isinstance(volume.get("chapters"), list) or not volume["chapters"]:
+            raise ValueError("Every volume needs its chapters")
+        rows = []
+        for identifier in volume["chapters"]:
+            if type(identifier) is not int or identifier not in chapters:
+                raise ValueError("Unknown chapter")
+            rows.append({key: value for key, value in chapters[identifier].items() if key != "volumeId"})
+        title = volume.get("title")
+        proposed.append({"id": volume.get("id"), "number": volume.get("number"),
+                         "title": title.strip() if isinstance(title, str) else title,
+                         "cover": (old.get(volume.get("id")) or {}).get("cover"), "chapters": rows})
+    candidate = {key: value for key, value in current.items() if key != "chapters"}
+    candidate["volumes"] = proposed
+    flatten(candidate)
+    if [chapter["id"] for chapter in candidate["chapters"]] != list(chapters):
+        raise ValueError("Every chapter must occur once, in its existing global order")
+    return candidate
 
 
 def nested(book: dict[str, Any]) -> dict[str, Any]:
