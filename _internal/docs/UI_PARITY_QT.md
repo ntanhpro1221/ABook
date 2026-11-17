@@ -11,7 +11,7 @@ icon `LucidePaths.js` sinh bởi `scripts/gen_lucide_icons.py --qml`. Bảng dư
 
 <!-- ui_parity_qt:begin (SINH TỰ ĐỘNG bởi scripts/ui_parity_qt.py - không sửa tay, chạy lại script) -->
 
-Quét: web máy tính 6248 chữ (2876 khác nhau), 351 cặp nhãn-icon; Qt 3707 chữ (2721 khác nhau), 292 cặp nhãn-icon (icon dùng ở 415 chỗ). Khoá so lỏng như UI_PARITY.md (hạ chữ, dấu thanh một kiểu, `...` = `…`, bỏ dấu câu cuối); phím tắt trong chú thích Qt (`Thu nhỏ (Esc)`) tách khỏi nhãn.
+Quét: web máy tính 6249 chữ (2876 khác nhau), 351 cặp nhãn-icon; Qt 3710 chữ (2721 khác nhau), 292 cặp nhãn-icon (icon dùng ở 415 chỗ). Khoá so lỏng như UI_PARITY.md (hạ chữ, dấu thanh một kiểu, `...` = `…`, bỏ dấu câu cuối); phím tắt trong chú thích Qt (`Thu nhỏ (Esc)`) tách khỏi nhãn.
 
 ## a. Cùng việc, khác chữ
 
@@ -180,17 +180,17 @@ Nhãn ngắn (<= 6 chữ). **Chỉ Qt**: không có ở web cùng màn; `*` = we
 ### Thanh phát
 
 - chỉ Qt (11): Không có mạng - (`qt/PlayerAlert.qml:10`); Giọng {} đang không dùng được.* (`qt/PlayerAlert.qml:25`); Cửa sổ mini (`qt/PlayerBar.qml:128`); Chỉnh* (`qt/PlayerBar.qml:158`); Âm thanh* (`qt/PlayerBar.qml:158`); Hẹn giờ* (`qt/PlayerBar.qml:159`); Giọng đọc* (`qt/PlayerBar.qml:162`); Hẹn lại {} phút* (`qt/PlayerFade.qml:16`); Nghe bằng giọng đọc. (`qt/PlayerLabels.js:18`); Thêm giọng* (`qt/PlayerVoicePopover.qml:47`); Tua nhạc (`qt/SeekBar.qml:29`)
-- chỉ web (8): Shift+← (`285`); Sắp tắt · (`1268`); Chưa nghe · {} chương (`69`); Nghe tiếp · {} (`88`); Shift+→ (`106`); Chưa có audio (`116`); Chạm (`127`); Nghe bằng giọng đọc.{} (`149`)
+- chỉ web (8): Shift+← (`285`); Sắp tắt · (`1273`); Chưa nghe · {} chương (`69`); Nghe tiếp · {} (`88`); Shift+→ (`106`); Chưa có audio (`116`); Chạm (`127`); Nghe bằng giọng đọc.{} (`149`)
 
 ### Đang nghe
 
-- chỉ Qt (20): Tạm dừng {}* (`qt/ChapterList.qml:27`); Đọc {}* (`qt/ChapterList.qml:27`); Đọc chương này* (`qt/ChapterList.qml:46`); Đọc* (`qt/ChapterReader.qml:15`); Chưa có chương để đọc. (`qt/ChapterReader.qml:35`); Đang tải chương (`qt/ChapterReader.qml:89`); Đã nghe* (`qt/ChapterRow.qml:76`); Thêm tuỳ chọn: {}* (`qt/ChapterRow.qml:127`); Thêm tuỳ chọn* (`qt/NowPlaying.qml:241`); Giọng {}* (`qt/NowPlaying.qml:297`); Thử lại* (`qt/NowPlaying.qml:341`); Danh sách chương* (`qt/NowPlaying.qml:463`); Nhạc nền* (`qt/NowPlaying.qml:474`); Chỉnh* (`qt/NowPlaying.qml:611`); Âm thanh* (`qt/NowPlaying.qml:611`); Cửa sổ mini (`qt/NowPlaying.qml:620`); Gợi ý phần đọc* (`qt/ReadingSuggestions.qml:9`); Bỏ dòng (`qt/ReadingSuggestions.qml:57`); Đóng* (`qt/ReadingSuggestions.qml:80`); Số chương* (`qt/SleepPopover.qml:98`)
-- chỉ web (17): Shift+← (`285`); Đã chọn tốc độ đọc {} (`520`); Phím (`523`); Đã chọn giọng {} (`787`); Hẹn giờ đã tắt tiếng lúc (`982`); Bật lại (`990`); Tiếng nhỏ dần (`996`); Hẹn giờ ngủ trên {} (`1070`); Về chế độ nghe (`2138`); Chưa nghe · {} chương (`69`); Nghe tiếp · {} (`88`); Shift+→ (`106`); Chưa có audio (`116`); Chạm (`127`); Nghe bằng giọng đọc.{} (`149`); ...
+- chỉ Qt (20): Tạm dừng {}* (`qt/ChapterList.qml:27`); Đọc {}* (`qt/ChapterList.qml:27`); Đọc chương này* (`qt/ChapterList.qml:46`); Đọc* (`qt/ChapterReader.qml:15`); Chưa có chương để đọc. (`qt/ChapterReader.qml:35`); Đang tải chương (`qt/ChapterReader.qml:89`); Đã nghe* (`qt/ChapterRow.qml:76`); Thêm tuỳ chọn: {}* (`qt/ChapterRow.qml:127`); Thêm tuỳ chọn* (`qt/NowPlaying.qml:241`); Giọng {}* (`qt/NowPlaying.qml:297`); Thử lại* (`qt/NowPlaying.qml:341`); Danh sách chương* (`qt/NowPlaying.qml:463`); Nhạc nền* (`qt/NowPlaying.qml:474`); Chỉnh* (`qt/NowPlaying.qml:611`); Âm thanh* (`qt/NowPlaying.qml:611`); Cửa sổ mini (`qt/NowPlaying.qml:620`); Gợi ý phần đọc* (`qt/ReadingSuggestions.qml:9`); Bỏ dòng (`qt/ReadingSuggestions.qml:57`); Đóng* (`qt/ReadingSuggestions.qml:80`); Số chương* (`qt/SleepPopover.qml:103`)
+- chỉ web (16): Shift+← (`285`); Đã chọn tốc độ đọc {} (`520`); Phím (`523`); Đã chọn giọng {} (`787`); Hẹn giờ đã tắt tiếng lúc (`982`); Tiếng nhỏ dần (`997`); Hẹn giờ ngủ trên {} (`1074`); Về chế độ nghe (`2143`); Chưa nghe · {} chương (`69`); Nghe tiếp · {} (`88`); Shift+→ (`106`); Chưa có audio (`116`); Chạm (`127`); Nghe bằng giọng đọc.{} (`149`); Hẹn giờ ngủ: còn {} giây (`121`); ...
 
 ### Đọc theo
 
 - chỉ Qt (2): Đang tải kịch bản* (`qt/PlayerLineEditor.qml:115`); Đang mở văn bản chương (`qt/ReadAlongView.qml:480`)
-- chỉ web (12): Người nói: {} (`101`); Cách đọc câu - {} (`104`); Các từ trong câu (`165`); Cách đọc “{}”: “{}” (`398`); Đọc từ này là (`400`); Đang chờ máy làm sách (`418`); Sửa cách đọc “{}” (`424`); Bỏ: {} (`437`); Sửa cách đọc từ (`491`); Đang tải chữ (`1753`); Nghe từ “{}” (`59`); Shift F10: sửa cách đọc. (`423`)
+- chỉ web (12): Người nói: {} (`101`); Cách đọc câu - {} (`104`); Các từ trong câu (`165`); Cách đọc “{}”: “{}” (`398`); Đọc từ này là (`400`); Đang chờ máy làm sách (`418`); Sửa cách đọc “{}” (`424`); Bỏ: {} (`437`); Sửa cách đọc từ (`491`); Đang tải chữ (`1758`); Nghe từ “{}” (`59`); Shift F10: sửa cách đọc. (`423`)
 
 ### Trang sách
 
@@ -254,13 +254,13 @@ Nhãn ngắn (<= 6 chữ). **Chỉ Qt**: không có ở web cùng màn; `*` = we
 
 ### Thanh tiêu đề
 
-- chỉ Qt (2): ABook vẫn chạy ở khay (`qt/Main.qml:28`); Chưa tải được bản mới* (`qt/Main.qml:368`)
+- chỉ Qt (2): ABook vẫn chạy ở khay (`qt/Main.qml:28`); Chưa tải được bản mới* (`qt/Main.qml:370`)
 - chỉ web (3): Mở rộng (Ctrl+B) (`260`); Thu gọn (Ctrl+B) (`260`); Điều hướng (`277`)
 
 ### Chung
 
 - chỉ Qt (2): Chưa làm được lúc này. (`qt/Api.qml:61`); Quay lại* (`qt/ScreenHeader.qml:14`)
-- chỉ web (4): Đang tải điều hướng (`582`); Thông báo (Alt+T) (`699`); Xem các tab trước (`558`); Xem các tab sau (`563`)
+- chỉ web (4): Đang tải điều hướng (`590`); Thông báo (Alt+T) (`709`); Xem các tab trước (`558`); Xem các tab sau (`563`)
 
 File QML chưa xếp màn (thêm vào SCREENS): `desktop_qt/qml/AvatarEditor.qml`, `desktop_qt/qml/BookLogic.js`, `desktop_qt/qml/CastLogic.js`, `desktop_qt/qml/DestructiveConfirm.qml`, `desktop_qt/qml/FindInBook.qml`, `desktop_qt/qml/FindLogic.js`, `desktop_qt/qml/MusicCredit.qml`, `desktop_qt/qml/MusicLevelSlider.qml`, `desktop_qt/qml/MusicPopover.qml`, `desktop_qt/qml/PeerStudio.js`, `desktop_qt/qml/PlayerConsent.qml`, `desktop_qt/qml/PlayerLineLogic.js`, `desktop_qt/qml/ProjectSteps.qml`, `desktop_qt/qml/ScriptScope.qml`, `desktop_qt/qml/StudioChapterHead.qml`, `desktop_qt/qml/StudioMusic.qml`, `desktop_qt/qml/StudioMusicLogic.js`, `desktop_qt/qml/StudioMusicMoods.qml`, `desktop_qt/qml/StudioMusicScene.qml`, `desktop_qt/qml/StudioMusicSwap.qml`, `desktop_qt/qml/StudioMusicTrackRow.qml`, `desktop_qt/qml/ToneLabels.js`, `desktop_qt/qml/UiNumber.js`, `desktop_qt/qml/ValuePicker.qml`, `desktop_qt/qml/ValuePickerLogic.js`, `desktop_qt/qml/VolumeEditor.qml`.
 
