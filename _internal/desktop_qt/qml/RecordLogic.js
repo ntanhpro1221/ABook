@@ -36,7 +36,7 @@ function pickerActions(book) {
     const name = active ? active.name : ""
     return [
         {key: "create", label: S.s_ho_so_moi_5dfda9aa, icon: "plus", dialog: newDialog(book)},
-        {key: "rename", label: S.s_doi_ten_ho_so_nay_30b6b56f, icon: "text-cursor-input", dialog: {kind: "rename", name: name}},
+        {key: "rename", label: S.s_doi_ten_ho_so_92440dab, icon: "text-cursor-input", dialog: {kind: "rename", name: name}},
         {key: "move", label: S.s_chuyen_sang_cuon_khac_0ddcf455, icon: "arrow-right-left", dialog: {kind: "move", name: name}},
         {key: "delete", label: S.s_xoa_ho_so_nay_27fc6264, icon: "trash", dialog: {kind: "delete", name: name}, danger: true}
     ]

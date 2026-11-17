@@ -45,6 +45,7 @@ Collapse {
             id: fold
             y: root.first ? 0 : 1
             width: parent.width
+            nameTitle: true
             storageKey: "other-computers." + root.rowId
             title: root.computer.name || ""
             summary: root.computer.waking ? S.s_dang_cho_4257d45b : root.computer.error ? S.s_can_kiem_tra_d549619d : S.s_da_ghep_2bd0972f

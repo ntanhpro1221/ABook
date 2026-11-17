@@ -1697,7 +1697,7 @@ internal object S {
     const val s_gui_nhat_ky_2e35a4f8 = "Gửi nhật ký"
     const val s_gui_nhat_ky_cua_abook_b435382a = "Gửi nhật ký của ABook"
     const val s_gui_qua_tin_dung_chung_cce1fcf2 = "gửi quá tín dụng chung"
-    const val s_gui_truoc_roi_bo_ghep_99e6d1f1 = "Gửi trước rồi bỏ ghép"
+    const val s_gui_truoc_roi_bo_ghep_99e6d1f1 = "Gửi rồi bỏ ghép"
     fun s_gui_ve_0_50e46c2d(p0: Any?): String = "Gửi về " + p0.toString()
     const val s_hai_nguoi_se_nghe_giong_het_nhau_958bdccc = "hai người sẽ nghe giống hệt nhau"
     const val s_han_muc_6532c99e = "hạn mức"
@@ -2661,7 +2661,7 @@ internal object S {
     const val s_thu_ba_af3bd17a = "Thứ Ba"
     const val s_thu_bay_c8024d2b = "Thứ Bảy"
     const val s_thu_gon_1f6bf2c3 = "Thu gọn"
-    const val s_thu_gui_truoc_roi_bo_ghep_f12544da = "Thử gửi trước rồi bỏ ghép"
+    const val s_thu_gui_truoc_roi_bo_ghep_f12544da = "Thử gửi, bỏ ghép"
     const val s_thu_hai_419e6e2f = "Thứ Hai"
     const val s_thu_khong_duoc_07616f5a = "Thử không được."
     fun s_thu_khong_duoc_0_bf5f8af8(p0: Any?): String = "Thử không được: " + p0.toString()
@@ -2820,7 +2820,7 @@ internal object S {
     const val s_vai_phu_6e7c6bce = "Vai phụ"
     const val s_vai_phu_khong_ten_6395f0d2 = "Vai phụ không tên"
     const val s_vai_phu_khong_ten_6a816c3e = "vai phụ không tên"
-    const val s_van_bo_ghep_bo_thay_doi_64cb2e74 = "Vẫn bỏ ghép, bỏ thay đổi"
+    const val s_van_bo_ghep_bo_thay_doi_64cb2e74 = "Bỏ ghép luôn"
     const val s_van_dung_f9d19e87 = "Vẫn dừng"
     const val s_van_tai_b166c8ee = "Vẫn tải"
     const val s_van_tay_74d5ff65 = "Vân tay"

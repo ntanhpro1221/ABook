@@ -4,6 +4,7 @@ import { TickingValue } from "@/shared/TickingValue";
 import { ActionMenu } from "@/shared/ActionMenu";
 import { MotionRegion } from "@/shared/MotionRegion";
 import { Fold } from "@/shared/Collapse";
+import { OneLineFit } from "@/shared/OneLineFit";
 import { FoldRows } from "@/shared/FoldRows";
 import { AnimatedRows, LoadingCrossfade, MotionPresence, Reveal } from "@/shared/MotionPresence";
 import * as DropdownMenu from "@/shared/DropdownMenu";
@@ -826,7 +827,7 @@ function RecordPicker({ book, dialog, setDialog }: { book: ListenBook; dialog: R
               >
                 <SelectionMark selected={record.active} />
                 <span className="min-w-0 flex-1">
-                  <span className="block text-pretty [overflow-wrap:anywhere]">{record.name}</span>
+                  <OneLineFit>{record.name}</OneLineFit>
                   <span className="block text-xs text-fg-3">
                     {record.last
                       ? `${book.chapters?.find((chapter) => chapter.id === record.last!.chapterId)?.title ?? S.s_chuong_2d157977} · ${formatClock(record.last.seconds)} · `

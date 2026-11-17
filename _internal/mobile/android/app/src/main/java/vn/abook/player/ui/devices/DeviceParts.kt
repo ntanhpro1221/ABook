@@ -65,6 +65,7 @@ fun DeviceRow(device: Paired, onOpen: () -> Unit, onRetry: () -> Unit) {
     val failed = device.failed
     ListItem(
         device.name, Modifier, onOpen, "device_${device.key.ifEmpty { "main" }}", hint = device.state,
+        titleOneLine = true,  // tên máy là dữ liệu người dùng: một dòng qua OneLineFit như Qt / web
         tickingHint = true,
         hintColor = if (failed) colors.danger else colors.text2,
         leading = { DeviceIcon(device.kind, colors.text2) },

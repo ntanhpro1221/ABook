@@ -10,6 +10,7 @@ Column {
     property string title: ""
     property string summary: ""
     property bool defaultOpen: false
+    property bool nameTitle: false          // tiêu đề là tên máy / thiết bị (DisclosureRow.nameTitle)
     property real bottomGap: 12
     property bool expanded: {
         const saved = Platform.setting("fold." + storageKey, "")
@@ -21,6 +22,7 @@ Column {
         width: parent.width
         section: true
         title: root.title
+        nameTitle: root.nameTitle
         summary: root.summary
         expanded: root.expanded
         onClicked: {

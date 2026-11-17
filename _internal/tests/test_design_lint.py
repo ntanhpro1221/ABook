@@ -762,6 +762,14 @@ def test_r14_label_word_count_ignores_numbers_and_units():
     assert "0 chữ" in dt.rule_r14("k", unnamed)[0].detail
 
 
+def test_r14_lone_separator_is_not_a_word():
+    # Tab lọc "Ai nói câu này · 1": bốn chữ, dấu chấm giữa đứng riêng và số đếm không tính.
+    assert dt.rule_r14("k", tree(ROOT, n(0, 20, 100, 260, 136, role="radiobutton", text="Ai nói câu này · 1"))) == []
+    assert dt.rule_r14("k", tree(ROOT, n(0, 20, 100, 260, 136, role="button", text="Tách – nhập – lưu – gửi"))) == []
+    findings = dt.rule_r14("k", tree(ROOT, n(0, 20, 100, 300, 136, role="radiobutton", text="Yêu cầu chưa được làm · 1")))
+    assert [f.rule for f in findings] == ["R14"] and "5 chữ" in findings[0].detail
+
+
 def test_r14_dropdown_shows_its_value_and_markup_is_not_words():
     value = tree(ROOT, n(0, 20, 100, 340, 148, role="dropdownlist", text="Chương 12: Một buổi sáng ở bến sông"))
     styled = tree(ROOT, n(0, 20, 100, 200, 148, role="button", text="<span style='color:#a0600c'>Nghe</span>&nbsp;tiếp"))

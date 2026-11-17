@@ -2,6 +2,7 @@ import { S } from "../shared/strings.generated";
 import { MotionRegion } from "@/shared/MotionRegion";
 import { AnimatedRows, MotionPresence } from "@/shared/MotionPresence";
 import { Fold } from "@/shared/Collapse";
+import { OneLineFit } from "@/shared/OneLineFit";
 import * as DropdownMenu from "@/shared/DropdownMenu";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Bluetooth, Clapperboard, Laptop, Moon, Radar, RefreshCw, Smartphone, Stethoscope, Unplug } from "lucide-react";
@@ -177,7 +178,7 @@ export function OtherComputers() {
         <AnimatedRows className="divide-y divide-line" items={data.computers} keyOf={(computer) => computer.id}>
           {(computer) => (
             <MotionRegion>
-              <Fold storageKey={`other-computers.${computer.id}`} title={computer.name} heading="h3" summary={computer.waking ? S.s_dang_cho_4257d45b : computer.error ? S.s_can_kiem_tra_d549619d : S.s_da_ghep_2bd0972f} bodyClassName="flex flex-wrap items-center gap-3 pb-3">
+              <Fold storageKey={`other-computers.${computer.id}`} title={<OneLineFit>{computer.name}</OneLineFit>} heading="h3" summary={computer.waking ? S.s_dang_cho_4257d45b : computer.error ? S.s_can_kiem_tra_d549619d : S.s_da_ghep_2bd0972f} bodyClassName="flex flex-wrap items-center gap-3 pb-3">
               <Laptop className="size-5 shrink-0 text-fg-2" />
               <div className="min-w-0 flex-1">
                 {computer.waking ? (
@@ -318,8 +319,9 @@ export function OtherComputers() {
           <ul className="flex flex-wrap gap-2">
             {unpaired.map((device) => (
               <li key={device.address}>
-                <Button size="sm" variant="ghost" icon={Bluetooth} onClick={() => chooseDevice(device)}>
-                  {device.name} · {deviceKindLabel(device.kind)}
+                {/* Tên thiết bị là dữ liệu người dùng: một dòng qua OneLineFit, vẫn không vừa thì xuống dòng trong nút (như Qt nameText). */}
+                <Button size="sm" variant="ghost" icon={Bluetooth} onClick={() => chooseDevice(device)} className="h-auto max-w-full whitespace-normal text-left">
+                  <OneLineFit>{`${device.name} · ${deviceKindLabel(device.kind)}`}</OneLineFit>
                 </Button>
               </li>
             ))}
@@ -376,8 +378,8 @@ export function BluetoothFallback({
           {devices.map((device) => (
             <DropdownMenu.Item key={device.address} onSelect={() => onChoose(device.address)} className={MENU_ITEM}>
               <SelectionMark selected={device.address === current} />
-              <span className="min-w-0 flex-1 text-pretty [overflow-wrap:anywhere]">
-                {device.name} <span className="text-fg-3">· {deviceKindLabel(device.kind)}</span>
+              <span className="flex min-w-0 flex-1 items-baseline gap-1">
+                <OneLineFit>{device.name}</OneLineFit> <span className="shrink-0 text-fg-3">· {deviceKindLabel(device.kind)}</span>
                 {device.address === current && <span className="sr-only">{S.s_dang_chon_19938ba6}</span>}
               </span>
             </DropdownMenu.Item>

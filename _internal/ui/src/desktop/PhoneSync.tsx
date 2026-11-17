@@ -2,6 +2,7 @@ import { S } from "../shared/strings.generated";
 import { MoreInfo, SettingsBlock } from "@/shared/SettingsNav";
 import { MotionRegion } from "@/shared/MotionRegion";
 import { Fold } from "@/shared/Collapse";
+import { OneLineFit } from "@/shared/OneLineFit";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Switch } from "./Switch";
 import { ShieldAlert, Smartphone } from "lucide-react";
@@ -336,10 +337,10 @@ export function PhoneSync() {
                 {deviceRows.map(({ key, state, item: device, ref }) => (
                   // Điện thoại hẹp + công tắc "Điều khiển sản xuất": hàng tự xuống dòng thay vì bóp tên máy còn "NGDtuanh-…".
                   <li key={key} ref={ref} className="motion-row" data-state={state} inert={state === "exit"}>
-                  <Fold storageKey={`phone-sync.device.${device.id}`} title={device.name} summary={S.s_lan_cuoi_0_97f1a485(formatRelative(device.lastSeen))} bodyClassName="flex flex-wrap items-center gap-3 pb-3">
+                  <Fold storageKey={`phone-sync.device.${device.id}`} title={<OneLineFit>{device.name}</OneLineFit>} summary={S.s_lan_cuoi_0_97f1a485(formatRelative(device.lastSeen))} bodyClassName="flex flex-wrap items-center gap-3 pb-3">
                     <Smartphone className="glyph shrink-0 text-fg-3" />
                     <div className="min-w-0 flex-1 basis-44">
-                      <div className="truncate text-sm font-medium">{device.name}</div>
+                      <OneLineFit className="text-sm font-medium">{device.name}</OneLineFit>
                       <div data-motion-live className="text-xs text-fg-2">{S.s_ket_noi_lan_cuoi_1ffb25d2}{formatRelative(device.lastSeen)}{S.s_ghep_ngay_04227336}{formatDate(device.pairedAt)}
                       </div>
                     </div>

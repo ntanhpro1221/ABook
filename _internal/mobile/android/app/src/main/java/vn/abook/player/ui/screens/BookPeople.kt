@@ -337,6 +337,8 @@ internal fun PickRow(title: String, hint: String?, selected: Boolean, onClick: (
             BasicText(
                 title,
                 style = Abook.type.body.copy(color = if (selected) colors.accentText else colors.text, fontWeight = if (selected) FontWeight.Medium else FontWeight.Normal),
+                // Tên (người, hồ sơ, cuốn) là dữ liệu người dùng: một dòng qua OneLineFit, vẫn không vừa thì xuống dòng - như Qt / web.
+                autoSize = vn.abook.player.ui.components.OneLineFit.of(Abook.type.body),
             )
             SwapContent(hint, contentKey = { hint -> hint != null }, layout = ContentLayout.Column) { hint ->
                 if (hint != null) RowHint(hint, Modifier.padding(top = 4.dp), if (selected) colors.accentText else colors.text2)

@@ -372,7 +372,8 @@ Column {
                                         size: "sm"
                                         kind: "ghost"
                                         icon: "bluetooth"
-                                        wrap: true
+                                        nameText: true
+                                        width: Math.min(implicitWidth, parent.width)
                                         text: modelData.name + "\u00a0·\u00a0" + Logic.deviceKindLabel(modelData.kind)
                                         onActivated: root.choose(modelData.address)
                                     }

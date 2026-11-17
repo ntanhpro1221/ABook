@@ -124,7 +124,8 @@ def label(tree: dict, node: dict) -> str:
 def words(text: str) -> list[str]:
     # Chữ giàu định dạng của Qt (Text.StyledText: <span style=...>, &nbsp;): đếm chữ hiện, không đếm thẻ.
     text = html.unescape(re.sub(r"<[^>]*>", " ", text))
-    return [w for w in re.split(r"\s+", text.strip()) if w and not UNIT.match(w.strip("()·,."))]
+    # Dấu ngăn đứng riêng ("Ai nói câu này · 1": dấu chấm giữa trước số đếm) không phải chữ.
+    return [w for w in re.split(r"\s+", text.strip()) if w.strip("()·,.–—-|/") and not UNIT.match(w.strip("()·,."))]
 
 
 # ---------------------------------------------------------------- luật

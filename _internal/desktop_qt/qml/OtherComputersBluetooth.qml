@@ -73,15 +73,23 @@ Item {
                     onClicked: { menu.close(); root.choose(modelData.address) }
                     Rectangle { anchors.fill: parent; radius: Theme.radiusControl; color: Theme.hover; opacity: row.hovered ? 1 : 0; Behavior on opacity { NumberAnimation { duration: Theme.motionFast } } }
                     SelectionMark { x: 8; y: 6 + 2; size: 16; selected: row.selected }
-                    Text {
+                    // Tên thiết bị là dữ liệu người dùng: một dòng qua OneLineFit (nhường chỗ cho loại máy đứng sau, cùng đường chân chữ dòng đầu),
+                    // vẫn không vừa thì xuống dòng - như web (tên + "· loại" mực phụ).
+                    OneLineFit {
                         id: label
                         x: 8 + 16 + 8
                         y: 6
-                        width: parent.width - x - 8
-                        textFormat: Text.RichText
-                        text: Logic.esc(TextWrap.keepDots(modelData.name)) + "&nbsp;<span style='color:" + Theme.text3 + "'>·&nbsp;" + Logic.esc(Logic.deviceKindLabel(modelData.kind)) + "</span>"
+                        room: parent.width - x - 8 - kind.implicitWidth
+                        text: TextWrap.keepDots(row.modelData.name)
                         color: Theme.text
-                        wrapMode: Text.WrapAtWordBoundaryOrAnywhere
+                        baseSize: Theme.sizeBodySmall
+                    }
+                    Text {
+                        id: kind
+                        x: label.x + label.width
+                        anchors.baseline: label.baseline
+                        text: "\u00a0·\u00a0" + Logic.deviceKindLabel(row.modelData.kind)
+                        color: Theme.text3
                         font.pixelSize: Theme.sizeBodySmall
                     }
                 }

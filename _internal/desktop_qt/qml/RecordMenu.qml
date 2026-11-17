@@ -4,7 +4,7 @@ import "RecordLogic.js" as Logic
 import "TextWrap.js" as TextWrap
 
 // Danh sách của nút "Hồ sơ nghe:" (menu của RecordPicker, listen/BookScreen.tsx): một dòng giải thích, mỗi hồ sơ (dấu tích ở hồ sơ đang dùng, chỗ nghe cuối và
-// lần nghe gần nhất), vạch ngăn, rồi "Hồ sơ mới", "Đổi tên hồ sơ này…", "Chuyển sang cuốn khác…", "Xoá hồ sơ này…". Việc chọn / làm do trang sách xử lý.
+// lần nghe gần nhất), vạch ngăn, rồi "Hồ sơ mới", "Đổi tên hồ sơ…", "Chuyển sang cuốn khác…", "Xoá hồ sơ này…". Việc chọn / làm do trang sách xử lý.
 Column {
     id: root
     property var book: ({})
@@ -57,13 +57,13 @@ Column {
                 x: Theme.s8 + 16 + Theme.s12
                 y: 6
                 width: parent.width - x - Theme.s8
-                Text {
+                // Tên hồ sơ là dữ liệu người dùng: một dòng qua OneLineFit, vẫn không vừa thì xuống dòng (như web / điện thoại).
+                OneLineFit {
                     objectName: "recordChoiceName"
-                    width: parent.width
+                    room: parent.width
                     text: TextWrap.pretty(row.modelData.name)
                     color: Theme.text
-                    wrapMode: Text.WrapAtWordBoundaryOrAnywhere
-                    font.pixelSize: Theme.sizeBodySmall
+                    baseSize: Theme.sizeBodySmall
                 }
                 ClockLabel {
                     objectName: "recordChoiceLine"

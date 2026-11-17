@@ -42,6 +42,7 @@ Collapse {
             id: fold
             y: root.first ? 0 : 1
             width: parent.width
+            nameTitle: true
             storageKey: "phone-sync.device." + root.rowId
             title: root.device.name || ""
             summary: S.s_lan_cuoi_b70cb038 + Logic.formatRelative(root.device.lastSeen, root.clock)
@@ -58,7 +59,7 @@ Collapse {
                     x: 32
                     y: (body.lineHeight - height) / 2
                     width: body.inline ? body.width - 32 - 12 - body.restWidth : body.width - 32
-                    Text { width: parent.width; text: TextWrap.keepDots(root.device.name || ""); color: Theme.text; wrapMode: Text.WrapAtWordBoundaryOrAnywhere; font.pixelSize: Theme.sizeBodySmall; font.weight: Theme.weightMedium }
+                    OneLineFit { room: parent.width; text: TextWrap.keepDots(root.device.name || ""); color: Theme.text; baseSize: Theme.sizeBodySmall; font.weight: Theme.weightMedium }
                     Text {
                         width: parent.width
                         text: S.s_ket_noi_lan_cuoi_1ffb25d2 + Logic.formatRelative(root.device.lastSeen, root.clock) + S.s_u00a0_u00a0ghep_ngay_495f597d + Logic.formatDate(root.device.pairedAt)

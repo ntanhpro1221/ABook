@@ -14,6 +14,9 @@ Interactive {
     property string kind: "primary"     // "primary" | "ghost" (= "text") | "danger"
     property string size: "md"          // "sm" | "md" | "lg"
     property bool wrap: false
+    // Chữ là TÊN dữ liệu người dùng (tên thiết bị, tên tập): một dòng qua OneLineFit (thu tới Theme.oneLineMinScale), vẫn không vừa bề
+    // ngang nút thì xuống dòng - không cắt, không đếm như nhãn (máy dò R14). Bề ngang nút do nơi dùng giới hạn (vd min(implicitWidth, khung)).
+    property bool nameText: false
     property bool pending: false
     property bool busy: false
     property int ownedRequest: 0
@@ -31,14 +34,17 @@ Interactive {
     readonly property color ink: primary ? Theme.accentInk : danger ? Theme.danger : outline ? Theme.text : !enabled || busy ? Theme.text3 : Theme.accentText
     // `wrap`: dòng cao 1,25 mà Qt dồn phần dư xuống DƯỚI chữ - chữ nổi cao hơn tâm nút 1/8 dòng. Hạ khối chữ đúng phần ấy (leading-[1.25]
     // của web chia đều hai bên), icon đứng giữa dòng đầu khi chữ gãy nhiều dòng (máy dò IconText).
-    readonly property real slot: label.implicitHeight / Math.max(1, label.lineCount)
-    readonly property real halfLeading: wrap ? slot * 0.1 : 0
+    // Tên đi qua OneLineFit chỉ khi cần (Loader): nút thường không mang thêm Text đo nào.
+    readonly property Item labelBox: nameText && fitBox.item ? fitBox : label
+    readonly property int labelLines: nameText && fitBox.item ? fitBox.item.lineCount : label.lineCount
+    readonly property real slot: (nameText ? labelBox.height : label.implicitHeight) / Math.max(1, labelLines)
+    readonly property real halfLeading: wrap && !nameText ? slot * 0.1 : 0
     signal activated()
 
     Accessible.role: Accessible.Button
     Accessible.name: text
-    implicitHeight: Math.max(Theme.buttonHeight, label.implicitHeight + 8)
-    implicitWidth: Math.max(label.implicitWidth, reservedWidth) + iconBox + 2 * pad
+    implicitHeight: Math.max(Theme.buttonHeight, (nameText ? labelBox.height : label.implicitHeight) + 8)
+    implicitWidth: Math.max(nameText ? (fitBox.item ? fitBox.item.naturalWidth : 0) : label.implicitWidth, reservedWidth) + iconBox + 2 * pad
     opacity: enabled && !working ? 1 : 0.45
     // Mờ như MỘT nhóm như opacity của CSS (disabled:opacity-45): mờ từng lớp thì chữ 45% chồng lên nền 45% thành chữ nâu nhạt trên khối
     // nâu (Lead soát 0.4.151 lượt 2, "Lưu tên" tối); dựng nhóm vào một lớp rồi mới mờ - chữ vẫn đậm trên nền như web
@@ -73,7 +79,7 @@ Interactive {
         x: Math.max(root.pad, (root.width - root.implicitWidth) / 2 + root.pad)
         width: 16
         height: 16
-        y: root.wrap && label.lineCount > 1 ? label.y + root.slot / 2.5 - height / 2 : (root.height - height) / 2
+        y: (root.wrap || root.nameText) && root.labelLines > 1 ? root.labelBox.y + root.slot / 2.5 - height / 2 : (root.height - height) / 2
         StateIcon {
             anchors.centerIn: parent
             Reveal { shown: !wait.shown }
@@ -85,6 +91,7 @@ Interactive {
     }
     Text {
         id: label
+        visible: !root.nameText
         x: root.showsIcon ? lead.x + root.iconBox : Math.max(root.pad, (root.width - implicitWidth) / 2)
         width: Math.max(0, Math.min(implicitWidth, root.width - x - root.pad))
         anchors.verticalCenter: parent.verticalCenter
@@ -96,5 +103,20 @@ Interactive {
         lineHeight: root.wrap ? 1.25 : 1
         font.pixelSize: root.size === "lg" ? Theme.sizeBody : Theme.sizeBodySmall   // như web: sm/md text-body-small, lg text-body
         font.weight: Theme.weightMedium
+    }
+    Loader {
+        id: fitBox
+        active: root.nameText
+        readonly property real start: root.showsIcon ? lead.x + root.iconBox : root.pad
+        x: root.showsIcon ? start : Math.max(root.pad, (root.width - width) / 2)
+        anchors.verticalCenter: parent.verticalCenter
+        sourceComponent: OneLineFit {
+            room: Math.max(0, root.width - fitBox.start - root.pad)
+            text: root.text
+            color: root.ink
+            horizontalAlignment: Text.AlignHCenter
+            baseSize: root.size === "lg" ? Theme.sizeBody : Theme.sizeBodySmall
+            font.weight: Theme.weightMedium
+        }
     }
 }
