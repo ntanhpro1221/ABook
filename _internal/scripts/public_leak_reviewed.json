@@ -28,8 +28,8 @@
     "reason": "AGENTS.md: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
   },
   "README.md": {
-    "sha256": "cfe9ea190f9ab39f2488f800a096b846c769b7b74c999cce34d8d9577cd52981",
-    "reason": "README.md: all flagged strings match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
+    "sha256": "8ef7ca3b79f9e330f3c975262b0f479032cd41c4aa9bec24bed7d404afacdce2",
+    "reason": "README.md: all flagged strings match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data. fix173d: added privacy wording for the opt-in portrait service and feature bullets (volumes, Hako links, portraits); app-authored prose, no story text."
   },
   "_internal/AGENTS.md": {
     "sha256": "3665f6e466581757b09dc62fefe264ec0b5e4350569e9dc7211d1f07994745a3",
@@ -978,12 +978,12 @@
     "reason": "docs/BOUNDARY_6_AND_THE_DRIVER_MORNING.md: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
   },
   "_internal/docs/CHANGELOG.md": {
-    "sha256": "3c770d60d04a9953ae0f46e07fb0051c245a45ccfe0de4a8ec607678bf51cc72",
-    "reason": "_internal/docs/CHANGELOG.md: 0.4.171 technical release notes, ignored-tracked implementation and test description; existing individual shingle approvals unchanged. _internal/docs/CHANGELOG.md: tnfix172 exact changed bytes reviewed; authored technical documentation or synthetic normalization expectations. Existing individual category-i shingles were rechecked as identical public word sequences against 0964e4cd2. No new Corpus shingle is approved. Integration 0.4.172: byte pins refreshed for combined technical notes and existing normalization tests; no new Corpus shingle approval. _internal/docs/CHANGELOG.md: tnfix173 exact bytes reviewed as authored short Vietnamese release note; historical entries unchanged. Existing comments and historical documentation retain their public origin. Corpus matching remains active. Integration phase 1: combined authored implementation, expectations or technical documentation; exact inherited Corpus sequences rechecked; no new Corpus approval. Integration phase 2: combined authored implementation, expectations or technical documentation; exact inherited Corpus sequences rechecked; no new Corpus approval. Re-pinned for the 0.4.173 review fixes (dev/fix173): added lines reviewed as engineering text (validation messages, docstrings, UI strings, test names); no story or phoneme strings.",
+    "sha256": "9743c09d4f8b9e5a0217baf96c640e13ef8ad7f8a988c26e191817eab4e2127c",
+    "reason": "_internal/docs/CHANGELOG.md: 0.4.171 technical release notes, ignored-tracked implementation and test description; existing individual shingle approvals unchanged. _internal/docs/CHANGELOG.md: tnfix172 exact changed bytes reviewed; authored technical documentation or synthetic normalization expectations. Existing individual category-i shingles were rechecked as identical public word sequences against 0964e4cd2. No new Corpus shingle is approved. Integration 0.4.172: byte pins refreshed for combined technical notes and existing normalization tests; no new Corpus shingle approval. _internal/docs/CHANGELOG.md: tnfix173 exact bytes reviewed as authored short Vietnamese release note; historical entries unchanged. Existing comments and historical documentation retain their public origin. Corpus matching remains active. Integration phase 1: combined authored implementation, expectations or technical documentation; exact inherited Corpus sequences rechecked; no new Corpus approval. Integration phase 2: combined authored implementation, expectations or technical documentation; exact inherited Corpus sequences rechecked; no new Corpus approval. Re-pinned for the 0.4.173 review fixes (dev/fix173): added lines reviewed as engineering text (validation messages, docstrings, UI strings, test names); no story or phoneme strings. fix173d: 0.4.173 section regrouped by kind with upgrade notes; app-authored release prose; Corpus shingle a427005770c2fa6d unchanged and still the only match.",
     "corpus_review": {
       "classification": "i",
-      "file_sha256": "3c770d60d04a9953ae0f46e07fb0051c245a45ccfe0de4a8ec607678bf51cc72",
-      "reason": "_internal/docs/CHANGELOG.md: 0.4.171 technical release notes, ignored-tracked implementation and test description; existing individual shingle approvals unchanged. _internal/docs/CHANGELOG.md: each listed shingle retains its prior Lead-approved category-i classification. Exact public eight-word sequences are unchanged against 0964e4cd2; changes concern only TN behavior, expectations or technical notes. Byte pins expired and were individually re-reviewed. _internal/docs/CHANGELOG.md: each existing Lead-approved category-i eight-word sequence was rechecked unchanged against d136b0f4e; no new Corpus shingle is approved. 0.4.173 review fixes: exact-byte pin carried forward; the approved shingle set is unchanged, so any new Corpus overlap still blocks.",
+      "file_sha256": "9743c09d4f8b9e5a0217baf96c640e13ef8ad7f8a988c26e191817eab4e2127c",
+      "reason": "_internal/docs/CHANGELOG.md: 0.4.171 technical release notes, ignored-tracked implementation and test description; existing individual shingle approvals unchanged. _internal/docs/CHANGELOG.md: each listed shingle retains its prior Lead-approved category-i classification. Exact public eight-word sequences are unchanged against 0964e4cd2; changes concern only TN behavior, expectations or technical notes. Byte pins expired and were individually re-reviewed. _internal/docs/CHANGELOG.md: each existing Lead-approved category-i eight-word sequence was rechecked unchanged against d136b0f4e; no new Corpus shingle is approved. 0.4.173 review fixes: exact-byte pin carried forward; the approved shingle set is unchanged, so any new Corpus overlap still blocks. fix173d: 0.4.173 section regrouped by kind with upgrade notes; app-authored release prose; Corpus shingle a427005770c2fa6d unchanged and still the only match.",
       "shingles": [
         "a427005770c2fa6d"
       ]
@@ -1239,12 +1239,12 @@
     "reason": "docs/THE_VOICE_MODEL_IS_NOT_PINNED.md: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
   },
   "_internal/docs/THIRD_PARTY.md": {
-    "sha256": "86b38576def5cb56dd16a9cba51ff1d9549599d406cf54b3c26bf1d616d0451e",
-    "reason": "docs/THIRD_PARTY.md: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data.",
+    "sha256": "9ad28b6d192c1d9f87d4bd6a5839077c5ae205ecaa7c191e0f7ef4b95b4cab1f",
+    "reason": "docs/THIRD_PARTY.md: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data. fix173d: added the SDXL 1.0 voice portrait licence section; licence and provenance prose only; Corpus shingle 34673a5dbf551cda unchanged and still the only match.",
     "corpus_review": {
       "classification": "i",
-      "file_sha256": "86b38576def5cb56dd16a9cba51ff1d9549599d406cf54b3c26bf1d616d0451e",
-      "reason": "_internal/docs/THIRD_PARTY.md: Technical commentary or book-title metadata. Lead approved category (i) only; each hash was classified in round two.",
+      "file_sha256": "9ad28b6d192c1d9f87d4bd6a5839077c5ae205ecaa7c191e0f7ef4b95b4cab1f",
+      "reason": "_internal/docs/THIRD_PARTY.md: Technical commentary or book-title metadata. Lead approved category (i) only; each hash was classified in round two. fix173d: added the SDXL 1.0 voice portrait licence section; licence and provenance prose only; Corpus shingle 34673a5dbf551cda unchanged and still the only match.",
       "shingles": [
         "34673a5dbf551cda"
       ]
@@ -1263,8 +1263,8 @@
     "reason": "docs/UI.md: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
   },
   "_internal/docs/UI_PARITY.md": {
-    "sha256": "1b31e6a43684c0e5ee25d3854479d43ba057938f1454d87f43093fee0243ef7c",
-    "reason": "_internal/docs/UI_PARITY.md: reviewed integration-only layout, generated parity inventory or pinned asset URL edits; existing scrubbed prose preserved. Re-pinned for 0.4.169: its added lines were reviewed as engineering text, no story or phoneme strings. Integration phase 1: combined authored implementation, expectations or technical documentation; exact inherited Corpus sequences rechecked; no new Corpus approval. Integration phase 2: combined authored implementation, expectations or technical documentation; exact inherited Corpus sequences rechecked; no new Corpus approval. Re-pinned for the 0.4.173 review fixes (dev/fix173): added lines reviewed as engineering text (validation messages, docstrings, UI strings, test names); no story or phoneme strings."
+    "sha256": "aa7a948ce2c31ff1b94c2faa5fff8a85d8f6fa4996ed0cec51820ced1b8ecaf8",
+    "reason": "_internal/docs/UI_PARITY.md: reviewed integration-only layout, generated parity inventory or pinned asset URL edits; existing scrubbed prose preserved. Re-pinned for 0.4.169: its added lines were reviewed as engineering text, no story or phoneme strings. Integration phase 1: combined authored implementation, expectations or technical documentation; exact inherited Corpus sequences rechecked; no new Corpus approval. Integration phase 2: combined authored implementation, expectations or technical documentation; exact inherited Corpus sequences rechecked; no new Corpus approval. Re-pinned for the 0.4.173 review fixes (dev/fix173): added lines reviewed as engineering text (validation messages, docstrings, UI strings, test names); no story or phoneme strings. fix173d: regenerated parity inventory (line refs and native string count after the Android heard bar); generated counts only."
   },
   "_internal/docs/UI_PARITY_QT.md": {
     "sha256": "b32fe4b54a8f4e8dd218c64c7416aaee282e5e59baf314a6dd7d5f1454197b12",
