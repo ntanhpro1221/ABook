@@ -1119,73 +1119,73 @@
     "id": "0eb6ef1238f0213bb9f6",
     "kind": "destructive",
     "path": "ui/src/listen/BookScreen.tsx",
-    "line": 787,
+    "line": 788,
     "statement": "if (dialog.kind === \"delete\") switchTo(() => mutations.removeRecord.mutateAsync(active.id), S.s_da_xoa_ho_so_0_54dabd55(active.name));",
     "occurrence": 1,
-    "source_sha256": "3d7c948dea4d7d2429ad9eac0f42564340e6b7769266157598a15dc59162a908",
+    "source_sha256": "7cd896d00b3f0c84d84e72d223f28aa517574b40951f6879678010055b52030b",
     "disposition": "confirmation",
     "guard": "BookRecords ConfirmPage / BookScreen record Dialog / RecordDialogs Modal / DeleteBookPage",
-    "reason": "Deleting a listening profile explicitly describes loss of progress and history. Deleting a book uses the book confirmation. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Gate repair: reviewed identity-key motion, explicit layout, token spacing or semantic navigation changes; existing guard retained."
+    "reason": "Deleting a listening profile explicitly describes loss of progress and history. Deleting a book uses the book confirmation. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Gate repair: reviewed identity-key motion, explicit layout, token spacing or semantic navigation changes; existing guard retained. 0.4.173 fixes (sleep stopped line, activity-off extend, night continue, word reading row, per-book timers, volume editor id and add rule) leave this statement and its guard unchanged."
   },
   {
     "id": "9afb04bc8bcc92ca4b0c",
     "kind": "pending",
     "path": "ui/src/listen/BookScreen.tsx",
-    "line": 1088,
+    "line": 1089,
     "statement": "const restart = async () => {",
     "occurrence": 1,
-    "source_sha256": "3d7c948dea4d7d2429ad9eac0f42564340e6b7769266157598a15dc59162a908",
+    "source_sha256": "7cd896d00b3f0c84d84e72d223f28aa517574b40951f6879678010055b52030b",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; LoadingCrossfade, Progress, busy, isLoading, loading, pending, pendingVoice, preparingBookId, progress, progressFill",
-    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Gate repair: reviewed identity-key motion, explicit layout, token spacing or semantic navigation changes; existing guard retained."
+    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Gate repair: reviewed identity-key motion, explicit layout, token spacing or semantic navigation changes; existing guard retained. 0.4.173 fixes (sleep stopped line, activity-off extend, night continue, word reading row, per-book timers, volume editor id and add rule) leave this statement and its guard unchanged."
   },
   {
     "id": "0cff7a6337a7b77585a3",
     "kind": "pending",
     "path": "ui/src/listen/BookScreen.tsx",
-    "line": 1103,
+    "line": 1104,
     "statement": "action: { label: S.s_quay_lai_cho_cu_fea69b14, onClick: () => void playBook(book, before.chapter.id, before.at) },",
     "occurrence": 1,
-    "source_sha256": "3d7c948dea4d7d2429ad9eac0f42564340e6b7769266157598a15dc59162a908",
+    "source_sha256": "7cd896d00b3f0c84d84e72d223f28aa517574b40951f6879678010055b52030b",
     "disposition": "internal",
     "guard": "Async interface/helper boundary; concrete activation inventoried separately",
-    "reason": "This signature supplies work to a model or component; declaring it starts no user operation. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Gate repair: reviewed identity-key motion, explicit layout, token spacing or semantic navigation changes; existing guard retained."
+    "reason": "This signature supplies work to a model or component; declaring it starts no user operation. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Gate repair: reviewed identity-key motion, explicit layout, token spacing or semantic navigation changes; existing guard retained. 0.4.173 fixes (sleep stopped line, activity-off extend, night continue, word reading row, per-book timers, volume editor id and add rule) leave this statement and its guard unchanged."
   },
   {
     "id": "066bfd62238e7b1506cd",
     "kind": "pending",
     "path": "ui/src/listen/BookScreen.tsx",
-    "line": 1109,
+    "line": 1110,
     "statement": "const listenNow = async () => {",
     "occurrence": 1,
-    "source_sha256": "3d7c948dea4d7d2429ad9eac0f42564340e6b7769266157598a15dc59162a908",
+    "source_sha256": "7cd896d00b3f0c84d84e72d223f28aa517574b40951f6879678010055b52030b",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; LoadingCrossfade, Progress, busy, isLoading, loading, pending, pendingVoice, preparingBookId, progress, progressFill",
-    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Gate repair: reviewed identity-key motion, explicit layout, token spacing or semantic navigation changes; existing guard retained."
+    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Gate repair: reviewed identity-key motion, explicit layout, token spacing or semantic navigation changes; existing guard retained. 0.4.173 fixes (sleep stopped line, activity-off extend, night continue, word reading row, per-book timers, volume editor id and add rule) leave this statement and its guard unchanged."
   },
   {
     "id": "1d74793870f93603ba4e",
     "kind": "pending",
     "path": "ui/src/listen/BookScreen.tsx",
-    "line": 1255,
+    "line": 1256,
     "statement": "onSelect={() => void saver.save()}",
     "occurrence": 1,
-    "source_sha256": "3d7c948dea4d7d2429ad9eac0f42564340e6b7769266157598a15dc59162a908",
+    "source_sha256": "7cd896d00b3f0c84d84e72d223f28aa517574b40951f6879678010055b52030b",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; LoadingCrossfade, Progress, busy, isLoading, loading, pending, pendingVoice, preparingBookId, progress, progressFill",
-    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Gate repair: reviewed identity-key motion, explicit layout, token spacing or semantic navigation changes; existing guard retained."
+    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Gate repair: reviewed identity-key motion, explicit layout, token spacing or semantic navigation changes; existing guard retained. 0.4.173 fixes (sleep stopped line, activity-off extend, night continue, word reading row, per-book timers, volume editor id and add rule) leave this statement and its guard unchanged."
   },
   {
     "id": "1d071d9ad59632b02e8b",
     "kind": "pending",
     "path": "ui/src/listen/BookScreen.tsx",
-    "line": 1264,
+    "line": 1265,
     "statement": "onSelect={() => void sharer.share()}",
     "occurrence": 1,
-    "source_sha256": "3d7c948dea4d7d2429ad9eac0f42564340e6b7769266157598a15dc59162a908",
+    "source_sha256": "7cd896d00b3f0c84d84e72d223f28aa517574b40951f6879678010055b52030b",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; LoadingCrossfade, Progress, busy, isLoading, loading, pending, pendingVoice, preparingBookId, progress, progressFill",
-    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Gate repair: reviewed identity-key motion, explicit layout, token spacing or semantic navigation changes; existing guard retained."
+    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Gate repair: reviewed identity-key motion, explicit layout, token spacing or semantic navigation changes; existing guard retained. 0.4.173 fixes (sleep stopped line, activity-off extend, night continue, word reading row, per-book timers, volume editor id and add rule) leave this statement and its guard unchanged."
   },
   {
     "id": "d2780dded4db9ad89245",
@@ -1722,10 +1722,10 @@
     "line": 409,
     "statement": "async (spot, keepalive) => {",
     "occurrence": 1,
-    "source_sha256": "565c1756686d3516f258a5077ab5ae9ea5079cb1422e7f4899a70718fbb77eeb",
+    "source_sha256": "c59f2a27f3c41c42ce118d6dee3d02981bed1de4f282df5e445549393ed4caa0",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; ProgressOutbox, beginProgress, busy, musicLoading, pending, preparingBookId, progressOutbox, saveProgress, setMusicLoading, setPreparingBookId",
-    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
+    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. 0.4.173 fixes (sleep stopped line, activity-off extend, night continue, word reading row, per-book timers) leave this statement and its guard unchanged."
   },
   {
     "id": "6f5c73f49aab503968b4",
@@ -1734,10 +1734,10 @@
     "line": 482,
     "statement": "after: async () => {",
     "occurrence": 1,
-    "source_sha256": "565c1756686d3516f258a5077ab5ae9ea5079cb1422e7f4899a70718fbb77eeb",
+    "source_sha256": "c59f2a27f3c41c42ce118d6dee3d02981bed1de4f282df5e445549393ed4caa0",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; ProgressOutbox, beginProgress, busy, musicLoading, pending, preparingBookId, progressOutbox, saveProgress, setMusicLoading, setPreparingBookId",
-    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
+    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. 0.4.173 fixes (sleep stopped line, activity-off extend, night continue, word reading row, per-book timers) leave this statement and its guard unchanged."
   },
   {
     "id": "a80286c0ae4f2cf2ecb1",
@@ -1746,10 +1746,10 @@
     "line": 1078,
     "statement": "forgetVoiceTrouble(); // S.s_thu_lai_c58d068c gọi lại dịch vụ thật, không nhắc lại lỗi cũ của giọng trực tuyến",
     "occurrence": 1,
-    "source_sha256": "565c1756686d3516f258a5077ab5ae9ea5079cb1422e7f4899a70718fbb77eeb",
+    "source_sha256": "c59f2a27f3c41c42ce118d6dee3d02981bed1de4f282df5e445549393ed4caa0",
     "disposition": "internal",
     "guard": "Object URL / voice discovery / retry-failure or in-flight request cache",
-    "reason": "The action releases an object URL or cached discovery/failure/request state, not a saved artifact or credential. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
+    "reason": "The action releases an object URL or cached discovery/failure/request state, not a saved artifact or credential. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. 0.4.173 fixes (sleep stopped line, activity-off extend, night continue, word reading row, per-book timers) leave this statement and its guard unchanged."
   },
   {
     "id": "13f6ad88763cb151dc60",
@@ -1758,106 +1758,106 @@
     "line": 1445,
     "statement": "const switchRecord = useCallback<PlayerActions[\"switchRecord\"]>(async (bookId, change, startOver = false) => {",
     "occurrence": 1,
-    "source_sha256": "565c1756686d3516f258a5077ab5ae9ea5079cb1422e7f4899a70718fbb77eeb",
+    "source_sha256": "c59f2a27f3c41c42ce118d6dee3d02981bed1de4f282df5e445549393ed4caa0",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; ProgressOutbox, beginProgress, busy, musicLoading, pending, preparingBookId, progressOutbox, saveProgress, setMusicLoading, setPreparingBookId",
-    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
+    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. 0.4.173 fixes (sleep stopped line, activity-off extend, night continue, word reading row, per-book timers) leave this statement and its guard unchanged."
   },
   {
     "id": "4f5f8de8e1629e9ebb7a",
     "kind": "pending",
     "path": "ui/src/listen/player.tsx",
-    "line": 1832,
+    "line": 1837,
     "statement": "const check = async () => {",
     "occurrence": 1,
-    "source_sha256": "565c1756686d3516f258a5077ab5ae9ea5079cb1422e7f4899a70718fbb77eeb",
+    "source_sha256": "c59f2a27f3c41c42ce118d6dee3d02981bed1de4f282df5e445549393ed4caa0",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; ProgressOutbox, beginProgress, busy, musicLoading, pending, preparingBookId, progressOutbox, saveProgress, setMusicLoading, setPreparingBookId",
-    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
+    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. 0.4.173 fixes (sleep stopped line, activity-off extend, night continue, word reading row, per-book timers) leave this statement and its guard unchanged."
   },
   {
     "id": "83613ccbd44e125ebf71",
     "kind": "pending",
     "path": "ui/src/listen/PlayerViews.tsx",
-    "line": 803,
+    "line": 806,
     "statement": "onClick={() => (playing ? sample.stop() : void sample.play(voice.id))}",
     "occurrence": 1,
-    "source_sha256": "03e835f3cb3ce08f23d4eaf5b529bacefa95bda08486039d13e23999d1a19644",
+    "source_sha256": "07db0e870d7af45da4512cfd8b1552c48d2d81bcf954acd14f278e0d0408b3fe",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; BookProgressLine, CompactProgress, PendingIndicator, bookProgressText, busy, busyClick, isLoading, isPending, levelBusy, loading, musicLoading, pending",
-    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Gate repair: reviewed identity-key motion, explicit layout, token spacing or semantic navigation changes; existing guard retained."
+    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Gate repair: reviewed identity-key motion, explicit layout, token spacing or semantic navigation changes; existing guard retained. 0.4.173 fixes (sleep stopped line, activity-off extend, night continue, word reading row, per-book timers) leave this statement and its guard unchanged."
   },
   {
     "id": "f014459f7e3244b9fbb4",
     "kind": "pending",
     "path": "ui/src/listen/PlayerViews.tsx",
-    "line": 886,
+    "line": 889,
     "statement": "const start = async () => {",
     "occurrence": 1,
-    "source_sha256": "03e835f3cb3ce08f23d4eaf5b529bacefa95bda08486039d13e23999d1a19644",
+    "source_sha256": "07db0e870d7af45da4512cfd8b1552c48d2d81bcf954acd14f278e0d0408b3fe",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; BookProgressLine, CompactProgress, PendingIndicator, bookProgressText, busy, busyClick, isLoading, isPending, levelBusy, loading, musicLoading, pending",
-    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Gate repair: reviewed identity-key motion, explicit layout, token spacing or semantic navigation changes; existing guard retained."
+    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Gate repair: reviewed identity-key motion, explicit layout, token spacing or semantic navigation changes; existing guard retained. 0.4.173 fixes (sleep stopped line, activity-off extend, night continue, word reading row, per-book timers) leave this statement and its guard unchanged."
   },
   {
     "id": "3a79393defa6f77f9bcb",
     "kind": "pending",
     "path": "ui/src/listen/PlayerViews.tsx",
-    "line": 914,
+    "line": 917,
     "statement": "<button type=\"button\" data-focus-next className=\"touch-hit -ml-2 rounded-control px-2 py-1 font-medium text-fg hover:bg-hover\" onClick={() => void source.readAloudPrepareCancel?.().then(settle)}>{S.s_dung_lam_truoc_632af923}</button>",
     "occurrence": 1,
-    "source_sha256": "03e835f3cb3ce08f23d4eaf5b529bacefa95bda08486039d13e23999d1a19644",
+    "source_sha256": "07db0e870d7af45da4512cfd8b1552c48d2d81bcf954acd14f278e0d0408b3fe",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; BookProgressLine, CompactProgress, PendingIndicator, bookProgressText, busy, busyClick, isLoading, isPending, levelBusy, loading, musicLoading, pending",
-    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Gate repair: reviewed identity-key motion, explicit layout, token spacing or semantic navigation changes; existing guard retained."
+    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Gate repair: reviewed identity-key motion, explicit layout, token spacing or semantic navigation changes; existing guard retained. 0.4.173 fixes (sleep stopped line, activity-off extend, night continue, word reading row, per-book timers) leave this statement and its guard unchanged."
   },
   {
     "id": "b0dcdbfe651ac29eeb28",
     "kind": "pending",
     "path": "ui/src/listen/PlayerViews.tsx",
-    "line": 917,
+    "line": 920,
     "statement": "<button type=\"button\" data-focus-next aria-disabled={busy || undefined} aria-busy={busy || undefined} className=\"touch-hit -ml-2 rounded-control px-2 py-1 font-medium text-accent-text hover:bg-hover aria-disabled:opacity-45\" onClick={busyClick(busy, () => void start())}>",
     "occurrence": 1,
-    "source_sha256": "03e835f3cb3ce08f23d4eaf5b529bacefa95bda08486039d13e23999d1a19644",
+    "source_sha256": "07db0e870d7af45da4512cfd8b1552c48d2d81bcf954acd14f278e0d0408b3fe",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; BookProgressLine, CompactProgress, PendingIndicator, bookProgressText, busy, busyClick, isLoading, isPending, levelBusy, loading, musicLoading, pending",
-    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Gate repair: reviewed identity-key motion, explicit layout, token spacing or semantic navigation changes; existing guard retained."
+    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Gate repair: reviewed identity-key motion, explicit layout, token spacing or semantic navigation changes; existing guard retained. 0.4.173 fixes (sleep stopped line, activity-off extend, night continue, word reading row, per-book timers) leave this statement and its guard unchanged."
   },
   {
     "id": "5d21139a7aa11bae8a5b",
     "kind": "pending",
     "path": "ui/src/listen/PlayerViews.tsx",
-    "line": 945,
+    "line": 948,
     "statement": "const clear = async () => {",
     "occurrence": 1,
-    "source_sha256": "03e835f3cb3ce08f23d4eaf5b529bacefa95bda08486039d13e23999d1a19644",
+    "source_sha256": "07db0e870d7af45da4512cfd8b1552c48d2d81bcf954acd14f278e0d0408b3fe",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; BookProgressLine, CompactProgress, PendingIndicator, bookProgressText, busy, busyClick, isLoading, isPending, levelBusy, loading, musicLoading, pending",
-    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Gate repair: reviewed identity-key motion, explicit layout, token spacing or semantic navigation changes; existing guard retained."
+    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Gate repair: reviewed identity-key motion, explicit layout, token spacing or semantic navigation changes; existing guard retained. 0.4.173 fixes (sleep stopped line, activity-off extend, night continue, word reading row, per-book timers) leave this statement and its guard unchanged."
   },
   {
     "id": "d91727560f169d121388",
     "kind": "pending",
     "path": "ui/src/listen/PlayerViews.tsx",
-    "line": 1505,
+    "line": 1520,
     "statement": "return switchRecord(bookId, async () => undefined).then(() =>",
     "occurrence": 1,
-    "source_sha256": "03e835f3cb3ce08f23d4eaf5b529bacefa95bda08486039d13e23999d1a19644",
+    "source_sha256": "07db0e870d7af45da4512cfd8b1552c48d2d81bcf954acd14f278e0d0408b3fe",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; BookProgressLine, CompactProgress, PendingIndicator, bookProgressText, busy, busyClick, isLoading, isPending, levelBusy, loading, musicLoading, pending",
-    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Gate repair: reviewed identity-key motion, explicit layout, token spacing or semantic navigation changes; existing guard retained."
+    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Gate repair: reviewed identity-key motion, explicit layout, token spacing or semantic navigation changes; existing guard retained. 0.4.173 fixes (sleep stopped line, activity-off extend, night continue, word reading row, per-book timers) leave this statement and its guard unchanged."
   },
   {
     "id": "048072df29fe02577ac4",
     "kind": "pending",
     "path": "ui/src/listen/PlayerViews.tsx",
-    "line": 2039,
+    "line": 2055,
     "statement": "function PlayerModeSwitch({ reading, onSelect }: { reading: boolean; onSelect: (reading: boolean) => void }) {",
     "occurrence": 1,
-    "source_sha256": "03e835f3cb3ce08f23d4eaf5b529bacefa95bda08486039d13e23999d1a19644",
+    "source_sha256": "07db0e870d7af45da4512cfd8b1552c48d2d81bcf954acd14f278e0d0408b3fe",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; BookProgressLine, CompactProgress, PendingIndicator, bookProgressText, busy, busyClick, isLoading, isPending, levelBusy, loading, musicLoading, pending",
-    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Gate repair: reviewed identity-key motion, explicit layout, token spacing or semantic navigation changes; existing guard retained."
+    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Gate repair: reviewed identity-key motion, explicit layout, token spacing or semantic navigation changes; existing guard retained. 0.4.173 fixes (sleep stopped line, activity-off extend, night continue, word reading row, per-book timers) leave this statement and its guard unchanged."
   },
   {
     "id": "bf54d84f837e1fca0fd4",
@@ -2919,13 +2919,13 @@
     "id": "03d6b24dc4f17480cf89",
     "kind": "pending",
     "path": "ui/src/listen/VolumeEditor.tsx",
-    "line": 29,
+    "line": 39,
     "statement": "const save = async () => {",
     "occurrence": 1,
-    "source_sha256": "67d587857ff7b44b98f8dd0be613a0ff4c8a2ff5442484825319db70fb340dcf",
+    "source_sha256": "26ac34b92bf94f54f4891cb8fa63dc6fe551e6c7eeb1fbcedfde4352bbe81115",
     "disposition": "pending",
     "guard": "save busy owner, disabled inputs, error/retry and finally/callback release; delayed Button/PrimaryButton indicator",
-    "reason": "Volume writes serialize under the editor busy owner; QML generation guards reject stale callbacks. Draft removal changes only local boundaries before explicit save."
+    "reason": "Volume writes serialize under the editor busy owner; QML generation guards reject stale callbacks. Draft removal changes only local boundaries before explicit save. 0.4.173 fixes (sleep stopped line, activity-off extend, night continue, word reading row, per-book timers, volume editor id and add rule) leave this statement and its guard unchanged."
   },
   {
     "id": "c8d77f3e0233b6dcd659",
@@ -10899,97 +10899,97 @@
     "id": "2868e9efb88590141cfe",
     "kind": "pending",
     "path": "mobile/android/app/src/main/java/vn/abook/player/ui/nowplaying/PlayerLineEditor.kt",
-    "line": 16,
+    "line": 18,
     "statement": "suspend fun load(source: StudioSource, computer: String, project: String, chapter: Int, paragraph: ReadParagraph): PlayerLineSnapshot {",
     "occurrence": 1,
-    "source_sha256": "13f9f2d40cd63feae5c40dd754f652466dbb09e9b572f812ca1d416a06081469",
+    "source_sha256": "1d430df975ce0ff78b1c4378c551685e268715762730c5628836fa28b1ff93e3",
     "disposition": "internal",
     "guard": "Async interface/helper boundary; concrete activation inventoried separately",
-    "reason": "This signature supplies work to a model or component; declaring it starts no user operation."
+    "reason": "This signature supplies work to a model or component; declaring it starts no user operation. 0.4.173 fixes (sleep stopped line, activity-off extend, night continue, word reading row, per-book timers) leave this statement and its guard unchanged."
   },
   {
     "id": "307743d5eb1e566c6a5a",
     "kind": "pending",
     "path": "mobile/android/app/src/main/java/vn/abook/player/ui/nowplaying/PlayerLineEditor.kt",
-    "line": 25,
+    "line": 27,
     "statement": "override suspend fun write(computer: String, id: String, step: WorkStep, slow: Boolean): JSONObject =",
     "occurrence": 1,
-    "source_sha256": "13f9f2d40cd63feae5c40dd754f652466dbb09e9b572f812ca1d416a06081469",
+    "source_sha256": "1d430df975ce0ff78b1c4378c551685e268715762730c5628836fa28b1ff93e3",
     "disposition": "internal",
     "guard": "Async interface/helper boundary; concrete activation inventoried separately",
-    "reason": "This signature supplies work to a model or component; declaring it starts no user operation."
+    "reason": "This signature supplies work to a model or component; declaring it starts no user operation. 0.4.173 fixes (sleep stopped line, activity-off extend, night continue, word reading row, per-book timers) leave this statement and its guard unchanged."
   },
   {
     "id": "f8b883529fdb3f7504ad",
     "kind": "pending",
     "path": "mobile/android/app/src/main/java/vn/abook/player/ui/nowplaying/PlayerLineEditor.kt",
-    "line": 37,
+    "line": 39,
     "statement": "suspend fun load(bookId: String, chapter: Int, paragraph: ReadParagraph): PlayerLineSnapshot",
     "occurrence": 1,
-    "source_sha256": "13f9f2d40cd63feae5c40dd754f652466dbb09e9b572f812ca1d416a06081469",
+    "source_sha256": "1d430df975ce0ff78b1c4378c551685e268715762730c5628836fa28b1ff93e3",
     "disposition": "internal",
     "guard": "Async interface/helper boundary; concrete activation inventoried separately",
-    "reason": "This signature supplies work to a model or component; declaring it starts no user operation."
+    "reason": "This signature supplies work to a model or component; declaring it starts no user operation. 0.4.173 fixes (sleep stopped line, activity-off extend, night continue, word reading row, per-book timers) leave this statement and its guard unchanged."
   },
   {
     "id": "744b446c001143c7971b",
     "kind": "pending",
     "path": "mobile/android/app/src/main/java/vn/abook/player/ui/nowplaying/PlayerLineEditor.kt",
-    "line": 38,
+    "line": 40,
     "statement": "suspend fun sample(bookId: String, chapter: Int, paragraph: ReadParagraph) {}",
     "occurrence": 1,
-    "source_sha256": "13f9f2d40cd63feae5c40dd754f652466dbb09e9b572f812ca1d416a06081469",
+    "source_sha256": "1d430df975ce0ff78b1c4378c551685e268715762730c5628836fa28b1ff93e3",
     "disposition": "internal",
     "guard": "Async interface/helper boundary; concrete activation inventoried separately",
-    "reason": "This signature supplies work to a model or component; declaring it starts no user operation."
+    "reason": "This signature supplies work to a model or component; declaring it starts no user operation. 0.4.173 fixes (sleep stopped line, activity-off extend, night continue, word reading row, per-book timers) leave this statement and its guard unchanged."
   },
   {
     "id": "32cf6d261986f288ac69",
     "kind": "pending",
     "path": "mobile/android/app/src/main/java/vn/abook/player/ui/nowplaying/PlayerLineEditor.kt",
-    "line": 104,
+    "line": 124,
     "statement": "scope.launch { reload() }",
     "occurrence": 1,
-    "source_sha256": "13f9f2d40cd63feae5c40dd754f652466dbb09e9b572f812ca1d416a06081469",
+    "source_sha256": "1d430df975ce0ff78b1c4378c551685e268715762730c5628836fa28b1ff93e3",
     "disposition": "pending",
     "guard": "ViewModel/operation fields: busy, loading, pending; Components pending indicator",
-    "reason": "The model retains the operation and locks repeats; UI uses the shared pending parameter, loading content or progress owner."
+    "reason": "The model retains the operation and locks repeats; UI uses the shared pending parameter, loading content or progress owner. 0.4.173 fixes (sleep stopped line, activity-off extend, night continue, word reading row, per-book timers) leave this statement and its guard unchanged."
   },
   {
     "id": "a39b26df29390acc64af",
     "kind": "destructive",
     "path": "mobile/android/app/src/main/java/vn/abook/player/ui/nowplaying/PlayerLineEditor.kt",
-    "line": 113,
+    "line": 133,
     "statement": "owner.forgetSent(owner.away)",
     "occurrence": 1,
-    "source_sha256": "13f9f2d40cd63feae5c40dd754f652466dbb09e9b572f812ca1d416a06081469",
+    "source_sha256": "1d430df975ce0ff78b1c4378c551685e268715762730c5628836fa28b1ff93e3",
     "disposition": "internal",
     "guard": "Draft/in-flight bookkeeping in the editor state",
-    "reason": "The removal is a pending operation or draft entry, not deletion of the source book or stored audio."
+    "reason": "The removal is a pending operation or draft entry, not deletion of the source book or stored audio. 0.4.173 fixes (sleep stopped line, activity-off extend, night continue, word reading row, per-book timers) leave this statement and its guard unchanged."
   },
   {
     "id": "69bb0fcf578ed5a7dbe3",
     "kind": "pending",
     "path": "mobile/android/app/src/main/java/vn/abook/player/ui/nowplaying/PlayerLineEditor.kt",
-    "line": 123,
+    "line": 152,
     "statement": "suspend fun reload() {",
     "occurrence": 1,
-    "source_sha256": "13f9f2d40cd63feae5c40dd754f652466dbb09e9b572f812ca1d416a06081469",
+    "source_sha256": "1d430df975ce0ff78b1c4378c551685e268715762730c5628836fa28b1ff93e3",
     "disposition": "internal",
     "guard": "Async interface/helper boundary; concrete activation inventoried separately",
-    "reason": "This signature supplies work to a model or component; declaring it starts no user operation."
+    "reason": "This signature supplies work to a model or component; declaring it starts no user operation. 0.4.173 fixes (sleep stopped line, activity-off extend, night continue, word reading row, per-book timers) leave this statement and its guard unchanged."
   },
   {
     "id": "0b28818cfac658d18e7c",
     "kind": "pending",
     "path": "mobile/android/app/src/main/java/vn/abook/player/ui/nowplaying/PlayerLineEditor.kt",
-    "line": 164,
+    "line": 193,
     "statement": "scope.launch { try { source.sample(selection.bookId, selection.chapter, selection.paragraph) }",
     "occurrence": 1,
-    "source_sha256": "13f9f2d40cd63feae5c40dd754f652466dbb09e9b572f812ca1d416a06081469",
+    "source_sha256": "1d430df975ce0ff78b1c4378c551685e268715762730c5628836fa28b1ff93e3",
     "disposition": "pending",
     "guard": "ViewModel/operation fields: busy, loading, pending; Components pending indicator",
-    "reason": "The model retains the operation and locks repeats; UI uses the shared pending parameter, loading content or progress owner."
+    "reason": "The model retains the operation and locks repeats; UI uses the shared pending parameter, loading content or progress owner. 0.4.173 fixes (sleep stopped line, activity-off extend, night continue, word reading row, per-book timers) leave this statement and its guard unchanged."
   },
   {
     "id": "6b3cbb2a48258077c161",
@@ -10998,10 +10998,10 @@
     "line": 77,
     "statement": "fun pop() { if(parents.isNotEmpty())window.openSheet(parents.removeAt(parents.lastIndex)) else window.closeSheet() }",
     "occurrence": 1,
-    "source_sha256": "f0d8b1f88aa3c37903f57ce76f02293000547dcdf20c4cd2b3796f130e7d667e",
+    "source_sha256": "4548a8f70862e6864828921021651960e6aa183fd48c8e92b5cf3297438a77e0",
     "disposition": "internal",
     "guard": "Declaration; the invoked call site is independently inventoried",
-    "reason": "A declaration/signature is not an executing UI action. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Gate repair: reviewed identity-key motion, explicit layout, token spacing or semantic navigation changes; existing guard retained."
+    "reason": "A declaration/signature is not an executing UI action. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Gate repair: reviewed identity-key motion, explicit layout, token spacing or semantic navigation changes; existing guard retained. 0.4.173 fixes (sleep stopped line, activity-off extend, night continue, word reading row, per-book timers) leave this statement and its guard unchanged."
   },
   {
     "id": "41d49281785c0f3be740",
@@ -11742,10 +11742,10 @@
     "line": 205,
     "statement": "scope.launch {",
     "occurrence": 1,
-    "source_sha256": "35dff3596d4990191ac538eadca40f21f6dd4ecacab07a78f101e4e5ce05e61a",
+    "source_sha256": "1c36b3c064c3d033453fcafeace270697212494c707d093e53e59218f6b3e742",
     "disposition": "pending",
     "guard": "ViewModel/operation fields: busy, studio_readings_loading, trying; Components pending indicator",
-    "reason": "The model retains the operation and locks repeats; UI uses the shared pending parameter, loading content or progress owner. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
+    "reason": "The model retains the operation and locks repeats; UI uses the shared pending parameter, loading content or progress owner. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. 0.4.173 fixes (sleep stopped line, activity-off extend, night continue, word reading row, per-book timers) leave this statement and its guard unchanged."
   },
   {
     "id": "2b4cd8374b42eeaa6ff9",
@@ -11754,10 +11754,10 @@
     "line": 161,
     "statement": "scope.launch {",
     "occurrence": 1,
-    "source_sha256": "ab8a86f4c1c033394812d35a7ffa1710cdd089ad85265779927dbf537fc48eda",
+    "source_sha256": "d08997012bcbba951db938b24c70fda5b00d74194dad0ca4d168662f81efb4c6",
     "disposition": "pending",
     "guard": "ViewModel/operation fields: busy; Components pending indicator",
-    "reason": "The model retains the operation and locks repeats; UI uses the shared pending parameter, loading content or progress owner. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
+    "reason": "The model retains the operation and locks repeats; UI uses the shared pending parameter, loading content or progress owner. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. 0.4.173 fixes (sleep stopped line, activity-off extend, night continue, word reading row, per-book timers) leave this statement and its guard unchanged."
   },
   {
     "id": "2416ad5c655927307e6c",
@@ -13803,49 +13803,49 @@
     "id": "b86c9612d228f0950fbc",
     "kind": "pending",
     "path": "mobile/android/app/src/main/java/vn/abook/player/ui/studio/StudioVolumes.kt",
-    "line": 71,
+    "line": 76,
     "statement": "suspend fun load() {",
     "occurrence": 1,
-    "source_sha256": "8438e96bb4559b96889cf1be4ccf67b0c16310f4fcfe87ea12f7cc867dd83cd9",
+    "source_sha256": "64a679d3bbe5ef404e68e35bb56ecf78ca0771517acf9f5e3a01b27814ecb2e6",
     "disposition": "pending",
     "guard": "save busy owner, disabled inputs, error/retry and finally/callback release; delayed Button/PrimaryButton indicator",
-    "reason": "Volume writes serialize under the editor busy owner; QML generation guards reject stale callbacks. Draft removal changes only local boundaries before explicit save."
+    "reason": "Volume writes serialize under the editor busy owner; QML generation guards reject stale callbacks. Draft removal changes only local boundaries before explicit save. 0.4.173 fixes (sleep stopped line, activity-off extend, night continue, word reading row, per-book timers, volume editor id and add rule) leave this statement and its guard unchanged."
   },
   {
     "id": "07e90489e1b38283c349",
     "kind": "pending",
     "path": "mobile/android/app/src/main/java/vn/abook/player/ui/studio/StudioVolumes.kt",
-    "line": 83,
+    "line": 88,
     "statement": "if (uri != null && id != null) scope.launch {",
     "occurrence": 1,
-    "source_sha256": "8438e96bb4559b96889cf1be4ccf67b0c16310f4fcfe87ea12f7cc867dd83cd9",
+    "source_sha256": "64a679d3bbe5ef404e68e35bb56ecf78ca0771517acf9f5e3a01b27814ecb2e6",
     "disposition": "pending",
     "guard": "save busy owner, disabled inputs, error/retry and finally/callback release; delayed Button/PrimaryButton indicator",
-    "reason": "Volume writes serialize under the editor busy owner; QML generation guards reject stale callbacks. Draft removal changes only local boundaries before explicit save."
+    "reason": "Volume writes serialize under the editor busy owner; QML generation guards reject stale callbacks. Draft removal changes only local boundaries before explicit save. 0.4.173 fixes (sleep stopped line, activity-off extend, night continue, word reading row, per-book timers, volume editor id and add rule) leave this statement and its guard unchanged."
   },
   {
     "id": "9b14ca801d4bbce6cf33",
     "kind": "pending",
     "path": "mobile/android/app/src/main/java/vn/abook/player/ui/studio/StudioVolumes.kt",
-    "line": 103,
+    "line": 108,
     "statement": "scope.launch {",
     "occurrence": 1,
-    "source_sha256": "8438e96bb4559b96889cf1be4ccf67b0c16310f4fcfe87ea12f7cc867dd83cd9",
+    "source_sha256": "64a679d3bbe5ef404e68e35bb56ecf78ca0771517acf9f5e3a01b27814ecb2e6",
     "disposition": "pending",
     "guard": "save busy owner, disabled inputs, error/retry and finally/callback release; delayed Button/PrimaryButton indicator",
-    "reason": "Volume writes serialize under the editor busy owner; QML generation guards reject stale callbacks. Draft removal changes only local boundaries before explicit save."
+    "reason": "Volume writes serialize under the editor busy owner; QML generation guards reject stale callbacks. Draft removal changes only local boundaries before explicit save. 0.4.173 fixes (sleep stopped line, activity-off extend, night continue, word reading row, per-book timers, volume editor id and add rule) leave this statement and its guard unchanged."
   },
   {
     "id": "5fcf3e7260b0284630c3",
     "kind": "pending",
     "path": "mobile/android/app/src/main/java/vn/abook/player/ui/studio/StudioVolumes.kt",
-    "line": 140,
+    "line": 145,
     "statement": "item(\"problem\") { InlineProblem(problem, { scope.launch { load() } }, \"volumes_problem\") }",
     "occurrence": 1,
-    "source_sha256": "8438e96bb4559b96889cf1be4ccf67b0c16310f4fcfe87ea12f7cc867dd83cd9",
+    "source_sha256": "64a679d3bbe5ef404e68e35bb56ecf78ca0771517acf9f5e3a01b27814ecb2e6",
     "disposition": "pending",
     "guard": "save busy owner, disabled inputs, error/retry and finally/callback release; delayed Button/PrimaryButton indicator",
-    "reason": "Volume writes serialize under the editor busy owner; QML generation guards reject stale callbacks. Draft removal changes only local boundaries before explicit save."
+    "reason": "Volume writes serialize under the editor busy owner; QML generation guards reject stale callbacks. Draft removal changes only local boundaries before explicit save. 0.4.173 fixes (sleep stopped line, activity-off extend, night continue, word reading row, per-book timers, volume editor id and add rule) leave this statement and its guard unchanged."
   },
   {
     "id": "382e89e9c070b2692529",
@@ -16515,49 +16515,49 @@
     "id": "08069e103fd1f13ad299",
     "kind": "pending",
     "path": "desktop_qt/qml/PlayerLineEditor.qml",
-    "line": 42,
+    "line": 46,
     "statement": "Api.quiet(\"GET\", \"/api/listen/books/\" + encodeURIComponent(bookId), null, function(meta, err) {",
     "occurrence": 1,
-    "source_sha256": "f2102f498a3db652b6190815cd5a5544ea1248081f454f1649d81823703fb81d",
+    "source_sha256": "9c6cfb29b19a6b1d0a33ddc46806539c819fda62ce85dc096fd0ebbbc9604299",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; loading, pending",
-    "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads."
+    "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads. 0.4.173 fixes (sleep stopped line, activity-off extend, night continue, word reading row, per-book timers) leave this statement and its guard unchanged."
   },
   {
     "id": "f362d91a897242c2a6a9",
     "kind": "pending",
     "path": "desktop_qt/qml/PlayerLineEditor.qml",
-    "line": 49,
+    "line": 53,
     "statement": "Api.quiet(\"GET\", base + \"/casting/\" + root.chapterId, null, function(data, error) {",
     "occurrence": 1,
-    "source_sha256": "f2102f498a3db652b6190815cd5a5544ea1248081f454f1649d81823703fb81d",
+    "source_sha256": "9c6cfb29b19a6b1d0a33ddc46806539c819fda62ce85dc096fd0ebbbc9604299",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; loading, pending",
-    "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads."
+    "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads. 0.4.173 fixes (sleep stopped line, activity-off extend, night continue, word reading row, per-book timers) leave this statement and its guard unchanged."
   },
   {
     "id": "0f35e73ae352b589a8cb",
     "kind": "pending",
     "path": "desktop_qt/qml/PlayerLineEditor.qml",
-    "line": 60,
+    "line": 64,
     "statement": "Api.quiet(\"GET\", base + \"/cast\", null, function(cast, error) {",
     "occurrence": 1,
-    "source_sha256": "f2102f498a3db652b6190815cd5a5544ea1248081f454f1649d81823703fb81d",
+    "source_sha256": "9c6cfb29b19a6b1d0a33ddc46806539c819fda62ce85dc096fd0ebbbc9604299",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; loading, pending",
-    "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads."
+    "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads. 0.4.173 fixes (sleep stopped line, activity-off extend, night continue, word reading row, per-book timers) leave this statement and its guard unchanged."
   },
   {
     "id": "9ce2ab64f27163d974f4",
     "kind": "pending",
     "path": "desktop_qt/qml/PlayerLineEditor.qml",
-    "line": 63,
+    "line": 67,
     "statement": "Api.quiet(\"GET\", base + \"/wishes\", null, function(wishes, failure) {",
     "occurrence": 1,
-    "source_sha256": "f2102f498a3db652b6190815cd5a5544ea1248081f454f1649d81823703fb81d",
+    "source_sha256": "9c6cfb29b19a6b1d0a33ddc46806539c819fda62ce85dc096fd0ebbbc9604299",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; loading, pending",
-    "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads."
+    "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads. 0.4.173 fixes (sleep stopped line, activity-off extend, night continue, word reading row, per-book timers) leave this statement and its guard unchanged."
   },
   {
     "id": "1d6a14902ffc350b39e3",
@@ -17223,25 +17223,25 @@
     "id": "23495db38cef9c887345",
     "kind": "pending",
     "path": "desktop_qt/qml/VolumeEditor.qml",
-    "line": 49,
+    "line": 50,
     "statement": "Api.call(\"PUT\", \"/api/books/\" + id + \"/volumes\", {volumes: definitions}, function(data, error) {",
     "occurrence": 1,
-    "source_sha256": "4d90d1fa81965edf8380d0ac2b9a2e021b00d5d6e724565020932d14d7621dd7",
+    "source_sha256": "fb16bb608c32f734736eb8e88c83f67cc27d3cc97f0b84f5b62ea6ba5ab074a0",
     "disposition": "pending",
     "guard": "save busy owner, disabled inputs, error/retry and finally/callback release; delayed Button/PrimaryButton indicator",
-    "reason": "Volume writes serialize under the editor busy owner; QML generation guards reject stale callbacks. Draft removal changes only local boundaries before explicit save."
+    "reason": "Volume writes serialize under the editor busy owner; QML generation guards reject stale callbacks. Draft removal changes only local boundaries before explicit save. 0.4.173 fixes (sleep stopped line, activity-off extend, night continue, word reading row, per-book timers, volume editor id and add rule) leave this statement and its guard unchanged."
   },
   {
     "id": "de5e0e3e0affa68b7ad2",
     "kind": "pending",
     "path": "desktop_qt/qml/VolumeEditor.qml",
-    "line": 61,
+    "line": 62,
     "statement": "Api.call(\"PUT\", \"/api/books/\" + id + \"/volumes/\" + v.id + \"/cover\", {image: v.image}, function(saved, failure) {",
     "occurrence": 1,
-    "source_sha256": "4d90d1fa81965edf8380d0ac2b9a2e021b00d5d6e724565020932d14d7621dd7",
+    "source_sha256": "fb16bb608c32f734736eb8e88c83f67cc27d3cc97f0b84f5b62ea6ba5ab074a0",
     "disposition": "pending",
     "guard": "save busy owner, disabled inputs, error/retry and finally/callback release; delayed Button/PrimaryButton indicator",
-    "reason": "Volume writes serialize under the editor busy owner; QML generation guards reject stale callbacks. Draft removal changes only local boundaries before explicit save."
+    "reason": "Volume writes serialize under the editor busy owner; QML generation guards reject stale callbacks. Draft removal changes only local boundaries before explicit save. 0.4.173 fixes (sleep stopped line, activity-off extend, night continue, word reading row, per-book timers, volume editor id and add rule) leave this statement and its guard unchanged."
   },
   {
     "id": "5e7c03e5aab0c23affa4",

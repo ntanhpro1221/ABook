@@ -24,4 +24,12 @@ class StudioVolumesTest {
         val book = JSONObject("""{"chapters":[{"id":11},{"id":15},{"id":20}],"volumes":[{"id":1,"title":"Một","number":1,"chapters":[{"id":11},{"id":15}]},{"id":2,"title":"Hai","number":2,"chapters":[{"id":20}]}]}""")
         assertEquals(listOf("1", "3"), StudioVolumes.drafts(book).map { it.start })
     }
+
+    /** Soát 0.4.173 B13c: xoá quyển 2 rồi thêm quyển mới trong cùng lần sửa - id mới là 3, không tái dùng 2 (bìa riêng của quyển 2 ghép theo id). */
+    @Test fun aVolumeAddedAfterARemovalNeverReusesTheRemovedId() {
+        val book = JSONObject("""{"chapters":[{"id":11},{"id":15},{"id":20}],"volumes":[{"id":1,"title":"Một","number":1,"chapters":[{"id":11}]},{"id":2,"title":"Hai","number":2,"chapters":[{"id":15},{"id":20}]}]}""")
+        val kept = StudioVolumes.drafts(book).take(1)
+        assertEquals(3, StudioVolumes.nextId(kept, book))
+        assertEquals(1, StudioVolumes.nextId(emptyList(), JSONObject()))
+    }
 }

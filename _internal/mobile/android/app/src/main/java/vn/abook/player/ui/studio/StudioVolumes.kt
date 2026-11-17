@@ -38,6 +38,11 @@ object StudioVolumes {
         }
     }
 
+    /** Id của quyển thêm mới: lớn hơn mọi id đã nạp lẫn đang có - quyển vừa xoá trong lần sửa này không bị tái dùng, nên quyển mới không thừa hưởng bìa riêng của nó
+     *  (máy tính ghép bìa theo id). Một luật cho cả ba nền (soát 0.4.173 B13c). */
+    fun nextId(rows: List<VolumeDraft>, book: JSONObject): Int =
+        maxOf(rows.maxOfOrNull { it.id } ?: 0, book.optJSONArray("volumes").objects().maxOfOrNull { it.optInt("id") } ?: 0) + 1
+
     fun definitions(rows: List<VolumeDraft>, chapters: List<Int>): JSONObject {
         val starts = rows.map { it.start.toIntOrNull() ?: 0 }
         require(rows.isNotEmpty() && starts.first() == 1 && starts == starts.distinct().sorted()
@@ -133,7 +138,7 @@ fun StudioVolumesScreen(session: StudioSession, bookId: String, onBack: () -> Un
                 TextAction(S.s_volume_add, {
                     if (busy || rows.size >= 99) return@TextAction
                     val start = (rows.lastOrNull()?.start?.toIntOrNull() ?: 0) + 1
-                    if (start <= chapters.size) rows = rows + VolumeDraft((rows.maxOfOrNull { it.id } ?: 0) + 1,
+                    if (start <= chapters.size) rows = rows + VolumeDraft(StudioVolumes.nextId(rows, book),
                         S.s_volume_number(rows.size + 1), (rows.size + 1).toString(), start.toString())
                 }, "volume_add")
             }

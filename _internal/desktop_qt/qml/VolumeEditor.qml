@@ -32,7 +32,8 @@ Column {
     function add() {
         const start = rows.length ? Number(rows[rows.length - 1].start) + 1 : 1
         if (start > chapters.length) return
-        rows = rows.concat([{id: Math.max(0, ...rows.map(v => v.id)) + 1, number: rows.length + 1,
+        // Id mới lớn hơn mọi id đã nạp lẫn đang có: quyển vừa xoá không bị tái dùng (bìa riêng ghép theo id) - một luật cho cả ba nền (soát 0.4.173 B13c).
+        rows = rows.concat([{id: Math.max(0, ...rows.map(v => v.id), ...(book.volumes || []).map(v => v.id)) + 1, number: rows.length + 1,
             title: S.s_volume_number(rows.length + 1), start: start}])
     }
     function save() {

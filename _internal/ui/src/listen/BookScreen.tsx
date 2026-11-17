@@ -329,7 +329,8 @@ export function ChapterGroups({ book, currentChapter, onDone, onRename, prepared
   if (groups.length === 1 && !groups[0].heading) {
     return <div className="mt-2"><MotionPresence open={Boolean(onRename)}><VolumeEditor book={book} /></MotionPresence><ChapterGroupList {...list} chapters={groups[0].chapters} memory={`book.${book.id}.0`} /></div>;
   }
-  return <>{groups.map((group, index) => (
+  // Sách một quyển chia nhiều phần cũng mở được trình sửa quyển - như máy tính (EditBook.qml) và nhánh không chia phần ở trên (soát 0.4.173 B11).
+  return <><MotionPresence open={Boolean(onRename)}><VolumeEditor book={book} /></MotionPresence>{groups.map((group, index) => (
             <Fold key={group.heading ?? index} storageKey={`book.${book.id}.chapters.${index}`} title={group.heading || S.s_danh_sach_chuong_7fa755f9} summary={S.s_0_chuong_1_6fd924b9(group.chapters.length, group.chapters.some(chapter => chapter.id === currentChapter) ? S.s_dang_nghe_a38a21a6 : "")} defaultOpen={group.chapters.length <= 4 || group.chapters.some(chapter => chapter.id === currentChapter)} onOpened={(element) => {
               const row = element.querySelector(`[data-chapter="${CSS.escape(String(currentChapter))}"]`);
               if (row && !row.closest("[inert]")) reveal(scrollParent(row), row);
