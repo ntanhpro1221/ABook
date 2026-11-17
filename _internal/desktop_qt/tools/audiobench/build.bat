@@ -1,17 +1,19 @@
 @echo off
-rem Builds the two playback-core benchmarks into D:\Novels\native_desk_proto\audiobench (outside the repo).
+rem Builds the two playback-core benchmarks into %ABOOK_TOOLS_ROOT%\native_desk_proto\audiobench (outside the repo; defaults as in ..\..\build.bat).
 setlocal
-if not defined ABOOK_PYTHON set ABOOK_PYTHON=D:\Novels\ABook\_internal\runtime\.venv\Scripts\python.exe
 set HERE=%~dp0
+if not defined ABOOK_TOOLS_ROOT for %%I in ("%HERE%..\..\..\..\..") do set "ABOOK_TOOLS_ROOT=%%~fI"
+if not defined ABOOK_PYTHON if exist "%HERE%..\..\..\runtime\.venv\Scripts\python.exe" for %%I in ("%HERE%..\..\..\runtime\.venv\Scripts\python.exe") do set "ABOOK_PYTHON=%%~fI"
+if not defined ABOOK_PYTHON set ABOOK_PYTHON=%ABOOK_TOOLS_ROOT%\ABook\_internal\runtime\.venv\Scripts\python.exe
 set "QT_VERSION="
 set /p "QT_VERSION="=<"%HERE%..\..\QT_VERSION"
 if not defined QT_VERSION exit /b 1
-if not defined QT_ROOT set QT_ROOT=D:\Novels\native_desk_proto\qt611\%QT_VERSION%\msvc2022_64
-if not defined CMAKE_BIN set CMAKE_BIN=D:\Novels\native_desk_proto\qt\Tools\CMake_64\bin
-if not defined NINJA_BIN set NINJA_BIN=D:\Novels\native_desk_proto\qt\Tools\Ninja
+if not defined QT_ROOT set QT_ROOT=%ABOOK_TOOLS_ROOT%\native_desk_proto\qt611\%QT_VERSION%\msvc2022_64
+if not defined CMAKE_BIN set CMAKE_BIN=%ABOOK_TOOLS_ROOT%\native_desk_proto\qt\Tools\CMake_64\bin
+if not defined NINJA_BIN set NINJA_BIN=%ABOOK_TOOLS_ROOT%\native_desk_proto\qt\Tools\Ninja
 if not defined VCVARS call "%~dp0..\find_vcvars.bat"
 if not defined VCVARS exit /b 1
-set OUT=D:\Novels\native_desk_proto\audiobench
+set OUT=%ABOOK_TOOLS_ROOT%\native_desk_proto\audiobench
 call "%VCVARS%" >nul
 "%ABOOK_PYTHON%" -X utf8 "%HERE%..\qt_sdk.py" --check-root "%QT_ROOT%"
 if errorlevel 1 exit /b 1

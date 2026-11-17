@@ -5,6 +5,8 @@ rem   build.bat package   build, then dist\resources (embedded Python + app) and
 rem   build.bat installer package, then the NSIS installer (installer\abook.nsi) tested in a fake profile, signed for the updater
 rem   build.bat clean     remove build\ and dist\ with Python shutil
 rem Override with env vars: QWK_ROOT (QWindowKit, built by tools\build_qwindowkit.bat when missing), QT_ROOT (Qt from QT_VERSION, msvc2022_64), CMAKE_BIN, NINJA_BIN, VCVARS, ABOOK_PYTHON.
+rem Their defaults sit under ABOOK_TOOLS_ROOT (default: the folder holding this checkout): native_desk_proto\ for the SDKs, and ABOOK_PYTHON is
+rem this checkout's runtime\.venv, else the one of the main checkout ABook\ beside it. No machine-specific path is written here.
 setlocal
 set HERE=%~dp0
 rem Owner 27-10: test windows never appear on the screen
@@ -12,13 +14,15 @@ set QT_QPA_PLATFORM=offscreen
 set "QT_VERSION="
 set /p "QT_VERSION="=<"%HERE%QT_VERSION"
 if not defined QT_VERSION exit /b 1
-if not defined QT_ROOT set QT_ROOT=D:\Novels\native_desk_proto\qt611\%QT_VERSION%\msvc2022_64
-if not defined CMAKE_BIN set CMAKE_BIN=D:\Novels\native_desk_proto\qt\Tools\CMake_64\bin
-if not defined NINJA_BIN set NINJA_BIN=D:\Novels\native_desk_proto\qt\Tools\Ninja
+if not defined ABOOK_TOOLS_ROOT for %%I in ("%HERE%..\..\..") do set "ABOOK_TOOLS_ROOT=%%~fI"
+if not defined QT_ROOT set QT_ROOT=%ABOOK_TOOLS_ROOT%\native_desk_proto\qt611\%QT_VERSION%\msvc2022_64
+if not defined CMAKE_BIN set CMAKE_BIN=%ABOOK_TOOLS_ROOT%\native_desk_proto\qt\Tools\CMake_64\bin
+if not defined NINJA_BIN set NINJA_BIN=%ABOOK_TOOLS_ROOT%\native_desk_proto\qt\Tools\Ninja
 if not defined VCVARS call "%~dp0tools\find_vcvars.bat"
 if not defined VCVARS exit /b 1
-if not defined QWK_ROOT set QWK_ROOT=D:\Novels\native_desk_proto\qwk
-if not defined ABOOK_PYTHON set ABOOK_PYTHON=D:\Novels\ABook\_internal\runtime\.venv\Scripts\python.exe
+if not defined QWK_ROOT set QWK_ROOT=%ABOOK_TOOLS_ROOT%\native_desk_proto\qwk
+if not defined ABOOK_PYTHON if exist "%HERE%..\runtime\.venv\Scripts\python.exe" for %%I in ("%HERE%..\runtime\.venv\Scripts\python.exe") do set "ABOOK_PYTHON=%%~fI"
+if not defined ABOOK_PYTHON set ABOOK_PYTHON=%ABOOK_TOOLS_ROOT%\ABook\_internal\runtime\.venv\Scripts\python.exe
 rem cmd returns from `call :label` by byte offset: with LF endings it resumes on the wrong line and silently skips steps
 rem (01-11: 5 of 15 Qt test suites never ran). .gitattributes keeps *.bat CRLF; an old checkout must be re-checked out.
 "%ABOOK_PYTHON%" -X utf8 -c "import sys; d=open(sys.argv[1],'rb').read(); sys.exit(0 if d.count(b'\n')==d.count(b'\r\n') else 'ERROR: build.bat has LF line endings, so cmd skips steps after call - delete it and git checkout it again (eol=crlf)')" "%~f0"

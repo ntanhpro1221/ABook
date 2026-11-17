@@ -47,7 +47,12 @@ def test_sdk_defaults_and_qwk_share_the_version_file(tmp_path, monkeypatch):
     monkeypatch.setattr(sdk, "VERSION_FILE", version_file)
     monkeypatch.delenv("QT_ROOT", raising=False)
     monkeypatch.delenv("QWK_ROOT", raising=False)
-    assert sdk.qt_root() == Path("D:/Novels/native_desk_proto/qt611") / sdk.qt_version() / "msvc2022_64"
+    monkeypatch.delenv("ABOOK_TOOLS_ROOT", raising=False)
+    # Default beside the checkout (no machine path in the repo); ABOOK_TOOLS_ROOT moves every SDK default at once
+    assert sdk.qt_root() == QT.resolve().parents[2] / "native_desk_proto/qt611" / sdk.qt_version() / "msvc2022_64"
+    monkeypatch.setenv("ABOOK_TOOLS_ROOT", str(tmp_path / "tools"))
+    assert sdk.qt_root() == tmp_path / "tools/native_desk_proto/qt611" / sdk.qt_version() / "msvc2022_64"
+    assert sdk.qwk_root() == tmp_path / "tools/native_desk_proto/qwk"
     assert sdk.qwk_install_root() == sdk.qwk_root() / ("inst-" + sdk.qt_version())
     monkeypatch.setenv("QT_ROOT", str(tmp_path / "sdk"))
     monkeypatch.setenv("QWK_ROOT", str(tmp_path / "qwk"))
