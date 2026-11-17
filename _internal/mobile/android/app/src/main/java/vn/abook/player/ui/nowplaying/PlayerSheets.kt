@@ -127,9 +127,10 @@ fun PlayerSheets(state: NowPlayingState, model: NowPlayingModel, window: NowPlay
                     PlayerSheet.Sleep -> {
                         val options = model.sleepOptions
                         val active = state.sleep.kind != SleepKind.Off
-                        var draftMinutes by remember(window.sheetOpen, state.bookId) { mutableIntStateOf(window.lastSleepMinutes) }
+                        // Mốc mở sẵn: lần hẹn cuối người nghe tự đặt (lõi nhớ qua tắt app; chưa từng đặt: 30 phút).
+                        val last = remember(window.sheetOpen, state.sleep) { model.lastSleep }
+                        var draftMinutes by remember(window.sheetOpen, state.bookId, last.minutes) { mutableIntStateOf(last.minutes) }
                         fun setMinutes(minutes: Int) {
-                            window.lastSleepMinutes = minutes
                             draftMinutes = minutes
                             model.setSleep(SleepKind.Minutes, minutes)
                         }
@@ -147,8 +148,9 @@ fun PlayerSheets(state: NowPlayingState, model: NowPlayingModel, window: NowPlay
                                         Reveal(SleepText.recentlyStopped(state.sleep, now)) {
                                             Column {
                                                 BasicText(SleepText.stoppedAt(state.sleep.stoppedAtMs), style = Abook.type.body, modifier = Modifier.testTag("sleep_stopped"))
-                                                TextAction(SleepText.restart(window.lastSleepMinutes), {
-                                                    model.setSleep(SleepKind.Minutes, window.lastSleepMinutes); window.closeSheet()
+                                                TextAction(SleepText.restart(last), {
+                                                    if (last.isChapter) model.setSleep(SleepKind.Chapter, last.chapters) else model.setSleep(SleepKind.Minutes, last.minutes)
+                                                    window.closeSheet()
                                                 }, "sleep_again", align = Alignment.CenterStart)
                                             }
                                         }
@@ -168,7 +170,7 @@ fun PlayerSheets(state: NowPlayingState, model: NowPlayingModel, window: NowPlay
                             },
                             special = {
                                 Reveal(!minutesNow) { TextAction(S.s_xong_a6f4543a, { setMinutes(draftMinutes); window.closeSheet() }, "sleep_confirm", align = Alignment.CenterEnd) }
-                                SleepChapterChoice(state.sleep) { count -> model.setSleep(SleepKind.Chapter, count) }
+                                SleepChapterChoice(state.sleep, last.chapters) { count -> model.setSleep(SleepKind.Chapter, count) }
                             },
                         )
                         BasicText(SleepText.note(options, model.hadNight), style = Abook.type.caption.copy(color = Abook.colors.text2),
@@ -338,8 +340,8 @@ private fun LookPage(window: NowPlayingWindowState) {
 
 /** Chapter counts share the same value field, text color and label rhythm as the minutes picker. */
 @Composable
-private fun SleepChapterChoice(sleep: PlayerSleep, onSet: (Int) -> Unit) {
-    var chapters by remember { mutableIntStateOf(if (sleep.kind == SleepKind.Chapter) sleep.minutes.coerceAtLeast(1) else 1) }
+private fun SleepChapterChoice(sleep: PlayerSleep, lastChapters: Int, onSet: (Int) -> Unit) {
+    var chapters by remember(lastChapters) { mutableIntStateOf(if (sleep.kind == SleepKind.Chapter) sleep.minutes.coerceAtLeast(1) else lastChapters) }
     val active = sleep.kind == SleepKind.Chapter && sleep.minutes.coerceAtLeast(1) == chapters
     ValuePicker(ValueSpecs.sleepChapters, chapters.toDouble(), { next ->
         chapters = next.toInt(); vn.abook.player.Feedback.play("toggle"); onSet(chapters)

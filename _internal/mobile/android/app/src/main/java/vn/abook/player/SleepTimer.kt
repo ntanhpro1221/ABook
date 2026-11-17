@@ -72,7 +72,21 @@ object SleepTimer {
         Playback.emit("sleep")
     }
 
-    val lastMinutes: Int get() = minutes.takeIf(::minutesAllowed) ?: 30
+    /** Lần hẹn cuối người nghe tự đặt (chưa từng đặt: 30 phút): mốc mở sẵn của tấm Hẹn giờ và nút "Bật lại". Nạp ở [ListenPrefs.load], nhớ ở
+     *  [ListenPrefs.saveLastSleep] mỗi lần người nghe tự đặt ([setMinutes] không có `reason`, [setEndOfChapter]); lịch đêm tự hẹn không đổi nó. */
+    var last = LastSleep()
+        internal set
+
+    private fun remember(choice: LastSleep) {
+        last = choice
+        ListenPrefs.saveLastSleep(choice)
+    }
+
+    /** Nút "Bật lại" (tấm Hẹn giờ, widget): đặt lại đúng lần hẹn cuối - số phút hay số chương. */
+    fun restartLast() {
+        val choice = last
+        if (choice.isChapter) setEndOfChapter(choice.chapters) else setMinutes(choice.minutes)
+    }
     /** "Hết N chương": số chương còn phải nghe hết (1 = chương này). Chỉ chương cuối của hẹn giữ ở cuối mục ([Playback.holdAtItemEnd]); các chương trước
      *  đếm xuống ở lúc sang chương tự nhiên ([onChapterChanged]), không nhỏ dần. */
     var chapters = 1
@@ -214,7 +228,10 @@ object SleepTimer {
 
     fun setMinutes(value: Int, reason: String? = null, feedback: Boolean = true) {
         if (!minutesAllowed(value)) return
-        if (reason == null) onUserActivity("timer")
+        if (reason == null) {
+            onUserActivity("timer")
+            remember(last.withMinutes(value))
+        }
         automaticReason = reason?.takeIf { it == "schedule" }.orEmpty()
         scheduleFor = if (reason == "schedule") scheduleWindow().orEmpty() else ""
         retained = false
@@ -243,6 +260,7 @@ object SleepTimer {
     fun setEndOfChapter(count: Int = 1) {
         if (count < ValueSpecs.sleepChapters.min || count > ValueSpecs.sleepChapters.max) return
         onUserActivity("timer")
+        remember(last.withChapters(count))
         chapters = count
         selectedMode = Mode.CHAPTER
         selectedChapters = count

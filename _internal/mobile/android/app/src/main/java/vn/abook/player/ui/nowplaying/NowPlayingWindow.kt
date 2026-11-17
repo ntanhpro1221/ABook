@@ -101,8 +101,6 @@ class NowPlayingWindowState(private val scope: CoroutineScope) {
         return viewport
     }
 
-    /** Số phút của lần hẹn giờ gần nhất: tấm Hẹn giờ mời "Bật lại N phút" khi hẹn giờ vừa tắt tiếng (web: 30 lúc đầu). */
-    var lastSleepMinutes by mutableIntStateOf(30)
     var sheet by mutableStateOf(PlayerSheet.Speed)
         private set
     var sheetOpen by mutableStateOf(false)
