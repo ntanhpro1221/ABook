@@ -72,12 +72,13 @@ def pinned_file(relpath: str, ref: str | None = None) -> str:
 
 
 def read_pins(ref: str | None = None) -> list[tuple[str, str]]:
-    return PIN_PATTERN.findall(pinned_file("pyproject.toml", ref))
+    """Mỗi gói một lần: setuptools được ghim hai chỗ (build backend và constraint) nên chuông từng đếm nó hai lần."""
+    return list(dict.fromkeys(PIN_PATTERN.findall(pinned_file("pyproject.toml", ref))))
 
 
-def pinned_revision(constant: str, ref: str | None = None) -> str:
-    """Revision HF ghim ở hằng số `constant` của `abook/runtime_contract.py` (theo `ref`); "" nếu không có."""
-    match = re.search(rf'^{re.escape(constant)}\s*=\s*"([0-9a-f]+)"', pinned_file("abook/runtime_contract.py", ref), re.MULTILINE)
+def pinned_revision(constant: str, ref: str | None = None, relpath: str = "abook/runtime_contract.py") -> str:
+    """Revision HF ghim ở hằng số `constant` của `relpath` (theo `ref`); "" nếu không có."""
+    match = re.search(rf'^{re.escape(constant)}\s*=\s*"([0-9a-f]+)"', pinned_file(relpath, ref), re.MULTILINE)
     return match.group(1) if match else ""
 
 
@@ -233,11 +234,12 @@ def check_ollama() -> dict[str, Any]:
 # ---------------------------------------------------------------------------------------------
 TORCH_FAMILY = ("torch", "torchaudio", "torchvision")
 HF_PINNED_MODELS = {
-    # repo -> hằng số revision trong abook.runtime_contract (None = không ghim ở đó)
-    "pnnbao-ump/VieNeu-TTS-v3-Turbo": "VIENEU_CACHE_REVISION",
-    "facebook/wav2vec2-base": "WAV2VEC2_CACHE_REVISION",
-    "timm/tf_efficientnetv2_s.in21k_ft_in1k": "TIMM_CACHE_REVISION",
-    "mobiuslabsgmbh/faster-whisper-large-v3-turbo": None,
+    # repo -> (file tính từ _internal/, hằng số revision trong file ấy)
+    "pnnbao-ump/VieNeu-TTS-v3-Turbo": ("abook/runtime_contract.py", "VIENEU_CACHE_REVISION"),
+    "facebook/wav2vec2-base": ("abook/runtime_contract.py", "WAV2VEC2_CACHE_REVISION"),
+    "timm/tf_efficientnetv2_s.in21k_ft_in1k": ("abook/runtime_contract.py", "TIMM_CACHE_REVISION"),
+    # Studio tải đúng revision này (studio_setup.py); trước 18-11 bảng ghi None nên json in "pinned": "".
+    "mobiuslabsgmbh/faster-whisper-large-v3-turbo": ("abook/webui/studio_setup.py", "FASTER_WHISPER_REVISION"),
 }
 GIT_PINS = {"utmosv2": ("sarulab-speech/UTMOSv2", r"UTMOSv2\.git@([0-9a-f]{40})")}
 OLLAMA_CONFIGURED_MODELS = ("qwen3:8b", "qwen3:4b")
@@ -287,8 +289,8 @@ def check_hf_models(*, offline: bool) -> list[dict[str, Any]]:
     if offline:
         return []
     rows = []
-    for repo, constant in HF_PINNED_MODELS.items():
-        pinned = pinned_revision(constant) if constant else ""
+    for repo, (relpath, constant) in HF_PINNED_MODELS.items():
+        pinned = pinned_revision(constant, relpath=relpath)
         row: dict[str, Any] = {"repo": repo, "pinned": pinned[:12], "main": "", "changed_files": []}
         try:
             info = _get_json(f"https://huggingface.co/api/models/{repo}")

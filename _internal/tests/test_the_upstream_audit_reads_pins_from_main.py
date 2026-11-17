@@ -61,3 +61,22 @@ def test_model_revisions_also_come_from_the_ref(tmp_path, monkeypatch):
 
 def test_the_default_ref_is_origin_main():
     assert checker.PINS_REF == "origin/main"
+
+
+def test_a_package_pinned_twice_is_listed_once(tmp_path, monkeypatch):
+    """18-11: setuptools sits in build-system requires and in the uv constraints, and the alert counted it twice."""
+    inner = tmp_path / "_internal"
+    inner.mkdir()
+    (inner / "pyproject.toml").write_text(
+        'requires = ["setuptools==81.0.0", "wheel"]\ndependencies = ["timm==1.0.30"]\n'
+        'constraint-dependencies = ["setuptools==81.0.0", "brotli==1.2.1"]\n', encoding="utf-8")
+    monkeypatch.setattr(checker, "PYPROJECT", inner / "pyproject.toml")
+    assert checker.read_pins("") == [("setuptools", "81.0.0"), ("timm", "1.0.30"), ("brotli", "1.2.1")]
+
+
+def test_every_pinned_hf_model_resolves_to_a_revision():
+    """faster-whisper was listed with no pin (json said "pinned": "") although Studio downloads a fixed revision."""
+    for repo, (relpath, constant) in checker.HF_PINNED_MODELS.items():
+        assert len(checker.pinned_revision(constant, "", relpath)) == 40, repo
+    assert checker.pinned_revision("FASTER_WHISPER_REVISION", "", "abook/webui/studio_setup.py") == (
+        "0a363e9161cbc7ed1431c9597a8ceaf0c4f78fcf")

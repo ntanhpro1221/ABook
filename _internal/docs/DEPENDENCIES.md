@@ -3,6 +3,45 @@
 File này là trách nhiệm thường trực của người dev project, không phải một lần rà soát. Mỗi phiên bản
 phải kiểm lại bảng dưới và ghi kết quả vào `VERSIONS.md`.
 
+## 18-11 — soát thượng nguồn: hai bản vá bị lùi ở 0.4.168, ba CVE Ollama (`dev/deps175`)
+
+**Bản vá bị lùi.** 0.4.168 ghim theo runtime đo được (mục "0.4.168 - measured runtime declarations" bên dưới). Việc này
+kéo hai gói mà dev đã nâng về lại bản có lỗ:
+- `brotli` 1.2.1 → 1.2.0: CVE-2026-111497, ghi ngoài vùng nhớ trong bộ giải nén (1.0.3-1.2.0). Gói này đi tới máy người
+  dùng qua `studio-requirements.txt`. Khi có nó, urllib3/httpx tự xin và tự giải `br`.
+- `setuptools` 81.0.0 → 78.1.0: CVE-2025-47273 (path traversal ở `PackageIndex`, sửa từ 78.1.1).
+
+Hai gói này đã về lại 1.2.1 / 81.0.0 trên `dev/deps175`, đo trên venv thử riêng. setuptools vẫn phải <82 chừng nào torch
+còn ở 2.11. Bài học: khi kéo ghim về theo runtime, phải đối chiếu từng gói bị lùi với bảng CVE, không chỉ với số phiên bản.
+
+**Ollama 0.33.2 vẫn giữ ghim, dù có ba CVE chạm đúng bản này** (bản soát 12-11 bỏ sót vì chỉ đọc release notes v0.40.x):
+
+| CVE | Lỗi | Điều kiện | Bản sửa (theo bên thứ ba) |
+|---|---|---|---|
+| CVE-2026-85180 | SSRF qua redirect blob tensor (`x/transfer/download.go`), 0.30.0-0.33.2 | registry độc phục vụ manifest tensor-layer **và** ta kéo từ đó | 0.34.2 |
+| CVE-2026-108836 | SSRF ở Pull API (`IsValid`, `types/model/name.go`), tới 0.34.1 | gọi được API pull với tên tuỳ ý | 0.34.2 (`AllowPrivateHosts`) |
+| CVE-2026-103663 | path traversal ở `/api/pull` qua digest layer (`digestToPath`) | registry độc hoặc gọi được API | 0.35.0 |
+
+Lý do chấp nhận rủi ro:
+- Studio bind `OLLAMA_HOST=127.0.0.1:<cổng riêng>`.
+- `_pull` chỉ nhận tên cố định (model phân tích, `music_moods.MODEL`), không nhận tên người dùng gõ hay `hf.co/...`.
+- Registry là registry.ollama.ai qua TLS.
+
+Như vậy cả ba lỗ đều cần registry chính thức bị chiếm, hoặc một tiến trình cục bộ gọi thẳng API. Còn bỏ ghim thì đổi digest
+model, tức đổi cả sách: từ 0.40.2 Ollama tự nâng model nền. Bản sửa chưa xác minh được trên release notes chính thức.
+Việc kế: đo 0.35.x trên cây riêng và kho model riêng (digest, không migration, phân tích trùng byte trên bộ gold). Trong lúc
+chờ, trên máy chạy 0.33.2 đừng `ollama pull` từ registry lạ hay `hf.co/...` không rõ nguồn.
+
+**Bộ kiểm `check_dependency_updates.py`:**
+- faster-whisper nay đọc ghim `FASTER_WHISPER_REVISION` từ `studio_setup.py`; trước đó bảng ghi `None` nên json in `"pinned": ""`.
+- `setuptools` không còn bị đếm hai lần (build backend + constraint).
+- "Không có lượt 18-11" không phải lỗi. Bản soát được viết trước 06:17 ngày 18-11, còn tác vụ `ABookUpstreamDaily` vẫn Ready,
+  lượt 17-11 trả 0 và lượt kế đặt 18-11 06:17. Log có đủ mọi ngày từ 10-11.
+- Tác vụ chạy checker của `origin/main`, nên hai sửa trên chỉ có hiệu lực sau khi nhánh này vào main.
+
+Để sau, không làm trong đợt này: transformers 5.23 + timm 1.0.31 (cần đo embedding CLAP và MOS UTMOSv2), và Qt C++ 6.12 LTS
+(chờ 6.12.1, QWindowKit dùng Private API).
+
 ## 17-11 — năm bản vá bảo mật cho 0.4.175 (`dev/deps175`)
 
 | Thành phần | Cũ → mới | Vì sao | Kiểm |
