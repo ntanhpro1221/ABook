@@ -11,6 +11,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.disabled
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
@@ -18,6 +19,7 @@ import vn.abook.player.S
 import vn.abook.player.ui.components.*
 import vn.abook.player.ui.studio.*
 import vn.abook.player.ui.studio.parts.DecisionStrip
+import vn.abook.player.ui.studio.parts.collectClip
 import vn.abook.player.ui.theme.Abook
 import vn.abook.player.ui.theme.Dim
 
@@ -54,6 +56,7 @@ internal fun PlayerLineSheet(editor: PlayerLineEditor, dismiss: () -> Unit) {
         BasicText(when (editor.step) {
             "speaker" -> if (line?.kind == "thought") S.s_ai_nghi_cau_nay_1d5dd20c else S.s_ai_noi_cau_nay_39d97e95
             "delivery" -> S.s_cach_doc_cau_nay_d8d0b9f1
+            "word" -> S.s_doc_tu_nay_la_00b9f99e
             else -> S.s_sua_cau_nay_a82aec43
         }, style = Abook.type.sectionTitle)
         BasicText(selection.paragraph.text, style = Abook.type.bodySmall)
@@ -64,9 +67,11 @@ internal fun PlayerLineSheet(editor: PlayerLineEditor, dismiss: () -> Unit) {
             RowHint(editor.problem.ifEmpty { snapshot?.blocked.orEmpty() }, color = Abook.colors.danger)
         }
         editor.decisions?.let { DecisionStrip(it) }
-        SheetPages(editor.step, { when (it) { "speaker" -> 1; "delivery" -> 2; else -> 0 } }, "player_line_pages") { step ->
+        editor.readings?.let { DecisionStrip(it.decisions) }
+        SheetPages(editor.step, { when (it) { "speaker" -> 1; "delivery" -> 2; "word" -> 3; else -> 0 } }, "player_line_pages") { step ->
             Column(Modifier.fillMaxWidth()) {
                 if (line != null && snapshot != null) when (step) {
+                    "word" -> editor.readings?.let { WordStep(editor, it) }
                     "speaker" -> ScriptPeoplePicker(snapshot.script, ScriptLogic.speaker(line), showTitle = false) { editor.assign(it) }
                     "delivery" -> ScriptDeliveryEditor(snapshot.script, line, { editor.step = "menu" }, reading = true, showTitle = false, modifier = Modifier.heightIn(max = bodyLimit), save = editor::delivery)
                     else -> {
@@ -77,11 +82,29 @@ internal fun PlayerLineSheet(editor: PlayerLineEditor, dismiss: () -> Unit) {
                         LineAction(S.s_nghe_thu_fa024065, LucidePaths.PLAY, line.hasAudio, "player_line_sample", action = editor::sample)
                         LineAction(S.s_thu_lai_cau_nay_034c2834, LucidePaths.ROTATE_CCW, editor.enabled && line.hasAudio && !snapshot.retake, "player_line_retake",
                             note = when { !line.hasAudio -> S.s_chuong_nay_chua_co_audio_chua_co_gi_de_thu_47e4d310; snapshot.retake -> S.s_da_ghi_dang_cho_may_lam_sach_7335a8a2; else -> S.s_doc_lai_mot_lan_khac_giong_nhu_cu_a0908dad }, chevron = false, action = editor::retake)
+                        LineAction(S.s_sua_cach_doc_mot_tu_ad71101c, LucidePaths.TYPE, editor.wordsEnabled, "player_line_word", note = S.s_chon_tu_may_doc_sai_go_cach_doc_dung_3c5ef37e, action = editor::openWords)
                     }
                 }
                 TextAction(if (step == "menu") S.s_dong_5d54c2a1 else S.s_quay_lai_6d793582,
                     { if (step == "menu") dismiss() else editor.step = "menu" }, "player_line_back")
             }
+        }
+    }
+}
+
+/** Bước "Sửa cách đọc một từ" (WordView của LineWishes.tsx): chạm từ máy đọc sai, ô sửa của Studio mở ngay dưới. */
+@Composable
+private fun WordStep(editor: PlayerLineEditor, readings: StudioReadingsState) {
+    val clip = readings.clip.collectClip()
+    var editing by remember(editor.word) { mutableStateOf(false) }
+    Column(Modifier.fillMaxWidth().testTag("player_line_word_step"), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        RowHint(S.s_cham_vao_tu_may_doc_sai_thuong_la_ten_rien_2afff698)
+        FlowRow(Modifier.fillMaxWidth().semantics { contentDescription = S.s_cac_tu_trong_cau_e3fc9264 }, horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            for (word in editor.words) ScopeChoice(word, editor.word == word, true, "player_line_word_chip") { editor.pickWord(word) }
+        }
+        Reveal(editor.word.isNotEmpty()) {
+            val item = remember(editor.word) { NameReading(editor.word, "", false, 0, null, false, null) }
+            ReadingRow(readings, item, clip, fresh = true, editing = editing, onEdit = { editing = it })
         }
     }
 }

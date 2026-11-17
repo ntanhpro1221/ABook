@@ -136,6 +136,7 @@ ICONS = sorted({
     "trash-2",
     "triangle-alert",
     "tv",
+    "type",
     "undo-2",
     "unplug",
     "upload",

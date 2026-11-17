@@ -82,6 +82,26 @@ Item {
             compare(DesktopApi.requests.filter(r => r.method === "POST" && r.path.endsWith("/speaker")).length, 1)
             editor.close(); compare(Player.position, before)
         }
+        // Soát 0.4.173 B10/B13b: hàng "Sửa cách đọc một từ" như web, mở được cả với câu chưa nhận ra (file ABook bản cũ); "Nghe thử" chỉ xét audio.
+        function test_wordRowOpensTheReadingEditorEvenForAnUnidentifiedLine() {
+            const row = cases.find(item => item.name === "missing-stable-id"), editor = prepare(row)
+            verify(!editor.identified); compare(editor.problem, "")
+            function one(name) { const all = Layers.findAll(host, name); verify(all.length > 0, name); return all[0] }
+            VisualReady.render(this, host.Window.window, host, qtVisualReady)
+            verify(!one("playerLineWho").enabled); verify(!one("playerLineRetake").enabled)
+            verify(one("playerLineSample").enabled)
+            compare(L.wordsOf("Rô-bốt nói: rô-bốt l’ami, 10 giờ!"), ["Rô-bốt", "nói", "l’ami", "10", "giờ"])
+            mouseClick(one("playerLineWord")); compare(editor.step, "word")
+            VisualReady.render(this, host.Window.window, host, qtVisualReady)
+            const chips = Layers.findAll(host, "playerLineWordChip")
+            compare(chips.map(chip => chip.text), L.wordsOf(row.source.text))
+            mouseClick(chips[0]); compare(editor.word, chips[0].text)
+            const wordRow = one("playerLineWordRow")
+            compare(wordRow.surface, chips[0].text); verify(wordRow.fresh)
+            editor.close(); compare(editor.step, "menu")
+            compare(DesktopApi.requests.filter(r => r.method === "POST").length, 0)
+            editor.close()
+        }
         function test_backFromChildOnlyReturnsToMenu() {
             const editor = prepare(cases[0]), before = Player.position
             editor.step = "speaker"; editor.close(); verify(editor.open); compare(editor.step, "menu")
