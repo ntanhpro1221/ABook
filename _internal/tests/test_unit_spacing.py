@@ -1,4 +1,15 @@
-from scripts.check_unit_spacing import NBSP, breaks, findings, join, source_lines
+from scripts.check_unit_spacing import NBSP, breaks, findings, join, jsx_escape_lines, source_lines
+
+
+def test_jsx_attribute_strings_never_carry_javascript_escapes():
+    """suffix="\\u00a0dBFS" in JSX renders the six characters, not a no-break space."""
+    for line in ('<FxSlider suffix="\\u00a0dBFS" onChange={f}/>', "  title='Dòng 1\\nDòng 2'", '<X a={1} label="x\\x41"/>',
+                 '<X label="tab\\there"/>'):
+        assert jsx_escape_lines(line) == [1], line
+    for line in ('<FxSlider suffix={"\\u00a0dBFS"} />', "<FxSlider suffix={DBFS}/>", "const raw='Chương 1\\n\\nCâu.';",
+                 'let x="\\n";', 'function f(a="\\n") {}', 'items.join("\\n")', '<input pattern="\\d+"/>', 'x === "\\n"',
+                 '// suffix="\\u00a0dB"'):
+        assert jsx_escape_lines(line) == [], line
 
 
 def test_catalog_and_sources_keep_numbers_with_their_units():
