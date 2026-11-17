@@ -151,6 +151,32 @@ class NowPlayingUiTest {
         rule.onNodeWithTag("voice_add").performClick()
         org.junit.Assert.assertTrue(opened)
     }
+    /** Soát 17-11: viên "Kéo xuống còn giọng khác" giữ cú BẤM (chạm nó không chọn giọng nằm dưới) nhưng để cú VUỐT bắt đầu trên nó cuộn danh sách
+     *  giọng - đúng chỗ nó mời kéo. Bản trước (pointerInput{detectTapGestures}) chặn luôn cú vuốt. */
+    @Test fun voiceHintSwallowsTapsButScrolls() {
+        show(reading = true, sheet = PlayerSheet.Voice, base = FakeNowPlayingModel.demoState().copy(
+            voices = List(30) { PlayerVoice("device:test$it", "Tiếng Việt ${it + 1}") }, voiceId = "device:test0"))
+        rule.waitForIdle()
+        val hint = rule.onNodeWithTag("voice_more_hint").fetchSemanticsNode().boundsInRoot
+        val rowUnder = rule.onAllNodes(SemanticsMatcher("voice row") { node ->
+            node.config.getOrNull(androidx.compose.ui.semantics.SemanticsProperties.TestTag)?.startsWith("voice_device:") == true
+        }).fetchSemanticsNodes().firstOrNull { it.boundsInRoot.contains(hint.center) }
+        org.junit.Assert.assertNotNull("a voice row lies under the hint", rowUnder)
+        rule.onRoot().performTouchInput { click(hint.center) }
+        rule.waitForIdle()
+        assertEquals("a tap on the hint picked the voice under it", "device:test0", model.state.value.voiceId)
+        rule.onNodeWithTag("voice_more_hint").assertExists()
+        val first = rule.onNodeWithTag("voice_device:test0").fetchSemanticsNode().boundsInRoot.top
+        rule.onRoot().performTouchInput {
+            down(hint.center)
+            repeat(10) { moveBy(androidx.compose.ui.geometry.Offset(0f, -30f)) }
+            up()
+        }
+        rule.waitForIdle()
+        val after = rule.onAllNodesWithTag("voice_device:test0").fetchSemanticsNodes().firstOrNull()?.boundsInRoot?.top ?: Float.NEGATIVE_INFINITY
+        org.junit.Assert.assertTrue("a swipe from the hint did not scroll the voice list: $first -> $after", after < first - 100f)
+        assertEquals("device:test0", model.state.value.voiceId)
+    }
     @Test fun voiceAffordanceLight() = voiceAffordance(false)
     @Test fun voiceAffordanceDark() = voiceAffordance(true)
     // Bộ chọn giá trị (DESIGN mục 6): ảnh gallery mỗi tấm đã chuyển, sáng / tối, 360 dp, chữ 130 %.

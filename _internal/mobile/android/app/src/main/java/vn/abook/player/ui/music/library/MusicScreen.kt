@@ -379,17 +379,28 @@ private fun ChipOptions(title: String, options: List<Label>, value: String, onPi
  */
 @Composable
 private fun PreviewBar(ui: LibraryUi, state: LibraryState, modifier: Modifier = Modifier, onOpen: (String) -> Unit) {
-    val link = ui.previewing ?: return
-    val track = ui.index?.byLink?.get(link) ?: return
+    val link = ui.previewing
+    val track = link?.let { ui.index?.byLink?.get(it) }
+    val status = if (ui.previewLoading) S.s_buffering else if (ui.previewPaused) S.s_music_paused else S.s_dang_nghe_thu_f1fb4cba
+    // Hiện / ẩn có chuyển động như MotionPresence (web) và Reveal (Qt): thanh đang mờ đi giữ bài nó vừa hiện (soát 17-11: trước bật / tắt cứng).
+    SwapContent(if (link != null && track != null) Triple(link, track, status) else null, contentKey = { shown -> shown != null }, modifier = modifier) { shown ->
+        if (shown != null) PreviewBarBody(shown.first, shown.second, shown.third, state, onOpen)
+    }
+}
+
+@Composable
+private fun PreviewBarBody(link: String, track: MusicLibrary.Track, status: String, state: LibraryState, onOpen: (String) -> Unit) {
     val colors = Abook.colors
+    val line = listOf(status, track.title).dotJoined()
     Row(
-        modifier.padding(horizontal = Dim.margin).padding(bottom = navigationClearance() + Dim.s8).fillMaxWidth()
-            .pressable { onOpen(link) }.semantics { contentDescription = S.s_mo_0_7a5716e0(track.title) }
+        Modifier.padding(horizontal = Dim.margin).padding(bottom = navigationClearance() + Dim.s8).fillMaxWidth()
+            // Tên đọc = chính dòng chữ (trạng thái · tên bài): "Mở <tên>" từng làm mất "Đang đệm / Đã tạm dừng" (soát 17-11); việc "Mở" là nhãn hành động.
+            .pressable(onClickLabel = S.s_mo_741bd2c2) { onOpen(link) }.semantics { contentDescription = line }
             .clip(RoundedCornerShape(Dim.radiusControl)).background(colors.panel).border(1.dp, colors.line, RoundedCornerShape(Dim.radiusControl))
             .padding(start = Dim.s16).testTag("preview_bar"),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        BasicText(listOf(if (ui.previewLoading) S.s_buffering else if (ui.previewPaused) S.s_music_paused else S.s_dang_nghe_thu_f1fb4cba, track.title).dotJoined(), style = Abook.type.label, modifier = Modifier.weight(1f).padding(vertical = Dim.s12))
+        BasicText(line, style = Abook.type.label, modifier = Modifier.weight(1f).padding(vertical = Dim.s12))
         Box(
             Modifier.size(Dim.touch).pressable { state.stopPreview() }.semantics { contentDescription = S.s_dung_nghe_thu_41a2925b }.testTag("preview_stop"),
             contentAlignment = Alignment.Center,

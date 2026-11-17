@@ -291,7 +291,8 @@ private fun VoiceList(state: NowPlayingState, model: NowPlayingModel, window: No
                     }, "voice_add") }
                 }
             }
-            // Lời gợi ý nổi trên danh sách giọng: đang hiện thì nuốt chạm (cả chỗ chừa đáy), không để cú bấm lọt xuống chọn giọng nằm dưới.
+            // Lời gợi ý nổi trên danh sách giọng: đang hiện thì giữ cú bấm (cả chỗ chừa đáy), không để nó lọt xuống chọn giọng nằm dưới; cú vuốt bắt
+            // đầu trên viên gợi ý vẫn cuộn danh sách (floatingLayer chỉ giữ cú nhấn) - đúng chỗ lời gợi ý mời kéo.
             BasicText(S.s_keo_xuong_con_giong_khac_d4bb507b, Modifier.align(Alignment.BottomCenter).then(if (more) Modifier.floatingLayer() else Modifier).padding(bottom = Dim.s8).graphicsLayer { alpha = hint; translationY = (1f - hint) * 8.dp.toPx() }
                 .background(Abook.colors.panel, RoundedCornerShape(Dim.radiusCover)).padding(horizontal = 12.dp, vertical = 4.dp).testTag("voice_more_hint"),
                 style = Abook.type.caption)

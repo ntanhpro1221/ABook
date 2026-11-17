@@ -419,7 +419,9 @@ def test_l12_bites_floating_layers_that_let_a_tap_through(planted):
         "    IconButton {\n        id: fab\n        y: parent.height - height\n    }\n}\n", encoding="utf-8")
     problems = planted.l12_floating_layers()
     text = "\n".join(problems)
-    assert len([p for p in problems if "Bar.kt" in p]) == 1 and "Bar.kt:4:" in text, problems
+    # Soát 17-11: `.padding(8.dp).pressable {}` vẫn để phần đệm cho cú bấm lọt - bộ bắt chạm phải đứng trước padding đầu tiên.
+    assert len([p for p in problems if "Bar.kt" in p]) == 2 and "Bar.kt:4:" in text and "Bar.kt:6:" in text, problems
+    assert "Bar.kt:5:" not in text, problems
     assert "Bar.tsx:1:" in text and "Bar.tsx:2:" not in text and "Bar.tsx:3:" not in text, problems
     assert "Rectangle#bar" in text and "#shielded" not in text and "#fab" not in text, problems
     # An exception needs the exact site and its own reason; a stale one is reported.
@@ -432,3 +434,41 @@ def test_l12_bites_floating_layers_that_let_a_tap_through(planted):
     assert any("allow thừa" in p and "Gone.tsx" in p for p in problems), problems
     (root / android / "components/Components.kt").write_text("fun Modifier.other() = this\n", encoding="utf-8")
     assert any("thiếu Modifier.floatingLayer()" in p for p in planted.l12_floating_layers())
+
+
+GOOD_INTERACTIVE = ("Item {\n    id: root\n    property bool exclusiveTap: false\n    readonly property bool holdsTap: exclusiveTap || layer.shielded\n"
+                    "    QtObject { id: layer; property bool shielded: false\n"
+                    "        function scan() { for (let p = root.parent; p; p = p.parent) if (p.children[0] instanceof TapShield) return true; return false } }\n"
+                    "    TapHandler { gesturePolicy: root.holdsTap ? TapHandler.ReleaseWithinBounds : TapHandler.DragThreshold }\n}\n")
+GOOD_SHIELD = ("Item {\n    anchors.fill: parent\n    TapHandler { acceptedButtons: Qt.LeftButton | Qt.RightButton | Qt.MiddleButton; "
+               "gesturePolicy: TapHandler.ReleaseWithinBounds }\n    HoverHandler {}\n}\n")
+
+
+def test_l12_bites_a_button_in_a_shielded_layer_that_does_not_hold_its_tap(planted):
+    """Đo 17-11: nút (TapHandler thụ động) trong lớp có TapShield để cú bấm tới cả Interactive nằm dưới lớp (màn Đang nghe trên thư viện). Cách sửa
+    chung là Interactive tự giữ riêng cú bấm khi một tổ tiên có TapShield làm con đầu tiên; luật đỏ khi bất kỳ mắt xích nào của cách ấy gãy."""
+    root = planted.ROOT
+    qml = root / "desktop_qt/qml"
+    (qml / "Interactive.qml").write_text(GOOD_INTERACTIVE, encoding="utf-8")
+    (qml / "TapShield.qml").write_text(GOOD_SHIELD, encoding="utf-8")
+    (qml / "Layer.qml").write_text(
+        "Item {\n    Rectangle {\n        id: good\n        HoverHandler {}\n        TapShield {}\n        IconButton {}\n    }\n"
+        "    Rectangle {\n        id: late\n        Rectangle { anchors.fill: parent }\n        TapShield {}\n        IconButton {}\n    }\n"
+        "    Rectangle {\n        id: bare\n        MouseArea { anchors.fill: parent }\n        IconButton {}\n    }\n"
+        "    Rectangle {\n        id: shifted\n        transform: Translate { y: 4 }\n        Behavior on opacity { NumberAnimation {} }\n"
+        "        TapShield {}\n    }\n}\n", encoding="utf-8")
+    problems = planted.l12_qt_layer_problems()
+    text = "\n".join(problems)
+    assert "Layer.qml:11:" in text and "con đầu tiên" in text, problems         # khiên đứng sau nền: nút trong lớp không giữ cú bấm
+    assert "Layer.qml:16:" in text and "MouseArea" in text, problems            # lớp tự chặn bằng MouseArea trơn
+    assert "Layer.qml:5:" not in text and "Layer.qml:22:" not in text, problems  # Handler / giá trị thuộc tính / Behavior không phải con
+    assert len(problems) == 2, problems
+    # Interactive thôi dò khiên (hay gesturePolicy không theo holdsTap): mọi nút của mọi lớp lại để cú bấm lọt.
+    (qml / "Interactive.qml").write_text(GOOD_INTERACTIVE.replace("root.holdsTap ?", "root.exclusiveTap ?"), encoding="utf-8")
+    assert any("Interactive.qml" in p for p in planted.l12_qt_layer_problems())
+    (qml / "Interactive.qml").write_text(GOOD_INTERACTIVE.replace("instanceof TapShield", "!== null"), encoding="utf-8")
+    assert any("Interactive.qml" in p for p in planted.l12_qt_layer_problems())
+    # Khiên nuốt nút Back: Back của chuột không còn đóng Đang nghe.
+    (qml / "Interactive.qml").write_text(GOOD_INTERACTIVE, encoding="utf-8")
+    (qml / "TapShield.qml").write_text("MouseArea {\n    anchors.fill: parent\n    acceptedButtons: Qt.AllButtons\n}\n", encoding="utf-8")
+    assert any("TapShield.qml" in p and "Back" in p for p in planted.l12_qt_layer_problems())

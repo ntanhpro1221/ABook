@@ -43,7 +43,6 @@ Item {
                 font.pixelSize: Theme.sizeBodySmall
             }
             Interactive {
-                exclusiveTap: true      // nút của lớp nổi: giữ riêng cú bấm, không để nó tới thứ nằm dưới lớp
                 id: actionLabel
                 Reveal { shown: root.action !== "" }
                 anchors.verticalCenter: parent.verticalCenter

@@ -68,7 +68,9 @@ export function MusicScreen() {
 
 /** Thanh nhỏ "Đang nghe thử · tên · ■" ở đáy màn trong lúc nghe thử. Bấm thân thanh mở chi tiết của chính bài đang nghe thử - cùng `onOpen` mà dòng bài
  *  gọi; nút ■ chỉ dừng nghe thử. Thanh là lớp nổi đè lên danh sách: không lớp nào của nó được `pointer-events-none` (luật L12, scripts/ui_parity_rules.py),
- *  nên cú bấm vào chỗ trống / phần đệm của thanh không lọt xuống dòng bài nằm dưới. */
+ *  nên cú bấm vào chỗ trống / phần đệm của thanh không lọt xuống dòng bài nằm dưới. Tên đọc của nút thân thanh là chính dòng chữ (trạng thái Đang đệm /
+ *  Đã tạm dừng / Đang nghe thử · tên bài), gợi ý "Mở" nằm ở mô tả - như Qt (Accessible.description) và Android (onClickLabel). Tên bài dài xuống dòng,
+ *  không cắt. */
 export function PreviewBar({ preview, onOpen }: { preview: LibraryPreview; onOpen: (link: string) => void }) {
   const playing = preview.playing;
   return (
@@ -77,10 +79,10 @@ export function PreviewBar({ preview, onOpen }: { preview: LibraryPreview; onOpe
     <MotionPresence open={playing !== null} className="sticky bottom-3 z-10 mt-4">
       <div role="status" data-preview-bar className="mx-auto flex max-w-[560px] items-center gap-1 rounded-cover border border-line bg-panel py-1 pl-1 pr-2 shadow-float">
         <button type="button" data-preview-open onClick={() => { if (playing) onOpen(playing.link); }}
-          aria-label={S.s_mo_0_7a5716e0(playing?.title || S.s_bai_nay_d9683a01)}
+          aria-description={S.s_mo_741bd2c2}
           className="press flex min-h-10 min-w-0 flex-1 items-center gap-3 rounded-control px-3 py-1 text-left outline-none transition-colors duration-motion-fast hover:bg-hover focus-visible:ring-2 focus-visible:ring-focus">
           <Music2 aria-hidden className="size-4 shrink-0 text-accent-text" />
-          <span className="min-w-0 flex-1 truncate text-sm">
+          <span className="min-w-0 flex-1 break-words text-sm">
             <span className="text-fg-2">{preview.loading ? S.s_buffering : preview.paused ? S.s_music_paused : S.s_dang_nghe_thu_f1fb4cba}</span>
             {playing?.title ? <span className="font-medium"> · {playing.title}</span> : null}
           </span>

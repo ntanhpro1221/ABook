@@ -750,8 +750,15 @@ def l12_android_hits() -> list[tuple[str, int, str, bool]]:
                 continue
             start, end = _argument(text, m.start())
             chain = " ".join(text[start:end].split())
-            hits.append((rel(path), text.count("\n", 0, m.start()) + 1, chain, bool(L12_ANDROID_CATCH.search(chain))))
+            hits.append((rel(path), text.count("\n", 0, m.start()) + 1, chain, l12_android_catches(chain)))
     return hits
+
+
+def l12_android_catches(chain: str) -> bool:
+    """Chỗ bắt chạm phải đứng TRƯỚC `padding` đầu tiên của chuỗi: `.padding(...).pressable {}` để phần đệm cho cú bấm lọt xuống (soát 17-11)."""
+    catch = L12_ANDROID_CATCH.search(chain)
+    pad = re.search(r"\.padding\(", chain)
+    return bool(catch) and (pad is None or catch.start() < pad.start())
 
 
 def l12_web_hits() -> list[tuple[str, int, str]]:
@@ -822,6 +829,69 @@ def l12_qt_hits() -> list[tuple[str, int, str, bool]]:
     return hits
 
 
+# Kiểu QML không phải Item (không vào `children`): đứng trước TapShield vẫn để khiên là con đầu tiên.
+L12_QT_NOT_ITEM = re.compile(r"\w*Handler|\w*Animation|Behavior|Connections|Listen|Timer|QtObject|Binding|Shortcut|Reveal|ClockUser|Component")
+
+
+def _qt_children(block: str) -> list[tuple[int, str]]:
+    """Các object con trực tiếp (vị trí, kiểu) của khối QML `{...}`: bỏ giá trị thuộc tính (`transform: Translate {}`), `Behavior on x {}`."""
+    out, depth = [], 0
+    for m in re.finditer(r"[{}]|(?<![\w.:])([A-Z]\w*)\s*\{", block):
+        if m.group(0) == "{":
+            depth += 1
+        elif m.group(0) == "}":
+            depth -= 1
+        else:
+            if depth == 1:
+                line = block[block.rfind("\n", 0, m.start()) + 1:m.start()]
+                if not re.search(r"\w\s*:\s*$", line):
+                    out.append((m.start(), m.group(1)))
+            depth += 1
+    return out
+
+
+def l12_qt_layer_problems() -> list[str]:
+    """Nút trong lớp có TapShield phải giữ riêng cú bấm (đo 17-11: TapHandler thụ động để cú bấm tới cả Interactive nằm dưới lớp). Cách sửa chung:
+    Interactive tự bật `holdsTap` khi một tổ tiên có TapShield làm con ĐẦU TIÊN. Luật giữ cho cách ấy còn đúng: Interactive còn dò khiên, khiên luôn
+    là con đầu tiên, khiên không nuốt nút Back, và không còn lớp nào tự chặn bằng `MouseArea { anchors.fill: parent }` trơn (nút trong lớp ấy không
+    được bật holdsTap)."""
+    problems = []
+    inter = ROOT / QT / "Interactive.qml"
+    text = _code_only(inter.read_text(encoding="utf-8")) if inter.exists() else ""
+    if not (re.search(r"instanceof\s+TapShield", text) and re.search(r"gesturePolicy:\s*root\.holdsTap\b", text)
+            and re.search(r"holdsTap:\s*exclusiveTap\s*\|\|", text)):
+        problems.append("L12 Qt: Interactive.qml không còn tự giữ riêng cú bấm trong lớp có TapShield (holdsTap / instanceof TapShield / gesturePolicy)")
+    shield = ROOT / QT / "TapShield.qml"
+    if shield.exists():
+        body = _code_only(shield.read_text(encoding="utf-8"))
+        if re.search(r"AllButtons|BackButton|ForwardButton", body) or not re.search(r"ReleaseWithinBounds", body):
+            problems.append("L12 Qt: TapShield.qml phải giữ riêng cú bấm trái/phải/giữa (ReleaseWithinBounds) và để nút Back / Forward đi tiếp")
+    for path in qt_files():
+        text = _code_only(path.read_text(encoding="utf-8"))
+        for m in re.finditer(r"(?<![\w.])TapShield\s*\{", text):
+            if path.name == "TapShield.qml":
+                continue
+            depth, start = 0, m.start()
+            while start > 0:
+                start -= 1
+                if text[start] == "}":
+                    depth += 1
+                elif text[start] == "{":
+                    if depth == 0:
+                        break
+                    depth -= 1
+            _kind, block = _qt_block(text, m.start())
+            kids = [k for k in _qt_children(block) if not L12_QT_NOT_ITEM.fullmatch(k[1])]
+            first = kids[0] if kids else None
+            if not first or first[1] != "TapShield" or start + first[0] != m.start():
+                problems.append(f"L12 {rel(path)}:{text.count(chr(10), 0, m.start()) + 1}: TapShield không là con đầu tiên của lớp: nút trong lớp không "
+                                "tự giữ riêng cú bấm (Interactive chỉ nhìn con đầu tiên)")
+        for m in re.finditer(r"(?<![\w.])MouseArea\s*\{\s*anchors\.fill:\s*parent;?\s*\}", text):
+            problems.append(f"L12 {rel(path)}:{text.count(chr(10), 0, m.start()) + 1}: `MouseArea {{ anchors.fill: parent }}` chặn cú bấm của lớp: dùng "
+                            "TapShield (con đầu tiên) để nút trong lớp tự giữ riêng cú bấm và nút Back đi tiếp")
+    return problems
+
+
 def l12_floating_layers() -> list[str]:
     cfg = config().get("L12", {})
     problems, used = [], set()
@@ -831,6 +901,7 @@ def l12_floating_layers() -> list[str]:
         problems.append("L12 Android: thiếu Modifier.floatingLayer() ở components/Components.kt")
     if not (ROOT / QT / "TapShield.qml").exists():
         problems.append("L12 Qt: thiếu desktop_qt/qml/TapShield.qml")
+    problems += l12_qt_layer_problems()
     for path, line, chain, caught in l12_android_hits():
         key = ("android", path, chain)
         if key in allow:

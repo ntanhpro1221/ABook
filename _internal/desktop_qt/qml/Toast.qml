@@ -69,6 +69,7 @@ Item {
         transformOrigin: Item.Top
         HoverHandler { id: hover }
 
+        TapShield {}      // lời báo nổi trên mọi màn: bấm chữ / phần đệm của nó không trúng thứ nằm dưới; nút bên trong tự giữ riêng cú bấm
         Shadow {}      // bóng chung của lớp nổi (DESIGN.md 5.5)
         Rectangle {
             anchors.fill: parent
@@ -77,7 +78,6 @@ Item {
             border.width: 1
             border.color: Theme.line
         }
-        TapShield {}      // lời báo nổi trên mọi màn: bấm chữ / phần đệm của nó không trúng thứ nằm dưới
         Item {
             id: body
             x: 16
@@ -121,7 +121,6 @@ Item {
                 x: body.width - width
                 y: (body.height - height) / 2
                 Interactive {
-                    exclusiveTap: true      // nút của lớp nổi: giữ riêng cú bấm, không để nó tới thứ nằm dưới lớp
                     id: actionButton
                     objectName: "toastAction"
                     width: parent.width
@@ -155,7 +154,6 @@ Item {
         }
         // Close stays inside the top right corner, clear of the text and action.
         Interactive {
-            exclusiveTap: true      // nút của lớp nổi: giữ riêng cú bấm, không để nó tới thứ nằm dưới lớp
             id: close
             objectName: "toastClose"
             x: card.width - width - 12

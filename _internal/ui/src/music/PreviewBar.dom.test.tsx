@@ -42,7 +42,10 @@ it("opens the previewing track from the bar body, like tapping its row", async (
   const preview = previewOf();
   const { host, row } = await render(preview, onOpen);
   const body = host.querySelector<HTMLButtonElement>("[data-preview-open]")!;
-  expect(body.getAttribute("aria-label")).toBe(S.s_mo_0_7a5716e0("03 Jungle of Mysteries"));
+  // Tên đọc = chính dòng chữ (trạng thái · tên bài), gợi ý "Mở" ở mô tả - như Qt và Android.
+  expect(body.getAttribute("aria-label")).toBeNull();
+  expect(body.textContent).toBe(`${S.s_dang_nghe_thu_f1fb4cba} · 03 Jungle of Mysteries`);
+  expect(body.getAttribute("aria-description")).toBe(S.s_mo_741bd2c2);
   expect(body.className).toContain("press");
   await act(async () => body.click());
   expect(onOpen).toHaveBeenCalledExactlyOnceWith("https://music/03.mp3");
@@ -61,6 +64,24 @@ it("stop only stops the preview and never opens the track", async () => {
   expect(row).not.toHaveBeenCalled();
 });
 
+it("the screen-reader name keeps the buffering / paused state", async () => {
+  for (const [patch, status] of [[{ loading: true }, S.s_buffering], [{ paused: true }, S.s_music_paused]] as const) {
+    const { host } = await render(previewOf(patch), vi.fn());
+    const body = host.querySelector<HTMLButtonElement>("[data-preview-open]")!;
+    expect(body.getAttribute("aria-label")).toBeNull();
+    expect(body.textContent).toBe(`${status} · 03 Jungle of Mysteries`);
+  }
+});
+
+it("a long title wraps instead of being cut", async () => {
+  const { host } = await render(previewOf(), vi.fn());
+  const line = host.querySelector("[data-preview-open] span.text-sm")!;
+  expect(line.className).not.toMatch(/truncate|line-clamp|text-ellipsis|whitespace-nowrap/);
+  expect(line.className).toContain("break-words");
+});
+
+// Phạm vi: happy-dom không dàn trang, nên ca này chỉ giữ hai điều - cú bấm vào chính thanh không gọi gì, và không lớp nào cho cú bấm đi
+// xuyên (pointer-events-none). Phép bấm thật vào phần đệm / khe của thanh nằm ở scripts/check_preview_bar.mjs (Chromium, elementFromPoint).
 it("a click on the bar's padding reaches neither the row below nor the open action", async () => {
   const onOpen = vi.fn();
   const { host, row } = await render(previewOf(), onOpen);

@@ -175,6 +175,8 @@ const DESKTOP: Omit<Entry, "platform">[] = [
   { id: "desktop/music-library", group: "Nhạc", title: "Nhạc › Kho nhạc", route: "/music?tab=library" },
   { id: "desktop/music-library-downloading", group: "Nhạc", title: "Kho nhạc · đang tải hai bài", route: "/music?tab=library", scenario: { musicDownloading: true } },
   { id: "desktop/music-library-filter", group: "Nhạc", title: "Kho nhạc · chip Phong cách mở", route: "/music?tab=library", act: () => click(/^Phong cách/).then(() => undefined) },
+  // Thanh "Đang nghe thử" nổi trên danh sách: scripts/check_preview_bar.mjs bấm thật (Chromium) vào phần đệm/khe của thanh - đích bấm phải ở trong thanh.
+  { id: "desktop/music-library-previewing", group: "Nhạc", title: "Kho nhạc · đang nghe thử", route: "/music?tab=library", act: () => clickFirst("Nghe thử").then(() => undefined) },
   { id: "desktop/music-track", group: "Nhạc", title: "Kho nhạc · chi tiết bài", route: "/music?tab=library", act: () => click(/^Air Prelude/).then(() => undefined) },
   { id: "desktop/music-pick", group: "Nhạc", title: "Kho nhạc · chế độ chọn cho một đoạn", route: "/music?pick=suong-mu-2&scene=1:1" },
   { id: "desktop/studio-projects", group: "Studio", title: "Danh sách dự án", route: "/studio" },

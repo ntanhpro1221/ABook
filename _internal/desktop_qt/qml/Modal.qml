@@ -91,9 +91,9 @@ WindowLayer {
         scale: Theme.reduceMotion ? 1 : 0.96 + 0.04 * root.shown
         opacity: root.shown
 
+        TapShield {}      // bấm trong hộp không đóng, không lọt xuống dưới; mọi nút trong hộp tự giữ riêng cú bấm (Interactive)
         Shadow { radius: Theme.radiusSheet }      // bóng chung của lớp nổi (DESIGN 5.5)
         Rectangle { anchors.fill: parent; radius: Theme.radiusSheet; color: Theme.panel; border.width: 1; border.color: Theme.line }
-        MouseArea { anchors.fill: parent }      // bấm trong hộp không đóng
 
         Column {
             id: heading

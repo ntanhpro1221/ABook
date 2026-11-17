@@ -179,12 +179,13 @@ Item {
         height: root.height - y
         clip: true
 
+        // Đang nghe phủ lên thư viện: bấm chỗ trống của nó không trúng bìa / dòng nằm dưới, và mọi nút bên trong tự giữ riêng cú bấm (Interactive)
+        TapShield {}
         Rectangle {
             anchors.fill: parent
             color: Theme.bg
             opacity: Math.min(1, root.g * 2.5)
         }
-        TapShield {}      // Đang nghe phủ lên thư viện: bấm chỗ trống của nó không trúng bìa / dòng nằm dưới
         Item {
             id: stage
             y: -panel.y
@@ -371,6 +372,7 @@ Item {
                     }
                     SeekBar {
                         id: seek
+                        objectName: "nowSeek"
                         width: parent.width
                     }
                     Item {

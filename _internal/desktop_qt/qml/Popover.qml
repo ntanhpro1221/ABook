@@ -119,6 +119,7 @@ WindowLayer {
         scale: Theme.reduceMotion ? 1 : 0.96 + 0.04 * root.shown
         transformOrigin: root.below ? Item.Top : Item.Bottom
 
+        TapShield {}      // bấm trong bảng không đóng, không lọt xuống dưới; mọi nút trong bảng tự giữ riêng cú bấm (Interactive)
         Shadow {}      // bóng chung của lớp nổi (DESIGN.md 5.5: bóng chỉ cho lớp nổi)
         Rectangle {
             anchors.fill: parent
@@ -127,7 +128,6 @@ WindowLayer {
             border.width: Theme.dark ? 1 : 0
             border.color: Theme.line
         }
-        MouseArea { anchors.fill: parent }   // bấm trong bảng không đóng
         Flickable {
             id: viewport
             x: root.pad

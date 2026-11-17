@@ -658,7 +658,7 @@
     ]
   },
   "L12": {
-    "_doc": "Floating layers over scrolling content swallow every tap in their frame (chủ sách 17-11: thanh 'Đang nghe thử' để cú bấm lọt xuống dòng bài). Android `.align(Alignment.Bottom…)` chains carry floatingLayer()/pressable/clickable/pointerInput/sheetSurface; web positioned layers are not pointer-events-none unless aria-hidden; Qt floating Items (z > 0 or docked by y: root.height - height) hold TapShield/MouseArea or are buttons. `allow` keys: platform + file + what (the Android chain, the web class string, the Qt Type#id).",
+    "_doc": "Floating layers over scrolling content swallow every tap in their frame (chủ sách 17-11: thanh 'Đang nghe thử' để cú bấm lọt xuống dòng bài). Android `.align(Alignment.Bottom…)` chains carry floatingLayer()/pressable/clickable/pointerInput/sheetSurface BEFORE the first padding (a catcher after padding lets the padding through); web positioned layers are not pointer-events-none unless aria-hidden; Qt floating Items (z > 0 or docked by y: root.height - height) hold TapShield/MouseArea or are buttons. `allow` keys: platform + file + what (the Android chain, the web class string, the Qt Type#id).",
     "allow": [
       {
         "platform": "android",
@@ -803,6 +803,12 @@
         "file": "desktop_qt/qml/Vu.qml",
         "what": "Rectangle",
         "reason": "Bốn vạch của đồng hồ âm lượng dính đáy khung của chính nó, trang trí."
+      },
+      {
+        "platform": "android",
+        "file": "mobile/android/app/src/main/java/vn/abook/player/ui/components/Sheet.kt",
+        "what": "Modifier.align(if (floating) Alignment.Center else Alignment.BottomCenter) .then(if (floating) Modifier.padding(Dim.s16).widthIn(max = 560.dp).heightIn(max = (maxHeight - Dim.s32).coerceAtLeast(0.dp)) else Modifier) .fillMaxWidth().statusBarsPadding().imePadding() .sheetSurface(drag) .floatingMotionLayer { surfaceSize -> translationY = if (reduced) 0f else (1f - progress.value) * surfaceSize.height + drag.offset alpha = progress.value } .floatingSurface(if (floating) RoundedCornerShape(Dim.radiusSheet) else RoundedCornerShape(topStart = Dim.radiusSheet, topEnd = Dim.radiusSheet), sheet = true)",
+        "reason": "Tấm nổi (bảng) nằm trên lớp nền mờ của chính nó (pointerInput detectTapGestures -> dismiss) phủ cả màn: chạm vào lề padding(Dim.s16) của tấm nổi giữa màn rơi xuống lớp nền mờ và đóng tấm - đúng ý, không lọt tới nội dung bên dưới."
       }
     ]
   }

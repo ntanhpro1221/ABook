@@ -10998,10 +10998,10 @@
     "line": 78,
     "statement": "fun pop() { if(parents.isNotEmpty())window.openSheet(parents.removeAt(parents.lastIndex)) else window.closeSheet() }",
     "occurrence": 1,
-    "source_sha256": "35a70180ff417583c39cf8fc8749d31533710b1dc293a53490e6aa2f4e5ded4c",
+    "source_sha256": "8378992b23c33ff4a79c5c6b8f7177858a16664e001dfdc62c5329029f7caec8",
     "disposition": "internal",
     "guard": "Declaration; the invoked call site is independently inventoried",
-    "reason": "A declaration/signature is not an executing UI action. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Gate repair: reviewed identity-key motion, explicit layout, token spacing or semantic navigation changes; existing guard retained. Combined-source review: floating layers now swallow taps (tapthru: preview bar opens its track, TapShield / floatingLayer); this action and its guard are unchanged."
+    "reason": "A declaration/signature is not an executing UI action. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Gate repair: reviewed identity-key motion, explicit layout, token spacing or semantic navigation changes; existing guard retained. Combined-source review: floating layers now swallow taps (tapthru: preview bar opens its track, TapShield / floatingLayer); this action and its guard are unchanged. Combined-source review (tapthru2): only the voice hint comment changed (floatingLayer keeps the tap, lets the swipe scroll); this action and its guard are unchanged."
   },
   {
     "id": "41d49281785c0f3be740",
@@ -16770,10 +16770,10 @@
     "line": 122,
     "statement": "for (let i = lineModel.count - 1; i >= 0; --i) if (!next[lineModel.get(i).key]) lineModel.remove(i)",
     "occurrence": 1,
-    "source_sha256": "2ae03dc11e7bf2277da8034c4b8deeb41c53b860e4439abd3e3612c5ff27eeed",
+    "source_sha256": "2cce68766c1a165d8bdb5c30f634365bf03f5f9b0705853c9db210cad361a6d8",
     "disposition": "internal",
     "guard": "In-memory collection entry lifecycle",
-    "reason": "The statement releases a listener, request, UI row, selection or cache entry; it does not delete its persisted source. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Combined-source review: floating layers now swallow taps (tapthru: preview bar opens its track, TapShield / floatingLayer); this action and its guard are unchanged."
+    "reason": "The statement releases a listener, request, UI row, selection or cache entry; it does not delete its persisted source. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Combined-source review: floating layers now swallow taps (tapthru: preview bar opens its track, TapShield / floatingLayer); this action and its guard are unchanged. Combined-source review (tapthru2): exclusiveTap lines removed (buttons in a TapShield layer hold their tap on their own); this action and its guard are unchanged."
   },
   {
     "id": "667a39e364701bf232be",
