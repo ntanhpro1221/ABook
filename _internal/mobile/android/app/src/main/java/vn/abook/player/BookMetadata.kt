@@ -39,7 +39,7 @@ object BookMetadata {
         else -> false
     }
     fun same(a: Any?, b: Any?): Boolean = (blank(a) && blank(b)) || StrictJson.equal(a, b)
-    fun select(raw: JSONObject): JSONObject =validate(JSONObject().apply { for (key in fields) if (raw.has(key)) put(key, raw.get(key)) })
+    fun select(raw: JSONObject): JSONObject = validate(JSONObject().apply { for (key in fields) if (raw.has(key)) put(key, raw.get(key)) })
 
     fun version(raw: JSONObject): String {
         val values = JSONArray()
