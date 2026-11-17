@@ -1,5 +1,6 @@
 import { S } from "../shared/strings.generated";
 import { MotionRegion } from "@/shared/MotionRegion";
+import { OneLineFit } from "@/shared/OneLineFit";
 import { AnimatedRows, MotionPresence } from "@/shared/MotionPresence";
 import { useBackLayer } from "@/shared/backStack";
 import { useRef, useState } from "react";
@@ -97,7 +98,7 @@ export function BookTemplates() {
               ) : (
                 <>
                   <div className="min-w-0 flex-1">
-                    <div className="truncate text-sm font-medium">{template.name}</div>
+                    <OneLineFit className="text-sm font-medium">{template.name}</OneLineFit>
                     <div className="truncate text-body-small text-fg-2">
                       {[template.narrator || S.s_giong_may_de_xuat_35389626, PROFILE_LABEL[template.profile], template.startNow ? S.s_bat_dau_ngay_83137873 : S.s_cho_bam_bat_dau_5d760870, ...(template.precastWait ? [S.s_cho_ban_duyet_truoc_khi_thu_35299b41] : [])].join(" · ")}
                     </div>

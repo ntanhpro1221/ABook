@@ -85,7 +85,6 @@ import androidx.compose.ui.semantics.disabled
 import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -662,16 +661,17 @@ private fun BookButtons(
 }
 
 /**
- * Nút chính hổ phách, rộng cả hàng, cao ĐÚNG 48 ở mọi trạng thái và mọi cỡ chữ (soát thiết kế 10-11 L4/L7: nút 3 dòng 81 dp kéo cả trang). MỘT dòng:
- * biểu tượng phát / dừng (biến hình nét vẽ) + động từ + " · chương sẽ phát" ("Nghe tiếp · Chương 4", như Qt); tên chương dài thì cắt "…" ở phía tên chương,
- * động từ không bao giờ bị cắt. Tên đầy đủ nằm ở danh sách chương ngay dưới. Nhãn đổi thì trượt (chữ cũ lên, chữ mới từ dưới lên).
+ * Nút chính hổ phách, rộng cả hàng, cao 48 khi nhãn vừa một dòng (soát thiết kế 10-11 L4/L7). Biểu tượng phát / dừng (biến hình nét vẽ) + động từ
+ * + " · chương sẽ phát" ("Nghe tiếp · Chương 4", như Qt). Tên chương là chữ của sách nên không bao giờ cắt "…" (left174, luật OneLineFit): dài thì
+ * thu cỡ cho vừa một dòng, thu tới đáy vẫn không vừa thì xuống dòng và nút cao thêm - như Qt (Button wrap) và web (OneLineFit).
+ * Nhãn đổi thì trượt (chữ cũ lên, chữ mới từ dưới lên).
  */
 @Composable
 private fun ListenButton(label: String, detail: String?, playing: Boolean, buffering: Boolean, restart: Boolean, onClick: () -> Unit) {
     val colors = Abook.colors
-    Box(Modifier.fillMaxWidth().height(Dim.s48).pressable(onClick = onClick)
+    Box(Modifier.fillMaxWidth().heightIn(min = Dim.s48).pressable(onClick = onClick)
         .clip(RoundedCornerShape(Dim.radiusControl)).background(colors.accent)
-        .padding(horizontal = Dim.s16).testTag("book_primary"), contentAlignment = Alignment.Center) {
+        .padding(horizontal = Dim.s16, vertical = Dim.s8).testTag("book_primary"), contentAlignment = Alignment.Center) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             vn.abook.player.ui.components.PendingIndicator(buffering, Modifier.size(22.dp), color = colors.accentInk) {
                 vn.abook.player.ui.motion.SwapContent(restart, contentKey = { it }, inPlace = true) { retry ->
@@ -685,7 +685,7 @@ private fun ListenButton(label: String, detail: String?, playing: Boolean, buffe
     }
 }
 
-/** Nội dung nút chính, một dòng: biểu tượng + động từ (không cắt) + " · chương" (cắt "…" khi hết chỗ). */
+/** Nội dung nút chính: động từ (một dòng) + " · chương" qua OneLineFit (thu cỡ; không vừa thì xuống dòng - không bao giờ "…"). */
 @Composable
 private fun ListenLabel(text: String, sub: String?, playing: Boolean, restart: Boolean) {
     val colors = Abook.colors
@@ -694,8 +694,8 @@ private fun ListenLabel(text: String, sub: String?, playing: Boolean, restart: B
         BasicText(text, style = ink, softWrap = false)
         SwapContent(sub, contentKey = { sub -> sub != null }, layout = ContentLayout.Row) { sub ->
             if (sub != null) {
-                // cắt-có-chủ-ý: tên chương sau động từ của nút chính; nút luôn một dòng cao 48, tên đầy đủ ở danh sách chương ngay dưới (DESIGN.md §7, soát 10-11 việc 3).
-                BasicText("\u00a0·\u00a0" + sub, Modifier.padding(start = Dim.s8).weight(1f, fill = false).testTag("book_primary_chapter"), style = ink, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                BasicText("\u00a0·\u00a0" + sub, Modifier.padding(start = Dim.s8).weight(1f, fill = false).testTag("book_primary_chapter"), style = ink,
+                    autoSize = vn.abook.player.ui.components.OneLineFit.of(ink))
             }
         }
     }

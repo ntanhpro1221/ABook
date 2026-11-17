@@ -2145,10 +2145,10 @@ const NowPlayingColumn = memo(function NowPlayingColumn({
             </div>
           )}
           <div className={cn("min-w-0", reading ? "flex-1" : "mt-6 w-full")}>
-            <h2 data-np="chapter" className={cn("break-words font-bold leading-snug", reading ? "line-clamp-2 text-base" : "text-xl")}>
+            <h2 data-np="chapter" className={cn("break-words font-bold leading-snug", reading ? "text-base" : "text-xl")}>
               <MotionRegion as="span" motionKey={[track.bookId, track.chapterId, track.chapterTitle]} className="block">{track.chapterTitle}</MotionRegion>
             </h2>
-            <div data-np="book" className={cn("mt-1 break-words text-fg-2", reading ? "truncate text-xs" : "text-sm")}>
+            <div data-np="book" className={cn("mt-1 break-words text-fg-2", reading ? "text-xs" : "text-sm")}>
               <TrackSubtitle look={reading ? "reading" : "screen"} />
             </div>
             {<Presence>{!reading && <MusicCreditLine />}</Presence>}

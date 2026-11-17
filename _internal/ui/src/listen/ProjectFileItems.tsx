@@ -277,7 +277,7 @@ function NamesList({ data }: { data?: NamesSnapshot }) {
     <ul className="divide-y divide-line">
       {data.items.map((item) => (
         <li key={item.surface} className="flex items-baseline justify-between gap-3 py-2">
-          <span className="min-w-0 truncate">
+          <span className="min-w-0 break-words">
             {item.surface} → {item.spoken}
           </span>
           <span className="shrink-0 text-xs text-fg-3">

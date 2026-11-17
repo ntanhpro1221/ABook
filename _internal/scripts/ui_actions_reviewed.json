@@ -111,13 +111,13 @@
     "id": "e725155d37959611e931",
     "kind": "destructive",
     "path": "ui/src/desktop/BookTemplates.tsx",
-    "line": 114,
+    "line": 115,
     "statement": "<Button size=\"sm\" variant=\"ghost\" onClick={() => remove(template)}>{S.s_xoa_777195ab}</Button>",
     "occurrence": 1,
-    "source_sha256": "e9ca3fbba35c35d571e83e7f00f200e240896b1cfa97af08fa33b1fcf994cd73",
+    "source_sha256": "bfe1d0e59dc0340a46a0c3d8b3283ac4fb2ad8fdac5a3a020e2552d6c1cb0019",
     "disposition": "undo",
     "guard": "BookTemplates.remove / removeTemplate: restore template and original index from the toast",
-    "reason": "The complete template and its index are retained for the ten-second undo action."
+    "reason": "The complete template and its index are retained for the ten-second undo action. Re-pinned for left174: the edit only moves book/user text off truncate/line-clamp onto OneLineFit or wrapping; this statement and its guard are unchanged."
   },
   {
     "id": "6725441c0ae4ab4b5ff2",
@@ -834,10 +834,10 @@
     "line": 61,
     "statement": "removeKey: (provider) => api<OnlineProviderInfo>(`/api/readaloud/online/${provider}`, { method: \"DELETE\" }),",
     "occurrence": 1,
-    "source_sha256": "64cfb89d4187ce982efd461a12bf872f28ca1d7eaba12b93b9638bc3c7d06d16",
+    "source_sha256": "6cf9faa9882a4d1617a978542d3a445078d35f21449976df9585011f33d9c653",
     "disposition": "confirmation",
     "guard": "VoiceSettings useDestructiveConfirm / ProviderKey removeConfirm / VoiceSheets key confirmation",
-    "reason": "Provider credentials are deleted only after the object-specific confirmation. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Gate repair: reviewed identity-key motion, explicit layout, token spacing or semantic navigation changes; existing guard retained."
+    "reason": "Provider credentials are deleted only after the object-specific confirmation. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Gate repair: reviewed identity-key motion, explicit layout, token spacing or semantic navigation changes; existing guard retained. Re-pinned for left174: the edit only moves book/user text off truncate/line-clamp onto OneLineFit or wrapping; this statement and its guard are unchanged."
   },
   {
     "id": "32f43e4126455dbefcf7",
@@ -846,10 +846,10 @@
     "line": 136,
     "statement": "const install = async () => {",
     "occurrence": 1,
-    "source_sha256": "64cfb89d4187ce982efd461a12bf872f28ca1d7eaba12b93b9638bc3c7d06d16",
+    "source_sha256": "6cf9faa9882a4d1617a978542d3a445078d35f21449976df9585011f33d9c653",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; busy, loading, setBusy",
-    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Gate repair: reviewed identity-key motion, explicit layout, token spacing or semantic navigation changes; existing guard retained."
+    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Gate repair: reviewed identity-key motion, explicit layout, token spacing or semantic navigation changes; existing guard retained. Re-pinned for left174: the edit only moves book/user text off truncate/line-clamp onto OneLineFit or wrapping; this statement and its guard are unchanged."
   },
   {
     "id": "0dd78303454f077d29d4",
@@ -858,10 +858,10 @@
     "line": 177,
     "statement": "const check = async () => {",
     "occurrence": 1,
-    "source_sha256": "64cfb89d4187ce982efd461a12bf872f28ca1d7eaba12b93b9638bc3c7d06d16",
+    "source_sha256": "6cf9faa9882a4d1617a978542d3a445078d35f21449976df9585011f33d9c653",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; busy, loading, setBusy",
-    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Gate repair: reviewed identity-key motion, explicit layout, token spacing or semantic navigation changes; existing guard retained."
+    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Gate repair: reviewed identity-key motion, explicit layout, token spacing or semantic navigation changes; existing guard retained. Re-pinned for left174: the edit only moves book/user text off truncate/line-clamp onto OneLineFit or wrapping; this statement and its guard are unchanged."
   },
   {
     "id": "b9eba6dc8cef2043667b",
@@ -870,10 +870,10 @@
     "line": 410,
     "statement": "const changeLibrary = async () => {",
     "occurrence": 1,
-    "source_sha256": "64cfb89d4187ce982efd461a12bf872f28ca1d7eaba12b93b9638bc3c7d06d16",
+    "source_sha256": "6cf9faa9882a4d1617a978542d3a445078d35f21449976df9585011f33d9c653",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; busy, loading, setBusy",
-    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Gate repair: reviewed identity-key motion, explicit layout, token spacing or semantic navigation changes; existing guard retained."
+    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Gate repair: reviewed identity-key motion, explicit layout, token spacing or semantic navigation changes; existing guard retained. Re-pinned for left174: the edit only moves book/user text off truncate/line-clamp onto OneLineFit or wrapping; this statement and its guard are unchanged."
   },
   {
     "id": "d3efc5b2c2b58701a12d",
@@ -1122,10 +1122,10 @@
     "line": 789,
     "statement": "if (dialog.kind === \"delete\") switchTo(() => mutations.removeRecord.mutateAsync(active.id), S.s_da_xoa_ho_so_0_54dabd55(active.name));",
     "occurrence": 1,
-    "source_sha256": "d1a4c0f7d3464deb7f0aa3c7923467e7a2b9c013bbcb6f859216ed8207ab7d98",
+    "source_sha256": "c89ce68a6275812b0952285331aefa72db6ed6088c61391c13adf6add24b811b",
     "disposition": "confirmation",
     "guard": "BookRecords ConfirmPage / BookScreen record Dialog / RecordDialogs Modal / DeleteBookPage",
-    "reason": "Deleting a listening profile explicitly describes loss of progress and history. Deleting a book uses the book confirmation. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Gate repair: reviewed identity-key motion, explicit layout, token spacing or semantic navigation changes; existing guard retained."
+    "reason": "Deleting a listening profile explicitly describes loss of progress and history. Deleting a book uses the book confirmation. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Gate repair: reviewed identity-key motion, explicit layout, token spacing or semantic navigation changes; existing guard retained. Re-pinned for left174: the edit only moves book/user text off truncate/line-clamp onto OneLineFit or wrapping; this statement and its guard are unchanged."
   },
   {
     "id": "9afb04bc8bcc92ca4b0c",
@@ -1134,10 +1134,10 @@
     "line": 1090,
     "statement": "const restart = async () => {",
     "occurrence": 1,
-    "source_sha256": "d1a4c0f7d3464deb7f0aa3c7923467e7a2b9c013bbcb6f859216ed8207ab7d98",
+    "source_sha256": "c89ce68a6275812b0952285331aefa72db6ed6088c61391c13adf6add24b811b",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; LoadingCrossfade, Progress, busy, isLoading, loading, pending, pendingVoice, preparingBookId, progress, progressFill",
-    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Gate repair: reviewed identity-key motion, explicit layout, token spacing or semantic navigation changes; existing guard retained."
+    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Gate repair: reviewed identity-key motion, explicit layout, token spacing or semantic navigation changes; existing guard retained. Re-pinned for left174: the edit only moves book/user text off truncate/line-clamp onto OneLineFit or wrapping; this statement and its guard are unchanged."
   },
   {
     "id": "0cff7a6337a7b77585a3",
@@ -1146,10 +1146,10 @@
     "line": 1105,
     "statement": "action: { label: S.s_quay_lai_cho_cu_fea69b14, onClick: () => void playBook(book, before.chapter.id, before.at) },",
     "occurrence": 1,
-    "source_sha256": "d1a4c0f7d3464deb7f0aa3c7923467e7a2b9c013bbcb6f859216ed8207ab7d98",
+    "source_sha256": "c89ce68a6275812b0952285331aefa72db6ed6088c61391c13adf6add24b811b",
     "disposition": "internal",
     "guard": "Async interface/helper boundary; concrete activation inventoried separately",
-    "reason": "This signature supplies work to a model or component; declaring it starts no user operation. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Gate repair: reviewed identity-key motion, explicit layout, token spacing or semantic navigation changes; existing guard retained."
+    "reason": "This signature supplies work to a model or component; declaring it starts no user operation. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Gate repair: reviewed identity-key motion, explicit layout, token spacing or semantic navigation changes; existing guard retained. Re-pinned for left174: the edit only moves book/user text off truncate/line-clamp onto OneLineFit or wrapping; this statement and its guard are unchanged."
   },
   {
     "id": "066bfd62238e7b1506cd",
@@ -1158,34 +1158,34 @@
     "line": 1111,
     "statement": "const listenNow = async () => {",
     "occurrence": 1,
-    "source_sha256": "d1a4c0f7d3464deb7f0aa3c7923467e7a2b9c013bbcb6f859216ed8207ab7d98",
+    "source_sha256": "c89ce68a6275812b0952285331aefa72db6ed6088c61391c13adf6add24b811b",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; LoadingCrossfade, Progress, busy, isLoading, loading, pending, pendingVoice, preparingBookId, progress, progressFill",
-    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Gate repair: reviewed identity-key motion, explicit layout, token spacing or semantic navigation changes; existing guard retained."
+    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Gate repair: reviewed identity-key motion, explicit layout, token spacing or semantic navigation changes; existing guard retained. Re-pinned for left174: the edit only moves book/user text off truncate/line-clamp onto OneLineFit or wrapping; this statement and its guard are unchanged."
   },
   {
     "id": "1d74793870f93603ba4e",
     "kind": "pending",
     "path": "ui/src/listen/BookScreen.tsx",
-    "line": 1257,
+    "line": 1258,
     "statement": "onSelect={() => void saver.save()}",
     "occurrence": 1,
-    "source_sha256": "d1a4c0f7d3464deb7f0aa3c7923467e7a2b9c013bbcb6f859216ed8207ab7d98",
+    "source_sha256": "c89ce68a6275812b0952285331aefa72db6ed6088c61391c13adf6add24b811b",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; LoadingCrossfade, Progress, busy, isLoading, loading, pending, pendingVoice, preparingBookId, progress, progressFill",
-    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Gate repair: reviewed identity-key motion, explicit layout, token spacing or semantic navigation changes; existing guard retained."
+    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Gate repair: reviewed identity-key motion, explicit layout, token spacing or semantic navigation changes; existing guard retained. Re-pinned for left174: the edit only moves book/user text off truncate/line-clamp onto OneLineFit or wrapping; this statement and its guard are unchanged."
   },
   {
     "id": "1d071d9ad59632b02e8b",
     "kind": "pending",
     "path": "ui/src/listen/BookScreen.tsx",
-    "line": 1266,
+    "line": 1267,
     "statement": "onSelect={() => void sharer.share()}",
     "occurrence": 1,
-    "source_sha256": "d1a4c0f7d3464deb7f0aa3c7923467e7a2b9c013bbcb6f859216ed8207ab7d98",
+    "source_sha256": "c89ce68a6275812b0952285331aefa72db6ed6088c61391c13adf6add24b811b",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; LoadingCrossfade, Progress, busy, isLoading, loading, pending, pendingVoice, preparingBookId, progress, progressFill",
-    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Gate repair: reviewed identity-key motion, explicit layout, token spacing or semantic navigation changes; existing guard retained."
+    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Gate repair: reviewed identity-key motion, explicit layout, token spacing or semantic navigation changes; existing guard retained. Re-pinned for left174: the edit only moves book/user text off truncate/line-clamp onto OneLineFit or wrapping; this statement and its guard are unchanged."
   },
   {
     "id": "d2780dded4db9ad89245",
@@ -1254,10 +1254,10 @@
     "line": 67,
     "statement": "export async function saveAuthor(bookId: string, author: string): Promise<string> {",
     "occurrence": 1,
-    "source_sha256": "c1e6304300133dd1c1b5a28f1b68f6fd6fb5f898f8bce9a01e1a0c0e1f48eee6",
+    "source_sha256": "6cc8f72b6d2f65c10818d477cf0ad04082cacb1637595809a258270655c7b747",
     "disposition": "internal",
     "guard": "Async interface/helper boundary; concrete activation inventoried separately",
-    "reason": "This signature supplies work to a model or component; declaring it starts no user operation."
+    "reason": "This signature supplies work to a model or component; declaring it starts no user operation. Re-pinned for left174: the edit only moves book/user text off truncate/line-clamp onto OneLineFit or wrapping; this statement and its guard are unchanged."
   },
   {
     "id": "ba51e141b1ceb781f2d5",
@@ -1266,10 +1266,10 @@
     "line": 76,
     "statement": "async function imageToDataUrl(file: Blob): Promise<string> {",
     "occurrence": 1,
-    "source_sha256": "c1e6304300133dd1c1b5a28f1b68f6fd6fb5f898f8bce9a01e1a0c0e1f48eee6",
+    "source_sha256": "6cc8f72b6d2f65c10818d477cf0ad04082cacb1637595809a258270655c7b747",
     "disposition": "internal",
     "guard": "Async interface/helper boundary; concrete activation inventoried separately",
-    "reason": "This signature supplies work to a model or component; declaring it starts no user operation."
+    "reason": "This signature supplies work to a model or component; declaring it starts no user operation. Re-pinned for left174: the edit only moves book/user text off truncate/line-clamp onto OneLineFit or wrapping; this statement and its guard are unchanged."
   },
   {
     "id": "efefcba7081a2e1a029f",
@@ -1278,10 +1278,10 @@
     "line": 340,
     "statement": "mutationFn: async (picked: Blob) => api(`/api/books/${book.id}/cover`, { method: \"PUT\", body: { image: await imageToDataUrl(picked) } }),",
     "occurrence": 1,
-    "source_sha256": "c1e6304300133dd1c1b5a28f1b68f6fd6fb5f898f8bce9a01e1a0c0e1f48eee6",
+    "source_sha256": "6cc8f72b6d2f65c10818d477cf0ad04082cacb1637595809a258270655c7b747",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; busy, isLoading, isPending, loading, onBusy, saving, setBusy",
-    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering."
+    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Re-pinned for left174: the edit only moves book/user text off truncate/line-clamp onto OneLineFit or wrapping; this statement and its guard are unchanged."
   },
   {
     "id": "edeafb7a83eca97b6bcc",
@@ -1290,10 +1290,10 @@
     "line": 346,
     "statement": "mutationFn: () => api(`/api/books/${book.id}/cover`, { method: \"DELETE\" }),",
     "occurrence": 1,
-    "source_sha256": "c1e6304300133dd1c1b5a28f1b68f6fd6fb5f898f8bce9a01e1a0c0e1f48eee6",
+    "source_sha256": "6cc8f72b6d2f65c10818d477cf0ad04082cacb1637595809a258270655c7b747",
     "disposition": "confirmation",
     "guard": "EditBook cover DestructiveConfirm and DiscardSheet / discard dialog",
-    "reason": "Cover removal and discarding saved edits have explicit object-specific confirmations."
+    "reason": "Cover removal and discarding saved edits have explicit object-specific confirmations. Re-pinned for left174: the edit only moves book/user text off truncate/line-clamp onto OneLineFit or wrapping; this statement and its guard are unchanged."
   },
   {
     "id": "c4f7b6125021e7241870",
@@ -1302,10 +1302,10 @@
     "line": 351,
     "statement": "mutationFn: () => api(`/api/books/${book.id}/edits`, { method: \"DELETE\" }),",
     "occurrence": 1,
-    "source_sha256": "c1e6304300133dd1c1b5a28f1b68f6fd6fb5f898f8bce9a01e1a0c0e1f48eee6",
+    "source_sha256": "6cc8f72b6d2f65c10818d477cf0ad04082cacb1637595809a258270655c7b747",
     "disposition": "confirmation",
     "guard": "EditBook cover DestructiveConfirm and DiscardSheet / discard dialog",
-    "reason": "Cover removal and discarding saved edits have explicit object-specific confirmations."
+    "reason": "Cover removal and discarding saved edits have explicit object-specific confirmations. Re-pinned for left174: the edit only moves book/user text off truncate/line-clamp onto OneLineFit or wrapping; this statement and its guard are unchanged."
   },
   {
     "id": "6aa9020be238fcbbe12b",
@@ -1314,10 +1314,10 @@
     "line": 427,
     "statement": "<Reveal when={book.cover}><Button variant=\"ghost\" className=\"justify-start text-left\" icon={Trash2} loading={busy} disabled={busy} onClick={() => deletion.confirm({ title: S.s_bo_anh_bia_696c6692, description: S.s_irreversible_detail(book.title), run: () => removeCover.mutateAsync() })}>{S.s_bo_anh_bia_696c6692}</Button></Reveal>",
     "occurrence": 1,
-    "source_sha256": "c1e6304300133dd1c1b5a28f1b68f6fd6fb5f898f8bce9a01e1a0c0e1f48eee6",
+    "source_sha256": "6cc8f72b6d2f65c10818d477cf0ad04082cacb1637595809a258270655c7b747",
     "disposition": "confirmation",
     "guard": "EditBook cover DestructiveConfirm and DiscardSheet / discard dialog",
-    "reason": "Cover removal and discarding saved edits have explicit object-specific confirmations."
+    "reason": "Cover removal and discarding saved edits have explicit object-specific confirmations. Re-pinned for left174: the edit only moves book/user text off truncate/line-clamp onto OneLineFit or wrapping; this statement and its guard are unchanged."
   },
   {
     "id": "eafc2242132e1aa8dc2b",
@@ -1326,10 +1326,10 @@
     "line": 560,
     "statement": "const save = async (options?: { folder?: string; as?: \"abook\" | \"abookproj\"; ask?: boolean }): Promise<boolean> => {",
     "occurrence": 1,
-    "source_sha256": "c1e6304300133dd1c1b5a28f1b68f6fd6fb5f898f8bce9a01e1a0c0e1f48eee6",
+    "source_sha256": "6cc8f72b6d2f65c10818d477cf0ad04082cacb1637595809a258270655c7b747",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; busy, isLoading, isPending, loading, onBusy, saving, setBusy",
-    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering."
+    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Re-pinned for left174: the edit only moves book/user text off truncate/line-clamp onto OneLineFit or wrapping; this statement and its guard are unchanged."
   },
   {
     "id": "8b39fd322ec8cf5d736e",
@@ -1338,10 +1338,10 @@
     "line": 571,
     "statement": "? { label: S.s_mo_thu_muc_4bf5b127, onClick: () => void api(\"/api/reveal-export\", { method: \"POST\", body: { folder } }).catch(() => undefined) }",
     "occurrence": 1,
-    "source_sha256": "c1e6304300133dd1c1b5a28f1b68f6fd6fb5f898f8bce9a01e1a0c0e1f48eee6",
+    "source_sha256": "6cc8f72b6d2f65c10818d477cf0ad04082cacb1637595809a258270655c7b747",
     "disposition": "internal",
     "guard": "Async interface/helper boundary; concrete activation inventoried separately",
-    "reason": "This signature supplies work to a model or component; declaring it starts no user operation."
+    "reason": "This signature supplies work to a model or component; declaring it starts no user operation. Re-pinned for left174: the edit only moves book/user text off truncate/line-clamp onto OneLineFit or wrapping; this statement and its guard are unchanged."
   },
   {
     "id": "8a684bedbf4b9227cdf9",
@@ -1350,10 +1350,10 @@
     "line": 589,
     "statement": "const share = async () => {",
     "occurrence": 1,
-    "source_sha256": "c1e6304300133dd1c1b5a28f1b68f6fd6fb5f898f8bce9a01e1a0c0e1f48eee6",
+    "source_sha256": "6cc8f72b6d2f65c10818d477cf0ad04082cacb1637595809a258270655c7b747",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; busy, isLoading, isPending, loading, onBusy, saving, setBusy",
-    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering."
+    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Re-pinned for left174: the edit only moves book/user text off truncate/line-clamp onto OneLineFit or wrapping; this statement and its guard are unchanged."
   },
   {
     "id": "6a60663a9579fe096344",
@@ -1362,10 +1362,10 @@
     "line": 629,
     "statement": "onClick={() => void save({ ...(folder ? { folder } : {}), as: kind, ask: true }).then((saved) => saved && onOpenChange(false))}",
     "occurrence": 1,
-    "source_sha256": "c1e6304300133dd1c1b5a28f1b68f6fd6fb5f898f8bce9a01e1a0c0e1f48eee6",
+    "source_sha256": "6cc8f72b6d2f65c10818d477cf0ad04082cacb1637595809a258270655c7b747",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; busy, isLoading, isPending, loading, onBusy, saving, setBusy",
-    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering."
+    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Re-pinned for left174: the edit only moves book/user text off truncate/line-clamp onto OneLineFit or wrapping; this statement and its guard are unchanged."
   },
   {
     "id": "8834d2d9de93c9904cda",
@@ -1782,10 +1782,10 @@
     "line": 807,
     "statement": "onClick={() => (playing ? sample.stop() : void sample.play(voice.id))}",
     "occurrence": 1,
-    "source_sha256": "b19aaafabcbf836e8b8e068cd8eb47a037028dc49ecf64205bf86c07b9cf8883",
+    "source_sha256": "2b467d85052ff9d578911ab32148d23043e592c6bc2f266bbf77471b6134071d",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; BookProgressLine, CompactProgress, PendingIndicator, bookProgressText, busy, busyClick, isLoading, isPending, levelBusy, loading, musicLoading, pending",
-    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Gate repair: reviewed identity-key motion, explicit layout, token spacing or semantic navigation changes; existing guard retained."
+    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Gate repair: reviewed identity-key motion, explicit layout, token spacing or semantic navigation changes; existing guard retained. Re-pinned for left174: the edit only moves book/user text off truncate/line-clamp onto OneLineFit or wrapping; this statement and its guard are unchanged."
   },
   {
     "id": "f014459f7e3244b9fbb4",
@@ -1794,10 +1794,10 @@
     "line": 890,
     "statement": "const start = async () => {",
     "occurrence": 1,
-    "source_sha256": "b19aaafabcbf836e8b8e068cd8eb47a037028dc49ecf64205bf86c07b9cf8883",
+    "source_sha256": "2b467d85052ff9d578911ab32148d23043e592c6bc2f266bbf77471b6134071d",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; BookProgressLine, CompactProgress, PendingIndicator, bookProgressText, busy, busyClick, isLoading, isPending, levelBusy, loading, musicLoading, pending",
-    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Gate repair: reviewed identity-key motion, explicit layout, token spacing or semantic navigation changes; existing guard retained."
+    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Gate repair: reviewed identity-key motion, explicit layout, token spacing or semantic navigation changes; existing guard retained. Re-pinned for left174: the edit only moves book/user text off truncate/line-clamp onto OneLineFit or wrapping; this statement and its guard are unchanged."
   },
   {
     "id": "3a79393defa6f77f9bcb",
@@ -1806,10 +1806,10 @@
     "line": 918,
     "statement": "<button type=\"button\" data-focus-next className=\"touch-hit -ml-2 rounded-control px-2 py-1 font-medium text-fg hover:bg-hover\" onClick={() => void source.readAloudPrepareCancel?.().then(settle)}>{S.s_dung_lam_truoc_632af923}</button>",
     "occurrence": 1,
-    "source_sha256": "b19aaafabcbf836e8b8e068cd8eb47a037028dc49ecf64205bf86c07b9cf8883",
+    "source_sha256": "2b467d85052ff9d578911ab32148d23043e592c6bc2f266bbf77471b6134071d",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; BookProgressLine, CompactProgress, PendingIndicator, bookProgressText, busy, busyClick, isLoading, isPending, levelBusy, loading, musicLoading, pending",
-    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Gate repair: reviewed identity-key motion, explicit layout, token spacing or semantic navigation changes; existing guard retained."
+    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Gate repair: reviewed identity-key motion, explicit layout, token spacing or semantic navigation changes; existing guard retained. Re-pinned for left174: the edit only moves book/user text off truncate/line-clamp onto OneLineFit or wrapping; this statement and its guard are unchanged."
   },
   {
     "id": "b0dcdbfe651ac29eeb28",
@@ -1818,10 +1818,10 @@
     "line": 921,
     "statement": "<button type=\"button\" data-focus-next aria-disabled={busy || undefined} aria-busy={busy || undefined} className=\"touch-hit -ml-2 rounded-control px-2 py-1 font-medium text-accent-text hover:bg-hover aria-disabled:opacity-45\" onClick={busyClick(busy, () => void start())}>",
     "occurrence": 1,
-    "source_sha256": "b19aaafabcbf836e8b8e068cd8eb47a037028dc49ecf64205bf86c07b9cf8883",
+    "source_sha256": "2b467d85052ff9d578911ab32148d23043e592c6bc2f266bbf77471b6134071d",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; BookProgressLine, CompactProgress, PendingIndicator, bookProgressText, busy, busyClick, isLoading, isPending, levelBusy, loading, musicLoading, pending",
-    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Gate repair: reviewed identity-key motion, explicit layout, token spacing or semantic navigation changes; existing guard retained."
+    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Gate repair: reviewed identity-key motion, explicit layout, token spacing or semantic navigation changes; existing guard retained. Re-pinned for left174: the edit only moves book/user text off truncate/line-clamp onto OneLineFit or wrapping; this statement and its guard are unchanged."
   },
   {
     "id": "5d21139a7aa11bae8a5b",
@@ -1830,10 +1830,10 @@
     "line": 949,
     "statement": "const clear = async () => {",
     "occurrence": 1,
-    "source_sha256": "b19aaafabcbf836e8b8e068cd8eb47a037028dc49ecf64205bf86c07b9cf8883",
+    "source_sha256": "2b467d85052ff9d578911ab32148d23043e592c6bc2f266bbf77471b6134071d",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; BookProgressLine, CompactProgress, PendingIndicator, bookProgressText, busy, busyClick, isLoading, isPending, levelBusy, loading, musicLoading, pending",
-    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Gate repair: reviewed identity-key motion, explicit layout, token spacing or semantic navigation changes; existing guard retained."
+    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Gate repair: reviewed identity-key motion, explicit layout, token spacing or semantic navigation changes; existing guard retained. Re-pinned for left174: the edit only moves book/user text off truncate/line-clamp onto OneLineFit or wrapping; this statement and its guard are unchanged."
   },
   {
     "id": "d91727560f169d121388",
@@ -1842,10 +1842,10 @@
     "line": 1509,
     "statement": "return switchRecord(bookId, async () => undefined).then(() =>",
     "occurrence": 1,
-    "source_sha256": "b19aaafabcbf836e8b8e068cd8eb47a037028dc49ecf64205bf86c07b9cf8883",
+    "source_sha256": "2b467d85052ff9d578911ab32148d23043e592c6bc2f266bbf77471b6134071d",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; BookProgressLine, CompactProgress, PendingIndicator, bookProgressText, busy, busyClick, isLoading, isPending, levelBusy, loading, musicLoading, pending",
-    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Gate repair: reviewed identity-key motion, explicit layout, token spacing or semantic navigation changes; existing guard retained."
+    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Gate repair: reviewed identity-key motion, explicit layout, token spacing or semantic navigation changes; existing guard retained. Re-pinned for left174: the edit only moves book/user text off truncate/line-clamp onto OneLineFit or wrapping; this statement and its guard are unchanged."
   },
   {
     "id": "048072df29fe02577ac4",
@@ -1854,10 +1854,10 @@
     "line": 2044,
     "statement": "function PlayerModeSwitch({ reading, onSelect }: { reading: boolean; onSelect: (reading: boolean) => void }) {",
     "occurrence": 1,
-    "source_sha256": "b19aaafabcbf836e8b8e068cd8eb47a037028dc49ecf64205bf86c07b9cf8883",
+    "source_sha256": "2b467d85052ff9d578911ab32148d23043e592c6bc2f266bbf77471b6134071d",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; BookProgressLine, CompactProgress, PendingIndicator, bookProgressText, busy, busyClick, isLoading, isPending, levelBusy, loading, musicLoading, pending",
-    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Gate repair: reviewed identity-key motion, explicit layout, token spacing or semantic navigation changes; existing guard retained."
+    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Gate repair: reviewed identity-key motion, explicit layout, token spacing or semantic navigation changes; existing guard retained. Re-pinned for left174: the edit only moves book/user text off truncate/line-clamp onto OneLineFit or wrapping; this statement and its guard are unchanged."
   },
   {
     "id": "bf54d84f837e1fca0fd4",
@@ -1986,10 +1986,10 @@
     "line": 37,
     "statement": "const build = async () => {",
     "occurrence": 1,
-    "source_sha256": "e887db1de345616b7f3ea0a15b19ffd8b9f8446b198d22011d52b1ccc7dfe75e",
+    "source_sha256": "3d9b9462a80f44a276c4a4e7a63b3a3125b1762efde6c7027c5ebee7514e5056",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; isLoading, pending",
-    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering."
+    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Re-pinned for left174: the edit only moves book/user text off truncate/line-clamp onto OneLineFit or wrapping; this statement and its guard are unchanged."
   },
   {
     "id": "9aaed7daef1f07cca0e9",
@@ -1998,10 +1998,10 @@
     "line": 113,
     "statement": "onSelect={() => void build()}",
     "occurrence": 1,
-    "source_sha256": "e887db1de345616b7f3ea0a15b19ffd8b9f8446b198d22011d52b1ccc7dfe75e",
+    "source_sha256": "3d9b9462a80f44a276c4a4e7a63b3a3125b1762efde6c7027c5ebee7514e5056",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; isLoading, pending",
-    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering."
+    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Re-pinned for left174: the edit only moves book/user text off truncate/line-clamp onto OneLineFit or wrapping; this statement and its guard are unchanged."
   },
   {
     "id": "a8986125073ae535b0a4",
@@ -2010,10 +2010,10 @@
     "line": 142,
     "statement": "onSelect={() => void build()}",
     "occurrence": 2,
-    "source_sha256": "e887db1de345616b7f3ea0a15b19ffd8b9f8446b198d22011d52b1ccc7dfe75e",
+    "source_sha256": "3d9b9462a80f44a276c4a4e7a63b3a3125b1762efde6c7027c5ebee7514e5056",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; isLoading, pending",
-    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering."
+    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Re-pinned for left174: the edit only moves book/user text off truncate/line-clamp onto OneLineFit or wrapping; this statement and its guard are unchanged."
   },
   {
     "id": "6ee2d08746aac33ed4e1",
@@ -4287,73 +4287,73 @@
     "id": "3316c527cf170e7b6064",
     "kind": "destructive",
     "path": "ui/src/studio/NewProjectScreen.tsx",
-    "line": 200,
+    "line": 201,
     "statement": "else sessionStorage.removeItem(DRAFT_KEY);",
     "occurrence": 1,
-    "source_sha256": "3d5622d4daec620e6b5a92554daf4d0195af90bce836be00e69b19e18538de43",
+    "source_sha256": "8edd2033a405372920d5d66d0df4431baeb68ef0cf42b7b2bc45136cb857c86f",
     "disposition": "internal",
     "guard": "DOM subscription cleanup / selected input draft",
-    "reason": "This location removes no stored source file or personal artifact. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
+    "reason": "This location removes no stored source file or personal artifact. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Re-pinned for left174: the edit only moves book/user text off truncate/line-clamp onto OneLineFit or wrapping; this statement and its guard are unchanged."
   },
   {
     "id": "28425c8a7030624f4358",
     "kind": "pending",
     "path": "ui/src/studio/NewProjectScreen.tsx",
-    "line": 302,
+    "line": 303,
     "statement": "const upload = async (picked: (Picked & { file: File })[], append: boolean) => {",
     "occurrence": 1,
-    "source_sha256": "3d5622d4daec620e6b5a92554daf4d0195af90bce836be00e69b19e18538de43",
+    "source_sha256": "8edd2033a405372920d5d66d0df4431baeb68ef0cf42b7b2bc45136cb857c86f",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; UploadProgress, appending, busy, isLoading, isPending, loading, progress, progressLabel, progressSpeech, progressbar, sending, setBusy",
-    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
+    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Re-pinned for left174: the edit only moves book/user text off truncate/line-clamp onto OneLineFit or wrapping; this statement and its guard are unchanged."
   },
   {
     "id": "a7c004c1d5f8aa836669",
     "kind": "pending",
     "path": "ui/src/studio/NewProjectScreen.tsx",
-    "line": 332,
+    "line": 333,
     "statement": "const chooseFolder = async () => {",
     "occurrence": 1,
-    "source_sha256": "3d5622d4daec620e6b5a92554daf4d0195af90bce836be00e69b19e18538de43",
+    "source_sha256": "8edd2033a405372920d5d66d0df4431baeb68ef0cf42b7b2bc45136cb857c86f",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; UploadProgress, appending, busy, isLoading, isPending, loading, progress, progressLabel, progressSpeech, progressbar, sending, setBusy",
-    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
+    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Re-pinned for left174: the edit only moves book/user text off truncate/line-clamp onto OneLineFit or wrapping; this statement and its guard are unchanged."
   },
   {
     "id": "689d3c458b4cf8af778d",
     "kind": "pending",
     "path": "ui/src/studio/NewProjectScreen.tsx",
-    "line": 339,
+    "line": 340,
     "statement": "const chooseFiles = async (append: boolean) => {",
     "occurrence": 1,
-    "source_sha256": "3d5622d4daec620e6b5a92554daf4d0195af90bce836be00e69b19e18538de43",
+    "source_sha256": "8edd2033a405372920d5d66d0df4431baeb68ef0cf42b7b2bc45136cb857c86f",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; UploadProgress, appending, busy, isLoading, isPending, loading, progress, progressLabel, progressSpeech, progressbar, sending, setBusy",
-    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
+    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Re-pinned for left174: the edit only moves book/user text off truncate/line-clamp onto OneLineFit or wrapping; this statement and its guard are unchanged."
   },
   {
     "id": "77bf3823c1e0a5a77ca3",
     "kind": "pending",
     "path": "ui/src/studio/NewProjectScreen.tsx",
-    "line": 948,
+    "line": 949,
     "statement": "onSelect: () => void;",
     "occurrence": 1,
-    "source_sha256": "3d5622d4daec620e6b5a92554daf4d0195af90bce836be00e69b19e18538de43",
+    "source_sha256": "8edd2033a405372920d5d66d0df4431baeb68ef0cf42b7b2bc45136cb857c86f",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; UploadProgress, appending, busy, isLoading, isPending, loading, progress, progressLabel, progressSpeech, progressbar, sending, setBusy",
-    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
+    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Re-pinned for left174: the edit only moves book/user text off truncate/line-clamp onto OneLineFit or wrapping; this statement and its guard are unchanged."
   },
   {
     "id": "c249e3ad58da2b5556f2",
     "kind": "pending",
     "path": "ui/src/studio/NewProjectScreen.tsx",
-    "line": 1879,
+    "line": 1880,
     "statement": "onSplit={async (path) => {",
     "occurrence": 1,
-    "source_sha256": "3d5622d4daec620e6b5a92554daf4d0195af90bce836be00e69b19e18538de43",
+    "source_sha256": "8edd2033a405372920d5d66d0df4431baeb68ef0cf42b7b2bc45136cb857c86f",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; UploadProgress, appending, busy, isLoading, isPending, loading, progress, progressLabel, progressSpeech, progressbar, sending, setBusy",
-    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
+    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Re-pinned for left174: the edit only moves book/user text off truncate/line-clamp onto OneLineFit or wrapping; this statement and its guard are unchanged."
   },
   {
     "id": "be1c7a46bca717e62f87",
@@ -4395,121 +4395,121 @@
     "id": "039a0b760bc249aa02d3",
     "kind": "pending",
     "path": "ui/src/studio/ProjectScreen.tsx",
-    "line": 122,
+    "line": 123,
     "statement": "return async (bookId: string, chapterId: number) => {",
     "occurrence": 1,
-    "source_sha256": "ab0f39bb55258aaed6bf3a59907ccb7811462daf9c0737bdfeb47a8c31658cb8",
+    "source_sha256": "cf3596def97d2bfa7b8b75f98c1df1d19c6586611eb6d71dcec98abb9d0513ec",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; HeaderProgress, LoadingCrossfade, Progress, busy, isFetching, isLoading, isPending, loading, pending, pendingChanges, progress, progressNote",
-    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
+    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Re-pinned for left174: the edit only moves book/user text off truncate/line-clamp onto OneLineFit or wrapping; this statement and its guard are unchanged."
   },
   {
     "id": "6448ba9ba49f9bfc6b40",
     "kind": "destructive",
     "path": "ui/src/studio/ProjectScreen.tsx",
-    "line": 520,
+    "line": 521,
     "statement": "mutationFn: () => api<{ ok: boolean; undo?: string }>(`/api/books/${book.id}`, { method: \"DELETE\" }),",
     "occurrence": 1,
-    "source_sha256": "ab0f39bb55258aaed6bf3a59907ccb7811462daf9c0737bdfeb47a8c31658cb8",
+    "source_sha256": "cf3596def97d2bfa7b8b75f98c1df1d19c6586611eb6d71dcec98abb9d0513ec",
     "disposition": "confirmation",
     "guard": "Delete dialog / StudioConfirm or DeleteBookPage; trashUndo / UndoDelete after acceptance",
-    "reason": "Book/project deletion is explicitly confirmed and the existing recoverable trash token remains available. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
+    "reason": "Book/project deletion is explicitly confirmed and the existing recoverable trash token remains available. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Re-pinned for left174: the edit only moves book/user text off truncate/line-clamp onto OneLineFit or wrapping; this statement and its guard are unchanged."
   },
   {
     "id": "bc8c0c24aea00289a351",
     "kind": "destructive",
     "path": "ui/src/studio/ProjectScreen.tsx",
-    "line": 524,
+    "line": 525,
     "statement": "client.removeQueries({ queryKey: [\"book\", book.id] });",
     "occurrence": 1,
-    "source_sha256": "ab0f39bb55258aaed6bf3a59907ccb7811462daf9c0737bdfeb47a8c31658cb8",
+    "source_sha256": "cf3596def97d2bfa7b8b75f98c1df1d19c6586611eb6d71dcec98abb9d0513ec",
     "disposition": "confirmation",
     "guard": "Delete dialog / StudioConfirm or DeleteBookPage; trashUndo / UndoDelete after acceptance",
-    "reason": "Book/project deletion is explicitly confirmed and the existing recoverable trash token remains available. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
+    "reason": "Book/project deletion is explicitly confirmed and the existing recoverable trash token remains available. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Re-pinned for left174: the edit only moves book/user text off truncate/line-clamp onto OneLineFit or wrapping; this statement and its guard are unchanged."
   },
   {
     "id": "b800533c4354d7a5ef85",
     "kind": "destructive",
     "path": "ui/src/studio/ProjectScreen.tsx",
-    "line": 551,
+    "line": 552,
     "statement": "remove.mutate();",
     "occurrence": 1,
-    "source_sha256": "ab0f39bb55258aaed6bf3a59907ccb7811462daf9c0737bdfeb47a8c31658cb8",
+    "source_sha256": "cf3596def97d2bfa7b8b75f98c1df1d19c6586611eb6d71dcec98abb9d0513ec",
     "disposition": "confirmation",
     "guard": "Delete dialog / StudioConfirm or DeleteBookPage; trashUndo / UndoDelete after acceptance",
-    "reason": "Book/project deletion is explicitly confirmed and the existing recoverable trash token remains available. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
+    "reason": "Book/project deletion is explicitly confirmed and the existing recoverable trash token remains available. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Re-pinned for left174: the edit only moves book/user text off truncate/line-clamp onto OneLineFit or wrapping; this statement and its guard are unchanged."
   },
   {
     "id": "bc7e68380150ddaa8e4e",
     "kind": "pending",
     "path": "ui/src/studio/ProjectScreen.tsx",
-    "line": 573,
+    "line": 574,
     "statement": "onSelect: () => void;",
     "occurrence": 1,
-    "source_sha256": "ab0f39bb55258aaed6bf3a59907ccb7811462daf9c0737bdfeb47a8c31658cb8",
+    "source_sha256": "cf3596def97d2bfa7b8b75f98c1df1d19c6586611eb6d71dcec98abb9d0513ec",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; HeaderProgress, LoadingCrossfade, Progress, busy, isFetching, isLoading, isPending, loading, pending, pendingChanges, progress, progressNote",
-    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
+    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Re-pinned for left174: the edit only moves book/user text off truncate/line-clamp onto OneLineFit or wrapping; this statement and its guard are unchanged."
   },
   {
     "id": "9ac1ee3db955c0d58a18",
     "kind": "destructive",
     "path": "ui/src/studio/ProjectScreen.tsx",
-    "line": 1413,
+    "line": 1414,
     "statement": "here.delete(\"card\");",
     "occurrence": 1,
-    "source_sha256": "ab0f39bb55258aaed6bf3a59907ccb7811462daf9c0737bdfeb47a8c31658cb8",
+    "source_sha256": "cf3596def97d2bfa7b8b75f98c1df1d19c6586611eb6d71dcec98abb9d0513ec",
     "disposition": "internal",
     "guard": "In-memory collection entry lifecycle",
-    "reason": "The statement releases a listener, request, UI row, selection or cache entry; it does not delete its persisted source. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
+    "reason": "The statement releases a listener, request, UI row, selection or cache entry; it does not delete its persisted source. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Re-pinned for left174: the edit only moves book/user text off truncate/line-clamp onto OneLineFit or wrapping; this statement and its guard are unchanged."
   },
   {
     "id": "e9c3cfeee7a1d301c19c",
     "kind": "destructive",
     "path": "ui/src/studio/ProjectScreen.tsx",
-    "line": 1436,
+    "line": 1437,
     "statement": "if (value === \"all\") here.delete(\"kind\");",
     "occurrence": 1,
-    "source_sha256": "ab0f39bb55258aaed6bf3a59907ccb7811462daf9c0737bdfeb47a8c31658cb8",
+    "source_sha256": "cf3596def97d2bfa7b8b75f98c1df1d19c6586611eb6d71dcec98abb9d0513ec",
     "disposition": "internal",
     "guard": "In-memory collection entry lifecycle",
-    "reason": "The statement releases a listener, request, UI row, selection or cache entry; it does not delete its persisted source. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
+    "reason": "The statement releases a listener, request, UI row, selection or cache entry; it does not delete its persisted source. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Re-pinned for left174: the edit only moves book/user text off truncate/line-clamp onto OneLineFit or wrapping; this statement and its guard are unchanged."
   },
   {
     "id": "a4e011d1eef46aea3e1e",
     "kind": "destructive",
     "path": "ui/src/studio/ProjectScreen.tsx",
-    "line": 1438,
+    "line": 1439,
     "statement": "here.delete(\"card\");",
     "occurrence": 2,
-    "source_sha256": "ab0f39bb55258aaed6bf3a59907ccb7811462daf9c0737bdfeb47a8c31658cb8",
+    "source_sha256": "cf3596def97d2bfa7b8b75f98c1df1d19c6586611eb6d71dcec98abb9d0513ec",
     "disposition": "internal",
     "guard": "In-memory collection entry lifecycle",
-    "reason": "The statement releases a listener, request, UI row, selection or cache entry; it does not delete its persisted source. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
+    "reason": "The statement releases a listener, request, UI row, selection or cache entry; it does not delete its persisted source. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Re-pinned for left174: the edit only moves book/user text off truncate/line-clamp onto OneLineFit or wrapping; this statement and its guard are unchanged."
   },
   {
     "id": "5eef2903709c7ce048d2",
     "kind": "pending",
     "path": "ui/src/studio/ProjectsScreen.tsx",
-    "line": 79,
+    "line": 80,
     "statement": "<IconButton label={S.s_thu_lai_c58d068c} icon={RotateCw} onClick={() => void client.invalidateQueries({ queryKey: [\"library\"] })} />",
     "occurrence": 1,
-    "source_sha256": "57bc4fd961a85cf93e69e5791a96eb8feb7a6e354f7fdf0efcd53f7c5a3224e2",
+    "source_sha256": "09a4d2fd7b6a6ef001d3b82d05d5762bfc5735dfd02ea45cd95777d5a29540bb",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; Progress, busy, isLoading, isPending, loading, pendingChanges, progress",
-    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering."
+    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Re-pinned for left174: the edit only moves book/user text off truncate/line-clamp onto OneLineFit or wrapping; this statement and its guard are unchanged."
   },
   {
     "id": "28d11a23dd0d956b661d",
     "kind": "pending",
     "path": "ui/src/studio/ProjectsScreen.tsx",
-    "line": 263,
+    "line": 264,
     "statement": "const openExisting = async () => {",
     "occurrence": 1,
-    "source_sha256": "57bc4fd961a85cf93e69e5791a96eb8feb7a6e354f7fdf0efcd53f7c5a3224e2",
+    "source_sha256": "09a4d2fd7b6a6ef001d3b82d05d5762bfc5735dfd02ea45cd95777d5a29540bb",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; Progress, busy, isLoading, isPending, loading, pendingChanges, progress",
-    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering."
+    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Re-pinned for left174: the edit only moves book/user text off truncate/line-clamp onto OneLineFit or wrapping; this statement and its guard are unchanged."
   },
   {
     "id": "a94ea12e339e8c11ec18",
@@ -4554,10 +4554,10 @@
     "line": 117,
     "statement": "export async function postLineFix(bookId: string, ref: { stableId: string; textSha256: string }, change: Delivery, wish: SeenDelivery | null | undefined): Promise<LineReply> {",
     "occurrence": 1,
-    "source_sha256": "4a120ddb9c6891adc9e2587031880c740cb1946724c7b8f5c2592f43a75fe383",
+    "source_sha256": "d4784e96d38c22ddac9f1d757b7248e99e359e75c59d0f77ecdb80105b240539",
     "disposition": "internal",
     "guard": "Async interface/helper boundary; concrete activation inventoried separately",
-    "reason": "This signature supplies work to a model or component; declaring it starts no user operation. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
+    "reason": "This signature supplies work to a model or component; declaring it starts no user operation. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Re-pinned for left174: the edit only moves book/user text off truncate/line-clamp onto OneLineFit or wrapping; this statement and its guard are unchanged."
   },
   {
     "id": "0bcddc9766a51760f0e5",
@@ -4566,10 +4566,10 @@
     "line": 379,
     "statement": "mutationFn: async (lines: Line[]) => {",
     "occurrence": 1,
-    "source_sha256": "4a120ddb9c6891adc9e2587031880c740cb1946724c7b8f5c2592f43a75fe383",
+    "source_sha256": "d4784e96d38c22ddac9f1d757b7248e99e359e75c59d0f77ecdb80105b240539",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; isLoading, isPending, loading, pending, pendingNote, usePendingNote",
-    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
+    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Re-pinned for left174: the edit only moves book/user text off truncate/line-clamp onto OneLineFit or wrapping; this statement and its guard are unchanged."
   },
   {
     "id": "28f004339bcb6950d7c9",
@@ -4578,10 +4578,10 @@
     "line": 1434,
     "statement": "<Presence>{scope && <ScriptScope key={scope.stableId} script={script} line={scope} onClose={() => setScope(null)} onApply={async (lines, person, revision) => {",
     "occurrence": 1,
-    "source_sha256": "4a120ddb9c6891adc9e2587031880c740cb1946724c7b8f5c2592f43a75fe383",
+    "source_sha256": "d4784e96d38c22ddac9f1d757b7248e99e359e75c59d0f77ecdb80105b240539",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; isLoading, isPending, loading, pending, pendingNote, usePendingNote",
-    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
+    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Re-pinned for left174: the edit only moves book/user text off truncate/line-clamp onto OneLineFit or wrapping; this statement and its guard are unchanged."
   },
   {
     "id": "18215db793eea75254c4",
@@ -4590,10 +4590,10 @@
     "line": 1496,
     "statement": "else rows.current.delete(line.stableId);",
     "occurrence": 1,
-    "source_sha256": "4a120ddb9c6891adc9e2587031880c740cb1946724c7b8f5c2592f43a75fe383",
+    "source_sha256": "d4784e96d38c22ddac9f1d757b7248e99e359e75c59d0f77ecdb80105b240539",
     "disposition": "internal",
     "guard": "In-memory collection entry lifecycle",
-    "reason": "The statement releases a listener, request, UI row, selection or cache entry; it does not delete its persisted source. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
+    "reason": "The statement releases a listener, request, UI row, selection or cache entry; it does not delete its persisted source. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Re-pinned for left174: the edit only moves book/user text off truncate/line-clamp onto OneLineFit or wrapping; this statement and its guard are unchanged."
   },
   {
     "id": "4f4d31a8bb2376dc1993",
@@ -4602,10 +4602,10 @@
     "line": 1623,
     "statement": "else next.delete(\"at\");",
     "occurrence": 1,
-    "source_sha256": "4a120ddb9c6891adc9e2587031880c740cb1946724c7b8f5c2592f43a75fe383",
+    "source_sha256": "d4784e96d38c22ddac9f1d757b7248e99e359e75c59d0f77ecdb80105b240539",
     "disposition": "internal",
     "guard": "In-memory collection entry lifecycle",
-    "reason": "The statement releases a listener, request, UI row, selection or cache entry; it does not delete its persisted source. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
+    "reason": "The statement releases a listener, request, UI row, selection or cache entry; it does not delete its persisted source. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Re-pinned for left174: the edit only moves book/user text off truncate/line-clamp onto OneLineFit or wrapping; this statement and its guard are unchanged."
   },
   {
     "id": "5974fb634b118c43bf4e",
@@ -4731,13 +4731,13 @@
     "id": "18a24633aa540f18643f",
     "kind": "destructive",
     "path": "ui/src/studio/VolumeSplit.tsx",
-    "line": 167,
+    "line": 166,
     "statement": "onClick={() => commit(removeStart(starts, index))}",
     "occurrence": 1,
-    "source_sha256": "5f5b49108510cdb0637f649d8638504fb815e151252ed321ba3351ff4d2dd79a",
+    "source_sha256": "f84c642c8011f73b7b6d984241cec31c393a4a44a51c546130d0acf6d2bc763b",
     "disposition": "internal",
     "guard": "ImportQueue staging / new-project selected-files and volume-boundary draft",
-    "reason": "Deselecting input or cancelling staging retains the original user files and existing projects; the draft can be reselected. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
+    "reason": "Deselecting input or cancelling staging retains the original user files and existing projects; the draft can be reselected. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Re-pinned for left174: the edit only moves book/user text off truncate/line-clamp onto OneLineFit or wrapping; this statement and its guard are unchanged."
   },
   {
     "id": "3112da12a39ed6e28d78",
@@ -11403,49 +11403,49 @@
     "id": "9dd763b53235c11ae59f",
     "kind": "pending",
     "path": "mobile/android/app/src/main/java/vn/abook/player/ui/screens/BookScreen.kt",
-    "line": 184,
+    "line": 183,
     "statement": "suspend fun load() {",
     "occurrence": 1,
-    "source_sha256": "f25be5829d13c18df1d81d73afebc3a8a263572909330354b932f896be430ccf",
+    "source_sha256": "c543b19333e59b07037f80304dfe8e1cc56bf8e94f5fc78b96a09302df9c031d",
     "disposition": "internal",
     "guard": "Async interface/helper boundary; concrete activation inventoried separately",
-    "reason": "This signature supplies work to a model or component; declaring it starts no user operation. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Gate repair: reviewed identity-key motion, explicit layout, token spacing or semantic navigation changes; existing guard retained."
+    "reason": "This signature supplies work to a model or component; declaring it starts no user operation. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Gate repair: reviewed identity-key motion, explicit layout, token spacing or semantic navigation changes; existing guard retained. Re-pinned for left174: the edit only moves book/user text off truncate/line-clamp onto OneLineFit or wrapping; this statement and its guard are unchanged."
   },
   {
     "id": "3fe3465713164a2d2bd5",
     "kind": "pending",
     "path": "mobile/android/app/src/main/java/vn/abook/player/ui/screens/BookScreen.kt",
-    "line": 195,
+    "line": 194,
     "statement": "suspend fun wantCast() {",
     "occurrence": 1,
-    "source_sha256": "f25be5829d13c18df1d81d73afebc3a8a263572909330354b932f896be430ccf",
+    "source_sha256": "c543b19333e59b07037f80304dfe8e1cc56bf8e94f5fc78b96a09302df9c031d",
     "disposition": "internal",
     "guard": "Async interface/helper boundary; concrete activation inventoried separately",
-    "reason": "This signature supplies work to a model or component; declaring it starts no user operation. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Gate repair: reviewed identity-key motion, explicit layout, token spacing or semantic navigation changes; existing guard retained."
+    "reason": "This signature supplies work to a model or component; declaring it starts no user operation. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Gate repair: reviewed identity-key motion, explicit layout, token spacing or semantic navigation changes; existing guard retained. Re-pinned for left174: the edit only moves book/user text off truncate/line-clamp onto OneLineFit or wrapping; this statement and its guard are unchanged."
   },
   {
     "id": "cdb975d60b510da0614d",
     "kind": "pending",
     "path": "mobile/android/app/src/main/java/vn/abook/player/ui/screens/BookScreen.kt",
-    "line": 200,
+    "line": 199,
     "statement": "private suspend fun loadCast() {",
     "occurrence": 1,
-    "source_sha256": "f25be5829d13c18df1d81d73afebc3a8a263572909330354b932f896be430ccf",
+    "source_sha256": "c543b19333e59b07037f80304dfe8e1cc56bf8e94f5fc78b96a09302df9c031d",
     "disposition": "internal",
     "guard": "Async interface/helper boundary; concrete activation inventoried separately",
-    "reason": "This signature supplies work to a model or component; declaring it starts no user operation. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Gate repair: reviewed identity-key motion, explicit layout, token spacing or semantic navigation changes; existing guard retained."
+    "reason": "This signature supplies work to a model or component; declaring it starts no user operation. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Gate repair: reviewed identity-key motion, explicit layout, token spacing or semantic navigation changes; existing guard retained. Re-pinned for left174: the edit only moves book/user text off truncate/line-clamp onto OneLineFit or wrapping; this statement and its guard are unchanged."
   },
   {
     "id": "a1779010345e9c7c4091",
     "kind": "pending",
     "path": "mobile/android/app/src/main/java/vn/abook/player/ui/screens/BookScreen.kt",
-    "line": 398,
+    "line": 397,
     "statement": "ChapterJump(below) { currentItem?.let { scope.launch { list.animateScrollToItem((it - 1).coerceAtLeast(0)) } } }",
     "occurrence": 1,
-    "source_sha256": "f25be5829d13c18df1d81d73afebc3a8a263572909330354b932f896be430ccf",
+    "source_sha256": "c543b19333e59b07037f80304dfe8e1cc56bf8e94f5fc78b96a09302df9c031d",
     "disposition": "pending",
     "guard": "ViewModel/operation fields: PendingIndicator, loading, preparingBookId, progress, progressLine; Components pending indicator",
-    "reason": "The model retains the operation and locks repeats; UI uses the shared pending parameter, loading content or progress owner. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Gate repair: reviewed identity-key motion, explicit layout, token spacing or semantic navigation changes; existing guard retained."
+    "reason": "The model retains the operation and locks repeats; UI uses the shared pending parameter, loading content or progress owner. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Gate repair: reviewed identity-key motion, explicit layout, token spacing or semantic navigation changes; existing guard retained. Re-pinned for left174: the edit only moves book/user text off truncate/line-clamp onto OneLineFit or wrapping; this statement and its guard are unchanged."
   },
   {
     "id": "7a85018d5968a539b205",

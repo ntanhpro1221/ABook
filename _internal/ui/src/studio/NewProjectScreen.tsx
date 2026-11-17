@@ -1,6 +1,7 @@
 import { Presence } from "../shared/MotionPresence";
 import { S } from "../shared/strings.generated";
 import { MotionRegion } from "@/shared/MotionRegion";
+import { OneLineFit } from "@/shared/OneLineFit";
 import { SectionHeading } from "@/shared/SectionHeading";
 import { DisclosureRow } from "@/shared/DisclosureRow";
 import { MotionPresence, Reveal } from "@/shared/MotionPresence";
@@ -560,7 +561,7 @@ export function SourceStep({
                       {/* Tên thư mục đứng trước: hai thư mục "Tập 1", "Tập 2" cùng một đường dẫn dài thì đuôi bị cắt nhìn y hệt nhau. */}
                       <span className="shrink-0 font-medium">{sourceName(folder)}</span>
                       {/* Tham chiếu của máy tính (Studio từ xa) không phải thứ để đọc: chỉ có tên. */}
-                      <Reveal when={!isSourceRef(folder)}><span className="min-w-0 truncate text-xs text-fg-3">{folder}</span></Reveal>
+                      <Reveal when={!isSourceRef(folder)}><span className="min-w-0 text-xs text-fg-3 [overflow-wrap:anywhere]">{folder}</span></Reveal>
                     </button>
                   ))}
                   {problem.subfolders.length > 8 && (
@@ -703,8 +704,8 @@ export function SourceStep({
                       {index >= 0 ? index + 1 : ""}
                     </span>
                     <div className="min-w-0">
-                      <div className="truncate text-sm font-medium">{file.firstLine || file.title}</div>
-                      <div className="truncate text-xs text-fg-2">{file.name}</div>
+                      <OneLineFit className="text-sm font-medium">{file.firstLine || file.title}</OneLineFit>
+                      <OneLineFit className="text-xs text-fg-2">{file.name}</OneLineFit>
                     </div>
                     <div className="tabular-cell text-right text-xs text-fg-2">
                       <div>{approx(file.words, file.estimated)}{S.s_chu_6117d040}</div>

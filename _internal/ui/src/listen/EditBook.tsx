@@ -657,7 +657,7 @@ export function SaveAsDialog({
       {<Presence>{pickFolder && (
         <div className="mt-3 flex items-center gap-2 text-sm">
           <Button variant="ghost" size="sm" onClick={() => pickFolder().then((picked) => picked && setFolder(picked))}>{S.s_chon_thu_muc_1fe47e38}</Button>
-          <MotionRegion as="span" motionKey={folder ?? ""} className="min-w-0 truncate text-fg-2">{folder ?? S.s_mac_dinh_thu_muc_da_xuat_65fabfd2}</MotionRegion>
+          <MotionRegion as="span" motionKey={folder ?? ""} className="min-w-0 text-fg-2 [overflow-wrap:anywhere]">{folder ?? S.s_mac_dinh_thu_muc_da_xuat_65fabfd2}</MotionRegion>
         </div>
       )}</Presence>}
       <Reveal when={pickFolder}><p className="mt-2 text-xs text-fg-3">{S.s_da_co_file_cung_ten_trong_thu_muc_ay_thi_f_ca6cb2a9}</p></Reveal>

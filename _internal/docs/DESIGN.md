@@ -312,9 +312,11 @@ giữ tên trong cột tối đa 640 px, thanh tua dùng phần rộng còn lạ
   hành động và đối tượng, thân nói hậu quả; Huỷ mặc định bên trái, nút nguy hiểm bên phải. Back/Escape/chạm ngoài là huỷ.
   Việc có hoàn tác dùng snackbar ghi rõ Hoàn tác và giữ đủ dữ liệu để khôi phục. Máy dò `scripts/check_ui_actions.py` giữ bản rà
   từng lời gọi, chặn lời gọi mới chưa được xét; không coi việc quét chữ là chứng minh runtime.
-- **Tên một dòng** (tên giọng, tên nhân vật, tên thiết bị/máy/điện thoại, thiết bị phát và hồ sơ nghe): chữ thu cỡ tới 0.75 cỡ gốc cho vừa một dòng; thu tới đó vẫn không vừa thì
+- **Tên một dòng** (tên giọng, tên nhân vật, tên thiết bị/máy/điện thoại, thiết bị phát và hồ sơ nghe; cả tên sách, tên chương, dòng đầu file, tên mẫu,
+  đường dẫn người chọn - và "· chương" trong nút chính trang sách, nút ấy cao thêm khi phải xuống dòng): chữ thu cỡ tới 0.75 cỡ gốc cho vừa một dòng; thu tới đó vẫn không vừa thì
   xuống dòng ở cỡ gốc - không bao giờ "…". Một thành phần: điện thoại `OneLineFit`, web `OneLineFit`, Qt `OneLineFit.qml`; máy dò `TextCutScanTest`,
-  `check_text_cut.py`, `shared/userTextClip.test.ts`.
+  `check_text_cut.py`, `shared/userTextClip.test.ts`. Chỗ cắt chữ sách còn giữ (mỗi chỗ một lý do, cùng ở ba nền): tên dưới bìa ô thư viện đúng 2 dòng,
+  tên bài trong danh sách nhạc tối đa 2 dòng, thanh phát thu nhỏ một dòng (web) - danh sách ở `keptBookCuts` / `BOOK_KEPT` / `text-cut-ok`.
   Hàng chứa tên tăng chiều cao theo chữ, kể cả hàng chọn nơi phát và thanh báo đang phát trên thiết bị khác. Câu giải thích dài có tên vẫn xuống dòng đầy đủ.
   Ngoại lệ duy nhất cho tên thiết bị: thanh phiên điện thoại thu nhỏ trên web (`RemotePhone`, cao cố định 48/56 px) dùng `ShortName`, giữ đầu/đuôi ở khổ hẹp
   và tên đầy đủ trong tooltip; các hàng và menu có thể tăng chiều cao dùng `OneLineFit`. Chữ hiển thị và mẫu câu lấy cùng kho chữ ở cả ba nền.

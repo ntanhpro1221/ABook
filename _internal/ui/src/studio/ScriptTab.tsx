@@ -1045,7 +1045,7 @@ function ScriptRow({
         {speech ? (
           <SpeakerChip line={line} script={script} open={menuOpen} onOpenChange={onMenu} onPick={onPick} />
         ) : (
-          <span className="flex h-7 items-center truncate text-xs text-fg-3">{line.label || S.s_nguoi_ke_fd36cd15}</span>
+          <span className="flex min-h-7 items-center text-xs text-fg-3"><OneLineFit>{line.label || S.s_nguoi_ke_fd36cd15}</OneLineFit></span>
         )}
       </div>
       {/* Nút nghe đứng ngay trước chữ (cột cố định, cao bằng dòng chữ đầu): luôn sát chữ dù câu ngắn hay dài, không trôi sang mép phải. */}
@@ -1570,7 +1570,7 @@ function ChapterMenu({ chapters, chapterId, narrow, onPick }: { chapters: Chapte
           aria-label={S.s_chuong_2d157977}
           className="-ml-3 inline-flex h-9 min-w-0 flex-1 items-center gap-2 rounded-control px-3 text-sm font-medium transition-colors duration-motion-fast hover:bg-hover data-[state=open]:bg-hover sm:max-w-[26rem] sm:flex-initial"
         >
-          <span className="truncate">{current ? chapterLabel(current) : ""}</span>
+          <OneLineFit className="text-left">{current ? chapterLabel(current) : ""}</OneLineFit>
           <ChevronDown className="fold-chevron ink-end [--icon-w:14px] size-4 shrink-0 text-fg-3" aria-hidden />
         </button>
       </DropdownMenu.Trigger>
@@ -1591,7 +1591,7 @@ function ChapterMenu({ chapters, chapterId, narrow, onPick }: { chapters: Chapte
               >
                 {/* Dấu chọn chung: luôn giữ chỗ, mờ vào / ra (ItemIndicator gắn / gỡ cứng). */}
                 <SelectionMark selected={chapter.chapterId === chapterId} />
-                <span className="min-w-0 flex-1 truncate">{chapterLabel(chapter)}</span>
+                <OneLineFit className="flex-1">{chapterLabel(chapter)}</OneLineFit>
                 <Reveal when={!narrow}><span className="shrink-0 text-xs text-fg-2">{chapterExtras(chapter)}</span></Reveal>
               </DropdownMenu.RadioItem>
             ))}
