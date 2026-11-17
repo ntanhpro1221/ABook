@@ -16,7 +16,9 @@ phải kiểm lại bảng dưới và ghi kết quả vào `VERSIONS.md`.
 Luật ghim ffmpeg: chỉ dùng thẻ **bản cuối tháng** của FFmpeg-Builds. Theo README của họ, bản cuối mỗi tháng được giữ 2 năm,
 còn bản ngày chỉ giữ 14 ngày rồi bị xoá (URL tải 404). `tests/test_ffmpeg_setup.py` kiểm luật này. Pin hiện tại hết hạn
 khoảng 10-2028, phải đổi trước mốc đó. Đổi pin thì chạy lại `scripts/ffmpeg_pinned_codecs.py <exe mới>` để ghi fixture bộ
-tách / bộ giải mà `tests/test_music_local.py` kiểm. Hash chất lượng không đổi (`6d5817d2…`).
+tách / bộ giải mà `tests/test_music_local.py` kiểm. Script này cũng đọc danh sách release của FFmpeg-Builds và từ chối thẻ không phải
+bản muộn nhất của tháng, hoặc tháng chưa hết. Sau khi đổi pin ít nhất 15 ngày, mở lại trang release xem thẻ còn không (bản ngày đã
+bị xoá thì lộ ra ở đây). Hash chất lượng không đổi (`6d5817d2…`).
 
 ## 0.4.168 — measured runtime declarations
 

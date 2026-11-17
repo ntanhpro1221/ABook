@@ -9,6 +9,12 @@ Chỉ tải phần nén của ffmpeg.exe bằng HTTP Range; ghim SHA-256/cỡ c�
 cài ffmpeg (lý do nói rõ). Máy đã có ffmpeg không phải của mình (imageio_ffmpeg, hay trong PATH) thì `external()` đúng và mô-đun không
 tải gì. Việc tải/đặt trạng thái do music_module.py lo; ở đây chỉ có `install` (đồng bộ) và các phép kiểm.
 
+Bố cục `tools/ffmpeg`: mỗi pin một thư mục `<16 ký tự đầu của pin>/ffmpeg.exe`; `installed.sha256` (ghi nguyên tử SAU khi exe đã nằm
+đúng chỗ) là con trỏ tới bản đang dùng. Cập nhật không bao giờ ghi đè exe đang chạy (Windows khoá file của tiến trình đang chạy:
+một lượt xuất dùng bản cũ trong lúc bản mới tải xong): bản mới vào thư mục riêng, con trỏ đổi, bản cũ để lại và chỉ bị xoá khi
+xoá được (không còn tiến trình nào giữ) - ngay sau khi cài và mỗi lần app mở. `ffmpeg.exe` nằm thẳng trong thư mục là bố cục trước
+0.4.175 (Gyan 8.1.2): vẫn nhận ra để mời cập nhật. File tải dở mang tên theo pin, nên phần dở của pin khác không bao giờ bị nối vào.
+
 ABOOK_FFMPEG_DOWNLOAD=0: không bao giờ tải (bộ kiểm đặt sẵn).
 """
 from __future__ import annotations
@@ -46,16 +52,58 @@ _folder: Path | None = None
 
 
 def configure(folder: Path | str | None) -> None:
-    """Thư mục đặt ffmpeg tải về (server.py: <dữ liệu app>/tools/ffmpeg); đã có exe ở đó thì đăng ký ngay."""
+    """Thư mục đặt ffmpeg tải về (server.py: <dữ liệu app>/tools/ffmpeg); đã có exe ở đó thì đăng ký ngay, rồi dọn các bản cũ không ai giữ."""
     global _folder
     with _lock:
         _folder = Path(folder) if folder is not None else None
         exe = _exe()
         io_utils.use_downloaded_ffmpeg(exe if exe is not None and exe.is_file() else None)
+        if exe is not None and exe.is_file() and _installed_current():
+            _prune(exe)
+
+
+def _slot(stamp: str) -> str:
+    """Tên thư mục của một pin (SHA-256 phần nén)."""
+    return stamp[:16]
+
+
+def _stamp() -> str:
+    if _folder is None:
+        return ""
+    try:
+        return (_folder / "installed.sha256").read_text(encoding="utf-8").strip()
+    except (OSError, UnicodeError):
+        return ""
 
 
 def _exe() -> Path | None:
-    return _folder / EXE_NAME if _folder is not None else None
+    """Exe con trỏ `installed.sha256` chỉ tới; không có thì `ffmpeg.exe` của bố cục cũ (để còn mời cập nhật)."""
+    if _folder is None:
+        return None
+    stamp = _stamp()
+    if len(stamp) == 64 and all(c in "0123456789abcdef" for c in stamp):
+        pinned = _folder / _slot(stamp) / EXE_NAME
+        if pinned.is_file():
+            return pinned
+    return _folder / EXE_NAME
+
+
+def _prune(keep: Path) -> None:
+    """Xoá các bản ffmpeg khác `keep` (thư mục pin khác, `ffmpeg.exe` bố cục cũ) và phần tải dở của pin khác. Bản nào đang chạy
+    thì Windows không cho xoá: để đó, lần sau dọn. Không bao giờ ném lỗi."""
+    assert _folder is not None
+    current = _slot(pin())
+    for path in list(_folder.iterdir()) if _folder.is_dir() else []:
+        try:
+            if path.is_dir() and path != keep.parent and len(path.name) == 16 and all(c in "0123456789abcdef" for c in path.name):
+                for child in path.iterdir():
+                    child.unlink()
+                path.rmdir()
+            elif path.is_file() and path != keep and (path.name in (EXE_NAME, EXE_NAME + ".part", "ffmpeg.deflate", "ffmpeg.deflate.part")
+                                                     or (path.name.startswith("ffmpeg-") and ".deflate" in path.name and current not in path.name)):
+                path.unlink()
+        except OSError:
+            continue
 
 
 def ready() -> bool:
@@ -91,12 +139,8 @@ def current() -> bool:
 
 
 def _installed_current() -> bool:
-    if not downloaded() or _folder is None:
-        return False
-    try:
-        return (_folder / "installed.sha256").read_text(encoding="utf-8") == pin()
-    except (OSError, UnicodeError):
-        return False
+    """Con trỏ chỉ tới đúng pin và exe của pin ấy nằm trong thư mục riêng của nó."""
+    return _folder is not None and _stamp() == pin() and (_folder / _slot(pin()) / EXE_NAME).is_file()
 
 
 def outdated() -> bool:
@@ -119,30 +163,37 @@ def install(progress: Callable[[int, int], None], cancelled: Callable[[], bool] 
 
     assert _folder is not None
     with destination_lock(_folder / "install"):
-        stamp = _folder / "installed.sha256"
-        exe = _folder / EXE_NAME
         if _installed_current():
+            exe = _folder / _slot(pin()) / EXE_NAME
             io_utils.use_downloaded_ffmpeg(exe)
             progress(WHEEL.size, WHEEL.size)
             return exe
         result = _install(progress, cancelled)
-        io_utils.atomic_write_text(stamp, pin())
+        # Con trỏ đổi SAU khi exe mới đã kiểm xong và nằm đúng chỗ; bản cũ (có thể đang chạy) không bị chạm tới
+        io_utils.atomic_write_text(_folder / "installed.sha256", pin())
+        io_utils.use_downloaded_ffmpeg(result)
+        _prune(result)
         return result
 
 
 def _install(progress: Callable[[int, int], None], cancelled: Callable[[], bool]) -> Path:
-    """Tải riêng mục FFmpeg đã ghim, kiểm băm trước khi đăng ký với io_utils. Đồng bộ - gọi ở luồng nền của mô-đun. Ném lỗi để mô-đun nói lý do (`reason`)."""
+    """Tải riêng mục FFmpeg đã ghim vào thư mục của pin, kiểm băm/CRC/cỡ. Không ghi đè exe nào đang dùng: thư mục của pin mới chưa
+    từng được trỏ tới; exe của pin này đã nằm sẵn và đúng (mất con trỏ) thì dùng lại, không tải. Đồng bộ - gọi ở luồng nền của
+    mô-đun. Ném lỗi để mô-đun nói lý do (`reason`)."""
     assert _folder is not None
     _folder.mkdir(parents=True, exist_ok=True)
-    archive = _folder / "ffmpeg.deflate"
+    exe = _folder / _slot(pin()) / EXE_NAME
+    if exe.is_file() and exe.stat().st_size == EXE_SIZE and studio_setup._sha256(exe) == EXE_SHA256:
+        progress(WHEEL.size, WHEEL.size)
+        return exe
+    archive = _folder / f"ffmpeg-{_slot(pin())}.deflate"  # tên theo pin: phần dở của pin khác không bao giờ bị nối vào
     offset = zip_range.member_offset(WHEEL, ARCHIVE_SIZE, MEMBER, EXE_SIZE, EXE_CRC, cancelled)
     studio_setup.download(WHEEL, archive, progress, cancelled, byte_range=(offset, ARCHIVE_SIZE))
-    exe = _folder / EXE_NAME
+    exe.parent.mkdir(exist_ok=True)  # chỉ tạo khi đã có phần nén đúng băm: lượt hỏng không để lại thư mục rỗng
     part = exe.with_name(exe.name + ".part")
     zip_range.inflate(archive, part, EXE_SIZE, EXE_SHA256, EXE_CRC, cancelled)
     os.replace(part, exe)
     os.remove(archive.resolve())
-    io_utils.use_downloaded_ffmpeg(exe)
     return exe
 
 

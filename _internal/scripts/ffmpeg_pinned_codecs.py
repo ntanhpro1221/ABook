@@ -7,13 +7,21 @@ kiểm fixture thuộc đúng `ffmpeg_setup.EXE_SHA256` và mỗi đuôi nhạc 
     python scripts/ffmpeg_pinned_codecs.py <đường tới ffmpeg.exe đã ghim>
 
 Script từ chối exe có SHA-256 khác `EXE_SHA256`. Đặt ABOOK_TEST_FFMPEG=<exe> khi chạy pytest thì test còn so fixture với exe thật.
+
+Cùng lúc, script hỏi danh sách release của FFmpeg-Builds (GitHub API, cần mạng) và ghi mọi thẻ `autobuild-` của tháng ghim vào
+fixture (`month_tags`). `tests/test_ffmpeg_setup.py` kiểm thẻ ghim là thẻ MUỘN NHẤT của tháng ấy, tức đúng bản cuối tháng mà
+FFmpeg-Builds giữ 2 năm (bản ngày khác bị xoá sau 14 ngày). Script từ chối chạy khi tháng ấy chưa hết (giờ UTC), vì lúc đó
+còn có thể có bản dựng muộn hơn.
 """
 from __future__ import annotations
 
+import datetime
 import hashlib
 import json
+import re
 import subprocess
 import sys
+import urllib.request
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -47,6 +55,30 @@ def listing(exe: Path) -> dict[str, object]:
     return {"version": version, "demuxers": demuxers, "audio_decoders": decoders}
 
 
+RELEASES = "https://api.github.com/repos/FFmpeg-Builds/FFmpeg-Builds/releases?per_page=100&page={page}"
+
+
+def release_tag(url: str) -> str:
+    found = re.search(r"/releases/download/(autobuild-\d{4}-\d{2}-\d{2}-\d{2}-\d{2})/", url)
+    if not found:
+        raise SystemExit(f"{url}: không có thẻ autobuild-YYYY-MM-DD-HH-MM")
+    return found.group(1)
+
+
+def month_tags(tag: str) -> list[str]:
+    """Mọi thẻ `autobuild-` cùng tháng với `tag` mà FFmpeg-Builds còn giữ, theo GitHub API."""
+    month = tag[: len("autobuild-YYYY-MM")]
+    found: set[str] = set()
+    for page in range(1, 11):
+        request = urllib.request.Request(RELEASES.format(page=page), headers={"Accept": "application/vnd.github+json", "User-Agent": "release-check"})
+        with urllib.request.urlopen(request, timeout=60) as response:
+            releases = json.load(response)
+        found.update(r["tag_name"] for r in releases if r["tag_name"].startswith(month))
+        if not releases or all(r["tag_name"] < month for r in releases if r["tag_name"].startswith("autobuild-")):
+            break
+    return sorted(found)
+
+
 def main(argv: list[str]) -> int:
     if len(argv) != 1:
         print(__doc__)
@@ -59,7 +91,18 @@ def main(argv: list[str]) -> int:
     if digest != ffmpeg_setup.EXE_SHA256:
         print(f"{exe}: SHA-256 {digest} khác EXE_SHA256 đang ghim {ffmpeg_setup.EXE_SHA256}", file=sys.stderr)
         return 1
-    record = {"exe_sha256": digest, "member": ffmpeg_setup.MEMBER, **listing(exe)}
+    tag = release_tag(ffmpeg_setup.WHEEL.url)
+    year, month = int(tag[10:14]), int(tag[15:17])
+    now = datetime.datetime.now(datetime.timezone.utc)
+    if (now.year, now.month) <= (year, month):
+        print(f"{tag}: tháng {month:02d}-{year} chưa hết, còn có thể có bản dựng muộn hơn - chờ sang tháng sau", file=sys.stderr)
+        return 1
+    tags = month_tags(tag)
+    if tag not in tags or tags[-1] != tag:
+        print(f"{tag} không phải bản muộn nhất của tháng (FFmpeg-Builds đang có: {tags}) - sẽ bị xoá sau 14 ngày", file=sys.stderr)
+        return 1
+    record = {"exe_sha256": digest, "member": ffmpeg_setup.MEMBER, "release_tag": tag, "month_tags": tags,
+              "checked_utc": now.strftime("%Y-%m-%d"), **listing(exe)}
     FIXTURE.write_bytes((json.dumps(record, ensure_ascii=False, indent=1) + "\n").encode("utf-8"))
     print(f"{FIXTURE}: {len(record['demuxers'])} demuxer, {len(record['audio_decoders'])} audio decoder; {record['version']}")
     return 0

@@ -43,7 +43,8 @@ def test_two_callers_share_one_ffmpeg_download(tmp_path, monkeypatch):
         calls.append("download")
         entered.set()
         assert release.wait(5)
-        target = tmp_path / ff.EXE_NAME
+        target = tmp_path / ff.pin()[:16] / ff.EXE_NAME
+        target.parent.mkdir(parents=True, exist_ok=True)
         target.write_bytes(b"fake exe")
         return target
 

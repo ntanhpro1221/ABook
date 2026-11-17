@@ -59,6 +59,14 @@ month-end builds for two years, so the pin moved to the October month-end build 
   rerun of that file with the parity, action and ffmpeg files: 104 passed, 1 skipped), `test_music_local` +
   `test_ffmpeg_setup` 42 passed, 0 skipped without `ABOOK_TEST_FFMPEG`; tsc rc 0; vitest (src/studio + export tests)
   474 passed; Qt WidthTests `tst_studio5.qml` 69 passed, 0 failed, 0 skipped, no member-data warning.
+- Install layout (review fix): each pin installs into `tools/ffmpeg/<pin16>/ffmpeg.exe` and `installed.sha256` is switched
+  atomically afterwards, so an update never overwrites the exe an export is running; older copies are deleted only when
+  deletion succeeds (right after install and at app start). The download's partial file is named after the pin.
+  New `test_ffmpeg_range` cases run a copy of ping.exe at the old exe path: on the previous code the update failed with
+  `PermissionError [WinError 5]` (and the stale partial of another pin failed the hash, a lost pointer re-downloaded);
+  now all pass. The month-end test also checks that the pinned tag is the latest of its month from the tag list recorded
+  in the fixture (a later tag on the same day turns it red). pytest on the 23 ffmpeg/export/music/release files: 394 passed,
+  0 failed, 2 skipped (test_music_valence needs the local model package, as before).
 - Quality implementation hash unchanged after every commit: `6d5817d28678d2f85dcc3c8f5158638907a6f9f463bdb8e1a83b3c46c9a68fa8`.
 
 ## 15-11-2026 — 0.4.173 integration

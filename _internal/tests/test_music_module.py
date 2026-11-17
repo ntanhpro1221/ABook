@@ -123,7 +123,7 @@ def test_one_tap_downloads_every_missing_part_with_one_total_and_stamps_their_pi
     assert len(machine.calls) == 1 + len(music_module.WHEELS) + len(music_student.PACKAGE_FILES["onnx"])
     stamp = music_module._read_stamp()
     assert stamp == {"ffmpeg": ffmpeg_setup.pin(), "libs": music_module.libs_pin(), "model": music_student.model_pin("onnx")}
-    assert (tmp_path / "tools" / "ffmpeg" / "ffmpeg.exe").is_file() and (tmp_path / "music" / "lib" / "numpy" / "__init__.py").is_file()
+    assert (tmp_path / "tools" / "ffmpeg" / ffmpeg_setup.pin()[:16] / "ffmpeg.exe").is_file() and (tmp_path / "music" / "lib" / "numpy" / "__init__.py").is_file()
     assert all((tmp_path / "music" / "student" / name).is_file() for name in music_student.PACKAGE_FILES["onnx"])
     assert str(tmp_path / "music" / "lib") in sys.path
     assert not (tmp_path / "music" / "lib.dl").exists(), "wheel đã xoá sau khi giải"
@@ -143,7 +143,7 @@ def test_unchanged_pins_are_current_and_a_second_tap_fetches_nothing(machine: Ma
 def test_a_new_model_pin_with_the_same_file_names_is_outdated_and_only_the_model_is_fetched(machine: Machine, tmp_path: Path, monkeypatch) -> None:
     music_module.start()
     music_module.join(10)
-    ffmpeg_exe = tmp_path / "tools" / "ffmpeg" / "ffmpeg.exe"
+    ffmpeg_exe = tmp_path / "tools" / "ffmpeg" / ffmpeg_setup.pin()[:16] / "ffmpeg.exe"
     numpy_init = tmp_path / "music" / "lib" / "numpy" / "__init__.py"
     ffmpeg_before, numpy_before = ffmpeg_exe.read_bytes(), numpy_init.read_bytes()
     old_pin = music_student.model_pin("onnx")

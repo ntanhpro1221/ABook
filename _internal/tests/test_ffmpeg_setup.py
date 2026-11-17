@@ -47,9 +47,11 @@ def test_install_unpacks_the_exe_removes_the_archive_and_registers_it(bare_machi
     monkeypatch.setattr(studio_setup, "download", _fake_download(calls))
     assert not ffmpeg_setup.ready() and not ffmpeg_setup.downloaded() and not ffmpeg_setup.external()
     exe = ffmpeg_setup.install(lambda done, total: seen.append((done, total)))
-    assert exe == bare_machine / "ffmpeg.exe" and exe.read_bytes() == b"MZ fake ffmpeg"
+    slot = ffmpeg_setup.pin()[:16]
+    assert exe == bare_machine / slot / "ffmpeg.exe" and exe.read_bytes() == b"MZ fake ffmpeg", "mỗi pin một thư mục riêng"
     assert len(calls) == 1 and calls[0] is ffmpeg_setup.WHEEL and seen[-1] == (ffmpeg_setup.WHEEL.size, ffmpeg_setup.WHEEL.size)
-    assert sorted(path.name for path in bare_machine.iterdir()) == ["ffmpeg.exe", "install.lock", "installed.sha256"], "gói đã xoá, chỉ còn exe, khoá và dấu phiên bản"
+    assert sorted(path.name for path in bare_machine.iterdir()) == sorted([slot, "install.lock", "installed.sha256"]), "gói đã xoá, chỉ còn exe, khoá và con trỏ"
+    assert [path.name for path in (bare_machine / slot).iterdir()] == ["ffmpeg.exe"]
     assert io_utils.ffmpeg_executable() == str(exe) and ffmpeg_setup.ready() and ffmpeg_setup.downloaded()
 
 
@@ -71,12 +73,25 @@ def test_the_pinned_build_is_a_month_end_build_that_is_not_deleted() -> None:
     assert found, "thẻ có ngày, không phải `latest`"
     year, month, day = (int(part) for part in found.groups())
     assert day == calendar.monthrange(year, month)[1], f"autobuild-{year}-{month:02d}-{day:02d} không phải bản cuối tháng: sẽ bị xoá sau 14 ngày"
+    # Một ngày cuối tháng có thể có hai bản dựng: chỉ bản MUỘN NHẤT được giữ. Danh sách thẻ của tháng do scripts/ffmpeg_pinned_codecs.py
+    # đọc từ GitHub khi đổi pin (từ chối chạy khi tháng chưa hết) và ghi vào fixture.
+    import json
+
+    recorded = json.loads((Path(__file__).parent / "fixtures" / "ffmpeg_pinned_codecs.json").read_text(encoding="utf-8"))
+    tag = re.search(r"/releases/download/([^/]+)/", ffmpeg_setup.WHEEL.url).group(1)
+    assert recorded["release_tag"] == tag, "fixture ghi cho thẻ khác: chạy lại scripts/ffmpeg_pinned_codecs.py"
+    prefix = f"autobuild-{year}-{month:02d}-"
+    assert recorded["month_tags"] and all(t.startswith(prefix) for t in recorded["month_tags"])
+    assert max(recorded["month_tags"]) == tag, f"{tag} không phải bản muộn nhất của tháng: {recorded['month_tags']}"
+    assert recorded["checked_utc"] > f"{year}-{month:02d}-31", "danh sách thẻ phải đọc sau khi tháng đã hết"
 
 
 @pytest.mark.parametrize("stamp", [None, "old-export-pin", "current", "invalid-utf8"])
 def test_export_reports_own_stamp_and_updates_only_after_click(bare_machine, monkeypatch, stamp):
-    bare_machine.mkdir(parents=True)
-    (bare_machine / "ffmpeg.exe").write_bytes(b"MZ old ffmpeg")
+    # "current": bản của đúng pin trong thư mục của nó; còn lại: ffmpeg.exe bố cục trước 0.4.175 với dấu cũ / hỏng / không có
+    exe = bare_machine / ffmpeg_setup.pin()[:16] / "ffmpeg.exe" if stamp == "current" else bare_machine / "ffmpeg.exe"
+    exe.parent.mkdir(parents=True)
+    exe.write_bytes(b"MZ old ffmpeg")
     if stamp == "invalid-utf8":
         (bare_machine / "installed.sha256").write_bytes(b"\xff")
     elif stamp is not None:
