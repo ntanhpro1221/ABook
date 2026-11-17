@@ -99,6 +99,7 @@ Reveal 1.0 ../../../../qml/Reveal.qml
 DisclosureRow 1.0 ../../../../qml/DisclosureRow.qml
 SettingsItem 1.0 ../../../../qml/SettingsItem.qml
 ChoiceRow 1.0 ../../../../qml/ChoiceRow.qml
+FilterRow 1.0 ../../../../qml/FilterRow.qml
 Select 1.0 ../../../../qml/Select.qml
 MoreInfo 1.0 ../../../../qml/MoreInfo.qml
 HintText 1.0 ../../../../qml/HintText.qml

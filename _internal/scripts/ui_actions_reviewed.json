@@ -16722,7 +16722,7 @@
     "line": 88,
     "statement": "work.store.request(\"GET\", root.pathFor(cursor), null, function(status, page) {",
     "occurrence": 1,
-    "source_sha256": "7228b7c2822837c538357b9fd83ec9c24e512736de436e4f2d72b144b9a0772b",
+    "source_sha256": "a016c18f160210077a44d961448305a6eefa2d630a0f551d1f46595bd17d4ef2",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; fetchingNext, loading, pending",
     "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads."
@@ -16734,7 +16734,7 @@
     "line": 100,
     "statement": "work.store.request(\"GET\", pathFor(last.nextCursor), null, function(status, page) {",
     "occurrence": 1,
-    "source_sha256": "7228b7c2822837c538357b9fd83ec9c24e512736de436e4f2d72b144b9a0772b",
+    "source_sha256": "a016c18f160210077a44d961448305a6eefa2d630a0f551d1f46595bd17d4ef2",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; fetchingNext, loading, pending",
     "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads."
@@ -16770,7 +16770,7 @@
     "line": 122,
     "statement": "for (let i = lineModel.count - 1; i >= 0; --i) if (!next[lineModel.get(i).key]) lineModel.remove(i)",
     "occurrence": 1,
-    "source_sha256": "fca1b358cfceb58ee79f1414af16b76866bde87c6398804546c527e970dbbeea",
+    "source_sha256": "82b867da11c7d53d0a189cb31e42237c193aaaf9c48f0217857614459da2ad8f",
     "disposition": "internal",
     "guard": "In-memory collection entry lifecycle",
     "reason": "The statement releases a listener, request, UI row, selection or cache entry; it does not delete its persisted source. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."

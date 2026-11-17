@@ -744,7 +744,7 @@ Item {
                         Accessible.role: Accessible.StaticText
                     }
                 }
-                ChoiceRow {
+                FilterRow {
                     objectName: "scriptFilter"
                     width: Math.min(implicitWidth, parent.width)
                     label: S.s_hien_cau_nao_959e6c6b

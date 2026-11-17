@@ -230,8 +230,9 @@ Item {
                     wrapMode: Text.Wrap
                     font.pixelSize: Theme.sizeBodySmall
                 }
-                ChoiceRow {
+                FilterRow {
                     objectName: "reviewFilter"
+                    width: Math.min(implicitWidth, parent.width)
                     label: S.s_loc_8812e325
                     value: root.filter
                     options: [{value: "todo", label: S.s_chua_xem_2fb1e370}, {value: "done", label: S.s_da_xem_95526f88}]
