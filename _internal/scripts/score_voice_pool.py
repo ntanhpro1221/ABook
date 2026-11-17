@@ -1,7 +1,14 @@
 """Score every voice preset using recorded books and held-out owner verdicts.
 
 Usage: python scripts/score_voice_pool.py --out DIRECTORY/voice_scores.json
+       --projects BOOK/project.sqlite3 [BOOK/project.sqlite3 ...]
        [--per-voice 30] [--speechbrain-path DIRECTORY]
+
+The recorded books are the caller's own: pass their project.sqlite3 files with
+--projects (or list them, one per line, in the file named by
+ABOOK_VOICE_POOL_PROJECTS). The UTMOSv2 checkpoint is read from
+$ABOOK_RUNTIME/models/utmosv2, else from the runtime folder beside this repo's
+scripts. Nothing here assumes a particular machine's folders.
 
 Expand the approved pool by measured scores without another owner listening
 round. Calibrate the ranking against owner tiers in voice_rank.json versus
@@ -40,16 +47,9 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from abook.voice_catalog import NEVER_AUTO, VIENEU_PRESETS, VOICE_PREVIEW_FILENAMES, VOICE_RANK  # noqa: E402
 
-HAND18 = Path("D:/Novels/Audiobooks/hand18")
-DEFAULT_PROJECTS = (
-    HAND18 / "all-you-need-is-kill/all_you_need_is_kill_novel_70be1348f4/project.sqlite3",
-    HAND18 / "hello-hello-and-hello/build_20261112_122943/hello_hello_and_hello_e4e4d173ba/project.sqlite3",
-    HAND18 / "nhung-gi-em-de-lai-cho-toi/build_20261110_223946/"
-             "nhung_gi_em_de_lai_cho_toi_voi_mot_nam_con_lai_cua_cuoc_doi_af223a1dc8/project.sqlite3",
-    HAND18 / "noi-ma-hai-ta-da-goi-dien/build_20261107_142937/noi_ma_hai_ta_da_goi_dien_33e49f5810/project.sqlite3",
-)
 PREVIEW_ROOT = Path(__file__).resolve().parent.parent / "abook" / "assets" / "voice_previews"
-UTMOS_CHECKPOINT = Path(os.environ.get("ABOOK_RUNTIME", "D:/Novels/ABook/_internal/runtime")) / "models/utmosv2/fold0_s42_best_model.pth"
+RUNTIME = Path(os.environ.get("ABOOK_RUNTIME") or Path(__file__).resolve().parent.parent / "runtime")
+UTMOS_CHECKPOINT = RUNTIME / "models/utmosv2/fold0_s42_best_model.pth"
 MIN_SECONDS, MAX_SECONDS = 2.0, 12.0
 # Phán quyết TỆ của chủ sách: NEVER_AUTO, và Adam bựa (15-11: "đó không phải giọng tốt").
 OWNER_BAD = frozenset(NEVER_AUTO | {"Adam bựa"})
@@ -219,12 +219,18 @@ def main() -> None:
     parser.add_argument("--per-voice", type=int, default=30)
     parser.add_argument("--speechbrain-path", default="")
     parser.add_argument("--threads", type=int, default=4)
-    parser.add_argument("--projects", nargs="*", default=[str(p) for p in DEFAULT_PROJECTS])
+    parser.add_argument("--projects", nargs="*", default=None,
+                        help="project.sqlite3 của các sách đã thu; mặc định đọc danh sách trong file $ABOOK_VOICE_POOL_PROJECTS")
     args = parser.parse_args()
     out = Path(args.out)
     if args.summarize:
         print(json.dumps(summarize(json.loads(out.read_text(encoding="utf-8"))), ensure_ascii=False, indent=1))
         return
+    if args.projects is None and os.environ.get("ABOOK_VOICE_POOL_PROJECTS"):
+        listing = Path(os.environ["ABOOK_VOICE_POOL_PROJECTS"]).read_text(encoding="utf-8")
+        args.projects = [line.strip() for line in listing.splitlines() if line.strip()]
+    if not args.projects:
+        parser.error("cần --projects (hoặc ABOOK_VOICE_POOL_PROJECTS): project.sqlite3 của các sách đã thu")
     out.parent.mkdir(parents=True, exist_ok=True)
     clips = collect_clips([Path(p) for p in args.projects], args.per_voice)
     print({name: len(rows) for name, rows in clips.items()}, flush=True)

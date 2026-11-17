@@ -18,6 +18,11 @@ SDK = Path(os.environ.get("LOCALAPPDATA", "")) / "Android/Sdk"
 JAVA = Path("C:/Program Files/Android/Android Studio/jbr/bin/java.exe")
 PYTHON = Path(os.environ["ABOOK_RUNTIME"]) / ".venv/Scripts/python.exe"
 NO_WINDOW = 0x08000000
+# Qt width-test binary of this checkout's own build; another build is chosen with ABOOK_WIDTH_TESTS, never a machine-specific default.
+WIDTH_TESTS = Path(os.environ.get("ABOOK_WIDTH_TESTS") or ROOT / "desktop_qt/build/width_tests/WidthTests.exe")
+# The emulator this script starts (job "emulator") listens on this console port; adb names it emulator-<port>.
+EMULATOR_PORT = os.environ.get("ABOOK_EMULATOR_PORT", "5620")
+EMULATOR = f"emulator-{EMULATOR_PORT}"
 
 
 def run(command, cwd, name, env=None):
@@ -46,7 +51,7 @@ def main():
     env = dict(os.environ, JAVA_HOME=str(JAVA.parent.parent), ANDROID_HOME=str(SDK), ANDROID_SDK_ROOT=str(SDK), PYTHONUTF8="1")
     if job in {"emulator", "emulator-host"}:
         gpu = "host" if job == "emulator-host" else "swiftshader_indirect"
-        return run([SDK / "emulator/emulator.exe", "-avd", "navanim", "-read-only", "-port", "5620", "-no-window", "-no-snapshot", "-no-boot-anim", "-noaudio", "-memory", "1536", "-gpu", gpu], ROOT, job, env)
+        return run([SDK / "emulator/emulator.exe", "-avd", "navanim", "-read-only", "-port", EMULATOR_PORT, "-no-window", "-no-snapshot", "-no-boot-anim", "-noaudio", "-memory", "1536", "-gpu", gpu], ROOT, job, env)
     if job.startswith("gradle"):
         memory_gate()
         return run([JAVA, "-classpath", "gradle/wrapper/gradle-wrapper.jar", "org.gradle.wrapper.GradleWrapperMain", "--no-daemon", "--max-workers=2", "-Dorg.gradle.jvmargs=-Xmx6g -XX:MaxMetaspaceSize=1g", "-Pkotlin.compiler.execution.strategy=in-process", *sys.argv[2:]], ROOT / "mobile/android", job, env)
@@ -57,12 +62,12 @@ def main():
         if mode.startswith("before") and (OUT / "before-app.apk").is_file():
             apks = [OUT / "before-app.apk", OUT / "before-test.apk"]
         for apk in apks:
-            code = run([adb, "-s", "emulator-5620", "install", "-r", apk], ROOT, f"install-{mode}-{Path(apk).stem}", env)
+            code = run([adb, "-s", EMULATOR, "install", "-r", apk], ROOT, f"install-{mode}-{Path(apk).stem}", env)
             if code: return code
-        result = run([adb, "-s", "emulator-5620", "shell", "am", "instrument", "-w", "-r", "-e", "bookMusicAudit", "true", "-e", "class", "vn.abook.player.BookMusicScrollAuditTest", "com.ngdtuanh.abook.dev.test/androidx.test.runner.AndroidJUnitRunner"], ROOT, f"audit-{mode}", env)
+        result = run([adb, "-s", EMULATOR, "shell", "am", "instrument", "-w", "-r", "-e", "bookMusicAudit", "true", "-e", "class", "vn.abook.player.BookMusicScrollAuditTest", "com.ngdtuanh.abook.dev.test/androidx.test.runner.AndroidJUnitRunner"], ROOT, f"audit-{mode}", env)
         if "OK (1 test)" not in (OUT / f"audit-{mode}.log").read_text(encoding="utf-8"):
             return 1
-        run([adb, "-s", "emulator-5620", "pull", "/sdcard/Android/data/com.ngdtuanh.abook.dev/files/bookmusic-scroll.json", OUT / f"{mode}.json"], ROOT, f"pull-{mode}", env)
+        run([adb, "-s", EMULATOR, "pull", "/sdcard/Android/data/com.ngdtuanh.abook.dev/files/bookmusic-scroll.json", OUT / f"{mode}.json"], ROOT, f"pull-{mode}", env)
         return result
     if job == "paired":
         for mode in ("before-host1", "after-host1", "before-host2", "after-host2"):
@@ -91,7 +96,7 @@ def main():
         env.update(PATH=str(qt) + os.pathsep + env["PATH"], QT_QPA_PLATFORM="offscreen", QT_QUICK_BACKEND="software",
                    QML2_IMPORT_PATH=str(ROOT / "desktop_qt/tests/qml/stub"), QML_IMPORT_PATH=str(ROOT / "desktop_qt/tests/qml/stub"),
                    ABOOK_GLYPH_AUDIT=str(OUT / "qt-glyph.json"))
-        return run(["D:/Novels/ABook_phonefix/_internal/desktop_qt/build/width_tests/WidthTests.exe", "-input", ROOT / "desktop_qt/tests/width/tst_book_music.qml", "-o", str(OUT / "qt-results.txt") + ",txt", "-o", str(OUT / "qt-results.xml") + ",xml"], ROOT, job, env)
+        return run([WIDTH_TESTS, "-input", ROOT / "desktop_qt/tests/width/tst_book_music.qml", "-o", str(OUT / "qt-results.txt") + ",txt", "-o", str(OUT / "qt-results.xml") + ",xml"], ROOT, job, env)
     if job == "python":
         return run([PYTHON, "-X", "utf8", *sys.argv[2:]], ROOT, job, env)
     if job == "prepare":
