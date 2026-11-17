@@ -90,9 +90,15 @@ Interactive {
             Shadow {}      // bóng chung của lớp nổi (DESIGN.md 5.5)
             Rectangle { anchors.fill: parent; radius: Theme.radiusCover; color: Theme.panel; border.width: 1; border.color: Theme.line }
         }
-        contentItem: ListView {
-            id: rows
+        // Danh sách xổ là lớp nổi đè lên trang (soát 18-11: bấm một hàng vừa chọn vừa kích hoạt thứ nằm dưới). TapShield là con đầu: phủ cả phần đệm
+        // 8 px của bảng, giữ cú bấm ở chỗ trống, và mọi hàng (Interactive) tự giữ riêng cú bấm của mình.
+        contentItem: Item {
+            implicitHeight: rows.implicitHeight
             transform: Translate { y: -8 * (1 - list.shown) }
+            TapShield { anchors.margins: -list.padding }
+        ListView {
+            id: rows
+            anchors.fill: parent
             implicitHeight: contentHeight
             clip: true
             boundsBehavior: Flickable.StopAtBounds
@@ -159,6 +165,7 @@ Interactive {
                     font.weight: row.header ? Font.DemiBold : Theme.weightRegular
                 }
             }
+        }
         }
     }
 }

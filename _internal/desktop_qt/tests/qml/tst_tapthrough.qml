@@ -106,6 +106,69 @@ Item {
         }
     }
 
+    // Soát 18-11: danh sách xổ của Select (C.Popup) đè lên trang; bên dưới chỗ nó xổ ra là một Interactive như dòng / thanh mức của StudioMusic.
+    Component {
+        id: selectFactory
+        Item {
+            id: picker
+            width: 600; height: 400
+            property int below: 0
+            property var picked: []
+            property alias select: select
+            Interactive { x: 0; y: 70; width: 600; height: 330; onClicked: picker.below++ }
+            Select {
+                id: select
+                x: 20; y: 20; width: 200; height: 36
+                options: [{ value: "a", label: "Alpha" }, { value: "b", label: "Beta" }, { value: "c", label: "Gamma" }]
+                value: "a"
+                onPicked: v => picker.picked = picker.picked.concat([v])
+            }
+        }
+    }
+
+    // Bảng nổi / menu "…" thật, dưới là một Interactive phủ cả khung (cuốn sách, dòng chương); tổ tiên có TapHandler Back như Main.qml.
+    Component {
+        id: popoverFactory
+        Item {
+            id: scenePop
+            width: 600; height: 400
+            property int below: 0
+            property int backs: 0
+            property int pressed: 0
+            property alias pop: pop
+            property alias button: button
+            TapHandler { acceptedButtons: Qt.BackButton; gesturePolicy: TapHandler.ReleaseWithinBounds; onTapped: scenePop.backs++ }
+            Interactive { anchors.fill: parent; onClicked: scenePop.below++ }
+            Rectangle { id: anchorBox; x: 280; y: 40; width: 40; height: 30 }
+            Popover {
+                id: pop
+                anchorItem: anchorBox
+                Column {
+                    width: 200
+                    Interactive { id: button; width: 200; height: 40; onClicked: scenePop.pressed++ }
+                    Item { width: 200; height: 80 }
+                }
+            }
+        }
+    }
+
+    // Lăn chuột trên lớp: lớp che trang (Đang nghe, bảng, hộp thoại: holdsWheel) giữ cú lăn; thanh nổi nhỏ (thanh nghe thử) để trang dưới lăn tiếp.
+    Component {
+        id: wheelFactory
+        Item {
+            id: wheelScene
+            width: 600; height: 400
+            property int backs: 0
+            property alias flick: flick
+            property alias covering: covering
+            property alias strip: strip
+            TapHandler { acceptedButtons: Qt.BackButton; gesturePolicy: TapHandler.ReleaseWithinBounds; onTapped: wheelScene.backs++ }
+            Flickable { id: flick; anchors.fill: parent; contentHeight: 3000; Rectangle { width: 600; height: 3000; color: "#ddd" } }
+            Rectangle { id: covering; x: 50; y: 50; width: 300; height: 200; TapShield { holdsWheel: true } }
+            Rectangle { id: strip; x: 50; y: 300; width: 300; height: 60; TapShield {} }
+        }
+    }
+
     TestCase {
         name: "TapThrough"
         when: windowShown
@@ -211,6 +274,77 @@ Item {
             mouseMove(deep, 450, 250)
             tryCompare(deep.under, "hovered", false)
             verify(deep.panelHover.hovered, "the layer's own HoverHandler lost the pointer")
+        }
+
+        // Soát 18-11 (CHẶN): bấm một hàng của danh sách xổ vừa chọn vừa kích hoạt thứ nằm dưới (đo: picked=["b"], below=1).
+        function test_selectRowKeepsItsTap() {
+            const picker = createTemporaryObject(selectFactory, host)
+            mouseClick(picker.select, 20, 18)
+            wait(Theme.motionFast + 150)
+            compare(picker.below, 0)
+            const beta = 20 + 36 + 4 + 8 + 36 + 18
+            mouseClick(host, 60, beta)
+            wait(Theme.motionFast + 150)
+            compare(picker.picked, ["b"])
+            compare(picker.below, 0, "a pick in the drop-down list reached the item under it")
+            // Phần đệm 8 px của bảng (trái các hàng) cũng không lọt
+            mouseClick(picker.select, 20, 18)
+            wait(Theme.motionFast + 150)
+            mouseClick(host, 20 + 3, beta)
+            wait(Theme.motionFast + 150)
+            compare(picker.below, 0, "a tap on the list padding reached the item under it")
+        }
+
+        // Soát 18-11 (TB): bấm ra ngoài bảng / menu "…" chỉ đóng nó, như DropdownMenu của web - không mở luôn cuốn sách / dòng nằm dưới.
+        function test_outsideTapOnlyClosesThePopover() {
+            const scenePop = createTemporaryObject(popoverFactory, host)
+            scenePop.pop.show()
+            wait(Theme.motionFast + 150)
+            verify(scenePop.button.holdsTap)
+            mouseClick(scenePop.button, 20, 20)
+            compare(scenePop.pressed, 1)
+            compare(scenePop.below, 0)
+            mouseClick(host, 560, 360)
+            wait(Theme.motionFast + 150)
+            compare(scenePop.pop.open, false, "a tap outside did not close the popover")
+            compare(scenePop.below, 0, "a tap outside the popover also hit the item under it")
+            // Chuột phải ra ngoài cũng chỉ đóng; nút Back đi tiếp tới tổ tiên (Main.qml lùi / đóng lớp)
+            scenePop.pop.show()
+            wait(Theme.motionFast + 150)
+            mouseClick(host, 560, 360, Qt.RightButton)
+            wait(Theme.motionFast + 150)
+            compare(scenePop.pop.open, false)
+            compare(scenePop.below, 0)
+            scenePop.pop.show()
+            wait(Theme.motionFast + 150)
+            mouseClick(host, 560, 360, Qt.BackButton)
+            compare(scenePop.backs, 1, "the backdrop swallowed the mouse Back button")
+            // Đã đóng: nền không còn chặn gì
+            scenePop.pop.closeNow()
+            wait(Theme.motionFast + 150)
+            mouseClick(host, 560, 360)
+            compare(scenePop.below, 1)
+        }
+
+        // Soát 18-11: lăn trên bìa Đang nghe làm thư viện khuất cuộn đi. Lớp che trang giữ cú lăn; thanh nổi nhỏ thì không; Back vẫn đi tiếp.
+        function test_wheelStopsAtCoveringLayers() {
+            const wheelScene = createTemporaryObject(wheelFactory, host)
+            mouseWheel(wheelScene.covering, 150, 100, 0, -240)
+            wait(400)
+            compare(wheelScene.flick.contentY, 0, "a wheel over a covering layer scrolled the page under it")
+            mouseWheel(wheelScene.strip, 150, 30, 0, -240)
+            tryVerify(() => wheelScene.flick.contentY > 0, 1000, "a wheel over a small floating strip must still scroll the page")
+            mouseClick(wheelScene.covering, 150, 100, Qt.BackButton)
+            compare(wheelScene.backs, 1, "the wheel-holding shield swallowed the mouse Back button")
+        }
+
+        // Soát 18-11: bài thiếu tên không ra " · undefined" (như web chỉ thêm " · tên" khi có tên).
+        function test_previewBarWithoutTitle() {
+            const scene = createTemporaryObject(sceneFactory, host)
+            scene.bar.track = ({ link: "https://music/09.mp3" })
+            compare(scene.bar.body.Accessible.name, "Đang nghe thử")
+            scene.bar.track = ({ link: "https://music/09.mp3", title: "" })
+            compare(scene.bar.body.Accessible.name, "Đang nghe thử")
         }
     }
 }

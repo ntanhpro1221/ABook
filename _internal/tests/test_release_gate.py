@@ -756,3 +756,22 @@ def test_changelog_accepts_unreleased_entries_or_the_bumped_version_section(tmp_
     log.write_text("# Log\n\n## [Chưa phát hành]\n\n## [9.9.8]\n\n- Cũ\n", encoding="utf-8")
     with pytest.raises(ValueError, match="CHANGELOG"):
         gate.worker("changelog")
+
+
+def test_preview_bar_runs_in_the_gate_and_needs_every_width_and_theme(tmp_path):
+    """Soát 18-11: check_preview_bar.mjs (Chromium bấm thật vào phần đệm thanh "Đang nghe thử") phải là một bước của cổng, không chỉ chạy tay."""
+    check = {c.name: c for c in gate.checks()}["preview-bar"]
+    assert check.requires == ("gallery-build",) and "preview-bar" in gate.UI_CHECKS
+    assert "scripts/check_preview_bar.mjs" in check.command and check.command[check.command.index("--dist") + 1] == "dist/gallery"
+    points = {name: {"x": 1, "y": 1} for name in ("padLeft", "padTop", "padBottom", "gap", "padRight")}
+    full = [{"width": w, "height": 900, "theme": t, "points": points} for w in (1280, 420) for t in ("light", "dark")]
+    artifact = tmp_path / "preview-bar-checks.json"
+    artifact.write_text(json.dumps(full), encoding="utf-8")
+    counts, _ = gate.validate_report(check, gate.Execution(0), artifact)
+    assert counts == {"cases": 4, "points": 20}
+    artifact.write_text(json.dumps(full[:3]), encoding="utf-8")
+    with pytest.raises(ValueError, match="preview-bar"):
+        gate.validate_report(check, gate.Execution(0), artifact)
+    artifact.write_text(json.dumps(full), encoding="utf-8")
+    with pytest.raises(ValueError, match="exit 1"):
+        gate.validate_report(check, gate.Execution(1), artifact)

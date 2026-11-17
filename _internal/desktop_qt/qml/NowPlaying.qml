@@ -179,8 +179,9 @@ Item {
         height: root.height - y
         clip: true
 
-        // Đang nghe phủ lên thư viện: bấm chỗ trống của nó không trúng bìa / dòng nằm dưới, và mọi nút bên trong tự giữ riêng cú bấm (Interactive)
-        TapShield {}
+        // Đang nghe phủ lên thư viện: bấm chỗ trống của nó không trúng bìa / dòng nằm dưới, và mọi nút bên trong tự giữ riêng cú bấm (Interactive);
+        // lăn chuột trên bìa / chỗ trống không cuộn thư viện đang khuất (holdsWheel)
+        TapShield { holdsWheel: true }
         Rectangle {
             anchors.fill: parent
             color: Theme.bg

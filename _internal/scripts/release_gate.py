@@ -205,6 +205,9 @@ def checks(confirm_hash: str | None = None) -> list[Check]:
                                 "--configLoader", "runner"], ui, 180),
         Check("gallery-inspect", [node, "scripts/gallery_inspect.mjs", "--theme", "both", "--out", "<run>/gallery"],
               ui, 3600, "gallery", ("gallery-build",)),
+        # Chromium thật bấm vào phần đệm / khe của thanh "Đang nghe thử" đè lên danh sách nhạc (soát 18-11): cú bấm phải ở lại trong thanh.
+        Check("preview-bar", [node, "scripts/check_preview_bar.mjs", "--dist", "dist/gallery", "--out", "<run>/preview-bar"],
+              ui, 600, "preview-bar", ("gallery-build",)),
         Check("contrast", [node, "scripts/check_contrast.mjs", "--compact"], ui),
         Check("qt-tests", worker_command("qt-tests"), timeout=3000, parser="json"),
         Check("qt-installer", py("desktop_qt/tools/test_installer.py", str(ROOT / "desktop_qt/dist")),
@@ -801,6 +804,14 @@ def validate_report(check: Check, execution: Execution, artifact: Path, row: dic
         require(not failed and not evidence["errors"] and not any(s.get("error") for s in stories), "gallery có lỗi/vi phạm luật chặn")
         geometry = evidence["sheetGeometry"]
         require(geometry["trials"] > 0 and geometry["trials"] == geometry["completed"], "gallery thiếu lượt sheet hoàn tất")
+    elif kind == "preview-bar":
+        results = json.loads(artifact.read_text(encoding="utf-8"))
+        cases = {(r["width"], r["theme"]) for r in results}
+        counts = {"cases": len(results), "points": sum(len(r["points"]) for r in results)}
+        if row is not None:
+            row.update(counts=counts, evidence=results)
+        require(cases == {(w, t) for w in (1280, 420) for t in ("light", "dark")} and all(len(r["points"]) >= 4 for r in results),
+                "preview-bar: thiếu khổ / chủ đề hay điểm đệm")
     if kind in {"pytest", "vitest"}:
         require(counts.get("passed", 0) > 0 and not any(counts.get(k, 0) for k in ("failed", "error", "xpassed")),
                 "summary có test lỗi hoặc không có test passed: " + json.dumps(counts))
@@ -826,7 +837,7 @@ def select_checks(definitions: list[Check], only: list[str] | None) -> list[Chec
     return [check for check in definitions if check.name in requested]
 
 
-UI_CHECKS = {"typecheck", "vitest", "ui-build", "gallery-build", "gallery-inspect", "contrast", "sheet-geometry"}
+UI_CHECKS = {"typecheck", "vitest", "ui-build", "gallery-build", "gallery-inspect", "preview-bar", "contrast", "sheet-geometry"}
 
 
 def directory_link(link: Path, target: Path) -> None:
@@ -929,6 +940,9 @@ def run_gate(selected: list[Check], directory: Path, runner=run_process, inject:
         elif check.parser == "gallery":
             command = [shutil.which("node") or "node", "scripts/gallery_inspect.mjs", "--theme", "both", "--out", str(directory / "gallery")]
             artifact = directory / "gallery/findings.json"
+        elif check.parser == "preview-bar":
+            command = [*check.command[:-1], str(directory / "preview-bar")]
+            artifact = directory / "preview-bar/preview-bar-checks.json"
         # Build frontend artifacts outside the protected audio source tree.
         if check.name == "ui-build":
             command = [*command, "--outDir", str(directory / "ui-static")]

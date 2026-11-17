@@ -166,6 +166,7 @@ qt_add_qml_module(ABookDesk
         qml/ReadingInk.js
         qml/Interactive.qml
         qml/TapShield.qml
+        qml/Backdrop.qml
         qml/Button.qml
         qml/IconButton.qml
         qml/Shadow.qml

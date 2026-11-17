@@ -17,6 +17,11 @@ import androidx.compose.ui.graphics.drawscope.scale
 import androidx.compose.ui.input.pointer.PointerEvent
 import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.PointerEventType
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.gestures.Orientation
+import androidx.compose.foundation.gestures.ScrollableState
+import androidx.compose.foundation.gestures.scrollable
 import androidx.compose.ui.node.DrawModifierNode
 import androidx.compose.ui.node.ModifierNodeElement
 import androidx.compose.ui.node.PointerInputModifierNode
@@ -97,8 +102,7 @@ private class PressScaleNode : Modifier.Node(), DrawModifierNode, PointerInputMo
         if (pass != PointerEventPass.Initial) return
         val change = pointerEvent.changes.firstOrNull() ?: return
         when (pointerEvent.type) {
-            // Cú chạm đã bị một lớp nổi phía trên giữ ([floatingLayer]): phần tử nằm dưới không thu lại như thể được bấm.
-            PointerEventType.Press -> if (!change.isConsumed) { downAt = change.position; setPressed(true) }
+            PointerEventType.Press -> { downAt = change.position; setPressed(true) }
             PointerEventType.Move -> {
                 val from = downAt
                 if (pressed && from != null && (change.position - from).getDistance() > requireDensity().run { SLOP.toPx() }) setPressed(false)
@@ -131,37 +135,19 @@ private class PressScaleNode : Modifier.Node(), DrawModifierNode, PointerInputMo
 }
 
 /**
- * Lớp nổi đè lên nội dung cuộn (thanh nghe thử, gợi ý, dải nút đáy...): giữ cú BẤM trong CẢ khung của nó - kể cả vùng trống và phần đệm - để cú bấm
- * không lọt xuống dòng nằm dưới, nhưng để cú VUỐT đi qua: danh sách bên dưới vẫn cuộn khi vuốt bắt đầu trên lớp (như web, Qt). Đặt NGOÀI CÙNG chuỗi
- * Modifier (trước `padding`); phần bấm được bên trong vẫn nhận chạm như thường. Máy dò: scripts/ui_parity_rules.py (L12).
+ * Lớp nổi đè lên nội dung cuộn (thanh nghe thử, gợi ý, dải nút đáy...): nuốt mọi cú chạm trong CẢ khung của nó - kể cả vùng trống và phần đệm -
+ * để cú bấm không lọt xuống dòng nằm dưới. Đặt NGOÀI CÙNG chuỗi Modifier (trước `padding`), phần bấm được bên trong vẫn nhận chạm như thường.
+ *
+ * Lớp KHÔNG chia chạm với anh em nằm dưới: Compose dừng dò ở nút trên cùng đã trúng, nên dòng bên dưới không nhận gì (không bấm, không thu lại,
+ * không giữ lâu). Soát 18-11: bản chia chạm (`sharePointerInputWithSiblings`) nối dòng nằm dưới vào làm CON của lớp trong chuỗi giao sự kiện -
+ * pha Main đi từ dưới lên nên `clickable` của dòng nhận cú nhấn / cú thả TRƯỚC lớp: bấm thân thanh mở bài ở dòng dưới, bấm tab mở dòng dưới.
+ * Không có cách "chỉ giữ cú nhấn" an toàn, nên cú VUỐT đi qua bằng đường khác: [scrollThrough] là trạng thái cuộn của danh sách nằm dưới; lớp tự
+ * kéo danh sách ấy (`scrollable`, cùng chiều và cùng fling như vuốt thẳng trên danh sách). Dải nút đáy của Shell không cần (không đè danh sách
+ * nào mà người nghe muốn vuốt từ đó). Máy dò: scripts/ui_parity_rules.py (L12).
  */
-fun Modifier.floatingLayer(): Modifier = this then FloatingLayerElement
-
-private object FloatingLayerElement : ModifierNodeElement<FloatingLayerNode>() {
-    override fun create() = FloatingLayerNode()
-    override fun update(node: FloatingLayerNode) {}
-    override fun hashCode() = 2
-    override fun equals(other: Any?) = other === this
-    override fun InspectorInfo.inspectableProperties() { name = "floatingLayer" }
-}
-
-/**
- * Soát 17-11: bản trước (`pointerInput { detectTapGestures {} }`) chặn cả cú vuốt - Compose không dò tiếp anh em nằm dưới một nút đã trúng chạm, nên
- * danh sách giọng / Kho nhạc không cuộn được khi vuốt bắt đầu trên viên gợi ý hay lề thanh. Node này chia chạm cho anh em nằm dưới
- * ([sharePointerInputWithSiblings]) và chỉ giữ cú NHẤN: ở pha Main (con bên trong lớp đã xử lý xong) nó đánh dấu cú nhấn là đã dùng; nhánh nằm dưới
- * được giao sau nhánh của lớp, nên `clickable` / [pressable] của dòng bên dưới bỏ qua cú nhấn ấy (không bấm, không thu lại). Cú di chuyển không bị
- * đụng tới: phần cuộn của danh sách (nhận cả cú nhấn đã dùng) vẫn kéo được.
- */
-private class FloatingLayerNode : Modifier.Node(), PointerInputModifierNode {
-    override fun sharePointerInputWithSiblings() = true
-
-    override fun onPointerEvent(pointerEvent: PointerEvent, pass: PointerEventPass, bounds: IntSize) {
-        if (pass != PointerEventPass.Main || pointerEvent.type != PointerEventType.Press) return
-        for (change in pointerEvent.changes) if (change.pressed && !change.previousPressed) change.consume()
-    }
-
-    override fun onCancelPointerInput() {}
-}
+fun Modifier.floatingLayer(scrollThrough: ScrollableState? = null): Modifier =
+    (if (scrollThrough != null) this.scrollable(scrollThrough, Orientation.Vertical, reverseDirection = true) else this)
+        .pointerInput(Unit) { detectTapGestures { } }
 
 /** Đầu màn gốc: tiêu đề 24 + dòng phụ ngay dưới (DESIGN.md §6 "Đầu màn"). */
 @Composable

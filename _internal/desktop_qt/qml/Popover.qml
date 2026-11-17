@@ -103,11 +103,7 @@ WindowLayer {
         panel.y = Math.max(8, Math.min(root.height - panel.height - 8, below ? a.y + anchorItem.height + Theme.s8 : a.y - panel.height - Theme.s8))
     }
 
-    MouseArea {
-        anchors.fill: parent
-        enabled: root.open
-        onPressed: root.close()
-    }
+    Backdrop { onDismissed: root.close() }      // bấm ra ngoài chỉ đóng bảng, không tới thứ nằm dưới (như DropdownMenu của web)
 
     FloatingPanel {
         id: panel
@@ -119,7 +115,7 @@ WindowLayer {
         scale: Theme.reduceMotion ? 1 : 0.96 + 0.04 * root.shown
         transformOrigin: root.below ? Item.Top : Item.Bottom
 
-        TapShield {}      // bấm trong bảng không đóng, không lọt xuống dưới; mọi nút trong bảng tự giữ riêng cú bấm (Interactive)
+        TapShield { holdsWheel: true }      // bấm trong bảng không đóng, không lọt xuống dưới; mọi nút trong bảng tự giữ riêng cú bấm (Interactive)
         Shadow {}      // bóng chung của lớp nổi (DESIGN.md 5.5: bóng chỉ cho lớp nổi)
         Rectangle {
             anchors.fill: parent

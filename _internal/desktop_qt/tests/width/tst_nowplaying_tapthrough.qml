@@ -16,6 +16,9 @@ Item {
             property alias bar: mini
             property alias now: now
             property int libraryTaps: 0
+            property alias libraryScroll: libraryScroll
+            // Thư viện cuộn được nằm dưới (ScreenStack vẫn hiện dưới Đang nghe)
+            Flickable { id: libraryScroll; anchors.fill: parent; contentHeight: 5000 }
             // Như Main.qml: nút Back (nút bên) của chuột lùi một lớp ở bất cứ đâu trong cửa sổ
             TapHandler { acceptedButtons: Qt.BackButton; gesturePolicy: TapHandler.ReleaseWithinBounds; onTapped: Nav.back() }
             Interactive {
@@ -146,6 +149,21 @@ Item {
             tryVerify(() => list.contentY > 150, 2000, "the chapter list did not scroll: contentY " + list.contentY)
             compare(Player.chapterId, before, "dragging the list played the row under the pointer")
             compare(content.libraryTaps, 0)
+        }
+
+        // Soát 18-11: lăn chuột trên bìa / chỗ trống của Đang nghe làm thư viện khuất cuộn đi. Khiên giữ cú lăn; danh sách chương bên trong vẫn lăn.
+        function test_wheelStaysInNowPlaying() {
+            const content = openScene({width: 1200, height: 700}), page = content.now
+            mouseWheel(page, page.width - 4, page.height / 2, 0, -360)
+            wait(400)
+            compare(content.libraryScroll.contentY, 0, "a wheel over Now Playing scrolled the hidden library")
+            page.sidePage = 0
+            const list = findChild(page, "nowChapterList")
+            tryVerify(() => list.visible && list.contentHeight > list.height + 200)
+            list.positionViewAtBeginning()
+            mouseWheel(list, list.width / 2, list.height / 2, 0, -360)
+            tryVerify(() => list.contentY > 0, 2000, "the chapter list inside Now Playing no longer takes the wheel")
+            compare(content.libraryScroll.contentY, 0)
         }
     }
 }
