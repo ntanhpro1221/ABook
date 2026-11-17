@@ -176,6 +176,21 @@ def content_nodes(tree: dict) -> list[dict]:
     return [n for n in nodes if width(n) * height(n) < 0.5 * area]
 
 
+def filled(node: dict) -> bool:
+    """Rectangle tô màu thấy được (alpha > 0, không phải dải màu mờ dần)."""
+    colour = str(node.get("background_color", "")).lower()
+    return (str(node.get("type", "")).endswith("Rectangle") and not node.get("gradient")
+            and len(colour) == 9 and colour[1:3] != "00")
+
+
+def row_edges(blocks: list[dict], node: dict) -> tuple[float, float]:
+    """Đỉnh và đáy của hàng ngang chứa `node`: chính nó cùng các anh em cùng cha chồng với nó theo chiều dọc, tách theo chiều ngang."""
+    x0, y0, x1, y1 = node["bounds"]
+    mates = [m for m in blocks if m["parent"] == node["parent"] and min(y1, m["bounds"][3]) - max(y0, m["bounds"][1]) > 0.5
+             and (m["bounds"][2] <= x0 + 0.5 or m["bounds"][0] >= x1 - 0.5)]
+    return min([y0] + [m["bounds"][1] for m in mates]), max([y1] + [m["bounds"][3] for m in mates])
+
+
 def rule_r3(key: str, tree: dict) -> list[dl.Finding]:
     out = []
     nodes = content_nodes(tree)
@@ -186,7 +201,8 @@ def rule_r3(key: str, tree: dict) -> list[dl.Finding]:
     blocks = [n for n in nodes if not any(inside(n, m) and (width(m) * height(m) > width(n) * height(n) + 0.5
                                                         or m['id'] < n['id']) for m in nodes)]
     seen = set()
-    painted = nodes + [n for n in tree["nodes"] if shown(n) and (n.get("icon") or n.get("graphic"))]
+    # Vật vẽ: icon, ảnh, và mặt tô màu (thanh tiến độ mảnh, vạch chia: Rectangle nền không trong suốt, không dải màu).
+    painted = nodes + [n for n in tree["nodes"] if shown(n) and (n.get("icon") or n.get("graphic") or filled(n))]
     for a in blocks:
         below = [b for b in blocks if b["bounds"][1] >= a["bounds"][3] - 0.5
                  and b["parent"] == a["parent"] and b["id"] != a["id"]
@@ -194,7 +210,13 @@ def rule_r3(key: str, tree: dict) -> list[dl.Finding]:
         if not below:
             continue
         b = min(below, key=lambda n: n["bounds"][1])
-        gap = round(b["bounds"][1] - a["bounds"][3], 2)
+        # Hàng ngang (flex-wrap căn giữa: ô nhập 36 cạnh nút 40): khe giữa hai hàng đo từ đáy hàng trên tới đỉnh hàng dưới,
+        # không từ đáy ô thấp hơn. Bạn cùng hàng = anh em cùng cha, chồng theo chiều dọc, tách nhau theo chiều ngang; hàng
+        # trên còn thò xuống ngang khối dưới (ảnh cao cạnh hai dòng chữ) thì không phải hai hàng, đo thẳng hai khối.
+        top, bottom = row_edges(blocks, b)[0], row_edges(blocks, a)[1]
+        if bottom > b["bounds"][1] + 0.5 or top < a["bounds"][3] - 0.5:
+            top, bottom = b["bounds"][1], a["bounds"][3]
+        gap = round(top - bottom, 2)
         # Khe chỉ là khe khi giữa hai khối không có gì vẽ: một nút / thanh trượt / icon của nhánh cha khác nằm giữa
         # (hàng "Chọn ảnh" giữa "Chưa có bìa" và "Kéo hoặc dán ảnh") thì khoảng ấy là hai khe, đo ở chỗ khác.
         if any(c["id"] not in (a["id"], b["id"]) and c["bounds"][1] >= a["bounds"][3] - 0.5

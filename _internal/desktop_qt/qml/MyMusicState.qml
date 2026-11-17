@@ -81,7 +81,7 @@ Column {
                 font.pixelSize: Theme.sizeBody
                 font.weight: Theme.weightMedium
             }
-            Item { width: 1; height: 20 }
+            Item { width: 1; height: 24 }
             Button {
                 anchors.horizontalCenter: parent.horizontalCenter
                 text: root.addText; icon: "upload"; kind: root.addKind

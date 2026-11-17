@@ -129,7 +129,6 @@ Item {
                 }
             }
         }
-        Item { width: 1; height: 2 }
         Text {
             objectName: "castCounts"
             width: parent.width

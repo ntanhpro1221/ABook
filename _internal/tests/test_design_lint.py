@@ -585,6 +585,32 @@ def test_r3_gap_with_a_painted_piece_between_is_two_gaps_not_one():
     assert [f.rule for f in findings] == ["R3"] and "66" in findings[0].detail
 
 
+def test_r3_filled_bar_between_blocks_splits_the_gap():
+    # Dòng tình trạng, rồi thanh tiến độ mảnh 4 dp (Rectangle tô màu), rồi "Đang nghe": 24 + 4 + 8 là hai khe trên thang, không phải 36.
+    blocks = (n(0, 20, 506, 340, 524, text="Chưa đủ chương"), n(0, 20, 560, 340, 576, text="Đang nghe"))
+    bar = n(0, 20, 548, 340, 552, type="QQuickRectangle", background_color="#ffe8e4dc")
+    assert dt.rule_r3("k", tree(ROOT, *blocks, bar)) == []
+    # Rectangle trong suốt (khung giữ chỗ) hay dải mờ dần không phải vật vẽ: 36 dp vẫn đỏ.
+    clear = n(0, 20, 548, 340, 552, type="QQuickRectangle", background_color="#00000000")
+    fade = n(0, 20, 548, 340, 552, type="QQuickRectangle", background_color="#ffffffff", gradient=True)
+    for piece in (clear, fade):
+        findings = dt.rule_r3("k", tree(ROOT, *blocks, piece))
+        assert [f.rule for f in findings] == ["R3"] and "36" in findings[0].detail
+
+
+def test_r3_wrapped_row_gap_is_measured_from_the_row_bottom():
+    # Hàng khoá hẹp (flex-wrap, items-center, gap 8): ô vùng 36 cạnh nút "Lưu" 40, nút "Xoá khoá" xuống hàng 2. Đáy ô thấp hơn đáy
+    # hàng 2 dp; khe giữa hai hàng là 8, không phải 10.
+    row = (n(0, 20, 102, 220, 138, text="southeastasia"), n(0, 228, 100, 300, 140, text="Lưu"))
+    assert dt.rule_r3("k", tree(ROOT, *row, n(0, 20, 148, 140, 188, text="Xoá khoá"))) == []
+    # Hàng 2 cách đáy hàng 10: vẫn đỏ.
+    findings = dt.rule_r3("k", tree(ROOT, *row, n(0, 20, 150, 140, 190, text="Xoá khoá")))
+    assert [f.rule for f in findings] == ["R3"] and "10" in findings[0].detail
+    # Bạn cùng hàng thò xuống ngang khối dưới (ảnh cao bên cạnh hai dòng chữ): không phải hai hàng, khe 6 giữa hai dòng vẫn đỏ.
+    tall = tree(ROOT, n(0, 20, 100, 220, 120, text="Tên"), n(0, 20, 126, 220, 146, text="Tác giả"), n(0, 240, 100, 340, 200, text="Bìa"))
+    assert [f.detail.split(" giữa")[0] for f in dt.rule_r3("k", tall)] == ["khe dọc 6 dp"]
+
+
 def test_r8_cut_text_and_overlap_red_clean_green():
     clean = tree(ROOT, n(0, 20, 100, 340, 124, text="Một"), n(0, 20, 130, 340, 150, text="Hai"))
     assert dt.rule_r8("k", clean) == []
