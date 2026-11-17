@@ -130,6 +130,8 @@ if errorlevel 1 exit /b 1
 if not errorlevel 0 exit /b 1
 rem Music library filters/search: the shared case table tests/fixtures/music_library/cases.json
 call :test "%HERE%build\MusicLibraryTests.exe" "%HERE%build\musiclibrary-test.txt"
+if errorlevel 1 exit /b 1
+if not errorlevel 0 exit /b 1
 call :test "%HERE%build\MusicArtTests.exe" "%HERE%build\musicart-test.txt"
 if errorlevel 1 exit /b 1
 if not errorlevel 0 exit /b 1
