@@ -410,11 +410,16 @@ fun PlayerSeekBar(durationMs: Long, position: PlayerPosition, onSeek: (Long) -> 
 /**
  * Công tắc hai chế độ của cửa sổ: "Nghe" / "Đọc theo". Hai ô bằng nhau; viên chỉ báo trượt theo đúng tiến độ của phép đổi bố cục
  * ([mode] 0 -> 1) và màu chữ đổi theo cùng tiến độ ấy - một chuyển động, đọc ở pha vẽ, không recompose mỗi khung.
+ * Nhãn luôn một dòng (soát 0.4.173: chữ 130 % làm "Đọc theo" xuống hai dòng, tràn khỏi viên): thiếu chỗ thì lề trong co từ 16 về 8 dp trước,
+ * rồi chữ mới thu cỡ cho vừa ô - không xuống dòng, không cắt "…". Đủ chỗ thì y như cũ.
  */
 @Composable
 fun PlayerModeSwitch(mode: State<Float>, onSelect: (Boolean) -> Unit, modifier: Modifier = Modifier) {
     val colors = Abook.colors
     val style = Abook.type.label.copy(textAlign = androidx.compose.ui.text.style.TextAlign.Center)
+    val fit = remember(style.fontSize) {
+        androidx.compose.foundation.text.TextAutoSize.StepBased(minFontSize = 8.sp, maxFontSize = style.fontSize, stepSize = 0.25.sp)
+    }
     Layout(modifier = modifier.heightIn(min = 36.dp).testTag("player_mode")
         .drawBehind {
             val corner = size.height / 2
@@ -433,12 +438,13 @@ fun PlayerModeSwitch(mode: State<Float>, onSelect: (Boolean) -> Unit, modifier: 
                     .semantics { selected = (mode.value >= 0.5f) == reading }
                     .testTag(if (reading) "mode_read" else "mode_listen"),
                     contentAlignment = Alignment.Center) {
-                    BasicText(label, Modifier.padding(horizontal = 16.dp), style = style,
+                    BasicText(label, Modifier.padding(horizontal = 8.dp), style = style, softWrap = false, autoSize = fit,
                         color = { lerp(colors.accentText, colors.text, if (reading) mode.value else 1f - mode.value) })
                 }
             }
         }) { measurables, constraints ->
-        val segment = measurables.maxOf { it.maxIntrinsicWidth(constraints.maxHeight) }
+        // Nhãn đã có lề 8 dp mỗi bên; thêm 8 dp nữa (đủ 16) khi còn chỗ. Hai ô luôn bằng nhau và vừa nửa bề ngang.
+        val segment = (measurables.maxOf { it.maxIntrinsicWidth(constraints.maxHeight) } + 16.dp.roundToPx())
             .coerceAtMost(constraints.maxWidth / 2)
         val placeables = measurables.map { it.measure(Constraints(minWidth = segment, maxWidth = segment, maxHeight = constraints.maxHeight)) }
         val height = (placeables.maxOfOrNull { it.height } ?: 0).coerceIn(constraints.minHeight, constraints.maxHeight)

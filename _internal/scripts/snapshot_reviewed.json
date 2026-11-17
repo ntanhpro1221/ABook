@@ -548,12 +548,12 @@
     "reason": "Opened the before/after contact sheet in this integration session. Intentional action ink, radio outlines, chevrons and music artwork retained; labels and primary controls remain readable."
   },
   "_internal/mobile/android/app/src/test/snapshots/np_picker_sleep_font130_dark.png": {
-    "sha256": "7f2e0dafa645d977704dbefa02f4b3c10fab25fe62309e3745add1b75ef12813",
-    "reason": "Opened the before/after contact sheet in this integration session. Intentional action ink, radio outlines, chevrons and music artwork retained; labels and primary controls remain readable."
+    "sha256": "36a8de1545e1f0ac685e3d0a9c349b5d715d1c6a459e27bfedea52216723a91a",
+    "reason": "Visually reviewed fix173d old/new header contact sheet: at 130 % text the Nghe / Đọc theo mode switch keeps each label on one line inside the pill (old: Đọc theo wrapped to two lines and overflowed); padding shrinks before any font scaling; only the header pill region (x 204-876, y 6-162) differs, rest of the frame byte-identical. np_picker_sleep_font130_dark.png"
   },
   "_internal/mobile/android/app/src/test/snapshots/np_picker_sleep_font130_light.png": {
-    "sha256": "715d51baa47d984564114e5d73933d2f587b0a59e37e51eb97b963b45faab4d9",
-    "reason": "Opened the before/after contact sheet in this integration session. Intentional action ink, radio outlines, chevrons and music artwork retained; labels and primary controls remain readable."
+    "sha256": "8a8c467f78c7f68bf2786095c64b836f3765f449a77efa8f852ba5c0deca9550",
+    "reason": "Visually reviewed fix173d old/new header contact sheet: at 130 % text the Nghe / Đọc theo mode switch keeps each label on one line inside the pill (old: Đọc theo wrapped to two lines and overflowed); padding shrinks before any font scaling; only the header pill region (x 204-876, y 6-162) differs, rest of the frame byte-identical. np_picker_sleep_font130_light.png"
   },
   "_internal/mobile/android/app/src/test/snapshots/np_playing_dark.png": {
     "sha256": "26daf02956bd4df62cd15ac8ac118d3450963a43c87f992a6201d8e7f60a283c",
@@ -868,28 +868,28 @@
     "reason": "Inspected the combined-source before/after contact sheet and exact image bytes. Labels and controls remain inside their surfaces; selection marks, icons and shared confirmation rows reflect the integrated musicdl behavior. The shared cancel and destructive choice remain distinct, with the consequence text fully wrapped."
   },
   "_internal/mobile/android/app/src/test/snapshots/music_audio_sheet_130_dark.png": {
-    "sha256": "094b8bd454ee172b6cc9196bb55096bc3b94d0a6e24619310623c1041b3df639",
-    "reason": "Opened the before/after contact sheet in this integration session. Intentional action ink, radio outlines, chevrons and music artwork retained; labels and primary controls remain readable."
+    "sha256": "8562021f4c3c2a5debcdae1c3b9a9c411b883c9d30a4705663dda69ca7e0e1b1",
+    "reason": "Visually reviewed fix173d old/new header contact sheet: at 130 % text the Nghe / Đọc theo mode switch keeps each label on one line inside the pill (old: Đọc theo wrapped to two lines and overflowed); padding shrinks before any font scaling; only the header pill region (x 204-876, y 6-162) differs, rest of the frame byte-identical. music_audio_sheet_130_dark.png"
   },
   "_internal/mobile/android/app/src/test/snapshots/music_audio_sheet_130_dark_bottom.png": {
-    "sha256": "e18319337cc01d27b3b5f2349c41018e6ef3a9b999927fcef15d411ec3545c70",
-    "reason": "Opened the before/after contact sheet in this integration session. Intentional action ink, radio outlines, chevrons and music artwork retained; labels and primary controls remain readable."
+    "sha256": "cf907bc0cdebed38fa1a316508b2270c61bd2d4da126c6094713318ddf3aecf1",
+    "reason": "Visually reviewed fix173d old/new header contact sheet: at 130 % text the Nghe / Đọc theo mode switch keeps each label on one line inside the pill (old: Đọc theo wrapped to two lines and overflowed); padding shrinks before any font scaling; only the header pill region (x 204-876, y 6-162) differs, rest of the frame byte-identical. music_audio_sheet_130_dark_bottom.png"
   },
   "_internal/mobile/android/app/src/test/snapshots/music_audio_sheet_130_dark_off.png": {
-    "sha256": "20be8e7a1245c070adfe822a419194bdfb23cf76d98a928324447b7aa058ccbe",
-    "reason": "Opened the before/after contact sheet in this integration session. Intentional action ink, radio outlines, chevrons and music artwork retained; labels and primary controls remain readable."
+    "sha256": "242c6ad5f32a11b3692c642ea8797c68d54869fadec10ca30d45bd8433834b2e",
+    "reason": "Visually reviewed fix173d old/new header contact sheet: at 130 % text the Nghe / Đọc theo mode switch keeps each label on one line inside the pill (old: Đọc theo wrapped to two lines and overflowed); padding shrinks before any font scaling; only the header pill region (x 204-876, y 6-162) differs, rest of the frame byte-identical. music_audio_sheet_130_dark_off.png"
   },
   "_internal/mobile/android/app/src/test/snapshots/music_audio_sheet_130_light.png": {
-    "sha256": "82042a80c58db673c551d101c046cd674c0c5c63bf4c21a565a6b750b9c44bff",
-    "reason": "Opened the before/after contact sheet in this integration session. Intentional action ink, radio outlines, chevrons and music artwork retained; labels and primary controls remain readable."
+    "sha256": "bba146a9d3767ab3a7d4d060b1a7516613e2d3b43e1760cc3d657e8db0da8712",
+    "reason": "Visually reviewed fix173d old/new header contact sheet: at 130 % text the Nghe / Đọc theo mode switch keeps each label on one line inside the pill (old: Đọc theo wrapped to two lines and overflowed); padding shrinks before any font scaling; only the header pill region (x 204-876, y 6-162) differs, rest of the frame byte-identical. music_audio_sheet_130_light.png"
   },
   "_internal/mobile/android/app/src/test/snapshots/music_audio_sheet_130_light_bottom.png": {
-    "sha256": "5a05e2c4d4427a356acb69d3fb21c38f168fecab670902d73c895acfee1f2b12",
-    "reason": "Opened the before/after contact sheet in this integration session. Intentional action ink, radio outlines, chevrons and music artwork retained; labels and primary controls remain readable."
+    "sha256": "5fafa5154ea3949170b21de51603e95cc9dfe51259aa3f8d1abf74ceb2755a4f",
+    "reason": "Visually reviewed fix173d old/new header contact sheet: at 130 % text the Nghe / Đọc theo mode switch keeps each label on one line inside the pill (old: Đọc theo wrapped to two lines and overflowed); padding shrinks before any font scaling; only the header pill region (x 204-876, y 6-162) differs, rest of the frame byte-identical. music_audio_sheet_130_light_bottom.png"
   },
   "_internal/mobile/android/app/src/test/snapshots/music_audio_sheet_130_light_off.png": {
-    "sha256": "09df94e141d1f15c98f453670a2b6be9fcc1d7859c1ac187b0519150cdcff0a4",
-    "reason": "Opened the before/after contact sheet in this integration session. Intentional action ink, radio outlines, chevrons and music artwork retained; labels and primary controls remain readable."
+    "sha256": "5554188a3bb69c4f74f40a702ea61f63842dcd61818f77f4c42b2f463fa8420f",
+    "reason": "Visually reviewed fix173d old/new header contact sheet: at 130 % text the Nghe / Đọc theo mode switch keeps each label on one line inside the pill (old: Đọc theo wrapped to two lines and overflowed); padding shrinks before any font scaling; only the header pill region (x 204-876, y 6-162) differs, rest of the frame byte-identical. music_audio_sheet_130_light_off.png"
   },
   "_internal/mobile/android/app/src/test/snapshots/music_audio_sheet_dark.png": {
     "sha256": "0dce6f6dd317f5aea70467586c40310472546d96ac56dd177da685d4f646be39",
@@ -904,12 +904,12 @@
     "reason": "Opened the before/after contact sheet in this integration session. Intentional action ink, radio outlines, chevrons and music artwork retained; labels and primary controls remain readable."
   },
   "_internal/mobile/android/app/src/test/snapshots/music_audio_sheet_full_130_dark.png": {
-    "sha256": "4ea2d6752baf4f8a96e6ab2684a06994d2f8fe6070e65d0d21b3d11f8944f9ce",
-    "reason": "Opened the before/after contact sheet in this integration session. Intentional action ink, radio outlines, chevrons and music artwork retained; labels and primary controls remain readable."
+    "sha256": "1817293359c88c6435ad278e86af5b097482482b204b303ebc083d31fe65ff85",
+    "reason": "Visually reviewed fix173d old/new header contact sheet: at 130 % text the Nghe / Đọc theo mode switch keeps each label on one line inside the pill (old: Đọc theo wrapped to two lines and overflowed); padding shrinks before any font scaling; only the header pill region (x 204-876, y 6-162) differs, rest of the frame byte-identical. music_audio_sheet_full_130_dark.png"
   },
   "_internal/mobile/android/app/src/test/snapshots/music_audio_sheet_full_130_light.png": {
-    "sha256": "6961d4677ac75f95c4c5ea62dfd4393abacaa6dfa76161714d9064e033defe08",
-    "reason": "Opened the before/after contact sheet in this integration session. Intentional action ink, radio outlines, chevrons and music artwork retained; labels and primary controls remain readable."
+    "sha256": "0803c40d8ee5cb302e4dc097861633303376b743646d3ee61687138911eb63a9",
+    "reason": "Visually reviewed fix173d old/new header contact sheet: at 130 % text the Nghe / Đọc theo mode switch keeps each label on one line inside the pill (old: Đọc theo wrapped to two lines and overflowed); padding shrinks before any font scaling; only the header pill region (x 204-876, y 6-162) differs, rest of the frame byte-identical. music_audio_sheet_full_130_light.png"
   },
   "_internal/mobile/android/app/src/test/snapshots/music_audio_sheet_full_dark.png": {
     "sha256": "915c9c90083f78a37895a2128997bc7f6c544fc382467a7a224b7e1cc6d557b4",
@@ -1000,16 +1000,16 @@
     ]
   },
   "_internal/mobile/android/app/src/test/snapshots/np_picker_audio_font130_dark.png": {
-    "sha256": "4d73526fe8a648f7c789a02bfd54b5d7457fede1f9ea30f075e8abf47aa33c49",
-    "reason": "Opened the before/after contact sheet in this integration session. Intentional action ink, radio outlines, chevrons and music artwork retained; labels and primary controls remain readable. The established full-scroll extent is retained; audio grouping and ruler controls remain present.",
+    "sha256": "81f5b20e7af8763a7127ebbc296fdf745ee58abee211f9c8a5217ce749be6272",
+    "reason": "Visually reviewed fix173d old/new header contact sheet: at 130 % text the Nghe / Đọc theo mode switch keeps each label on one line inside the pill (old: Đọc theo wrapped to two lines and overflowed); padding shrinks before any font scaling; only the header pill region (x 204-876, y 6-162) differs, rest of the frame byte-identical. np_picker_audio_font130_dark.png",
     "scroll_dimensions": [
       1080,
       10200
     ]
   },
   "_internal/mobile/android/app/src/test/snapshots/np_picker_audio_font130_light.png": {
-    "sha256": "d5a5eed6b0fa10a19ec7ebfe28aa4580d8c8f81def09cce687e82a13fc1831b5",
-    "reason": "Opened the before/after contact sheet in this integration session. Intentional action ink, radio outlines, chevrons and music artwork retained; labels and primary controls remain readable. The established full-scroll extent is retained; audio grouping and ruler controls remain present.",
+    "sha256": "631d07f2cef75aa2a0aaee9a8ee0f00aa64f013e0eb8c17a9ec2a94a154f69e7",
+    "reason": "Visually reviewed fix173d old/new header contact sheet: at 130 % text the Nghe / Đọc theo mode switch keeps each label on one line inside the pill (old: Đọc theo wrapped to two lines and overflowed); padding shrinks before any font scaling; only the header pill region (x 204-876, y 6-162) differs, rest of the frame byte-identical. np_picker_audio_font130_light.png",
     "scroll_dimensions": [
       1080,
       10200
@@ -1024,20 +1024,20 @@
     ]
   },
   "_internal/mobile/android/app/src/test/snapshots/np_picker_look_font130_dark.png": {
-    "sha256": "3925d6108ca691d69191ed9c901c1e7b017990b9f8684f7dc09efaaf8cc8f5a3",
-    "reason": "Opened the before/after contact sheet in this integration session. Intentional action ink, radio outlines, chevrons and music artwork retained; labels and primary controls remain readable."
+    "sha256": "56812d8d7b6cf484896b3d50f8475945627bc7f51380b7a76b0918df1253994b",
+    "reason": "Visually reviewed fix173d old/new header contact sheet: at 130 % text the Nghe / Đọc theo mode switch keeps each label on one line inside the pill (old: Đọc theo wrapped to two lines and overflowed); padding shrinks before any font scaling; only the header pill region (x 204-876, y 6-162) differs, rest of the frame byte-identical. np_picker_look_font130_dark.png"
   },
   "_internal/mobile/android/app/src/test/snapshots/np_picker_look_font130_light.png": {
-    "sha256": "06bbe6769301c05a77e8169c222c64b7f45234486e9b4ee6bc08bf0f9a9f13cc",
-    "reason": "Opened the before/after contact sheet in this integration session. Intentional action ink, radio outlines, chevrons and music artwork retained; labels and primary controls remain readable."
+    "sha256": "948a967b81c5f513cfbf3424cea667a56baba7fd110375d25c35629dc95f8a37",
+    "reason": "Visually reviewed fix173d old/new header contact sheet: at 130 % text the Nghe / Đọc theo mode switch keeps each label on one line inside the pill (old: Đọc theo wrapped to two lines and overflowed); padding shrinks before any font scaling; only the header pill region (x 204-876, y 6-162) differs, rest of the frame byte-identical. np_picker_look_font130_light.png"
   },
   "_internal/mobile/android/app/src/test/snapshots/np_picker_speed_font130_dark.png": {
-    "sha256": "205ced67dbd0489fc767f6c63e884c5b2ba252179307b3b8d39447203953361f",
-    "reason": "Opened the before/after contact sheet in this integration session. Intentional action ink, radio outlines, chevrons and music artwork retained; labels and primary controls remain readable."
+    "sha256": "05024622236639518aca5ead2e5b2ea91ccbf0b3795c0f8970386513e8c162f3",
+    "reason": "Visually reviewed fix173d old/new header contact sheet: at 130 % text the Nghe / Đọc theo mode switch keeps each label on one line inside the pill (old: Đọc theo wrapped to two lines and overflowed); padding shrinks before any font scaling; only the header pill region (x 204-876, y 6-162) differs, rest of the frame byte-identical. np_picker_speed_font130_dark.png"
   },
   "_internal/mobile/android/app/src/test/snapshots/np_picker_speed_font130_light.png": {
-    "sha256": "1e34a95297146c65d1bb1656882972d2ae85d02c72cfadb64dc4aeaa6ec321d2",
-    "reason": "Opened the before/after contact sheet in this integration session. Intentional action ink, radio outlines, chevrons and music artwork retained; labels and primary controls remain readable."
+    "sha256": "89d2bae5dd1f021389bf4d0667c0adaf1148a550cb63c3cacdfe16157e8a6139",
+    "reason": "Visually reviewed fix173d old/new header contact sheet: at 130 % text the Nghe / Đọc theo mode switch keeps each label on one line inside the pill (old: Đọc theo wrapped to two lines and overflowed); padding shrinks before any font scaling; only the header pill region (x 204-876, y 6-162) differs, rest of the frame byte-identical. np_picker_speed_font130_light.png"
   },
   "_internal/mobile/android/app/src/test/snapshots/np_prepare_light.png": {
     "sha256": "2b4e682aab0fb31102553d032eaf3eb2f6e73225a00e085c759c01d346692fcb",

@@ -10806,10 +10806,10 @@
     "line": 346,
     "statement": "onRetry = { onDim(false); scope.launch { model.loadReadAlong() } },",
     "occurrence": 1,
-    "source_sha256": "28679c906a8890a7d69fc407c0d10ad7197f4503c6eea2f10ecbef992faeff67",
+    "source_sha256": "b399708f77634322465aface642d42398c6c655ba4f1c416a72379b2ae83c396",
     "disposition": "pending",
     "guard": "ViewModel/operation fields: pending, preparing, progress, windowProgress; Components pending indicator",
-    "reason": "The model retains the operation and locks repeats; UI uses the shared pending parameter, loading content or progress owner. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
+    "reason": "The model retains the operation and locks repeats; UI uses the shared pending parameter, loading content or progress owner. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Re-pinned for fix173d: the edit only fits the Nghe/Đọc theo labels on one line and adds the volume heard bar; this statement and its guard are unchanged."
   },
   {
     "id": "ace48ea02e5d8fec927b",
