@@ -6,7 +6,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { AddBookDialog } from "./AddBook";
 
-const importer = vi.hoisted(() => ({ typedPath: true, preview: vi.fn(), discard: vi.fn(async () => {}), choose: vi.fn(), chooseMany: vi.fn() }));
+const importer = vi.hoisted(() => ({ typedPath: true, preview: vi.fn(), add: vi.fn(), discard: vi.fn(async () => {}), choose: vi.fn(), chooseMany: vi.fn() }));
 vi.mock("./source", () => ({ useSource: () => ({ textImport: importer }) }));
 let root: Root, host: HTMLDivElement, client: QueryClient;
 let start: ReturnType<typeof vi.fn>;
@@ -54,6 +54,20 @@ it("multi-file step changes keep hidden AddBook controls inert then restore titl
   expect(body.querySelector<HTMLInputElement>('input[placeholder="Tên hiển thị trong thư viện"]')?.value).toBe("Sách hai");
 });
 afterEach(async () => { await act(() => root.unmount()); client.clear(); document.body.replaceChildren(); Reflect.deleteProperty(document, "startViewTransition"); vi.restoreAllMocks(); });
+it("closing a submitted text import detaches the dialog without discarding its source", async () => {
+  importer.preview.mockResolvedValue({ title: "Sách thử", chapters: [{ index: 1, title: "Chương 1", words: 100 }], notes: [] });
+  let complete!: (value: { id: string; how: string }) => void;
+  importer.add.mockImplementation(() => new Promise(resolve => { complete = resolve; }));
+  await act(() => root.render(<QueryClientProvider client={client}><MemoryRouter><Book initial={{ ref: "a.txt", name: "a.txt" }} /></MemoryRouter></QueryClientProvider>));
+  await act(() => [...document.querySelectorAll<HTMLButtonElement>('button')].find(button => button.textContent === "Thêm vào thư viện")!.click());
+  expect(importer.add).toHaveBeenCalledTimes(1);
+  await act(() => document.querySelector<HTMLButtonElement>('[role="dialog"] button[aria-label="Đóng"]')!.click());
+  expect(document.querySelector('[role="dialog"][data-state="open"]')).toBeNull();
+  expect(importer.discard).not.toHaveBeenCalled();
+  await act(() => complete({ id: "added", how: "new" }));
+  expect(document.querySelector('[role="dialog"][data-state="open"]')).toBeNull();
+  expect(importer.discard).not.toHaveBeenCalled();
+});
 it("cuốn đã có trong hàng chờ: nút chính ở cuối chân hộp", async () => {
   importer.chooseMany.mockResolvedValue(["a", "b"].map(name => ({ name: `${name}.txt`, choice: { ref: `${name}.txt`, name: `${name}.txt` } })));
   importer.preview.mockResolvedValue({ title: "Sách thử", chapters: [{ index: 1, title: "Chương 1", words: 100 }], notes: [], existing: { id: "old", title: "Sách đã có" } });

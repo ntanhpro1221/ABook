@@ -187,11 +187,12 @@ object BookFileImport {
      * Chép từ content:// (trình quản lý file, Zalo, Drive...) vào bộ nhớ đệm rồi nhập. `progress`: byte đã chép / cỡ file (nửa đầu thanh),
      * rồi byte đã giải và kiểm mã băm / tổng phần cần giải (nửa sau). File dự án mở tại chỗ không có bước chép: bước kiểm chiếm cả thanh.
      */
-    fun import(context: Context, uri: Uri, allowOlder: Boolean = false, progress: WorkSink = {}): Imported {
+    fun import(context: Context, uri: Uri, allowOlder: Boolean = false, progress: WorkSink = {}, checkpoint: () -> Unit = {}): Imported {
+        checkpoint()
         Store.init(context)
         // File dự án có thể vài chục GB (sổ dự án, từng câu đã thu): đọc thẳng từ chỗ nó nằm, chỉ phần nghe mới được chép.
         openInPlace(context, uri)?.let { descriptor ->
-            descriptor.use { return importFile(File("/proc/self/fd/${it.fd}"), allowOlder = allowOlder, progress = progress) }
+            descriptor.use { return importFile(File("/proc/self/fd/${it.fd}"), allowOlder = allowOlder, progress = progress, checkpoint = checkpoint) }
         }
         val copy = File(context.cacheDir, "import-${System.nanoTime()}.abook")
         try {
@@ -200,7 +201,7 @@ object BookFileImport {
             val total = size ?: 0L
             val input = context.contentResolver.openInputStream(uri) ?: throw Refused(S.s_chua_doc_duoc_file_6575d76b)
             input.use { source -> copy.outputStream().use { sink -> copyCounting(source, sink) { done -> progress(copyWork(done, total, COPY_SHARE)) } } }
-            return importFile(copy, allowOlder = allowOlder, progress = progress, from = COPY_SHARE)
+            return importFile(copy, allowOlder = allowOlder, progress = progress, from = COPY_SHARE, checkpoint = checkpoint)
         } finally {
             copy.delete()
         }
@@ -259,11 +260,16 @@ object BookFileImport {
      *  `refreshBase = false` chỉ giữ lớp nền khi nhập lại chữ từ EPUB/TXT; gói có audio luôn so và cập nhật lớp nền. */
     /** `progress`: byte đã giải và kiểm mã băm / tổng phần cần giải, chiếm khoảng [from, 1] của thanh. */
     fun importFile(file: File, separate: Boolean = false, allowOlder: Boolean = false, refreshBase: Boolean = true,
-                   progress: WorkSink = {}, from: Float = 0f, freeSpace: (File) -> Long = { it.usableSpace }): Imported {
+                   progress: WorkSink = {}, from: Float = 0f, checkpoint: () -> Unit = {}, freeSpace: (File) -> Long = { it.usableSpace }): Imported {
+        checkpoint()
+        // File không còn / không đọc được là lỗi đọc, không phải "không phải file sách": lời ấy chỉ dành cho nội dung đã đọc được mà sai.
+        if (!file.canRead()) throw Refused(S.s_chua_doc_duoc_file_6575d76b)
         val zip = try {
             ZipFile(file)
         } catch (error: Exception) {
-            throw Refused(if (looksCut(file)) DAMAGED else S.s_day_khong_phai_file_sach_cua_app_a571a0c0)
+            val cut = looksCut(file)
+            AppLog.w("BookFileImport", "not a zip: ${file.length()} bytes, cut=$cut", error)
+            throw Refused(if (cut) DAMAGED else S.s_day_khong_phai_file_sach_cua_app_a571a0c0)
         }
         zip.use {
             val entries = zip.entries().toList()
@@ -365,6 +371,7 @@ object BookFileImport {
             val refresh = refreshBase || chapters.keys().asSequence().any { it.startsWith("chapters/") }
             val changed = refresh && current != null && !StrictJson.equal(baseLayer(current, BookEdits.load(Store.bookDir(target))), baseLayer(book, incoming.edits))
             if (current != null && disposition == "existing" && !gainsWorkshop && !changed) {
+                checkpoint()
                 // Giữ bản trên máy, nhưng phần sửa trong file vẫn được hợp vào (bên máy này thắng) - không mất công của ai.
                 var merged = false
                 if (editable && BookEdits.count(incoming.edits) > 0) {
@@ -429,6 +436,7 @@ object BookFileImport {
                 book.put("audioVersion", AudioRevision.version(bookChapters))
                 // Bản sách của app trên máy mang mã thư mục của app (book.json không nằm trong danh sách mã băm).
                 Store.writeAtomic(File(staging, "book.json"), book.put("id", target).toString())
+                checkpoint()
                 replace(books, staging, Store.bookDir(target), target)
             } finally {
                 staging.deleteRecursively()
@@ -639,7 +647,8 @@ object BookFileImport {
             }
             val chapters = book.optJSONArray("chapters")
             for (index in 0 until (chapters?.length() ?: 0)) {
-                val file = chapters?.optJSONObject(index)?.optString("file").orEmpty()
+                // Android optString turns JSONObject.NULL into "null"; an unfinished chapter has no audio reference.
+                val file = (chapters?.optJSONObject(index)?.opt("file") as? String).orEmpty()
                 if (file.isNotEmpty() && file !in listening) throw Refused(S.s_phan_nghe_cua_du_an_thieu_audio_cua_mot_ch_9c0bdad5)
                 val written = chapters?.optJSONObject(index)?.opt("text")
                 if (written != null && written != JSONObject.NULL && (written !is String || written.isNotEmpty() && written !in listening)) {

@@ -7,6 +7,11 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+- Điện thoại: nhập file sách chạy ngầm - rời app hay đóng màn Thêm sách giữa lúc chép/kiểm vẫn nhập tới xong, tiến độ và kết quả ở thông báo (bấm mở sách, lỗi thì Thử lại); người phát triển nhập qua adb mà app không nhảy lên màn hình.
+- Máy tính và web: thêm sách là việc nền của máy chủ - đóng hộp Thêm sách giữa chừng vẫn thêm tới xong, thanh bên hiện "Đang thêm sách" và thư viện tự làm mới khi xong; app đóng giữa lượt thì mở lại thấy lượt dở kèm Thử lại, không bao giờ có nửa cuốn trong thư viện.
+- Thêm sách: lỗi của file trước (ví dụ file .abook hỏng) không còn dính sang file sau - mỗi lượt có bản tạm, kiểu file và lời lỗi riêng.
+- Điện thoại: sửa metadata khi app tự đóng gói TXT và khi lưu sách/dự án, để file vừa tạo vẫn nhập lại được thay vì báo sai kiểu file.
+
 - Điện thoại, web và máy tính: tên giọng (và tên nhân vật khi gộp người) quá dài không còn bị cắt bằng "…" - chữ thu nhỏ vừa một dòng, dài quá nữa thì xuống dòng để luôn đọc trọn tên.
 
 - Dòng giọng đọc giữ tên trên một dòng, đánh dấu bằng biểu tượng chọn và chừa khoảng cách rõ với nút Nghe thử trên điện thoại, web và máy tính; nút quay lại chỗ vừa nghe không che tên chương.

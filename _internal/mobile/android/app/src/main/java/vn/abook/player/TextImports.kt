@@ -277,7 +277,13 @@ object TextImports {
             packed.outputStream().use { TextBook.build(book, it, codec) }
             val before = Store.books().map { it.optString("id") }.toSet()
             // Repeating an EPUB/TXT pick keeps the existing book; opening an exported .abook refreshes its base layer.
-            val imported = BookFileImport.importFile(packed, separate = separate, refreshBase = false)
+            val imported = try {
+                BookFileImport.importFile(packed, separate = separate, refreshBase = false)
+            } catch (error: BookFileImport.Refused) {
+                // Gói do chính app vừa dựng mà bị từ chối là lỗi của app, không phải của file người dùng: ghi đủ để lần ra.
+                AppLog.w("TextImports", "own package refused: exists=${packed.exists()} bytes=${packed.length()} free=${cacheDir.usableSpace}", error)
+                throw error
+            }
             if (imported.id !in before) Store.rememberSource(imported.id, sourceDigest(staged(ref)))
             discard(ref)
             return Created(imported.id, if (imported.id in before) "existing" else "new", book.chapters.size)

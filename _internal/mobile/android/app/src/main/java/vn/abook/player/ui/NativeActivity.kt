@@ -47,6 +47,7 @@ import vn.abook.player.AbookApplication
 import vn.abook.player.AppLog
 import vn.abook.player.BuildConfig
 import vn.abook.player.Diagnostics
+import vn.abook.player.BookImports
 import vn.abook.player.IncomingFile
 import vn.abook.player.ui.data.DemoPlaybackCore
 import vn.abook.player.ui.data.LibraryState
@@ -97,6 +98,9 @@ class NativeActivity : ComponentActivity() {
     /** File app khác gửi tới ("Mở bằng", chia sẻ) chờ khung vẽ xong để vào hàng nhập sách ([ShellState.receive]); mở nguội thì khung chưa có, nên cần chỗ đợi. */
     private val incoming = Channel<List<String>>(Channel.UNLIMITED)
 
+    /** Bấm thông báo nhập sách ([vn.abook.player.BookImportNotes]): null = mở "Thêm sách", mã sách = trang của cuốn vừa thêm. Cũng chờ khung vẽ xong. */
+    private val imported = Channel<String?>(Channel.UNLIMITED)
+
     /** Nơi cần mở trong Studio từ xa (thông báo "cần duyệt / đã xong", hàng "Studio" ở Thiết bị): cũng chờ khung vẽ xong rồi [ShellState.openStudio]. */
     private val studioRequests = Channel<StudioRequest>(Channel.UNLIMITED)
 
@@ -139,6 +143,14 @@ class NativeActivity : ComponentActivity() {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
                 player.state.map { it.playing }.distinctUntilChanged().collect { playing ->
                     if (playing) settings.offerNotifications { deviceLinks.askNotifications {} }
+                }
+            }
+        }
+        // Nhập sách chạy nền và báo tiến độ / kết quả ở thông báo: lượt đầu tiên khi app đang hiện thì mời cho phép thông báo (cùng lời mời một lần như khi phát).
+        if (!demo) lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                BookImports.jobs.jobs.map { jobs -> jobs.values.any { it.state == vn.abook.player.ImportJobState.Running } }.distinctUntilChanged().collect { running ->
+                    if (running) settings.offerNotifications { deviceLinks.askNotifications {} }
                 }
             }
         }
@@ -197,6 +209,13 @@ class NativeActivity : ComponentActivity() {
                     }
                     val env = remember { SettingsEnv(settings, reveal, links, if (demo) null else app.devices, if (demo) null else app.voice, if (demo) null else app.music, pip, if (demo) null else app.prepare, if (demo) null else app.night, if (demo) null else app.musicLibrary) }
                     LaunchedEffect(shell) { for (files in incoming) shell.receive(app.imports, files) }
+                    LaunchedEffect(shell) {
+                        for (id in imported) {
+                            if (id == null) { shell.showImports(); continue }
+                            library.refresh()
+                            (library.state.value as? LibraryState.Ready)?.books?.firstOrNull { it.id == id }?.let { shell.showBookPage(it) }
+                        }
+                    }
                     LaunchedEffect(shell) { for (request in studioRequests) shell.openStudio(request) }
                     LaunchedEffect(Unit) { shell.library.restoreSort(withContext(Dispatchers.IO) { prefs.sort() }) }
                     // Dáng chữ của Đọc theo: đọc một lần lúc mở app, ghi mỗi khi người nghe đổi.
@@ -247,6 +266,10 @@ class NativeActivity : ComponentActivity() {
     private fun receive(intent: Intent?) {
         if (demo || intent == null) return
         StudioRoute.request(intent)?.let { studioRequests.trySend(it) }
+        when (intent.action) {
+            BookImports.ACTION_SHOW_IMPORTS -> { imported.trySend(null); return }
+            BookImports.ACTION_OPEN_BOOK -> { intent.getStringExtra(BookImports.EXTRA_BOOK)?.let { imported.trySend(it) }; return }
+        }
         val uri = IncomingFile.uri(intent)
         if (uri == null) {
             if (IncomingFile.textOnly(intent)) Toast.makeText(this, IncomingFile.TEXT_ONLY, Toast.LENGTH_LONG).show()

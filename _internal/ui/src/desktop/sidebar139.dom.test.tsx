@@ -4,20 +4,23 @@ import { createRoot, type Root } from "react-dom/client";
 import { MemoryRouter } from "react-router";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import type { BookSummary } from "@/studio/api";
+import type { ImportJob } from "@/listen/importJobs";
 import { MOTION } from "@/shared/motion";
+import { TooltipProvider } from "@/shared/ui";
 
-const state = vi.hoisted(() => ({ books: [] as BookSummary[], close: vi.fn() }));
+const state = vi.hoisted(() => ({ books: [] as BookSummary[], close: vi.fn(), running: [] as ImportJob[], problems: [] as ImportJob[], retry: vi.fn(), dismiss: vi.fn() }));
 vi.mock("@/studio/data", () => ({ useLibrary: () => ({ data: { books: state.books } }), useAppInfo: () => ({ data: {} }) }));
 vi.mock("@/listen/player", () => ({ useNowPlaying: () => ({ setExpanded: state.close }) }));
 vi.mock("@/studio/precastInvites", () => ({ usePrecastInvites: vi.fn() }));
+vi.mock("@/listen/importJobs", () => ({ useImportJobs: () => ({ running: state.running, problems: state.problems, retry: state.retry, dismiss: state.dismiss }) }));
 import { DesktopSidebar } from "./Shell";
 
 let root: Root, host: HTMLDivElement;
 const book = (id: string, queuePosition?: number): BookSummary => ({ id, title: `Sách ${id}`, running: queuePosition === undefined, starting: false, queuePosition, progress: { overall: .42 } }) as BookSummary;
-const draw = (path = "/") => act(() => root.render(<MemoryRouter initialEntries={[path]}><DesktopSidebar /></MemoryRouter>));
+const draw = (path = "/") => act(() => root.render(<MemoryRouter initialEntries={[path]}><TooltipProvider><DesktopSidebar /></TooltipProvider></MemoryRouter>));
 beforeEach(() => {
   (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
-  vi.useFakeTimers(); state.books = []; state.close.mockClear();
+  vi.useFakeTimers(); state.books = []; state.close.mockClear(); state.running = []; state.problems = []; state.retry.mockClear(); state.dismiss.mockClear();
   Object.defineProperty(CSSStyleDeclaration.prototype, Symbol.iterator, { configurable: true, value: function* (this: CSSStyleDeclaration) { for (let i = 0; i < this.length; i++) yield this.item(i); } });
   vi.spyOn(HTMLElement.prototype, "getBoundingClientRect").mockReturnValue({ x: 0, y: 0, top: 0, left: 0, right: 200, bottom: 50, width: 200, height: 50, toJSON() {} });
   vi.spyOn(HTMLElement.prototype, "animate").mockImplementation(() => ({ cancel: vi.fn(), onfinish: null }) as unknown as Animation);
@@ -65,4 +68,21 @@ it("dự án vào/ra bằng list presence, hàng thoát inert đến hết chuy�
   await act(() => vi.advanceTimersByTime(MOTION.mediumOut + 300));
   expect(host.querySelectorAll(".motion-row")).toHaveLength(1);
   expect(host.querySelector(".motion-row")?.textContent).toContain("Sách b");
+});
+
+it("lượt thêm sách khi hộp đã đóng: đang chạy thì tên file, dở thì lý do kèm Thử lại / Đóng", async () => {
+  const job = (id: string, st: ImportJob["state"]): ImportJob => ({ id, kind: "book", name: "Sach_lon.abook", state: st, problem: "", result: null });
+  state.running = [job("a1b2c3d4e5f6", "running")];
+  state.problems = [job("0a1b2c3d4e5f", "interrupted")];
+  await draw();
+  const text = host.textContent ?? "";
+  expect(text).toContain("Đang thêm sách");
+  expect(text).toContain("Sach_lon.abook");
+  expect(text).toContain("App đóng giữa lúc thêm, sách chưa vào thư viện.");
+  const retry = host.querySelector<HTMLButtonElement>('button[aria-label="Thử lại"]');
+  expect(retry).not.toBeNull();
+  await act(async () => { retry!.click(); });
+  expect(state.retry).toHaveBeenCalledWith("0a1b2c3d4e5f");
+  await act(async () => { host.querySelector<HTMLButtonElement>('button[aria-label="Đóng"]')!.click(); });
+  expect(state.dismiss).toHaveBeenCalledWith("0a1b2c3d4e5f");
 });

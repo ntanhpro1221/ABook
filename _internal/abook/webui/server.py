@@ -52,7 +52,7 @@ from .fingerprints import Fingerprints
 from .library import (NUMBER_RANGES, READING_SURFACES, SLEEP_RANGES, on_grid, BookTemplateError, Library, Preferences, apply_book_template_op, book_id, clean_sleep_schedule)
 from .listening import HEAVY_KEYS, RECORD_ID, Listening, RecordGone, StalePlayback
 from .opened_events import OpenedEvents
-from . import audio_revision, bluetooth, cancelled, name_rules, peer_studio, precast, remote_books, spelling, teller_mode, tls, workshop_merge
+from . import audio_revision, bluetooth, cancelled, import_jobs, name_rules, peer_studio, precast, remote_books, spelling, teller_mode, tls, workshop_merge
 from .. import names as renames
 from .remote_studio import LENGTH_REQUIRED, REMOTE_HEADER, StudioGate, lacks_length
 from .reviews import Reviews, review_view
@@ -199,6 +199,17 @@ class ApiError(Exception):
         self.status = status
         self.message = message
         self.extra = extra
+
+
+def _job_problem(error: Exception) -> str:
+    """Lời của một lượt thêm sách bị lỗi, như giao diện vẫn hiện (ApiError mang sẵn câu cho người dùng)."""
+    return error.message if isinstance(error, ApiError) else (str(error) or type(error).__name__)
+
+
+def _quietly(work: Callable[[], Any]) -> None:
+    """Lượt chạy lại ở nền ("Thử lại"): lỗi đã ghi vào sổ lượt (import_jobs), không còn ai chờ để nhận nó."""
+    with contextlib.suppress(Exception):
+        work()
 
 
 def _typed(rule: Callable[[Any], str], raw: Any) -> str:
@@ -416,6 +427,10 @@ class App:
         self.sync_port = SYNC_PORT
         self.sync_error = ""
         self.library = Library(preferences)
+        # Lượt thêm sách là việc của máy chủ, không của màn "Thêm sách" (import_jobs.py); lượt dở của lần chạy trước hiện lại kèm Thử lại.
+        self.import_jobs = import_jobs.ImportJobs(preferences.path.with_name(import_jobs.FILE_NAME))
+        if self.import_jobs.interrupted and not self.library.root_missing():
+            import_jobs.sweep_parts(self.library.root, self.import_jobs.interrupted)
         # Chỗ chờ "Hoàn tác" trước Thùng rác (trash_pending.py): xoá sách / dự án đổi tên vào `<thư viện>/.trash-pending`, hết hạn mới vào Thùng rác.
         self.trash = trash_pending.TrashPending()
         self._trash_sweeper = trash_pending.SweepTimer(self.sweep_trash)
@@ -883,6 +898,10 @@ class App:
             path = self.dialogs.pick_book_file("Mở file sách", str(Path.home())) or ""
             if not path:
                 return {"id": None}
+        return self.import_jobs.run("book", Path(path).name, {"path": path, "allowOlder": allow_older},
+                                    lambda: self._open_book_path(path, allow_older), _job_problem)
+
+    def _open_book_path(self, path: str, allow_older: bool) -> dict[str, Any]:
         if not Path(path).is_file():
             raise ApiError(HTTPStatus.NOT_FOUND, "Không tìm thấy file sách này - có thể nó đã bị chuyển hay xoá")
         self.require_library_root()
@@ -961,6 +980,14 @@ class App:
         `chapters`: các chương người dùng tích ở bước xem trước, kèm tên mới (`textbook.picks_from_json`); không có thì các chương mặc định.
         `footnotes`: đề xuất về chú thích đã tích, như lúc xem trước."""
         self._mutating()
+        params = {"path": path, "title": title, "separate": separate, "splitChapters": split_chapters, "chapters": chapters,
+                  "footnotes": footnotes, "sourceFingerprint": source_fingerprint}
+        name = (title or "").strip() or Path(str(path).strip().strip('"').strip("'")).name
+        return self.import_jobs.run("text", name, params, lambda: self._add_text_book(path, title, separate, split_chapters, chapters, footnotes,
+                                                                                    source_fingerprint), _job_problem)
+
+    def _add_text_book(self, path: str, title: str, separate: bool, split_chapters: bool, chapters: Any, footnotes: Any,
+                       source_fingerprint: str | None) -> dict[str, Any]:
         source = self._book_source(path)
         self.require_library_root()
         try:
@@ -974,6 +1001,27 @@ class App:
         except OSError as error:
             raise ApiError(HTTPStatus.INSUFFICIENT_STORAGE, humanize.write_error(error)) from error
         return {"id": book_id(folder), "how": how, "chapters": len(book.chapters)}
+
+    def retry_import(self, job_id: str) -> dict[str, Any]:
+        """"Thử lại" ở hàng của một lượt lỗi / dở (kể cả lượt app thoát giữa chừng): chạy lại đúng lượt ấy ở nền, trả ngay mã lượt mới. Lượt cũ rời sổ."""
+        self._mutating()
+        job = self.import_jobs.get(job_id)
+        if job is None or job["state"] not in {import_jobs.FAILED, import_jobs.INTERRUPTED}:
+            raise ApiError(HTTPStatus.NOT_FOUND, "Không còn lượt này để thử lại.")
+        params = job["params"]
+        self.import_jobs.dismiss(job_id)
+        if job["kind"] == "book":
+            work = lambda: self._open_book_path(str(params.get("path") or ""), params.get("allowOlder") is True)
+        else:
+            work = lambda: self._add_text_book(str(params.get("path") or ""), str(params.get("title") or ""), params.get("separate") is True,
+                                              params.get("splitChapters") is True, params.get("chapters"), params.get("footnotes"),
+                                              params.get("sourceFingerprint"))
+        # Publish before starting the thread: the immediate UI poll must see a running job and keep polling until it ends.
+        next_id = self.import_jobs.begin(job["kind"], job["name"], params)
+        before = self.import_jobs.revision
+        run = lambda: self.import_jobs.run(job["kind"], job["name"], params, work, _job_problem, job_id=next_id)
+        threading.Thread(target=_quietly, args=(run,), name="import-retry", daemon=True).start()
+        return {"retrying": True, "revision": before}
 
     def open_project_file(self, path: Path) -> dict[str, Any]:
         """Mở một file `.abookproj` (projectfile.py). Máy có Studio và file mang xưởng: dự án này đã có ở đây thì KHÔNG tạo bản
@@ -6516,6 +6564,17 @@ class Handler(BaseHTTPRequestHandler):
                                                               body.get("separate") is True, body.get("splitChapters") is True,
                                                               body.get("chapters"), body.get("footnotes"), body.get("sourceFingerprint")))
 
+    def get_import_jobs(self, _query: dict[str, list[str]]) -> None:
+        # Người xem cấp app (Qt Api.qml, web useImportJobs): tiến độ khi màn Thêm sách đã đóng, làm mới thư viện khi một lượt xong.
+        self._send_json(HTTPStatus.OK, self.app.import_jobs.view())
+
+    def post_import_job_retry(self, _query: dict[str, list[str]], value: str) -> None:
+        self._send_json(HTTPStatus.OK, self.app.retry_import(value))
+
+    def delete_import_job(self, _query: dict[str, list[str]], value: str) -> None:
+        self.app._mutating()
+        self._send_json(HTTPStatus.OK, {"removed": self.app.import_jobs.dismiss(value)})
+
     def get_chapter_text(self, _query: dict[str, list[str]], value: str, chapter: str) -> None:
         # Chữ của chương trong sách CHỈ-CÓ-CHỮ (texts/<mã>.txt): trang đọc dựng các đoạn từ đây (listen/textScript.ts).
         path = self.app._listenable(value)
@@ -7626,6 +7685,9 @@ ROUTES: list[Route] = [
     # Thêm sách từ EPUB / DOCX / PDF / TXT: xem trước danh sách chương, rồi nhập thành sách chỉ-chữ (chỉ trên máy này).
     ("POST", re.compile(r"/api/listen/import/preview"), Handler.post_import_preview),
     ("POST", re.compile(r"/api/listen/import"), Handler.post_import_book),
+    ("GET", re.compile(r"/api/listen/import/jobs"), Handler.get_import_jobs),
+    ("POST", re.compile(r"/api/listen/import/jobs/([0-9a-f]{12})/retry"), Handler.post_import_job_retry),
+    ("DELETE", re.compile(r"/api/listen/import/jobs/([0-9a-f]{12})"), Handler.delete_import_job),
     ("GET", re.compile(LISTEN + r"/chapters/(\d+)/text"), Handler.get_chapter_text),
     ("GET", re.compile(LISTEN + r"/search-texts"), Handler.get_search_texts),
 

@@ -3357,4 +3357,6 @@ export const S = {
   s_music_seek: "Tua nhạc",
   s_music_paused: "Đã tạm dừng",
   s_unpair_detail: (p0: unknown) => "Máy này sẽ quên kết nối với “" + String(p0) + "”. Muốn nối lại, bạn cần ghép lại thiết bị.",
+  s_import_running_title: "Đang thêm sách",
+  s_import_interrupted: "App đóng giữa lúc thêm, sách chưa vào thư viện.",
 } as const;

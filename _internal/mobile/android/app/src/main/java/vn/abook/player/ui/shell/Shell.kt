@@ -164,6 +164,16 @@ class ShellState(val scope: CoroutineScope, onSortChanged: (LibrarySort) -> Unit
         nav.push(Destination.AddBook)
     }
 
+    /** Bấm thông báo đang nhập / nhập lỗi: thu bảng trượt và cửa sổ Đang nghe rồi mở "Thêm sách" (người xem các lượt nền); đang ở đó rồi thì thôi. */
+    suspend fun showImports() {
+        sheets.dismiss()
+        window.close()
+        while (nav.busy) delay(20) // đang chuyển cảnh thì NavState.push bỏ lệnh
+        val top = nav.stack.top?.destination
+        if (top == Destination.AddBook || top is Destination.ImportReview || top is Destination.ImportChapter) return
+        nav.push(Destination.AddBook)
+    }
+
     /** Tên sách ở trình phát: thu cửa sổ rồi tới trang của cuốn. Trang ấy đã có trong ngăn xếp thì về đúng nó, không đẩy trùng; Back từ trang mới về chỗ đang đứng. */
     suspend fun showBookPage(book: vn.abook.player.ui.data.ListenBook) {
         sheets.dismiss()

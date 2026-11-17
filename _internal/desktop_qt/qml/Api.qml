@@ -78,6 +78,44 @@ QtObject {
             else if (done) done(null, data && (data.message || data.error) || S.s_chua_lam_duoc_luc_nay_2e7cacde, data)
         })
     }
+    // ---- Lượt thêm sách của máy chủ (import_jobs.py): người xem cấp app, như useImportJobs của web và thông báo của điện thoại ----
+    // AddBook.qml chỉ là một người xem: đóng hộp giữa chừng thì lượt vẫn chạy, thanh bên hiện tiến độ (ImportStatus.qml), và chính người xem này làm mới
+    // thư viện khi lượt xong - không nhờ lời gọi lại của hộp đã đóng. Lượt lỗi / dở (app đóng giữa chừng) ở lại kèm "Thử lại".
+    property var importJobs: []
+    property int importRevision: -1
+    property int importScreens: 0           // AddBook đang mở thì nó tự báo kết quả
+    readonly property var importRows: importJobs.filter(job => job.state !== "done").slice(0, 3)
+    readonly property bool importRunning: importJobs.some(job => job.state === "running")
+    // Chỉ hỏi khi có lý do (không có nhịp hỏi suốt ngày): lúc mở app (Main.qml - lượt dở của lần trước), khi hộp gửi / đóng (watchImports), và mỗi 800 ms
+    // khi còn lượt đang chạy.
+    property var importTimer: Timer {
+        interval: 800
+        repeat: true
+        running: root.transport !== null && root.importRunning
+        onTriggered: root.pollImports()
+    }
+    function pollImports() {
+        quiet("GET", "/api/listen/import/jobs", null, function(data, error) {
+            if (error || !data || typeof data.revision !== "number" || !Array.isArray(data.jobs) || data.revision === root.importRevision) return
+            const first = root.importRevision < 0
+            const known = ({})
+            for (const job of root.importJobs) known[job.id] = job.state
+            root.importRevision = data.revision
+            root.importJobs = data.jobs
+            if (first) return
+            const ended = data.jobs.filter(job => job.state !== "running" && (known[job.id] || "running") === "running")
+            if (ended.some(job => job.state === "done") && transport) transport.refreshLibrary()
+            if (root.importScreens > 0) return
+            for (const job of ended) {
+                if (job.state === "done") notice = job.result && job.result.how === "updated" ? S.s_da_cap_nhat_0_627a2681(job.name)
+                    : job.result && job.result.how === "existing" ? S.s_da_co_trong_thu_vien_3bb6eeb4 : S.s_da_them_0_ea40abe7(job.name)
+                else notice = S.s_chua_them_duoc_sach_b327e086 + " - " + (job.state === "interrupted" ? S.s_import_interrupted : job.problem)
+            }
+        })
+    }
+    function watchImports() { pollImports() }
+    function retryImport(id) { quiet("POST", "/api/listen/import/jobs/" + id + "/retry", null, function() { root.watchImports() }) }
+    function dismissImport(id) { quiet("DELETE", "/api/listen/import/jobs/" + id, null, function() { root.watchImports() }) }
     function load() {
         call("GET", "/api/preferences", null, function(data, error) {
             if (error) return

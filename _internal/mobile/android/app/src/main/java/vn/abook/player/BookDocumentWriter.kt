@@ -119,7 +119,8 @@ object BookDocumentWriter {
         packageInfo["createdAt"] = format.format(Date())
         packageInfo["producer"] = PRODUCER
         packageInfo["files"] = described
-        book.put("package", packageInfo as Any)
+        // Android's JSONObject.put keeps a Map as-is; nested() serializes it before StrictJson sees it.
+        book.put("package", JSONObject(packageInfo))
 
         val counting = Counting(out)
         ZipOutputStream(counting).use { zip ->
@@ -178,7 +179,7 @@ object BookDocumentWriter {
         packageInfo["createdAt"] = createdAt
         packageInfo["producer"] = PRODUCER
         packageInfo["files"] = listed
-        book.put("package", packageInfo as Any)
+        book.put("package", JSONObject(packageInfo))
         val bookBytes = StrictJson.dumps(BookVolumes.nested(book), 1).toByteArray(Charsets.UTF_8)
         files["book.json"] = bookBytes
         described["book.json"] = describe("book.json", bookBytes, null)

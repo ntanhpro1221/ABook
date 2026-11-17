@@ -73,6 +73,12 @@ screen-control and sparse/sample-layout findings; it is not reported as passing.
 the unavailable Astera browser CLI. Detailed counts, commands, screenshot paths and private package SHA comparisons
 are recorded locally in CX/bookmeta/result.md.
 
+## 16-11-2026 — durable book import jobs
+
+Server imports have an application-level journal, so closing the add-book view does not lose the running job. Restarting the server marks unfinished jobs as interrupted and preserves their retry parameters. Retry publishes its running job before launching the worker thread; interrupted extraction cleanup matches only the application's staging directory pattern.
+
+Focused backend validation: 119 passed, zero failed across import jobs, text books, book files and project-file workshop tests. The deferred-thread retry and unrelated staging-directory regressions pass. Related copy/action/string and parity-checker unit tests pass 64 cases with two skips. Client build and runtime verification are recorded separately when completed.
+
 ## 15-11-2026 — device voice names
 
 Android device voices use the configured engine name and the Voice network flag. Colliding labels get stable numbers; offline voices precede online voices and higher reported quality comes first within each group. No gender or accent is inferred from Android identifiers. Windows preserves the supplied vendor and proper name for both Qt and web. The shared device-group description allows engines with network voices. Voice rows keep individual preview actions; the Android selection status sits below the name when a preview button is present.

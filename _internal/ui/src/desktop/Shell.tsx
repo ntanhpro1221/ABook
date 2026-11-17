@@ -1,6 +1,6 @@
 import { Presence } from "../shared/MotionPresence";
 import { S } from "../shared/strings.generated";
-import { Clapperboard, Clock, Download, Library, ListMusic, PanelLeftClose, PanelLeftOpen, Pause, Settings } from "lucide-react";
+import { CircleAlert, Clapperboard, Clock, Download, Library, ListMusic, PanelLeftClose, PanelLeftOpen, Pause, RotateCcw, Settings, X } from "lucide-react";
 import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import { Link, useLocation, useNavigate } from "react-router";
 import { useRestoreLastListening } from "@/listen/LibraryScreen";
@@ -22,6 +22,7 @@ import { formatPercent } from "@/shared/format";
 import { ContentSkeleton, IconButton, InlineError, OfflineStrip, Progress, Tooltip, Vu } from "@/shared/ui";
 import { useAppInfo, useLibrary } from "@/studio/data";
 import { usePrecastInvites } from "@/studio/precastInvites";
+import { useImportJobs } from "@/listen/importJobs";
 import { PeerBar } from "./PeerBar";
 import { HandOffButton, RemoteBars, ThisPlayerReporter } from "./RemotePhone";
 import { TitleBar } from "./TitleBar";
@@ -161,6 +162,34 @@ export function UpdateNotice() {
   )}</MotionPresence>;
 }
 
+/**
+ * Lượt thêm sách của máy chủ khi hộp "Thêm sách" đã đóng (listen/importJobs.ts) - như thông báo của điện thoại: đang chạy thì tên file và "Đang thêm sách",
+ * lỗi hay dở (app đóng giữa chừng) thì lý do, "Thử lại" và "Đóng". Người xem này cũng là người làm mới thư viện khi một lượt xong.
+ */
+export function ImportNotice() {
+  const { running, problems, retry, dismiss } = useImportJobs();
+  const rows = [...running, ...problems].slice(0, 3);
+  return (
+    <AnimatedRows className="mb-2 space-y-1" items={rows} keyOf={(job) => job.id}>{(job) => (
+      <div key={job.id} className="flex w-full items-center gap-3 py-2" role="status">
+        <MotionRegion as="span" motionKey={job.state} className="flex size-4 shrink-0 items-center justify-center">
+          {job.state === "running" ? <Vu className="h-2.5 gap-px text-accent [&>span]:w-[2px]" /> : <CircleAlert className="size-4 text-danger" />}
+        </MotionRegion>
+        <span className="min-w-0 flex-1">
+          <span className="block truncate text-body-small font-medium">{job.state === "running" ? S.s_import_running_title : S.s_chua_them_duoc_sach_b327e086}</span>
+          <span className="block break-words text-xs text-fg-2">{job.state === "interrupted" ? S.s_import_interrupted : job.state === "failed" && job.problem ? job.problem : job.name}</span>
+        </span>
+        <MotionPresence open={job.state !== "running"}>
+          <span className="flex shrink-0 items-center">
+            <IconButton size="sm" label={S.s_thu_lai_c58d068c} icon={RotateCcw} onClick={() => void retry(job.id)} />
+            <IconButton size="sm" label={S.s_dong_5d54c2a1} icon={X} onClick={() => void dismiss(job.id)} />
+          </span>
+        </MotionPresence>
+      </div>
+    )}</AnimatedRows>
+  );
+}
+
 const TITLES: [RegExp, string][] = [
   [/^\/$/, S.s_thu_vien_58145555],
   [/^\/book\//, S.s_sach_0c2b3e9b],
@@ -184,6 +213,7 @@ export function DesktopSidebar({ listenOnly = false, collapsed = false }: { list
         </MotionPresence>
       </nav>
       <div className="mt-auto pt-8">
+        <div data-sidebar-extra><ImportNotice /></div>
         <div data-sidebar-extra><UpdateNotice /></div>
         <NavItem to="/settings" icon={Settings} ink={2.04} match={(path) => path.startsWith("/settings")} collapsed={collapsed}>{S.s_cai_dat_202e0e9b}</NavItem>
       </div>

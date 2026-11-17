@@ -7,6 +7,7 @@ QtObject {
     property int nextRequest: 0
     property string thirdParty: "Qt Quick"
     property bool delayed: false
+    property int libraryRefreshes: 0
     // Nghe thử (câu mẫu của nhân vật, giọng): đường đã mở và số lần dừng; ba tín hiệu như DesktopApi thật
     property var previews: []
     property var starts: []                 // giây bắt đầu của mỗi lần nghe một đoạn (previewFrom)
@@ -35,7 +36,7 @@ QtObject {
     function cancel(id) { const found = pending.some(job => job.requestId === id); pending = pending.filter(job => job.requestId !== id); if (found) requestFinished(id, 0) }
     function localPath(url) { return String(url).replace(/^file:\/\//, "") }
     function mediaUrl(path) { return path }
-    function refreshLibrary() {}
+    function refreshLibrary() { libraryRefreshes++ }
     function preview(path) { previews = previews.concat([path]); starts = starts.concat([0]) }
     function previewFrom(path, start) { previews = previews.concat([path]); starts = starts.concat([start]) }
     function stopPreview() { stops++ }

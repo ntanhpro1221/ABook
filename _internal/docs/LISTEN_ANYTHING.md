@@ -49,6 +49,11 @@ Studio product). Background music can play along.
   `TextBook.kt` + `TextImports.kt` behind `EbookLibrary.pickSource / previewImport / createImport / discardImport` (system picker → copy into
   `library/imports/<ref>/` → `BookImport` rules → `BookDocumentWriter.seal` → `BookFileImport`). Both write the SAME `book.json` and hashes on
   `tests/fixtures/text_books/` (`tests/text_book_fixtures.py`, `TextBookTest.kt`; `python_text.abook` is read by Kotlin, `kotlin_text.abook` by Python).
+- **Imports are jobs, not screens**: every `open-book-file` / `POST /api/listen/import` runs as a job of `abook/webui/import_jobs.py` (journal
+  `import_jobs.json` beside `preferences.json`). `GET /api/listen/import/jobs` (`{revision, jobs}`), `POST /api/listen/import/jobs/<id>/retry`,
+  `DELETE /api/listen/import/jobs/<id>`. The app-level watchers (Qt `Api.qml` `importJobs` + `ImportStatus.qml` in the sidebar, web
+  `listen/importJobs.ts` + `ImportNotice` in `desktop/Shell.tsx`) show progress after Add book closes and refresh the library when a job ends; a job cut by
+  closing the app comes back as `interrupted` with Retry, and its `.<name>.<hex>.part` staging is swept. Phone: `BookImports` / `ImportJobs` (WorkManager).
 - **PDF on the phone**: `ui/addbook/ImportRepo.kt` copies the PDF to the app folder, reads its lines per page with Android's `PdfRenderer` (Android 15+) and hands them
   to `TextImports.preview(ref, pages, ...)`, which runs `BookImport.fromPdfPages`.
 - **UI**: `listen/AddBook.tsx` ("Thêm sách từ file…": choose → chapter list (`shared/ChapterPreview.tsx`, the Studio list's row layout) + suggestions never applied →

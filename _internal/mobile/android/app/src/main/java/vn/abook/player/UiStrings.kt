@@ -862,6 +862,7 @@ internal object S {
     const val s_chua_thay_thiet_bi_192c6e9e = "Chưa thấy thiết bị"
     const val s_chua_them_duoc_nhac_5565bc66 = "Chưa thêm được nhạc"
     const val s_chua_them_duoc_sach_a46be70d = "Chưa thêm được sách."
+    const val s_chua_them_duoc_sach_b327e086 = "Chưa thêm được sách"
     const val s_chua_thu_cau_nao_nen_khong_phai_thu_lai_79ed2712 = "chưa thu câu nào nên không phải thu lại"
     const val s_chua_thu_chuong_nao_sua_bay_gio_khong_phai_e0dc8283 = "Chưa thu chương nào - sửa bây giờ không phải thu lại câu nào."
     const val s_chua_thu_d168d4a9 = "Chưa thử"
@@ -3036,4 +3037,7 @@ internal object S {
     const val s_music_seek = "Tua nhạc"
     const val s_music_paused = "Đã tạm dừng"
     fun s_unpair_detail(p0: Any?): String = "Máy này sẽ quên kết nối với “" + p0.toString() + "”. Muốn nối lại, bạn cần ghép lại thiết bị."
+    const val s_import_channel_note = "Tiến độ khi thêm sách từ file vào điện thoại"
+    const val s_import_running_title = "Đang thêm sách"
+    const val s_import_open_hint = "Bấm để mở sách."
 }

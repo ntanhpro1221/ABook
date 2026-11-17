@@ -891,169 +891,169 @@
     "id": "107a60b1a917dbafa111",
     "kind": "pending",
     "path": "ui/src/listen/AddBook.tsx",
-    "line": 237,
+    "line": 251,
     "statement": "const loadPreview = async (picked: ImportChoice, session: ReadSession) => {",
     "occurrence": 1,
-    "source_sha256": "ba5352e3a2e47e30fd6b1a6c132beafff06ff21e302bb5cdda41935914053042",
+    "source_sha256": "0aaf1e5a2fb78e2b9b29d8308a7b34556e0835dbe1d4809dc3c7de5345e42a2d",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; busy, loading, setBusy, setWorking, working",
-    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering."
+    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Merge review (merge174, dev/bgimport): the dialog became a viewer of the server import job; closing during a single add detaches the viewer while the job continues and the app-level watcher reports it. This statement and its guard are unchanged."
   },
   {
     "id": "3c567e6dc42c757abe91",
     "kind": "pending",
     "path": "ui/src/listen/AddBook.tsx",
-    "line": 250,
+    "line": 264,
     "statement": "const read = async (picked: ImportChoice) => {",
     "occurrence": 1,
-    "source_sha256": "ba5352e3a2e47e30fd6b1a6c132beafff06ff21e302bb5cdda41935914053042",
+    "source_sha256": "0aaf1e5a2fb78e2b9b29d8308a7b34556e0835dbe1d4809dc3c7de5345e42a2d",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; busy, loading, setBusy, setWorking, working",
-    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering."
+    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Merge review (merge174, dev/bgimport): the dialog became a viewer of the server import job; closing during a single add detaches the viewer while the job continues and the app-level watcher reports it. This statement and its guard are unchanged."
   },
   {
     "id": "a25f36b0cb3cb6b55a82",
     "kind": "pending",
     "path": "ui/src/listen/AddBook.tsx",
-    "line": 285,
+    "line": 302,
     "statement": "const openBookFiles = async (items: QueueItem[], session?: ReadSession) => {",
     "occurrence": 1,
-    "source_sha256": "ba5352e3a2e47e30fd6b1a6c132beafff06ff21e302bb5cdda41935914053042",
+    "source_sha256": "0aaf1e5a2fb78e2b9b29d8308a7b34556e0835dbe1d4809dc3c7de5345e42a2d",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; busy, loading, setBusy, setWorking, working",
-    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering."
+    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Merge review (merge174, dev/bgimport): the dialog became a viewer of the server import job; closing during a single add detaches the viewer while the job continues and the app-level watcher reports it. This statement and its guard are unchanged."
   },
   {
     "id": "b391d0e20253bec874d7",
     "kind": "pending",
     "path": "ui/src/listen/AddBook.tsx",
-    "line": 321,
+    "line": 338,
     "statement": "const goNext = async (start: QueueItem[]) => {",
     "occurrence": 1,
-    "source_sha256": "ba5352e3a2e47e30fd6b1a6c132beafff06ff21e302bb5cdda41935914053042",
+    "source_sha256": "0aaf1e5a2fb78e2b9b29d8308a7b34556e0835dbe1d4809dc3c7de5345e42a2d",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; busy, loading, setBusy, setWorking, working",
-    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering."
+    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Merge review (merge174, dev/bgimport): the dialog became a viewer of the server import job; closing during a single add detaches the viewer while the job continues and the app-level watcher reports it. This statement and its guard are unchanged."
   },
   {
     "id": "16f562874927b2d2f1b7",
     "kind": "pending",
     "path": "ui/src/listen/AddBook.tsx",
-    "line": 328,
+    "line": 345,
     "statement": "async (next, items) => {",
     "occurrence": 1,
-    "source_sha256": "ba5352e3a2e47e30fd6b1a6c132beafff06ff21e302bb5cdda41935914053042",
+    "source_sha256": "0aaf1e5a2fb78e2b9b29d8308a7b34556e0835dbe1d4809dc3c7de5345e42a2d",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; busy, loading, setBusy, setWorking, working",
-    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering."
+    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Merge review (merge174, dev/bgimport): the dialog became a viewer of the server import job; closing during a single add detaches the viewer while the job continues and the app-level watcher reports it. This statement and its guard are unchanged."
   },
   {
     "id": "f9bf114a3e9eb89c030e",
     "kind": "pending",
     "path": "ui/src/listen/AddBook.tsx",
-    "line": 350,
+    "line": 367,
     "statement": "const startPicked = async (items: PickedItem[]) => {",
     "occurrence": 1,
-    "source_sha256": "ba5352e3a2e47e30fd6b1a6c132beafff06ff21e302bb5cdda41935914053042",
+    "source_sha256": "0aaf1e5a2fb78e2b9b29d8308a7b34556e0835dbe1d4809dc3c7de5345e42a2d",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; busy, loading, setBusy, setWorking, working",
-    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering."
+    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Merge review (merge174, dev/bgimport): the dialog became a viewer of the server import job; closing during a single add detaches the viewer while the job continues and the app-level watcher reports it. This statement and its guard are unchanged."
   },
   {
     "id": "a9573142c5f92af45592",
     "kind": "pending",
     "path": "ui/src/listen/AddBook.tsx",
-    "line": 373,
+    "line": 390,
     "statement": "const reread = async (next: { split: boolean; footnotes: FootnoteChoice }) => {",
     "occurrence": 1,
-    "source_sha256": "ba5352e3a2e47e30fd6b1a6c132beafff06ff21e302bb5cdda41935914053042",
+    "source_sha256": "0aaf1e5a2fb78e2b9b29d8308a7b34556e0835dbe1d4809dc3c7de5345e42a2d",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; busy, loading, setBusy, setWorking, working",
-    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering."
+    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Merge review (merge174, dev/bgimport): the dialog became a viewer of the server import job; closing during a single add detaches the viewer while the job continues and the app-level watcher reports it. This statement and its guard are unchanged."
   },
   {
     "id": "604a9bd715760d03354d",
     "kind": "pending",
     "path": "ui/src/listen/AddBook.tsx",
-    "line": 396,
+    "line": 413,
     "statement": "const choose = async (kind: ImportKind) => {",
     "occurrence": 1,
-    "source_sha256": "ba5352e3a2e47e30fd6b1a6c132beafff06ff21e302bb5cdda41935914053042",
+    "source_sha256": "0aaf1e5a2fb78e2b9b29d8308a7b34556e0835dbe1d4809dc3c7de5345e42a2d",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; busy, loading, setBusy, setWorking, working",
-    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering."
+    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Merge review (merge174, dev/bgimport): the dialog became a viewer of the server import job; closing during a single add detaches the viewer while the job continues and the app-level watcher reports it. This statement and its guard are unchanged."
   },
   {
     "id": "4dadf34889039e7a7fd1",
     "kind": "pending",
     "path": "ui/src/listen/AddBook.tsx",
-    "line": 443,
+    "line": 460,
     "statement": "const addCurrent = async (separate: boolean): Promise<AddedBook> => {",
     "occurrence": 1,
-    "source_sha256": "ba5352e3a2e47e30fd6b1a6c132beafff06ff21e302bb5cdda41935914053042",
+    "source_sha256": "0aaf1e5a2fb78e2b9b29d8308a7b34556e0835dbe1d4809dc3c7de5345e42a2d",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; busy, loading, setBusy, setWorking, working",
-    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering."
+    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Merge review (merge174, dev/bgimport): the dialog became a viewer of the server import job; closing during a single add detaches the viewer while the job continues and the app-level watcher reports it. This statement and its guard are unchanged."
   },
   {
     "id": "7d327f94722b39a5dbf5",
     "kind": "pending",
     "path": "ui/src/listen/AddBook.tsx",
-    "line": 461,
+    "line": 478,
     "statement": "const add = async (separate = false) => {",
     "occurrence": 1,
-    "source_sha256": "ba5352e3a2e47e30fd6b1a6c132beafff06ff21e302bb5cdda41935914053042",
+    "source_sha256": "0aaf1e5a2fb78e2b9b29d8308a7b34556e0835dbe1d4809dc3c7de5345e42a2d",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; busy, loading, setBusy, setWorking, working",
-    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering."
+    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Merge review (merge174, dev/bgimport): the dialog became a viewer of the server import job; closing during a single add detaches the viewer while the job continues and the app-level watcher reports it. This statement and its guard are unchanged."
   },
   {
     "id": "f335b44e3a47b1ad40a6",
     "kind": "pending",
     "path": "ui/src/listen/AddBook.tsx",
-    "line": 489,
+    "line": 509,
     "statement": "const addAll = async () => {",
     "occurrence": 1,
-    "source_sha256": "ba5352e3a2e47e30fd6b1a6c132beafff06ff21e302bb5cdda41935914053042",
+    "source_sha256": "0aaf1e5a2fb78e2b9b29d8308a7b34556e0835dbe1d4809dc3c7de5345e42a2d",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; busy, loading, setBusy, setWorking, working",
-    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering."
+    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Merge review (merge174, dev/bgimport): the dialog became a viewer of the server import job; closing during a single add detaches the viewer while the job continues and the app-level watcher reports it. This statement and its guard are unchanged."
   },
   {
     "id": "07760328322c8dd9e2f7",
     "kind": "pending",
     "path": "ui/src/listen/AddBook.tsx",
-    "line": 495,
+    "line": 515,
     "statement": "const addNow = async (): Promise<Pick<QueueItem, \"state\" | \"note\" | \"bookId\">> => {",
     "occurrence": 1,
-    "source_sha256": "ba5352e3a2e47e30fd6b1a6c132beafff06ff21e302bb5cdda41935914053042",
+    "source_sha256": "0aaf1e5a2fb78e2b9b29d8308a7b34556e0835dbe1d4809dc3c7de5345e42a2d",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; busy, loading, setBusy, setWorking, working",
-    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering."
+    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Merge review (merge174, dev/bgimport): the dialog became a viewer of the server import job; closing during a single add detaches the viewer while the job continues and the app-level watcher reports it. This statement and its guard are unchanged."
   },
   {
     "id": "db37cb3692811ba66199",
     "kind": "destructive",
     "path": "ui/src/listen/AddBook.tsx",
-    "line": 721,
+    "line": 741,
     "statement": "else next.delete(index);",
     "occurrence": 1,
-    "source_sha256": "ba5352e3a2e47e30fd6b1a6c132beafff06ff21e302bb5cdda41935914053042",
+    "source_sha256": "0aaf1e5a2fb78e2b9b29d8308a7b34556e0835dbe1d4809dc3c7de5345e42a2d",
     "disposition": "internal",
     "guard": "In-memory collection entry lifecycle",
-    "reason": "The statement releases a listener, request, UI row, selection or cache entry; it does not delete its persisted source."
+    "reason": "The statement releases a listener, request, UI row, selection or cache entry; it does not delete its persisted source. Merge review (merge174, dev/bgimport): the dialog became a viewer of the server import job; closing during a single add detaches the viewer while the job continues and the app-level watcher reports it. This statement and its guard are unchanged."
   },
   {
     "id": "c34fc9be3251ba618f21",
     "kind": "destructive",
     "path": "ui/src/listen/AddBook.tsx",
-    "line": 753,
+    "line": 773,
     "statement": "else next.delete(group.line);",
     "occurrence": 1,
-    "source_sha256": "ba5352e3a2e47e30fd6b1a6c132beafff06ff21e302bb5cdda41935914053042",
+    "source_sha256": "0aaf1e5a2fb78e2b9b29d8308a7b34556e0835dbe1d4809dc3c7de5345e42a2d",
     "disposition": "internal",
     "guard": "In-memory collection entry lifecycle",
-    "reason": "The statement releases a listener, request, UI row, selection or cache entry; it does not delete its persisted source."
+    "reason": "The statement releases a listener, request, UI row, selection or cache entry; it does not delete its persisted source. Merge review (merge174, dev/bgimport): the dialog became a viewer of the server import job; closing during a single add detaches the viewer while the job continues and the app-level watcher reports it. This statement and its guard are unchanged."
   },
   {
     "id": "e30313177d650a98b1ea",
@@ -4779,85 +4779,85 @@
     "id": "d5ded6a45aba35f90d34",
     "kind": "pending",
     "path": "mobile/android/app/src/main/java/vn/abook/player/ui/addbook/ImportQueue.kt",
-    "line": 49,
+    "line": 107,
     "statement": "scope.launch {",
     "occurrence": 1,
-    "source_sha256": "64a5ecd815484a93ef28c880ee5c567f323813b1b9d9a2791162f4039ea32a8c",
+    "source_sha256": "03308206047617fc7ab488e99c0a12891a747871bf0c9755c5aec6ab5ecad28c",
     "disposition": "pending",
     "guard": "ViewModel/operation fields: busy, progress; Components pending indicator",
-    "reason": "The model retains the operation and locks repeats; UI uses the shared pending parameter, loading content or progress owner."
+    "reason": "The model retains the operation and locks repeats; UI uses the shared pending parameter, loading content or progress owner. Merge review (merge174, dev/bgimport): the queue mirrors background import jobs and staging refs are bound to the row that read them, so discard only touches that row's own staging. This statement and its guard are unchanged."
   },
   {
     "id": "90296b013d7f2b25fe95",
     "kind": "pending",
     "path": "mobile/android/app/src/main/java/vn/abook/player/ui/addbook/ImportQueue.kt",
-    "line": 72,
+    "line": 130,
     "statement": "worker = scope.launch {",
     "occurrence": 1,
-    "source_sha256": "64a5ecd815484a93ef28c880ee5c567f323813b1b9d9a2791162f4039ea32a8c",
+    "source_sha256": "03308206047617fc7ab488e99c0a12891a747871bf0c9755c5aec6ab5ecad28c",
     "disposition": "pending",
     "guard": "ViewModel/operation fields: busy, progress; Components pending indicator",
-    "reason": "The model retains the operation and locks repeats; UI uses the shared pending parameter, loading content or progress owner."
+    "reason": "The model retains the operation and locks repeats; UI uses the shared pending parameter, loading content or progress owner. Merge review (merge174, dev/bgimport): the queue mirrors background import jobs and staging refs are bound to the row that read them, so discard only touches that row's own staging. This statement and its guard are unchanged."
   },
   {
     "id": "50881c0985139dfcd08e",
     "kind": "pending",
     "path": "mobile/android/app/src/main/java/vn/abook/player/ui/addbook/ImportQueue.kt",
-    "line": 93,
+    "line": 151,
     "statement": "worker = scope.launch {",
     "occurrence": 2,
-    "source_sha256": "64a5ecd815484a93ef28c880ee5c567f323813b1b9d9a2791162f4039ea32a8c",
+    "source_sha256": "03308206047617fc7ab488e99c0a12891a747871bf0c9755c5aec6ab5ecad28c",
     "disposition": "pending",
     "guard": "ViewModel/operation fields: busy, progress; Components pending indicator",
-    "reason": "The model retains the operation and locks repeats; UI uses the shared pending parameter, loading content or progress owner."
+    "reason": "The model retains the operation and locks repeats; UI uses the shared pending parameter, loading content or progress owner. Merge review (merge174, dev/bgimport): the queue mirrors background import jobs and staging refs are bound to the row that read them, so discard only touches that row's own staging. This statement and its guard are unchanged."
   },
   {
     "id": "25fe5623ca634c3b1ff2",
     "kind": "destructive",
     "path": "mobile/android/app/src/main/java/vn/abook/player/ui/addbook/ImportQueue.kt",
-    "line": 96,
+    "line": 154,
     "statement": "source.discard(staged)",
     "occurrence": 1,
-    "source_sha256": "64a5ecd815484a93ef28c880ee5c567f323813b1b9d9a2791162f4039ea32a8c",
+    "source_sha256": "03308206047617fc7ab488e99c0a12891a747871bf0c9755c5aec6ab5ecad28c",
     "disposition": "internal",
     "guard": "ImportQueue staging / new-project selected-files and volume-boundary draft",
-    "reason": "Deselecting input or cancelling staging retains the original user files and existing projects; the draft can be reselected."
+    "reason": "Deselecting input or cancelling staging retains the original user files and existing projects; the draft can be reselected. Merge review (merge174, dev/bgimport): the queue mirrors background import jobs and staging refs are bound to the row that read them, so discard only touches that row's own staging. This statement and its guard are unchanged."
   },
   {
     "id": "d7fa86fffe8a64742207",
     "kind": "destructive",
     "path": "mobile/android/app/src/main/java/vn/abook/player/ui/addbook/ImportQueue.kt",
-    "line": 104,
+    "line": 162,
     "statement": "runCatching { source.discard(staged) }",
     "occurrence": 1,
-    "source_sha256": "64a5ecd815484a93ef28c880ee5c567f323813b1b9d9a2791162f4039ea32a8c",
+    "source_sha256": "03308206047617fc7ab488e99c0a12891a747871bf0c9755c5aec6ab5ecad28c",
     "disposition": "internal",
     "guard": "ImportQueue staging / new-project selected-files and volume-boundary draft",
-    "reason": "Deselecting input or cancelling staging retains the original user files and existing projects; the draft can be reselected."
+    "reason": "Deselecting input or cancelling staging retains the original user files and existing projects; the draft can be reselected. Merge review (merge174, dev/bgimport): the queue mirrors background import jobs and staging refs are bound to the row that read them, so discard only touches that row's own staging. This statement and its guard are unchanged."
   },
   {
     "id": "6e54e53e3f5fe4942edb",
     "kind": "pending",
     "path": "mobile/android/app/src/main/java/vn/abook/player/ui/addbook/ImportQueue.kt",
-    "line": 138,
+    "line": 196,
     "statement": "worker = scope.launch {",
     "occurrence": 3,
-    "source_sha256": "64a5ecd815484a93ef28c880ee5c567f323813b1b9d9a2791162f4039ea32a8c",
+    "source_sha256": "03308206047617fc7ab488e99c0a12891a747871bf0c9755c5aec6ab5ecad28c",
     "disposition": "pending",
     "guard": "ViewModel/operation fields: busy, progress; Components pending indicator",
-    "reason": "The model retains the operation and locks repeats; UI uses the shared pending parameter, loading content or progress owner."
+    "reason": "The model retains the operation and locks repeats; UI uses the shared pending parameter, loading content or progress owner. Merge review (merge174, dev/bgimport): the queue mirrors background import jobs and staging refs are bound to the row that read them, so discard only touches that row's own staging. This statement and its guard are unchanged."
   },
   {
     "id": "75f88413269deeef7aee",
     "kind": "pending",
     "path": "mobile/android/app/src/main/java/vn/abook/player/ui/addbook/ImportQueue.kt",
-    "line": 157,
+    "line": 215,
     "statement": "worker = scope.launch {",
     "occurrence": 4,
-    "source_sha256": "64a5ecd815484a93ef28c880ee5c567f323813b1b9d9a2791162f4039ea32a8c",
+    "source_sha256": "03308206047617fc7ab488e99c0a12891a747871bf0c9755c5aec6ab5ecad28c",
     "disposition": "pending",
     "guard": "ViewModel/operation fields: busy, progress; Components pending indicator",
-    "reason": "The model retains the operation and locks repeats; UI uses the shared pending parameter, loading content or progress owner."
+    "reason": "The model retains the operation and locks repeats; UI uses the shared pending parameter, loading content or progress owner. Merge review (merge174, dev/bgimport): the queue mirrors background import jobs and staging refs are bound to the row that read them, so discard only touches that row's own staging. This statement and its guard are unchanged."
   },
   {
     "id": "d63536b427222cd3b5dd",
@@ -4875,301 +4875,301 @@
     "id": "a245f2bf6da9d03d70c7",
     "kind": "pending",
     "path": "mobile/android/app/src/main/java/vn/abook/player/ui/addbook/ImportQueue.kt",
-    "line": 187,
+    "line": 249,
     "statement": "if (staged != null) scope.launch {",
     "occurrence": 1,
-    "source_sha256": "64a5ecd815484a93ef28c880ee5c567f323813b1b9d9a2791162f4039ea32a8c",
+    "source_sha256": "03308206047617fc7ab488e99c0a12891a747871bf0c9755c5aec6ab5ecad28c",
     "disposition": "pending",
     "guard": "ViewModel/operation fields: busy, progress; Components pending indicator",
-    "reason": "The model retains the operation and locks repeats; UI uses the shared pending parameter, loading content or progress owner."
+    "reason": "The model retains the operation and locks repeats; UI uses the shared pending parameter, loading content or progress owner. Merge review (merge174, dev/bgimport): the queue mirrors background import jobs and staging refs are bound to the row that read them, so discard only touches that row's own staging. This statement and its guard are unchanged."
   },
   {
     "id": "2bd16240bdeb3ac9e885",
     "kind": "destructive",
     "path": "mobile/android/app/src/main/java/vn/abook/player/ui/addbook/ImportQueue.kt",
-    "line": 188,
+    "line": 250,
     "statement": "try { source.discard(staged) } catch (error: Exception) { if (error is CancellationException) throw error }",
     "occurrence": 1,
-    "source_sha256": "64a5ecd815484a93ef28c880ee5c567f323813b1b9d9a2791162f4039ea32a8c",
+    "source_sha256": "03308206047617fc7ab488e99c0a12891a747871bf0c9755c5aec6ab5ecad28c",
     "disposition": "internal",
     "guard": "ImportQueue staging / new-project selected-files and volume-boundary draft",
-    "reason": "Deselecting input or cancelling staging retains the original user files and existing projects; the draft can be reselected."
+    "reason": "Deselecting input or cancelling staging retains the original user files and existing projects; the draft can be reselected. Merge review (merge174, dev/bgimport): the queue mirrors background import jobs and staging refs are bound to the row that read them, so discard only touches that row's own staging. This statement and its guard are unchanged."
   },
   {
     "id": "34981df386708bc0bf5d",
     "kind": "pending",
     "path": "mobile/android/app/src/main/java/vn/abook/player/ui/addbook/ImportQueue.kt",
-    "line": 203,
+    "line": 265,
     "statement": "worker = scope.launch {",
     "occurrence": 5,
-    "source_sha256": "64a5ecd815484a93ef28c880ee5c567f323813b1b9d9a2791162f4039ea32a8c",
+    "source_sha256": "03308206047617fc7ab488e99c0a12891a747871bf0c9755c5aec6ab5ecad28c",
     "disposition": "pending",
     "guard": "ViewModel/operation fields: busy, progress; Components pending indicator",
-    "reason": "The model retains the operation and locks repeats; UI uses the shared pending parameter, loading content or progress owner."
+    "reason": "The model retains the operation and locks repeats; UI uses the shared pending parameter, loading content or progress owner. Merge review (merge174, dev/bgimport): the queue mirrors background import jobs and staging refs are bound to the row that read them, so discard only touches that row's own staging. This statement and its guard are unchanged."
   },
   {
     "id": "9c858ef56f781a088f91",
     "kind": "destructive",
     "path": "mobile/android/app/src/main/java/vn/abook/player/ui/addbook/ImportQueue.kt",
-    "line": 228,
+    "line": 295,
     "statement": "source.discard(result.ref!!)",
     "occurrence": 1,
-    "source_sha256": "64a5ecd815484a93ef28c880ee5c567f323813b1b9d9a2791162f4039ea32a8c",
+    "source_sha256": "03308206047617fc7ab488e99c0a12891a747871bf0c9755c5aec6ab5ecad28c",
     "disposition": "internal",
     "guard": "ImportQueue staging / new-project selected-files and volume-boundary draft",
-    "reason": "Deselecting input or cancelling staging retains the original user files and existing projects; the draft can be reselected."
+    "reason": "Deselecting input or cancelling staging retains the original user files and existing projects; the draft can be reselected. Merge review (merge174, dev/bgimport): the queue mirrors background import jobs and staging refs are bound to the row that read them, so discard only touches that row's own staging. This statement and its guard are unchanged."
   },
   {
     "id": "1b531e2c7156e2a8aa53",
     "kind": "pending",
     "path": "mobile/android/app/src/main/java/vn/abook/player/ui/addbook/ImportRepo.kt",
-    "line": 31,
+    "line": 32,
     "statement": "suspend fun replace(item: ImportItem, progress: WorkSink = {}): PreparedImport = error(S.s_chua_thay_duoc_sach_8eebed8f)",
     "occurrence": 1,
-    "source_sha256": "c97ec65743f01d1b7e2ef9adff5ebda9ed5e8d81fe7d7631704b4625612c98ea",
+    "source_sha256": "2b9564bc6090070c633b0380f516e641722cf15611f89e08686f69b74b9bb168",
     "disposition": "internal",
     "guard": "Async interface/helper boundary; concrete activation inventoried separately",
-    "reason": "This signature supplies work to a model or component; declaring it starts no user operation."
+    "reason": "This signature supplies work to a model or component; declaring it starts no user operation. Merge review (merge174, dev/bgimport): book-file imports go through the shared BookImports background job; staging discard and in-memory removals are unchanged."
   },
   {
     "id": "cc7827ef894ba1b49c33",
     "kind": "pending",
     "path": "mobile/android/app/src/main/java/vn/abook/player/ui/addbook/ImportRepo.kt",
-    "line": 32,
+    "line": 33,
     "statement": "suspend fun describe(item: ImportItem): String = item.name",
     "occurrence": 1,
-    "source_sha256": "c97ec65743f01d1b7e2ef9adff5ebda9ed5e8d81fe7d7631704b4625612c98ea",
+    "source_sha256": "2b9564bc6090070c633b0380f516e641722cf15611f89e08686f69b74b9bb168",
     "disposition": "internal",
     "guard": "Async interface/helper boundary; concrete activation inventoried separately",
-    "reason": "This signature supplies work to a model or component; declaring it starts no user operation."
+    "reason": "This signature supplies work to a model or component; declaring it starts no user operation. Merge review (merge174, dev/bgimport): book-file imports go through the shared BookImports background job; staging discard and in-memory removals are unchanged."
   },
   {
     "id": "b6c4b541f7ed93d358d8",
     "kind": "pending",
     "path": "mobile/android/app/src/main/java/vn/abook/player/ui/addbook/ImportRepo.kt",
-    "line": 33,
+    "line": 34,
     "statement": "suspend fun prepare(item: ImportItem, progress: WorkSink = {}): PreparedImport",
     "occurrence": 1,
-    "source_sha256": "c97ec65743f01d1b7e2ef9adff5ebda9ed5e8d81fe7d7631704b4625612c98ea",
+    "source_sha256": "2b9564bc6090070c633b0380f516e641722cf15611f89e08686f69b74b9bb168",
     "disposition": "internal",
     "guard": "Async interface/helper boundary; concrete activation inventoried separately",
-    "reason": "This signature supplies work to a model or component; declaring it starts no user operation."
+    "reason": "This signature supplies work to a model or component; declaring it starts no user operation. Merge review (merge174, dev/bgimport): book-file imports go through the shared BookImports background job; staging discard and in-memory removals are unchanged."
   },
   {
     "id": "6c05639ca13447b5cf3e",
     "kind": "pending",
     "path": "mobile/android/app/src/main/java/vn/abook/player/ui/addbook/ImportRepo.kt",
-    "line": 34,
+    "line": 35,
     "statement": "suspend fun revise(ref: String, choices: ImportChoices): ImportPreview",
     "occurrence": 1,
-    "source_sha256": "c97ec65743f01d1b7e2ef9adff5ebda9ed5e8d81fe7d7631704b4625612c98ea",
+    "source_sha256": "2b9564bc6090070c633b0380f516e641722cf15611f89e08686f69b74b9bb168",
     "disposition": "internal",
     "guard": "Async interface/helper boundary; concrete activation inventoried separately",
-    "reason": "This signature supplies work to a model or component; declaring it starts no user operation."
+    "reason": "This signature supplies work to a model or component; declaring it starts no user operation. Merge review (merge174, dev/bgimport): book-file imports go through the shared BookImports background job; staging discard and in-memory removals are unchanged."
   },
   {
     "id": "cdbd2360af0c34bd27a1",
     "kind": "pending",
     "path": "mobile/android/app/src/main/java/vn/abook/player/ui/addbook/ImportRepo.kt",
-    "line": 35,
+    "line": 36,
     "statement": "suspend fun add(ref: String, preview: ImportPreview, choices: ImportChoices): Pair<String, Boolean>",
     "occurrence": 1,
-    "source_sha256": "c97ec65743f01d1b7e2ef9adff5ebda9ed5e8d81fe7d7631704b4625612c98ea",
+    "source_sha256": "2b9564bc6090070c633b0380f516e641722cf15611f89e08686f69b74b9bb168",
     "disposition": "internal",
     "guard": "Async interface/helper boundary; concrete activation inventoried separately",
-    "reason": "This signature supplies work to a model or component; declaring it starts no user operation."
+    "reason": "This signature supplies work to a model or component; declaring it starts no user operation. Merge review (merge174, dev/bgimport): book-file imports go through the shared BookImports background job; staging discard and in-memory removals are unchanged."
   },
   {
     "id": "62c3b5bb7276f582c063",
     "kind": "destructive",
     "path": "mobile/android/app/src/main/java/vn/abook/player/ui/addbook/ImportRepo.kt",
-    "line": 36,
+    "line": 37,
     "statement": "suspend fun discard(ref: String)",
     "occurrence": 1,
-    "source_sha256": "c97ec65743f01d1b7e2ef9adff5ebda9ed5e8d81fe7d7631704b4625612c98ea",
+    "source_sha256": "2b9564bc6090070c633b0380f516e641722cf15611f89e08686f69b74b9bb168",
     "disposition": "internal",
     "guard": "Declaration; the invoked call site is independently inventoried",
-    "reason": "A declaration/signature is not an executing UI action."
+    "reason": "A declaration/signature is not an executing UI action. Merge review (merge174, dev/bgimport): book-file imports go through the shared BookImports background job; staging discard and in-memory removals are unchanged."
   },
   {
     "id": "4b6557c9243b1cb93bb4",
     "kind": "pending",
     "path": "mobile/android/app/src/main/java/vn/abook/player/ui/addbook/ImportRepo.kt",
-    "line": 36,
+    "line": 37,
     "statement": "suspend fun discard(ref: String)",
     "occurrence": 1,
-    "source_sha256": "c97ec65743f01d1b7e2ef9adff5ebda9ed5e8d81fe7d7631704b4625612c98ea",
+    "source_sha256": "2b9564bc6090070c633b0380f516e641722cf15611f89e08686f69b74b9bb168",
     "disposition": "internal",
     "guard": "Async interface/helper boundary; concrete activation inventoried separately",
-    "reason": "This signature supplies work to a model or component; declaring it starts no user operation."
+    "reason": "This signature supplies work to a model or component; declaring it starts no user operation. Merge review (merge174, dev/bgimport): book-file imports go through the shared BookImports background job; staging discard and in-memory removals are unchanged."
   },
   {
     "id": "62555e2bf98123bd11b8",
     "kind": "pending",
     "path": "mobile/android/app/src/main/java/vn/abook/player/ui/addbook/ImportRepo.kt",
-    "line": 43,
+    "line": 44,
     "statement": "override suspend fun describe(item: ImportItem): String = withContext(Dispatchers.IO) { name(document(item)) ?: item.name }",
     "occurrence": 1,
-    "source_sha256": "c97ec65743f01d1b7e2ef9adff5ebda9ed5e8d81fe7d7631704b4625612c98ea",
+    "source_sha256": "2b9564bc6090070c633b0380f516e641722cf15611f89e08686f69b74b9bb168",
     "disposition": "internal",
     "guard": "Async interface/helper boundary; concrete activation inventoried separately",
-    "reason": "This signature supplies work to a model or component; declaring it starts no user operation."
+    "reason": "This signature supplies work to a model or component; declaring it starts no user operation. Merge review (merge174, dev/bgimport): book-file imports go through the shared BookImports background job; staging discard and in-memory removals are unchanged."
   },
   {
     "id": "d60b908c7aa99178d049",
     "kind": "pending",
     "path": "mobile/android/app/src/main/java/vn/abook/player/ui/addbook/ImportRepo.kt",
-    "line": 50,
+    "line": 51,
     "statement": "override suspend fun prepare(item: ImportItem, progress: WorkSink): PreparedImport = withContext(Dispatchers.IO) {",
     "occurrence": 1,
-    "source_sha256": "c97ec65743f01d1b7e2ef9adff5ebda9ed5e8d81fe7d7631704b4625612c98ea",
+    "source_sha256": "2b9564bc6090070c633b0380f516e641722cf15611f89e08686f69b74b9bb168",
     "disposition": "internal",
     "guard": "Async interface/helper boundary; concrete activation inventoried separately",
-    "reason": "This signature supplies work to a model or component; declaring it starts no user operation."
+    "reason": "This signature supplies work to a model or component; declaring it starts no user operation. Merge review (merge174, dev/bgimport): book-file imports go through the shared BookImports background job; staging discard and in-memory removals are unchanged."
   },
   {
     "id": "67164d3a2f772298a483",
     "kind": "destructive",
     "path": "mobile/android/app/src/main/java/vn/abook/player/ui/addbook/ImportRepo.kt",
-    "line": 78,
+    "line": 81,
     "statement": "TextImports.discard(staged.ref)",
     "occurrence": 1,
-    "source_sha256": "c97ec65743f01d1b7e2ef9adff5ebda9ed5e8d81fe7d7631704b4625612c98ea",
+    "source_sha256": "2b9564bc6090070c633b0380f516e641722cf15611f89e08686f69b74b9bb168",
     "disposition": "internal",
     "guard": "ImportQueue staging / new-project selected-files and volume-boundary draft",
-    "reason": "Deselecting input or cancelling staging retains the original user files and existing projects; the draft can be reselected."
+    "reason": "Deselecting input or cancelling staging retains the original user files and existing projects; the draft can be reselected. Merge review (merge174, dev/bgimport): book-file imports go through the shared BookImports background job; staging discard and in-memory removals are unchanged."
   },
   {
     "id": "7497c5435f8cdfc38eff",
     "kind": "destructive",
     "path": "mobile/android/app/src/main/java/vn/abook/player/ui/addbook/ImportRepo.kt",
-    "line": 79,
+    "line": 82,
     "statement": "pdfPages.remove(staged.ref)",
     "occurrence": 1,
-    "source_sha256": "c97ec65743f01d1b7e2ef9adff5ebda9ed5e8d81fe7d7631704b4625612c98ea",
+    "source_sha256": "2b9564bc6090070c633b0380f516e641722cf15611f89e08686f69b74b9bb168",
     "disposition": "internal",
     "guard": "In-memory collection entry lifecycle",
-    "reason": "The statement releases a listener, request, UI row, selection or cache entry; it does not delete its persisted source."
+    "reason": "The statement releases a listener, request, UI row, selection or cache entry; it does not delete its persisted source. Merge review (merge174, dev/bgimport): book-file imports go through the shared BookImports background job; staging discard and in-memory removals are unchanged."
   },
   {
     "id": "06cc16c1c31926cae398",
     "kind": "pending",
     "path": "mobile/android/app/src/main/java/vn/abook/player/ui/addbook/ImportRepo.kt",
-    "line": 84,
+    "line": 87,
     "statement": "override suspend fun revise(ref: String, choices: ImportChoices): ImportPreview = withContext(Dispatchers.IO) { read(ref, choices) }",
     "occurrence": 1,
-    "source_sha256": "c97ec65743f01d1b7e2ef9adff5ebda9ed5e8d81fe7d7631704b4625612c98ea",
+    "source_sha256": "2b9564bc6090070c633b0380f516e641722cf15611f89e08686f69b74b9bb168",
     "disposition": "internal",
     "guard": "Async interface/helper boundary; concrete activation inventoried separately",
-    "reason": "This signature supplies work to a model or component; declaring it starts no user operation."
+    "reason": "This signature supplies work to a model or component; declaring it starts no user operation. Merge review (merge174, dev/bgimport): book-file imports go through the shared BookImports background job; staging discard and in-memory removals are unchanged."
   },
   {
     "id": "62d0e072c5a1964e0f8a",
     "kind": "pending",
     "path": "mobile/android/app/src/main/java/vn/abook/player/ui/addbook/ImportRepo.kt",
-    "line": 105,
+    "line": 108,
     "statement": "override suspend fun add(ref: String, preview: ImportPreview, choices: ImportChoices): Pair<String, Boolean> = withContext(Dispatchers.IO) {",
     "occurrence": 1,
-    "source_sha256": "c97ec65743f01d1b7e2ef9adff5ebda9ed5e8d81fe7d7631704b4625612c98ea",
+    "source_sha256": "2b9564bc6090070c633b0380f516e641722cf15611f89e08686f69b74b9bb168",
     "disposition": "internal",
     "guard": "Async interface/helper boundary; concrete activation inventoried separately",
-    "reason": "This signature supplies work to a model or component; declaring it starts no user operation."
+    "reason": "This signature supplies work to a model or component; declaring it starts no user operation. Merge review (merge174, dev/bgimport): book-file imports go through the shared BookImports background job; staging discard and in-memory removals are unchanged."
   },
   {
     "id": "0f04535991e92931af4b",
     "kind": "destructive",
     "path": "mobile/android/app/src/main/java/vn/abook/player/ui/addbook/ImportRepo.kt",
-    "line": 113,
+    "line": 116,
     "statement": "pdfPages.remove(ref)",
     "occurrence": 1,
-    "source_sha256": "c97ec65743f01d1b7e2ef9adff5ebda9ed5e8d81fe7d7631704b4625612c98ea",
+    "source_sha256": "2b9564bc6090070c633b0380f516e641722cf15611f89e08686f69b74b9bb168",
     "disposition": "internal",
     "guard": "In-memory collection entry lifecycle",
-    "reason": "The statement releases a listener, request, UI row, selection or cache entry; it does not delete its persisted source."
+    "reason": "The statement releases a listener, request, UI row, selection or cache entry; it does not delete its persisted source. Merge review (merge174, dev/bgimport): book-file imports go through the shared BookImports background job; staging discard and in-memory removals are unchanged."
   },
   {
     "id": "8d27867f029d0ca73152",
     "kind": "destructive",
     "path": "mobile/android/app/src/main/java/vn/abook/player/ui/addbook/ImportRepo.kt",
-    "line": 114,
+    "line": 117,
     "statement": "created.remove(ref)",
     "occurrence": 1,
-    "source_sha256": "c97ec65743f01d1b7e2ef9adff5ebda9ed5e8d81fe7d7631704b4625612c98ea",
+    "source_sha256": "2b9564bc6090070c633b0380f516e641722cf15611f89e08686f69b74b9bb168",
     "disposition": "internal",
     "guard": "In-memory collection entry lifecycle",
-    "reason": "The statement releases a listener, request, UI row, selection or cache entry; it does not delete its persisted source."
+    "reason": "The statement releases a listener, request, UI row, selection or cache entry; it does not delete its persisted source. Merge review (merge174, dev/bgimport): book-file imports go through the shared BookImports background job; staging discard and in-memory removals are unchanged."
   },
   {
     "id": "1a1069d696c15be8c352",
     "kind": "destructive",
     "path": "mobile/android/app/src/main/java/vn/abook/player/ui/addbook/ImportRepo.kt",
-    "line": 118,
+    "line": 121,
     "statement": "override suspend fun discard(ref: String) = withContext(Dispatchers.IO) {",
     "occurrence": 1,
-    "source_sha256": "c97ec65743f01d1b7e2ef9adff5ebda9ed5e8d81fe7d7631704b4625612c98ea",
+    "source_sha256": "2b9564bc6090070c633b0380f516e641722cf15611f89e08686f69b74b9bb168",
     "disposition": "internal",
     "guard": "Declaration; the invoked call site is independently inventoried",
-    "reason": "A declaration/signature is not an executing UI action."
+    "reason": "A declaration/signature is not an executing UI action. Merge review (merge174, dev/bgimport): book-file imports go through the shared BookImports background job; staging discard and in-memory removals are unchanged."
   },
   {
     "id": "dce31c1daa756af2f9cc",
     "kind": "pending",
     "path": "mobile/android/app/src/main/java/vn/abook/player/ui/addbook/ImportRepo.kt",
-    "line": 118,
+    "line": 121,
     "statement": "override suspend fun discard(ref: String) = withContext(Dispatchers.IO) {",
     "occurrence": 1,
-    "source_sha256": "c97ec65743f01d1b7e2ef9adff5ebda9ed5e8d81fe7d7631704b4625612c98ea",
+    "source_sha256": "2b9564bc6090070c633b0380f516e641722cf15611f89e08686f69b74b9bb168",
     "disposition": "internal",
     "guard": "Async interface/helper boundary; concrete activation inventoried separately",
-    "reason": "This signature supplies work to a model or component; declaring it starts no user operation."
+    "reason": "This signature supplies work to a model or component; declaring it starts no user operation. Merge review (merge174, dev/bgimport): book-file imports go through the shared BookImports background job; staging discard and in-memory removals are unchanged."
   },
   {
     "id": "1451d30d67624fbb94b5",
     "kind": "destructive",
     "path": "mobile/android/app/src/main/java/vn/abook/player/ui/addbook/ImportRepo.kt",
-    "line": 119,
+    "line": 122,
     "statement": "TextImports.discard(ref)",
     "occurrence": 1,
-    "source_sha256": "c97ec65743f01d1b7e2ef9adff5ebda9ed5e8d81fe7d7631704b4625612c98ea",
+    "source_sha256": "2b9564bc6090070c633b0380f516e641722cf15611f89e08686f69b74b9bb168",
     "disposition": "internal",
     "guard": "ImportQueue staging / new-project selected-files and volume-boundary draft",
-    "reason": "Deselecting input or cancelling staging retains the original user files and existing projects; the draft can be reselected."
+    "reason": "Deselecting input or cancelling staging retains the original user files and existing projects; the draft can be reselected. Merge review (merge174, dev/bgimport): book-file imports go through the shared BookImports background job; staging discard and in-memory removals are unchanged."
   },
   {
     "id": "342fcf966197646ece65",
     "kind": "destructive",
     "path": "mobile/android/app/src/main/java/vn/abook/player/ui/addbook/ImportRepo.kt",
-    "line": 120,
+    "line": 123,
     "statement": "pdfPages.remove(ref)",
     "occurrence": 2,
-    "source_sha256": "c97ec65743f01d1b7e2ef9adff5ebda9ed5e8d81fe7d7631704b4625612c98ea",
+    "source_sha256": "2b9564bc6090070c633b0380f516e641722cf15611f89e08686f69b74b9bb168",
     "disposition": "internal",
     "guard": "In-memory collection entry lifecycle",
-    "reason": "The statement releases a listener, request, UI row, selection or cache entry; it does not delete its persisted source."
+    "reason": "The statement releases a listener, request, UI row, selection or cache entry; it does not delete its persisted source. Merge review (merge174, dev/bgimport): book-file imports go through the shared BookImports background job; staging discard and in-memory removals are unchanged."
   },
   {
     "id": "a37ff179fd13114d79bd",
     "kind": "destructive",
     "path": "mobile/android/app/src/main/java/vn/abook/player/ui/addbook/ImportRepo.kt",
-    "line": 121,
+    "line": 124,
     "statement": "created.remove(ref)",
     "occurrence": 2,
-    "source_sha256": "c97ec65743f01d1b7e2ef9adff5ebda9ed5e8d81fe7d7631704b4625612c98ea",
+    "source_sha256": "2b9564bc6090070c633b0380f516e641722cf15611f89e08686f69b74b9bb168",
     "disposition": "internal",
     "guard": "In-memory collection entry lifecycle",
-    "reason": "The statement releases a listener, request, UI row, selection or cache entry; it does not delete its persisted source."
+    "reason": "The statement releases a listener, request, UI row, selection or cache entry; it does not delete its persisted source. Merge review (merge174, dev/bgimport): book-file imports go through the shared BookImports background job; staging discard and in-memory removals are unchanged."
   },
   {
     "id": "7fd73d861862bb34cc06",
     "kind": "pending",
     "path": "mobile/android/app/src/main/java/vn/abook/player/ui/addbook/ImportRepo.kt",
-    "line": 125,
+    "line": 128,
     "statement": "override suspend fun replace(item: ImportItem, progress: WorkSink): PreparedImport = withContext(Dispatchers.IO) {",
     "occurrence": 1,
-    "source_sha256": "c97ec65743f01d1b7e2ef9adff5ebda9ed5e8d81fe7d7631704b4625612c98ea",
+    "source_sha256": "2b9564bc6090070c633b0380f516e641722cf15611f89e08686f69b74b9bb168",
     "disposition": "internal",
     "guard": "Async interface/helper boundary; concrete activation inventoried separately",
-    "reason": "This signature supplies work to a model or component; declaring it starts no user operation."
+    "reason": "This signature supplies work to a model or component; declaring it starts no user operation. Merge review (merge174, dev/bgimport): book-file imports go through the shared BookImports background job; staging discard and in-memory removals are unchanged."
   },
   {
     "id": "9f5279007405569087f5",
@@ -11586,10 +11586,10 @@
     "line": 144,
     "statement": "scope.launch { page.load() }",
     "occurrence": 1,
-    "source_sha256": "29d7faac2fba290a876f5643336704963c90699c9daa6778e8de760cccce71ac",
+    "source_sha256": "8f4c581adfbb1a2886835767960954a9cf1f8be9aacb3d2206273ce2b696c9b0",
     "disposition": "pending",
     "guard": "ViewModel/operation fields: busy, pending, progress; Components pending indicator",
-    "reason": "The model retains the operation and locks repeats; UI uses the shared pending parameter, loading content or progress owner. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
+    "reason": "The model retains the operation and locks repeats; UI uses the shared pending parameter, loading content or progress owner. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Combined-source review (merge174 bgimport): both sides' changes to this file keep this statement and its guard unchanged."
   },
   {
     "id": "39d74cac0534bba005ae",
@@ -11598,70 +11598,70 @@
     "line": 159,
     "statement": "suspend fun receive(queue: ImportQueue, sources: List<String>) {",
     "occurrence": 1,
-    "source_sha256": "29d7faac2fba290a876f5643336704963c90699c9daa6778e8de760cccce71ac",
+    "source_sha256": "8f4c581adfbb1a2886835767960954a9cf1f8be9aacb3d2206273ce2b696c9b0",
     "disposition": "internal",
     "guard": "Async interface/helper boundary; concrete activation inventoried separately",
-    "reason": "This signature supplies work to a model or component; declaring it starts no user operation. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
+    "reason": "This signature supplies work to a model or component; declaring it starts no user operation. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Combined-source review (merge174 bgimport): both sides' changes to this file keep this statement and its guard unchanged."
   },
   {
     "id": "d0ef5000b187ceda1175",
     "kind": "pending",
     "path": "mobile/android/app/src/main/java/vn/abook/player/ui/shell/Shell.kt",
-    "line": 168,
+    "line": 178,
     "statement": "suspend fun showBookPage(book: vn.abook.player.ui.data.ListenBook) {",
     "occurrence": 1,
-    "source_sha256": "29d7faac2fba290a876f5643336704963c90699c9daa6778e8de760cccce71ac",
+    "source_sha256": "8f4c581adfbb1a2886835767960954a9cf1f8be9aacb3d2206273ce2b696c9b0",
     "disposition": "internal",
     "guard": "Async interface/helper boundary; concrete activation inventoried separately",
-    "reason": "This signature supplies work to a model or component; declaring it starts no user operation. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
+    "reason": "This signature supplies work to a model or component; declaring it starts no user operation. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Combined-source review (merge174 bgimport): both sides' changes to this file keep this statement and its guard unchanged."
   },
   {
     "id": "d66254934903cf00c88a",
     "kind": "pending",
     "path": "mobile/android/app/src/main/java/vn/abook/player/ui/shell/Shell.kt",
-    "line": 180,
+    "line": 190,
     "statement": "suspend fun openStudio(request: StudioRequest) {",
     "occurrence": 1,
-    "source_sha256": "29d7faac2fba290a876f5643336704963c90699c9daa6778e8de760cccce71ac",
+    "source_sha256": "8f4c581adfbb1a2886835767960954a9cf1f8be9aacb3d2206273ce2b696c9b0",
     "disposition": "internal",
     "guard": "Async interface/helper boundary; concrete activation inventoried separately",
-    "reason": "This signature supplies work to a model or component; declaring it starts no user operation. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
+    "reason": "This signature supplies work to a model or component; declaring it starts no user operation. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Combined-source review (merge174 bgimport): both sides' changes to this file keep this statement and its guard unchanged."
   },
   {
     "id": "5dd4b24cc34afb624403",
     "kind": "pending",
     "path": "mobile/android/app/src/main/java/vn/abook/player/ui/shell/Shell.kt",
-    "line": 329,
+    "line": 339,
     "statement": "(libraryNow.value as? LibraryState.Ready)?.books?.firstOrNull { it.id == id }?.let { book -> shell.scope.launch { shell.showBookPage(book) } }",
     "occurrence": 1,
-    "source_sha256": "29d7faac2fba290a876f5643336704963c90699c9daa6778e8de760cccce71ac",
+    "source_sha256": "8f4c581adfbb1a2886835767960954a9cf1f8be9aacb3d2206273ce2b696c9b0",
     "disposition": "pending",
     "guard": "ViewModel/operation fields: busy, pending, progress; Components pending indicator",
-    "reason": "The model retains the operation and locks repeats; UI uses the shared pending parameter, loading content or progress owner. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
+    "reason": "The model retains the operation and locks repeats; UI uses the shared pending parameter, loading content or progress owner. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Combined-source review (merge174 bgimport): both sides' changes to this file keep this statement and its guard unchanged."
   },
   {
     "id": "b4139ce6b925740feaa0",
     "kind": "pending",
     "path": "mobile/android/app/src/main/java/vn/abook/player/ui/shell/Shell.kt",
-    "line": 340,
+    "line": 350,
     "statement": "readAlong = { book -> shell.scope.launch { if (player.prepare(book)) window.openReading() } },",
     "occurrence": 1,
-    "source_sha256": "29d7faac2fba290a876f5643336704963c90699c9daa6778e8de760cccce71ac",
+    "source_sha256": "8f4c581adfbb1a2886835767960954a9cf1f8be9aacb3d2206273ce2b696c9b0",
     "disposition": "pending",
     "guard": "ViewModel/operation fields: busy, pending, progress; Components pending indicator",
-    "reason": "The model retains the operation and locks repeats; UI uses the shared pending parameter, loading content or progress owner. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
+    "reason": "The model retains the operation and locks repeats; UI uses the shared pending parameter, loading content or progress owner. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Combined-source review (merge174 bgimport): both sides' changes to this file keep this statement and its guard unchanged."
   },
   {
     "id": "820cd3ca713805723ec4",
     "kind": "pending",
     "path": "mobile/android/app/src/main/java/vn/abook/player/ui/shell/Shell.kt",
-    "line": 345,
+    "line": 355,
     "statement": "openNowPlaying = { id -> shell.scope.launch { if (player.awaitLoaded(id)) window.open() } },",
     "occurrence": 1,
-    "source_sha256": "29d7faac2fba290a876f5643336704963c90699c9daa6778e8de760cccce71ac",
+    "source_sha256": "8f4c581adfbb1a2886835767960954a9cf1f8be9aacb3d2206273ce2b696c9b0",
     "disposition": "pending",
     "guard": "ViewModel/operation fields: busy, pending, progress; Components pending indicator",
-    "reason": "The model retains the operation and locks repeats; UI uses the shared pending parameter, loading content or progress owner. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
+    "reason": "The model retains the operation and locks repeats; UI uses the shared pending parameter, loading content or progress owner. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Combined-source review (merge174 bgimport): both sides' changes to this file keep this statement and its guard unchanged."
   },
   {
     "id": "a779ea84a03842ecaadb",
@@ -15126,10 +15126,10 @@
     "line": 85,
     "statement": "Api.call(method, route, body, function(data, error) {",
     "occurrence": 1,
-    "source_sha256": "33e718f8cd67a460e27f4bd3adcbe5a18da653c1731c9e6dfc4cbdb61302062b",
+    "source_sha256": "b199275384e9894b4ecb01e1c7fa75657fb3fec6e68ccb4d411d006d159dc550",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; busy, pending, working",
-    "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
+    "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Merge review (merge174, dev/bgimport): the dialog became a viewer of the server import job (Api.importScreens / watchImports); closing during a single add detaches the viewer while the job continues. This statement and its guard are unchanged."
   },
   {
     "id": "af49df2e4950153e0d85",
@@ -15138,10 +15138,10 @@
     "line": 212,
     "statement": "Api.quiet(\"GET\", \"/api/listen/books/\" + encodeURIComponent(outcome.id), null, function(book, error) {",
     "occurrence": 1,
-    "source_sha256": "33e718f8cd67a460e27f4bd3adcbe5a18da653c1731c9e6dfc4cbdb61302062b",
+    "source_sha256": "b199275384e9894b4ecb01e1c7fa75657fb3fec6e68ccb4d411d006d159dc550",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; busy, pending, working",
-    "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
+    "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Merge review (merge174, dev/bgimport): the dialog became a viewer of the server import job (Api.importScreens / watchImports); closing during a single add detaches the viewer while the job continues. This statement and its guard are unchanged."
   },
   {
     "id": "8a873b33a644eb4c58fb",
@@ -15690,22 +15690,22 @@
     "line": 70,
     "statement": "Api.call(\"GET\", \"/api/listen/books/\" + id, null, function(data, error) {",
     "occurrence": 1,
-    "source_sha256": "58d3aafd2d6e577aa9f3b9c7db218518fa409d4330e2e350e8596d5f65523a09",
+    "source_sha256": "edecb9098963cff907414f49552371ad8d66e28cb956960a228cd690b5a6b2d3",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; Loading, pending, pendingFiles",
-    "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads."
+    "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads. Combined-source review (merge174 bgimport): both sides' changes to this file keep this statement and its guard unchanged."
   },
   {
     "id": "154fb23af149d009c2b5",
     "kind": "pending",
     "path": "desktop_qt/qml/Main.qml",
-    "line": 369,
+    "line": 370,
     "statement": "if (name === \"abook-update\") Api.call(\"GET\", \"/api/app\", null, function(data, error) { if (!error) Api.info = data })",
     "occurrence": 1,
-    "source_sha256": "58d3aafd2d6e577aa9f3b9c7db218518fa409d4330e2e350e8596d5f65523a09",
+    "source_sha256": "edecb9098963cff907414f49552371ad8d66e28cb956960a228cd690b5a6b2d3",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; Loading, pending, pendingFiles",
-    "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads."
+    "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads. Combined-source review (merge174 bgimport): both sides' changes to this file keep this statement and its guard unchanged."
   },
   {
     "id": "839fcd74729978555a9e",
@@ -17326,5 +17326,125 @@
     "guard": "metadataBusy blocks duplicate writes and drives the save-button pending state.",
     "reason": "Only optional descriptive fields are submitted. Failure stays in the open editor; success refreshes project metadata without changing audio.",
     "source_sha256": "133d3cfafcb8637ed680b96881d47f7c323494171a33e5fda5850f28e1f9fdb5"
+  },
+  {
+    "id": "a5e2f6939495d2574a6f",
+    "kind": "pending",
+    "path": "mobile/android/app/src/main/java/vn/abook/player/ui/addbook/ImportQueue.kt",
+    "line": 49,
+    "statement": "if (background != null) scope.launch { background.collect(::mirror) }",
+    "occurrence": 1,
+    "source_sha256": "03308206047617fc7ab488e99c0a12891a747871bf0c9755c5aec6ab5ecad28c",
+    "disposition": "internal",
+    "guard": "ImportQueue init: process-lifetime collector of BookImports.jobs on the application scope",
+    "reason": "Read-only mirror of background import jobs into rows; it starts no work and loses nothing when cancelled."
+  },
+  {
+    "id": "9ce6165c654cbcb8c351",
+    "kind": "pending",
+    "path": "mobile/android/app/src/main/java/vn/abook/player/ui/addbook/ImportQueue.kt",
+    "line": 88,
+    "statement": "scope.launch { changed() }",
+    "occurrence": 1,
+    "source_sha256": "03308206047617fc7ab488e99c0a12891a747871bf0c9755c5aec6ab5ecad28c",
+    "disposition": "internal",
+    "guard": "ImportQueue.mirror after a background job is Done",
+    "reason": "Only refreshes the library listing after a background import finished; the import itself already ran in WorkManager."
+  },
+  {
+    "id": "400b49b3903d5175af53",
+    "kind": "pending",
+    "path": "mobile/android/app/src/main/java/vn/abook/player/ui/shell/Shell.kt",
+    "line": 168,
+    "statement": "suspend fun showImports() {",
+    "occurrence": 1,
+    "source_sha256": "8f4c581adfbb1a2886835767960954a9cf1f8be9aacb3d2206273ce2b696c9b0",
+    "disposition": "pending",
+    "guard": "ShellState.showImports: waits for nav.busy, no push when Add book is already on top",
+    "reason": "Navigation to the Add book viewer from an import notification; idempotent and cancellable without side effects. Combined-source review (merge174 bgimport): both sides' changes to this file keep this statement and its guard unchanged."
+  },
+  {
+    "id": "830c9d0e2c850548e79e",
+    "kind": "pending",
+    "path": "ui/src/desktop/Shell.tsx",
+    "line": 184,
+    "statement": "<IconButton size=\"sm\" label={S.s_thu_lai_c58d068c} icon={RotateCcw} onClick={() => void retry(job.id)} />",
+    "occurrence": 1,
+    "source_sha256": "5567983484fe9a5256cd157085924b754dcffd0d9e13460c881c82898fdb9a98",
+    "disposition": "pending",
+    "guard": "ImportNotice row: the server re-runs the job in the background and the row turns into the running row on the next poll",
+    "reason": "Retry of a failed / interrupted server import; the new job shows as 'Đang thêm sách' in the same sidebar slot."
+  },
+  {
+    "id": "111976f45f912f4b3d43",
+    "kind": "pending",
+    "path": "ui/src/desktop/Shell.tsx",
+    "line": 185,
+    "statement": "<IconButton size=\"sm\" label={S.s_dong_5d54c2a1} icon={X} onClick={() => void dismiss(job.id)} />",
+    "occurrence": 1,
+    "source_sha256": "5567983484fe9a5256cd157085924b754dcffd0d9e13460c881c82898fdb9a98",
+    "disposition": "internal",
+    "guard": "ImportNotice row: removes only the ended job record (server refuses a running job)",
+    "reason": "Closing a notice row; no book, file or library data is touched."
+  },
+  {
+    "id": "08f646b1e6c2a6113542",
+    "kind": "pending",
+    "path": "ui/src/listen/importJobs.ts",
+    "line": 80,
+    "statement": "retry: async (id: string) => {",
+    "occurrence": 1,
+    "source_sha256": "f42136d1d5624b4703cda2b79197fb37499b376e01c6d2d18765100126b67301",
+    "disposition": "pending",
+    "guard": "useImportJobs.retry: POST retry then refetch the job list",
+    "reason": "Starts the same import again on the server; progress comes back through the polled job list."
+  },
+  {
+    "id": "3c5baa8430be6340f2d7",
+    "kind": "pending",
+    "path": "ui/src/listen/importJobs.ts",
+    "line": 84,
+    "statement": "dismiss: async (id: string) => {",
+    "occurrence": 1,
+    "source_sha256": "f42136d1d5624b4703cda2b79197fb37499b376e01c6d2d18765100126b67301",
+    "disposition": "internal",
+    "guard": "useImportJobs.dismiss: DELETE an ended job record then refetch",
+    "reason": "Only the notice record goes; running jobs are refused by the server."
+  },
+  {
+    "id": "4f6ec204a44c2fb16241",
+    "kind": "destructive",
+    "path": "ui/src/listen/importJobs.ts",
+    "line": 85,
+    "statement": "await api(`/api/listen/import/jobs/${id}`, { method: \"DELETE\" });",
+    "occurrence": 1,
+    "source_sha256": "f42136d1d5624b4703cda2b79197fb37499b376e01c6d2d18765100126b67301",
+    "disposition": "internal",
+    "guard": "import_jobs.ImportJobs.dismiss refuses running jobs",
+    "reason": "Deletes the record of an ended import (a notice), never a book or a file."
+  },
+  {
+    "id": "2d2949bed590d1abe053",
+    "kind": "destructive",
+    "path": "mobile/android/app/src/main/java/vn/abook/player/ui/addbook/ImportQueue.kt",
+    "line": 216,
+    "statement": "refOf(id)?.let { source.discard(it) }",
+    "occurrence": 1,
+    "source_sha256": "03308206047617fc7ab488e99c0a12891a747871bf0c9755c5aec6ab5ecad28c",
+    "disposition": "internal",
+    "guard": "ImportQueue staging / new-project selected-files and volume-boundary draft",
+    "reason": "Deselecting input or cancelling staging retains the original user files and existing projects; the draft can be reselected."
+  },
+  {
+    "id": "da5c1a11d03a28d43836",
+    "kind": "destructive",
+    "path": "mobile/android/app/src/main/java/vn/abook/player/ui/addbook/ImportQueue.kt",
+    "line": 271,
+    "statement": "try { source.discard(left.ref) } catch (error: Exception) { if (error is CancellationException) throw error }",
+    "occurrence": 1,
+    "source_sha256": "03308206047617fc7ab488e99c0a12891a747871bf0c9755c5aec6ab5ecad28c",
+    "disposition": "internal",
+    "guard": "ImportQueue.advance: staging left by an earlier row before the next row starts",
+    "reason": "Drops only the app's own staging copy of a row that already ended; the user's source file and the library are untouched."
   }
 ]

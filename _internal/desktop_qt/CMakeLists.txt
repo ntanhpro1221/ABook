@@ -370,6 +370,7 @@ qt_add_qml_module(ABookDesk
         qml/ImportSkeleton.qml
         qml/ImportFold.qml
         qml/ImportQueueList.qml
+        qml/ImportStatus.qml
         qml/ImportChapters.qml
         qml/ImportSlot.qml
         qml/ImportActions.qml

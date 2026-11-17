@@ -126,7 +126,7 @@
             android:foregroundServiceType="mediaPlayback"
             android:exported="false" />
 
-        <!-- "Xuất MP3" (Mp3ExportWorker.kt): WorkManager chép các chương ra thư mục người dùng chọn ở dịch vụ nền loại dataSync -
+        <!-- "Xuất MP3" (Mp3ExportWorker.kt), nhập file sách (BookImportWorker.kt): WorkManager chạy ở dịch vụ nền loại dataSync -
              ra khỏi app vẫn chạy tiếp. Android 14+ bắt khai loại cho dịch vụ của WorkManager. -->
         <service
             android:name="androidx.work.impl.foreground.SystemForegroundService"
@@ -159,6 +159,19 @@
         </receiver>
 
         <receiver android:name=".ExportCancelReceiver" android:exported="false" />
+
+        <!-- Nhập sách ngầm qua adb (BookImportWorker.kt, ImportReceiver): file .abook đã adb push vào thư mục nhập của app vào thư viện mà app
+             không nhảy lên màn hình. Quyền DUMP: chỉ shell / hệ thống gửi được lệnh này, app khác không. -->
+        <receiver
+            android:name=".ImportReceiver"
+            android:exported="true"
+            android:permission="android.permission.DUMP">
+            <intent-filter>
+                <action android:name="com.ngdtuanh.abook.action.IMPORT" />
+            </intent-filter>
+        </receiver>
+        <!-- Nút "Thử lại" / "Thay bằng file này" trên thông báo nhập sách. -->
+        <receiver android:name=".ImportActionReceiver" android:exported="false" />
 
         <provider
             android:name="androidx.core.content.FileProvider"

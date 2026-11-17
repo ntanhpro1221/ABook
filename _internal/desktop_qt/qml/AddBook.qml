@@ -8,7 +8,7 @@ import "TextWrap.js" as TextWrap
 // "Thêm sách từ file…" (listen/AddBook.tsx của bản web): EPUB / DOCX / PDF có chữ / TXT / thư mục TXT / file .abook thành sách trong thư viện. Ba bước trong một
 // hộp, đổi bước bằng Collapse (mở khép tại chỗ): chọn -> xem lại chương (và gợi ý của máy) -> thêm. Chọn nhiều file thì thành hàng xem trước, mỗi cuốn qua đúng bước
 // xem trước của một file. Chữ của truyện không bao giờ bị sửa. Hàm thuần nằm ở ImportQueue.js; ở đây giữ trạng thái và việc gọi máy chủ.
-// Back: Esc / ✕ / bấm ra ngoài là một đường (Modal.keepOpen) - đang thêm thì giữ hộp, đang hỏi "Đóng khi còn sách chưa thêm" thì đóng câu hỏi trước (lớp Back riêng),
+// Back: Esc / ✕ / bấm ra ngoài là một đường (Modal.keepOpen) - hàng đang thêm thì giữ hộp, đang hỏi "Đóng khi còn sách chưa thêm" thì đóng câu hỏi trước (lớp Back riêng),
 // hàng còn > 1 cuốn thì hỏi trước khi bỏ. Đổi tên chương là bước con của ImportChapters (cũng một lớp Back).
 Modal {
     id: root
@@ -421,16 +421,23 @@ Modal {
         if (typedPath) read({path: typedPath, name: typedPath})
     }
 
-    // Esc / ✕ / bấm ra ngoài / Back: đang thêm thì giữ hộp; đang hỏi thì đóng câu hỏi; hàng còn > 1 cuốn thì hỏi; không thì bỏ lượt đọc dở và đóng.
+    // A submitted single import can outlive this viewer. A batch keeps its viewer until the remaining books have been submitted.
     keepOpen: function() {
         if (leave !== "") { leave = ""; return true }
-        if (busy === "adding") return true
+        if (busy === "adding" && queue !== null) return true
         if (pending > 1) { leave = "close"; return true }
         generation++
         return false
     }
-    onOpenChanged: if (!open) { generation++; leave = ""; files.close(); folder.close() }
-    Component.onDestruction: Nav.closedLayer(leaveLayer)
+    // Hộp chỉ là một người xem của lượt thêm sách trên máy chủ (Api.importJobs): đang mở thì hộp tự báo kết quả; đóng giữa chừng thì lượt vẫn chạy,
+    // thanh bên hiện tiến độ ngay và thư viện tự làm mới khi lượt xong (Api.pollImports), không nhờ lời gọi lại của hộp đã đóng.
+    onOpenChanged: {
+        if (open) { Api.importScreens++; return }
+        Api.importScreens = Math.max(0, Api.importScreens - 1)
+        Api.watchImports()
+        generation++; leave = ""; files.close(); folder.close()
+    }
+    Component.onDestruction: { if (open) Api.importScreens = Math.max(0, Api.importScreens - 1); Nav.closedLayer(leaveLayer) }
 
     // ---- Chân hộp ----
     footer: [
