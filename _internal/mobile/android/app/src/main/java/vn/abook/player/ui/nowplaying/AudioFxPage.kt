@@ -62,11 +62,11 @@ fun AudioFxPage(music: MusicState? = null, bookId: String = "", openMusic: () ->
         Reveal(fx.skipSilence) {
             Column(Modifier.fillMaxWidth()) {
                 // Thanh hai phía (ngưỡng dBFS, Cao độ): số có dấu, dấu trừ thật.
-                FxSlider(S.s_copy_8e18e6dd7fd9, ValueSpecs.silenceDb, fx.silenceDb, "audiofx_silence_db", { "${PlayerLabels.signed(it)} dBFS" }) { update(fx.copy(silenceDb = it)) }
-                FxSlider(S.s_copy_19adc1b298a9, ValueSpecs.silenceSeconds, fx.silenceSeconds, "audiofx_silence_seconds", { "${ValuePickerLogic.format(ValueSpecs.silenceSeconds, it)} s" }) { update(fx.copy(silenceSeconds = it)) }
+                FxSlider(S.s_copy_8e18e6dd7fd9, ValueSpecs.silenceDb, fx.silenceDb, "audiofx_silence_db", { "${PlayerLabels.signed(it)}\u00a0dBFS" }) { update(fx.copy(silenceDb = it)) }
+                FxSlider(S.s_copy_19adc1b298a9, ValueSpecs.silenceSeconds, fx.silenceSeconds, "audiofx_silence_seconds", { "${ValuePickerLogic.format(ValueSpecs.silenceSeconds, it)}\u00a0s" }) { update(fx.copy(silenceSeconds = it)) }
                 // "Giữ khoảng nghỉ" không quá "Dài tối thiểu".
                 val keep = ValueSpecs.keepSeconds.cappedAt(fx.silenceSeconds)
-                FxSlider(S.s_copy_483cdfec9d5f, keep, fx.keepSeconds, "audiofx_keep_seconds", { "${ValuePickerLogic.format(keep, it)} s" }) { update(fx.copy(keepSeconds = it)) }
+                FxSlider(S.s_copy_483cdfec9d5f, keep, fx.keepSeconds, "audiofx_keep_seconds", { "${ValuePickerLogic.format(keep, it)}\u00a0s" }) { update(fx.copy(keepSeconds = it)) }
             }
         }
         SheetSwitch(S.s_copy_0aedb2b2cf2b, bookOnly, AudioFx::setBookOnly, "audiofx_book")
@@ -101,7 +101,7 @@ private fun MusicBlock(music: MusicState, bookId: String, openMusic: () -> Unit)
                     val shown = moving ?: MusicLevels.clamp(book.levelDb)
                     val range = remember { ValueSpec(MusicLevels.MIN_DB, MusicLevels.MAX_DB, MusicLevels.STEP_DB, listOf(-30.0, -20.0, -10.0)) }
                     ValuePicker(range, shown,
-                        { moving = it; music.setLevel(it) }, { "${PlayerLabels.signed(it)} dB" }, MusicLevels.TITLE, "audiofx_music_level", dense = true,
+                        { moving = it; music.setLevel(it) }, { S.s_tone_db(PlayerLabels.signed(it)) }, MusicLevels.TITLE, "audiofx_music_level", dense = true,
                         enabled = !ui.busy, chipLabel = { ValuePickerLogic.format(range, it) })
                     SheetLink(S.s_chon_nhac_4e9b1d72, openMusic, "audiofx_music_more")
                 }

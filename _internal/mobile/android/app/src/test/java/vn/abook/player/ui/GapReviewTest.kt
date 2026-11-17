@@ -109,7 +109,9 @@ class GapReviewTest {
     private fun kinds(dark: Boolean) {
         val core = FakeCompanionCore()
         core.rows = JSONArray()
-        val names = listOf("Máy tính phòng làm việc bên cạnh cửa sổ", "Điện thoại", "Loa phòng khách", "TV phòng ngủ", "Bộ phát", "Google Cast")
+        // Device names shrink to one line down to OneLineFit.MIN_SCALE first (DESIGN "Tên một dòng"); this one is long enough
+        // to still wrap at that floor, so the row exercises the wrapped case the icon has to follow.
+        val names = listOf("Máy tính phòng làm việc bên cạnh cửa sổ hướng ra khu vườn phía sau nhà của bố mẹ trên tầng hai", "Điện thoại", "Loa phòng khách", "TV phòng ngủ", "Bộ phát", "Google Cast")
         for ((i, kind) in listOf("computer", "phone", "speaker", "tv", "media", "speaker").withIndex()) {
             core.rows.put(JSONObject().put("device", "d$i").put("kind", kind).put("name", names[i]).put("via", if (i == 5) "cast" else ""))
         }

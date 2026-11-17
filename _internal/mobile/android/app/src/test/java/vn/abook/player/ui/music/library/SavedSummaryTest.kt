@@ -12,8 +12,8 @@ class SavedSummaryTest {
     }
 
     @Test fun downloadedSongsShowCountAndSize() {
-        assertEquals("Đã tải 1 bài · 1 KB", savedSummaryText(1, 400L))
-        assertEquals("Đã tải 3 bài · 4,8 MB", savedSummaryText(3, 5_000_000L))
+        assertEquals("Đã tải 1 bài · 1\u00a0KB", savedSummaryText(1, 400L))
+        assertEquals("Đã tải 3 bài · 4,8\u00a0MB", savedSummaryText(3, 5_000_000L))
     }
 
     @Test fun anEmptyLibraryHasNoSummary() {

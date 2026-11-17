@@ -334,7 +334,7 @@ class LocalStudioTest {
         assertEquals("Dữ liệu ảnh bị hỏng", refused("data:image/png;base64,A=AA"))
         assertEquals("Chưa đọc được ảnh này", refused("data:image/png;base64,AAAA"))
         val big = "data:image/jpeg;base64," + Base64.getEncoder().encodeToString(ByteArray(Covers.MAX_UPLOAD_BYTES + 1) { 1 })
-        assertEquals("Ảnh quá lớn (tối đa 16 MB)", refused(big))
+        assertEquals("Ảnh quá lớn (tối đa 16\u00a0MB)", refused(big))
         assertFalse("không có gì được ghi", File(dir, "edits.json").exists())
         // địa chỉ ảnh không thuộc nguồn nào của "Tìm bìa trên mạng" bị từ chối như trên máy tính
         val (status, reply) = call("PUT", "/cover", JSONObject().put("url", "https://x/y.jpg"))

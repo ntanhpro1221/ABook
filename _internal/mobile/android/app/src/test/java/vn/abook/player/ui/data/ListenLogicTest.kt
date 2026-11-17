@@ -258,14 +258,14 @@ class ListenLogicTest {
     @Test
     fun `status line of an audio book`() {
         val whole = ListenBook("x", "t", duration = 7500.0, chaptersTotal = 5, chaptersAvailable = 5)
-        assertEquals("2 giờ 5 phút", ListenLogic.progressText(whole))
+        assertEquals("2\u00a0giờ 5\u00a0phút", ListenLogic.progressText(whole))
         val half = ListenBook("x", "t", duration = 7200.0, chaptersTotal = 5, chaptersAvailable = 5, progress = Progress.None.copy(heardSeconds = 3600.0, fraction = 0.5f))
-        assertEquals("Còn 1 giờ", ListenLogic.progressText(half))
+        assertEquals("Còn 1\u00a0giờ", ListenLogic.progressText(half))
         val fast = ListenBook(
             "x", "t", duration = 7200.0, chaptersTotal = 5, chaptersAvailable = 5,
             state = ListenState(rate = 2.0), progress = Progress.None.copy(heardSeconds = 3600.0),
         )
-        assertEquals("Còn 30 phút", ListenLogic.progressText(fast))
+        assertEquals("Còn 30\u00a0phút", ListenLogic.progressText(fast))
         assertEquals("Đã nghe xong", ListenLogic.progressText(ListenBook("x", "t", progress = Progress.None.copy(finished = true))))
         assertEquals("3/9 chương", ListenLogic.progressText(ListenBook("x", "t", chaptersTotal = 9, chaptersAvailable = 3, complete = false)))
         assertEquals(

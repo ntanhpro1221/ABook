@@ -861,9 +861,9 @@ class _Zip(zipfile.ZipFile):
                 while chunk := stream.read(min(64 * 1024, limit - size + 1, MAX_TOTAL - total - size + 1)):
                     size += len(chunk)
                     if size > limit:
-                        raise ImportFailed(f"Có một phần quá lớn (trên 20 MB) - không giống {kind} truyện")
+                        raise ImportFailed(f"Có một phần quá lớn (trên 20\u00a0MB) - không giống {kind} truyện")
                     if total + size > MAX_TOTAL:
-                        raise ImportFailed(f"Quá lớn khi giải nén (trên 300 MB) - không giống {kind} truyện")
+                        raise ImportFailed(f"Quá lớn khi giải nén (trên 300\u00a0MB) - không giống {kind} truyện")
                     chunks.append(chunk)
         except (zipfile.BadZipFile, zlib.error, lzma.LZMAError, EOFError, NotImplementedError, RuntimeError, struct.error) as error:
             # CRC sai, dữ liệu nén cụt (tải dở / lỗi đĩa), nén kiểu lạ, mục có mật khẩu: file hỏng - nói như mọi file hỏng khác.
@@ -887,7 +887,7 @@ def _read(book: _Zip, name: str, kind: str = "EPUB") -> bytes:
     if info is None:
         raise ImportFailed(BROKEN.format(kind=kind))
     if info.file_size > MAX_MEMBER:
-        raise ImportFailed(f"Có một phần quá lớn (trên 20 MB) - không giống {kind} truyện")
+        raise ImportFailed(f"Có một phần quá lớn (trên 20\u00a0MB) - không giống {kind} truyện")
     return book.read_limited(info, kind, MAX_MEMBER)
 
 
@@ -898,7 +898,7 @@ def _open_zip(path: Path, kind: str) -> _Zip:
         raise ImportFailed(BROKEN.format(kind=kind)) from error
     if sum(info.file_size for info in book.infolist()) > MAX_TOTAL:
         book.close()
-        raise ImportFailed(f"Quá lớn khi giải nén (trên 300 MB) - không giống {kind} truyện")
+        raise ImportFailed(f"Quá lớn khi giải nén (trên 300\u00a0MB) - không giống {kind} truyện")
     return book
 
 

@@ -148,13 +148,13 @@ describe("đo cảm xúc nhạc chính xác hơn", () => {
   });
   it("chỉ mời khi máy đủ sức và đã có bộ phân tích nhạc (điện thoại không có tuỳ chọn này)", () => {
     expect(preciseOffered(module())).toBe(true);
-    expect(preciseOffered(module({ precise: precise({ state: "unavailable", reason: "cần máy có từ 8 GB RAM" }) }))).toBe(false);
+    expect(preciseOffered(module({ precise: precise({ state: "unavailable", reason: "cần máy có từ 8\u00a0GB RAM" }) }))).toBe(false);
     expect(preciseOffered(module({ ready: false }))).toBe(false);
     expect(preciseOffered(module({ precise: undefined }))).toBe(false);
     expect(preciseOffered(undefined)).toBe(false);
   });
   it("nói dung lượng phải tải trước khi bật, và không nhắc tải nếu file đã có", () => {
-    expect(preciseLabel(precise())).toContain("Tải thêm 1,2 GB một lần");
+    expect(preciseLabel(precise())).toContain("Tải thêm 1,2\u00a0GB một lần");
     expect(preciseLabel(precise({ present: true }))).not.toContain("Tải thêm");
   });
   it("nói phần trăm khi tải, việc đang làm khi nghe kỹ lại, và lý do khi hỏng", () => {

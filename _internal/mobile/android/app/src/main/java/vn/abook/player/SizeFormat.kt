@@ -9,9 +9,9 @@ fun formatSize(bytes: Long): String {
         val tenths = Math.round(value * 10)
         return if (tenths % 10 == 0L) grouped(tenths / 10) else "${grouped(tenths / 10)},${tenths % 10}"
     }
-    if (bytes >= 1024L * 1024 * 1024) return "${decimal(bytes / (1024.0 * 1024 * 1024))} GB"
+    if (bytes >= 1024L * 1024 * 1024) return "${decimal(bytes / (1024.0 * 1024 * 1024))}\u00a0GB"
     val mb = bytes / (1024.0 * 1024)
-    if (mb < 0.1) return "${maxOf(1L, Math.round(bytes / 1024.0))} KB"
-    if (mb < 10) return "${decimal(mb)} MB"
-    return "${grouped(Math.round(mb))} MB"
+    if (mb < 0.1) return "${maxOf(1L, Math.round(bytes / 1024.0))}\u00a0KB"
+    if (mb < 10) return "${decimal(mb)}\u00a0MB"
+    return "${grouped(Math.round(mb))}\u00a0MB"
 }

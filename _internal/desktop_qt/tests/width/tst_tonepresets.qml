@@ -46,7 +46,7 @@ Item {
                 compare(Player.tones.selected.id,"clear")
                 compare(Player.tones.builtins.length,7)
                 verify(findChild(view,"toneMore"))
-                verify(hasText(view,"−4 dB"))
+                verify(hasText(view,"−4\u00a0dB"))
                 shot("tone_360_130_"+mode+"_top")
                 const more=findChild(view,"toneMore")
                 view.contentY=Math.max(0,more.mapToItem(view.contentItem,0,0).y+more.height-view.height)

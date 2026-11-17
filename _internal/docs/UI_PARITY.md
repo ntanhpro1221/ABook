@@ -838,7 +838,7 @@ Nhãn ngắn (<= 6 chữ) không có (theo khoá lỏng) ở phía kia - kể c�
 - `Nữ` | `nữ` (`native/data/ListenExtras.kt:354`, `native/data/ListenExtras.kt:400` (+5))
 - `Thử không được` | `Thử không được.` (`native/voice/VoicePickCard.kt:68`, `native/voice/VoiceState.kt:216`)
 - `Tới 15 giây` | `Tới {} giây` (`native/nowplaying/NowPlayingScreen.kt:279`, `native/pip/PipParams.kt:51`)
-- `Xoá bản tải` | `Xoá bản tải?` (`native/music/library/TrackSheet.kt:140`, `native/music/library/TrackSheet.kt:160`)
+- `Xoá bản tải` | `Xoá bản tải?` (`native/music/library/TrackSheet.kt:141`, `native/music/library/TrackSheet.kt:161`)
 ## e. Cặp màn web <-> native (luật cứng, scripts/ui_parity_pairs.json)
 
 Trong một cặp, mỗi nhãn ngắn phải có ở cả hai phía (khoá lỏng) trừ khi nằm trong `allow` (nền tảng bắt buộc khác, có lý do) hay `missing` (tính năng / phần màn chỉ có ở một phía - Lead xếp lịch). Cột lệch phải bằng 0 thì `--check` mới qua. Cột "chờ Lead" (`wording_for_lead`) là chữ khác nhau cho cùng một việc, chưa chọn chuẩn: TẠM, mục nào có ở đó là nợ.

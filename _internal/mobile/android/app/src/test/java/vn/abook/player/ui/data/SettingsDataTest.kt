@@ -140,7 +140,7 @@ class SettingsDataTest {
     fun `voice speed lines say what each voice uses`() {
         val state = VoiceSpeedText.state(FakeSettingsCore().voiceSpeed())
         assertEquals(VoiceSpeedChoice.Auto, state.choice)
-        assertEquals(listOf("Giọng Supertonic - Đang dùng: Chất lượng cao nhất. Bản nhanh hơn cần tải thêm 48 MB."), state.lines)
+        assertEquals(listOf("Giọng Supertonic - Đang dùng: Chất lượng cao nhất. Bản nhanh hơn cần tải thêm 48\u00a0MB."), state.lines)
         val quality = JSONObject().put("name", "G").put("tier", "quality").put("using", "quality").put("rtf", 0.4)
         assertEquals("G - Đang dùng: Chất lượng cao nhất (máy này đọc kịp tốc độ nghe).", VoiceSpeedText.line(quality, VoiceSpeedChoice.Auto))
         assertEquals("G - Đang dùng: Chất lượng cao nhất (bạn đã chọn).", VoiceSpeedText.line(quality, VoiceSpeedChoice.Quality))
@@ -148,14 +148,14 @@ class SettingsDataTest {
 
     @Test
     fun `sizes read like formatSize`() {
-        assertEquals("1 KB", formatSize(10))
-        assertEquals("100 KB", formatSize(100L * 1024))
-        assertEquals("0,5 MB", formatSize(512L * 1024))
-        assertEquals("1 MB", formatSize(1024L * 1024))
-        assertEquals("9,9 MB", formatSize((9.9 * 1024 * 1024).toLong()))
-        assertEquals("850 MB", formatSize(850L * 1024 * 1024))
-        assertEquals("1.000 MB", formatSize(1000L * 1024 * 1024))
-        assertEquals("3,2 GB", formatSize((3.2 * 1024 * 1024 * 1024).toLong()))
+        assertEquals("1\u00a0KB", formatSize(10))
+        assertEquals("100\u00a0KB", formatSize(100L * 1024))
+        assertEquals("0,5\u00a0MB", formatSize(512L * 1024))
+        assertEquals("1\u00a0MB", formatSize(1024L * 1024))
+        assertEquals("9,9\u00a0MB", formatSize((9.9 * 1024 * 1024).toLong()))
+        assertEquals("850\u00a0MB", formatSize(850L * 1024 * 1024))
+        assertEquals("1.000\u00a0MB", formatSize(1000L * 1024 * 1024))
+        assertEquals("3,2\u00a0GB", formatSize((3.2 * 1024 * 1024 * 1024).toLong()))
     }
 
     @Test

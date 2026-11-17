@@ -279,6 +279,26 @@ class MusicLibraryScreenTest {
         shot("music_track_bottom_${theme(dark)}")
     }
 
+    /** At 130 % text the emotion score column grows rather than breaking "97 %" into "97" / "%" (DESIGN "Số và đơn vị"). */
+    @Test
+    @Config(sdk = [35], qualifiers = "w360dp-h780dp-xxhdpi", fontScale = 1.3f)
+    fun detailLargeText() {
+        show()
+        rule.runOnUiThread { openTrack(sheets, state, link(5), null, scene = mapOf("joy" to 0.8, "power" to 0.6, "peacefulness" to 0.3)) }
+        rule.waitForIdle()
+        val scores = rule.onAllNodesWithTag("emotion_score", useUnmergedTree = true).fetchSemanticsNodes()
+        assertTrue("no measured emotion score", scores.isNotEmpty())
+        for (node in scores) {
+            val measured = ArrayList<TextLayoutResult>()
+            node.config[SemanticsActions.GetTextLayoutResult].action!!.invoke(measured)
+            val layout = measured.single()
+            val text = layout.layoutInput.text.text
+            assertTrue("score and unit must share one line: $text", layout.lineCount == 1)
+            assertTrue("score joins its unit with U+00A0: $text", text.endsWith("\u00a0%"))
+        }
+        shot("music_track_font130_light")
+    }
+
     @Test fun detailLight() = detail(false)
     @Test fun detailDark() = detail(true)
 

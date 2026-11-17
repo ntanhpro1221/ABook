@@ -44,7 +44,6 @@ data class AudioFxSettings(
         const val VOICE_MAX = 2.0
         val LABELS = ToneCatalog.presets.map { it.name }
         val PRESETS = ToneCatalog.presets.map { it.bands.toDoubleArray() }
-        val BAND_LABELS = listOf("80 Hz", "250 Hz", "1 kHz", "4 kHz", "12 kHz")
     }
 }
 private fun Double?.finite(fallback: Double, lo: Double, hi: Double) =

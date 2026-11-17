@@ -39,17 +39,17 @@ class PrepareTextTest {
 
     @Test
     fun `spoken duration`() {
-        assertEquals("dưới 1 phút", PrepareText.spokenDuration(20))
-        assertEquals("khoảng 12 phút", PrepareText.spokenDuration(720))
-        assertEquals("khoảng 1 giờ", PrepareText.spokenDuration(3600))
-        assertEquals("khoảng 1 giờ 20 phút", PrepareText.spokenDuration(4800))
+        assertEquals("dưới 1\u00a0phút", PrepareText.spokenDuration(20))
+        assertEquals("khoảng 12\u00a0phút", PrepareText.spokenDuration(720))
+        assertEquals("khoảng 1\u00a0giờ", PrepareText.spokenDuration(3600))
+        assertEquals("khoảng 1\u00a0giờ 20\u00a0phút", PrepareText.spokenDuration(4800))
     }
 
     @Test
     fun `plan sentence`() {
-        assertEquals("2 giờ nghe · máy cần khoảng 1 giờ 50 phút.", PrepareText.planLabel(PreparePlan(3, 3, 7200, 6600)))
-        assertEquals("30 phút nghe.", PrepareText.planLabel(PreparePlan(2, 2, 1800, null)))
-        assertEquals("Vừa chỗ trống cho 2 chương: 30 phút nghe.", PrepareText.planLabel(PreparePlan(2, 5, 1800, null)))
+        assertEquals("2\u00a0giờ nghe · máy cần khoảng 1\u00a0giờ 50\u00a0phút.", PrepareText.planLabel(PreparePlan(3, 3, 7200, 6600)))
+        assertEquals("30\u00a0phút nghe.", PrepareText.planLabel(PreparePlan(2, 2, 1800, null)))
+        assertEquals("Vừa chỗ trống cho 2 chương: 30\u00a0phút nghe.", PrepareText.planLabel(PreparePlan(2, 5, 1800, null)))
         assertEquals("", PrepareText.planLabel(PreparePlan()))
     }
 
@@ -57,10 +57,10 @@ class PrepareTextTest {
     fun `progress sentences`() {
         val chapters = listOf(PreparedChapter(2, "b", 10, 10, true), PreparedChapter(3, "c", 10, 2, false))
         assertEquals("Đã sẵn sàng 1/2 chương · chờ cắm sạc", PrepareText.label(PrepareStatus("running", chapters = chapters, waitingFor = "charging")))
-        assertEquals("Đã sẵn sàng 1/2 chương · còn khoảng 5 phút", PrepareText.label(PrepareStatus("running", chapters = chapters, secondsLeft = 300)))
+        assertEquals("Đã sẵn sàng 1/2 chương · còn khoảng 5\u00a0phút", PrepareText.label(PrepareStatus("running", chapters = chapters, secondsLeft = 300)))
         assertEquals("Đã sẵn sàng 1/2 chương - phần còn lại làm tiếp khi bạn nghe tới.", PrepareText.label(PrepareStatus("done", chapters = chapters)))
         assertEquals("Đã dừng làm trước (đã sẵn sàng 1/2 chương).", PrepareText.label(PrepareStatus("cancelled", chapters = chapters)))
-        assertEquals("Đang làm trước 2 chương tới (30 phút nghe): 4/20 đoạn, còn khoảng 3 phút.",
+        assertEquals("Đang làm trước 2 chương tới (30\u00a0phút nghe): 4/20 đoạn, còn khoảng 3\u00a0phút.",
             PrepareText.label(PrepareStatus("running", label = "2 chương tới", total = 20, done = 4, audioSeconds = 1800, secondsLeft = 180)))
         assertEquals("Đã làm trước các chương tới: nghe liền mạch, không cần chờ.", PrepareText.label(PrepareStatus("done")))
         assertEquals("Làm trước bị dừng.", PrepareText.label(PrepareStatus("error")))

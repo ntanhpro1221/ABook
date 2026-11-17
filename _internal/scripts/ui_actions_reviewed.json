@@ -1062,7 +1062,7 @@
     "line": 39,
     "statement": "export const onAudioFx = (listener:()=>void) => { listeners.add(listener); return ()=>{listeners.delete(listener);}; };",
     "occurrence": 1,
-    "source_sha256": "b828231cd5fbeac81f50b6af7eb0ada36418f484f734663f90547402db541945",
+    "source_sha256": "c89ee1228d5f94f088ddac2118cef5b2b1d3206dd2d54b8af4d99642b5f1f282",
     "disposition": "internal",
     "guard": "In-memory collection entry lifecycle",
     "reason": "The statement releases a listener, request, UI row, selection or cache entry; it does not delete its persisted source."
@@ -1074,7 +1074,7 @@
     "line": 52,
     "statement": "if(enabled)localStorage.setItem(key,JSON.stringify(current));else localStorage.removeItem(key);",
     "occurrence": 1,
-    "source_sha256": "b828231cd5fbeac81f50b6af7eb0ada36418f484f734663f90547402db541945",
+    "source_sha256": "c89ee1228d5f94f088ddac2118cef5b2b1d3206dd2d54b8af4d99642b5f1f282",
     "disposition": "confirmation",
     "guard": "AudioFxPanel useDestructiveConfirm / AudioFxPage DestructiveConfirm",
     "reason": "Resetting all device audio preferences asks before replacing the user settings; graph cleanup is transient audio infrastructure."
@@ -1086,7 +1086,7 @@
     "line": 65,
     "statement": "export function resetAudioFx() { changeTone(t=>t.select('off'));setAudioFx({...DEFAULT_FX,bands:[...DEFAULT_FX.bands],speed:current.speed}); }",
     "occurrence": 1,
-    "source_sha256": "b828231cd5fbeac81f50b6af7eb0ada36418f484f734663f90547402db541945",
+    "source_sha256": "c89ee1228d5f94f088ddac2118cef5b2b1d3206dd2d54b8af4d99642b5f1f282",
     "disposition": "internal",
     "guard": "Declaration; the invoked call site is independently inventoried",
     "reason": "A declaration/signature is not an executing UI action."
@@ -1098,7 +1098,7 @@
     "line": 126,
     "statement": "worklet?.port.close();graphs.delete(audio);",
     "occurrence": 1,
-    "source_sha256": "b828231cd5fbeac81f50b6af7eb0ada36418f484f734663f90547402db541945",
+    "source_sha256": "c89ee1228d5f94f088ddac2118cef5b2b1d3206dd2d54b8af4d99642b5f1f282",
     "disposition": "internal",
     "guard": "In-memory collection entry lifecycle",
     "reason": "The statement releases a listener, request, UI row, selection or cache entry; it does not delete its persisted source."
@@ -1110,7 +1110,7 @@
     "line": 44,
     "statement": "<Button variant=\"ghost\" size=\"sm\" className=\"self-start px-0\" onClick={()=>deletion.confirm({title:S.s_reset_question,description:S.s_reset_detail,label:S.s_ve_mac_dinh_4eb6b300,run:()=>{resetAudioFx();setVolume(1);}})}>{S.s_ve_mac_dinh_4eb6b300}</Button>",
     "occurrence": 1,
-    "source_sha256": "2452f0a7ef70a2d6c5f3fcd74c685c078a168c44f4f9b8afb0154f2681124934",
+    "source_sha256": "ef7ff267bce491b289b6706ea19e5527892dc90c7b030ea749b72c88ddbc50b4",
     "disposition": "confirmation",
     "guard": "AudioFxPanel useDestructiveConfirm / AudioFxPage DestructiveConfirm",
     "reason": "Resetting all device audio preferences asks before replacing the user settings; graph cleanup is transient audio infrastructure."
@@ -3090,7 +3090,7 @@
     "line": 116,
     "statement": "run: () => unsave.mutateAsync([track.link]) });",
     "occurrence": 1,
-    "source_sha256": "ab79412babaab51bc878e5e1f5605f96973af831a73b96b8c057c91ee1e32d2a",
+    "source_sha256": "bc077fcf0a0e187204a6a510f576716af1f924db6d76a5259af9685b4dd623a7",
     "disposition": "confirmation",
     "guard": "DownloadControl / TrackRow / TrackSheet DestructiveConfirm; cancel incomplete transfer is exempt",
     "reason": "Complete music download removal is confirmed with track title and size. Cancelling an unfinished download discards partial bytes immediately. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
@@ -10218,7 +10218,7 @@
     "line": 142,
     "statement": "{ state.forget(link) }, pending = link in ui.pendingLinks, problem = ui.actionError)",
     "occurrence": 1,
-    "source_sha256": "0db1ee02f3b952f56e89fa2d16149263fecc6ab91870a3ba82fcea5a255ffeba",
+    "source_sha256": "1d50d357109e8d3810674103e39057ccc94f1f243be0f955166a1b67db2f47ae",
     "disposition": "confirmation",
     "guard": "DownloadControl / TrackRow / TrackSheet DestructiveConfirm; cancel incomplete transfer is exempt",
     "reason": "Complete music download removal is confirmed with track title and size. Cancelling an unfinished download discards partial bytes immediately."
@@ -15918,7 +15918,7 @@
     "line": 28,
     "statement": "signal unsave()",
     "occurrence": 1,
-    "source_sha256": "fd0ab2f349bc9fd42f81d6c2084869d36c5f8adeec52aeab6569e6b54a409106",
+    "source_sha256": "b4672782d3a932ad4e7202d92957ad60481b28e0526faf89424aaa2b89192e73",
     "disposition": "internal",
     "guard": "Declaration; the invoked call site is independently inventoried",
     "reason": "A declaration/signature is not an executing UI action."
@@ -15930,7 +15930,7 @@
     "line": 52,
     "statement": "Api.quiet(\"GET\", path, null, function(data, error) {",
     "occurrence": 1,
-    "source_sha256": "fd0ab2f349bc9fd42f81d6c2084869d36c5f8adeec52aeab6569e6b54a409106",
+    "source_sha256": "b4672782d3a932ad4e7202d92957ad60481b28e0526faf89424aaa2b89192e73",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; MusicListeningProgress, loading, pending, previewLoading",
     "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads."
@@ -15942,7 +15942,7 @@
     "line": 62,
     "statement": "onAccepted: root.unsave()",
     "occurrence": 1,
-    "source_sha256": "fd0ab2f349bc9fd42f81d6c2084869d36c5f8adeec52aeab6569e6b54a409106",
+    "source_sha256": "b4672782d3a932ad4e7202d92957ad60481b28e0526faf89424aaa2b89192e73",
     "disposition": "confirmation",
     "guard": "DownloadControl / TrackRow / TrackSheet DestructiveConfirm; cancel incomplete transfer is exempt",
     "reason": "Complete music download removal is confirmed with track title and size. Cancelling an unfinished download discards partial bytes immediately."

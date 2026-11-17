@@ -26,13 +26,13 @@ describe("dòng tiến độ ở màn Đang nghe", () => {
   const base = { whole: false, heard: 330, total: 3300, rate: 1, speed: "1×" };
 
   it("tốc độ thường: đã nghe bao nhiêu, còn bao lâu", () => {
-    expect(bookProgressText(base)).toBe("Đã nghe 10% phần đã có · còn 50 phút");
+    expect(bookProgressText(base)).toBe("Đã nghe 10% phần đã có · còn 50\u00a0phút");
     expect(bookProgressText({ ...base, whole: true })).toContain("Đã nghe 10% cả cuốn");
   });
 
   it("tốc độ khác: chỉ nói thời gian còn lại ở tốc độ đang chọn, không hai con số lẫn nhau", () => {
     const text = bookProgressText({ ...base, rate: 1.5, speed: "1,5×" });
-    expect(text).toBe("Đã nghe 10% phần đã có · còn khoảng 33 phút ở tốc độ 1,5×");
+    expect(text).toBe("Đã nghe 10% phần đã có · còn khoảng 33\u00a0phút ở tốc độ 1,5×");
   });
 
   it("hết sách: nói đã hết, không để một con số như 98%", () => {
@@ -118,8 +118,8 @@ describe("dòng dưới tên cuốn trong 'Nghe cuốn khác'", () => {
   const book = (heardSeconds: number) => ({ duration: 7200, chaptersTotal: 12, complete: true, progress: { heardSeconds, totalSeconds: 7200 } });
 
   it("nghe dở thì nói tiến độ, chưa nghe thì nói độ dài", () => {
-    expect(otherBookLine(book(720))).toBe("Đã nghe 10% cả cuốn · còn 1 giờ 48 phút");
-    expect(otherBookLine(book(0))).toBe("Chưa nghe · 2 giờ");
+    expect(otherBookLine(book(720))).toBe("Đã nghe 10% cả cuốn · còn 1\u00a0giờ 48\u00a0phút");
+    expect(otherBookLine(book(0))).toBe("Chưa nghe · 2\u00a0giờ");
     expect(otherBookLine({ ...book(0), duration: 0 })).toBe("Chưa nghe · 12 chương");
   });
 });
@@ -157,7 +157,7 @@ describe("dòng phụ của chương", () => {
 
   it("chương có audio nói độ dài, chương chưa có nói đang thu hay chưa có", () => {
     const audio = { ...chapter, state: null };
-    expect(chapterSubline({ ...audio, available: true, duration: 1560, subtitle: "Mùi giấy cũ", title: "Chương 4" }, false)).toBe("Chương 4 · 26 phút");
+    expect(chapterSubline({ ...audio, available: true, duration: 1560, subtitle: "Mùi giấy cũ", title: "Chương 4" }, false)).toBe("Chương 4 · 26\u00a0phút");
     expect(chapterSubline(audio, true)).toBe("Đang thu âm");
     expect(chapterSubline(audio, false)).toBe("Chưa có audio");
   });

@@ -73,16 +73,16 @@ describe("formatFingerprint", () => {
 
 describe("formatSize", () => {
   it("shows megabytes below a gigabyte and one decimal above", () => {
-    expect(formatSize(850 * 1024 ** 2)).toBe("850 MB");
-    expect(formatSize(3.25 * 1024 ** 3)).toBe("3,3 GB");
-    expect(formatSize(4 * 1024 ** 3)).toBe("4 GB");
+    expect(formatSize(850 * 1024 ** 2)).toBe("850\u00a0MB");
+    expect(formatSize(3.25 * 1024 ** 3)).toBe("3,3\u00a0GB");
+    expect(formatSize(4 * 1024 ** 3)).toBe("4\u00a0GB");
   });
   it("keeps one decimal under 10 MB and never says 0 MB", () => {
-    expect(formatSize(0.5 * 1024 ** 2)).toBe("0,5 MB");
-    expect(formatSize(3.25 * 1024 ** 2)).toBe("3,3 MB");
-    expect(formatSize(200 * 1024)).toBe("0,2 MB");
-    expect(formatSize(20 * 1024)).toBe("20 KB");
-    expect(formatSize(10 * 1024 ** 2)).toBe("10 MB");
+    expect(formatSize(0.5 * 1024 ** 2)).toBe("0,5\u00a0MB");
+    expect(formatSize(3.25 * 1024 ** 2)).toBe("3,3\u00a0MB");
+    expect(formatSize(200 * 1024)).toBe("0,2\u00a0MB");
+    expect(formatSize(20 * 1024)).toBe("20\u00a0KB");
+    expect(formatSize(10 * 1024 ** 2)).toBe("10\u00a0MB");
   });
 });
 
@@ -98,20 +98,20 @@ describe("fileName", () => {
 describe("formatEta", () => {
   it("chỉ nói sắp xong khi bước đang làm thật sự gần xong", () => {
     expect(formatEta(40, 0.95)).toBe("sắp xong");
-    expect(formatEta(40, 0.21)).toBe("còn dưới 2 phút");
+    expect(formatEta(40, 0.21)).toBe("còn dưới 2\u00a0phút");
     expect(formatEta(40)).toBe("sắp xong");
-    expect(formatEta(600, 0.2)).toBe("còn khoảng 10 phút");
+    expect(formatEta(600, 0.2)).toBe("còn khoảng 10\u00a0phút");
   });
 
   it("chưa có tốc độ (không có ước lượng) thì không nói gì", () => {
     expect(etaOf({ eta: null, progress: { analysis: 0.2, synthesis: 0 } })).toBeNull();
-    expect(etaOf({ eta: { phase: "analysis", seconds: 30 }, progress: { analysis: 0.21, synthesis: 0 } })).toBe("pha phân tích còn dưới 2 phút");
+    expect(etaOf({ eta: { phase: "analysis", seconds: 30 }, progress: { analysis: 0.21, synthesis: 0 } })).toBe("pha phân tích còn dưới 2\u00a0phút");
     expect(etaOf({ eta: { phase: "synthesis", seconds: 30 }, progress: { analysis: 1, synthesis: 0.97 } })).toBe("pha thu âm sắp xong");
   });
 
   it("nói rõ ước lượng là của bước nào, để không đọc thành cả cuốn sắp xong", () => {
-    expect(etaOf({ eta: { phase: "analysis", seconds: 7200 }, progress: { analysis: 0.4, synthesis: 0 } })).toBe("pha phân tích còn khoảng 2 giờ");
-    expect(etaOf({ eta: { phase: "synthesis", seconds: 600 }, progress: { analysis: 1, synthesis: 0.5 } })).toBe("pha thu âm còn khoảng 10 phút");
+    expect(etaOf({ eta: { phase: "analysis", seconds: 7200 }, progress: { analysis: 0.4, synthesis: 0 } })).toBe("pha phân tích còn khoảng 2\u00a0giờ");
+    expect(etaOf({ eta: { phase: "synthesis", seconds: 600 }, progress: { analysis: 1, synthesis: 0.5 } })).toBe("pha thu âm còn khoảng 10\u00a0phút");
     // Bước phân tích gần xong vẫn còn thu âm phía sau: câu nói về bước, không hứa về cả cuốn.
     expect(etaOf({ eta: { phase: "analysis", seconds: 20 }, progress: { analysis: 0.97, synthesis: 0 } })).toBe("pha phân tích sắp xong");
   });
@@ -119,10 +119,10 @@ describe("formatEta", () => {
   it("lượt xác định người nói từng câu có tên riêng, tính theo số chương đã xong của nó", () => {
     const pass = { done: 3, total: 40 };
     expect(etaOf({ eta: { phase: "speaker", seconds: 2200 }, progress: { analysis: 0.95, synthesis: 0 }, speakerPass: pass })).toBe(
-      "pha xác định người nói còn khoảng 37 phút",
+      "pha xác định người nói còn khoảng 37\u00a0phút",
     );
     expect(etaOf({ eta: { phase: "speaker", seconds: 30 }, progress: { analysis: 0.95, synthesis: 0 }, speakerPass: pass })).toBe(
-      "pha xác định người nói còn dưới 2 phút",
+      "pha xác định người nói còn dưới 2\u00a0phút",
     );
     expect(etaOf({ eta: { phase: "speaker", seconds: 30 }, progress: { analysis: 1, synthesis: 0 }, speakerPass: { done: 39, total: 40 } })).toBe(
       "pha xác định người nói sắp xong",
@@ -132,10 +132,10 @@ describe("formatEta", () => {
 
 describe("formatLengthUp (soát a26 L10)", () => {
   it("làm tròn lên như đồng hồ đếm ngược của thanh phát", () => {
-    expect(formatLengthUp(129)).toBe("3 phút");
-    expect(formatLengthUp(56)).toBe("1 phút");
-    expect(formatLengthUp(3600)).toBe("1 giờ");
-    expect(formatLengthUp(0)).toBe("0 phút");
+    expect(formatLengthUp(129)).toBe("3\u00a0phút");
+    expect(formatLengthUp(56)).toBe("1\u00a0phút");
+    expect(formatLengthUp(3600)).toBe("1\u00a0giờ");
+    expect(formatLengthUp(0)).toBe("0\u00a0phút");
   });
 });
 
@@ -160,9 +160,9 @@ describe("musicCreditText", () => {
 
 describe("storageSummary", () => {
   it("máy chưa có sách nói thẳng \"Chưa có sách\", không phải \"Sách 1 KB\" (bản native: Storage.line)", () => {
-    expect(storageSummary(0, 20 * 1024 ** 3)).toBe("Chưa có sách · còn trống 20 GB");
-    expect(storageSummary(300, 20 * 1024 ** 3)).toBe("Chưa có sách · còn trống 20 GB");
-    expect(storageSummary(2 * 1024 ** 2, 10 * 1024 ** 3)).toBe("Sách 2 MB · còn trống 10 GB");
+    expect(storageSummary(0, 20 * 1024 ** 3)).toBe("Chưa có sách · còn trống 20\u00a0GB");
+    expect(storageSummary(300, 20 * 1024 ** 3)).toBe("Chưa có sách · còn trống 20\u00a0GB");
+    expect(storageSummary(2 * 1024 ** 2, 10 * 1024 ** 3)).toBe("Sách 2\u00a0MB · còn trống 10\u00a0GB");
   });
 });
 

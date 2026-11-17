@@ -50,7 +50,7 @@ describe("mức nhạc nền", () => {
     expect(html).toContain('role="slider"');
     expect(html).toContain('aria-valuemin="-40"');
     expect(html).toContain('aria-valuemax="-6"');
-    expect(html).toContain('aria-valuetext="Hơi to, -18,5 dB"');
+    expect(html).toContain('aria-valuetext="Hơi to, -18,5\u00a0dB"');
     expect(html).toContain("Về mặc định");
     expect(html).not.toContain("của sách");
     expect(html).not.toContain("aria-pressed");
@@ -59,7 +59,7 @@ describe("mức nhạc nền", () => {
   it("đúng mặc định thì không có Về mặc định", async () => {
     const { MusicLevelRow } = await import("@/listen/PlayerViews");
     const html = wrap(<MusicLevelRow level={DEFAULT_LEVEL_DB} disabled={false} onChange={() => undefined} />);
-    expect(html).toContain("-20 dB (mặc định)");
+    expect(html).toContain("-20\u00a0dB (mặc định)");
     expect(html).toContain(">Vừa<");
     expect(html).not.toContain("Về mặc định");
   });
@@ -69,7 +69,7 @@ describe("mức nhạc nền", () => {
     const client = new QueryClient();
     client.setQueryData(["listen", "edit-music", "sach"], { hasMusic: true, enabled: true, levelDb: -28, defaultLevelDb: -20, cues: [] });
     const html = wrap(<MusicSection book={{ id: "sach" } as ListenBook} />, client);
-    expect(html).toContain('aria-valuetext="Rất nhỏ (rõ lời), -28 dB"');
+    expect(html).toContain('aria-valuetext="Rất nhỏ (rõ lời), -28\u00a0dB"');
     expect(html).not.toContain("<option");
   });
 });

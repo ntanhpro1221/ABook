@@ -74,7 +74,7 @@ describe("Kho nhạc: dòng Đã tải", () => {
   });
 
   it("có bài đã tải thì nói số bài và dung lượng", () => {
-    expect(savedSummary({ count: 1, bytes: 400 })).toBe("Đã tải 1 bài · 1 KB");
-    expect(savedSummary({ count: 3, bytes: 5_000_000 })).toBe("Đã tải 3 bài · 4,8 MB");
+    expect(savedSummary({ count: 1, bytes: 400 })).toBe("Đã tải 1 bài · 1\u00a0KB");
+    expect(savedSummary({ count: 3, bytes: 5_000_000 })).toBe("Đã tải 3 bài · 4,8\u00a0MB");
   });
 });

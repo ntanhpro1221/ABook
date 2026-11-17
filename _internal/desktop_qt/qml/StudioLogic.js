@@ -263,7 +263,7 @@ var KNOWN_ERRORS = [
      summary: S.s_card_do_hoa_het_bo_nho_3d3fdb50,
      hint: S.s_dong_cac_app_khac_dang_dung_card_do_hoa_tr_12ee0258},
     {pattern: /disk free (\d+(?:[.,]\d+)?) GB/i,
-     summary: function(match) { return S.s_o_dia_chua_thu_vien_sach_chi_con_29f74a91 + match[1].replace(",", ".") + " GB." },
+     summary: function(match) { return S.s_o_dia_chua_thu_vien_sach_chi_con_29f74a91 + match[1].replace(",", ".") + "\u00a0GB." },
      hint: S.s_giai_phong_them_dung_luong_o_o_do_lam_sach_0ae5c6e8},
     {pattern: /model .* không sẵn sàng/i,
      summary: S.s_chua_dung_duoc_model_phan_tich_truyen_olla_8c2ead55,

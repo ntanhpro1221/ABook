@@ -302,7 +302,7 @@ class SettingsScreenTest {
     fun advancedActionsReachTheCoreAndTheSystem() {
         showGroup(SettingsGroup.Advanced)
         rule.onNodeWithTag("advanced_memory").performClick()
-        rule.onNodeWithText("Bản đọc đã làm chiếm 12 MB trên máy này.").assertIsDisplayed()
+        rule.onNodeWithText("Bản đọc đã làm chiếm 12\u00a0MB trên máy này.").assertIsDisplayed()
         rule.onNodeWithTag("cache_clear").performClick()
         rule.waitForIdle()
         rule.onNodeWithTag("clear_sheet").assertIsDisplayed()

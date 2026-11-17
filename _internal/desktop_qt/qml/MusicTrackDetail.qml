@@ -101,7 +101,7 @@ Modal {
                 width: (parent.width - parent.spacing) / 2
                 objectName: "musicDetailDownload"
                 kind: "outline"
-                text: root.load.kind === "loading" ? S.s_stop_download + (root.load.percent !== null && root.load.percent !== undefined ? "\u00a0·\u00a0" + root.load.percent + " %" : "")
+                text: root.load.kind === "loading" ? S.s_stop_download + (root.load.percent !== null && root.load.percent !== undefined ? "\u00a0·\u00a0" + S.s_percent(root.load.percent) : "")
                     : root.load.kind === "done" ? S.s_xoa_ban_tai_4b461f4a : root.load.kind === "failed" ? S.s_tai_tiep_1efbd854 : S.s_tai_ve_9b5bdb44
                 icon: root.load.kind === "loading" ? "square" : root.load.kind === "done" ? "trash" : "download"
                 enabled: root.online || root.load.kind === "done" || root.load.kind === "loading"
@@ -197,7 +197,7 @@ Modal {
                     if (!d) return []
                     const rows = []
                     const energy = Logic.energyPercent(d.arousal)
-                    if (energy !== null) rows.push([S.s_nang_luong_1b9cc9af, energy + " %"])
+                    if (energy !== null) rows.push([S.s_nang_luong_1b9cc9af, S.s_percent(energy)])
                     if (d.bpm > 0) rows.push([S.s_nhip_8a75919d, S.s_0_nhip_phut_3c154e09(Math.round(d.bpm))])
                     if (d.style) rows.push([S.s_phong_cach_d80ae8d9, Logic.labelOf(root.meta ? root.meta.styles : [], d.style)])
                     if (d.duration) rows.push([S.s_do_dai_5e055f59, Logic.clock(d.duration)])
@@ -228,13 +228,15 @@ Modal {
         height: 24
         Text { width: 120; anchors.verticalCenter: parent.verticalCenter; text: parent.label; color: Theme.text2; font.pixelSize: Theme.sizeBodySmall; elide: Text.ElideNone; wrapMode: Text.Wrap }
         LevelBar {
-            x: 128; width: parent.width - 128 - 52; height: 6
+            // The score column grows with its text (never "97" / "%"): the bar takes what is left.
+            x: 128; width: parent.width - 128 - Math.max(52, scoreText.implicitWidth + 8); height: 6
             anchors.verticalCenter: parent.verticalCenter
             score: parent.score; label: parent.label
         }
         ClockLabel {
+            id: scoreText
             anchors.right: parent.right; anchors.verticalCenter: parent.verticalCenter
-            text: Logic.percent(parent.score) + " %"; color: Theme.text2; font.pixelSize: Theme.sizeBodySmall
+            text: S.s_percent(Logic.percent(parent.score)); color: Theme.text2; font.pixelSize: Theme.sizeBodySmall
         }
     }
 }

@@ -673,7 +673,7 @@ class BookScreenTest {
         show(detail(listening()))
         rule.onNodeWithTag("book_more").performClick()
         rule.waitForIdle()
-        rule.onNodeWithText("Chiếm 148 MB").assertIsDisplayed()
+        rule.onNodeWithText("Chiếm 148\u00a0MB").assertIsDisplayed()
     }
 
     @Test

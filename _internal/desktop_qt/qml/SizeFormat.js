@@ -14,9 +14,9 @@ function decimal1(value) {
 
 // "850 MB", "3,2 GB"; dưới 10 MB một chữ số thập phân ("0,5 MB"), dưới 0,1 MB tính KB (ít nhất 1)
 function formatSize(bytes) {
-    if (bytes >= Math.pow(1024, 3)) return decimal1(bytes / Math.pow(1024, 3)) + " GB"
+    if (bytes >= Math.pow(1024, 3)) return decimal1(bytes / Math.pow(1024, 3)) + "\u00a0GB"
     const megabytes = bytes / Math.pow(1024, 2)
-    if (megabytes < 0.1) return Math.max(1, Math.round(bytes / 1024)) + " KB"
-    if (megabytes < 10) return decimal1(megabytes) + " MB"
-    return groupThousands(Math.round(megabytes)) + " MB"
+    if (megabytes < 0.1) return Math.max(1, Math.round(bytes / 1024)) + "\u00a0KB"
+    if (megabytes < 10) return decimal1(megabytes) + "\u00a0MB"
+    return groupThousands(Math.round(megabytes)) + "\u00a0MB"
 }

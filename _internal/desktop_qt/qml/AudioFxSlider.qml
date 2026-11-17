@@ -8,7 +8,7 @@ import ABook
 // Thanh hai phía (Cao độ, ngưỡng dBFS): số đang chọn có dấu, dấu trừ thật.
 ValuePicker {
     id: root
-    property string suffix: " dB"
+    property string suffix: "\u00a0dB"
     property bool livePreview: true
     dense: true
     format: function(v) { return (root.spec.min < 0 ? Labels.signed(v) : Logic.formatNumber(root.spec, v)) + root.suffix }

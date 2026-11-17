@@ -162,8 +162,8 @@ Item {
             // mới nhất trước trong ngày
             const rows = all(days[0], "historySession")
             compare(rows.length, 2)
-            compare(findChild(rows[0], "historyHeadline").text, "14:40\u00a0·\u00a00 phút")
-            compare(findChild(rows[1], "historyHeadline").text, "13:57-14:20\u00a0·\u00a023 phút")
+            compare(findChild(rows[0], "historyHeadline").text, "14:40\u00a0·\u00a00\u00a0phút")
+            compare(findChild(rows[1], "historyHeadline").text, "13:57-14:20\u00a0·\u00a023\u00a0phút")
             compare(findChild(rows[1], "historyWhere").text, "Chương 2 0:30 → Chương 2 23:30")
             compare(findChild(rows[1], "historyResume").text, "Nghe tiếp từ 23:30")
             shot("history_list", host)
@@ -176,8 +176,8 @@ Item {
         function test_weekTotalTextAndName() {
             const history = openHistory()
             // 1200 + 1380 + 0 = 2580 giây -> 43 phút; lượt 10 ngày trước không tính
-            compare(findChild(history, "historyWeekLength").text, "43 phút")
-            compare(findChild(history, "historyWeek").Accessible.name, "7 ngày qua: 43 phút nghe cuốn này.")
+            compare(findChild(history, "historyWeekLength").text, "43\u00a0phút")
+            compare(findChild(history, "historyWeek").Accessible.name, "7 ngày qua: 43\u00a0phút nghe cuốn này.")
         }
         function test_resumeOpensThePlayerAtTheEndOfTheSession() {
             WidthNet.setBook({id: "width", title: "Sách có lịch sử", complete: true, chapters: [

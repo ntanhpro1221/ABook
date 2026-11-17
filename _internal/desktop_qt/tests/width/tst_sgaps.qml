@@ -203,7 +203,7 @@ Item {
             compare(one(page, "projectBar").size, "xs")
             tryCompare(one(page, "projectProgressNote"), "text", "đang ước tính thời gian")
             setBook(page, analysing({eta: {phase: "analysis", seconds: 3600}}))
-            tryCompare(one(page, "projectProgressNote"), "text", "pha phân tích còn khoảng 1 giờ")
+            tryCompare(one(page, "projectProgressNote"), "text", "pha phân tích còn khoảng 1\u00a0giờ")
             setBook(page, analysing({stopping: true}))
             tryCompare(one(page, "projectProgressNote"), "text", "đang dừng")
             setBook(page, analysing({paused: "precast", precast: {ready: true, held: true, wait: true, announcedAt: 100}}))

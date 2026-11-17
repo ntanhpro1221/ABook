@@ -30,10 +30,10 @@ export function percent(score: number): number {
 
 function Bar({ label, value, tone = "accent" }: { label: ReactNode; value: number; tone?: "accent" | "muted" }) {
   return (
-    <div className="grid grid-cols-[minmax(6.5rem,9rem)_1fr_2.75rem] items-center gap-3 text-sm">
+    <div className="grid grid-cols-[minmax(6.5rem,9rem)_1fr_minmax(2.75rem,auto)] items-center gap-3 text-sm">
       <span className="min-w-0 truncate text-fg-2">{label}</span>
       <Progress value={value / 100} size="sm" tone={tone} label={typeof label === "string" ? label : S.s_cam_xuc_05c1aee0} />
-      <span className="text-right text-fg-2">{value} %</span>
+      <span className="whitespace-nowrap text-right text-fg-2">{S.s_percent(value)}</span>
     </div>
   );
 }
@@ -128,7 +128,7 @@ function TrackBody({
           <Button variant="primary" icon={track.saved ? BookmarkCheck : Bookmark} aria-pressed={track.saved} loading={save.isPending || unsave.isPending}
             onClick={() => (track.saved ? askDelete() : save.mutate([track.link]))}>
             {track.saved ? S.s_bo_luu_2fd51455 : S.s_luu_e91f26c0}
-            {<Presence>{load.kind === "loading" && load.percent !== null && <span data-motion-live>{load.percent} %</span>}</Presence>}
+            {<Presence>{load.kind === "loading" && load.percent !== null && <span data-motion-live>{S.s_percent(load.percent)}</span>}</Presence>}
           </Button>
           <Button variant="ghost" icon={Library} onClick={() => playing.onOpenLibrary(track.title ?? "")}>{S.s_xem_trong_kho_2a139d05}</Button>
           <Reveal when={playing.onSwap}><Button variant="ghost" icon={Shuffle} onClick={playing.onSwap}>{S.s_doi_bai_7b81488f}</Button></Reveal>
@@ -143,7 +143,7 @@ function TrackBody({
         } secondary={load.kind === "loading" ? (
           <Button icon={Square} loading={cancel.isPending} onClick={() => cancel.mutate([track.link])}>
             {S.s_stop_download}
-            <span data-motion-live className="text-fg-2">{load.percent === null ? <Loader2 className="size-4 animate-spin" /> : `${load.percent} %`}</span>
+            <span data-motion-live className="text-fg-2">{load.percent === null ? <Loader2 className="size-4 animate-spin" /> : S.s_percent(load.percent)}</span>
           </Button>
         ) : load.kind === "done" ? (
           <Button icon={Trash2} loading={unsave.isPending} onClick={askDelete}>{S.s_xoa_ban_tai_4b461f4a}</Button>
@@ -188,7 +188,7 @@ function TrackBody({
       <section aria-labelledby="track-info">
       <SectionHeading as="h3" id="track-info">{S.s_thong_tin_4aa16c92}</SectionHeading>
       <dl>
-        <Reveal when={energy !== null}><Fact label={S.s_nang_luong_1b9cc9af}>{energy} %</Fact></Reveal>
+        <Reveal when={energy !== null}><Fact label={S.s_nang_luong_1b9cc9af}>{S.s_percent(energy)}</Fact></Reveal>
         <Reveal when={typeof track.bpm === "number" && track.bpm > 0}><Fact label={S.s_nhip_8a75919d}>{typeof track.bpm === "number" ? S.s_0_nhip_phut_3c154e09(Math.round(track.bpm)) : null}</Fact></Reveal>
         <Reveal when={track.style}><Fact label={S.s_phong_cach_d80ae8d9}>{track.style ? labelOf(styles, track.style) : null}</Fact></Reveal>
         <Reveal when={typeof track.duration === "number"}><Fact label={S.s_do_dai_5e055f59}>{typeof track.duration === "number" ? formatClock(track.duration) : null}</Fact></Reveal>

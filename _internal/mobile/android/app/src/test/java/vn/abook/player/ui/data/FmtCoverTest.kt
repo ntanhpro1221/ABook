@@ -11,21 +11,21 @@ import org.junit.Test
 class FmtCoverTest {
     @Test
     fun `length speaks hours and minutes`() {
-        assertEquals("0 phút", Fmt.length(0.0))
-        assertEquals("0 phút", Fmt.length(Double.NaN))
-        assertEquals("dưới 1 phút", Fmt.length(20.0))
-        assertEquals("1 phút", Fmt.length(30.0))
-        assertEquals("45 phút", Fmt.length(45 * 60.0))
-        assertEquals("1 giờ", Fmt.length(3600.0))
-        assertEquals("9 giờ 12 phút", Fmt.length(9 * 3600.0 + 12 * 60))
+        assertEquals("0\u00a0phút", Fmt.length(0.0))
+        assertEquals("0\u00a0phút", Fmt.length(Double.NaN))
+        assertEquals("dưới 1\u00a0phút", Fmt.length(20.0))
+        assertEquals("1\u00a0phút", Fmt.length(30.0))
+        assertEquals("45\u00a0phút", Fmt.length(45 * 60.0))
+        assertEquals("1\u00a0giờ", Fmt.length(3600.0))
+        assertEquals("9\u00a0giờ 12\u00a0phút", Fmt.length(9 * 3600.0 + 12 * 60))
     }
 
     @Test
     fun `lengthUp rounds up to the minute`() {
-        assertEquals("0 phút", Fmt.lengthUp(0.0))
-        assertEquals("1 phút", Fmt.lengthUp(60.0))
-        assertEquals("2 phút", Fmt.lengthUp(61.0))
-        assertEquals("1 giờ", Fmt.lengthUp(3541.0))
+        assertEquals("0\u00a0phút", Fmt.lengthUp(0.0))
+        assertEquals("1\u00a0phút", Fmt.lengthUp(60.0))
+        assertEquals("2\u00a0phút", Fmt.lengthUp(61.0))
+        assertEquals("1\u00a0giờ", Fmt.lengthUp(3541.0))
     }
 
     @Test

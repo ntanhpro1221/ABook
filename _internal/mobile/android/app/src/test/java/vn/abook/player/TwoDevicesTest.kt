@@ -58,7 +58,7 @@ class TwoDevicesTest {
         val mb = 1L shl 20
         assertNull(DownloadSpace.shortage(10 * mb, 200 * mb))
         val short = DownloadSpace.shortage(125 * mb, 50 * mb)!!
-        assertTrue(short, short.contains("cần 225 MB, còn 50 MB"))
+        assertTrue(short, short.contains("cần 225\u00a0MB, còn 50\u00a0MB"))
         val manifest = JSONObject("""{"chapters":[{"available":true,"size":1000},{"available":false,"size":500},{"available":true,"size":24}]}""")
         assertEquals(1024L, DownloadSpace.bookBytes(manifest))
     }

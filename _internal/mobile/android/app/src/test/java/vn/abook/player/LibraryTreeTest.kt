@@ -42,7 +42,7 @@ class LibraryTreeTest {
         val manifest = book("QzpcU8OhY2g_-", "Sách", 1 to true, 2 to true, 3 to false, 4 to true)
         val nodes = LibraryTree.chapterNodes(manifest, state(2, 61.0, done = 1))
         assertEquals(listOf("chapter/QzpcU8OhY2g_-/1", "chapter/QzpcU8OhY2g_-/2", "chapter/QzpcU8OhY2g_-/4"), nodes.map { it.id })
-        assertEquals(listOf("Đã nghe", "Đang nghe dở", "15 phút"), nodes.map { it.subtitle })
+        assertEquals(listOf("Đã nghe", "Đang nghe dở", "15\u00a0phút"), nodes.map { it.subtitle })
         assertEquals("QzpcU8OhY2g_-", LibraryTree.bookOf(nodes[0].id))
     }
 
@@ -61,7 +61,7 @@ class LibraryTreeTest {
         val listening = state(2, 42.5, at = 10.0)
         assertEquals(listOf("book/t1"), LibraryTree.books(listOf(manifest to listening)).map { it.id })
         assertEquals(LibraryTree.Start("t1", 2, 42.5), LibraryTree.start("book/t1", manifest, listening))
-        assertEquals(listOf("Giọng đọc của máy", "Đang nghe dở", "10 phút"), LibraryTree.chapterNodes(manifest, listening).map { it.subtitle })
+        assertEquals(listOf("Giọng đọc của máy", "Đang nghe dở", "10\u00a0phút"), LibraryTree.chapterNodes(manifest, listening).map { it.subtitle })
     }
 
     @Test
@@ -94,13 +94,13 @@ class LibraryTreeTest {
                 .put(chapter(100001, 1, "chapters/1/a.mp3")).put(chapter(200001, 2, "chapters/2/a.mp3")))
         val nodes = LibraryTree.chapterNodes(manifest, state(200001, 12.0))
         assertEquals(listOf("chapter/s1/100001", "chapter/s1/200001"), nodes.map { it.id })
-        assertEquals(listOf("Phần 1 · 15 phút", "Phần 2 · Đang nghe dở"), nodes.map { it.subtitle })
+        assertEquals(listOf("Phần 1 · 15\u00a0phút", "Phần 2 · Đang nghe dở"), nodes.map { it.subtitle })
         assertEquals(LibraryTree.Start("s1", 200001, 12.0), LibraryTree.start("chapter/s1/200001", manifest, state(200001, 12.0)))
         assertEquals("chương ở thư mục phần vẫn nghe được", "chapters/2/a.mp3", LibraryTree.chapters(manifest)[1].file)
         // Sách một phần (hay file chỉ có một phần) không thêm gì vào dòng phụ.
         val single = JSONObject().put("id", "s2").put("parts", JSONArray().put(JSONObject().put("part", 1)))
             .put("chapters", JSONArray().put(chapter(100001, 1, "chapters/1/a.mp3")))
-        assertEquals(listOf("15 phút"), LibraryTree.chapterNodes(single, state()).map { it.subtitle })
+        assertEquals(listOf("15\u00a0phút"), LibraryTree.chapterNodes(single, state()).map { it.subtitle })
     }
 
     /**

@@ -52,8 +52,8 @@ class ExportStopTest {
         assertFalse(Mp3Exports.stoppedBySystem(35, WorkInfo.STOP_REASON_FOREGROUND_SERVICE_TIMEOUT))
         assertFalse(Mp3Exports.timedOut(35, WorkInfo.STOP_REASON_TIMEOUT))
         assertFalse(Mp3Exports.timedOut(30, WorkInfo.STOP_REASON_FOREGROUND_SERVICE_TIMEOUT))
-        assertTrue(Mp3Exports.TIMEOUT_NOTE.contains("6 giờ") && Mp3Exports.TIMEOUT_NOTE.contains("Xuất lại"))
-        assertTrue(BookDownloads.TIMEOUT_NOTE.contains("6 giờ") && BookDownloads.TIMEOUT_NOTE.contains("Tải"))
+        assertTrue(Mp3Exports.TIMEOUT_NOTE.contains("6\u00a0giờ") && Mp3Exports.TIMEOUT_NOTE.contains("Xuất lại"))
+        assertTrue(BookDownloads.TIMEOUT_NOTE.contains("6\u00a0giờ") && BookDownloads.TIMEOUT_NOTE.contains("Tải"))
     }
 
     @Test

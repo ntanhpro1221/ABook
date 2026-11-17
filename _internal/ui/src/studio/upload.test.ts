@@ -38,7 +38,7 @@ describe("planUpload", () => {
     expect(plan.tooBig).toEqual(["to.epub"]);
     expect(names(plan.groups[0].files)).toEqual(["1.txt"]);
     expect(planNotice(plan)).toBe(
-      "“anh.jpg”, “sach.mobi” không phải file truyện - chỉ nhận .txt, .epub, .docx, .pdf. “to.epub” lớn hơn 40 MB nên không gửi qua mạng được. " +
+      "“anh.jpg”, “sach.mobi” không phải file truyện - chỉ nhận .txt, .epub, .docx, .pdf. “to.epub” lớn hơn 40\u00a0MB nên không gửi qua mạng được. " +
         "Bạn hãy tách thành vài file nhỏ hơn rồi gửi lại, hoặc chép file vào máy tính rồi mở nó ngay trên máy tính.",
     );
     expect(planNotice(planUpload([file("1.txt")], "B"))).toBeNull();
@@ -56,7 +56,7 @@ describe("labels", () => {
   });
   it("shows files and size sent so far", () => {
     expect(progressLabel({ files: 3, totalFiles: 12, bytes: 1_200_000, totalBytes: 4_500_000 })).toBe(
-      "Đang gửi 3/12 file · 1,1 MB / 4,3 MB",
+      "Đang gửi 3/12 file · 1,1\u00a0MB / 4,3\u00a0MB",
     );
   });
 });

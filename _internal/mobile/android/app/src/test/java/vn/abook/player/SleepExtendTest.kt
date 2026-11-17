@@ -89,7 +89,7 @@ class SleepExtendTest {
         SleepTimer.extend()
         assertEquals(30 * 60.0, left(), 1.0)
         assertEquals(30, SleepTimer.extendTarget())
-        assertEquals("nhãn nút thông báo", "Hẹn lại 30 phút", SleepText.extendLabel(SleepTimer.extendTarget()))
+        assertEquals("nhãn nút thông báo", "Hẹn lại 30\u00a0phút", SleepText.extendLabel(SleepTimer.extendTarget()))
     }
 
     @Test fun shakingAChapterTimerRestartsTheSelectedChapterCount() = withSensors {
@@ -140,7 +140,7 @@ class SleepExtendTest {
         assertEquals("lịch đêm đếm đúng số phút đã chọn", 1800.0, left(), 2.0)
         assertEquals(30, SleepTimer.describe().getInt("minutes"))
         assertEquals(30, SleepTimer.extendTarget())
-        assertEquals("Hẹn lại 30 phút", SleepText.extendLabel(SleepTimer.extendTarget()))
+        assertEquals("Hẹn lại 30\u00a0phút", SleepText.extendLabel(SleepTimer.extendTarget()))
         SleepTimer.extend()
         SleepTimer.extend()
         assertEquals(SleepTimer.Mode.MINUTES, SleepTimer.mode)

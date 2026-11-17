@@ -316,8 +316,8 @@ describe("lựa chọn nhạc nền", () => {
     expect(options.map((option) => option.id)).toEqual([null, OFF_PLAYLIST, "calm", "short", MINE_PLAYLIST]);
     expect(options[0]).toMatchObject({ label: "Để máy chọn", hint: "" });
     expect(options[1]).toMatchObject({ label: "Tắt" });
-    expect(options[2]).toMatchObject({ label: "Kỳ ảo êm đềm", hint: "dài 9 giờ", description: "Cho truyện chậm." });
-    expect(options[3].hint).toBe("dài 40 phút");
+    expect(options[2]).toMatchObject({ label: "Kỳ ảo êm đềm", hint: "dài 9\u00a0giờ", description: "Cho truyện chậm." });
+    expect(options[3].hint).toBe("dài 40\u00a0phút");
     expect(options[4]).toMatchObject({ label: "Nhạc của tôi", disabled: true });
     // Máy không nhập được nhạc: chỉ đường sang máy tính; máy nhập được: mục "Thêm nhạc của bạn" ngay dưới đã là đường đi.
     expect(options[4].description).toContain("trên máy tính");

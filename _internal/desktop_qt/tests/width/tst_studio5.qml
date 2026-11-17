@@ -323,7 +323,7 @@ Item {
         function test_errorTextSqliteFullAndResourceGateAreFullDisk() {
             compare(Studio.friendlyError("sqlite3.OperationalError: database or disk is full").summary, "Ổ đĩa hết chỗ trống.")
             const gate = Studio.friendlyError("disk free 4.0 GB", true)
-            compare(gate.summary, "Ổ đĩa chứa thư viện sách chỉ còn 4.0 GB.")
+            compare(gate.summary, "Ổ đĩa chứa thư viện sách chỉ còn 4.0\u00a0GB.")
             verify(gate.hint.indexOf("Giải phóng thêm dung lượng") >= 0)
             verify(!/[Bb]ấm Tiếp tục/.test(Studio.friendlyError("disk free 8.0 GB", true, true).hint))
         }
@@ -466,7 +466,7 @@ Item {
             stepJob("mp3-job", {state: "done", result: {folder: "D:\\Đã xuất\\Cuốn a", files: 3, size: 15000000}})
             tryCompare(dlg, "phase", "finished", 4000)
             compare(one(dlg, "exportDoneTitle").text, "Đã xuất MP3")
-            verify(one(dlg, "exportDoneDetail").text.indexOf("Cuốn a\u00a0·\u00a03 file\u00a0·\u00a014 MB") === 0)
+            verify(one(dlg, "exportDoneDetail").text.indexOf("Cuốn a\u00a0·\u00a03 file\u00a0·\u00a014\u00a0MB") === 0)
             compare(one(dlg, "confirm_done").text, "Xong")
             one(dlg, "confirm_reveal").clicked()
             tryVerify(function() { return calls("POST", "/api/reveal-export").length === 1 }, 3000)
@@ -491,7 +491,7 @@ Item {
             const dlg = exportDlg(page)
             pickKind(dlg, "abook")
             tryVerify(function() { return has(dlg, "exportEstimate") }, 3000)
-            verify(one(dlg, "exportEstimate").text.indexOf("Cỡ ước tính: khoảng 4,8 MB") === 0)
+            verify(one(dlg, "exportEstimate").text.indexOf("Cỡ ước tính: khoảng 4,8\u00a0MB") === 0)
             goExport(dlg)
             tryVerify(function() { return calls("POST", base + "/bookfile-job").length === 1 }, 3000)
             compare(DesktopApi.folders[0].title, "Chọn nơi lưu")
@@ -501,7 +501,7 @@ Item {
             stepJob("bookfile-job", {state: "done", result: {file: "D:\\Đã xuất\\Cuốn a.abook", folder: "D:\\Đã xuất", size: 5000000}})
             tryCompare(dlg, "phase", "finished", 4000)
             compare(one(dlg, "exportDoneTitle").text, "Đã xuất file sách")
-            compare(one(dlg, "exportDoneDetail").text, "D:\\Đã xuất\\Cuốn a.abook\u00a0·\u00a04,8 MB")
+            compare(one(dlg, "exportDoneDetail").text, "D:\\Đã xuất\\Cuốn a.abook\u00a0·\u00a04,8\u00a0MB")
         }
         function test_partialBookExportSendsTheChoiceAndShowsMissingChapterNames() {
             serve()
@@ -530,7 +530,7 @@ Item {
             compare(DesktopApi.folders[0].title, "Chọn nơi lưu")
             compare(calls("POST", base + "/projectfile-job")[0].body, {target: "D:/Đã xuất"})
             stepJob("projectfile-job", {state: "running", phase: "hash", done: 1048576, total: 4194304})
-            tryVerify(function() { return has(dlg, "exportBar") && one(dlg, "exportBusyTitle").text.indexOf("Đang đóng gói (1 MB/4 MB)") === 0 }, 4000)
+            tryVerify(function() { return has(dlg, "exportBar") && one(dlg, "exportBusyTitle").text.indexOf("Đang đóng gói (1\u00a0MB/4\u00a0MB)") === 0 }, 4000)
             verify(one(dlg, "exportBusyNote").text === "đóng hộp vẫn xuất nền và báo khi xong.")
             stepJob("projectfile-job", {state: "error", error: "PermissionError: [Errno 13] Permission denied: 'D:/x'"})
             tryCompare(dlg, "phase", "form", 4000)
@@ -768,7 +768,7 @@ Item {
             stepJob("bookfile-job", {state: "done", result: {file: "Cuốn a.abook", folder: "Đã xuất", size: 5000000}})
             tryCompare(dlg, "phase", "finished", 4000)
             compare(one(dlg, "exportDoneTitle").text, "Đã xuất file sách")
-            compare(one(dlg, "exportDoneDetail").text, "Đã xuất vào máy tính Máy bàn phòng làm việc: Cuốn a.abook\u00a0·\u00a04,8 MB")
+            compare(one(dlg, "exportDoneDetail").text, "Đã xuất vào máy tính Máy bàn phòng làm việc: Cuốn a.abook\u00a0·\u00a04,8\u00a0MB")
             verify(!has(dlg, "confirm_reveal"))
             // KHÔNG một lời gọi nào đi thẳng vào máy này
             const direct = DesktopApi.requests.filter(r => (/^\/api\/books\/a\//).test(r.path))
@@ -830,7 +830,7 @@ Item {
             verify(hasText(dlg, "“Lucien” đọc là “lu-xi-ăng”"))
             verify(hasText(dlg, "“Đi thôi,” - Natasha\u00a0·\u00a0Chương 2\u00a0·\u00a0từ Máy bàn"))
             verify(hasText(dlg, "4 câu thu lại") && hasText(dlg, "1 câu thu lại") && hasText(dlg, "chưa thu - không tốn gì"))
-            compare(one(dlg, "applySummary").text, "Thu lại 5 câu ở 2 chương (Chương 1, Chương 2) - khoảng 3 phút trên máy này.")
+            compare(one(dlg, "applySummary").text, "Thu lại 5 câu ở 2 chương (Chương 1, Chương 2) - khoảng 3\u00a0phút trên máy này.")
             compare(one(dlg, "confirm_later").text, "Để sau")
             compare(one(dlg, "confirm_go").text, "Áp dụng")
             const names = all(dlg, "pendingDrop").filter(shown).map(b => b.Accessible.name)

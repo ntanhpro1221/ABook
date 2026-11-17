@@ -86,7 +86,7 @@ class GapSurfacesTest {
         rule.onNodeWithTag("remote_toggle_main").performClick()
         rule.waitForIdle()
         assertEquals("toggle", core.commands.last().second.getString("action"))
-        for ((tag, description) in listOf("back" to "Máy tính phòng khách: lùi 15 giây", "toggle" to "Tạm dừng trên Máy tính phòng khách", "forward" to "Máy tính phòng khách: tới 15 giây")) {
+        for ((tag, description) in listOf("back" to "Máy tính phòng khách: lùi 15\u00a0giây", "toggle" to "Tạm dừng trên Máy tính phòng khách", "forward" to "Máy tính phòng khách: tới 15\u00a0giây")) {
             val node = rule.onNodeWithTag("remote_${tag}_main")
             node.assertContentDescriptionEquals(description)
             val bounds = node.getUnclippedBoundsInRoot()

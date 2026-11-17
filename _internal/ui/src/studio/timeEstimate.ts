@@ -8,7 +8,7 @@ import type { StudioGpu } from "./studioFit";
  * chỉ khi card và model phân tích khớp máy đã đo mới nói số ấy; máy khác chỉ cho khoảng rộng, nhãn luôn nói đó là số tham khảo.
  * Hai mức Nhanh / Cân bằng chưa đo ở đâu cả nên không đoán con số.
  */
-export const MEASURED_ON = "RTX 5060 Laptop 8 GB";
+export const MEASURED_ON = "RTX 5060 Laptop 8\u00a0GB";
 const MEASURED = { analysisPerKiloword: 2.1 * 60, synthesisPerKiloword: [2.5 * 60, 3.8 * 60] as const };
 // Máy khác nhanh hay chậm hơn bao nhiêu thì chưa ai đo: khoảng rộng là phán đoán (card yếu hơn mất gấp vài lần, card mạnh hơn bớt đáng kể), không phải số đo.
 const WIDER = { low: 0.6, high: 3 };

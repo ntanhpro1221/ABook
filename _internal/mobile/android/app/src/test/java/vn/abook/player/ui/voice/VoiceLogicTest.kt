@@ -16,11 +16,11 @@ class VoiceLogicTest {
 
     @Test
     fun `sizes use the shared 1024 formatter`() {
-        assertEquals("811 MB", formatSize(850_000_000))
-        assertEquals("1,1 GB", formatSize(1_200_000_000))
-        assertEquals("3,3 MB", formatSize(3_500_000))
-        assertEquals("1 KB", formatSize(400))
-        assertEquals("189 MB", formatSize(198_000_000))
+        assertEquals("811\u00a0MB", formatSize(850_000_000))
+        assertEquals("1,1\u00a0GB", formatSize(1_200_000_000))
+        assertEquals("3,3\u00a0MB", formatSize(3_500_000))
+        assertEquals("1\u00a0KB", formatSize(400))
+        assertEquals("189\u00a0MB", formatSize(198_000_000))
     }
 
     @Test
@@ -52,10 +52,10 @@ class VoiceLogicTest {
         val rows = VoiceText.rows(Fixtures.missing(turbo), emptyList())
         val first = rows.first()
         assertEquals("Giọng VieNeu", first.title)
-        assertEquals(ModuleAction.Download("Tải (189 MB)"), first.action)
+        assertEquals(ModuleAction.Download("Tải (189\u00a0MB)"), first.action)
         assertTrue(first.hint.startsWith("Khuyên dùng"))
         assertFalse(first.progress)
-        assertEquals(ModuleAction.Download("Tải (50 MB)"), rows[1].action)
+        assertEquals(ModuleAction.Download("Tải (50\u00a0MB)"), rows[1].action)
     }
 
     @Test
@@ -63,7 +63,7 @@ class VoiceLogicTest {
         val rows = VoiceText.rows(Fixtures.downloading(turbo, 40), listOf("nano"))
         assertEquals(ModuleAction.Cancel, rows[1].action)
         assertTrue(rows[1].progress)
-        assertEquals("Đang tải 189 MB · 40%", rows[1].hint)
+        assertEquals("Đang tải 189\u00a0MB · 40%", rows[1].hint)
         assertEquals(ModuleAction.None, rows[0].action)
         assertFalse(rows[0].progress)
     }
@@ -83,7 +83,7 @@ class VoiceLogicTest {
         assertEquals("Đọc trực tiếp được · nhanh gấp 2,0 lần", fast.hint)
         val slow = VoiceText.rows(Fixtures.ready(turbo, mapOf("turbo" to ModuleBench(1.4, 800))), emptyList()).first()
         assertTrue(slow.hint.startsWith("Chậm hơn tốc độ nghe"))
-        assertEquals("Có bản mới · 11 MB", VoiceText.rows(Fixtures.outdated(turbo), emptyList()).first().hint)
+        assertEquals("Có bản mới · 11\u00a0MB", VoiceText.rows(Fixtures.outdated(turbo), emptyList()).first().hint)
         assertEquals("Đã có", VoiceText.rows(Fixtures.ready(turbo), emptyList()).first().hint)
         assertTrue(VoiceText.rows(Fixtures.benchmarking(turbo), emptyList()).first().hint.startsWith("Đang thử giọng"))
     }
@@ -113,7 +113,7 @@ class VoiceLogicTest {
     fun `metered data warns only when there is something to download`() {
         assertNull(VoiceText.metered(Fixtures.missing(turbo), 198_000_000))
         val warned = VoiceText.metered(Fixtures.missing(turbo, metered = true), 198_000_000)
-        assertTrue(warned!!.contains("189 MB"))
+        assertTrue(warned!!.contains("189\u00a0MB"))
         assertNull(VoiceText.metered(Fixtures.missing(turbo, metered = true), 0))
     }
 
@@ -124,7 +124,7 @@ class VoiceLogicTest {
         assertTrue(slow.contains("Làm trước"))
         val fast = VoiceText.benchmark("nano", ModuleBench(0.5, 1500), 0.8)
         assertTrue(fast.contains("nhanh gấp 2,0 lần"))
-        assertTrue(fast.contains("1,5 giây"))
+        assertTrue(fast.contains("1,5\u00a0giây"))
     }
 
     @Test

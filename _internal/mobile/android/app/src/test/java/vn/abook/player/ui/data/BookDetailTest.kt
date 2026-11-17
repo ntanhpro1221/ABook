@@ -65,23 +65,23 @@ class BookDetailTest {
     @Test
     fun `meta, status and progress lines`() {
         val book = BookDetail.of(manifest(audio(1), audio(2), complete = false).put("chaptersTotal", 5), null, { null }).book
-        assertEquals("Giọng Hoài My · 5 chương · 20 phút", BookPage.metaLine(book))
+        assertEquals("Giọng Hoài My · 5 chương · 20 phút", BookPage.metaLine(book))
         assertEquals("Sách này có 2/5 chương đã thu - các chương sau chưa có audio", BookPage.statusLine(book))
-        assertEquals("Chưa nghe · 20 phút", BookPage.progressLine(book))
+        assertEquals("Chưa nghe · 20\u00a0phút", BookPage.progressLine(book))
         val heard = BookDetail.of(manifest(audio(1), audio(2)), state(1 to JSONObject().put("heard", 600.0).put("done", true)), { null }).book
         assertNull(BookPage.statusLine(heard))
-        assertEquals("Đã nghe 10 phút · còn 10 phút chưa nghe", BookPage.progressLine(heard))
+        assertEquals("Đã nghe 10\u00a0phút · còn 10\u00a0phút chưa nghe", BookPage.progressLine(heard))
     }
 
     @Test
     fun `chapter line shows the length and the share heard`() {
         fun row(heard: Float, done: Boolean = false, playable: Boolean = true) =
             ChapterLine(1, "Chương 1", if (playable) 1500.0 else 0.0, available = playable, textOnly = false, heard = heard, done = done)
-        assertEquals("25 phút", BookPage.chapterLine(row(0f)))
-        assertEquals("25 phút · đã nghe 40%", BookPage.chapterLine(row(0.4f)))
-        assertEquals("25 phút · đã nghe 1%", BookPage.chapterLine(row(0.001f)))
-        assertEquals("25 phút · đã nghe 99%", BookPage.chapterLine(row(0.999f)))
-        assertEquals("25 phút · đã nghe hết", BookPage.chapterLine(row(1f, done = true)))
+        assertEquals("25\u00a0phút", BookPage.chapterLine(row(0f)))
+        assertEquals("25\u00a0phút · đã nghe 40%", BookPage.chapterLine(row(0.4f)))
+        assertEquals("25\u00a0phút · đã nghe 1%", BookPage.chapterLine(row(0.001f)))
+        assertEquals("25\u00a0phút · đã nghe 99%", BookPage.chapterLine(row(0.999f)))
+        assertEquals("25\u00a0phút · đã nghe hết", BookPage.chapterLine(row(1f, done = true)))
         assertEquals("Chưa có audio", BookPage.chapterLine(row(0f, playable = false)))
     }
 

@@ -13,12 +13,12 @@ describe("máy có đủ để làm sách nói không (soát a64)", () => {
   });
 
   it("chia theo bộ nhớ card: >= 8 GB đủ, 6-8 GB có thể, dưới 6 GB không đủ - card 8 GB báo hơi dưới 8 GiB vẫn là đủ", () => {
-    expect(studioFit({ name: "RTX 4060", memory: 7.996 * GIB })).toMatchObject({ level: "ok", line: "Card RTX 4060 (8 GB): đủ để làm sách nói (đã thử trên card 8 GB)." });
+    expect(studioFit({ name: "RTX 4060", memory: 7.996 * GIB })).toMatchObject({ level: "ok", line: "Card RTX 4060 (8\u00a0GB): đủ để làm sách nói (đã thử trên card 8\u00a0GB)." });
     expect(studioFit({ name: "RTX 3060", memory: 12 * GIB }).level).toBe("ok");
     expect(studioFit({ name: "RTX 2060", memory: 5.99 * GIB })).toMatchObject({ level: "maybe" });
     const small = studioFit({ name: "GTX 1650", memory: 4 * GIB });
     expect(small.level).toBe("no");
-    expect(noStudioLine(small.reason!)).toContain("card GTX 1650 (4 GB) ít bộ nhớ hơn mức tối thiểu 6 GB");
+    expect(noStudioLine(small.reason!)).toContain("card GTX 1650 (4\u00a0GB) ít bộ nhớ hơn mức tối thiểu 6\u00a0GB");
   });
 
   it("không đọc được bộ nhớ: chưa biết, không chặn", () => {

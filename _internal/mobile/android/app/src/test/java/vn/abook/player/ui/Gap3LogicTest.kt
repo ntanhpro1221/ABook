@@ -44,7 +44,7 @@ class Gap3LogicTest {
         assertEquals(Production(true, false, "listener", "speaker", 300.0), rows["b"])
         assertEquals(Production(false, true, null, null, null), rows["c"])
         assertTrue(Production.catalogue("[]").isEmpty())
-        assertEquals("Đang làm · chương đầu nghe được sau khoảng 15 phút", ProductionText.upcoming(ListenBook("b", "B", producing=true, etaPhase="analysis", etaSeconds=300.0)))
+        assertEquals("Đang làm · chương đầu nghe được sau khoảng 15\u00a0phút", ProductionText.upcoming(ListenBook("b", "B", producing=true, etaPhase="analysis", etaSeconds=300.0)))
     }
     @Test fun livePhaseAndCompletionChangesReachStateFlowSubscribers() {
         assertNotEquals(ListenBook("b", "B", producing=true, etaPhase="analysis", etaSeconds=1.0), ListenBook("b", "B", producing=true, etaPhase="tts", etaSeconds=1.0))

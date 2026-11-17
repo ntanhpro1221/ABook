@@ -29,7 +29,7 @@ class PipParamsTest {
     fun theThreeButtonsAreBackToggleForwardWithTheLabelsOfThePlayer() {
         val plan = PipParams.plan(playing = false, hasBook = true, switchOn = true)
         assertEquals(listOf(PipKind.Back, PipKind.Toggle, PipKind.Forward), plan.buttons.map { it.kind })
-        assertEquals(listOf("Lùi 15 giây", "Phát", "Tới 15 giây"), plan.buttons.map { it.label })
+        assertEquals(listOf("Lùi 15\u00a0giây", "Phát", "Tới 15\u00a0giây"), plan.buttons.map { it.label })
         assertEquals("số 15 là của lõi, không viết cứng", 15, Playback.SKIP_SECONDS)
     }
 
@@ -91,7 +91,7 @@ class PipParamsTest {
     fun builtParamsCarryTheCoverRatioTheActionsAndAutoEnter() {
         val params = PipParams.build(context, PipParams.plan(playing = true, hasBook = true, switchOn = true))
         assertEquals(Rational(2, 3), params.aspectRatio)
-        assertEquals(listOf("Lùi 15 giây", "Tạm dừng", "Tới 15 giây"), params.actions.map { it.title.toString() })
+        assertEquals(listOf("Lùi 15\u00a0giây", "Tạm dừng", "Tới 15\u00a0giây"), params.actions.map { it.title.toString() })
         assertEquals(params.actions.map { it.title.toString() }, params.actions.map { it.contentDescription.toString() })
         val sent = params.actions.map { shadowOf(it.actionIntent) }
         assertTrue(sent.all { it.isBroadcastIntent })

@@ -32,15 +32,15 @@ describe("máy kia đang ngủ", () => {
   it("điện thoại: nói nó đang ngủ, mở ABook là trả lời ngay, và còn chờ bao lâu", () => {
     const waking = { since: 1000, until: 1300, via: "bluetooth" as const };
     expect(wakingLine({ kind: "phone", waking }, 1010)).toBe(
-      "Điện thoại đang ngủ - mở ABook trên điện thoại để trả lời ngay · chờ thêm tối đa 5 phút",
+      "Điện thoại đang ngủ - mở ABook trên điện thoại để trả lời ngay · chờ thêm tối đa 5\u00a0phút",
     );
-    expect(wakingLine({ kind: "phone", waking }, 1250)).toMatch(/chờ thêm tối đa 50 giây$/);
-    expect(wakingLine({ kind: "phone", waking }, 1400)).toMatch(/tối đa 1 giây$/);
+    expect(wakingLine({ kind: "phone", waking }, 1250)).toMatch(/chờ thêm tối đa 50\u00a0giây$/);
+    expect(wakingLine({ kind: "phone", waking }, 1400)).toMatch(/tối đa 1\u00a0giây$/);
   });
 
   it("máy tính không ngủ kiểu điện thoại: chỉ nói chưa trả lời", () => {
     expect(wakingLine({ kind: "computer", waking: { since: 0, until: 60, via: "wifi" } }, 0)).toBe(
-      "Máy kia chưa trả lời - mở ABook trên máy ấy · chờ thêm tối đa 60 giây",
+      "Máy kia chưa trả lời - mở ABook trên máy ấy · chờ thêm tối đa 60\u00a0giây",
     );
   });
 });

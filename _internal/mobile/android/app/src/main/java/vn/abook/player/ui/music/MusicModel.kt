@@ -176,7 +176,7 @@ object MusicLevels {
     }
     private fun decibels(value: Double): String =
         vn.abook.player.UiNumber.decimal(value)
-    fun number(value: Double): String = "${decibels(value)} dB" + if (value == DEFAULT_DB) S.s_mac_dinh_2a963068 else ""
+    fun number(value: Double): String = S.s_tone_db(decibels(value)) + if (value == DEFAULT_DB) S.s_mac_dinh_2a963068 else ""
     /** Cùng mức, nói bằng phần trăm của miền (0 % nhỏ nhất, 100 % to nhất) - thanh "Nhạc nền" của trang Âm thanh, cạnh thanh "Giọng đọc". */
     fun percent(value: Double): Int = ((clamp(value) - MIN_DB) / (MAX_DB - MIN_DB) * 100).roundToInt()
 }

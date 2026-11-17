@@ -101,11 +101,11 @@ class StudioLogicTest {
     @Test fun etaSpeaksLikeTheWeb() {
         assertEquals("sắp xong", StudioText.eta(30.0))
         assertEquals("sắp xong", StudioText.eta(30.0, 0.9f))
-        assertEquals("còn dưới 2 phút", StudioText.eta(30.0, 0.2f))
-        assertEquals("còn khoảng 2 phút", StudioText.eta(120.0))
-        assertEquals("còn khoảng 1 giờ 5 phút", StudioText.eta(3900.0))
+        assertEquals("còn dưới 2\u00a0phút", StudioText.eta(30.0, 0.2f))
+        assertEquals("còn khoảng 2\u00a0phút", StudioText.eta(120.0))
+        assertEquals("còn khoảng 1\u00a0giờ 5\u00a0phút", StudioText.eta(3900.0))
         assertNull(StudioText.etaOf(studioBook()))
-        assertEquals("pha thu âm còn khoảng 5 phút", StudioText.etaOf(studioBook(eta = StudioEta("synthesis", 300.0))))
+        assertEquals("pha thu âm còn khoảng 5\u00a0phút", StudioText.etaOf(studioBook(eta = StudioEta("synthesis", 300.0))))
         assertEquals("pha phân tích sắp xong", StudioText.etaOf(studioBook(eta = StudioEta("analysis", 20.0), overall = 0.9f)))
         assertTrue(StudioText.etaOf(studioBook(eta = StudioEta("speaker", 600.0)))!!.startsWith("pha xác định người nói"))
     }
@@ -116,7 +116,7 @@ class StudioLogicTest {
         assertEquals("chờ bạn duyệt rồi bấm Thu âm", StudioText.progressNote(studioBook(running = true, paused = StudioPause.Listener, precastHeld = true)))
         assertEquals("đang ước tính thời gian", StudioText.progressNote(studioBook(running = true)))
         assertEquals("", StudioText.progressNote(studioBook()))
-        assertEquals("pha thu âm còn khoảng 5 phút", StudioText.progressNote(studioBook(running = true, eta = StudioEta("synthesis", 300.0))))
+        assertEquals("pha thu âm còn khoảng 5\u00a0phút", StudioText.progressNote(studioBook(running = true, eta = StudioEta("synthesis", 300.0))))
     }
 
     @Test fun statusLineAddsChaptersOnlyWhenThereAreSome() {

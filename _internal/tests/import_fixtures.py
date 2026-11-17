@@ -1265,11 +1265,11 @@ def expected_files(root: Path) -> dict[str, bytes]:
     out: dict[str, bytes] = {}
     out["expected/zip_stream_cases.json"] = dumps([
         {"case": "entry", "sizes": [20 * 1024 * 1024 + 1], "cover": False,
-         "error": "Có một phần quá lớn (trên 20 MB) - không giống EPUB truyện"},
+         "error": "Có một phần quá lớn (trên 20\u00a0MB) - không giống EPUB truyện"},
         {"case": "cover", "sizes": [20 * 1024 * 1024 + 1], "cover": True,
-         "error": "Có một phần quá lớn (trên 20 MB) - không giống EPUB truyện"},
+         "error": "Có một phần quá lớn (trên 20\u00a0MB) - không giống EPUB truyện"},
         {"case": "total", "sizes": [20 * 1024 * 1024] * 16, "cover": False,
-         "error": "Quá lớn khi giải nén (trên 300 MB) - không giống EPUB truyện"},
+         "error": "Quá lớn khi giải nén (trên 300\u00a0MB) - không giống EPUB truyện"},
     ])
     for name in [*SOURCES, "txt"]:
         stem = name.rsplit(".", 1)[0] if name != "txt" else "txt"

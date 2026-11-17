@@ -58,7 +58,7 @@ Item {
             // Bộ chọn giá trị: chip "30" là đặt ngay, bảng đứng yên (kéo thước cần bảng không tự đóng).
             clickReady(findChild(menu, "valueChip_30")); compare(Player.sleepKind, "minutes"); compare(Player.sleepMinutes, 30); verify(menu.open)
             // Hẹn lại về số đã chọn (30), không phải "Mỗi lần nghe thêm" (15) và không cộng thêm.
-            compare(findChild(menu, "sleepExtend").text, "Hẹn lại 30 phút")
+            compare(findChild(menu, "sleepExtend").text, "Hẹn lại 30\u00a0phút")
             clickReady(findChild(menu, "sleepExtend"))
             fuzzyCompare(Player.clock.sleepLeft, 1800, 1)
             clickReady(findChild(menu, "sleepOff")); compare(Player.sleepKind, "off")

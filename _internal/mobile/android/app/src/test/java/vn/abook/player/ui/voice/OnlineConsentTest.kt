@@ -73,8 +73,8 @@ class OnlineConsentTest {
         assertEquals(12, OnlineConsent.stepTarget(ids, 11, 1, 0))
         assertNull("hết cuốn", OnlineConsent.stepTarget(ids, 12, 1, 0))
         assertEquals(10, OnlineConsent.stepTarget(ids, 11, -1, 2_000))
-        assertEquals("quá 5 giây: về đầu chính chương này", 11, OnlineConsent.stepTarget(ids, 11, -1, 6_000))
-        assertNull("chương đầu, chưa quá 5 giây", OnlineConsent.stepTarget(ids, 10, -1, 0))
+        assertEquals("quá 5\u00a0giây: về đầu chính chương này", 11, OnlineConsent.stepTarget(ids, 11, -1, 6_000))
+        assertNull("chương đầu, chưa quá 5\u00a0giây", OnlineConsent.stepTarget(ids, 10, -1, 0))
         assertNull(OnlineConsent.stepTarget(ids, null, 1, 0))
         assertNull(OnlineConsent.stepTarget(ids, 99, 1, 0))
     }
@@ -152,9 +152,9 @@ class OnlineConsentTest {
         assertEquals(198_000_000L, OfflineOffer.bytes(base, listOf("turbo")))
         assertEquals(250_000_000L, OfflineOffer.bytes(base, listOf("turbo", "nano")))
         assertEquals(0L, OfflineOffer.bytes(base, emptyList()))
-        assertEquals("Tải giọng VieNeu (189 MB)", OfflineOffer.label("Tải giọng VieNeu", false, 198_000_000))
+        assertEquals("Tải giọng VieNeu (189\u00a0MB)", OfflineOffer.label("Tải giọng VieNeu", false, 198_000_000))
         assertEquals("Tải giọng VieNeu", OfflineOffer.label("Tải giọng VieNeu", false, 0))
         assertEquals("sau lỗi chỉ còn Thử lại", "Thử lại", OfflineOffer.label("Tải giọng VieNeu", true, 198_000_000))
-        assertEquals("Gói đầy đủ (238 MB)", OfflineOffer.fullLabel(250_000_000))
+        assertEquals("Gói đầy đủ (238\u00a0MB)", OfflineOffer.fullLabel(250_000_000))
     }
 }
