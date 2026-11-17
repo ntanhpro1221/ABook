@@ -485,7 +485,8 @@ def test_pdf_reading_uses_the_vendored_pypdf_not_an_installed_one() -> None:
 
     vendor = Path(importers.__file__).resolve().parent / "vendor" / "pypdf"
     assert Path(pypdf.__file__).resolve().parent == vendor
-    assert (vendor / "LICENSE").is_file() and "SHA-256 c8b09a59" in (vendor / "README.md").read_text(encoding="utf-8")
+    note = (vendor / "README.md").read_text(encoding="utf-8")
+    assert (vendor / "LICENSE").is_file() and "SHA-256 33e4fb41" in note and f"pypdf {pypdf.__version__} " in note
 
 
 def test_a_chapter_named_from_its_first_line_is_cut_at_a_word_not_in_the_middle_of_one() -> None:

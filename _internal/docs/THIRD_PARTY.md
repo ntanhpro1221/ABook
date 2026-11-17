@@ -15,7 +15,7 @@ phần ấy.
 - PyWORLD và WORLD vocoder; Praat qua parselmouth.
 - pyloudnorm; NumPy, SciPy, SoundFile, psutil, requests, huggingface-hub.
 - MoSQITo 1.2.1, tập con ISO 532-1 stationary được chép vào `abook/_vendor/zwicker/` (Apache-2.0, MoSQITo Developers). Giữ `LICENSE` và `NOTICE.md` với đường dẫn, SHA-256 nguồn; chỉ đổi import sang tương đối, dùng NumPy/SciPy đã có, không mang pyuff hay meter biến thiên.
-- pypdf 6.16.2 (BSD-3-Clause, thuần Python) - đọc chữ của PDF có lớp chữ khi nhập sách (`abook/importers.py`). Chép nguyên vào
+- pypdf 6.21.4 (BSD-3-Clause, thuần Python) - đọc chữ của PDF có lớp chữ khi nhập sách (`abook/importers.py`). Chép nguyên vào
   `abook/vendor/pypdf/` (kèm LICENSE và băm wheel nguồn), không phụ thuộc pyproject/uv.lock hay gói cài sẵn. Nhập EPUB và DOCX chỉ
   dùng thư viện chuẩn của Python (zipfile, xml, html.parser).
 - PySide6 / Qt (LGPLv3) - cửa sổ app máy tính.
@@ -62,7 +62,7 @@ Bộ cài mang theo:
   `<dữ liệu app>/music/lib`): NumPy (BSD-3-Clause; wheel mang theo OpenBLAS BSD-3-Clause, LAPACK và thư viện chạy GCC GPL-3.0-or-later kèm GCC
   Runtime Library Exception - giấy phép từng phần nằm trong `numpy-*.dist-info/licenses`), ONNX Runtime CPU (MIT), flatbuffers
   (Apache-2.0), protobuf (BSD-3-Clause), packaging (Apache-2.0 hoặc BSD-2-Clause); cùng ffmpeg (ở trên) và model (mục "Nhạc nền").
-- Bộ nhập sách (`abook/importers.py`) mang theo pypdf 6.16.2 (BSD-3-Clause) trong mã nguồn (`abook/vendor/pypdf/`), nên bản app chỉ-nghe
+- Bộ nhập sách (`abook/importers.py`) mang theo pypdf 6.21.4 (BSD-3-Clause) trong mã nguồn (`abook/vendor/pypdf/`), nên bản app chỉ-nghe
   không cần thêm gói nào.
 - Thư viện chạy Microsoft Visual C++ (`msvcp140*.dll`, `vcruntime140*.dll`, `concrt140.dll` từ thư mục
   `Microsoft.VC145.CRT` của Visual Studio) - thuộc "Distributable Code" của giấy phép Visual Studio, được phép phát hành
