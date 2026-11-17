@@ -25,7 +25,7 @@ phần ấy.
   ba file `desktop_qt/fonts/BeVietnamPro-*.ttf` gộp từ @fontsource (`desktop_qt/tools/merge_fonts.py`) rồi thêm chữ số đều bề rộng qua tính năng `tnum`
   bằng cùng công cụ của bản Android (`mobile/android/scripts/add_tabular_digits.py`); giữ nguyên chữ mặc định, thông tin tác giả và giấy phép SIL OFL 1.1
   trong bảng `name` của font; toàn văn giấy phép `desktop_qt/fonts/OFL.txt` gói trong tài nguyên của file chạy cạnh ba font;
-  [minimp3](https://github.com/lieff/minimp3) (CC0 1.0, commit afb604c0, `desktop_qt/third_party/minimp3/` kèm LICENSE) - giải mã mp3 cho
+  [minimp3](https://github.com/lieff/minimp3) (CC0 1.0, commit a2ad968c, `desktop_qt/third_party/minimp3/` kèm LICENSE) - giải mã mp3 cho
   đường âm thanh WASAPI (rẻ hơn Media Foundation ~4 lần).
 - FFmpeg / imageio-ffmpeg (LGPL hoặc GPL tuỳ bản build). Bản app chỉ-nghe KHÔNG mang ffmpeg trong bộ cài: mô-đun "Phân tích nhạc" và việc "Xuất sách nói" (MP3 / M4B)
   đều do người dùng bấm mới tải (`webui/music_module.py`, hộp xuất sách nói), cùng lấy riêng `bin/ffmpeg.exe` trong ZIP [GyanD/codexffmpeg 8.1.2 essentials](https://github.com/GyanD/codexffmpeg/releases/tag/8.1.2)
