@@ -30,6 +30,6 @@ function useOpeningReleaseGuard({ onPointerDownCapture, onPointerUpCapture, onPo
 
 // Bấm ra ngoài menu chỉ đóng menu (outsideShield.ts) - modal hay không, như Qt / Android.
 export const Content = forwardRef<ComponentRef<typeof Radix.Content>, ComponentPropsWithoutRef<typeof Radix.Content>>(
-  function MenuContent(props, ref) { return <Radix.Content {...props} {...useOpeningReleaseGuard(props)} ref={useOutsideShield(ref)} />; });
+  function MenuContent(props, ref) { return <Radix.Content {...props} {...useOpeningReleaseGuard(props)} {...useOutsideShield(ref, props.onInteractOutside)} />; });
 export const SubContent = forwardRef<ComponentRef<typeof Radix.SubContent>, ComponentPropsWithoutRef<typeof Radix.SubContent>>(
   function SubmenuContent(props, ref) { return <Radix.SubContent {...props} {...useOpeningReleaseGuard(props)} ref={ref} />; });

@@ -32,7 +32,7 @@ it("routes every dropdown and popover through its shared wrapper", () => {
 it("each wrapper's Content lays the outside shield", () => {
   for (const wrapper of Object.values(WRAPPERS)) {
     const source = readFileSync(join(SRC, wrapper), "utf8");
-    expect(source, wrapper).toMatch(/export const Content = forwardRef[\s\S]*?ref=\{useOutsideShield\(ref\)\}/);
+    expect(source, wrapper).toMatch(/export const Content = forwardRef[\s\S]*?\{\.\.\.useOutsideShield\(ref, props\.onInteractOutside\)\}/);
   }
 });
 

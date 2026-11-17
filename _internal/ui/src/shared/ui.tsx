@@ -18,6 +18,7 @@ import { installFocusModality } from "./focusModality";
 import { hasPresentContent, MotionPresence, Reveal, usePresent } from "./MotionPresence";
 import { SlidingIndicator } from "./SlidingIndicator";
 import { useBackLayer } from "./backStack";
+import { pressedForeignShield } from "./outsideShield";
 import { useMediaQuery } from "./media";
 import { clampFraction, percentOf, progressFill } from "./format";
 import { useRowFade, useScrollFadeOn } from "./scrollFade";
@@ -601,9 +602,12 @@ export function TabLabel({ count, children }: { count?: number; children: ReactN
 }
 
 /** Bấm vào thông báo (Toaster của sonner) trong lúc hộp thoại đang mở không được tính là bấm ra ngoài hộp - hộp đóng mất chữ đang
- *  gõ. Dùng cho `onInteractOutside` của Dialog / Sheet; Toaster đặt `pointer-events-auto` để nút trong thông báo bấm được. */
+ *  gõ. Dùng cho `onInteractOutside` của Dialog / Sheet; Toaster đặt `pointer-events-auto` để nút trong thông báo bấm được.
+ *  Cú nhấn trúng lớp chặn của một Popover / menu mở TRONG hộp (lớp ấy nằm ngoài cây của hộp, outsideShield.ts) chỉ đóng lớp ấy, hộp đứng yên -
+ *  như Qt / Android: bấm ra ngoài chỉ đóng lớp trên cùng (soát 18-11 T2: "Phát trên" -> "Hẹn giờ", bấm trong hộp đóng luôn cả hộp). */
 function keepOpenForToasts(event: { target: EventTarget | null; preventDefault: () => void }) {
   if (event.target instanceof Element && event.target.closest("[data-sonner-toaster]")) event.preventDefault();
+  else if (pressedForeignShield(event.target)) event.preventDefault();
 }
 
 /** Lớp đang đóng (Radix giữ lại tới khi chuyển động xong) không nhận chạm. Lúc mở KHÔNG truyền `style`: Radix đặt `pointer-events: auto`

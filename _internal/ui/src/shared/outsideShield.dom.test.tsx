@@ -4,6 +4,7 @@ import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import * as Menu from "./DropdownMenu";
 import * as Popover from "./Popover";
+import { Dialog, Sheet } from "./ui";
 
 // Soát 18-11 lần 4: menu "Xếp theo" (modal={false}), ChipMenu, mọi Popover của web - bấm ra ngoài vừa đóng vừa mở cuốn sách / dòng nằm dưới.
 // Qt (Backdrop) và Android (SortMenu, nền tấm) chỉ đóng. Ở web: lớp chặn trong suốt nằm ngay dưới bảng, phủ cả cửa sổ; Radix vẫn thấy cú nhấn "ra
@@ -113,4 +114,107 @@ it("a menu that is not portalled to the body (inside a phone sheet) gets no shie
   await tick();
   expect(document.querySelector('[role="menu"]')).not.toBeNull();
   expect(shield()).toBeNull();
+});
+
+// Soát Chromium thật 18-11 (T1): menu đóng ngay ở pointerdown. Lớp chặn phải giữ tới hết CHÍNH cú nhấn ấy - click giả lập sau cú chạm, contextmenu
+// sau chuột phải - không thì trình duyệt dò lại vị trí và phần còn lại của cú nhấn rơi xuống thẻ sách bên dưới.
+it("the shield keeps catching until the press that closed the menu has finished", async () => {
+  await act(() => root.render(<SortMenu under={() => undefined} />));
+  await tick();
+  const cover = shield()!;
+  await act(() => { cover.dispatchEvent(new PointerEvent("pointerdown", { bubbles: true, cancelable: true, button: 0, pointerId: 1, pointerType: "touch" })); });
+  expect(document.querySelector('[role="menu"]')).toBeNull();          // menu đã đóng ngay ở pointerdown
+  expect(cover.isConnected).toBe(true);                                // bảng đã rời cây, lớp vẫn còn
+  expect(cover.style.pointerEvents).toBe("auto");                      // và vẫn bắt
+  cover.dispatchEvent(new PointerEvent("pointerup", { bubbles: true, cancelable: true, pointerId: 1, pointerType: "touch" }));
+  expect(cover.style.pointerEvents).toBe("auto");
+  cover.dispatchEvent(new MouseEvent("click", { bubbles: true, cancelable: true }));
+  await tick();
+  expect(cover.isConnected).toBe(false);                               // cú nhấn xong: gỡ lớp
+});
+
+it("a right press outside: the shield catches the contextmenu that follows on release, then goes", async () => {
+  await act(() => root.render(<SortMenu under={() => undefined} />));
+  await tick();
+  const cover = shield()!;
+  await act(() => { cover.dispatchEvent(new PointerEvent("pointerdown", { bubbles: true, cancelable: true, button: 2, pointerId: 1, pointerType: "mouse" })); });
+  expect(cover.isConnected).toBe(true);
+  const context = new MouseEvent("contextmenu", { bubbles: true, cancelable: true, button: 2 });
+  cover.dispatchEvent(context);
+  expect(context.defaultPrevented).toBe(true);                         // không bật menu chuột phải của trình duyệt
+  await tick();
+  expect(cover.isConnected).toBe(false);
+});
+
+it("a press that never ends in a click lets the shield go after a second", async () => {
+  vi.useFakeTimers({ shouldAdvanceTime: true });
+  try {
+    await act(() => root.render(<SortMenu under={() => undefined} />));
+    await act(() => vi.advanceTimersByTimeAsync(1));
+    const cover = shield()!;
+    await act(() => { cover.dispatchEvent(new PointerEvent("pointerdown", { bubbles: true, cancelable: true, button: 0, pointerId: 1, pointerType: "touch" })); });
+    expect(cover.isConnected).toBe(true);
+    await act(() => vi.advanceTimersByTimeAsync(999));
+    expect(cover.isConnected).toBe(true);
+    await act(() => vi.advanceTimersByTimeAsync(2));
+    expect(cover.isConnected).toBe(false);
+  } finally { vi.useRealTimers(); }
+});
+
+// Soát 18-11 T2: Popover trong hộp thoại ("Phát trên" -> "Hẹn giờ"): bấm ngoài bảng nhưng trong hộp chỉ đóng bảng, hộp đứng yên - như Qt / Android.
+it.each(["dialog", "sheet"] as const)("a popover inside a %s: a press on its shield closes only the popover", async kind => {
+  vi.spyOn(HTMLElement.prototype, "animate").mockImplementation(() => ({ cancel: vi.fn(), onfinish: null }) as unknown as Animation);
+  const closed = vi.fn();
+  function Remote() {
+    const [sleep, setSleep] = useState(false);
+    const body = <>
+      <button type="button">Tạm dừng</button>
+      <Popover.Root open={sleep} onOpenChange={setSleep}>
+        <Popover.Trigger>Hẹn giờ</Popover.Trigger>
+        <Popover.Portal><Popover.Content aria-label="Hẹn giờ ngủ" style={{ zIndex: 60 }}>15 phút</Popover.Content></Popover.Portal>
+      </Popover.Root>
+    </>;
+    return kind === "dialog"
+      ? <Dialog open onOpenChange={closed} title="Phát trên">{body}</Dialog>
+      : <Sheet open onOpenChange={closed} title="Phát trên" trigger={<button>Mở</button>}>{body}</Sheet>;
+  }
+  await act(() => root.render(<Remote />));
+  await tick();
+  // Mở bảng sau khi hộp đã nhận tiêu điểm (hộp chuyển tiêu điểm vào trong lúc mở - bảng mở sẵn sẽ tự đóng vì mất tiêu điểm).
+  await act(() => { [...document.querySelectorAll("button")].find(button => button.textContent === "Hẹn giờ")!.click(); });
+  await tick();
+  expect(document.querySelector('[aria-label="Hẹn giờ ngủ"]')).not.toBeNull();
+  const cover = shield()!;
+  expect(cover).not.toBeNull();
+  await act(() => { press(cover); });
+  await tick();
+  expect(document.querySelector('[aria-label="Hẹn giờ ngủ"]')).toBeNull();      // bảng đóng
+  expect(closed).not.toHaveBeenCalled();                                         // hộp không đóng
+  expect(document.querySelector('[role="dialog"]')).not.toBeNull();
+  expect(shield()).toBeNull();
+});
+
+it("a popover inside a popover: a press on the inner shield closes only the inner one", async () => {
+  function Nested() {
+    const [outer, setOuter] = useState(true);
+    const [inner, setInner] = useState(true);
+    return <Popover.Root open={outer} onOpenChange={setOuter}>
+      <Popover.Trigger>Ngoài</Popover.Trigger>
+      <Popover.Portal><Popover.Content aria-label="Ngoài" style={{ zIndex: 50 }}>
+        <Popover.Root open={inner} onOpenChange={setInner}>
+          <Popover.Trigger>Trong</Popover.Trigger>
+          <Popover.Portal><Popover.Content aria-label="Trong" style={{ zIndex: 60 }}>x</Popover.Content></Popover.Portal>
+        </Popover.Root>
+      </Popover.Content></Popover.Portal>
+    </Popover.Root>;
+  }
+  await act(() => root.render(<Nested />));
+  await tick();
+  const covers = document.querySelectorAll<HTMLElement>("[data-outside-shield]");
+  expect(covers).toHaveLength(2);
+  const innerCover = [...covers].find(cover => cover.style.zIndex === "60")!;
+  await act(() => { press(innerCover); });
+  await tick();
+  expect(document.querySelector('[aria-label="Trong"]')).toBeNull();
+  expect(document.querySelector('[aria-label="Ngoài"]')).not.toBeNull();
 });
