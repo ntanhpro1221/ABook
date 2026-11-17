@@ -15918,10 +15918,10 @@
     "line": 28,
     "statement": "signal unsave()",
     "occurrence": 1,
-    "source_sha256": "b4672782d3a932ad4e7202d92957ad60481b28e0526faf89424aaa2b89192e73",
+    "source_sha256": "3e47ef15aa3203462289d5abe4b1fac806a254d241e04e16834762976c98e8c1",
     "disposition": "internal",
     "guard": "Declaration; the invoked call site is independently inventoried",
-    "reason": "A declaration/signature is not an executing UI action."
+    "reason": "A declaration/signature is not an executing UI action. Combined-source review: the download button gained tabular digits (check_ticks T4); this action and its guard are unchanged."
   },
   {
     "id": "29d917903c35d8b43bfc",
@@ -15930,10 +15930,10 @@
     "line": 52,
     "statement": "Api.quiet(\"GET\", path, null, function(data, error) {",
     "occurrence": 1,
-    "source_sha256": "b4672782d3a932ad4e7202d92957ad60481b28e0526faf89424aaa2b89192e73",
+    "source_sha256": "3e47ef15aa3203462289d5abe4b1fac806a254d241e04e16834762976c98e8c1",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; MusicListeningProgress, loading, pending, previewLoading",
-    "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads."
+    "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads. Combined-source review: the download button gained tabular digits (check_ticks T4); this action and its guard are unchanged."
   },
   {
     "id": "5920c6952c6b8ebc09eb",
@@ -15942,10 +15942,10 @@
     "line": 62,
     "statement": "onAccepted: root.unsave()",
     "occurrence": 1,
-    "source_sha256": "b4672782d3a932ad4e7202d92957ad60481b28e0526faf89424aaa2b89192e73",
+    "source_sha256": "3e47ef15aa3203462289d5abe4b1fac806a254d241e04e16834762976c98e8c1",
     "disposition": "confirmation",
     "guard": "DownloadControl / TrackRow / TrackSheet DestructiveConfirm; cancel incomplete transfer is exempt",
-    "reason": "Complete music download removal is confirmed with track title and size. Cancelling an unfinished download discards partial bytes immediately."
+    "reason": "Complete music download removal is confirmed with track title and size. Cancelling an unfinished download discards partial bytes immediately. Combined-source review: the download button gained tabular digits (check_ticks T4); this action and its guard are unchanged."
   },
   {
     "id": "4b19453ac0e453cd5b89",

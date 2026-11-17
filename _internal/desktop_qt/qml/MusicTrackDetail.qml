@@ -101,6 +101,7 @@ Modal {
                 width: (parent.width - parent.spacing) / 2
                 objectName: "musicDetailDownload"
                 kind: "outline"
+                tabular: true
                 text: root.load.kind === "loading" ? S.s_stop_download + (root.load.percent !== null && root.load.percent !== undefined ? "\u00a0·\u00a0" + S.s_percent(root.load.percent) : "")
                     : root.load.kind === "done" ? S.s_xoa_ban_tai_4b461f4a : root.load.kind === "failed" ? S.s_tai_tiep_1efbd854 : S.s_tai_ve_9b5bdb44
                 icon: root.load.kind === "loading" ? "square" : root.load.kind === "done" ? "trash" : "download"

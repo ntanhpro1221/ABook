@@ -15,6 +15,8 @@ Interactive {
     property string size: "md"          // "sm" | "md" | "lg"
     property bool wrap: false
     property bool fitName: false
+    // Self-changing value in the label (download %): digits keep one width so the label changes in place (check_ticks T4).
+    property bool tabular: false
     property bool pending: false
     property bool busy: false
     property int ownedRequest: 0
@@ -99,5 +101,6 @@ Interactive {
         lineHeight: root.wrap ? 1.25 : 1
         baseSize: root.size === "sm" ? 13 : root.size === "lg" ? 15 : Theme.sizeBodySmall
         font.weight: Theme.weightMedium
+        font.features: root.tabular ? ({"tnum": 1}) : ({})
     }
 }
