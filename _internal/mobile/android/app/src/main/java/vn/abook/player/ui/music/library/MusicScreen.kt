@@ -117,9 +117,11 @@ fun MusicScreen(
     DisposableEffect(state) { onDispose { state.stopPreview() } }
     var part by rememberSaveable { mutableStateOf(if (pick != null) MusicPart.Library else initialPart) }
     LaunchedEffect(ui.libraryRequest) { if (ui.libraryRequest > 0) part = MusicPart.Library }
-    // Danh sách của hai phần ở cấp màn: thanh "Đang nghe thử" nổi trên danh sách đang hiện kéo được chính danh sách ấy (floatingLayer scrollThrough).
-    val savedList = rememberLazyListState()
-    val libraryList = rememberLazyListState()
+    // Danh sách của phần đang hiện ở cấp màn: thanh "Đang nghe thử" nổi trên nó kéo được chính danh sách ấy (floatingLayer scrollThrough). Khoá theo
+    // phần và theo việc danh sách có đang hiện: đổi "Đã lưu" <-> "Kho nhạc" (hay danh sách bị thay bởi "Đang tải" / lỗi) thì về đầu danh sách - như
+    // web (Tabs tháo nội dung phần cũ) và Qt (một ListView, đổi model) - và vẫn giữ chỗ cuộn khi xoay màn.
+    val listShown = !ui.loading && ui.error.isEmpty()
+    val list = rememberSaveable(part, listShown, saver = LazyListState.Saver) { LazyListState() }
     Box(modifier.fillMaxSize().testTag("music_screen")) {
         androidx.compose.foundation.layout.BoxWithConstraints(Modifier.fillMaxSize()) {
         val headScroll = androidx.compose.foundation.rememberScrollState()
@@ -149,13 +151,13 @@ fun MusicScreen(
             when {
                 ui.loading -> Caption(S.s_dang_tai_465b1987, Modifier.padding(horizontal = Dim.margin).testTag("music_loading"))
                 ui.error.isNotEmpty() -> InlineProblem(ui.error, state::open, "music_error", Modifier.padding(horizontal = Dim.margin))
-                part == MusicPart.Saved -> SavedPart(ui, state, sheets, onMyMusic, savedList)
-                else -> LibraryPart(ui, state, sheets, pick, libraryList)
+                part == MusicPart.Saved -> SavedPart(ui, state, sheets, onMyMusic, list)
+                else -> LibraryPart(ui, state, sheets, pick, list)
             }
         }
         }
         // Lớp nổi nuốt cú bấm (không lọt xuống dòng dưới) và tự kéo danh sách đang hiện khi vuốt bắt đầu trên thanh / lề / khe đáy.
-        PreviewBar(ui, state, Modifier.align(Alignment.BottomCenter).floatingLayer(if (part == MusicPart.Saved) savedList else libraryList)) { link ->
+        PreviewBar(ui, state, Modifier.align(Alignment.BottomCenter).floatingLayer(list)) { link ->
             openTrack(sheets, state, link, pick)
         }
         if (ui.meteredAsk.isNotEmpty()) {

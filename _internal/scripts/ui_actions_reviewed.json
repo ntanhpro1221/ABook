@@ -1782,10 +1782,10 @@
     "line": 807,
     "statement": "onClick={() => (playing ? sample.stop() : void sample.play(voice.id))}",
     "occurrence": 1,
-    "source_sha256": "b19aaafabcbf836e8b8e068cd8eb47a037028dc49ecf64205bf86c07b9cf8883",
+    "source_sha256": "28e37adc996dc697795b682c5d3df18242b90cf908930cc056cb37a9db0098e2",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; BookProgressLine, CompactProgress, PendingIndicator, bookProgressText, busy, busyClick, isLoading, isPending, levelBusy, loading, musicLoading, pending",
-    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Gate repair: reviewed identity-key motion, explicit layout, token spacing or semantic navigation changes; existing guard retained."
+    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Gate repair: reviewed identity-key motion, explicit layout, token spacing or semantic navigation changes; existing guard retained. Combined-source review (tapthru 18-11 round 4): only the Popover import moved to @/shared/Popover (outside taps only close); this action and its guard are unchanged."
   },
   {
     "id": "f014459f7e3244b9fbb4",
@@ -1794,10 +1794,10 @@
     "line": 890,
     "statement": "const start = async () => {",
     "occurrence": 1,
-    "source_sha256": "b19aaafabcbf836e8b8e068cd8eb47a037028dc49ecf64205bf86c07b9cf8883",
+    "source_sha256": "28e37adc996dc697795b682c5d3df18242b90cf908930cc056cb37a9db0098e2",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; BookProgressLine, CompactProgress, PendingIndicator, bookProgressText, busy, busyClick, isLoading, isPending, levelBusy, loading, musicLoading, pending",
-    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Gate repair: reviewed identity-key motion, explicit layout, token spacing or semantic navigation changes; existing guard retained."
+    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Gate repair: reviewed identity-key motion, explicit layout, token spacing or semantic navigation changes; existing guard retained. Combined-source review (tapthru 18-11 round 4): only the Popover import moved to @/shared/Popover (outside taps only close); this action and its guard are unchanged."
   },
   {
     "id": "3a79393defa6f77f9bcb",
@@ -1806,10 +1806,10 @@
     "line": 918,
     "statement": "<button type=\"button\" data-focus-next className=\"touch-hit -ml-2 rounded-control px-2 py-1 font-medium text-fg hover:bg-hover\" onClick={() => void source.readAloudPrepareCancel?.().then(settle)}>{S.s_dung_lam_truoc_632af923}</button>",
     "occurrence": 1,
-    "source_sha256": "b19aaafabcbf836e8b8e068cd8eb47a037028dc49ecf64205bf86c07b9cf8883",
+    "source_sha256": "28e37adc996dc697795b682c5d3df18242b90cf908930cc056cb37a9db0098e2",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; BookProgressLine, CompactProgress, PendingIndicator, bookProgressText, busy, busyClick, isLoading, isPending, levelBusy, loading, musicLoading, pending",
-    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Gate repair: reviewed identity-key motion, explicit layout, token spacing or semantic navigation changes; existing guard retained."
+    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Gate repair: reviewed identity-key motion, explicit layout, token spacing or semantic navigation changes; existing guard retained. Combined-source review (tapthru 18-11 round 4): only the Popover import moved to @/shared/Popover (outside taps only close); this action and its guard are unchanged."
   },
   {
     "id": "b0dcdbfe651ac29eeb28",
@@ -1818,10 +1818,10 @@
     "line": 921,
     "statement": "<button type=\"button\" data-focus-next aria-disabled={busy || undefined} aria-busy={busy || undefined} className=\"touch-hit -ml-2 rounded-control px-2 py-1 font-medium text-accent-text hover:bg-hover aria-disabled:opacity-45\" onClick={busyClick(busy, () => void start())}>",
     "occurrence": 1,
-    "source_sha256": "b19aaafabcbf836e8b8e068cd8eb47a037028dc49ecf64205bf86c07b9cf8883",
+    "source_sha256": "28e37adc996dc697795b682c5d3df18242b90cf908930cc056cb37a9db0098e2",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; BookProgressLine, CompactProgress, PendingIndicator, bookProgressText, busy, busyClick, isLoading, isPending, levelBusy, loading, musicLoading, pending",
-    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Gate repair: reviewed identity-key motion, explicit layout, token spacing or semantic navigation changes; existing guard retained."
+    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Gate repair: reviewed identity-key motion, explicit layout, token spacing or semantic navigation changes; existing guard retained. Combined-source review (tapthru 18-11 round 4): only the Popover import moved to @/shared/Popover (outside taps only close); this action and its guard are unchanged."
   },
   {
     "id": "5d21139a7aa11bae8a5b",
@@ -1830,10 +1830,10 @@
     "line": 949,
     "statement": "const clear = async () => {",
     "occurrence": 1,
-    "source_sha256": "b19aaafabcbf836e8b8e068cd8eb47a037028dc49ecf64205bf86c07b9cf8883",
+    "source_sha256": "28e37adc996dc697795b682c5d3df18242b90cf908930cc056cb37a9db0098e2",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; BookProgressLine, CompactProgress, PendingIndicator, bookProgressText, busy, busyClick, isLoading, isPending, levelBusy, loading, musicLoading, pending",
-    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Gate repair: reviewed identity-key motion, explicit layout, token spacing or semantic navigation changes; existing guard retained."
+    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Gate repair: reviewed identity-key motion, explicit layout, token spacing or semantic navigation changes; existing guard retained. Combined-source review (tapthru 18-11 round 4): only the Popover import moved to @/shared/Popover (outside taps only close); this action and its guard are unchanged."
   },
   {
     "id": "d91727560f169d121388",
@@ -1842,10 +1842,10 @@
     "line": 1509,
     "statement": "return switchRecord(bookId, async () => undefined).then(() =>",
     "occurrence": 1,
-    "source_sha256": "b19aaafabcbf836e8b8e068cd8eb47a037028dc49ecf64205bf86c07b9cf8883",
+    "source_sha256": "28e37adc996dc697795b682c5d3df18242b90cf908930cc056cb37a9db0098e2",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; BookProgressLine, CompactProgress, PendingIndicator, bookProgressText, busy, busyClick, isLoading, isPending, levelBusy, loading, musicLoading, pending",
-    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Gate repair: reviewed identity-key motion, explicit layout, token spacing or semantic navigation changes; existing guard retained."
+    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Gate repair: reviewed identity-key motion, explicit layout, token spacing or semantic navigation changes; existing guard retained. Combined-source review (tapthru 18-11 round 4): only the Popover import moved to @/shared/Popover (outside taps only close); this action and its guard are unchanged."
   },
   {
     "id": "048072df29fe02577ac4",
@@ -1854,10 +1854,10 @@
     "line": 2044,
     "statement": "function PlayerModeSwitch({ reading, onSelect }: { reading: boolean; onSelect: (reading: boolean) => void }) {",
     "occurrence": 1,
-    "source_sha256": "b19aaafabcbf836e8b8e068cd8eb47a037028dc49ecf64205bf86c07b9cf8883",
+    "source_sha256": "28e37adc996dc697795b682c5d3df18242b90cf908930cc056cb37a9db0098e2",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; BookProgressLine, CompactProgress, PendingIndicator, bookProgressText, busy, busyClick, isLoading, isPending, levelBusy, loading, musicLoading, pending",
-    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Gate repair: reviewed identity-key motion, explicit layout, token spacing or semantic navigation changes; existing guard retained."
+    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Gate repair: reviewed identity-key motion, explicit layout, token spacing or semantic navigation changes; existing guard retained. Combined-source review (tapthru 18-11 round 4): only the Popover import moved to @/shared/Popover (outside taps only close); this action and its guard are unchanged."
   },
   {
     "id": "bf54d84f837e1fca0fd4",
@@ -2310,10 +2310,10 @@
     "line": 179,
     "statement": "const flushReading = useCallback(async () => {",
     "occurrence": 1,
-    "source_sha256": "349b7ac0e8245b19f272b3bbf9cddc104b125858ed4d836fa5a75f2a73e4d730",
+    "source_sha256": "f3bc7b2aa9809438d60dda7d3d37bf2314843f5955f0174197bdd635b700b5e1",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; LoadingCrossfade, isLoading, loading, pending, saving",
-    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering."
+    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review (tapthru 18-11 round 4): only the Popover import moved to @/shared/Popover (outside taps only close); this action and its guard are unchanged."
   },
   {
     "id": "f7b73a495ef5ff30678c",
@@ -4554,10 +4554,10 @@
     "line": 117,
     "statement": "export async function postLineFix(bookId: string, ref: { stableId: string; textSha256: string }, change: Delivery, wish: SeenDelivery | null | undefined): Promise<LineReply> {",
     "occurrence": 1,
-    "source_sha256": "4a120ddb9c6891adc9e2587031880c740cb1946724c7b8f5c2592f43a75fe383",
+    "source_sha256": "c5779564f53cf8f2a5723abddafa49829b5c8344ddc859265c43542fe2745ec5",
     "disposition": "internal",
     "guard": "Async interface/helper boundary; concrete activation inventoried separately",
-    "reason": "This signature supplies work to a model or component; declaring it starts no user operation. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
+    "reason": "This signature supplies work to a model or component; declaring it starts no user operation. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Combined-source review (tapthru 18-11 round 4): only the Popover import moved to @/shared/Popover (outside taps only close); this action and its guard are unchanged."
   },
   {
     "id": "0bcddc9766a51760f0e5",
@@ -4566,10 +4566,10 @@
     "line": 379,
     "statement": "mutationFn: async (lines: Line[]) => {",
     "occurrence": 1,
-    "source_sha256": "4a120ddb9c6891adc9e2587031880c740cb1946724c7b8f5c2592f43a75fe383",
+    "source_sha256": "c5779564f53cf8f2a5723abddafa49829b5c8344ddc859265c43542fe2745ec5",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; isLoading, isPending, loading, pending, pendingNote, usePendingNote",
-    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
+    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Combined-source review (tapthru 18-11 round 4): only the Popover import moved to @/shared/Popover (outside taps only close); this action and its guard are unchanged."
   },
   {
     "id": "28f004339bcb6950d7c9",
@@ -4578,10 +4578,10 @@
     "line": 1434,
     "statement": "<Presence>{scope && <ScriptScope key={scope.stableId} script={script} line={scope} onClose={() => setScope(null)} onApply={async (lines, person, revision) => {",
     "occurrence": 1,
-    "source_sha256": "4a120ddb9c6891adc9e2587031880c740cb1946724c7b8f5c2592f43a75fe383",
+    "source_sha256": "c5779564f53cf8f2a5723abddafa49829b5c8344ddc859265c43542fe2745ec5",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; isLoading, isPending, loading, pending, pendingNote, usePendingNote",
-    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
+    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Combined-source review (tapthru 18-11 round 4): only the Popover import moved to @/shared/Popover (outside taps only close); this action and its guard are unchanged."
   },
   {
     "id": "18215db793eea75254c4",
@@ -4590,10 +4590,10 @@
     "line": 1496,
     "statement": "else rows.current.delete(line.stableId);",
     "occurrence": 1,
-    "source_sha256": "4a120ddb9c6891adc9e2587031880c740cb1946724c7b8f5c2592f43a75fe383",
+    "source_sha256": "c5779564f53cf8f2a5723abddafa49829b5c8344ddc859265c43542fe2745ec5",
     "disposition": "internal",
     "guard": "In-memory collection entry lifecycle",
-    "reason": "The statement releases a listener, request, UI row, selection or cache entry; it does not delete its persisted source. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
+    "reason": "The statement releases a listener, request, UI row, selection or cache entry; it does not delete its persisted source. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Combined-source review (tapthru 18-11 round 4): only the Popover import moved to @/shared/Popover (outside taps only close); this action and its guard are unchanged."
   },
   {
     "id": "4f4d31a8bb2376dc1993",
@@ -4602,10 +4602,10 @@
     "line": 1623,
     "statement": "else next.delete(\"at\");",
     "occurrence": 1,
-    "source_sha256": "4a120ddb9c6891adc9e2587031880c740cb1946724c7b8f5c2592f43a75fe383",
+    "source_sha256": "c5779564f53cf8f2a5723abddafa49829b5c8344ddc859265c43542fe2745ec5",
     "disposition": "internal",
     "guard": "In-memory collection entry lifecycle",
-    "reason": "The statement releases a listener, request, UI row, selection or cache entry; it does not delete its persisted source. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
+    "reason": "The statement releases a listener, request, UI row, selection or cache entry; it does not delete its persisted source. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Combined-source review (tapthru 18-11 round 4): only the Popover import moved to @/shared/Popover (outside taps only close); this action and its guard are unchanged."
   },
   {
     "id": "5974fb634b118c43bf4e",
@@ -17326,5 +17326,17 @@
     "guard": "metadataBusy blocks duplicate writes and drives the save-button pending state.",
     "reason": "Only optional descriptive fields are submitted. Failure stays in the open editor; success refreshes project metadata without changing audio.",
     "source_sha256": "133d3cfafcb8637ed680b96881d47f7c323494171a33e5fda5850f28e1f9fdb5"
+  },
+  {
+    "id": "c1829920e2cc36206c01",
+    "kind": "destructive",
+    "path": "ui/src/shared/outsideShield.ts",
+    "line": 25,
+    "statement": "return () => { watch.disconnect(); cover.remove(); };",
+    "occurrence": 1,
+    "source_sha256": "8718fdafdee1ceb4e01933266852b856b5725d48f872d9abf5ee57b8453d8a36",
+    "disposition": "internal",
+    "guard": "effect cleanup of the shield it created (useOutsideShield): runs only when the menu / popover content leaves the tree",
+    "reason": "Removes the transparent outside-shield <div> this module inserted under an open menu / popover; no user data, no server state, nothing to confirm or undo."
   }
 ]

@@ -114,8 +114,11 @@ Item {
             width: 600; height: 400
             property int below: 0
             property var picked: []
+            property int backs: 0
             property alias select: select
-            Interactive { x: 0; y: 70; width: 600; height: 330; onClicked: picker.below++ }
+            property alias under: under
+            TapHandler { acceptedButtons: Qt.BackButton; gesturePolicy: TapHandler.ReleaseWithinBounds; onTapped: picker.backs++ }
+            Interactive { id: under; x: 0; y: 70; width: 600; height: 330; onClicked: picker.below++ }
             Select {
                 id: select
                 x: 20; y: 20; width: 200; height: 36
@@ -137,8 +140,9 @@ Item {
             property int pressed: 0
             property alias pop: pop
             property alias button: button
+            property alias under: under
             TapHandler { acceptedButtons: Qt.BackButton; gesturePolicy: TapHandler.ReleaseWithinBounds; onTapped: scenePop.backs++ }
-            Interactive { anchors.fill: parent; onClicked: scenePop.below++ }
+            Interactive { id: under; anchors.fill: parent; onClicked: scenePop.below++ }
             Rectangle { id: anchorBox; x: 280; y: 40; width: 40; height: 30 }
             Popover {
                 id: pop
@@ -295,6 +299,38 @@ Item {
             compare(picker.below, 0, "a tap on the list padding reached the item under it")
         }
 
+        // Soát 18-11 lần 4: Popup không modal để cú bấm ra ngoài đi tiếp - đóng danh sách xổ VÀ mở dòng nằm dưới (đo: below=1). Giờ như mọi lớp nổi:
+        // bấm / bấm phải ra ngoài chỉ đóng, hover không tới thứ dưới, nút Back đi tiếp tới tổ tiên (Main.qml: Nav đóng lớp).
+        function test_selectOutsideTapOnlyCloses() {
+            const picker = createTemporaryObject(selectFactory, host)
+            const beta = 20 + 36 + 4 + 8 + 36 + 18
+            mouseMove(picker, 500, 300); tryCompare(picker.under, "hovered", true)
+            mouseClick(picker.select, 20, 18)
+            wait(Theme.motionFast + 150)
+            mouseMove(picker, 520, 320)
+            tryCompare(picker.under, "hovered", false)
+            mouseClick(host, 500, 300)
+            wait(Theme.motionFast + 150)
+            compare(picker.below, 0, "a tap outside the drop-down list also hit the item under it")
+            compare(picker.picked.length, 0)
+            mouseClick(picker.select, 20, 18)
+            wait(Theme.motionFast + 150)
+            mouseClick(host, 500, 300, Qt.RightButton)
+            wait(Theme.motionFast + 150)
+            compare(picker.below, 0)
+            mouseClick(picker.select, 20, 18)
+            wait(Theme.motionFast + 150)
+            mouseClick(host, 500, 300, Qt.BackButton)
+            compare(picker.backs, 1, "the drop-down backdrop swallowed the mouse Back button")
+            mouseClick(host, 500, 300)
+            wait(Theme.motionFast + 150)
+            compare(picker.below, 0)
+            // Mọi lần trên đều đã đóng danh sách: giờ không còn nền, chỗ cũ của hàng "Beta" là dòng nằm dưới
+            mouseClick(host, 60, beta)
+            compare(picker.picked.length, 0, "the list stayed open after a tap outside")
+            compare(picker.below, 1)
+        }
+
         // Soát 18-11 (TB): bấm ra ngoài bảng / menu "…" chỉ đóng nó, như DropdownMenu của web - không mở luôn cuốn sách / dòng nằm dưới.
         function test_outsideTapOnlyClosesThePopover() {
             const scenePop = createTemporaryObject(popoverFactory, host)
@@ -304,6 +340,12 @@ Item {
             mouseClick(scenePop.button, 20, 20)
             compare(scenePop.pressed, 1)
             compare(scenePop.below, 0)
+            // Soát 18-11 lần 4: rê ra ngoài bảng thì dòng nằm dưới không sáng hover / hiện chú thích
+            mouseMove(host, 540, 340)
+            mouseMove(host, 560, 360)
+            tryCompare(scenePop.under, "hovered", false)
+            wait(700)
+            compare(scenePop.under.hovered, false, "the item under the backdrop shows hover")
             mouseClick(host, 560, 360)
             wait(Theme.motionFast + 150)
             compare(scenePop.pop.open, false, "a tap outside did not close the popover")

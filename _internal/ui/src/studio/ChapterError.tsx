@@ -1,6 +1,6 @@
 import { S } from "../shared/strings.generated";
 import { friendlyError } from "./errorText";
-import * as Popover from "@radix-ui/react-popover";
+import * as Popover from "@/shared/Popover";
 import { useFadeScroller } from "@/shared/scrollFade";
 
 import { Reveal } from "../shared/MotionPresence";

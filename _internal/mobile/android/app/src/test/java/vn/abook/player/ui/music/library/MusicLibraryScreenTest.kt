@@ -509,6 +509,25 @@ class MusicLibraryScreenTest {
         assertEquals(link(0), state.ui.value.previewing)
     }
 
+    /** Soát 18-11 lần 4: đổi "Kho nhạc" -> "Đã lưu" -> "Kho nhạc" về đầu danh sách, như web (Tabs tháo nội dung phần cũ) và Qt (một ListView, đổi
+     *  model). Danh sách nay ở cấp màn (thanh "Đang nghe thử" kéo được nó) nhưng khoá theo phần, không nhớ chỗ cuộn của từng phần. */
+    @Test
+    fun switchingPartsStartsTheListAtTheTop() {
+        show()
+        val (first, top) = topRow()
+        rule.onNodeWithTag("music_list").performTouchInput {
+            down(center)
+            repeat(12) { moveBy(androidx.compose.ui.geometry.Offset(0f, -40f)) }
+            up()
+        }
+        rule.waitForIdle()
+        assertTrue("the list did not scroll", topRow().first != first)
+        tap(MusicPart.Saved.tag)
+        tap(MusicPart.Library.tag)
+        assertEquals("switching parts kept the old scroll position", first, topRow().first)
+        assertEquals(top, topOf(first), 1f)
+    }
+
     @Test
     fun offlinePreviewOnlyForDownloadedTracks() {
         source.online = false

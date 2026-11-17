@@ -14,7 +14,7 @@ import { SlidersHorizontal } from 'lucide-react';
 import { SlidingIndicator } from "@/shared/SlidingIndicator";
 import { MotionPresence, Reveal } from "@/shared/MotionPresence";
 import { Collapse } from "@/shared/Collapse";
-import * as Popover from "@radix-ui/react-popover";
+import * as Popover from "@/shared/Popover";
 import { coverColor, coverStyle } from "@/shared/cover";
 import * as Slider from "@radix-ui/react-slider";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
