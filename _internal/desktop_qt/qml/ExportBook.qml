@@ -48,6 +48,8 @@ StudioConfirm {
     readonly property bool mixes: audioKind && withMusic
     readonly property bool wantsFfmpeg: open && !job.running && (kind === "m4b" || mixes)
     readonly property bool needsFfmpeg: (kind === "m4b" || mixes) && ffmpeg !== null && !ffmpeg.ready
+    // Bản ffmpeg đã tải nhưng cũ (status.outdated): vẫn xuất được bằng bản ấy, nhưng hộp mời cập nhật - cùng luật FfmpegNeeded của web
+    readonly property bool offersFfmpeg: (kind === "m4b" || mixes) && ffmpeg !== null && (!ffmpeg.ready || Boolean(ffmpeg.outdated))
     readonly property string phase: job.running ? "busy" : finished ? "finished" : "form"
     readonly property alias exportJob: job
     readonly property var kinds: Logic.kindsFor(remote)
@@ -248,7 +250,7 @@ StudioConfirm {
         }
         Collapse {
             width: parent.width
-            open: root.needsFfmpeg
+            open: root.offersFfmpeg
             FfmpegNeeded {
                 width: parent.width
                 status: root.ffmpeg

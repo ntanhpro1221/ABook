@@ -2,13 +2,13 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { expect, it, vi } from "vitest";
 
 // Soát a99 V5: dự án chỉ có chữ (chưa chương nào xong audio) xuất được `.abook` như bộ đóng gói hỗ trợ - nút không khoá, hộp nói file mang gì.
-const state = vi.hoisted(() => ({ kind: "abook" }));
+const state = vi.hoisted(() => ({ kind: "abook", ffmpeg: undefined as unknown }));
 vi.mock("react", async (original) => {
   const actual = await original<typeof import("react")>();
   return { ...actual, useState: (initial: unknown) => actual.useState(initial === "mp3" ? state.kind : initial) };
 });
 vi.mock("@tanstack/react-query", () => ({
-  useQuery: () => ({ data: undefined }),
+  useQuery: (options: { queryKey: unknown[] }) => ({ data: options.queryKey[0] === "ffmpeg" ? state.ffmpeg : undefined }),
   useQueryClient: () => ({ invalidateQueries: vi.fn() }),
 }));
 vi.mock("@/studio/data", () => ({
@@ -30,7 +30,7 @@ vi.mock("@/shared/ui", () => ({
   radioTabIndex: () => 0,
   Select: () => null,
 }));
-vi.mock("@/desktop/AudiobookDialog", () => ({ FfmpegNeeded: () => null }));
+vi.mock("@/desktop/AudiobookDialog", () => ({ FfmpegNeeded: ({ status }: any) => <p data-ffmpeg={status.outdated ? "update" : "missing"} /> }));
 vi.mock("@/desktop/ExportBookFileJob", () => ({ startExport: vi.fn(), trackExport: vi.fn() }));
 vi.mock("@/studio/WordTimings", () => ({ WordTimingsRow: () => null }));
 vi.mock("@/desktop/musicMix", () => ({ MusicMixOption: () => null, useMusicChoice: () => [false, vi.fn()] }));
@@ -63,4 +63,24 @@ it("a partial book requires an unchecked choice and shows the audio count", () =
   expect(html).toContain("1/2 chương có audio");
   expect(html).toContain("Xuất một phần");
   expect(html).toMatch(/<input type="checkbox"\/>/);
+});
+
+// Cùng luật với hộp "Xuất sách nói" của Nghe ngay và ExportBook.qml: ffmpeg đã tải mà cũ thì mời cập nhật, nút xuất vẫn bấm được.
+it("M4B offers to update an outdated ffmpeg without blocking the export, and blocks only when there is none", () => {
+  state.kind = "m4b";
+  const book = { ...textOnly(2), chapters: { total: 2, completed: 2, missingAudio: 0 } };
+  const ffmpeg = (over: object) => ({ ready: true, outdated: false, downloading: false, done: 0, total: 0, error: "", bytes: 63753164, blocked: "", ...over });
+  state.ffmpeg = ffmpeg({ outdated: true });
+  let html = render(book);
+  expect(html).toContain('data-ffmpeg="update"');
+  expect(html).toMatch(/<button(?![^>]*disabled)[^>]*>Lưu và xuất<\/button>/);
+  state.ffmpeg = ffmpeg({});
+  html = render(book);
+  expect(html).not.toContain("data-ffmpeg");
+  expect(html).toMatch(/<button(?![^>]*disabled)[^>]*>Lưu và xuất<\/button>/);
+  state.ffmpeg = ffmpeg({ ready: false });
+  html = render(book);
+  expect(html).toContain('data-ffmpeg="missing"');
+  expect(html).toMatch(/<button[^>]*disabled=""[^>]*>Lưu và xuất<\/button>/);
+  state.ffmpeg = undefined;
 });
