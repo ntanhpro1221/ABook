@@ -49,6 +49,30 @@ Item {
             host.Window.window.update(); waitForRendering(text)
             qtGlyphAudit.scan()
         }
+        // Tên sách / tác giả / nhân vật / nghệ sĩ tiếng Nhật, Trung, Hàn: font dự phòng CJK (font hệ thống Windows) phải vẽ ra mực
+        // ở cả ba độ đậm của app; máy dò GLYPH_MISSING quét đúng các chữ này, không chuỗi nào được miễn.
+        function test_cjkNames_data() {
+            const names = [{tag: "book-zh", text: "斗破苍穹 第一卷"}, {tag: "author-zh", text: "天蚕土豆"},
+                {tag: "book-ja", text: "夜明けの旅路「序章」"}, {tag: "character-ja", text: "カタリナ・クラエス"},
+                {tag: "artist-ja", text: "魔王魂"}, {tag: "book-ko", text: "달빛 조각사"}, {tag: "character-ko", text: "이서준"},
+                {tag: "mixed", text: "Tập 1 · 魔王魂 – 별빛 · ０１２"}]
+            const rows = []
+            for (const weight of [Font.Normal, Font.Medium, Font.Bold])
+                for (const name of names) rows.push({tag: name.tag + "-" + weight, text: name.text, weight: weight})
+            return rows
+        }
+        function test_cjkNames(d) {
+            const item = createTemporaryObject(symbol, host, {text: d.text, width: 300})
+            item.children[0].font.weight = d.weight
+            host.Window.window.update(); waitForRendering(item)
+            const image = grabImage(item)
+            let ink = 0
+            for (let y = 0; y < item.height; ++y)
+                for (let x = 0; x < item.width; ++x)
+                    if (image.red(x, y) < 128) ++ink
+            verify(ink >= 40 * d.text.length / 3, d.tag + " must draw visible ink, got " + ink)
+            qtGlyphAudit.scan()
+        }
         function test_bundledSymbols_data() {
             return [{tag: "arrow", text: "\u2192"}, {tag: "play", text: "\u25b6"}]
         }

@@ -26,9 +26,12 @@ Item {
         readonly property var emotions: [["peacefulness", "bình yên"], ["tenderness", "dịu dàng"], ["nostalgia", "hoài niệm"], ["sadness", "buồn"],
             ["joy", "vui tươi"], ["playful", "tinh nghịch"], ["power", "hào hùng"], ["wonder", "kỳ vĩ"], ["tension", "căng thẳng"], ["fear", "rùng rợn"],
             ["anger", "giận dữ"], ["mystery", "bí ẩn"], ["moved", "xúc động"]]
+        // Tên Nhật / Trung / Hàn như danh mục thật (魔王魂 có trong danh mục): font dự phòng CJK phải vẽ được, máy dò chữ không loại trừ chuỗi nào
         readonly property var titles: ["Ghostpocalypse - 5 Apotheosis", "Air Prelude", "Mưa trên phố cổ",
-            "Bản tình ca của những người lữ hành trong đêm dài không trăng", "Clean Soul", "Đồi gió", "Hành khúc đêm", "Long Road Ahead"]
-        readonly property var creators: ["Kevin MacLeod", "Scott Buckley", "Shane Ivers", "Nhóm nhạc rất dài tên để kiểm chữ cắt ở dòng người sáng tác"]
+            "Bản tình ca của những người lữ hành trong đêm dài không trăng", "Clean Soul", "夜明けの旅路「序章」", "Đồi gió", "青云之上・归途",
+            "Hành khúc đêm", "달빛 아래서", "Long Road Ahead"]
+        readonly property var creators: ["Kevin MacLeod", "Scott Buckley", "Shane Ivers", "Nhóm nhạc rất dài tên để kiểm chữ cắt ở dòng người sáng tác",
+            "별빛 악단", "魔王魂", "青山乐团"]
         property var downloading: []
 
         function track(index) {
