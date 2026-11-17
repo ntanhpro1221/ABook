@@ -35,7 +35,7 @@ export function AudioFxPanel({setVolume,music,leaveGuard}:{setVolume:(value:numb
     <FxSlider label={S.s_can_bang_8b88211d} spec={VALUE_SPECS.balance} value={Math.round(fx.balance*100)} format={formatBalance} onChange={v=>update({balance:v/100})}/>
     <FxSwitch label={S.s_copy_289e1cff4cbc} checked={fx.skipSilence} hint={S.s_copy_b09b5fb2264a} onChange={skipSilence=>update({skipSilence})}/>
     <Collapse open={fx.skipSilence}>
-      <FxSlider label={S.s_copy_8e18e6dd7fd9} spec={VALUE_SPECS.silenceDb} value={fx.silenceDb} suffix="\u00a0dBFS" onChange={silenceDb=>update({silenceDb})}/>
+      <FxSlider label={S.s_copy_8e18e6dd7fd9} spec={VALUE_SPECS.silenceDb} value={fx.silenceDb} suffix={DBFS} onChange={silenceDb=>update({silenceDb})}/>
       <FxSlider label={S.s_copy_19adc1b298a9} spec={VALUE_SPECS.silenceSeconds} value={fx.silenceSeconds} suffix={SECONDS} onChange={silenceSeconds=>update({silenceSeconds})}/>
       <FxSlider label={S.s_copy_483cdfec9d5f} spec={capped(VALUE_SPECS.keepSeconds,fx.silenceSeconds)} value={fx.keepSeconds} suffix={SECONDS} onChange={keepSeconds=>update({keepSeconds})}/>
     </Collapse>
@@ -45,7 +45,7 @@ export function AudioFxPanel({setVolume,music,leaveGuard}:{setVolume:(value:numb
   </>}</div></MotionRegion>;
 }
 /** Đơn vị dính số (DESIGN "Số và đơn vị"): không xuống dòng giữa số và đơn vị. */
-const DECIBELS = '\u00a0dB', SECONDS = '\u00a0s';
+const DECIBELS = '\u00a0dB', DBFS = '\u00a0dBFS', SECONDS = '\u00a0s';
 /** Núm âm thanh = bộ chọn giá trị hàng gọn (DESIGN mục 6): tên + giá trị (chạm để gõ), thước giữa -/+, chip tiêu biểu.
  *  Thanh có hai phía (Cao độ, ngưỡng dBFS): số đang chọn có dấu, dấu trừ thật. */
 function FxSlider({format,label,spec,value,suffix=DECIBELS,disabled=false,onChange}:{label:string;spec:ValueSpec;value:number;suffix?:string;format?:(v:number)=>string;disabled?:boolean;onChange:(value:number)=>void}) {

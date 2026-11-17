@@ -31,6 +31,13 @@ JSX = re.compile(r"\}( )" + _UNIT + r"(?=\s*(?:<|$))")
 GENERATED = {"UiStrings.kt", "strings.generated.ts", "UiStrings.js", "uistrings.generated.h"}
 # Spoken readings for the voice engine and developer-only tools are not visible copy.
 SKIPPED = ("mobile/android/app/src/main/java/vn/abook/player/vieneu/", "ui/src/perf/")
+# A JSX attribute string is not a JavaScript string: suffix="\u00a0dBFS" renders the six characters \u00a0, which no
+# space rule can see. Escapes belong in an expression (suffix={DBFS} or suffix={"\u00a0dBFS"}). The lookbehinds and
+# the trailing guard keep TypeScript assignments (const raw='a\nb';, f(a="\n")) out.
+JSX_ESCAPE = re.compile(
+    r"(?<![\w.$])(?<!const )(?<!let )(?<!var )[A-Za-z_][\w-]*=([\"'])(?:(?!\1)[^\n\\])*"
+    r"\\(?:u[0-9a-fA-F{]|x[0-9a-fA-F]{2}|[ntr0])(?:(?!\1)[^\n])*\1(?!\s*[;,)])"
+)
 LOG = re.compile(r"\b(?:AppLog|Log)\.[a-z]\(|console\.(?:log|warn|error)\(|qDebug\(|qWarning\(")
 
 # Server code: the shipped Python package and its entry point; vendored libraries are not ours.
@@ -152,6 +159,17 @@ def python_lines(source: str) -> list[int]:
     return sorted(found)
 
 
+def jsx_escape_lines(source: str) -> list[int]:
+    """Lines whose JSX attribute string holds a JavaScript escape that JSX will print literally."""
+    found = []
+    for number, line in enumerate(source.splitlines(), 1):
+        if line.strip().startswith(("//", "*", "/*")):
+            continue
+        if JSX_ESCAPE.search(line.split(" //", 1)[0]):
+            found.append(number)
+    return found
+
+
 def sources():
     paths = list((ROOT / "ui/src").rglob("*.ts")) + list((ROOT / "ui/src").rglob("*.tsx"))
     paths += list((ROOT / "desktop_qt/qml").glob("*.qml")) + list((ROOT / "desktop_qt/qml").glob("*.js"))
@@ -180,6 +198,9 @@ def findings():
     for name, path in sources():
         for line in source_lines(path.read_text(encoding="utf-8"), path.suffix == ".tsx"):
             yield f"{name}:{line}: a number and its unit are joined by a plain space (use \\u00a0)"
+        if path.suffix == ".tsx":
+            for line in jsx_escape_lines(path.read_text(encoding="utf-8")):
+                yield f"{name}:{line}: a JSX attribute string prints its escape literally (write it as {{\"...\"}} or a constant)"
     for name, path in server_sources():
         for line in python_lines(path.read_text(encoding="utf-8")):
             yield f"{name}:{line}: server copy joins a number and its unit with a plain space (use \\u00a0)"
