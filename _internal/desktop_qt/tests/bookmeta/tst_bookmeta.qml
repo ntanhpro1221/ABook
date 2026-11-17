@@ -3,6 +3,7 @@ import QtTest
 import "../../qml" as Subject
 import ABook
 import "../width/ParityFixtures.js" as Fixture
+import "../width/VisualReady.js" as VisualReady
 
 Item {
     id: host
@@ -35,7 +36,7 @@ Item {
             capture("details-collapsed")
             value.expanded = true
             tryVerify(function() { return value.height > closed + 10 })
-            wait(350)
+            tryVerify(function() { return VisualReady.settled(value, qtVisualReady) })
             verify(value.summary.endsWith("Đoạn cuối nguyên vẹn."))
             waitForRendering(host)
             capture("details")
@@ -94,7 +95,7 @@ Item {
             const value = createTemporaryObject(page, host, {width: 420, height: 900, book: {bookId: "width", title: book.title}})
             verify(value !== null)
             tryCompare(value, "loaded", true)
-            wait(350)
+            tryVerify(function() { return VisualReady.settled(value, qtVisualReady) })
             capture("book-page")
             WidthNet.resetBooks()
         }
