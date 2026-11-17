@@ -1318,6 +1318,761 @@
      "kind": "narration"
     }
    ]
+  },
+  {
+   "text": "Lan bĩu môi.\n\n\"Hôm qua cậu còn nói rằng \"hôm nay trời đẹp nhỉ\" cơ mà.\"\n\nTôi im lặng.",
+   "segments": [
+    {
+     "id": 0,
+     "text": "Lan bĩu môi.",
+     "sceneBreak": false,
+     "kind": "narration"
+    },
+    {
+     "id": 1,
+     "text": "\"Hôm qua cậu còn nói rằng \"hôm nay trời đẹp nhỉ\" cơ mà.\"",
+     "sceneBreak": false,
+     "kind": "dialogue"
+    },
+    {
+     "id": 2,
+     "text": "Tôi im lặng.",
+     "sceneBreak": false,
+     "kind": "narration"
+    }
+   ]
+  },
+  {
+   "text": "\"Hôm qua cậu còn nói rằng \"hôm nay trời đẹp nhỉ\" cơ mà,\" Lan nói.",
+   "segments": [
+    {
+     "id": 0,
+     "text": "\"Hôm qua cậu còn nói rằng \"hôm nay trời đẹp nhỉ\" cơ mà,\"",
+     "sceneBreak": false,
+     "kind": "dialogue"
+    },
+    {
+     "id": 1,
+     "text": "Lan nói.",
+     "sceneBreak": false,
+     "kind": "narration"
+    }
+   ]
+  },
+  {
+   "text": "\"Cậu bảo \"hôm nay trời đẹp nhỉ\".\"\n\nTôi im lặng.",
+   "segments": [
+    {
+     "id": 0,
+     "text": "\"Cậu bảo \"hôm nay trời đẹp nhỉ\".\"",
+     "sceneBreak": false,
+     "kind": "dialogue"
+    },
+    {
+     "id": 1,
+     "text": "Tôi im lặng.",
+     "sceneBreak": false,
+     "kind": "narration"
+    }
+   ]
+  },
+  {
+   "text": "\"...Này. Tớ nghĩ... \"Tớ muốn đi biển.\" hay đại loại thế.\"",
+   "segments": [
+    {
+     "id": 0,
+     "text": "\"...Này. Tớ nghĩ... \"Tớ muốn đi biển.\" hay đại loại thế.\"",
+     "sceneBreak": false,
+     "kind": "dialogue"
+    }
+   ]
+  },
+  {
+   "text": "\"Cậu bảo \"đi\", rồi lại \"ở\",\" Lan nói. \"Thật là.\"",
+   "segments": [
+    {
+     "id": 0,
+     "text": "\"Cậu bảo \"đi\", rồi lại \"ở\",\"",
+     "sceneBreak": false,
+     "kind": "dialogue"
+    },
+    {
+     "id": 1,
+     "text": "Lan nói.",
+     "sceneBreak": false,
+     "kind": "narration"
+    },
+    {
+     "id": 2,
+     "text": "\"Thật là.\"",
+     "sceneBreak": false,
+     "kind": "dialogue"
+    }
+   ]
+  },
+  {
+   "text": "Lan bĩu môi.\n\n“Hôm qua cậu còn nói rằng “hôm nay trời đẹp nhỉ” cơ mà.”\n\nTôi im lặng.",
+   "segments": [
+    {
+     "id": 0,
+     "text": "Lan bĩu môi.",
+     "sceneBreak": false,
+     "kind": "narration"
+    },
+    {
+     "id": 1,
+     "text": "“Hôm qua cậu còn nói rằng “hôm nay trời đẹp nhỉ” cơ mà.”",
+     "sceneBreak": false,
+     "kind": "dialogue"
+    },
+    {
+     "id": 2,
+     "text": "Tôi im lặng.",
+     "sceneBreak": false,
+     "kind": "narration"
+    }
+   ]
+  },
+  {
+   "text": "““Hôm nay trời đẹp nhỉ” - đấy là cậu nói.”\n\nTôi im lặng.",
+   "segments": [
+    {
+     "id": 0,
+     "text": "““Hôm nay trời đẹp nhỉ” - đấy là cậu nói.”",
+     "sceneBreak": false,
+     "kind": "dialogue"
+    },
+    {
+     "id": 1,
+     "text": "Tôi im lặng.",
+     "sceneBreak": false,
+     "kind": "narration"
+    }
+   ]
+  },
+  {
+   "text": "“Cậu bảo “hôm nay trời đẹp nhỉ”.”\n\nTôi im lặng.",
+   "segments": [
+    {
+     "id": 0,
+     "text": "“Cậu bảo “hôm nay trời đẹp nhỉ”.”",
+     "sceneBreak": false,
+     "kind": "dialogue"
+    },
+    {
+     "id": 1,
+     "text": "Tôi im lặng.",
+     "sceneBreak": false,
+     "kind": "narration"
+    }
+   ]
+  },
+  {
+   "text": "Lan bĩu môi.\n\n“Hôm qua cậu còn nói rằng ‘hôm nay trời đẹp nhỉ’ cơ mà.”\n\nTôi im lặng.",
+   "segments": [
+    {
+     "id": 0,
+     "text": "Lan bĩu môi.",
+     "sceneBreak": false,
+     "kind": "narration"
+    },
+    {
+     "id": 1,
+     "text": "“Hôm qua cậu còn nói rằng ‘hôm nay trời đẹp nhỉ’ cơ mà.”",
+     "sceneBreak": false,
+     "kind": "dialogue"
+    },
+    {
+     "id": 2,
+     "text": "Tôi im lặng.",
+     "sceneBreak": false,
+     "kind": "narration"
+    }
+   ]
+  },
+  {
+   "text": "“Hôm qua cậu còn nói rằng \"hôm nay trời đẹp nhỉ\" cơ mà.”",
+   "segments": [
+    {
+     "id": 0,
+     "text": "“Hôm qua cậu còn nói rằng \"hôm nay trời đẹp nhỉ\" cơ mà.”",
+     "sceneBreak": false,
+     "kind": "dialogue"
+    }
+   ]
+  },
+  {
+   "text": "Lan bĩu môi.\n\n「Hôm qua cậu còn nói rằng 『hôm nay trời đẹp nhỉ』 cơ mà.」\n\nTôi im lặng.",
+   "segments": [
+    {
+     "id": 0,
+     "text": "Lan bĩu môi.",
+     "sceneBreak": false,
+     "kind": "narration"
+    },
+    {
+     "id": 1,
+     "text": "“Hôm qua cậu còn nói rằng 『hôm nay trời đẹp nhỉ』 cơ mà.”",
+     "sceneBreak": false,
+     "kind": "dialogue"
+    },
+    {
+     "id": 2,
+     "text": "Tôi im lặng.",
+     "sceneBreak": false,
+     "kind": "narration"
+    }
+   ]
+  },
+  {
+   "text": "Lan bĩu môi.\n\n“Hôm qua cậu còn nói rằng «hôm nay trời đẹp nhỉ» cơ mà.”\n\nTôi im lặng.",
+   "segments": [
+    {
+     "id": 0,
+     "text": "Lan bĩu môi.",
+     "sceneBreak": false,
+     "kind": "narration"
+    },
+    {
+     "id": 1,
+     "text": "“Hôm qua cậu còn nói rằng «hôm nay trời đẹp nhỉ» cơ mà.”",
+     "sceneBreak": false,
+     "kind": "dialogue"
+    },
+    {
+     "id": 2,
+     "text": "Tôi im lặng.",
+     "sceneBreak": false,
+     "kind": "narration"
+    }
+   ]
+  },
+  {
+   "text": "\"Ghé qua «Hội Thợ Săn» trước đã,\" Minh nói.",
+   "segments": [
+    {
+     "id": 0,
+     "text": "\"Ghé qua «Hội Thợ Săn» trước đã,\"",
+     "sceneBreak": false,
+     "kind": "dialogue"
+    },
+    {
+     "id": 1,
+     "text": "Minh nói.",
+     "sceneBreak": false,
+     "kind": "narration"
+    }
+   ]
+  },
+  {
+   "text": "Lan bĩu môi.\n\n‘Hôm qua cậu ta còn nói rằng “hôm nay trời đẹp nhỉ” cơ mà.’\n\nTôi im lặng.",
+   "segments": [
+    {
+     "id": 0,
+     "text": "Lan bĩu môi.",
+     "sceneBreak": false,
+     "kind": "narration"
+    },
+    {
+     "id": 1,
+     "text": "‘Hôm qua cậu ta còn nói rằng “hôm nay trời đẹp nhỉ” cơ mà.’",
+     "sceneBreak": false,
+     "kind": "thought"
+    },
+    {
+     "id": 2,
+     "text": "Tôi im lặng.",
+     "sceneBreak": false,
+     "kind": "narration"
+    }
+   ]
+  },
+  {
+   "text": "Lan bĩu môi.\n\n‘Nghe này.\n\nHôm qua nó còn nói rằng “hôm nay trời đẹp nhỉ” cơ mà.’\n\nTôi im lặng.",
+   "segments": [
+    {
+     "id": 0,
+     "text": "Lan bĩu môi.",
+     "sceneBreak": false,
+     "kind": "narration"
+    },
+    {
+     "id": 1,
+     "text": "‘Nghe này.",
+     "sceneBreak": false,
+     "kind": "thought"
+    },
+    {
+     "id": 2,
+     "text": "Hôm qua nó còn nói rằng “hôm nay trời đẹp nhỉ” cơ mà.’",
+     "sceneBreak": false,
+     "kind": "thought"
+    },
+    {
+     "id": 3,
+     "text": "Tôi im lặng.",
+     "sceneBreak": false,
+     "kind": "narration"
+    }
+   ]
+  },
+  {
+   "text": "Lan bĩu môi.\n\n“Nghe này. Chuyện dài lắm.\n\nHôm qua cậu còn nói rằng “hôm nay trời đẹp nhỉ” cơ mà.\n\nVậy mà giờ lại thế.”\n\nTôi im lặng.",
+   "segments": [
+    {
+     "id": 0,
+     "text": "Lan bĩu môi.",
+     "sceneBreak": false,
+     "kind": "narration"
+    },
+    {
+     "id": 1,
+     "text": "“Nghe này. Chuyện dài lắm.",
+     "sceneBreak": false,
+     "kind": "dialogue"
+    },
+    {
+     "id": 2,
+     "text": "Hôm qua cậu còn nói rằng “hôm nay trời đẹp nhỉ” cơ mà.",
+     "sceneBreak": false,
+     "kind": "dialogue"
+    },
+    {
+     "id": 3,
+     "text": "Vậy mà giờ lại thế.”",
+     "sceneBreak": false,
+     "kind": "dialogue"
+    },
+    {
+     "id": 4,
+     "text": "Tôi im lặng.",
+     "sceneBreak": false,
+     "kind": "narration"
+    }
+   ]
+  },
+  {
+   "text": "Lan bĩu môi.\n\n“Nghe này. Chuyện dài lắm.\n\nHôm qua cậu còn nói rằng “hôm nay trời đẹp nhỉ” cơ mà.”\n\nTôi im lặng.",
+   "segments": [
+    {
+     "id": 0,
+     "text": "Lan bĩu môi.",
+     "sceneBreak": false,
+     "kind": "narration"
+    },
+    {
+     "id": 1,
+     "text": "“Nghe này. Chuyện dài lắm.",
+     "sceneBreak": false,
+     "kind": "dialogue"
+    },
+    {
+     "id": 2,
+     "text": "Hôm qua cậu còn nói rằng “hôm nay trời đẹp nhỉ” cơ mà.”",
+     "sceneBreak": false,
+     "kind": "dialogue"
+    },
+    {
+     "id": 3,
+     "text": "Tôi im lặng.",
+     "sceneBreak": false,
+     "kind": "narration"
+    }
+   ]
+  },
+  {
+   "text": "Lan bĩu môi.\n\n“Nghe này, hôm qua cậu nói “trời đẹp nhỉ” cơ mà.\n\nVậy mà giờ lại thế.”\n\nTôi im lặng.",
+   "segments": [
+    {
+     "id": 0,
+     "text": "Lan bĩu môi.",
+     "sceneBreak": false,
+     "kind": "narration"
+    },
+    {
+     "id": 1,
+     "text": "“Nghe này, hôm qua cậu nói “trời đẹp nhỉ” cơ mà.",
+     "sceneBreak": false,
+     "kind": "dialogue"
+    },
+    {
+     "id": 2,
+     "text": "Vậy mà giờ lại thế.”",
+     "sceneBreak": false,
+     "kind": "dialogue"
+    },
+    {
+     "id": 3,
+     "text": "Tôi im lặng.",
+     "sceneBreak": false,
+     "kind": "narration"
+    }
+   ]
+  },
+  {
+   "text": "Lan bĩu môi.\n\n\"Nghe này. Chuyện dài lắm.\n\nHôm qua cậu còn nói rằng \"hôm nay trời đẹp nhỉ\" cơ mà.\n\nVậy mà giờ lại thế.\"\n\nTôi im lặng.",
+   "segments": [
+    {
+     "id": 0,
+     "text": "Lan bĩu môi.",
+     "sceneBreak": false,
+     "kind": "narration"
+    },
+    {
+     "id": 1,
+     "text": "\"Nghe này. Chuyện dài lắm.",
+     "sceneBreak": false,
+     "kind": "dialogue"
+    },
+    {
+     "id": 2,
+     "text": "Hôm qua cậu còn nói rằng \"hôm nay trời đẹp nhỉ\" cơ mà.",
+     "sceneBreak": false,
+     "kind": "dialogue"
+    },
+    {
+     "id": 3,
+     "text": "Vậy mà giờ lại thế.\"",
+     "sceneBreak": false,
+     "kind": "dialogue"
+    },
+    {
+     "id": 4,
+     "text": "Tôi im lặng.",
+     "sceneBreak": false,
+     "kind": "narration"
+    }
+   ]
+  },
+  {
+   "text": "Lan bĩu môi.\n\n\"Nghe này, hôm qua cậu nói \"trời đẹp nhỉ\" cơ mà.\n\nVậy mà giờ lại thế.\"\n\nTôi im lặng.",
+   "segments": [
+    {
+     "id": 0,
+     "text": "Lan bĩu môi.",
+     "sceneBreak": false,
+     "kind": "narration"
+    },
+    {
+     "id": 1,
+     "text": "\"Nghe này, hôm qua cậu nói \"trời đẹp nhỉ\" cơ mà.",
+     "sceneBreak": false,
+     "kind": "dialogue"
+    },
+    {
+     "id": 2,
+     "text": "Vậy mà giờ lại thế.\"",
+     "sceneBreak": false,
+     "kind": "dialogue"
+    },
+    {
+     "id": 3,
+     "text": "Tôi im lặng.",
+     "sceneBreak": false,
+     "kind": "narration"
+    }
+   ]
+  },
+  {
+   "text": "Lan kể.\n\n\"Đoạn một của lời nói.\n\n\"Đoạn hai tiếp lời.\n\n\"Đoạn ba hết rồi.\"\n\nTôi gật đầu.",
+   "segments": [
+    {
+     "id": 0,
+     "text": "Lan kể.",
+     "sceneBreak": false,
+     "kind": "narration"
+    },
+    {
+     "id": 1,
+     "text": "\"Đoạn một của lời nói.",
+     "sceneBreak": false,
+     "kind": "dialogue"
+    },
+    {
+     "id": 2,
+     "text": "\"Đoạn hai tiếp lời.",
+     "sceneBreak": false,
+     "kind": "dialogue"
+    },
+    {
+     "id": 3,
+     "text": "\"Đoạn ba hết rồi.\"",
+     "sceneBreak": false,
+     "kind": "dialogue"
+    },
+    {
+     "id": 4,
+     "text": "Tôi gật đầu.",
+     "sceneBreak": false,
+     "kind": "narration"
+    }
+   ]
+  },
+  {
+   "text": "Lan kể.\n\n\"Đoạn một của lời nói.\n\n\"Đoạn hai, cậu bảo \"trời đẹp\" mà.\n\n\"Đoạn ba hết rồi.\"\n\nTôi gật đầu.",
+   "segments": [
+    {
+     "id": 0,
+     "text": "Lan kể.",
+     "sceneBreak": false,
+     "kind": "narration"
+    },
+    {
+     "id": 1,
+     "text": "\"Đoạn một của lời nói.",
+     "sceneBreak": false,
+     "kind": "dialogue"
+    },
+    {
+     "id": 2,
+     "text": "\"Đoạn hai, cậu bảo \"trời đẹp\" mà.",
+     "sceneBreak": false,
+     "kind": "dialogue"
+    },
+    {
+     "id": 3,
+     "text": "\"Đoạn ba hết rồi.\"",
+     "sceneBreak": false,
+     "kind": "dialogue"
+    },
+    {
+     "id": 4,
+     "text": "Tôi gật đầu.",
+     "sceneBreak": false,
+     "kind": "narration"
+    }
+   ]
+  },
+  {
+   "text": "Lan kể.\n\n“Đoạn một của lời nói.\n\n“Đoạn hai, cậu bảo “trời đẹp” mà.\n\n“Đoạn ba hết rồi.”\n\nTôi gật đầu.",
+   "segments": [
+    {
+     "id": 0,
+     "text": "Lan kể.",
+     "sceneBreak": false,
+     "kind": "narration"
+    },
+    {
+     "id": 1,
+     "text": "“Đoạn một của lời nói.",
+     "sceneBreak": false,
+     "kind": "dialogue"
+    },
+    {
+     "id": 2,
+     "text": "“Đoạn hai, cậu bảo “trời đẹp” mà.",
+     "sceneBreak": false,
+     "kind": "dialogue"
+    },
+    {
+     "id": 3,
+     "text": "“Đoạn ba hết rồi.”",
+     "sceneBreak": false,
+     "kind": "dialogue"
+    },
+    {
+     "id": 4,
+     "text": "Tôi gật đầu.",
+     "sceneBreak": false,
+     "kind": "narration"
+    }
+   ]
+  },
+  {
+   "text": "“Hôm qua cậu còn nói rằng “hôm nay trời đẹp nhỉ cơ mà.”\n\nTôi im lặng.",
+   "segments": [
+    {
+     "id": 0,
+     "text": "“Hôm qua cậu còn nói rằng “hôm nay trời đẹp nhỉ cơ mà.”",
+     "sceneBreak": false,
+     "kind": "dialogue"
+    },
+    {
+     "id": 1,
+     "text": "Tôi im lặng.",
+     "sceneBreak": false,
+     "kind": "narration"
+    }
+   ]
+  },
+  {
+   "text": "“Hôm qua cậu còn nói rằng “hôm nay trời đẹp nhỉ\" cơ mà.”\n\nTôi im lặng.",
+   "segments": [
+    {
+     "id": 0,
+     "text": "“Hôm qua cậu còn nói rằng “hôm nay trời đẹp nhỉ\" cơ mà.”",
+     "sceneBreak": false,
+     "kind": "dialogue"
+    },
+    {
+     "id": 1,
+     "text": "Tôi im lặng.",
+     "sceneBreak": false,
+     "kind": "narration"
+    }
+   ]
+  },
+  {
+   "text": "“Nghe này.\n\nTôi nhìn cô ấy, cô ấy bảo “đi thôi” rồi quay đi.\n\n“Ừ.”\n\nHết.",
+   "segments": [
+    {
+     "id": 0,
+     "text": "“Nghe này.",
+     "sceneBreak": false,
+     "kind": "dialogue"
+    },
+    {
+     "id": 1,
+     "text": "Tôi nhìn cô ấy, cô ấy bảo",
+     "sceneBreak": false,
+     "kind": "narration"
+    },
+    {
+     "id": 2,
+     "text": "“đi thôi”",
+     "sceneBreak": false,
+     "kind": "dialogue"
+    },
+    {
+     "id": 3,
+     "text": "rồi quay đi.",
+     "sceneBreak": false,
+     "kind": "narration"
+    },
+    {
+     "id": 4,
+     "text": "“Ừ.”",
+     "sceneBreak": false,
+     "kind": "dialogue"
+    },
+    {
+     "id": 5,
+     "text": "Hết.",
+     "sceneBreak": false,
+     "kind": "narration"
+    }
+   ]
+  },
+  {
+   "text": "“Nghe này.\n\nTôi nhìn cô ấy, cô ấy bảo “đi thôi” rồi quay đi.\n\nHết.",
+   "segments": [
+    {
+     "id": 0,
+     "text": "“Nghe này.",
+     "sceneBreak": false,
+     "kind": "dialogue"
+    },
+    {
+     "id": 1,
+     "text": "Tôi nhìn cô ấy, cô ấy bảo",
+     "sceneBreak": false,
+     "kind": "narration"
+    },
+    {
+     "id": 2,
+     "text": "“đi thôi”",
+     "sceneBreak": false,
+     "kind": "dialogue"
+    },
+    {
+     "id": 3,
+     "text": "rồi quay đi.",
+     "sceneBreak": false,
+     "kind": "narration"
+    },
+    {
+     "id": 4,
+     "text": "Hết.",
+     "sceneBreak": false,
+     "kind": "narration"
+    }
+   ]
+  },
+  {
+   "text": "\"Đi thôi,\" Lan nói. \"Muộn rồi.\"",
+   "segments": [
+    {
+     "id": 0,
+     "text": "\"Đi thôi,\"",
+     "sceneBreak": false,
+     "kind": "dialogue"
+    },
+    {
+     "id": 1,
+     "text": "Lan nói.",
+     "sceneBreak": false,
+     "kind": "narration"
+    },
+    {
+     "id": 2,
+     "text": "\"Muộn rồi.\"",
+     "sceneBreak": false,
+     "kind": "dialogue"
+    }
+   ]
+  },
+  {
+   "text": "Cô gọi nó là \"con mèo\" và cười.",
+   "segments": [
+    {
+     "id": 0,
+     "text": "Cô gọi nó là",
+     "sceneBreak": false,
+     "kind": "narration"
+    },
+    {
+     "id": 1,
+     "text": "\"con mèo\"",
+     "sceneBreak": false,
+     "kind": "dialogue"
+    },
+    {
+     "id": 2,
+     "text": "và cười.",
+     "sceneBreak": false,
+     "kind": "narration"
+    }
+   ]
+  },
+  {
+   "text": "Lan đã nói hai điều, \"Tớ muốn vui\" và \"làm điều mới\".",
+   "segments": [
+    {
+     "id": 0,
+     "text": "Lan đã nói hai điều,",
+     "sceneBreak": false,
+     "kind": "narration"
+    },
+    {
+     "id": 1,
+     "text": "\"Tớ muốn vui\"",
+     "sceneBreak": false,
+     "kind": "dialogue"
+    },
+    {
+     "id": 2,
+     "text": "và",
+     "sceneBreak": false,
+     "kind": "narration"
+    },
+    {
+     "id": 3,
+     "text": "\"làm điều mới\".",
+     "sceneBreak": false,
+     "kind": "dialogue"
+    }
+   ]
+  },
+  {
+   "text": "\"“Thôi đủ rồi.”\"",
+   "segments": [
+    {
+     "id": 0,
+     "text": "\"“Thôi đủ rồi.” \"",
+     "sceneBreak": false,
+     "kind": "dialogue"
+    }
+   ]
   }
  ]
 }
