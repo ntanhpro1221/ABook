@@ -85,6 +85,9 @@ def test_doctor_uses_actual_critical_dependency_and_runtime_contract_checks(
         lambda _root: {"ok": True, "detail": "VieNeu-TTS pinned"},
     )
     monkeypatch.setattr(cli.shutil, "which", lambda name: f"C:\\bin\\{name}.exe")
+    # RAM tổng + VRAM là của máy đang chạy test: máy nhỏ hơn thì doctor báo đúng là thiếu và test này đỏ vì máy, không vì
+    # doctor. Phép kiểm ấy có bài riêng (tests/test_doctor_headroom.py) với số giả.
+    monkeypatch.setattr(cli, "_headroom_checks", lambda: {"headroom:ram": {"ok": True, "detail": "test"}})
 
     result = cli._command_doctor(SimpleNamespace(deep=False))
 
