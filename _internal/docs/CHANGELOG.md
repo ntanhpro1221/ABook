@@ -21,7 +21,7 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 - Khắc phục lỗi ứng dụng thoát đột ngột khi dữ liệu trang sách về muộn.
 
-- Kiểm phát hành chỉ chạy từng bước khi máy cắm sạc (chạy pin thì chờ, thời gian chờ không tính vào hạn giờ của bước); bước hết giờ trong lúc có chạy pin được chạy lại một lần khi có sạc, ghi cả hai lần vào báo cáo. `ABOOK_GATE_ALLOW_BATTERY=1` bỏ chờ.
+- Kỹ thuật: kiểm phát hành chỉ chạy từng bước (kể cả `npm ci` của UI) khi máy cắm sạc. Chạy pin thì chờ, ghi trạng thái chờ vào `power-wait.json` của lượt kiểm; thời gian chờ không tính vào hạn giờ hay số giây của bước. Chờ quá `ABOOK_GATE_BATTERY_WAIT_MAX` (mặc định 12 giờ) thì các bước còn lại ghi NOT_RUN. Bước hết giờ trong lúc có chạy pin được chạy lại một lần khi có sạc; bước nào có lúc chạy pin đều ghi các lần chạy vào báo cáo. `ABOOK_GATE_ALLOW_BATTERY=1` bỏ chờ.
 
 ## [0.4.173] - 2026-11-15
 

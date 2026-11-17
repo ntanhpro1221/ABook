@@ -50,7 +50,12 @@ PRIVATE_WORK_LOGS = ("result.md", "PROGRESS.md", "_internal/PROGRESS.md")
 # Mỗi bước chỉ bắt đầu khi cắm sạc; timeout có lúc chạy pin thì chạy lại một lần sau khi có sạc.
 POWER_POLL_SECONDS = 30.0
 ALLOW_BATTERY_ENV = "ABOOK_GATE_ALLOW_BATTERY"
+# Trần một lần chờ sạc liên tục (giây, hay hậu tố s/m/h); quá trần thì các bước còn lại NOT_RUN thay vì treo.
+BATTERY_WAIT_MAX_ENV = "ABOOK_GATE_BATTERY_WAIT_MAX"
+BATTERY_WAIT_MAX_DEFAULT = 12 * 3600.0
+POWER_WAIT_FILE = "power-wait.json"
 power_sleep = time.sleep
+clock = time.monotonic  # một đồng hồ cho chờ sạc và số giây của bước (bài thử thay bằng đồng hồ giả)
 
 
 @dataclass
@@ -197,18 +202,84 @@ def on_battery() -> bool:
         return False
 
 
-def wait_for_mains(name: str) -> float | None:
-    """Chờ (không tính vào deadline của bước) tới khi máy cắm sạc; số giây đã chờ, None khi vốn đang có sạc."""
+class PowerWaitExpired(Exception):
+    """Chờ sạc quá ABOOK_GATE_BATTERY_WAIT_MAX: gate dừng chạy các bước còn lại thay vì treo."""
+
+    def __init__(self, name: str, waited: float, since: str, limit: float):
+        super().__init__(f"chờ sạc quá {limit / 3600:g} giờ (máy chạy pin từ {since}, bước {name})")
+        self.waited = waited
+
+
+@dataclass
+class PowerRecord:
+    """Số giây chờ sạc và các lần chạy của một bước; ghi dần nên còn đúng cả khi runner ném lỗi."""
+    attempts: list[dict] = field(default_factory=list)
+    waited: float | None = None
+
+    def add_wait(self, seconds: float) -> None:
+        self.waited = round((self.waited or 0.0) + seconds, 3)
+
+    def evidence(self) -> list[dict] | None:
+        """Ghi vào báo cáo khi có chạy lại hay có lần nào chạy trên pin (kết quả có thể do CPU bị hãm)."""
+        if len(self.attempts) > 1 or any(attempt["on_battery"] for attempt in self.attempts):
+            return self.attempts
+        return None
+
+
+def battery_wait_max() -> float:
+    raw = os.environ.get(BATTERY_WAIT_MAX_ENV, "").strip().lower()
+    if not raw:
+        return BATTERY_WAIT_MAX_DEFAULT
+    scale = {"s": 1, "m": 60, "h": 3600}.get(raw[-1], 1)
+    try:
+        value = float(raw[:-1] if raw[-1] in "smh" else raw) * scale
+        if value >= 0:
+            return value
+    except ValueError:
+        pass
+    print(f"{BATTERY_WAIT_MAX_ENV}={raw!r} không hiểu - dùng mặc định {BATTERY_WAIT_MAX_DEFAULT / 3600:g} giờ",
+          file=sys.stderr, flush=True)
+    return BATTERY_WAIT_MAX_DEFAULT
+
+
+def write_power_wait(directory: Path, state: dict) -> None:
+    """Trạng thái chờ sạc trong thư mục của lượt gate, để người/agent khác thấy gate đang chờ chứ không treo."""
+    try:
+        directory.mkdir(parents=True, exist_ok=True)
+        payload = dict(state, updated_at=datetime.now().astimezone().isoformat(timespec="seconds"))
+        (directory / POWER_WAIT_FILE).write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n",
+                                                encoding="utf-8", newline="\n")
+    except OSError as exc:  # không ghi được trạng thái không được làm hỏng gate
+        print(f"không ghi được {POWER_WAIT_FILE}: {exc}", file=sys.stderr, flush=True)
+
+
+def wait_for_mains(name: str, directory: Path) -> float | None:
+    """Chờ (không tính vào deadline của bước) tới khi máy cắm sạc; số giây đã chờ, None khi vốn đang có sạc.
+
+    Quá ABOOK_GATE_BATTERY_WAIT_MAX thì ném PowerWaitExpired. Mỗi lần hỏi ghi power-wait.json vào thư mục lượt gate."""
     if not on_battery():
         return None
-    started = time.monotonic()
-    print(f"[{name}] máy đang chạy pin - chờ cắm sạc mới chạy (hỏi lại mỗi {POWER_POLL_SECONDS:.0f}s)",
-          file=sys.stderr, flush=True)
+    limit = battery_wait_max()
+    started = clock()
+    since = datetime.now().astimezone()
+    state = {"state": "waiting", "check": name, "since": since.isoformat(timespec="seconds"),
+             "since_local": since.strftime("%H:%M"), "limit_seconds": limit, "waited_seconds": 0.0}
+    print(f"[{name}] máy chạy pin - chờ cắm sạc từ {state['since_local']} (hỏi lại mỗi {POWER_POLL_SECONDS:.0f}s,"
+          f" bỏ cuộc sau {limit / 3600:g} giờ; trạng thái ở {directory / POWER_WAIT_FILE})", file=sys.stderr, flush=True)
     while True:
-        power_sleep(POWER_POLL_SECONDS)
+        waited = round(clock() - started, 3)
+        state["waited_seconds"] = waited
+        if waited >= limit:
+            write_power_wait(directory, dict(state, state="gave_up"))
+            print(f"[{name}] chờ sạc quá {limit / 3600:g} giờ (từ {state['since_local']}) - các bước còn lại không chạy",
+                  file=sys.stderr, flush=True)
+            raise PowerWaitExpired(name, waited, state["since_local"], limit)
+        write_power_wait(directory, state)
+        power_sleep(min(POWER_POLL_SECONDS, limit - waited))
         if not on_battery():
             break
-    waited = round(time.monotonic() - started, 3)
+    waited = round(clock() - started, 3)
+    write_power_wait(directory, dict(state, state="mains", waited_seconds=waited))
     print(f"[{name}] đã có sạc sau {waited:.0f}s - chạy tiếp", file=sys.stderr, flush=True)
     return waited
 
@@ -238,9 +309,28 @@ def execution_timed_out(execution: Execution) -> bool:
     if execution.timed_out:
         return True
     try:
-        return json.loads(execution.output.splitlines()[-1]).get("timed_out") is True
-    except (ValueError, IndexError, AttributeError):
+        return worker_json(execution.output).get("timed_out") is True
+    except ValueError:
         return False
+
+
+def worker_json(output: str) -> dict:
+    """Đối tượng JSON cuối cùng worker in ra, kể cả khi nó dính vào dòng log cuối không có xuống dòng (Gradle bị giết)."""
+    lines = [line for line in output.splitlines() if line.strip()]
+    if not lines:
+        raise ValueError("worker không in JSON kết quả (output rỗng)")
+    last = lines[-1].rstrip()
+    decoder = json.JSONDecoder()
+    start = last.find("{")
+    while start != -1:
+        try:
+            value, end = decoder.raw_decode(last, start)
+        except ValueError:
+            value, end = None, -1
+        if end == len(last) and isinstance(value, dict):
+            return value
+        start = last.find("{", start + 1)
+    raise ValueError("dòng cuối của worker không kết thúc bằng JSON kết quả: " + last[-200:])
 
 
 def py(*args: str) -> list[str]:
@@ -844,7 +934,7 @@ def validate_report(check: Check, execution: Execution, artifact: Path, row: dic
     elif kind == "vitest":
         counts = parse_vitest(execution.output)
     elif kind == "json":
-        evidence = json.loads(execution.output.splitlines()[-1])
+        evidence = worker_json(execution.output)
         if row is not None:
             row.update(counts=evidence.get("counts", {}), evidence=evidence)
         require(evidence.get("status") == "PASS", evidence.get("detail", "worker FAIL"))
@@ -989,26 +1079,39 @@ def tree_fingerprint() -> str:
     return digest.hexdigest()
 
 
-def run_on_mains(name: str, run, directory: Path) -> tuple[Execution, list[dict], float | None]:
-    """Chạy một bước khi có sạc; timeout mà có lúc chạy pin thì chạy lại đúng một lần sau khi có sạc lại."""
-    attempts, waited = [], None
+def run_on_mains(name: str, run, directory: Path, record: PowerRecord) -> Execution:
+    """Chạy một bước khi có sạc; timeout mà có lúc chạy pin thì chạy lại đúng một lần sau khi có sạc lại.
+
+    Số giây chờ và các lần chạy ghi thẳng vào `record` trước khi gọi run(), nên vẫn đúng khi run() ném lỗi
+    hay khi chờ sạc quá trần (PowerWaitExpired)."""
     while True:
-        pause = wait_for_mains(name)
+        try:
+            pause = wait_for_mains(name, directory)
+        except PowerWaitExpired as exc:
+            record.add_wait(exc.waited)
+            raise
         if pause is not None:
-            waited = (waited or 0.0) + pause
-        started = time.monotonic()
+            record.add_wait(pause)
+        started = clock()
         with BatteryWatch() as watch:
             execution = run()
-        attempt = {"attempt": len(attempts) + 1, "returncode": execution.returncode,
+        attempt = {"attempt": len(record.attempts) + 1, "returncode": execution.returncode,
                    "timed_out": execution_timed_out(execution), "on_battery": watch.seen,
-                   "seconds": round(time.monotonic() - started, 3)}
-        attempts.append(attempt)
-        if len(attempts) == 2 or not (attempt["timed_out"] and watch.seen):
-            return execution, attempts, waited
+                   "seconds": round(clock() - started, 3)}
+        record.attempts.append(attempt)
+        if len(record.attempts) == 2 or not (attempt["timed_out"] and watch.seen):
+            return execution
         log = directory / f"{name}.attempt1.log"
         log.write_text(execution.output, encoding="utf-8")
         attempt["log"] = str(log)
         print(f"[{name}] timeout trong lúc có chạy pin - chạy lại một lần khi có sạc", file=sys.stderr, flush=True)
+
+
+def mains_runner(runner, name: str, directory: Path, record: PowerRecord):
+    """Runner bọc run_on_mains, cho các lệnh chạy ngoài một bước (npm ci của prepare_ui)."""
+    def run(command, cwd, timeout, *args):
+        return run_on_mains(name, lambda: runner(command, cwd, timeout, *args), directory, record)
+    return run
 
 
 def run_gate(selected: list[Check], directory: Path, runner=run_process, inject: str | None = None,
@@ -1017,9 +1120,10 @@ def run_gate(selected: list[Check], directory: Path, runner=run_process, inject:
     rows = []
     ui_context = None
     ui_error = None
+    gave_up = None  # lý do bỏ các bước còn lại khi chờ sạc quá trần
     for check in selected:
-        start = time.monotonic()
-        attempts, waited = [], None
+        start = clock()
+        power, ui_power = PowerRecord(), PowerRecord()
         row = dict(check=check.name, result="FAIL", counts={}, seconds=0.0, command=check.command,
                    cwd=str(check.cwd), timeout=check.timeout)
         artifact = directory / (check.name + ".json")
@@ -1045,6 +1149,8 @@ def run_gate(selected: list[Check], directory: Path, runner=run_process, inject:
                 row.update(result="CONFIRMED" if confirmation else "MANUAL", detail=check.manual)
                 if confirmation:
                     row["confirmation"] = confirmation
+            elif gave_up is not None:
+                row.update(result="NOT_RUN", detail="không chạy: " + gave_up)
             else:
                 missing = [name for name in check.requires if not any(r["check"] == name and r["result"] == "PASS" for r in rows)]
                 require(not missing, "điều kiện trước chưa PASS: " + ", ".join(missing))
@@ -1052,7 +1158,9 @@ def run_gate(selected: list[Check], directory: Path, runner=run_process, inject:
                 if check.name in UI_CHECKS:
                     if ui_context is None and ui_error is None:
                         try:
-                            ui_context = prepare(directory, runner)
+                            ui_context = prepare(directory, mains_runner(runner, "ui-dependencies", directory, ui_power))
+                        except PowerWaitExpired:
+                            raise
                         except Exception as exc:
                             ui_error = str(exc)
                     require(ui_error is None, ui_error or "UI dependency preparation failed")
@@ -1064,9 +1172,9 @@ def run_gate(selected: list[Check], directory: Path, runner=run_process, inject:
                                      + repr(str(cwd.parent.parent)) + "; raise SystemExit(pytest.main("
                                      + repr(check.command[5:]) + "))")
                         row["command"] = command
-                execution, attempts, waited = run_on_mains(check.name, lambda: runner(command, cwd, check.timeout), directory)
+                execution = run_on_mains(check.name, lambda: runner(command, cwd, check.timeout), directory, power)
                 row["returncode"] = execution.returncode
-                row["timed_out"] = execution.timed_out
+                row["timed_out"] = execution_timed_out(execution)
                 log = directory / (check.name + ".log")
                 log.write_text(execution.output, encoding="utf-8")
                 row["log"] = str(log)
@@ -1082,15 +1190,24 @@ def run_gate(selected: list[Check], directory: Path, runner=run_process, inject:
                     output = Path(vitest["log"]).read_text(encoding="utf-8")
                     absent = [p for p in evidence["files"] if p.removeprefix("_internal/ui/") not in ANSI.sub("", output).replace("\\", "/")]
                     require(not absent, "Vitest không chứng minh đã chạy DOM: " + ", ".join(absent))
+        except PowerWaitExpired as exc:
+            gave_up = str(exc)
+            if power.attempts:  # lần 1 đã timeout trên pin; lần chạy lại bị bỏ
+                row.update(result="FAIL", detail="timeout trong lúc chạy pin; không chạy lại vì " + gave_up)
+            else:
+                row.update(result="NOT_RUN", detail="không chạy: " + gave_up)
         except Exception as exc:
             row.update(result="FAIL", detail=str(exc))
-        if waited is not None:
-            row["power_wait_seconds"] = waited
-        if len(attempts) > 1:
-            if not isinstance(row.get("evidence"), dict):
-                row["evidence"] = {}
-            row["evidence"]["power_attempts"] = attempts
-        row["seconds"] = round(time.monotonic() - start - (waited or 0.0), 3)
+        waited = (power.waited or 0.0) + (ui_power.waited or 0.0)
+        if power.waited is not None or ui_power.waited is not None:
+            row["power_wait_seconds"] = round(waited, 3)
+        for key, record in (("power_attempts", power), ("ui_dependencies_power_attempts", ui_power)):
+            attempts = record.evidence()
+            if attempts:
+                if not isinstance(row.get("evidence"), dict):
+                    row["evidence"] = {}
+                row["evidence"][key] = attempts
+        row["seconds"] = round(max(0.0, clock() - start - waited), 3)
         rows.append(row)
         print(f"[{check.name}] {row['result']} ({row['seconds']:.1f}s)", file=sys.stderr, flush=True)
     return rows
@@ -1128,10 +1245,11 @@ def main(argv: list[str] | None = None, *, runner=run_process, definitions=None)
         try:
             result = worker(args.worker, args.confirm_hash)
             result.setdefault("status", "PASS")
-            print(json.dumps(result, ensure_ascii=False))
+            # Xuống dòng trước JSON: log Gradle/Qt bị giết giữa chừng có thể không kết thúc bằng "\n".
+            print("\n" + json.dumps(result, ensure_ascii=False))
             return 0 if result["status"] == "PASS" else 1
         except Exception as exc:
-            print(json.dumps({"status": "FAIL", "detail": str(exc)}, ensure_ascii=False))
+            print("\n" + json.dumps({"status": "FAIL", "detail": str(exc)}, ensure_ascii=False))
             return 1
     definitions = checks(args.confirm_hash) if definitions is None else definitions
     if args.list:
