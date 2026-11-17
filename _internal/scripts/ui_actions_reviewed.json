@@ -15246,7 +15246,7 @@
     "line": 64,
     "statement": "Api.call(\"GET\", \"/api/listen/books/\" + id, null, function(data, error) { if (!error && id === root.book.bookId) root.fullBook = data })",
     "occurrence": 1,
-    "source_sha256": "e811c5c453238110f8aed1926f2d4f9223f5ae6557522bcb197daae6bea63b10",
+    "source_sha256": "b948480d76055e5e9a974b9dbb0bb3b28db35712e405a01fc1b28014f6ac06fc",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; ProgressBar, bookProgress, bookProgressLine, progress, progressLine, progressOf",
     "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
@@ -15258,7 +15258,7 @@
     "line": 72,
     "statement": "Api.call(\"GET\", \"/api/listen/books/\" + bookId, null, function(data, error) {",
     "occurrence": 1,
-    "source_sha256": "e811c5c453238110f8aed1926f2d4f9223f5ae6557522bcb197daae6bea63b10",
+    "source_sha256": "b948480d76055e5e9a974b9dbb0bb3b28db35712e405a01fc1b28014f6ac06fc",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; ProgressBar, bookProgress, bookProgressLine, progress, progressLine, progressOf",
     "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
@@ -15270,7 +15270,7 @@
     "line": 140,
     "statement": "Api.call(\"POST\", \"/api/listen/books/\" + id + \"/finished\", active ? {finished: finished, record: active.id} : {finished: finished}, function(data, error) {",
     "occurrence": 1,
-    "source_sha256": "e811c5c453238110f8aed1926f2d4f9223f5ae6557522bcb197daae6bea63b10",
+    "source_sha256": "b948480d76055e5e9a974b9dbb0bb3b28db35712e405a01fc1b28014f6ac06fc",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; ProgressBar, bookProgress, bookProgressLine, progress, progressLine, progressOf",
     "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
@@ -15282,7 +15282,7 @@
     "line": 271,
     "statement": "Api.call(\"POST\", \"/api/listen/books/\" + id + \"/chapters/\" + chapterId + \"/done\", body, function(data, error) {",
     "occurrence": 1,
-    "source_sha256": "e811c5c453238110f8aed1926f2d4f9223f5ae6557522bcb197daae6bea63b10",
+    "source_sha256": "b948480d76055e5e9a974b9dbb0bb3b28db35712e405a01fc1b28014f6ac06fc",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; ProgressBar, bookProgress, bookProgressLine, progress, progressLine, progressOf",
     "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."

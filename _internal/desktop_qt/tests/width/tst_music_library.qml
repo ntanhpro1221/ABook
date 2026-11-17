@@ -177,8 +177,20 @@ Item {
             for (const name of ["musicArtGenerated", "musicArtSupplied"]) {
                 const art = named(page, name)
                 compare(art.fillMode, Image.PreserveAspectCrop, name)
-                verify(art.clip, name)
+                compare(art.radius, Theme.radiusCover, name)
             }
+            // 0.4.173 soát tay: ảnh nhạc góc vuông trên Qt, bo Theme.radiusCover trên web / Android - và phải hiện cả ở backend
+            // phần mềm của ảnh chụp (mặt nạ shader thì không): góc là nền, giữa là ảnh
+            const art = named(page, "musicArt")
+            compare(art.radius, Theme.radiusCover)
+            // chụp cả cửa sổ rồi đọc theo toạ độ (grabImage(item) đi qua lớp riêng, không thấy nội dung Canvas ở backend phần mềm)
+            const at = art.mapToItem(host, 0, 0)
+            const back = grabImage(host).pixel(Math.round(at.x) - 4, Math.round(at.y) + 20)
+            tryVerify(function() {
+                return !Qt.colorEqual(grabImage(host).pixel(Math.round(at.x + art.width / 2), Math.round(at.y + art.height / 2)), back)
+            }, 3000, "ảnh nhạc phải được vẽ")
+            const corner = grabImage(host).pixel(Math.round(at.x), Math.round(at.y))
+            verify(Qt.colorEqual(corner, back), "góc ảnh nhạc phải là nền, không phải " + corner)
             // danh sách ảo hoá: không dựng đủ 24 hàng cùng lúc ở 900 px
             const rows = named(page, "musicList")
             verify(rows.count === 24)

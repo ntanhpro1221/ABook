@@ -24,6 +24,7 @@
 #include <QSet>
 #include <QThread>
 #include <QQuickImageProvider>
+#include <QPainter>
 #include <QDir>
 #include <QTemporaryDir>
 #include <QDateTime>
@@ -77,10 +78,19 @@ public:
 class WidthCovers : public QQuickImageProvider {
 public:
     WidthCovers() : QQuickImageProvider(QQuickImageProvider::Image) {}
-    QImage requestImage(const QString &, QSize *size, const QSize &requested) override {
+    // Bo góc theo bán kính ở cuối id như CoverProvider thật (src/coverprovider.cpp): bìa giả vuông làm ảnh d2shots lệch app thật
+    // (0.4.173 soát tay: bìa quyển 1 vuông, quyển 2 bìa vẽ bo góc).
+    QImage requestImage(const QString &id, QSize *size, const QSize &requested) override {
         if (size) *size = QSize(600, 900);
-        QImage image(requested.isValid() ? requested : QSize(60, 90), QImage::Format_RGB32);
-        image.fill(QColor(QStringLiteral("#9b562f")));
+        const QSize box = requested.isValid() ? requested : QSize(60, 90);
+        const int radius = id.section(QLatin1Char('/'), -1).toInt();
+        QImage image(box, QImage::Format_ARGB32_Premultiplied);
+        image.fill(Qt::transparent);
+        QPainter painter(&image);
+        painter.setRenderHint(QPainter::Antialiasing);
+        painter.setPen(Qt::NoPen);
+        painter.setBrush(QColor(QStringLiteral("#9b562f")));
+        painter.drawRoundedRect(QRectF(QPointF(0, 0), QSizeF(box)), radius, radius);
         return image;
     }
 };

@@ -160,6 +160,7 @@ qt_add_qml_module(ABookDesk
         qml/MiniPlayer.qml
         qml/Icon.qml
         qml/AvatarPortrait.qml
+        qml/RoundedImage.qml
         qml/AvatarLogic.js
         qml/AvatarEditor.qml
         qml/LucidePaths.js
