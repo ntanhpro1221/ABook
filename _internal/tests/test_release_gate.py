@@ -17,6 +17,131 @@ gate = importlib.util.module_from_spec(spec)
 sys.modules[spec.name] = gate
 spec.loader.exec_module(gate)
 FIXTURES = Path(__file__).parent / "fixtures/release_gate"
+REAL_BATTERY_PROBE = gate.battery_probe
+
+
+@pytest.fixture(autouse=True)
+def mains_power(monkeypatch):
+    """Không bài thử nào được phụ thuộc pin thật của máy chạy test hay ngủ thật."""
+    monkeypatch.delenv(gate.ALLOW_BATTERY_ENV, raising=False)
+    monkeypatch.setattr(gate, "battery_probe", lambda: False)
+    monkeypatch.setattr(gate, "power_sleep", lambda seconds: pytest.fail("không được chờ khi có sạc"))
+
+
+def power_sequence(monkeypatch, states):
+    """Đầu dò giả trả lần lượt các trạng thái, phần tử cuối lặp mãi; ghi lại các lần chờ."""
+    states, sleeps = list(states), []
+    monkeypatch.setattr(gate, "battery_probe", lambda: states.pop(0) if len(states) > 1 else states[0])
+    monkeypatch.setattr(gate, "power_sleep", sleeps.append)
+    return sleeps
+
+
+def test_check_waits_for_mains_before_starting_and_waiting_is_not_its_runtime(tmp_path, monkeypatch, capsys):
+    # trước bước: pin, pin, có sạc; trong bước (đầu + cuối): có sạc
+    sleeps = power_sequence(monkeypatch, [True, True, False])
+    calls = []
+    def runner(command, cwd, timeout):
+        calls.append(timeout)
+        return gate.Execution(0, "3 passed in 1s")
+    rows = gate.run_gate([fake_check()], tmp_path, runner)
+    assert rows[0]["result"] == "PASS" and calls == [1]
+    assert sleeps == [gate.POWER_POLL_SECONDS, gate.POWER_POLL_SECONDS]
+    assert "power_wait_seconds" in rows[0] and "evidence" not in rows[0]
+    err = capsys.readouterr().err
+    assert err.count("chờ cắm sạc") == 1 and err.count("đã có sạc") == 1
+
+
+def test_manual_rows_never_wait_for_mains(tmp_path, monkeypatch):
+    sleeps = power_sequence(monkeypatch, [True])
+    rows = gate.run_gate([gate.Check("eyes", manual="người duyệt")], tmp_path)
+    assert rows[0]["result"] == "MANUAL" and sleeps == []
+
+
+def test_allow_battery_env_disables_wait_and_rerun(tmp_path, monkeypatch):
+    sleeps = power_sequence(monkeypatch, [True])
+    monkeypatch.setenv(gate.ALLOW_BATTERY_ENV, "1")
+    calls = []
+    def runner(*_):
+        calls.append(1)
+        return gate.Execution(-1, "", True)
+    rows = gate.run_gate([fake_check()], tmp_path, runner)
+    assert rows[0]["result"] == "FAIL" and "timeout" in rows[0]["detail"]
+    assert sleeps == [] and len(calls) == 1
+
+
+def test_timeout_on_battery_reruns_once_after_mains_returns(tmp_path, monkeypatch):
+    # lần 1: đầu có sạc, cuối chạy pin; chờ: pin, có sạc; lần 2: có sạc suốt
+    sleeps = power_sequence(monkeypatch, [False, False, True, True, False, False, False])
+    outputs = [gate.Execution(-1, "half", True), gate.Execution(0, "5 passed in 1s")]
+    rows = gate.run_gate([fake_check()], tmp_path, lambda *_: outputs.pop(0))
+    row = rows[0]
+    assert row["result"] == "PASS" and row["counts"]["passed"] == 5 and not outputs
+    first, second = row["evidence"]["power_attempts"]
+    assert first["timed_out"] and first["on_battery"]
+    assert Path(first["log"]).read_text(encoding="utf-8") == "half"
+    assert not second["timed_out"] and not second["on_battery"]
+    assert sleeps == [gate.POWER_POLL_SECONDS]
+
+
+def test_worker_reported_timeout_on_battery_also_reruns(tmp_path, monkeypatch):
+    # Gradle 840 s trong worker 900 s: worker báo timed_out trong JSON, bước ngoài không timeout.
+    power_sequence(monkeypatch, [False, True, False])
+    timed = json.dumps({"status": "FAIL", "timed_out": True, "counts": {}, "detail": "Gradle: timeout sau 840s"})
+    passed = json.dumps({"status": "PASS", "timed_out": False, "counts": {"passed": 4}})
+    outputs = [gate.Execution(1, "gradle log\n" + timed), gate.Execution(0, passed)]
+    rows = gate.run_gate([fake_check("json")], tmp_path, lambda *_: outputs.pop(0))
+    assert rows[0]["result"] == "PASS" and rows[0]["counts"] == {"passed": 4}
+    assert [a["timed_out"] for a in rows[0]["evidence"]["power_attempts"]] == [True, False]
+
+
+def test_second_timeout_fails_and_reruns_only_once(tmp_path, monkeypatch):
+    power_sequence(monkeypatch, [False, True, False, True, False])
+    calls = []
+    def runner(*_):
+        calls.append(1)
+        return gate.Execution(-1, "", True)
+    rows = gate.run_gate([fake_check()], tmp_path, runner)
+    assert rows[0]["result"] == "FAIL" and "timeout" in rows[0]["detail"] and len(calls) == 2
+    assert len(rows[0]["evidence"]["power_attempts"]) == 2
+
+
+@pytest.mark.parametrize("execution", [gate.Execution(-1, "", True), gate.Execution(1, "1 failed, 2 passed in 1s")])
+def test_no_rerun_without_battery_or_without_timeout(tmp_path, monkeypatch, execution):
+    # chạy pin suốt lần chạy nhưng không timeout, hay timeout mà luôn có sạc: không chạy lại
+    timed = execution.timed_out
+    power_sequence(monkeypatch, [False] if timed else [False, True])
+    calls = []
+    def runner(*_):
+        calls.append(1)
+        return execution
+    rows = gate.run_gate([fake_check()], tmp_path, runner)
+    assert rows[0]["result"] == "FAIL" and len(calls) == 1 and "evidence" not in rows[0]
+
+
+def test_power_probe_failure_or_non_windows_counts_as_mains(monkeypatch):
+    def broken():
+        raise OSError("không đọc được pin")
+    monkeypatch.setattr(gate, "battery_probe", broken)
+    assert gate.on_battery() is False
+    monkeypatch.setattr(gate.os, "name", "posix")
+    assert REAL_BATTERY_PROBE() is False
+
+
+def test_android_worker_reports_gradle_timeout_explicitly(tmp_path, monkeypatch):
+    monkeypatch.setattr(gate, "ROOT", tmp_path)
+    monkeypatch.setattr(gate, "android_host_inputs", lambda: {})
+    monkeypatch.setattr(gate, "run_process", lambda *args: gate.Execution(-1, "gradle", True))
+    result = gate.worker("android-unit")
+    assert result["status"] == "FAIL" and result["timed_out"] is True
+    assert gate.execution_timed_out(gate.Execution(1, json.dumps(result)))
+
+
+def test_execution_timed_out_reads_worker_json():
+    assert gate.execution_timed_out(gate.Execution(-1, "", True))
+    assert gate.execution_timed_out(gate.Execution(1, 'x\n{"status": "FAIL", "timed_out": true}'))
+    assert not gate.execution_timed_out(gate.Execution(1, '{"status": "FAIL"}'))
+    assert not gate.execution_timed_out(gate.Execution(1, "not json"))
+    assert not gate.execution_timed_out(gate.Execution(0, ""))
 
 
 @pytest.mark.parametrize("name", ["ui-parity", "ui-parity-qt"])

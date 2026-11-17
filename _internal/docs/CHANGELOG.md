@@ -21,6 +21,8 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 - Khắc phục lỗi ứng dụng thoát đột ngột khi dữ liệu trang sách về muộn.
 
+- Kiểm phát hành chỉ chạy từng bước khi máy cắm sạc (chạy pin thì chờ, thời gian chờ không tính vào hạn giờ của bước); bước hết giờ trong lúc có chạy pin được chạy lại một lần khi có sạc, ghi cả hai lần vào báo cáo. `ABOOK_GATE_ALLOW_BATTERY=1` bỏ chờ.
+
 ## [0.4.173] - 2026-11-15
 
 - Kỹ thuật: desktop dùng Qt 6.11.3 để nhận bản sửa QML/V4 cho QTBUG-148459 (MethodStorage null gây crash WidthTests). Phiên bản SDK có một nguồn cấu hình; QWindowKit được dựng riêng theo phiên bản Qt.

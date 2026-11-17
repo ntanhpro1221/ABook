@@ -18,6 +18,7 @@ import re
 import shutil
 import subprocess
 import sys
+import threading
 import time
 import tempfile
 import xml.etree.ElementTree as ET
@@ -45,6 +46,11 @@ IGNORED_TRACKED_APPROVED = {
         "1d17de62d2262412376540a3dfc17004a9da87bea17ec2aa9558609482499051",
 }
 PRIVATE_WORK_LOGS = ("result.md", "PROGRESS.md", "_internal/PROGRESS.md")
+# 17-11: laptop rút sạc lúc 17:56, CPU bị hãm, hai bước Gradle chạm deadline 840 s -> hỏng cả lượt gate 5 giờ.
+# Mỗi bước chỉ bắt đầu khi cắm sạc; timeout có lúc chạy pin thì chạy lại một lần sau khi có sạc.
+POWER_POLL_SECONDS = 30.0
+ALLOW_BATTERY_ENV = "ABOOK_GATE_ALLOW_BATTERY"
+power_sleep = time.sleep
 
 
 @dataclass
@@ -169,6 +175,72 @@ def run_process(command: list[str], cwd: Path, timeout: float, extra_env: dict |
             proc.stdout.close()
             output = ""
         return Execution(-1, output, True)
+
+
+def battery_probe() -> bool:
+    """True chỉ khi Windows báo đang chạy pin (GetSystemPowerStatus); máy bàn, không biết hay không phải Windows = có sạc."""
+    if os.name != "nt":
+        return False
+    if str(ROOT) not in sys.path:
+        sys.path.insert(0, str(ROOT))
+    from abook import power_source  # cùng đầu dò ctypes mà supervisor dùng để tạm dừng khi rút sạc
+
+    return power_source.on_battery() is True
+
+
+def on_battery() -> bool:
+    if os.environ.get(ALLOW_BATTERY_ENV) == "1":
+        return False
+    try:
+        return battery_probe()
+    except Exception:  # noqa: BLE001 - đầu dò pin hỏng không được chặn gate
+        return False
+
+
+def wait_for_mains(name: str) -> float | None:
+    """Chờ (không tính vào deadline của bước) tới khi máy cắm sạc; số giây đã chờ, None khi vốn đang có sạc."""
+    if not on_battery():
+        return None
+    started = time.monotonic()
+    print(f"[{name}] máy đang chạy pin - chờ cắm sạc mới chạy (hỏi lại mỗi {POWER_POLL_SECONDS:.0f}s)",
+          file=sys.stderr, flush=True)
+    while True:
+        power_sleep(POWER_POLL_SECONDS)
+        if not on_battery():
+            break
+    waited = round(time.monotonic() - started, 3)
+    print(f"[{name}] đã có sạc sau {waited:.0f}s - chạy tiếp", file=sys.stderr, flush=True)
+    return waited
+
+
+class BatteryWatch:
+    """Ghi lại có lúc nào chạy pin trong khi một bước đang chạy (hỏi lúc đầu, mỗi POWER_POLL_SECONDS và lúc cuối)."""
+
+    def __enter__(self) -> "BatteryWatch":
+        self.seen = on_battery()
+        self._stop = threading.Event()
+        self._thread = threading.Thread(target=self._poll, daemon=True)
+        self._thread.start()
+        return self
+
+    def _poll(self) -> None:
+        while not self._stop.wait(POWER_POLL_SECONDS):
+            self.seen = self.seen or on_battery()
+
+    def __exit__(self, *_) -> None:
+        self._stop.set()
+        self._thread.join()
+        self.seen = self.seen or on_battery()
+
+
+def execution_timed_out(execution: Execution) -> bool:
+    """Timeout của chính bước, hay của tiến trình con mà worker JSON báo (Gradle 840 s trong worker 900 s)."""
+    if execution.timed_out:
+        return True
+    try:
+        return json.loads(execution.output.splitlines()[-1]).get("timed_out") is True
+    except (ValueError, IndexError, AttributeError):
+        return False
 
 
 def py(*args: str) -> list[str]:
@@ -459,13 +531,17 @@ def worker(name: str, confirm_hash: str | None = None) -> dict:
             inputs["ABOOK_G2P_OCCURRENCE_FIXTURE"] = str(fixture)
             execution = run_process(command, android, 840, inputs)
         print(execution.output, end="")
+        if execution.timed_out:
+            # Báo rõ timeout để gate biết đây là deadline (có thể do chạy pin), không phải test đỏ.
+            return {"counts": {}, "status": "FAIL", "timed_out": True, "detail": "Gradle: timeout sau 840s"}
         counts = parse_gradle(results)
         require_phoneme_suites_ran(results)
         if baseline is not None:
             counts.update(validate_snapshot_proofs(proofs, baseline))
         ok = (execution.returncode == 0 and not execution.timed_out and counts["passed"] > 0
               and not counts["failed"] and not counts["error"])
-        return {"counts": counts, "status": "PASS" if ok else "FAIL", "detail": "Gradle: đối chiếu exit và XML"}
+        return {"counts": counts, "status": "PASS" if ok else "FAIL", "timed_out": False,
+                "detail": "Gradle: đối chiếu exit và XML"}
     if name == "qt-tests":
         return qt_tests()
     if name == "design-lint":
@@ -713,6 +789,8 @@ def qt_tests() -> dict:
     command_file.write_bytes(("\r\n".join(commands) + "\r\n").encode("utf-8"))
     built = run_process([str(command_file)], qt, 800)
     print(built.output)
+    if built.timed_out:
+        return {"counts": {}, "status": "FAIL", "timed_out": True, "detail": "Qt: configure/build timeout"}
     require(built.returncode == 0 and not built.timed_out, "Qt: configure/build lỗi hoặc timeout")
     validator = load_module(qt / "tools/check_test_results.py", "gate_qt_results")
     counts = {"passed": 0, "failed": 0, "skipped": 0, "suites": 0, "timeouts": 0, "missing_summaries": 0, "lint_failed": 0,
@@ -752,6 +830,7 @@ def qt_tests() -> dict:
         counts["suites"] += 1
     require(counts["suites"] == len(targets), "Qt: thiếu suite")
     return {"counts": counts, "status": "FAIL" if failures else "PASS", "failed_suites": failures, "logs": str(command_file.parent),
+            "timed_out": bool(counts["timeouts"]),
             "detail": "Qt: " + (", ".join(failures) if failures else "đủ suite, totals và QML lint")}
 
 
@@ -910,6 +989,28 @@ def tree_fingerprint() -> str:
     return digest.hexdigest()
 
 
+def run_on_mains(name: str, run, directory: Path) -> tuple[Execution, list[dict], float | None]:
+    """Chạy một bước khi có sạc; timeout mà có lúc chạy pin thì chạy lại đúng một lần sau khi có sạc lại."""
+    attempts, waited = [], None
+    while True:
+        pause = wait_for_mains(name)
+        if pause is not None:
+            waited = (waited or 0.0) + pause
+        started = time.monotonic()
+        with BatteryWatch() as watch:
+            execution = run()
+        attempt = {"attempt": len(attempts) + 1, "returncode": execution.returncode,
+                   "timed_out": execution_timed_out(execution), "on_battery": watch.seen,
+                   "seconds": round(time.monotonic() - started, 3)}
+        attempts.append(attempt)
+        if len(attempts) == 2 or not (attempt["timed_out"] and watch.seen):
+            return execution, attempts, waited
+        log = directory / f"{name}.attempt1.log"
+        log.write_text(execution.output, encoding="utf-8")
+        attempt["log"] = str(log)
+        print(f"[{name}] timeout trong lúc có chạy pin - chạy lại một lần khi có sạc", file=sys.stderr, flush=True)
+
+
 def run_gate(selected: list[Check], directory: Path, runner=run_process, inject: str | None = None,
              confirmations: dict | None = None, prepare=prepare_ui) -> list[dict]:
     directory.mkdir(parents=True, exist_ok=True)
@@ -918,6 +1019,7 @@ def run_gate(selected: list[Check], directory: Path, runner=run_process, inject:
     ui_error = None
     for check in selected:
         start = time.monotonic()
+        attempts, waited = [], None
         row = dict(check=check.name, result="FAIL", counts={}, seconds=0.0, command=check.command,
                    cwd=str(check.cwd), timeout=check.timeout)
         artifact = directory / (check.name + ".json")
@@ -962,7 +1064,7 @@ def run_gate(selected: list[Check], directory: Path, runner=run_process, inject:
                                      + repr(str(cwd.parent.parent)) + "; raise SystemExit(pytest.main("
                                      + repr(check.command[5:]) + "))")
                         row["command"] = command
-                execution = runner(command, cwd, check.timeout)
+                execution, attempts, waited = run_on_mains(check.name, lambda: runner(command, cwd, check.timeout), directory)
                 row["returncode"] = execution.returncode
                 row["timed_out"] = execution.timed_out
                 log = directory / (check.name + ".log")
@@ -982,7 +1084,13 @@ def run_gate(selected: list[Check], directory: Path, runner=run_process, inject:
                     require(not absent, "Vitest không chứng minh đã chạy DOM: " + ", ".join(absent))
         except Exception as exc:
             row.update(result="FAIL", detail=str(exc))
-        row["seconds"] = round(time.monotonic() - start, 3)
+        if waited is not None:
+            row["power_wait_seconds"] = waited
+        if len(attempts) > 1:
+            if not isinstance(row.get("evidence"), dict):
+                row["evidence"] = {}
+            row["evidence"]["power_attempts"] = attempts
+        row["seconds"] = round(time.monotonic() - start - (waited or 0.0), 3)
         rows.append(row)
         print(f"[{check.name}] {row['result']} ({row['seconds']:.1f}s)", file=sys.stderr, flush=True)
     return rows
