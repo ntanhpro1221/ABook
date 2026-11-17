@@ -32,11 +32,12 @@ beforeEach(() => {
 });
 afterEach(async () => { await act(() => root.unmount()); vi.runAllTimers(); vi.useRealTimers(); vi.restoreAllMocks(); document.body.replaceChildren(); });
 
-it("shows an ellipsized author line directly below the library title", async () => {
+it("shows the whole author directly below the library title, fitted to one line, never ellipsized", async () => {
   state.books = [{ ...state.books[0], author: "Người Viết Có Tên Dài", stage: "text" }];
   await act(() => root.render(<MemoryRouter><LibraryScreen /></MemoryRouter>));
-  const author = [...main.querySelectorAll("p")].find(element => element.textContent === "Người Viết Có Tên Dài");
-  expect(author?.classList.contains("truncate")).toBe(true);
+  const author = [...main.querySelectorAll("[data-one-line-fit]")].find(element => element.textContent === "Người Viết Có Tên Dài");
+  expect(author).toBeTruthy();
+  expect(author?.className).not.toMatch(/(?:truncate|line-clamp-\d)/);
   expect(author?.previousElementSibling?.textContent).toBe("Book 0");
   expect(main.querySelector("[data-tile-sub]")?.textContent).not.toContain("Người Viết Có Tên Dài");
   expect(main.querySelector("[data-tile-sub]")?.textContent).toContain("1 chương");

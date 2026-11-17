@@ -129,18 +129,17 @@ Interactive {
         font.pixelSize: Theme.sizeBodySmall
         font.weight: Theme.weightMedium
     }
-    Text {
+    // Tác giả là chữ người dùng: một dòng qua OneLineFit (thu cỡ, không vừa thì xuống dòng), không bao giờ "…" - như web và điện thoại.
+    OneLineFit {
         id: authorText
         objectName: "bookCellAuthor"
         x: 0
         y: titleText.y + titleText.height
-        width: root.coverWidth
+        room: root.coverWidth
         height: text !== "" ? implicitHeight : 0
         text: root.book.author || ""
         color: Theme.text2
-        font.pixelSize: Theme.sizeCaption
-        maximumLineCount: 1   // text-cut-ok: one author line below the two-line title
-        elide: Text.ElideRight   // text-cut-ok: full author appears on the book page
+        baseSize: Theme.sizeCaption
     }
     Text {
         id: subtitleText

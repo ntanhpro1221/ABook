@@ -6,6 +6,7 @@ import vn.abook.player.ui.motion.ContentLayout
 import vn.abook.player.S
 
 import vn.abook.player.ui.components.ClockLabel
+import vn.abook.player.ui.components.OneLineFit
 import vn.abook.player.ui.components.ProgressFill
 import androidx.compose.ui.text.style.TextOverflow
 import vn.abook.player.ui.data.CoverArt
@@ -353,7 +354,8 @@ private fun BookTile(
             }
         }
         name()
-        Reveal(lead.author.isNotEmpty()) { BasicText(lead.author, Modifier.fillMaxWidth().semantics { if (active()) testTag = "tile_author" }, style = Abook.type.caption, maxLines = 1, overflow = TextOverflow.Ellipsis) }
+        // Tác giả là chữ người dùng: một dòng qua OneLineFit (thu cỡ, không vừa thì xuống dòng), không bao giờ "…" - như web và Qt.
+        Reveal(lead.author.isNotEmpty()) { BasicText(lead.author, Modifier.fillMaxWidth().semantics { if (active()) testTag = "tile_author" }, style = Abook.type.caption, autoSize = OneLineFit.of(Abook.type.caption)) }
         line()
     }
 }

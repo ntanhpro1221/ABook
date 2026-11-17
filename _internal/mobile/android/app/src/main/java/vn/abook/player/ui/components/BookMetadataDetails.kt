@@ -34,7 +34,8 @@ fun BookMetadataDetails(book: ListenBook) {
         Reveal(metadata.summary.isNotEmpty()) { Column(verticalArrangement = Arrangement.spacedBy(Dim.s8)) {
             BasicText(S.s_tom_tat_b4bb3064, style = Abook.type.label)
             BasicText(metadata.summary, Modifier.fillMaxWidth().animateContentSize(tween(if (expanded) MotionMs.MEDIUM else MotionMs.MEDIUM_OUT, easing = if (expanded) Motion.Decelerate else Motion.Accelerate)),
-                style = Abook.type.bodySmall.copy(color = Abook.colors.text2), maxLines = if (expanded) Int.MAX_VALUE else 3, overflow = TextOverflow.Clip,
+                style = Abook.type.bodySmall.copy(color = Abook.colors.text2), // cắt-có-chủ-ý: tóm tắt thu gọn 3 dòng, nút Xem thêm mở trọn (web: chiều cao + overflow-hidden, Qt: clip - cùng một quyết định)
+                maxLines = if (expanded) Int.MAX_VALUE else 3, overflow = TextOverflow.Clip,
                 onTextLayout = { if (!expanded) overflows = it.hasVisualOverflow })
             Reveal(overflows || expanded) { InlineActionRow(if (expanded) S.s_thu_gon_1f6bf2c3 else S.s_xem_them_e0ac1b1e, { expanded = !expanded }, "book_summary_toggle",
                 icon = if (expanded) LucidePaths.CHEVRON_UP else LucidePaths.CHEVRON_DOWN)

@@ -56,6 +56,18 @@ Item {
             waitForRendering(host)
             capture("card")
         }
+        function test_longAuthorIsNeverCut() {
+            // Tác giả là chữ người dùng: thu cỡ hay xuống dòng (OneLineFit), không bao giờ "…".
+            const long = Object.assign({}, book, {author: "Người Viết Có Một Cái Tên Dài Hơn Cả Bề Ngang Của Bìa Sách"})
+            const value = createTemporaryObject(card, host, {width: 180, x: 24, y: 24, coverWidth: 180, title: long.title, book: long})
+            verify(value !== null)
+            const author = findChild(value, "bookCellAuthor")
+            compare(author.text, long.author)
+            compare(author.elide, Text.ElideNone)
+            verify(!author.truncated)
+            verify(author.fit === "shrunk" || author.fit === "wrap", author.fit)
+            verify(author.width <= 180)
+        }
         function test_missingMetadata() {
             const value = createTemporaryObject(details, host, {width: 372, book: {}})
             compare(value.summary, "")

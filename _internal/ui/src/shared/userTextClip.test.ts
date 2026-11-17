@@ -5,8 +5,8 @@ import { cwd } from "node:process";
 import { expect, it } from "vitest";
 
 const root = `${cwd()}/src`;
-/** Biểu thức trong JSX in tên sách / chương / tên do người dùng đặt. */
-const USER_TEXT = /book\.title|bookTitle|chapterTitle|chapter\.(sub)?title|fullTitle|displayTitle\(|titleOf\(|labels\.get\(|item\.label|\{item\.name\}|active\.name|^\{(name|title|sub|where)\}$/;
+/** Biểu thức trong JSX in tên sách / chương / tác giả / tên do người dùng đặt. */
+const USER_TEXT = /book\.title|bookTitle|\.author\b|^\{author\}$|chapterTitle|chapter\.(sub)?title|fullTitle|displayTitle\(|titleOf\(|labels\.get\(|item\.label|\{item\.name\}|active\.name|^\{(name|title|sub|where)\}$/;
 /** Chỗ còn cắt có lý do (đã ghi trong báo cáo, chờ chủ sách quyết): thanh phát thu nhỏ cao cố định một dòng tên chương + một dòng tên sách (DESIGN 6),
  *  tên đầy đủ ở tooltip `title` của nút. */
 const ALLOWED = new Set(["listen/PlayerViews.tsx:{track.chapterTitle}#mini", "listen/PlayerViews.tsx:{track.bookTitle}#mini"]);
