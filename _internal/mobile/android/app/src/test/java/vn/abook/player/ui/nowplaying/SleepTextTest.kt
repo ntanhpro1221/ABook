@@ -34,6 +34,17 @@ class SleepTextTest {
         assertFalse(SleepText.recentlyStopped(PlayerSleep(SleepKind.Off), 5))
     }
 
+    /** Soát 0.4.173 B8: lựa chọn còn giữ sau lần tự dừng (không còn là "tắt") - dòng giờ tắt tiếng vẫn hiện như máy tính và web; nút "Bật lại" chỉ khi đã tắt hẳn. */
+    @Test
+    fun `the stopped line also shows while the choice is kept, the restart only once it is off`() {
+        val kept = PlayerSleep(SleepKind.Minutes, 15, counting = false, stoppedAtMs = 1_000_000)
+        assertTrue(SleepText.recentlyStopped(kept, 1_000_000 + 60_000))
+        assertFalse(SleepText.restartOffered(kept, 1_000_000 + 60_000))
+        val off = PlayerSleep(SleepKind.Off, stoppedAtMs = 1_000_000)
+        assertTrue(SleepText.restartOffered(off, 1_000_000 + 60_000))
+        assertFalse(SleepText.restartOffered(off, 1_000_000 + 30 * 60_000))
+    }
+
     @Test
     fun `stopped line shows the clock in 24 hour form`() {
         val utc = TimeZone.getTimeZone("UTC")

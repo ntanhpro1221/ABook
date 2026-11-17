@@ -52,7 +52,9 @@ object SleepTimer {
         ListenerActivity.evidence.awake(SystemClock.elapsedRealtime())
         if (mode == Mode.OFF) return
         if (automaticReason == "schedule" && scheduleFor.isNotEmpty() && scheduleFor != scheduleWindow()) { turnOff(); return }
-        if (activityResets) resetCycle(now)
+        // Tắt "Thao tác hẹn lại": thao tác thường không đặt lại đồng hồ, nhưng lúc đang nhỏ dần vẫn là "Hẹn lại" - như máy tính và web (soát 0.4.173 B9).
+        // Cú lắc có đường riêng ([applyShake]) nên không hẹn lại hai lần.
+        if (activityResets) resetCycle(now) else if (source != "shake" && Playback.fadeLevel < 1f) extend()
         Bedtime.interaction(source)
     }
 
@@ -131,6 +133,35 @@ object SleepTimer {
         if (timer == null || mode != Mode.OFF) return
         scheduleOffFor = timer.optString("disabledWindow")
         if (timer.optString("selection") == "off") return
+        if (!adoptSaved(timer, now)) ListenPrefs.saveTimer(null)
+    }
+
+    /**
+     * Đổi sách hay hồ sơ nghe: lựa chọn hẹn giờ đi theo từng (sách, hồ sơ) - sách vừa mở nhận lại lựa chọn của chính nó (đủ một lượt, đứng chờ phát),
+     * sách cũ giữ lựa chọn của nó cho lần quay lại. Như máy tính (Player::restoreSleep) và web (readSleepSelection); không tắt hẹn giờ, không khoá
+     * lịch đêm (trước đây đổi sách là [cancel] - soát 0.4.173 B7).
+     */
+    internal fun adopt(book: String, record: String, now: Long = System.currentTimeMillis()) {
+        if (mode != Mode.OFF) Bedtime.timerOff()
+        mode = Mode.OFF
+        selectedMode = Mode.OFF
+        retained = false
+        automaticReason = ""
+        scheduleFor = ""
+        stoppedAtMs = 0L
+        Playback.player?.pauseAtEndOfMediaItems = false
+        restoreVolume()
+        ownerBook = book
+        ownerRecord = record
+        ListenPrefs.savedTimer(book, record)?.let { adoptSaved(it, now) }
+        Motion.refresh()
+        persist(now)
+        Playback.emit("sleep")
+    }
+
+    /** Một lựa chọn đã lưu thành hẹn giờ đứng chờ phát; false khi nó không còn dùng được (đã tắt, sai miền, lịch của đêm khác). */
+    private fun adoptSaved(timer: JSONObject, now: Long): Boolean {
+        if (timer.optString("selection") == "off") return false
         val picked = timer.optInt("minutes")
         val kind = timer.optString("selection")
         val count = timer.optInt("chapters", 1)
@@ -138,8 +169,7 @@ object SleepTimer {
         if (timer.optString("bookId").isEmpty() || source !in listOf("manual", "schedule") ||
             (kind != "minutes" && kind != "chapter") || (kind == "minutes" && !minutesAllowed(picked)) ||
             count !in 1..10 || (source == "schedule" && timer.optString("window") != scheduleWindow(Calendar.getInstance().apply { timeInMillis = now }))) {
-            ListenPrefs.saveTimer(null)
-            return
+            return false
         }
         automaticReason = if (source == "manual") "" else source
         scheduleFor = timer.optString("window")
@@ -156,6 +186,7 @@ object SleepTimer {
         warned = false
         runningSinceMs = 0L
         retained = true
+        return true
     }
 
     fun describe(now: Long = System.currentTimeMillis()): JSONObject {
@@ -181,13 +212,13 @@ object SleepTimer {
 
     /** Gọi khi trình phát bắt đầu/ngừng phát: đồng hồ hẹn giờ chạy/đứng theo. */
     fun checkOwner() {
-        if (mode != Mode.OFF && (ownerBook != Playback.bookId || ownerRecord != Playback.recordId)) cancel()
+        if (ownerBook != Playback.bookId || ownerRecord != Playback.recordId) adopt(Playback.bookId, Playback.recordId)
     }
 
     /** Only playback advances the countdown; a retained cycle restarts in full. */
     fun onPlaying(isPlaying: Boolean) {
+        if (isPlaying && (ownerBook != Playback.bookId || ownerRecord != Playback.recordId)) adopt(Playback.bookId, Playback.recordId)
         if (mode == Mode.OFF) return
-        if (isPlaying && (ownerBook != Playback.bookId || ownerRecord != Playback.recordId)) { cancel(); return }
         val now = System.currentTimeMillis()
         if (automaticReason == "schedule" && scheduleFor != scheduleWindow()) { turnOff(); return }
         if (isPlaying && retained) {

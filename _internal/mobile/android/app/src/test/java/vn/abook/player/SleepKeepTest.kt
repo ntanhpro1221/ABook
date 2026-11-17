@@ -141,4 +141,47 @@ class SleepKeepTest {
         }
         assertEquals("Đang tạm dừng - đồng hồ cũng dừng.", SleepText.pausedNote)
     }
+
+    private fun openBook(book: String, record: String = "reader") {
+        Playback::class.java.getDeclaredField("bookId").also { it.isAccessible = true }.set(Playback, book)
+        Playback::class.java.getDeclaredField("recordId").also { it.isAccessible = true }.set(Playback, record)
+        SleepTimer.checkOwner()
+    }
+
+    /** Soát 0.4.173 B7: như máy tính và web, hẹn giờ là của từng (sách, hồ sơ) - đổi sách không tắt nó, quay lại thì còn nguyên. */
+    @Test fun eachBookKeepsItsOwnTimerAndSwitchingNeitherCancelsNorLocksTheNight() {
+        val disabled = field("scheduleOffFor")
+        disabled.set(SleepTimer, "")
+        SleepTimer.setMinutes(30)
+        openBook("other-book")
+        assertEquals("a book never timed starts without a timer", SleepTimer.Mode.OFF, SleepTimer.mode)
+        assertEquals("switching books is not the listener turning the night schedule off", "", disabled.get(SleepTimer))
+        SleepTimer.setEndOfChapter(2)
+        openBook("sleep-book")
+        assertEquals(SleepTimer.Mode.MINUTES, SleepTimer.mode)
+        assertEquals(1800.0, SleepTimer.describe().getDouble("remaining"), 0.01)
+        assertFalse("a full cycle, paused until playback", SleepTimer.describe().getBoolean("counting"))
+        openBook("other-book")
+        assertEquals(SleepTimer.Mode.CHAPTER, SleepTimer.mode)
+        assertEquals(2, SleepTimer.chapters)
+        openBook("sleep-book", "another-reader")
+        assertEquals("another listening profile has its own choice", SleepTimer.Mode.OFF, SleepTimer.mode)
+        openBook("sleep-book")
+        SleepTimer.cancel()
+        openBook("other-book")
+        openBook("sleep-book")
+        assertEquals("turned off stays off for that book", SleepTimer.Mode.OFF, SleepTimer.mode)
+    }
+
+    @Test fun theChoicePerBookSurvivesProcessRecreation() {
+        SleepTimer.setMinutes(20)
+        openBook("other-book")
+        assertTrue(DiskWrites.flush(TestTime.ms(5_000)))
+        reset()
+        field("ownerBook").set(SleepTimer, "")
+        ListenPrefs.load()
+        openBook("sleep-book")
+        assertEquals(SleepTimer.Mode.MINUTES, SleepTimer.mode)
+        assertEquals(1200.0, SleepTimer.describe().getDouble("remaining"), 0.01)
+    }
 }

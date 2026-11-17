@@ -154,3 +154,17 @@ it("night schedule waits for idle evidence, gives its reason and respects cancel
   await elapsed(300_000);
   expect(actions.sleep.kind).toBe("off");
 });
+
+// Soát 0.4.173 B13a: nút "Nghe tiếp" của lịch đêm lúc đang tạm dừng hẹn lại VÀ phát tiếp, như máy tính và điện thoại.
+it("the night schedule's continue button also resumes a paused player", async () => {
+  await mount(true); osIdle = 121_000;
+  await elapsed(121_000);
+  expect(actions.sleep.kind).toBe("minutes");
+  const options = h.toast.mock.calls.find(([text]) => text === AUTO_SLEEP_SCHEDULE)![1] as { action: { onClick: () => void } };
+  await act(async () => { engine.pause(); });
+  expect(paused).toBe(true);
+  await act(async () => { options.action.onClick(); await vi.advanceTimersByTimeAsync(3000); });
+  expect(actions.sleep).toMatchObject({ kind: "minutes", minutes: 30 });
+  expect(engine.play).toHaveBeenCalled();
+  expect(paused).toBe(false);
+});

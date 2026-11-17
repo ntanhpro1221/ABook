@@ -3,6 +3,7 @@ package vn.abook.player
 import vn.abook.player.ui.components.ValuePickerLogic
 import vn.abook.player.ui.components.ValueSpec
 import vn.abook.player.ui.components.ValueSpecs
+import org.json.JSONArray
 import org.json.JSONObject
 import java.io.File
 
@@ -139,9 +140,47 @@ object ListenPrefs {
     fun saveTimer(timer: JSONObject?) {
         val target = file()
         val snapshot = timer?.let { JSONObject(it.toString()) }
+        val book = snapshot?.optString("bookId").orEmpty()
+        val key = timerKey(book, snapshot?.optString("recordId").orEmpty())
+        // Lựa chọn của từng (sách, hồ sơ nghe), như máy tính (Player::persistSleep) và web (saveSleepSelection): đổi sách rồi quay lại thì
+        // hẹn giờ của sách ấy còn nguyên ([SleepTimer.checkOwner], soát 0.4.173 B7).
+        if (snapshot != null && book.isNotEmpty()) synchronized(timerLock) { putTimer(remembered(target), key, snapshot) }
         DiskWrites.post("ABookPrefs") {
-            update(target) { stored -> if (snapshot == null) stored.remove("timer") else stored.put("timer", snapshot) }
+            update(target) { stored ->
+                if (snapshot == null) stored.remove("timer") else stored.put("timer", snapshot)
+                if (snapshot != null && book.isNotEmpty()) stored.put("timers", putTimer(stored.optJSONObject("timers") ?: JSONObject(), key, snapshot))
+            }
         }
+    }
+
+    /** Hẹn giờ đã chọn của (sách, hồ sơ nghe) - từ bộ nhớ (nạp một lần lúc [load]), không đọc đĩa trên luồng chính; null = chưa từng hẹn. */
+    fun savedTimer(book: String, record: String): JSONObject? = synchronized(timerLock) {
+        remembered(file()).optJSONObject(timerKey(book, record))?.let { JSONObject(it.toString()) }
+    }
+
+    private const val MAX_TIMERS = 200
+    private var timers = JSONObject()
+    private var timersFile: File? = null
+    /** Khoá riêng của bản trong bộ nhớ: [update] giữ khoá của object suốt lúc ghi đĩa, luồng chính không được chờ nó. */
+    private val timerLock = Any()
+
+    private fun timerKey(book: String, record: String) = JSONArray().put(book).put(record).toString()
+
+    /** Bản trong bộ nhớ của `timers`; thư mục lưu đổi (bài thử) thì nạp lại từ file ấy. */
+    private fun remembered(target: File): JSONObject {
+        if (timersFile != target) {
+            timersFile = target
+            timers = (try { Store.readJson(target) } catch (error: Exception) { null })?.optJSONObject("timers") ?: JSONObject()
+        }
+        return timers
+    }
+
+    private fun putTimer(all: JSONObject, key: String, timer: JSONObject): JSONObject {
+        all.remove(key)
+        all.put(key, JSONObject(timer.toString()))
+        val keys = all.keys().asSequence().toList()
+        for (old in keys.take((keys.size - MAX_TIMERS).coerceAtLeast(0))) all.remove(old) // giữ những sách nghe gần nhất
+        return all
     }
 
     /** Đọc - sửa - ghi cả file dưới khoá riêng: hẹn giờ (luồng ghi nền) và tuỳ chọn ([remember]) không ghi đè phần của nhau. */
@@ -166,6 +205,10 @@ object ListenPrefs {
     fun load(now: Long = System.currentTimeMillis()) {
         DiskWrites.flush() // đọc sau mọi lần ghi hẹn giờ đã giao
         val stored = try { Store.readJson(file()) } catch (error: Exception) { null }
+        synchronized(timerLock) {
+            timersFile = file()
+            timers = stored?.optJSONObject("timers") ?: JSONObject()
+        }
         if (stored != null) apply(stored, startup = true)
         SleepTimer.restore(stored?.optJSONObject("timer"), now)
     }

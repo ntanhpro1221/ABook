@@ -164,7 +164,12 @@ void Player::watchInput() {
 void Player::noteInteraction(const QString &source) {
     Q_UNUSED(source);
     m_lastActivity = m_now();
-    if (!m_activityResets || m_sleep.kind == Sleep::Off) return;
+    if (m_sleep.kind == Sleep::Off) return;
+    // Tắt "Thao tác hẹn lại": thao tác thường không đặt lại đồng hồ, nhưng lúc đang nhỏ dần vẫn là "Hẹn lại" - như điện thoại lắc máy (soát 0.4.173 B9).
+    if (!m_activityResets) {
+        if (m_fading) extendSleep();
+        return;
+    }
     const Sleep cycle = !m_sleepRetained && m_sleep.kind == Sleep::Minutes && m_selectedSleep.kind == Sleep::Chapter ? m_sleep : m_selectedSleep;
     endFade();
     resetSleepMark();

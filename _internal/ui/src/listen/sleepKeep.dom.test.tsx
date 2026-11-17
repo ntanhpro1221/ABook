@@ -45,11 +45,11 @@ beforeEach(() => {
 });
 afterEach(async () => { await act(() => root.unmount()); document.body.replaceChildren(); vi.useRealTimers(); vi.unstubAllGlobals(); });
 
-async function mount(schedule = false, reader: (() => Promise<number | null>) | undefined = async () => osIdle) {
+async function mount(schedule = false, reader: (() => Promise<number | null>) | undefined = async () => osIdle, activityResets = true) {
   const source = { kind: "desktop", audioUrl: () => "/audio", saveProgress: async () => {}, beginProgress: async () => {},
     setRate: async () => {}, book: async () => book } as unknown as ListenSource;
   await act(() => root.render(<QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { queryFn: async () => [], retry: false } } })}>
-    <SourceProvider source={source}><PlayerProvider engine={engine} keyboard={false} systemIdleReader={reader}
+    <SourceProvider source={source}><PlayerProvider engine={engine} keyboard={false} systemIdleReader={reader} activityResets={activityResets} fadeSeconds={10}
       sleepSchedule={schedule ? { from: "22:00", to: "06:00", minutes: 30 } : null}><Probe /></PlayerProvider></SourceProvider>
   </QueryClientProvider>));
   await act(async () => { actions.prepare(book, chapters, 1, 12); paused = false; fire("play"); fire("playing"); });
@@ -137,4 +137,19 @@ it("chapter expiry retains the original count; extension only changes this cycle
   await hear(601);
   expect(paused).toBe(true);
   expect(actions.sleep).toEqual({ kind: "chapter", chapters: 2 });
+});
+
+// Soát 0.4.173 B9: tắt "Thao tác hẹn lại" thì thao tác thường không đặt lại đồng hồ, nhưng lúc đang nhỏ dần vẫn hẹn lại - như máy tính và điện thoại.
+it("with activity resets off, input extends only while fading", async () => {
+  await mount(false, async () => osIdle, false);
+  await act(async () => { actions.setSleep({ kind: "minutes", minutes: 1 }); });
+  await hear(20);
+  await act(async () => { window.dispatchEvent(new Event("keydown")); });
+  expect(actions.sleep.kind === "minutes" && actions.sleep.leftMs).toBeLessThan(41_000);
+  expect(actions.fading).toBe(false);
+  await hear(33);
+  expect(actions.fading).toBe(true);
+  await act(async () => { window.dispatchEvent(new Event("keydown")); });
+  expect(actions.fading).toBe(false);
+  expect(actions.sleep).toMatchObject({ kind: "minutes", minutes: 1, leftMs: 60_000 });
 });

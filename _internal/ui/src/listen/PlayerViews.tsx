@@ -71,7 +71,7 @@ import { canPlay, continuingPart, newerElsewhere, otherBooksToHear, partToContin
 import { SKIP_SECONDS, useNowPlaying, usePlayer, type PlayerValue } from "./player";
 import { ValuePicker } from "@/shared/ValuePicker";
 import { VALUE_SPECS, formatNumber } from "@/shared/valuePickerLogic";
-import { chaptersOf, sleepButtonLabel, sleepExtendLabel, sleepExtendMinutes, sleepExtended, sleepLabel, sleepLeftMs, sleepPausedNote, sleepSpoken, type SleepMode, type SleepRequest } from "./sleep";
+import { chaptersOf, sleepButtonLabel, sleepExtendLabel, sleepExtendMinutes, sleepExtended, sleepLabel, sleepLeftMs, sleepPausedNote, sleepRestartOffered, sleepSpoken, sleepStoppedRecently, type SleepMode, type SleepRequest } from "./sleep";
 import { useVoiceSample } from "./VoiceSettings";
 import { genderLabel, groupedVoices, groupLabel, voiceSections } from "./voiceGroups";
 import { revealVoiceSettings } from "./voiceSettingsLink";
@@ -964,7 +964,8 @@ export function SleepMenu({ look = "chip" }: { look?: MenuLook }) {
   // Thẻ S.s_toi_qua_920edeaa chỉ đáng nhắc khi người nghe đã từng có đêm nào được ghi lại (chưa có thì nhắc là nhắc một thứ họ chưa thấy bao giờ).
   const hadNight = Boolean(useLastNight().data);
   const now = useTicker(sleep.kind === "minutes" && sleep.since !== null);
-  const recentlyStopped = sleep.kind === "off" && sleepStoppedAt !== null && now - sleepStoppedAt < 30 * 60_000;
+  // Dòng giờ tắt tiếng hiện cả khi lựa chọn còn giữ sau lần tự dừng; nút "Bật lại" chỉ khi đã tắt hẳn - như máy tính và điện thoại (soát 0.4.173 B8).
+  const stopped = sleepStoppedRecently(sleepStoppedAt, now);
   return (
     <MotionRegion as={look === "chip" ? "div" : "span"} className={look === "row" ? "grid grid-cols-[minmax(0,1fr)]" : look === "action" ? "inline-flex" : undefined}><SleepPicker
       look={look}
@@ -975,12 +976,16 @@ export function SleepMenu({ look = "chip" }: { look?: MenuLook }) {
       lastMinutes={lastSleepMinutes}
       onExtend={() => extendSleep()}
       onSet={setSleep}
+      stopped={
+        stopped ? (
+          <div className="text-sm" data-testid="sleep-stopped">{S.s_hen_gio_da_tat_tieng_luc_ac7c0df9}{" "}
+            <span className="font-medium">{new Date(sleepStoppedAt!).toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" })}</span>.
+          </div>
+        ) : null
+      }
       idle={
-        recentlyStopped ? (
-          <div className="px-2 pb-2 pt-2">
-            <div className="text-sm">{S.s_hen_gio_da_tat_tieng_luc_ac7c0df9}{" "}
-              <span className="font-medium">{new Date(sleepStoppedAt!).toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" })}</span>.
-            </div>
+        sleepRestartOffered(sleep, sleepStoppedAt, now) ? (
+          <div className="px-2 pb-2">
             <Popover.Close asChild>
               <button
                 type="button"
@@ -1033,6 +1038,7 @@ function SleepPicker({
   disabled = false,
   extendMinutes,
   idle = null,
+  stopped = null,
   note,
   look = "chip",
   lastMinutes = 30,
@@ -1050,6 +1056,8 @@ function SleepPicker({
   onSet: (request: SleepRequest) => void;
   /** Hiện thay phần S.s_copy_90638c7194c5 khi chưa hẹn gì. */
   idle?: ReactNode;
+  /** Dòng "Hẹn giờ đã tắt tiếng lúc …" (đang hẹn hay đã tắt đều hiện). */
+  stopped?: ReactNode;
   note: ReactNode;
   /** Số phút bộ chọn đứng sẵn khi chưa hẹn phút (lần hẹn trước). */
   lastMinutes?: number;
@@ -1093,6 +1101,7 @@ function SleepPicker({
           {sleep.kind === "minutes" && sleep.since === null && left !== null && (
             <div className="mt-1 text-xs text-fg-2">{sleepPausedNote()}</div>
           )}
+          {stopped && <div className="mt-2">{stopped}</div>}
           <div className="mt-3 flex gap-2">
             <Popover.Close asChild>
               <button
@@ -1109,7 +1118,10 @@ function SleepPicker({
           </div>
         </div>
       ) : (
-        idle
+        <>
+          {stopped && <div className="px-2 pt-2">{stopped}</div>}
+          {idle && <div className="pt-2">{idle}</div>}
+        </>
       )}
       <div className="px-2 pb-1 pt-1 text-xs font-medium text-fg-2">{active ? S.s_dat_lai_51a46825 : S.s_dung_phat_sau_41477737}</div>
       {/* Bộ chọn giá trị (DESIGN mục 6, chủ sách 09-11): chip tiêu biểu một chạm + kéo / -,+ / gõ số ra mọi số phút 1-240; hàng riêng dưới cùng
