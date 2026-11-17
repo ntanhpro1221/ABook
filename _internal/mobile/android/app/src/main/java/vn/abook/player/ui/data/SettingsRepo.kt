@@ -282,7 +282,7 @@ object Voices {
             listOf(
                 Triple("vieneu", S.s_vieneu_338b8a9f, S.s_tren_may_nay_khong_can_mang_c8ad4ea8),
                 Triple("supertonic", S.s_supertonic_b426cb32, S.s_tren_may_nay_khong_can_mang_c8ad4ea8),
-                Triple("device", S.s_giong_cua_may_2404d649, S.s_khong_can_mang_1c7dfe7f),
+                Triple("device", S.s_giong_cua_may_2404d649, S.s_device_voice_group_detail),
             )
     private val SUFFIX = Regex("""^(.*\S)\s+\(([^()]+)\)$""")
 

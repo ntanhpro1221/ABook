@@ -19,8 +19,9 @@ Item {
             settingsSpy.clear()
             Theme.reduceMotion = true; Nav.layers = []; Nav.uiVisible = true
             Platform.reset(); DesktopApi.reset(); Api.bind(DesktopApi, Theme)
-            Api.voiceList = [{id: "local", name: "Tiếng Việt 1", default: true, online: false}, {id: "other", name: "Tiếng Việt 2", online: false}]
+            Api.voiceList = [{id: "device:local", name: "Google ngoại tuyến 1", provider: "device", default: true, online: false}, {id: "device:other", name: "Samsung cần mạng", provider: "device", online: true}]
             DesktopApi.responses["/api/readaloud/voices"] = {status: 200, data: Api.voiceList}
+            DesktopApi.responses["POST /api/readaloud/clip"] = {status: 200, data: {url: "/media/sample.mp3", duration_ms: 4000}}
             Player.open("width", 1, 0, false); Player.pause()
         }
         function cleanup() { settingsSpy.target = null; Nav.layers = []; Theme.reduceMotion = false }
@@ -31,11 +32,39 @@ Item {
             sheet.show(); tryCompare(sheet, "open", true); ready()
             const action = findChild(sheet, "playerVoiceAdd")
             verify(action); compare(action.action, true); compare(action.icon, "plus")
+            const selected = findChild(sheet, "playerVoice_device:local")
+            compare(selected.radio.Accessible.checked, true)
+            const name = findChild(selected, "voiceName")
+            const sample = findChild(selected, "voiceTry")
+            selected.radio.forceActiveFocus()
+            keyClick(Qt.Key_Down)
+            const other = findChild(sheet, "playerVoice_device:other")
+            compare(other.radio.activeFocus, true)
+            keyClick(Qt.Key_Home)
+            compare(selected.radio.activeFocus, true)
+            compare(name.lineCount, 1)
+            verify(sample.mapToItem(selected, 0, 0).x - name.mapToItem(selected, name.width, 0).x >= 12)
+            compare(sample.Accessible.name, "Nghe thử Google ngoại tuyến 1")
+            mouseClick(sample)
+            tryCompare(selected, "playing", true)
+            compare(DesktopApi.requests.filter(r => r.path === "/api/readaloud/clip").pop().body.voice, "device:local")
+            mouseClick(sample)
+            tryCompare(selected, "playing", false)
             settingsSpy.signalName = "settingsRequested"; settingsSpy.target = sheet
             const path = Qt.resolvedUrl("../../build/d2shots/affordance_voice_" + data.tag + ".png").toString().replace(/^file:\/\/\/([A-Za-z]:)/, "$1")
             grabImage(host).save(path); verify(qtUiTree.save(path, host))
             action.forceActiveFocus(); keyClick(Qt.Key_Return)
             compare(settingsSpy.count, 1); compare(sheet.open, false)
+        }
+        function test_voiceClosingCancelsLatePreview() {
+            const sheet = createTemporaryObject(voice, host, {width: host.width, height: host.height})
+            sheet.show(); ready()
+            DesktopApi.delayed = true
+            const selected = findChild(sheet, "playerVoice_device:local")
+            mouseClick(findChild(selected, "voiceTry"))
+            sheet.close()
+            DesktopApi.finish()
+            tryCompare(selected, "playing", false)
         }
         function test_footer_responds_to_pointer() {
             const action = createTemporaryObject(footer, host, {width: 320, text: "Thêm giọng"})

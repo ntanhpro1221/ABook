@@ -40,7 +40,7 @@ Item {
             width: parent.width
             Accessible.role: Accessible.Grouping
             Accessible.name: S.s_can_studio_4b14a373
-            readonly property bool wide: width >= 520
+            readonly property bool wide: width >= 520 && (!root.shownUnfit || peerFlow.natural <= width / 2)
             readonly property real buttons: root.shownUnfit ? peerFlow.height : (root.remote ? 0 : install.height)
             height: 16 + Math.max(words.height, wide ? buttons : words.height + 8 + buttons) + 16
             Icon { y: 16 + 2; name: "cpu"; size: 16; color: Theme.warning }
@@ -99,6 +99,8 @@ Item {
                         icon: "clapperboard"
                         kind: "ghost"
                         size: "sm"
+                        fitName: true
+                        width: Math.min(implicitWidth, root.width - 28)
                         onActivated: root.peerRequested(modelData.id)
                     }
                 }

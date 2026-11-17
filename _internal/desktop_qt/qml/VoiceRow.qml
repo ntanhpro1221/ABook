@@ -3,9 +3,10 @@ import QtQuick
 import ABook
 import "VoiceLogic.js" as VoiceLogic
 
-// Một giọng trong danh sách Cài đặt › Giọng đọc (li của VoiceSettings.tsx): radio "chọn làm mặc định" (dấu tích 20, tên 14/500 xuống dòng ở bất kỳ
-// đâu, giới 12 mực phụ, "Mặc định" 12 màu nhấn) + nút "Nghe thử" / "Dừng" cỡ nhỏ bên phải; vạch chia với giọng trên; lỗi nghe thử nằm ngay dưới
-// hàng vừa bấm. Cả nhóm chỉ một điểm Tab (`tabbable`): mũi tên đổi chọn như radiogroup, nút thử chỉ vào vòng Tab ở đúng giọng ấy.
+// Settings and player share one radio row: one-line name, explicit selection
+// semantics and a separate preview action at least 12 logical pixels away.
+// Gender is shown only when supplied by the engine; failures stay below the row.
+// Each group keeps one radio in the Tab order; its preview is a separate action.
 Item {
     id: root
     property var voice: ({})
@@ -61,43 +62,37 @@ Item {
                 SelectionMark {
                     id: mark
                     selected: root.selected
-                    opacity: saveWait.shown ? 0 : 1
-                Behavior on opacity { NumberAnimation { duration: Theme.motionFast } }
-                    anchors.verticalCenter: parent.verticalCenter
+                    circled: true
+                    y: name.y + (name.firstLineHeight - height) / 2      // dấu chọn đứng giữa DÒNG ĐẦU của tên (tên xuống dòng vẫn thẳng dòng đầu)
                 }
-                PendingIndicator { id: saveWait; anchors.verticalCenter: parent.verticalCenter; pending: root.saving }
-                Text {
+                // Dấu chọn mờ ra khi vòng chờ lưu hiện, mờ vào khi xong (không bật / tắt cứng)
+                Reveal { target: mark; shown: !saveWait.shown }
+                PendingIndicator { id: saveWait; y: name.y + (name.firstLineHeight - height) / 2; pending: root.saving }
+                // Tên dài: thu cỡ cho vừa một dòng, không vừa nữa thì xuống dòng ở cỡ gốc - không "…" (OneLineFit, cùng luật điện thoại và web)
+                OneLineFit {
                     id: name
                     x: 30
-                    width: Math.min(implicitWidth, Math.max(0, radio.width - 30 - (gender.visible ? gender.implicitWidth + 10 : 0) - (marker.visible ? marker.implicitWidth + 10 : 0)))
+                    objectName: "voiceName"
+                    room: Math.max(0, radio.width - 30 - (gender.visible ? gender.implicitWidth + 10 : 0))
                     anchors.verticalCenter: parent.verticalCenter
                     text: root.shown
                     color: Theme.text
-                    wrapMode: Text.WrapAtWordBoundaryOrAnywhere
-                    font.pixelSize: Theme.sizeBodySmall
+                    baseSize: Theme.sizeBodySmall
                     font.weight: Theme.weightMedium
                 }
                 Text {
                     id: gender
                     Reveal { shown: gender.text !== "" }
                     x: name.x + name.width + 10
-                    anchors.verticalCenter: parent.verticalCenter
+                    y: name.y + (name.firstLineHeight - height) / 2
                     text: VoiceLogic.genderLabel(root.voice.gender)
                     color: Theme.text2
-                    font.pixelSize: Theme.sizeCaption
-                }
-                Text {
-                    id: marker
-                    Reveal { shown: root.selected }
-                    x: (gender.visible ? gender.x + gender.implicitWidth : name.x + name.width) + 10
-                    anchors.verticalCenter: parent.verticalCenter
-                    text: S.s_mac_dinh_9a1af367
-                    color: Theme.accentText
                     font.pixelSize: Theme.sizeCaption
                 }
             }
             Button {
                 id: sampleButton
+                objectName: "voiceTry"
                 anchors.right: parent.right
                 anchors.verticalCenter: parent.verticalCenter
                 size: "sm"
@@ -106,7 +101,7 @@ Item {
                 icon: root.playing ? "square" : "play"
                 busy: root.loading
                 activeFocusOnTab: root.tabbable || activeFocus
-                Accessible.name: (root.playing ? S.s_dung_11554138 : S.s_thu_77e1c0d9) + S.s_giong_ded5e045 + (root.voice.name || "")
+                Accessible.name: root.playing ? S.s_dung_nghe_thu_0_c63198da(root.voice.name || "") : S.s_nghe_thu_0_65a85c4d(root.voice.name || "")
                 onActivated: root.sample()
             }
         }

@@ -94,7 +94,7 @@ Item {
                     Flow {
                         objectName: "historyWeek"
                         width: parent.width
-                        spacing: 4
+                        spacing: Theme.s8
                         Accessible.role: Accessible.StaticText
                         Accessible.name: S.s_7_ngay_qua_70c6d33d + Logic.formatLength(root.week) + S.s_nghe_cuon_nay_8e481d62
                         Text { text: S.s_7_ngay_qua_01662a56; color: Theme.text2; font.pixelSize: Theme.sizeBodySmall }

@@ -23,12 +23,12 @@ Item {
         width: root.width - toggle.width - 24
         anchors.verticalCenter: parent.verticalCenter
         spacing: 4
-        Text {
-            width: parent.width
+        OneLineFit {
+            objectName: "deviceToggleLabel"
+            room: parent.width
             text: root.label
             color: toggle.enabled ? Theme.accentText : Theme.text3
-            wrapMode: Text.Wrap
-            font.pixelSize: root.labelSize
+            baseSize: root.labelSize
             font.weight: Theme.weightMedium
         }
         Text { id: textItem;

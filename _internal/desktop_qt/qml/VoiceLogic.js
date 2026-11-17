@@ -36,7 +36,7 @@ var GROUPS = [
     {provider: "viettel", title: KEYED.viettel, detail: S.s_dung_khoa_cua_ban_36c096a0},
     {provider: "vieneu", title: S.s_vieneu_338b8a9f, detail: S.s_tren_may_nay_khong_can_mang_c8ad4ea8},
     {provider: "supertonic", title: S.s_supertonic_b426cb32, detail: S.s_tren_may_nay_khong_can_mang_c8ad4ea8},
-    {provider: "device", title: S.s_giong_cua_may_2404d649, detail: S.s_khong_can_mang_1c7dfe7f}
+    {provider: "device", title: S.s_giong_cua_may_2404d649, detail: S.s_device_voice_group_detail}
 ]
 
 function groupLabel(group) { return group.detail ? group.title + "\u00a0·\u00a0" + group.detail : group.title }

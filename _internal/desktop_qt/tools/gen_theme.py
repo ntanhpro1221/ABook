@@ -333,6 +333,8 @@ def render() -> str:
         a(f"    readonly property int size{name[0].upper()}{name[1:]}: {size}")
         if lh is not None:
             a(f"    readonly property real lineHeight{name[0].upper()}{name[1:]}: {fmt(lh)}")
+    a("    // Tên một dòng (OneLineFit.qml): thu cỡ tới tỉ lệ này cho vừa một dòng, không vừa thì xuống dòng ở cỡ gốc")
+    a(f"    readonly property real oneLineMinScale: {fmt(data['sizes']['ONE_LINE_MIN_SCALE'])}")
     a("")
     a("    // ---- chuyển động (5.2; cùng số với motion.ts) ----")
     for k, v in data["timing"].items():

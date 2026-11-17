@@ -125,6 +125,14 @@ const DESKTOP: Omit<Entry, "platform">[] = [
   { id: "desktop/player-voice", group: "Trình phát", title: "Hộp giọng đọc", route: "/book/gac-xep", act: async () => {
     await desktopTextMore(); await click(/^Giọng đọc:/);
   } },
+  { id: "desktop/player-device-voices", group: "Trình phát", title: "Tên giọng thiết bị", route: "/book/gac-xep", scenario: { deviceVoices: true }, act: async () => {
+    await click(/^Nghe(?! thử)/, document.querySelector("main")!);
+    await playerMore(); await click(/^Giọng đọc:/);
+  } },
+  { id: "desktop/player-long-voice-names", group: "Trình phát", title: "Tên giọng dài", route: "/book/gac-xep", scenario: { deviceVoices: true, longVoiceNames: true }, act: async () => {
+    await click(/^Nghe(?! thử)/, document.querySelector("main")!);
+    await playerMore(); await click(/^Giọng đọc:/);
+  } },
   { id: "desktop/player-music", group: "Trình phát", title: "Hộp nhạc nền", route: "/book/gac-xep", scenario: { music: true }, act: async () => {
     await desktopTextMore(); await click("Âm thanh"); await click("Chọn nhạc");
   } },
@@ -150,6 +158,10 @@ const DESKTOP: Omit<Entry, "platform">[] = [
     await click("Thêm vào thư viện");
   } },
   { id: "desktop/settings", group: "Cài đặt", title: "Cài đặt (gốc)", route: "/settings" },
+  { id: "desktop/settings-device-voices", group: "Cài đặt", title: "Tên giọng thiết bị", route: "/settings/voice",
+    scenario: { installedStudio: true, deviceVoices: true }, storage: { "abook.fold.voice.provider.device": "1" } },
+  { id: "desktop/settings-long-voice-names", group: "Cài đặt", title: "Tên giọng dài", route: "/settings/voice",
+    scenario: { installedStudio: true, deviceVoices: true, longVoiceNames: true }, storage: { "abook.fold.voice.provider.device": "1" } },
   ...(["voice", "listen", "sleep", "look", "devices", "studio", "advanced"] as const).map((group): Omit<Entry, "platform"> => ({
     id: `desktop/settings-${group}`,
     group: "Cài đặt",

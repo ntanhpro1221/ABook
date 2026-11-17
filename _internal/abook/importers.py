@@ -188,7 +188,9 @@ class ImportedBook:
                      "sha256": hashlib.sha256(self.cover_bytes).hexdigest()}
         return {
             "title": self.title, "author": self.author, "language": self.language, "cover": cover,
-            "chapters": [{"title": chapter.title, "text": chapter.text, **({"matter": chapter.matter} if chapter.matter else {})}
+            # `name`: display name shown in the preview (chapter_titles); the stored title and text stay untouched.
+            "chapters": [{"title": chapter.title, "text": chapter.text, **({"name": chapter.name} if chapter.name else {}),
+                          **({"matter": chapter.matter} if chapter.matter else {})}
                          for chapter in self.chapters],
             "notes": list(self.notes),
             **({"splitOffer": self.split_offer, "splitHeadings": self.split_headings} if self.split_offer else {}),

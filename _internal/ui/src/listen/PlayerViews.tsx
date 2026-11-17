@@ -55,6 +55,7 @@ import { BookCover } from "@/shared/BookCover";
 import { Windowed } from "@/shared/Windowed";
 import { reveal } from "@/shared/scrollMemory";
 import { cn } from "@/shared/cn";
+import { FIRST_LINE_ICON, FIRST_LINE_ROW, FIRST_LINE_TEXT, OneLineFit } from "@/shared/OneLineFit";
 import { APP_TITLE } from "@/shared/title";
 import { useMediaQuery } from "@/shared/media";
 import { MUSIC_MODIFIED_NOTE, formatClock, licenseLabel, progressFill, musicCreditText, musicNeedsModifiedNote } from "@/shared/format";
@@ -606,7 +607,7 @@ function MusicMenuFor({ bookId, look, audio = false }: { bookId: string; look: M
       icon={audio ? undefined : EighthNote}
       triggerKey={look === "row" ? [waiting, playing, label, known] : undefined}
       trigger={audio ? null : look === "row"
-        ? (waiting ? <Loader2 className="size-4 animate-spin" aria-hidden="true" /> : <span className="block max-w-32 truncate">{playing ? shortPlaylistLabel(label) : known ? S.s_tat_3286064e : ""}</span>)
+        ? (waiting ? <Loader2 className="size-4 animate-spin" aria-hidden="true" /> : <span className="block max-w-32 break-words">{playing ? shortPlaylistLabel(label) : known ? S.s_tat_3286064e : ""}</span>)
         : <>{waiting ? <Loader2 className="size-4 animate-spin" aria-hidden="true" /> : <EighthNote className="size-4" />}<span className="max-w-40 truncate max-sm:hidden @max-[83rem]:hidden" title={playing ? label : undefined}>{playing ? shortPlaylistLabel(label) : ""}</span></>}
       width="w-72"
     ><MotionRegion>
@@ -750,7 +751,7 @@ export function VoiceMenu({ scope = "bar", look = "chip" }: { scope?: VoiceMenuS
       triggerKey={look === "row" ? current?.id : undefined}
       // Tên giọng hiện cả trên điện thoại: người nghe thấy ngay giọng nào đang đọc, không chỉ một biểu tượng.
       trigger={look === "row"
-        ? <span className="block max-w-32 truncate">{current ? spokenVoiceName(current.name) : ""}</span>
+        ? <span className="block max-w-32 break-words">{current ? spokenVoiceName(current.name) : ""}</span>
         : <><AudioLines className="size-4" /><span className="max-w-24 truncate @max-[75rem]:hidden">{current ? spokenVoiceName(current.name) : ""}</span></>}
       width="w-80 max-w-[calc(100vw-1.5rem)]"
     ><MotionRegion>
@@ -771,7 +772,7 @@ export function VoiceMenu({ scope = "bar", look = "chip" }: { scope?: VoiceMenuS
                   const selected = voice.id === current?.id;
                   const playing = sample.playing === voice.id;
                   return (
-                    <div key={voice.id} data-sheet-choice data-sheet-current={selected ? "" : undefined} className="flex items-center gap-1">
+                    <div key={voice.id} data-sheet-choice data-sheet-current={selected ? "" : undefined} className="flex items-center gap-3">
                       <Popover.Close asChild>
                         <button
                           type="button"
@@ -790,13 +791,13 @@ export function VoiceMenu({ scope = "bar", look = "chip" }: { scope?: VoiceMenuS
                           }}
                           className={cn(
                             "flex min-h-9 min-w-0 flex-1 items-center gap-2 rounded-control px-2 py-1 text-left text-sm transition-colors duration-motion-fast hover:bg-hover max-sm:min-h-[48px]",
+                            FIRST_LINE_ROW,
                             selected ? "font-medium text-accent-text" : "text-fg",
                           )}
                         >
-                          <SelectionMark selected={selected} />
-                          {/* Tên giọng xuống dòng, không cắt "…": menu 252 px từng còn "An (Windo…" - chọn mà không đọc đủ tên (luật choice-label-truncated). */}
-                          <span className="min-w-0 text-pretty [overflow-wrap:anywhere]">{shown}</span>
-                          <Reveal when={genderLabel(voice.gender)}><span className="shrink-0 text-xs font-normal text-fg-2">{genderLabel(voice.gender)}</span></Reveal>
+                          <SelectionMark selected={selected} circled className={FIRST_LINE_ICON} />
+                          <OneLineFit>{shown}</OneLineFit>
+                          <Reveal when={genderLabel(voice.gender)}><span className={cn("shrink-0 text-xs font-normal text-fg-2", FIRST_LINE_TEXT)}>{genderLabel(voice.gender)}</span></Reveal>
                         </button>
                       </Popover.Close>
                       <Reveal when={source.readAloudSample}><button

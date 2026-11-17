@@ -1,4 +1,3 @@
-import { Presence } from "../shared/MotionPresence";
 import { useDestructiveConfirm } from "../shared/DestructiveConfirm";
 import { S } from "../shared/strings.generated";
 import { MusicArt } from "../music/MusicArt";
@@ -21,7 +20,7 @@ import { AutoPickNote } from "@/studio/AutoPickNote";
 import { MusicModuleNotice } from "@/studio/MusicModuleNotice";
 import { MUSIC_CHANGED_ALL, MUSIC_CHANGED_EVENT } from "./musicBed";
 
-import { Reveal } from "../shared/MotionPresence";
+import { Presence, Reveal } from "../shared/MotionPresence";
 // "Nhạc của tôi" trên trang sửa sách (docs/MUSIC_IMPORT.md): nhạc bạn tự có làm nhạc nền. Nhập, xem, xoá ở đây; "Đổi bài" ở từng đoạn
 // nhạc của sách. Cùng JSON ở máy tính (server.py) và điện thoại (LocalStudio.kt, MusicStore.kt).
 

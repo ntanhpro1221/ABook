@@ -26,7 +26,6 @@ import { TrackSheet } from "./TrackSheet";
 import { DownloadControl } from "./DownloadControl";
 import { TickingValue } from "../shared/TickingValue";
 import { ListeningProgress } from "./ListeningProgress";
-import { useDestructiveConfirm } from "../shared/DestructiveConfirm";
 import { Pause } from "lucide-react";
 
 /** Màn "Nhạc" (đích cấp cao nhất, docs/DESIGN.md mục Nhạc): "Đã lưu" (bài đã lưu + Nhạc của tôi) | "Kho nhạc" (cả danh mục: tìm, lọc,
@@ -298,8 +297,7 @@ export function TrackRow({
   /** Hàng nằm trong một `<li>` của danh sách khác (Nhạc trong sách) - khi ấy chính nó không phải mục danh sách. */
   nested?: boolean;
 }) {
-  const { save, unsave, cancel } = useSaveTracks();
-  const deletion = useDestructiveConfirm();
+  const { save, cancel } = useSaveTracks();
   const load = loadOf(track, downloads);
   const previewing = preview.playing?.link === track.link;
   const playable = online || track.downloaded;
@@ -322,12 +320,10 @@ export function TrackRow({
         <DotJoin singleLine className="mt-1 text-xs text-fg-2" parts={[track.creator, load.kind === "failed" ? <span className="text-danger">{S.s_chua_tai_xong_b257419d}</span> : load.kind === "loading" && load.percent !== null ? <TickingValue>{S.s_dang_tai_0_e9a97892(load.percent)}</TickingValue> : typeof track.duration === "number" ? <TickingValue>{formatClock(track.duration)}</TickingValue> : null]} />
       </button>
       {<Presence>{onUse && <Button size="sm" variant="primary" onClick={() => onUse(track.link)}>{S.s_dung_7927ca4e}</Button>}</Presence>}
-      <DownloadControl load={load} online={online} busy={save.isPending || unsave.isPending || cancel.isPending}
-        onSave={() => save.mutate([track.link])} onStop={() => cancel.mutate([track.link])}
-        onDelete={() => deletion.confirm({title: S.s_delete_download_question,
-          description: S.s_delete_download_description(title, formatSize(track.bytes ?? 0)), run: () => unsave.mutateAsync([track.link])})} />
+      <DownloadControl load={load} online={online} busy={save.isPending || cancel.isPending}
+        onSave={() => save.mutate([track.link])} onStop={() => cancel.mutate([track.link])} />
+      {/* Thanh nghe bắt đầu dưới nút nghe thử (ảnh 40 + khe 8), như Qt và điện thoại. */}
       <Reveal when={previewing}><div className="basis-full pl-12"><ListeningProgress preview={preview} /></div></Reveal>
-      {deletion.dialog}
     </Item>
   );
 }

@@ -29,17 +29,16 @@ Collapse {
             y: 8
             width: root.contentWidth
             height: Math.max(line.height, back.height)
-            Icon { x: 0; y: (row.height - 16) / 2; name: "laptop"; size: 16; color: Theme.text2 }
-            Text {
+            Icon { x: 0; y: line.y + line.firstLineHeight / 2 - 8; name: "laptop"; size: 16; color: Theme.text2 }
+            OneLineFit {
                 id: line
                 objectName: "peerLine"
                 x: 28
                 y: (row.height - height) / 2
-                width: row.width - x - 12 - back.width
+                room: row.width - x - 12 - back.width
                 text: TextWrap.keepDots(Peer.peerBarLine(root.name, root.silent, root.listenOnly))
                 color: Theme.text
-                wrapMode: Text.Wrap
-                font.pixelSize: Theme.sizeBodySmall
+                baseSize: Theme.sizeBodySmall
             }
             Button {
                 id: back

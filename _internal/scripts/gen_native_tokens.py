@@ -137,6 +137,9 @@ def sizes(design: str) -> dict[str, object]:
     assert radius, "DESIGN.md §5.5 không còn dòng Bo góc"
     out["RADIUS"] = [int(radius.group(i)) for i in (1, 2, 3)]
     out["TOUCH_PHONE"] = int(re.search(r"Vùng chạm\*\*: tối thiểu (\d+)×\d+ \(điện thoại\)", s).group(1))
+    one_line = re.search(r"\*\*Tên một dòng\*\*[^:]*: chữ thu cỡ tới ([0-9.]+) cỡ gốc", s)
+    assert one_line, "DESIGN.md §5.5 không còn dòng Tên một dòng"
+    out["ONE_LINE_MIN_SCALE"] = float(one_line.group(1))
     return out
 
 
@@ -216,6 +219,8 @@ def render() -> str:
         lines.append(f"    const val {key} = {size[key]}")
     lines += [
         f"    const val READING_LEADING = {number(size['READING_LEADING'])}",
+        "    /** Tên một dòng (OneLineFit): thu cỡ tới tỉ lệ này cho vừa một dòng, không vừa thì xuống dòng ở cỡ gốc. */",
+        f"    const val ONE_LINE_MIN_SCALE = {number(size['ONE_LINE_MIN_SCALE'])}",
         "}",
         "",
         "/** Thời lượng chuyển động (ms): vào / ra. */",
@@ -293,6 +298,11 @@ def render_ts() -> str:
         "",
     ]
     lines += ["export const TIMING = " + json.dumps(tokens()["timing"], indent=2) + " as const;", ""]
+    lines += [
+        "/** Tên một dòng (OneLineFit): thu cỡ tới tỉ lệ này cho vừa một dòng, không vừa thì xuống dòng ở cỡ gốc. */",
+        f"export const ONE_LINE_MIN_SCALE = {tokens()['sizes']['ONE_LINE_MIN_SCALE']:g};",
+        "",
+    ]
     return "\n".join(lines)
 
 

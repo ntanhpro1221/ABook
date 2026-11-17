@@ -11,7 +11,11 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.expandHorizontally
 import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkHorizontally
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
@@ -189,6 +193,7 @@ fun <T : Choice> ChoiceSetting(
     Column(Modifier.fillMaxWidth().padding(top = Dim.s12, bottom = Dim.s4).testTag(tag)) {
         Box(Modifier.fillMaxWidth()) {
             RowLabel(label, hint, Modifier.fillMaxWidth().padding(end = if (pending != null) Dim.s24 else 0.dp))
+            // The slot is always there; PendingIndicator fades its spinner in and out (an idle slot draws nothing).
             PendingIndicator(pending == true, Modifier.align(Alignment.CenterEnd))
         }
         Spacer(Modifier.height(Dim.s4))
@@ -320,6 +325,25 @@ fun Reveal(visible: Boolean, content: @Composable () -> Unit) {
     }
 }
 
+/** Reveal's horizontal twin for an inline slot (a button's leading spinner): opens / closes its width with a fade, never a hard jump.
+ * Reduced motion: the shared short fade. */
+@Composable
+fun RevealInline(visible: Boolean, content: @Composable () -> Unit) {
+    if (vn.abook.player.ui.motion.rememberReducedMotion()) {
+        vn.abook.player.ui.motion.ReducedFade(visible, content)
+        return
+    }
+    AnimatedVisibility(
+        visible = visible,
+        enter = expandHorizontally(tween(MotionMs.FAST, easing = Motion.Decelerate), expandFrom = Alignment.Start) +
+            fadeIn(tween(MotionMs.FAST, easing = Motion.Decelerate)),
+        exit = shrinkHorizontally(tween(MotionMs.FAST_OUT, easing = Motion.Accelerate), shrinkTowards = Alignment.Start) +
+            fadeOut(tween(MotionMs.FAST_OUT, easing = Motion.Accelerate)),
+    ) {
+        content()
+    }
+}
+
 /** Dòng chữ đầu của tên một hàng (16/24): biểu tượng hai bên hàng đứng giữa dòng này. */
 val FirstLine: Dp
     @Composable get() = with(LocalDensity.current) { Abook.type.body.lineHeight.toDp() }
@@ -341,7 +365,7 @@ fun Modifier.onFirstLine(): Modifier {
 }
 
 /**
- * Hàng danh sách (DESIGN.md §6 "Hàng danh sách"): [leading] (biểu tượng) · tên (16, xuống dòng không cắt) + mô tả (14, [RowHint]) · [trailing] hay mũi tên. Cả hai bên thẳng dòng
+ * Hàng danh sách (DESIGN.md §6 "Hàng danh sách"): [leading] (biểu tượng) · tên (16, xuống dòng không cắt; `titleOneLine` thì thu cỡ cho vừa một dòng - [OneLineFit]) + mô tả (14, [RowHint]) · [trailing] hay mũi tên. Cả hai bên thẳng dòng
  * đầu của tên ([onFirstLine]); có `onClick` thì CẢ hàng là chỗ chạm. Hàng cao ít nhất 56, đệm trên dưới 16.
  */
 @Composable
@@ -354,6 +378,7 @@ fun ListItem(
     hintColor: Color = Abook.colors.text2,
     titleColor: Color = Abook.colors.text,
     titleStyle: TextStyle = Abook.type.body,
+    titleOneLine: Boolean = false,
     leading: (@Composable () -> Unit)? = null,
     leadingWidth: Dp = Dim.s24,
     leadingGap: Dp = Dim.s12,
@@ -376,7 +401,7 @@ fun ListItem(
                 }
             }
             Column(Modifier.weight(1f).heightIn(min = if (below != null) 0.dp else 56.dp).padding(top = RowPad, bottom = if (below != null) 0.dp else RowPad)) {
-                BasicText(title, style = titleStyle.copy(color = titleColor), modifier = Modifier.testTag("row_title"))
+                BasicText(title, style = titleStyle.copy(color = titleColor), modifier = Modifier.testTag("row_title"), autoSize = if (titleOneLine) OneLineFit.of(titleStyle) else null)
                 SwapContent(hint, contentKey = { hint -> hint != null }, layout = ContentLayout.Column) { hint ->
                     if (hint != null) {
                         Spacer(Modifier.height(2.dp))

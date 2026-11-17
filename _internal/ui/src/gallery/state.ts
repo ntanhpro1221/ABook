@@ -3,6 +3,10 @@
 
 export interface Scenario {
   volumes?: boolean;
+  /** Explicit device-voice fixtures for checking engine names and preview controls. */
+  deviceVoices?: boolean;
+  /** Thêm hai giọng tên dài vào danh sách giọng thiết bị: tên vừa dài hơn chỗ một chút (thu cỡ một dòng) và tên dài hẳn (xuống dòng) - không bao giờ "…". */
+  longVoiceNames?: boolean;
   /** Thư viện: đủ sách, rỗng, đang tải mãi, hay lỗi. */
   library: "full" | "empty" | "loading" | "error";
   /** Điện thoại đã ghép máy tính chưa (Cài đặt › Thiết bị). */

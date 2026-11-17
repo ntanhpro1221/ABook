@@ -4,21 +4,24 @@ import { PendingIndicator } from "../shared/PendingIndicator";
 import { S } from "../shared/strings.generated";
 import type { TrackLoad } from "./library";
 
-export function DownloadControl({ load, online, busy, onSave, onStop, onDelete }: {
-  load: TrackLoad; online: boolean; busy: boolean; onSave: () => void; onStop: () => void; onDelete: () => void;
+/** One fixed slot per row. Download, stop and retry are buttons; "downloaded" is a status, never a hidden delete
+ *  button: removing a download lives in the track details ("Xoá bản tải") behind the shared confirmation. */
+export function DownloadControl({ load, online, busy, onSave, onStop }: {
+  load: TrackLoad; online: boolean; busy: boolean; onSave: () => void; onStop: () => void;
 }) {
-  const label = busy ? load.kind === "done" ? S.s_dang_xoa_71482e81 : S.s_dang_tai_465b1987 : load.kind === "loading" ? S.s_stop_download : load.kind === "done" ? S.s_downloaded_delete : load.kind === "failed" ? S.s_thu_lai_c58d068c : S.s_tai_ve_9b5bdb44;
-  return <button type="button" aria-label={label} title={label} aria-busy={busy || undefined}
-    disabled={busy || (!online && load.kind !== "loading" && load.kind !== "done")}
-    onClick={load.kind === "loading" ? onStop : load.kind === "done" ? onDelete : onSave}
-    className="press relative grid size-9 shrink-0 place-items-center rounded-control text-accent-text hover:bg-hover touch-reach disabled:opacity-40">
-    <StateIcon state={load.kind} className="relative inline-grid size-9 place-items-center">
+  const label = busy ? S.s_dang_tai_465b1987 : load.kind === "loading" ? S.s_stop_download : load.kind === "failed" ? S.s_thu_lai_c58d068c : S.s_tai_ve_9b5bdb44;
+  return <StateIcon state={load.kind} className="relative inline-grid size-9 shrink-0 place-items-center">
+    {load.kind === "done" ? <span role="img" aria-label={S.s_da_tai_b7362bbf} data-download-status className="grid size-9 place-items-center">
+      <span className="grid size-5 place-items-center rounded-full bg-accent text-accent-ink"><ArrowDown aria-hidden className="size-3.5" /></span>
+    </span> : <button type="button" aria-label={label} title={label} aria-busy={busy || undefined}
+      disabled={busy || (!online && load.kind !== "loading")}
+      onClick={load.kind === "loading" ? onStop : onSave}
+      className="press relative grid size-9 shrink-0 place-items-center rounded-control text-accent-text hover:bg-hover touch-reach disabled:opacity-40">
       <PendingIndicator pending={busy && load.kind !== "loading"}>
-      {load.kind === "loading" ? <DownloadProgress percent={load.percent} /> : load.kind === "done" ?
-        <span className="grid size-5 place-items-center rounded-full bg-accent text-accent-ink"><ArrowDown className="size-3.5" /></span> : <Download className="size-5" />}
+        {load.kind === "loading" ? <DownloadProgress percent={load.percent} /> : <Download className="size-5" />}
       </PendingIndicator>
-    </StateIcon>
-  </button>;
+    </button>}
+  </StateIcon>;
 }
 
 export function DownloadProgress({ percent }: { percent: number | null }) {

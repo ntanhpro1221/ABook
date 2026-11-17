@@ -12,11 +12,10 @@ Column {
     property var voices: null                      // null: đang tải
     property var providers: []
     property string loadError: ""
-    property string playing: ""
-    property string loading: ""
-    property string failedVoice: ""
-    property string failedMessage: ""
-    property int turn: 0
+    property alias playing: samples.playing
+    property alias loading: samples.loading
+    property alias failedVoice: samples.failedVoice
+    property alias failedMessage: samples.failedMessage
     property bool keysOpen: Platform.setting("fold.voice.keys", "0") === "1"
     readonly property string chosen: Api.defaultVoice
     readonly property var current: voices && voices.length ? VoiceLogic.resolveVoice(voices, chosen) : undefined
@@ -64,38 +63,10 @@ Column {
         return false
     }
 
-    // ---- nghe thử (useVoiceSample): mỗi lần bấm là một lượt mới, mẫu của lượt cũ về muộn bị bỏ ----
-    function stopSample() {
-        turn++
-        DesktopApi.stopPreview()
-        playEnd.stop()
-        playing = ""
-        loading = ""
-    }
-    function playSample(id) {
-        stopSample()
-        const mine = turn
-        failedVoice = ""
-        failedMessage = ""
-        loading = id
-        Api.quiet("POST", "/api/readaloud/clip", {voice: id, text: VoiceLogic.SAMPLE_TEXT}, function(data, error) {
-            if (root.turn !== mine) return
-            root.loading = ""
-            if (error || !data || !data.url) {
-                root.playing = ""
-                root.failedVoice = id
-                root.failedMessage = error || S.s_chua_lam_duoc_luc_nay_2e7cacde
-                return
-            }
-            DesktopApi.preview(data.url)
-            root.playing = id
-            playEnd.interval = Math.max(500, (data.duration_ms || 8000) + 300)
-            playEnd.restart()
-        })
-    }
-    Timer { id: playEnd; onTriggered: root.playing = "" }
+    VoiceSample { id: samples }
+    function stopSample() { samples.stopSample() }
+    function playSample(id) { samples.playSample(id) }
     Component.onCompleted: load()
-    Component.onDestruction: if (playing !== "" || loading !== "") DesktopApi.stopPreview()
     ListModel { id: providerIds }
 
     SectionBlock {

@@ -46,8 +46,10 @@ class MusicControlsSnapshotTest {
         }
         val theme = if (dark) "dark" else "light"
         fun shot(name: String) {
+            // The generated artwork is drawn on Dispatchers.Default, which waitForIdle does not wait for.
+            rule.waitUntil(5_000) { rule.onAllNodesWithTag("music_art_image", useUnmergedTree = true).fetchSemanticsNodes().isNotEmpty() }
             rule.waitForIdle()
-            val node = if (name == "confirm") rule.onNodeWithTag("destructive_confirm") else rule.onAllNodes(isRoot()).onFirst()
+            val node = rule.onAllNodes(isRoot()).onFirst()
             node.captureRoboImage("src/test/snapshots/music_controls_${name}_$theme.png")
         }
         shot("download")
@@ -61,16 +63,13 @@ class MusicControlsSnapshotTest {
         shot("connecting")
         assertEquals(initialBounds, button.fetchSemanticsNode().boundsInRoot)
         rule.runOnUiThread { ui.value = ui.value.copy(active = emptyMap(), downloaded = setOf(track.link)) }
-        rule.onNodeWithContentDescription(S.s_downloaded_delete).performClick()
-        rule.onNodeWithTag("destructive_confirm").assertIsDisplayed()
-        shot("confirm")
-        rule.onNodeWithTag("destructive_cancel").performClick()
-        assertTrue(source.onDisk.contains(track.link))
+        // "Downloaded" is a status, not a hidden delete button: removing it lives in the track sheet behind the confirmation.
+        val status = rule.onNodeWithTag("download_${track.link.hashCode()}", useUnmergedTree = true)
+        status.assertContentDescriptionEquals(S.s_da_tai_b7362bbf)
+        status.assertHasNoClickAction()
         shot("downloaded")
         assertEquals(initialBounds, button.fetchSemanticsNode().boundsInRoot)
-        rule.onNodeWithContentDescription(S.s_downloaded_delete).performClick()
-        rule.onNodeWithTag("destructive_accept").performClick()
-        assertFalse(source.onDisk.contains(track.link))
+        assertTrue(source.onDisk.contains(track.link))
         rule.runOnUiThread { ui.value = ui.value.copy(previewing = track.link, previewLoading = true, previewPosition = 32.0, previewDuration = track.duration ?: 180.0) }
         rule.mainClock.advanceTimeBy(vn.abook.player.ui.components.PENDING_DELAY_MS + 32L)
         rule.waitForIdle()
@@ -91,7 +90,7 @@ class MusicControlsSnapshotTest {
         val open = mutableStateOf(true)
         var calls = 0
         rule.setContent { AbookTheme(false) {
-            if (open.value) vn.abook.player.ui.components.DestructiveConfirm("Xoá bản tải?", "Air Prelude", { open.value = false },
+            vn.abook.player.ui.components.DestructiveConfirm(open.value, "Xoá bản tải?", "Air Prelude", { open.value = false },
                 { calls++; pending.value = true; problem.value = "" }, pending = pending.value, problem = problem.value)
         } }
         rule.onNodeWithTag("destructive_accept").performClick()
@@ -112,7 +111,7 @@ class MusicControlsSnapshotTest {
         val open = mutableStateOf(true)
         var calls = 0
         rule.setContent { AbookTheme(false) {
-            if (open.value) vn.abook.player.ui.components.DestructiveConfirm("Xoá bản tải?", "Air Prelude", { open.value = false },
+            vn.abook.player.ui.components.DestructiveConfirm(open.value, "Xoá bản tải?", "Air Prelude", { open.value = false },
                 { calls++; job }, pending = false)
         } }
         rule.onNodeWithTag("destructive_accept").performClick()

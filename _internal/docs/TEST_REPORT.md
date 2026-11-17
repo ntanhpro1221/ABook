@@ -1,5 +1,72 @@
 # Test report
 
+## 16-11-2026 — complete device and listening-profile names
+
+Device, phone, playback-destination and listening-profile names use the shared OneLineFit
+rule on web, Qt and Android: shrink to 0.75 of the original size, then restore the original
+size and wrap when needed. Rows and the remote playback strip grow with their content;
+web toast placement follows the strip's measured height. The fixed 48/56px web phone-session
+control row retains ShortName with its complete-name tooltip and a documented reason.
+
+Before the UI changes, the expanded web detector found six real truncations (3 passed,
+1 failed), and the Android JVM detector found the single-line playback-strip caption
+(3 passed, 1 failed). Qt had no device-name elision on the initial revision; its scanner
+now also rejects generic exemptions on device/profile names. Invented long names exercise
+actual DOM, QML and Compose components; no phone or emulator is used.
+
+Focused validation passed 28 Vitest cases and 76 Android JVM cases with no failures or
+skips, including normal shared-UI preparation. Parity and design-lint pytest suites passed
+171 cases with two skips; the Qt scanner checked 323 QML files with no findings. The UI
+action gate passed 1,435 statements, and its eight regression tests passed. Changed-file
+review hashes were refreshed only after proving that the action ID inventories matched
+the initial revision. TypeScript and whitespace checks passed. The design-lint archive
+report completed without measurement errors but still contains existing red findings,
+one stale exception and missing Android sidecars; it is not a fresh visual pass.
+
+The complete Vitest run passed 3,510 cases across 368 files with no failures or skips
+(573.80s, one thread worker). Its Python-backed suite uses ABOOK_TEST_PYTHON pointing to
+the existing shared runtime; the initial run failed that suite's setup because the
+worktree has no separate runtime. Native child checks are hidden by the scratch harness.
+
+The configured Qt WidthTests target built successfully after available RAM reached
+6.012 GiB. The new long-name QML suite passed nine checks, and the existing OneLineFit
+suite passed ten, all offscreen. The first long-name run exposed a test assumption:
+wrapped RichText reports lineCount=1 even when its painted document spans multiple
+lines. That case now compares document height with the actual single-line FontMetrics;
+the full-name, no-elide and row-growth assertions remain in place.
+The related device suite passed 26 checks and the listening-profile suite passed 19,
+with no failures or skips. RAM was checked before each native suite.
+
+## 15-11-2026 — device voice names
+
+Android device voices use the configured engine name and the Voice network flag. Colliding labels get stable numbers; offline voices precede online voices and higher reported quality comes first within each group. No gender or accent is inferred from Android identifiers. Windows preserves the supplied vendor and proper name for both Qt and web. The shared device-group description allows engines with network voices. Voice rows keep individual preview actions; the Android selection status sits below the name when a preview button is present.
+
+Focused validation passed 35 Android tests, two existing voice-sheet screenshot Verify tests, 39 Vitest tests, 29 Qt QML checks, three backend tests, TypeScript, the web gallery build and both parity checks. Android and Qt review frames are exported outside the repository. The Qt run uses the existing C++ test runner from the base worktree with this worktree's QML imports and tests; C++ sources are unchanged. Preview tests use fake voices and audio sources, so they verify labels, selection and requests rather than the sound of installed engines.
+
+## 15-11-2026 — hash-bound signal edge acceptance on reopen
+
+Recovery recognizes an already committed edge refusal only for the same WAV checksum and locked
+policy, after all other signal gates pass. SQLite records the original reason and a warning;
+recording and recovery retain the same acceptance through later QA checkpoints. Pending, clipped,
+changed-hash and changed-policy takes cannot inherit it. No waveform or gate threshold changes.
+Recovery now uses the same materialized speech as the writer, with the recorded text hash still
+guarding reading drift.
+
+Eighteen synthetic regression cases pass, including two chapter resumes without TTS, interruption
+before/after acceptance commit, missing/truncated/replaced WAVs and byte-identical passing audio.
+The related recovery, rejected-take, signal-cache and spoken-text suites pass 110 cases with no
+failures. Compileall passes. The new test file passes Ruff; application diagnostics match the base.
+
+A read-only external audit uses copied SQLite databases and original audio under a write guard.
+For 34 selected checkpoints, the base recovery resets 34 on both fresh-snapshot scans. Fixed
+recovery preserves all 34 across two DB opens, with zero missing/corrupt resets, zero reading-drift
+resets and unchanged WAV hashes when given the exact recorded, hash-verified materialized speech.
+A separate whole-project scan with the current materializer has zero missing/corrupt resets but
+correctly reports 84 reading drifts, including two selected checkpoints; those are not edge waivers.
+No real project was resumed or rendered. Its database contents and the 34 audio hashes remain unchanged.
+
+Full-suite and committed-tree leak-scan results are recorded with the final change.
+
 ## 15-11-2026 — 0.4.173 integration
 
 QML objects outside the visual tree now hold their JS wrapper for their whole life (`Keep.hold`, `desktop_qt/src/keep.h`). The collector marks QML property storage only through the wrapper; outside the visual tree only the weak QObject-wrapper pass keeps it, and that pass drops it under a JS-owned top ancestor (WidthTests run 6: 18 Reveal "Cannot find member data", Studio2 transition never finished). Reveal, SmoothWheel, 14 non-singleton QtObject components, every child Connections (now `Listen`, 64 sites) and 8 child timers/handlers/stores with their own properties anchor themselves. `tests/width/tst_keep.qml` reproduces the loss deterministically (JS-owned owner dropped, visible part kept, two `gc()`): previous QML 2 passed / 4 failed in each of 5 runs, fixed 7 passed / 0 failed in each of 5 runs. `tests/test_qt_keep_anchor.py` rejects unanchored shapes and anchor users without `import ABook` (88 findings on the previous QML, 0 now). The first `release_gate.qt_tests()` failed once (Studio1: `UiActivity.qml` lacked `import ABook`, 2381 passed / 1 failed); after the fix: 21 suites, 2382 passed, 0 failed, 2 skipped, 0 member-data warnings. WidthTests three consecutive clean runs: 1732/0/2 each (in the gate, 1250.6 s, 1296.0 s), no crash, no member-data warning. ABookDesk offscreen smoke exits 0. Focused pytest: 109 passed; Qt source pytest: 216 passed, 1 skipped.

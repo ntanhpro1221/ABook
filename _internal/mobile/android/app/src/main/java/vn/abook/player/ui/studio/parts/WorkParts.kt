@@ -40,7 +40,6 @@ import vn.abook.player.ui.components.IconAction
 import vn.abook.player.ui.components.InlineProblem
 import vn.abook.player.ui.components.PlayIcon
 import vn.abook.player.ui.components.PrimaryButton
-import vn.abook.player.ui.components.PendingIndicator
 import vn.abook.player.ui.components.Reveal
 import vn.abook.player.ui.components.RowHint
 import vn.abook.player.ui.components.StopIcon
@@ -140,7 +139,7 @@ fun AnswerButton(label: String, onClick: () -> Unit, tag: String, modifier: Modi
                 contentAlignment = Alignment.Center,
                 ) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Reveal(pending) { Row { PendingIndicator(true); Spacer(Modifier.width(Dim.s8)) } }
+                        vn.abook.player.ui.components.ButtonLead(pending, Abook.colors.accentText)
                         BasicText(label, style = Abook.type.bodyStrong.copy(color = if (enabled) Abook.colors.text else Abook.colors.text3))
                     }
                 }

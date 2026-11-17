@@ -119,7 +119,13 @@ def merge_row(x: Gold, y: Gold, drop: set[str], written: list[str] | None = None
     low, high = min(x.intensity[0], y.intensity[0]), max(x.intensity[1], y.intensity[1])
     paces = union(x.pace_order, y.pace_order)
     volumes = union(x.volume_order, y.volume_order)
-    gender = x.gender if x.gender != "u" else y.gender
+    # Gender belongs to the preferred identity, not to whichever annotation
+    # contributed a non-unknown value. Conflicting sources must be adjudicated.
+    selected = names_full[0] if names_full else None
+    genders = {row.gender for row in (x, y) if selected in full(row) and row.gender in ("m", "f")}
+    if len(genders) > 1:
+        raise ValueError(f"{x.seq}: preferred identity has conflicting source genders; adjudicate before merge")
+    gender = next(iter(genders)) if genders else "u"
     if names_full[:1] == ["NARRATOR"]:
         gender = "u"  # quy ước: giới tính theo nhân vật đứng đầu; NARRATOR đứng đầu thì u
     speaker0, emotions0, intensity0, paces0, volumes0, gender0 = NARRATION_DEFAULT

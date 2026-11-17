@@ -9,7 +9,7 @@ Item {
     property bool active: false
     property bool hovered: false
     property bool chevron: false
-    implicitWidth: label.implicitWidth + (count > 0 ? countText.implicitWidth + 6 : 0) + (chevron ? 14 + 6 : 0)
+    implicitWidth: label.implicitWidth + (count > 0 ? countText.implicitWidth + Theme.s8 : 0) + (chevron ? 14 + 6 : 0)
     width: implicitWidth
     height: 44
     Text {
@@ -24,7 +24,7 @@ Item {
     ClockLabel {
         id: countText
         Reveal { shown: root.count > 0 }
-        x: label.implicitWidth + 6
+        x: label.implicitWidth + Theme.s8
         anchors.verticalCenter: parent.verticalCenter
         text: root.count
         color: Theme.text3

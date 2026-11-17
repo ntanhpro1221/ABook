@@ -19,7 +19,10 @@ from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
 ROOT = HERE.parents[1]
-GOLD = HERE / "gold"
+sys.path.insert(0, str(HERE))
+from gold_root import gold_root  # noqa: E402
+
+GOLD = gold_root()
 CORPUS = ROOT.parent / "Corpus"
 
 # Thư mục đáp án -> thư mục truyện trong Corpus/ (None = cuốn 2, nguồn sản xuất Text_Tmp, mặc định của make_eval_project).

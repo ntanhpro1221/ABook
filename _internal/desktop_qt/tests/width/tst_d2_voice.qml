@@ -175,7 +175,7 @@ Item {
             verify(hasText(page, "trực tuyến, miễn phí\u00a0·\u00a02 giọng"))
             verify(hasText(page, "dùng khoá của bạn\u00a0·\u00a01 giọng"))
             verify(hasText(page, "trên máy này, không cần mạng\u00a0·\u00a04 giọng\u00a0·\u00a0đang dùng"))
-            verify(hasText(page, "không cần mạng\u00a0·\u00a01 giọng"))
+            verify(hasText(page, "Theo bộ đọc hệ thống\u00a0·\u00a01 giọng"))
             verify(hasText(page, "Giọng Edge gửi chữ của sách tới máy chủ Microsoft để đọc."))
             verify(hasText(page, "Giọng Azure Speech gửi chữ của sách tới Azure Speech bằng khoá của bạn - có thể bị tính tiền vào tài khoản của bạn."))
             verify(!hasText(page, "Cài giọng tiếng Việt tại Cài đặt Windows › Thời gian và ngôn ngữ › Giọng nói."))
@@ -188,7 +188,7 @@ Item {
             openAll()
             const page = make()
             verify(hasText(page, "Cài giọng tiếng Việt tại Cài đặt Windows › Thời gian và ngôn ngữ › Giọng nói."))
-            verify(hasText(page, "không cần mạng\u00a0·\u00a00 giọng"))
+            verify(hasText(page, "Theo bộ đọc hệ thống\u00a0·\u00a00 giọng"))
         }
 
         function test_choosingDefaultVoice() {
@@ -209,8 +209,8 @@ Item {
             tryVerify(function() { return (find(page, "voiceCurrent").text) === ("Đang dùng: Nam Minh (Edge)") })
             tryVerify(function() { return hasText(page, "trực tuyến, miễn phí\u00a0·\u00a02 giọng\u00a0·\u00a0đang dùng") })
             tryCompare(Api, "voiceName", "Nam Minh")
-            // chỉ giọng được chọn có "Mặc định"
-            tryVerify(function() { return findAll(page, node => node.text === "Mặc định" && node.visible).length === 1 })   // the old one fades out
+            verify(!hasText(page, "Mặc định"))
+            compare(target.radio.Accessible.checked, true)
             // lưu hỏng: lời báo cách thử lại, như web
             DesktopApi.responses["PUT /api/preferences"] = {status: 500, data: {error: "đĩa đầy"}}
             click(row(page, "edge:vi-VN-HoaiMyNeural").radio)
@@ -263,6 +263,39 @@ Item {
             // hết thời lượng mẫu thì nút về "Nghe thử"
             DesktopApi.delayed = false
             tryCompare(other, "playing", false)
+        }
+
+        function test_deviceNames_data() { return [{tag: "light"}, {tag: "dark"}] }
+        function test_deviceNames(data) {
+            Theme.mode = data.tag
+            host.voices = [
+                {id: "device:an", name: "Microsoft An", provider: "device", gender: "male", online: false},
+                {id: "device:google", name: "Google ngoại tuyến 1", provider: "device", gender: "", online: false},
+                {id: "device:samsung", name: "Samsung cần mạng", provider: "device", gender: "", online: true},
+                {id: "device:oem", name: "OPPO ngoại tuyến", provider: "device", gender: "", online: false}
+            ]
+            openAll()
+            Api.defaultVoice = host.voices[0].id
+            const page = make()
+            for (const voice of host.voices) {
+                const target = row(page, voice.id)
+                compare(target.shown, voice.name)
+                verify(textItem(target, "Nghe thử") !== null)
+                const name = find(target, "voiceName")
+                const sample = find(target, "voiceTry")
+                compare(name.lineCount, 1)
+                verify(sample.mapToItem(target, 0, 0).x - name.mapToItem(target, name.width, 0).x >= 12)
+            }
+            shot("settings_device", page)
+            for (const voice of host.voices) {
+                const target = row(page, voice.id)
+                DesktopApi.delayed = true
+                click(textItem(target, "Nghe thử"))
+                compare(last("POST", "/api/readaloud/clip").body.voice, voice.id)
+                DesktopApi.finish()
+                tryCompare(target, "playing", true)
+                click(textItem(target, "Dừng"))
+            }
         }
 
         function test_sampleErrorShowsUnderTheRow() {
@@ -491,7 +524,8 @@ Item {
             tryVerify(function() { return row(page, "edge:vi-VN-HoaiMyNeural") !== null })
         }
 
-        function test_longVoiceNamesWrap() {
+        // Tên một dòng (OneLineFit, DESIGN.md 5.5): thu cỡ vừa một dòng, không vừa thì xuống dòng ở cỡ gốc - không bao giờ "…"
+        function test_longVoiceNamesFitOrWrapNeverCut() {
             const longName = "Giọng có một cái tên rất rất dài để thử xem nó xuống dòng thay vì bị cắt mất chữ ở cuối dòng (Edge)"
             voices = fixtureVoices().concat([{id: "edge:long", name: longName, provider: "edge", gender: "female", online: true}])
             openAll()
@@ -499,7 +533,12 @@ Item {
             const longRow = row(page, "edge:long")
             const name = findAll(longRow, node => node.text === longName.replace(" (Edge)", ""))[0]
             verify(name !== undefined)
-            verify(name.height > 2 * 14, "tên dài phải xuống dòng, cao " + name.height)
+            compare(name.elide, Text.ElideNone)
+            verify(!name.truncated)
+            compare(name.fit, "wrap")    // tên này dài gấp đôi chỗ: thu tới 0,75 vẫn không vừa
+            verify(name.lineCount > 1)
+            compare(name.font.pixelSize, Theme.sizeBodySmall)
+            compare(longRow.radio.Accessible.name, longName)
             verify(name.paintedWidth <= name.width + 1)
             verify(longRow.radio.height >= name.height)
             // nút thử vẫn nằm trong hàng, không bị đẩy ra ngoài

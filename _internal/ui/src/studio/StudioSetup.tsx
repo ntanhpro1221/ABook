@@ -10,6 +10,7 @@ import { useNavigate } from "react-router";
 import { toast } from "@/shared/toast";
 import { cn } from "@/shared/cn";
 import { peerPage } from "@/shared/peerStudio";
+import { OneLineFit } from "@/shared/OneLineFit";
 import { Button, Progress } from "@/shared/ui";
 import { SettingsRow } from "@/shared/SettingsNav";
 import { api } from "./api";
@@ -101,7 +102,7 @@ export function NoStudioHere({ fit, className }: { fit: StudioFit; className?: s
       {peers.length > 0 && (
         <div className="flex flex-wrap gap-2">
           {peers.map((peer) => (
-            <Button key={peer.id} variant="ghost" size="sm" icon={Clapperboard} onClick={() => window.location.assign(peerPage(window.location.search, peer.id, "/studio/new"))}>{S.s_tao_tren_91f136e2}{peer.name}
+            <Button key={peer.id} variant="ghost" size="sm" icon={Clapperboard} className="h-auto min-h-8 max-w-full items-start whitespace-normal py-2 [&>span:first-child]:mt-line-icon" onClick={() => window.location.assign(peerPage(window.location.search, peer.id, "/studio/new"))}><OneLineFit>{`${S.s_tao_tren_91f136e2}${peer.name}`}</OneLineFit>
             </Button>
           ))}
         </div>

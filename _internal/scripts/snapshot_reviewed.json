@@ -16,28 +16,28 @@
     "reason": "Visually compared base and after in affordance review-01.jpg: action ink, navigation chevrons, persistent choice rings and read-along play cues; no frame or shadow change."
   },
   "_internal/mobile/android/app/src/test/snapshots/book_cast_dark.png": {
-    "sha256": "532577a64aefcdef8ca7464ecc34d3a9c198ae1dae1e91661ce758e773ec5c42",
-    "reason": "Inspected the combined-source before/after contact sheet and exact image bytes. Labels and controls remain inside their surfaces; selection marks, icons and shared confirmation rows reflect the integrated musicdl behavior. Book volume/title/portrait and chapter/history choices remain present. The cast light fixture is intentionally scrolled; existing cropped scroll extent is retained."
+    "sha256": "7a18a9826e0a4de9bfa44d96300da45bab5dd92abda3124aee2a1db102d390fd",
+    "reason": "Inspected old/new contact sheet of this golden after merging devvoice onto 0.4.173. The primary listen button separates its chapter label with the 8 dp text gap; every other book control is unchanged."
   },
   "_internal/mobile/android/app/src/test/snapshots/book_cast_light.png": {
-    "sha256": "1b25d688d5c8ca30f91f278f365959974b0a0d504e6f0621373925f61c0996d0",
-    "reason": "Inspected the combined-source before/after contact sheet and exact image bytes. Labels and controls remain inside their surfaces; selection marks, icons and shared confirmation rows reflect the integrated musicdl behavior. Book volume/title/portrait and chapter/history choices remain present. The cast light fixture is intentionally scrolled; existing cropped scroll extent is retained."
+    "sha256": "eb4484a2d3f69ec9eedad30969cb936c88decbf2bc2d57202350c89d2f6935c0",
+    "reason": "Inspected old/new contact sheet of this golden after merging devvoice onto 0.4.173. The primary listen button separates its chapter label with the 8 dp text gap; every other book control is unchanged."
   },
   "_internal/mobile/android/app/src/test/snapshots/book_delete_dark.png": {
-    "sha256": "2a05ef967f93d6e7fdb5ec9096ad87aa28f8056a5c45336a042b267ea1f83128",
-    "reason": "Inspected the combined-source before/after contact sheet and exact image bytes. Labels and controls remain inside their surfaces; selection marks, icons and shared confirmation rows reflect the integrated musicdl behavior. Book volume/title/portrait and chapter/history choices remain present. The cast light fixture is intentionally scrolled; existing cropped scroll extent is retained. The shared cancel and destructive choice remain distinct, with the consequence text fully wrapped."
+    "sha256": "d6c228ef10affc50267dd54bb7d3208825bd6a18177ccdfccf9490df2ebecbda",
+    "reason": "Inspected old/new contact sheet of this golden after merging devvoice onto 0.4.173. The primary listen button separates its chapter label with the 8 dp text gap; every other book control is unchanged."
   },
   "_internal/mobile/android/app/src/test/snapshots/book_delete_light.png": {
-    "sha256": "e410cf7e6b3ed82139dc7881cef73a88c91dd36a3919b41585e518475bee59e9",
-    "reason": "Inspected the combined-source before/after contact sheet and exact image bytes. Labels and controls remain inside their surfaces; selection marks, icons and shared confirmation rows reflect the integrated musicdl behavior. Book volume/title/portrait and chapter/history choices remain present. The cast light fixture is intentionally scrolled; existing cropped scroll extent is retained. The shared cancel and destructive choice remain distinct, with the consequence text fully wrapped."
+    "sha256": "aef01655b2e791db5d55af246478cbc886e7e63911395670cb0d8c0512bd72f7",
+    "reason": "Inspected old/new contact sheet of this golden after merging devvoice onto 0.4.173. The primary listen button separates its chapter label with the 8 dp text gap; every other book control is unchanged."
   },
   "_internal/mobile/android/app/src/test/snapshots/book_expanded_light.png": {
-    "sha256": "4a8d23076e12643689f158554108794cb9f00fb00f478e4e8360ba81a80e17e7",
-    "reason": "Inspected the combined-source before/after contact sheet and exact image bytes. Labels and controls remain inside their surfaces; selection marks, icons and shared confirmation rows reflect the integrated musicdl behavior. Book volume/title/portrait and chapter/history choices remain present. The cast light fixture is intentionally scrolled; existing cropped scroll extent is retained."
+    "sha256": "1460af7f0e436a251171d8d89601402405bb4e7438cf81e3a990103bcba122c7",
+    "reason": "Inspected old/new contact sheet of this golden after merging devvoice onto 0.4.173. The primary listen button separates its chapter label with the 8 dp text gap; every other book control is unchanged."
   },
   "_internal/mobile/android/app/src/test/snapshots/book_find_light.png": {
-    "sha256": "2db046ddb85ee18b4ab413dc9011f44057aa86edd30ef2813bf0851fd8cccd70",
-    "reason": "Inspected the combined-source before/after contact sheet and exact image bytes. Labels and controls remain inside their surfaces; selection marks, icons and shared confirmation rows reflect the integrated musicdl behavior. Book volume/title/portrait and chapter/history choices remain present. The cast light fixture is intentionally scrolled; existing cropped scroll extent is retained."
+    "sha256": "bce66c5950f5d9c74dd18a7c86f805da2e71fb31a117c3d45fba2fb384e68f83",
+    "reason": "Inspected old/new contact sheet of this golden after merging devvoice onto 0.4.173. The primary listen button separates its chapter label with the 8 dp text gap; every other book control is unchanged."
   },
   "_internal/mobile/android/app/src/test/snapshots/book_finished_dark.png": {
     "sha256": "3c92f8492e15624a7486ccc1222f101a3f111ac268fbd4c160c442edc42ede54",
@@ -56,24 +56,24 @@
     "reason": "Reviewed old/new book_gone_light.png in contact sheets 01-25: intentional typography, copy and layout changes; labels readable and settled controls separated."
   },
   "_internal/mobile/android/app/src/test/snapshots/book_head_light.png": {
-    "sha256": "0b401ccc643e113c6cf4888ed29f3d7626e964a0a7e0a11f81f183494acb5811",
-    "reason": "Inspected the combined-source before/after contact sheet and exact image bytes. Labels and controls remain inside their surfaces; selection marks, icons and shared confirmation rows reflect the integrated musicdl behavior. Book volume/title/portrait and chapter/history choices remain present. The cast light fixture is intentionally scrolled; existing cropped scroll extent is retained."
+    "sha256": "5627af42f431cafcb41d94ed710914d01d799ebdbf789907294039943a6dbc03",
+    "reason": "Inspected old/new contact sheet of this golden after merging devvoice onto 0.4.173. The primary listen button separates its chapter label with the 8 dp text gap; every other book control is unchanged."
   },
   "_internal/mobile/android/app/src/test/snapshots/book_history_light.png": {
-    "sha256": "bf86bd657a9a24220cb08940af6ce86e1d6ae462247db3ba282f265ab994ef4e",
-    "reason": "Inspected the combined-source before/after contact sheet and exact image bytes. Labels and controls remain inside their surfaces; selection marks, icons and shared confirmation rows reflect the integrated musicdl behavior. Book volume/title/portrait and chapter/history choices remain present. The cast light fixture is intentionally scrolled; existing cropped scroll extent is retained."
+    "sha256": "511d501019a51581c4a526b877d750ea75d1b47caedbbbb26d59b4996567b544",
+    "reason": "Inspected old/new contact sheet of this golden after merging devvoice onto 0.4.173. The primary listen button separates its chapter label with the 8 dp text gap; every other book control is unchanged."
   },
   "_internal/mobile/android/app/src/test/snapshots/book_large_dark.png": {
-    "sha256": "a070add52cf0391b2a75780c2b5f7739b01a3062869c8e5020bff7acdbb5a573",
-    "reason": "Inspected the combined-source before/after contact sheet and exact image bytes. Labels and controls remain inside their surfaces; selection marks, icons and shared confirmation rows reflect the integrated musicdl behavior. Book volume/title/portrait and chapter/history choices remain present. The cast light fixture is intentionally scrolled; existing cropped scroll extent is retained."
+    "sha256": "738e88289a9e404aedf0cc73d1c22be7cdb4169662b4aa1224ae11e69bf550b9",
+    "reason": "Inspected old/new contact sheet of this golden after merging devvoice onto 0.4.173. The primary listen button separates its chapter label with the 8 dp text gap; every other book control is unchanged."
   },
   "_internal/mobile/android/app/src/test/snapshots/book_listening_dark.png": {
-    "sha256": "9ddea576da8a4b4bfbd987b64ba4d188b62fa39fe672adb87be4cd3aee661b93",
-    "reason": "Inspected the combined-source before/after contact sheet and exact image bytes. Labels and controls remain inside their surfaces; selection marks, icons and shared confirmation rows reflect the integrated musicdl behavior. Book volume/title/portrait and chapter/history choices remain present. The cast light fixture is intentionally scrolled; existing cropped scroll extent is retained."
+    "sha256": "cfab2949c5971c7d8fc1ae1d2f91bf9802b0d2e1c619ed0ac2e94548e871dfea",
+    "reason": "Inspected old/new contact sheet of this golden after merging devvoice onto 0.4.173. The primary listen button separates its chapter label with the 8 dp text gap; every other book control is unchanged."
   },
   "_internal/mobile/android/app/src/test/snapshots/book_listening_light.png": {
-    "sha256": "30036bfce037133438e53228f2ff956e0599088434ede13f8db144a17a23f0f7",
-    "reason": "Inspected the combined-source before/after contact sheet and exact image bytes. Labels and controls remain inside their surfaces; selection marks, icons and shared confirmation rows reflect the integrated musicdl behavior. Book volume/title/portrait and chapter/history choices remain present. The cast light fixture is intentionally scrolled; existing cropped scroll extent is retained."
+    "sha256": "bbd10388ab046a1107e1631e4d5580eae7b4b60b4545cc40f0f537383d79a974",
+    "reason": "Inspected old/new contact sheet of this golden after merging devvoice onto 0.4.173. The primary listen button separates its chapter label with the 8 dp text gap; every other book control is unchanged."
   },
   "_internal/mobile/android/app/src/test/snapshots/book_loading_light.png": {
     "sha256": "93e60dd34156dcfcf5331db7111066c20afda65f89b62b88d8a33567fbcff0be",
@@ -88,16 +88,16 @@
     "reason": "Inspected the combined-source before/after contact sheet and exact image bytes. Labels and controls remain inside their surfaces; selection marks, icons and shared confirmation rows reflect the integrated musicdl behavior. Book volume/title/portrait and chapter/history choices remain present. The cast light fixture is intentionally scrolled; existing cropped scroll extent is retained."
   },
   "_internal/mobile/android/app/src/test/snapshots/book_person_sheet_light.png": {
-    "sha256": "f8cfe834ae91c99529094c5eafc91275eceb0b1ec938daeb3e5dc2ccb23a387f",
-    "reason": "Inspected the combined-source before/after contact sheet and exact image bytes. Labels and controls remain inside their surfaces; selection marks, icons and shared confirmation rows reflect the integrated musicdl behavior. Book volume/title/portrait and chapter/history choices remain present. The cast light fixture is intentionally scrolled; existing cropped scroll extent is retained."
+    "sha256": "460874c5eab15358ec56a1d1f9a7ecd67979cdacc4d7679e4163217e7b7c958d",
+    "reason": "Inspected old/new contact sheet of this golden after merging devvoice onto 0.4.173. The primary listen button separates its chapter label with the 8 dp text gap; every other book control is unchanged."
   },
   "_internal/mobile/android/app/src/test/snapshots/book_playing_light.png": {
     "sha256": "49cf3914ce7ee1fcf9f97e4dde0620043807f5598b1cb62ff48d16abaa46f5c1",
     "reason": "Inspected the combined-source before/after contact sheet and exact image bytes. Labels and controls remain inside their surfaces; selection marks, icons and shared confirmation rows reflect the integrated musicdl behavior. Book volume/title/portrait and chapter/history choices remain present. The cast light fixture is intentionally scrolled; existing cropped scroll extent is retained."
   },
   "_internal/mobile/android/app/src/test/snapshots/book_save_as_light.png": {
-    "sha256": "43efcd73b409efad66dd2fc3b633a4407ccce03f84d8cc5182fd08a2ca9ad370",
-    "reason": "Inspected the combined-source before/after contact sheet and exact image bytes. Labels and controls remain inside their surfaces; selection marks, icons and shared confirmation rows reflect the integrated musicdl behavior. Book volume/title/portrait and chapter/history choices remain present. The cast light fixture is intentionally scrolled; existing cropped scroll extent is retained."
+    "sha256": "2f62ce134261f9c198ccc368f04eeb679bc7f651620e1ff244c4c78450e2295a",
+    "reason": "Inspected old/new contact sheet of this golden after merging devvoice onto 0.4.173. The primary listen button separates its chapter label with the 8 dp text gap; every other book control is unchanged."
   },
   "_internal/mobile/android/app/src/test/snapshots/cover_long_title.png": {
     "sha256": "1ee48d032b0a6407146604e1def501847b05e82d35c74f41937f2b64a143cae2",
@@ -476,32 +476,32 @@
     "reason": "Visually reviewed the exact before/after snapshot pair on integration contact sheet 3. The rounded sheet surface, hairline and shadow share the panel edge; the stationary rectangular paint band is removed. Controls and labels remain readable with no new clipping."
   },
   "_internal/mobile/android/app/src/test/snapshots/music_library_dark.png": {
-    "sha256": "076229c2fc3882dde692da1774e03761a147930a9e7784d7bba6403760e19a3a",
-    "reason": "Opened the before/after contact sheet in this integration session. Intentional action ink, radio outlines, chevrons and music artwork retained; labels and primary controls remain readable."
+    "sha256": "5accfedf0b152ce7ef354d20d494ac8515b3b394cf9742bd09c2b6551fcc8d03",
+    "reason": "Inspected old/new contact sheet of this golden after merging devvoice onto 0.4.173. Track rows use the 8 dp gap around the separator dot; download progress, failure and duration text are unchanged."
   },
   "_internal/mobile/android/app/src/test/snapshots/music_library_downloading_dark.png": {
-    "sha256": "e413c43c3e237c150d599a10adf77cab97ff0552843faff81c5be350e5a5f5d7",
-    "reason": "Inspected the combined-source before/after contact sheet and exact image bytes. Labels and controls remain inside their surfaces; selection marks, icons and shared confirmation rows reflect the integrated musicdl behavior."
+    "sha256": "3e619fbdacfce41a5cc6a1b70c5567a54ef7a90dad930f43f1f90cdbfc6fae8e",
+    "reason": "Inspected old/new contact sheet of this golden after merging devvoice onto 0.4.173. Track rows use the 8 dp gap around the separator dot; download progress, failure and duration text are unchanged."
   },
   "_internal/mobile/android/app/src/test/snapshots/music_library_downloading_light.png": {
-    "sha256": "498e89b4491daaa2da9d1b77961ad751b15dc8b5072c713d3480a03654f7e9d2",
-    "reason": "Inspected the combined-source before/after contact sheet and exact image bytes. Labels and controls remain inside their surfaces; selection marks, icons and shared confirmation rows reflect the integrated musicdl behavior."
+    "sha256": "5205c48cc53e980893d94897462166099d6c148363ef859ed74b9356eed25e69",
+    "reason": "Inspected old/new contact sheet of this golden after merging devvoice onto 0.4.173. Track rows use the 8 dp gap around the separator dot; download progress, failure and duration text are unchanged."
   },
   "_internal/mobile/android/app/src/test/snapshots/music_library_font130_light.png": {
-    "sha256": "a5b6bd80f77172543810d2c4a67d4f08babb0b2f0425fad0d6542b033d6bd7a5",
-    "reason": "Opened the before/after contact sheet in this integration session. Intentional action ink, radio outlines, chevrons and music artwork retained; labels and primary controls remain readable."
+    "sha256": "db13e617b7e457ef4a8d3034e2b6e2f44e7fcf59de0f510d45456fc9a5f3426a",
+    "reason": "Inspected old/new contact sheet of this golden after merging devvoice onto 0.4.173. Track rows use the 8 dp gap around the separator dot; download progress, failure and duration text are unchanged."
   },
   "_internal/mobile/android/app/src/test/snapshots/music_library_light.png": {
-    "sha256": "345e8377fa441d14ce4e7c17963d4ba57633aae455a9dfb78be3b319ef50c428",
-    "reason": "Opened the before/after contact sheet in this integration session. Intentional action ink, radio outlines, chevrons and music artwork retained; labels and primary controls remain readable."
+    "sha256": "1fd1cc113f7aa977f7a812289ee8e4a92a993dd2259fce0a2cb00ab1e666e56c",
+    "reason": "Inspected old/new contact sheet of this golden after merging devvoice onto 0.4.173. Track rows use the 8 dp gap around the separator dot; download progress, failure and duration text are unchanged."
   },
   "_internal/mobile/android/app/src/test/snapshots/music_pick_dark.png": {
-    "sha256": "04869a5ac78fc9eb75178a2e532d29df28985dc12ab668bb4c5e8983b9bcf07a",
-    "reason": "Opened the before/after contact sheet in this integration session. Intentional action ink, radio outlines, chevrons and music artwork retained; labels and primary controls remain readable."
+    "sha256": "a11c063213c845e7fd790ea810b93bf790f186665f7e6b251f6bd823a0e39e20",
+    "reason": "Inspected old/new contact sheet of this golden after merging devvoice onto 0.4.173. Track rows use the 8 dp gap around the separator dot; download progress, failure and duration text are unchanged."
   },
   "_internal/mobile/android/app/src/test/snapshots/music_pick_light.png": {
-    "sha256": "77b268aa706407fe6d5c09b96bfeb28d5a6779f2d71a38eac9f57b3d4b8f2f4e",
-    "reason": "Opened the before/after contact sheet in this integration session. Intentional action ink, radio outlines, chevrons and music artwork retained; labels and primary controls remain readable."
+    "sha256": "0b3ef2ed28139b5bc1a885782e00449405b35af744a05cd7c0018463da50f8e1",
+    "reason": "Inspected old/new contact sheet of this golden after merging devvoice onto 0.4.173. Track rows use the 8 dp gap around the separator dot; download progress, failure and duration text are unchanged."
   },
   "_internal/mobile/android/app/src/test/snapshots/np_caught_up_light.png": {
     "sha256": "8fecba2c44e4fecb24c1cdc4a08d579e63a1a2ca1f71f430b0d8817d58d997f7",
@@ -620,12 +620,12 @@
     "reason": "Inspected the combined-source before/after contact sheet and exact image bytes. Labels and controls remain inside their surfaces; selection marks, icons and shared confirmation rows reflect the integrated musicdl behavior."
   },
   "_internal/mobile/android/app/src/test/snapshots/settings_expanded_light.png": {
-    "sha256": "922eaaa66da099d3dc0149fc00b9e34cad9f16a4d79900c22fef8e237af27f85",
-    "reason": "Inspected the combined-source before/after contact sheet and exact image bytes. Labels and controls remain inside their surfaces; selection marks, icons and shared confirmation rows reflect the integrated musicdl behavior. Wide two-column settings retain the section hierarchy and full-height content."
+    "sha256": "5549f6c6d6d771953dc2b8838b91dac5c4706404ee93728a2381e84bcddf1f8c",
+    "reason": "Inspected old/new contact sheet of this golden after merging devvoice onto 0.4.173. Voice rows now show one-line names with a circled radio mark instead of the Default/Selected value text; device voices are named by the system reader; the preview action stays at the row end."
   },
   "_internal/mobile/android/app/src/test/snapshots/settings_large_dark.png": {
-    "sha256": "63d04d4a2606dca9a4ec412265b8e8f25e52e9ba774dbab75024ce00200d3be4",
-    "reason": "Inspected the combined-source before/after contact sheet and exact image bytes. Labels and controls remain inside their surfaces; selection marks, icons and shared confirmation rows reflect the integrated musicdl behavior. Wide two-column settings retain the section hierarchy and full-height content."
+    "sha256": "e273fa903cd8d14801b7e026615384aa6b91c039a355f92e0a06228940742228",
+    "reason": "Inspected old/new contact sheet of this golden after merging devvoice onto 0.4.173. Voice rows now show one-line names with a circled radio mark instead of the Default/Selected value text; device voices are named by the system reader; the preview action stays at the row end."
   },
   "_internal/mobile/android/app/src/test/snapshots/settings_log_sheet_dark.png": {
     "sha256": "eb7301a363a3b40135d934e6172fcebb755e97fff066ef05857d794a0d791651",
@@ -708,12 +708,12 @@
     "reason": "Visually compared base and after in affordance review-17.jpg: action ink, navigation chevrons, persistent choice rings and read-along play cues; no frame or shadow change."
   },
   "_internal/mobile/android/app/src/test/snapshots/voice_consent_sheet_dark.png": {
-    "sha256": "e8323a4485d8b2181cb2d2ea191d14101f402536859b2129c76b47a8a081fbe1",
-    "reason": "Inspected the combined-source before/after contact sheet and exact image bytes. Labels and controls remain inside their surfaces; selection marks, icons and shared confirmation rows reflect the integrated musicdl behavior."
+    "sha256": "7348144ce74237fcf30bdee9519c80663a375767f0d567c00971a7253af0f022",
+    "reason": "Inspected old/new contact sheet of this golden after merging devvoice onto 0.4.173. Voice rows now show one-line names with a circled radio mark instead of the Default/Selected value text; device voices are named by the system reader; the preview action stays at the row end."
   },
   "_internal/mobile/android/app/src/test/snapshots/voice_consent_sheet_light.png": {
-    "sha256": "e79b9e66086efc6b454ad67d8b2b18415fea79deaaef35b2aa00d91b92ac6c37",
-    "reason": "Inspected the combined-source before/after contact sheet and exact image bytes. Labels and controls remain inside their surfaces; selection marks, icons and shared confirmation rows reflect the integrated musicdl behavior."
+    "sha256": "e1ca7e855dd21400843ae76078551350026c67095a60c87c1dad813a81916ced",
+    "reason": "Inspected old/new contact sheet of this golden after merging devvoice onto 0.4.173. Voice rows now show one-line names with a circled radio mark instead of the Default/Selected value text; device voices are named by the system reader; the preview action stays at the row end."
   },
   "_internal/mobile/android/app/src/test/snapshots/voice_key_consent_light.png": {
     "sha256": "c8c18d3956363cc2d97a4a1b40adbcaa8714fd81ec862eaf136526d56efc1fb4",
@@ -948,12 +948,12 @@
     "reason": "Opened the before/after contact sheet in this integration session. Intentional action ink, radio outlines, chevrons and music artwork retained; labels and primary controls remain readable."
   },
   "_internal/mobile/android/app/src/test/snapshots/music_style_sheet_dark.png": {
-    "sha256": "c7c870d024df616b6a91fe85a87cd2688c2206d2e4f64cba094c705b895efad4",
-    "reason": "Opened the before/after contact sheet in this integration session. Intentional action ink, radio outlines, chevrons and music artwork retained; labels and primary controls remain readable."
+    "sha256": "d37ddb229efd9eddeae9562d1929ff3dce29b036964671d3fb83ff2a3f6e69e2",
+    "reason": "Inspected old/new contact sheet of this golden after merging devvoice onto 0.4.173. Track rows use the 8 dp gap around the separator dot; download progress, failure and duration text are unchanged."
   },
   "_internal/mobile/android/app/src/test/snapshots/music_style_sheet_light.png": {
-    "sha256": "f06908bc272889a0edd86449bf5f3d7d770ca972f8efd1fb4c6991d21f673870",
-    "reason": "Opened the before/after contact sheet in this integration session. Intentional action ink, radio outlines, chevrons and music artwork retained; labels and primary controls remain readable."
+    "sha256": "bfbbe4cbd1a302a9e0b1d974e94284d2063539e68ad814d754830dce70ef9106",
+    "reason": "Inspected old/new contact sheet of this golden after merging devvoice onto 0.4.173. Track rows use the 8 dp gap around the separator dot; download progress, failure and duration text are unchanged."
   },
   "_internal/mobile/android/app/src/test/snapshots/np_audio_412_light.png": {
     "sha256": "410be732dcbb81901cf2e3d172c954a19ce902ec3f6b3354d2283ab57ea9a59a",
@@ -1040,12 +1040,12 @@
     "reason": "Opened the before/after contact sheet in this integration session. Intentional action ink, radio outlines, chevrons and music artwork retained; labels and primary controls remain readable."
   },
   "_internal/mobile/android/app/src/test/snapshots/np_prepare_light.png": {
-    "sha256": "2b4e682aab0fb31102553d032eaf3eb2f6e73225a00e085c759c01d346692fcb",
-    "reason": "Opened the before/after contact sheet in this integration session. Intentional action ink, radio outlines, chevrons and music artwork retained; labels and primary controls remain readable."
+    "sha256": "3723737eaac78c945ca409912ebe89281ec61875ad153b4c9f211fbd7c91442f",
+    "reason": "Inspected old/new contact sheet of this golden after merging devvoice onto 0.4.173. Preparing sheet voice row follows the one-line circled voice row."
   },
   "_internal/mobile/android/app/src/test/snapshots/np_prepare_waiting_light.png": {
-    "sha256": "081f737f435d72b456e52ac243b469ad03a11bba26c052924f998e0ae8350464",
-    "reason": "Opened the before/after contact sheet in this integration session. Intentional action ink, radio outlines, chevrons and music artwork retained; labels and primary controls remain readable."
+    "sha256": "a9d319652e25d4c09b04daf16a59ef4133f739f5dce64fa5c99eb9a57cd54a2a",
+    "reason": "Inspected old/new contact sheet of this golden after merging devvoice onto 0.4.173. Preparing sheet voice row follows the one-line circled voice row."
   },
   "_internal/mobile/android/app/src/test/snapshots/np_speed_dark.png": {
     "sha256": "fe0a9de9e30133d49176b9c9725211975bffd9b59ffd544a1beda21c21dc9d80",
@@ -1132,12 +1132,12 @@
     "reason": "Visually compared base and after in affordance review-10.jpg: action ink, navigation chevrons, persistent choice rings and read-along play cues; no frame or shadow change."
   },
   "_internal/mobile/android/app/src/test/snapshots/np_voice_affordance_dark.png": {
-    "sha256": "0ff4f13b823cffb434939fb14ae8d82b1f5ef5fed68f3fe08042ee3e54e31ee4",
-    "reason": "Opened the before/after contact sheet in this integration session. Intentional action ink, radio outlines, chevrons and music artwork retained; labels and primary controls remain readable."
+    "sha256": "835c39eee47e9262f810c02f8235705460552729adcb7490e94e295a097c8e19",
+    "reason": "Inspected old/new contact sheet of this golden after merging devvoice onto 0.4.173. Voice rows now show one-line names with a circled radio mark instead of the Default/Selected value text; device voices are named by the system reader; the preview action stays at the row end."
   },
   "_internal/mobile/android/app/src/test/snapshots/np_voice_affordance_light.png": {
-    "sha256": "0fad0481f40a1713ac640e813de6c1f071da4697c7ff6d28002589df3345d8f2",
-    "reason": "Opened the before/after contact sheet in this integration session. Intentional action ink, radio outlines, chevrons and music artwork retained; labels and primary controls remain readable."
+    "sha256": "c96cf6c0c59b45083ac0646f04ae0c3c81e7595b147e47fdaa044e44be1bd904",
+    "reason": "Inspected old/new contact sheet of this golden after merging devvoice onto 0.4.173. Voice rows now show one-line names with a circled radio mark instead of the Default/Selected value text; device voices are named by the system reader; the preview action stays at the row end."
   },
   "_internal/mobile/android/app/src/test/snapshots/recap_light.png": {
     "sha256": "47e0317ec58f4f6d317f72654d2bd943ecb728da38329da97a3850e71aeac98a",
@@ -1192,12 +1192,12 @@
     "reason": "Opened the before/after contact sheet in this integration session. Intentional action ink, radio outlines, chevrons and music artwork retained; labels and primary controls remain readable."
   },
   "_internal/mobile/android/app/src/test/snapshots/settings_voice_dark.png": {
-    "sha256": "c7f51e34a9c35d545c3105db7631e91edef0ca8c7bae34ca5347285649207b53",
-    "reason": "Inspected the combined-source before/after contact sheet and exact image bytes. Labels and controls remain inside their surfaces; selection marks, icons and shared confirmation rows reflect the integrated musicdl behavior."
+    "sha256": "95c09667b18c58298656a8ba89e47ac91c005f81a502678d9ecab98ca8bce030",
+    "reason": "Inspected old/new contact sheet of this golden after merging devvoice onto 0.4.173. Voice rows now show one-line names with a circled radio mark instead of the Default/Selected value text; device voices are named by the system reader; the preview action stays at the row end."
   },
   "_internal/mobile/android/app/src/test/snapshots/settings_voice_light.png": {
-    "sha256": "d803725383e55fa0b068ba81149b660902ca7ed6b0b8b9a1182b746b884923be",
-    "reason": "Inspected the combined-source before/after contact sheet and exact image bytes. Labels and controls remain inside their surfaces; selection marks, icons and shared confirmation rows reflect the integrated musicdl behavior."
+    "sha256": "22175dd9d3f7bf8e1dbb573231350a77ddc98ea867f8b5c7535f9420f555aeb9",
+    "reason": "Inspected old/new contact sheet of this golden after merging devvoice onto 0.4.173. Voice rows now show one-line names with a circled radio mark instead of the Default/Selected value text; device voices are named by the system reader; the preview action stays at the row end."
   },
   "_internal/mobile/android/app/src/test/snapshots/shell_settings_look_light.png": {
     "sha256": "726c5a8f833b0b1a126b69907e67bd337cd52c57d753f1def2608489565c777f",
@@ -1252,28 +1252,28 @@
     "reason": "Opened the before/after contact sheet in this integration session. Intentional action ink, radio outlines, chevrons and music artwork retained; labels and primary controls remain readable."
   },
   "_internal/mobile/android/app/src/test/snapshots/voice_sample_failed_dark.png": {
-    "sha256": "e045d882cab66ac8a522837d52eb991da87092481456e494d66d80b3ced0bb86",
-    "reason": "Inspected the combined-source before/after contact sheet and exact image bytes. Labels and controls remain inside their surfaces; selection marks, icons and shared confirmation rows reflect the integrated musicdl behavior."
+    "sha256": "4e5e82071fc9e313a367a56ffd862357a24d201cbb640e478c1a2f65e928ca3d",
+    "reason": "Inspected old/new contact sheet of this golden after merging devvoice onto 0.4.173. Voice rows now show one-line names with a circled radio mark instead of the Default/Selected value text; device voices are named by the system reader; the preview action stays at the row end."
   },
   "_internal/mobile/android/app/src/test/snapshots/voice_sample_failed_light.png": {
-    "sha256": "5863b51521ae1d02f6d28bcea20f59cc15e5c00fa1bdeb01c4251b3fdac0e9ab",
-    "reason": "Inspected the combined-source before/after contact sheet and exact image bytes. Labels and controls remain inside their surfaces; selection marks, icons and shared confirmation rows reflect the integrated musicdl behavior."
+    "sha256": "5d35a317339ef93dd004948d62ed15eb01d5881c7503e4560a628063967e7a5e",
+    "reason": "Inspected old/new contact sheet of this golden after merging devvoice onto 0.4.173. Voice rows now show one-line names with a circled radio mark instead of the Default/Selected value text; device voices are named by the system reader; the preview action stays at the row end."
   },
   "_internal/mobile/android/app/src/test/snapshots/voice_sample_loading_dark.png": {
-    "sha256": "9585bb081bb3699ceddf8dda2f36b0dafb7d4edb21b3614f7a799750ca3197e4",
-    "reason": "Inspected the combined-source before/after contact sheet and exact image bytes. Labels and controls remain inside their surfaces; selection marks, icons and shared confirmation rows reflect the integrated musicdl behavior."
+    "sha256": "0de359621ab9b303348d6b90aeeb0eca22533137fb5e2cb53e1cea53e2a59160",
+    "reason": "Inspected old/new contact sheet of this golden after merging devvoice onto 0.4.173. Voice rows now show one-line names with a circled radio mark instead of the Default/Selected value text; device voices are named by the system reader; the preview action stays at the row end."
   },
   "_internal/mobile/android/app/src/test/snapshots/voice_sample_loading_light.png": {
-    "sha256": "8039795eb16f4f6eda5056e331d75305985a96de63ccbd1db0d8c7fff93702f5",
-    "reason": "Inspected the combined-source before/after contact sheet and exact image bytes. Labels and controls remain inside their surfaces; selection marks, icons and shared confirmation rows reflect the integrated musicdl behavior."
+    "sha256": "4b3614b1533c1e660a476e7f9f0d52d3a3d9fea481fd62bcfba80f9c67234d3d",
+    "reason": "Inspected old/new contact sheet of this golden after merging devvoice onto 0.4.173. Voice rows now show one-line names with a circled radio mark instead of the Default/Selected value text; device voices are named by the system reader; the preview action stays at the row end."
   },
   "_internal/mobile/android/app/src/test/snapshots/voice_sample_playing_dark.png": {
-    "sha256": "e009d307ac2f74ec20eb72a942b0a48b7a2dedbac78d6c888b1bcaa54fcced3e",
-    "reason": "Inspected the combined-source before/after contact sheet and exact image bytes. Labels and controls remain inside their surfaces; selection marks, icons and shared confirmation rows reflect the integrated musicdl behavior."
+    "sha256": "5d9bc76a3ecf589af2ff5d64662b5baa6bb9dfa1d9f4248f9154255d72e95713",
+    "reason": "Inspected old/new contact sheet of this golden after merging devvoice onto 0.4.173. Voice rows now show one-line names with a circled radio mark instead of the Default/Selected value text; device voices are named by the system reader; the preview action stays at the row end."
   },
   "_internal/mobile/android/app/src/test/snapshots/voice_sample_playing_light.png": {
-    "sha256": "93a8e2d921f87e933bb2781cfe34f68858d7f0950b150def82cb2036044b4d93",
-    "reason": "Inspected the combined-source before/after contact sheet and exact image bytes. Labels and controls remain inside their surfaces; selection marks, icons and shared confirmation rows reflect the integrated musicdl behavior."
+    "sha256": "3f8d3541fe0bb4de36a99b4a8b2e06f205f1d2de612dd2437f8705a8bc786c6a",
+    "reason": "Inspected old/new contact sheet of this golden after merging devvoice onto 0.4.173. Voice rows now show one-line names with a circled radio mark instead of the Default/Selected value text; device voices are named by the system reader; the preview action stays at the row end."
   },
   "_internal/mobile/android/app/src/test/snapshots/edit_cover_search_dark.png": {
     "sha256": "9b27c8c6bd2c49f37c9c3f24e35035be39bb8a6942029bbc3410d66ce8825d08",
@@ -1284,75 +1284,107 @@
     "reason": "Visually compared base and after in affordance review-delta/delta-01.jpg: action ink and persistent play/choice/navigation cues; loaded artwork visible in current fixture."
   },
   "_internal/mobile/android/app/src/test/snapshots/music_saved_dark.png": {
-    "sha256": "09346645ef54fd1a92e998d23e398f0a3930f26e416c529acb2dd8c0b5d5d62e",
-    "reason": "Inspected the combined-source before/after contact sheet and exact image bytes. Labels and controls remain inside their surfaces; selection marks, icons and shared confirmation rows reflect the integrated musicdl behavior."
+    "sha256": "4d7738a8a5775d4c9da1879279df21371c0ac9d1814505d64070b0a9828d82f6",
+    "reason": "Inspected old/new contact sheet of this golden after merging devvoice onto 0.4.173. Track rows use the 8 dp gap around the separator dot; download progress, failure and duration text are unchanged."
   },
   "_internal/mobile/android/app/src/test/snapshots/music_saved_light.png": {
-    "sha256": "9332fa478a960ae38b4af86e154c203da53d5cfa06a68641873d861e14c796a7",
-    "reason": "Inspected the combined-source before/after contact sheet and exact image bytes. Labels and controls remain inside their surfaces; selection marks, icons and shared confirmation rows reflect the integrated musicdl behavior."
+    "sha256": "24aff7b9f040245dbe3bf0aabb67d4a2742eeb02a5afc25e403b39b9c79e7035",
+    "reason": "Inspected old/new contact sheet of this golden after merging devvoice onto 0.4.173. Track rows use the 8 dp gap around the separator dot; download progress, failure and duration text are unchanged."
   },
   "_internal/mobile/android/app/src/test/snapshots/music_controls_buffering_dark.png": {
-    "sha256": "567d30b14cba6797623ca0e5524a55dcba6a51a50faef0e7cdcc40f037d30017",
-    "reason": "Inspected all ten exact combined-source before/after images on the gate-repair contact sheet; additionally opened buffering dark at full native resolution. Token spacing aligns the listening ruler with the play control; download/stop rings stay inside their fixed slots. Titles, metadata, seek track and all state controls remain visible without clipping or overlap. The buffering ring is present after advancing the Compose test clock."
+    "sha256": "580b9b9e81ccbcb77659f49b84d3e4664030ca5e1bd942612d841cf33f2fd2fd",
+    "reason": "Inspected old/new contact sheet of this golden after merging devvoice onto 0.4.173. Track rows use the 8 dp gap around the separator dot; download progress, failure and duration text are unchanged."
   },
   "_internal/mobile/android/app/src/test/snapshots/music_controls_buffering_light.png": {
-    "sha256": "c257313466cfbb377fe3b6a64a0bac73ce29342d622c8075f2212deed0d00c73",
-    "reason": "Inspected all ten exact combined-source before/after images on the gate-repair contact sheet; additionally opened buffering dark at full native resolution. Token spacing aligns the listening ruler with the play control; download/stop rings stay inside their fixed slots. Titles, metadata, seek track and all state controls remain visible without clipping or overlap. The buffering ring is present after advancing the Compose test clock."
+    "sha256": "7e2295aa4f31f27db898aa7211b827ddd3353fb141da65c878fa15483f642121",
+    "reason": "Inspected old/new contact sheet of this golden after merging devvoice onto 0.4.173. Track rows use the 8 dp gap around the separator dot; download progress, failure and duration text are unchanged."
   },
   "_internal/mobile/android/app/src/test/snapshots/music_controls_confirm_dark.png": {
-    "sha256": "a4ddd6f71b179d79da2f538350a4db88958181597087fc5a728f7a65d5dca17b",
-    "reason": "Inspected the combined-source before/after contact sheet and exact image bytes. Labels and controls remain inside their surfaces; selection marks, icons and shared confirmation rows reflect the integrated musicdl behavior. New music fixture shows the requested download/connecting/buffering/full-playback state; seek/progress and explicit cancel/delete controls are visible. The shared cancel and destructive choice remain distinct, with the consequence text fully wrapped."
+    "sha256": "522ed27cb084578e132daef4aa35f637641a315829a612257db633f5a989851d",
+    "reason": "Inspected old/new contact sheet of this golden after merging devvoice onto 0.4.173. Track rows use the 8 dp gap around the separator dot; download progress, failure and duration text are unchanged."
   },
   "_internal/mobile/android/app/src/test/snapshots/music_controls_confirm_light.png": {
-    "sha256": "930ace21e959c8807481b2ed33c3aee934dfe75668ea49ffda2af625abc252b8",
-    "reason": "Inspected the combined-source before/after contact sheet and exact image bytes. Labels and controls remain inside their surfaces; selection marks, icons and shared confirmation rows reflect the integrated musicdl behavior. New music fixture shows the requested download/connecting/buffering/full-playback state; seek/progress and explicit cancel/delete controls are visible. The shared cancel and destructive choice remain distinct, with the consequence text fully wrapped."
+    "sha256": "e7017cdf2ed86af56706de6c05a3b833ef26f1b2fa9f986f58997df5a71909d3",
+    "reason": "Inspected old/new contact sheet of this golden after merging devvoice onto 0.4.173. Track rows use the 8 dp gap around the separator dot; download progress, failure and duration text are unchanged."
   },
   "_internal/mobile/android/app/src/test/snapshots/music_controls_connecting_dark.png": {
-    "sha256": "71b9a587e9643426d519bffa47f2a2a63b3c82cc5034afd6852d5b4dfaf00396",
-    "reason": "Inspected all ten exact combined-source before/after images on the gate-repair contact sheet; additionally opened buffering dark at full native resolution. Token spacing aligns the listening ruler with the play control; download/stop rings stay inside their fixed slots. Titles, metadata, seek track and all state controls remain visible without clipping or overlap. The buffering ring is present after advancing the Compose test clock."
+    "sha256": "2e24136aedd7ca8f58055bdc9a3de83a25001f0d9da826a997909721425fb4e8",
+    "reason": "Inspected old/new contact sheet of this golden after merging devvoice onto 0.4.173. Track rows use the 8 dp gap around the separator dot; download progress, failure and duration text are unchanged."
   },
   "_internal/mobile/android/app/src/test/snapshots/music_controls_connecting_light.png": {
-    "sha256": "403227c3b4b20e4666b7972eeba3504eefa716451a540fda0fcd7f973713714a",
-    "reason": "Inspected all ten exact combined-source before/after images on the gate-repair contact sheet; additionally opened buffering dark at full native resolution. Token spacing aligns the listening ruler with the play control; download/stop rings stay inside their fixed slots. Titles, metadata, seek track and all state controls remain visible without clipping or overlap. The buffering ring is present after advancing the Compose test clock."
+    "sha256": "0f7cf3810d980da8b27c6a4e22d9de5da68a161ee95f177863ff090f1e84a1c7",
+    "reason": "Inspected old/new contact sheet of this golden after merging devvoice onto 0.4.173. Track rows use the 8 dp gap around the separator dot; download progress, failure and duration text are unchanged."
   },
   "_internal/mobile/android/app/src/test/snapshots/music_controls_download_dark.png": {
-    "sha256": "925ae2d5406452b18eada49a0b7ee2cb68f69b30a621a67d99d020dce257801e",
-    "reason": "Visually reviewed actual/reference/diff; merged volume-aware M4B label, completed generated music artwork, or shared action-row spacing. Exact previously reviewed bytes reconciled after integration; no new rendering or baseline change."
+    "sha256": "5dce4e1d240729ca966051458176797b280cef2adaac3d9c929f8d1854ba2312",
+    "reason": "Inspected old/new contact sheet of this golden after merging devvoice onto 0.4.173. Track rows use the 8 dp gap around the separator dot; download progress, failure and duration text are unchanged."
   },
   "_internal/mobile/android/app/src/test/snapshots/music_controls_download_light.png": {
-    "sha256": "18e6db7f5d3abe7f4a16268077f368dd19bf82f2ba37e5d9edc48536842a4ac5",
-    "reason": "Inspected the combined-source before/after contact sheet and exact image bytes. Labels and controls remain inside their surfaces; selection marks, icons and shared confirmation rows reflect the integrated musicdl behavior. New music fixture shows the requested download/connecting/buffering/full-playback state; seek/progress and explicit cancel/delete controls are visible."
+    "sha256": "14fd17015e3d33ce6efa562622dd1fb824735f0acee27ac2885e837c5ce44d69",
+    "reason": "Inspected old/new contact sheet of this golden after merging devvoice onto 0.4.173. Track rows use the 8 dp gap around the separator dot; download progress, failure and duration text are unchanged."
   },
   "_internal/mobile/android/app/src/test/snapshots/music_controls_downloaded_dark.png": {
-    "sha256": "8da238e6dc56d7df22ddb55fbc06b5cc1969a0d8db0701301285cc8b8fabfd9b",
-    "reason": "Inspected the combined-source before/after contact sheet and exact image bytes. Labels and controls remain inside their surfaces; selection marks, icons and shared confirmation rows reflect the integrated musicdl behavior. New music fixture shows the requested download/connecting/buffering/full-playback state; seek/progress and explicit cancel/delete controls are visible."
+    "sha256": "f5a85e4fc13d1f1edd4044132e878c06cc5a1a70a383a67d4c0fda3f2f8b4b36",
+    "reason": "Inspected old/new contact sheet of this golden after merging devvoice onto 0.4.173. Track rows use the 8 dp gap around the separator dot; download progress, failure and duration text are unchanged."
   },
   "_internal/mobile/android/app/src/test/snapshots/music_controls_downloaded_light.png": {
-    "sha256": "98f083a3ebbb518d61809b6db5a118a332c81ae22d3a4ef21d1dc2549d5f77b3",
-    "reason": "Inspected the combined-source before/after contact sheet and exact image bytes. Labels and controls remain inside their surfaces; selection marks, icons and shared confirmation rows reflect the integrated musicdl behavior. New music fixture shows the requested download/connecting/buffering/full-playback state; seek/progress and explicit cancel/delete controls are visible."
+    "sha256": "26157589eab8ce7aeb435ffe211c548ae3f82efb793aa3ac5348deeb73848b9d",
+    "reason": "Inspected old/new contact sheet of this golden after merging devvoice onto 0.4.173. Track rows use the 8 dp gap around the separator dot; download progress, failure and duration text are unchanged."
   },
   "_internal/mobile/android/app/src/test/snapshots/music_controls_paused_dark.png": {
-    "sha256": "37d1eae0ad5858df401b38d96dd798c94f7ca0967fb673f4686b375b1527ced9",
-    "reason": "Inspected all ten exact combined-source before/after images on the gate-repair contact sheet; additionally opened buffering dark at full native resolution. Token spacing aligns the listening ruler with the play control; download/stop rings stay inside their fixed slots. Titles, metadata, seek track and all state controls remain visible without clipping or overlap. The buffering ring is present after advancing the Compose test clock."
+    "sha256": "ce01e2e8b98e8dc3f71befe45c6bc4551a7ca2415b89a68985b73300f97bfc58",
+    "reason": "Inspected old/new contact sheet of this golden after merging devvoice onto 0.4.173. Track rows use the 8 dp gap around the separator dot; download progress, failure and duration text are unchanged."
   },
   "_internal/mobile/android/app/src/test/snapshots/music_controls_paused_light.png": {
-    "sha256": "020f5b8bf89ee67473504f17a27ec99b9eee3249d850a6c0c67e0922f100864a",
-    "reason": "Inspected all ten exact combined-source before/after images on the gate-repair contact sheet; additionally opened buffering dark at full native resolution. Token spacing aligns the listening ruler with the play control; download/stop rings stay inside their fixed slots. Titles, metadata, seek track and all state controls remain visible without clipping or overlap. The buffering ring is present after advancing the Compose test clock."
+    "sha256": "e926878f33dfc555080090cec24105b280f79d19c9e345a8aebe1b703b13d188",
+    "reason": "Inspected old/new contact sheet of this golden after merging devvoice onto 0.4.173. Track rows use the 8 dp gap around the separator dot; download progress, failure and duration text are unchanged."
   },
   "_internal/mobile/android/app/src/test/snapshots/music_controls_playing_dark.png": {
-    "sha256": "b970d479073f06084d295d64ed8a693a70d7bd728168198ea3315d0ae5e42ac9",
-    "reason": "Inspected all ten exact combined-source before/after images on the gate-repair contact sheet; additionally opened buffering dark at full native resolution. Token spacing aligns the listening ruler with the play control; download/stop rings stay inside their fixed slots. Titles, metadata, seek track and all state controls remain visible without clipping or overlap. The buffering ring is present after advancing the Compose test clock."
+    "sha256": "0aca9f8e9e7eaa1925055c0efebd217ee374af8d48265cb8550e2543ff3106f4",
+    "reason": "Inspected old/new contact sheet of this golden after merging devvoice onto 0.4.173. Track rows use the 8 dp gap around the separator dot; download progress, failure and duration text are unchanged."
   },
   "_internal/mobile/android/app/src/test/snapshots/music_controls_playing_light.png": {
-    "sha256": "9fea5dd910e4b6fc48d5df36e616546be7f77224d68804d56271bf5921bb044a",
-    "reason": "Inspected all ten exact combined-source before/after images on the gate-repair contact sheet; additionally opened buffering dark at full native resolution. Token spacing aligns the listening ruler with the play control; download/stop rings stay inside their fixed slots. Titles, metadata, seek track and all state controls remain visible without clipping or overlap. The buffering ring is present after advancing the Compose test clock."
+    "sha256": "d28f0b09d81ace57d44c58d5c456553e9a09e07984ae434794f0d9f335f87031",
+    "reason": "Inspected old/new contact sheet of this golden after merging devvoice onto 0.4.173. Track rows use the 8 dp gap around the separator dot; download progress, failure and duration text are unchanged."
   },
   "_internal/mobile/android/app/src/test/snapshots/music_controls_progress_dark.png": {
-    "sha256": "ca0e64d4d2f99d68683f6477d474f4cd844fa1998b6421aaf3b99bff30495a21",
-    "reason": "Inspected all ten exact combined-source before/after images on the gate-repair contact sheet; additionally opened buffering dark at full native resolution. Token spacing aligns the listening ruler with the play control; download/stop rings stay inside their fixed slots. Titles, metadata, seek track and all state controls remain visible without clipping or overlap. The buffering ring is present after advancing the Compose test clock."
+    "sha256": "db6b193d34f94fc58ae70205d48a8fc14633872a28c4e88fdeead3215220d314",
+    "reason": "Inspected old/new contact sheet of this golden after merging devvoice onto 0.4.173. Track rows use the 8 dp gap around the separator dot; download progress, failure and duration text are unchanged."
   },
   "_internal/mobile/android/app/src/test/snapshots/music_controls_progress_light.png": {
-    "sha256": "a20309ba89ebf5e684cdb1ce22ea4b98ebdf3fb6a5c827cdd38aa38229c40a15",
-    "reason": "Inspected all ten exact combined-source before/after images on the gate-repair contact sheet; additionally opened buffering dark at full native resolution. Token spacing aligns the listening ruler with the play control; download/stop rings stay inside their fixed slots. Titles, metadata, seek track and all state controls remain visible without clipping or overlap. The buffering ring is present after advancing the Compose test clock."
+    "sha256": "7326d135dda71015b31eafb8e9c3ff25700b7664eff94eeda88470d7811bfc5a",
+    "reason": "Inspected old/new contact sheet of this golden after merging devvoice onto 0.4.173. Track rows use the 8 dp gap around the separator dot; download progress, failure and duration text are unchanged."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/voice_modules_downloading_dark.png": {
+    "sha256": "738c12cc007c9b67338f79af8b178a3389448b83f0bd8d12cf16e522e16dbc6a",
+    "reason": "Inspected old/new contact sheet of this golden after merging devvoice onto 0.4.173. Voice rows now show one-line names with a circled radio mark instead of the Default/Selected value text; device voices are named by the system reader; the preview action stays at the row end. Rows above the module list are one line each, so the module card sits higher; its controls are unchanged."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/voice_modules_downloading_light.png": {
+    "sha256": "cb4c055a6c5db79212d7bfb2dd569cfd901ec1066f1f3bdf716d112aa540d716",
+    "reason": "Inspected old/new contact sheet of this golden after merging devvoice onto 0.4.173. Voice rows now show one-line names with a circled radio mark instead of the Default/Selected value text; device voices are named by the system reader; the preview action stays at the row end. Rows above the module list are one line each, so the module card sits higher; its controls are unchanged."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/voice_modules_failed_dark.png": {
+    "sha256": "c1dc7e55b4b09e6d502ed5a570b0bc87cb60deec3717d101488b1344e978ccb9",
+    "reason": "Inspected old/new contact sheet of this golden after merging devvoice onto 0.4.173. Voice rows now show one-line names with a circled radio mark instead of the Default/Selected value text; device voices are named by the system reader; the preview action stays at the row end. Rows above the module list are one line each, so the module card sits higher; its controls are unchanged."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/voice_modules_failed_light.png": {
+    "sha256": "4d16b249bb2ec70c5f12db2c329e70fc08b0f9448e3d112288b2005671fbad93",
+    "reason": "Inspected old/new contact sheet of this golden after merging devvoice onto 0.4.173. Voice rows now show one-line names with a circled radio mark instead of the Default/Selected value text; device voices are named by the system reader; the preview action stays at the row end. Rows above the module list are one line each, so the module card sits higher; its controls are unchanged."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/voice_modules_installed_dark.png": {
+    "sha256": "14e651f33f702970780875f28e02b9fb8b1d2d5c5101d5e40514117b463b34f0",
+    "reason": "Inspected old/new contact sheet of this golden after merging devvoice onto 0.4.173. Voice rows now show one-line names with a circled radio mark instead of the Default/Selected value text; device voices are named by the system reader; the preview action stays at the row end. Rows above the module list are one line each, so the module card sits higher; its controls are unchanged."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/voice_modules_installed_light.png": {
+    "sha256": "40e4a950e7140ccff5a6be8508fd4fe6d3c53b034aaf009c46f712b153bd2ac2",
+    "reason": "Inspected old/new contact sheet of this golden after merging devvoice onto 0.4.173. Voice rows now show one-line names with a circled radio mark instead of the Default/Selected value text; device voices are named by the system reader; the preview action stays at the row end. Rows above the module list are one line each, so the module card sits higher; its controls are unchanged."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/voice_modules_suggestion_dark.png": {
+    "sha256": "bde53ba9947f7af385c5e3ca91d171119e48feb1bac96ff1ed6cfdd45a6c201e",
+    "reason": "Inspected old/new contact sheet of this golden after merging devvoice onto 0.4.173. Voice rows now show one-line names with a circled radio mark instead of the Default/Selected value text; device voices are named by the system reader; the preview action stays at the row end. Rows above the module list are one line each, so the module card sits higher; its controls are unchanged."
+  },
+  "_internal/mobile/android/app/src/test/snapshots/voice_modules_suggestion_light.png": {
+    "sha256": "38fb4f591af047a165c792b1537754d97e54437fe462f7a94a37f55429aafbe0",
+    "reason": "Inspected old/new contact sheet of this golden after merging devvoice onto 0.4.173. Voice rows now show one-line names with a circled radio mark instead of the Default/Selected value text; device voices are named by the system reader; the preview action stays at the row end. Rows above the module list are one line each, so the module card sits higher; its controls are unchanged."
   }
 }

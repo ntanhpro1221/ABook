@@ -30,6 +30,7 @@ import { usePlayer, type WordTarget } from "./player";
 import { useClock } from "./clock";
 import { useListenBook, useListenLibrary, useReadAloudVoices, useSource } from "./source";
 import { feedback, withFeedback } from "@/shared/feedback";
+import { OneLineFit } from "@/shared/OneLineFit";
 
 type Filter = "all" | "listening" | "new" | "finished";
 const LIBRARY_FILTER_OPTIONS = [{ value: "all", label: S.s_tat_ca_49c73a31 }, { value: "listening", label: S.s_nghe_do_7e529071 }, { value: "new", label: S.s_chua_nghe_2fbea4c8 }, { value: "finished", label: S.s_xong_a6f4543a }] as const;
@@ -354,7 +355,7 @@ function UpcomingCard({ book, onOpen: open }: { book: ListenBook; onOpen?: (book
       <BookCover bookKey={book.id} title={book.title} part={book.series?.part} size="sm" image={book.cover} className="size-12 opacity-80" />
       <MotionRegion as="span" className="min-w-0" motionKey={[book.title, status]}>
         <span className="block break-words text-sm font-medium">{book.title}</span>
-        <span className="block truncate text-xs text-fg-2">{status}</span>
+        <OneLineFit className="text-xs text-fg-2">{status}</OneLineFit>
       </MotionRegion>
     </button>
   );

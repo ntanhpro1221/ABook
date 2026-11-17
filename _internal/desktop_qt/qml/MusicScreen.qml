@@ -213,7 +213,6 @@ FocusScope {
             onUse: root.use(modelData.link)
             onSave: root.save([modelData.link])
             onCancelDownload: root.cancelDownload([modelData.link])
-            onDeleteDownload: root.unsave([modelData.link])
             onClicked: detail.show(modelData.link, root.picking ? {book: root.pickBook, scene: root.pickScene} : null)
         }
         footer: Column {

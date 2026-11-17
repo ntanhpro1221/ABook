@@ -13,6 +13,8 @@ import { KIND_ICON } from "./ApplyChanges";
 import { api } from "./api";
 import { UNDO_MS } from "./decisions";
 import { pollDelay, retryUnlessGone } from "./polling";
+import { FIRST_LINE_ROW, FIRST_LINE_TEXT, OneLineFit } from "@/shared/OneLineFit";
+import { cn } from "@/shared/cn";
 
 // Hộp thư thay đổi từ điện thoại (docs/EDITING.md, P2b; webui/edits_inbox.py). Điện thoại đã ghép gửi phần sửa của cuốn về máy tính:
 // tên sách, bìa, tên nhân vật, tên chương, nhạc áp NGAY (không qua đây); còn những việc cần Studio - đổi giọng, cách đọc, người
@@ -156,9 +158,9 @@ export function PhoneEdits({ bookId }: { bookId: string }) {
       <AnimatedRows items={data.devices} keyOf={(device) => device.id}>
       {(device) => (
         <div className="pt-3">
-          <div className="flex flex-wrap items-center gap-2">
-            <h3 className="min-w-0 flex-1 truncate text-sm font-medium">
-              {device.name} <span className="font-normal text-fg-3">{S.s_gui_665940fe}{formatWhen(device.at)}</span>
+          <div className="flex flex-wrap items-start gap-2">
+            <h3 className={cn("flex min-w-0 flex-1 items-center gap-1 text-sm font-medium", FIRST_LINE_ROW)}>
+              <OneLineFit className="flex-1">{device.name}</OneLineFit><span className={cn("font-normal text-fg-3", FIRST_LINE_TEXT)}>{S.s_gui_665940fe}{formatWhen(device.at)}</span>
             </h3>
             <Button size="sm" variant="primary" icon={Check} loading={busy === `${device.id}:all`} disabled={busy !== null} onClick={() => decide("apply", device)}>{S.s_ap_dung_tat_ca_068378e0}</Button>
             <Button size="sm" variant="ghost" icon={X} disabled={busy !== null} onClick={() => setConfirmSkipAll(device)}>{S.s_bo_qua_tat_ca_e736ef1f}</Button>
@@ -191,8 +193,8 @@ export function PhoneEdits({ bookId }: { bookId: string }) {
           <AnimatedRows items={data.skipped ?? []} keyOf={(device) => device.id}>
           {(device) => (
             <div className="pt-2">
-              <div className="flex flex-wrap items-center gap-2">
-                <h3 className="min-w-0 flex-1 truncate text-sm font-medium text-fg">{device.name}</h3>
+              <div className="flex flex-wrap items-start gap-2">
+                <h3 className="min-w-0 flex-1 text-sm font-medium text-fg"><OneLineFit>{device.name}</OneLineFit></h3>
                 <Button size="sm" variant="ghost" icon={RotateCcw} disabled={busy !== null} onClick={() => decide("restore", device)}>{S.s_khoi_phuc_tat_ca_cc961492}</Button>
               </div>
               <AnimatedRows className="mt-1 divide-y divide-line overflow-hidden" items={device.items} keyOf={(item) => item.id}>

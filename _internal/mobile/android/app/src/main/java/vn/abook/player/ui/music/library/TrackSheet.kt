@@ -137,11 +137,9 @@ private fun Actions(ui: LibraryUi, state: LibraryState, track: MusicLibrary.Trac
     val downloaded = link in ui.downloaded
     val saved = link in ui.savedSet
     var askDelete by remember(link) { mutableStateOf(false) }
-    vn.abook.player.ui.motion.SwapContent(askDelete, contentKey = { it }, inPlace = true) { shown ->
-        if (shown) DestructiveConfirm(S.s_delete_download_question,
+    DestructiveConfirm(askDelete, S.s_delete_download_question,
         S.s_delete_download_description(track.title, formatSize(track.bytes)), { askDelete = false },
         { state.forget(link) }, pending = link in ui.pendingLinks, problem = ui.actionError)
-    }
     Column {
         SwapContent(playing, contentKey = { playing -> playing != null }, layout = ContentLayout.Column) { playing ->
             if (playing != null) {

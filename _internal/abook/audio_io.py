@@ -233,6 +233,7 @@ SIGNAL_REJECTION_CLASS_EDGE = "edge"
 SIGNAL_REJECTION_CLASS_CLIPPED = "clipped"
 SIGNAL_REJECTION_CLASS_UNKNOWN = "unknown"
 SIGNAL_EDGE_KEPT_FIELD = "signal_edge_kept"
+SIGNAL_EDGE_ACCEPTANCE_FIELD = "signal_edge_acceptance"
 TTS_SIGNAL_EDGE_KEPT = "TTS_SIGNAL_EDGE_KEPT"
 
 
@@ -267,13 +268,13 @@ def rejected_take_path(path: Path) -> Path:
     return path.with_name(path.stem + ".rejected" + path.suffix)
 
 
-def is_edge_kept_take(signal: Any, policy_hash: str | None) -> bool:
+def is_edge_kept_take(signal: Any, policy_hash: str | None, wav_sha256: str | None = None) -> bool:
     """A take kept, after every attempt, only for an edge pop - under this same policy.
 
     Such a take is judged without the edge gate on resume: reseeding under the same policy
     would replay the same attempts and end with the same take. Another policy re-judges it.
     """
-    return bool(
+    kept = bool(
         isinstance(signal, dict)
         and signal.get(SIGNAL_EDGE_KEPT_FIELD)
         and signal.get("signal_rejected")
@@ -281,6 +282,55 @@ def is_edge_kept_take(signal: Any, policy_hash: str | None) -> bool:
         and policy_hash
         and signal.get("generation_policy_hash") == policy_hash
     )
+    if not kept:
+        return False
+    if SIGNAL_EDGE_ACCEPTANCE_FIELD not in signal:
+        return True
+    receipt = signal[SIGNAL_EDGE_ACCEPTANCE_FIELD]
+    return bool(
+        isinstance(receipt, dict)
+        and wav_sha256
+        and receipt.get("wav_sha256") == wav_sha256
+        and receipt.get("policy_hash") == policy_hash
+        and receipt.get("code") in SIGNAL_EDGE_CODES
+        and receipt.get("code") == signal_rejection_code(str(signal.get("rejection_reason") or ""))
+        and receipt.get("reason") == signal.get("rejection_reason")
+        and not signal.get("quality_pending")
+    )
+
+
+def accepted_edge_signal(
+    signal: Any, policy_hash: str | None, wav_sha256: str, *, accepted: bool = False,
+) -> dict[str, Any] | None:
+    """Bind an explicit edge acceptance, or a committed refusal reason, to these exact bytes.
+
+    `accepted` is supplied only for a verified/warning checkpoint. A refused attempt still
+    awaiting quality checks never grants this authority. Other signal failures remain fatal.
+    """
+    if not isinstance(signal, dict) or signal.get("quality_pending"):
+        return None
+    if SIGNAL_EDGE_ACCEPTANCE_FIELD in signal:
+        return dict(signal) if is_edge_kept_take(signal, policy_hash, wav_sha256) else None
+    code = signal_rejection_code(str(signal.get("rejection_reason") or ""))
+    if not (
+        signal.get("signal_rejected")
+        and code in SIGNAL_EDGE_CODES
+        and signal.get("rejection_class", SIGNAL_REJECTION_CLASS_EDGE) == SIGNAL_REJECTION_CLASS_EDGE
+        and policy_hash and signal.get("generation_policy_hash") == policy_hash
+        and wav_sha256
+        and (accepted or is_edge_kept_take(signal, policy_hash))
+    ):
+        return None
+    return {
+        **signal,
+        SIGNAL_EDGE_KEPT_FIELD: True,
+        "rejection_class": SIGNAL_REJECTION_CLASS_EDGE,
+        "rejection_code": code,
+        SIGNAL_EDGE_ACCEPTANCE_FIELD: {
+            "wav_sha256": wav_sha256, "policy_hash": policy_hash,
+            "code": code, "reason": signal["rejection_reason"],
+        },
+    }
 
 # What one pause costs, fitted on committed segments rather than chosen. Regressing
 # duration on (speakable characters, pause groups) over 4095 of them gives 0.060 s per

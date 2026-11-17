@@ -57,13 +57,12 @@ Column {
                 x: Theme.s8 + 16 + Theme.s12
                 y: 6
                 width: parent.width - x - Theme.s8
-                Text {
+                OneLineFit {
                     objectName: "recordChoiceName"
-                    width: parent.width
+                    room: parent.width
                     text: TextWrap.pretty(row.modelData.name)
                     color: Theme.text
-                    wrapMode: Text.WrapAtWordBoundaryOrAnywhere
-                    font.pixelSize: Theme.sizeBodySmall
+                    baseSize: Theme.sizeBodySmall
                 }
                 ClockLabel {
                     objectName: "recordChoiceLine"

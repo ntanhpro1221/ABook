@@ -13,6 +13,7 @@ import { cn } from "@/shared/cn";
 import { useListPresence } from "@/shared/motion";
 import { formatDate, formatRelative } from "@/shared/format";
 import { SYNC_SWITCH_LABEL } from "@/shared/syncSwitch";
+import { OneLineFit } from "@/shared/OneLineFit";
 
 import { Reveal } from "../shared/MotionPresence";
 // Hợp đồng với server (webui/server.py: sync_view). Máy chủ đồng bộ chỉ chạy khi người dùng bật; mã ghép nối chỉ
@@ -336,10 +337,10 @@ export function PhoneSync() {
                 {deviceRows.map(({ key, state, item: device, ref }) => (
                   // Điện thoại hẹp + công tắc "Điều khiển sản xuất": hàng tự xuống dòng thay vì bóp tên máy còn "NGDtuanh-…".
                   <li key={key} ref={ref} className="motion-row" data-state={state} inert={state === "exit"}>
-                  <Fold storageKey={`phone-sync.device.${device.id}`} title={device.name} summary={S.s_lan_cuoi_0_97f1a485(formatRelative(device.lastSeen))} bodyClassName="flex flex-wrap items-center gap-3 pb-3">
-                    <Smartphone className="glyph shrink-0 text-fg-3" />
+                  <Fold storageKey={`phone-sync.device.${device.id}`} title={<OneLineFit>{device.name}</OneLineFit>} summary={S.s_lan_cuoi_0_97f1a485(formatRelative(device.lastSeen))} bodyClassName="flex flex-wrap items-start gap-3 pb-3">
+                    <Smartphone className="mt-line-icon glyph shrink-0 text-fg-3" />
                     <div className="min-w-0 flex-1 basis-44">
-                      <div className="truncate text-sm font-medium">{device.name}</div>
+                      <OneLineFit className="text-sm font-medium">{device.name}</OneLineFit>
                       <div data-motion-live className="text-xs text-fg-2">{S.s_ket_noi_lan_cuoi_1ffb25d2}{formatRelative(device.lastSeen)}{S.s_ghep_ngay_04227336}{formatDate(device.pairedAt)}
                       </div>
                     </div>

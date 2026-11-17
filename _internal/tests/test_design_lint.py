@@ -380,6 +380,29 @@ def test_r11_font_scale_and_row_title_style():
     assert "khác kiểu" in dt.rule_r11("k", mixed)[0].detail
 
 
+def test_r11_one_line_fit_shrink_is_on_the_scale():
+    """OneLineFit thu chữ 14 xuống 13 cho vừa một dòng: vẫn thuộc thang; cùng cỡ mà không phải OneLineFit, hay OneLineFit xuống dòng, thì đỏ."""
+    fit = tree(ROOT, n(0, 20, 100, 300, 116, text="Supertonic F1 - giọng nữ trầm ấm", font_size=13, type="OneLineFit", line_count=1))
+    assert dt.rule_r11("k", fit) == []
+    below = tree(ROOT, n(0, 20, 100, 300, 116, text="Tên", font_size=12 * dt.ONE_LINE_MIN_SCALE - 0.5, type="OneLineFit", line_count=1))
+    assert "ngoài thang" in dt.rule_r11("k", below)[0].detail
+    plain = tree(ROOT, n(0, 20, 100, 300, 116, text="Tên", font_size=13, type="Text", line_count=1))
+    assert "ngoài thang" in dt.rule_r11("k", plain)[0].detail
+    rows = tree(ROOT, *[n(0, 0, 100 + i * 56, 360, 156 + i * 56, clickable=True) for i in range(3)],
+                *[n(1 + i, 20, 110 + i * 56, 200, 130 + i * 56, text=f"Giọng {i}", font_size=13 if i == 1 else 14, type="OneLineFit",
+                    line_count=1, font_weight=500, color="#1a1814") for i in range(3)])
+    assert dt.rule_r11("k", rows) == []
+
+
+def test_r14_skips_data_names_in_one_line_fit():
+    """Nút chọn giọng mang tên giọng dài (dữ liệu, qua OneLineFit) không phải nhãn giao diện; nút có nhãn chữ thường 6 chữ vẫn đỏ."""
+    name = "Supertonic F1 - giọng nữ trầm ấm đọc truyện"
+    data = tree(ROOT, n(0, 20, 100, 340, 140, role="radiobutton"), n(1, 50, 110, 300, 130, text=name, type="OneLineFit", line_count=1))
+    assert dt.rule_r14("k", data) == []
+    label = tree(ROOT, n(0, 20, 100, 340, 140, role="radiobutton"), n(1, 50, 110, 300, 130, text=name, type="Text", line_count=1))
+    assert "chữ" in dt.rule_r14("k", label)[0].detail
+
+
 def test_r14_label_word_count_ignores_numbers_and_units():
     good = tree(ROOT, n(0, 20, 100, 200, 148, role="button", text="Nghe tiếp · Chương 4"),
                 n(0, 20, 160, 200, 208, role="button", text="Tải (48 MB)"))

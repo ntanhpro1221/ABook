@@ -110,6 +110,8 @@ QtObject {
     readonly property int sizeTitleDesktop: 32
     readonly property int sizeReading: 20
     readonly property real lineHeightReading: 1.7
+    // Tên một dòng (OneLineFit.qml): thu cỡ tới tỉ lệ này cho vừa một dòng, không vừa thì xuống dòng ở cỡ gốc
+    readonly property real oneLineMinScale: 0.75
 
     // ---- chuyển động (5.2; cùng số với motion.ts) ----
     readonly property int bookTransformMs: 350

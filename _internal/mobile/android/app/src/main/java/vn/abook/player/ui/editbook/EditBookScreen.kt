@@ -85,11 +85,9 @@ fun EditBookRoute(
     val state by editor.state.collectAsState()
     val readings by editor.readings.collectAsState()
     var askRemoveCover by remember { mutableStateOf(false) }
-    vn.abook.player.ui.motion.SwapContent(askRemoveCover, contentKey = { it }, inPlace = true) { shown ->
-        if (shown) vn.abook.player.ui.components.DestructiveConfirm(S.s_bo_anh_bia_696c6692,
+    vn.abook.player.ui.components.DestructiveConfirm(askRemoveCover, S.s_bo_anh_bia_696c6692,
         S.s_irreversible_detail(state.saved?.title.orEmpty()), { askRemoveCover = false },
         { editor.setCover(null) }, pending = state.saving, problem = state.problem)
-    }
     val picker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri -> uri?.let { crop(it.toString()) } }
     EditBookScreen(
         state, covers, onBack, editor::change,
@@ -334,10 +332,8 @@ private enum class ReadingsStage { Failed, Loading, Empty, Words }
 @Composable
 private fun ReadingRow(item: WordReading, editing: Boolean, saving: Boolean, failure: String, onEdit: () -> Unit, onRemove: () -> Unit, onSave: (String) -> Unit) {
     var askRemove by remember { mutableStateOf(false) }
-    vn.abook.player.ui.motion.SwapContent(askRemove, contentKey = { it }, inPlace = true) { shown ->
-        if (shown) vn.abook.player.ui.components.DestructiveConfirm(S.s_destructive_question(item.surface),
+    vn.abook.player.ui.components.DestructiveConfirm(askRemove, S.s_destructive_question(item.surface),
         S.s_irreversible_detail(item.surface), { askRemove = false }, onRemove, pending = saving, problem = failure)
-    }
     val colors = Abook.colors
     Column(Modifier.fillMaxWidth().testTag("reading_${item.surface}")) {
         ListItem(

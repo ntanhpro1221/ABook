@@ -4,8 +4,8 @@ import { createRoot } from 'react-dom/client';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { expect, it, vi } from 'vitest';
 import { CoverEditor } from './CoverEditor';
-import type { BookSummary } from './api';
 import { MOTION } from '@/shared/motion';
+import type { BookSummary } from './api';
 
 const api = vi.hoisted(() => vi.fn());
 vi.mock('./api', () => ({ api }));

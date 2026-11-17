@@ -29,7 +29,8 @@ export default defineConfig({
   base: "./",
   resolve: { alias: { "@": path.resolve(import.meta.dirname, "src") } },
   // Test quét cả cây mã (máy dò) chạy riêng dưới 1 giây nhưng cạnh 300 file khác có lúc quá hạn mặc định 5 s; 30 s vẫn bắt được test treo.
-  test: { testTimeout: 30_000, hookTimeout: 60_000 },
+  // webAnimationsSpec: makes happy-dom mark a cancelled animation's `finished` rejection as handled, as the Web Animations spec does.
+  test: { testTimeout: 30_000, hookTimeout: 60_000, setupFiles: ["./src/testing/webAnimationsSpec.ts"] },
   build: {
     outDir: path.resolve(import.meta.dirname, "../abook/webui/static"),
     emptyOutDir: true,

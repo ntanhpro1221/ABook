@@ -25,6 +25,8 @@
 #include <QThread>
 #include <QQuickImageProvider>
 #include <QDir>
+#include <QDirIterator>
+#include <QRegularExpression>
 #include <QTemporaryDir>
 #include <QDateTime>
 #include <QtQuickTest/quicktest.h>
@@ -320,12 +322,26 @@ public:
     std::unique_ptr<GlyphAudit> audit;
 };
 
+/** QML cannot create folders: every "build/<name>/" a test writes into (d2shots, surface_frames...) is created
+ *  before the run, read from the test sources themselves so a new folder never fails on a clean checkout. */
+static void createShotFolders() {
+    static const QRegularExpression folder(QStringLiteral("build/([A-Za-z0-9_-]+)/"));
+    QDirIterator files(QStringLiteral(QUICK_TEST_SOURCE_DIR), {QStringLiteral("*.qml"), QStringLiteral("*.js")}, QDir::Files, QDirIterator::Subdirectories);
+    while (files.hasNext()) {
+        QFile source(files.next());
+        if (!source.open(QIODevice::ReadOnly)) continue;
+        const QString text = QString::fromUtf8(source.readAll());
+        for (auto match = folder.globalMatch(text); match.hasNext();)
+            QDir().mkpath(QStringLiteral(WIDTH_SOURCE_DIR "/build/") + match.next().captured(1));
+    }
+}
+
 int main(int argc, char **argv) {
     qputenv("QT_QPA_PLATFORM", "offscreen");
     qputenv("QML_IMPORT_PATH", WIDTH_SOURCE_DIR "/tests/qml/stub");
     qputenv("QT_QPA_FONTDIR", WIDTH_SOURCE_DIR "/fonts");
     qputenv("QML_XHR_ALLOW_FILE_READ", "1");   // tst_uitree reads back the tree file it just wrote
-    QDir().mkpath(QStringLiteral(WIDTH_SOURCE_DIR "/build/d2shots"));     // ảnh của tst_d2_*.qml
+    createShotFolders();
     if (qEnvironmentVariableIsSet("ABOOK_QML_LIFETIME_DIAGNOSTICS")) LifetimeProbe::installHooks();
     WidthSetup setup;
     const int result = quick_test_main_with_setup(argc, argv, "width", QUICK_TEST_SOURCE_DIR, &setup);

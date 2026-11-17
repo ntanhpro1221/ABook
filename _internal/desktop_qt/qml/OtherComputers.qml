@@ -262,7 +262,7 @@ Column {
                                             x: 32
                                             y: (foundRow.height + (foundRow.index > 0 ? 1 : 0) - height) / 2
                                             width: parent.width - 32 - 12 - pick.width
-                                            Text { width: parent.width; text: TextWrap.keepDots(modelData.name); color: Theme.text; wrapMode: Text.WrapAtWordBoundaryOrAnywhere; font.pixelSize: Theme.sizeBodySmall; font.weight: Theme.weightMedium }
+                                            OneLineFit { objectName: "discoveredDeviceName"; room: parent.width; text: TextWrap.keepDots(modelData.name); color: Theme.text; baseSize: Theme.sizeBodySmall; font.weight: Theme.weightMedium }
                                             Text { width: parent.width; text: modelData.host + ":" + modelData.port; color: Theme.text2; wrapMode: Text.WrapAtWordBoundaryOrAnywhere; font.pixelSize: Theme.sizeCaption }
                                         }
                                         Item {
@@ -373,6 +373,8 @@ Column {
                                         kind: "ghost"
                                         icon: "bluetooth"
                                         wrap: true
+                                        fitName: true
+                                        width: Math.min(implicitWidth, parent.width)
                                         text: modelData.name + "\u00a0·\u00a0" + Logic.deviceKindLabel(modelData.kind)
                                         onActivated: root.choose(modelData.address)
                                     }
@@ -387,6 +389,8 @@ Column {
                             size: "sm"
                             kind: "ghost"
                             icon: "bluetooth"
+                            fitName: true
+                            width: Math.min(implicitWidth, parent.width)
                             text: modelData.name + S.s_u00a0_u00a0ban_thu_175857e0
                             onActivated: root.choose(modelData.address + "@dev")
                         }

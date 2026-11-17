@@ -21,8 +21,10 @@ import sys
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
-GOLD = HERE / "gold"
 sys.path.insert(0, str(HERE))
+from gold_root import gold_root  # noqa: E402
+
+GOLD = gold_root()
 from replay_all import BOOKS, CORPUS  # noqa: E402
 
 PRODUCTION_SOURCE = Path("D:/Novels/ABook/Text_Tmp")

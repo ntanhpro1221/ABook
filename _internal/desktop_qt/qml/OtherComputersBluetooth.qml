@@ -73,16 +73,16 @@ Item {
                     onClicked: { menu.close(); root.choose(modelData.address) }
                     Rectangle { anchors.fill: parent; radius: Theme.radiusControl; color: Theme.hover; opacity: row.hovered ? 1 : 0; Behavior on opacity { NumberAnimation { duration: Theme.motionFast } } }
                     SelectionMark { x: 8; y: 6 + 2; size: 16; selected: row.selected }
-                    Text {
+                    OneLineFit {
                         id: label
+                        objectName: "bluetoothDeviceName"
                         x: 8 + 16 + 8
                         y: 6
-                        width: parent.width - x - 8
+                        room: parent.width - x - 8
                         textFormat: Text.RichText
                         text: Logic.esc(TextWrap.keepDots(modelData.name)) + "&nbsp;<span style='color:" + Theme.text3 + "'>·&nbsp;" + Logic.esc(Logic.deviceKindLabel(modelData.kind)) + "</span>"
                         color: Theme.text
-                        wrapMode: Text.WrapAtWordBoundaryOrAnywhere
-                        font.pixelSize: Theme.sizeBodySmall
+                        baseSize: Theme.sizeBodySmall
                     }
                 }
             }

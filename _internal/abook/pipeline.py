@@ -43,6 +43,7 @@ from .audio_io import (
     REPEATED_UTTERANCE_METRIC,
     REPEATED_UTTERANCE_THRESHOLD,
     SIGNAL_EDGE_KEPT_FIELD,
+    SIGNAL_EDGE_ACCEPTANCE_FIELD,
     SIGNAL_REJECTION_CLASS_CLIPPED,
     SIGNAL_REJECTION_CLASS_EDGE,
     SIGNAL_REJECTION_CLASS_UNKNOWN,
@@ -322,6 +323,7 @@ TTS_SIGNAL_PROVENANCE_FIELDS = (
     "rejection_class",
     "rejection_reason",
     SIGNAL_EDGE_KEPT_FIELD,
+    SIGNAL_EDGE_ACCEPTANCE_FIELD,
     "word_break_gate",
     "tts_delivery_mode",
     ASR_CLARITY_REPAIR_ROUND_METRIC,
@@ -937,6 +939,7 @@ class BookPipeline:
             self.db,
             self.settings,
             spoken_text_drifted=self._spoken_text_drifted,
+            spoken_text_for_segment=lambda row: self._spoken_text_and_anchors(row)[0],
         )
         self._completed_noop = report.completed_verified
         if (
@@ -3309,7 +3312,9 @@ class BookPipeline:
             segment=row,
             # Kept after every attempt for an edge pop: the same policy would replay the
             # same attempts and keep the same take, so only the edge gate is waived.
-            check_edges=not is_edge_kept_take(self._segment_signal_provenance(dict(row)), self.quality_policy_hash),
+            check_edges=not is_edge_kept_take(
+                self._segment_signal_provenance(dict(row)), self.quality_policy_hash, wav_sha256,
+            ),
             signal_measurements=measurements,
         )
         self._signal_cache.remember(wav_sha256, measurements)

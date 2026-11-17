@@ -694,7 +694,7 @@ private fun ListenLabel(text: String, sub: String?, playing: Boolean, restart: B
         SwapContent(sub, contentKey = { sub -> sub != null }, layout = ContentLayout.Row) { sub ->
             if (sub != null) {
                 // cắt-có-chủ-ý: tên chương sau động từ của nút chính; nút luôn một dòng cao 48, tên đầy đủ ở danh sách chương ngay dưới (DESIGN.md §7, soát 10-11 việc 3).
-                BasicText("\u00a0·\u00a0" + sub, Modifier.weight(1f, fill = false).testTag("book_primary_chapter"), style = ink, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                BasicText("\u00a0·\u00a0" + sub, Modifier.padding(start = Dim.s8).weight(1f, fill = false).testTag("book_primary_chapter"), style = ink, maxLines = 1, overflow = TextOverflow.Ellipsis)
             }
         }
     }

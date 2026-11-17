@@ -158,7 +158,7 @@ fun DangerButton(label: String, onClick: () -> Unit, tag: String, modifier: Modi
         contentAlignment = Alignment.Center,
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Reveal(pendingVisible(pending)) { Row { BusyRing(color = ink); Spacer(Modifier.width(Dim.s8)) } }
+            ButtonLead(pending, ink)
             BasicText(label, style = Abook.type.bodyStrong.copy(color = ink))
         }
     }

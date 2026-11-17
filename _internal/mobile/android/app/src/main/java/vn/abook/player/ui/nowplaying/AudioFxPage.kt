@@ -72,10 +72,8 @@ fun AudioFxPage(music: MusicState? = null, bookId: String = "", openMusic: () ->
         SheetSwitch(S.s_copy_0aedb2b2cf2b, bookOnly, AudioFx::setBookOnly, "audiofx_book")
         }
         TextAction(S.s_ve_mac_dinh_4eb6b300, { askReset = true }, "audiofx_reset", align = Alignment.CenterStart)
-        vn.abook.player.ui.motion.SwapContent(askReset, contentKey = { it }, inPlace = true) { shown ->
-        if (shown) vn.abook.player.ui.components.DestructiveConfirm(S.s_reset_question, S.s_reset_detail,
+        vn.abook.player.ui.components.DestructiveConfirm(askReset, S.s_reset_question, S.s_reset_detail,
             { askReset = false }, { askReset = false; AudioFx.reset(); if (music != null && bookId.isNotEmpty()) music.setLevel(MusicLevels.DEFAULT_DB) }, S.s_ve_mac_dinh_4eb6b300)
-    }
     }
 }
 

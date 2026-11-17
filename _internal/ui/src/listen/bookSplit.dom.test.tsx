@@ -20,7 +20,7 @@ vi.mock("./player", async (original) => ({
 }));
 vi.mock("./source", async (original) => ({
   ...(await original<typeof import("./source")>()),
-  useSource: () => ({ kind: "desktop" }),
+  useSource: () => ({ kind: "desktop", records: {} }),
   useListenBook: () => ({ data: state.book, isLoading: false }),
   useListenLibrary: () => ({ data: [], isLoading: false }),
   useWarmVoice: () => undefined,
@@ -88,6 +88,29 @@ const info = () => layout().querySelector<HTMLElement>(":scope > div > header")!
 const tabs = () => layout().querySelector<HTMLElement>('[data-orientation]:not([role])')!; // gốc của Tabs (hàng tab và các bảng nằm trong nó)
 const list = () => layout().querySelector<HTMLElement>("[data-book-list]")!; // phần cuộn của cột phải (hàng tab nằm ngoài nó)
 const scrolls = (element: Element) => element.className.split(/\s+/).includes("overflow-y-auto");
+
+it("keeps a long invented listening profile name in the trigger and chooser", async () => {
+  const name = "Hồ sơ nghe buổi tối của Nguyễn Văn An và gia đình";
+  state.book = { ...listenBook(), records: [{ id: "invented-a", name, active: true }, { id: "invented-b", name: "Nghe lần hai", active: false }] };
+  const computed = window.getComputedStyle.bind(window);
+  vi.spyOn(window, "getComputedStyle").mockImplementation((element) => element.hasAttribute("data-one-line-fit")
+    ? { fontSize: "14px", lineHeight: "20px" } as CSSStyleDeclaration : computed(element));
+  Object.defineProperty(HTMLElement.prototype, "clientWidth", { configurable: true, get(this: HTMLElement) { return this.hasAttribute("data-book-frame") ? state.width : 160; } });
+  vi.spyOn(HTMLElement.prototype, "scrollWidth", "get").mockImplementation(function (this: HTMLElement) { return (this.textContent ?? "").length * 8; });
+  await open(700);
+  const label = [...host.querySelectorAll<HTMLElement>("[data-one-line-fit]")].find(node => node.textContent === name)!;
+  expect(label.dataset.fit).toBe("wrap");
+  expect(label.style.fontSize).toBe("");
+  expect(label.style.whiteSpace).toBe("");
+  const trigger = label.closest<HTMLButtonElement>("button")!;
+  expect(trigger.className).toContain("min-h-8");
+  await act(() => trigger.dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowDown", bubbles: true })));
+  const choice = [...document.querySelectorAll<HTMLElement>('[role="menuitem"] [data-one-line-fit]')].find(node => node.textContent === name)!;
+  expect(choice).toBeDefined();
+  expect(choice.dataset.fit).toBe("wrap");
+  expect(choice.textContent).toBe(name);
+  expect(choice.className).not.toMatch(/truncate|ellipsis|line-clamp/);
+});
 
 it("chapters never mount book music or request its catalog", async () => {
   manyChapters(300);

@@ -28,6 +28,8 @@ import design_lint as dl
 
 PARITY = Path(__file__).with_name("design_lint_parity.json")
 FONT_SCALE = (12, 14, 16, 18, 20, 24, 32)
+# Tên một dòng (OneLineFit, DESIGN.md 5.5): chữ thu cỡ tới tỉ lệ này của một cỡ trong thang để vừa một dòng - cỡ thu ấy là của thang, không ngoài thang.
+ONE_LINE_MIN_SCALE = json.loads((Path(__file__).resolve().parents[1] / "ui_design/tokens.json").read_text(encoding="utf-8"))["sizes"]["ONE_LINE_MIN_SCALE"]
 CONTROL_ROLES = {"button", "tab", "menuitem", "dropdownlist", "checkbox", "switch", "radiobutton", "choice", "listitem"}
 # R14 xét nhãn của điều khiển; hàng danh sách mang dữ liệu (tên sách, tên chương), không phải nhãn.
 LABEL_ROLES = CONTROL_ROLES - {"checkbox", "switch", "listitem"}
@@ -216,11 +218,19 @@ def rule_r8(key: str, tree: dict) -> list[dl.Finding]:
     return out
 
 
+def nominal_size(n: dict) -> float | None:
+    """Cỡ chữ theo thang của một nút: chữ OneLineFit đang thu cho vừa một dòng tính theo cỡ gốc trong thang (cỡ nhỏ nhất s mà s * ONE_LINE_MIN_SCALE <= cỡ <= s)."""
+    size = n.get("font_size")
+    if size is None or n.get("type") != "OneLineFit" or n.get("line_count", 1) != 1:
+        return size
+    return next((s for s in FONT_SCALE if s * ONE_LINE_MIN_SCALE - 0.01 <= size <= s + 0.01), size)
+
+
 def rule_r11(key: str, tree: dict) -> list[dl.Finding]:
     out = []
     nodes = tree["nodes"]
     for n in nodes:
-        size = n.get("font_size")
+        size = nominal_size(n)
         if size is None or not n.get("text") or not shown(n):
             continue
         if size < 12 or min(abs(size - s) for s in FONT_SCALE) > 0.01:
@@ -238,7 +248,7 @@ def rule_r11(key: str, tree: dict) -> list[dl.Finding]:
         for row in rows:
             first = first_text(tree, row)
             if first is not None and first.get("font_size") is not None:
-                styles[row["id"]] = (first.get("font_size"), first.get("font_weight"), first.get("color"))
+                styles[row["id"]] = (nominal_size(first), first.get("font_weight"), first.get("color"))
         if len(styles) >= 2 and len(set(styles.values())) > 1:
             kinds = sorted({f"{s[0]:g}/{s[1]}/{s[2]}" for s in styles.values()})
             out.append(dl.Finding("R11", key, f"tên hàng trong một danh sách khác kiểu: {', '.join(kinds)}",
@@ -266,10 +276,23 @@ def rule_r14(key: str, tree: dict) -> list[dl.Finding]:
         text = visible_label(tree, n)
         if not text.strip() and n.get("description", "").strip():
             continue
+        # Nhãn là TÊN dữ liệu (tên giọng, tên nhân vật qua OneLineFit), không phải chữ giao diện: không đếm chữ.
+        if holds_one_line_fit(tree, n):
+            continue
         count = len(words(text))
         if count > 4 or not text.strip():
             out.append(dl.Finding("R14", key, f"nhãn {n['role']} {count} chữ: '{text[:40]}'", [round(x) for x in n["bounds"]]))
     return out
+
+
+def holds_one_line_fit(tree: dict, node: dict) -> bool:
+    stack = list(node.get("children", []))
+    while stack:
+        child = tree["nodes"][stack.pop()]
+        if child.get("type") == "OneLineFit":
+            return True
+        stack.extend(child.get("children", []))
+    return False
 
 
 TREE_RULES = (rule_r1, rule_r3, rule_r8, rule_r11, rule_r14)

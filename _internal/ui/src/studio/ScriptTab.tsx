@@ -2,6 +2,7 @@ import { ScriptScope } from "./ScriptScope";
 import { Presence } from "../shared/MotionPresence";
 import { S } from "../shared/strings.generated";
 import { MoreInfo } from "@/shared/SettingsNav";
+import { FIRST_LINE_ICON, FIRST_LINE_ROW, OneLineFit } from "@/shared/OneLineFit";
 import { MotionRegion } from "@/shared/MotionRegion";
 import { MotionPresence, Reveal } from "@/shared/MotionPresence";
 import { useListPresence, type PresentRow } from "@/shared/motion";
@@ -632,12 +633,9 @@ export function DeliveryMenu({
         <div>
           <div className="mb-2 label-section text-fg-2">{S.s_ai_noi_ab25bbf5}</div>
           {picked ? (
-            <div className="flex items-center gap-2 py-2 text-sm text-accent-text">
-              <SelectionMark selected />
-              <span className="min-w-0 flex-1 truncate font-medium">
-                {picked.label}
-                {picked.newGender ? S.s_nguoi_moi_cc9a5f2d : ""}
-              </span>
+            <div className={cn("flex items-center gap-2 py-2 text-sm text-accent-text", FIRST_LINE_ROW)}>
+              <SelectionMark selected className={FIRST_LINE_ICON} />
+              <OneLineFit className="flex-1 font-medium">{`${picked.label}${picked.newGender ? S.s_nguoi_moi_cc9a5f2d : ""}`}</OneLineFit>
               <button type="button" className="shrink-0 text-xs font-medium underline" onClick={() => setPicked(null)}>{S.s_doi_8f75900f}</button>
             </div>
           ) : (
@@ -829,12 +827,10 @@ export function SpeakerMenu({
         key={person.value}
         type="button"
         onClick={() => onPick(person)}
-        className="flex h-9 w-full items-center gap-2 rounded-control px-2 text-left text-sm hover:bg-hover focus-visible:bg-hover focus-visible:outline-none pointer-coarse:h-11"
+        className={cn("flex min-h-9 w-full items-center gap-2 rounded-control px-2 py-1 text-left text-sm hover:bg-hover focus-visible:bg-hover focus-visible:outline-none pointer-coarse:min-h-11", FIRST_LINE_ROW)}
       >
-        <PersonAvatar name={person.value} avatar={person.avatar} size={24} />
-        <span className="min-w-0 flex-1 truncate">
-          {current ? S.s_dung_la_0_32e8685a(person.label) : person.label}
-        </span>
+        <PersonAvatar name={person.value} avatar={person.avatar} size={24} className={cn("[--icon-w:24px]", FIRST_LINE_ICON)} />
+        <OneLineFit className="flex-1">{current ? S.s_dung_la_0_32e8685a(person.label) : person.label}</OneLineFit>
         {current ? <Check className="size-4 shrink-0 text-success" /> : <Reveal when={person.lines > 0}><span className="shrink-0 text-xs text-fg-3">{formatNumber(person.lines)}</span></Reveal>}
       </button>
     );
@@ -932,11 +928,11 @@ function SpeakerChip({
       tabIndex={-1}
       disabled={!script.castReady || !line.editable}
       aria-label={S.s_0_1_bam_de_doi_80d58682(line.kind === "thought" ? S.s_nguoi_nghi_ce1afa0f : S.s_nguoi_noi_9620707b, shown)}
-      className="avatar inline-flex h-7 max-w-full items-center gap-1 rounded-full px-3 text-body-small font-medium transition-[filter] hover:brightness-95 disabled:cursor-default disabled:hover:brightness-100"
+      className="avatar inline-flex min-h-7 max-w-full items-center gap-1 rounded-full px-3 text-body-small font-medium transition-[filter] hover:brightness-95 disabled:cursor-default disabled:hover:brightness-100"
       style={hue(shown)}
     >
       <PersonAvatar name={line.current || shown} avatar={[...script.cast, ...script.others].find((person) => person.value === line.current)?.avatar} size={22} />
-      <span className="truncate">{shown}</span>
+      <OneLineFit className="text-left">{shown}</OneLineFit>
       <Icon className={cn("size-3.5 shrink-0", line.wish?.state === "applied" && "text-success")} strokeWidth={2.25} />
     </button>
   );

@@ -5,6 +5,15 @@ import { genderLabel, groupedVoices, splitVoiceName, voiceSections } from "./voi
 const voice = (id: string, name: string, gender = ""): ReadAloudVoice => ({ id, name, provider: id.split(":")[0], online: false, gender });
 
 describe("danh sách giọng ở Cài đặt", () => {
+  it("keeps meaningful device names, metadata and order supplied by the engine", () => {
+    const list = [voice("device:an", "Microsoft An", "male"), voice("device:google", "Google ngoại tuyến 1"),
+      { ...voice("device:samsung", "Samsung cần mạng"), online: true }];
+    const group = groupedVoices(list)[0];
+    expect(group.detail).toBe("Theo bộ đọc hệ thống");
+    expect(group.voices).toEqual(list);
+    expect(voiceSections(list)[0].voices.map(v => v.shown)).toEqual(list.map(v => v.name));
+    expect(group.voices[1].gender).toBe("");
+  });
   it("tách tên giọng khỏi tên mô-đun trong ngoặc cuối", () => {
     expect(splitVoiceName("Nhẹ (VieNeu Nano)")).toEqual({ shown: "Nhẹ", module: "VieNeu Nano" });
     expect(splitVoiceName("Hoài My")).toEqual({ shown: "Hoài My", module: null });

@@ -201,7 +201,10 @@ object BookImport {
             "language" to book.language,
             "cover" to cover,
             "chapters" to book.chapters.map { chapter ->
-                linkedMapOf<String, Any?>("title" to chapter.title, "text" to chapter.text).also { if (chapter.matter.isNotEmpty()) it["matter"] = chapter.matter }
+                linkedMapOf<String, Any?>("title" to chapter.title, "text" to chapter.text).also {
+                    if (chapter.name.isNotEmpty()) it["name"] = chapter.name // tên hiển thị của bước xem trước (ChapterTitles), như importers.to_dict
+                    if (chapter.matter.isNotEmpty()) it["matter"] = chapter.matter
+                }
             },
             "notes" to book.notes.toList(),
         ).also {

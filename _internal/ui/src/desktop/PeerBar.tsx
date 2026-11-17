@@ -10,6 +10,7 @@ import { homePage, PEER_SILENT_EVENT, peerBarLine } from "@/shared/peerStudio";
 import { Button } from "@/shared/ui";
 import { api, currentPeer, type AppInfo } from "@/studio/api";
 import { useAppInfo } from "@/studio/data";
+import { OneLineFit } from "@/shared/OneLineFit";
 
 /** Máy kia không trả lời (câu của máy chủ, "" khi đang trả lời): nghe sự kiện của api.ts, hỏi lại mỗi vài giây (listen/peerBack.ts)
  *  và khi máy ấy trả lời thì tải lại mọi thứ đang xem - người dùng không phải bấm gì. `onBack`: việc thêm khi máy ấy về. */
@@ -52,9 +53,9 @@ export function PeerBar() {
       )}
     >
       {/* Như dải mất mạng: nền tràn cả bề ngang, nội dung thẳng lề trang bên dưới (page-x, khung 1180) - từng thụt 14 px (soát 25-10). */}
-      <div className="page-x mx-auto flex max-w-[1180px] items-center gap-3 max-sm:flex-wrap">
-        <Laptop className="ink-start size-4 shrink-0 text-fg-2" aria-hidden />
-        <MotionRegion as="span" className="min-w-0 flex-1 text-pretty">{peerBarLine(info.peer.name, { silent, listenOnly: info.listenOnly })}</MotionRegion>
+      <div className="page-x mx-auto flex max-w-[1180px] items-start gap-3 max-sm:flex-wrap">
+        <Laptop className="mt-line-icon size-4 shrink-0 text-fg-2" aria-hidden />
+        <MotionRegion as="span" className="min-w-0 flex-1"><OneLineFit>{peerBarLine(info.peer.name, { silent, listenOnly: info.listenOnly })}</OneLineFit></MotionRegion>
         <Button size="sm" variant="ghost" onClick={() => window.location.assign(homePage(window.location.search))}>{S.s_ve_may_nay_d9404884}</Button>
       </div>
     </div>

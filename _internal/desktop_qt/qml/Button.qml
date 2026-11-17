@@ -14,6 +14,7 @@ Interactive {
     property string kind: "primary"     // "primary" | "ghost" (= "text") | "danger"
     property string size: "md"          // "sm" | "md" | "lg"
     property bool wrap: false
+    property bool fitName: false
     property bool pending: false
     property bool busy: false
     property int ownedRequest: 0
@@ -38,7 +39,7 @@ Interactive {
     Accessible.role: Accessible.Button
     Accessible.name: text
     implicitHeight: Math.max(Theme.buttonHeight, label.implicitHeight + 8)
-    implicitWidth: Math.max(label.implicitWidth, reservedWidth) + iconBox + 2 * pad
+    implicitWidth: Math.max(fitName ? label.naturalWidth : label.implicitWidth, reservedWidth) + iconBox + 2 * pad
     opacity: enabled && !working ? 1 : 0.45
     // Mờ như MỘT nhóm như opacity của CSS (disabled:opacity-45): mờ từng lớp thì chữ 45% chồng lên nền 45% thành chữ nâu nhạt trên khối
     // nâu (Lead soát 0.4.151 lượt 2, "Lưu tên" tối); dựng nhóm vào một lớp rồi mới mờ - chữ vẫn đậm trên nền như web
@@ -73,7 +74,7 @@ Interactive {
         x: Math.max(root.pad, (root.width - root.implicitWidth) / 2 + root.pad)
         width: 16
         height: 16
-        y: root.wrap && label.lineCount > 1 ? label.y + root.slot / 2.5 - height / 2 : (root.height - height) / 2
+        y: (root.wrap || root.fitName) && label.lineCount > 1 ? label.y + root.slot / (root.wrap ? 2.5 : 2) - height / 2 : (root.height - height) / 2
         StateIcon {
             anchors.centerIn: parent
             Reveal { shown: !wait.shown }
@@ -83,18 +84,20 @@ Interactive {
         }
         PendingIndicator { id: wait; anchors.centerIn: parent; width: 16; height: 16; pending: root.working || root.pending; color: root.ink }
     }
-    Text {
+    OneLineFit {
         id: label
+        objectName: root.fitName ? "buttonDeviceName" : ""
+        room: root.fitName ? root.width - 2 * root.pad - root.iconBox : naturalWidth
         x: root.showsIcon ? lead.x + root.iconBox : Math.max(root.pad, (root.width - implicitWidth) / 2)
         width: Math.max(0, Math.min(implicitWidth, root.width - x - root.pad))
         anchors.verticalCenter: parent.verticalCenter
         anchors.verticalCenterOffset: root.halfLeading
         text: root.text
         color: root.ink
-        wrapMode: root.wrap ? Text.WrapAtWordBoundaryOrAnywhere : Text.NoWrap
+        wrapMode: root.fitName ? (fit === "wrap" ? Text.Wrap : Text.NoWrap) : root.wrap ? Text.WrapAtWordBoundaryOrAnywhere : Text.NoWrap
         horizontalAlignment: Text.AlignHCenter
         lineHeight: root.wrap ? 1.25 : 1
-        font.pixelSize: root.size === "sm" ? 13 : root.size === "lg" ? 15 : Theme.sizeBodySmall
+        baseSize: root.size === "sm" ? 13 : root.size === "lg" ? 15 : Theme.sizeBodySmall
         font.weight: Theme.weightMedium
     }
 }

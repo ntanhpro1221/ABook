@@ -143,11 +143,9 @@ private fun CoverHub(editor: BookEditor, onBack: () -> Unit, find: () -> Unit, c
     val picker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri -> uri?.let { crop(it.toString()) } }
     val has = state.saved?.cover != null
     var askRemoveCover by remember { mutableStateOf(false) }
-    vn.abook.player.ui.motion.SwapContent(askRemoveCover, contentKey = { it }, inPlace = true) { shown ->
-        if (shown) vn.abook.player.ui.components.DestructiveConfirm(S.s_bo_anh_bia_696c6692,
+    vn.abook.player.ui.components.DestructiveConfirm(askRemoveCover, S.s_bo_anh_bia_696c6692,
         S.s_irreversible_detail(state.saved?.title.orEmpty()), { askRemoveCover = false },
         { editor.setCover(null) }, pending = state.saving, problem = state.problem)
-    }
     BookForm(StudioCoverText.TITLE, onBack, "studio_cover") {
         // The shared menu scrolls the lead and all actions together in short windows.
         SheetMenu(Modifier.fillMaxWidth()) {

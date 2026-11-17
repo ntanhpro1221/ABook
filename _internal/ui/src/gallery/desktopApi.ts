@@ -321,7 +321,17 @@ const ROUTES: [string, RegExp, Handler][] = [
   ["GET", /^\/api\/books\/([^/]+)$/, (match) => ({ book: summary(book(match[1])), chapters: chapterRows(book(match[1])) })],
   ["GET", /^\/api\/books\/([^/]+)\/activity$/, (match) => activity(book(match[1]))],
   ["GET", /^\/api\/voices$/, () => VOICES],
-  ["GET", /^\/api\/readaloud\/voices$/, () => [
+  ["GET", /^\/api\/readaloud\/voices$/, () => galleryState.scenario.deviceVoices ? [
+    { id: "device:an", name: "Microsoft An", provider: "device", online: false, gender: "male" },
+    { id: "device:google1", name: "Google ngoại tuyến 1", provider: "device", online: false, gender: "" },
+    { id: "device:google2", name: "Google ngoại tuyến 2", provider: "device", online: false, gender: "" },
+    { id: "device:samsung", name: "Samsung cần mạng", provider: "device", online: true, gender: "" },
+    { id: "device:oem", name: "OPPO ngoại tuyến", provider: "device", online: false, gender: "" },
+    ...(galleryState.scenario.longVoiceNames ? [
+      { id: "device:long1", name: "Supertonic F1 - giọng nữ trầm ấm đọc truyện", provider: "device", online: false, gender: "female" },
+      { id: "device:long2", name: "Supertonic F1 - giọng nữ trầm ấm đọc truyện dài cho những đêm khuya không ngủ", provider: "device", online: false, gender: "female" },
+    ] : []),
+  ] : [
     { id: "edge:vi-VN-HoaiMyNeural", name: "Hoài My", provider: "edge", online: true, default: true, gender: "female" },
     { id: "edge:vi-VN-NamMinhNeural", name: "Nam Minh", provider: "edge", online: true, gender: "male" },
     { id: "device:vi-VN-An", name: "An (Windows)", provider: "device", online: false, gender: "male" },

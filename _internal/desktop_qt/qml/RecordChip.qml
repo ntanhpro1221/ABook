@@ -45,14 +45,13 @@ Interactive {
             color: Theme.text2
             font.pixelSize: Theme.sizeCaption
         }
-        Text {
+        OneLineFit {
             id: nameText
             objectName: "recordChipName"
-            width: Math.min(implicitWidth, flow.width)
+            room: flow.width
             text: TextWrap.pretty(root.name)
             color: Theme.text
-            wrapMode: Text.WrapAtWordBoundaryOrAnywhere
-            font.pixelSize: Theme.sizeCaption
+            baseSize: Theme.sizeCaption
             font.weight: Theme.weightMedium
         }
     }

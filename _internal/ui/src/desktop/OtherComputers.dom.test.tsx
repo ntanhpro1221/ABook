@@ -89,3 +89,33 @@ it.each([
     expect([...host.querySelectorAll("input")].some(input => input.value === "AA:BB:CC:DD:EE:01")).toBe(true);
   }
 });
+
+it.each([{ room: 300, fit: "shrunk" }, { room: 150, fit: "wrap" }])("keeps a complete discovered phone name at $room px", async ({ room, fit }) => {
+  const name = "Điện thoại OPPO Find X8 Ultra của Nguyễn Văn An";
+  const computed = window.getComputedStyle.bind(window);
+  vi.spyOn(window, "getComputedStyle").mockImplementation((element) => element.hasAttribute("data-one-line-fit")
+    ? { fontSize: `${parseFloat((element as HTMLElement).style.fontSize) || 14}px`, lineHeight: "20px" } as CSSStyleDeclaration
+    : computed(element));
+  vi.spyOn(HTMLElement.prototype, "clientWidth", "get").mockReturnValue(room);
+  vi.spyOn(HTMLElement.prototype, "scrollWidth", "get").mockImplementation(function (this: HTMLElement) {
+    return Math.ceil((this.textContent ?? "").length * 8 * (parseFloat(this.style.fontSize) || 14) / 14);
+  });
+  vi.mocked(api).mockImplementation(async (path) => path === "/api/computers/discover"
+    ? { found: [{ name, host: "phone.invalid", port: 8443, kind: "phone" }] } : new Promise(() => {}));
+  await act(() => root.render(<QueryClientProvider client={client}><TooltipProvider><OtherComputers /></TooltipProvider></QueryClientProvider>));
+  const discover = [...host.querySelectorAll<HTMLButtonElement>("button")].find(button => button.textContent === S.s_tu_tim_3f09ad05)!;
+  await act(() => discover.click());
+  await act(() => eventually(() => expect([...host.querySelectorAll("[data-one-line-fit]")].some(node => node.textContent === name)).toBe(true)));
+  const label = [...host.querySelectorAll<HTMLElement>("[data-one-line-fit]")].find(node => node.textContent === name)!;
+  expect(label).toBeDefined();
+  expect(label.dataset.fit).toBe(fit);
+  expect(label.textContent).toBe(name);
+  expect(label.className).not.toMatch(/truncate|ellipsis|line-clamp/);
+  if (fit === "wrap") {
+    expect(label.style.fontSize).toBe("");
+    expect(label.style.whiteSpace).toBe("");
+  } else {
+    expect(parseFloat(label.style.fontSize)).toBeGreaterThanOrEqual(14 * 0.75);
+    expect(label.scrollWidth).toBeLessThanOrEqual(label.clientWidth);
+  }
+});

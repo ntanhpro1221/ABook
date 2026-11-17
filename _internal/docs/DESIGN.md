@@ -312,6 +312,12 @@ giữ tên trong cột tối đa 640 px, thanh tua dùng phần rộng còn lạ
   hành động và đối tượng, thân nói hậu quả; Huỷ mặc định bên trái, nút nguy hiểm bên phải. Back/Escape/chạm ngoài là huỷ.
   Việc có hoàn tác dùng snackbar ghi rõ Hoàn tác và giữ đủ dữ liệu để khôi phục. Máy dò `scripts/check_ui_actions.py` giữ bản rà
   từng lời gọi, chặn lời gọi mới chưa được xét; không coi việc quét chữ là chứng minh runtime.
+- **Tên một dòng** (tên giọng, tên nhân vật, tên thiết bị/máy/điện thoại, thiết bị phát và hồ sơ nghe): chữ thu cỡ tới 0.75 cỡ gốc cho vừa một dòng; thu tới đó vẫn không vừa thì
+  xuống dòng ở cỡ gốc - không bao giờ "…". Một thành phần: điện thoại `OneLineFit`, web `OneLineFit`, Qt `OneLineFit.qml`; máy dò `TextCutScanTest`,
+  `check_text_cut.py`, `shared/userTextClip.test.ts`.
+  Hàng chứa tên tăng chiều cao theo chữ, kể cả hàng chọn nơi phát và thanh báo đang phát trên thiết bị khác. Câu giải thích dài có tên vẫn xuống dòng đầy đủ.
+  Ngoại lệ duy nhất cho tên thiết bị: thanh phiên điện thoại thu nhỏ trên web (`RemotePhone`, cao cố định 48/56 px) dùng `ShortName`, giữ đầu/đuôi ở khổ hẹp
+  và tên đầy đủ trong tooltip; các hàng và menu có thể tăng chiều cao dùng `OneLineFit`. Chữ hiển thị và mẫu câu lấy cùng kho chữ ở cả ba nền.
 - **Vùng chạm**: tối thiểu 44×44 (điện thoại), 32×32 (máy tính, có tooltip).
 
 ## 6. Thành phần
@@ -413,9 +419,10 @@ giữ tên trong cột tối đa 640 px, thanh tua dùng phần rộng còn lạ
     tests/fixtures/music_library/cases.json (máy chủ, Android, Qt chạy cùng bảng).
   - *Dòng bài* (cao >= 64): nút nghe thử · tên (đậm, tối đa hai dòng, ellipsis) / người sáng tác · thời lượng (một dòng, chỉ người sáng tác
     ellipsis) · cột trạng thái tải cố định (mũi tên tải / vòng mảnh quanh ô vuông dừng / mũi tên xuống trong vòng đặc màu nhấn).
-    Nhãn lần lượt "Tải về", "Dừng tải", "Đã tải - bấm để xoá". Vòng không có chữ; % ở dòng phụ dùng chữ số đều.
-    Chưa biết tổng byte thì vòng quay quanh ô vuông dừng. Dừng bỏ phần dở ngay, không hỏi. Bản hoàn chỉnh chỉ xoá sau hộp
-    "Xoá bản tải?", tên bài + dung lượng giải phóng; Huỷ mặc định bên trái, Xoá màu nguy hiểm bên phải.
+    Nhãn lần lượt "Tải về", "Dừng tải" (nút) và "Đã tải" (trạng thái, KHÔNG bấm được - không phải nút xoá ngầm). Vòng không có chữ;
+    % ở dòng phụ dùng chữ số đều. Chưa biết tổng byte thì vòng quay quanh ô vuông dừng. Dừng bỏ phần dở ngay, không hỏi. Bản hoàn chỉnh
+    chỉ xoá ở chi tiết bài ("Xoá bản tải") sau hộp "Xoá bản tải?", tên bài + dung lượng giải phóng; Huỷ mặc định bên trái, Xoá màu nguy
+    hiểm bên phải. Thanh nghe của dòng bắt đầu dưới nút nghe thử (ảnh 40 + khe 8).
     Bỏ phong cách khỏi hàng trên cả ba nền tảng để giữ chỗ cho tên và cột tải; phong cách đầy đủ ở Thông tin. Đây là ngoại lệ cắt chữ
     có chủ ý theo soát musiclib2; sheet giữ nguyên tên đầy đủ. Danh sách ảo hoá (2.387 dòng).
     Mất mạng: bài chưa tải mờ nút nghe thử và nút tải; danh mục đã lưu vẫn mở được.

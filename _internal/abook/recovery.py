@@ -1,12 +1,13 @@
 from __future__ import annotations
 
+import hashlib
 import json
 from collections.abc import Callable
 from dataclasses import dataclass, field
 from pathlib import Path
 
 from . import book_paths
-from .audio_io import inspect_wav, is_edge_kept_take, signal_metrics_cache_version, verify_mp3
+from .audio_io import accepted_edge_signal, inspect_wav, signal_metrics_cache_version, verify_mp3
 from .background_runner import BACKGROUND_DIRECTORY
 from .database import (
     SEGMENT_AUDIO_QUALITY_STAGE,
@@ -151,6 +152,7 @@ def recover_project(
     settings: dict,
     *,
     spoken_text_drifted: Callable[[dict], bool] | None = None,
+    spoken_text_for_segment: Callable[[dict], str] | None = None,
 ) -> RecoveryReport:
     errors = db.integrity_check()
     if errors:
@@ -237,29 +239,42 @@ def recover_project(
                 signal = json.loads(str(row["signal_json"] or "{}"))
             except (TypeError, ValueError):
                 signal = {}
+            same_take = checksum == str(row["wav_sha256"])
+            if same_take and spoken_text_drifted is not None and spoken_text_drifted(row):
+                db.reset_segment_pending(int(row["id"]), "Recovery found a recording made from a different spoken text")
+                report.reset_spoken_text_drift += 1
+                continue
+            text = str(row["text"])
+            if checksum_ok and spoken_text_for_segment is not None:
+                # The writer validates materialized speech: stretched vowels, symbols and
+                # locked readings can have very different duration/rate budgets from source.
+                try:
+                    text = spoken_text_for_segment(dict(row))
+                except Exception as exc:
+                    raise RecoveryError(f"Cannot reconstruct recorded speech for {row['stable_id']}") from exc
+                spoken_hash = signal.get("spoken_text_sha256") if isinstance(signal, dict) else None
+                if same_take and spoken_hash and hashlib.sha256(text.encode("utf-8")).hexdigest() != spoken_hash:
+                    db.reset_segment_pending(int(row["id"]), "Recovery found a recording made from a different spoken text")
+                    report.reset_spoken_text_drift += 1
+                    continue
+            edge_signal = accepted_edge_signal(
+                signal, current_policy_hash, checksum,
+                accepted=str(row["status"]) in {"verified", "warning"},
+            ) if same_take else None
             signal_ok, _, _ = inspect_wav(
-                wav, str(row["text"]), settings, segment=row,
-                # An edge pop kept after every attempt under this policy would be kept again.
-                check_edges=not (checksum == str(row["wav_sha256"])
-                                 and is_edge_kept_take(signal, current_policy_hash)),
+                wav, text, settings, segment=row,
+                check_edges=edge_signal is None,
                 signal_measurements=measurements,
             )
             signal_cache.remember(checksum, measurements)
             valid = checksum_ok and signal_ok
-        if valid and spoken_text_drifted is not None and spoken_text_drifted(row):
-            # Bản thu còn nguyên, checksum còn khớp - nhưng nó được làm từ một CHUỖI NÓI khác
-            # (một bản vá đã đổi `spoken_symbols_to_words` / chuẩn hoá tiếng / phiên âm). Cùng
-            # một họ với "WAV mất" ở dưới: bằng chứng không còn nói về văn bản này.
-            #
-            # `reset_segment_pending` chứ không `requeue_segment_for_asr`: requeue giữ bản thu và
-            # bắt ASR đọc lại nó, tức đi thẳng vào đúng `RuntimeError` ấy lần nữa - và lần này ở
-            # giữa lô, sau hàng giờ GPU. Xem `pipeline._spoken_text_drifted`.
-            db.reset_segment_pending(
-                int(row["id"]),
-                "Recovery found a recording made from a different spoken text",
-            )
-            report.reset_spoken_text_drift += 1
-        elif valid:
+            if valid and edge_signal is not None and edge_signal != signal:
+                db.remember_signal_edge_acceptance(
+                    int(row["id"]), wav_sha256=checksum, original_signal=str(row["signal_json"]),
+                    signal=edge_signal, policy_hash=str(current_policy_hash),
+                )
+                row = db.get_segment(int(row["id"]))
+        if valid:
             status = str(row["status"])
             quality_ok = _segment_has_current_audio_qa(
                 db,

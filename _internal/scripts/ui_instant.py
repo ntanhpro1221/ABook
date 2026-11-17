@@ -302,7 +302,8 @@ KT_IF = re.compile(r'(?<![\w.])if\s*\(')
 KT_COMPOSE = {'Box', 'Column', 'Row', 'BasicText', 'Text', 'Image', 'Icon', 'Spacer', 'LazyColumn', 'LazyRow', 'Canvas', 'Surface', 'AnimatedContent',
               'BasicTextField', 'Layout', 'FlowRow', 'FlowColumn', 'LazyVerticalGrid', 'HorizontalPager', 'VerticalPager',
               'SelectionContainer', 'Popup', 'Dialog', 'DropdownMenu', 'CircularProgressIndicator', 'LinearProgressIndicator'}
-KT_MOTION = {'AnimatedVisibility', 'AnimatedContent', 'Crossfade', 'Reveal', 'SwapContent'}
+# StateIcon is the one in-place icon swap (SwapContent keyed on its whole state); RevealInline is Reveal's horizontal twin.
+KT_MOTION = {'AnimatedVisibility', 'AnimatedContent', 'Crossfade', 'Reveal', 'RevealInline', 'SwapContent', 'StateIcon'}
 
 
 def kt_composables(paths: list[Path]) -> set[str]:
@@ -449,7 +450,7 @@ def _kt_inside_motion(clean: str, offset: int, condition: str, source: str | Non
                         held = {name.strip() for name in reads.split(',')}
                         names = set(re.findall(r'(?<![.\w])([a-z_]\w*)', condition)) - {'true', 'false', 'null', 'is', 'in'}
                         return expression.strip() in held and bool(names) and names <= held
-                    if call[1] == 'AnimatedVisibility' or call[1] == 'Reveal':
+                    if call[1] in ('AnimatedVisibility', 'Reveal', 'RevealInline'):
                         return re.sub(r'\s+', '', args.removeprefix('visible').lstrip(' =')) == re.sub(r'\s+', '', condition)
                     return any(re.search(r'(?<![.\w])' + name.strip() + r'\b', condition) for name in reads.split(','))
             else:
