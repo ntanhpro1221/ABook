@@ -253,6 +253,7 @@ PlayerFade 1.0 ../../../../qml/PlayerFade.qml
 PlayerSubtitle 1.0 ../../../../qml/PlayerSubtitle.qml
 PlayerVoicePopover 1.0 ../../../../qml/PlayerVoicePopover.qml
 SidebarProgress 1.0 ../../../../qml/SidebarProgress.qml
+ImportStatus 1.0 ../../../../qml/ImportStatus.qml
 singleton OutputDevices 1.0 OutputDevices.qml
 PlayerConsent 1.0 ../../../../qml/PlayerConsent.qml
 PlayerBar 1.0 ../../../../qml/PlayerBar.qml

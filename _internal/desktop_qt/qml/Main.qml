@@ -307,6 +307,7 @@ Window {
         function onStateChanged() {
             if (Backend.state !== Backend.Ready) return
             Api.bind(DesktopApi, Theme); Api.load()
+            Api.watchImports()      // lượt thêm sách dở / đang chạy (app thoát giữa chừng): hiện ở thanh bên kèm Thử lại
             const files = win.pendingFiles
             win.pendingFiles = []
             win.openFiles(files)

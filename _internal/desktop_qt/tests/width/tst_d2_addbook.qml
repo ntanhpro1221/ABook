@@ -13,6 +13,7 @@ Item {
     Item { id: narrowHost; width: 760; height: 900; clip: true; Rectangle { anchors.fill: parent; color: Theme.bg } }
     Component { id: addFactory; AddBook {} }
     Component { id: libraryFactory; LibraryScreen {} }
+    Component { id: importStatusFactory; ImportStatus {} }
 
     TestCase {
         id: test
@@ -28,6 +29,7 @@ Item {
             Api.info = {version: "fixture"}
             Api.loaded = true
             Api.notice = ""
+            Api.importJobs = []; Api.importRevision = -1; Api.importScreens = 0
             Nav.layers = []
             Platform.reset()
             opened = []
@@ -187,6 +189,72 @@ Item {
             compare(calls, 2)
             compare(dialog.step, "review")
             compare(dialog.problem, "")
+        }
+        // Bản bench 15-11 (Android): .abook hỏng rồi TXT báo "Đây không phải file sách của app.". Mỗi lượt có đường dẫn / kiểu file / lời lỗi riêng - cả hai chiều.
+        function test_aBrokenBookFileNeverSpoilsTheNextText() {
+            DesktopApi.responses = {"/api/listen/open-book-file": {status: 400, data: {error: "Đây không phải file sách của app."}},
+                                    "/api/listen/import/preview": {status: 200, data: book()}, "/api/listen/import": {status: 200, data: {id: "txt-id", how: "new"}}}
+            const dialog = make()
+            dialog.begin(["D:/x/Sach_lon.abook"])
+            compare(dialog.problem, "Đây không phải file sách của app.")
+            compare(dialog.path, "")
+            dialog.read({path: "D:/x/Sach_thu.txt", name: "Sach_thu.txt"})
+            compare(dialog.step, "review")
+            compare(dialog.problem, "")
+            dialog.add(false)
+            compare(importCalls().length, 1)
+            compare(importCalls()[0].body.path, "D:/x/Sach_thu.txt")
+            compare(Api.notice, "Đã thêm “Tên sách”")
+            compare(opened.join(), "txt-id")
+        }
+        function test_aBrokenTextNeverSpoilsTheNextBookFile() {
+            DesktopApi.responses = {"/api/listen/import/preview": {status: 400, data: {error: "File “Sach_hong.txt” hỏng chữ."}},
+                                    "/api/listen/open-book-file": {status: 200, data: {id: "book-id", how: "new"}}}
+            const dialog = make()
+            dialog.begin(["D:/x/Sach_hong.txt"])
+            compare(dialog.problem, "File “Sach_hong.txt” hỏng chữ.")
+            compare(dialog.path, "")
+            dialog.read({path: "D:/x/Sach_tot.abook", name: "Sach_tot.abook"})
+            const calls = DesktopApi.requests.filter(r => r.path === "/api/listen/open-book-file")
+            compare(calls.length, 1)
+            compare(calls[0].body.path, "D:/x/Sach_tot.abook")
+            compare(importCalls().length, 0)
+            compare(opened.join(), "book-id")
+            verify(!dialog.open)
+        }
+        // Đóng hộp giữa lúc thêm: lượt vẫn chạy trên máy chủ; người xem cấp app (Api.importJobs) hỏi ngay khi hộp đóng, hiện tiến độ ở thanh bên, và khi lượt
+        // xong thì làm mới thư viện + báo "Đã thêm" - không nhờ lời gọi lại của hộp đã đóng.
+        function test_closingMidImportLeavesTheJobToTheAppWatcher() {
+            let view = {revision: 1, jobs: [{id: "a1b2c3d4e5f6", kind: "text", name: "Tên sách", state: "running", problem: "", result: null}]}
+            DesktopApi.responses = {"/api/listen/import/preview": {status: 200, data: book()}, "/api/listen/import/jobs": function() { return {status: 200, data: view} }}
+            Api.importJobs = []; Api.importRevision = 0; Api.importScreens = 0
+            const dialog = make()
+            dialog.show()
+            compare(Api.importScreens, 1)
+            dialog.begin(["D:/x/a.epub"])
+            DesktopApi.delayed = true
+            dialog.add(false)                       // lời gọi thêm còn treo
+            dialog.close()
+            verify(!dialog.open)
+            tryCompare(Api, "importScreens", 0)
+            DesktopApi.delayed = false
+            Api.pollImports()
+            compare(Api.importRunning, true)
+            compare(Api.importRows.length, 1)
+            const status = createTemporaryObject(importStatusFactory, host, {width: 280})
+            verify(status !== null)
+            const refreshes = DesktopApi.libraryRefreshes
+            view = {revision: 2, jobs: [{id: "a1b2c3d4e5f6", kind: "text", name: "Tên sách", state: "done", problem: "", result: {id: "n", how: "new"}}]}
+            Api.pollImports()
+            compare(Api.importRunning, false)
+            compare(Api.importRows.length, 0)
+            compare(Api.notice, "Đã thêm “Tên sách”")
+            compare(DesktopApi.libraryRefreshes, refreshes + 1)
+            view = {revision: 3, jobs: [{id: "0a1b2c3d4e5f", kind: "book", name: "Sach_lon.abook", state: "interrupted", problem: "", result: null}]}
+            Api.pollImports()
+            compare(Api.importRows.length, 1)        // lượt dở (app thoát giữa chừng) ở lại kèm Thử lại
+            Api.retryImport("0a1b2c3d4e5f")
+            verify(DesktopApi.requests.some(r => r.method === "POST" && r.path === "/api/listen/import/jobs/0a1b2c3d4e5f/retry"))
         }
         function test_addErrorKeepsDialog() {
             DesktopApi.responses = {"/api/listen/import/preview": {status: 200, data: book()}, "/api/listen/import": {status: 500, data: {error: "Ổ đĩa đã đầy."}}}

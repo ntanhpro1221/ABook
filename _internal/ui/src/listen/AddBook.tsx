@@ -11,6 +11,7 @@ import { BookOpen, BookPlus, Check, CircleAlert, Copy, FileText, Folder, Loader2
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { useNavigate } from "react-router";
 import { toast } from "@/shared/toast";
+import { addBookOpened, IMPORT_JOBS_KEY } from "./importJobs";
 import { ChapterPreview } from "@/shared/ChapterPreview";
 import { cn } from "@/shared/cn";
 import { ErrorDetails } from "@/shared/ErrorDetails";
@@ -110,6 +111,13 @@ export function AddBookDialog({
   const importer = source.textImport;
   const client = useQueryClient();
   const navigate = useNavigate();
+  // Hộp chỉ là một người xem của lượt thêm sách trên máy chủ: đang mở thì nó tự báo kết quả; đóng giữa chừng thì người xem cấp app (thanh bên) hỏi ngay
+  // và hiện tiến độ, rồi làm mới thư viện khi lượt xong (listen/importJobs.ts).
+  useEffect(() => {
+    if (!open) return;
+    const release = addBookOpened();
+    return () => { release(); void client.invalidateQueries({ queryKey: IMPORT_JOBS_KEY }); };
+  }, [open, client]);
   const [choice, setChoice] = useState<ImportChoice | null>(null);
   const lastRead = useRef<ImportChoice | null>(null);
   // Các bước con do MotionRegion trong hộp chuyển động; reset khi đóng không chụp cả nền trang.
@@ -223,7 +231,13 @@ export function AddBookDialog({
   useBackLayer(open && confirmLeave !== null, () => setConfirmLeave(null), confirmBox, confirmButton);
   const close = (next: boolean) => {
     if (!next && confirmLeave !== null) { setConfirmLeave(null); return; }
-    if (busy === "adding") return;
+    if (busy === "adding") {
+      if (queueRef.current) return;
+      // The submitted import owns its source until it finishes; closing only detaches this viewer.
+      clear();
+      onOpenChange(next);
+      return;
+    }
     if (!next && unfinished > 1) {
       confirmButton.current = document.activeElement as HTMLElement;
       setConfirmLeave((asked) => (asked === "close" ? null : "close")); // lần Esc thứ hai là "Quay lại"
@@ -259,7 +273,10 @@ export function AddBookDialog({
         clear();
         onOpenChange(false);
       } catch (error) {
-        if (!(error instanceof ReadCancelled)) fail(error);
+        if (error instanceof ReadCancelled) return;
+        fail(error);
+        // Mỗi lượt đọc có kiểu file / đường dẫn riêng: file sách lỗi không để lại lựa chọn nào cho lượt sau "Thêm" nhầm.
+        setChoice(null);
       } finally {
         if (session.active()) setBusy(null);
       }
@@ -460,9 +477,11 @@ export function AddBookDialog({
   };
   const add = async (separate = false) => {
     if (!choice || !preview) return;
+    const session = reads.current.start();
     setBusy("adding");
     try {
       const added = await addCurrent(separate);
+      if (!session.active()) return;
       const items = queueRef.current;
       if (items && currentId !== null) {
         // Trong hàng: cuốn này xong, sang cuốn kế (toast gộp ở cuối hàng).
@@ -478,10 +497,11 @@ export function AddBookDialog({
       onOpenChange(false);
       navigate(`/book/${added.id}`);
     } catch (error) {
+      if (!session.active()) return;
       feedback("reject");
       toast.error(S.s_chua_them_duoc_sach_b327e086, { description: (error as Error).message });
     } finally {
-      setBusy(null);
+      if (session.active()) setBusy(null);
     }
   };
   // "Thêm phần còn lại" (addRest): cuốn đang xem thêm đúng như đang hiện, các cuốn sau dùng mặc định của bước xem trước. Cuốn nào lỗi thì ghi vào hàng

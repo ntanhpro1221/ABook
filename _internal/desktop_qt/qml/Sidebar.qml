@@ -159,7 +159,7 @@ Item {
             x: Theme.s16; y: studio.y + studio.height + Theme.s8
             width: root.fullWidth - 2 * Theme.s16
             height: Math.max(0, chip.y - y - Theme.s8)
-            contentHeight: production.height + update.height
+            contentHeight: production.height + update.height + imports.height
             clip: true; boundsBehavior: Flickable.StopAtBounds
             Reveal { target: productionScroll; shown: root.expanded || root.peek }
             SidebarProgress {
@@ -177,6 +177,11 @@ Item {
                     text: S.s_co_abook_39ccc742 + (Api.info.update ? Api.info.update.version : "") + S.s_bam_de_cap_nhat_186823a8
                     onActivated: { root.choose(2); if (Nav.stack) Nav.stack.rootContent(2).active = "advanced" }
                 }
+            }
+            Collapse {
+                id: imports; y: production.height + update.height; width: parent.width
+                open: Api.importRows.length > 0
+                ImportStatus { objectName: "sidebarImports"; width: parent.width }
             }
             SmoothWheel { flick: productionScroll }
         }
