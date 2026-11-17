@@ -58,6 +58,8 @@ class SleepLastTest {
         assertTrue(DiskWrites.flush(TestTime.ms(5_000)))
         reset()
         ListenPrefs.load()
+        // cancel() vừa dừng cảm biến lắc; JVM không có SensorManager - giữ cờ "đang chạy" như lúc setup để hẹn lại không gọi dịch vụ thật.
+        Motion::class.java.getDeclaredField("running").also { it.isAccessible = true }.setBoolean(Motion, true)
     }
 
     @Test fun theContractMatchesTheSharedFixture() {
