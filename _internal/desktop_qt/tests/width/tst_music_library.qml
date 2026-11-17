@@ -173,6 +173,12 @@ Item {
             verify(named(page, "musicList") !== null)
             tryVerify(function() { return named(page, "musicArt") !== null })
             tryVerify(function() { const cover = named(page, "musicArtGenerated"); return cover && cover.status === Image.Ready })
+            // B13f: art fills its square by cropping, like Android Crop and web object-cover
+            for (const name of ["musicArtGenerated", "musicArtSupplied"]) {
+                const art = named(page, name)
+                compare(art.fillMode, Image.PreserveAspectCrop, name)
+                verify(art.clip, name)
+            }
             // danh sách ảo hoá: không dựng đủ 24 hàng cùng lúc ở 900 px
             const rows = named(page, "musicList")
             verify(rows.count === 24)

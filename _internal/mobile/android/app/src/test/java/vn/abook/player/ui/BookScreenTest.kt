@@ -14,6 +14,11 @@ import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.SemanticsProperties
+import androidx.compose.ui.test.SemanticsMatcher
+import androidx.compose.ui.test.assert
+import androidx.compose.ui.test.assertHeightIsAtLeast
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.onAllNodesWithText
@@ -172,7 +177,9 @@ class BookScreenTest {
         }
         rule.onNodeWithTag("chapter_3").performClick()
         assertEquals("chapter b1 3 600.0", played.last())
-        rule.onNodeWithText("Các quyển").performClick()
+        // B13e: the way back to the volume list is a real button (role, 48 dp target) like the web and Qt Button.
+        rule.onNodeWithTag("volume_back").assert(SemanticsMatcher.expectValue(SemanticsProperties.Role, Role.Button))
+            .assertTextContains("Các quyển").assertHeightIsAtLeast(48.dp).performClick()
         rule.waitForIdle()
         rule.onNodeWithTag("volume_1").assertIsDisplayed()
     }

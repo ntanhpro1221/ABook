@@ -91,6 +91,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import vn.abook.player.ui.components.BackButton
+import vn.abook.player.ui.components.OutlineButton
 import vn.abook.player.ui.components.BookCover
 import vn.abook.player.ui.components.CheckIcon
 import vn.abook.player.ui.components.ClusterLabel
@@ -373,7 +374,7 @@ private fun BookScreenBody(
             BookTab.Chapters -> {
                 if ((detail?.volumes?.size ?: 0) > 1 && volume != null) item(key = "volume_back") {
                     Column(Modifier.animateItem(fadeInSpec = null, fadeOutSpec = null).fade { fade.value * arrival.value }) {
-                        BasicText(S.s_volumes, Modifier.fillMaxWidth().pressable { selectedVolume = null }.padding(vertical = Dim.s12))
+                        OutlineButton(S.s_volumes, { selectedVolume = null }, Modifier.padding(vertical = Dim.s8).testTag("volume_back"))
                         BasicText(volume.title, style = Abook.type.bodyStrong)
                     }
                 }

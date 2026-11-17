@@ -15,17 +15,20 @@ Item {
         anchors.fill: parent
         source: "data:image/bmp;base64," + Raster.base64(root.seed)
         asynchronous: true
-        fillMode: Image.PreserveAspectFit
+        fillMode: Image.PreserveAspectCrop
+        clip: true
         smooth: true
     }
     Image {
         id: suppliedArt
+        objectName: "musicArtSupplied"
         anchors.fill: parent
         source: root.visible && root.track.art && root.track.art.sha1 && root.track.art.url
             ? "image://musicart/" + root.track.art.sha1 + "/" + encodeURIComponent(root.track.art.url) : ""
         sourceSize: Qt.size(Math.ceil(root.width * Screen.devicePixelRatio), Math.ceil(root.height * Screen.devicePixelRatio))
         asynchronous: true
-        fillMode: Image.PreserveAspectFit
+        fillMode: Image.PreserveAspectCrop
+        clip: true
         Reveal { shown: suppliedArt.status === Image.Ready }
     }
 }

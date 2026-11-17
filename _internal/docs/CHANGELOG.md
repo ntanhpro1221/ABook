@@ -20,6 +20,7 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 - Tắt "Thao tác hẹn lại": thao tác lúc tiếng đang nhỏ dần vẫn hẹn lại trên máy tính và web, như lắc máy trên điện thoại. Nút "Nghe tiếp" của lịch đêm trên web phát tiếp khi đang tạm dừng.
 - Sửa câu trong trình phát: Android và máy tính có hàng "Sửa cách đọc một từ" như web, dùng được cả với file ABook bản cũ; "Nghe thử" trên máy tính chỉ cần câu có audio.
 - Web: sách một quyển chia nhiều phần mở được "Sắp xếp quyển"; quyển mới không còn thừa hưởng bìa của quyển vừa xoá (cả ba nền) và không thêm được quyển trùng chương đầu.
+- Android: nút quay về "Các quyển" là nút thật như web và máy tính. Máy tính: ảnh nhạc cắt cho đầy khung như Android và web.
 - Kỹ thuật: bộ chụp gallery trả kết quả kèm chẩn đoán khi trang không vẽ khung nào, thay vì treo tới hết giờ CDP.
 
 - Kỹ thuật: desktop dùng Qt 6.11.3 để nhận bản sửa QML/V4 cho QTBUG-148459 (MethodStorage null gây crash WidthTests). Phiên bản SDK có một nguồn cấu hình; QWindowKit được dựng riêng theo phiên bản Qt.
