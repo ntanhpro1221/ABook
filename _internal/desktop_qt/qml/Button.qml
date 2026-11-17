@@ -101,6 +101,6 @@ Interactive {
         lineHeight: root.wrap ? 1.25 : 1
         baseSize: root.size === "sm" ? 13 : root.size === "lg" ? 15 : Theme.sizeBodySmall
         font.weight: Theme.weightMedium
-        font.features: root.tabular ? ({"tnum": 1}) : ({})
+        font.features: root.tabular ? ({"tnum": 1}) : ({})  // tnum-ok: only when the label carries a self-changing percent (tabular), as VoiceNote
     }
 }

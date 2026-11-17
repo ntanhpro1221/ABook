@@ -18,9 +18,10 @@ ALLOWED = {
     "StudioChapterRow.qml": "cột số chương, độ dài, đã xong của bảng chương Studio",
     "ProjectRow.qml": "cột 'cập nhật' của bảng dự án",
     "ProjectScreen.qml": "cột giờ của nhật ký việc",
+    "Button.qml": "nhãn nút mang phần trăm tự đổi (tabular: true), không phải chữ chạy",
 }
 # Chỗ bật chế độ tabular của VoiceNote: chỉ cho chữ có phần trăm tự đổi.
-TABULAR_USERS = {"VoiceModule.qml": "phần trăm tải giọng đổi tại chỗ"}
+TABULAR_USERS = {"VoiceModule.qml": "phần trăm tải giọng đổi tại chỗ", "MusicTrackDetail.qml": "phần trăm tải nhạc trên nút Dừng tải đổi tại chỗ"}
 
 TNUM = re.compile(r'"tnum"')
 TABULAR = re.compile(r"\btabular\s*:\s*true\b")
