@@ -1,5 +1,5 @@
 {
-  "_doc": "Exceptions and remaining-work lists for scripts/ui_parity_rules.py (L1-L11). Every exception carries a reason. `remaining` lists are ratchets: a count may only go down, and must be lowered here when a fix lands.",
+  "_doc": "Exceptions and remaining-work lists for scripts/ui_parity_rules.py (L1-L12). Every exception carries a reason. `remaining` lists are ratchets: a count may only go down, and must be lowered here when a fix lands.",
   "L1": {
     "screens": [
       {
@@ -654,6 +654,155 @@
         "file": "mobile/android/app/src/main/java/vn/abook/player/ui/editbook/EditBookScreen.kt",
         "key": "s_doc_la_0_328eec99",
         "reason": "Continues the row title as one sentence (\"Haruto\" / \"đọc là “Ha-ru-tô”\"), word for word the web/Qt single line \"Haruto đọc là “Ha-ru-tô”\"; UI_PARITY requires the same words on both."
+      }
+    ]
+  },
+  "L12": {
+    "_doc": "Floating layers over scrolling content swallow every tap in their frame (chủ sách 17-11: thanh 'Đang nghe thử' để cú bấm lọt xuống dòng bài). Android `.align(Alignment.Bottom…)` chains carry floatingLayer()/pressable/clickable/pointerInput/sheetSurface; web positioned layers are not pointer-events-none unless aria-hidden; Qt floating Items (z > 0 or docked by y: root.height - height) hold TapShield/MouseArea or are buttons. `allow` keys: platform + file + what (the Android chain, the web class string, the Qt Type#id).",
+    "allow": [
+      {
+        "platform": "android",
+        "file": "mobile/android/app/src/main/java/vn/abook/player/ui/editbook/EditBookScreen.kt",
+        "what": "Modifier.align(Alignment.BottomEnd).size(36.dp).clip(CircleShape).background(colors.bg).padding(4.dp).clip(CircleShape).background(colors.panel)",
+        "reason": "Huy hiệu bút chì nằm TRONG nút bìa (pressable của edit_cover): cú bấm vào nó là bấm bìa, đúng ý."
+      },
+      {
+        "platform": "android",
+        "file": "mobile/android/app/src/main/java/vn/abook/player/ui/nowplaying/PlayerSheets.kt",
+        "what": "Modifier.align(if (floating) Alignment.Center else Alignment.BottomCenter) .then(if (floating) Modifier.padding(Dim.s16).widthIn(max = 560.dp) else Modifier)",
+        "reason": "Khung trượt của tấm trình phát: chính tấm mang sheetSurface (nuốt chạm) ở dòng dưới; lề quanh tấm nổi là nền tối, chạm vào đóng tấm."
+      },
+      {
+        "platform": "android",
+        "file": "mobile/android/app/src/main/java/vn/abook/player/ui/nowplaying/ReadAlongPane.kt",
+        "what": "Modifier.align(Alignment.BottomCenter).padding(bottom = Dim.s8).fillMaxWidth().heightIn(min = Dim.s48) .testTag(\"reading_dock\").clipToBounds()",
+        "reason": "Hộp chứa trong suốt của dải đọc kèm, không vẽ gì: hai chip bên trong (return_place, follow_sentence) pressable trên trọn bề mặt; chữ ngoài chip vẫn chạm được."
+      },
+      {
+        "platform": "android",
+        "file": "mobile/android/app/src/main/java/vn/abook/player/ui/pip/PipContent.kt",
+        "what": "Modifier.align(Alignment.BottomStart).fillMaxWidth()",
+        "reason": "Cửa sổ hình-trong-hình không nhận chạm của ứng dụng (hệ thống mở lại app khi chạm), lớp chữ / vạch tiến độ chỉ để xem."
+      },
+      {
+        "platform": "android",
+        "file": "mobile/android/app/src/main/java/vn/abook/player/ui/pip/PipContent.kt",
+        "what": "Modifier.align(Alignment.BottomStart).fillMaxWidth().height(PROGRESS_HEIGHT).testTag(\"pip_progress\").drawBehind { drawRect(track) val fraction = if (player.durationMs > 0) (position().toFloat() / player.durationMs).coerceIn(0f, 1f) else 0f drawRect(colors.accent, size = Size(size.width * fraction, size.height)) }",
+        "reason": "Cửa sổ hình-trong-hình không nhận chạm của ứng dụng (hệ thống mở lại app khi chạm), lớp chữ / vạch tiến độ chỉ để xem."
+      },
+      {
+        "platform": "android",
+        "file": "mobile/android/app/src/main/java/vn/abook/player/ui/screens/LibraryScreen.kt",
+        "what": "Modifier.align(Alignment.BottomStart)",
+        "reason": "Chip bộ / vạch đã nghe nằm TRONG ô bìa bấm được: cú bấm vào chúng là bấm ô sách, đúng ý."
+      },
+      {
+        "platform": "android",
+        "file": "mobile/android/app/src/main/java/vn/abook/player/ui/screens/LibraryScreen.kt",
+        "what": "Modifier.align(Alignment.BottomStart).fillMaxWidth().height(Dim.s4).drawBehind { drawRect(track) drawRect(accent, Offset.Zero, Size(size.width * fraction, size.height)) }",
+        "reason": "Chip bộ / vạch đã nghe nằm TRONG ô bìa bấm được: cú bấm vào chúng là bấm ô sách, đúng ý."
+      },
+      {
+        "platform": "android",
+        "file": "mobile/android/app/src/main/java/vn/abook/player/ui/shell/Shell.kt",
+        "what": "Modifier.align(Alignment.BottomStart)",
+        "reason": "Vạch chỉ tab nằm TRONG thanh tab (TAB_BAR có floatingLayer, mỗi tab pressable): không có gì bên dưới để lọt xuống."
+      },
+      {
+        "platform": "android",
+        "file": "mobile/android/app/src/main/java/vn/abook/player/ui/shell/Shell.kt",
+        "what": "Modifier.fillMaxWidth(1f / Tab.entries.size).height(3.dp).align(Alignment.BottomStart) .graphicsLayer { translationX = tabs.position.value * size.width }",
+        "reason": "Vạch chỉ tab nằm TRONG thanh tab (TAB_BAR có floatingLayer, mỗi tab pressable): không có gì bên dưới để lọt xuống."
+      },
+      {
+        "platform": "web",
+        "file": "ui/src/listen/DropToAdd.tsx",
+        "what": "pointer-events-none fixed inset-0 z-[60] grid place-items-center bg-bg/80 p-6",
+        "reason": "Lớp phủ chỉ hiện trong lúc kéo file vào cửa sổ; để sự kiện kéo-thả tới vùng thả bên dưới, không có cú bấm nào trong lúc kéo."
+      },
+      {
+        "platform": "web",
+        "file": "ui/src/listen/FindInBook.tsx",
+        "what": "pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-fg-3",
+        "reason": "Biểu tượng kính lúp trang trí trong ô tìm: cú bấm đi xuống chính ô nhập, đúng ý."
+      },
+      {
+        "platform": "web",
+        "file": "ui/src/listen/LibraryScreen.tsx",
+        "what": "pointer-events-none absolute inset-0 overflow-hidden rounded-cover",
+        "reason": "Lớp trang trí trong ô bìa / biểu tượng trong ô tìm: cú bấm đi xuống chính ô bìa / ô nhập, đúng ý."
+      },
+      {
+        "platform": "web",
+        "file": "ui/src/listen/LibraryScreen.tsx",
+        "what": "pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-fg-2",
+        "reason": "Lớp trang trí trong ô bìa / biểu tượng trong ô tìm: cú bấm đi xuống chính ô bìa / ô nhập, đúng ý."
+      },
+      {
+        "platform": "web",
+        "file": "ui/src/listen/PlayerViews.tsx",
+        "what": "pointer-events-none absolute inset-x-0 bottom-2 z-10 flex flex-col items-center justify-center",
+        "reason": "Dải nổi của đọc kèm: vỏ trong suốt cho chữ bên dưới chạm được; thanh chọn câu bọc pointer-events-auto, nút 'Tới câu đang nghe' tự có pointer-events-auto."
+      },
+      {
+        "platform": "web",
+        "file": "ui/src/listen/ReaderScreen.tsx",
+        "what": "pointer-events-none sticky bottom-6 h-0",
+        "reason": "Vỏ trong suốt (h-0) của thanh nổi / dải đọc: phần nhìn thấy (ReaderControls, SentenceMenu, JumpToPlaying) tự đặt pointer-events-auto."
+      },
+      {
+        "platform": "web",
+        "file": "ui/src/listen/ReaderScreen.tsx",
+        "what": "pointer-events-none absolute inset-x-0 bottom-2 z-10 flex items-center justify-center",
+        "reason": "Vỏ trong suốt (h-0) của thanh nổi / dải đọc: phần nhìn thấy (ReaderControls, SentenceMenu, JumpToPlaying) tự đặt pointer-events-auto."
+      },
+      {
+        "platform": "web",
+        "file": "ui/src/studio/MergePeople.tsx",
+        "what": "pointer-events-none absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-fg-3",
+        "reason": "Biểu tượng kính lúp trang trí trong ô tìm: cú bấm đi xuống chính ô nhập, đúng ý."
+      },
+      {
+        "platform": "qt",
+        "file": "desktop_qt/qml/ContentSlide.qml",
+        "what": "Item#root",
+        "reason": "Ảnh chụp trượt sang trang (vài trăm ms) chỉ để vẽ chuyển cảnh, không phải lớp có việc."
+      },
+      {
+        "platform": "qt",
+        "file": "desktop_qt/qml/LibraryScreen.qml",
+        "what": "DropArea#dropArea",
+        "reason": "DropArea chỉ nhận kéo-thả file, không vẽ gì khi không kéo."
+      },
+      {
+        "platform": "qt",
+        "file": "desktop_qt/qml/Main.qml",
+        "what": "TitleBar#titleBar",
+        "reason": "TitleBar: vùng trống là chỗ kéo cửa sổ do WindowChrome bắt ở mức hệ thống, không có nội dung cuộn dưới nó. tip: chú thích hiện cạnh con trỏ, chỉ để đọc."
+      },
+      {
+        "platform": "qt",
+        "file": "desktop_qt/qml/Main.qml",
+        "what": "Rectangle#tip",
+        "reason": "TitleBar: vùng trống là chỗ kéo cửa sổ do WindowChrome bắt ở mức hệ thống, không có nội dung cuộn dưới nó. tip: chú thích hiện cạnh con trỏ, chỉ để đọc."
+      },
+      {
+        "platform": "qt",
+        "file": "desktop_qt/qml/ReadAlongView.qml",
+        "what": "Text#hint",
+        "reason": "Dòng gợi ý ở đỉnh; danh sách chữ bắt đầu dưới nó (y = hint.height + 2*s12), không đè lên dòng nào."
+      },
+      {
+        "platform": "qt",
+        "file": "desktop_qt/qml/ScreenStack.qml",
+        "what": "ShaderEffectSource#sharedCover",
+        "reason": "Ảnh bìa bay giữa hai màn (chuyển cảnh), chỉ để vẽ."
+      },
+      {
+        "platform": "qt",
+        "file": "desktop_qt/qml/Vu.qml",
+        "what": "Rectangle",
+        "reason": "Bốn vạch của đồng hồ âm lượng dính đáy khung của chính nó, trang trí."
       }
     ]
   }

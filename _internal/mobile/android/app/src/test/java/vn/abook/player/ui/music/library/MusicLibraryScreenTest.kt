@@ -12,6 +12,10 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performTouchInput
+import androidx.compose.ui.test.click
+import androidx.compose.ui.test.hasText
+import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.test.performTextReplacement
@@ -33,6 +37,7 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
 import vn.abook.player.MusicLibrary
+import vn.abook.player.S
 import vn.abook.player.ui.components.SheetHost
 import vn.abook.player.ui.components.SheetLayer
 import vn.abook.player.ui.components.hasOrphanLastLine
@@ -427,6 +432,45 @@ class MusicLibraryScreenTest {
         rule.onNodeWithTag("preview_bar").assertIsDisplayed()
         tap("preview_stop")
         assertEquals(null, state.ui.value.previewing)
+    }
+
+    /** Toạ độ (px, trong gốc) có một dòng bài nằm ngay dưới: bằng chứng cú chạm ở đó mà lọt thì sẽ trúng dòng ấy. */
+    private fun rowUnder(x: Float, y: Float): Boolean = rule.onAllNodes(SemanticsMatcher("track row") { node ->
+        node.config.getOrNull(SemanticsProperties.TestTag)?.matches(Regex("track_-?\\d+")) == true
+    }).fetchSemanticsNodes().any { it.boundsInRoot.contains(androidx.compose.ui.geometry.Offset(x, y)) }
+
+    /** Ảnh của chủ sách 17-11: chạm thanh "Đang nghe thử" mở chi tiết của CHÍNH bài đang nghe thử (cùng openTrack của dòng bài); chạm lề / chỗ chừa đáy của
+     *  thanh không lọt xuống dòng bài bên dưới; nút ■ vẫn chỉ dừng nghe thử. */
+    @Test
+    fun previewBarOpensItsTrackAndSwallowsTaps() {
+        show()
+        rule.runOnUiThread { state.togglePreview(link(0)) }
+        rule.waitForIdle()
+        val title = source.raw.getValue(link(0)).getString("title")
+        val bar = rule.onNodeWithTag("preview_bar").assertIsDisplayed().fetchSemanticsNode()
+        assertEquals(S.s_mo_0_7a5716e0(title), bar.config.getOrNull(SemanticsProperties.ContentDescription)?.firstOrNull())
+        val box = bar.boundsInRoot
+        assertTrue("a track row lies under the bar", rowUnder(box.center.x, box.center.y))
+        rule.onNodeWithTag("preview_bar").performTouchInput { click(center) }
+        rule.waitForIdle()
+        rule.onNodeWithTag("track_title").assert(hasText(title))
+        assertEquals(link(0), state.ui.value.previewing)
+        rule.runOnUiThread { sheets.dismiss() }
+        rule.waitForIdle()
+        assertEquals(0, rule.onAllNodesWithTag("track_sheet").fetchSemanticsNodes().size)
+        // Chỗ chừa đáy dưới thanh (lề hai bên trùng lề của danh sách nên không có dòng nào dưới đó): có dòng bài nằm dưới, chạm vào không mở gì.
+        val corner = androidx.compose.ui.geometry.Offset(box.left + 6f, box.bottom + 6f)
+        val below = androidx.compose.ui.geometry.Offset(box.center.x, box.bottom + 6f)
+        for (spot in listOf(corner, below)) {
+            assertTrue("a track row lies under $spot", rowUnder(spot.x, spot.y))
+            rule.onRoot().performTouchInput { click(spot) }
+            rule.waitForIdle()
+            assertEquals("tap at $spot leaked to a row", 0, rule.onAllNodesWithTag("track_sheet").fetchSemanticsNodes().size)
+        }
+        assertEquals(link(0), state.ui.value.previewing)
+        tap("preview_stop")
+        assertEquals(null, state.ui.value.previewing)
+        assertEquals(0, rule.onAllNodesWithTag("track_sheet").fetchSemanticsNodes().size)
     }
 
     @Test

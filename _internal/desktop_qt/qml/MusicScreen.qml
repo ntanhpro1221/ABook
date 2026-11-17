@@ -86,6 +86,8 @@ FocusScope {
         })
     }
     function search(text) { part = 1; query = text; refresh() }
+    // Mở chi tiết một bài: dòng bài và thanh "Đang nghe thử" cùng gọi hàm này.
+    function openTrack(link) { detail.show(link, picking ? {book: pickBook, scene: pickScene} : null) }
 
     onPartChanged: refresh()
     onQueryChanged: queryTimer.restart()
@@ -213,7 +215,7 @@ FocusScope {
             onUse: root.use(modelData.link)
             onSave: root.save([modelData.link])
             onCancelDownload: root.cancelDownload([modelData.link])
-            onClicked: detail.show(modelData.link, root.picking ? {book: root.pickBook, scene: root.pickScene} : null)
+            onClicked: root.openTrack(modelData.link)
         }
         footer: Column {
             width: rows.width
@@ -230,25 +232,19 @@ FocusScope {
     }
     Scrollbar { target: rows }
     SmoothWheel { flick: rows }
-    // "Đang nghe thử · tên · ■"
-    Rectangle {
+    // "Đang nghe thử · tên · ■": bấm thân thanh mở chi tiết bài đang nghe thử (cùng openTrack của dòng bài), ■ chỉ dừng; cả khung tới đáy màn nuốt cú bấm
+    MusicPreviewBar {
         id: bar
         objectName: "musicPreviewBar"
         Reveal { shown: root.previewing !== "" }
         x: root.contentX; width: root.contentW
-        y: root.height - height - Theme.s8
-        height: 48
-        radius: Theme.radiusControl
-        color: Theme.panel
-        border.color: Theme.line
-        readonly property var track: root.shown.find(item => item.link === root.previewing) || null
-        Text {
-            x: Theme.s16; width: parent.width - stop.width - 2 * Theme.s16
-            anchors.verticalCenter: parent.verticalCenter
-            text: TextWrap.keepDots((Clip.loading ? S.s_buffering : Clip.paused ? S.s_music_paused : S.s_dang_nghe_thu_f1fb4cba) + (bar.track ? "\u00a0·\u00a0" + bar.track.title : ""))
-            color: Theme.text; font.pixelSize: Theme.sizeBodySmall; wrapMode: Text.Wrap
-        }
-        IconButton { id: stop; anchors.right: parent.right; anchors.verticalCenter: parent.verticalCenter; icon: "square"; tip: S.s_dung_nghe_f20939be; onActivated: Clip.stop() }
+        y: root.height - height
+        height: implicitHeight
+        track: root.shown.find(item => item.link === root.previewing) || null
+        loading: Clip.loading
+        paused: Clip.paused
+        onOpened: root.openTrack(root.previewing)
+        onStopped: Clip.stop()
     }
     MusicTrackDetail {
         id: detail

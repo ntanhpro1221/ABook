@@ -11,6 +11,7 @@ singleton Platform 1.0 Platform.qml
 singleton Backend 1.0 Backend.qml
 singleton Bench 1.0 Bench.qml
 Interactive 1.0 ../../../../qml/Interactive.qml
+TapShield 1.0 ../../../../qml/TapShield.qml
 Icon 1.0 ../../../../qml/Icon.qml
 StateIcon 1.0 ../../../../qml/StateIcon.qml
 PendingIndicator 1.0 ../../../../qml/PendingIndicator.qml
@@ -312,6 +313,7 @@ WordTimings 1.0 ../../../../qml/WordTimings.qml
 MusicScreen 1.0 ../../../../qml/MusicScreen.qml
 MusicTrackDetail 1.0 ../../../../qml/MusicTrackDetail.qml
 MusicTrackRow 1.0 ../../../../qml/MusicTrackRow.qml
+MusicPreviewBar 1.0 ../../../../qml/MusicPreviewBar.qml
 MusicBookSection 1.0 ../../../../qml/MusicBookSection.qml
 MusicOpenRow 1.0 ../../../../qml/MusicOpenRow.qml
 SheetRow 1.0 ../../../../qml/SheetRow.qml

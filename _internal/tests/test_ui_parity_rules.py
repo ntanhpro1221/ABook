@@ -1,10 +1,10 @@
-"""Eleven cross-platform UI rules (scripts/ui_parity_rules.py): each holds on the real sources, and each bites a planted violation.
+"""Twelve cross-platform UI rules (scripts/ui_parity_rules.py): each holds on the real sources, and each bites a planted violation.
 
 Lead 12-11 (soát đồng nhất ba nền): one task, one word, one token, one shape on web, Qt and Android. The rules compare Qt with
 Android directly, read the dictionary's "Thay cho" column, demand every colour token on all three, keep spacing / type / weight on
 the scale, give each shared component one radius role, read motion timings from tokens, count hard show/hide (only down), name
 every "…" button "Thêm tuỳ chọn…", keep labels at four words, pin same-control pairs to one key and start every row
-summary with a capital (L11, 0.4.169).
+summary with a capital (L11, 0.4.169) and make every floating layer swallow the taps in its frame (L12, 0.4.174).
 """
 import importlib.util
 import json
@@ -24,7 +24,7 @@ def _tool():
     return module
 
 
-@pytest.mark.parametrize("rule", ["L1", "L2", "L3", "L4", "L5", "L6", "L7", "L8", "L9", "L10", "L11"])
+@pytest.mark.parametrize("rule", ["L1", "L2", "L3", "L4", "L5", "L6", "L7", "L8", "L9", "L10", "L11", "L12"])
 def test_rule_holds_on_the_sources(rule):
     tool = _tool()
     problems = tool.RULES[rule]()
@@ -393,3 +393,42 @@ def test_l11_bites_a_lowercase_row_summary_on_all_three_platforms(planted):
     cfg["L11"]["producers"][0]["start"] = r"function gone\("
     planted.CONFIG.write_text(json.dumps(cfg, ensure_ascii=False), encoding="utf-8")
     assert any("không còn" in p and "function gone" in p for p in planted.l11_summary_case())
+
+
+def test_l12_bites_floating_layers_that_let_a_tap_through(planted):
+    """Chủ sách 17-11: thanh "Đang nghe thử" nổi trên Kho nhạc để cú bấm lọt xuống dòng bài - trên cả ba nền, lớp nổi phải nuốt cú bấm."""
+    root = planted.ROOT
+    android = "mobile/android/app/src/main/java/vn/abook/player/ui/"
+    (root / android / "components").mkdir(parents=True, exist_ok=True)
+    (root / android / "components/Components.kt").write_text("fun Modifier.floatingLayer(): Modifier = pointerInput(Unit) { detectTapGestures { } }\n", encoding="utf-8")
+    (root / "desktop_qt/qml/TapShield.qml").write_text("MouseArea { anchors.fill: parent }\n", encoding="utf-8")
+    (root / android / "Bar.kt").write_text(
+        "fun Screen() {\n    Box {\n        // a bracket ( in a comment does not move the chain\n"
+        "        Bar(ui, Modifier.align(Alignment.BottomCenter))\n"
+        "        Bar(ui, Modifier.align(Alignment.BottomCenter).floatingLayer())\n"
+        "        Hint(Modifier.align(Alignment.BottomEnd).padding(8.dp).pressable { open() })\n"
+        "        Chip(Modifier.align(Alignment.TopEnd))\n    }\n}\n", encoding="utf-8")
+    (root / "ui/src/listen/Bar.tsx").write_text(
+        'export const A = () => <div className="pointer-events-none sticky bottom-3"><Bar /></div>;\n'
+        'export const B = () => <div aria-hidden className="pointer-events-none absolute inset-0 bg-gradient-to-t" />;\n'
+        'export const C = () => <div className="pointer-events-none flex gap-2" />;\n', encoding="utf-8")
+    (root / "desktop_qt/qml/Shelf.qml").write_text(
+        "Item {\n    ListView { anchors.fill: parent }\n"
+        "    Rectangle {\n        id: bar\n        y: root.height - height - 8\n        color: \"white\"\n        Text { text: \"x\" }\n    }\n"
+        "    Rectangle {\n        id: shielded\n        z: 3\n        TapShield {}\n    }\n"
+        "    IconButton {\n        id: fab\n        y: parent.height - height\n    }\n}\n", encoding="utf-8")
+    problems = planted.l12_floating_layers()
+    text = "\n".join(problems)
+    assert len([p for p in problems if "Bar.kt" in p]) == 1 and "Bar.kt:4:" in text, problems
+    assert "Bar.tsx:1:" in text and "Bar.tsx:2:" not in text and "Bar.tsx:3:" not in text, problems
+    assert "Rectangle#bar" in text and "#shielded" not in text and "#fab" not in text, problems
+    # An exception needs the exact site and its own reason; a stale one is reported.
+    cfg = planted.config()
+    cfg["L12"] = {"allow": [{"platform": "qt", "file": "desktop_qt/qml/Shelf.qml", "what": "Rectangle#bar", "reason": "x"},
+                            {"platform": "web", "file": "ui/src/listen/Gone.tsx", "what": "pointer-events-none fixed", "reason": "x"}]}
+    planted.CONFIG.write_text(json.dumps(cfg, ensure_ascii=False), encoding="utf-8")
+    problems = planted.l12_floating_layers()
+    assert not any("Rectangle#bar" in p and "allow" not in p for p in problems), problems
+    assert any("allow thừa" in p and "Gone.tsx" in p for p in problems), problems
+    (root / android / "components/Components.kt").write_text("fun Modifier.other() = this\n", encoding="utf-8")
+    assert any("thiếu Modifier.floatingLayer()" in p for p in planted.l12_floating_layers())

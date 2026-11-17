@@ -6,6 +6,7 @@ import vn.abook.player.ui.motion.ContentLayout
 import vn.abook.player.S
 
 import vn.abook.player.ui.components.gestureBarPadding
+import vn.abook.player.ui.components.floatingLayer
 import vn.abook.player.ui.components.ClockLabel
 import vn.abook.player.ui.components.IconAction
 import vn.abook.player.ui.components.LucideIcon
@@ -290,7 +291,8 @@ private fun VoiceList(state: NowPlayingState, model: NowPlayingModel, window: No
                     }, "voice_add") }
                 }
             }
-            BasicText(S.s_keo_xuong_con_giong_khac_d4bb507b, Modifier.align(Alignment.BottomCenter).padding(bottom = Dim.s8).graphicsLayer { alpha = hint; translationY = (1f - hint) * 8.dp.toPx() }
+            // Lời gợi ý nổi trên danh sách giọng: đang hiện thì nuốt chạm (cả chỗ chừa đáy), không để cú bấm lọt xuống chọn giọng nằm dưới.
+            BasicText(S.s_keo_xuong_con_giong_khac_d4bb507b, Modifier.align(Alignment.BottomCenter).then(if (more) Modifier.floatingLayer() else Modifier).padding(bottom = Dim.s8).graphicsLayer { alpha = hint; translationY = (1f - hint) * 8.dp.toPx() }
                 .background(Abook.colors.panel, RoundedCornerShape(Dim.radiusCover)).padding(horizontal = 12.dp, vertical = 4.dp).testTag("voice_more_hint"),
                 style = Abook.type.caption)
         }

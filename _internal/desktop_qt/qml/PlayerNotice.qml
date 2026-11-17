@@ -29,6 +29,7 @@ Item {
         opacity: root.shown ? 1 : 0
         transform: Translate { y: root.shown ? 0 : 12 }
         Behavior on opacity { NumberAnimation { duration: root.shown ? Theme.motionMedium : Theme.motionFastOut } }
+        TapShield {}      // viên thuốc nổi trên nội dung: bấm chữ của nó không trúng thứ nằm dưới
         Row {
             id: row
             anchors.centerIn: parent
@@ -42,6 +43,7 @@ Item {
                 font.pixelSize: Theme.sizeBodySmall
             }
             Interactive {
+                exclusiveTap: true      // nút của lớp nổi: giữ riêng cú bấm, không để nó tới thứ nằm dưới lớp
                 id: actionLabel
                 Reveal { shown: root.action !== "" }
                 anchors.verticalCenter: parent.verticalCenter

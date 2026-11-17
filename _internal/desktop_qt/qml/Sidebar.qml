@@ -81,8 +81,10 @@ Item {
 
         // Nền: chỉ đục khi đè lên nội dung (lúc đứng yên cùng màu cửa sổ nên không thấy)
         Rectangle { anchors.fill: parent; color: Theme.bg }
+        TapShield {}      // mở tạm đè lên nội dung: bấm chỗ trống của thanh không trúng thứ nằm dưới
 
         IconButton {
+            exclusiveTap: true      // nút của lớp nổi: giữ riêng cú bấm, không để nó tới thứ nằm dưới lớp
             id: toggleButton
             x: 12                  // tâm biểu tượng ở 28 như các mục; vùng bấm 32 lọt trong dải tiêu đề cao 40
             y: 4

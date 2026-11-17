@@ -10995,13 +10995,13 @@
     "id": "6b3cbb2a48258077c161",
     "kind": "destructive",
     "path": "mobile/android/app/src/main/java/vn/abook/player/ui/nowplaying/PlayerSheets.kt",
-    "line": 77,
+    "line": 78,
     "statement": "fun pop() { if(parents.isNotEmpty())window.openSheet(parents.removeAt(parents.lastIndex)) else window.closeSheet() }",
     "occurrence": 1,
-    "source_sha256": "36b37e78ccc0b942b922d545ec7af1b4460f6a7d8f11adc922bc27a347c337c1",
+    "source_sha256": "35a70180ff417583c39cf8fc8749d31533710b1dc293a53490e6aa2f4e5ded4c",
     "disposition": "internal",
     "guard": "Declaration; the invoked call site is independently inventoried",
-    "reason": "A declaration/signature is not an executing UI action. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Gate repair: reviewed identity-key motion, explicit layout, token spacing or semantic navigation changes; existing guard retained."
+    "reason": "A declaration/signature is not an executing UI action. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Gate repair: reviewed identity-key motion, explicit layout, token spacing or semantic navigation changes; existing guard retained. Combined-source review: floating layers now swallow taps (tapthru: preview bar opens its track, TapShield / floatingLayer); this action and its guard are unchanged."
   },
   {
     "id": "41d49281785c0f3be740",
@@ -11583,85 +11583,85 @@
     "id": "76dc12b9598bdb85c87f",
     "kind": "pending",
     "path": "mobile/android/app/src/main/java/vn/abook/player/ui/shell/Shell.kt",
-    "line": 144,
+    "line": 145,
     "statement": "scope.launch { page.load() }",
     "occurrence": 1,
-    "source_sha256": "29d7faac2fba290a876f5643336704963c90699c9daa6778e8de760cccce71ac",
+    "source_sha256": "760ce995bf3eba68ab70d4bfb6adf260ee9fe4426e0eb81d2800014f5cb193b8",
     "disposition": "pending",
     "guard": "ViewModel/operation fields: busy, pending, progress; Components pending indicator",
-    "reason": "The model retains the operation and locks repeats; UI uses the shared pending parameter, loading content or progress owner. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
+    "reason": "The model retains the operation and locks repeats; UI uses the shared pending parameter, loading content or progress owner. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Combined-source review: floating layers now swallow taps (tapthru: preview bar opens its track, TapShield / floatingLayer); this action and its guard are unchanged."
   },
   {
     "id": "39d74cac0534bba005ae",
     "kind": "pending",
     "path": "mobile/android/app/src/main/java/vn/abook/player/ui/shell/Shell.kt",
-    "line": 159,
+    "line": 160,
     "statement": "suspend fun receive(queue: ImportQueue, sources: List<String>) {",
     "occurrence": 1,
-    "source_sha256": "29d7faac2fba290a876f5643336704963c90699c9daa6778e8de760cccce71ac",
+    "source_sha256": "760ce995bf3eba68ab70d4bfb6adf260ee9fe4426e0eb81d2800014f5cb193b8",
     "disposition": "internal",
     "guard": "Async interface/helper boundary; concrete activation inventoried separately",
-    "reason": "This signature supplies work to a model or component; declaring it starts no user operation. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
+    "reason": "This signature supplies work to a model or component; declaring it starts no user operation. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Combined-source review: floating layers now swallow taps (tapthru: preview bar opens its track, TapShield / floatingLayer); this action and its guard are unchanged."
   },
   {
     "id": "d0ef5000b187ceda1175",
     "kind": "pending",
     "path": "mobile/android/app/src/main/java/vn/abook/player/ui/shell/Shell.kt",
-    "line": 168,
+    "line": 169,
     "statement": "suspend fun showBookPage(book: vn.abook.player.ui.data.ListenBook) {",
     "occurrence": 1,
-    "source_sha256": "29d7faac2fba290a876f5643336704963c90699c9daa6778e8de760cccce71ac",
+    "source_sha256": "760ce995bf3eba68ab70d4bfb6adf260ee9fe4426e0eb81d2800014f5cb193b8",
     "disposition": "internal",
     "guard": "Async interface/helper boundary; concrete activation inventoried separately",
-    "reason": "This signature supplies work to a model or component; declaring it starts no user operation. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
+    "reason": "This signature supplies work to a model or component; declaring it starts no user operation. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Combined-source review: floating layers now swallow taps (tapthru: preview bar opens its track, TapShield / floatingLayer); this action and its guard are unchanged."
   },
   {
     "id": "d66254934903cf00c88a",
     "kind": "pending",
     "path": "mobile/android/app/src/main/java/vn/abook/player/ui/shell/Shell.kt",
-    "line": 180,
+    "line": 181,
     "statement": "suspend fun openStudio(request: StudioRequest) {",
     "occurrence": 1,
-    "source_sha256": "29d7faac2fba290a876f5643336704963c90699c9daa6778e8de760cccce71ac",
+    "source_sha256": "760ce995bf3eba68ab70d4bfb6adf260ee9fe4426e0eb81d2800014f5cb193b8",
     "disposition": "internal",
     "guard": "Async interface/helper boundary; concrete activation inventoried separately",
-    "reason": "This signature supplies work to a model or component; declaring it starts no user operation. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
+    "reason": "This signature supplies work to a model or component; declaring it starts no user operation. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Combined-source review: floating layers now swallow taps (tapthru: preview bar opens its track, TapShield / floatingLayer); this action and its guard are unchanged."
   },
   {
     "id": "5dd4b24cc34afb624403",
     "kind": "pending",
     "path": "mobile/android/app/src/main/java/vn/abook/player/ui/shell/Shell.kt",
-    "line": 329,
+    "line": 330,
     "statement": "(libraryNow.value as? LibraryState.Ready)?.books?.firstOrNull { it.id == id }?.let { book -> shell.scope.launch { shell.showBookPage(book) } }",
     "occurrence": 1,
-    "source_sha256": "29d7faac2fba290a876f5643336704963c90699c9daa6778e8de760cccce71ac",
+    "source_sha256": "760ce995bf3eba68ab70d4bfb6adf260ee9fe4426e0eb81d2800014f5cb193b8",
     "disposition": "pending",
     "guard": "ViewModel/operation fields: busy, pending, progress; Components pending indicator",
-    "reason": "The model retains the operation and locks repeats; UI uses the shared pending parameter, loading content or progress owner. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
+    "reason": "The model retains the operation and locks repeats; UI uses the shared pending parameter, loading content or progress owner. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Combined-source review: floating layers now swallow taps (tapthru: preview bar opens its track, TapShield / floatingLayer); this action and its guard are unchanged."
   },
   {
     "id": "b4139ce6b925740feaa0",
     "kind": "pending",
     "path": "mobile/android/app/src/main/java/vn/abook/player/ui/shell/Shell.kt",
-    "line": 340,
+    "line": 341,
     "statement": "readAlong = { book -> shell.scope.launch { if (player.prepare(book)) window.openReading() } },",
     "occurrence": 1,
-    "source_sha256": "29d7faac2fba290a876f5643336704963c90699c9daa6778e8de760cccce71ac",
+    "source_sha256": "760ce995bf3eba68ab70d4bfb6adf260ee9fe4426e0eb81d2800014f5cb193b8",
     "disposition": "pending",
     "guard": "ViewModel/operation fields: busy, pending, progress; Components pending indicator",
-    "reason": "The model retains the operation and locks repeats; UI uses the shared pending parameter, loading content or progress owner. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
+    "reason": "The model retains the operation and locks repeats; UI uses the shared pending parameter, loading content or progress owner. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Combined-source review: floating layers now swallow taps (tapthru: preview bar opens its track, TapShield / floatingLayer); this action and its guard are unchanged."
   },
   {
     "id": "820cd3ca713805723ec4",
     "kind": "pending",
     "path": "mobile/android/app/src/main/java/vn/abook/player/ui/shell/Shell.kt",
-    "line": 345,
+    "line": 346,
     "statement": "openNowPlaying = { id -> shell.scope.launch { if (player.awaitLoaded(id)) window.open() } },",
     "occurrence": 1,
-    "source_sha256": "29d7faac2fba290a876f5643336704963c90699c9daa6778e8de760cccce71ac",
+    "source_sha256": "760ce995bf3eba68ab70d4bfb6adf260ee9fe4426e0eb81d2800014f5cb193b8",
     "disposition": "pending",
     "guard": "ViewModel/operation fields: busy, pending, progress; Components pending indicator",
-    "reason": "The model retains the operation and locks repeats; UI uses the shared pending parameter, loading content or progress owner. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
+    "reason": "The model retains the operation and locks repeats; UI uses the shared pending parameter, loading content or progress owner. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Combined-source review: floating layers now swallow taps (tapthru: preview bar opens its track, TapShield / floatingLayer); this action and its guard are unchanged."
   },
   {
     "id": "a779ea84a03842ecaadb",
@@ -15786,10 +15786,10 @@
     "line": 38,
     "statement": "Api.quiet(\"GET\", \"/api/music/library\" + Logic.libraryQuery(forSaved ? Logic.noFilters() : effective, forSaved), null, function(data, problem) {",
     "occurrence": 1,
-    "source_sha256": "6c4ee409224fd2cbefc2eca68e53222a000e913c7fbdbc65bdea9d4d729d4fd8",
+    "source_sha256": "d9d5a8a94c9f3241b7e73d66802e8a89a61ec08fae7feb37e3318d9bc247aec2",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; busy, loading, previewLoading",
-    "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads."
+    "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads. Combined-source review: floating layers now swallow taps (tapthru: preview bar opens its track, TapShield / floatingLayer); this action and its guard are unchanged."
   },
   {
     "id": "485fb14a64c3b24b2dfd",
@@ -15798,10 +15798,10 @@
     "line": 46,
     "statement": "function loadMeta() { Api.quiet(\"GET\", \"/api/music/library/meta\", null, function(data, problem) { if (!problem) meta = data }) }",
     "occurrence": 1,
-    "source_sha256": "6c4ee409224fd2cbefc2eca68e53222a000e913c7fbdbc65bdea9d4d729d4fd8",
+    "source_sha256": "d9d5a8a94c9f3241b7e73d66802e8a89a61ec08fae7feb37e3318d9bc247aec2",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; busy, loading, previewLoading",
-    "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads."
+    "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads. Combined-source review: floating layers now swallow taps (tapthru: preview bar opens its track, TapShield / floatingLayer); this action and its guard are unchanged."
   },
   {
     "id": "63580d02e9c71debd82d",
@@ -15810,10 +15810,10 @@
     "line": 47,
     "statement": "function pollDownloads() { Api.quiet(\"GET\", \"/api/music/library/downloads\", null, function(data, problem) { if (!problem) { const was = busy; downloads = data; if (was && !busy) refresh() } }) }",
     "occurrence": 1,
-    "source_sha256": "6c4ee409224fd2cbefc2eca68e53222a000e913c7fbdbc65bdea9d4d729d4fd8",
+    "source_sha256": "d9d5a8a94c9f3241b7e73d66802e8a89a61ec08fae7feb37e3318d9bc247aec2",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; busy, loading, previewLoading",
-    "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads."
+    "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads. Combined-source review: floating layers now swallow taps (tapthru: preview bar opens its track, TapShield / floatingLayer); this action and its guard are unchanged."
   },
   {
     "id": "fd59f89de875c0fc3d1f",
@@ -15822,10 +15822,10 @@
     "line": 51,
     "statement": "Api.quiet(\"POST\", \"/api/music/library/save\", {links: links}, function(data, problem) {",
     "occurrence": 1,
-    "source_sha256": "6c4ee409224fd2cbefc2eca68e53222a000e913c7fbdbc65bdea9d4d729d4fd8",
+    "source_sha256": "d9d5a8a94c9f3241b7e73d66802e8a89a61ec08fae7feb37e3318d9bc247aec2",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; busy, loading, previewLoading",
-    "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads."
+    "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads. Combined-source review: floating layers now swallow taps (tapthru: preview bar opens its track, TapShield / floatingLayer); this action and its guard are unchanged."
   },
   {
     "id": "06db7e2ac926d73ec0dc",
@@ -15834,10 +15834,10 @@
     "line": 56,
     "statement": "function unsave(links) {",
     "occurrence": 1,
-    "source_sha256": "6c4ee409224fd2cbefc2eca68e53222a000e913c7fbdbc65bdea9d4d729d4fd8",
+    "source_sha256": "d9d5a8a94c9f3241b7e73d66802e8a89a61ec08fae7feb37e3318d9bc247aec2",
     "disposition": "internal",
     "guard": "Declaration; the invoked call site is independently inventoried",
-    "reason": "A declaration/signature is not an executing UI action."
+    "reason": "A declaration/signature is not an executing UI action. Combined-source review: floating layers now swallow taps (tapthru: preview bar opens its track, TapShield / floatingLayer); this action and its guard are unchanged."
   },
   {
     "id": "c151ddb7ac9e880a865a",
@@ -15846,10 +15846,10 @@
     "line": 57,
     "statement": "Api.quiet(\"POST\", \"/api/music/library/unsave\", {links: links}, function(data, problem) {",
     "occurrence": 1,
-    "source_sha256": "6c4ee409224fd2cbefc2eca68e53222a000e913c7fbdbc65bdea9d4d729d4fd8",
+    "source_sha256": "d9d5a8a94c9f3241b7e73d66802e8a89a61ec08fae7feb37e3318d9bc247aec2",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; busy, loading, previewLoading",
-    "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads."
+    "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads. Combined-source review: floating layers now swallow taps (tapthru: preview bar opens its track, TapShield / floatingLayer); this action and its guard are unchanged."
   },
   {
     "id": "1a1eba6d678aa67c99b8",
@@ -15858,10 +15858,10 @@
     "line": 63,
     "statement": "Api.quiet(\"POST\", \"/api/music/library/cancel\", {links: links}, function(data, problem) {",
     "occurrence": 1,
-    "source_sha256": "6c4ee409224fd2cbefc2eca68e53222a000e913c7fbdbc65bdea9d4d729d4fd8",
+    "source_sha256": "d9d5a8a94c9f3241b7e73d66802e8a89a61ec08fae7feb37e3318d9bc247aec2",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; busy, loading, previewLoading",
-    "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads."
+    "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads. Combined-source review: floating layers now swallow taps (tapthru: preview bar opens its track, TapShield / floatingLayer); this action and its guard are unchanged."
   },
   {
     "id": "a40120169b36a3ff8bcb",
@@ -15870,10 +15870,10 @@
     "line": 74,
     "statement": "Api.quiet(\"PUT\", \"/api/books/\" + encodeURIComponent(pickBook) + \"/music\", {pins: (function() { const pins = {}; pins[pickScene] = link; return pins })()}, function(data, problem) {",
     "occurrence": 1,
-    "source_sha256": "6c4ee409224fd2cbefc2eca68e53222a000e913c7fbdbc65bdea9d4d729d4fd8",
+    "source_sha256": "d9d5a8a94c9f3241b7e73d66802e8a89a61ec08fae7feb37e3318d9bc247aec2",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; busy, loading, previewLoading",
-    "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads."
+    "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads. Combined-source review: floating layers now swallow taps (tapthru: preview bar opens its track, TapShield / floatingLayer); this action and its guard are unchanged."
   },
   {
     "id": "2b1d1f7131525e8ff40e",
@@ -15882,10 +15882,10 @@
     "line": 82,
     "statement": "Api.quiet(\"PUT\", \"/api/books/\" + encodeURIComponent(pickBook) + \"/music\", {ban: [link]}, function(data, problem) {",
     "occurrence": 1,
-    "source_sha256": "6c4ee409224fd2cbefc2eca68e53222a000e913c7fbdbc65bdea9d4d729d4fd8",
+    "source_sha256": "d9d5a8a94c9f3241b7e73d66802e8a89a61ec08fae7feb37e3318d9bc247aec2",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; busy, loading, previewLoading",
-    "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads."
+    "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads. Combined-source review: floating layers now swallow taps (tapthru: preview bar opens its track, TapShield / floatingLayer); this action and its guard are unchanged."
   },
   {
     "id": "9e8eb9cacd8e40789546",
@@ -15903,13 +15903,13 @@
     "id": "c4ccff7e968500ed6810",
     "kind": "destructive",
     "path": "desktop_qt/qml/MusicScreen.qml",
-    "line": 263,
+    "line": 259,
     "statement": "onUnsave: root.unsave([detail.link])",
     "occurrence": 1,
-    "source_sha256": "6c4ee409224fd2cbefc2eca68e53222a000e913c7fbdbc65bdea9d4d729d4fd8",
+    "source_sha256": "d9d5a8a94c9f3241b7e73d66802e8a89a61ec08fae7feb37e3318d9bc247aec2",
     "disposition": "confirmation",
     "guard": "DownloadControl / TrackRow / TrackSheet DestructiveConfirm; cancel incomplete transfer is exempt",
-    "reason": "Complete music download removal is confirmed with track title and size. Cancelling an unfinished download discards partial bytes immediately."
+    "reason": "Complete music download removal is confirmed with track title and size. Cancelling an unfinished download discards partial bytes immediately. Combined-source review: floating layers now swallow taps (tapthru: preview bar opens its track, TapShield / floatingLayer); this action and its guard are unchanged."
   },
   {
     "id": "59c233eed2e5c73b6eb9",
@@ -16770,10 +16770,10 @@
     "line": 122,
     "statement": "for (let i = lineModel.count - 1; i >= 0; --i) if (!next[lineModel.get(i).key]) lineModel.remove(i)",
     "occurrence": 1,
-    "source_sha256": "1efc3b0368a18611016306bd6480a469b30003cd3c3b1b42b1d95edc31cdb348",
+    "source_sha256": "2ae03dc11e7bf2277da8034c4b8deeb41c53b860e4439abd3e3612c5ff27eeed",
     "disposition": "internal",
     "guard": "In-memory collection entry lifecycle",
-    "reason": "The statement releases a listener, request, UI row, selection or cache entry; it does not delete its persisted source. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
+    "reason": "The statement releases a listener, request, UI row, selection or cache entry; it does not delete its persisted source. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Combined-source review: floating layers now swallow taps (tapthru: preview bar opens its track, TapShield / floatingLayer); this action and its guard are unchanged."
   },
   {
     "id": "667a39e364701bf232be",
