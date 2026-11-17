@@ -57,7 +57,7 @@ class PlaybackIoOffMainTest {
     private fun returnsWhileDiskIsBusy(event: () -> Unit): Boolean {
         val holding = CountDownLatch(1)
         val release = CountDownLatch(1)
-        val disk = Thread { synchronized(Store) { holding.countDown(); release.await() } }.apply { start() }
+        val disk = Thread { synchronized(Store) { holding.countDown(); release.await(TestTime.seconds(10), TimeUnit.SECONDS) } }.apply { start() }
         assertTrue(holding.await(TestTime.seconds(5), TimeUnit.SECONDS))
         val done = CountDownLatch(1)
         val caller = Thread { event(); done.countDown() }.apply { start() }

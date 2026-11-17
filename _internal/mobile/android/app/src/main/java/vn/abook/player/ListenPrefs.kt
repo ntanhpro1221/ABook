@@ -166,11 +166,16 @@ object ListenPrefs {
 
     private fun timerKey(book: String, record: String) = JSONArray().put(book).put(record).toString()
 
-    /** Bản trong bộ nhớ của `timers`; thư mục lưu đổi (bài thử) thì nạp lại từ file ấy. */
+    /**
+     * Bản trong bộ nhớ của `timers`. KHÔNG đọc đĩa: người gọi ở luồng chính ([SleepTimer.persist], [SleepTimer.adopt]) và [Store.readJson]
+     * chờ khoá của Store - luồng ghi đang giữ nó thì luồng chính đứng (ANR; cổng 0.4.173: PlaybackDestroyTest treo ở close()).
+     * Chỉ [load] (luồng nền, lúc tiến trình dậy) nạp từ file; thư mục lưu đổi mà chưa [load] (bài thử) thì bắt đầu bản rỗng - file vẫn
+     * đủ vì [saveTimer] gộp vào `timers` trên đĩa ở luồng ghi nền.
+     */
     private fun remembered(target: File): JSONObject {
         if (timersFile != target) {
             timersFile = target
-            timers = (try { Store.readJson(target) } catch (error: Exception) { null })?.optJSONObject("timers") ?: JSONObject()
+            timers = JSONObject()
         }
         return timers
     }
