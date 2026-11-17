@@ -1,5 +1,18 @@
 # Test report
 
+## 16-11-2026 — chapter narrator coverage
+
+Cast review includes separate narrator rows for the default voice and chapter-specific voices,
+with each row retaining its own scope and line count. The focused Qt and Android fixtures cover
+both themes. An opt-in Android instrumentation audit imports the two existing local packages
+under a private application ID and checks cast counts without storing book content in Git.
+
+Results: Qt CastTab 36, Studio4 30, CastHistory 4 passed (0 failed, 0 skipped); Roborazzi record
+and verify 40 tests, 0 failures. On the emulator both packages import one at a time (the data
+partition cannot hold both with their imports); Hello keeps 4 main / 20 extras / 2 narrators and
+the other book 3 / 17 / 1, with no QA marks. The cast tab shows each narrator row with its scope
+and line count in light and dark. Package bytes and modification times are unchanged.
+
 ## 15-11-2026 — device voice names
 
 Android device voices use the configured engine name and the Voice network flag. Colliding labels get stable numbers; offline voices precede online voices and higher reported quality comes first within each group. No gender or accent is inferred from Android identifiers. Windows preserves the supplied vendor and proper name for both Qt and web. The shared device-group description allows engines with network voices. Voice rows keep individual preview actions; the Android selection status sits below the name when a preview button is present.

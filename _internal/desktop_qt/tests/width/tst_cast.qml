@@ -86,6 +86,7 @@ Item {
             page = null
             dialogs = null
             host.width = 1440
+            Theme.mode = "auto"
         }
         function calls(method, path) { return DesktopApi.requests.filter(r => r.method === method && r.path === path) }
         function render() { ready() }
@@ -147,6 +148,30 @@ Item {
             compare(Logic.genderText({gender: "", genderNote: "unknown"}), "Chưa rõ")
             compare(Logic.genderText({gender: ""}), "Chưa rõ")
             compare(Logic.genderText({gender: "Nam", genderNote: "group"}), "Nam")
+        }
+
+        function test_chapterNarratorsKeepTheirScopeAndCounts_data() {
+            return [{tag: "light", dark: false}, {tag: "dark", dark: true}]
+        }
+        function test_chapterNarratorsKeepTheirScopeAndCounts(data) {
+            Theme.mode = data.dark ? "dark" : "light"
+            castReply.narrator = {
+                voice: "Minh Quân", lines: 2196, seconds: 12600,
+                voiceLines: 1599, voiceSeconds: 9000,
+                exceptChapters: [{id: 4, title: "Chương 4"}, {id: 6, title: "Chương 6"}],
+                chapterVoices: [{voice: "Ngọc Linh", profile: {preset: "ngoc-linh", label: "Ngọc Linh"}, lines: 597, seconds: 3600,
+                    chapters: [{id: 4, title: "Chương 4"}, {id: 6, title: "Chương 6"}]}]
+            }
+            openCast()
+            compare(findChild(page, "castNarratorChapterVoice").text, "Ngọc Linh")
+            const scopes = all(page, "castNarratorScope")
+            compare(scopes.length, 2)
+            verify(scopes.some(item => item.text === "Toàn sách trừ chương 4, 6"))
+            verify(scopes.some(item => item.text === "Chương 4, 6"))
+            const rows = findChild(page, "castList").narratorRows
+            compare(rows[0].lines, 1599)
+            compare(rows[1].lines, 597)
+            shot("cast_chapter_narrators", host)
         }
 
         function test_waitingBookSaysMachineIsBusy() {
@@ -239,10 +264,10 @@ Item {
             openMenu("Lan")
             verify(findChild(page, "castMerge").visible)
             verify(findChild(page, "castRename").visible)
-            verify(findChild(page, "castGender").visible)
+            verify(findChild(findChild(page, "castMenu"), "castGender").visible)
             compare(findChild(page, "castMerge").text, "Gộp vào người khác")
             compare(findChild(page, "castRename").text, "Đổi tên")
-            compare(findChild(page, "castGender").text, "Đổi giới tính")
+            compare(findChild(findChild(page, "castMenu"), "castGender").text, "Đổi giới tính")
             compare(Nav.layers.length, 1)               // bảng nổi là một lớp Back
             Nav.back()
             tryVerify(function() { return !findChild(page, "castMenu").open })
@@ -310,7 +335,7 @@ Item {
         function test_genderSendsChoice() {
             openCast()
             openMenu("Lan")
-            findChild(page, "castGender").clicked()
+            findChild(findChild(page, "castMenu"), "castGender").clicked()
             tryVerify(function() { return dialog("castGenderDialog").open })
             render()
             const dlg = dialog("castGenderDialog")
