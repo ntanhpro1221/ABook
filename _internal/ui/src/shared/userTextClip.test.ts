@@ -11,8 +11,8 @@ function sourceFiles(dir: string, prefix = ""): string[] {
     return statSync(`${root}/${dir}/${relative}`).isDirectory() ? sourceFiles(dir, `${relative}/`) : [relative];
   });
 }
-/** Biểu thức trong JSX in tên sách / chương / tên do người dùng đặt. */
-const USER_TEXT = /book\.title|bookTitle|chapterTitle|chapter\.(sub)?title|fullTitle|displayTitle\(|titleOf\(|labels\.get\(|item\.label|\{item\.name\}|active\??\.name|\b(?:target|only|phone|device|computer|found|peer|profile|record|remote|sharer|session|push|sync)\??\.(?:name|displayName|label)\b|\bnames\.current\b|\b(?:deviceName|phoneName|profileName|machineName|recordName)\b|^\{(name|title|sub|where)\}$/;
+/** Biểu thức trong JSX in tên sách / chương / tác giả / tên do người dùng đặt. */
+const USER_TEXT = /book\.title|bookTitle|\.author\b|^\{author\}$|chapterTitle|chapter\.(sub)?title|fullTitle|displayTitle\(|titleOf\(|labels\.get\(|item\.label|\{item\.name\}|active\??\.name|\b(?:target|only|phone|device|computer|found|peer|profile|record|remote|sharer|session|push|sync)\??\.(?:name|displayName|label)\b|\bnames\.current\b|\b(?:deviceName|phoneName|profileName|machineName|recordName)\b|^\{(name|title|sub|where)\}$/;
 const DEVICE_PROFILE_TEXT = /\b(?:target|only|phone|device|computer|found|peer|profile|record|remote|sharer|session|push|active|sync)\??\.(?:name|displayName|label)\b|\bnames\.current\b|\b(?:deviceName|phoneName|profileName|machineName|recordName)\b/;
 /** Derived location/status lines also contain the remote computer's name. */
 const DEVICE_LINE = /\b(?:remoteName|remotePlace|computerOf|peerBarLine|onComputerLine)\(|^\{?status\}?$/;

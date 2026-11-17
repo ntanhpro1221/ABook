@@ -494,19 +494,29 @@ object BookImport {
         val keys = mapOf("tác giả" to "author", "author" to "author", "h\u1ecda sĩ" to "illustrator", "hoạ sĩ" to "illustrator",
             "illustrator" to "illustrator", "tên khác" to "altTitles", "thể loại" to "genres", "tóm tắt" to "summary")
         val pattern = Regex("^\\s*(?:#+\\s*)?([^:：]+)\\s*[:：]\\s*(.*)$")
-        val lines = text.lines()
+        // Only the header window (Python book_metadata.HEADER_LINES; shared cases tests/fixtures/book_metadata/header.json).
+        val lines = text.lines().take(64)
         val out = org.json.JSONObject()
-        for ((index, line) in lines.take(64).withIndex()) {
+        val sceneBreak = Regex("^\\s*(?:[*\\-=~_#]\\s*){3,}$")
+        var summaryEnd = -1
+        for ((index, line) in lines.withIndex()) {
+            if (index <= summaryEnd) continue
             if (Regex("^\\s*(?:Chương|Chapter)\\s+", RegexOption.IGNORE_CASE).containsMatchIn(line)) break
             val match = pattern.matchEntire(line) ?: continue
             val key = keys[match.groupValues[1].trim().lowercase()] ?: continue
             var value = match.groupValues[2].trim()
             if (key == "summary") {
+                // Ends at a chapter heading, header key, Markdown section, scene break or two blank lines: a short story with no
+                // "Chương" line is not its own summary.
                 val parts = mutableListOf(value)
-                for (next in lines.drop(index + 1)) {
+                var blank = 0
+                for ((end, next) in lines.withIndex().drop(index + 1)) {
                     if (Regex("^\\s*(?:#+\\s|(?:Chương|Chapter)\\s+)", RegexOption.IGNORE_CASE).containsMatchIn(next) ||
-                        pattern.matchEntire(next)?.groupValues?.get(1)?.trim()?.lowercase() in keys) break
+                        sceneBreak.matches(next) || pattern.matchEntire(next)?.groupValues?.get(1)?.trim()?.lowercase() in keys) break
+                    blank = if (next.isBlank()) blank + 1 else 0
+                    if (blank >= 2) break
                     parts.add(next)
+                    summaryEnd = end
                 }
                 value = parts.joinToString("\n").trim()
             }

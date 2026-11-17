@@ -235,10 +235,11 @@ const BookTile = memo(function BookTile({ book, badge, twin, current, playingHer
       </div>
       <button type="button" onClick={() => actions.open(book)} className="touch-row relative mt-3 flex w-full flex-col pr-5 text-left">
         <DisclosureChevron aria-hidden className="ink-end absolute right-0 top-0.5 size-4 text-fg-3" />
-        {/* Tên 2 dòng dành sẵn, dòng phụ 1 dòng cắt "…": mọi ô một hàng cao bằng nhau (DESIGN.md §6, soát 10-11 việc 4, như điện thoại và Qt).
+        {/* Tác giả là chữ người dùng: một dòng qua OneLineFit (thu cỡ, không vừa thì xuống dòng), không bao giờ "…" - như Qt và điện thoại.
+            Tên 2 dòng dành sẵn, dòng phụ 1 dòng cắt "…": mọi ô một hàng cao bằng nhau (DESIGN.md §6, soát 10-11 việc 4, như điện thoại và Qt).
             Bìa vẽ hay ảnh đều có tên dưới bìa (chủ sách 15-11: hàng ô phải đồng nhất). */}
         <TileName className={cn(current && "text-accent-text")}>{displayTitle(book.title)}</TileName>
-        {book.author && <p className="truncate text-xs text-fg-2">{book.author}</p>}
+        {book.author && <OneLineFit className="text-xs text-fg-2">{book.author}</OneLineFit>}
         {/* Cuốn ở máy khác: dấu máy tính đầu dòng trạng thái, không đè lên bìa - nhãn góc trên từng che tên sách của bìa vẽ (audit140 V8).
             Hai cuốn cùng tên: nhãn "Dự án" / "Đã nhập" và ngày vào thư viện nối vào cùng dòng để biết cuốn nào là cuốn nào. */}
         <div data-tile-sub="" className="mt-1 flex h-[1rem] items-center gap-1 text-xs leading-4 text-fg-2">
