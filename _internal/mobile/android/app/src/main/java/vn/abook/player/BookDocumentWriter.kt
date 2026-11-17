@@ -99,6 +99,12 @@ object BookDocumentWriter {
         if (files.keys.none { it.startsWith("chapters/") || it.startsWith("texts/") }) {
             throw Refused(S.s_sach_chua_co_chuong_nao_nghe_duoc_hay_doc_bd4501d9)
         }
+        // Như `bookfile.seal`: chữ người nghe thấy có dấu nội bộ, hay book.json có trường QA / nội bộ -> từ chối, không lặng lẽ bỏ.
+        val (leaked, internal) = ListenerPackage.problems(book, files.keys) { name ->
+            when (val source = files.getValue(name)) { is File -> source.readBytes(); else -> source as ByteArray }
+        }
+        if (leaked.isNotEmpty()) throw Refused(S.s_package_internal_marks(leaked.take(3).joinToString("; ")))
+        if (internal.isNotEmpty()) throw Refused(S.s_package_internal_fields(internal.take(3).joinToString("; ")))
         val sorted = files.keys.sorted()
         val described = LinkedHashMap<String, Any>()
         for (name in sorted) described[name] = describe(name, files.getValue(name), known[name])

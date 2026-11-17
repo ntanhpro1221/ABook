@@ -95,38 +95,25 @@ def cover_warnings(book: dict[str, Any], files: Container[str], edits: dict[str,
     return [] if present else [MISSING_COVER]
 
 
+# Luật gói người nghe - một nguồn cho máy tính và điện thoại (assets/listener_package.json, BookDocumentWriter.seal đọc cùng file).
 # Dấu nội bộ (QA, mã câu, mã lỗi máy, nhãn vai cục bộ thô) KHÔNG BAO GIỜ vào chữ người nghe thấy - luật chủ sách 15-11: "Cần nghe lại"
 # từng thành tên phụ của sáu chương Hello trong file đã phát hành. `seal` chặn mọi gói (đóng mới, đóng lại, file dự án) có dấu ấy.
-INTERNAL_MARKER = re.compile(
-    r"Cần nghe lại|Cần thu lại|listener_redo|Thiếu audio dòng|NPC_LOCAL|\bc\d{5}_s\d{4}\b|\b[A-Z]{2,}(?:_[A-Z0-9]{2,}){2,}\b")
 # Các trường chữ người nghe thấy (danh sách trắng): tên sách, tác giả, người kể, tên quyển/phần/chương, tên phụ; ở cast.json là tên
-# hiện, chương đầu, giới, tuổi, tên giọng và tên chương của người kể. Trường dữ liệu (name...) không ra mặt người nghe.
-LISTENER_BOOK_FIELDS = ("title", "author", "narrator")
-LISTENER_CHAPTER_FIELDS = ("title", "subtitle", "fullTitle")
-LISTENER_PERSON_FIELDS = ("displayName", "originalName", "firstChapter", "gender", "age", "mergedInto")
-# Tên người hiện ra (tên trong cast.json, người nói trên dòng đọc theo của scripts/) không mang dấu NPC: "NPC X" là danh tính trong
-# sổ, người nghe thấy "X" (humanize.person_name). Chỉ xét tên người - "NPC" có thể đứng trong tên sách, tên chương thật.
-NPC_SHOWN = re.compile(r"^\s*npc\b", re.IGNORECASE)
-LISTENER_NAME_FIELDS = ("displayName", "originalName", "mergedInto")
+# hiện, chương đầu, giới, tuổi, tên giọng và tên chương của người kể. Tên người hiện ra (cast.json, người nói trên dòng đọc theo của
+# scripts/) không mang dấu NPC: "NPC X" là vai trong sổ, người nghe thấy "X" (humanize.person_name) - chỉ xét tên người, "NPC" có thể
+# đứng trong tên sách, tên chương thật. Trường của `book.json` trong gói theo danh sách trắng: trạng thái QA (qualityPassed,
+# qualityWarning, failedLines, levelQa) và mọi trường nội bộ chỉ thuộc dự án (sổ, .abookproj). Bước xuất bỏ chúng (`listener_book`),
+# `seal` từ chối gói còn trường ngoài danh sách. Cây con không mang QA (bìa, nhạc, ảnh, sharedWords, package) không xét sâu.
+_RULES = json.loads((Path(__file__).with_name("assets") / "listener_package.json").read_text(encoding="utf-8"))
+INTERNAL_MARKER = re.compile(_RULES["internalMarker"])
+NPC_SHOWN = re.compile(_RULES["npcShown"], re.IGNORECASE)
+LISTENER_BOOK_FIELDS = tuple(_RULES["listenerBookFields"])
+LISTENER_CHAPTER_FIELDS = tuple(_RULES["listenerChapterFields"])
+LISTENER_PERSON_FIELDS = tuple(_RULES["listenerPersonFields"])
+LISTENER_NAME_FIELDS = tuple(_RULES["listenerNameFields"])
 SCRIPT_SPEAKER = re.compile(rb'"speaker":\s*"((?:[^"\\]|\\.)*)"')
-
-
-# Trường của `book.json` trong gói người nghe (danh sách trắng, luật chủ sách 15-11): trạng thái QA (qualityPassed, qualityWarning,
-# failedLines, levelQa) và mọi trường nội bộ chỉ thuộc dự án (sổ, .abookproj), không bao giờ vào .abook. Bước xuất bỏ chúng
-# (`listener_book`), `seal` từ chối gói còn trường ngoài danh sách. Cây con không mang QA (bìa, nhạc, ảnh, sharedWords, package)
-# không xét sâu.
-PACKAGE_BOOK_KEYS = frozenset({
-    "format", "title", "author", "description", "language", "narrator", "duration", "chaptersTotal", "chaptersAvailable", "complete", "version", "audioVersion",
-    "audioUpdatedAt", "sourceFingerprint", "metaVersion", "chapters", "volumes", "parts", "cast", "avatars", "samples", "cover", "music",
-    "sharedWords", "audioCoverage", "package"})
-PACKAGE_CHAPTER_KEYS = frozenset({
-    "id", "index", "part", "volumeId", "title", "subtitle", "fullTitle", "file", "size", "sha256", "script", "text", "state", "duration",
-    "available", "audioVersion", "wordsVersion"})
-PACKAGE_VOLUME_KEYS = frozenset({"id", "number", "title", "cover", "chapters"})
-PACKAGE_PART_KEYS = frozenset({"part", "title", "chapters", "duration", "narrator"})
-PACKAGE_COVERAGE_KEYS = frozenset({"expected", "missing", "partial"})
-PACKAGE_EXPECTED_KEYS = frozenset({"id", "title", "audioSha256", "segments"})
-PACKAGE_MISSING_KEYS = frozenset({"id", "title", "reason"})
+PACKAGE_BOOK_KEYS, PACKAGE_CHAPTER_KEYS, PACKAGE_VOLUME_KEYS, PACKAGE_PART_KEYS, PACKAGE_COVERAGE_KEYS, PACKAGE_EXPECTED_KEYS, \
+    PACKAGE_MISSING_KEYS = (frozenset(_RULES["keys"][name]) for name in ("book", "chapter", "volume", "part", "coverage", "expected", "missing"))
 
 
 def _package_fields(book: dict[str, Any], strip: bool) -> list[str]:

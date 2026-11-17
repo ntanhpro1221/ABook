@@ -6,6 +6,8 @@ internal fields belong to the project only (owner ruling 15-11): book.json is wh
 """
 from __future__ import annotations
 
+import copy
+import json
 from pathlib import Path
 
 import pytest
@@ -110,3 +112,28 @@ def test_a_clean_book_passes_the_whitelist(tmp_path: Path) -> None:
     assert bookfile.package_field_problems(book) == []
     bookfile.seal(book, {"chapters/1.mp3": b"audio"}, tmp_path / "x.abook", producer="test", version=1)
     assert (tmp_path / "x.abook").is_file()
+
+
+SHARED = json.loads((Path(__file__).parent / "fixtures" / "book_files" / "listener_package_cases.json").read_text(encoding="utf-8"))
+
+
+def shared_book(case: dict) -> dict:
+    """`base` with the case's `patch` applied by dotted path (list indexes are numbers) - Kotlin ListenerPackageTest does the same."""
+    book = copy.deepcopy(SHARED["base"])
+    for path, value in (case.get("patch") or {}).items():
+        *parents, last = path.split(".")
+        target = book
+        for step in parents:
+            target = target[int(step)] if isinstance(target, list) else target[step]
+        target[int(last) if isinstance(target, list) else last] = value
+    return book
+
+
+@pytest.mark.parametrize("case", SHARED["cases"], ids=[case["name"] for case in SHARED["cases"]])
+def test_the_rules_shared_with_the_phone_packer(case: dict) -> None:
+    """Same cases as Android ListenerPackageTest: the phone's BookDocumentWriter.seal refuses exactly what `seal` refuses."""
+    files = {name: text.encode("utf-8") for name, text in (case.get("scripts") or {}).items()}
+    if case.get("cast") is not None:
+        files["cast.json"] = json.dumps(case["cast"], ensure_ascii=False).encode("utf-8")
+    leaked, internal = bookfile.listener_package_problems(shared_book(case), files, files.__getitem__)
+    assert (sorted(leaked), sorted(internal)) == (sorted(case["leaked"]), sorted(case["internal"]))
