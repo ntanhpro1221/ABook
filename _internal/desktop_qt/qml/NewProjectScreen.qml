@@ -136,6 +136,8 @@ FocusScope {
         }
     }
 
+    // DESIGN 5.5: mọi vùng cuộn dọc mờ ở mép còn nội dung (mép dưới là mép trên của nút ghim, ngay bên dưới).
+    ScrollEdges { target: page; color: Theme.bg; x: page.x; y: page.y; width: page.width; height: page.height }
     Scrollbar { target: page }
 
     // Nút tạo ghim ở đáy vùng cuộn: "Tuỳ chọn" mở ra dài thì nút vẫn luôn thấy; trang ngắn thì nằm ngay dưới nội dung (sticky bottom-0 của bản web)
@@ -153,6 +155,18 @@ FocusScope {
         visible: opacity > 0
         enabled: root.ready
         Rectangle { x: root.contentX; width: root.contentW; height: 1; color: Theme.line }
+        // Nút đang ghim (còn trang đi dưới nó): mép trên của nó là mép cuộn - câu mờ dần vào, không bị cắt cứng ngang dòng.
+        Rectangle {
+            objectName: "scrollFadeBottom"
+            y: -height
+            width: parent.width
+            height: Theme.s16
+            Reveal { shown: footer.y < footer.natural - 0.5 }
+            gradient: Gradient {
+                GradientStop { position: 0; color: Qt.alpha(Theme.bg, 0) }
+                GradientStop { position: 1; color: Theme.bg }
+            }
+        }
         Item {
             id: actions
             x: root.contentX

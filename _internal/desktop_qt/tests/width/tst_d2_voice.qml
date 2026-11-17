@@ -2,6 +2,7 @@ import QtQuick
 import QtTest
 import "../../qml/TextWrap.js" as TextWrap
 import "VisualReady.js" as VisualReady
+import "CaptureSize.js" as CaptureSize
 import ABook
 
 // Cài đặt › Giọng đọc (SettingsVoice + VoiceModule + ProviderKey): việc làm thật (yêu cầu gửi đi, giọng mặc định, nghe thử, khoá, tải / huỷ / gỡ có hỏi, Back từ hộp hỏi,
@@ -276,7 +277,10 @@ Item {
             ]
             openAll()
             Api.defaultVoice = host.voices[0].id
-            const page = make()
+            // Capture the clipped viewport; the raw settings column is taller than the window.
+            const shown = framed(760, 0)
+            shown.frame.width = 760
+            const page = shown.page
             for (const voice of host.voices) {
                 const target = row(page, voice.id)
                 compare(target.shown, voice.name)
@@ -286,7 +290,7 @@ Item {
                 compare(name.lineCount, 1)
                 verify(sample.mapToItem(target, 0, 0).x - name.mapToItem(target, name.width, 0).x >= 12)
             }
-            shot("settings_device", page)
+            shot("settings_device", shown.frame)
             for (const voice of host.voices) {
                 const target = row(page, voice.id)
                 DesktopApi.delayed = true
@@ -585,7 +589,7 @@ Item {
             const target = item || host
             ready()
             qtGlyphAudit.scan()
-            const img = grabImage(VisualReady.grabTarget(host.Window.window, target))
+            const img = CaptureSize.grab(this, VisualReady.grabTarget(host.Window.window, target))
             const path = Qt.resolvedUrl("../../build/d2shots/" + name + "_" + (Theme.dark ? "dark" : "light") + ".png").toString()
                 .replace(/^file:\/\/\/([A-Za-z]:)/, "$1").replace(/^file:\/\//, "")
             img.save(path)
@@ -725,9 +729,24 @@ Item {
         Component {
             id: frameFactory
             Item {
+                id: frame
                 property alias holder: clip
                 Rectangle { anchors.fill: parent; color: Theme.bg }
                 Item { id: clip; anchors.fill: parent; clip: true; property real contentY: 0 }
+                // Như trang Cài đặt thật (ScrollEdges trên nền màn): trang kéo lên thì mép trên mờ, còn trang bên dưới thì mép dưới mờ.
+                readonly property Item page: clip.children.length ? clip.children[clip.children.length - 1] : null
+                Rectangle {
+                    objectName: "scrollFadeTop"
+                    width: parent.width; height: Theme.s16
+                    visible: !!frame.page && frame.page.y < 0
+                    gradient: Gradient { GradientStop { position: 0; color: Theme.bg } GradientStop { position: 1; color: Qt.alpha(Theme.bg, 0) } }
+                }
+                Rectangle {
+                    objectName: "scrollFadeBottom"
+                    y: parent.height - height; width: parent.width; height: Theme.s16
+                    visible: !!frame.page && frame.page.y + frame.page.height > frame.height
+                    gradient: Gradient { GradientStop { position: 0; color: Qt.alpha(Theme.bg, 0) } GradientStop { position: 1; color: Theme.bg } }
+                }
             }
         }
     }

@@ -1,6 +1,7 @@
 import QtQuick
 import ABook
 import "TextWrap.js" as TextWrap
+import "UiStrings.js" as S
 
 // Bìa vẽ từ tên khi sách chưa có ảnh: cặp màu cố định băm từ tên (cùng tên, cùng bìa), như ui/src/shared/cover.ts.
 // Bảng màu lấy từ Theme.coverPalettes (sinh từ cover.ts); phần băm và tách "Tập N" là bản QML của coverStyle / splitTitle.
@@ -29,11 +30,31 @@ Rectangle {
         GradientStop { position: 1; color: root.palette[1] }
     }
 
-    // Tên sách in trên bìa: thu cỡ chữ cho vừa khung (không cắt, không '...'), chừa chỗ cho nhãn "Tập N" nếu có.
-    // Bìa nhỏ (ảnh đại diện trong bảng, < 64 px): chỉ còn tên sách, nhãn "Tập N" đã có ngay trên dòng tên
+    // Chữ trên bìa nhỏ (coverLabel của cover.ts, CoverArt.label của điện thoại): số tập nếu là sách trong một bộ ("16"),
+    // không thì chữ cái đầu của hai chữ có nghĩa.
+    readonly property string label: {
+        const volume = parts[1].match(/(\d+)/)
+        if (volume) return volume[1]
+        // Chữ đệm không lấy chữ cái: "the" / "and" của tên tiếng Anh (mẫu, không phải chữ hiện) và các chữ đệm tiếng Việt.
+        const stop = [S.s_cua_56cf0ad4, S.s_va_befa210d, S.s_nhung_767e74d8, S.s_cac_d6e0786e, S.s_mot_0231bfca]
+        return parts[0].split(/\s+/).filter(word => word.length > 2 && !/^(?:the|and)$/i.test(word) && stop.indexOf(word.toLowerCase()) < 0)
+            .slice(0, 2).map(word => word.charAt(0).toUpperCase()).join("")
+    }
+    // Bìa nhỏ (ảnh đại diện trong bảng, < 64 px): chỉ nhãn ngắn ở giữa, như web xs/sm và `small` của điện thoại - tên dài 26 dòng
+    // trong ô 40 px tràn khỏi bìa (soát R8 15-11).
     readonly property bool compact: width < 64
     Text {
-        readonly property real pad: root.compact ? 4 : Math.max(8, root.width * 0.08)
+        Reveal { shown: root.compact }
+        anchors.centerIn: parent
+        text: root.label
+        color: Theme.coverInk
+        font.pixelSize: Math.round(root.width * 0.34)
+        font.weight: Theme.weightBold
+    }
+    // Tên sách in trên bìa: thu cỡ chữ cho vừa khung, chừa chỗ cho nhãn "Tập N" nếu có.
+    Text {
+        Reveal { shown: !root.compact }
+        readonly property real pad: Math.max(8, root.width * 0.08)
         x: pad
         y: pad
         width: root.width - 2 * pad
@@ -50,7 +71,7 @@ Rectangle {
     }
     Rectangle {
         id: tagBox
-        Reveal { shown: !root.compact && root.parts[1] !== "" }
+        Reveal { shown: root.width >= 88 && root.parts[1] !== "" }
         anchors.left: parent.left
         anchors.bottom: parent.bottom
         anchors.margins: Math.max(8, root.width * 0.08)

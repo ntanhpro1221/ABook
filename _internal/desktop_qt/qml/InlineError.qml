@@ -19,7 +19,7 @@ Collapse {
     readonly property real line: 20
     Item {
         width: root.width
-        height: Math.max(row.height, again.implicitHeight) + 24
+        height: Math.max(row.height - (retrySlot.wrapped ? 8 : 0), again.implicitHeight) + 24
         Icon {
             objectName: "inlineErrorIcon"
             x: 0
@@ -33,7 +33,9 @@ Collapse {
             x: 16 + 12
             y: 12
             width: parent.width - x
-            spacing: 4
+            // Như web (gap-x-3 + -ml-3 của nút): nút ghost sát câu, chữ "Thử lại" cách câu 12 - không đè đệm nút lên cuối câu.
+            // Xuống dòng thì cách dòng trên 4 (gap-y-1): Flow chỉ có một khoảng cách nên nút kéo lên 8.
+            spacing: 12
             Text {
                 objectName: "inlineErrorText"
                 width: Math.min(implicitWidth, row.width)
@@ -49,12 +51,15 @@ Collapse {
                 Accessible.role: Accessible.AlertMessage
             }
             Item {
+                id: retrySlot
+                readonly property bool wrapped: y > 0
                 width: again.implicitWidth - 12
                 height: again.implicitHeight
                 Button {
                     id: again
                     objectName: "inlineErrorRetry"
                     x: -12
+                    y: retrySlot.wrapped ? -8 : 0
                     text: S.s_thu_lai_c58d068c
                     icon: "rotate-cw"
                     kind: "ghost"

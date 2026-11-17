@@ -224,10 +224,71 @@ def modal_layer(tree: dict) -> list[int]:
     return layer
 
 
+def paints_above(tree: dict, cover: dict, node: dict) -> bool:
+    """`cover` vẽ đè lên `node`: con vẽ trên cha; hai nhánh anh em thì nhánh z lớn hơn, cùng z thì nhánh khai báo sau (id lớn hơn).
+    `cover` là tổ tiên của `node` thì `node` nằm TRÊN nó (chữ trên nền thẻ của chính mình)."""
+    nodes = tree["nodes"]
+
+    def path(n):
+        ids = [n["id"]]
+        while n["parent"] >= 0:
+            n = nodes[n["parent"]]
+            ids.append(n["id"])
+        return ids[::-1]
+    pc, pn = path(cover), path(node)
+    i = 0
+    while i < min(len(pc), len(pn)) and pc[i] == pn[i]:
+        i += 1
+    if i == len(pc):
+        return False
+    if i == len(pn):
+        return True
+    a, b = nodes[pc[i]], nodes[pn[i]]
+    return (a.get("z", 0), a["id"]) > (b.get("z", 0), b["id"])
+
+
+def opaque_surfaces(tree: dict) -> list[dict]:
+    """Mặt đục: Rectangle nền màu đặc (alpha ff), không dải màu, cao >= 12 dp - thanh dính đầu cột, thẻ báo, lớp thả file.
+    Vạch mảnh (gạch chân tab, vạch chia, thanh tiến độ) là nét trang trí, không phải mặt che chữ."""
+    return [n for n in tree["nodes"] if str(n.get("type", "")).endswith("Rectangle") and not n.get("gradient")
+            and n.get("opacity", 1) >= 1 - 0.001
+            and str(n.get("background_color", "")).lower().startswith("#ff") and shown(n) and height(n) >= 12]
+
+
 def rule_r8(key: str, tree: dict) -> list[dl.Finding]:
     out = []
     layer = modal_layer(tree)
     texts = [n for n in tree["nodes"] if n.get("text") and shown(n)]
+    # Chữ đi dưới một mặt đục vẽ sau nó (thanh dính của cột kịch bản, thẻ báo nổi) bị che: phần bị che không phải chữ chồng
+    # nhau; mép mặt đục cắt ngang dòng chữ thì là mép cuộn, phải có dải mờ như mọi mép cuộn khác (DESIGN 5.5).
+    surfaces = opaque_surfaces(tree)
+
+    def inside(c, n) -> bool:
+        while c["parent"] >= 0:
+            if c["parent"] == n["id"]:
+                return True
+            c = tree["nodes"][c["parent"]]
+        return False
+
+    # Mặt đục là con cháu của chính điều khiển (gạch chân tab đang chọn, nền viên chip) là trang trí của nó, không che nhãn.
+    def above(n) -> list[dict]:
+        return [c for c in surfaces if layer[c["id"]] == layer[n["id"]] and not inside(c, n) and paints_above(tree, c, n)]
+
+    def seen(n) -> list[float] | None:
+        v = list(n["visible"])
+        for c in above(n):
+            cv = c["visible"]
+            if cv[0] > v[0] + 0.5 or cv[2] < v[2] - 0.5:
+                continue
+            if cv[1] <= v[1] + 0.5 and cv[3] >= v[3] - 0.5:
+                return None
+            if cv[1] <= v[1] + 0.5 < cv[3]:
+                v[1] = cv[3]
+            elif cv[1] < v[3] - 0.5 <= cv[3]:
+                v[3] = cv[1]
+        return v
+    boxes = {n["id"]: seen(n) for n in texts}
+    texts = [n for n in texts if boxes[n["id"]] is not None]
     # Mép mờ của vùng cuộn (DESIGN 5.5 "Mọi vùng cuộn dọc"; Qt ScrollEdges: scrollFadeTop / scrollFadeBottom): hàng đi dưới
     # lớp mờ là hàng đang cuộn ra khỏi khung, không phải chữ cụt cứng. Mép cắt phải nằm trong dải mờ đang hiện, cùng lớp vẽ.
     fades = {side: [f for f in tree["nodes"] if f.get("tag") == tag and shown(f)]
@@ -239,7 +300,7 @@ def rule_r8(key: str, tree: dict) -> list[dl.Finding]:
                    and min(f["visible"][2], v[2]) - max(f["visible"][0], v[0]) > 0.5 for f in fades[side])
 
     for n in texts:
-        v, b = n["visible"], n["bounds"]
+        v, b = boxes[n["id"]], n["bounds"]
         lines = [line["bounds"] for line in n.get("lines", [])] or [b]
         shown_lines = [line for line in lines if min(line[3], v[3]) - max(line[1], v[1]) > 0.5]
         cut = any((line[1] < v[1] - 0.5 < line[3] and not faded(n, "top", v[1]))
@@ -249,10 +310,16 @@ def rule_r8(key: str, tree: dict) -> list[dl.Finding]:
                                   [round(x) for x in v]))
     for i, a in enumerate(texts):
         for c in texts[i + 1:]:
-            va, vc = a["visible"], c["visible"]
+            va, vc = boxes[a["id"]], boxes[c["id"]]
             w = min(va[2], vc[2]) - max(va[0], vc[0])
             h = min(va[3], vc[3]) - max(va[1], vc[1])
             if w <= 1 or h <= 1 or layer[a["id"]] != layer[c["id"]]:
+                continue
+            # Chỗ chồng nằm trọn trong một mặt đục vẽ đè lên đúng một trong hai (thẻ báo nổi trên nút của trang): nút bị che,
+            # không thấy hai chữ đè nhau.
+            box = [max(va[0], vc[0]), max(va[1], vc[1]), min(va[2], vc[2]), min(va[3], vc[3])]
+            if any(s["visible"][0] <= box[0] + 0.5 and s["visible"][1] <= box[1] + 0.5 and s["visible"][2] >= box[2] - 0.5
+                   and s["visible"][3] >= box[3] - 0.5 and (s in above(a)) != (s in above(c)) for s in surfaces):
                 continue
             def ancestor(parent, child):
                 while child["parent"] >= 0:

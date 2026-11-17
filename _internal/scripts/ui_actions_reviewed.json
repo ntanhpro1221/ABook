@@ -15378,7 +15378,7 @@
     "line": 41,
     "statement": "Api.quiet(\"GET\", \"/api/listen/books/\" + encodeURIComponent(id), null, function(data, err) {",
     "occurrence": 1,
-    "source_sha256": "04741ef52daa8f3703626d7452f45a969b54214f08050f2ef303284958d6d1e5",
+    "source_sha256": "28735ff307ef59e8cc3ea646c77bd85ea1f444d4f42a481603c3c52a3a970ac4",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; Reloading, loading, pendingParagraphs",
     "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads."
@@ -15390,7 +15390,7 @@
     "line": 56,
     "statement": "Api.quiet(\"GET\", path + (next.state === \"text\" ? \"/text\" : \"/script\"), null, function(data, err) {",
     "occurrence": 1,
-    "source_sha256": "04741ef52daa8f3703626d7452f45a969b54214f08050f2ef303284958d6d1e5",
+    "source_sha256": "28735ff307ef59e8cc3ea646c77bd85ea1f444d4f42a481603c3c52a3a970ac4",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; Reloading, loading, pendingParagraphs",
     "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads."
@@ -16770,7 +16770,7 @@
     "line": 122,
     "statement": "for (let i = lineModel.count - 1; i >= 0; --i) if (!next[lineModel.get(i).key]) lineModel.remove(i)",
     "occurrence": 1,
-    "source_sha256": "108e35fd82af0d9855aff559e89450793371b13e80508820ffb2db777f78a70c",
+    "source_sha256": "fca1b358cfceb58ee79f1414af16b76866bde87c6398804546c527e970dbbeea",
     "disposition": "internal",
     "guard": "In-memory collection entry lifecycle",
     "reason": "The statement releases a listener, request, UI row, selection or cache entry; it does not delete its persisted source. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
@@ -16782,7 +16782,7 @@
     "line": 60,
     "statement": "Api.call(\"GET\", \"/api/sync\", null, function(data, error) { if (!error) root.sync = data })",
     "occurrence": 1,
-    "source_sha256": "5074a8f5ae663e163e78f2a397f76ce1acf83db03c81c54aa2d8c4ad7b8a43c2",
+    "source_sha256": "1833cc5c28416f52ca98695cdeecdc8c9392a57a9befa651a595974f7387a829",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; ",
     "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."

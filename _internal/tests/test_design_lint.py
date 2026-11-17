@@ -616,6 +616,54 @@ def test_r8_row_under_a_scroll_fade_is_not_a_hard_cut():
     assert "bị cắt" in dt.rule_r8("k", tree(ROOT, row(), off_side))[0].detail
 
 
+def test_r8_text_under_an_opaque_sticky_bar_is_covered_and_its_edge_needs_a_fade():
+    # Cột cuộn (1) có câu A chui hẳn dưới thanh dính, câu B hai dòng bị mép dưới thanh (y 50) cắt ngang; thanh (4) là Rectangle
+    # nền đục z 2 vẽ sau cột, chữ của thanh (5) nằm đúng chỗ câu A.
+    rows = [n(0, 0, 0, 360, 780), n(1, 20, 10, 200, 30, text="Tách nhóm"),
+            n(1, 20, 40, 200, 80, text="Một câu dài", lines=[{"bounds": [20, 40, 200, 60]}, {"bounds": [20, 60, 200, 80]}])]
+    bar = [n(0, 0, 0, 360, 50, type="QQuickRectangle", background_color="#fff5f3ef", z=2), n(4, 20, 12, 200, 32, text="Chương 1")]
+    fade = n(4, 0, 50, 360, 66, type="QQuickRectangle", background_color="#ffffffff", gradient=True, tag="scrollFadeTop")
+    # Không mờ ở mép thanh: câu A bị che (không chồng chữ), câu B cụt cứng ở mép thanh.
+    findings = dt.rule_r8("k", tree(ROOT, *rows, *bar))
+    assert [f.detail.split(":")[0] for f in findings] == ["chữ 'Một câu dài' bị cắt"]
+    # Có dải mờ dưới thanh (dải màu: không đục, không che gì): sạch.
+    assert dt.rule_r8("k", tree(ROOT, *rows, *bar, fade)) == []
+    # Cùng thanh nhưng vẽ TRƯỚC cột (khai báo trước, không z): chữ của cột nằm trên thanh - chồng chữ thật, đỏ.
+    under = tree(ROOT, n(0, 0, 0, 360, 50, type="QQuickRectangle", background_color="#fff5f3ef"), n(1, 20, 12, 200, 32, text="Chương 1"),
+                 n(0, 0, 0, 360, 780), n(3, 20, 10, 200, 30, text="Tách nhóm"))
+    assert any("chồng nhau" in f.detail for f in dt.rule_r8("k", under))
+    # Nền nửa trong (alpha < ff) không che: vẫn đỏ.
+    see_through = tree(ROOT, *rows[:2], n(0, 0, 0, 360, 50, type="QQuickRectangle", background_color="#ccf5f3ef", z=2),
+                       n(3, 20, 12, 200, 32, text="Chương 1"))
+    assert any("chồng nhau" in f.detail for f in dt.rule_r8("k", see_through))
+    # Alpha màu đục nhưng bản thân mặt/cha đang mờ: vẫn thấy cả hai nhãn.
+    see_through["nodes"][3]["background_color"] = "#fff5f3ef"
+    see_through["nodes"][3]["opacity"] = 0.5
+    assert any("chồng nhau" in f.detail for f in dt.rule_r8("k", see_through))
+    # Gạch chân 2 dp của tab đang chọn là con của chính tab: trang trí của nó, không che nhãn tab.
+    tab = tree(ROOT, n(0, 20, 100, 120, 144, role="tab", text="Chương"),
+               n(1, 20, 142, 120, 144, type="QQuickRectangle", background_color="#ffd4912b"))
+    assert dt.rule_r8("k", tab) == []
+    # Gạch chân là anh em vẽ sau tab (StudioTabs: tabUnderline cạnh các TabLabel): vạch mảnh 2 dp là nét, không phải mặt che.
+    line = tree(ROOT, n(0, 20, 100, 120, 144, role="tab", text="Chương"),
+                n(0, 20, 142, 120, 144, type="QQuickRectangle", background_color="#ffd4912b"))
+    assert dt.rule_r8("k", line) == []
+    # Thanh đục 12 dp của trang vẽ sau tab, phủ đáy tab: mép cắt tab - đỏ.
+    bar = tree(ROOT, n(0, 20, 100, 120, 144, role="tab", text="Chương"),
+               n(0, 0, 136, 360, 148, type="QQuickRectangle", background_color="#ffd4912b"))
+    assert [f.detail.split(":")[0] for f in dt.rule_r8("k", bar)] == ["chữ 'Chương' bị cắt"]
+
+
+def test_r8_floating_card_over_a_page_button_is_covering_not_overlapping():
+    # Thẻ báo nổi (Rectangle đục vẽ sau) đè lên một phần nút của trang: chỗ chồng nằm trong thẻ - nút bị che, không đỏ.
+    page_button = n(0, 885, 32, 1072, 72, text="Nghe trong Thư viện")
+    card = [n(0, 908, 22, 1260, 82, type="QQuickRectangle", background_color="#ffffffff", z=10), n(2, 924, 33, 1132, 51, text="Đã ghi")]
+    assert dt.rule_r8("k", tree(ROOT, page_button, *card, width=1280)) == []
+    # Chữ của thẻ tràn ra ngoài thẻ, đè lên nút: chỗ chồng không nằm trọn trong thẻ - đỏ.
+    spill = [n(0, 908, 22, 1260, 40, type="QQuickRectangle", background_color="#ffffffff", z=10), n(2, 924, 33, 1132, 51, text="Đã ghi")]
+    assert any("chồng nhau" in f.detail for f in dt.rule_r8("k", tree(ROOT, page_button, *spill, width=1280)))
+
+
 def test_r11_font_scale_and_row_title_style():
     good = tree(ROOT, *[n(0, 0, 100 + i * 56, 360, 156 + i * 56, clickable=True) for i in range(3)],
                 *[n(1 + i, 20, 110 + i * 56, 200, 130 + i * 56, text=f"Hàng {i}", font_size=16, font_weight=400, color="#1a1814")

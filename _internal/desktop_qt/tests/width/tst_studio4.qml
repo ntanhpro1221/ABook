@@ -3,6 +3,7 @@ import QtTest
 import "../../qml/TextWrap.js" as TextWrap
 import "ModalLayer.js" as ModalLayer
 import "VisualReady.js" as VisualReady
+import "CaptureSize.js" as CaptureSize
 import ABook
 
 // Studio S4: tab "Nhân vật" của dự án (dàn người, đổi giọng / tên / giới / gộp / bỏ gộp, công tắc "Nhân vật tự kể", lời dưới hàng người kể) và màn "Duyệt trước khi thu"
@@ -51,7 +52,7 @@ Item {
             VisualReady.render(this, host.Window.window, target, qtVisualReady)
             const path = Qt.resolvedUrl("../../build/d2shots/s4_" + name + "_" + (Theme.dark ? "dark" : "light") + ".png").toString()
                 .replace(/^file:\/\/\/([A-Za-z]:)/, "$1").replace(/^file:\/\//, "")
-            grabImage(VisualReady.grabTarget(host.Window.window, target)).save(path)
+            CaptureSize.grab(this, VisualReady.grabTarget(host.Window.window, target)).save(path)
             verify(qtUiTree.save(path, VisualReady.grabTarget(host.Window.window, target)))   // cây UI cạnh ảnh cho scripts/design_lint.py
         }
         function scrollTo(page, item) {
@@ -205,12 +206,14 @@ Item {
             Clip.stop()
         }
         function cleanup() {
+            CaptureSize.resize(this, host, host.Window.window, 1280, 900)
             Theme.mode = "auto"; Theme.reduceMotion = false
             Nav.layers = []; Nav.studioPeer = ""; Api.notice = ""
             DesktopApi.delayed = false
             Clip.stop()
         }
         function makeStudio(width, height) {
+            CaptureSize.resize(this, host, host.Window.window, width || 1280, height || 900)
             const page = createTemporaryObject(studioFactory, host, {width: width || 1280, height: height || 900})
             verify(page !== null)
             return page
