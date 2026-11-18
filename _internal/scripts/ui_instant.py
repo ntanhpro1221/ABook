@@ -116,17 +116,23 @@ class QtProject:
                     out.append((name, own[m.start(1):m.end(1)].strip()))
         return out
 
-    def configured(self, file: str, expression: str) -> bool:
-        """True when every name is a literal-default property of this component that no QML binding or assignment ever
-        changes: a per-instance setting fixed for the item's lifetime (only C++ tests or the default set it)."""
+    def configured(self, file: str, expression: str, depth: int = 0) -> bool:
+        """True when every name is a literal-default property of this component that nothing changes after creation: a
+        per-instance setting fixed for the item's lifetime. Callers may set it, but only to a literal (`nameText: true`) or
+        to their own per-instance setting (`nameTitle: root.nameTitle` where that is configured in turn)."""
         names = set(re.findall(r'(?<![.\w])(?:root\.)?([a-zA-Z_]\w*)(?!\s*\()', mask(expression))) - {'root', 'true', 'false', 'null'}
-        if not names:
+        if not names or depth > 4:
             return False
         for name in names:
             decl = self.decls.get(file, {}).get(name)
+            decl = None if decl is None else re.sub(r'\s*//.*$', '', decl).strip()  # `property bool x: false   // note`
             if decl is None or not re.fullmatch(r'"[^"]*"|-?\d+(?:\.\d+)?|true|false', decl):
                 return False
-            if self.assignments(file, name):
+            for caller, value in self.assignments(file, name):
+                if re.fullmatch(r'"[^"]*"|-?\d+(?:\.\d+)?|true|false', value):
+                    continue
+                if re.fullmatch(r'root\.\w+', value) and self.configured(caller, value, depth + 1):
+                    continue
                 return False
             if any(re.search(r'\.' + name + r'\s*=(?!=)', clean) for clean in self.clean.values()):
                 return False
