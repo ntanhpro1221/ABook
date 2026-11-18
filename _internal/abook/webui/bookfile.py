@@ -578,7 +578,8 @@ def pack_series(parts: Sequence[tuple[int, Path] | Path], out: Path, *, producer
     cover = covers.cover_file(first_root)
     if cover is not None:
         files[covers.COVER_FILE] = cover
-    cast, samples = _merge_cast([(number, root) for number, root, _ in books], files)
+    cast, samples = _merge_cast([(number, root) for number, root, _ in books], files,
+                                chapters={number: book["chapters"] for number, _, book in books})
     for _, root, _ in books:
         files.update(avatars.image_files(root, cast))
     files["cast.json"] = json_bytes(book_edits.shared_cast(cast))
@@ -631,7 +632,8 @@ def _numbered(parts: Sequence[tuple[int, Path] | Path]) -> list[tuple[int, Path]
     return [(number, Path(root)) for number, root in numbered]
 
 
-def _merge_cast(parts: list[tuple[int, Path]], files: dict[str, Path | bytes]) -> tuple[dict[str, Any], list[str]]:
+def _merge_cast(parts: list[tuple[int, Path]], files: dict[str, Path | bytes], *,
+                chapters: dict[int, list[dict[str, Any]]]) -> tuple[dict[str, Any], list[str]]:
     """Dàn nhân vật của cả bộ: gộp theo tên chuẩn (`name`), cộng số câu, `parts` = phần nào người ấy lên tiếng. Câu mẫu
     đánh số lại 1..K theo thứ tự gặp (mã câu của hai dự án có thể trùng nhau) và `sampleId` trỏ theo số mới; file mẫu vào
     `files`. Người là nhân vật chính ở phần này, vai phụ ở phần kia: tính là nhân vật chính."""
@@ -639,10 +641,37 @@ def _merge_cast(parts: list[tuple[int, Path]], files: dict[str, Path | bytes]) -
     section: dict[str, str] = {}
     carried: dict[str, dict[str, Any]] = {}
     narrator: dict[str, Any] | None = None
+    narrator_voices: dict[str, dict[str, Any]] = {}
+    all_chapters: dict[int, dict[str, Any]] = {}
     samples: list[str] = []
     for number, root in parts:
         cast = avatars.recorded_cast(root)
-        narrator = narrator or cast["narrator"]
+        part_narrator = cast["narrator"]
+        if narrator is None:
+            narrator = {**part_narrator, "lines": 0, "seconds": 0.0, "voiceLines": 0, "voiceSeconds": 0.0,
+                        "chapterVoices": [], "exceptChapters": [], "redo": 0}
+        # Use the already-packaged names and global ids, including chapters without audio.
+        chapter_refs = {chapter["id"]: {"id": chapter["id"], "title": chapter["title"]}
+                        for chapter in chapters[number]}
+        all_chapters.update(chapter_refs)
+        excluded = {number * PART_SPAN + item["id"] for item in part_narrator["exceptChapters"]}
+        main = {"voice": part_narrator["voice"], "profile": part_narrator["profile"],
+                "lines": part_narrator["voiceLines"], "seconds": part_narrator["voiceSeconds"],
+                "chapters": [item for key, item in chapter_refs.items() if key not in excluded]}
+        alternates = [{**entry, "chapters": [chapter_refs[number * PART_SPAN + item["id"]]
+                                            for item in entry["chapters"]]}
+                      for entry in part_narrator["chapterVoices"]]
+        # A later part's main narrator may be an earlier part's alternate (or vice versa).
+        for entry in [main, *alternates]:
+            merged_voice = narrator_voices.setdefault(entry["voice"], {
+                "voice": entry["voice"], "profile": entry["profile"], "chapters": [], "lines": 0, "seconds": 0.0})
+            merged_voice["lines"] += entry["lines"]
+            merged_voice["seconds"] = round(merged_voice["seconds"] + entry["seconds"], 1)
+            seen = {item["id"] for item in merged_voice["chapters"]}
+            merged_voice["chapters"].extend(item for item in entry["chapters"] if item["id"] not in seen)
+        narrator["lines"] += part_narrator["lines"]
+        narrator["seconds"] = round(narrator["seconds"] + part_narrator["seconds"], 1)
+        narrator["redo"] += part_narrator["redo"]
         for kind in ("characters", "extras"):
             for person in cast[kind]:
                 name = person["name"]
@@ -670,6 +699,14 @@ def _merge_cast(parts: list[tuple[int, Path]], files: dict[str, Path | bytes]) -
     def ordered(kind: str) -> list[dict[str, Any]]:
         return sorted((entry for name, entry in people.items() if section[name] == kind),
                       key=lambda entry: (-entry["lines"], entry["displayName"]))
+
+    if narrator is not None:
+        main = narrator_voices[narrator["voice"]]
+        narrator["voiceLines"], narrator["voiceSeconds"] = main["lines"], main["seconds"]
+        narrator["chapterVoices"] = [entry for voice, entry in narrator_voices.items()
+                                    if voice != narrator["voice"] and entry["lines"]]
+        main_chapters = {item["id"] for item in main["chapters"]}
+        narrator["exceptChapters"] = [item for key, item in all_chapters.items() if key not in main_chapters]
 
     return ({"narrator": narrator or {}, "characters": ordered("characters"), "extras": ordered("extras"),
              "carried": sorted((entry for name, entry in carried.items() if name not in people),
