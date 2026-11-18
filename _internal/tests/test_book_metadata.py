@@ -202,6 +202,19 @@ def test_a_summary_read_through_the_real_import_paths_matches_the_parser(tmp_pat
         assert len(imported["summary"].splitlines()) < case["summaryLinesBelow"]
 
 
+@pytest.mark.parametrize("case", HEADER_CASES["folderCases"], ids=lambda case: case["name"])
+def test_a_txt_folder_reads_its_information_through_the_real_folder_import(tmp_path, case):
+    """Import a TXT folder to listen (`import_text(folder)` -> `_txt_folder`) and a Studio project from the same files
+    (`from_sources`) give the expected fields; Android BookMetadataParityTest runs the same cases through its folder import."""
+    folder = tmp_path / "Hồ giấy"
+    folder.mkdir()
+    for name, text in {**case["files"], **case["sidecars"]}.items():
+        (folder / name).write_bytes(text.encode("utf-8"))
+    imported = importers.import_text(folder).metadata()
+    studio = book_metadata.from_sources([folder / name for name in case["files"]])
+    assert imported == studio == case["expected"]
+
+
 META_CASES = json.loads((FIXTURES / "meta_version.json").read_text(encoding="utf-8"))["cases"]
 
 
