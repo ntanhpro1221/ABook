@@ -22,7 +22,7 @@ Item {
             WidthNet.setReadScript(JSON.stringify({timed:true, segments:segments}))
             Player.open("wordglide", 1, 0, true); Player.pause()
             ReadAlong.active = true
-            wait(0) // Drain the controller's queued reload before observing its ready state.
+            waitForRendering(host) // Observe the controller after its queued reload reaches a rendered frame.
             Player.seek(0.1)
             tryCompare(ReadAlong, "status", "ready")
             compare(Player.bookId,"wordglide")
@@ -58,7 +58,7 @@ Item {
             const held = ink.x
             Player.seek(1.6)
             tryCompare(ReadAlong, "currentWord", 3)
-            wait(Theme.motionFast)
+            wait(Theme.motionFast) // fixed: proves absence - punctuation must never move the ink
             compare(ink.x, held) // punctuation-only token holds preceding geometry
             Player.seek(2.1)
             tryCompare(ReadAlong, "currentWord", 4)
@@ -79,8 +79,7 @@ Item {
             verify(chip.y + chip.height <= list.y + list.height)
             const old = list.contentY
             page.goBackToReading()
-            wait(32)
-            verify(list.contentY !== old)
+            tryVerify(() => list.contentY !== old)
             tryCompare(chip, "opacity", 0)
         }
         function test_reducedMotionPlacesImmediately() {
@@ -98,7 +97,6 @@ Item {
             qtAnimationClock.begin()
             try {
                 Player.seek(0.6)
-                wait(0)
                 qtAnimationClock.step(32)
                 const item=list.itemAtIndex(0), target=(item.width-item.textW)/2+item.wordRects[0].x
                 verify(ink.x>old && ink.x<target, "intermediate x="+ink.x+" from="+old+" target="+target)
@@ -109,13 +107,19 @@ Item {
         function test_captureMotionFrames() {
             if (!qtWideShotDir) skip("No capture directory")
             const page = make(360,640)
-            Player.seek(0.05); wait(160)
-            Player.seek(0.6)
-            for (let i=0;i<8;i++) {
-                wait(16)
-                const destination = qtWideShotDir.replace(/\\/g,"/") + "/qt-word-"+i+".png"
-                grabImage(page).save(destination)
-            }
+            Player.seek(0.05)
+            tryCompare(ReadAlong, "currentWord", 0)
+            waitForRendering(page)
+            qtAnimationClock.begin()
+            try {
+                Player.seek(0.6)
+                for (let i=0;i<8;i++) {
+                    qtAnimationClock.step(16)
+                    waitForRendering(page)
+                    const destination = qtWideShotDir.replace(/\\/g,"/") + "/qt-word-"+i+".png"
+                    grabImage(page).save(destination)
+                }
+            } finally { qtAnimationClock.end() }
         }
         function test_lineChangeNeverSweepsDiagonallyAndReflowSnaps() {
             Platform.setSetting("readingSize", "40")
@@ -128,11 +132,13 @@ Item {
                 if (a.length && b.length && Math.abs(a[0].y-b[0].y)>4) { crossing=w; break }
             }
             verify(crossing>0)
-            Player.seek((crossing-1)*0.5+0.1); wait(200)
+            Player.seek((crossing-1)*0.5+0.1)
+            tryCompare(ReadAlong, "currentWord", crossing-1)
+            tryVerify(() => Math.abs(ink.width-item.wordRects[0].width)<0.01)
             const oldY=ink.y, oldWidth=ink.width
             qtAnimationClock.begin()
             try {
-                Player.seek(crossing*0.5+0.1); wait(0)
+                Player.seek(crossing*0.5+0.1)
                 qtAnimationClock.step(32)
                 fuzzyCompare(ink.y,oldY,0.01)
                 verify(ink.width>0 && ink.width<oldWidth)

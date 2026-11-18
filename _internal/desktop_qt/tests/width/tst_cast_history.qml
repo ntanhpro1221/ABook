@@ -32,14 +32,12 @@ Item {
             // First click opens the actual disclosure; second clicks the actual undo control.
             mouseClick(view.children[0])
             tryCompare(view, "expanded", true)
-            wait(300)
             const actions = []
             function collect(item) {
                 if (item.text === "Hoàn tác" && item.kind === "ghost") actions.push(item)
                 for (const child of item.children || []) collect(child)
             }
-            collect(view)
-            compare(actions.length, 1)
+            tryVerify(function() { actions.length = 0; collect(view); return actions.length === 1 && actions[0].visible && actions[0].height > 0 })
             mouseClick(actions[0])
             compare(transport.calls, 1)
             compare(transport.lastPath, "/api/books/book1/cast-history/undo")
@@ -49,7 +47,7 @@ Item {
             const view = createTemporaryObject(factory, host, {bookId: "book1", history: {items: []}, editable: true, store: transport})
             verify(view)
             view.expanded = true
-            wait(300)
+            wait(300) // fixed: proves absence - opening history never sends a request
             compare(transport.calls, 0)
         }
     }
