@@ -70,7 +70,9 @@ class BookTabsScreenTest {
     }
 
     private fun state(): JSONObject {
-        val now = System.currentTimeMillis() / 1000.0
+        // Phiên mẫu nằm trọn trong hôm nay, kể cả khi test chạy ngay sau nửa đêm (ảnh book_history_light ghi "Hôm nay").
+        val midnight = java.time.LocalDate.now().atStartOfDay(java.time.ZoneId.systemDefault()).toEpochSecond().toDouble()
+        val now = maxOf(System.currentTimeMillis() / 1000.0, midnight + 3600)
         val session = JSONObject().put("id", "s1").put("startedAt", now - 3600).put("endedAt", now - 3000).put("listened", 600.0)
             .put("from", JSONObject().put("chapterId", 2).put("seconds", 10.0)).put("to", JSONObject().put("chapterId", 3).put("seconds", 600.0))
         return JSONObject()

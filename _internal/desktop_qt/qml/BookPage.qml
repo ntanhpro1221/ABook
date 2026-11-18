@@ -664,7 +664,7 @@ Item {
                         id: volumeInfo
                         x: 80; y: Theme.s16; width: parent.width - x
                         Text { width: parent.width; text: TextWrap.keepDots(modelData.title); color: Theme.text; font.pixelSize: Theme.sizeBody; wrapMode: Text.Wrap }
-                        Text { width: parent.width; text: S.s_volume_progress((modelData.chapters || []).length, Math.round(BookText.volumeProgress(root.fullBook, modelData) * 100)); color: Theme.text2; font.pixelSize: Theme.sizeBodySmall; wrapMode: Text.Wrap }
+                        ClockLabel { width: parent.width; text: S.s_volume_progress((modelData.chapters || []).length, Math.round(BookText.volumeProgress(root.fullBook, modelData) * 100)); color: Theme.text2; font.pixelSize: Theme.sizeBodySmall; wrapMode: Text.Wrap }
                     }
                     TapHandler { onTapped: bookDetail.selectedVolume = modelData.id }
                 }
