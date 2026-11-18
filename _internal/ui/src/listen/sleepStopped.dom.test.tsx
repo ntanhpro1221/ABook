@@ -47,7 +47,7 @@ it("the stopped line shows while the choice is kept after a stop, without a rest
 it("once off, the stopped line and the restart button both show", async () => {
   await open({ kind: "off" }, NOW - 60_000);
   expect(stoppedLine()).not.toBeNull();
-  expect(restart()?.textContent).toBe("Bật lại 20 phút");
+  expect(restart()?.textContent).toBe("Bật lại 20\u00a0phút");
 });
 
 it("neither shows half an hour after the stop", async () => {
