@@ -1060,7 +1060,8 @@ def l12_android_layer_problems() -> list[str]:
 
 def l12_web_layer_problems() -> list[str]:
     """Menu / Popover của Radix không modal để cú bấm ra ngoài tới thứ nằm dưới (soát 18-11 lần 4). Mọi nơi dùng qua bọc chung; Content của bọc gắn
-    lớp chặn ngoài (useOutsideShield) và lớp chặn được chèn ngay dưới bảng."""
+    lớp chặn ngoài (useOutsideShield: `ref={useOutsideShield(ref)}`, hay trải `{...useOutsideShield(ref, onInteractOutside)}` từ khi lớp chặn
+    giữ tới lúc nhả tay - ce8096487) và lớp chặn được chèn ngay dưới bảng."""
     problems = []
     for path in web_files():
         name = rel(path)
@@ -1072,7 +1073,7 @@ def l12_web_layer_problems() -> list[str]:
                 problems.append(f"L12 {name}:{text.count(chr(10), 0, m.start()) + 1}: dùng {radix} thẳng - đi qua {wrapper} (bấm ra ngoài chỉ đóng)")
     for wrapper in L12_WEB_WRAPPERS.values():
         path = ROOT / wrapper
-        if not path.exists() or not re.search(r"export const Content = forwardRef[\s\S]*?ref=\{useOutsideShield\(ref\)\}", path.read_text(encoding="utf-8")):
+        if not path.exists() or not re.search(r"export const Content = forwardRef[\s\S]*?(?:ref=\{useOutsideShield\(ref\)\}|\{\.\.\.useOutsideShield\(ref\b)", path.read_text(encoding="utf-8")):
             problems.append(f"L12 {wrapper}: Content không gắn lớp chặn ngoài (useOutsideShield)")
     shield = ROOT / "ui/src/shared/outsideShield.ts"
     body = shield.read_text(encoding="utf-8") if shield.exists() else ""
