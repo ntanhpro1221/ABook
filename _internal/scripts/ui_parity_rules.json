@@ -169,6 +169,21 @@
         "reason": "edge fade from the host's background token to transparent"
       },
       {
+        "file": "desktop_qt/qml/FilterRow.qml",
+        "match": "Qt.alpha(",
+        "reason": "left / right edge fade of the scrolling filter row: root.fadeColor (a Theme background token) to its transparent self, as ScrollEdges"
+      },
+      {
+        "file": "desktop_qt/qml/NewProjectScreen.qml",
+        "match": "Qt.alpha(",
+        "reason": "scroll edge fade above the sticky footer: Theme.bg to its transparent self, as ScrollEdges"
+      },
+      {
+        "file": "desktop_qt/qml/ScriptTab.qml",
+        "match": "Qt.alpha(",
+        "reason": "scroll edge fade under the sticky header: Theme.bg to its transparent self, as ScrollEdges"
+      },
+      {
         "file": "desktop_qt/qml/ScriptRow.qml",
         "match": "Qt.alpha(",
         "reason": "Theme.warning at 60 % / 25 %: the web's `ring-warning/60` / `ring-warning/25` on the same marked row"
@@ -767,6 +782,12 @@
         "file": "desktop_qt/qml/ContentSlide.qml",
         "what": "Item#root",
         "reason": "Ảnh chụp trượt sang trang (vài trăm ms) chỉ để vẽ chuyển cảnh, không phải lớp có việc."
+      },
+      {
+        "platform": "qt",
+        "file": "desktop_qt/qml/FilterRow.qml",
+        "what": "Rectangle#underline",
+        "reason": "Vạch chọn 2 px dưới mục lọc đang chọn, nằm trong chính hàng lọc (không phủ lên danh sách nào): chạm vào nó là chạm hàng lọc, không có gì bên dưới để lọt xuống."
       },
       {
         "platform": "qt",
