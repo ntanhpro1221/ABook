@@ -123,6 +123,19 @@ class BookDocumentWriterTest {
         assertEquals(BookEditsFixtures.obj("base/book.json").getString("title"), book.getString("title"))
     }
 
+    /** metaVersion through the real export (fix174d Thấp-6): the volume tree after BookVolumes.project and the descriptive edits give the
+     *  value Python bookfile.repack writes for the same book (tests/fixtures/book_metadata/written_meta_version.json). */
+    @Test
+    fun the_exported_meta_version_matches_python_for_the_same_descriptive_edits() {
+        val shared = JSONObject(File("../../../tests/fixtures/book_metadata/written_meta_version.json").readText())
+        val dir = bookWith(null)
+        File(dir, "edits.json").writeText(shared.getJSONObject("edits").toString())
+        val (file, _) = write(dir, "meta.abook")
+        val book = verify(file)
+        assertEquals(shared.getString("metaVersion"), book.getString("metaVersion"))
+        assertEquals(shared.getJSONObject("edits").getString("summary"), book.getString("summary"))
+    }
+
     @Test
     fun every_edits_case_is_written_as_version_6_and_opens_again_with_its_edits() {
         for (name in BookEditsFixtures.cases("edits")) {

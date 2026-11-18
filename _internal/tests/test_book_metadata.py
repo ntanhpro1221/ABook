@@ -234,6 +234,30 @@ def test_meta_version_and_overlay_match_the_shared_cases(case):
     assert book_metadata.overlay(json.loads(json.dumps(case["book"])), case["edits"]) == case["overlaid"]
 
 
+def test_meta_version_written_by_the_real_export_matches_the_shared_value(tmp_path):
+    """Android BookDocumentWriterTest writes the same version-6 book with the same edits through BookDocumentWriter.write and
+    must find this metaVersion in its book.json: the export flattens the volume tree before overlay on both sides."""
+    import shutil
+    import warnings
+
+    from abook import book_volumes
+
+    shared = json.loads((FIXTURES / "written_meta_version.json").read_text(encoding="utf-8"))
+    folder = tmp_path / "book"
+    shutil.copytree(Path(__file__).parent / "fixtures" / "book_edits" / "base", folder)
+    book = json.loads((folder / "book.json").read_text(encoding="utf-8"))
+    book["package"]["version"] = 6
+    (folder / "book.json").write_text(json.dumps(book_volumes.nested(book), ensure_ascii=False), encoding="utf-8")
+    (folder / "edits.json").write_text(json.dumps(shared["edits"], ensure_ascii=False), encoding="utf-8")
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        bookfile.repack(folder, tmp_path / "out.abook")
+    with zipfile.ZipFile(tmp_path / "out.abook") as archive:
+        written = json.loads(archive.read("book.json"))
+    assert written["metaVersion"] == shared["metaVersion"]
+    assert list(written["source"]) == ["site", "url"]
+
+
 def test_a_header_that_cannot_be_read_never_stops_a_project(tmp_path, monkeypatch):
     """A DOS end-of-file mark and a stray control inside the summary are dropped; any header the parser still rejects is
     skipped with a warning, never raised into project creation."""
