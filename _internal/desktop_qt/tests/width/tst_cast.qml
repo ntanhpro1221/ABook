@@ -74,6 +74,7 @@ Item {
             reply("POST /api/books/b1/characters/merge", {status: 200, data: {lines: 10}})
             reply("POST /api/books/b1/characters/rename", {status: 200, data: {renamed: true, name: "Lan Anh"}})
             reply("POST /api/books/b1/speaker", {status: 200, data: {}})
+            reply("POST /api/readaloud/clip", {status: 200, data: {url: "/media/readaloud/x.mp3", duration_ms: 4000}})
             reply("GET /api/books/b1/pending-changes", {status: 200, data: {items: [
                 {section: "speakers", requestedAt: 1700.5, key: "s1", keys: ["s1", "s2"]}]}})
         }
@@ -246,6 +247,7 @@ Item {
             const sample = createTemporaryObject(voiceSampleFactory, host)
             sample.playSample("edge:vi-VN-HoaiMyNeural")
             DesktopApi.previewStarted()
+            compare(sample.playing, "edge:vi-VN-HoaiMyNeural")
             child(rowOf("Lan"), "castSample").clicked()
             DesktopApi.previewStarted()
             compare(sample.playing, "")
