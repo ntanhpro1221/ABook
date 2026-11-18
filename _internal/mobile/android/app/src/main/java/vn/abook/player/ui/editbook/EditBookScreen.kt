@@ -144,9 +144,10 @@ fun DiscardSheet(discardAll: ((String?) -> Unit) -> Unit, dismiss: () -> Unit) {
 }
 
 /**
- * Sửa sách: cùng bố cục với đầu trang sách (bìa bên trái, chữ bên phải) nhưng chữ là ô nhập. Lưu im lặng (không có chữ "Đã lưu"); chỉ khi lưu hỏng mới hiện một dòng
- * lỗi tại chỗ kèm "Thử lại". Phần sửa chờ gửi là MỘT hàng, chỉ khi có gì để gửi - cùng chữ với dòng tình trạng "Gửi về máy tính" của web (SendEdits.tsx,
- * shared/editsSync.ts). Chương là danh sách hàng mở màn tên chương.
+ * Sửa sách: bìa bên trái, tên sách bên phải; dưới đó nhóm thông tin sách mở bằng Tác giả - cùng thứ tự với web / Qt (Tên sách, rồi Tác giả đầu các ô thông tin,
+ * UI_PARITY "Sửa sách"). Lưu im lặng, tự lưu khi gõ (không có nút "Lưu thông tin" như web / Qt - khác biệt có chủ ý, ghi ở UI_PARITY); lưu hỏng thì một dòng lỗi
+ * kèm "Thử lại". Dòng lỗi và hàng phần sửa chờ gửi (cùng chữ với "Gửi về máy tính" của web, SendEdits.tsx / shared/editsSync.ts) nằm ở CHÂN MÀN ghim, trên bàn
+ * phím (BookForm imePadding): form dài hay đang gõ ô cuối thì việc cần làm vẫn thấy và chạm được. Chương là danh sách hàng mở màn tên chương.
  */
 @Composable
 fun EditBookScreen(
@@ -155,7 +156,27 @@ fun EditBookScreen(
     readings: ReadingsUi = ReadingsUi(), loadReadings: () -> Unit = {}, setReading: (String, String, () -> Unit) -> Unit = { _, _, _ -> },
     discard: () -> Unit = {},
 ) {
-    BookForm(S.s_sua_sach_79fb71d2, onBack, "edit_book_screen") {
+    val saved = state.saved
+    val sendRow = saved != null && saved.sendable && (saved.pending > 0 || state.sending)
+    val sentNote = saved != null && saved.sendable && saved.pending == 0 && saved.syncNote.isNotBlank()
+    val status = state.draft != null && (state.problem.isNotBlank() || state.notice.isNotBlank() || sendRow || sentNote)
+    val footer: (@Composable ColumnScope.() -> Unit)? = if (!status || saved == null) null else { ->
+        Column(Modifier.fillMaxWidth().testTag("edit_status"), verticalArrangement = Arrangement.spacedBy(Dim.s8)) {
+            InlineProblem(state.problem, retry, "edit_problem")
+            Reveal(state.notice.isNotBlank()) { Caption(state.notice) }
+            if (sendRow) {
+                ActionRow(
+                    S.s_0_thay_doi_dang_cho_gui_ve_1_af5aef9d(saved.pending, saved.holder), if (state.sending) S.s_dang_gui_dd6f95be else S.s_gui_ve_0_50e46c2d(saved.holder),
+                    { if (!state.sending && !state.saving) send() }, "send_edits",
+                    hint = S.s_tu_gui_khi_toi_duoc_0_bam_gui_ve_1_de_gui_68533698(saved.holder, saved.holder),
+                )
+                Reveal(saved.syncNote.isNotEmpty()) { Caption(saved.syncNote, Modifier.testTag("sync_note")) }
+                InlineProblem(state.sendProblem, send, "send_problem")
+            }
+            if (sentNote) Caption(saved.syncNote)
+        }
+    }
+    BookForm(S.s_sua_sach_79fb71d2, onBack, "edit_book_screen", footer = footer) {
         val book = state.saved
         val draft = state.draft
         val list = rememberLazyListState()
@@ -173,30 +194,14 @@ fun EditBookScreen(
                         Spacer(Modifier.width(Dim.s16))
                         Column(Modifier.weight(1f)) {
                             BookField(S.s_ten_sach_d54846eb, draft.title, { value -> change { it.copy(title = value) } }, "edit_title", !state.sending)
-                            Spacer(Modifier.height(Dim.s16))
-                            BookField(S.s_tac_gia_0ec4731b, draft.author, { value -> change { it.copy(author = value) } }, "edit_author", !state.sending,
-                                placeholder = S.s_khong_ro_tac_gia_baaa8118)
                         }
                     }
                 }
-                // Lỗi lưu và phần sửa chờ gửi đứng ngay dưới tên sách / tác giả (web: dòng tình trạng dưới tên sách, SendEdits.tsx), trên các ô thông tin
-                // sách: form dài ra thì việc cần làm vẫn trong khung nhìn đầu tiên.
-                item("problem", "problem") { InlineProblem(state.problem, retry, "edit_problem") }
-                item("notice", "notice") { Reveal(state.notice.isNotBlank()) { Caption(state.notice) } }
-                if (book.sendable && (book.pending > 0 || state.sending)) item("send", "send") {
-                    Column(Modifier.padding(top = Dim.sectionGap)) {
-                        ActionRow(
-                            S.s_0_thay_doi_dang_cho_gui_ve_1_af5aef9d(book.pending, book.holder), if (state.sending) S.s_dang_gui_dd6f95be else S.s_gui_ve_0_50e46c2d(book.holder),
-                            { if (!state.sending && !state.saving) send() }, "send_edits",
-                            hint = S.s_tu_gui_khi_toi_duoc_0_bam_gui_ve_1_de_gui_68533698(book.holder, book.holder),
-                        )
-                        Reveal(book.syncNote.isNotEmpty()) { Caption(book.syncNote, Modifier.testTag("sync_note")) }
-                        InlineProblem(state.sendProblem, send, "send_problem")
-                    }
-                }
-                if (book.sendable && book.pending == 0 && book.syncNote.isNotBlank()) item("sent", "sent") { Caption(book.syncNote) }
+                // Nhóm thông tin sách, mở bằng Tác giả như web / Qt. Ô nào cũng nhiều dòng: tên dài xuống dòng, không bao giờ bị cắt.
                 item("metadata", "metadata") {
                     Column(Modifier.fillMaxWidth().padding(top = Dim.sectionGap), verticalArrangement = Arrangement.spacedBy(Dim.s12)) {
+                        BookField(S.s_tac_gia_0ec4731b, draft.author, { value -> change { it.copy(author = value) } }, "edit_author", !state.sending,
+                            placeholder = S.s_khong_ro_tac_gia_baaa8118)
                         BookField(S.s_bookmeta_illustrator, draft.metadata.illustrator, { value -> change { it.copy(metadata = it.metadata.copy(illustrator = value)) } }, "edit_illustrator", !state.sending)
                         BookField(S.s_bookmeta_alt_titles, draft.metadata.altTitles.joinToString("\n"), { value -> change { it.copy(metadata = it.metadata.copy(altTitles = value.split("\n"))) } }, "edit_alt_titles", !state.sending)
                         BookField(S.s_bookmeta_genres, draft.metadata.genres.joinToString("\n"), { value -> change { it.copy(metadata = it.metadata.copy(genres = value.split("\n"))) } }, "edit_genres", !state.sending)
