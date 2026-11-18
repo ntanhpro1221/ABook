@@ -1,11 +1,9 @@
 package vn.abook.player.ui.components
 
-import androidx.compose.foundation.background
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.tween
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
@@ -15,6 +13,7 @@ import vn.abook.player.S
 import vn.abook.player.ui.data.ListenBook
 import vn.abook.player.ui.theme.Abook
 import vn.abook.player.ui.theme.Dim
+import vn.abook.player.ui.theme.insetSurface
 import vn.abook.player.ui.motion.Motion
 import vn.abook.player.ui.theme.MotionMs
 
@@ -29,7 +28,7 @@ fun BookMetadataDetails(book: ListenBook) {
         Reveal(metadata.illustrator.isNotEmpty()) { BasicText(S.s_bookmeta_illustrator + " " + metadata.illustrator, style = Abook.type.bodySmall) }
         Reveal(metadata.altTitles.isNotEmpty()) { BasicText(S.s_bookmeta_alt_titles + " " + metadata.altTitles.joinToString("; "), style = Abook.type.bodySmall) }
         Reveal(metadata.genres.isNotEmpty()) { FlowRow(Modifier.semantics { contentDescription = S.s_bookmeta_genres }, horizontalArrangement = Arrangement.spacedBy(Dim.s8), verticalArrangement = Arrangement.spacedBy(Dim.s8)) {
-            for (genre in metadata.genres) BasicText(genre, Modifier.background(Abook.colors.bgSunken, RoundedCornerShape(Dim.radiusControl)).padding(horizontal = Dim.s8, vertical = Dim.s4), Abook.type.caption.copy(color = Abook.colors.text2))
+            for (genre in metadata.genres) BasicText(genre, Modifier.insetSurface(Abook.colors).padding(horizontal = Dim.s8, vertical = Dim.s4), Abook.type.caption.copy(color = Abook.colors.text2))
         } }
         Reveal(metadata.summary.isNotEmpty()) { Column(verticalArrangement = Arrangement.spacedBy(Dim.s8)) {
             BasicText(S.s_tom_tat_b4bb3064, style = Abook.type.label)
