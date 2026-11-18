@@ -17,7 +17,7 @@ Item {
     // Một câu cho cả chữ trên thanh lẫn tên đọc cho trình đọc màn hình: trạng thái (Đang đệm / Đã tạm dừng / Đang nghe thử) không được mất khỏi tên
     // (soát 17-11); việc của cú bấm ("Mở") nằm ở phần mô tả. Bài thiếu tên thì chỉ còn trạng thái, như web (soát 18-11: " · undefined").
     readonly property string line: (root.loading ? S.s_buffering : root.paused ? S.s_music_paused : S.s_dang_nghe_thu_f1fb4cba)
-                                   + (root.track && root.track.title ? " · " + root.track.title : "")
+                                   + (root.track && root.track.title ? "\u00a0·\u00a0" + root.track.title : "")
     signal opened()
     signal stopped()
     implicitHeight: 48 + gap

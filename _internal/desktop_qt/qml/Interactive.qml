@@ -46,6 +46,7 @@ Item {
             }
             return false
         }
+        Component.onCompleted: Keep.hold(layer)
     }
     Component.onCompleted: layer.shielded = layer.scan()
     onParentChanged: layer.shielded = layer.scan()
