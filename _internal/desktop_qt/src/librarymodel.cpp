@@ -73,7 +73,7 @@ void LibraryModel::setBooks(const QJsonArray &array) {
         else if (const QString d = durationText(b.duration); !d.isEmpty())
             detail << d;
         b.detail = detail.join(QStringLiteral("\u00a0·\u00a0"));   // dấu ngăn dính mảnh trước: không bao giờ đứng đầu dòng
-        b.subtitle = b.producing || b.author.isEmpty() ? b.detail : b.author;
+        b.subtitle = b.detail;   // tình trạng ô lưới tính ở BookCell (BookLogic.progressText), tác giả có dòng riêng
         books.push_back(std::move(b));
     }
 

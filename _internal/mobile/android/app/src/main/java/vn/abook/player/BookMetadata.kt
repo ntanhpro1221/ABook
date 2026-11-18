@@ -41,16 +41,50 @@ object BookMetadata {
     fun same(a: Any?, b: Any?): Boolean = (blank(a) && blank(b)) || StrictJson.equal(a, b)
     fun select(raw: JSONObject): JSONObject = validate(JSONObject().apply { for (key in fields) if (raw.has(key)) put(key, raw.get(key)) })
 
+    /** Python `book_metadata.overlay`: publish the listener's descriptive edits in book.json; a blank one removes the field. */
+    fun overlay(book: JSONObject, edits: JSONObject): JSONObject {
+        if (fields.none { edits.has(it) }) return book
+        for (key in fields) if (edits.has(key)) {
+            val value = edits.get(key)
+            if (blank(value)) book.remove(key) else book.put(key, value)
+        }
+        return book.put("metaVersion", version(book))
+    }
+
+    /**
+     * `metaVersion` of a book.json: the same digest as Python `listen_view.metadata_version` (title, author, narrator, series link,
+     * chapter names, shown descriptive fields, volumes), so one edit gives one book.json whichever device writes it. Shared cases:
+     * tests/fixtures/book_metadata/meta_version.json.
+     */
     fun version(raw: JSONObject): String {
-        val values = JSONArray()
-        for (key in listOf("title", "narrator", "series") + fields) values.put(raw.opt(key) ?: JSONObject.NULL)
-        val chapters = JSONArray()
-        raw.optJSONArray("chapters")?.let { rows -> for (index in 0 until rows.length()) {
-            val row = rows.getJSONObject(index)
-            chapters.put(JSONArray(listOf(row.opt("id"), row.opt("title"), row.opt("subtitle"), row.opt("fullTitle"))))
-        } }
-        values.put(chapters)
-        return java.security.MessageDigest.getInstance("SHA-256").digest(values.toString().toByteArray(Charsets.UTF_8))
+        fun text(value: Any?): Any = if (value == null || value == JSONObject.NULL || value == "") "" else value
+        fun plain(value: Any?): Any? = if (value == JSONObject.NULL) null else value
+        val series = raw.opt("series") as? JSONObject
+        val chapters = (raw.optJSONArray("chapters") ?: JSONArray()).let { rows ->
+            (0 until rows.length()).mapNotNull { rows.opt(it) as? JSONObject }
+                .map { listOf(plain(it.opt("id")), text(it.opt("title")), text(it.opt("subtitle")), text(it.opt("fullTitle"))) }
+        }
+        val shown = LinkedHashMap<String, Any?>()
+        for (key in fields) {
+            val value = raw.opt(key)
+            if (blank(value)) continue
+            shown[key] = when {
+                // Python `validate` keeps the non-blank items of a list; a source is written url then site everywhere.
+                value is JSONArray -> (0 until value.length()).map { value.opt(it) }.filter { it.toString().isNotBlank() }
+                key == "source" && value is JSONObject -> linkedMapOf("url" to plain(value.opt("url")), "site" to plain(value.opt("site")))
+                else -> value
+            }
+        }
+        val volumes = (raw.optJSONArray("volumes") ?: JSONArray()).let { rows ->
+            (0 until rows.length()).mapNotNull { rows.opt(it) as? JSONObject }.map { volume ->
+                val members = volume.optJSONArray("chapters") ?: JSONArray()
+                listOf(plain(volume.opt("id")), plain(volume.opt("number")), plain(volume.opt("title")), plain(volume.opt("cover")),
+                    (0 until members.length()).map { plain(members.getJSONObject(it).opt("id")) })
+            }
+        }
+        val values = listOf(text(raw.opt("title")), text(raw.opt("author")), text(raw.opt("narrator")),
+            series?.let { listOf(plain(it.opt("root")), plain(it.opt("part"))) }, chapters, shown, volumes)
+        return java.security.MessageDigest.getInstance("SHA-256").digest(StrictJson.dumps(values, null).toByteArray(Charsets.UTF_8))
             .joinToString("") { "%02x".format(it) }.take(16)
     }
 }

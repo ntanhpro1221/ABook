@@ -14,9 +14,8 @@ describe("bookStatusText - sách chỉ có chữ", () => {
     expect(bookStatusText(book({}), true)).toBe("3 chương");
     expect(bookStatusText(book({ author: "  " }), true)).toBe("3 chương");
   });
-  // 76f408a48 (bookmeta): dòng trạng thái của thẻ không còn nhãn "Chỉ có chữ" trên cả ba nền - máy chưa có giọng đọc cũng chỉ số chương.
-  it("máy chưa có giọng đọc: vẫn chỉ số chương", () => {
-    expect(bookStatusText(book({}), false)).toBe("3 chương");
+  it("máy chưa có giọng đọc: Chỉ có chữ", () => {
+    expect(bookStatusText(book({}), false)).toBe("Chỉ có chữ · 3 chương");
   });
 });
 

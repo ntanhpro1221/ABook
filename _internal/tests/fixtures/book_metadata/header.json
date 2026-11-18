@@ -1,11 +1,14 @@
 {
-  "about": "Shared by tests/test_book_metadata.py and Android BookMetadataParityTest: header fields read from the top of a TXT. A summary ends at a chapter heading, another header key, a Markdown section, a scene break or two blank lines, and never runs past the 64-line header window. 'filler' lines (count) are appended after 'text' to stand for a story without chapter headings.",
+  "about": "Shared by tests/test_book_metadata.py and Android BookMetadataParityTest: header fields read from the top of a TXT. A summary ends at a chapter heading, another header key, a Markdown section, a scene break or two blank lines, and never runs past the 64-line header window. 'filler' lines (count) are appended after 'text' to stand for a story without chapter headings. Each case also runs through the real import paths (Python import_text + from_sources, Kotlin BookImport.importFile), not only the parser.",
   "fillerLine": "Dòng số {n} của một truyện không có tiêu đề chương.",
   "cases": [
     {"name": "full header", "text": "Hồ giấy\nTác giả: Người Viết\nHọa sĩ: Người Vẽ\nTên khác: Paper Lake; 湖\nThể loại: Fantasy, Adventure\nTóm tắt: Một chiếc thuyền.\n\nChương 1\nChữ.", "filler": 0,
      "expected": {"author": "Người Viết", "illustrator": "Người Vẽ", "altTitles": ["Paper Lake", "湖"], "genres": ["Fantasy", "Adventure"], "summary": "Một chiếc thuyền."}},
     {"name": "multi-paragraph summary", "text": "Tóm tắt: Đoạn một.\n\nĐoạn hai.\n\n\nChương 1\nChữ.", "filler": 0, "expected": {"summary": "Đoạn một.\n\nĐoạn hai."}},
     {"name": "two blank lines close the summary", "text": "Truyện ngắn\nTóm tắt: Một chiếc thuyền.\nNó trôi.\n\n\n", "filler": 500, "expected": {"summary": "Một chiếc thuyền.\nNó trôi."}},
+    {"name": "two blank lines before the story close the summary", "text": "Truyện ngắn\nTóm tắt: Một chiếc thuyền.\n\n\nNgày xưa có một bến sông.\n", "filler": 500, "expected": {"summary": "Một chiếc thuyền."}},
+    {"name": "control characters are dropped, never fatal", "text": "\u001aTruyện ngắn\nTóm tắt: Một\u0001 chiếc thuyền.\u001a\n", "filler": 0, "expected": {"summary": "Một chiếc thuyền."}},
+    {"name": "an empty author line keeps the author read before it", "text": "Truyện ngắn\nTác giả: Người Viết\nTác giả:\nThể loại: Fantasy\nThể loại: , ;\n", "filler": 0, "expected": {"author": "Người Viết", "genres": ["Fantasy"]}},
     {"name": "*** closes the summary", "text": "Truyện ngắn\nTóm tắt: Một chiếc thuyền.\nNó trôi.\n***\n", "filler": 500, "expected": {"summary": "Một chiếc thuyền.\nNó trôi."}},
     {"name": "--- closes the summary", "text": "Truyện ngắn\nTóm tắt: Một chiếc thuyền.\nNó trôi.\n---\n", "filler": 500, "expected": {"summary": "Một chiếc thuyền.\nNó trôi."}},
     {"name": "* * * closes the summary", "text": "Truyện ngắn\nTóm tắt: Một chiếc thuyền.\nNó trôi.\n* * *\n", "filler": 500, "expected": {"summary": "Một chiếc thuyền.\nNó trôi."}},

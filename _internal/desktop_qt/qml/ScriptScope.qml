@@ -54,6 +54,7 @@ Modal {
         })
     }
     Column {
+        id: columnOfCollapse
         width: root.bodyWidth
         spacing: 12
         Text {
@@ -90,6 +91,7 @@ Modal {
             }
         }
         Collapse {
+            id: collapseOfInteractive
             width: parent.width; open: !root.person
             WorkField {
                 id: search; objectName: "scopeSearch"; width: parent.width
@@ -101,7 +103,7 @@ Modal {
                     id: personOption
                     required property var modelData
                     objectName: "scopePerson_" + modelData.value
-                    width: parent.width; height: Math.max(40, personLabel.implicitHeight + 16)
+                    width: collapseOfInteractive.width; height: Math.max(40, personLabel.implicitHeight + 16)
                     Accessible.role: Accessible.Button; Accessible.name: modelData.label
                     onClicked: root.person = modelData
                     Icon { x: 8; y: 12; name: "check"; size: 16; color: Theme.accentText; opacity: root.line && root.line.current === personOption.modelData.value ? 1 : 0 }
@@ -143,7 +145,7 @@ Modal {
             delegate: Collapse {
                 id: previewRow
                 required property var modelData
-                width: parent.width
+                width: columnOfCollapse.width
                 open: root.candidates.some(line => line.stableId === modelData.stableId)
                 Interactive {
                 id: option

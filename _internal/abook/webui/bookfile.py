@@ -67,7 +67,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, Callable, Self, Sequence
 
-from .. import avatars, continuation
+from .. import avatars, book_metadata, continuation
 from . import audio_coverage, book_edits, covers, music_plan, store, sync, word_timing
 from .fingerprints import content_key, identity_prints
 from .library import book_id
@@ -114,11 +114,12 @@ SCRIPT_SPEAKER = re.compile(rb'"speaker":\s*"((?:[^"\\]|\\.)*)"')
 # Trường của `book.json` trong gói người nghe (danh sách trắng, luật chủ sách 15-11): trạng thái QA (qualityPassed, qualityWarning,
 # failedLines, levelQa) và mọi trường nội bộ chỉ thuộc dự án (sổ, .abookproj), không bao giờ vào .abook. Bước xuất bỏ chúng
 # (`listener_book`), `seal` từ chối gói còn trường ngoài danh sách. Cây con không mang QA (bìa, nhạc, ảnh, sharedWords, package)
-# không xét sâu.
+# không xét sâu. Thông tin mô tả sách (book_metadata.FIELDS: tác giả, họa sĩ, tên khác, thể loại, tóm tắt, nguồn) là của người
+# nghe nên đi theo cuốn.
 PACKAGE_BOOK_KEYS = frozenset({
     "format", "title", "author", "description", "language", "narrator", "duration", "chaptersTotal", "chaptersAvailable", "complete", "version", "audioVersion",
     "audioUpdatedAt", "sourceFingerprint", "metaVersion", "chapters", "volumes", "parts", "cast", "avatars", "samples", "cover", "music",
-    "sharedWords", "audioCoverage", "package"})
+    "sharedWords", "audioCoverage", "package", *book_metadata.FIELDS})
 PACKAGE_CHAPTER_KEYS = frozenset({
     "id", "index", "part", "volumeId", "title", "subtitle", "fullTitle", "file", "size", "sha256", "script", "text", "state", "duration",
     "available", "audioVersion", "wordsVersion"})

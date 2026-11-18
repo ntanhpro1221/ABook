@@ -3,8 +3,9 @@ import QtQuick
 import QtQuick.Shapes
 import ABook
 import "TextWrap.js" as TextWrap
+import "BookLogic.js" as BookLogic
 
-// Ô sách trong lưới (DESIGN.md mục 6, "Lưới bìa"): bìa 2:3 bo 12, dưới bìa tên 2 dòng DÀNH SẴN + dòng phụ 1 dòng cắt "…" - mọi ô cao bằng
+// Ô sách trong lưới (DESIGN.md mục 6, "Lưới bìa"): bìa 2:3 bo 12, dưới bìa tên 2 dòng DÀNH SẴN + dòng phụ 1 dòng (OneLineFit) - mọi ô cao bằng
 // nhau, hàng lưới phẳng (soát thiết kế 10-11 L5/L11, như điện thoại). Tên luôn hiện dưới bìa, bìa vẽ hay ảnh như nhau (chủ sách 15-11: hàng
 // ô đồng nhất). Tên đầy đủ ở trang sách và Accessible.name. Tiến độ nghe = vạch mảnh ở đáy bìa; sách của máy khác: "Trên <máy>"
 // đứng đầu dòng phụ, có icon máy tính.
@@ -23,17 +24,10 @@ Interactive {
     property bool onPlayButton: false
     property real coverWidth: Theme.coverMin
     readonly property real coverHeight: Math.round(coverWidth * Theme.coverRatio)
-    readonly property string statusText: {
-        const author = String(root.book.author || "").trim()
-        const subtitle = root.subtitle.trim()
-        if (author && subtitle === author) return ""
-        if (author && subtitle.startsWith(author)) {
-            const rest = subtitle.slice(author.length).trim()
-            // Reads the server's separator off the subtitle (never shown): the shown line joins with " · " below.
-            if (/^·/.test(rest)) return rest.slice(1).trim()
-        }
-        return subtitle
-    }
+    // Dòng tình trạng như web / điện thoại ("Còn 2 giờ", "Đã nghe xong", "12 chương"): tính từ chính cuốn, không kèm tác giả (tác giả có dòng
+    // riêng ở trên). `subtitle` chỉ để ô một bộ nhiều tập ghi "N tập". Chỉ dòng thư viện thật (có chaptersTotal) mới có tình trạng.
+    readonly property string statusText: root.subtitle !== "" ? root.subtitle
+        : root.book && root.book.bookId && typeof root.book.chaptersTotal === "number" ? BookLogic.progressText(root.book, Api.voiceList.length > 0, false) : ""
     readonly property string subLine: [root.source !== "" ? (root.remoteSeries ? S.s_co_sach_tren_may_khac_3b7cdd88 : S.s_tren_54f68805 + root.source) : "", root.statusText]
         .filter(part => part !== "").join("\u00a0·\u00a0")
     readonly property real textBlock: 12 + root.titleHeight + authorText.height + 4 + subtitleText.height
@@ -142,18 +136,20 @@ Interactive {
         color: Theme.text2
         baseSize: Theme.sizeCaption
     }
-    Text {
+    // Dòng phụ một dòng qua OneLineFit (thu cỡ, không vừa thì xuống dòng), không bao giờ "…".
+    OneLineFit {
         id: subtitleText
         objectName: "bookCellSubtitle"
         x: root.source !== "" ? 18 : 0
         y: authorText.y + authorText.height + 4
-        width: root.coverWidth - x
+        room: root.coverWidth - x
         text: TextWrap.keepDots(root.subLine)
         color: Theme.text3
-        wrapMode: Text.NoWrap
-        maximumLineCount: 1   // text-cut-ok: dòng phụ ô lưới một dòng (DESIGN.md mục 6), phần đầu là thứ quan trọng
-        elide: Text.ElideRight   // text-cut-ok: như trên
-        font.pixelSize: Theme.sizeCaption
+        baseSize: Theme.sizeCaption
+        // Thu cỡ chữ không làm ô thấp đi: dòng giữ chiều cao một dòng ở cỡ gốc (mọi ô một hàng cao bằng nhau), chữ thu cỡ canh giữa.
+        height: Math.max(implicitHeight, slot.implicitHeight)
+        verticalAlignment: Text.AlignVCenter
+        Text { id: slot; visible: false; text: subtitleText.text; font.family: subtitleText.font.family; font.pixelSize: Theme.sizeCaption }
     }
     // Same laptop mark as web, leading the one subtitle line.
     Icon {

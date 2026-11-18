@@ -14,6 +14,7 @@ Item {
     Rectangle { anchors.fill: parent; color: Theme.bg }
     Component { id: voiceFactory; SettingsVoice {} }
     Component { id: screenFactory; SettingsScreen {} }
+    Component { id: sampleFactory; VoiceSample {} }
 
     property var voices: []
     property var providers: []
@@ -264,6 +265,27 @@ Item {
             // hết thời lượng mẫu thì nút về "Nghe thử"
             DesktopApi.delayed = false
             tryCompare(other, "playing", false)
+        }
+
+        function test_anIdleSampleNeverStopsAnotherAndTheRowFollowsThePlayback() {
+            const settings = createTemporaryObject(sampleFactory, host)
+            const player = createTemporaryObject(sampleFactory, host)
+            settings.playSample("edge:vi-VN-HoaiMyNeural")
+            compare(settings.playing, "edge:vi-VN-HoaiMyNeural")
+            DesktopApi.previewStarted()
+            // the player's voice popover closes with nothing of its own playing: the Settings sample plays on
+            const stops = DesktopApi.stops
+            player.stopSample()
+            compare(DesktopApi.stops, stops)
+            compare(settings.playing, "edge:vi-VN-HoaiMyNeural")
+            // another sample takes the one output: the Settings row is back to "Nghe thử"
+            player.playSample("edge:vi-VN-NamMinhNeural")
+            DesktopApi.previewStarted()
+            compare(settings.playing, "")
+            compare(player.playing, "edge:vi-VN-NamMinhNeural")
+            // its clip ends: the row follows at once, not at the duration timer
+            DesktopApi.previewEnded()
+            compare(player.playing, "")
         }
 
         function test_deviceNames_data() { return [{tag: "light"}, {tag: "dark"}] }

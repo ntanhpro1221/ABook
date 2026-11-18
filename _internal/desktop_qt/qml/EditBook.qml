@@ -18,14 +18,13 @@ Modal {
     panelWidth: expanded ? Math.min(width - 2 * Theme.margin, 1160) : 560
     property var book: ({})
     property string titleDraft: ""
-    property string authorDraft: ""
     property var metadataDraft: ({})
     property string computer: ""                // Studio từ xa: tên máy tính đang giữ sách
     property bool canOpenStudio: false          // máy tính, cuốn có xưởng: nút "Mở tab Nhạc nền"
     property bool searching: false
     property bool confirmRevert: false
     property bool renaming: false
-    property bool savingAuthor: false
+    property bool savingMetadata: false
     property bool settingCover: false
     property bool removingCover: false
     property bool reverting: false
@@ -34,15 +33,12 @@ Modal {
     readonly property string bookId: book.id || book.bookId || ""
     readonly property bool workshop: Boolean(book.capabilities && book.capabilities.workshop)
     readonly property bool textBook: book.stage === "text"
-    readonly property bool busy: renaming || savingAuthor || settingCover || removingCover || coverSearch.choosing
+    readonly property bool busy: renaming || savingMetadata || settingCover || removingCover || coverSearch.choosing
     readonly property string shownTitle: book.title || ""
-    readonly property string shownAuthor: book.author || ""
-    // Tên hay tác giả của sách đổi (lưu xong, nạp lại): chỉ nạp lại ô ấy
+    // Tên sách đổi (lưu xong, nạp lại): chỉ nạp lại ô ấy
     // Chữ trong ô theo bản nháp kể cả khi ô đã bị gán tay (gán tay làm đứt ràng buộc `text:`)
     onTitleDraftChanged: if (titleField.text !== titleDraft) titleField.text = titleDraft
-    onAuthorDraftChanged: if (authorField.text !== authorDraft) authorField.text = authorDraft
     onShownTitleChanged: titleDraft = shownTitle
-    onShownAuthorChanged: authorDraft = shownAuthor
     title: searching ? S.s_tim_anh_bia_9825b3d1 : S.s_sua_sach_79fb71d2
     description: searching ? S.s_ban_chon_anh_tu_cac_nguon_sach_hoac_tren_m_ca23c898 : Logic.editDescription(book, computer)
 
@@ -52,10 +48,9 @@ Modal {
         dropLayers()
         book = data
         titleDraft = data.title || ""
-        authorDraft = data.author || ""
-        metadataDraft = {illustrator: data.illustrator || "", altTitles: data.altTitles || [], genres: data.genres || [], summary: data.summary || "", source: data.source || {url: "", site: ""}}
+        metadataDraft = Logic.metadataOf(data)
         searching = false; confirmRevert = false
-        renaming = false; savingAuthor = false; settingCover = false; removingCover = false; reverting = false
+        renaming = false; savingMetadata = false; settingCover = false; removingCover = false; reverting = false
         show()
         titleField.forceActiveFocus(Qt.TabFocusReason)
     }
@@ -117,9 +112,10 @@ Modal {
         if (!titleDraft.trim() || titleDraft.trim() === book.title) return
         call("renaming", "PUT", "/title", {title: titleDraft}, function() { root.done(S.s_da_doi_ten_sach_d9618322) }, S.s_chua_doi_duoc_ten_sach_d845e696)
     }
-    function saveAuthor() {
-        if (!Logic.authorSaveable(authorDraft, book.author)) return
-        call("savingAuthor", "PUT", "/author", {author: authorDraft}, function(saved) { root.done(saved.author ? S.s_da_doi_tac_gia_cc6c70a5 : S.s_da_bo_ten_tac_gia_538a5212) }, S.s_chua_doi_duoc_tac_gia_32e393fb)
+    // Một form, một nút như web (EditBook.tsx): tác giả cùng các ô thông tin, PUT /metadata.
+    function saveMetadata() {
+        if (!Logic.metadataSaveable(metadataDraft, book)) return
+        call("savingMetadata", "PUT", "/metadata", metadataDraft, function() { root.done(S.s_bookmeta_saved) }, S.s_bookmeta_save_error)
     }
     function setCoverImage(image) {
         call("settingCover", "PUT", "/cover", {image: image}, function() { root.done(S.s_da_dat_anh_bia_90470364) }, S.s_chua_dat_duoc_anh_bia_a4afb9fa)
@@ -181,56 +177,14 @@ Modal {
                                 onActivated: root.saveTitle()
                             }
                         }
-                    }
-                    // Chỉ sách chữ (nhập từ file): sách Studio không có chỗ áp tác giả
-                    EditBookSection {
-                        width: parent.width
-                        title: S.s_tac_gia_0ec4731b
-                        hint: S.s_de_trong_neu_khong_ro_tac_gia_hien_o_thu_v_04875479
-                        shown: true
-                        Row {
-                            width: parent.width
-                            spacing: 8
-                            FormField {
-                                id: authorField
-                                objectName: "editAuthor"
-                                width: parent.width - saveAuthorButton.width - 8
-                                label: S.s_tac_gia_0ec4731b
-                                placeholderText: S.s_khong_ro_tac_gia_baaa8118
-                                text: root.authorDraft
-                                onTextChanged: {
-                                    if (text.length > 160) { text = text.slice(0, 160); return }
-                                    root.authorDraft = text
-                                }
-                                onAccepted: root.saveAuthor()
-                            }
-                            Button {
-                                id: saveAuthorButton
-                                objectName: "editSaveAuthor"
-                                kind: "outline"   // lưu từng ô là việc phụ: màn sửa sách không có nút chính (DESIGN §4.1)
-                                text: S.s_luu_tac_gia_cd5c8008
-                                busy: root.savingAuthor
-                                enabled: Logic.authorSaveable(root.authorDraft, root.book.author)
-                                onActivated: root.saveAuthor()
-                            }
-                        }
-                    }
-                }
-                Column {
-                    id: extras
-                    objectName: "editExtrasColumn"
-                    x: (sections.width + Theme.s32) * Math.min(1, root.wideT * 2)
-                    y: sections.height * (1 - Math.max(0, root.wideT * 2 - 1))
-                    width: parent.width - x
-                    EditBookSection {
-                        width: parent.width
-                        title: S.s_sua_thong_tin_17e4a8a6
+                        // Thông tin sách (web: form ngay dưới tên, không tên mục): tác giả trước, một nút "Lưu thông tin".
                         Column {
                             id: metadataFields
                             width: parent.width
                             spacing: Theme.s12
                             Repeater {
                                 model: [
+                                    {key: "author", label: S.s_tac_gia_0ec4731b},
                                     {key: "illustrator", label: S.s_bookmeta_illustrator},
                                     {key: "altTitles", label: S.s_bookmeta_alt_titles},
                                     {key: "genres", label: S.s_bookmeta_genres},
@@ -245,7 +199,9 @@ Modal {
                                     FormField {
                                         width: parent.width
                                         label: modelData.label
-                                        multiline: modelData.key !== "illustrator"
+                                        objectName: "editMeta_" + modelData.key
+                                        multiline: modelData.key !== "author" && modelData.key !== "illustrator"
+                                        placeholderText: modelData.key === "author" ? S.s_khong_ro_tac_gia_baaa8118 : ""
                                         readonly property string draftText: Array.isArray(root.metadataDraft[modelData.key]) ? root.metadataDraft[modelData.key].join("\n") : root.metadataDraft[modelData.key] || ""
                                         text: draftText
                                         onTextChanged: {
@@ -273,11 +229,19 @@ Modal {
                                 objectName: "editSaveMetadata"
                                 kind: "outline"   // lưu từng ô là việc phụ: màn sửa sách không có nút chính (DESIGN §4.1)
                                 text: S.s_bookmeta_save
-                                busy: root.savingAuthor
-                                onActivated: root.call("savingAuthor", "PUT", "/metadata", root.metadataDraft, function() { root.done(S.s_bookmeta_saved) }, S.s_bookmeta_save_error)
+                                busy: root.savingMetadata
+                                enabled: Logic.metadataSaveable(root.metadataDraft, root.book)
+                                onActivated: root.saveMetadata()
                             }
                         }
                     }
+                }
+                Column {
+                    id: extras
+                    objectName: "editExtrasColumn"
+                    x: (sections.width + Theme.s32) * Math.min(1, root.wideT * 2)
+                    y: sections.height * (1 - Math.max(0, root.wideT * 2 - 1))
+                    width: parent.width - x
                     EditBookSection {
                         width: parent.width
                         title: S.s_volume_manage

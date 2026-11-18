@@ -206,7 +206,7 @@ Item {
             if (d.screen === "edit") page.begin({id: "width", title: "Tên sách", author: "Tác giả", stage: "text", capabilities: {}, edits: 2})
             if (d.screen === "mini") { page.bookTitle = "Một tên sách dài ".repeat(12); page.chapterTitle = "Tên chương dài ".repeat(15); page.height = Qt.binding(() => page.naturalHeight) }
             VisualReady.render(this, host.Window.window, page, qtVisualReady)
-            if (d.screen === "edit") { page.titleDraft = "Bản nháp đang viết ".repeat(5); page.authorDraft = "Tác giả đang viết" }
+            if (d.screen === "edit") { page.titleDraft = "Bản nháp đang viết ".repeat(5); page.metadataDraft = Object.assign({}, page.metadataDraft, {author: "Tác giả đang viết"}) }
             Theme.reduceMotion = false
             for (const width of [1688, narrow, 1688]) {
                 host.width = width + content.x
@@ -225,7 +225,7 @@ Item {
                 VisualReady.waitForSettledFrame(this, host.Window.window, page, qtVisualReady)
                 verifyLayout(page, d.screen)
             }
-            if (d.screen === "edit") { compare(page.titleDraft, "Bản nháp đang viết ".repeat(5)); compare(page.authorDraft, "Tác giả đang viết") }
+            if (d.screen === "edit") { compare(page.titleDraft, "Bản nháp đang viết ".repeat(5)); compare(page.metadataDraft.author, "Tác giả đang viết") }
             if (d.screen === "add") { compare(page.bookTitle, "Bản nháp"); compare(page.picked.join(), "1") }
             // Also verify the explicit reduced-motion setting after the animated cycles.
             Theme.reduceMotion = true

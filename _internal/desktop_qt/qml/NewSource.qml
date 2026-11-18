@@ -37,6 +37,7 @@ Column {
     Prose { topPadding: 4; text: S.s_chon_txt_epub_word_hoac_pdf_co_chu_5e38434f }
     Item { width: 1; height: 12 }
     ImportFold {
+        id: importFoldOfItem
         width: parent.width
         storageKey: "formats"
         prefix: "fold.new-project."
@@ -50,7 +51,7 @@ Column {
             ]
             delegate: Item {
                 required property string modelData
-                width: parent.width
+                width: importFoldOfItem.width
                 height: bullet.height + 4
                 Text { x: 6; text: "•"; color: Theme.text2; font.pixelSize: Theme.sizeBodySmall }
                 Prose { id: bullet; x: 20; width: parent.width - 20; text: modelData }

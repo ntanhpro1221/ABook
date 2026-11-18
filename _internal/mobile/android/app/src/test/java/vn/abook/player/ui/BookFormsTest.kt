@@ -511,6 +511,11 @@ class BookFormsTest {
         rule.onNodeWithTag("edit_book_list").performScrollToNode(hasTestTag("readings_section"))
     }
 
+    /** Hàng của một từ đã dạy: phần mở ra nằm dưới tiêu đề gập, form Sửa sách dài (có các ô thông tin sách) thì hàng ở dưới khung nhìn - cuộn tới như người dùng. */
+    private fun showReading(word: String) {
+        rule.onNodeWithTag("edit_book_list").performScrollToNode(hasContentDescription("Sửa cách đọc $word"))
+    }
+
     @Test fun readingsFoldListsTaughtWordsAndEditsOneInPlace() {
         val source = FakeEditSource(edit)
         source.words["Haruto"] = "Ha-ru-tô"
@@ -518,6 +523,7 @@ class BookFormsTest {
         rule.onAllNodesWithTag("readings_section").assertCountEquals(0)
         openReadings()
         rule.onNodeWithText(ReadingText.HINT).assertIsDisplayed()
+        showReading("Haruto")
         rule.onNodeWithText("đọc là “Ha-ru-tô”").assertIsDisplayed()
         rule.onNodeWithContentDescription("Sửa cách đọc Haruto").performClick()
         rule.waitForIdle()
@@ -570,6 +576,7 @@ class BookFormsTest {
         source.words["Hạ Vy"] = "Hạ Vi"
         editorScreen(edit, source, dark)
         openReadings()
+        showReading("Haruto")
         rule.onNodeWithContentDescription("Sửa cách đọc Haruto").performClick()
         rule.waitForIdle()
         rule.onNodeWithTag("edit_book_list").performScrollToNode(hasTestTag("reading_save"))

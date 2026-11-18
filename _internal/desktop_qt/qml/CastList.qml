@@ -145,6 +145,7 @@ Item {
                             summary: S.s_0_giong_7be1af23(root.narratorRows.length)
                             defaultOpen: true
                             Column {
+                                id: columnOfNarrators
                                 width: parent.width
                                 Repeater {
                                     model: root.narratorRows
@@ -152,7 +153,7 @@ Item {
                                         id: narratorRow
                                         required property var modelData
                                         objectName: modelData.main ? "castNarrator" : "castNarratorChapter"
-                                        width: parent.width
+                                        width: columnOfNarrators.width
                                         height: Math.max(40, narratorTexts.height) + 24
                                         readonly property string voice: modelData.preset
                                         readonly property real buttonsWidth: narratorButtons.width

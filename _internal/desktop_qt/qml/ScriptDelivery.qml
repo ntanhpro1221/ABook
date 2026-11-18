@@ -192,6 +192,7 @@ Column {
         title: S.s_ten_trong_cau_7a39c9f4
         summary: root.names.length + S.s_ten_0fd957e9
         Column {
+            id: columnOfNameRow
             width: parent.width
             spacing: 8
             Label_ { text: S.s_ten_ca_cuon_050a79ad }
@@ -199,7 +200,7 @@ Column {
                 model: root.names
                 delegate: NameRow {
                     required property var modelData
-                    width: parent.width
+                    width: columnOfNameRow.width
                     work: root.work
                     item: modelData
                 }

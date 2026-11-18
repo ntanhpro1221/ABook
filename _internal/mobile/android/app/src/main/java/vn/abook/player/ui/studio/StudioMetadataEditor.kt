@@ -5,6 +5,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import vn.abook.player.S
 import vn.abook.player.ui.addbook.BookField
+import vn.abook.player.ui.addbook.FieldGroup
 import vn.abook.player.ui.components.*
 import vn.abook.player.ui.data.ListenBook
 import vn.abook.player.ui.theme.Dim
@@ -18,7 +19,8 @@ fun StudioMetadataEditor(book: StudioBook, state: StudioProjectState) {
         BookMetadataDetails(ListenBook(book.id, book.title, book.author, metadata = book.metadata))
         InlineActionRow(S.s_sua_thong_tin_17e4a8a6, { draft = book.metadata; author = book.author; editing = !editing }, "studio_edit_metadata", icon = LucidePaths.PENCIL)
         Reveal(editing) {
-            Column(verticalArrangement = Arrangement.spacedBy(Dim.s12)) {
+            // Các ô + nút Lưu dưới ô là một nhóm: đang gõ thì cả nhóm cuộn lên trên bàn phím, nút Lưu không bị che.
+            FieldGroup(Modifier.fillMaxWidth().imePadding(), verticalArrangement = Arrangement.spacedBy(Dim.s12)) {
                 BookField(S.s_tac_gia_0ec4731b, author, { author = it }, "studio_author", !state.busy)
                 BookField(S.s_bookmeta_illustrator, draft.illustrator, { draft = draft.copy(illustrator = it) }, "studio_illustrator", !state.busy)
                 BookField(S.s_bookmeta_alt_titles, draft.altTitles.joinToString("\n"), { draft = draft.copy(altTitles = it.split("\n")) }, "studio_alt_titles", !state.busy)

@@ -617,12 +617,13 @@ Item {
     Modal {
         id: recommendations; objectName: "nowRecommendations"; title: S.s_nghe_cuon_khac_cc5cf8a7
         Column {
+            id: columnOfButton
             width: parent.width; spacing: Theme.s8
             Repeater {
                 model: root.otherBooks
                 Button {
                     required property var modelData
-                    width: parent.width; wrap: true; kind: "ghost"; icon: "play"; text: modelData.title
+                    width: columnOfButton.width; wrap: true; kind: "ghost"; icon: "play"; text: modelData.title
                     onActivated: { recommendations.close(); Player.playBook(modelData.bookId) }
                 }
             }

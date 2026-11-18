@@ -5,8 +5,17 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.clickable
+import androidx.compose.ui.unit.dp
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import vn.abook.player.ui.nav.Tab
@@ -124,6 +133,28 @@ class BottomTouchBoxTest {
         assertTrue("dải 60 dp phải bắt được chân màn: ${strip.problems}", strip.problems.any { "chỗ chừa đáy" in it })
         val tall = rule.touchBoxProblems("hộp 200 dp", minDp = 200f)
         assertTrue("hộp 200 dp phải bắt được mọi nút", tall.problems.size >= tall.checked)
+    }
+
+    /**
+     * Danh sách cuộn: phép đo dùng phần THẤY được của hộp. Khung nhìn dừng trên dải nuốt chạm (như BookForm) thì hàng bị khung cắt ở mép dưới không phải lỗi -
+     * cuộn tới mới chạm. Khung nhìn tràn xuống dải thì phần thấy được của hàng nằm trong dải: máy dò vẫn phải bắt.
+     */
+    @Test fun aScrollingListIsMeasuredByWhatItShows() {
+        var padded by mutableStateOf(true)
+        rule.setContent {
+            AbookTheme {
+                LazyColumn(Modifier.fillMaxSize().background(Abook.colors.bg).padding(bottom = if (padded) 60.dp else 0.dp)) {
+                    items(40) { Box(Modifier.fillMaxWidth().height(72.dp).clickable {}) }
+                }
+            }
+        }
+        rule.waitForIdle()
+        val inside = rule.touchBoxProblems("khung dừng trên dải 60 dp", clearanceDp = 60f)
+        assertTrue("hàng bị khung cắt không phải lỗi: ${inside.problems}", inside.checked > 0 && inside.problems.isEmpty())
+        padded = false
+        rule.waitForIdle()
+        val into = rule.touchBoxProblems("khung tràn vào dải 60 dp", clearanceDp = 60f)
+        assertTrue("khung tràn vào dải phải bị bắt", into.problems.any { "chỗ chừa đáy" in it })
     }
 
     /**

@@ -9,6 +9,7 @@ Popover {
     onOpenChanged: if (open) OutputDevices.refresh()
     Listen { target: Player; function onLoadedChanged() { if (!Player.loaded) root.close() } }
     Column {
+        id: columnOfMenuRow
         width: parent.width; spacing: Theme.s8
         Text { width: parent.width; text: S.s_phat_tren_681e16e1; wrapMode: Text.Wrap; color: Theme.text; font.pixelSize: Theme.sizeBodySmall }
         Repeater {
@@ -16,7 +17,7 @@ Popover {
             MenuRow {
                 required property var modelData
                 objectName: "output_" + modelData.id
-                width: parent ? parent.width : 0; text: modelData.name
+                width: columnOfMenuRow.width; text: modelData.name
                 selected: OutputDevices.selected === modelData.id
                 icon: selected ? "check" : ""
                 enabled: !OutputDevices.busy

@@ -84,6 +84,7 @@ Modal {
         Reveal { shown: root.report !== null }
         spacing: 16
         Column {
+            id: columnOfItem
             width: parent.width
             Reveal { shown: root.rows.length > 0 }
             Repeater {
@@ -91,7 +92,7 @@ Modal {
                 Item {
                     required property var modelData
                     required property int index
-                    width: parent.width
+                    width: columnOfItem.width
                     implicitHeight: valueText.height + 16 + (index > 0 ? 1 : 0)
                     height: implicitHeight
                     Rectangle { width: parent.width; height: 1; color: Theme.line; Reveal { shown: index > 0 }}

@@ -90,6 +90,7 @@ Item {
                 gap: 12
                 title: S.s_gui_gan_day_954ffe00 + (root.held.recent || []).length + ")"
                 Column {
+                    id: columnOfColumn
                     width: parent.width
                     spacing: 8
                     topPadding: 8
@@ -97,7 +98,7 @@ Item {
                         model: root.held.recent || []
                         delegate: Column {
                             required property var modelData
-                            width: parent ? parent.width : 400
+                            width: columnOfColumn.width
                             Text { width: parent.width; text: N.describePush(modelData); color: Theme.text2; wrapMode: Text.Wrap; font.pixelSize: Theme.sizeBodySmall }
                             Repeater {
                                 model: modelData.conflicts || []

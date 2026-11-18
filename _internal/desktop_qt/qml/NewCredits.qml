@@ -27,6 +27,7 @@ Column {
         width: parent.width
         open: root.issues.length > 0
         NewNote {
+            id: newNoteOfItem
             objectName: "newNumberWarning"
             width: parent.width
             icon: "triangle-alert"
@@ -36,7 +37,7 @@ Column {
                 model: root.issues
                 delegate: Item {
                     required property string modelData
-                    width: parent.width
+                    width: newNoteOfItem.contentWidth
                     height: issueText.height
                     Text { x: 4; text: "•"; color: Theme.text2; font.pixelSize: Theme.sizeBodySmall }
                     Prose { id: issueText; x: 16; width: parent.width - 16; text: modelData }

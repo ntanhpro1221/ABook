@@ -71,13 +71,7 @@ object BookDocumentWriter {
         book.remove("package")
         book.remove("id") // mã sách là của app này, không đi theo file (sách không mang mã nào)
         val edits = BookEdits.load(bookDir)
-        if (BookMetadata.fields.any { edits.has(it) }) {
-            for (key in BookMetadata.fields) if (edits.has(key)) {
-                val value = edits.get(key)
-                if (value == "" || value is JSONArray && value.length() == 0) book.remove(key) else book.put(key, value)
-            }
-            book.put("metaVersion", BookMetadata.version(book))
-        }
+        BookMetadata.overlay(book, edits)
         val changes = BookEdits.count(edits)
         if (changes > 0) {
             files[BookEdits.EDITS_FILE] = BookEdits.dump(edits)

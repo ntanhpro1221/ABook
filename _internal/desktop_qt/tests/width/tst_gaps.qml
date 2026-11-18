@@ -401,11 +401,12 @@ Item {
             cell.book = {bookId: "a", stage: "audio"}
             compare(play.tip, "Nghe Truyện chữ")
         }
-        // Soát thiết kế 10-11 việc 4: tên 2 dòng dành sẵn, phụ 1 dòng cắt "…" - mọi ô cao bằng nhau; bìa vẽ cũng hiện tên dưới bìa (15-11).
+        // Soát thiết kế 10-11 việc 4: tên 2 dòng dành sẵn, phụ 1 dòng - mọi ô cao bằng nhau; bìa vẽ cũng hiện tên dưới bìa (15-11).
+        // Dòng phụ là tình trạng ngắn (review174b): không vừa thì thu cỡ (OneLineFit), không cắt "…".
         function test_everyCellHasTheSameHeight() {
             const props = [
                 {title: "Chí Phèo", subtitle: "Nam Cao", coverKey: "a"},
-                {title: "Dế Mèn phiêu lưu ký, một cái tên rất dài cho ô lưới hẹp", subtitle: "Tô Hoài, Nhà xuất bản Kim Đồng, bản in lần thứ mười", coverKey: "b"},
+                {title: "Dế Mèn phiêu lưu ký, một cái tên rất dài cho ô lưới hẹp", subtitle: "Còn 12 giờ 45 phút", coverKey: "b"},
                 {title: "Nhật ký trong tù", subtitle: "Hồ Chí Minh", source: "máy tính", coverKey: "c"},
                 {title: "Bìa vẽ", subtitle: "", coverKey: ""}
             ]
@@ -414,7 +415,9 @@ Item {
             for (const cell of cells) compare(cell.implicitHeight, cells[0].implicitHeight, cell.title)
             const longSub = one(cells[1], "bookCellSubtitle")
             compare(longSub.lineCount, 1)
-            verify(longSub.truncated)
+            compare(longSub.elide, Text.ElideNone)
+            verify(!longSub.truncated)
+            verify(longSub.width <= 160)
             verify(one(cells[1], "bookCellTitle").lineCount <= 2)
             verify(one(cells[0], "bookCellTitle").visible)
             // Chủ sách 15-11: bìa vẽ (không ảnh) vẫn có tên dưới bìa, thấy được và đọc được, nằm trên dòng phụ như ô có ảnh.

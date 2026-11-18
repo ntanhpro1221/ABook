@@ -26,6 +26,7 @@ Popover {
         }
     }
     Column {
+        id: columnOfInteractive
         width: parent.width
         Repeater {
             id: rows
@@ -35,7 +36,7 @@ Popover {
                 required property var modelData
                 readonly property bool selected: modelData.chapterId === root.chapterId
                 objectName: "scriptChapterOption"
-                width: parent.width
+                width: columnOfInteractive.width
                 height: Math.max(36, words.height + 12)
                 pressScaling: false
                 Accessible.role: Accessible.RadioButton

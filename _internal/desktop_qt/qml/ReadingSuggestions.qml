@@ -44,6 +44,7 @@ Modal {
         })
     }
     Column {
+        id: columnOfSettingRow
         width: parent.width; spacing: Theme.s12
         Text {
             width: parent.width; text: S.s_bo_khoi_phan_doc_giu_chu_goc_bo_chon_de_do_53aadf4d
@@ -53,7 +54,7 @@ Modal {
             model: root.groups
             SettingRow {
                 required property var modelData
-                width: parent.width
+                width: columnOfSettingRow.width
                 label: S.s_bo_dong_3643dad2
                 hint: "“" + modelData.line + "”\u00a0·\u00a0" + modelData.chapters.length + S.s_chuong_9e6a01dc
                 Switch {

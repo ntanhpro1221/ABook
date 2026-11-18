@@ -281,6 +281,7 @@ Column {
                 width: parent.width
                 open: root.overrides.banned.length > 0
                 StudioMusicDetails {
+                    id: studioMusicDetailsOfItem
                     objectName: "musicBanned"
                     width: parent.width
                     topPadding: 8
@@ -289,7 +290,7 @@ Column {
                         model: root.overrides.banned
                         Item {
                             required property string modelData
-                            width: parent.width
+                            width: studioMusicDetailsOfItem.width
                             height: Math.max(bannedName.height, again.height) + 4
                             Text {
                                 id: bannedName

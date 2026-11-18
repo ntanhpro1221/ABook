@@ -1419,25 +1419,25 @@
     "id": "eb5a41a0c4c81383f5cb",
     "kind": "pending",
     "path": "ui/src/listen/LibraryScreen.tsx",
-    "line": 129,
+    "line": 130,
     "statement": "return async (book: ListenBook, chapterId?: number, at?: number, extra?: { word?: WordTarget; rate?: number }) => {",
     "occurrence": 1,
-    "source_sha256": "58841ad762ef7376f39d833ee1af59c3d504d6dd37d80ebd2f22d6d1855d3617",
+    "source_sha256": "d810c1581b6e5e6211425387d5418b805488cc3502569f6a0b93f6d4ed7a9e47",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; LoadingCrossfade, Progress, isLoading, loading, progress, progressFill, progressText",
-    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Gate repair: reviewed identity-key motion, explicit layout, token spacing or semantic navigation changes; existing guard retained. Combined-source review: the author line now uses OneLineFit (no ellipsis); this action and its guard are unchanged. Combined-source review (merge174 lintfix): both sides' changes to this file keep this statement and its guard unchanged."
+    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Gate repair: reviewed identity-key motion, explicit layout, token spacing or semantic navigation changes; existing guard retained. Combined-source review: the author line now uses OneLineFit (no ellipsis); this action and its guard are unchanged. Combined-source review (merge174 lintfix): both sides' changes to this file keep this statement and its guard unchanged. Combined-source review: progressText again says 'Chỉ có chữ' for a text-only book without author on a computer without a voice; this action and its guard are unchanged. Combined-source review (fix174b): both sides' changes to this file keep this statement and its guard unchanged."
   },
   {
     "id": "8e6269fe3f7bbd02cacc",
     "kind": "pending",
     "path": "ui/src/listen/LibraryScreen.tsx",
-    "line": 293,
+    "line": 294,
     "statement": "onClick={withFeedback(\"playPause\", () => (current ? player.toggle() : void playBook(book)))}",
     "occurrence": 1,
-    "source_sha256": "58841ad762ef7376f39d833ee1af59c3d504d6dd37d80ebd2f22d6d1855d3617",
+    "source_sha256": "d810c1581b6e5e6211425387d5418b805488cc3502569f6a0b93f6d4ed7a9e47",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; LoadingCrossfade, Progress, isLoading, loading, progress, progressFill, progressText",
-    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Gate repair: reviewed identity-key motion, explicit layout, token spacing or semantic navigation changes; existing guard retained. Combined-source review: the author line now uses OneLineFit (no ellipsis); this action and its guard are unchanged. Combined-source review (merge174 lintfix): both sides' changes to this file keep this statement and its guard unchanged."
+    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Gate repair: reviewed identity-key motion, explicit layout, token spacing or semantic navigation changes; existing guard retained. Combined-source review: the author line now uses OneLineFit (no ellipsis); this action and its guard are unchanged. Combined-source review (merge174 lintfix): both sides' changes to this file keep this statement and its guard unchanged. Combined-source review: progressText again says 'Chỉ có chữ' for a text-only book without author on a computer without a voice; this action and its guard are unchanged. Combined-source review (fix174b): both sides' changes to this file keep this statement and its guard unchanged."
   },
   {
     "id": "7a75357ddc0dd98439a5",
@@ -15126,10 +15126,10 @@
     "line": 85,
     "statement": "Api.call(method, route, body, function(data, error) {",
     "occurrence": 1,
-    "source_sha256": "b199275384e9894b4ecb01e1c7fa75657fb3fec6e68ccb4d411d006d159dc550",
+    "source_sha256": "19d330faf2706f758cbf2548f39d8dba7b28dbdb4c9d20c2364ac30e98c45ccf",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; busy, pending, working",
-    "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
+    "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Combined-source review (fix174b): both sides' changes to this file keep this statement and its guard unchanged."
   },
   {
     "id": "af49df2e4950153e0d85",
@@ -15138,10 +15138,10 @@
     "line": 212,
     "statement": "Api.quiet(\"GET\", \"/api/listen/books/\" + encodeURIComponent(outcome.id), null, function(book, error) {",
     "occurrence": 1,
-    "source_sha256": "b199275384e9894b4ecb01e1c7fa75657fb3fec6e68ccb4d411d006d159dc550",
+    "source_sha256": "19d330faf2706f758cbf2548f39d8dba7b28dbdb4c9d20c2364ac30e98c45ccf",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; busy, pending, working",
-    "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
+    "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Combined-source review (fix174b): both sides' changes to this file keep this statement and its guard unchanged."
   },
   {
     "id": "8a873b33a644eb4c58fb",
@@ -15246,10 +15246,10 @@
     "line": 64,
     "statement": "Api.call(\"GET\", \"/api/listen/books/\" + id, null, function(data, error) { if (!error && id === root.book.bookId) root.fullBook = data })",
     "occurrence": 1,
-    "source_sha256": "7dca00830a107b8032f79b9d1429b7c49b6bf248e91141955eda6082a66ee712",
+    "source_sha256": "7aeed0d2596f4c0f8441d267a31bc2af3668dc961907ee0f5daa0759592d163f",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; ProgressBar, bookProgress, bookProgressLine, progress, progressLine, progressOf",
-    "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Combined-source review (merge174 lintfix): both sides' changes to this file keep this statement and its guard unchanged. Combined-source review (merge174 integ173): both sides' changes to this file keep this statement and its guard unchanged. Re-pinned for left174: the edit only restyles the volume rows (initials cover, medium title, heard bar); this statement and its guard are unchanged. Combined-source review (merge174 left174): both sides' changes to this file keep this statement and its guard unchanged."
+    "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Combined-source review (merge174 lintfix): both sides' changes to this file keep this statement and its guard unchanged. Combined-source review (merge174 integ173): both sides' changes to this file keep this statement and its guard unchanged. Re-pinned for left174: the edit only restyles the volume rows (initials cover, medium title, heard bar); this statement and its guard are unchanged. Combined-source review (merge174 left174): both sides' changes to this file keep this statement and its guard unchanged. Combined-source review (fix174b): both sides' changes to this file keep this statement and its guard unchanged."
   },
   {
     "id": "7d25ff271ae75b3e8573",
@@ -15258,10 +15258,10 @@
     "line": 72,
     "statement": "Api.call(\"GET\", \"/api/listen/books/\" + bookId, null, function(data, error) {",
     "occurrence": 1,
-    "source_sha256": "7dca00830a107b8032f79b9d1429b7c49b6bf248e91141955eda6082a66ee712",
+    "source_sha256": "7aeed0d2596f4c0f8441d267a31bc2af3668dc961907ee0f5daa0759592d163f",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; ProgressBar, bookProgress, bookProgressLine, progress, progressLine, progressOf",
-    "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Combined-source review (merge174 lintfix): both sides' changes to this file keep this statement and its guard unchanged. Combined-source review (merge174 integ173): both sides' changes to this file keep this statement and its guard unchanged. Re-pinned for left174: the edit only restyles the volume rows (initials cover, medium title, heard bar); this statement and its guard are unchanged. Combined-source review (merge174 left174): both sides' changes to this file keep this statement and its guard unchanged."
+    "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Combined-source review (merge174 lintfix): both sides' changes to this file keep this statement and its guard unchanged. Combined-source review (merge174 integ173): both sides' changes to this file keep this statement and its guard unchanged. Re-pinned for left174: the edit only restyles the volume rows (initials cover, medium title, heard bar); this statement and its guard are unchanged. Combined-source review (merge174 left174): both sides' changes to this file keep this statement and its guard unchanged. Combined-source review (fix174b): both sides' changes to this file keep this statement and its guard unchanged."
   },
   {
     "id": "bbe3ef32dfbb09cf74a9",
@@ -15270,22 +15270,22 @@
     "line": 140,
     "statement": "Api.call(\"POST\", \"/api/listen/books/\" + id + \"/finished\", active ? {finished: finished, record: active.id} : {finished: finished}, function(data, error) {",
     "occurrence": 1,
-    "source_sha256": "7dca00830a107b8032f79b9d1429b7c49b6bf248e91141955eda6082a66ee712",
+    "source_sha256": "7aeed0d2596f4c0f8441d267a31bc2af3668dc961907ee0f5daa0759592d163f",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; ProgressBar, bookProgress, bookProgressLine, progress, progressLine, progressOf",
-    "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Combined-source review (merge174 lintfix): both sides' changes to this file keep this statement and its guard unchanged. Combined-source review (merge174 integ173): both sides' changes to this file keep this statement and its guard unchanged. Re-pinned for left174: the edit only restyles the volume rows (initials cover, medium title, heard bar); this statement and its guard are unchanged. Combined-source review (merge174 left174): both sides' changes to this file keep this statement and its guard unchanged."
+    "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Combined-source review (merge174 lintfix): both sides' changes to this file keep this statement and its guard unchanged. Combined-source review (merge174 integ173): both sides' changes to this file keep this statement and its guard unchanged. Re-pinned for left174: the edit only restyles the volume rows (initials cover, medium title, heard bar); this statement and its guard are unchanged. Combined-source review (merge174 left174): both sides' changes to this file keep this statement and its guard unchanged. Combined-source review (fix174b): both sides' changes to this file keep this statement and its guard unchanged."
   },
   {
     "id": "6fee1b77cd5db713d5b8",
     "kind": "pending",
     "path": "desktop_qt/qml/BookPage.qml",
-    "line": 271,
+    "line": 272,
     "statement": "Api.call(\"POST\", \"/api/listen/books/\" + id + \"/chapters/\" + chapterId + \"/done\", body, function(data, error) {",
     "occurrence": 1,
-    "source_sha256": "7dca00830a107b8032f79b9d1429b7c49b6bf248e91141955eda6082a66ee712",
+    "source_sha256": "7aeed0d2596f4c0f8441d267a31bc2af3668dc961907ee0f5daa0759592d163f",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; ProgressBar, bookProgress, bookProgressLine, progress, progressLine, progressOf",
-    "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Combined-source review (merge174 lintfix): both sides' changes to this file keep this statement and its guard unchanged. Combined-source review (merge174 integ173): both sides' changes to this file keep this statement and its guard unchanged. Re-pinned for left174: the edit only restyles the volume rows (initials cover, medium title, heard bar); this statement and its guard are unchanged. Combined-source review (merge174 left174): both sides' changes to this file keep this statement and its guard unchanged."
+    "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Combined-source review (merge174 lintfix): both sides' changes to this file keep this statement and its guard unchanged. Combined-source review (merge174 integ173): both sides' changes to this file keep this statement and its guard unchanged. Re-pinned for left174: the edit only restyles the volume rows (initials cover, medium title, heard bar); this statement and its guard are unchanged. Combined-source review (merge174 left174): both sides' changes to this file keep this statement and its guard unchanged. Combined-source review (fix174b): both sides' changes to this file keep this statement and its guard unchanged."
   },
   {
     "id": "5c92264f2dc698b8f35c",
@@ -15330,7 +15330,7 @@
     "line": 36,
     "statement": "else Api.quiet(\"POST\", path, {operationId: operationId}, answer)",
     "occurrence": 1,
-    "source_sha256": "0c5ea5ae9f61f4427e8030396057c9e9bc45236be03802375374e1258c7654de",
+    "source_sha256": "5722c09de8b11215acfb1b5b3a93b4ad9fd622692738fb866389a44d5a18cd97",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; busy, pending",
     "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads."
@@ -15342,10 +15342,10 @@
     "line": 48,
     "statement": "else Api.quiet(\"GET\", \"/api/books/\" + bookId + \"/cast\", null, answer)",
     "occurrence": 1,
-    "source_sha256": "53dbca98aaf41aea44d77e577f12d2e12e298824d78f31f841f867967ab4f4f0",
+    "source_sha256": "ef95f709daea28022025467223794575b07a959f6283b5fe57847976f9b5be76",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; castNarratorPending, loading, narratorPending",
-    "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Combined-source review (merge174 castview): both sides' changes to this file keep this statement and its guard unchanged."
+    "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Combined-source review (merge174 castview): both sides' changes to this file keep this statement and its guard unchanged. merge174 (fix174b test_qt_repeater_parent): narrator rows size from their Column by id instead of parent; this statement and its guard are unchanged."
   },
   {
     "id": "68152639fcda06e82c6e",
@@ -15471,49 +15471,49 @@
     "id": "63be433d1ccda08ccf66",
     "kind": "pending",
     "path": "desktop_qt/qml/EditBook.qml",
-    "line": 99,
+    "line": 94,
     "statement": "Api.call(\"GET\", \"/api/listen/books/\" + id, null, function(fresh, error) {",
     "occurrence": 1,
-    "source_sha256": "d6b78ec7bd69bcac3f9c6704cbb66cebd1bbc67692347d8aa542c0a3cd128cb4",
+    "source_sha256": "4404a715a59c4515b3c1756a26ee81c4339e599d8d4807c3b768fe13349c5740",
     "disposition": "pending",
-    "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; busy, savingAuthor",
-    "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Combined-source review: the metadata field delegate now sizes from its column by id (null parent during Repeater teardown); this action and its guard are unchanged. Combined-source review (merge174 lintfix): both sides' changes to this file keep this statement and its guard unchanged."
+    "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; busy, savingMetadata",
+    "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Combined-source review: the metadata field delegate now sizes from its column by id (null parent during Repeater teardown); this action and its guard are unchanged. Combined-source review (merge174 lintfix): both sides' changes to this file keep this statement and its guard unchanged. Combined-source review (fix174b): both sides' changes to this file keep this statement and its guard unchanged."
   },
   {
     "id": "7d61c4ce9b357f430ab1",
     "kind": "pending",
     "path": "desktop_qt/qml/EditBook.qml",
-    "line": 109,
+    "line": 104,
     "statement": "Api.call(method, \"/api/books/\" + bookId + suffix, body, function(data, error) {",
     "occurrence": 1,
-    "source_sha256": "d6b78ec7bd69bcac3f9c6704cbb66cebd1bbc67692347d8aa542c0a3cd128cb4",
+    "source_sha256": "4404a715a59c4515b3c1756a26ee81c4339e599d8d4807c3b768fe13349c5740",
     "disposition": "pending",
-    "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; busy, savingAuthor",
-    "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Combined-source review: the metadata field delegate now sizes from its column by id (null parent during Repeater teardown); this action and its guard are unchanged. Combined-source review (merge174 lintfix): both sides' changes to this file keep this statement and its guard unchanged."
+    "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; busy, savingMetadata",
+    "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Combined-source review: the metadata field delegate now sizes from its column by id (null parent during Repeater teardown); this action and its guard are unchanged. Combined-source review (merge174 lintfix): both sides' changes to this file keep this statement and its guard unchanged. Combined-source review (fix174b): both sides' changes to this file keep this statement and its guard unchanged."
   },
   {
     "id": "245ccc206eb79582a95b",
     "kind": "destructive",
     "path": "desktop_qt/qml/EditBook.qml",
-    "line": 331,
+    "line": 295,
     "statement": "onActivated: root.removeCover()",
     "occurrence": 1,
-    "source_sha256": "d6b78ec7bd69bcac3f9c6704cbb66cebd1bbc67692347d8aa542c0a3cd128cb4",
+    "source_sha256": "4404a715a59c4515b3c1756a26ee81c4339e599d8d4807c3b768fe13349c5740",
     "disposition": "confirmation",
     "guard": "EditBook cover DestructiveConfirm and DiscardSheet / discard dialog",
-    "reason": "Cover removal and discarding saved edits have explicit object-specific confirmations. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Combined-source review: the metadata field delegate now sizes from its column by id (null parent during Repeater teardown); this action and its guard are unchanged. Combined-source review (merge174 lintfix): both sides' changes to this file keep this statement and its guard unchanged."
+    "reason": "Cover removal and discarding saved edits have explicit object-specific confirmations. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Combined-source review: the metadata field delegate now sizes from its column by id (null parent during Repeater teardown); this action and its guard are unchanged. Combined-source review (merge174 lintfix): both sides' changes to this file keep this statement and its guard unchanged. Combined-source review (fix174b): both sides' changes to this file keep this statement and its guard unchanged."
   },
   {
     "id": "16933171519c1e852e5e",
     "kind": "destructive",
     "path": "desktop_qt/qml/EditBook.qml",
-    "line": 480,
+    "line": 444,
     "statement": "DestructiveConfirm { id: removeConfirm; objectName: \"editCoverRemoveConfirm\"; title: S.s_bo_anh_bia_696c6692; description: S.s_irreversible_detail(root.book ? root.book.title || \"\" : \"\"); onAccepted: root.removeCoverConfirmed() }",
     "occurrence": 1,
-    "source_sha256": "d6b78ec7bd69bcac3f9c6704cbb66cebd1bbc67692347d8aa542c0a3cd128cb4",
+    "source_sha256": "4404a715a59c4515b3c1756a26ee81c4339e599d8d4807c3b768fe13349c5740",
     "disposition": "confirmation",
     "guard": "EditBook cover DestructiveConfirm and DiscardSheet / discard dialog",
-    "reason": "Cover removal and discarding saved edits have explicit object-specific confirmations. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Combined-source review: the metadata field delegate now sizes from its column by id (null parent during Repeater teardown); this action and its guard are unchanged. Combined-source review (merge174 lintfix): both sides' changes to this file keep this statement and its guard unchanged."
+    "reason": "Cover removal and discarding saved edits have explicit object-specific confirmations. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Combined-source review: the metadata field delegate now sizes from its column by id (null parent during Repeater teardown); this action and its guard are unchanged. Combined-source review (merge174 lintfix): both sides' changes to this file keep this statement and its guard unchanged. Combined-source review (fix174b): both sides' changes to this file keep this statement and its guard unchanged."
   },
   {
     "id": "253585c3c7f1d48cd2a3",
@@ -15918,7 +15918,7 @@
     "line": 28,
     "statement": "signal unsave()",
     "occurrence": 1,
-    "source_sha256": "3e47ef15aa3203462289d5abe4b1fac806a254d241e04e16834762976c98e8c1",
+    "source_sha256": "25453dac8e2b48728fcf67a7de4e3c13278969318a8a98f84e956e2eade8a3bf",
     "disposition": "internal",
     "guard": "Declaration; the invoked call site is independently inventoried",
     "reason": "A declaration/signature is not an executing UI action. Combined-source review: the download button gained tabular digits (check_ticks T4); this action and its guard are unchanged."
@@ -15930,7 +15930,7 @@
     "line": 52,
     "statement": "Api.quiet(\"GET\", path, null, function(data, error) {",
     "occurrence": 1,
-    "source_sha256": "3e47ef15aa3203462289d5abe4b1fac806a254d241e04e16834762976c98e8c1",
+    "source_sha256": "25453dac8e2b48728fcf67a7de4e3c13278969318a8a98f84e956e2eade8a3bf",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; MusicListeningProgress, loading, pending, previewLoading",
     "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads. Combined-source review: the download button gained tabular digits (check_ticks T4); this action and its guard are unchanged."
@@ -15942,7 +15942,7 @@
     "line": 62,
     "statement": "onAccepted: root.unsave()",
     "occurrence": 1,
-    "source_sha256": "3e47ef15aa3203462289d5abe4b1fac806a254d241e04e16834762976c98e8c1",
+    "source_sha256": "25453dac8e2b48728fcf67a7de4e3c13278969318a8a98f84e956e2eade8a3bf",
     "disposition": "confirmation",
     "guard": "DownloadControl / TrackRow / TrackSheet DestructiveConfirm; cancel incomplete transfer is exempt",
     "reason": "Complete music download removal is confirmed with track title and size. Cancelling an unfinished download discards partial bytes immediately. Combined-source review: the download button gained tabular digits (check_ticks T4); this action and its guard are unchanged."
@@ -16182,10 +16182,10 @@
     "line": 48,
     "statement": "Api.call(method, path, body, function(result, error) { if (error) Api.notice = before; done(result, error) })",
     "occurrence": 1,
-    "source_sha256": "d093b21a0b5bbefa7350d9341a62048aca054b6fb46c5a85e9ea03b253cba040",
+    "source_sha256": "9b3749c4ab90a9bd3f576ca19421fe5f9f5d94e092a58a72d7aced98d0e6801a",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; bluetoothBusy, busy, busyChoice, pairBusy, refreshBusy",
-    "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads. Combined-source review (merge174 lintfix): both sides' changes to this file keep this statement and its guard unchanged."
+    "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads. Combined-source review (merge174 lintfix): both sides' changes to this file keep this statement and its guard unchanged. Combined-source review (fix174b): both sides' changes to this file keep this statement and its guard unchanged."
   },
   {
     "id": "dd50425e71dfeb0ff65c",
@@ -16194,10 +16194,10 @@
     "line": 73,
     "statement": "Api.quiet(\"POST\", \"/api/computers\", {address: address, code: code, fingerprint: fingerprint || \"\"}, function(view, error, detail) {",
     "occurrence": 1,
-    "source_sha256": "d093b21a0b5bbefa7350d9341a62048aca054b6fb46c5a85e9ea03b253cba040",
+    "source_sha256": "9b3749c4ab90a9bd3f576ca19421fe5f9f5d94e092a58a72d7aced98d0e6801a",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; bluetoothBusy, busy, busyChoice, pairBusy, refreshBusy",
-    "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads. Combined-source review (merge174 lintfix): both sides' changes to this file keep this statement and its guard unchanged."
+    "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads. Combined-source review (merge174 lintfix): both sides' changes to this file keep this statement and its guard unchanged. Combined-source review (fix174b): both sides' changes to this file keep this statement and its guard unchanged."
   },
   {
     "id": "e30047a0d0e444b95d93",
@@ -16206,10 +16206,10 @@
     "line": 89,
     "statement": "Api.call(\"POST\", \"/api/computers/refresh\", null, function(view, error) { root.refreshBusy = false; if (!error) root.done(view) })",
     "occurrence": 1,
-    "source_sha256": "d093b21a0b5bbefa7350d9341a62048aca054b6fb46c5a85e9ea03b253cba040",
+    "source_sha256": "9b3749c4ab90a9bd3f576ca19421fe5f9f5d94e092a58a72d7aced98d0e6801a",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; bluetoothBusy, busy, busyChoice, pairBusy, refreshBusy",
-    "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads. Combined-source review (merge174 lintfix): both sides' changes to this file keep this statement and its guard unchanged."
+    "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads. Combined-source review (merge174 lintfix): both sides' changes to this file keep this statement and its guard unchanged. Combined-source review (fix174b): both sides' changes to this file keep this statement and its guard unchanged."
   },
   {
     "id": "320564825957a408c90c",
@@ -16218,10 +16218,10 @@
     "line": 93,
     "statement": "Api.call(\"POST\", \"/api/computers/\" + id + \"/stop-waiting\", null, function(view, error) { root.refreshBusy = false; if (!error) root.done(view) })",
     "occurrence": 1,
-    "source_sha256": "d093b21a0b5bbefa7350d9341a62048aca054b6fb46c5a85e9ea03b253cba040",
+    "source_sha256": "9b3749c4ab90a9bd3f576ca19421fe5f9f5d94e092a58a72d7aced98d0e6801a",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; bluetoothBusy, busy, busyChoice, pairBusy, refreshBusy",
-    "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads. Combined-source review (merge174 lintfix): both sides' changes to this file keep this statement and its guard unchanged."
+    "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads. Combined-source review (merge174 lintfix): both sides' changes to this file keep this statement and its guard unchanged. Combined-source review (fix174b): both sides' changes to this file keep this statement and its guard unchanged."
   },
   {
     "id": "088d87b8a5c00ae07fb7",
@@ -16230,10 +16230,10 @@
     "line": 97,
     "statement": "Api.call(\"POST\", \"/api/computers/\" + id + \"/bluetooth\", {address: bluetoothAddress}, function(view, error) {",
     "occurrence": 1,
-    "source_sha256": "d093b21a0b5bbefa7350d9341a62048aca054b6fb46c5a85e9ea03b253cba040",
+    "source_sha256": "9b3749c4ab90a9bd3f576ca19421fe5f9f5d94e092a58a72d7aced98d0e6801a",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; bluetoothBusy, busy, busyChoice, pairBusy, refreshBusy",
-    "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads. Combined-source review (merge174 lintfix): both sides' changes to this file keep this statement and its guard unchanged."
+    "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads. Combined-source review (merge174 lintfix): both sides' changes to this file keep this statement and its guard unchanged. Combined-source review (fix174b): both sides' changes to this file keep this statement and its guard unchanged."
   },
   {
     "id": "bec31e9a7220212196d7",
@@ -16242,10 +16242,10 @@
     "line": 106,
     "statement": "Api.call(\"GET\", \"/api/computers/discover\", null, function(result, error) {",
     "occurrence": 1,
-    "source_sha256": "d093b21a0b5bbefa7350d9341a62048aca054b6fb46c5a85e9ea03b253cba040",
+    "source_sha256": "9b3749c4ab90a9bd3f576ca19421fe5f9f5d94e092a58a72d7aced98d0e6801a",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; bluetoothBusy, busy, busyChoice, pairBusy, refreshBusy",
-    "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads. Combined-source review (merge174 lintfix): both sides' changes to this file keep this statement and its guard unchanged."
+    "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads. Combined-source review (merge174 lintfix): both sides' changes to this file keep this statement and its guard unchanged. Combined-source review (fix174b): both sides' changes to this file keep this statement and its guard unchanged."
   },
   {
     "id": "3e8284706ddbe9b78202",
@@ -16254,10 +16254,10 @@
     "line": 124,
     "statement": "Api.call(\"DELETE\", \"/api/computers/\" + computer.id + edits, null, function(view, error) {",
     "occurrence": 1,
-    "source_sha256": "d093b21a0b5bbefa7350d9341a62048aca054b6fb46c5a85e9ea03b253cba040",
+    "source_sha256": "9b3749c4ab90a9bd3f576ca19421fe5f9f5d94e092a58a72d7aced98d0e6801a",
     "disposition": "confirmation",
     "guard": "useUnpair / DevicesUnpair / DeviceSheets ForgetPage and revoke confirmation",
-    "reason": "The preflight names unsent edits and cached books; even an empty device now asks before forgetting its identity. Combined-source review (merge174 lintfix): both sides' changes to this file keep this statement and its guard unchanged."
+    "reason": "The preflight names unsent edits and cached books; even an empty device now asks before forgetting its identity. Combined-source review (merge174 lintfix): both sides' changes to this file keep this statement and its guard unchanged. Combined-source review (fix174b): both sides' changes to this file keep this statement and its guard unchanged."
   },
   {
     "id": "fddf260a6b07cb7df129",
@@ -16266,10 +16266,10 @@
     "line": 124,
     "statement": "Api.call(\"DELETE\", \"/api/computers/\" + computer.id + edits, null, function(view, error) {",
     "occurrence": 1,
-    "source_sha256": "d093b21a0b5bbefa7350d9341a62048aca054b6fb46c5a85e9ea03b253cba040",
+    "source_sha256": "9b3749c4ab90a9bd3f576ca19421fe5f9f5d94e092a58a72d7aced98d0e6801a",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; bluetoothBusy, busy, busyChoice, pairBusy, refreshBusy",
-    "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads. Combined-source review (merge174 lintfix): both sides' changes to this file keep this statement and its guard unchanged."
+    "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads. Combined-source review (merge174 lintfix): both sides' changes to this file keep this statement and its guard unchanged. Combined-source review (fix174b): both sides' changes to this file keep this statement and its guard unchanged."
   },
   {
     "id": "777bdee01bb073fedd3a",
@@ -16278,10 +16278,10 @@
     "line": 131,
     "statement": "Api.call(\"GET\", \"/api/computers/\" + computer.id + \"/unsent\", null, function(unsent, error) {",
     "occurrence": 1,
-    "source_sha256": "d093b21a0b5bbefa7350d9341a62048aca054b6fb46c5a85e9ea03b253cba040",
+    "source_sha256": "9b3749c4ab90a9bd3f576ca19421fe5f9f5d94e092a58a72d7aced98d0e6801a",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; bluetoothBusy, busy, busyChoice, pairBusy, refreshBusy",
-    "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads. Combined-source review (merge174 lintfix): both sides' changes to this file keep this statement and its guard unchanged."
+    "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads. Combined-source review (merge174 lintfix): both sides' changes to this file keep this statement and its guard unchanged. Combined-source review (fix174b): both sides' changes to this file keep this statement and its guard unchanged."
   },
   {
     "id": "f613cb4300e26956b187",
@@ -16290,10 +16290,10 @@
     "line": 133,
     "statement": "if (Logic.unpairCopy(computer.name, S.s_may_tinh_8eafc226, unsent, root.reachable(computer)) === null) {",
     "occurrence": 1,
-    "source_sha256": "d093b21a0b5bbefa7350d9341a62048aca054b6fb46c5a85e9ea03b253cba040",
+    "source_sha256": "9b3749c4ab90a9bd3f576ca19421fe5f9f5d94e092a58a72d7aced98d0e6801a",
     "disposition": "confirmation",
     "guard": "useUnpair / DevicesUnpair / DeviceSheets ForgetPage and revoke confirmation",
-    "reason": "The preflight names unsent edits and cached books; even an empty device now asks before forgetting its identity. Combined-source review (merge174 lintfix): both sides' changes to this file keep this statement and its guard unchanged."
+    "reason": "The preflight names unsent edits and cached books; even an empty device now asks before forgetting its identity. Combined-source review (merge174 lintfix): both sides' changes to this file keep this statement and its guard unchanged. Combined-source review (fix174b): both sides' changes to this file keep this statement and its guard unchanged."
   },
   {
     "id": "3481851a21d7a7833439",
@@ -16302,10 +16302,10 @@
     "line": 134,
     "statement": "root.runUnpair(computer, null, function(problem) { root.say(problem ? S.s_chua_bo_ghep_duoc_7e3c5ca4 : Logic.unpairDone(computer.name)) })",
     "occurrence": 1,
-    "source_sha256": "d093b21a0b5bbefa7350d9341a62048aca054b6fb46c5a85e9ea03b253cba040",
+    "source_sha256": "9b3749c4ab90a9bd3f576ca19421fe5f9f5d94e092a58a72d7aced98d0e6801a",
     "disposition": "confirmation",
     "guard": "useUnpair / DevicesUnpair / DeviceSheets ForgetPage and revoke confirmation",
-    "reason": "The preflight names unsent edits and cached books; even an empty device now asks before forgetting its identity. Combined-source review (merge174 lintfix): both sides' changes to this file keep this statement and its guard unchanged."
+    "reason": "The preflight names unsent edits and cached books; even an empty device now asks before forgetting its identity. Combined-source review (merge174 lintfix): both sides' changes to this file keep this statement and its guard unchanged. Combined-source review (fix174b): both sides' changes to this file keep this statement and its guard unchanged."
   },
   {
     "id": "46ff431f064cd0402c0a",
@@ -16314,22 +16314,22 @@
     "line": 150,
     "statement": "root.say(Logic.unpairDone(target.name))",
     "occurrence": 1,
-    "source_sha256": "d093b21a0b5bbefa7350d9341a62048aca054b6fb46c5a85e9ea03b253cba040",
+    "source_sha256": "9b3749c4ab90a9bd3f576ca19421fe5f9f5d94e092a58a72d7aced98d0e6801a",
     "disposition": "confirmation",
     "guard": "useUnpair / DevicesUnpair / DeviceSheets ForgetPage and revoke confirmation",
-    "reason": "The preflight names unsent edits and cached books; even an empty device now asks before forgetting its identity. Combined-source review (merge174 lintfix): both sides' changes to this file keep this statement and its guard unchanged."
+    "reason": "The preflight names unsent edits and cached books; even an empty device now asks before forgetting its identity. Combined-source review (merge174 lintfix): both sides' changes to this file keep this statement and its guard unchanged. Combined-source review (fix174b): both sides' changes to this file keep this statement and its guard unchanged."
   },
   {
     "id": "575789e967921b283925",
     "kind": "destructive",
     "path": "desktop_qt/qml/OtherComputers.qml",
-    "line": 407,
+    "line": 410,
     "statement": "copy: root.asking ? Logic.unpairCopy(root.asking.computer.name, S.s_may_tinh_8eafc226, root.asking.unsent, root.reachable(root.asking.computer)) : null",
     "occurrence": 1,
-    "source_sha256": "d093b21a0b5bbefa7350d9341a62048aca054b6fb46c5a85e9ea03b253cba040",
+    "source_sha256": "9b3749c4ab90a9bd3f576ca19421fe5f9f5d94e092a58a72d7aced98d0e6801a",
     "disposition": "confirmation",
     "guard": "useUnpair / DevicesUnpair / DeviceSheets ForgetPage and revoke confirmation",
-    "reason": "The preflight names unsent edits and cached books; even an empty device now asks before forgetting its identity. Combined-source review (merge174 lintfix): both sides' changes to this file keep this statement and its guard unchanged."
+    "reason": "The preflight names unsent edits and cached books; even an empty device now asks before forgetting its identity. Combined-source review (merge174 lintfix): both sides' changes to this file keep this statement and its guard unchanged. Combined-source review (fix174b): both sides' changes to this file keep this statement and its guard unchanged."
   },
   {
     "id": "6bf832a7cb3ab05d34ed",
@@ -16662,7 +16662,7 @@
     "line": 21,
     "statement": "Api.quiet(\"GET\", \"/api/books/\" + encodeURIComponent(id) + \"/suggestions\", null, function(data, err) {",
     "occurrence": 1,
-    "source_sha256": "686d28093a41a86bc87f411332371a9df1fd5537f07a0ceb59e97e4d8635c71b",
+    "source_sha256": "4629c9d3ea267e5d730a32b2c03ed4248b18046a06bda48468e189b48ce84004",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; loading, saving",
     "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads."
@@ -16674,7 +16674,7 @@
     "line": 38,
     "statement": "Api.quiet(\"PUT\", \"/api/books/\" + encodeURIComponent(id) + \"/skip\", {line: group.line, chapters: group.chapters, skip: on}, function(data, err) {",
     "occurrence": 1,
-    "source_sha256": "686d28093a41a86bc87f411332371a9df1fd5537f07a0ceb59e97e4d8635c71b",
+    "source_sha256": "4629c9d3ea267e5d730a32b2c03ed4248b18046a06bda48468e189b48ce84004",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; loading, saving",
     "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads."
@@ -16746,7 +16746,7 @@
     "line": 45,
     "statement": "store.request(\"GET\", \"/api/books/\" + bookId + \"/casting/\" + snapshot.chapterId, null, function(status, data) {",
     "occurrence": 1,
-    "source_sha256": "1df3233bc3de0f6405b9fb3d014e35ce7d1067fd3051b56b5c6ad2d538f1550d",
+    "source_sha256": "3c5f68b361c557cc0d3e2708acbd171506076284c5b897401263edeaec9cedc0",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; busy, pending",
     "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads."
@@ -16794,10 +16794,10 @@
     "line": 27,
     "statement": "Api.quiet(\"GET\", \"/api/readaloud/voices\", null, function(data, error) {",
     "occurrence": 1,
-    "source_sha256": "61f9b78f033fc9fd9ad41305539aeb9f9d1c325a1affc430de6ee9c0e81ffc10",
+    "source_sha256": "64406070211b4ec7ef989c38eda43ad8fa2102addc9cfab7152eabcf959b2d5f",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; loading",
-    "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads."
+    "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads. Combined-source review (fix174b): both sides' changes to this file keep this statement and its guard unchanged."
   },
   {
     "id": "2355ab56c47e68ae3ca7",
@@ -16806,10 +16806,10 @@
     "line": 34,
     "statement": "Api.quiet(\"GET\", \"/api/readaloud/online\", null, function(data, error) { root.syncProviders(!error && Array.isArray(data) ? data : []) })",
     "occurrence": 1,
-    "source_sha256": "61f9b78f033fc9fd9ad41305539aeb9f9d1c325a1affc430de6ee9c0e81ffc10",
+    "source_sha256": "64406070211b4ec7ef989c38eda43ad8fa2102addc9cfab7152eabcf959b2d5f",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; loading",
-    "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads."
+    "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads. Combined-source review (fix174b): both sides' changes to this file keep this statement and its guard unchanged."
   },
   {
     "id": "8e77e82a57d6aea8c5f9",
@@ -16878,7 +16878,7 @@
     "line": 48,
     "statement": "store.request(\"GET\", \"/api/books/\" + bookId + \"/music\", null, function(status, data) {",
     "occurrence": 1,
-    "source_sha256": "47716997b9a3cdaa485d544fc0498b5b70e4dd9468111872557ce29ac8c6ed99",
+    "source_sha256": "5e611abef28d06b7dd535c5ad4063070bce0c941a7870d50a0048f8b40244677",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; busy, musicBusy, pending, spokenProgress",
     "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads."
@@ -16890,7 +16890,7 @@
     "line": 88,
     "statement": "store.request(\"PUT\", \"/api/books/\" + bookId + \"/music\", body, function(status, data) {",
     "occurrence": 1,
-    "source_sha256": "47716997b9a3cdaa485d544fc0498b5b70e4dd9468111872557ce29ac8c6ed99",
+    "source_sha256": "5e611abef28d06b7dd535c5ad4063070bce0c941a7870d50a0048f8b40244677",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; busy, musicBusy, pending, spokenProgress",
     "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads."
@@ -16902,7 +16902,7 @@
     "line": 102,
     "statement": "store.request(\"POST\", \"/api/books/\" + bookId + \"/music/rebuild\", null, function(status, data) {",
     "occurrence": 1,
-    "source_sha256": "47716997b9a3cdaa485d544fc0498b5b70e4dd9468111872557ce29ac8c6ed99",
+    "source_sha256": "5e611abef28d06b7dd535c5ad4063070bce0c941a7870d50a0048f8b40244677",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; busy, musicBusy, pending, spokenProgress",
     "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads."
@@ -16914,7 +16914,7 @@
     "line": 113,
     "statement": "store.request(\"POST\", \"/api/books/\" + bookId + \"/music/download/cancel\", null, function(status, data) {",
     "occurrence": 1,
-    "source_sha256": "47716997b9a3cdaa485d544fc0498b5b70e4dd9468111872557ce29ac8c6ed99",
+    "source_sha256": "5e611abef28d06b7dd535c5ad4063070bce0c941a7870d50a0048f8b40244677",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; busy, musicBusy, pending, spokenProgress",
     "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads."
@@ -16962,7 +16962,7 @@
     "line": 36,
     "statement": "store.request(\"GET\", \"/api/books/\" + bookId + \"/music/scenes/\" + encodeURIComponent(sceneKey) + \"/alternatives\", null, function(status, data) {",
     "occurrence": 1,
-    "source_sha256": "c3e643fe01de0b4c584b1a5a3aa4d4ea88a0abd5e2957a8a6c62369cddb91ecb",
+    "source_sha256": "e58c233d77c00cf19000d09b49d8484b738e711fa3fefd460952e21f19f3f98f",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; busy, loading",
     "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads."
@@ -17106,10 +17106,10 @@
     "line": 46,
     "statement": "Api.quiet(\"GET\", copy.path, null, function(data, error) { if (!error && data) root.status = data })",
     "occurrence": 1,
-    "source_sha256": "8be6820da94dabf654970cd2f1a236802a2ec78d3891afc52d7d98f7e6d1b807",
+    "source_sha256": "88dea98042b6ea9921defe857af146acf413eab308a2a669c8cc4f139052af34",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; ProgressBar, busy, downloading, onDownloadingChanged, onWorkingChanged, wasWorking, working",
-    "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
+    "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Combined-source review (fix174b): both sides' changes to this file keep this statement and its guard unchanged."
   },
   {
     "id": "eabbbef8b55cf08dbbe6",
@@ -17118,10 +17118,10 @@
     "line": 51,
     "statement": "Api.quiet(\"POST\", copy.path + suffix, body, function(data, error) {",
     "occurrence": 1,
-    "source_sha256": "8be6820da94dabf654970cd2f1a236802a2ec78d3891afc52d7d98f7e6d1b807",
+    "source_sha256": "88dea98042b6ea9921defe857af146acf413eab308a2a669c8cc4f139052af34",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; ProgressBar, busy, downloading, onDownloadingChanged, onWorkingChanged, wasWorking, working",
-    "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
+    "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Combined-source review (fix174b): both sides' changes to this file keep this statement and its guard unchanged."
   },
   {
     "id": "67a90caaac236a0e1cb3",
@@ -17130,10 +17130,10 @@
     "line": 70,
     "statement": "Api.quiet(\"GET\", \"/api/studio/supertonic/use\", null, function(data, error) {",
     "occurrence": 1,
-    "source_sha256": "8be6820da94dabf654970cd2f1a236802a2ec78d3891afc52d7d98f7e6d1b807",
+    "source_sha256": "88dea98042b6ea9921defe857af146acf413eab308a2a669c8cc4f139052af34",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; ProgressBar, busy, downloading, onDownloadingChanged, onWorkingChanged, wasWorking, working",
-    "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
+    "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Combined-source review (fix174b): both sides' changes to this file keep this statement and its guard unchanged."
   },
   {
     "id": "33a1143b6a0eb14bcc70",
@@ -17142,46 +17142,46 @@
     "line": 84,
     "statement": "Api.quiet(\"GET\", \"/api/readaloud/voices\", null, function(voices, error) {",
     "occurrence": 1,
-    "source_sha256": "8be6820da94dabf654970cd2f1a236802a2ec78d3891afc52d7d98f7e6d1b807",
+    "source_sha256": "88dea98042b6ea9921defe857af146acf413eab308a2a669c8cc4f139052af34",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; ProgressBar, busy, downloading, onDownloadingChanged, onWorkingChanged, wasWorking, working",
-    "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
+    "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Combined-source review (fix174b): both sides' changes to this file keep this statement and its guard unchanged."
   },
   {
     "id": "5c4c69daf625ed7b4f79",
     "kind": "destructive",
     "path": "desktop_qt/qml/VoiceModule.qml",
-    "line": 273,
+    "line": 274,
     "statement": "onActivated: { if (choiceRow.choice.installed) root.ask(choiceRow.choice.id, choiceRow.choice.label); else root.remove(choiceRow.choice.id) }",
     "occurrence": 1,
-    "source_sha256": "8be6820da94dabf654970cd2f1a236802a2ec78d3891afc52d7d98f7e6d1b807",
+    "source_sha256": "88dea98042b6ea9921defe857af146acf413eab308a2a669c8cc4f139052af34",
     "disposition": "confirmation",
     "guard": "VoiceSheets ModuleRemovePage, KeyRemovePage, TrackSheet / VoiceModule confirmation",
-    "reason": "Removing installed resources, credentials or imported music asks first; removing an incomplete package discards only temporary downloaded bytes. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
+    "reason": "Removing installed resources, credentials or imported music asks first; removing an incomplete package discards only temporary downloaded bytes. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Combined-source review (fix174b): both sides' changes to this file keep this statement and its guard unchanged."
   },
   {
     "id": "3be106f95717b829811e",
     "kind": "destructive",
     "path": "desktop_qt/qml/VoiceModule.qml",
-    "line": 411,
+    "line": 412,
     "statement": "description: root.asking && root.asking.use === undefined ? S.s_dang_xem_cuon_nao_con_dung_giong_nay_1a2d4fa1 : VoiceLogic.removeAsk(root.asking ? root.asking.use : null)",
     "occurrence": 1,
-    "source_sha256": "8be6820da94dabf654970cd2f1a236802a2ec78d3891afc52d7d98f7e6d1b807",
+    "source_sha256": "88dea98042b6ea9921defe857af146acf413eab308a2a669c8cc4f139052af34",
     "disposition": "confirmation",
     "guard": "VoiceSheets ModuleRemovePage, KeyRemovePage, TrackSheet / VoiceModule confirmation",
-    "reason": "Removing installed resources, credentials or imported music asks first; removing an incomplete package discards only temporary downloaded bytes. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
+    "reason": "Removing installed resources, credentials or imported music asks first; removing an incomplete package discards only temporary downloaded bytes. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Combined-source review (fix174b): both sides' changes to this file keep this statement and its guard unchanged."
   },
   {
     "id": "3a08d81c91f4da39eddf",
     "kind": "destructive",
     "path": "desktop_qt/qml/VoiceModule.qml",
-    "line": 424,
+    "line": 425,
     "statement": "onActivated: { const id = root.asking.id; confirm.dismiss(); root.remove(id) }",
     "occurrence": 1,
-    "source_sha256": "8be6820da94dabf654970cd2f1a236802a2ec78d3891afc52d7d98f7e6d1b807",
+    "source_sha256": "88dea98042b6ea9921defe857af146acf413eab308a2a669c8cc4f139052af34",
     "disposition": "confirmation",
     "guard": "VoiceSheets ModuleRemovePage, KeyRemovePage, TrackSheet / VoiceModule confirmation",
-    "reason": "Removing installed resources, credentials or imported music asks first; removing an incomplete package discards only temporary downloaded bytes. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
+    "reason": "Removing installed resources, credentials or imported music asks first; removing an incomplete package discards only temporary downloaded bytes. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Combined-source review (fix174b): both sides' changes to this file keep this statement and its guard unchanged."
   },
   {
     "id": "05fca5f003975d2aa527",
@@ -17190,7 +17190,7 @@
     "line": 21,
     "statement": "Api.quiet(\"GET\", \"/api/readaloud/voice-speed\", null, function(data, error) { if (!error && data) root.status = data })",
     "occurrence": 1,
-    "source_sha256": "7abc66b645027f667b7ef952aae8c89c384e442be6122e922049f361e8ab030d",
+    "source_sha256": "f861c587aebb9878430757a80c1e52a0638e76e00ed9ae8622cb953b91b36a23",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; PendingIndicator, busy, downloading, pending, working",
     "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads."
@@ -17202,7 +17202,7 @@
     "line": 26,
     "statement": "Api.quiet(\"POST\", \"/api/readaloud/voice-speed\", {choice: choice}, function(data, error) {",
     "occurrence": 1,
-    "source_sha256": "7abc66b645027f667b7ef952aae8c89c384e442be6122e922049f361e8ab030d",
+    "source_sha256": "f861c587aebb9878430757a80c1e52a0638e76e00ed9ae8622cb953b91b36a23",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; PendingIndicator, busy, downloading, pending, working",
     "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads."
@@ -17283,10 +17283,10 @@
     "id": "0e95271548b4b870e267",
     "kind": "pending",
     "path": "desktop_qt/qml/VoiceSample.qml",
-    "line": 28,
+    "line": 35,
     "statement": "Api.quiet(\"POST\", \"/api/readaloud/clip\", {voice: id, text: VoiceLogic.SAMPLE_TEXT}, function(data, error) {",
     "occurrence": 1,
-    "source_sha256": "d92235376adea73160879f86015214702886e807558aaece64824da1865eeb14",
+    "source_sha256": "cd62142b0ee18fd486c74608206f96c07548ee6d59c594fec0e4c62ebaf6d8c1",
     "disposition": "pending",
     "guard": "VoiceSample turn token drops late replies; loading/playing/failedVoice state shown on each VoiceRow; stopSample on popover close and destruction",
     "reason": "Moved verbatim from SettingsVoice.qml so Settings and the player voice popover share one preview owner. Each press starts a new turn; stale replies are ignored and failures are shown on the row."
@@ -17319,13 +17319,13 @@
     "id": "6a755871f6b8af687a36",
     "kind": "pending",
     "path": "desktop_qt/qml/ProjectScreen.qml",
-    "line": 58,
+    "line": 59,
     "statement": "store.request(\"PUT\", \"/api/books/\" + book.id + \"/metadata\", metadataDraft, function(status, data) {",
     "occurrence": 1,
     "disposition": "pending",
     "guard": "metadataBusy blocks duplicate writes and drives the save-button pending state.",
     "reason": "Only optional descriptive fields are submitted. Failure stays in the open editor; success refreshes project metadata without changing audio.",
-    "source_sha256": "133d3cfafcb8637ed680b96881d47f7c323494171a33e5fda5850f28e1f9fdb5"
+    "source_sha256": "f1ea92046c073fa5b33b65a6d3a6638922711f9ed95e61b9f4a70f3a8296361b"
   },
   {
     "id": "a5e2f6939495d2574a6f",

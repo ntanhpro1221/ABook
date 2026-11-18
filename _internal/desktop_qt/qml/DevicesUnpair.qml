@@ -20,13 +20,14 @@ Modal {
     keepOpen: function() { return root.busyChoice !== "" }
 
     Column {
+        id: columnOfText
         width: parent.width
         spacing: 8
         Repeater {
             model: root.shownCopy ? root.shownCopy.lines : []
             Text {
                 required property string modelData
-                width: parent.width
+                width: columnOfText.width
                 text: modelData
                 color: Theme.text2
                 wrapMode: Text.WrapAtWordBoundaryOrAnywhere

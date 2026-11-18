@@ -1,0 +1,349 @@
+{
+ "about": "Shared by tests/test_book_metadata.py and Android BookMetadataParityTest: `metaVersion` of a book.json (Python listen_view.metadata_version, Kotlin BookMetadata.version) and the book.json an export writes after the listener's descriptive edits (Python book_metadata.overlay, Kotlin BookMetadata.overlay). Values made by Python.",
+ "cases": [
+  {
+   "name": "plain book",
+   "book": {
+    "format": "abook-book/1",
+    "title": "Hồ giấy",
+    "version": "v",
+    "narrator": "Giọng A",
+    "chapters": [
+     {
+      "id": 1,
+      "title": "Chương 1",
+      "subtitle": "Buổi sáng",
+      "file": "chapters/0001.mp3"
+     },
+     {
+      "id": 2,
+      "title": "Chương 2",
+      "fullTitle": "Chương 2: \"Đêm\"\nmưa"
+     }
+    ]
+   },
+   "edits": {},
+   "version": "16d69507503b3e10",
+   "overlaid": {
+    "format": "abook-book/1",
+    "title": "Hồ giấy",
+    "version": "v",
+    "narrator": "Giọng A",
+    "chapters": [
+     {
+      "id": 1,
+      "title": "Chương 1",
+      "subtitle": "Buổi sáng",
+      "file": "chapters/0001.mp3"
+     },
+     {
+      "id": 2,
+      "title": "Chương 2",
+      "fullTitle": "Chương 2: \"Đêm\"\nmưa"
+     }
+    ]
+   }
+  },
+  {
+   "name": "every descriptive field and a series link",
+   "book": {
+    "format": "abook-book/1",
+    "title": "Hồ giấy",
+    "version": "v",
+    "narrator": "Giọng A",
+    "chapters": [
+     {
+      "id": 1,
+      "title": "Chương 1",
+      "subtitle": "Buổi sáng",
+      "file": "chapters/0001.mp3"
+     },
+     {
+      "id": 2,
+      "title": "Chương 2",
+      "fullTitle": "Chương 2: \"Đêm\"\nmưa"
+     }
+    ],
+    "author": "Người Viết",
+    "series": {
+     "root": "abc",
+     "part": 2
+    },
+    "illustrator": "Người Vẽ",
+    "altTitles": [
+     "Paper Lake",
+     " ",
+     "湖"
+    ],
+    "genres": [
+     "Fantasy"
+    ],
+    "summary": "Một chiếc thuyền.\n\nNó trôi 🚣.",
+    "source": {
+     "url": "https://example.org/b",
+     "site": "Ví dụ"
+    }
+   },
+   "edits": {
+    "summary": "Tóm tắt mới."
+   },
+   "version": "8a0199f3bda73d45",
+   "overlaid": {
+    "format": "abook-book/1",
+    "title": "Hồ giấy",
+    "version": "v",
+    "narrator": "Giọng A",
+    "chapters": [
+     {
+      "id": 1,
+      "title": "Chương 1",
+      "subtitle": "Buổi sáng",
+      "file": "chapters/0001.mp3"
+     },
+     {
+      "id": 2,
+      "title": "Chương 2",
+      "fullTitle": "Chương 2: \"Đêm\"\nmưa"
+     }
+    ],
+    "author": "Người Viết",
+    "series": {
+     "root": "abc",
+     "part": 2
+    },
+    "illustrator": "Người Vẽ",
+    "altTitles": [
+     "Paper Lake",
+     " ",
+     "湖"
+    ],
+    "genres": [
+     "Fantasy"
+    ],
+    "summary": "Tóm tắt mới.",
+    "source": {
+     "url": "https://example.org/b",
+     "site": "Ví dụ"
+    },
+    "metaVersion": "b4e60754d127909b"
+   }
+  },
+  {
+   "name": "clearing the source and the summary removes them, as Python overlay",
+   "book": {
+    "format": "abook-book/1",
+    "title": "Hồ giấy",
+    "version": "v",
+    "narrator": "Giọng A",
+    "chapters": [
+     {
+      "id": 1,
+      "title": "Chương 1",
+      "subtitle": "Buổi sáng",
+      "file": "chapters/0001.mp3"
+     },
+     {
+      "id": 2,
+      "title": "Chương 2",
+      "fullTitle": "Chương 2: \"Đêm\"\nmưa"
+     }
+    ],
+    "author": "Người Viết",
+    "summary": "Cũ.",
+    "source": {
+     "url": "https://example.org/b",
+     "site": "Ví dụ"
+    }
+   },
+   "edits": {
+    "source": {
+     "url": "",
+     "site": ""
+    },
+    "summary": "   ",
+    "genres": []
+   },
+   "version": "79948215a5b05a63",
+   "overlaid": {
+    "format": "abook-book/1",
+    "title": "Hồ giấy",
+    "version": "v",
+    "narrator": "Giọng A",
+    "chapters": [
+     {
+      "id": 1,
+      "title": "Chương 1",
+      "subtitle": "Buổi sáng",
+      "file": "chapters/0001.mp3"
+     },
+     {
+      "id": 2,
+      "title": "Chương 2",
+      "fullTitle": "Chương 2: \"Đêm\"\nmưa"
+     }
+    ],
+    "author": "Người Viết",
+    "metaVersion": "a9e3b9f5b9bea02f"
+   }
+  },
+  {
+   "name": "blank fields count as absent",
+   "book": {
+    "format": "abook-book/1",
+    "title": "Hồ giấy",
+    "version": "v",
+    "narrator": "Giọng A",
+    "chapters": [
+     {
+      "id": 1,
+      "title": "Chương 1",
+      "subtitle": "Buổi sáng",
+      "file": "chapters/0001.mp3"
+     },
+     {
+      "id": 2,
+      "title": "Chương 2",
+      "fullTitle": "Chương 2: \"Đêm\"\nmưa"
+     }
+    ],
+    "author": "",
+    "summary": " ",
+    "genres": [],
+    "source": {
+     "url": "",
+     "site": ""
+    }
+   },
+   "edits": {
+    "author": "Tác giả mới"
+   },
+   "version": "16d69507503b3e10",
+   "overlaid": {
+    "format": "abook-book/1",
+    "title": "Hồ giấy",
+    "version": "v",
+    "narrator": "Giọng A",
+    "chapters": [
+     {
+      "id": 1,
+      "title": "Chương 1",
+      "subtitle": "Buổi sáng",
+      "file": "chapters/0001.mp3"
+     },
+     {
+      "id": 2,
+      "title": "Chương 2",
+      "fullTitle": "Chương 2: \"Đêm\"\nmưa"
+     }
+    ],
+    "author": "Tác giả mới",
+    "summary": " ",
+    "genres": [],
+    "source": {
+     "url": "",
+     "site": ""
+    },
+    "metaVersion": "e7b9b5180472060b"
+   }
+  },
+  {
+   "name": "volumes",
+   "book": {
+    "format": "abook-book/1",
+    "title": "Hồ giấy",
+    "version": "v",
+    "narrator": "Giọng A",
+    "chapters": [
+     {
+      "id": 1,
+      "title": "Chương 1",
+      "subtitle": "Buổi sáng",
+      "file": "chapters/0001.mp3"
+     },
+     {
+      "id": 2,
+      "title": "Chương 2",
+      "fullTitle": "Chương 2: \"Đêm\"\nmưa"
+     }
+    ],
+    "volumes": [
+     {
+      "id": 1,
+      "number": 1,
+      "title": "Tập 1",
+      "cover": null,
+      "chapters": [
+       {
+        "id": 1
+       }
+      ]
+     },
+     {
+      "id": 7,
+      "number": 2,
+      "title": "Tập 2",
+      "cover": {
+       "file": "covers/7.jpg"
+      },
+      "chapters": [
+       {
+        "id": 2
+       }
+      ]
+     }
+    ]
+   },
+   "edits": {
+    "illustrator": "Người Vẽ"
+   },
+   "version": "d922a266a1ea893f",
+   "overlaid": {
+    "format": "abook-book/1",
+    "title": "Hồ giấy",
+    "version": "v",
+    "narrator": "Giọng A",
+    "chapters": [
+     {
+      "id": 1,
+      "title": "Chương 1",
+      "subtitle": "Buổi sáng",
+      "file": "chapters/0001.mp3"
+     },
+     {
+      "id": 2,
+      "title": "Chương 2",
+      "fullTitle": "Chương 2: \"Đêm\"\nmưa"
+     }
+    ],
+    "volumes": [
+     {
+      "id": 1,
+      "number": 1,
+      "title": "Tập 1",
+      "cover": null,
+      "chapters": [
+       {
+        "id": 1
+       }
+      ]
+     },
+     {
+      "id": 7,
+      "number": 2,
+      "title": "Tập 2",
+      "cover": {
+       "file": "covers/7.jpg"
+      },
+      "chapters": [
+       {
+        "id": 2
+       }
+      ]
+     }
+    ],
+    "illustrator": "Người Vẽ",
+    "metaVersion": "e75877b714945f3d"
+   }
+  }
+ ]
+}

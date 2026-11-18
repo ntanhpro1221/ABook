@@ -32,8 +32,10 @@ class BookDocumentWriterTest {
     private fun sha256(bytes: ByteArray) = MessageDigest.getInstance("SHA-256").digest(bytes).joinToString("") { "%02x".format(it) }
 
     /** Các số vàng này kiểm lớp sửa; dấu truyền audio được kiểm riêng trong AudioRevisionTest. */
+    // metaVersion is a digest of the shown fields, written by the export (BookMetadata.overlay); its parity with Python
+    // listen_view.metadata_version is BookMetadataParityTest.metaVersionAndOverlayMatchPython, not this view of the fields.
     private fun editingView(book: JSONObject): JSONObject = (BookEdits.deepCopy(book) as JSONObject).also { shown ->
-        listOf("id", "edits", "unsaved", "wishes", "capabilities", "projectFile", "package", "audioVersion", "volumes").forEach(shown::remove)
+        listOf("id", "edits", "unsaved", "wishes", "capabilities", "projectFile", "package", "audioVersion", "metaVersion", "volumes").forEach(shown::remove)
         shown.optJSONArray("chapters")?.let { chapters ->
             for (index in 0 until chapters.length()) chapters.getJSONObject(index).apply { remove("sha256"); remove("volumeId") }
         }

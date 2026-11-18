@@ -158,6 +158,7 @@ Column {
                 width: parent.width
                 open: root.povList.length > 0
                 Column {
+                    id: columnOfImportCheck
                     objectName: "newPovChapters"
                     width: parent.width
                     topPadding: 16
@@ -170,7 +171,7 @@ Column {
                         delegate: ImportCheck {
                             required property var modelData
                             objectName: "newPovChapter"
-                            width: parent.width
+                            width: columnOfImportCheck.width
                             label: modelData.title + S.s_toi_la_90e4c35d + modelData.name
                             checked: (root.draft.povOff || []).indexOf(modelData.chapter) < 0
                             onToggled: value => {

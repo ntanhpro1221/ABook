@@ -39,6 +39,7 @@ Column {
         width: parent.width
         open: root.others.length > 0
         NewNote {
+            id: newNoteOfFlow
             objectName: "newExistingNote"
             width: parent.width
             icon: "info"
@@ -47,7 +48,7 @@ Column {
                 model: root.others
                 delegate: Flow {
                     required property var modelData
-                    width: parent.width
+                    width: newNoteOfFlow.contentWidth
                     spacing: 8
                     Text {
                         width: Math.min(implicitWidth, parent.width)
@@ -67,6 +68,7 @@ Column {
         width: parent.width
         open: root.splits.length > 0
         Column {
+            id: columnOfNewNote
             width: parent.width
             Repeater {
                 model: root.splits
@@ -74,7 +76,7 @@ Column {
                     id: suggestion
                     required property var modelData
                     objectName: "newSplitNote"
-                    width: parent.width
+                    width: columnOfNewNote.width
                     icon: "sparkles"
                     tone: Theme.accentText
                     readonly property var plan: modelData.split
@@ -110,6 +112,7 @@ Column {
         width: parent.width
         open: root.matter.length > 0
         Column {
+            id: columnOfImportCheck
             objectName: "newMatter"
             width: parent.width
             topPadding: 16
@@ -121,7 +124,7 @@ Column {
                 delegate: ImportCheck {
                     required property var modelData
                     objectName: "newMatterRow"
-                    width: parent.width
+                    width: columnOfImportCheck.width
                     label: modelData.matter
                     help: modelData.firstLine || modelData.name
                     checked: (root.draft.keepMatter || []).indexOf(modelData.path) >= 0
