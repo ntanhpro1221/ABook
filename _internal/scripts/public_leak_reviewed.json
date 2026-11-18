@@ -4417,7 +4417,7 @@
     "reason": "tests/test_pin_the_book_cast.py: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
   },
   "_internal/tests/test_pipeline_mock.py": {
-    "sha256": "3f5bec573386ae3b3d7f183054acce0fe45ba8858000d3e3a9efa1c87c791566",
+    "sha256": "162a7888024c17714784fe55a1a7a3dbc6499c25f05113763d6c656737c9dd0c",
     "reason": "tests/test_pipeline_mock.py: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data. Integration phase 2: combined authored implementation, expectations or technical documentation; exact inherited Corpus sequences rechecked; no new Corpus approval."
   },
   "_internal/tests/test_pool_counts_its_own_ram.py": {
