@@ -980,6 +980,7 @@ var s_da_nghe_het_phan_da_co_u00a0_u00a0_0cb260be = "Đã nghe hết phần đã
 var s_da_nghe_het_sach_2fefde33 = "Đã nghe hết sách";
 var s_da_nghe_xong_bam_nghe_thu_de_nghe_lai_u00a_9e8cc7ab = "Đã nghe xong - bấm “Nghe thử” để nghe lại · ";
 var s_da_nghe_xong_d276b702 = "Đã nghe xong";
+var s_da_nhap_47b970fc = "Đã nhập";
 var s_da_nho_may_giu_sach_rut_lai_e7afaa0b = "Đã nhờ máy giữ sách rút lại";
 var s_da_phan_tich_xong_4edb6015 = "” đã phân tích xong";
 var s_da_quyet_3f663a9a = " đã quyết";
@@ -2465,6 +2466,7 @@ var s_the_e2579785 = " thẻ “";
 var s_the_hoi_lai_nhu_truoc_khi_bam_7ad3829e = "Thẻ hỏi lại như trước khi bấm.";
 var s_the_loai_truyen_9c821aa0 = "Thể loại truyện";
 var s_the_tro_lai_cho_duyet_7b3f19d4 = " thẻ trở lại chờ duyệt.";
+function s_them_0_07ca4c38(p0) { return "Thêm " + String(p0); }
 var s_them_3f5e8c43 = "Thêm ";
 var s_them_ban_rieng_fe9759e4 = "Thêm bản riêng";
 var s_them_cach_doc_2c703022 = "Thêm cách đọc";

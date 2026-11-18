@@ -11,7 +11,7 @@ icon `LucidePaths.js` sinh bởi `scripts/gen_lucide_icons.py --qml`. Bảng dư
 
 <!-- ui_parity_qt:begin (SINH TỰ ĐỘNG bởi scripts/ui_parity_qt.py - không sửa tay, chạy lại script) -->
 
-Quét: web máy tính 6249 chữ (2877 khác nhau), 351 cặp nhãn-icon; Qt 3700 chữ (2716 khác nhau), 292 cặp nhãn-icon (icon dùng ở 415 chỗ). Khoá so lỏng như UI_PARITY.md (hạ chữ, dấu thanh một kiểu, `...` = `…`, bỏ dấu câu cuối); phím tắt trong chú thích Qt (`Thu nhỏ (Esc)`) tách khỏi nhãn.
+Quét: web máy tính 6249 chữ (2877 khác nhau), 351 cặp nhãn-icon; Qt 3701 chữ (2718 khác nhau), 292 cặp nhãn-icon (icon dùng ở 415 chỗ). Khoá so lỏng như UI_PARITY.md (hạ chữ, dấu thanh một kiểu, `...` = `…`, bỏ dấu câu cuối); phím tắt trong chú thích Qt (`Thu nhỏ (Esc)`) tách khỏi nhãn.
 
 ## a. Cùng việc, khác chữ
 
@@ -72,7 +72,7 @@ Mỗi cặp còn lại phải có giải thích trong ui_strings/qt_wording_revi
 | Bắt đầu | headphones | wand-sparkles | `qt/NewProjectScreen.qml:185` ~ `desktop/AudiobookDialog.tsx:216` | Different operations: Qt starts a Studio production job (wand-sparkles); the matched web dialog starts a read-aloud export (headphones). |
 | Chi tiết | info | chevron-right | `qt/MyMusicDetails.qml:29` (+1) ~ `studio/ProjectScreen.tsx:758` | Different controls: Qt rotates a disclosure chevron to expand the music details; the matched web item opens project information. |
 | Quay lại | chevron-left | arrow-left | `qt/ScreenHeader.qml:14` (+1) ~ `listen/LineWishes.tsx:224` (+2) | Different navigation depth: the web chevron returns one step inside a sentence editor; the Qt arrow returns to the previous screen. |
-| Tạm dừng {} | check, circle-dashed, play | pause | `qt/BookCell.qml:92` ~ `listen/BookScreen.tsx:189` (+3) | Scanner pairing ambiguity: the web book row has status check/circle icons beside its transport action. Its actual pause action and the Qt book cell use pause. |
+| Tạm dừng {} | check, circle-dashed, play | pause | `qt/BookCell.qml:98` ~ `listen/BookScreen.tsx:189` (+3) | Scanner pairing ambiguity: the web book row has status check/circle icons beside its transport action. Its actual pause action and the Qt book cell use pause. |
 
 **Cùng icon, khác nhãn** (67 cặp Qt; web cùng màn dùng cùng icon với nhãn khác):
 
@@ -84,9 +84,9 @@ Mỗi cặp còn lại phải có giải thích trong ui_strings/qt_wording_revi
 | Thêm sách | file-text | Đang đọc | Đang đọc / Chọn file sách | `qt/AddBook.qml:551` |
 | Cài đặt | download | Cập nhật ABook | Cài Studio, Cài tiếp, Có ABook {} | `qt/AdvancedUpdate.qml:96` |
 | Cài đặt | download | Đang tải bản mới | Cài Studio, Cài tiếp, Có ABook {} | `qt/AdvancedUpdate.qml:96` |
-| Thư viện | play | Nghe ngay {} | Đọc {} | `qt/BookCell.qml:92` |
-| Thư viện | play | Nghe {} | Đọc {} | `qt/BookCell.qml:92` |
-| Thư viện | pause | Tạm dừng {} | Đọc {} | `qt/BookCell.qml:92` |
+| Thư viện | play | Nghe ngay {} | Đọc {} | `qt/BookCell.qml:98` |
+| Thư viện | play | Nghe {} | Đọc {} | `qt/BookCell.qml:98` |
+| Thư viện | pause | Tạm dừng {} | Đọc {} | `qt/BookCell.qml:98` |
 | Trang sách | chevron-up | Thu gọn | Thu gọn / Xem thêm | `qt/BookMetadataDetails.qml:75` |
 | Trang sách | chevron-down | Xem thêm | Thu gọn / Xem thêm | `qt/BookMetadataDetails.qml:75` |
 | Trang sách | check-check | Chưa nghe xong | Chưa nghe / Đã nghe xong, Chưa nghe xong / Đã nghe xong | `qt/BookPage.qml:174` |
@@ -107,8 +107,8 @@ Mỗi cặp còn lại phải có giải thích trong ui_strings/qt_wording_revi
 | Thêm sách | book-plus | Thả để thêm sách | Thêm vào thư viện | `qt/ImportDrop.qml:49` |
 | Thư viện | play | Nghe tiếp | Đọc {} | `qt/LibraryContinue.qml:46` |
 | Thư viện | pause | Tạm dừng | Đọc {} | `qt/LibraryContinue.qml:46` |
-| Thư viện | x | Đóng ô tìm | Xoá ô tìm | `qt/LibraryScreen.qml:191` |
-| Thư viện | search | Chưa có cuốn nào nghe xong. | Thử tên sách hoặc tác giả khác., Tìm sách | `qt/LibraryScreen.qml:497` |
+| Thư viện | x | Đóng ô tìm | Xoá ô tìm | `qt/LibraryScreen.qml:192` |
+| Thư viện | search | Chưa có cuốn nào nghe xong. | Thử tên sách hoặc tác giả khác., Tìm sách | `qt/LibraryScreen.qml:499` |
 | Nhạc | square | Dừng nghe | Dừng nghe thử, Dừng tải | `qt/MusicScreen.qml:251` |
 | Nhạc | download | Tải tiếp | Lưu tất cả ({}), Tải cả danh sách ({}), Tải tiếp / Tải về | `qt/MusicTrackDetail.qml:107` |
 | Nhạc | download | Tải về | Lưu tất cả ({}), Tải cả danh sách ({}), Tải tiếp / Tải về | `qt/MusicTrackDetail.qml:107` |
@@ -174,7 +174,7 @@ Nhãn ngắn (<= 6 chữ). **Chỉ Qt**: không có ở web cùng màn; `*` = we
 
 ### Thư viện
 
-- chỉ Qt (9): Tạm dừng* (`qt/LibraryContinue.qml:44`); Mới thêm* (`qt/LibraryScreen.qml:48`); Tác giả* (`qt/LibraryScreen.qml:48`); Tên sách* (`qt/LibraryScreen.qml:48`); Đang mở ABook* (`qt/LibraryScreen.qml:394`); Chưa mở được ABook (`qt/LibraryScreen.qml:443`); Chưa tải được thư viện (`qt/LibraryScreen.qml:443`); Thử lại* (`qt/LibraryScreen.qml:461`); Không thấy “{}”* (`qt/LibraryScreen.qml:498`)
+- chỉ Qt (11): Dự án* (`qt/BookCell.qml:34`); Đã nhập* (`qt/BookCell.qml:34`); Tạm dừng* (`qt/LibraryContinue.qml:44`); Mới thêm* (`qt/LibraryScreen.qml:48`); Tác giả* (`qt/LibraryScreen.qml:48`); Tên sách* (`qt/LibraryScreen.qml:48`); Đang mở ABook* (`qt/LibraryScreen.qml:396`); Chưa mở được ABook (`qt/LibraryScreen.qml:445`); Chưa tải được thư viện (`qt/LibraryScreen.qml:445`); Thử lại* (`qt/LibraryScreen.qml:463`); Không thấy “{}”* (`qt/LibraryScreen.qml:500`)
 - chỉ web (7): Đang tạm dừng {} (`335`); Đang làm {} (`336`); Đang tạm dừng{} (`340`); Chưa có chương nghe được{} (`342`); Đang làm · {} (`342`); Thư viện chưa có sách nào. (`463`); Chữ bìa trên hoạ tiết sóng (`86`)
 
 ### Thanh phát

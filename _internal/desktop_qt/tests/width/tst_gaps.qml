@@ -5,6 +5,9 @@ import "VisualReady.js" as VisualReady
 import ABook
 import "../../qml/FindLogic.js" as Find
 import "../../qml/BookLogic.js" as BookText
+import "../../qml/LibraryLogic.js" as LibraryLogic
+import "../../qml/StudioLogic.js" as StudioLogic
+import "../../qml/UiStrings.js" as S
 
 // Lỗ "chỉ web" của các màn ngoài Studio (docs/UI_PARITY_QT.md mục c): logic "Tìm trong sách" chép đủ ca của web listen/findText.test.ts (+ findStatus),
 // dòng chữ phần đầu trang sách (BookScreen.tsx / LibraryScreen.tsx bookStatusText), rồi giao diện: hàng nút phụ Đọc / Tìm / Từ đầu / Thêm, hộp Tìm
@@ -406,18 +409,27 @@ Item {
         function test_everyCellHasTheSameHeight() {
             const props = [
                 {title: "Chí Phèo", subtitle: "Nam Cao", coverKey: "a"},
-                {title: "Dế Mèn phiêu lưu ký, một cái tên rất dài cho ô lưới hẹp", subtitle: "Còn 12 giờ 45 phút", coverKey: "b"},
+                // Dòng tình trạng DÀI (soát fix174b TB-1): thu tới cỡ tối thiểu vẫn rộng hơn 160 px, nên cắt "…" trên đúng một dòng, không xuống dòng.
+                {title: "Dế Mèn phiêu lưu ký, một cái tên rất dài cho ô lưới hẹp", subtitle: "Đã nghe hết phần đã có · 12/30 chương", coverKey: "b"},
                 {title: "Nhật ký trong tù", subtitle: "Hồ Chí Minh", source: "máy tính", coverKey: "c"},
-                {title: "Bìa vẽ", subtitle: "", coverKey: ""}
+                {title: "Bìa vẽ", subtitle: "", coverKey: ""},
+                // Cuốn ở máy khác có tên máy dài: chỉ icon máy tính (tên máy ở Accessible.name), dòng vẫn một dòng.
+                {title: "Truyện Kiều", subtitle: "Đã nghe hết phần đã có · 12/30 chương", source: "Máy tính xách tay của chị Hoa ở phòng khách", coverKey: "e"}
             ]
             const cells = []
             for (const p of props) cells.push(createTemporaryObject(cellFactory, host, Object.assign({book: {bookId: p.title}, coverWidth: 160}, p)))
             for (const cell of cells) compare(cell.implicitHeight, cells[0].implicitHeight, cell.title)
-            const longSub = one(cells[1], "bookCellSubtitle")
-            compare(longSub.lineCount, 1)
-            compare(longSub.elide, Text.ElideNone)
-            verify(!longSub.truncated)
-            verify(longSub.width <= 160)
+            for (const at of [1, 4]) {
+                const longSub = one(cells[at], "bookCellSubtitle")
+                compare(longSub.lineCount, 1, cells[at].title)
+                compare(longSub.fit, "cut", cells[at].title)
+                compare(longSub.font.pixelSize, longSub.minSize)
+                compare(longSub.elide, Text.ElideRight)
+                verify(longSub.truncated)
+                verify(longSub.x + longSub.width <= 160)
+                compare(longSub.height, one(cells[0], "bookCellSubtitle").height)
+            }
+            verify(one(cells[4], "bookCellSubtitle").text.indexOf("Máy tính xách tay") < 0)
             verify(one(cells[1], "bookCellTitle").lineCount <= 2)
             verify(one(cells[0], "bookCellTitle").visible)
             // Chủ sách 15-11: bìa vẽ (không ảnh) vẫn có tên dưới bìa, thấy được và đọc được, nằm trên dòng phụ như ô có ảnh.
@@ -427,7 +439,22 @@ Item {
             compare(drawn.text, "Bìa vẽ")
             compare(drawn.y, one(cells[0], "bookCellTitle").y)
             verify(one(cells[3], "bookCellSubtitle").y >= drawn.y + drawn.height)
-            compare(one(cells[2], "bookCellSubtitle").text, "Trên máy tính · Hồ Chí Minh")
+            compare(one(cells[2], "bookCellSubtitle").text, "Hồ Chí Minh")
+        }
+        // Hai cuốn CÙNG TÊN (soát fix174b Thấp-8, như web twinKind): dòng tình trạng nối "Dự án" / "Đã nhập" và "Thêm <ngày>"; cuốn không trùng thì không.
+        function test_twinBooksSayWhichIsWhich() {
+            const added = Math.floor(Date.now() / 1000) - 10 * 86400
+            const twins = LibraryLogic.twinIds([{bookId: "a", title: "Chí  Phèo"}, {bookId: "b", title: "chí phèo"}, {bookId: "c", title: "Lão Hạc"}])
+            verify(twins.a && twins.b && !twins.c)
+            const base = {chaptersTotal: 3, chaptersAvailable: 3, stage: "text", addedAt: added}
+            const project = createTemporaryObject(cellFactory, host, {title: "Chí Phèo", twin: true, book: Object.assign({bookId: "a", capabilities: {workshop: true}}, base)})
+            const imported = createTemporaryObject(cellFactory, host, {title: "Chí Phèo", twin: true, book: Object.assign({bookId: "b", imported: true}, base)})
+            const alone = createTemporaryObject(cellFactory, host, {title: "Lão Hạc", book: Object.assign({bookId: "c", imported: true}, base)})
+            const when = S.s_them_0_07ca4c38(StudioLogic.formatWhen(added))
+            compare(project.subLine, [project.statusText, S.s_du_an_4f139d43, when].join(" · "))
+            compare(imported.subLine, [imported.statusText, S.s_da_nhap_47b970fc, when].join(" · "))
+            compare(alone.subLine, alone.statusText)
+            compare(project.implicitHeight, alone.implicitHeight)
         }
         // Nút phát trên bìa như web: tròn 44, nền panel, shadow-card, cách góc bìa 10 - bìa tối hay sáng vẫn nổi; ẩn tới khi rê chuột
         function test_coverPlayButtonStandsOutOnAnyCover() {
