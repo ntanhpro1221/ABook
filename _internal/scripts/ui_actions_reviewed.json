@@ -3,85 +3,85 @@
     "id": "f22ab217f208719aae55",
     "kind": "pending",
     "path": "ui/src/desktop/App.tsx",
-    "line": 180,
+    "line": 183,
     "statement": "const remove = async () => {",
     "occurrence": 1,
-    "source_sha256": "7ee095a6ddde4d5849d904b12a7bf5850597917bf6ede053ac36f970aaa9b5d2",
+    "source_sha256": "648240ad7a71eaf7ece3b6a0fc44f7e1a24a31fe423136f5650648233e8e976a",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; busy, loading, setBusy, trash_pending",
-    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
+    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Tapfix5b source review: opener focus, text-only status or startup theme changed; this exact action and its guard are unchanged."
   },
   {
     "id": "4be2c54041e9d2c14748",
     "kind": "destructive",
     "path": "ui/src/desktop/App.tsx",
-    "line": 186,
+    "line": 189,
     "statement": "const result = await api<{ ok: boolean; undo?: string }>(`/api/listen/books/${book.id}`, { method: \"DELETE\" });",
     "occurrence": 1,
-    "source_sha256": "7ee095a6ddde4d5849d904b12a7bf5850597917bf6ede053ac36f970aaa9b5d2",
+    "source_sha256": "648240ad7a71eaf7ece3b6a0fc44f7e1a24a31fe423136f5650648233e8e976a",
     "disposition": "confirmation",
     "guard": "Delete dialog / StudioConfirm or DeleteBookPage; trashUndo / UndoDelete after acceptance",
-    "reason": "Book/project deletion is explicitly confirmed and the existing recoverable trash token remains available. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
+    "reason": "Book/project deletion is explicitly confirmed and the existing recoverable trash token remains available. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Tapfix5b source review: opener focus, text-only status or startup theme changed; this exact action and its guard are unchanged."
   },
   {
     "id": "5df00973536e1af29d1a",
     "kind": "destructive",
     "path": "ui/src/desktop/App.tsx",
-    "line": 206,
+    "line": 209,
     "statement": "<Button variant=\"danger\" icon={Trash2} loading={busy} onClick={() => remove()}>{S.s_xoa_khoi_thu_vien_79dbd32b}</Button>",
     "occurrence": 1,
-    "source_sha256": "7ee095a6ddde4d5849d904b12a7bf5850597917bf6ede053ac36f970aaa9b5d2",
+    "source_sha256": "648240ad7a71eaf7ece3b6a0fc44f7e1a24a31fe423136f5650648233e8e976a",
     "disposition": "confirmation",
     "guard": "Delete dialog / StudioConfirm or DeleteBookPage; trashUndo / UndoDelete after acceptance",
-    "reason": "Book/project deletion is explicitly confirmed and the existing recoverable trash token remains available. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
+    "reason": "Book/project deletion is explicitly confirmed and the existing recoverable trash token remains available. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Tapfix5b source review: opener focus, text-only status or startup theme changed; this exact action and its guard are unchanged."
   },
   {
     "id": "6a3a615843c127818cd3",
     "kind": "destructive",
     "path": "ui/src/desktop/App.tsx",
-    "line": 211,
+    "line": 214,
     "statement": "description={book ? removeAsk(book) : \"\"}",
     "occurrence": 1,
-    "source_sha256": "7ee095a6ddde4d5849d904b12a7bf5850597917bf6ede053ac36f970aaa9b5d2",
+    "source_sha256": "648240ad7a71eaf7ece3b6a0fc44f7e1a24a31fe423136f5650648233e8e976a",
     "disposition": "confirmation",
     "guard": "Delete dialog / StudioConfirm or DeleteBookPage; trashUndo / UndoDelete after acceptance",
-    "reason": "Book/project deletion is explicitly confirmed and the existing recoverable trash token remains available. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
+    "reason": "Book/project deletion is explicitly confirmed and the existing recoverable trash token remains available. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Tapfix5b source review: opener focus, text-only status or startup theme changed; this exact action and its guard are unchanged."
   },
   {
     "id": "f2521f95af40a56b9b6c",
     "kind": "pending",
     "path": "ui/src/desktop/App.tsx",
-    "line": 363,
+    "line": 366,
     "statement": "const replay = async () => {",
     "occurrence": 1,
-    "source_sha256": "7ee095a6ddde4d5849d904b12a7bf5850597917bf6ede053ac36f970aaa9b5d2",
+    "source_sha256": "648240ad7a71eaf7ece3b6a0fc44f7e1a24a31fe423136f5650648233e8e976a",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; busy, loading, setBusy, trash_pending",
-    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
+    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Tapfix5b source review: opener focus, text-only status or startup theme changed; this exact action and its guard are unchanged."
   },
   {
     "id": "7402295cdb285d6a7a23",
     "kind": "pending",
     "path": "ui/src/desktop/App.tsx",
-    "line": 413,
+    "line": 416,
     "statement": "async (path: string, session?: ReadSession) => {",
     "occurrence": 1,
-    "source_sha256": "7ee095a6ddde4d5849d904b12a7bf5850597917bf6ede053ac36f970aaa9b5d2",
+    "source_sha256": "648240ad7a71eaf7ece3b6a0fc44f7e1a24a31fe423136f5650648233e8e976a",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; busy, loading, setBusy, trash_pending",
-    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
+    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Tapfix5b source review: opener focus, text-only status or startup theme changed; this exact action and its guard are unchanged."
   },
   {
     "id": "bf19a790cd9bf0dc7ac8",
     "kind": "pending",
     "path": "ui/src/desktop/App.tsx",
-    "line": 434,
+    "line": 437,
     "statement": "const run = async () => {",
     "occurrence": 1,
-    "source_sha256": "7ee095a6ddde4d5849d904b12a7bf5850597917bf6ede053ac36f970aaa9b5d2",
+    "source_sha256": "648240ad7a71eaf7ece3b6a0fc44f7e1a24a31fe423136f5650648233e8e976a",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; busy, loading, setBusy, trash_pending",
-    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
+    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Tapfix5b source review: opener focus, text-only status or startup theme changed; this exact action and its guard are unchanged."
   },
   {
     "id": "7a5c08271e7435852a97",
@@ -726,10 +726,10 @@
     "line": 94,
     "statement": "queryFn: async (): Promise<RemoteView> => ({ ...(await api<{ phones: RemotePhone[] }>(\"/api/remote\")), receivedAt: Date.now() }),",
     "occurrence": 1,
-    "source_sha256": "b159259c93e7122e71a4655d36622380ef1d162a90e95b092b8eb5c19fb56aa9",
+    "source_sha256": "e3a39fc5c00ea23ab3cbfe5ec39f7043d8f2bad5f3973ed1d03b15aed23760e0",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; loading, progress",
-    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering."
+    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Tapfix5b source review: opener focus, text-only status or startup theme changed; this exact action and its guard are unchanged."
   },
   {
     "id": "1c45f366f8a345de4389",
@@ -738,94 +738,94 @@
     "line": 205,
     "statement": "const listenHere = async () => {",
     "occurrence": 1,
-    "source_sha256": "b159259c93e7122e71a4655d36622380ef1d162a90e95b092b8eb5c19fb56aa9",
+    "source_sha256": "e3a39fc5c00ea23ab3cbfe5ec39f7043d8f2bad5f3973ed1d03b15aed23760e0",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; loading, progress",
-    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering."
+    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Tapfix5b source review: opener focus, text-only status or startup theme changed; this exact action and its guard are unchanged."
   },
   {
     "id": "8079fdc60f2680f965df",
     "kind": "destructive",
     "path": "ui/src/desktop/RemotePhone.tsx",
-    "line": 520,
+    "line": 525,
     "statement": "for (const [id, at] of handled) if (now - at > 60_000) handled.delete(id);",
     "occurrence": 1,
-    "source_sha256": "b159259c93e7122e71a4655d36622380ef1d162a90e95b092b8eb5c19fb56aa9",
+    "source_sha256": "e3a39fc5c00ea23ab3cbfe5ec39f7043d8f2bad5f3973ed1d03b15aed23760e0",
     "disposition": "internal",
     "guard": "In-memory collection entry lifecycle",
-    "reason": "The statement releases a listener, request, UI row, selection or cache entry; it does not delete its persisted source."
+    "reason": "The statement releases a listener, request, UI row, selection or cache entry; it does not delete its persisted source. Tapfix5b source review: opener focus, text-only status or startup theme changed; this exact action and its guard are unchanged."
   },
   {
     "id": "e25cc07f5037ce9d5e74",
     "kind": "pending",
     "path": "ui/src/desktop/RemotePhone.tsx",
-    "line": 523,
+    "line": 528,
     "statement": "const done = queue.then(async () => {",
     "occurrence": 1,
-    "source_sha256": "b159259c93e7122e71a4655d36622380ef1d162a90e95b092b8eb5c19fb56aa9",
+    "source_sha256": "e3a39fc5c00ea23ab3cbfe5ec39f7043d8f2bad5f3973ed1d03b15aed23760e0",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; loading, progress",
-    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering."
+    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Tapfix5b source review: opener focus, text-only status or startup theme changed; this exact action and its guard are unchanged."
   },
   {
     "id": "b042eba94c2b5cdf68c3",
     "kind": "pending",
     "path": "ui/src/desktop/RemotePhone.tsx",
-    "line": 550,
+    "line": 555,
     "statement": "const reportRef = useRef<(wait: number) => Promise<unknown>>(async () => undefined);",
     "occurrence": 1,
-    "source_sha256": "b159259c93e7122e71a4655d36622380ef1d162a90e95b092b8eb5c19fb56aa9",
+    "source_sha256": "e3a39fc5c00ea23ab3cbfe5ec39f7043d8f2bad5f3973ed1d03b15aed23760e0",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; loading, progress",
-    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering."
+    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Tapfix5b source review: opener focus, text-only status or startup theme changed; this exact action and its guard are unchanged."
   },
   {
     "id": "55c7987a8d6a735a4b3d",
     "kind": "pending",
     "path": "ui/src/desktop/RemotePhone.tsx",
-    "line": 577,
+    "line": 582,
     "statement": "const report = async (wait: number) => {",
     "occurrence": 1,
-    "source_sha256": "b159259c93e7122e71a4655d36622380ef1d162a90e95b092b8eb5c19fb56aa9",
+    "source_sha256": "e3a39fc5c00ea23ab3cbfe5ec39f7043d8f2bad5f3973ed1d03b15aed23760e0",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; loading, progress",
-    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering."
+    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Tapfix5b source review: opener focus, text-only status or startup theme changed; this exact action and its guard are unchanged."
   },
   {
     "id": "528373c50a0d3b61b73b",
     "kind": "pending",
     "path": "ui/src/desktop/RemotePhone.tsx",
-    "line": 583,
+    "line": 588,
     "statement": "const apply = async (command: RemoteCommand): Promise<string | null> => {",
     "occurrence": 1,
-    "source_sha256": "b159259c93e7122e71a4655d36622380ef1d162a90e95b092b8eb5c19fb56aa9",
+    "source_sha256": "e3a39fc5c00ea23ab3cbfe5ec39f7043d8f2bad5f3973ed1d03b15aed23760e0",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; loading, progress",
-    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering."
+    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Tapfix5b source review: opener focus, text-only status or startup theme changed; this exact action and its guard are unchanged."
   },
   {
     "id": "46db76cf80a9c99f6a4c",
     "kind": "pending",
     "path": "ui/src/desktop/RemotePhone.tsx",
-    "line": 627,
+    "line": 632,
     "statement": "const handle = async (commands: (RemoteCommand & { id: string })[]) => {",
     "occurrence": 1,
-    "source_sha256": "b159259c93e7122e71a4655d36622380ef1d162a90e95b092b8eb5c19fb56aa9",
+    "source_sha256": "e3a39fc5c00ea23ab3cbfe5ec39f7043d8f2bad5f3973ed1d03b15aed23760e0",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; loading, progress",
-    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering."
+    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Tapfix5b source review: opener focus, text-only status or startup theme changed; this exact action and its guard are unchanged."
   },
   {
     "id": "1c9e91c4fab81006d93a",
     "kind": "pending",
     "path": "ui/src/desktop/RemotePhone.tsx",
-    "line": 631,
+    "line": 636,
     "statement": "void (async () => {",
     "occurrence": 1,
-    "source_sha256": "b159259c93e7122e71a4655d36622380ef1d162a90e95b092b8eb5c19fb56aa9",
+    "source_sha256": "e3a39fc5c00ea23ab3cbfe5ec39f7043d8f2bad5f3973ed1d03b15aed23760e0",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; loading, progress",
-    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering."
+    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Tapfix5b source review: opener focus, text-only status or startup theme changed; this exact action and its guard are unchanged."
   },
   {
     "id": "39f812e312b64e5e45e3",
@@ -1422,10 +1422,10 @@
     "line": 129,
     "statement": "return async (book: ListenBook, chapterId?: number, at?: number, extra?: { word?: WordTarget; rate?: number }) => {",
     "occurrence": 1,
-    "source_sha256": "e98ff33af3326cc9efccbeb5add58ebbaac18c07d838cb9172dbde570b7fa84d",
+    "source_sha256": "ecbb88a3aa81233717c46e9bdc9e079e0c4e73d9aec2ae2a6a0d0997897285d8",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; LoadingCrossfade, Progress, isLoading, loading, progress, progressFill, progressText",
-    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Gate repair: reviewed identity-key motion, explicit layout, token spacing or semantic navigation changes; existing guard retained. Combined-source review: the author line now uses OneLineFit (no ellipsis); this action and its guard are unchanged."
+    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Gate repair: reviewed identity-key motion, explicit layout, token spacing or semantic navigation changes; existing guard retained. Combined-source review: the author line now uses OneLineFit (no ellipsis); this action and its guard are unchanged. Tapfix5b source review: opener focus, text-only status or startup theme changed; this exact action and its guard are unchanged."
   },
   {
     "id": "8e6269fe3f7bbd02cacc",
@@ -1434,10 +1434,10 @@
     "line": 293,
     "statement": "onClick={withFeedback(\"playPause\", () => (current ? player.toggle() : void playBook(book)))}",
     "occurrence": 1,
-    "source_sha256": "e98ff33af3326cc9efccbeb5add58ebbaac18c07d838cb9172dbde570b7fa84d",
+    "source_sha256": "ecbb88a3aa81233717c46e9bdc9e079e0c4e73d9aec2ae2a6a0d0997897285d8",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; LoadingCrossfade, Progress, isLoading, loading, progress, progressFill, progressText",
-    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Gate repair: reviewed identity-key motion, explicit layout, token spacing or semantic navigation changes; existing guard retained. Combined-source review: the author line now uses OneLineFit (no ellipsis); this action and its guard are unchanged."
+    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Gate repair: reviewed identity-key motion, explicit layout, token spacing or semantic navigation changes; existing guard retained. Combined-source review: the author line now uses OneLineFit (no ellipsis); this action and its guard are unchanged. Tapfix5b source review: opener focus, text-only status or startup theme changed; this exact action and its guard are unchanged."
   },
   {
     "id": "7a75357ddc0dd98439a5",
