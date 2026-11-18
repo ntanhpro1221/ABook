@@ -59,9 +59,10 @@ function longLabels(where, code, lang = "tsx") {
   return found;
 }
 
+// testing/ là trang mẫu cho test trình duyệt (fitFixture cố tình dùng nhãn dài để thử xuống dòng), không phải giao diện thật.
 it("nhãn nút, mục menu và lựa chọn không quá 4 chữ", () => {
   const offenders = files(src)
-    .filter(file => /\.tsx?$/.test(file) && !file.endsWith(".d.ts") && !file.includes(".test.") && !file.includes(`${path.sep}gallery${path.sep}`))
+    .filter(file => /\.tsx?$/.test(file) && !file.endsWith(".d.ts") && !file.includes(".test.") && !file.includes(`${path.sep}gallery${path.sep}`) && !file.includes(`${path.sep}testing${path.sep}`))
     .flatMap(file => longLabels(path.relative(src, file), readFileSync(file, "utf8"), file.endsWith(".tsx") ? "tsx" : "ts"));
   expect(offenders).toEqual([]);
 });

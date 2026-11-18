@@ -114,7 +114,7 @@ class TextCutScanTest {
         var start = 0
         args.forEachIndexed { i, ch ->
             if (quoted) {
-                if (escaped) escaped = false else if (ch == '\') escaped = true else if (ch == '"') quoted = false
+                if (escaped) escaped = false else if (ch == '\\') escaped = true else if (ch == '"') quoted = false
             } else when (ch) {
                 '"' -> quoted = true
                 '(', '{', '[' -> depth++
@@ -144,7 +144,7 @@ class TextCutScanTest {
             while (index < code.length && depth > 0) {
                 val ch = code[index++]
                 if (quoted) {
-                    if (escaped) escaped = false else if (ch == '\') escaped = true else if (ch == '"') quoted = false
+                    if (escaped) escaped = false else if (ch == '\\') escaped = true else if (ch == '"') quoted = false
                 } else when (ch) {
                     '"' -> quoted = true
                     '(', '{', '[' -> depth++
