@@ -341,7 +341,7 @@ def build_toc_txt() -> bytes:
 def build_gutenberg_txt() -> bytes:
     """TXT kiểu Project Gutenberg (chữ tự viết): dòng đầu "The Project Gutenberg eBook of …", rồi "Title:" / "Author:", mục lục "CHAPTER I."
     liền nhau (BUG5) - tên sách / tác giả lấy từ "Title:" / "Author:", không phải cả câu đầu."""
-    return ("﻿The Project Gutenberg eBook of Bến đò ngang\r\n\r\nBản này tự viết để thử, mượn hình dạng của sách Project Gutenberg.\r\n\r\n"
+    return ("\uFEFFThe Project Gutenberg eBook of Bến đò ngang\r\n\r\nBản này tự viết để thử, mượn hình dạng của sách Project Gutenberg.\r\n\r\n"
             "Title: Bến đò ngang\r\n\r\nAuthor: Lê Thử Nghiệm\r\n\r\n*** START OF THE PROJECT GUTENBERG EBOOK BẾN ĐÒ NGANG ***\r\n\r\n"
             "Contents\r\n\r\n CHAPTER I.   Bến\r\n CHAPTER II.  Mưa\r\n\r\n\r\n"
             f"CHAPTER I.\r\nBến\r\n\r\n{LINE}\r\n\r\nCHAPTER II.\r\nMưa\r\n\r\n{LINE}\r\n").encode()
@@ -477,7 +477,7 @@ def build_zh_gbk() -> bytes:
 
 def build_bom_join() -> bytes:
     """TXT nối từ hai file UTF-8 có BOM (BUG13): dấu BOM giữa file không được làm "Chương 2" mất tư cách tiêu đề, và không lọt vào chữ."""
-    return "﻿Chương 1\nCon đò rời bến.\n\n﻿Chương 2\nMưa xuống trắng mặt sông.\n".encode()
+    return "\uFEFFChương 1\nCon đò rời bến.\n\n\uFEFFChương 2\nMưa xuống trắng mặt sông.\n".encode()
 
 
 def build_declared() -> bytes:
@@ -829,7 +829,7 @@ def txt_files() -> dict[str, bytes]:
     two = "Chương hai\n\nTiếng máy nổ trầm đục.\n"
     three = "Chương ba\n\nDịch: Nhóm Lục Bình\n\nMưa rơi suốt chiều.\n"
     return {
-        "1.txt": "﻿".encode("utf-8") + one.encode("utf-8"),
+        "1.txt": "\uFEFF".encode("utf-8") + one.encode("utf-8"),
         "2.txt": b"\xff\xfe" + two.encode("utf-16-le"),
         "10.txt": encode_cp1258(three),
         "9 Ngoại truyện.txt": "Một chương viết bằng UTF-8 thường, không BOM.\n".encode("utf-8"),

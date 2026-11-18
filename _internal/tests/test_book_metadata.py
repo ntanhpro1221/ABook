@@ -202,6 +202,28 @@ def test_a_summary_read_through_the_real_import_paths_matches_the_parser(tmp_pat
         assert len(imported["summary"].splitlines()) < case["summaryLinesBelow"]
 
 
+@pytest.mark.parametrize("case", HEADER_CASES["folderCases"], ids=lambda case: case["name"])
+def test_a_txt_folder_reads_its_information_through_the_real_folder_import(tmp_path, case):
+    """Import a TXT folder to listen (`import_text(folder)` -> `_txt_folder`) and a Studio project from the same files
+    (`from_sources`) give the expected fields; Android BookMetadataParityTest runs the same cases through its folder import."""
+    folder = tmp_path / "Hồ giấy"
+    folder.mkdir()
+    for name, text in {**case["files"], **case["sidecars"]}.items():
+        (folder / name).write_bytes(text.encode("utf-8"))
+    imported = importers.import_text(folder).metadata()
+    studio = book_metadata.from_sources([folder / name for name in case["files"]])
+    assert imported == studio == case["expected"]
+
+
+SAVEABLE_CASES = json.loads((FIXTURES / "saveable.json").read_text(encoding="utf-8"))["cases"]
+
+
+@pytest.mark.parametrize("case", SAVEABLE_CASES, ids=lambda case: case["name"])
+def test_the_save_button_cleans_the_draft_as_the_server_does(case):
+    """The web and Qt 'Lưu thông tin' button clean the draft before comparing; 'cleaned' must be what the server keeps."""
+    assert book_metadata.clean(case["draft"]) == case["cleaned"]
+
+
 META_CASES = json.loads((FIXTURES / "meta_version.json").read_text(encoding="utf-8"))["cases"]
 
 
@@ -210,6 +232,30 @@ def test_meta_version_and_overlay_match_the_shared_cases(case):
     """Android BookMetadataParityTest reads the same cases: one book.json and one metaVersion whichever device exports."""
     assert listen_view.metadata_version(case["book"]) == case["version"]
     assert book_metadata.overlay(json.loads(json.dumps(case["book"])), case["edits"]) == case["overlaid"]
+
+
+def test_meta_version_written_by_the_real_export_matches_the_shared_value(tmp_path):
+    """Android BookDocumentWriterTest writes the same version-6 book with the same edits through BookDocumentWriter.write and
+    must find this metaVersion in its book.json: the export flattens the volume tree before overlay on both sides."""
+    import shutil
+    import warnings
+
+    from abook import book_volumes
+
+    shared = json.loads((FIXTURES / "written_meta_version.json").read_text(encoding="utf-8"))
+    folder = tmp_path / "book"
+    shutil.copytree(Path(__file__).parent / "fixtures" / "book_edits" / "base", folder)
+    book = json.loads((folder / "book.json").read_text(encoding="utf-8"))
+    book["package"]["version"] = 6
+    (folder / "book.json").write_text(json.dumps(book_volumes.nested(book), ensure_ascii=False), encoding="utf-8")
+    (folder / "edits.json").write_text(json.dumps(shared["edits"], ensure_ascii=False), encoding="utf-8")
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        bookfile.repack(folder, tmp_path / "out.abook")
+    with zipfile.ZipFile(tmp_path / "out.abook") as archive:
+        written = json.loads(archive.read("book.json"))
+    assert written["metaVersion"] == shared["metaVersion"]
+    assert list(written["source"]) == ["site", "url"]
 
 
 def test_a_header_that_cannot_be_read_never_stops_a_project(tmp_path, monkeypatch):

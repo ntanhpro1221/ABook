@@ -149,7 +149,7 @@ internal object Py {
         return out
     }
 
-    /** `str.splitlines()`: \n \r \r\n \v \f \x1c \x1d \x1e \x85     là ngắt dòng; không giữ dấu ngắt. */
+    /** `str.splitlines()`: \n \r \r\n \v \f \x1c \x1d \x1e \x85 \u2028 \u2029 là ngắt dòng; không giữ dấu ngắt. */
     fun splitLines(text: String): List<String> {
         val out = ArrayList<String>()
         var from = 0

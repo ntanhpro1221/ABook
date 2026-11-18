@@ -5,16 +5,26 @@
 // Phần thuần của "Sửa sách" và "Tìm bìa" (EditBook.tsx, CoverSearch.tsx, shared/capabilities.ts, musicLevels.ts, studio/musicLocal.ts): chữ và quy tắc
 // chép nguyên từ bản web để hai nền tảng nói cùng một câu.
 
-// Chữ người gõ như máy chủ làm sạch: khoảng trắng gộp một dấu cách, bỏ đầu cuối.
-function tidy(text) { return String(text || "").trim().replace(/\s+/g, " ") }
-
 // Phần thông tin của form "Sửa sách" (BookMetadata.tsx metadataOf): tác giả cùng các ô mô tả, lưu một lần bằng "Lưu thông tin".
 function metadataOf(book) {
     return {author: book.author || "", illustrator: book.illustrator || "", altTitles: book.altTitles || [], genres: book.genres || [],
             summary: book.summary || "", source: book.source || {url: "", site: ""}}
 }
-// Nút "Lưu thông tin" chỉ bấm được khi bản nháp khác thông tin đang có (EditBook.tsx: JSON.stringify(metadata) !== JSON.stringify(metadataOf(book))).
-function metadataSaveable(draft, book) { return JSON.stringify(draft) !== JSON.stringify(metadataOf(book || {})) }
+// Bản nháp như máy chủ sẽ giữ (BookMetadata.tsx cleanMetadata, `book_metadata.clean`): tác giả một dòng (ký tự điều khiển / định dạng thành dấu
+// cách, khoảng trắng gộp một dấu cách, trần 160), mục rỗng của danh sách bị bỏ. Ca dùng chung: tests/fixtures/book_metadata/saveable.json.
+// Lớp ký tự là \p{C} của web viết ra (Cc + Cf thường gặp): V4 của Qt chưa chắc có \p{...}.
+var AUTHOR_MAX = 160
+var CONTROL = /[\u0000-\u001f\u007f-\u009f\u00ad\u0600-\u0605\u061c\u06dd\u070f\u180e\u200b-\u200f\u202a-\u202e\u2060-\u2064\u2066-\u206f\ufeff\ufff9-\ufffb]/g
+function cleanMetadata(draft) {
+    const value = metadataOf(draft || {})
+    const words = String(value.author).normalize("NFC").replace(CONTROL, " ").split(/\s+/).filter(function(word) { return word !== "" })
+    const author = Array.from(words.join(" ")).slice(0, AUTHOR_MAX).join("").trim()
+    const kept = function(list) { return list.filter(function(item) { return String(item).trim() !== "" }) }
+    return {author: author, illustrator: value.illustrator, altTitles: kept(value.altTitles), genres: kept(value.genres), summary: value.summary, source: value.source}
+}
+// Nút "Lưu thông tin" bấm được khi bản nháp ĐÃ làm sạch khác thông tin đang có (EditBook.tsx metadataSaveable): thêm khoảng trắng hay Enter cuối
+// danh sách không phải một thay đổi, và lưu xong (sách nạp lại) nút tắt.
+function metadataSaveable(draft, book) { return JSON.stringify(cleanMetadata(draft)) !== JSON.stringify(cleanMetadata(book || {})) }
 
 // ---- capabilities.ts ----
 var LINK_BOOK = S.s_sach_nay_lay_tu_may_tinh_khac_muon_sua_thi_d2a5136b

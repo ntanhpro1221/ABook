@@ -5,7 +5,7 @@ import type { ListenChapter, Script, ScriptSegment } from "./model";
 // chung hàm này - máy chủ / plugin chỉ đưa chữ ra, không dựng kịch bản giả.
 
 const NEWLINES = /\r\n?/g;
-const BLANK_LINE = /\n[ \t ]*\n/;
+const BLANK_LINE = /\n[ \t\u00A0]*\n/;
 const SPACES = /\s+/g;
 
 function squeeze(text: string): string {

@@ -4,11 +4,12 @@ import QtQuick.Shapes
 import ABook
 import "TextWrap.js" as TextWrap
 import "BookLogic.js" as BookLogic
+import "StudioLogic.js" as StudioLogic
 
 // Ô sách trong lưới (DESIGN.md mục 6, "Lưới bìa"): bìa 2:3 bo 12, dưới bìa tên 2 dòng DÀNH SẴN + dòng phụ 1 dòng (OneLineFit) - mọi ô cao bằng
 // nhau, hàng lưới phẳng (soát thiết kế 10-11 L5/L11, như điện thoại). Tên luôn hiện dưới bìa, bìa vẽ hay ảnh như nhau (chủ sách 15-11: hàng
-// ô đồng nhất). Tên đầy đủ ở trang sách và Accessible.name. Tiến độ nghe = vạch mảnh ở đáy bìa; sách của máy khác: "Trên <máy>"
-// đứng đầu dòng phụ, có icon máy tính.
+// ô đồng nhất). Tên đầy đủ ở trang sách và Accessible.name. Tiến độ nghe = vạch mảnh ở đáy bìa; sách của máy khác: icon máy tính đầu
+// dòng phụ, tên máy ở Accessible.name của icon (như web / điện thoại; chữ "Trên <máy>" không chiếm dòng).
 Interactive {
     id: root
     property string title: ""
@@ -18,6 +19,7 @@ Interactive {
     property real progress: 0
     property string source: ""
     property bool remoteSeries: false
+    property bool twin: false
     property var book: ({})
     property bool playVisible: false
     signal readRequested()
@@ -28,7 +30,11 @@ Interactive {
     // riêng ở trên). `subtitle` chỉ để ô một bộ nhiều tập ghi "N tập". Chỉ dòng thư viện thật (có chaptersTotal) mới có tình trạng.
     readonly property string statusText: root.subtitle !== "" ? root.subtitle
         : root.book && root.book.bookId && typeof root.book.chaptersTotal === "number" ? BookLogic.progressText(root.book, Api.voiceList.length > 0, false) : ""
-    readonly property string subLine: [root.source !== "" ? (root.remoteSeries ? S.s_co_sach_tren_may_khac_3b7cdd88 : S.s_tren_54f68805 + root.source) : "", root.statusText]
+    // Thư viện còn một cuốn CÙNG TÊN: nối "Dự án" / "Đã nhập" và "Thêm <ngày>" vào dòng tình trạng để biết cuốn nào là cuốn nào (như web twinKind).
+    readonly property string twinKind: root.book && root.book.capabilities && root.book.capabilities.workshop ? S.s_du_an_4f139d43
+        : root.book && root.book.imported ? S.s_da_nhap_47b970fc : ""
+    readonly property string subLine: [root.statusText].concat(root.twin
+            ? [root.twinKind, root.book && root.book.addedAt ? S.s_them_0_07ca4c38(StudioLogic.formatWhen(root.book.addedAt)) : ""] : [])
         .filter(part => part !== "").join("\u00a0·\u00a0")
     readonly property real textBlock: 12 + root.titleHeight + authorText.height + 4 + subtitleText.height
 
@@ -136,7 +142,8 @@ Interactive {
         color: Theme.text2
         baseSize: Theme.sizeCaption
     }
-    // Dòng phụ một dòng qua OneLineFit (thu cỡ, không vừa thì xuống dòng), không bao giờ "…".
+    // Dòng tình trạng là chữ của app, ĐÚNG một dòng (DESIGN.md mục 6): OneLineFit thu cỡ tới mức tối thiểu rồi mới cắt "…" (cutAtMin), để
+    // mọi ô một hàng cao bằng nhau như web (truncate) và điện thoại (maxLines 1).
     OneLineFit {
         id: subtitleText
         objectName: "bookCellSubtitle"
@@ -146,6 +153,7 @@ Interactive {
         text: TextWrap.keepDots(root.subLine)
         color: Theme.text3
         baseSize: Theme.sizeCaption
+        cutAtMin: true
         // Thu cỡ chữ không làm ô thấp đi: dòng giữ chiều cao một dòng ở cỡ gốc (mọi ô một hàng cao bằng nhau), chữ thu cỡ canh giữa.
         height: Math.max(implicitHeight, slot.implicitHeight)
         verticalAlignment: Text.AlignVCenter

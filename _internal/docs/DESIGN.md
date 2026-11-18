@@ -325,6 +325,9 @@ giữ tên trong cột tối đa 640 px, thanh tua dùng phần rộng còn lạ
   giảm chuyển động thì nhảy từng đoạn, không trượt, không mờ đuôi. Ô luôn cao đúng một dòng ở cỡ gốc nên bìa và nút phát không bao giờ dời (máy dò
   R7). Lời nhắn của màn Đang nghe (hẹn giờ, sắp tắt, lỗi phát, đã nghe hết) nổi trên phần dưới bìa, ngay trên tên - không chiếm chỗ trong cột;
   chế độ Đọc theo thì ở cuối cột. Một thành phần: điện thoại `MarqueeLine`, web `MarqueeLine`, Qt `MarqueeLine.qml`.
+
+  Chữ của APP phải giữ đúng một dòng (dòng tình trạng dưới bìa ô lưới: "Còn 2 giờ", "Đã nghe hết phần đã có · 12/30 chương") không phải tên: Qt đặt
+  `OneLineFit.cutAtMin` - thu tới 0.75 rồi mới cắt "…", như web `truncate` và điện thoại `maxLines = 1`. Cuốn ở máy khác chỉ có icon máy tính, tên máy ở nhãn đọc màn hình.
 - **Số và đơn vị** (%, giờ/phút/giây/ms/s, KB/MB/GB/TB, Hz/kHz, dB/dBFS, nhịp/phút): số và đơn vị nối bằng khoảng trắng không ngắt U+00A0, không bao giờ
   xuống dòng thành "97" / "%". Kho chữ chung giữ sẵn U+00A0 (một chuỗi `s_percent` cho mọi phần trăm), bộ định dạng dung lượng của cả ba nền cũng vậy;
   cột số (điểm cảm xúc) rộng theo chữ khi chữ to 130 %. Máy dò `scripts/check_unit_spacing.py` (kho chữ + chuỗi trong code web, điện thoại, Qt

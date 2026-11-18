@@ -30,6 +30,14 @@ function sort(books, order) {
     else if (order === "added") result.sort((a,b) => (b.addedAt || b.updatedAt || 0) - (a.addedAt || a.updatedAt || 0))
     return result
 }
+// Mã các cuốn mà thư viện còn một cuốn nữa CÙNG TÊN (twinBookIds của listen/model.ts): ô lưới nối "Dự án" / "Đã nhập" và ngày thêm để phân biệt.
+function twinIds(books) {
+    const key = book => fold(String(book.title || "").trim().replace(/\s+/g, " "))
+    const count = {}, result = {}
+    for (const book of books) count[key(book)] = (count[key(book)] || 0) + 1
+    for (const book of books) if (count[key(book)] > 1) result[book.bookId] = true
+    return result
+}
 function place(title) {
     title = String(title || "")
     const m = title.match(/^(.*?)\s*[·|:—–-]\s*(Tập|Quyển|Phần|Vol\.?|Book)\s*(\d+)\b/i)

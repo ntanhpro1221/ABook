@@ -76,6 +76,29 @@ class BookMetadataParityTest {
         }
     }
 
+    /** A TXT folder through the real folder import ("Thêm sách" -> chọn thư mục: [TextImports.stageFolder] then [TextImports.prepare]) reads
+     *  the same information as Python `import_text(folder)` / `from_sources`: a sidecar beside the files wins, else the first file's header. */
+    @Test fun aTxtFolderReadsItsInformationThroughTheRealFolderImport() {
+        BookEditsFixtures.useStoreRoot(temp.newFolder())
+        TextImports.codec = null
+        val cases = fixture("header.json").getJSONArray("folderCases")
+        try {
+            for (index in 0 until cases.length()) {
+                val case = cases.getJSONObject(index)
+                val name = case.getString("name")
+                val rows = ArrayList<Pair<String, String>>()
+                for (group in listOf("files", "sidecars")) case.getJSONObject(group).let { map -> for (key in map.keys()) rows += key to map.getString(key) }
+                val staged = TextImports.stageFolder("Hồ giấy", rows.map { (file, text) -> file to { text.byteInputStream() as java.io.InputStream? } })
+                val book = TextImports.prepare(staged.ref)
+                val found = metadataOf(book.metadata)
+                assertTrue("$name: $found", StrictJson.equal(case.getJSONObject("expected"), found))
+                assertEquals(name, case.getJSONObject("expected").optString("author").ifEmpty { null }, book.author)
+            }
+        } finally {
+            TextImports.sweep()
+        }
+    }
+
     /** The real import path (chapter text already cleaned, which folds blank lines) ends the summary where the parser does. */
     @Test fun headerSummaryThroughTheRealImportMatchesTheParser() {
         val root = fixture("header.json")

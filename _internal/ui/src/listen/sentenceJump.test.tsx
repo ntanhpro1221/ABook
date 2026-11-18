@@ -1,4 +1,4 @@
-﻿import { renderToString } from 'react-dom/server';
+import { renderToString } from 'react-dom/server';
 import { expect, it, vi } from 'vitest';
 import { textScript } from '@/listen/textScript';
 import { estimatedStarts, timedTextScript } from '@/listen/readAloud';

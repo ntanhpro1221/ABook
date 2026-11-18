@@ -81,7 +81,7 @@ def test_the_fixture_covers_the_unicode_traps_the_phone_has_to_get_right() -> No
     assert unicodedata.normalize("NFD", texts) != texts or any(unicodedata.normalize("NFD", s["text"]) == s["text"] for s in TEXT["samples"]), "có chữ NFD"
     assert any(ord(char) > 0xFFFF for char in texts), "ngoài BMP"
     assert "İ" in texts and "ΟΔΟΣ" in texts, "hạ chữ đầy đủ: İ, sigma cuối từ"
-    assert "\u001c" in texts and "　" in texts, "khoảng trắng mà Char.isWhitespace của Java hiểu khác"
+    assert "\u001c" in texts and "\u3000" in texts, "khoảng trắng mà Char.isWhitespace của Java hiểu khác"
 
 
 # ---- 4 số và mục chương (bộ ví dụ đầu ra) ---------------------------------------------------------------------------------------------
@@ -264,7 +264,7 @@ def test_lb_blocks_close_at_150_words_and_a_short_tail_joins_the_last_block() ->
 
 
 def test_lb_counts_words_like_python_split_for_unicode_spaces() -> None:
-    odd = {"id": 1, "text": "a b　c d e"}  # 5 mẩu: NBSP, ideographic space, em space đều là khoảng trắng của str.split
+    odd = {"id": 1, "text": "a b\u3000c\u2003d e"}  # 5 mẩu: NBSP, ideographic space, em space đều là khoảng trắng của str.split
     assert len(odd["text"].split()) == 5
     assert music_nnlite.blocks([odd] * 30) == [(0, 29)], "30 x 5 = 150 chữ: đóng đúng ở câu cuối"
     assert music_nnlite.blocks([odd] * 29 + [{"id": 2, "text": "x"}, {"id": 3, "text": "y"}]) == [(0, 30)], "145 + 2 = 147 chữ: chưa đủ 150"

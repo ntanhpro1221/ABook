@@ -163,6 +163,10 @@ rem Width classes: actual Book/Library/NowPlaying/Settings QML with fake HTTP/au
 call :test "%HERE%build\width_tests\WidthTests.exe" "%HERE%build\width-test.txt"
 if errorlevel 1 exit /b 1
 if not errorlevel 0 exit /b 1
+rem Edit book metadata form (CMake BookMetadataTests): the same WidthTests binary on tests\bookmeta
+call :test "%HERE%build\width_tests\WidthTests.exe" "%HERE%build\bookmeta-test.txt" -input "%HERE%tests\bookmeta"
+if errorlevel 1 exit /b 1
+if not errorlevel 0 exit /b 1
 call :test "%HERE%build\hitl_tests\HitlTests.exe" "%HERE%build\hitl-test.txt"
 if errorlevel 1 exit /b 1
 if not errorlevel 0 exit /b 1
@@ -241,7 +245,7 @@ exit /b 0
 rem Keep every QtTest result: GUI stderr alone can be empty even when tests fail.
 :test
 set /a TESTS_RUN+=1
-"%~1" -o "%~2",txt
+"%~1" -o "%~2",txt %3 %4
 set TEST_EXIT=%errorlevel%
 type "%~2"
 "%ABOOK_PYTHON%" -X utf8 "%HERE%tools\check_test_results.py" "%~2"

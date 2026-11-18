@@ -17,7 +17,7 @@ import json
 import re
 
 ROOT = Path(__file__).resolve().parents[1]
-NBSP = " "
+NBSP = "\u00A0"
 UNITS = ("%", "giờ", "phút", "giây", "ms", "KB", "MB", "GB", "TB", "kHz", "Hz", "dBFS", "dB", "s", "nhịp/phút")
 _UNIT = "(?:" + "|".join(re.escape(unit) for unit in UNITS) + r")(?![\wÀ-ỹ-])"
 # Inside one piece of copy: a digit or a value slot ({0}, %1, ${x}, $x, %d, %.1f, %(name)s) then a plain space then a unit.

@@ -15,6 +15,7 @@ Item {
     Rectangle { anchors.fill: parent; color: Theme.bg }
     Component { id: pageFactory; BookPage {} }
     Component { id: dialogsFactory; CastDialogs {} }
+    Component { id: voiceSampleFactory; VoiceSample {} }
 
     TestCase {
         id: test
@@ -273,6 +274,7 @@ Item {
             findChild(page, "castNarratorSample").clicked()
             compare(Clip.current, "voice-Minh Quân")
             compare(DesktopApi.previews[2], "/media/voices/" + encodeURIComponent("Minh Quân"))
+            DesktopApi.previewStarted()
             DesktopApi.previewEnded()
             compare(Clip.current, "")
         }
@@ -282,6 +284,42 @@ Item {
             DesktopApi.previewFailed("404")
             compare(Clip.current, "")
             compare(Api.notice, "Chưa nghe thử được\nCâu mẫu này chưa có bản thu.")
+        }
+
+        // Clip and VoiceSample share the one preview output (fix174d Thấp-1): a voice sample taking it puts the clip back to "Nghe",
+        // stopping the clip later never stops that sample, and the sample's end or failure is not the clip's.
+        function test_aVoiceSampleTakingTheOutputReleasesTheClip() {
+            openCast()
+            const button = child(rowOf("Lan"), "castSample")
+            button.clicked()
+            DesktopApi.previewStarted()
+            compare(Clip.current, "sample-b1-3")
+            const sample = createTemporaryObject(voiceSampleFactory, host)
+            sample.playSample("edge:vi-VN-HoaiMyNeural")
+            DesktopApi.previewStarted()
+            compare(Clip.current, "")
+            compare(button.Accessible.name, "Nghe Lan nói")
+            compare(sample.playing, "edge:vi-VN-HoaiMyNeural")
+            const stops = DesktopApi.stops
+            Clip.stop()
+            compare(DesktopApi.stops, stops)
+            Api.notice = ""
+            DesktopApi.previewFailed("decoder")
+            compare(Api.notice, "")
+            compare(sample.playing, "")
+        }
+        function test_aClipTakingTheOutputFromAVoiceSampleKeepsItsOwnStart() {
+            openCast()
+            const sample = createTemporaryObject(voiceSampleFactory, host)
+            sample.playSample("edge:vi-VN-HoaiMyNeural")
+            DesktopApi.previewStarted()
+            child(rowOf("Lan"), "castSample").clicked()
+            DesktopApi.previewStarted()
+            compare(sample.playing, "")
+            compare(Clip.current, "sample-b1-3")
+            verify(!Clip.loading)
+            DesktopApi.previewEnded()
+            compare(Clip.current, "")
         }
 
         // ---------- gộp / bỏ gộp ----------

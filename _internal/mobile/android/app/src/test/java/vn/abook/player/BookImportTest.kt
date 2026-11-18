@@ -442,7 +442,7 @@ class BookImportTest {
     @Test
     fun text_encodings_follow_python_decode_text_bytes() {
         val sample = "Chương một: Tiếng Việt"
-        assertEquals(sample, BookImport.decodeTextBytes("﻿$sample".toByteArray(Charsets.UTF_8)))
+        assertEquals(sample, BookImport.decodeTextBytes("\uFEFF$sample".toByteArray(Charsets.UTF_8)))
         assertEquals(sample, BookImport.decodeTextBytes(byteArrayOf(0xFF.toByte(), 0xFE.toByte()) + sample.toByteArray(Charsets.UTF_16LE)))
         assertEquals(sample, BookImport.decodeTextBytes(sample.toByteArray(Charsets.UTF_16LE)))
         assertEquals(sample, BookImport.decodeTextBytes(sample.toByteArray(Charsets.UTF_16BE)))
@@ -491,10 +491,10 @@ class BookImportTest {
     @Test
     fun a_soft_hyphen_at_a_line_end_is_dropped_but_a_real_hyphen_stays() {
         val filler = (0 until 6).map { "Một dòng văn xuôi dài vừa đủ để làm dòng đầy của trang thử số $it, kết thúc không có dấu chấm" }
-        val pages = listOf(filler + listOf("Cuối trang là chữ khô­", "ng tách ở giữa từ, còn Hà-", "nội thì giữ gạch nối."))
+        val pages = listOf(filler + listOf("Cuối trang là chữ khô\u00AD", "ng tách ở giữa từ, còn Hà-", "nội thì giữ gạch nối."))
         val text = BookImport.fromPdfPages("x", pages).chapters[0].text
         assertTrue(text.contains("không tách ở giữa từ") && text.contains("Hà-nội thì giữ gạch nối."))
-        assertFalse(text.contains("­"))
+        assertFalse(text.contains("\u00AD"))
     }
 
     @Test

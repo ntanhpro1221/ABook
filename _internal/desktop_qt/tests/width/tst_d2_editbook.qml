@@ -120,6 +120,13 @@ Item {
             verify(findChild(dialog, "editSaveMetadata").enabled)
             author.text = "Tác giả cũ"
             verify(!findChild(dialog, "editSaveMetadata").enabled)
+            author.text = "  Tác giả   cũ "                          // cùng chữ sau khi làm sạch (saveable.json)
+            verify(!findChild(dialog, "editSaveMetadata").enabled)
+            findChild(dialog, "editMeta_genres").text = "\n"         // Enter trong ô thể loại trống: ["", ""] -> [] như máy chủ
+            verify(!findChild(dialog, "editSaveMetadata").enabled)
+            findChild(dialog, "editMeta_genres").text = "Fantasy\n"
+            verify(findChild(dialog, "editSaveMetadata").enabled)
+            findChild(dialog, "editMeta_genres").text = ""
             title.text = "   "
             verify(!findChild(dialog, "editSaveTitle").enabled)     // tên trống không lưu được
             title.text = "x".repeat(200)

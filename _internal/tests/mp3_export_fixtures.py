@@ -43,7 +43,7 @@ SAFE_NAME_CASES: list[tuple[str, int]] = [
     ("Chương 646: Trở về/1?", 120),
     ('  "..."  ', 120),
     (". a .", 120),
-    ("Tên\tcó　nhiều    khoảng\ntrắng", 120),
+    ("Tên\tcó\u3000nhiều    khoảng\ntrắng", 120),
     ("..Sách.. ", 120),
     ("<>:\"/\\|?*\x01\x1f", 120),
     ("Một tên chương rất dài " * 6, 90),

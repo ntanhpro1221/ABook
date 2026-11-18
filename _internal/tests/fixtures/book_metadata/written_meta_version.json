@@ -1,0 +1,18 @@
+{
+ "about": "Shared by tests/test_book_metadata.py and Android BookDocumentWriterTest: the metaVersion in the book.json of a real export (Python bookfile.repack -> seal: flatten the volume tree, book_metadata.overlay; Kotlin BookDocumentWriter.write: BookVolumes.project, BookMetadata.overlay) of tests/fixtures/book_edits/base as a version-6 book carrying these descriptive edits. The source is written site before url on purpose. Values made by Python.",
+ "edits": {
+  "format": "abook-edits",
+  "version": 1,
+  "author": "Tác giả mới",
+  "summary": "Một chiếc thuyền.\n\nNó trôi.",
+  "genres": [
+   "Fantasy",
+   "Phiêu lưu"
+  ],
+  "source": {
+   "site": "Hako",
+   "url": "https://docln.net/truyen/42-ho-giay"
+  }
+ },
+ "metaVersion": "50b8766d7fceda20"
+}

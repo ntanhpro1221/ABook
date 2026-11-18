@@ -48,6 +48,7 @@ FocusScope {
     readonly property var sortOptions: [{value: "recent", label: S.s_nghe_gan_day_2b222d97}, {value: "title", label: S.s_ten_sach_d54846eb}, {value: "author", label: S.s_tac_gia_0ec4731b}, {value: "added", label: S.s_moi_them_bcc59d6f}]
     readonly property var filtered: LibraryLogic.sort(books.filter(b => LibraryLogic.matches(b, filter, query)), sortOrder)
     readonly property var sections: LibraryLogic.sections(filtered)
+    readonly property var twins: LibraryLogic.twinIds(books)
     property var shownSections: []
     // JSON, not a "\u0000" separator: qmlcachegen cuts the AOT C++ at a NUL inside a string literal and the build breaks.
     function selectionKey() { return JSON.stringify([filter, query, sortOrder]) }
@@ -338,6 +339,7 @@ FocusScope {
                         progress: info.progress || 0
                         source: section.remote ? (section.books.find(b => b.source) || {}).source || "" : ""
                         remoteSeries: section.books.length > 1 && !!section.remote
+                        twin: section.books.length === 1 && !!root.twins[info.bookId]
                         externalFocus: at === root.current && list.activeFocus
                         onClicked: {
                             if (cell.onPlayButton) return

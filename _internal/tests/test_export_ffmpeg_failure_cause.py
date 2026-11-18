@@ -77,3 +77,12 @@ def test_the_export_job_shows_the_drive_message_and_keeps_the_detail() -> None:
         time.sleep(0.05)
     assert status["state"] == "error" and "đã đầy" in status["error"] and "nguồn hỏng" not in status["error"]
     assert status["detail"] == "No space left on device"
+
+
+@pytest.mark.parametrize(("stderr", "denied"), [("Could not open file: [WinError 5] Access is denied", True),
+                                                ("Could not open file: [WinError 5]", True),
+                                                ("Could not open file: [WinError 50] The request is not supported", False)])
+def test_win_error_5_is_a_whole_code(stderr: str, denied: bool) -> None:
+    """`WinError 5\b` is a word boundary; the regex once held a raw backspace byte there and never matched "[WinError 5]" (fix174d)."""
+    failure = export.ffmpeg_failure(subprocess.CalledProcessError(1, ["ffmpeg"], stderr=stderr), Path("D:/Xuất/01.mp3"), "nguồn hỏng", "chưa rõ")
+    assert isinstance(failure, PermissionError) is denied

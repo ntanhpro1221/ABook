@@ -76,7 +76,7 @@ it("the screen-reader name keeps the buffering / paused state", async () => {
 it("a long title wraps instead of being cut", async () => {
   const { host } = await render(previewOf(), vi.fn());
   const line = host.querySelector("[data-preview-open] span.text-sm")!;
-  expect(line.className).not.toMatch(/truncate|line-clamp|text-ellipsis|whitespace-nowrap/);
+  expect(line.className).not.toMatch(/\btruncate\b|line-clamp|text-ellipsis|whitespace-nowrap/);
   expect(line.className).toContain("break-words");
 });
 

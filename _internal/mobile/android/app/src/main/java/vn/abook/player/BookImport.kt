@@ -307,8 +307,8 @@ object BookImport {
 
     /** Khoảng trắng của Python `str.split()` / `str.strip()`. */
     private fun isPySpace(c: Char): Boolean = when (c) {
-        '\t', '\n', '\u000b', '\u000c', '\r', ' ', '\u0085', ' ', ' ', ' ', ' ', ' ', ' ', '　' -> true
-        in '\u001c'..'\u001f', in ' '..' ' -> true
+        '\t', '\n', '\u000b', '\u000c', '\r', ' ', '\u0085', '\u00A0', '\u1680', '\u2028', '\u2029', '\u202F', '\u205F', '\u3000' -> true
+        in '\u001c'..'\u001f', in '\u2000'..'\u200A' -> true
         else -> false
     }
 
@@ -452,10 +452,63 @@ object BookImport {
             .sortedWith { x, y -> naturalOrder.compare(originalNames[x.name] ?: x.name, originalNames[y.name] ?: y.name) }
         if (files.isEmpty()) throw Failed(S.s_thu_muc_nay_khong_co_file_txt_nao_nam_ngay_ba76d525)
         val read = files.map { txtChapter(it, originalNames[it.name] ?: it.name) }
-        return Book(
+        val book = Book(
             titleFromFilename(folder.canonicalFile.name), chapters = read.map { it.chapter }.toMutableList(), notes = encodingNotes(read.map { it.encoding }),
             textHasTitle = true, keepMatter = true,
         )
+        // `importers._txt_folder` -> `book_metadata.from_sources`: a sidecar next to the files wins, otherwise the header of the first file.
+        val metadata = folderMetadata(folder, read.first().decoded)
+        for (key in metadata.keys()) book.metadata.put(key, metadata.get(key))
+        if (metadata.has("author")) book.author = metadata.getString("author")
+        return book
+    }
+
+    /** Sidecars next to TXT files, in priority order (`book_metadata.SIDECARS`): ABook's own file, the `extract` sidecar, a Hako download.
+     *  [TextImports.stageFolder] copies them along with the TXT files. */
+    val METADATA_SIDECARS = listOf("book_metadata.json", "import.json", "metadata.json")
+    private val HAKO_MARKS = listOf("path", "url", "source")
+
+    /** `book_metadata.from_sources` for one folder: the first readable sidecar of ours, else the header of the first file (natural order). A
+     *  broken or foreign sidecar, or a header that does not validate, is skipped - never fatal. Shared cases: tests/fixtures/book_metadata/header.json. */
+    internal fun folderMetadata(folder: File, firstDecoded: String): org.json.JSONObject {
+        for (name in METADATA_SIDECARS) {
+            val path = File(folder, name)
+            if (path.isFile) sidecarMetadata(path)?.let { return it }
+        }
+        return try { present(headerMetadata(firstDecoded)) } catch (_: IllegalArgumentException) { org.json.JSONObject() }
+    }
+
+    /** `book_metadata.present`: the non-blank descriptive fields, validated. */
+    private fun present(raw: org.json.JSONObject): org.json.JSONObject =
+        BookMetadata.validate(org.json.JSONObject().apply { for (key in BookMetadata.fields) raw.opt(key).let { if (!BookMetadata.blank(it)) put(key, it) } })
+
+    /** Python truthiness of a JSON value (`raw.get(mark)` in `book_metadata._sidecar`). */
+    private fun truthy(value: Any?): Boolean = when (value) {
+        null, org.json.JSONObject.NULL, false -> false
+        is String -> value.isNotEmpty()
+        is Number -> value.toDouble() != 0.0
+        is org.json.JSONArray -> value.length() > 0
+        is org.json.JSONObject -> value.length() > 0
+        else -> true
+    }
+
+    /** `book_metadata._sidecar`: fields of one sidecar, or null when it is not ours or is broken. */
+    private fun sidecarMetadata(path: File): org.json.JSONObject? = try {
+        val raw = org.json.JSONObject(String(path.readBytes(), Charsets.UTF_8))
+        val hako = path.name == "metadata.json"
+        if (hako && HAKO_MARKS.none { truthy(raw.opt(it)) }) null else {
+            val link = raw.opt("path").let { if (it is String && it.isNotEmpty()) "https://docln.net$it" else "" }
+            if (hako && raw.opt("source") is String) {
+                val url = raw.opt("url").let { if (truthy(it)) it else link }
+                if (url is String && url.isNotEmpty()) raw.put("source", org.json.JSONObject().put("url", url).put("site", "Hako")) else raw.remove("source")
+            }
+            val result = present(raw)
+            if (hako && !result.has("source") && link.isNotEmpty()) result.put("source", org.json.JSONObject().put("url", link).put("site", "Hako"))
+            result
+        }
+    } catch (error: Exception) {
+        if (error is InterruptedException) throw error
+        null
     }
 
     /** Một file TXT là một chương - trừ khi nó là CẢ truyện (>= 2 dòng "Chương N") và người dùng tích tách (`importers._txt_file`). */
@@ -533,7 +586,7 @@ object BookImport {
                         sceneBreak.matches(next) || pattern.matchEntire(next)?.groupValues?.get(1)?.trim()?.lowercase() in keys) break
                     blank = if (next.isBlank()) blank + 1 else 0
                     if (blank >= 2) break
-                    parts.add(next)
+                    parts.add(pyRstrip(next)) // trailing spaces of a summary line never reach book.json (Python `next_line.rstrip()`)
                     summaryEnd = end
                 }
                 value = parts.joinToString("\n").trim()
@@ -876,7 +929,7 @@ object BookImport {
             return null
         }
         val text = strictDecode(raw, charset) ?: return null
-        return if (signed) text.removePrefix("﻿") else text
+        return if (signed) text.removePrefix("\uFEFF") else text
     }
 
     /** Chữ của `raw` theo `charset`, hay null nếu có byte hỏng hoặc không có trong bảng mã (CodingErrorAction.REPORT). */
@@ -2413,7 +2466,7 @@ object BookImport {
     )
     private const val SENTENCE_END = ".!?…”\"»’)。"
     private const val DIALOGUE_START = "-–—“\"«‘"
-    private const val SOFT_HYPHEN = '­'
+    private const val SOFT_HYPHEN = '\u00AD'
     private const val RUNNING_ZONE = 2
     private const val RUNNING_MIN_PAGES = 3
     private const val SCAN_CHARS_PER_PAGE = 30
@@ -2508,8 +2561,8 @@ object BookImport {
 
     /** `text_processing.normalize_text` (phần ảnh hưởng tới việc nhận ra dòng ghi công). */
     private fun normalizeText(input: String): String {
-        var text = input.replace("\r\n", "\n").replace("\r", "\n").replace(" ", " ")
-        for (zero in listOf("​", "‌", "‍", "⁠", "﻿")) text = text.replace(zero, "")
+        var text = input.replace("\r\n", "\n").replace("\r", "\n").replace("\u00A0", " ")
+        for (zero in listOf("\u200B", "\u200C", "\u200D", "\u2060", "\uFEFF")) text = text.replace(zero, "")
         text = text.replace("「", "“").replace("」", "”")
         text = NOTE_MARKER.replace(text, "")
         text = text.replace(Regex("[ \t]+"), " ").replace(Regex("\n[ \t]+"), "\n").replace(Regex("\n{3,}"), "\n\n")

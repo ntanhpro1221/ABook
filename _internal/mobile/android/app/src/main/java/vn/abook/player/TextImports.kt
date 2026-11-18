@@ -180,6 +180,17 @@ object TextImports {
                 }
             }
             progress(Work(WorkStep.Copy, texts.size.toLong(), texts.size.toLong(), bytes = false))
+            // The book information beside the TXT files (book_metadata.json, import.json, a Hako metadata.json) comes along, as on the computer
+            // (`importers._txt_folder`); an unreadable one is left behind, never fatal.
+            for ((fileName, open) in files) if (fileName in BookImport.METADATA_SIDECARS) {
+                try {
+                    val input = open() ?: continue
+                    budget -= input.use { copy(it, File(folder, fileName), budget) }
+                } catch (error: Exception) {
+                    if (error is InterruptedException) throw error
+                    File(folder, fileName).delete()
+                }
+            }
             File(folder, FOLDER_NAMES).writeText(names.toString(), Charsets.UTF_8)
         } catch (error: Exception) {
             dir(ref).deleteRecursively()

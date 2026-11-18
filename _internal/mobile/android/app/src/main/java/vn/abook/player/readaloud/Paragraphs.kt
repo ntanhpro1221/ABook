@@ -15,7 +15,7 @@ object Paragraphs {
     private val SPACES = Regex("[$JS_SPACE]+")
     private val NEWLINES = Regex("\r\n?")
     /** `\n[ \t<nbsp>]*\n` của textScript.ts (ký tự thứ ba trong ngoặc là U+00A0). */
-    private val BLANK_LINE = Regex("\n[ \t ]*\n")
+    private val BLANK_LINE = Regex("\n[ \t\u00A0]*\n")
 
     private val NOTE_MARKER = Regex("\\[[$JS_SPACE]*note[0-9]+[$JS_SPACE]*]", RegexOption.IGNORE_CASE)
 
@@ -29,8 +29,8 @@ object Paragraphs {
     fun squeeze(text: String): String = text.replace(SPACES, " ").trim { it in JS_SPACE_CHARS }
 
     private val JS_SPACE_CHARS: Set<Char> = buildSet {
-        "\t\n\u000B\u000C\r       　﻿".forEach { add(it) }
-        for (c in ' '..' ') add(c)
+        "\t\n\u000B\u000C\r \u00A0\u1680\u2028\u2029\u202F\u205F\u3000\uFEFF".forEach { add(it) }
+        for (c in '\u2000'..'\u200A') add(c)
     }
 
     /**

@@ -148,7 +148,7 @@ def text_header(text: str) -> dict[str, Any]:
     Lines split on \\n, \\r\\n and \\r only, like Kotlin `lines()` (BookImport.headerMetadata).
     """
     result = {}
-    lines = text_controls(text).replace("﻿", "").replace("\r\n", "\n").replace("\r", "\n").split("\n")[:HEADER_LINES]
+    lines = text_controls(text).replace("\ufeff", "").replace("\r\n", "\n").replace("\r", "\n").split("\n")[:HEADER_LINES]
     summary_end = -1
     for index, line in enumerate(lines):
         if index <= summary_end:
@@ -170,7 +170,7 @@ def text_header(text: str) -> dict[str, Any]:
                 blanks = blanks + 1 if not next_line.strip() else 0
                 if blanks >= 2:
                     break
-                parts.append(next_line)
+                parts.append(next_line.rstrip())  # a trailing space or tab inside the summary is invisible; it never reaches book.json
                 summary_end = end
             value = "\n".join(parts).strip()
         elif key in ("altTitles", "genres"):

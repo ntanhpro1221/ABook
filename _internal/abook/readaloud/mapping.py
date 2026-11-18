@@ -16,7 +16,7 @@ from dataclasses import dataclass
 # "Chữ hiện" = đoạn không có khoảng trắng THEO JAVASCRIPT (`\s` của JS, `Paragraphs.JS_SPACE` bên Kotlin), không phải `\S` của Python: Python coi U+0085 và U+001C-U+001F là
 # khoảng trắng còn JS thì không, JS coi U+FEFF là khoảng trắng còn Python thì không - số chữ lệch thì mốc tô sáng lệch từ chỗ ấy trở đi (soát a79 lỗi 11).
 # Mọi nơi đếm chữ ở máy chủ dùng chung TOKEN này.
-JS_SPACE = "\t\n\x0b\x0c\r    -     　﻿"
+JS_SPACE = "\t\n\x0b\x0c\r \u00A0\u1680\u2000-\u200A\u2028\u2029\u202F\u205F\u3000\ufeff"
 TOKEN = re.compile(f"[^{JS_SPACE}]+")
 _TOKEN = TOKEN
 # Mảnh không khớp ngay chữ đang chờ thì nhìn tới nhiều nhất chừng này chữ nữa: xa hơn là giọng đọc lời khác chữ (số, từ viết tắt), không phải

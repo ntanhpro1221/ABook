@@ -692,7 +692,7 @@ if(MSVC)
     target_compile_options(WidthTests PRIVATE /W3 /utf-8)
 endif()
 add_test(NAME WidthTests COMMAND WidthTests -o ${CMAKE_BINARY_DIR}/width-test.txt,txt)
-add_test(NAME BookMetadataTests COMMAND WidthTests -input ${CMAKE_CURRENT_SOURCE_DIR}/tests/bookmeta -o ${CMAKE_BINARY_DIR}/bookmeta-test.txt,txt)
+add_test(NAME BookMetadataTests COMMAND WidthTests -input "${CMAKE_CURRENT_SOURCE_DIR}/tests/bookmeta" -o ${CMAKE_BINARY_DIR}/bookmeta-test.txt,txt)
 qt_add_executable(HitlTests tests/test_width.cpp tests/glyphaudit.h tests/visualready.h tests/uitree.h tests/fakes.h src/later.h src/keep.h src/shadowprovider.cpp src/shadowprovider.h src/musicartprovider.cpp src/musicartprovider.h src/bookdetail.cpp src/bookdetail.h src/mediacontrols.cpp src/mediacontrols.h
     src/readalong.cpp src/readalong.h src/music.cpp src/music.h src/feedback.cpp src/feedback.h ${ABOOK_PLAYER_SOURCES} ${ABOOK_MUSIC_SOURCES})
 target_include_directories(HitlTests PRIVATE src tests)

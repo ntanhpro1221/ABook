@@ -64,7 +64,7 @@ class ParagraphsTest {
     @Test
     fun squeezesTheSameWhitespaceAsJavaScript() {
         // \s của JS: U+00A0 và U+FEFF là khoảng trắng, U+0085 thì không.
-        assertEquals(listOf("a b c"), Paragraphs.of("﻿a  b　c "))
+        assertEquals(listOf("a b c"), Paragraphs.of("\uFEFFa  b\u3000c\u2003"))
         assertEquals(listOf("a\u0085b"), Paragraphs.of("a\u0085b"))
     }
 

@@ -86,8 +86,8 @@ object SceneSegmenter {
 
     /** `text_processing.normalize_text`. */
     fun normalizeText(raw: String): String {
-        var text = raw.replace("\r\n", "\n").replace("\r", "\n").replace(" ", " ")
-        for (zeroWidth in listOf("​", "‌", "‍", "⁠", "﻿")) text = text.replace(zeroWidth, "")
+        var text = raw.replace("\r\n", "\n").replace("\r", "\n").replace("\u00A0", " ")
+        for (zeroWidth in listOf("\u200B", "\u200C", "\u200D", "\u2060", "\uFEFF")) text = text.replace(zeroWidth, "")
         text = text.replace('「', '“').replace('」', '”')
         text = NOTE_MARKER.matcher(text).replaceAll("")
         text = SPACE_RUN.replace(text, " ")

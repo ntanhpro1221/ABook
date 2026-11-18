@@ -72,7 +72,7 @@ export interface ReadAloudCacheUsage {
 /** Dòng nói bản đọc đã làm nặng bao nhiêu: "Cuốn này 12 MB · cả máy 148 MB". Ngắn một dòng, số và đơn vị dính liền (NBSP) - không rớt "141 MB)." xuống dòng riêng. */
 export function cacheLabel(usage: ReadAloudCacheUsage): string {
   if (usage.book <= 0 && usage.total <= 0) return S.s_chua_luu_ban_doc_nao_7e94282d;
-  const size = (bytes: number) => formatSize(bytes).replace(" ", " ");
+  const size = (bytes: number) => formatSize(bytes).replace(" ", "\u00A0");
   return S.s_0_ca_may_1_c42dbd32(usage.book > 0 ? S.s_cuon_nay_0_e00451d9(size(usage.book)) : S.s_cuon_nay_chua_co_93121203, usage.total > 0 ? size(usage.total) : S.s_chua_co_e995e679);
 }
 

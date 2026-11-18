@@ -102,7 +102,7 @@ def keys_in(paths: list[Path]) -> dict[str, list[str]]:
 
 
 def loose(text: str) -> str:
-    text = unicodedata.normalize("NFC", text.replace(" ", " "))
+    text = unicodedata.normalize("NFC", text.replace("\u00A0", " "))
     text = re.sub(r"\{\d+\}", "{}", text)
     return re.sub(r"\s+", " ", text).strip().rstrip(".…:").strip().lower()
 
@@ -164,7 +164,7 @@ def dictionary_rows() -> list[tuple[str, str, str]]:
 
 def exact(text: str) -> str:
     """Same copy for the dictionary: case and punctuation count ("Mở Cài đặt" is banned, "Mở cài đặt" is not); slots and spaces do not."""
-    text = unicodedata.normalize("NFC", text.replace(" ", " "))
+    text = unicodedata.normalize("NFC", text.replace("\u00A0", " "))
     text = re.sub(r"\{[^}]*\}", "{}", text)
     return re.sub(r"\s+", " ", text).strip()
 
