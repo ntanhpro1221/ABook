@@ -640,7 +640,7 @@ Nhãn ngắn (<= 6 chữ) không có (theo khoá lỏng) ở phía kia - kể c�
 - `native/devices/ShareScreen.kt` (4): Chia sẻ thư viện (`56`); Cần quyền Thiết bị ở gần (`102`); Mở cài đặt (`103`); Cho ABook chạy nền (`108`)
 - `native/devices/StorageScreen.kt` (3): Dung lượng (`46`); Còn trống {} (`70`); Chưa có gì trên máy (`72`)
 - `native/editbook/CoverCrop.kt` (5): Bạn hãy chọn lại ảnh bìa. (`112`); Cắt ảnh bìa (`115`); Dùng ảnh (`117`); Đang lưu (`117`); Đang đọc ảnh (`135`)
-- `native/editbook/EditBookScreen.kt` (1): Tên gốc: {} (`218`)
+- `native/editbook/EditBookScreen.kt` (1): Tên gốc: {} (`220`)
 - `native/editbook/EditModel.kt` (2): Bạn hãy nhập tên sách. (`62`); Bạn hãy nhập tên chương. (`63`)
 - `native/export/ExportModel.kt` (8): Chương 1/{} · 0% (`287`); Vào {} (`315`); Đã xuất {} chương (`315`); File dở đã xoá (`328`); Còn mới (`373`); Sách nói (`382`); Đã xuất xong (`393`); Chưa xuất được (`394`)
 - `native/export/ExportRepo.kt` (1): Chọn thư mục để lưu trước (`53`)

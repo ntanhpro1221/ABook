@@ -164,16 +164,18 @@ fun EditBookScreen(
         Column(Modifier.fillMaxWidth().testTag("edit_status"), verticalArrangement = Arrangement.spacedBy(Dim.s8)) {
             InlineProblem(state.problem, retry, "edit_problem")
             Reveal(state.notice.isNotBlank()) { Caption(state.notice) }
-            if (sendRow) {
-                ActionRow(
-                    S.s_0_thay_doi_dang_cho_gui_ve_1_af5aef9d(saved.pending, saved.holder), if (state.sending) S.s_dang_gui_dd6f95be else S.s_gui_ve_0_50e46c2d(saved.holder),
-                    { if (!state.sending && !state.saving) send() }, "send_edits",
-                    hint = S.s_tu_gui_khi_toi_duoc_0_bam_gui_ve_1_de_gui_68533698(saved.holder, saved.holder),
-                )
-                Reveal(saved.syncNote.isNotEmpty()) { Caption(saved.syncNote, Modifier.testTag("sync_note")) }
-                InlineProblem(state.sendProblem, send, "send_problem")
+            Reveal(sendRow) {
+                Column {
+                    ActionRow(
+                        S.s_0_thay_doi_dang_cho_gui_ve_1_af5aef9d(saved.pending, saved.holder), if (state.sending) S.s_dang_gui_dd6f95be else S.s_gui_ve_0_50e46c2d(saved.holder),
+                        { if (!state.sending && !state.saving) send() }, "send_edits",
+                        hint = S.s_tu_gui_khi_toi_duoc_0_bam_gui_ve_1_de_gui_68533698(saved.holder, saved.holder),
+                    )
+                    Reveal(saved.syncNote.isNotEmpty()) { Caption(saved.syncNote, Modifier.testTag("sync_note")) }
+                    InlineProblem(state.sendProblem, send, "send_problem")
+                }
             }
-            if (sentNote) Caption(saved.syncNote)
+            Reveal(sentNote) { Caption(saved.syncNote) }
         }
     }
     BookForm(S.s_sua_sach_79fb71d2, onBack, "edit_book_screen", footer = footer) {
