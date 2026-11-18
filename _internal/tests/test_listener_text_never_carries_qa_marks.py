@@ -12,7 +12,7 @@ from pathlib import Path
 
 import pytest
 
-from abook.webui import bookfile
+from abook.webui import bookfile, projectfile
 
 
 def _book(**chapter) -> dict:
@@ -47,7 +47,7 @@ def test_a_mark_in_the_cast_is_found() -> None:
 
 
 def test_seal_refuses_a_package_whose_listener_text_carries_a_mark(tmp_path: Path) -> None:
-    with pytest.raises(bookfile.BookFileError, match="dấu nội bộ"):
+    with pytest.raises(bookfile.BookFileError, match="dấu kiểm tra nội bộ"):
         bookfile.seal(_book(subtitle="Cần nghe lại"), {"chapters/1.mp3": b"audio"}, tmp_path / "x.abook",
                       producer="test", version=1)
     assert not (tmp_path / "x.abook").exists()
@@ -70,9 +70,21 @@ def test_seal_refuses_a_script_line_whose_speaker_shows_a_mark(tmp_path: Path) -
     script = '{"segments": [{"speaker": "Bà Lão"}, {"speaker": "NPC Bà Lão Bán Hoa"}]}'.encode()
     assert bookfile.script_speaker_problems("scripts/1.json", script) == ["scripts/1.json.speaker: NPC Bà Lão Bán Hoa"]
     assert bookfile.script_speaker_problems("scripts/1.json", '{"segments": [{"speaker": "An \\"Cáo\\""}]}'.encode()) == []
-    with pytest.raises(bookfile.BookFileError, match="dấu nội bộ"):
+    with pytest.raises(bookfile.BookFileError, match="dấu kiểm tra nội bộ"):
         bookfile.seal(_book(), {"chapters/1.mp3": b"audio", "scripts/1.json": script}, tmp_path / "x.abook", producer="test", version=1)
     assert not (tmp_path / "x.abook").exists()
+
+
+@pytest.mark.parametrize("bad", [3, "voice", {"voice": "A"}])
+def test_saving_a_malformed_cast_keeps_its_bytes_for_the_shared_error_state(bad) -> None:
+    cast = {"narrator": {"chapterVoices": bad, "exceptChapters": bad}, "characters": bad, "extras": bad}
+    data = bookfile.json_bytes(cast)
+    files = {"cast.json": data}
+    known = {"cast.json": {"size": len(data), "sha256": "verified"}}
+    book = _book()
+    bookfile.clean_listener_layer(book, files, known)
+    assert files["cast.json"] == data and "cast.json" in known
+    assert bookfile.listener_package_problems(book, files, files.__getitem__) == ([], [])
 
 
 QA_FIELDS = [
@@ -99,7 +111,7 @@ def test_qa_state_is_not_a_package_field(where: str, key: str, value, tmp_path: 
     """Even an empty or passing QA field is refused: listeners never need it, so the whitelist leaves it out."""
     book = _with(where, key, value)
     assert bookfile.package_field_problems(book) and all(problem.endswith("." + key) for problem in bookfile.package_field_problems(book))
-    with pytest.raises(bookfile.BookFileError, match="QA / nội bộ"):
+    with pytest.raises(bookfile.BookFileError, match="dấu kiểm tra nội bộ"):
         bookfile.seal(book, {"chapters/1.mp3": b"audio"}, tmp_path / "x.abook", producer="test", version=1)
     assert not (tmp_path / "x.abook").exists()
     stripped = bookfile.listener_book(book)
@@ -137,3 +149,53 @@ def test_the_rules_shared_with_the_phone_packer(case: dict) -> None:
         files["cast.json"] = json.dumps(case["cast"], ensure_ascii=False).encode("utf-8")
     leaked, internal = bookfile.listener_package_problems(shared_book(case), files, files.__getitem__)
     assert (sorted(leaked), sorted(internal)) == (sorted(case["leaked"]), sorted(case["internal"]))
+
+
+@pytest.mark.parametrize("target", SHARED["targets"])
+@pytest.mark.parametrize("case", SHARED["cases"], ids=lambda case: case["name"])
+def test_book_and_project_seals_enforce_the_same_shared_rules(tmp_path: Path, target: str, case: dict) -> None:
+    book = shared_book(case)
+    files = {name: text.encode("utf-8") for name, text in (case.get("scripts") or {}).items()}
+    files["chapters/1.mp3"] = b"audio"
+    if "cast" in case:
+        files["cast.json"] = bookfile.json_bytes(case["cast"])
+    out = tmp_path / ("x.abookproj" if target == "project" else "x.abook")
+    def seal() -> None:
+        if target == "book":
+            bookfile.seal(book, files, out, producer="test", version=6)
+        else:
+            projectfile._seal(out, files, book, producer="test", title="Sách thử", workshop=projectfile.PENDING,
+                              project_root="", sources=[], missing=[], version=6)
+    if case["leaked"] or case["internal"]:
+        with pytest.raises((bookfile.BookFileError, projectfile.ProjectFileError)) as error:
+            seal()
+        assert str(error.value) == bookfile._RULES["refusal"]
+        assert not out.exists()
+    else:
+        seal()
+        assert out.is_file()
+
+
+@pytest.mark.parametrize("case", SHARED["cases"], ids=lambda case: case["name"])
+def test_imported_listening_layers_are_cleaned_by_the_shared_rules(case: dict) -> None:
+    book = shared_book(case)
+    files = {name: text.encode("utf-8") for name, text in (case.get("scripts") or {}).items()}
+    if "cast" in case:
+        files["cast.json"] = bookfile.json_bytes(case["cast"])
+    known = {name: bookfile.describe(data) for name, data in files.items()}
+    original = dict(files)
+    bookfile.clean_listener_layer(book, files, known)
+    assert bookfile.listener_package_problems(book, files, files.__getitem__) == ([], [])
+    if not case["leaked"] and not case["internal"]:
+        assert book == shared_book(case)
+        assert files == original
+
+
+@pytest.mark.parametrize("data", [b"{", b"[]", b'"cast"'])
+def test_saving_does_not_rewrite_an_unreadable_cast(data: bytes) -> None:
+    files = {"cast.json": data}
+    known = {"cast.json": bookfile.describe(data)}
+    expected = copy.deepcopy(known)
+    bookfile.clean_listener_layer(_book(), files, known)
+    assert files == {"cast.json": data}
+    assert known == expected

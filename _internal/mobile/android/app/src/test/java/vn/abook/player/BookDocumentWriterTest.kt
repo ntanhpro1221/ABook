@@ -176,6 +176,47 @@ class BookDocumentWriterTest {
     }
 
     @Test
+    fun imported_books_save_clean_in_both_formats_and_keep_every_listener_edit() {
+        for (project in listOf(false, true)) {
+            val dir = bookWith("everything")
+            val manifest = File(dir, "book.json")
+            val book = JSONObject(manifest.readText())
+            book.put("levelQa", JSONObject().put("verdict", "warning"))
+            for (volume in (0 until book.getJSONArray("volumes").length()).map { book.getJSONArray("volumes").getJSONObject(it) }) {
+                for (chapter in (0 until volume.getJSONArray("chapters").length()).map { volume.getJSONArray("chapters").getJSONObject(it) }) {
+                    chapter.put("qualityPassed", false).put("failedLines", org.json.JSONArray()).put("subtitle", "Cần nghe lại")
+                }
+            }
+            manifest.writeText(book.toString())
+            val edits = File(dir, "edits.json").readBytes()
+            val original = manifest.readBytes()
+            val castFile = File(dir, "cast.json")
+            val cast = JSONObject(castFile.readText())
+            cast.getJSONArray("characters").getJSONObject(0).put("displayName", "NPC Bác gác")
+            castFile.writeText(cast.toString())
+            val originalCast = castFile.readBytes()
+            val scriptFile = File(dir, "scripts/1.json")
+            scriptFile.writeText("""{"segments":[{"speaker":"NPC Bác gác","text":"Cần nghe lại lời bà dặn. GAME_OVER_01"}]}""")
+            val originalScript = scriptFile.readBytes()
+            val (file, _) = write(dir, "clean-${if (project) "project.abookproj" else "book.abook"}", project)
+            ZipFile(file).use { zip ->
+                fun read(name: String) = zip.getInputStream(zip.getEntry(name)).readBytes()
+                val saved = JSONObject(String(read("book.json"), Charsets.UTF_8))
+                assertEquals(emptyList<String>() to emptyList<String>(), ListenerPackage.problems(saved, zip.entries().toList().map { it.name }, ::read))
+                assertTrue(StrictJson.equal(BookEdits.parse(edits), BookEdits.parse(read("edits.json"))))
+                assertEquals("Bác gác", JSONObject(String(read("cast.json"), Charsets.UTF_8)).getJSONArray("characters").getJSONObject(0).getString("displayName"))
+                val segment = JSONObject(String(read("scripts/1.json"), Charsets.UTF_8)).getJSONArray("segments").getJSONObject(0)
+                assertEquals("Bác gác", segment.getString("speaker"))
+                assertEquals("Cần nghe lại lời bà dặn. GAME_OVER_01", segment.getString("text"))
+            }
+            assertArrayEquals(original, manifest.readBytes())
+            assertArrayEquals(originalCast, castFile.readBytes())
+            assertArrayEquals(originalScript, scriptFile.readBytes())
+            assertArrayEquals(edits, File(dir, "edits.json").readBytes())
+        }
+    }
+
+    @Test
     fun a_series_and_a_plain_book_both_use_version_6() {
         fun mini(name: String, audio: String, music: Boolean): File {
             val dir = File(work, name)

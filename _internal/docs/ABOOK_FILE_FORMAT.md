@@ -75,11 +75,15 @@ Earlier package versions and flat manifests are refused; rebuild a book from its
   uses chapter durations (text-only chapters have unit weight); whole-book progress keeps the complete queue.
 - `book.json` carries only listener fields (a whitelist). Production QA state (whether a chapter passed review, failed lines,
   machine errors, the level report) belongs to the project (its database, and the `.abookproj` that carries it) and never
-  enters a `.abook`; listener-visible text (titles, cast names, read-along speakers) never carries an internal mark ("Cần nghe
-  lại", line ids, machine codes, the NPC mark on a shown name). Every producer refuses to seal a package that breaks either
-  rule, it never strips silently: desktop `bookfile.seal` and Android `BookDocumentWriter.seal` read the same rules
+  enters the listening layer of either file type. Listener-visible text (titles, cast names, read-along speakers) never carries
+  an app status label, line id, known machine error code, or NPC prefix on a shown name. Real story words and game codes such
+  as `GAME_OVER_01` remain valid. New production refuses to seal output that breaks either rule: desktop `bookfile.seal`,
+  `projectfile._seal` and both Android export paths read the same rules
   (`abook/webui/assets/listener_package.json`) and pass the same cases (`tests/fixtures/book_files/listener_package_cases.json`).
-  A package an older producer made with such marks is packed again from its project (the pipeline never treats it as current).
+  Saving an imported book cleans QA fields and exact app marks from that listening layer, then applies the same seal checks.
+  This preserves the listener's complete edit layer, story text, audio and unchanged file hashes; it never rewrites imported
+  files in place. Production rebuilds a marked package from its project and never treats it as current. The whitelist includes
+  author, illustrator, alternative titles, genres, summary and source metadata.
 - Readium `readingOrder` remains flat across all volumes. `mimetype`, file extensions and both registered IANA media
   type names are unchanged. All layouts described below are features of version 6, including music, parts, edits and plain text.
 

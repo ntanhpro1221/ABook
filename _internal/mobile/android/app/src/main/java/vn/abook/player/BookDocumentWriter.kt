@@ -84,6 +84,7 @@ object BookDocumentWriter {
                     ?: throw Refused(S.s_thieu_file_bai_nhac_nguoi_nghe_da_chon_tro_fec4fb4a)
             }
         }
+        ListenerPackage.clean(book, files, known)
         val version = BookVolumes.TREE_VERSION
         // File dự án không đòi chương nào có audio (phần nghe có thể còn thiếu); file .abook đòi audio hay chữ.
         if (asProject) return writeProject(bookDir, out, book, files, known, edits, version)
@@ -99,12 +100,7 @@ object BookDocumentWriter {
         if (files.keys.none { it.startsWith("chapters/") || it.startsWith("texts/") }) {
             throw Refused(S.s_sach_chua_co_chuong_nao_nghe_duoc_hay_doc_bd4501d9)
         }
-        // Như `bookfile.seal`: chữ người nghe thấy có dấu nội bộ, hay book.json có trường QA / nội bộ -> từ chối, không lặng lẽ bỏ.
-        val (leaked, internal) = ListenerPackage.problems(book, files.keys) { name ->
-            when (val source = files.getValue(name)) { is File -> source.readBytes(); else -> source as ByteArray }
-        }
-        if (leaked.isNotEmpty()) throw Refused(S.s_package_internal_marks(leaked.take(3).joinToString("; ")))
-        if (internal.isNotEmpty()) throw Refused(S.s_package_internal_fields(internal.take(3).joinToString("; ")))
+        requireClean(book, files)
         val sorted = files.keys.sorted()
         val described = LinkedHashMap<String, Any>()
         for (name in sorted) described[name] = describe(name, files.getValue(name), known[name])
@@ -135,6 +131,14 @@ object BookDocumentWriter {
         return Written(counting.written, BookEdits.count(edits), BookVolumes.TREE_VERSION)
     }
 
+    private fun requireClean(book: JSONObject, files: Map<String, Any>) {
+        val (leaked, internal) = ListenerPackage.problems(book, files.keys) { name ->
+            when (val source = files.getValue(name)) { is File -> source.readBytes(); else -> source as ByteArray }
+        }
+        if (leaked.isNotEmpty()) throw Refused(S.s_package_internal_marks)
+        if (internal.isNotEmpty()) throw Refused(S.s_package_internal_marks)
+    }
+
     private fun rank(name: String) = RANK.indexOfFirst { name.startsWith(it) }
 
     /**
@@ -142,8 +146,9 @@ object BookDocumentWriter {
      * file `.abook`) ra file chờ dựng xưởng. Phần xưởng lấy theo danh sách của `project.json` đã lưu; mục nào là bí danh (không giải ra
      * thư mục) thì đọc byte của mục thật. Cỡ + mã băm tính lại một lần cho mỗi file thật trên đĩa.
      */
-    private fun writeProject(bookDir: File, out: OutputStream, book: JSONObject, files: HashMap<String, Any>,
+    internal fun writeProject(bookDir: File, out: OutputStream, book: JSONObject, files: HashMap<String, Any>,
                              known: HashMap<String, JSONObject>, edits: JSONObject, version: Int): Written {
+        requireClean(book, files)
         val unknown = files.keys.filter { !BookFileImport.contentPattern(version).matches(it) }
         if (unknown.isNotEmpty()) throw Refused(S.s_chua_goi_duoc_cac_file_co_ten_ngoai_dinh_d_a63320dc(unknown.take(3)))
         val kept = ProjectDocument.kept(bookDir)
