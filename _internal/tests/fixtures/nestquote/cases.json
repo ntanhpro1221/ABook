@@ -1,0 +1,1022 @@
+{
+ "cases": [
+  {
+   "name": "thang_trong_thang",
+   "text": "Lan bĩu môi.\n\n\"Hôm qua cậu còn nói rằng \"hôm nay trời đẹp nhỉ\" cơ mà.\"\n\nTôi im lặng.",
+   "segments": [
+    [
+     "narration",
+     "Lan bĩu môi."
+    ],
+    [
+     "dialogue",
+     "\"Hôm qua cậu còn nói rằng \"hôm nay trời đẹp nhỉ\" cơ mà.\""
+    ],
+    [
+     "narration",
+     "Tôi im lặng."
+    ]
+   ]
+  },
+  {
+   "name": "thang_trong_thang_co_loi_dan",
+   "text": "\"Hôm qua cậu còn nói rằng \"hôm nay trời đẹp nhỉ\" cơ mà,\" Lan nói.",
+   "segments": [
+    [
+     "dialogue",
+     "\"Hôm qua cậu còn nói rằng \"hôm nay trời đẹp nhỉ\" cơ mà,\""
+    ],
+    [
+     "narration",
+     "Lan nói."
+    ]
+   ]
+  },
+  {
+   "name": "thang_trong_thang_cuoi_cau",
+   "text": "\"Cậu bảo \"hôm nay trời đẹp nhỉ\".\"\n\nTôi im lặng.",
+   "segments": [
+    [
+     "dialogue",
+     "\"Cậu bảo \"hôm nay trời đẹp nhỉ\".\""
+    ],
+    [
+     "narration",
+     "Tôi im lặng."
+    ]
+   ]
+  },
+  {
+   "name": "thang_mo_bang_dau_lung",
+   "text": "\"...Này. Tớ nghĩ... \"Tớ muốn đi biển.\" hay đại loại thế.\"",
+   "segments": [
+    [
+     "dialogue",
+     "\"...Này. Tớ nghĩ... \"Tớ muốn đi biển.\" hay đại loại thế.\""
+    ]
+   ]
+  },
+  {
+   "name": "thang_hai_cap_long_va_cau_sau",
+   "text": "\"Cậu bảo \"đi\", rồi lại \"ở\",\" Lan nói. \"Thật là.\"",
+   "segments": [
+    [
+     "dialogue",
+     "\"Cậu bảo \"đi\", rồi lại \"ở\",\""
+    ],
+    [
+     "narration",
+     "Lan nói."
+    ],
+    [
+     "dialogue",
+     "\"Thật là.\""
+    ]
+   ]
+  },
+  {
+   "name": "cong_trong_cong",
+   "text": "Lan bĩu môi.\n\n“Hôm qua cậu còn nói rằng “hôm nay trời đẹp nhỉ” cơ mà.”\n\nTôi im lặng.",
+   "segments": [
+    [
+     "narration",
+     "Lan bĩu môi."
+    ],
+    [
+     "dialogue",
+     "“Hôm qua cậu còn nói rằng “hôm nay trời đẹp nhỉ” cơ mà.”"
+    ],
+    [
+     "narration",
+     "Tôi im lặng."
+    ]
+   ]
+  },
+  {
+   "name": "cong_trong_cong_dau_cau",
+   "text": "““Hôm nay trời đẹp nhỉ” - đấy là cậu nói.”\n\nTôi im lặng.",
+   "segments": [
+    [
+     "dialogue",
+     "““Hôm nay trời đẹp nhỉ” - đấy là cậu nói.”"
+    ],
+    [
+     "narration",
+     "Tôi im lặng."
+    ]
+   ]
+  },
+  {
+   "name": "cong_trong_cong_cuoi_cau",
+   "text": "“Cậu bảo “hôm nay trời đẹp nhỉ”.”\n\nTôi im lặng.",
+   "segments": [
+    [
+     "dialogue",
+     "“Cậu bảo “hôm nay trời đẹp nhỉ”.”"
+    ],
+    [
+     "narration",
+     "Tôi im lặng."
+    ]
+   ]
+  },
+  {
+   "name": "don_trong_cong",
+   "text": "Lan bĩu môi.\n\n“Hôm qua cậu còn nói rằng ‘hôm nay trời đẹp nhỉ’ cơ mà.”\n\nTôi im lặng.",
+   "segments": [
+    [
+     "narration",
+     "Lan bĩu môi."
+    ],
+    [
+     "dialogue",
+     "“Hôm qua cậu còn nói rằng ‘hôm nay trời đẹp nhỉ’ cơ mà.”"
+    ],
+    [
+     "narration",
+     "Tôi im lặng."
+    ]
+   ]
+  },
+  {
+   "name": "thang_trong_cong",
+   "text": "“Hôm qua cậu còn nói rằng \"hôm nay trời đẹp nhỉ\" cơ mà.”",
+   "segments": [
+    [
+     "dialogue",
+     "“Hôm qua cậu còn nói rằng \"hôm nay trời đẹp nhỉ\" cơ mà.”"
+    ]
+   ]
+  },
+  {
+   "name": "goc_trong_goc",
+   "text": "Lan bĩu môi.\n\n「Hôm qua cậu còn nói rằng 『hôm nay trời đẹp nhỉ』 cơ mà.」\n\nTôi im lặng.",
+   "segments": [
+    [
+     "narration",
+     "Lan bĩu môi."
+    ],
+    [
+     "dialogue",
+     "“Hôm qua cậu còn nói rằng 『hôm nay trời đẹp nhỉ』 cơ mà.”"
+    ],
+    [
+     "narration",
+     "Tôi im lặng."
+    ]
+   ]
+  },
+  {
+   "name": "phap_trong_cong",
+   "text": "Lan bĩu môi.\n\n“Hôm qua cậu còn nói rằng «hôm nay trời đẹp nhỉ» cơ mà.”\n\nTôi im lặng.",
+   "segments": [
+    [
+     "narration",
+     "Lan bĩu môi."
+    ],
+    [
+     "dialogue",
+     "“Hôm qua cậu còn nói rằng «hôm nay trời đẹp nhỉ» cơ mà.”"
+    ],
+    [
+     "narration",
+     "Tôi im lặng."
+    ]
+   ]
+  },
+  {
+   "name": "phap_trong_thang",
+   "text": "\"Ghé qua «Hội Thợ Săn» trước đã,\" Minh nói.",
+   "segments": [
+    [
+     "dialogue",
+     "\"Ghé qua «Hội Thợ Săn» trước đã,\""
+    ],
+    [
+     "narration",
+     "Minh nói."
+    ]
+   ]
+  },
+  {
+   "name": "long_trong_noi_tam",
+   "text": "Lan bĩu môi.\n\n‘Hôm qua cậu ta còn nói rằng “hôm nay trời đẹp nhỉ” cơ mà.’\n\nTôi im lặng.",
+   "segments": [
+    [
+     "narration",
+     "Lan bĩu môi."
+    ],
+    [
+     "thought",
+     "‘Hôm qua cậu ta còn nói rằng “hôm nay trời đẹp nhỉ” cơ mà.’"
+    ],
+    [
+     "narration",
+     "Tôi im lặng."
+    ]
+   ]
+  },
+  {
+   "name": "noi_tam_nhieu_doan",
+   "text": "Lan bĩu môi.\n\n‘Nghe này.\n\nHôm qua nó còn nói rằng “hôm nay trời đẹp nhỉ” cơ mà.’\n\nTôi im lặng.",
+   "segments": [
+    [
+     "narration",
+     "Lan bĩu môi."
+    ],
+    [
+     "thought",
+     "‘Nghe này."
+    ],
+    [
+     "thought",
+     "Hôm qua nó còn nói rằng “hôm nay trời đẹp nhỉ” cơ mà.’"
+    ],
+    [
+     "narration",
+     "Tôi im lặng."
+    ]
+   ]
+  },
+  {
+   "name": "cong_nhieu_doan_long_giua",
+   "text": "Lan bĩu môi.\n\n“Nghe này. Chuyện dài lắm.\n\nHôm qua cậu còn nói rằng “hôm nay trời đẹp nhỉ” cơ mà.\n\nVậy mà giờ lại thế.”\n\nTôi im lặng.",
+   "segments": [
+    [
+     "narration",
+     "Lan bĩu môi."
+    ],
+    [
+     "dialogue",
+     "“Nghe này. Chuyện dài lắm."
+    ],
+    [
+     "dialogue",
+     "Hôm qua cậu còn nói rằng “hôm nay trời đẹp nhỉ” cơ mà."
+    ],
+    [
+     "dialogue",
+     "Vậy mà giờ lại thế.”"
+    ],
+    [
+     "narration",
+     "Tôi im lặng."
+    ]
+   ]
+  },
+  {
+   "name": "cong_nhieu_doan_long_o_doan_dong",
+   "text": "Lan bĩu môi.\n\n“Nghe này. Chuyện dài lắm.\n\nHôm qua cậu còn nói rằng “hôm nay trời đẹp nhỉ” cơ mà.”\n\nTôi im lặng.",
+   "segments": [
+    [
+     "narration",
+     "Lan bĩu môi."
+    ],
+    [
+     "dialogue",
+     "“Nghe này. Chuyện dài lắm."
+    ],
+    [
+     "dialogue",
+     "Hôm qua cậu còn nói rằng “hôm nay trời đẹp nhỉ” cơ mà.”"
+    ],
+    [
+     "narration",
+     "Tôi im lặng."
+    ]
+   ]
+  },
+  {
+   "name": "cong_nhieu_doan_long_o_doan_mo",
+   "text": "Lan bĩu môi.\n\n“Nghe này, hôm qua cậu nói “trời đẹp nhỉ” cơ mà.\n\nVậy mà giờ lại thế.”\n\nTôi im lặng.",
+   "segments": [
+    [
+     "narration",
+     "Lan bĩu môi."
+    ],
+    [
+     "dialogue",
+     "“Nghe này, hôm qua cậu nói “trời đẹp nhỉ” cơ mà."
+    ],
+    [
+     "dialogue",
+     "Vậy mà giờ lại thế.”"
+    ],
+    [
+     "narration",
+     "Tôi im lặng."
+    ]
+   ]
+  },
+  {
+   "name": "thang_nhieu_doan_long_giua",
+   "text": "Lan bĩu môi.\n\n\"Nghe này. Chuyện dài lắm.\n\nHôm qua cậu còn nói rằng \"hôm nay trời đẹp nhỉ\" cơ mà.\n\nVậy mà giờ lại thế.\"\n\nTôi im lặng.",
+   "segments": [
+    [
+     "narration",
+     "Lan bĩu môi."
+    ],
+    [
+     "dialogue",
+     "\"Nghe này. Chuyện dài lắm."
+    ],
+    [
+     "dialogue",
+     "Hôm qua cậu còn nói rằng \"hôm nay trời đẹp nhỉ\" cơ mà."
+    ],
+    [
+     "dialogue",
+     "Vậy mà giờ lại thế.\""
+    ],
+    [
+     "narration",
+     "Tôi im lặng."
+    ]
+   ]
+  },
+  {
+   "name": "thang_nhieu_doan_long_o_doan_mo",
+   "text": "Lan bĩu môi.\n\n\"Nghe này, hôm qua cậu nói \"trời đẹp nhỉ\" cơ mà.\n\nVậy mà giờ lại thế.\"\n\nTôi im lặng.",
+   "segments": [
+    [
+     "narration",
+     "Lan bĩu môi."
+    ],
+    [
+     "dialogue",
+     "\"Nghe này, hôm qua cậu nói \"trời đẹp nhỉ\" cơ mà."
+    ],
+    [
+     "dialogue",
+     "Vậy mà giờ lại thế.\""
+    ],
+    [
+     "narration",
+     "Tôi im lặng."
+    ]
+   ]
+  },
+  {
+   "name": "thang_loi_anh_mo_lai_moi_doan",
+   "text": "Lan kể.\n\n\"Đoạn một của lời nói.\n\n\"Đoạn hai tiếp lời.\n\n\"Đoạn ba hết rồi.\"\n\nTôi gật đầu.",
+   "segments": [
+    [
+     "narration",
+     "Lan kể."
+    ],
+    [
+     "dialogue",
+     "\"Đoạn một của lời nói."
+    ],
+    [
+     "dialogue",
+     "\"Đoạn hai tiếp lời."
+    ],
+    [
+     "dialogue",
+     "\"Đoạn ba hết rồi.\""
+    ],
+    [
+     "narration",
+     "Tôi gật đầu."
+    ]
+   ]
+  },
+  {
+   "name": "thang_loi_anh_long_giua",
+   "text": "Lan kể.\n\n\"Đoạn một của lời nói.\n\n\"Đoạn hai, cậu bảo \"trời đẹp\" mà.\n\n\"Đoạn ba hết rồi.\"\n\nTôi gật đầu.",
+   "segments": [
+    [
+     "narration",
+     "Lan kể."
+    ],
+    [
+     "dialogue",
+     "\"Đoạn một của lời nói."
+    ],
+    [
+     "dialogue",
+     "\"Đoạn hai, cậu bảo \"trời đẹp\" mà."
+    ],
+    [
+     "dialogue",
+     "\"Đoạn ba hết rồi.\""
+    ],
+    [
+     "narration",
+     "Tôi gật đầu."
+    ]
+   ]
+  },
+  {
+   "name": "cong_loi_anh_long_giua",
+   "text": "Lan kể.\n\n“Đoạn một của lời nói.\n\n“Đoạn hai, cậu bảo “trời đẹp” mà.\n\n“Đoạn ba hết rồi.”\n\nTôi gật đầu.",
+   "segments": [
+    [
+     "narration",
+     "Lan kể."
+    ],
+    [
+     "dialogue",
+     "“Đoạn một của lời nói."
+    ],
+    [
+     "dialogue",
+     "“Đoạn hai, cậu bảo “trời đẹp” mà."
+    ],
+    [
+     "dialogue",
+     "“Đoạn ba hết rồi.”"
+    ],
+    [
+     "narration",
+     "Tôi gật đầu."
+    ]
+   ]
+  },
+  {
+   "name": "cong_long_khong_dong",
+   "text": "“Hôm qua cậu còn nói rằng “hôm nay trời đẹp nhỉ cơ mà.”\n\nTôi im lặng.",
+   "segments": [
+    [
+     "dialogue",
+     "“Hôm qua cậu còn nói rằng “hôm nay trời đẹp nhỉ cơ mà.”"
+    ],
+    [
+     "narration",
+     "Tôi im lặng."
+    ]
+   ]
+  },
+  {
+   "name": "cong_long_dong_bang_thang",
+   "text": "“Hôm qua cậu còn nói rằng “hôm nay trời đẹp nhỉ\" cơ mà.”\n\nTôi im lặng.",
+   "segments": [
+    [
+     "dialogue",
+     "“Hôm qua cậu còn nói rằng “hôm nay trời đẹp nhỉ\" cơ mà.”"
+    ],
+    [
+     "narration",
+     "Tôi im lặng."
+    ]
+   ]
+  },
+  {
+   "name": "giu_thieu_dau_dong_roi_cau_moi",
+   "text": "“Nghe này.\n\nTôi nhìn cô ấy, cô ấy bảo “đi thôi” rồi quay đi.\n\n“Ừ.”\n\nHết.",
+   "segments": [
+    [
+     "dialogue",
+     "“Nghe này."
+    ],
+    [
+     "narration",
+     "Tôi nhìn cô ấy, cô ấy bảo"
+    ],
+    [
+     "dialogue",
+     "“đi thôi”"
+    ],
+    [
+     "narration",
+     "rồi quay đi."
+    ],
+    [
+     "dialogue",
+     "“Ừ.”"
+    ],
+    [
+     "narration",
+     "Hết."
+    ]
+   ]
+  },
+  {
+   "name": "giu_thieu_dau_dong_den_het_chuong",
+   "text": "“Nghe này.\n\nTôi nhìn cô ấy, cô ấy bảo “đi thôi” rồi quay đi.\n\nHết.",
+   "segments": [
+    [
+     "dialogue",
+     "“Nghe này."
+    ],
+    [
+     "narration",
+     "Tôi nhìn cô ấy, cô ấy bảo"
+    ],
+    [
+     "dialogue",
+     "“đi thôi”"
+    ],
+    [
+     "narration",
+     "rồi quay đi."
+    ],
+    [
+     "narration",
+     "Hết."
+    ]
+   ]
+  },
+  {
+   "name": "giu_hai_cau_mot_dong",
+   "text": "\"Đi thôi,\" Lan nói. \"Muộn rồi.\"",
+   "segments": [
+    [
+     "dialogue",
+     "\"Đi thôi,\""
+    ],
+    [
+     "narration",
+     "Lan nói."
+    ],
+    [
+     "dialogue",
+     "\"Muộn rồi.\""
+    ]
+   ]
+  },
+  {
+   "name": "giu_thuat_ngu_trong_loi_ke",
+   "text": "Cô gọi nó là \"con mèo\" và cười.",
+   "segments": [
+    [
+     "narration",
+     "Cô gọi nó là"
+    ],
+    [
+     "dialogue",
+     "\"con mèo\""
+    ],
+    [
+     "narration",
+     "và cười."
+    ]
+   ]
+  },
+  {
+   "name": "giu_liet_ke_trich_trong_loi_ke",
+   "text": "Lan đã nói hai điều, \"Tớ muốn vui\" và \"làm điều mới\".",
+   "segments": [
+    [
+     "narration",
+     "Lan đã nói hai điều,"
+    ],
+    [
+     "dialogue",
+     "\"Tớ muốn vui\""
+    ],
+    [
+     "narration",
+     "và"
+    ],
+    [
+     "dialogue",
+     "\"làm điều mới\"."
+    ]
+   ]
+  },
+  {
+   "name": "giu_ngoac_boc_ngoac",
+   "text": "\"“Thôi đủ rồi.”\"",
+   "segments": [
+    [
+     "dialogue",
+     "\"“Thôi đủ rồi.” \""
+    ]
+   ]
+  },
+  {
+   "name": "giu_thieu_dong_dau_go_lan_o_xa",
+   "text": "“Đi thôi.\n\nTôi nhớ lời mẹ dặn “về sớm” nên gật đầu.\n\nTôi bước ra cửa.\n\nCô ấy nói: \"Mai gặp nhé.”\n\nHết.",
+   "segments": [
+    [
+     "dialogue",
+     "“Đi thôi."
+    ],
+    [
+     "narration",
+     "Tôi nhớ lời mẹ dặn “về sớm” nên gật đầu."
+    ],
+    [
+     "narration",
+     "Tôi bước ra cửa."
+    ],
+    [
+     "narration",
+     "Cô ấy nói:"
+    ],
+    [
+     "dialogue",
+     "\"Mai gặp nhé.”"
+    ],
+    [
+     "narration",
+     "Hết."
+    ]
+   ]
+  },
+  {
+   "name": "giu_thieu_dong_dau_dong_lac_o_xa",
+   "text": "“Đi thôi.\n\nTôi nghe cô bảo “đi thôi” rồi bước ra.\n\nLan hỏi: “Đi đâu?”\n\nTôi đáp: “Về nhà.”\n\nNam lẩm bẩm: Thôi được rồi.”\n\nHết.",
+   "segments": [
+    [
+     "dialogue",
+     "“Đi thôi."
+    ],
+    [
+     "narration",
+     "Tôi nghe cô bảo"
+    ],
+    [
+     "dialogue",
+     "“đi thôi”"
+    ],
+    [
+     "narration",
+     "rồi bước ra."
+    ],
+    [
+     "narration",
+     "Lan hỏi:"
+    ],
+    [
+     "dialogue",
+     "“Đi đâu?”"
+    ],
+    [
+     "narration",
+     "Tôi đáp:"
+    ],
+    [
+     "dialogue",
+     "“Về nhà.”"
+    ],
+    [
+     "narration",
+     "Nam lẩm bẩm: Thôi được rồi.”"
+    ],
+    [
+     "narration",
+     "Hết."
+    ]
+   ]
+  },
+  {
+   "name": "giu_thieu_dong_noi_tam_nhay_trong_tu",
+   "text": "‘Mình phải đi.\n\nTôi nghe cô bảo “đi thôi” rồi bước ra.\n\nChúng tôi vào quán McDonald’s gần đó.\n\nHết.",
+   "segments": [
+    [
+     "thought",
+     "‘Mình phải đi."
+    ],
+    [
+     "narration",
+     "Tôi nghe cô bảo"
+    ],
+    [
+     "dialogue",
+     "“đi thôi”"
+    ],
+    [
+     "narration",
+     "rồi bước ra."
+    ],
+    [
+     "narration",
+     "Chúng tôi vào quán McDonald’s gần đó."
+    ],
+    [
+     "narration",
+     "Hết."
+    ]
+   ]
+  },
+  {
+   "name": "giu_thieu_dong_loi_dan_truoc",
+   "text": "“Đi thôi.\n\nLan hỏi: “Đi đâu?”\n\nTôi đáp: “Về nhà.”\n\nHết.",
+   "segments": [
+    [
+     "dialogue",
+     "“Đi thôi."
+    ],
+    [
+     "narration",
+     "Lan hỏi:"
+    ],
+    [
+     "dialogue",
+     "“Đi đâu?”"
+    ],
+    [
+     "narration",
+     "Tôi đáp:"
+    ],
+    [
+     "dialogue",
+     "“Về nhà.”"
+    ],
+    [
+     "narration",
+     "Hết."
+    ]
+   ]
+  },
+  {
+   "name": "giu_long_o_xa_qua_tam_nhin",
+   "text": "“Nghe này.\n\nHôm qua cậu nói “trời đẹp nhỉ” cơ mà.\n\nMột.\n\nHai.\n\nBa.\n\nBốn.\n\nNăm.”\n\nLan thở dài.",
+   "segments": [
+    [
+     "dialogue",
+     "“Nghe này."
+    ],
+    [
+     "narration",
+     "Hôm qua cậu nói"
+    ],
+    [
+     "dialogue",
+     "“trời đẹp nhỉ”"
+    ],
+    [
+     "narration",
+     "cơ mà."
+    ],
+    [
+     "narration",
+     "Một."
+    ],
+    [
+     "narration",
+     "Hai."
+    ],
+    [
+     "narration",
+     "Ba."
+    ],
+    [
+     "narration",
+     "Bốn."
+    ],
+    [
+     "narration",
+     "Năm.”"
+    ],
+    [
+     "narration",
+     "Lan thở dài."
+    ]
+   ]
+  },
+  {
+   "name": "cong_nhieu_doan_long_dong_sau_hai_doan",
+   "text": "“Nghe này.\n\nHôm qua cậu nói “trời đẹp nhỉ” cơ mà.\n\nVậy mà hôm nay lại mưa.\n\nThật chẳng hiểu nổi.”\n\nLan thở dài.",
+   "segments": [
+    [
+     "dialogue",
+     "“Nghe này."
+    ],
+    [
+     "dialogue",
+     "Hôm qua cậu nói “trời đẹp nhỉ” cơ mà."
+    ],
+    [
+     "dialogue",
+     "Vậy mà hôm nay lại mưa."
+    ],
+    [
+     "dialogue",
+     "Thật chẳng hiểu nổi.”"
+    ],
+    [
+     "narration",
+     "Lan thở dài."
+    ]
+   ]
+  },
+  {
+   "name": "noi_tam_nhieu_doan_thuat_ngu_long",
+   "text": "‘Nơi này lạ quá.\n\nHọ gọi tôi là “Thần Gió” nữa.\n\nAi bày ra cái lễ ‘cầu mưa’ này nhỉ, rồi còn cả ‘Sổ tay gọi thần’. Thật là.\n\nChắc phải đi thôi.’\n\nLan đứng dậy.",
+   "segments": [
+    [
+     "thought",
+     "‘Nơi này lạ quá."
+    ],
+    [
+     "thought",
+     "Họ gọi tôi là “Thần Gió” nữa."
+    ],
+    [
+     "thought",
+     "Ai bày ra cái lễ ‘cầu mưa’ này nhỉ, rồi còn cả ‘Sổ tay gọi thần’. Thật là."
+    ],
+    [
+     "thought",
+     "Chắc phải đi thôi.’"
+    ],
+    [
+     "narration",
+     "Lan đứng dậy."
+    ]
+   ]
+  },
+  {
+   "name": "thang_long_ngay_dau_cau",
+   "text": "\"\"Đi\" là cậu nói đấy,\" Lan bảo.",
+   "segments": [
+    [
+     "dialogue",
+     "\"\"Đi\" là cậu nói đấy,\""
+    ],
+    [
+     "narration",
+     "Lan bảo."
+    ]
+   ]
+  },
+  {
+   "name": "noi_tam_nhay_trong_tu",
+   "text": "‘Cậu bảo “don’t go” cơ mà.’",
+   "segments": [
+    [
+     "thought",
+     "‘Cậu bảo “don’t go” cơ mà.’"
+    ]
+   ]
+  },
+  {
+   "name": "noi_tam_dong_dinh_chu_viet",
+   "text": "‘Thôi chết’tôi nghĩ.\n\nLan cười.",
+   "segments": [
+    [
+     "thought",
+     "‘Thôi chết’"
+    ],
+    [
+     "narration",
+     "tôi nghĩ."
+    ],
+    [
+     "narration",
+     "Lan cười."
+    ]
+   ]
+  },
+  {
+   "name": "noi_tam_nhay_hau_to_tieng_anh",
+   "text": "‘Đi McDonald’s đi, we’re late, rock’n’roll mà.’ Lan nghĩ.",
+   "segments": [
+    [
+     "thought",
+     "‘Đi McDonald’s đi, we’re late, rock’n’roll mà.’"
+    ],
+    [
+     "narration",
+     "Lan nghĩ."
+    ]
+   ]
+  },
+  {
+   "name": "giu_thieu_dong_luot_moi_o_dong_dang_xet",
+   "text": "“Đi thôi.\n\nLan hỏi: “Đi đâu?”\n\nTôi đáp về nhà rồi.”\n\nHết.",
+   "segments": [
+    [
+     "dialogue",
+     "“Đi thôi."
+    ],
+    [
+     "narration",
+     "Lan hỏi:"
+    ],
+    [
+     "dialogue",
+     "“Đi đâu?”"
+    ],
+    [
+     "narration",
+     "Tôi đáp về nhà rồi.”"
+    ],
+    [
+     "narration",
+     "Hết."
+    ]
+   ]
+  },
+  {
+   "name": "cong_long_sau_hai_cham_cau_chay_tiep",
+   "text": "“Nghe này.\n\nMẹ dặn: “trời đẹp nhỉ, về sớm” nên tớ về.\n\nThế thôi.”\n\nHết.",
+   "segments": [
+    [
+     "dialogue",
+     "“Nghe này."
+    ],
+    [
+     "dialogue",
+     "Mẹ dặn: “trời đẹp nhỉ, về sớm” nên tớ về."
+    ],
+    [
+     "dialogue",
+     "Thế thôi.”"
+    ],
+    [
+     "narration",
+     "Hết."
+    ]
+   ]
+  },
+  {
+   "name": "giu_thieu_dong_long_mo_khong_dong",
+   "text": "“Nghe này.\n\nCậu bảo “trời đẹp rồi đi.\n\nỪ.”\n\nHết.",
+   "segments": [
+    [
+     "dialogue",
+     "“Nghe này."
+    ],
+    [
+     "narration",
+     "Cậu bảo"
+    ],
+    [
+     "dialogue",
+     "“trời đẹp rồi đi."
+    ],
+    [
+     "dialogue",
+     "Ừ.”"
+    ],
+    [
+     "narration",
+     "Hết."
+    ]
+   ]
+  },
+  {
+   "name": "giu_dau_lac_o_dong_sau",
+   "text": "“Nghe này.\n\nHôm qua cậu nói “trời đẹp nhỉ” cơ mà.\n\nRồi cô ấy đi » mất.\n\nThế đấy.”\n\nHết.",
+   "segments": [
+    [
+     "dialogue",
+     "“Nghe này."
+    ],
+    [
+     "narration",
+     "Hôm qua cậu nói"
+    ],
+    [
+     "dialogue",
+     "“trời đẹp nhỉ”"
+    ],
+    [
+     "narration",
+     "cơ mà."
+    ],
+    [
+     "narration",
+     "Rồi cô ấy đi » mất."
+    ],
+    [
+     "narration",
+     "Thế đấy.”"
+    ],
+    [
+     "narration",
+     "Hết."
+    ]
+   ]
+  },
+  {
+   "name": "cong_long_dong_o_dong_thu_tu",
+   "text": "“Nghe này.\n\nHôm qua cậu nói “trời đẹp nhỉ” cơ mà.\n\nMột.\n\nHai.\n\nBa.\n\nBốn.”\n\nHết.",
+   "segments": [
+    [
+     "dialogue",
+     "“Nghe này."
+    ],
+    [
+     "dialogue",
+     "Hôm qua cậu nói “trời đẹp nhỉ” cơ mà."
+    ],
+    [
+     "dialogue",
+     "Một."
+    ],
+    [
+     "dialogue",
+     "Hai."
+    ],
+    [
+     "dialogue",
+     "Ba."
+    ],
+    [
+     "dialogue",
+     "Bốn.”"
+    ],
+    [
+     "narration",
+     "Hết."
+    ]
+   ]
+  }
+ ]
+}

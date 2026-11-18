@@ -523,6 +523,10 @@ SEGMENTER_TEXTS = [
     ("a" * 100 + " ") * 9,
     ("Lời. " * 70 + "\n\n") * 3,
 ]
+# Trích dẫn lồng trong lời thoại (nestquote): cùng bộ ca với test Python, để bản Kotlin tách y như Python.
+SEGMENTER_TEXTS += [
+    case["text"] for case in json.loads((ROOT / "tests" / "fixtures" / "nestquote" / "cases.json").read_text(encoding="utf-8"))["cases"]
+]
 
 
 def segmenter_cases() -> dict[str, Any]:

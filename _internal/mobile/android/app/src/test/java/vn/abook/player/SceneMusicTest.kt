@@ -167,6 +167,30 @@ class SceneMusicTest {
         }
     }
 
+    // ‘…’ quét tay, không regex có nhánh chọn trong vòng lặp: dòng dài 5000 ký tự không tràn ngăn xếp kể cả ở luồng 256 KB (regex cũ tràn
+    // ở <= 512 KB); thân tối đa 1600 code point như Python.
+    @Test
+    fun a_long_thought_line_does_not_overflow_a_small_stack() {
+        var failure: Throwable? = null
+        val found = ArrayList<List<Int>>()
+        val worker = Thread(null, {
+            try {
+                assertTrue(SceneSegmenter.thoughtQuoteMatches("‘" + "ab ".repeat(1666) + "ab").isEmpty())
+                assertTrue(SceneSegmenter.thoughtQuoteMatches("‘" + "b’s ".repeat(1250)).isEmpty())
+                for (body in listOf(1600, 1601)) {
+                    found.add(SceneSegmenter.thoughtQuoteMatches("x ‘" + "a".repeat(body) + "’ y ‘b’").flatMap { it.toList() })
+                }
+                assertTrue(SceneSegmenter.segment("‘" + "ab ".repeat(1666) + "ab").isNotEmpty())
+            } catch (error: Throwable) {
+                failure = error
+            }
+        }, "small-stack", 256L * 1024)
+        worker.start()
+        worker.join()
+        failure?.let { throw it }
+        assertEquals(listOf(listOf(2, 1604, 1607, 1610), listOf(1608, 1611)), found)
+    }
+
     // Tên chủ ngữ mở bằng chữ hoa có dấu (VietnameseLetters) ở dòng gạch của chương viết thoại trong ngoặc kép: kể việc là lời kể.
     @Test
     fun a_dash_line_led_by_an_accented_name_is_narration() {
