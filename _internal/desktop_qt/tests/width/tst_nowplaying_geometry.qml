@@ -103,6 +103,9 @@ Item {
             sameBox({x: page.sharedFrames[1].from.x, y: page.sharedFrames[1].from.y, w: page.sharedFrames[1].from.width, h: page.sharedFrames[1].from.height}, bookFrom, "book source")
             tryVerify(() => page.p > 0 && page.p < 1)
             const chapter = findChild(page, "nowChapterMorph"), play = findChild(page, "nowPlayMorph")
+            // Đích tên chương xuống dòng (ô hai dòng), đích tên sách vẫn một dòng chạy chữ
+            compare(page.sharedFrames[0].wrap, true); compare(page.sharedFrames[1].wrap, false)
+            verify(page.sharedFrames[0].to.height > page.sharedFrames[0].from.height)
             const g = page.g, path = page.sharedFrames[0]
             fuzzyCompare(chapter.x, path.from.x + (path.to.x - path.from.x) * g, 0.01)
             fuzzyCompare(chapter.y, path.from.y + (path.to.y - path.from.y) * g, 0.01)
@@ -118,6 +121,35 @@ Item {
             fuzzyCompare(page.sharedFrames[0].from.y, chapterFrom.y, 0.01)
             tryCompare(page, "p", 0)
             compare(content.bar.sharedShown, true)
+        }
+        // Tên chương màn Đang nghe xuống dòng trong ô cao sẵn HAI dòng (DESIGN 5.5): tên một hay hai dòng thì bìa, thanh tua, nút phát đứng yên.
+        function test_chapterTitleWrapsInATwoLineBox_data() { return sizes() }
+        function test_chapterTitleWrapsInATwoLineBox(data) {
+            const content = makeScene(data), page = content.now
+            page.show(); tryCompare(page, "p", 1)
+            const chapter = findChild(page, "nowChapterTitle")
+            compare(chapter.wrapMode, Text.Wrap)
+            compare(chapter.lineCount, 1)
+            fuzzyCompare(chapter.height, Math.ceil(chapter.lineHeightPx * 2), 0.01)
+            const names = ["nowCover", "nowControls", "nowPlay", "nowChapterTitle"]
+            const before = names.map(name => Audit.box(findChild(page, name), host))
+            // Thay chữ trực tiếp (bỏ ràng buộc với Player): đủ dài để xuống đúng hai dòng ở bề ngang cột này
+            let words = "Chương mười hai"
+            while (true) {
+                chapter.text = words + " những con đường"
+                if (chapter.lineCount > 2) break
+                words += " những con đường"
+            }
+            chapter.text = words
+            compare(chapter.lineCount, 2)
+            compare(chapter.truncated, false)
+            for (let k = 0; k < names.length; ++k) sameBox(Audit.box(findChild(page, names[k]), host), before[k], names[k] + " two lines")
+            // Dài hơn hai dòng: ô cao thêm, không cắt chữ
+            chapter.text = words + " " + words
+            verify(chapter.lineCount > 2)
+            compare(chapter.height, chapter.implicitHeight)
+            compare(chapter.truncated, false)
+            page.close(); tryCompare(page, "p", 0)
         }
         function test_playPauseKeepsPlayerGeometry_data() { return sizes() }
         function test_playPauseKeepsPlayerGeometry(data) {

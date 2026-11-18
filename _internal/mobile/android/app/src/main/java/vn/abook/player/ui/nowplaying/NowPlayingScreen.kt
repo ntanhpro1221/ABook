@@ -151,9 +151,9 @@ private fun NowPlayingBody(
                     PlayerCover(state.cover, state.bookTitle, parts.element(NowPlayingPart.Cover, Modifier.size(coverSize).testTag("player_cover")))
                     Spacer(Modifier.width(12.dp))
                     Column(Modifier.weight(1f)) {
-                        RollingLabel(state.chapterTitle, parts.element(NowPlayingPart.Chapter), Abook.type.bodyStrong, oneLine = true)
+                        RollingLabel(state.chapterTitle, parts.element(NowPlayingPart.Chapter), line = marqueeLine(Abook.type.bodyStrong))
                         RollingLabel(subtitle, parts.element(NowPlayingPart.Book,
-                            window.bookPage?.let { Modifier.pressable(onClick = it).testTag("player_book") } ?: Modifier), Abook.type.bodySmall, oneLine = true)
+                            window.bookPage?.let { Modifier.pressable(onClick = it).testTag("player_book") } ?: Modifier), line = marqueeLine(Abook.type.bodySmall))
                     }
                 }
             }
@@ -196,16 +196,17 @@ private fun NowPlayingBody(
                     .testTag("player_cover")
                     .then(if (state.readAlongAvailable && !window.reading && !split) Modifier.pressable { setReading(true) } else Modifier)))
                 Column(Modifier.fillMaxWidth().padding(bottom = 8.dp)) {
+                    // Tên chương XUỐNG DÒNG ở cỡ gốc trong ô cao sẵn hai dòng (DESIGN 5.5; web h2[data-np=chapter], Qt nowChapterTitle): tên một hay hai
+                    // dòng thì khối tên cao như nhau - bìa (tính từ phần còn lại phía trên khối tên) và nút phát không dời; dài hơn thì ô cao thêm, không cắt.
                     RollingLabel(state.chapterTitle, parts.element(NowPlayingPart.Chapter, Modifier.testTag("player_chapter")),
-                        Abook.type.bodyStrong.copy(fontSize = 20.sp, lineHeight = 28.sp, fontWeight = FontWeight.Bold), oneLine = true)
+                        line = wrapLines(Abook.type.bodyStrong.copy(fontSize = 20.sp, lineHeight = 28.sp, fontWeight = FontWeight.Bold)))
                     Spacer(Modifier.height(4.dp))
                     // Tên sách là nút: chạm thì thu trình phát, tới trang sách. Dòng ấy đang nói việc khác (đang chuẩn bị giọng, đã nghe hết phần đã có) thì chỉ là chữ.
                     val toBook = window.bookPage.takeIf { subtitle == state.bookTitle }
                     RollingLabel(
                         if (toBook != null) subtitle + "\u00A0›" else subtitle,
                         parts.element(NowPlayingPart.Book, if (toBook != null) Modifier.pressable(onClick = toBook).semantics { contentDescription = S.s_mo_trang_sach_3f7bd955 }.testTag("player_book") else Modifier),
-                        Abook.type.bodySmall.copy(color = if (toBook != null) Abook.colors.accentText else Abook.colors.text2),
-                        oneLine = true,
+                        line = marqueeLine(Abook.type.bodySmall.copy(color = if (toBook != null) Abook.colors.accentText else Abook.colors.text2)),
                     )
                 }
                 Box(Modifier.testTag("player_cover_small").then(if (readingHere) Modifier

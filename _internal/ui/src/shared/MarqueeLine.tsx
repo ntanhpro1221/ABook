@@ -1,6 +1,7 @@
 import { useLayoutEffect, useRef, useState, type HTMLAttributes } from "react";
 import { cn } from "./cn";
 import { prefersReducedMotion } from "./motion";
+import { Presence } from "./MotionPresence";
 import { ONE_LINE_MIN_SCALE, TIMING } from "./widthClass.generated";
 
 /** "one": vừa ở cỡ gốc · "shrunk": thu cỡ cho vừa · "scroll": ở cỡ đáy và chạy chữ · "unmeasured": chưa có bề ngang. */
@@ -104,7 +105,9 @@ export function MarqueeLine({ children, className, ...rest }: Omit<HTMLAttribute
     <span ref={box} data-marquee-line="" className={cn("relative block min-w-0 overflow-hidden whitespace-nowrap", className)} {...rest}>
       <span ref={strip} className="inline-flex will-change-transform" style={{ gap: TIMING.marqueeGap }}>
         <span ref={first}>{children}</span>
-        {twin && <span aria-hidden>{children}</span>}
+        {/* Bản chép đến/đi qua Presence (mờ vào/ra, giữ chữ cũ tới hết nhịp): lúc vào nó còn nằm ngoài mép phải ô nên mắt không thấy bật, lúc đổi sang ô vừa
+            (tên ngắn lại, khung rộng ra) nó mờ đi thay vì biến mất cứng. */}
+        <Presence>{twin && <span aria-hidden>{children}</span>}</Presence>
       </span>
     </span>
   );

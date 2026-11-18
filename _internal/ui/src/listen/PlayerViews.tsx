@@ -2176,7 +2176,8 @@ const NowPlayingColumn = memo(function NowPlayingColumn({
             </div>
           )}
           <div className={cn("min-w-0", reading ? "flex-1" : "mt-6 w-full")}>
-            <h2 data-np="chapter" className={cn("break-words font-bold leading-snug", reading ? "text-base" : "text-xl")}>
+            {/* Ô tên chương cao tối thiểu hai dòng (DESIGN 5.5): tên một hay hai dòng thì bìa (flex-1 phía trên) và nút phát không dời; dài hơn thì ô cao thêm. */}
+            <h2 data-np="chapter" className={cn("break-words font-bold leading-snug", reading ? "text-base" : "min-h-[2lh] text-xl")}>
               <MotionRegion as="span" motionKey={[track.bookId, track.chapterId, track.chapterTitle]} className="block">{track.chapterTitle}</MotionRegion>
             </h2>
             <div data-np="book" className={cn("mt-1 break-words text-fg-2", reading ? "text-xs" : "text-sm")}>
