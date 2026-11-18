@@ -24,6 +24,7 @@ def soundPolicy = new groovy.json.JsonSlurper().parse(file("../../../abook/reada
 def nameSounds = new groovy.json.JsonSlurper().parse(file("../../../abook/readaloud/name_sounds.json"))
 def voiceRank = new groovy.json.JsonSlurper().parse(file("../../../abook/assets/voice_rank.json"))
 def chapterTitles = new groovy.json.JsonSlurper().parse(file("../../../abook/webui/assets/chapter_titles.json"))
+def listenerPackage = new groovy.json.JsonSlurper().parse(file("../../../abook/webui/assets/listener_package.json"))
 
 android {
     namespace = "vn.abook.player"
@@ -44,6 +45,7 @@ android {
         buildConfigField "String", "ENGLISH_READING_POLICY", groovy.json.JsonOutput.toJson(groovy.json.JsonOutput.toJson(englishPolicy))
         buildConfigField "String", "VOICE_RANK_POLICY", groovy.json.JsonOutput.toJson(groovy.json.JsonOutput.toJson(voiceRank))
         buildConfigField "String", "CHAPTER_TITLE_RULES", groovy.json.JsonOutput.toJson(groovy.json.JsonOutput.toJson(chapterTitles))
+        buildConfigField "String", "LISTENER_PACKAGE_RULES", groovy.json.JsonOutput.toJson(groovy.json.JsonOutput.toJson(listenerPackage))
         buildConfigField "String", "SOUND_POLICY", groovy.json.JsonOutput.toJson(groovy.json.JsonOutput.toJson(soundPolicy))
         buildConfigField "String", "NAME_SOUNDS", groovy.json.JsonOutput.toJson(groovy.json.JsonOutput.toJson(nameSounds))
         buildConfigField "String", "ENGLISH_ACRONYMS", '"' + englishPolicy.acronyms.join(' ') + '"'

@@ -79,9 +79,13 @@ Earlier package versions and flat manifests are refused; rebuild a book from its
   The library shelf always uses the book cover.
 - End-of-chapter playback continues into the next volume using the same book id and listening record. Volume progress
   uses chapter durations (text-only chapters have unit weight); whole-book progress keeps the complete queue.
-- `book.json` carries only listener fields (a whitelist, `bookfile.PACKAGE_*_KEYS`). Production QA state (whether a chapter
-  passed review, failed lines, machine errors, the level report) belongs to the project (its database, and the `.abookproj`
-  that carries it) and never enters a `.abook`; a producer refuses to seal a package that still has such a field.
+- `book.json` carries only listener fields (a whitelist). Production QA state (whether a chapter passed review, failed lines,
+  machine errors, the level report) belongs to the project (its database, and the `.abookproj` that carries it) and never
+  enters a `.abook`; listener-visible text (titles, cast names, read-along speakers) never carries an internal mark ("Cần nghe
+  lại", line ids, machine codes, the NPC mark on a shown name). Every producer refuses to seal a package that breaks either
+  rule, it never strips silently: desktop `bookfile.seal` and Android `BookDocumentWriter.seal` read the same rules
+  (`abook/webui/assets/listener_package.json`) and pass the same cases (`tests/fixtures/book_files/listener_package_cases.json`).
+  A package an older producer made with such marks is packed again from its project (the pipeline never treats it as current).
 - Readium `readingOrder` remains flat across all volumes. `mimetype`, file extensions and both registered IANA media
   type names are unchanged. All layouts described below are features of version 6, including music, parts, edits and plain text.
 

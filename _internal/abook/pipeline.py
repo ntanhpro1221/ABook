@@ -1205,7 +1205,7 @@ class BookPipeline:
             if (str(book["status"]) != BookStatus.COMPLETED.value
                     and str(_segment_value(book, "stage", "")) != "completed_with_errors"):
                 return
-            from .webui.bookfile import BookFile, default_name, pack
+            from .webui.bookfile import BookFile, default_name, listener_package_problems, pack
 
             target = self.paths.output / default_name(str(book["title"]))
             if only_if_missing and target.exists():
@@ -1218,13 +1218,16 @@ class BookPipeline:
                     with BookFile(target) as existing:
                         existing.verify()
                         covered = existing.book.get("audioCoverage", {}).get("expected") == expected_source(self.paths.root)
-                        current = True
+                        # Gói còn mang trạng thái QA / dấu nội bộ (gói làm trước khi bộ đóng gói chặn chúng - Hello có tên phụ
+                        # "Cần nghe lại", `levelQa`): không bao giờ là gói đúng, đóng lại từ dự án thì sạch.
+                        leaked, internal = listener_package_problems(existing.book, existing.content, existing.read)
+                        current = not leaked and not internal
                         if levels is not None:
                             prints = existing.chapter_prints
                             packaged = {str(ch['id']): prints[ch['file']]['sha256']
                                         for ch in existing.book['chapters'] if ch.get('file')}
                             # Báo cáo QA (levelQa) ở lại dự án, không vào gói: gói đúng khi MP3 trùng mã băm báo cáo đã đo.
-                            current = packaged == levels.get('audio_sha256')
+                            current = current and packaged == levels.get('audio_sha256')
                         if covered and current:
                             return
                 except (BookFileError, KeyError):

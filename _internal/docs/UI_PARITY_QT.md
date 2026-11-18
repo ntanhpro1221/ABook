@@ -11,7 +11,7 @@ icon `LucidePaths.js` sinh bởi `scripts/gen_lucide_icons.py --qml`. Bảng dư
 
 <!-- ui_parity_qt:begin (SINH TỰ ĐỘNG bởi scripts/ui_parity_qt.py - không sửa tay, chạy lại script) -->
 
-Quét: web máy tính 6271 chữ (2882 khác nhau), 353 cặp nhãn-icon; Qt 3732 chữ (2729 khác nhau), 295 cặp nhãn-icon (icon dùng ở 419 chỗ). Khoá so lỏng như UI_PARITY.md (hạ chữ, dấu thanh một kiểu, `...` = `…`, bỏ dấu câu cuối); phím tắt trong chú thích Qt (`Thu nhỏ (Esc)`) tách khỏi nhãn.
+Quét: web máy tính 6268 chữ (2881 khác nhau), 353 cặp nhãn-icon; Qt 3732 chữ (2729 khác nhau), 295 cặp nhãn-icon (icon dùng ở 419 chỗ). Khoá so lỏng như UI_PARITY.md (hạ chữ, dấu thanh một kiểu, `...` = `…`, bỏ dấu câu cuối); phím tắt trong chú thích Qt (`Thu nhỏ (Esc)`) tách khỏi nhãn.
 
 ## a. Cùng việc, khác chữ
 
@@ -60,8 +60,8 @@ Mỗi cặp còn lại phải có giải thích trong ui_strings/qt_wording_revi
 | Studio xuất và áp dụng | Đang thêm chữ sáng… {} | Đang thêm chữ sáng… {}% | 1.00 | `qt/ExportLogic.js:259` ~ `studio/WordTimings.tsx:43` | Same catalog key as web (s_dang_them_chu_sang_0); the Qt reader renders the slotted call as {} without the catalog's percent sign. |
 | Studio xuất và áp dụng | Đã xuất | Xuất “{}” | 0.73 | `qt/ExportLogic.js:112` ~ `studio/ExportBook.tsx:395` | Different states: Qt completed-export confirmation, matched web text is an export-dialog heading. |
 | Thanh phát | Nghe bằng giọng đọc. | Nghe bằng giọng đọc.{} | 1.00 | `qt/PlayerLabels.js:18` ~ `listen/labels.ts:149` | Same sentence; web appends an optional platform-specific pointer/editing hint. |
-| Trang sách | Lần nghe | Lần nghe {} | 1.00 | `qt/RecordLogic.js:10` ~ `listen/BookScreen.tsx:737` | Same listening-record name prefix; Qt renders the record number separately. |
-| Trang sách | Hồ sơ nghe: {} | Đã nghe {} | 0.59 | `qt/RecordChip.qml:14` ~ `listen/BookScreen.tsx:1213` | Different data: Qt accessibility name for a listening profile, the matched web label is listening progress. |
+| Trang sách | Lần nghe | Lần nghe {} | 1.00 | `qt/RecordLogic.js:10` ~ `listen/BookScreen.tsx:736` | Same listening-record name prefix; Qt renders the record number separately. |
+| Trang sách | Hồ sơ nghe: {} | Đã nghe {} | 0.59 | `qt/RecordChip.qml:14` ~ `listen/BookScreen.tsx:1212` | Different data: Qt accessibility name for a listening profile, the matched web label is listening progress. |
 
 ## b. Cùng nhãn khác icon, cùng icon khác nhãn
 
@@ -194,7 +194,7 @@ Nhãn ngắn (<= 6 chữ). **Chỉ Qt**: không có ở web cùng màn; `*` = we
 ### Trang sách
 
 - chỉ Qt (56): Giới tính của {}* (`qt/CastGender.qml:17`); Hiện đang là nhân vật {}.* (`qt/CastGender.qml:18`); Chưa đổi được giới tính* (`qt/CastGender.qml:26`); Giới tính* (`qt/CastGender.qml:48`); Nữ* (`qt/CastGender.qml:50`); Ghi lại* (`qt/CastGender.qml:83`); Thôi* (`qt/CastGender.qml:83`); Đang tải nhân vật (`qt/CastList.qml:98`); Gộp nhân vật* (`qt/CastMerge.qml:18`); Chưa gộp được* (`qt/CastMerge.qml:29`); Đã ghi:* (`qt/CastMerge.qml:29`); Tìm người trong truyện* (`qt/CastMerge.qml:51`); Gộp vào ai* (`qt/CastMerge.qml:68`); Không có ai khớp “{}”. (`qt/CastMerge.qml:137`); Gộp* (`qt/CastMerge.qml:159`); Chưa hoàn tác được* (`qt/CastModal.qml:24`); Hoàn tác* (`qt/CastModal.qml:24`); Đã hoàn tác* (`qt/CastModal.qml:24`); Đã hoàn tác. {} (`qt/CastModal.qml:24`); Bỏ gộp {} vào {} (`qt/CastPerson.qml:120`); Đổi tên {}* (`qt/CastRename.qml:14`); Chưa đổi được tên* (`qt/CastRename.qml:26`); Đã trở về tên gốc: {}* (`qt/CastRename.qml:26`); Đã đổi tên thành {}* (`qt/CastRename.qml:26`); Tên mới của {}* (`qt/CastRename.qml:48`); Tên gốc:* (`qt/CastRename.qml:58`); Về tên gốc* (`qt/CastRename.qml:64`); Chưa bỏ gộp được* (`qt/CastUnmerge.qml:14`); Đã bỏ gộp {}* (`qt/CastUnmerge.qml:14`); Giọng (`qt/CastVoice.qml:70`); Chưa bỏ được lựa chọn* (`qt/CastVoice.qml:89`); Đã bỏ lựa chọn {}* (`qt/CastVoice.qml:89`); Đang tải giọng đọc* (`qt/CastVoice.qml:117`); Chờ áp dụng: đổi sang* (`qt/CastVoice.qml:152`); Giữ* (`qt/CastVoice.qml:159`); Giữ như cũ* (`qt/CastVoice.qml:199`); Lọc giọng theo giới* (`qt/CastVoice.qml:206`); Tất cả* (`qt/CastVoice.qml:208`); Đang dùng* (`qt/CastVoice.qml:330`); Máy gợi ý* (`qt/CastVoice.qml:344`); Giữ giọng này* (`qt/CastVoice.qml:367`); Tìm hiểu thêm* (`qt/CastVoice.qml:388`); Thử lại* (`qt/Clip.qml:18`); Mạng chậm, thử nghe lại. (`qt/Clip.qml:61`); Chưa nghe thử được lúc này.* (`qt/Clip.qml:72`); Đang tải lịch sử (`qt/HistoryList.qml:62`); Chủ Nhật (`qt/HistoryLogic.js:10`); Thứ Ba (`qt/HistoryLogic.js:10`); Thứ Bảy (`qt/HistoryLogic.js:10`); Thứ Hai (`qt/HistoryLogic.js:10`); Thứ Năm (`qt/HistoryLogic.js:10`); Thứ Sáu (`qt/HistoryLogic.js:10`); Thứ Tư (`qt/HistoryLogic.js:10`); Hồ sơ nghe: {} (`qt/RecordChip.qml:14`); Lần nghe (`qt/RecordLogic.js:10`); Hồ sơ mới “ (`qt/RecordLogic.js:104`)
-- chỉ web (13): Đã làm sẵn (`215`); Tách {} khỏi {} (`475`); Chờ áp dụng: giọng (`557`); Nghe tiếp từ (`714`); Lần nghe {} (`737`); Chia sẻ (`1285`); Đã nghe {} {} · {} (`37`); Chưa nghe · {} chương (`69`); Nghe tiếp · {} (`88`); Shift+→ (`106`); Chưa có audio (`116`); Chạm (`127`); Nghe bằng giọng đọc.{} (`149`)
+- chỉ web (13): Đã làm sẵn (`215`); Tách {} khỏi {} (`475`); Chờ áp dụng: giọng (`557`); Nghe tiếp từ (`713`); Lần nghe {} (`736`); Chia sẻ (`1284`); Đã nghe {} {} · {} (`37`); Chưa nghe · {} chương (`69`); Nghe tiếp · {} (`88`); Shift+→ (`106`); Chưa có audio (`116`); Chạm (`127`); Nghe bằng giọng đọc.{} (`149`)
 
 ### Cài đặt
 

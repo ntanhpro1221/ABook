@@ -384,12 +384,12 @@ export interface CastNarrator {
   voice: string;
   lines: number;
   seconds: number;
-  chapterVoices?: NarratorChapterVoice[];
+  chapterVoices: NarratorChapterVoice[];
   /** Chương giọng chính không đọc câu nào ("Toàn sách trừ …"). */
-  exceptChapters?: CastChapter[];
+  exceptChapters: CastChapter[];
   /** Số câu / giây của riêng giọng chính. */
-  voiceLines?: number;
-  voiceSeconds?: number;
+  voiceLines: number;
+  voiceSeconds: number;
   /** Giọng người kể người nghe đã chọn ở Studio mà dây chuyền chưa áp (store.cast). */
   pendingVoice?: { preset: string; label?: string; gender: string } | null;
   /** Câu kể chờ thu lại theo sửa của người nghe. */

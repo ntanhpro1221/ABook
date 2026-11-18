@@ -243,6 +243,39 @@ class StudioWorkScreenTest {
         assertTrue(source.writes.isEmpty())
     }
 
+    /** Studio Android giống web/Qt từng chữ, với một đầu ra thật của máy chủ (tests/fixtures/cast_contract): fold "Người kể chuyện · 2 giọng",
+     *  mỗi giọng kể một hàng có phạm vi chương, "N câu dẫn truyện · thời lượng" và nút nghe thử; hàng người có ô giới. */
+    @Test fun theStudioCastShowsTheServerOutputAsWebAndQtDo() {
+        val folder = java.io.File("../../../tests/fixtures/cast_contract")
+        val expected = org.json.JSONObject(java.io.File(folder, "expected.json").readText())
+        source.cast = StudioCastJson.cast(org.json.JSONObject(java.io.File(folder, "cast.json").readText()))
+        project(StudioTab.Cast)
+        rule.onNodeWithText(expected.getString("narratorHeading")).assertIsDisplayed()
+        rule.onNodeWithText(expected.getString("narratorSummary"), substring = true).assertIsDisplayed()
+        val rows = expected.getJSONArray("narratorRows")
+        val tags = listOf("studio_cast_narrator") + (1 until rows.length()).map { "studio_cast_narrator_chapter-${it - 1}-${rows.getJSONObject(it).getString("preset")}" }
+        for (index in 0 until rows.length()) {
+            val row = rows.getJSONObject(index)
+            tag("studio_project_list").performScrollToNode(hasTestTag(tags[index]))
+            tag(tags[index]).assertIsDisplayed()
+            val text = textIn(tags[index])
+            for (want in listOf(row.getString("voice"), row.getString("scope"), row.getString("line"))) assertTrue("$want trong $text", text.contains(want))
+            tag(if (index == 0) "studio_cast_narrator_play" else "studio_cast_narrator_play_chapter-${index - 1}-${row.getString("preset")}").assertIsDisplayed()
+        }
+        val genders = expected.getJSONObject("genders")
+        for (name in genders.keys()) {  // tên hiện = tên khoá trong fixture (không đổi tên)
+            tag("studio_project_list").performScrollToNode(hasTestTag("studio_cast_$name"))
+            val text = textIn("studio_cast_$name")
+            assertTrue("${genders.getString(name)} trong $text", text.lines().any { it == genders.getString(name) })
+        }
+    }
+
+    /** Mọi chữ dưới một hàng (cây chưa gộp: hàng không bấm được thì chữ nằm ở các nút con). */
+    private fun textIn(rowTag: String): String =
+        rule.onAllNodes(androidx.compose.ui.test.hasAnyAncestor(hasTestTag(rowTag)) or hasTestTag(rowTag), useUnmergedTree = true).fetchSemanticsNodes()
+            .flatMap { it.config.getOrElse(androidx.compose.ui.semantics.SemanticsProperties.Text) { emptyList() } }
+            .joinToString("\n") { it.text }.replace('\u00a0', ' ')
+
     @Test fun anEmptyCastSaysWhenCharactersAppear() {
         project(StudioTab.Cast)
         tag("studio_cast_empty").assertIsDisplayed()

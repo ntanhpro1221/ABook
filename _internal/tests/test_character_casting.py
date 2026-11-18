@@ -274,8 +274,7 @@ def test_clear_named_aliases_lock_to_one_character_and_voice(tmp_path: Path) -> 
     build_registry_and_cast(db, build_settings(), lambda _message: None)
 
     rows = db.list_segments()
-    # "NPC ALISA" là một người khác Alisa: tiền tố NPC không bao giờ bị bỏ để gộp vào nhân vật có tên.
-    assert {str(row["speaker"]) for row in rows} == {"ALISA", "DÌ ALISA", "NPC ALISA", "VICTOR"}
+    assert {str(row["speaker"]) for row in rows} == {"ALISA", "DÌ ALISA", "VICTOR"}
     for speaker in ("ALISA", "VICTOR"):
         speaker_rows = [row for row in rows if str(row["speaker"]) == speaker]
         assert len({int(row["canonical_character_id"]) for row in speaker_rows}) == 1

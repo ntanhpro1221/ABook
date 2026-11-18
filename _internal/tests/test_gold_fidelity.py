@@ -89,11 +89,10 @@ def test_one_person_split_in_two_with_a_male_voice_fails(tmp_path: Path) -> None
         "'Aya' là bí danh trong đáp án: cùng người, chỉ giọng là sai"
 
 
-def test_the_names_key_ignores_order_case_and_honorifics_but_keeps_the_npc_mark() -> None:
+def test_the_names_key_ignores_order_case_honorifics_and_the_npc_prefix() -> None:
     key = gold_fidelity.name_key
     assert key("HAJIKANO AYA") == key("Aya Hajikano") == key("Aya-san Hajikano")
-    assert key("NPC bác bảo vệ") == key("Npc: Bác Bảo Vệ") == key("NPC_LOCAL::c00001::bác bảo vệ")
-    assert key("NPC bác bảo vệ") != key("Bác Bảo Vệ"), "NPC X và X là hai người"
+    assert key("NPC bác bảo vệ") == key("Bác Bảo Vệ") == key("NPC_LOCAL::c00001::bác bảo vệ")
     assert key("Yui Hajikano") != key("Aya Hajikano")
 
 
@@ -112,13 +111,13 @@ def _set_record(project: Path, canonical: str, display: str, importance: str, me
                      (canonical, display, importance, mentions))
 
 
-def test_a_gold_npc_whose_prefix_was_dropped_upstream_is_a_speaker_mismatch(tmp_path: Path) -> None:
-    """Bộ tiêm cũ bỏ tiền tố "NPC ": sách ghi một người có tên khác hẳn người đáp án - bắt được, không chấp nhận tay."""
+def test_the_npc_mark_is_a_role_so_a_book_without_it_names_the_same_person(tmp_path: Path) -> None:
+    """Sổ ghi "Bác Bảo Vệ" cho người đáp án ghi "NPC bác bảo vệ": cùng một người (NPC là loại vai, không phải tên)."""
     lines = [*LINES[:4], ("dialogue", "NPC bác bảo vệ", "Bác Bảo Vệ", "Xuân Vĩnh"), LINES[5]]
     project, gold = _book(tmp_path, lines)
     report = gold_fidelity.check(project, gold)
-    assert [(item["gold"], item["app"]) for item in report["mismatches"]] == [("NPC BÁC BẢO VỆ", "Bác Bảo Vệ")]
-    assert not report["pass"]
+    assert report["speaker_mismatches"] == 0, report["mismatches"]
+    assert report["pass"], report
 
 
 def test_a_gold_npc_promoted_to_the_main_cast_fails(tmp_path: Path) -> None:
@@ -130,3 +129,24 @@ def test_a_gold_npc_promoted_to_the_main_cast_fails(tmp_path: Path) -> None:
     assert report["speaker_mismatches"] == 0, report["mismatches"]
     assert report["npc_in_main_cast"] == ["Bác Bảo Vệ (NPC BÁC BẢO VỆ)"], report["npc_in_main_cast"]
     assert not report["pass"]
+
+
+def test_a_gold_npc_the_app_makes_main_by_its_own_rule_passes(tmp_path: Path, monkeypatch) -> None:
+    """MỘT luật: NPC nói từ MAIN_ROLE_MAJOR_LINES câu ở từ MAIN_ROLE_MAJOR_CHAPTERS chương là vai chính ở app (store.cast_role)
+    thì cổng gold cũng nhận - cổng đọc đúng hàm app, không có luật thứ hai."""
+    from abook.webui import store
+
+    lines = [*LINES[:4], *[("dialogue", "NPC bác bảo vệ", "Bác Bảo Vệ", "Xuân Vĩnh")] * store.MAIN_ROLE_MAJOR_LINES, LINES[5]]
+    project, gold = _book(tmp_path, lines)
+    _set_record(project, "BÁC BẢO VỆ", "Bác Bảo Vệ", "main", 40)
+    real = store.speaker_presence
+
+    def two_chapters(root):
+        scenes, book_scenes, chapters = real(root)
+        return scenes, book_scenes, {**chapters, "Bác Bảo Vệ": store.MAIN_ROLE_MAJOR_CHAPTERS}
+
+    monkeypatch.setattr(store, "speaker_presence", two_chapters)
+    assert [person["name"] for person in store.cast(project)["characters"]].count("Bác Bảo Vệ") == 1
+    assert gold_fidelity.check(project, gold)["npc_in_main_cast"] == []
+    monkeypatch.setattr(store, "speaker_presence", real)
+    assert gold_fidelity.check(project, gold)["npc_in_main_cast"] == ["Bác Bảo Vệ (NPC BÁC BẢO VỆ)"],         "một chương: NPC trăm câu vẫn là vai phụ theo app, nên app xếp chính là sai"

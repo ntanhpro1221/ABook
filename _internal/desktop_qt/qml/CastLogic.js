@@ -90,14 +90,12 @@ function chapterList(chapters, lower) {
     if (list.length && numbers.every(Boolean)) return lower ? S.s_chuong_0_55d256d1(joined) : S.s_chuong_0_268b0521(joined)
     return list.map(chapter => chapter.title).join(", ")
 }
-// Danh sách "Người kể chuyện" đúng như cast.json ghi (web narratorRows): giọng chính rồi từng giọng kể theo chương; mục không đúng dạng thì bỏ qua
+// Danh sách "Người kể chuyện" đúng như cast.json ghi (store.cast; web narratorRows): giọng chính rồi từng giọng kể theo chương
 function narratorRows(narrator) {
-    const others = (narrator.chapterVoices || []).filter(entry => entry && typeof entry === "object" && Array.isArray(entry.chapters))
-    const except = narrator.exceptChapters || []
+    const others = narrator.chapterVoices
     const main = { key: "main", voice: narrator.voice || S.s_mac_dinh_9a1af367, preset: narrator.voice || "", main: true,
-                   scope: others.length && except.length ? S.s_toan_sach_tru_0_baff4d91(chapterList(except, true)) : "",
-                   lines: narrator.voiceLines !== undefined ? narrator.voiceLines : (narrator.lines || 0),
-                   seconds: narrator.voiceSeconds !== undefined ? narrator.voiceSeconds : (narrator.seconds || 0) }
+                   scope: others.length && narrator.exceptChapters.length ? S.s_toan_sach_tru_0_baff4d91(chapterList(narrator.exceptChapters, true)) : "",
+                   lines: narrator.voiceLines, seconds: narrator.voiceSeconds }
     return [main].concat(others.map((entry, index) => ({
         key: "chapter-" + index + "-" + entry.voice, voice: voiceName(entry.profile) || entry.voice, preset: (entry.profile && entry.profile.preset) || entry.voice,
         main: false, scope: chapterList(entry.chapters, false), lines: entry.lines || 0, seconds: entry.seconds || 0 })))

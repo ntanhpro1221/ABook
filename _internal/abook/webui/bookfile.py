@@ -48,7 +48,7 @@ nhắc cập nhật. Trong gói không có gì được "chạy".
 """
 from __future__ import annotations
 
-from collections.abc import Container
+from collections.abc import Collection, Container
 import argparse
 import contextlib
 import hashlib
@@ -67,7 +67,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, Callable, Self, Sequence
 
-from .. import avatars, book_metadata, continuation
+from .. import avatars, continuation
 from . import audio_coverage, book_edits, covers, music_plan, store, sync, word_timing
 from .fingerprints import content_key, identity_prints
 from .library import book_id
@@ -95,39 +95,25 @@ def cover_warnings(book: dict[str, Any], files: Container[str], edits: dict[str,
     return [] if present else [MISSING_COVER]
 
 
+# Luật gói người nghe - một nguồn cho máy tính và điện thoại (assets/listener_package.json, BookDocumentWriter.seal đọc cùng file).
 # Dấu nội bộ (QA, mã câu, mã lỗi máy, nhãn vai cục bộ thô) KHÔNG BAO GIỜ vào chữ người nghe thấy - luật chủ sách 15-11: "Cần nghe lại"
 # từng thành tên phụ của sáu chương Hello trong file đã phát hành. `seal` chặn mọi gói (đóng mới, đóng lại, file dự án) có dấu ấy.
-INTERNAL_MARKER = re.compile(
-    r"Cần nghe lại|Cần thu lại|listener_redo|Thiếu audio dòng|NPC_LOCAL|\bc\d{5}_s\d{4}\b|\b[A-Z]{2,}(?:_[A-Z0-9]{2,}){2,}\b")
 # Các trường chữ người nghe thấy (danh sách trắng): tên sách, tác giả, người kể, tên quyển/phần/chương, tên phụ; ở cast.json là tên
-# hiện, chương đầu, giới, tuổi, tên giọng và tên chương của người kể. Trường dữ liệu (name...) không ra mặt người nghe.
-LISTENER_BOOK_FIELDS = ("title", "author", "narrator")
-LISTENER_CHAPTER_FIELDS = ("title", "subtitle", "fullTitle")
-LISTENER_PERSON_FIELDS = ("displayName", "originalName", "firstChapter", "gender", "age", "mergedInto")
-# Tên người hiện ra (tên trong cast.json, người nói trên dòng đọc theo của scripts/) không mang dấu NPC: "NPC X" là danh tính trong
-# sổ, người nghe thấy "X" (humanize.person_name). Chỉ xét tên người - "NPC" có thể đứng trong tên sách, tên chương thật.
-NPC_SHOWN = re.compile(r"^\s*npc\b", re.IGNORECASE)
-LISTENER_NAME_FIELDS = ("displayName", "originalName", "mergedInto")
+# hiện, chương đầu, giới, tuổi, tên giọng và tên chương của người kể. Tên người hiện ra (cast.json, người nói trên dòng đọc theo của
+# scripts/) không mang dấu NPC: "NPC X" là vai trong sổ, người nghe thấy "X" (humanize.person_name) - chỉ xét tên người, "NPC" có thể
+# đứng trong tên sách, tên chương thật. Trường của `book.json` trong gói theo danh sách trắng: trạng thái QA (qualityPassed,
+# qualityWarning, failedLines, levelQa) và mọi trường nội bộ chỉ thuộc dự án (sổ, .abookproj). Bước xuất bỏ chúng (`listener_book`),
+# `seal` từ chối gói còn trường ngoài danh sách. Cây con không mang QA (bìa, nhạc, ảnh, sharedWords, package) không xét sâu.
+_RULES = json.loads((Path(__file__).with_name("assets") / "listener_package.json").read_text(encoding="utf-8"))
+INTERNAL_MARKER = re.compile(_RULES["internalMarker"])
+NPC_SHOWN = re.compile(_RULES["npcShown"], re.IGNORECASE)
+LISTENER_BOOK_FIELDS = tuple(_RULES["listenerBookFields"])
+LISTENER_CHAPTER_FIELDS = tuple(_RULES["listenerChapterFields"])
+LISTENER_PERSON_FIELDS = tuple(_RULES["listenerPersonFields"])
+LISTENER_NAME_FIELDS = tuple(_RULES["listenerNameFields"])
 SCRIPT_SPEAKER = re.compile(rb'"speaker":\s*"((?:[^"\\]|\\.)*)"')
-
-
-# Trường của `book.json` trong gói người nghe (danh sách trắng, luật chủ sách 15-11): trạng thái QA (qualityPassed, qualityWarning,
-# failedLines, levelQa) và mọi trường nội bộ chỉ thuộc dự án (sổ, .abookproj), không bao giờ vào .abook. Bước xuất bỏ chúng
-# (`listener_book`), `seal` từ chối gói còn trường ngoài danh sách. Cây con không mang QA (bìa, nhạc, ảnh, sharedWords, package)
-# không xét sâu. Thông tin mô tả sách (book_metadata.FIELDS: tác giả, họa sĩ, tên khác, thể loại, tóm tắt, nguồn) là của người
-# nghe nên đi theo cuốn.
-PACKAGE_BOOK_KEYS = frozenset({
-    "format", "title", "author", "description", "language", "narrator", "duration", "chaptersTotal", "chaptersAvailable", "complete", "version", "audioVersion",
-    "audioUpdatedAt", "sourceFingerprint", "metaVersion", "chapters", "volumes", "parts", "cast", "avatars", "samples", "cover", "music",
-    "sharedWords", "audioCoverage", "package", *book_metadata.FIELDS})
-PACKAGE_CHAPTER_KEYS = frozenset({
-    "id", "index", "part", "volumeId", "title", "subtitle", "fullTitle", "file", "size", "sha256", "script", "text", "state", "duration",
-    "available", "audioVersion", "wordsVersion"})
-PACKAGE_VOLUME_KEYS = frozenset({"id", "number", "title", "cover", "chapters"})
-PACKAGE_PART_KEYS = frozenset({"part", "title", "chapters", "duration", "narrator"})
-PACKAGE_COVERAGE_KEYS = frozenset({"expected", "missing", "partial"})
-PACKAGE_EXPECTED_KEYS = frozenset({"id", "title", "audioSha256", "segments"})
-PACKAGE_MISSING_KEYS = frozenset({"id", "title", "reason"})
+PACKAGE_BOOK_KEYS, PACKAGE_CHAPTER_KEYS, PACKAGE_VOLUME_KEYS, PACKAGE_PART_KEYS, PACKAGE_COVERAGE_KEYS, PACKAGE_EXPECTED_KEYS, \
+    PACKAGE_MISSING_KEYS = (frozenset(_RULES["keys"][name]) for name in ("book", "chapter", "volume", "part", "coverage", "expected", "missing"))
 
 
 def _package_fields(book: dict[str, Any], strip: bool) -> list[str]:
@@ -224,6 +210,23 @@ def script_speaker_problems(name: str, data: bytes) -> list[str]:
         if INTERNAL_MARKER.search(speaker) or NPC_SHOWN.search(speaker):
             found.append(f"{name}.speaker: {speaker}")
     return found
+
+
+def listener_package_problems(book: dict[str, Any], names: Collection[str], read: Callable[[str], bytes]
+                              ) -> tuple[list[str], list[str]]:
+    """(chữ người nghe thấy có dấu nội bộ, trường book.json ngoài danh sách trắng) của một gói - đúng phép `seal` từ chối, dùng
+    chung cho dây chuyền khi xét gói đang có còn dùng được không (pipeline._export_book_file). Rỗng cả hai là sạch."""
+    cast_view = None
+    if "cast.json" in names:
+        try:
+            cast_view = json.loads(read("cast.json"))
+        except (OSError, ValueError):
+            cast_view = None
+    leaked = listener_text_problems(book, cast_view)
+    for name in names:
+        if name.startswith("scripts/") and name.endswith(".json") and not leaked:
+            leaked += script_speaker_problems(name, read(name))
+    return leaked, package_field_problems({key: value for key, value in book.items() if key != "package"})
 
 
 # Every book.json stores the volume tree. Chapter arrays are runtime projections only.
@@ -440,7 +443,6 @@ def book_layer(folder: Path) -> tuple[dict[str, Any], dict[str, Path | bytes], d
             raise BookFileError(f"Thư mục sách thiếu file {name}.")
         files[name], known[name] = source, meta
     book.pop("package", None)
-    listener_book(book)  # gói cũ còn mang trạng thái QA: đóng lại thì bỏ
     edits = book_edits.load(folder)
     try:
         layer = book_edits.layer_files(folder, edits)
@@ -641,18 +643,10 @@ def seal(book: dict[str, Any], files: dict[str, Path | bytes], out: Path, *, pro
     known = known or {}
     for message in cover_warnings(book, files, edits):
         warnings.warn(message, MissingCoverWarning, stacklevel=2)
-    cast_source = files.get("cast.json")
-    try:
-        cast_view = json.loads(cast_source.read_bytes() if isinstance(cast_source, Path) else cast_source) if cast_source else None
-    except (OSError, ValueError):
-        cast_view = None
-    leaked = listener_text_problems(book, cast_view)
-    for name, source in files.items():
-        if name.startswith("scripts/") and name.endswith(".json") and not leaked:
-            leaked += script_speaker_problems(name, source.read_bytes() if isinstance(source, Path) else source)
+    leaked, internal = listener_package_problems(
+        book, files, lambda name: files[name].read_bytes() if isinstance(files[name], Path) else files[name])
     if leaked:
         raise BookFileError("Chữ người nghe thấy có dấu nội bộ (QA, mã máy) - không đóng gói: " + "; ".join(leaked[:3]))
-    internal = package_field_problems({key: value for key, value in book.items() if key != "package"})
     if internal:
         raise BookFileError("book.json có trường QA / nội bộ chỉ thuộc dự án - không đóng gói: " + "; ".join(internal[:3]))
     described_files = {}

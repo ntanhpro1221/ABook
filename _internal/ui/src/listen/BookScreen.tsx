@@ -36,7 +36,7 @@ import { FindInBook } from "./FindInBook";
 import { canEditBook, EditBlockedItem, EditBookDialog, refreshAfterEdit, RenameChapterDialog, SaveAsDialog, StudioOnlyItem, useSaveBook, useShareBook } from "./EditBook";
 import { bookStatusText, remoteUnfinishedLine, usePlayListenBook, useResumeTarget } from "./LibraryScreen";
 import { canPlay, chapterHeard, chapterResumeAt, chaptersByPart, type CastMember, type CastNarrator, type ListenBook, type ListenChapter, type NarratorRowView, voiceName } from "./model";
-import { genderText, narratorRows } from "./castNarrator";
+import { genderText, narratorRowLine, narratorRows } from "./castNarrator";
 import { chapterSubline, displayTitle, keepTogether, partialBookLine, primaryListenLabel, textBookLine } from "./labels";
 import { useNowPlaying, usePlayer } from "./player";
 import { usePreparedChapters } from "./PlayerViews";
@@ -557,9 +557,8 @@ function NarratorRow({ row, narrator, onPickNarrator }: { row: NarratorRowView; 
           <div className="mt-1 break-words text-xs font-medium text-fg-2">{S.s_cho_ap_dung_giong_82c96902}{voiceName(narrator.pendingVoice)}</div>
         )}
         {/* Số câu / thời lượng tăng khi cuốn đang thu: chữ đổi tại chỗ (TickingValue), không trượt cả hàng. */}
-        <TickingValue className="mt-1 block break-words text-xs text-fg-2">{formatNumber(row.lines)}{S.s_cau_dan_truyen_f0d4156b}{row.seconds > 0 ? ` · ${formatLength(row.seconds)}` : ""}
-          {/* Sau "Áp dụng" đổi giọng kể: các câu đã thu chờ thu lại bằng giọng mới (soát UX a24). */}
-          {row.main && narrator.redo ? S.s_0_cau_cho_thu_lai_e42ce3ef(formatNumber(narrator.redo)) : ""}</TickingValue>
+        {/* Sau "Áp dụng" đổi giọng kể: hàng giọng chính thêm số câu đã thu chờ thu lại bằng giọng mới (soát UX a24). */}
+        <TickingValue className="mt-1 block break-words text-xs text-fg-2">{narratorRowLine(row, narrator.redo)}</TickingValue>
       </div>
       {row.preset && <SampleButton id={`voice-${row.preset}`} url={source.voiceUrl(row.preset)} label={S.s_nghe_giong_0_1b667018(row.voice)} />}
       {row.main && onPickNarrator && <IconButton label={S.s_doi_giong_nguoi_ke_c2afb757} icon={SlidersHorizontal} size="sm" onClick={onPickNarrator} />}

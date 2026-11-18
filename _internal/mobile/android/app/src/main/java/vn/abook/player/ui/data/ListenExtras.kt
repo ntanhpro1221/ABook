@@ -238,49 +238,52 @@ class CastView(val narrator: Narrator, val characters: List<CastMember>, val ext
 object Cast {
     /** Ô giới của một người: giới cast.json ghi; trống thì lý do (store.cast_gender_note) - "Nhóm", "Trẻ em" hay "Chưa rõ".
      *  Không bao giờ để trống, không bao giờ bịa giới. Web: castNarrator.genderText, Qt: CastLogic.genderText - cùng chữ. */
-    fun genderText(person: CastMember): String = when {
-        person.gender.isNotEmpty() -> person.gender
-        person.genderNote == "group" -> S.s_cast_gender_group
-        person.genderNote == "child" -> S.s_cast_gender_child
+    fun genderText(person: CastMember): String = genderText(person.gender, person.genderNote)
+
+    /** Như trên, cho hàng Studio (StudioCastJson). */
+    fun genderText(gender: String, genderNote: String): String = when {
+        gender.isNotEmpty() -> gender
+        genderNote == "group" -> S.s_cast_gender_group
+        genderNote == "child" -> S.s_cast_gender_child
         else -> S.s_chua_ro_be464a5a
     }
 
-    /** `cast.json` như người nghe thấy (lớp sửa phủ lên) -> dàn nhân vật; null khi không đọc được. Sách chỉ có chữ (không có file) là dàn rỗng. */
+    /** `cast.json` như người nghe thấy (lớp sửa phủ lên) -> dàn nhân vật; null khi không đọc được (không phải JSON, hay không đúng
+     *  dạng store.cast ghi - app chỉ đọc dạng hiện hành). Sách chỉ có chữ (không có file) là dàn rỗng. */
     fun parse(text: String?): CastView? {
         if (text.isNullOrBlank()) return CastView(Narrator("", 0, 0.0, null, 0), emptyList(), emptyList())
-        val json = try {
-            JSONObject(text)
-        } catch (_: Exception) {
-            return null
+        return try {
+            val json = JSONObject(text)
+            val narrator = json.getJSONObject("narrator")
+            CastView(
+                Narrator(
+                    narrator.optString("voice").cleanNull(), narrator.optInt("lines"), narrator.optDouble("seconds", 0.0).takeIf { it.isFinite() } ?: 0.0,
+                    pending(narrator.optJSONObject("pendingVoice")), narrator.optInt("redo"),
+                    narratorVoices(narrator.getJSONArray("chapterVoices")), chapters(narrator.getJSONArray("exceptChapters")),
+                    narrator.getInt("voiceLines"), narrator.getDouble("voiceSeconds"),
+                ),
+                people(json.optJSONArray("characters")), people(json.optJSONArray("extras")),
+            )
+        } catch (_: org.json.JSONException) {
+            null
         }
-        val narrator = json.optJSONObject("narrator")
-        return CastView(
-            Narrator(
-                narrator?.optString("voice").orEmpty().cleanNull(), narrator?.optInt("lines") ?: 0, narrator?.optDouble("seconds", 0.0) ?: 0.0,
-                pending(narrator?.optJSONObject("pendingVoice")), narrator?.optInt("redo") ?: 0,
-                narratorVoices(narrator?.optJSONArray("chapterVoices")), chapters(narrator?.optJSONArray("exceptChapters")),
-                narrator?.let { it.optInt("voiceLines", it.optInt("lines")) } ?: 0,
-                narrator?.let { it.optDouble("voiceSeconds", it.optDouble("seconds", 0.0)) }?.takeIf { it.isFinite() } ?: 0.0,
-            ),
-            people(json.optJSONArray("characters")), people(json.optJSONArray("extras")),
-        )
     }
 
     private fun String.cleanNull(): String = if (this == "null") "" else this
 
-    /** Các chương {id, title} của cast.json; mục không đúng dạng thì bỏ qua. */
-    fun chapters(list: JSONArray?): List<CastChapter> =
-        (0 until (list?.length() ?: 0)).mapNotNull { index -> list!!.optJSONObject(index)?.let { CastChapter(it.optInt("id"), it.optString("title").cleanNull()) } }
+    /** Các chương {id, title} của cast.json (mục không phải đối tượng: JSONException - cast.json không đúng dạng). */
+    fun chapters(list: JSONArray): List<CastChapter> =
+        (0 until list.length()).map { index -> list.getJSONObject(index).let { CastChapter(it.getInt("id"), it.optString("title").cleanNull()) } }
 
-    /** `narrator.chapterVoices`: mỗi mục một giọng có cấu trúc; mục không phải đối tượng thì bỏ qua (app chỉ hiện điều cast.json ghi). */
-    fun narratorVoices(list: JSONArray?): List<NarratorVoice> =
-        (0 until (list?.length() ?: 0)).mapNotNull { index ->
-            list!!.optJSONObject(index)?.let { item ->
+    /** `narrator.chapterVoices`: mỗi mục một giọng có cấu trúc (store._narrator_chapter_voices); mục không phải đối tượng: JSONException. */
+    fun narratorVoices(list: JSONArray): List<NarratorVoice> =
+        (0 until list.length()).map { index ->
+            list.getJSONObject(index).let { item ->
                 val profile = item.optJSONObject("profile")
                 NarratorVoice(
                     profile?.optString("preset")?.cleanNull()?.ifEmpty { null } ?: item.optString("voice").cleanNull(),
                     profile?.optString("label")?.cleanNull()?.ifEmpty { null } ?: profile?.optString("preset")?.cleanNull()?.ifEmpty { null } ?: item.optString("voice").cleanNull(),
-                    chapters(item.optJSONArray("chapters")), item.optInt("lines"), item.optDouble("seconds", 0.0).takeIf { it.isFinite() } ?: 0.0,
+                    chapters(item.getJSONArray("chapters")), item.optInt("lines"), item.optDouble("seconds", 0.0).takeIf { it.isFinite() } ?: 0.0,
                 )
             }
         }

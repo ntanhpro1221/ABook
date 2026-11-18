@@ -21,8 +21,7 @@ def name_key(name: str) -> str:
     name = unicodedata.normalize("NFC", name).strip()
     if name.startswith("NPC_LOCAL::"):
         return name.casefold()
-    # Tiền tố NPC là một phần danh tính ("NPC X" và "X" là hai người): chỉ chuẩn cách viết nó, không bỏ.
-    name = re.sub(r"^npc(?:[\s:_-]+)", "npc ", name, flags=re.IGNORECASE)
+    name = re.sub(r"^npc(?:[\s:_-]+)", "", name, flags=re.IGNORECASE)
     words = [re.sub(r"-(?:san|sama|kun|chan|sensei|senpai|dono)$", "", word, flags=re.IGNORECASE)
              for word in name.replace("_", " ").split()]
     return " ".join(sorted(word.casefold() for word in words))

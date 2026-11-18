@@ -3007,6 +3007,8 @@ internal object S {
     const val s_cast_history_undo = "Hoàn tác phân vai"
     const val s_cast_gender_group = "Nhóm"
     const val s_cast_gender_child = "Trẻ em"
+    fun s_package_internal_marks(p0: Any?): String = "Chữ người nghe thấy có dấu nội bộ (QA, mã máy) - không đóng gói: " + p0.toString()
+    fun s_package_internal_fields(p0: Any?): String = "book.json có trường QA / nội bộ chỉ thuộc dự án - không đóng gói: " + p0.toString()
     const val s_cast_history_bad_wish = "Một ý muốn hoàn tác trong phần sửa không hợp lệ."
     const val s_preview_timeout = "Mạng chậm, thử nghe lại."
     const val s_chua_co_bia = "Chưa có bìa"

@@ -6,6 +6,8 @@ internal fields belong to the project only (owner ruling 15-11): book.json is wh
 """
 from __future__ import annotations
 
+import copy
+import json
 from pathlib import Path
 
 import pytest
@@ -112,14 +114,26 @@ def test_a_clean_book_passes_the_whitelist(tmp_path: Path) -> None:
     assert (tmp_path / "x.abook").is_file()
 
 
-def test_no_reader_takes_qa_state_from_a_package() -> None:
-    """Python, Android, web and Qt sources never read the QA fields: they come from the project (store.chapters) or nowhere."""
-    root = Path(__file__).resolve().parents[1]
-    readers = [path for pattern in ("abook/**/*.py", "mobile/android/app/src/main/**/*.kt", "ui/src/**/*.ts", "ui/src/**/*.tsx",
-                                    "desktop_qt/**/*.qml", "desktop_qt/**/*.cpp")
-               for path in root.glob(pattern) if "node_modules" not in path.parts]
-    assert len(readers) > 100
-    for path in readers:
-        text = path.read_text(encoding="utf-8", errors="replace")
-        for field in ("qualityPassed", "qualityWarning", "failedLines", "levelQa"):
-            assert f'"{field}"' not in text and f"'{field}'" not in text and f".{field}" not in text, f"{path.name} đọc {field}"
+SHARED = json.loads((Path(__file__).parent / "fixtures" / "book_files" / "listener_package_cases.json").read_text(encoding="utf-8"))
+
+
+def shared_book(case: dict) -> dict:
+    """`base` with the case's `patch` applied by dotted path (list indexes are numbers) - Kotlin ListenerPackageTest does the same."""
+    book = copy.deepcopy(SHARED["base"])
+    for path, value in (case.get("patch") or {}).items():
+        *parents, last = path.split(".")
+        target = book
+        for step in parents:
+            target = target[int(step)] if isinstance(target, list) else target[step]
+        target[int(last) if isinstance(target, list) else last] = value
+    return book
+
+
+@pytest.mark.parametrize("case", SHARED["cases"], ids=[case["name"] for case in SHARED["cases"]])
+def test_the_rules_shared_with_the_phone_packer(case: dict) -> None:
+    """Same cases as Android ListenerPackageTest: the phone's BookDocumentWriter.seal refuses exactly what `seal` refuses."""
+    files = {name: text.encode("utf-8") for name, text in (case.get("scripts") or {}).items()}
+    if case.get("cast") is not None:
+        files["cast.json"] = json.dumps(case["cast"], ensure_ascii=False).encode("utf-8")
+    leaked, internal = bookfile.listener_package_problems(shared_book(case), files, files.__getitem__)
+    assert (sorted(leaked), sorted(internal)) == (sorted(case["leaked"]), sorted(case["internal"]))

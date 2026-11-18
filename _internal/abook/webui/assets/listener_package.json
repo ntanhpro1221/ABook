@@ -1,0 +1,21 @@
+{
+ "_doc": "Luật gói người nghe (.abook), một nguồn cho máy tính (webui/bookfile.py: seal, listener_book) và điện thoại (BookDocumentWriter.seal qua ListenerPackage.kt, BuildConfig.LISTENER_PACKAGE_RULES). Luật chủ sách 15-11: dấu nội bộ (QA, mã câu, mã lỗi máy, nhãn vai cục bộ thô) không bao giờ vào chữ người nghe thấy; trạng thái QA và trường nội bộ chỉ thuộc dự án - book.json theo danh sách trắng. Ca thử chung: tests/fixtures/book_files/listener_package_cases.json.",
+ "internalMarker": "Cần nghe lại|Cần thu lại|listener_redo|Thiếu audio dòng|NPC_LOCAL|\\bc\\d{5}_s\\d{4}\\b|\\b[A-Z]{2,}(?:_[A-Z0-9]{2,}){2,}\\b",
+ "npcShown": "^\\s*npc\\b",
+ "listenerBookFields": ["title", "author", "narrator"],
+ "listenerChapterFields": ["title", "subtitle", "fullTitle"],
+ "listenerPersonFields": ["displayName", "originalName", "firstChapter", "gender", "age", "mergedInto"],
+ "listenerNameFields": ["displayName", "originalName", "mergedInto"],
+ "keys": {
+  "book": ["format", "title", "author", "description", "language", "narrator", "duration", "chaptersTotal", "chaptersAvailable", "complete", "version",
+           "audioVersion", "audioUpdatedAt", "sourceFingerprint", "metaVersion", "chapters", "volumes", "parts", "cast", "avatars", "samples", "cover",
+           "music", "sharedWords", "audioCoverage", "package", "illustrator", "altTitles", "genres", "summary", "source"],
+  "chapter": ["id", "index", "part", "volumeId", "title", "subtitle", "fullTitle", "file", "size", "sha256", "script", "text", "state", "duration",
+              "available", "audioVersion", "wordsVersion"],
+  "volume": ["id", "number", "title", "cover", "chapters"],
+  "part": ["part", "title", "chapters", "duration", "narrator"],
+  "coverage": ["expected", "missing", "partial"],
+  "expected": ["id", "title", "audioSha256", "segments"],
+  "missing": ["id", "title", "reason"]
+ }
+}

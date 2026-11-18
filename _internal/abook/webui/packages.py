@@ -375,7 +375,8 @@ def raw_cast(path: Path) -> Any:
     file = _file(path, manifest(path).get("cast") or "cast.json")
     if file:
         return json.loads(file.read_text(encoding="utf-8"))
-    return {"narrator": {"voice": "", "lines": 0, "seconds": 0}, "characters": [], "extras": []}  # sách chỉ-chữ: chưa phân vai
+    return {"narrator": {"voice": "", "lines": 0, "seconds": 0, "chapterVoices": [], "exceptChapters": [], "voiceLines": 0, "voiceSeconds": 0},
+            "characters": [], "extras": []}  # sách chỉ-chữ: chưa phân vai
 
 
 def cast(path: Path) -> Any:

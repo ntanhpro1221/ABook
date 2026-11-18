@@ -3,7 +3,7 @@
 The listener apps display exactly what cast.json records. These tests pin the export rule:
 - a speaker with many lines across chapters is a main role even when the registry calls them an NPC;
 - an NPC with a couple of lines is never a main role;
-- gender comes from the registry, then gendered words in the label, then the assigned voice (never for children);
+- gender comes from the registry, then gendered words in the label - never from the assigned voice ("Chưa rõ");
 - narrator voices that differ by chapter are structured entries naming the chapters as the Chapters tab titles them.
 All names and lines are synthetic.
 """
@@ -72,13 +72,14 @@ def _gendered_book(tmp_path: Path) -> Path:
     return root
 
 
-def test_gender_comes_from_the_registry_then_the_label_then_the_voice_but_never_a_child_voice(tmp_path: Path) -> None:
+def test_gender_comes_from_the_registry_then_the_label_and_never_from_the_voice(tmp_path: Path) -> None:
     view = store.cast(_gendered_book(tmp_path))
-    gender = {person["name"]: person["gender"] for person in view["characters"] + view["extras"]}
-    assert gender["Soren"] == "Nam", "sổ nhân vật"
-    assert gender["Người Phụ Nữ Áo Đỏ"] == "Nữ", "chữ chỉ giới trong nhãn"
-    assert gender["Velia"] == "Nữ", "giọng phân vai đã gán"
-    assert gender["Bé Tí"] == "", "trẻ em đọc giọng nữ theo luật, không phải vì là nữ"
+    people = {person["name"]: person for person in view["characters"] + view["extras"]}
+    assert people["Soren"]["gender"] == "Nam", "sổ nhân vật"
+    assert people["Người Phụ Nữ Áo Đỏ"]["gender"] == "Nữ", "chữ chỉ giới trong nhãn"
+    # Velia chưa rõ giới mà đã có giọng nữ (cấp bằng hoà phiếu giữa hai kho): giọng không phải bằng chứng về giới.
+    assert (people["Velia"]["gender"], people["Velia"]["genderNote"]) == ("", "unknown")
+    assert people["Bé Tí"]["gender"] == "", "trẻ em đọc giọng nữ theo luật, không phải vì là nữ"
 
 
 def test_an_empty_gender_says_why_and_is_never_invented(tmp_path: Path) -> None:

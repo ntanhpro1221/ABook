@@ -1,0 +1,34 @@
+{
+ "_doc": "Ca chung của luật gói người nghe (abook/webui/assets/listener_package.json): Python bookfile.listener_package_problems (tests/test_listener_text_never_carries_qa_marks.py) và Kotlin ListenerPackage.problems (ListenerPackageTest.kt) phải ra đúng `leaked` (chữ người nghe thấy có dấu nội bộ) và `internal` (trường book.json ngoài danh sách trắng). Mọi `book` dùng chung `base` rồi đè `patch` theo đường dẫn.",
+ "base": {
+  "format": "abook", "title": "Sách thử", "narrator": "Giọng A", "cover": null, "chaptersTotal": 1, "chaptersAvailable": 1, "complete": true,
+  "chapters": [{"id": 1, "index": 1, "volumeId": 1, "title": "Chương 1", "subtitle": "", "fullTitle": "Chương 1", "file": "chapters/1.mp3", "duration": 10.0, "available": true}],
+  "volumes": [{"id": 1, "number": 1, "title": "Quyển 1", "cover": null, "chapters": [{"id": 1, "index": 1, "title": "Chương 1", "subtitle": "", "fullTitle": "Chương 1"}]}],
+  "audioCoverage": {"expected": [{"id": 1, "title": "Chương 1", "audioSha256": null, "segments": []}], "missing": [], "partial": false}
+ },
+ "cases": [
+  {"name": "clean", "leaked": [], "internal": [],
+   "cast": {"narrator": {"voice": "Giọng A", "chapterVoices": [{"voice": "Giọng B", "chapters": [{"id": 1, "title": "Chương 1"}], "lines": 1, "seconds": 1.0}],
+                         "exceptChapters": [{"id": 1, "title": "Chương 1"}], "voiceLines": 0, "voiceSeconds": 0, "lines": 1, "seconds": 1.0},
+            "characters": [{"name": "NPC_LOCAL::c00001::bác gác", "displayName": "Bác gác", "firstChapter": "Chương 1", "gender": "Nam", "age": "Người lớn"}],
+            "extras": [], "carried": []},
+   "scripts": {"scripts/1.json": "{\"segments\": [{\"speaker\": \"An \\\"Cáo\\\"\"}]}"}},
+  {"name": "shipped Hello subtitle", "patch": {"chapters.0.subtitle": "Cần nghe lại"}, "leaked": ["chapters[1].subtitle: Cần nghe lại"], "internal": []},
+  {"name": "retake mark in a volume chapter", "patch": {"volumes.0.chapters.0.fullTitle": "Chương 1 · Cần thu lại"},
+   "leaked": ["chapters[1].fullTitle: Chương 1 · Cần thu lại"], "internal": []},
+  {"name": "line id in a title", "patch": {"chapters.0.title": "Chương 1 c00001_s0002"}, "leaked": ["chapters[1].title: Chương 1 c00001_s0002"], "internal": []},
+  {"name": "machine code", "patch": {"chapters.0.subtitle": "TTS_PACE_OUTLIER"}, "leaked": ["chapters[1].subtitle: TTS_PACE_OUTLIER"], "internal": []},
+  {"name": "NPC in a book title is a real word", "patch": {"title": "Tôi chuyển sinh thành NPC"}, "leaked": [], "internal": []},
+  {"name": "QA verdict on a chapter", "patch": {"chapters.0.qualityPassed": false, "chapters.0.failedLines": [{"id": 2, "reason": "failed"}]},
+   "leaked": [], "internal": ["chapters[1].qualityPassed", "chapters[1].failedLines"]},
+  {"name": "QA report on the book", "patch": {"levelQa": {"chapters": []}}, "leaked": [], "internal": ["book.levelQa"]},
+  {"name": "QA in the coverage and a volume", "patch": {"audioCoverage.expected.0.qualityPassed": true, "volumes.0.chapters.0.qualityWarning": ""},
+   "leaked": [], "internal": ["chapters[1].qualityWarning", "audioCoverage.expected.qualityPassed"]},
+  {"name": "NPC mark in a shown name", "leaked": ["cast.extras.displayName: NPC Bà Lão Bán Hoa"], "internal": [],
+   "cast": {"narrator": {"voice": "Giọng A"}, "characters": [], "extras": [{"name": "NPC Bà Lão Bán Hoa", "displayName": "NPC Bà Lão Bán Hoa"}], "carried": []}},
+  {"name": "mark in a narrator chapter", "leaked": ["cast.narrator.exceptChapters: Chương 1 · Cần nghe lại"], "internal": [],
+   "cast": {"narrator": {"voice": "Giọng A", "exceptChapters": [{"id": 1, "title": "Chương 1 · Cần nghe lại"}]}, "characters": [], "extras": [], "carried": []}},
+  {"name": "NPC mark on a read-along speaker", "leaked": ["scripts/1.json.speaker: NPC Bà Lão Bán Hoa"], "internal": [],
+   "scripts": {"scripts/1.json": "{\"segments\": [{\"speaker\": \"Bà Lão\"}, {\"speaker\": \"NPC Bà Lão Bán Hoa\"}]}"}}
+ ]
+}
