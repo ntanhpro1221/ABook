@@ -482,6 +482,11 @@ class MusicLibraryScreenTest {
 
     private fun topOf(tag: String): Float = rule.onNodeWithTag(tag).fetchSemanticsNode().boundsInRoot.top
 
+    /** Mép trên (px trong gốc) của mọi dòng bài đang dựng, theo thẻ. */
+    private fun rowTops(): Map<String, Float> = rule.onAllNodes(SemanticsMatcher("track row") { node ->
+        node.config.getOrNull(SemanticsProperties.TestTag)?.matches(Regex("track_-?\\d+")) == true
+    }).fetchSemanticsNodes().associate { it.config[SemanticsProperties.TestTag] to it.boundsInRoot.top }
+
     /** Soát 17-11: floatingLayer chỉ giữ cú BẤM. Vuốt bắt đầu ở lề / khe đáy / thân thanh "Đang nghe thử" vẫn cuộn Kho nhạc (như web, Qt), và không mở
      *  bài nào; trước đó pointerInput{detectTapGestures} chặn luôn cú vuốt ở cả dải ngang đáy màn. */
     @Test
@@ -496,14 +501,19 @@ class MusicLibraryScreenTest {
             "bar body" to androidx.compose.ui.geometry.Offset(box.left + 40f, box.center.y),
         )
         for ((name, start) in starts) {
-            val (tag, before) = topRow()
+            // Đo bằng mọi dòng đang dựng, không bằng một dòng: dòng cao nhất cuộn khỏi khung thì LazyColumn tháo nó (gate 18-11: topOf ném vì
+            // không còn nút). Dòng còn ở cả trước lẫn sau phải lên ít nhất 100 px; không còn dòng chung nào nghĩa là danh sách đã cuộn quá một khung.
+            val before = rowTops()
             rule.onRoot().performTouchInput {
                 down(start)
                 repeat(10) { moveBy(androidx.compose.ui.geometry.Offset(0f, -30f)) }
                 up()
             }
             rule.waitForIdle()
-            assertTrue("a swipe from the $name did not scroll the list: $tag ${before} -> ${topOf(tag)}", topOf(tag) < before - 100f)
+            val after = rowTops()
+            val moved = before.keys.intersect(after.keys).map { before.getValue(it) - after.getValue(it) }
+            assertTrue("a swipe from the $name did not scroll the list: $before -> $after",
+                after.isNotEmpty() && (if (moved.isEmpty()) after.keys != before.keys else moved.min() >= 100f))
             assertEquals("a swipe from the $name opened a track", 0, rule.onAllNodesWithTag("track_sheet").fetchSemanticsNodes().size)
         }
         assertEquals(link(0), state.ui.value.previewing)
