@@ -591,6 +591,12 @@ def test_l12_bites_the_fourth_review_holes(planted):
     assert "DropdownMenu.tsx" not in text and "outsideShield" not in text, text
     (shared / "Popover.tsx").write_text(wrapper.format("popover").replace("useOutsideShield(ref)", "ref"), encoding="utf-8")
     assert any("ui/src/shared/Popover.tsx: Content không gắn lớp chặn ngoài" in p for p in planted.l12_floating_layers())
+    # Dạng hiện hành: trải bộ xử lý của khiên (giữ tới hết cử chỉ) với chính ref của Content; khiên gắn vào ref khác vẫn đỏ.
+    spread = wrapper.replace("ref={{useOutsideShield(ref)}}", "{{...useOutsideShield(ref, props.onInteractOutside)}}")
+    (shared / "Popover.tsx").write_text(spread.format("popover"), encoding="utf-8")
+    assert not any("ui/src/shared/Popover.tsx: Content không gắn lớp chặn ngoài" in p for p in planted.l12_floating_layers())
+    (shared / "Popover.tsx").write_text(spread.format("popover").replace("useOutsideShield(ref,", "useOutsideShield(other,"), encoding="utf-8")
+    assert any("ui/src/shared/Popover.tsx: Content không gắn lớp chặn ngoài" in p for p in planted.l12_floating_layers())
     # N1: Popup không modal đóng khi nhấn ra ngoài (closePolicy mặc định) để cú nhấn ấy tới trang; N2: Backdrop không giữ con trỏ.
     (qml / "Drop.qml").write_text(
         "Item {\n    C.Popup {\n        contentItem: Item { TapShield {} }\n    }\n"

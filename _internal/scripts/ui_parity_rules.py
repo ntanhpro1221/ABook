@@ -1072,7 +1072,10 @@ def l12_web_layer_problems() -> list[str]:
                 problems.append(f"L12 {name}:{text.count(chr(10), 0, m.start()) + 1}: dùng {radix} thẳng - đi qua {wrapper} (bấm ra ngoài chỉ đóng)")
     for wrapper in L12_WEB_WRAPPERS.values():
         path = ROOT / wrapper
-        if not path.exists() or not re.search(r"export const Content = forwardRef[\s\S]*?ref=\{useOutsideShield\(ref\)\}", path.read_text(encoding="utf-8")):
+        # Gắn bằng ref (`ref={useOutsideShield(ref)}`) hay trải cả bộ xử lý của khiên (`{...useOutsideShield(ref, onInteractOutside)}`, từ khi khiên giữ
+        # tới hết cử chỉ - ce8096487); cả hai đều phải đưa CHÍNH ref của Content.
+        wired = r"(?:ref=\{useOutsideShield\(ref\)\}|\{\.\.\.useOutsideShield\(ref\s*[,)])"
+        if not path.exists() or not re.search(r"export const Content = forwardRef[\s\S]*?" + wired, path.read_text(encoding="utf-8")):
             problems.append(f"L12 {wrapper}: Content không gắn lớp chặn ngoài (useOutsideShield)")
     shield = ROOT / "ui/src/shared/outsideShield.ts"
     body = shield.read_text(encoding="utf-8") if shield.exists() else ""
