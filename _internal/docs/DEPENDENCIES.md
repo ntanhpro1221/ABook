@@ -3,6 +3,18 @@
 File này là trách nhiệm thường trực của người dev project, không phải một lần rà soát. Mỗi phiên bản
 phải kiểm lại bảng dưới và ghi kết quả vào `VERSIONS.md`.
 
+## 18-11 — certifi + urllib3 của Studio (lấy từ `dev/studiodeps` b7362d6fb khi gộp 0.4.174)
+
+deps175 đã làm lại brotli và setuptools; hai ghim còn lại của studiodeps vào cùng `uv.lock` và `studio-requirements.txt`:
+
+| Gói | Cũ → mới | Lý do |
+|---|---|---|
+| certifi | 2026.7.22 → **2026.10.23** | GHSA-6q48-6c7w-9gw2 (CRITICAL): bỏ các gốc emSign bị lộ khoá trung gian. Studio tải model qua HTTPS bằng bộ gốc này. |
+| urllib3 | 2.7.0 → **2.8.0** | GHSA-8988-9cw3-xx77, GHSA-vxq7-64xx-v4gw (HIGH), GHSA-gh4c-6fx4-qh6g. App nghe đã mang 2.8.0. |
+
+`runtime/.venv` chưa được cài lại: sau khi gộp phải nhận hai wheel này (cùng các gói deps175), không thì
+`test_installed_packages_match_the_release_lock` báo lệch.
+
 ## 18-11 — soát thượng nguồn: hai bản vá bị lùi ở 0.4.168, ba CVE Ollama (`dev/deps175`)
 
 **Bản vá bị lùi.** 0.4.168 ghim theo runtime đo được (mục "0.4.168 - measured runtime declarations" bên dưới). Việc này

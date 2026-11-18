@@ -7,6 +7,7 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+- Bảo mật: bộ cài Studio dùng certifi 2026.10.23 (bỏ gốc emSign bị lộ khoá trung gian) và urllib3 2.8.0 (vá TLS qua proxy HTTPS và cỡ khối).
 - Bảo mật: nhập PDF dùng pypdf 6.21.4 (vá 26 lỗi PDF độc làm treo hay ăn hết RAM); chữ trích ra từ PDF không đổi.
 - Bảo mật: máy tính giải mã MP3 bằng minimp3 mới (vá đọc tràn bộ nhớ ở thẻ VBR, tua và khung lỗi); âm thanh giải ra không đổi.
 - Bảo mật: app Windows mang Python 3.14.10 (chặn khoá CA emSign đã lộ trong kết nối mã hoá, vá giải nén tar).

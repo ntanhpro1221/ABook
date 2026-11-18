@@ -7,7 +7,7 @@ anyio==4.14.2
 audioread==3.1.0
 av==18.1.0
 brotli==1.2.1
-certifi==2026.7.22
+certifi==2026.10.23
 cffi==2.1.0
 charset-normalizer==3.4.9
 click==8.4.2
@@ -96,7 +96,7 @@ typer==0.27.0
 typing-inspection==0.4.2
 typing_extensions==4.16.0
 tzdata==2026.3
-urllib3==2.7.0
+urllib3==2.8.0
 utmosv2 @ git+https://github.com/sarulab-speech/UTMOSv2.git@cc2700db57bb83ee13dc31ebe1b868c254e15d09
 uvicorn==0.52.1
 vieneu==3.8.3
