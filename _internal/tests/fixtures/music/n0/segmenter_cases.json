@@ -2424,6 +2424,239 @@
      "kind": "thought"
     }
    ]
+  },
+  {
+   "text": "‘Thôi chết’tôi nghĩ.\n\nLan cười.",
+   "segments": [
+    {
+     "id": 0,
+     "text": "‘Thôi chết’",
+     "sceneBreak": false,
+     "kind": "thought"
+    },
+    {
+     "id": 1,
+     "text": "tôi nghĩ.",
+     "sceneBreak": false,
+     "kind": "narration"
+    },
+    {
+     "id": 2,
+     "text": "Lan cười.",
+     "sceneBreak": false,
+     "kind": "narration"
+    }
+   ]
+  },
+  {
+   "text": "‘Đi McDonald’s đi, we’re late, rock’n’roll mà.’ Lan nghĩ.",
+   "segments": [
+    {
+     "id": 0,
+     "text": "‘Đi McDonald’s đi, we’re late, rock’n’roll mà.’",
+     "sceneBreak": false,
+     "kind": "thought"
+    },
+    {
+     "id": 1,
+     "text": "Lan nghĩ.",
+     "sceneBreak": false,
+     "kind": "narration"
+    }
+   ]
+  },
+  {
+   "text": "“Đi thôi.\n\nLan hỏi: “Đi đâu?”\n\nTôi đáp về nhà rồi.”\n\nHết.",
+   "segments": [
+    {
+     "id": 0,
+     "text": "“Đi thôi.",
+     "sceneBreak": false,
+     "kind": "dialogue"
+    },
+    {
+     "id": 1,
+     "text": "Lan hỏi:",
+     "sceneBreak": false,
+     "kind": "narration"
+    },
+    {
+     "id": 2,
+     "text": "“Đi đâu?”",
+     "sceneBreak": false,
+     "kind": "dialogue"
+    },
+    {
+     "id": 3,
+     "text": "Tôi đáp về nhà rồi.”",
+     "sceneBreak": false,
+     "kind": "narration"
+    },
+    {
+     "id": 4,
+     "text": "Hết.",
+     "sceneBreak": false,
+     "kind": "narration"
+    }
+   ]
+  },
+  {
+   "text": "“Nghe này.\n\nMẹ dặn: “trời đẹp nhỉ, về sớm” nên tớ về.\n\nThế thôi.”\n\nHết.",
+   "segments": [
+    {
+     "id": 0,
+     "text": "“Nghe này.",
+     "sceneBreak": false,
+     "kind": "dialogue"
+    },
+    {
+     "id": 1,
+     "text": "Mẹ dặn: “trời đẹp nhỉ, về sớm” nên tớ về.",
+     "sceneBreak": false,
+     "kind": "dialogue"
+    },
+    {
+     "id": 2,
+     "text": "Thế thôi.”",
+     "sceneBreak": false,
+     "kind": "dialogue"
+    },
+    {
+     "id": 3,
+     "text": "Hết.",
+     "sceneBreak": false,
+     "kind": "narration"
+    }
+   ]
+  },
+  {
+   "text": "“Nghe này.\n\nCậu bảo “trời đẹp rồi đi.\n\nỪ.”\n\nHết.",
+   "segments": [
+    {
+     "id": 0,
+     "text": "“Nghe này.",
+     "sceneBreak": false,
+     "kind": "dialogue"
+    },
+    {
+     "id": 1,
+     "text": "Cậu bảo",
+     "sceneBreak": false,
+     "kind": "narration"
+    },
+    {
+     "id": 2,
+     "text": "“trời đẹp rồi đi.",
+     "sceneBreak": false,
+     "kind": "dialogue"
+    },
+    {
+     "id": 3,
+     "text": "Ừ.”",
+     "sceneBreak": false,
+     "kind": "dialogue"
+    },
+    {
+     "id": 4,
+     "text": "Hết.",
+     "sceneBreak": false,
+     "kind": "narration"
+    }
+   ]
+  },
+  {
+   "text": "“Nghe này.\n\nHôm qua cậu nói “trời đẹp nhỉ” cơ mà.\n\nRồi cô ấy đi » mất.\n\nThế đấy.”\n\nHết.",
+   "segments": [
+    {
+     "id": 0,
+     "text": "“Nghe này.",
+     "sceneBreak": false,
+     "kind": "dialogue"
+    },
+    {
+     "id": 1,
+     "text": "Hôm qua cậu nói",
+     "sceneBreak": false,
+     "kind": "narration"
+    },
+    {
+     "id": 2,
+     "text": "“trời đẹp nhỉ”",
+     "sceneBreak": false,
+     "kind": "dialogue"
+    },
+    {
+     "id": 3,
+     "text": "cơ mà.",
+     "sceneBreak": false,
+     "kind": "narration"
+    },
+    {
+     "id": 4,
+     "text": "Rồi cô ấy đi » mất.",
+     "sceneBreak": false,
+     "kind": "narration"
+    },
+    {
+     "id": 5,
+     "text": "Thế đấy.”",
+     "sceneBreak": false,
+     "kind": "narration"
+    },
+    {
+     "id": 6,
+     "text": "Hết.",
+     "sceneBreak": false,
+     "kind": "narration"
+    }
+   ]
+  },
+  {
+   "text": "“Nghe này.\n\nHôm qua cậu nói “trời đẹp nhỉ” cơ mà.\n\nMột.\n\nHai.\n\nBa.\n\nBốn.”\n\nHết.",
+   "segments": [
+    {
+     "id": 0,
+     "text": "“Nghe này.",
+     "sceneBreak": false,
+     "kind": "dialogue"
+    },
+    {
+     "id": 1,
+     "text": "Hôm qua cậu nói “trời đẹp nhỉ” cơ mà.",
+     "sceneBreak": false,
+     "kind": "dialogue"
+    },
+    {
+     "id": 2,
+     "text": "Một.",
+     "sceneBreak": false,
+     "kind": "dialogue"
+    },
+    {
+     "id": 3,
+     "text": "Hai.",
+     "sceneBreak": false,
+     "kind": "dialogue"
+    },
+    {
+     "id": 4,
+     "text": "Ba.",
+     "sceneBreak": false,
+     "kind": "dialogue"
+    },
+    {
+     "id": 5,
+     "text": "Bốn.”",
+     "sceneBreak": false,
+     "kind": "dialogue"
+    },
+    {
+     "id": 6,
+     "text": "Hết.",
+     "sceneBreak": false,
+     "kind": "narration"
+    }
+   ]
   }
  ]
 }

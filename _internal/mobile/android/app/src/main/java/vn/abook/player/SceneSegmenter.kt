@@ -22,10 +22,11 @@ object SceneSegmenter {
     private val NEWLINE_RUN = Regex("\n{3,}")
 
     private val QUOTE = Py.rx("""([“"][^”"]{1,1600}[”"])""", dotAll = true)
-    /** ’ kẹp giữa hai chữ là dấu nháy trong từ ("McDonald’s", "don’t"), không đóng ‘ (`THOUGHT_CLOSING_PATTERN`). */
-    private const val THOUGHT_CLOSING_SOURCE = """(?<!\w)’|’(?!\w)|(?<=\S)'(?!\w)"""
-    private val THOUGHT_CLOSING = Py.rx(THOUGHT_CLOSING_SOURCE)
-    private val THOUGHT_QUOTE = Py.rx("""(‘(?:[^’]|(?<=\w)’(?=\w)){1,1600}?(?:$THOUGHT_CLOSING_SOURCE))""", dotAll = true)
+    /** `STRAIGHT_THOUGHT_CLOSING_PATTERN`: ' thẳng bám cuối chữ đóng ‘. */
+    private val STRAIGHT_THOUGHT_CLOSING = Py.rx("""(?<=\S)'(?!\w)""")
+    /** `WORD_APOSTROPHE_SUFFIX_PATTERN`: hậu tố rút gọn tiếng Anh sau ’ nháy trong từ ("McDonald’s", "don’t", "we’re"). */
+    private val WORD_APOSTROPHE_SUFFIX = Py.rx("""(?:s|t|re|ll|ve|d|m|n)(?!\w)""", ignoreCase = true)
+    private const val THOUGHT_QUOTE_MAX_BODY = 1600
     private val WHITE_CORNER_LINE = Py.rx("""『[^』]{1,1600}』""")
     private val LETTERED_VOICE_LINES = listOf(Py.rx("""\[[^\]]{1,1600}\]"""), Py.rx("""【[^】]{1,1600}】"""))
     private val TRANSLATOR_NOTE_LABEL = Py.rx(
@@ -519,7 +520,7 @@ object SceneSegmenter {
         if (isStraightThoughtLine(line)) return listOf(Piece(line, "thought"))
         val matches = ArrayList<Pair<Span, String>>()
         for (span in dialogueQuoteMatches(line)) matches.add(span to (if (quotedSpanIsDialogue(line, span)) "dialogue" else "narration"))
-        for (span in findAll(THOUGHT_QUOTE, line)) matches.add(span to "thought")
+        for (span in thoughtQuoteMatches(line)) matches.add(Span(span[0], span[1]) to "thought")
         val ordered = matches.sortedWith(compareBy({ it.first.start }, { -it.first.end })) // sắp ổn định
         val kept = ArrayList<Pair<Span, String>>()
         var occupiedUntil = -1
@@ -576,12 +577,64 @@ object SceneSegmenter {
         return merged
     }
 
-    /** `THOUGHT_CLOSING_PATTERN.match(line, index)`: dấu đóng nội tâm bắt đầu ĐÚNG tại `index` (lookbehind nhìn được chữ trước). */
-    private fun thoughtClosingAt(line: String, index: Int): Boolean {
-        val matcher = THOUGHT_CLOSING.matcher(line)
+    /** `pattern.match(line, index)`: khớp bắt đầu ĐÚNG tại `index` (lookbehind nhìn được chữ trước). */
+    private fun matchesAt(pattern: java.util.regex.Pattern, line: String, index: Int): Boolean {
+        val matcher = pattern.matcher(line)
         matcher.useTransparentBounds(true)
         matcher.region(index, line.length)
         return matcher.lookingAt()
+    }
+
+    /** `_is_latin_letter`: `isalpha()` và tên Unicode có "LATIN". */
+    private fun isLatinLetter(cp: Int): Boolean = Character.isLetter(cp) && (Character.getName(cp) ?: "").contains("LATIN")
+
+    /**
+     * `_is_word_apostrophe`: ’ tại `index` là nháy trong từ - chữ Latin trước, hậu tố rút gọn tiếng Anh sau; hay ’ thứ hai của "’n’"
+     * ("rock’n’roll") có chữ Latin theo sau. Chữ Việt dính sau ’ (‘Thôi chết’tôi nghĩ) thì ’ vẫn là dấu đóng.
+     */
+    private fun isWordApostrophe(line: String, index: Int): Boolean {
+        if (line[index] != '’' || index == 0 || !isLatinLetter(line.codePointBefore(index))) return false
+        if (matchesAt(WORD_APOSTROPHE_SUFFIX, line, index + 1)) return true
+        return index >= 2 && line[index - 2] == '’' && (line[index - 1] == 'n' || line[index - 1] == 'N') &&
+            index + 1 < line.length && isLatinLetter(line.codePointAt(index + 1)) && isWordApostrophe(line, index - 2)
+    }
+
+    /** `_thought_closing_at`: dấu đóng nội tâm ĐÚNG tại `index`. */
+    private fun thoughtClosingAt(line: String, index: Int): Boolean = when (line[index]) {
+        '’' -> !isWordApostrophe(line, index)
+        '\'' -> matchesAt(STRAIGHT_THOUGHT_CLOSING, line, index)
+        else -> false
+    }
+
+    /**
+     * `_thought_quote_matches`: từ ‘, dấu đóng nội tâm GẦN NHẤT sau 1..[THOUGHT_QUOTE_MAX_BODY] code point thân. Quét tay vì regex có
+     * nhánh chọn trong vòng lặp chạy đệ quy trên JVM và tràn ngăn xếp ở dòng dài.
+     */
+    internal fun thoughtQuoteMatches(line: String): List<IntArray> {
+        val found = ArrayList<IntArray>()
+        var start = line.indexOf('‘')
+        while (start >= 0) {
+            var end = -1
+            var index = start + 1
+            var position = 0 // số code point từ sau ‘ tới `index`
+            while (index < line.length && position <= THOUGHT_QUOTE_MAX_BODY) {
+                val closing = thoughtClosingAt(line, index)
+                if (closing && position > 0) {
+                    end = index + 1
+                    break
+                }
+                if (line[index] == '’' && closing) break
+                index += Character.charCount(line.codePointAt(index))
+                position++
+            }
+            if (end > 0) {
+                found.add(intArrayOf(start, end))
+                start = line.indexOf('‘', end)
+            } else {
+                start = line.indexOf('‘', start + 1)
+            }
+        }
+        return found
     }
 
     /** `_scan_quote_closing`: dấu đóng ngoặc ngoài và ngăn xếp còn lại, đếm cả ngoặc lồng (qua nhiều dòng nguồn). */
@@ -593,9 +646,7 @@ object SceneSegmenter {
                 val char = line[index]
                 if (char == '“' || char == '‘') {
                     stack.add(if (char == '“') "”" else "’")
-                } else if ((char.toString() == stack.last() && char != '’') ||
-                    (stack.last() == "’" && (char == '’' || char == '\'') && thoughtClosingAt(line, index))
-                ) {
+                } else if ((char.toString() == stack.last() && char != '’') || (stack.last() == "’" && thoughtClosingAt(line, index))) {
                     stack.removeAt(stack.size - 1)
                     if (stack.isEmpty()) return index to emptyList()
                 }
@@ -769,7 +820,7 @@ object SceneSegmenter {
     private fun quoteRunsOnPastNested(lines: List<String>, state: State): Boolean {
         val (closingIndex, remaining) = scanQuoteClosing(lines[0], state.closers)
         if (closingIndex >= 0) return true
-        if (remaining.size > state.closers.size) return false
+        if (remaining.size > state.closers.size || lineOpensANewTurn(lines[0])) return false
         for (line in lines.drop(1).take(NESTED_RUN_ON_MAX_LINES)) {
             val index = scanQuoteClosing(line, state.closers).first
             if (lineLeavesTheQuote(if (index < 0) line else line.substring(0, index), index < 0)) return false
@@ -782,16 +833,12 @@ object SceneSegmenter {
 
     /**
      * `_line_leaves_the_quote`: dòng sau (phần trước dấu đóng ngoài) có dấu ngoặc lạc / không cân, hay mở lượt thoại mới (cặp mở sau
-     * `:` hoặc đóng ở cuối dòng). ’ kẹp giữa hai chữ là dấu nháy trong từ.
+     * `:` hoặc đóng ở cuối dòng). ’ nháy trong từ ([isWordApostrophe]) không phải dấu ngoặc.
      */
     private fun lineLeavesTheQuote(text: String, wholeLine: Boolean): Boolean {
         val stack = ArrayList<Char>()
         for ((index, char) in text.withIndex()) {
-            if (char == '’' && index > 0 && index < text.length - 1 &&
-                Py.isAlnum(Character.codePointBefore(text, index)) && Py.isAlnum(text.codePointAt(index + 1))
-            ) {
-                continue
-            }
+            if (isWordApostrophe(text, index)) continue
             if (char == '“' || char == '‘' || char == '«' || (char == '"' && !(stack.isNotEmpty() && stack.last() == '"'))) {
                 if (stack.isEmpty() && Py.rstrip(text.substring(0, index)).endsWith(":")) return true
                 stack.add(
@@ -809,5 +856,32 @@ object SceneSegmenter {
             }
         }
         return stack.isNotEmpty()
+    }
+
+    /**
+     * `_line_opens_a_new_turn`: dòng đang xét có cặp ngoặc mở ngay sau `:` và đóng ở cuối dòng (`Lan hỏi: “Đi đâu?”`) - lượt thoại mới,
+     * ngoặc trước thiếu dấu đóng. `Mẹ dặn: “về sớm” nên…` (câu còn chạy tiếp) vẫn là trích dẫn lồng.
+     */
+    private fun lineOpensANewTurn(line: String): Boolean {
+        val stack = ArrayList<Char>()
+        var afterColon = false
+        for ((index, char) in line.withIndex()) {
+            if (isWordApostrophe(line, index)) continue
+            if (char == '“' || char == '‘' || char == '«' || (char == '"' && !(stack.isNotEmpty() && stack.last() == '"'))) {
+                if (stack.isEmpty()) afterColon = Py.rstrip(line.substring(0, index)).endsWith(":")
+                stack.add(
+                    when (char) {
+                        '“' -> '”'
+                        '‘' -> '’'
+                        '«' -> '»'
+                        else -> '"'
+                    },
+                )
+            } else if (stack.isNotEmpty() && char == stack.last()) {
+                stack.removeAt(stack.size - 1)
+                if (stack.isEmpty() && afterColon && Py.strip(line.substring(index + 1)).isEmpty()) return true
+            }
+        }
+        return false
     }
 }

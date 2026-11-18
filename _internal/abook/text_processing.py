@@ -15,19 +15,17 @@ QUOTE_PATTERN = re.compile(r"([“\"][^”\"]{1,1600}[”\"])", re.DOTALL)
 # Bản dịch hay mở ‘ rồi đóng bằng dấu ' thẳng ("được gọi là ‘tổng hợp ý kiến'."): dấu ' bám cuối chữ và theo sau là khoảng
 # trắng / dấu câu / hết dòng thì đóng ‘. Dấu ' nằm GIỮA chữ (tên phiên âm "Ma'at", "I'm") không đóng gì. Không nhận nó
 # thì nội tâm không bao giờ đóng và khoá giọng nội tâm tràn sang mọi câu kể phía sau.
-# Dấu ’ kẹp giữa hai chữ cũng là dấu nháy trong từ ("McDonald’s", "don’t"), không đóng ‘: đọc nó là dấu đóng thì nội tâm
-# bị cắt giữa từ.
-THOUGHT_CLOSING_PATTERN = re.compile(r"(?<!\w)’|’(?!\w)|(?<=\S)'(?!\w)")
-THOUGHT_QUOTE_PATTERN = re.compile(
-    rf"(‘(?:[^’]|(?<=\w)’(?=\w)){{1,1600}}?(?:{THOUGHT_CLOSING_PATTERN.pattern}))",
-    re.DOTALL,
-)
+# Dấu ’ sau chữ Latin và trước một hậu tố rút gọn tiếng Anh là dấu nháy trong từ ("McDonald’s", "don’t", "we’re",
+# "rock’n"), không đóng ‘: đọc nó là dấu đóng thì nội tâm bị cắt giữa từ. Chữ Việt dính sau ’ (‘Thôi chết’tôi nghĩ - gõ
+# thiếu dấu cách) thì ’ vẫn là dấu đóng.
+STRAIGHT_THOUGHT_CLOSING_PATTERN = re.compile(r"(?<=\S)'(?!\w)")
+WORD_APOSTROPHE_SUFFIX_PATTERN = re.compile(r"(?:s|t|re|ll|ve|d|m|n)(?!\w)", re.IGNORECASE)
+THOUGHT_QUOTE_MAX_BODY = 1600
 CURLY_QUOTE_SPECS = (
     ("“", "”", "dialogue"),
     ("‘", "’", "thought"),
 )
 QUOTE_CLOSING_MARKS = {"”", "’", '"'}
-QUOTE_CLOSING_PATTERNS = {"’": THOUGHT_CLOSING_PATTERN}
 # Cả dòng bọc trong cặp ' thẳng ('Chà, chắc mình phải chăm chỉ thêm thôi.') là nội tâm, như ‘…’: kho có 8.554 dòng như
 # thế ở 70 bộ (bản dịch gõ không có dấu cong). Chỉ nhận khi ' mở dính chữ ở ĐẦU dòng và ' đóng dính chữ ở CUỐI dòng -
 # dấu ' giữa dòng ("Ma'at", "I'm") không mở/đóng gì. Dòng có ' đóng GIỮA chừng ('Mực tím à? Ừm,' tôi thầm nghĩ. 'Mai...'')
@@ -1171,7 +1169,7 @@ def _line_pieces(line: str) -> list[tuple[str, str]]:
         (match, "dialogue" if _quoted_span_is_dialogue(line, match) else "narration")
         for match in _dialogue_quote_matches(line)
     ]
-    matches.extend((match, "thought") for match in THOUGHT_QUOTE_PATTERN.finditer(line))
+    matches.extend((match, "thought") for match in _thought_quote_matches(line))
     matches.sort(key=lambda item: (item[0].start(), -item[0].end()))
     non_overlapping: list[tuple[re.Match[str], str]] = []
     occupied_until = -1
@@ -1228,6 +1226,57 @@ def _line_pieces(line: str) -> list[tuple[str, str]]:
     return merged
 
 
+def _is_word_apostrophe(line: str, index: int) -> bool:
+    """`line[index]` là ’ nháy trong từ: chữ Latin đứng trước, hậu tố rút gọn tiếng Anh (s, t, re, ll, ve, d, m, n) theo
+    sau; hay ’ thứ hai của "’n’" ("rock’n’roll") có chữ Latin theo sau."""
+    if line[index] != "’" or index == 0 or not _is_latin_letter(line[index - 1]):
+        return False
+    if WORD_APOSTROPHE_SUFFIX_PATTERN.match(line, index + 1) is not None:
+        return True
+    return (
+        index >= 2 and line[index - 2] == "’" and line[index - 1] in "nN" and index + 1 < len(line)
+        and _is_latin_letter(line[index + 1]) and _is_word_apostrophe(line, index - 2)
+    )
+
+
+def _is_latin_letter(char: str) -> bool:
+    return char.isalpha() and "LATIN" in unicodedata.name(char, "")
+
+
+def _thought_closing_at(line: str, index: int) -> bool:
+    """Dấu đóng nội tâm ĐÚNG tại `index`: ’ không phải nháy trong từ, hay ' thẳng bám cuối chữ."""
+    char = line[index]
+    if char == "’":
+        return not _is_word_apostrophe(line, index)
+    return char == "'" and STRAIGHT_THOUGHT_CLOSING_PATTERN.match(line, index) is not None
+
+
+_WHOLE_SPAN_PATTERN = re.compile(r"(.+)", re.DOTALL)
+
+
+def _thought_quote_matches(line: str) -> list[re.Match[str]]:
+    """Các cặp ‘…’ của dòng: từ ‘, dấu đóng nội tâm GẦN NHẤT sau 1..THOUGHT_QUOTE_MAX_BODY ký tự thân; ’ đóng thì thân
+    không chứa được, nên nó chặn luôn (như regex lười cũ). Quét tay chứ không regex: nhánh chọn trong vòng lặp regex chạy
+    đệ quy trên JVM và tràn ngăn xếp ở dòng dài (bản Kotlin quét cùng cách)."""
+    found: list[re.Match[str]] = []
+    start = line.find("‘")
+    while start >= 0:
+        end = -1
+        for index in range(start + 1, min(len(line), start + 2 + THOUGHT_QUOTE_MAX_BODY)):
+            closing = _thought_closing_at(line, index)
+            if closing and index > start + 1:
+                end = index + 1
+                break
+            if line[index] == "’" and closing:
+                break
+        if end > 0:
+            found.append(_WHOLE_SPAN_PATTERN.match(line, start, end))
+            start = line.find("‘", end)
+        else:
+            start = line.find("‘", start + 1)
+    return found
+
+
 def _scan_quote_closing(line: str, closers: tuple[str, ...], start: int = 0) -> tuple[int, tuple[str, ...]]:
     """Return the outer closer and remaining nesting, including across source lines."""
     closing_mark = closers[0]
@@ -1237,10 +1286,7 @@ def _scan_quote_closing(line: str, closers: tuple[str, ...], start: int = 0) -> 
             char = line[index]
             if char in ("“", "‘"):
                 stack.append("”" if char == "“" else "’")
-            elif (char == stack[-1] and char != "’") or (
-                stack[-1] == "’" and char in "’'"
-                and THOUGHT_CLOSING_PATTERN.match(line, index) is not None
-            ):
+            elif (char == stack[-1] and char != "’") or (stack[-1] == "’" and _thought_closing_at(line, index)):
                 stack.pop()
                 if not stack:
                     return index, ()
@@ -1248,12 +1294,8 @@ def _scan_quote_closing(line: str, closers: tuple[str, ...], start: int = 0) -> 
     if closing_mark == '"':
         index = _straight_quote_closing(line, start)
         return index, () if index >= 0 else closers
-    pattern = QUOTE_CLOSING_PATTERNS.get(closing_mark)
-    if pattern is None:
-        index = line.find(closing_mark, start)
-        return index, () if index >= 0 else closers
-    match = pattern.search(line, start)
-    return (match.start(), ()) if match is not None else (-1, closers)
+    index = line.find(closing_mark, start)
+    return index, () if index >= 0 else closers
 
 
 def _straight_quote_closing(line: str, start: int = 0) -> int:
@@ -1468,7 +1510,7 @@ def _quote_runs_on_past_nested(lines: list[str], quote_state: QuoteState) -> boo
     closing_index, remaining = _scan_quote_closing(lines[0], closers)
     if closing_index >= 0:
         return True
-    if len(remaining) > len(closers):
+    if len(remaining) > len(closers) or _line_opens_a_new_turn(lines[0]):
         return False
     for line in lines[1 : NESTED_RUN_ON_MAX_LINES + 1]:
         closing_index, _remaining = _scan_quote_closing(line, closers)
@@ -1487,11 +1529,11 @@ def _line_leaves_the_quote(text: str, whole_line: bool) -> bool:
     """`text` (một dòng sau, phần trước dấu đóng ngoặc ngoài) cho thấy ngoặc ngoài đã thiếu dấu đóng: một dấu ngoặc lạc
     / không cân ("Cô ấy nói: "Mai gặp nhé.” gõ lẫn), hay một lượt thoại MỚI - cặp ngoặc mở sau dấu hai chấm (`Lan hỏi:
     “Đi đâu?”`) hoặc đóng ở cuối dòng. Cặp lồng cân giữa câu (thuật ngữ ‘học’, “miếng phô mai”) là phần tiếp của lời.
-    ’ kẹp giữa hai chữ là dấu nháy trong từ ("McDonald’s"), không phải dấu ngoặc.
+    ’ nháy trong từ ("McDonald’s", `_is_word_apostrophe`) không phải dấu ngoặc.
     """
     stack: list[str] = []
     for index, char in enumerate(text):
-        if char == "’" and 0 < index < len(text) - 1 and text[index - 1].isalnum() and text[index + 1].isalnum():
+        if _is_word_apostrophe(text, index):
             continue
         if char in _LATER_LINE_CLOSERS or (char == '"' and not (stack and stack[-1] == '"')):
             if not stack and text[:index].rstrip().endswith(":"):
@@ -1504,6 +1546,26 @@ def _line_leaves_the_quote(text: str, whole_line: bool) -> bool:
             if not stack and whole_line and not text[index + 1 :].strip():
                 return True
     return bool(stack)
+
+
+def _line_opens_a_new_turn(line: str) -> bool:
+    """Dòng mở “ lồng khi ngoặc trước còn mở có một cặp ngoặc mở ngay sau dấu hai chấm và đóng ở cuối dòng (`Lan hỏi:
+    “Đi đâu?”`): đó là lượt thoại MỚI, ngoặc trước thiếu dấu đóng. Cặp sau hai chấm mà câu còn chạy tiếp (`Mẹ dặn: “về
+    sớm” nên…`) vẫn là trích dẫn lồng."""
+    stack: list[str] = []
+    after_colon = False
+    for index, char in enumerate(line):
+        if _is_word_apostrophe(line, index):
+            continue
+        if char in _LATER_LINE_CLOSERS or (char == '"' and not (stack and stack[-1] == '"')):
+            if not stack:
+                after_colon = line[:index].rstrip().endswith(":")
+            stack.append(_LATER_LINE_CLOSERS.get(char, '"'))
+        elif stack and char == stack[-1]:
+            stack.pop()
+            if not stack and after_colon and not line[index + 1 :].strip():
+                return True
+    return False
 
 
 def _chapter_writes_dialogue_in_quotes(paragraphs: list[str]) -> bool:

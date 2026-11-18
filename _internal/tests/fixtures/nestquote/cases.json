@@ -843,6 +843,180 @@
      "‘Cậu bảo “don’t go” cơ mà.’"
     ]
    ]
+  },
+  {
+   "name": "noi_tam_dong_dinh_chu_viet",
+   "text": "‘Thôi chết’tôi nghĩ.\n\nLan cười.",
+   "segments": [
+    [
+     "thought",
+     "‘Thôi chết’"
+    ],
+    [
+     "narration",
+     "tôi nghĩ."
+    ],
+    [
+     "narration",
+     "Lan cười."
+    ]
+   ]
+  },
+  {
+   "name": "noi_tam_nhay_hau_to_tieng_anh",
+   "text": "‘Đi McDonald’s đi, we’re late, rock’n’roll mà.’ Lan nghĩ.",
+   "segments": [
+    [
+     "thought",
+     "‘Đi McDonald’s đi, we’re late, rock’n’roll mà.’"
+    ],
+    [
+     "narration",
+     "Lan nghĩ."
+    ]
+   ]
+  },
+  {
+   "name": "giu_thieu_dong_luot_moi_o_dong_dang_xet",
+   "text": "“Đi thôi.\n\nLan hỏi: “Đi đâu?”\n\nTôi đáp về nhà rồi.”\n\nHết.",
+   "segments": [
+    [
+     "dialogue",
+     "“Đi thôi."
+    ],
+    [
+     "narration",
+     "Lan hỏi:"
+    ],
+    [
+     "dialogue",
+     "“Đi đâu?”"
+    ],
+    [
+     "narration",
+     "Tôi đáp về nhà rồi.”"
+    ],
+    [
+     "narration",
+     "Hết."
+    ]
+   ]
+  },
+  {
+   "name": "cong_long_sau_hai_cham_cau_chay_tiep",
+   "text": "“Nghe này.\n\nMẹ dặn: “trời đẹp nhỉ, về sớm” nên tớ về.\n\nThế thôi.”\n\nHết.",
+   "segments": [
+    [
+     "dialogue",
+     "“Nghe này."
+    ],
+    [
+     "dialogue",
+     "Mẹ dặn: “trời đẹp nhỉ, về sớm” nên tớ về."
+    ],
+    [
+     "dialogue",
+     "Thế thôi.”"
+    ],
+    [
+     "narration",
+     "Hết."
+    ]
+   ]
+  },
+  {
+   "name": "giu_thieu_dong_long_mo_khong_dong",
+   "text": "“Nghe này.\n\nCậu bảo “trời đẹp rồi đi.\n\nỪ.”\n\nHết.",
+   "segments": [
+    [
+     "dialogue",
+     "“Nghe này."
+    ],
+    [
+     "narration",
+     "Cậu bảo"
+    ],
+    [
+     "dialogue",
+     "“trời đẹp rồi đi."
+    ],
+    [
+     "dialogue",
+     "Ừ.”"
+    ],
+    [
+     "narration",
+     "Hết."
+    ]
+   ]
+  },
+  {
+   "name": "giu_dau_lac_o_dong_sau",
+   "text": "“Nghe này.\n\nHôm qua cậu nói “trời đẹp nhỉ” cơ mà.\n\nRồi cô ấy đi » mất.\n\nThế đấy.”\n\nHết.",
+   "segments": [
+    [
+     "dialogue",
+     "“Nghe này."
+    ],
+    [
+     "narration",
+     "Hôm qua cậu nói"
+    ],
+    [
+     "dialogue",
+     "“trời đẹp nhỉ”"
+    ],
+    [
+     "narration",
+     "cơ mà."
+    ],
+    [
+     "narration",
+     "Rồi cô ấy đi » mất."
+    ],
+    [
+     "narration",
+     "Thế đấy.”"
+    ],
+    [
+     "narration",
+     "Hết."
+    ]
+   ]
+  },
+  {
+   "name": "cong_long_dong_o_dong_thu_tu",
+   "text": "“Nghe này.\n\nHôm qua cậu nói “trời đẹp nhỉ” cơ mà.\n\nMột.\n\nHai.\n\nBa.\n\nBốn.”\n\nHết.",
+   "segments": [
+    [
+     "dialogue",
+     "“Nghe này."
+    ],
+    [
+     "dialogue",
+     "Hôm qua cậu nói “trời đẹp nhỉ” cơ mà."
+    ],
+    [
+     "dialogue",
+     "Một."
+    ],
+    [
+     "dialogue",
+     "Hai."
+    ],
+    [
+     "dialogue",
+     "Ba."
+    ],
+    [
+     "dialogue",
+     "Bốn.”"
+    ],
+    [
+     "narration",
+     "Hết."
+    ]
+   ]
   }
  ]
 }
