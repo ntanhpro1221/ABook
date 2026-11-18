@@ -391,12 +391,12 @@ export function EditBookDialog({
               onChange={(event) => setTitle(event.target.value)}
               className="touch-box h-[40px] min-w-0 flex-1 rounded-control border border-line bg-bg px-3 text-sm outline-none focus:border-focus"
             />
-            <Button type="submit" variant="outline" className="touch-box h-10 min-h-10 max-sm:min-h-[48px] pointer-coarse:min-h-[48px]" loading={rename.isPending} disabled={!title.trim() || title.trim() === book.title}>{S.s_luu_ten_0b3ef54a}</Button>
+            <Button type="submit" variant="ghost" className="touch-box h-10 min-h-10 max-sm:min-h-[48px] pointer-coarse:min-h-[48px]" loading={rename.isPending} disabled={!title.trim() || title.trim() === book.title}>{S.s_luu_ten_0b3ef54a}</Button>
           </form>
         </Section>
         <form className="space-y-3" onSubmit={event => { event.preventDefault(); if (metadataSaveable(metadata, book)) changeAuthor.mutate(metadata); }}>
           <BookMetadataFields value={metadata} onChange={setMetadata} />
-          <Button type="submit" variant="outline" loading={changeAuthor.isPending} disabled={!metadataSaveable(metadata, book)}>{S.s_bookmeta_save}</Button>
+          <Button type="submit" variant="ghost" loading={changeAuthor.isPending} disabled={!metadataSaveable(metadata, book)}>{S.s_bookmeta_save}</Button>
         </form>
         <Section title={S.s_anh_bia_f224644d}>
           {/* flex-wrap: ở 375 px cột nút (rộng ~190 px) không vừa cạnh bìa 112 px - xuống dưới bìa thay vì tràn khỏi hộp (soát UX a17). */}

@@ -1,4 +1,4 @@
-import { click, clickFirst, find, type, waitFor } from "./actions";
+import { click, clickFirst, find, press, type, waitFor } from "./actions";
 import type { Scenario } from "./state";
 import type { StateStory } from "./StateStories";
 
@@ -100,7 +100,7 @@ const DESKTOP: Omit<Entry, "platform">[] = [
   { id: "desktop/toast", group: "Thông báo", title: "Thông báo (toast) “Đang nghe lại từ đầu”", route: "/book/suong-mu-2", act: () => click(/^Nghe lại từ đầu/).then(() => undefined) },
   { id: "desktop/player-playing", group: "Trình phát", title: "Thanh phát đang phát", route: "/", act: () => click("Phát").then(() => undefined) },
   { id: "desktop/remote-cast", group: "Trình phát", title: "Hộp “Phát trên” loa trong nhà", route: "/", scenario: { castSpeaker: true },
-    act: async () => { (await waitFor(() => document.querySelector<HTMLElement>("[data-remote-strip]"), "thanh Đang phát trên")).click(); await waitFor(() => document.querySelector("[role=dialog]"), "hộp Phát trên"); } },
+    act: async () => { await press(await waitFor(() => document.querySelector<HTMLElement>("[data-remote-strip]"), "thanh Đang phát trên")); await waitFor(() => document.querySelector("[role=dialog]"), "hộp Phát trên"); } },
   { id: "desktop/player-full", group: "Trình phát", title: "Màn Đang nghe (toàn màn)", route: "/", act: playerOpen },
   { id: "desktop/player-full-chapters", group: "Trình phát", title: "Màn Đang nghe · tab Chương", route: "/", act: async () => {
     await playerOpen(); await click(/^Chương$/, document.querySelector('.now-playing')!);

@@ -48,7 +48,7 @@ declare global {
   }
 }
 
-async function press(element: HTMLElement): Promise<void> {
+export async function press(element: HTMLElement): Promise<void> {
   if (window.__galleryPointer) return window.__galleryPointer(element);
   const init = { bubbles: true, cancelable: true, composed: true, button: 0, buttons: 1, pointerId: 1, pointerType: "mouse", isPrimary: true };
   const Pointer = typeof PointerEvent === "function" ? PointerEvent : MouseEvent;

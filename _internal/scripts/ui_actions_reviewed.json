@@ -1266,10 +1266,10 @@
     "line": 60,
     "statement": "async function imageToDataUrl(file: Blob): Promise<string> {",
     "occurrence": 1,
-    "source_sha256": "109d413d04b2ea0bdae030da5011057156e9b038007b61da6e3d13c35ba2f43a",
+    "source_sha256": "999c8351fdc06336b4edc54667c27960bf63626c0d8abccd4895ef7a7f90bb9b",
     "disposition": "internal",
     "guard": "Async interface/helper boundary; concrete activation inventoried separately",
-    "reason": "This signature supplies work to a model or component; declaring it starts no user operation. Combined-source review (merge174 lintfix): both sides' changes to this file keep this statement and its guard unchanged. Re-pinned for left174: the edit only moves book/user text off truncate/line-clamp onto OneLineFit or wrapping; this statement and its guard are unchanged. Combined-source review (merge174 left174): both sides' changes to this file keep this statement and its guard unchanged. Combined-source review (fix174b): both sides' changes to this file keep this statement and its guard unchanged."
+    "reason": "This signature supplies work to a model or component; declaring it starts no user operation. Combined-source review (merge174 lintfix): both sides' changes to this file keep this statement and its guard unchanged. Re-pinned for left174: the edit only moves book/user text off truncate/line-clamp onto OneLineFit or wrapping; this statement and its guard are unchanged. Combined-source review (merge174 left174): both sides' changes to this file keep this statement and its guard unchanged. Combined-source review (fix174b): both sides' changes to this file keep this statement and its guard unchanged. Combined-source review (merge174b): outline buttons became ghost (0.4.173 allows primary/ghost/danger only); this action and its guard are unchanged."
   },
   {
     "id": "efefcba7081a2e1a029f",
@@ -1278,10 +1278,10 @@
     "line": 324,
     "statement": "mutationFn: async (picked: Blob) => api(`/api/books/${book.id}/cover`, { method: \"PUT\", body: { image: await imageToDataUrl(picked) } }),",
     "occurrence": 1,
-    "source_sha256": "109d413d04b2ea0bdae030da5011057156e9b038007b61da6e3d13c35ba2f43a",
+    "source_sha256": "999c8351fdc06336b4edc54667c27960bf63626c0d8abccd4895ef7a7f90bb9b",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; busy, isLoading, isPending, loading, onBusy, saving, setBusy",
-    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review (merge174 lintfix): both sides' changes to this file keep this statement and its guard unchanged. Re-pinned for left174: the edit only moves book/user text off truncate/line-clamp onto OneLineFit or wrapping; this statement and its guard are unchanged. Combined-source review (merge174 left174): both sides' changes to this file keep this statement and its guard unchanged. Combined-source review (fix174b): both sides' changes to this file keep this statement and its guard unchanged."
+    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review (merge174 lintfix): both sides' changes to this file keep this statement and its guard unchanged. Re-pinned for left174: the edit only moves book/user text off truncate/line-clamp onto OneLineFit or wrapping; this statement and its guard are unchanged. Combined-source review (merge174 left174): both sides' changes to this file keep this statement and its guard unchanged. Combined-source review (fix174b): both sides' changes to this file keep this statement and its guard unchanged. Combined-source review (merge174b): outline buttons became ghost (0.4.173 allows primary/ghost/danger only); this action and its guard are unchanged."
   },
   {
     "id": "edeafb7a83eca97b6bcc",
@@ -1290,10 +1290,10 @@
     "line": 330,
     "statement": "mutationFn: () => api(`/api/books/${book.id}/cover`, { method: \"DELETE\" }),",
     "occurrence": 1,
-    "source_sha256": "109d413d04b2ea0bdae030da5011057156e9b038007b61da6e3d13c35ba2f43a",
+    "source_sha256": "999c8351fdc06336b4edc54667c27960bf63626c0d8abccd4895ef7a7f90bb9b",
     "disposition": "confirmation",
     "guard": "EditBook cover DestructiveConfirm and DiscardSheet / discard dialog",
-    "reason": "Cover removal and discarding saved edits have explicit object-specific confirmations. Combined-source review (merge174 lintfix): both sides' changes to this file keep this statement and its guard unchanged. Re-pinned for left174: the edit only moves book/user text off truncate/line-clamp onto OneLineFit or wrapping; this statement and its guard are unchanged. Combined-source review (merge174 left174): both sides' changes to this file keep this statement and its guard unchanged. Combined-source review (fix174b): both sides' changes to this file keep this statement and its guard unchanged."
+    "reason": "Cover removal and discarding saved edits have explicit object-specific confirmations. Combined-source review (merge174 lintfix): both sides' changes to this file keep this statement and its guard unchanged. Re-pinned for left174: the edit only moves book/user text off truncate/line-clamp onto OneLineFit or wrapping; this statement and its guard are unchanged. Combined-source review (merge174 left174): both sides' changes to this file keep this statement and its guard unchanged. Combined-source review (fix174b): both sides' changes to this file keep this statement and its guard unchanged. Combined-source review (merge174b): outline buttons became ghost (0.4.173 allows primary/ghost/danger only); this action and its guard are unchanged."
   },
   {
     "id": "c4f7b6125021e7241870",
@@ -1302,10 +1302,10 @@
     "line": 335,
     "statement": "mutationFn: () => api(`/api/books/${book.id}/edits`, { method: \"DELETE\" }),",
     "occurrence": 1,
-    "source_sha256": "109d413d04b2ea0bdae030da5011057156e9b038007b61da6e3d13c35ba2f43a",
+    "source_sha256": "999c8351fdc06336b4edc54667c27960bf63626c0d8abccd4895ef7a7f90bb9b",
     "disposition": "confirmation",
     "guard": "EditBook cover DestructiveConfirm and DiscardSheet / discard dialog",
-    "reason": "Cover removal and discarding saved edits have explicit object-specific confirmations. Combined-source review (merge174 lintfix): both sides' changes to this file keep this statement and its guard unchanged. Re-pinned for left174: the edit only moves book/user text off truncate/line-clamp onto OneLineFit or wrapping; this statement and its guard are unchanged. Combined-source review (merge174 left174): both sides' changes to this file keep this statement and its guard unchanged. Combined-source review (fix174b): both sides' changes to this file keep this statement and its guard unchanged."
+    "reason": "Cover removal and discarding saved edits have explicit object-specific confirmations. Combined-source review (merge174 lintfix): both sides' changes to this file keep this statement and its guard unchanged. Re-pinned for left174: the edit only moves book/user text off truncate/line-clamp onto OneLineFit or wrapping; this statement and its guard are unchanged. Combined-source review (merge174 left174): both sides' changes to this file keep this statement and its guard unchanged. Combined-source review (fix174b): both sides' changes to this file keep this statement and its guard unchanged. Combined-source review (merge174b): outline buttons became ghost (0.4.173 allows primary/ghost/danger only); this action and its guard are unchanged."
   },
   {
     "id": "6aa9020be238fcbbe12b",
@@ -1314,10 +1314,10 @@
     "line": 411,
     "statement": "<Reveal when={book.cover}><Button variant=\"ghost\" className=\"justify-start text-left\" icon={Trash2} loading={busy} disabled={busy} onClick={() => deletion.confirm({ title: S.s_bo_anh_bia_696c6692, description: S.s_irreversible_detail(book.title), run: () => removeCover.mutateAsync() })}>{S.s_bo_anh_bia_696c6692}</Button></Reveal>",
     "occurrence": 1,
-    "source_sha256": "109d413d04b2ea0bdae030da5011057156e9b038007b61da6e3d13c35ba2f43a",
+    "source_sha256": "999c8351fdc06336b4edc54667c27960bf63626c0d8abccd4895ef7a7f90bb9b",
     "disposition": "confirmation",
     "guard": "EditBook cover DestructiveConfirm and DiscardSheet / discard dialog",
-    "reason": "Cover removal and discarding saved edits have explicit object-specific confirmations. Combined-source review (merge174 lintfix): both sides' changes to this file keep this statement and its guard unchanged. Re-pinned for left174: the edit only moves book/user text off truncate/line-clamp onto OneLineFit or wrapping; this statement and its guard are unchanged. Combined-source review (merge174 left174): both sides' changes to this file keep this statement and its guard unchanged. Combined-source review (fix174b): both sides' changes to this file keep this statement and its guard unchanged."
+    "reason": "Cover removal and discarding saved edits have explicit object-specific confirmations. Combined-source review (merge174 lintfix): both sides' changes to this file keep this statement and its guard unchanged. Re-pinned for left174: the edit only moves book/user text off truncate/line-clamp onto OneLineFit or wrapping; this statement and its guard are unchanged. Combined-source review (merge174 left174): both sides' changes to this file keep this statement and its guard unchanged. Combined-source review (fix174b): both sides' changes to this file keep this statement and its guard unchanged. Combined-source review (merge174b): outline buttons became ghost (0.4.173 allows primary/ghost/danger only); this action and its guard are unchanged."
   },
   {
     "id": "eafc2242132e1aa8dc2b",
@@ -1326,10 +1326,10 @@
     "line": 544,
     "statement": "const save = async (options?: { folder?: string; as?: \"abook\" | \"abookproj\"; ask?: boolean }): Promise<boolean> => {",
     "occurrence": 1,
-    "source_sha256": "109d413d04b2ea0bdae030da5011057156e9b038007b61da6e3d13c35ba2f43a",
+    "source_sha256": "999c8351fdc06336b4edc54667c27960bf63626c0d8abccd4895ef7a7f90bb9b",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; busy, isLoading, isPending, loading, onBusy, saving, setBusy",
-    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review (merge174 lintfix): both sides' changes to this file keep this statement and its guard unchanged. Re-pinned for left174: the edit only moves book/user text off truncate/line-clamp onto OneLineFit or wrapping; this statement and its guard are unchanged. Combined-source review (merge174 left174): both sides' changes to this file keep this statement and its guard unchanged. Combined-source review (fix174b): both sides' changes to this file keep this statement and its guard unchanged."
+    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review (merge174 lintfix): both sides' changes to this file keep this statement and its guard unchanged. Re-pinned for left174: the edit only moves book/user text off truncate/line-clamp onto OneLineFit or wrapping; this statement and its guard are unchanged. Combined-source review (merge174 left174): both sides' changes to this file keep this statement and its guard unchanged. Combined-source review (fix174b): both sides' changes to this file keep this statement and its guard unchanged. Combined-source review (merge174b): outline buttons became ghost (0.4.173 allows primary/ghost/danger only); this action and its guard are unchanged."
   },
   {
     "id": "8b39fd322ec8cf5d736e",
@@ -1338,10 +1338,10 @@
     "line": 555,
     "statement": "? { label: S.s_mo_thu_muc_4bf5b127, onClick: () => void api(\"/api/reveal-export\", { method: \"POST\", body: { folder } }).catch(() => undefined) }",
     "occurrence": 1,
-    "source_sha256": "109d413d04b2ea0bdae030da5011057156e9b038007b61da6e3d13c35ba2f43a",
+    "source_sha256": "999c8351fdc06336b4edc54667c27960bf63626c0d8abccd4895ef7a7f90bb9b",
     "disposition": "internal",
     "guard": "Async interface/helper boundary; concrete activation inventoried separately",
-    "reason": "This signature supplies work to a model or component; declaring it starts no user operation. Combined-source review (merge174 lintfix): both sides' changes to this file keep this statement and its guard unchanged. Re-pinned for left174: the edit only moves book/user text off truncate/line-clamp onto OneLineFit or wrapping; this statement and its guard are unchanged. Combined-source review (merge174 left174): both sides' changes to this file keep this statement and its guard unchanged. Combined-source review (fix174b): both sides' changes to this file keep this statement and its guard unchanged."
+    "reason": "This signature supplies work to a model or component; declaring it starts no user operation. Combined-source review (merge174 lintfix): both sides' changes to this file keep this statement and its guard unchanged. Re-pinned for left174: the edit only moves book/user text off truncate/line-clamp onto OneLineFit or wrapping; this statement and its guard are unchanged. Combined-source review (merge174 left174): both sides' changes to this file keep this statement and its guard unchanged. Combined-source review (fix174b): both sides' changes to this file keep this statement and its guard unchanged. Combined-source review (merge174b): outline buttons became ghost (0.4.173 allows primary/ghost/danger only); this action and its guard are unchanged."
   },
   {
     "id": "8a684bedbf4b9227cdf9",
@@ -1350,10 +1350,10 @@
     "line": 573,
     "statement": "const share = async () => {",
     "occurrence": 1,
-    "source_sha256": "109d413d04b2ea0bdae030da5011057156e9b038007b61da6e3d13c35ba2f43a",
+    "source_sha256": "999c8351fdc06336b4edc54667c27960bf63626c0d8abccd4895ef7a7f90bb9b",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; busy, isLoading, isPending, loading, onBusy, saving, setBusy",
-    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review (merge174 lintfix): both sides' changes to this file keep this statement and its guard unchanged. Re-pinned for left174: the edit only moves book/user text off truncate/line-clamp onto OneLineFit or wrapping; this statement and its guard are unchanged. Combined-source review (merge174 left174): both sides' changes to this file keep this statement and its guard unchanged. Combined-source review (fix174b): both sides' changes to this file keep this statement and its guard unchanged."
+    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review (merge174 lintfix): both sides' changes to this file keep this statement and its guard unchanged. Re-pinned for left174: the edit only moves book/user text off truncate/line-clamp onto OneLineFit or wrapping; this statement and its guard are unchanged. Combined-source review (merge174 left174): both sides' changes to this file keep this statement and its guard unchanged. Combined-source review (fix174b): both sides' changes to this file keep this statement and its guard unchanged. Combined-source review (merge174b): outline buttons became ghost (0.4.173 allows primary/ghost/danger only); this action and its guard are unchanged."
   },
   {
     "id": "6a60663a9579fe096344",
@@ -1362,10 +1362,10 @@
     "line": 613,
     "statement": "onClick={() => void save({ ...(folder ? { folder } : {}), as: kind, ask: true }).then((saved) => saved && onOpenChange(false))}",
     "occurrence": 1,
-    "source_sha256": "109d413d04b2ea0bdae030da5011057156e9b038007b61da6e3d13c35ba2f43a",
+    "source_sha256": "999c8351fdc06336b4edc54667c27960bf63626c0d8abccd4895ef7a7f90bb9b",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; busy, isLoading, isPending, loading, onBusy, saving, setBusy",
-    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review (merge174 lintfix): both sides' changes to this file keep this statement and its guard unchanged. Re-pinned for left174: the edit only moves book/user text off truncate/line-clamp onto OneLineFit or wrapping; this statement and its guard are unchanged. Combined-source review (merge174 left174): both sides' changes to this file keep this statement and its guard unchanged. Combined-source review (fix174b): both sides' changes to this file keep this statement and its guard unchanged."
+    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review (merge174 lintfix): both sides' changes to this file keep this statement and its guard unchanged. Re-pinned for left174: the edit only moves book/user text off truncate/line-clamp onto OneLineFit or wrapping; this statement and its guard are unchanged. Combined-source review (merge174 left174): both sides' changes to this file keep this statement and its guard unchanged. Combined-source review (fix174b): both sides' changes to this file keep this statement and its guard unchanged. Combined-source review (merge174b): outline buttons became ghost (0.4.173 allows primary/ghost/danger only); this action and its guard are unchanged."
   },
   {
     "id": "8834d2d9de93c9904cda",
@@ -4362,10 +4362,10 @@
     "line": 116,
     "statement": "const decide = async (verb: Verb, device: InboxDevice, item?: InboxItem) => {",
     "occurrence": 1,
-    "source_sha256": "71b7025a198ba998f0163bd8f4f59dcb7c7c86fd8df6b17eb80a81dd2d48e449",
+    "source_sha256": "dd9a28f5439473d98036533842d7219e6fa242d30184902b9b0d80a92983e949",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; busy, loading, setBusy",
-    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review (merge174 lintfix): both sides' changes to this file keep this statement and its guard unchanged."
+    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review (merge174 lintfix): both sides' changes to this file keep this statement and its guard unchanged. Combined-source review (merge174b): outline buttons became ghost (0.4.173 allows primary/ghost/danger only); this action and its guard are unchanged."
   },
   {
     "id": "ed582c4ffef8f23b3e4d",
@@ -4374,10 +4374,10 @@
     "line": 134,
     "statement": "action: { label: S.s_khoi_phuc_c652d9c0, onClick: () => void decide(\"restore\", device, item) },",
     "occurrence": 1,
-    "source_sha256": "71b7025a198ba998f0163bd8f4f59dcb7c7c86fd8df6b17eb80a81dd2d48e449",
+    "source_sha256": "dd9a28f5439473d98036533842d7219e6fa242d30184902b9b0d80a92983e949",
     "disposition": "internal",
     "guard": "Async interface/helper boundary; concrete activation inventoried separately",
-    "reason": "This signature supplies work to a model or component; declaring it starts no user operation. Combined-source review (merge174 lintfix): both sides' changes to this file keep this statement and its guard unchanged."
+    "reason": "This signature supplies work to a model or component; declaring it starts no user operation. Combined-source review (merge174 lintfix): both sides' changes to this file keep this statement and its guard unchanged. Combined-source review (merge174b): outline buttons became ghost (0.4.173 allows primary/ghost/danger only); this action and its guard are unchanged."
   },
   {
     "id": "266b0183ebb1101605e5",
