@@ -38,7 +38,9 @@ let host: HTMLDivElement, root: ReturnType<typeof createRoot>, stripHeight: numb
 const observers: { callback: () => void; targets: Set<Element> }[] = [];
 beforeEach(() => {
   (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
-  state.data = { receivedAt: Date.now(), phones: [phone] };
+  // Đồng hồ cố định: vị trí phát = phone.age, không phụ thuộc lúc test chạy.
+  vi.useFakeTimers({ toFake: ["Date"] }); vi.setSystemTime(1_800_000_000_000);
+  state.data = { receivedAt: 1_800_000_000_000, phones: [phone] };
   state.setOffset.mockClear(); state.disposeOffset.mockClear();
   stripHeight = 64;
   observers.length = 0;
@@ -59,7 +61,7 @@ beforeEach(() => {
   vi.spyOn(HTMLElement.prototype, "animate").mockImplementation(() => ({ cancel: vi.fn(), finished: Promise.resolve() }) as unknown as Animation);
   host = document.createElement("div"); document.body.append(host); root = createRoot(host);
 });
-afterEach(async () => { await act(() => root.unmount()); host.remove(); vi.restoreAllMocks(); vi.unstubAllGlobals(); });
+afterEach(async () => { await act(() => root.unmount()); host.remove(); vi.restoreAllMocks(); vi.unstubAllGlobals(); vi.useRealTimers(); });
 
 it("wraps complete remote strip and target names while the fixed control row exposes its full tooltip", async () => {
   await act(() => root.render(<><RemoteBars /><HandOffButton /></>));

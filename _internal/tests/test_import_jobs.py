@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import json
 import shutil
-import time
 from pathlib import Path
 
 import pytest
@@ -12,6 +11,7 @@ import pytest
 from abook.webui import import_jobs
 from abook.webui.server import ApiError, Server
 from tests import import_fixtures
+from tests.async_wait import wait_for
 from tests.test_project_file import _app
 from tests.test_webui_listen_and_sync import _request
 
@@ -52,9 +52,10 @@ def test_a_job_cut_by_closing_the_app_comes_back_as_interrupted_and_its_staging_
     library.mkdir()
     old_part = library / ".cu.00000000.part"
     old_part.mkdir()
-    started = time.time()
+    # Một giờ trước lúc thư mục ấy được tạo - mốc lấy từ chính ổ đĩa, không từ đồng hồ của test.
+    hour_ago = old_part.stat().st_mtime - 3600
     import os
-    os.utime(old_part, (started - 3600, started - 3600))
+    os.utime(old_part, (hour_ago, hour_ago))
     jobs = import_jobs.ImportJobs(journal)
     cut = jobs.begin("book", "Sách lớn.abook", {"path": str(tmp_path / "Sách lớn.abook"), "allowOlder": False})
     left = library / ".Sach.1a2b3c4d.part"
@@ -76,13 +77,11 @@ def test_a_job_cut_by_closing_the_app_comes_back_as_interrupted_and_its_staging_
 
 
 def _wait(app, predicate, seconds: float = 20.0):
-    deadline = time.time() + seconds
-    while time.time() < deadline:
-        view = app.import_jobs.view()
-        if predicate(view):
-            return view
-        time.sleep(0.05)
-    raise AssertionError(app.import_jobs.view())
+    """Sổ lượt khi `predicate` đúng; `seconds` chỉ là chốt chặn treo (nhân hệ số máy tải - tests/async_wait.py)."""
+    view = wait_for(lambda: (lambda current: current if predicate(current) else None)(app.import_jobs.view()), seconds, 0.05)
+    if not view:
+        raise AssertionError(app.import_jobs.view())
+    return view
 
 
 def test_every_import_is_a_job_and_a_broken_book_file_never_spoils_the_next_text(tmp_path: Path) -> None:
