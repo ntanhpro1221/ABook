@@ -18,7 +18,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.shape.RoundedCornerShape
+import vn.abook.player.ui.components.BookCoverShape
 import vn.abook.player.ui.components.BasicText
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -121,7 +121,7 @@ private fun ProjectCard(book: StudioBook, onOpen: (StudioBook) -> Unit) {
     val status = StudioLogic.status(book)
     Column(Modifier.fillMaxWidth().testTag("studio_book_${book.id}")) {
         Row(Modifier.fillMaxWidth().pressable { onOpen(book) }.padding(vertical = Dim.s12), verticalAlignment = Alignment.Top) {
-            GeneratedCover(book.title, null, COVER_WIDTH, Modifier.width(COVER_WIDTH).aspectRatio(2f / 3f).clip(RoundedCornerShape(Dim.radiusControl)), small = true)
+            GeneratedCover(book.title, null, COVER_WIDTH, Modifier.width(COVER_WIDTH).aspectRatio(2f / 3f).clip(BookCoverShape), small = true)
             Spacer(Modifier.width(Dim.s12))
             Column(Modifier.weight(1f)) {
                 BasicText(book.title, style = Abook.type.bodyStrong, modifier = Modifier.testTag("studio_book_title"))

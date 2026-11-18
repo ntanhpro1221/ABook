@@ -78,6 +78,7 @@ import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.contentDescription
@@ -672,8 +673,10 @@ private fun ListenButton(label: String, detail: String?, playing: Boolean, buffe
     Box(Modifier.fillMaxWidth().heightIn(min = Dim.s48).pressable(onClick = onClick)
         .clip(RoundedCornerShape(Dim.radiusControl)).background(colors.accent)
         .padding(horizontal = Dim.s16, vertical = Dim.s8).testTag("book_primary"), contentAlignment = Alignment.Center) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            vn.abook.player.ui.components.PendingIndicator(buffering, Modifier.size(22.dp), color = colors.accentInk) {
+        // Nhãn xuống dòng thì icon đứng giữa DÒNG ĐẦU (như web FIRST_LINE và Qt Button), không trôi xuống giữa khối chữ (soát leftfix L1).
+        val line = with(LocalDensity.current) { Abook.type.bodyStrong.lineHeight.toDp() }
+        Row(verticalAlignment = Alignment.Top) {
+            vn.abook.player.ui.components.PendingIndicator(buffering, Modifier.padding(top = ((line - 22.dp) / 2).coerceAtLeast(0.dp)).size(22.dp).testTag("book_primary_icon"), color = colors.accentInk) {
                 vn.abook.player.ui.motion.SwapContent(restart, contentKey = { it }, inPlace = true) { retry ->
                     if (retry) RestartIcon(colors.accentInk) else PlayPauseGlyph(playing && !buffering, colors.accentInk, 22.dp)
                 }

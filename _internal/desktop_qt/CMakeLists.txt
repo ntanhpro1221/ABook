@@ -11,10 +11,23 @@ endif()
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+# Python của bước chuẩn bị giao diện: ABOOK_PYTHON, không có thì runtime của chính bản checkout này, rồi của bản checkout chính "ABook" trong
+# ABOOK_TOOLS_ROOT (mặc định thư mục chứa bản checkout) - cùng thứ tự với build.bat, không đường dẫn riêng của máy nào (leftfix L7).
 if(DEFINED ENV{ABOOK_PYTHON})
     set(ABOOK_UI_PYTHON "$ENV{ABOOK_PYTHON}")
+elseif(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/../runtime/.venv/Scripts/python.exe")
+    set(ABOOK_UI_PYTHON "${CMAKE_CURRENT_SOURCE_DIR}/../runtime/.venv/Scripts/python.exe")
 else()
-    set(ABOOK_UI_PYTHON "D:/Novels/ABook/_internal/runtime/.venv/Scripts/python.exe")
+    if(DEFINED ENV{ABOOK_TOOLS_ROOT})
+        set(ABOOK_TOOLS_ROOT "$ENV{ABOOK_TOOLS_ROOT}")
+    else()
+        get_filename_component(ABOOK_TOOLS_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/../../.." ABSOLUTE)
+    endif()
+    set(ABOOK_UI_PYTHON "${ABOOK_TOOLS_ROOT}/ABook/_internal/runtime/.venv/Scripts/python.exe")
+endif()
+if(NOT EXISTS "${ABOOK_UI_PYTHON}")
+    message(FATAL_ERROR "No Python at ${ABOOK_UI_PYTHON}: set ABOOK_PYTHON to runtime/.venv/Scripts/python.exe of an ABook checkout, "
+        "or ABOOK_TOOLS_ROOT to the folder holding the main checkout named ABook")
 endif()
 add_custom_target(SharedUi ALL
     COMMAND "${ABOOK_UI_PYTHON}" -X utf8 "${CMAKE_CURRENT_SOURCE_DIR}/../scripts/prepare_ui.py"

@@ -142,18 +142,17 @@ Interactive {
         color: Theme.text2
         baseSize: Theme.sizeCaption
     }
-    Text {
+    // Dòng phụ có tên máy tính ("Trên <máy>", chữ người dùng) và phụ đề máy chủ: một dòng qua OneLineFit (thu cỡ, không vừa thì xuống dòng),
+    // không "…" (soát leftfix T4, luật chủ sách).
+    OneLineFit {
         id: subtitleText
         objectName: "bookCellSubtitle"
         x: root.source !== "" ? 18 : 0
         y: authorText.y + authorText.height + 4
-        width: root.coverWidth - x
+        room: root.coverWidth - x
         text: TextWrap.keepDots(root.subLine)
         color: Theme.text3
-        wrapMode: Text.NoWrap
-        maximumLineCount: 1   // text-cut-ok: dòng phụ ô lưới một dòng (DESIGN.md mục 6), phần đầu là thứ quan trọng
-        elide: Text.ElideRight   // text-cut-ok: như trên
-        font.pixelSize: Theme.sizeCaption
+        baseSize: Theme.sizeCaption
     }
     // Same laptop mark as web, leading the one subtitle line.
     Icon {

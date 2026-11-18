@@ -401,7 +401,8 @@ Item {
             cell.book = {bookId: "a", stage: "audio"}
             compare(play.tip, "Nghe Truyện chữ")
         }
-        // Soát thiết kế 10-11 việc 4: tên 2 dòng dành sẵn, phụ 1 dòng cắt "…" - mọi ô cao bằng nhau; bìa vẽ cũng hiện tên dưới bìa (15-11).
+        // Soát thiết kế 10-11 việc 4: tên 2 dòng dành sẵn - ô cao bằng nhau; bìa vẽ cũng hiện tên dưới bìa (15-11). Dòng phụ mang tên máy / phụ đề
+        // máy chủ (chữ người dùng): OneLineFit, không "…" (leftfix T4) - phụ quá dài thì xuống dòng, ô ấy cao thêm thay vì cắt.
         function test_everyCellHasTheSameHeight() {
             const props = [
                 {title: "Chí Phèo", subtitle: "Nam Cao", coverKey: "a"},
@@ -411,10 +412,21 @@ Item {
             ]
             const cells = []
             for (const p of props) cells.push(createTemporaryObject(cellFactory, host, Object.assign({book: {bookId: p.title}, coverWidth: 160}, p)))
-            for (const cell of cells) compare(cell.implicitHeight, cells[0].implicitHeight, cell.title)
+            for (const cell of [cells[2], cells[3]]) compare(cell.implicitHeight, cells[0].implicitHeight, cell.title)
             const longSub = one(cells[1], "bookCellSubtitle")
-            compare(longSub.lineCount, 1)
-            verify(longSub.truncated)
+            verify(!longSub.truncated)
+            compare(longSub.elide, Text.ElideNone)
+            compare(longSub.maximumLineCount, 2147483647)
+            compare(longSub.text, "Tô Hoài, Nhà xuất bản Kim Đồng, bản in lần thứ mười")
+            verify(longSub.fit === "wrap" && longSub.lineCount > 1)
+            verify(longSub.x + longSub.width <= cells[1].coverWidth)
+            verify(cells[1].implicitHeight >= cells[0].implicitHeight)
+            // Tên máy dài vừa phải thu cỡ cho vừa một dòng (không cắt, không xuống dòng)
+            const machine = createTemporaryObject(cellFactory, host, {book: {bookId: "m"}, coverWidth: 160, title: "Truyện", subtitle: "", source: "Laptop của Ngọc"})
+            const machineSub = one(machine, "bookCellSubtitle")
+            verify(!machineSub.truncated)
+            compare(machineSub.text, "Trên Laptop của Ngọc")
+            compare(machineSub.lineCount, 1)
             verify(one(cells[1], "bookCellTitle").lineCount <= 2)
             verify(one(cells[0], "bookCellTitle").visible)
             // Chủ sách 15-11: bìa vẽ (không ảnh) vẫn có tên dưới bìa, thấy được và đọc được, nằm trên dòng phụ như ô có ảnh.

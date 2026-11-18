@@ -7,6 +7,9 @@ setlocal
 if not defined ABOOK_TOOLS_ROOT for %%I in ("%~dp0..\..\..\..") do set "ABOOK_TOOLS_ROOT=%%~fI"
 if not defined ABOOK_PYTHON if exist "%~dp0..\..\runtime\.venv\Scripts\python.exe" for %%I in ("%~dp0..\..\runtime\.venv\Scripts\python.exe") do set "ABOOK_PYTHON=%%~fI"
 if not defined ABOOK_PYTHON set ABOOK_PYTHON=%ABOOK_TOOLS_ROOT%\ABook\_internal\runtime\.venv\Scripts\python.exe
+rem No Python found: say what to set instead of a bare "not recognized" from cmd (leftfix L6: a checkout not named ABook beside this one).
+if not exist "%ABOOK_PYTHON%" echo ERROR: no Python at "%ABOOK_PYTHON%" - set ABOOK_PYTHON to runtime\.venv\Scripts\python.exe of an ABook checkout, or ABOOK_TOOLS_ROOT to the folder holding the main checkout named ABook 1>&2
+if not exist "%ABOOK_PYTHON%" exit /b 1
 if not defined QWK_ROOT set QWK_ROOT=%ABOOK_TOOLS_ROOT%\native_desk_proto\qwk
 if not defined QWK_TAG set QWK_TAG=1.5.0
 set "QT_VERSION="

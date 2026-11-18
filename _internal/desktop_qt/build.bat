@@ -23,6 +23,9 @@ if not defined VCVARS exit /b 1
 if not defined QWK_ROOT set QWK_ROOT=%ABOOK_TOOLS_ROOT%\native_desk_proto\qwk
 if not defined ABOOK_PYTHON if exist "%HERE%..\runtime\.venv\Scripts\python.exe" for %%I in ("%HERE%..\runtime\.venv\Scripts\python.exe") do set "ABOOK_PYTHON=%%~fI"
 if not defined ABOOK_PYTHON set ABOOK_PYTHON=%ABOOK_TOOLS_ROOT%\ABook\_internal\runtime\.venv\Scripts\python.exe
+rem No Python found: say what to set instead of a bare "not recognized" from cmd (leftfix L6: a checkout not named ABook beside this one).
+if not exist "%ABOOK_PYTHON%" echo ERROR: no Python at "%ABOOK_PYTHON%" - set ABOOK_PYTHON to runtime\.venv\Scripts\python.exe of an ABook checkout, or ABOOK_TOOLS_ROOT to the folder holding the main checkout named ABook 1>&2
+if not exist "%ABOOK_PYTHON%" exit /b 1
 rem cmd returns from `call :label` by byte offset: with LF endings it resumes on the wrong line and silently skips steps
 rem (01-11: 5 of 15 Qt test suites never ran). .gitattributes keeps *.bat CRLF; an old checkout must be re-checked out.
 "%ABOOK_PYTHON%" -X utf8 -c "import sys; d=open(sys.argv[1],'rb').read(); sys.exit(0 if d.count(b'\n')==d.count(b'\r\n') else 'ERROR: build.bat has LF line endings, so cmd skips steps after call - delete it and git checkout it again (eol=crlf)')" "%~f0"

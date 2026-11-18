@@ -1123,7 +1123,6 @@ export const S = {
   s_copy_de92c414c43f: "chờ Studio làm tiếp",
   s_copy_e17f4bb77700: "đổi nội dung",
   s_copy_e268753d6184: "Nghe từ “…”",
-  s_copy_e825d35cde60: "Chương 3 · Đ…",
   s_copy_e978c94ddc2d: "Phần 2",
   s_copy_e9d6329e8255: " bán âm",
   s_copy_f408d3f2b0ef: "Chưa lưu được âm lượng.",

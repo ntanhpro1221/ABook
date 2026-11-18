@@ -175,7 +175,7 @@ Nhãn ngắn (<= 6 chữ). **Chỉ Qt**: không có ở web cùng màn; `*` = we
 ### Thư viện
 
 - chỉ Qt (9): Tạm dừng* (`qt/LibraryContinue.qml:44`); Mới thêm* (`qt/LibraryScreen.qml:48`); Tác giả* (`qt/LibraryScreen.qml:48`); Tên sách* (`qt/LibraryScreen.qml:48`); Đang mở ABook* (`qt/LibraryScreen.qml:392`); Chưa mở được ABook (`qt/LibraryScreen.qml:441`); Chưa tải được thư viện (`qt/LibraryScreen.qml:441`); Thử lại* (`qt/LibraryScreen.qml:459`); Không thấy “{}”* (`qt/LibraryScreen.qml:496`)
-- chỉ web (7): Đang tạm dừng {} (`334`); Đang làm {} (`335`); Đang tạm dừng{} (`339`); Chưa có chương nghe được{} (`341`); Đang làm · {} (`341`); Thư viện chưa có sách nào. (`462`); Chữ bìa trên hoạ tiết sóng (`86`)
+- chỉ web (7): Đang tạm dừng {} (`334`); Đang làm {} (`335`); Đang tạm dừng{} (`339`); Chưa có chương nghe được{} (`341`); Đang làm · {} (`341`); Thư viện chưa có sách nào. (`462`); Chữ bìa trên hoạ tiết sóng (`87`)
 
 ### Thanh phát
 
@@ -185,7 +185,7 @@ Nhãn ngắn (<= 6 chữ). **Chỉ Qt**: không có ở web cùng màn; `*` = we
 ### Đang nghe
 
 - chỉ Qt (20): Tạm dừng {}* (`qt/ChapterList.qml:27`); Đọc {}* (`qt/ChapterList.qml:27`); Đọc chương này* (`qt/ChapterList.qml:46`); Đọc* (`qt/ChapterReader.qml:15`); Chưa có chương để đọc. (`qt/ChapterReader.qml:35`); Đang tải chương (`qt/ChapterReader.qml:89`); Đã nghe* (`qt/ChapterRow.qml:76`); Thêm tuỳ chọn: {}* (`qt/ChapterRow.qml:127`); Thêm tuỳ chọn* (`qt/NowPlaying.qml:241`); Giọng {}* (`qt/NowPlaying.qml:297`); Thử lại* (`qt/NowPlaying.qml:341`); Danh sách chương* (`qt/NowPlaying.qml:463`); Nhạc nền* (`qt/NowPlaying.qml:474`); Chỉnh* (`qt/NowPlaying.qml:611`); Âm thanh* (`qt/NowPlaying.qml:611`); Cửa sổ mini (`qt/NowPlaying.qml:620`); Gợi ý phần đọc* (`qt/ReadingSuggestions.qml:9`); Bỏ dòng (`qt/ReadingSuggestions.qml:57`); Đóng* (`qt/ReadingSuggestions.qml:80`); Số chương* (`qt/SleepPopover.qml:98`)
-- chỉ web (17): Shift+← (`285`); Đã chọn tốc độ đọc {} (`520`); Phím (`523`); Đã chọn giọng {} (`787`); Hẹn giờ đã tắt tiếng lúc (`982`); Bật lại (`990`); Tiếng nhỏ dần (`996`); Hẹn giờ ngủ trên {} (`1070`); Về chế độ nghe (`2138`); Chưa nghe · {} chương (`69`); Nghe tiếp · {} (`88`); Shift+→ (`106`); Chưa có audio (`116`); Chạm (`127`); Nghe bằng giọng đọc.{} (`149`); ...
+- chỉ web (17): Shift+← (`285`); Đã chọn tốc độ đọc {} (`520`); Phím (`523`); Đã chọn giọng {} (`787`); Hẹn giờ đã tắt tiếng lúc (`982`); Bật lại (`990`); Tiếng nhỏ dần (`996`); Hẹn giờ ngủ trên {} (`1070`); Về chế độ nghe (`2139`); Chưa nghe · {} chương (`69`); Nghe tiếp · {} (`88`); Shift+→ (`106`); Chưa có audio (`116`); Chạm (`127`); Nghe bằng giọng đọc.{} (`149`); ...
 
 ### Đọc theo
 

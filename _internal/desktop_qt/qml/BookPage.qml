@@ -647,14 +647,15 @@ Item {
                     Accessible.role: Accessible.Button
                     Accessible.name: modelData.title
                     Accessible.onPressAction: bookDetail.selectedVolume = modelData.id
-                    height: Math.max(112, volumeInfo.implicitHeight + Theme.s32)
+                    // Như hàng quyển của web (p-3, items-center: cao tối thiểu 84 + 2 x 12) và Android (dọc 12, CenterVertically): bìa và chữ
+                    // canh giữa hàng, đệm 12. Bìa 56x84 bo Theme.radiusCover (DESIGN.md "12 bìa/ảnh", cả web và Android), quyển không ảnh dùng
+                    // bìa sách, sách không ảnh thì bìa vẽ chỉ ghi chữ cái đầu tên sách; tên quyển đậm vừa; thanh "Đã nghe" 8 px bo tròn cách
+                    // dòng số chương 8 px, dưới 2 % không tô và chạy dần khi đổi (LevelBar.progress).
+                    height: Math.max(84, volumeInfo.implicitHeight) + Theme.s24
                     readonly property real heard: BookText.volumeProgress(root.fullBook, modelData)
-                    // Như hàng quyển của web (BookCover size "sm" + Progress) và Android: bìa 56x84 bo Theme.radiusCover, quyển không ảnh
-                    // dùng bìa sách, sách không ảnh thì bìa vẽ chỉ ghi chữ cái đầu tên sách; tên quyển đậm vừa; thanh "Đã nghe" 8 px bo
-                    // tròn cách dòng số chương 8 px.
                     CoverView {
                         objectName: "bookVolumeCover"
-                        x: Theme.s8; y: Theme.s8; width: 56; height: 84
+                        x: Theme.s12; y: Math.round((parent.height - height) / 2); width: 56; height: 84
                         radius: Theme.radiusCover
                         initials: true
                         title: modelData.cover ? modelData.title : root.book.title || ""
@@ -662,7 +663,7 @@ Item {
                     }
                     Column {
                         id: volumeInfo
-                        x: 80; y: Theme.s16; width: parent.width - x - Theme.s8
+                        x: Theme.s12 + 56 + Theme.s16; y: Math.round((parent.height - height) / 2); width: parent.width - x - Theme.s12
                         Text { objectName: "bookVolumeName"; width: parent.width; text: TextWrap.keepDots(modelData.title); color: Theme.text; font.pixelSize: Theme.sizeBody; font.weight: Theme.weightMedium; wrapMode: Text.Wrap }
                         ClockLabel { width: parent.width; text: S.s_volume_progress((modelData.chapters || []).length, Math.round(volumeInfo.parent.heard * 100)); color: Theme.text2; font.pixelSize: Theme.sizeBodySmall; wrapMode: Text.Wrap }
                         Item { width: 1; height: Theme.s8 }
@@ -671,6 +672,7 @@ Item {
                             width: parent.width
                             height: 8
                             score: volumeInfo.parent.heard
+                            progress: true
                             label: S.s_da_nghe_1e0f8d88
                         }
                     }

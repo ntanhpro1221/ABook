@@ -54,10 +54,9 @@ import kotlin.math.max
 
 /** Hình bìa dùng chung cho ảnh và mọi lớp phủ trong cùng khung. */
 val BookCoverShape = RoundedCornerShape(Dim.radiusCover)
-private val SmallShape = RoundedCornerShape(Dim.radiusControl)
 
 /**
- * Bìa 2:3 bo 12 (bo 8 ở cỡ nhỏ): ảnh thật nạp ngoài luồng chính và vẽ trong pha vẽ, hoặc - sách không có ảnh - bìa tự vẽ như shared/cover.ts
+ * Bìa 2:3 bo 12 ở mọi cỡ (DESIGN.md 5.5 "12 bìa/ảnh", cùng web BookCover và Qt GeneratedCover): ảnh thật nạp ngoài luồng chính và vẽ trong pha vẽ, hoặc - sách không có ảnh - bìa tự vẽ như shared/cover.ts
  * (nền chéo, vòng cung mờ từ góc dưới, tên sách, nhãn tập). `small`: chỉ nhãn ngắn ("16" hay hai chữ cái đầu), cho thanh phát nhỏ và hàng danh sách.
  * `width` là bề rộng ô để chọn cỡ giải mã và cỡ chữ; chiều cao theo 2:3.
  */
@@ -89,9 +88,8 @@ fun BookCover(
         val current = rememberUpdatedState(settled)
         LaunchedEffect(Unit) { current.value() }
     }
-    val shape = if (small) SmallShape else BookCoverShape
     val sunken = Abook.colors.bgSunken
-    SwapContent(path, contentKey = { path -> path != null }, layout = ContentLayout.Box, modifier = modifier.aspectRatio(2f / 3f).clip(shape)) { path ->
+    SwapContent(path, contentKey = { path -> path != null }, layout = ContentLayout.Box, modifier = modifier.aspectRatio(2f / 3f).clip(BookCoverShape)) { path ->
         if (path != null) {
             Box(Modifier.fillMaxSize().then(if (image.value != null) Modifier.visualImage() else Modifier).background(sunken).drawBehind { image.value?.let { drawCover(it) } })
         } else {
