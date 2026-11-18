@@ -344,6 +344,49 @@
     "illustrator": "Người Vẽ",
     "metaVersion": "e75877b714945f3d"
    }
+  },
+  {
+   "name": "a source written site before url (a sidecar or a PUT body) keeps its key order, as Python",
+   "book": {
+    "format": "abook-book/1",
+    "title": "Hồ giấy",
+    "version": "v",
+    "chapters": [
+     {
+      "id": 1,
+      "title": "Chương 1"
+     }
+    ],
+    "source": {
+     "site": "Hako",
+     "url": "https://docln.net/truyen/42-ho-giay"
+    },
+    "summary": "Một chiếc thuyền."
+   },
+   "edits": {
+    "source": {
+     "site": "Hako",
+     "url": "https://docln.net/truyen/42"
+    }
+   },
+   "version": "a9ee6e79e2c7dbde",
+   "overlaid": {
+    "format": "abook-book/1",
+    "title": "Hồ giấy",
+    "version": "v",
+    "chapters": [
+     {
+      "id": 1,
+      "title": "Chương 1"
+     }
+    ],
+    "source": {
+     "site": "Hako",
+     "url": "https://docln.net/truyen/42"
+    },
+    "summary": "Một chiếc thuyền.",
+    "metaVersion": "adb122ce3953453f"
+   }
   }
  ]
 }

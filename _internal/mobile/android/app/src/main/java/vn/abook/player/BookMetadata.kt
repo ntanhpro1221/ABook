@@ -69,9 +69,10 @@ object BookMetadata {
             val value = raw.opt(key)
             if (blank(value)) continue
             shown[key] = when {
-                // Python `validate` keeps the non-blank items of a list; a source is written url then site everywhere.
+                // Python `validate` keeps the non-blank items of a list, and a source dict in the order it came: a sidecar or a PUT body that
+                // writes site before url hashes site first on both sides (shared case in meta_version.json).
                 value is JSONArray -> (0 until value.length()).map { value.opt(it) }.filter { it.toString().isNotBlank() }
-                key == "source" && value is JSONObject -> linkedMapOf("url" to plain(value.opt("url")), "site" to plain(value.opt("site")))
+                key == "source" && value is JSONObject -> LinkedHashMap<String, Any?>().apply { for (name in value.keys()) put(name, plain(value.opt(name))) }
                 else -> value
             }
         }
