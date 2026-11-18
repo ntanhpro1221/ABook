@@ -11,6 +11,7 @@ import { SourceProvider, type ListenSource } from "./source";
 import { PlayerProvider, usePlayer } from "./player";
 import { SleepMenu } from "./PlayerViews";
 import type { LastSleep } from "./sleep";
+import { eventually } from "@/testing/eventually";
 
 vi.mock("sonner", () => ({ toast: Object.assign(vi.fn(), { dismiss: vi.fn(), success: vi.fn(), warning: vi.fn(), error: vi.fn() }) }));
 vi.mock("./OnlineVoicePrompt", () => ({ OnlineVoicePrompt: () => null }));
@@ -133,17 +134,18 @@ it("lần lưu còn bay: tuỳ chọn cũ về muộn không kéo mốc lùi; l�
   await render({ kind: "minutes", minutes: 30, chapters: 1 });
   await act(async () => actions.prepare(book, chapters, 1, 0));
   for (const minutes of [31, 32, 33]) await act(async () => actions.setSleep({ kind: "minutes", minutes }));
-  await act(async () => { await new Promise(resolve => setTimeout(resolve, 0)); });
+  await act(() => eventually(() => expect(answers.length).toBeGreaterThan(0)));   // lần gom đầu đã gửi, còn bay
   // Phản hồi cũ (31 - lần gửi trước, hay một lần đọc lại tuỳ chọn) đến khi 33 còn chưa lưu xong.
   await render({ kind: "minutes", minutes: 31, chapters: 1 });
   expect(actions.lastSleep).toEqual({ kind: "minutes", minutes: 33, chapters: 1 });
   await act(async () => actions.setSleep({ kind: "chapter", chapters: 2 }));
   expect(actions.lastSleep).toEqual({ kind: "chapter", minutes: 33, chapters: 2 });
   // Lưu xong hết: tuỳ chọn mới của máy chủ (máy khác vừa đổi) lại được theo.
-  for (let round = 0; round < 3 && answers.length; round++) {
-    await act(async () => { answers.splice(0).forEach(answer => answer({} as LastSleep)); await new Promise(resolve => setTimeout(resolve, 0)); });
-  }
-  expect(saver.pending).toBe(false);
+  // Trả lời từng lần gửi (bản mới nhất đi sau khi bản trước về) tới khi không còn lần lưu nào chờ / bay.
+  await act(() => eventually(() => {
+    answers.splice(0).forEach(answer => answer({} as LastSleep));
+    expect(saver.pending).toBe(false);
+  }));
   await render({ kind: "minutes", minutes: 50, chapters: 1 });
   expect(actions.lastSleep).toEqual({ kind: "minutes", minutes: 50, chapters: 1 });
 });

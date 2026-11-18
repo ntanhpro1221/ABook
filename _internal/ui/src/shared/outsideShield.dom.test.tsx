@@ -1,7 +1,8 @@
 // @vitest-environment happy-dom
 import { act, useState } from "react";
 import { createRoot, type Root } from "react-dom/client";
-import { afterEach, beforeEach, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, expect, it, vi, type MockInstance } from "vitest";
+import { eventually } from "@/testing/eventually";
 import * as Menu from "./DropdownMenu";
 import * as Popover from "./Popover";
 import { Dialog, Sheet } from "./ui";
@@ -14,11 +15,15 @@ let root: Root, host: HTMLElement;
 beforeEach(() => {
   (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
   host = document.createElement("div"); document.body.append(host); root = createRoot(host);
+  documentListeners = vi.spyOn(document, "addEventListener");
 });
 afterEach(async () => { await act(() => root.unmount()); document.body.replaceChildren(); vi.restoreAllMocks(); });
 
-// Radix gắn bộ nghe "nhấn ra ngoài" sau một nhịp setTimeout(0).
-const tick = () => act(() => new Promise<void>(resolve => setTimeout(resolve, 0)));
+// Radix gắn bộ nghe "nhấn ra ngoài" (pointerdown trên document) sau một nhịp hẹn giờ: chờ tới khi đủ `layers` lớp đã gắn, không chờ một nhịp cố định.
+let documentListeners: MockInstance<typeof document.addEventListener>;
+const listening = (layers = 1) => until(() =>
+  expect(documentListeners.mock.calls.filter(([type]) => type === "pointerdown").length).toBeGreaterThanOrEqual(layers));
+const until = (check: () => void) => act(() => eventually(check));
 const shield = () => document.querySelector<HTMLElement>("[data-outside-shield]");
 
 function press(target: Element, init: PointerEventInit = {}) {
@@ -41,7 +46,7 @@ function SortMenu({ under }: { under: () => void }) {
 it("a non-modal menu lays a full-window shield right under itself; a press on it only closes the menu", async () => {
   const under = vi.fn();
   await act(() => root.render(<SortMenu under={under} />));
-  await tick();
+  await listening();
   const cover = shield()!;
   expect(cover).not.toBeNull();
   const wrapper = document.querySelector("[data-radix-popper-content-wrapper]")!;
@@ -70,7 +75,7 @@ it("a non-modal menu lays a full-window shield right under itself; a press on it
 
 it("a press inside the menu does not reach the shield and keeps the menu open", async () => {
   await act(() => root.render(<SortMenu under={() => undefined} />));
-  await tick();
+  await listening();
   await act(() => { document.querySelector('[role="menu"]')!.dispatchEvent(new PointerEvent("pointerdown", { bubbles: true, pointerId: 1, pointerType: "mouse" })); });
   expect(document.querySelector('[role="menu"]')).not.toBeNull();
   expect(shield()).not.toBeNull();
@@ -78,7 +83,7 @@ it("a press inside the menu does not reach the shield and keeps the menu open", 
 
 it("the shield stops catching as soon as the menu starts closing", async () => {
   await act(() => root.render(<SortMenu under={() => undefined} />));
-  await tick();
+  await listening();
   const content = document.querySelector<HTMLElement>('[role="menu"]')!;
   content.setAttribute("data-state", "closed");
   await act(() => Promise.resolve());
@@ -98,7 +103,7 @@ it("a popover only closes on a press outside, like the menus", async () => {
     </>;
   }
   await act(() => root.render(<Volume />));
-  await tick();
+  await listening();
   const cover = shield()!;
   expect(cover.nextElementSibling).toBe(document.querySelector("[data-radix-popper-content-wrapper]"));
   expect(cover.style.zIndex).toBe("50");                               // bảng không đặt z-index: như lớp z-50 của app
@@ -111,7 +116,7 @@ it("a popover only closes on a press outside, like the menus", async () => {
 it("a menu that is not portalled to the body (inside a phone sheet) gets no shield: the sheet's scrim already stops the outside", async () => {
   await act(() => root.render(<Menu.Root open modal={false}><Menu.Trigger>Open</Menu.Trigger>
     <Menu.Content><Menu.Item>Read</Menu.Item></Menu.Content></Menu.Root>));
-  await tick();
+  await listening();
   expect(document.querySelector('[role="menu"]')).not.toBeNull();
   expect(shield()).toBeNull();
 });
@@ -120,7 +125,7 @@ it("a menu that is not portalled to the body (inside a phone sheet) gets no shie
 // sau chuột phải - không thì trình duyệt dò lại vị trí và phần còn lại của cú nhấn rơi xuống thẻ sách bên dưới.
 it("the shield keeps catching until the press that closed the menu has finished", async () => {
   await act(() => root.render(<SortMenu under={() => undefined} />));
-  await tick();
+  await listening();
   const cover = shield()!;
   await act(() => { cover.dispatchEvent(new PointerEvent("pointerdown", { bubbles: true, cancelable: true, button: 0, pointerId: 1, pointerType: "touch" })); });
   expect(document.querySelector('[role="menu"]')).toBeNull();          // menu đã đóng ngay ở pointerdown
@@ -129,20 +134,20 @@ it("the shield keeps catching until the press that closed the menu has finished"
   cover.dispatchEvent(new PointerEvent("pointerup", { bubbles: true, cancelable: true, pointerId: 1, pointerType: "touch" }));
   expect(cover.style.pointerEvents).toBe("auto");
   cover.dispatchEvent(new MouseEvent("click", { bubbles: true, cancelable: true }));
-  await tick();
+  await until(() => expect(cover.isConnected).toBe(false));
   expect(cover.isConnected).toBe(false);                               // cú nhấn xong: gỡ lớp
 });
 
 it("a right press outside: the shield catches the contextmenu that follows on release, then goes", async () => {
   await act(() => root.render(<SortMenu under={() => undefined} />));
-  await tick();
+  await listening();
   const cover = shield()!;
   await act(() => { cover.dispatchEvent(new PointerEvent("pointerdown", { bubbles: true, cancelable: true, button: 2, pointerId: 1, pointerType: "mouse" })); });
   expect(cover.isConnected).toBe(true);
   const context = new MouseEvent("contextmenu", { bubbles: true, cancelable: true, button: 2 });
   cover.dispatchEvent(context);
   expect(context.defaultPrevented).toBe(true);                         // không bật menu chuột phải của trình duyệt
-  await tick();
+  await until(() => expect(cover.isConnected).toBe(false));
   expect(cover.isConnected).toBe(false);
 });
 
@@ -179,15 +184,16 @@ it.each(["dialog", "sheet"] as const)("a popover inside a %s: a press on its shi
       : <Sheet open onOpenChange={closed} title="Phát trên" trigger={<button>Mở</button>}>{body}</Sheet>;
   }
   await act(() => root.render(<Remote />));
-  await tick();
+  await listening();
+  await until(() => expect(document.querySelector('[role="dialog"]')!.contains(document.activeElement)).toBe(true));
   // Mở bảng sau khi hộp đã nhận tiêu điểm (hộp chuyển tiêu điểm vào trong lúc mở - bảng mở sẵn sẽ tự đóng vì mất tiêu điểm).
   await act(() => { [...document.querySelectorAll("button")].find(button => button.textContent === "Hẹn giờ")!.click(); });
-  await tick();
+  await listening(2);
   expect(document.querySelector('[aria-label="Hẹn giờ ngủ"]')).not.toBeNull();
   const cover = shield()!;
   expect(cover).not.toBeNull();
   await act(() => { press(cover); });
-  await tick();
+  await until(() => expect(document.querySelector('[aria-label="Hẹn giờ ngủ"]')).toBeNull());
   expect(document.querySelector('[aria-label="Hẹn giờ ngủ"]')).toBeNull();      // bảng đóng
   expect(closed).not.toHaveBeenCalled();                                         // hộp không đóng
   expect(document.querySelector('[role="dialog"]')).not.toBeNull();
@@ -209,12 +215,12 @@ it("a popover inside a popover: a press on the inner shield closes only the inne
     </Popover.Root>;
   }
   await act(() => root.render(<Nested />));
-  await tick();
+  await listening(2);
   const covers = document.querySelectorAll<HTMLElement>("[data-outside-shield]");
   expect(covers).toHaveLength(2);
   const innerCover = [...covers].find(cover => cover.style.zIndex === "60")!;
   await act(() => { press(innerCover); });
-  await tick();
+  await until(() => expect(document.querySelector('[aria-label="Trong"]')).toBeNull());
   expect(document.querySelector('[aria-label="Trong"]')).toBeNull();
   expect(document.querySelector('[aria-label="Ngoài"]')).not.toBeNull();
 });

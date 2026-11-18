@@ -126,8 +126,9 @@ Item {
             tryVerify(function() { return saves().length === 1 })
             compare(saves()[0].body.lastSleep.minutes, 33)
             Api.rememberLastSleep(minutes(34), function() { settled++ })
-            wait(60)
+            tryCompare(Api.lastSleepTimer, "running", false) // nhịp gom của 34 đã điểm khi 33 còn bay
             compare(saves().length, 1) // lần 33 còn bay: 34 chưa gửi chồng lên
+            compare(Api.lastSleepQueued.minutes, 34)
             DesktopApi.finish() // phản hồi của 33 về khi 34 đã chọn: không áp
             verify(!Api.preferences.lastSleep || Api.preferences.lastSleep.minutes !== 33)
             compare(settled, 0)

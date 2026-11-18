@@ -144,7 +144,7 @@ Item {
             list.positionViewAtBeginning()
             const before = Player.chapterId, x = list.width / 2, y0 = list.height * 0.8
             mousePress(list, x, y0)
-            for (let k = 1; k <= 12; ++k) { wait(16); mouseMove(list, x, y0 - 25 * k, -1, Qt.LeftButton) }
+            for (let k = 1; k <= 12; ++k) mouseMove(list, x, y0 - 25 * k, 16, Qt.LeftButton)   // 16 ms/bước: cú kéo có vận tốc như tay
             mouseRelease(list, x, y0 - 300, Qt.LeftButton)
             tryVerify(() => list.contentY > 150, 2000, "the chapter list did not scroll: contentY " + list.contentY)
             compare(Player.chapterId, before, "dragging the list played the row under the pointer")
@@ -155,7 +155,7 @@ Item {
         function test_wheelStaysInNowPlaying() {
             const content = openScene({width: 1200, height: 700}), page = content.now
             mouseWheel(page, page.width - 4, page.height / 2, 0, -360)
-            wait(400)
+            wait(400)       // fixed: proves absence - cú lăn trên Đang nghe không cuộn thư viện khuất
             compare(content.libraryScroll.contentY, 0, "a wheel over Now Playing scrolled the hidden library")
             page.sidePage = 0
             const list = findChild(page, "nowChapterList")
