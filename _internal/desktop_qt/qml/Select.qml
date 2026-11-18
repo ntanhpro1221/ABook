@@ -60,6 +60,15 @@ Interactive {
         color: Theme.text2
     }
 
+    // Nền của danh sách xổ, dưới bảng trong Overlay: bấm / bấm phải ra ngoài chỉ đóng, hover và con trỏ không tới thứ nằm dưới, Back đi tiếp (Nav đóng lớp).
+    Backdrop {
+        parent: C.Overlay.overlay
+        z: list.z - 1
+        visible: list.visible       // cùng nhịp với bảng (bảng tự mờ vào / ra); nền trong suốt
+        enabled: list.wanted
+        onDismissed: list.close()
+    }
+
     C.Popup {
         id: list
         property real shown: 0
@@ -67,7 +76,9 @@ Interactive {
         padding: 8
         modal: false
         focus: true
-        closePolicy: C.Popup.CloseOnPressOutside | C.Popup.CloseOnEscape
+        // Bấm ra ngoài: Backdrop bên dưới (soát 18-11 lần 4: Popup không modal để cú nhấn ra ngoài đi tiếp - đóng danh sách VÀ mở dòng nằm dưới).
+        closePolicy: C.Popup.CloseOnEscape
+        property bool wanted: false     // từ lúc mở tới lúc bắt đầu đóng (đang mờ đi thì nền thôi chặn)
         width: Math.max(root.width, 160)
         function show() {
             if (visible) return
@@ -77,12 +88,14 @@ Interactive {
             x = Math.max(8, Math.min(parent.width - width - 8, p.x))
             y = below ? p.y + root.height + 4 : Math.max(8, p.y - h - 4)
             height = h
+            wanted = true
             open()
             Nav.openLayer(list)
             rows.currentIndex = Math.max(0, root.currentIndex)
             rows.positionViewAtIndex(rows.currentIndex, ListView.Contain)
             rows.forceActiveFocus()
         }
+        onAboutToHide: wanted = false
         onClosed: { Nav.closedLayer(list); root.forceActiveFocus(Qt.OtherFocusReason) }
         enter: Transition { NumberAnimation { property: "opacity"; from: 0; to: 1; duration: Theme.motionFast; easing.type: Easing.BezierSpline; easing.bezierCurve: Theme.easeDecelerate }
                             NumberAnimation { property: "shown"; from: 0; to: 1; duration: Theme.reduceMotion ? Theme.motionReduced : Theme.motionFast; easing.type: Easing.BezierSpline; easing.bezierCurve: Theme.easeDecelerate } }
@@ -93,73 +106,80 @@ Interactive {
             Shadow {}      // bóng chung của lớp nổi (DESIGN.md 5.5)
             Rectangle { anchors.fill: parent; radius: Theme.radiusCover; color: Theme.panel; border.width: 1; border.color: Theme.line }
         }
-        contentItem: ListView {
-            id: rows
+        // Danh sách xổ là lớp nổi đè lên trang (soát 18-11: bấm một hàng vừa chọn vừa kích hoạt thứ nằm dưới). TapShield là con đầu: phủ cả phần đệm
+        // 8 px của bảng, giữ cú bấm ở chỗ trống, và mọi hàng (Interactive) tự giữ riêng cú bấm của mình.
+        contentItem: Item {
+            implicitHeight: rows.implicitHeight
             transform: Translate { y: -8 * (1 - list.shown) }
-            implicitHeight: contentHeight
-            clip: true
-            boundsBehavior: Flickable.StopAtBounds
-            model: root.choices
-            keyNavigationEnabled: true
-            highlightMoveDuration: 0
-            Keys.onReturnPressed: pick(currentIndex)
-            Keys.onEnterPressed: pick(currentIndex)
-            Keys.onSpacePressed: pick(currentIndex)
-            function pick(i) {
-                if (i >= 0 && i < root.choices.length && root.choices[i].header) return
-                if (i >= 0 && i < root.choices.length) root.picked(root.choices[i].value)
-                list.close()
-            }
-            // Mũi tên dừng ở đầu nhóm thì đi tiếp theo cùng chiều (hết chỗ thì quay lại)
-            property int lastIndex: 0
-            onCurrentIndexChanged: {
-                const at = currentIndex
-                if (at >= 0 && at < root.choices.length && root.choices[at].header) {
-                    const step = at >= lastIndex ? 1 : -1
-                    const next = at + step >= 0 && at + step < root.choices.length ? at + step : at - step
+            TapShield { anchors.margins: -list.padding }
+            ListView {
+                id: rows
+                anchors.fill: parent
+                implicitHeight: contentHeight
+                clip: true
+                boundsBehavior: Flickable.StopAtBounds
+                model: root.choices
+                keyNavigationEnabled: true
+                highlightMoveDuration: 0
+                Keys.onReturnPressed: pick(currentIndex)
+                Keys.onEnterPressed: pick(currentIndex)
+                Keys.onSpacePressed: pick(currentIndex)
+                function pick(i) {
+                    if (i >= 0 && i < root.choices.length && root.choices[i].header) return
+                    if (i >= 0 && i < root.choices.length) root.picked(root.choices[i].value)
+                    list.close()
+                }
+                // Mũi tên dừng ở đầu nhóm thì đi tiếp theo cùng chiều (hết chỗ thì quay lại)
+                property int lastIndex: 0
+                onCurrentIndexChanged: {
+                    const at = currentIndex
+                    if (at >= 0 && at < root.choices.length && root.choices[at].header) {
+                        const step = at >= lastIndex ? 1 : -1
+                        const next = at + step >= 0 && at + step < root.choices.length ? at + step : at - step
+                        lastIndex = at
+                        currentIndex = next
+                        return
+                    }
                     lastIndex = at
-                    currentIndex = next
-                    return
                 }
-                lastIndex = at
-            }
-            delegate: Interactive {
-                id: row
-                required property var modelData
-                required property int index
-                readonly property bool selected: index === root.currentIndex
-                readonly property bool header: Boolean(modelData.header)
-                width: ListView.view.width
-                height: header ? Math.max(28, rowText.implicitHeight + 12) : Math.max(36, rowText.implicitHeight + 16)
-                enabled: !header
-                pressScaling: false
-                activeFocusOnTab: false
-                externalFocus: ListView.isCurrentItem && rows.activeFocus
-                Accessible.role: header ? Accessible.StaticText : Accessible.ListItem
-                Accessible.name: String((header ? modelData.header : modelData.label) ?? "")
-                Accessible.selected: selected
-                onClicked: rows.pick(index)
-                Rectangle { anchors.fill: parent; radius: Theme.radiusControl; color: Theme.hover; opacity: !row.header && (row.hovered || row.ListView.isCurrentItem) ? 1 : 0 }
-                Icon {
-                    Reveal { shown: !row.header }
-                    x: 8
-                    anchors.verticalCenter: parent.verticalCenter
-                    name: "check"
-                    size: 16
-                    color: Theme.accentText
-                    opacity: row.selected ? 1 : 0
-                    Behavior on opacity { NumberAnimation { duration: Theme.motionFast } }
-                }
-                Text {
-                    id: rowText
-                    x: row.header ? 8 : 8 + 16 + 8
-                    width: row.width - x - 8
-                    anchors.verticalCenter: parent.verticalCenter
-                    text: String((row.header ? row.modelData.header : row.modelData.label) ?? "")
-                    wrapMode: Text.Wrap
-                    color: row.header ? Theme.text2 : row.selected ? Theme.accentText : Theme.text
-                    font.pixelSize: row.header ? Theme.sizeCaption : Theme.sizeBodySmall
-                    font.weight: row.header ? Font.DemiBold : Theme.weightRegular
+                delegate: Interactive {
+                    id: row
+                    required property var modelData
+                    required property int index
+                    readonly property bool selected: index === root.currentIndex
+                    readonly property bool header: Boolean(modelData.header)
+                    width: ListView.view.width
+                    height: header ? Math.max(28, rowText.implicitHeight + 12) : Math.max(36, rowText.implicitHeight + 16)
+                    enabled: !header
+                    pressScaling: false
+                    activeFocusOnTab: false
+                    externalFocus: ListView.isCurrentItem && rows.activeFocus
+                    Accessible.role: header ? Accessible.StaticText : Accessible.ListItem
+                    Accessible.name: String((header ? modelData.header : modelData.label) ?? "")
+                    Accessible.selected: selected
+                    onClicked: rows.pick(index)
+                    Rectangle { anchors.fill: parent; radius: Theme.radiusControl; color: Theme.hover; opacity: !row.header && (row.hovered || row.ListView.isCurrentItem) ? 1 : 0 }
+                    Icon {
+                        Reveal { shown: !row.header }
+                        x: 8
+                        anchors.verticalCenter: parent.verticalCenter
+                        name: "check"
+                        size: 16
+                        color: Theme.accentText
+                        opacity: row.selected ? 1 : 0
+                        Behavior on opacity { NumberAnimation { duration: Theme.motionFast } }
+                    }
+                    Text {
+                        id: rowText
+                        x: row.header ? 8 : 8 + 16 + 8
+                        width: row.width - x - 8
+                        anchors.verticalCenter: parent.verticalCenter
+                        text: String((row.header ? row.modelData.header : row.modelData.label) ?? "")
+                        wrapMode: Text.Wrap
+                        color: row.header ? Theme.text2 : row.selected ? Theme.accentText : Theme.text
+                        font.pixelSize: row.header ? Theme.sizeCaption : Theme.sizeBodySmall
+                        font.weight: row.header ? Font.DemiBold : Theme.weightRegular
+                    }
                 }
             }
         }

@@ -99,6 +99,8 @@ const DESKTOP: Omit<Entry, "platform">[] = [
   } },
   { id: "desktop/toast", group: "Thông báo", title: "Thông báo (toast) “Đang nghe lại từ đầu”", route: "/book/suong-mu-2", act: () => click(/^Nghe lại từ đầu/).then(() => undefined) },
   { id: "desktop/player-playing", group: "Trình phát", title: "Thanh phát đang phát", route: "/", act: () => click("Phát").then(() => undefined) },
+  { id: "desktop/remote-cast", group: "Trình phát", title: "Hộp “Phát trên” loa trong nhà", route: "/", scenario: { castSpeaker: true },
+    act: async () => { (await waitFor(() => document.querySelector<HTMLElement>("[data-remote-strip]"), "thanh Đang phát trên")).click(); await waitFor(() => document.querySelector("[role=dialog]"), "hộp Phát trên"); } },
   { id: "desktop/player-full", group: "Trình phát", title: "Màn Đang nghe (toàn màn)", route: "/", act: playerOpen },
   { id: "desktop/player-full-chapters", group: "Trình phát", title: "Màn Đang nghe · tab Chương", route: "/", act: async () => {
     await playerOpen(); await click(/^Chương$/, document.querySelector('.now-playing')!);
@@ -175,6 +177,8 @@ const DESKTOP: Omit<Entry, "platform">[] = [
   { id: "desktop/music-library", group: "Nhạc", title: "Nhạc › Kho nhạc", route: "/music?tab=library" },
   { id: "desktop/music-library-downloading", group: "Nhạc", title: "Kho nhạc · đang tải hai bài", route: "/music?tab=library", scenario: { musicDownloading: true } },
   { id: "desktop/music-library-filter", group: "Nhạc", title: "Kho nhạc · chip Phong cách mở", route: "/music?tab=library", act: () => click(/^Phong cách/).then(() => undefined) },
+  // Thanh "Đang nghe thử" nổi trên danh sách: scripts/check_preview_bar.mjs bấm thật (Chromium) vào phần đệm/khe của thanh - đích bấm phải ở trong thanh.
+  { id: "desktop/music-library-previewing", group: "Nhạc", title: "Kho nhạc · đang nghe thử", route: "/music?tab=library", act: () => clickFirst("Nghe thử").then(() => undefined) },
   { id: "desktop/music-track", group: "Nhạc", title: "Kho nhạc · chi tiết bài", route: "/music?tab=library", act: () => click(/^Air Prelude/).then(() => undefined) },
   { id: "desktop/music-pick", group: "Nhạc", title: "Kho nhạc · chế độ chọn cho một đoạn", route: "/music?pick=suong-mu-2&scene=1:1" },
   { id: "desktop/studio-projects", group: "Studio", title: "Danh sách dự án", route: "/studio" },

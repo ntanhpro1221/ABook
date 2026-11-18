@@ -1952,7 +1952,6 @@ var s_mien_nam_81505299 = "Miền Nam";
 var s_mien_toi_uu_pin_a80cbc7b = "miễn tối ưu pin: ";
 var s_mien_trung_f313e576 = "Miền Trung";
 var s_mo_05587fd6 = "Mở ";
-function s_mo_0_7a5716e0(p0) { return "Mở " + String(p0); }
 var s_mo_741bd2c2 = "Mở";
 var s_mo_abook_feeae114 = "Mở ABook";
 function s_mo_bo_0_676ecc6b(p0) { return "Mở bộ " + String(p0); }

@@ -79,7 +79,7 @@ WindowLayer {
         }
     }
     Rectangle { anchors.fill: parent; color: Theme.scrim; opacity: root.shown }
-    MouseArea { anchors.fill: parent; onPressed: if (root.dismissable) root.close() }
+    Backdrop { onDismissed: if (root.dismissable) root.close() }      // bấm ra ngoài: chỉ đóng (nếu được), không tới thứ nằm dưới
 
     FloatingPanel {
         id: panel
@@ -91,9 +91,9 @@ WindowLayer {
         scale: Theme.reduceMotion ? 1 : 0.96 + 0.04 * root.shown
         opacity: root.shown
 
+        TapShield { holdsWheel: true }      // bấm trong hộp không đóng, không lọt xuống dưới; mọi nút trong hộp tự giữ riêng cú bấm (Interactive)
         Shadow { radius: Theme.radiusSheet }      // bóng chung của lớp nổi (DESIGN 5.5)
         Rectangle { anchors.fill: parent; radius: Theme.radiusSheet; color: Theme.panel; border.width: 1; border.color: Theme.line }
-        MouseArea { anchors.fill: parent }      // bấm trong hộp không đóng
 
         Column {
             id: heading

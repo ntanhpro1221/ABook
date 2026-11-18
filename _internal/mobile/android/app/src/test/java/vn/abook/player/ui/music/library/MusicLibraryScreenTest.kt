@@ -448,7 +448,9 @@ class MusicLibraryScreenTest {
         rule.waitForIdle()
         val title = source.raw.getValue(link(0)).getString("title")
         val bar = rule.onNodeWithTag("preview_bar").assertIsDisplayed().fetchSemanticsNode()
-        assertEquals(S.s_mo_0_7a5716e0(title), bar.config.getOrNull(SemanticsProperties.ContentDescription)?.firstOrNull())
+        // Tên đọc giữ trạng thái + tên bài (soát 17-11: "Mở <tên>" làm mất "Đang đệm / Đã tạm dừng"); "Mở" là nhãn của hành động chạm.
+        assertEquals("${S.s_dang_nghe_thu_f1fb4cba} · $title", bar.config.getOrNull(SemanticsProperties.ContentDescription)?.firstOrNull()?.replace(' ', ' '))
+        assertEquals(S.s_mo_741bd2c2, bar.config.getOrNull(androidx.compose.ui.semantics.SemanticsActions.OnClick)?.label)
         val box = bar.boundsInRoot
         assertTrue("a track row lies under the bar", rowUnder(box.center.x, box.center.y))
         rule.onNodeWithTag("preview_bar").performTouchInput { click(center) }
@@ -471,6 +473,59 @@ class MusicLibraryScreenTest {
         tap("preview_stop")
         assertEquals(null, state.ui.value.previewing)
         assertEquals(0, rule.onAllNodesWithTag("track_sheet").fetchSemanticsNodes().size)
+    }
+
+    /** Dòng bài đang hiện cao nhất: thẻ và mép trên (px trong gốc). */
+    private fun topRow(): Pair<String, Float> = rule.onAllNodes(SemanticsMatcher("track row") { node ->
+        node.config.getOrNull(SemanticsProperties.TestTag)?.matches(Regex("track_-?\\d+")) == true
+    }).fetchSemanticsNodes().minBy { it.boundsInRoot.top }.let { it.config[SemanticsProperties.TestTag] to it.boundsInRoot.top }
+
+    private fun topOf(tag: String): Float = rule.onNodeWithTag(tag).fetchSemanticsNode().boundsInRoot.top
+
+    /** Soát 17-11: floatingLayer chỉ giữ cú BẤM. Vuốt bắt đầu ở lề / khe đáy / thân thanh "Đang nghe thử" vẫn cuộn Kho nhạc (như web, Qt), và không mở
+     *  bài nào; trước đó pointerInput{detectTapGestures} chặn luôn cú vuốt ở cả dải ngang đáy màn. */
+    @Test
+    fun previewBarLetsSwipesScrollTheList() {
+        show()
+        rule.runOnUiThread { state.togglePreview(link(0)) }
+        rule.waitForIdle()
+        val box = rule.onNodeWithTag("preview_bar").fetchSemanticsNode().boundsInRoot
+        val starts = listOf(
+            "bottom gap" to androidx.compose.ui.geometry.Offset(box.center.x, box.bottom + 6f),
+            "side margin" to androidx.compose.ui.geometry.Offset(box.left - 6f, box.center.y),
+            "bar body" to androidx.compose.ui.geometry.Offset(box.left + 40f, box.center.y),
+        )
+        for ((name, start) in starts) {
+            val (tag, before) = topRow()
+            rule.onRoot().performTouchInput {
+                down(start)
+                repeat(10) { moveBy(androidx.compose.ui.geometry.Offset(0f, -30f)) }
+                up()
+            }
+            rule.waitForIdle()
+            assertTrue("a swipe from the $name did not scroll the list: $tag ${before} -> ${topOf(tag)}", topOf(tag) < before - 100f)
+            assertEquals("a swipe from the $name opened a track", 0, rule.onAllNodesWithTag("track_sheet").fetchSemanticsNodes().size)
+        }
+        assertEquals(link(0), state.ui.value.previewing)
+    }
+
+    /** Soát 18-11 lần 4: đổi "Kho nhạc" -> "Đã lưu" -> "Kho nhạc" về đầu danh sách, như web (Tabs tháo nội dung phần cũ) và Qt (một ListView, đổi
+     *  model). Danh sách nay ở cấp màn (thanh "Đang nghe thử" kéo được nó) nhưng khoá theo phần, không nhớ chỗ cuộn của từng phần. */
+    @Test
+    fun switchingPartsStartsTheListAtTheTop() {
+        show()
+        val (first, top) = topRow()
+        rule.onNodeWithTag("music_list").performTouchInput {
+            down(center)
+            repeat(12) { moveBy(androidx.compose.ui.geometry.Offset(0f, -40f)) }
+            up()
+        }
+        rule.waitForIdle()
+        assertTrue("the list did not scroll", topRow().first != first)
+        tap(MusicPart.Saved.tag)
+        tap(MusicPart.Library.tag)
+        assertEquals("switching parts kept the old scroll position", first, topRow().first)
+        assertEquals(top, topOf(first), 1f)
     }
 
     @Test

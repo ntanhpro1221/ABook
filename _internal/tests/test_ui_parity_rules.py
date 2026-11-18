@@ -419,7 +419,9 @@ def test_l12_bites_floating_layers_that_let_a_tap_through(planted):
         "    IconButton {\n        id: fab\n        y: parent.height - height\n    }\n}\n", encoding="utf-8")
     problems = planted.l12_floating_layers()
     text = "\n".join(problems)
-    assert len([p for p in problems if "Bar.kt" in p]) == 1 and "Bar.kt:4:" in text, problems
+    # Soát 17-11: `.padding(8.dp).pressable {}` vẫn để phần đệm cho cú bấm lọt - bộ bắt chạm phải đứng trước padding đầu tiên.
+    assert len([p for p in problems if "Bar.kt" in p]) == 2 and "Bar.kt:4:" in text and "Bar.kt:6:" in text, problems
+    assert "Bar.kt:5:" not in text, problems
     assert "Bar.tsx:1:" in text and "Bar.tsx:2:" not in text and "Bar.tsx:3:" not in text, problems
     assert "Rectangle#bar" in text and "#shielded" not in text and "#fab" not in text, problems
     # An exception needs the exact site and its own reason; a stale one is reported.
@@ -432,3 +434,171 @@ def test_l12_bites_floating_layers_that_let_a_tap_through(planted):
     assert any("allow thừa" in p and "Gone.tsx" in p for p in problems), problems
     (root / android / "components/Components.kt").write_text("fun Modifier.other() = this\n", encoding="utf-8")
     assert any("thiếu Modifier.floatingLayer()" in p for p in planted.l12_floating_layers())
+
+
+GOOD_INTERACTIVE = ("Item {\n    id: root\n    property bool exclusiveTap: false\n    readonly property bool holdsTap: exclusiveTap || layer.shielded\n"
+                    "    QtObject { id: layer; property bool shielded: false\n"
+                    "        function scan() { for (let p = root.parent; p; p = p.parent) if (p.children[0] instanceof TapShield) return true; return false } }\n"
+                    "    TapHandler { gesturePolicy: root.holdsTap ? TapHandler.ReleaseWithinBounds : TapHandler.DragThreshold }\n}\n")
+GOOD_SHIELD = ("Item {\n    anchors.fill: parent\n    TapHandler { acceptedButtons: Qt.LeftButton | Qt.RightButton | Qt.MiddleButton; "
+               "gesturePolicy: TapHandler.ReleaseWithinBounds }\n    HoverHandler {}\n}\n")
+
+
+def test_l12_bites_a_button_in_a_shielded_layer_that_does_not_hold_its_tap(planted):
+    """Đo 17-11: nút (TapHandler thụ động) trong lớp có TapShield để cú bấm tới cả Interactive nằm dưới lớp (màn Đang nghe trên thư viện). Cách sửa
+    chung là Interactive tự giữ riêng cú bấm khi một tổ tiên có TapShield làm con đầu tiên; luật đỏ khi bất kỳ mắt xích nào của cách ấy gãy."""
+    root = planted.ROOT
+    qml = root / "desktop_qt/qml"
+    (qml / "Interactive.qml").write_text(GOOD_INTERACTIVE, encoding="utf-8")
+    (qml / "TapShield.qml").write_text(GOOD_SHIELD, encoding="utf-8")
+    (qml / "Layer.qml").write_text(
+        "Item {\n    Rectangle {\n        id: good\n        HoverHandler {}\n        TapShield {}\n        IconButton {}\n    }\n"
+        "    Rectangle {\n        id: late\n        Rectangle { anchors.fill: parent }\n        TapShield {}\n        IconButton {}\n    }\n"
+        "    Rectangle {\n        id: bare\n        MouseArea { anchors.fill: parent }\n        IconButton {}\n    }\n"
+        "    Rectangle {\n        id: shifted\n        transform: Translate { y: 4 }\n        Behavior on opacity { NumberAnimation {} }\n"
+        "        TapShield {}\n    }\n}\n", encoding="utf-8")
+    problems = planted.l12_qt_layer_problems()
+    text = "\n".join(problems)
+    assert "Layer.qml:11:" in text and "con đầu tiên" in text, problems         # khiên đứng sau nền: nút trong lớp không giữ cú bấm
+    assert "Layer.qml:16:" in text and "MouseArea" in text, problems            # lớp tự chặn bằng MouseArea trơn
+    assert "Layer.qml:5:" not in text and "Layer.qml:22:" not in text, problems  # Handler / giá trị thuộc tính / Behavior không phải con
+    assert len(problems) == 2, problems
+    # Interactive thôi dò khiên (hay gesturePolicy không theo holdsTap): mọi nút của mọi lớp lại để cú bấm lọt.
+    (qml / "Interactive.qml").write_text(GOOD_INTERACTIVE.replace("root.holdsTap ?", "root.exclusiveTap ?"), encoding="utf-8")
+    assert any("Interactive.qml" in p for p in planted.l12_qt_layer_problems())
+    (qml / "Interactive.qml").write_text(GOOD_INTERACTIVE.replace("instanceof TapShield", "!== null"), encoding="utf-8")
+    assert any("Interactive.qml" in p for p in planted.l12_qt_layer_problems())
+    # Khiên nuốt nút Back: Back của chuột không còn đóng Đang nghe.
+    (qml / "Interactive.qml").write_text(GOOD_INTERACTIVE, encoding="utf-8")
+    (qml / "TapShield.qml").write_text("MouseArea {\n    anchors.fill: parent\n    acceptedButtons: Qt.AllButtons\n}\n", encoding="utf-8")
+    assert any("TapShield.qml" in p and "Back" in p for p in planted.l12_qt_layer_problems())
+
+
+def test_l12_bites_the_18_11_review_cases(planted):
+    """Soát 18-11 (82cb3968e): L12 báo xanh trong khi (1) floatingLayer chia chạm với anh em - dòng nằm dưới nhận cú bấm trước lớp, (2) danh sách xổ
+    của Select (C.Popup) không có khiên, (3) nền bấm-ra-ngoài của Popover / Modal là MouseArea - vừa đóng vừa kích hoạt thứ dưới; cộng các lỗ: một nút
+    trong Item nổi được coi là cả Item bắt chạm, MouseArea phủ kín có thêm thuộc tính, lớp nổi không dính đáy trong Box có danh sách cuộn."""
+    root = planted.ROOT
+    android = "mobile/android/app/src/main/java/vn/abook/player/ui/"
+    (root / android / "components").mkdir(parents=True, exist_ok=True)
+    good = ("fun Modifier.floatingLayer(scrollThrough: ScrollableState? = null): Modifier =\n"
+            "    (if (scrollThrough != null) this.scrollable(scrollThrough, Orientation.Vertical) else this).pointerInput(Unit) { detectTapGestures { } }\n\n")
+    (root / android / "components/Components.kt").write_text(good, encoding="utf-8")
+    qml = root / "desktop_qt/qml"
+    (qml / "Interactive.qml").write_text(GOOD_INTERACTIVE, encoding="utf-8")
+    (qml / "TapShield.qml").write_text(GOOD_SHIELD, encoding="utf-8")
+    assert not any("Components.kt" in p or "Android:" in p for p in planted.l12_floating_layers())
+
+    # (1) Lớp chia chạm với anh em, và floatingLayer không còn chặn bằng pointerInput.
+    (root / android / "components/Components.kt").write_text(
+        "fun Modifier.floatingLayer(): Modifier = this then FloatingLayerElement\n\n"
+        "private class FloatingLayerNode : Modifier.Node(), PointerInputModifierNode {\n"
+        "    override fun sharePointerInputWithSiblings() = true\n}\n", encoding="utf-8")
+    text = "\n".join(planted.l12_floating_layers())
+    assert "Components.kt:4:" in text and "sharePointerInputWithSiblings" in text, text
+    assert "không còn bắt chạm bằng pointerInput" in text, text
+    (root / android / "components/Components.kt").write_text(good, encoding="utf-8")
+
+    # Lớp nổi góc / giữa trong Box có danh sách cuộn; nhánh `when` thay danh sách và căn trong Column thì không phải lớp nổi.
+    (root / android / "Over.kt").write_text(
+        "fun Screen() {\n    Box {\n        LazyColumn(Modifier.fillMaxSize()) { items(rows) { Row(it) } }\n"
+        "        Chip(Modifier.align(Alignment.TopEnd))\n"
+        "        Chip(Modifier.align(Alignment.TopEnd).floatingLayer())\n    }\n"
+        "    Box {\n        when {\n            loading -> Text(Modifier.align(Alignment.Center))\n"
+        "            else -> LazyColumn(Modifier.fillMaxSize()) { }\n        }\n    }\n"
+        "    Column { Handle(Modifier.align(Alignment.CenterHorizontally)) ; LazyColumn() {} }\n}\n", encoding="utf-8")
+    text = "\n".join(planted.l12_floating_layers())
+    assert "Over.kt:4:" in text and "Over.kt:5:" not in text and "Over.kt:9:" not in text and "Over.kt:13:" not in text, text
+    (root / android / "Over.kt").unlink()
+
+    # (2) Popup không khiên; (3) nền MouseArea đóng lớp; MouseArea phủ kín có thêm thuộc tính; nút trong Item nổi không thay khiên; WindowLayer không khiên.
+    (qml / "Pick.qml").write_text(
+        "Item {\n    C.Popup {\n        contentItem: ListView { delegate: Interactive {} }\n    }\n"
+        "    C.Popup {\n        modal: true; contentItem: Item {\n            TapShield {}\n            ListView {}\n        }\n    }\n"
+        "    ShortcutsDialog {}\n}\n", encoding="utf-8")
+    (qml / "Pop.qml").write_text(
+        "WindowLayer {\n    MouseArea {\n        anchors.fill: parent\n        enabled: root.open\n        onPressed: root.close()\n    }\n"
+        "    Rectangle {\n        id: panel\n        z: 2\n        IconButton {}\n    }\n"
+        "    Rectangle {\n        MouseArea { anchors.fill: parent; hoverEnabled: true }\n    }\n"
+        "    MouseArea { anchors.fill: parent; acceptedButtons: Qt.NoButton; onWheel: wheel => wheel.accepted = true }\n}\n", encoding="utf-8")
+    (qml / "Seek.qml").write_text("Item {\n    MouseArea {\n        anchors.fill: parent\n        onPressed: mouse => root.seek(mouse.x)\n    }\n}\n",
+                                  encoding="utf-8")
+    (qml / "Bar.qml").write_text("Item {\n    Seek {\n        id: seek\n        z: 2\n    }\n}\n", encoding="utf-8")
+    problems = planted.l12_floating_layers()
+    text = "\n".join(problems)
+    assert "Pick.qml:2:" in text and "C.Popup" in text and "Pick.qml:5:" not in text and "Pick.qml:11:" not in text, text
+    assert "Pop.qml:2:" in text and "Backdrop" in text, text
+    assert "Pop.qml:9:" in text and "Rectangle#panel" in text, text          # một IconButton bên trong không chặn chỗ trống quanh nó
+    assert "Pop.qml:13:" in text, text                                        # MouseArea phủ kín chỉ thêm hoverEnabled vẫn là cái chặn trơn
+    assert "Pop.qml:15:" not in text, text                                    # chỉ giữ cú lăn (NoButton): không chặn cú bấm
+    assert "Pop.qml: lớp WindowLayer không có TapShield" in text, text
+    assert "Bar.qml" not in text, text                                        # điều khiển phủ cả khung (thanh tua) tự bắt cú bấm
+
+
+def test_l12_bites_the_fourth_review_holes(planted):
+    """Soát 18-11 lần 4 (5c9d541af): nền bấm-ra-ngoài bằng TapHandler thụ động, lớp đưa lên Overlay (`parent: …overlay`) hay dính đáy bằng neo cạnh
+    danh sách, một TapShield ở đâu đó trong tệp được coi là cả kiểu bắt chạm, floatingLayer chỉ còn chữ `pointerInput(`, và web dùng thẳng menu /
+    Popover của Radix (không modal: bấm ra ngoài tới thứ nằm dưới)."""
+    root = planted.ROOT
+    qml = root / "desktop_qt/qml"
+    (qml / "Interactive.qml").write_text(GOOD_INTERACTIVE, encoding="utf-8")
+    (qml / "TapShield.qml").write_text(GOOD_SHIELD, encoding="utf-8")
+    # (a) TapHandler thụ động đóng lớp; Backdrop thật (ReleaseWithinBounds) thì không bị báo.
+    (qml / "Scrim.qml").write_text(
+        "Item {\n    TapHandler {\n        onTapped: root.close()\n    }\n"
+        "    TapHandler {\n        gesturePolicy: TapHandler.ReleaseWithinBounds\n        onPressedChanged: if (pressed) root.dismissed()\n    }\n}\n",
+        encoding="utf-8")
+    # (c) Kiểu có TapShield trong một bảng con sâu không bắt cả khung; con đầu của gốc / của bảng chính thì có.
+    (qml / "Deep.qml").write_text("Item {\n    Rectangle {\n        Column {\n            TapShield {}\n        }\n    }\n}\n", encoding="utf-8")
+    (qml / "Pill.qml").write_text("Item {\n    Rectangle {\n        id: pill\n        TapShield {}\n    }\n}\n", encoding="utf-8")
+    (qml / "Shade.qml").write_text("Item {\n    Backdrop {}\n    Rectangle {}\n}\n", encoding="utf-8")
+    # (b) Overlay và neo đáy cạnh danh sách.
+    (qml / "Page.qml").write_text(
+        "Item {\n    Deep {\n        z: 2\n    }\n    Pill {\n        z: 2\n    }\n    Shade {\n        z: 2\n    }\n"
+        "    Item {\n        id: floating\n        parent: C.Overlay.overlay\n        Text {}\n    }\n"
+        "    ListView {\n        anchors.fill: parent\n    }\n"
+        "    Row {\n        id: dock\n        anchors.bottom: parent.bottom\n        IconButton {}\n    }\n"
+        "    Rectangle {\n        id: fade\n        anchors.bottom: parent.bottom\n        height: 24\n    }\n}\n", encoding="utf-8")
+    (qml / "Footer.qml").write_text(
+        "Item {\n    ListView {\n        anchors.top: parent.top\n        anchors.bottom: bar.top\n    }\n"
+        "    Row {\n        id: bar\n        anchors.bottom: parent.bottom\n        IconButton {}\n    }\n}\n", encoding="utf-8")
+    text = "\n".join(planted.l12_floating_layers())
+    assert "Scrim.qml:2:" in text and "TapHandler thụ động" in text and "Scrim.qml:5:" not in text, text
+    assert "Page.qml:3:" in text and "Deep" in text, text                       # khiên sâu trong bảng con không phủ cả khung
+    assert "Page.qml:6:" not in text and "Page.qml:9:" not in text, text        # khiên đầu của bảng chính / Backdrop thì có
+    assert "Item#floating" in text, text                                        # lớp đưa lên Overlay
+    assert "Row#dock" in text and "Rectangle#fade" not in text, text            # dải nút dính đáy trên danh sách; dải mờ trang trí thì không
+    assert "Footer.qml" not in text, text                                       # danh sách dừng trên dải (anchors.bottom: bar.top)
+    # (d) floatingLayer phải thật sự bắt cú chạm (detectTapGestures), không chỉ có chữ pointerInput(.
+    android = root / "mobile/android/app/src/main/java/vn/abook/player/ui/components"
+    android.mkdir(parents=True, exist_ok=True)
+    (android / "Components.kt").write_text("fun Modifier.floatingLayer(): Modifier = this.pointerInput(Unit) { }\n\n", encoding="utf-8")
+    assert any("detectTapGestures" in p for p in planted.l12_floating_layers())
+    (android / "Components.kt").write_text("fun Modifier.floatingLayer(): Modifier = this.pointerInput(Unit) { detectTapGestures { } }\n\n",
+                                           encoding="utf-8")
+    assert not any("Components.kt" in p or "Android:" in p for p in planted.l12_floating_layers())
+    # Web: Radix thẳng thì đỏ; bọc chung phải gắn lớp chặn ngoài.
+    shared = root / "ui/src/shared"
+    shared.mkdir(parents=True, exist_ok=True)
+    wrapper = ("import * as Radix from \"@radix-ui/react-{0}\";\nexport * from \"@radix-ui/react-{0}\";\n"
+               "export const Content = forwardRef(function C(props, ref) {{ return <Radix.Content {{...props}} ref={{useOutsideShield(ref)}} />; }});\n")
+    (shared / "DropdownMenu.tsx").write_text(wrapper.format("dropdown-menu"), encoding="utf-8")
+    (shared / "Popover.tsx").write_text(wrapper.format("popover"), encoding="utf-8")
+    (shared / "outsideShield.ts").write_text("Object.assign(cover.style, { position: \"fixed\" });\nwrapper.before(cover);\n", encoding="utf-8")
+    (root / "ui/src/listen/Volume.tsx").write_text("import * as Popover from \"@radix-ui/react-popover\";\n", encoding="utf-8")
+    text = "\n".join(planted.l12_floating_layers())
+    assert "Volume.tsx:1:" in text and "shared/Popover.tsx" in text, text
+    assert "DropdownMenu.tsx" not in text and "outsideShield" not in text, text
+    (shared / "Popover.tsx").write_text(wrapper.format("popover").replace("useOutsideShield(ref)", "ref"), encoding="utf-8")
+    assert any("ui/src/shared/Popover.tsx: Content không gắn lớp chặn ngoài" in p for p in planted.l12_floating_layers())
+    # N1: Popup không modal đóng khi nhấn ra ngoài (closePolicy mặc định) để cú nhấn ấy tới trang; N2: Backdrop không giữ con trỏ.
+    (qml / "Drop.qml").write_text(
+        "Item {\n    C.Popup {\n        contentItem: Item { TapShield {} }\n    }\n"
+        "    C.Popup {\n        closePolicy: C.Popup.CloseOnEscape\n        contentItem: Item { TapShield {} }\n    }\n"
+        "    C.Popup {\n        modal: true\n        contentItem: Item { TapShield {} }\n    }\n}\n", encoding="utf-8")
+    (qml / "Backdrop.qml").write_text("Item {\n    TapHandler { gesturePolicy: TapHandler.ReleaseWithinBounds }\n}\n", encoding="utf-8")
+    text = "\n".join(planted.l12_floating_layers())
+    assert "Drop.qml:2:" in text and "không modal" in text and "Drop.qml:5:" not in text and "Drop.qml:9:" not in text, text
+    assert "Backdrop.qml phải" in text and "HoverHandler" in text, text
+    (qml / "Backdrop.qml").write_text("Item {\n    TapHandler { gesturePolicy: TapHandler.ReleaseWithinBounds }\n    HoverHandler {}\n}\n", encoding="utf-8")
+    assert not any("Backdrop.qml phải" in p for p in planted.l12_floating_layers())

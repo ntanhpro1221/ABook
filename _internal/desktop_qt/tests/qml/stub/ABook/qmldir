@@ -12,6 +12,7 @@ singleton Backend 1.0 Backend.qml
 singleton Bench 1.0 Bench.qml
 Interactive 1.0 ../../../../qml/Interactive.qml
 TapShield 1.0 ../../../../qml/TapShield.qml
+Backdrop 1.0 ../../../../qml/Backdrop.qml
 Icon 1.0 ../../../../qml/Icon.qml
 StateIcon 1.0 ../../../../qml/StateIcon.qml
 PendingIndicator 1.0 ../../../../qml/PendingIndicator.qml

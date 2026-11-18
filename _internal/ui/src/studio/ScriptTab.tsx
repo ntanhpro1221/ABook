@@ -8,7 +8,7 @@ import { MotionPresence, Reveal } from "@/shared/MotionPresence";
 import { useListPresence, type PresentRow } from "@/shared/motion";
 import { Fold } from "@/shared/Collapse";
 import * as DropdownMenu from "@/shared/DropdownMenu";
-import * as Popover from "@radix-ui/react-popover";
+import * as Popover from "@/shared/Popover";
 import { useMutation, useQuery, useQueryClient, type QueryClient } from "@tanstack/react-query";
 import { AlertTriangle, BookOpenText, Check, ChevronDown, SkipBack, SkipForward, Clock, Pause, Play, RefreshCw, Search, X } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, type KeyboardEvent, type ReactNode } from "react";

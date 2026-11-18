@@ -652,7 +652,6 @@ Item {
                     width: root.narrow ? toolbar.width : implicitWidth
                     spacing: 0
                     Interactive {
-                        exclusiveTap: true      // nút của lớp nổi: giữ riêng cú bấm, không để nó tới thứ nằm dưới lớp
                         id: chapterButton
                         objectName: "scriptChapter"
                         x: -10
@@ -685,7 +684,6 @@ Item {
                         }
                     }
                     IconButton {
-                        exclusiveTap: true      // nút của lớp nổi: giữ riêng cú bấm, không để nó tới thứ nằm dưới lớp
                         objectName: "scriptPrevious"
                         icon: "skip-back"
                         tip: S.s_chuong_truoc_4750f9e9
@@ -695,7 +693,6 @@ Item {
                         onActivated: root.go(root.script.previous)
                     }
                     IconButton {
-                        exclusiveTap: true      // nút của lớp nổi: giữ riêng cú bấm, không để nó tới thứ nằm dưới lớp
                         objectName: "scriptNext"
                         icon: "skip-forward"
                         tip: S.s_chuong_sau_17d1bd20
@@ -769,7 +766,6 @@ Item {
                 Repeater {
                     model: Script.legend(root.people, root.unnamed)
                     delegate: Interactive {
-                        exclusiveTap: true      // nút của lớp nổi: giữ riêng cú bấm, không để nó tới thứ nằm dưới lớp
                         id: chip
                         required property var modelData
                         readonly property bool on: root.who === modelData.person.value
@@ -804,7 +800,6 @@ Item {
                     }
                 }
                 Interactive {
-                    exclusiveTap: true      // nút của lớp nổi: giữ riêng cú bấm, không để nó tới thứ nằm dưới lớp
                     id: showAll
                     objectName: "legendAll"
                     Reveal { shown: root.who !== "" }

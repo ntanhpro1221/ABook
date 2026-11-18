@@ -4,7 +4,7 @@ import { ValuePicker } from "@/shared/ValuePicker";
 import { VALUE_SPECS, formatNumber, quantize } from "@/shared/valuePickerLogic";
 import { MotionRegion } from "@/shared/MotionRegion";
 import { LoadingCrossfade, MotionPresence, Reveal } from "@/shared/MotionPresence";
-import * as Popover from "@radix-ui/react-popover";
+import * as Popover from "@/shared/Popover";
 import { ArrowRight, BookOpenText, SkipBack, SkipForward, Headphones, Search, Type } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState, type KeyboardEvent as ReactKeyboardEvent, type TouchEvent as ReactTouchEvent, type WheelEvent as ReactWheelEvent } from "react";
 import { toast, toastOffset } from "@/shared/toast";

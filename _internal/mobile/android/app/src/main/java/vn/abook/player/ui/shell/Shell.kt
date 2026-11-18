@@ -527,7 +527,7 @@ internal fun miniBarShown(nav: NavState): Float {
  * dưới thanh tab, vốn đã chừa rồi. Thanh báo nằm TRÊN ngăn xếp để vẫn bấm được khi có màn con, và đứng ngay trên thanh đang lộ.
  */
 @Composable
-private fun ShellFrame(
+internal fun ShellFrame(
     nav: NavState,
     stack: @Composable (LayerInsets) -> Unit,
     bars: @Composable () -> Unit,
@@ -541,7 +541,8 @@ private fun ShellFrame(
     val rail = vn.abook.player.ui.theme.windowLayout(config.screenWidthDp.toFloat(), config.screenHeightDp.toFloat()).let { it.short && it.twoPane }
     Layout(
         content = {
-            // Ba lớp chrome đè lên nội dung cuộn (thanh tab, thanh phát nhỏ + dải chừa đáy, thanh báo/hoàn tác): nuốt chạm ở cả vùng trống của chúng.
+            // Ba lớp chrome đè lên nội dung cuộn (thanh tab, thanh phát nhỏ + dải chừa đáy, thanh báo/hoàn tác): nuốt chạm ở cả vùng trống của chúng,
+            // không có dòng nào nằm dưới nhận cú bấm (ShellTapThroughTest).
             Box(Modifier.layoutId(TAB_BAR).floatingLayer().semantics { if (tabBarShown(nav) <= 0f) hideFromAccessibility() }) { Column(Modifier.fillMaxWidth()) { tabBar() } }
             Column(Modifier.layoutId(MINI_BAR).floatingLayer().fillMaxWidth().semantics { if (miniBarShown(nav) <= 0f) hideFromAccessibility() }) {
                 miniBar()

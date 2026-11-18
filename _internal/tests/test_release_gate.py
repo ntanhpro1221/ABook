@@ -1043,3 +1043,53 @@ def test_changelog_accepts_unreleased_entries_or_the_bumped_version_section(tmp_
     log.write_text("# Log\n\n## [Chưa phát hành]\n\n## [9.9.8]\n\n- Cũ\n", encoding="utf-8")
     with pytest.raises(ValueError, match="CHANGELOG"):
         gate.worker("changelog")
+
+
+def test_preview_bar_runs_in_the_gate_and_needs_every_width_and_theme(tmp_path):
+    """Soát 18-11: check_preview_bar.mjs (Chromium bấm thật vào phần đệm thanh "Đang nghe thử") phải là một bước của cổng, không chỉ chạy tay."""
+    check = {c.name: c for c in gate.checks()}["preview-bar"]
+    assert check.requires == ("gallery-build",) and "preview-bar" in gate.UI_CHECKS
+    assert "scripts/check_preview_bar.mjs" in check.command and check.command[check.command.index("--dist") + 1] == "dist/gallery"
+    points = {name: {"x": 1, "y": 1} for name in ("padLeft", "padTop", "padBottom", "gap", "padRight")}
+    full = [{"width": w, "height": 900, "theme": t, "points": points} for w in (1280, 420) for t in ("light", "dark")]
+    artifact = tmp_path / "preview-bar-checks.json"
+    artifact.write_text(json.dumps(full), encoding="utf-8")
+    counts, _ = gate.validate_report(check, gate.Execution(0), artifact)
+    assert counts == {"cases": 4, "points": 20}
+    artifact.write_text(json.dumps(full[:3]), encoding="utf-8")
+    with pytest.raises(ValueError, match="preview-bar"):
+        gate.validate_report(check, gate.Execution(0), artifact)
+    artifact.write_text(json.dumps(full), encoding="utf-8")
+    with pytest.raises(ValueError, match="exit 1"):
+        gate.validate_report(check, gate.Execution(1), artifact)
+
+
+def test_outside_taps_runs_in_the_gate_and_needs_every_layer_and_press(tmp_path):
+    """Soát 18-11 tapfix5: check_outside_taps.mjs (Chromium thật bấm / chạm / bấm phải ra ngoài mọi lớp nổi) là một bước của cổng."""
+    check = {c.name: c for c in gate.checks()}["outside-taps"]
+    assert check.requires == ("gallery-build",) and "outside-taps" in gate.UI_CHECKS
+    assert "scripts/check_outside_taps.mjs" in check.command and check.command[check.command.index("--dist") + 1] == "dist/gallery"
+    ids = sorted(gate.OUTSIDE_TAPS_REQUIRED) + ["library-sort-menu-wheel"]
+    press = lambda name: next((p for p in ("touch", "right", "wheel") if name.endswith("-" + p)), None)
+    rows = [{"id": name, "outside": {"pass": True, **({"press": press(name)} if press(name) else {})}} for name in ids]
+    artifact = tmp_path / "outside-taps.json"
+    write = lambda results, scenarios=None: artifact.write_text(json.dumps({"scenarios": scenarios or [r["id"] for r in results], "results": results}), encoding="utf-8")
+    write(rows)
+    counts, _ = gate.validate_report(check, gate.Execution(0), artifact)
+    assert counts == {"passed": len(ids), "failed": 0, "scenarios": len(ids)}
+    leaked = [dict(r, outside={**r["outside"], "pass": r["id"] != "remote-sleep-in-dialog"}) for r in rows]
+    write(leaked)
+    with pytest.raises(ValueError, match="lọt ở remote-sleep-in-dialog"):
+        gate.validate_report(check, gate.Execution(1), artifact)
+    write([r for r in rows if r["id"] != "remote-sleep-in-dialog-touch"])
+    with pytest.raises(ValueError, match="bắt buộc"):
+        gate.validate_report(check, gate.Execution(0), artifact)
+    write(rows, [r["id"] for r in rows] + ["extra"])
+    with pytest.raises(ValueError, match="thiếu / trùng"):
+        gate.validate_report(check, gate.Execution(0), artifact)
+    write([r for r in rows if not r["id"].endswith("-wheel")])
+    with pytest.raises(ValueError, match="lăn"):
+        gate.validate_report(check, gate.Execution(0), artifact)
+    write(rows)
+    with pytest.raises(ValueError, match="exit 1"):
+        gate.validate_report(check, gate.Execution(1), artifact)

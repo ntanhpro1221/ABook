@@ -4,7 +4,6 @@ import ABook
 // Một mục của thanh bên. Mục đang mở = nền trung tính nhạt (do Sidebar vẽ, trượt giữa các mục) + chữ đậm màu thường;
 // không nền hổ phách, không dấu tích (DESIGN.md mục 6, "Điều hướng").
 Interactive {
-    exclusiveTap: true      // nút của lớp nổi: giữ riêng cú bấm, không để nó tới thứ nằm dưới lớp
     id: root
     property string text: ""
     property string icon: ""

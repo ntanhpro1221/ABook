@@ -35,6 +35,8 @@ export interface Scenario {
   packagedMusic?: boolean;
   /** Kho nhạc: hai bài đang tải (vòng phần trăm trên dòng, nút Huỷ tải ở chi tiết). */
   musicDownloading?: boolean;
+  /** Một loa trong nhà đang phát một cuốn của máy này: thanh "Đang phát trên" và hộp "Phát trên" (có Hẹn giờ của loa). */
+  castSpeaker?: boolean;
 }
 
 export const DEFAULT_SCENARIO: Scenario = { library: "full", paired: true, remoteBooks: false, night: false, playing: true, projects: "full" };

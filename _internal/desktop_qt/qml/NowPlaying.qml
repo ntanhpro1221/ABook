@@ -181,12 +181,14 @@ Item {
         height: root.height - y
         clip: true
 
+        // Đang nghe phủ lên thư viện: bấm chỗ trống của nó không trúng bìa / dòng nằm dưới, và mọi nút bên trong tự giữ riêng cú bấm (Interactive);
+        // lăn chuột trên bìa / chỗ trống không cuộn thư viện đang khuất (holdsWheel)
+        TapShield { holdsWheel: true }
         Rectangle {
             anchors.fill: parent
             color: Theme.bg
             opacity: Math.min(1, root.g * 2.5)
         }
-        TapShield {}      // Đang nghe phủ lên thư viện: bấm chỗ trống của nó không trúng bìa / dòng nằm dưới
         Item {
             id: stage
             y: -panel.y
@@ -402,6 +404,7 @@ Item {
                     Item { width: parent.width; height: root.notesInFlow ? notes.height : 0; visible: height > 0 }
                     SeekBar {
                         id: seek
+                        objectName: "nowSeek"
                         width: parent.width
                     }
                     Item {

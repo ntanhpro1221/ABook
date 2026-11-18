@@ -22,6 +22,7 @@ import kotlinx.coroutines.Dispatchers
 import org.json.JSONObject
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
+import org.junit.Assume.assumeTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -96,7 +97,7 @@ class PreviewBarTapOnDeviceTest {
 
     @Test
     fun barTapOpensThePreviewingTrackAndNothingLeaks() {
-        assertTrue("emulator only", Build.FINGERPRINT.contains("generic") || Build.HARDWARE.contains("ranchu") || Build.PRODUCT.contains("sdk"))
+        assumeTrue("emulator only: máy thật (OPPO) bỏ qua, không đỏ", Build.FINGERPRINT.contains("generic") || Build.HARDWARE.contains("ranchu") || Build.PRODUCT.contains("sdk"))
         val sheets = SheetHost()
         val state = LibraryState(Source(), CoroutineScope(Dispatchers.Unconfined), Silent(), pauseBook = {}, io = Dispatchers.Unconfined)
         rule.setContent {

@@ -19,6 +19,9 @@ import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.gestures.Orientation
+import androidx.compose.foundation.gestures.ScrollableState
+import androidx.compose.foundation.gestures.scrollable
 import androidx.compose.ui.node.DrawModifierNode
 import androidx.compose.ui.node.ModifierNodeElement
 import androidx.compose.ui.node.PointerInputModifierNode
@@ -65,12 +68,12 @@ import vn.abook.player.ui.theme.Dim
  * Đang nghe). Hệ số thu đọc trong pha vẽ nên mỗi khung của hoạt ảnh không dựng lại gì.
  */
 @OptIn(ExperimentalFoundationApi::class)
-fun Modifier.pressable(role: Role = Role.Button, onLongClick: (() -> Unit)? = null, onClick: () -> Unit): Modifier {
+fun Modifier.pressable(role: Role = Role.Button, onLongClick: (() -> Unit)? = null, onClickLabel: String? = null, onClick: () -> Unit): Modifier {
     val base = this.then(PressScaleElement)
     return if (onLongClick == null) {
-        base.clickable(interactionSource = null, indication = null, role = role, onClick = onClick)
+        base.clickable(interactionSource = null, indication = null, role = role, onClickLabel = onClickLabel, onClick = onClick)
     } else {
-        base.combinedClickable(interactionSource = null, indication = null, role = role, onLongClick = onLongClick, onClick = onClick)
+        base.combinedClickable(interactionSource = null, indication = null, role = role, onClickLabel = onClickLabel, onLongClick = onLongClick, onClick = onClick)
     }
 }
 
@@ -134,9 +137,17 @@ private class PressScaleNode : Modifier.Node(), DrawModifierNode, PointerInputMo
 /**
  * Lớp nổi đè lên nội dung cuộn (thanh nghe thử, gợi ý, dải nút đáy...): nuốt mọi cú chạm trong CẢ khung của nó - kể cả vùng trống và phần đệm -
  * để cú bấm không lọt xuống dòng nằm dưới. Đặt NGOÀI CÙNG chuỗi Modifier (trước `padding`), phần bấm được bên trong vẫn nhận chạm như thường.
- * Máy dò: scripts/ui_parity_rules.py (floating_layer_swallows).
+ *
+ * Lớp KHÔNG chia chạm với anh em nằm dưới: Compose dừng dò ở nút trên cùng đã trúng, nên dòng bên dưới không nhận gì (không bấm, không thu lại,
+ * không giữ lâu). Soát 18-11: bản chia chạm (`sharePointerInputWithSiblings`) nối dòng nằm dưới vào làm CON của lớp trong chuỗi giao sự kiện -
+ * pha Main đi từ dưới lên nên `clickable` của dòng nhận cú nhấn / cú thả TRƯỚC lớp: bấm thân thanh mở bài ở dòng dưới, bấm tab mở dòng dưới.
+ * Không có cách "chỉ giữ cú nhấn" an toàn, nên cú VUỐT đi qua bằng đường khác: [scrollThrough] là trạng thái cuộn của danh sách nằm dưới; lớp tự
+ * kéo danh sách ấy (`scrollable`, cùng chiều và cùng fling như vuốt thẳng trên danh sách). Dải nút đáy của Shell không cần (không đè danh sách
+ * nào mà người nghe muốn vuốt từ đó). Máy dò: scripts/ui_parity_rules.py (L12).
  */
-fun Modifier.floatingLayer(): Modifier = pointerInput(Unit) { detectTapGestures { } }
+fun Modifier.floatingLayer(scrollThrough: ScrollableState? = null): Modifier =
+    (if (scrollThrough != null) this.scrollable(scrollThrough, Orientation.Vertical, reverseDirection = true) else this)
+        .pointerInput(Unit) { detectTapGestures { } }
 
 /** Đầu màn gốc: tiêu đề 24 + dòng phụ ngay dưới (DESIGN.md §6 "Đầu màn"). */
 @Composable

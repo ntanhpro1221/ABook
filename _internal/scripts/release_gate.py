@@ -367,6 +367,12 @@ def checks(confirm_hash: str | None = None) -> list[Check]:
                                 "--configLoader", "runner"], ui, 180),
         Check("gallery-inspect", [node, "scripts/gallery_inspect.mjs", "--theme", "both", "--out", "<run>/gallery"],
               ui, 3600, "gallery", ("gallery-build",)),
+        # Chromium thật bấm vào phần đệm / khe của thanh "Đang nghe thử" đè lên danh sách nhạc (soát 18-11): cú bấm phải ở lại trong thanh.
+        Check("preview-bar", [node, "scripts/check_preview_bar.mjs", "--dist", "dist/gallery", "--out", "<run>/preview-bar"],
+              ui, 600, "preview-bar", ("gallery-build",)),
+        # Chromium thật bấm / chạm / bấm phải / lăn ra ngoài mọi lớp nổi (soát 18-11 tapfix5): chỉ lớp trên cùng đóng, phần tử dưới không nhận gì.
+        Check("outside-taps", [node, "scripts/check_outside_taps.mjs", "--dist", "dist/gallery", "--out", "<run>/outside-taps.json"],
+              ui, 900, "outside-taps", ("gallery-build",)),
         Check("contrast", [node, "scripts/check_contrast.mjs", "--compact"], ui),
         Check("qt-tests", worker_command("qt-tests"), timeout=3000, parser="json"),
         Check("qt-installer", py("desktop_qt/tools/test_installer.py", str(ROOT / "desktop_qt/dist")),
@@ -924,6 +930,11 @@ def qt_tests() -> dict:
             "detail": "Qt: " + (", ".join(failures) if failures else "đủ suite, totals và QML lint")}
 
 
+# Lớp nổi mà cổng phải thử thật (check_outside_taps.mjs): menu modal=false, menu modal, Popover, Popover trong hộp thoại - chuột, chạm, chuột phải.
+OUTSIDE_TAPS_REQUIRED = {"library-sort-menu", "library-sort-menu-touch", "library-sort-menu-right", "book-action-menu-touch", "player-speed-popover",
+                         "player-speed-popover-right", "remote-sleep-in-dialog", "remote-sleep-in-dialog-touch", "remote-sleep-in-dialog-right"}
+
+
 def validate_report(check: Check, execution: Execution, artifact: Path, row: dict | None = None) -> tuple[dict, dict]:
     kind = check.parser
     counts, evidence = {}, {}
@@ -970,6 +981,26 @@ def validate_report(check: Check, execution: Execution, artifact: Path, row: dic
         require(not failed and not evidence["errors"] and not any(s.get("error") for s in stories), "gallery có lỗi/vi phạm luật chặn")
         geometry = evidence["sheetGeometry"]
         require(geometry["trials"] > 0 and geometry["trials"] == geometry["completed"], "gallery thiếu lượt sheet hoàn tất")
+    elif kind == "preview-bar":
+        results = json.loads(artifact.read_text(encoding="utf-8"))
+        cases = {(r["width"], r["theme"]) for r in results}
+        counts = {"cases": len(results), "points": sum(len(r["points"]) for r in results)}
+        if row is not None:
+            row.update(counts=counts, evidence=results)
+        require(cases == {(w, t) for w in (1280, 420) for t in ("light", "dark")} and all(len(r["points"]) >= 4 for r in results),
+                "preview-bar: thiếu khổ / chủ đề hay điểm đệm")
+    elif kind == "outside-taps":
+        evidence = json.loads(artifact.read_text(encoding="utf-8"))
+        results = evidence["results"]
+        ids = [r["id"] for r in results]
+        failed = [r["id"] for r in results if r.get("error") or not (r.get("outside") or {}).get("pass") or (r.get("inside") and not r["inside"].get("pass"))]
+        counts = {"passed": len(results) - len(failed), "failed": len(failed), "scenarios": len(results)}
+        if row is not None:
+            row.update(counts=counts, evidence=evidence)
+        require(ids == evidence.get("scenarios") and len(set(ids)) == len(ids), "outside-taps: thiếu / trùng kịch bản")
+        require({r.get("outside", {}).get("press") for r in results} >= {"touch", "right", "wheel"}, "outside-taps: thiếu chạm / chuột phải / lăn")
+        require(OUTSIDE_TAPS_REQUIRED <= set(ids), "outside-taps: thiếu kịch bản bắt buộc " + ", ".join(sorted(OUTSIDE_TAPS_REQUIRED - set(ids))))
+        require(not failed, "outside-taps: lọt ở " + ", ".join(failed))
     if kind in {"pytest", "vitest"}:
         require(counts.get("passed", 0) > 0 and not any(counts.get(k, 0) for k in ("failed", "error", "xpassed")),
                 "summary có test lỗi hoặc không có test passed: " + json.dumps(counts))
@@ -995,7 +1026,7 @@ def select_checks(definitions: list[Check], only: list[str] | None) -> list[Chec
     return [check for check in definitions if check.name in requested]
 
 
-UI_CHECKS = {"typecheck", "vitest", "ui-build", "gallery-build", "gallery-inspect", "contrast", "sheet-geometry"}
+UI_CHECKS = {"typecheck", "vitest", "ui-build", "gallery-build", "gallery-inspect", "preview-bar", "outside-taps", "contrast", "sheet-geometry"}
 
 
 def directory_link(link: Path, target: Path) -> None:
@@ -1135,6 +1166,12 @@ def run_gate(selected: list[Check], directory: Path, runner=run_process, inject:
         elif check.parser == "gallery":
             command = [shutil.which("node") or "node", "scripts/gallery_inspect.mjs", "--theme", "both", "--out", str(directory / "gallery")]
             artifact = directory / "gallery/findings.json"
+        elif check.parser == "preview-bar":
+            command = [*check.command[:-1], str(directory / "preview-bar")]
+            artifact = directory / "preview-bar/preview-bar-checks.json"
+        elif check.parser == "outside-taps":
+            artifact = directory / "outside-taps.json"
+            command = [*check.command[:-1], str(artifact)]
         # Build frontend artifacts outside the protected audio source tree.
         if check.name == "ui-build":
             command = [*command, "--outDir", str(directory / "ui-static")]

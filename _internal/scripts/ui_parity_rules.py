@@ -695,15 +695,31 @@ def l11_summary_case() -> list[str]:
 # --- L12: a floating layer over scrolling content swallows every tap in its frame -------------------------------------------------
 # Chủ sách 17-11 (Kho nhạc trên OPPO): bấm thanh "Đang nghe thử" thì cú bấm lọt xuống dòng bài nằm dưới. Mọi lớp nổi đè lên nội dung cuộn - thanh
 # nổi, thanh phát nhỏ, lời báo, chip, tấm, dải nút... - phải nuốt cú bấm ở cả vùng trống và phần đệm của nó.
-#  Android: một phần tử đặt bằng `.align(Alignment.Bottom…)` mang trong chính chuỗi Modifier của nó một chỗ bắt chạm (floatingLayer() ngoài cùng,
-#           pressable/clickable/pointerInput/sheetSurface).
+#  Android: một phần tử đặt bằng `.align(Alignment.Bottom…)` - hay `.align(Alignment.<góc / giữa>)` trong một Box có danh sách cuộn - mang trong
+#           chính chuỗi Modifier của nó một chỗ bắt chạm (floatingLayer() ngoài cùng, pressable/clickable/pointerInput/sheetSurface) đứng trước
+#           `padding` đầu tiên. Không node nào chia chạm với anh em nằm dưới
+#           (`sharePointerInputWithSiblings() = true`): soát 18-11, Compose nối dòng nằm dưới vào làm CON của lớp và giao cú bấm cho nó trước.
 #  Web:     một lớp `fixed` / `sticky` / `absolute` không được `pointer-events-none` (trừ trang trí aria-hidden), vì khi ấy cú bấm đi xuyên.
-#  Qt:      một Item nổi (`z:` dương, hay dính đáy `y: root.height - height`) chứa TapShield / MouseArea, hoặc chính nó / kiểu của nó bấm được.
+#           Menu / Popover của Radix chỉ dùng qua bọc chung (shared/DropdownMenu.tsx, shared/Popover.tsx) mà Content gắn lớp chặn ngoài
+#           (outsideShield.ts): bấm ra ngoài chỉ đóng, như Qt / Android - soát 18-11 lần 4 (modal={false} và Popover để cú bấm tới thứ nằm dưới).
+#  Qt:      một Item nổi (`z:` dương, dính đáy `y: root.height - height`, đưa lên Overlay `parent: …overlay`, hay `anchors.bottom: parent.bottom`
+#           cạnh một danh sách cuộn) có TapShield, hoặc chính nó / kiểu của nó là nút, Backdrop hay có TapShield làm con đầu của gốc (một nút bên
+#           trong KHÔNG đủ: chỗ trống quanh nút vẫn lọt - soát 18-11). Popup / Drawer / Menu / Dialog của Qt Quick Controls và lớp WindowLayer cũng
+#           là lớp nổi: phải có TapShield. Nền "bấm ra ngoài thì đóng" là Backdrop (TapHandler giữ riêng), không phải MouseArea hay TapHandler thụ động.
 # Ngoại lệ có lý do riêng ở scripts/ui_parity_rules.json "L12".
 
 L12_ANDROID_CATCH = re.compile(r"\bfloatingLayer\(|\bpressable\b|\bclickable\b|\bcombinedClickable\b|\bpointerInput\b|\bsheetSurface\(")
-L12_QT_CATCH = re.compile(r"TapShield|MouseArea|Interactive|IconButton|Button|TapHandler")
-L12_QT_FLOAT = re.compile(r"^[ \t]*(?:z:\s*[1-9]\d*\b|y:\s*(?:root|parent)\.height\s*-\s*height\s*(?:$|;|-))", re.M)
+L12_QT_CATCH = re.compile(r"TapShield|Backdrop|MouseArea|Interactive|IconButton|Button|TapHandler")
+L12_QT_FLOAT = re.compile(r"^[ \t]*(?:z:\s*[1-9]\d*\b|y:\s*(?:root|parent)\.height\s*-\s*height\s*(?:$|;|-)|parent:\s*[\w.]*\.overlay\b)", re.M)
+# Dính đáy bằng neo: lớp nổi khi khối cha có một danh sách / vùng cuộn anh em (soát 18-11 lần 4: L12 chỉ thấy `y: root.height - height`).
+L12_QT_BOTTOM = re.compile(r"^[ \t]*anchors\.bottom:\s*parent\.bottom\b", re.M)
+L12_QT_SCROLLER = re.compile(r"(?<![\w.])(?:[A-Z]\w*\.)?(?:ListView|GridView|TableView|Flickable|ScrollView)\s*\{")
+# Radix có lớp tự đóng khi nhấn ra ngoài: chỉ dùng qua bọc chung có lớp chặn ngoài.
+L12_WEB_WRAPPERS = {"@radix-ui/react-dropdown-menu": "ui/src/shared/DropdownMenu.tsx", "@radix-ui/react-popover": "ui/src/shared/Popover.tsx"}
+# Kiểu nổi của Qt Quick Controls (cửa sổ con vẽ trên Overlay): `C.Popup {`, `Popup {`, `T.Drawer {`... (không bắt `ShortcutsDialog`, `CastMenu`).
+L12_QT_POPUP = re.compile(r"(?<![\w.])(?:[A-Z]\w*\.)?(?:Popup|Drawer|Menu|Dialog)\s*\{")
+# Node chia chạm với anh em nằm dưới (Compose): dòng nằm dưới thành con của lớp trong chuỗi giao sự kiện và nhận cú bấm TRƯỚC lớp.
+L12_ANDROID_SHARE = re.compile(r"sharePointerInputWithSiblings\(\)\s*(?::\s*Boolean\s*)?(?:=\s*true\b|\{[^{}]*\breturn\s+true\b)")
 
 
 def _code_only(text: str) -> str:
@@ -746,12 +762,50 @@ def l12_android_hits() -> list[tuple[str, int, str, bool]]:
         text = _code_only(path.read_text(encoding="utf-8"))
         for m in re.finditer(r"\.align\(", text):
             _arg_start, arg_end = _argument(text, m.end())
-            if "Alignment.Bottom" not in text[m.end():arg_end]:
-                continue
+            where = text[m.end():arg_end]
+            # Bottom: thanh / dải đáy luôn là lớp nổi. Góc / giữa của Box (TopEnd, Center...): chỉ khi Box ấy có danh sách cuộn (đè lên nội dung cuộn);
+            # `Alignment.CenterHorizontally` / `End` là căn trong Column / Row, không nổi.
+            if "Alignment.Bottom" not in where:
+                box = re.search(r"Alignment\.(?:Top|Center)(?:Start|Center|End)?\b", where)
+                if not box or re.search(r"Alignment\.Center(?:Horizontally|Vertically)\b", where) or not _kt_over_scroll(text, m.start()):
+                    continue
             start, end = _argument(text, m.start())
             chain = " ".join(text[start:end].split())
-            hits.append((rel(path), text.count("\n", 0, m.start()) + 1, chain, bool(L12_ANDROID_CATCH.search(chain))))
+            hits.append((rel(path), text.count("\n", 0, m.start()) + 1, chain, l12_android_catches(chain)))
     return hits
+
+
+def _kt_over_scroll(text: str, at: int) -> bool:
+    """Phần tử ở `at` nằm trong khối nội dung `{...}` (của Box) có một danh sách cuộn anh em."""
+    depth, i = 0, at
+    while i > 0:
+        i -= 1
+        if text[i] == "}":
+            depth += 1
+        elif text[i] == "{":
+            if depth == 0:
+                break
+            depth -= 1
+    # Nhánh của `when { ... }`: phần tử THAY danh sách (đang tải / lỗi), không đè lên nó.
+    if re.search(r"\bwhen\s*(?:\([^()]*\))?\s*$", text[max(0, i - 200):i]):
+        return False
+    depth, j = 0, i
+    while j < len(text):
+        if text[j] == "{":
+            depth += 1
+        elif text[j] == "}":
+            depth -= 1
+            if depth == 0:
+                break
+        j += 1
+    return bool(re.search(r"\bLazy(?:Column|Row|VerticalGrid|HorizontalGrid|VerticalStaggeredGrid)\(|\.(?:vertical|horizontal)Scroll\(", text[i:j]))
+
+
+def l12_android_catches(chain: str) -> bool:
+    """Chỗ bắt chạm phải đứng TRƯỚC `padding` đầu tiên của chuỗi: `.padding(...).pressable {}` để phần đệm cho cú bấm lọt xuống (soát 17-11)."""
+    catch = L12_ANDROID_CATCH.search(chain)
+    pad = re.search(r"\.padding\(", chain)
+    return bool(catch) and (pad is None or catch.start() < pad.start())
 
 
 def l12_web_hits() -> list[tuple[str, int, str]]:
@@ -794,7 +848,7 @@ def _qt_block(text: str, at: int) -> tuple[str, str]:
 
 
 def _qt_catches(name: str, seen: set[str] | None = None) -> bool:
-    """Kiểu QML `name` tự bắt cú bấm: là / dựng trên nút, hay tệp của nó có TapShield / MouseArea."""
+    """Kiểu QML `name` tự bắt cú bấm trong CẢ khung: là / dựng trên nút, hay tệp của nó có TapShield. Một MouseArea ở đâu đó trong tệp không đủ."""
     if L12_QT_CATCH.fullmatch(name):
         return True
     seen = seen if seen is not None else set()
@@ -803,9 +857,24 @@ def _qt_catches(name: str, seen: set[str] | None = None) -> bool:
         return False
     seen.add(name)
     text = _code_only(path.read_text(encoding="utf-8"))
-    if re.search(r"\b(?:TapShield|MouseArea)\b", text):
-        return True
-    root = re.search(r"^([A-Z]\w*)\s*\{", text, re.M)
+    root = re.search(r"^([A-Z][\w.]*)\s*\{", text, re.M)
+    if root:
+        # Soát 18-11 lần 4: một TapShield ở đâu đó trong tệp (một bảng con) không làm cả khung của kiểu bắt chạm. Phải là con đầu của gốc (hay
+        # Backdrop phủ cả cửa sổ), hoặc con đầu của bảng chính - con Item đầu của gốc (Sidebar: panel; PlayerNotice: viên thuốc mang cỡ của gốc).
+        body = _qt_braces(text, root.end() - 1)
+        kids = [k for k in _qt_children(body) if not L12_QT_NOT_ITEM.fullmatch(k[1])]
+        if kids and kids[0][1] in ("TapShield", "Backdrop"):
+            return True
+        if kids:
+            panel = _qt_braces(body, body.find("{", kids[0][0]))
+            inner = [k for k in _qt_children(panel) if not L12_QT_NOT_ITEM.fullmatch(k[1])]
+            if inner and inner[0][1] == "TapShield":
+                return True
+    # Chính nó là điều khiển phủ cả khung (thanh tua: MouseArea phủ kín có việc khi bấm / kéo).
+    for m in re.finditer(r"(?<![\w.])MouseArea\s*\{", text):
+        block = _qt_braces(text, m.end() - 1)
+        if re.search(r"anchors\.fill:\s*parent\b", block) and re.search(r"\bon(?:Pressed|Clicked|PositionChanged)\s*:", block):
+            return True
     return bool(root and _qt_catches(root.group(1), seen))
 
 
@@ -813,30 +882,220 @@ def l12_qt_hits() -> list[tuple[str, int, str, bool]]:
     hits = []
     for path in qt_files():
         text = _code_only(path.read_text(encoding="utf-8"))
-        for m in L12_QT_FLOAT.finditer(text):
+        floats = list(L12_QT_FLOAT.finditer(text)) + [m for m in L12_QT_BOTTOM.finditer(text) if _qt_over_scroll(text, m.start())]
+        for m in floats:
             kind, block = _qt_block(text, m.start())
             name = re.search(r"^\s*(?:id|objectName):\s*\"?(\w+)", block[1:], re.M)
             label = f"{kind}#{name.group(1)}" if name else kind
-            caught = _qt_catches(kind) or any(_qt_catches(t) for t in re.findall(r"\b([A-Z]\w*)\s*\{", block))
+            # Soát 18-11: một nút bên trong khối (`Rectangle { z: 2; IconButton {} }`) không làm chỗ trống quanh nó thôi lọt.
+            caught = _qt_catches(kind) or bool(re.search(r"(?<![\w.])TapShield\s*\{", block))
             hits.append((rel(path), text.count("\n", 0, m.start()) + 1, label, caught))
     return hits
+
+
+def _qt_over_scroll(text: str, at: int) -> bool:
+    """Object có thuộc tính ở `at` có một anh em (con trực tiếp của cùng khối cha) là danh sách / vùng cuộn mà không neo đáy lên đầu lớp
+    (`anchors.bottom: <lớp>.top` thì danh sách dừng trên lớp, không bị đè)."""
+    def opening(k: int) -> int:
+        depth = 0
+        while k > 0:
+            k -= 1
+            if text[k] == "}":
+                depth += 1
+            elif text[k] == "{":
+                if depth == 0:
+                    return k
+                depth -= 1
+        return -1
+    own = opening(at)
+    head = re.search(r"[A-Za-z_][\w.]*\s*$", text[:own]) if own > 0 else None
+    outer = opening(head.start()) if head else -1
+    if outer < 0:
+        return False
+    parent = _qt_braces(text, outer)
+    mine = _qt_braces(text, own)
+    # Chỉ dải mang điều khiển (thanh nút nổi), không phải chính vùng cuộn hay dải mờ trang trí / khung chờ.
+    if L12_QT_SCROLLER.search(mine) or not re.search(r"(?<![\w.])(?:Interactive|IconButton|\w*Button|MouseArea|TapHandler)\s*\{", mine):
+        return False
+    for kid_at, _kind in _qt_children(parent):
+        brace = parent.find("{", kid_at)
+        # Vùng cuộn khai báo SAU lớp thì vẽ đè lên lớp, không bị lớp đè.
+        if outer + brace >= own or not L12_QT_SCROLLER.match(parent, kid_at):
+            continue
+        if re.search(r"^[ \t]*anchors\.bottom:\s*(?!parent\b)\w+\.top\b", _qt_braces(parent, brace), re.M):
+            continue
+        return True
+    return False
+
+
+# Kiểu QML không phải Item (không vào `children`): đứng trước TapShield vẫn để khiên là con đầu tiên.
+L12_QT_NOT_ITEM = re.compile(r"\w*Handler|\w*Animation|Behavior|Connections|Listen|Timer|QtObject|Binding|Shortcut|Reveal|ClockUser|Component")
+
+
+def _qt_children(block: str) -> list[tuple[int, str]]:
+    """Các object con trực tiếp (vị trí, kiểu) của khối QML `{...}`: bỏ giá trị thuộc tính (`transform: Translate {}`), `Behavior on x {}`."""
+    out, depth = [], 0
+    for m in re.finditer(r"[{}]|(?<![\w.:])([A-Z]\w*)\s*\{", block):
+        if m.group(0) == "{":
+            depth += 1
+        elif m.group(0) == "}":
+            depth -= 1
+        else:
+            if depth == 1:
+                line = block[block.rfind("\n", 0, m.start()) + 1:m.start()]
+                if not re.search(r"\w\s*:\s*$", line):
+                    out.append((m.start(), m.group(1)))
+            depth += 1
+    return out
+
+
+def l12_qt_layer_problems() -> list[str]:
+    """Nút trong lớp có TapShield phải giữ riêng cú bấm (đo 17-11: TapHandler thụ động để cú bấm tới cả Interactive nằm dưới lớp). Cách sửa chung:
+    Interactive tự bật `holdsTap` khi một tổ tiên có TapShield làm con ĐẦU TIÊN. Luật giữ cho cách ấy còn đúng: Interactive còn dò khiên, khiên luôn
+    là con đầu tiên, khiên không nuốt nút Back, và không còn lớp nào tự chặn bằng `MouseArea { anchors.fill: parent }` trơn (nút trong lớp ấy không
+    được bật holdsTap)."""
+    problems = []
+    inter = ROOT / QT / "Interactive.qml"
+    text = _code_only(inter.read_text(encoding="utf-8")) if inter.exists() else ""
+    if not (re.search(r"instanceof\s+TapShield", text) and re.search(r"gesturePolicy:\s*root\.holdsTap\b", text)
+            and re.search(r"holdsTap:\s*exclusiveTap\s*\|\|", text)):
+        problems.append("L12 Qt: Interactive.qml không còn tự giữ riêng cú bấm trong lớp có TapShield (holdsTap / instanceof TapShield / gesturePolicy)")
+    shield = ROOT / QT / "TapShield.qml"
+    if shield.exists():
+        body = _code_only(shield.read_text(encoding="utf-8"))
+        if re.search(r"AllButtons|BackButton|ForwardButton", body) or not re.search(r"ReleaseWithinBounds", body):
+            problems.append("L12 Qt: TapShield.qml phải giữ riêng cú bấm trái/phải/giữa (ReleaseWithinBounds) và để nút Back / Forward đi tiếp")
+    backdrop = ROOT / QT / "Backdrop.qml"
+    if backdrop.exists():
+        body = _code_only(backdrop.read_text(encoding="utf-8"))
+        # Soát 18-11 lần 4: nền thiếu HoverHandler thì dòng dưới màn mờ vẫn sáng hover, hiện chú thích, con trỏ thành bàn tay.
+        if re.search(r"AllButtons|BackButton|ForwardButton", body) or not re.search(r"ReleaseWithinBounds", body) or not re.search(r"\bHoverHandler\b", body):
+            problems.append("L12 Qt: Backdrop.qml phải giữ riêng cú bấm (ReleaseWithinBounds), giữ con trỏ (HoverHandler) và để nút Back / Forward đi tiếp")
+    for path in qt_files():
+        text = _code_only(path.read_text(encoding="utf-8"))
+        for m in re.finditer(r"(?<![\w.])TapShield\s*\{", text):
+            if path.name == "TapShield.qml":
+                continue
+            depth, start = 0, m.start()
+            while start > 0:
+                start -= 1
+                if text[start] == "}":
+                    depth += 1
+                elif text[start] == "{":
+                    if depth == 0:
+                        break
+                    depth -= 1
+            _kind, block = _qt_block(text, m.start())
+            kids = [k for k in _qt_children(block) if not L12_QT_NOT_ITEM.fullmatch(k[1])]
+            first = kids[0] if kids else None
+            if not first or first[1] != "TapShield" or start + first[0] != m.start():
+                problems.append(f"L12 {rel(path)}:{text.count(chr(10), 0, m.start()) + 1}: TapShield không là con đầu tiên của lớp: nút trong lớp không "
+                                "tự giữ riêng cú bấm (Interactive chỉ nhìn con đầu tiên)")
+        for m in re.finditer(r"(?<![\w.])MouseArea\s*\{", text):
+            block = _qt_braces(text, m.end() - 1)
+            if not re.search(r"anchors\.fill:\s*parent\b", block) or re.search(r"acceptedButtons:\s*Qt\.NoButton\b", block):
+                continue
+            line = text.count(chr(10), 0, m.start()) + 1
+            if re.search(r"\bon(?:Pressed|Clicked|Released)\s*:[^\n]*\b(?:close|dismiss)\w*\(", block):
+                problems.append(f"L12 {rel(path)}:{line}: nền bấm-ra-ngoài là MouseArea: TapHandler thụ động của thứ nằm dưới vẫn thấy cú bấm, nên bấm ra "
+                                "ngoài vừa đóng lớp vừa kích hoạt thứ dưới - dùng Backdrop")
+            elif not re.search(r"\bon(?:Pressed|Clicked|Released|DoubleClicked|PressAndHold|Wheel|PositionChanged)\s*:|\bdrag\.target\s*:", block):
+                problems.append(f"L12 {rel(path)}:{line}: `MouseArea {{ anchors.fill: parent }}` chỉ để chặn cú bấm của lớp: dùng TapShield (con đầu tiên) "
+                                "để nút trong lớp tự giữ riêng cú bấm và nút Back đi tiếp")
+        for m in re.finditer(r"(?<![\w.])TapHandler\s*\{", text):
+            block = _qt_braces(text, m.end() - 1)
+            if re.search(r"\bon(?:Tapped|SingleTapped|Pressed|PressedChanged)\s*:[^\n]*\b(?:close|dismiss)\w*\(", block) \
+                    and not re.search(r"gesturePolicy:\s*TapHandler\.(?:ReleaseWithinBounds|WithinBounds)\b", block):
+                problems.append(f"L12 {rel(path)}:{text.count(chr(10), 0, m.start()) + 1}: nền bấm-ra-ngoài là TapHandler thụ động (DragThreshold): thứ nằm "
+                                "dưới vẫn nhận cú bấm - dùng Backdrop")
+        for m in L12_QT_POPUP.finditer(text):
+            block = _qt_braces(text, m.end() - 1)
+            if not re.search(r"(?<![\w.])TapShield\s*\{", block):
+                problems.append(f"L12 {rel(path)}:{text.count(chr(10), 0, m.start()) + 1}: lớp nổi {m.group(0)[:-1].strip()} không có TapShield: hàng / chỗ "
+                                "trống của nó để cú bấm tới thứ nằm dưới (đặt TapShield làm con đầu của contentItem)")
+            # Soát 18-11 lần 4: Popup không modal đóng khi nhấn ra ngoài (mặc định của closePolicy) nhưng để cú nhấn ấy đi tiếp xuống trang.
+            policy = re.search(r"closePolicy:\s*([^\n]*)", block)
+            if not re.search(r"\bmodal:\s*true\b", block) and (policy is None or "CloseOnPressOutside" in policy.group(1)):
+                problems.append(f"L12 {rel(path)}:{text.count(chr(10), 0, m.start()) + 1}: {m.group(0)[:-1].strip()} không modal đóng khi nhấn ra ngoài: cú nhấn "
+                                "ấy vẫn tới thứ nằm dưới - bỏ CloseOnPressOutside, đặt Backdrop dưới bảng")
+        root = re.search(r"^([A-Z][\w.]*)\s*\{", text, re.M)
+        if root and root.group(1) == "WindowLayer" and not re.search(r"(?<![\w.])TapShield\s*\{", text):
+            problems.append(f"L12 {rel(path)}: lớp WindowLayer không có TapShield: bảng của nó để cú bấm tới thứ nằm dưới")
+    return problems
+
+
+def _qt_braces(text: str, at: int) -> str:
+    """Khối `{...}` mở ở vị trí `at`."""
+    depth = 0
+    for j in range(at, len(text)):
+        if text[j] == "{":
+            depth += 1
+        elif text[j] == "}":
+            depth -= 1
+            if depth == 0:
+                return text[at:j + 1]
+    return text[at:]
+
+
+def l12_android_layer_problems() -> list[str]:
+    """floatingLayer phải CHẶN (không chia chạm với anh em) - soát 18-11: bản chia chạm làm dòng nằm dưới nhận cú bấm trước lớp, kể cả dưới thanh tab
+    và thanh phát nhỏ. Cú vuốt đi qua bằng `scrollThrough` (lớp tự kéo danh sách), không bằng chia chạm."""
+    problems = []
+    for path in and_files():
+        text = _code_only(path.read_text(encoding="utf-8"))
+        for m in L12_ANDROID_SHARE.finditer(text):
+            problems.append(f"L12 {rel(path)}:{text.count(chr(10), 0, m.start()) + 1}: node chia chạm với anh em nằm dưới (sharePointerInputWithSiblings): "
+                            "Compose giao cú bấm cho dòng nằm dưới TRƯỚC lớp - lớp nổi phải chặn hết")
+    components = ROOT / AND / "components/Components.kt"
+    text = _code_only(components.read_text(encoding="utf-8")) if components.exists() else ""
+    m = re.search(r"fun Modifier\.floatingLayer\(", text)
+    if not m:
+        problems.append("L12 Android: thiếu Modifier.floatingLayer() ở components/Components.kt")
+    else:
+        body = text[m.start():text.find("\n\n", m.start()) if "\n\n" in text[m.start():] else len(text)]
+        if not re.search(r"\bpointerInput\([^)]*\)\s*\{\s*(?:detectTapGestures|awaitEachGesture)\b", body):
+            problems.append("L12 Android: Modifier.floatingLayer() không còn bắt chạm bằng pointerInput { detectTapGestures } (chặn hết trong khung của lớp)")
+    return problems
+
+
+def l12_web_layer_problems() -> list[str]:
+    """Menu / Popover của Radix không modal để cú bấm ra ngoài tới thứ nằm dưới (soát 18-11 lần 4). Mọi nơi dùng qua bọc chung; Content của bọc gắn
+    lớp chặn ngoài (useOutsideShield) và lớp chặn được chèn ngay dưới bảng."""
+    problems = []
+    for path in web_files():
+        name = rel(path)
+        if name in L12_WEB_WRAPPERS.values() or re.search(r"\.test\.[jt]sx?$", name):
+            continue
+        text = path.read_text(encoding="utf-8")
+        for radix, wrapper in L12_WEB_WRAPPERS.items():
+            for m in re.finditer(r"[\"'`]" + re.escape(radix) + r"[\"'`]", text):
+                problems.append(f"L12 {name}:{text.count(chr(10), 0, m.start()) + 1}: dùng {radix} thẳng - đi qua {wrapper} (bấm ra ngoài chỉ đóng)")
+    for wrapper in L12_WEB_WRAPPERS.values():
+        path = ROOT / wrapper
+        if not path.exists() or not re.search(r"export const Content = forwardRef[\s\S]*?ref=\{useOutsideShield\(ref\)\}", path.read_text(encoding="utf-8")):
+            problems.append(f"L12 {wrapper}: Content không gắn lớp chặn ngoài (useOutsideShield)")
+    shield = ROOT / "ui/src/shared/outsideShield.ts"
+    body = shield.read_text(encoding="utf-8") if shield.exists() else ""
+    if not (re.search(r"wrapper\.before\(", body) and re.search(r"position:\s*\"fixed\"", body)):
+        problems.append("L12 ui/src/shared/outsideShield.ts: lớp chặn ngoài phải phủ cả cửa sổ (fixed) và nằm ngay dưới bảng (wrapper.before)")
+    return problems
 
 
 def l12_floating_layers() -> list[str]:
     cfg = config().get("L12", {})
     problems, used = [], set()
     allow = {(a["platform"], a["file"], a["what"]) for a in cfg.get("allow", [])}
-    components = ROOT / AND / "components/Components.kt"
-    if not components.exists() or "fun Modifier.floatingLayer()" not in components.read_text(encoding="utf-8"):
-        problems.append("L12 Android: thiếu Modifier.floatingLayer() ở components/Components.kt")
+    problems += l12_android_layer_problems()
     if not (ROOT / QT / "TapShield.qml").exists():
         problems.append("L12 Qt: thiếu desktop_qt/qml/TapShield.qml")
+    problems += l12_qt_layer_problems()
+    problems += l12_web_layer_problems()
     for path, line, chain, caught in l12_android_hits():
         key = ("android", path, chain)
         if key in allow:
             used.add(key)
         elif not caught:
-            problems.append(f"L12 {path}:{line}: lớp nổi đáy không nuốt chạm (thêm .floatingLayer() ngoài cùng): {chain[:120]}")
+            problems.append(f"L12 {path}:{line}: lớp nổi không nuốt chạm (thêm .floatingLayer() ngoài cùng): {chain[:120]}")
     for path, line, classes in l12_web_hits():
         key = ("web", path, classes)
         if key in allow:
@@ -848,7 +1107,7 @@ def l12_floating_layers() -> list[str]:
         if key in allow:
             used.add(key)
         elif not caught:
-            problems.append(f"L12 {path}:{line}: Item nổi {label} không có TapShield / MouseArea: cú bấm vào chỗ trống lọt xuống dưới")
+            problems.append(f"L12 {path}:{line}: Item nổi {label} không có TapShield: cú bấm vào chỗ trống lọt xuống dưới")
     problems += [f"L12 allow thừa (đã hết vi phạm): {p} {f} {w}" for p, f, w in sorted(allow - used)]
     return problems
 

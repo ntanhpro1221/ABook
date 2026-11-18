@@ -25,6 +25,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -116,6 +117,11 @@ fun MusicScreen(
     DisposableEffect(state) { onDispose { state.stopPreview() } }
     var part by rememberSaveable { mutableStateOf(if (pick != null) MusicPart.Library else initialPart) }
     LaunchedEffect(ui.libraryRequest) { if (ui.libraryRequest > 0) part = MusicPart.Library }
+    // Danh sách của phần đang hiện ở cấp màn: thanh "Đang nghe thử" nổi trên nó kéo được chính danh sách ấy (floatingLayer scrollThrough). Khoá theo
+    // phần và theo việc danh sách có đang hiện: đổi "Đã lưu" <-> "Kho nhạc" (hay danh sách bị thay bởi "Đang tải" / lỗi) thì về đầu danh sách - như
+    // web (Tabs tháo nội dung phần cũ) và Qt (một ListView, đổi model) - và vẫn giữ chỗ cuộn khi xoay màn.
+    val listShown = !ui.loading && ui.error.isEmpty()
+    val list = rememberSaveable(part, listShown, saver = LazyListState.Saver) { LazyListState() }
     Box(modifier.fillMaxSize().testTag("music_screen")) {
         androidx.compose.foundation.layout.BoxWithConstraints(Modifier.fillMaxSize()) {
         val headScroll = androidx.compose.foundation.rememberScrollState()
@@ -145,12 +151,15 @@ fun MusicScreen(
             when {
                 ui.loading -> Caption(S.s_dang_tai_465b1987, Modifier.padding(horizontal = Dim.margin).testTag("music_loading"))
                 ui.error.isNotEmpty() -> InlineProblem(ui.error, state::open, "music_error", Modifier.padding(horizontal = Dim.margin))
-                part == MusicPart.Saved -> SavedPart(ui, state, sheets, onMyMusic)
-                else -> LibraryPart(ui, state, sheets, pick)
+                part == MusicPart.Saved -> SavedPart(ui, state, sheets, onMyMusic, list)
+                else -> LibraryPart(ui, state, sheets, pick, list)
             }
         }
         }
-        PreviewBar(ui, state, Modifier.align(Alignment.BottomCenter).floatingLayer()) { link -> openTrack(sheets, state, link, pick) }
+        // Lớp nổi nuốt cú bấm (không lọt xuống dòng dưới) và tự kéo danh sách đang hiện khi vuốt bắt đầu trên thanh / lề / khe đáy.
+        PreviewBar(ui, state, Modifier.align(Alignment.BottomCenter).floatingLayer(list)) { link ->
+            openTrack(sheets, state, link, pick)
+        }
         if (ui.meteredAsk.isNotEmpty()) {
             LaunchedEffect(ui.meteredAsk) {
                 val links = ui.meteredAsk
@@ -173,13 +182,12 @@ internal fun PreviewProblem(ui: LibraryUi, modifier: Modifier = Modifier, retry:
 }
 
 @Composable
-private fun SavedPart(ui: LibraryUi, state: LibraryState, sheets: SheetHost, onMyMusic: (() -> Unit)?) {
+private fun SavedPart(ui: LibraryUi, state: LibraryState, sheets: SheetHost, onMyMusic: (() -> Unit)?, list: LazyListState) {
     val tracks = ui.savedTracks()
     val summary = ui.savedSummary()
     // Giữ dòng cuối khi bài tải cuối cùng bị bỏ: dòng thu lại với chữ cũ thay vì chớp trống.
     val lastSummary = remember { mutableStateOf("") }
     SideEffect { if (summary != null) lastSummary.value = summary }
-    val list = rememberLazyListState()
     LazyColumn(
         Modifier.fillMaxSize().testTag("music_saved").fadeEdges(list),
         state = list,
@@ -209,9 +217,8 @@ private fun SavedPart(ui: LibraryUi, state: LibraryState, sheets: SheetHost, onM
 }
 
 @Composable
-private fun LibraryPart(ui: LibraryUi, state: LibraryState, sheets: SheetHost, pick: PickTarget?) {
+private fun LibraryPart(ui: LibraryUi, state: LibraryState, sheets: SheetHost, pick: PickTarget?, list: LazyListState) {
     val index = ui.index ?: return
-    val list = rememberLazyListState()
     val filters = ui.filters
     val controls: @Composable androidx.compose.foundation.layout.ColumnScope.() -> Unit = {
         SearchField(filters.q, state::setQuery, Modifier.padding(horizontal = Dim.margin))
@@ -379,17 +386,28 @@ private fun ChipOptions(title: String, options: List<Label>, value: String, onPi
  */
 @Composable
 private fun PreviewBar(ui: LibraryUi, state: LibraryState, modifier: Modifier = Modifier, onOpen: (String) -> Unit) {
-    val link = ui.previewing ?: return
-    val track = ui.index?.byLink?.get(link) ?: return
+    val link = ui.previewing
+    val track = link?.let { ui.index?.byLink?.get(it) }
+    val status = if (ui.previewLoading) S.s_buffering else if (ui.previewPaused) S.s_music_paused else S.s_dang_nghe_thu_f1fb4cba
+    // Hiện / ẩn có chuyển động như MotionPresence (web) và Reveal (Qt): thanh đang mờ đi giữ bài nó vừa hiện (soát 17-11: trước bật / tắt cứng).
+    SwapContent(if (link != null && track != null) Triple(link, track, status) else null, contentKey = { shown -> shown != null }, modifier = modifier) { shown ->
+        if (shown != null) PreviewBarBody(shown.first, shown.second, shown.third, state, onOpen)
+    }
+}
+
+@Composable
+private fun PreviewBarBody(link: String, track: MusicLibrary.Track, status: String, state: LibraryState, onOpen: (String) -> Unit) {
     val colors = Abook.colors
+    val line = listOf(status, track.title).dotJoined()
     Row(
-        modifier.padding(horizontal = Dim.margin).padding(bottom = navigationClearance() + Dim.s8).fillMaxWidth()
-            .pressable { onOpen(link) }.semantics { contentDescription = S.s_mo_0_7a5716e0(track.title) }
+        Modifier.padding(horizontal = Dim.margin).padding(bottom = navigationClearance() + Dim.s8).fillMaxWidth()
+            // Tên đọc = chính dòng chữ (trạng thái · tên bài): "Mở <tên>" từng làm mất "Đang đệm / Đã tạm dừng" (soát 17-11); việc "Mở" là nhãn hành động.
+            .pressable(onClickLabel = S.s_mo_741bd2c2) { onOpen(link) }.semantics { contentDescription = line }
             .clip(RoundedCornerShape(Dim.radiusControl)).background(colors.panel).border(1.dp, colors.line, RoundedCornerShape(Dim.radiusControl))
             .padding(start = Dim.s16).testTag("preview_bar"),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        BasicText(listOf(if (ui.previewLoading) S.s_buffering else if (ui.previewPaused) S.s_music_paused else S.s_dang_nghe_thu_f1fb4cba, track.title).dotJoined(), style = Abook.type.label, modifier = Modifier.weight(1f).padding(vertical = Dim.s12))
+        BasicText(line, style = Abook.type.label, modifier = Modifier.weight(1f).padding(vertical = Dim.s12))
         Box(
             Modifier.size(Dim.touch).pressable { state.stopPreview() }.semantics { contentDescription = S.s_dung_nghe_thu_41a2925b }.testTag("preview_stop"),
             contentAlignment = Alignment.Center,

@@ -2120,7 +2120,6 @@ internal object S {
     const val s_mien_phi_100_000_ky_tu_moi_thang_90b8153a = "Miễn phí 100.000 ký tự mỗi tháng"
     const val s_mien_phi_50_000_ky_tu_trong_thang_dau_a4a44d1b = "Miễn phí 50.000 ký tự trong tháng đầu"
     const val s_mien_phi_moi_thang_4_trieu_ky_tu_giong_sta_718565c1 = "Miễn phí mỗi tháng: 4 triệu ký tự giọng Standard, 1 triệu WaveNet / Neural2"
-    fun s_mo_0_7a5716e0(p0: Any?): String = "Mở " + p0.toString()
     const val s_mo_741bd2c2 = "Mở"
     fun s_mo_bang_chia_se_nhat_ky_0_byte_3fd57b21(p0: Any?): String = "mở bảng chia sẻ nhật ký (" + p0.toString() + " byte)"
     const val s_mo_cai_dat_60ab929f = "Mở cài đặt"
