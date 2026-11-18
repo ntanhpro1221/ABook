@@ -1,0 +1,104 @@
+{
+ "tree": "5c008b85a",
+ "sha256": "f3932dd8d5520410f322741ef556a4d85286ae9e71af9e14d56f728b2ce74b45",
+ "snapshot": {
+  "lines": [
+   {
+    "line": "c1s1",
+    "speaker": "NARRATOR",
+    "voiceKey": "narrator",
+    "preset": "Đức Trí",
+    "profileSeed": 601636852,
+    "seed": 1513685393
+   },
+   {
+    "line": "c1s2",
+    "speaker": "Rita",
+    "voiceKey": "vieneu@3.8.3/Thục Đoan",
+    "preset": "Thục Đoan",
+    "profileSeed": 750284492,
+    "seed": 675756269
+   },
+   {
+    "line": "c1s3",
+    "speaker": "Keiji",
+    "voiceKey": "vieneu@3.8.3/Phạm Tuyên",
+    "preset": "Phạm Tuyên",
+    "profileSeed": 1522862088,
+    "seed": 775528529
+   },
+   {
+    "line": "c1s4",
+    "speaker": "Cha Rita",
+    "voiceKey": "vieneu@3.8.3/Xuân Vĩnh",
+    "preset": "Xuân Vĩnh",
+    "profileSeed": 174345721,
+    "seed": 1460106761
+   },
+   {
+    "line": "c1s5",
+    "speaker": "Anh trai",
+    "voiceKey": "vieneu@3.8.3/Thiền Tâm Đức",
+    "preset": "Thiền Tâm Đức",
+    "profileSeed": 1352486946,
+    "seed": 1689892496
+   },
+   {
+    "line": "c1s6",
+    "speaker": "NARRATOR",
+    "voiceKey": "narrator",
+    "preset": "Đức Trí",
+    "profileSeed": 601636852,
+    "seed": 737109931
+   },
+   {
+    "line": "c2s1",
+    "speaker": "Rita",
+    "voiceKey": "vieneu@3.8.3/Thục Đoan",
+    "preset": "Thục Đoan",
+    "profileSeed": 750284492,
+    "seed": 1057636538
+   },
+   {
+    "line": "c2s2",
+    "speaker": "Cha Rita",
+    "voiceKey": "vieneu@3.8.3/Xuân Vĩnh",
+    "preset": "Xuân Vĩnh",
+    "profileSeed": 174345721,
+    "seed": 1303115422
+   },
+   {
+    "line": "c2s3",
+    "speaker": "Em trai",
+    "voiceKey": "vieneu@3.8.3/Adam",
+    "preset": "Adam",
+    "profileSeed": 427295862,
+    "seed": 929780495
+   },
+   {
+    "line": "c2s4",
+    "speaker": "Keiji",
+    "voiceKey": "vieneu@3.8.3/Phạm Tuyên",
+    "preset": "Phạm Tuyên",
+    "profileSeed": 1522862088,
+    "seed": 146425100
+   },
+   {
+    "line": "c2s5",
+    "speaker": "NARRATOR",
+    "voiceKey": "narrator",
+    "preset": "Đức Trí",
+    "profileSeed": 601636852,
+    "seed": 633827648
+   }
+  ],
+  "characters": [
+   "ANH TRAI",
+   "CHA RITA",
+   "EM TRAI",
+   "KEIJI",
+   "NARRATOR",
+   "RITA"
+  ]
+ }
+}
