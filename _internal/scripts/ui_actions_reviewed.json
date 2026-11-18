@@ -3879,13 +3879,13 @@
     "id": "57d9fdfa0d79b9ec8104",
     "kind": "pending",
     "path": "ui/src/shared/ui.tsx",
-    "line": 89,
+    "line": 90,
     "statement": "export function busyClick<E extends { preventDefault: () => void }>(loading: boolean | undefined, onClick: ((event: E) => void) | undefined) {",
     "occurrence": 1,
-    "source_sha256": "c73b9f234201534628ae328a42a066fcdd6dc6e9e0d614ff6fe54f2128a0e8d4",
+    "source_sha256": "e6769d0342a685ea79eb3278152ab3b7778041dd45f2f1e36a5b24e3a68aa398",
     "disposition": "internal",
     "guard": "Async interface/helper boundary; concrete activation inventoried separately",
-    "reason": "This signature supplies work to a model or component; declaring it starts no user operation. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
+    "reason": "This signature supplies work to a model or component; declaring it starts no user operation. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Combined-source review (tapthru 18-11, ce8096487): ui.tsx only gained the pressedForeignShield import and the Dialog / Sheet outside-press guard; this action and its guard are unchanged."
   },
   {
     "id": "55eac8835610195bed03",
@@ -17328,15 +17328,15 @@
     "source_sha256": "133d3cfafcb8637ed680b96881d47f7c323494171a33e5fda5850f28e1f9fdb5"
   },
   {
-    "id": "c1829920e2cc36206c01",
+    "id": "9470ccde9eaed30e6bd3",
     "kind": "destructive",
     "path": "ui/src/shared/outsideShield.ts",
-    "line": 25,
-    "statement": "return () => { watch.disconnect(); cover.remove(); };",
+    "line": 41,
+    "statement": "if (gone && !held) { cover.remove(); return; }",
     "occurrence": 1,
-    "source_sha256": "8718fdafdee1ceb4e01933266852b856b5725d48f872d9abf5ee57b8453d8a36",
+    "source_sha256": "134d0351e482f6e0dee96c050273449f42e0d9e0087908710fd69c7f7633e092",
     "disposition": "internal",
-    "guard": "effect cleanup of the shield it created (useOutsideShield): runs only when the menu / popover content leaves the tree",
+    "guard": "sync() of the shield this module created: removes it only after its menu / popover left the tree (gone) and no press that started on it is still held",
     "reason": "Removes the transparent outside-shield <div> this module inserted under an open menu / popover; no user data, no server state, nothing to confirm or undo."
   }
 ]
