@@ -4179,13 +4179,13 @@
     "id": "12f2477a2e0098e564e0",
     "kind": "pending",
     "path": "ui/src/studio/ExportBook.tsx",
-    "line": 240,
+    "line": 242,
     "statement": "const run = async (attach = false, chosen: Kind = kind) => {",
     "occurrence": 1,
-    "source_sha256": "37f882fd1a558689bc4f6f7e3ed214fa612dfd83be4d72e12ef6c142c589b33c",
+    "source_sha256": "2e27cd469344470f26032ba0c69b8019aa9d38de7c52251ab500f19d89aaaaad",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; Progress, busy, downloading, loading, loadingToast, musicPending, pending, pendingChanges, progressSpeech, setBusy, spokenProgress",
-    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
+    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. deps175 review: the outdated-ffmpeg update offer only changes which status renders FfmpegNeeded; this action and its guard are unchanged."
   },
   {
     "id": "b29890485fb20e245901",

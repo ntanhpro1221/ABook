@@ -1009,6 +1009,17 @@ private slots:
             QVERIFY2(error / a.size() < 1e-9, qPrintable(QString::number(error / a.size(), 'g', 12)));
         }
     }
+    // minimp3 vector l3-nonstandard-vbrtag-oob-read (104 byte, a2ad968c): a Xing tag that claims more TOC than the
+    // frame holds. Both decoders must finish (any result) without reading past the buffer.
+    void hostileVbrTagEndsCleanly() {
+        const auto bytes = fixture(QStringLiteral("vbrtag_oob_read"));
+        QCOMPARE(int(bytes.size()), 104);
+        Mp3Source cached(48000); std::vector<float> a;
+        if (cached.open(bytes)) { int guard = 0; while (cached.read(a, 8192) && ++guard < 1000) {} QVERIFY(guard < 1000); cached.seek(0.01); }
+        const QUrl url = QUrl::fromLocalFile(QStringLiteral(MIX_FIXTURES_DIR "/voice_stream/vbrtag_oob_read.mp3"));
+        auto source = std::make_shared<RangeSource>(url, [] {}); StreamMp3 decoder(source, 48000); std::vector<float> b;
+        if (decoder.open()) { int guard = 0; while (decoder.read(b, 8192) && ++guard < 1000) {} QVERIFY(guard < 1000); decoder.seek(0.01); }
+    }
     void refillChunkSizeDoesNotChangePcmOrSeeks() {
         for(const auto &name : {QStringLiteral("cbr"),QStringLiteral("vbr")}) {
             const QUrl url=QUrl::fromLocalFile(QStringLiteral(MIX_FIXTURES_DIR "/voice_stream/")+name+QStringLiteral(".mp3"));

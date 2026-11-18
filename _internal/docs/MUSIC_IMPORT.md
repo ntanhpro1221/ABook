@@ -17,6 +17,10 @@ bộ. Giai đoạn B (cuối file): nhập nhạc ngay trên điện thoại, gh
 - Độ to đo bằng đúng mã của bài danh mục (`music_plan.measured_lufs`, hai kênh, ghi `<sha1>.lufs2` cạnh file), nên `gainDb` của
   mốc nhạc tính bằng cùng một công thức (`cue_gain_db`) - bài nhập to hay nhỏ đều nằm đúng `levelDb` dưới giọng.
 - File không phải nhạc / đuôi lạ / không thấy / quá 1 GB: bị từ chối kèm lý do bằng tiếng Việt, các file khác trong lượt vẫn vào.
+  Speex trong .ogg cũng bị từ chối ("không đọc được như một bản nhạc", `music_local.UNPLAYABLE_CODECS`): ffmpeg giải được nhưng Media
+  Foundation và điện thoại thì không, điện thoại vốn đã từ chối nó ở MediaMetadataRetriever. Đuôi nhận giống hệt ở Python, Android, hộp
+  chọn file Qt và Tauri; exe ffmpeg ghim phải có bộ tách + bộ giải cho từng đuôi (`tests/test_music_local.py`, chạy với
+  `ABOOK_TEST_FFMPEG` trỏ tới exe mới mỗi lần đổi bản ffmpeg).
 
 ## Link `local:<sha1>`
 
@@ -67,7 +71,7 @@ Nhạc huấn luyện) cắm vào bằng `music_local.set_analyzer(hàm)`; kết
   "chưa phân tích". Gói chỉ tải khi người dùng bấm "Phân tích nhạc" (mục dưới) - không bao giờ tự tải, kể cả lúc nhập.
   `ABOOK_MUSIC_STUDENT_DIR` trỏ tới một thư mục gói có sẵn (bài thử, máy không mạng); `ABOOK_MUSIC_STUDENT_DOWNLOAD=0` chặn mọi lần tải.
 - **Mô-đun "Phân tích nhạc"** (`abook/webui/music_module.py`, quản lý như Studio): một nút, một thanh tiến độ, một tổng dung lượng cho mọi thứ
-  bộ phân tích cần mà bộ cài không mang. Máy tính chỉ-nghe: **ffmpeg** (~36 MB, Gyan 8.1.2 essentials: chỉ tải `ffmpeg.exe` qua HTTP Range, `ffmpeg_setup.py`; SHA-256/cỡ phần nén + exe và CRC đều được kiểm, `.part` nối tiếp sau mất mạng) + **thư viện** (numpy 2.4.6, onnxruntime 1.28.0,
+  bộ phân tích cần mà bộ cài không mang. Máy tính chỉ-nghe: **ffmpeg** (~64 MB, FFmpeg-Builds n8.1.3-27 win64-gpl-8.1, thẻ cuối tháng autobuild-2026-10-31-12-59 (giữ 2 năm): chỉ tải `ffmpeg.exe` qua HTTP Range, `ffmpeg_setup.py`; SHA-256/cỡ phần nén + exe và CRC đều được kiểm, `.part` nối tiếp sau mất mạng) + **thư viện** (numpy 2.4.6, onnxruntime 1.28.0,
   flatbuffers, packaging, protobuf: ~27 MB wheel cp314 win_amd64, ghim URL + SHA-256, giải vào `<dữ liệu app>/music/lib` rồi thêm vào `sys.path`
   trước khi import) + **model** (~59 MB); máy Studio (đã có torch + ffmpeg) chỉ tải model. Giao diện: MỘT thẻ (`MusicModuleNotice`) ở "Nhạc của
   tôi" khi đã có bài, hiện tổng dung lượng và nút "Phân tích nhạc (N MB)"; không còn thẻ "bộ đọc nhạc" riêng, không còn đợi tải lúc nhập.

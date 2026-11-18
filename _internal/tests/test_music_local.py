@@ -114,6 +114,75 @@ def test_files_that_are_not_music_are_refused_with_a_reason(tmp_path: Path, song
     assert store.entries() == [] and not list((tmp_path / "mine").glob("files/*"))
 
 
+def test_speex_in_an_ogg_file_is_refused_like_the_phone_refuses_it(tmp_path: Path, songs) -> None:
+    """tinytag đọc được Speex trong .ogg, nhưng không trình phát nào của app giải được nó (music_local.UNPLAYABLE_CODECS)."""
+    speex = tmp_path / "noi.ogg"
+    made = subprocess.run([ffmpeg_executable(), "-hide_banner", "-nostdin", "-y", "-i", str(songs["short"]), "-c:a", "libspeex", str(speex)],
+                          capture_output=True)
+    if made.returncode != 0:
+        pytest.skip("ffmpeg của máy này không có bộ mã hoá libspeex để dựng file thử")
+    from abook.vendor.tinytag import TinyTag
+
+    assert 'codecs="speex"' in (TinyTag.get(str(speex)).mime_type or ""), "file thử đúng là Speex trong Ogg"
+    store = LocalMusic(tmp_path / "mine")
+    with pytest.raises(MusicImportError, match="không đọc được như một bản nhạc") as error:
+        store.import_file(speex)
+    assert speex.name in str(error.value) and store.entries() == []
+    assert store.import_file(songs["ogg"])[0]["title"] == "Gió", "Vorbis trong .ogg vẫn nhận"
+
+
+# Đuôi app nhận -> (bộ tách luồng, bộ giải) ffmpeg của gói nhạc phải có để phân tích / đo bài nhập (music_mel, music_plan).
+TRACK_DECODERS = {
+    "mp3": ("mp3", ("mp3float",)),
+    "m4a": ("mov,mp4,m4a,3gp,3g2,mj2", ("aac", "alac")),
+    "ogg": ("ogg", ("vorbis", "opus", "flac")),
+    "opus": ("ogg", ("opus",)),
+    "flac": ("flac", ("flac",)),
+    "wav": ("wav", ("pcm_s16le", "pcm_s24le", "pcm_s32le", "pcm_f32le", "pcm_u8")),
+}
+_ROOT = Path(__file__).resolve().parents[1]
+
+
+def test_every_platform_accepts_the_same_music_extensions() -> None:
+    """Một danh sách đuôi cho mọi nơi: Python, Android, hộp chọn file của Qt và Tauri - và mỗi đuôi có dòng giải mã ở TRACK_DECODERS."""
+    expected = list(music_plan.TRACK_EXTENSIONS)
+    assert list(TRACK_DECODERS) == expected
+    android = (_ROOT / "mobile/android/app/src/main/java/vn/abook/player/MusicStore.kt").read_text(encoding="utf-8")
+    assert 'val EXTENSIONS = listOf(' + ", ".join(f'"{e}"' for e in expected) + ")" in android
+    qt = (_ROOT / "desktop_qt/qml/UiStrings.js").read_text(encoding="utf-8")
+    assert '"Nhạc (' + " ".join(f"*.{e}" for e in expected) + ')"' in qt
+    tauri = (_ROOT / "shell/src-tauri/src/main.rs").read_text(encoding="utf-8")
+    assert "&[" + ", ".join(f'"{e}"' for e in expected) + "]" in tauri
+
+
+def test_the_pinned_ffmpeg_decodes_every_extension_the_app_accepts() -> None:
+    """Bộ tách + bộ giải của exe ffmpeg đang ghim, ghi ở tests/fixtures/ffmpeg_pinned_codecs.json bởi scripts/ffmpeg_pinned_codecs.py
+    (kèm SHA-256 của exe): luôn chạy, không cần exe. Đổi pin mà quên ghi lại fixture thì đỏ. ABOOK_TEST_FFMPEG=<exe ghim> thì kiểm
+    thêm fixture đúng với exe thật."""
+    import json
+    import os
+    import sys
+
+    from abook.webui import ffmpeg_setup
+
+    recorded = json.loads((_ROOT / "tests/fixtures/ffmpeg_pinned_codecs.json").read_text(encoding="utf-8"))
+    assert recorded["exe_sha256"] == ffmpeg_setup.EXE_SHA256 and recorded["member"] == ffmpeg_setup.MEMBER, \
+        "fixture thuộc exe khác pin: chạy lại scripts/ffmpeg_pinned_codecs.py với exe mới"
+    demuxers, decoders = set(recorded["demuxers"]), set(recorded["audio_decoders"])
+    for extension, (demuxer, needed) in TRACK_DECODERS.items():
+        assert demuxer in demuxers, f".{extension}: thiếu bộ tách {demuxer}"
+        assert not set(needed) - decoders, f".{extension}: thiếu bộ giải {sorted(set(needed) - decoders)}"
+
+    exe = os.environ.get("ABOOK_TEST_FFMPEG", "")
+    if exe:  # phần kiểm thêm khi có exe thật; không có thì phần fixture ở trên đã là phép kiểm
+        sys.path.insert(0, str(_ROOT / "scripts"))
+        import ffmpeg_pinned_codecs
+
+        assert ffmpeg_pinned_codecs.sha256(Path(exe)) == ffmpeg_setup.EXE_SHA256, "ABOOK_TEST_FFMPEG phải là đúng exe đang ghim"
+        live = ffmpeg_pinned_codecs.listing(Path(exe))
+        assert {key: recorded[key] for key in live} == live, "fixture phải khớp đúng exe đang ghim"
+
+
 def test_removing_a_track_deletes_its_file_and_loudness(tmp_path: Path, songs) -> None:
     store = LocalMusic(tmp_path / "mine")
     track, _ = store.import_file(songs["mp3"])

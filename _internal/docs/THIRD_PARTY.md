@@ -15,7 +15,7 @@ phần ấy.
 - PyWORLD và WORLD vocoder; Praat qua parselmouth.
 - pyloudnorm; NumPy, SciPy, SoundFile, psutil, requests, huggingface-hub.
 - MoSQITo 1.2.1, tập con ISO 532-1 stationary được chép vào `abook/_vendor/zwicker/` (Apache-2.0, MoSQITo Developers). Giữ `LICENSE` và `NOTICE.md` với đường dẫn, SHA-256 nguồn; chỉ đổi import sang tương đối, dùng NumPy/SciPy đã có, không mang pyuff hay meter biến thiên.
-- pypdf 6.16.2 (BSD-3-Clause, thuần Python) - đọc chữ của PDF có lớp chữ khi nhập sách (`abook/importers.py`). Chép nguyên vào
+- pypdf 6.21.4 (BSD-3-Clause, thuần Python) - đọc chữ của PDF có lớp chữ khi nhập sách (`abook/importers.py`). Chép nguyên vào
   `abook/vendor/pypdf/` (kèm LICENSE và băm wheel nguồn), không phụ thuộc pyproject/uv.lock hay gói cài sẵn. Nhập EPUB và DOCX chỉ
   dùng thư viện chuẩn của Python (zipfile, xml, html.parser).
 - PySide6 / Qt (LGPLv3) - cửa sổ app máy tính.
@@ -25,13 +25,13 @@ phần ấy.
   ba file `desktop_qt/fonts/BeVietnamPro-*.ttf` gộp từ @fontsource (`desktop_qt/tools/merge_fonts.py`) rồi thêm chữ số đều bề rộng qua tính năng `tnum`
   bằng cùng công cụ của bản Android (`mobile/android/scripts/add_tabular_digits.py`); giữ nguyên chữ mặc định, thông tin tác giả và giấy phép SIL OFL 1.1
   trong bảng `name` của font; toàn văn giấy phép `desktop_qt/fonts/OFL.txt` gói trong tài nguyên của file chạy cạnh ba font;
-  [minimp3](https://github.com/lieff/minimp3) (CC0 1.0, commit afb604c0, `desktop_qt/third_party/minimp3/` kèm LICENSE) - giải mã mp3 cho
+  [minimp3](https://github.com/lieff/minimp3) (CC0 1.0, commit a2ad968c, `desktop_qt/third_party/minimp3/` kèm LICENSE) - giải mã mp3 cho
   đường âm thanh WASAPI (rẻ hơn Media Foundation ~4 lần).
 - FFmpeg / imageio-ffmpeg (LGPL hoặc GPL tuỳ bản build). Bản app chỉ-nghe KHÔNG mang ffmpeg trong bộ cài: mô-đun "Phân tích nhạc" và việc "Xuất sách nói" (MP3 / M4B)
-  đều do người dùng bấm mới tải (`webui/music_module.py`, hộp xuất sách nói), cùng lấy riêng `bin/ffmpeg.exe` trong ZIP [GyanD/codexffmpeg 8.1.2 essentials](https://github.com/GyanD/codexffmpeg/releases/tag/8.1.2)
-  bằng HTTP Range (~36 MB thay vì cả ZIP 110 MB; Windows x64 tĩnh, GPL-3.0-or-later).
+  đều do người dùng bấm mới tải (`webui/music_module.py`, hộp xuất sách nói), cùng lấy riêng `bin/ffmpeg.exe` trong ZIP [FFmpeg-Builds n8.1.3-27-g8dca1586f4 win64-gpl-8.1](https://github.com/FFmpeg-Builds/FFmpeg-Builds/releases/tag/autobuild-2026-10-31-12-59)
+  bằng HTTP Range (~64 MB thay vì cả ZIP 194 MB; Windows x64 tĩnh, GPL-3.0-or-later; thẻ bản cuối tháng, FFmpeg-Builds giữ 2 năm; bản ngày bị xoá sau 14 ngày; không dùng `latest`).
   `webui/ffmpeg_setup.py` ghim URL có tag, cỡ ZIP, SHA-256/cỡ phần nén và exe; kiểm thêm CRC trước khi thay exe.
-  [Mã nguồn FFmpeg n8.1.2](https://github.com/FFmpeg/FFmpeg/commit/38b88335f9), [thông tin build và thư viện của Gyan](https://www.gyan.dev/ffmpeg/builds/#libraries).
+  [Mã nguồn FFmpeg n8.1.3-27-g8dca1586f4](https://github.com/FFmpeg/FFmpeg/commit/8dca1586f468bfcbb78ae3ed618af1361d9f140a) (nhánh release/8.1), [kịch bản build và phiên bản từng thư viện tĩnh của FFmpeg-Builds ở commit 5031c6f1](https://github.com/FFmpeg-Builds/FFmpeg-Builds/tree/5031c6f1082414e53688d39e521849905071070d) (commit của thẻ autobuild-2026-10-31-12-59).
   Studio hoặc máy có sẵn `imageio-ffmpeg` vẫn có thể dùng binary của gói đó; phần bọc imageio-ffmpeg là BSD-2-Clause.
   Tải về thư mục dữ liệu của app (`tools/ffmpeg`), gỡ app là gỡ nó.
 - CMU Pronouncing Dictionary (`cmudict.dict`, dữ liệu từ CMU Sphinx; sử dụng và phân phối không hạn chế, yêu cầu ghi nhận
@@ -62,7 +62,7 @@ Bộ cài mang theo:
   `<dữ liệu app>/music/lib`): NumPy (BSD-3-Clause; wheel mang theo OpenBLAS BSD-3-Clause, LAPACK và thư viện chạy GCC GPL-3.0-or-later kèm GCC
   Runtime Library Exception - giấy phép từng phần nằm trong `numpy-*.dist-info/licenses`), ONNX Runtime CPU (MIT), flatbuffers
   (Apache-2.0), protobuf (BSD-3-Clause), packaging (Apache-2.0 hoặc BSD-2-Clause); cùng ffmpeg (ở trên) và model (mục "Nhạc nền").
-- Bộ nhập sách (`abook/importers.py`) mang theo pypdf 6.16.2 (BSD-3-Clause) trong mã nguồn (`abook/vendor/pypdf/`), nên bản app chỉ-nghe
+- Bộ nhập sách (`abook/importers.py`) mang theo pypdf 6.21.4 (BSD-3-Clause) trong mã nguồn (`abook/vendor/pypdf/`), nên bản app chỉ-nghe
   không cần thêm gói nào.
 - Thư viện chạy Microsoft Visual C++ (`msvcp140*.dll`, `vcruntime140*.dll`, `concrt140.dll` từ thư mục
   `Microsoft.VC145.CRT` của Visual Studio) - thuộc "Distributable Code" của giấy phép Visual Studio, được phép phát hành

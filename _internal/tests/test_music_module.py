@@ -90,9 +90,10 @@ def _names(parts: list[dict[str, Any]]) -> dict[str, str]:
 
 def test_export_only_ffmpeg_stamp_controls_music_update_without_module_stamp(machine, tmp_path):
     folder = tmp_path / "tools" / "ffmpeg"
-    folder.mkdir(parents=True)
-    (folder / "ffmpeg.exe").write_bytes(b"MZ old")
-    (folder / "installed.sha256").write_text("old-export-pin", encoding="utf-8")
+    pointer = "0123456789abcdef" + "0" * 48  # bản Xuất đã tải ở một pin trước
+    (folder / pointer[:16]).mkdir(parents=True)
+    (folder / pointer[:16] / "ffmpeg.exe").write_bytes(b"MZ old")
+    (folder / "installed.sha256").write_text(pointer, encoding="utf-8")
     ffmpeg_setup.configure(folder)
     assert music_module._read_stamp() == {}
     assert _names(music_module.status()["parts"])["ffmpeg"] == "outdated"
@@ -123,7 +124,7 @@ def test_one_tap_downloads_every_missing_part_with_one_total_and_stamps_their_pi
     assert len(machine.calls) == 1 + len(music_module.WHEELS) + len(music_student.PACKAGE_FILES["onnx"])
     stamp = music_module._read_stamp()
     assert stamp == {"ffmpeg": ffmpeg_setup.pin(), "libs": music_module.libs_pin(), "model": music_student.model_pin("onnx")}
-    assert (tmp_path / "tools" / "ffmpeg" / "ffmpeg.exe").is_file() and (tmp_path / "music" / "lib" / "numpy" / "__init__.py").is_file()
+    assert (tmp_path / "tools" / "ffmpeg" / ffmpeg_setup.pin()[:16] / "ffmpeg.exe").is_file() and (tmp_path / "music" / "lib" / "numpy" / "__init__.py").is_file()
     assert all((tmp_path / "music" / "student" / name).is_file() for name in music_student.PACKAGE_FILES["onnx"])
     assert str(tmp_path / "music" / "lib") in sys.path
     assert not (tmp_path / "music" / "lib.dl").exists(), "wheel đã xoá sau khi giải"
@@ -143,7 +144,7 @@ def test_unchanged_pins_are_current_and_a_second_tap_fetches_nothing(machine: Ma
 def test_a_new_model_pin_with_the_same_file_names_is_outdated_and_only_the_model_is_fetched(machine: Machine, tmp_path: Path, monkeypatch) -> None:
     music_module.start()
     music_module.join(10)
-    ffmpeg_exe = tmp_path / "tools" / "ffmpeg" / "ffmpeg.exe"
+    ffmpeg_exe = tmp_path / "tools" / "ffmpeg" / ffmpeg_setup.pin()[:16] / "ffmpeg.exe"
     numpy_init = tmp_path / "music" / "lib" / "numpy" / "__init__.py"
     ffmpeg_before, numpy_before = ffmpeg_exe.read_bytes(), numpy_init.read_bytes()
     old_pin = music_student.model_pin("onnx")

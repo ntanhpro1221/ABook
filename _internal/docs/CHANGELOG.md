@@ -7,6 +7,12 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+- Bảo mật: nhập PDF dùng pypdf 6.21.4 (vá 26 lỗi PDF độc làm treo hay ăn hết RAM); chữ trích ra từ PDF không đổi.
+- Bảo mật: máy tính giải mã MP3 bằng minimp3 mới (vá đọc tràn bộ nhớ ở thẻ VBR, tua và khung lỗi); âm thanh giải ra không đổi.
+- Bảo mật: app Windows mang Python 3.14.10 (chặn khoá CA emSign đã lộ trong kết nối mã hoá, vá giải nén tar).
+- Bảo mật: bộ đọc nhạc tải thêm (ffmpeg) lên bản n8.1.3-27-g8dca1586f4 dựng sẵn của FFmpeg-Builds (8.1.3 cùng 27 bản sửa sau đó của nhánh 8.1), có các bản vá kiểm biên khi đọc file nhạc; tải về ~64 MB thay vì ~36 MB, máy đã có bản cũ được mời tải bản mới khi mở Xuất hay Phân tích nhạc, bản cũ được dọn sau khi tải xong.
+- Kỹ thuật: Gradle wrapper 8.14.7 (vá bảo mật daemon của máy dựng Android).
+- Sửa: "Nhạc của tôi" trên máy tính không nhận file .ogg chứa Speex nữa (trình phát của Windows và điện thoại đều không phát được); điện thoại vốn đã không nhận, nay hai bên báo cùng một lý do.
 - Điện thoại: nhập file sách chạy ngầm - rời app hay đóng màn Thêm sách giữa lúc chép/kiểm vẫn nhập tới xong, tiến độ và kết quả ở thông báo (bấm mở sách, lỗi thì Thử lại); người phát triển nhập qua adb mà app không nhảy lên màn hình.
 - Máy tính và web: thêm sách là việc nền của máy chủ - đóng hộp Thêm sách giữa chừng vẫn thêm tới xong, thanh bên hiện "Đang thêm sách" và thư viện tự làm mới khi xong; app đóng giữa lượt thì mở lại thấy lượt dở kèm Thử lại, không bao giờ có nửa cuốn trong thư viện.
 - Thêm sách: lỗi của file trước (ví dụ file .abook hỏng) không còn dính sang file sau - mỗi lượt có bản tạm, kiểu file và lời lỗi riêng.

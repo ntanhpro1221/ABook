@@ -1,5 +1,78 @@
 # Test report
 
+## 17-11-2026 — dependency security updates for 0.4.175 (`dev/deps175`)
+
+Five pins moved, one commit each, on top of faa841749: vendored pypdf 6.16.2 -> 6.21.4, desktop minimp3 afb604c0 -> a2ad968c,
+embedded Python 3.14.8 -> 3.14.10, Gradle wrapper 8.14.6 -> 8.14.7, and the downloaded ffmpeg Gyan 8.1.2 essentials ->
+FFmpeg-Builds n8.1.3-27-g8dca1586f4 win64-gpl-8.1 (month-end tag autobuild-2026-10-31-12-59). The first pin was the daily
+build n8.1.3-35-gf1acb0a266 (autobuild-2026-11-16-15-29); FFmpeg-Builds deletes daily builds after 14 days and keeps
+month-end builds for two years, so the pin moved to the October month-end build (see the ffmpeg bullet).
+
+- pypdf: text, metadata and `importers.pdf_pages` output of the three PDF fixtures plus the four PDFs the import tests generate
+  (40- and 300-page text PDFs, two broken files) are byte-identical between 6.16.2 and 6.21.4; locked and broken files give the
+  same errors. Import-related pytest (13 files): 507 passed, 1 skipped, 0 failed.
+- minimp3: a harness decoding through both paths `mp3source.cpp` uses (`mp3dec_ex_*` with seeks, and frame-by-frame after
+  `mp3dec_check_vbrtag`) gives bit-identical float PCM for all 18 repo mp3 fixtures and 82 of 83 upstream vectors, with both
+  MSVC (/O2) and MinGW g++. The 83rd is `l3-nonstandard-vbrtag-oob-read`: the old header read past the 104-byte buffer under
+  MSVC (claimed 728064 samples, read 0); the new one rejects the tag and decodes the single frame. That vector is now a
+  VoiceTests fixture (`hostileVbrTagEndsCleanly`).
+- Python 3.14.10: embed zip SHA-256 equals python.org's release-file API value. Build-Python + Copy-App + Test-Layout +
+  Test-Python on the trimmed build: 112/115 webui modules load (three need numpy/librosa as before), covers, importer with
+  vendored pypdf, ssl (OpenSSL 3.5.9), sqlite3, requests, psutil. A real ranged ffmpeg download over HTTPS through
+  `ffmpeg_setup.install` with this embedded Python matched the pinned exe hash.
+- Gradle: `distributionSha256Sum` is the -all.zip checksum from services.gradle.org.
+- ffmpeg: ZIP SHA-256 equals the release's `checksums.sha256` and GitHub asset digest; recomputing the member pin from the old
+  ZIP reproduces the old pin. Through the four app decode command lines (`music_mel.decode` at 48 kHz and 22.05 kHz,
+  `music_plan` pcm_f32le WAV, export `pump_pcm` s16le) PCM is bit-identical for 37 inputs (repo mp3s plus flac, ogg/vorbis,
+  opus, aac, alac, wma, aiff, wav derived from the music_student fixtures and a synthetic track): 148 identical cases, 16 cases
+  where both versions reject the same non-audio fixtures. Encoders: flac and aac decode back bit-identical; libmp3lame output
+  differs at the sample level (same byte size, loudness within 0.04 LU, difference -20 to -41 dB relative). Decode speed equal
+  (10-minute mp3: 0.56-0.71 s both). Download grows from 35.7 MB to 63.7 MB (exe 102 -> 165 MB). ffmpeg/music/export pytest
+  (54 files): 886 passed, 7 skipped, 0 failed (the nine `test_ui_parity_rules` L7 failures of the first run were a missing
+  `ui/node_modules`; after the junction the file is 36 passed).
+- Heavy run 2 (16:15-17:12, slot GOT 16:19): `desktop_qt\build.bat package` rc 0 - every Qt suite 0 failed, WidthTests
+  1732 passed / 0 failed / 2 skipped with `QML_MEMBER_DATA_ERROR 0`, `QML_TYPE_ERROR 0` (VoiceTests 65 including
+  `hostileVbrTagEndsCleanly`, MixTests 93); dist trimmed 90.1 -> 72.3 MB of Qt files, whole `desktop_qt\dist` 120.4 MB;
+  `smoke_packaged` SMOKE_OK for Main.qml first frame (twice), packaged host Ready from the bundled Python 3.14.10, a Library
+  book played (2.7 s at 440 Hz heard, broken chapter exit 6), single-instance hand-off, and self-update refusing the test-key
+  package. Gradle 8.14.7 `:app:testDebugUnitTest --rerun-tasks`: 3910 passed, 0 failed, 19 skipped in 483 suites (counted from
+  the XML); `:app:assembleRelease` BUILD SUCCESSFUL. Round 1 failures were environment only: the fresh worktree had no
+  `desktop_qt/build/surface_frames/` (4 SurfaceMotion PNG saves failed, with the NowPlayingGeometry member-data noise) and
+  no `mobile/android/local.properties` (Gradle could not find the SDK); both are gitignored and were created for round 2.
+- Speex: the new build has no libspeex, but FFmpeg's own `speex` decoder is in both builds and a Speex Ogg decodes to
+  identical PCM with the old and new exe (likewise GSM in WAV without libgsm). No platform lists `.spx`; the six accepted
+  extensions are the same on Python, Android, the Qt file dialog and Tauri (now pinned by
+  `test_every_platform_accepts_the_same_music_extensions`), and
+  `test_the_pinned_ffmpeg_decodes_every_extension_the_app_accepts` checks the demuxer and decoders for each extension on the
+  exe whose SHA-256 equals `ffmpeg_setup.EXE_SHA256`, from `tests/fixtures/ffmpeg_pinned_codecs.json` (written by
+  `scripts/ffmpeg_pinned_codecs.py` from the pinned exe; with `ABOOK_TEST_FFMPEG` it also compares the fixture with the exe). Speex inside a `.ogg`
+  was the one gap: the desktop importer (tinytag) accepted it although neither Media Foundation nor the phone can play it, and
+  the phone already refused it; desktop import now refuses it with the phone's reason (`music_local.UNPLAYABLE_CODECS`).
+- Month-end repin (review fix): ZIP 194,182,300 B, SHA-256 401dffcf... = release `checksums.sha256` = GitHub asset digest;
+  member DEFLATE 63,753,164 B, exe 165,577,728 B, CRC 876847253 (the same script reproduces the n8.1.3-35 pin from its ZIP).
+  Against the n8.1.3-35 exe, the same 37 inputs through the four app decode command lines: 148 identical PCM cases, 16 cases
+  where both reject the same 4 non-audio fixtures; the 12 encoder outputs (flac, aac, libmp3lame 64k mono and 128k) are
+  byte-identical. The 8 FFmpeg commits between the two builds are Ogg muxer/Vorbis chained-stream, LCEVC, CBS size
+  checks (32-bit), H.264, 4xm and aarch64 fixes. The Qt and web Studio export dialogs now offer the update when the
+  downloaded ffmpeg is outdated (export stays enabled), as the Listen audiobook dialog already did.
+  Checks: pytest on 39 related files 721 passed, 1 skipped (perf marker), 1 failed (stale UI_PARITY_QT.md, regenerated;
+  rerun of that file with the parity, action and ffmpeg files: 104 passed, 1 skipped), `test_music_local` +
+  `test_ffmpeg_setup` 42 passed, 0 skipped without `ABOOK_TEST_FFMPEG`; tsc rc 0; vitest (src/studio + export tests)
+  474 passed; Qt WidthTests `tst_studio5.qml` 69 passed, 0 failed, 0 skipped, no member-data warning.
+- Install layout (review fix): each pin installs into `tools/ffmpeg/<pin16>/ffmpeg.exe` and `installed.sha256` is switched
+  atomically afterwards, so an update never overwrites the exe an export is running; older copies are deleted only when
+  deletion succeeds (right after install and at app start). The download's partial file is named after the pin.
+  New `test_ffmpeg_range` cases run a copy of ping.exe at the old exe path: on the previous code the update failed with
+  `PermissionError [WinError 5]` (and the stale partial of another pin failed the hash, a lost pointer re-downloaded);
+  now all pass. The month-end test also checks that the pinned tag is the latest of its month from the tag list recorded
+  in the fixture (a later tag on the same day turns it red). pytest on the 23 ffmpeg/export/music/release files: 394 passed,
+  0 failed, 2 skipped (test_music_valence needs the local model package, as before).
+- One cleanup rule for `tools/ffmpeg`: everything except the current pin's folder, the pointer, the install lock and the
+  current pin's partial download is deleted when deletion succeeds; a locked file stays until next time. A new test runs a
+  stray copy of ping.exe in the folder: install still succeeds and leaves it intact, and the next app start removes it once
+  it has stopped. The 6 ffmpeg/music/listen_export test files: 108 passed, 0 failed, 0 skipped.
+- Quality implementation hash unchanged after every commit: `6d5817d28678d2f85dcc3c8f5158638907a6f9f463bdb8e1a83b3c46c9a68fa8`.
+
 ## 17-11-2026 — Qt draws CJK names with Windows fallback fonts
 
 Book, author, character and music names in Japanese, Chinese or Korean no longer render as

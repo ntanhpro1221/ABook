@@ -15,10 +15,10 @@ $Shell = Join-Path $Internal "shell"
 
 # Python nhúng: bản ổn định mới nhất còn bản vá nhị phân (server đồng bộ nghe cả mạng LAN). Nâng: đổi số + băm (tải về,
 # Get-FileHash), dựng lại, chạy thử.
-$PythonVersion = "3.14.8"
+$PythonVersion = "3.14.10"
 $PythonTag = "314"
 $PythonUrl = "https://www.python.org/ftp/python/$PythonVersion/python-$PythonVersion-embed-amd64.zip"
-$PythonSha256 = "a93abe456ab01bd96d7a085b3cdb6566b3063f4241360d114142fbdb07f0a310"
+$PythonSha256 = "90905e64a840557d8c1bc4f5b74db3d7ee85e3ffb217611cac1c7813acea4159"
 
 # Bộ cài chỉ-nghe chỉ mang cái người NGHE cần; cái chỉ Studio hay một tính năng tuỳ chọn cần thì đi cùng Studio / tải khi cần.
 # Dữ liệu của Studio (studio_setup.ASSET_PATHS - test_studio_assets kiểm hai danh sách trùng nhau): Studio tải ở bước "assets".

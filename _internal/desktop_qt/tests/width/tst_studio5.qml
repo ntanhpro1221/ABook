@@ -647,6 +647,25 @@ Item {
             dlg.loadFfmpeg()
             tryVerify(function() { return one(dlg, "confirm_go").enabled }, 3000)
         }
+        function test_anOutdatedMixingToolIsOfferedAnUpdateWhileExportStaysOpen() {
+            // Cùng luật FfmpegNeeded của web: bản đã tải mà cũ (outdated) thì mời cập nhật, nhưng vẫn xuất được bằng bản ấy
+            serve({ffmpeg: ffmpegStatus({ready: true, outdated: true})})
+            const page = openExport()
+            const dlg = exportDlg(page)
+            pickKind(dlg, "m4b")
+            tryVerify(function() { return has(dlg, "ffmpegNeeded") && shown(one(dlg, "ffmpegNeeded")) }, 3000)
+            compare(one(dlg, "ffmpegTitle").text, "Cập nhật công cụ")
+            verify(one(dlg, "ffmpegLine").text.indexOf("Có bản mới để ghép lời đọc thành file MP3 / M4B (khoảng ") === 0)
+            compare(one(dlg, "ffmpegDownload").text, "Cập nhật công cụ")
+            compare(one(dlg, "confirm_go").enabled, true)
+            noCut(dlg)
+            one(dlg, "ffmpegDownload").clicked()
+            tryVerify(function() { return calls("POST", "/api/ffmpeg").length === 1 }, 3000)
+            server.ffmpeg = ffmpegStatus({ready: true})
+            dlg.loadFfmpeg()
+            tryVerify(function() { return dlg.ffmpeg !== null && !dlg.ffmpeg.outdated && !dlg.offersFfmpeg }, 3000)
+            compare(one(dlg, "confirm_go").enabled, true)
+        }
         function test_ffmpegFailureShowsTheErrorWithDetailAndRetry() {
             serve({ffmpeg: ffmpegStatus({error: "Chưa tải được công cụ ghép - kiểm tra mạng rồi bấm Thử lại.", errorDetail: "URLError: getaddrinfo failed"})})
             const page = openExport()

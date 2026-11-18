@@ -2,10 +2,19 @@
 nhạc (thẻ + độ dài đọc bằng tinytag). ffmpeg chỉ phục vụ phần phân tích: giải mã cho model (music_mel.py) và đo độ to (music_plan.py).
 Đường tải ghim cứng (URL + SHA-256 + cỡ), qua studio_setup.download (.part, kiểm băm, rồi mới đổi tên).
 
-Nguồn: ZIP GyanD/codexffmpeg 8.1.2 essentials, Windows x64 tĩnh GPL-3.0-or-later, tag cố định 8.1.2.
+Nguồn: ZIP FFmpeg-Builds (BtbN) n8.1.3-27-g8dca1586f4 win64-gpl-8.1 (nhánh release/8.1), Windows x64 tĩnh GPL-3.0-or-later,
+thẻ autobuild-2026-10-31-12-59 = bản CUỐI THÁNG (FFmpeg-Builds giữ bản cuối mỗi tháng 2 năm, bản ngày chỉ 14 ngày rồi xoá, URL 404).
+Đổi pin: chỉ chọn thẻ ngày cuối tháng (test_ffmpeg_setup kiểm), rồi chạy scripts/ffmpeg_pinned_codecs.py với exe mới.
 Chỉ tải phần nén của ffmpeg.exe bằng HTTP Range; ghim SHA-256/cỡ cả phần nén và exe, kiểm CRC (docs/THIRD_PARTY.md). Chỉ Windows x86_64 có đường tải; nền tảng khác phải tự
 cài ffmpeg (lý do nói rõ). Máy đã có ffmpeg không phải của mình (imageio_ffmpeg, hay trong PATH) thì `external()` đúng và mô-đun không
 tải gì. Việc tải/đặt trạng thái do music_module.py lo; ở đây chỉ có `install` (đồng bộ) và các phép kiểm.
+
+Bố cục `tools/ffmpeg`: mỗi pin một thư mục `<16 ký tự đầu của pin>/ffmpeg.exe`; `installed.sha256` (ghi nguyên tử SAU khi exe đã nằm
+đúng chỗ) là con trỏ tới bản đang dùng. Cập nhật không bao giờ ghi đè exe đang chạy (Windows khoá file của tiến trình đang chạy:
+một lượt xuất dùng bản cũ trong lúc bản mới tải xong): bản mới vào thư mục riêng, con trỏ đổi, bản cũ để lại và chỉ bị xoá khi
+xoá được (không còn tiến trình nào giữ) - ngay sau khi cài và mỗi lần app mở. Luật dọn chung: trong thư mục chỉ giữ thư mục của pin
+hiện tại, con trỏ, khoá cài đặt và file tải dở của pin hiện tại; mọi thứ khác bị xoá khi xoá được, file đang bị khoá để lần sau.
+File tải dở mang tên theo pin, nên phần dở của pin khác không bao giờ bị nối vào.
 
 ABOOK_FFMPEG_DOWNLOAD=0: không bao giờ tải (bộ kiểm đặt sẵn).
 """
@@ -25,15 +34,15 @@ from . import studio_setup, zip_range
 # Giữ tên WHEEL cho caller: cỡ/băm của phần DEFLATE, URL của ZIP có tag cố định.
 WHEEL = studio_setup.Download(
     "bộ đọc nhạc (ffmpeg)",
-    "https://github.com/GyanD/codexffmpeg/releases/download/8.1.2/ffmpeg-8.1.2-essentials_build.zip",
-    "fcc9bb26d29ef695533bec19e0b2e15f0d3745cb900d260d8b6c97eab07277aa",
-    35_710_575,
+    "https://github.com/FFmpeg-Builds/FFmpeg-Builds/releases/download/autobuild-2026-10-31-12-59/ffmpeg-n8.1.3-27-g8dca1586f4-win64-gpl-8.1.zip",
+    "7ec86ab76b06d90656139025394513670c2ff8b6404b957be24bf1ec09792520",
+    63_753_164,
 )
-MEMBER = "ffmpeg-8.1.2-essentials_build/bin/ffmpeg.exe"
-ARCHIVE_SIZE = 109_728_040
-EXE_SIZE = 101_897_728
-EXE_SHA256 = "1326dde4c84ff1f96fe6b8916c5bed29e163e9b5dccf995f6f3db069d143ec5e"
-EXE_CRC = 1558300500
+MEMBER = "ffmpeg-n8.1.3-27-g8dca1586f4-win64-gpl-8.1/bin/ffmpeg.exe"
+ARCHIVE_SIZE = 194_182_300
+EXE_SIZE = 165_577_728
+EXE_SHA256 = "c46215f8889634396f0ac0acac738ef2145175e5b6caf28b3daa8ac9a9980c5f"
+EXE_CRC = 876847253
 ENV_DOWNLOAD = "ABOOK_FFMPEG_DOWNLOAD"  # "0" = không bao giờ tải
 NOUN = "bộ đọc nhạc (ffmpeg)"  # trong câu báo lỗi tải
 FOLDER = Path("tools") / "ffmpeg"  # dưới thư mục dữ liệu của app (server.py)
@@ -44,16 +53,60 @@ _folder: Path | None = None
 
 
 def configure(folder: Path | str | None) -> None:
-    """Thư mục đặt ffmpeg tải về (server.py: <dữ liệu app>/tools/ffmpeg); đã có exe ở đó thì đăng ký ngay."""
+    """Thư mục đặt ffmpeg tải về (server.py: <dữ liệu app>/tools/ffmpeg); đã có exe ở đó thì đăng ký ngay, rồi dọn các bản cũ không ai giữ."""
     global _folder
     with _lock:
         _folder = Path(folder) if folder is not None else None
         exe = _exe()
         io_utils.use_downloaded_ffmpeg(exe if exe is not None and exe.is_file() else None)
+        if _installed_current():
+            _prune()
+
+
+def _slot(stamp: str) -> str:
+    """Tên thư mục của một pin (SHA-256 phần nén)."""
+    return stamp[:16]
+
+
+def _stamp() -> str:
+    if _folder is None:
+        return ""
+    try:
+        return (_folder / "installed.sha256").read_text(encoding="utf-8").strip()
+    except (OSError, UnicodeError):
+        return ""
 
 
 def _exe() -> Path | None:
-    return _folder / EXE_NAME if _folder is not None else None
+    """Exe trong thư mục của pin mà con trỏ `installed.sha256` chỉ tới (không có con trỏ hợp lệ thì của pin hiện tại)."""
+    if _folder is None:
+        return None
+    stamp = _stamp()
+    valid = len(stamp) == 64 and all(c in "0123456789abcdef" for c in stamp)
+    return _folder / _slot(stamp if valid else pin()) / EXE_NAME
+
+
+def _keeps() -> set[str]:
+    """Tên được giữ trong thư mục: thư mục pin hiện tại, con trỏ, khoá cài đặt, file tải dở của pin hiện tại."""
+    archive = f"ffmpeg-{_slot(pin())}.deflate"
+    return {_slot(pin()), "installed.sha256", "install.lock", archive, archive + ".part"}
+
+
+def _prune() -> None:
+    """Luật dọn chung: xoá mọi thứ trong thư mục ngoài `_keeps()`. File đang bị khoá (exe đang chạy) thì Windows không cho xoá:
+    để đó, lần sau dọn. Không bao giờ ném lỗi."""
+    assert _folder is not None
+    keeps = _keeps()
+    for path in list(_folder.iterdir()) if _folder.is_dir() else []:
+        if path.name in keeps:
+            continue
+        try:
+            if path.is_dir() and not path.is_symlink():
+                shutil.rmtree(path, ignore_errors=True)
+            else:
+                path.unlink()
+        except OSError:
+            continue
 
 
 def ready() -> bool:
@@ -89,12 +142,8 @@ def current() -> bool:
 
 
 def _installed_current() -> bool:
-    if not downloaded() or _folder is None:
-        return False
-    try:
-        return (_folder / "installed.sha256").read_text(encoding="utf-8") == pin()
-    except (OSError, UnicodeError):
-        return False
+    """Con trỏ chỉ tới đúng pin và exe của pin ấy nằm trong thư mục riêng của nó."""
+    return _folder is not None and _stamp() == pin() and (_folder / _slot(pin()) / EXE_NAME).is_file()
 
 
 def outdated() -> bool:
@@ -117,35 +166,42 @@ def install(progress: Callable[[int, int], None], cancelled: Callable[[], bool] 
 
     assert _folder is not None
     with destination_lock(_folder / "install"):
-        stamp = _folder / "installed.sha256"
-        exe = _folder / EXE_NAME
         if _installed_current():
+            exe = _folder / _slot(pin()) / EXE_NAME
             io_utils.use_downloaded_ffmpeg(exe)
             progress(WHEEL.size, WHEEL.size)
             return exe
         result = _install(progress, cancelled)
-        io_utils.atomic_write_text(stamp, pin())
+        # Con trỏ đổi SAU khi exe mới đã kiểm xong và nằm đúng chỗ; bản cũ (có thể đang chạy) không bị chạm tới
+        io_utils.atomic_write_text(_folder / "installed.sha256", pin())
+        io_utils.use_downloaded_ffmpeg(result)
+        _prune()
         return result
 
 
 def _install(progress: Callable[[int, int], None], cancelled: Callable[[], bool]) -> Path:
-    """Tải riêng mục FFmpeg đã ghim, kiểm băm trước khi đăng ký với io_utils. Đồng bộ - gọi ở luồng nền của mô-đun. Ném lỗi để mô-đun nói lý do (`reason`)."""
+    """Tải riêng mục FFmpeg đã ghim vào thư mục của pin, kiểm băm/CRC/cỡ. Không ghi đè exe nào đang dùng: thư mục của pin mới chưa
+    từng được trỏ tới; exe của pin này đã nằm sẵn và đúng (mất con trỏ) thì dùng lại, không tải. Đồng bộ - gọi ở luồng nền của
+    mô-đun. Ném lỗi để mô-đun nói lý do (`reason`)."""
     assert _folder is not None
     _folder.mkdir(parents=True, exist_ok=True)
-    archive = _folder / "ffmpeg.deflate"
+    exe = _folder / _slot(pin()) / EXE_NAME
+    if exe.is_file() and exe.stat().st_size == EXE_SIZE and studio_setup._sha256(exe) == EXE_SHA256:
+        progress(WHEEL.size, WHEEL.size)
+        return exe
+    archive = _folder / f"ffmpeg-{_slot(pin())}.deflate"  # tên theo pin: phần dở của pin khác không bao giờ bị nối vào
     offset = zip_range.member_offset(WHEEL, ARCHIVE_SIZE, MEMBER, EXE_SIZE, EXE_CRC, cancelled)
     studio_setup.download(WHEEL, archive, progress, cancelled, byte_range=(offset, ARCHIVE_SIZE))
-    exe = _folder / EXE_NAME
+    exe.parent.mkdir(exist_ok=True)  # chỉ tạo khi đã có phần nén đúng băm: lượt hỏng không để lại thư mục rỗng
     part = exe.with_name(exe.name + ".part")
     zip_range.inflate(archive, part, EXE_SIZE, EXE_SHA256, EXE_CRC, cancelled)
     os.replace(part, exe)
     os.remove(archive.resolve())
-    io_utils.use_downloaded_ffmpeg(exe)
     return exe
 
 
 # ---- tải riêng ffmpeg (xuất sách nói: hộp Xuất mời tải khi máy chưa có) ---------------------------------------------------------
-# Mô-đun "Phân tích nhạc" tải ffmpeg cùng thư viện + model; xuất sách nói chỉ cần ffmpeg (~36 MB) nên có đường tải riêng, cùng `install` và cùng thư mục.
+# Mô-đun "Phân tích nhạc" tải ffmpeg cùng thư viện + model; xuất sách nói chỉ cần ffmpeg (~64 MB) nên có đường tải riêng, cùng `install` và cùng thư mục.
 
 _state: dict[str, object] = {"downloading": False, "done": 0, "total": 0, "error": ""}
 _cancel = threading.Event()

@@ -83,7 +83,7 @@ Text is never auto-edited (owner rule): cleanup proposals (e.g. a credit line) a
 - `abook/importers.py`: `import_text(path) -> ImportedBook{title, author, language, cover_bytes, chapters[{title, text}], notes}` for a
   folder of `.txt` (Studio's order and `decode_text_bytes`: UTF-8 with/without BOM, UTF-16, cp1258, cp1252), EPUB (spine order, nav/NCX titles,
   cover from the manifest, image-only pages noted), DOCX (Heading 1/2, fallback `Chương|Chapter|Hồi|Quyển N` lines) and text-layer PDF.
-  EPUB/DOCX use only `zipfile` + `xml.etree`/`html.parser`; PDF uses `pypdf` 6.16.2 (BSD-3, pure Python), vendored unchanged in
+  EPUB/DOCX use only `zipfile` + `xml.etree`/`html.parser`; PDF uses `pypdf` 6.21.4 (BSD-3, pure Python), vendored unchanged in
   `abook/vendor/pypdf/` (LICENSE + wheel SHA-256 in its README; `pyproject.toml` is hash-locked so nothing is declared there). A PDF with no text
   layer fails with "PDF scan, cần OCR". `epub_import.py` moved into it; `extract()` writes the Studio chapter folder (+ `import.json`, cover).
 - One spec, three places: the **rules** (heading regex, running header/footer removal = lines in the first/last 2 of a page whose digits-normalised

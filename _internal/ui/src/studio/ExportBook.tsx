@@ -205,6 +205,8 @@ export function ExportDialog({
   });
   const refreshFfmpeg = () => void client.invalidateQueries({ queryKey: ["ffmpeg"] });
   const needsFfmpeg = (kind === "m4b" || mixes) && ffmpeg.data !== undefined && !ffmpeg.data.ready;
+  // Bản đã tải nhưng cũ: vẫn xuất được, nhưng mời cập nhật (như hộp "Xuất sách nói" của Nghe ngay và ExportBook.qml).
+  const offersFfmpeg = (kind === "m4b" || mixes) && ffmpeg.data !== undefined && (!ffmpeg.data.ready || ffmpeg.data.outdated);
   const bytes = estimate.data?.bytes ?? 0;
   const musicPending = estimate.data?.musicPending ?? 0;
   const byVolume = audioKind && !wholeSeries && volumes.length > 1;
@@ -526,7 +528,7 @@ export function ExportDialog({
           {musicPending > 0 && S.s_cong_them_0_bai_nhac_khi_xuat_725f787e(musicPending)}
         </p>
       )}
-      {needsFfmpeg && ffmpeg.data && (
+      {offersFfmpeg && ffmpeg.data && (
         <div className="mt-3">
           <FfmpegNeeded
             status={ffmpeg.data}
