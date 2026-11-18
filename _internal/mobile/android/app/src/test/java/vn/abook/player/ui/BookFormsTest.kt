@@ -579,7 +579,8 @@ class BookFormsTest {
         showReading("Haruto")
         rule.onNodeWithContentDescription("Sửa cách đọc Haruto").performClick()
         rule.waitForIdle()
-        rule.onNodeWithTag("edit_book_list").performScrollToNode(hasTestTag("reading_save"))
+        // Cả ô sửa vào khung: cuộn tới việc cuối của nó ("Đọc như trong sách" dưới nút Lưu).
+        rule.onNodeWithTag("edit_book_list").performScrollToNode(hasTestTag("reading_plain"))
         shot(name)
     }
     @Test @Config(sdk = [35], qualifiers = "w360dp-h1100dp-xxhdpi") fun readingsLight() = readingsShot(false, "edit_readings_light")
