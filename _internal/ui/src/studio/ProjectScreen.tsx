@@ -1,6 +1,7 @@
 import { Presence } from "../shared/MotionPresence";
 import { S } from "../shared/strings.generated";
 import { TickingValue } from "@/shared/TickingValue";
+import { OneLineFit } from "@/shared/OneLineFit";
 import { MotionRegion } from "@/shared/MotionRegion";
 import { Fold } from "@/shared/Collapse";
 import { MoreInfo } from "@/shared/SettingsNav";
@@ -971,11 +972,11 @@ function ChapterRow({ book, chapter, rowIndex }: { book: BookSummary; chapter: C
         )}
       </div>
       <div role="cell" className="min-w-0">
-        <div className="truncate font-medium">{chapter.displayTitle}</div>
+        <OneLineFit className="font-medium">{chapter.displayTitle}</OneLineFit>
         {chapter.lastError ? (
           <ChapterError raw={chapter.lastError} studio={hasStudio} />
         ) : chapter.subtitle ? (
-          <div className="truncate text-xs text-fg-2">{chapter.subtitle}</div>
+          <OneLineFit className="text-xs text-fg-2">{chapter.subtitle}</OneLineFit>
         ) : null}
       </div>
       <div role="cell">

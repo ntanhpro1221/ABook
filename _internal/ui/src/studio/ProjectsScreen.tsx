@@ -1,6 +1,7 @@
 import { Presence } from "../shared/MotionPresence";
 import { S } from "../shared/strings.generated";
 import { TickingValue } from "@/shared/TickingValue";
+import { OneLineFit } from "@/shared/OneLineFit";
 import { MotionRegion } from "@/shared/MotionRegion";
 import { AnimatedRows, MotionPresence, Reveal } from "@/shared/MotionPresence";
 import * as DropdownMenu from "@/shared/DropdownMenu";
@@ -67,7 +68,7 @@ function BrokenRow({ book, local }: { book: BookSummary; local: boolean }) {
     <div className={cn("grid items-center gap-x-4 px-3 py-3 text-sm", COLUMNS)}>
       <span aria-hidden className="size-10 rounded-control bg-hover" />
       <div className="min-w-0 md:col-span-2 xl:col-span-3">
-        <div className="truncate font-medium">{book.title}</div>
+        <OneLineFit className="font-medium">{book.title}</OneLineFit>
         <div className={cn("truncate text-xs", busy ? "text-warning" : "text-danger")}>
           {busy ? S.s_chua_mo_duoc_ffa5657d : S.s_chua_doc_duoc_2213ed66}
           {book.broken}
@@ -129,7 +130,7 @@ function ProjectRowBody({ book }: { book: BookSummary }) {
       >
         <BookCover title={book.title} part={book.series?.part} size="sm" image={book.cover} className="row-span-3 size-10 self-start md:row-span-1 md:self-center" />
         <div className="min-w-0">
-          <div className="truncate font-medium">{book.title}</div>
+          <OneLineFit className="font-medium">{book.title}</OneLineFit>
           <div className="truncate text-body-small text-fg-2">
             {/* Chất lượng "Cân bằng" là mặc định của gần mọi dự án: chữ giống nhau trên mọi hàng thì chỉ ghi ở hàng KHÁC (soát 25-10). */}
             <DotJoin parts={[book.settings.narrator && S.s_giong_ke_0_958dd853(book.settings.narrator), book.settings.profile !== "balanced" && book.settings.profileLabel]} />

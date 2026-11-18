@@ -1232,10 +1232,11 @@ function BookPage({ extraActions, dangerActions, studioLink, notice, editing = {
               pending={(listening && player.buffering) || player.preparingBookId === book.id}
               icon={listenFirst ? (listening && player.playing ? Pause : finished ? RotateCcw : Play) : BookOpen}
               onClick={listenFirst ? withFeedback("playPause", listenNow) : read}
-              // Tên chương dài (truyện dịch) hay chữ hệ thống to: cắt "…" trong nút thay vì tràn ra hai mép màn hình (soát UX a9).
-              className="min-w-0 max-w-full max-sm:w-full"
+              // Tên chương dài (truyện dịch) hay chữ hệ thống to: không tràn hai mép màn hình (soát UX a9) mà cũng không cắt "…" (left174, luật
+              // OneLineFit): thu cỡ cho vừa một dòng, không vừa thì xuống dòng và nút cao thêm - như Android và Qt (Button wrap).
+              className="h-auto min-w-0 max-w-full py-2 max-sm:w-full"
             >
-              <span className="min-w-0 truncate">{listenFirst && ((listening && player.buffering) || player.preparingBookId === book.id) ? S.s_buffering : listenFirst ? primaryLabel : readLabel}</span>
+              <OneLineFit data-book-primary-label="" className="min-w-0 text-left">{listenFirst && ((listening && player.buffering) || player.preparingBookId === book.id) ? S.s_buffering : listenFirst ? primaryLabel : readLabel}</OneLineFit>
             </Button>
           )}
           {/* Hàng phụ: luôn cùng bốn chỗ, cùng thứ tự - nút chưa dùng được thì mờ đi chứ không biến mất (không nhảy chỗ khi bắt đầu nghe). */}

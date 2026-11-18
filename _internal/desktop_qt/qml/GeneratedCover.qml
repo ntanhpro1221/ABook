@@ -8,6 +8,9 @@ import "UiStrings.js" as S
 Rectangle {
     id: root
     property string title: ""
+    // Bìa nhỏ trong hàng danh sách (hàng quyển): chỉ một nhãn ngắn ở giữa - số tập hay hai chữ cái đầu - như BookCover size "sm" của web
+    // (chữ đậm cỡ Theme.sizeSection, màu điểm của bảng màu) và `small` của Android.
+    property bool initials: false
     radius: Theme.radiusCover
 
     // FNV-1a như cover.ts hash(); Math.imul có trong QML JS.
@@ -24,36 +27,37 @@ Rectangle {
         const m = title.match(/^(.*?)\s*[·|:—–-]\s*(Tập|Quyển|Phần|Vol\.?|Book)\s*(.+)$/i)
         return m ? [m[1].trim(), (m[2] + " " + m[3]).trim()] : [title.trim(), ""]
     }
+    // coverLabel của cover.ts: số tập nếu có, không thì chữ cái đầu của tối đa hai từ dài hơn 2 chữ, bỏ từ nối.
+    readonly property var stopWords: ["the", "and", S.s_cua_56cf0ad4, S.s_va_befa210d, S.s_nhung_767e74d8, S.s_cac_d6e0786e, S.s_mot_0231bfca]
+    readonly property string label: {
+        const volume = parts[1].match(/(\d+)/)
+        if (volume) return volume[1]
+        return parts[0].split(/\s+/).filter(word => word.length > 2 && stopWords.indexOf(word.toLowerCase()) < 0)
+            .slice(0, 2).map(word => word[0].toUpperCase()).join("")
+    }
 
     gradient: Gradient {
         GradientStop { position: 0; color: root.palette[0] }
         GradientStop { position: 1; color: root.palette[1] }
     }
 
-    // Chữ trên bìa nhỏ (coverLabel của cover.ts, CoverArt.label của điện thoại): số tập nếu là sách trong một bộ ("16"),
-    // không thì chữ cái đầu của hai chữ có nghĩa.
-    readonly property string label: {
-        const volume = parts[1].match(/(\d+)/)
-        if (volume) return volume[1]
-        // Chữ đệm không lấy chữ cái: "the" / "and" của tên tiếng Anh (mẫu, không phải chữ hiện) và các chữ đệm tiếng Việt.
-        const stop = [S.s_cua_56cf0ad4, S.s_va_befa210d, S.s_nhung_767e74d8, S.s_cac_d6e0786e, S.s_mot_0231bfca]
-        return parts[0].split(/\s+/).filter(word => word.length > 2 && !/^(?:the|and)$/i.test(word) && stop.indexOf(word.toLowerCase()) < 0)
-            .slice(0, 2).map(word => word.charAt(0).toUpperCase()).join("")
-    }
     // Bìa nhỏ (ảnh đại diện trong bảng, < 64 px): chỉ nhãn ngắn ở giữa, như web xs/sm và `small` của điện thoại - tên dài 26 dòng
     // trong ô 40 px tràn khỏi bìa (soát R8 15-11).
     readonly property bool compact: width < 64
     Text {
-        Reveal { shown: root.compact }
+        // Nhãn ngắn ở giữa (`label`): hàng quyển (`initials`, như BookCover "sm" của web) hay bìa nhỏ hơn 64 px (`compact`).
+        objectName: "coverInitials"
+        Reveal { shown: root.initials || root.compact }
         anchors.centerIn: parent
         text: root.label
-        color: Theme.coverInk
-        font.pixelSize: Math.round(root.width * 0.34)
+        color: root.initials ? root.palette[2] : Theme.coverInk
+        font.pixelSize: root.initials ? Theme.sizeSection     // web 17 px, Android 0,34 x bề ngang (19 dp ở bìa 56): token gần nhất
+            : Math.round(root.width * 0.34)
         font.weight: Theme.weightBold
     }
-    // Tên sách in trên bìa: thu cỡ chữ cho vừa khung, chừa chỗ cho nhãn "Tập N" nếu có.
+    // Tên sách in trên bìa: thu cỡ chữ cho vừa khung (không cắt, không '...'), chừa chỗ cho nhãn "Tập N" nếu có.
     Text {
-        Reveal { shown: !root.compact }
+        Reveal { shown: !root.initials && !root.compact }
         readonly property real pad: Math.max(8, root.width * 0.08)
         x: pad
         y: pad
@@ -71,7 +75,7 @@ Rectangle {
     }
     Rectangle {
         id: tagBox
-        Reveal { shown: root.width >= 88 && root.parts[1] !== "" }
+        Reveal { shown: !root.initials && root.width >= 88 && root.parts[1] !== "" }
         anchors.left: parent.left
         anchors.bottom: parent.bottom
         anchors.margins: Math.max(8, root.width * 0.08)

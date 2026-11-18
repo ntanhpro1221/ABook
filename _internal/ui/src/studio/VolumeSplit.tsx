@@ -1,5 +1,6 @@
 import { S } from "../shared/strings.generated";
 import { MoreInfo } from "@/shared/SettingsNav";
+import { OneLineFit } from "@/shared/OneLineFit";
 import { MotionRegion } from "@/shared/MotionRegion";
 import { AnimatedRows } from "@/shared/MotionPresence";
 import { Layers, Plus, Sparkles, Trash2 } from "lucide-react";
@@ -136,10 +137,8 @@ export function VolumeSplit({
           <MotionRegion className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3 gap-y-1 py-2 sm:grid-cols-[minmax(0,1fr)_auto_90px_32px]">
             <div className="min-w-0">
               {/* Phần 1 giữ nguyên tên sách (là sách thường, như máy chủ đặt) - nên nói ra nó là phần 1; các phần sau đã có "· Phần N" trong tên. */}
-              <div className="truncate font-medium max-sm:whitespace-normal max-sm:break-words">
-                {title}
-              </div>
-              <div className="truncate text-xs text-fg-2">
+              <OneLineFit className="font-medium">{title}</OneLineFit>
+              <div className="break-words text-xs text-fg-2">
                 {files[part.start - 1]?.firstLine || files[part.start - 1]?.name}
                 {proposed.get(files[part.start - 1]?.path) ? ` · ${proposed.get(files[part.start - 1].path)}` : ""}
               </div>

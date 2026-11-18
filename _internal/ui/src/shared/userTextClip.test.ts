@@ -96,3 +96,57 @@ it("ShortName chỉ xuất hiện ở hàng điều khiển phiên điện tho�
   }
   expect(callers).toEqual(["desktop/RemotePhone.tsx"]);
 });
+
+/** left174: chữ sách / chữ người dùng ở MỌI vùng (cả Studio) - tên dự án, tên chương, dòng đầu file, tên mẫu, tên nhân vật trong kịch bản, đường dẫn
+ *  thư mục người dùng chọn, nhãn nút chính "Nghe tiếp · <chương>". Cắt bằng truncate / line-clamp là lỗi; dùng OneLineFit (thu cỡ, không vừa thì
+ *  xuống dòng) hoặc xuống dòng. */
+const BOOK_TEXT = /book\.title|chapter\.(?:displayTitle|subtitle|title)|chapterLabel\(|template\.name|file\.(?:firstLine|title|name)\b|row\.firstLine|line\.label\b|\bprimaryLabel\b|libraryRoot|^\{folder\b|\bitem\.surface\b|\bentry\.surface\b|^\{title\}$/;
+/** Chỗ cắt chữ sách còn giữ, mỗi chỗ một lý do (left174 result.md). */
+const BOOK_KEPT = new Set([
+  // Thanh phát thu nhỏ cao cố định (DESIGN 6): tên chương / sách một dòng, tên đầy đủ ở tooltip và màn Đang nghe.
+  "listen/PlayerViews.tsx:{track.chapterTitle}",
+  // Chủ sách: tên bài nhạc tối đa 2 dòng trong danh sách nhạc (Android TrackRow, Qt MusicTrackRow cùng luật); tấm chi tiết bài hiện trọn.
+  "music/MusicScreen.tsx:{title}",
+]);
+
+function bookTextClips(dir: string, file: string, source: string): string[] {
+  const found: string[] = [];
+  const tag = /className=(?:"[^"]*\b(?:truncate|line-clamp-\d)\b[^"]*"|\{[^}]*\b(?:truncate|line-clamp-\d)\b[^}]*\})[^>]*>\s*([^<]*)/g;
+  for (const match of source.matchAll(tag)) {
+    const expression = match[1].trim().match(/\{(?:[^{}]|\{[^{}]*\})*\}/g)?.find((part) => BOOK_TEXT.test(part.slice(1, -1).trim()) || BOOK_TEXT.test(part));
+    if (!expression || BOOK_KEPT.has(`${dir}/${file}:${expression}`)) continue;
+    found.push(`${dir}/${file}:${expression} (dòng ${source.slice(0, match.index).split("\n").length})`);
+  }
+  return found;
+}
+
+it("chữ sách và chữ người dùng không bị cắt \"…\" ở mọi vùng, kể cả Studio (left174)", () => {
+  const clipped: string[] = [];
+  for (const dir of ["listen", "desktop", "shared", "studio", "music"]) {
+    for (const file of sourceFiles(dir)) {
+      if (!file.endsWith(".tsx") || file.includes(".test.")) continue;
+      clipped.push(...bookTextClips(dir, file, readFileSync(`${root}/${dir}/${file}`, "utf8")));
+    }
+  }
+  expect(clipped).toEqual([]);
+});
+
+it("máy dò chữ sách bắt được các chỗ cắt cũ (đối chứng trước left174)", () => {
+  const old = [
+    `<span className="min-w-0 truncate">{listenFirst && ((listening && player.buffering) || player.preparingBookId === book.id) ? S.s_buffering : listenFirst ? primaryLabel : readLabel}</span>`,
+    `<div className="truncate font-medium">{book.title}</div>`,
+    `<div className="truncate font-medium">{chapter.displayTitle}</div>`,
+    `<span className="min-w-0 flex-1 truncate">{chapterLabel(chapter)}</span>`,
+    `<div className="truncate text-sm font-medium">{template.name}</div>`,
+    `<span className="flex h-7 items-center truncate text-xs text-fg-3">{line.label || S.s_nguoi_ke_fd36cd15}</span>`,
+    `<span className="truncate" title={preferences?.libraryRoot}>{preferences?.libraryRoot}</span>`,
+  ];
+  for (const line of old) expect(bookTextClips("studio", "Old.tsx", line), line).toHaveLength(1);
+  expect(bookTextClips("studio", "New.tsx", `<OneLineFit className="font-medium">{book.title}</OneLineFit>`)).toEqual([]);
+});
+
+it("CSS không cắt chữ bằng text-overflow: ellipsis, trừ dòng tác giả/thời lượng của hàng nhạc (cùng quyết định với Android TrackRow và Qt MusicTrackRow)", () => {
+  const css = readFileSync(`${root}/styles.css`, "utf8");
+  const rules = [...css.matchAll(/([^{}]+)\{[^}]*text-overflow:\s*ellipsis[^}]*\}/g)].map((match) => match[1].trim().split("\n").pop()!.trim());
+  expect(rules).toEqual([".dot-join-single > span > span:first-child"]);
+});

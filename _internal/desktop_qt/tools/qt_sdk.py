@@ -15,12 +15,17 @@ def qt_version() -> str:
     return version
 
 
+def tools_root() -> Path:
+    """Folder holding native_desk_proto (Qt SDK, CMake, Ninja, QWindowKit): $ABOOK_TOOLS_ROOT, else the folder holding this checkout."""
+    return Path(os.environ.get("ABOOK_TOOLS_ROOT") or Path(__file__).resolve().parents[4])
+
+
 def qt_root() -> Path:
-    return Path(os.environ.get("QT_ROOT", f"D:/Novels/native_desk_proto/qt611/{qt_version()}/msvc2022_64"))
+    return Path(os.environ.get("QT_ROOT") or tools_root() / f"native_desk_proto/qt611/{qt_version()}/msvc2022_64")
 
 
 def qwk_root() -> Path:
-    return Path(os.environ.get("QWK_ROOT", "D:/Novels/native_desk_proto/qwk"))
+    return Path(os.environ.get("QWK_ROOT") or tools_root() / "native_desk_proto/qwk")
 
 
 def qwk_install_root() -> Path:

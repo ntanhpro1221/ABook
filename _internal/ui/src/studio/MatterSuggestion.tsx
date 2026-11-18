@@ -1,6 +1,7 @@
 import { S } from "../shared/strings.generated";
 import type { ScannedFile } from "@/studio/api";
 import { formatNumber } from "@/shared/format";
+import { OneLineFit } from "@/shared/OneLineFit";
 import { matterFiles } from "@/studio/scanView";
 
 /** Trang phụ của file sách (bìa, bản quyền, mục lục, mục rất ngắn - cùng luật với Nghe ngay): có trong sách nhưng CHƯA tích; tích trang nào bạn muốn nghe. */
@@ -24,7 +25,7 @@ export function MatterSuggestion({ files, keep, onKeep }: { files: ScannedFile[]
               />
               <span className="min-w-0">
                 <span className="block font-medium">{row.matter}</span>
-                <span className="block truncate text-xs text-fg-2">{row.firstLine || row.name}</span>
+                <OneLineFit className="text-xs text-fg-2">{row.firstLine || row.name}</OneLineFit>
               </span>
             </label>
           </li>

@@ -82,5 +82,40 @@ Item {
             verify(made.problem.length > 0)
             compare(made.busy, false)
         }
+        // left174: hàng quyển giống web (BookScreen.tsx ChapterGroups: BookCover sm + font-medium + Progress mt-2 h-2) và Android
+        // (volume_progress_<id> 8 dp): bìa bo Theme.radiusCover, bìa vẽ chỉ ghi chữ cái đầu tên sách, tên đậm vừa, thanh 8 px bo tròn cách 8 px.
+        function test_volumeRowsMatchWebAndAndroid() {
+            const made = createTemporaryObject(page, host, {width: host.width, height: host.height,
+                book: {bookId: "width", title: "Đồng hồ bên cửa sổ"}})
+            tryVerify(() => made.loaded && made.volumePicker)
+            for (const id of [1, 2]) {
+                const row = findChild(made, "bookVolume_" + id)
+                const cover = findChild(row, "bookVolumeCover")
+                compare(cover.radius, Theme.radiusCover)
+                compare(cover.initials, true)
+                compare([cover.width, cover.height], [56, 84])
+                const name = findChild(row, "bookVolumeName")
+                compare(name.font.weight, Theme.weightMedium)
+                compare(name.text, id === 1 ? "Tập một" : "Tập hai")
+                const bar = findChild(row, "bookVolumeProgress")
+                compare(bar.height, 8)
+                compare(bar.radius, 4)
+                compare(bar.Accessible.name, "Đã nghe")
+                compare(bar.width, name.width)
+                // Cách dòng số chương ngay trên đúng 8 px
+                const column = bar.parent
+                const hint = column.children[1]
+                compare(bar.mapToItem(row, 0, 0).y - hint.mapToItem(row, 0, hint.height).y, 8)
+                verify(bar.mapToItem(row, 0, bar.height).y <= row.height)
+            }
+            // Quyển 2 không có ảnh, sách không có ảnh: bìa vẽ nhỏ chỉ ghi chữ cái đầu tên sách (coverLabel của web: "Đồng hồ bên cửa sổ" -> "ĐB")
+            const drawn = findChild(findChild(findChild(made, "bookVolume_2"), "bookVolumeCover"), "coverInitials")
+            verify(drawn !== null && drawn.visible)
+            compare(drawn.text, "ĐB")
+            compare(drawn.font.pixelSize, Theme.sizeSection)
+            compare(drawn.font.weight, Theme.weightBold)
+            VisualReady.render(this, host.Window.window, host, qtVisualReady)
+            shot("qt_volumes_rows")
+        }
     }
 }

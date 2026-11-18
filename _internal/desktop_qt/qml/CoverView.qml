@@ -9,6 +9,7 @@ Item {
     id: root
     property string coverKey: ""
     property string title: ""
+    property bool initials: false        // bìa vẽ dự phòng chỉ ghi nhãn ngắn (GeneratedCover.initials)
     property real radius: Theme.radiusCover
     readonly property real dpr: Screen.devicePixelRatio
     readonly property size wantSize: Qt.size(Math.round(width * dpr), Math.round(height * dpr))
@@ -25,6 +26,7 @@ Item {
     GeneratedCover {
         anchors.fill: parent
         title: root.title
+        initials: root.initials
         radius: root.radius
         Reveal { shown: root.coverKey === "" || image.status === Image.Error }
     }

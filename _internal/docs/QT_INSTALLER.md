@@ -12,7 +12,8 @@ Phiên bản SDK duy nhất nằm trong `desktop_qt/QT_VERSION` (hiện là **6.
 Qt 6.11.3 có bản sửa qtdeclarative `42c76d7acd` cho **QTBUG-148459**: xử lý MethodStorage null trong QML/V4,
 liên quan crash `QQmlConnections::connectSignalsToMethods` của WidthTests. Đổi SDK vẫn phải kiểm WidthTests thật.
 
-Máy Windows dùng MSVC 2022 x64. Cài song song dưới `D:/Novels/native_desk_proto/qt611/<QT_VERSION>/msvc2022_64`,
+Máy Windows dùng MSVC 2022 x64. Cài song song dưới `<ABOOK_TOOLS_ROOT>/native_desk_proto/qt611/<QT_VERSION>/msvc2022_64`
+(`ABOOK_TOOLS_ROOT`: biến môi trường, mặc định là thư mục chứa bản checkout - build.bat, build_qwindowkit.bat, qt_sdk.py cùng đọc),
 giữ các thư mục SDK khác để những cây đang làm việc tiếp tục dùng được. Bộ module cần có: `qtbase`, `qtdeclarative`
 và ba addon `qtmultimedia`, `qttasktree`, `qtimageformats` (plugin `imageformats/qwebp.dll`: mọi ảnh chân dung giọng và
 ảnh nhân vật là WebP; thiếu nó thì QML Image lặng lẽ hỏng, chỉ hiện chữ cái dự phòng như bản 0.4.173 trước khi sửa).
@@ -22,7 +23,7 @@ Trước khi đổi SDK, so danh sách `lib/cmake` với bản đang dùng và k
 phiên bản trong `QT_VERSION`. Không suy addon từ tên thư mục `Qt6CoreTools`/`Qt6QmlTools`: chúng đi cùng module nền.
 
 aqt 3.3.0 chưa đọc được kho theo kiến trúc của Qt 6.11: nó tìm Updates.xml trong thư mục lặp phiên bản và gặp 404.
-Dùng `desktop_qt/tools/install_qt_sdk.py --destination D:/Novels/native_desk_proto/qt611 --cache <thư-mục-log>/archives
+Dùng `desktop_qt/tools/install_qt_sdk.py --destination <ABOOK_TOOLS_ROOT>/native_desk_proto/qt611 --cache <thư-mục-log>/archives
 --python-libraries <site-packages có py7zr đã ghim>` với Python của ABook; công cụ tự cài gói nền cùng ba addon bắt buộc
 (`REQUIRED_ADDONS`), `--addon` chỉ để thêm addon khác. Thêm addon vào SDK đã có: `--only-addon <tên>`.
 Công cụ đọc `QT_VERSION`, lấy Updates.xml từ kho `qt6_<version>_msvc2022_64`, chọn toàn bộ gói nền và addon yêu cầu,
@@ -37,13 +38,13 @@ kích thước từng archive và kết quả `qmake -query`/`qtpaths -query`; `
 Qt6QmlAssetDownloaderPrivate trong bộ này cần thêm qttasktree; đây là phụ thuộc mới so với SDK trước.
 Việc cài/dựng dài phải chạy qua
 `Start-Process pythonw -ArgumentList scripts/run_detached.py,<command>` với WorkingDirectory
-`D:/Novels/ABook/_internal`, không mở console; không dùng WMI để thả tiến trình. Với bản run_detached.py còn tự gọi WMI,
+`_internal` của bản checkout chính (nơi có `runtime/.venv`), không mở console; không dùng WMI để thả tiến trình. Với bản run_detached.py còn tự gọi WMI,
 truyền `--outside-claude <file-json-môi-trường>` trước lệnh (file `{}` dùng được) để bỏ qua nhánh ấy. Ghi log riêng cho lượt cài.
 
 QWindowKit 1.5.0 dùng header private của Qt, phải dựng lại bằng đúng SDK này. Script `tools/build_qwindowkit.bat`
-dùng chung nguồn `D:/Novels/native_desk_proto/qwk/src`, nhưng tách thư mục `build-<QT_VERSION>` và
+dùng chung nguồn `<ABOOK_TOOLS_ROOT>/native_desk_proto/qwk/src`, nhưng tách thư mục `build-<QT_VERSION>` và
 `inst-<QT_VERSION>`; CMake của app tìm package trong thư mục cài theo phiên bản. Không dùng lại binary QWindowKit
-đã dựng bằng SDK khác, không ghi đè thư mục cài cũ. Có thể đặt `QT_ROOT`/`QWK_ROOT` để chọn vị trí SDK/nguồn QWindowKit;
+đã dựng bằng SDK khác, không ghi đè thư mục cài cũ. Có thể đặt `ABOOK_TOOLS_ROOT` (mọi mặc định cùng dời) hay `QT_ROOT`/`QWK_ROOT` để chọn vị trí SDK/nguồn QWindowKit;
 phiên bản package Qt vẫn phải khớp file cấu hình.
 
 Sau khi cài: dựng toàn bộ bằng `desktop_qt/build.bat`, chạy các suite Qt với `QT_QUICK_BACKEND=software`,

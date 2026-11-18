@@ -224,7 +224,7 @@ class BookScreenTest {
     @Test
     fun listeningLight() {
         show(detail(listening()))
-        rule.onNodeWithText("Nghe tiếp").assertIsDisplayed()
+        rule.onNodeWithText("Nghe tiếp", substring = true).assertIsDisplayed()
         rule.onNode(hasText("Chương 3: Một cái tên chương khá dài để xuống dòng", substring = true) and hasAnyAncestor(hasTestTag("book_primary")), useUnmergedTree = true)
             .assertIsDisplayed()
         rule.onNodeWithTag("chapter_3").assertIsSelected()
@@ -273,7 +273,7 @@ class BookScreenTest {
     fun playingHereLight() {
         val player = PlayerState(bookId = "b1", chapterId = 3, chapterTitle = "Chương 3", playing = true, durationMs = 1_500_000)
         show(detail(listening()), player = player)
-        rule.onNodeWithText("Tạm dừng").assertIsDisplayed()
+        rule.onNodeWithText("Tạm dừng", substring = true).assertIsDisplayed()
         shot("book_playing_light")
     }
 
@@ -288,7 +288,7 @@ class BookScreenTest {
     @Test
     fun finishedDark() {
         show(detail(finished()), dark = true)
-        rule.onNodeWithText("Nghe lại từ đầu").assertIsDisplayed()
+        rule.onNodeWithText("Nghe lại từ đầu", substring = true).assertIsDisplayed()
         shot("book_finished_dark")
     }
 
@@ -337,22 +337,22 @@ class BookScreenTest {
         setBook(detail(listening()), player = { player })
         repeat(2) { rule.mainClock.advanceTimeByFrame() }
         // The label follows actual player state through the shared transition.
-        rule.onNodeWithText("Nghe tiếp").assertExists()
+        rule.onNodeWithText("Nghe tiếp", substring = true).assertExists()
         player = PlayerState(bookId = "b1", chapterId = 3, chapterTitle = "Chương 3", playing = true, durationMs = 1_500_000)
         rule.mainClock.advanceTimeByFrame()
         rule.waitForIdle()
         rule.mainClock.advanceTimeBy(1_000)
-        rule.onNodeWithText("Tạm dừng").assertExists()
-        rule.onAllNodesWithText("Nghe tiếp").assertCountEquals(0)
+        rule.onNodeWithText("Tạm dừng", substring = true).assertExists()
+        rule.onAllNodesWithText("Nghe tiếp", substring = true).assertCountEquals(0)
         // A later state change settles on the new label as well.
         repeat(6) { rule.mainClock.advanceTimeByFrame() }
-        rule.onNodeWithText("Tạm dừng").assertExists()
+        rule.onNodeWithText("Tạm dừng", substring = true).assertExists()
         player = PlayerState(bookId = "b1", chapterId = 3, chapterTitle = "Chương 3", playing = false, durationMs = 1_500_000)
         rule.mainClock.advanceTimeByFrame()
         rule.waitForIdle()
         rule.mainClock.advanceTimeBy(1_000)
-        rule.onNodeWithText("Nghe tiếp").assertExists()
-        rule.onAllNodesWithText("Tạm dừng").assertCountEquals(0)
+        rule.onNodeWithText("Nghe tiếp", substring = true).assertExists()
+        rule.onAllNodesWithText("Tạm dừng", substring = true).assertCountEquals(0)
     }
 
     // ---- kịch bản bấm ----
@@ -515,8 +515,10 @@ class BookScreenTest {
     }
 
     /**
-     * Soát thiết kế 10-11 việc 3 (L4, L7): nút chính một dòng "Nghe tiếp · Chương N", cao ĐÚNG 48 ở mọi trạng thái; hàng phụ bốn mục đều có nhãn (như Qt);
+     * Soát thiết kế 10-11 việc 3 (L4, L7): nút chính "Nghe tiếp · Chương N" cao 48 khi nhãn vừa một dòng; hàng phụ bốn mục đều có nhãn (như Qt);
      * Tab Chương must stay in place for partial books as well; their production note belongs with the chapter list.
+     * left174 (luật OneLineFit): tên chương trong nút không bao giờ bị cắt "…" - không vừa một dòng (kể cả sau khi thu cỡ) thì xuống dòng, nút
+     * cao thêm vừa đủ chữ; các trạng thái ấy không so chỗ tab (chỗ tab đứng yên chỉ so giữa các nhãn một dòng).
      */
     private fun assertPrimaryIsOneFixedLine() {
         val playing = PlayerState(bookId = "b1", chapterId = 3, chapterTitle = "Chương 3", playing = true, durationMs = 1_500_000)
@@ -545,12 +547,59 @@ class BookScreenTest {
             rule.waitForIdle()
             val name = states[i].first
             val primary = rule.onNodeWithTag("book_primary").getUnclippedBoundsInRoot()
-            assertEquals("$name: nút chính cao 48", 48f, (primary.bottom - primary.top).value, 0.5f)
+            val lines = primaryChapterLines()
+            if (lines <= 1) assertEquals("$name: nút chính một dòng cao 48", 48f, (primary.bottom - primary.top).value, 0.5f)
+            else assertTrue("$name: nút chính xuống dòng thì cao thêm", (primary.bottom - primary.top).value > 48f)
+            assertPrimaryChapterWhole(name)
             for (tag in listOf("book_read", "book_find", "book_restart", "book_more")) rule.onNodeWithTag(tag).assertExists()
-            name to rule.onNodeWithTag("book_tab_chapters", useUnmergedTree = true).getUnclippedBoundsInRoot().top.value
+            Triple(name, lines, rule.onNodeWithTag("book_tab_chapters", useUnmergedTree = true).getUnclippedBoundsInRoot().top.value)
         }
-        val first = tabs.first().second
-        for ((name, top) in tabs) assertEquals("$name: tab Chương đứng yên", first, top, 1f)
+        val oneLine = tabs.filter { it.second <= 1 }
+        assertTrue("có trạng thái một dòng để so", oneLine.size >= 3)
+        val first = oneLine.first().third
+        for ((name, _, top) in oneLine) assertEquals("$name: tab Chương đứng yên", first, top, 1f)
+    }
+
+    /** Số dòng của nhãn nút chính (động từ + " · tên chương"). */
+    private fun primaryChapterLines(): Int {
+        val nodes = rule.onAllNodesWithTag("book_primary_label", useUnmergedTree = true).fetchSemanticsNodes()
+        return nodes.maxOfOrNull { node ->
+            val layouts = mutableListOf<androidx.compose.ui.text.TextLayoutResult>()
+            node.config[androidx.compose.ui.semantics.SemanticsActions.GetTextLayoutResult].action!!(layouts)
+            layouts.maxOf { it.lineCount }
+        } ?: 0
+    }
+
+    /** Nhãn nút chính (động từ + tên chương) đọc trọn: không dòng nào bị "…", chữ nằm trong nút. */
+    private fun assertPrimaryChapterWhole(name: String) {
+        val button = rule.onNodeWithTag("book_primary").getUnclippedBoundsInRoot()
+        for (node in rule.onAllNodesWithTag("book_primary_label", useUnmergedTree = true).fetchSemanticsNodes()) {
+            val layouts = mutableListOf<androidx.compose.ui.text.TextLayoutResult>()
+            node.config[androidx.compose.ui.semantics.SemanticsActions.GetTextLayoutResult].action!!(layouts)
+            for (layout in layouts) {
+                for (line in 0 until layout.lineCount) assertTrue("$name: dòng $line của tên chương bị cắt \"…\"", !layout.isLineEllipsized(line))
+            }
+            val box = node.boundsInRoot
+            val density = node.layoutInfo.density.density
+            assertTrue("$name: tên chương nằm trong nút", box.top / density >= button.top.value - 0.5f && box.bottom / density <= button.bottom.value + 0.5f)
+        }
+    }
+
+    /** Lỗi 0.4.173 (fix173d): "Nghe tiếp · Chương 3: Một cái t…" - tên chương dài bị cắt. Giờ đọc trọn ở cả 100 % và 130 %. */
+    @Test
+    fun primaryNeverCutsTheChapterName() {
+        show(detail(listening()))
+        rule.onNode(hasText("Chương 3: Một cái tên chương khá dài để xuống dòng", substring = true) and hasAnyAncestor(hasTestTag("book_primary")), useUnmergedTree = true)
+            .assertIsDisplayed()
+        assertPrimaryChapterWhole("100%")
+    }
+
+    @Test
+    @Config(sdk = [35], qualifiers = "w360dp-h780dp-xxhdpi", fontScale = 1.3f)
+    fun primaryNeverCutsTheChapterNameAtLargeFontScale() {
+        show(detail(listening()))
+        assertPrimaryChapterWhole("130%")
+        rule.assertNoTextOverflow()
     }
 
     @Test fun primaryIsOneFixedLineInEveryState() = assertPrimaryIsOneFixedLine()

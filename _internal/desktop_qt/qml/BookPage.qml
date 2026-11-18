@@ -648,17 +648,31 @@ Item {
                     Accessible.name: modelData.title
                     Accessible.onPressAction: bookDetail.selectedVolume = modelData.id
                     height: Math.max(112, volumeInfo.implicitHeight + Theme.s32)
+                    readonly property real heard: BookText.volumeProgress(root.fullBook, modelData)
+                    // Như hàng quyển của web (BookCover size "sm" + Progress) và Android: bìa 56x84 bo Theme.radiusCover, quyển không ảnh
+                    // dùng bìa sách, sách không ảnh thì bìa vẽ chỉ ghi chữ cái đầu tên sách; tên quyển đậm vừa; thanh "Đã nghe" 8 px bo
+                    // tròn cách dòng số chương 8 px.
                     CoverView {
                         objectName: "bookVolumeCover"
                         x: Theme.s8; y: Theme.s8; width: 56; height: 84
+                        radius: Theme.radiusCover
+                        initials: true
                         title: modelData.cover ? modelData.title : root.book.title || ""
                         coverKey: modelData.cover ? root.book.bookId + "/" + (modelData.cover.version || 0) + "/volumes/" + modelData.id : root.book.coverKey || ""
                     }
                     Column {
                         id: volumeInfo
-                        x: 80; y: Theme.s16; width: parent.width - x
-                        Text { width: parent.width; text: TextWrap.keepDots(modelData.title); color: Theme.text; font.pixelSize: Theme.sizeBody; wrapMode: Text.Wrap }
-                        ClockLabel { width: parent.width; text: S.s_volume_progress((modelData.chapters || []).length, Math.round(BookText.volumeProgress(root.fullBook, modelData) * 100)); color: Theme.text2; font.pixelSize: Theme.sizeBodySmall; wrapMode: Text.Wrap }
+                        x: 80; y: Theme.s16; width: parent.width - x - Theme.s8
+                        Text { objectName: "bookVolumeName"; width: parent.width; text: TextWrap.keepDots(modelData.title); color: Theme.text; font.pixelSize: Theme.sizeBody; font.weight: Theme.weightMedium; wrapMode: Text.Wrap }
+                        ClockLabel { width: parent.width; text: S.s_volume_progress((modelData.chapters || []).length, Math.round(volumeInfo.parent.heard * 100)); color: Theme.text2; font.pixelSize: Theme.sizeBodySmall; wrapMode: Text.Wrap }
+                        Item { width: 1; height: Theme.s8 }
+                        LevelBar {
+                            objectName: "bookVolumeProgress"
+                            width: parent.width
+                            height: 8
+                            score: volumeInfo.parent.heard
+                            label: S.s_da_nghe_1e0f8d88
+                        }
                     }
                     TapHandler { onTapped: bookDetail.selectedVolume = modelData.id }
                 }
