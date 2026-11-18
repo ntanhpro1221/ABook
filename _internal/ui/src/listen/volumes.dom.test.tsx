@@ -69,3 +69,32 @@ it("sách nhiều quyển: hàng quyển có số chương và tiến độ; ch�
   await act(async () => back.click());
   expect(host.querySelectorAll('[aria-label="Các quyển"] [role=listitem]')).toHaveLength(2);
 });
+
+// Soát 0.4.173 B11: trình sửa quyển mở được ở cả ba dạng danh sách - một quyển không chia phần, một quyển chia nhiều phần, nhiều quyển (như máy tính).
+it("the volume editor is offered whether the book has parts, no parts or several volumes", async () => {
+  const parts = [{ part: 1, title: "Sách · Phần 1", chapters: [1, 2] }, { part: 2, title: "Sách · Phần 2", chapters: [3, 3] }];
+  for (const shape of [{ ...book }, { ...book, parts }, { ...book, volumes: volumes(book.chapters!) }] as ListenBook[]) {
+    await render(<ChapterGroups book={shape} onDone={() => {}} onRename={() => {}} />);
+    expect([...host.querySelectorAll("button")].filter((button) => button.textContent === "Sắp xếp quyển")).toHaveLength(1);
+  }
+});
+
+// Soát 0.4.173 B13c/d: id quyển mới không tái dùng id vừa xoá; hết chương thì không thêm quyển (như máy tính và điện thoại).
+it("a new volume never reuses a removed id and cannot start on the last volume's chapter", async () => {
+  const { nextVolumeId, canAddVolume } = await import("./VolumeEditor");
+  expect(nextVolumeId([{ id: 1 }], [{ id: 1 }, { id: 2 }])).toBe(3);
+  expect(nextVolumeId([], undefined)).toBe(1);
+  expect(canAddVolume([{ start: 1 }, { start: 3 }], 3)).toBe(false);
+  expect(canAddVolume([{ start: 1 }, { start: 2 }], 3)).toBe(true);
+  expect(canAddVolume(Array.from({ length: 99 }, (_, index) => ({ start: index + 1 })), 500)).toBe(false);
+});
+
+// Soát 0.4.173 B6: hàng quyển giống nhau trên web và Android - quyển không có ảnh riêng dùng bìa sách (sách không ảnh: bìa vẽ nhỏ, chữ cái đầu
+// của tên sách), mỗi hàng một thanh "Đã nghe" (Android: volume_progress_<id>).
+it("volume rows without artwork reuse the book's drawn cover and show a heard bar", async () => {
+  const many = { ...book, volumes: volumes(book.chapters!), state: { chapters: { "1": { done: true } } } } as unknown as ListenBook;
+  await render(<ChapterGroups book={many} onDone={() => {}} />);
+  const rows = [...host.querySelectorAll<HTMLButtonElement>('[aria-label="Các quyển"] [role=listitem] button')];
+  expect(rows.map((row) => row.querySelector("[aria-hidden] span")?.textContent)).toEqual(["S", "S"]);
+  expect(rows.map((row) => row.querySelector('[role="progressbar"]')?.getAttribute("aria-valuenow"))).toEqual(["50", "0"]);
+});

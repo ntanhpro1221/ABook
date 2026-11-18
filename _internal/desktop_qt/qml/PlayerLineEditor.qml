@@ -3,13 +3,14 @@ import ABook
 import "UiStrings.js" as S
 import "PlayerLineLogic.js" as L
 import "ScriptLogic.js" as Script
+import "NameLogic.js" as N
 
 // One frozen sentence, above the native player/reader. Studio owns request and undo semantics.
 Modal {
     id: root
     objectName: "playerLineEditor"
     panelWidth: 512
-    title: step === "speaker" ? (line && line.kind === "thought" ? S.s_ai_nghi_cau_nay_1d5dd20c : S.s_ai_noi_cau_nay_39d97e95) : step === "delivery" ? S.s_cach_doc_cau_nay_d8d0b9f1 : S.s_sua_cau_nay_a82aec43
+    title: step === "speaker" ? (line && line.kind === "thought" ? S.s_ai_nghi_cau_nay_1d5dd20c : S.s_ai_noi_cau_nay_39d97e95) : step === "delivery" ? S.s_cach_doc_cau_nay_d8d0b9f1 : step === "word" ? S.s_doc_tu_nay_la_00b9f99e : S.s_sua_cau_nay_a82aec43
     property string bookId: ""
     property int chapterId: 0
     property var sourceLine: ({})
@@ -17,6 +18,9 @@ Modal {
     property var line: null
     property var chapter: ({cast: [], others: [], lines: []})
     property string step: "menu"
+    // Từ đang sửa cách đọc (bước "word"); rỗng: chưa chọn.
+    property string word: ""
+    readonly property var words: L.wordsOf(sourceLine.text || "")
     property string problem: ""
     property bool loading: false
     property int generation: 0
@@ -33,7 +37,7 @@ Modal {
         if (commands) commands.retire()
         bookId = snapshot.bookId; chapterId = snapshot.chapterId; sourceLine = snapshot.source
         commands = commandFactory.createObject(root, {bookId: bookId, chapterId: chapterId})
-        timed = !!audio; step = "menu"; line = null; problem = ""; loading = true
+        timed = !!audio; step = "menu"; word = ""; line = null; problem = ""; loading = true
         show(); reload()
     }
     function reload() {
@@ -118,7 +122,7 @@ Modal {
             id: editorBody
             width: parent.width
             active: !!root.line && !root.loading && root.problem === ""
-            sourceComponent: root.step === "speaker" ? people : root.step === "delivery" ? delivery : menu
+            sourceComponent: root.step === "speaker" ? people : root.step === "delivery" ? delivery : root.step === "word" ? wordStep : menu
             onLoaded: item.forceActiveFocus()
             opacity: status === Loader.Ready ? 1 : 0
             Behavior on opacity { NumberAnimation { duration: Theme.motionMedium } }
@@ -129,11 +133,50 @@ Modal {
         id: menu
         Column {
             width: parent.width
-            enabled: root.identified && !root.writing
-            MenuRow { objectName: "playerLineWho"; ringRadius: Theme.radiusCover; chevron: true; width: parent.width; icon: "user-round"; text: root.line.kind === "thought" ? S.s_ai_nghi_cau_nay_0656af4f : S.s_ai_noi_cau_nay_0e00a5c7; note: !Script.isSpeech(root.line) ? S.s_loi_ke_khong_co_nguoi_noi_muon_gan_nguoi_d_a62c8bf9 : root.line.wish ? S.s_dang_cho_may_lam_sach_0_712ab9de(root.line.wish.label) : S.s_hien_la_0_d6cdb2e8(root.line.label); enabled: Script.isSpeech(root.line); onClicked: root.step = "speaker" }
-            MenuRow { objectName: "playerLineDelivery"; ringRadius: Theme.radiusCover; chevron: true; width: parent.width; icon: "message-square-quote"; text: S.s_cach_doc_cau_50f2072a; note: S.s_loai_cau_cam_xuc_chu_dem_doc_483deab7; onClicked: root.step = "delivery" }
+            // Câu chưa nhận ra (file làm bằng ABook bản cũ): chỉ bốn hàng sửa câu bị khoá - "Nghe thử" theo audio, "Sửa cách đọc một từ" vẫn được, như web và điện thoại (soát 0.4.173 B10, B13b).
+            enabled: !root.writing
+            MenuRow { objectName: "playerLineWho"; ringRadius: Theme.radiusCover; chevron: true; width: parent.width; icon: "user-round"; text: root.line.kind === "thought" ? S.s_ai_nghi_cau_nay_0656af4f : S.s_ai_noi_cau_nay_0e00a5c7; note: !Script.isSpeech(root.line) ? S.s_loi_ke_khong_co_nguoi_noi_muon_gan_nguoi_d_a62c8bf9 : root.line.wish ? S.s_dang_cho_may_lam_sach_0_712ab9de(root.line.wish.label) : S.s_hien_la_0_d6cdb2e8(root.line.label); enabled: root.identified && Script.isSpeech(root.line); onClicked: root.step = "speaker" }
+            MenuRow { objectName: "playerLineDelivery"; ringRadius: Theme.radiusCover; chevron: true; width: parent.width; icon: "message-square-quote"; text: S.s_cach_doc_cau_50f2072a; note: S.s_loai_cau_cam_xuc_chu_dem_doc_483deab7; enabled: root.identified; onClicked: root.step = "delivery" }
             MenuRow { objectName: "playerLineSample"; ringRadius: Theme.radiusCover; chevron: true; solidIcon: false; width: parent.width; icon: "play"; text: S.s_nghe_thu_fa024065; enabled: root.timed && typeof root.sourceLine.start === "number" && root.sourceLine.end > root.sourceLine.start; onClicked: Clip.toggle("player-line-" + root.line.stableId, "/media/books/" + root.bookId + "/chapters/" + root.chapterId, root.sourceLine.start, root.sourceLine.end) }
-            MenuRow { objectName: "playerLineRetake"; ringRadius: Theme.radiusCover; width: parent.width; icon: "rotate-ccw"; text: S.s_thu_lai_cau_nay_034c2834; note: !root.timed ? S.s_chuong_nay_chua_co_audio_chua_co_gi_de_thu_47e4d310 : root.line.retake === "pending" ? S.s_da_ghi_dang_cho_may_lam_sach_7335a8a2 : S.s_doc_lai_mot_lan_khac_giong_nhu_cu_a0908dad; enabled: root.timed && root.line.retake !== "pending"; onClicked: commands.retake([root.line]) }
+            MenuRow { objectName: "playerLineRetake"; ringRadius: Theme.radiusCover; width: parent.width; icon: "rotate-ccw"; text: S.s_thu_lai_cau_nay_034c2834; note: !root.timed ? S.s_chuong_nay_chua_co_audio_chua_co_gi_de_thu_47e4d310 : root.line.retake === "pending" ? S.s_da_ghi_dang_cho_may_lam_sach_7335a8a2 : S.s_doc_lai_mot_lan_khac_giong_nhu_cu_a0908dad; enabled: root.identified && root.timed && root.line.retake !== "pending"; onClicked: commands.retake([root.line]) }
+            MenuRow { objectName: "playerLineWord"; ringRadius: Theme.radiusCover; chevron: true; width: parent.width; icon: "type"; text: S.s_sua_cach_doc_mot_tu_ad71101c; note: S.s_chon_tu_may_doc_sai_go_cach_doc_dung_3c5ef37e; enabled: root.words.length > 0; onClicked: { root.word = ""; root.step = "word" } }
+        }
+    }
+    Component {
+        id: wordStep
+        Column {
+            width: parent.width
+            spacing: Theme.s12
+            enabled: !root.writing
+            Text { width: parent.width; text: S.s_cham_vao_tu_may_doc_sai_thuong_la_ten_rien_2afff698; color: Theme.text2; wrapMode: Text.Wrap; font.pixelSize: Theme.sizeBodySmall }
+            Flow {
+                width: parent.width
+                spacing: Theme.s8
+                Accessible.role: Accessible.Grouping
+                Accessible.name: S.s_cac_tu_trong_cau_e3fc9264
+                Repeater {
+                    model: root.words
+                    ChoiceChip {
+                        required property var modelData
+                        objectName: "playerLineWordChip"
+                        text: modelData
+                        selected: root.word === modelData
+                        onClicked: root.word = root.word === modelData ? "" : modelData
+                    }
+                }
+            }
+            Collapse {
+                width: parent.width
+                open: root.word !== ""
+                NameRow {
+                    objectName: "playerLineWordRow"
+                    width: parent.width
+                    work: root.commands ? root.commands.work : null
+                    fresh: true
+                    item: N.freshItem(root.word)
+                }
+            }
+            Button { text: S.s_quay_lai_6d793582; kind: "ghost"; onActivated: root.step = "menu" }
         }
     }
     Component {

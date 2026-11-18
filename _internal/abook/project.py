@@ -70,6 +70,26 @@ class ProjectCreationLock:
             self.handle = None
 
 
+def chapter_manifest(input_files: list[Path], output_root: Path, *, ordered: bool = False) -> list[dict[str, Any]]:
+    """The chapter manifest of a new book. `ordered`: `input_files` is already the reading order the reader saw and chose
+    (Studio scan order, or chapters arranged volume by volume) - keep it, instead of the file-name order of
+    `build_chapter_manifest`. Two folders that both hold "001.txt" otherwise interleave their chapters. For files that
+    already are in file-name order both give the same manifest, so an ordinary book keeps its identity."""
+    manifest = build_chapter_manifest(input_files, output_root)
+    if not ordered:
+        return manifest
+    resolved = [str(path.resolve()) for path in input_files]
+    if len(set(resolved)) != len(resolved):
+        raise ValueError("A chapter file occurs twice in the reading order")
+    position = {path: index for index, path in enumerate(resolved)}
+    rows = sorted(manifest, key=lambda row: position[str(row["input_path"])])
+    return [
+        {**row, "chapter_index": index,
+         "output_mp3": str(output_root / f"{index:05d}_{slugify(Path(str(row['input_path'])).stem, 72)}.mp3")}
+        for index, row in enumerate(rows, 1)
+    ]
+
+
 def infer_book_title(input_files: list[Path]) -> str:
     paths = [path.resolve() for path in input_files]
     if len(paths) > 1:
@@ -84,7 +104,10 @@ def create_or_open_project(
     output_root: Path,
     requested_settings: dict[str, Any],
     title: str | None = None,
+    *,
+    ordered: bool = False,
 ) -> tuple[ProjectPaths, ProjectDB, dict[str, Any]]:
+    """`ordered`: keep `input_files` in the given reading order (`chapter_manifest`)."""
     if not input_files:
         raise ValueError("At least one TXT file is required")
     if any(network(path) for path in input_files):
@@ -94,14 +117,14 @@ def create_or_open_project(
     book_title = (title or infer_book_title(input_files)).strip() or "audiobook"
     requested_hash = settings_hash(requested_settings)
     for _attempt in range(MAX_CREATION_LOCK_RETRIES):
-        initial_manifest = build_chapter_manifest(input_files, output_root)
+        initial_manifest = chapter_manifest(input_files, output_root, ordered=ordered)
         initial_manifest_hash = input_manifest_hash(initial_manifest)
         project_name = f"{slugify(book_title, 70)}_{initial_manifest_hash[:10]}"
         lock_path = output_root / ".abook-create-locks" / f"{project_name}.lock"
         with ProjectCreationLock(lock_path):
             # Sources can change while waiting for another creator. Re-evaluate the
             # identity under the lock and retry under the correct lock when needed.
-            locked_manifest = build_chapter_manifest(input_files, output_root)
+            locked_manifest = chapter_manifest(input_files, output_root, ordered=ordered)
             manifest_hash = input_manifest_hash(locked_manifest)
             locked_project_name = f"{slugify(book_title, 70)}_{manifest_hash[:10]}"
             if locked_project_name != project_name:

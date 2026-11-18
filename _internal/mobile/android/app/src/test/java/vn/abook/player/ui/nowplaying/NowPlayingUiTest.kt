@@ -925,6 +925,28 @@ class NowPlayingUiTest {
         rule.onNodeWithTag("prepare_block").assertDoesNotExist()
     }
 
+    // Soát 0.4.173: chữ 130 % làm "Đọc theo" xuống hai dòng, tràn khỏi viên chọn chế độ. Mỗi nhãn một dòng, trọn trong ô của nó, ở 360 và 320 dp.
+    private fun assertModeLabelsFitOneLine() {
+        val pill = bounds("player_mode")
+        for ((tag, label) in listOf("mode_listen" to vn.abook.player.S.s_nghe_a43aafef, "mode_read" to vn.abook.player.S.s_doc_theo_df342819)) {
+            val layouts = mutableListOf<androidx.compose.ui.text.TextLayoutResult>()
+            val text = rule.onNode(hasText(label) and hasAnyAncestor(hasTestTag(tag)), useUnmergedTree = true)
+            text.fetchSemanticsNode().config[androidx.compose.ui.semantics.SemanticsActions.GetTextLayoutResult].action!!(layouts)
+            assertEquals("$label: một dòng", 1, layouts.single().lineCount)
+            assertFalse("$label: không tràn", layouts.single().hasVisualOverflow)
+            val box = text.getUnclippedBoundsInRoot()
+            assertTrue("$label trọn trong viên: $box / $pill", box.left >= pill.left - 0.5.dp && box.right <= pill.right + 0.5.dp
+                && box.top >= pill.top - 0.5.dp && box.bottom <= pill.bottom + 0.5.dp)
+        }
+    }
+
+    @Test fun modeSwitchLabelsFitOneLineAtLargeText() { show(fontScale = 1.3f); rule.waitForIdle(); assertModeLabelsFitOneLine() }
+
+    @Test @Config(qualifiers = "w320dp-h780dp-xxhdpi")
+    fun modeSwitchLabelsFitOneLineAtLargeTextOnNarrowPhone() { show(fontScale = 1.3f); rule.waitForIdle(); assertModeLabelsFitOneLine() }
+
+    @Test fun modeSwitchLabelsFitOneLineAtDefaultText() { show(); rule.waitForIdle(); assertModeLabelsFitOneLine() }
+
     // ---- khổ cửa sổ (DESIGN.md §5.5): hai cột từ large khi sách có chữ để đọc theo ----
 
     @Test

@@ -58,6 +58,11 @@ def main():
         if not (dist / need).is_file():
             print(f"SMOKE_FAIL {need} is missing from {dist} (scripts/build_windows_qt.ps1 builds resources/)")
             return 1
+    # Voice portraits and character avatars are WebP: without the plugin every one silently shows its fallback.
+    if not (dist / "imageformats/qwebp.dll").is_file():
+        print(f"SMOKE_FAIL imageformats/qwebp.dll is missing from {dist} (Qt SDK without qtimageformats, or windeployqt "
+              "--exclude-plugins dropped it)")
+        return 1
     copy = Path(tempfile.mkdtemp(prefix="abook-packaged-"))
     try:
         if any((parent / "abook/webui/host.py").is_file() for parent in copy.parents):

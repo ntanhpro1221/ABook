@@ -581,6 +581,26 @@ def input_files(paths: list[str]) -> list[Path]:
     return _gather_inputs(paths)[0]
 
 
+def chapters_in_order(paths: list[str]) -> list[Path]:
+    """`paths` as the exact chapter list in reading order - what a volume split counts its cuts in (chapter N = the N-th entry).
+    Each entry must be one existing .txt chapter, each only once: a folder, a book file or a repeated chapter would make
+    "chapter N" mean something other than what the reader saw, so it is refused before anything is created."""
+    files: list[Path] = []
+    seen: set[str] = set()
+    for item in paths:
+        cleaned = str(item).strip().strip('"').strip("'").strip()
+        path = Path(cleaned).expanduser()
+        if not path.is_file() or path.suffix.casefold() != ".txt":
+            raise ValueError(f"Chia tập cần từng chương TXT, “{path.name or cleaned}” không phải một chương — bạn quét lại nguồn rồi chia.")
+        resolved = path.resolve()
+        key = os.path.normcase(str(resolved))
+        if key in seen:
+            raise ValueError(f"Chương “{resolved.name}” được chọn hai lần — bạn quét lại nguồn rồi chia.")
+        seen.add(key)
+        files.append(resolved)
+    return files
+
+
 def scan_inputs(paths: list[str], epub_root: Path | None = None, *, continuation_from: Path | None = None) -> dict[str, Any]:
     """Những gì người dùng sắp đưa vào sách: file TXT (thư mục chỉ quét một tầng, như app cũ), xếp tự nhiên. File EPUB / DOCX /
     PDF (importers.py) được tách thành thư mục chương TXT trong `epub_root` (thư viện; không có thì cạnh file) rồi quét như một
@@ -702,8 +722,11 @@ def create_book(library_root: Path, paths: list[str], title: str, profile: str, 
                 first_person_chapters: dict[str, str] | None = None,
                 drop_credit_lines: bool | None = None, drop_tail_credit_lines: bool | None = None,
                 first_person_gender: str = "", teller_mode: bool = False,
-                reuse_project: Path | None = None) -> Path:
-    """`narrator` rỗng = người dùng không chọn giọng dẫn: sách có người kể "tôi" thì máy chọn giọng dẫn cùng giới người ấy
+                reuse_project: Path | None = None, in_order: bool = False) -> Path:
+    """`in_order`: `paths` is the exact chapter list in reading order (`chapters_in_order`, a volume split) - the book keeps that
+    order. Otherwise the book keeps the order of the Studio scan (`input_files`).
+
+    `narrator` rỗng = người dùng không chọn giọng dẫn: sách có người kể "tôi" thì máy chọn giọng dẫn cùng giới người ấy
     (abook/teller_voice.py). `first_person_gender` ("male"/"female"/"" = chưa rõ): người dùng nói giới người kể "tôi" ngay lúc tạo -
     ghim giới ấy cho nhân vật (như một người nghe ghim) và, khi không chọn giọng dẫn, giọng dẫn cùng giới được đặt NGAY, để bước phân vai
     tránh nó. `teller_mode` (B, tuỳ chọn, mặc định tắt): người kể "tôi" tự kể chuyện - câu lời kể của đoạn họ kể cũng đọc bằng giọng
@@ -713,7 +736,7 @@ def create_book(library_root: Path, paths: list[str], title: str, profile: str, 
     from ..config import build_settings
     from ..project import create_or_open_project
 
-    files = input_files(paths)
+    files = chapters_in_order(paths) if in_order else input_files(paths)
     if not files:
         raise ValueError("Chưa có file TXT nào để làm sách")
     first_person = first_person.strip()
@@ -756,7 +779,7 @@ def create_book(library_root: Path, paths: list[str], title: str, profile: str, 
     if reuse_project is not None:
         from contextlib import closing
         from ..config import settings_hash
-        from ..text_processing import build_chapter_manifest
+        from ..project import chapter_manifest
         from . import store
 
         # Redo selects contained copies, whose paths differ from the original
@@ -767,7 +790,7 @@ def create_book(library_root: Path, paths: list[str], title: str, profile: str, 
                 stored = [dict(row) for row in connection.execute(
                     "SELECT chapter_index, title, input_sha256, input_size FROM chapters ORDER BY chapter_index, id")]
             fields = ("chapter_index", "title", "input_sha256", "input_size")
-            selected = build_chapter_manifest(files, library_root)
+            selected = chapter_manifest(files, library_root, ordered=True)
             if (settings_hash(settings) == settings_hash(store.read_settings(reuse_project))
                     and title.strip() == plan["title"]
                     and first_person_gender == plan["firstPersonGender"]
@@ -776,7 +799,7 @@ def create_book(library_root: Path, paths: list[str], title: str, profile: str, 
                     == [tuple(row[key] for key in fields) for row in stored]):
                 return reuse_project
     library_root.mkdir(parents=True, exist_ok=True)
-    paths_created, db, _settings = create_or_open_project(files, library_root, settings, title.strip() or None)
+    paths_created, db, _settings = create_or_open_project(files, library_root, settings, title.strip() or None, ordered=True)
     if not db.casting_is_finalized():  # sách đã phân vai (mở lại đúng sách cũ) thì giọng dẫn đã là chuyện đã rồi
         if teller_voice.auto_for_new_book(first_person, chapters, narrator):
             teller_voice.mark_auto(paths_created.root)
@@ -788,11 +811,11 @@ def create_book(library_root: Path, paths: list[str], title: str, profile: str, 
     from .. import book_metadata
     if files and not (paths_created.root / book_metadata.FILE).exists():
         book_metadata.save(paths_created.root, book_metadata.from_sources(files))
-    # Volume boundaries come from the import sidecar next to each chosen chapter file. The project keeps copies, so pair the
-    # chosen files with the stored chapters in the manifest's own order (text_processing.build_chapter_manifest).
+    # Volume boundaries come from the import sidecar next to each chosen chapter file. The project keeps copies in the order of
+    # `files` (project.chapter_manifest, ordered), so the chosen files pair with the stored chapters one to one.
     with db.connect() as connection:
         stored = [dict(row) for row in connection.execute("SELECT id FROM chapters ORDER BY chapter_index")]
-    chosen = sorted((file.resolve() for file in files), key=lambda file: natural_key(file.name))
+    chosen = [file.resolve() for file in files]
     definitions = []
     metadata = {}
     for file, chapter in zip(chosen, stored) if len(chosen) == len(stored) else ():

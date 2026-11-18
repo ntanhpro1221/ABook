@@ -70,6 +70,7 @@ from typing import Any, Callable, Self
 
 from ..database import SCHEMA_VERSION
 from .. import book_paths
+from ..io_utils import sqlite_read_only_uri
 from . import book_edits, bookfile, covers, project_views, store
 from .fingerprints import content_key, identity_prints
 
@@ -127,7 +128,7 @@ def _project_files(project_root: Path) -> list[tuple[str, Path]]:
 
 def _sources(database: Path, project_root: Path) -> dict[str, str]:
     """Nguồn chương nằm ngoài thư mục dự án: {đường dẫn cũ: tên mục}."""
-    connection = sqlite3.connect(f"file:{database.as_posix()}?mode=ro", uri=True)
+    connection = sqlite3.connect(sqlite_read_only_uri(database), uri=True)
     try:
         rows = connection.execute(
             "SELECT chapter_index, input_path FROM chapters ORDER BY chapter_index, id").fetchall()
@@ -186,7 +187,7 @@ def aliases_for(described: dict[str, dict[str, Any]]) -> dict[str, str]:
 
 def _snapshot(database: Path, target: Path) -> None:
     """Bản chụp nhất quán của sổ dự án (kể cả phần còn trong `-wal`), như một file SQLite thường."""
-    source = sqlite3.connect(f"file:{database.as_posix()}?mode=ro", uri=True)
+    source = sqlite3.connect(sqlite_read_only_uri(database), uri=True)
     try:
         sink = sqlite3.connect(target)
         try:

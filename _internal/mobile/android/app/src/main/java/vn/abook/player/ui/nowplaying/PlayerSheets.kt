@@ -136,17 +136,21 @@ fun PlayerSheets(state: NowPlayingState, model: NowPlayingModel, window: NowPlay
                             model.setSleep(SleepKind.Minutes, minutes)
                         }
                         // Đang hẹn: còn bao lâu + S.s_copy_4a2a3696181b / S.s_tat_hen_gio_fc8af231. Chưa hẹn mà vừa tắt tiếng (chưa quá 30 phút): mời bật lại đúng mức cũ.
+                        // Dòng "Hẹn giờ đã tắt tiếng lúc …" hiện cả khi lựa chọn còn giữ sau lần tự dừng (máy tính, web: soát 0.4.173 B8).
+                        val stoppedNow = remember(window.sheetOpen) { System.currentTimeMillis() }
                                 SwapContent(active, contentKey = { active -> active }, layout = ContentLayout.Column) { active ->
                                     if (active) {
                                         RowHint(SleepText.heading(state.sleep.kind))
                                         SleepClock(state.sleep, model.position)
+                                        Reveal(SleepText.recentlyStopped(state.sleep, stoppedNow)) {
+                                            BasicText(SleepText.stoppedAt(state.sleep.stoppedAtMs), style = Abook.type.body, modifier = Modifier.testTag("sleep_stopped"))
+                                        }
                                         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(Dim.s16)) {
                                             TextAction(SleepText.extendLabel(SleepText.extendMinutes(state.sleep, options)), { model.extendSleep(); window.closeSheet() }, "sleep_extend", align = Alignment.CenterStart)
                                             TextAction(S.s_tat_hen_gio_fc8af231, { model.setSleep(SleepKind.Off); window.closeSheet() }, "sleep_off", align = Alignment.CenterStart, danger = true)
                                         }
                                     } else {
-                                        val now = remember(window.sheetOpen) { System.currentTimeMillis() }
-                                        Reveal(SleepText.recentlyStopped(state.sleep, now)) {
+                                        Reveal(SleepText.restartOffered(state.sleep, stoppedNow)) {
                                             Column {
                                                 BasicText(SleepText.stoppedAt(state.sleep.stoppedAtMs), style = Abook.type.body, modifier = Modifier.testTag("sleep_stopped"))
                                                 TextAction(SleepText.restart(window.lastSleepMinutes), {

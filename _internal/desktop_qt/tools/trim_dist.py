@@ -4,7 +4,8 @@ build.bat runs this after windeployqt, before the VC runtime copy, check_imports
 between builds, so everything goes here (a file from an older build is removed too), each with why it is dead:
 - Qt Quick Controls styles: the app imports only QtQuick.Controls.Basic and main.cpp fixes QT_QUICK_CONTROLS_STYLE=Basic.
   windeployqt deploys all of them (16.6 MB, 2.6 MB of the installer).
-- QtQuick.Effects stays: AvatarPortrait uses MultiEffect to mask portrait images.
+- QtQuick.Effects stays: since 0.4.173 no QML of ours imports it (portraits and music art are clipped by RoundedImage's
+  Canvas), but removing it is unproven against Qt's own modules (QtQuick.Dialogs fallback); left for a measured trim.
 - styles\ (QStyle plugin): only a QApplication loads one; main.cpp builds a QGuiApplication.
 - tls\ and networkinformation\: every request of the C++ side goes to the host on http://127.0.0.1 (https, downloads and
   updates are the host's, in Python with its own OpenSSL); nothing calls QNetworkInformation.

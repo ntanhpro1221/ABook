@@ -146,7 +146,7 @@ private fun ReadingsList(state: StudioReadingsState, data: NameReadings, clip: C
 
 /** Một tên: nút nghe câu mẫu, tên "đọc là ...", dòng phụ, và nút "Sửa" (hay ô sửa khi đang mở). */
 @Composable
-private fun ReadingRow(state: StudioReadingsState, item: NameReading, clip: ClipState, fresh: Boolean, editing: Boolean, onEdit: (Boolean) -> Unit) {
+internal fun ReadingRow(state: StudioReadingsState, item: NameReading, clip: ClipState, fresh: Boolean, editing: Boolean, onEdit: (Boolean) -> Unit) {
     val example = item.example
     val reach = if (fresh) state.reach else null
     Column(Modifier.fillMaxWidth().testTag("studio_reading_${item.surface}")) {

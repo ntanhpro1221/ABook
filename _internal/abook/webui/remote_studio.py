@@ -80,6 +80,7 @@ LISTEN_ROUTES: tuple[tuple[str, re.Pattern[str]], ...] = tuple((method, re.compi
     ("POST", r"/api/listen/night/dismiss"),
     ("GET", _MEDIA + r"/chapters/\d+"),
     ("GET", _MEDIA + r"/cover"),
+    ("GET", _MEDIA + r"/volumes/\d+/cover"),  # bìa từng quyển trên hàng quyển của trang sách (soát 0.4.173 B13g)
     ("GET", _BOOK + r"/cast"),
     ("GET", _BOOK + r"/cast-history"),
     ("GET", _BOOK + r"/chapters/\d+/script"),

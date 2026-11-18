@@ -16,7 +16,7 @@ from pathlib import Path
 from typing import Any, Callable
 
 from . import book_paths
-from .io_utils import file_lock
+from .io_utils import file_lock, sqlite_read_only_uri
 
 DB = "avatars.sqlite3"
 CONFIG = "avatar_service.json"
@@ -55,6 +55,17 @@ def voice_avatar(name: str) -> dict[str, Any]:
     return {"kind": "voice", "file": path.name, "key": name} if path.is_file() else fallback(name)
 
 
+def portrait_key(name: str) -> str:
+    """The one portrait key, for every write and every read: the cast shows a speaker as written ("Lucien"), the character
+    book keys "LUCIEN" - both must land on the same row (soát 0.4.173 B3). Same rule as store.speaker_key."""
+    return " ".join(str(name).strip().casefold().split()).upper()
+
+
+def portrait(saved: dict[str, dict[str, Any]], name: str) -> dict[str, Any]:
+    """The saved portrait of a speaker, written any way the cast writes it, or its pattern."""
+    return saved.get(portrait_key(name)) or fallback(name)
+
+
 def _connect(root: Path) -> sqlite3.Connection:
     path = book_paths.inside(root, str((root / DB).absolute()))
     connection = sqlite3.connect(path, timeout=15)
@@ -67,8 +78,8 @@ def entries(root: Path) -> dict[str, dict[str, Any]]:
     path = book_paths.inside(root, str((root / DB).absolute()))
     if not path.is_file():
         return {}
-    with closing(sqlite3.connect(f"file:{path.as_posix()}?mode=ro", uri=True)) as connection:
-        return {name: json.loads(payload) for name, payload in connection.execute("SELECT name,payload FROM portraits")}
+    with closing(sqlite3.connect(sqlite_read_only_uri(path), uri=True)) as connection:
+        return {portrait_key(name): json.loads(payload) for name, payload in connection.execute("SELECT name,payload FROM portraits")}
 
 
 def decorate(root: Path, cast: dict[str, Any]) -> dict[str, Any]:
@@ -76,7 +87,7 @@ def decorate(root: Path, cast: dict[str, Any]) -> dict[str, Any]:
     saved = entries(root)
     result = dict(cast)
     for group in ("characters", "extras", "carried"):
-        result[group] = [{**person, "avatar": saved.get(person["name"]) or fallback(person["name"])}
+        result[group] = [{**person, "avatar": portrait(saved, person["name"])}
                          for person in cast.get(group, [])]
     result["narrator"] = {**cast.get("narrator", {}), "avatar": voice_avatar(str(cast.get("narrator", {}).get("voice") or "NARRATOR"))}
     return result
@@ -163,7 +174,7 @@ def choose(root: Path, name: str, data: bytes | None) -> dict[str, Any]:
     with closing(_connect(root)) as connection, connection:
         connection.execute("INSERT INTO portraits VALUES (?,1,1,?,?) ON CONFLICT(name) DO UPDATE SET "
                            "revision=revision+1,chosen=1,payload=excluded.payload,provenance=excluded.provenance",
-                           (name, json.dumps(payload), json.dumps({"source": "user"})))
+                           (portrait_key(name), json.dumps(payload), json.dumps({"source": "user"})))
     return payload
 
 
@@ -224,7 +235,7 @@ def remote_image(config: dict[str, Any], prompt: str, seed: int) -> bytes:
 
 def generate(root: Path, person: dict[str, Any], quotes: list[str], *, force: bool = False,
              renderer: Callable[[str, int], bytes] | None = None) -> dict[str, Any]:
-    name = person["canonical_name"]
+    name = portrait_key(person["canonical_name"])
     config = service_config(root) if renderer is None else None
     if renderer is None and config is None:
         # Nothing is stored, so a service configured later still runs; a read never creates the database.
@@ -271,7 +282,7 @@ def run_after_analysis(root: Path, stop: Callable[[], bool], log: Callable[[str]
     names = [p["display_name"] for p in named]
     with file_lock(root / "avatar_generation", timeout=0.1):
         saved = entries(root)
-        todo = [p for p in named if (saved.get(p["canonical_name"]) or {}).get("kind") != "image"]
+        todo = [p for p in named if (saved.get(portrait_key(p["canonical_name"])) or {}).get("kind") != "image"]
         # Text is read only when needed and is never committed to the repository.
         for person in todo:
             while paused() and not stop():

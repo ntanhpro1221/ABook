@@ -178,7 +178,7 @@ private fun fold(text: String) = java.text.Normalizer.normalize(text, java.text.
     .replace(Regex("[\\u0300-\\u036f]"), "").replace('đ', 'd').replace('Đ', 'D').lowercase()
 
 @Composable
-private fun ScopeChoice(label: String, active: Boolean, enabled: Boolean, tag: String, onClick: () -> Unit) {
+internal fun ScopeChoice(label: String, active: Boolean, enabled: Boolean, tag: String, onClick: () -> Unit) {
     Box(Modifier.heightIn(min = 40.dp)
         .border(if (active) 1.dp else 0.dp, if (active) Abook.colors.controlLine else androidx.compose.ui.graphics.Color.Transparent, RoundedCornerShape(Dim.radiusControl))
         .then(if (enabled) Modifier.pressable(Role.RadioButton, onClick = onClick) else Modifier.semantics { disabled() })

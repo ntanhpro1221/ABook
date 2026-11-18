@@ -18,6 +18,13 @@ def natural_key(value: str) -> list[Any]:
     return [int(part) if part.isdigit() else part.casefold() for part in re.split(r"(\d+)", value)]
 
 
+def sqlite_read_only_uri(path: Path) -> str:
+    """The read-only SQLite URI of a database file. Built with `as_uri` so a folder named "Sách #2", "100%" or with spaces
+    is escaped: a hand-built "file:...?mode=ro" is cut at `#` / `?`, loses `mode=ro` and opens (creates) another file
+    (soát 0.4.173 B4). tests/test_sqlite_uri_escaped.py keeps every opener on this helper."""
+    return Path(path).resolve().as_uri() + "?mode=ro"
+
+
 def discover_txt_files(directory: Path) -> list[Path]:
     """Return direct child TXT files in deterministic natural order.
 

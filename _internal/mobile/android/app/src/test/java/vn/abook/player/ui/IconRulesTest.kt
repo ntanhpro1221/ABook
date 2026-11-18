@@ -25,6 +25,7 @@ class IconRulesTest {
         "nowplaying/ReadInk.kt" to "nền tô chữ bo góc (câu đang đọc, chữ đang đọc, chữ tìm thấy)",
         "nowplaying/TonePage.kt" to "đồ thị đáp tuyến, cột kéo từng dải, nút chọn tròn của Âm sắc (như svg của web)",
         "screens/LibraryChrome.kt" to "nền ô tìm",
+        "screens/BookScreen.kt" to "thanh \"Đã nghe\" của từng quyển: phần đã nghe bo tròn như `Progress` của web",
         "theme/ThemeReveal.kt" to "vòng lan đổi giao diện",
         "editbook/CoverCrop.kt" to "khung cắt ảnh bìa",
     )

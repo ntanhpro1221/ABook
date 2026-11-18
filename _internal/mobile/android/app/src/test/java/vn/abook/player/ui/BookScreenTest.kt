@@ -14,6 +14,11 @@ import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.SemanticsProperties
+import androidx.compose.ui.test.SemanticsMatcher
+import androidx.compose.ui.test.assert
+import androidx.compose.ui.test.assertHeightIsAtLeast
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.onAllNodesWithText
@@ -175,6 +180,11 @@ class BookScreenTest {
         show(BookDetail.of(raw, listening(), { null }))
         rule.onNodeWithTag("volume_1").assertIsDisplayed()
         rule.onNodeWithText("2 chương · Đã nghe 100%").assertExists()
+        // Soát 0.4.173 B6: mỗi hàng quyển có thanh "Đã nghe" như web (`Progress` dưới dòng số chương), cùng bề ngang cột chữ.
+        for (id in listOf(1, 2)) {
+            val bar = rule.onNodeWithTag("volume_progress_$id", useUnmergedTree = true).assertExists().getUnclippedBoundsInRoot()
+            assertEquals(8f, (bar.bottom - bar.top).value, 0.5f)
+        }
         run {
             rule.onRoot().captureRoboImage("build/icon_probe/volumes/android-volumes.png", com.github.takahirom.roborazzi.RoborazziOptions(taskType = com.github.takahirom.roborazzi.RoborazziTaskType.Record))
         }
@@ -187,7 +197,9 @@ class BookScreenTest {
         }
         rule.onNodeWithTag("chapter_3").performClick()
         assertEquals("chapter b1 3 600.0", played.last())
-        rule.onNodeWithText("Các quyển").performClick()
+        // B13e: the way back to the volume list is a real button (role, 48 dp target) like the web and Qt Button.
+        rule.onNodeWithTag("volume_back").assert(SemanticsMatcher.expectValue(SemanticsProperties.Role, Role.Button))
+            .assertTextContains("Các quyển").assertHeightIsAtLeast(48.dp).performClick()
         rule.waitForIdle()
         rule.onNodeWithTag("volume_1").assertIsDisplayed()
     }

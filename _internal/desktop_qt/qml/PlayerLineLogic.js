@@ -3,6 +3,29 @@
 
 // Script identity is carried by the selected text, including when timing is absent.
 function identified(source) { return !!source && !!source.stableId && !!source.textSha256 }
+// Các từ của câu cho bước "Sửa cách đọc một từ" - như wordsOf của LineWishes.tsx (chữ, dấu, số; nối bằng nháy hay gạch), mỗi từ một lần không kể hoa thường.
+// Không dùng \p{L} của regex: bộ máy JS của Qt không chắc có; chữ = có hoa / thường, hay thuộc dải dấu, số, chữ Nhật / Trung / Hàn.
+function wordChar(ch) {
+    return /[0-9\u0300-\u036f\u1ab0-\u1aff\u1dc0-\u1dff\u3040-\u30ff\u3400-\u9fff\uac00-\ud7af]/.test(ch) || ch.toLowerCase() !== ch.toUpperCase()
+}
+function wordsOf(text) {
+    const chars = Array.from(String(text).normalize("NFC"))
+    const seen = {}, out = []
+    let current = ""
+    function flush() {
+        const key = current.toLocaleLowerCase("vi")
+        if (current !== "" && !seen[key]) { seen[key] = true; out.push(current) }
+        current = ""
+    }
+    for (let i = 0; i < chars.length; i++) {
+        const ch = chars[i]
+        if (wordChar(ch)) current += ch
+        else if (current !== "" && (ch === "'" || ch === "\u2019" || ch === "-") && i + 1 < chars.length && wordChar(chars[i + 1])) current += ch
+        else flush()
+    }
+    flush()
+    return out
+}
 function blocked(caps, listenOnly) {
     if (listenOnly) return S.s_may_tinh_chua_cho_ban_sua_6a5d6567
     if (!caps) return S.s_chua_lam_duoc_luc_nay_2e7cacde

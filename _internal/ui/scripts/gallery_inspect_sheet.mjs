@@ -126,13 +126,17 @@ export function installGeometryProbe() {
     },
     // Budget in rendered frames, not wall time: under machine load frames arrive late, and a 2 s deadline then failed pages
     // that never moved (gate 0.4.173: player-tone, `moving: []`). 120 frames is 2 s at 60 Hz on an idle machine.
-    stable: ({ tolerance = 0, geometryOnly = false } = {}) => new Promise(resolve => {
+    // A wall-clock cap still bounds the wait: a hidden or background page renders no frames at all, and a moving page on a loaded
+    // machine can need longer than the 60 s CDP call. The cap answers first, with the diagnostics, instead of a bare CDP timeout
+    // (review 0.4.173 B12). It sits below gallery_browser's 60 s Runtime.evaluate limit.
+    stable: ({ tolerance = 0, geometryOnly = false, maxMs = 45000 } = {}) => new Promise(resolve => {
       const start = performance.now();
-      let previous = [], frames = 0, ticks = 0, changed = [], done = false;
-      const finish = stable => {
+      let previous = [], frames = 0, ticks = 0, changed = [], done = false, timer = 0;
+      const finish = (stable, timedOut = false) => {
         if (done) return;
         done = true;
-        resolve({ stable, elapsed: performance.now() - start, ticks, visibility: document.visibilityState, tolerance, changed,
+        clearTimeout(timer);
+        resolve({ stable, timedOut, elapsed: performance.now() - start, ticks, visibility: document.visibilityState, tolerance, changed,
           exiting: stable ? [] : [...document.querySelectorAll('[role="dialog"][data-state="closed"], .now-playing[data-state="closed"]')].map(el => ({ tag: el.tagName, rect: box(el), html: el.outerHTML.slice(0, 200) })),
           moving: stable ? [] : document.getAnimations().filter(a => a.playState === 'running').map(a => ({ name: a.animationName || a.id, end: a.effect?.getComputedTiming().endTime })) });
       };
@@ -155,6 +159,7 @@ export function installGeometryProbe() {
         previous = current;
         requestAnimationFrame(tick);
       };
+      timer = setTimeout(() => finish(false, true), maxMs);
       requestAnimationFrame(tick);
     }),
     center: selector => {

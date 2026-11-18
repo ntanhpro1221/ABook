@@ -37,78 +37,75 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 - File sách nghe (.abook) không còn mang trạng thái kiểm tra (chương đạt hay chưa, dòng lỗi, báo cáo mức âm): những thứ ấy chỉ ở dự án; file còn trường ấy bị từ chối khi đóng gói.
 - Tên chương nhận theo mẫu lặp lại trong cả cuốn ("Lần gặp thứ N - …"), kể cả tiêu đề dài; một cuốn không bao giờ lẫn tên thật với "Chương N", và đoạn văn thường không bị nhận nhầm thành tên chương.
 
-## [0.4.173] - 2026-11-15
+## [0.4.173] - 2026-11-17
 
-- Kỹ thuật: desktop dùng Qt 6.11.3 để nhận bản sửa QML/V4 cho QTBUG-148459 (MethodStorage null gây crash WidthTests). Phiên bản SDK có một nguồn cấu hình; QWindowKit được dựng riêng theo phiên bản Qt.
-
-- Máy tính: nút và khối không còn có thể kẹt nửa mờ hay mất sau một lượt dọn bộ nhớ; cuộn bánh xe giữ quán tính và các phần màn tự cập nhật không ngừng theo dõi.
-
-- Giữ đúng quyển khi nhận tên chương từ nội dung; đóng phiên loa/TV đồng bộ với lượt hỏi trạng thái đang chạy.
-
-- Nút tải nhạc rõ trạng thái dừng/đã tải, xoá có xác nhận; báo đang chờ và đang đệm, nghe trọn bài kèm thanh tua trên cả ba giao diện.
-
-- Làm rõ nút Thêm giọng, hàng hành động, liên kết và lựa chọn trên điện thoại, web và máy tính.
-
-- Bóng và viền cửa sổ đi cùng bảng khi mở, đóng và kéo; bỏ dải tối đứng yên, đồng bộ ba nền.
-
-- Mở và đóng sách liền mạch, bìa trở về đúng ô Thư viện; đồng bộ chuyển cảnh trên điện thoại và máy tính.
-- Điện thoại: giảm khựng khi mở/đóng sách; nội dung ổn định trước khi bìa đáp.
-
-- Hẹn giờ ngủ giữ nguyên sau khi tự dừng; lần phát sau tự đếm lại.
-
-- Dựng từ đáp án giữ đúng người nói qua mọi bước sửa nhãn; bìa JPEG đã đạt chuẩn giữ nguyên byte khi lưu trên máy tính và điện thoại.
+### Mới
 
 - Sách có thể gồm nhiều quyển, mỗi quyển có bìa riêng (như các tập trên Hako). Trang sách nhiều quyển hiện danh sách quyển kèm bìa và tiến độ; bấm vào một quyển để xem chương. Sách một quyển hiện như trước. Có ở web, máy tính và Android.
 - Nghe liền mạch qua các quyển: hết quyển tự sang chương đầu quyển sau; thứ tự chương, phân tích, giọng và seed của sách không đổi khi chia hay gộp quyển.
 - Studio: chia sách nhiều tập giờ tạo một sách nhiều quyển (không còn tạo các phần nối tiếp riêng); sửa tên, số, ranh giới và bìa từng quyển trong trang sách.
 - Dán đường dẫn sách Hako vào ô đường dẫn của Studio để nhập đủ các tập (mỗi tập một quyển, kèm bìa tập). EPUB và TXT có mục "Tập/Quyển" cũng được chia quyển khi nhập.
-- Xuất MP3/M4B cả sách hoặc một quyển. Mọi file .abook dùng cây quyển ở định dạng 6 (bìa quyển trong covers/), kể cả sách một quyển.
-
-- Tab Nhân vật xếp Vai chính / Vai phụ theo vai thật: nhân vật chính không còn rơi xuống Vai phụ và mất giới tính, tuổi; NPC và người chỉ có một cảnh luôn là Vai phụ.
-- Một nhân vật viết đảo họ-tên ("Hajikano Aya" / "Aya Hajikano"), gọi bằng một phần tên, hay mang vài cách tả gần nhau ("người phụ nữ bí ẩn qua/trên điện thoại") không còn bị tách làm hai người hai giọng.
-- Người chưa rõ giới lấy giới từ chính tên gọi ("người phụ nữ…", "nam sinh…") và không còn mặc định giọng nam.
-
-- Tự phân vai chỉ dùng giọng đạt (chủ sách xếp hạng hoặc máy chấm cho qua); hết giọng đạt thì dùng chung giọng giữa những vai không bao giờ gặp nhau, không còn rơi xuống Adam bựa, Ngọc Huyền, Trúc Ly. Giới chưa rõ không còn mặc định giọng nam.
-
-- Thư viện (điện thoại, web, máy tính): ô sách có bìa vẽ (sách chưa có ảnh bìa) giờ cũng hiện tên dưới bìa như ô có ảnh; trình đọc màn hình đọc được tên.
-
-- Nhận đúng tên chương như “Đoạn kết”, “Lời bạt” và tiêu đề không số; tên dự phòng theo thứ tự trong sách.
-
-- Android: sửa văng khi xoay ngang màn Đọc theo hoặc thu nhỏ cửa sổ.
-- Bố cục ngang: tách điều khiển và chữ, tận dụng hai cột cho sách, cài đặt, Studio và kho nhạc; tấm mở gọn trong cửa sổ thấp.
-
-- Nhóm nhân vật, lịch sử nghe và các danh sách con dài chỉ dựng hàng gần màn hình khi mở; giữ trạng thái gập và chuyển động trên Android, web và máy tính Qt.
-
-- Mỗi giọng có sẵn có ảnh chân dung minh hoạ riêng (app tự chọn theo giới tính, tuổi, chất giọng), hiện ở danh sách giọng của Studio trên máy tính, web và điện thoại.
-- Nhân vật trong sách có ảnh đại diện: mặc định là hoạ tiết kèm chữ cái đầu, màu riêng cho từng người, giống nhau trên cả ba nền. Khi đã cấu hình dịch vụ ảnh, sau bước phân tích app sinh ảnh cho từng nhân vật có tên từ chính câu tả ngoại hình trong truyện; dừng và làm tiếp an toàn, không đổi phân tích, giọng hay bản thu.
+- Xuất MP3/M4B cả sách hoặc một quyển. File `.abook` mang cây quyển (bìa từng quyển nằm trong file), kể cả sách một quyển - xem "Lưu ý khi nâng cấp".
+- Mỗi giọng có sẵn có ảnh chân dung minh hoạ riêng (app tự chọn theo giới tính, tuổi, chất giọng), hiện ở danh sách giọng của Studio.
+- Nhân vật trong sách có ảnh đại diện: mặc định là hoạ tiết kèm chữ cái đầu, màu riêng cho từng người, giống nhau trên cả ba nền. Dịch vụ sinh ảnh nhân vật tắt sẵn; khi bạn tự bật một dịch vụ ảnh cho dự án, sau bước phân tích app gửi tới dịch vụ ấy câu tả ngoại hình trích từ truyện để sinh ảnh cho từng nhân vật có tên (README, mục quyền riêng tư); dừng và làm tiếp an toàn, không đổi phân tích, giọng hay bản thu.
 - Studio cho chọn ảnh riêng, sinh lại ảnh hoặc quay về hoạ tiết cho từng nhân vật; ảnh bạn chọn không bị thay lại.
-- Ảnh nhân vật hiện ở danh sách nhân vật, kịch bản, chọn người nói, Đọc theo và trang sách; file `.abook` mang ảnh (phiên bản định dạng 6) và điện thoại tải ảnh khi đồng bộ.
-
-- Đưa nhạc của sách sang tab Nhạc trên điện thoại, web và máy tính; tải nền và dựng từng hàng để cuộn cuối danh sách chương không bị khựng vì nhạc.
-
+- Ảnh nhân vật đi cùng danh sách nhân vật, kịch bản, chọn người nói, Đọc theo và trang sách; file `.abook` mang ảnh và điện thoại tải ảnh khi đồng bộ.
+- Nhạc của sách nằm ở tab Nhạc trên điện thoại, web và máy tính; tải nền và dựng từng hàng để cuộn cuối danh sách chương không bị khựng vì nhạc.
 - Các bài trong thư viện Nhạc có bìa nguồn hoặc hình trừu tượng theo cảm xúc, dùng được cả khi mất mạng.
-
-- Ô từ đang đọc trượt và co giãn theo chữ, bỏ dấu câu; nút quay lại nổi trong vùng chữ, cuộn mượt và không chừa dải trống.
-
+- Bố cục ngang: tách điều khiển và chữ, tận dụng hai cột cho sách, cài đặt, Studio và kho nhạc; tấm mở gọn trong cửa sổ thấp.
+- Kịch bản cho tách vai theo cảnh hoặc quãng tự chọn, xem trước từng câu và giữ các quyết định riêng trên web, máy tính và Android.
+- Duyệt quãng người nói từ xa và tiếng tập thể, chọn từng câu và giữ riêng ngoại lệ trên web, máy tính và Android.
+- Sửa người nói, cách đọc và yêu cầu thu lại ngay trên câu đang nghe ở máy tính và Android; giữ nguyên chỗ nghe khi đóng bảng.
+- Studio trên Android thêm tạo người, sửa cách đọc câu, chọn nhóm cảm ứng và menu đổi tên, giới tính, gộp hoặc bỏ gộp đang chờ.
+- Lưu lịch sử gộp, tách và hoàn tác có kiểm tra xung đột trên cả ba giao diện.
+- Việc duyệt ưu tiên chương sắp thu, nêu công duyệt, số đã thu và lúc áp trên cả ba giao diện.
 - Studio gợi ý chọn ảnh khi sách chưa có bìa; xuất file sách thiếu bìa có cảnh báo rõ.
 
+### Giao diện
+
+- Nút tải nhạc rõ trạng thái dừng/đã tải, xoá có xác nhận; báo đang chờ và đang đệm, nghe trọn bài kèm thanh tua trên cả ba giao diện.
+- Làm rõ nút Thêm giọng, hàng hành động, liên kết và lựa chọn trên điện thoại, web và máy tính.
+- Bóng và viền cửa sổ đi cùng bảng khi mở, đóng và kéo; bỏ dải tối đứng yên, đồng bộ ba nền.
+- Mở và đóng sách liền mạch, bìa trở về đúng ô Thư viện; đồng bộ chuyển cảnh trên điện thoại và máy tính.
+- Điện thoại: giảm khựng khi mở/đóng sách; nội dung ổn định trước khi bìa đáp.
+- Thư viện (điện thoại, web, máy tính): ô sách có bìa vẽ (sách chưa có ảnh bìa) giờ cũng hiện tên dưới bìa như ô có ảnh; trình đọc màn hình đọc được tên.
+- Nhóm nhân vật, lịch sử nghe và các danh sách con dài chỉ dựng hàng gần màn hình khi mở; giữ trạng thái gập và chuyển động trên Android, web và máy tính.
+- Ô từ đang đọc trượt và co giãn theo chữ, bỏ dấu câu; nút quay lại nổi trong vùng chữ, cuộn mượt và không chừa dải trống.
 - Tấm Âm thanh gọn theo ba nhóm, đồng nhất hàng và thanh trượt trên điện thoại, web và máy tính.
-
-- Nghe thử nhạc có báo đang tải, thử bản sao khi nguồn lỗi và báo khi không phát được.
 - Menu cuộn để giữ đủ chữ trên màn thấp hoặc khi phóng to; chuyển bộ lọc Thư viện bớt khựng.
+- Android: nút quay về "Các quyển" là nút thật như web và máy tính; mỗi quyển trong danh sách quyển có thanh "Đã nghe" như trên web. Máy tính: ảnh nhạc cắt cho đầy khung như Android và web.
+- Android: với chữ hệ thống cỡ lớn, nút chọn "Nghe / Đọc theo" của trình phát giữ mỗi nhãn trên một dòng, không còn tràn khỏi viên.
 
-- Lưu lịch sử gộp, tách và hoàn tác có kiểm tra xung đột trên cả ba giao diện.
+### Sửa lỗi
 
-- Việc duyệt ưu tiên chương sắp thu, nêu công duyệt, số đã thu và lúc áp trên cả ba giao diện.
-
-- Duyệt quãng người nói từ xa và tiếng tập thể, chọn từng câu và giữ riêng ngoại lệ trên web, máy tính và Android.
-
-- Kịch bản cho tách vai theo cảnh hoặc quãng tự chọn, xem trước từng câu và giữ các quyết định riêng trên web, Qt và Android.
-
-- Sửa người nói, cách đọc và yêu cầu thu lại ngay trên câu đang nghe ở Qt và Android; giữ nguyên chỗ nghe khi đóng bảng.
-- Studio trên Android thêm tạo người, sửa cách đọc câu, chọn nhóm cảm ứng và menu đổi tên, giới tính, gộp hoặc bỏ gộp đang chờ.
-
+- Studio: chia sách thành nhiều quyển từ nhiều thư mục có tên file trùng nhau (Tập 1/001.txt, Tập 2/001.txt…) giữ đúng thứ tự đã chọn, mỗi quyển trọn chương của mình; thứ tự mơ hồ (file trùng, thư mục, file không còn) bị từ chối trước khi tạo gì. Nhập nhiều EPUB một lần cũng giữ đúng thứ tự.
+- Tên quyển dài quá 240 ký tự hay danh sách tên quyển sai bị từ chối trước khi tạo sách; tạo sách, chia quyển và dựng xưởng hỏng giữa chừng không còn để lại sách hay dự án dở.
+- Sách mở từ file .abook sắp xếp lại quyển được; máy không bao giờ báo đã lưu mà quyển vẫn như cũ.
+- Web: sách một quyển chia nhiều phần mở được "Sắp xếp quyển"; quyển mới không còn thừa hưởng bìa của quyển vừa xoá (cả ba nền) và không thêm được quyển trùng chương đầu.
+- Giữ đúng quyển khi nhận tên chương từ nội dung; đóng phiên loa/TV đồng bộ với lượt hỏi trạng thái đang chạy.
+- Bìa quyển hiện trên máy ghép từ xa.
+- Ảnh nhân vật tải lên theo tên hiện hay tên gốc đều được lưu và hiện đúng; thư mục sách có `#`, `%` hay dấu cách không còn làm hỏng danh sách nhân vật.
+- Tab Nhân vật xếp Vai chính / Vai phụ theo vai thật: nhân vật chính không còn rơi xuống Vai phụ và mất giới tính, tuổi; NPC và người chỉ có một cảnh luôn là Vai phụ.
+- Một nhân vật có tên viết theo hai thứ tự họ-tên (họ trước rồi tên, hay tên trước rồi họ), gọi bằng một phần tên, hay mang vài cách tả gần nhau ("người phụ nữ bí ẩn qua/trên điện thoại") không còn bị tách làm hai người hai giọng.
+- Người chưa rõ giới lấy giới từ chính tên gọi ("người phụ nữ…", "nam sinh…") và không còn mặc định giọng nam.
+- Tự phân vai chỉ dùng giọng đạt (chủ sách xếp hạng hoặc máy chấm cho qua); hết giọng đạt thì dùng chung giọng giữa những vai không bao giờ gặp nhau, không còn rơi xuống Adam bựa, Ngọc Huyền, Trúc Ly.
+- Dựng từ đáp án giữ đúng người nói qua mọi bước sửa nhãn; bìa JPEG đã đạt chuẩn giữ nguyên byte khi lưu trên máy tính và điện thoại.
+- Nhận đúng tên chương như “Đoạn kết”, “Lời bạt” và tiêu đề không số; tên dự phòng theo thứ tự trong sách.
 - Sửa đọc giờ, khoảng số, điện thoại, đơn vị và viết tắt khi nghe truyện.
+- Hẹn giờ ngủ trên Android nhớ theo từng sách như máy tính và web: đổi sách rồi quay lại không còn tắt hẹn giờ hay khoá lịch đêm. Dòng "Hẹn giờ đã tắt tiếng lúc…" hiện trên cả ba nền sau khi tự dừng; nút "Bật lại" chỉ khi đã tắt hẳn.
+- Hẹn giờ ngủ giữ nguyên sau khi tự dừng; lần phát sau tự đếm lại.
+- Tắt "Thao tác hẹn lại": thao tác lúc tiếng đang nhỏ dần vẫn hẹn lại trên máy tính và web, như lắc máy trên điện thoại. Nút "Nghe tiếp" của lịch đêm trên web phát tiếp khi đang tạm dừng.
+- Sửa câu trong trình phát: Android và máy tính có hàng "Sửa cách đọc một từ" như web; "Nghe thử" trên máy tính chỉ cần câu có audio.
+- Nghe thử nhạc có báo đang tải, thử bản sao khi nguồn lỗi và báo khi không phát được.
+- Android: sửa văng khi xoay ngang màn Đọc theo hoặc thu nhỏ cửa sổ.
+- Máy tính: nút và khối không còn có thể kẹt nửa mờ hay mất sau một lượt dọn bộ nhớ; cuộn bánh xe giữ quán tính và các phần màn tự cập nhật không ngừng theo dõi.
+- Máy tính: app dùng Qt 6.11.3, bản có sửa một lỗi của Qt làm app có thể đóng đột ngột.
+
+### Lưu ý khi nâng cấp
+
+- File `.abook` và `.abookproj` làm bằng bản trước 0.4.173 không còn mở được ở bản này, trên máy tính, web lẫn điện thoại: app báo "File sách không dùng cấu trúc quyển hiện hành. Hãy dựng lại từ nguồn." App không chuyển đổi file cũ. Muốn có lại file: trên máy tính còn giữ sách hay dự án ấy, xuất lại file bằng bản này; sách thêm từ EPUB, Word, PDF hay TXT thì bấm "Thêm sách" và chọn lại file gốc. Sách đang nằm trong Thư viện (kể cả sách đã tải về điện thoại) vẫn nghe bình thường.
+- Ngược lại, app bản 0.4.172 trở về trước không mở được file `.abook` làm bằng bản này ("Sách này được làm bằng bản app mới hơn"). Cập nhật cả máy tính lẫn điện thoại lên 0.4.173 trước khi gửi file sách qua lại.
+- Dự án Studio đang làm dở không làm tiếp được với bản này (cách phân tích và phân vai đã đổi, nên tiếp tục sẽ ra một cuốn khác). Tạo dự án mới từ cùng nguồn rồi bắt đầu lại; sách đã làm xong vẫn nằm trong Thư viện và nghe bình thường.
 
 ## [0.4.172] - 2026-11-15
 

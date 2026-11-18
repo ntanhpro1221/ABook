@@ -14,15 +14,24 @@ liên quan crash `QQmlConnections::connectSignalsToMethods` của WidthTests. Đ
 
 Máy Windows dùng MSVC 2022 x64. Cài song song dưới `D:/Novels/native_desk_proto/qt611/<QT_VERSION>/msvc2022_64`,
 giữ các thư mục SDK khác để những cây đang làm việc tiếp tục dùng được. Bộ module cần có: `qtbase`, `qtdeclarative`
-và addon `qtmultimedia`; `QtQuick.Effects`/`Qt6QuickEffects` thuộc qtdeclarative, cần giữ cho AvatarPortrait.
+và ba addon `qtmultimedia`, `qttasktree`, `qtimageformats` (plugin `imageformats/qwebp.dll`: mọi ảnh chân dung giọng và
+ảnh nhân vật là WebP; thiếu nó thì QML Image lặng lẽ hỏng, chỉ hiện chữ cái dự phòng như bản 0.4.173 trước khi sửa).
+`tools/qt_sdk.py --check-root` (build.bat gọi trước khi dựng) từ chối SDK thiếu một trong ba addon ấy;
+`QtQuick.Effects`/`Qt6QuickEffects` thuộc qtdeclarative, cần giữ cho AvatarPortrait.
 Trước khi đổi SDK, so danh sách `lib/cmake` với bản đang dùng và kiểm các import QML; nếu cần thêm addon thì cài đúng
 phiên bản trong `QT_VERSION`. Không suy addon từ tên thư mục `Qt6CoreTools`/`Qt6QmlTools`: chúng đi cùng module nền.
 
 aqt 3.3.0 chưa đọc được kho theo kiến trúc của Qt 6.11: nó tìm Updates.xml trong thư mục lặp phiên bản và gặp 404.
 Dùng `desktop_qt/tools/install_qt_sdk.py --destination D:/Novels/native_desk_proto/qt611 --cache <thư-mục-log>/archives
---addon qtmultimedia --addon qttasktree --python-libraries D:/Novels/native_desk_proto/qtvenv/Lib/site-packages` với Python của ABook.
+--python-libraries <site-packages có py7zr đã ghim>` với Python của ABook; công cụ tự cài gói nền cùng ba addon bắt buộc
+(`REQUIRED_ADDONS`), `--addon` chỉ để thêm addon khác. Thêm addon vào SDK đã có: `--only-addon <tên>`.
 Công cụ đọc `QT_VERSION`, lấy Updates.xml từ kho `qt6_<version>_msvc2022_64`, chọn toàn bộ gói nền và addon yêu cầu,
-kiểm SHA-256 hoặc SHA-1 từ file cạnh từng archive trước giải nén bằng py7zr có sẵn. Gói nền gồm qtbase, qtsvg,
+rồi kiểm từng archive bằng **SHA-256 ghim trong repo** (`desktop_qt/qt_sdk_pins.json`, kèm số byte), không tin file
+.sha256/.sha1 của máy chủ. Archive không có ghim, hay kho liệt kê archive khác bộ ghim, thì dừng trước khi tải.
+Ghim cho phiên bản Qt mới: `--record-pins` (chỉ nhận SHA-256 của máy chủ, từ chối gói chỉ có SHA-1, không cài gì), rồi tải
+lại từng archive từ một mirror độc lập, so khớp, xem diff và commit trước khi cài. py7zr cũng ghim:
+`desktop_qt/tools/qt_sdk_requirements.txt` (py7zr 1.1.4 và các gói nó cần, kèm hash wheel; cài bằng
+`pip install --require-hashes --only-binary :all: --target <dir> -r ...`); bản khác thì công cụ từ chối giải nén. Gói nền gồm qtbase, qtsvg,
 qtdeclarative, qtdoc, qttools, qttranslations, d3dcompiler_47 và opengl32sw. File `installed.json` ghi URL, checksum,
 kích thước từng archive và kết quả `qmake -query`/`qtpaths -query`; `bin/qt.conf` dùng `Prefix=..`.
 Qt6QmlAssetDownloaderPrivate trong bộ này cần thêm qttasktree; đây là phụ thuộc mới so với SDK trước.

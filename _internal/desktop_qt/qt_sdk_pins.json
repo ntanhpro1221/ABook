@@ -1,0 +1,73 @@
+{
+  "provenance": [
+    "Read by tools/install_qt_sdk.py; an archive without a pin here is never installed.",
+    "SHA-256 first read from the download.qt.io .sha256 file next to each archive (SHA-1 is not accepted).",
+    "2026-11-17: every archive re-downloaded from the independent mirror ftp.fau.de/qtproject and matched (sha256 and bytes); qtimageformats also matched mirrors.ocf.berkeley.edu/qt."
+  ],
+  "packages": {
+    "qt.qt6.6113.win64_msvc2022_64": {
+      "version": "6.11.3-0-202610220312",
+      "archives": {
+        "qtbase-Windows-Windows_11_24H2-MSVC2022-Windows-Windows_11_24H2-X86_64.7z": {
+          "sha256": "68be61b613b963daf206834fdcc57dd3b84baff3082e50679e5846ca4a7a8b86",
+          "bytes": 39790318
+        },
+        "qtsvg-Windows-Windows_11_24H2-MSVC2022-Windows-Windows_11_24H2-X86_64.7z": {
+          "sha256": "e8c789e1a059601dd82114dd9560952891e7c8e94e1cb291166eb61d74800353",
+          "bytes": 683023
+        },
+        "qtdeclarative-Windows-Windows_11_24H2-MSVC2022-Windows-Windows_11_24H2-X86_64.7z": {
+          "sha256": "7c1bb872495144f154d24931b0b58f817defbfd4099b0ac99372062bdfd2ac81",
+          "bytes": 172634577
+        },
+        "qtdoc-Windows-Windows_11_24H2-MSVC2022-Windows-Windows_11_24H2-X86_64.7z": {
+          "sha256": "f6ad1ecae952fbf85a85b8da16d93d06691f2670ec9eefe37419c6e063c1d255",
+          "bytes": 1874552
+        },
+        "qttools-Windows-Windows_11_24H2-MSVC2022-Windows-Windows_11_24H2-X86_64.7z": {
+          "sha256": "b519f552424d8c748ed37c6b3a7615d29a1e3920383ee8ccf9b2066998341c2c",
+          "bytes": 27042501
+        },
+        "qttranslations-Windows-Windows_11_24H2-MSVC2022-Windows-Windows_11_24H2-X86_64.7z": {
+          "sha256": "fa6da593ea97824c83acaeaddbe15d51224df5586a0609f7c2d9d8891d40c55a",
+          "bytes": 2014619
+        },
+        "d3dcompiler_47-x64.7z": {
+          "sha256": "be4292719fe0930c988236972bca7f5926db1342e1c85b247e1cef87b903fc9a",
+          "bytes": 1380117
+        },
+        "opengl32sw-64-mesa_11_2_2-signed_sha256.7z": {
+          "sha256": "f9a6f0229f63d04b3ec1cc455078171f4d0c32e4fd79bc3e6a6dca54e79f7eae",
+          "bytes": 5474526
+        }
+      }
+    },
+    "qt.qt6.6113.addons.qtmultimedia.win64_msvc2022_64": {
+      "version": "6.11.3-0-202610220312",
+      "archives": {
+        "qtmultimedia-Windows-Windows_11_24H2-MSVC2022-Windows-Windows_11_24H2-X86_64.7z": {
+          "sha256": "344fb1b0185ab810cfc247dabd1470d14e23999e6861f3a7e62d217fa6ec5fc5",
+          "bytes": 43247811
+        }
+      }
+    },
+    "qt.qt6.6113.addons.qttasktree.win64_msvc2022_64": {
+      "version": "6.11.3-0-202610220312",
+      "archives": {
+        "qttasktree-Windows-Windows_11_24H2-MSVC2022-Windows-Windows_11_24H2-X86_64.7z": {
+          "sha256": "834916e71935a298c699f6f1c0acd920dbbe89021baf0e51eee32a419eba5f45",
+          "bytes": 285316
+        }
+      }
+    },
+    "qt.qt6.6113.addons.qtimageformats.win64_msvc2022_64": {
+      "version": "6.11.3-0-202610220312",
+      "archives": {
+        "qtimageformats-Windows-Windows_11_24H2-MSVC2022-Windows-Windows_11_24H2-X86_64.7z": {
+          "sha256": "fb372c6f182a50306aa5321b7063e35644f35356a63d0980f4e67fc579f666fe",
+          "bytes": 832221
+        }
+      }
+    }
+  }
+}

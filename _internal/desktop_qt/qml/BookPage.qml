@@ -649,6 +649,7 @@ Item {
                     Accessible.onPressAction: bookDetail.selectedVolume = modelData.id
                     height: Math.max(112, volumeInfo.implicitHeight + Theme.s32)
                     CoverView {
+                        objectName: "bookVolumeCover"
                         x: Theme.s8; y: Theme.s8; width: 56; height: 84
                         title: modelData.cover ? modelData.title : root.book.title || ""
                         coverKey: modelData.cover ? root.book.bookId + "/" + (modelData.cover.version || 0) + "/volumes/" + modelData.id : root.book.coverKey || ""

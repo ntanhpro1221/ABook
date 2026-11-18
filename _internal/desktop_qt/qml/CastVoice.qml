@@ -305,10 +305,11 @@ CastModal {
                                     label: Logic.tryLabel(row.voice.name, false)
                                     onRequested: root.tryVoice(row.voice)
                                 }
-                                AvatarPortrait { name: row.voice.key; voice: true; pixels: 28; x: root.choices.tryLine ? 88 : 48; anchors.verticalCenter: parent.verticalCenter }
+                                // 32 px như danh sách giọng của web (VoicePicker) và Android (CastTab): ở 28 px chữ cái dự phòng chỉ còn ~8 px
+                                AvatarPortrait { objectName: "voicePortrait"; name: row.voice.key; voice: true; pixels: 32; x: root.choices.tryLine ? 88 : 48; anchors.verticalCenter: parent.verticalCenter }
                                 Column {
                                     id: texts
-                                    x: root.choices.tryLine ? 124 : 84
+                                    x: root.choices.tryLine ? 128 : 88
                                     anchors.verticalCenter: parent.verticalCenter
                                     width: parent.width - x - action.width - 20
                                     spacing: 4

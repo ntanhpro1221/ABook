@@ -22,6 +22,7 @@ from __future__ import annotations
 
 import json
 import re
+import shutil
 import time
 from pathlib import Path
 from typing import Any, Callable
@@ -65,7 +66,7 @@ def buildable(folder: Path) -> bool:
     return packages.workshop_state(folder) == "pending" or packages.text_book(packages.manifest(folder))
 
 
-def _sources(folder: Path, library_root: Path, title: str) -> tuple[list[str], int]:
+def _sources(folder: Path, library_root: Path, title: str) -> tuple[Path, tuple[list[str], int]]:
     """Viết chữ các chương ra `library_root/Nguồn dựng xưởng/<tên sách>/` (dự án giữ đường dẫn tới chúng). Trả (đường dẫn các file,
     số chương không có chữ). Sách chỉ-chữ: chép `texts/<n>.txt`. Có `sources/` trong thư mục cuốn thì dùng nguyên văn; không thì
     dựng từ kịch bản."""
@@ -76,6 +77,10 @@ def _sources(folder: Path, library_root: Path, title: str) -> tuple[list[str], i
         target = target.with_name(f"{target.name} ({n})")
         n += 1
     target.mkdir(parents=True)
+    return target, _write_sources(folder, target)
+
+
+def _write_sources(folder: Path, target: Path) -> tuple[list[str], int]:
     book = packages.manifest(folder)
     if packages.text_book(book):
         paths = []
@@ -149,21 +154,26 @@ def build(folder: Path, library_root: Path, create: Callable[[list[str], str, st
     book = packages.edited_manifest(folder)
     title = str(book.get("title") or folder.name)
     cast = packages.cast(folder)
-    paths, without = _sources(folder, library_root, title)
-    if not paths:
-        raise WorkshopError("Cuốn này thiếu chữ và nguồn chương nên chưa dựng lại được.")
-    narrator = str((cast.get("narrator") or {}).get("voice") or book.get("narrator") or "")
-    project = Path(create(paths, title, narrator))
-    voices = _seed_voices(project, cast)
-    named = 0
-    for person in cast.get("characters") or []:
-        shown, original = str(person.get("displayName") or ""), str(person.get("originalName") or "")
-        if shown and original and shown != original:
-            named += renames.set_name(project, str(person["name"]), shown, original)
-    cover = book_edits.cover_file(folder)  # bìa người nghe thấy (bìa họ chọn thắng bìa của người làm sách)
-    if cover is not None:
-        covers.save_cover_bytes(project, cover.read_bytes())
-    folded = book_wishes.fold(project, book_edits.load(folder).get("wishes") or {}, now=time.time())
-    atomic_write_bytes(folder / BUILT_FILE, json.dumps({"id": book_id(project)}).encode("utf-8"))
+    target, (paths, without) = _sources(folder, library_root, title)
+    try:
+        if not paths:
+            raise WorkshopError("Cuốn này thiếu chữ và nguồn chương nên chưa dựng lại được.")
+        narrator = str((cast.get("narrator") or {}).get("voice") or book.get("narrator") or "")
+        project = Path(create(paths, title, narrator))
+        voices = _seed_voices(project, cast)
+        named = 0
+        for person in cast.get("characters") or []:
+            shown, original = str(person.get("displayName") or ""), str(person.get("originalName") or "")
+            if shown and original and shown != original:
+                named += renames.set_name(project, str(person["name"]), shown, original)
+        cover = book_edits.cover_file(folder)  # bìa người nghe thấy (bìa họ chọn thắng bìa của người làm sách)
+        if cover is not None:
+            covers.save_cover_bytes(project, cover.read_bytes())
+        folded = book_wishes.fold(project, book_edits.load(folder).get("wishes") or {}, now=time.time())
+        atomic_write_bytes(folder / BUILT_FILE, json.dumps({"id": book_id(project)}).encode("utf-8"))
+    except BaseException:
+        # Not built: the chapter copies written for it go too. The caller removes a project it made (App._undo_new_books).
+        shutil.rmtree(target, ignore_errors=True)
+        raise
     return {"project": project, "chapters": len(paths), "chaptersWithoutText": without, "voices": voices, "names": named,
             "requests": folded["requests"], "skipped": folded["skipped"]}

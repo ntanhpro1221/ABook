@@ -17,6 +17,7 @@ class SleepExtendTest {
     private val voice = FakeExo()
     private fun field(name: String) = SleepTimer::class.java.getDeclaredField(name).also { it.isAccessible = true }
     private fun left() = SleepTimer.describe().getDouble("remaining")
+    private fun fade(level: Float) = Playback::class.java.getDeclaredField("fadeLevel").also { it.isAccessible = true }.setFloat(null, level)
 
     /** Đặt thẳng trạng thái "hẹn `picked` phút, còn `leftMin` phút, đang dừng" (setMinutes đụng cảm biến / nhật ký đêm - cần Android thật). */
     private fun timer(picked: Int, leftMin: Double) {
@@ -53,6 +54,8 @@ class SleepExtendTest {
         field("automaticReason").set(SleepTimer, "")
         field("stoppedAtMs").setLong(SleepTimer, 0L)
         SleepTimer.extendMinutes = 10
+        SleepTimer.activityResets = true
+        fade(1f)
         Playback.player = null
         Handler.reset()
     }
@@ -63,6 +66,18 @@ class SleepExtendTest {
         assertEquals(SleepTimer.Mode.MINUTES, SleepTimer.mode)
         assertEquals(10 * 60.0, left(), 1.0)
         assertEquals("số đã chọn không đổi", 10, SleepTimer.describe().getInt("minutes"))
+    }
+
+    /** Soát 0.4.173 B9: tắt "Thao tác hẹn lại" thì chạm thường không đặt lại đồng hồ, nhưng chạm lúc đang nhỏ dần vẫn hẹn lại - như máy tính và web. */
+    @Test fun withActivityResetsOffATouchOnlyExtendsWhileFading() {
+        SleepTimer.activityResets = false
+        timer(picked = 10, leftMin = 2.0)
+        fade(1f)
+        SleepTimer.onUserActivity("touch", System.currentTimeMillis()) // wallclock-ok: event timestamp supplied directly
+        assertEquals("chưa nhỏ dần: không đổi", 2 * 60.0, left(), 1.0)
+        fade(0.3f)
+        SleepTimer.onUserActivity("touch", System.currentTimeMillis()) // wallclock-ok: event timestamp supplied directly
+        assertEquals("đang nhỏ dần: hẹn lại", 10 * 60.0, left(), 1.0)
     }
 
     @Test fun shakingAtFullTimeChangesNothing() {

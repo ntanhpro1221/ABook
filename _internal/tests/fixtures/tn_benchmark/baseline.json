@@ -17,7 +17,7 @@
     "studio_g2p": "keep_vieneu_final_mark; sentence_case; normalize_to_chunks_v3_with_gaps; phonemize_text_with_emotions"
   },
   "case_count": 551,
-  "cases_sha256": "0f2e0ecd20122c33bb909b6b2a12261a75220a0cc07ca2e353a539b860b38f2f",
+  "cases_sha256": "24aff1a43ab8ef168648695aac788568879b8ba38472fc07f1200ac06e0228f3",
   "quality_implementation_hash": "6b62f36f35401504077655148462b9c58659ac093c4b46b18013788ba484d3ed",
   "categories": {
     "cardinal_small": {

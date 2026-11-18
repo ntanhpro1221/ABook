@@ -248,3 +248,82 @@ def test_txt_chapters_opened_by_a_volume_heading_start_a_new_volume_without_touc
     assert [c.volume for c in book.chapters] == [1, 1, 2]
     assert [c.text for c in book.chapters] == [importers.import_text(folder).chapters[i].text for i in range(3)]
     assert 'Tập 2: Biển' in book.chapters[2].text, 'dòng tên quyển vẫn nằm trong chữ chương'
+
+
+# ---- .abook: chia lại quyển (soát 0.4.173 B2) ------------------------------------------------------------------------------
+
+
+def _package_server(tmp_path, volumes, chapter_volumes):
+    from abook.webui.fingerprints import Fingerprints
+    from abook.webui.library import book_id
+    from abook.webui.server import Server
+    from tests.test_book_edits import _app
+
+    book = importers.ImportedBook('Test book', chapters=[
+        importers.Chapter(f'Chapter {n}', f'The clock number {n} ticked.', volume=volume) for n, volume in enumerate(chapter_volumes, 1)],
+        volumes=[importers.Volume(n, n, title) for n, title in enumerate(volumes, 1)])
+    path = textbook.build(book, tmp_path / 'book.abook')
+    library = tmp_path / 'thu_vien'
+    folder, _how = packages.import_file(path, library, [], Fingerprints(tmp_path / 'fp.json'))
+    return Server(_app(tmp_path, library), port=0).start(), book_id(folder)
+
+
+def _package_call(server, method, path, body=None):
+    from tests.test_webui_listen_and_sync import _request
+
+    status, data, _headers = _request(server.port, method, path, headers={'X-Ebook-Token': 't'}, body=body)
+    return status, json.loads(data or b'{}')
+
+
+def _membership(server, ident):
+    status, view = _package_call(server, 'GET', f'/api/books/{ident}/volumes')
+    assert status == 200, view
+    return [(v['id'], v['title'], [c['id'] for c in v['chapters']]) for v in view['volumes']]
+
+
+@pytest.mark.filterwarnings('ignore::UserWarning')
+def test_an_imported_book_splits_one_volume_into_two(tmp_path):
+    server, ident = _package_server(tmp_path, ['First'], [1, 1, 1])
+    try:
+        status, data = _package_call(server, 'PUT', f'/api/books/{ident}/volumes', {'volumes': [
+            {'id': 1, 'number': 1, 'title': 'First', 'chapters': [1]},
+            {'id': 2, 'number': 2, 'title': 'Second', 'chapters': [2, 3]}]})
+        assert status == 200, data
+        assert _membership(server, ident) == [(1, 'First', [1]), (2, 'Second', [2, 3])]
+    finally:
+        server.stop()
+
+
+@pytest.mark.filterwarnings('ignore::UserWarning')
+def test_an_imported_book_moves_a_boundary_and_never_answers_ok_without_the_change(tmp_path):
+    server, ident = _package_server(tmp_path, ['First', 'Second'], [1, 2, 2])
+    try:
+        status, data = _package_call(server, 'PUT', f'/api/books/{ident}/volumes', {'volumes': [
+            {'id': 1, 'number': 1, 'title': 'First', 'chapters': [1, 2]},
+            {'id': 2, 'number': 2, 'title': 'Second', 'chapters': [3]}]})
+        assert status == 200, data
+        assert _membership(server, ident) == [(1, 'First', [1, 2]), (2, 'Second', [3])]
+        # merge back into one volume, then refuse what would change the global order or drop a chapter
+        status, data = _package_call(server, 'PUT', f'/api/books/{ident}/volumes', {'volumes': [
+            {'id': 1, 'number': 1, 'title': 'All', 'chapters': [1, 2, 3]}]})
+        assert status == 200 and _membership(server, ident) == [(1, 'All', [1, 2, 3])]
+        for bad in ([{'id': 1, 'number': 1, 'title': 'A', 'chapters': [2, 1, 3]}],
+                    [{'id': 1, 'number': 1, 'title': 'A', 'chapters': [1, 2]}],
+                    [{'id': 1, 'number': 1, 'title': 'A', 'chapters': [1]}, {'id': 2, 'number': 2, 'title': 'B', 'chapters': []}],
+                    [{'id': 1, 'number': 1, 'title': 'A', 'chapters': [1, 2, 9]}]):
+            status, data = _package_call(server, 'PUT', f'/api/books/{ident}/volumes', {'volumes': bad})
+            assert status == 400, (bad, data)
+        assert _membership(server, ident) == [(1, 'All', [1, 2, 3])]
+    finally:
+        server.stop()
+
+
+def test_rearrange_works_on_a_copy_and_ignores_the_old_membership():
+    book = bv.flatten({'title': 'T', 'volumes': [
+        {'id': 1, 'number': 1, 'title': 'A', 'cover': None, 'chapters': [{'id': 1}]},
+        {'id': 2, 'number': 2, 'title': 'B', 'cover': None, 'chapters': [{'id': 2}, {'id': 3}]}]})
+    before = json.dumps(book, sort_keys=True)
+    result = bv.rearrange(book, [{'id': 1, 'number': 1, 'title': ' A ', 'chapters': [1, 2]},
+                                 {'id': 2, 'number': 2, 'title': 'B', 'chapters': [3]}])
+    assert [(v['id'], v['title'], [c['id'] for c in v['chapters']]) for v in result['volumes']] == [(1, 'A', [1, 2]), (2, 'B', [3])]
+    assert json.dumps(book, sort_keys=True) == before, 'the cached manifest is never changed'

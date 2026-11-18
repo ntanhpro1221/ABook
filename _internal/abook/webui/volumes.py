@@ -192,3 +192,19 @@ def split_paths(paths: list[str], starts: list[Any] | None) -> list[list[str]]:
     if len(cuts) > MAX_VOLUMES:
         raise ValueError(f"Tối đa {MAX_VOLUMES} tập")
     return [list(paths[start - 1:end - 1]) for start, end in zip(cuts, [*cuts[1:], len(paths) + 1])]
+
+
+def check_labels(labels: Any, count: int) -> list[str]:
+    """The volume titles the reader typed (`volumeLabels`), stripped; "" keeps the default title. Checked BEFORE the book is
+    created, with the rules of `book_volumes`: a title it would refuse must not leave a half-made book (soát 0.4.173 B6)."""
+    from ..book_volumes import MAX_TITLE
+
+    if labels is None:
+        return []
+    if not isinstance(labels, list) or len(labels) > count or any(not isinstance(label, str) for label in labels):
+        raise ValueError("Tên các tập không hợp lệ")
+    cleaned = [label.strip() for label in labels]
+    for number, label in enumerate(cleaned, start=1):
+        if len(label) > MAX_TITLE:
+            raise ValueError(f"Tên tập {number} dài quá {MAX_TITLE} ký tự")
+    return cleaned

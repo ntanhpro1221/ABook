@@ -48,6 +48,19 @@ export function sleepPausedNote(): string {
   return S.s_sleep_paused_keep;
 }
 
+export const RECENT_STOP_MS = 30 * 60_000;
+
+/** Hẹn giờ tự tắt tiếng chưa quá nửa giờ: tấm Hẹn giờ nói lúc tắt tiếng - kể cả khi lựa chọn còn giữ sau lần tự dừng (soát 0.4.173 B8).
+ *  Máy tính: Player::sleepStoppedText; điện thoại: SleepText.recentlyStopped. */
+export function sleepStoppedRecently(stoppedAt: number | null, now: number): boolean {
+  return stoppedAt !== null && now - stoppedAt >= 0 && now - stoppedAt < RECENT_STOP_MS;
+}
+
+/** Nút "Bật lại N phút": chỉ khi hẹn giờ đã tắt hẳn. Điện thoại: SleepText.restartOffered; máy tính: SleepPopover (sleepKind "off"). */
+export function sleepRestartOffered(mode: SleepMode, stoppedAt: number | null, now: number): boolean {
+  return mode.kind === "off" && sleepStoppedRecently(stoppedAt, now);
+}
+
 export function sleepResumed(mode: SleepMode, now: number): SleepMode {
   if (mode.kind !== "minutes" || mode.since !== null) return mode;
   return { ...mode, since: now };

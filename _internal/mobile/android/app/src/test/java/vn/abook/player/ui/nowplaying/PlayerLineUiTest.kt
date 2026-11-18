@@ -99,4 +99,28 @@ class PlayerLineUiTest {
         rule.onNodeWithTag("player_line_delivery").assertIsNotEnabled()
         assertEquals(0, seeks); assertTrue(sent.isEmpty())
     }
+
+    /** Soát 0.4.173 B10: hàng "Sửa cách đọc một từ" như web, mở được cả với câu chưa nhận ra (lời nhắc của file ABook bản cũ hứa điều này). */
+    @Test fun theWordRowOpensTheReadingEditorEvenForAnOldScript() {
+        val row = fixture(); row.getJSONObject("source").remove("textSha256")
+        val editor = show(row)
+        rule.onNodeWithTag("paragraph_0").performTouchInput { longClick() }
+        rule.onNodeWithTag("player_line_who").assertIsNotEnabled()
+        rule.onNodeWithTag("player_line_word").assertIsEnabled().performClick()
+        rule.waitForIdle()
+        assertEquals("word", editor.step)
+        val words = PlayerLineLogic.words(row.getJSONObject("source").getString("text"))
+        rule.onAllNodesWithTag("player_line_word_chip").assertCountEquals(words.size)
+        rule.onAllNodesWithTag("player_line_word_chip")[0].performClick()
+        rule.waitForIdle()
+        assertEquals(words[0], editor.word)
+        rule.onNodeWithTag("studio_reading_${words[0]}").assertExists()
+        rule.runOnUiThread { rule.activity.onBackPressedDispatcher.onBackPressed() }
+        rule.waitForIdle()
+        assertEquals("menu", editor.step); assertEquals(0, seeks); assertTrue(sent.isEmpty())
+    }
+
+    @Test fun wordsFollowTheWebSplitter() {
+        assertEquals(listOf("Rô-bốt", "nói", "l’ami", "10", "giờ", "TP", "HCM"), PlayerLineLogic.words("Rô-bốt nói: rô-bốt l’ami, 10 giờ -- TP.HCM!"))
+    }
 }

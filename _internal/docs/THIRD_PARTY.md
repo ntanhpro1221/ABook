@@ -79,6 +79,24 @@ băm trong `webui/studio_setup.py`):
   trong đó model phân tích của chính dự án `abook-analyzer` (huggingface.co/NGDtuanh/abook-analyzer, Apache-2.0 như
   model nền Qwen3-4B-Instruct-2507; thẻ model: `docs/models/`).
 
+## Ảnh chân dung giọng (đóng gói trong bộ cài và APK)
+
+- 42 ảnh chân dung minh hoạ của các giọng có sẵn (`abook/assets/voice_avatars/voice-*.webp`, WebP 256 × 256): nằm trong file chạy
+  máy tính (tài nguyên Qt `/voiceavatars`, `desktop_qt/CMakeLists.txt`), trong APK (`mobile/android/app/src/main/assets/voice_avatars/`)
+  và trong thư mục mã Python `abook` mà bộ cài mang theo (`resources/app/abook/assets/voice_avatars`, nơi bản web và Studio đọc). Ảnh do chính dự án sinh bằng model **Stable Diffusion XL 1.0**
+  (`stabilityai/stable-diffusion-xl-base-1.0`, Stability AI, commit `462165984030d82259a11f4367a4eed129e94a7b`) qua `scripts/avatar_modal.py`;
+  câu lệnh, seed, commit model, phiên bản thư viện sinh và SHA-256 từng ảnh ghi trong `abook/assets/voice_avatars/manifest.json`, kết quả
+  duyệt bằng mắt trong `scripts/voice_artwork_reviewed.json`. Không ảnh nào vẽ người thật hay lấy từ nguồn ngoài; câu lệnh chỉ tả giới
+  tính, tuổi, chất giọng theo kiểu minh hoạ phẳng.
+- Giấy phép của model: **CreativeML Open RAIL++-M**. ABook KHÔNG phân phối model hay trọng số nào của nó - chỉ phân phối ảnh đầu ra.
+  Theo giấy phép, Stability AI không giữ quyền với ảnh sinh ra; ảnh là một phần của ABook và theo giấy phép MIT của ABook. Giấy phép
+  model vẫn đòi việc dùng đầu ra không trái các hạn chế dùng ở Phụ lục A của nó (không dùng trái luật, không dùng để hại hay lợi dụng
+  trẻ vị thành niên, không tạo thông tin sai để hại người khác, không bôi nhọ, không phân biệt đối xử, không dùng để giả làm người
+  thật...; đọc đủ ở https://huggingface.co/stabilityai/stable-diffusion-xl-base-1.0/blob/main/LICENSE.md). ABook chỉ dùng các ảnh
+  này để minh hoạ giọng đọc của máy trong app.
+- Công cụ sinh (torch, diffusers, transformers, accelerate, safetensors, huggingface-hub, Pillow, NumPy, psutil - phiên bản ghim trong
+  manifest) chỉ chạy ngoài app khi dựng ảnh, không nằm trong bản phát hành nào.
+
 ## Giao diện web
 
 - React, React DOM, React Router (MIT); TanStack Query (MIT); Radix UI (MIT); lucide-react (ISC); sonner (MIT);

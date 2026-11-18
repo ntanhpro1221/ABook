@@ -4371,22 +4371,33 @@ def test_mock_pipeline_finishes_on_a_busy_machine(tmp_path: Path, monkeypatch) -
     monkeypatch.setattr(
         "abook.pipeline.WhisperVerifier.can_verify_repeated_short", lambda _verifier, _expected: False
     )
-    import time
+    import threading
 
-    deadline = time.monotonic() + 120.0
+    from tests.timing import completes_within, scaled
+
+    # A pipeline that waits on the test machine would never finish: a load-scaled watchdog stops it so the test fails
+    # instead of hanging, and the run itself must finish inside the shared, load-scaled bound.
+    stalled = threading.Event()
+    watchdog = threading.Timer(scaled(120.0), stalled.set)
+    watchdog.daemon = True
     events = []
     pipeline = BookPipeline(
         paths=paths,
         db=db,
         settings=settings,
         pause_requested=lambda: False,
-        stop_requested=lambda: time.monotonic() > deadline,
+        stop_requested=stalled.is_set,
         emit=lambda kind, payload: events.append((kind, payload)),
     )
     pipeline.tts = FakeTTS(settings, db)
-    pipeline.run()
+    watchdog.start()
+    try:
+        with completes_within(120.0):
+            pipeline.run()
+    finally:
+        watchdog.cancel()
 
-    assert time.monotonic() <= deadline, "the resource gate waited on the machine running the tests"
+    assert not stalled.is_set(), "the resource gate waited on the machine running the tests"
     assert db.book()["status"] == "completed"
     assert db.list_chapters()[0]["status"] == "completed"
     assert not [payload for kind, payload in events if kind == "resource" and payload["level"] != "maximum"]

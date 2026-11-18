@@ -41,7 +41,7 @@ class AudioFxIoTest {
                 }
             }
         }
-        DiskWrites.post("tone-test") { holding.countDown(); release.await() }
+        DiskWrites.post("tone-test") { holding.countDown(); release.await(TestTime.seconds(10), TimeUnit.SECONDS) }
         assertTrue(holding.await(TestTime.seconds(5), TimeUnit.SECONDS))
         try {
             prefsField.set(AudioFx, prefs)

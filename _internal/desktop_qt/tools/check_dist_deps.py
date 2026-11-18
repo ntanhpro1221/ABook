@@ -1,9 +1,11 @@
-"""Fail the build when the desktop app drags QtWidgets back in.
+"""Fail the build when the desktop app drags QtWidgets back in, or ships without the WebP image plugin.
 
 Qt.labs.platform (SystemTrayIcon / Menu) is the only thing that ever pulled Qt6Widgets.dll (6.3 MB, ~2.2 MB in the installer) into
 dist. The tray is now plain Win32 (src/trayicon.cpp), so:
   - no QML file may `import Qt.labs.platform`;
-  - dist must not hold Qt6Widgets.dll, Qt6LabsPlatform.dll or the labs/platform QML plugin.
+  - dist must not hold Qt6Widgets.dll, Qt6LabsPlatform.dll or the labs/platform QML plugin;
+  - dist must hold imageformats/qwebp.dll: every voice portrait and character avatar is WebP, and without the plugin
+    QML Image fails quietly and shows the initial-letter fallback (0.4.173: the pinned SDK shipped without qtimageformats).
 
   check_dist_deps.py <dist dir> <qml dir>     check the real tree
   check_dist_deps.py selftest                 plant every fault in a temp tree; each must be caught, the clean tree must pass
@@ -15,6 +17,7 @@ from pathlib import Path
 
 IMPORT = re.compile(r"^\s*import\s+Qt\.labs\.platform\b", re.MULTILINE)
 FORBIDDEN_DIST = ("Qt6Widgets.dll", "Qt6LabsPlatform.dll")
+REQUIRED_DIST = ("imageformats/qwebp.dll",)
 
 
 def problems(dist: Path, qml: Path) -> list[str]:
@@ -26,6 +29,8 @@ def problems(dist: Path, qml: Path) -> list[str]:
         for name in FORBIDDEN_DIST:
             found += [f"dist holds {name}: {p}" for p in sorted(dist.rglob(name))]
         found += [f"dist holds the labs/platform QML plugin: {p}" for p in sorted(dist.rglob("platform")) if p.parent.name == "labs"]
+        found += [f"dist lacks {name} (qtimageformats; tools/install_qt_sdk.py --only-addon qtimageformats)"
+                  for name in REQUIRED_DIST if not (dist / name).is_file()]
     return found
 
 
@@ -36,6 +41,7 @@ def selftest() -> int:
         "Qt6Widgets.dll": lambda d, q: (d / "Qt6Widgets.dll").write_bytes(b"MZ"),
         "Qt6LabsPlatform.dll": lambda d, q: (d / "Qt6LabsPlatform.dll").write_bytes(b"MZ"),
         "labs/platform plugin": lambda d, q: (d / "qml" / "Qt" / "labs" / "platform").mkdir(parents=True),
+        "no qwebp.dll": lambda d, q: (d / "imageformats" / "qwebp.dll").unlink(),
     }
     bad = 0
     with tempfile.TemporaryDirectory(prefix="abook-deps-") as tmp:
@@ -46,6 +52,8 @@ def selftest() -> int:
             qml.mkdir()
             (qml / "Ok.qml").write_text("import QtQuick\n// Qt.labs.platform is only named in a comment\nItem {}\n")
             (dist / "Qt6Core.dll").write_bytes(b"MZ")
+            (dist / "imageformats").mkdir()
+            (dist / "imageformats" / "qwebp.dll").write_bytes(b"MZ")
             if name:
                 plants[name](dist, qml)
             caught = problems(dist, qml)

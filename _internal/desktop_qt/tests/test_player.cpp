@@ -331,6 +331,28 @@ private slots:
         }
     }
 
+    // Soát 0.4.173 B9: tắt "Thao tác hẹn lại" thì thao tác thường không đặt lại đồng hồ, nhưng lúc đang nhỏ dần vẫn hẹn lại - như điện thoại lắc máy và web.
+    void withActivityResetsOffInputOnlyExtendsWhileFading() {
+        Rig rig;
+        rig.out.dur = 2000;
+        rig.player->setFadeSeconds(10);
+        rig.player->configure({{QStringLiteral("sleepActivityResets"), false}});
+        rig.player->open(QStringLiteral("a"), 1, 0, true);
+        rig.player->setSleep(QStringLiteral("minutes"), 1);
+        rig.player->watchInput();
+        rig.run(20);
+        const double before = rig.player->clock()->sleepLeft();
+        QEvent early(QEvent::KeyPress);
+        QCoreApplication::sendEvent(QCoreApplication::instance(), &early);
+        QCOMPARE(rig.player->clock()->sleepLeft(), before);
+        rig.run(33); // còn ~7 giây: đang nhỏ dần
+        QVERIFY(rig.player->fading());
+        QEvent late(QEvent::KeyPress);
+        QCoreApplication::sendEvent(QCoreApplication::instance(), &late);
+        QVERIFY(!rig.player->fading());
+        QCOMPARE(rig.player->clock()->sleepLeft(), 60.0);
+    }
+
     void choosingCountsCannotEndPlayback() {
         Rig rig;
         rig.player->open(QStringLiteral("a"), 1, 0, true);

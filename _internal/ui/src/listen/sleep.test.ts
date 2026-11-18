@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { remoteSleepAfter, remoteSleepCommand, remoteSleepMode, sleepAfterChapter, sleepButtonLabel, sleepExtendLabel, sleepExtendMinutes, sleepExtended, sleepFrom, sleepLabel, sleepLeftMs, sleepSpoken } from "./sleep";
+import { RECENT_STOP_MS, remoteSleepAfter, remoteSleepCommand, remoteSleepMode, sleepAfterChapter, sleepButtonLabel, sleepExtendLabel, sleepExtendMinutes, sleepExtended, sleepFrom, sleepLabel, sleepLeftMs, sleepRestartOffered, sleepSpoken, sleepStoppedRecently, type SleepMode } from "./sleep";
 
 describe("hẹn giờ tắt của loa / TV", () => {
   it("đọc lời máy giữ phiên phát như hẹn giờ ở đây: chỉ trôi khi thiết bị đang phát", () => {
@@ -108,5 +108,22 @@ describe("Hết N chương", () => {
     expect(sleepButtonLabel(one!, 0)).toBe("Hết chương");
     expect(sleepAfterChapter(one!)).toBeNull();
     expect(sleepFrom({ kind: "chapter" }, true, 0)).toEqual({ kind: "chapter", chapters: 1 });
+  });
+});
+
+describe("dòng đã tắt tiếng và nút bật lại (soát 0.4.173 B8)", () => {
+  it("dòng giờ tắt tiếng hiện 30 phút sau lần dừng, dù lựa chọn còn giữ hay đã tắt", () => {
+    expect(sleepStoppedRecently(null, 5)).toBe(false);
+    expect(sleepStoppedRecently(1_000_000, 1_000_000 + 29 * 60_000)).toBe(true);
+    expect(sleepStoppedRecently(1_000_000, 1_000_000 + RECENT_STOP_MS)).toBe(false);
+    expect(sleepStoppedRecently(1_000_000, 999_999)).toBe(false);
+  });
+
+  it("nút bật lại chỉ khi đã tắt hẳn, như máy tính và điện thoại", () => {
+    const kept: SleepMode = { kind: "minutes", minutes: 15, leftMs: 900_000, since: null };
+    expect(sleepRestartOffered(kept, 1_000_000, 1_000_000 + 60_000)).toBe(false);
+    expect(sleepRestartOffered({ kind: "off" }, 1_000_000, 1_000_000 + 60_000)).toBe(true);
+    expect(sleepRestartOffered({ kind: "off" }, 1_000_000, 1_000_000 + RECENT_STOP_MS)).toBe(false);
+    expect(sleepRestartOffered({ kind: "off" }, null, 5)).toBe(false);
   });
 });

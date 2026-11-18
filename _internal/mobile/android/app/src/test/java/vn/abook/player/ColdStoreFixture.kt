@@ -11,6 +11,8 @@ internal class ColdStoreFixture {
         lateinit var directory: File
         override fun getFilesDir(): File = directory
         override fun getApplicationContext(): Context = this
+        // No system services on the JVM: callers that tolerate a missing service (sensors) see null instead of a stub error.
+        override fun getSystemService(name: String): Any? = null
     }
     val directory = BookEditsFixtures.tempDir("abook-init")
     val context = contextFor(directory)

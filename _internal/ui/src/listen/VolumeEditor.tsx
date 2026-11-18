@@ -10,6 +10,16 @@ import type { ListenBook } from "./model";
 type Draft = { id: number; number: number; title: string; start: number; image?: string | null };
 
 /** Volume edits only move boundaries; all chapter identities stay in global order. */
+/** Id của quyển thêm mới: lớn hơn mọi id đã nạp lẫn đang có. */
+export function nextVolumeId(rows: { id: number }[], loaded: { id: number }[] | undefined): number {
+  return Math.max(0, ...rows.map(row => row.id), ...(loaded ?? []).map(volume => volume.id)) + 1;
+}
+
+/** Còn thêm được quyển: dưới 99 quyển và còn chương sau chương đầu của quyển cuối. */
+export function canAddVolume(rows: { start: number }[], chapters: number): boolean {
+  return rows.length < 99 && (rows.at(-1)?.start ?? 0) + 1 <= chapters;
+}
+
 export function VolumeEditor({ book }: { book: ListenBook }) {
   const client = useQueryClient();
   const [open, setOpen] = useState(false);
@@ -60,7 +70,9 @@ export function VolumeEditor({ book }: { book: ListenBook }) {
           <MotionPresence open={row.id !== rows[0]?.id}><Button size="sm" variant="ghost" className="flex w-fit justify-start px-0 text-left" onClick={() => setRows(rows.filter(other => other.id !== row.id))}>{S.s_xoa_777195ab}</Button></MotionPresence>
         </div>}
       </AnimatedRows>
-      <Button variant="ghost" className="justify-start px-0" disabled={rows.length >= Math.min(99, chapters.length)} onClick={() => setRows([...rows, { id: Math.max(...rows.map(row => row.id)) + 1, number: rows.length + 1, title: S.s_volume_number(rows.length + 1), start: Math.min(chapters.length, (rows.at(-1)?.start ?? 0) + 1) }])}>{S.s_volume_add}</Button>
+      {/* Id mới lớn hơn mọi id đã nạp lẫn đang có (quyển vừa xoá không bị tái dùng - bìa riêng ghép theo id); quyển mới bắt đầu sau chương đầu của quyển cuối,
+          hết chương thì không thêm - như máy tính và điện thoại (soát 0.4.173 B13c, B13d). */}
+      <Button variant="ghost" className="justify-start px-0" disabled={!canAddVolume(rows, chapters.length)} onClick={() => setRows([...rows, { id: nextVolumeId(rows, book.volumes), number: rows.length + 1, title: S.s_volume_number(rows.length + 1), start: (rows.at(-1)?.start ?? 0) + 1 }])}>{S.s_volume_add}</Button>
       <InlineError message={error} open={Boolean(error)} onRetry={() => void save()} />
       <DialogActions><Button variant="primary" onClick={save} loading={busy} disabled={busy || !rows.length}>{S.s_volume_save}</Button></DialogActions>
     </Dialog>

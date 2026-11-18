@@ -25,6 +25,7 @@
 #include <QSet>
 #include <QThread>
 #include <QQuickImageProvider>
+#include <QPainter>
 #include <QDir>
 #include <QDirIterator>
 #include <QRegularExpression>
@@ -32,7 +33,14 @@
 #include <QDateTime>
 #include <QtQuickTest/quicktest.h>
 #include <QQuickWindow>
+#include <QGuiApplication>
+#include <QPlatformSurfaceEvent>
+#include <QWindow>
+#include <QTimer>
 #include <QtQuick/private/qquickwindow_p.h>
+#include <qpa/qwindowsysteminterface_p.h>
+#define NOMINMAX
+#include <windows.h>
 #include <QtQuick/private/qsgabstractsoftwarerenderer_p.h>
 
 // Only motion-contract tests opt into this clock. Real scheduler delays must
@@ -73,10 +81,19 @@ public:
 class WidthCovers : public QQuickImageProvider {
 public:
     WidthCovers() : QQuickImageProvider(QQuickImageProvider::Image) {}
-    QImage requestImage(const QString &, QSize *size, const QSize &requested) override {
+    // Bo góc theo bán kính ở cuối id như CoverProvider thật (src/coverprovider.cpp): bìa giả vuông làm ảnh d2shots lệch app thật
+    // (0.4.173 soát tay: bìa quyển 1 vuông, quyển 2 bìa vẽ bo góc).
+    QImage requestImage(const QString &id, QSize *size, const QSize &requested) override {
         if (size) *size = QSize(600, 900);
-        QImage image(requested.isValid() ? requested : QSize(60, 90), QImage::Format_RGB32);
-        image.fill(QColor(QStringLiteral("#9b562f")));
+        const QSize box = requested.isValid() ? requested : QSize(60, 90);
+        const int radius = id.section(QLatin1Char('/'), -1).toInt();
+        QImage image(box, QImage::Format_ARGB32_Premultiplied);
+        image.fill(Qt::transparent);
+        QPainter painter(&image);
+        painter.setRenderHint(QPainter::Antialiasing);
+        painter.setPen(Qt::NoPen);
+        painter.setBrush(QColor(QStringLiteral("#9b562f")));
+        painter.drawRoundedRect(QRectF(QPointF(0, 0), QSizeF(box)), radius, radius);
         return image;
     }
 };
@@ -164,6 +181,68 @@ public:
                     ++count;
                 }
             }, Qt::DirectConnection);
+        }
+        return false;
+    }
+};
+
+// ABOOK_WIDTH_REAL_BACKEND=1: chạy trên nền "windows" với bộ vẽ RHI thật (D3D11 như app) thay cho offscreen + bộ vẽ phần mềm, để
+// so ảnh chụp với bộ vẽ của app (0.4.173: viền đen quanh hộp thoại chỉ có ở bộ vẽ phần mềm). Như bộ gác cửa sổ của chế độ đo
+// (main.cpp BenchWindowGuard): mọi cửa sổ đặt ở -10000,-10000 trước lần hiện đầu, không nhận focus, hiện mà không kích hoạt -
+// không bao giờ lên màn hình của chủ máy hay lấy bàn phím (móc CBT chặn kích hoạt ở Win32 như BenchActivationGuard). Windows không
+// gửi "đã hiện" cho cửa sổ ngoài mọi màn hình nên QuickTest sẽ chờ mãi windowShown: cửa sổ Quick đang hiện được coi là đã hiện
+// (như BenchExposure); D3D11 vẫn vẽ và grabWindow đọc lại bộ đệm. Test cần phím có thể trượt ở chế độ này; dùng nó để chụp ảnh.
+class HiddenWindows : public QObject, public QWindowSystemEventHandler {
+    bool handling = false;
+    HHOOK hook = nullptr;
+    static LRESULT CALLBACK filter(int code, WPARAM wparam, LPARAM lparam) {
+        if (code == HCBT_ACTIVATE || code == HCBT_SETFOCUS) return 1;
+        if (code == HCBT_CREATEWND) {
+            auto *create = reinterpret_cast<CBT_CREATEWNDW *>(lparam)->lpcs;
+            if (!(create->style & WS_CHILD) && create->hwndParent != HWND_MESSAGE) {
+                create->x = create->y = -10000;
+                create->dwExStyle |= WS_EX_NOACTIVATE;
+            }
+        }
+        return CallNextHookEx(nullptr, code, wparam, lparam);
+    }
+public:
+    void install() {
+        hook = SetWindowsHookExW(WH_CBT, filter, nullptr, GetCurrentThreadId());
+        if (!hook) qFatal("ABOOK_WIDTH_REAL_BACKEND: no CBT hook, refusing to show windows");
+        QWindowSystemInterfacePrivate::installWindowSystemEventHandler(this);
+        qApp->installEventFilter(this);
+    }
+    ~HiddenWindows() override {
+        if (!hook) return;
+        QWindowSystemInterfacePrivate::removeWindowSystemEventhandler(this);
+        UnhookWindowsHookEx(hook);
+    }
+    bool sendEvent(QWindowSystemInterfacePrivate::WindowSystemEvent *event) override {
+        if (event->type == QWindowSystemInterfacePrivate::Expose) {
+            auto *expose = static_cast<QWindowSystemInterfacePrivate::ExposeEvent *>(event);
+            if (auto *window = qobject_cast<QQuickWindow *>(expose->window.data()))
+                expose->isExposed = window->isVisible() && window->visibility() != QWindow::Minimized;
+        }
+        return QWindowSystemEventHandler::sendEvent(event);
+    }
+    bool eventFilter(QObject *object, QEvent *event) override {
+        if (handling) return false;
+        const bool created = event->type() == QEvent::PlatformSurface &&
+            static_cast<QPlatformSurfaceEvent *>(event)->surfaceEventType() == QPlatformSurfaceEvent::SurfaceCreated;
+        auto *window = qobject_cast<QWindow *>(object);
+        if ((created || event->type() == QEvent::Show) && window && window->isTopLevel()) {
+            handling = true;
+            window->setProperty("_q_showWithoutActivating", true);
+            window->setFlag(Qt::WindowDoesNotAcceptFocus, true);
+            window->setPosition(-10000, -10000);
+            handling = false;
+            // Windows không gửi WM_PAINT/expose cho cửa sổ ngoài mọi màn hình: tự báo một lần, sendEvent ở trên giữ nó là "đã hiện"
+            if (event->type() == QEvent::Show && qobject_cast<QQuickWindow *>(window))
+                QTimer::singleShot(0, window, [window] {
+                    QWindowSystemInterface::handleExposeEvent<QWindowSystemInterface::SynchronousDelivery>(
+                        window, QRegion(QRect(QPoint(), window->size())));
+                });
         }
         return false;
     }
@@ -261,6 +340,7 @@ class WidthSetup : public QObject {
     std::unique_ptr<WidthNet> netView;
     std::unique_ptr<MediaControls> media;
     FullRepaint repaint;
+    HiddenWindows hidden;
 public slots:
     void qmlEngineAvailable(QQmlEngine *engine) {
         if (qEnvironmentVariableIsSet("ABOOK_QML_LIFETIME_DIAGNOSTICS")) LifetimeProbe::installHandler();
@@ -284,6 +364,10 @@ public slots:
     void applicationAvailable() {
         audit = std::make_unique<GlyphAudit>();
         qApp->installEventFilter(&repaint);
+        if (qEnvironmentVariableIntValue("ABOOK_WIDTH_REAL_BACKEND") == 1) {
+            if (QGuiApplication::platformName() != QStringLiteral("windows")) qFatal("ABOOK_WIDTH_REAL_BACKEND needs the windows platform");
+            hidden.install();
+        }
         if (!loadAppFonts(QStringLiteral(WIDTH_SOURCE_DIR "/fonts")))
             qFatal("Could not load application fonts");
         net.books.insert(QStringLiteral("width"), makeBook(QStringLiteral("width"), 32));
@@ -339,7 +423,9 @@ static void createShotFolders() {
 }
 
 int main(int argc, char **argv) {
-    qputenv("QT_QPA_PLATFORM", "offscreen");
+    const bool realBackend = qEnvironmentVariableIntValue("ABOOK_WIDTH_REAL_BACKEND") == 1;
+    qputenv("QT_QPA_PLATFORM", realBackend ? "windows" : "offscreen");
+    if (realBackend) qunsetenv("QT_QUICK_BACKEND");
     qputenv("QML_IMPORT_PATH", WIDTH_SOURCE_DIR "/tests/qml/stub");
     qputenv("QT_QPA_FONTDIR", WIDTH_SOURCE_DIR "/fonts");
     qputenv("QML_XHR_ALLOW_FILE_READ", "1");   // tst_uitree reads back the tree file it just wrote

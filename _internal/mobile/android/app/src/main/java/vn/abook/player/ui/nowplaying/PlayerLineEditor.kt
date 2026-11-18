@@ -6,6 +6,8 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.launch
 import org.json.JSONObject
 import vn.abook.player.S
+import java.text.Normalizer
+import java.util.Locale
 import vn.abook.player.ui.studio.*
 
 data class PlayerLineSnapshot(val script: ChapterScript, val blocked: String = "", val retake: Boolean = false,
@@ -40,6 +42,15 @@ interface PlayerLineSource {
 }
 
 object PlayerLineLogic {
+    private val WORD = Regex("[\\p{L}\\p{M}\\p{N}]+(?:['\u2019-][\\p{L}\\p{M}\\p{N}]+)*")
+    private val VI = Locale.forLanguageTag("vi")
+
+    /** Các từ của câu cho bước "Sửa cách đọc một từ" - đúng wordsOf của LineWishes.tsx: chữ, dấu, số, nối bằng nháy hay gạch; mỗi từ một lần không kể hoa thường. */
+    fun words(text: String): List<String> {
+        val seen = HashSet<String>()
+        return WORD.findAll(Normalizer.normalize(text, Normalizer.Form.NFC)).map { it.value }.filter { seen.add(it.lowercase(VI)) }.toList()
+    }
+
     fun people(cast: JSONObject, wishes: JSONObject): List<ScriptPerson> = buildList {
         val seen = HashSet<String>()
         for (key in listOf("characters", "extras", "carried")) {
@@ -88,6 +99,12 @@ class PlayerLineEditor(private val source: PlayerLineSource, private val scope: 
     var notice by mutableStateOf("")
         private set
     var step by mutableStateOf("menu")
+    /** Từ đang sửa cách đọc (bước "word"); rỗng: chưa chọn. */
+    var word by mutableStateOf("")
+        private set
+    /** Ô cách đọc một từ dùng đúng ô của Studio ("Cách đọc tên"), ghi qua cùng nơi với các sửa khác của câu. */
+    var readings by mutableStateOf<StudioReadingsState?>(null)
+        private set
     private var generation = 0
     private var session: StudioSession? = null
     private var refresh: (suspend () -> PlayerLineSnapshot)? = null
@@ -95,12 +112,15 @@ class PlayerLineEditor(private val source: PlayerLineSource, private val scope: 
         private set
     val line: ScriptLine? get() = snapshot?.script?.let { ScriptLogic.withHeld(it, decisions?.held?.decision) }?.lines?.singleOrNull()
     val enabled: Boolean get() = !loading && decisions != null && decisions?.busy != true && problem.isEmpty() && snapshot?.blocked.orEmpty().isEmpty() && session?.listenOnly != true && line?.editable == true
+    /** "Sửa cách đọc một từ" không cần câu được nhận ra (file ABook bản cũ vẫn sửa được) - như web (soát 0.4.173 B10). */
+    val wordsEnabled: Boolean get() = !loading && readings != null && problem.isEmpty() && session?.listenOnly != true && words.isNotEmpty()
+    val words: List<String> get() = selected?.paragraph?.text?.let(PlayerLineLogic::words).orEmpty()
 
     fun open(bookId: String, chapter: Int, paragraph: ReadParagraph) {
         close()
         selected = Selection(bookId, chapter, paragraph)
-        step = "menu"; problem = ""; notice = ""; snapshot = null
-        decisions = null; session = null; refresh = null
+        step = "menu"; word = ""; problem = ""; notice = ""; snapshot = null
+        decisions = null; session = null; refresh = null; readings = null
         scope.launch { reload() }
     }
 
@@ -118,6 +138,15 @@ class PlayerLineEditor(private val source: PlayerLineSource, private val scope: 
         })
         decisions = owner
         owner.persistImmediately = true
+        readings = StudioReadingsState(boundSession, selection.bookId)
+    }
+
+    fun openWords() { if (wordsEnabled) { word = ""; step = "word" } }
+
+    /** Chạm một từ: mở ô sửa cách đọc của từ ấy (chạm lại thì khép); hỏi ngay từ ấy chạm tới bao nhiêu câu. */
+    fun pickWord(picked: String) {
+        word = if (word == picked) "" else picked
+        if (word.isNotEmpty()) readings?.askReach(word)
     }
 
     suspend fun reload() {
@@ -167,5 +196,5 @@ class PlayerLineEditor(private val source: PlayerLineSource, private val scope: 
     }
 
     fun back() { if (step != "menu") step = "menu" else close() }
-    fun close() { ++generation; selected = null; decisions?.flush(); source.stopSample(); loading = false }
+    fun close() { ++generation; selected = null; decisions?.flush(); readings?.let { it.cancelTry(); it.decisions.flush() }; source.stopSample(); loading = false }
 }

@@ -12,13 +12,16 @@ Interactive {
     property string label: ""           // tên cho trình đọc màn hình
     property string placeholder: ""     // chữ mờ khi chưa chọn mục nào ("Chọn cuốn…")
     property bool inline: false
+    // Mục giá trị "" ("Tất cả" của ô lọc) nghĩa là chưa lọc: ô hiện placeholder (tên bộ lọc) như chip lọc của web / Android
+    property bool unsetShowsPlaceholder: false
     signal picked(var value)
     readonly property var choices: options || []  // người gọi chưa có dữ liệu (undefined) = danh sách rỗng
     readonly property int currentIndex: {
         for (let i = 0; i < choices.length; ++i) if (!choices[i].header && String(choices[i].value) === String(value)) return i
         return -1
     }
-    readonly property string currentLabel: currentIndex >= 0 ? String(choices[currentIndex].label ?? "") : ""
+    readonly property string currentLabel: currentIndex >= 0 && !(unsetShowsPlaceholder && String(value) === "")
+        ? String(choices[currentIndex].label ?? "") : ""
     Accessible.role: Accessible.ComboBox
     Accessible.name: label
     Accessible.description: currentLabel

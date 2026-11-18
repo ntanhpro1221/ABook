@@ -1801,7 +1801,12 @@ export function PlayerProvider({
       applySleep({ kind: "off" });
       return;
     }
-    if (native || !activityResets || refs.current.sleep.kind === "off") return;
+    if (native || refs.current.sleep.kind === "off") return;
+    // Tắt "Thao tác hẹn lại": thao tác thường không đặt lại đồng hồ, nhưng lúc đang nhỏ dần vẫn là "Hẹn lại" - như điện thoại lắc máy (soát 0.4.173 B9).
+    if (!activityResets) {
+      if (refs.current.fading) extendSleep();
+      return;
+    }
     endFade();
     refs.current.sleepMark = { at: now, seconds: engine.time };
     const current = refs.current.sleep;
@@ -1870,13 +1875,14 @@ export function PlayerProvider({
       automaticLastInput.current = requestedAt - osIdle!;
       toast(AUTO_SLEEP_SCHEDULE, {
         id: "automatic-sleep", duration: Infinity,
-        action: { label: AUTO_SLEEP_CONTINUE, onClick: extendSleep },
+        // "Nghe tiếp" lúc đang tạm dừng cũng phát tiếp - như máy tính và điện thoại (soát 0.4.173 B13a).
+        action: { label: AUTO_SLEEP_CONTINUE, onClick: () => { extendSleep(); if (engine.paused) resume(); } },
       });
     };
     void check();
     const timer = window.setInterval(() => void check(), 1000);
     return () => { live = false; window.clearInterval(timer); };
-  }, [applySleep, engine, extendSleep, native, night, options.schedule, playing, position, systemIdleReader, rememberSleep]);
+  }, [applySleep, engine, extendSleep, native, night, options.schedule, playing, position, resume, systemIdleReader, rememberSleep]);
 
   useEffect(() => {
     const onHide = () => {

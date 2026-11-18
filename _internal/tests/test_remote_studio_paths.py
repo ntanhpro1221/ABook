@@ -450,3 +450,21 @@ def test_a_remote_device_with_edit_rights_teaches_readings_and_skips_credit_line
     assert status == 200 and json.loads(data)["readings"] == [], "bỏ cách đọc"
     status, data, _ = _sync_request(port, "PUT", f"/api/books/{added['id']}/readings", headers=editor, body={"spoken": "x"})
     assert status == 400 and _leaks(data, private) == [], "thiếu từ: máy tính từ chối như ở chỗ mình"
+
+
+def test_every_book_media_route_of_the_computer_is_open_to_a_paired_listener() -> None:
+    """Each GET /media/books/<id>/... the computer serves (cover, volume cover, chapter audio, samples, portraits...) is part of
+    listening: a paired device that cannot fetch it shows a broken picture or silence (soát 0.4.173 B13g: bìa quyển)."""
+    from abook.webui import server
+
+    missing = []
+    for method, pattern, _handler in server.ROUTES:
+        if method != "GET" or not pattern.pattern.startswith(r"/media/books/"):
+            continue
+        sample = pattern.pattern.replace("([A-Za-z0-9_-]+)", "abc").replace(r"(\d+)", "2").replace("([0-9a-f]{32})", "b" * 32)
+        sample = sample.replace("([0-9a-f]{64})", "c" * 64).replace(r"\.", ".")
+        # "Nghe thử cách đọc" is a Studio edit (a device with production rights), not listening.
+        listening = "/reading-previews/" not in sample
+        if not remote_studio.permitted("GET", sample, producing=not listening):
+            missing.append(f"{pattern.pattern} (sample {sample})")
+    assert not missing, "add to remote_studio.LISTEN_ROUTES:\n" + "\n".join(missing)

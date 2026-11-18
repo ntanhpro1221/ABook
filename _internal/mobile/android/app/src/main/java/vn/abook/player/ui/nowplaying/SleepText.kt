@@ -44,9 +44,13 @@ object SleepText {
         S.s_tieng_nho_dan_39149d9b + options.fadeSeconds + S.s_giay_truoc_khi_dung_luc_do_bd65541f + GESTURE + S.s_de_hen_lai_tu_dau_78b355e2 +
             if (hadNight) S.s_sang_hom_sau_the_toi_qua_giup_tim_lai_doan_9c2d2ff0 else ""
 
-    /** Tắt tiếng chưa quá [RECENT_STOP_MS]: tấm Hẹn giờ mời bật lại. */
+    /** Tắt tiếng chưa quá [RECENT_STOP_MS]: tấm Hẹn giờ nói lúc tắt tiếng - kể cả khi lựa chọn còn giữ sau lần tự dừng (máy tính
+     *  Player::sleepStoppedText, web sleepStoppedRecently: soát 0.4.173 B8). */
     fun recentlyStopped(sleep: PlayerSleep, nowMs: Long): Boolean =
         !sleep.counting && sleep.stoppedAtMs > 0 && nowMs - sleep.stoppedAtMs in 0 until RECENT_STOP_MS
+
+    /** Nút "Bật lại N phút": chỉ khi hẹn giờ đã tắt hẳn (còn giữ lựa chọn thì phát tiếp là chạy lại đủ lượt). */
+    fun restartOffered(sleep: PlayerSleep, nowMs: Long): Boolean = sleep.kind == SleepKind.Off && recentlyStopped(sleep, nowMs)
 
     fun stoppedAt(stoppedAtMs: Long, zone: java.util.TimeZone = java.util.TimeZone.getDefault()): String {
         val at = Calendar.getInstance(zone).apply { timeInMillis = stoppedAtMs }
