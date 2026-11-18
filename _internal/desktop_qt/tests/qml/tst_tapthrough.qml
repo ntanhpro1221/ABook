@@ -156,6 +156,36 @@ Item {
         }
     }
 
+    // Soát 18-11 T2 (web): bảng nổi mở TRONG hộp thoại ("Phát trên" -> "Hẹn giờ" của loa). Dưới cả hai là một Interactive phủ khung.
+    Component {
+        id: modalPopFactory
+        Item {
+            id: sceneModal
+            width: 600; height: 400
+            property int below: 0
+            property int inside: 0
+            property alias modal: modal
+            property alias pop: pop
+            property alias pause: pause
+            Interactive { anchors.fill: parent; onClicked: sceneModal.below++ }
+            Modal {
+                id: modal
+                title: "Phát trên"
+                Row {
+                    width: modal.bodyWidth
+                    Interactive { id: pause; width: 120; height: 40; onClicked: sceneModal.inside++ }
+                    Item { width: modal.bodyWidth - 160; height: 40 }
+                    Rectangle { id: sleepAnchor; width: 40; height: 40 }
+                }
+                Popover {
+                    id: pop
+                    anchorItem: sleepAnchor
+                    Column { width: 160; Item { width: 160; height: 60 } }
+                }
+            }
+        }
+    }
+
     // Lăn chuột trên lớp: lớp che trang (Đang nghe, bảng, hộp thoại: holdsWheel) giữ cú lăn; thanh nổi nhỏ (thanh nghe thử) để trang dưới lăn tiếp.
     Component {
         id: wheelFactory
@@ -177,7 +207,17 @@ Item {
         name: "TapThrough"
         when: windowShown
 
-        function settle() { wait(Theme.motionMedium + 50) }
+        function settle() { waitForRendering(host) }
+        function selectPopup(select) {
+            const popup = select.data.filter(o => o && o.contentItem !== undefined && o.closePolicy !== undefined)[0]
+            verify(popup !== undefined)
+            return popup
+        }
+        function selectShown(select, shown) {
+            const popup = selectPopup(select)
+            tryCompare(popup, "shown", shown ? 1 : 0)
+            tryCompare(popup, "visible", shown)
+        }
 
         function test_barBodyOpensItsOwnTrack() {
             const scene = createTemporaryObject(sceneFactory, host)
@@ -271,7 +311,7 @@ Item {
             mouseMove(scene, 300, 40); tryCompare(scene.row, "hovered", true)
             mouseMove(scene, 300, gapY)
             tryCompare(scene.row, "hovered", false)
-            wait(700)       // quá 600 ms của chú thích
+            wait(700)       // fixed: proves absence - hover stays absent past the 600 ms tooltip delay
             compare(scene.row.hovered, false, "the row under the gap still shows hover")
             const deep = createTemporaryObject(deepFactory, host)
             mouseMove(deep, 10, 10); tryCompare(deep.under, "hovered", true)
@@ -284,18 +324,18 @@ Item {
         function test_selectRowKeepsItsTap() {
             const picker = createTemporaryObject(selectFactory, host)
             mouseClick(picker.select, 20, 18)
-            wait(Theme.motionFast + 150)
+            selectShown(picker.select, true)
             compare(picker.below, 0)
             const beta = 20 + 36 + 4 + 8 + 36 + 18
             mouseClick(host, 60, beta)
-            wait(Theme.motionFast + 150)
+            selectShown(picker.select, false)
             compare(picker.picked, ["b"])
             compare(picker.below, 0, "a pick in the drop-down list reached the item under it")
             // Phần đệm 8 px của bảng (trái các hàng) cũng không lọt
             mouseClick(picker.select, 20, 18)
-            wait(Theme.motionFast + 150)
+            selectShown(picker.select, true)
             mouseClick(host, 20 + 3, beta)
-            wait(Theme.motionFast + 150)
+            selectShown(picker.select, true)
             compare(picker.below, 0, "a tap on the list padding reached the item under it")
         }
 
@@ -306,24 +346,24 @@ Item {
             const beta = 20 + 36 + 4 + 8 + 36 + 18
             mouseMove(picker, 500, 300); tryCompare(picker.under, "hovered", true)
             mouseClick(picker.select, 20, 18)
-            wait(Theme.motionFast + 150)
+            selectShown(picker.select, true)
             mouseMove(picker, 520, 320)
             tryCompare(picker.under, "hovered", false)
             mouseClick(host, 500, 300)
-            wait(Theme.motionFast + 150)
+            selectShown(picker.select, false)
             compare(picker.below, 0, "a tap outside the drop-down list also hit the item under it")
             compare(picker.picked.length, 0)
             mouseClick(picker.select, 20, 18)
-            wait(Theme.motionFast + 150)
+            selectShown(picker.select, true)
             mouseClick(host, 500, 300, Qt.RightButton)
-            wait(Theme.motionFast + 150)
+            selectShown(picker.select, false)
             compare(picker.below, 0)
             mouseClick(picker.select, 20, 18)
-            wait(Theme.motionFast + 150)
+            selectShown(picker.select, true)
             mouseClick(host, 500, 300, Qt.BackButton)
             compare(picker.backs, 1, "the drop-down backdrop swallowed the mouse Back button")
             mouseClick(host, 500, 300)
-            wait(Theme.motionFast + 150)
+            selectShown(picker.select, false)
             compare(picker.below, 0)
             // Mọi lần trên đều đã đóng danh sách: giờ không còn nền, chỗ cũ của hàng "Beta" là dòng nằm dưới
             mouseClick(host, 60, beta)
@@ -335,7 +375,7 @@ Item {
         function test_outsideTapOnlyClosesThePopover() {
             const scenePop = createTemporaryObject(popoverFactory, host)
             scenePop.pop.show()
-            wait(Theme.motionFast + 150)
+            tryCompare(scenePop.pop, "shown", 1)
             verify(scenePop.button.holdsTap)
             mouseClick(scenePop.button, 20, 20)
             compare(scenePop.pressed, 1)
@@ -344,35 +384,59 @@ Item {
             mouseMove(host, 540, 340)
             mouseMove(host, 560, 360)
             tryCompare(scenePop.under, "hovered", false)
-            wait(700)
+            wait(700) // fixed: proves absence - hover stays absent past the tooltip delay
             compare(scenePop.under.hovered, false, "the item under the backdrop shows hover")
             mouseClick(host, 560, 360)
-            wait(Theme.motionFast + 150)
+            tryCompare(scenePop.pop, "shown", 0)
             compare(scenePop.pop.open, false, "a tap outside did not close the popover")
             compare(scenePop.below, 0, "a tap outside the popover also hit the item under it")
             // Chuột phải ra ngoài cũng chỉ đóng; nút Back đi tiếp tới tổ tiên (Main.qml lùi / đóng lớp)
             scenePop.pop.show()
-            wait(Theme.motionFast + 150)
+            tryCompare(scenePop.pop, "shown", 1)
             mouseClick(host, 560, 360, Qt.RightButton)
-            wait(Theme.motionFast + 150)
+            tryCompare(scenePop.pop, "shown", 0)
             compare(scenePop.pop.open, false)
             compare(scenePop.below, 0)
             scenePop.pop.show()
-            wait(Theme.motionFast + 150)
+            tryCompare(scenePop.pop, "shown", 1)
             mouseClick(host, 560, 360, Qt.BackButton)
             compare(scenePop.backs, 1, "the backdrop swallowed the mouse Back button")
             // Đã đóng: nền không còn chặn gì
             scenePop.pop.closeNow()
-            wait(Theme.motionFast + 150)
+            tryCompare(scenePop.pop, "shown", 0)
             mouseClick(host, 560, 360)
             compare(scenePop.below, 1)
+        }
+
+        // Soát 18-11 T2: bấm ra ngoài bảng nhưng trong hộp chỉ đóng bảng (lớp trên cùng); hộp còn mở, nút trong hộp không nhận cú bấm ấy.
+        function test_popoverInsideAModalClosesAlone() {
+            const scene = createTemporaryObject(modalPopFactory, host)
+            scene.modal.show()
+            tryCompare(scene.modal, "shown", 1)
+            const at = scene.pause.mapToItem(host, scene.pause.width / 2, scene.pause.height / 2)
+            for (const button of [Qt.LeftButton, Qt.RightButton]) {
+                scene.pop.show()
+                tryCompare(scene.pop, "shown", 1)
+                verify(scene.pop.open)
+                verify(scene.pop.z > scene.modal.z, "the nested popover is below its dialog")
+                mouseClick(host, at.x, at.y, button)
+                tryCompare(scene.pop, "shown", 0)
+                compare(scene.pop.open, false, "a tap outside the popover did not close it")
+                compare(scene.modal.open, true, "a tap outside the popover but inside the dialog closed the dialog too")
+                compare(scene.inside, 0, "the tap that closed the popover also pressed the button in the dialog")
+                compare(scene.below, 0)
+            }
+            // Bảng đã đóng: nút trong hộp bấm được như thường
+            mouseClick(host, at.x, at.y)
+            compare(scene.inside, 1)
+            compare(scene.modal.open, true)
         }
 
         // Soát 18-11: lăn trên bìa Đang nghe làm thư viện khuất cuộn đi. Lớp che trang giữ cú lăn; thanh nổi nhỏ thì không; Back vẫn đi tiếp.
         function test_wheelStopsAtCoveringLayers() {
             const wheelScene = createTemporaryObject(wheelFactory, host)
             mouseWheel(wheelScene.covering, 150, 100, 0, -240)
-            wait(400)
+            wait(400) // fixed: proves absence - a shielded wheel never starts scrolling the page below
             compare(wheelScene.flick.contentY, 0, "a wheel over a covering layer scrolled the page under it")
             mouseWheel(wheelScene.strip, 150, 30, 0, -240)
             tryVerify(() => wheelScene.flick.contentY > 0, 1000, "a wheel over a small floating strip must still scroll the page")

@@ -9,6 +9,16 @@ FocusScope {
     anchors.fill: parent
     readonly property Item scene: Window.contentItem
     property Item owner: null            // nơi khai báo (cha lúc dựng): ai sở hữu lớp này; dùng cho phép thử tìm lớp theo trang đã mở nó
+    readonly property bool windowLayer: true
+    property real baseZ: 50
+    // Reparenting must retain the declaration's stacking relationship. A menu
+    // opened inside a dialog belongs above that dialog, including its backdrop.
+    z: {
+        let above = baseZ
+        for (let node = owner; node; node = node.parent)
+            if (node.windowLayer === true) above = Math.max(above, node.z + 1)
+        return above
+    }
     onSceneChanged: reparent()
     Component.onCompleted: reparent()
     function reparent() {

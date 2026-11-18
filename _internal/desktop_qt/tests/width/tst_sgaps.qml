@@ -364,7 +364,9 @@ Item {
             keyClick(Qt.Key_Down)
             const popup = select.data.filter(o => o && o.contentItem !== undefined && o.closePolicy !== undefined)[0]
             verify(popup !== undefined)
-            const rows = popup.contentItem
+            // The floating list also contains its tap shield and padding.
+            const rows = popup.contentItem.children.filter(o => o && o.itemAtIndex !== undefined)[0]
+            verify(rows !== undefined)
             tryVerify(function() { return rows.visible && rows.count === 4 })
             compare(rows.currentIndex, 0)
             keyClick(Qt.Key_Down)
