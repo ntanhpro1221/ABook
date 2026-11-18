@@ -589,10 +589,10 @@ if(MSVC)
     target_compile_options(SkipGlyphTests PRIVATE /W3 /utf-8)
 endif()
 # Thanh bên thu gọn / mở rộng: QtQuickTest với Theme + Nav thật, Platform / Backend giả
-qt_add_executable(SidebarTests tests/test_sidebar.cpp src/keep.h)
+qt_add_executable(SidebarTests tests/test_sidebar.cpp tests/fakes.h src/keep.h src/later.h ${ABOOK_PLAYER_SOURCES})
 target_include_directories(SidebarTests PRIVATE src)
 target_compile_definitions(SidebarTests PRIVATE QUICK_TEST_SOURCE_DIR="${CMAKE_CURRENT_SOURCE_DIR}/tests/qml")
-target_link_libraries(SidebarTests PRIVATE Qt6::QuickTest Qt6::Quick)
+target_link_libraries(SidebarTests PRIVATE Qt6::QuickTest Qt6::Quick Qt6::QmlPrivate Qt6::Network)
 # Ở thư mục riêng: cạnh app thì Qt tìm thấy module ABook thật (trỏ vào qrc của app) trước bản dựng giả
 set_target_properties(SidebarTests PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/sidebar_tests")
 if(MSVC)

@@ -57,7 +57,7 @@ class ImportBackgroundTest {
         val total = 1_400L shl 20
         jobs.report("w1", Work(WorkStep.Check, total / 2, total))
         assertEquals(0.5f, queue.progress(row.id).value.fraction!!, 1e-6f)
-        assertEquals("Đang kiểm tra · 700 MB / 1,4 GB", ImportLogic.workLabel(queue.progress(row.id).value))
+        assertEquals("Đang kiểm tra · 700\u00a0MB / 1,4\u00a0GB", ImportLogic.workLabel(queue.progress(row.id).value))
         jobs.finish("w1", ImportOutcome("b1", "To", "new"))
         val done = queue.state.value.items.single()
         assertEquals(ImportStage.Added, done.stage)

@@ -25,10 +25,9 @@ data class LastSleep(val kind: String = MINUTES, val minutes: Int = 30, val chap
         const val MINUTES = "minutes"
         const val CHAPTER = "chapter"
 
-        /** Số nguyên trong miền của `spec` (JSON đưa vào Int / Long / Double nguyên); chuỗi, bool, số lẻ thì null. */
+        /** Số nguyên trong miền của `spec` (JSON đưa vào Int / Long / Double nguyên, hay BigDecimal như org.json thật đọc "45.0"); chuỗi, bool, số lẻ thì null. */
         private fun whole(value: Any?, spec: ValueSpec): Int? {
-            if (value !is Int && value !is Long && value !is Double && value !is Float) return null
-            val number = (value as Number).toDouble()
+            val number = (value as? Number)?.toDouble() ?: return null
             if (number.isNaN() || number != Math.floor(number) || number < spec.min || number > spec.max) return null
             return number.toInt()
         }

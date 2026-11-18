@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsEnabled
+import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onFirst
@@ -153,6 +154,8 @@ class BookTabsScreenTest {
         show(detail())
         open("book_tab_cast")
         rule.waitUntil(5_000) { rule.onAllNodesWithTag("person_more").fetchSemanticsNodes().isNotEmpty() }
+        // The book head and the narrator list come first: the first person row can start below the screen.
+        rule.onNodeWithTag("book_list").performScrollToNode(hasTestTag("person_more"))
         rule.onAllNodesWithTag("person_more").onFirst().performClick()
         rule.waitForIdle()
         rule.onNodeWithTag("person_rename").assertIsDisplayed()

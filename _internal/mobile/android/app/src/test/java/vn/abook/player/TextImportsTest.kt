@@ -345,8 +345,9 @@ class TextImportsTest {
         val staged = stageFolder("txt")
         assertEquals("txt", staged.name)
         val preview = TextImports.preview(staged.ref)
-        // The live Python importer resolves display names; the raw writer fixture keeps source titles.
-        assertEquals(listOf("Chương 1", "Sương sớm", "Chương hai", "9 Ngoại truyện", "Chương ba", "Chương 6"), titles(preview))
+        // The live Python importer resolves display names; the raw writer fixture keeps source titles. A lone guessed first line
+        // ("Sương sớm") gives way to its number, as in the shared chapter_titles rules and tests/fixtures/text_books/cases.json.
+        assertEquals(listOf("Chương 1", "Chương 2", "Chương hai", "9 Ngoại truyện", "Chương ba", "Chương 6"), titles(preview))
         val source = sharedPreview("txt").getJSONArray("chapters")
         val actual = preview.getJSONArray("chapters")
         assertEquals(source.length(), actual.length())

@@ -21,6 +21,7 @@ import androidx.work.WorkManager
 import androidx.work.Worker
 import androidx.work.WorkerParameters
 import vn.abook.player.ui.addbook.ImportLogic
+import vn.abook.player.ui.data.dotJoined
 import java.io.File
 
 /**
@@ -178,7 +179,7 @@ object BookImportNotes {
     private fun progress(context: Context, job: ImportJob, work: Work) = NotificationCompat.Builder(context, CHANNEL)
         .setSmallIcon(R.drawable.ic_notification)
         .setContentTitle(S.s_import_running_title)
-        .setContentText(listOf(job.name, ImportLogic.workLabel(work)).filter { it.isNotBlank() }.joinToString(" · "))
+        .setContentText(listOf(job.name, ImportLogic.workLabel(work)).dotJoined())
         .apply { val fraction = work.fraction; if (fraction != null) setProgress(1000, (fraction * 1000).toInt(), false) else setProgress(0, 0, true) }
         .setOngoing(true)
         .setOnlyAlertOnce(true)
@@ -212,13 +213,13 @@ object BookImportNotes {
         val book = job.bookId
         when {
             job.state == ImportJobState.Failed -> {
-                val text = listOf(job.name, job.problem).filter { it.isNotBlank() }.joinToString(" · ")
+                val text = listOf(job.name, job.problem).dotJoined()
                 builder.setContentTitle(S.s_chua_them_duoc_sach_b327e086).setContentText(text).setStyle(NotificationCompat.BigTextStyle().bigText(text))
                     .setContentIntent(activity(context, BookImports.ACTION_SHOW_IMPORTS, resultId(job.source)))
                     .addAction(0, S.s_thu_lai_c58d068c, again(context, job, job.allowOlder))
             }
             job.needsChoice -> {
-                val text = listOf(job.title, S.s_chinh_sua_va_cho_nghe_cua_ban_van_duoc_giu_287783a6).filter { it.isNotBlank() }.joinToString(" · ")
+                val text = listOf(job.title, S.s_chinh_sua_va_cho_nghe_cua_ban_van_duoc_giu_287783a6).dotJoined()
                 builder.setContentTitle(S.s_file_nay_co_ban_thu_khac_6036a451).setContentText(text).setStyle(NotificationCompat.BigTextStyle().bigText(text))
                     .apply { if (book != null) setContentIntent(activity(context, BookImports.ACTION_OPEN_BOOK, resultId(job.source), book)) }
                     .addAction(0, S.s_thay_bang_file_nay_3140e07e, again(context, job, allowOlder = true))

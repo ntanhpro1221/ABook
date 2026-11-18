@@ -28,6 +28,8 @@ import org.robolectric.annotation.GraphicsMode
 import org.robolectric.shadows.ShadowContentResolver
 import org.robolectric.shadows.ShadowToast
 import vn.abook.player.AbookApplication
+import vn.abook.player.BookImports
+import org.junit.Before
 import vn.abook.player.IncomingFile
 import java.io.File
 import vn.abook.player.TestTime
@@ -39,6 +41,11 @@ import vn.abook.player.TestTime
 class NativeIncomingFileTest {
     @get:Rule val rule = createEmptyComposeRule()
     private val app get() = ApplicationProvider.getApplicationContext<AbookApplication>()
+
+    /** BookImports.jobs is process-wide: a book import left running by the previous case would show here as a background row. */
+    @Before fun noImportFromThePreviousCase() {
+        BookImports.jobs.jobs.value.values.filter { it.state == vn.abook.player.ImportJobState.Running }.forEach { BookImports.jobs.fail(it.id, "") }
+    }
 
     /** Nơi gửi: tên + kiểu nội dung theo đường dẫn của địa chỉ; nội dung là byte vô nghĩa (cuộc thử không đọc sách thật). */
     class Sender : ContentProvider() {

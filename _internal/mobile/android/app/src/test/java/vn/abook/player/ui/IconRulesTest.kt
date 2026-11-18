@@ -38,6 +38,7 @@ class IconRulesTest {
         "music/MusicPanel.kt" to "icon 16 trong nút chữ như nút ghost size-4 của web (Đổi bài, Chọn)",
         "screens/BookTabs.kt" to "icon 14 trong chip hồ sơ / nút nghe thử / dòng giọng (size-3.5 của web), icon 28 của ghi chú trống (size-7)",
         "screens/BookScreen.kt" to "icon 28 của trang \"Không thấy sách\" (như ghi chú trống)",
+        "components/EmptyState.kt" to "icon 28 trong ô 56 dp của trạng thái cả màn dùng chung (như size-7 của web)",
         "music/library/MusicScreen.kt" to "Kho nhạc: icon 16 trong chip lọc (dấu tích, mũi tên), 18 trong nút nghe thử tròn 40 dp và dấu trạng thái tải cuối dòng, X trong ô tìm (như LibraryChrome)",
     )
 
