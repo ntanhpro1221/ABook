@@ -47,7 +47,10 @@ it("scrolling text is announced once and cancels its animation when width grows"
     room = 1000;
     await act(async () => resized());
     expect(view.el.dataset.fit).toBe("one");
-    expect(view.el.querySelector('[aria-hidden]')).toBeNull();
+    // Bản chép mờ đi qua Presence (đóng, inert, đã rời cây trợ năng) thay vì biến mất cứng
+    const twin = view.el.querySelector<HTMLElement>('[aria-hidden]');
+    expect(twin?.dataset.state).toBe("closed");
+    expect(twin?.hasAttribute("inert")).toBe(true);
     expect(cancel).toHaveBeenCalled();
   } finally { await view.close(); }
 });
