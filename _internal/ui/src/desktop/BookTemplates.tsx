@@ -99,7 +99,8 @@ export function BookTemplates() {
                 <>
                   <div className="min-w-0 flex-1">
                     <OneLineFit className="text-sm font-medium">{template.name}</OneLineFit>
-                    <div className="truncate text-body-small text-fg-2">
+                    {/* Dòng có tên giọng kể (tên): xuống dòng chứ không cắt (leftfix). */}
+                    <div className="break-words text-body-small text-fg-2">
                       {[template.narrator || S.s_giong_may_de_xuat_35389626, PROFILE_LABEL[template.profile], template.startNow ? S.s_bat_dau_ngay_83137873 : S.s_cho_bam_bat_dau_5d760870, ...(template.precastWait ? [S.s_cho_ban_duyet_truoc_khi_thu_35299b41] : [])].join(" · ")}
                     </div>
                   </div>

@@ -1,0 +1,3 @@
+/* Trang đo dựng với root = thư mục này: Tailwind chỉ tự quét thư mục gốc, nên chỉ rõ nguồn lớp là cả src/. */
+@import "../../styles.css";
+@source "../..";

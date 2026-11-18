@@ -242,7 +242,8 @@ function RemoteBar({ phone, receivedAt, onDismiss }: { phone: RemotePhone; recei
               <ShortName name={phone.name} short={13} className="shrink" />
               {protocolLabel(phone) && <span className="hidden shrink-0 font-normal text-fg-3 lg:inline"> · {protocolLabel(phone)}</span>}
             </div>
-            <div className="truncate text-sm">
+            {/* Tên chương · tên sách: chữ sách, xuống dòng chứ không cắt (luật chủ sách; Qt / Android cũng xuống dòng). */}
+            <div className="min-w-0 break-words text-sm">
               <span className="font-medium">{phone.chapterTitle}</span>
               <span className="text-fg-2"> · {phone.bookTitle}</span>
             </div>

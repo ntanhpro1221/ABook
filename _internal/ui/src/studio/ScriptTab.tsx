@@ -796,7 +796,7 @@ function DeliveryChip({
 
 /** Tấm trượt trên điện thoại che mất đúng câu vừa chạm (soát UX 30-09) - trích lại câu ấy ở đầu tấm. */
 export function LineQuote({ line }: { line: Line }) {
-  return <p className="mx-2 mt-2 line-clamp-3 py-2 text-sm leading-snug text-fg-2">{line.text}</p>;
+  return <p className="mx-2 mt-2 break-words py-2 text-sm leading-snug text-fg-2">{line.text}</p>;
 }
 
 /** `phone`: trong tấm trượt - ô tìm không tự bật bàn phím (bàn phím che danh sách người của chương, lối chọn chính).
@@ -1568,10 +1568,10 @@ function ChapterMenu({ chapters, chapterId, narrow, onPick }: { chapters: Chapte
           type="button"
           id="script-chapter"
           aria-label={S.s_chuong_2d157977}
-          className="-ml-3 inline-flex h-9 min-w-0 flex-1 items-center gap-2 rounded-control px-3 text-sm font-medium transition-colors duration-motion-fast hover:bg-hover data-[state=open]:bg-hover sm:max-w-[26rem] sm:flex-initial"
+          className={cn("-ml-3 inline-flex min-h-9 min-w-0 flex-1 items-center gap-2 rounded-control px-3 py-1 text-sm font-medium transition-colors duration-motion-fast hover:bg-hover data-[state=open]:bg-hover sm:max-w-[26rem] sm:flex-initial", FIRST_LINE_ROW)}
         >
           <OneLineFit className="text-left">{current ? chapterLabel(current) : ""}</OneLineFit>
-          <ChevronDown className="fold-chevron ink-end [--icon-w:14px] size-4 shrink-0 text-fg-3" aria-hidden />
+          <ChevronDown className={cn("fold-chevron ink-end [--icon-w:14px] size-4 shrink-0 text-fg-3", FIRST_LINE_ICON)} aria-hidden />
         </button>
       </DropdownMenu.Trigger>
       <DropdownMenu.Portal>
@@ -1587,10 +1587,10 @@ function ChapterMenu({ chapters, chapterId, narrow, onPick }: { chapters: Chapte
               <DropdownMenu.RadioItem
                 key={chapter.chapterId}
                 value={String(chapter.chapterId)}
-                className="flex min-h-9 cursor-default items-center gap-2 rounded-control px-2 py-2 text-sm outline-none data-[highlighted]:bg-hover data-[state=checked]:text-accent-text"
+                className={cn("flex min-h-9 cursor-default items-center gap-2 rounded-control px-2 py-2 text-sm outline-none data-[highlighted]:bg-hover data-[state=checked]:text-accent-text", FIRST_LINE_ROW)}
               >
                 {/* Dấu chọn chung: luôn giữ chỗ, mờ vào / ra (ItemIndicator gắn / gỡ cứng). */}
-                <SelectionMark selected={chapter.chapterId === chapterId} />
+                <SelectionMark selected={chapter.chapterId === chapterId} className={FIRST_LINE_ICON} />
                 <OneLineFit className="flex-1">{chapterLabel(chapter)}</OneLineFit>
                 <Reveal when={!narrow}><span className="shrink-0 text-xs text-fg-2">{chapterExtras(chapter)}</span></Reveal>
               </DropdownMenu.RadioItem>

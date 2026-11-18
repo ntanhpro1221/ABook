@@ -73,7 +73,7 @@ export function PreviewBar({ preview }: { preview: LibraryPreview }) {
     <MotionPresence open={playing !== null} className="sticky bottom-3 z-10 mt-4">
       <div role="status" className="mx-auto flex max-w-[560px] items-center gap-3 rounded-cover border border-line bg-panel px-4 py-2 shadow-float">
         <Music2 aria-hidden className="size-4 shrink-0 text-accent-text" />
-        <p className="min-w-0 flex-1 truncate text-sm">
+        <p className="line-clamp-2 min-w-0 flex-1 break-words text-sm">
           <span className="text-fg-2">{preview.loading ? S.s_buffering : preview.paused ? S.s_music_paused : S.s_dang_nghe_thu_f1fb4cba}</span>
           {playing?.title ? <span className="font-medium"> · {playing.title}</span> : null}
         </p>

@@ -193,7 +193,7 @@ export function MorningRecap({ className }: { className?: string }) {
                     {marker.chapterTitle}
                     <span className="whitespace-nowrap">{` · ${formatClock(marker.seconds)}`}</span>
                   </span>
-                  {<Presence>{sentence && <span className="mt-2 line-clamp-2 block text-sm italic leading-snug text-fg">“{unquoted(sentence)}”</span>}</Presence>}
+                  {<Presence>{sentence && <span className="mt-2 block break-words text-sm italic leading-snug text-fg">“{unquoted(sentence)}”</span>}</Presence>}
                 </span>
               </button>
             </li>

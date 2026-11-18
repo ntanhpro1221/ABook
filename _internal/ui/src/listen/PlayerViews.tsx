@@ -1297,7 +1297,7 @@ function MusicCreditLine() {
         onClick={() => (catalogLink ? setSheet(catalogLink) : setOpen((value) => !value))}
         title={musicCreditText(musicCredit) || label}
         className="inline-flex max-w-full items-center gap-2 rounded-control outline-none focus-visible:ring-2 focus-visible:ring-focus"
-      ><Presence>{catalogLink && <PlayingMusicArt link={catalogLink} />}</Presence><span className="truncate">{S.s_nhac_nen_198fce26}{label}</span>
+      ><Presence>{catalogLink && <PlayingMusicArt link={catalogLink} />}</Presence><span className="line-clamp-2 break-words text-left">{S.s_nhac_nen_198fce26}{label}</span>
       </button>
       <Collapse open={open} className="mx-auto mt-1 max-w-sm break-words text-left">
           <p>{musicCreditText(musicCredit)}</p>
@@ -1351,14 +1351,14 @@ function TrackSubtitle({ look }: { look: "bar" | "screen" | "reading" }) {
       {purpose === "review" && (
         <span className="mr-2 inline-block rounded-control bg-info-soft px-2 text-xs font-medium text-info">{S.s_nghe_kiem_f9c474bb}</span>
       )}
-      {preparing ? <span className={look === "bar" ? "block truncate" : undefined}>{PREPARING_VOICE}</span> : atEnd === "caughtUp" ? <span className={look === "bar" ? "block truncate" : undefined}>{S.s_da_nghe_het_phan_da_co_1aa0a8e0}</span> : (
+      {preparing ? <span className={look === "bar" ? "block break-words" : undefined}>{PREPARING_VOICE}</span> : atEnd === "caughtUp" ? <span className={look === "bar" ? "block break-words" : undefined}>{S.s_da_nghe_het_phan_da_co_1aa0a8e0}</span> : (
         <button
           type="button"
           data-track-book
           onClick={openBook}
           aria-label={S.s_mo_trang_sach_3f7bd955}
           title={track.bookTitle}
-          className={cn("touch-hit pointer-events-auto relative z-[1] rounded-control text-left underline-offset-2 hover:text-fg hover:underline", look === "screen" && "inline-block max-w-full break-words", look === "bar" && "inline-block max-w-full truncate align-top")}
+          className={cn("touch-hit pointer-events-auto relative z-[1] rounded-control text-left underline-offset-2 hover:text-fg hover:underline", look === "screen" && "inline-block max-w-full break-words", look === "bar" && "inline-block max-w-full break-words align-top")}
         >
           {track.bookTitle}{look === "screen" && <span aria-hidden>{"\u00a0›"}</span>}
         </button>
@@ -1618,8 +1618,8 @@ export function PlayerBar({
         )}
         <FadingNotice className="mx-3 mt-2" />
         <PlayerAlert className="mx-3 mt-2" compact />
-        <div className="flex h-16 items-center gap-3 px-3">
-          {/* title: tên chương / sách bị cắt S.s_copy_e825d35cde60 khi phóng chữ hay cửa sổ hẹp - rê chuột đọc được đủ (soát a31 Z1).
+        <div className="flex min-h-16 items-center gap-3 px-3 py-2">
+          {/* Tên chương / sách là chữ sách: xuống dòng, hàng cao thêm (min-h-16) - như Qt MiniPlayer và Android MiniPlayer (leftfix T4); title giữ cho rê chuột.
               Nút mở Đang nghe phủ cả vùng (nút không chứa được nút); tên sách là nút riêng nằm trên nó, tới trang sách. */}
           <div className="relative flex min-w-0 flex-1 items-center gap-3 text-left">
             <button
@@ -1632,7 +1632,7 @@ export function PlayerBar({
             <div className="pointer-events-none flex min-w-0 flex-1 items-center gap-3">
               <BookCover title={track.bookTitle} image={track.bookCover} size="sm" label={false} morph="cover" className="size-11" />
               <div className="min-w-0">
-                <MotionRegion motionKey={[track.bookId, track.chapterId, track.chapterTitle]} data-np="chapter" className="truncate text-sm font-medium">{track.chapterTitle}</MotionRegion>
+                <MotionRegion motionKey={[track.bookId, track.chapterId, track.chapterTitle]} data-np="chapter" className="break-words text-sm font-medium">{track.chapterTitle}</MotionRegion>
                 <div data-np="book" className="text-xs text-fg-2">
                   <TrackSubtitle look="bar" />
                 </div>
@@ -1684,7 +1684,7 @@ export function PlayerBar({
           <div className="pointer-events-none flex min-w-0 items-center gap-3">
             <BookCover title={track.bookTitle} image={track.bookCover} size="sm" label={false} morph="cover" className="size-12" />
             <div className="min-w-0">
-              <MotionRegion motionKey={[track.bookId, track.chapterId, track.chapterTitle]} data-np="chapter" className="truncate text-sm font-medium">{track.chapterTitle}</MotionRegion>
+              <MotionRegion motionKey={[track.bookId, track.chapterId, track.chapterTitle]} data-np="chapter" className="break-words text-sm font-medium">{track.chapterTitle}</MotionRegion>
               <div data-np="book" className="text-xs text-fg-2">
                 <TrackSubtitle look="bar" />
               </div>
@@ -1859,7 +1859,8 @@ const PanelChapterRow = memo(function PanelChapterRow({ chapter, current, playin
           {chapter.subtitle || chapter.title}
         </span>
         {/* Dòng phụ đổi khi chương thu xong (S.s_copy_7e63dd84fb6c -> độ dài) hay đổi giọng: mờ chéo, không thay chữ cứng. */}
-        <MotionRegion as="span" className="block truncate text-xs text-fg-2">
+        {/* Dòng phụ mang tên chương khi chương có phụ đề (chapterSubline): chữ sách, xuống dòng chứ không cắt (leftfix). */}
+        <MotionRegion as="span" className="block break-words text-xs text-fg-2">
           {chapterSubline(chapter, producing)}
         </MotionRegion>
       </span>

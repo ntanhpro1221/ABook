@@ -555,11 +555,11 @@ export function SourceStep({
                       type="button"
                       title={isSourceRef(folder) ? sourceName(folder) : folder}
                       onClick={() => onPaths([folder])}
-                      className="flex min-h-10 w-full items-center gap-2 truncate py-2 text-left text-accent-text hover:bg-hover"
+                      className="flex min-h-10 w-full flex-wrap items-baseline gap-x-2 py-2 text-left text-accent-text hover:bg-hover"
                     >
-                      <Folder className="size-4 shrink-0 text-fg-2" />
+                      <Folder className="size-4 shrink-0 self-start mt-line-icon text-fg-2" />
                       {/* Tên thư mục đứng trước: hai thư mục "Tập 1", "Tập 2" cùng một đường dẫn dài thì đuôi bị cắt nhìn y hệt nhau. */}
-                      <span className="shrink-0 font-medium">{sourceName(folder)}</span>
+                      <span className="min-w-0 break-words font-medium">{sourceName(folder)}</span>
                       {/* Tham chiếu của máy tính (Studio từ xa) không phải thứ để đọc: chỉ có tên. */}
                       <Reveal when={!isSourceRef(folder)}><span className="min-w-0 text-xs text-fg-3 [overflow-wrap:anywhere]">{folder}</span></Reveal>
                     </button>
