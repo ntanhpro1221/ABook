@@ -1,10 +1,30 @@
 {
- "note": "Chữ mọi nền phải hiện cho cast.json cạnh đây (tests/test_cast_contract_fixture.py). Khoảng trắng không ngắt so như dấu cách.",
+ "note": "Every client compares these raw strings, including NBSP between numbers and units and around the separator.",
  "narratorHeading": "Người kể chuyện",
- "narratorSummary": "2 giọng",
+ "narratorSummary": "2 giọng",
  "narratorRows": [
-  {"voice": "Phạm Tuyên", "preset": "Phạm Tuyên", "scope": "Toàn sách trừ chương 2", "line": "3 câu dẫn truyện · 1 giờ 15 phút"},
-  {"voice": "Ngọc Linh", "preset": "Ngọc Linh", "scope": "Chương 2", "line": "2 câu dẫn truyện · 50 phút"}
+  {
+   "voice": "Phạm Tuyên",
+   "preset": "Phạm Tuyên",
+   "scope": "Toàn sách trừ chương 2",
+   "line": "3 câu dẫn truyện · 1 giờ 15 phút"
+  },
+  {
+   "voice": "Ngọc Linh",
+   "preset": "Ngọc Linh",
+   "scope": "Chương 2",
+   "line": "2 câu dẫn truyện · 50 phút"
+  }
  ],
- "genders": {"Soren": "Nam", "Velia": "Chưa rõ", "Bé Tí": "Trẻ em", "Dân Làng": "Nhóm"}
+ "genders": {
+  "Soren": "Nam",
+  "Velia": "Chưa rõ",
+  "Bé Tí": "Trẻ em",
+  "Dân Làng": "Nhóm"
+ },
+ "error": {
+  "key": "cast_invalid",
+  "title": "Không đọc được",
+  "description": "Dàn nhân vật không đúng định dạng. Hãy xin lại file từ người làm sách."
+ }
 }

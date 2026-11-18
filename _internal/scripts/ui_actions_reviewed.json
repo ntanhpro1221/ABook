@@ -1119,73 +1119,73 @@
     "id": "0eb6ef1238f0213bb9f6",
     "kind": "destructive",
     "path": "ui/src/listen/BookScreen.tsx",
-    "line": 786,
+    "line": 809,
     "statement": "if (dialog.kind === \"delete\") switchTo(() => mutations.removeRecord.mutateAsync(active.id), S.s_da_xoa_ho_so_0_54dabd55(active.name));",
     "occurrence": 1,
-    "source_sha256": "87a271334ff9418c5884fff131ae7e566de111ef9597077089574c2ce859c175",
+    "source_sha256": "0b0faa116ef7288d458636be02237963cb6a06d5bed17cb55736a4f5eba2d1d7",
     "disposition": "confirmation",
     "guard": "BookRecords ConfirmPage / BookScreen record Dialog / RecordDialogs Modal / DeleteBookPage",
-    "reason": "Deleting a listening profile explicitly describes loss of progress and history. Deleting a book uses the book confirmation. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
+    "reason": "Cast validation and book/cast error boundaries only change rendering. Inspected record deletion confirmation, playback jump/return, and save/share pending guards; their mutations and listeners are unchanged."
   },
   {
     "id": "9afb04bc8bcc92ca4b0c",
     "kind": "pending",
     "path": "ui/src/listen/BookScreen.tsx",
-    "line": 1087,
+    "line": 1110,
     "statement": "const restart = async () => {",
     "occurrence": 1,
-    "source_sha256": "87a271334ff9418c5884fff131ae7e566de111ef9597077089574c2ce859c175",
+    "source_sha256": "0b0faa116ef7288d458636be02237963cb6a06d5bed17cb55736a4f5eba2d1d7",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; LoadingCrossfade, Progress, busy, isLoading, loading, pending, pendingVoice, preparingBookId, progress, progressFill",
-    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
+    "reason": "Cast validation and book/cast error boundaries only change rendering. Inspected record deletion confirmation, playback jump/return, and save/share pending guards; their mutations and listeners are unchanged."
   },
   {
     "id": "0cff7a6337a7b77585a3",
     "kind": "pending",
     "path": "ui/src/listen/BookScreen.tsx",
-    "line": 1102,
+    "line": 1125,
     "statement": "action: { label: S.s_quay_lai_cho_cu_fea69b14, onClick: () => void playBook(book, before.chapter.id, before.at) },",
     "occurrence": 1,
-    "source_sha256": "87a271334ff9418c5884fff131ae7e566de111ef9597077089574c2ce859c175",
+    "source_sha256": "0b0faa116ef7288d458636be02237963cb6a06d5bed17cb55736a4f5eba2d1d7",
     "disposition": "internal",
     "guard": "Async interface/helper boundary; concrete activation inventoried separately",
-    "reason": "This signature supplies work to a model or component; declaring it starts no user operation. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
+    "reason": "Cast validation and book/cast error boundaries only change rendering. Inspected record deletion confirmation, playback jump/return, and save/share pending guards; their mutations and listeners are unchanged."
   },
   {
     "id": "066bfd62238e7b1506cd",
     "kind": "pending",
     "path": "ui/src/listen/BookScreen.tsx",
-    "line": 1108,
+    "line": 1131,
     "statement": "const listenNow = async () => {",
     "occurrence": 1,
-    "source_sha256": "87a271334ff9418c5884fff131ae7e566de111ef9597077089574c2ce859c175",
+    "source_sha256": "0b0faa116ef7288d458636be02237963cb6a06d5bed17cb55736a4f5eba2d1d7",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; LoadingCrossfade, Progress, busy, isLoading, loading, pending, pendingVoice, preparingBookId, progress, progressFill",
-    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
+    "reason": "Cast validation and book/cast error boundaries only change rendering. Inspected record deletion confirmation, playback jump/return, and save/share pending guards; their mutations and listeners are unchanged."
   },
   {
     "id": "1d74793870f93603ba4e",
     "kind": "pending",
     "path": "ui/src/listen/BookScreen.tsx",
-    "line": 1254,
+    "line": 1277,
     "statement": "onSelect={() => void saver.save()}",
     "occurrence": 1,
-    "source_sha256": "87a271334ff9418c5884fff131ae7e566de111ef9597077089574c2ce859c175",
+    "source_sha256": "0b0faa116ef7288d458636be02237963cb6a06d5bed17cb55736a4f5eba2d1d7",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; LoadingCrossfade, Progress, busy, isLoading, loading, pending, pendingVoice, preparingBookId, progress, progressFill",
-    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
+    "reason": "Cast validation and book/cast error boundaries only change rendering. Inspected record deletion confirmation, playback jump/return, and save/share pending guards; their mutations and listeners are unchanged."
   },
   {
     "id": "1d071d9ad59632b02e8b",
     "kind": "pending",
     "path": "ui/src/listen/BookScreen.tsx",
-    "line": 1263,
+    "line": 1286,
     "statement": "onSelect={() => void sharer.share()}",
     "occurrence": 1,
-    "source_sha256": "87a271334ff9418c5884fff131ae7e566de111ef9597077089574c2ce859c175",
+    "source_sha256": "0b0faa116ef7288d458636be02237963cb6a06d5bed17cb55736a4f5eba2d1d7",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; LoadingCrossfade, Progress, busy, isLoading, loading, pending, pendingVoice, preparingBookId, progress, progressFill",
-    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
+    "reason": "Cast validation and book/cast error boundaries only change rendering. Inspected record deletion confirmation, playback jump/return, and save/share pending guards; their mutations and listeners are unchanged."
   },
   {
     "id": "d2780dded4db9ad89245",
@@ -11511,25 +11511,25 @@
     "id": "6bb55eb4d55cf32641ce",
     "kind": "pending",
     "path": "mobile/android/app/src/main/java/vn/abook/player/ui/screens/BookTabs.kt",
-    "line": 284,
+    "line": 285,
     "statement": "suspend fun avatar(person: CastMember): ByteArray? = person.avatar?.file?.let { source.avatarBytes(bookId, it) }",
     "occurrence": 1,
-    "source_sha256": "93ed9fbda3eac725a83577c99d96c3435944a90b5608b19b68ebbed48edf9743",
+    "source_sha256": "0ccbfe1476e0a2cbd8749279947eed6915c51c5fa7bd4773a90bb2ac35fb7ff2",
     "disposition": "internal",
     "guard": "suspend service boundary; awaited by existing export/cast UI state owner",
-    "reason": "Volume export and portrait source methods are awaited service adapters. ExportState/StudioCastState retain progress and errors; byte reads use the existing IO boundary."
+    "reason": "Cast parse rejection and shared error presentation do not change existing actions or their pending owners."
   },
   {
     "id": "68e91ce63dcab41321cb",
     "kind": "pending",
     "path": "mobile/android/app/src/main/java/vn/abook/player/ui/screens/BookTabs.kt",
-    "line": 296,
+    "line": 297,
     "statement": "scope.launch {",
     "occurrence": 1,
-    "source_sha256": "93ed9fbda3eac725a83577c99d96c3435944a90b5608b19b68ebbed48edf9743",
+    "source_sha256": "0ccbfe1476e0a2cbd8749279947eed6915c51c5fa7bd4773a90bb2ac35fb7ff2",
     "disposition": "internal",
     "guard": "Animation/frame clock or test harness lifecycle",
-    "reason": "The coroutine advances presentation or test fixtures, not a user-triggered network/file operation. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
+    "reason": "Cast parse rejection and shared error presentation do not change existing actions or their pending owners."
   },
   {
     "id": "a64361490e5fb37eb655",
@@ -11727,13 +11727,13 @@
     "id": "67d912cd49551cf976e7",
     "kind": "pending",
     "path": "mobile/android/app/src/main/java/vn/abook/player/ui/studio/CastTab.kt",
-    "line": 196,
+    "line": 220,
     "statement": "choices == null -> InlineProblem(sheet.problem, { scope.launch { sheet.load() } }, \"studio_voice_problem\")",
     "occurrence": 1,
-    "source_sha256": "85aa768f9701fd02d89719eb471f3ddbaf65c41a67f1710745333c445a4ad989",
+    "source_sha256": "168d8e46f82f80a12de26435ee0efe466eccccfd531d25feca3fddf58641ed12",
     "disposition": "pending",
     "guard": "ViewModel/operation fields: cast_loading, loading, pending, pendingVoice, studio_cast_loading, studio_voice_loading, studio_voice_pending, voicePending; Components pending indicator",
-    "reason": "The model retains the operation and locks repeats; UI uses the shared pending parameter, loading content or progress owner. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
+    "reason": "Narrator row retains the change-voice chevron and shared error copy; retry reloads read-only voice choices under the existing loading state."
   },
   {
     "id": "7a6e23a17c09eab629a3",
@@ -11766,10 +11766,10 @@
     "line": 45,
     "statement": "session.scope.launch {",
     "occurrence": 1,
-    "source_sha256": "efbf1d7e4399050165a5d78195eb3301a491bf5345b33cba2f521e5c13c92dde",
+    "source_sha256": "2fa04156ac58b8bc731459121a3b3f76a8bf7be8b6f4f7762463ec26e3040b6c",
     "disposition": "pending",
     "guard": "ViewModel/operation fields: loading, pending, poller; Components pending indicator",
-    "reason": "The model retains the operation and locks repeats; UI uses the shared pending parameter, loading content or progress owner. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
+    "reason": "Inspected cast polling, operation-id undo, avatar reads/changes, voice loading and preview. Shared session scope owns cancellation; existing state and StudioErrors report failures and keep the current cast."
   },
   {
     "id": "c293b60b57b3e9adb4b2",
@@ -11778,10 +11778,10 @@
     "line": 62,
     "statement": "suspend fun run() = poller.run()",
     "occurrence": 1,
-    "source_sha256": "efbf1d7e4399050165a5d78195eb3301a491bf5345b33cba2f521e5c13c92dde",
+    "source_sha256": "2fa04156ac58b8bc731459121a3b3f76a8bf7be8b6f4f7762463ec26e3040b6c",
     "disposition": "internal",
     "guard": "Async interface/helper boundary; concrete activation inventoried separately",
-    "reason": "This signature supplies work to a model or component; declaring it starts no user operation. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
+    "reason": "Inspected cast polling, operation-id undo, avatar reads/changes, voice loading and preview. Shared session scope owns cancellation; existing state and StudioErrors report failures and keep the current cast."
   },
   {
     "id": "f1885b5400455cd0dc88",
@@ -11790,10 +11790,10 @@
     "line": 64,
     "statement": "suspend fun refresh() = poller.refresh()",
     "occurrence": 1,
-    "source_sha256": "efbf1d7e4399050165a5d78195eb3301a491bf5345b33cba2f521e5c13c92dde",
+    "source_sha256": "2fa04156ac58b8bc731459121a3b3f76a8bf7be8b6f4f7762463ec26e3040b6c",
     "disposition": "internal",
     "guard": "Async interface/helper boundary; concrete activation inventoried separately",
-    "reason": "This signature supplies work to a model or component; declaring it starts no user operation. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
+    "reason": "Inspected cast polling, operation-id undo, avatar reads/changes, voice loading and preview. Shared session scope owns cancellation; existing state and StudioErrors report failures and keep the current cast."
   },
   {
     "id": "c5186c571b4a1d2c6426",
@@ -11802,70 +11802,70 @@
     "line": 67,
     "statement": "session.scope.launch { poller.refresh() }",
     "occurrence": 1,
-    "source_sha256": "efbf1d7e4399050165a5d78195eb3301a491bf5345b33cba2f521e5c13c92dde",
+    "source_sha256": "2fa04156ac58b8bc731459121a3b3f76a8bf7be8b6f4f7762463ec26e3040b6c",
     "disposition": "pending",
     "guard": "ViewModel/operation fields: loading, pending, poller; Components pending indicator",
-    "reason": "The model retains the operation and locks repeats; UI uses the shared pending parameter, loading content or progress owner. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
+    "reason": "Inspected cast polling, operation-id undo, avatar reads/changes, voice loading and preview. Shared session scope owns cancellation; existing state and StudioErrors report failures and keep the current cast."
   },
   {
     "id": "c2d089e630067059231a",
     "kind": "pending",
     "path": "mobile/android/app/src/main/java/vn/abook/player/ui/studio/StudioCastState.kt",
-    "line": 82,
+    "line": 87,
     "statement": "suspend fun avatar(member: CastMember): ByteArray? = member.avatar?.file?.let { session.source.avatar(session.computer, project.bookId, it) }",
     "occurrence": 1,
-    "source_sha256": "efbf1d7e4399050165a5d78195eb3301a491bf5345b33cba2f521e5c13c92dde",
+    "source_sha256": "2fa04156ac58b8bc731459121a3b3f76a8bf7be8b6f4f7762463ec26e3040b6c",
     "disposition": "internal",
     "guard": "suspend service boundary; awaited by existing export/cast UI state owner",
-    "reason": "Volume export and portrait source methods are awaited service adapters. ExportState/StudioCastState retain progress and errors; byte reads use the existing IO boundary."
+    "reason": "Inspected cast polling, operation-id undo, avatar reads/changes, voice loading and preview. Shared session scope owns cancellation; existing state and StudioErrors report failures and keep the current cast."
   },
   {
     "id": "2a211a6577a02fd6a14d",
     "kind": "pending",
     "path": "mobile/android/app/src/main/java/vn/abook/player/ui/studio/StudioCastState.kt",
-    "line": 83,
+    "line": 88,
     "statement": "suspend fun changeAvatar(member: CastMember, action: String, data: String? = null) =",
     "occurrence": 1,
-    "source_sha256": "efbf1d7e4399050165a5d78195eb3301a491bf5345b33cba2f521e5c13c92dde",
+    "source_sha256": "2fa04156ac58b8bc731459121a3b3f76a8bf7be8b6f4f7762463ec26e3040b6c",
     "disposition": "internal",
     "guard": "suspend service boundary; awaited by existing export/cast UI state owner",
-    "reason": "Volume export and portrait source methods are awaited service adapters. ExportState/StudioCastState retain progress and errors; byte reads use the existing IO boundary."
+    "reason": "Inspected cast polling, operation-id undo, avatar reads/changes, voice loading and preview. Shared session scope owns cancellation; existing state and StudioErrors report failures and keep the current cast."
   },
   {
     "id": "43bfa7068d02e5982a6b",
     "kind": "pending",
     "path": "mobile/android/app/src/main/java/vn/abook/player/ui/studio/StudioCastState.kt",
-    "line": 85,
+    "line": 90,
     "statement": "suspend fun avatarStatus(member: CastMember) = session.source.avatarStatus(session.computer, project.bookId, member.name)",
     "occurrence": 1,
-    "source_sha256": "efbf1d7e4399050165a5d78195eb3301a491bf5345b33cba2f521e5c13c92dde",
+    "source_sha256": "2fa04156ac58b8bc731459121a3b3f76a8bf7be8b6f4f7762463ec26e3040b6c",
     "disposition": "internal",
     "guard": "suspend service boundary; awaited by existing export/cast UI state owner",
-    "reason": "Volume export and portrait source methods are awaited service adapters. ExportState/StudioCastState retain progress and errors; byte reads use the existing IO boundary."
+    "reason": "Inspected cast polling, operation-id undo, avatar reads/changes, voice loading and preview. Shared session scope owns cancellation; existing state and StudioErrors report failures and keep the current cast."
   },
   {
     "id": "d153443abd69545b9eae",
     "kind": "pending",
     "path": "mobile/android/app/src/main/java/vn/abook/player/ui/studio/StudioCastState.kt",
-    "line": 137,
+    "line": 143,
     "statement": "suspend fun load() {",
     "occurrence": 1,
-    "source_sha256": "efbf1d7e4399050165a5d78195eb3301a491bf5345b33cba2f521e5c13c92dde",
+    "source_sha256": "2fa04156ac58b8bc731459121a3b3f76a8bf7be8b6f4f7762463ec26e3040b6c",
     "disposition": "internal",
     "guard": "Async interface/helper boundary; concrete activation inventoried separately",
-    "reason": "This signature supplies work to a model or component; declaring it starts no user operation. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
+    "reason": "Inspected cast polling, operation-id undo, avatar reads/changes, voice loading and preview. Shared session scope owns cancellation; existing state and StudioErrors report failures and keep the current cast."
   },
   {
     "id": "c52d1d0425ece6a045c6",
     "kind": "pending",
     "path": "mobile/android/app/src/main/java/vn/abook/player/ui/studio/StudioCastState.kt",
-    "line": 207,
+    "line": 213,
     "statement": "session.scope.launch {",
     "occurrence": 2,
-    "source_sha256": "efbf1d7e4399050165a5d78195eb3301a491bf5345b33cba2f521e5c13c92dde",
+    "source_sha256": "2fa04156ac58b8bc731459121a3b3f76a8bf7be8b6f4f7762463ec26e3040b6c",
     "disposition": "pending",
     "guard": "ViewModel/operation fields: loading, pending, poller; Components pending indicator",
-    "reason": "The model retains the operation and locks repeats; UI uses the shared pending parameter, loading content or progress owner. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
+    "reason": "Inspected cast polling, operation-id undo, avatar reads/changes, voice loading and preview. Shared session scope owns cancellation; existing state and StudioErrors report failures and keep the current cast."
   },
   {
     "id": "eb6a3d03c7bafd918c16",
@@ -15339,13 +15339,13 @@
     "id": "f4ef87fda2c02e52eab3",
     "kind": "pending",
     "path": "desktop_qt/qml/CastList.qml",
-    "line": 47,
+    "line": 50,
     "statement": "else Api.quiet(\"GET\", \"/api/books/\" + bookId + \"/cast\", null, answer)",
     "occurrence": 1,
-    "source_sha256": "3aea99c9886d13ff35e2c90aaafb67c76341ef39150f6f0366dd5f9c7c5bf286",
+    "source_sha256": "eb2ceb830b31e46028dff3750eb4bfd473dba26afb907264fe387e10a95af955",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; castNarratorPending, loading, narratorPending",
-    "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
+    "reason": "Read-only cast GET now validates the current shape before rendering and presents the shared failure copy; local and Studio transports use the same guarded callback."
   },
   {
     "id": "68152639fcda06e82c6e",

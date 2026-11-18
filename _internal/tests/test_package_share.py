@@ -30,6 +30,11 @@ def _holder(tmp_path: Path) -> tuple[Library, SyncApp, Path, Path]:
     root = tmp_path / "kia" / "thu_vien"
     folder = root / packages.IMPORTED_FOLDER / "base"
     shutil.copytree(shared.BASE, folder)
+    # Pairing exercises the current cast contract; the edit-layer fixture is independent of it.
+    cast_path = folder / "cast.json"
+    cast = json.loads(cast_path.read_text(encoding="utf-8"))
+    cast["narrator"].update(voiceLines=4, voiceSeconds=7.0, chapterVoices=[], exceptChapters=[])
+    cast_path.write_bytes(json.dumps(cast, ensure_ascii=False).encode("utf-8"))
     mirror = root / remote_books.REMOTE_FOLDER / "Máy C (cccccccc)" / "Sách C (11111111)"
     shutil.copytree(shared.BASE, mirror)
     book = json.loads((mirror / "book.json").read_text(encoding="utf-8"))

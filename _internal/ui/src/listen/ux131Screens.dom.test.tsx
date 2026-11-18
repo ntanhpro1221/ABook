@@ -53,18 +53,18 @@ const book = (id = "book", title = "Truyện thử", count = 8) => ({ id, title,
 it("lists every narrator voice as its own row with the chapters it reads", async () => {
   state.cast = { narrator: { voice: "Đức Trí", lines: 10, seconds: 0, voiceLines: 7, voiceSeconds: 0, exceptChapters: [{ id: 8, title: "Chương 8" }],
     chapterVoices: [{ voice: "Đoan Trang", profile: { preset: "Đoan Trang" }, chapters: [{ id: 8, title: "Chương 8" }], lines: 3, seconds: 0 }] },
-    characters: [{ name: "TOUKA", displayName: "Touka", lines: 1, seconds: 0, firstChapter: "now" }], extras: [] };
+    characters: [{ name: "TOUKA", displayName: "Touka", gender: "", lines: 1, seconds: 0, firstChapter: "now" }], extras: [] };
   await render(<CastList bookId="b" reached={new Set()} onPickVoice={() => {}} />);
   const rows = [...host.querySelectorAll('[data-testid="cast-narrator-row"]')].map(row => row.textContent);
   expect(rows).toHaveLength(2);
-  expect(rows[0]).toContain("Đức Trí"); expect(rows[0]).toContain("Toàn sách trừ chương 8"); expect(rows[0]).toContain("7 câu dẫn truyện");
-  expect(rows[1]).toContain("Đoan Trang"); expect(rows[1]).toContain("Chương 8"); expect(rows[1]).toContain("3 câu dẫn truyện");
+  expect(rows[0]).toContain("Đức Trí"); expect(rows[0]).toContain("Toàn sách trừ chương 8"); expect(rows[0]).toContain("7 câu dẫn truyện");
+  expect(rows[1]).toContain("Đoan Trang"); expect(rows[1]).toContain("Chương 8"); expect(rows[1]).toContain("3 câu dẫn truyện");
 });
 
 it("one narrator voice is one row without a chapter scope; the extras fold counts people and lines", async () => {
   state.cast = { narrator: { voice: "Đức Trí", lines: 10, seconds: 0, chapterVoices: [], exceptChapters: [], voiceLines: 10, voiceSeconds: 0 },
-    characters: [{ name: "TOUKA", displayName: "Touka", lines: 1, seconds: 0, firstChapter: "now" }],
-    extras: [{ name: "A", displayName: "A", lines: 2, seconds: 0, firstChapter: "" }, { name: "B", displayName: "B", lines: 3, seconds: 0, firstChapter: "" }] };
+    characters: [{ name: "TOUKA", displayName: "Touka", gender: "", lines: 1, seconds: 0, firstChapter: "now" }],
+    extras: [{ name: "A", displayName: "A", gender: "", lines: 2, seconds: 0, firstChapter: "" }, { name: "B", displayName: "B", gender: "", lines: 3, seconds: 0, firstChapter: "" }] };
   await render(<CastList bookId="b2" reached={new Set()} onPickVoice={() => {}} />);
   const rows = [...host.querySelectorAll('[data-testid="cast-narrator-row"]')].map(row => row.textContent);
   expect(rows).toHaveLength(1);
@@ -148,7 +148,7 @@ it("trang sách dài: nhóm chương gập, mở lại giữ thao tác đúng ch
 });
 
 it("nhân vật dài: chia ba Fold và không lộ người ở chương sau", async () => {
-  const people = Array.from({ length: 8 }, (_, i) => ({ name: `P${i}`, displayName: `Người ${i}`, lines: 3, seconds: 0, firstChapter: i > 3 ? "later" : "now" }));
+  const people = Array.from({ length: 8 }, (_, i) => ({ name: `P${i}`, displayName: `Người ${i}`, gender: "", lines: 3, seconds: 0, firstChapter: i > 3 ? "later" : "now" }));
   state.cast = { narrator: { voice: "", lines: 1, seconds: 0, chapterVoices: [], exceptChapters: [], voiceLines: 1, voiceSeconds: 0 }, characters: people, extras: people.slice(0, 2), carried: people.slice(0, 2) };
   await render(<CastList bookId="b" reached={new Set(["now"])} onPickVoice={() => {}} />);
   for (const label of ["Vai chính", "Vai phụ", "Từ phần trước"]) expect(body(fold(label)).hasAttribute("inert")).toBe(true);

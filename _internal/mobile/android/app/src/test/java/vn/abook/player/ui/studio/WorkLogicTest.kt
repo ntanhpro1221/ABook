@@ -302,8 +302,8 @@ class WorkLogicTest {
     @Test fun castAndVoicesJsonRead() {
         val cast = StudioCastJson.cast(
             JSONObject(
-                """{"narrator":{"voice":"Giọng A","lines":3,"chapterVoices":[{"voice":"Giọng D","profile":{"key":"kd","preset":"Giọng D","label":"Giọng D"},"chapters":[{"id":9,"title":"Chương 8"}],"lines":5,"seconds":12.5}],"exceptChapters":[{"id":9,"title":"Chương 8"}],"voiceLines":2,"voiceSeconds":4.5,"profile":{"key":"k","preset":"p","label":"Giọng A"}},
-                "characters":[{"name":"kati","displayName":"Kati","lines":4,"sampleId":7,"voice":{"key":"k","preset":"p","label":"Giọng B"},"pendingVoice":{"preset":"q","label":"Giọng C","gender":"female"}}],
+                """{"narrator":{"voice":"Giọng A","lines":7,"seconds":17,"chapterVoices":[{"voice":"Giọng D","profile":{"key":"kd","preset":"Giọng D","label":"Giọng D"},"chapters":[{"id":9,"title":"Chương 8"}],"lines":5,"seconds":12.5}],"exceptChapters":[{"id":9,"title":"Chương 8"}],"voiceLines":2,"voiceSeconds":4.5,"profile":{"key":"k","preset":"p","label":"Giọng A"}},
+                "characters":[{"name":"kati","displayName":"Kati","gender":"female","lines":4,"seconds":0,"sampleId":7,"voice":{"key":"k","preset":"p","label":"Giọng B"},"pendingVoice":{"preset":"q","label":"Giọng C","gender":"female"}}],
                 "extras":[],"carried":[]}""",
             ),
         )

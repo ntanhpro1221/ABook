@@ -9,8 +9,9 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { TooltipProvider } from "@/shared/ui";
 import cast from "../../../tests/fixtures/cast_contract/cast.json";
 import expected from "../../../tests/fixtures/cast_contract/expected.json";
+import invalid from "../../../tests/fixtures/cast_contract/invalid.json";
 import { CastList } from "./BookScreen";
-import { genderText, narratorRowLine, narratorRows } from "./castNarrator";
+import { genderText, narratorRowLine, narratorRows, validCast } from "./castNarrator";
 import type { Cast } from "./model";
 
 const state = vi.hoisted(() => ({ cast: undefined as unknown }));
@@ -19,7 +20,7 @@ vi.mock("./clip", async original => ({ ...await original<typeof import("./clip")
 vi.mock("./source", async original => ({ ...await original<typeof import("./source")>(), useSource: () => ({ kind: "desktop", voiceUrl: () => "/voice.wav" }), useReadAloudVoices: () => ({ data: [] }), useCast: () => ({ data: state.cast }) }));
 
 const view = cast as unknown as Cast;
-const plain = (text: string | null | undefined) => (text ?? "").replace(/ /g, " ");
+const plain = (text: string | null | undefined) => text ?? "";
 
 let root: Root, host: HTMLDivElement, client: QueryClient;
 beforeEach(() => {
@@ -54,4 +55,25 @@ it("the Characters tab renders that output as the fold, the narrator rows and th
   });
   const text = plain(host.textContent);
   for (const [name, gender] of Object.entries(expected.genders)) expect(text).toContain(name + gender);
+});
+
+it.each(invalid)("rejects $name with the shared state and leaves the book visible", async ({ cast: malformed }) => {
+  expect(validCast(malformed)).toBe(false);
+  state.cast = malformed;
+  await act(() => root.render(<QueryClientProvider client={client}><MemoryRouter><TooltipProvider>
+    <div>Trang sách</div><CastList bookId="invalid" /></TooltipProvider></MemoryRouter></QueryClientProvider>));
+  expect(host.textContent).toContain("Trang sách");
+  expect(host.textContent).toContain(expected.error.title);
+  expect(host.textContent).toContain(expected.error.description);
+  expect(host.querySelector('[data-testid="cast-narrator-row"]')).toBeNull();
+});
+
+it("contains an unexpected cast render exception within the book page", async () => {
+  vi.spyOn(console, "error").mockImplementation(() => {});
+  state.cast = { ...view, get narrator() { throw new Error("render failure"); } };
+  await act(() => root.render(<QueryClientProvider client={client}><MemoryRouter><TooltipProvider>
+    <div>Trang sách</div><CastList bookId="render-error" /></TooltipProvider></MemoryRouter></QueryClientProvider>));
+  expect(host.textContent).toContain("Trang sách");
+  expect(host.textContent).toContain(expected.error.title);
+  expect(host.textContent).toContain(expected.error.description);
 });

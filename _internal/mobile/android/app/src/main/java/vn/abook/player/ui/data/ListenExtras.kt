@@ -236,6 +236,27 @@ class CastView(val narrator: Narrator, val characters: List<CastMember>, val ext
 }
 
 object Cast {
+    /** Same current-schema gate as Python, web and Qt, before any lossy JSON accessors. */
+    fun valid(json: JSONObject): Boolean {
+        fun number(value: Any?): Boolean = value is Number && value.toDouble().isFinite() && value.toDouble() >= 0
+        fun counts(item: JSONObject?): Boolean = item != null && number(item.opt("lines")) && item.optDouble("lines") % 1.0 == 0.0 && number(item.opt("seconds"))
+        fun chapters(items: Any?): Boolean = items is JSONArray && (0 until items.length()).all { index ->
+            val item = items.optJSONObject(index)
+            item != null && item.opt("id") is Number && item.optDouble("id") % 1.0 == 0.0 && item.opt("title") is String
+        }
+        fun people(items: Any?): Boolean = items is JSONArray && (0 until items.length()).all { index ->
+            val item = items.optJSONObject(index)
+            counts(item) && listOf("name", "displayName", "gender").all { item?.opt(it) is String }
+        }
+        val narrator = json.optJSONObject("narrator") ?: return false
+        val voices = narrator.opt("chapterVoices") as? JSONArray ?: return false
+        return counts(narrator) && narrator.opt("voice") is String && number(narrator.opt("voiceLines")) && narrator.optDouble("voiceLines") % 1.0 == 0.0 && number(narrator.opt("voiceSeconds"))
+            && chapters(narrator.opt("exceptChapters")) && (0 until voices.length()).all { index ->
+                val item = voices.optJSONObject(index)
+                item != null && counts(item) && item.opt("voice") is String && chapters(item.opt("chapters"))
+            } && people(json.opt("characters")) && people(json.opt("extras")) && (!json.has("carried") || people(json.opt("carried")))
+    }
+
     /** Ô giới của một người: giới cast.json ghi; trống thì lý do (store.cast_gender_note) - "Nhóm", "Trẻ em" hay "Chưa rõ".
      *  Không bao giờ để trống, không bao giờ bịa giới. Web: castNarrator.genderText, Qt: CastLogic.genderText - cùng chữ. */
     fun genderText(person: CastMember): String = genderText(person.gender, person.genderNote)
@@ -251,9 +272,11 @@ object Cast {
     /** `cast.json` như người nghe thấy (lớp sửa phủ lên) -> dàn nhân vật; null khi không đọc được (không phải JSON, hay không đúng
      *  dạng store.cast ghi - app chỉ đọc dạng hiện hành). Sách chỉ có chữ (không có file) là dàn rỗng. */
     fun parse(text: String?): CastView? {
-        if (text.isNullOrBlank()) return CastView(Narrator("", 0, 0.0, null, 0), emptyList(), emptyList())
+        if (text == null) return CastView(Narrator("", 0, 0.0, null, 0), emptyList(), emptyList())
+        if (text.isBlank()) return null
         return try {
             val json = JSONObject(text)
+            if (!valid(json)) return null
             val narrator = json.getJSONObject("narrator")
             CastView(
                 Narrator(
@@ -315,9 +338,9 @@ object Cast {
     /** "1.599 câu dẫn truyện · 2 giờ 52 phút" của một giọng kể; giọng chính kèm số câu chờ thu lại. */
     fun narratorRowCount(row: NarratorLine, redo: Int = 0): String {
         val text = StringBuilder(Fmt.number(row.lines.toLong())).append(S.s_cau_dan_truyen_f0d4156b)
-        if (row.seconds > 0) text.append(" · ").append(Fmt.length(row.seconds))
-        if (row.main && redo > 0) text.append(" · ").append(Fmt.number(redo.toLong())).append(S.s_cau_cho_thu_lai_98956e55)
-        return text.toString()
+        if (row.seconds > 0) text.append("\u00a0·\u00a0").append(Fmt.length(row.seconds))
+        if (row.main && redo > 0) text.append("\u00a0·\u00a0").append(Fmt.number(redo.toLong())).append(S.s_cau_cho_thu_lai_98956e55)
+        return text.toString().replace(Regex("(\\d) (?=\\S)"), "$1\u00a0")
     }
 
     private fun pending(json: JSONObject?): PendingVoice? =

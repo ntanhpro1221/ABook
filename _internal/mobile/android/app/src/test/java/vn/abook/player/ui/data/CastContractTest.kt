@@ -2,6 +2,11 @@ package vn.abook.player.ui.data
 
 import org.json.JSONObject
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
+import org.json.JSONArray
+import vn.abook.player.S
 import org.junit.Test
 import vn.abook.player.ui.studio.StudioCastJson
 import java.io.File
@@ -23,7 +28,7 @@ class CastContractTest {
         }
     }
 
-    private fun shown(rows: List<NarratorLine>) = rows.map { listOf(it.voice, it.preset, it.scope, Cast.narratorRowCount(it).replace(' ', ' ')) }
+    private fun shown(rows: List<NarratorLine>) = rows.map { listOf(it.voice, it.preset, it.scope, Cast.narratorRowCount(it)) }
 
     private fun expectedGenders(): Map<String, String> {
         val genders = expected.getJSONObject("genders")
@@ -42,5 +47,19 @@ class CastContractTest {
         val studio = StudioCastJson.cast(JSONObject(cast))
         val narrator = studio.narrator
         assertEquals(expectedRows(), shown(Cast.narratorRows(narrator.voice, narrator.chapterVoices, narrator.exceptChapters, narrator.voiceLines, narrator.voiceSeconds)))
+    }
+
+    @Test
+    fun `every malformed shared cast has the same error state on listening and Studio`() {
+        val cases = JSONArray(File(folder, "invalid.json").readText())
+        for (index in 0 until cases.length()) {
+            val case = cases.getJSONObject(index)
+            val input = case.getJSONObject("cast")
+            assertFalse(case.getString("name"), Cast.valid(input))
+            assertNull(case.getString("name"), Cast.parse(input.toString()))
+            assertTrue(case.getString("name"), StudioCastJson.cast(input).invalid)
+        }
+        assertEquals(expected.getJSONObject("error").getString("title"), S.s_cast_invalid_title)
+        assertEquals(expected.getJSONObject("error").getString("description"), S.s_cast_invalid_description)
     }
 }
