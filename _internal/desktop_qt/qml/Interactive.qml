@@ -20,7 +20,7 @@ Item {
     // `exclusiveTap` chỉ cần cho thứ nổi không có TapShield. Máy dò: scripts/ui_parity_rules.py (L12). Flickable vẫn giành được cú kéo
     // (TapHandler chấp nhận nhường), nên cuộn vẫn chạy (tests/width/tst_nowplaying_tapthrough.qml).
     property bool exclusiveTap: false
-    readonly property bool holdsTap: exclusiveTap || inShieldedLayer
+    readonly property bool holdsTap: exclusiveTap || layer.shielded
     signal clicked()
     signal rightClicked()
 
@@ -35,18 +35,21 @@ Item {
     }
 
     // Dò một lần khi dựng xong và mỗi khi đổi cha (không ràng buộc: đọc `children` trong binding sẽ chạy lại cho mọi hàng mỗi lần ListView thêm hàng).
-    // O(độ sâu): chỉ nhìn con đầu tiên của mỗi tổ tiên - TapShield luôn là con đầu (L12 kiểm). Cờ nằm ngay trên Item gốc (wrapper của Item giữ
-    // bộ nhớ thuộc tính), không phải một QtObject con: QtObject con cần Keep.hold (tests/test_qt_keep_anchor.py), mà Interactive có ở mọi hàng.
-    property bool inShieldedLayer: false
-    function findShield() {
-        for (let p = root.parent; p; p = p.parent) {
-            const first = p.children.length ? p.children[0] : null
-            if (first instanceof TapShield) return true
+    // O(độ sâu): chỉ nhìn con đầu tiên của mỗi tổ tiên - TapShield luôn là con đầu (L12 kiểm).
+    QtObject {
+        id: layer
+        property bool shielded: false
+        function scan() {
+            for (let p = root.parent; p; p = p.parent) {
+                const first = p.children.length ? p.children[0] : null
+                if (first instanceof TapShield) return true
+            }
+            return false
         }
-        return false
+        Component.onCompleted: Keep.hold(layer)
     }
-    Component.onCompleted: inShieldedLayer = findShield()
-    onParentChanged: inShieldedLayer = findShield()
+    Component.onCompleted: layer.shielded = layer.scan()
+    onParentChanged: layer.shielded = layer.scan()
 
     HoverHandler {
         id: hover
