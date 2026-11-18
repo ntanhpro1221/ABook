@@ -165,7 +165,7 @@ Một việc - một cách viết, cho web (máy tính + điện thoại), nativ
 
 <!-- ui_parity:begin (SINH TỰ ĐỘNG bởi scripts/ui_parity.py - không sửa tay, chạy lại script) -->
 
-Quét: web 6721 chữ (3146 khác nhau), 364 cặp nhãn-icon; native 2295 chữ (1674 khác nhau), 87 cặp nhãn-icon. Nhãn so theo khoá lỏng (hạ chữ, dấu thanh một kiểu, `...` = `…`, bỏ dấu câu cuối).
+Quét: web 6721 chữ (3147 khác nhau), 364 cặp nhãn-icon; native 2295 chữ (1674 khác nhau), 87 cặp nhãn-icon. Nhãn so theo khoá lỏng (hạ chữ, dấu thanh một kiểu, `...` = `…`, bỏ dấu câu cuối).
 
 ## a. Gợi ý gần chữ, đối chiếu với giao ước màn
 
@@ -573,7 +573,7 @@ Quét: web 6721 chữ (3146 khác nhau), 364 cặp nhãn-icon; native 2295 chữ
 
 | icon | web | native |
 |---|---|---|
-| audio-lines | Chưa có giọng, Nghe lại | Chưa có nhân vật, Không đọc được |
+| audio-lines | Chưa có giọng, Nghe lại | Chưa có nhân vật, Dàn nhân vật lỗi |
 | book-open-text | Chưa mở được chương, Dừng / Nghe thử, Kịch bản chương này, Phân tích truyện | Không thấy sách |
 | cast | Phát trên máy khác | Phát trên |
 | check | Có lời, Duyệt câu, Dùng, Giữ cả thẻ | Chưa nghe, Chưa nghe xong |
@@ -799,7 +799,7 @@ Nhãn ngắn (<= 6 chữ) không có (theo khoá lỏng) ở phía kia - kể c�
 - web: Chữ của cả cuốn được gửi tới {} để đọc, bằng khóa của bạn -… (`desktop/listenExport.ts:87`)
 - native: (không có)
 
-**d4. web: cùng nhãn nhưng viết khác nhau trong chính phía này** (59); 15 đầu:
+**d4. web: cùng nhãn nhưng viết khác nhau trong chính phía này** (58); 15 đầu:
 
 - `Ai nghĩ câu này` | `Ai nghĩ câu này?` (`listen/LineWishes.tsx:400`, `listen/LineWishes.tsx:456` (+2))
 - `Ai nói câu này` | `Ai nói câu này?` (`listen/LineWishes.tsx:400`, `listen/LineWishes.tsx:456` (+4))

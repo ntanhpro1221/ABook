@@ -1,7 +1,7 @@
 {
   "_doc": "Single Vietnamese UI copy source. {0}, {1}, ... are ordered value slots. Edit here, then run scripts/gen_ui_strings.py.",
   "strings": {
-    "s_cast_invalid_title": "Không đọc được",
+    "s_cast_invalid_title": "Dàn nhân vật lỗi",
     "s_cast_voice_count": "{0} giọng",
     "s_cast_invalid_description": "Dàn nhân vật không đúng định dạng. Hãy xin lại file từ người làm sách.",
     "s_device_engine_google": "Google",

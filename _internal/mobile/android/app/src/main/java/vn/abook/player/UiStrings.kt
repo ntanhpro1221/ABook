@@ -2,7 +2,7 @@
 package vn.abook.player
 
 internal object S {
-    const val s_cast_invalid_title = "Không đọc được"
+    const val s_cast_invalid_title = "Dàn nhân vật lỗi"
     fun s_cast_voice_count(p0: Any?): String = p0.toString() + " giọng"
     const val s_cast_invalid_description = "Dàn nhân vật không đúng định dạng. Hãy xin lại file từ người làm sách."
     const val s_device_engine_google = "Google"

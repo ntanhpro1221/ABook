@@ -24,7 +24,7 @@
  },
  "error": {
   "key": "cast_invalid",
-  "title": "Không đọc được",
+  "title": "Dàn nhân vật lỗi",
   "description": "Dàn nhân vật không đúng định dạng. Hãy xin lại file từ người làm sách."
  }
 }
