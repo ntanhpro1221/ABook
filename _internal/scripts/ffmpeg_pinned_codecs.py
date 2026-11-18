@@ -40,7 +40,7 @@ def _rows(exe: Path, kind: str) -> list[tuple[str, str]]:
     """(cờ, tên) cho mỗi dòng sau vạch `---`/`------` của `ffmpeg -demuxers` / `-decoders`. Cột cờ rộng đúng bằng vạch và có thể chứa
     khoảng trắng (`D d dshow`: bộ tách là thiết bị), nên cắt theo cột chứ không tách theo khoảng trắng."""
     flags = getattr(subprocess, "CREATE_NO_WINDOW", 0)
-    lines = subprocess.run([str(exe), "-hide_banner", f"-{kind}"], capture_output=True, text=True, check=True, creationflags=flags).stdout.splitlines()
+    lines = subprocess.run([str(exe), "-hide_banner", f"-{kind}"], capture_output=True, text=True, encoding="utf-8", errors="replace", check=True, creationflags=flags).stdout.splitlines()
     start = next(index for index, line in enumerate(lines) if line.strip() and set(line.strip()) == {"-"})
     width = len(lines[start].strip())
     return [(line[1:1 + width], line[1 + width:].split()[0]) for line in lines[start + 1:] if line[1 + width:].strip()]
@@ -49,7 +49,7 @@ def _rows(exe: Path, kind: str) -> list[tuple[str, str]]:
 def listing(exe: Path) -> dict[str, object]:
     """Cái test cần biết về một exe: phiên bản, mọi bộ tách (ffmpeg ghi nhiều tên chung một dòng như `mov,mp4,m4a,3gp,3g2,mj2`), bộ giải âm thanh."""
     flags = getattr(subprocess, "CREATE_NO_WINDOW", 0)
-    version = subprocess.run([str(exe), "-hide_banner", "-version"], capture_output=True, text=True, check=True, creationflags=flags).stdout.splitlines()[0]
+    version = subprocess.run([str(exe), "-hide_banner", "-version"], capture_output=True, text=True, encoding="utf-8", errors="replace", check=True, creationflags=flags).stdout.splitlines()[0]
     demuxers = sorted({name for flag, name in _rows(exe, "demuxers") if flag.startswith("D")})
     decoders = sorted({name for flag, name in _rows(exe, "decoders") if flag.startswith("A")})
     return {"version": version, "demuxers": demuxers, "audio_decoders": decoders}
