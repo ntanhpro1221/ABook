@@ -102,10 +102,10 @@ export function remoteUnfinishedLine(book: ListenBook): string {
   return S.s_0_1_con_dang_lam_chuong_moi_hien_o_day_khi_9adfb0f7(name.charAt(0).toUpperCase(), name.slice(1));
 }
 
-function progressText(book: ListenBook, _speaks: boolean, includeAuthor = true): string {
+function progressText(book: ListenBook, speaks: boolean, includeAuthor = true): string {
   // Cards have a dedicated author line. Other compact statuses may include it.
   if (book.stage === "text") {
-    const lead = includeAuthor ? book.author?.trim() : "";
+    const lead = (includeAuthor ? book.author?.trim() : "") || (speaks ? "" : S.s_chi_co_chu_bf879f2c);
     return S.s_0_1_chuong_2ba5a353(lead ? lead + " · " : "", book.chaptersTotal);
   }
   const chapters = S.s_0_1_chuong_8d58e1df(book.chaptersAvailable, book.chaptersTotal);

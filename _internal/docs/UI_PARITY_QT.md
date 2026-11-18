@@ -11,7 +11,7 @@ icon `LucidePaths.js` sinh bởi `scripts/gen_lucide_icons.py --qml`. Bảng dư
 
 <!-- ui_parity_qt:begin (SINH TỰ ĐỘNG bởi scripts/ui_parity_qt.py - không sửa tay, chạy lại script) -->
 
-Quét: web máy tính 6249 chữ (2876 khác nhau), 351 cặp nhãn-icon; Qt 3708 chữ (2721 khác nhau), 292 cặp nhãn-icon (icon dùng ở 415 chỗ). Khoá so lỏng như UI_PARITY.md (hạ chữ, dấu thanh một kiểu, `...` = `…`, bỏ dấu câu cuối); phím tắt trong chú thích Qt (`Thu nhỏ (Esc)`) tách khỏi nhãn.
+Quét: web máy tính 6250 chữ (2877 khác nhau), 351 cặp nhãn-icon; Qt 3708 chữ (2721 khác nhau), 292 cặp nhãn-icon (icon dùng ở 415 chỗ). Khoá so lỏng như UI_PARITY.md (hạ chữ, dấu thanh một kiểu, `...` = `…`, bỏ dấu câu cuối); phím tắt trong chú thích Qt (`Thu nhỏ (Esc)`) tách khỏi nhãn.
 
 ## a. Cùng việc, khác chữ
 
@@ -213,7 +213,7 @@ Nhãn ngắn (<= 6 chữ). **Chỉ Qt**: không có ở web cùng màn; `*` = we
 
 ### Thanh bên
 
-- chỉ Qt (10): Trạng thái ABook (`qt/ConnectionChip.qml:10`); Gặp lỗi (`qt/ConnectionChip.qml:55`); Sẵn sàng (`qt/ConnectionChip.qml:55`); Đang mở* (`qt/ConnectionChip.qml:55`); Bản {} (`qt/ConnectionPopover.qml:69`); Khởi động lại (`qt/ConnectionPopover.qml:81`); Mở thư mục nhật ký (`qt/ConnectionPopover.qml:89`); Mở rộng (`qt/Sidebar.qml:94`); Thu gọn* (`qt/Sidebar.qml:94`); Duyệt* (`qt/SidebarProgress.qml:37`)
+- chỉ Qt (10): Trạng thái ABook (`qt/ConnectionChip.qml:10`); Gặp lỗi (`qt/ConnectionChip.qml:55`); Sẵn sàng (`qt/ConnectionChip.qml:55`); Đang mở* (`qt/ConnectionChip.qml:55`); Bản {} (`qt/ConnectionPopover.qml:68`); Khởi động lại (`qt/ConnectionPopover.qml:80`); Mở thư mục nhật ký (`qt/ConnectionPopover.qml:88`); Mở rộng (`qt/Sidebar.qml:94`); Thu gọn* (`qt/Sidebar.qml:94`); Duyệt* (`qt/SidebarProgress.qml:37`)
 - chỉ web (1): Thanh bên (`176`)
 
 ### Studio dự án

@@ -171,7 +171,7 @@ Một việc - một cách viết, cho web (máy tính + điện thoại), nativ
 
 <!-- ui_parity:begin (SINH TỰ ĐỘNG bởi scripts/ui_parity.py - không sửa tay, chạy lại script) -->
 
-Quét: web 6739 chữ (3141 khác nhau), 362 cặp nhãn-icon; native 2303 chữ (1672 khác nhau), 85 cặp nhãn-icon. Nhãn so theo khoá lỏng (hạ chữ, dấu thanh một kiểu, `...` = `…`, bỏ dấu câu cuối).
+Quét: web 6740 chữ (3142 khác nhau), 362 cặp nhãn-icon; native 2304 chữ (1673 khác nhau), 85 cặp nhãn-icon. Nhãn so theo khoá lỏng (hạ chữ, dấu thanh một kiểu, `...` = `…`, bỏ dấu câu cuối).
 
 ## a. Gợi ý gần chữ, đối chiếu với giao ước màn
 
@@ -202,7 +202,7 @@ Quét: web 6739 chữ (3141 khác nhau), 362 cặp nhãn-icon; native 2303 chữ
 | Còn lại | Chọn lại | 0.93 | `native/studio/StudioText.kt:58` ~ `listen/AddBook.tsx:547` (+1) | shared-labels: chữ có bản khớp trong màn đã ghép; nhãn gần giống ở cột kia không phải cặp thao tác được xác nhận; studio.missing: phone's remote Studio sentences about work that happens on the computer (export tool, ambience reader, cover, log, pause, version, permission): the computer's own Studio never has to say them | add-edit-book.allow: hộp thoại của máy tính cần nút đóng / chọn lại ngay trong hộp; điện thoại là màn riêng: Back đóng, "Chọn file sách" luôn ở đáy hàng đợi |
 | Đang đo. | Đang đổi | 0.93 | `native/screens/SettingsAdvanced.kt:88` ~ `studio/MusicTab.tsx:186` | shared-labels: chữ có bản khớp trong màn đã ghép; nhãn gần giống ở cột kia không phải cặp thao tác được xác nhận; settings.missing: web shows a skeleton (DESIGN §2: đang tải = khung xám) where native writes a loading line | studio: chữ có bản khớp trong màn đã ghép; nhãn gần giống ở cột kia không phải cặp thao tác được xác nhận |
 | Đang tạo sách | Đã tạo sách | 0.92 | `native/studio/StudioNew.kt:326` ~ `studio/NewProjectScreen.tsx:1800` | shared-labels: chữ có bản khớp trong màn đã ghép; nhãn gần giống ở cột kia không phải cặp thao tác được xác nhận; studio.allow: new-project flow: native shows its own progress / error lines on one screen; web NewProjectScreen words the same steps through upload.ts ('Đang gửi 3/12 file · …', 'Đã gửi … file') | studio: chữ có bản khớp trong màn đã ghép; nhãn gần giống ở cột kia không phải cặp thao tác được xác nhận |
-| Máy tính không còn đoạn này. | Máy tính không có cuốn này | 0.91 | `native/studio/WorkText.kt:25` ~ `desktop/RemotePhone.tsx:620` | shared-labels: chữ có bản khớp trong màn đã ghép; nhãn gần giống ở cột kia không phải cặp thao tác được xác nhận; studio.missing: phone's remote Studio inbox / review / script / readings sentences: the computer's own Studio (WorkInbox, ReviewQueue, ScriptTab, ReadingSuggestions) has no identical sentence for these - not compared sentence by sentence | devices.missing: computer bar shown while a book of another machine is open (PeerBar.tsx) and the 'player has no such book' line |
+| Máy tính không còn đoạn này. | Máy tính không có cuốn này | 0.91 | `native/studio/WorkText.kt:25` ~ `desktop/RemotePhone.tsx:625` | shared-labels: chữ có bản khớp trong màn đã ghép; nhãn gần giống ở cột kia không phải cặp thao tác được xác nhận; studio.missing: phone's remote Studio inbox / review / script / readings sentences: the computer's own Studio (WorkInbox, ReviewQueue, ScriptTab, ReadingSuggestions) has no identical sentence for these - not compared sentence by sentence | devices.missing: computer bar shown while a book of another machine is open (PeerBar.tsx) and the 'player has no such book' line |
 | Chưa gửi được nhật ký | Chưa lưu được nhật ký | 0.91 | `native/NativeActivity.kt:362` ~ `desktop/PhoneDiagnostics.tsx:65` | shared-labels: chữ có bản khớp trong màn đã ghép; nhãn gần giống ở cột kia không phải cặp thao tác được xác nhận; settings.allow: platform: the phone shares the diagnostics (Gửi / system share sheet), the computer saves a package to a folder it picks | devices.missing: computer reading a phone's diagnostics over the network (PhoneDiagnostics.tsx) |
 | Dung lượng | Dựng xưởng | 0.90 | `native/devices/StorageScreen.kt:46` ~ `listen/ProjectFileItems.tsx:139` (+1) | shared-labels: chữ có bản khớp trong màn đã ghép; nhãn gần giống ở cột kia không phải cặp thao tác được xác nhận; devices.missing: phone's own share page: a 'Chi tiết' fold with name and address, the hint that points to it, and the share page title | studio: chữ có bản khớp trong màn đã ghép; nhãn gần giống ở cột kia không phải cặp thao tác được xác nhận |
 | Đổi chương | Lỗi chương | 0.90 | `native/studio/StudioScript.kt:266` ~ `studio/ChapterError.tsx:19` | shared-labels: chữ có bản khớp trong màn đã ghép; nhãn gần giống ở cột kia không phải cặp thao tác được xác nhận; studio.allow: native sheet / button names with no web twin: web has the chapter and voice pickers inline in the card ('Chọn giọng khác', 'Nghe từ câu này') | studio: chữ có bản khớp trong màn đã ghép; nhãn gần giống ở cột kia không phải cặp thao tác được xác nhận |
@@ -765,7 +765,7 @@ Nhãn ngắn (<= 6 chữ) không có (theo khoá lỏng) ở phía kia - kể c�
 | đang chuẩn bị | Đang chuẩn bị | chữ hoa | `listen/LibraryScreen.tsx:337` (+1) ~ `native/export/ExportModel.kt:276` |
 | đang làm | Đang làm | chữ hoa | `studio/StudioSetup.tsx:257` ~ `native/studio/StudioText.kt:56` |
 | Đang làm sách nói… | Đang làm sách nói | dấu câu cuối | `desktop/listenExport.ts:14` ~ `native/export/ExportModel.kt:287` (+1) |
-| đang phát | Đang phát | chữ hoa | `desktop/RemotePhone.tsx:499` ~ `native/devices/CompanionSurfaces.kt:79` (+1) |
+| đang phát | Đang phát | chữ hoa | `desktop/RemotePhone.tsx:504` ~ `native/devices/CompanionSurfaces.kt:79` (+1) |
 | Đang tính độ dài… | Đang tính độ dài | dấu câu cuối | `desktop/AudiobookDialog.tsx:133` ~ `native/export/ExportScreen.kt:231` |
 | đang xuất | Đang xuất | chữ hoa | `shared/diagnostics.ts:48` ~ `native/export/ExportModel.kt:392` |
 | Đã nghe hết các câu trong danh sách | Đã nghe hết các câu trong danh sách. | dấu câu cuối | `studio/ReviewQueue.tsx:315` ~ `native/studio/WorkText.kt:106` |
@@ -776,23 +776,23 @@ Nhãn ngắn (<= 6 chữ) không có (theo khoá lỏng) ở phía kia - kể c�
 
 | kiểu | web | native |
 |---|---|---|
-| dấu ba chấm ASCII `...` | 6 / 6739 | 0 / 2303 |
-| dấu ba chấm `…` | 19 / 6739 | 0 / 2303 |
-| kết thúc bằng dấu chấm `.` | 1154 / 6739 | 430 / 2303 |
-| kết thúc bằng `!` | 0 / 6739 | 0 / 2303 |
-| kết thúc bằng `:` | 90 / 6739 | 6 / 2303 |
-| dấu thanh kiểu cũ `oà oá uý` | 530 / 6739 | 223 / 2303 |
-| dấu thanh kiểu mới `òa óa úy` | 1 / 6739 | 0 / 2303 |
-| số thập phân dấu phẩy `1,5` | 2 / 6739 | 0 / 2303 |
-| số thập phân dấu chấm `1.5` | 0 / 6739 | 0 / 2303 |
-| nhân bằng `×` | 0 / 6739 | 0 / 2303 |
-| nhân bằng `x` sau số | 0 / 6739 | 0 / 2303 |
-| ngăn cách `·` | 144 / 6739 | 38 / 2303 |
-| ngăn cách ` - ` | 274 / 6739 | 87 / 2303 |
-| gạch dài `—`/`–` | 17 / 6739 | 2 / 2303 |
-| giờ `1:30` hay `1 giờ 30` | 0 / 6739 | 2 / 2303 |
-| dấu `%` dính số | 0 / 6739 | 1 / 2303 |
-| dấu `%` cách số | 0 / 6739 | 0 / 2303 |
+| dấu ba chấm ASCII `...` | 6 / 6740 | 0 / 2304 |
+| dấu ba chấm `…` | 19 / 6740 | 0 / 2304 |
+| kết thúc bằng dấu chấm `.` | 1154 / 6740 | 430 / 2304 |
+| kết thúc bằng `!` | 0 / 6740 | 0 / 2304 |
+| kết thúc bằng `:` | 90 / 6740 | 6 / 2304 |
+| dấu thanh kiểu cũ `oà oá uý` | 530 / 6740 | 223 / 2304 |
+| dấu thanh kiểu mới `òa óa úy` | 1 / 6740 | 0 / 2304 |
+| số thập phân dấu phẩy `1,5` | 2 / 6740 | 0 / 2304 |
+| số thập phân dấu chấm `1.5` | 0 / 6740 | 0 / 2304 |
+| nhân bằng `×` | 0 / 6740 | 0 / 2304 |
+| nhân bằng `x` sau số | 0 / 6740 | 0 / 2304 |
+| ngăn cách `·` | 144 / 6740 | 38 / 2304 |
+| ngăn cách ` - ` | 274 / 6740 | 87 / 2304 |
+| gạch dài `—`/`–` | 17 / 6740 | 2 / 2304 |
+| giờ `1:30` hay `1 giờ 30` | 0 / 6740 | 2 / 2304 |
+| dấu `%` dính số | 0 / 6740 | 1 / 2304 |
+| dấu `%` cách số | 0 / 6740 | 0 / 2304 |
 
 **d3. Nhãn ngắn bắt đầu bằng chữ thường** (web 138, native 0); 15 đầu mỗi phía:
 
@@ -848,13 +848,13 @@ Trong một cặp, mỗi nhãn ngắn phải có ở cả hai phía (khoá lỏn
 | destructive-confirmation | 3 | 3 | 0 | 0 | 0 | 0 | 0 |
 | cast-history | 4 | 4 | 0 | 0 | 0 | 0 | 0 |
 | now-playing | 151 | 165 | 0 | 0 | 30 | 4 | 0 |
-| shared-labels | 33 | 1479 | 0 | 0 | 7 | 0 | 0 |
-| library-book | 210 | 220 | 0 | 0 | 63 | 10 | 0 |
+| shared-labels | 33 | 1480 | 0 | 0 | 7 | 0 | 0 |
+| library-book | 211 | 221 | 0 | 0 | 63 | 10 | 0 |
 | settings | 112 | 135 | 0 | 0 | 21 | 77 | 0 |
 | devices | 145 | 164 | 0 | 0 | 18 | 159 | 0 |
 | voice | 162 | 146 | 0 | 0 | 26 | 23 | 0 |
 | add-edit-book | 169 | 148 | 0 | 0 | 60 | 4 | 0 |
-| studio | 2242 | 541 | 0 | 0 | 59 | 87 | 0 |
+| studio | 2243 | 541 | 0 | 0 | 59 | 87 | 0 |
 | export | 80 | 83 | 0 | 0 | 28 | 44 | 0 |
 | music | 31 | 52 | 0 | 0 | 7 | 8 | 0 |
 | music-library | 74 | 76 | 0 | 0 | 6 | 1 | 0 |

@@ -525,6 +525,7 @@ internal object S {
     fun s_chi_0_chuong_doi_9bd4c5f8(p0: Any?): String = "Chỉ " + p0.toString() + " chương đổi"
     const val s_chi_cau_lech_nhieu_b3763bc7 = "Chỉ câu lệch nhiều"
     const val s_chi_chon_ban_khac_khi_muon_thu_tren_cuon_n_d2d4143b = "Chỉ chọn bản khác khi muốn thử trên cuốn này."
+    const val s_chi_co_chu_bf879f2c = "Chỉ có chữ"
     const val s_chi_co_chu_nghe_bang_giong_doc_edf36d64 = "Chỉ có chữ · nghe bằng giọng đọc"
     const val s_chi_co_phan_nghe_va_thay_doi_cua_ban_studi_09cd637e = "Chỉ có phần nghe và thay đổi của bạn. Studio dựng lại được dự án từ file này."
     const val s_chi_doc_duoc_thu_tu_c_087035f9 = "chỉ đọc được thứ tự C"

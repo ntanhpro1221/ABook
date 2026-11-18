@@ -243,10 +243,11 @@ object ListenLogic {
 
     // ---- dòng trạng thái ---------------------------------------------------------------------------------
 
-    /** Dòng trạng thái của một cuốn (androidSource-side `progressText`), không kèm dấu nguồn. */
-    fun progressText(book: ListenBook, includeAuthor: Boolean = true): String {
+    /** Shared status contract: native has a bundled voice by default; callers without one retain the text-only status. */
+    fun progressText(book: ListenBook, includeAuthor: Boolean = true, speaks: Boolean = true): String {
         if (book.textOnly) {
-            val lead = if (includeAuthor) book.author.trim() else ""
+            val author = if (includeAuthor) book.author.trim() else ""
+            val lead = author.ifEmpty { if (speaks) "" else S.s_chi_co_chu_bf879f2c }
             return (if (lead.isNotEmpty()) "$lead · " else "") + S.s_0_chuong_04093412(book.chaptersTotal)
         }
         val chapters = S.s_0_1_chuong_8d58e1df(book.chaptersAvailable, book.chaptersTotal)
