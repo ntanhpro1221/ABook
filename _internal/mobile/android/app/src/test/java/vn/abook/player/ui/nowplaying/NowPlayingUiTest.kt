@@ -16,6 +16,7 @@ import androidx.compose.ui.test.*
 import vn.abook.player.ui.createAndroidComposeRule
 import vn.abook.player.ui.assertNoTextOverflow
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.DpRect
 import androidx.compose.ui.unit.dp
