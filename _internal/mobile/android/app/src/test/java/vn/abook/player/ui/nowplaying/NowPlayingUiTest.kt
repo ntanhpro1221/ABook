@@ -25,6 +25,7 @@ import androidx.compose.ui.unit.width
 import androidx.compose.ui.unit.height
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.layout.boundsInRoot
+import androidx.compose.ui.semantics.getOrNull
 import vn.abook.player.ui.snapshot.captureRoboImage
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
