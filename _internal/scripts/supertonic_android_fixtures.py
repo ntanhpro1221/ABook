@@ -36,7 +36,7 @@ CLEAN = [
     "[Ghi chú] Hệ thống | cấp_độ #3 → mở khoá ← quay lại",
     "Gửi thư tới a@b.vn , nhé ?",
     "Ôi '' trời ``đất'' ơi",
-    "Khoảng trắng lạ　ở\tđây và\u0085kia\x1c",
+    "Khoảng trắng\u2009lạ\u3000ở\tđây\u2028và\u0085kia\x1c",
     "Tim ♥ sao ☆ © bản quyền \\ gạch",
     "Chữ tổ hợp: ế và ế",
     "<en>Hello</en> world",

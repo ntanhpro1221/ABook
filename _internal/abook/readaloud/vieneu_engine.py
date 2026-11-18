@@ -218,7 +218,7 @@ def _bytes_to_unicode() -> dict[int, str]:
     return {byte: chr(char) for byte, char in zip(keep, chars)}
 
 
-_WHITE = "\t\n\x0b\x0c\r \x85\xa0  -     　"  # thuộc tính Unicode White_Space
+_WHITE = "\t\n\x0b\x0c\r \x85\xa0\u1680\u2000-\u200A\u2028\u2029\u202F\u205F\u3000"  # thuộc tính Unicode White_Space
 _classes: tuple[str, str] | None = None
 
 

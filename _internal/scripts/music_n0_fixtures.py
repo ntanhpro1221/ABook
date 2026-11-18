@@ -405,7 +405,7 @@ def mood_chapters() -> list[dict[str, Any]]:
 REGEX_STRINGS = [
     # SEPARATOR / CUE_SYMBOLS
     "***", "* * *", "  ***  ", "~~~", "###", "===", "___", "- - -", "---", "·••", "ooo", "o0O", "OOO", "000", "o O o", "oOo", "◇", "◆◆◆", "※", "✦ ✦", "＊＊＊", "◇ ◆ ○", "●", "♦",
-    "**", "*", "-", "a***", "*** a", "***\n", "\n***", "o", "oo", "***　", " *** ", "* * *",
+    "**", "*", "-", "a***", "*** a", "***\n", "\n***", "o", "oo", "***\u3000", " *** ", "* *\u2003*",
     # TIME_JUMP / CUE_TIME_PLACE
     "Sáng hôm sau, họ đi.", "sáng hôm sau", "SÁNG HÔM SAU", "Tối sau đó", "Đêm hôm sau trời mưa", "Hôm sau", "Ngày hôm sau", "Ngày sau", "Sáng sớm hôm sau", "Trưa sau nữa",
     "Ba ngày sau, chuyện lắng xuống.", "Mấy tuần sau", "Vài tháng sau", "5 ngày sau", "12 năm sau", "Một canh giờ sau", "Bảy năm sau", "Chín ngày sau", "Mười ngày sau",
@@ -425,8 +425,8 @@ REGEX_STRINGS = [
     # CUE_PLAIN_END / chữ cuối câu
     "Phần 4:", "Phần hai…", "Phần hai!", "Phần hai?", "Phần hai,", "Phần hai;", "Phần hai”", "Phần hai)", "Phần hai'", "Phần hai’", "Phần hai.\n", "Phần hai \n",
     # chữ có dấu / hoa thường / ký tự lạ, ký tự ngoài BMP
-    "Sáng hôm sau 🌸", "🌸 Sáng hôm sau", "𠀋 Phần hai", "Phần hai 𠀋", "Đêm sau", "ĐÊM SAU", "đêm sau", "Ðêm sau", "Sáng hôm sau", "Sáng　hôm　sau", "Sáng hôm sau",
-    "Ngày sau", "\u0085Sáng hôm sau", "​Sáng hôm sau", "Sáng hôm sau", "Hô̂m sau",
+    "Sáng hôm sau 🌸", "🌸 Sáng hôm sau", "𠀋 Phần hai", "Phần hai 𠀋", "Đêm sau", "ĐÊM SAU", "đêm sau", "Ðêm sau", "Sáng hôm sau", "Sáng\u3000hôm\u3000sau", "Sáng\u2003hôm\u2003sau",
+    "Ngày\u1680sau", "\u0085Sáng hôm sau", "\u200BSáng hôm sau", "Sáng hôm sau", "Hô̂m sau",
 ]
 HEADINGS = ["Chương 1", "Chương 12: Cổng thành", "chương 5 - nhỏ", "CHƯƠNG 7. Mở", "Chapter 3 - Cổng sau", "Chapter IV", "Hồi 2", "Quyển 3: Gió", "Phần 2 · Núi", "Tiết 9", "Chương", "Chương một", "Chương X: Tên",
             "Chương 5 — Tên dài", "Chương 5 | Đường về", "Chương12", "Chương 1" + "x" * 200, "Prologue", "Phần hai", "Tập 3", "  Chương 8  ", "Chương 1a", "Chương IVX Đảo", "Hồi CL: lạ", "Chương 3.", "Chương 3 (1)"]
@@ -497,9 +497,9 @@ SEGMENTER_TEXTS = [
     "Lan  nói    nhiều   khoảng trắng.\n\n\n\nVà   nhiều dòng trống.\n \n \nHết.",
     "Đây là dòng một\nđây là dòng hai bị bẻ\ndòng ba.",
     "Dòng [note123] có chú thích [Note54360] và [note].\n\nHết.",
-    "Zero​width‍text‌ với﻿ ký tự ẩn.\n\nHết.",
+    "Zero\u200Bwidth\u200Dtext\u200C với\uFEFF ký tự ẩn.\n\nHết.",
     "NBSP giữa  chữ.\n\nDòng\r\nCRLF.\r\rHết.",
-    "Dòng có ngắt dòng Unicode và\u0085nữa.",
+    "Dòng có\u2028ngắt dòng Unicode\u2029và\u0085nữa.",
     "“Ừ.” “Cô chắc chứ?” “Chắc.”",
     "“a”, “b”, “c” là ba chữ.",
     "Anh đọc “Lan”.",

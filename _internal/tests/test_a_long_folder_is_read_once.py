@@ -17,7 +17,7 @@ TAIL = "\n\nLucien bước vào làng.\n\nỦng hộ nhóm dịch qua Momo 09123
 def _folder(tmp_path: Path) -> dict[str, bytes]:
     files = {
         "001.txt": (HEAD + "\n\n".join(f"Câu kể thứ {n}." for n in range(900)) + TAIL).encode("utf-8"),  # > 8 KB
-        "002.txt": ("﻿\n\n" + HEAD + TAIL).replace("\n", "\r\n").encode("utf-8"),
+        "002.txt": ("\uFEFF\n\n" + HEAD + TAIL).replace("\n", "\r\n").encode("utf-8"),
         "003.txt": b"",
         "004.txt": "Chương 4\n\nCâu kể.\n".encode(),  # quá ba file: không xét tách file (txt_split đọc lại cả file)
     }

@@ -225,7 +225,7 @@ def write_chapter(ffmpeg: str, source: Path, final: Path, cover_path: Path | Non
 
 
 _DISK_FULL = re.compile(r"No space left on device|not enough space on the disk|WinError 112|Disk quota exceeded|ENOSPC", re.I)
-_DENIED = re.compile(r"Permission denied|Access is denied|Read-only file system|WinError 5", re.I)
+_DENIED = re.compile(r"Permission denied|Access is denied|Read-only file system|WinError 5\b", re.I)
 _UNREADABLE_SOURCE = re.compile(r"Error opening input|Invalid data found|moov atom not found|Error while decoding|Header missing|"
                                 r"could not find codec|Error reading|Failed to read|Invalid argument|Error splitting the argument", re.I)
 

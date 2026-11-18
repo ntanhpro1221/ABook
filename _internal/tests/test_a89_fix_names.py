@@ -41,12 +41,12 @@ def _line(paths, stable_id: str = "c1s1") -> dict:
 
 
 def test_clean_is_nfc_without_invisible_characters() -> None:
-    assert name_rules.clean("Lu​cien  Hà") == unicodedata.normalize("NFC", "Lucien Hà")
-    assert name_rules.clean("A﻿B­C‮") == "ABC"
+    assert name_rules.clean("Lu\u200Bcien  Hà") == unicodedata.normalize("NFC", "Lucien Hà")
+    assert name_rules.clean("A\uFEFFB\u00ADC\u202E") == "ABC"
     assert name_rules.clean("a\tb\nc") == "a b c"
 
 
-@pytest.mark.parametrize("typed", ["​​", "﻿", "‍ ⁠"])
+@pytest.mark.parametrize("typed", ["\u200B\u200B", "\uFEFF", "\u200D \u2060"])
 def test_a_name_of_only_invisible_characters_is_refused(typed: str) -> None:
     with pytest.raises(name_rules.NameProblem, match="không nhìn thấy"):
         name_rules.person(typed)
@@ -79,7 +79,7 @@ def test_a_duplicate_of_another_person_is_refused_but_a_near_name_is_not() -> No
 
 def test_rename_refuses_invisible_long_reserved_and_duplicate(studio) -> None:
     paths, post = studio
-    for bad, part in (("​", "không nhìn thấy"), ("x" * 120, "tối đa 80"), ("Người kể", "tên máy dùng"), ("natasha", "Đã có “Natasha” trong sách")):
+    for bad, part in (("\u200B", "không nhìn thấy"), ("x" * 120, "tối đa 80"), ("Người kể", "tên máy dùng"), ("natasha", "Đã có “Natasha” trong sách")):
         status, answer = post("characters/rename", {"character": "LUCIEN", "name": bad})
         assert status == 400 and part in answer["error"], (bad, answer)
     assert names.shown(paths.root, "LUCIEN") in (None, "")
@@ -87,7 +87,7 @@ def test_rename_refuses_invisible_long_reserved_and_duplicate(studio) -> None:
 
 def test_rename_stores_nfc_and_without_invisible_characters(studio) -> None:
     paths, post = studio
-    status, answer = post("characters/rename", {"character": "LUCIEN", "name": unicodedata.normalize("NFD", "Lu​ciên")})
+    status, answer = post("characters/rename", {"character": "LUCIEN", "name": unicodedata.normalize("NFD", "Lu\u200Bciên")})
     assert status == 200, answer
     assert answer["name"] == unicodedata.normalize("NFC", "Luciên")
     assert names.shown(paths.root, "LUCIEN") == answer["name"]
@@ -102,11 +102,11 @@ def test_rename_to_its_own_name_or_empty_is_not_a_duplicate(studio) -> None:
 
 def test_a_new_person_goes_through_the_same_rules(studio) -> None:
     paths, post = studio
-    for bad, part in (("​", "không nhìn thấy"), ("Lucien", "Đã có “Lucien” trong sách"), ("Vai phụ không tên", "tên máy dùng"), ("y" * 90, "tối đa 80")):
+    for bad, part in (("\u200B", "không nhìn thấy"), ("Lucien", "Đã có “Lucien” trong sách"), ("Vai phụ không tên", "tên máy dùng"), ("y" * 90, "tối đa 80")):
         status, answer = post("speaker", {**_line(paths), "speaker": bad, "newGender": "male"})
         assert status == 400 and part in answer["error"], (bad, answer)
     assert not lo.read_overrides(paths.root).get("speakers")
-    status, answer = post("speaker", {**_line(paths), "speaker": "Ma​ria", "newGender": "female"})
+    status, answer = post("speaker", {**_line(paths), "speaker": "Ma\u200Bria", "newGender": "female"})
     assert status == 200, answer
     assert answer["speaker"] == "Maria"
     assert lo.read_overrides(paths.root)["speakers"]["c1s1"]["speaker"] == "Maria"
@@ -120,10 +120,10 @@ def test_an_existing_person_is_not_checked_as_a_new_name(studio) -> None:
 
 def test_a_reading_surface_is_cleaned_and_told_when_too_long(studio) -> None:
     paths, post = studio
-    status, answer = post("pronunciation", {"surface": "Lu​cien", "spokenForm": "Lu xi en"})
+    status, answer = post("pronunciation", {"surface": "Lu\u200Bcien", "spokenForm": "Lu xi en"})
     assert status == 200, answer
     assert answer["surface"] == "Lucien"
-    status, answer = post("pronunciation", {"surface": "​", "spokenForm": "a"})
+    status, answer = post("pronunciation", {"surface": "\u200B", "spokenForm": "a"})
     assert status == 400 and "không nhìn thấy" in answer["error"]
     status, answer = post("pronunciation", {"surface": "z" * 200, "spokenForm": "a"})
     assert status == 400 and "tối đa 80" in answer["error"]

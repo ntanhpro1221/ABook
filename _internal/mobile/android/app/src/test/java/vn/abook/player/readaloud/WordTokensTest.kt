@@ -65,7 +65,7 @@ class WordTokensTest {
     fun countsTokensTheWayTheWordsViewDoes() {
         assertEquals(5, WordTokens.count("Xin chào — các bạn."))
         assertEquals(0, WordTokens.count("   "))
-        assertEquals(2, WordTokens.count("a　b"))
+        assertEquals(2, WordTokens.count("a\u3000b"))
     }
 
     @Test

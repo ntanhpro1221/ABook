@@ -273,20 +273,20 @@ class BookWishesTest {
     @Test
     fun names_typed_by_the_listener_go_through_the_same_rules_as_the_computer() {
         // Người mới: ký tự vô hình, tên dành riêng, trùng người đã có, quá dài.
-        for (bad in listOf("​", "Người kể", "lucien", "y".repeat(90))) {
+        for (bad in listOf("\u200B", "Người kể", "lucien", "y".repeat(90))) {
             assertEquals(bad, 400, post("/speaker", line(lucien).put("speaker", bad).put("newGender", "male")).first)
         }
-        val cleaned = post("/speaker", line(lucien).put("speaker", "Ma​ria").put("newGender", "female"))
+        val cleaned = post("/speaker", line(lucien).put("speaker", "Ma\u200Bria").put("newGender", "female"))
         assertEquals(200, cleaned.first)
         assertEquals("Maria", (cleaned.second as JSONObject).getString("speaker"))
         // Đổi tên: trùng người khác, ký tự vô hình; rỗng là trở về tên gốc.
         assertEquals(400, post("/characters/rename", JSONObject().put("character", "HEIDI").put("name", "Lucien")).first)
-        assertEquals(400, post("/characters/rename", JSONObject().put("character", "HEIDI").put("name", "​")).first)
+        assertEquals(400, post("/characters/rename", JSONObject().put("character", "HEIDI").put("name", "\u200B")).first)
         assertEquals(200, post("/characters/rename", JSONObject().put("character", "HEIDI").put("name", "")).first)
         // Cách đọc: chữ cần đổi quá dài, ký tự vô hình.
         assertEquals(400, post("/pronunciation", JSONObject().put("surface", "z".repeat(200)).put("spokenForm", "da cờ")).first)
-        assertEquals(400, post("/pronunciation", JSONObject().put("surface", "Hailkes").put("spokenForm", "​")).first)
-        assertEquals(200, post("/pronunciation", JSONObject().put("surface", "Hail​kes").put("spokenForm", "Hên-khơ")).first)
+        assertEquals(400, post("/pronunciation", JSONObject().put("surface", "Hailkes").put("spokenForm", "\u200B")).first)
+        assertEquals(200, post("/pronunciation", JSONObject().put("surface", "Hail\u200Bkes").put("spokenForm", "Hên-khơ")).first)
         assertEquals("Hailkes", wishes().getJSONObject("pronunciations").getJSONObject("hailkes").getString("surface"))
     }
 }
