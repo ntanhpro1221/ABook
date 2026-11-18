@@ -31,6 +31,7 @@ import type { ListenBook } from "@/listen/model";
 import { brokenMusicNote, keptEditsTitle, otherTitleNote, workshopMergeNote } from "@/shared/editsKept";
 import { MissingLibrary } from "@/shared/MissingLibrary";
 import { MotionHashRouter } from "@/shared/MotionRouter";
+import { latestSave } from "@/shared/latestSave";
 import { withViewTransition } from "@/shared/motion";
 import { setLetterShortcuts } from "@/shared/letterShortcuts";
 import { configureFeedback } from "@/shared/feedback";
@@ -39,7 +40,8 @@ import { setExternalOpener } from "@/shared/openExternal";
 import { toastRemoved } from "@/shared/trashUndo";
 import { homePage, LISTEN_ONLY_EVENT, listenOnlyLine, listenOnlyOwner, peerPage } from "@/shared/peerStudio";
 import { watchUntilBack } from "@/listen/peerBack";
-import { api, ApiError, currentPeer, type AppInfo } from "@/studio/api";
+import { api, ApiError, currentPeer, type AppInfo, type Preferences } from "@/studio/api";
+import type { LastSleep } from "@/listen/sleep";
 import { pickFolder, useAppInfo, useLibrary, usePreferences } from "@/studio/data";
 import { LibraryMoveRecovery } from "./LibraryMoveRecovery";
 import { PICK_SOURCE } from "@/studio/pickSource";
@@ -337,17 +339,15 @@ function offerFold(client: QueryClient, id: string, edits: number) {
 function VolumeSaver() {
   const { volume } = usePlayer();
   const first = useRef(true);
+  const [saver] = useState(() => latestSave((value: number) => api("/api/preferences", { method: "PUT", body: { volume: value } })));
   useEffect(() => {
     if (first.current) {
       first.current = false;
       return;
     }
     if (volume <= 0) return;
-    const timer = window.setTimeout(() => {
-      void api("/api/preferences", { method: "PUT", body: { volume } }).catch(() => undefined);
-    }, 800);
-    return () => window.clearTimeout(timer);
-  }, [volume]);
+    void saver.save(volume);
+  }, [saver, volume]);
   return null;
 }
 
@@ -540,6 +540,14 @@ export function App() {
   const retry = useCallback(() => void refetch(), [refetch]);
   const { data: preferences, error: preferencesError, refetch: reloadPreferences } = usePreferences();
   const [voiceReady, setVoiceReady] = useState(false);
+  // Lần hẹn giờ cuối (chủ sách 17-11): nhớ qua các lần mở app, lần sau hộp hẹn giờ mở sẵn ở mốc này. Không lưu được thì vẫn dùng cho phiên này.
+  // Giữ nút +/- đổi số liên tục: gom như âm lượng, bản máy chủ trả về chỉ áp khi không còn lần lưu mới hơn (soát sleeplast lỗi 1).
+  const client = useQueryClient();
+  const [lastSleepSaver] = useState(() => latestSave(
+    (lastSleep: LastSleep) => api<Preferences>("/api/preferences", { method: "PUT", body: { lastSleep } }),
+    { apply: (saved) => client.setQueryData(["preferences"], saved) },
+  ));
+  const saveLastSleep = useCallback((lastSleep: LastSleep) => lastSleepSaver.save(lastSleep), [lastSleepSaver]);
   useEffect(() => {
     if (!preferences || info?.remote) return;
     restoreDefaultVoice(preferences.readAloudVoice ?? "");
@@ -594,6 +602,8 @@ export function App() {
           extendMinutes={preferences?.sleepExtendMinutes ?? info.sleepExtendMinutes}
           systemIdleReader={!info.remote && !currentPeer() ? readLocalSystemIdleMs : undefined}
           sleepSchedule={preferences ? preferences.sleepSchedule : info.sleepSchedule}
+          lastSleep={preferences ? preferences.lastSleep : info.lastSleep}
+          onLastSleep={info.remote ? undefined : saveLastSleep}
         >
           <ClipBridge>
             <MotionHashRouter>

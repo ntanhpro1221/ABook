@@ -216,7 +216,7 @@ class PlayerWidget : AppWidgetProvider() {
                         ACTION_BACK -> Playback.skip(-Playback.SKIP_SECONDS.toDouble())
                         ACTION_FORWARD -> Playback.skip(Playback.SKIP_SECONDS.toDouble())
                         ACTION_SLEEP -> if (Playback.bookId.isNotEmpty()) {
-                            if (!hadTimer) SleepTimer.setMinutes(SleepTimer.lastMinutes) else { SleepTimer.cancel(); Feedback.play("toggle") }
+                            if (!hadTimer) SleepTimer.restartLast() else { SleepTimer.cancel(); Feedback.play("toggle") }
                         }
                     }
                 }

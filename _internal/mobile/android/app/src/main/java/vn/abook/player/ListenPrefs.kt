@@ -11,7 +11,8 @@ import java.io.File
  * Tuỳ chọn nghe mà phần Kotlin cần NGAY khi tiến trình dậy, trước cả khi có giao diện: nút tai nghe, tự lùi, lắc / úp máy, lịch đêm, số phút "nghe thêm", mờ dần, thao tác thì hẹn lại.
  * Giao diện đẩy xuống mỗi lần mở app ([apply]); tiến trình khởi động lại từ tai nghe / widget / Android Auto (không có giao diện)
  * trước đây quay về mặc định (soát a77 #6). Nay mỗi lần giao diện đẩy xuống, các trường ấy được ghi vào `listen-prefs.json` ở kho native và nạp lại ở [load].
- * Cùng file giữ hẹn giờ ngủ đang chạy (`timer`, [SleepTimer.persist]): lựa chọn được giữ, khôi phục đủ một lượt và đứng chờ phát.
+ * Cùng file giữ hẹn giờ ngủ đang chạy (`timer`, [SleepTimer.persist]): lựa chọn được giữ, khôi phục đủ một lượt và đứng chờ phát; và lần hẹn cuối người nghe
+ * tự đặt (`lastSleep`, [saveLastSleep]): mốc mở sẵn của tấm Hẹn giờ.
  */
 object ListenPrefs {
     private const val FILE = "listen-prefs.json"
@@ -188,6 +189,13 @@ object ListenPrefs {
         return all
     }
 
+    /** Lần hẹn giờ cuối người nghe tự đặt ([SleepTimer.last]): khoá `lastSleep` của cùng file, cùng luồng ghi nền - lần mở sau tấm Hẹn giờ mở sẵn ở đó. */
+    fun saveLastSleep(choice: LastSleep) {
+        val target = file()
+        val snapshot = choice.toJson()
+        DiskWrites.post("ABookPrefs") { update(target) { stored -> stored.put("lastSleep", snapshot) } }
+    }
+
     /** Đọc - sửa - ghi cả file dưới khoá riêng: hẹn giờ (luồng ghi nền) và tuỳ chọn ([remember]) không ghi đè phần của nhau. */
     @Synchronized
     private fun update(target: File, change: (JSONObject) -> Unit) {
@@ -215,6 +223,8 @@ object ListenPrefs {
             timers = stored?.optJSONObject("timers") ?: JSONObject()
         }
         if (stored != null) apply(stored, startup = true)
+        // Hỏng / ngoài miền / chưa có: như chưa từng đặt (30 phút).
+        SleepTimer.last = LastSleep.parse(stored?.opt("lastSleep")) ?: LastSleep()
         SleepTimer.restore(stored?.optJSONObject("timer"), now)
     }
 }

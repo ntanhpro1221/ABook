@@ -3,49 +3,49 @@
     "id": "f22ab217f208719aae55",
     "kind": "pending",
     "path": "ui/src/desktop/App.tsx",
-    "line": 180,
+    "line": 182,
     "statement": "const remove = async () => {",
     "occurrence": 1,
-    "source_sha256": "4379220d2c2a6c2585209d4995279fc31b240bd2241c1bfbdaf3fc5e4e46b407",
+    "source_sha256": "9e1cd4233499599dc90bd0cdcca75c671bfdfbc5003b7e6b9322c8e169c871ee",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; busy, loading, setBusy, trash_pending",
-    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
+    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Combined-source review (merge174 sleeplast): both sides' changes to this file keep this statement and its guard unchanged."
   },
   {
     "id": "4be2c54041e9d2c14748",
     "kind": "destructive",
     "path": "ui/src/desktop/App.tsx",
-    "line": 186,
+    "line": 188,
     "statement": "const result = await api<{ ok: boolean; undo?: string }>(`/api/listen/books/${book.id}`, { method: \"DELETE\" });",
     "occurrence": 1,
-    "source_sha256": "4379220d2c2a6c2585209d4995279fc31b240bd2241c1bfbdaf3fc5e4e46b407",
+    "source_sha256": "9e1cd4233499599dc90bd0cdcca75c671bfdfbc5003b7e6b9322c8e169c871ee",
     "disposition": "confirmation",
     "guard": "Delete dialog / StudioConfirm or DeleteBookPage; trashUndo / UndoDelete after acceptance",
-    "reason": "Book/project deletion is explicitly confirmed and the existing recoverable trash token remains available. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
+    "reason": "Book/project deletion is explicitly confirmed and the existing recoverable trash token remains available. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Combined-source review (merge174 sleeplast): both sides' changes to this file keep this statement and its guard unchanged."
   },
   {
     "id": "5df00973536e1af29d1a",
     "kind": "destructive",
     "path": "ui/src/desktop/App.tsx",
-    "line": 206,
+    "line": 208,
     "statement": "<Button variant=\"danger\" icon={Trash2} loading={busy} onClick={() => remove()}>{S.s_xoa_khoi_thu_vien_79dbd32b}</Button>",
     "occurrence": 1,
-    "source_sha256": "4379220d2c2a6c2585209d4995279fc31b240bd2241c1bfbdaf3fc5e4e46b407",
+    "source_sha256": "9e1cd4233499599dc90bd0cdcca75c671bfdfbc5003b7e6b9322c8e169c871ee",
     "disposition": "confirmation",
     "guard": "Delete dialog / StudioConfirm or DeleteBookPage; trashUndo / UndoDelete after acceptance",
-    "reason": "Book/project deletion is explicitly confirmed and the existing recoverable trash token remains available. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
+    "reason": "Book/project deletion is explicitly confirmed and the existing recoverable trash token remains available. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Combined-source review (merge174 sleeplast): both sides' changes to this file keep this statement and its guard unchanged."
   },
   {
     "id": "6a3a615843c127818cd3",
     "kind": "destructive",
     "path": "ui/src/desktop/App.tsx",
-    "line": 211,
+    "line": 213,
     "statement": "description={book ? removeAsk(book) : \"\"}",
     "occurrence": 1,
-    "source_sha256": "4379220d2c2a6c2585209d4995279fc31b240bd2241c1bfbdaf3fc5e4e46b407",
+    "source_sha256": "9e1cd4233499599dc90bd0cdcca75c671bfdfbc5003b7e6b9322c8e169c871ee",
     "disposition": "confirmation",
     "guard": "Delete dialog / StudioConfirm or DeleteBookPage; trashUndo / UndoDelete after acceptance",
-    "reason": "Book/project deletion is explicitly confirmed and the existing recoverable trash token remains available. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
+    "reason": "Book/project deletion is explicitly confirmed and the existing recoverable trash token remains available. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Combined-source review (merge174 sleeplast): both sides' changes to this file keep this statement and its guard unchanged."
   },
   {
     "id": "f2521f95af40a56b9b6c",
@@ -54,10 +54,10 @@
     "line": 363,
     "statement": "const replay = async () => {",
     "occurrence": 1,
-    "source_sha256": "4379220d2c2a6c2585209d4995279fc31b240bd2241c1bfbdaf3fc5e4e46b407",
+    "source_sha256": "9e1cd4233499599dc90bd0cdcca75c671bfdfbc5003b7e6b9322c8e169c871ee",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; busy, loading, setBusy, trash_pending",
-    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
+    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Combined-source review (merge174 sleeplast): both sides' changes to this file keep this statement and its guard unchanged."
   },
   {
     "id": "7402295cdb285d6a7a23",
@@ -66,10 +66,10 @@
     "line": 413,
     "statement": "async (path: string, session?: ReadSession) => {",
     "occurrence": 1,
-    "source_sha256": "4379220d2c2a6c2585209d4995279fc31b240bd2241c1bfbdaf3fc5e4e46b407",
+    "source_sha256": "9e1cd4233499599dc90bd0cdcca75c671bfdfbc5003b7e6b9322c8e169c871ee",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; busy, loading, setBusy, trash_pending",
-    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
+    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Combined-source review (merge174 sleeplast): both sides' changes to this file keep this statement and its guard unchanged."
   },
   {
     "id": "bf19a790cd9bf0dc7ac8",
@@ -78,10 +78,10 @@
     "line": 434,
     "statement": "const run = async () => {",
     "occurrence": 1,
-    "source_sha256": "4379220d2c2a6c2585209d4995279fc31b240bd2241c1bfbdaf3fc5e4e46b407",
+    "source_sha256": "9e1cd4233499599dc90bd0cdcca75c671bfdfbc5003b7e6b9322c8e169c871ee",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; busy, loading, setBusy, trash_pending",
-    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
+    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Combined-source review (merge174 sleeplast): both sides' changes to this file keep this statement and its guard unchanged."
   },
   {
     "id": "7a5c08271e7435852a97",
@@ -1719,61 +1719,61 @@
     "id": "5e865e38076633644638",
     "kind": "pending",
     "path": "ui/src/listen/player.tsx",
-    "line": 409,
+    "line": 435,
     "statement": "async (spot, keepalive) => {",
     "occurrence": 1,
-    "source_sha256": "c59f2a27f3c41c42ce118d6dee3d02981bed1de4f282df5e445549393ed4caa0",
+    "source_sha256": "193e2f96f6caf45a04a37a8ef9c43ad6eadfee918d162891a877394279c0dd46",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; ProgressOutbox, beginProgress, busy, musicLoading, pending, preparingBookId, progressOutbox, saveProgress, setMusicLoading, setPreparingBookId",
-    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. 0.4.173 fixes (sleep stopped line, activity-off extend, night continue, word reading row, per-book timers) leave this statement and its guard unchanged."
+    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. 0.4.173 fixes (sleep stopped line, activity-off extend, night continue, word reading row, per-book timers) leave this statement and its guard unchanged. Combined-source review (merge174 sleeplast): both sides' changes to this file keep this statement and its guard unchanged."
   },
   {
     "id": "6f5c73f49aab503968b4",
     "kind": "pending",
     "path": "ui/src/listen/player.tsx",
-    "line": 482,
+    "line": 508,
     "statement": "after: async () => {",
     "occurrence": 1,
-    "source_sha256": "c59f2a27f3c41c42ce118d6dee3d02981bed1de4f282df5e445549393ed4caa0",
+    "source_sha256": "193e2f96f6caf45a04a37a8ef9c43ad6eadfee918d162891a877394279c0dd46",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; ProgressOutbox, beginProgress, busy, musicLoading, pending, preparingBookId, progressOutbox, saveProgress, setMusicLoading, setPreparingBookId",
-    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. 0.4.173 fixes (sleep stopped line, activity-off extend, night continue, word reading row, per-book timers) leave this statement and its guard unchanged."
+    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. 0.4.173 fixes (sleep stopped line, activity-off extend, night continue, word reading row, per-book timers) leave this statement and its guard unchanged. Combined-source review (merge174 sleeplast): both sides' changes to this file keep this statement and its guard unchanged."
   },
   {
     "id": "a80286c0ae4f2cf2ecb1",
     "kind": "destructive",
     "path": "ui/src/listen/player.tsx",
-    "line": 1078,
+    "line": 1103,
     "statement": "forgetVoiceTrouble(); // S.s_thu_lai_c58d068c gọi lại dịch vụ thật, không nhắc lại lỗi cũ của giọng trực tuyến",
     "occurrence": 1,
-    "source_sha256": "c59f2a27f3c41c42ce118d6dee3d02981bed1de4f282df5e445549393ed4caa0",
+    "source_sha256": "193e2f96f6caf45a04a37a8ef9c43ad6eadfee918d162891a877394279c0dd46",
     "disposition": "internal",
     "guard": "Object URL / voice discovery / retry-failure or in-flight request cache",
-    "reason": "The action releases an object URL or cached discovery/failure/request state, not a saved artifact or credential. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. 0.4.173 fixes (sleep stopped line, activity-off extend, night continue, word reading row, per-book timers) leave this statement and its guard unchanged."
+    "reason": "The action releases an object URL or cached discovery/failure/request state, not a saved artifact or credential. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. 0.4.173 fixes (sleep stopped line, activity-off extend, night continue, word reading row, per-book timers) leave this statement and its guard unchanged. Combined-source review (merge174 sleeplast): both sides' changes to this file keep this statement and its guard unchanged."
   },
   {
     "id": "13f6ad88763cb151dc60",
     "kind": "pending",
     "path": "ui/src/listen/player.tsx",
-    "line": 1445,
+    "line": 1481,
     "statement": "const switchRecord = useCallback<PlayerActions[\"switchRecord\"]>(async (bookId, change, startOver = false) => {",
     "occurrence": 1,
-    "source_sha256": "c59f2a27f3c41c42ce118d6dee3d02981bed1de4f282df5e445549393ed4caa0",
+    "source_sha256": "193e2f96f6caf45a04a37a8ef9c43ad6eadfee918d162891a877394279c0dd46",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; ProgressOutbox, beginProgress, busy, musicLoading, pending, preparingBookId, progressOutbox, saveProgress, setMusicLoading, setPreparingBookId",
-    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. 0.4.173 fixes (sleep stopped line, activity-off extend, night continue, word reading row, per-book timers) leave this statement and its guard unchanged."
+    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. 0.4.173 fixes (sleep stopped line, activity-off extend, night continue, word reading row, per-book timers) leave this statement and its guard unchanged. Combined-source review (merge174 sleeplast): both sides' changes to this file keep this statement and its guard unchanged."
   },
   {
     "id": "4f5f8de8e1629e9ebb7a",
     "kind": "pending",
     "path": "ui/src/listen/player.tsx",
-    "line": 1837,
+    "line": 1873,
     "statement": "const check = async () => {",
     "occurrence": 1,
-    "source_sha256": "c59f2a27f3c41c42ce118d6dee3d02981bed1de4f282df5e445549393ed4caa0",
+    "source_sha256": "193e2f96f6caf45a04a37a8ef9c43ad6eadfee918d162891a877394279c0dd46",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; ProgressOutbox, beginProgress, busy, musicLoading, pending, preparingBookId, progressOutbox, saveProgress, setMusicLoading, setPreparingBookId",
-    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. 0.4.173 fixes (sleep stopped line, activity-off extend, night continue, word reading row, per-book timers) leave this statement and its guard unchanged."
+    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. 0.4.173 fixes (sleep stopped line, activity-off extend, night continue, word reading row, per-book timers) leave this statement and its guard unchanged. Combined-source review (merge174 sleeplast): both sides' changes to this file keep this statement and its guard unchanged."
   },
   {
     "id": "83613ccbd44e125ebf71",
@@ -1782,10 +1782,10 @@
     "line": 808,
     "statement": "onClick={() => (playing ? sample.stop() : void sample.play(voice.id))}",
     "occurrence": 1,
-    "source_sha256": "09901724daec902e0a614613c66c35266cd1f76a349d877db066a11f777408ea",
+    "source_sha256": "db2ab1b9c41c8ae4447d7cf6feae1c45f5d70f4cda7ff905d267ebda4621d052",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; BookProgressLine, CompactProgress, PendingIndicator, bookProgressText, busy, busyClick, isLoading, isPending, levelBusy, loading, musicLoading, pending",
-    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Gate repair: reviewed identity-key motion, explicit layout, token spacing or semantic navigation changes; existing guard retained. Combined-source review (merge174 lintfix): both sides' changes to this file keep this statement and its guard unchanged. 0.4.173 fixes (sleep stopped line, activity-off extend, night continue, word reading row, per-book timers) leave this statement and its guard unchanged. Combined-source review (merge174 integ173): both sides' changes to this file keep this statement and its guard unchanged. Combined-source review (tapthru 18-11 round 4): only the Popover import moved to @/shared/Popover (outside taps only close); this action and its guard are unchanged. Combined-source review (merge174 tapthru): both sides' changes to this file keep this statement and its guard unchanged. Re-pinned for left174: the edit only moves book/user text off truncate/line-clamp onto OneLineFit or wrapping; this statement and its guard are unchanged. Combined-source review (merge174 left174): both sides' changes to this file keep this statement and its guard unchanged."
+    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Gate repair: reviewed identity-key motion, explicit layout, token spacing or semantic navigation changes; existing guard retained. Combined-source review (merge174 lintfix): both sides' changes to this file keep this statement and its guard unchanged. 0.4.173 fixes (sleep stopped line, activity-off extend, night continue, word reading row, per-book timers) leave this statement and its guard unchanged. Combined-source review (merge174 integ173): both sides' changes to this file keep this statement and its guard unchanged. Combined-source review (tapthru 18-11 round 4): only the Popover import moved to @/shared/Popover (outside taps only close); this action and its guard are unchanged. Combined-source review (merge174 tapthru): both sides' changes to this file keep this statement and its guard unchanged. Re-pinned for left174: the edit only moves book/user text off truncate/line-clamp onto OneLineFit or wrapping; this statement and its guard are unchanged. Combined-source review (merge174 left174): both sides' changes to this file keep this statement and its guard unchanged. Combined-source review (merge174 sleeplast): both sides' changes to this file keep this statement and its guard unchanged."
   },
   {
     "id": "f014459f7e3244b9fbb4",
@@ -1794,10 +1794,10 @@
     "line": 891,
     "statement": "const start = async () => {",
     "occurrence": 1,
-    "source_sha256": "09901724daec902e0a614613c66c35266cd1f76a349d877db066a11f777408ea",
+    "source_sha256": "db2ab1b9c41c8ae4447d7cf6feae1c45f5d70f4cda7ff905d267ebda4621d052",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; BookProgressLine, CompactProgress, PendingIndicator, bookProgressText, busy, busyClick, isLoading, isPending, levelBusy, loading, musicLoading, pending",
-    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Gate repair: reviewed identity-key motion, explicit layout, token spacing or semantic navigation changes; existing guard retained. Combined-source review (merge174 lintfix): both sides' changes to this file keep this statement and its guard unchanged. 0.4.173 fixes (sleep stopped line, activity-off extend, night continue, word reading row, per-book timers) leave this statement and its guard unchanged. Combined-source review (merge174 integ173): both sides' changes to this file keep this statement and its guard unchanged. Combined-source review (tapthru 18-11 round 4): only the Popover import moved to @/shared/Popover (outside taps only close); this action and its guard are unchanged. Combined-source review (merge174 tapthru): both sides' changes to this file keep this statement and its guard unchanged. Re-pinned for left174: the edit only moves book/user text off truncate/line-clamp onto OneLineFit or wrapping; this statement and its guard are unchanged. Combined-source review (merge174 left174): both sides' changes to this file keep this statement and its guard unchanged."
+    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Gate repair: reviewed identity-key motion, explicit layout, token spacing or semantic navigation changes; existing guard retained. Combined-source review (merge174 lintfix): both sides' changes to this file keep this statement and its guard unchanged. 0.4.173 fixes (sleep stopped line, activity-off extend, night continue, word reading row, per-book timers) leave this statement and its guard unchanged. Combined-source review (merge174 integ173): both sides' changes to this file keep this statement and its guard unchanged. Combined-source review (tapthru 18-11 round 4): only the Popover import moved to @/shared/Popover (outside taps only close); this action and its guard are unchanged. Combined-source review (merge174 tapthru): both sides' changes to this file keep this statement and its guard unchanged. Re-pinned for left174: the edit only moves book/user text off truncate/line-clamp onto OneLineFit or wrapping; this statement and its guard are unchanged. Combined-source review (merge174 left174): both sides' changes to this file keep this statement and its guard unchanged. Combined-source review (merge174 sleeplast): both sides' changes to this file keep this statement and its guard unchanged."
   },
   {
     "id": "3a79393defa6f77f9bcb",
@@ -1806,10 +1806,10 @@
     "line": 919,
     "statement": "<button type=\"button\" data-focus-next className=\"touch-hit -ml-2 rounded-control px-2 py-1 font-medium text-fg hover:bg-hover\" onClick={() => void source.readAloudPrepareCancel?.().then(settle)}>{S.s_dung_lam_truoc_632af923}</button>",
     "occurrence": 1,
-    "source_sha256": "09901724daec902e0a614613c66c35266cd1f76a349d877db066a11f777408ea",
+    "source_sha256": "db2ab1b9c41c8ae4447d7cf6feae1c45f5d70f4cda7ff905d267ebda4621d052",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; BookProgressLine, CompactProgress, PendingIndicator, bookProgressText, busy, busyClick, isLoading, isPending, levelBusy, loading, musicLoading, pending",
-    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Gate repair: reviewed identity-key motion, explicit layout, token spacing or semantic navigation changes; existing guard retained. Combined-source review (merge174 lintfix): both sides' changes to this file keep this statement and its guard unchanged. 0.4.173 fixes (sleep stopped line, activity-off extend, night continue, word reading row, per-book timers) leave this statement and its guard unchanged. Combined-source review (merge174 integ173): both sides' changes to this file keep this statement and its guard unchanged. Combined-source review (tapthru 18-11 round 4): only the Popover import moved to @/shared/Popover (outside taps only close); this action and its guard are unchanged. Combined-source review (merge174 tapthru): both sides' changes to this file keep this statement and its guard unchanged. Re-pinned for left174: the edit only moves book/user text off truncate/line-clamp onto OneLineFit or wrapping; this statement and its guard are unchanged. Combined-source review (merge174 left174): both sides' changes to this file keep this statement and its guard unchanged."
+    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Gate repair: reviewed identity-key motion, explicit layout, token spacing or semantic navigation changes; existing guard retained. Combined-source review (merge174 lintfix): both sides' changes to this file keep this statement and its guard unchanged. 0.4.173 fixes (sleep stopped line, activity-off extend, night continue, word reading row, per-book timers) leave this statement and its guard unchanged. Combined-source review (merge174 integ173): both sides' changes to this file keep this statement and its guard unchanged. Combined-source review (tapthru 18-11 round 4): only the Popover import moved to @/shared/Popover (outside taps only close); this action and its guard are unchanged. Combined-source review (merge174 tapthru): both sides' changes to this file keep this statement and its guard unchanged. Re-pinned for left174: the edit only moves book/user text off truncate/line-clamp onto OneLineFit or wrapping; this statement and its guard are unchanged. Combined-source review (merge174 left174): both sides' changes to this file keep this statement and its guard unchanged. Combined-source review (merge174 sleeplast): both sides' changes to this file keep this statement and its guard unchanged."
   },
   {
     "id": "b0dcdbfe651ac29eeb28",
@@ -1818,10 +1818,10 @@
     "line": 922,
     "statement": "<button type=\"button\" data-focus-next aria-disabled={busy || undefined} aria-busy={busy || undefined} className=\"touch-hit -ml-2 rounded-control px-2 py-1 font-medium text-accent-text hover:bg-hover aria-disabled:opacity-45\" onClick={busyClick(busy, () => void start())}>",
     "occurrence": 1,
-    "source_sha256": "09901724daec902e0a614613c66c35266cd1f76a349d877db066a11f777408ea",
+    "source_sha256": "db2ab1b9c41c8ae4447d7cf6feae1c45f5d70f4cda7ff905d267ebda4621d052",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; BookProgressLine, CompactProgress, PendingIndicator, bookProgressText, busy, busyClick, isLoading, isPending, levelBusy, loading, musicLoading, pending",
-    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Gate repair: reviewed identity-key motion, explicit layout, token spacing or semantic navigation changes; existing guard retained. Combined-source review (merge174 lintfix): both sides' changes to this file keep this statement and its guard unchanged. 0.4.173 fixes (sleep stopped line, activity-off extend, night continue, word reading row, per-book timers) leave this statement and its guard unchanged. Combined-source review (merge174 integ173): both sides' changes to this file keep this statement and its guard unchanged. Combined-source review (tapthru 18-11 round 4): only the Popover import moved to @/shared/Popover (outside taps only close); this action and its guard are unchanged. Combined-source review (merge174 tapthru): both sides' changes to this file keep this statement and its guard unchanged. Re-pinned for left174: the edit only moves book/user text off truncate/line-clamp onto OneLineFit or wrapping; this statement and its guard are unchanged. Combined-source review (merge174 left174): both sides' changes to this file keep this statement and its guard unchanged."
+    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Gate repair: reviewed identity-key motion, explicit layout, token spacing or semantic navigation changes; existing guard retained. Combined-source review (merge174 lintfix): both sides' changes to this file keep this statement and its guard unchanged. 0.4.173 fixes (sleep stopped line, activity-off extend, night continue, word reading row, per-book timers) leave this statement and its guard unchanged. Combined-source review (merge174 integ173): both sides' changes to this file keep this statement and its guard unchanged. Combined-source review (tapthru 18-11 round 4): only the Popover import moved to @/shared/Popover (outside taps only close); this action and its guard are unchanged. Combined-source review (merge174 tapthru): both sides' changes to this file keep this statement and its guard unchanged. Re-pinned for left174: the edit only moves book/user text off truncate/line-clamp onto OneLineFit or wrapping; this statement and its guard are unchanged. Combined-source review (merge174 left174): both sides' changes to this file keep this statement and its guard unchanged. Combined-source review (merge174 sleeplast): both sides' changes to this file keep this statement and its guard unchanged."
   },
   {
     "id": "5d21139a7aa11bae8a5b",
@@ -1830,34 +1830,34 @@
     "line": 950,
     "statement": "const clear = async () => {",
     "occurrence": 1,
-    "source_sha256": "09901724daec902e0a614613c66c35266cd1f76a349d877db066a11f777408ea",
+    "source_sha256": "db2ab1b9c41c8ae4447d7cf6feae1c45f5d70f4cda7ff905d267ebda4621d052",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; BookProgressLine, CompactProgress, PendingIndicator, bookProgressText, busy, busyClick, isLoading, isPending, levelBusy, loading, musicLoading, pending",
-    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Gate repair: reviewed identity-key motion, explicit layout, token spacing or semantic navigation changes; existing guard retained. Combined-source review (merge174 lintfix): both sides' changes to this file keep this statement and its guard unchanged. 0.4.173 fixes (sleep stopped line, activity-off extend, night continue, word reading row, per-book timers) leave this statement and its guard unchanged. Combined-source review (merge174 integ173): both sides' changes to this file keep this statement and its guard unchanged. Combined-source review (tapthru 18-11 round 4): only the Popover import moved to @/shared/Popover (outside taps only close); this action and its guard are unchanged. Combined-source review (merge174 tapthru): both sides' changes to this file keep this statement and its guard unchanged. Re-pinned for left174: the edit only moves book/user text off truncate/line-clamp onto OneLineFit or wrapping; this statement and its guard are unchanged. Combined-source review (merge174 left174): both sides' changes to this file keep this statement and its guard unchanged."
+    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Gate repair: reviewed identity-key motion, explicit layout, token spacing or semantic navigation changes; existing guard retained. Combined-source review (merge174 lintfix): both sides' changes to this file keep this statement and its guard unchanged. 0.4.173 fixes (sleep stopped line, activity-off extend, night continue, word reading row, per-book timers) leave this statement and its guard unchanged. Combined-source review (merge174 integ173): both sides' changes to this file keep this statement and its guard unchanged. Combined-source review (tapthru 18-11 round 4): only the Popover import moved to @/shared/Popover (outside taps only close); this action and its guard are unchanged. Combined-source review (merge174 tapthru): both sides' changes to this file keep this statement and its guard unchanged. Re-pinned for left174: the edit only moves book/user text off truncate/line-clamp onto OneLineFit or wrapping; this statement and its guard are unchanged. Combined-source review (merge174 left174): both sides' changes to this file keep this statement and its guard unchanged. Combined-source review (merge174 sleeplast): both sides' changes to this file keep this statement and its guard unchanged."
   },
   {
     "id": "d91727560f169d121388",
     "kind": "pending",
     "path": "ui/src/listen/PlayerViews.tsx",
-    "line": 1523,
+    "line": 1528,
     "statement": "return switchRecord(bookId, async () => undefined).then(() =>",
     "occurrence": 1,
-    "source_sha256": "09901724daec902e0a614613c66c35266cd1f76a349d877db066a11f777408ea",
+    "source_sha256": "db2ab1b9c41c8ae4447d7cf6feae1c45f5d70f4cda7ff905d267ebda4621d052",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; BookProgressLine, CompactProgress, PendingIndicator, bookProgressText, busy, busyClick, isLoading, isPending, levelBusy, loading, musicLoading, pending",
-    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Gate repair: reviewed identity-key motion, explicit layout, token spacing or semantic navigation changes; existing guard retained. Combined-source review (merge174 lintfix): both sides' changes to this file keep this statement and its guard unchanged. 0.4.173 fixes (sleep stopped line, activity-off extend, night continue, word reading row, per-book timers) leave this statement and its guard unchanged. Combined-source review (merge174 integ173): both sides' changes to this file keep this statement and its guard unchanged. Combined-source review (tapthru 18-11 round 4): only the Popover import moved to @/shared/Popover (outside taps only close); this action and its guard are unchanged. Combined-source review (merge174 tapthru): both sides' changes to this file keep this statement and its guard unchanged. Re-pinned for left174: the edit only moves book/user text off truncate/line-clamp onto OneLineFit or wrapping; this statement and its guard are unchanged. Combined-source review (merge174 left174): both sides' changes to this file keep this statement and its guard unchanged."
+    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Gate repair: reviewed identity-key motion, explicit layout, token spacing or semantic navigation changes; existing guard retained. Combined-source review (merge174 lintfix): both sides' changes to this file keep this statement and its guard unchanged. 0.4.173 fixes (sleep stopped line, activity-off extend, night continue, word reading row, per-book timers) leave this statement and its guard unchanged. Combined-source review (merge174 integ173): both sides' changes to this file keep this statement and its guard unchanged. Combined-source review (tapthru 18-11 round 4): only the Popover import moved to @/shared/Popover (outside taps only close); this action and its guard are unchanged. Combined-source review (merge174 tapthru): both sides' changes to this file keep this statement and its guard unchanged. Re-pinned for left174: the edit only moves book/user text off truncate/line-clamp onto OneLineFit or wrapping; this statement and its guard are unchanged. Combined-source review (merge174 left174): both sides' changes to this file keep this statement and its guard unchanged. Combined-source review (merge174 sleeplast): both sides' changes to this file keep this statement and its guard unchanged."
   },
   {
     "id": "048072df29fe02577ac4",
     "kind": "pending",
     "path": "ui/src/listen/PlayerViews.tsx",
-    "line": 2058,
+    "line": 2063,
     "statement": "function PlayerModeSwitch({ reading, onSelect }: { reading: boolean; onSelect: (reading: boolean) => void }) {",
     "occurrence": 1,
-    "source_sha256": "09901724daec902e0a614613c66c35266cd1f76a349d877db066a11f777408ea",
+    "source_sha256": "db2ab1b9c41c8ae4447d7cf6feae1c45f5d70f4cda7ff905d267ebda4621d052",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; BookProgressLine, CompactProgress, PendingIndicator, bookProgressText, busy, busyClick, isLoading, isPending, levelBusy, loading, musicLoading, pending",
-    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Gate repair: reviewed identity-key motion, explicit layout, token spacing or semantic navigation changes; existing guard retained. Combined-source review (merge174 lintfix): both sides' changes to this file keep this statement and its guard unchanged. 0.4.173 fixes (sleep stopped line, activity-off extend, night continue, word reading row, per-book timers) leave this statement and its guard unchanged. Combined-source review (merge174 integ173): both sides' changes to this file keep this statement and its guard unchanged. Combined-source review (tapthru 18-11 round 4): only the Popover import moved to @/shared/Popover (outside taps only close); this action and its guard are unchanged. Combined-source review (merge174 tapthru): both sides' changes to this file keep this statement and its guard unchanged. Re-pinned for left174: the edit only moves book/user text off truncate/line-clamp onto OneLineFit or wrapping; this statement and its guard are unchanged. Combined-source review (merge174 left174): both sides' changes to this file keep this statement and its guard unchanged."
+    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Gate repair: reviewed identity-key motion, explicit layout, token spacing or semantic navigation changes; existing guard retained. Combined-source review (merge174 lintfix): both sides' changes to this file keep this statement and its guard unchanged. 0.4.173 fixes (sleep stopped line, activity-off extend, night continue, word reading row, per-book timers) leave this statement and its guard unchanged. Combined-source review (merge174 integ173): both sides' changes to this file keep this statement and its guard unchanged. Combined-source review (tapthru 18-11 round 4): only the Popover import moved to @/shared/Popover (outside taps only close); this action and its guard are unchanged. Combined-source review (merge174 tapthru): both sides' changes to this file keep this statement and its guard unchanged. Re-pinned for left174: the edit only moves book/user text off truncate/line-clamp onto OneLineFit or wrapping; this statement and its guard are unchanged. Combined-source review (merge174 left174): both sides' changes to this file keep this statement and its guard unchanged. Combined-source review (merge174 sleeplast): both sides' changes to this file keep this statement and its guard unchanged."
   },
   {
     "id": "bf54d84f837e1fca0fd4",
@@ -3975,61 +3975,61 @@
     "id": "ed8d775b3c7ca701597e",
     "kind": "pending",
     "path": "ui/src/studio/api.ts",
-    "line": 446,
+    "line": 450,
     "statement": "async function call<T>(path: string, init: ApiInit | undefined, read: (response: Response, alive: () => void) => Promise<T>): Promise<T> {",
     "occurrence": 1,
-    "source_sha256": "c295193205549c3364d0c23cb8da9fa4aa5db22c95eaf5fde872f2cc6c8315e9",
+    "source_sha256": "55d1d4a8ba9f0ef81b7ff63ad354f30111255da24d22c2ec3156f0a51a74c37f",
     "disposition": "internal",
     "guard": "Async interface/helper boundary; concrete activation inventoried separately",
-    "reason": "This signature supplies work to a model or component; declaring it starts no user operation. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Combined-source review (merge174 castview): both sides' changes to this file keep this statement and its guard unchanged."
+    "reason": "This signature supplies work to a model or component; declaring it starts no user operation. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Combined-source review (merge174 castview): both sides' changes to this file keep this statement and its guard unchanged. Combined-source review (merge174 sleeplast): both sides' changes to this file keep this statement and its guard unchanged."
   },
   {
     "id": "98265de628c83f7bf565",
     "kind": "pending",
     "path": "ui/src/studio/api.ts",
-    "line": 470,
+    "line": 474,
     "statement": "export async function api<T>(path: string, init?: ApiInit): Promise<T> {",
     "occurrence": 1,
-    "source_sha256": "c295193205549c3364d0c23cb8da9fa4aa5db22c95eaf5fde872f2cc6c8315e9",
+    "source_sha256": "55d1d4a8ba9f0ef81b7ff63ad354f30111255da24d22c2ec3156f0a51a74c37f",
     "disposition": "internal",
     "guard": "Async interface/helper boundary; concrete activation inventoried separately",
-    "reason": "This signature supplies work to a model or component; declaring it starts no user operation. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Combined-source review (merge174 castview): both sides' changes to this file keep this statement and its guard unchanged."
+    "reason": "This signature supplies work to a model or component; declaring it starts no user operation. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Combined-source review (merge174 castview): both sides' changes to this file keep this statement and its guard unchanged. Combined-source review (merge174 sleeplast): both sides' changes to this file keep this statement and its guard unchanged."
   },
   {
     "id": "4841cbe51a45a0fa247d",
     "kind": "pending",
     "path": "ui/src/studio/api.ts",
-    "line": 472,
+    "line": 476,
     "statement": "return call(path, init, async (response, alive) => settle<T>(response, await readText(response, alive)));",
     "occurrence": 1,
-    "source_sha256": "c295193205549c3364d0c23cb8da9fa4aa5db22c95eaf5fde872f2cc6c8315e9",
+    "source_sha256": "55d1d4a8ba9f0ef81b7ff63ad354f30111255da24d22c2ec3156f0a51a74c37f",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; busy, narratorPending, pending, pendingChanges, pendingVoice, pending_changes, progress, seedPending, working",
-    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Combined-source review (merge174 castview): both sides' changes to this file keep this statement and its guard unchanged."
+    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Combined-source review (merge174 castview): both sides' changes to this file keep this statement and its guard unchanged. Combined-source review (merge174 sleeplast): both sides' changes to this file keep this statement and its guard unchanged."
   },
   {
     "id": "b6316e4a8c1a129b3906",
     "kind": "pending",
     "path": "ui/src/studio/api.ts",
-    "line": 481,
+    "line": 485,
     "statement": "export async function apiOrStream<T, S>(path: string, init: ApiInit, streamType: string, onStream: (response: Response) => Promise<S>): Promise<T | S> {",
     "occurrence": 1,
-    "source_sha256": "c295193205549c3364d0c23cb8da9fa4aa5db22c95eaf5fde872f2cc6c8315e9",
+    "source_sha256": "55d1d4a8ba9f0ef81b7ff63ad354f30111255da24d22c2ec3156f0a51a74c37f",
     "disposition": "internal",
     "guard": "Async interface/helper boundary; concrete activation inventoried separately",
-    "reason": "This signature supplies work to a model or component; declaring it starts no user operation. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Combined-source review (merge174 castview): both sides' changes to this file keep this statement and its guard unchanged."
+    "reason": "This signature supplies work to a model or component; declaring it starts no user operation. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Combined-source review (merge174 castview): both sides' changes to this file keep this statement and its guard unchanged. Combined-source review (merge174 sleeplast): both sides' changes to this file keep this statement and its guard unchanged."
   },
   {
     "id": "6bcf393b1ec73ad1d810",
     "kind": "pending",
     "path": "ui/src/studio/api.ts",
-    "line": 482,
+    "line": 486,
     "statement": "return call<T | S>(path, init, async (response, alive) =>",
     "occurrence": 1,
-    "source_sha256": "c295193205549c3364d0c23cb8da9fa4aa5db22c95eaf5fde872f2cc6c8315e9",
+    "source_sha256": "55d1d4a8ba9f0ef81b7ff63ad354f30111255da24d22c2ec3156f0a51a74c37f",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; busy, narratorPending, pending, pendingChanges, pendingVoice, pending_changes, progress, seedPending, working",
-    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Combined-source review (merge174 castview): both sides' changes to this file keep this statement and its guard unchanged."
+    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Combined-source review (merge174 castview): both sides' changes to this file keep this statement and its guard unchanged. Combined-source review (merge174 sleeplast): both sides' changes to this file keep this statement and its guard unchanged."
   },
   {
     "id": "dc7de6e4dcd28fc16236",
@@ -7266,7 +7266,7 @@
     "line": 89,
     "statement": "IconAction(S.s_lui_15_giay_tren_0_ef9cea4b(remote.name), { if (!ui.busy) scope.launch { repo.send(remote, \"skip\", -15.0) } }, \"remote_back_${remote.device}\") { PlayerGlyph(\"↶15\") }",
     "occurrence": 1,
-    "source_sha256": "cf473cf148940853a0078743ee36a79c0610a0b2cd2e6ad6653bc759bf11ef23",
+    "source_sha256": "52c5abc4fb53d93ba930d4a49d26c6f6fe5d278166ca305e2352b6582d2baea6",
     "disposition": "pending",
     "guard": "ViewModel/operation fields: busy; Components pending indicator",
     "reason": "The model retains the operation and locks repeats; UI uses the shared pending parameter, loading content or progress owner."
@@ -7278,7 +7278,7 @@
     "line": 91,
     "statement": "{ if (!ui.busy) scope.launch { repo.send(remote, \"toggle\") } }, \"remote_toggle_${remote.device}\") {",
     "occurrence": 1,
-    "source_sha256": "cf473cf148940853a0078743ee36a79c0610a0b2cd2e6ad6653bc759bf11ef23",
+    "source_sha256": "52c5abc4fb53d93ba930d4a49d26c6f6fe5d278166ca305e2352b6582d2baea6",
     "disposition": "pending",
     "guard": "ViewModel/operation fields: busy; Components pending indicator",
     "reason": "The model retains the operation and locks repeats; UI uses the shared pending parameter, loading content or progress owner."
@@ -7290,7 +7290,7 @@
     "line": 96,
     "statement": "IconAction(S.s_toi_15_giay_tren_0_4023d456(remote.name), { if (!ui.busy) scope.launch { repo.send(remote, \"skip\", 15.0) } }, \"remote_forward_${remote.device}\") { PlayerGlyph(\"15↷\") }",
     "occurrence": 1,
-    "source_sha256": "cf473cf148940853a0078743ee36a79c0610a0b2cd2e6ad6653bc759bf11ef23",
+    "source_sha256": "52c5abc4fb53d93ba930d4a49d26c6f6fe5d278166ca305e2352b6582d2baea6",
     "disposition": "pending",
     "guard": "ViewModel/operation fields: busy; Components pending indicator",
     "reason": "The model retains the operation and locks repeats; UI uses the shared pending parameter, loading content or progress owner."
@@ -7302,7 +7302,7 @@
     "line": 99,
     "statement": "TextAction(S.s_nghe_o_day_f7f1d741, { if (!ui.busy) scope.launch { if (repo.listenHere(remote, local::playChapter)) dismiss() } }, \"remote_here_${remote.device}\", align = Alignment.CenterStart)",
     "occurrence": 1,
-    "source_sha256": "cf473cf148940853a0078743ee36a79c0610a0b2cd2e6ad6653bc759bf11ef23",
+    "source_sha256": "52c5abc4fb53d93ba930d4a49d26c6f6fe5d278166ca305e2352b6582d2baea6",
     "disposition": "pending",
     "guard": "ViewModel/operation fields: busy; Components pending indicator",
     "reason": "The model retains the operation and locks repeats; UI uses the shared pending parameter, loading content or progress owner."
@@ -7311,10 +7311,10 @@
     "id": "c8e57010418c5de50950",
     "kind": "pending",
     "path": "mobile/android/app/src/main/java/vn/abook/player/ui/devices/CompanionSurfaces.kt",
-    "line": 110,
+    "line": 113,
     "statement": "{ minutes -> remoteMinutes = minutes.toInt(); if (!ui.busy) scope.launch { repo.send(remote, \"sleep\", minutes = minutes.toInt()) } },",
     "occurrence": 1,
-    "source_sha256": "cf473cf148940853a0078743ee36a79c0610a0b2cd2e6ad6653bc759bf11ef23",
+    "source_sha256": "52c5abc4fb53d93ba930d4a49d26c6f6fe5d278166ca305e2352b6582d2baea6",
     "disposition": "pending",
     "guard": "ViewModel/operation fields: busy; Components pending indicator",
     "reason": "The model retains the operation and locks repeats; UI uses the shared pending parameter, loading content or progress owner."
@@ -7323,10 +7323,10 @@
     "id": "2e33fdb8f969f5985203",
     "kind": "pending",
     "path": "mobile/android/app/src/main/java/vn/abook/player/ui/devices/CompanionSurfaces.kt",
-    "line": 114,
+    "line": 117,
     "statement": "TextAction(S.s_tat_hen_gio_fc8af231, { if (!ui.busy) scope.launch { repo.send(remote, \"sleep\", minutes = 0); sleepFor = null } }, \"remote_sleep_off\", Modifier.fillMaxWidth(), Alignment.CenterStart)",
     "occurrence": 1,
-    "source_sha256": "cf473cf148940853a0078743ee36a79c0610a0b2cd2e6ad6653bc759bf11ef23",
+    "source_sha256": "52c5abc4fb53d93ba930d4a49d26c6f6fe5d278166ca305e2352b6582d2baea6",
     "disposition": "pending",
     "guard": "ViewModel/operation fields: busy; Components pending indicator",
     "reason": "The model retains the operation and locks repeats; UI uses the shared pending parameter, loading content or progress owner."
@@ -7335,10 +7335,10 @@
     "id": "b33b7500e4392ec08dcb",
     "kind": "pending",
     "path": "mobile/android/app/src/main/java/vn/abook/player/ui/devices/CompanionSurfaces.kt",
-    "line": 115,
+    "line": 118,
     "statement": "TextAction(S.s_het_chuong_f1d590bb, { if (!ui.busy) scope.launch { repo.send(remote, \"sleep\", mode = \"chapter\"); sleepFor = null } }, \"remote_sleep_chapter\", Modifier.fillMaxWidth(), Alignment.CenterStart)",
     "occurrence": 1,
-    "source_sha256": "cf473cf148940853a0078743ee36a79c0610a0b2cd2e6ad6653bc759bf11ef23",
+    "source_sha256": "52c5abc4fb53d93ba930d4a49d26c6f6fe5d278166ca305e2352b6582d2baea6",
     "disposition": "pending",
     "guard": "ViewModel/operation fields: busy; Components pending indicator",
     "reason": "The model retains the operation and locks repeats; UI uses the shared pending parameter, loading content or progress owner."
@@ -7347,10 +7347,10 @@
     "id": "ed348086b8643217ac17",
     "kind": "pending",
     "path": "mobile/android/app/src/main/java/vn/abook/player/ui/devices/CompanionSurfaces.kt",
-    "line": 124,
+    "line": 127,
     "statement": "TextAction(S.s_phat_tren_0_1_757da6a7(remote.name, if (remote.protocol == \"gcast\") \" (Google Cast)\" else \"\"), { if (!ui.busy) scope.launch { repo.handOff(remote, here, local.positionMs() / 1000.0, local::pause) } }, \"remote_load_${remote.device}\", align = Alignment.CenterStart)",
     "occurrence": 1,
-    "source_sha256": "cf473cf148940853a0078743ee36a79c0610a0b2cd2e6ad6653bc759bf11ef23",
+    "source_sha256": "52c5abc4fb53d93ba930d4a49d26c6f6fe5d278166ca305e2352b6582d2baea6",
     "disposition": "pending",
     "guard": "ViewModel/operation fields: busy; Components pending indicator",
     "reason": "The model retains the operation and locks repeats; UI uses the shared pending parameter, loading content or progress owner."
@@ -7359,10 +7359,10 @@
     "id": "8487b59144a445ed4b10",
     "kind": "pending",
     "path": "mobile/android/app/src/main/java/vn/abook/player/ui/devices/CompanionSurfaces.kt",
-    "line": 134,
+    "line": 137,
     "statement": "IconAction(S.s_tim_lai_thiet_bi_phat_0dc4396a, { if (!ui.busy) scope.launch { repo.findPlayers() } }, \"remote_retry\", Modifier.align(Alignment.End)) { RefreshIcon(Abook.colors.text) }",
     "occurrence": 1,
-    "source_sha256": "cf473cf148940853a0078743ee36a79c0610a0b2cd2e6ad6653bc759bf11ef23",
+    "source_sha256": "52c5abc4fb53d93ba930d4a49d26c6f6fe5d278166ca305e2352b6582d2baea6",
     "disposition": "pending",
     "guard": "ViewModel/operation fields: busy; Components pending indicator",
     "reason": "The model retains the operation and locks repeats; UI uses the shared pending parameter, loading content or progress owner."
@@ -7371,10 +7371,10 @@
     "id": "c3e6cae5b4620e4e6779",
     "kind": "pending",
     "path": "mobile/android/app/src/main/java/vn/abook/player/ui/devices/CompanionSurfaces.kt",
-    "line": 145,
+    "line": 148,
     "statement": "val apply = { scope.launch { repo.setNotices(on) }; Unit }",
     "occurrence": 1,
-    "source_sha256": "cf473cf148940853a0078743ee36a79c0610a0b2cd2e6ad6653bc759bf11ef23",
+    "source_sha256": "52c5abc4fb53d93ba930d4a49d26c6f6fe5d278166ca305e2352b6582d2baea6",
     "disposition": "pending",
     "guard": "ViewModel/operation fields: busy; Components pending indicator",
     "reason": "The model retains the operation and locks repeats; UI uses the shared pending parameter, loading content or progress owner."
@@ -10779,10 +10779,10 @@
     "id": "379ba7acadd07963b0e5",
     "kind": "pending",
     "path": "mobile/android/app/src/main/java/vn/abook/player/ui/nowplaying/NowPlayingModel.kt",
-    "line": 135,
+    "line": 138,
     "statement": "suspend fun loadVoices()",
     "occurrence": 1,
-    "source_sha256": "42808a8cc7a541eaafc49b5223c5b5f8cd36d8c4a464225cb13cf83d7a889ec0",
+    "source_sha256": "a5b9dcfa657a459375c7d2d2777d077ebbce99ae6097ecf74fe328a35a13b923",
     "disposition": "internal",
     "guard": "Async interface/helper boundary; concrete activation inventoried separately",
     "reason": "This signature supplies work to a model or component; declaring it starts no user operation."
@@ -10791,10 +10791,10 @@
     "id": "21abfccfc39866f94816",
     "kind": "pending",
     "path": "mobile/android/app/src/main/java/vn/abook/player/ui/nowplaying/NowPlayingModel.kt",
-    "line": 138,
+    "line": 141,
     "statement": "suspend fun loadReadAlong()",
     "occurrence": 1,
-    "source_sha256": "42808a8cc7a541eaafc49b5223c5b5f8cd36d8c4a464225cb13cf83d7a889ec0",
+    "source_sha256": "a5b9dcfa657a459375c7d2d2777d077ebbce99ae6097ecf74fe328a35a13b923",
     "disposition": "internal",
     "guard": "Async interface/helper boundary; concrete activation inventoried separately",
     "reason": "This signature supplies work to a model or component; declaring it starts no user operation."
@@ -10815,10 +10815,10 @@
     "id": "ace48ea02e5d8fec927b",
     "kind": "pending",
     "path": "mobile/android/app/src/main/java/vn/abook/player/ui/nowplaying/NowPlayingWindow.kt",
-    "line": 132,
+    "line": 130,
     "statement": "motion = scope.launch {",
     "occurrence": 1,
-    "source_sha256": "deb1bff378363da32e36a77040c4f97ac3e66f83eea0245564a20faa9a509047",
+    "source_sha256": "4276f450005792decc405e922d7b29dd48ad54864abbffc7a5152047893980d3",
     "disposition": "pending",
     "guard": "ViewModel/operation fields: Progress, progress, progressState; Components pending indicator",
     "reason": "The model retains the operation and locks repeats; UI uses the shared pending parameter, loading content or progress owner. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
@@ -10827,10 +10827,10 @@
     "id": "c763b2f16947ec99c729",
     "kind": "pending",
     "path": "mobile/android/app/src/main/java/vn/abook/player/ui/nowplaying/NowPlayingWindow.kt",
-    "line": 163,
+    "line": 161,
     "statement": "motion = scope.launch {",
     "occurrence": 2,
-    "source_sha256": "deb1bff378363da32e36a77040c4f97ac3e66f83eea0245564a20faa9a509047",
+    "source_sha256": "4276f450005792decc405e922d7b29dd48ad54864abbffc7a5152047893980d3",
     "disposition": "pending",
     "guard": "ViewModel/operation fields: Progress, progress, progressState; Components pending indicator",
     "reason": "The model retains the operation and locks repeats; UI uses the shared pending parameter, loading content or progress owner. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
@@ -10839,10 +10839,10 @@
     "id": "cae27c112fbf28de297d",
     "kind": "pending",
     "path": "mobile/android/app/src/main/java/vn/abook/player/ui/nowplaying/NowPlayingWindow.kt",
-    "line": 173,
+    "line": 171,
     "statement": "suspend fun dragClose(progress: Float) {",
     "occurrence": 1,
-    "source_sha256": "deb1bff378363da32e36a77040c4f97ac3e66f83eea0245564a20faa9a509047",
+    "source_sha256": "4276f450005792decc405e922d7b29dd48ad54864abbffc7a5152047893980d3",
     "disposition": "internal",
     "guard": "Async interface/helper boundary; concrete activation inventoried separately",
     "reason": "This signature supplies work to a model or component; declaring it starts no user operation. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
@@ -10851,10 +10851,10 @@
     "id": "f1b681175c0519932b7c",
     "kind": "pending",
     "path": "mobile/android/app/src/main/java/vn/abook/player/ui/nowplaying/NowPlayingWindow.kt",
-    "line": 178,
+    "line": 176,
     "statement": "suspend fun settleClose(commit: Boolean) {",
     "occurrence": 1,
-    "source_sha256": "deb1bff378363da32e36a77040c4f97ac3e66f83eea0245564a20faa9a509047",
+    "source_sha256": "4276f450005792decc405e922d7b29dd48ad54864abbffc7a5152047893980d3",
     "disposition": "internal",
     "guard": "Async interface/helper boundary; concrete activation inventoried separately",
     "reason": "This signature supplies work to a model or component; declaring it starts no user operation. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
@@ -10863,10 +10863,10 @@
     "id": "b3dbff9b1871d81a2529",
     "kind": "pending",
     "path": "mobile/android/app/src/main/java/vn/abook/player/ui/nowplaying/NowPlayingWindow.kt",
-    "line": 433,
+    "line": 431,
     "statement": "scope.launch { window.dragClose(drag / height) }",
     "occurrence": 1,
-    "source_sha256": "deb1bff378363da32e36a77040c4f97ac3e66f83eea0245564a20faa9a509047",
+    "source_sha256": "4276f450005792decc405e922d7b29dd48ad54864abbffc7a5152047893980d3",
     "disposition": "pending",
     "guard": "ViewModel/operation fields: Progress, progress, progressState; Components pending indicator",
     "reason": "The model retains the operation and locks repeats; UI uses the shared pending parameter, loading content or progress owner. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
@@ -10875,10 +10875,10 @@
     "id": "9f77daea21c5221a0225",
     "kind": "pending",
     "path": "mobile/android/app/src/main/java/vn/abook/player/ui/nowplaying/NowPlayingWindow.kt",
-    "line": 435,
+    "line": 433,
     "statement": "onDragEnd = { scope.launch { window.settleClose(drag / height > 0.2f) } },",
     "occurrence": 1,
-    "source_sha256": "deb1bff378363da32e36a77040c4f97ac3e66f83eea0245564a20faa9a509047",
+    "source_sha256": "4276f450005792decc405e922d7b29dd48ad54864abbffc7a5152047893980d3",
     "disposition": "pending",
     "guard": "ViewModel/operation fields: Progress, progress, progressState; Components pending indicator",
     "reason": "The model retains the operation and locks repeats; UI uses the shared pending parameter, loading content or progress owner. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
@@ -10887,10 +10887,10 @@
     "id": "68c6b72077182e471ec1",
     "kind": "pending",
     "path": "mobile/android/app/src/main/java/vn/abook/player/ui/nowplaying/NowPlayingWindow.kt",
-    "line": 436,
+    "line": 434,
     "statement": "onDragCancel = { scope.launch { window.settleClose(false) } },",
     "occurrence": 1,
-    "source_sha256": "deb1bff378363da32e36a77040c4f97ac3e66f83eea0245564a20faa9a509047",
+    "source_sha256": "4276f450005792decc405e922d7b29dd48ad54864abbffc7a5152047893980d3",
     "disposition": "pending",
     "guard": "ViewModel/operation fields: Progress, progress, progressState; Components pending indicator",
     "reason": "The model retains the operation and locks repeats; UI uses the shared pending parameter, loading content or progress owner. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
@@ -10998,10 +10998,10 @@
     "line": 79,
     "statement": "fun pop() { if(parents.isNotEmpty())window.openSheet(parents.removeAt(parents.lastIndex)) else window.closeSheet() }",
     "occurrence": 1,
-    "source_sha256": "6c15e82df671f0e71639ab6e8b3c8d4b52bbb97cdf4a6f075310410cbc752daa",
+    "source_sha256": "7bc6463137895fdc8f49638ef45eb83677f97bcefbe8a18f674aeabb5c9fb67c",
     "disposition": "internal",
     "guard": "Declaration; the invoked call site is independently inventoried",
-    "reason": "A declaration/signature is not an executing UI action. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Gate repair: reviewed identity-key motion, explicit layout, token spacing or semantic navigation changes; existing guard retained. Combined-source review (merge174 bottomgap): both sides' changes to this file keep this statement and its guard unchanged. Combined-source review: floating layers now swallow taps (tapthru: preview bar opens its track, TapShield / floatingLayer); this action and its guard are unchanged. Combined-source review (merge174 tapthru): both sides' changes to this file keep this statement and its guard unchanged. 0.4.173 fixes (sleep stopped line, activity-off extend, night continue, word reading row, per-book timers) leave this statement and its guard unchanged. Combined-source review (merge174 integ173): both sides' changes to this file keep this statement and its guard unchanged. Combined-source review (tapthru2): only the voice hint comment changed (floatingLayer keeps the tap, lets the swipe scroll); this action and its guard are unchanged. Combined-source review (tapthru2): voice hint uses floatingLayer(voiceList): a blocking layer that scrolls the voice list itself (review 18-11); this action and its guard are unchanged."
+    "reason": "A declaration/signature is not an executing UI action. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Gate repair: reviewed identity-key motion, explicit layout, token spacing or semantic navigation changes; existing guard retained. Combined-source review (merge174 bottomgap): both sides' changes to this file keep this statement and its guard unchanged. Combined-source review: floating layers now swallow taps (tapthru: preview bar opens its track, TapShield / floatingLayer); this action and its guard are unchanged. Combined-source review (merge174 tapthru): both sides' changes to this file keep this statement and its guard unchanged. 0.4.173 fixes (sleep stopped line, activity-off extend, night continue, word reading row, per-book timers) leave this statement and its guard unchanged. Combined-source review (merge174 integ173): both sides' changes to this file keep this statement and its guard unchanged. Combined-source review (tapthru2): only the voice hint comment changed (floatingLayer keeps the tap, lets the swipe scroll); this action and its guard are unchanged. Combined-source review (tapthru2): voice hint uses floatingLayer(voiceList): a blocking layer that scrolls the voice list itself (review 18-11); this action and its guard are unchanged. Combined-source review (merge174 sleeplast): both sides' changes to this file keep this statement and its guard unchanged."
   },
   {
     "id": "41d49281785c0f3be740",
@@ -11082,7 +11082,7 @@
     "line": 35,
     "statement": "suspend fun paragraphs(bookId: String, chapter: PlayerChapter): List<ReadParagraph>",
     "occurrence": 1,
-    "source_sha256": "2924df3b3f8739f8ba6298202c74966f654bcb74c2151afb8d9781327bc1351c",
+    "source_sha256": "37c25465be3017999844721eb80fdb837ed4b1749a14dedfa6833319e2d6f5a7",
     "disposition": "internal",
     "guard": "Async interface/helper boundary; concrete activation inventoried separately",
     "reason": "This signature supplies work to a model or component; declaring it starts no user operation."
@@ -11094,7 +11094,7 @@
     "line": 36,
     "statement": "suspend fun voices(): List<PlayerVoice>",
     "occurrence": 1,
-    "source_sha256": "2924df3b3f8739f8ba6298202c74966f654bcb74c2151afb8d9781327bc1351c",
+    "source_sha256": "37c25465be3017999844721eb80fdb837ed4b1749a14dedfa6833319e2d6f5a7",
     "disposition": "internal",
     "guard": "Async interface/helper boundary; concrete activation inventoried separately",
     "reason": "This signature supplies work to a model or component; declaring it starts no user operation."
@@ -11106,7 +11106,7 @@
     "line": 39,
     "statement": "override suspend fun paragraphs(bookId: String, chapter: PlayerChapter): List<ReadParagraph> = emptyList()",
     "occurrence": 1,
-    "source_sha256": "2924df3b3f8739f8ba6298202c74966f654bcb74c2151afb8d9781327bc1351c",
+    "source_sha256": "37c25465be3017999844721eb80fdb837ed4b1749a14dedfa6833319e2d6f5a7",
     "disposition": "internal",
     "guard": "Async interface/helper boundary; concrete activation inventoried separately",
     "reason": "This signature supplies work to a model or component; declaring it starts no user operation."
@@ -11118,7 +11118,7 @@
     "line": 40,
     "statement": "override suspend fun voices(): List<PlayerVoice> = emptyList()",
     "occurrence": 1,
-    "source_sha256": "2924df3b3f8739f8ba6298202c74966f654bcb74c2151afb8d9781327bc1351c",
+    "source_sha256": "37c25465be3017999844721eb80fdb837ed4b1749a14dedfa6833319e2d6f5a7",
     "disposition": "internal",
     "guard": "Async interface/helper boundary; concrete activation inventoried separately",
     "reason": "This signature supplies work to a model or component; declaring it starts no user operation."
@@ -11127,10 +11127,10 @@
     "id": "007657e8c0d9165b92f7",
     "kind": "pending",
     "path": "mobile/android/app/src/main/java/vn/abook/player/ui/nowplaying/RepoNowPlayingModel.kt",
-    "line": 148,
+    "line": 149,
     "statement": "scope.launch {",
     "occurrence": 1,
-    "source_sha256": "2924df3b3f8739f8ba6298202c74966f654bcb74c2151afb8d9781327bc1351c",
+    "source_sha256": "37c25465be3017999844721eb80fdb837ed4b1749a14dedfa6833319e2d6f5a7",
     "disposition": "pending",
     "guard": "ViewModel/operation fields: loading; Components pending indicator",
     "reason": "The model retains the operation and locks repeats; UI uses the shared pending parameter, loading content or progress owner."
@@ -11139,10 +11139,10 @@
     "id": "a65ce4607c19c4d2f7f6",
     "kind": "pending",
     "path": "mobile/android/app/src/main/java/vn/abook/player/ui/nowplaying/RepoNowPlayingModel.kt",
-    "line": 151,
+    "line": 152,
     "statement": "scope.launch {",
     "occurrence": 2,
-    "source_sha256": "2924df3b3f8739f8ba6298202c74966f654bcb74c2151afb8d9781327bc1351c",
+    "source_sha256": "37c25465be3017999844721eb80fdb837ed4b1749a14dedfa6833319e2d6f5a7",
     "disposition": "pending",
     "guard": "ViewModel/operation fields: loading; Components pending indicator",
     "reason": "The model retains the operation and locks repeats; UI uses the shared pending parameter, loading content or progress owner."
@@ -11151,10 +11151,10 @@
     "id": "6c29712d591b0c07d1e4",
     "kind": "pending",
     "path": "mobile/android/app/src/main/java/vn/abook/player/ui/nowplaying/RepoNowPlayingModel.kt",
-    "line": 154,
+    "line": 155,
     "statement": "scope.launch { books.collect { list -> checkElsewhere(list) } }",
     "occurrence": 1,
-    "source_sha256": "2924df3b3f8739f8ba6298202c74966f654bcb74c2151afb8d9781327bc1351c",
+    "source_sha256": "37c25465be3017999844721eb80fdb837ed4b1749a14dedfa6833319e2d6f5a7",
     "disposition": "pending",
     "guard": "ViewModel/operation fields: loading; Components pending indicator",
     "reason": "The model retains the operation and locks repeats; UI uses the shared pending parameter, loading content or progress owner."
@@ -11163,10 +11163,10 @@
     "id": "fe4d31e31dd442409dac",
     "kind": "pending",
     "path": "mobile/android/app/src/main/java/vn/abook/player/ui/nowplaying/RepoNowPlayingModel.kt",
-    "line": 155,
+    "line": 156,
     "statement": "scope.launch { repo.state.map { it.ended }.distinctUntilChanged().collect { continueIntoNextPart() } }",
     "occurrence": 1,
-    "source_sha256": "2924df3b3f8739f8ba6298202c74966f654bcb74c2151afb8d9781327bc1351c",
+    "source_sha256": "37c25465be3017999844721eb80fdb837ed4b1749a14dedfa6833319e2d6f5a7",
     "disposition": "pending",
     "guard": "ViewModel/operation fields: loading; Components pending indicator",
     "reason": "The model retains the operation and locks repeats; UI uses the shared pending parameter, loading content or progress owner."
@@ -11175,10 +11175,10 @@
     "id": "84399a6c55effef1d89b",
     "kind": "pending",
     "path": "mobile/android/app/src/main/java/vn/abook/player/ui/nowplaying/RepoNowPlayingModel.kt",
-    "line": 157,
+    "line": 158,
     "statement": "scope.launch {",
     "occurrence": 3,
-    "source_sha256": "2924df3b3f8739f8ba6298202c74966f654bcb74c2151afb8d9781327bc1351c",
+    "source_sha256": "37c25465be3017999844721eb80fdb837ed4b1749a14dedfa6833319e2d6f5a7",
     "disposition": "pending",
     "guard": "ViewModel/operation fields: loading; Components pending indicator",
     "reason": "The model retains the operation and locks repeats; UI uses the shared pending parameter, loading content or progress owner."
@@ -11187,10 +11187,10 @@
     "id": "050221c0f240836ba1dc",
     "kind": "pending",
     "path": "mobile/android/app/src/main/java/vn/abook/player/ui/nowplaying/RepoNowPlayingModel.kt",
-    "line": 161,
+    "line": 162,
     "statement": "scope.launch {",
     "occurrence": 4,
-    "source_sha256": "2924df3b3f8739f8ba6298202c74966f654bcb74c2151afb8d9781327bc1351c",
+    "source_sha256": "37c25465be3017999844721eb80fdb837ed4b1749a14dedfa6833319e2d6f5a7",
     "disposition": "pending",
     "guard": "ViewModel/operation fields: loading; Components pending indicator",
     "reason": "The model retains the operation and locks repeats; UI uses the shared pending parameter, loading content or progress owner."
@@ -11199,10 +11199,10 @@
     "id": "09dbcdbf21c8e91b4978",
     "kind": "pending",
     "path": "mobile/android/app/src/main/java/vn/abook/player/ui/nowplaying/RepoNowPlayingModel.kt",
-    "line": 197,
+    "line": 199,
     "statement": "override suspend fun loadVoices() {",
     "occurrence": 1,
-    "source_sha256": "2924df3b3f8739f8ba6298202c74966f654bcb74c2151afb8d9781327bc1351c",
+    "source_sha256": "37c25465be3017999844721eb80fdb837ed4b1749a14dedfa6833319e2d6f5a7",
     "disposition": "internal",
     "guard": "Async interface/helper boundary; concrete activation inventoried separately",
     "reason": "This signature supplies work to a model or component; declaring it starts no user operation."
@@ -11211,10 +11211,10 @@
     "id": "b77b6248ddf9e3bedc6f",
     "kind": "pending",
     "path": "mobile/android/app/src/main/java/vn/abook/player/ui/nowplaying/RepoNowPlayingModel.kt",
-    "line": 215,
+    "line": 217,
     "statement": "textJob = scope.launch { loadReadAlong() }",
     "occurrence": 1,
-    "source_sha256": "2924df3b3f8739f8ba6298202c74966f654bcb74c2151afb8d9781327bc1351c",
+    "source_sha256": "37c25465be3017999844721eb80fdb837ed4b1749a14dedfa6833319e2d6f5a7",
     "disposition": "pending",
     "guard": "ViewModel/operation fields: loading; Components pending indicator",
     "reason": "The model retains the operation and locks repeats; UI uses the shared pending parameter, loading content or progress owner."
@@ -11223,10 +11223,10 @@
     "id": "954cb9afc06241a3658d",
     "kind": "pending",
     "path": "mobile/android/app/src/main/java/vn/abook/player/ui/nowplaying/RepoNowPlayingModel.kt",
-    "line": 218,
+    "line": 220,
     "statement": "override suspend fun loadReadAlong() {",
     "occurrence": 1,
-    "source_sha256": "2924df3b3f8739f8ba6298202c74966f654bcb74c2151afb8d9781327bc1351c",
+    "source_sha256": "37c25465be3017999844721eb80fdb837ed4b1749a14dedfa6833319e2d6f5a7",
     "disposition": "internal",
     "guard": "Async interface/helper boundary; concrete activation inventoried separately",
     "reason": "This signature supplies work to a model or component; declaring it starts no user operation."
@@ -15690,22 +15690,22 @@
     "line": 70,
     "statement": "Api.call(\"GET\", \"/api/listen/books/\" + id, null, function(data, error) {",
     "occurrence": 1,
-    "source_sha256": "edecb9098963cff907414f49552371ad8d66e28cb956960a228cd690b5a6b2d3",
+    "source_sha256": "33f009c4298ece58d8b7f72e8e14ef5e6e24d516ec31c6f89490ac767b536ec9",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; Loading, pending, pendingFiles",
-    "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads. Combined-source review (merge174 bgimport): both sides' changes to this file keep this statement and its guard unchanged."
+    "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads. Combined-source review (merge174 bgimport): both sides' changes to this file keep this statement and its guard unchanged. Combined-source review (merge174 sleeplast): both sides' changes to this file keep this statement and its guard unchanged."
   },
   {
     "id": "154fb23af149d009c2b5",
     "kind": "pending",
     "path": "desktop_qt/qml/Main.qml",
-    "line": 370,
+    "line": 373,
     "statement": "if (name === \"abook-update\") Api.call(\"GET\", \"/api/app\", null, function(data, error) { if (!error) Api.info = data })",
     "occurrence": 1,
-    "source_sha256": "edecb9098963cff907414f49552371ad8d66e28cb956960a228cd690b5a6b2d3",
+    "source_sha256": "33f009c4298ece58d8b7f72e8e14ef5e6e24d516ec31c6f89490ac767b536ec9",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; Loading, pending, pendingFiles",
-    "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads. Combined-source review (merge174 bgimport): both sides' changes to this file keep this statement and its guard unchanged."
+    "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads. Combined-source review (merge174 bgimport): both sides' changes to this file keep this statement and its guard unchanged. Combined-source review (merge174 sleeplast): both sides' changes to this file keep this statement and its guard unchanged."
   },
   {
     "id": "839fcd74729978555a9e",

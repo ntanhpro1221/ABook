@@ -10,7 +10,7 @@ import type { SleepMode } from "./sleep";
 const state: { sleep: SleepMode; stoppedAt: number | null } = { sleep: { kind: "off" }, stoppedAt: null };
 vi.mock("./player", async (original) => ({
   ...(await original<typeof import("./player")>()),
-  usePlayer: () => ({ options: { extendMinutes: 10, fadeSeconds: 10 }, sleep: state.sleep, sleepStoppedAt: state.stoppedAt, lastSleepMinutes: 20,
+  usePlayer: () => ({ options: { extendMinutes: 10, fadeSeconds: 10 }, sleep: state.sleep, sleepStoppedAt: state.stoppedAt, lastSleep: { kind: "minutes", minutes: 20, chapters: 1 },
     setSleep: () => undefined, extendSleep: () => undefined, track: null, volume: 1, setVolume: () => undefined }),
 }));
 vi.mock("./source", async (original) => ({

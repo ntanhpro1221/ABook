@@ -115,3 +115,75 @@ def test_the_listener_is_told_a_broken_setting_was_kept(tmp_path: Path) -> None:
 
 def test_listening_defaults_do_not_offer_automatic_rewind(tmp_path: Path) -> None:
     assert "autoRewind" not in Preferences(tmp_path / "preferences.json").get()
+
+
+def _put(prefs: Preferences, body: dict) -> None:
+    from types import SimpleNamespace
+
+    from abook.webui.server import Handler
+
+    class Request:
+        app = SimpleNamespace(preferences=prefs, library=SimpleNamespace(root=prefs.path.parent), voices=lambda: [])
+
+        def _body(self) -> dict:
+            return body
+
+        def _send_json(self, status, value) -> None:
+            self.reply = value
+
+    Handler.put_preferences(Request(), {})
+
+
+def test_the_last_sleep_choice_is_never_set_until_the_listener_sets_one(tmp_path: Path) -> None:
+    """Chủ sách 17-11: mốc mặc định của hẹn giờ ngủ là lần đặt cuối; chưa từng đặt thì None (giao diện dùng 30 phút)."""
+    assert Preferences(tmp_path / "preferences.json").get()["lastSleep"] is None
+
+
+@pytest.mark.parametrize("choice", [
+    {"kind": "minutes", "minutes": 45, "chapters": 1},
+    {"kind": "chapter", "minutes": 45, "chapters": 2},
+])
+def test_the_last_sleep_choice_survives_a_restart(tmp_path: Path, choice: dict) -> None:
+    prefs = Preferences(tmp_path / "preferences.json")
+    _put(prefs, {"lastSleep": choice})
+    assert Preferences(prefs.path).get()["lastSleep"] == choice  # mở lại app: đọc lại từ đĩa
+    assert not list(tmp_path.glob("preferences.json.hong-*"))
+
+
+@pytest.mark.parametrize("stored", [
+    {"kind": "minutes", "minutes": 0, "chapters": 1}, {"kind": "minutes", "minutes": 999, "chapters": 1},
+    {"kind": "chapter", "minutes": 30, "chapters": 11}, {"kind": "off", "minutes": 30, "chapters": 1},
+    {"kind": "minutes", "minutes": "45", "chapters": 1}, {"kind": "minutes"}, [45], "45", 45, True,
+])
+def test_a_broken_last_sleep_choice_falls_back_to_never_set(tmp_path: Path, stored) -> None:
+    prefs, _ = _load(tmp_path, {"lastSleep": stored, "theme": "dark"})
+    data = prefs.get()
+    assert data["lastSleep"] is None and data["theme"] == "dark"
+    assert list(tmp_path.glob("preferences.json.hong-*"))
+
+
+def test_the_server_put_ignores_a_broken_last_sleep_choice(tmp_path: Path) -> None:
+    prefs = Preferences(tmp_path / "preferences.json")
+    good = {"kind": "chapter", "minutes": 20, "chapters": 3}
+    _put(prefs, {"lastSleep": {**good, "extra": 1}})
+    assert Preferences(prefs.path).get()["lastSleep"] == good
+    for broken in ({"kind": "minutes", "minutes": 241, "chapters": 1}, None, "45", {"kind": "chapter", "minutes": 20}):
+        _put(prefs, {"lastSleep": broken})
+        assert Preferences(prefs.path).get()["lastSleep"] == good, broken
+
+
+_LAST_SLEEP_CASES = json.loads((Path(__file__).parent / "fixtures/settings/ranges.json").read_text(encoding="utf-8"))["lastSleep"]["cases"]
+
+
+@pytest.mark.parametrize(("stored", "cleaned"), _LAST_SLEEP_CASES)
+def test_reading_the_file_follows_the_shared_last_sleep_table(tmp_path: Path, stored, cleaned) -> None:
+    """Soát sleeplast 18-11 (lỗi 3): đọc file theo đúng bảng ca chung như web / Qt / Android - khoá thừa bỏ đi, 45.0 nhận như 45, không coi
+    cả giá trị là hỏng; chỉ giá trị thật sự hỏng mới giữ bản hỏng + báo."""
+    prefs, _ = _load(tmp_path, {"lastSleep": stored, "theme": "dark"})
+    data = prefs.get()
+    assert data["lastSleep"] == cleaned and data["theme"] == "dark"
+    if cleaned is not None:
+        assert all(type(data["lastSleep"][key]) is int for key in ("minutes", "chapters"))
+    assert bool(list(tmp_path.glob("preferences.json.hong-*"))) == (stored is not None and cleaned is None)
+    _put(prefs, {"theme": "light"})
+    assert json.loads(prefs.path.read_text(encoding="utf-8"))["lastSleep"] == cleaned

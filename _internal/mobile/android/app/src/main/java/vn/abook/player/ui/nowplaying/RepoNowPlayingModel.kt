@@ -54,6 +54,7 @@ class RepoNowPlayingModel(
     override val music: MusicState? = null,
     override val voice: VoiceState? = null,
     private val options: () -> SleepOptions = { SleepOptions() },
+    private val last: () -> vn.abook.player.LastSleep = { vn.abook.player.LastSleep() },
     /** Thư viện lúc này: "Đã nghe hết ..." mời tập kế / cuốn khác, và hỏi khi máy khác đã nghe xa hơn. */
     private val books: StateFlow<List<ListenBook>> = MutableStateFlow(emptyList()),
     private val clockMs: () -> Long = System::currentTimeMillis,
@@ -187,6 +188,7 @@ class RepoNowPlayingModel(
     }
 
     override val sleepOptions: SleepOptions get() = options()
+    override val lastSleep: vn.abook.player.LastSleep get() = last()
     override fun extendSleep() = repo.extendSleep()
 
     override fun setVoice(id: String) {
@@ -256,5 +258,6 @@ fun rememberRepoNowPlaying(
     val scope = androidx.compose.runtime.rememberCoroutineScope()
     // Mức hẹn giờ do lõi giữ (SleepTimer); chỉ đọc khi tấm Hẹn giờ / lời báo cần.
     val options = { SleepOptions((vn.abook.player.SleepTimer.fadeMs / 1000).toInt(), vn.abook.player.SleepTimer.extendMinutes) }
-    return androidx.compose.runtime.remember(repo, source, music, voice, books, prepare, night) { RepoNowPlayingModel(repo, scope, source, music, voice, options, books, prepare = prepare, night = night) }
+    val last = { vn.abook.player.SleepTimer.last }
+    return androidx.compose.runtime.remember(repo, source, music, voice, books, prepare, night) { RepoNowPlayingModel(repo, scope, source, music, voice, options, last, books, prepare = prepare, night = night) }
 }

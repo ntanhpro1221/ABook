@@ -8,6 +8,8 @@
 #include <QJsonObject>
 #include <QList>
 #include <QString>
+#include <QVariant>
+#include <QVariantMap>
 #include <QVector>
 
 #include <algorithm>
@@ -40,6 +42,40 @@ inline constexpr int kExtendMinutesMax = 60;
 inline constexpr int kScheduleMinutesMin = 5;
 inline constexpr int kScheduleMinutesMax = 240;
 inline constexpr int kScheduleMinutesStep = 5;
+
+// Lần hẹn giờ cuối người nghe tự đặt (tuỳ chọn `lastSleep`, chủ sách 17-11): `kind` là loại của lần cuối, `minutes` / `chapters` là số gần nhất của từng loại.
+// Hộp hẹn giờ mở sẵn ở mốc này, nút "Bật lại" đặt lại đúng nó; chưa từng đặt thì 30 phút. Cùng hợp đồng với webui/library.py clean_last_sleep, sleep.ts
+// cleanLastSleep, Android LastSleep.parse (tests/fixtures/settings/ranges.json `lastSleep`).
+struct LastSleep {
+    QString kind = QStringLiteral("minutes");
+    int minutes = 30;
+    int chapters = 1;
+    bool operator==(const LastSleep &other) const { return kind == other.kind && minutes == other.minutes && chapters == other.chapters; }
+    QVariantMap toMap() const { return {{QStringLiteral("kind"), kind}, {QStringLiteral("minutes"), minutes}, {QStringLiteral("chapters"), chapters}}; }
+};
+
+/// Số nguyên trong [low, high] (JSON đưa qua QVariant là int / qlonglong / double nguyên); chuỗi, bool, số lẻ thì không.
+inline std::optional<int> wholeIn(const QVariant &value, int low, int high) {
+    const int type = value.typeId();
+    if (type != QMetaType::Int && type != QMetaType::LongLong && type != QMetaType::UInt && type != QMetaType::ULongLong && type != QMetaType::Double)
+        return std::nullopt;
+    const double number = value.toDouble();
+    if (!std::isfinite(number) || std::floor(number) != number || number < low || number > high) return std::nullopt;
+    return int(number);
+}
+
+/// Lần hẹn cuối đã làm sạch (khoá thừa bỏ đi), hay nullopt: thiếu khoá, sai kiểu, ngoài miền ở bất kỳ khoá nào - coi như chưa từng đặt.
+inline std::optional<LastSleep> cleanLastSleep(const QVariant &value) {
+    if (value.typeId() != QMetaType::QVariantMap) return std::nullopt;
+    const QVariantMap map = value.toMap();
+    const QVariant kind = map.value(QStringLiteral("kind"));
+    if (kind.typeId() != QMetaType::QString || (kind.toString() != QLatin1String("minutes") && kind.toString() != QLatin1String("chapter")))
+        return std::nullopt;
+    const auto minutes = wholeIn(map.value(QStringLiteral("minutes")), 1, kSleepMinutesMax);
+    const auto chapters = wholeIn(map.value(QStringLiteral("chapters")), 1, kSleepChaptersMax);
+    if (!minutes || !chapters) return std::nullopt;
+    return LastSleep{kind.toString(), *minutes, *chapters};
+}
 struct Chapter {
     int id = 0;
     int index = 0;

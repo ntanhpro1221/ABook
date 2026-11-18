@@ -375,6 +375,16 @@ void Player::configure(const QVariantMap &p) {
     if (voice != m_defaultVoice) { m_defaultVoice = voice; emit bookChanged(); }
     m_activityResets = p.value(QStringLiteral("sleepActivityResets"), true).toBool();
     m_fadeSeconds = std::clamp(p.value(QStringLiteral("sleepFadeSeconds"), 30).toInt(), kFadeSecondsMin, kFadeSecondsMax);
+    // Lần hẹn cuối đã lưu: hỏng / chưa có thì giữ mốc hiện tại (chưa từng đặt: 30 phút). Chỉ nhận khi bản đã lưu ĐỔI (như effect theo
+    // storedLastSleepKey của web: lưu hỏng rồi Cài đặt khác đổi thì không lùi về bản cũ trên đĩa) và không còn lần chọn nào đang lưu
+    // (lastSleepSaved): phản hồi muộn của lần lưu trước không kéo mốc vừa chọn lùi lại (soát sleeplast lỗi 1).
+    const auto stored = cleanLastSleep(p.value(QStringLiteral("lastSleep")));
+    const bool storedChanged = stored.has_value() != m_lastSleepStored.has_value() || (stored && !(*stored == *m_lastSleepStored));
+    m_lastSleepStored = stored;
+    if (stored && storedChanged && !m_lastSleepSaving && !(*stored == m_lastSleep)) {
+        m_lastSleep = *stored;
+        emit sleepChanged(); // hộp hẹn giờ và nút "Bật lại" đọc mốc này
+    }
     const int extendMinutes = std::clamp(p.value(QStringLiteral("sleepExtendMinutes"), 10).toInt(), 1, kExtendMinutesMax);
     if (extendMinutes != m_extendMinutes) {
         m_extendMinutes = extendMinutes;
@@ -1045,13 +1055,20 @@ void Player::setSleep(const QString &kind, int minutes) {
     endFade();
     resetSleepMark();
     if (kind == QLatin1String("minutes") && minutes > 0 && minutes <= kSleepMinutesMax) {
-        m_lastSleepMinutes = minutes;
+        m_lastSleep.kind = kind;
+        m_lastSleep.minutes = minutes;
         m_sleepStoppedAt = 0;
         applySleepState(Sleep::Minutes, minutes, minutes * 60'000.0);
+        m_lastSleepSaving = true;
+        emit lastSleepChosen(m_lastSleep.toMap());
     } else if (kind == QLatin1String("chapter")) {
         // "Hết chương này" (`minutes` 0 / 1) hay "Hết N chương" (N 1-10).
+        m_lastSleep.kind = kind;
+        m_lastSleep.chapters = std::clamp(minutes, 1, kSleepChaptersMax);
         m_sleepStoppedAt = 0;
-        applySleepState(Sleep::Chapter, std::clamp(minutes, 1, kSleepChaptersMax), 0);
+        applySleepState(Sleep::Chapter, m_lastSleep.chapters, 0);
+        m_lastSleepSaving = true;
+        emit lastSleepChosen(m_lastSleep.toMap());
     } else {
         m_scheduleOffFor = scheduleWindow();
         applySleepState(Sleep::Off, 0, 0);
@@ -1060,6 +1077,14 @@ void Player::setSleep(const QString &kind, int minutes) {
     m_sleepWindow.clear();
     m_sleepRetained = false;
     persistSleep();
+}
+
+void Player::lastSleepSaved() {
+    m_lastSleepSaving = false;
+}
+
+void Player::restartLastSleep() {
+    setSleep(m_lastSleep.kind, m_lastSleep.kind == QLatin1String("chapter") ? m_lastSleep.chapters : m_lastSleep.minutes);
 }
 
 void Player::persistSleep() {

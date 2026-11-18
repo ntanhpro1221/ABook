@@ -550,7 +550,8 @@ endif()
 # ---- bộ thử QtTest: bộ phát với AudioOut / PlayerNet giả, không cần thiết bị âm thanh hay host ----
 qt_add_executable(PlayerTests tests/test_player.cpp tests/fakes.h ${ABOOK_PLAYER_SOURCES})
 target_include_directories(PlayerTests PRIVATE src tests)
-target_compile_definitions(PlayerTests PRIVATE QT_NO_CAST_FROM_ASCII)
+target_compile_definitions(PlayerTests PRIVATE QT_NO_CAST_FROM_ASCII
+    SETTINGS_RANGES_FIXTURE="${CMAKE_CURRENT_SOURCE_DIR}/../tests/fixtures/settings/ranges.json")
 target_link_libraries(PlayerTests PRIVATE Qt6::Test Qt6::Qml Qt6::Network)
 if(MSVC)
     target_compile_options(PlayerTests PRIVATE /W3 /utf-8)

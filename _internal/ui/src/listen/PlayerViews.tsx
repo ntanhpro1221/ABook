@@ -73,7 +73,7 @@ import { canPlay, continuingPart, newerElsewhere, otherBooksToHear, partToContin
 import { SKIP_SECONDS, useNowPlaying, usePlayer, type PlayerValue } from "./player";
 import { ValuePicker } from "@/shared/ValuePicker";
 import { VALUE_SPECS, formatNumber } from "@/shared/valuePickerLogic";
-import { chaptersOf, sleepButtonLabel, sleepExtendLabel, sleepExtendMinutes, sleepExtended, sleepLabel, sleepLeftMs, sleepPausedNote, sleepRestartOffered, sleepSpoken, sleepStoppedRecently, type SleepMode, type SleepRequest } from "./sleep";
+import { LAST_SLEEP_DEFAULT, chaptersOf, lastSleepRequest, lastSleepRestartLabel, sleepButtonLabel, sleepExtendLabel, sleepExtendMinutes, sleepExtended, sleepLabel, sleepLeftMs, sleepPausedNote, sleepRestartOffered, sleepSpoken, sleepStoppedRecently, type LastSleep, type SleepMode, type SleepRequest } from "./sleep";
 import { useVoiceSample } from "./VoiceSettings";
 import { genderLabel, groupedVoices, groupLabel, voiceSections } from "./voiceGroups";
 import { revealVoiceSettings } from "./voiceSettingsLink";
@@ -962,7 +962,7 @@ function ReadAloudCache({ bookId }: { bookId: string }) {
 }
 
 export function SleepMenu({ look = "chip" }: { look?: MenuLook }) {
-  const { sleep, setSleep, extendSleep, options, sleepStoppedAt, lastSleepMinutes, track } = usePlayer();
+  const { sleep, setSleep, extendSleep, options, sleepStoppedAt, lastSleep, track } = usePlayer();
   // Thẻ S.s_toi_qua_920edeaa chỉ đáng nhắc khi người nghe đã từng có đêm nào được ghi lại (chưa có thì nhắc là nhắc một thứ họ chưa thấy bao giờ).
   const hadNight = Boolean(useLastNight().data);
   const now = useTicker(sleep.kind === "minutes" && sleep.since !== null);
@@ -975,7 +975,7 @@ export function SleepMenu({ look = "chip" }: { look?: MenuLook }) {
       now={now}
       disabled={!track}
       extendMinutes={options.extendMinutes}
-      lastMinutes={lastSleepMinutes}
+      last={lastSleep}
       onExtend={() => extendSleep()}
       onSet={setSleep}
       stopped={
@@ -991,9 +991,10 @@ export function SleepMenu({ look = "chip" }: { look?: MenuLook }) {
             <Popover.Close asChild>
               <button
                 type="button"
-                onClick={withFeedback("toggle", () => setSleep({ kind: "minutes", minutes: lastSleepMinutes }))}
+                data-sleep-restart
+                onClick={withFeedback("toggle", () => setSleep(lastSleepRequest(lastSleep)))}
                 className="mt-2 h-9 w-full rounded-control text-sm font-medium text-accent-text"
-              >{S.s_bat_lai_0bad8bcf}{lastSleepMinutes}{S.s_phut_cf728a6a}</button>
+              >{lastSleepRestartLabel(lastSleep)}</button>
             </Popover.Close>
           </div>
         ) : null
@@ -1011,13 +1012,14 @@ export function SleepMenu({ look = "chip" }: { look?: MenuLook }) {
  * giờ của trình phát ở đây, nhưng máy giữ phiên phát mới là bên đếm - nút chỉ đọc lại và gửi lệnh.
  */
 export function RemoteSleepMenu({ sleep, name, onSet }: { sleep: SleepMode; name: string; onSet: (request: SleepRequest) => void }) {
-  const { options } = usePlayer();
+  const { options, lastSleep } = usePlayer();
   const now = useTicker(sleep.kind === "minutes" && sleep.since !== null);
   return (
     <SleepPicker
       sleep={sleep}
       now={now}
       name={name}
+      last={lastSleep}
       extendMinutes={options.extendMinutes}
       onExtend={() => {
         feedback("sleepExtend");
@@ -1043,7 +1045,7 @@ function SleepPicker({
   stopped = null,
   note,
   look = "chip",
-  lastMinutes = 30,
+  last = LAST_SLEEP_DEFAULT,
   chapterCounts = true,
   ...handlers
 }: {
@@ -1061,12 +1063,14 @@ function SleepPicker({
   /** Dòng "Hẹn giờ đã tắt tiếng lúc …" (đang hẹn hay đã tắt đều hiện). */
   stopped?: ReactNode;
   note: ReactNode;
-  /** Số phút bộ chọn đứng sẵn khi chưa hẹn phút (lần hẹn trước). */
-  lastMinutes?: number;
+  /** Lần hẹn giờ cuối người nghe tự đặt: số phút / số chương bộ chọn đứng sẵn khi chưa hẹn loại ấy (chưa từng đặt: 30 phút). */
+  last?: LastSleep;
   /** "Hết N chương" (N > 1): chỉ trình phát ở đây; loa / TV chỉ biết "Hết chương này". */
   chapterCounts?: boolean;
 }) {
-  const [draftMinutes, setDraftMinutes] = useState(lastMinutes);
+  const [draftMinutes, setDraftMinutes] = useState(last.minutes);
+  // Tuỳ chọn tải xong sau khi nút đã vẽ / lần hẹn mới vừa lưu: bộ chọn đứng ở mốc mới.
+  useEffect(() => setDraftMinutes(last.minutes), [last.minutes]);
   // Chọn mức / thêm giờ là việc người nghe vừa làm: tiếng chạm + rung (DESIGN 5.3/5.4). Hẹn giờ tự tắt thì không đi qua đây.
   const onExtend = handlers.onExtend; // Playback owns the single sleepExtend sound/haptic, including keyboard gestures.
   const onSet = withFeedback("toggle", handlers.onSet);
@@ -1149,7 +1153,7 @@ function SleepPicker({
         {sleep.kind !== "minutes" && <Popover.Close asChild><button type="button" disabled={disabled} data-sleep-confirm
           className="h-12 w-full rounded-control text-right text-sm font-medium text-accent-text"
           onClick={() => onSet({kind: "minutes", minutes: draftMinutes})}>{S.s_xong_a6f4543a}</button></Popover.Close>}
-        <SleepChapterChoice sleep={sleep} disabled={disabled} counts={chapterCounts} onSet={onSet} />
+        <SleepChapterChoice sleep={sleep} disabled={disabled} counts={chapterCounts} lastChapters={chapterCounts ? last.chapters : 1} onSet={onSet} />
       </ValuePicker>
       <p className="px-2 pb-1 pt-2 text-xs leading-snug text-fg-2">{note}</p>
     </MotionRegion></MenuShell>
@@ -1157,8 +1161,9 @@ function SleepPicker({
 }
 
 /** Counts use the shared value field and label rhythm, including remote players with one chapter only. */
-function SleepChapterChoice({ sleep, disabled, counts, onSet }: { sleep: SleepMode; disabled: boolean; counts: boolean; onSet: (request: SleepRequest) => void }) {
-  const [chapters, setChapters] = useState(() => Math.max(1, chaptersOf(sleep)));
+function SleepChapterChoice({ sleep, disabled, counts, lastChapters, onSet }: { sleep: SleepMode; disabled: boolean; counts: boolean; lastChapters: number; onSet: (request: SleepRequest) => void }) {
+  const [chapters, setChapters] = useState(() => sleep.kind === "chapter" ? Math.max(1, chaptersOf(sleep)) : lastChapters);
+  useEffect(() => { if (sleep.kind !== "chapter") setChapters(lastChapters); }, [lastChapters, sleep.kind]);
   const active = sleep.kind === "chapter" && chaptersOf(sleep) === chapters;
   return <div data-sleep-chapters><ValuePicker spec={VALUE_SPECS.sleepChapters} value={chapters} current={active} disabled={disabled}
     stepperOnly stepButtons={counts} label={S.s_so_chuong_6e52dccd} format={String}

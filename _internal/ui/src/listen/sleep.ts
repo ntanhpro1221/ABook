@@ -169,6 +169,45 @@ export interface SleepSchedule {
   minutes: number;
 }
 
+/** Lần hẹn giờ cuối người nghe tự đặt (tuỳ chọn `lastSleep`, chủ sách 17-11): `kind` là loại của lần cuối, `minutes` / `chapters` là số gần nhất của
+ *  từng loại. Hộp hẹn giờ mở sẵn ở mốc này, nút "Bật lại" đặt lại đúng nó. Cùng hợp đồng với webui/library.py (clean_last_sleep), Qt (playerlogic.h)
+ *  và Android (LastSleep.kt) - tests/fixtures/settings/ranges.json `lastSleep`. */
+export interface LastSleep {
+  kind: "minutes" | "chapter";
+  minutes: number;
+  chapters: number;
+}
+
+/** Chưa từng đặt hẹn giờ: 30 phút. */
+export const LAST_SLEEP_DEFAULT: LastSleep = { kind: "minutes", minutes: 30, chapters: 1 };
+
+/** Lần hẹn cuối đã làm sạch (khoá thừa bỏ đi), hay null: thiếu khoá, sai kiểu, ngoài miền ở bất kỳ khoá nào - coi như chưa từng đặt. */
+export function cleanLastSleep(value: unknown): LastSleep | null {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return null;
+  const { kind, minutes, chapters } = value as Record<string, unknown>;
+  if (kind !== "minutes" && kind !== "chapter") return null;
+  if (rangeOr(minutes, VALUE_SPECS.sleepMinutes, -1) !== minutes || rangeOr(chapters, VALUE_SPECS.sleepChapters, -1) !== chapters) return null;
+  return { kind, minutes: minutes as number, chapters: chapters as number };
+}
+
+/** Lần hẹn cuối sau khi người nghe tự đặt `request`; tắt hẹn giờ thì giữ nguyên. */
+export function lastSleepAfter(last: LastSleep, request: SleepRequest): LastSleep {
+  if (request.kind === "minutes") return { ...last, kind: "minutes", minutes: request.minutes };
+  if (request.kind === "chapter") return { ...last, kind: "chapter", chapters: chaptersOf(request) };
+  return last;
+}
+
+/** Đặt lại đúng lần hẹn cuối (nút "Bật lại"). */
+export function lastSleepRequest(last: LastSleep): SleepRequest {
+  return last.kind === "chapter" ? { kind: "chapter", chapters: last.chapters } : { kind: "minutes", minutes: last.minutes };
+}
+
+/** Nhãn nút "Bật lại" (tối đa 4 chữ, một khuôn cho hai loại): "Bật lại 45 phút", "Bật lại 1 chương", "Bật lại 2 chương".
+ *  Điện thoại: SleepText.restart, Qt: SleepPopover.qml - cùng từng chữ. */
+export function lastSleepRestartLabel(last: LastSleep): string {
+  return S.s_bat_lai_0bad8bcf + (last.kind === "minutes" ? S.s_0_phut_2596d212(last.minutes) : S.s_0_chuong_04093412(last.chapters));
+}
+
 // Hợp đồng của các tuỳ chọn hẹn giờ ngủ: miền tự do của bộ chọn giá trị (VALUE_SPECS), cùng bảng với webui/library.py (SLEEP_RANGES,
 // SCHEDULE_MINUTES, clean_sleep_schedule) - file tuỳ chọn sửa tay / bản app khác ghi không được lọt vào trình phát (soát a100 V2).
 export const FADE_RANGE = VALUE_SPECS.sleepFadeSeconds;

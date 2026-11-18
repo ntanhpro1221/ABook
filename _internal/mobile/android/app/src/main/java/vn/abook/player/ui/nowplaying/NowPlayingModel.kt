@@ -106,6 +106,9 @@ interface NowPlayingModel {
     /** Mức hẹn giờ của Cài đặt (bao lâu tiếng nhỏ dần, mỗi lần nghe thêm bao nhiêu phút): đọc lúc vẽ tấm Hẹn giờ và lời báo "Sắp tắt". */
     val sleepOptions: SleepOptions get() = SleepOptions()
 
+    /** Lần hẹn giờ cuối người nghe tự đặt (chưa từng đặt: 30 phút): mốc mở sẵn của tấm Hẹn giờ và nút "Bật lại". Đọc lúc vẽ tấm. */
+    val lastSleep: vn.abook.player.LastSleep get() = vn.abook.player.LastSleep()
+
     /** Người nghe đã có một đêm được ghi lại (thẻ "Tối qua"): tấm Hẹn giờ nhắc thẻ ấy. */
     val hadNight: Boolean get() = false
 

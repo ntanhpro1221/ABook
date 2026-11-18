@@ -101,7 +101,10 @@ class Player : public QObject {
     Q_PROPERTY(QString sleepKind READ sleepKind NOTIFY sleepChanged)    // "off" | "minutes" | "chapter"
     Q_PROPERTY(int sleepMinutes READ sleepMinutes NOTIFY sleepChanged)
     Q_PROPERTY(int sleepChapters READ sleepChapters NOTIFY sleepChanged)   // "Hết N chương": số chương còn phải nghe hết (1 = chương này), 0 khi không hẹn chương
+    // Lần hẹn giờ cuối người nghe tự đặt (tuỳ chọn `lastSleep`; chưa từng đặt: 30 phút): mốc mở sẵn của hộp hẹn giờ và nút "Bật lại".
+    Q_PROPERTY(QString lastSleepKind READ lastSleepKind NOTIFY sleepChanged)     // "minutes" | "chapter"
     Q_PROPERTY(int lastSleepMinutes READ lastSleepMinutes NOTIFY sleepChanged)
+    Q_PROPERTY(int lastSleepChapters READ lastSleepChapters NOTIFY sleepChanged)
     Q_PROPERTY(int sleepExtendMinutes READ sleepExtendMinutes NOTIFY sleepChanged) // N của nút "Hẹn lại N phút"
     Q_PROPERTY(QString sleepStoppedText READ sleepStoppedText NOTIFY sleepChanged) // "23:42" khi hẹn giờ vừa tắt tiếng, không thì ""
     Q_PROPERTY(bool fading READ fading NOTIFY fadingChanged)
@@ -159,7 +162,13 @@ public:
     QString sleepKind() const;
     int sleepMinutes() const { return m_sleep.kind == Sleep::Minutes ? m_sleep.minutes : 0; }
     int sleepChapters() const { return m_sleep.kind == Sleep::Chapter ? std::max(1, m_sleep.minutes) : 0; }
-    int lastSleepMinutes() const { return m_lastSleepMinutes; }
+    QString lastSleepKind() const { return m_lastSleep.kind; }
+    int lastSleepMinutes() const { return m_lastSleep.minutes; }
+    int lastSleepChapters() const { return m_lastSleep.chapters; }
+    /// Nút "Bật lại": đặt lại đúng lần hẹn cuối (số phút hay số chương).
+    Q_INVOKABLE void restartLastSleep();
+    /// Main.qml: mọi lần lưu `lastSleep` đã về (xong hay hỏng) - từ giờ `configure` lại nhận mốc đã lưu khi nó đổi.
+    Q_INVOKABLE void lastSleepSaved();
     int sleepExtendMinutes() const;
     QString sleepStoppedText() const;
     bool fading() const { return m_fading; }
@@ -244,6 +253,8 @@ public:
     void watchInput();
 
 signals:
+    /// Người nghe vừa tự đặt hẹn giờ: Main.qml lưu `value` ({kind, minutes, chapters}) vào tuỳ chọn `lastSleep` cho lần mở sau.
+    void lastSleepChosen(const QVariantMap &value);
     void loadedChanged();
     void bookChanged();
     void chapterChanged();
@@ -382,7 +393,9 @@ private:
     QString m_sleepWindow;
     bool m_sleepRetained = false;
     QString m_sleepStore;
-    int m_lastSleepMinutes = 30;
+    PlayerLogic::LastSleep m_lastSleep;
+    std::optional<PlayerLogic::LastSleep> m_lastSleepStored; // bản `lastSleep` đã lưu nhận ở lần configure trước
+    bool m_lastSleepSaving = false;                          // còn lần chọn chưa lưu xong (lastSleepSaved)
     qint64 m_sleepStoppedAt = 0;
     int m_fadeSeconds = PlayerLogic::kDefaultFadeSeconds;
     int m_extendMinutes = 10;

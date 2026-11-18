@@ -49,7 +49,10 @@ class SleepTextTest {
     fun `stopped line shows the clock in 24 hour form`() {
         val utc = TimeZone.getTimeZone("UTC")
         assertEquals("Hẹn giờ đã tắt tiếng lúc 22:05.", SleepText.stoppedAt(22 * 3_600_000L + 5 * 60_000L, utc))
-        assertEquals("Bật lại 30\u00a0phút", SleepText.restart(30))
+        assertEquals("Bật lại 30\u00a0phút", SleepText.restart(vn.abook.player.LastSleep()))
+        assertEquals("Bật lại 45\u00a0phút", SleepText.restart(vn.abook.player.LastSleep(minutes = 45)))
+        assertEquals("Bật lại 2 chương", SleepText.restart(vn.abook.player.LastSleep("chapter", 45, 2)))
+        assertEquals("Bật lại 1 chương", SleepText.restart(vn.abook.player.LastSleep("chapter", 45, 1)))
     }
 
     @Test

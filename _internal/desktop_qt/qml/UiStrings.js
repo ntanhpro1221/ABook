@@ -18,6 +18,7 @@ var s_00_giay_27015af3 = "00 giây";
 var s_00_phut_347ed245 = "00 phút";
 function s_0_bai_1e392237(p0) { return String(p0) + " bài"; }
 function s_0_chu_de_nghe_tu_do_f3859cf4(p0) { return String(p0) + " chữ để nghe từ đó."; }
+function s_0_chuong_04093412(p0) { return String(p0) + " chương"; }
 function s_0_doan_c2eb5200(p0) { return String(p0) + " đoạn"; }
 function s_0_giay_daac30d3(p0) { return String(p0) + " giây"; }
 function s_0_giong_7be1af23(p0) { return String(p0) + " giọng"; }

@@ -30,7 +30,10 @@ Item {
         function init() {
             Theme.reduceMotion = false; Nav.layers = []
             Platform.reset(); DesktopApi.reset(); Api.bind(DesktopApi, Theme)
-            Api.preferences = {sleepFadeSeconds: 45, sleepExtendMinutes: 15}
+            // Player là singleton sống qua các ca: đưa lần hẹn cuối về "chưa từng đặt" (30 phút) cho mỗi ca.
+            // (Main.qml không nạp ở đây: báo "đã lưu xong" thay nó, rồi đưa bản đã lưu về rỗng để mốc 30 được nhận lại.)
+            Player.lastSleepSaved(); Player.configure({})
+            Api.preferences = {sleepFadeSeconds: 45, sleepExtendMinutes: 15, lastSleep: {kind: "minutes", minutes: 30, chapters: 1}}
             Player.configure(Api.preferences)
             Player.open("width", 1, 0, true); Player.pause(); Player.setVolume(0.7); Player.setSleep("off")
             DesktopApi.responses = {
@@ -81,6 +84,67 @@ Item {
             compare(picker.value, 42)
             clickReady(findChild(menu, "sleepConfirm"))
             compare(Player.sleepKind, "minutes"); compare(Player.sleepMinutes, 42)
+        }
+        // Chủ sách 17-11: hộp hẹn giờ mở sẵn ở lần đặt cuối (tuỳ chọn `lastSleep`), nút "Bật lại" đặt lại đúng lần ấy - số phút hay số chương.
+        function test_sleep_opens_at_the_last_choice_and_restarts_it() {
+            const menu = createTemporaryObject(sleep, host, {width: 792, height: 700})
+            // Mở hộp TRƯỚC khi tuỳ chọn tải xong (soát sleeplast lỗi 5): bộ chọn nhảy theo mốc vừa nạp, như web.
+            menu.show(); tryCompare(menu, "open", true); ready()
+            compare(findChild(menu, "sleepPicker").value, 30)
+            Player.configure({lastSleep: {kind: "minutes", minutes: 45, chapters: 3}})
+            compare(findChild(menu, "sleepPicker").value, 45)
+            compare(findChild(menu, "sleepChapterPicker").value, 3)
+            menu.close()
+            menu.show(); tryCompare(menu, "open", true); ready()
+            compare(findChild(menu, "sleepPicker").value, 45)
+            compare(findChild(menu, "sleepChapterPicker").value, 3)
+            menu.close()
+            Player.resume(); Player.setSleep("chapter", 2)
+            compare(Player.lastSleepKind, "chapter"); compare(Player.lastSleepChapters, 2); compare(Player.lastSleepMinutes, 45)
+            Player.setSleep("minutes", 1); WidthNet.advance(70)
+            verify(Player.sleepStoppedText !== "")
+            menu.show(); tryCompare(menu, "open", true); ready()
+            compare(findChild(menu, "sleepRestart").text, "Bật lại 1\u00a0phút")
+            Player.lastSleepSaved() // (Main.qml: lần lưu đã về)
+            Player.configure({lastSleep: {kind: "chapter", minutes: 45, chapters: 2}})
+            compare(findChild(menu, "sleepRestart").text, "Bật lại 2 chương")
+            clickReady(findChild(menu, "sleepRestart"))
+            compare(Player.sleepKind, "chapter"); compare(Player.sleepChapters, 2)
+            // Giá trị lưu hỏng: giữ mốc đang có, không văng.
+            Player.configure({lastSleep: {kind: "minutes", minutes: 999, chapters: 1}})
+            compare(Player.lastSleepKind, "chapter"); compare(Player.lastSleepChapters, 2)
+        }
+        // Soát sleeplast 18-11 (lỗi 1, 2): đổi số liên tiếp gom một lần lưu, mỗi lúc một lần gửi; phản hồi cũ về muộn không kéo mốc lùi;
+        // lưu hỏng thì im lặng (Api.quiet, như web).
+        function test_last_sleep_saves_coalesce_and_ignore_a_late_reply() {
+            const saves = () => DesktopApi.requests.filter(r => r.method === "PUT" && r.path === "/api/preferences" && r.body.lastSleep)
+            const minutes = value => ({kind: "minutes", minutes: value, chapters: 1})
+            let settled = 0
+            Api.lastSleepTimer.interval = 20
+            DesktopApi.delayed = true
+            for (const value of [31, 32, 33]) Api.rememberLastSleep(minutes(value), function() { settled++ })
+            tryVerify(function() { return saves().length === 1 })
+            compare(saves()[0].body.lastSleep.minutes, 33)
+            Api.rememberLastSleep(minutes(34), function() { settled++ })
+            wait(60)
+            compare(saves().length, 1) // lần 33 còn bay: 34 chưa gửi chồng lên
+            DesktopApi.finish() // phản hồi của 33 về khi 34 đã chọn: không áp
+            verify(!Api.preferences.lastSleep || Api.preferences.lastSleep.minutes !== 33)
+            compare(settled, 0)
+            tryVerify(function() { return saves().length === 2 })
+            compare(saves()[1].body.lastSleep.minutes, 34)
+            DesktopApi.finish()
+            compare(Api.preferences.lastSleep.minutes, 34)
+            compare(settled, 4)
+            // Lưu hỏng: không hiện lời báo, mốc trong tuỳ chọn giữ nguyên.
+            DesktopApi.delayed = false
+            DesktopApi.responses = {"PUT /api/preferences": {status: 500, data: {message: "hỏng"}}}
+            Api.notice = ""
+            Api.rememberLastSleep(minutes(45), function() { settled++ })
+            tryCompare(Api, "lastSleepFlying", false); tryVerify(function() { return settled === 5 })
+            compare(Api.notice, "")
+            compare(Api.preferences.lastSleep.minutes, 34)
+            Api.lastSleepTimer.interval = 800
         }
         function test_fade_restart_and_geometric_bounds() {
             const menu = createTemporaryObject(sleep, host, {width: 792, height: 700})

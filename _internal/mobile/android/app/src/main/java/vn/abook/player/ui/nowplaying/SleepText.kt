@@ -58,7 +58,10 @@ object SleepText {
         return S.s_hen_gio_da_tat_tieng_luc_5d5e4231 + clock + "."
     }
 
-    fun restart(minutes: Int): String = S.s_bat_lai_0bad8bcf + minutes + S.s_phut_cf728a6a
+    /** Nút "Bật lại" đúng lần hẹn cuối (tối đa 4 chữ, một khuôn cho hai loại): "Bật lại 45 phút", "Bật lại 1 chương", "Bật lại 2 chương"
+     *  (web: sleep.ts `lastSleepRestartLabel`, Qt: SleepPopover.qml - cùng từng chữ). */
+    fun restart(last: vn.abook.player.LastSleep): String =
+        S.s_bat_lai_0bad8bcf + if (last.isChapter) S.s_0_chuong_04093412(last.chapters) else S.s_0_phut_2596d212(last.minutes)
 
     /** Đang trong đoạn nhỏ dần: đang hẹn, đang phát, và còn chưa tới `fadeSeconds` giây. */
     fun fading(sleep: PlayerSleep, remainingMs: Long, playing: Boolean, options: SleepOptions): Boolean =
