@@ -20,7 +20,7 @@ Rectangle {
     Rectangle {
         objectName: "levelBarFill"
         readonly property real shown: root.progress && root.score < Theme.progressFillMin ? 0 : Math.max(0, Math.min(1, root.score))
-        width: parent.width * shown; height: parent.height; radius: height / 2; color: root.ink
+        width: parent.width * shown; height: parent.height; radius: height / 2; color: root.ink // tick-ok: "Đã nghe" đổi sau khi nghe, không tự chạy từng giây; chạy dần như web motion-progress (Lead chốt leftfix)
         Behavior on width { enabled: root.progress && !Theme.reduceMotion; NumberAnimation { duration: Theme.motionMedium; easing.type: Easing.BezierSpline; easing.bezierCurve: Theme.easeStandard } }
     }
 }
