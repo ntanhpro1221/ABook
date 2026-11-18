@@ -62,17 +62,17 @@ def test_production_is_closed_until_the_owner_opens_it(studio) -> None:
 
 
 def test_the_home_screen_files_open_without_pairing_but_nothing_else_does(studio) -> None:
-    """"Thêm vào màn hình chính": trình duyệt lấy manifest và biểu tượng không kèm cookie - chỉ bốn file ấy mở cho trình duyệt chưa ghép."""
+    """"Thêm vào màn hình chính": trình duyệt lấy manifest và biểu tượng không kèm cookie - chỉ các file ấy mở cho trình duyệt chưa ghép."""
     app, _project = studio
     port = app.sync_server.port
     static = app.static_dir
     (static / "manifest.webmanifest").write_text('{"name": "ABook"}', encoding="utf-8")
-    for name in ("apple-touch-icon.png", "icon-192.png", "icon-512.png"):
+    for name in ("apple-touch-icon.png", "icon-192.png", "icon-512.png", "glyph-192.png", "glyph-512.png"):
         (static / name).write_bytes(b"icon")
     status, data, headers = _sync_request(port, "GET", "/manifest.webmanifest")
     assert status == 200 and json.loads(data) == {"name": "ABook"}
     assert headers["Content-Type"] == "application/manifest+json"
-    for name in ("apple-touch-icon.png", "icon-192.png", "icon-512.png"):
+    for name in ("apple-touch-icon.png", "icon-192.png", "icon-512.png", "glyph-192.png", "glyph-512.png"):
         status, data, headers = _sync_request(port, "GET", f"/{name}")
         assert (status, data, headers["Content-Type"]) == (200, b"icon", "image/png")
     status, data, _ = _sync_request(port, "GET", "/assets/app.js")

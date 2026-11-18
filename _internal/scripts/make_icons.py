@@ -45,6 +45,9 @@ TERRACOTTA, TERRACOTTA_LIGHT = "#e0764f", "#f3a383"
 PAPER, PAPER_SHADE, PAGE_LINE = "#fbf3e2", "#efe2c4", "#cdb68c"
 WAVE = "#f5e8cc"
 FLAP, FLAP_EDGE = "#fbf3e2", "#e3d2ae"
+# Màn chờ ở theme SÁNG (nền app #f5f3ef): giấy kem và sóng kem gần như biến mất, nên giấy có viền + gân xanh rừng, sóng 1 xanh rừng,
+# sóng 2 xanh nhạt (đặc, không alpha: #1f4c3c alpha 0.55 trên nền sáng chỉ 2.8:1). Mỗi nét >= 3:1 với nền (tests/test_splash_icon.py).
+LIGHT_WAVES, LIGHT_INK = (FOREST_TOP, "#6b8a7e"), FOREST_TOP
 
 WINDOWS_SIZES = (16, 20, 24, 32, 40, 48, 64, 96, 128, 256)
 SMALL_MAX = 32
@@ -78,9 +81,10 @@ def _dashes(radius: float, span: float, width: float, count: int) -> str:
     return f' stroke-dasharray="{max(0.1, visible - width):.1f} {gap + width:.1f}"'
 
 
-def glyph(*, small: bool = False, dashed: bool = False, mono: str | None = None) -> str:
+def glyph(*, small: bool = False, dashed: bool = False, mono: str | None = None, on_light: bool = False) -> str:
     """Sách mở xoè thành cái loa. small: bản giản lược cho 16-32 px; dashed: sóng nét đứt (.abookproj);
-    mono: tô MỘT màu (icon đơn sắc của Android 13, hệ thống tự nhuộm)."""
+    mono: tô MỘT màu (icon đơn sắc của Android 13, hệ thống tự nhuộm); on_light: hình trần trên nền sáng (màn chờ theme sáng) -
+    sóng xanh rừng, giấy kem có viền và gân xanh rừng, bìa cam giữ nguyên."""
     spine, half, reach, square = (296.0, 512.0), 40.0, 290.0, 20.0
     board, spine_r, wave_w, groups = (44.0, 52.0, 56.0, 3) if small else (30.0, 44.0, 38.0, 5)
     wave_start, wave_gap = (78.0, 98.0) if small else (74.0, 88.0)
@@ -89,8 +93,8 @@ def glyph(*, small: bool = False, dashed: bool = False, mono: str | None = None)
     for index in range(2):
         radius = reach + square + wave_start + wave_gap * index
         span = half * (0.9 - 0.07 * index)
-        colour = mono or WAVE
-        opacity = 1.0 if index == 0 or mono else 0.55
+        colour = mono or (LIGHT_WAVES[index] if on_light else WAVE)
+        opacity = 1.0 if index == 0 or mono or on_light else 0.55
         dash = _dashes(radius, span, wave_w, 3 if small else 4) if dashed else ""
         parts.append(f'<path d="M {_points(_arc(spine, radius, -span, span))}" stroke="{colour}"'
                      f' stroke-width="{wave_w}" fill="none" stroke-linecap="round" opacity="{opacity}"{dash}/>')
@@ -102,12 +106,14 @@ def glyph(*, small: bool = False, dashed: bool = False, mono: str | None = None)
         end = reach - 10 * abs(group - (groups - 1) / 2) / ((groups - 1) / 2)  # mép giấy so le như sách thật xoè
         wedge = [spine, *_arc(spine, end, a0, a1, 16)]
         fill = mono or (PAPER if group % 2 == 0 else PAPER_SHADE)
-        parts.append(f'<path d="M {_points(wedge)} Z" fill="{fill}"/>')
+        edge = (f' stroke="{LIGHT_INK}" stroke-width="7" stroke-linejoin="round"' if on_light else "")
+        parts.append(f'<path d="M {_points(wedge)} Z" fill="{fill}"{edge}/>')
         if not small and not mono:
             for k in (1, 2):
                 x, y = _polar(spine, end - 2, a0 + (a1 - a0) * k / 3)
-                parts.append(f'<path d="M {spine[0]} {spine[1]} L {x:.1f} {y:.1f}" stroke="{PAGE_LINE}"'
-                             f' stroke-width="3" opacity="0.8"/>')
+                line, width = (LIGHT_INK, 4) if on_light else (PAGE_LINE, 3)
+                parts.append(f'<path d="M {spine[0]} {spine[1]} L {x:.1f} {y:.1f}" stroke="{line}"'
+                             f' stroke-width="{width}" opacity="0.8"/>')
     for sign in (-1, 1):
         x, y = _polar(spine, reach + square, sign * half)
         parts.append(f'<path d="M {spine[0]} {spine[1]} L {x:.1f} {y:.1f}" stroke="{cover}" stroke-width="{board}"'
@@ -202,9 +208,13 @@ def write_ico(path: Path, full: str, small: str) -> None:
 # Chỉ những gì glyph() dùng: <g transform="translate() scale()">, <path> (nét / tô, opacity), <circle>.
 
 ANDROID_NS = 'xmlns:android="http://schemas.android.com/apk/res/android"'
-# Màn chờ Android 12+ (và core-splashscreen ở bản cũ): khung 240 dp, hệ thống chỉ giữ vòng tròn 160 dp giữa khung. Logo là icon app
-# tròn vẽ đúng trong vòng ấy: hãng nào cắt ô vuông bo góc (OPPO) cũng thấy trọn hình, và vector thì không nhoè khi phóng.
+# Màn chờ Android 12+ (và core-splashscreen ở bản cũ): khung 240 dp, hệ thống chỉ giữ vòng tròn 160 dp giữa khung. Logo là hình
+# sách-loa TRẦN đặt thẳng trên nền app (chủ sách 17-11: "chỉ icon thôi, bỏ cái bao nền đi") - không vòng xanh rừng của icon app.
+# Mọi nét của hình nằm trong vòng ấy: hãng nào cắt ô vuông bo góc (OPPO) cũng thấy trọn hình, và vector thì không nhoè khi phóng.
 SPLASH_FRAME_DP, SPLASH_LOGO_DP = 240.0, 160.0
+# Điểm mực xa nhất của glyph() tính từ GLYPH_CENTRE, ở tỉ lệ 1 (đo bằng rasterize, tests/test_splash_icon.py đo lại); hình chiếm
+# SPLASH_FILL bán kính vòng an toàn - chừa một chút để nét tròn đầu sóng không chạm mép vòng.
+GLYPH_REACH, SPLASH_FILL = 330.0, 0.94
 # Nút Đóng trên thông báo phát (Lucide "x", khung 24).
 CLOSE_PATH = "M18,6L6,18M6,6L18,18"
 
@@ -252,6 +262,8 @@ def _vector_body(markup: str, depth: int = 1) -> str:
             attrs += [f'android:strokeColor="{stroke}"', f'android:strokeWidth="{node.get("stroke-width", "1")}"']
             if node.get("stroke-linecap"):
                 attrs.append(f'android:strokeLineCap="{node.get("stroke-linecap")}"')
+            if node.get("stroke-linejoin"):
+                attrs.append(f'android:strokeLineJoin="{node.get("stroke-linejoin")}"')
             if alpha and float(alpha) < 1:
                 attrs.append(f'android:strokeAlpha="{alpha}"')
         out.append(f"{pad}<path " + " ".join(attrs) + " />")
@@ -260,25 +272,28 @@ def _vector_body(markup: str, depth: int = 1) -> str:
     return "\n".join(out)
 
 
-def _vector(note: str, size_dp: float, body: str, viewport: float = 1024.0, aapt: bool = False) -> str:
-    extra = '\n    xmlns:aapt="http://schemas.android.com/aapt"' if aapt else ""
+def _vector(note: str, size_dp: float, body: str, viewport: float = 1024.0) -> str:
     return ('<?xml version="1.0" encoding="utf-8"?>\n'
             f'<!-- {note} Sinh bởi scripts/make_icons.py - đừng sửa tay. -->\n'
-            f'<vector {ANDROID_NS}{extra}\n    android:width="{size_dp:g}dp" android:height="{size_dp:g}dp"\n'
+            f'<vector {ANDROID_NS}\n    android:width="{size_dp:g}dp" android:height="{size_dp:g}dp"\n'
             f'    android:viewportWidth="{viewport:g}" android:viewportHeight="{viewport:g}">\n{body}\n</vector>\n')
 
 
-def splash_icon() -> str:
-    scale = SPLASH_LOGO_DP / SPLASH_FRAME_DP
-    offset = 1024 * (1 - scale) / 2
-    circle = ('        <path android:pathData="M0,512A512,512 0 1,1 1024,512A512,512 0 1,1 0,512Z">\n'
-              '            <aapt:attr name="android:fillColor">\n'
-              '                <gradient android:type="linear" android:startX="0" android:startY="0" android:endX="0" android:endY="1024"\n'
-              f'                    android:startColor="{FOREST_TOP}" android:endColor="{FOREST_BOTTOM}" />\n'
-              '            </aapt:attr>\n        </path>')
-    body = (f'    <group android:translateX="{offset:.2f}" android:translateY="{offset:.2f}" android:scaleX="{scale:.4f}" android:scaleY="{scale:.4f}">\n'
-            f'{circle}\n{_vector_body(_placed(glyph(), 0.92), depth=2)}\n    </group>')
-    return _vector("Màn chờ: icon app tròn trong vòng 160 dp của khung 240 dp (Android 12+ chỉ giữ vòng ấy).", SPLASH_FRAME_DP, body, aapt=True)
+def splash_scale() -> float:
+    """Tỉ lệ của glyph() trong khung 1024 của màn chờ: điểm xa nhất nằm ở SPLASH_FILL bán kính vòng 160 dp."""
+    return 512 * SPLASH_LOGO_DP / SPLASH_FRAME_DP * SPLASH_FILL / GLYPH_REACH
+
+
+def splash_body(*, night: bool) -> str:
+    """Hình màn chờ dạng SVG (khung 1024 = 240 dp): chỉ glyph, nền trong suốt - nền là app_bg của theme. night: bản trên nền tối
+    (giấy + sóng kem như icon app); không night: bản trên nền sáng (on_light)."""
+    return _placed(glyph(on_light=not night), splash_scale())
+
+
+def splash_icon(*, night: bool) -> str:
+    theme = "theme tối, drawable-night" if night else "theme sáng: giấy viền xanh rừng, sóng xanh rừng"
+    return _vector(f"Màn chờ ({theme}): chỉ hình sách-loa, không vòng nền, nằm trọn trong vòng 160 dp của khung 240 dp"
+                   " (Android 12+ chỉ giữ vòng ấy).", SPLASH_FRAME_DP, _vector_body(splash_body(night=night)))
 
 
 def notification_icon() -> str:
@@ -314,7 +329,8 @@ def write_android() -> list[Path]:
             "Lớp trước icon thích ứng (108 dp, launcher giữ 72 dp giữa).", 108, _vector_body(adaptive_foreground_body()))),
         _write(drawable / "ic_launcher_monochrome.xml", _vector(
             "Icon đơn sắc Android 13 (hệ thống tự nhuộm).", 108, _vector_body(adaptive_foreground_body(mono="#ffffff")))),
-        _write(drawable / "splash_icon.xml", splash_icon()),
+        _write(drawable / "splash_icon.xml", splash_icon(night=False)),
+        _write(RES / "drawable-night" / "splash_icon.xml", splash_icon(night=True)),
         _write(drawable / "ic_notification.xml", notification_icon()),
         _write(drawable / "ic_notification_close.xml", close_icon()),
         _write(drawable / "ic_launcher_background.xml",
@@ -340,6 +356,16 @@ def write_android() -> list[Path]:
 
 # Trang nghe qua trình duyệt (apple-touch-icon + web app manifest trong ui/index.html): tên file cố định vì index.html trỏ tới.
 WEB_ICONS = (("apple-touch-icon.png", 180), ("icon-192.png", 192), ("icon-512.png", 512))
+# Màn chờ của trang web cài lên màn hình chính (Chrome trên Android dựng nó từ manifest: background_color + icon "any"): hình sách-loa
+# TRẦN như màn chờ app, nền trong suốt, bản trên nền sáng vì background_color là --bg sáng (#f5f3ef). Icon "maskable" (launcher tự cắt
+# khuôn) vẫn là ô xanh rừng icon-*.png. Lead 18-11 (soát tapthru5 S3).
+WEB_GLYPHS = (("glyph-192.png", 192), ("glyph-512.png", 512))
+# Điểm mực xa nhất ở WEB_GLYPH_FILL nửa cạnh ô: Chrome vẽ icon "any" của màn chờ không cắt khuôn.
+WEB_GLYPH_FILL = 0.94
+
+
+def web_glyph() -> str:
+    return _svg(_placed(glyph(on_light=True), 512 * WEB_GLYPH_FILL / GLYPH_REACH))
 
 
 def write_web() -> list[Path]:
@@ -347,7 +373,9 @@ def write_web() -> list[Path]:
     target.mkdir(parents=True, exist_ok=True)
     for name, size in WEB_ICONS:
         rasterize(app_icon(square=True), size).convert("RGB").save(target / name)
-    return [target / name for name, _ in WEB_ICONS]
+    for name, size in WEB_GLYPHS:
+        rasterize(web_glyph(), size).save(target / name)
+    return [target / name for name, _ in (*WEB_ICONS, *WEB_GLYPHS)]
 
 
 def preview(folder: Path) -> None:
