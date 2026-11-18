@@ -1,4 +1,5 @@
 // Nhạc nền: phép tính thuần (cùng fixture với máy chủ, web và Android) + MusicBed với AudioOut giả, đồng hồ giả.
+#include "timing.h"
 #include "fakes.h"
 #include "music.h"
 #include "musicbed.h"
@@ -314,7 +315,7 @@ private slots:
         QCOMPARE(rig.music->bed()->activeLink(), QString());
         QSignalSpy positions(rig.player->clock(), &PlayerClock::positionChanged);
         rig.out.pos = 30.2; // silently: only the music sync timer can notice
-        QTRY_COMPARE_WITH_TIMEOUT(rig.music->bed()->activeLink(), QStringLiteral("a"), 3000);
+        QTRY_COMPARE_WITH_TIMEOUT(rig.music->bed()->activeLink(), QStringLiteral("a"), TestTiming::ms(3000));
         QCOMPARE(int(positions.count()), 0);
         QCoreApplication::processEvents();
         rig.music->bed()->tick(ticksFor(FADE_SECONDS));

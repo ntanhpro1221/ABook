@@ -2,6 +2,7 @@
 // Bản mới gửi đúng danh sách file cho bản đang chạy rồi thoát; không ai nghe thì tự làm bản đang chạy; bản đang chạy chết thì
 // lần mở sau tự lên thay.
 #include "singleinstance.h"
+#include "timing.h"
 
 #include <QElapsedTimer>
 #include <QProcess>
@@ -53,7 +54,7 @@ private slots:
         QElapsedTimer timer;
         timer.start();
         QVERIFY(!alone.handOff({QStringLiteral("x.abook")}, 2000));
-        QVERIFY2(timer.elapsed() < 1500, "không có ai nghe thì trả lời ngay, không chờ hết hạn");
+        QVERIFY2(TestTiming::within(timer.elapsed(), 1500, 2000), "không có ai nghe thì trả lời ngay, không chờ hết hạn");
         QVERIFY(alone.listen());
     }
 
@@ -84,12 +85,12 @@ private slots:
         const QString name = uniqueName();
         QProcess holder;
         holder.start(QCoreApplication::applicationFilePath(), {QStringLiteral("--hold"), name});
-        QVERIFY(holder.waitForReadyRead(10000));
+        QVERIFY(holder.waitForReadyRead(TestTiming::ms(10000)));
         QCOMPARE(holder.readLine().trimmed(), QByteArray("listening"));
         SingleInstance probe(name);
         QVERIFY(!probe.listen());
         holder.kill();
-        QVERIFY(holder.waitForFinished(10000));
+        QVERIFY(holder.waitForFinished(TestTiming::ms(10000)));
         QVERIFY(probe.listen());
     }
 

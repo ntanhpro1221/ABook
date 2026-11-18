@@ -233,6 +233,15 @@ def other_patterns(text, suffix):
         rules["elapsed-bound"] = r"\b(?:Date\s*\.\s*now|performance\s*\.\s*now)\s*\(\s*\)\s*-\s*\w+\s*<(?!\s*scaledMs\b)"
     if suffix in {".qml", ".cpp"}:
         rules = {"qt-fixed-delay": r"(?<![\w.])wait\s*\(" if suffix == ".qml" else r"\bQTest::qWait\s*\("}
+    if suffix == ".cpp":
+        # Include values derived from QElapsedTimer / chrono, not just inline elapsed() calls.
+        timed = r"\b\w+\s*\.\s*(?:elapsed|nsecsElapsed)\s*\(\s*\)"
+        chrono = r"(?:std::)?chrono::(?:\w+::)*now\s*\(\s*\)\s*-\s*\w+"
+        aliases = set(re.findall(r"\b(\w+)\s*=\s*(?:" + timed + "|" + chrono + ")", code))
+        names = r"|\b(?:" + "|".join(map(re.escape, sorted(aliases))) + r")\b" if aliases else ""
+        values = "(?:" + timed + "|" + chrono + names + ")"
+        rules["elapsed-bound"] = values + r"\s*(?:/\s*[\d.eE]+\s*)?<=?\s*\d"
+        rules["fixed-deadline"] = r"(?:std::)?chrono::(?:\w+::)*now\s*\(\s*\)\s*\+\s*(?:std::)?chrono::\w+\s*\(\s*\d"
     for rule, pattern in rules.items():
         for match in re.finditer(pattern, code):
             line = code.count("\n", 0, match.start()) + 1

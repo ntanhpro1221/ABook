@@ -1,3 +1,4 @@
+#include "timing.h"
 #include <QCryptographicHash>
 #include <QFile>
 #include <QJSEngine>
@@ -32,7 +33,7 @@ private slots:
         MusicArtProvider provider;
         std::unique_ptr<QQuickImageResponse> response(provider.requestImageResponse(QString::fromLatin1(sha) + QLatin1Char('/') + QString::fromLatin1(QUrl::toPercentEncoding(QStringLiteral("https://artwork.invalid/cover.jpg"))), QSize(40, 40)));
         QSignalSpy ready(response.get(), &QQuickImageResponse::finished);
-        QTRY_COMPARE_WITH_TIMEOUT(ready.count(), 1, 3000);
+        QTRY_COMPARE_WITH_TIMEOUT(ready.count(), 1, TestTiming::ms(3000));
         std::unique_ptr<QQuickTextureFactory> texture(response->textureFactory());
         QVERIFY(texture);
         QCOMPARE(texture->image().size(), QSize(40, 40));

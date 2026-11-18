@@ -1,5 +1,6 @@
 // Bộ thử "Đọc theo" và phần nghe của trang sách: kịch bản -> đoạn / câu / chữ, câu và chữ đang đọc ở một giây (chỉ phát tín hiệu khi đổi),
 // luật cuộn theo, nhãn nút chính của trang sách.
+#include "timing.h"
 #include "bookdetail.h"
 #include "fakes.h"
 #include "readalong.h"
@@ -212,7 +213,7 @@ private slots:
         QCOMPARE(rig.read->status(), QStringLiteral("ready"));
         QVERIFY(rig.read->paragraphs()->rowCount() > 0);
         rig.read->setActive(false);
-        QTRY_COMPARE_WITH_TIMEOUT(rig.read->status(), QStringLiteral("idle"), 1000);
+        QTRY_COMPARE_WITH_TIMEOUT(rig.read->status(), QStringLiteral("idle"), TestTiming::ms(1000));
         QCOMPARE(rig.read->paragraphs()->rowCount(), 0);
         QCOMPARE(rig.read->currentSegment(), -1);
         rig.read->setActive(true);

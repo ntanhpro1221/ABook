@@ -1,6 +1,7 @@
 // WebP must decode on the desktop: every voice portrait (qrc /voiceavatars) and every character avatar of a book is WebP.
 // 0.4.173: the Qt 6.11.3 SDK had no qtimageformats, so qwebp.dll was missing and every portrait quietly showed its
 // initial-letter fallback while all other tests stayed green. These checks fail on an SDK (or a dist) without the plugin.
+#include "timing.h"
 #include <QDir>
 #include <QGuiApplication>
 #include <QImage>
@@ -47,7 +48,7 @@ private slots:
         QVERIFY2(object, qPrintable(component.errorString()));
         object->setProperty("source", QUrl(QStringLiteral("qrc:/voiceavatars/") + names.first()));
         // QQuickImage::Status: Null 0, Ready 1, Loading 2, Error 3
-        QTRY_VERIFY_WITH_TIMEOUT(object->property("status").toInt() != 2 && object->property("status").toInt() != 0, 5000);
+        QTRY_VERIFY_WITH_TIMEOUT(object->property("status").toInt() != 2 && object->property("status").toInt() != 0, TestTiming::ms(5000));
         QCOMPARE(object->property("status").toInt(), 1);
         QVERIFY(object->property("implicitWidth").toReal() > 0);
     }

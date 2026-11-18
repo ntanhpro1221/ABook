@@ -12,6 +12,7 @@ mà kết quả phụ thuộc vào việc máy có kịp trong N giây: mã khô
 | Chờ tín hiệu / join luồng | `event.wait(scaled(1))`, `thread.join(scaled(1))` | Python |
 | Hạn chờ Kotlin | `TestTime.ms(..)`, `TestTime.nanos(..)`, `TestTime.seconds(..)` | `vn/abook/player/TestTime.kt` |
 | Hạn chờ web | `scaledMs(..)`, `eventually(..)` (thay `vi.waitFor`, hạn mặc định 1 s) | `ui/src/testing/` |
+| Hạn chờ / độ trễ Qt C++ | `TestTiming::ms(..)`, `TestTiming::within(tookMs, limitMs, blockedMs)` | `desktop_qt/tests/timing.h` |
 | Đo hiệu năng thật (ngưỡng cố định) | marker `@pytest.mark.perf` (Python), `TestTime.perf { .. }` (Kotlin) - ngoài cổng thường | `pytest -m perf`, `ABOOK_PERF=1` |
 | Giờ giả (đồng hồ bị thay, `vi.advanceTimersByTime`) | không đụng; dòng ghi `wallclock-ok: <lý do>` khi máy dò nhầm | |
 
@@ -24,6 +25,20 @@ Máy dò: `scripts/flaky_patterns.py` có thêm ba luật không dung sai (`elap
 `tests/fixtures/flaky_patterns.json` không được chứa ba luật ấy. Hai file Android `TlsRouteResolverTest.kt` và `net/FastConnectTest.kt`
 nằm trong `WALLCLOCK_DEFERRED` vì nhánh `dev/tlsleak` đang viết lại chúng (còn `FastConnectTest.kt:80,95`: `nanoTime() + toNanos(..)`);
 khi tlsleak vào, sửa hai file theo bảng trên và bỏ chúng khỏi danh sách.
+
+Qt C++ dùng cùng biến môi trường, mặc định và cận `blocked` như Python. Máy dò cũng bắt `elapsed()` / `nsecsElapsed()`
+và biến đo suy ra từ chúng trong các test C++; helper header nằm ngoài tập file test được quét. Cận hoàn tất tường minh của
+`QTRY_*_WITH_TIMEOUT`, `qWaitFor` và `QProcess::waitFor*` đi qua `TestTiming::ms`; cửa sổ chứng minh không xảy ra vẫn giữ nguyên.
+VoiceTests kiểm 4× bằng mixer/reader threaded thật nhưng đồng hồ endpoint giả: sau mỗi lần nạp xong mới tiêu thụ 100 ms PCM,
+qua 32 lần nạp, không chấp nhận underrun thiết bị hay nguồn. Máy bị bỏ đói không tự tiêu thụ thêm PCM. Giới hạn lead 375 ms và
+việc tự đánh thức để nạp vẫn được kiểm; đây là kiểm tính đúng của hàng đợi, không phải đo hiệu năng CPU thời gian thực.
+Khôi phục UI còn được kiểm bằng đồng hồ thiết bị giả với PCM không đổi và con trỏ tăng đúng 12.000 khung, bên cạnh bài threaded
+kiểm không reset/seek. Các đồng hồ giả `SinkClock` và `TestAnimationClock` không nhân hệ số.
+Mẫu vị trí nhạc nền được kẹp giữa hai lần đọc đồng hồ thiết bị; lời gọi `play()` cũng có hai mốc kẹp. Khoảng đo chứa thời điểm
+thực của thao tác kể cả khi luồng test bị bỏ đói giữa hai lần đọc, trong khi dung sai ánh xạ âm thanh 12 ms vẫn giữ nguyên.
+Hàng `blocked-open-idle-mixer` giữ decoder trong `open()`: chưa có voice sẵn sàng nên mixer rỗi, không có timer nạp lại.
+Pause phải tăng bộ đếm reset, và stop phải trả về khi barrier vẫn giữ; bài này kiểm đánh thức bằng control độc lập với timer, bên cạnh
+hàng chặn trong `read()` và bài kiểm timer nạp lại với endpoint nhỏ.
 
 ## Đã sửa (số chỗ, trước -> sau theo máy dò)
 
