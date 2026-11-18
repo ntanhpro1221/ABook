@@ -215,6 +215,15 @@ def test_a_txt_folder_reads_its_information_through_the_real_folder_import(tmp_p
     assert imported == studio == case["expected"]
 
 
+SAVEABLE_CASES = json.loads((FIXTURES / "saveable.json").read_text(encoding="utf-8"))["cases"]
+
+
+@pytest.mark.parametrize("case", SAVEABLE_CASES, ids=lambda case: case["name"])
+def test_the_save_button_cleans_the_draft_as_the_server_does(case):
+    """The web and Qt 'Lưu thông tin' button clean the draft before comparing; 'cleaned' must be what the server keeps."""
+    assert book_metadata.clean(case["draft"]) == case["cleaned"]
+
+
 META_CASES = json.loads((FIXTURES / "meta_version.json").read_text(encoding="utf-8"))["cases"]
 
 

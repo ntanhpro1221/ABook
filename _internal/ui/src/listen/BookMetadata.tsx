@@ -12,6 +12,23 @@ export function metadataOf(book: BookMetadata): BookMetadata {
   return { author: book.author ?? "", illustrator: book.illustrator ?? "", altTitles: book.altTitles ?? [], genres: book.genres ?? [], summary: book.summary ?? "", source: book.source ?? { url: "", site: "" } };
 }
 
+/** Trần của tên tác giả (`book_edits.AUTHOR_MAX`, cùng trần với tên sách). */
+const AUTHOR_MAX = 160;
+
+/** Bản nháp như máy chủ sẽ giữ (`book_metadata.clean`): tác giả một dòng, khoảng trắng gộp một dấu cách; mục rỗng của danh sách bị bỏ.
+ *  Ca dùng chung: tests/fixtures/book_metadata/saveable.json. */
+export function cleanMetadata(draft: BookMetadata): BookMetadata {
+  const value = metadataOf(draft);
+  const author = Array.from((value.author ?? "").normalize("NFC").replace(/\p{C}/gu, " ").split(/\s+/).filter(Boolean).join(" ")).slice(0, AUTHOR_MAX).join("").trim();
+  return { ...value, author, altTitles: (value.altTitles ?? []).filter(item => item.trim()), genres: (value.genres ?? []).filter(item => item.trim()) };
+}
+
+/** Nút "Lưu thông tin" bấm được khi bản nháp ĐÃ làm sạch khác thông tin sách đang có: thêm khoảng trắng hay Enter cuối danh sách không phải
+ *  một thay đổi, và lưu xong (sách nạp lại) nút tắt. */
+export function metadataSaveable(draft: BookMetadata, book: BookMetadata): boolean {
+  return JSON.stringify(cleanMetadata(draft)) !== JSON.stringify(cleanMetadata(book));
+}
+
 export function BookMetadataDetails({ book }: { book: BookMetadata }) {
   const [open, setOpen] = useState(false);
   const id = useId();

@@ -30,7 +30,7 @@ import { seriesOf, type ListenBook, type ListenChapter } from "./model";
 import { useSource } from "./source";
 import { BookReadingsSection } from "./WordReadings";
 import { useFadeScroller } from "@/shared/scrollFade";
-import { BookMetadataFields, metadataOf, type BookMetadata } from "./BookMetadata";
+import { BookMetadataFields, metadataOf, metadataSaveable, type BookMetadata } from "./BookMetadata";
 
 import { Reveal } from "../shared/MotionPresence";
 // Sửa sách "áp ngay" ngay trên trang nghe (docs/EDITING.md): tên sách, tác giả, bìa, tên nhân vật, tên chương, nhạc nền. Cùng một bộ
@@ -51,22 +51,6 @@ export function refreshAfterEdit(client: QueryClient, bookId: string): void {
 /** Cuốn này sửa được ngay trên trang nghe không (cuốn của máy này, có xưởng hay không). */
 export function canEditBook(book: Pick<ListenBook, "capabilities"> | undefined): boolean {
   return canEditLayer(book?.capabilities);
-}
-
-/** Chữ người gõ như máy chủ làm sạch (khoảng trắng gộp một dấu cách, bỏ đầu cuối): "Nguyễn  Nhật Ánh " và "Nguyễn Nhật Ánh" là một. */
-function tidy(text: string): string {
-  return text.trim().replace(/\s+/g, " ");
-}
-
-/** Ô "Tác giả" lưu được không: chữ gõ khác tác giả đang hiện (trống cũng là một thay đổi nếu sách đang có tác giả: bỏ tên tác giả). */
-export function authorSaveable(typed: string, shown: string | undefined): boolean {
-  return tidy(typed) !== tidy(shown ?? "");
-}
-
-/** Đặt tác giả của sách (lớp sửa của cuốn nhập từ file); tên trống là "không rõ tác giả". Trả tác giả đã làm sạch. */
-export async function saveAuthor(bookId: string, author: string): Promise<string> {
-  const saved = await api<{ author: string }>(`/api/books/${bookId}/author`, { method: "PUT", body: { author } });
-  return saved.author;
 }
 
 const MAX_SIDE = 1600;
@@ -410,9 +394,9 @@ export function EditBookDialog({
             <Button type="submit" variant="primary" className="touch-box h-10 min-h-10 max-sm:min-h-[48px] pointer-coarse:min-h-[48px]" loading={rename.isPending} disabled={!title.trim() || title.trim() === book.title}>{S.s_luu_ten_0b3ef54a}</Button>
           </form>
         </Section>
-        <form className="space-y-3" onSubmit={event => { event.preventDefault(); changeAuthor.mutate(metadata); }}>
+        <form className="space-y-3" onSubmit={event => { event.preventDefault(); if (metadataSaveable(metadata, book)) changeAuthor.mutate(metadata); }}>
           <BookMetadataFields value={metadata} onChange={setMetadata} />
-          <Button type="submit" variant="primary" loading={changeAuthor.isPending} disabled={JSON.stringify(metadata) === JSON.stringify(metadataOf(book))}>{S.s_bookmeta_save}</Button>
+          <Button type="submit" variant="primary" loading={changeAuthor.isPending} disabled={!metadataSaveable(metadata, book)}>{S.s_bookmeta_save}</Button>
         </form>
         <Section title={S.s_anh_bia_f224644d}>
           {/* flex-wrap: ở 375 px cột nút (rộng ~190 px) không vừa cạnh bìa 112 px - xuống dưới bìa thay vì tràn khỏi hộp (soát UX a17). */}
