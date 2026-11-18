@@ -16,7 +16,9 @@ import kotlin.math.roundToInt
  *  - cao >= 48 dp (kích thước thật, không cắt theo cha);
  *  - mọi chữ con nằm gọn trong hộp chạm (sai số 1 px);
  *  - hộp chạm nằm trên chỗ chừa đáy: đáy không quá `rootHeight - clearanceDp` (mặc định: luật chung components/Insets.kt cho cửa sổ không inset của Robolectric;
- *    màn soát kiểu máy thật truyền chỗ chừa của máy ấy, vd [OppoHiddenBar]).
+ *    màn soát kiểu máy thật truyền chỗ chừa của máy ấy, vd [OppoHiddenBar]). Đo phần THẤY được của hộp (`boundsInRoot`, đã cắt theo khung cuộn chứa nó): ô của một
+ *    danh sách cuộn nằm dưới mép khung nhìn thì chưa ai thấy hay chạm được, cuộn tới mới chạm; còn danh sách mà khung nhìn tràn vào dải nuốt chạm thì phần
+ *    thấy được vẫn nằm trong dải và vẫn bị bắt. Nút bị cắt hẳn (không còn phần nào thấy) bỏ qua phép này; hai phép trên vẫn đo kích thước thật.
  * Trả về danh sách vi phạm (rỗng = sạch) và số nút đã soát.
  */
 class TouchReport(val checked: Int, val problems: List<String>)
@@ -47,7 +49,10 @@ fun ComposeContentTestRule.touchBoxProblems(screen: String, clearanceDp: Float =
             val minPx = minDp * density
             if (node.size.height + 0.5f < minPx) problems += "$name cao ${(node.size.height / density).roundToInt()} dp (< ${minDp.roundToInt()} dp)"
             val limit = rootHeight - clearanceDp * density
-            if (bottom > limit + 1f) problems += "$name: đáy hộp chạm ${(bottom / density).roundToInt()} dp, thấp hơn mép trên chỗ chừa đáy ${(limit / density).roundToInt()} dp"
+            val shown = node.boundsInRoot
+            if (shown.height > 0f && shown.bottom > limit + 1f) {
+                problems += "$name: đáy hộp chạm ${(shown.bottom / density).roundToInt()} dp, thấp hơn mép trên chỗ chừa đáy ${(limit / density).roundToInt()} dp"
+            }
             for (inner in descendants(node)) {
                 if (inner.config.getOrNull(SemanticsProperties.Text) == null) continue
                 val t = inner.positionInRoot.y
