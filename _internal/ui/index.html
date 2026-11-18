@@ -9,8 +9,14 @@
     <meta name="theme-color" content="#f5f3ef" media="(prefers-color-scheme: light)" />
     <meta name="theme-color" content="#121110" media="(prefers-color-scheme: dark)" />
     <script>
-      // The native shell reads preferences.json before creating the webview. Browsers follow the OS until preferences arrive.
-      document.documentElement.dataset.theme = window.__ABOOK_BOOT_THEME__ || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+      // The native shell reads preferences.json before creating the webview. Browsers use the choice saved by the app last time
+      // (src/shared/savedTheme.ts, key "abook.theme"), else follow the OS until preferences arrive.
+      (function () {
+        var saved = null;
+        try { saved = localStorage.getItem('abook.theme'); } catch (e) {}
+        document.documentElement.dataset.theme = window.__ABOOK_BOOT_THEME__ || (saved === 'light' || saved === 'dark' ? saved
+          : matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+      })();
     </script>
     <style>
       html { background: #f5f3ef; color: #1a1814; color-scheme: light; }
