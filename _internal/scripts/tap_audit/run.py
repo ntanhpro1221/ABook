@@ -16,7 +16,7 @@ import tempfile
 import time
 
 sys.dont_write_bytecode = True
-from ui_tap_audit import find_browser, limit_cpu, load_scenarios, run
+from ui_tap_audit import TIME_SCALE, find_browser, limit_cpu, load_scenarios, run
 
 
 def main():
@@ -56,7 +56,7 @@ def main():
                 )
                 try:
                     ready = state / 'ready.json'
-                    deadline = time.monotonic() + 60
+                    deadline = time.monotonic() + 60 * TIME_SCALE
                     while not ready.is_file():
                         if server.poll() is not None or time.monotonic() > deadline:
                             log.flush(); log.seek(0)
@@ -71,9 +71,9 @@ def main():
                     # Closing our pipe requests server.stop() and app.close().
                     server.stdin.close()
                     try:
-                        server.wait(timeout=15)
+                        server.wait(timeout=15 * TIME_SCALE)
                     except subprocess.TimeoutExpired:
-                        server.kill(); server.wait(timeout=10)
+                        server.kill(); server.wait(timeout=10 * TIME_SCALE)
                     payload.setdefault('cleanup', {})['serverExited'] = server.poll() is not None
         payload.setdefault('cleanup', {})['stateRemoved'] = not root.exists()
     except Exception as exc:

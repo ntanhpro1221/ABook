@@ -1,5 +1,53 @@
 # Kiểm chạm thật trước phát hành
 
+The positive audit performs trusted coordinate mouse/touch actions. The negative
+control deliberately reports `FAIL` / `0/21 PASS`: that is its expected result,
+which `release_gate.py` validates as a successful detector check. Each negative
+scenario must first prove that the unmodified layer and both probe centers are
+reachable. It then applies `pointer-events:none` only to the captured layer,
+records the two expected center failures, restores the exact original inline
+property and priority, and proves that the controls are reachable again. It never
+executes application actions through an intentionally broken layer; such actions
+can dismiss a modal, activate the page behind it and corrupt subsequent probes.
+JSON evidence is under each row's `negativeControl` (`baseline`, `detected`,
+`restored`); missing preparation/restoration or unrelated failures fail the gate.
+
+Readiness uses predicates, with a 15 second failure deadline (every harness deadline -
+readiness, fixture/Edge start, CDP replies, cleanup - is multiplied by
+`ABOOK_TEST_TIME_SCALE`, default 5, the factor of `tests/timing.py`): navigation must mount
+the page, geometry must match across three successive animation frames, and all
+finite animations must finish. The animation list is sampled again each frame,
+including animations mounted after the initial input. A deadline never counts as
+readiness. During opening, every visible enabled layer control is also sampled
+for `pointer-events:none`; waiting for motion must not conceal an unclickable
+visible surface. This covers every scenario automatically, including new menus,
+dialogs, sheets and listboxes. "Visible" means the control's center is painted:
+inside the viewport (1px hit-test margin), inside every `clip-path: inset()`
+ancestor (MotionRegion slides) and inside every ancestor whose `overflow` clips it
+along its containing-block chain (fixed/absolute layers escape other ancestors;
+html/body overflow belongs to the viewport). A control still clipped by an expanding
+section is not yet visible, so a hit-test at its center proves nothing. Mid-motion,
+a hit that lands on the layer's own surface (inside the layer, not on another
+control) is a transient dead zone, not a tap through to the page; a hit outside the
+layer, on another control, or any `pointer-events:none` still fails, and the
+settled check ("opening layer controls reachable") requires the exact control.
+Blocked samples carry `chain`/`hitChain` (position, overflow, clip-path, transform,
+inert, rect) so the next failure explains itself. A toast covering a page step is
+closed through its real ✕; while that ✕ is still off screen (toast sliding in/out on
+a busy machine) the step re-settles and re-checks until the same deadline. A tapped
+`aria-haspopup` trigger must produce a live layer within the deadline; otherwise the
+step fails with the pointer/focus/`aria-expanded`/layer mount trace of that tap.
+The same tap must only open: if afterwards the trigger is no longer `aria-expanded`
+(its click, delivered under the finger inside the just-opened layer, selected an item
+or pressed Close), the step fails with that trace too.
+If the trace shows the press itself landed in a page toast that slid under the finger
+after the hit-test, the step re-selects (closing the toast through its ✕) and taps
+once more; any other missed tap stays red.
+Cleanup waits (bounded) for every process of our own Edge tree to exit before
+removing the profile, because children outlive the root on a busy machine. Checked
+steps wait (same deadline) for the saved `aria-checked`, because switches reflect
+server state and a busy machine answers late.
+
 ## Player geometry: sheetgeo
 
 From the task/repository root, one command builds this tree's real gallery and runs Edge:
