@@ -1,4 +1,5 @@
 package vn.abook.player.ui.pip
+import vn.abook.player.ui.data.ImageLaunchedEffect
 
 import vn.abook.player.ui.motion.SwapContent
 import vn.abook.player.ui.motion.ContentLayout
@@ -17,7 +18,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -133,7 +133,7 @@ private fun PipCover(player: PlayerState, covers: CoverLoader, maxWidthPx: Int, 
         } else {
             val key = remember(ref.path, ref.stamp, maxWidthPx) { covers.key(ref.path, ref.stamp, maxWidthPx, maxWidthPx * 3 / 2) }
             val image = remember(key) { mutableStateOf(covers.peek(key)) }
-            if (image.value == null) LaunchedEffect(key) { image.value = covers.load(key, ref.path, maxWidthPx, maxWidthPx * 3 / 2) }
+            if (image.value == null) ImageLaunchedEffect(key) { image.value = covers.load(key, ref.path, maxWidthPx, maxWidthPx * 3 / 2) }
             image.value?.let { Image(it, null, modifier, contentScale = ContentScale.Crop) }
         }
     }

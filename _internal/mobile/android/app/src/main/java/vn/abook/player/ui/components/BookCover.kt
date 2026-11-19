@@ -1,4 +1,5 @@
 package vn.abook.player.ui.components
+import vn.abook.player.ui.data.ImageLaunchedEffect
 
 import vn.abook.player.ui.motion.SwapContent
 import vn.abook.player.ui.motion.ContentLayout
@@ -83,7 +84,7 @@ fun BookCover(
     // Final pixels are known: decoded, generated, or the decode gave up. Until then this cover is only the sunken placeholder.
     val decided = remember(key) { mutableStateOf(key == null || path == null || image.value != null) }
     if (key != null && path != null && frozenImage == null) {
-        LaunchedEffect(key) { covers.load(key, path, widthPx, heightPx)?.let { image.value = it }; decided.value = true }
+        ImageLaunchedEffect(key) { covers.load(key, path, widthPx, heightPx)?.let { image.value = it }; decided.value = true }
     }
     if (settled != null && decided.value) {
         val current = rememberUpdatedState(settled)

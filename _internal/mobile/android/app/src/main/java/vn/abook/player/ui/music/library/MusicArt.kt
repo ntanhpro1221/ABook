@@ -1,4 +1,5 @@
 package vn.abook.player.ui.music.library
+import vn.abook.player.ui.data.produceImageState
 import vn.abook.player.ui.components.visualImage
 
 import android.graphics.Bitmap
@@ -40,7 +41,7 @@ fun MusicArt(track: MusicLibrary.Track, modifier: Modifier = Modifier) {
     val art = track.info.optJSONObject("art")
     val sha = art?.optString("sha1") ?: ""
     val key = "${track.link}|$seed|$sha"
-    val image by produceState<Pair<String, Bitmap>?>(null, key) {
+    val image by produceImageState<Pair<String, Bitmap>?>(null, key) {
         value = key to withContext(Dispatchers.Default) { ArtImages.generated(seed) }
         val url = art?.optString("url") ?: ""
         if (url.isNotEmpty()) {
@@ -58,7 +59,7 @@ fun MusicArt(track: MusicLibrary.Track, modifier: Modifier = Modifier) {
 @Composable
 fun PlayingMusicArt(link: String) {
     val app = LocalContext.current.applicationContext
-    val info by produceState<JSONObject?>(null, link) {
+    val info by produceImageState<JSONObject?>(null, link) {
         if (!link.startsWith("local:") && link.isNotEmpty()) {
             value = withContext(Dispatchers.IO) { runCatching { DeviceMusic.catalog(app).lookup(listOf(link))[link] }.getOrNull() }
         }

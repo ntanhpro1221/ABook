@@ -218,6 +218,20 @@ export function Lib({ a, b }: { a: boolean; b: boolean }) {
     assert got[("Lib.kt", 8)] == "a-swap" and got[("Lib.kt", 9)] == "a-hard" and ("Lib.kt", 10) not in got
 
 
+def test_l7_image_effect_is_work_but_image_content_is_visible(planted):
+    path = planted.ROOT / "mobile/android/app/src/main/java/vn/abook/player/ui/Lib.kt"
+    path.write_text("""package vn.abook.player.ui
+@Composable fun ImageLaunchedEffect(key: Any?, block: suspend () -> Unit) {}
+@Composable fun Lib(ready: Boolean) {
+    if (ready) ImageLaunchedEffect(Unit) { loadImage() }
+    if (ready) Image(bitmap)
+}
+""", encoding="utf-8")
+    got = _categories(planted)
+    assert got[("Lib.kt", 4)] == "b-not-ui"
+    assert got[("Lib.kt", 5)] == "a-hard"
+
+
 def test_l7_retained_presence_and_snapshot_swaps(planted):
     (planted.ROOT / "ui/src/listen/Lib.tsx").write_text("""export function Lib({item}) {
   return <><Presence>{item && <Custom value={item.name} />}</Presence>

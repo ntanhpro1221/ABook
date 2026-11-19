@@ -1,4 +1,6 @@
 package vn.abook.player.ui.nowplaying
+import vn.abook.player.ui.data.produceImageState
+import vn.abook.player.ui.data.ImageWork
 
 import vn.abook.player.ui.motion.SwapContent
 import vn.abook.player.ui.motion.ContentLayout
@@ -96,8 +98,10 @@ fun PrefetchPlayerCover(cover: kotlinx.coroutines.flow.Flow<CoverRef?>) {
     LaunchedEffect(cover, covers, requestPx) {
         cover.collect { ref ->
             if (ref == null) return@collect
-            covers.load(covers.key(ref.path, ref.stamp, requestPx, requestPx), ref.path, requestPx, requestPx)
-            covers.load(covers.key(ref.path, ref.stamp, 32, 32), ref.path, 32, 32)
+            ImageWork.track {
+                covers.load(covers.key(ref.path, ref.stamp, requestPx, requestPx), ref.path, requestPx, requestPx)
+                covers.load(covers.key(ref.path, ref.stamp, 32, 32), ref.path, 32, 32)
+            }
         }
     }
 }
@@ -117,7 +121,7 @@ fun PlayerCover(ref: CoverRef?, title: String, modifier: Modifier = Modifier, de
                 val width = requestPx
                 val height = requestPx
                 val cacheKey = covers.key(ref.path, ref.stamp, width, height)
-                val bitmap by produceState<ImageBitmap?>(covers.peek(cacheKey), cacheKey) {
+                val bitmap by produceImageState<ImageBitmap?>(covers.peek(cacheKey), cacheKey) {
                     value = covers.load(cacheKey, ref.path, width, height)
                 }
                 bitmap?.let { Image(it, title, Modifier.fillMaxSize(), contentScale = ContentScale.Crop) }
@@ -137,7 +141,7 @@ fun rememberPlayerBackground(ref: CoverRef?): State<Color> {
     val colors = Abook.colors
     val covers = LocalPlayerCovers.current
     val tintKey = ref?.let { "${it.path}|${it.stamp}" }
-    val dominant by produceState<Color?>(tintKey?.let { CoverTints.values.get(it)?.color }, ref) {
+    val dominant by produceImageState<Color?>(tintKey?.let { CoverTints.values.get(it)?.color }, ref) {
         val cached = tintKey?.let(CoverTints.values::get)
         value = if (cached != null) cached.color else if (ref == null) null else {
             val cacheKey = covers.key(ref.path, ref.stamp, 32, 32)
