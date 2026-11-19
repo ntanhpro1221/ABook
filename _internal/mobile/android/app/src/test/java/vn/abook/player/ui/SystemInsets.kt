@@ -2,7 +2,6 @@ package vn.abook.player.ui
 
 import android.view.ViewGroup
 import androidx.activity.ComponentActivity
-import androidx.compose.ui.test.junit4.AndroidComposeTestRule
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.core.graphics.Insets
@@ -25,7 +24,7 @@ val EmulatorGesture = BottomInsets("emulator cử chỉ", navigationPx = 63, man
 val EmulatorThreeButton = BottomInsets("emulator 3 nút", navigationPx = 126, mandatoryPx = 126)
 
 /** Đưa [insets] tới khung Compose như hệ thống gửi (navigationBars + mandatorySystemGestures + systemGestures đáy). Gọi sau `setContent`. */
-fun <A : ComponentActivity> AndroidComposeTestRule<*, A>.applyBottomInsets(insets: BottomInsets) {
+fun <A : ComponentActivity> AbookComposeRule<A>.applyBottomInsets(insets: BottomInsets) {
     val built = WindowInsetsCompat.Builder()
         .setInsets(WindowInsetsCompat.Type.navigationBars(), Insets.of(0, 0, 0, insets.navigationPx))
         .setInsets(WindowInsetsCompat.Type.mandatorySystemGestures(), Insets.of(0, 0, 0, insets.mandatoryPx))

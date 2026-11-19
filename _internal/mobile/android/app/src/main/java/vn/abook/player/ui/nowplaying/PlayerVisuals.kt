@@ -1,6 +1,6 @@
 package vn.abook.player.ui.nowplaying
 import vn.abook.player.ui.data.produceImageState
-import vn.abook.player.ui.data.ImageWork
+import vn.abook.player.ui.data.rememberImageWork
 
 import vn.abook.player.ui.motion.SwapContent
 import vn.abook.player.ui.motion.ContentLayout
@@ -95,10 +95,11 @@ private fun playerCoverRequestPx(decodeSize: Dp? = null): Int {
 fun PrefetchPlayerCover(cover: kotlinx.coroutines.flow.Flow<CoverRef?>) {
     val covers = LocalPlayerCovers.current
     val requestPx = playerCoverRequestPx()
-    LaunchedEffect(cover, covers, requestPx) {
+    val imageWork = rememberImageWork(cover, covers, requestPx)
+    LaunchedEffect(imageWork) {
         cover.collect { ref ->
             if (ref == null) return@collect
-            ImageWork.track {
+            imageWork.track {
                 covers.load(covers.key(ref.path, ref.stamp, requestPx, requestPx), ref.path, requestPx, requestPx)
                 covers.load(covers.key(ref.path, ref.stamp, 32, 32), ref.path, 32, 32)
             }

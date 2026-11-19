@@ -33,7 +33,7 @@ class SnapshotImageRulesTest {
             // Exclude only a tracked request's scope, so another untracked decode
             // cannot hide beside it in a long-lived prefetch collector.
             while (true) {
-                val tracked = Regex("""\bImageWork\.track\s*\{""").find(producer) ?: break
+                val tracked = Regex("""\bimageWork\.track\s*\{""").find(producer) ?: break
                 val trackedEnd = end(producer, tracked.range.last, '{', '}')
                 producer = producer.replaceRange(tracked.range.first, trackedEnd + 1,
                     " ".repeat(trackedEnd + 1 - tracked.range.first))
@@ -43,6 +43,11 @@ class SnapshotImageRulesTest {
             } else null
         }.toList()
     }
+
+    // A ticket must be owned by a composition (released when it is forgotten), never opened by hand.
+    internal fun unowned(source: String): List<String> = Regex("""\bImageWork\.begin\s*\(|\bImageWorkScope\s*\(""")
+        .findAll(code(source)).map { "line ${source.take(it.range.first).count { c -> c == '\n' } + 1}: use rememberImageWork/produceImageState/ImageLaunchedEffect" }
+        .toList()
 
     internal fun bypassesImageRule(source: String): Boolean = "captureRoboImage" in source &&
         (Regex("""import\s+androidx\.compose\.ui\.test\.junit4(?:\.v2)?\.(?:createAndroidComposeRule|createComposeRule|createEmptyComposeRule|\*)""").containsMatchIn(source) ||
@@ -60,7 +65,7 @@ class SnapshotImageRulesTest {
         val main = File("src/main/java/vn/abook/player/ui")
         assertTrue(main.isDirectory)
         val offenders = main.walkTopDown().filter { it.extension == "kt" && it.name != "ImageWork.kt" }
-            .flatMap { file -> untracked(file.readText()).map { "${file.relativeTo(main).path}: $it" } }.toList()
+            .flatMap { file -> (untracked(file.readText()) + unowned(file.readText())).map { "${file.relativeTo(main).path}: $it" } }.toList()
         assertTrue("Untracked asynchronous artwork: $offenders", offenders.isEmpty())
     }
 
@@ -72,8 +77,12 @@ class SnapshotImageRulesTest {
         }
         assertEquals(1, untracked("val image by produceState<ImageBitmap?>(null, key) { value = load() }").size)
         assertEquals(0, untracked("val image by produceImageState<ImageBitmap?>(null, key) { value = load() }").size)
-        assertEquals(0, untracked("LaunchedEffect(key) { ImageWork.track { image = load() } }").size)
-        assertEquals(1, untracked("LaunchedEffect(key) { ImageWork.track { image = load() }; bitmap = load() }").size)
+        assertEquals(0, untracked("LaunchedEffect(key) { imageWork.track { image = load() } }").size)
+        assertEquals(1, untracked("LaunchedEffect(key) { imageWork.track { image = load() }; bitmap = load() }").size)
+        assertEquals(1, untracked("LaunchedEffect(key) { ImageWork.track { image = load() } }").size)
+        assertEquals(1, unowned("val t = ImageWork.begin(src)").size)
+        assertEquals(1, unowned("val w = ImageWorkScope(src)").size)
+        assertEquals(0, unowned("val imageWork = rememberImageWork(key)").size)
         assertEquals(1, untracked("LaunchedEffect(key) { value = fetchBookCover(id) }").size)
         assertEquals(0, untracked("// LaunchedEffect(key) { image = load() }").size)
         val capture = "node.capture" + "RoboImage(path)"

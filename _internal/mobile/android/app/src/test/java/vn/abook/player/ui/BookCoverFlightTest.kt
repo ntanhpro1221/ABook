@@ -188,7 +188,7 @@ class BookCoverFlightTest {
             val art = artworkStage(CoverRef(file.absolutePath, 1L), covers)
             rule.runOnUiThread { flight.capture(art.id); nav.push(Destination.Book(art)) }
             rule.mainClock.advanceTimeBy(1_000)
-            rule.waitForIdle()
+            rule.whileImageWorkHeld { rule.waitForIdle() }
             rule.runOnUiThread { assertEquals("placeholder must not fly", 0f, nav.progress.value, 0f) }
             gate.countDown()
             rule.waitUntil(10_000) { nav.progress.value == 1f && !nav.busy }

@@ -17280,15 +17280,27 @@
     "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads."
   },
   {
+    "id": "6ec1599f19b497a85153",
+    "kind": "destructive",
+    "path": "mobile/android/app/src/main/java/vn/abook/player/ui/data/ImageWork.kt",
+    "line": 23,
+    "statement": "fun release() { if (open.compareAndSet(true, false)) live.remove(this) }",
+    "occurrence": 1,
+    "source_sha256": "ce52d3643dc33e306c8256b1b99687bc114e40d5cc0cbfbd3274f9e1eb3101e3",
+    "disposition": "internal",
+    "guard": "Compare-and-set: each image-work ticket leaves the in-memory tracker exactly once",
+    "reason": "Internal image-work bookkeeping: removes a finished/forgotten producer from an in-memory map. No user data, file, request or UI state is removed."
+  },
+  {
     "id": "d90ef1a3a7e47a8d7983",
     "kind": "pending",
     "path": "mobile/android/app/src/main/java/vn/abook/player/ui/data/ImageWork.kt",
-    "line": 20,
+    "line": 49,
     "statement": "suspend fun <T> track(block: suspend () -> T): T {",
     "occurrence": 1,
-    "source_sha256": "9b0111572e5c3d7acd2bd3c7bbd1ad9acafb2157f2f87dd8e4123ebf0afd6498",
+    "source_sha256": "ce52d3643dc33e306c8256b1b99687bc114e40d5cc0cbfbd3274f9e1eb3101e3",
     "disposition": "internal",
-    "guard": "Atomic pending counter with decrement in finally; shared Compose test IdlingResource observes it",
+    "guard": "Ticket released in finally and, synchronously, when the composition forgets the producer (RememberObserver); shared Compose test IdlingResource observes it",
     "reason": "Internal image-work bookkeeping through publication. No user action, data loss, request retry or detached job; propagates errors and cancellation."
   }
 ]
