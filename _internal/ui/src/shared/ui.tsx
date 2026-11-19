@@ -18,6 +18,7 @@ import { installFocusModality } from "./focusModality";
 import { hasPresentContent, MotionPresence, Reveal, usePresent } from "./MotionPresence";
 import { SlidingIndicator } from "./SlidingIndicator";
 import { useBackLayer } from "./backStack";
+import { useOpeningClickGuard } from "./openingClickGuard";
 import { useMediaQuery } from "./media";
 import { clampFraction, percentOf, progressFill } from "./format";
 import { useRowFade, useScrollFadeOn } from "./scrollFade";
@@ -811,6 +812,7 @@ export function Sheet({
   const fade = useScrollFadeOn(body);
   const closeSheet = useRef(onOpenChange);
   closeSheet.current = onOpenChange;
+  const openingClick = useOpeningClickGuard<HTMLDivElement>();
   useEffect(() => {
     if (!surface || !open) return;
     let origin: { x: number; y: number } | null = null;
@@ -871,6 +873,8 @@ export function Sheet({
           // Đóng (Esc, nút Đóng, chạm nền): tiêu điểm về nút mở (Trigger) - trước đây chặn việc ấy nên tiêu điểm rơi về BODY (soát a31 K1).
           onEscapeKeyDown={onEscapeKeyDown}
           onInteractOutside={keepOpenForToasts}
+          // Sheet của ActionMenu mở ngay lúc nhấn (menu Radix): click của chính cú chạm ấy không bấm nút "Đóng" / mục nằm dưới ngón.
+          {...openingClick}
           className={cn("motion-sheet sheet-surface fixed inset-x-0 bottom-0 z-50 flex max-h-[min(85dvh,calc(100dvh-env(safe-area-inset-top)-0.5rem))] min-w-0 flex-col rounded-t-sheet bg-panel pl-[max(env(safe-area-inset-left),20px)] pr-[max(env(safe-area-inset-right),20px)] pb-[max(env(safe-area-inset-bottom),20px)] shadow-float focus:outline-none", className)}
         >
           <div data-sheet-grip className="shrink-0 touch-none pb-3 pt-3"
