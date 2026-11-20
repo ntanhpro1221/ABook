@@ -50,12 +50,14 @@ Item {
             scene.faded.open = true
             tryCompare(scene.faded, "opacity", 1)
             verify(scene.faded.visible)
+            const held = Keep.count()
             scene.faded.destroy()
             scene.flick.destroy()
-            wait(0)
+            // The deferred deletes run; the wheel and the Reveal go with their items and release their anchors.
+            tryVerify(function() { return scene.faded === null && scene.flick === null && Keep.count() === held - 2 })
             gc()
             gc()
-            wait(0)
+            compare(Keep.count(), held - 2)
         }
     }
 }
