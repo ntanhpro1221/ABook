@@ -2122,7 +2122,7 @@ const NowPlayingColumn = memo(function NowPlayingColumn({
     >
       {/* Thanh đầu: thu nhỏ · ĐANG NGHE · "…" - không gì khác. Mực hai đầu đứng đúng mép cột (bìa, thanh tua): mực ⌄ bắt đầu 5/24 trong ô
           icon (glyph), mực "…" dừng 3/24 trước mép phải - mỗi đầu lùi ít hơn chừng ấy. */}
-      <div className="slot-row [--g:clamp(1.125rem,0.75rlh,1.96875rem)] [--slot-end:calc(var(--g)*18/24)] [--slot-start:calc(var(--g)*14/24)]">
+      <div data-toast-avoid className="slot-row [--g:clamp(1.125rem,0.75rlh,1.96875rem)] [--slot-end:calc(var(--g)*18/24)] [--slot-start:calc(var(--g)*14/24)]">
         <IconButton label={withShortcut(S.s_thu_nho_d7896922, S.s_esc_52f878ed)} icon={ChevronDown} className="touch-box" onClick={onCollapse} />
         {mobile ? <PlayerModeSwitch reading={reading} onSelect={onReading} /> : <span className="label-section text-fg-2">{S.s_dang_nghe_9310d8cf}</span>}
         <div>
@@ -2159,7 +2159,7 @@ const NowPlayingColumn = memo(function NowPlayingColumn({
             <h2 data-np="chapter" className={cn("break-words font-bold leading-snug", reading ? "line-clamp-2 text-base" : "text-xl")}>
               <MotionRegion as="span" motionKey={[track.bookId, track.chapterId, track.chapterTitle]} className="block">{track.chapterTitle}</MotionRegion>
             </h2>
-            <div data-np="book" className={cn("mt-1 break-words text-fg-2", reading ? "truncate text-xs" : "text-sm")}>
+            <div data-np="book" data-toast-avoid className={cn("mt-1 break-words text-fg-2", reading ? "truncate text-xs" : "text-sm")}>
               <TrackSubtitle look={reading ? "reading" : "screen"} />
             </div>
             {<Presence>{!reading && <MusicCreditLine />}</Presence>}
