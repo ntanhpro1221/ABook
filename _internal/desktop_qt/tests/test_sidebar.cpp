@@ -3,6 +3,7 @@
 #include <QQmlEngine>
 
 #include "keep.h"
+#include "smoothwheel.h"
 
 #include <QByteArray>
 
@@ -10,5 +11,6 @@ int main(int argc, char **argv) {
     qputenv("QT_QPA_PLATFORM", "offscreen");
     qputenv("QML_IMPORT_PATH", QUICK_TEST_SOURCE_DIR "/stub");
     qmlRegisterSingletonType<Keep>("ABook", 1, 0, "Keep", [](QQmlEngine *, QJSEngine *) -> QObject * { return new Keep; });
+    qmlRegisterType<SmoothWheel>("ABook", 1, 0, "SmoothWheel");
     return quick_test_main(argc, argv, "sidebar", QUICK_TEST_SOURCE_DIR);
 }

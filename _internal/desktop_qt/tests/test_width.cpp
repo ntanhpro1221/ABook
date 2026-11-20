@@ -7,6 +7,7 @@
 #include "readalong.h"
 #include "glyphaudit.h"
 #include "keep.h"
+#include "smoothwheel.h"
 #include "later.h"
 #include "appfonts.h"
 #include "visualready.h"
@@ -19,6 +20,9 @@
 #include <QQmlContext>
 #include <QtQml/private/qqmldata_p.h>
 #include <QtQml/private/qqmlvmemetaobject_p.h>
+#include <QtQml/private/qv4engine_p.h>
+#include <QtQml/private/qv4mm_p.h>
+#include <QFileInfo>
 #include <QtCore/private/qhooks_p.h>
 #include <QMutex>
 #include <QSet>
@@ -256,7 +260,11 @@ QtMessageHandler previous = nullptr;
 QHooks::AddQObjectCallback previousAdd = nullptr;
 QHooks::RemoveQObjectCallback previousRemove = nullptr;
 bool scanning = false;
+void reinstallHandler();
 void add(QObject *object) {
+    // QtTest installs its logger when each file starts; stay in front of it without a timer (a 1 ms timer changed the timing
+    // enough to hide the warning in gate 22's diagnostics run).
+    if (auto *app = QCoreApplication::instance(); app && object->thread() == app->thread()) reinstallHandler();
     { QMutexLocker lock(&mutex); live.insert(object); }
     if (previousAdd) previousAdd(object);
 }
@@ -299,10 +307,35 @@ void scan() {
     }
     qWarning() << "QML_LOST_SCAN" << objects.size() << "objects" << lost << "new";
 }
+QQmlEngine *probeEngine = nullptr;
+// At the warning: collector state, JS stack (empty = the access came from C++), C++ frames.
+void stacks() {
+    if (probeEngine) {
+        QV4::ExecutionEngine *v4 = probeEngine->handle();
+        qWarning().noquote() << "QML_LOST_GC state=" << int(v4->memoryManager->gcStateMachine->state) << "ongoing=" << int(v4->isGCOngoing);
+        const auto trace = v4->stackTrace(12);
+        qWarning().noquote() << "QML_LOST_JS frames=" << trace.size();
+        for (const auto &frame : trace)
+            qWarning().noquote() << "QML_LOST_JS" << frame.function << frame.source << frame.line;
+    }
+    // C++ frames as module + offset (no PDBs for Qt): resolve against the DLL export table offline.
+    void *frames[48];
+    const USHORT count = CaptureStackBackTrace(0, 48, frames, nullptr);
+    for (USHORT i = 0; i < count; ++i) {
+        HMODULE module = nullptr;
+        wchar_t path[MAX_PATH] = L"";
+        if (GetModuleHandleExW(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS | GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT,
+                               reinterpret_cast<LPCWSTR>(frames[i]), &module))
+            GetModuleFileNameW(module, path, MAX_PATH);
+        qWarning().noquote() << "QML_LOST_CPP" << i << QFileInfo(QString::fromWCharArray(path)).fileName()
+                             << QStringLiteral("+0x") + QString::number(quintptr(frames[i]) - quintptr(module), 16);
+    }
+}
 void handler(QtMsgType type, const QMessageLogContext &context, const QString &message) {
     if (previous) previous(type, context, message);
     if (scanning || !message.contains(QStringLiteral("Cannot find member data"))) return;
     scanning = true;
+    stacks();
     scan();
     scanning = false;
 }
@@ -324,14 +357,24 @@ void reinstallHandler() {
 }
 void installHandler() {
     reinstallHandler();
-    static QTimer *keeper = nullptr;
-    if (keeper) return;
-    keeper = new QTimer(QCoreApplication::instance());
-    keeper->setInterval(1);
-    QObject::connect(keeper, &QTimer::timeout, keeper, &reinstallHandler);
-    keeper->start();
 }
 }
+
+// qtStorage: the QML property storage (MemberData) of one object. drop() does what a collection of that storage does while
+// the object lives; tst_guard_teardown.qml uses it to show that SmoothWheel has no QML storage left to lose (gates 22/23).
+class StorageProbe : public QObject {
+    Q_OBJECT
+public:
+    using QObject::QObject;
+    Q_INVOKABLE bool has(QObject *object) const {
+        auto *vme = object ? QQmlVMEMetaObject::get(object) : nullptr;
+        return vme && vme->propertyAndMethodStorageAsMemberData();
+    }
+    Q_INVOKABLE void drop(QObject *object) {
+        if (auto *vme = object ? QQmlVMEMetaObject::get(object) : nullptr)
+            vme->propertyAndMethodStorage.set(vme->engine, QV4::Value::undefinedValue());
+    }
+};
 
 class WidthSetup : public QObject {
     Q_OBJECT
@@ -349,7 +392,8 @@ class WidthSetup : public QObject {
     HiddenWindows hidden;
 public slots:
     void qmlEngineAvailable(QQmlEngine *engine) {
-        if (qEnvironmentVariableIsSet("ABOOK_QML_LIFETIME_DIAGNOSTICS")) LifetimeProbe::installHandler();
+        if (qEnvironmentVariableIsSet("ABOOK_QML_LIFETIME_DIAGNOSTICS")) { LifetimeProbe::probeEngine = engine; LifetimeProbe::installHandler(); }
+        engine->rootContext()->setContextProperty(QStringLiteral("qtStorage"), new StorageProbe(engine));
         engine->rootContext()->setContextProperty(QStringLiteral("qtVisualReady"), new VisualReady(engine));
         engine->rootContext()->setContextProperty(QStringLiteral("qtAnimationClock"), new TestAnimationClock(engine));
         engine->rootContext()->setContextProperty(QStringLiteral("qtGlyphAudit"), audit.get());
@@ -401,6 +445,7 @@ public slots:
         qmlRegisterType<BookDetail>("ABook", 1, 0, "BookDetail");
         qmlRegisterSingletonType<Later>("ABook", 1, 0, "Later", [](QQmlEngine *, QJSEngine *) -> QObject * { return new Later; });
         qmlRegisterSingletonType<Keep>("ABook", 1, 0, "Keep", [](QQmlEngine *, QJSEngine *) -> QObject * { return new Keep; });
+        qmlRegisterType<SmoothWheel>("ABook", 1, 0, "SmoothWheel");
         qmlRegisterSingletonInstance("ABook", 1, 0, "Player", player.get());
         qmlRegisterSingletonInstance("ABook", 1, 0, "ReadAlong", read.get());
         qmlRegisterSingletonInstance("ABook", 1, 0, "Music", music.get());

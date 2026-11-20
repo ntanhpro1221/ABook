@@ -110,8 +110,36 @@ def test_anchor_users_import_the_module(tmp_path):
 
 
 def test_shared_anchors_hold_themselves():
-    for name, owner in (("Reveal.qml", "reveal"), ("SmoothWheel.qml", "root"), ("Listen.qml", "listen")):
+    for name, owner in (("Reveal.qml", "reveal"), ("Listen.qml", "listen")):
         assert f"Keep.hold({owner})" in (QML / name).read_text(encoding="utf-8"), name
+
+
+HANDLER_ROOT = re.compile(r"^(\w*Handler)\s*\{", re.M)
+
+
+def handler_components_with_storage(root=QML):
+    """A component whose root is a pointer handler declares no property or function: its state lives in C++.
+
+    Gates 22 and 23: "QML SmoothWheel: Cannot find member data" at NowPlaying.qml:225, although SmoothWheel.qml held its
+    wrapper (Keep.hold) and no binding re-read its storage any more. A handler's QML property storage is reachable only
+    through its wrapper and the path that lost it was not isolated; SmoothWheel is now C++ (src/smoothwheel.h), which has no
+    such storage. tests/width/tst_guard_teardown.qml drops that storage and shows the warning on the QML version.
+    """
+    found = []
+    for path in sorted(root.glob("*.qml")):
+        text = _strip(path.read_text(encoding="utf-8"))
+        first = re.search(r"^[A-Z][\w.]*\s*\{", text, re.M)
+        if first and HANDLER_ROOT.match(text, first.start()) and _own_declarations(_block(text, first.end() - 1)):
+            found.append(path.name)
+    return found
+
+
+def test_handler_components_keep_no_qml_storage(tmp_path):
+    assert handler_components_with_storage() == []
+    assert not (QML / "SmoothWheel.qml").exists()
+    (tmp_path / "Wheel.qml").write_text("import QtQuick\nWheelHandler {\n    id: root\n    required property Flickable flick\n}\n", encoding="utf-8")
+    (tmp_path / "Tap.qml").write_text("import QtQuick\nTapHandler {\n    onTapped: run()\n}\n", encoding="utf-8")
+    assert handler_components_with_storage(tmp_path) == ["Wheel.qml"]
 
 
 def test_every_qml_harness_registers_keep():
@@ -122,6 +150,10 @@ def test_every_qml_harness_registers_keep():
     assert re.search(r"^\s+qml/Listen\.qml$", cmake, re.M)
     for harness in ("tests/test_width.cpp", "tests/test_sidebar.cpp"):
         assert re.search(r'qmlRegisterSingletonType<Keep>\("ABook", 1, 0, "Keep"', (ROOT / harness).read_text(encoding="utf-8")), harness
+        assert 'qmlRegisterType<SmoothWheel>("ABook", 1, 0, "SmoothWheel")' in (ROOT / harness).read_text(encoding="utf-8"), harness
+    for target in ("ABookDesk WIN32", "WidthTests", "HitlTests", "SidebarTests"):
+        start = cmake.index(f"qt_add_executable({target}")
+        assert "src/smoothwheel.h" in cmake[start:cmake.index(")", start)], target
     assert re.search(r"^Listen 1\.0 \.\./\.\./\.\./\.\./qml/Listen\.qml$", (ROOT / "tests/qml/stub/ABook/qmldir").read_text(encoding="utf-8"), re.M)
 
 

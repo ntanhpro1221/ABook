@@ -49,7 +49,6 @@ SettingsScreen 1.0 ../../../../qml/SettingsScreen.qml
 StudioScreen 1.0 ../../../../qml/StudioScreen.qml
 ScrollEdges 1.0 ../../../../qml/ScrollEdges.qml
 Scrollbar 1.0 ../../../../qml/Scrollbar.qml
-SmoothWheel 1.0 ../../../../qml/SmoothWheel.qml
 ChapterRow 1.0 ../../../../qml/ChapterRow.qml
 ChapterList 1.0 ../../../../qml/ChapterList.qml
 PageSwitch 1.0 ../../../../qml/PageSwitch.qml

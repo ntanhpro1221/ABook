@@ -2,11 +2,14 @@ import QtQuick
 import QtTest
 import ABook
 
-// Gate 22: "QML SmoothWheel: Cannot find member data" (twice) at NowPlaying.qml:225 when a NowPlaying scene was torn down in
-// the full WidthTests run. Qt prints it when a QML-declared property is read or written after the object's property storage
-// was collected. Outside a real wheel turn the only reader of SmoothWheel's storage was the glide binding `target: root.flick`;
-// the target is now set when a wheel turn starts. tests/test_qt_keep_anchor.py rejects that binding shape; this file checks
-// that the wheel still glides, Reveal still controls its item, and tearing their items down first (then gc()) is quiet.
+// Gates 22 and 23: "QML SmoothWheel: Cannot find member data" at NowPlaying.qml:225 in full WidthTests runs, at the start of
+// the test after a NowPlaying scene was torn down. Qt prints it when a QML-declared OBJECT property (the old QML
+// SmoothWheel's `flick` or `glide`) is read or written after the object's QML property storage (MemberData) is gone; real
+// properties then read as 0 without a word. Keep.hold anchored the wrapper and gate 22 removed the glide binding, and gate 23
+// still printed it once: the path that loses the storage of an anchored handler was not isolated (three full diagnostic runs,
+// none reproduced). SmoothWheel is now a C++ type (src/smoothwheel.h) with no QML-declared property, so there is no storage to
+// lose. test_wheelHasNoQmlStorageToLose drops the storage the way a collection does: the QML component (8f08a6d6e) printed the
+// warning on the wheel turn and did not scroll (4 of 4 runs); the C++ type has none to drop and glides.
 Item {
     id: host
     width: 400
@@ -37,6 +40,18 @@ Item {
             }
         }
 
+        function test_wheelHasNoQmlStorageToLose() {
+            failOnWarning(/Cannot find member data/)
+            const scene = createTemporaryObject(realScene, host)
+            verify(scene !== null)
+            const wheel = findChild(scene, "wheel")
+            verify(wheel !== null)
+            qtStorage.drop(wheel)
+            verify(!qtStorage.has(wheel))
+            mouseWheel(scene.flick, 50, 50, 0, -120)
+            tryVerify(function() { return scene.flick.contentY > 0 })
+        }
+
         // The real types: the wheel still glides, the Reveal still controls its item, and tearing the item down first is quiet.
         function test_realTypesStillWorkAndTearDownQuietly() {
             failOnWarning(/Cannot find member data/)
@@ -53,11 +68,11 @@ Item {
             const held = Keep.count()
             scene.faded.destroy()
             scene.flick.destroy()
-            // The deferred deletes run; the wheel and the Reveal go with their items and release their anchors.
-            tryVerify(function() { return scene.faded === null && scene.flick === null && Keep.count() === held - 2 })
+            // The deferred deletes run; the wheel and the Reveal go with their items, and the Reveal releases its anchor.
+            tryVerify(function() { return scene.faded === null && scene.flick === null && Keep.count() === held - 1 })
             gc()
             gc()
-            compare(Keep.count(), held - 2)
+            compare(Keep.count(), held - 1)
         }
     }
 }
