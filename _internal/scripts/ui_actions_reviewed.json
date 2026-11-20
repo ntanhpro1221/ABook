@@ -1782,7 +1782,7 @@
     "line": 806,
     "statement": "onClick={() => (playing ? sample.stop() : void sample.play(voice.id))}",
     "occurrence": 1,
-    "source_sha256": "07db0e870d7af45da4512cfd8b1552c48d2d81bcf954acd14f278e0d0408b3fe",
+    "source_sha256": "a1cc67410c5b0f25893a2ac10a437fa3ccca71035b59ccdfec07c829fab164bc",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; BookProgressLine, CompactProgress, PendingIndicator, bookProgressText, busy, busyClick, isLoading, isPending, levelBusy, loading, musicLoading, pending",
     "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Gate repair: reviewed identity-key motion, explicit layout, token spacing or semantic navigation changes; existing guard retained. 0.4.173 fixes (sleep stopped line, activity-off extend, night continue, word reading row, per-book timers) leave this statement and its guard unchanged."
@@ -1794,7 +1794,7 @@
     "line": 889,
     "statement": "const start = async () => {",
     "occurrence": 1,
-    "source_sha256": "07db0e870d7af45da4512cfd8b1552c48d2d81bcf954acd14f278e0d0408b3fe",
+    "source_sha256": "a1cc67410c5b0f25893a2ac10a437fa3ccca71035b59ccdfec07c829fab164bc",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; BookProgressLine, CompactProgress, PendingIndicator, bookProgressText, busy, busyClick, isLoading, isPending, levelBusy, loading, musicLoading, pending",
     "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Gate repair: reviewed identity-key motion, explicit layout, token spacing or semantic navigation changes; existing guard retained. 0.4.173 fixes (sleep stopped line, activity-off extend, night continue, word reading row, per-book timers) leave this statement and its guard unchanged."
@@ -1806,7 +1806,7 @@
     "line": 917,
     "statement": "<button type=\"button\" data-focus-next className=\"touch-hit -ml-2 rounded-control px-2 py-1 font-medium text-fg hover:bg-hover\" onClick={() => void source.readAloudPrepareCancel?.().then(settle)}>{S.s_dung_lam_truoc_632af923}</button>",
     "occurrence": 1,
-    "source_sha256": "07db0e870d7af45da4512cfd8b1552c48d2d81bcf954acd14f278e0d0408b3fe",
+    "source_sha256": "a1cc67410c5b0f25893a2ac10a437fa3ccca71035b59ccdfec07c829fab164bc",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; BookProgressLine, CompactProgress, PendingIndicator, bookProgressText, busy, busyClick, isLoading, isPending, levelBusy, loading, musicLoading, pending",
     "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Gate repair: reviewed identity-key motion, explicit layout, token spacing or semantic navigation changes; existing guard retained. 0.4.173 fixes (sleep stopped line, activity-off extend, night continue, word reading row, per-book timers) leave this statement and its guard unchanged."
@@ -1818,7 +1818,7 @@
     "line": 920,
     "statement": "<button type=\"button\" data-focus-next aria-disabled={busy || undefined} aria-busy={busy || undefined} className=\"touch-hit -ml-2 rounded-control px-2 py-1 font-medium text-accent-text hover:bg-hover aria-disabled:opacity-45\" onClick={busyClick(busy, () => void start())}>",
     "occurrence": 1,
-    "source_sha256": "07db0e870d7af45da4512cfd8b1552c48d2d81bcf954acd14f278e0d0408b3fe",
+    "source_sha256": "a1cc67410c5b0f25893a2ac10a437fa3ccca71035b59ccdfec07c829fab164bc",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; BookProgressLine, CompactProgress, PendingIndicator, bookProgressText, busy, busyClick, isLoading, isPending, levelBusy, loading, musicLoading, pending",
     "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Gate repair: reviewed identity-key motion, explicit layout, token spacing or semantic navigation changes; existing guard retained. 0.4.173 fixes (sleep stopped line, activity-off extend, night continue, word reading row, per-book timers) leave this statement and its guard unchanged."
@@ -1830,7 +1830,7 @@
     "line": 948,
     "statement": "const clear = async () => {",
     "occurrence": 1,
-    "source_sha256": "07db0e870d7af45da4512cfd8b1552c48d2d81bcf954acd14f278e0d0408b3fe",
+    "source_sha256": "a1cc67410c5b0f25893a2ac10a437fa3ccca71035b59ccdfec07c829fab164bc",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; BookProgressLine, CompactProgress, PendingIndicator, bookProgressText, busy, busyClick, isLoading, isPending, levelBusy, loading, musicLoading, pending",
     "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Gate repair: reviewed identity-key motion, explicit layout, token spacing or semantic navigation changes; existing guard retained. 0.4.173 fixes (sleep stopped line, activity-off extend, night continue, word reading row, per-book timers) leave this statement and its guard unchanged."
@@ -1842,7 +1842,7 @@
     "line": 1520,
     "statement": "return switchRecord(bookId, async () => undefined).then(() =>",
     "occurrence": 1,
-    "source_sha256": "07db0e870d7af45da4512cfd8b1552c48d2d81bcf954acd14f278e0d0408b3fe",
+    "source_sha256": "a1cc67410c5b0f25893a2ac10a437fa3ccca71035b59ccdfec07c829fab164bc",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; BookProgressLine, CompactProgress, PendingIndicator, bookProgressText, busy, busyClick, isLoading, isPending, levelBusy, loading, musicLoading, pending",
     "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Gate repair: reviewed identity-key motion, explicit layout, token spacing or semantic navigation changes; existing guard retained. 0.4.173 fixes (sleep stopped line, activity-off extend, night continue, word reading row, per-book timers) leave this statement and its guard unchanged."
@@ -1854,7 +1854,7 @@
     "line": 2055,
     "statement": "function PlayerModeSwitch({ reading, onSelect }: { reading: boolean; onSelect: (reading: boolean) => void }) {",
     "occurrence": 1,
-    "source_sha256": "07db0e870d7af45da4512cfd8b1552c48d2d81bcf954acd14f278e0d0408b3fe",
+    "source_sha256": "a1cc67410c5b0f25893a2ac10a437fa3ccca71035b59ccdfec07c829fab164bc",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; BookProgressLine, CompactProgress, PendingIndicator, bookProgressText, busy, busyClick, isLoading, isPending, levelBusy, loading, musicLoading, pending",
     "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Gate repair: reviewed identity-key motion, explicit layout, token spacing or semantic navigation changes; existing guard retained. 0.4.173 fixes (sleep stopped line, activity-off extend, night continue, word reading row, per-book timers) leave this statement and its guard unchanged."
@@ -3762,7 +3762,7 @@
     "line": 34,
     "statement": "for (const [el, fade] of fades) if (!el.isConnected) { fade.cancel(); fades.delete(el); }",
     "occurrence": 1,
-    "source_sha256": "406cf51201f256239fa2ba2a10d2b4054a8fa225fef38761cabc8c57278f17e6",
+    "source_sha256": "5c10b6b06431ce59838a1127c1ad354c1561844b5b3271187635860fa07eea06",
     "disposition": "internal",
     "guard": "In-memory collection entry lifecycle",
     "reason": "The statement releases a listener, request, UI row, selection or cache entry; it does not delete its persisted source."
@@ -3774,7 +3774,7 @@
     "line": 36,
     "statement": "for (const el of watched) if (!observed.has(el)) { resize.unobserve(el); watched.delete(el); }",
     "occurrence": 1,
-    "source_sha256": "406cf51201f256239fa2ba2a10d2b4054a8fa225fef38761cabc8c57278f17e6",
+    "source_sha256": "5c10b6b06431ce59838a1127c1ad354c1561844b5b3271187635860fa07eea06",
     "disposition": "internal",
     "guard": "In-memory collection entry lifecycle",
     "reason": "The statement releases a listener, request, UI row, selection or cache entry; it does not delete its persisted source."
@@ -3786,7 +3786,7 @@
     "line": 67,
     "statement": "if (hidden || toaster.style.getPropertyValue(\"--toast-shift\") !== `${shift}px`) { fades.get(toaster)?.cancel(); fades.delete(toaster); }",
     "occurrence": 1,
-    "source_sha256": "406cf51201f256239fa2ba2a10d2b4054a8fa225fef38761cabc8c57278f17e6",
+    "source_sha256": "5c10b6b06431ce59838a1127c1ad354c1561844b5b3271187635860fa07eea06",
     "disposition": "internal",
     "guard": "In-memory collection entry lifecycle",
     "reason": "The statement releases a listener, request, UI row, selection or cache entry; it does not delete its persisted source."
@@ -3798,7 +3798,7 @@
     "line": 73,
     "statement": "fade.onfinish = () => fades.delete(toaster);",
     "occurrence": 1,
-    "source_sha256": "406cf51201f256239fa2ba2a10d2b4054a8fa225fef38761cabc8c57278f17e6",
+    "source_sha256": "5c10b6b06431ce59838a1127c1ad354c1561844b5b3271187635860fa07eea06",
     "disposition": "internal",
     "guard": "In-memory collection entry lifecycle",
     "reason": "The statement releases a listener, request, UI row, selection or cache entry; it does not delete its persisted source."

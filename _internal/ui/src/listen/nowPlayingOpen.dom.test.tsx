@@ -136,6 +136,17 @@ async function openSheet(button: string) {
   return { scroller, trigger };
 }
 
+// Gate 23: thông báo đáy của điện thoại nằm đúng chỗ các hàng nút của màn Đang nghe; useToastClearance chỉ tránh được vùng có đánh dấu.
+it("mọi hàng nút của màn Đang nghe là vùng thông báo phải tránh", async () => {
+  const { scroller, trigger } = await openSheet("Tốc độ");
+  expect(trigger.closest("[data-toast-avoid]")).not.toBeNull();
+  for (const button of scroller.querySelectorAll<HTMLButtonElement>("[data-player-secondary] button, [data-toast-avoid] button"))
+    expect(button.closest("[data-toast-avoid]")).not.toBeNull();
+  // Thanh tiến độ, hàng 5 nút và hàng phụ: ba vùng riêng (dải hở giữa chúng không đủ cho một thông báo).
+  const regions = [...scroller.querySelectorAll("[data-toast-avoid]")].filter((region) => region.querySelector("button,[role=slider],input"));
+  expect(regions.length).toBeGreaterThanOrEqual(3);
+});
+
 it.each(sheetCases)("$title: tấm qua Portal và fixed, nằm ngoài cây bố cục Đang nghe", async ({ button, title }) => {
   const { trigger } = await openSheet(button);
   await act(() => trigger.click());

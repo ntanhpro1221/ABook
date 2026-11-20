@@ -1274,7 +1274,7 @@ function FadingNotice({ className }: { className?: string }) {
   const content = () => {
   if (!fading) return null;
   return (
-    <div className={cn("motion-appear flex items-center gap-3 rounded-cover px-3 py-2 text-sm text-fg-2", className)} role="status">
+    <div data-toast-avoid className={cn("motion-appear flex items-center gap-3 rounded-cover px-3 py-2 text-sm text-fg-2", className)} role="status">
       <Moon className="size-4 shrink-0" />
       <span className="min-w-0 flex-1">{S.s_sap_tat_e76c49b1}{EXTEND_GESTURE}{S.s_de_hen_lai_f1a3acdc}{again}{S.s_phut_cf728a6a}</span>
       <button type="button" onClick={() => extendSleep()} className="shrink-0 rounded-control bg-accent px-3 py-1 text-xs font-medium text-accent-ink">
@@ -1400,7 +1400,7 @@ function PlayerAlert({ className, overlay = false, compact = false }: { classNam
     const local = stuck && voices ? localVoiceFor(voices, current) : undefined;
     const button = "min-h-[40px] shrink-0 rounded-control px-3 text-sm font-medium text-accent-text hover:bg-hover max-sm:min-h-[48px]";
     return (
-      <div key={errorRepeat} role="alert" className={cn("motion-appear flex items-start gap-3 py-2 text-sm text-fg", className)}>
+      <div key={errorRepeat} role="alert" data-toast-avoid className={cn("motion-appear flex items-start gap-3 py-2 text-sm text-fg", className)}>
         <TriangleAlert className="mt-line-icon size-4 shrink-0 text-danger" />
         {/* Lời báo + cụm nút xuống hàng khi hẹp; nút ✕ đứng riêng ở góc trên phải nên không thêm hàng nào và không bao giờ trôi xuống dưới cụm nút. */}
         <div className="flex min-w-0 flex-1 flex-wrap items-center gap-x-3 gap-y-2">
@@ -2001,7 +2001,7 @@ function CaughtUpNotice() {
   const content = () => {
   if (atEnd === "finished" && next) {
     return (
-      <div className="motion-appear mt-3 rounded-cover px-3 py-3 text-center text-sm">
+      <div data-toast-avoid className="motion-appear mt-3 rounded-cover px-3 py-3 text-center text-sm">
         <div className="text-fg">{S.s_da_nghe_het_cuon_nay_05edcdd9}</div>
         <button type="button" onClick={() => playBook(next)} className="mt-2 font-medium text-accent-text underline underline-offset-2">{S.s_nghe_tiep_062d402e}{nextLabel(next.title)}
         </button>
@@ -2011,7 +2011,7 @@ function CaughtUpNotice() {
   }
   if (atEnd === "finished") {
     return (
-      <div className="motion-appear mt-3 rounded-cover px-3 py-3 text-center text-sm">
+      <div data-toast-avoid className="motion-appear mt-3 rounded-cover px-3 py-3 text-center text-sm">
         <div className="text-fg">{S.s_da_nghe_het_sach_4a2d3bf1}</div>
         <button type="button" onClick={restart} className="mt-2 min-h-[48px] font-medium text-accent-text underline underline-offset-2">{S.s_nghe_lai_tu_dau_e251d632}</button>
         <AfterTheEnd />
@@ -2170,16 +2170,17 @@ const NowPlayingColumn = memo(function NowPlayingColumn({
           <div data-read-along className="motion-reveal mt-3 min-h-0 flex-1 overflow-hidden rounded-cover"><ReadAlong edit={edit} /></div>
         )}</Presence>}
       </div>
-      <div className="mt-5 w-full">
+      {/* data-toast-avoid: thông báo đáy (điện thoại) nằm đúng chỗ các hàng nút này - không được che nút (DESIGN 6 Toast, gate 23 tap-audit Tốc độ). */}
+      <div data-toast-avoid className="mt-5 w-full">
         <SeekBar large />
       </div>
       {/* Một hàng 5 nút: chương trước · lùi 15 · phát · tới 15 · chương sau. */}
-      <div className="mt-3 flex justify-center">
+      <div data-toast-avoid className="mt-3 flex justify-center">
         <Transport large />
       </div>
       {/* Một hàng nút phụ có nhãn; mọi việc khác ở "…" trên thanh đầu. Hai đầu = bề rộng nhãn đầu mút (S.s_toc_do_16ee0914 41,8 px, S.s_chuong_2d157977 46,2 px,
           S.s_hen_gio_39d9ca26 44,6 px ở rlh 24 px) để chữ chạm đúng mép cột. Máy tính: S.s_chuong_2d157977 và S.s_doc_theo_df342819 đã là hai tab của bảng bên phải - không lặp ở cột này. */}
-      <div role="group" aria-label={S.s_dieu_khien_phu_bf325663} data-player-secondary className={cn("slot-row mt-5 items-start [--slot-start:1.742rlh] [--slot:1.9rlh]", mobile ? "[--slot-end:1.925rlh]" : "[--slot-end:1.859rlh]")}>
+      <div role="group" aria-label={S.s_dieu_khien_phu_bf325663} data-player-secondary data-toast-avoid className={cn("slot-row mt-5 items-start [--slot-start:1.742rlh] [--slot:1.9rlh]", mobile ? "[--slot-end:1.925rlh]" : "[--slot-end:1.859rlh]")}>
         <SpeedMenu look="action" />
         <SleepMenu look="action" />
         {<Presence>{mobile && <ActionButton icon={ListOrdered} label={S.s_chuong_2d157977} aria-pressed={selected === "chapters"} active={selected === "chapters"} {...keepFocus} onClick={() => onToggle("chapters")} />}</Presence>}
