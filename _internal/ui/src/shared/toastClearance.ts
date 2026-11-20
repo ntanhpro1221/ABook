@@ -38,6 +38,17 @@ export function toastPlacement(top: number, height: number, obstacles: readonly 
  *  trên điện thoại nằm đúng chỗ thông báo đáy. Đánh dấu `data-toast-avoid` trên chính vùng có nút; vùng ẩn/inert không tính. */
 export const TOAST_AVOID = "[data-toast-avoid]";
 
+/** Bề mặt/khung nhận tiêu điểm bằng mã (trang, tấm, hộp, danh sách) không phải một nút: coi cả khung là vật cản thì thông báo hết chỗ. */
+const FOCUS_SURFACE = 'html,body,main,section,[role="main"],[role="dialog"],[role="alertdialog"],[role="menu"],[role="listbox"],[role="region"],[data-sonner-toaster],[data-sonner-toaster] *';
+
+/** Nút đang giữ tiêu điểm cũng là vật cản (soát a67: tiêu điểm không bao giờ nằm dưới thông báo). Thông báo tự dịch đi, trang KHÔNG cuộn vì thông
+ *  báo (gate 24: tiêu điểm trở về hàng sách sau khi đóng Đang nghe, toaster còn đang dịch -188 px tránh hàng nút của màn ấy, bộ cuộn-tránh-thông-báo
+ *  cũ cuộn trang 26 px và mọi mốc của trang lệch theo). */
+function focusedControl(): HTMLElement | null {
+  const el = document.activeElement;
+  return el instanceof HTMLElement && !el.matches(FOCUS_SURFACE) ? el : null;
+}
+
 /** Giữ thông báo ngoài nội dung bảng/hộp, kể cả popover không khoá body, và ngoài các vùng điều khiển `data-toast-avoid`.
  *  Dịch cả toaster để Sonner giữ nguyên thứ tự, vuốt đóng và chuyển động của từng toast. */
 export function useToastClearance(): void {
@@ -50,7 +61,8 @@ export function useToastClearance(): void {
       frame = 0;
       // Không có thông báo: thôi luôn - quan sát style của cả trang chạy theo thanh tiến độ trình phát, không được đo layout mỗi khung.
       if (!document.querySelector('[data-sonner-toast][data-mounted="true"]:not([data-removed="true"])')) return;
-      const layers = [...document.querySelectorAll<HTMLElement>(`[role="dialog"],[role="alertdialog"],[role="menu"],[role="listbox"],${TOAST_AVOID}`)]
+      const focused = focusedControl();
+      const layers = [...document.querySelectorAll<HTMLElement>(`[role="dialog"],[role="alertdialog"],[role="menu"],[role="listbox"],${TOAST_AVOID}`), ...(focused ? [focused] : [])]
         .filter(el => el.dataset.state !== "closed" && !el.closest('[hidden],[inert],[aria-hidden="true"]') && getComputedStyle(el).display !== "none" && getComputedStyle(el).visibility === "visible");
       const toasters = [...document.querySelectorAll<HTMLElement>("[data-sonner-toaster]")];
       for (const [el, fade] of fades) if (!el.isConnected) { fade.cancel(); fades.delete(el); }
@@ -102,12 +114,16 @@ export function useToastClearance(): void {
     observer.observe(document.body, { subtree: true, childList: true, attributes: true, attributeFilter: ["data-state", "data-mounted", "data-removed", "data-visible", "style", "inert", "aria-hidden"] });
     window.addEventListener("resize", schedule);
     document.addEventListener("animationend", schedule, true);
+    document.addEventListener("focusin", schedule);
+    document.addEventListener("focusout", schedule);
     schedule();
     return () => {
       observer.disconnect(); resize.disconnect(); cancelAnimationFrame(frame);
       for (const fade of fades.values()) fade.cancel();
       window.removeEventListener("resize", schedule);
       document.removeEventListener("animationend", schedule, true);
+      document.removeEventListener("focusin", schedule);
+      document.removeEventListener("focusout", schedule);
     };
   }, []);
 }

@@ -323,49 +323,6 @@ export function Progress({
 
 /** Thuộc tính trợ năng của các vạch "đã nghe" nhỏ (thẻ sách ở Thư viện, dòng chương ở trang sách, thanh phát gọn): trước đây là div trơn, trình đọc
  *  màn hình không biết có vạch ấy (soát a67). */
-type Box = { top: number; bottom: number; left: number; right: number };
-
-/** Khoảng phải cuộn (dương = cuộn xuống) để phần tử `target` không nằm dưới thông báo nào; 0 = không bị che. Thông báo ở nửa trên màn thì đẩy phần tử
- *  xuống dưới nó, ở nửa dưới thì kéo lên trên nó. */
-export function toastClearance(target: Box, toasts: readonly Box[], viewportHeight: number, gap = 8): number {
-  for (const toast of toasts) {
-    if (target.left >= toast.right || target.right <= toast.left || target.top >= toast.bottom || target.bottom <= toast.top) continue;
-    return toast.top + toast.bottom < viewportHeight ? target.top - toast.bottom - gap : target.bottom - toast.top + gap;
-  }
-  return 0;
-}
-
-function scrollParent(element: HTMLElement): Element | null {
-  // A fixed surface cannot be uncovered by scrolling the page behind it.
-  if (getComputedStyle(element).position === "fixed") return null;
-  for (let node = element.parentElement; node; node = node.parentElement) {
-    const { overflowY } = getComputedStyle(node);
-    if ((overflowY === "auto" || overflowY === "scroll") && node.scrollHeight > node.clientHeight) return node;
-    if (getComputedStyle(node).position === "fixed") return null;
-  }
-  if (/hidden|clip/.test(getComputedStyle(document.body).overflowY) || /hidden|clip/.test(getComputedStyle(document.documentElement).overflowY)) return null;
-  return document.scrollingElement ?? document.documentElement;
-}
-
-/** Tiêu điểm không bao giờ nằm dưới thông báo (soát a67, cửa sổ 640×400: thẻ tiến độ xuất che tab "Lịch sử" và nút "…" của chương): phần tử vừa
- *  nhận tiêu điểm mà bị một thông báo che thì cuộn khung chứa nó cho lộ ra. Gắn một lần ở gốc app (máy tính và điện thoại). */
-export function useFocusClearOfToasts() {
-  useEffect(() => {
-    const onFocus = (event: Event) => {
-      const target = event.target as HTMLElement | null;
-      if (!target?.getBoundingClientRect || target.closest("[data-sonner-toaster]")) return;
-      // Đợi trình duyệt tự cuộn tới phần tử (Tab tới chỗ khuất) rồi mới đo.
-      requestAnimationFrame(() => {
-        const toasts = Array.from(document.querySelectorAll('[data-sonner-toast]:not([data-visible="false"])'), (toast) => toast.getBoundingClientRect());
-        const delta = toastClearance(target.getBoundingClientRect(), toasts, window.innerHeight);
-        if (delta) scrollParent(target)?.scrollBy({ top: delta });
-      });
-    };
-    document.addEventListener("focusin", onFocus);
-    return () => document.removeEventListener("focusin", onFocus);
-  }, []);
-}
-
 export function heardBarProps(fraction: number) {
   const percent = percentOf(fraction);
   return {

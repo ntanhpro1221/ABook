@@ -3,7 +3,7 @@ import { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import * as Menu from "./DropdownMenu";
-import { Sheet, useFocusClearOfToasts } from "./ui";
+import { Sheet } from "./ui";
 
 let root: Root, host: HTMLElement;
 beforeEach(() => {
@@ -72,22 +72,4 @@ it("a Sheet ignores a pointer click whose press began outside it (opening tap); 
   expect(pressed).toHaveBeenCalledTimes(1);
   await act(() => { button.click(); });
   expect(pressed).toHaveBeenCalledTimes(2);
-});
-
-it("does not scroll the page behind a fixed surface to clear a toast", async () => {
-  vi.spyOn(window, "requestAnimationFrame").mockImplementation(callback => { callback(0); return 1; });
-  const scroll = vi.fn();
-  Object.defineProperty(document.documentElement, "scrollBy", { configurable: true, value: scroll });
-  function Fixture() { useFocusClearOfToasts(); return <><div data-sonner-toast="" /><div role="dialog" tabIndex={-1} style={{ position: "fixed" }}><button>Inside</button></div></>; }
-  await act(() => root.render(<Fixture />));
-  const box = { top: 500, bottom: 600, left: 0, right: 400, width: 400, height: 100, x: 0, y: 500, toJSON() {} };
-  vi.spyOn(document.querySelector('[data-sonner-toast]')!, "getBoundingClientRect").mockReturnValue(box);
-  const surface = document.querySelector<HTMLElement>('[role="dialog"]')!;
-  vi.spyOn(surface, "getBoundingClientRect").mockReturnValue(box);
-  surface.focus();
-  expect(scroll).not.toHaveBeenCalled();
-  const button = surface.querySelector('button')!;
-  vi.spyOn(button, "getBoundingClientRect").mockReturnValue(box);
-  button.focus();
-  expect(scroll).not.toHaveBeenCalled();
 });
