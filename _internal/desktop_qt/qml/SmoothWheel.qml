@@ -27,12 +27,15 @@ WheelHandler {
             return
         }
         glide.stop()
+        glide.target = flick
         glide.from = flick.contentY
         glide.to = target
         glide.start()
     }
+    // The target is set on each wheel turn, never bound to `flick`: when the Flickable dies first (teardown), the guard of
+    // `flick` notifies, and a binding on it would read this object's property storage while it is being torn down
+    // ("Cannot find member data", gate 22). Nothing outside a real wheel event may read `flick`.
     property NumberAnimation glide: NumberAnimation {
-        target: root.flick
         property: "contentY"
         duration: 160
         easing.type: Easing.BezierSpline

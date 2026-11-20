@@ -316,11 +316,20 @@ void removeHooks() {
     qtHookData[QHooks::AddQObject] = reinterpret_cast<quintptr>(previousAdd);
     qtHookData[QHooks::RemoveQObject] = reinterpret_cast<quintptr>(previousRemove);
 }
+// QtTest installs its own logger when each file starts (after qmlEngineAvailable), which replaced this handler for good:
+// the probe printed nothing in gate 22. Put it back in front of whatever logger is current, on every engine and turn.
+void reinstallHandler() {
+    const QtMessageHandler current = qInstallMessageHandler(handler);
+    if (current != handler) previous = current;
+}
 void installHandler() {
-    static bool installed = false;
-    if (installed) return;
-    installed = true;
-    previous = qInstallMessageHandler(handler);
+    reinstallHandler();
+    static QTimer *keeper = nullptr;
+    if (keeper) return;
+    keeper = new QTimer(QCoreApplication::instance());
+    keeper->setInterval(1);
+    QObject::connect(keeper, &QTimer::timeout, keeper, &reinstallHandler);
+    keeper->start();
 }
 }
 

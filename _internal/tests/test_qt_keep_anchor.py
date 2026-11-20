@@ -149,3 +149,67 @@ def test_detector_accepts_anchored_shapes(tmp_path):
     (tmp_path / "Root.qml").write_text("QtObject {\n    id: root\n    Component.onCompleted: Keep.hold(root)\n    property int n\n}\n", encoding="utf-8")
     (tmp_path / "Single.qml").write_text("pragma Singleton\nimport QtQml\nQtObject {\n    property int n\n}\n", encoding="utf-8")
     assert violations(tmp_path) == []
+
+
+VALUE_TYPES = {"real", "int", "bool", "string", "var", "color", "url", "double", "date", "point", "size", "rect", "font",
+               "list", "alias", "variant", "vector2d", "vector3d", "matrix4x4"}
+HANDLER_OPEN = re.compile(r"^\s*(?:on[A-Z]\w*\s*:|function\s+\w+|Component\.on\w+\s*:)")
+
+
+def guarded_rereads(root=QML):
+    """An anchored object (Keep.hold on its root id) does not bind its inline property-value objects to its own object properties.
+
+    Gate 22: "QML SmoothWheel: Cannot find member data", twice, at NowPlaying.qml:225 when a NowPlaying scene was torn down
+    in the full WidthTests run. Outside a real wheel turn the only reader of SmoothWheel's property storage was the glide
+    animation's binding `target: root.flick`; it now gets the target when a wheel turn starts.
+    """
+    found = []
+    value_block = re.compile(r"^\s*(?:(?:readonly|required|default)\s+)*property\s+[\w.<>]+\s+\w+\s*:\s*[A-Z][\w.]*\s*\{")
+    for path in sorted(root.glob("*.qml")):
+        text = _strip(path.read_text(encoding="utf-8"))
+        owner = re.search(r"\bKeep\.hold\((\w+)\)", text)
+        first = re.search(r"^[A-Z][\w.]*\s*\{", text, re.M)
+        if not owner or not first:
+            continue
+        root_id = re.search(r"\bid:\s*(\w+)", text[first.end():])
+        if not root_id or root_id.group(1) != owner.group(1):
+            continue
+        # Object properties naming another object (guarded by Qt); an inline value (`property T x: T {`) is owned storage.
+        objects = [m.group(2) for m in re.finditer(r"^\s{4}(?:(?:readonly|required|default)\s+)*property\s+([\w.<>]+)\s+(\w+)(\s*:\s*[A-Z][\w.]*\s*\{)?",
+                                                   text, re.M)
+                   if m.group(1) not in VALUE_TYPES and not m.group(3)]
+        if not objects:
+            continue
+        reader = re.compile(rf"\b{owner.group(1)}\.(?:{'|'.join(objects)})\b")
+        depth = 0
+        inside = None   # depth at which the current inline property-value object was opened
+        for number, line in enumerate(text.split("\n"), 1):
+            if inside is None and value_block.match(line):
+                inside = depth
+            elif inside is not None and not HANDLER_OPEN.match(line) and (hit := reader.search(line)) \
+                    and re.search(r"\b\w+\s*:[^:]*$", line[:hit.start()]):
+                found.append(f"{path.name}:{number}: binding re-reads {hit.group(0)}; assign it when the event starts")
+            depth += line.count("{") - line.count("}")
+            if inside is not None and depth <= inside:
+                inside = None
+    return found
+
+
+def test_anchored_objects_do_not_rebind_their_own_objects():
+    assert guarded_rereads() == []
+
+
+def test_reread_detector_sees_the_gate22_shapes(tmp_path):
+    (tmp_path / "Wheel.qml").write_text(
+        "import ABook\nWheelHandler {\n    id: root\n    Component.onCompleted: Keep.hold(root)\n"
+        "    required property Flickable flick\n    property real step: 110\n"
+        "    onWheel: (event) => {\n        glide.target = root.flick\n        flick.contentY = root.step\n    }\n"
+        "    property NumberAnimation glide: NumberAnimation {\n        target: root.flick\n        duration: root.step\n    }\n}\n",
+        encoding="utf-8")
+    (tmp_path / "Fade.qml").write_text(
+        "import ABook\nItem {\n    id: reveal\n    property Item target: parent\n    property bool shown\n"
+        "    Component.onCompleted: { bind.target = target; Keep.hold(reveal) }\n"
+        "    Binding { id: bind; target: null; property: \"visible\"; value: reveal.shown }\n"
+        "    Binding { target: reveal.target; property: \"opacity\"; value: 1 }\n}\n", encoding="utf-8")
+    found = guarded_rereads(tmp_path)
+    assert [f.split(": binding")[0] for f in found] == ["Wheel.qml:12"], found
