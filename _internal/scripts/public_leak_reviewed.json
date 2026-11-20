@@ -32,11 +32,11 @@
     "reason": "README.md: all flagged strings match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data. fix173d: added privacy wording for the opt-in portrait service and feature bullets (volumes, Hako links, portraits); app-authored prose, no story text."
   },
   "_internal/AGENTS.md": {
-    "sha256": "30335e974aaf4a5e24a1c4e4a7392a599f9757af23096de3499c17f518e94619",
+    "sha256": "d798e87175a3e9ceb55e7e732a153a8f91b788634784adf651cdca14508995d8",
     "reason": "_internal/AGENTS.md: technical contributor rules; added private index lifecycle invariants. The inherited approved Corpus shingle set is unchanged. _internal/AGENTS.md: tnfix172 exact changed bytes reviewed; authored technical documentation or synthetic normalization expectations. Existing individual category-i shingles were rechecked as identical public word sequences against 0964e4cd2. No new Corpus shingle is approved. Integration 0.4.172: byte pins refreshed for combined technical notes and existing normalization tests; no new Corpus shingle approval. Integration phase 1: combined authored implementation, expectations or technical documentation; exact inherited Corpus sequences rechecked; no new Corpus approval. Integration phase 2: combined authored implementation, expectations or technical documentation; exact inherited Corpus sequences rechecked; no new Corpus approval.",
     "corpus_review": {
       "classification": "i",
-      "file_sha256": "30335e974aaf4a5e24a1c4e4a7392a599f9757af23096de3499c17f518e94619",
+      "file_sha256": "d798e87175a3e9ceb55e7e732a153a8f91b788634784adf651cdca14508995d8",
       "reason": "_internal/AGENTS.md: each listed shingle retains its prior Lead-approved category-i classification. Exact public eight-word sequences are unchanged against 0964e4cd2; changes concern only TN behavior, expectations or technical notes. Byte pins expired and were individually re-reviewed.",
       "shingles": [
         "278c69d8d369f37e"
@@ -5162,10 +5162,10 @@
   "_internal/desktop_qt/tests/test_width.cpp": {
     "reason": "_internal/desktop_qt/tests/test_width.cpp: individually classified contextual coincidences only. Integration phase 1: combined authored implementation, expectations or technical documentation; exact inherited Corpus sequences rechecked; no new Corpus approval. Integration phase 2: combined authored implementation, expectations or technical documentation; exact inherited Corpus sequences rechecked; no new Corpus approval.",
     "rules": [],
-    "sha256": "04854d0156505533a25289cc97726a63b0fac529a6db6929c76ad652f7fe6a6a",
+    "sha256": "8ac6152e450a6ad29ac6f196ebaa31c310c434aedfcd18bd892a1355e0ead149",
     "corpus_review": {
       "classification": "i",
-      "file_sha256": "04854d0156505533a25289cc97726a63b0fac529a6db6929c76ad652f7fe6a6a",
+      "file_sha256": "8ac6152e450a6ad29ac6f196ebaa31c310c434aedfcd18bd892a1355e0ead149",
       "reason": "_internal/desktop_qt/tests/test_width.cpp: Short generic test/UI prose or literal bridge. Lead approved category (i) only; each hash was classified in round two.",
       "shingles": [
         "34c39778d36c91e5"
