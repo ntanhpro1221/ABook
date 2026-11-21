@@ -33,6 +33,7 @@ import org.robolectric.Shadows.shadowOf
 import org.robolectric.annotation.Config
 import org.robolectric.shadows.ShadowContentResolver
 import vn.abook.player.ui.theme.AbookTheme
+import vn.abook.player.TestTime
 import java.io.File
 
 /**
@@ -53,14 +54,9 @@ class ExpiredGrantRetryTest {
         ShadowContentResolver.registerProviderInternal(AUTHORITY, it)
     }
 
-    private fun waitFor(what: String, check: () -> Boolean) {
-        val end = System.currentTimeMillis() + 15_000
-        while (!check()) {
-            check(System.currentTimeMillis() < end) { "timed out: $what" }
-            shadowOf(android.os.Looper.getMainLooper()).idle()
-            Thread.sleep(20)
-        }
-    }
+    /** The import reads on Dispatchers.IO: poll through the shared scaled helper, running the main looper between checks. */
+    private fun waitFor(what: String, check: () -> Boolean) =
+        TestTime.eventually(what, limitMs = 3_000, pollMs = 20) { check().also { if (!it) shadowOf(android.os.Looper.getMainLooper()).idle() } }
 
     @Test fun expiredGrantShowsVietnameseAndRetryAsksForThePickerThenReadsTheNewFile() {
         provider()
