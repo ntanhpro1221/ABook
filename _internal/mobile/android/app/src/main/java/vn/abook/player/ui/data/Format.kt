@@ -4,6 +4,7 @@ import vn.abook.player.S
 
 import java.util.Calendar
 import java.util.Locale
+import java.util.TimeZone
 
 /** Định dạng kiểu Việt (viết lại từ ui/src/shared/format.ts, cùng ca test): "9 giờ 12 phút", "13:05", "hôm qua 09:15". Hàm thuần, không Android. */
 object Fmt {
@@ -35,10 +36,10 @@ object Fmt {
     }
 
     /** Mốc thời gian nói kiểu người: "hôm nay 14:02", "tối qua 23:41", "hôm qua 09:15", "3 ngày trước", cũ hơn thì ngày/tháng/năm. */
-    fun whenText(epochSeconds: Double, nowMs: Long = System.currentTimeMillis()): String {
+    fun whenText(epochSeconds: Double, nowMs: Long = WallClock.nowMs(), zone: TimeZone = WallClock.zone()): String {
         if (epochSeconds <= 0 || epochSeconds.isNaN()) return ""
-        val then = Calendar.getInstance().apply { timeInMillis = (epochSeconds * 1000).toLong() }
-        val today = Calendar.getInstance().apply { timeInMillis = nowMs }
+        val then = Calendar.getInstance(zone).apply { timeInMillis = (epochSeconds * 1000).toLong() }
+        val today = Calendar.getInstance(zone).apply { timeInMillis = nowMs }
         val days = Math.round((midnight(today) - midnight(then)) / 86_400_000.0).toInt()
         val time = String.format(Locale.ROOT, "%02d:%02d", then.get(Calendar.HOUR_OF_DAY), then.get(Calendar.MINUTE))
         return when {
@@ -49,7 +50,7 @@ object Fmt {
         }
     }
 
-    private fun midnight(c: Calendar): Long = Calendar.getInstance().apply {
+    private fun midnight(c: Calendar): Long = Calendar.getInstance(c.timeZone).apply {
         set(c.get(Calendar.YEAR), c.get(Calendar.MONTH), c.get(Calendar.DAY_OF_MONTH), 0, 0, 0)
         set(Calendar.MILLISECOND, 0)
     }.timeInMillis

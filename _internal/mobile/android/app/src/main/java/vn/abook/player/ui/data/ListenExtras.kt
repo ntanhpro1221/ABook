@@ -64,7 +64,7 @@ object History {
     }.timeInMillis
 
     /** "Hôm nay" / "Hôm qua" / "Thứ Sáu, 24/10" (BookScreen.tsx dayLabel). */
-    fun dayLabel(epochSeconds: Double, nowMs: Long = System.currentTimeMillis(), zone: TimeZone = TimeZone.getDefault()): String {
+    fun dayLabel(epochSeconds: Double, nowMs: Long = WallClock.nowMs(), zone: TimeZone = WallClock.zone()): String {
         val then = (epochSeconds * 1000).toLong()
         val days = Math.round((midnight(nowMs, zone) - midnight(then, zone)) / 86_400_000.0).toInt()
         if (days == 0) return S.s_hom_nay_e6747a82
@@ -74,20 +74,20 @@ object History {
     }
 
     /** "13:57" (giờ máy). */
-    fun clockOf(epochSeconds: Double, zone: TimeZone = TimeZone.getDefault()): String {
+    fun clockOf(epochSeconds: Double, zone: TimeZone = WallClock.zone()): String {
         val date = Calendar.getInstance(zone).apply { timeInMillis = (epochSeconds * 1000).toLong() }
         return String.format(Locale.ROOT, "%02d:%02d", date.get(Calendar.HOUR_OF_DAY), date.get(Calendar.MINUTE))
     }
 
     /** Cùng phút thì một mốc giờ, không "13:57-13:57". */
-    fun clockRange(session: ListenSession, zone: TimeZone = TimeZone.getDefault()): String {
+    fun clockRange(session: ListenSession, zone: TimeZone = WallClock.zone()): String {
         val start = clockOf(session.startedAt, zone)
         val end = clockOf(session.endedAt, zone)
         return if (start == end) start else "$start-$end"
     }
 
     /** Dòng đầu của một lượt: "13:57-14:20 · 23 phút". */
-    fun headline(session: ListenSession, zone: TimeZone = TimeZone.getDefault()): String = dotJoin(clockRange(session, zone), Fmt.length(session.listened))
+    fun headline(session: ListenSession, zone: TimeZone = WallClock.zone()): String = dotJoin(clockRange(session, zone), Fmt.length(session.listened))
 
     /** Dòng phụ: "Chương 3 0:12 → Chương 4 1:05"; chương đã gỡ khỏi sách thì "chương đã gỡ". */
     fun route(session: ListenSession, titleOf: (Int) -> String?): String {
@@ -100,14 +100,14 @@ object History {
     fun resumeLabel(session: ListenSession): String = S.s_nghe_tiep_tu_0_e930b100(Fmt.clock(session.toSeconds))
 
     /** Tổng thời gian nghe trong 7 ngày qua. */
-    fun weekListened(sessions: List<ListenSession>, nowMs: Long = System.currentTimeMillis()): Double =
+    fun weekListened(sessions: List<ListenSession>, nowMs: Long = WallClock.nowMs()): Double =
         sessions.filter { nowMs / 1000.0 - it.startedAt < 7 * 86_400 }.sumOf { it.listened }
 
     /** "7 ngày qua: 2 giờ nghe cuốn này." */
     fun weekLine(seconds: Double): String = S.s_7_ngay_qua_0_nghe_cuon_nay_291dfcc3(Fmt.length(seconds))
 
     /** Lượt mới nhất trước, gom theo ngày (thứ tự nhóm = thứ tự lần đầu gặp, tức ngày mới nhất trước). */
-    fun byDay(sessions: List<ListenSession>, nowMs: Long = System.currentTimeMillis(), zone: TimeZone = TimeZone.getDefault()): List<SessionDay> {
+    fun byDay(sessions: List<ListenSession>, nowMs: Long = WallClock.nowMs(), zone: TimeZone = WallClock.zone()): List<SessionDay> {
         val groups = LinkedHashMap<String, MutableList<ListenSession>>()
         for (session in sessions.asReversed()) groups.getOrPut(dayLabel(session.startedAt, nowMs, zone)) { ArrayList() } += session
         return groups.map { SessionDay(it.key, it.value) }
@@ -146,7 +146,7 @@ object Records {
     const val NAME_MAX = 60
 
     /** Dòng phụ của một hồ sơ trong bộ chọn: "nghe gần nhất hôm qua" / "chưa nghe". */
-    fun lastHeard(record: ListenRecord, nowMs: Long = System.currentTimeMillis(), zone: TimeZone = TimeZone.getDefault()): String =
+    fun lastHeard(record: ListenRecord, nowMs: Long = WallClock.nowMs(), zone: TimeZone = WallClock.zone()): String =
         record.updatedAt?.let { S.s_nghe_gan_nhat_0_3ef6d860(History.dayLabel(it, nowMs, zone).lowercase()) } ?: S.s_chua_nghe_2d5b1cbe
 
     fun createdNote(name: String): String = S.s_ho_so_moi_0_nghe_tu_chuong_dau_d9c8929e(name.ifBlank { S.s_khong_ten_7a5bff7f })

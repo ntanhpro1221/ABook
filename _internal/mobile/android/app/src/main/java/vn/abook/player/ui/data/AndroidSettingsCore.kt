@@ -66,7 +66,7 @@ class AndroidSettingsCore(context: Context) : SettingsCore {
     override fun release(): AppRelease? {
         val prefs = app.getSharedPreferences("app-release", Context.MODE_PRIVATE)
         val cached = runCatching { JSONObject(prefs.getString("json", "")!!) }.getOrNull()
-        if (System.currentTimeMillis() - prefs.getLong("at", 0) < 86_400_000) return cached?.let(AppRelease::parse)
+        if (System.currentTimeMillis() - prefs.getLong("at", 0) < 86_400_000) return cached?.let(AppRelease::parse) // wallclock-ok: cache TTL, not shown text
         return runCatching {
             val connection = vn.abook.player.net.FastConnect.get("https://api.github.com/repos/ntanhpro1221/ABook/releases/latest", 8000) {
                 it.readTimeout = 8000
@@ -76,7 +76,7 @@ class AndroidSettingsCore(context: Context) : SettingsCore {
                 check(connection.responseCode == 200)
                 val json = connection.inputStream.bufferedReader().use { it.readText() }
                 val release = AppRelease.parse(JSONObject(json))
-                prefs.edit().putString("json", json).putLong("at", System.currentTimeMillis()).apply()
+                prefs.edit().putString("json", json).putLong("at", System.currentTimeMillis()).apply() // wallclock-ok: cache TTL stamp
                 release
             } finally { connection.disconnect() }
         }.getOrElse { cached?.let(AppRelease::parse) }

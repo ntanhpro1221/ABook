@@ -52,6 +52,7 @@ import vn.abook.player.ui.data.MarkerKind
 import vn.abook.player.ui.data.NightMarker
 import vn.abook.player.ui.data.NightRecap
 import vn.abook.player.ui.data.NightState
+import vn.abook.player.ui.data.WallClock
 import vn.abook.player.ui.nowplaying.ReadParagraph
 import vn.abook.player.ui.theme.Abook
 import vn.abook.player.ui.theme.Dim
@@ -63,7 +64,7 @@ import vn.abook.player.ui.theme.Dim
  */
 @Composable
 fun MorningRecap(night: NightState, books: List<ListenBook>, play: (bookId: String, chapterId: Int, seconds: Double) -> Unit, modifier: Modifier = Modifier,
-    nowMs: () -> Long = System::currentTimeMillis) {
+    nowMs: () -> Long = { WallClock.nowMs() }) {
     val session by night.session.collectAsState()
     val lines by night.lines.collectAsState()
     val shown = session

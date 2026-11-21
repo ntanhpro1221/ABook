@@ -350,7 +350,7 @@ object StudioNewText {
 @Stable
 class StudioNewState(
     val session: StudioSession,
-    private val batch: String = StudioNewLogic.batchName(Calendar.getInstance(), java.lang.Long.toString(System.nanoTime() % 100_000, 36)),
+    private val batch: String = StudioNewLogic.batchName(Calendar.getInstance(vn.abook.player.ui.data.WallClock.zone()).apply { timeInMillis = vn.abook.player.ui.data.WallClock.nowMs() }, java.lang.Long.toString(System.nanoTime() % 100_000, 36)),
 ) {
     var step by mutableStateOf(NewStep.Source)
         private set

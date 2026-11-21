@@ -65,7 +65,7 @@ object NightRecap {
         !session.dismissed && session.endedAt != null && session.events.any { it.type == "stopped" } && nowSeconds - session.endedAt < RECENT_HOURS * 3600
 
     /** "Tối qua" chỉ đúng khi lần hẹn giờ kết thúc hôm trước hay lúc rạng sáng; hẹn giờ ban ngày thì "Vừa hẹn giờ". */
-    fun sessionLabel(endedAt: Double?, nowMs: Long, zone: TimeZone = TimeZone.getDefault()): String {
+    fun sessionLabel(endedAt: Double?, nowMs: Long, zone: TimeZone = WallClock.zone()): String {
         if (endedAt == null || endedAt <= 0) return S.s_toi_qua_920edeaa
         val ended = Calendar.getInstance(zone).apply { timeInMillis = (endedAt * 1000).toLong() }
         val now = Calendar.getInstance(zone).apply { timeInMillis = nowMs }
@@ -74,7 +74,7 @@ object NightRecap {
     }
 
     /** Giờ của một mốc, "HH:mm". */
-    fun clock(at: Double, zone: TimeZone = TimeZone.getDefault()): String {
+    fun clock(at: Double, zone: TimeZone = WallClock.zone()): String {
         val time = Calendar.getInstance(zone).apply { timeInMillis = (at * 1000).toLong() }
         return "%02d:%02d".format(time.get(Calendar.HOUR_OF_DAY), time.get(Calendar.MINUTE))
     }

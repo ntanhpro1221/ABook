@@ -16,6 +16,7 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollToNode
+import vn.abook.player.ui.snapshot.FixedWallClock
 import vn.abook.player.ui.snapshot.captureRoboImage
 import org.json.JSONArray
 import org.json.JSONObject
@@ -52,6 +53,10 @@ class BookTabsScreenTest {
     @get:Rule
     val rule = createAndroidComposeRule<ComponentActivity>()
 
+    /** Lượt nghe "cách đây một giờ" và nhóm "Hôm nay" tính theo cùng một giờ ghim (giữa ngày): không đổi khi chạy quanh nửa đêm. */
+    @get:Rule
+    val clock = FixedWallClock()
+
     private class Source(var detail: BookDetail?, val cast: CastView?) : BookSource by BookSource.None {
         override suspend fun detail(id: String) = detail
         override suspend fun cast(id: String) = cast
@@ -71,7 +76,7 @@ class BookTabsScreenTest {
     }
 
     private fun state(): JSONObject {
-        val now = System.currentTimeMillis() / 1000.0
+        val now = clock.nowSeconds
         val session = JSONObject().put("id", "s1").put("startedAt", now - 3600).put("endedAt", now - 3000).put("listened", 600.0)
             .put("from", JSONObject().put("chapterId", 2).put("seconds", 10.0)).put("to", JSONObject().put("chapterId", 3).put("seconds", 600.0))
         return JSONObject()

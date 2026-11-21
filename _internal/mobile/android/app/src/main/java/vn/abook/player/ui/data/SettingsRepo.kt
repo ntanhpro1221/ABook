@@ -200,7 +200,7 @@ class SettingsRepo(private val core: SettingsCore, private val scope: CoroutineS
         val after = update(before)
         val changes = after.changesFrom(before)
         if (changes.length() == 0) return
-        val stamp = maxOf(System.currentTimeMillis(), before.stamp + 1)
+        val stamp = maxOf(System.currentTimeMillis(), before.stamp + 1) // wallclock-ok: sync ordering stamp, not shown text
         flow.value = after.copy(stamp = stamp)
         changes.put("settingsStamp", stamp)
         writes.trySend { core.save(changes) }

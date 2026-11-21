@@ -138,7 +138,7 @@ fun PlayerSheets(state: NowPlayingState, model: NowPlayingModel, window: NowPlay
                         }
                         // Đang hẹn: còn bao lâu + S.s_copy_4a2a3696181b / S.s_tat_hen_gio_fc8af231. Chưa hẹn mà vừa tắt tiếng (chưa quá 30 phút): mời bật lại đúng mức cũ.
                         // Dòng "Hẹn giờ đã tắt tiếng lúc …" hiện cả khi lựa chọn còn giữ sau lần tự dừng (máy tính, web: soát 0.4.173 B8).
-                        val stoppedNow = remember(window.sheetOpen) { System.currentTimeMillis() }
+                        val stoppedNow = remember(window.sheetOpen) { vn.abook.player.ui.data.WallClock.nowMs() }
                                 SwapContent(active, contentKey = { active -> active }, layout = ContentLayout.Column) { active ->
                                     if (active) {
                                         RowHint(SleepText.heading(state.sleep.kind))

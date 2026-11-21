@@ -312,12 +312,12 @@ object DeviceText {
     }
 
     /** Dòng mốc thời gian của máy nghe thư viện này: lần cuối thấy nó. */
-    fun seen(lastSeen: Double, nowMs: Long = System.currentTimeMillis()): String =
+    fun seen(lastSeen: Double, nowMs: Long = vn.abook.player.ui.data.WallClock.nowMs()): String =
         Fmt.whenText(lastSeen, nowMs).let { if (it.isEmpty()) S.s_chua_thay_46bcd090 else S.s_thay_0_4319765d(it) }
 
     /** Giờ hết hạn của mã ghép, như "14:12" (giờ máy). */
     fun clock(epochSeconds: Double): String {
-        val calendar = java.util.Calendar.getInstance().apply { timeInMillis = (epochSeconds * 1000).toLong() }
+        val calendar = java.util.Calendar.getInstance(vn.abook.player.ui.data.WallClock.zone()).apply { timeInMillis = (epochSeconds * 1000).toLong() }
         return String.format(java.util.Locale.ROOT, "%02d:%02d", calendar.get(java.util.Calendar.HOUR_OF_DAY), calendar.get(java.util.Calendar.MINUTE))
     }
 

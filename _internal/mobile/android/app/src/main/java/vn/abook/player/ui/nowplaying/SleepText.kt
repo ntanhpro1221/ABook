@@ -52,7 +52,7 @@ object SleepText {
     /** Nút "Bật lại N phút": chỉ khi hẹn giờ đã tắt hẳn (còn giữ lựa chọn thì phát tiếp là chạy lại đủ lượt). */
     fun restartOffered(sleep: PlayerSleep, nowMs: Long): Boolean = sleep.kind == SleepKind.Off && recentlyStopped(sleep, nowMs)
 
-    fun stoppedAt(stoppedAtMs: Long, zone: java.util.TimeZone = java.util.TimeZone.getDefault()): String {
+    fun stoppedAt(stoppedAtMs: Long, zone: java.util.TimeZone = vn.abook.player.ui.data.WallClock.zone()): String {
         val at = Calendar.getInstance(zone).apply { timeInMillis = stoppedAtMs }
         val clock = "%02d:%02d".format(at.get(Calendar.HOUR_OF_DAY), at.get(Calendar.MINUTE))
         return S.s_hen_gio_da_tat_tieng_luc_5d5e4231 + clock + "."

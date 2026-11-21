@@ -36,7 +36,7 @@ object StudioLogLogic {
     fun ordered(items: List<StudioLogItem>): List<StudioLogItem> = items.sortedByDescending { it.at }
 
     /** Giờ của một dòng: "hôm nay 14:02". */
-    fun at(item: StudioLogItem, nowMs: Long = System.currentTimeMillis()): String = Fmt.whenText(item.at, nowMs)
+    fun at(item: StudioLogItem, nowMs: Long = vn.abook.player.ui.data.WallClock.nowMs()): String = Fmt.whenText(item.at, nowMs)
 
     /** Thông tin chỉ đọc của dự án: nhãn + giá trị, theo thứ tự hiện. */
     fun facts(page: StudioPage): List<Pair<String, String>> {

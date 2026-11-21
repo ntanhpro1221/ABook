@@ -5238,7 +5238,7 @@
     "line": 47,
     "statement": "check(vn.abook.player.OldSaves.delete(vn.abook.player.OldSaves.dir(app.filesDir), name)) { S.s_chua_xoa_duoc_b872fff6 }",
     "occurrence": 1,
-    "source_sha256": "7eb246b0ff8ba4c86c26c0971d3100862b21698b2b7b6d6396f1e9ba73efb2c3",
+    "source_sha256": "3c1dca4a8a9e871a7bba4baae81c24fd80900fc33277b4a1a490ad0f646a9f4d",
     "disposition": "confirmation",
     "guard": "SettingsAdvanced ClearSheet and ClearLogsSheet / SettingsMaintenance old-delete / AdvancedStorage clearDialog",
     "reason": "Cache, diagnostic logs and recovery saves are cleared only after their respective confirmations."
@@ -5250,7 +5250,7 @@
     "line": 139,
     "statement": "override fun clearCache(): Long {",
     "occurrence": 1,
-    "source_sha256": "7eb246b0ff8ba4c86c26c0971d3100862b21698b2b7b6d6396f1e9ba73efb2c3",
+    "source_sha256": "3c1dca4a8a9e871a7bba4baae81c24fd80900fc33277b4a1a490ad0f646a9f4d",
     "disposition": "internal",
     "guard": "Declaration; the invoked call site is independently inventoried",
     "reason": "A declaration/signature is not an executing UI action."
@@ -5262,7 +5262,7 @@
     "line": 155,
     "statement": "override fun clearLogs() {",
     "occurrence": 1,
-    "source_sha256": "7eb246b0ff8ba4c86c26c0971d3100862b21698b2b7b6d6396f1e9ba73efb2c3",
+    "source_sha256": "3c1dca4a8a9e871a7bba4baae81c24fd80900fc33277b4a1a490ad0f646a9f4d",
     "disposition": "internal",
     "guard": "Declaration; the invoked call site is independently inventoried",
     "reason": "A declaration/signature is not an executing UI action."
@@ -6666,7 +6666,7 @@
     "line": 94,
     "statement": "fun clearCache(): Long",
     "occurrence": 1,
-    "source_sha256": "b4e7a764ffcaa858a11280855af5bb9b55fc50a7675e70b6969eb497f42f920d",
+    "source_sha256": "4e1467d3a9393474c16310ef53873341e218bfabe59c39bf2f7a6b4eae29fdb6",
     "disposition": "internal",
     "guard": "Declaration; the invoked call site is independently inventoried",
     "reason": "A declaration/signature is not an executing UI action."
@@ -6678,7 +6678,7 @@
     "line": 101,
     "statement": "fun clearLogs()",
     "occurrence": 1,
-    "source_sha256": "b4e7a764ffcaa858a11280855af5bb9b55fc50a7675e70b6969eb497f42f920d",
+    "source_sha256": "4e1467d3a9393474c16310ef53873341e218bfabe59c39bf2f7a6b4eae29fdb6",
     "disposition": "internal",
     "guard": "Declaration; the invoked call site is independently inventoried",
     "reason": "A declaration/signature is not an executing UI action."
@@ -6690,7 +6690,7 @@
     "line": 119,
     "statement": "suspend fun offerNotifications(allow: () -> Unit) {",
     "occurrence": 1,
-    "source_sha256": "b4e7a764ffcaa858a11280855af5bb9b55fc50a7675e70b6969eb497f42f920d",
+    "source_sha256": "4e1467d3a9393474c16310ef53873341e218bfabe59c39bf2f7a6b4eae29fdb6",
     "disposition": "internal",
     "guard": "Async interface/helper boundary; concrete activation inventoried separately",
     "reason": "This signature supplies work to a model or component; declaring it starts no user operation."
@@ -6702,7 +6702,7 @@
     "line": 132,
     "statement": "scope.launch {",
     "occurrence": 1,
-    "source_sha256": "b4e7a764ffcaa858a11280855af5bb9b55fc50a7675e70b6969eb497f42f920d",
+    "source_sha256": "4e1467d3a9393474c16310ef53873341e218bfabe59c39bf2f7a6b4eae29fdb6",
     "disposition": "pending",
     "guard": "ViewModel/operation fields: Loading, maintenanceBusy, savingSpeed, savingVoice; Components pending indicator",
     "reason": "The model retains the operation and locks repeats; UI uses the shared pending parameter, loading content or progress owner."
@@ -6714,7 +6714,7 @@
     "line": 152,
     "statement": "scope.launch {",
     "occurrence": 2,
-    "source_sha256": "b4e7a764ffcaa858a11280855af5bb9b55fc50a7675e70b6969eb497f42f920d",
+    "source_sha256": "4e1467d3a9393474c16310ef53873341e218bfabe59c39bf2f7a6b4eae29fdb6",
     "disposition": "pending",
     "guard": "ViewModel/operation fields: Loading, maintenanceBusy, savingSpeed, savingVoice; Components pending indicator",
     "reason": "The model retains the operation and locks repeats; UI uses the shared pending parameter, loading content or progress owner."
@@ -6726,7 +6726,7 @@
     "line": 191,
     "statement": "suspend fun load() {",
     "occurrence": 1,
-    "source_sha256": "b4e7a764ffcaa858a11280855af5bb9b55fc50a7675e70b6969eb497f42f920d",
+    "source_sha256": "4e1467d3a9393474c16310ef53873341e218bfabe59c39bf2f7a6b4eae29fdb6",
     "disposition": "internal",
     "guard": "Async interface/helper boundary; concrete activation inventoried separately",
     "reason": "This signature supplies work to a model or component; declaring it starts no user operation."
@@ -6738,7 +6738,7 @@
     "line": 210,
     "statement": "scope.launch {",
     "occurrence": 3,
-    "source_sha256": "b4e7a764ffcaa858a11280855af5bb9b55fc50a7675e70b6969eb497f42f920d",
+    "source_sha256": "4e1467d3a9393474c16310ef53873341e218bfabe59c39bf2f7a6b4eae29fdb6",
     "disposition": "pending",
     "guard": "ViewModel/operation fields: Loading, maintenanceBusy, savingSpeed, savingVoice; Components pending indicator",
     "reason": "The model retains the operation and locks repeats; UI uses the shared pending parameter, loading content or progress owner."
@@ -6750,7 +6750,7 @@
     "line": 226,
     "statement": "scope.launch {",
     "occurrence": 4,
-    "source_sha256": "b4e7a764ffcaa858a11280855af5bb9b55fc50a7675e70b6969eb497f42f920d",
+    "source_sha256": "4e1467d3a9393474c16310ef53873341e218bfabe59c39bf2f7a6b4eae29fdb6",
     "disposition": "pending",
     "guard": "ViewModel/operation fields: Loading, maintenanceBusy, savingSpeed, savingVoice; Components pending indicator",
     "reason": "The model retains the operation and locks repeats; UI uses the shared pending parameter, loading content or progress owner."
@@ -6762,7 +6762,7 @@
     "line": 239,
     "statement": "scope.launch { speedFlow.value = withContext(io) { runCatching { VoiceSpeedText.state(core.voiceSpeed()) }.getOrNull() } }",
     "occurrence": 1,
-    "source_sha256": "b4e7a764ffcaa858a11280855af5bb9b55fc50a7675e70b6969eb497f42f920d",
+    "source_sha256": "4e1467d3a9393474c16310ef53873341e218bfabe59c39bf2f7a6b4eae29fdb6",
     "disposition": "pending",
     "guard": "ViewModel/operation fields: Loading, maintenanceBusy, savingSpeed, savingVoice; Components pending indicator",
     "reason": "The model retains the operation and locks repeats; UI uses the shared pending parameter, loading content or progress owner."
@@ -6774,7 +6774,7 @@
     "line": 247,
     "statement": "scope.launch {",
     "occurrence": 5,
-    "source_sha256": "b4e7a764ffcaa858a11280855af5bb9b55fc50a7675e70b6969eb497f42f920d",
+    "source_sha256": "4e1467d3a9393474c16310ef53873341e218bfabe59c39bf2f7a6b4eae29fdb6",
     "disposition": "pending",
     "guard": "ViewModel/operation fields: Loading, maintenanceBusy, savingSpeed, savingVoice; Components pending indicator",
     "reason": "The model retains the operation and locks repeats; UI uses the shared pending parameter, loading content or progress owner."
@@ -6786,7 +6786,7 @@
     "line": 257,
     "statement": "scope.launch { cacheFlow.value = withContext(io) { runCatching { core.cacheBytes() }.getOrNull() } }",
     "occurrence": 1,
-    "source_sha256": "b4e7a764ffcaa858a11280855af5bb9b55fc50a7675e70b6969eb497f42f920d",
+    "source_sha256": "4e1467d3a9393474c16310ef53873341e218bfabe59c39bf2f7a6b4eae29fdb6",
     "disposition": "pending",
     "guard": "ViewModel/operation fields: Loading, maintenanceBusy, savingSpeed, savingVoice; Components pending indicator",
     "reason": "The model retains the operation and locks repeats; UI uses the shared pending parameter, loading content or progress owner."
@@ -6798,7 +6798,7 @@
     "line": 260,
     "statement": "fun clearCache() {",
     "occurrence": 1,
-    "source_sha256": "b4e7a764ffcaa858a11280855af5bb9b55fc50a7675e70b6969eb497f42f920d",
+    "source_sha256": "4e1467d3a9393474c16310ef53873341e218bfabe59c39bf2f7a6b4eae29fdb6",
     "disposition": "internal",
     "guard": "Declaration; the invoked call site is independently inventoried",
     "reason": "A declaration/signature is not an executing UI action."
@@ -6810,7 +6810,7 @@
     "line": 261,
     "statement": "maintenance(S.s_chua_don_duoc_ban_doc_fbc43cc6, S.s_da_don_ban_doc_da_lam_19cc9826, refreshSaves = false) { cacheFlow.value = core.clearCache() }",
     "occurrence": 1,
-    "source_sha256": "b4e7a764ffcaa858a11280855af5bb9b55fc50a7675e70b6969eb497f42f920d",
+    "source_sha256": "4e1467d3a9393474c16310ef53873341e218bfabe59c39bf2f7a6b4eae29fdb6",
     "disposition": "confirmation",
     "guard": "SettingsAdvanced ClearSheet and ClearLogsSheet / SettingsMaintenance old-delete / AdvancedStorage clearDialog",
     "reason": "Cache, diagnostic logs and recovery saves are cleared only after their respective confirmations."
@@ -6822,7 +6822,7 @@
     "line": 266,
     "statement": "scope.launch { notifyFlow.value = withContext(io) { runCatching { core.notificationsAllowed() }.getOrDefault(true) } }",
     "occurrence": 1,
-    "source_sha256": "b4e7a764ffcaa858a11280855af5bb9b55fc50a7675e70b6969eb497f42f920d",
+    "source_sha256": "4e1467d3a9393474c16310ef53873341e218bfabe59c39bf2f7a6b4eae29fdb6",
     "disposition": "pending",
     "guard": "ViewModel/operation fields: Loading, maintenanceBusy, savingSpeed, savingVoice; Components pending indicator",
     "reason": "The model retains the operation and locks repeats; UI uses the shared pending parameter, loading content or progress owner."
@@ -6834,7 +6834,7 @@
     "line": 269,
     "statement": "suspend fun logLines(): List<String> = withContext(io) { core.logLines() }",
     "occurrence": 1,
-    "source_sha256": "b4e7a764ffcaa858a11280855af5bb9b55fc50a7675e70b6969eb497f42f920d",
+    "source_sha256": "4e1467d3a9393474c16310ef53873341e218bfabe59c39bf2f7a6b4eae29fdb6",
     "disposition": "internal",
     "guard": "Async interface/helper boundary; concrete activation inventoried separately",
     "reason": "This signature supplies work to a model or component; declaring it starts no user operation."
@@ -6846,7 +6846,7 @@
     "line": 271,
     "statement": "fun clearLogs() {",
     "occurrence": 1,
-    "source_sha256": "b4e7a764ffcaa858a11280855af5bb9b55fc50a7675e70b6969eb497f42f920d",
+    "source_sha256": "4e1467d3a9393474c16310ef53873341e218bfabe59c39bf2f7a6b4eae29fdb6",
     "disposition": "internal",
     "guard": "Declaration; the invoked call site is independently inventoried",
     "reason": "A declaration/signature is not an executing UI action."
@@ -6858,7 +6858,7 @@
     "line": 272,
     "statement": "maintenance(S.s_chua_xoa_duoc_nhat_ky_1b7a3e04, S.s_da_xoa_nhat_ky_526f2ff7, refreshSaves = false) { core.clearLogs() }",
     "occurrence": 1,
-    "source_sha256": "b4e7a764ffcaa858a11280855af5bb9b55fc50a7675e70b6969eb497f42f920d",
+    "source_sha256": "4e1467d3a9393474c16310ef53873341e218bfabe59c39bf2f7a6b4eae29fdb6",
     "disposition": "confirmation",
     "guard": "SettingsAdvanced ClearSheet and ClearLogsSheet / SettingsMaintenance old-delete / AdvancedStorage clearDialog",
     "reason": "Cache, diagnostic logs and recovery saves are cleared only after their respective confirmations."
@@ -6870,7 +6870,7 @@
     "line": 275,
     "statement": "suspend fun thirdParty(): List<ThirdPartySection> = withContext(io) { ThirdParty.parse(runCatching { core.thirdParty() }.getOrDefault(\"\")) }",
     "occurrence": 1,
-    "source_sha256": "b4e7a764ffcaa858a11280855af5bb9b55fc50a7675e70b6969eb497f42f920d",
+    "source_sha256": "4e1467d3a9393474c16310ef53873341e218bfabe59c39bf2f7a6b4eae29fdb6",
     "disposition": "internal",
     "guard": "Async interface/helper boundary; concrete activation inventoried separately",
     "reason": "This signature supplies work to a model or component; declaring it starts no user operation."
@@ -6882,7 +6882,7 @@
     "line": 368,
     "statement": "titles += line.removePrefix(\"## \").trim()",
     "occurrence": 1,
-    "source_sha256": "b4e7a764ffcaa858a11280855af5bb9b55fc50a7675e70b6969eb497f42f920d",
+    "source_sha256": "4e1467d3a9393474c16310ef53873341e218bfabe59c39bf2f7a6b4eae29fdb6",
     "disposition": "internal",
     "guard": "String transformation / event subscription ownership",
     "reason": "No persisted user data is removed."
@@ -7434,7 +7434,7 @@
     "line": 51,
     "statement": "val shownName: String get() = name.ifBlank { host.removePrefix(\"bt:\") }.ifBlank { S.s_may_tinh_828ebb9d }",
     "occurrence": 1,
-    "source_sha256": "b1e962c5214bca8a1ae80f376158b319f19d12258100c0b5160e10bf5ef9fb52",
+    "source_sha256": "fe290994cbe740c5b909582200cf44a1a670655cc149e13a96fa10d0b97f03fb",
     "disposition": "internal",
     "guard": "String transformation / event subscription ownership",
     "reason": "No persisted user data is removed."
@@ -10950,7 +10950,7 @@
     "line": 79,
     "statement": "fun pop() { if(parents.isNotEmpty())window.openSheet(parents.removeAt(parents.lastIndex)) else window.closeSheet() }",
     "occurrence": 1,
-    "source_sha256": "7bc6463137895fdc8f49638ef45eb83677f97bcefbe8a18f674aeabb5c9fb67c",
+    "source_sha256": "4321d786b93e13c17b9d3b2f4a0e8636a18316fba20a01af1495bbfd7981e2da",
     "disposition": "internal",
     "guard": "Declaration; the invoked call site is independently inventoried",
     "reason": "A declaration/signature is not an executing UI action. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Gate repair: reviewed identity-key motion, explicit layout, token spacing or semantic navigation changes; existing guard retained. Combined-source review (merge174 bottomgap): both sides' changes to this file keep this statement and its guard unchanged. Combined-source review: floating layers now swallow taps (tapthru: preview bar opens its track, TapShield / floatingLayer); this action and its guard are unchanged. Combined-source review (merge174 tapthru): both sides' changes to this file keep this statement and its guard unchanged. 0.4.173 fixes (sleep stopped line, activity-off extend, night continue, word reading row, per-book timers) leave this statement and its guard unchanged. Combined-source review (merge174 integ173): both sides' changes to this file keep this statement and its guard unchanged. Combined-source review (tapthru2): only the voice hint comment changed (floatingLayer keeps the tap, lets the swipe scroll); this action and its guard are unchanged. Combined-source review (tapthru2): voice hint uses floatingLayer(voiceList): a blocking layer that scrolls the voice list itself (review 18-11); this action and its guard are unchanged. Combined-source review (merge174 sleeplast): both sides' changes to this file keep this statement and its guard unchanged."
@@ -12090,7 +12090,7 @@
     "line": 83,
     "statement": "suspend fun run() = poller.run()",
     "occurrence": 1,
-    "source_sha256": "63c99e1e9b6935031417c6aa434b60a10802dcf2212ede2c5ea5e4b96d714209",
+    "source_sha256": "8fcf711408c2070a5b871cc8e424842adf9471022009d1e68f97d0b484d503cf",
     "disposition": "internal",
     "guard": "Async interface/helper boundary; concrete activation inventoried separately",
     "reason": "This signature supplies work to a model or component; declaring it starts no user operation."
@@ -12102,7 +12102,7 @@
     "line": 85,
     "statement": "suspend fun refresh() = poller.refresh()",
     "occurrence": 1,
-    "source_sha256": "63c99e1e9b6935031417c6aa434b60a10802dcf2212ede2c5ea5e4b96d714209",
+    "source_sha256": "8fcf711408c2070a5b871cc8e424842adf9471022009d1e68f97d0b484d503cf",
     "disposition": "internal",
     "guard": "Async interface/helper boundary; concrete activation inventoried separately",
     "reason": "This signature supplies work to a model or component; declaring it starts no user operation."
@@ -12114,7 +12114,7 @@
     "line": 88,
     "statement": "session.scope.launch { poller.refresh() }",
     "occurrence": 1,
-    "source_sha256": "63c99e1e9b6935031417c6aa434b60a10802dcf2212ede2c5ea5e4b96d714209",
+    "source_sha256": "8fcf711408c2070a5b871cc8e424842adf9471022009d1e68f97d0b484d503cf",
     "disposition": "pending",
     "guard": "ViewModel/operation fields: poller; Components pending indicator",
     "reason": "The model retains the operation and locks repeats; UI uses the shared pending parameter, loading content or progress owner."
@@ -12210,7 +12210,7 @@
     "line": 471,
     "statement": "files.remove(id)",
     "occurrence": 1,
-    "source_sha256": "bc4d0b7649d1b010f34ce046d49269c72bb3e04ecdaef84d5cf326f557abda92",
+    "source_sha256": "8abdb9a0a2c059731944c1fb7fcaf736614aeefec7184c95a353f4fb4f50a64e",
     "disposition": "internal",
     "guard": "In-memory collection entry lifecycle",
     "reason": "The statement releases a listener, request, UI row, selection or cache entry; it does not delete its persisted source."
@@ -12222,7 +12222,7 @@
     "line": 481,
     "statement": "uploading = session.scope.launch {",
     "occurrence": 1,
-    "source_sha256": "bc4d0b7649d1b010f34ce046d49269c72bb3e04ecdaef84d5cf326f557abda92",
+    "source_sha256": "8abdb9a0a2c059731944c1fb7fcaf736614aeefec7184c95a353f4fb4f50a64e",
     "disposition": "pending",
     "guard": "ViewModel/operation fields: Sending, progressOf, sending, sendingBytes, sendingId, uploading; Components pending indicator",
     "reason": "The model retains the operation and locks repeats; UI uses the shared pending parameter, loading content or progress owner."
@@ -12234,7 +12234,7 @@
     "line": 489,
     "statement": "private suspend fun send(row: SourceRow) {",
     "occurrence": 1,
-    "source_sha256": "bc4d0b7649d1b010f34ce046d49269c72bb3e04ecdaef84d5cf326f557abda92",
+    "source_sha256": "8abdb9a0a2c059731944c1fb7fcaf736614aeefec7184c95a353f4fb4f50a64e",
     "disposition": "internal",
     "guard": "Async interface/helper boundary; concrete activation inventoried separately",
     "reason": "This signature supplies work to a model or component; declaring it starts no user operation."
@@ -12246,7 +12246,7 @@
     "line": 587,
     "statement": "session.scope.launch {",
     "occurrence": 1,
-    "source_sha256": "bc4d0b7649d1b010f34ce046d49269c72bb3e04ecdaef84d5cf326f557abda92",
+    "source_sha256": "8abdb9a0a2c059731944c1fb7fcaf736614aeefec7184c95a353f4fb4f50a64e",
     "disposition": "pending",
     "guard": "ViewModel/operation fields: Sending, progressOf, sending, sendingBytes, sendingId, uploading; Components pending indicator",
     "reason": "The model retains the operation and locks repeats; UI uses the shared pending parameter, loading content or progress owner."
@@ -12258,7 +12258,7 @@
     "line": 629,
     "statement": "session.scope.launch {",
     "occurrence": 2,
-    "source_sha256": "bc4d0b7649d1b010f34ce046d49269c72bb3e04ecdaef84d5cf326f557abda92",
+    "source_sha256": "8abdb9a0a2c059731944c1fb7fcaf736614aeefec7184c95a353f4fb4f50a64e",
     "disposition": "pending",
     "guard": "ViewModel/operation fields: Sending, progressOf, sending, sendingBytes, sendingId, uploading; Components pending indicator",
     "reason": "The model retains the operation and locks repeats; UI uses the shared pending parameter, loading content or progress owner."
@@ -12270,7 +12270,7 @@
     "line": 651,
     "statement": "session.scope.launch {",
     "occurrence": 3,
-    "source_sha256": "bc4d0b7649d1b010f34ce046d49269c72bb3e04ecdaef84d5cf326f557abda92",
+    "source_sha256": "8abdb9a0a2c059731944c1fb7fcaf736614aeefec7184c95a353f4fb4f50a64e",
     "disposition": "pending",
     "guard": "ViewModel/operation fields: Sending, progressOf, sending, sendingBytes, sendingId, uploading; Components pending indicator",
     "reason": "The model retains the operation and locks repeats; UI uses the shared pending parameter, loading content or progress owner."
@@ -12282,7 +12282,7 @@
     "line": 662,
     "statement": "session.scope.launch {",
     "occurrence": 4,
-    "source_sha256": "bc4d0b7649d1b010f34ce046d49269c72bb3e04ecdaef84d5cf326f557abda92",
+    "source_sha256": "8abdb9a0a2c059731944c1fb7fcaf736614aeefec7184c95a353f4fb4f50a64e",
     "disposition": "pending",
     "guard": "ViewModel/operation fields: Sending, progressOf, sending, sendingBytes, sendingId, uploading; Components pending indicator",
     "reason": "The model retains the operation and locks repeats; UI uses the shared pending parameter, loading content or progress owner."
@@ -12294,7 +12294,7 @@
     "line": 705,
     "statement": "session.scope.launch {",
     "occurrence": 5,
-    "source_sha256": "bc4d0b7649d1b010f34ce046d49269c72bb3e04ecdaef84d5cf326f557abda92",
+    "source_sha256": "8abdb9a0a2c059731944c1fb7fcaf736614aeefec7184c95a353f4fb4f50a64e",
     "disposition": "pending",
     "guard": "ViewModel/operation fields: Sending, progressOf, sending, sendingBytes, sendingId, uploading; Components pending indicator",
     "reason": "The model retains the operation and locks repeats; UI uses the shared pending parameter, loading content or progress owner."
