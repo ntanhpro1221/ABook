@@ -152,7 +152,7 @@ it("a right press outside: the shield catches the contextmenu that follows on re
 });
 
 it("a press that never ends in a click lets the shield go after a second", async () => {
-  vi.useFakeTimers({ shouldAdvanceTime: true });
+  vi.useFakeTimers();   // chỉ đồng hồ giả: máy bận không được đẩy mốc 1 giây
   try {
     await act(() => root.render(<SortMenu under={() => undefined} />));
     await act(() => vi.advanceTimersByTimeAsync(1));
