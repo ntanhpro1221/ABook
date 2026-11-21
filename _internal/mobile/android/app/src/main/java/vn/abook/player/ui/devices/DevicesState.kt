@@ -1,5 +1,7 @@
 package vn.abook.player.ui.devices
 
+import vn.abook.player.UserText
+
 import vn.abook.player.S
 
 import androidx.compose.runtime.Immutable
@@ -120,7 +122,7 @@ class DevicesState(
         Result.failure(error)
     }
 
-    private fun message(error: Throwable?) = error?.message?.takeIf { it.isNotBlank() } ?: S.s_chua_lam_duoc_8b442a06
+    private fun message(error: Throwable?) = UserText.of(error, S.s_chua_lam_duoc_8b442a06)
     val notice = MutableStateFlow("")
 
     // ---- trang nhóm ----------------------------------------------------------------------------------------------------

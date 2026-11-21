@@ -20,6 +20,8 @@ data class ImportItem(
     val stage: ImportStage = ImportStage.Waiting, val problem: String = "", val bookId: String? = null,
     /** Hàng chỉ xem một lượt nhập nền mà màn này không xếp (lệnh adb, nút trên thông báo): đóng màn không làm mất nó nên không tính vào [ImportLogic.unfinished]. */
     val background: Boolean = false,
+    /** Quyền đọc `source` đã hết (quyền tạm của hộp chọn file mất khi app khởi động lại): "Thử lại" mở lại hộp chọn file cho hàng này. */
+    val lostAccess: Boolean = false,
 )
 
 @Immutable
@@ -60,6 +62,8 @@ data class ImportState(
     val packageReview: PackageReview? = null,
     val notice: String = "",
     val addingRest: Boolean = false,
+    /** Hàng cần chọn lại file vì mất quyền đọc: màn Thêm sách mở hộp chọn file một lần ([ImportQueue.takeRepick]). */
+    val repick: Long? = null,
 )
 
 /** File order is preserved: native imports never navigate away automatically for a package. */
@@ -69,8 +73,8 @@ object ImportLogic {
     /** Tên đang gõ khác tên gốc (khoảng trắng thừa không tính). */
     fun renamed(current: String, original: String) = current.trim().replace(spaces, " ") != original.trim().replace(spaces, " ")
 
-    fun settle(items: List<ImportItem>, id: Long, stage: ImportStage, problem: String = "", bookId: String? = null) =
-        items.map { if (it.id == id) it.copy(stage = stage, problem = problem, bookId = bookId) else it }
+    fun settle(items: List<ImportItem>, id: Long, stage: ImportStage, problem: String = "", bookId: String? = null, lostAccess: Boolean = false) =
+        items.map { if (it.id == id) it.copy(stage = stage, problem = problem, bookId = bookId, lostAccess = lostAccess) else it }
 
     fun next(items: List<ImportItem>) = items.firstOrNull { it.stage == ImportStage.Waiting }
 
@@ -114,6 +118,9 @@ object ImportLogic {
 
     /** Không tích chương nào thì không thêm được sách - trừ khi việc là mở cuốn đã có ("Dùng sách có"), không cần chương nào. */
     fun canAdd(preview: ImportPreview, choice: ImportChoices) = choice.picked.isNotEmpty() || (preview.existingId != null && !choice.separate)
+
+    /** Hàng mất quyền đọc file: nói đúng một việc giúp được - "Thử lại" mở lại hộp chọn file. */
+    const val LOST_ACCESS = S.s_abook_khong_con_quyen_doc_file_nay_bam_f31e46a8
 
     const val NOTHING_PICKED = S.s_chua_chon_chuong_nao_tich_it_nhat_mot_chuo_416cb9ec
 

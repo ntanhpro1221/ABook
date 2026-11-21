@@ -1,5 +1,7 @@
 package vn.abook.player.ui.data
 
+import vn.abook.player.UserText
+
 import vn.abook.player.S
 
 import vn.abook.player.formatSize
@@ -149,7 +151,7 @@ class SettingsRepo(private val core: SettingsCore, private val scope: CoroutineS
         maintenanceBusy.value = true; problem.value = ""
         scope.launch {
             try { withContext(io) { action() }; notice.value = success; if (refreshSaves) oldSaves.value = withContext(io) { core.oldSaves() } }
-            catch (e: Exception) { problem.value = listOf(error, e.message.orEmpty()).filter { it.isNotBlank() }.joinToString(". ") }
+            catch (e: Exception) { problem.value = listOf(error, UserText.of(e, "")).filter { it.isNotBlank() }.joinToString(". ") }
             finally { maintenanceBusy.value = false }
         }
     }
@@ -245,7 +247,7 @@ class SettingsRepo(private val core: SettingsCore, private val scope: CoroutineS
         scope.launch {
             try { speedFlow.value = withContext(io) { VoiceSpeedText.state(core.setVoiceSpeed(choice.key)) } }
             catch (e: Exception) {
-                problem.value = listOf(S.s_chua_doi_duoc_toc_do_giong_e3562390, e.message.orEmpty()).joinToString(". ")
+                problem.value = listOf(S.s_chua_doi_duoc_toc_do_giong_e3562390, UserText.of(e, "")).filter { it.isNotBlank() }.joinToString(". ")
                 notes.say(problem.value, S.s_thu_lai_c58d068c) { chooseSpeed(choice) }
             } finally { savingSpeed.value = false }
         }

@@ -1,5 +1,7 @@
 package vn.abook.player.ui.data
 
+import vn.abook.player.UserText
+
 import vn.abook.player.S
 
 import android.content.Context
@@ -100,7 +102,7 @@ class AndroidPrepareSource(context: Context) : PrepareSource {
         try {
             PrepareStatus.parse(PrepareAhead.start(app, bookId, voice, chapterIds, label, chargingOnly))
         } catch (error: VoiceException) {
-            throw IllegalStateException(error.message ?: S.s_chua_lam_truoc_duoc_54f36d9c)
+            throw IllegalStateException(UserText.of(error, S.s_chua_lam_truoc_duoc_54f36d9c))
         }
     }
 

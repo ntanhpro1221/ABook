@@ -1,5 +1,7 @@
 package vn.abook.player.ui.voice
 
+import vn.abook.player.UserText
+
 import vn.abook.player.S
 
 import androidx.compose.runtime.Immutable
@@ -129,7 +131,7 @@ class VoiceState(
         Result.failure(error)
     }
 
-    private fun message(error: Throwable?, fallback: String) = error?.message?.takeIf { it.isNotBlank() } ?: fallback
+    private fun message(error: Throwable?, fallback: String) = UserText.of(error, fallback)
 
     // ---- mở màn ----------------------------------------------------------------------------------------------------------------
 
@@ -192,7 +194,7 @@ class VoiceState(
         scope.launch {
             val result = attempt { source.start(kind, ids) }
             result.onSuccess { apply(kind, it) }
-            result.onFailure { error -> setModule(kind) { it.copy(problem = listOf(if (ids == listOf("supertonic_fast")) S.s_chua_tai_duoc_ban_nhanh_hon_0011ec37 else S.s_chua_tai_duoc_0_0cb3de66(kind.title), error.message.orEmpty()).joinToString(". ")) } }
+            result.onFailure { error -> setModule(kind) { it.copy(problem = listOf(if (ids == listOf("supertonic_fast")) S.s_chua_tai_duoc_ban_nhanh_hon_0011ec37 else S.s_chua_tai_duoc_0_0cb3de66(kind.title), UserText.of(error, "")).filter { it.isNotBlank() }.joinToString(". ")) } }
         }
     }
 
@@ -201,7 +203,7 @@ class VoiceState(
 
     fun cancel(kind: ModuleKind) {
         scope.launch { attempt { source.cancel(kind) }.onSuccess { apply(kind, it) }
-            .onFailure { e -> setModule(kind) { it.copy(problem = listOf(S.s_chua_huy_duoc_viec_tai_0_d8afe625(kind.title), e.message.orEmpty()).joinToString(". ")) } } }
+            .onFailure { e -> setModule(kind) { it.copy(problem = listOf(S.s_chua_huy_duoc_viec_tai_0_d8afe625(kind.title), UserText.of(e, "")).filter { it.isNotBlank() }.joinToString(". ")) } } }
     }
 
     fun measure(kind: ModuleKind) {

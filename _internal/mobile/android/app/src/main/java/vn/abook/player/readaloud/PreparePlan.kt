@@ -1,5 +1,7 @@
 package vn.abook.player.readaloud
 
+import vn.abook.player.UserText
+
 import vn.abook.player.S
 
 import org.json.JSONArray
@@ -344,7 +346,7 @@ class PrepareRunner(
         return if (job.online && error.offline) {
             S.s_mat_mang_o_0_1_ban_noi_wi_fi_roi_lam_truoc_6452e188(chapter.title, kept)
         } else {
-            S.s_chua_lam_truoc_duoc_0_1_2_93af4638(chapter.title, error.message?.trimEnd('.'), kept)
+            S.s_chua_lam_truoc_duoc_0_1_2_93af4638(chapter.title, UserText.of(error, S.s_chua_ro_vi_sao_7e2472f6).trimEnd('.'), kept)
         }
     }
 }

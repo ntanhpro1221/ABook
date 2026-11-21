@@ -49,7 +49,7 @@ class SeamPicker(
         val built = try {
             plan(file, cue)
         } catch (t: Throwable) {
-            dead(key, S.s_dung_hinh_hoc_noi_loi_0_phat_bang_duong_cu_56d2c375(t.message))
+            dead(key, S.s_dung_hinh_hoc_noi_loi_0_phat_bang_duong_cu_56d2c375(UserText.of(t, S.s_chua_ro_vi_sao_7e2472f6)))
             return Choice.Legacy
         }
         if (built == null) {
@@ -69,7 +69,7 @@ class SeamPicker(
                     built.source = "built"
                     synchronized(this) { if (built.state == State.BUILDING) built.state = State.READY }
                 } catch (t: Throwable) {
-                    reject(built, S.s_dung_noi_loi_0_46b5b526(t.message))
+                    reject(built, S.s_dung_noi_loi_0_46b5b526(UserText.of(t, S.s_chua_ro_vi_sao_7e2472f6)))
                 }
             })
         }

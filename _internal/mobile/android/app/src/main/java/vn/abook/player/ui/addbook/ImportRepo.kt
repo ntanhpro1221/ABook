@@ -31,6 +31,8 @@ interface ImportSource {
     /** `progress` (cả ở [prepare]): tiến độ theo việc thật (byte đã chép / kiểm, số file, số trang), gọi từ luồng nền. */
     suspend fun replace(item: ImportItem, progress: WorkSink = {}): PreparedImport = error(S.s_chua_thay_duoc_sach_8eebed8f)
     suspend fun describe(item: ImportItem): String = item.name
+    /** App còn quyền đọc nguồn của hàng (false: quyền của hộp chọn file đã hết - "Thử lại" phải chọn lại file). */
+    suspend fun readable(item: ImportItem): Boolean = true
     suspend fun prepare(item: ImportItem, progress: WorkSink = {}): PreparedImport
     suspend fun revise(ref: String, choices: ImportChoices): ImportPreview
     suspend fun add(ref: String, preview: ImportPreview, choices: ImportChoices): Pair<String, Boolean>
@@ -42,6 +44,21 @@ class ImportRepo(private val context: Context) : ImportSource {
     private val created = HashMap<String, TextImports.Created>()
 
     override suspend fun describe(item: ImportItem): String = withContext(Dispatchers.IO) { name(document(item)) ?: item.name }
+
+    override suspend fun readable(item: ImportItem): Boolean = withContext(Dispatchers.IO) {
+        val uri = Uri.parse(item.source)
+        if (uri.scheme != "content") return@withContext true
+        try {
+            if (item.folder) context.contentResolver.query(document(item), arrayOf(OpenableColumns.DISPLAY_NAME), null, null, null)?.close()
+            else context.contentResolver.openAssetFileDescriptor(uri, "r")?.close()
+            true
+        } catch (_: SecurityException) {
+            false
+        } catch (_: Exception) {
+            // Lỗi khác (file hỏng, nguồn bận) không phải mất quyền: đọc lại và để bước đọc nói lý do.
+            true
+        }
+    }
 
     private fun document(item: ImportItem): Uri {
         val uri = Uri.parse(item.source)

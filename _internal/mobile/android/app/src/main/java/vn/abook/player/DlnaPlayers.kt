@@ -251,7 +251,7 @@ class DlnaPlayers(
             val session = synchronized(lock) { sessions[id] }
             apply(renderer, session?.takeIf { !it.ended }, command)
         } catch (error: Dlna.Failure) {
-            throw Dlna.Failure("${renderer.name}: ${error.message}", error.code)
+            throw Dlna.Failure("${renderer.name}: ${UserText.of(error, S.s_chua_ro_vi_sao_7e2472f6)}", error.code)
         } finally {
             device.unlock()
         }

@@ -172,7 +172,7 @@ object LibraryServer {
                 bind(InetSocketAddress(PORT))
             }
         } catch (error: Exception) {
-            lastError = S.s_cong_0_dang_ban_1_a606f5c2(PORT, error.message ?: S.s_khong_mo_duoc_61869ca3)
+            lastError = S.s_cong_0_dang_ban_1_a606f5c2(PORT, UserText.of(error, S.s_khong_mo_duoc_61869ca3))
             AppLog.e("Share", S.s_cong_dong_bo_khong_bat_duoc_0_ef5f5463(lastError), error)
             throw IllegalStateException(lastError)
         }

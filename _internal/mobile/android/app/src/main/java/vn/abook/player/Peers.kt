@@ -75,7 +75,7 @@ object Peers {
             SyncLink.pair(context, root, body)
         } catch (error: Exception) {
             if (error is Pin.PairConfirm) throw error
-            throw IllegalStateException(BluetoothLink.lastError(address).ifBlank { error.message ?: S.s_khong_ket_noi_duoc_qua_bluetooth_6d5929dc })
+            throw IllegalStateException(BluetoothLink.lastError(address).ifBlank { UserText.of(error, S.s_khong_ket_noi_duoc_qua_bluetooth_6d5929dc) })
         }
         val host = "bt:$address"
         val peers = all(context)
@@ -277,7 +277,7 @@ object Peers {
                 entry.put("name", reply.optString("name", peer.optString("name"))).put("books", books)
                 entry.put("connectedVia", all(context).getJSONObject(key).optString("connectedVia"))
             } catch (error: Exception) {
-                entry.put("books", JSONArray()).put("error", error.message ?: S.s_khong_ket_noi_duoc_82cdd285)
+                entry.put("books", JSONArray()).put("error", UserText.of(error, S.s_khong_ket_noi_duoc_82cdd285))
                 if (error is Pin.ChangedException) entry.put("pinChanged", true)
                 if (NetErrors.unpaired(error)) entry.put("unpaired", true) // máy ấy đã bỏ ghép điện thoại này - không phải tắt máy
                 else NetErrors.kind(error)?.let { entry.put("error", NetErrors.message(it, peer.optString("name"))).put("technical", NetErrors.technical(error)) }

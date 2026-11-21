@@ -132,7 +132,7 @@ object Remote {
         Playback.onMain {
             // Đã báo "không kịp" thì KHÔNG làm muộn: người bấm đã được bảo lệnh không thành, nó không được tự xảy ra sau.
             if (!claim.compareAndSet(0, 1)) return@onMain
-            result.set(runCatching { apply(command) }.getOrElse { it.message ?: it.javaClass.simpleName })
+            result.set(runCatching { apply(command) }.getOrElse { UserText.of(it, S.s_chua_lam_duoc_8b442a06) })
             done.countDown()
             kick()
         }
@@ -182,14 +182,14 @@ object Remote {
             val id = command.optString("bookId")
             if (command.optString("action") == "load" && Store.manifest(id) == null) {
                 runCatching { Streaming.fetchManifest(context, id) }
-                    .onFailure { fetchProblems[command.optString("id")] = S.s_chua_lay_duoc_sach_tu_may_tinh_0_6cf498da(it.message) }
+                    .onFailure { fetchProblems[command.optString("id")] = S.s_chua_lay_duoc_sach_tu_may_tinh_0_6cf498da(UserText.of(it, S.s_chua_ro_vi_sao_7e2472f6)) }
             }
         }
         Playback.onMain {
             for (index in 0 until commands.length()) {
                 val command = commands.optJSONObject(index) ?: continue
                 val problem = fetchProblems[command.optString("id")]
-                    ?: runCatching { apply(command) }.getOrElse { it.message ?: it.javaClass.simpleName }
+                    ?: runCatching { apply(command) }.getOrElse { UserText.of(it, S.s_chua_lam_duoc_8b442a06) }
                 val ack = JSONObject().put("id", command.optString("id")).put("ok", problem == null).put("message", problem ?: "")
                 synchronized(acks) { acks.addLast(System.currentTimeMillis() to ack) }
             }

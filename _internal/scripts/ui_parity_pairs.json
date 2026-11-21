@@ -449,6 +449,7 @@
         "screens/SettingsMaintenance.kt",
         "data/SettingsRepo.kt",
         "data/PrepareState.kt",
+        "data/PrepareSource.kt",
         "NativeActivity.kt"
       ],
       "allow": [
@@ -1123,6 +1124,11 @@
           "side": "native",
           "match": "^(chưa\\ mở\\ được\\ file|file\\ không\\ có\\ sách\\ nào|file\\ này\\ không\\ có\\ chữ\\ để\\ đọc)$",
           "reason": "native core's reasons for a file that is not a book / has no text: the computer checks the extension before reading, so it never reaches these"
+        },
+        {
+          "side": "native",
+          "label": "ABook không còn quyền đọc file này. Bấm Thử lại để chọn lại file.",
+          "reason": "Android only: a file picked with ACTION_OPEN_DOCUMENT can lose its read grant (app restarted, grant not persistable), so Thử lại reopens the system picker; the computer reads a File object or a path and never loses access"
         }
       ],
       "allow": [

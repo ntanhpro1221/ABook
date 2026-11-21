@@ -205,7 +205,7 @@ object EditsSync {
         val snapshot = try {
             snapshot(dir)
         } catch (error: IllegalStateException) {
-            throw failure(dir, id, error.message.orEmpty(), error)
+            throw failure(dir, id, UserText.of(error, ""), error)
         }
         if (snapshot == null || pending(dir, snapshot.edits) == 0) return view(dir, 0)
         val file = File(Store.root, "edits_out_$id.zip")
@@ -213,14 +213,14 @@ object EditsSync {
             try {
                 writePackage(dir, snapshot, file)
             } catch (error: IllegalStateException) {
-                throw failure(dir, id, error.message.orEmpty(), error)
+                throw failure(dir, id, UserText.of(error, ""), error)
             }
             val reply = try {
                 JSONObject(send(file))
             } catch (error: IOException) {
                 throw failure(dir, id, S.s_chua_noi_duoc_may_tinh_giu_phan_sua_o_may_f42e62b5, error)
             } catch (error: IllegalStateException) {
-                throw failure(dir, id, error.message ?: S.s_may_tinh_khong_nhan_phan_sua_ce78179a, error)
+                throw failure(dir, id, UserText.of(error, S.s_may_tinh_khong_nhan_phan_sua_ce78179a), error)
             } catch (error: JSONException) {
                 throw failure(dir, id, S.s_may_tinh_tra_loi_khong_hieu_duoc_b801447f, error)
             }

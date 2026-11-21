@@ -30,9 +30,9 @@ object MusicImport {
                 val (track, duplicate) = store.importStream(name) { context.contentResolver.openInputStream(uri) }
                 (if (duplicate) existing else added).add(track)
             } catch (error: MusicStore.ImportError) {
-                failed.add(error.message.orEmpty())
+                failed.add(UserText.of(error, S.s_chua_lam_duoc_8b442a06))
             } catch (error: Exception) {
-                failed.add(S.s_0_khong_them_duoc_1_8b310b93(name, error.message ?: error.javaClass.simpleName))
+                failed.add(S.s_0_khong_them_duoc_1_8b310b93(name, UserText.of(error, S.s_chua_ro_vi_sao_7e2472f6)))
             }
             progress(index + 1, uris.size)
         }

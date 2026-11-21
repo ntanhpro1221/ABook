@@ -1,5 +1,7 @@
 package vn.abook.player.ui.export
 
+import vn.abook.player.UserText
+
 import vn.abook.player.S
 
 import androidx.compose.runtime.Immutable
@@ -103,7 +105,7 @@ class ExportState(
         Result.failure(error)
     }
 
-    private fun message(error: Throwable?) = error?.message?.takeIf { it.isNotBlank() } ?: S.s_chua_lam_duoc_8b442a06
+    private fun message(error: Throwable?) = UserText.of(error, S.s_chua_lam_duoc_8b442a06)
 
     private fun edit(bookId: String, change: (ExportUi) -> ExportUi) {
         flow(bookId).update(change)

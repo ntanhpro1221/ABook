@@ -8,7 +8,8 @@ import vn.abook.player.Work
 import vn.abook.player.WorkStep
 
 import vn.abook.player.ui.data.dotJoined
-import android.content.Intent
+import android.content.ActivityNotFoundException
+import android.net.Uri
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -57,14 +58,31 @@ fun AddBookRoute(queue: ImportQueue, onBack: () -> Unit, onReview: (Long) -> Uni
     val state by queue.state.collectAsState()
     val context = LocalContext.current
     val files = rememberLauncherForActivityResult(ActivityResultContracts.OpenMultipleDocuments()) { uris ->
-        for (uri in uris) runCatching { context.contentResolver.takePersistableUriPermission(uri, Intent.FLAG_GRANT_READ_URI_PERMISSION) }
+        for (uri in uris) keepReadAccess(context, uri)
         queue.enqueue(uris.map { it.toString() })
     }
     val folder = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocumentTree()) { uri ->
         uri?.let {
-            runCatching { context.contentResolver.takePersistableUriPermission(it, Intent.FLAG_GRANT_READ_URI_PERMISSION) }
+            keepReadAccess(context, it)
             queue.enqueue(listOf(it.toString()), folder = true)
         }
+    }
+    // "Thử lại" của hàng mất quyền đọc: mở lại hộp chọn file (thư mục) ở chỗ cũ; file mới thay vào đúng hàng ấy.
+    var repicking by rememberSaveable { mutableStateOf(-1L) }
+    val repicked: (Uri?) -> Unit = { uri ->
+        uri?.let { keepReadAccess(context, it) }
+        queue.repicked(repicking, uri?.toString())
+        repicking = -1L
+    }
+    val reopenFile = rememberLauncherForActivityResult(ReopenDocument(), repicked)
+    val reopenFolder = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocumentTree(), repicked)
+    LaunchedEffect(state.repick) {
+        val id = queue.takeRepick() ?: return@LaunchedEffect
+        val item = queue.state.value.items.firstOrNull { it.id == id } ?: return@LaunchedEffect
+        repicking = id
+        val old = Uri.parse(item.source)
+        // Máy không có hộp chọn file: hàng giữ lời tiếng Việt nói cách làm, không có gì khác để mở.
+        try { if (item.folder) reopenFolder.launch(old) else reopenFile.launch(old) } catch (_: ActivityNotFoundException) { repicking = -1L }
     }
     var picked by remember { mutableStateOf(false) }
     LaunchedEffect(Unit) {

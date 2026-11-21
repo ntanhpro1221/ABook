@@ -1,5 +1,7 @@
 package vn.abook.player.ui.voice
 
+import vn.abook.player.UserText
+
 import vn.abook.player.S
 
 import android.content.Context
@@ -57,9 +59,9 @@ class VoiceRepo(context: Context) : VoiceSource {
     } catch (error: VoiceFailure) {
         throw error
     } catch (error: IllegalArgumentException) {
-        throw VoiceFailure(error.message ?: fallback)
+        throw VoiceFailure(UserText.of(error, fallback))
     } catch (error: VoiceException) {
-        throw VoiceFailure(error.message ?: fallback)
+        throw VoiceFailure(UserText.of(error, fallback))
     } catch (error: Exception) {
         throw VoiceFailure(fallback)
     }

@@ -86,7 +86,7 @@ object DeviceScenes {
         val revision = try {
             catalog.manifest().optString("revision")
         } catch (error: Exception) {
-            return empty.put("unavailable", error.message.orEmpty()) // chưa có danh mục (mất mạng lần đầu): chưa có nhạc, nói lý do, hỏi lại khi có mạng
+            return empty.put("unavailable", UserText.of(error, S.s_chua_lam_duoc_8b442a06)) // chưa có danh mục (mất mạng lần đầu): chưa có nhạc, nói lý do, hỏi lại khi có mạng
         }
         val book = bookFor(context, bookId, manifest.optString("version"), revision, order, entries, catalog)
         // Chương đã dựng với bài mà máy này hoá ra không dùng được (tải báo quá cỡ): bỏ bản ghi, dựng lại chọn bài khác (`server._scene_cues`).

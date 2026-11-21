@@ -137,13 +137,13 @@ private class Gateway(private val context: Context, private val address: String)
             link().open(client)
             lastUsed = System.currentTimeMillis()
         } catch (error: IOException) {
-            lastError = error.message ?: S.s_khong_ket_noi_duoc_qua_bluetooth_6d5929dc
+            lastError = UserText.of(error, S.s_khong_ket_noi_duoc_qua_bluetooth_6d5929dc)
             runCatching { client.close() }
         } catch (_: SecurityException) {
             lastError = S.s_chua_cho_abook_dung_bluetooth_0ddc4068
             runCatching { client.close() }
         } catch (error: Exception) { // địa chỉ hỏng, Bluetooth stack lỗi...: không được làm sập app
-            lastError = S.s_chua_ket_noi_duoc_qua_bluetooth_0_8313a583(error.message ?: error.javaClass.simpleName)
+            lastError = S.s_chua_ket_noi_duoc_qua_bluetooth_0_8313a583(UserText.of(error, S.s_chua_ro_vi_sao_7e2472f6))
             runCatching { client.close() }
         }
     }
@@ -263,7 +263,7 @@ object BluetoothShare {
         val socket = try {
             adapter.listenUsingRfcommWithServiceRecord(if (BuildConfig.DEBUG) S.s_abook_dev_c1e43072 else S.s_abook_1c37d334, UUID.fromString(BuildConfig.LIBRARY_SERVICE_UUID))
         } catch (error: IOException) {
-            status = S.s_chua_mo_duoc_bluetooth_0_3e352e52(error.message)
+            status = S.s_chua_mo_duoc_bluetooth_0_3e352e52(UserText.of(error, S.s_chua_ro_vi_sao_7e2472f6))
             return
         } catch (_: SecurityException) {
             status = S.s_chua_cho_abook_dung_bluetooth_0ddc4068

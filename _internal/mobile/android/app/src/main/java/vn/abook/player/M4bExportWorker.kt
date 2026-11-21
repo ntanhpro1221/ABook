@@ -133,9 +133,9 @@ object M4bExports {
         // MediaMuxer báo hết chỗ bằng lời chung chung ("stop failed"...): máy đang gần đầy thì đó là lý do.
         if (lowSpace && error !is Mp3Export.Refused) return OUT_OF_SPACE
         return when (error) {
-            is Mp3Export.Refused -> error.message.orEmpty()
-            is IOException -> S.s_loi_khi_ghi_0_7ee7b58a(error.message ?: error.javaClass.simpleName)
-            else -> S.s_loi_khi_lam_file_m4b_0_725f2664(error.message ?: error.javaClass.simpleName)
+            is Mp3Export.Refused -> UserText.of(error, S.s_chua_lam_duoc_8b442a06)
+            is IOException -> S.s_loi_khi_ghi_0_7ee7b58a(UserText.of(error, S.s_chua_ro_vi_sao_7e2472f6))
+            else -> S.s_loi_khi_lam_file_m4b_0_725f2664(UserText.of(error, S.s_chua_ro_vi_sao_7e2472f6))
         }
     }
 }

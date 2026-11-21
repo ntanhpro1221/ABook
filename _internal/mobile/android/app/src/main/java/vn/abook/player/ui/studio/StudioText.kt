@@ -1,5 +1,7 @@
 package vn.abook.player.ui.studio
 
+import vn.abook.player.UserText
+
 import vn.abook.player.S
 
 import vn.abook.player.Pin
@@ -30,8 +32,8 @@ object StudioText {
         is StudioError.PinChanged -> Pin.CHANGED
         is StudioError.TooBig -> TOO_BIG
         is StudioError.ListenOnly -> PERMISSION_TITLE
-        is StudioError.Busy -> error.message.orEmpty()
-        is StudioError.Server -> error.message.orEmpty().ifBlank { GONE }
+        is StudioError.Busy -> UserText.of(error, S.s_chua_lam_duoc_8b442a06)
+        is StudioError.Server -> UserText.of(error, GONE)
     }
 
     const val PERMISSION_TITLE = S.s_may_tinh_chua_cho_ban_sua_6a5d6567

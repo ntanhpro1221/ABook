@@ -1,5 +1,7 @@
 package vn.abook.player.readaloud
 
+import vn.abook.player.UserText
+
 import vn.abook.player.S
 
 import java.util.concurrent.ConcurrentHashMap
@@ -118,7 +120,7 @@ class ClipReader(
                 if (!(online(voice) || local(voice)) || index == chain.lastIndex) {
                     offlineHelp(earlier ?: error)?.let { throw it }
                     if (earlier == null) throw error
-                    throw VoiceException("${earlier.message}; ${error.message}", earlier.offline, error, earlier.reason, final = true)
+                    throw VoiceException("${UserText.of(earlier, S.s_chua_ro_vi_sao_7e2472f6)}; ${UserText.of(error, S.s_chua_ro_vi_sao_7e2472f6)}", earlier.offline, error, earlier.reason, final = true)
                 }
                 downUntil[provider(voice)] = clock() + when {
                     error.reason == "auth" || error.reason == "quota" -> KEY_BREAK_MS
@@ -154,7 +156,7 @@ class ClipReader(
             throw error
         } catch (error: Exception) {
             tmp.delete()
-            throw VoiceException(S.s_chua_doc_duoc_doan_nay_0_947406a0(error.message), cause = error)
+            throw VoiceException(S.s_chua_doc_duoc_doan_nay_0_947406a0(UserText.of(error, S.s_chua_ro_vi_sao_7e2472f6)), cause = error)
         }
     }
 }

@@ -1148,7 +1148,7 @@ object BookEdits {
         val normalized = try {
             codec.normalize(raw)
         } catch (error: CoverCodec.CoverError) {
-            throw EditsError(error.message.orEmpty())
+            throw EditsError(UserText.of(error, S.s_chua_lam_duoc_8b442a06))
         }
         synchronized(lock) {
             val edits = load(folder)

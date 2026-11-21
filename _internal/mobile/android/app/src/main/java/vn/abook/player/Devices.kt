@@ -98,7 +98,7 @@ object Devices {
         } catch (error: Exception) {
             if (error is Pin.PairConfirm) throw error
             val reason = BluetoothLink.lastError(address)
-            throw IllegalStateException(reason.ifBlank { error.message ?: S.s_khong_ket_noi_duoc_qua_bluetooth_6d5929dc })
+            throw IllegalStateException(reason.ifBlank { UserText.of(error, S.s_khong_ket_noi_duoc_qua_bluetooth_6d5929dc) })
         }
         SyncLink.saveRoutes(prefs.edit().putString("host", "bt:$address").putInt("port", 0).putString("token", reply.getString("token"))
             .putString("fingerprint", fingerprint).putString("name", reply.optString("name")), reply, "bt:$address", 0, fingerprint,

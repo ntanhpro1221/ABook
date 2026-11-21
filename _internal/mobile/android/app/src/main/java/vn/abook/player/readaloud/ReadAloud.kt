@@ -1,5 +1,7 @@
 package vn.abook.player.readaloud
 
+import vn.abook.player.UserText
+
 import vn.abook.player.S
 
 import android.content.Context
@@ -1479,7 +1481,7 @@ object ReadAloud {
                 resume = null
                 waiting = Target(chap.index, segment, if (rest.from > 0) 0L else rest.baseMs, if (rest.from > 0) rest.from else -1, exo?.playWhenReady == true)
             }
-            fail((error as? VoiceException)?.message ?: S.s_chua_doc_duoc_doan_nay_0_947406a0(error.message), chap.index to segment)
+            fail(if (error is VoiceException) UserText.of(error, S.s_chua_doc_duoc_doan_nay_0_947406a0(S.s_chua_ro_vi_sao_7e2472f6)) else S.s_chua_doc_duoc_doan_nay_0_947406a0(UserText.of(error, S.s_chua_ro_vi_sao_7e2472f6)), chap.index to segment)
             return
         }
         // Clip đuôi: `words` đủ chữ của đoạn (chữ trước chữ bấm mốc [0, 0]), âm thanh bắt đầu từ chữ ấy ([SeekPlan.tailWords]).

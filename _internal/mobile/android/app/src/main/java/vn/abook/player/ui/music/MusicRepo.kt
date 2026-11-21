@@ -1,5 +1,7 @@
 package vn.abook.player.ui.music
 
+import vn.abook.player.UserText
+
 import vn.abook.player.S
 
 import android.content.Context
@@ -29,9 +31,9 @@ class MusicRepo(context: Context) : MusicSource {
         try {
             block()
         } catch (error: BookEdits.EditsError) {
-            throw MusicFailure(error.message ?: fallback)
+            throw MusicFailure(UserText.of(error, fallback))
         } catch (error: IllegalArgumentException) {
-            throw MusicFailure(error.message ?: fallback)
+            throw MusicFailure(UserText.of(error, fallback))
         }
     }
 

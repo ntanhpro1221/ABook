@@ -1,5 +1,7 @@
 package vn.abook.player.ui.music.library
 
+import vn.abook.player.UserText
+
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.Stable
 import kotlinx.coroutines.CoroutineDispatcher
@@ -156,7 +158,7 @@ class LibraryState(
                 flow.update { it.copy(loading = false, index = index, downloaded = downloaded, saved = saved, online = online) }
                 refilter()
             }.onFailure { error ->
-                flow.update { it.copy(loading = false, error = error.message?.takeIf(String::isNotBlank) ?: S.s_chua_tai_duoc_kho_nhac_9577b7c7) }
+                flow.update { it.copy(loading = false, error = UserText.of(error, S.s_chua_tai_duoc_kho_nhac_9577b7c7)) }
             }
         }
     }
@@ -291,7 +293,7 @@ class LibraryState(
                     when {
                         completed -> ui.copy(active = ui.active - link, downloaded = ui.downloaded + link)
                         wasCancelled -> ui.copy(active = ui.active - link)
-                        else -> ui.copy(active = ui.active - link, failed = ui.failed + (link to (outcome.exceptionOrNull()?.message ?: S.s_chua_tai_xong_b257419d)))
+                        else -> ui.copy(active = ui.active - link, failed = ui.failed + (link to UserText.of(outcome.exceptionOrNull(), S.s_chua_tai_xong_b257419d)))
                     }
                 }
             }

@@ -41,9 +41,9 @@
     },
     "add-edit-book": {
       "allow_entries": 43,
-      "missing_entries": 2,
+      "missing_entries": 3,
       "allowed_labels": 62,
-      "missing_labels": 4
+      "missing_labels": 5
     },
     "studio": {
       "allow_entries": 13,

@@ -1,5 +1,7 @@
 package vn.abook.player.ui.editbook
 
+import vn.abook.player.UserText
+
 import vn.abook.player.ui.data.ImageLaunchedEffect
 import vn.abook.player.ui.motion.SwapContent
 import vn.abook.player.ui.motion.ContentLayout
@@ -110,7 +112,7 @@ fun CoverCropRoute(editor: BookEditor, uri: String, onBack: () -> Unit) {
     ImageLaunchedEffect(uri, attempt) {
         problem = ""
         try { bitmap = CoverCrop.load(context, Uri.parse(uri), width) }
-        catch (error: Exception) { problem = error.message ?: S.s_ban_hay_chon_lai_anh_bia_ff20026e }
+        catch (error: Exception) { problem = UserText.of(error, S.s_ban_hay_chon_lai_anh_bia_ff20026e) }
     }
     val image = bitmap?.asImageBitmap()
     BookForm(S.s_cat_anh_bia_d9d3257b, onBack, "cover_crop_screen", footer = {
@@ -122,7 +124,7 @@ fun CoverCropRoute(editor: BookEditor, uri: String, onBack: () -> Unit) {
                 try {
                     val bytes = CoverCrop.jpeg(shown, choice)
                     editor.setCover(bytes) { onBack() }.join()
-                } catch (error: Exception) { problem = error.message.orEmpty() }
+                } catch (error: Exception) { problem = UserText.of(error, S.s_chua_lam_duoc_8b442a06) }
                 finally { committing = false }
             }
         }, Modifier.fillMaxWidth().testTag("use_cover"), enabled = image != null && !committing, pending = committing)

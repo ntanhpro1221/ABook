@@ -1,5 +1,7 @@
 package vn.abook.player.ui.data
 
+import vn.abook.player.UserText
+
 import vn.abook.player.ui.theme.MotionMs
 import vn.abook.player.S
 
@@ -73,7 +75,7 @@ class UndoDelete(
         } catch (error: Exception) {
             hiding.value = hiding.value - id
             changed()
-            return error.message?.takeIf { it.isNotBlank() } ?: S.s_chua_xoa_duoc_b872fff6
+            return UserText.of(error, S.s_chua_xoa_duoc_b872fff6)
         }
         if (token == null) {
             // Xoá thẳng: chỉ báo, không có Hoàn tác.
@@ -112,7 +114,7 @@ class UndoDelete(
                         throw cancelled
                     } catch (error: Exception) {
                         // Tiêu đề "Chưa hoàn tác được" + lý do của lõi.
-                        say(S.s_chua_hoan_tac_duoc_164b754b + " - " + (error.message?.takeIf { it.isNotBlank() } ?: S.s_ban_thu_lai_dd8cbd9d), error = true)
+                        say(S.s_chua_hoan_tac_duoc_164b754b + " - " + UserText.of(error, S.s_ban_thu_lai_dd8cbd9d), error = true)
                         continue
                     }
                     held.remove(id)?.expiry?.cancel()

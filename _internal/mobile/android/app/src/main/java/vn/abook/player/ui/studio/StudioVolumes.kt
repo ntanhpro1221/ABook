@@ -1,5 +1,7 @@
 package vn.abook.player.ui.studio
 
+import vn.abook.player.UserText
+
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.*
@@ -71,7 +73,7 @@ fun StudioVolumesScreen(session: StudioSession, bookId: String, onBack: () -> Un
     val list = rememberLazyListState()
     val chapters = book.optJSONArray("chapters").objects().map { it.getInt("id") }
     fun failure(error: Throwable) {
-        problem = if (error is IllegalArgumentException) error.message.orEmpty() else StudioText.failure(StudioErrors.of(error))
+        problem = if (error is IllegalArgumentException) UserText.of(error, S.s_chua_lam_duoc_8b442a06) else StudioText.failure(StudioErrors.of(error))
     }
     suspend fun load() {
         try {

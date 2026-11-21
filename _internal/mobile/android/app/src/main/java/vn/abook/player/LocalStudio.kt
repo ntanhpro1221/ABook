@@ -78,7 +78,7 @@ object LocalStudio {
         val playlists = try {
             Playlists.summaries(catalog?.playlists() ?: emptyList())
         } catch (problem: MusicCatalog.CatalogError) {
-            error = problem.message.orEmpty()
+            error = UserText.of(problem, "")
             JSONArray()
         }
         // `scene`: máy dựng được nhạc theo cảnh (menu hiện dòng "Theo cảnh"), như máy tính.
@@ -145,7 +145,7 @@ object LocalStudio {
             val raw = try {
                 CoverSearch.downloadImage(BookEdits.pyStr(body.opt("url")))
             } catch (error: CoverCodec.CoverError) {
-                throw BookEdits.EditsError(error.message.orEmpty())
+                throw BookEdits.EditsError(UserText.of(error, S.s_chua_lam_duoc_8b442a06))
             }
             return synchronized(lock) { 200 to setCover(dir, raw) }
         }
@@ -239,7 +239,7 @@ object LocalStudio {
         val raw = try {
             Covers.decodeDataUrl(BookEdits.pyText(body.opt("image")))
         } catch (error: CoverCodec.CoverError) {
-            throw BookEdits.EditsError(error.message.orEmpty())
+            throw BookEdits.EditsError(UserText.of(error, S.s_chua_lam_duoc_8b442a06))
         }
         return setCover(dir, raw)
     }
@@ -268,7 +268,7 @@ object LocalStudio {
         try {
             block()
         } catch (problem: NameRules.Problem) {
-            throw Api(400, problem.message ?: "")
+            throw Api(400, UserText.of(problem, S.s_chua_lam_duoc_8b442a06))
         }
 
     /** PUT /chapters/<n>/title {title?, subtitle?, revert?}. */
@@ -375,7 +375,7 @@ object LocalStudio {
         try {
             alternatives(editable(id), key) as JSONObject
         } catch (error: Api) {
-            throw BookEdits.EditsError(error.message ?: S.s_khong_thay_doan_nhac_nay_trong_sach_cbf90189)
+            throw BookEdits.EditsError(UserText.of(error, S.s_khong_thay_doan_nhac_nay_trong_sach_cbf90189))
         }
     }
 

@@ -1,5 +1,7 @@
 package vn.abook.player.readaloud
 
+import vn.abook.player.UserText
+
 import vn.abook.player.S
 
 import android.content.Context
@@ -128,7 +130,7 @@ abstract class KeyedProvider(val keys: OnlineKeys) {
             JSONObject().put("ok", true).put("voices", voices.size)
         } catch (error: VoiceException) {
             if (error.reason in setOf("auth", "quota", "voice", "rejected")) keys.mark(id, false)
-            JSONObject().put("ok", false).put("reason", error.reason).put("message", error.message)
+            JSONObject().put("ok", false).put("reason", error.reason).put("message", UserText.of(error, S.s_thu_khong_duoc_d17d8afe))
         }
     }
 

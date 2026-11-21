@@ -546,7 +546,7 @@ object BookFileImport {
             edits = try {
                 BookEdits.parse(data)
             } catch (error: BookEdits.EditsError) {
-                throw Refused(error.message.orEmpty())
+                throw Refused(UserText.of(error, S.s_chua_lam_duoc_8b442a06))
             }
         }
         if (BookEdits.pinnedFiles(edits).any { zip.getEntry(resolve(it)) == null }) throw Refused(S.s_file_sach_thieu_bai_nhac_ma_nguoi_nghe_da_d722ea89)

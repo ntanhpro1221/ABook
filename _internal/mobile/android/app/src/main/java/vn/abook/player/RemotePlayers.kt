@@ -79,7 +79,7 @@ object RemotePlayers {
         return try {
             PhoneCast.players.send(id, command)
         } catch (error: Dlna.Failure) {
-            throw IllegalStateException(error.message)
+            throw IllegalStateException(UserText.of(error, S.s_chua_lam_duoc_8b442a06))
         }
     }
 

@@ -16,6 +16,8 @@ internal object S {
     fun s_device_voice_number(p0: Any?, p1: Any?): String = p0.toString() + " " + p1.toString()
     const val s_device_voice_group_detail = "Theo bộ đọc hệ thống"
     const val s_player_line_waiting_audio = "Chỉ ghi yêu cầu; giọng đọc đổi sau khi Studio thu lại."
+    const val s_abook_khong_con_quyen_doc_file_nay_bam_f31e46a8 = "ABook không còn quyền đọc file này. Bấm Thử lại để chọn lại file."
+    const val s_abook_khong_con_quyen_mo_file_nay_ban_hay_b7276dfc = "ABook không còn quyền mở file này. Bạn hãy chọn lại file."
     fun s_ghi_nen_chua_xong_0_9b2f61d4(p0: Any?): String = "Ghi nền chưa xong: " + p0.toString()
     const val s_pair_fingerprint_label = "Mã nhận máy: "
     const val s_pair_fingerprint_help = "Bạn so mã nhận máy với mã trên máy kia rồi bấm “Đúng, ghép”."
@@ -1883,6 +1885,7 @@ internal object S {
     fun s_khong_thay_0_trong_sach_1_1967bf94(p0: Any?, p1: Any?): String = "Không thấy “" + p0.toString() + "” trong sách." + p1.toString()
     const val s_khong_thay_ban_luu_cu_nay_059c824b = "Không thấy bản lưu cũ này"
     const val s_khong_thay_doan_nhac_nay_trong_sach_cbf90189 = "Không thấy đoạn nhạc này trong sách."
+    const val s_khong_thay_file_nua_co_the_no_da_bi_xoa_371f4e4f = "Không thấy file nữa - có thể nó đã bị xoá hay chuyển chỗ."
     const val s_khong_thay_tieu_de_chuong_chuong_n_chapter_c7fddfe2 = "Không thấy tiêu đề chương (Chương N, Chapter N…) - cả file là một chương."
     const val s_khong_them_cuon_nao_0fb1d747 = "Không thêm cuốn nào"
     const val s_khong_tim_thay_sach_ban_hay_quay_lai_thu_v_54d9bdb0 = "Không tìm thấy sách. Bạn hãy quay lại Thư viện."

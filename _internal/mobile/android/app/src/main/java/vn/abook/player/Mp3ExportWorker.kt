@@ -453,8 +453,8 @@ class Mp3ExportWorker(context: Context, params: WorkerParameters) : Worker(conte
             }
             val message = when {
                 isStopped && Mp3Exports.timedOut(this) -> Mp3Exports.TIMEOUT_NOTE
-                error is Mp3Export.Refused -> error.message.orEmpty()
-                else -> S.s_loi_khi_ghi_0_7ee7b58a(error.message ?: error.javaClass.simpleName)
+                error is Mp3Export.Refused -> UserText.of(error, S.s_chua_lam_duoc_8b442a06)
+                else -> S.s_loi_khi_ghi_0_7ee7b58a(UserText.of(error, S.s_chua_ro_vi_sao_7e2472f6))
             }
             Mp3Exports.finished(context, bookId, S.s_chua_xuat_duoc_mp3_1550e65a, "$title · $message")
             Mp3Exports.emit(event().put("error", message))

@@ -944,7 +944,7 @@ object Store {
     private fun validatePeerRevisions(body: JSONObject) {
         try { ListeningRevision.checkedPeer(JSONObject(), withoutSyncKeys(body)) { } }
         catch (error: IllegalArgumentException) {
-            addDataNotice(error.message ?: ListeningRevision.MISSING_REVISION)
+            addDataNotice(UserText.of(error, ListeningRevision.MISSING_REVISION))
             throw error
         }
         body.optJSONObject("activeState")?.let { validatePeerRevisions(it) }

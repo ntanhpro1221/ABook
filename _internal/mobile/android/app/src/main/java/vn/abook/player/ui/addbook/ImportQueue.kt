@@ -3,6 +3,7 @@ package vn.abook.player.ui.addbook
 import vn.abook.player.ImportJob
 import vn.abook.player.ImportJobState
 import vn.abook.player.S
+import vn.abook.player.UserText
 import vn.abook.player.Work
 import vn.abook.player.WorkStep
 import vn.abook.player.WorkThrottle
@@ -219,15 +220,43 @@ class ImportQueue(
         }
     }
 
+    /**
+     * "Thử lại" của hàng lỗi. Quyền đọc file đã hết (app khởi động lại, hay nguồn không cho giữ quyền lâu dài) thì đọc lại chỉ ra cùng lỗi:
+     * hàng xin màn Thêm sách mở lại hộp chọn file ([ImportState.repick]), chọn xong thì [repicked] đọc file mới vào đúng chỗ của hàng.
+     */
     fun retry(id: Long) {
-        if (flow.value.items.none { it.id == id && it.stage == ImportStage.Error }) return
+        val item = flow.value.items.firstOrNull { it.id == id && it.stage == ImportStage.Error } ?: return
         mirrored.entries.firstOrNull { it.value == id }?.let { (job, _) -> retryJob(job); return }
-        flow.value = flow.value.copy(items = ImportLogic.settle(flow.value.items, id, ImportStage.Waiting))
+        scope.launch {
+            val readable = !item.lostAccess && try { source.readable(item) } catch (error: Exception) {
+                if (error is CancellationException) throw error
+                true
+            }
+            if (flow.value.items.none { it.id == id && it.stage == ImportStage.Error }) return@launch
+            if (!readable) {
+                flow.value = flow.value.copy(repick = id, items = ImportLogic.settle(flow.value.items, id, ImportStage.Error, ImportLogic.LOST_ACCESS, lostAccess = true))
+                return@launch
+            }
+            flow.value = flow.value.copy(items = ImportLogic.settle(flow.value.items, id, ImportStage.Waiting))
+            advance()
+        }
+    }
+
+    /** Màn Thêm sách nhận việc mở hộp chọn file đúng một lần (xoay màn không mở hộp thứ hai). */
+    fun takeRepick(): Long? = flow.value.repick?.also { flow.value = flow.value.copy(repick = null) }
+
+    /** Kết quả hộp chọn file mở lại cho hàng `id`: null (người dùng đóng hộp) giữ hàng lỗi với lời nói cách làm; có file thì đọc lại hàng ấy. */
+    fun repicked(id: Long, source: String?) {
+        if (source == null) return
+        if (flow.value.items.none { it.id == id && it.stage == ImportStage.Error }) return
+        flow.value = flow.value.copy(items = flow.value.items.map {
+            if (it.id == id) it.copy(source = source, stage = ImportStage.Waiting, problem = "", lostAccess = false) else it
+        })
         advance()
     }
 
-    /** Lời lỗi: việc chưa làm được (cùng chữ với lời báo của web) + lý do của lõi. */
-    private fun failure(what: String, error: Exception) = listOfNotNull(what, error.message?.takeIf { it.isNotBlank() }).joinToString(" ")
+    /** Lời lỗi: việc chưa làm được (cùng chữ với lời báo của web) + lý do đã dịch ra lời người đọc ([UserText]). */
+    private fun failure(what: String, error: Exception) = listOf(what, UserText.of(error, "")).filter { it.isNotBlank() }.joinToString(" ")
 
     /**
      * "Bỏ phần còn lại" khi đóng Thêm sách giữa hàng (web AddBook `reset`): cuốn đang đọc dừng, bản tạm của cuốn đang xem bị bỏ, cả hàng về trống. Cuốn đã thêm vẫn ở
@@ -303,8 +332,10 @@ class ImportQueue(
                 } catch (error: Exception) {
                     if (error is CancellationException) throw error
                     if (held?.id == item.id) held = null
+                    val lost = UserText.accessLost(error)
+                    val problem = if (lost) ImportLogic.LOST_ACCESS else ImportLogic.openFailure(item, UserText.of(error, ""))
                     flow.value = flow.value.copy(currentId = null, busy = false, preview = null, packageReview = null, choices = ImportChoices(), problem = "",
-                        items = ImportLogic.settle(flow.value.items, item.id, ImportStage.Error, ImportLogic.openFailure(item, error.message)))
+                        items = ImportLogic.settle(flow.value.items, item.id, ImportStage.Error, problem, lostAccess = lost))
                 }
             }
             if (ImportLogic.next(flow.value.items) == null && flow.value.currentId == null)

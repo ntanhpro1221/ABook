@@ -1,5 +1,7 @@
 package vn.abook.player.ui.studio
 
+import vn.abook.player.UserText
+
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -67,7 +69,7 @@ internal fun ScriptPeoplePicker(script: ChapterScript, current: String, allowNar
             Column {
                 BookField(null, name, { name = it }, "studio_script_new_name", description = WorkText.NEW_PERSON_FIELD, placeholder = WorkText.NEW_PERSON_FIELD)
                 val valid = runCatching { NameRules.person(name, people.flatMap { listOf(it.label, it.value) }) }
-                Reveal(name.isNotBlank() && valid.isFailure) { RowHint(valid.exceptionOrNull()?.message.orEmpty(), color = Abook.colors.danger) }
+                Reveal(name.isNotBlank() && valid.isFailure) { RowHint(UserText.of(valid.exceptionOrNull(), S.s_chua_lam_duoc_8b442a06), color = Abook.colors.danger) }
                 SideBySide {
                     for ((gender, label) in listOf("male" to WorkText.GENDER_MALE, "female" to WorkText.GENDER_FEMALE, "unknown" to WorkText.GENDER_UNKNOWN)) {
                         AnswerButton(label, { valid.getOrNull()?.let { onPick(ScriptPerson(it, it, 0, gender)) } }, "studio_script_new_$gender", Modifier.weight(1f), enabled = valid.isSuccess)

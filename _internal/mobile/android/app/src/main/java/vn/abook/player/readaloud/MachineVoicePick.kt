@@ -1,5 +1,7 @@
 package vn.abook.player.readaloud
 
+import vn.abook.player.UserText
+
 import vn.abook.player.S
 
 import org.json.JSONObject
@@ -107,7 +109,7 @@ class MachineVoicePick(
                         out.delete()
                     }
                 } catch (error: Exception) {
-                    row.put("error", error.message ?: S.s_thu_khong_duoc_d17d8afe)
+                    row.put("error", UserText.of(error, S.s_thu_khong_duoc_d17d8afe))
                 } finally { engine.forget() }
                 rows.put(engine.id, row)
             }
@@ -115,7 +117,7 @@ class MachineVoicePick(
                 val data = read().put("machine", machine).put("engines", rows).put("at", System.currentTimeMillis())
                 Store.writeAtomic(file, data.toString())
             }
-        } catch (error: Exception) { problem = error.message ?: S.s_thu_khong_duoc_d17d8afe }
+        } catch (error: Exception) { problem = UserText.of(error, S.s_thu_khong_duoc_d17d8afe) }
         finally { measuring = false }
     }
 

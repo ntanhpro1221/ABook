@@ -423,7 +423,7 @@ object ListenExport {
                         pause(failures * 1000L)
                         continue
                     }
-                    throw Mp3Export.Refused(S.s_0_1_giu_phan_da_lam_ban_xuat_lai_de_tiep_t_263c1046(chapters[index].title, error.message))
+                    throw Mp3Export.Refused(S.s_0_1_giu_phan_da_lam_ban_xuat_lai_de_tiep_t_263c1046(chapters[index].title, UserText.of(error, S.s_chua_ro_vi_sao_7e2472f6)))
                 }
             }
         }

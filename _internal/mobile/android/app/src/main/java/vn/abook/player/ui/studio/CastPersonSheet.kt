@@ -1,5 +1,7 @@
 package vn.abook.player.ui.studio
 
+import vn.abook.player.UserText
+
 import vn.abook.player.ui.components.fadeEdges
 import androidx.compose.foundation.layout.imePadding
 import androidx.activity.compose.BackHandler
@@ -86,7 +88,7 @@ internal fun CastPersonSheet(project: StudioProjectState, person: CastMember, pe
                     RowHint(S.s_chi_doi_ten_hien_thi_giu_giong_va_audio_1f7110c8)
                     BookField(null, name, { name = it }, "studio_person_name", description = S.s_ten_moi_cua_0_ac5dd137(person.displayName))
                     val decision = runCatching { StudioPeopleEdits.rename(person, name, people) }
-                    Reveal(name.isNotBlank() && decision.isFailure) { RowHint(decision.exceptionOrNull()?.message.orEmpty(), color = Abook.colors.danger) }
+                    Reveal(name.isNotBlank() && decision.isFailure) { RowHint(UserText.of(decision.exceptionOrNull(), S.s_chua_lam_duoc_8b442a06), color = Abook.colors.danger) }
                     AnswerButton(S.s_luu_e91f26c0, { decision.getOrNull()?.let(::commit) }, "studio_person_rename_save", primary = true, enabled = name.isNotBlank() && decision.isSuccess)
                     Reveal(person.originalName != null) { TextAction(S.s_ve_ten_goc_643cd2e0, { commit(StudioPeopleEdits.rename(person, "", people)) }, "studio_person_original") }
                 }

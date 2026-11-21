@@ -1,5 +1,7 @@
 package vn.abook.player.ui.devices
 
+import vn.abook.player.UserText
+
 import vn.abook.player.S
 
 import android.content.Context
@@ -150,7 +152,7 @@ class CompanionRepo(private val core: CompanionCore, private val now: () -> Long
         flow.value = flow.value.copy(busy = true, problem = "")
         return try { block(); true }
         catch (cancelled: CancellationException) { throw cancelled }
-        catch (error: Exception) { flow.value = flow.value.copy(problem = DeviceText.failure(failure, error.message)); false }
+        catch (error: Exception) { flow.value = flow.value.copy(problem = DeviceText.failure(failure, UserText.of(error, ""))); false }
         finally { flow.value = flow.value.copy(busy = false) }
     }
 }

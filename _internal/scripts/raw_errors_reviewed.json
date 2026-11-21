@@ -1,0 +1,82 @@
+[
+  {
+    "file": "AppLog.kt",
+    "line": "clean(message) + if (error == null) \"\" else \"\\n\" + scrub(error.stackTraceToString()).lineSequence().take(STACK_LINES).joinToString(\"\\n\") { clean(it) }",
+    "reason": "The log writer itself: the stack trace and message go to the log file and logcat, never to a screen."
+  },
+  {
+    "file": "AppLog.kt",
+    "line": "val trace = scrub(error.stackTraceToString()).lineSequence().filter { it.isNotBlank() }.take(STACK_LINES).map { \"    \" + clean(it.trim()) }.toList()",
+    "reason": "The log writer itself: the stack trace and message go to the log file and logcat, never to a screen."
+  },
+  {
+    "file": "AppLog.kt",
+    "line": "e(tag, S.s_viec_nen_vang_0_1_c78909ff(error.javaClass.simpleName, scrub(error.message.orEmpty()).take(200)), error)",
+    "reason": "The log writer itself: the stack trace and message go to the log file and logcat, never to a screen."
+  },
+  {
+    "file": "BookDownloads.kt",
+    "line": "BookDownloads.finished(context, bookId, S.s_tai_bi_gian_doan_8ba012e5, \"$title · $error\")",
+    "reason": "False match: `error` is the String already produced by BookDownloads.describe, which routes the Throwable through UserText."
+  },
+  {
+    "file": "CrashLog.kt",
+    "line": "return AppLog.scrub(S.s_0_luong_1_dfc8ed37(time, thread) + error.stackTraceToString()).take(MAX_CHARS)",
+    "reason": "Crash report text written to the crash log file for Diagnostics; never shown as a UI message."
+  },
+  {
+    "file": "Diagnostics.kt",
+    "line": ".put(\"error\", \"${error.javaClass.simpleName}: ${AppLog.scrub(error.message.orEmpty()).take(200)}\"))",
+    "reason": "Technical line inside the Diagnostics zip the owner shares with the developer; not shown on a screen."
+  },
+  {
+    "file": "LibraryServer.kt",
+    "line": "json(output, 400, JSONObject().put(\"error\", error.message))",
+    "reason": "HTTP reply to a paired device, not a screen of this app; the receiving Android app shows it only through UserText (NetErrors.Refused -> UserText.of)."
+  },
+  {
+    "file": "LibraryServer.kt",
+    "line": "json(output, 500, JSONObject().put(\"error\", \"${error.javaClass.simpleName}: ${error.message}\"))",
+    "reason": "HTTP reply to a paired device, not a screen of this app; the receiving Android app shows it only through UserText (NetErrors.Refused -> UserText.of)."
+  },
+  {
+    "file": "LocalStudio.kt",
+    "line": "error.status to fail(error.message.orEmpty(), error.extra)",
+    "reason": "LocalStudio.Api is only thrown with app-authored Vietnamese text; the native Studio screens map StudioError text through UserText (StudioText.failure)."
+  },
+  {
+    "file": "LocalStudio.kt",
+    "line": "400 to fail(error.message.orEmpty())",
+    "reason": "BookEdits.EditsError carries app-authored Vietnamese text (raw causes are mapped by UserText where it is thrown); the Studio screens map it again through StudioText.failure."
+  },
+  {
+    "file": "M4bExportWorker.kt",
+    "line": "val text = cause.message.orEmpty()",
+    "reason": "Looks for ENOSPC / No space left in the cause chain to pick the Vietnamese out-of-space sentence; the text is never shown."
+  },
+  {
+    "file": "NetErrors.kt",
+    "line": "is SSLException -> return if (dropped(cause.message)) Kind.DROPPED else Kind.SECURITY",
+    "reason": "Classifies the SSL error by its text (connection reset vs. TLS problem); the text itself is never shown."
+  },
+  {
+    "file": "PeerRouting.kt",
+    "line": "return choice.lan?.let { \"https://$it\" } ?: BluetoothLink.base(context, choice.bluetooth ?: throw IllegalStateException(S.s_may_da_ghep_chua_co_dia_chi_ban_hay_ghep_l_40a8d8a7))",
+    "reason": "False match: `it` is the LAN address string in the https URL, not a Throwable."
+  },
+  {
+    "file": "readaloud/EdgeTts.kt",
+    "line": "(cause.message.orEmpty().contains(\"reset\", ignoreCase = true) || cause.message.orEmpty().contains(\"abort\", ignoreCase = true))",
+    "reason": "Classifies a dropped websocket by its text to decide on a retry; the text itself is never shown."
+  },
+  {
+    "file": "ui/nowplaying/RepoNowPlayingModel.kt",
+    "line": "text.value = ReadAlongState(book, chapter.id, error = error.message?.takeIf { it.startsWith(S.s_ban_can_5ca5f9e9) } ?: S.s_chua_tai_duoc_chu_ban_thu_lai_02f8a145)",
+    "reason": "Only an app-authored sentence starting with the catalog text \"Bạn cần\" passes; any other text becomes the fixed Vietnamese fallback."
+  },
+  {
+    "file": "vieneu/VieneuUnits.kt",
+    "line": "if (\"$earlier $before\".lowercase() in NUMBERED_PAIRS) return true",
+    "reason": "False match: `earlier` here is a word of the sentence being read aloud, not a Throwable."
+  }
+]

@@ -211,7 +211,7 @@ class MusicStore(
             val found = try {
                 tags.read(part)
             } catch (error: ImportError) {
-                throw ImportError("“$name”: ${error.message}.")
+                throw ImportError("“$name”: ${UserText.of(error, S.s_chua_ro_vi_sao_7e2472f6)}.")
             }
             val lufs = runCatching { loudness?.measure(part) }.getOrNull()
             val analysis = analyze(part)

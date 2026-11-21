@@ -1,5 +1,7 @@
 package vn.abook.player.ui.nowplaying
 
+import vn.abook.player.UserText
+
 import androidx.compose.runtime.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CancellationException
@@ -160,7 +162,7 @@ class PlayerLineEditor(private val source: PlayerLineSource, private val scope: 
                 snapshot = loaded; problem = ""
             }
         } catch (cancelled: CancellationException) { throw cancelled }
-        catch (failure: Throwable) { if (mine == generation) problem = if (failure is vn.abook.player.StudioError) StudioText.failure(failure) else failure.message.orEmpty().ifEmpty { S.s_chua_ghi_duoc_9fa87a7d } }
+        catch (failure: Throwable) { if (mine == generation) problem = if (failure is vn.abook.player.StudioError) StudioText.failure(failure) else UserText.of(failure, S.s_chua_ghi_duoc_9fa87a7d) }
         finally { if (mine == generation) loading = false }
     }
 
@@ -192,7 +194,7 @@ class PlayerLineEditor(private val source: PlayerLineSource, private val scope: 
         val selection = selected ?: return
         scope.launch { try { source.sample(selection.bookId, selection.chapter, selection.paragraph) }
             catch (cancelled: CancellationException) { throw cancelled }
-            catch (failure: Throwable) { notice = failure.message.orEmpty().ifEmpty { S.s_chua_nghe_thu_duoc_f7601d1f } } }
+            catch (failure: Throwable) { notice = UserText.of(failure, S.s_chua_nghe_thu_duoc_f7601d1f) } }
     }
 
     fun back() { if (step != "menu") step = "menu" else close() }

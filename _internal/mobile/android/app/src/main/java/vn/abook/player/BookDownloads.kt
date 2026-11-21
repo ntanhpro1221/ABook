@@ -155,10 +155,10 @@ object BookDownloads {
     }
 
     /** Lời cho người nghe + chữ gốc (chỉ khi là lỗi mạng đã dịch thành câu) - dùng chung cho lời gọi bị từ chối và sự kiện "download". */
-    fun describe(error: Exception, fallback: String = error.javaClass.simpleName): Pair<String, String?> {
-        if (error is Pin.ChangedException) return (error.message ?: Pin.CHANGED) to null
+    fun describe(error: Exception, fallback: String = S.s_chua_lam_duoc_8b442a06): Pair<String, String?> {
+        if (error is Pin.ChangedException) return UserText.of(error, Pin.CHANGED) to null
         if (NetErrors.unpaired(error)) return S.s_may_kia_da_bo_ghep_ban_ghep_lai_de_tai_va_d8874ae9 to null
-        val kind = NetErrors.kind(error) ?: return (error.message ?: fallback) to null
+        val kind = NetErrors.kind(error) ?: return UserText.of(error, fallback) to null
         return NetErrors.message(kind) to NetErrors.technical(error)
     }
 

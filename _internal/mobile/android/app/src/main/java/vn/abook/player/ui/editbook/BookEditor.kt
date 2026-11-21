@@ -1,5 +1,7 @@
 package vn.abook.player.ui.editbook
 
+import vn.abook.player.UserText
+
 import vn.abook.player.S
 
 import androidx.compose.runtime.Stable
@@ -45,7 +47,7 @@ class BookEditor(val id: String, private val source: EditSource, private val sco
                 flow.value = flow.value.copy(saved = latest, draft = draft, loading = false)
             } catch (error: Exception) {
                 if (error is CancellationException) throw error
-                flow.value = flow.value.copy(loading = false, problem = error.message ?: S.s_chua_lam_duoc_8b442a06)
+                flow.value = flow.value.copy(loading = false, problem = UserText.of(error, S.s_chua_lam_duoc_8b442a06))
             }
         } }
     }
@@ -103,7 +105,7 @@ class BookEditor(val id: String, private val source: EditSource, private val sco
             } catch (error: Exception) {
                 if (error is CancellationException) throw error
                 val holder = flow.value.saved?.holder ?: S.s_may_tinh_8eafc226
-                flow.value = flow.value.copy(sendProblem = listOf(S.s_chua_gui_duoc_ve_0_2ac674e4(holder), error.message.orEmpty(), S.s_phan_sua_van_nam_tren_may_nay_095e7b80)
+                flow.value = flow.value.copy(sendProblem = listOf(S.s_chua_gui_duoc_ve_0_2ac674e4(holder), UserText.of(error, ""), S.s_phan_sua_van_nam_tren_may_nay_095e7b80)
                     .filter { it.isNotBlank() }.joinToString(" "))
             } finally { flow.value = flow.value.copy(sending = false) }
         }
@@ -232,11 +234,11 @@ class BookEditor(val id: String, private val source: EditSource, private val sco
             true
         } catch (error: Exception) {
             if (error is CancellationException) throw error
-            flow.value = flow.value.copy(loading = false, saving = false, problem = if (what == null) error.message ?: S.s_chua_lam_duoc_8b442a06 else failure(what, error))
+            flow.value = flow.value.copy(loading = false, saving = false, problem = if (what == null) UserText.of(error, S.s_chua_lam_duoc_8b442a06) else failure(what, error))
             false
         }
     }
 
     /** Lời lỗi: việc chưa làm được (cùng chữ với lời báo của web) + lý do của lõi. */
-    private fun failure(what: String, error: Exception) = listOfNotNull(what, error.message?.takeIf { it.isNotBlank() }).joinToString(" ")
+    private fun failure(what: String, error: Exception) = listOf(what, UserText.of(error, "")).filter { it.isNotBlank() }.joinToString(" ")
 }

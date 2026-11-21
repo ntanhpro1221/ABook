@@ -1,5 +1,7 @@
 package vn.abook.player.ui.data
 
+import vn.abook.player.UserText
+
 import vn.abook.player.S
 
 import androidx.compose.runtime.Stable
@@ -73,7 +75,7 @@ class PrepareState(private val source: PrepareSource, private val scope: Corouti
             } catch (cancel: CancellationException) {
                 throw cancel
             } catch (error: Exception) {
-                _failure.value = error.message ?: S.s_chua_ro_vi_sao_7e2472f6
+                _failure.value = UserText.of(error, S.s_chua_ro_vi_sao_7e2472f6)
             } finally {
                 _busy.value = false
             }

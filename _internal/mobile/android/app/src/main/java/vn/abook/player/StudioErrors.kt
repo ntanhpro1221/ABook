@@ -91,7 +91,7 @@ object StudioErrors {
         // Máy tính nhận lời gọi mà im quá hạn (hai lượt): không phải "tắt máy" - cùng dạng với hạn của chính máy tính (504, lý do timeout), như bản web.
         error is HostWait.Timeout -> StudioError.Server(HostWait.TIMEOUT_MESSAGE, 504, JSONObject().put("reason", HostWait.TIMEOUT_REASON).toString())
         NetErrors.kind(error) != null || error is IOException -> StudioError.Offline(error)
-        else -> StudioError.Server(error.message.orEmpty().ifBlank { StudioErrors.UNEXPECTED }, 0)
+        else -> StudioError.Server(UserText.of(error, StudioErrors.UNEXPECTED), 0)
     }
 }
 

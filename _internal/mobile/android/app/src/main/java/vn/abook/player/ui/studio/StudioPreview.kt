@@ -1,5 +1,8 @@
 package vn.abook.player.ui.studio
 
+import vn.abook.player.S
+import vn.abook.player.UserText
+
 import kotlinx.coroutines.CancellationException
 import vn.abook.player.StudioError
 import vn.abook.player.StudioErrors
@@ -27,7 +30,7 @@ internal suspend fun StudioSession.checkReading(bookId: String, step: WorkStep):
 } catch (error: Throwable) {
     val failure = StudioErrors.of(error)
     note(failure)
-    if (failure is StudioError.Server && failure.status == 400) ReadingCheck.Rejected(failure.message.orEmpty(), StudioErrors.detail(failure, "suggestion"))
+    if (failure is StudioError.Server && failure.status == 400) ReadingCheck.Rejected(UserText.of(failure, S.s_chua_lam_duoc_8b442a06), StudioErrors.detail(failure, "suggestion"))
     else ReadingCheck.Failed(StudioText.failure(failure))
 }
 
@@ -44,7 +47,7 @@ internal suspend fun StudioSession.preview(bookId: String, step: WorkStep): Prev
     note(failure)
     val reason = StudioErrors.detail(failure, "reason")
     if (failure is StudioError.Server && failure.status == 400 && reason != "no-line") {
-        PreviewOutcome.Rejected(failure.message.orEmpty(), StudioErrors.detail(failure, "suggestion"), reason)
+        PreviewOutcome.Rejected(UserText.of(failure, S.s_chua_lam_duoc_8b442a06), StudioErrors.detail(failure, "suggestion"), reason)
     } else {
         val message = StudioText.failure(failure)
         PreviewOutcome.Refused(VoiceLogic.refusalText(reason, message, StudioErrors.named(failure)), reason)

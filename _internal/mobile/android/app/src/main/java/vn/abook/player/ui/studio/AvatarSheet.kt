@@ -1,5 +1,7 @@
 package vn.abook.player.ui.studio
 
+import vn.abook.player.UserText
+
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.*
@@ -39,15 +41,15 @@ internal fun AvatarSheet(member: CastMember, cast: StudioCastState) {
                 portrait = vn.abook.player.ui.data.AvatarArt.parse(result.optJSONObject("avatar")) ?: portrait
                 pending = result.optBoolean("pending"); cast.refresh()
             } catch (cancelled: CancellationException) { throw cancelled }
-            catch (failure: Exception) { error = failure.message.orEmpty() }
+            catch (failure: Exception) { error = UserText.of(failure, S.s_chua_lam_duoc_8b442a06) }
             finally { busy = false }
         }
     }
-    LaunchedEffect(Unit) { runCatching { status() }.onFailure { error = it.message.orEmpty() } }
+    LaunchedEffect(Unit) { runCatching { status() }.onFailure { error = UserText.of(it, S.s_chua_lam_duoc_8b442a06) } }
     LaunchedEffect(pending) {
         while (pending) {
             delay(1000)
-            runCatching { status() }.onFailure { error = it.message.orEmpty(); pending = false }
+            runCatching { status() }.onFailure { error = UserText.of(it, S.s_chua_lam_duoc_8b442a06); pending = false }
             if (!pending) {
                 cast.refresh()
                 val loaded = cast.poll.value.data
