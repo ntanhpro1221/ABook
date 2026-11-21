@@ -36,8 +36,11 @@ FORBIDDEN_TERMS = ("migrat", "legacy", "nâng cấp từ")
 PYTEST_MAX_SKIPPED = 17
 # One Android row (android-unit / android-snapshots) on the owner's laptop, BELOW_NORMAL, nothing else running, compile
 # outputs up to date (21-11, loadfix174 --profile): prepareSharedUi 52 s + testDebugUnitTest 332 s + Gradle start ~10 s.
-# All-core synthetic load stretched the test task 1.7x (gatefix22 and-load). The budget is that unloaded time times a stated
-# factor, so it moves with a measurement, never by hand. A row that must also recompile Kotlin under all-core load is not
+# The Android rows run at NORMAL priority, not BELOW_NORMAL like every other gate process: under a saturating all-core
+# load (cpu_load.py at ~95% of 32 threads) BELOW_NORMAL Gradle got 34 s of CPU in 10 minutes, time-bounded tests failed and
+# both rows passed 840 s while still in classes A-D; the same suite at NORMAL under that load passed 3950/0 in 564 s.
+# One test JVM fork and one Gradle worker (maxParallelForks = 1) take an equal share of one or two cores, no more.
+# The budget is that unloaded time times a stated factor, so it moves with a measurement, never by hand. A row that must also recompile Kotlin under all-core load is not
 # covered: BELOW_NORMAL compileDebugKotlin went 52 s -> 1111 s there (the gate yields to the owner's work by design).
 ANDROID_ROW_UNLOADED_S = 420
 ANDROID_ROW_LOAD_FACTOR = 2.0
@@ -160,8 +163,9 @@ def g2p_parity_env() -> dict[str, str]:
             "ABOOK_SEA_G2P_LIB": str(Path(os.environ.get("ABOOK_SEA_G2P_LIB", str(library))).resolve())}
 
 
-def run_process(command: list[str], cwd: Path, timeout: float, extra_env: dict | None = None) -> Execution:
-    flags = (subprocess.CREATE_NO_WINDOW | subprocess.BELOW_NORMAL_PRIORITY_CLASS) if os.name == "nt" else 0
+def run_process(command: list[str], cwd: Path, timeout: float, extra_env: dict | None = None, *,
+                yield_cpu: bool = True) -> Execution:
+    flags = (subprocess.CREATE_NO_WINDOW | (subprocess.BELOW_NORMAL_PRIORITY_CLASS if yield_cpu else 0)) if os.name == "nt" else 0
     proc = subprocess.Popen(command, cwd=cwd, env=safe_env() | (extra_env or {}), stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
                             encoding="utf-8", errors="replace", creationflags=flags)
     try:
@@ -636,7 +640,7 @@ def worker(name: str, confirm_hash: str | None = None) -> dict:
             require(not fixture.resolve().is_relative_to(REPO.resolve()), "Sentence phonemes must stay outside the checkout")
             write(fixture, occurrence_cases())
             inputs["ABOOK_G2P_OCCURRENCE_FIXTURE"] = str(fixture)
-            execution = run_process(command, android, ANDROID_ROW_BUDGET_S, inputs)
+            execution = run_process(command, android, ANDROID_ROW_BUDGET_S, inputs, yield_cpu=False)
         print(execution.output, end="")
         if execution.timed_out:
             # Báo rõ timeout để gate biết đây là deadline (có thể do chạy pin), không phải test đỏ.

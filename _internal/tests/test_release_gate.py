@@ -951,7 +951,7 @@ def test_android_gate_generates_occurrence_parity_for_its_native_run(tmp_path, m
     results = tmp_path / "mobile/android/app/build/test-results/testDebugUnitTest"
     inputs = []
 
-    def run(command, cwd, timeout, extra_env):
+    def run(command, cwd, timeout, extra_env, **options):
         fixture = Path(extra_env["ABOOK_G2P_OCCURRENCE_FIXTURE"])
         assert fixture.is_file() and not fixture.is_relative_to(gate.REPO)
         cases = load(fixture)["cases"]
@@ -979,13 +979,14 @@ def test_android_rows_force_only_the_test_task_within_a_measured_budget(tmp_path
     monkeypatch.setattr(gate, "parse_gradle", lambda results: {"passed": 1, "failed": 0, "error": 0, "skipped": 0})
     seen = []
 
-    def run(command, cwd, timeout, extra_env):
-        seen.append((command, timeout))
+    def run(command, cwd, timeout, extra_env, *, yield_cpu=True):
+        seen.append((command, timeout, yield_cpu))
         return gate.Execution(0, "")
 
     monkeypatch.setattr(gate, "run_process", run)
     assert gate.worker("android-unit")["status"] == "PASS"
-    command, timeout = seen[0]
+    command, timeout, yield_cpu = seen[0]
+    assert yield_cpu is False  # measured: BELOW_NORMAL Gradle starves under all-core load
     assert "--rerun-tasks" not in command
     at = command.index(":app:testDebugUnitTest")
     assert command[at + 1] == "--rerun"

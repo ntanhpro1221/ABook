@@ -50,7 +50,9 @@ theo package + lock hiện tại, tái sử dụng khi đủ phiên bản khóa.
 các đường dẫn tương đối tới catalog `ui_strings` và token `ui_design` vẫn đọc được từ bản sao ấy.
 Junction node_modules dùng chung không đổi. Thiếu npm/module hoặc cài thất bại là FAIL có log, không bỏ kiểm.
 Pytest có summary thật và `--durations=30`; deadline 7200 giây. Qt offscreen/phần mềm: WidthTests có deadline riêng
-1800 giây, các suite khác 360 giây; mọi subprocess gate chạy BELOW_NORMAL trên Windows.
+1800 giây, các suite khác 360 giây; mọi subprocess gate chạy BELOW_NORMAL trên Windows, trừ hai hàng Android (Gradle ở NORMAL:
+dưới tải toàn lõi, Gradle BELOW_NORMAL bị bỏ đói quá mọi ngân sách). Trong suite Qt đo giờ thật hay suite QML, đúng một luồng test
+được nâng lên mức của tiến trình normal (`TestTiming::promptObserver`); luồng render/giải mã âm thanh của app chạy MMCSS.
 Gallery inspect có deadline 3600 giây cho toàn bộ ma trận sáng/tối, hai khổ cửa sổ và các lượt mở/đóng sheet;
 thời hạn 1800 giây đã ngắt lượt 0.4.165 sau 3312 trial sạch, khi còn hai trạng thái chưa kiểm xong.
 
