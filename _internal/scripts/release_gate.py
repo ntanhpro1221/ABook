@@ -34,6 +34,14 @@ FORBIDDEN_TERMS = ("migrat", "legacy", "nâng cấp từ")
 # Released 0.4.167 report: 19 skips. Remove two optional audiotsm comparisons;
 # pitch and LUFS remain mandatory direct measurements in the same test module.
 PYTEST_MAX_SKIPPED = 17
+# One Android row (android-unit / android-snapshots) on the owner's laptop, BELOW_NORMAL, nothing else running, compile
+# outputs up to date (21-11, loadfix174 --profile): prepareSharedUi 52 s + testDebugUnitTest 332 s + Gradle start ~10 s.
+# All-core synthetic load stretched the test task 1.7x (gatefix22 and-load). The budget is that unloaded time times a stated
+# factor, so it moves with a measurement, never by hand. A row that must also recompile Kotlin under all-core load is not
+# covered: BELOW_NORMAL compileDebugKotlin went 52 s -> 1111 s there (the gate yields to the owner's work by design).
+ANDROID_ROW_UNLOADED_S = 420
+ANDROID_ROW_LOAD_FACTOR = 2.0
+ANDROID_ROW_BUDGET_S = round(ANDROID_ROW_UNLOADED_S * ANDROID_ROW_LOAD_FACTOR)
 PYTEST_MAX_XFAILED = 0
 # Exact generated libmp3lame fixtures: four-second mono test signals, no source audio.
 # Pin bytes so the exception cannot silently admit replacement recordings.
@@ -353,8 +361,8 @@ def checks(confirm_hash: str | None = None) -> list[Check]:
         Check("vitest", [node, "node_modules/vitest/vitest.mjs", "run", "--no-cache", "--configLoader", "runner", "--reporter", "verbose",
                          "--maxWorkers", os.environ.get("ABOOK_GATE_VITEST_WORKERS", "2")],
               ui, 1800, "vitest"),
-        Check("android-unit", worker_command("android-unit"), timeout=900, parser="json"),
-        Check("android-snapshots", worker_command("android-snapshots"), timeout=900, parser="json"),
+        Check("android-unit", worker_command("android-unit"), timeout=ANDROID_ROW_BUDGET_S + 60, parser="json"),
+        Check("android-snapshots", worker_command("android-snapshots"), timeout=ANDROID_ROW_BUDGET_S + 60, parser="json"),
         Check("ui-parity", py("scripts/ui_parity.py", "--check")),
         Check("ui-parity-qt", py("scripts/ui_parity_qt.py", "--check")),
         Check("dom-count", worker_command("dom-count"), parser="json", requires=("vitest",)),
@@ -611,11 +619,14 @@ def worker(name: str, confirm_hash: str | None = None) -> dict:
         for path in results.glob("**/TEST-*.xml"):
             require(path.resolve().is_relative_to(REPO.resolve()), "XML ra ngoài worktree")
             path.unlink()
-        task = ":app:verifyRoborazziDebug" if baseline is not None else ":app:testDebugUnitTest"
+        # --rerun forces only the test task: fresh XML every row, while unchanged compile outputs stay up to date
+        # (--rerun-tasks recompiled Kotlin in both rows; under load that alone outgrew the budget).
+        tasks = [":app:verifyRoborazziDebug"] if baseline is not None else []
+        tasks += [":app:testDebugUnitTest", "--rerun"]
         java = Path(inputs.get("JAVA_HOME", os.environ.get("JAVA_HOME", "C:/Program Files/Android/Android Studio/jbr"))) / "bin/java.exe"
         command = [str(java), "-classpath", "gradle/wrapper/gradle-wrapper.jar", "org.gradle.wrapper.GradleWrapperMain",
-                   "--no-daemon", "-Dorg.gradle.jvmargs=-Xmx6g -XX:MaxMetaspaceSize=768m", task,
-                   "--rerun-tasks", "-Proborazzi.test.record=false"]
+                   "--no-daemon", "-Dorg.gradle.jvmargs=-Xmx6g -XX:MaxMetaspaceSize=768m", *tasks,
+                   "-Proborazzi.test.record=false"]
         # Generate sentence phones from this desktop build outside the checkout;
         # the native contract consumes them in this same verification run.
         from scripts.generate_g2p_parity import occurrence_cases, write
@@ -625,7 +636,7 @@ def worker(name: str, confirm_hash: str | None = None) -> dict:
             require(not fixture.resolve().is_relative_to(REPO.resolve()), "Sentence phonemes must stay outside the checkout")
             write(fixture, occurrence_cases())
             inputs["ABOOK_G2P_OCCURRENCE_FIXTURE"] = str(fixture)
-            execution = run_process(command, android, 840, inputs)
+            execution = run_process(command, android, ANDROID_ROW_BUDGET_S, inputs)
         print(execution.output, end="")
         if execution.timed_out:
             # Báo rõ timeout để gate biết đây là deadline (có thể do chạy pin), không phải test đỏ.

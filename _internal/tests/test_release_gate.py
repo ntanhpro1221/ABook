@@ -970,6 +970,30 @@ def test_android_gate_generates_occurrence_parity_for_its_native_run(tmp_path, m
     assert len(inputs) == 1 and not inputs[0].exists()
 
 
+def test_android_rows_force_only_the_test_task_within_a_measured_budget(tmp_path, monkeypatch):
+    # Every row reruns the test task (fresh XML), but unchanged Kotlin is not recompiled: under all-core load the forced
+    # BELOW_NORMAL compile alone went 52 s -> 1111 s. The budget is a measured unloaded row times a stated factor.
+    monkeypatch.setattr(gate, "ROOT", tmp_path)
+    monkeypatch.setattr(gate, "android_host_inputs", lambda: {})
+    monkeypatch.setattr(gate, "require_phoneme_suites_ran", lambda results: None)
+    monkeypatch.setattr(gate, "parse_gradle", lambda results: {"passed": 1, "failed": 0, "error": 0, "skipped": 0})
+    seen = []
+
+    def run(command, cwd, timeout, extra_env):
+        seen.append((command, timeout))
+        return gate.Execution(0, "")
+
+    monkeypatch.setattr(gate, "run_process", run)
+    assert gate.worker("android-unit")["status"] == "PASS"
+    command, timeout = seen[0]
+    assert "--rerun-tasks" not in command
+    at = command.index(":app:testDebugUnitTest")
+    assert command[at + 1] == "--rerun"
+    assert timeout == gate.ANDROID_ROW_BUDGET_S == round(gate.ANDROID_ROW_UNLOADED_S * gate.ANDROID_ROW_LOAD_FACTOR)
+    rows = {check.name: check for check in gate.checks()}
+    assert all(rows[name].timeout > timeout for name in ("android-unit", "android-snapshots"))
+
+
 def test_vitest_unhandled_errors_block_even_when_all_tests_pass(tmp_path):
     rows = gate.run_gate([fake_check("vitest")], tmp_path,
                          lambda *_: gate.Execution(0, "Tests 12 passed (12)\nErrors 1 error"))
