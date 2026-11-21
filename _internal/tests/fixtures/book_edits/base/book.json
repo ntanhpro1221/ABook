@@ -90,8 +90,8 @@
   "producer": "ABook",
   "files": {
    "cast.json": {
-    "size": 946,
-    "sha256": "aeb6c013d9ae7fa677ddb492bc4b265f86652c10b49a4f905017847a259167c0"
+    "size": 1035,
+    "sha256": "0bff786f24cff36db43134c21d898032de4dad45ae027ab8e739c098a4273983"
    },
    "chapters/00001_645.mp3": {
     "size": 10243,

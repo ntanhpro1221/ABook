@@ -18,7 +18,7 @@
     "preset": "baotrang",
     "gender": "",
     "avoid": "",
-    "requestedAt": 1792693055.4275205
+    "requestedAt": 1795301882.2427752
    }
   },
   {
@@ -28,6 +28,10 @@
    "response": {
     "narrator": {
      "voice": "Đức Trí",
+     "chapterVoices": [],
+     "exceptChapters": [],
+     "voiceLines": 4,
+     "voiceSeconds": 7.0,
      "lines": 4,
      "seconds": 7.0,
      "profile": {
@@ -93,7 +97,7 @@
       "lines": 0,
       "section": "voices",
       "key": "HEIDI",
-      "requestedAt": 1792693055.4275205
+      "requestedAt": 1795301882.2427752
      }
     ],
     "lines": 0,
@@ -115,7 +119,7 @@
     "preset": "F1",
     "gender": "",
     "avoid": "",
-    "requestedAt": 1792693055.462223,
+    "requestedAt": 1795301882.3156214,
     "elsewhere": {
      "voice": "Bảo Trang",
      "gender": ""
@@ -129,6 +133,10 @@
    "response": {
     "narrator": {
      "voice": "Đức Trí",
+     "chapterVoices": [],
+     "exceptChapters": [],
+     "voiceLines": 4,
+     "voiceSeconds": 7.0,
      "lines": 4,
      "seconds": 7.0,
      "profile": {
@@ -194,7 +202,7 @@
       "lines": 0,
       "section": "voices",
       "key": "HEIDI",
-      "requestedAt": 1792693055.462223
+      "requestedAt": 1795301882.3156214
      }
     ],
     "lines": 0,

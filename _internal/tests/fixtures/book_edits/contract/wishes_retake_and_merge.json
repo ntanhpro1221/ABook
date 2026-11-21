@@ -11,7 +11,7 @@
    "status": 200,
    "response": {
     "lines": 4,
-    "requestedAt": 1791666395.345243
+    "requestedAt": 1795301882.912309
    }
   },
   {
@@ -62,12 +62,12 @@
       "lines": 0,
       "section": "retakes",
       "key": "c1_s0001_aa6eb2",
+      "requestedAt": 1795301882.912309,
       "keys": [
        "c1_s0001_aa6eb2",
        "c1_s0002_c58b67",
        "c1_s0006_34534a"
-      ],
-      "requestedAt": 1791666395.345243
+      ]
      },
      {
       "kind": "retake",
@@ -76,7 +76,7 @@
       "lines": 0,
       "section": "retakes",
       "key": "c1_s0003_fa1fe2",
-      "requestedAt": 1791666395.4313972
+      "requestedAt": 1795301883.0182304
      }
     ],
     "lines": 0,
@@ -94,7 +94,7 @@
    "status": 200,
    "response": {
     "lines": 1,
-    "requestedAt": 1791666395.5143454
+    "requestedAt": 1795301883.1075077
    }
   },
   {
@@ -140,6 +140,10 @@
    "response": {
     "narrator": {
      "voice": "Đức Trí",
+     "chapterVoices": [],
+     "exceptChapters": [],
+     "voiceLines": 4,
+     "voiceSeconds": 7.0,
      "lines": 4,
      "seconds": 7.0,
      "profile": {
@@ -203,7 +207,7 @@
       "lines": 0,
       "section": "speakers",
       "key": "c1_s0006_34534a",
-      "requestedAt": 1791666395.5143454
+      "requestedAt": 1795301883.1075077
      },
      {
       "kind": "retake",
@@ -212,12 +216,12 @@
       "lines": 0,
       "section": "retakes",
       "key": "c1_s0001_aa6eb2",
+      "requestedAt": 1795301882.912309,
       "keys": [
        "c1_s0001_aa6eb2",
        "c1_s0002_c58b67",
        "c1_s0006_34534a"
-      ],
-      "requestedAt": 1791666395.345243
+      ]
      },
      {
       "kind": "retake",
@@ -226,7 +230,7 @@
       "lines": 0,
       "section": "retakes",
       "key": "c1_s0003_fa1fe2",
-      "requestedAt": 1791666395.4313972
+      "requestedAt": 1795301883.0182304
      }
     ],
     "lines": 0,

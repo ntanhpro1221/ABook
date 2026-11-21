@@ -20,7 +20,8 @@
     "kind": "",
     "emotion": "tender",
     "intensity": 1,
-    "spoken": null
+    "spoken": null,
+    "requestedAt": 1795301880.59106
    }
   },
   {
@@ -37,7 +38,8 @@
     "kind": "",
     "emotion": "",
     "intensity": null,
-    "spoken": "Chào   anh nhé."
+    "spoken": "Chào   anh nhé.",
+    "requestedAt": 1795301880.622511
    }
   },
   {
@@ -107,7 +109,8 @@
     "kind": "dialogue",
     "emotion": "",
     "intensity": null,
-    "spoken": null
+    "spoken": null,
+    "requestedAt": 1795301880.7342436
    }
   },
   {
@@ -175,7 +178,7 @@
       "lines": 0,
       "section": "speakers",
       "key": "c1_s0002_c58b67",
-      "requestedAt": 1790957767.8364098
+      "requestedAt": 1795301880.7342436
      },
      {
       "kind": "line",
@@ -184,7 +187,7 @@
       "lines": 0,
       "section": "lines",
       "key": "c1_s0002_c58b67",
-      "requestedAt": 1790957767.8364098
+      "requestedAt": 1795301880.7342436
      },
      {
       "kind": "line",
@@ -193,7 +196,7 @@
       "lines": 0,
       "section": "lines",
       "key": "c1_s0006_34534a",
-      "requestedAt": 1790957767.7603555
+      "requestedAt": 1795301880.622511
      }
     ],
     "lines": 0,
@@ -225,7 +228,8 @@
     "kind": "",
     "emotion": "",
     "intensity": null,
-    "spoken": ""
+    "spoken": "",
+    "requestedAt": 1795301880.8175216
    }
   },
   {
@@ -241,7 +245,7 @@
       "lines": 0,
       "section": "speakers",
       "key": "c1_s0002_c58b67",
-      "requestedAt": 1790957767.8364098
+      "requestedAt": 1795301880.7342436
      },
      {
       "kind": "line",
@@ -250,7 +254,7 @@
       "lines": 0,
       "section": "lines",
       "key": "c1_s0002_c58b67",
-      "requestedAt": 1790957767.8364098
+      "requestedAt": 1795301880.7342436
      },
      {
       "kind": "line",
@@ -259,7 +263,7 @@
       "lines": 0,
       "section": "lines",
       "key": "c1_s0006_34534a",
-      "requestedAt": 1790957767.9106848
+      "requestedAt": 1795301880.8175216
      }
     ],
     "lines": 0,

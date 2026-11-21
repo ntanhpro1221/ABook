@@ -19,7 +19,7 @@
     "speaker": "HEIDI",
     "new": false,
     "alias": false,
-    "requestedAt": 1791710452.2051666
+    "requestedAt": 1795301879.440467
    }
   },
   {
@@ -39,7 +39,7 @@
     "speaker": "LUCIEN",
     "new": false,
     "alias": false,
-    "requestedAt": 1791710452.2442744,
+    "requestedAt": 1795301879.468524,
     "elsewhere": {
      "c1_s0003_fa1fe2": "HEIDI"
     }
@@ -62,7 +62,7 @@
     "speaker": "HEIDI",
     "new": false,
     "alias": false,
-    "requestedAt": 1791710452.2725344
+    "requestedAt": 1795301879.5044081
    }
   },
   {
@@ -91,7 +91,7 @@
     "speaker": "LUCIEN",
     "new": false,
     "alias": false,
-    "requestedAt": 1791710452.3031237,
+    "requestedAt": 1795301879.534944,
     "elsewhere": {
      "c1_s0003_fa1fe2": "HEIDI"
     }
@@ -111,7 +111,8 @@
     "kind": "",
     "emotion": "sad",
     "intensity": null,
-    "spoken": null
+    "spoken": null,
+    "requestedAt": 1795301879.5801432
    }
   },
   {
@@ -130,6 +131,7 @@
     "emotion": "angry",
     "intensity": null,
     "spoken": null,
+    "requestedAt": 1795301879.6270213,
     "elsewhere": {
      "delivery": {
       "kind": "",
@@ -159,7 +161,8 @@
     "kind": "",
     "emotion": "",
     "intensity": null,
-    "spoken": "Chào."
+    "spoken": "Chào.",
+    "requestedAt": 1795301879.6572244
    }
   },
   {
@@ -182,6 +185,7 @@
     "emotion": "",
     "intensity": 2,
     "spoken": null,
+    "requestedAt": 1795301879.7077556,
     "elsewhere": {
      "delivery": {
       "kind": "",
@@ -268,7 +272,7 @@
    "response": {
     "ok": true,
     "lines": 2,
-    "requestedAt": 1791710452.5310493,
+    "requestedAt": 1795301879.8729265,
     "elsewhere": {
      "c1_s0002_c58b67": ""
     }
@@ -287,7 +291,7 @@
     "preset": "",
     "gender": "male",
     "avoid": "",
-    "requestedAt": 1791710452.5613666
+    "requestedAt": 1795301879.9139106
    }
   },
   {
@@ -304,7 +308,7 @@
     "preset": "",
     "gender": "female",
     "avoid": "",
-    "requestedAt": 1791710452.586368,
+    "requestedAt": 1795301879.9585242,
     "elsewhere": {
      "voice": "",
      "gender": "male"
@@ -325,7 +329,7 @@
     "preset": "",
     "gender": "male",
     "avoid": "",
-    "requestedAt": 1791710452.6139562
+    "requestedAt": 1795301879.9912531
    }
   },
   {
@@ -342,7 +346,7 @@
     "preset": "",
     "gender": "female",
     "avoid": "",
-    "requestedAt": 1791710452.6507516
+    "requestedAt": 1795301880.023328
    }
   },
   {
