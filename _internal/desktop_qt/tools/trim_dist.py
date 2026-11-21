@@ -4,7 +4,7 @@ build.bat runs this after windeployqt, before the VC runtime copy, check_imports
 between builds, so everything goes here (a file from an older build is removed too), each with why it is dead:
 - Qt Quick Controls styles: the app imports only QtQuick.Controls.Basic and main.cpp fixes QT_QUICK_CONTROLS_STYLE=Basic.
   windeployqt deploys all of them (16.6 MB, 2.6 MB of the installer).
-- QtQuick.Effects: windeployqt deploys it for the styles above; no QML left in the dist imports it.
+- QtQuick.Effects stays: AvatarPortrait uses MultiEffect to mask portrait images.
 - styles\ (QStyle plugin): only a QApplication loads one; main.cpp builds a QGuiApplication.
 - tls\ and networkinformation\: every request of the C++ side goes to the host on http://127.0.0.1 (https, downloads and
   updates are the host's, in Python with its own OpenSSL); nothing calls QNetworkInformation.
@@ -23,7 +23,7 @@ from pathlib import Path
 STYLES = ("FluentWinUI3", "Fusion", "Imagine", "Material", "Universal", "Windows")
 UNUSED_RUNTIME = ("concrt140.dll", "vccorlib140.dll", "msvcp140_atomic_wait.dll", "msvcp140_codecvt_ids.dll",
                   "vcruntime140_threads.dll")
-QML_USES = re.compile(r"^\s*import\s+QtQuick\.(?:Controls\.(?:" + "|".join(STYLES) + r")|NativeStyle|Effects)\b", re.M)
+QML_USES = re.compile(r"^\s*import\s+QtQuick\.(?:Controls\.(?:" + "|".join(STYLES) + r")|NativeStyle)\b", re.M)
 CPP_USES = re.compile(r"\bQ(?:Ssl\w*|NetworkInformation|Application|Style|ProxyStyle|CommonStyle)\b|<QtWidgets")
 
 
@@ -33,7 +33,7 @@ def targets(dist: Path) -> list[Path]:
         found += [dist / f"Qt6QuickControls2{style}.dll", dist / f"Qt6QuickControls2{style}StyleImpl.dll",
                   dist / "qml/QtQuick/Controls" / style, dist / "qml/QtQuick/Dialogs/quickimpl/qml" / f"+{style}"]
     found.append(dist / "qml/QtQuick/NativeStyle")  # only the Windows style draws through it
-    found += [dist / "Qt6QuickEffects.dll", dist / "qml/QtQuick/Effects", dist / "styles", dist / "tls",
+    found += [dist / "styles", dist / "tls",
               dist / "networkinformation"]
     found += [dist / name for name in UNUSED_RUNTIME]
     return [p for p in found if p.exists()]
@@ -76,7 +76,7 @@ def main():
         else:
             path.unlink()
     after = size(dist)
-    print(f"TRIM_OK unused styles, effects, plugins and VC runtime DLLs: {before / 1e6:.1f} MB -> {after / 1e6:.1f} MB")
+    print(f"TRIM_OK unused styles, plugins and VC runtime DLLs: {before / 1e6:.1f} MB -> {after / 1e6:.1f} MB")
     return 0
 
 
