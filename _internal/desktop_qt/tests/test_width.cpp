@@ -409,10 +409,11 @@ public:
 };
 
 /** QML cannot create folders: every "build/<name>/" a test writes into (d2shots, surface_frames...) is created
- *  before the run, read from the test sources themselves so a new folder never fails on a clean checkout. */
+ *  before the run, read from every test source (tests/width and the -input suites such as tests/bookmeta) so a new
+ *  folder never fails on a clean checkout. */
 static void createShotFolders() {
     static const QRegularExpression folder(QStringLiteral("build/([A-Za-z0-9_-]+)/"));
-    QDirIterator files(QStringLiteral(QUICK_TEST_SOURCE_DIR), {QStringLiteral("*.qml"), QStringLiteral("*.js")}, QDir::Files, QDirIterator::Subdirectories);
+    QDirIterator files(QStringLiteral(WIDTH_SOURCE_DIR "/tests"), {QStringLiteral("*.qml"), QStringLiteral("*.js")}, QDir::Files, QDirIterator::Subdirectories);
     while (files.hasNext()) {
         QFile source(files.next());
         if (!source.open(QIODevice::ReadOnly)) continue;
