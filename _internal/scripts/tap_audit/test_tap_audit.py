@@ -420,7 +420,7 @@ def test_every_harness_deadline_scales_with_machine_load():
         source = Path(scaled.__file__).read_text(encoding='utf-8') + (Path(scaled.__file__).parent / 'run.py').read_text(encoding='utf-8')
         import re
         # No literal wall-clock bound bypasses the factor (sleeps are polling cadence, not deadlines).
-        assert not re.search(r'wait_for\([^)]*,\s*\d+\)|timeout=\d+\)|range\(100\)|monotonic\(\) \+ \d+(?! \*)', source)
+        assert not re.search(r'wait_for\([^)]*,\s*\d+\)|timeout=\d+\)|range\(100\)|monotonic\(\) \+ \d+\b(?! \*)', source)
     finally:
         if old is None: os.environ.pop('ABOOK_TEST_TIME_SCALE', None)
         else: os.environ['ABOOK_TEST_TIME_SCALE'] = old

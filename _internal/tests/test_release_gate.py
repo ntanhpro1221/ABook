@@ -293,7 +293,7 @@ def test_power_probe_failure_or_non_windows_counts_as_mains(monkeypatch):
 def test_android_worker_reports_gradle_timeout_explicitly(tmp_path, monkeypatch):
     monkeypatch.setattr(gate, "ROOT", tmp_path)
     monkeypatch.setattr(gate, "android_host_inputs", lambda: {})
-    monkeypatch.setattr(gate, "run_process", lambda *args: gate.Execution(-1, "gradle", True))
+    monkeypatch.setattr(gate, "run_process", lambda *args, **kwargs: gate.Execution(-1, "gradle", True))
     result = gate.worker("android-unit")
     assert result["status"] == "FAIL" and result["timed_out"] is True
     assert gate.execution_timed_out(gate.Execution(1, json.dumps(result)))

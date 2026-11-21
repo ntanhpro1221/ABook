@@ -42,6 +42,6 @@ it("lazy loading goes only through lazyComponent", () => {
     if (statSync(path).isDirectory()) return sources(path);
     return /\.tsx?$/.test(name) && !/\.test\./.test(name) && path !== `${root}/shared/lazyScreen.tsx` ? [path] : [];
   });
-  const offenders = sources(root).filter((path) => /<Suspense|React\.lazy\(|lazy\(\s*\(\)\s*=>/.test(readFileSync(path, "utf8")));
+  const offenders = sources(root).filter((path) => /<Suspense\b|\bReact\.lazy\(|\blazy\(\s*\(\)\s*=>/.test(readFileSync(path, "utf8")));
   expect(offenders.map((path) => path.slice(root.length + 1))).toEqual([]);
 });
