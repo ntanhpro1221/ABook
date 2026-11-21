@@ -55,7 +55,17 @@ internal class ChapterMusicRig(music: Map<Int, JSONArray>) {
             .put("music", JSONObject().put("tracks", tracks).put("chapters", chapters)).toString())
     }
 
-    fun advance(ms: Long) = shadowOf(Looper.getMainLooper()).idleFor(Duration.ofMillis(ms))
+    /** Virtual time on the main looper; MusicBed also works on its own [MusicBed.awaitIdle] worker thread in real time and posts the
+     *  result back. Drain both until neither has work left, so a busy machine cannot leave that result for after the assertion. */
+    fun advance(ms: Long) {
+        val looper = shadowOf(Looper.getMainLooper())
+        looper.idleFor(Duration.ofMillis(ms))
+        while (true) {
+            assertTrue("MusicBed worker did not finish", MusicBed.awaitIdle(TestTime.ms(5_000)))
+            if (looper.isIdle) break
+            looper.idle()
+        }
+    }
     /** PlaybackService: onIsPlayingChanged -> Playback.onPlayingChanged. */
     fun voicePlaying(playing: Boolean) { voice.playing = playing; Playback.onPlayingChanged(playing) }
     /** PlaybackService: onMediaItemTransition -> Playback.onMediaTransition(manual = reason SEEK). */

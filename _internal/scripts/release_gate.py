@@ -35,7 +35,9 @@ FORBIDDEN_TERMS = ("migrat", "legacy", "nâng cấp từ")
 # pitch and LUFS remain mandatory direct measurements in the same test module.
 PYTEST_MAX_SKIPPED = 17
 # One Android row (android-unit / android-snapshots) on the owner's laptop, BELOW_NORMAL, nothing else running, compile
-# outputs up to date (21-11, loadfix174 --profile): prepareSharedUi 52 s + testDebugUnitTest 332 s + Gradle start ~10 s.
+# outputs up to date (21-11, loadfix174 --profile): prepareSharedUi 52 s + testDebugUnitTest 332 s + Gradle start ~10 s;
+# whole rows measured 389-432 s. Under all-core load at 99.6% (loadfix174 and-load1e/2e) the rows took 710-829 s:
+# 1.64-1.92x. The factor 2.5 is that ratio plus about a quarter of headroom.
 # The Android rows run at NORMAL priority, not BELOW_NORMAL like every other gate process: under a saturating all-core
 # load (cpu_load.py at ~95% of 32 threads) BELOW_NORMAL Gradle got 34 s of CPU in 10 minutes, time-bounded tests failed and
 # both rows passed 840 s while still in classes A-D; the same suite at NORMAL under that load passed 3950/0 in 564 s.
@@ -43,7 +45,7 @@ PYTEST_MAX_SKIPPED = 17
 # The budget is that unloaded time times a stated factor, so it moves with a measurement, never by hand. A row that must also recompile Kotlin under all-core load is not
 # covered: BELOW_NORMAL compileDebugKotlin went 52 s -> 1111 s there (the gate yields to the owner's work by design).
 ANDROID_ROW_UNLOADED_S = 420
-ANDROID_ROW_LOAD_FACTOR = 2.0
+ANDROID_ROW_LOAD_FACTOR = 2.5
 ANDROID_ROW_BUDGET_S = round(ANDROID_ROW_UNLOADED_S * ANDROID_ROW_LOAD_FACTOR)
 PYTEST_MAX_XFAILED = 0
 # Exact generated libmp3lame fixtures: four-second mono test signals, no source audio.
