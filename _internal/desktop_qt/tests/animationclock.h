@@ -15,11 +15,6 @@ public:
     using QAnimationDriver::QAnimationDriver;
     ~TestAnimationClock() override { end(); }
     qint64 elapsed() const override { return m_elapsed; }
-protected:
-    // Like Qt's default driver, elapsed() counts from this driver's own start(): QUnifiedTimer stops the driver when the
-    // last animation ends and starts it again for the next one, adding elapsed() to the time it restarted at.
-    void start() override { m_elapsed = 0; QAnimationDriver::start(); }
-public:
     Q_INVOKABLE void begin() {
         Q_ASSERT(!m_installed);
         QCoreApplication::processEvents();
