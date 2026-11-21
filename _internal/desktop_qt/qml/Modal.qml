@@ -11,7 +11,7 @@ import "TextWrap.js" as TextWrap
 // Lớp: là WindowLayer, tức tự dời lên gốc cửa sổ nên z 70 luôn trên mọi màn, thanh bên và dải tiêu đề, dù khai báo ở đâu.
 WindowLayer {
     id: root
-    z: 70
+    baseZ: 70
     property bool open: false
     property string title: ""
     property string description: ""

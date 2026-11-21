@@ -255,6 +255,14 @@ class ListenLogicTest {
         assertEquals("3 chương", ListenLogic.progressText(ListenBook("x", "t", author = "  ", chaptersTotal = 3, textOnly = true)))
     }
 
+    @Test fun textOnlyStatusSaysTextOnlyWithoutAVoiceButCardsKeepTheCount() {
+        val book = ListenBook("x", "t", author = "Writer", chaptersTotal = 3, textOnly = true)
+        assertEquals("Writer · 3 chương", ListenLogic.progressText(book, speaks = false))
+        assertEquals("Chỉ có chữ · 3 chương", ListenLogic.progressText(ListenBook("x", "t", chaptersTotal = 3, textOnly = true), speaks = false))
+        assertEquals("3 chương", ListenLogic.progressText(book, includeAuthor = false, speaks = false))
+        assertEquals("3 chương", ListenLogic.progressText(book, includeAuthor = false, speaks = true))
+    }
+
     @Test
     fun `status line of an audio book`() {
         val whole = ListenBook("x", "t", duration = 7500.0, chaptersTotal = 5, chaptersAvailable = 5)

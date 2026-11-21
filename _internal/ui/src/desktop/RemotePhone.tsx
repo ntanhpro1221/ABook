@@ -341,7 +341,12 @@ export function RemoteBars() {
   return (
     <>
     <MotionPresence open={visible.length > 0}>
-      <button ref={strip} type="button" data-remote-strip onClick={() => setOpen(true)}
+      <button ref={strip} type="button" data-remote-strip onClick={(event) => {
+        // Some browsers do not focus buttons on pointer activation. Remember the
+        // actual opener before the dialog moves focus into its content.
+        event.currentTarget.focus({ preventScroll: true });
+        setOpen(true);
+      }}
         className={cn("flex min-h-9 w-full items-center gap-2 border-t border-line bg-panel px-4 py-2 text-left text-xs text-fg-2", FIRST_LINE_ROW)}>
         <Cast className={cn("size-4 shrink-0", FIRST_LINE_ICON)} />
         <OneLineFit className="flex-1">{S.s_dang_phat_tren_0_62a989a1(names.current)}</OneLineFit>

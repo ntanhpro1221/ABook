@@ -124,6 +124,8 @@ public:
     qint64 sent = 0, first, perSecond = 0;
     QPointer<QTcpSocket> socket;
     QTimer dripper;
+    QElapsedTimer dripClock;
+    qint64 dripBase = 0;
     HeldServer(QByteArray data, qint64 head) : bytes(std::move(data)), first(head) {
         connect(this, &QTcpServer::newConnection, this, [this] {
             auto *client = nextPendingConnection(); socket = client;
@@ -135,13 +137,19 @@ public:
                 client->write("HTTP/1.1 200 OK\r\nContent-Type: audio/mpeg\r\nContent-Length: " + QByteArray::number(bytes.size()) +
                     "\r\nConnection: close\r\n\r\n");
                 send(first);
+                if (dripper.isActive()) { dripBase = sent; dripClock.start(); }
             });
             connect(client, &QTcpSocket::disconnected, client, &QObject::deleteLater);
         });
         if (!listen(QHostAddress::LocalHost)) qFatal("Cannot listen");
-        connect(&dripper, &QTimer::timeout, this, [this] { if (socket) send(std::min<qint64>(bytes.size() - 1, sent + perSecond / 20)); });
+        connect(&dripper, &QTimer::timeout, this, [this] {
+            if (!socket || !socket->property("answered").toBool()) return;
+            // Coalesced timer signals must not slow down the simulated link.
+            // Its byte budget follows elapsed time, including a busy test loop.
+            send(std::min<qint64>(bytes.size() - 1, dripBase + perSecond * dripClock.nsecsElapsed() / 1000000000));
+        });
     }
-    void drip(qint64 bytesPerSecond) { perSecond = bytesPerSecond; dripper.start(50); }
+    void drip(qint64 bytesPerSecond) { perSecond = bytesPerSecond; dripBase = sent; dripClock.start(); dripper.start(50); }
     void hold() { dripper.stop(); }
     QUrl url() const { return QUrl(QStringLiteral("http://127.0.0.1:%1/music/track?link=held").arg(serverPort())); }
     // Chưa trả dòng tiêu đề (yêu cầu chưa tới) thì chưa gửi thân bài: gửi trước tiêu đề là hỏng cả phản hồi (bộ hẹn giờ của test bắn sớm).

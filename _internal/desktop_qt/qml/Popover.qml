@@ -19,7 +19,6 @@ WindowLayer {
     default property alias content: holder.data
     readonly property real contentHeight: holder.childrenRect.height
     visible: shown > 0
-    z: 50
     enabled: open
     onShownChanged: if (shown > 0 && focusPending && open) {
         focusPending = false

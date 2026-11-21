@@ -592,12 +592,21 @@ private slots:
         QFETCH(bool, musicFirst);
         struct QueueDevice : MixDevice {
             std::atomic<size_t> queued{0}, peakAfterReset{0}; std::atomic<int> resets{0};
+            std::atomic<qint64> firstResetNs{0};
             std::atomic<bool> running{false};
             std::chrono::steady_clock::time_point sampled = std::chrono::steady_clock::now();
+            static qint64 nowNs() {
+                return std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::steady_clock::now().time_since_epoch()).count();
+            }
             int rate() const override { return 48000; }
             bool start() override { running = true; return true; }
             void stop() override { running = false; }
-            void reset() override { queued = peakAfterReset = 0; sampled = std::chrono::steady_clock::now(); ++resets; }
+            void reset() override {
+                queued = peakAfterReset = 0; sampled = std::chrono::steady_clock::now();
+                qint64 empty = 0;
+                firstResetNs.compare_exchange_strong(empty, nowNs());
+                ++resets;
+            }
             size_t padding() override {
                 const auto now = std::chrono::steady_clock::now();
                 const size_t heard = size_t(std::chrono::duration<double>(now - sampled).count() * 48000);
@@ -620,10 +629,18 @@ private slots:
         QTRY_VERIFY_WITH_TIMEOUT(voice.playing(), 3000);
         QVERIFY(device->peakAfterReset.load() > size_t(1440));
         QVERIFY(device->peakAfterReset.load() <= size_t(24000));
-        music.pause(); const int resets = device->resets;
-        QElapsedTimer timer; timer.start(); voice.pause();
-        QTRY_VERIFY_WITH_TIMEOUT(device->resets != resets, 100);
-        QVERIFY2(timer.elapsed() < 50, qPrintable(QString::number(timer.elapsed())));
+        const int beforeMusicPause = device->resets.load();
+        music.pause();
+        QTRY_VERIFY_WITH_TIMEOUT(device->resets.load() != beforeMusicPause, 100);
+        const qint64 beganNs = QueueDevice::nowNs();
+        device->firstResetNs = 0;
+        voice.pause();
+        QTRY_VERIFY_WITH_TIMEOUT(device->firstResetNs.load() != 0, 100);
+        // Timestamp the reset on the render thread. Qt's polling/event processing
+        // may resume this test late even when the endpoint met its 50 ms deadline.
+        const qint64 resetNs = device->firstResetNs.load() - beganNs;
+        qInfo() << "pause_reset_us=" << resetNs / 1000;
+        QVERIFY2(resetNs >= 0 && resetNs < 50000000, qPrintable(QString::number(resetNs / 1000000.0)));
         // Sau đuôi mờ 10 ms thiết bị dừng hẳn.
         QTRY_VERIFY_WITH_TIMEOUT(!device->running && device->queued.load() == 0, 200);
     }

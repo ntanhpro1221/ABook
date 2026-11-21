@@ -726,10 +726,10 @@
     "line": 94,
     "statement": "queryFn: async (): Promise<RemoteView> => ({ ...(await api<{ phones: RemotePhone[] }>(\"/api/remote\")), receivedAt: Date.now() }),",
     "occurrence": 1,
-    "source_sha256": "b159259c93e7122e71a4655d36622380ef1d162a90e95b092b8eb5c19fb56aa9",
+    "source_sha256": "e3a39fc5c00ea23ab3cbfe5ec39f7043d8f2bad5f3973ed1d03b15aed23760e0",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; loading, progress",
-    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering."
+    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Tapfix5b source review: opener focus, text-only status or startup theme changed; this exact action and its guard are unchanged."
   },
   {
     "id": "1c45f366f8a345de4389",
@@ -738,94 +738,94 @@
     "line": 205,
     "statement": "const listenHere = async () => {",
     "occurrence": 1,
-    "source_sha256": "b159259c93e7122e71a4655d36622380ef1d162a90e95b092b8eb5c19fb56aa9",
+    "source_sha256": "e3a39fc5c00ea23ab3cbfe5ec39f7043d8f2bad5f3973ed1d03b15aed23760e0",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; loading, progress",
-    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering."
+    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Tapfix5b source review: opener focus, text-only status or startup theme changed; this exact action and its guard are unchanged."
   },
   {
     "id": "8079fdc60f2680f965df",
     "kind": "destructive",
     "path": "ui/src/desktop/RemotePhone.tsx",
-    "line": 520,
+    "line": 525,
     "statement": "for (const [id, at] of handled) if (now - at > 60_000) handled.delete(id);",
     "occurrence": 1,
-    "source_sha256": "b159259c93e7122e71a4655d36622380ef1d162a90e95b092b8eb5c19fb56aa9",
+    "source_sha256": "e3a39fc5c00ea23ab3cbfe5ec39f7043d8f2bad5f3973ed1d03b15aed23760e0",
     "disposition": "internal",
     "guard": "In-memory collection entry lifecycle",
-    "reason": "The statement releases a listener, request, UI row, selection or cache entry; it does not delete its persisted source."
+    "reason": "The statement releases a listener, request, UI row, selection or cache entry; it does not delete its persisted source. Tapfix5b source review: opener focus, text-only status or startup theme changed; this exact action and its guard are unchanged."
   },
   {
     "id": "e25cc07f5037ce9d5e74",
     "kind": "pending",
     "path": "ui/src/desktop/RemotePhone.tsx",
-    "line": 523,
+    "line": 528,
     "statement": "const done = queue.then(async () => {",
     "occurrence": 1,
-    "source_sha256": "b159259c93e7122e71a4655d36622380ef1d162a90e95b092b8eb5c19fb56aa9",
+    "source_sha256": "e3a39fc5c00ea23ab3cbfe5ec39f7043d8f2bad5f3973ed1d03b15aed23760e0",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; loading, progress",
-    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering."
+    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Tapfix5b source review: opener focus, text-only status or startup theme changed; this exact action and its guard are unchanged."
   },
   {
     "id": "b042eba94c2b5cdf68c3",
     "kind": "pending",
     "path": "ui/src/desktop/RemotePhone.tsx",
-    "line": 550,
+    "line": 555,
     "statement": "const reportRef = useRef<(wait: number) => Promise<unknown>>(async () => undefined);",
     "occurrence": 1,
-    "source_sha256": "b159259c93e7122e71a4655d36622380ef1d162a90e95b092b8eb5c19fb56aa9",
+    "source_sha256": "e3a39fc5c00ea23ab3cbfe5ec39f7043d8f2bad5f3973ed1d03b15aed23760e0",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; loading, progress",
-    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering."
+    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Tapfix5b source review: opener focus, text-only status or startup theme changed; this exact action and its guard are unchanged."
   },
   {
     "id": "55c7987a8d6a735a4b3d",
     "kind": "pending",
     "path": "ui/src/desktop/RemotePhone.tsx",
-    "line": 577,
+    "line": 582,
     "statement": "const report = async (wait: number) => {",
     "occurrence": 1,
-    "source_sha256": "b159259c93e7122e71a4655d36622380ef1d162a90e95b092b8eb5c19fb56aa9",
+    "source_sha256": "e3a39fc5c00ea23ab3cbfe5ec39f7043d8f2bad5f3973ed1d03b15aed23760e0",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; loading, progress",
-    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering."
+    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Tapfix5b source review: opener focus, text-only status or startup theme changed; this exact action and its guard are unchanged."
   },
   {
     "id": "528373c50a0d3b61b73b",
     "kind": "pending",
     "path": "ui/src/desktop/RemotePhone.tsx",
-    "line": 583,
+    "line": 588,
     "statement": "const apply = async (command: RemoteCommand): Promise<string | null> => {",
     "occurrence": 1,
-    "source_sha256": "b159259c93e7122e71a4655d36622380ef1d162a90e95b092b8eb5c19fb56aa9",
+    "source_sha256": "e3a39fc5c00ea23ab3cbfe5ec39f7043d8f2bad5f3973ed1d03b15aed23760e0",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; loading, progress",
-    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering."
+    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Tapfix5b source review: opener focus, text-only status or startup theme changed; this exact action and its guard are unchanged."
   },
   {
     "id": "46db76cf80a9c99f6a4c",
     "kind": "pending",
     "path": "ui/src/desktop/RemotePhone.tsx",
-    "line": 627,
+    "line": 632,
     "statement": "const handle = async (commands: (RemoteCommand & { id: string })[]) => {",
     "occurrence": 1,
-    "source_sha256": "b159259c93e7122e71a4655d36622380ef1d162a90e95b092b8eb5c19fb56aa9",
+    "source_sha256": "e3a39fc5c00ea23ab3cbfe5ec39f7043d8f2bad5f3973ed1d03b15aed23760e0",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; loading, progress",
-    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering."
+    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Tapfix5b source review: opener focus, text-only status or startup theme changed; this exact action and its guard are unchanged."
   },
   {
     "id": "1c9e91c4fab81006d93a",
     "kind": "pending",
     "path": "ui/src/desktop/RemotePhone.tsx",
-    "line": 631,
+    "line": 636,
     "statement": "void (async () => {",
     "occurrence": 1,
-    "source_sha256": "b159259c93e7122e71a4655d36622380ef1d162a90e95b092b8eb5c19fb56aa9",
+    "source_sha256": "e3a39fc5c00ea23ab3cbfe5ec39f7043d8f2bad5f3973ed1d03b15aed23760e0",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; loading, progress",
-    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering."
+    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Tapfix5b source review: opener focus, text-only status or startup theme changed; this exact action and its guard are unchanged."
   },
   {
     "id": "39f812e312b64e5e45e3",
@@ -1246,18 +1246,6 @@
     "disposition": "internal",
     "guard": "In-memory collection entry lifecycle",
     "reason": "The statement releases a listener, request, UI row, selection or cache entry; it does not delete its persisted source."
-  },
-  {
-    "id": "7901dfe8e0339c741ce5",
-    "kind": "pending",
-    "path": "ui/src/listen/EditBook.tsx",
-    "line": 67,
-    "statement": "export async function saveAuthor(bookId: string, author: string): Promise<string> {",
-    "occurrence": 1,
-    "source_sha256": "0c60e67a19b9871c0ab85fd4dfbea0b8761d876b49f73b869fa8d9e569c9406f",
-    "disposition": "internal",
-    "guard": "Async interface/helper boundary; concrete activation inventoried separately",
-    "reason": "This signature supplies work to a model or component; declaring it starts no user operation. Combined-source review (merge174 lintfix): both sides' changes to this file keep this statement and its guard unchanged. Re-pinned for left174: the edit only moves book/user text off truncate/line-clamp onto OneLineFit or wrapping; this statement and its guard are unchanged. Combined-source review (merge174 left174): both sides' changes to this file keep this statement and its guard unchanged."
   },
   {
     "id": "ba51e141b1ceb781f2d5",
@@ -3060,18 +3048,6 @@
     "reason": "The action releases an object URL or cached discovery/failure/request state, not a saved artifact or credential."
   },
   {
-    "id": "8a76257707c70fd5b46d",
-    "kind": "destructive",
-    "path": "ui/src/music/MusicScreen.tsx",
-    "line": 328,
-    "statement": "description: S.s_delete_download_description(title, formatSize(track.bytes ?? 0)), run: () => unsave.mutateAsync([track.link])})} />",
-    "occurrence": 1,
-    "source_sha256": "ab3ab8325ac298784cff5a313ef705ff227151b049f091a8af2534f9fd1d8506",
-    "disposition": "confirmation",
-    "guard": "DownloadControl / TrackRow / TrackSheet DestructiveConfirm; cancel incomplete transfer is exempt",
-    "reason": "Complete music download removal is confirmed with track title and size. Cancelling an unfinished download discards partial bytes immediately. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Gate repair: reviewed identity-key motion, explicit layout, token spacing or semantic navigation changes; existing guard retained."
-  },
-  {
     "id": "8461b0dc9cda345bf15e",
     "kind": "destructive",
     "path": "ui/src/music/preview.ts",
@@ -4858,18 +4834,6 @@
     "disposition": "pending",
     "guard": "ViewModel/operation fields: busy, progress; Components pending indicator",
     "reason": "The model retains the operation and locks repeats; UI uses the shared pending parameter, loading content or progress owner."
-  },
-  {
-    "id": "d63536b427222cd3b5dd",
-    "kind": "destructive",
-    "path": "mobile/android/app/src/main/java/vn/abook/player/ui/addbook/ImportQueue.kt",
-    "line": 158,
-    "statement": "ref?.let { source.discard(it) }",
-    "occurrence": 1,
-    "source_sha256": "64a5ecd815484a93ef28c880ee5c567f323813b1b9d9a2791162f4039ea32a8c",
-    "disposition": "internal",
-    "guard": "ImportQueue staging / new-project selected-files and volume-boundary draft",
-    "reason": "Deselecting input or cancelling staging retains the original user files and existing projects; the draft can be reselected."
   },
   {
     "id": "a245f2bf6da9d03d70c7",
@@ -10198,18 +10162,6 @@
     "disposition": "internal",
     "guard": "Temporary DOM/audio/image lifecycle or string/UI bookkeeping",
     "reason": "Only a transient node, source attribute, cache image, listener, collection entry or display text is affected. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard."
-  },
-  {
-    "id": "43bff5ff64630114ee28",
-    "kind": "destructive",
-    "path": "mobile/android/app/src/main/java/vn/abook/player/ui/music/library/TrackRow.kt",
-    "line": 111,
-    "statement": "{ state.forget(track.link) }, pending = pending, problem = ui.actionError)",
-    "occurrence": 1,
-    "source_sha256": "3d3fc5577f9004c6039f5095d62c4e80453af45e05197f22e09d4335e7a0b637",
-    "disposition": "confirmation",
-    "guard": "DownloadControl / TrackRow / TrackSheet DestructiveConfirm; cancel incomplete transfer is exempt",
-    "reason": "Complete music download removal is confirmed with track title and size. Cancelling an unfinished download discards partial bytes immediately. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Gate repair: reviewed identity-key motion, explicit layout, token spacing or semantic navigation changes; existing guard retained."
   },
   {
     "id": "acdce9447837d66fe3d1",
@@ -15888,18 +15840,6 @@
     "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads. Combined-source review (merge174 lintfix): both sides' changes to this file keep this statement and its guard unchanged. Combined-source review: floating layers now swallow taps (tapthru: preview bar opens its track, TapShield / floatingLayer); this action and its guard are unchanged. Combined-source review (merge174 tapthru): both sides' changes to this file keep this statement and its guard unchanged. Combined-source review (merge174 integ173): both sides' changes to this file keep this statement and its guard unchanged."
   },
   {
-    "id": "9e8eb9cacd8e40789546",
-    "kind": "destructive",
-    "path": "desktop_qt/qml/MusicScreen.qml",
-    "line": 217,
-    "statement": "onDeleteDownload: root.unsave([modelData.link])",
-    "occurrence": 1,
-    "source_sha256": "83fcd560785a97940f5e94e140ee49a180c368395b05aa99efcc8d508f535e06",
-    "disposition": "confirmation",
-    "guard": "DownloadControl / TrackRow / TrackSheet DestructiveConfirm; cancel incomplete transfer is exempt",
-    "reason": "Complete music download removal is confirmed with track title and size. Cancelling an unfinished download discards partial bytes immediately."
-  },
-  {
     "id": "c4ccff7e968500ed6810",
     "kind": "destructive",
     "path": "desktop_qt/qml/MusicScreen.qml",
@@ -15946,30 +15886,6 @@
     "disposition": "confirmation",
     "guard": "DownloadControl / TrackRow / TrackSheet DestructiveConfirm; cancel incomplete transfer is exempt",
     "reason": "Complete music download removal is confirmed with track title and size. Cancelling an unfinished download discards partial bytes immediately. Combined-source review: the download button gained tabular digits (check_ticks T4); this action and its guard are unchanged."
-  },
-  {
-    "id": "4b19453ac0e453cd5b89",
-    "kind": "destructive",
-    "path": "desktop_qt/qml/MusicTrackRow.qml",
-    "line": 25,
-    "statement": "signal deleteDownload()",
-    "occurrence": 1,
-    "source_sha256": "a6de489ee92b96deac7f790f2c07290d031430bb758ea5d2122195d3a6e7af56",
-    "disposition": "internal",
-    "guard": "Declaration; the invoked call site is independently inventoried",
-    "reason": "A declaration/signature is not an executing UI action."
-  },
-  {
-    "id": "b5de8a356f266f7504cd",
-    "kind": "destructive",
-    "path": "desktop_qt/qml/MusicTrackRow.qml",
-    "line": 132,
-    "statement": "onAccepted: root.deleteDownload()",
-    "occurrence": 1,
-    "source_sha256": "a6de489ee92b96deac7f790f2c07290d031430bb758ea5d2122195d3a6e7af56",
-    "disposition": "confirmation",
-    "guard": "DownloadControl / TrackRow / TrackSheet DestructiveConfirm; cancel incomplete transfer is exempt",
-    "reason": "Complete music download removal is confirmed with track title and size. Cancelling an unfinished download discards partial bytes immediately."
   },
   {
     "id": "c9bb0977a48049c0a5d1",
@@ -16812,18 +16728,6 @@
     "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads. Combined-source review (fix174b): both sides' changes to this file keep this statement and its guard unchanged."
   },
   {
-    "id": "8e77e82a57d6aea8c5f9",
-    "kind": "pending",
-    "path": "desktop_qt/qml/SettingsVoice.qml",
-    "line": 81,
-    "statement": "Api.quiet(\"POST\", \"/api/readaloud/clip\", {voice: id, text: VoiceLogic.SAMPLE_TEXT}, function(data, error) {",
-    "occurrence": 1,
-    "source_sha256": "caed6ef88d216c9decc59e66579c258a4df6a2c2b1d6549f5b537f69f782a52f",
-    "disposition": "pending",
-    "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; loading",
-    "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads."
-  },
-  {
     "id": "611d0a897cfa327d7e69",
     "kind": "destructive",
     "path": "desktop_qt/qml/SidebarProgress.qml",
@@ -17290,18 +17194,6 @@
     "disposition": "pending",
     "guard": "VoiceSample turn token drops late replies; loading/playing/failedVoice state shown on each VoiceRow; stopSample on popover close and destruction",
     "reason": "Moved verbatim from SettingsVoice.qml so Settings and the player voice popover share one preview owner. Each press starts a new turn; stale replies are ignored and failures are shown on the row."
-  },
-  {
-    "id": "d26e2ef2f91ce112668d",
-    "kind": "destructive",
-    "path": "ui/src/listen/MyMusic.tsx",
-    "line": 169,
-    "statement": "onClick={() => deletion.confirm({ title: S.s_xoa_bai_nay_412d7001, description: S.s_0_se_bi_xoa_khoi_nhac_cua_toi_a41656b0(track.title), run: () => remove.mutateAsync(track.link) })}>{S.s_xoa_777195ab}</Button>}",
-    "occurrence": 1,
-    "source_sha256": "90c3ad78a0615afb6a62b51e156968d2e253e524a8911335b92e5c2836c69097",
-    "disposition": "confirmation",
-    "guard": "MyMusic useDestructiveConfirm / MyMusicTrack removeConfirm / VoiceSheets TrackSheet",
-    "reason": "The local imported music file is removed only after the shared confirmation."
   },
   {
     "id": "ea80ba34c4ae38dba126",

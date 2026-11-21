@@ -243,10 +243,11 @@ object ListenLogic {
 
     // ---- dòng trạng thái ---------------------------------------------------------------------------------
 
-    /** Dòng trạng thái của một cuốn (androidSource-side `progressText`), không kèm dấu nguồn. */
-    fun progressText(book: ListenBook, includeAuthor: Boolean = true): String {
+    /** Dòng trạng thái của một cuốn (androidSource-side `progressText`), không kèm dấu nguồn. Như Qt BookLogic.progressText: thẻ sách
+     *  (includeAuthor false) chỉ số chương; dòng gọn khác nói tác giả, không có tác giả mà máy không có giọng đọc thì "Chỉ có chữ". */
+    fun progressText(book: ListenBook, includeAuthor: Boolean = true, speaks: Boolean = true): String {
         if (book.textOnly) {
-            val lead = if (includeAuthor) book.author.trim() else ""
+            val lead = if (includeAuthor) book.author.trim().ifEmpty { if (speaks) "" else S.s_chi_co_chu_bf879f2c } else ""
             return (if (lead.isNotEmpty()) "$lead · " else "") + S.s_0_chuong_04093412(book.chaptersTotal)
         }
         val chapters = S.s_0_1_chuong_8d58e1df(book.chaptersAvailable, book.chaptersTotal)

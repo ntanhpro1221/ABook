@@ -10,7 +10,6 @@ WindowLayer {
     property Item anchorItem: null
     property real shown: open ? 1 : 0
     visible: shown > 0
-    z: 50
 
     Behavior on shown {
         NumberAnimation {

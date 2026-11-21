@@ -15,6 +15,9 @@ vi.mock("@/studio/api", async (load) => ({ ...await load<typeof import("@/studio
 let root: ReturnType<typeof createRoot>;
 let animate: ReturnType<typeof vi.spyOn>;
 beforeEach(() => {
+  // Assert the transition's initial frame without letting CPU load expire its
+  // old-content snapshot while React flushes the portal update.
+  vi.useFakeTimers();
   (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
   h.players = []; h.phones = [];
   Object.defineProperty(CSSStyleDeclaration.prototype, Symbol.iterator, { configurable: true, value: function* (this: CSSStyleDeclaration) { for (let index = 0; index < this.length; index++) yield this.item(index); } });
@@ -23,7 +26,7 @@ beforeEach(() => {
   vi.spyOn(HTMLElement.prototype, "getBoundingClientRect").mockReturnValue({ x: 0, y: 0, top: 0, left: 0, right: 240, bottom: 80, width: 240, height: 80, toJSON() {} });
   const style = document.createElement("style"); style.textContent = '[role="menu"] { z-index: 50; }'; document.head.append(style);
 });
-afterEach(async () => { await act(() => root.unmount()); document.body.replaceChildren(); document.head.replaceChildren(); vi.restoreAllMocks(); });
+afterEach(async () => { await act(() => root.unmount()); vi.clearAllTimers(); vi.useRealTimers(); document.body.replaceChildren(); document.head.replaceChildren(); vi.restoreAllMocks(); });
 
 it.each(["desktop", "bluetooth"])("V4 %s: kết quả đổi bên trong Portal, ảnh cũ trên menu và inert", async (kind) => {
   let devices: { address: string; name: string; kind: "computer" | "phone"; services: ("release" | "dev")[] }[] = [];
