@@ -38,8 +38,9 @@ Item {
                 qtAnimationClock.step(16)
                 waitForRendering(host)
                 // The first animation tick may still be at shown 0: nothing paints then.
-                compare(panel.composition.layer.enabled, panel.visible, "surface and shadow must fade as one group")
-                if (!panel.visible) continue
+                // Đang mờ dần thì mặt + bóng là một lớp; hiện hẳn trên bộ vẽ phần mềm thì vẽ thẳng (FloatingPanel: tránh khung đen).
+                if (!panel.visible) { compare(panel.composition.layer.enabled, false, "a surface not painted yet keeps no layer"); continue }
+                if (panel.opacity < 1) verify(panel.composition.layer.enabled, "surface and shadow must fade as one group")
                 const shadow = panel.surfaceData.find(child => child.source !== undefined && String(child.source).indexOf("image://shadow/") === 0)
                 verify(shadow !== undefined)
                 const p = panel.mapToItem(host, 0, 0)
@@ -66,7 +67,8 @@ Item {
                 qtAnimationClock.step(16)
             }
             verify(panel.visible)
-            verify(panel.composition.layer.enabled, "reopening restores group composition before painting")
+            verify(panel.composition.layer.enabled || (panel.GraphicsInfo.api === GraphicsInfo.Software && panel.opacity >= 1),
+                   "reopening restores group composition before painting")
         }
     }
 }

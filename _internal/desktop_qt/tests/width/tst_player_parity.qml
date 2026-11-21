@@ -103,6 +103,9 @@ Item {
             compare(Player.lastSleepKind, "chapter"); compare(Player.lastSleepChapters, 2); compare(Player.lastSleepMinutes, 45)
             Player.setSleep("minutes", 1); WidthNet.advance(70)
             verify(Player.sleepStoppedText !== "")
+            // Tự dừng vẫn giữ lựa chọn (0.4.173 B8); "Bật lại" chỉ hiện khi đã tắt hẳn - như web sleepRestartOffered.
+            compare(Player.sleepKind, "minutes")
+            Player.setSleep("off", 0)
             menu.show(); tryCompare(menu, "open", true); ready()
             compare(findChild(menu, "sleepRestart").text, "Bật lại 1\u00a0phút")
             Player.lastSleepSaved() // (Main.qml: lần lưu đã về)
