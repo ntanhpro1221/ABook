@@ -171,7 +171,7 @@ object BookFileImport {
             }
         }
         check(book, BOOK_FIELDS)
-        try { BookMetadata.select(book) } catch (error: IllegalArgumentException) { throw Refused(error.message.orEmpty()) }
+        try { BookMetadata.select(book) } catch (error: IllegalArgumentException) { throw Refused(UserText.of(error, S.s_file_sach_hong_hoac_khong_doc_duoc_ban_xin_80b98983)) }
         book.optJSONArray("chapters")?.let { for (index in 0 until it.length()) check(it.opt(index), CHAPTER_FIELDS) }
         book.optJSONArray("parts")?.let { for (index in 0 until it.length()) check(it.opt(index), PART_FIELDS) }
     }

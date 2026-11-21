@@ -282,7 +282,7 @@ object BookEdits {
             val metadata = BookMetadata.select(raw)
             for (key in metadata.keys()) out.put(key, metadata.get(key))
             if (raw.has("author") && !isClean(raw.getString("author"), AUTHOR_MAX)) throw EditsError(S.s_tac_gia_trong_phan_sua_khong_hop_le_1ecaa99c)
-        } catch (error: IllegalArgumentException) { throw EditsError(error.message.orEmpty()) }
+        } catch (error: IllegalArgumentException) { throw EditsError(UserText.of(error, S.s_chua_luu_duoc_phan_sua_sach_cua_ban_8e2cc552)) }
         if (raw.has("cover")) out.put("cover", validateCover(raw.opt("cover")))
         if (raw.has("characters")) {
             val people = raw.opt("characters")

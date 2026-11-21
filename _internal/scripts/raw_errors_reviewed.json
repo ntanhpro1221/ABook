@@ -78,5 +78,10 @@
     "file": "vieneu/VieneuUnits.kt",
     "line": "if (\"$earlier $before\".lowercase() in NUMBERED_PAIRS) return true",
     "reason": "False match: `earlier` here is a word of the sentence being read aloud, not a Throwable."
+  },
+  {
+    "file": "ImportJobs.kt",
+    "line": "return if (problem == null) Pick(listOf(file.canonicalFile), emptyList()) else Pick(emptyList(), listOf(\"$path: $problem\"))",
+    "reason": "False match: `problem` is the String from ImportInbox.refusal, an English reply for the adb broadcast caller, not a Throwable."
   }
 ]

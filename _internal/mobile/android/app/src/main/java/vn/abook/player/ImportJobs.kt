@@ -91,7 +91,7 @@ class ImportJobs(private val now: () -> Long = { System.nanoTime() / 1_000_000 }
         } catch (stopped: ImportStopped) {
             throw stopped
         } catch (error: Exception) {
-            fail(job.id, error.message?.takeIf { it.isNotBlank() } ?: error.javaClass.simpleName)
+            fail(job.id, UserText.of(error, S.s_chua_them_duoc_sach_a46be70d))
         }
         return flow.value.getValue(job.id)
     }
