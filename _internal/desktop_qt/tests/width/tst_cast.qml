@@ -593,11 +593,14 @@ Item {
                 })
             }
             tryVerify(function() { return photos.filter(p => p.status === Image.Ready && p.opacity === 1).length === 2 }, 3000, "ảnh hiện hết")
-            const shown = centres(grabImage(target))
             for (const p of photos) p.visible = false
             const hidden = centres(grabImage(target))
             for (const p of photos) p.visible = true
-            for (let i = 0; i < 2; i++) verify(!Qt.colorEqual(shown[i], hidden[i]), "ảnh chân dung " + i + " phải được vẽ (" + shown[i] + ")")
+            // RoundedImage's Canvas reloads the decoded photo into its own cache and paints it on a later frame: wait for
+            // those pixels (bounded), rather than grabbing the frame right after Image.Ready.
+            let shown = hidden
+            tryVerify(function() { shown = centres(grabImage(target)); return [0, 1].every(i => !Qt.colorEqual(shown[i], hidden[i])) }, 5000,
+                      "ảnh chân dung phải được vẽ (" + shown + ")")
             const letter = all(portraits[2], "").filter(item => typeof item.text === "string" && item.text.length > 0)[0]
             verify(letter !== undefined, "chữ cái dự phòng của giọng không ảnh")
             verify(letter.font.pixelSize >= 9.5, "chữ dự phòng " + letter.font.pixelSize + " px")

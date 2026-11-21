@@ -691,6 +691,11 @@ struct MusicMixer::Impl {
         { std::unique_lock<std::mutex> wait(waitMutex); mixCv.wait(wait, [this] { return initialized; }); }
         readerThread = std::thread([this] {
             SetThreadDescription(GetCurrentThread(), L"ABook audio decode");
+            // MMCSS at low priority within the task: a starved decode thread leaves a streaming voice without PCM (silence
+            // written mid-sentence) and holds a starting voice past its responsive lead, whatever else keeps the cores busy.
+            DWORD mmcssTask = 0;
+            const HANDLE mmcss = AvSetMmThreadCharacteristicsW(L"Audio", &mmcssTask);
+            if (mmcss) AvSetMmThreadPriority(mmcss, AVRT_PRIORITY_LOW);
             quint64 wakes = 0;
             const bool traceWakes = qEnvironmentVariableIntValue("ABOOK_AUDIO_TRACE");
             auto traceAt = Clock::now();
@@ -709,6 +714,7 @@ struct MusicMixer::Impl {
             }
             wait.unlock();
             MfSource::endThread();
+            if (mmcss) AvRevertMmThreadCharacteristics(mmcss);
         });
     }
 };
