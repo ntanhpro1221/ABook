@@ -225,8 +225,9 @@ fun RollingLabel(
 fun marqueeLine(style: TextStyle): @Composable (String) -> Unit = { MarqueeLine(it, style = style) }
 
 /** Cách vẽ của [RollingLabel] cho tên XUỐNG DÒNG ở cỡ gốc trong ô cao sẵn [lines] dòng (tên chương màn Đang nghe - DESIGN 5.5; web h2[data-np=chapter]
- * min-h-[2lh], Qt nowChapterTitle): tên ngắn hơn không làm khối thấp đi, tên dài hơn làm ô cao thêm - không "…", không chạy chữ. */
-fun wrapLines(style: TextStyle, lines: Int = 2): @Composable (String) -> Unit = { BasicText(it, style = style, minLines = lines) }
+ * min-h-[2lh], Qt nowChapterTitle): tên ngắn hơn không làm khối thấp đi, tên dài hơn làm ô cao thêm - không "…", không chạy chữ.
+ * Ô chiếm hết bề ngang (như h2 khối của web, Text width của Qt): khung ô không co giãn theo độ dài tên. */
+fun wrapLines(style: TextStyle, lines: Int = 2): @Composable (String) -> Unit = { BasicText(it, Modifier.fillMaxWidth(), style = style, minLines = lines) }
 
 /** Two four-point contours interpolate triangle -> pause bars. Path objects are reused in draw. */
 @Composable
