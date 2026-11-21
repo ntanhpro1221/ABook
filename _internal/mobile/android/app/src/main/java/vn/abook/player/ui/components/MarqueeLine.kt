@@ -30,6 +30,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.animation.core.withInfiniteAnimationFrameMillis
 import kotlinx.coroutines.delay
+import vn.abook.player.ui.motion.SwapContent
 import vn.abook.player.ui.motion.rememberReducedMotion
 import vn.abook.player.ui.theme.MotionMs
 import kotlin.math.floor
@@ -53,6 +54,9 @@ fun marqueeFit(room: Int, baseSp: Float, measure: (Float) -> Int): Pair<MarqueeF
 }
 
 private const val STEP = 0.5f
+
+/** Một trạng thái vẽ của [MarqueeLine] (giữ nguyên cho khối đang mờ đi). */
+private data class MarqueeShape(val text: String, val fit: MarqueeFit, val style: TextStyle)
 
 /** Original design size, before fitting the title to its fixed line. */
 val MarqueeBaseSize = SemanticsPropertyKey<Float>("marquee_base_size")
@@ -80,12 +84,16 @@ fun MarqueeLine(text: String, modifier: Modifier = Modifier, style: TextStyle, t
         val lineHeight = remember(text, style, density, measurer) { measurer.measure(text, style, softWrap = false).size.height }
         val shown = style.copy(fontSize = size.sp, lineHeight = style.lineHeight)
         val boxHeight = with(density) { lineHeight.toDp() }
-        if (fit != MarqueeFit.Scroll) {
-            Box(Modifier.fillMaxWidth().height(boxHeight), contentAlignment = Alignment.CenterStart) {
-                BasicText(text, Modifier.fillMaxWidth().semantics { this[MarqueeBaseSize] = baseSp }, shown.copy(textAlign = textAlign), softWrap = false)
+        // Đứng yên (vừa / thu cỡ) <-> chạy chữ: hai cách vẽ mờ chéo qua nhau (SwapContent), không bật cứng khi tên dài ra hay khung hẹp lại.
+        // Khối đang đi ra giữ chính chữ, cỡ của nó (MarqueeShape) tới hết nhịp.
+        SwapContent(MarqueeShape(text, fit, shown), contentKey = { s -> s.fit == MarqueeFit.Scroll }, modifier = Modifier.fillMaxWidth()) { s ->
+            if (s.fit == MarqueeFit.Scroll) {
+                MarqueeScroll(s.text, s.style, baseSp, room, boxHeight, reduced)
+            } else {
+                Box(Modifier.fillMaxWidth().height(boxHeight), contentAlignment = Alignment.CenterStart) {
+                    BasicText(s.text, Modifier.fillMaxWidth().semantics { this[MarqueeBaseSize] = baseSp }, s.style.copy(textAlign = textAlign), softWrap = false)
+                }
             }
-        } else {
-            MarqueeScroll(text, shown, baseSp, room, boxHeight, reduced)
         }
     }
 }
@@ -118,10 +126,10 @@ private fun MarqueeScroll(text: String, shown: TextStyle, baseSp: Float, room: I
     Box(Modifier.fillMaxWidth().height(boxHeight).clipToBounds(), contentAlignment = Alignment.CenterStart) {
         Row(Modifier.wrapContentWidth(Alignment.Start, unbounded = true).graphicsLayer { translationX = -offset.value }, verticalAlignment = Alignment.CenterVertically) {
             BasicText(text, Modifier.semantics { this[MarqueeBaseSize] = baseSp }, style = shown, softWrap = false)
-            if (!reduced) {
-                Spacer(Modifier.width(with(density) { gap.toDp() }))
-                BasicText(text, Modifier.clearAndSetSemantics {}, style = shown, softWrap = false)
-            }
+            // Bản chép thứ hai luôn có trên dải (không bật / tắt theo giảm chuyển động): lúc giảm chuyển động dải chỉ nhảy tới cuối tên
+            // (độ dời tối đa textWidth - room), bản chép nằm từ room + gap trở đi - luôn ngoài khung cắt, không bao giờ lộ.
+            Spacer(Modifier.width(with(density) { gap.toDp() }))
+            BasicText(text, Modifier.clearAndSetSemantics {}, style = shown, softWrap = false)
         }
     }
 }

@@ -177,10 +177,14 @@ Item {
             verify(message.implicitHeight > message.font.pixelSize * 2); verify(message.width <= alert.width); compare(message.truncated, false)
             const now = createTemporaryObject(nowComponent, host, {width: data.pixels - 232, height: 1000})
             now.show(); tryCompare(now, "open", true); ready()
-            // Tên chương / tên sách trên thanh phát và màn Đang nghe: MỘT dòng cố định (MarqueeLine) - tên dài thu cỡ rồi chạy chữ, không xuống dòng, không "…"
-            for (const text of [findChild(bar, "barChapterTitle"), findChild(now, "playerSubtitleText"), findChild(now, "nowChapterTitle")]) {
+            // Thanh phát + dòng tên sách: MỘT dòng cố định (MarqueeLine) - tên dài thu cỡ rồi chạy chữ, không xuống dòng, không "…"
+            for (const text of [findChild(bar, "barChapterTitle"), findChild(now, "playerSubtitleText")]) {
                 verify(text.width > 0); compare(text.fit, "scroll"); verify(text.height < text.baseSize * 2); compare(text.height, text.implicitHeight)
             }
+            // Tên chương màn Đang nghe: XUỐNG DÒNG ở cỡ gốc (DESIGN 5.5, như web h2[data-np=chapter]) - đủ chữ, không "…", ô cao theo chữ
+            const nowChapter = findChild(now, "nowChapterTitle")
+            verify(nowChapter.width > 0); compare(nowChapter.font.pixelSize, Theme.sizeSection); compare(nowChapter.truncated, false)
+            verify(nowChapter.lineCount >= 2); compare(nowChapter.height, nowChapter.implicitHeight); verify(nowChapter.paintedWidth <= nowChapter.width)
             const scroll = findChild(now, "nowColumnScroll")
             verify(scroll.contentHeight >= scroll.height)
             scroll.contentY = scroll.contentHeight - scroll.height

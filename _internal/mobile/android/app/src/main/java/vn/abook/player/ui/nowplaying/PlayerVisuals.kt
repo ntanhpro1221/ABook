@@ -179,10 +179,17 @@ private class Roll(first: String) {
  * Every label replacement travels vertically through a clipped aperture (chữ mới trồi từ dưới 220 ms, chữ cũ đi lên 150 ms, khung đổi cỡ theo). No default cross-fades.
  * Không dùng AnimatedContent: mỗi nhãn tĩnh của Đang nghe (tên chương, tên sách, giờ, nhãn nút...) mang một AnimatedContent, ~0,8 ms dựng lần đầu mỗi cái trong trace
  * Perfetto (NATIVE_POLISH) và cả chục cái cùng lúc ở khung đầu của cửa sổ. Ở đây lúc đứng yên chỉ là một BasicText; hai chữ chỉ có trong lúc chạy,
- * toạ độ đọc trong pha dàn trang. `oneLine`: tên trong ô một dòng cố định ([MarqueeLine]: thu cỡ rồi chạy chữ) - khối tên không cao thêm, bìa và nút không dời.
+ * toạ độ đọc trong pha dàn trang. [line] vẽ MỘT bản chữ (chữ đang hiện và chữ đang đi ra dùng cùng cách vẽ, cố định theo chỗ gọi - không có nhánh nào đổi qua lại
+ * lúc chạy): mặc định chữ xuống dòng; [marqueeLine] cho ô một dòng cố định (thu cỡ rồi chạy chữ); [wrapLines] cho tên xuống dòng trong ô cao sẵn N dòng
+ * (tên chương màn Đang nghe, DESIGN 5.5) - khối tên không cao thêm khi tên một hay hai dòng, bìa và nút không dời.
  */
 @Composable
-fun RollingLabel(text: String, modifier: Modifier = Modifier, style: TextStyle = Abook.type.body, oneLine: Boolean = false) {
+fun RollingLabel(
+    text: String,
+    modifier: Modifier = Modifier,
+    style: TextStyle = Abook.type.body,
+    line: @Composable (String) -> Unit = { BasicText(it, style = style) },
+) {
     val roll = remember { Roll(text) }
     LaunchedEffect(text) {
         if (roll.shown == text) return@LaunchedEffect
@@ -194,8 +201,8 @@ fun RollingLabel(text: String, modifier: Modifier = Modifier, style: TextStyle =
     }
     Layout(
         content = {
-            if (oneLine) MarqueeLine(roll.shown, style = style) else BasicText(roll.shown, style = style)
-            roll.leaving?.let { if (oneLine) MarqueeLine(it, style = style) else BasicText(it, style = style) }
+            line(roll.shown)
+            roll.leaving?.let { line(it) }
         },
         modifier = modifier.clipToBounds(),
     ) { measurables, constraints ->
@@ -213,6 +220,14 @@ fun RollingLabel(text: String, modifier: Modifier = Modifier, style: TextStyle =
         }
     }
 }
+
+/** Cách vẽ của [RollingLabel] cho ô MỘT DÒNG cố định ([MarqueeLine]: thu cỡ rồi chạy chữ - thanh phát, dòng tên sách). */
+fun marqueeLine(style: TextStyle): @Composable (String) -> Unit = { MarqueeLine(it, style = style) }
+
+/** Cách vẽ của [RollingLabel] cho tên XUỐNG DÒNG ở cỡ gốc trong ô cao sẵn [lines] dòng (tên chương màn Đang nghe - DESIGN 5.5; web h2[data-np=chapter]
+ * min-h-[2lh], Qt nowChapterTitle): tên ngắn hơn không làm khối thấp đi, tên dài hơn làm ô cao thêm - không "…", không chạy chữ.
+ * Ô chiếm hết bề ngang (như h2 khối của web, Text width của Qt): khung ô không co giãn theo độ dài tên. */
+fun wrapLines(style: TextStyle, lines: Int = 2): @Composable (String) -> Unit = { BasicText(it, Modifier.fillMaxWidth(), style = style, minLines = lines) }
 
 /** Two four-point contours interpolate triangle -> pause bars. Path objects are reused in draw. */
 @Composable

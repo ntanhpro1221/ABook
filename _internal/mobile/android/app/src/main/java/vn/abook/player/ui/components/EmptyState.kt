@@ -20,6 +20,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import vn.abook.player.ui.motion.SwapContent
 import vn.abook.player.ui.theme.Abook
 import vn.abook.player.ui.theme.Dim
 
@@ -53,13 +54,23 @@ fun EmptyState(
         }
         Spacer(Modifier.height(Dim.s16))
         BasicText(title, style = Abook.type.bodyStrong.copy(textAlign = TextAlign.Center))
-        if (!text.isNullOrEmpty()) {
-            Spacer(Modifier.height(Dim.s8))
-            BasicText(text, Modifier.widthIn(max = 448.dp), style = Abook.type.bodySmall.copy(textAlign = TextAlign.Center))
+        // Lời và việc theo THAM SỐ của chỗ gọi: tham số đổi (có lời <-> không lời, có nút <-> không nút) thì khối mới mờ vào trên khối cũ, không bật cứng.
+        // SwapContent giữ chính giá trị cũ cho khối đang đi ra (lời cũ, nút cũ) tới hết nhịp.
+        SwapContent(text, contentKey = { text -> !text.isNullOrEmpty() }) { text ->
+            if (!text.isNullOrEmpty()) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Spacer(Modifier.height(Dim.s8))
+                    BasicText(text, Modifier.widthIn(max = 448.dp), style = Abook.type.bodySmall.copy(textAlign = TextAlign.Center))
+                }
+            }
         }
-        if (actions != null) {
-            Spacer(Modifier.height(Dim.s24))
-            actions()
+        SwapContent(actions, contentKey = { actions -> actions != null }) { actions ->
+            if (actions != null) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Spacer(Modifier.height(Dim.s24))
+                    actions()
+                }
+            }
         }
     }
 }

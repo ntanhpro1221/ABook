@@ -55,6 +55,7 @@ Item {
             fromColor: from.color, toColor: to.color,
             fromAlign: from.horizontalAlignment, toAlign: to.horizontalAlignment,
             fromInk: from.paintedWidth,
+            wrap: to.wrapMode !== undefined && to.wrapMode !== Text.NoWrap,
             text: to.text}
     }
 
@@ -279,16 +280,23 @@ Item {
                     y: root.displayedTitlesY - root.topH
                     width: root.colW
                     spacing: 4
-                    // Tên chương MỘT dòng cố định (MarqueeLine): thu cỡ rồi chạy chữ - bìa, thanh tua, nút phát không dời theo tên dài ngắn
-                    MarqueeLine {
+                    // Tên chương XUỐNG DÒNG ở cỡ gốc, không chạy chữ, không "…" (DESIGN.md 5.5 "Tên chương màn Đang nghe"; web PlayerViews
+                    // h2[data-np=chapter], điện thoại NowPlayingScreen player_chapter). Ô cao tối thiểu HAI dòng: tên một hay hai dòng thì bìa, thanh tua,
+                    // nút phát không dời (R7); tên dài hơn hai dòng thì ô cao thêm - chữ sách không bao giờ bị cắt.
+                    Text {
                         id: chapterTitle
                         objectName: "nowChapterTitle"
+                        readonly property int minLines: 2
+                        readonly property real lineHeightPx: lineCount > 0 ? implicitHeight / lineCount : 0
                         width: parent.width
+                        height: Math.max(implicitHeight, Math.ceil(lineHeightPx * minLines))
                         horizontalAlignment: Text.AlignHCenter
+                        wrapMode: Text.Wrap
+                        textFormat: Text.PlainText
                         text: TextWrap.keepDots([Player.chapterTitle, Player.chapterSubtitle].filter(s => s !== "").join("\u00a0·\u00a0"))
                         color: Theme.text
-                        baseSize: Theme.sizeSection
-                        weight: Theme.weightBold
+                        font.pixelSize: Theme.sizeSection
+                        font.weight: Theme.weightBold
                         opacity: root.g >= 1 ? 1 : 0
                     }
                     PlayerSubtitle { id: bookSubtitle; width: parent.width; horizontalAlignment: Text.AlignHCenter; chevron: true; opacity: root.g >= 1 ? 1 : 0; onBookRequested: root.bookRequested() }
@@ -584,9 +592,13 @@ Item {
                             text: parent.modelData.text
                             font.pixelSize: parent.modelData.fromSize + (parent.modelData.toSize - parent.modelData.fromSize) * root.g
                             font.weight: parent.modelData.fromWeight + (parent.modelData.toWeight - parent.modelData.fromWeight) * root.g
-                            // Hai đầu là ô một dòng (MarqueeLine): tên dài hơn khung thì bay từ mép trái như lúc chạy chữ bắt đầu
-                            horizontalAlignment: implicitWidth > width ? Text.AlignLeft : parent.modelData.toAlign
-                            verticalAlignment: Text.AlignVCenter
+                            // Đích một dòng (MarqueeLine): tên dài hơn khung thì bay từ mép trái như lúc chạy chữ bắt đầu.
+                            // Đích xuống dòng (tên chương màn Đang nghe): chữ xuống dòng theo bề ngang khung đang giãn, dòng đầu bám mép trên -
+                            // lúc khung còn cao một dòng (thanh phát) chỉ dòng đầu lộ ra, khung cao dần tới ô hai dòng của đích.
+                            wrapMode: parent.modelData.wrap ? Text.Wrap : Text.NoWrap
+                            horizontalAlignment: parent.modelData.wrap ? parent.modelData.toAlign
+                                : implicitWidth > width ? Text.AlignLeft : parent.modelData.toAlign
+                            verticalAlignment: parent.modelData.wrap ? Text.AlignTop : Text.AlignVCenter
                             color: Qt.rgba(parent.modelData.fromColor.r + (parent.modelData.toColor.r - parent.modelData.fromColor.r) * root.g,
                                            parent.modelData.fromColor.g + (parent.modelData.toColor.g - parent.modelData.fromColor.g) * root.g,
                                            parent.modelData.fromColor.b + (parent.modelData.toColor.b - parent.modelData.fromColor.b) * root.g, 1)

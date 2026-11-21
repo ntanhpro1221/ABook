@@ -320,10 +320,16 @@ giữ tên trong cột tối đa 640 px, thanh tua dùng phần rộng còn lạ
   Hàng chứa tên tăng chiều cao theo chữ, kể cả hàng chọn nơi phát và thanh báo đang phát trên thiết bị khác. Câu giải thích dài có tên vẫn xuống dòng đầy đủ.
   Ngoại lệ duy nhất cho tên thiết bị: thanh phiên điện thoại thu nhỏ trên web (`RemotePhone`, cao cố định 48/56 px) dùng `ShortName`, giữ đầu/đuôi ở khổ hẹp
   và tên đầy đủ trong tooltip; các hàng và menu có thể tăng chiều cao dùng `OneLineFit`. Chữ hiển thị và mẫu câu lấy cùng kho chữ ở cả ba nền.
-  Ô tên CAO CỐ ĐỊNH (thanh phát thu nhỏ, thanh phát, màn Đang nghe: tên chương, tên sách): cùng luật thu cỡ, nhưng thu tới 0.75 vẫn không vừa thì
+  Ô tên CAO CỐ ĐỊNH (thanh phát thu nhỏ, thanh phát, dòng tên sách của màn Đang nghe): cùng luật thu cỡ, nhưng thu tới 0.75 vẫn không vừa thì
   CHẠY CHỮ thay vì xuống dòng - đứng `marqueeDelayMs` ở đầu, trượt chậm `marqueeSpeed` px/giây, bản chép thứ hai cách `marqueeGap`, rồi lại đứng;
-  giảm chuyển động thì nhảy từng đoạn, không trượt, không mờ đuôi. Ô luôn cao đúng một dòng ở cỡ gốc nên bìa và nút phát không bao giờ dời (máy dò
-  R7). Lời nhắn của màn Đang nghe (hẹn giờ, sắp tắt, lỗi phát, đã nghe hết) nổi trên phần dưới bìa, ngay trên tên - không chiếm chỗ trong cột;
+  giảm chuyển động thì nhảy từng đoạn, không trượt, không mờ đuôi; đổi giữa đứng yên và chạy chữ thì mờ chéo. Ô luôn cao đúng một dòng ở cỡ gốc nên
+  bìa và nút phát không bao giờ dời (máy dò R7).
+  **Tên chương màn Đang nghe** (toàn màn, không phải thanh phát): XUỐNG DÒNG ở cỡ gốc, không chạy chữ, không "…" - đây là chỗ đọc tên, chạy chữ ở cỡ
+  lớn khó đọc. Ô cao TỐI THIỂU HAI dòng: tên một hay hai dòng (gần như mọi tên chương) thì khối tên cao như nhau nên bìa, thanh tua và nút phát
+  không dời (R7); tên dài hơn hai dòng thì ô cao thêm (bìa nhường chỗ) - chữ sách không bao giờ bị cắt. Chọn "tối thiểu hai dòng" thay cho "đúng
+  hai dòng": đúng hai dòng sẽ phải cắt tên dài. Hoạt cảnh thanh phát <-> toàn màn: chữ bay xuống dòng theo bề ngang khung đang giãn, dòng đầu bám
+  mép trên, khung cao dần từ một dòng tới ô hai dòng. Một chỗ ở ba nền: điện thoại `RollingLabel(line = wrapLines(...))` (`player_chapter`), web
+  `h2[data-np=chapter]` (`min-h-[2lh]`), Qt `nowChapterTitle`. Lời nhắn của màn Đang nghe (hẹn giờ, sắp tắt, lỗi phát, đã nghe hết) nổi trên phần dưới bìa, ngay trên tên - không chiếm chỗ trong cột;
   chế độ Đọc theo thì ở cuối cột. Một thành phần: điện thoại `MarqueeLine`, web `MarqueeLine`, Qt `MarqueeLine.qml`.
 
   Chữ của APP phải giữ đúng một dòng (dòng tình trạng dưới bìa ô lưới: "Còn 2 giờ", "Đã nghe hết phần đã có · 12/30 chương") không phải tên: Qt đặt

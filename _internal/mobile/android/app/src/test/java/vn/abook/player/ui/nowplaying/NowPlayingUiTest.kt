@@ -239,7 +239,8 @@ class NowPlayingUiTest {
         val original = tags.associateWith(::bounds)
         val base = model.state.value
         val variants = listOf(
-            "long" to base.copy(chapterTitle = LONG_CHAPTER, bookTitle = LONG_BOOK),
+            // Tên chương HAI dòng (DESIGN 5.5: ô tên chương cao sẵn hai dòng) + tên sách dài chạy chữ: không mốc nào dời, kể cả khối tên
+            "long" to base.copy(chapterTitle = TWO_LINE_CHAPTER, bookTitle = LONG_BOOK),
             "sleep" to base.copy(sleep = PlayerSleep(SleepKind.Minutes, 30, true)),
             "error" to base.copy(error = "Không đọc được chương này. Hãy thử lại."),
             "ended" to base.copy(ended = true),
@@ -252,6 +253,13 @@ class NowPlayingUiTest {
             shot("anchor_${name}_font130_light")
             assertTrue(rule.assertNoTextOverflow() > 8)
         }
+        // Dài hơn hai dòng: ô tên chương cao thêm (chữ sách không bị cắt), bìa nhường chỗ - thanh tua và nút phát vẫn đứng yên
+        rule.runOnUiThread { model.update(base.copy(chapterTitle = LONG_CHAPTER)) }
+        rule.waitForIdle()
+        rule.onNode(inWindow(hasText(LONG_CHAPTER))).assertIsDisplayed()
+        assertTrue("ô tên chương cao thêm", bounds("player_chapter").height > original.getValue("player_chapter").height)
+        for (tag in listOf("player_seek", "transport")) assertBounds(original.getValue(tag), bounds(tag))
+        assertTrue(rule.assertNoTextOverflow() > 8)
     }
 
     @Test fun secondaryActionsShareOneLabelLineAndEqualColumns() {
@@ -1022,6 +1030,8 @@ class NowPlayingUiTest {
 
     companion object {
         const val LONG_CHAPTER = "Chương mười hai · Người lữ khách trở về qua những con đường mùa thu"
+        /** Hai dòng ở cỡ chữ 130 % trên khổ 360 dp - vừa ô tên chương cao sẵn hai dòng. */
+        const val TWO_LINE_CHAPTER = "Chương mười hai · Người lữ khách trở về"
         const val LONG_BOOK = "Những ngày gió hát bên kia ngọn đồi và câu chuyện chưa kể"
     }
 }
