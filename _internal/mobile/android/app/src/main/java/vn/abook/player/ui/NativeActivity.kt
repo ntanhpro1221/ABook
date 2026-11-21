@@ -49,6 +49,7 @@ import vn.abook.player.BuildConfig
 import vn.abook.player.Diagnostics
 import vn.abook.player.BookImports
 import vn.abook.player.IncomingFile
+import vn.abook.player.ui.data.AppNightMode
 import vn.abook.player.ui.data.DemoPlaybackCore
 import vn.abook.player.ui.data.LibraryState
 import vn.abook.player.ui.data.PlayerRepo
@@ -194,7 +195,12 @@ class NativeActivity : ComponentActivity() {
             val scope = rememberCoroutineScope()
             val reveal = remember { ThemeReveal(scope) }
             val chosen by settings.state.collectAsStateWithLifecycle()
+            val settingsLoaded by settings.loaded.collectAsStateWithLifecycle()
             val dark = chosen.theme.dark(isSystemInDarkTheme())
+            // Màn chờ lần mở sau theo giao diện chọn trong app, không theo máy (AppNightMode). Bản thử (demo) không ghi gì của máy.
+            LaunchedEffect(chosen.theme, settingsLoaded) {
+                AppNightMode.apply(this@NativeActivity, chosen.theme, loaded = settingsLoaded, demo = demo)
+            }
             // Biểu tượng thanh trạng thái / điều hướng theo giao diện của APP (app tối trên máy sáng và ngược lại), đổi cùng lúc với giao diện.
             LaunchedEffect(dark) {
                 WindowCompat.getInsetsController(window, window.decorView).apply {

@@ -259,7 +259,7 @@ Nhãn ngắn (<= 6 chữ). **Chỉ Qt**: không có ở web cùng màn; `*` = we
 ### Chung
 
 - chỉ Qt (6): Chưa làm được lúc này. (`qt/Api.qml:61`); Chưa thêm được sách* (`qt/Api.qml:97`); Đã có trong thư viện* (`qt/Api.qml:97`); Đã cập nhật “{}”* (`qt/Api.qml:97`); Đã thêm “{}”* (`qt/Api.qml:97`); Quay lại* (`qt/ScreenHeader.qml:14`)
-- chỉ web (4): Đang tải điều hướng (`592`); Thông báo (Alt+T) (`711`); Xem các tab trước (`559`); Xem các tab sau (`564`)
+- chỉ web (4): Đang tải điều hướng (`595`); Thông báo (Alt+T) (`714`); Xem các tab trước (`559`); Xem các tab sau (`564`)
 
 File QML chưa xếp màn (thêm vào SCREENS): `desktop_qt/qml/AvatarEditor.qml`, `desktop_qt/qml/BookLogic.js`, `desktop_qt/qml/CastLogic.js`, `desktop_qt/qml/DestructiveConfirm.qml`, `desktop_qt/qml/FindInBook.qml`, `desktop_qt/qml/FindLogic.js`, `desktop_qt/qml/MusicCredit.qml`, `desktop_qt/qml/MusicLevelSlider.qml`, `desktop_qt/qml/MusicPopover.qml`, `desktop_qt/qml/MusicPreviewBar.qml`, `desktop_qt/qml/PeerStudio.js`, `desktop_qt/qml/PlayerConsent.qml`, `desktop_qt/qml/PlayerLineLogic.js`, `desktop_qt/qml/ProjectSteps.qml`, `desktop_qt/qml/ScriptScope.qml`, `desktop_qt/qml/StudioChapterHead.qml`, `desktop_qt/qml/StudioMusic.qml`, `desktop_qt/qml/StudioMusicLogic.js`, `desktop_qt/qml/StudioMusicMoods.qml`, `desktop_qt/qml/StudioMusicScene.qml`, `desktop_qt/qml/StudioMusicSwap.qml`, `desktop_qt/qml/StudioMusicTrackRow.qml`, `desktop_qt/qml/ToneLabels.js`, `desktop_qt/qml/UiNumber.js`, `desktop_qt/qml/ValuePicker.qml`, `desktop_qt/qml/ValuePickerLogic.js`, `desktop_qt/qml/VolumeEditor.qml`.
 
