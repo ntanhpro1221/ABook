@@ -199,6 +199,7 @@ double rms(const std::vector<float> &x, int channels, int channel, size_t from, 
 class MixTests : public QObject {
     Q_OBJECT
 private slots:
+    void initTestCase() { TestTiming::promptObserver(); }
     void fileSinkAccountsWriteTimeBeforeChangingState_data() {
         QTest::addColumn<bool>("realPause");
         QTest::newRow("write-latency-is-not-a-pause") << false;

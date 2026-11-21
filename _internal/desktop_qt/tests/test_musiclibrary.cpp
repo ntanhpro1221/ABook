@@ -32,6 +32,7 @@ class MusicLibraryTests : public QObject {
 
 private slots:
     void initTestCase() {
+        TestTiming::promptObserver();
         // `.pragma library` là chỉ thị của QML, không phải JS: bỏ trước khi chạy file trong QJSEngine trần.
         QString source = readText(QStringLiteral(MUSICLIBRARY_QML_DIR "/MusicLibraryLogic.js"));
         QVERIFY2(!source.isEmpty(), "không đọc được MusicLibraryLogic.js");

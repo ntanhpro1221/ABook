@@ -34,6 +34,7 @@ bool handOffFromThread(const QString &name, const QStringList &files, int timeou
 class SingleInstanceTests : public QObject {
     Q_OBJECT
 private slots:
+    void initTestCase() { TestTiming::promptObserver(); }
     void secondLaunchHandsItsFilesToTheRunningOne() {
         const QString name = uniqueName();
         SingleInstance first(name);

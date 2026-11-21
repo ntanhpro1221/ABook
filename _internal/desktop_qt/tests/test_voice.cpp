@@ -174,6 +174,7 @@ private:
 class VoiceTests : public QObject {
     Q_OBJECT
 private slots:
+    void initTestCase() { TestTiming::promptObserver(); }
     void silenceLookaheadDoesNotReportBuffering_data() {
         QTest::addColumn<double>("speed");
         for (double speed : {1.0, 1.5}) QTest::newRow(qPrintable(QString::number(speed))) << speed;
@@ -641,7 +642,7 @@ private slots:
         // may resume this test late even when the endpoint met its 50 ms deadline.
         const qint64 resetNs = device->firstResetNs.load() - beganNs;
         qInfo() << "pause_reset_us=" << resetNs / 1000;
-        QVERIFY2(resetNs >= 0 && resetNs < 50000000, qPrintable(QString::number(resetNs / 1000000.0)));
+        QVERIFY(resetNs >= 0); QVERIFY(TestTiming::within(resetNs / 1e6, 50));
         // Sau đuôi mờ 10 ms thiết bị dừng hẳn.
         QTRY_VERIFY_WITH_TIMEOUT(!device->running && device->queued.load() == 0, TestTiming::ms(200));
     }
@@ -767,10 +768,11 @@ private slots:
         };
         struct CounterDevice : MixDevice {
             std::atomic<int> resets{0};
+            TestTiming::Mark resetAt;
             int rate() const override { return 48000; }
             bool start() override { return true; }
             void stop() override {}
-            void reset() override { ++resets; }
+            void reset() override { resetAt.stamp(); ++resets; }
             size_t padding() override { return 0; }
             size_t bufferFrames() const override { return 48000; }
             bool write(const float *, size_t) override { return true; }
@@ -800,9 +802,10 @@ private slots:
         // refill timer. Pause must wake it by notification while open() remains behind the barrier.
         if (blockOpen) { QTRY_VERIFY_WITH_TIMEOUT(device->resets.load() > 0, TestTiming::ms(3000)); }
         QElapsedTimer timer; timer.start(); const int resets = device->resets;
+        const auto asked = std::chrono::steady_clock::now();
         voice.pause(); QVERIFY(TestTiming::within(timer.elapsed(), 50, TestTiming::ms(3000)));
         QTRY_VERIFY_WITH_TIMEOUT(device->resets != resets, TestTiming::ms(100));
-        QVERIFY(TestTiming::within(timer.elapsed(), 50, TestTiming::ms(3000)));
+        QVERIFY(TestTiming::within(device->resetAt.msAfter(asked), 50, TestTiming::ms(3000)));
         { std::lock_guard<std::mutex> lock(barrier->mutex);
           QVERIFY(!barrier->release); } // The decoder is still blocked when pause completes.
         timer.restart(); voice.stop();
@@ -817,7 +820,8 @@ private slots:
             int rate() const override { return 48000; }
             bool start() override { sampled = std::chrono::steady_clock::now(); running = true; return true; }
             void stop() override { padding(); running = false; }
-            void reset() override { queued = 0; ++resets; }
+            TestTiming::Mark resetAt;
+            void reset() override { queued = 0; resetAt.stamp(); ++resets; }
             size_t padding() override {
                 const auto now = std::chrono::steady_clock::now();
                 if (running) queued -= std::min(queued.load(), size_t(std::chrono::duration<double>(now - sampled).count() * 48000));
@@ -835,10 +839,9 @@ private slots:
         QTRY_VERIFY_WITH_TIMEOUT(voice.playing(), TestTiming::ms(3000));
         const int writes = device->writes;
         QTRY_VERIFY(device->writes >= writes + 2);
-        QElapsedTimer timer;
-        const int resets = device->resets; timer.restart(); voice.pause();
+        const int resets = device->resets; const auto asked = std::chrono::steady_clock::now(); voice.pause();
         QTRY_VERIFY_WITH_TIMEOUT(device->resets != resets, TestTiming::ms(100));
-        QVERIFY(TestTiming::within(timer.elapsed(), 50)); QVERIFY(device->queued.load() <= size_t(1440 + 2400)); // tới pivot 20 ms + mờ ra 10 ms + 50 ms lặng
+        QVERIFY(TestTiming::within(device->resetAt.msAfter(asked), 50)); QVERIFY(device->queued.load() <= size_t(1440 + 2400)); // tới pivot 20 ms + mờ ra 10 ms + 50 ms lặng
         QTRY_VERIFY_WITH_TIMEOUT(!device->running && device->queued.load() == 0, TestTiming::ms(200));
     }
     void controlsRemixAtTheCursorWithLargeLead_data() {

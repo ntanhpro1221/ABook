@@ -31,6 +31,7 @@
 
 #define NOMINMAX
 #include <windows.h>
+#include <avrt.h>
 #include <initguid.h>
 #include <audioclient.h>
 #include <mmdeviceapi.h>
@@ -656,6 +657,10 @@ struct MusicMixer::Impl {
         if (!threads) { rate = device->rate(); deviceRevision = device->revision(); initialized = true; trim(); return; }
         mixerThread = std::thread([this] {
             SetThreadDescription(GetCurrentThread(), L"ABook audio render");
+            // MMCSS: the render deadline must not depend on the process priority class or on other work keeping every
+            // core busy. A starved Stop..Write..Start or a late pause is an audible hole / late pause for the listener.
+            DWORD mmcssTask = 0;
+            const HANDLE mmcss = AvSetMmThreadCharacteristicsW(L"Audio", &mmcssTask);
             quint64 wakes = 0;
             const bool traceWakes = qEnvironmentVariableIntValue("ABOOK_AUDIO_TRACE");
             auto traceAt = Clock::now();
@@ -681,6 +686,7 @@ struct MusicMixer::Impl {
             }
             wait.unlock();
             device->stop(); device->reset(); device.reset(); // COM được nhả trên chính luồng tạo nó.
+            if (mmcss) AvRevertMmThreadCharacteristics(mmcss);
         });
         { std::unique_lock<std::mutex> wait(waitMutex); mixCv.wait(wait, [this] { return initialized; }); }
         readerThread = std::thread([this] {
