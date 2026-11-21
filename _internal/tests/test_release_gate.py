@@ -4,6 +4,7 @@ from __future__ import annotations
 import hashlib
 import importlib.util
 import json
+import os
 from pathlib import Path
 import shutil
 import subprocess
@@ -993,6 +994,26 @@ def test_android_rows_force_only_the_test_task_within_a_measured_budget(tmp_path
     assert timeout == gate.ANDROID_ROW_BUDGET_S == round(gate.ANDROID_ROW_UNLOADED_S * gate.ANDROID_ROW_LOAD_FACTOR)
     rows = {check.name: check for check in gate.checks()}
     assert all(rows[name].timeout > timeout for name in ("android-unit", "android-snapshots"))
+
+
+@pytest.mark.skipif(os.name != "nt", reason="Windows priority classes")
+def test_run_process_sets_the_priority_class_explicitly(monkeypatch):
+    # The gate worker itself runs BELOW_NORMAL; NORMAL must be asked for, not inherited.
+    seen = []
+
+    class Done(Exception):
+        pass
+
+    def popen(command, **options):
+        seen.append(options["creationflags"])
+        raise Done
+
+    monkeypatch.setattr(gate.subprocess, "Popen", popen)
+    for yield_cpu in (True, False):
+        with pytest.raises(Done):
+            gate.run_process(["x"], Path("."), 1, yield_cpu=yield_cpu)
+    assert seen[0] & subprocess.BELOW_NORMAL_PRIORITY_CLASS and not seen[0] & subprocess.NORMAL_PRIORITY_CLASS
+    assert seen[1] & subprocess.NORMAL_PRIORITY_CLASS and not seen[1] & subprocess.BELOW_NORMAL_PRIORITY_CLASS
 
 
 def test_vitest_unhandled_errors_block_even_when_all_tests_pass(tmp_path):

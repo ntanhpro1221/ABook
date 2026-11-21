@@ -165,7 +165,9 @@ def g2p_parity_env() -> dict[str, str]:
 
 def run_process(command: list[str], cwd: Path, timeout: float, extra_env: dict | None = None, *,
                 yield_cpu: bool = True) -> Execution:
-    flags = (subprocess.CREATE_NO_WINDOW | (subprocess.BELOW_NORMAL_PRIORITY_CLASS if yield_cpu else 0)) if os.name == "nt" else 0
+    # Explicit both ways: a child inherits its parent's class, and the gate worker itself already runs BELOW_NORMAL.
+    priority = subprocess.BELOW_NORMAL_PRIORITY_CLASS if yield_cpu else subprocess.NORMAL_PRIORITY_CLASS
+    flags = (subprocess.CREATE_NO_WINDOW | priority) if os.name == "nt" else 0
     proc = subprocess.Popen(command, cwd=cwd, env=safe_env() | (extra_env or {}), stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
                             encoding="utf-8", errors="replace", creationflags=flags)
     try:
