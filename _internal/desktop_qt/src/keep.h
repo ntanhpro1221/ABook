@@ -7,7 +7,7 @@
 
 // Keep.hold(object): a strong reference to the JS wrapper of a QML object that lives outside the visual tree, for exactly as
 // long as the QObject exists. The V4 collector marks a QML object's property storage only through its wrapper. A QQuickItem
-// wrapper marks its VISUAL children; every other object (Reveal after `parent = null`, a pointer handler such as SmoothWheel,
+// wrapper marks its VISUAL children; every other object (Reveal after `parent = null`, a pointer handler declared in QML,
 // Connections) is kept only by the weak QObject-wrapper pass (qv4mm.cpp markWeakValues), and only while its topmost QObject
 // ancestor is C++-owned or being created. Any gap in that weak path frees the storage of an object that is still alive:
 // "Cannot find member data", properties read as 0, transitions that never finish (WidthTests 0.4.173, Studio2/Studio5).

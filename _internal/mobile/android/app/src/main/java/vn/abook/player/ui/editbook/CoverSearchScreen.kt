@@ -1,4 +1,5 @@
 package vn.abook.player.ui.editbook
+import vn.abook.player.ui.data.produceImageState
 
 import vn.abook.player.S
 
@@ -35,7 +36,6 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -166,7 +166,7 @@ private fun CoverGrid(ui: CoverSearchUi, choose: (FoundCover) -> Unit, thumbnail
 @Composable
 private fun FoundCoverTile(found: FoundCover, choosing: String?, choose: (FoundCover) -> Unit, thumbnail: suspend (String) -> ImageBitmap?) {
     val colors = Abook.colors
-    val image by produceState<ImageBitmap?>(null, found.thumb) { value = thumbnail(found.thumb) }
+    val image by produceImageState<ImageBitmap?>(null, found.thumb) { value = thumbnail(found.thumb) }
     val busy = choosing == found.url
     // Đang đặt một ảnh: không chọn ảnh khác được; ảnh đang đặt có thanh "đang làm" ngay dưới (không làm mờ cả lưới - đổi chỉ bằng độ mờ là cứng).
     Column(

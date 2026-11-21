@@ -573,8 +573,10 @@ def test_private_ui_workspace_preserves_shared_catalogs(tmp_path, monkeypatch):
     shared = ui / "node_modules"
     shared.mkdir()
     (shared / "sentinel").write_text("shared dependencies must stay untouched", encoding="utf-8")
-    for name in ("abook", "docs", "tests", "mobile", "desktop_qt", "ui_strings", "ui_design"):
+    for name in ("abook", "docs", "tests", "mobile", "desktop_qt", "ui_strings", "ui_design", "scripts"):
         (root / name).mkdir()
+    (root / "scripts/tap_audit").mkdir()
+    (root / "scripts/tap_audit/ui_tap_audit.py").write_text("# harness source read by ui/scripts tests", encoding="utf-8")
     catalog = {"strings": {"broken_pdf": "PDF không đọc được"}}
     (root / "ui_strings/vi.json").write_text(json.dumps(catalog), encoding="utf-8")
     (root / "ui_design/tokens.json").write_text('{"space":{"base":4}}', encoding="utf-8")
@@ -591,6 +593,7 @@ def test_private_ui_workspace_preserves_shared_catalogs(tmp_path, monkeypatch):
     # Vitest reads outside ui/ through the same relative paths as application consumers.
     assert json.loads((mirror.parent / "ui_strings/vi.json").read_text(encoding="utf-8")) == catalog
     assert json.loads((mirror.parent / "ui_design/tokens.json").read_text(encoding="utf-8"))["space"]["base"] == 4
+    assert (mirror.parent / "scripts/tap_audit/ui_tap_audit.py").is_file()
     assert (mirror / "node_modules").resolve() == (install / "node_modules").resolve()
     assert (shared / "sentinel").read_text(encoding="utf-8") == "shared dependencies must stay untouched"
     assert not (mirror / "node_modules/sentinel").exists()
@@ -1005,6 +1008,48 @@ def test_negative_control_cannot_pass_on_browser_start_failure(tmp_path, monkeyp
     check = gate.Check("tap-negative", parser="tap-negative")
     with pytest.raises(ValueError, match="scenarios"):
         gate.validate_report(check, gate.Execution(1, ""), artifact)
+
+
+def negative_tap_scenario():
+    healthy = dict(label="choice", tag="BUTTON", disabled=False, hit=True,
+                   pointerEvents="auto", blockedInLayer=[], noneAncestors=["BODY"])
+    broken = dict(healthy, hit=False, pointerEvents="none", blockedInLayer=["BUTTON"],
+                  noneAncestors=["BUTTON", "DIV[role=menu]", "BODY"])
+    names = ["negative baseline healthy before injection", "fault injection applied",
+             "negative original pointer state restored healthy",
+             "visible layer controls receive pointer events throughout opening"]
+    return dict(status="FAIL", injected=True, checks=[dict(name=n, pass_=True) for n in names]
+                + [dict(name=m+" probe center reaches control", pass_=False) for m in ("mouse", "touch")],
+                negativeControl=dict(baseline=dict(healthy=True, elements=[dict(healthy)],
+                                                  probes={m: dict(healthy) for m in ("mouse", "touch")}),
+                                     detected={m: dict(broken) for m in ("mouse", "touch")},
+                                     restored=dict(healthy=True, elements=[dict(healthy)])))
+
+
+def test_negative_control_accepts_only_scoped_pointer_failure_with_recovery():
+    gate.validate_tap_negative(negative_tap_scenario())
+
+
+@pytest.mark.parametrize("mutation", ["old_report", "setup_error", "baseline", "baseline_flag", "restored",
+                                         "missing_touch", "disabled", "target_changed", "no_pointer_fault",
+                                         "unrelated_failure", "missing_opening_check", "non_boolean"])
+def test_negative_control_rejects_setup_cascades_and_unproven_faults(mutation):
+    row = negative_tap_scenario()
+    control = row["negativeControl"]
+    if mutation == "old_report": del row["negativeControl"]
+    elif mutation == "setup_error": row["error"] = "layer did not open after coordinate input"
+    elif mutation == "baseline": control["baseline"]["elements"][0]["hit"] = False
+    elif mutation == "baseline_flag": control["baseline"]["healthy"] = False
+    elif mutation == "restored": control["restored"]["elements"][0]["pointerEvents"] = "none"
+    elif mutation == "missing_touch": del control["detected"]["touch"]
+    elif mutation == "disabled": control["detected"]["mouse"]["disabled"] = True
+    elif mutation == "target_changed": control["detected"]["mouse"]["label"] = "another control"
+    elif mutation == "no_pointer_fault": control["detected"]["mouse"]["pointerEvents"] = "auto"
+    elif mutation == "unrelated_failure": row["checks"].append(dict(name="close failed", pass_=False))
+    elif mutation == "missing_opening_check": row["checks"].pop(3)
+    elif mutation == "non_boolean": row["checks"][0]["pass_"] = "true"
+    with pytest.raises(ValueError, match="tap-negative"):
+        gate.validate_tap_negative(row)
 
 
 def test_publish_stops_before_any_external_mutation_on_gate_failure(tmp_path, monkeypatch):

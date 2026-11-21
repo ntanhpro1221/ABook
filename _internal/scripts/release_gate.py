@@ -935,6 +935,47 @@ OUTSIDE_TAPS_REQUIRED = {"library-sort-menu", "library-sort-menu-touch", "librar
                          "player-speed-popover-right", "remote-sleep-in-dialog", "remote-sleep-in-dialog-touch", "remote-sleep-in-dialog-right"}
 
 
+def validate_tap_negative(scenario: dict) -> None:
+    """A negative control must isolate its fault from setup, app and cleanup errors."""
+    require(scenario.get("status") == "FAIL" and scenario.get("injected") is True
+            and not scenario.get("error"), "tap-negative: injection failed or unrelated scenario error")
+    control = scenario.get("negativeControl", {})
+
+    def reachable(element: dict) -> bool:
+        return (element.get("hit") is True and element.get("disabled") is False
+                and element.get("blockedInLayer") == [] and element.get("pointerEvents") == "auto")
+
+    for phase in ("baseline", "restored"):
+        data = control.get(phase, {})
+        elements = data.get("elements", [])
+        require(data.get("healthy") is True and bool(elements)
+                and any(reachable(e) for e in elements)
+                and all(e.get("disabled") is True or reachable(e) for e in elements),
+                "tap-negative: missing/unhealthy " + phase)
+    probes = control.get("baseline", {}).get("probes", {})
+    detected = control.get("detected", {})
+    require(set(probes) == set(detected) == {"mouse", "touch"}, "tap-negative: missing mouse/touch samples")
+    for mode in ("mouse", "touch"):
+        before, broken = probes[mode], detected[mode]
+        require(reachable(before), "tap-negative: unhealthy baseline probe " + mode)
+        require(broken.get("hit") is False and broken.get("disabled") is False
+                and broken.get("pointerEvents") == "none" and bool(broken.get("blockedInLayer"))
+                and bool(broken.get("noneAncestors")), "tap-negative: fault not detected by " + mode)
+        require(broken.get("label") == before.get("label") and broken.get("tag") == before.get("tag"),
+                "tap-negative: probe target changed during injection")
+    expected = {mode + " probe center reaches control" for mode in ("mouse", "touch")}
+    checks = scenario.get("checks", [])
+    failures = [c for c in checks if c.get("pass_") is False]
+    require(len(failures) == 2 and {c.get("name") for c in failures} == expected
+            and all(c.get("pass_") is True or c in failures for c in checks),
+            "tap-negative: unexpected failures beyond the injected pointer fault")
+    required = {"negative baseline healthy before injection", "fault injection applied",
+                "negative original pointer state restored healthy",
+                "visible layer controls receive pointer events throughout opening"}
+    require(required <= {c.get("name") for c in checks if c.get("pass_") is True},
+            "tap-negative: missing baseline, opening or restoration checks")
+
+
 def validate_report(check: Check, execution: Execution, artifact: Path, row: dict | None = None) -> tuple[dict, dict]:
     kind = check.parser
     counts, evidence = {}, {}
@@ -963,8 +1004,8 @@ def validate_report(check: Check, execution: Execution, artifact: Path, row: dic
         if kind == "tap-negative":
             require(execution.returncode == 1 and evidence.get("status") == "FAIL" and evidence.get("injected") is True,
                     "đối chứng âm không FAIL đúng cách")
-            require(all(row.get("injected") is True and any(not c["pass_"] and "center reaches control" in c["name"]
-                        for c in row["checks"]) for row in rows), "đối chứng âm thiếu lỗi pointer được cấy")
+            for scenario in rows:
+                validate_tap_negative(scenario)
             return counts, evidence
         require(evidence.get("status") == "PASS" and counts["passed"] > 0 and not counts["failed"], "tap có scenario lỗi")
     elif kind == "gallery":
@@ -1083,7 +1124,8 @@ def prepare_ui(directory: Path, runner=run_process) -> tuple[Path, dict]:
     shutil.copytree(ui, mirror, ignore=shutil.ignore_patterns("node_modules", "dist", ".vite", ".cache"))
     directory_link(mirror / "node_modules", install / "node_modules")
     # Relative source/test fixture imports and the UI build destination keep their real layout.
-    for name in ("abook", "docs", "tests", "mobile", "desktop_qt", "ui_strings", "ui_design"):
+    # scripts/: ui/scripts/tap_readiness.test.mjs runs the tap harness's own browser predicates.
+    for name in ("abook", "docs", "tests", "mobile", "desktop_qt", "ui_strings", "ui_design", "scripts"):
         directory_link(private_root / name, ROOT / name)
     return mirror, {"install": str(install), "lock_sha256": digest, "source": str(ui), "mirror": str(mirror)}
 

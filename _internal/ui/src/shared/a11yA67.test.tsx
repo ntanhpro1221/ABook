@@ -114,19 +114,3 @@ describe("nút Tốc độ / Giọng đọc của trình phát", () => {
     expect(voiceButtonLabel(undefined)).toBe("Giọng đọc");
   });
 });
-
-describe("toastClearance (thông báo không che chỗ đang chọn)", () => {
-  const toast = { top: 16, bottom: 100, left: 268, right: 624 };
-  it("phần tử dưới thông báo ở trên: cuộn lên cho nó xuống dưới thông báo; ở dưới: cuộn xuống", async () => {
-    const { toastClearance } = await import("./ui");
-    expect(toastClearance({ top: 40, bottom: 88, left: 300, right: 360 }, [toast], 400)).toBe(40 - 100 - 8);
-    const bottom = { top: 300, bottom: 384, left: 268, right: 624 };
-    expect(toastClearance({ top: 320, bottom: 360, left: 300, right: 360 }, [bottom], 400)).toBe(360 - 300 + 8);
-  });
-  it("không chạm thông báo nào thì không cuộn", async () => {
-    const { toastClearance } = await import("./ui");
-    expect(toastClearance({ top: 192, bottom: 240, left: 231, right: 300 }, [toast], 400)).toBe(0);
-    expect(toastClearance({ top: 40, bottom: 88, left: 100, right: 200 }, [toast], 400)).toBe(0);
-    expect(toastClearance({ top: 40, bottom: 88, left: 300, right: 360 }, [], 400)).toBe(0);
-  });
-});

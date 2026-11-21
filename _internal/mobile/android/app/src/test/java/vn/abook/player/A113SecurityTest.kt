@@ -46,7 +46,13 @@ class A113SecurityTest {
     @Test fun progress_keeps_a_stream_alive_past_the_idle_limit() {
         val audio = Files.createTempFile("a113-progress", ".mp3").toFile()
         audio.writeBytes(ByteArray(8 * 1024 * 1024) { 7 })
-        val media = Dlna.Media("127.0.0.1", writeIdleMs = 500)
+        // The idle limit bounds ONE gap of a healthy reader, so it scales with machine load (gate 22 under all-core load:
+        // a single 10 ms pause stretched past a fixed 500 ms and the server rightly cut the stream). The reader is paced so the
+        // whole transfer still outlasts the limit twice over: progress, not one quick burst, is what keeps it alive.
+        val idleMs = TestTime.ms(500)
+        val chunk = 16 * 1024
+        val pauseMs = maxOf(10L, 2 * idleMs / (audio.length() / chunk))
+        val media = Dlna.Media("127.0.0.1", writeIdleMs = idleMs)
         try {
             val uri = URI(media.share(audio, "127.0.0.1"))
             Socket().apply {
@@ -62,15 +68,18 @@ class A113SecurityTest {
                     assertTrue("header đủ trước khi đọc audio", byte >= 0)
                     header.append(byte.toChar())
                 }
-                val buffer = ByteArray(65536)
+                val buffer = ByteArray(chunk)
                 var total = 0
+                val started = System.nanoTime() // wallclock-ok: lower bound (stream outlived the idle limit), never scaled
                 while (true) {
                     val count = input.read(buffer)
                     if (count < 0) break
                     total += count
-                    Thread.sleep(10)
+                    Thread.sleep(pauseMs) // wallclock-ok: paces a slow reader; each gap stays far below the scaled idle limit
                 }
                 assertEquals(audio.length(), total.toLong())
+                val elapsedMs = (System.nanoTime() - started) / 1_000_000 // wallclock-ok: lower bound below
+                assertTrue("the stream lived past the idle limit ($elapsedMs ms <= $idleMs ms)", elapsedMs > idleMs)
             }
         } finally { media.close() }
     }

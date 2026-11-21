@@ -1,5 +1,6 @@
 package vn.abook.player.ui.editbook
 
+import vn.abook.player.ui.data.ImageLaunchedEffect
 import vn.abook.player.ui.motion.SwapContent
 import vn.abook.player.ui.motion.ContentLayout
 
@@ -106,7 +107,7 @@ fun CoverCropRoute(editor: BookEditor, uri: String, onBack: () -> Unit) {
     var choice by remember(uri) { mutableStateOf(CropChoice()) }
     var committing by remember { mutableStateOf(false) }
     val width = with(LocalDensity.current) { context.resources.configuration.screenWidthDp.dp.toPx().toInt() }
-    LaunchedEffect(uri, attempt) {
+    ImageLaunchedEffect(uri, attempt) {
         problem = ""
         try { bitmap = CoverCrop.load(context, Uri.parse(uri), width) }
         catch (error: Exception) { problem = error.message ?: S.s_ban_hay_chon_lai_anh_bia_ff20026e }

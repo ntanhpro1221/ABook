@@ -1,4 +1,5 @@
 // Backend start limit with a fake host: a real Python process that says Ready late, at once, or never.
+#include "timing.h"
 #include "backend.h"
 #include "bench.h"
 
@@ -70,26 +71,26 @@ private slots:
     void hostThatNeverSaysReadyFails() {
         Backend backend(nullptr);
         startWith(backend, "silent", 800);
-        QTRY_COMPARE_WITH_TIMEOUT(backend.state(), Backend::Failed, 10000);
+        QTRY_COMPARE_WITH_TIMEOUT(backend.state(), Backend::Failed, TestTiming::ms(10000));
         QCOMPARE(backend.message(), QStringLiteral("ABook chưa mở được. Bạn thử lại; nếu vẫn lỗi, xem nhật ký trong Cài đặt."));
         // "Thử lại" (LibraryScreen, ConnectionPopover) = restart: a working host opens the app.
         qputenv("ABOOK_TEST_HOST", "ready");
         Backend::s_startLimitMs = 60'000;
         backend.restart();
         QCOMPARE(backend.state(), Backend::Starting);
-        QTRY_COMPARE_WITH_TIMEOUT(backend.state(), Backend::Ready, 15000);
+        QTRY_COMPARE_WITH_TIMEOUT(backend.state(), Backend::Ready, TestTiming::ms(15000));
         QCOMPARE(backend.port(), 9);
     }
     void lateReadyStillOpens() {
         Backend backend(nullptr);
         startWith(backend, "late", 300);
-        QTRY_COMPARE_WITH_TIMEOUT(backend.state(), Backend::Failed, 10000);
-        QTRY_COMPARE_WITH_TIMEOUT(backend.state(), Backend::Ready, 10000);
+        QTRY_COMPARE_WITH_TIMEOUT(backend.state(), Backend::Failed, TestTiming::ms(10000));
+        QTRY_COMPARE_WITH_TIMEOUT(backend.state(), Backend::Ready, TestTiming::ms(10000));
     }
     void quickHostIsNotCut() {
         Backend backend(nullptr);
         startWith(backend, "ready", 3000);
-        QTRY_COMPARE_WITH_TIMEOUT(backend.state(), Backend::Ready, 10000);
+        QTRY_COMPARE_WITH_TIMEOUT(backend.state(), Backend::Ready, TestTiming::ms(10000));
         QTest::qWait(3500); // fixed: proves absence (the start limit does not fire after Ready)
         QCOMPARE(backend.state(), Backend::Ready);
     }
@@ -107,7 +108,7 @@ private slots:
         startWith(backend, "installer", 60'000);
         QCOMPARE(loop.exec(), 0);
         QVERIFY(QFileInfo::exists(dir.filePath(QStringLiteral("host-quit"))));
-        QTRY_VERIFY_WITH_TIMEOUT(QFileInfo::exists(dir.filePath(QStringLiteral("installer-ran"))), 15000);
+        QTRY_VERIFY_WITH_TIMEOUT(QFileInfo::exists(dir.filePath(QStringLiteral("installer-ran"))), TestTiming::ms(15000));
     }
 };
 QTEST_MAIN(BackendTests)

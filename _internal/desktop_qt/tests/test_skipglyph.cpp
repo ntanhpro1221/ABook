@@ -1,5 +1,6 @@
 // Đo bằng điểm ảnh biểu tượng tua 15 giây (qml/SkipGlyph.qml): mọi mực nằm trong ô 24 đơn vị, và giữa nét (cung + mũi tên) với số 15
 // luôn còn ít nhất một hàng điểm ảnh trống ở 1x (chủ sách 24-10/26-10: số không được chạm vòng). Dựng bằng bộ vẽ phần mềm, không cần GPU.
+#include "timing.h"
 #include <QFontDatabase>
 #include <QGuiApplication>
 #include <QImage>
@@ -74,7 +75,7 @@ class SkipGlyphTests : public QObject {
             return !image.isNull()
                 && (!stroke || measure(image, QRect(kPad, kPad, size, qCeil(10.5 * size / 24))).any())
                 && (!digits || measure(image, QRect(kPad, kPad + qCeil(11.0 * size / 24), size, size / 2)).any());
-        }, 5000);
+        }, TestTiming::ms(5000));
         if (!rendered) image = {};
         delete item;
         return image;

@@ -3,6 +3,7 @@
 // nguyên vẹn (máy chủ nhận đúng bộ lọc ấy), cộng các phép tính của dòng / sheet chi tiết (phần trăm tải, năng lượng, thời lượng). Đo: dựng chuỗi
 // truy vấn cho cả bảng nhiều lần dưới 50 ms.
 #include <QElapsedTimer>
+#include "timing.h"
 #include <QFile>
 #include <QJSEngine>
 #include <QJsonArray>
@@ -118,7 +119,7 @@ private slots:
             }
         const double perRound = timer.nsecsElapsed() / 1e6 / 50;
         qInfo("MusicLibraryLogic.libraryQuery: %.3f ms cho %d ca", perRound, int(cases.size()));
-        QVERIFY2(perRound < 50.0, qPrintable(QString::number(perRound)));
+        QVERIFY(TestTiming::within(perRound, 50));
     }
 };
 

@@ -1,5 +1,6 @@
 // Lõi trộn của đường âm thanh WASAPI (mixcore.h, mp3source.h): vòng đệm, âm lượng trượt, đổi tần số, giải mã mp3 - thử trên số và
 // trên fixture mp3 chung, không cần thiết bị âm thanh.
+#include "timing.h"
 #include "downloadforecast.h"
 #include "filesinkdevice.h"
 #include "mixcore.h"
@@ -99,7 +100,7 @@ struct MixerRig {
         const bool ready = QTest::qWaitFor([&] {
             mixer.service(0); mixer.serviceReader(); QCoreApplication::processEvents();
             return voice.duration() > 0 && !mixer.decodingCount();
-        }, 5000);
+        }, TestTiming::ms(5000));
         QCoreApplication::processEvents();
         return ready;
     }
@@ -351,7 +352,7 @@ private slots:
             MusicMixer mixer(std::make_unique<FakeDevice>(), dir.path(), true);
             MixVoice voice(&mixer); QSignalSpy failed(&voice, &AudioOut::failed);
             voice.load(QUrl::fromLocalFile(QStringLiteral(MIX_FIXTURES_DIR "/music_student/stereo_44k.wav")), 0);
-            QTRY_VERIFY_WITH_TIMEOUT(voice.duration() > 0, 3000);
+            QTRY_VERIFY_WITH_TIMEOUT(voice.duration() > 0, TestTiming::ms(3000));
             QCOMPARE(failed.size(), 0); QCOMPARE(mixer.decodeCount(), quint64(1));
         }
     }
@@ -641,7 +642,7 @@ private slots:
         MixerRig rig; MixVoice voice(&rig.mixer); voice.setVolume(1); voice.load(server.url(), 0);
         QSignalSpy failed(&voice, &AudioOut::failed);
         // Biết độ dài là vào, nhưng tải có kịp không còn tuỳ tốc độ đo được: chờ tải chạy một lúc (đã đo được tốc độ tải - vào là phát).
-        QVERIFY(QTest::qWaitFor([&] { rig.mixer.service(0); rig.mixer.serviceReader(); return voice.duration() > 0 && server.sent >= bytes.size() * 3 / 4; }, 5000));
+        QVERIFY(QTest::qWaitFor([&] { rig.mixer.service(0); rig.mixer.serviceReader(); return voice.duration() > 0 && server.sent >= bytes.size() * 3 / 4; }, TestTiming::ms(5000)));
         QCoreApplication::processEvents();
         QVERIFY(server.sent < bytes.size());
         const QString path = rig.mixer.cachePath(server.url());
@@ -655,7 +656,7 @@ private slots:
         QVERIFY(voice.playing());
         QVERIFY(rms(rig.device->output, 2, 0, second, 2 * second) > 0.001);
         server.finish();
-        QVERIFY(QTest::qWaitFor([&] { rig.serve(second / 10); return !rig.mixer.decodingCount(); }, 5000));
+        QVERIFY(QTest::qWaitFor([&] { rig.serve(second / 10); return !rig.mixer.decodingCount(); }, TestTiming::ms(5000)));
         QCOMPARE(MusicMixer::cacheFrames(path, rig.mixer.rate()), quint64(all.size() / 2));
         QTRY_COMPARE(voice.duration(), double(all.size() / 2) / rig.mixer.rate());
         QCOMPARE(failed.size(), 0);
@@ -707,7 +708,7 @@ private slots:
         MixerRig rig; MixVoice voice(&rig.mixer); voice.setVolume(1); voice.load(server.url(), 0);
         QSignalSpy failed(&voice, &AudioOut::failed);
         // Biết độ dài là vào, nhưng tải có kịp không còn tuỳ tốc độ đo được: chờ tải chạy một lúc (đã đo được tốc độ tải - vào là phát).
-        QVERIFY(QTest::qWaitFor([&] { rig.mixer.service(0); rig.mixer.serviceReader(); return voice.duration() > 0 && server.sent >= bytes.size() * 3 / 4; }, 5000));
+        QVERIFY(QTest::qWaitFor([&] { rig.mixer.service(0); rig.mixer.serviceReader(); return voice.duration() > 0 && server.sent >= bytes.size() * 3 / 4; }, TestTiming::ms(5000)));
         QCoreApplication::processEvents();
         QVERIFY(server.sent < bytes.size());
         Mp3Source source(rig.mixer.rate()); QVERIFY(source.open(bytes));
@@ -722,7 +723,7 @@ private slots:
         QVERIFY(rms(rig.device->output, 2, 0, second, 2 * second) > 0.001);
         server.finish();
         const QString path = rig.mixer.cachePath(server.url());
-        QVERIFY(QTest::qWaitFor([&] { rig.serve(second / 10); return !rig.mixer.decodingCount(); }, 5000));
+        QVERIFY(QTest::qWaitFor([&] { rig.serve(second / 10); return !rig.mixer.decodingCount(); }, TestTiming::ms(5000)));
         QCOMPARE(MusicMixer::cacheFrames(path, rig.mixer.rate()), quint64(all.size() / 2));
         QTRY_COMPARE(voice.duration(), exact);
         QCOMPARE(failed.size(), 0);
@@ -743,7 +744,7 @@ private slots:
         QVERIFY(!QTest::qWaitFor([&] { return sounds(rig); }, 3000));
         QCOMPARE(rig.mixer.decodingCount(), size_t(1));
         server.finish();
-        QVERIFY(QTest::qWaitFor([&] { return sounds(rig); }, 5000));
+        QVERIFY(QTest::qWaitFor([&] { return sounds(rig); }, TestTiming::ms(5000)));
     }
     // Cùng nguồn chậm, nhưng mốc chỉ dùng bài tới giây 4 (setPlayUntil - hết các mốc dùng bài + mờ ra): nửa bài đã có thừa cho phần ấy, vào ngay,
     // không chờ tải xong cả bài (U30F 02-11: bài 863 s mà mốc dùng 342 s, nhạc chương 1 vào ở 350 s thay vì 98 s).
@@ -758,7 +759,7 @@ private slots:
         });
         head.start(30);
         MixerRig rig; MixVoice voice(&rig.mixer); voice.setVolume(1); voice.load(server.url(), 0); voice.setPlayUntil(4); voice.play();
-        QVERIFY(QTest::qWaitFor([&] { return sounds(rig); }, 3000));
+        QVERIFY(QTest::qWaitFor([&] { return sounds(rig); }, TestTiming::ms(3000)));
         QVERIFY(server.sent < bytes.size());
         QCOMPARE(rig.mixer.decodingCount(), size_t(1));
         server.finish();
@@ -771,7 +772,8 @@ private slots:
             HeldServer server(bytes, bytes.size() * 6 / 10);
             server.drip(bytes.size() / 8);
             MixerRig rig; MixVoice voice(&rig.mixer); voice.setVolume(1); voice.load(server.url(), 0); voice.setPlayUntil(until); voice.play();
-            QCOMPARE(QTest::qWaitFor([&] { return sounds(rig); }, 2000), until > 3.6);
+            // The false rows prove absence while the transfer remains incomplete; keep their observation window.
+            QCOMPARE(QTest::qWaitFor([&] { return sounds(rig); }, until > 3.6 ? TestTiming::ms(2000) : 2000), until > 3.6);
             QVERIFY(server.sent < bytes.size());
             server.finish();
         }
@@ -815,7 +817,7 @@ private slots:
         QVERIFY(!QTest::qWaitFor([&] { return sounds(rig); }, 3000));
         QCOMPARE(rig.mixer.decodingCount(), size_t(1));
         server.finish();
-        QVERIFY(QTest::qWaitFor([&] { return sounds(rig); }, 5000));
+        QVERIFY(QTest::qWaitFor([&] { return sounds(rig); }, TestTiming::ms(5000)));
     }
     // Bed căn bài theo mốc khi biết độ dài - thường tới giữa bài: chỗ ấy tải chưa kịp thì giữ im (buffering - bài cũ giữ chỗ), không kêu
     // nửa giây ở mép tải rồi cạn (U30I 02-11: xét tải kịp từ giây 0, căn tới 107,7 s, kêu 0,5 s rồi im 41 s); tải tới thì mờ vào.
@@ -825,16 +827,16 @@ private slots:
         server.drip(bytes.size() / 24); // nửa tốc độ bài
         MixerRig rig; MixVoice voice(&rig.mixer); voice.setVolume(1); voice.load(server.url(), 0);
         QSignalSpy buffering(&voice, &AudioOut::buffering);
-        QVERIFY(QTest::qWaitFor([&] { rig.mixer.service(0); rig.mixer.serviceReader(); return voice.duration() > 0; }, 5000));
+        QVERIFY(QTest::qWaitFor([&] { rig.mixer.service(0); rig.mixer.serviceReader(); return voice.duration() > 0; }, TestTiming::ms(5000)));
         const double place = voice.duration() * 0.7;
         voice.seek(place); voice.setPlayUntil(place + 2); voice.play();
         // Tải đã qua chỗ căn chừng một giây nhạc - chưa đủ tới chỗ thôi kêu: vẫn im.
         bool heard = false;
-        QVERIFY(QTest::qWaitFor([&] { heard |= sounds(rig); return server.sent >= bytes.size() * 8 / 10; }, 10000));
+        QVERIFY(QTest::qWaitFor([&] { heard |= sounds(rig); return server.sent >= bytes.size() * 8 / 10; }, TestTiming::ms(10000)));
         QVERIFY(!heard);
         QVERIFY(!buffering.isEmpty() && buffering.last().at(0).toBool());
         server.finish();
-        QVERIFY(QTest::qWaitFor([&] { return sounds(rig); }, 5000));
+        QVERIFY(QTest::qWaitFor([&] { return sounds(rig); }, TestTiming::ms(5000)));
         rig.serve(size_t(rig.mixer.rate()) * 3 / 10);
         const auto &x = rig.device->output;
         const size_t window = size_t(rig.mixer.rate()) / 200;
@@ -855,7 +857,7 @@ private slots:
         server.drip(bytes.size() / 6);
         MixerRig rig; MixVoice voice(&rig.mixer); voice.setVolume(1); voice.load(server.url(), 0); voice.play();
         // Biết độ dài là vào, nhưng tải có kịp không còn tuỳ tốc độ đo được: chờ tải chạy một lúc (đã đo được tốc độ tải - vào là phát).
-        QVERIFY(QTest::qWaitFor([&] { rig.mixer.service(0); rig.mixer.serviceReader(); return voice.duration() > 0 && server.sent >= bytes.size() / 2; }, 5000));
+        QVERIFY(QTest::qWaitFor([&] { rig.mixer.service(0); rig.mixer.serviceReader(); return voice.duration() > 0 && server.sent >= bytes.size() / 2; }, TestTiming::ms(5000)));
         server.hold();
         const size_t second = size_t(rig.mixer.rate()), window = second / 200;
         rig.device->output.clear();
@@ -880,7 +882,7 @@ private slots:
             const auto p = peaks();
             for (gap = 200; gap + 100 <= p.size(); ++gap) if (p[gap] <= 1e-4f && silentFor(p, gap, 100)) return true;
             return false;
-        }, 10000));
+        }, TestTiming::ms(10000)));
         auto p = peaks();
         float before = 0;
         for (size_t i = gap - 200; i < gap - 100; ++i) before = std::max(before, p[i]);
@@ -893,7 +895,7 @@ private slots:
             const auto q = peaks();
             for (back = gap + 100; back < q.size(); ++back) if (q[back] > 1e-4f) return back + 200 < q.size();
             return false;
-        }, 10000));
+        }, TestTiming::ms(10000)));
         p = peaks();
         float after = 0;
         for (size_t i = back + 100; i < back + 200; ++i) after = std::max(after, p[i]);
@@ -906,9 +908,9 @@ private slots:
         HeldServer server(bytes, bytes.size() / 2);
         MixerRig rig; MixVoice voice(&rig.mixer); QSignalSpy failed(&voice, &AudioOut::failed); voice.load(server.url(), 0);
         const QString path = rig.mixer.cachePath(server.url());
-        QVERIFY(QTest::qWaitFor([&] { rig.mixer.service(0); rig.mixer.serviceReader(); return QFile::exists(path); }, 5000));
+        QVERIFY(QTest::qWaitFor([&] { rig.mixer.service(0); rig.mixer.serviceReader(); return QFile::exists(path); }, TestTiming::ms(5000)));
         server.drop();
-        QVERIFY(QTest::qWaitFor([&] { rig.mixer.service(0); rig.mixer.serviceReader(); return !failed.isEmpty(); }, 5000));
+        QVERIFY(QTest::qWaitFor([&] { rig.mixer.service(0); rig.mixer.serviceReader(); return !failed.isEmpty(); }, TestTiming::ms(5000)));
         QCOMPARE(failed.size(), 1); QCOMPARE(rig.mixer.decodingCount(), size_t(0)); QVERIFY(!QFile::exists(path));
     }
     // Bỏ bài đang tải (đổi cảnh): huỷ tải, không để lại tệp đệm dở, không báo lỗi cho giọng đã dừng.
@@ -917,9 +919,9 @@ private slots:
         HeldServer server(bytes, bytes.size() / 2);
         MixerRig rig; MixVoice voice(&rig.mixer); QSignalSpy failed(&voice, &AudioOut::failed); voice.load(server.url(), 0);
         const QString path = rig.mixer.cachePath(server.url());
-        QVERIFY(QTest::qWaitFor([&] { rig.mixer.service(0); rig.mixer.serviceReader(); return QFile::exists(path); }, 5000));
+        QVERIFY(QTest::qWaitFor([&] { rig.mixer.service(0); rig.mixer.serviceReader(); return QFile::exists(path); }, TestTiming::ms(5000)));
         voice.stop();
-        QVERIFY(QTest::qWaitFor([&] { rig.mixer.service(0); rig.mixer.serviceReader(); return !rig.mixer.decodingCount(); }, 5000));
+        QVERIFY(QTest::qWaitFor([&] { rig.mixer.service(0); rig.mixer.serviceReader(); return !rig.mixer.decodingCount(); }, TestTiming::ms(5000)));
         QVERIFY(!QFile::exists(path)); QCoreApplication::processEvents(); QCOMPARE(failed.size(), 0);
     }
 
@@ -975,7 +977,7 @@ private slots:
         MusicMixer mixer(std::unique_ptr<MixDevice>(device), dir.path(), true);
         QTest::qWait(300); // fixed: proves absence of idle polling
         QCOMPARE(device->polls.load(), 0);
-        MixVoice voice(&mixer); voice.load(track(), 0); QTRY_VERIFY_WITH_TIMEOUT(voice.duration() > 0, 3000);
+        MixVoice voice(&mixer); voice.load(track(), 0); QTRY_VERIFY_WITH_TIMEOUT(voice.duration() > 0, TestTiming::ms(3000));
         mixer.setRelaxed(true); voice.play(); QTRY_VERIFY(device->running.load()); QCOMPARE(device->lastWrite.load(), 24000);
         mixer.setRelaxed(false); QTRY_COMPARE(device->lastWrite.load(), 24000);
         voice.pause(); QTRY_VERIFY(!device->running.load());
@@ -986,7 +988,7 @@ private slots:
             const int polls = device->polls;
             QTest::qWait(600); // fixed: proves absence of paused polling
             return device->polls.load() == polls;
-        }, 5000));
+        }, TestTiming::ms(5000)));
     }
 
     void mixerRateChangesWhileReaderOpensCache() {
@@ -1057,7 +1059,7 @@ private slots:
             QProcess child; auto env = QProcessEnvironment::systemEnvironment(); env.insert(QStringLiteral("ABOOK_MUTE"), QStringLiteral("1"));
             env.insert(QStringLiteral("QT_QPA_PLATFORM"), QStringLiteral("offscreen")); child.setProcessEnvironment(env);
             child.start(QCoreApplication::applicationFilePath(), {QStringLiteral("muteOutput")});
-            QVERIFY(child.waitForFinished(30000)); const auto output = child.readAllStandardOutput();
+            QVERIFY(child.waitForFinished(TestTiming::ms(30000))); const auto output = child.readAllStandardOutput();
             QVERIFY2(!output.contains("FAIL!"), output.constData()); QCOMPARE(child.exitCode(), 0); return;
         }
         MixerRig rig; MixVoice voice(&rig.mixer); voice.setVolume(1); voice.load(track(), 0); QVERIFY(rig.ready(voice)); voice.play();

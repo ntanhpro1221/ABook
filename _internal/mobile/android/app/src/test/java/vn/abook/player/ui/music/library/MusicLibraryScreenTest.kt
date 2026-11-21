@@ -185,6 +185,9 @@ class MusicLibraryScreenTest {
         show(dark)
         rule.onNodeWithTag("music_count").assertIsDisplayed()
         assertTrue(rule.onAllNodesWithTag("music_art", useUnmergedTree = true).fetchSemanticsNodes().isNotEmpty())
+        assertEquals("every music tile has published artwork before capture",
+            rule.onAllNodesWithTag("music_art", useUnmergedTree = true).fetchSemanticsNodes().size,
+            rule.onAllNodesWithTag("music_art_image", useUnmergedTree = true).fetchSemanticsNodes().size)
         shot("music_library_${theme(dark)}")
     }
 

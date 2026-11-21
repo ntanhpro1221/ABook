@@ -4,7 +4,7 @@ import ABook
 
 // Objects outside the visual tree keep their QML property storage while they live. The collector marks that storage only
 // through the object's JS wrapper; a QQuickItem wrapper marks its visual children, so a Reveal (after `parent = null`), a
-// pointer handler (SmoothWheel), a Connections (Listen) or a non-visual store declared as a child is kept only by the weak
+// pointer handler declared in QML, a Connections (Listen) or a non-visual store declared as a child is kept only by the weak
 // QObject-wrapper pass, which gives up when the topmost QObject ancestor is JS-owned. The scene below is exactly that:
 // its owner is created without a parent and dropped, while the visible part lives on in the window. Before Keep.hold the
 // first gc() freed the storage: progress/step/path read as 0 or "", and the Reveal no longer controlled its target.
@@ -106,7 +106,7 @@ Item {
         function test_deletedObjectsAreReleased() {
             const before = Keep.count()
             const owner = ownerFactory.createObject(host)
-            verify(Keep.count() >= before + 4)
+            verify(Keep.count() >= before + 3)
             owner.destroy()
             tryVerify(function() { return Keep.count() === before }, 3000)
         }

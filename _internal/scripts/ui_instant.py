@@ -389,7 +389,7 @@ def kt_classify(paths: list[Path], rel, all_paths: list[Path] | None = None) -> 
                 row['category'], row['reason'] = 'b-motion-policy', 'selects the shared reduced fade implementation; both paths animate the same content'
             elif target == 'FoundationText' and re.search(r'\bimport\s+androidx\.compose\.foundation\.text\.BasicText\s+as\s+FoundationText', source) and re.search(r'\bval\s+separated\s*=\s*remember\(shaped\)\s*\{\s*hasSeparator\(shaped\)', clean) and condition.strip() == '!separated':
                 row['category'], row['reason'] = 'b-text-shaping', 'same BasicText surface: plain shaping fast path versus annotated separator ink; no UI node is toggled'
-            elif target in {'LaunchedEffect', 'DisposableEffect', 'SideEffect'}:
+            elif target in {'LaunchedEffect', 'ImageLaunchedEffect', 'DisposableEffect', 'SideEffect'}:
                 row['category'], row['reason'] = 'b-not-ui', f'`{target}` is an effect host: no visible UI node'
             elif target not in composables:
                 row['category'], row['reason'] = 'b-not-ui', f'`{target}` is not a composable: no node appears or disappears'

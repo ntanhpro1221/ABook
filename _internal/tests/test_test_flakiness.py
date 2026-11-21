@@ -152,9 +152,9 @@ WALLCLOCK_RULES = {"elapsed-bound", "fixed-deadline", "raw-waitfor"}
 
 
 def test_hard_wall_clock_limits_are_banned_outside_the_shared_helpers():
-    """Hạn theo giờ thật đi qua tests/timing.py (Python), TestTime.kt (JVM), ui/src/testing (web) - không có ngoại lệ trong baseline."""
+    """Use the shared Python/JVM/web/Qt timing helpers; the baseline cannot waive hard upper bounds."""
     stray = [f"{f.path}:{f.line} {f.rule}: {f.code}" for f in scan() if f.rule in WALLCLOCK_RULES]
-    assert not stray, "Dùng assert_within / scaled / TestTime / scaledMs / eventually (docs/WALLCLOCK_TESTS.md):\n" + "\n".join(stray)
+    assert not stray, "Dùng assert_within / scaled / TestTime / TestTiming / scaledMs / eventually (docs/WALLCLOCK_TESTS.md):\n" + "\n".join(stray)
     assert not [key for key in json.loads(BASELINE.read_text(encoding="utf-8")) if key.split("|")[1] in WALLCLOCK_RULES]
 
 
@@ -200,3 +200,24 @@ expect(Date.now() - clickStarted).toBeGreaterThanOrEqual(150);
 def test_other_languages_wall_clock_limits_are_detected(suffix, source, expected):
     rules = [rule for _, rule, _ in other_patterns(source, suffix) if rule in WALLCLOCK_RULES]
     assert rules == expected
+
+
+def test_cpp_elapsed_limits_include_derived_measurements_and_ignore_helpers():
+    source = '''
+QVERIFY(timer.elapsed() < 50);
+QVERIFY(timer.elapsed() <= 50);
+const double perRound = timer.nsecsElapsed() / 1e6 / 50;
+QVERIFY(perRound < 50.0);
+auto latency = std::chrono::steady_clock::now() - started;
+QVERIFY(latency < 100);
+auto deadline = std::chrono::steady_clock::now() + std::chrono::seconds(2);
+QVERIFY(TestTiming::within(timer.elapsed(), 50));
+QVERIFY(timer.elapsed() >= 50);
+QVERIFY(timer.elapsed() > 50 && count < 3);
+QVERIFY(other_latency < 100);
+QVERIFY(timer.elapsed() < TestTiming::ms(50));
+// QVERIFY(timer.elapsed() < 50);
+auto example = "timer.elapsed() < 50";
+'''
+    assert [rule for _, rule, _ in other_patterns(source, ".cpp") if rule in WALLCLOCK_RULES] == [
+        "elapsed-bound", "elapsed-bound", "elapsed-bound", "elapsed-bound", "fixed-deadline"]

@@ -1,4 +1,5 @@
 package vn.abook.player.ui.components
+import vn.abook.player.ui.data.ImageLaunchedEffect
 
 import android.graphics.BitmapFactory
 import android.util.LruCache
@@ -44,8 +45,8 @@ fun PersonAvatar(name: String, avatar: AvatarRef? = null, size: Dp = 40.dp, voic
     val file = if (voice) AvatarArt.voiceFile(name) else avatar?.file.orEmpty()
     val key = if (voice) "voice:$file" else file
     var image by remember(key) { mutableStateOf(PortraitCache.images.get(key)) }
-    LaunchedEffect(key) {
-        if (key.isEmpty() || image != null) return@LaunchedEffect
+    ImageLaunchedEffect(key) {
+        if (key.isEmpty() || image != null) return@ImageLaunchedEffect
         image = withContext(Dispatchers.IO) {
             runCatching {
                 val bytes = if (voice && file.matches(Regex("voice-[0-9a-f]{8}\\.webp"))) context.assets.open("voice_avatars/$file").use { it.readBytes() }

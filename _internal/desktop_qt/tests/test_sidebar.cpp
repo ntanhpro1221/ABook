@@ -6,6 +6,7 @@
 #include "later.h"
 #include "fakes.h"
 #include "player.h"
+#include "smoothwheel.h"
 
 #include <QByteArray>
 #include <QTemporaryDir>
@@ -32,6 +33,7 @@ int main(int argc, char **argv) {
     qputenv("QML_IMPORT_PATH", QUICK_TEST_SOURCE_DIR "/stub");
     qmlRegisterSingletonType<Keep>("ABook", 1, 0, "Keep", [](QQmlEngine *, QJSEngine *) -> QObject * { return new Keep; });
     qmlRegisterSingletonType<Later>("ABook", 1, 0, "Later", [](QQmlEngine *, QJSEngine *) -> QObject * { return new Later; });
+    qmlRegisterType<SmoothWheel>("ABook", 1, 0, "SmoothWheel");
     SidebarSetup setup;
     return quick_test_main_with_setup(argc, argv, "sidebar", QUICK_TEST_SOURCE_DIR, &setup);
 }

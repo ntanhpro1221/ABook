@@ -25,7 +25,7 @@ import { readerEditing } from "./readerEditing";
 import { readLocalSystemIdleMs } from "@/listen/sleepActivity";
 import { PlayerProvider, usePlayer } from "@/listen/player";
 import { SourceProvider, useSource } from "@/listen/source";
-import { DialogActions, Button, ContentSkeleton, Dialog, EmptyState, InlineError, OfflineStrip, TooltipProvider, useFocusClearOfToasts } from "@/shared/ui";
+import { DialogActions, Button, ContentSkeleton, Dialog, EmptyState, InlineError, OfflineStrip, TooltipProvider } from "@/shared/ui";
 import { useMediaQuery } from "@/shared/media";
 import { useToastClearance } from "@/shared/toastClearance";
 import type { ListenBook } from "@/listen/model";
@@ -574,7 +574,6 @@ export function App() {
   // điều hướng suốt 8 giây của nút "Hoàn tác" (soát UX 30-09).
   const narrow = useMediaQuery("(max-width: 639px)");
   useToastClearance();
-  useFocusClearOfToasts();
   // Cửa sổ app Windows không mở được liên kết ngoài tự thân: nhờ máy chủ mở bằng trình duyệt mặc định (chỉ ở app đóng gói có hộp thoại).
   useEffect(() => {
     setExternalOpener(info?.dialogs ? (url) => api("/api/open-url", { method: "POST", body: { url } }).then(() => undefined) : null);
