@@ -7,11 +7,13 @@
 #include <atomic>
 #include <chrono>
 #include <cmath>
+
 #ifdef Q_OS_WIN
-#ifndef NOMINMAX
-#define NOMINMAX
-#endif
-#include <windows.h>
+// windows.h stays out of this header (its near/far macros break test code): the four calls promptObserver needs.
+extern "C" __declspec(dllimport) void *__stdcall GetCurrentProcess(void);
+extern "C" __declspec(dllimport) void *__stdcall GetCurrentThread(void);
+extern "C" __declspec(dllimport) unsigned long __stdcall GetPriorityClass(void *process);
+extern "C" __declspec(dllimport) int __stdcall SetThreadPriority(void *thread, int priority);
 #endif
 
 // Match tests/timing.py: upper bounds only, ABOOK_TEST_TIME_SCALE, default 5, minimum 1.
@@ -52,8 +54,10 @@ struct Mark {
 // priority the app's own thread has (normal), so a bound measures the code under test, not the observer's turn.
 inline void promptObserver() {
 #ifdef Q_OS_WIN
-    if (GetPriorityClass(GetCurrentProcess()) == BELOW_NORMAL_PRIORITY_CLASS)
-        SetThreadPriority(GetCurrentThread(), THREAD_PRIORITY_HIGHEST);
+    constexpr unsigned long belowNormalPriorityClass = 0x4000; // BELOW_NORMAL_PRIORITY_CLASS
+    constexpr int highest = 2;                                 // THREAD_PRIORITY_HIGHEST: base 6 + 2 = 8, as a normal thread
+    if (GetPriorityClass(GetCurrentProcess()) == belowNormalPriorityClass && !SetThreadPriority(GetCurrentThread(), highest))
+        qFatal("promptObserver: SetThreadPriority failed");
 #endif
 }
 } // namespace TestTiming
