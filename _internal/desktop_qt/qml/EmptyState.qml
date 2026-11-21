@@ -40,7 +40,7 @@ Column {
         anchors.horizontalCenter: parent.horizontalCenter
         width: Math.min(root.width, 448)
         horizontalAlignment: Text.AlignHCenter
-        text: root.text
+        text: TextWrap.pretty(root.text)    // text-wrap: pretty như web: từ cuối ngắn không rớt một mình
         color: Theme.text2
         wrapMode: Text.Wrap
         lineHeight: 1.625

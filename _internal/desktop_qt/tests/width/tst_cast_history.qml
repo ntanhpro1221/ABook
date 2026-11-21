@@ -37,7 +37,13 @@ Item {
                 if (item.text === "Hoàn tác" && item.kind === "ghost") actions.push(item)
                 for (const child of item.children || []) collect(child)
             }
-            tryVerify(function() { actions.length = 0; collect(view); return actions.length === 1 && actions[0].visible && actions[0].height > 0 })
+            // The fold grows under a clip: click only once the control's centre is inside the opened area and fully shown.
+            tryVerify(function() {
+                actions.length = 0; collect(view)
+                if (actions.length !== 1 || !actions[0].visible || actions[0].opacity < 1 || !actions[0].enabled) return false
+                const centre = actions[0].mapToItem(view, actions[0].width / 2, actions[0].height)
+                return centre.y <= view.height - view.bottomGap
+            })
             mouseClick(actions[0])
             compare(transport.calls, 1)
             compare(transport.lastPath, "/api/books/book1/cast-history/undo")

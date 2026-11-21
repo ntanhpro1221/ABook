@@ -11,17 +11,17 @@
 // ---- Tên ------------------------------------------------------------------------------------------------------------------
 // Reject any input outside the current cast.json schema before a QML binding reads it.
 function validCast(value) {
-    const object = item => item && typeof item === "object" && !Array.isArray(item)
+    const object = item => Boolean(item) && typeof item === "object" && !Array.isArray(item)
     const number = item => typeof item === "number" && isFinite(item) && item >= 0
     const counts = item => object(item) && number(item.lines) && Number.isInteger(item.lines) && number(item.seconds)
     const chapters = items => Array.isArray(items) && items.every(item => object(item) && Number.isInteger(item.id) && typeof item.title === "string")
     const people = items => Array.isArray(items) && items.every(item => counts(item) && ["name", "displayName", "gender"].every(key => typeof item[key] === "string"))
     if (!object(value) || !people(value.characters) || !people(value.extras)) return false
     const narrator = value.narrator
-    return counts(narrator) && typeof narrator.voice === "string" && number(narrator.voiceLines) && Number.isInteger(narrator.voiceLines) && number(narrator.voiceSeconds)
+    return Boolean(counts(narrator) && typeof narrator.voice === "string" && number(narrator.voiceLines) && Number.isInteger(narrator.voiceLines) && number(narrator.voiceSeconds)
         && chapters(narrator.exceptChapters) && Array.isArray(narrator.chapterVoices)
         && narrator.chapterVoices.every(item => counts(item) && typeof item.voice === "string" && chapters(item.chapters))
-        && (value.carried === undefined || people(value.carried))
+        && (value.carried === undefined || people(value.carried)))
 }
 
 // Tên hiển thị không lộ dữ liệu thô: gạch dưới thành dấu cách (cleanName)

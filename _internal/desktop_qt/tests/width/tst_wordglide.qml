@@ -97,6 +97,7 @@ Item {
             qtAnimationClock.begin()
             try {
                 Player.seek(0.6)
+                tryCompare(page, "inkWord", 1) // the view places the ink a turn after the word changes
                 qtAnimationClock.step(32)
                 const item=list.itemAtIndex(0), target=(item.width-item.textW)/2+item.wordRects[0].x
                 verify(ink.x>old && ink.x<target, "intermediate x="+ink.x+" from="+old+" target="+target)
@@ -139,6 +140,7 @@ Item {
             qtAnimationClock.begin()
             try {
                 Player.seek(crossing*0.5+0.1)
+                tryCompare(page, "inkWord", crossing) // the view places the ink a turn after the word changes
                 qtAnimationClock.step(32)
                 fuzzyCompare(ink.y,oldY,0.01)
                 verify(ink.width>0 && ink.width<oldWidth)
