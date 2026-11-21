@@ -34,7 +34,7 @@ Item {
             Theme.reduceMotion = false
             Player.open("width", 1, 0, true); Player.pause(); Player.setSleep("off")
         }
-        function cleanup() { Nav.layers = []; Player.pause(); Theme.reduceMotion = false }
+        function cleanup() { qtAnimationClock.end(); Nav.layers = []; Player.pause(); Theme.reduceMotion = false }
         function sizes() {
             return [{tag: "narrow", width: 792, height: 900}, {tag: "wide", width: 1200, height: 900}]
         }
@@ -98,10 +98,11 @@ Item {
             const chapterFrom = Audit.box(content.bar.chapterLabel, page)
             const bookFrom = Audit.box(content.bar.bookLabel, page)
             const playFrom = Audit.box(content.bar.playButton, page)
+            qtAnimationClock.begin()
             page.show()
             sameBox({x: page.sharedFrames[0].from.x, y: page.sharedFrames[0].from.y, w: page.sharedFrames[0].from.width, h: page.sharedFrames[0].from.height}, chapterFrom, "chapter source")
             sameBox({x: page.sharedFrames[1].from.x, y: page.sharedFrames[1].from.y, w: page.sharedFrames[1].from.width, h: page.sharedFrames[1].from.height}, bookFrom, "book source")
-            tryVerify(() => page.p > 0 && page.p < 1)
+            verify(qtAnimationClock.advanceUntil(() => page.p > 0 && page.p < 1, 5000))
             const chapter = findChild(page, "nowChapterMorph"), play = findChild(page, "nowPlayMorph")
             // Đích tên chương xuống dòng (ô hai dòng), đích tên sách vẫn một dòng chạy chữ
             compare(page.sharedFrames[0].wrap, true); compare(page.sharedFrames[1].wrap, false)
@@ -113,6 +114,7 @@ Item {
             fuzzyCompare(play.y, page.playFrom.y + (page.playTo.y - page.playFrom.y) * g, 0.01)
             fuzzyCompare(play.width * play.scale, playFrom.w + (56 - playFrom.w) * g, 0.01)
             compare(content.bar.sharedShown, false)
+            qtAnimationClock.end()
             tryCompare(page, "p", 1)
             page.close()
             // The mini's temporary -12 px exit transform must not change the

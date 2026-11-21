@@ -1,6 +1,10 @@
 // Bộ thử QML của thanh bên (tests/qml/tst_sidebar.qml): QtQuickTest trên nền offscreen, Platform / Backend giả ở tests/qml/stub.
 #include <QtQuickTest/quicktest.h>
+#include <QQmlContext>
 #include <QQmlEngine>
+
+#include "animationclock.h"
+#include "timing.h"
 
 #include "keep.h"
 #include "later.h"
@@ -14,6 +18,7 @@
 
 // MusicPreviewBar also creates a SeekBar and ClockUser. Keep their real Player
 // dependency available even when this suite only exercises pointer handling.
+// Motion tests step a test clock (qtAnimationClock) instead of racing a real-time animation, as in WidthTests.
 class SidebarSetup : public QObject {
     Q_OBJECT
     QTemporaryDir dir;
@@ -26,9 +31,13 @@ public slots:
         Player::setInstance(player.get());
         qmlRegisterSingletonInstance("ABook", 1, 0, "Player", player.get());
     }
+    void qmlEngineAvailable(QQmlEngine *engine) {
+        engine->rootContext()->setContextProperty(QStringLiteral("qtAnimationClock"), new TestAnimationClock(engine));
+    }
 };
 
 int main(int argc, char **argv) {
+    TestTiming::promptObserver(); // the QML test thread is the app's UI thread: run it at the app's priority
     qputenv("QT_QPA_PLATFORM", "offscreen");
     qputenv("QML_IMPORT_PATH", QUICK_TEST_SOURCE_DIR "/stub");
     qmlRegisterSingletonType<Keep>("ABook", 1, 0, "Keep", [](QQmlEngine *, QJSEngine *) -> QObject * { return new Keep; });

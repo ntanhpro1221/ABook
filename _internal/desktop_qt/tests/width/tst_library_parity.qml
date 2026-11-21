@@ -23,7 +23,7 @@ Item {
             {bookId: "c", title: "Cuốn mới", stage: "text", addedAt: 3}
         ]
         function init() { Theme.reduceMotion = false; Nav.layers = []; Platform.reset(); DesktopApi.reset(); Api.bind(DesktopApi, Theme) }
-        function cleanup() { Nav.layers = []; Theme.reduceMotion = false }
+        function cleanup() { qtAnimationClock.end(); Nav.layers = []; Theme.reduceMotion = false }
         function test_selectionCapturesOnDemandAndReleasesAfterMotion() {
             const page = createTemporaryObject(library, host, {width: 792, height: 700, books: fixture})
             ready()
@@ -42,8 +42,9 @@ Item {
             tryVerify(function() { return !slide.running })
             compare(page.shownSections[0].books[0].bookId, "b")
             compare(slide.image, null)
+            qtAnimationClock.begin()
             page.filter = "listening"
-            tryVerify(function() { return slide.image !== null && page.resultProgress < 1 })
+            verify(qtAnimationClock.advanceUntil(function() { return slide.image !== null && page.resultProgress < 1 }, 5000))
             page.visible = false
             compare(slide.image, null, "hiding a page releases an active capture")
         }
@@ -107,7 +108,7 @@ Item {
             Backend.library.revision++; tryVerify(function() { return Math.abs((page.list.contentY) - (before)) <= 1 })
             page.list.forceActiveFocus(); keyClick(Qt.Key_Right); compare(page.current, 1)
             Theme.reduceMotion = false
-            page.filter = "finished"; tryVerify(function() { return page.resultProgress > 0 && page.resultProgress < 1 })
+            qtAnimationClock.begin(); page.filter = "finished"; verify(qtAnimationClock.advanceUntil(function() { return page.resultProgress > 0 && page.resultProgress < 1 }, 5000)); qtAnimationClock.end()
             tryCompare(page, "count", 0)
             page.destroy()
         }

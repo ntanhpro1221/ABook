@@ -227,6 +227,7 @@ Item {
         }
         function cleanup() {
             CaptureSize.resize(this, host, host.Window.window, 1280, 900)
+            qtAnimationClock.end()
             host.frameTab = null
             Api.elsewhereNotice = null
             Theme.mode = "auto"; Theme.reduceMotion = false
@@ -817,21 +818,25 @@ Item {
             VisualReady.render(this, host.Window.window, page, qtVisualReady)
             const tab = tabOf(page), removed = rowOf(page, "n1").parent, retained = rowOf(page, "d1")
             Theme.reduceMotion = false
+            qtAnimationClock.begin()
             tab.setFilter("speech")
-            tryVerify(function() { return removed.reveal > 0 && removed.reveal < 1 })
+            verify(qtAnimationClock.advanceUntil(function() { return removed.reveal > 0 && removed.reveal < 1 }, 5000))
             verify(!removed.enabled)
             compare(retained.parent.reveal, 1)
             compare(one(page, "scriptLines").opacity, 1)
             verify(removed.transform[0].y < 0)
+            qtAnimationClock.end()
             tab.setFilter("all")
             tryCompare(removed, "reveal", 1)
             compare(rowOf(page, "d1"), retained, "delegate theo stableId không bị dựng lại")
             tab.setWho("HEIDI")
             ready(page, 1)
             tryVerify(function() { return !removed.visible })
+            qtAnimationClock.begin()
             tab.setWho("HEIDI")
-            tryVerify(function() { return removed.reveal > 0 && removed.reveal < 1 })
+            verify(qtAnimationClock.advanceUntil(function() { return removed.reveal > 0 && removed.reveal < 1 }, 5000))
             verify(removed.transform[0].y > 0)
+            qtAnimationClock.end()
             ready(page, 6)
             tryCompare(removed, "reveal", 1)
         }
@@ -840,9 +845,11 @@ Item {
             const page = openScript()
             ready(page, 6)
             const removed = rowOf(page, "n1").parent
+            qtAnimationClock.begin()
             tabOf(page).setFilter("speech")
-            tryVerify(function() { return removed.reveal > 0 && removed.reveal < 1 })
+            verify(qtAnimationClock.advanceUntil(function() { return removed.reveal > 0 && removed.reveal < 1 }, 5000))
             compare(removed.transform[0].y, 0)
+            qtAnimationClock.end()
             tryCompare(removed, "reveal", 0)
             tabOf(page).setFilter("all")
             tryCompare(removed, "reveal", 1)
@@ -859,10 +866,12 @@ Item {
             const removed = rowOf(page, "d1").parent, retained = rowOf(page, "t1")
             Theme.reduceMotion = false
             DesktopApi.delayed = true
+            qtAnimationClock.begin()
             tab.scriptStore.assign([removed.row.line], {value: "HEIDI", label: "Heidi"})
-            tryVerify(function() { return removed.reveal > 0 && removed.reveal < 1 })
+            verify(qtAnimationClock.advanceUntil(function() { return removed.reveal > 0 && removed.reveal < 1 }, 5000))
             compare(retained.parent.reveal, 1)
             verify(!removed.enabled)
+            qtAnimationClock.end()
             tryCompare(removed, "reveal", 0)
             server.chapters[1].lines[1].wish = {value: "HEIDI", label: "Heidi", state: "pending"}
             DesktopApi.delayed = false

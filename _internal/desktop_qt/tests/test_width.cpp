@@ -11,6 +11,8 @@
 #include "later.h"
 #include "appfonts.h"
 #include "visualready.h"
+#include "animationclock.h"
+#include "timing.h"
 #include "uitree.h"
 #include "shadowprovider.h"
 #include "musicartprovider.h"
@@ -46,41 +48,6 @@
 #define NOMINMAX
 #include <windows.h>
 #include <QtQuick/private/qsgabstractsoftwarerenderer_p.h>
-
-// Only motion-contract tests opt into this clock. Real scheduler delays must
-// not decide whether an intermediate animation value can be observed.
-class TestAnimationClock : public QAnimationDriver {
-    Q_OBJECT
-    qint64 m_elapsed = 0;
-    bool m_installed = false;
-public:
-    using QAnimationDriver::QAnimationDriver;
-    ~TestAnimationClock() override { end(); }
-    qint64 elapsed() const override { return m_elapsed; }
-    Q_INVOKABLE void begin() {
-        Q_ASSERT(!m_installed);
-        QCoreApplication::processEvents();
-        m_elapsed = 0;
-        install();
-        m_installed = true;
-        advanceAnimation();
-        QCoreApplication::processEvents();
-    }
-    Q_INVOKABLE void step(int milliseconds) {
-        Q_ASSERT(m_installed && milliseconds > 0);
-        // Start queued animations before advancing their clock. Rendering and
-        // queued application responses still use Qt's actual event loop.
-        QCoreApplication::processEvents();
-        m_elapsed += milliseconds;
-        advanceAnimation();
-        QCoreApplication::processEvents();
-    }
-    Q_INVOKABLE void end() {
-        if (!m_installed) return;
-        uninstall();
-        m_installed = false;
-    }
-};
 
 class WidthCovers : public QQuickImageProvider {
 public:
@@ -478,6 +445,7 @@ static void createShotFolders() {
 }
 
 int main(int argc, char **argv) {
+    TestTiming::promptObserver(); // the QML test thread is the app's UI thread: run it at the app's priority
     const bool realBackend = qEnvironmentVariableIntValue("ABOOK_WIDTH_REAL_BACKEND") == 1;
     qputenv("QT_QPA_PLATFORM", realBackend ? "windows" : "offscreen");
     if (realBackend) qunsetenv("QT_QUICK_BACKEND");

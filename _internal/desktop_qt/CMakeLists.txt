@@ -589,8 +589,8 @@ if(MSVC)
     target_compile_options(SkipGlyphTests PRIVATE /W3 /utf-8)
 endif()
 # Thanh bên thu gọn / mở rộng: QtQuickTest với Theme + Nav thật, Platform / Backend giả
-qt_add_executable(SidebarTests tests/test_sidebar.cpp tests/fakes.h src/keep.h src/smoothwheel.h src/later.h ${ABOOK_PLAYER_SOURCES})
-target_include_directories(SidebarTests PRIVATE src)
+qt_add_executable(SidebarTests tests/test_sidebar.cpp tests/animationclock.h tests/fakes.h src/keep.h src/smoothwheel.h src/later.h ${ABOOK_PLAYER_SOURCES})
+target_include_directories(SidebarTests PRIVATE src tests)
 target_compile_definitions(SidebarTests PRIVATE QUICK_TEST_SOURCE_DIR="${CMAKE_CURRENT_SOURCE_DIR}/tests/qml")
 target_link_libraries(SidebarTests PRIVATE Qt6::QuickTest Qt6::Quick Qt6::QmlPrivate Qt6::Network Qt6::QuickPrivate)   # QuickPrivate: SmoothWheel (QQuickWheelHandler)
 # Ở thư mục riêng: cạnh app thì Qt tìm thấy module ABook thật (trỏ vào qrc của app) trước bản dựng giả
@@ -679,7 +679,7 @@ if(MSVC)
     target_compile_options(SingleInstanceTests PRIVATE /W3 /utf-8)
 endif()
 add_test(NAME SingleInstanceTests COMMAND SingleInstanceTests)
-qt_add_executable(WidthTests tests/test_width.cpp tests/glyphaudit.h tests/visualready.h tests/uitree.h tests/fakes.h src/later.h src/keep.h src/smoothwheel.h src/shadowprovider.cpp src/shadowprovider.h src/musicartprovider.cpp src/musicartprovider.h src/bookdetail.cpp src/bookdetail.h src/mediacontrols.cpp src/mediacontrols.h
+qt_add_executable(WidthTests tests/test_width.cpp tests/animationclock.h tests/glyphaudit.h tests/visualready.h tests/uitree.h tests/fakes.h src/later.h src/keep.h src/smoothwheel.h src/shadowprovider.cpp src/shadowprovider.h src/musicartprovider.cpp src/musicartprovider.h src/bookdetail.cpp src/bookdetail.h src/mediacontrols.cpp src/mediacontrols.h
     src/readalong.cpp src/readalong.h src/music.cpp src/music.h src/feedback.cpp src/feedback.h ${ABOOK_PLAYER_SOURCES} ${ABOOK_MUSIC_SOURCES})
 target_include_directories(WidthTests PRIVATE src tests)
 target_compile_definitions(WidthTests PRIVATE QUICK_TEST_SOURCE_DIR="${CMAKE_CURRENT_SOURCE_DIR}/tests/width"
@@ -693,7 +693,7 @@ if(MSVC)
 endif()
 add_test(NAME WidthTests COMMAND WidthTests -o ${CMAKE_BINARY_DIR}/width-test.txt,txt)
 add_test(NAME BookMetadataTests COMMAND WidthTests -input "${CMAKE_CURRENT_SOURCE_DIR}/tests/bookmeta" -o ${CMAKE_BINARY_DIR}/bookmeta-test.txt,txt)
-qt_add_executable(HitlTests tests/test_width.cpp tests/glyphaudit.h tests/visualready.h tests/uitree.h tests/fakes.h src/later.h src/keep.h src/smoothwheel.h src/shadowprovider.cpp src/shadowprovider.h src/musicartprovider.cpp src/musicartprovider.h src/bookdetail.cpp src/bookdetail.h src/mediacontrols.cpp src/mediacontrols.h
+qt_add_executable(HitlTests tests/test_width.cpp tests/animationclock.h tests/glyphaudit.h tests/visualready.h tests/uitree.h tests/fakes.h src/later.h src/keep.h src/smoothwheel.h src/shadowprovider.cpp src/shadowprovider.h src/musicartprovider.cpp src/musicartprovider.h src/bookdetail.cpp src/bookdetail.h src/mediacontrols.cpp src/mediacontrols.h
     src/readalong.cpp src/readalong.h src/music.cpp src/music.h src/feedback.cpp src/feedback.h ${ABOOK_PLAYER_SOURCES} ${ABOOK_MUSIC_SOURCES})
 target_include_directories(HitlTests PRIVATE src tests)
 target_compile_definitions(HitlTests PRIVATE QUICK_TEST_SOURCE_DIR="${CMAKE_CURRENT_SOURCE_DIR}/tests/hitl"

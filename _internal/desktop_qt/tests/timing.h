@@ -50,8 +50,9 @@ struct Mark {
 };
 // The release gate starts every test process BELOW_NORMAL so it never competes with the owner's work; under all-core
 // load such a thread waits for Windows' anti-starvation boost (~1 s). A suite whose test thread measures real time
-// (elapsed bounds, a device clock, a paced local server) calls this in initTestCase: the observer then runs at the
-// priority the app's own thread has (normal), so a bound measures the code under test, not the observer's turn.
+// (elapsed bounds, a device clock, a paced local server) or is the app's UI thread (QML suites) calls this first: that
+// one thread then runs at the priority the app's own thread has (normal), so a bound measures the code under test, not
+// the observer's turn. Everything else the gate starts stays BELOW_NORMAL.
 inline void promptObserver() {
 #ifdef Q_OS_WIN
     constexpr unsigned long belowNormalPriorityClass = 0x4000; // BELOW_NORMAL_PRIORITY_CLASS

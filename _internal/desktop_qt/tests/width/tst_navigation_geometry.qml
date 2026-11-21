@@ -18,6 +18,7 @@ Item {
             Platform.reset(); DesktopApi.reset(); Api.bind(DesktopApi, Theme); Theme.reduceMotion = false; Nav.uiVisible = true
             DesktopApi.responses["/api/listen/books/width"] = {status: 200, data: {id: "width", title: "Hành trình qua miền đất mới", stage: "audio", chapters: []}}
         }
+        function cleanup() { qtAnimationClock.end() }
         function test_coverTracksResponsiveDestinationUntilLastFrame() {
             const stack = createTemporaryObject(stackFactory, host)
             stack.show(0)
@@ -40,30 +41,38 @@ Item {
             const settings = createTemporaryObject(settingsFactory, host)
             const frame = findChild(settings, "settingsFrame")
             const origin = frame.mapToItem(host, 0, 0).x
+            qtAnimationClock.begin()
             settings.active = "listen"
-            tryVerify(() => settings.navigationPhase > 0 && settings.navigationPhase < 1)
+            verify(qtAnimationClock.advanceUntil(() => settings.navigationPhase > 0 && settings.navigationPhase < 1, 5000))
             verify(frame.mapToItem(host, 0, 0).x > origin)
             verify(findChild(settings, "settingsContentSlide").image !== null)
+            qtAnimationClock.end()
             tryCompare(settings, "navigationPhase", 1)
+            qtAnimationClock.begin()
             settings.active = ""
-            tryVerify(() => settings.navigationPhase > 0 && settings.navigationPhase < 1)
+            verify(qtAnimationClock.advanceUntil(() => settings.navigationPhase > 0 && settings.navigationPhase < 1, 5000))
             verify(frame.mapToItem(host, 0, 0).x < origin)
             verify(findChild(settings, "settingsContentSlide").image !== null)
+            qtAnimationClock.end()
             tryCompare(settings, "navigationPhase", 1)
             compare(settings.shown, "")
         }
         function test_studioBackReversesEntry() {
             const studio = createTemporaryObject(studioFactory, host)
             const content = findChild(studio, "studioContent")
+            qtAnimationClock.begin()
             studio.openProject("width")
-            tryVerify(() => studio.phase > 0 && studio.phase < 1)
+            verify(qtAnimationClock.advanceUntil(() => studio.phase > 0 && studio.phase < 1, 5000))
             verify(content.mapToItem(host, 0, 0).x > 0)
             verify(findChild(studio, "studioContentSlide").image !== null)
+            qtAnimationClock.end()
             tryCompare(studio, "phase", 1)
+            qtAnimationClock.begin()
             studio.goList()
-            tryVerify(() => studio.phase > 0 && studio.phase < 1)
+            verify(qtAnimationClock.advanceUntil(() => studio.phase > 0 && studio.phase < 1, 5000))
             verify(content.mapToItem(host, 0, 0).x < 0)
             verify(findChild(studio, "studioContentSlide").image !== null)
+            qtAnimationClock.end()
             tryCompare(studio, "phase", 1)
         }
         function test_bookTabsMoveAndReverseInsteadOfOnlyFading() {
@@ -71,13 +80,17 @@ Item {
             tryCompare(page, "loaded", true)
             const chapters = findChild(page, "bookChapters"), history = findChild(page, "historyList")
             const origin = chapters.mapToItem(host, 0, 0).x
+            qtAnimationClock.begin()
             page.tab = 1
-            tryVerify(() => history.opacity > 0 && history.opacity < 1 && history.mapToItem(host, 0, 0).x > origin)
+            verify(qtAnimationClock.advanceUntil(() => history.opacity > 0 && history.opacity < 1 && history.mapToItem(host, 0, 0).x > origin, 5000))
             verify(chapters.mapToItem(host, 0, 0).x < origin)
+            qtAnimationClock.end()
             tryCompare(history, "opacity", 1)
+            qtAnimationClock.begin()
             page.tab = 0
-            tryVerify(() => chapters.opacity > 0 && chapters.opacity < 1 && chapters.mapToItem(host, 0, 0).x < origin)
+            verify(qtAnimationClock.advanceUntil(() => chapters.opacity > 0 && chapters.opacity < 1 && chapters.mapToItem(host, 0, 0).x < origin, 5000))
             verify(history.mapToItem(host, 0, 0).x > origin)
+            qtAnimationClock.end()
             tryCompare(chapters, "opacity", 1)
             fuzzyCompare(chapters.mapToItem(host, 0, 0).x, origin, 0.01)
         }

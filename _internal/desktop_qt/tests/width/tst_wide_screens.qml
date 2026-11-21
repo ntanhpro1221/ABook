@@ -35,7 +35,7 @@ Item {
                 "/api/sync/peers": {status: 200, data: {peers: []}}
             }
         }
-        function cleanup() { Nav.layers = []; Theme.reduceMotion = false; Theme.mode = "auto" }
+        function cleanup() { qtAnimationClock.end(); Nav.layers = []; Theme.reduceMotion = false; Theme.mode = "auto" }
         function disjoint(a, b, page) {
             verify(a !== null && b !== null, "missing layout columns")
             const p = a.mapToItem(page, 0, 0), q = b.mapToItem(page, 0, 0)
@@ -209,8 +209,10 @@ Item {
             if (d.screen === "edit") { page.titleDraft = "Bản nháp đang viết ".repeat(5); page.metadataDraft = Object.assign({}, page.metadataDraft, {author: "Tác giả đang viết"}) }
             Theme.reduceMotion = false
             for (const width of [1688, narrow, 1688]) {
+                const animates = d.screen !== "settings" && d.screen !== "devices"
+                if (animates) qtAnimationClock.begin()
                 host.width = width + content.x
-                if (d.screen !== "settings" && d.screen !== "devices") tryVerify(function() { return page.wideT > 0 && page.wideT < 1 }, 5000, "reflow must animate")
+                if (animates) { verify(qtAnimationClock.advanceUntil(function() { return page.wideT > 0 && page.wideT < 1 }, 5000), "reflow must animate"); qtAnimationClock.end() }
                 if (d.screen === "add" || d.screen === "edit" || d.screen === "mini") {
                     for (let frame = 0; frame < 14; frame++) {
                         waitForPolish(host.Window.window)

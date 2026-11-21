@@ -32,19 +32,21 @@ Item {
     TestCase {
         name: "RevealLifetime"
         when: windowShown
-        function cleanup() { Theme.reduceMotion = false }
+        function cleanup() { qtAnimationClock.end(); Theme.reduceMotion = false }
         function test_exit_data() { return [{tag: "normal", reduced: false}, {tag: "reduced", reduced: true}] }
         function test_exit(data) {
             Theme.reduceMotion = data.reduced
             const row = createTemporaryObject(sample, host)
             verify(row)
             verify(row.visible)
+            qtAnimationClock.begin()
             row.expanded = false
             verify(row.visible, "keep the outgoing item until its fade finishes")
             verify(!row.enabled, "closing blocks input immediately")
             const control = findChild(row, "controller")
-            tryVerify(() => control.progress > 0 && control.progress < 1)
+            verify(qtAnimationClock.advanceUntil(() => control.progress > 0 && control.progress < 1, 5000))
             verify(row.visible)
+            qtAnimationClock.end()
             tryCompare(row, "visible", false)
             compare(row.opacity, 0)
             row.allowed = false
@@ -59,12 +61,14 @@ Item {
         }
         function test_reverse() {
             const row = createTemporaryObject(sample, host)
+            qtAnimationClock.begin()
             row.expanded = false
             const control = findChild(row, "controller")
-            tryVerify(() => control.progress > 0 && control.progress < 1)
+            verify(qtAnimationClock.advanceUntil(() => control.progress > 0 && control.progress < 1, 5000))
             const middle = control.progress
             row.expanded = true
             verify(control.progress >= middle && control.progress < 1, "reverse the current fade")
+            qtAnimationClock.end()
             tryCompare(control, "progress", 1)
             verify(row.visible && row.enabled)
         }
