@@ -676,7 +676,8 @@ private fun ListenButton(label: String, detail: String?, playing: Boolean, buffe
         // Nhãn xuống dòng thì icon đứng giữa DÒNG ĐẦU (như web FIRST_LINE và Qt Button), không trôi xuống giữa khối chữ (soát leftfix L1).
         // Tâm dòng đầu đo từ bố cục chữ thật: OneLineFit có thể đã thu cỡ chữ nên dòng thấp hơn lineHeight của kiểu chữ.
         val density = LocalDensity.current
-        var lineMid by remember { mutableStateOf(with(density) { Abook.type.bodyStrong.lineHeight.toDp() } / 2) }
+        val styleLine = with(density) { Abook.type.bodyStrong.lineHeight.toDp() }
+        var lineMid by remember { mutableStateOf(styleLine / 2) }
         Row(verticalAlignment = Alignment.Top) {
             vn.abook.player.ui.components.PendingIndicator(buffering, Modifier.padding(top = (lineMid - 11.dp).coerceAtLeast(0.dp)).size(22.dp).testTag("book_primary_icon"), color = colors.accentInk) {
                 vn.abook.player.ui.motion.SwapContent(restart, contentKey = { it }, inPlace = true) { retry ->

@@ -310,6 +310,7 @@ PendingRow 1.0 ../../../../qml/PendingRow.qml
 VoiceTry 1.0 ../../../../qml/VoiceTry.qml
 WordTimings 1.0 ../../../../qml/WordTimings.qml
 MusicScreen 1.0 ../../../../qml/MusicScreen.qml
+LevelBar 1.0 ../../../../qml/LevelBar.qml
 MusicTrackDetail 1.0 ../../../../qml/MusicTrackDetail.qml
 MusicTrackRow 1.0 ../../../../qml/MusicTrackRow.qml
 MusicBookSection 1.0 ../../../../qml/MusicBookSection.qml

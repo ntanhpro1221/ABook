@@ -150,6 +150,7 @@ Interactive {
         x: root.source !== "" ? 18 : 0
         y: authorText.y + authorText.height + 4
         room: root.coverWidth - x
+        holdLineHeight: true
         text: TextWrap.keepDots(root.subLine)
         color: Theme.text3
         baseSize: Theme.sizeCaption

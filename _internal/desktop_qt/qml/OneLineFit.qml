@@ -18,6 +18,10 @@ Text {
     readonly property string fit: room <= 0 || naturalWidth <= room ? "one" : fitted >= minSize ? "shrunk" : "wrap"
     // Chiều cao dòng đầu: icon đứng trước tên canh giữa dòng này (máy dò icon-off-center), cả khi tên xuống dòng
     readonly property real firstLineHeight: lineCount > 1 ? height / lineCount : height
+    // Ô lưới cần mọi ô cao bằng nhau: holdLineHeight giữ hộp dòng ở cỡ gốc khi chữ đã thu cỡ (chữ nhỏ canh giữa hộp ấy), để ô có dòng
+    // phụ dài (tên máy) không thấp hơn ô bên cạnh (soát leftfix T4).
+    property bool holdLineHeight: false
+    readonly property real baseLineHeight: probe.implicitHeight
 
     Text { id: probe; visible: false; text: root.text; textFormat: root.textFormat; font.family: root.font.family; font.weight: root.font.weight; font.features: root.font.features; font.pixelSize: root.baseSize }
     Text { id: probeFit; visible: false; text: root.text; textFormat: root.textFormat; font.family: root.font.family; font.weight: root.font.weight; font.features: root.font.features; font.pixelSize: Math.max(1, root.candidate) }
@@ -25,5 +29,7 @@ Text {
     width: Math.max(0, Math.min(naturalWidth, room))
     font.pixelSize: fit === "shrunk" ? fitted : baseSize
     wrapMode: fit === "wrap" ? Text.Wrap : Text.NoWrap
+    height: holdLineHeight && fit === "shrunk" ? Math.max(implicitHeight, baseLineHeight) : implicitHeight
+    verticalAlignment: holdLineHeight ? Text.AlignVCenter : Text.AlignTop
     textFormat: Text.PlainText
 }
