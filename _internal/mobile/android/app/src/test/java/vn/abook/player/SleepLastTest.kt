@@ -113,7 +113,7 @@ class SleepLastTest {
         val seen = SleepTimer.lastFlow.value
         assertEquals(LastSleep(), seen)
         val loader = Thread { ListenPrefs.load() }
-        loader.start(); loader.join(5_000)
+        loader.start(); loader.join(TestTime.ms(5_000))
         assertEquals(LastSleep(LastSleep.CHAPTER, 50, 3), SleepTimer.lastFlow.value)
         assertEquals(SleepTimer.lastFlow.value, SleepTimer.last)
     }
