@@ -389,6 +389,11 @@ select[class~="border-line"] {
 /* Biểu tượng to theo cỡ chữ (soát a67, điện thoại cỡ chữ 200 %): WebView Android giãn chữ bằng textZoom, mà rem / em KHÔNG giãn theo (đo trên máy ảo:
  * 1rem vẫn 16 px), còn rlh (chiều cao dòng của gốc, html line-height 1.5) thì có. Cỡ chữ 100 % đúng như cũ (18 / 22 px); to nhất bằng ô nút chứa nó
  * (size-9; glyph-20 trong size-11) để không tràn sang nút bên cạnh. Máy tính đổi cỡ chữ trình duyệt thì rem và rlh cùng giãn. */
+/* Nền của thứ NỔI trên nội dung (thẻ, khung thả file, tấm lời báo): nhấn nhạt PHỦ TRÊN mặt nổi. `--accent-soft` ở giao diện tối là hổ phách 14 %, đứng một mình
+ * thì chữ bên dưới lộ qua (chủ sách 22-11, thẻ "Về chỗ vừa nghe"); phủ trên --panel thì cùng màu mà đục hẳn (máy dò L14). */
+@utility bg-floating-accent {
+  background: linear-gradient(var(--accent-soft), var(--accent-soft)) var(--panel);
+}
 @utility glyph {
   --icon-w: clamp(1.125rem, 0.75rlh, 1.96875rem);
   width: clamp(1.125rem, 0.75rlh, 1.96875rem);

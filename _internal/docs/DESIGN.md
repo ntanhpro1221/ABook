@@ -405,6 +405,11 @@ giữ tên trong cột tối đa 640 px, thanh tua dùng phần rộng còn lạ
   tới 15 + thanh tiến độ; phải tốc độ · âm lượng · "…" (hẹn giờ, phát trên thiết bị khác, nhạc nền, giọng...).
 - **Dòng phụ nhiều cụm** (`A · B · C`): cụm giữa hai "·" không gãy, chỉ xuống dòng ngay sau dấu; cụm dài hơn cả dòng mới được gãy bên trong. Điện thoại `keepClustersTogether` (ClusterLabel), web `DotJoin`, Qt `Flow` + `FlowDetail`; máy kiểm: TextWrapRulesTest, gallery_inspect `cluster-broken`, test_qt_layout_lints.py.
 - **Dòng tóm tắt của hàng** (giá trị dưới / cạnh tên hàng: "Hoài My", "Tắt", "Nhạc tự chọn", "Phiên bản 0.4.169") viết hoa chữ đầu trên cả ba nền. Dòng không có gì để nói thì không hiện (không "Đã tải 0 bài · 1 KB"). Máy kiểm: `scripts/ui_parity_rules.py` L11.
+- **Thẻ nổi** ("Về chỗ vừa nghe", "Tới câu đang nghe", tấm lời báo trên bìa, khung thả file; chủ sách 22-11): nền ĐỤC - nhấn nhạt phủ trên mặt nổi
+  (Android `floatingFill` / `FloatingChip`, web `bg-floating-accent` hay `bg-panel`, Qt Rectangle `Theme.panel` dưới lớp nhấn), không bao giờ `*-soft` / `/95` / `opacity 0.95`
+  đứng một mình (giao diện tối: hổ phách 14 %, chữ bên dưới lộ qua). Chữ giữa thẻ theo cả hai chiều (chiều cao nằm ở khối căn giữa bọc chữ, không ở chính dòng chữ).
+  Không đè bìa hay điều khiển: màn Nghe thu bìa nhường một dải trên khối tên, cửa sổ thấp mở thẻ trong dòng chảy cuối cột. Vào / ra bằng mờ + trượt.
+  Máy kiểm: `scripts/ui_parity_rules.py` L13 (chữ dính đỉnh khung) + L14 (nền mờ trên lớp nổi), `NowPlayingUiTest.returnChip*`.
 - **Toast**: một dòng + tối đa một hành động, tự tắt, Back đóng.
   Thông báo luôn nằm dưới mặt điều khiển của mọi bảng / hộp / menu đang mở, kể cả trong chuyển động mở, đóng và đổi vị trí; không được che nút. Web dịch toast ra khoảng trống ngoài hộp, thiếu chỗ thì mờ dần; Android giữ lời báo trong dòng chảy dưới lớp nổi; Qt đặt toast dưới Modal / Popover. Giữ chuyển động ở mọi nền tảng, kể cả khi giảm chuyển động.
 

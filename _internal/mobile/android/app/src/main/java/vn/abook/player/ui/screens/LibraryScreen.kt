@@ -370,7 +370,8 @@ private fun BookTile(
 @Composable
 private fun CoverChip(text: String, modifier: Modifier) {
     val colors = Abook.colors
-    Box(modifier.clip(RoundedCornerShape(Dim.radiusControl)).background(colors.bg.copy(alpha = 0.92f)).padding(horizontal = 8.dp, vertical = 4.dp)) {
+    // Nổi trên ảnh bìa: nền đục (L14) - nền 92 % để nét ảnh lộ qua chữ.
+    Box(modifier.clip(RoundedCornerShape(Dim.radiusControl)).background(colors.bg).padding(horizontal = 8.dp, vertical = 4.dp)) {
         BasicText(text, style = Abook.type.caption.copy(color = colors.text, fontWeight = FontWeight.Medium))
     }
 }

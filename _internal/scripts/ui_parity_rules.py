@@ -1,9 +1,9 @@
-"""Twelve cross-platform UI rules (L1-L12) for web, Qt and Android, read straight from the sources.
+"""Fourteen cross-platform UI rules (L1-L14) for web, Qt and Android, read straight from the sources.
 
 docs/UI_PARITY.md keeps the shared dictionary and the existing web <-> native detectors; this file adds what they never compared:
 Qt <-> Android directly, the dictionary's "Thay cho" column, colour tokens, the spacing/type scale, component radius roles, motion
 tokens, hard show/hide, the "…" button's spoken name, label length, same-control pairs, row summary case (L11) and floating layers
-that swallow taps (L12). Exceptions and the remaining-work lists
+that swallow taps (L12), labels centred in their fixed-height surface (L13) and opaque fills on floating layers (L14). Exceptions and the remaining-work lists
 live in scripts/ui_parity_rules.json, each with a reason. Every check returns a list of readable problems; tests/test_ui_parity_rules.py
 asserts they are empty and that each rule bites a planted violation.
 
@@ -1115,10 +1115,215 @@ def l12_floating_layers() -> list[str]:
     return problems
 
 
+
+# --- L13: a label inside a fixed / minimum height surface must be centred (chủ sách 22-11 "Về chỗ vừa nghe") ---------------------------------------
+# BasicText lays its line out at the TOP of its own box. Give that box a minimum / fixed height plus a visible surface or a tap target and the words stick
+# to the upper edge with an empty strip below. The height belongs to a Box (contentAlignment = Center) around the text, or the text fills a centring parent.
+L13_TEXT = re.compile(r"(?<![\w.])(?:BasicText|Text)\(")
+L13_HEIGHT = re.compile(r"\.(?:heightIn\(\s*min\b|heightIn\(\s*\d|height\(|size\(|requiredHeight\(|requiredSize\(|defaultMinSize\([^)]*minHeight|fillMaxHeight\(|fillMaxSize\()")
+L13_SURFACE = re.compile(r"\.(?:background\(|border\(|drawBehind\b|pressable\b|clickable\b|combinedClickable\b|toggleable\b|selectable\b|insetSurface\()")
+
+
+def _call_args(text: str, open_paren: int) -> list[str]:
+    """Top-level arguments of the call whose `(` is at `open_paren`."""
+    depth, start, args = 0, open_paren + 1, []
+    for i in range(open_paren, len(text)):
+        c = text[i]
+        if c in "([{":
+            depth += 1
+        elif c in ")]}":
+            depth -= 1
+            if depth == 0:
+                args.append(text[start:i])
+                return args
+        elif c == "," and depth == 1:
+            args.append(text[start:i])
+            start = i + 1
+    return args
+
+
+L13_HOLDER = re.compile(r"(?<![\w.])(Box|Row)\(")
+
+
+def _call_end(text: str, open_paren: int) -> int:
+    """Index just after the `)` closing the call opened at `open_paren`."""
+    depth = 0
+    for i in range(open_paren, len(text)):
+        if text[i] in "([{":
+            depth += 1
+        elif text[i] in ")]}":
+            depth -= 1
+            if depth == 0:
+                return i + 1
+    return len(text)
+
+
+def _only_label(body: str) -> bool:
+    """The content lambda `{ ... }` holds exactly one BasicText / Text call and nothing else."""
+    inner = body[1:-1].strip()
+    m = L13_TEXT.match(inner)
+    return bool(m) and _call_end(inner, m.end() - 1) == len(inner)
+
+
+def l13_android_hits() -> list[tuple[str, int, str]]:
+    hits = []
+    for path in and_files():
+        text = _code_only(path.read_text(encoding="utf-8"))
+        # A Box / Row with a min / fixed height and a surface whose only child is a label, not centred: the same top-stuck line.
+        for m in L13_HOLDER.finditer(text):
+            args = _call_args(text, m.end() - 1)
+            chain = " ".join((args[0] if args else "").split())
+            if not re.match(r"(?:Modifier|modifier)\b", chain) or not (L13_HEIGHT.search(chain) and L13_SURFACE.search(chain)):
+                continue
+            rest = " ".join(" ".join(args[1:]).split())
+            # Any explicit alignment is a decision (TextAction aligns CenterEnd); only the default TopStart leaves the line stuck at the top.
+            if (m.group(1) == "Box" and "contentAlignment" in rest) or (m.group(1) == "Row" and "verticalAlignment" in rest):
+                continue
+            j = _call_end(text, m.end() - 1)
+            while j < len(text) and text[j] in " \t":
+                j += 1
+            if j < len(text) and text[j] == "{" and _only_label(_qt_braces(text, j)):
+                hits.append((rel(path), text.count("\n", 0, m.start()) + 1, f"{m.group(1)}({chain})"))
+        for m in L13_TEXT.finditer(text):
+            for arg in _call_args(text, m.end() - 1)[1:]:
+                chain = " ".join(arg.split())
+                chain = re.sub(r"^modifier\s*=\s*", "", chain)
+                if not re.match(r"(?:Modifier|modifier)\b", chain):
+                    continue
+                if L13_HEIGHT.search(chain) and L13_SURFACE.search(chain):
+                    hits.append((rel(path), text.count("\n", 0, m.start()) + 1, chain))
+    return hits
+
+
+def l13_centred_labels() -> list[str]:
+    allow = {(a["file"], a["what"]) for a in config().get("L13", {}).get("allow", [])}
+    problems, used = [], set()
+    for path, line, chain in l13_android_hits():
+        if (path, chain) in allow:
+            used.add((path, chain))
+            continue
+        problems.append(f"L13 {path}:{line}: chữ có chiều cao tối thiểu / cố định + nền hay chỗ bấm trên CHÍNH nó - BasicText đặt dòng ở đỉnh khung, chữ "
+                        f"dính mép trên: đặt chiều cao / nền vào Box(contentAlignment = Alignment.Center) bọc chữ: {chain[:120]}")
+    problems += [f"L13 allow thừa (đã hết vi phạm): {f} {w}" for f, w in sorted(allow - used)]
+    return problems
+
+
+# --- L14: anything floating over content has an opaque fill (chủ sách 22-11: "hoa anh đào" read through the chip) ------------------------------------
+# The `*-soft` tokens (and the scrim) are translucent in dark mode; `x.copy(alpha = …)` / `bg-x/NN` / `opacity: 0.9 *` are translucent everywhere. In the
+# flow they sit on an opaque page, which is what they are for; over other content the words underneath read through. Floating fills compose the tint over
+# the panel instead (Android `floatingFill`, web `bg-panel` + inner tint, Qt an opaque Rectangle under the tint).
+L14_KT_TRANSLUCENT = re.compile(r"\b(?:accentSoft|warningSoft|infoSoft|dangerSoft|successSoft|scrim)\b(?!\s*\.compositeOver)|\.copy\(\s*alpha\s*=")
+L14_KT_FILL = re.compile(r"\.background\(|\bdrawRoundRect\(|\bdrawRect\(")
+L14_WEB_FLOAT = re.compile(r"(?<![-\w:\[])(?:fixed|absolute|sticky)\b")
+L14_WEB_TRANSLUCENT = re.compile(r"(?<![-\w\[])(?:[a-z0-9]+:)*bg-(?:[a-z0-9-]*-soft|[a-z0-9-]+/\d+|scrim)\b")
+L14_QT_TRANSLUCENT = re.compile(r"(?:^|;)\s*color:\s*(?:Theme\.\w*(?:Soft|scrim)\b|Qt\.alpha\(|Qt\.rgba\()", re.M)
+L14_QT_PART_OPACITY = re.compile(r"(?:^|;)\s*opacity:[^\n;]*?(?<![\w.])0?\.\d+\s*\*", re.M)
+# Floating in QML: raised (z), re-parented onto another item's content, or named as an overlay.
+L14_QT_FLOATING = re.compile(r"(?:^|;)\s*(?:z:\s*[1-9]|parent:\s*\w|objectName:\s*\"[^\"]*(?:Chip|Notes|Plate|Toast|Bubble|Drop|Return)\")", re.M)
+
+
+def l14_android_hits() -> list[tuple[str, int, str]]:
+    """Every translucent fill drawn by Android UI code (`.background(…)`, drawRect / drawRoundRect). Floating or not is a review decision: an in-flow use
+    is listed in the JSON with its reason, anything else must use `floatingFill`."""
+    hits = []
+    for path in and_files():
+        if path.name == "FloatingChip.kt":
+            continue
+        text = _code_only(path.read_text(encoding="utf-8"))
+        for m in L14_KT_FILL.finditer(text):
+            args = _call_args(text, m.end() - 1)
+            colour = " ".join((args[0] if args else "").split())
+            if L14_KT_TRANSLUCENT.search(colour):
+                hits.append((rel(path), text.count("\n", 0, m.start()) + 1, colour))
+    return hits
+
+
+def l14_web_hits() -> list[tuple[str, int, str]]:
+    hits = []
+    for path in web_files():
+        text = path.read_text(encoding="utf-8")
+        for m in re.finditer(r"([\"'`])((?:(?!\1)[^\n])*)\1", text):
+            classes = m.group(2)
+            if L14_WEB_FLOAT.search(classes) and L14_WEB_TRANSLUCENT.search(classes) and not re.search(r"(?<![-\w])bg-gradient-", classes):
+                hits.append((rel(path), text.count("\n", 0, m.start()) + 1, " ".join(classes.split())))
+    return hits
+
+
+def _qt_ancestors(text: str, at: int) -> list[str]:
+    """Blocks `{...}` enclosing position `at`, innermost first (only the block's own direct lines matter to callers)."""
+    blocks, depth, i = [], 0, at
+    while i > 0:
+        i -= 1
+        if text[i] == "}":
+            depth += 1
+        elif text[i] == "{":
+            if depth == 0:
+                blocks.append(_qt_braces(text, i))
+            else:
+                depth -= 1
+    return blocks
+
+
+def _qt_own(block: str) -> str:
+    """The direct property lines of a QML block (children blanked)."""
+    out, depth = [], 0
+    for c in block[1:-1]:
+        if c == "{":
+            depth += 1
+        elif c == "}":
+            depth -= 1
+            continue
+        if depth == 0:
+            out.append(c)
+    return "".join(out)
+
+
+def l14_qt_hits() -> list[tuple[str, int, str]]:
+    hits = []
+    for path in qt_files():
+        text = path.read_text(encoding="utf-8")
+        root = re.search(r"^([A-Z][\w.]*)\s*\{", text, re.M)
+        overlay_file = bool(root and root.group(1) in ("WindowLayer", "Popup", "Drawer", "Dialog", "ToolTip"))
+        for m in re.finditer(r"(?<![\w.])Rectangle\s*\{", text):
+            block = _qt_braces(text, m.end() - 1)
+            own = _qt_own(block)
+            translucent = L14_QT_TRANSLUCENT.search(own) or L14_QT_PART_OPACITY.search(own)
+            if not translucent or "GradientStop" in own:
+                continue
+            chain = [own] + [_qt_own(b) for b in _qt_ancestors(text, m.start())]
+            floating = overlay_file or any(L14_QT_FLOATING.search(c) for c in chain)
+            if floating:
+                name = re.search(r"(?:^|;)\s*(?:id|objectName):\s*\"?(\w+)", own, re.M)
+                label = name.group(1) if name else " ".join(translucent.group(0).strip(" ;").split())
+                hits.append((rel(path), text.count("\n", 0, m.start()) + 1, f"Rectangle#{label}"))
+    return hits
+
+
+def l14_opaque_floating() -> list[str]:
+    cfg = config().get("L14", {})
+    allow = {(a["platform"], a["file"], a["what"]) for a in cfg.get("allow", [])}
+    problems, used = [], set()
+    chip = ROOT / AND / "components/FloatingChip.kt"
+    body = _code_only(chip.read_text(encoding="utf-8")) if chip.exists() else ""
+    if not re.search(r"fun floatingFill\([^)]*\)[^=]*=\s*tint\.compositeOver\(colors\.panel\)", body):
+        problems.append("L14 Android: components/FloatingChip.kt phải có floatingFill = tint.compositeOver(colors.panel) (nền đục cho lớp nổi)")
+    if not re.search(r"\.background\(floatingFill\(", body):
+        problems.append("L14 Android: FloatingChip không tô bằng floatingFill")
+    for platform, hits in (("android", l14_android_hits()), ("web", l14_web_hits()), ("qt", l14_qt_hits())):
+        for path, line, what in hits:
+            key = (platform, path, what)
+            if key in allow:
+                used.add(key)
+                continue
+            problems.append(f"L14 {path}:{line}: nền trong suốt một phần ({what[:100]}) - nổi trên nội dung thì chữ bên dưới lộ qua; dùng nền đục "
+                            "(Android floatingFill, web bg-panel, Qt Rectangle đục) hoặc ghi lý do trong ui_parity_rules.json nếu nó nằm trong dòng chảy")
+    problems += [f"L14 allow thừa (đã hết vi phạm): {p} {f} {w}" for p, f, w in sorted(allow - used)]
+    return problems
+
 RULES = {
     "L1": l1_cross_platform, "L2": l2_banned_words, "L3": l3_tokens, "L4": l4_scale, "L5": l5_radius_roles,
     "L6": l6_motion_tokens, "L7": l7_instant, "L8": l8_ellipsis_names, "L9": l9_label_length, "L10": l10_control_pairs,
-    "L11": l11_summary_case, "L12": l12_floating_layers,
+    "L11": l11_summary_case, "L12": l12_floating_layers, "L13": l13_centred_labels, "L14": l14_opaque_floating,
 }
 
 

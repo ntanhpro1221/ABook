@@ -27,6 +27,8 @@ Item {
         anchors.centerIn: parent
         opacity: root.reveal
         scale: Theme.reduceMotion ? 1 : 0.96 + 0.04 * root.reveal
+        // Nhấn nhạt phủ trên mặt nổi đục (L14): accentSoft tối là hổ phách 14 %, đứng một mình thì thư viện bên dưới lộ qua.
+        Rectangle { anchors.fill: parent; radius: Theme.radiusCover; color: Theme.panel }
         Rectangle { anchors.fill: parent; radius: Theme.radiusCover; color: Theme.accentSoft }
         Shape {
             anchors.fill: parent

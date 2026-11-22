@@ -2,11 +2,7 @@ package vn.abook.player.ui.nowplaying
 
 import vn.abook.player.S
 
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
-import androidx.compose.animation.slideInVertically
-import androidx.compose.animation.slideOutVertically
-import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.animateScrollBy
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.gestures.scrollBy
@@ -38,8 +34,6 @@ import vn.abook.player.ui.components.LucidePaths
 import vn.abook.player.ui.components.visualIcon
 import androidx.compose.ui.graphics.drawscope.translate
 import androidx.compose.ui.text.TextLayoutResult
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.CancellationException
@@ -260,21 +254,14 @@ fun ReadAlongPane(
         Box(Modifier.align(Alignment.BottomCenter).padding(bottom = Dim.s8).fillMaxWidth().heightIn(min = Dim.s48)
             .testTag("reading_dock").clipToBounds(), contentAlignment = Alignment.Center) {
             ReturnChip(returnAvailable && !showJump, returnSerial, onReturn)
-            AnimatedVisibility(showJump,
-                enter = slideInVertically(tween(MotionMs.MEDIUM)) { it },
-                exit = slideOutVertically(tween(MotionMs.MEDIUM_OUT)) { it }) {
-                Box(Modifier.heightIn(min = 48.dp).pressable {
+            // Cùng một thẻ nổi với "Về chỗ vừa nghe" (FloatingChip): chữ giữa thẻ, nền đục che hẳn chữ đọc bên dưới, vào / ra bằng mờ + trượt.
+            vn.abook.player.ui.components.FloatingReveal(showJump) {
+                vn.abook.player.ui.components.FloatingChip(S.s_toi_cau_dang_nghe_4526cf38, "follow_sentence") {
                     scope.launch {
                         tracker.settle(placeAt, viewportPx, animate = true)
                         following = true
                         onTap()
                     }
-                }.testTag("follow_sentence"),
-                    contentAlignment = Alignment.Center) {
-                    BasicText(S.s_toi_cau_dang_nghe_4526cf38, Modifier
-                        .background(Abook.colors.accentSoft, RoundedCornerShape(Dim.radiusCover))
-                        .padding(horizontal = 16.dp, vertical = 8.dp),
-                        style = Abook.type.caption.copy(color = Abook.colors.accentText, fontWeight = FontWeight.Medium))
                 }
             }
         }

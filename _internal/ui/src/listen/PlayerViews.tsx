@@ -2173,7 +2173,7 @@ const NowPlayingColumn = memo(function NowPlayingColumn({
               <CoverToggle title={track.bookTitle} image={track.bookCover} />
               {/* Lời nhắn (hẹn giờ, sắp tắt, lỗi phát, đã nghe hết) NỔI trên phần dưới bìa, ngay trên tên: không chiếm chỗ trong cột nên bìa, tên, thanh tua
                   và nút phát không bao giờ dời khi lời nhắn hiện / ẩn (máy dò R7; cùng chỗ với điện thoại NowPlayingScreen). Không có lời nhắn thì khối biến mất. */}
-              <div data-np-notes className="absolute inset-x-0 bottom-0 z-[1] rounded-cover bg-panel/95 px-3 empty:hidden">{notes}</div>
+              <div data-np-notes className="absolute inset-x-0 bottom-0 z-[1] rounded-cover bg-panel px-3 empty:hidden">{notes}</div>
             </div>
           )}
           <div className={cn("min-w-0", reading ? "flex-1" : "mt-6 w-full")}>

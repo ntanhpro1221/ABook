@@ -832,5 +832,134 @@
         "reason": "Tấm nổi (bảng) nằm trên lớp nền mờ của chính nó (pointerInput detectTapGestures -> dismiss) phủ cả màn: chạm vào lề padding(Dim.s16) của tấm nổi giữa màn rơi xuống lớp nền mờ và đóng tấm - đúng ý, không lọt tới nội dung bên dưới."
       }
     ]
+  },
+  "L13": {
+    "_doc": "Labels in a min/fixed-height surface must be centred: BasicText puts its line at the top of its own box (chủ sách 22-11, Về chỗ vừa nghe).",
+    "allow": []
+  },
+  "L14": {
+    "_doc": "Floating layers have an opaque fill (chủ sách 22-11: text read through the Về chỗ vừa nghe chip). Android lists EVERY translucent fill; each entry says why it is not floating.",
+    "allow": [
+      {
+        "platform": "android",
+        "file": "mobile/android/app/src/main/java/vn/abook/player/ui/components/Components.kt",
+        "what": "if (outline) Color.Transparent else if (enabled) accent else accent.copy(alpha = 0.45f)",
+        "reason": "disabled primary button fill, in the flow on the opaque page/row; nothing lies under it"
+      },
+      {
+        "platform": "android",
+        "file": "mobile/android/app/src/main/java/vn/abook/player/ui/components/EmptyState.kt",
+        "what": "Abook.colors.accentSoft",
+        "reason": "icon tile of an empty state, in the flow on the opaque page/row; nothing lies under it"
+      },
+      {
+        "platform": "android",
+        "file": "mobile/android/app/src/main/java/vn/abook/player/ui/components/ListParts.kt",
+        "what": "ink.copy(alpha = ink.alpha * shown)",
+        "reason": "progress ink drawn inside its own row (behind the row's text), not over other content"
+      },
+      {
+        "platform": "android",
+        "file": "mobile/android/app/src/main/java/vn/abook/player/ui/components/ListParts.kt",
+        "what": "ink.copy(alpha = ink.alpha * (1f - shown))",
+        "reason": "fading half of the same progress ink, inside its row"
+      },
+      {
+        "platform": "android",
+        "file": "mobile/android/app/src/main/java/vn/abook/player/ui/components/PersonAvatar.kt",
+        "what": "Color.White.copy(alpha = 0.1f)",
+        "reason": "texture cells painted on the avatar's own opaque fill"
+      },
+      {
+        "platform": "android",
+        "file": "mobile/android/app/src/main/java/vn/abook/player/ui/components/Sheet.kt",
+        "what": "scrim",
+        "reason": "the scrim itself: dims the page behind an open sheet by design (DESIGN --scrim)"
+      },
+      {
+        "platform": "android",
+        "file": "mobile/android/app/src/main/java/vn/abook/player/ui/components/ValuePicker.kt",
+        "what": "colors.text2.copy(alpha = .6f)",
+        "reason": "ruler tick mark, in the flow on the opaque page/row; nothing lies under it"
+      },
+      {
+        "platform": "android",
+        "file": "mobile/android/app/src/main/java/vn/abook/player/ui/editbook/CoverCrop.kt",
+        "what": "scrim",
+        "reason": "dims the image outside the crop frame by design"
+      },
+      {
+        "platform": "android",
+        "file": "mobile/android/app/src/main/java/vn/abook/player/ui/music/library/MusicScreen.kt",
+        "what": "if (on) colors.accentSoft else colors.hover",
+        "reason": "filter chip in the chip row, in the flow on the opaque page/row; nothing lies under it"
+      },
+      {
+        "platform": "android",
+        "file": "mobile/android/app/src/main/java/vn/abook/player/ui/nowplaying/PlayerSheets.kt",
+        "what": "scrim",
+        "reason": "the scrim behind the player's sheets, by design"
+      },
+      {
+        "platform": "android",
+        "file": "mobile/android/app/src/main/java/vn/abook/player/ui/player/MiniPlayer.kt",
+        "what": "Brush.verticalGradient(listOf(Color.Transparent, Color.Black.copy(alpha = if (colors.dark) 0.32f else 0.08f)), -lift, 0f)",
+        "reason": "soft shadow above the mini player, a gradient meant to fade into the page"
+      },
+      {
+        "platform": "android",
+        "file": "mobile/android/app/src/main/java/vn/abook/player/ui/screens/BookScreen.kt",
+        "what": "Abook.colors.accentSoft",
+        "reason": "'đã chuẩn bị' tag inside a chapter row, in the flow on the opaque page/row; nothing lies under it"
+      },
+      {
+        "platform": "android",
+        "file": "mobile/android/app/src/main/java/vn/abook/player/ui/screens/BookTabs.kt",
+        "what": "colors.accentSoft",
+        "reason": "icon disc of a tab row, in the flow on the opaque page/row; nothing lies under it"
+      },
+      {
+        "platform": "android",
+        "file": "mobile/android/app/src/main/java/vn/abook/player/ui/screens/LibraryChrome.kt",
+        "what": "colors.controlLine.copy(alpha = ui.search.value)",
+        "reason": "search field outline fading in with the field (a stroke, not a fill)"
+      },
+      {
+        "platform": "web",
+        "file": "ui/src/listen/DropToAdd.tsx",
+        "what": "pointer-events-none fixed inset-0 z-[60] grid place-items-center bg-bg/80 p-6",
+        "reason": "full-window drop scrim (dims the library while a file hovers); the drop box on it is opaque (bg-floating-accent)"
+      },
+      {
+        "platform": "web",
+        "file": "ui/src/shared/ui.tsx",
+        "what": "motion-scrim fixed inset-0 z-40 bg-scrim",
+        "reason": "dialog / sheet scrim, translucent by design (DESIGN --scrim)"
+      },
+      {
+        "platform": "qt",
+        "file": "desktop_qt/qml/ImportDrop.qml",
+        "what": "Rectangle#opacity: 0.8 *",
+        "reason": "full-window drop scrim like web DropToAdd; the drop box on it is opaque"
+      },
+      {
+        "platform": "qt",
+        "file": "desktop_qt/qml/ImportDrop.qml",
+        "what": "Rectangle#color: Theme.accentSoft",
+        "reason": "tint laid on the opaque Theme.panel Rectangle right before it (same box, same radius)"
+      },
+      {
+        "platform": "qt",
+        "file": "desktop_qt/qml/Modal.qml",
+        "what": "Rectangle#color: Theme.scrim",
+        "reason": "modal scrim, translucent by design (DESIGN --scrim)"
+      },
+      {
+        "platform": "qt",
+        "file": "desktop_qt/qml/ReadAlongView.qml",
+        "what": "Rectangle#wordInk",
+        "reason": "word highlight drawn UNDER the text (z: -1), never over content"
+      }
+    ]
   }
 }
