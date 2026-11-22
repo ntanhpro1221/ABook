@@ -13,6 +13,7 @@ import vn.abook.player.ui.components.gestureSafe
 import vn.abook.player.ui.components.fadeEdges
 import vn.abook.player.ui.components.ClockLabel
 import vn.abook.player.ui.components.Reveal
+import vn.abook.player.ui.components.FloatingChip
 import vn.abook.player.ui.components.FloatingReveal
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
