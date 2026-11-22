@@ -13,6 +13,7 @@ vi.mock('@/shared/CoverSearch', () => ({ CoverSearchDialog: () => null }));
 vi.mock('@/shared/media', () => ({ useMediaQuery: () => true }));
 
 it('suggests a local image only while artwork is missing, including narrow screens', async () => {
+  vi.useFakeTimers();
   (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
   const host = document.createElement('div'); document.body.append(host);
   const root = createRoot(host);
@@ -37,9 +38,9 @@ it('suggests a local image only while artwork is missing, including narrow scree
     const leaving = host.querySelector('[data-testid="studio-missing-cover"]');
     expect(leaving?.getAttribute('data-state')).toBe('closed');
     expect(leaving?.hasAttribute('inert')).toBe(true);
-    await act(() => new Promise(resolve => setTimeout(resolve, MOTION.mediumOut + 120)));
+    await act(() => vi.advanceTimersByTime(MOTION.mediumOut + 120));
     expect(host.querySelector('[data-testid="studio-missing-cover"]')).toBeNull();
   } finally {
-    await act(() => root.unmount()); client.clear(); host.remove(); vi.restoreAllMocks();
+    await act(() => root.unmount()); client.clear(); host.remove(); vi.restoreAllMocks(); vi.useRealTimers();
   }
 });
