@@ -7,6 +7,14 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+### Giao diện
+
+- Điện thoại: thẻ "Về chỗ vừa nghe" có chữ nằm giữa thẻ, nền đục không lộ chữ truyện bên dưới, và không bao giờ đè lên bìa - ở màn Nghe bìa nhường chỗ cho thẻ giữa bìa và tên chương; cửa sổ thấp thì thẻ nằm cuối cột, không che tên, thanh tua hay nút phát. Viên "Tới câu đang nghe" ở màn Đọc theo cũng đục và chữ giữa. Các lớp nổi khác (lời báo trên bìa, đầu Kịch bản, hộp thả file) trên web và máy tính cũng nền đục.
+
+### Đọc
+
+- Kính ngữ Nhật đọc theo cách người Việt quen nói: -kun "cun", -san "san", -sama "sa-ma", -senpai "xen-pai", -sensei "xen-xây" (ví dụ "Haruto-kun" đọc "Ha-ru-tô-cun", "Tanaka-senpai" đọc "Ta-na-ca-xen-pai"), trên máy tính và điện thoại.
+
 ## [0.4.174] - 2026-11-22
 
 ### Mới
