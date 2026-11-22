@@ -7,44 +7,64 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+## [0.4.174] - 2026-11-22
+
+### Mới
+
+- Điện thoại: nhập file sách chạy ngầm - rời app hay đóng màn Thêm sách giữa lúc chép/kiểm vẫn nhập tới xong, tiến độ và kết quả ở thông báo (bấm mở sách, lỗi thì Thử lại); người phát triển nhập qua adb mà app không nhảy lên màn hình.
+- Máy tính và web: thêm sách là việc nền của máy chủ - đóng hộp Thêm sách giữa chừng vẫn thêm tới xong, thanh bên hiện "Đang thêm sách" và thư viện tự làm mới khi xong; app đóng giữa lượt thì mở lại thấy lượt dở kèm Thử lại, không bao giờ có nửa cuốn trong thư viện.
+- Tab Nhân vật: vai chính và vai phụ chia đúng theo số câu, người nói nhiều qua nhiều chương luôn là vai chính, giới tính điền đủ; "Người kể chuyện" thành danh sách, mỗi giọng một hàng ghi rõ chương nó đọc, trên điện thoại, web và máy tính.
+- Tab Nhân vật: ô giới không còn trống - nhóm người ghi "Nhóm", trẻ em chưa rõ giới ghi "Trẻ em", còn lại "Chưa rõ"; không bao giờ đoán giới. Vai phụ không tên ("NPC bà cụ") và nhân vật cùng tên ("Bà cụ") là hai người, tên hiện ra không còn chữ "NPC".
+- Studio trên điện thoại: tab Nhân vật ghi "Người kể chuyện · N giọng" như máy tính, mỗi giọng kể một hàng có chương nó đọc, số câu dẫn truyện, thời lượng và nút nghe thử; mỗi người có ô giới ("Nhóm", "Trẻ em", "Chưa rõ" khi chưa biết).
+- Tên chương nhận theo mẫu lặp lại trong cả cuốn ("Lần gặp thứ N - …"), kể cả tiêu đề dài; một cuốn không bao giờ lẫn tên thật với "Chương N", và đoạn văn thường không bị nhận nhầm thành tên chương.
+- Thông tin sách: tác giả, thể loại và đoạn giới thiệu đi cùng sách - lấy sẵn từ file khi nhập nếu có, sửa trong Sửa sách bằng một biểu mẫu với một nút "Lưu thông tin"; trang sách hiện đoạn giới thiệu thu gọn. Có ở điện thoại, web và máy tính.
+- Điện thoại: sách đã đóng gói có nhạc theo cảm xúc từng cảnh cũng mở được mục "Vì sao bài này" như máy tính và web.
+- Hẹn giờ ngủ mở ra đúng lựa chọn bạn đặt lần trước, trên điện thoại, web và máy tính.
+
+### Giao diện
+
+- Đang nghe (điện thoại, web, máy tính): tên chương dài xuống dòng trọn vẹn trong ô cao ít nhất hai dòng, không chạy chữ hay cắt bằng "…"; tên dài một hay hai dòng thì bìa, thanh tua và nút phát vẫn đứng yên.
+- Tên sách, tên tác giả và chữ bạn tự đặt không bao giờ bị cắt bằng "…" trên điện thoại, web và máy tính: chữ thu nhỏ vừa chỗ hoặc xuống dòng. Bìa nhỏ bo góc 12 như thiết kế; biểu tượng của nút chính đứng ngang dòng chữ đầu khi nhãn xuống dòng.
+- Điện thoại, web và máy tính: tên giọng (và tên nhân vật khi gộp người) quá dài không còn bị cắt bằng "…" - chữ thu nhỏ vừa một dòng, dài quá nữa thì xuống dòng để luôn đọc trọn tên.
+- Dòng giọng đọc giữ tên trên một dòng, đánh dấu bằng biểu tượng chọn và chừa khoảng cách rõ với nút Nghe thử trên điện thoại, web và máy tính; nút quay lại chỗ vừa nghe không che tên chương.
+- Giọng đọc của thiết bị ghi tên bộ đọc và ngoại tuyến hay cần mạng, thay số tiếng Việt khó phân biệt; ưu tiên giọng ngoại tuyến có chất lượng cao và giữ nút nghe thử.
+- Điện thoại: bỏ dải trống cố định dưới đáy màn Thêm sách, Xem trước, Sửa sách, Xuất, bảng trượt và Đang nghe - nút cuối đứng ngay trên vạch cử chỉ (khoảng thở gộp với khoảng tránh vạch, không cộng thêm); khi nhập sách, thanh tiến độ chạy theo đúng bước mà dòng chữ đang nói ("Đang chép · 1,3 GB / 1,4 GB" là thanh gần đầy).
+- Máy tính: hàng quyển trong trang sách giống web và điện thoại (bìa chữ cái, tên quyển, thanh đã nghe).
+- Máy tính: tên có chữ Trung, Nhật, Hàn hiện đúng chữ thay vì ô vuông.
+- Màn khởi động theo giao diện sáng hay tối bạn chọn trong app (không chỉ theo máy), biểu tượng sách-loa đứng riêng trên nền app.
+- Chạm ra ngoài một bảng nổi, menu hay hộp thoại chỉ đóng nó, không bấm nhầm vào nút nằm phía dưới, trên cả ba nền.
+- Con số không bao giờ bị tách khỏi đơn vị khi xuống dòng ("20 phút", "1,3 GB"), trên điện thoại, web và máy tính.
+- Điện thoại: kéo thanh tua hay cuộn mượt hơn khi hẹn giờ ngủ đang chạy.
+- Giảm khựng khi cuộn kho nhạc và nhạc trong sách trên máy tính; giữ nguyên hình bài nhạc.
+- Mở giao diện nhanh hơn, bớt RAM cho các biểu tượng đang ẩn trên máy tính.
+
+### Sửa lỗi
+
+- Điện thoại: bấm Thử lại ở một sách nhập lỗi vì đã mất quyền đọc file sẽ mở lại hộp chọn file để bạn chọn lại; mọi lỗi hiện bằng câu tiếng Việt dễ hiểu, không còn chữ lỗi kỹ thuật tiếng Anh (như "Permission Denial").
+- Máy tính: luồng phát và giải mã âm thanh được Windows ưu tiên (MMCSS), nên khi máy đang tải nặng giọng đọc và nhạc nền không bị hụt tiếng hay vào trễ.
+- Thêm sách: lỗi của file trước (ví dụ file .abook hỏng) không còn dính sang file sau - mỗi lượt có bản tạm, kiểu file và lời lỗi riêng.
+- Điện thoại: sửa metadata khi app tự đóng gói TXT và khi lưu sách/dự án, để file vừa tạo vẫn nhập lại được thay vì báo sai kiểu file.
+- Mở lại sách giữ nguyên bản thu đã chấp nhận kèm cảnh báo ở mép; kiểm tra bằng đúng lời đọc để không thu lại oan câu kéo dài. Bản thu mất, hỏng hoặc sai băm vẫn bị phát hiện.
+- Khắc phục lỗi ứng dụng thoát đột ngột khi dữ liệu trang sách về muộn.
+- Tên chương và thông tin sách không bao giờ mang dấu kiểm tra nội bộ (như "Cần nghe lại"); file sách có dấu ấy bị từ chối khi đóng gói.
+- Lưu sách thành file trên điện thoại từ chối sách còn dấu kiểm tra nội bộ hay trạng thái kiểm tra, đúng như máy tính.
+- Hai chương không còn trùng tên "Chương 1": phần "Mở đầu" không chiếm số chương, và tên theo số không trùng tên một chương khác.
+- File sách nghe (.abook) không còn mang trạng thái kiểm tra (chương đạt hay chưa, dòng lỗi, báo cáo mức âm): những thứ ấy chỉ ở dự án; file còn trường ấy bị từ chối khi đóng gói. File sách đã xuất trước đây còn mang dấu ấy (như Hello, Hello and Hello) được đóng lại sạch từ dự án ở lần chạy kế tiếp.
+- Tab Nhân vật: dữ liệu nhân vật hỏng hiện một thông báo lỗi rõ ràng, giống nhau trên điện thoại, web và máy tính, thay vì trang trống.
+- Xuất sách nhiều phần thành một file: người kể của mọi phần đều có mặt với đúng chương của mình (trước đây chỉ lấy người kể phần 1).
+- Phân vai: lời trích dẫn lồng trong một câu thoại vẫn thuộc người đang nói, không bị tách thành người nói khác.
+- Mở lại sách đang làm dở không còn hỏng vì một câu không suy ra được lời đọc.
+- Sửa: "Nhạc của tôi" trên máy tính không nhận file .ogg chứa Speex nữa (trình phát của Windows và điện thoại đều không phát được); điện thoại vốn đã không nhận, nay hai bên báo cùng một lý do.
+
+### Bảo mật và kỹ thuật
+
 - Bảo mật: bộ cài Studio dùng certifi 2026.10.23 (bỏ gốc emSign bị lộ khoá trung gian) và urllib3 2.8.0 (vá TLS qua proxy HTTPS và cỡ khối).
 - Bảo mật: nhập PDF dùng pypdf 6.21.4 (vá 26 lỗi PDF độc làm treo hay ăn hết RAM); chữ trích ra từ PDF không đổi.
 - Bảo mật: máy tính giải mã MP3 bằng minimp3 mới (vá đọc tràn bộ nhớ ở thẻ VBR, tua và khung lỗi); âm thanh giải ra không đổi.
 - Bảo mật: app Windows mang Python 3.14.10 (chặn khoá CA emSign đã lộ trong kết nối mã hoá, vá giải nén tar).
 - Bảo mật: bộ đọc nhạc tải thêm (ffmpeg) lên bản n8.1.3-27-g8dca1586f4 dựng sẵn của FFmpeg-Builds (8.1.3 cùng 27 bản sửa sau đó của nhánh 8.1), có các bản vá kiểm biên khi đọc file nhạc; tải về ~64 MB thay vì ~36 MB, máy đã có bản cũ được mời tải bản mới khi mở Xuất hay Phân tích nhạc, bản cũ được dọn sau khi tải xong.
 - Kỹ thuật: Gradle wrapper 8.14.7 (vá bảo mật daemon của máy dựng Android).
-- Sửa: "Nhạc của tôi" trên máy tính không nhận file .ogg chứa Speex nữa (trình phát của Windows và điện thoại đều không phát được); điện thoại vốn đã không nhận, nay hai bên báo cùng một lý do.
-- Điện thoại: nhập file sách chạy ngầm - rời app hay đóng màn Thêm sách giữa lúc chép/kiểm vẫn nhập tới xong, tiến độ và kết quả ở thông báo (bấm mở sách, lỗi thì Thử lại); người phát triển nhập qua adb mà app không nhảy lên màn hình.
-- Máy tính và web: thêm sách là việc nền của máy chủ - đóng hộp Thêm sách giữa chừng vẫn thêm tới xong, thanh bên hiện "Đang thêm sách" và thư viện tự làm mới khi xong; app đóng giữa lượt thì mở lại thấy lượt dở kèm Thử lại, không bao giờ có nửa cuốn trong thư viện.
-- Thêm sách: lỗi của file trước (ví dụ file .abook hỏng) không còn dính sang file sau - mỗi lượt có bản tạm, kiểu file và lời lỗi riêng.
-- Điện thoại: sửa metadata khi app tự đóng gói TXT và khi lưu sách/dự án, để file vừa tạo vẫn nhập lại được thay vì báo sai kiểu file.
-
-- Điện thoại: bỏ dải trống cố định dưới đáy màn Thêm sách, Xem trước, Sửa sách, Xuất, bảng trượt và Đang nghe - nút cuối đứng ngay trên vạch cử chỉ (khoảng thở gộp với khoảng tránh vạch, không cộng thêm); khi nhập sách, thanh tiến độ chạy theo đúng bước mà dòng chữ đang nói ("Đang chép · 1,3 GB / 1,4 GB" là thanh gần đầy).
-
-- Điện thoại, web và máy tính: tên giọng (và tên nhân vật khi gộp người) quá dài không còn bị cắt bằng "…" - chữ thu nhỏ vừa một dòng, dài quá nữa thì xuống dòng để luôn đọc trọn tên.
-
-- Dòng giọng đọc giữ tên trên một dòng, đánh dấu bằng biểu tượng chọn và chừa khoảng cách rõ với nút Nghe thử trên điện thoại, web và máy tính; nút quay lại chỗ vừa nghe không che tên chương.
-
-- Giọng đọc của thiết bị ghi tên bộ đọc và ngoại tuyến hay cần mạng, thay số tiếng Việt khó phân biệt; ưu tiên giọng ngoại tuyến có chất lượng cao và giữ nút nghe thử.
-
-- Mở lại sách giữ nguyên bản thu đã chấp nhận kèm cảnh báo ở mép; kiểm tra bằng đúng lời đọc để không thu lại oan câu kéo dài. Bản thu mất, hỏng hoặc sai băm vẫn bị phát hiện.
-
-- Giảm khựng khi cuộn kho nhạc và nhạc trong sách trên máy tính; giữ nguyên hình bài nhạc.
-
-- Mở giao diện nhanh hơn, bớt RAM cho các biểu tượng đang ẩn trên máy tính.
-
-- Khắc phục lỗi ứng dụng thoát đột ngột khi dữ liệu trang sách về muộn.
-
 - Kỹ thuật: kiểm phát hành chỉ chạy từng bước (kể cả `npm ci` của UI) khi máy cắm sạc. Chạy pin thì chờ, ghi trạng thái chờ vào `power-wait.json` của lượt kiểm; thời gian chờ không tính vào hạn giờ hay số giây của bước. Chờ quá `ABOOK_GATE_BATTERY_WAIT_MAX` (mặc định 12 giờ) thì các bước còn lại ghi NOT_RUN. Bước hết giờ trong lúc có chạy pin được chạy lại một lần khi có sạc; bước nào có lúc chạy pin đều ghi các lần chạy vào báo cáo. `ABOOK_GATE_ALLOW_BATTERY=1` bỏ chờ.
-
-- Tab Nhân vật: vai chính và vai phụ chia đúng theo số câu, người nói nhiều qua nhiều chương luôn là vai chính, giới tính điền đủ; "Người kể chuyện" thành danh sách, mỗi giọng một hàng ghi rõ chương nó đọc, trên điện thoại, web và máy tính.
-- Tab Nhân vật: ô giới không còn trống - nhóm người ghi "Nhóm", trẻ em chưa rõ giới ghi "Trẻ em", còn lại "Chưa rõ"; không bao giờ đoán giới. Vai phụ không tên ("NPC bà cụ") và nhân vật cùng tên ("Bà cụ") là hai người, tên hiện ra không còn chữ "NPC".
-- Tên chương và thông tin sách không bao giờ mang dấu kiểm tra nội bộ (như "Cần nghe lại"); file sách có dấu ấy bị từ chối khi đóng gói.
-- Studio trên điện thoại: tab Nhân vật ghi "Người kể chuyện · N giọng" như máy tính, mỗi giọng kể một hàng có chương nó đọc, số câu dẫn truyện, thời lượng và nút nghe thử; mỗi người có ô giới ("Nhóm", "Trẻ em", "Chưa rõ" khi chưa biết).
-- Lưu sách thành file trên điện thoại từ chối sách còn dấu kiểm tra nội bộ hay trạng thái kiểm tra, đúng như máy tính.
-- Hai chương không còn trùng tên "Chương 1": phần "Mở đầu" không chiếm số chương, và tên theo số không trùng tên một chương khác.
-- File sách nghe (.abook) không còn mang trạng thái kiểm tra (chương đạt hay chưa, dòng lỗi, báo cáo mức âm): những thứ ấy chỉ ở dự án; file còn trường ấy bị từ chối khi đóng gói. File sách đã xuất trước đây còn mang dấu ấy (như Hello, Hello and Hello) được đóng lại sạch từ dự án ở lần chạy kế tiếp.
-- Tên chương nhận theo mẫu lặp lại trong cả cuốn ("Lần gặp thứ N - …"), kể cả tiêu đề dài; một cuốn không bao giờ lẫn tên thật với "Chương N", và đoạn văn thường không bị nhận nhầm thành tên chương.
 
 ## [0.4.173] - 2026-11-17
 
