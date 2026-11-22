@@ -2697,7 +2697,7 @@
     "reason": "scripts/release.py: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data. Re-pinned for 0.4.169: its added lines were reviewed as engineering text, no story or phoneme strings."
   },
   "_internal/scripts/release_gate.py": {
-    "sha256": "638c7abc7db55db5e41f167edc13b1854d290db490a7a1c0eb89c37c89d0b7c1",
+    "sha256": "f5d8ecb3439528e8e136a3dc3e60252979aa32d8c064af3b4c8f31d64431161d",
     "reason": "_internal/scripts/release_gate.py: 0.4.171 technical release notes, ignored-tracked implementation and test description; existing individual shingle approvals unchanged. Integration phase 1: combined authored implementation, expectations or technical documentation; exact inherited Corpus sequences rechecked; no new Corpus approval. Integration phase 2: combined authored implementation, expectations or technical documentation; exact inherited Corpus sequences rechecked; no new Corpus approval. Release 0.4.174: byte pin refreshed after the edits of the 0.4.174 line; flagged strings rechecked as authored technical text or synthetic fixtures; inherited Corpus shingles proven identical, new ones only where read by hand."
   },
   "_internal/scripts/report_castrules.py": {
@@ -5042,8 +5042,8 @@
     "reason": "ui/scripts/fixtures/frames-lists.html: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
   },
   "_internal/ui/scripts/gallery_inspect.mjs": {
-    "sha256": "4651964027acc2554d0cf2451c90671409f28fd6c51d7aab169e338cebcf90f2",
-    "reason": "ui/scripts/gallery_inspect.mjs: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data."
+    "sha256": "50aee224d6da81750a6711c7d35527b0864b93fe8ff3c18714b350242b0c892b",
+    "reason": "ui/scripts/gallery_inspect.mjs: file bytes match the scrubbed 0.4.167 baseline 645239bda; inherited technical documentation or synthetic test data. Release 0.4.174: byte pin refreshed after the edits of the 0.4.174 line; flagged strings rechecked as authored technical text or synthetic fixtures; inherited Corpus shingles proven identical, new ones only where read by hand."
   },
   "_internal/ui/scripts/label_length.test.mjs": {
     "sha256": "640819e1e5462961d90cf7b6b9d6e867094cf7cd195da39946b62323ce67f886",
