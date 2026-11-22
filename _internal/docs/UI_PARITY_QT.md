@@ -209,7 +209,7 @@ Nhãn ngắn (<= 6 chữ). **Chỉ Qt**: không có ở web cùng màn; `*` = we
 ### Sửa sách
 
 - chỉ Qt (22): Mức nhạc nền* (`qt/BookMusicSettings.qml:114`); Sắp xếp quyển* (`qt/EditBook.qml:247`); Chưa đọc được file ảnh* (`qt/EditBook.qml:438`); Lưu thay đổi* (`qt/EditBookItems.qml:71`); Chưa nối được {} (`qt/EditBookLogic.js:83`); Chưa bỏ được cách đọc* (`qt/EditBookReadings.qml:28`); Chưa lưu được cách đọc* (`qt/EditBookReadings.qml:28`); Đang tải cách đọc* (`qt/EditBookReadings.qml:71`); Sửa cách đọc {}* (`qt/EditBookReadings.qml:116`); Bỏ cách đọc {}* (`qt/EditBookReadings.qml:126`); Cách đọc cho {}* (`qt/EditBookReadings.qml:145`); Lưu cho cả cuốn* (`qt/EditBookReadings.qml:156`); Đọc nguyên chữ (`qt/EditBookReadings.qml:164`); Xoá “{}”?* (`qt/EditBookReadings.qml:175`); Đổi tên chương* (`qt/EditBookRename.qml:19`); Số chương hay nhãn (`qt/EditBookRename.qml:44`); Tên chương (tuỳ chọn) (`qt/EditBookRename.qml:44`); Chọn nơi lưu* (`qt/EditBookSaveAs.qml:52`); Đang tải* (`qt/EditBookSkeleton.qml:11`); Đang tải bài nhạc* (`qt/EditBookSwap.qml:39`); Chọn* (`qt/EditBookSwap.qml:93`); Xem cả kho (`qt/EditBookSwap.qml:109`)
-- chỉ web (6): Bỏ thay đổi ({}) (`440`); Nhãn (`514`); Tên (`524`); Chưa chia sẻ được sách (`579`); Google Books (`14`); Open Library (`14`)
+- chỉ web (6): Bỏ thay đổi ({}) (`441`); Nhãn (`515`); Tên (`525`); Chưa chia sẻ được sách (`580`); Google Books (`14`); Open Library (`14`)
 
 ### Thanh bên
 
