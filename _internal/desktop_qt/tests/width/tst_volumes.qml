@@ -10,6 +10,7 @@ Item {
     Rectangle { anchors.fill: parent; color: Theme.bg }
     Component { id: page; BookPage {} }
     Component { id: editor; VolumeEditor {} }
+    Component { id: levelBar; LevelBar { width: 200; height: 8 } }
     TestCase {
         name: "BookVolumes"
         when: windowShown
@@ -82,8 +83,24 @@ Item {
             verify(made.problem.length > 0)
             compare(made.busy, false)
         }
-        // left174: hàng quyển giống web (BookScreen.tsx ChapterGroups: BookCover sm + font-medium + Progress mt-2 h-2) và Android
-        // (volume_progress_<id> 8 dp): bìa bo Theme.radiusCover, bìa vẽ chỉ ghi chữ cái đầu tên sách, tên đậm vừa, thanh 8 px bo tròn cách 8 px.
+        // Hàng quyển giống web (BookScreen.tsx ChapterGroups: p-3 items-center, BookCover sm + font-medium + Progress mt-2 h-2) và Android
+        // (dọc 12, CenterVertically, volume_progress_<id> 8 dp): bìa bo Theme.radiusCover = 12 (DESIGN.md "12 bìa/ảnh"; leftfix đưa web BookCover
+        // và Android BookCover nhỏ lên 12), bìa và chữ canh giữa hàng, đệm 12, cao tối thiểu 84 + 24; bìa vẽ chỉ ghi chữ cái đầu tên sách, tên đậm
+        // vừa, thanh 8 px bo tròn cách 8 px, dưới 2 % không tô và chạy dần.
+        // Thanh "Đã nghe" (LevelBar.progress): dưới Theme.progressFillMin (2 %) không tô như web progressFill / Android ProgressFill.of; đổi giá trị
+        // thì chạy dần (web motion-progress); thang cảm xúc (progress false) tô đúng giá trị, không chuyển động.
+        function test_heardBarThresholdAndMotion() {
+            const bar = createTemporaryObject(levelBar, host, {progress: true, score: 0.01})
+            const fill = findChild(bar, "levelBarFill")
+            compare(fill.width, 0)
+            bar.score = 0.5
+            if (Theme.motionMedium > 0 && !Theme.reduceMotion) verify(fill.width < 100)
+            tryCompare(fill, "width", 100)
+            const emotion = createTemporaryObject(levelBar, host, {score: 0.01})
+            compare(findChild(emotion, "levelBarFill").width, 2)
+            emotion.score = 0.5
+            compare(findChild(emotion, "levelBarFill").width, 100)
+        }
         function test_volumeRowsMatchWebAndAndroid() {
             const made = createTemporaryObject(page, host, {width: host.width, height: host.height,
                 book: {bookId: "width", title: "Đồng hồ bên cửa sổ"}})
@@ -92,6 +109,15 @@ Item {
                 const row = findChild(made, "bookVolume_" + id)
                 const cover = findChild(row, "bookVolumeCover")
                 compare(cover.radius, Theme.radiusCover)
+                compare(Theme.radiusCover, 12)
+                verify(row.height >= 84 + 24)
+                compare(cover.x, 12)
+                // Canh giữa hàng: bìa và cột chữ cùng tâm dọc với hàng
+                verify(Math.abs(cover.y + cover.height / 2 - row.height / 2) <= 1)
+                const info = findChild(row, "bookVolumeName").parent
+                verify(Math.abs(info.y + info.height / 2 - row.height / 2) <= 1)
+                compare(info.x, 12 + 56 + 16)
+                compare(row.width - (info.x + info.width), 12)
                 compare(cover.initials, true)
                 compare([cover.width, cover.height], [56, 84])
                 const name = findChild(row, "bookVolumeName")
@@ -107,6 +133,7 @@ Item {
                 const hint = column.children[1]
                 compare(bar.mapToItem(row, 0, 0).y - hint.mapToItem(row, 0, hint.height).y, 8)
                 verify(bar.mapToItem(row, 0, bar.height).y <= row.height)
+                compare(bar.progress, true)
             }
             // Quyển 2 không có ảnh, sách không có ảnh: bìa vẽ nhỏ chỉ ghi chữ cái đầu tên sách (coverLabel của web: "Đồng hồ bên cửa sổ" -> "ĐB")
             const drawn = findChild(findChild(findChild(made, "bookVolume_2"), "bookVolumeCover"), "coverInitials")

@@ -5,6 +5,7 @@ import { useLayoutEffect, useRef, useState } from "react";
 import { coverColor, coverLabel, coverStyle, splitTitle, type CoverImage } from "@/shared/cover";
 import { Vu } from "@/shared/ui";
 import { MotionRegion } from "./MotionRegion";
+import { FitBox } from "./OneLineFit";
 
 import { Reveal } from "./MotionPresence";
 // Bìa vuông kiểu album sách nói. Hoạ tiết là các vòng sóng âm lan ra từ góc - thứ duy nhất sách TXT
@@ -53,7 +54,7 @@ export function BookCover({
       <MotionRegion
         motionKey={motionKey}
         data-book-cover={bookKey}
-        className={cn("relative aspect-square shrink-0 overflow-hidden rounded-control shadow-card", className)}
+        className={cn("relative aspect-square shrink-0 overflow-hidden rounded-cover shadow-card", className)}
         style={{ backgroundColor: coverColor(photo.color) || "var(--color-hover)" }}
         data-np={morph}
         aria-hidden
@@ -81,7 +82,7 @@ export function BookCover({
     <MotionRegion
       motionKey={motionKey}
       data-book-cover={bookKey}
-      className={cn("@container relative aspect-square shrink-0 overflow-hidden rounded-control text-left shadow-card", className)}
+      className={cn("@container relative aspect-square shrink-0 overflow-hidden rounded-cover text-left shadow-card", className)}
       style={{ background: `linear-gradient(155deg, ${style.from} 0%, ${style.to} 100%)` }}
       data-overlay={S.s_chu_bia_tren_hoa_tiet_song_5f192030}
       data-np={morph}
@@ -111,13 +112,10 @@ export function BookCover({
             </span></Reveal>
         ) : (
           <>
-            {/* Bìa lớn bị ép nhỏ (màn ngang: bìa trình phát ~55 px): chữ đã chạm sàn cỡ nên tên 3-4 dòng tràn khỏi bìa, cắt ngang dòng chữ
-                (soát a66). Dưới 5,5rem chỉ giữ hai dòng tên (có "…"), bỏ nhãn tập. */}
-            <span
-              className={cn("line-clamp-4 min-h-0 overflow-hidden font-bold tracking-tight text-cover-ink @max-[5.5rem]:line-clamp-2", leading)}
-              style={{ fontSize: text.fontSize }}
-            >
-              {main}
+            {/* Tên sách là chữ sách: không cắt "…" (luật chủ sách). Chiếm hết chỗ còn lại của bìa rồi thu cỡ cho vừa trọn - như Android FitText và
+                Qt GeneratedCover (fontSizeMode: Text.Fit). Bìa lớn bị ép nhỏ (màn ngang: bìa trình phát ~55 px) thì chữ nhỏ lại, không tràn (soát a66). */}
+            <span className={cn("flex min-h-0 flex-1 flex-col font-bold tracking-tight text-cover-ink", leading)} style={{ fontSize: text.fontSize }}>
+              <FitBox className="flex-1">{main}</FitBox>
             </span>
             {sub ? (
               <span

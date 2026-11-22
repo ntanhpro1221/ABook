@@ -113,7 +113,7 @@ it.each([{ room: 300, fit: "shrunk" }, { room: 150, fit: "wrap" }])("keeps a com
   expect(label.className).not.toMatch(/truncate|ellipsis|line-clamp/);
   if (fit === "wrap") {
     expect(label.style.fontSize).toBe("");
-    expect(label.style.whiteSpace).toBe("");
+    expect(label.style.whiteSpace).toBe("normal");
   } else {
     expect(parseFloat(label.style.fontSize)).toBeGreaterThanOrEqual(14 * 0.75);
     expect(label.scrollWidth).toBeLessThanOrEqual(label.clientWidth);

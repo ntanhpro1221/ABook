@@ -1315,7 +1315,7 @@ function MusicCreditLine() {
         onClick={() => (catalogLink ? setSheet(catalogLink) : setOpen((value) => !value))}
         title={musicCreditText(musicCredit) || label}
         className="inline-flex max-w-full items-center gap-2 rounded-control outline-none focus-visible:ring-2 focus-visible:ring-focus"
-      ><Presence>{catalogLink && <PlayingMusicArt link={catalogLink} />}</Presence><span className="truncate">{S.s_nhac_nen_198fce26}{label}</span>
+      ><Presence>{catalogLink && <PlayingMusicArt link={catalogLink} />}</Presence><span className="line-clamp-2 break-words text-left">{S.s_nhac_nen_198fce26}{label}</span>
       </button>
       <Collapse open={open} className="mx-auto mt-1 max-w-sm break-words text-left">
           <p>{musicCreditText(musicCredit)}</p>
@@ -1638,7 +1638,7 @@ export function PlayerBar({
         <FadingNotice className="mx-3 mt-2" />
         <PlayerAlert className="mx-3 mt-2" compact />
         <div className="flex h-16 items-center gap-3 px-3">
-          {/* title: tên chương / sách bị cắt S.s_copy_e825d35cde60 khi phóng chữ hay cửa sổ hẹp - rê chuột đọc được đủ (soát a31 Z1).
+          {/* Hàng cao cố định một dòng: tên chương / sách thu cỡ rồi chạy chữ (MarqueeLine, DESIGN "Ô tên CAO CỐ ĐỊNH"), không cắt; title giữ cho rê chuột.
               Nút mở Đang nghe phủ cả vùng (nút không chứa được nút); tên sách là nút riêng nằm trên nó, tới trang sách. */}
           <div className="relative flex min-w-0 flex-1 items-center gap-3 text-left">
             <button
@@ -1878,7 +1878,8 @@ const PanelChapterRow = memo(function PanelChapterRow({ chapter, current, playin
           {chapter.subtitle || chapter.title}
         </span>
         {/* Dòng phụ đổi khi chương thu xong (S.s_copy_7e63dd84fb6c -> độ dài) hay đổi giọng: mờ chéo, không thay chữ cứng. */}
-        <MotionRegion as="span" className="block truncate text-xs text-fg-2">
+        {/* Dòng phụ mang tên chương khi chương có phụ đề (chapterSubline): chữ sách, xuống dòng chứ không cắt (leftfix). */}
+        <MotionRegion as="span" className="block break-words text-xs text-fg-2">
           {chapterSubline(chapter, producing)}
         </MotionRegion>
       </span>

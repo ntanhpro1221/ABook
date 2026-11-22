@@ -1,6 +1,7 @@
 package vn.abook.player.ui
 
 import androidx.compose.ui.semantics.SemanticsActions
+import androidx.compose.ui.semantics.SemanticsNode
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.SemanticsNodeInteractionsProvider
 import androidx.compose.ui.text.TextLayoutResult
@@ -11,8 +12,10 @@ import org.junit.Assert.assertTrue
  * Đo bằng chiều cao tự nhiên của đoạn chữ so với khung đã cấp và mép phải từng dòng so với bề ngang khung (không dùng `hasVisualOverflow`: ở fontScale khác 1
  * nó báo sai cho mọi ô chữ trên Robolectric). Dòng bị "…" (maxLines + Ellipsis) cũng là cắt: khung khi ấy vừa khít đoạn chữ đã cắt nên phép đo trên
  * không thấy - hỏi thẳng isLineEllipsized (left174: "Nghe tiếp · Chương 3: Một cái t…" lọt qua máy dò này). Trả về số ô chữ đã kiểm.
+ * `keptCut`: chỗ cắt "…" đã duyệt của màn đang kiểm (tên dưới bìa ô thư viện 2 dòng, tên bài trong hàng nhạc - `keptBookCuts` của TextCutScanTest);
+ * màn có ô thư viện hay hàng nhạc truyền điều kiện theo thẻ / chữ, còn lại mọi "…" là lỗi (soát leftfix L3).
  */
-fun SemanticsNodeInteractionsProvider.assertNoTextOverflow(): Int {
+fun SemanticsNodeInteractionsProvider.assertNoTextOverflow(keptCut: (SemanticsNode) -> Boolean = { false }): Int {
     val nodes = onAllNodes(SemanticsMatcher.keyIsDefined(SemanticsActions.GetTextLayoutResult), useUnmergedTree = true).fetchSemanticsNodes()
     assertTrue("không thấy ô chữ nào để kiểm", nodes.isNotEmpty())
     val offenders = ArrayList<String>()
@@ -23,6 +26,7 @@ fun SemanticsNodeInteractionsProvider.assertNoTextOverflow(): Int {
             val natural = layout.multiParagraph.height
             val widest = (0 until layout.lineCount).maxOfOrNull { layout.getLineRight(it) } ?: 0f
             if ((0 until layout.lineCount).any { layout.isLineEllipsized(it) }) {
+                if (keptCut(node)) continue
                 offenders += "\"${layout.layoutInput.text.text.take(60)}\" bị cắt \"…\""
             } else if (natural > node.size.height + 1f || widest > node.size.width + 1f) {
                 offenders += "\"${layout.layoutInput.text.text.take(60)}\" tự nhiên ${natural}x${widest} khung ${node.size} dòng ${layout.lineCount}"

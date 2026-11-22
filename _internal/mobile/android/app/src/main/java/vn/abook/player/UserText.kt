@@ -4,7 +4,7 @@ import java.io.FileNotFoundException
 
 /**
  * Một cửa duy nhất từ lỗi (Throwable) ra chữ trên màn hình. Không màn nào của app được hiện nguyên chữ của Java/Android
- * ("Permission Denial: opening provider ... ACTION_OPEN_DOCUMENT", "ENOENT", "Failed to connect to /10.0.2.2"): chủ sách
+ * ("Permission Denial: opening provider ... ACTION_OPEN_DOCUMENT", "ENOENT", "Failed to connect to /192.0.2.10"): chủ sách
  * gặp đúng câu ấy ở Thêm sách 0.4.173 khi bấm "Thử lại" sau khi quyền đọc file đã hết.
  *
  * Lời do chính app viết (chữ trong `S`, lời của Studio/máy tính) đi qua nguyên vẹn. Lỗi của nền tảng thành một câu tiếng Việt

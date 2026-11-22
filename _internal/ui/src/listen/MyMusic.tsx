@@ -82,7 +82,7 @@ export function SwapTrack({
       {mine.map((item) => (
         <li key={item.link} className="flex items-center gap-3 px-3 py-2">
           <div className="min-w-0 flex-1">
-            <div className="truncate text-sm">{item.title}</div>
+            <div className="line-clamp-2 break-words text-sm">{item.title}</div>
             <div className="truncate text-xs text-fg-2">
               {[item.creator, item.duration ? formatClock(item.duration) : ""].filter(Boolean).join(" · ")}
             </div>

@@ -123,7 +123,7 @@ export function Button({
       aria-busy={working || pending || undefined}
       onClick={busyClick(working, action.invoke)}
       className={cn(
-        "shared-button inline-flex select-none items-center justify-center whitespace-nowrap font-medium pointer-coarse:min-w-[48px] press transition-[background-color,color,border-color,outline-color,box-shadow,transform,scale,opacity] duration-motion-fast disabled:pointer-events-none disabled:opacity-45 aria-disabled:cursor-default aria-disabled:opacity-45",
+        "shared-button inline-flex select-none items-center justify-center whitespace-nowrap font-medium has-[[data-fit=wrap]]:h-auto has-[[data-fit=wrap]]:items-start has-[[data-fit=wrap]]:py-2 pointer-coarse:min-w-[48px] press transition-[background-color,color,border-color,outline-color,box-shadow,transform,scale,opacity] duration-motion-fast disabled:pointer-events-none disabled:opacity-45 aria-disabled:cursor-default aria-disabled:opacity-45",
         VARIANTS[variant],
         SIZES[size],
         // Màn hẹp / cảm ứng: nút 28-38 px nới vùng chạm theo chiều dọc lên 40 px (touch-reach trong styles.css; soát UX 29-09 và a14: "Sửa",
@@ -133,7 +133,7 @@ export function Button({
       )}
       {...rest}
     >
-      <StateIcon state={showPending ? "pending" : Icon} className={cn("inline-grid shrink-0 place-items-center", !Icon && loading === undefined && (showPending ? "absolute left-1 size-4" : "hidden"), (Icon || loading !== undefined) && (size === "lg" ? "glyph" : "size-4"))}>{showPending ? (
+      <StateIcon state={showPending ? "pending" : Icon} className={cn("inline-grid shrink-0 place-items-center", !Icon && loading === undefined && (showPending ? "absolute left-1 size-4" : "hidden"), (Icon || loading !== undefined) && (size === "lg" ? "glyph" : "size-4"), "[button:has([data-fit=wrap])>&]:mt-line-icon")}>{showPending ? (
         <Loader2 className="size-4 animate-spin" />
       ) : Icon ? (
         <Icon className={size === "lg" ? "glyph" : "size-4"} strokeWidth={2} />

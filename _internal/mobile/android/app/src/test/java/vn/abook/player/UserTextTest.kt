@@ -28,7 +28,7 @@ class UserTextTest {
     @Test fun platformErrorsMapByKindAndUnknownOnesUseTheCallersWords() {
         assertEquals(S.s_ban_giai_phong_bo_nho_tren_dien_thoai_roi_17f5da65, UserText.of(IOException("write failed: ENOSPC (No space left on device)"), fallback))
         assertEquals(S.s_khong_thay_file_nua_co_the_no_da_bi_xoa_371f4e4f, UserText.of(FileNotFoundException("/sdcard/a.txt: open failed: ENOENT (No such file or directory)"), fallback))
-        assertEquals(NetErrors.message(NetErrors.Kind.UNREACHABLE), UserText.of(ConnectException("Failed to connect to /10.0.2.2:47679"), fallback))
+        assertEquals(NetErrors.message(NetErrors.Kind.UNREACHABLE), UserText.of(ConnectException("Failed to connect to /192.0.2.10:47679"), fallback))
         assertEquals(fallback, UserText.of(IllegalStateException("boom"), fallback))
         assertEquals(fallback, UserText.of(NullPointerException(), fallback))
         assertEquals(fallback, UserText.of(null, fallback))

@@ -101,7 +101,7 @@ it("keeps a long invented listening profile name in the trigger and chooser", as
   const label = [...host.querySelectorAll<HTMLElement>("[data-one-line-fit]")].find(node => node.textContent === name)!;
   expect(label.dataset.fit).toBe("wrap");
   expect(label.style.fontSize).toBe("");
-  expect(label.style.whiteSpace).toBe("");
+  expect(label.style.whiteSpace).toBe("normal");
   const trigger = label.closest<HTMLButtonElement>("button")!;
   expect(trigger.className).toContain("min-h-8");
   await act(() => trigger.dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowDown", bubbles: true })));

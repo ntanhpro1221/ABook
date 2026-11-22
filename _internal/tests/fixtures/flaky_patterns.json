@@ -346,6 +346,8 @@
   "tests/test_work_items_speaker_suggestions.py|wall-clock|time.time()": 6,
   "ui/scripts/gallery_inspect_sheet.test.mjs|wall-clock|const clickStarted = Date.now();": 1,
   "ui/scripts/gallery_inspect_sheet.test.mjs|wall-clock|expect(Date.now() - clickStarted).toBeGreaterThanOrEqual(150);": 1,
+  "ui/scripts/one_line_fit_browser.test.mjs|shared-temp|if (out && path.dirname(out) === path.resolve(tmpdir()) && path.basename(out).startsWith(\"abook-fit-\")) rmSync(out, { recursive: true, force: true });": 1,
+  "ui/scripts/one_line_fit_browser.test.mjs|shared-temp|out = mkdtempSync(path.join(tmpdir(), \"abook-fit-\"));": 1,
   "ui/src/desktop/handOff.test.tsx|fixed-delay|await new Promise((resolve) => setTimeout(resolve, 20));": 1,
   "ui/src/desktop/handOff.test.tsx|wall-clock|h.data = { receivedAt: Date.now(), phones: [tv] };": 1,
   "ui/src/desktop/httpSourceClip.test.ts|fixed-delay|await new Promise((resolve) => setTimeout(resolve, 0));": 3,

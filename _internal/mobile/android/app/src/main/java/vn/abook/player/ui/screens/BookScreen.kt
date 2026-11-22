@@ -78,6 +78,7 @@ import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.contentDescription
@@ -684,27 +685,34 @@ private fun ListenButton(label: String, detail: String?, playing: Boolean, buffe
     Box(Modifier.fillMaxWidth().heightIn(min = Dim.s48).pressable(onClick = onClick)
         .clip(RoundedCornerShape(Dim.radiusControl)).background(colors.accent)
         .padding(horizontal = Dim.s16, vertical = Dim.s8).testTag("book_primary"), contentAlignment = Alignment.Center) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            vn.abook.player.ui.components.PendingIndicator(buffering, Modifier.size(22.dp), color = colors.accentInk) {
+        // Nhãn xuống dòng thì icon đứng giữa DÒNG ĐẦU (như web FIRST_LINE và Qt Button), không trôi xuống giữa khối chữ (soát leftfix L1).
+        // Tâm dòng đầu đo từ bố cục chữ thật: OneLineFit có thể đã thu cỡ chữ nên dòng thấp hơn lineHeight của kiểu chữ.
+        val density = LocalDensity.current
+        val styleLine = with(density) { Abook.type.bodyStrong.lineHeight.toDp() }
+        var lineMid by remember { mutableStateOf(styleLine / 2) }
+        Row(verticalAlignment = Alignment.Top) {
+            vn.abook.player.ui.components.PendingIndicator(buffering, Modifier.padding(top = (lineMid - 11.dp).coerceAtLeast(0.dp)).size(22.dp).testTag("book_primary_icon"), color = colors.accentInk) {
                 vn.abook.player.ui.motion.SwapContent(restart, contentKey = { it }, inPlace = true) { retry ->
                     if (retry) RestartIcon(colors.accentInk) else PlayPauseGlyph(playing && !buffering, colors.accentInk, 22.dp)
                 }
             }
             Spacer(Modifier.width(Dim.s8))
             val words = (if (buffering) S.s_buffering else label) to detail
-            SwapContent(words, contentKey = { it }) { (text, sub) -> ListenLabel(text, sub, playing, restart) }
+            SwapContent(words, contentKey = { it }) { (text, sub) ->
+                ListenLabel(text, sub, playing, restart) { layout -> lineMid = with(density) { ((layout.getLineTop(0) + layout.getLineBottom(0)) / 2).toDp() } }
+            }
         }
     }
 }
 
 /** Nội dung nút chính: động từ (một dòng) + " · chương" qua OneLineFit (thu cỡ; không vừa thì xuống dòng - không bao giờ "…"). */
 @Composable
-private fun ListenLabel(text: String, sub: String?, playing: Boolean, restart: Boolean) {
+private fun ListenLabel(text: String, sub: String?, playing: Boolean, restart: Boolean, onLayout: (androidx.compose.ui.text.TextLayoutResult) -> Unit) {
     val colors = Abook.colors
     val ink = Abook.type.bodyStrong.copy(color = colors.accentInk)
     // Một khối chữ: động từ rồi " · chương"; xuống dòng thì dòng sau chảy dưới cả nhãn (không thành cột hẹp cạnh động từ).
     val label = text + if (sub != null) "\u00a0·\u00a0" + sub else ""
-    BasicText(label, Modifier.testTag("book_primary_label"), style = ink, autoSize = vn.abook.player.ui.components.OneLineFit.of(ink))
+    BasicText(label, Modifier.testTag("book_primary_label"), style = ink, onTextLayout = onLayout, autoSize = vn.abook.player.ui.components.OneLineFit.of(ink))
 }
 
 /** Nút phụ (DESIGN.md §6 "Nút (b)"): biểu tượng trơn trong ô chạm 44 + nhãn nhỏ dưới. Nhãn rỗng (nút ⋯): vẫn chừa dòng nhãn để các biểu tượng thẳng hàng; tên đọc màn hình ở `description`. */

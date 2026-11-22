@@ -242,7 +242,7 @@ function Example({ bookId, example, picked, onPick }: { bookId: string; example:
         <span className="mt-1 size-[32px] shrink-0" aria-hidden />
       )}
       <div className="min-w-0">
-        <Reveal when={example.before}><p className="line-clamp-2 text-fg-3"><span className="sr-only">{S.s_cau_lien_truoc_3fdc0989}</span>{example.before}</p></Reveal>
+        <Reveal when={example.before}><p className="break-words text-fg-3"><span className="sr-only">{S.s_cau_lien_truoc_3fdc0989}</span>{example.before}</p></Reveal>
         {/* Nhãn đứng NGAY TRÊN câu được hỏi (không phải trên câu trước mờ - dễ đọc nhầm là nhãn của câu ấy); vạch bên trái đánh dấu đúng câu đang hỏi
             khi có câu trước/sau làm ngữ cảnh. */}
         <div className={cn((example.before || example.after) && "border-l-2 border-accent pl-2")}>
@@ -267,7 +267,7 @@ function Example({ bookId, example, picked, onPick }: { bookId: string; example:
               : example.text}
           </p>
         </div>
-        <Reveal when={example.after}><p className="line-clamp-2 text-fg-3"><span className="sr-only">{S.s_cau_lien_sau_e9238b3e}</span>{example.after}</p></Reveal>
+        <Reveal when={example.after}><p className="break-words text-fg-3"><span className="sr-only">{S.s_cau_lien_sau_e9238b3e}</span>{example.after}</p></Reveal>
       </div>
     </li>
   );

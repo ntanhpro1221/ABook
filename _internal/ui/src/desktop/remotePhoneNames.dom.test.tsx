@@ -75,7 +75,7 @@ it("wraps complete remote strip and target names while the fixed control row exp
   expect(target.dataset.fit).toBe("wrap");
   expect(target.closest('[role="menuitem"]')!.className).toContain("min-h-9");
   expect(target.style.fontSize).toBe("");
-  expect(target.style.whiteSpace).toBe("");
+  expect(target.style.whiteSpace).toBe("normal");
   expect(host.querySelector("span[title]")?.getAttribute("title")).toBe(name);
   expect(state.setOffset).toHaveBeenLastCalledWith("160px");
   stripHeight = 96;

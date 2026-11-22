@@ -1,149 +1,639 @@
 {
-  "note": "left174 ratchet: tracked files that still name a private folder; only removals allowed (tests/test_private_paths_ratchet.py)",
-  "count": 143,
-  "files": [
-    ".claude/agents/abook-dev.md",
-    ".claude/hooks/after_edit.py",
-    ".claude/hooks/guard_bash.py",
-    ".claude/skills/abook-wake/SKILL.md",
-    "AGENTS.md",
-    "_internal/AGENTS.md",
-    "_internal/desktop_qt/CMakeLists.txt",
-    "_internal/desktop_qt/PROGRESS.md",
-    "_internal/desktop_qt/tests/test_backend.cpp",
-    "_internal/desktop_qt/tools/audio_sink.py",
-    "_internal/desktop_qt/tools/audiobench/run_matrix.py",
-    "_internal/desktop_qt/tools/check_smtc.py",
-    "_internal/desktop_qt/tools/check_smtc_app.py",
-    "_internal/desktop_qt/tools/hidden_suite.py",
-    "_internal/desktop_qt/tools/idle2_baseline.py",
-    "_internal/desktop_qt/tools/idle2_final.py",
-    "_internal/desktop_qt/tools/idle2_profile.py",
-    "_internal/desktop_qt/tools/idle2_stage.py",
-    "_internal/desktop_qt/tools/idle_ab.py",
-    "_internal/desktop_qt/tools/idle_native.py",
-    "_internal/desktop_qt/tools/listen_audit.py",
-    "_internal/desktop_qt/tools/make_fixture.py",
-    "_internal/desktop_qt/tools/measure.py",
-    "_internal/desktop_qt/tools/measure_mini.py",
-    "_internal/desktop_qt/tools/qtwide_review.py",
-    "_internal/desktop_qt/tools/sonic_vs_phone/compare.py",
-    "_internal/desktop_qt/tools/voice_ab.py",
-    "_internal/desktop_qt/tools/voice_validate.py",
-    "_internal/docs/ANALYSIS_RESEARCH.md",
-    "_internal/docs/LISTEN_ANYTHING.md",
-    "_internal/docs/LLM_EVAL.md",
-    "_internal/docs/MUSIC_RESEARCH.md",
-    "_internal/docs/NATIVE_PHONE_UI.md",
-    "_internal/docs/OPTIMISATION_QUEUE.md",
-    "_internal/docs/PRODUCTION_PLAN.md",
-    "_internal/docs/PRODUCTION_PLAN_book2.md",
-    "_internal/docs/READING_A_BOUNDARY_LOG.md",
-    "_internal/docs/README.md",
-    "_internal/docs/RELEASING.md",
-    "_internal/docs/SURVIVING_AN_INTERRUPTION.md",
-    "_internal/docs/TEST_REPORT.md",
-    "_internal/docs/THE_SOURCE_IS_WATERMARKED.md",
-    "_internal/docs/THROUGHPUT.md",
-    "_internal/docs/TTS_RESEARCH.md",
-    "_internal/docs/UI_PARITY_QT.md",
-    "_internal/docs/VERSIONS.md",
-    "_internal/docs/WORK_LOG.md",
-    "_internal/mobile/android/app/build.gradle",
-    "_internal/mobile/android/scripts/test_phone_frames.py",
-    "_internal/scripts/assemble_book.py",
-    "_internal/scripts/audit_the_shipped_book.py",
-    "_internal/scripts/book1.env",
-    "_internal/scripts/book_paths.py",
-    "_internal/scripts/boundary.sh",
-    "_internal/scripts/corpus/manifest.py",
-    "_internal/scripts/corpus/wikisource.py",
-    "_internal/scripts/discarded_cures.py",
-    "_internal/scripts/fix_source_quotes.py",
-    "_internal/scripts/generate_g2p_parity.py",
-    "_internal/scripts/launch_batch.sh",
-    "_internal/scripts/launch_repair.sh",
-    "_internal/scripts/make_listening_samples.py",
-    "_internal/scripts/make_speaker_pass_fixtures.py",
-    "_internal/scripts/measure_a_name_that_is_not_in_the_source.py",
-    "_internal/scripts/measure_a_phantom_by_its_own_chapter.py",
-    "_internal/scripts/measure_accent_folding.py",
-    "_internal/scripts/measure_castrules.py",
-    "_internal/scripts/measure_chapter_levels.py",
-    "_internal/scripts/measure_critic_free_text.py",
-    "_internal/scripts/measure_did_the_recast_help.py",
-    "_internal/scripts/measure_one_person_many_labels.py",
-    "_internal/scripts/measure_the_dead_exclusions.py",
-    "_internal/scripts/measure_would_a_name_fold_be_safe.py",
-    "_internal/scripts/model_eval/analysis/README.md",
-    "_internal/scripts/model_eval/analysis/bracket_flip.py",
-    "_internal/scripts/model_eval/analysis/cast_absent.py",
-    "_internal/scripts/model_eval/analysis/choose_composition.py",
-    "_internal/scripts/model_eval/analysis/gates_table.py",
-    "_internal/scripts/model_eval/analysis/ln_categories.py",
-    "_internal/scripts/model_eval/analysis/ln_table.py",
-    "_internal/scripts/model_eval/build_training_set.py",
-    "_internal/scripts/model_eval/common_speaker_errors.py",
-    "_internal/scripts/model_eval/eval_models.py",
-    "_internal/scripts/model_eval/eval_progress.py",
-    "_internal/scripts/model_eval/make_eval_project.py",
-    "_internal/scripts/model_eval/name_form.py",
-    "_internal/scripts/model_eval/paired.py",
-    "_internal/scripts/model_eval/profile_train_memory.py",
-    "_internal/scripts/model_eval/quote_scorer/build_csi.py",
-    "_internal/scripts/model_eval/quote_scorer/build_cue_masked.py",
-    "_internal/scripts/model_eval/quote_scorer/build_pdnc.py",
-    "_internal/scripts/model_eval/quote_scorer/build_unlabeled.py",
-    "_internal/scripts/model_eval/quote_scorer/build_unlabeled_corpus.py",
-    "_internal/scripts/model_eval/quote_scorer/build_vi.py",
-    "_internal/scripts/model_eval/quote_scorer/combine_eval.py",
-    "_internal/scripts/model_eval/quote_scorer/compare_predictions.py",
-    "_internal/scripts/model_eval/quote_scorer/decode_conversation.py",
-    "_internal/scripts/model_eval/quote_scorer/doubt_for_book.py",
-    "_internal/scripts/model_eval/quote_scorer/make_folds.py",
-    "_internal/scripts/model_eval/quote_scorer/narrator_raw.py",
-    "_internal/scripts/model_eval/quote_scorer/pseudo_label.py",
-    "_internal/scripts/model_eval/quote_scorer/review_curve.py",
-    "_internal/scripts/model_eval/quote_scorer/train_scorer.py",
-    "_internal/scripts/model_eval/replay_all.py",
-    "_internal/scripts/model_eval/score_models.py",
-    "_internal/scripts/model_eval/segment_diff.py",
-    "_internal/scripts/model_eval/serve_lora.py",
-    "_internal/scripts/model_eval/train_lora.py",
-    "_internal/scripts/model_eval/voice_identity.py",
-    "_internal/scripts/pending_patches/README.md",
-    "_internal/scripts/pending_patches/apply_all.py",
-    "_internal/scripts/pending_patches/patch_a_finished_take_is_promoted_without_two_passing_checks.py",
-    "_internal/scripts/pending_patches/patch_a_finished_take_survives_the_report.py",
-    "_internal/scripts/pending_patches/patch_keep_the_locked_reading.py",
-    "_internal/scripts/pending_patches/patch_one_promoted_take_and_one_way_to_fail.py",
-    "_internal/scripts/prepare_ort_runtime.py",
-    "_internal/scripts/prepare_sea_g2p_android.py",
-    "_internal/scripts/publish_model.py",
-    "_internal/scripts/release.py",
-    "_internal/scripts/release_gate.py",
-    "_internal/scripts/sign_remote_config.py",
-    "_internal/scripts/supertonic_phone_bench.sh",
-    "_internal/scripts/tap_audit/README.md",
-    "_internal/scripts/try_a_pronunciation.py",
-    "_internal/scripts/vieneu_phone_bench.sh",
-    "_internal/scripts/who_owns_the_phantom_line.py",
-    "_internal/tests/data/g2pgate/README.md",
-    "_internal/tests/fixtures/diagnostics_paths.json",
-    "_internal/tests/fixtures/speaker_pass/real.json",
-    "_internal/tests/test_a85_setup_safety.py",
-    "_internal/tests/test_a_section_can_have_its_own_narrator.py",
-    "_internal/tests/test_g2pgate.py",
-    "_internal/tests/test_moved_book_samples.py",
-    "_internal/tests/test_music_student.py",
-    "_internal/tests/test_music_valence.py",
-    "_internal/tests/test_portable_model_paths.py",
-    "_internal/tests/test_power_guard.py",
-    "_internal/tests/test_speaker_pass_prompts.py",
-    "_internal/tests/test_the_book_counts_against_its_own_source.py",
-    "_internal/tests/test_the_patch_guard_watches_every_book.py",
-    "_internal/tests/test_vietnamese_syllable.py",
-    "_internal/tests/test_word_timing.py",
-    "_internal/ui/scripts/prepare_ui.mjs"
-  ]
+  "note": "leftfix ratchet: lines per tracked file that name the owner's machine (projects folder, profile folder, computer name, LAN address); counts only go down (tests/test_private_paths_ratchet.py)",
+  "count": 623,
+  "files": {
+    ".claude/agents/abook-dev.md": {
+      "folder": 1
+    },
+    ".claude/hooks/after_edit.py": {
+      "folder": 2
+    },
+    ".claude/hooks/guard_bash.py": {
+      "folder": 2
+    },
+    ".claude/skills/abook-wake/SKILL.md": {
+      "folder": 5
+    },
+    "AGENTS.md": {
+      "folder": 1
+    },
+    "_internal/AGENTS.md": {
+      "folder": 2
+    },
+    "_internal/abook/webui/remote_books.py": {
+      "lan": 1
+    },
+    "_internal/abook/webui/sync.py": {
+      "lan": 2
+    },
+    "_internal/desktop_qt/PROGRESS.md": {
+      "folder": 16
+    },
+    "_internal/desktop_qt/qml/UiStrings.js": {
+      "lan": 1
+    },
+    "_internal/desktop_qt/tests/test_backend.cpp": {
+      "folder": 1
+    },
+    "_internal/desktop_qt/tests/width/tst_d2_devices.qml": {
+      "lan": 13
+    },
+    "_internal/desktop_qt/tests/width/tst_d3.qml": {
+      "lan": 1
+    },
+    "_internal/desktop_qt/tests/width/tst_layout_class.qml": {
+      "lan": 1
+    },
+    "_internal/desktop_qt/tests/width/tst_wide_screens.qml": {
+      "lan": 1
+    },
+    "_internal/desktop_qt/tools/audio_sink.py": {
+      "folder": 1
+    },
+    "_internal/desktop_qt/tools/audiobench/run_matrix.py": {
+      "folder": 1
+    },
+    "_internal/desktop_qt/tools/check_smtc.py": {
+      "folder": 1
+    },
+    "_internal/desktop_qt/tools/check_smtc_app.py": {
+      "folder": 3
+    },
+    "_internal/desktop_qt/tools/hidden_suite.py": {
+      "folder": 2
+    },
+    "_internal/desktop_qt/tools/idle2_baseline.py": {
+      "folder": 1
+    },
+    "_internal/desktop_qt/tools/idle2_final.py": {
+      "folder": 1
+    },
+    "_internal/desktop_qt/tools/idle2_profile.py": {
+      "folder": 4
+    },
+    "_internal/desktop_qt/tools/idle2_stage.py": {
+      "folder": 1
+    },
+    "_internal/desktop_qt/tools/idle_ab.py": {
+      "folder": 3
+    },
+    "_internal/desktop_qt/tools/idle_native.py": {
+      "folder": 1
+    },
+    "_internal/desktop_qt/tools/listen_audit.py": {
+      "folder": 1
+    },
+    "_internal/desktop_qt/tools/make_fixture.py": {
+      "folder": 1
+    },
+    "_internal/desktop_qt/tools/measure.py": {
+      "folder": 3
+    },
+    "_internal/desktop_qt/tools/measure_mini.py": {
+      "folder": 2
+    },
+    "_internal/desktop_qt/tools/qtwide_review.py": {
+      "folder": 4
+    },
+    "_internal/desktop_qt/tools/sonic_vs_phone/compare.py": {
+      "folder": 1
+    },
+    "_internal/desktop_qt/tools/voice_ab.py": {
+      "folder": 3
+    },
+    "_internal/desktop_qt/tools/voice_validate.py": {
+      "folder": 1
+    },
+    "_internal/docs/ANALYSIS_RESEARCH.md": {
+      "folder": 1
+    },
+    "_internal/docs/LISTEN_ANYTHING.md": {
+      "folder": 1
+    },
+    "_internal/docs/LLM_EVAL.md": {
+      "folder": 8
+    },
+    "_internal/docs/MUSIC_RESEARCH.md": {
+      "folder": 1
+    },
+    "_internal/docs/NATIVE_PHONE_UI.md": {
+      "folder": 1
+    },
+    "_internal/docs/OPTIMISATION_QUEUE.md": {
+      "folder": 2
+    },
+    "_internal/docs/PRODUCTION_PLAN.md": {
+      "folder": 2
+    },
+    "_internal/docs/PRODUCTION_PLAN_book2.md": {
+      "folder": 6
+    },
+    "_internal/docs/READING_A_BOUNDARY_LOG.md": {
+      "folder": 2
+    },
+    "_internal/docs/README.md": {
+      "folder": 1
+    },
+    "_internal/docs/RELEASING.md": {
+      "folder": 5
+    },
+    "_internal/docs/SURVIVING_AN_INTERRUPTION.md": {
+      "folder": 4
+    },
+    "_internal/docs/TEST_REPORT.md": {
+      "folder": 21
+    },
+    "_internal/docs/THE_SOURCE_IS_WATERMARKED.md": {
+      "folder": 1
+    },
+    "_internal/docs/THROUGHPUT.md": {
+      "folder": 1
+    },
+    "_internal/docs/TTS_RESEARCH.md": {
+      "folder": 1
+    },
+    "_internal/docs/UI.md": {
+      "lan": 1
+    },
+    "_internal/docs/UI_PARITY.md": {
+      "lan": 1
+    },
+    "_internal/docs/UI_PARITY_QT.md": {
+      "folder": 1
+    },
+    "_internal/docs/UI_PARITY_TRIAGE.md": {
+      "lan": 1
+    },
+    "_internal/docs/VERSIONS.md": {
+      "folder": 12
+    },
+    "_internal/docs/WORK_LOG.md": {
+      "folder": 21
+    },
+    "_internal/mobile/android/app/build.gradle": {
+      "folder": 1
+    },
+    "_internal/mobile/android/app/src/androidTest/java/vn/abook/player/MusicStreamOnDeviceTest.kt": {
+      "lan": 3
+    },
+    "_internal/mobile/android/app/src/androidTest/java/vn/abook/player/MusicStudentOnDeviceTest.kt": {
+      "lan": 1
+    },
+    "_internal/mobile/android/app/src/androidTest/java/vn/abook/player/StreamPaceOnDeviceTest.kt": {
+      "lan": 1
+    },
+    "_internal/mobile/android/app/src/main/java/vn/abook/player/NetErrors.kt": {
+      "lan": 1
+    },
+    "_internal/mobile/android/app/src/main/java/vn/abook/player/UiStrings.kt": {
+      "lan": 2
+    },
+    "_internal/mobile/android/app/src/test/java/vn/abook/player/A116DiagnosticsTest.kt": {
+      "lan": 1
+    },
+    "_internal/mobile/android/app/src/test/java/vn/abook/player/CoverSearchTest.kt": {
+      "lan": 1
+    },
+    "_internal/mobile/android/app/src/test/java/vn/abook/player/DiagnosticsPrivacyTest.kt": {
+      "lan": 9
+    },
+    "_internal/mobile/android/app/src/test/java/vn/abook/player/DiscoveryHintsTest.kt": {
+      "lan": 6
+    },
+    "_internal/mobile/android/app/src/test/java/vn/abook/player/DlnaTest.kt": {
+      "lan": 4
+    },
+    "_internal/mobile/android/app/src/test/java/vn/abook/player/GCastTest.kt": {
+      "lan": 5
+    },
+    "_internal/mobile/android/app/src/test/java/vn/abook/player/LocalStudioTest.kt": {
+      "lan": 1
+    },
+    "_internal/mobile/android/app/src/test/java/vn/abook/player/PairingWordsTest.kt": {
+      "lan": 8
+    },
+    "_internal/mobile/android/app/src/test/java/vn/abook/player/PeerAddressesTest.kt": {
+      "lan": 14
+    },
+    "_internal/mobile/android/app/src/test/java/vn/abook/player/PeerPrefsTest.kt": {
+      "lan": 2
+    },
+    "_internal/mobile/android/app/src/test/java/vn/abook/player/PeersRepairTest.kt": {
+      "lan": 5
+    },
+    "_internal/mobile/android/app/src/test/java/vn/abook/player/RouteTest.kt": {
+      "lan": 10
+    },
+    "_internal/mobile/android/app/src/test/java/vn/abook/player/TwoDevicesTest.kt": {
+      "lan": 1
+    },
+    "_internal/mobile/android/app/src/test/java/vn/abook/player/net/FastConnectTest.kt": {
+      "lan": 2
+    },
+    "_internal/mobile/android/app/src/test/java/vn/abook/player/net/HostWaitSyncTest.kt": {
+      "lan": 1
+    },
+    "_internal/mobile/android/app/src/test/java/vn/abook/player/ui/NativeDevicesFlowTest.kt": {
+      "lan": 1
+    },
+    "_internal/mobile/android/app/src/test/java/vn/abook/player/ui/devices/DevicesFontScaleTest.kt": {
+      "lan": 3
+    },
+    "_internal/mobile/android/app/src/test/java/vn/abook/player/ui/devices/DevicesLogicTest.kt": {
+      "lan": 24
+    },
+    "_internal/mobile/android/app/src/test/java/vn/abook/player/ui/devices/DevicesScreenTest.kt": {
+      "lan": 13
+    },
+    "_internal/mobile/android/app/src/test/java/vn/abook/player/ui/devices/DevicesStateTest.kt": {
+      "lan": 14
+    },
+    "_internal/mobile/android/scripts/test_phone_frames.py": {
+      "folder": 1
+    },
+    "_internal/scripts/assemble_book.py": {
+      "folder": 1
+    },
+    "_internal/scripts/audit_the_shipped_book.py": {
+      "folder": 2
+    },
+    "_internal/scripts/book1.env": {
+      "folder": 4
+    },
+    "_internal/scripts/book_paths.py": {
+      "folder": 7
+    },
+    "_internal/scripts/boundary.sh": {
+      "folder": 3
+    },
+    "_internal/scripts/corpus/manifest.py": {
+      "folder": 6
+    },
+    "_internal/scripts/corpus/wikisource.py": {
+      "folder": 1
+    },
+    "_internal/scripts/discarded_cures.py": {
+      "folder": 1
+    },
+    "_internal/scripts/fix_source_quotes.py": {
+      "folder": 2
+    },
+    "_internal/scripts/generate_g2p_parity.py": {
+      "folder": 1
+    },
+    "_internal/scripts/launch_batch.sh": {
+      "folder": 3
+    },
+    "_internal/scripts/launch_repair.sh": {
+      "folder": 3
+    },
+    "_internal/scripts/leak_scan.py": {
+      "lan": 7
+    },
+    "_internal/scripts/make_listening_samples.py": {
+      "folder": 1
+    },
+    "_internal/scripts/make_speaker_pass_fixtures.py": {
+      "folder": 2
+    },
+    "_internal/scripts/measure_a_name_that_is_not_in_the_source.py": {
+      "folder": 4
+    },
+    "_internal/scripts/measure_a_phantom_by_its_own_chapter.py": {
+      "folder": 1
+    },
+    "_internal/scripts/measure_accent_folding.py": {
+      "folder": 2
+    },
+    "_internal/scripts/measure_castrules.py": {
+      "folder": 1
+    },
+    "_internal/scripts/measure_chapter_levels.py": {
+      "folder": 3
+    },
+    "_internal/scripts/measure_critic_free_text.py": {
+      "folder": 1
+    },
+    "_internal/scripts/measure_did_the_recast_help.py": {
+      "folder": 1
+    },
+    "_internal/scripts/measure_one_person_many_labels.py": {
+      "folder": 4
+    },
+    "_internal/scripts/measure_the_dead_exclusions.py": {
+      "folder": 1
+    },
+    "_internal/scripts/measure_would_a_name_fold_be_safe.py": {
+      "folder": 1
+    },
+    "_internal/scripts/model_eval/analysis/README.md": {
+      "folder": 2
+    },
+    "_internal/scripts/model_eval/analysis/bracket_flip.py": {
+      "folder": 3
+    },
+    "_internal/scripts/model_eval/analysis/cast_absent.py": {
+      "folder": 2
+    },
+    "_internal/scripts/model_eval/analysis/choose_composition.py": {
+      "folder": 1
+    },
+    "_internal/scripts/model_eval/analysis/gates_table.py": {
+      "folder": 3
+    },
+    "_internal/scripts/model_eval/analysis/ln_categories.py": {
+      "folder": 2
+    },
+    "_internal/scripts/model_eval/analysis/ln_table.py": {
+      "folder": 2
+    },
+    "_internal/scripts/model_eval/build_training_set.py": {
+      "folder": 2
+    },
+    "_internal/scripts/model_eval/common_speaker_errors.py": {
+      "folder": 2
+    },
+    "_internal/scripts/model_eval/eval_models.py": {
+      "folder": 1
+    },
+    "_internal/scripts/model_eval/eval_progress.py": {
+      "folder": 1
+    },
+    "_internal/scripts/model_eval/make_eval_project.py": {
+      "folder": 5
+    },
+    "_internal/scripts/model_eval/name_form.py": {
+      "folder": 1
+    },
+    "_internal/scripts/model_eval/paired.py": {
+      "folder": 2
+    },
+    "_internal/scripts/model_eval/profile_train_memory.py": {
+      "folder": 1
+    },
+    "_internal/scripts/model_eval/quote_scorer/build_csi.py": {
+      "folder": 2
+    },
+    "_internal/scripts/model_eval/quote_scorer/build_cue_masked.py": {
+      "folder": 2
+    },
+    "_internal/scripts/model_eval/quote_scorer/build_pdnc.py": {
+      "folder": 2
+    },
+    "_internal/scripts/model_eval/quote_scorer/build_unlabeled.py": {
+      "folder": 3
+    },
+    "_internal/scripts/model_eval/quote_scorer/build_unlabeled_corpus.py": {
+      "folder": 2
+    },
+    "_internal/scripts/model_eval/quote_scorer/build_vi.py": {
+      "folder": 2
+    },
+    "_internal/scripts/model_eval/quote_scorer/combine_eval.py": {
+      "folder": 3
+    },
+    "_internal/scripts/model_eval/quote_scorer/compare_predictions.py": {
+      "folder": 4
+    },
+    "_internal/scripts/model_eval/quote_scorer/decode_conversation.py": {
+      "folder": 3
+    },
+    "_internal/scripts/model_eval/quote_scorer/doubt_for_book.py": {
+      "folder": 2
+    },
+    "_internal/scripts/model_eval/quote_scorer/make_folds.py": {
+      "folder": 2
+    },
+    "_internal/scripts/model_eval/quote_scorer/narrator_raw.py": {
+      "folder": 2
+    },
+    "_internal/scripts/model_eval/quote_scorer/pseudo_label.py": {
+      "folder": 3
+    },
+    "_internal/scripts/model_eval/quote_scorer/review_curve.py": {
+      "folder": 2
+    },
+    "_internal/scripts/model_eval/quote_scorer/train_scorer.py": {
+      "folder": 2
+    },
+    "_internal/scripts/model_eval/replay_all.py": {
+      "folder": 2
+    },
+    "_internal/scripts/model_eval/score_models.py": {
+      "folder": 1
+    },
+    "_internal/scripts/model_eval/segment_diff.py": {
+      "folder": 3
+    },
+    "_internal/scripts/model_eval/serve_lora.py": {
+      "folder": 5
+    },
+    "_internal/scripts/model_eval/train_lora.py": {
+      "folder": 5
+    },
+    "_internal/scripts/model_eval/voice_identity.py": {
+      "folder": 1
+    },
+    "_internal/scripts/pending_patches/README.md": {
+      "folder": 5
+    },
+    "_internal/scripts/pending_patches/apply_all.py": {
+      "folder": 1
+    },
+    "_internal/scripts/pending_patches/assets/uv.lock.vieneu381": {
+      "lan": 3
+    },
+    "_internal/scripts/pending_patches/patch_a_finished_take_is_promoted_without_two_passing_checks.py": {
+      "folder": 2
+    },
+    "_internal/scripts/pending_patches/patch_a_finished_take_survives_the_report.py": {
+      "folder": 1
+    },
+    "_internal/scripts/pending_patches/patch_keep_the_locked_reading.py": {
+      "folder": 1
+    },
+    "_internal/scripts/pending_patches/patch_one_promoted_take_and_one_way_to_fail.py": {
+      "folder": 1
+    },
+    "_internal/scripts/prepare_ort_runtime.py": {
+      "folder": 1
+    },
+    "_internal/scripts/prepare_sea_g2p_android.py": {
+      "folder": 1
+    },
+    "_internal/scripts/publish_model.py": {
+      "folder": 1
+    },
+    "_internal/scripts/release.py": {
+      "folder": 1
+    },
+    "_internal/scripts/release_gate.py": {
+      "folder": 2
+    },
+    "_internal/scripts/sign_remote_config.py": {
+      "folder": 2
+    },
+    "_internal/scripts/supertonic_phone_bench.sh": {
+      "folder": 2
+    },
+    "_internal/scripts/tap_audit/README.md": {
+      "folder": 3
+    },
+    "_internal/scripts/try_a_pronunciation.py": {
+      "folder": 1
+    },
+    "_internal/scripts/ui_parity_pairs.json": {
+      "lan": 1
+    },
+    "_internal/scripts/vieneu_phone_bench.sh": {
+      "folder": 2
+    },
+    "_internal/scripts/who_owns_the_phantom_line.py": {
+      "folder": 1
+    },
+    "_internal/tests/cover_search_fixtures.py": {
+      "lan": 1
+    },
+    "_internal/tests/data/g2pgate/README.md": {
+      "folder": 1
+    },
+    "_internal/tests/fixtures/diagnostics_paths.json": {
+      "folder": 1
+    },
+    "_internal/tests/fixtures/peer_address_aliases.json": {
+      "lan": 3
+    },
+    "_internal/tests/fixtures/peer_addresses.json": {
+      "lan": 2
+    },
+    "_internal/tests/fixtures/peer_addresses_malformed.json": {
+      "lan": 15
+    },
+    "_internal/tests/fixtures/peer_diagnostics.json": {
+      "lan": 2
+    },
+    "_internal/tests/fixtures/speaker_pass/real.json": {
+      "folder": 1
+    },
+    "_internal/tests/test_a85_setup_safety.py": {
+      "folder": 1
+    },
+    "_internal/tests/test_a98_import_fixes.py": {
+      "users": 1
+    },
+    "_internal/tests/test_a_section_can_have_its_own_narrator.py": {
+      "folder": 1
+    },
+    "_internal/tests/test_bluetooth_desktop_client.py": {
+      "lan": 3
+    },
+    "_internal/tests/test_cast.py": {
+      "lan": 4
+    },
+    "_internal/tests/test_computers_file.py": {
+      "lan": 1
+    },
+    "_internal/tests/test_dev_endpoints.py": {
+      "lan": 3
+    },
+    "_internal/tests/test_diagnostics_privacy.py": {
+      "lan": 3
+    },
+    "_internal/tests/test_g2pgate.py": {
+      "folder": 1
+    },
+    "_internal/tests/test_gcast.py": {
+      "lan": 4
+    },
+    "_internal/tests/test_leak_scan.py": {
+      "lan": 2
+    },
+    "_internal/tests/test_listener_activity.py": {
+      "lan": 1
+    },
+    "_internal/tests/test_moved_book_samples.py": {
+      "folder": 1
+    },
+    "_internal/tests/test_music_student.py": {
+      "folder": 2
+    },
+    "_internal/tests/test_music_valence.py": {
+      "folder": 2
+    },
+    "_internal/tests/test_own_host.py": {
+      "lan": 4
+    },
+    "_internal/tests/test_pairing_shows_the_address_to_type.py": {
+      "lan": 6
+    },
+    "_internal/tests/test_peer_addresses.py": {
+      "lan": 21
+    },
+    "_internal/tests/test_peer_addresses_malformed.py": {
+      "lan": 3
+    },
+    "_internal/tests/test_peer_multiaddr_regressions.py": {
+      "lan": 8
+    },
+    "_internal/tests/test_phone_diagnostics.py": {
+      "lan": 3
+    },
+    "_internal/tests/test_portable_model_paths.py": {
+      "folder": 3
+    },
+    "_internal/tests/test_power_guard.py": {
+      "folder": 1
+    },
+    "_internal/tests/test_private_paths_ratchet.py": {
+      "lan": 1
+    },
+    "_internal/tests/test_speaker_pass_prompts.py": {
+      "folder": 1
+    },
+    "_internal/tests/test_the_book_counts_against_its_own_source.py": {
+      "folder": 1
+    },
+    "_internal/tests/test_the_patch_guard_watches_every_book.py": {
+      "folder": 1
+    },
+    "_internal/tests/test_vietnamese_syllable.py": {
+      "folder": 1
+    },
+    "_internal/tests/test_webui_covers.py": {
+      "lan": 1
+    },
+    "_internal/tests/test_word_timing.py": {
+      "folder": 1
+    },
+    "_internal/ui/scripts/prepare_ui.mjs": {
+      "folder": 1
+    },
+    "_internal/ui/src/desktop/OtherComputers.dom.test.tsx": {
+      "lan": 5
+    },
+    "_internal/ui/src/desktop/computerRoutes.test.ts": {
+      "lan": 3
+    },
+    "_internal/ui/src/desktop/computerRoutes.ts": {
+      "lan": 1
+    },
+    "_internal/ui/src/gallery/desktopApi.ts": {
+      "lan": 1
+    },
+    "_internal/ui/src/listen/sleepActivity.test.ts": {
+      "lan": 1
+    },
+    "_internal/ui/src/shared/connectionRoute.test.ts": {
+      "lan": 1
+    },
+    "_internal/ui/src/shared/menuMotion.dom.test.tsx": {
+      "lan": 1
+    },
+    "_internal/ui/src/shared/strings.generated.ts": {
+      "lan": 1
+    },
+    "_internal/ui_strings/vi.json": {
+      "lan": 3
+    }
+  }
 }

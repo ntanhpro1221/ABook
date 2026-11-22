@@ -131,7 +131,8 @@ function ProjectRowBody({ book }: { book: BookSummary }) {
         <BookCover title={book.title} part={book.series?.part} size="sm" image={book.cover} className="row-span-3 size-10 self-start md:row-span-1 md:self-center" />
         <div className="min-w-0">
           <OneLineFit className="font-medium">{book.title}</OneLineFit>
-          <div className="truncate text-body-small text-fg-2">
+          {/* Tên giọng kể là tên (chữ người dùng chọn): xuống dòng chứ không cắt (leftfix, máy dò clipInventory). */}
+          <div className="break-words text-body-small text-fg-2">
             {/* Chất lượng "Cân bằng" là mặc định của gần mọi dự án: chữ giống nhau trên mọi hàng thì chỉ ghi ở hàng KHÁC (soát 25-10). */}
             <DotJoin parts={[book.settings.narrator && S.s_giong_ke_0_958dd853(book.settings.narrator), book.settings.profile !== "balanced" && book.settings.profileLabel]} />
           </div>

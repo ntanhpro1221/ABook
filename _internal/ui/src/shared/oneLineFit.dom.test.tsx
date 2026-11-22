@@ -64,7 +64,7 @@ it("tên dài hẳn xuống dòng ở cỡ gốc thay vì cắt", () => {
   const el = span("x".repeat(60));   // 420 px: cần thu dưới 0,75 mới vừa
   expect(fitOneLine(el)).toBe("wrap");
   expect(el.style.fontSize).toBe("");
-  expect(el.style.whiteSpace).toBe("");
+  expect(el.style.whiteSpace).toBe("normal");   // nút cha whitespace-nowrap không kéo chữ đã xuống dòng về một dòng (leftfix C1)
   el.remove();
 });
 

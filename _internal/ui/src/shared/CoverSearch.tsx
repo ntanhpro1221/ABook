@@ -156,7 +156,7 @@ export function CoverSearchPanel({
                       <Loader2 className="size-5 animate-spin" />
                     </div></Reveal>
                 </div>
-                <div className="mt-2 line-clamp-2 text-xs font-medium">{found.title}</div>
+                <div className="mt-2 break-words text-xs font-medium">{found.title}</div>
                 <div className="truncate text-caption text-fg-3">{found.provider}</div>
               </button>
             ))}

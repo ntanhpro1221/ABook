@@ -582,6 +582,11 @@ class BookScreenTest {
             val box = node.boundsInRoot
             val density = node.layoutInfo.density.density
             assertTrue("$name: tên chương nằm trong nút", box.top / density >= button.top.value - 0.5f && box.bottom / density <= button.bottom.value + 0.5f)
+            // Icon phát canh giữa dòng ĐẦU của nhãn, cả khi nhãn xuống dòng (soát leftfix L1)
+            val first = layouts.first()
+            val lineCenter = box.top + (first.getLineTop(0) + first.getLineBottom(0)) / 2
+            val icon = rule.onNodeWithTag("book_primary_icon", useUnmergedTree = true).fetchSemanticsNode().boundsInRoot
+            assertEquals("$name: icon giữa dòng đầu (${first.lineCount} dòng)", lineCenter / density, icon.center.y / density, 1.5f)
         }
     }
 
