@@ -10758,7 +10758,7 @@
     "line": 365,
     "statement": "onRetry = { onDim(false); scope.launch { model.loadReadAlong() } },",
     "occurrence": 1,
-    "source_sha256": "fa9d79f34ede71dfe2e8e2180cf4620fd3bb264a317cdf08e43d89317922e329",
+    "source_sha256": "6ff0432b91c903a265f0d27311a90d61c8942e9df5697e3dd263d4f57c543126",
     "disposition": "pending",
     "guard": "ViewModel/operation fields: pending, preparing, progress, windowProgress; Components pending indicator",
     "reason": "The model retains the operation and locks repeats; UI uses the shared pending parameter, loading content or progress owner. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Combined-source review (merge174 lintfix): both sides' changes to this file keep this statement and its guard unchanged. Re-pinned for fix173d: the edit only fits the Nghe/Đọc theo labels on one line and adds the volume heard bar; this statement and its guard are unchanged. Combined-source review (merge174 integ173): both sides' changes to this file keep this statement and its guard unchanged. Re-pinned for titlewrap174: the edit only makes the Now Playing chapter title wrap in a two-line box (marqueeLine/wrapLines, min-h-[2lh]); this statement and its guard are unchanged."
