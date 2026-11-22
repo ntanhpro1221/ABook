@@ -27,7 +27,7 @@ def test_shared_book_name_readings(case):
 def test_a_proven_name_reads_one_way_everywhere_and_a_listener_reading_still_wins():
     found = jp.book_name_readings(["Mira-san vẫy tay."])
     said = vieneu.spoken_tokens("Mira gọi MIRA và Mira-san.".split(), "ja", readings=found, direct_english=True)
-    assert said[4] == "Mi-ra-xan."
+    assert said[4] == "Mi-ra-san."
     assert said[0] == said[2] == "Mi-ra"
     mine = vieneu.spoken_tokens(["Mira"], "ja", readings={**found, "Mira": "Đan"}, direct_english=True)
     assert mine == ["Đan"]

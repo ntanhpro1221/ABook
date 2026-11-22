@@ -64,8 +64,8 @@
     "reason": "Pre-existing public regression fixture; exact bytes only, changes require renewed privacy review"
   },
   "_internal/tests/fixtures/readaloud/real_names/cases.json": {
-    "sha256": "1a9eeb428c4d7fd464df4d0277707a9d355e57a8b15ebb6f00e5ace5621d02a6",
-    "reason": "_internal/tests/fixtures/readaloud/real_names/cases.json: exact derived speech snapshot under tnfix172 ou/ei, address and neutral-continuation rules. Compared every JSON path with the previously byte-reviewed 0964e4cd2 fixture; source cases, names and ordering are unchanged. No new sentence data; strict IPA and Corpus overlap scans remain active."
+    "sha256": "e23ce614d2fc38468b3b1463e584750403333fe74f68807ad2e93c005a747335",
+    "reason": "_internal/tests/fixtures/readaloud/real_names/cases.json: exact derived speech snapshot under tnfix172 ou/ei, address and neutral-continuation rules. Compared every JSON path with the previously byte-reviewed 0964e4cd2 fixture; source cases, names and ordering are unchanged. No new sentence data; strict IPA and Corpus overlap scans remain active. kunfix 22-11: only the reading tag namespace jp-fallback7 -> jp-fallback8 changed (35 lines, every JSON path compared); no phonemes or names changed."
   },
   "_internal/tests/fixtures/readaloud/shared_vietnamese/cases.json": {
     "sha256": "69bba5b10f2c60b15c6e4b18e4bb5d56cd016011fa6b849a717431e1d844f7d2",

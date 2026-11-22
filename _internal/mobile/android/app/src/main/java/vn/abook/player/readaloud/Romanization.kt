@@ -583,6 +583,8 @@ object Romanization {
     // ---- cửa vào -----------------------------------------------------------------------------------------------------
 
     internal val JA_SUFFIXES = JapanesePolicy.list("suffixes").toSet()
+    // Kính ngữ đọc theo cách người Việt quen nói (Lead 22-11): bảng cố định của romanization.HONORIFIC_READINGS, không qua luật romaji
+    internal val HONORIFIC_READINGS = JapanesePolicy.strings("honorific_readings")
     private const val ABBREVIATION_MAX = 4 // chữ TOÀN HOA dài nhất mà còn coi là viết tắt (PD, NPC) khi giữ nguyên
     private const val ENGLISH_MIN = 4 // chữ Anh ngắn hơn thế (Si, Man, ram) dễ là âm tiết của tên Nhật / Hàn: không giữ
 
@@ -704,7 +706,11 @@ object Romanization {
                     piece.join == "hyphen" -> origin == "ko" || !piece.case || (piece.kind == "read" && piece.norm in JA_SUFFIXES)
                     else -> piece.kind == "read" && piece.syllables.size == 1 && pieces[index - 1].kind == "read" && pieces[index - 1].syllables.size == 1
                 }
-                val reading = if (piece.kind == "read") {
+                val fixed = if (origin == "ja" && piece.kind == "read" && (piece.join == "hyphen" || pieces.size == 1)) HONORIFIC_READINGS[piece.norm] else null
+                val reading = if (fixed != null) {
+                    readAny = true
+                    if (piece.case && !chain) fixed.substring(0, 1).uppercase(Locale.ROOT) + fixed.substring(1) else fixed
+                } else if (piece.kind == "read") {
                     (validated(piece.syllables, piece.case && !chain) ?: return null).also { readAny = true }
                 } else {
                     piece.text

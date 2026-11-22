@@ -91,9 +91,11 @@ Hệ quả: ABook phải tự chọn một quy ước, neo vào nguồn chính t
 | ー cuối từ | bỏ (Taruー → ta-ru) | **Chủ sách** | Lần 9: "Taruー => ta-ru" |
 | "u" vô thanh (desu, Matsu…) | vẫn đọc ư / u | Có nguồn | dạng viết không bỏ âm nào |
 
-**Hậu tố gọi** (-san, -kun, -chan, -sama, senpai, sensei, -dono, -tan, -nee, -nii): không có nguồn đọc tiếng Việt. Đọc theo bảng trên: xan, cun, chan, xa-ma,
-xen-pai, xen-xây (ei -> ây). Hậu tố nối vào tên bằng GẠCH NỐI thành một chuỗi: "Haruto-kun" → "Ha-ru-tô-cun". [Chủ sách 04-10 cho -kun; các hậu
-tố khác áp cùng cách]
+**Hậu tố gọi** (-san, -kun, -chan, -sama, senpai, sensei, -dono, -tan, -nee, -nii): không có nguồn đọc tiếng Việt. Bảy kính ngữ đọc theo cách người
+Việt quen nói, bảng cố định `honorific_readings` trong `japanese_policy.json`, không qua luật romaji: -kun cun, -chan chan, -san san, -sama sa-ma,
+-senpai xen-pai, -sensei xen-xây, -dono đô-nô (Lead 22-11, sau khi chủ sách nghe "Takaki-cưn" thành "cân"; luật romaji cho -san "xan", -sensei
+"xen-xê"). Áp khi kính ngữ nối gạch sau tên hay đứng riêng cả token; -tan, -nee, -nii vẫn theo bảng romaji. Hậu tố nối vào tên bằng GẠCH NỐI thành
+một chuỗi: "Haruto-kun" → "Ha-ru-tô-cun". [Chủ sách 04-10 cho -kun; Lead 22-11 cho cả bảng]
 
 **Phán quyết của chủ sách (04-10)** — đứng trên mọi nguồn, cố định, không quét; mỗi cái là một ca kind `owner` trong
 `tests/romanization_evidence.py` và test phải khớp:

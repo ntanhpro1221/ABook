@@ -3934,7 +3934,7 @@
     "ambiguity": null
   },
   "mixed:Mylene-san": {
-    "reading": "mylene xan",
+    "reading": "mylene san",
     "phones": [
       "mˈaɪliːn sˈaːn"
     ],
@@ -3955,7 +3955,7 @@
     "ambiguity": null
   },
   "mixed:Rhasa-san": {
-    "reading": "rhasa xan",
+    "reading": "rhasa san",
     "phones": [
       "ɹˈɑː sˈaː sˈaːn"
     ],
@@ -3969,14 +3969,14 @@
     "ambiguity": null
   },
   "mixed:Ayase-san": {
-    "reading": "a gia xe xan",
+    "reading": "a gia xe san",
     "phones": [
       "ˈaː zˈaː sˈɛ sˈaːn"
     ],
     "ambiguity": null
   },
   "mixed:Yuna-san": {
-    "reading": "giu na xan",
+    "reading": "giu na san",
     "phones": [
       "zˈu nˈaː sˈaːn"
     ],
@@ -4039,7 +4039,7 @@
     "ambiguity": null
   },
   "mixed:Akiko-san": {
-    "reading": "a ki cô xan",
+    "reading": "a ki cô san",
     "phones": [
       "ˈaː kˈi kˈo sˈaːn"
     ],
@@ -4193,7 +4193,7 @@
     "ambiguity": null
   },
   "mixed:Deiga-san": {
-    "reading": "đê ga xan",
+    "reading": "đê ga san",
     "phones": [
       "ɗˈe ɣˈaː sˈaːn"
     ],
@@ -4214,7 +4214,7 @@
     "ambiguity": null
   },
   "mixed:Madoka-san": {
-    "reading": "ma đô ca xan",
+    "reading": "ma đô ca san",
     "phones": [
       "mˈaː ɗˈo kˈaː sˈaːn"
     ],
@@ -4256,9 +4256,9 @@
     "ambiguity": null
   },
   "mixed:Chiyabashira-sensei": {
-    "reading": "chi a ba si ra xen xê",
+    "reading": "chi a ba si ra xen xây",
     "phones": [
-      "tʃˈi ˈaː bˈaː sˈi ɹˈaː sˈɛn sˈe"
+      "tʃˈi ˈaː bˈaː sˈi ɹˈaː sˈɛn sˈəɪ"
     ],
     "ambiguity": null
   },
@@ -4284,7 +4284,7 @@
     "ambiguity": null
   },
   "mixed:Magali-sama": {
-    "reading": "magali xa ma",
+    "reading": "magali sa ma",
     "phones": [
       "mæɡˈɑːli sˈaː mˈaː"
     ],
@@ -4298,7 +4298,7 @@
     "ambiguity": null
   },
   "mixed:Subaru-sama": {
-    "reading": "xu ba ru xa ma",
+    "reading": "xu ba ru sa ma",
     "phones": [
       "sˈu bˈaː ɹˈu sˈaː mˈaː"
     ],
@@ -4333,7 +4333,7 @@
     "ambiguity": null
   },
   "mixed:Celestina-san": {
-    "reading": "celestina xan",
+    "reading": "celestina san",
     "phones": [
       "səlɪstˈiːnə sˈaːn"
     ],
@@ -4389,7 +4389,7 @@
     "ambiguity": null
   },
   "mixed:Higashira-san": {
-    "reading": "hi ga si ra xan",
+    "reading": "hi ga si ra san",
     "phones": [
       "hˈi ɣˈaː sˈi ɹˈaː sˈaːn"
     ],
@@ -4655,9 +4655,9 @@
     "ambiguity": null
   },
   "japanese:Sensei": {
-    "reading": "xen xê",
+    "reading": "xen xây",
     "phones": [
-      "sˈɛn sˈe"
+      "sˈɛn sˈəɪ"
     ],
     "ambiguity": null
   },

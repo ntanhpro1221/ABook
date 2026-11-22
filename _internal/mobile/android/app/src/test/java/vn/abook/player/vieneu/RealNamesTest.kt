@@ -69,7 +69,7 @@ class RealNamesTest {
             assertEquals(case.text, case.said, unit.pieces.joinToString(" "))
             assertEquals(case.text, case.said, VieneuUnits.spokenTokens(tokens, book.origin, book.readings(), directEnglish = true).filter { it.isNotEmpty() }.joinToString(" "))
             assertEquals(case.text, case.tag, VieneuUnits.readingTag(case.text, book.origin, directEnglish = true))
-            assertTrue(case.tag, case.tag.endsWith("jp-fallback7"))
+            assertTrue(case.tag, case.tag.endsWith("jp-fallback8"))
         }
     }
 

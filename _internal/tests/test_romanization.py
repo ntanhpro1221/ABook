@@ -50,7 +50,7 @@ def test_every_sourced_form_matches_or_is_explained_by_a_chosen_rule():
     assert len(matched) + len(evidence.EXPLAINED) == len(evidence.SOURCED)
     # 140 / 195 (10-11: o đầu từ -> ô, Ōsaka và Ōita khớp SGK): 38 / 91 dạng có nguồn + 114 ca của chủ sách (04-10, chín lần; ca của chủ sách thay dạng SGK cùng chữ: Yamato, Osaka; Gangwon viết cang theo chính tả: EXPLAINED);
     # 55 còn lại đều do luật của chủ sách, điểm đã quét hay nguồn tự lệch (EXPLAINED)
-    assert len(matched) == 125  # 11 earlier ou/ei spellings differ under Lead 14-11.
+    assert len(matched) == 123  # 11 earlier ou/ei spellings differ under Lead 14-11; Lead 22-11 honorifics: sensei now matches, Okaa-san, Ojii-san, Onee-san read -san.
 
 
 def test_tally_of_sourced_forms_by_kind():
@@ -60,7 +60,7 @@ def test_tally_of_sourced_forms_by_kind():
         entry[0] += _matches(token, origin, sources)
         entry[1] += 1
     # (khớp, tổng). Dạng "community" (Doraemon cũ) chỉ để xem, không là chuẩn.
-    assert tally == {("owner", "ja"): [59, 70], ("owner", "ko"): [39, 40], ("textbook", "ja"): [21, 43], ("official", "ja"): [3, 11], ("community", "ja"): [0, 7],
+    assert tally == {("owner", "ja"): [57, 70], ("owner", "ko"): [39, 40], ("textbook", "ja"): [21, 43], ("official", "ja"): [3, 11], ("community", "ja"): [0, 7],
                      ("official", "ko"): [3, 20]}
 
 
@@ -90,13 +90,13 @@ def test_tally_of_sourced_forms_by_kind():
     # c / k / g theo chính tả
     ("Kenji", "ja", "Ken-gi"), ("Ginko", "ja", "Ghin-cô"),
     # hậu tố: nối gạch vào tên thành một chuỗi (chủ sách 04-10), hậu tố giữ chữ thường
-    ("Subaru-kun", "ja", "Xu-ba-ru-cun"), ("Tanaka-senpai", "ja", "Ta-na-ca-xen-pai"), ("Sato-sensei", "ja", 'Xa-tô-xen-xê'),
-    ("Aiko-san", "ja", "Ai-cô-xan"), ("Rin-chan", "ja", "Rin-chan"), ("Ojou-sama", "ja", "Ô-giô-xa-ma"), ("Hiiragi-chan", "ja", "Hi-ra-ghi-chan"),
+    ("Subaru-kun", "ja", "Xu-ba-ru-cun"), ("Tanaka-senpai", "ja", "Ta-na-ca-xen-pai"), ("Sato-sensei", "ja", 'Xa-tô-xen-xây'),
+    ("Aiko-san", "ja", "Ai-cô-san"), ("Rin-chan", "ja", "Rin-chan"), ("Ojou-sama", "ja", "Ô-giô-sa-ma"), ("Hiiragi-chan", "ja", "Hi-ra-ghi-chan"),
     ("senpai", "ja", "xen-pai"),
     # chủ sách 04-10 lần 4 (Nhật): ee -> e, ii -> i, aa -> a; g + i -> ghi, ji -> gi; tsu -> xu; yu sau phụ âm tách; shu -> su; o không phụ âm đầu -> o; ao cuối gộp
-    ("Onee-san", "ja", "Ô-ne-xan"), ("Onii-chan", "ja", "Ô-ni-chan"), ("Hiiragi", "ja", "Hi-ra-ghi"), ("Ryuu", "ja", "Ri-u"), ("Kyuuji", "ja", "Ki-u-gi"),
-    ("Aoi", "ja", "A-o-i"), ("Kaori", "ja", "Ca-o-ri"), ("Nao", "ja", "Nao"), ("Naoki", "ja", "Na-o-ki"), ("Okaa-san", "ja", "Ô-ca-xan"),
-    ("Ojii-san", "ja", "Ô-gi-xan"), ("Onigiri", "ja", "Ô-ni-gi-ri"), ("Tomoe", "ja", "Tô-mô-e"), ("Matsuyama", "ja", "Ma-xu-gia-ma"),
+    ("Onee-san", "ja", "Ô-ne-san"), ("Onii-chan", "ja", "Ô-ni-chan"), ("Hiiragi", "ja", "Hi-ra-ghi"), ("Ryuu", "ja", "Ri-u"), ("Kyuuji", "ja", "Ki-u-gi"),
+    ("Aoi", "ja", "A-o-i"), ("Kaori", "ja", "Ca-o-ri"), ("Nao", "ja", "Nao"), ("Naoki", "ja", "Na-o-ki"), ("Okaa-san", "ja", "Ô-ca-san"),
+    ("Ojii-san", "ja", "Ô-gi-san"), ("Onigiri", "ja", "Ô-ni-gi-ri"), ("Tomoe", "ja", "Tô-mô-e"), ("Matsuyama", "ja", "Ma-xu-gia-ma"),
     ("Jin-dono", "ja", "Gin-đô-nô"), ("Natsuki", "ja", "Na-xu-ki"), ("Kyūshū", "ja", "Ki-u-su"),
     # chủ sách 04-10 lần 4 (Hàn): bật hơi như thường, s -> x, j -> gi, y + nguyên âm -> gi, eo -> eo / e-o + coda, yu / yeo tách i-, wo -> uô, w đầu từ -> gu, oi
     ("Kang", "ko", "Cang"), ("Taehyun", "ko", "Te-hi-un"), ("Choi", "ko", "Choi"), ("Yoon", "ko", "Giun"), ("Hyung", "ko", "Hi-ung"), ("Seojun", "ko", "Xeo-giun"),
@@ -158,7 +158,7 @@ def test_a_reading_is_the_same_whatever_the_capitalisation_of_the_input():
     assert romanized_reading("osaka", "ja") == "ô-xa-ca"
     assert romanized_reading("Osaka", "ja") == "Ô-xa-ca"
     assert romanized_reading("OSAKA", "ja") == "Ô-xa-ca"  # toàn hoa: casefold rồi đọc, viết hoa chữ đầu như thường
-    assert romanized_reading("NEE-SAN", "ja") == "Ne-xan" and romanized_reading("PARK", "ko") == "Pắc"
+    assert romanized_reading("NEE-SAN", "ja") == "Ne-san" and romanized_reading("PARK", "ko") == "Pắc"
     assert romanized_reading("oSAKA", "ja") == "ô-xa-ca" and romanized_reading("HAruto", "ja") == "Ha-ru-tô"  # hoa lạ: như viết hoa chữ đầu của chính token
 
 
@@ -229,7 +229,7 @@ def test_a_hyphen_joins_what_the_part_says_and_a_camel_pair_of_single_syllables_
     # đoạn thường hay hậu tố sau gạch nối vào tên; đoạn viết hoa là từ mới; CamelCase cách nhau dấu cách, trừ hai nửa đều MỘT âm tiết (JoJo, ChuChu)
     assert romanized_reading("Kanata-cả", "ja") == "Ca-na-ta-cả"
     assert romanized_reading("Waseda-Keio", "ja") == 'Oa-xe-đa Kê-o'
-    assert romanized_reading("Rin-san", "ja") == "Rin-xan"
+    assert romanized_reading("Rin-san", "ja") == "Rin-san"
     assert romanized_reading("YuNa", "ja") == "Giu-na" and romanized_reading("KouIchi", "ja") == 'Cô I-chi'
     assert romanized_reading("Seol-Ah", "ko") == "Xe-on-a" and romanized_reading("Park Seol-Ah", "ko") == "Pắc Xe-on-a"
 

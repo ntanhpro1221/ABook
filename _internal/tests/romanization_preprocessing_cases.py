@@ -10,14 +10,14 @@ Gangwon ...) không có ở đây.
 from __future__ import annotations
 
 BENCH_JA: list[tuple[str, str, str]] = [
-    ("IZUMO", "ja", "I-du-mô"), ("Gấu-san", "ja", "Gấu-xan"), ("Vương-sama", "ja", "Vương-xa-ma"), ("vương-sama", "ja", "vương-xa-ma"),
-    ("hùng-sama", "ja", "hùng-xa-ma"), ("Thư-sama", "ja", "Thư-xa-ma"), ("thần-sama", "ja", "thần-xa-ma"), ("Thủy-sama", "ja", "Thủy-xa-ma"),
-    ("sĩ-sama", "ja", "sĩ-xa-ma"), ("chính-sama", "ja", "chính-xa-ma"), ("tước-sama", "ja", "tước-xa-ma"), ("Giả-sama", "ja", "Giả-xa-ma"),
-    ("giả-sama", "ja", "giả-xa-ma"), ("ChuChu", "ja", "Chu-chu"), ("chúa-sama", "ja", "chúa-xa-ma"), ("Thú-sama", "ja", "Thú-xa-ma"),
-    ("Thần-sama", "ja", "Thần-xa-ma"), ("Thủ-chan", "ja", "Thủ-chan"), ("KANATA", "ja", "Ca-na-ta"), ("OkabeRintarou", "ja", 'Ô-ca-be Rin-ta-rô'),
+    ("IZUMO", "ja", "I-du-mô"), ("Gấu-san", "ja", "Gấu-san"), ("Vương-sama", "ja", "Vương-sa-ma"), ("vương-sama", "ja", "vương-sa-ma"),
+    ("hùng-sama", "ja", "hùng-sa-ma"), ("Thư-sama", "ja", "Thư-sa-ma"), ("thần-sama", "ja", "thần-sa-ma"), ("Thủy-sama", "ja", "Thủy-sa-ma"),
+    ("sĩ-sama", "ja", "sĩ-sa-ma"), ("chính-sama", "ja", "chính-sa-ma"), ("tước-sama", "ja", "tước-sa-ma"), ("Giả-sama", "ja", "Giả-sa-ma"),
+    ("giả-sama", "ja", "giả-sa-ma"), ("ChuChu", "ja", "Chu-chu"), ("chúa-sama", "ja", "chúa-sa-ma"), ("Thú-sama", "ja", "Thú-sa-ma"),
+    ("Thần-sama", "ja", "Thần-sa-ma"), ("Thủ-chan", "ja", "Thủ-chan"), ("KANATA", "ja", "Ca-na-ta"), ("OkabeRintarou", "ja", 'Ô-ca-be Rin-ta-rô'),
     ("Tenshi-chan", "ja", "Ten-si-chan"), ("HAruto", "ja", "Ha-ru-tô"), ("REI", "ja", 'Rê'), ("KOU", "ja", "Cô"), ("KAEDE", "ja", "Ca-e-đe"),
-    ("TAKIOTO", "ja", "Ta-ki-ô-tô"), ("NEE-SAN", "ja", "Ne-xan"), ("Eruza-người", "ja", "E-ru-da-người"), ("Kanata-cả", "ja", "Ca-na-ta-cả"),
-    ("Kanata-vẫn", "ja", "Ca-na-ta-vẫn"), ("đại-sama", "ja", "đại-xa-ma"), ("thơm-sensei", "ja", 'thơm-xen-xê'),
+    ("TAKIOTO", "ja", "Ta-ki-ô-tô"), ("NEE-SAN", "ja", "Ne-san"), ("Eruza-người", "ja", "E-ru-da-người"), ("Kanata-cả", "ja", "Ca-na-ta-cả"),
+    ("Kanata-vẫn", "ja", "Ca-na-ta-vẫn"), ("đại-sama", "ja", "đại-sa-ma"), ("thơm-sensei", "ja", 'thơm-xen-xây'),
     ("xám-onechan", "ja", "xám-ô-ne-chan"), ("tải-kun", "ja", "tải-cun"), ("à-degozaru", "ja", "à-đe-gô-da-ru"), ("NhạcJoJo", "ja", "Nhạc Giô-giô"),
     ("DereDere", "ja", "Đe-re Đe-re"), ("Trắng-chan", "ja", "Trắng-chan"),
 ]
@@ -37,8 +37,8 @@ KEPT: list[tuple[str, str, str, str]] = [
     ("PD-nim", "ko", "PD-nim", "keep:abbr"),
     ("Ikemen-style", "ja", "I-ke-men-style", "keep:english"),
     ("Nagaya-Stable", "ja", "Na-gay-a Stable", "keep:english"),
-    ("Clan-sama", "ja", "Clan-xa-ma", "keep:english"),
-    ("Mary-san", "ja", "Mary-xan", "keep:english"),
+    ("Clan-sama", "ja", "Clan-sa-ma", "keep:english"),
+    ("Mary-san", "ja", "Mary-san", "keep:english"),
 ]
 
 STILL_NONE: list[tuple[str, str]] = [

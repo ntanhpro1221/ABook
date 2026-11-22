@@ -613,6 +613,9 @@ def _ko_nucleus(onset: str, vowel: str, closing: str, flags: list[str], initial:
 # ---- cửa vào ---------------------------------------------------------------------------------------------------------
 
 _JA_SUFFIXES = tuple(JAPANESE_POLICY["suffixes"])  # hậu tố gọi (mục 2): đọc theo chính bảng romaji, không có luật riêng
+# Kính ngữ đọc theo cách người Việt quen nói (Lead 22-11, chủ sách nghe "Takaki-cưn" ra "cân"): bảng cố định, không qua luật romaji
+# (luật cho -san -> "xan", -sensei -> "xen-xê"). Áp khi kính ngữ nối gạch sau tên, hay đứng một mình làm cả token.
+HONORIFIC_READINGS: dict[str, str] = dict(JAPANESE_POLICY["honorific_readings"])
 _ABBREVIATION_MAX = 4  # chữ TOÀN HOA dài nhất mà còn coi là viết tắt (PD, NPC) khi giữ nguyên
 _ENGLISH_MIN = 4  # chữ Anh ngắn hơn thế (Si, Man, ram) dễ là âm tiết của tên Nhật / Hàn: không giữ
 
@@ -769,7 +772,11 @@ def _read(token: str, origin: str) -> tuple[str, tuple[str, ...]] | None:
                 chain = origin == "ko" or not unit.case or (unit.kind == "read" and unit.norm in _JA_SUFFIXES)
             else:
                 chain = unit.kind == "read" and len(unit.syllables) == 1 and units[index - 1].kind == "read" and len(units[index - 1].syllables) == 1
-            if unit.kind == "read":
+            fixed = HONORIFIC_READINGS.get(unit.norm) if origin == "ja" and unit.kind == "read" and (unit.join == "hyphen" or len(units) == 1) else None
+            if fixed is not None:
+                reading = fixed[0].upper() + fixed[1:] if unit.case and not chain else fixed
+                read_any = True
+            elif unit.kind == "read":
                 reading = _validated(unit.syllables, unit.case and not chain)
                 if reading is None:
                     return None

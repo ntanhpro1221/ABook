@@ -497,7 +497,7 @@
   {"group": "edge", "token": "ok", "reading": "ô-kê", "flags": ["via:override"], "reading_nodict": "ô-kê", "flags_nodict": ["via:override"]},
   {"group": "edge", "token": "Lyle-kun", "reading": "Lai-ồ cun", "flags": ["via:override", "via:suffix"], "reading_nodict": "Lai-ồ cun", "flags_nodict": ["via:override", "via:suffix"]},
   {"group": "edge", "token": "Mary-dono", "reading": "Ma-ri đô-nô", "flags": ["via:phonemes", "via:suffix"], "reading_nodict": "Ma-ri đô-nô", "flags_nodict": ["via:spelling", "via:suffix"]},
-  {"group": "edge", "token": "Eleanora-san", "reading": "E-la-no-ra xan", "flags": ["via:phonemes", "via:suffix"], "reading_nodict": "E-li-no-ra xan", "flags_nodict": ["via:spelling", "via:suffix"]},
+  {"group": "edge", "token": "Eleanora-san", "reading": "E-la-no-ra san", "flags": ["via:phonemes", "via:suffix"], "reading_nodict": "E-li-no-ra san", "flags_nodict": ["via:spelling", "via:suffix"]},
   {"group": "edge", "token": "Persona-kun", "reading": "Pơ-xô-na cun", "flags": ["via:phonemes", "via:suffix"], "reading_nodict": "Pơ-xô-na cun", "flags_nodict": ["via:spelling", "via:suffix"]},
   {"group": "edge", "token": "Cromwell", "reading": "Cờ-rom-oen", "flags": ["via:phonemes", "via:compound"], "reading_nodict": "Cờ-rom-oen", "flags_nodict": ["via:spelling", "via:compound"]},
   {"group": "edge", "token": "Roxwell", "reading": "Róc-xơ-oen", "flags": ["via:phonemes", "via:compound"], "reading_nodict": "Róc-xơ-oen", "flags_nodict": ["via:spelling", "via:compound"]},

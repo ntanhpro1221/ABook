@@ -11418,7 +11418,7 @@
       "units": [
         {
           "pieces": [
-            "Mylene-xan"
+            "Mylene-san"
           ],
           "phonemes": "mˈaɪliːn sˈaːn."
         }
@@ -11481,7 +11481,7 @@
       "units": [
         {
           "pieces": [
-            "Rhasa-xan"
+            "Rhasa-san"
           ],
           "phonemes": "ɹˈɑː sˈaː sˈaːn."
         }
@@ -11523,7 +11523,7 @@
       "units": [
         {
           "pieces": [
-            "a-gia-xe-xan"
+            "a-gia-xe-san"
           ],
           "phonemes": "ˈaː zˈaː sˈɛ sˈaːn."
         }
@@ -11544,7 +11544,7 @@
       "units": [
         {
           "pieces": [
-            "Giu-na-xan"
+            "Giu-na-san"
           ],
           "phonemes": "zˈu nˈaː sˈaːn."
         }
@@ -11733,7 +11733,7 @@
       "units": [
         {
           "pieces": [
-            "a-ki-cô-xan"
+            "a-ki-cô-san"
           ],
           "phonemes": "ˈaː kˈi kˈo sˈaːn."
         }
@@ -12195,7 +12195,7 @@
       "units": [
         {
           "pieces": [
-            "Đê-ga-xan"
+            "Đê-ga-san"
           ],
           "phonemes": "ɗˈe ɣˈaː sˈaːn."
         }
@@ -12258,7 +12258,7 @@
       "units": [
         {
           "pieces": [
-            "Ma-đô-ca-xan"
+            "Ma-đô-ca-san"
           ],
           "phonemes": "mˈaː ɗˈo kˈaː sˈaːn."
         }
@@ -12384,12 +12384,12 @@
       "units": [
         {
           "pieces": [
-            "Chi-a-ba-si-ra-xen-xê"
+            "Chi-a-ba-si-ra-xen-xây"
           ],
-          "phonemes": "tʃˈi ˈaː bˈaː sˈi ɹˈaː sˈɛn sˈe."
+          "phonemes": "tʃˈi ˈaː bˈaː sˈi ɹˈaː sˈɛn sˈəɪ."
         }
       ],
-      "phonemes": "tʃˈi ˈaː bˈaː sˈi ɹˈaː sˈɛn sˈe."
+      "phonemes": "tʃˈi ˈaː bˈaː sˈi ɹˈaː sˈɛn sˈəɪ."
     },
     {
       "id": "token:589",
@@ -12468,7 +12468,7 @@
       "units": [
         {
           "pieces": [
-            "Magali-xa-ma"
+            "Magali-sa-ma"
           ],
           "phonemes": "mæɡˈɑːli sˈaː mˈaː."
         }
@@ -12510,7 +12510,7 @@
       "units": [
         {
           "pieces": [
-            "Xu-ba-ru-xa-ma"
+            "Xu-ba-ru-sa-ma"
           ],
           "phonemes": "sˈu bˈaː ɹˈu sˈaː mˈaː."
         }
@@ -12615,7 +12615,7 @@
       "units": [
         {
           "pieces": [
-            "Celestina-xan"
+            "Celestina-san"
           ],
           "phonemes": "səlɪstˈiːnə sˈaːn."
         }
@@ -12783,7 +12783,7 @@
       "units": [
         {
           "pieces": [
-            "Hi-ga-si-ra-xan"
+            "Hi-ga-si-ra-san"
           ],
           "phonemes": "hˈi ɣˈaː sˈi ɹˈaː sˈaːn."
         }
@@ -13573,7 +13573,7 @@
       "text": "Sensei",
       "origin": "ja",
       "readings": {
-        "Sensei": "Xen-xê"
+        "Sensei": "Xen-xây"
       },
       "book_names": true,
       "rulings": {
@@ -13583,12 +13583,12 @@
       "units": [
         {
           "pieces": [
-            "Xen-xê"
+            "Xen-xây"
           ],
-          "phonemes": "sˈɛn sˈe."
+          "phonemes": "sˈɛn sˈəɪ."
         }
       ],
-      "phonemes": "sˈɛn sˈe."
+      "phonemes": "sˈɛn sˈəɪ."
     },
     {
       "id": "token:646",
