@@ -1077,19 +1077,35 @@
   },
   "_internal/mobile/android/app/src/test/snapshots/np_picker_audio_dark.png": {
     "sha256": "504ef76a55f6112b1fd0ba197067bb058c8be89e44cb5462bab418f214bfc618",
-    "reason": "Reviewed by rel174 (22-11) side by side with v0.4.173 (written by 8f3bb3f76): titlewrap174: the Now Playing chapter title wraps in a box at least two lines tall; cover, seek bar and play button stay put. No clipped text, overlap or misplaced control."
+    "reason": "Reviewed by rel174 (22-11) side by side with v0.4.173 (written by 8f3bb3f76): titlewrap174: the Now Playing chapter title wraps in a box at least two lines tall; cover, seek bar and play button stay put. No clipped text, overlap or misplaced control.",
+    "scroll_dimensions": [
+      1080,
+      10200
+    ]
   },
   "_internal/mobile/android/app/src/test/snapshots/np_picker_audio_font130_dark.png": {
     "sha256": "1a75b9c51251775da0312121874b6d5c7cf2a360fd37de4a2383ebecb556ff5b",
-    "reason": "Reviewed by rel174 (22-11) side by side with v0.4.173 (written by 8f3bb3f76): titlewrap174: the Now Playing chapter title wraps in a box at least two lines tall; cover, seek bar and play button stay put. No clipped text, overlap or misplaced control."
+    "reason": "Reviewed by rel174 (22-11) side by side with v0.4.173 (written by 8f3bb3f76): titlewrap174: the Now Playing chapter title wraps in a box at least two lines tall; cover, seek bar and play button stay put. No clipped text, overlap or misplaced control.",
+    "scroll_dimensions": [
+      1080,
+      10200
+    ]
   },
   "_internal/mobile/android/app/src/test/snapshots/np_picker_audio_font130_light.png": {
     "sha256": "0e7969319f44af8d08f7856463b2fe34105481b7a87100d6501f54fb49de4961",
-    "reason": "Reviewed by rel174 (22-11) side by side with v0.4.173 (written by 8f3bb3f76): titlewrap174: the Now Playing chapter title wraps in a box at least two lines tall; cover, seek bar and play button stay put. No clipped text, overlap or misplaced control."
+    "reason": "Reviewed by rel174 (22-11) side by side with v0.4.173 (written by 8f3bb3f76): titlewrap174: the Now Playing chapter title wraps in a box at least two lines tall; cover, seek bar and play button stay put. No clipped text, overlap or misplaced control.",
+    "scroll_dimensions": [
+      1080,
+      10200
+    ]
   },
   "_internal/mobile/android/app/src/test/snapshots/np_picker_audio_light.png": {
     "sha256": "82bad7bcbde7ea3eb8dba725ca5d5e729478a67f98eb027bd7a7597897cd10d5",
-    "reason": "Reviewed by rel174 (22-11) side by side with v0.4.173 (written by 8f3bb3f76): titlewrap174: the Now Playing chapter title wraps in a box at least two lines tall; cover, seek bar and play button stay put. No clipped text, overlap or misplaced control."
+    "reason": "Reviewed by rel174 (22-11) side by side with v0.4.173 (written by 8f3bb3f76): titlewrap174: the Now Playing chapter title wraps in a box at least two lines tall; cover, seek bar and play button stay put. No clipped text, overlap or misplaced control.",
+    "scroll_dimensions": [
+      1080,
+      10200
+    ]
   },
   "_internal/mobile/android/app/src/test/snapshots/np_picker_look_font130_dark.png": {
     "sha256": "5ded9bd9ddb62aef3f4aec3a0de3c6decb01c5d3b2c0f2f571558e77010062bb",
