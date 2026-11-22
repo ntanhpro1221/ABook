@@ -1,6 +1,7 @@
 import QtQuick
 import QtTest
 import ABook
+import "VisualReady.js" as VisualReady
 
 Item {
     id: host
@@ -34,7 +35,7 @@ Item {
             tryCompare(view, "expanded", true)
             const body = view.children.find(item => item.settled !== undefined && item.open !== undefined)
             verify(body !== undefined)
-            tryVerify(() => body.open && body.settled && body.height > 0)
+            VisualReady.waitSettled(this, body, qtVisualReady, "history must finish opening", () => body.open && body.height > 0)
             const actions = []
             function collect(item) {
                 if (item.text === "Hoàn tác" && item.kind === "ghost") actions.push(item)

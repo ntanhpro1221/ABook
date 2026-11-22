@@ -364,8 +364,9 @@ public slots:
     void qmlEngineAvailable(QQmlEngine *engine) {
         if (qEnvironmentVariableIsSet("ABOOK_QML_LIFETIME_DIAGNOSTICS")) { LifetimeProbe::probeEngine = engine; LifetimeProbe::installHandler(); }
         engine->rootContext()->setContextProperty(QStringLiteral("qtStorage"), new StorageProbe(engine));
-        engine->rootContext()->setContextProperty(QStringLiteral("qtVisualReady"), new VisualReady(engine));
-        engine->rootContext()->setContextProperty(QStringLiteral("qtAnimationClock"), new TestAnimationClock(engine));
+        auto *clock = new TestAnimationClock(engine);
+        engine->rootContext()->setContextProperty(QStringLiteral("qtVisualReady"), new VisualReady(clock, engine));
+        engine->rootContext()->setContextProperty(QStringLiteral("qtAnimationClock"), clock);
         engine->rootContext()->setContextProperty(QStringLiteral("qtGlyphAudit"), audit.get());
         engine->rootContext()->setContextProperty(QStringLiteral("qtUiTree"), new UiTree(engine));   // cây UI cạnh ảnh (design_lint)
         engine->rootContext()->setContextProperty(QStringLiteral("qtGlyphProbe"), qEnvironmentVariableIsSet("ABOOK_GLYPH_PROBE"));

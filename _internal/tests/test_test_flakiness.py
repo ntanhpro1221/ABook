@@ -88,6 +88,31 @@ def test_other_languages_ignore_comments_and_strings(suffix, source, expected):
     assert [rule for _, rule, _ in other_patterns(source, suffix)] == expected
 
 
+def test_qt_visual_waits_must_run_on_the_animation_clock():
+    # The helper line that failed under load in the 0.4.174 build (VisualReady.js:73).
+    old_helper = 'test.tryVerify(function() { return settled(window.contentItem, probe) }, 5000, "finite visual transitions must finish")'
+    assert [rule for _, rule, _ in other_patterns(old_helper, ".qtjs")] == ["qt-visual-wall-wait", "qt-literal-timeout"]
+    body = '''tryVerify(function() { return VisualReady.settled(value, qtVisualReady) })
+tryVerify(() => body.open && body.settled)
+tryVerify(function() { return settled === 5 })
+tryVerify(function() { probe.finishTransitions(root, 5000); return settled(root, probe) }, probe.ms(5000))
+VisualReady.waitSettled(this, value, qtVisualReady)
+'''
+    assert [(line, rule) for line, rule, _ in other_patterns(body, ".qml")] == [(1, "qt-visual-wall-wait"), (2, "qt-visual-wall-wait")]
+    helper = 'test.verify(test.waitForPolish(window, 5000))\ntest.verify(test.waitForRendering(item, probe.ms(5000)))\ntest.tryCompare(w, "width", 3)\n'
+    assert [(line, rule) for line, rule, _ in other_patterns(helper, ".qtjs")] == [(1, "qt-literal-timeout")]
+    # Test bodies keep explicit literal bounds (they are not shared helpers); C++ bounds go through TestTiming::ms.
+    assert list(other_patterns("tryVerify(function() { return done }, 3000)", ".qml")) == []
+    cpp = "QTRY_COMPARE_WITH_TIMEOUT(ready.count(), 1, 3000);\nQTRY_VERIFY_WITH_TIMEOUT(done, TestTiming::ms(3000));\n"
+    assert [(line, rule) for line, rule, _ in other_patterns(cpp, ".cpp")] == [(1, "qt-literal-timeout")]
+
+
+def test_qt_helper_libraries_are_scanned_as_qml_helpers():
+    from scripts.flaky_patterns import suffix_of
+    assert suffix_of("desktop_qt/tests/width/VisualReady.js", ".js") == ".qtjs"
+    assert suffix_of("ui/src/a.test.js", ".js") == ".js"
+
+
 def test_ratchet_does_not_allow_swapping_sites_or_adding_duplicate_calls():
     old = Finding("tests/a.py", 1, "fixed-delay", "time.sleep(1)")
     moved = Finding("tests/a.py", 900, "fixed-delay", "time.sleep(1)")

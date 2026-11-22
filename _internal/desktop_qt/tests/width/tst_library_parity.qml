@@ -29,7 +29,7 @@ Item {
             ready()
             const slide = findChild(page, "libraryResultSlide")
             verify(slide !== null)
-            tryVerify(function() { return !slide.running })
+            VisualReady.waitSettled(this, slide, qtVisualReady, "result slide must finish", function() { return !slide.running })
             compare(slide.image, null, "idle results retain no capture")
             page.filter = "listening"
             compare(page.sections.length, 1)
@@ -39,7 +39,7 @@ Item {
             page.filter = "finished"
             compare(page.sections.length, 1)
             tryCompare(page, "appliedFilter", 3)
-            tryVerify(function() { return !slide.running })
+            VisualReady.waitSettled(this, slide, qtVisualReady, "result slide must finish", function() { return !slide.running })
             compare(page.shownSections[0].books[0].bookId, "b")
             compare(slide.image, null)
             qtAnimationClock.begin()

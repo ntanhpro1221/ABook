@@ -13,6 +13,7 @@ mà kết quả phụ thuộc vào việc máy có kịp trong N giây: mã khô
 | Hạn chờ Kotlin | `TestTime.ms(..)`, `TestTime.nanos(..)`, `TestTime.seconds(..)` | `vn/abook/player/TestTime.kt` |
 | Hạn chờ web | `scaledMs(..)`, `eventually(..)` (thay `vi.waitFor`, hạn mặc định 1 s) | `ui/src/testing/` |
 | Hạn chờ / độ trễ Qt C++ | `TestTiming::ms(..)`, `TestTiming::within(tookMs, limitMs, blockedMs)` | `desktop_qt/tests/timing.h` |
+| Chờ hoạt cảnh QML xong (settled) | `VisualReady.waitSettled(test, root, qtVisualReady[, msg, done])`: hoạt cảnh chạy trên đồng hồ hoạt cảnh (`finishTransitions`), phần còn lại hạn `qtVisualReady.ms(..)` | `desktop_qt/tests/width/VisualReady.js`, `visualready.h` |
 | Đo hiệu năng thật (ngưỡng cố định) | marker `@pytest.mark.perf` (Python), `TestTime.perf { .. }` (Kotlin) - ngoài cổng thường | `pytest -m perf`, `ABOOK_PERF=1` |
 | Giờ giả (đồng hồ bị thay, `vi.advanceTimersByTime`) | không đụng; dòng ghi `wallclock-ok: <lý do>` khi máy dò nhầm | |
 
@@ -25,6 +26,11 @@ Máy dò: `scripts/flaky_patterns.py` có thêm ba luật không dung sai (`elap
 `tests/fixtures/flaky_patterns.json` không được chứa ba luật ấy. Hai file Android `TlsRouteResolverTest.kt` và `net/FastConnectTest.kt`
 nằm trong `WALLCLOCK_DEFERRED` vì nhánh `dev/tlsleak` đang viết lại chúng (còn `FastConnectTest.kt:80,95`: `nanoTime() + toNanos(..)`);
 khi tlsleak vào, sửa hai file theo bảng trên và bỏ chúng khỏi danh sách.
+
+QML (bản dựng 0.4.174: `Studio2::test_coverEditorSetsAndRemovesTheCover` và trước đó `Studio1::test_longTitlesWrapAtBothWidths`
+hỏng 'finite visual transitions must finish' sau 5 s giờ thật ở VisualReady.js:73): chờ hoạt cảnh không bao giờ là `tryVerify`
+cố định trên `settled()`/`.settled`. Luật `qt-visual-wall-wait` (QML + thư viện JS test) và `qt-literal-timeout` (hạn số trần trong
+thư viện JS test `desktop_qt/tests/**/*.js` và `QTRY_*_WITH_TIMEOUT` C++) thuộc nhóm không dung sai ở trên.
 
 Qt C++ dùng cùng biến môi trường, mặc định và cận `blocked` như Python. Máy dò cũng bắt `elapsed()` / `nsecsElapsed()`
 và biến đo suy ra từ chúng trong các test C++; helper header nằm ngoài tập file test được quét. Cận hoàn tất tường minh của

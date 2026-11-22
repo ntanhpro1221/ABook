@@ -37,7 +37,7 @@ Item {
             capture("details-collapsed")
             value.expanded = true
             tryVerify(function() { return value.height > closed + 10 })
-            tryVerify(function() { return VisualReady.settled(value, qtVisualReady) })
+            VisualReady.waitSettled(this, value, qtVisualReady)
             verify(value.summary.endsWith("Đoạn cuối nguyên vẹn."))
             waitForRendering(host)
             capture("details")
@@ -109,7 +109,7 @@ Item {
             const value = createTemporaryObject(page, host, {width: 420, height: 900, book: {bookId: "width", title: book.title}})
             verify(value !== null)
             tryCompare(value, "loaded", true)
-            tryVerify(function() { return VisualReady.settled(value, qtVisualReady) })
+            VisualReady.waitSettled(this, value, qtVisualReady)
             capture("book-page")
             WidthNet.resetBooks()
         }

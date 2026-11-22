@@ -21,7 +21,7 @@ WALLCLOCK_DEFERRED = {
     "mobile/android/app/src/test/java/vn/abook/player/TlsRouteResolverTest.kt",
     "mobile/android/app/src/test/java/vn/abook/player/net/FastConnectTest.kt",
 }
-WALLCLOCK_RULES = {"elapsed-bound", "fixed-deadline", "raw-waitfor"}
+WALLCLOCK_RULES = {"elapsed-bound", "fixed-deadline", "raw-waitfor", "qt-visual-wall-wait", "qt-literal-timeout"}
 
 
 @dataclass(frozen=True)
@@ -47,8 +47,13 @@ def test_files(root=INTERNAL):
         for path in (root / directory).rglob("*"):
             if path.is_file() and re.search(r"\.(?:test|spec)\.[cm]?[jt]sx?$", path.name):
                 paths.add(path)
-    paths.update(p for p in (root / "desktop_qt/tests").rglob("*") if p.suffix in {".qml", ".cpp"})
+    paths.update(p for p in (root / "desktop_qt/tests").rglob("*") if p.suffix in {".qml", ".cpp", ".js"})
     return sorted(paths)
+
+
+def suffix_of(relative, suffix):
+    """QML test helper libraries (desktop_qt/tests/**/*.js) follow the QML rules plus the helper-only ones."""
+    return ".qtjs" if suffix == ".js" and relative.startswith("desktop_qt/tests/") else suffix
 
 
 def _name(node):
@@ -212,6 +217,48 @@ def masked(text):
     return re.sub(pattern, lambda m: re.sub(r"[^\n]", " ", m.group()), text)
 
 
+QT_TIMED_CALL = re.compile(r"(?<![\w$])(tryVerify|tryCompare|waitForPolish|waitForRendering|waitForItemPolished)\s*\(")
+QT_TIMEOUT_ARG = {"tryVerify": 1, "tryCompare": 3, "waitForPolish": 1, "waitForRendering": 1, "waitForItemPolished": 1}
+
+
+def _call_args(code, start):
+    """Top-level arguments of the call whose '(' ends at `start` (strings/comments already masked)."""
+    depth, args, begin = 0, [], start
+    for index in range(start, len(code)):
+        char = code[index]
+        if char in "([{":
+            depth += 1
+        elif char in ")]}":
+            if depth == 0:
+                args.append(code[begin:index].strip())
+                return args, index
+            depth -= 1
+        elif char == "," and depth == 0:
+            args.append(code[begin:index].strip())
+            begin = index + 1
+    return args, len(code)
+
+
+def qt_wait_patterns(code, suffix):
+    # Qt Quick tests (build 0.4.174): a fixed real-time wait for visual transitions ran out under load (VisualReady.js
+    # waited 5 s for settled()). Transitions step the test animation clock through VisualReady.waitSettled /
+    # probe.finishTransitions; a helper's real-time bound goes through probe.ms (TestTiming), C++ through TestTiming::ms.
+    if suffix in {".qml", ".qtjs"}:
+        for match in QT_TIMED_CALL.finditer(code):
+            args, end = _call_args(code, match.end())
+            call = code[match.start():end]
+            if match[1] in {"tryVerify", "tryCompare"} and re.search(r"\bsettled\s*\(|\.settled\b", call) and "finishTransitions" not in call:
+                yield match.start(), "qt-visual-wall-wait"
+            index = QT_TIMEOUT_ARG[match[1]]
+            if suffix == ".qtjs" and len(args) > index and re.fullmatch(r"\d+", args[index]):
+                yield match.start(), "qt-literal-timeout"
+    elif suffix == ".cpp":
+        for match in re.finditer(r"\bQTRY_\w+_WITH_TIMEOUT\s*\(", code):
+            args, _ = _call_args(code, match.end())
+            if args and re.fullmatch(r"\d+", args[-1]):
+                yield match.start(), "qt-literal-timeout"
+
+
 def other_patterns(text, suffix):
     code = masked(text)
     rules = {
@@ -231,8 +278,8 @@ def other_patterns(text, suffix):
     elif suffix in {".ts", ".tsx", ".mjs", ".js"}:
         rules["raw-waitfor"] = r"\bvi\s*\.\s*waitFor\s*\("
         rules["elapsed-bound"] = r"\b(?:Date\s*\.\s*now|performance\s*\.\s*now)\s*\(\s*\)\s*-\s*\w+\s*<(?!\s*scaledMs\b)"
-    if suffix in {".qml", ".cpp"}:
-        rules = {"qt-fixed-delay": r"(?<![\w.])wait\s*\(" if suffix == ".qml" else r"\bQTest::qWait\s*\("}
+    if suffix in {".qml", ".qtjs", ".cpp"}:
+        rules = {"qt-fixed-delay": r"(?<![\w.])wait\s*\(" if suffix != ".cpp" else r"\bQTest::qWait\s*\("}
     if suffix == ".cpp":
         # Include values derived from QElapsedTimer / chrono, not just inline elapsed() calls.
         timed = r"\b\w+\s*\.\s*(?:elapsed|nsecsElapsed)\s*\(\s*\)"
@@ -254,6 +301,11 @@ def other_patterns(text, suffix):
             if rule == "qt-fixed-delay" and ("// fixed: proves absence" in snippet or re.search(r"// fixed: samples timing - \S", snippet)):
                 continue  # checked more strictly by test_qt_fixed_waits.py
             yield line, rule, snippet
+    for start, rule in qt_wait_patterns(code, suffix):
+        line = code.count("\n", 0, start) + 1
+        snippet = text.splitlines()[line - 1].strip()
+        if not WALLCLOCK_OK.search(snippet):
+            yield line, rule, snippet
     if suffix == ".kt":
         units = {"NANOSECONDS": 1e-9, "MICROSECONDS": 1e-6, "MILLISECONDS": .001, "SECONDS": 1.0,
                  "MINUTES": 60.0, "HOURS": 3600.0, "DAYS": 86400.0}
@@ -269,7 +321,7 @@ def scan(root=INTERNAL, sources=None):
     for path in test_files(root):
         relative = path.relative_to(root).as_posix()
         text = sources[relative] if sources and relative in sources else path.read_text(encoding="utf-8-sig")
-        patterns = python_patterns(text) if path.suffix == ".py" else other_patterns(text, path.suffix)
+        patterns = python_patterns(text) if path.suffix == ".py" else other_patterns(text, suffix_of(relative, path.suffix))
         findings.extend(Finding(relative, line, rule, code) for line, rule, code in patterns
                         if not (rule in WALLCLOCK_RULES and relative in WALLCLOCK_DEFERRED))
     return sorted(findings, key=lambda f: (f.path, f.line, f.rule))

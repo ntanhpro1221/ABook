@@ -31,6 +31,11 @@ Item {
         }
     }
     Item {
+        id: slow
+        property real value: 0
+        Behavior on value { NumberAnimation { duration: 4000 } }
+    }
+    Item {
         id: controlled
         property real value: 0
         NumberAnimation { id: linear; target: controlled; property: "value"; from: 0; to: 1; duration: 1000 }
@@ -59,12 +64,14 @@ Item {
         function test_behaviorIsObserved() {
             motion.value = motion.value === 0 ? 1 : 0
             verify(!VisualReady.settled(motion, qtVisualReady), "must observe Behavior animation")
-            tryVerify(function() { return VisualReady.settled(motion, qtVisualReady) })
+            VisualReady.waitSettled(this, motion, qtVisualReady)
+            verify(VisualReady.settled(motion, qtVisualReady))
         }
         function test_sequenceIsObserved() {
             fade.restart()
             verify(!VisualReady.settled(sequence, qtVisualReady), "must observe sequential animation")
-            tryVerify(function() { return VisualReady.settled(sequence, qtVisualReady) })
+            VisualReady.waitSettled(this, sequence, qtVisualReady)
+            compare(sequence.value, 1)
         }
         function test_renderWaitsForAQueuedTransition() {
             const target = motion.value === 0 ? 1 : 0
@@ -97,6 +104,29 @@ Item {
                 qtAnimationClock.end()
             }
         }
+        // The settle wait runs transitions on the animation clock: with the test clock installed and never stepped by
+        // the test, real time cannot move the animation, so only the helper's own stepping can finish it.
+        function test_settleWaitStepsAnInstalledClock() {
+            qtAnimationClock.begin()
+            try {
+                slow.value = slow.value === 0 ? 1 : 0
+                const target = slow.value
+                verify(!VisualReady.settled(slow, qtVisualReady), "must observe the 4 s Behavior")
+                VisualReady.waitSettled(this, slow, qtVisualReady)
+                verify(VisualReady.settled(slow, qtVisualReady))
+                compare(slow.value, target)
+            } finally {
+                qtAnimationClock.end()
+            }
+        }
+        // Without a motion test's clock the helper installs it for the wait only, and leaves Qt's own driver afterwards.
+        function test_settleWaitInstallsTheClockOnlyForTheWait() {
+            slow.value = slow.value === 0 ? 1 : 0
+            verify(!VisualReady.settled(slow, qtVisualReady))
+            verify(qtVisualReady.finishTransitions(slow, 5000), "a 4 s transition ends within 5 s of animation time")
+            verify(VisualReady.settled(slow, qtVisualReady))
+            verify(!qtAnimationClock.installed(), "the helper must uninstall the clock it installed")
+        }
         function test_infiniteAnimationAndTimerDoNotBlock() {
             verify(VisualReady.settled(continuous, qtVisualReady))
         }
@@ -127,7 +157,7 @@ Item {
                     Qt.callLater(function() { textLayout.width = 110; wrapped.font.pixelSize = 24 })
                 }
                 return true
-            }}
+            }, finishTransitions: function() { return true }, ms: function(limit) { return qtVisualReady.ms(limit) }}
             textLayout.width = 260; wrapped.font.pixelSize = 12
             VisualReady.waitForSettledFrame(this, host.Window.window, host, probe)
             verify(queued)

@@ -4,6 +4,7 @@
 #include <QJSValue>
 #include <QObject>
 #include <QThread>
+#include <functional>
 
 // Only motion-contract tests opt into this clock. Real scheduler delays must
 // not decide whether an intermediate animation value can be observed.
@@ -38,15 +39,19 @@ public:
     // Each step also lets 1 ms of real time pass, so work that is not an animation (a frame for grabToImage, a posted
     // timer) still completes; only the animation's own time is the test's.
     Q_INVOKABLE bool advanceUntil(const QJSValue &predicate, int maxMs, int stepMs = 16) {
-        Q_ASSERT(m_installed && stepMs > 0);
         QJSValue test = predicate;
-        for (int spent = 0; !test.call().toBool(); spent += stepMs) {
+        return advanceUntil([&test] { return test.call().toBool(); }, maxMs, stepMs);
+    }
+    bool advanceUntil(const std::function<bool()> &predicate, int maxMs, int stepMs = 16) {
+        Q_ASSERT(m_installed && stepMs > 0);
+        for (int spent = 0; !predicate(); spent += stepMs) {
             if (spent >= maxMs) return false;
             QThread::msleep(1);
             step(stepMs);
         }
         return true;
     }
+    Q_INVOKABLE bool installed() const { return m_installed; }
     Q_INVOKABLE void end() {
         if (!m_installed) return;
         uninstall();

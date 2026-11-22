@@ -20,6 +20,19 @@ function settled(object, probe) {
     return probe.settled(object) && targetsSettled(object)
 }
 
+// Wait for finite transitions under `root` (and for `done()`, when given). Animations step on the test animation clock
+// (probe.finishTransitions), so a slow render loop under load cannot run out a wall-time budget; what is left (a capture
+// that must arrive before a slide starts, a `settled` flag cleared after a posted reply) gets a real-time bound scaled by
+// ABOOK_TEST_TIME_SCALE (probe.ms). Each poll finishes the transitions that started since the last one.
+// Test code waits for visual transitions through this function, never through a fixed tryVerify of settled() or of an
+// animation's running flag (flaky_patterns rule qt-visual-wall-wait).
+function waitSettled(test, root, probe, message, done) {
+    test.tryVerify(function() {
+        probe.finishTransitions(root, 5000)
+        return settled(root, probe) && (!done || done())
+    }, probe.ms(5000), message || "finite visual transitions must finish")
+}
+
 // Hoạt ảnh vòng lặp (Vu) đứng ở khung nghỉ: ảnh chụp tất định và đọc ra hình, không bắt một khung giữa chừng
 function rest(item) {
     if (!item) return
@@ -56,8 +69,9 @@ function difference(before, after) {
 }
 
 // A target value may also be the initial value of a sequential transition.
-// Each Qt wait keeps its own 5s budget: expensive text polish/rendering must not
+// Each Qt wait keeps its own budget: expensive text polish/rendering must not
 // consume the animation wait's budget (the old wall deadline could leave 1ms).
+// Real-time waits are scaled (probe.ms); transitions run on the animation clock.
 function waitForSettledFrame(test, window, item, probe, freeze) {
     let previous = null
     let change = ""
@@ -69,17 +83,17 @@ function waitForSettledFrame(test, window, item, probe, freeze) {
     // transition/layout wait's allowance. Return as soon as two samples agree.
     for (let frame = 0; frame < 120; ++frame) {
         if (freeze) rest(window.contentItem)
-        test.verify(test.waitForPolish(window), "window polish must finish")
-        test.tryVerify(function() { return settled(window.contentItem, probe) }, 5000, "finite visual transitions must finish")
+        test.verify(test.waitForPolish(window, probe.ms(5000)), "window polish must finish")
+        waitSettled(test, window.contentItem, probe)
         const before = layoutState(window.contentItem, [])
-        test.verify(test.waitForPolish(window), "measured text layout must finish")
+        test.verify(test.waitForPolish(window, probe.ms(5000)), "measured text layout must finish")
         window.update()
-        test.verify(test.waitForRendering(item), "requested frame must render")
+        test.verify(test.waitForRendering(item, probe.ms(5000)), "requested frame must render")
         const after = layoutState(window.contentItem, [])
         // Frame delivery and lazy text measurements can schedule another
         // polish. Drain that work, rather than repeatedly rendering while
         // rejecting an otherwise identical text layout for queued polish.
-        test.verify(test.waitForPolish(window), "post-render text layout must finish")
+        test.verify(test.waitForPolish(window, probe.ms(5000)), "post-render text layout must finish")
         // Responses, delegate creation and metric reads can queue more layout
         // or start another transition during that frame. Paint the new state.
         const ready = settled(window.contentItem, probe) && !test.isPolishScheduled(window)

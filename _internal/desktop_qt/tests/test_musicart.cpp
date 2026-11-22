@@ -27,7 +27,7 @@ private slots:
             std::unique_ptr<QQuickImageResponse> response(provider.requestImageResponse(
                 QStringLiteral("generated/%1").arg(item.value("seed").toInt()), QSize(40, 40)));
             QSignalSpy ready(response.get(), &QQuickImageResponse::finished);
-            QTRY_COMPARE_WITH_TIMEOUT(ready.count(), 1, 3000);
+            QTRY_COMPARE_WITH_TIMEOUT(ready.count(), 1, TestTiming::ms(3000));
             std::unique_ptr<QQuickTextureFactory> texture(response->textureFactory());
             QVERIFY(texture);
             const auto image = texture->image();
