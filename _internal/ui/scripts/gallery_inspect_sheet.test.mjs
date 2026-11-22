@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { compareGeometry, SHEET_RULE } from "./gallery_inspect_sheet.mjs";
 import { DEFAULT_FAIL_ON, normalizeRule } from "./gallery_inspect.mjs";
 import { createServer } from "node:http";
-import { browserAvailable, launch, findBrowser, connect, openPage, evaluate } from "./gallery_browser.mjs";
+import { browserAvailable, launch, findBrowser, connect, openPage, evaluate, waitUntil } from "./gallery_browser.mjs";
 import { installGeometryProbe, pointerClick } from "./gallery_inspect_sheet.mjs";
 
 const snapshot = () => ({
@@ -19,6 +19,8 @@ it.skipIf(!browserAvailable)('geometry baseline waits for a measured anchor\'s a
     cdp = await connect(browser.endpoint);
     const page = await openPage(cdp, {width:1000,height:700,scale:1,mobile:false,theme:'light',isolated:true});
     await cdp.send('Page.navigate', {url:'data:text/html,<div id="parent"><main><h1>Anchor</h1></main></div>'}, page.sessionId);
+    // Page.navigate can return before the data: document is parsed; a loaded machine then probes an empty page.
+    await waitUntil(cdp, page.sessionId, "document.readyState === 'complete' && document.getElementById('parent') !== null", 30000, "anchor fixture");
     await evaluate(cdp,page.sessionId,`crypto.randomUUID ??= () => 'ancestor-fixture'; (${installGeometryProbe.toString()})(); __sheetProbe.capture(true)`);
     const elapsed = await evaluate(cdp,page.sessionId,`(async()=>{
       const parent=document.getElementById('parent');
