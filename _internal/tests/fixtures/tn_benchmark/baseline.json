@@ -17,8 +17,8 @@
     "studio_g2p": "keep_vieneu_final_mark; sentence_case; normalize_to_chunks_v3_with_gaps; phonemize_text_with_emotions"
   },
   "case_count": 551,
-  "cases_sha256": "24aff1a43ab8ef168648695aac788568879b8ba38472fc07f1200ac06e0228f3",
-  "quality_implementation_hash": "6b62f36f35401504077655148462b9c58659ac093c4b46b18013788ba484d3ed",
+  "cases_sha256": "1536ee552c897805fc732af17d5d2160699f55184d14e0809232eb8654626b1f",
+  "quality_implementation_hash": "1c41f485617c4129d0b45e6acc7368a901eea42871dedde1d026ac81f468c18d",
   "categories": {
     "cardinal_small": {
       "nghe_ngay": {

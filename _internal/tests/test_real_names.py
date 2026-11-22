@@ -105,7 +105,7 @@ def test_read_aloud_and_studio_say_the_same_string(book, case):
     assert said == case["said"]
     assert len(offsets) == len(text) + 1 and offsets == sorted(offsets) and offsets[-1] == len(said)
     assert vieneu.reading_tag(text, origin, direct_english=True) == case["tag"]
-    assert case["tag"].endswith('jp-fallback7')
+    assert case["tag"].endswith('jp-fallback8')
 
 
 @pytest.mark.parametrize("book,case", CASES, ids=_id)

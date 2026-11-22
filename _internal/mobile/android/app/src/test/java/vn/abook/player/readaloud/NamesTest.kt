@@ -70,9 +70,9 @@ class NamesTest {
 
     @Test
     fun aLoneOSyllableOfANameIsMarkedSoTheNormaliserKeepsItAnO() {
-        assertEquals(listOf("ô-xu-ki-xan,", "ô-ca-gia-ma,", "ô-ni-xa-ma"), said("Otsuki-san, Okayama, Onii-sama", "ja"))
+        assertEquals(listOf("ô-xu-ki-san,", "ô-ca-gia-ma,", "ô-ni-sa-ma"), said("Otsuki-san, Okayama, Onii-sama", "ja"))
         assertEquals(listOf("Ca-o_-ri,", "ô-cô-nô-mi-a-ki,", "Na-o_-ki"), said("Kaori, okonomiyaki, Naoki", "ja"))
-        assertEquals("o_-xu-ki-xan", Names.loneSyllable("O-xu-ki-xan"))
+        assertEquals("o_-xu-ki-san", Names.loneSyllable("O-xu-ki-san"))
         assertEquals("a-ri", Names.loneSyllable("A-ri"))
         assertEquals("ca-o_-ri", Names.loneSyllable("ca-o-ri"))
         assertEquals("o_", Names.loneSyllable("o"))
@@ -97,9 +97,9 @@ class NamesTest {
         assertTrue(ClipCache.key("vieneu", "nano/Adam", "t", "ja") != ClipCache.key("vieneu", "nano/Adam", "t"))
         assertEquals("ja+tn", ClipCache.reading("edge:vi-VN-X", "Haruto đến.", "ja")) // Edge nhận chữ chuẩn hoá: thêm dấu tn
         assertEquals("", ClipCache.reading("azure:vi-VN-X", "Haruto đến.", "ja"))
-        assertEquals("ja+direct-en${EnglishPolicy.VERSION}+jp-fallback7+${ClipLift.TAG}", ClipCache.reading("vieneu:nano/Adam", "Haruto đến.", "ja"))
-        assertEquals("direct-en${EnglishPolicy.VERSION}+jp-fallback7+${ClipLift.TAG}", ClipCache.reading("vieneu:nano/Adam", "Kate đến.", "ja"))
-        assertEquals("ja+direct-en${EnglishPolicy.VERSION}+jp-fallback7+${ClipLift.TAG}", ClipCache.reading("vieneu:nano/Giọng chưa đo", "Haruto đến.", "ja"))
+        assertEquals("ja+direct-en${EnglishPolicy.VERSION}+jp-fallback8+${ClipLift.TAG}", ClipCache.reading("vieneu:nano/Adam", "Haruto đến.", "ja"))
+        assertEquals("direct-en${EnglishPolicy.VERSION}+jp-fallback8+${ClipLift.TAG}", ClipCache.reading("vieneu:nano/Adam", "Kate đến.", "ja"))
+        assertEquals("ja+direct-en${EnglishPolicy.VERSION}+jp-fallback8+${ClipLift.TAG}", ClipCache.reading("vieneu:nano/Giọng chưa đo", "Haruto đến.", "ja"))
     }
 
     @Test

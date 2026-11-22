@@ -18,7 +18,7 @@ from abook.tts import TTSCoordinator
     ("ông X đi qua", "ông X đi qua"),
     ("Anh HP ơi", "Anh hát pê ơi"),
     ("Aaaa! Đau quá", "a… a! Đau quá"),
-    ("Ariel-sama đến rồi", "Ariel-xa-ma đến rồi"),
+    ("Ariel-sama đến rồi", "Ariel-sa-ma đến rồi"),
     ("Giá 1,000 người", "Giá một nghìn người"),
     ("a ~ b", "a, b"),
     ("  Chương IV  ", "  Chương bốn  "),
@@ -28,8 +28,8 @@ def test_a_word_is_read_as_read_aloud_reads_it(text: str, said: str) -> None:
 
 
 def test_the_lone_o_mark_of_read_aloud_never_reaches_studio_text() -> None:
-    assert studio_tn("Otsuki-san đến", "ja", True)[0] == "ô-xu-ki-xan đến"
-    assert studio_tn("Naoki-san đến", "ja", True)[0] == "Na-o-ki-xan đến"
+    assert studio_tn("Otsuki-san đến", "ja", True)[0] == "ô-xu-ki-san đến"
+    assert studio_tn("Naoki-san đến", "ja", True)[0] == "Na-o-ki-san đến"
     assert "_" not in studio_tn("Tooo!", None, True)[0]
     assert studio_tn("snake_case ơi", None, True)[0] == "snake_case ơi"
 

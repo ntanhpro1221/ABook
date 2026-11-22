@@ -1,6 +1,6 @@
 {
-  "version": 7,
-  "namespace": "jp-fallback7",
+  "version": 8,
+  "namespace": "jp-fallback8",
   "provenance": "auto",
   "description": "Automatic Vietnamese approximation of Japanese romaji; not native Japanese pronunciation or an owner verdict.",
   "choices": {
@@ -158,6 +158,15 @@
     "sensei",
     "dono"
   ],
+  "honorific_readings": {
+    "kun": "cun",
+    "chan": "chan",
+    "san": "san",
+    "sama": "sa-ma",
+    "senpai": "xen-pai",
+    "sensei": "xen-xây",
+    "dono": "đô-nô"
+  },
   "common": [
     "anime",
     "ara",

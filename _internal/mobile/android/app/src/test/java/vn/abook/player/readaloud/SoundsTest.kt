@@ -123,10 +123,10 @@ class SoundsTest {
 
     @Test
     fun anHonorificSuffixIsReadWithAnyBookOrigin() {
-        val cases = listOf("Ariel-sama" to "Ariel-xa-ma", "Mary-san" to "Mary-xan", "Zeros-sensei" to "Zeros-xen-xê", "Goblin-san" to "Goblin-xan", "Noel-chan" to "Noel-chan",
-            "sĩ-sama" to "sĩ-xa-ma", "thần-chan" to "thần-chan", "diện-san" to "diện-xan", "Bá-sama" to "Bá-xa-ma",
-            "Sora-sama" to "Xô-ra-xa-ma", "Hinata-sama" to "Hi-na-ta-xa-ma", "Haruto-kun" to "Ha-ru-tô-cun", "Tanaka-senpai" to "Ta-na-ca-xen-pai",
-            "Kate-san" to "Kate-xan", "Ian-sama" to "Ian-xa-ma")
+        val cases = listOf("Ariel-sama" to "Ariel-sa-ma", "Mary-san" to "Mary-san", "Zeros-sensei" to "Zeros-xen-xây", "Goblin-san" to "Goblin-san", "Noel-chan" to "Noel-chan",
+            "sĩ-sama" to "sĩ-sa-ma", "thần-chan" to "thần-chan", "diện-san" to "diện-san", "Bá-sama" to "Bá-sa-ma",
+            "Sora-sama" to "Xô-ra-sa-ma", "Hinata-sama" to "Hi-na-ta-sa-ma", "Haruto-kun" to "Ha-ru-tô-cun", "Tanaka-senpai" to "Ta-na-ca-xen-pai",
+            "Kate-san" to "Kate-san", "Ian-sama" to "Ian-sa-ma")
         for ((token, reading) in cases) for (origin in listOf(null, "ja")) assertEquals("$token $origin", listOf("Rồi", "$reading."), said("Rồi $token.", origin))
     }
 
@@ -198,7 +198,7 @@ class SoundsTest {
 
     @Test
     fun aCapitalOStartingAHyphenatedNameIsASyllableNotALetter() {
-        assertEquals(listOf("ô-xu-ki-xan,", "ô-ca-gia-ma,", "ô-ni-xa-ma"), said("Otsuki-san, Okayama, Onii-sama", "ja"))
+        assertEquals(listOf("ô-xu-ki-san,", "ô-ca-gia-ma,", "ô-ni-sa-ma"), said("Otsuki-san, Okayama, Onii-sama", "ja"))
     }
 
     @Test
@@ -212,7 +212,7 @@ class SoundsTest {
     @Test
     fun aShoutedHonorificIsReadLikeItsLowerCaseForm() {
         assertEquals("ô-ni-chan, ô-ni-chan LO LẮNG!", said("ONII-CHAN, ONII-CHAN LO LẮNG!").joinToString(" "))
-        assertEquals("“ne-xan!” và óp-pa, ariel-xa-ma.", said("“NEE-SAN!” và OPPA, ARIEL-SAMA.").joinToString(" "))
+        assertEquals("“ne-san!” và óp-pa, ariel-sa-ma.", said("“NEE-SAN!” và OPPA, ARIEL-SAMA.").joinToString(" "))
         assertEquals("Kiểm tra ét a en và xen-pai", said("Kiểm tra SAN và SENPAI").joinToString(" "))
     }
 

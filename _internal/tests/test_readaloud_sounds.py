@@ -178,12 +178,12 @@ def test_a_stretched_roman_numeral_or_x_is_not_a_stretch() -> None:
 
 # ---- hậu tố gọi ---------------------------------------------------------------------------------------------------------------------------
 @pytest.mark.parametrize("token, reading", [
-    ("Ariel-sama", "Ariel-xa-ma"), ("Mary-san", "Mary-xan"), ("Zeros-sensei", "Zeros-xen-xê"), ("Goblin-san", "Goblin-xan"), ("Noel-chan", "Noel-chan"),
-    ("sĩ-sama", "sĩ-xa-ma"), ("thần-chan", "thần-chan"), ("diện-san", "diện-xan"), ("Bá-sama", "Bá-xa-ma"),
+    ("Ariel-sama", "Ariel-sa-ma"), ("Mary-san", "Mary-san"), ("Zeros-sensei", "Zeros-xen-xây"), ("Goblin-san", "Goblin-san"), ("Noel-chan", "Noel-chan"),
+    ("sĩ-sama", "sĩ-sa-ma"), ("thần-chan", "thần-chan"), ("diện-san", "diện-san"), ("Bá-sama", "Bá-sa-ma"),
     # tên Nhật rõ đọc cả tên (không cần gốc của cuốn)
-    ("Sora-sama", "Xô-ra-xa-ma"), ("Hinata-sama", "Hi-na-ta-xa-ma"), ("Haruto-kun", "Ha-ru-tô-cun"), ("Tanaka-senpai", "Ta-na-ca-xen-pai"),
+    ("Sora-sama", "Xô-ra-sa-ma"), ("Hinata-sama", "Hi-na-ta-sa-ma"), ("Haruto-kun", "Ha-ru-tô-cun"), ("Tanaka-senpai", "Ta-na-ca-xen-pai"),
     # tên Âu / từ Anh giữ nguyên chữ, chỉ hậu tố đổi
-    ("Kate-san", "Kate-xan"), ("Ian-sama", "Ian-xa-ma"),
+    ("Kate-san", "Kate-san"), ("Ian-sama", "Ian-sa-ma"),
 ])
 def test_an_honorific_suffix_is_read_with_any_book_origin(token: str, reading: str) -> None:
     for origin in (None, "ja"):
@@ -273,18 +273,18 @@ def test_won_yen_and_kwan_are_units_only_after_a_number() -> None:
 
 
 def test_a_capital_o_starting_a_hyphenated_name_is_a_syllable_not_a_letter() -> None:
-    assert _said("Otsukiri-san, Okayama, Onii-sama", "ja") == ["ô-xu-ki-ri-xan,", "ô-ca-gia-ma,", "ô-ni-xa-ma"]
+    assert _said("Otsukiri-san, Okayama, Onii-sama", "ja") == ["ô-xu-ki-ri-san,", "ô-ca-gia-ma,", "ô-ni-sa-ma"]
 
 
 def test_a_lone_o_syllable_is_marked_so_the_normaliser_keeps_it_an_o_and_not_the_letter_o_circumflex() -> None:
     """An "o" syllable after a / e inside a Japanese word stays "o" (owner 10-11: only the word-initial one is "ô"). sea-g2p spells a bare "o" in a Vietnamese sentence as the letter "ô"; "o_" loses the "_" in its first pass and `keep_lone_o` protects it in the second, so the engine says "o" (the TN answer)."""
     assert _said("Kaori, okonomiyaki, Naokiri", "ja") == ["Ca-o_-ri,", "ô-cô-nô-mi-a-ki,", "Na-o_-ki-ri"]
-    assert names.lone_syllable("O-xu-ki-xan") == "o_-xu-ki-xan" and names.lone_syllable("A-ri") == "a-ri" and names.lone_syllable("ca-o-ri") == "ca-o_-ri" and names.lone_syllable("o") == "o_" and names.lone_syllable("ô") == "ô"
+    assert names.lone_syllable("O-xu-ki-san") == "o_-xu-ki-san" and names.lone_syllable("A-ri") == "a-ri" and names.lone_syllable("ca-o-ri") == "ca-o_-ri" and names.lone_syllable("o") == "o_" and names.lone_syllable("ô") == "ô"
     pytest.importorskip("sea_g2p")
     from abook.readaloud import vieneu_engine
 
     pieces = " ".join(_said("Xem kìa Naokiri-san đang lau hộp mực."))
-    assert vieneu_engine.normalize([pieces]).startswith("xem kìa na o ki ri xan đang")
+    assert vieneu_engine.normalize([pieces]).startswith("xem kìa na o ki ri san đang")
     assert " nˈaː ˈɔ kˈi " in vieneu_engine.phonemize([pieces]), "VieNeu's second normalisation must not turn the syllable into the letter ô (ˈo)"
     assert " ˈo sˈu kˈi " in vieneu_engine.phonemize([" ".join(_said("Xem kìa Otsukiri-san đang lau hộp mực."))]), "the word-initial o is ô"
     assert " ˈo bˈeɜ " in vieneu_engine.phonemize(["Tôi đi o bế con."]), "a real Vietnamese 'o' is still spelled like sea-g2p does"
@@ -304,7 +304,7 @@ def test_two_words_glued_by_an_ellipsis_or_a_dash_are_read_one_by_one() -> None:
 # ---- TN "Nghe ngay" lượt 4: gọi viết hoa cả, danh xưng viết tắt, mũi tên chữ -----------------------------------------------------------------------
 @pytest.mark.parametrize("text, said", [
     ("ONII-CHAN, ONII-CHAN LO LẮNG!", "ô-ni-chan, ô-ni-chan LO LẮNG!"),
-    ("“NEE-SAN!” và OPPA, ARIEL-SAMA.", "“ne-xan!” và óp-pa, ariel-xa-ma."),
+    ("“NEE-SAN!” và OPPA, ARIEL-SAMA.", "“ne-san!” và óp-pa, ariel-sa-ma."),
     ("Kiểm tra SAN và SENPAI", "Kiểm tra ét a en và xen-pai"),  # hậu tố đứng một mình không có tên đi trước: SAN vẫn là viết tắt, senpai là từ mượn quen
 ])
 def test_a_shouted_honorific_is_read_like_its_lower_case_form(text: str, said: str) -> None:

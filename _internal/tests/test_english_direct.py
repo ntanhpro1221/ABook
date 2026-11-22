@@ -87,7 +87,7 @@ def test_only_vieneu_gets_the_new_policy_and_cache_namespace():
     toks = "Tôi kiểm GPS và video.".split()
     assert vieneu.spoken_tokens(toks) == ["Tôi", "kiểm", "giê pê ét", "và", "vi-đê-ô."]
     assert vieneu.reading_tag("Tôi kiểm GPS.", None) == ""
-    assert vieneu.reading_tag("Tôi kiểm GPS.", None, direct_english=True) == f"direct-en{english_policy.VERSION}+jp-fallback7"
+    assert vieneu.reading_tag("Tôi kiểm GPS.", None, direct_english=True) == f"direct-en{english_policy.VERSION}+jp-fallback8"
     assert english_policy.PROVENANCE == "auto"
     assert english_policy.ACRONYMS >= {"UDF", "MIT", "GPS", "DNA", "ID", "AC"}
     assert vieneu.spoken_tokens(["Bật", "AC", "nhẹ."], direct_english=True) == ["Bật", "<en>A C</en>", "nhẹ."]

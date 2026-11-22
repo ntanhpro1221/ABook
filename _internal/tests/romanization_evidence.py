@@ -311,7 +311,6 @@ EXPLAINED: dict[str, tuple[str, str]] = {
 # Current policy exceptions; original SOURCED evidence is preserved.
 EXPLAINED.update({
     'Rei': ('Rê', "Lead 14-11: Japanese long vowels ou -> o circumflex and ei -> e circumflex replace the earlier spelling choice."),
-    'sensei': ('xen-xê', "Lead 14-11: Japanese long vowels ou -> o circumflex and ei -> e circumflex replace the earlier spelling choice."),
     'Kyouko': ('Ki-ô-cô', "Lead 14-11: Japanese long vowels ou -> o circumflex and ei -> e circumflex replace the earlier spelling choice."),
     'Ryouma': ('Ri-ô-ma', "Lead 14-11: Japanese long vowels ou -> o circumflex and ei -> e circumflex replace the earlier spelling choice."),
     'Inoue': ('I-nô-e', "Lead 14-11: Japanese long vowels ou -> o circumflex and ei -> e circumflex replace the earlier spelling choice."),
@@ -324,4 +323,7 @@ EXPLAINED.update({
     'Kōmei': ('Cô-mê', "Lead 14-11: Japanese long vowels ou -> o circumflex and ei -> e circumflex replace the earlier spelling choice."),
     'Meiji': ('Mê-gi', "Lead 14-11: Japanese long vowels ou -> o circumflex and ei -> e circumflex replace the earlier spelling choice."),
     'Eisuke': ('Ê-xu-ke', "Lead 14-11: Japanese long vowels ou -> o circumflex and ei -> e circumflex replace the earlier spelling choice."),
+    'Okaa-san': ('Ô-ca-san', "Lead 22-11: honorifics are read the way Vietnamese readers say them (-kun cun, -san san, -sama sa-ma, -senpai xen-pai, -sensei xen-xây, -dono đô-nô)."),
+    'Ojii-san': ('Ô-gi-san', "Lead 22-11: honorifics are read the way Vietnamese readers say them (-kun cun, -san san, -sama sa-ma, -senpai xen-pai, -sensei xen-xây, -dono đô-nô)."),
+    'Onee-san': ('Ô-ne-san', "Lead 22-11: honorifics are read the way Vietnamese readers say them (-kun cun, -san san, -sama sa-ma, -senpai xen-pai, -sensei xen-xây, -dono đô-nô)."),
 })

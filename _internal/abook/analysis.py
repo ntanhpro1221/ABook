@@ -4925,6 +4925,20 @@ def _compound_name_reading(surface: str) -> str | None:
     return None
 
 
+def _hyphen_honorific(surface: str, start: int, word: str) -> str | None:
+    """The fixed reading of a Japanese honorific joined to the name before it ("Takaki-kun"), else None.
+
+    Both local routes read a name one word at a time, and "kun" on its own is an English-looking
+    word: the phoneme and spelling paths gave it "Căn", so the owner heard "Takaki-cân" (22-11).
+    The honorific is said the way Vietnamese readers say it (`romanization.HONORIFIC_READINGS`).
+    """
+    from .romanization import HONORIFIC_READINGS
+
+    if start == 0 or surface[start - 1] != "-":
+        return None
+    return HONORIFIC_READINGS.get(word.casefold())
+
+
 def _local_name_fallback(surface: str) -> str:
     """Produce a safe Vietnamese-readable form for any Latin name accepted by the scanner.
 
@@ -4933,10 +4947,15 @@ def _local_name_fallback(surface: str) -> str:
     name for that reason - so "Arthur Kaizer Theosbane" read its first word "A-rờ-thun" while
     "Arthur" on its own read "A-thờ", two readings of one name in one book.
     """
-    parts = re.findall(r"[A-Za-z]+", surface)
+    matches = list(re.finditer(r"[A-Za-z]+", surface))
+    parts = [match.group() for match in matches]
     dictionary = _cmu_pronunciations(parts)
     words: list[str] = []
-    for part in parts:
+    for match, part in zip(matches, parts):
+        honorific = _hyphen_honorific(surface, match.start(), part)
+        if honorific is not None and words:
+            words[-1] = f"{words[-1]}-{honorific}"
+            continue
         if is_vietnamese_syllable(part):
             # "Kim Luxara" is half a Vietnamese word and half an invented one. Reading the
             # Vietnamese half as if it were English gives it a reading it never had.
@@ -5162,8 +5181,13 @@ def _cmu_phrase_to_vietnamese(surface: str) -> str | None:
         # A single dictionary word is already handled upstream, where a short name still
         # gets the contextual review this path cannot give it.
         return None
+    starts = [match.start() for match in NAME_PHRASE_WORD_PATTERN.finditer(surface)]
     readings: list[str] = []
-    for word, key in zip(words, keys):
+    for start, word, key in zip(starts, words, keys):
+        honorific = _hyphen_honorific(surface, start, word)
+        if honorific is not None and readings:
+            readings[-1] = f"{readings[-1]}-{honorific}"
+            continue
         if is_vietnamese_syllable(word):
             # Already a Vietnamese word: it is read, not transliterated.
             readings.append(word)
