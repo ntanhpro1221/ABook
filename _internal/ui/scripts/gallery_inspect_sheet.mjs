@@ -68,8 +68,11 @@ export function installGeometryProbe() {
     recentInput,
     pending: null,
     surfaces: () => surfaces().map(el => ({ selector: path(el), title: el.querySelector('[data-surface-title]')?.textContent || el.getAttribute('aria-label') || '', rect: box(el) })),
+    // Một lớp nổi đang mở phủ tấm chắn bấm-ra-ngoài (tapthru, data-outside-shield) lên cả trang: nút mở nằm dưới tấm chắn không mở được gì ở
+    // trạng thái này - cú bấm ở đó chỉ đóng lớp đang mở (DESIGN: chạm ra ngoài chỉ đóng). Nó không phải đích thử của story.
     triggers: () => [...document.querySelectorAll('[aria-haspopup="dialog"], [aria-label="Mở trình phát"]' + (innerWidth <= 640 ? ', [aria-haspopup="menu"]' : ''))]
-      .filter(el => !el.closest('[inert], [aria-hidden="true"]') && !excluded(el) && !el.matches(':disabled, [aria-expanded="true"]') && box(el).width > 0)
+      .filter(el => !el.closest('[inert], [aria-hidden="true"]') && !excluded(el) && !el.matches(':disabled, [aria-expanded="true"]') && box(el).width > 0
+        && !window.__sheetProbe.shielded(el))
       .map(el => ({ selector: path(el), label: el.getAttribute('aria-label') || el.textContent?.trim().slice(0, 100), menu: el.getAttribute('aria-haspopup') === 'menu' })),
     // Điểm của điều khiển mà con trỏ thật chạm trúng chính nó: tâm trước, rồi lưới 5x5. Điều khiển lồng nhau (liên kết tên sách trên thanh thu nhỏ) hay lớp phủ
     // che đúng tâm không làm điều khiển thành "không chạm được" khi phần còn lại của nó chạm được.
@@ -162,12 +165,20 @@ export function installGeometryProbe() {
       timer = setTimeout(() => finish(false, true), maxMs);
       requestAnimationFrame(tick);
     }),
-    center: selector => {
+    // Điều khiển bị tấm chắn bấm-ra-ngoài của một lớp đang mở che (không phải toast, không phải lỗi bố cục).
+    shielded: el => {
+      if (window.__sheetProbe.reach(el)) return false;
+      const r = box(el), hit = document.elementFromPoint(r.x + r.width / 2, r.y + r.height / 2);
+      return Boolean(hit?.closest('[data-outside-shield]'));
+    },
+    // throughShield: nút bật/tắt của popover không modal nằm ngoài lớp; bấm vào chỗ nó thì trúng tấm chắn, và chính tấm chắn đóng lớp.
+    center: (selector, throughShield = false) => {
       const el = document.querySelector(selector);
       if (!el) throw new Error(`Missing click target ${selector}`);
       const r = box(el), reached = window.__sheetProbe.reach(el);
       if (reached) return reached;
       const x = r.x + r.width / 2, y = r.y + r.height / 2, hit = document.elementFromPoint(x, y);
+      if (throughShield && hit?.closest('[data-outside-shield]')) return { x, y };
       if (hit && !el.contains(hit) && hit.closest('[data-sonner-toast]')) return null;
       throw new Error(`Pointer target occluded: ${selector} by ${hit ? hit.outerHTML.slice(0, 180) : `nothing: point ${x},${y} is outside the ${innerWidth}x${innerHeight} viewport`}`);
     },
@@ -182,17 +193,17 @@ export function installGeometryProbe() {
 }
 
 const probe = (cdp, session, expression) => evaluate(cdp, session, `window.__sheetProbe.${expression}`);
-async function pointerCenter(cdp, session, selector) {
+async function pointerCenter(cdp, session, selector, { throughShield = false } = {}) {
   const started = Date.now();
   for (;;) {
-    const point = await probe(cdp, session, `center(${JSON.stringify(selector)})`);
+    const point = await probe(cdp, session, `center(${JSON.stringify(selector)}, ${throughShield})`);
     if (point) return point;
     if (Date.now() - started >= 8000) throw new Error(`Toast still covers pointer target after 8 s: ${selector}`);
     await new Promise(resolve => setTimeout(resolve, 40));
   }
 }
-export async function pointerClick(cdp, session, selector) {
-  const point = await pointerCenter(cdp, session, selector);
+export async function pointerClick(cdp, session, selector, options = {}) {
+  const point = await pointerCenter(cdp, session, selector, options);
   await cdp.send("Input.dispatchMouseEvent", { type: "mouseMoved", ...point }, session);
   await cdp.send("Input.dispatchMouseEvent", { type: "mousePressed", ...point, button: "left", buttons: 1, clickCount: 1 }, session);
   await cdp.send("Input.dispatchMouseEvent", { type: "mouseReleased", ...point, button: "left", buttons: 0, clickCount: 1 }, session);
@@ -311,7 +322,7 @@ export async function inspectSheets(cdp, { base, entry, theme, timeout = 45000, 
               } else {
                 const close = await probe(cdp, session, "closeControl()");
                 if (!close) throw new Error("No close control found on opened surface");
-                await pointerClick(cdp, session, close);
+                await pointerClick(cdp, session, close, { throughShield: true });
               }
               await stable(cdp, session);
               trial.surfacesClosed = await probe(cdp, session, "surfaces()");

@@ -147,6 +147,27 @@ it.skipIf(!browserAvailable)("isolated headless windows: native scrollbar, trust
     try { await browser?.close(); } finally { server.close(); }
   }
 }, 60000);
+it.skipIf(!browserAvailable)("an open layer's outside shield: triggers under it are not openers, its toggle closes through the shield", async () => {
+  let browser, cdp;
+  try {
+    browser = await launch(findBrowser(), { disableGpu: true });
+    cdp = await connect(browser.endpoint);
+    const page = await openPage(cdp, { width: 800, height: 600, scale: 1, mobile: false, theme: "light", isolated: true });
+    await cdp.send("Page.navigate", { url: `data:text/html,<main><button id=toggle aria-haspopup=dialog aria-controls=pop style="position:fixed;top:10px;left:10px">Speed</button>
+      <button id=under aria-haspopup=dialog style="position:fixed;top:10px;left:200px">Player</button><button id=free aria-haspopup=dialog style="position:fixed;top:500px;left:10px">Free</button></main>
+      <div id=shield data-outside-shield aria-hidden=true style="position:fixed;inset:0 0 200px 0;z-index:50"></div>
+      <div id=pop role=dialog style="position:fixed;top:60px;left:10px;width:200px;height:80px;z-index:51;background:white">Popover</div>` }, page.sessionId);
+    await waitUntil(cdp, page.sessionId, "document.readyState === 'complete' && document.getElementById('pop') !== null", 30000, "shield fixture");
+    const result = await evaluate(cdp, page.sessionId, `crypto.randomUUID ??= () => "shield-fixture"; (${installGeometryProbe.toString()})();
+      ({ triggers: __sheetProbe.triggers().map(t => t.label), through: __sheetProbe.center("#toggle", true),
+         plain: (() => { try { __sheetProbe.center("#toggle"); return "reached"; } catch (error) { return String(error.message).slice(0, 40); } })() })`);
+    // Only the trigger outside the shield is a story target; the shielded ones would only close the open popover.
+    expect(result.triggers).toEqual(["Free"]);
+    expect(result.through).toMatchObject({ x: expect.any(Number), y: expect.any(Number) });
+    expect(result.plain).toContain("Pointer target occluded");
+  } finally { cdp?.close(); await browser?.close(); }
+}, 60000);
+
 describe("sheet geometry comparison", () => {
   it("gates release runs, including numbered aliases", () => {
     expect(DEFAULT_FAIL_ON).toContain(SHEET_RULE);
