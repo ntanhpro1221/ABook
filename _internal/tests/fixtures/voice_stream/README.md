@@ -13,6 +13,7 @@ Each file exceeds the first range page. VoiceTests compares full decode and HTTP
 against Mp3Source, including gapless trimming and MP3 reservoir preroll. The fake server exercises
 both 206 (short, honored ranges) and 200 (ignored Range).
 
-`vbrtag_oob_read.mp3` (104 bytes) is `vectors/l3-nonstandard-vbrtag-oob-read.bit` from minimp3 (CC0, commit a2ad968c),
+`vbrtag_oob_read.bit` (104 bytes) is `vectors/l3-nonstandard-vbrtag-oob-read.bit` from minimp3 (CC0, commit a2ad968c), kept under
+its upstream suffix because the release gate refuses audio file suffixes in a release diff;
 a malformed Xing tag that made `mp3dec_check_vbrtag` read past the frame before that commit. VoiceTests only checks that
 both decoders finish on it.
