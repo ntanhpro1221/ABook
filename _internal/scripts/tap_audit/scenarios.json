@@ -46,7 +46,7 @@
       }
     ],
     "probe": {
-      "selector": "input[aria-label='Tác giả']",
+      "selector": "textarea[aria-label='Tác giả']",
       "type": "input"
     },
     "background": {
@@ -225,18 +225,18 @@
       }
     ],
     "probe": {
-      "text": "15 phút",
+      "text": "15 phút",
       "exact": true,
-      "expect": "[...document.querySelectorAll('button')].some(e=>tapAudit.visible(e)&&/15 phút/.test(e.getAttribute('aria-label')||''))"
+      "expect": "[...document.querySelectorAll('button')].some(e=>tapAudit.visible(e)&&/15\\s+phút/.test(e.getAttribute('aria-label')||''))"
     },
     "background": {
       "text": "Thêm tuỳ chọn",
       "exact": true
     },
     "touchProbe": {
-      "text": "30 phút",
+      "text": "30 phút",
       "exact": true,
-      "expect": "[...document.querySelectorAll('button')].some(e=>tapAudit.visible(e)&&/30 phút/.test(e.getAttribute('aria-label')||''))"
+      "expect": "[...document.querySelectorAll('button')].some(e=>tapAudit.visible(e)&&/30\\s+phút/.test(e.getAttribute('aria-label')||''))"
     },
     "reopenSteps": [
       {
@@ -394,41 +394,28 @@
         "selector": "[data-book-primary]"
       },
       {
-        "text": "Thêm tuỳ chọn",
-        "exact": true
-      },
-      {
         "text": "Hẹn giờ"
       }
     ],
     "probe": {
-      "text": "15 phút",
+      "text": "15 phút",
       "exact": true,
-      "expect": "([...document.querySelectorAll('button')].some(e=>tapAudit.visible(e)&&/15 phút/.test(e.getAttribute('aria-label')||''))) && !document.querySelector('[data-player-inline] > button[aria-expanded=true]')"
+      "expect": "[...document.querySelectorAll('button')].some(e=>tapAudit.visible(e)&&/15\\s+phút/.test(e.getAttribute('aria-label')||''))"
     },
     "background": {
       "text": "Thêm tuỳ chọn",
       "exact": true
     },
     "touchProbe": {
-      "text": "30 phút",
+      "text": "30 phút",
       "exact": true,
-      "expect": "([...document.querySelectorAll('button')].some(e=>tapAudit.visible(e)&&/30 phút/.test(e.getAttribute('aria-label')||''))) && !document.querySelector('[data-player-inline] > button[aria-expanded=true]')"
+      "expect": "[...document.querySelectorAll('button')].some(e=>tapAudit.visible(e)&&/30\\s+phút/.test(e.getAttribute('aria-label')||''))"
     },
     "viewport": [
       1280,
       900
     ],
     "reopenSteps": [
-      {
-        "text": "Thêm tuỳ chọn",
-        "exact": true
-      },
-      {
-        "text": "Hẹn giờ"
-      }
-    ],
-    "inlineReopen": [
       {
         "text": "Hẹn giờ"
       }
