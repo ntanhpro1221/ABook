@@ -1215,3 +1215,57 @@ def test_qt_suite_passes_its_extra_arguments(tmp_path):
 
     gate.run_qt_suite(tmp_path / "WidthTests.exe", tmp_path, tmp_path / "bookmeta-test.txt", runner, arguments=["-input", "x"])
     assert seen[0][-2:] == ["-input", "x"]
+
+def test_vendored_upstream_files_skip_the_term_rule_but_their_readme_does_not(tmp_path, monkeypatch):
+    monkeypatch.setattr(gate, "release_range", lambda: {"base": "v0.0.1", "commits": 1})
+    monkeypatch.setattr(gate, "REPO", tmp_path)
+    vendor = tmp_path / "_internal/abook/vendor/pkg"
+    vendor.mkdir(parents=True)
+    (vendor / "README.md").write_text("pkg 1.0 copied unchanged from the wheel\n", encoding="utf-8")
+    upstream = vendor / "_config.py"
+    upstream.write_text("# " + gate.FORBIDDEN_TERMS[1] + " handling of upstream\n", encoding="utf-8")
+    monkeypatch.setattr(gate, "source_lines", lambda path, base=None: path.read_text(encoding="utf-8").splitlines())
+    monkeypatch.setattr(gate, "changed_files", lambda: [upstream])
+    assert gate.worker("forbidden-terms")["counts"]["findings"] == 0
+    loose = tmp_path / "_internal/abook/vendor/helper.py"  # the project's own file next to the packages
+    loose.write_text("# " + gate.FORBIDDEN_TERMS[1] + "\n", encoding="utf-8")
+    unvendored = tmp_path / "_internal/abook/vendor/nodoc/mod.py"  # no README naming the upstream source
+    unvendored.parent.mkdir()
+    unvendored.write_text("# " + gate.FORBIDDEN_TERMS[1] + "\n", encoding="utf-8")
+    for path in (loose, unvendored):
+        monkeypatch.setattr(gate, "changed_files", lambda path=path: [path])
+        with pytest.raises(ValueError, match="cần duyệt"):
+            gate.worker("forbidden-terms")
+    (vendor / "README.md").write_text("pkg 1.0 - " + gate.FORBIDDEN_TERMS[1] + " note\n", encoding="utf-8")
+    monkeypatch.setattr(gate, "changed_files", lambda: [vendor / "README.md"])
+    assert gate.worker("forbidden-terms")["prose_mentions_for_manual_review"] == ["_internal/abook/vendor/pkg/README.md"]
+
+
+def test_binary_fixture_needs_an_exact_reviewed_entry(tmp_path, monkeypatch):
+    monkeypatch.setattr(gate, "release_range", lambda: {"base": "v0.0.1", "commits": 1})
+    monkeypatch.setattr(gate, "REPO", tmp_path)
+    fixture = tmp_path / "_internal/tests/fixtures/books/sample.abook"
+    fixture.parent.mkdir(parents=True)
+    fixture.write_bytes(b"PK\x03\x04\0\0binary")
+    monkeypatch.setattr(gate, "changed_files", lambda: [fixture])
+    with pytest.raises(ValueError, match="binary review missing"):
+        gate.worker("diff-safety")
+    registry = tmp_path / "_internal/scripts/binary_reviewed.json"
+    registry.parent.mkdir(parents=True)
+    entry = {"sha256": hashlib.sha256(fixture.read_bytes()).hexdigest(), "reason": "synthetic package written by the contract test, no story text"}
+    registry.write_text(json.dumps({"_internal/tests/fixtures/books/sample.abook": entry}), encoding="utf-8")
+    assert gate.worker("diff-safety")["counts"]["findings"] == 0
+    fixture.write_bytes(b"PK\x03\x04\0\0changed")
+    with pytest.raises(ValueError, match="binary review missing or stale"):
+        gate.worker("diff-safety")
+    elsewhere = tmp_path / "_internal/abook/blob.bin"
+    elsewhere.parent.mkdir(parents=True)
+    elsewhere.write_bytes(b"\0\1")
+    monkeypatch.setattr(gate, "changed_files", lambda: [elsewhere])
+    with pytest.raises(ValueError, match="binary trong diff cần duyệt"):
+        gate.worker("diff-safety")
+    audio = tmp_path / "_internal/tests/fixtures/books/clip.mp3"
+    audio.write_bytes(b"ID3\0")
+    monkeypatch.setattr(gate, "changed_files", lambda: [audio])
+    with pytest.raises(ValueError, match="audio"):
+        gate.worker("diff-safety")

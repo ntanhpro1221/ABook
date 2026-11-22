@@ -550,6 +550,28 @@ def require_reviewed_snapshot(path: Path) -> None:
         image.verify()
 
 
+REVIEWED_BINARY_ROOTS = ("_internal/tests/fixtures/", "_internal/ui/public/")
+
+
+def require_reviewed_binary(path: Path) -> None:
+    """A binary test fixture (book package, gzip database, image) or web icon: only the exact reviewed bytes pass."""
+    relative = path.relative_to(REPO).as_posix()
+    require(relative.startswith(REVIEWED_BINARY_ROOTS), f"binary trong diff cần duyệt: {relative}")
+    registry = REPO / "_internal/scripts/binary_reviewed.json"
+    entry = json.loads(registry.read_text(encoding="utf-8")).get(relative) if registry.is_file() else None
+    require(isinstance(entry, dict) and len(entry.get("reason", "")) >= 40
+            and entry.get("sha256") == hashlib.sha256(path.read_bytes()).hexdigest(),
+            f"binary review missing or stale: {relative}")
+
+
+def vendored_upstream(path: Path) -> bool:
+    """A file of a third-party package copied unchanged into abook/vendor/<package>/ (the README there names the wheel and
+    its SHA-256). The README itself is the project's text and stays subject to every source rule."""
+    parts = path.relative_to(REPO).parts
+    return (len(parts) >= 5 and parts[:3] == ("_internal", "abook", "vendor") and path.name != "README.md"
+            and (REPO.joinpath(*parts[:4]) / "README.md").is_file())
+
+
 def require_reviewed_voice_artwork(path: Path) -> None:
     """Accept only the exact reviewed, generated portraits bundled in both clients."""
     from PIL import Image
@@ -770,12 +792,16 @@ def worker(name: str, confirm_hash: str | None = None) -> dict:
                 if b"\0" in data:
                     if path.suffix == ".webp":
                         require_reviewed_voice_artwork(path)
+                    elif relative.startswith(REVIEWED_BINARY_ROOTS):
+                        require_reviewed_binary(path)
                     else:
                         require_reviewed_snapshot(path)
                     continue
                 lines = source_lines(path, comparison["base"])
                 if any(secret.search(line) for line in lines):
                     problems.append(relative)  # Chỉ ghi đường dẫn, tuyệt đối không in giá trị khoá.
+            elif vendored_upstream(path):
+                continue  # upstream code copied unchanged; the project's rule on its own wording does not apply to it
             elif path.suffix.lower() in {".py", ".ts", ".tsx", ".kt", ".cpp", ".h", ".qml", ".js", ".mjs", ".ps1", ".bat", ".cmd"}:
                 lines = source_lines(path, comparison["base"])
                 if path.resolve() == Path(__file__).resolve():
