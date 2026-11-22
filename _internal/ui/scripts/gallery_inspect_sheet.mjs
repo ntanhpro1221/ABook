@@ -166,10 +166,12 @@ export function installGeometryProbe() {
       requestAnimationFrame(tick);
     }),
     // Điều khiển bị tấm chắn bấm-ra-ngoài của một lớp đang mở che (không phải toast, không phải lỗi bố cục).
+    // Cả nút nằm ngoài màn (hàng chip cuộn ngang): tấm chắn phủ cả trang, nên nút ngoài lớp nổi đang mở là bị che dù chưa cuộn tới.
     shielded: el => {
       if (window.__sheetProbe.reach(el)) return false;
       const r = box(el), hit = document.elementFromPoint(r.x + r.width / 2, r.y + r.height / 2);
-      return Boolean(hit?.closest('[data-outside-shield]'));
+      if (hit?.closest('[data-outside-shield]')) return true;
+      return Boolean(document.querySelector('[data-outside-shield]')) && !el.closest('[role="menu"], [role="dialog"], [role="listbox"]');
     },
     // throughShield: nút bật/tắt của popover không modal nằm ngoài lớp; bấm vào chỗ nó thì trúng tấm chắn, và chính tấm chắn đóng lớp.
     center: (selector, throughShield = false) => {
@@ -274,6 +276,8 @@ export async function inspectSheets(cdp, { base, entry, theme, timeout = 45000, 
       // Radix Dialog/Popover triggers and Now Playing can also be opened on ordinary gallery screens with no `act`.
       for (const trigger of await probe(cdp, session, "triggers()")) {
         if (trigger.menu) {
+          // A menu probed just before may still be open (its outside shield covers this trigger): not an opener in this state.
+          if (await evaluate(cdp, session, `(() => { const el = document.querySelector(${JSON.stringify(trigger.selector)}); return !el || window.__sheetProbe.shielded(el); })()`)) continue;
           // ActionMenu becomes a Sheet at phone width; plain dropdowns remain outside this rule.
           const before = await probe(cdp, session, "surfaces()");
           await probe(cdp, session, `prepare(${JSON.stringify(trigger.selector)})`);
@@ -282,6 +286,9 @@ export async function inspectSheets(cdp, { base, entry, theme, timeout = 45000, 
           await stable(cdp, session);
           const after = await probe(cdp, session, "surfaces()");
           if (after.some(a => !before.some(b => b.selector === a.selector && b.title === a.title))) targets.push(trigger);
+          // A plain dropdown opens on press; the release lands on its outside shield and focus can leave the menu. Escape goes to the
+          // open layer itself, as in the Escape dismissal below - sent to <body> it would leave the menu (and its shield) open.
+          await evaluate(cdp, session, "[...document.querySelectorAll('[role=menu][data-state=open], [role=dialog]:not([inert])')].at(-1)?.focus({preventScroll:true})");
           await cdp.send("Input.dispatchKeyEvent", { type: "keyDown", key: "Escape", code: "Escape", windowsVirtualKeyCode: 27 }, session);
           await cdp.send("Input.dispatchKeyEvent", { type: "keyUp", key: "Escape", code: "Escape", windowsVirtualKeyCode: 27 }, session);
           await stable(cdp, session);
