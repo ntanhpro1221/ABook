@@ -843,11 +843,24 @@ def load_module(path: Path, name: str):
     return module
 
 
-def run_qt_suite(executable: Path, cwd: Path, log: Path, runner=run_process) -> Execution:
+QT_TEST_CALL = re.compile(r'^call :test "%HERE%build\\([^"\n]+\.exe)" "%HERE%build\\([^"\n]+\.txt)"([^\n]*)$', re.M)
+
+
+def qt_suite_calls(build_text: str, qt: Path) -> list[tuple[str, str, list[str]]]:
+    """Mỗi dòng `call :test` của build.bat: (exe, tên log, tham số thêm). Một binary có thể chạy nhiều lần với input khác
+    (WidthTests trên tests\\bookmeta), mỗi lần một log riêng; %HERE% là thư mục desktop_qt như trong build.bat."""
+    calls = []
+    for exe, log, rest in QT_TEST_CALL.findall(build_text):
+        arguments = [quoted or bare for quoted, bare in re.findall(r'"([^"]*)"|(\S+)', rest)]
+        calls.append((exe, log, [argument.replace("%HERE%", str(qt) + os.sep) for argument in arguments]))
+    return calls
+
+
+def run_qt_suite(executable: Path, cwd: Path, log: Path, runner=run_process, *, arguments: list[str] | None = None) -> Execution:
     """Qt GUI không có stdout: yêu cầu file mới như build.bat, rồi đọc byte thực đã ghi."""
     require(not log.exists(), "Qt: từ chối dùng log cũ " + log.name)
     timeout = 1800 if executable.stem == "WidthTests" else 360
-    result = runner([str(executable), "-o", str(log) + ",txt"], cwd, timeout)
+    result = runner([str(executable), "-o", str(log) + ",txt", *(arguments or [])], cwd, timeout)
     require(log.is_file(), "Qt: không tạo log " + log.name)
     output = log.read_text(encoding="utf-8", errors="replace")
     if result.output:
@@ -874,8 +887,10 @@ def find_vcvars() -> Path:
 def qt_tests() -> dict:
     qt = ROOT / "desktop_qt"
     build_text = (qt / "build.bat").read_text(encoding="ascii")
-    targets = re.findall(r'^call :test "%HERE%build\\([^"\n]+\.exe)"', build_text, re.M)
-    require(bool(targets), "Qt: không tìm được suite trong build.bat")
+    calls = qt_suite_calls(build_text, qt)
+    require(bool(calls) and len(calls) == len(re.findall(r"^call :test ", build_text, re.M)),
+            "Qt: không đọc được mọi dòng call :test trong build.bat")
+    targets = list(dict.fromkeys(exe for exe, _, _ in calls))
     sdk = load_module(qt / "tools/qt_sdk.py", "gate_qt_sdk")
     qt_root = sdk.validate_qt_root()
     qwk_install = sdk.qwk_install_root()
@@ -917,14 +932,14 @@ def qt_tests() -> dict:
         if lint.returncode != 0 or lint.timed_out:
             failures.append("qml_members " + arguments[0])
             counts["lint_failed"] += 1
-    for target in targets:
+    for target, log_name, arguments in calls:
         executable = build / target.replace("\\", "/")
-        log = command_file.parent / (executable.stem + ".txt")
+        log = command_file.parent / log_name
         # DLL Qt lấy từ bộ SDK chỉ đọc, không chép gì vào SDK.
         previous = os.environ.get("PATH", "")
         os.environ["PATH"] = str(qt_root / "bin") + os.pathsep + previous
         try:
-            result = run_qt_suite(executable, qt, log)
+            result = run_qt_suite(executable, qt, log, arguments=arguments)
         except Exception as exc:
             failures.append(executable.stem + ": " + str(exc))
             counts["suites"] += 1
@@ -943,7 +958,7 @@ def qt_tests() -> dict:
             for key, number in zip(("passed", "failed", "skipped"), row):
                 counts[key] += int(number)
         counts["suites"] += 1
-    require(counts["suites"] == len(targets), "Qt: thiếu suite")
+    require(counts["suites"] == len(calls), "Qt: thiếu suite")
     return {"counts": counts, "status": "FAIL" if failures else "PASS", "failed_suites": failures, "logs": str(command_file.parent),
             "timed_out": bool(counts["timeouts"]),
             "detail": "Qt: " + (", ".join(failures) if failures else "đủ suite, totals và QML lint")}

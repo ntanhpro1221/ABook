@@ -1184,3 +1184,34 @@ def test_outside_taps_runs_in_the_gate_and_needs_every_layer_and_press(tmp_path)
     write(rows)
     with pytest.raises(ValueError, match="exit 1"):
         gate.validate_report(check, gate.Execution(1), artifact)
+
+
+def test_qt_suite_calls_keep_each_build_bat_run_with_its_log_and_input(tmp_path):
+    """fix174b runs WidthTests twice; the second run reads tests\\bookmeta and writes its own log (gate 1 of 0.4.174)."""
+    text = (
+        'call :test "%HERE%build\\width_tests\\WidthTests.exe" "%HERE%build\\width-test.txt"\r\n'
+        'call :test "%HERE%build\\width_tests\\WidthTests.exe" "%HERE%build\\bookmeta-test.txt" -input "%HERE%tests\\bookmeta"\r\n'
+        'call :test "%HERE%build\\VoiceTests.exe" "%HERE%build\\voice-test.txt"\r\n')
+    qt = tmp_path / "desktop_qt"
+    calls = gate.qt_suite_calls(text, qt)
+    assert [(exe, log) for exe, log, _ in calls] == [
+        ("width_tests\\WidthTests.exe", "width-test.txt"), ("width_tests\\WidthTests.exe", "bookmeta-test.txt"),
+        ("VoiceTests.exe", "voice-test.txt")]
+    assert calls[0][2] == [] and calls[2][2] == []
+    assert calls[1][2] == ["-input", str(qt) + os.sep + "tests\\bookmeta"]
+    real = (gate.ROOT / "desktop_qt/build.bat").read_text(encoding="ascii")
+    found = gate.qt_suite_calls(real, gate.ROOT / "desktop_qt")
+    assert len(found) == sum(line.startswith("call :test ") for line in real.splitlines())
+    assert len({log for _, log, _ in found}) == len(found), "every build.bat run writes its own log"
+
+
+def test_qt_suite_passes_its_extra_arguments(tmp_path):
+    seen = []
+
+    def runner(command, cwd, timeout):
+        seen.append(command)
+        Path(command[2].rsplit(",", 1)[0]).write_text("Totals: 3 passed, 0 failed, 0 skipped\n", encoding="utf-8")
+        return gate.Execution(0, "")
+
+    gate.run_qt_suite(tmp_path / "WidthTests.exe", tmp_path, tmp_path / "bookmeta-test.txt", runner, arguments=["-input", "x"])
+    assert seen[0][-2:] == ["-input", "x"]
