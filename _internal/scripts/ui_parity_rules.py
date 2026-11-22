@@ -1208,7 +1208,7 @@ def l13_centred_labels() -> list[str]:
     return problems
 
 
-# --- L14: anything floating over content has an opaque fill (chủ sách 22-11: "hoa anh đào" read through the chip) ------------------------------------
+# --- L14: anything floating over content has an opaque fill (chủ sách 22-11: story text read through the chip) ------------------------------------
 # The `*-soft` tokens (and the scrim) are translucent in dark mode; `x.copy(alpha = …)` / `bg-x/NN` / `opacity: 0.9 *` are translucent everywhere. In the
 # flow they sit on an opaque page, which is what they are for; over other content the words underneath read through. Floating fills compose the tint over
 # the panel instead (Android `floatingFill`, web `bg-panel` + inner tint, Qt an opaque Rectangle under the tint).

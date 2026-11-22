@@ -517,7 +517,7 @@ class NowPlayingUiTest {
         assertEquals("label centred horizontally in $tag: chip=$chip text=$text", (chip.left + chip.right).value / 2, (text.left + text.right).value / 2, 1f)
     }
 
-    /** Nền thẻ đục (chủ sách 22-11: "hoa anh đào" lộ qua thẻ): điểm ảnh trong thẻ, ngoài chữ, đúng bằng màu nền đục - không pha thứ nằm dưới. */
+    /** Nền thẻ đục (chủ sách 22-11: chữ truyện lộ qua thẻ): điểm ảnh trong thẻ, ngoài chữ, đúng bằng màu nền đục - không pha thứ nằm dưới. */
     private fun assertChipOpaque(tag: String, dark: Boolean) {
         val colors = if (dark) vn.abook.player.ui.theme.DarkColors else vn.abook.player.ui.theme.LightColors
         val fill = vn.abook.player.ui.components.floatingFill(colors)

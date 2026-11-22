@@ -33,7 +33,7 @@ import vn.abook.player.ui.theme.MotionMs
 
 /**
  * Fill of anything that floats over content (chip, plate, toast): a `*Soft` token is translucent in dark mode (accent-soft is 14 % amber), so on its own
- * it lets the text underneath read through (chủ sách 22-11: "hoa anh đào" showed through "Về chỗ vừa nghe"). Compose the tint over the panel colour:
+ * it lets the text underneath read through (chủ sách 22-11: the story text showed through "Về chỗ vừa nghe"). Compose the tint over the panel colour:
  * the same hue as the in-flow highlight, fully opaque. `ui_parity_rules.py` L14 rejects a translucent fill on a floating layer.
  */
 fun floatingFill(colors: AbookColors, tint: Color = colors.accentSoft): Color = tint.compositeOver(colors.panel)

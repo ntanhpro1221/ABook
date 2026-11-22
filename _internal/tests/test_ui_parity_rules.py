@@ -652,7 +652,7 @@ def test_l13_bites_a_label_stuck_to_the_top_of_its_surface(planted):
 
 
 def test_l14_bites_translucent_fills_on_floating_layers(planted):
-    """Chủ sách 22-11: nền thẻ là accentSoft (hổ phách 14 % ở giao diện tối) nên chữ truyện "hoa anh đào" lộ qua thẻ nổi. Android: mọi nền trong suốt
+    """Chủ sách 22-11: nền thẻ là accentSoft (hổ phách 14 % ở giao diện tối) nên chữ truyện bên dưới lộ qua thẻ nổi. Android: mọi nền trong suốt
     phải có lý do (nằm trong dòng chảy) hoặc đi qua floatingFill; web: lớp fixed / absolute / sticky với bg-*-soft, bg-x/NN; Qt: Rectangle nổi (z, parent:,
     tên lớp phủ) với màu *Soft / Qt.alpha hay opacity 0.9 *."""
     root = planted.ROOT
