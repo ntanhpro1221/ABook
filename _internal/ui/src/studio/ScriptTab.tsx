@@ -1706,7 +1706,7 @@ export function ScriptTab({ bookId }: { bookId: string }) {
       </MotionPresence>
       {/* Chương + chú giải người nói DÍNH khi cuộn (soát UX a6 01-10: cuộn xuống giữa chương là quên phím 4 là ai, muốn sang
           chương sau phải cuộn ngược lên đầu). */}
-      <div className="sticky top-0 z-10 -mx-2 mt-2 flex flex-col gap-2 bg-bg/95 px-2 pb-2 pt-2 backdrop-blur">
+      <div className="sticky top-0 z-10 -mx-2 mt-2 flex flex-col gap-2 bg-bg px-2 pb-2 pt-2">
       <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
         {/* Tên chương (menu của app, không ô chọn gốc) rồi chương trước · sau. Chữ tên chương đứng đúng mép nội dung (nút lùi lề bằng đệm của nó). */}
         <div className="flex w-full min-w-0 items-center sm:w-auto sm:max-w-full">

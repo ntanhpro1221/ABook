@@ -327,7 +327,8 @@ Item {
                     height: notes.height + 2 * Theme.s8
                     radius: Theme.radiusCover
                     color: Theme.panel
-                    opacity: notes.height > 0 && !root.notesInFlow ? 0.95 * root.fade : 0
+                    // Đục hẳn (L14): tấm nổi trên bìa, bìa không được lộ qua chữ lời nhắn.
+                    opacity: notes.height > 0 && !root.notesInFlow ? root.fade : 0
                     visible: opacity > 0
                     Behavior on opacity { NumberAnimation { duration: Theme.reduceMotion ? Theme.motionReduced : Theme.motionMedium } }
                 }

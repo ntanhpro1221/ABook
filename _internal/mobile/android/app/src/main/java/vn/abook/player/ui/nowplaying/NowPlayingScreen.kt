@@ -13,10 +13,11 @@ import vn.abook.player.ui.components.gestureSafe
 import vn.abook.player.ui.components.fadeEdges
 import vn.abook.player.ui.components.ClockLabel
 import vn.abook.player.ui.components.Reveal
+import vn.abook.player.ui.components.FloatingChip
+import vn.abook.player.ui.components.FloatingReveal
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.background
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.gestures.detectDragGestures
@@ -25,13 +26,11 @@ import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.gestures.waitForUpOrCancellation
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.RoundedCornerShape
 import vn.abook.player.ui.components.BasicText
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.CornerRadius
@@ -45,7 +44,6 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.layout.Layout
-import androidx.compose.ui.layout.layout
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.semantics.*
 import androidx.compose.ui.text.font.FontWeight
@@ -97,6 +95,9 @@ private fun NowPlayingBody(
     val readingHere = window.reading && !split
     val mode = animateFloatAsState(if (readingHere) 1f else 0f, tween(MotionMs.SLOW), label = "reading-mode")
     var controlsDimmed by remember { mutableStateOf(false) }
+    val returnShown = rememberReturnShown(state.returnAvailable && !window.reading && !split, state.returnSerial)
+    // The cover yields room to the return chip with the same motion as the chip (read at layout, no recomposition per frame).
+    val returnRoom = animateFloatAsState(if (returnShown.value) 1f else 0f, tween(MotionMs.MEDIUM, easing = Motion.Standard), label = "return-room")
     val dim = animateFloatAsState(if (controlsDimmed && readingHere) 0.42f else 1f, tween(MotionMs.FAST), label = "controls-visibility")
     // Cửa sổ đỗ sẵn trong cây (WindowFlight.parked) thì không đọc theo: chỉ tính là đang đọc khi cửa sổ mở (nằm trong cây, `shown` chỉ được đọc khi đang ở chế độ đọc).
     val live = (window.reading || split) && window.shown
@@ -212,7 +213,6 @@ private fun NowPlayingBody(
                 Box(Modifier.testTag("player_cover_small").then(if (readingHere) Modifier
                     .pressable { setReading(false) }.semantics { contentDescription = S.s_ve_che_do_nghe_a0052a89 } else Modifier))
                 Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
-                    ReturnChip(state.returnAvailable && !window.reading && !split, state.returnSerial, model::returnToPreviousPlace)
                     // Lời báo (hẹn giờ, máy khác đã nghe, hết phần đã có, lỗi phát) nổi trên phần dưới của bìa, ngay trên khối tên: không lấy chỗ
                     // của cột nên bìa, tên, thanh tua và nút phát đứng nguyên một chỗ ở mọi trạng thái (neo R7). Nền tấm vẽ quanh chữ, khối rỗng thì không có.
                     val surface = Abook.colors.panel
@@ -223,13 +223,27 @@ private fun NowPlayingBody(
                         }
                     }) { if (!window.reading) notes() }
                 }
+                // Always one measurable (index 5), also while the chip is gone.
+                Box { ReturnChip(returnShown, model::returnToPreviousPlace) }
             }) { measurables, constraints ->
                 val width = constraints.maxWidth
                 val height = constraints.maxHeight
                 val thumb = 48.dp.roundToPx()
                 val gap = 12.dp.roundToPx()
                 val titles = measurables[2].measure(Constraints(maxWidth = width, maxHeight = height))
-                val coverSide = minOf(width, (height - titles.height - 24.dp.roundToPx()).coerceAtLeast(1), 320.dp.roundToPx())
+                val above = (height - titles.height).coerceAtLeast(0)
+                // Bìa nằm giữa khoảng trống phía trên khối tên, không dính trần để lại một hố giữa bìa và tên.
+                val side0 = minOf(width, (above - 24.dp.roundToPx()).coerceAtLeast(1), 320.dp.roundToPx())
+                val y0 = ((above - side0) / 2).coerceAtLeast(0)
+                // "Về chỗ vừa nghe" never covers the cover (chủ sách 22-11): it needs a 48 dp band with 12 dp on each side above the titles. Spare room below
+                // the cover is used first; otherwise the cover shrinks and rises into the remaining space, in step with the chip's own motion.
+                val need = (Dim.s48 + 24.dp).roundToPx()
+                val fits = y0 + side0 + need <= above
+                val side1 = if (fits) side0 else minOf(side0, (above - need - 12.dp.roundToPx()).coerceAtLeast(1))
+                val y1 = if (fits) y0 else ((above - need - side1) / 2).coerceIn(0, y0)
+                val room = returnRoom.value
+                val coverSide = (side0 + (side1 - side0) * room).toInt().coerceAtLeast(1)
+                val coverY = (y0 + (y1 - y0) * room).toInt()
                 val cover = measurables[1].measure(Constraints.fixed(coverSide, coverSide))
                 // Tên trong đầu trang đọc theo = cùng khối chữ thu theo một tỉ lệ (20 sp -> 16 sp), vừa phần bề ngang còn lại cạnh bìa nhỏ.
                 val titleScale = if (width > 0) minOf(0.8f, remainingSpace(width, thumb + gap).toFloat() / width) else 0f
@@ -237,12 +251,13 @@ private fun NowPlayingBody(
                 val textTop = header + gap
                 val text = measurables[0].measure(Constraints.fixed(width, (height - textTop).coerceAtLeast(0)))
                 val thumbTarget = measurables[3].measure(Constraints.fixed(thumb, thumb))
-                val returnChip = measurables[4].measure(Constraints(maxWidth = width,
+                val noteBlock = measurables[4].measure(Constraints(maxWidth = width,
                     maxHeight = (height - titles.height - gap).coerceAtLeast(0)))
+                val returnChip = measurables[5].measure(Constraints(maxWidth = width, maxHeight = above))
                 val coverX = (width - coverSide) / 2
-                // Bìa nằm giữa khoảng trống phía trên khối tên, không dính trần để lại một hố giữa bìa và tên.
-                val coverY = ((height - titles.height - coverSide) / 2).coerceAtLeast(0)
                 val titlesY = height - titles.height
+                val coverBottom = coverY + coverSide
+                val chipY = coverBottom + (titlesY - coverBottom - returnChip.height) / 2
                 layout(width, height) {
                     // Mép trên của chữ bám mép dưới của khối bìa + tên đang thu lại: chữ trượt lên từ đáy, không bao giờ nằm dưới bìa hay tên.
                     text.placeWithLayer(0, textTop) {
@@ -273,9 +288,10 @@ private fun NowPlayingBody(
                         translationX = (thumb + gap) * p
                         translationY = (-titlesY + (header - titles.height * titleScale).coerceAtLeast(0f) / 2f) * p
                     }
-                    // Keep the transient action over artwork, clear of the title and
-                    // subtitle. The seek bar and transport never change coordinates.
-                    returnChip.place(0, (titlesY - returnChip.height - gap).coerceAtLeast(0))
+                    // Notices float over the lower cover, just above the titles (and above the return chip's band while it shows).
+                    noteBlock.place(0, (titlesY - noteBlock.height - gap - ((need - 12.dp.roundToPx()) * room).toInt()).coerceAtLeast(0))
+                    // The return chip sits in the band between the cover and the titles. The seek bar and transport never change coordinates.
+                    returnChip.place((width - returnChip.width) / 2, chipY.coerceAtLeast(0))
                 }
             }
             Column(Modifier.fillMaxWidth().pointerInput(Unit) {
@@ -288,13 +304,6 @@ private fun NowPlayingBody(
                 alpha = dim.value
                 scaleX = 0.98f + dim.value * 0.02f; scaleY = scaleX
             }) {
-                // Zero-height anchor: the return action floats above the seek bar, never between its time labels.
-                Box(Modifier.fillMaxWidth().layout { measurable, constraints ->
-                    val placeable = measurable.measure(constraints.copy(minHeight = 0, maxHeight = Constraints.Infinity))
-                    layout(placeable.width, 0) { placeable.place(0, -placeable.height) }
-                }.padding(bottom = Dim.s8), contentAlignment = Alignment.BottomCenter) {
-                    ReturnChip(state.returnAvailable && !window.reading && !split && compactHeight, state.returnSerial, model::returnToPreviousPlace)
-                }
                 PlayerSeekBar(state.durationMs, model.position, model::seek, Modifier.playerReveal(windowProgress), compact = compactHeight)
                 Row(Modifier.fillMaxWidth().height(if (compactHeight) 72.dp else 88.dp).testTag("transport"),
                     verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceEvenly) {
@@ -316,6 +325,9 @@ private fun NowPlayingBody(
             // Cửa sổ thấp (cột cuộn) và chế độ Đọc theo (vùng bìa là chữ đọc - không gì nổi trên chữ đọc): lời báo ở cuối cột như cũ.
             // Còn lại: lời báo nổi trên vùng bìa, ngay trên khối tên.
             if (compactHeight || window.reading) notes()
+            // Cửa sổ thấp: phía trên thanh tua là tên / thanh đầu, nên thẻ "Về chỗ vừa nghe" không nổi đè lên chúng mà mở ra trong dòng chảy ở cuối cột
+            // (dưới mọi điều khiển: không nút nào dời).
+            ReturnChip(returnShown, model::returnToPreviousPlace, Modifier.fillMaxWidth().padding(top = Dim.s8), here = compactHeight, inFlow = true)
         }
         // Cột phải mở bằng bề ngang: 0 -> (cả phần còn lại sau cột trái và khe 32 dp). Đọc ở pha đo, không recompose theo từng khung.
         val sideT = animateFloatAsState(if (split) 1f else 0f, tween(MotionMs.MEDIUM, easing = Motion.Standard), label = "now-playing-split")
@@ -476,30 +488,33 @@ fun PlayerModeSwitch(mode: State<Float>, onSelect: (Boolean) -> Unit, modifier: 
     }
 }
 
+/** Whether "Về chỗ vừa nghe" shows: for ten seconds after each seek while [available]. Hoisted so the Nghe layout can make room for it (the cover yields). */
+@Composable
+internal fun rememberReturnShown(available: Boolean, serial: Int): MutableState<Boolean> {
+    val shown = remember { mutableStateOf(false) }
+    LaunchedEffect(available, serial) {
+        shown.value = available
+        if (available) { kotlinx.coroutines.delay(10_000); shown.value = false }
+    }
+    return shown
+}
+
 /**
- * Return to the previous listening position for ten seconds after a seek. Its host owns placement above the progress controls.
+ * Return to the previous listening position after a seek. Its host owns placement: never over the cover or a control (chủ sách 22-11) - the Nghe layout
+ * shrinks the cover into a free band above the titles, the read-along pane floats it in its bottom dock, a short window keeps it in the column's flow.
  */
 @Composable
-internal fun ReturnChip(available: Boolean, serial: Int, onReturn: () -> Unit) {
-    var shown by remember { mutableStateOf(false) }
-    LaunchedEffect(available, serial) {
-        shown = available
-        if (available) { kotlinx.coroutines.delay(10_000); shown = false }
-    }
-    Box(Modifier.clipToBounds()) {
-        androidx.compose.animation.AnimatedVisibility(shown,
-            enter = androidx.compose.animation.slideInVertically(tween(MotionMs.MEDIUM)) { it },
-            exit = androidx.compose.animation.slideOutVertically(tween(MotionMs.MEDIUM_OUT)) { it }) {
-            BasicText(S.s_ve_cho_vua_nghe_8da3c710, Modifier
-                .heightIn(min = Dim.s48)
-                .background(Abook.colors.accentSoft, RoundedCornerShape(Dim.radiusCover))
-                .pressable { shown = false; onReturn() }
-                .testTag("return_place")
-                .padding(horizontal = 16.dp, vertical = 8.dp),
-                style = Abook.type.caption.copy(color = Abook.colors.accentText, fontWeight = FontWeight.Medium))
+internal fun ReturnChip(shown: MutableState<Boolean>, onReturn: () -> Unit, modifier: Modifier = Modifier, here: Boolean = true, inFlow: Boolean = false) {
+    // `here` = false: this placement is not the one in use (the short window's in-flow slot while the tall layout floats it), nothing shows.
+    FloatingReveal(here && shown.value, modifier, inFlow = inFlow) {
+        Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+            FloatingChip(S.s_ve_cho_vua_nghe_8da3c710, "return_place") { shown.value = false; onReturn() }
         }
     }
 }
+
+@Composable
+internal fun ReturnChip(available: Boolean, serial: Int, onReturn: () -> Unit) = ReturnChip(rememberReturnShown(available, serial), onReturn)
 
 /** The read-along text's visible band, in the text's own coordinates (it slides under the header and over the transport; nothing may show outside the band).
  *  Only the top and bottom cut: sideways the band reaches [InkBleed] into the gutter, so the highlight breathes past the column on the left as much as on the right. */

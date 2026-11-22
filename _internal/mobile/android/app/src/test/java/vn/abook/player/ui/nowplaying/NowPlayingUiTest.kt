@@ -508,6 +508,92 @@ class NowPlayingUiTest {
         assertBounds(before, bounds("transport"), 0.1f)
     }
 
+    /** Chủ sách 22-11 ("thẻ về chỗ vừa nghe bị cái gì này"): chữ dính mép trên của thẻ. Chữ phải nằm giữa thẻ theo cả hai chiều. */
+    private fun assertLabelCentred(tag: String, label: String) {
+        val chip = bounds(tag)
+        val text = rule.onNode(hasText(label) and hasAnyAncestor(hasTestTag(tag)), useUnmergedTree = true).getUnclippedBoundsInRoot()
+        assertEquals("label centred vertically in $tag: chip=$chip text=$text", (chip.top + chip.bottom).value / 2, (text.top + text.bottom).value / 2, 1f)
+        assertEquals("label centred horizontally in $tag: chip=$chip text=$text", (chip.left + chip.right).value / 2, (text.left + text.right).value / 2, 1f)
+    }
+
+    /** Nền thẻ đục (chủ sách 22-11: chữ truyện lộ qua thẻ): điểm ảnh trong thẻ, ngoài chữ, đúng bằng màu nền đục - không pha thứ nằm dưới. */
+    // Reads the frame `shot(name)` just recorded (build/design_lint, written in every mode): captureToImage waits for a redraw that the
+    // read-along pane's running clock never lets settle.
+    private fun assertChipOpaque(tag: String, dark: Boolean, shotName: String) {
+        val colors = if (dark) vn.abook.player.ui.theme.DarkColors else vn.abook.player.ui.theme.LightColors
+        val fill = vn.abook.player.ui.components.floatingFill(colors)
+        assertEquals(1f, fill.alpha, 0f)
+        val bitmap = android.graphics.BitmapFactory.decodeFile("build/design_lint/np_$shotName.png")
+        assertNotNull("frame of $shotName", bitmap)
+        val root = rule.onRoot().getUnclippedBoundsInRoot()
+        val scale = bitmap.width / root.width.value
+        val chip = bounds(tag)
+        val y = (((chip.top + chip.bottom).value / 2 - root.top.value) * scale).toInt()
+        for (xDp in listOf(chip.left.value + 6f, chip.right.value - 6f)) {
+            val x = ((xDp - root.left.value) * scale).toInt()
+            val px = androidx.compose.ui.graphics.Color(bitmap.getPixel(x, y))
+            for ((name, a, b) in listOf(Triple("r", px.red, fill.red), Triple("g", px.green, fill.green), Triple("b", px.blue, fill.blue))) {
+                assertEquals("$tag $name at ($x,$y): $px vs fill $fill", b, a, 2f / 255f)
+            }
+        }
+    }
+
+    private fun returnOnListen(dark: Boolean) {
+        show(dark = dark, fontScale = 1.3f)
+        val transport = bounds("transport")
+        rule.runOnUiThread { model.skip(15) }
+        rule.waitForIdle()
+        rule.onNodeWithTag("return_place").assertIsDisplayed()
+        val chip = bounds("return_place")
+        // Not over the cover, the titles or any control (the cover yields room above the titles).
+        for (tag in listOf("player_cover", "player_chapter", "player_seek", "transport")) {
+            val other = bounds(tag)
+            assertTrue("return=$chip overlaps $tag=$other", chip.bottom <= other.top || chip.top >= other.bottom)
+        }
+        assertLabelCentred("return_place", "Về chỗ vừa nghe")
+        assertBounds(transport, bounds("transport"), 0.1f)
+        val name = if (dark) "return_chip_listen_font130_dark" else "return_chip_listen_font130_light"
+        shot(name)
+        assertChipOpaque("return_place", dark, name)
+    }
+
+    @Test fun returnChipOnListenLight() = returnOnListen(dark = false)
+
+    @Test fun returnChipOnListenDark() = returnOnListen(dark = true)
+
+    private fun returnOnReading(dark: Boolean) {
+        show(dark = dark, reading = true, fontScale = 1.3f)
+        rule.runOnUiThread { model.update(model.state.value.copy(returnAvailable = true, returnSerial = 1)) }
+        rule.waitForIdle()
+        rule.onNodeWithTag("return_place").assertIsDisplayed()
+        assertLabelCentred("return_place", "Về chỗ vừa nghe")
+        val name = if (dark) "return_chip_read_font130_dark" else "return_chip_read_font130_light"
+        shot(name)
+        assertChipOpaque("return_place", dark, name)
+    }
+
+    @Test fun returnChipOnReadingLight() = returnOnReading(dark = false)
+
+    @Test fun returnChipOnReadingDark() = returnOnReading(dark = true)
+
+    /** Cửa sổ thấp: thẻ ở trong dòng chảy cuối cột, không đè thanh đầu, tên hay điều khiển, và hàng nút phát không dời. */
+    @Test @Config(qualifiers = "w600dp-h400dp-xxhdpi")
+    fun returnChipInShortWindowCoversNothing() {
+        show()
+        val transport = bounds("transport")
+        rule.runOnUiThread { model.skip(15) }
+        rule.waitForIdle()
+        rule.onNodeWithTag("return_place").assertExists()
+        val chip = bounds("return_place")
+        for (tag in listOf("collapse_player", "player_more", "player_seek", "transport", "player_speed", "player_chapters")) {
+            val other = bounds(tag)
+            val apart = chip.bottom <= other.top || chip.top >= other.bottom || chip.right <= other.left || chip.left >= other.right
+            assertTrue("return=$chip overlaps $tag=$other", apart)
+        }
+        assertBounds(transport, bounds("transport"), 0.1f)
+        assertLabelCentred("return_place", "Về chỗ vừa nghe")
+    }
+
     @Test fun readingModeKeepsTransportAtExactlyTheSameCoordinates() {
         show()
         val before = bounds("transport")
@@ -747,7 +833,9 @@ class NowPlayingUiTest {
         val pill = bounds("follow_sentence")
         val text = bounds("read_along_text")
         assertTrue("pill ở trong vùng chữ: $pill / $text", pill.top >= text.top && pill.bottom <= text.bottom)
+        assertLabelCentred("follow_sentence", "Tới câu đang nghe")
         shot("reading_follow_light")
+        assertChipOpaque("follow_sentence", dark = false, "reading_follow_light")
         rule.onNodeWithTag("follow_sentence").performClick()
         rule.waitForIdle()
         rule.onNodeWithTag("follow_sentence").assertDoesNotExist()

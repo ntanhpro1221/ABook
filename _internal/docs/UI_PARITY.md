@@ -830,12 +830,12 @@ Nhãn ngắn (<= 6 chữ) không có (theo khoá lỏng) ở phía kia - kể c�
 - `Chờ áp dụng` | `chờ áp dụng` (`native/studio/CastHistoryPanel.kt:33`, `native/studio/CastHistoryPanel.kt:45` (+4))
 - `Huỷ xuất` | `Huỷ xuất?` (`native/studio/StudioExport.kt:314`, `native/studio/StudioExport.kt:315`)
 - `Hồ sơ nghe` | `Hồ sơ nghe:` (`native/screens/BookRecords.kt:119`, `native/screens/BookTabs.kt:150`)
-- `Lùi 15 giây` | `Lùi {} giây` (`native/nowplaying/NowPlayingScreen.kt:302`, `native/pip/PipParams.kt:49`)
+- `Lùi 15 giây` | `Lùi {} giây` (`native/nowplaying/NowPlayingScreen.kt:311`, `native/pip/PipParams.kt:49`)
 - `Lưu thay đổi` | `Lưu thay đổi?` (`native/nowplaying/TonePage.kt:128`, `native/screens/BookSheets.kt:201`)
 - `Mở Cài đặt` | `Mở cài đặt` (`native/data/SettingsRepo.kt:135`, `native/devices/CompanionSurfaces.kt:154` (+2))
 - `Nữ` | `nữ` (`native/data/ListenExtras.kt:453`, `native/data/ListenExtras.kt:499` (+5))
 - `Thử không được` | `Thử không được.` (`native/voice/VoicePickCard.kt:68`, `native/voice/VoiceState.kt:218`)
-- `Tới 15 giây` | `Tới {} giây` (`native/nowplaying/NowPlayingScreen.kt:304`, `native/pip/PipParams.kt:51`)
+- `Tới 15 giây` | `Tới {} giây` (`native/nowplaying/NowPlayingScreen.kt:313`, `native/pip/PipParams.kt:51`)
 ## e. Cặp màn web <-> native (luật cứng, scripts/ui_parity_pairs.json)
 
 Trong một cặp, mỗi nhãn ngắn phải có ở cả hai phía (khoá lỏng) trừ khi nằm trong `allow` (nền tảng bắt buộc khác, có lý do) hay `missing` (tính năng / phần màn chỉ có ở một phía - Lead xếp lịch). Cột lệch phải bằng 0 thì `--check` mới qua. Cột "chờ Lead" (`wording_for_lead`) là chữ khác nhau cho cùng một việc, chưa chọn chuẩn: TẠM, mục nào có ở đó là nợ.

@@ -1,10 +1,11 @@
-"""Twelve cross-platform UI rules (scripts/ui_parity_rules.py): each holds on the real sources, and each bites a planted violation.
+"""Fourteen cross-platform UI rules (scripts/ui_parity_rules.py): each holds on the real sources, and each bites a planted violation.
 
 Lead 12-11 (soát đồng nhất ba nền): one task, one word, one token, one shape on web, Qt and Android. The rules compare Qt with
 Android directly, read the dictionary's "Thay cho" column, demand every colour token on all three, keep spacing / type / weight on
 the scale, give each shared component one radius role, read motion timings from tokens, count hard show/hide (only down), name
 every "…" button "Thêm tuỳ chọn…", keep labels at four words, pin same-control pairs to one key and start every row
-summary with a capital (L11, 0.4.169) and make every floating layer swallow the taps in its frame (L12, 0.4.174).
+summary with a capital (L11, 0.4.169), make every floating layer swallow the taps in its frame (L12, 0.4.174), centre a label in its
+fixed-height surface (L13) and give every floating layer an opaque fill (L14, chủ sách 22-11).
 """
 import importlib.util
 import json
@@ -24,7 +25,7 @@ def _tool():
     return module
 
 
-@pytest.mark.parametrize("rule", ["L1", "L2", "L3", "L4", "L5", "L6", "L7", "L8", "L9", "L10", "L11", "L12"])
+@pytest.mark.parametrize("rule", ["L1", "L2", "L3", "L4", "L5", "L6", "L7", "L8", "L9", "L10", "L11", "L12", "L13", "L14"])
 def test_rule_holds_on_the_sources(rule):
     tool = _tool()
     problems = tool.RULES[rule]()
@@ -622,3 +623,81 @@ def test_l12_bites_the_fourth_review_holes(planted):
     assert "Backdrop.qml phải" in text and "HoverHandler" in text, text
     (qml / "Backdrop.qml").write_text("Item {\n    TapHandler { gesturePolicy: TapHandler.ReleaseWithinBounds }\n    HoverHandler {}\n}\n", encoding="utf-8")
     assert not any("Backdrop.qml phải" in p for p in planted.l12_floating_layers())
+
+
+def test_l13_bites_a_label_stuck_to_the_top_of_its_surface(planted):
+    """Chủ sách 22-11 ("thẻ về chỗ vừa nghe bị cái gì này"): BasicText với heightIn(min = 48) + nền trên CHÍNH nó đặt dòng chữ ở đỉnh khung - chữ dính mép
+    trên, thẻ thừa phần dưới. Box không căn / Row không căn chứa một nhãn cũng vậy; Box(contentAlignment) hay nhãn không có nền thì không bị báo."""
+    root = planted.ROOT
+    android = "mobile/android/app/src/main/java/vn/abook/player/ui/"
+    (root / android / "Chip.kt").write_text(
+        "fun Chips() {\n"
+        "    BasicText(S.s_a, Modifier\n        .heightIn(min = Dim.s48)\n        .background(Abook.colors.accentSoft, RoundedCornerShape(12.dp))\n"
+        "        .pressable { back() }\n        .padding(horizontal = 16.dp, vertical = 8.dp), style = x)\n"
+        "    Box(Modifier.height(48.dp).background(c)) { BasicText(S.s_b) }\n"
+        "    Row(Modifier.heightIn(min = 48.dp).pressable { go() }) { BasicText(S.s_c) }\n"
+        "    Box(Modifier.heightIn(min = 48.dp).background(c), contentAlignment = Alignment.Center) { BasicText(S.s_d) }\n"
+        "    Row(Modifier.heightIn(min = 48.dp).pressable { go() }, verticalAlignment = Alignment.CenterVertically) { BasicText(S.s_e) }\n"
+        "    BasicText(S.s_f, Modifier.heightIn(min = 48.dp))\n"
+        "    Box(Modifier.height(48.dp).background(c)) { Icon(); BasicText(S.s_g) }\n"
+        "}\n", encoding="utf-8")
+    problems = planted.l13_centred_labels()
+    text = "\n".join(problems)
+    assert "Chip.kt:2:" in text and "Chip.kt:7:" in text and "Chip.kt:8:" in text, problems
+    assert len(problems) == 3, problems
+    cfg = planted.config()
+    cfg["L13"] = {"allow": [{"file": android + "Gone.kt", "what": "Modifier.height(1.dp)", "reason": "x"}]}
+    planted.CONFIG.write_text(json.dumps(cfg, ensure_ascii=False), encoding="utf-8")
+    assert any("allow thừa" in p and "Gone.kt" in p for p in planted.l13_centred_labels())
+
+
+def test_l14_bites_translucent_fills_on_floating_layers(planted):
+    """Chủ sách 22-11: nền thẻ là accentSoft (hổ phách 14 % ở giao diện tối) nên chữ truyện bên dưới lộ qua thẻ nổi. Android: mọi nền trong suốt
+    phải có lý do (nằm trong dòng chảy) hoặc đi qua floatingFill; web: lớp fixed / absolute / sticky với bg-*-soft, bg-x/NN; Qt: Rectangle nổi (z, parent:,
+    tên lớp phủ) với màu *Soft / Qt.alpha hay opacity 0.9 *."""
+    root = planted.ROOT
+    android = "mobile/android/app/src/main/java/vn/abook/player/ui/"
+    (root / android / "components").mkdir(parents=True, exist_ok=True)
+    (root / android / "Float.kt").write_text(
+        "fun F() {\n"
+        "    Box(Modifier.background(Abook.colors.accentSoft, RoundedCornerShape(12.dp)))\n"
+        "    Box(Modifier.background(colors.bg.copy(alpha = 0.92f)))\n"
+        "    Box(Modifier.background(floatingFill(colors)))\n"
+        "    Box(Modifier.background(colors.accentSoft.compositeOver(colors.panel)))\n"
+        "    Canvas { drawRoundRect(colors.warningSoft, cornerRadius = r) }\n"
+        "}\n", encoding="utf-8")
+    (root / "ui/src/listen/Float.tsx").write_text(
+        'export const A = () => <div className="absolute inset-x-0 bottom-0 rounded-cover bg-panel/95 px-3" />;\n'
+        'export const B = () => <div className="fixed bottom-4 bg-accent-soft" />;\n'
+        'export const C = () => <div className="absolute inset-0 bg-panel" />;\n'
+        'export const D = () => <div className="flex bg-accent-soft" />;\n'
+        'export const E = () => <div className="pointer-events-none absolute inset-x-0 bottom-0 h-6 bg-gradient-to-t from-bg/80" />;\n',
+        encoding="utf-8")
+    (root / "desktop_qt/qml/Float.qml").write_text(
+        "Item {\n"
+        "    Rectangle {\n        parent: columnScroll.contentItem\n        color: Theme.panel\n        opacity: shown ? 0.95 * root.fade : 0\n    }\n"
+        "    Rectangle {\n        objectName: \"readingChip\"\n        color: Theme.accentSoft\n    }\n"
+        "    Rectangle {\n        color: Theme.accentSoft\n    }\n"
+        "    Rectangle {\n        z: 2\n        color: Theme.panel\n        opacity: root.fade\n    }\n"
+        "}\n", encoding="utf-8")
+    problems = planted.l14_opaque_floating()
+    text = "\n".join(problems)
+    assert "Float.kt:2:" in text and "Float.kt:3:" in text and "Float.kt:6:" in text, problems
+    assert "Float.kt:4:" not in text and "Float.kt:5:" not in text, problems
+    assert "Float.tsx:1:" in text and "Float.tsx:2:" in text, problems
+    assert not any(f"Float.tsx:{n}:" in text for n in (3, 4, 5)), problems
+    assert "Float.qml:2:" in text and "Float.qml:7:" in text, problems
+    assert "Float.qml:11:" not in text and "Float.qml:14:" not in text, problems
+    # The shared chip must exist and paint with an opaque fill.
+    assert any("FloatingChip.kt phải có floatingFill" in p for p in problems), problems
+    (root / android / "components/FloatingChip.kt").write_text(
+        "fun floatingFill(colors: AbookColors, tint: Color = colors.accentSoft): Color = tint.compositeOver(colors.panel)\n"
+        "fun FloatingChip() { Box(Modifier.background(floatingFill(colors))) }\n", encoding="utf-8")
+    assert not any("FloatingChip" in p for p in planted.l14_opaque_floating())
+    # A reasoned exception names the exact site; a stale one is reported.
+    cfg = planted.config()
+    cfg["L14"] = {"allow": [{"platform": "android", "file": android + "Float.kt", "what": "Abook.colors.accentSoft", "reason": "x"},
+                            {"platform": "web", "file": "ui/src/listen/Gone.tsx", "what": "fixed bg-scrim", "reason": "x"}]}
+    planted.CONFIG.write_text(json.dumps(cfg, ensure_ascii=False), encoding="utf-8")
+    problems = planted.l14_opaque_floating()
+    assert not any("Float.kt:2:" in p for p in problems) and any("allow thừa" in p and "Gone.tsx" in p for p in problems), problems

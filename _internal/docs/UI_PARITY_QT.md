@@ -104,7 +104,7 @@ Mỗi cặp còn lại phải có giải thích trong ui_strings/qt_wording_revi
 | Sửa sách | image-plus | Đổi ảnh bìa | Đổi ảnh bìa / Chọn ảnh bìa | `qt/EditBook.qml:272` |
 | Sửa sách | file-down | Lưu thành | Lưu | `qt/EditBookItems.qml:82` |
 | Sửa sách | trash | Bỏ cách đọc {} | Bỏ ảnh bìa | `qt/EditBookReadings.qml:124` |
-| Thêm sách | book-plus | Thả để thêm sách | Thêm vào thư viện | `qt/ImportDrop.qml:49` |
+| Thêm sách | book-plus | Thả để thêm sách | Thêm vào thư viện | `qt/ImportDrop.qml:51` |
 | Thư viện | play | Nghe tiếp | Đọc {} | `qt/LibraryContinue.qml:46` |
 | Thư viện | pause | Tạm dừng | Đọc {} | `qt/LibraryContinue.qml:46` |
 | Thư viện | x | Đóng ô tìm | Xoá ô tìm | `qt/LibraryScreen.qml:192` |
@@ -119,8 +119,8 @@ Mỗi cặp còn lại phải có giải thích trong ui_strings/qt_wording_revi
 | Studio tạo sách | layers | Chọn {} tập | Chia thành nhiều phần, Chia thành {} phần / Chia thành mấy phần? | `qt/NewDrop.qml:212` |
 | Studio tạo sách | scissors | Tách thành {} chương | Tách thành chương | `qt/NewHints.qml:96` |
 | Studio tạo sách | wand-sparkles | Bắt đầu | Bắt đầu / Tạo sách | `qt/NewProjectScreen.qml:199` |
-| Đang nghe | moon | Hẹn giờ | {} trên {} | `qt/NowPlaying.qml:483` |
-| Đang nghe | moon | Hết chương | {} trên {} | `qt/NowPlaying.qml:483` |
+| Đang nghe | moon | Hẹn giờ | {} trên {} | `qt/NowPlaying.qml:484` |
+| Đang nghe | moon | Hết chương | {} trên {} | `qt/NowPlaying.qml:484` |
 | Cài đặt | bluetooth | Dùng Bluetooth | Dùng Bluetooth cho {} | `qt/OtherComputersBluetooth.qml:23` |
 | Cài đặt | refresh-cw | Làm mới | Hỏi lại, Hỏi lại thư viện | `qt/PhoneDiagnostics.qml:68` |
 | Cài đặt | save | Lưu nhật ký | Gửi nhật ký | `qt/PhoneDiagnostics.qml:69` |
@@ -183,7 +183,7 @@ Nhãn ngắn (<= 6 chữ). **Chỉ Qt**: không có ở web cùng màn; `*` = we
 
 ### Đang nghe
 
-- chỉ Qt (17): Tạm dừng {}* (`qt/ChapterList.qml:27`); Đọc {}* (`qt/ChapterList.qml:27`); Đọc chương này* (`qt/ChapterList.qml:46`); Đọc* (`qt/ChapterReader.qml:15`); Chưa có chương để đọc. (`qt/ChapterReader.qml:35`); Đã nghe* (`qt/ChapterRow.qml:79`); Thêm tuỳ chọn: {}* (`qt/ChapterRow.qml:130`); Thêm tuỳ chọn* (`qt/NowPlaying.qml:247`); Giọng {}* (`qt/NowPlaying.qml:310`); Thử lại* (`qt/NowPlaying.qml:369`); Nhạc nền* (`qt/NowPlaying.qml:517`); Chỉnh* (`qt/NowPlaying.qml:662`); Âm thanh* (`qt/NowPlaying.qml:662`); Cửa sổ mini (`qt/NowPlaying.qml:671`); Gợi ý phần đọc* (`qt/ReadingSuggestions.qml:9`); Bỏ dòng (`qt/ReadingSuggestions.qml:58`); Đóng* (`qt/ReadingSuggestions.qml:81`)
+- chỉ Qt (17): Tạm dừng {}* (`qt/ChapterList.qml:27`); Đọc {}* (`qt/ChapterList.qml:27`); Đọc chương này* (`qt/ChapterList.qml:46`); Đọc* (`qt/ChapterReader.qml:15`); Chưa có chương để đọc. (`qt/ChapterReader.qml:35`); Đã nghe* (`qt/ChapterRow.qml:79`); Thêm tuỳ chọn: {}* (`qt/ChapterRow.qml:130`); Thêm tuỳ chọn* (`qt/NowPlaying.qml:247`); Giọng {}* (`qt/NowPlaying.qml:310`); Thử lại* (`qt/NowPlaying.qml:370`); Nhạc nền* (`qt/NowPlaying.qml:518`); Chỉnh* (`qt/NowPlaying.qml:663`); Âm thanh* (`qt/NowPlaying.qml:663`); Cửa sổ mini (`qt/NowPlaying.qml:672`); Gợi ý phần đọc* (`qt/ReadingSuggestions.qml:9`); Bỏ dòng (`qt/ReadingSuggestions.qml:58`); Đóng* (`qt/ReadingSuggestions.qml:81`)
 - chỉ web (16): Shift+← (`286`); Đã chọn tốc độ đọc {} (`521`); Phím (`524`); Đã chọn giọng {} (`788`); Hẹn giờ đã tắt tiếng lúc (`983`); Tiếng nhỏ dần (`1003`); Hẹn giờ ngủ trên {} (`1083`); Về chế độ nghe (`2167`); Chưa nghe · {} chương (`69`); Nghe tiếp · {} (`88`); Shift+→ (`106`); Chưa có audio (`116`); Chạm (`127`); Nghe bằng giọng đọc.{} (`149`); Hẹn giờ ngủ: còn {} giây (`134`); ...
 
 ### Đọc theo
@@ -203,7 +203,7 @@ Nhãn ngắn (<= 6 chữ). **Chỉ Qt**: không có ở web cùng màn; `*` = we
 
 ### Thêm sách
 
-- chỉ Qt (29): Chưa mở được file sách* (`qt/AddBook.qml:224`); Đã mở (`qt/AddBook.qml:235`); Bỏ qua* (`qt/AddBook.qml:402`); Đang đọc file tiếp (`qt/AddBook.qml:536`); Đang đọc file sách (`qt/AddBook.qml:594`); Bỏ số gọi* (`qt/AddBook.qml:885`); Lời chú* (`qt/AddBook.qml:896`); Bỏ lời chú* (`qt/AddBook.qml:908`); Cuối chương* (`qt/AddBook.qml:908`); Giữ nguyên* (`qt/AddBook.qml:908`); Bỏ đọc dòng* (`qt/AddBook.qml:974`); Đang thêm {} (`qt/AddBook.qml:1015`); Tất cả file (*) (`qt/AddBook.qml:1047`); Đưa vào sách: (`qt/ImportChapters.qml:101`); Bấm để đổi tên chương* (`qt/ImportChapters.qml:136`); Tên chương* (`qt/ImportChapters.qml:175`); Thả để thêm sách* (`qt/ImportDrop.qml:53`); Tách theo {} dòng “Chương N” (`qt/ImportQueue.js:119`); File này có bản thu khác* (`qt/ImportQueue.js:198`); Sách đã có* (`qt/ImportQueue.js:198`); Đã cập nhật* (`qt/ImportQueue.js:198`); Sách của Studio* (`qt/ImportQueue.js:199`); Đã khôi phục file* (`qt/ImportQueue.js:199`); Đã mở dự án* (`qt/ImportQueue.js:199`); Đã gộp {} sửa từ file* (`qt/ImportQueue.js:206`); Đang tải* (`qt/ImportSkeleton.qml:11`); Đang thêm sách* (`qt/ImportStatus.qml:50`); Thử lại* (`qt/ImportStatus.qml:73`); Đóng* (`qt/ImportStatus.qml:74`)
+- chỉ Qt (29): Chưa mở được file sách* (`qt/AddBook.qml:224`); Đã mở (`qt/AddBook.qml:235`); Bỏ qua* (`qt/AddBook.qml:402`); Đang đọc file tiếp (`qt/AddBook.qml:536`); Đang đọc file sách (`qt/AddBook.qml:594`); Bỏ số gọi* (`qt/AddBook.qml:885`); Lời chú* (`qt/AddBook.qml:896`); Bỏ lời chú* (`qt/AddBook.qml:908`); Cuối chương* (`qt/AddBook.qml:908`); Giữ nguyên* (`qt/AddBook.qml:908`); Bỏ đọc dòng* (`qt/AddBook.qml:974`); Đang thêm {} (`qt/AddBook.qml:1015`); Tất cả file (*) (`qt/AddBook.qml:1047`); Đưa vào sách: (`qt/ImportChapters.qml:101`); Bấm để đổi tên chương* (`qt/ImportChapters.qml:136`); Tên chương* (`qt/ImportChapters.qml:175`); Thả để thêm sách* (`qt/ImportDrop.qml:55`); Tách theo {} dòng “Chương N” (`qt/ImportQueue.js:119`); File này có bản thu khác* (`qt/ImportQueue.js:198`); Sách đã có* (`qt/ImportQueue.js:198`); Đã cập nhật* (`qt/ImportQueue.js:198`); Sách của Studio* (`qt/ImportQueue.js:199`); Đã khôi phục file* (`qt/ImportQueue.js:199`); Đã mở dự án* (`qt/ImportQueue.js:199`); Đã gộp {} sửa từ file* (`qt/ImportQueue.js:206`); Đang tải* (`qt/ImportSkeleton.qml:11`); Đang thêm sách* (`qt/ImportStatus.qml:50`); Thử lại* (`qt/ImportStatus.qml:73`); Đóng* (`qt/ImportStatus.qml:74`)
 - chỉ web (2): Xem trước (`564`); Tách chương (`722`)
 
 ### Sửa sách
@@ -288,8 +288,8 @@ Chú thích Qt ghi phím tắt sau nhãn; web ghép bằng `withShortcut(nhãn, 
 | nhãn | Qt | web | nơi |
 |---|---|---|---|
 | Thu nhỏ | `Esc` | (không ghi) | `qt/NowPlaying.qml:261` |
-| Chương trước | `Shift+←` | (không ghi) | `qt/NowPlaying.qml:442` |
-| Chương sau | `Shift+→` | (không ghi) | `qt/NowPlaying.qml:453` |
+| Chương trước | `Shift+←` | (không ghi) | `qt/NowPlaying.qml:443` |
+| Chương sau | `Shift+→` | (không ghi) | `qt/NowPlaying.qml:454` |
 | Phát | `Space` | (không ghi) | `qt/PlayButton.qml:14` |
 | Tạm dừng | `Space` | (không ghi) | `qt/PlayButton.qml:14` |
 | {} | `Esc` | (không ghi) | `qt/ScreenHeader.qml:26` |
