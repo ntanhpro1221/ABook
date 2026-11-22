@@ -56,7 +56,10 @@ export async function settle(cdp, session, timeout) {
   await waitUntil(cdp, session, `(() => {
     // Dữ liệu giả có thể retry sau ready: spinner mới cũng phải đứng yên, không chỉ loạt đầu.
     window.__inspectFreezeInfinite();
-    const still = document.fonts.status === "loaded" && document.getAnimations().every(a => a.playState === "finished" || a.playState === "idle");
+    // Thanh tiến độ đang phát (.motion-progress) trôi transform theo từng nhịp vị trí - ngoại lệ "tick" có chủ đích của web (như
+    // check_ticks bên Qt), không phải bố cục chưa yên: chờ nó đứng thì không bao giờ xong khi có thứ đang phát (loa ngoài, desktop/remote-cast).
+    const tick = a => a.transitionProperty === "transform" && a.effect?.target?.classList?.contains("motion-progress");
+    const still = document.fonts.status === "loaded" && document.getAnimations().every(a => a.playState === "finished" || a.playState === "idle" || tick(a));
     if (!still) { window.__inspectStillSince = 0; return false; }
     window.__inspectStillSince ||= performance.now();
     return performance.now() - window.__inspectStillSince >= 300;

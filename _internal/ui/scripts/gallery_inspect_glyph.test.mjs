@@ -42,3 +42,20 @@ it.skipIf(!browserAvailable)("resolves Vietnamese tab overhangs without hiding a
     expect(broken[0].tolerance).toBe(2);
   } finally { cdp?.close(); await browser?.close(); await new Promise(resolve => server.close(resolve)); }
 }, 60000);
+
+it.skipIf(!browserAvailable)("settles beside a ticking progress bar, but not beside other repeated motion", async () => {
+  const page = (bar) => `<!doctype html><meta charset="utf-8"><style>.motion-progress{width:100%;transform-origin:left;transition:transform 220ms linear}
+    #bar.x{transition:transform 220ms linear}</style><main><h1>Still page</h1><div id="bar" class="${bar}" style="height:2px;background:red"></div></main>
+    <script>let n=0;setInterval(()=>{document.getElementById("bar").style.transform="scaleX("+(0.2+(++n%50)/1000)+")"},120)</script>`;
+  const server = createServer((request, response) => response.end(page(request.url.includes("other") ? "x" : "motion-progress")));
+  await new Promise(resolve => server.listen(0, "127.0.0.1", resolve));
+  let browser, cdp;
+  try {
+    browser = await launch(findBrowser(), { disableGpu: true }); cdp = await connect(browser.endpoint);
+    const tab = await openPage(cdp, { width: 800, height: 600, scale: 1, mobile: false, theme: "light" });
+    await cdp.send("Page.navigate", { url: `http://127.0.0.1:${server.address().port}/progress` }, tab.sessionId);
+    await settle(cdp, tab.sessionId, 8000);
+    await cdp.send("Page.navigate", { url: `http://127.0.0.1:${server.address().port}/other` }, tab.sessionId);
+    await expect(settle(cdp, tab.sessionId, 3000)).rejects.toThrow();
+  } finally { cdp?.close(); await browser?.close(); await new Promise(resolve => server.close(resolve)); }
+}, 60000);
