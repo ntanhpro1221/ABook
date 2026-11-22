@@ -18,7 +18,7 @@
     "preset": "",
     "gender": "male",
     "avoid": "",
-    "requestedAt": 1791785639.4743245
+    "requestedAt": 1795301881.4129589
    }
   },
   {
@@ -87,6 +87,10 @@
    "response": {
     "narrator": {
      "voice": "Đức Trí",
+     "chapterVoices": [],
+     "exceptChapters": [],
+     "voiceLines": 4,
+     "voiceSeconds": 7.0,
      "lines": 4,
      "seconds": 7.0,
      "profile": {
@@ -153,7 +157,7 @@
     "preset": "Thiện Minh",
     "gender": "",
     "avoid": "preset_a",
-    "requestedAt": 1791785639.5657122
+    "requestedAt": 1795301881.5298111
    }
   },
   {
@@ -163,6 +167,10 @@
    "response": {
     "narrator": {
      "voice": "Đức Trí",
+     "chapterVoices": [],
+     "exceptChapters": [],
+     "voiceLines": 4,
+     "voiceSeconds": 7.0,
      "lines": 4,
      "seconds": 7.0,
      "profile": {
@@ -227,7 +235,7 @@
       "lines": 0,
       "section": "voices",
       "key": "HEIDI",
-      "requestedAt": 1791785639.5657122
+      "requestedAt": 1795301881.5298111
      }
     ],
     "lines": 0,
@@ -256,6 +264,10 @@
    "response": {
     "narrator": {
      "voice": "Đức Trí",
+     "chapterVoices": [],
+     "exceptChapters": [],
+     "voiceLines": 4,
+     "voiceSeconds": 7.0,
      "lines": 4,
      "seconds": 7.0,
      "profile": {
@@ -345,7 +357,7 @@
     "preset": "Thiện Minh",
     "gender": "",
     "avoid": "",
-    "requestedAt": 1791785639.6853054
+    "requestedAt": 1795301881.6363866
    }
   },
   {

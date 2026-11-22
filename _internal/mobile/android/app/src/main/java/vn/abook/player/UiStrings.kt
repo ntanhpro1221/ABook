@@ -8,6 +8,9 @@ internal object S {
     const val s_bookmeta_source_site = "Tên nguồn"
     const val s_bookmeta_save = "Lưu thông tin"
     const val s_bookmeta_save_error = "Chưa lưu được thông tin"
+    const val s_cast_invalid_title = "Dàn nhân vật lỗi"
+    fun s_cast_voice_count(p0: Any?): String = p0.toString() + " giọng"
+    const val s_cast_invalid_description = "Dàn nhân vật không đúng định dạng. Hãy xin lại file từ người làm sách."
     const val s_device_engine_google = "Google"
     const val s_device_engine_samsung = "Samsung"
     const val s_device_engine_default = "Máy"
@@ -3011,8 +3014,7 @@ internal object S {
     const val s_cast_history_undo = "Hoàn tác phân vai"
     const val s_cast_gender_group = "Nhóm"
     const val s_cast_gender_child = "Trẻ em"
-    fun s_package_internal_marks(p0: Any?): String = "Chữ người nghe thấy có dấu nội bộ (QA, mã máy) - không đóng gói: " + p0.toString()
-    fun s_package_internal_fields(p0: Any?): String = "book.json có trường QA / nội bộ chỉ thuộc dự án - không đóng gói: " + p0.toString()
+    const val s_package_internal_marks = "Chưa lưu được file vì còn dấu kiểm tra nội bộ. Hãy thử xuất lại từ Studio."
     const val s_cast_history_bad_wish = "Một ý muốn hoàn tác trong phần sửa không hợp lệ."
     const val s_preview_timeout = "Mạng chậm, thử nghe lại."
     const val s_chua_co_bia = "Chưa có bìa"

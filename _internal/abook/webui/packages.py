@@ -21,6 +21,7 @@ from typing import Any
 
 from .. import continuation, book_volumes
 from ..io_utils import atomic_write_bytes
+from ..cast_contract import valid_cast
 from . import book_edits, covers, humanize, listing_cache, project_views, store
 from .fingerprints import Fingerprints, base_name, identity_prints, is_text_identity
 from .listen_view import FORMAT
@@ -381,7 +382,12 @@ def raw_cast(path: Path) -> Any:
 
 def cast(path: Path) -> Any:
     """Dàn nhân vật như người nghe thấy (tên đã đổi, chương đầu theo tên chương mới)."""
-    result = raw_cast(path)
+    try:
+        result = raw_cast(path)
+    except (ValueError, OSError):
+        return {"error": "cast_invalid"}
+    if not valid_cast(result):
+        return {"error": "cast_invalid"}
     edits = book_edits.load(path)
     if not (book_edits.is_empty(edits) or not isinstance(result, dict)):
         result = book_edits.apply_cast(result, edits, manifest(path))

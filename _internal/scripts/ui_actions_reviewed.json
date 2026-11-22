@@ -1119,73 +1119,73 @@
     "id": "0eb6ef1238f0213bb9f6",
     "kind": "destructive",
     "path": "ui/src/listen/BookScreen.tsx",
-    "line": 803,
+    "line": 813,
     "statement": "if (dialog.kind === \"delete\") switchTo(() => mutations.removeRecord.mutateAsync(active.id), S.s_da_xoa_ho_so_0_54dabd55(active.name));",
     "occurrence": 1,
-    "source_sha256": "02b7dd8e13dee449c21ac7e4e6e8ed27c77da1ea787f22de1304957f2d16f9c8",
+    "source_sha256": "49fcec8ebdb1cb7c3acf6af7a8dc7908d9396ed23a437cf9301ac6b198c3ce39",
     "disposition": "confirmation",
     "guard": "BookRecords ConfirmPage / BookScreen record Dialog / RecordDialogs Modal / DeleteBookPage",
-    "reason": "Deleting a listening profile explicitly describes loss of progress and history. Deleting a book uses the book confirmation. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Gate repair: reviewed identity-key motion, explicit layout, token spacing or semantic navigation changes; existing guard retained. Combined-source review (merge174 castview): both sides' changes to this file keep this statement and its guard unchanged. Combined-source review (merge174 lintfix): both sides' changes to this file keep this statement and its guard unchanged. 0.4.173 fixes (sleep stopped line, activity-off extend, night continue, word reading row, per-book timers, volume editor id and add rule) leave this statement and its guard unchanged. Combined-source review (merge174 integ173): both sides' changes to this file keep this statement and its guard unchanged. Re-pinned for left174: the edit only moves book/user text off truncate/line-clamp onto OneLineFit or wrapping; this statement and its guard are unchanged. Combined-source review (merge174 left174): both sides' changes to this file keep this statement and its guard unchanged. merge174 (castview dbffd7a49 + gather): narrator rows read the server cast.json, a voice-sample play button and one count line were added beside these statements; each statement and its guard are unchanged."
+    "reason": "Deleting a listening profile explicitly describes loss of progress and history. Deleting a book uses the book confirmation. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Gate repair: reviewed identity-key motion, explicit layout, token spacing or semantic navigation changes; existing guard retained. Combined-source review (merge174 castview): both sides' changes to this file keep this statement and its guard unchanged. Combined-source review (merge174 lintfix): both sides' changes to this file keep this statement and its guard unchanged. 0.4.173 fixes (sleep stopped line, activity-off extend, night continue, word reading row, per-book timers, volume editor id and add rule) leave this statement and its guard unchanged. Combined-source review (merge174 integ173): both sides' changes to this file keep this statement and its guard unchanged. Re-pinned for left174: the edit only moves book/user text off truncate/line-clamp onto OneLineFit or wrapping; this statement and its guard are unchanged. Combined-source review (merge174 left174): both sides' changes to this file keep this statement and its guard unchanged. merge174 (castview dbffd7a49 + gather): narrator rows read the server cast.json, a voice-sample play button and one count line were added beside these statements; each statement and its guard are unchanged. Combined-source review (merge174e castview castfix3+castfix4): castview's cast.json validation, error boundaries and narrator rows sit beside this statement; the statement and its guard are unchanged."
   },
   {
     "id": "9afb04bc8bcc92ca4b0c",
     "kind": "pending",
     "path": "ui/src/listen/BookScreen.tsx",
-    "line": 1104,
+    "line": 1114,
     "statement": "const restart = async () => {",
     "occurrence": 1,
-    "source_sha256": "02b7dd8e13dee449c21ac7e4e6e8ed27c77da1ea787f22de1304957f2d16f9c8",
+    "source_sha256": "49fcec8ebdb1cb7c3acf6af7a8dc7908d9396ed23a437cf9301ac6b198c3ce39",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; LoadingCrossfade, Progress, busy, isLoading, loading, pending, pendingVoice, preparingBookId, progress, progressFill",
-    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Gate repair: reviewed identity-key motion, explicit layout, token spacing or semantic navigation changes; existing guard retained. Combined-source review (merge174 castview): both sides' changes to this file keep this statement and its guard unchanged. Combined-source review (merge174 lintfix): both sides' changes to this file keep this statement and its guard unchanged. 0.4.173 fixes (sleep stopped line, activity-off extend, night continue, word reading row, per-book timers, volume editor id and add rule) leave this statement and its guard unchanged. Combined-source review (merge174 integ173): both sides' changes to this file keep this statement and its guard unchanged. Re-pinned for left174: the edit only moves book/user text off truncate/line-clamp onto OneLineFit or wrapping; this statement and its guard are unchanged. Combined-source review (merge174 left174): both sides' changes to this file keep this statement and its guard unchanged. merge174 (castview dbffd7a49 + gather): narrator rows read the server cast.json, a voice-sample play button and one count line were added beside these statements; each statement and its guard are unchanged."
+    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Gate repair: reviewed identity-key motion, explicit layout, token spacing or semantic navigation changes; existing guard retained. Combined-source review (merge174 castview): both sides' changes to this file keep this statement and its guard unchanged. Combined-source review (merge174 lintfix): both sides' changes to this file keep this statement and its guard unchanged. 0.4.173 fixes (sleep stopped line, activity-off extend, night continue, word reading row, per-book timers, volume editor id and add rule) leave this statement and its guard unchanged. Combined-source review (merge174 integ173): both sides' changes to this file keep this statement and its guard unchanged. Re-pinned for left174: the edit only moves book/user text off truncate/line-clamp onto OneLineFit or wrapping; this statement and its guard are unchanged. Combined-source review (merge174 left174): both sides' changes to this file keep this statement and its guard unchanged. merge174 (castview dbffd7a49 + gather): narrator rows read the server cast.json, a voice-sample play button and one count line were added beside these statements; each statement and its guard are unchanged. Combined-source review (merge174e castview castfix3+castfix4): castview's cast.json validation, error boundaries and narrator rows sit beside this statement; the statement and its guard are unchanged."
   },
   {
     "id": "0cff7a6337a7b77585a3",
     "kind": "pending",
     "path": "ui/src/listen/BookScreen.tsx",
-    "line": 1119,
+    "line": 1129,
     "statement": "action: { label: S.s_quay_lai_cho_cu_fea69b14, onClick: () => void playBook(book, before.chapter.id, before.at) },",
     "occurrence": 1,
-    "source_sha256": "02b7dd8e13dee449c21ac7e4e6e8ed27c77da1ea787f22de1304957f2d16f9c8",
+    "source_sha256": "49fcec8ebdb1cb7c3acf6af7a8dc7908d9396ed23a437cf9301ac6b198c3ce39",
     "disposition": "internal",
     "guard": "Async interface/helper boundary; concrete activation inventoried separately",
-    "reason": "This signature supplies work to a model or component; declaring it starts no user operation. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Gate repair: reviewed identity-key motion, explicit layout, token spacing or semantic navigation changes; existing guard retained. Combined-source review (merge174 castview): both sides' changes to this file keep this statement and its guard unchanged. Combined-source review (merge174 lintfix): both sides' changes to this file keep this statement and its guard unchanged. 0.4.173 fixes (sleep stopped line, activity-off extend, night continue, word reading row, per-book timers, volume editor id and add rule) leave this statement and its guard unchanged. Combined-source review (merge174 integ173): both sides' changes to this file keep this statement and its guard unchanged. Re-pinned for left174: the edit only moves book/user text off truncate/line-clamp onto OneLineFit or wrapping; this statement and its guard are unchanged. Combined-source review (merge174 left174): both sides' changes to this file keep this statement and its guard unchanged. merge174 (castview dbffd7a49 + gather): narrator rows read the server cast.json, a voice-sample play button and one count line were added beside these statements; each statement and its guard are unchanged."
+    "reason": "This signature supplies work to a model or component; declaring it starts no user operation. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Gate repair: reviewed identity-key motion, explicit layout, token spacing or semantic navigation changes; existing guard retained. Combined-source review (merge174 castview): both sides' changes to this file keep this statement and its guard unchanged. Combined-source review (merge174 lintfix): both sides' changes to this file keep this statement and its guard unchanged. 0.4.173 fixes (sleep stopped line, activity-off extend, night continue, word reading row, per-book timers, volume editor id and add rule) leave this statement and its guard unchanged. Combined-source review (merge174 integ173): both sides' changes to this file keep this statement and its guard unchanged. Re-pinned for left174: the edit only moves book/user text off truncate/line-clamp onto OneLineFit or wrapping; this statement and its guard are unchanged. Combined-source review (merge174 left174): both sides' changes to this file keep this statement and its guard unchanged. merge174 (castview dbffd7a49 + gather): narrator rows read the server cast.json, a voice-sample play button and one count line were added beside these statements; each statement and its guard are unchanged. Combined-source review (merge174e castview castfix3+castfix4): castview's cast.json validation, error boundaries and narrator rows sit beside this statement; the statement and its guard are unchanged."
   },
   {
     "id": "066bfd62238e7b1506cd",
     "kind": "pending",
     "path": "ui/src/listen/BookScreen.tsx",
-    "line": 1125,
+    "line": 1135,
     "statement": "const listenNow = async () => {",
     "occurrence": 1,
-    "source_sha256": "02b7dd8e13dee449c21ac7e4e6e8ed27c77da1ea787f22de1304957f2d16f9c8",
+    "source_sha256": "49fcec8ebdb1cb7c3acf6af7a8dc7908d9396ed23a437cf9301ac6b198c3ce39",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; LoadingCrossfade, Progress, busy, isLoading, loading, pending, pendingVoice, preparingBookId, progress, progressFill",
-    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Gate repair: reviewed identity-key motion, explicit layout, token spacing or semantic navigation changes; existing guard retained. Combined-source review (merge174 castview): both sides' changes to this file keep this statement and its guard unchanged. Combined-source review (merge174 lintfix): both sides' changes to this file keep this statement and its guard unchanged. 0.4.173 fixes (sleep stopped line, activity-off extend, night continue, word reading row, per-book timers, volume editor id and add rule) leave this statement and its guard unchanged. Combined-source review (merge174 integ173): both sides' changes to this file keep this statement and its guard unchanged. Re-pinned for left174: the edit only moves book/user text off truncate/line-clamp onto OneLineFit or wrapping; this statement and its guard are unchanged. Combined-source review (merge174 left174): both sides' changes to this file keep this statement and its guard unchanged. merge174 (castview dbffd7a49 + gather): narrator rows read the server cast.json, a voice-sample play button and one count line were added beside these statements; each statement and its guard are unchanged."
+    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Gate repair: reviewed identity-key motion, explicit layout, token spacing or semantic navigation changes; existing guard retained. Combined-source review (merge174 castview): both sides' changes to this file keep this statement and its guard unchanged. Combined-source review (merge174 lintfix): both sides' changes to this file keep this statement and its guard unchanged. 0.4.173 fixes (sleep stopped line, activity-off extend, night continue, word reading row, per-book timers, volume editor id and add rule) leave this statement and its guard unchanged. Combined-source review (merge174 integ173): both sides' changes to this file keep this statement and its guard unchanged. Re-pinned for left174: the edit only moves book/user text off truncate/line-clamp onto OneLineFit or wrapping; this statement and its guard are unchanged. Combined-source review (merge174 left174): both sides' changes to this file keep this statement and its guard unchanged. merge174 (castview dbffd7a49 + gather): narrator rows read the server cast.json, a voice-sample play button and one count line were added beside these statements; each statement and its guard are unchanged. Combined-source review (merge174e castview castfix3+castfix4): castview's cast.json validation, error boundaries and narrator rows sit beside this statement; the statement and its guard are unchanged."
   },
   {
     "id": "1d74793870f93603ba4e",
     "kind": "pending",
     "path": "ui/src/listen/BookScreen.tsx",
-    "line": 1272,
+    "line": 1282,
     "statement": "onSelect={() => void saver.save()}",
     "occurrence": 1,
-    "source_sha256": "02b7dd8e13dee449c21ac7e4e6e8ed27c77da1ea787f22de1304957f2d16f9c8",
+    "source_sha256": "49fcec8ebdb1cb7c3acf6af7a8dc7908d9396ed23a437cf9301ac6b198c3ce39",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; LoadingCrossfade, Progress, busy, isLoading, loading, pending, pendingVoice, preparingBookId, progress, progressFill",
-    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Gate repair: reviewed identity-key motion, explicit layout, token spacing or semantic navigation changes; existing guard retained. Combined-source review (merge174 castview): both sides' changes to this file keep this statement and its guard unchanged. Combined-source review (merge174 lintfix): both sides' changes to this file keep this statement and its guard unchanged. 0.4.173 fixes (sleep stopped line, activity-off extend, night continue, word reading row, per-book timers, volume editor id and add rule) leave this statement and its guard unchanged. Combined-source review (merge174 integ173): both sides' changes to this file keep this statement and its guard unchanged. Re-pinned for left174: the edit only moves book/user text off truncate/line-clamp onto OneLineFit or wrapping; this statement and its guard are unchanged. Combined-source review (merge174 left174): both sides' changes to this file keep this statement and its guard unchanged. merge174 (castview dbffd7a49 + gather): narrator rows read the server cast.json, a voice-sample play button and one count line were added beside these statements; each statement and its guard are unchanged."
+    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Gate repair: reviewed identity-key motion, explicit layout, token spacing or semantic navigation changes; existing guard retained. Combined-source review (merge174 castview): both sides' changes to this file keep this statement and its guard unchanged. Combined-source review (merge174 lintfix): both sides' changes to this file keep this statement and its guard unchanged. 0.4.173 fixes (sleep stopped line, activity-off extend, night continue, word reading row, per-book timers, volume editor id and add rule) leave this statement and its guard unchanged. Combined-source review (merge174 integ173): both sides' changes to this file keep this statement and its guard unchanged. Re-pinned for left174: the edit only moves book/user text off truncate/line-clamp onto OneLineFit or wrapping; this statement and its guard are unchanged. Combined-source review (merge174 left174): both sides' changes to this file keep this statement and its guard unchanged. merge174 (castview dbffd7a49 + gather): narrator rows read the server cast.json, a voice-sample play button and one count line were added beside these statements; each statement and its guard are unchanged. Combined-source review (merge174e castview castfix3+castfix4): castview's cast.json validation, error boundaries and narrator rows sit beside this statement; the statement and its guard are unchanged."
   },
   {
     "id": "1d071d9ad59632b02e8b",
     "kind": "pending",
     "path": "ui/src/listen/BookScreen.tsx",
-    "line": 1281,
+    "line": 1291,
     "statement": "onSelect={() => void sharer.share()}",
     "occurrence": 1,
-    "source_sha256": "02b7dd8e13dee449c21ac7e4e6e8ed27c77da1ea787f22de1304957f2d16f9c8",
+    "source_sha256": "49fcec8ebdb1cb7c3acf6af7a8dc7908d9396ed23a437cf9301ac6b198c3ce39",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; LoadingCrossfade, Progress, busy, isLoading, loading, pending, pendingVoice, preparingBookId, progress, progressFill",
-    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Gate repair: reviewed identity-key motion, explicit layout, token spacing or semantic navigation changes; existing guard retained. Combined-source review (merge174 castview): both sides' changes to this file keep this statement and its guard unchanged. Combined-source review (merge174 lintfix): both sides' changes to this file keep this statement and its guard unchanged. 0.4.173 fixes (sleep stopped line, activity-off extend, night continue, word reading row, per-book timers, volume editor id and add rule) leave this statement and its guard unchanged. Combined-source review (merge174 integ173): both sides' changes to this file keep this statement and its guard unchanged. Re-pinned for left174: the edit only moves book/user text off truncate/line-clamp onto OneLineFit or wrapping; this statement and its guard are unchanged. Combined-source review (merge174 left174): both sides' changes to this file keep this statement and its guard unchanged. merge174 (castview dbffd7a49 + gather): narrator rows read the server cast.json, a voice-sample play button and one count line were added beside these statements; each statement and its guard are unchanged."
+    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Gate repair: reviewed identity-key motion, explicit layout, token spacing or semantic navigation changes; existing guard retained. Combined-source review (merge174 castview): both sides' changes to this file keep this statement and its guard unchanged. Combined-source review (merge174 lintfix): both sides' changes to this file keep this statement and its guard unchanged. 0.4.173 fixes (sleep stopped line, activity-off extend, night continue, word reading row, per-book timers, volume editor id and add rule) leave this statement and its guard unchanged. Combined-source review (merge174 integ173): both sides' changes to this file keep this statement and its guard unchanged. Re-pinned for left174: the edit only moves book/user text off truncate/line-clamp onto OneLineFit or wrapping; this statement and its guard are unchanged. Combined-source review (merge174 left174): both sides' changes to this file keep this statement and its guard unchanged. merge174 (castview dbffd7a49 + gather): narrator rows read the server cast.json, a voice-sample play button and one count line were added beside these statements; each statement and its guard are unchanged. Combined-source review (merge174e castview castfix3+castfix4): castview's cast.json validation, error boundaries and narrator rows sit beside this statement; the statement and its guard are unchanged."
   },
   {
     "id": "d2780dded4db9ad89245",
@@ -11466,10 +11466,10 @@
     "line": 285,
     "statement": "suspend fun avatar(person: CastMember): ByteArray? = person.avatar?.file?.let { source.avatarBytes(bookId, it) }",
     "occurrence": 1,
-    "source_sha256": "2dee3dad102ced55f313bf572a8092b4b134a45f36a83a4ed22170d3124aade8",
+    "source_sha256": "054a198223903a8d859ccc2d49a3a576a15fc601500478adfaa20a025dfda34a",
     "disposition": "internal",
     "guard": "suspend service boundary; awaited by existing export/cast UI state owner",
-    "reason": "Volume export and portrait source methods are awaited service adapters. ExportState/StudioCastState retain progress and errors; byte reads use the existing IO boundary. Gate repair: reviewed identity-key motion, explicit layout, token spacing or semantic navigation changes; existing guard retained. Combined-source review (merge174 castview): both sides' changes to this file keep this statement and its guard unchanged."
+    "reason": "Volume export and portrait source methods are awaited service adapters. ExportState/StudioCastState retain progress and errors; byte reads use the existing IO boundary. Gate repair: reviewed identity-key motion, explicit layout, token spacing or semantic navigation changes; existing guard retained. Combined-source review (merge174 castview): both sides' changes to this file keep this statement and its guard unchanged. Combined-source review (merge174e castview castfix3+castfix4): castview's cast.json validation, error boundaries and narrator rows sit beside this statement; the statement and its guard are unchanged."
   },
   {
     "id": "68e91ce63dcab41321cb",
@@ -11478,10 +11478,10 @@
     "line": 297,
     "statement": "scope.launch {",
     "occurrence": 1,
-    "source_sha256": "2dee3dad102ced55f313bf572a8092b4b134a45f36a83a4ed22170d3124aade8",
+    "source_sha256": "054a198223903a8d859ccc2d49a3a576a15fc601500478adfaa20a025dfda34a",
     "disposition": "internal",
     "guard": "Animation/frame clock or test harness lifecycle",
-    "reason": "The coroutine advances presentation or test fixtures, not a user-triggered network/file operation. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Gate repair: reviewed identity-key motion, explicit layout, token spacing or semantic navigation changes; existing guard retained. Combined-source review (merge174 castview): both sides' changes to this file keep this statement and its guard unchanged."
+    "reason": "The coroutine advances presentation or test fixtures, not a user-triggered network/file operation. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Gate repair: reviewed identity-key motion, explicit layout, token spacing or semantic navigation changes; existing guard retained. Combined-source review (merge174 castview): both sides' changes to this file keep this statement and its guard unchanged. Combined-source review (merge174e castview castfix3+castfix4): castview's cast.json validation, error boundaries and narrator rows sit beside this statement; the statement and its guard are unchanged."
   },
   {
     "id": "a64361490e5fb37eb655",
@@ -11679,13 +11679,13 @@
     "id": "67d912cd49551cf976e7",
     "kind": "pending",
     "path": "mobile/android/app/src/main/java/vn/abook/player/ui/studio/CastTab.kt",
-    "line": 212,
+    "line": 221,
     "statement": "choices == null -> InlineProblem(sheet.problem, { scope.launch { sheet.load() } }, \"studio_voice_problem\")",
     "occurrence": 1,
-    "source_sha256": "beda71b2d70ef27750be737968d4cdc092f7f931159c8ef7a5726524b6410276",
+    "source_sha256": "3d10d74cf221ac5770cc66376322b9789a7a7f05785cdac623f9d373b9597223",
     "disposition": "pending",
     "guard": "ViewModel/operation fields: cast_loading, loading, pending, pendingVoice, studio_cast_loading, studio_voice_loading, studio_voice_pending, voicePending; Components pending indicator",
-    "reason": "The model retains the operation and locks repeats; UI uses the shared pending parameter, loading content or progress owner. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Combined-source review (merge174 castview): both sides' changes to this file keep this statement and its guard unchanged. merge174 (castview dbffd7a49 + gather): narrator rows read the server cast.json, a voice-sample play button and one count line were added beside these statements; each statement and its guard are unchanged."
+    "reason": "The model retains the operation and locks repeats; UI uses the shared pending parameter, loading content or progress owner. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Combined-source review (merge174 castview): both sides' changes to this file keep this statement and its guard unchanged. merge174 (castview dbffd7a49 + gather): narrator rows read the server cast.json, a voice-sample play button and one count line were added beside these statements; each statement and its guard are unchanged. Combined-source review (merge174e castview castfix3+castfix4): castview's cast.json validation, error boundaries and narrator rows sit beside this statement; the statement and its guard are unchanged."
   },
   {
     "id": "7a6e23a17c09eab629a3",
@@ -15291,13 +15291,13 @@
     "id": "f4ef87fda2c02e52eab3",
     "kind": "pending",
     "path": "desktop_qt/qml/CastList.qml",
-    "line": 48,
+    "line": 50,
     "statement": "else Api.quiet(\"GET\", \"/api/books/\" + bookId + \"/cast\", null, answer)",
     "occurrence": 1,
-    "source_sha256": "39f25253ebbe4522fae7b258c0fdb4e1ede996ad4a2a8f61d84b2ca5c32b8a3c",
+    "source_sha256": "1780bdb8bf35caacdef74f940cc8883724d24a1023187c13a95289f104949904",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; castNarratorPending, loading, narratorPending",
-    "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Combined-source review (merge174 castview): both sides' changes to this file keep this statement and its guard unchanged. merge174 (fix174b test_qt_repeater_parent): narrator rows size from their Column by id instead of parent; this statement and its guard are unchanged. merge174 (castview dbffd7a49 + gather): narrator rows read the server cast.json, a voice-sample play button and one count line were added beside these statements; each statement and its guard are unchanged."
+    "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Combined-source review (merge174 castview): both sides' changes to this file keep this statement and its guard unchanged. merge174 (fix174b test_qt_repeater_parent): narrator rows size from their Column by id instead of parent; this statement and its guard are unchanged. merge174 (castview dbffd7a49 + gather): narrator rows read the server cast.json, a voice-sample play button and one count line were added beside these statements; each statement and its guard are unchanged. Combined-source review (merge174e castview castfix3+castfix4): castview's cast.json validation, error boundaries and narrator rows sit beside this statement; the statement and its guard are unchanged."
   },
   {
     "id": "68152639fcda06e82c6e",

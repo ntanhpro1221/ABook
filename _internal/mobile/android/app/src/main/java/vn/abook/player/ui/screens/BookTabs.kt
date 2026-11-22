@@ -329,7 +329,14 @@ fun LazyListScope.castItems(
         items(CAST_SKELETON, key = { "cast_skeleton_$it" }, contentType = { "skeleton" }) { SkeletonLine(fade) }
         return
     }
-    if (cast == null || cast.isEmpty) {
+    if (cast == null) {
+        item(key = "cast_invalid", contentType = "empty") {
+            EmptyNote(S.s_cast_invalid_title, S.s_cast_invalid_description, Modifier.fade(fade), "cast_invalid",
+                icon = { ink -> VoiceIcon(ink, size = 28.dp) })
+        }
+        return
+    }
+    if (cast.isEmpty) {
         item(key = "cast_empty", contentType = "empty") {
             EmptyNote(
                 S.s_chua_co_dan_nhan_vat_6f7729cd, S.s_dan_nhan_vat_hien_ra_khi_truyen_da_duoc_ph_dacb7364, Modifier.fade(fade), "cast_empty",
@@ -341,7 +348,7 @@ fun LazyListScope.castItems(
     // Người kể chuyện là một danh sách như Vai chính: mỗi giọng kể một hàng (giọng chính, rồi giọng kể riêng vài chương).
     val narrators = Cast.narratorRows(cast.narrator)
     foldItems(folds, S.s_nguoi_ke_chuyen_c0c2c504, "cast_narrators", narrators, { it.key }, Modifier.fade(fade),
-        summary = S.s_0_giong_7be1af23(narrators.size), defaultOpen = true) { n, row ->
+        summary = S.s_cast_voice_count(narrators.size), defaultOpen = true) { n, row ->
         Column(Modifier.fade(fade)) {
             Reveal(n > 0) { RowLine(start = PersonTextStart) }
             NarratorRow(row, cast.narrator.redo)

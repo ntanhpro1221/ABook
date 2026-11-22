@@ -164,7 +164,7 @@ class ListenExtrasTest {
         val rows = Cast.narratorRows(view.narrator)
         assertEquals(1, rows.size)
         assertEquals("", rows[0].scope)
-        assertEquals("40 câu dẫn truyện · 1\u00a0giờ · 2 câu chờ thu lại", Cast.narratorRowCount(rows[0], view.narrator.redo))
+        assertEquals("40\u00a0câu dẫn truyện\u00a0·\u00a01\u00a0giờ\u00a0·\u00a02\u00a0câu chờ thu lại", Cast.narratorRowCount(rows[0], view.narrator.redo))
         assertEquals(1, view.characters.size)
         assertEquals(1, view.extras.size)
         assertFalse(view.isEmpty)
@@ -178,7 +178,7 @@ class ListenExtrasTest {
     @Test
     fun `a book without cast file has an empty cast and a broken file has none`() {
         assertTrue(Cast.parse(null)!!.isEmpty)
-        assertTrue(Cast.parse("")!!.isEmpty)
+        assertNull(Cast.parse(""))
         assertNull(Cast.parse("{không phải json"))
         assertEquals("Mặc định", Cast.narratorName(Cast.parse(null)!!.narrator))
     }
@@ -187,11 +187,11 @@ class ListenExtrasTest {
     fun `every narrator voice is its own row with the chapters it reads`() {
         val view = Cast.parse("""{"narrator":{"voice":"Đức Trí","lines":10,"seconds":0,"voiceLines":7,"voiceSeconds":0,
             "exceptChapters":[{"id":5,"title":"Chương 5"},{"id":7,"title":"Chương 7"}],
-            "chapterVoices":[{"voice":"Đoan Trang","profile":{"key":"k","preset":"Đoan Trang"},"chapters":[{"id":5,"title":"Chương 5"},{"id":7,"title":"Chương 7"}],"lines":3,"seconds":0}]}}""")!!
+            "chapterVoices":[{"voice":"Đoan Trang","profile":{"key":"k","preset":"Đoan Trang"},"chapters":[{"id":5,"title":"Chương 5"},{"id":7,"title":"Chương 7"}],"lines":3,"seconds":0}]},"characters":[],"extras":[]}""")!!
         val rows = Cast.narratorRows(view.narrator)
         assertEquals(listOf("Đức Trí", "Đoan Trang"), rows.map { it.voice })
         assertEquals(listOf("Toàn sách trừ chương 5, 7", "Chương 5, 7"), rows.map { it.scope })
-        assertEquals(listOf("7 câu dẫn truyện", "3 câu dẫn truyện"), rows.map { Cast.narratorRowCount(it) })
+        assertEquals(listOf("7\u00a0câu dẫn truyện", "3\u00a0câu dẫn truyện"), rows.map { Cast.narratorRowCount(it) })
     }
 
     @Test

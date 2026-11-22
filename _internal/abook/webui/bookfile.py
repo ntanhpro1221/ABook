@@ -102,10 +102,11 @@ def cover_warnings(book: dict[str, Any], files: Container[str], edits: dict[str,
 # hiện, chương đầu, giới, tuổi, tên giọng và tên chương của người kể. Tên người hiện ra (cast.json, người nói trên dòng đọc theo của
 # scripts/) không mang dấu NPC: "NPC X" là vai trong sổ, người nghe thấy "X" (humanize.person_name) - chỉ xét tên người, "NPC" có thể
 # đứng trong tên sách, tên chương thật. Trường của `book.json` trong gói theo danh sách trắng: trạng thái QA (qualityPassed,
-# qualityWarning, failedLines, levelQa) và mọi trường nội bộ chỉ thuộc dự án (sổ, .abookproj). Bước xuất bỏ chúng (`listener_book`),
+# qualityWarning, failedLines, levelQa) và mọi trường nội bộ chỉ thuộc sổ dự án. Bước xuất bỏ chúng (`listener_book`),
 # `seal` từ chối gói còn trường ngoài danh sách. Cây con không mang QA (bìa, nhạc, ảnh, sharedWords, package) không xét sâu.
 _RULES = json.loads((Path(__file__).with_name("assets") / "listener_package.json").read_text(encoding="utf-8"))
 INTERNAL_MARKER = re.compile(_RULES["internalMarker"])
+STATUS_LABEL = re.compile(_RULES["statusLabel"])
 NPC_SHOWN = re.compile(_RULES["npcShown"], re.IGNORECASE)
 LISTENER_BOOK_FIELDS = tuple(_RULES["listenerBookFields"])
 LISTENER_CHAPTER_FIELDS = tuple(_RULES["listenerChapterFields"])
@@ -159,38 +160,43 @@ def listener_book(book: dict[str, Any]) -> dict[str, Any]:
     return book
 
 
+def _listener_objects(value: Any) -> list[dict[str, Any]]:
+    return [item for item in value if isinstance(item, dict)] if isinstance(value, list) else []
+
+
 def listener_text_problems(book: dict[str, Any], cast: dict[str, Any] | None) -> list[str]:
     """Các chữ người nghe thấy có dấu nội bộ, dạng "chỗ: chữ" - rỗng là sạch."""
     found: list[str] = []
 
     def check(where: str, value: Any) -> None:
-        if isinstance(value, str) and INTERNAL_MARKER.search(value):
+        if isinstance(value, str) and (INTERNAL_MARKER.search(value) or (where.endswith(".subtitle") and STATUS_LABEL.fullmatch(value))):
             found.append(f"{where}: {value}")
 
     for field in LISTENER_BOOK_FIELDS:
         check(f"book.{field}", book.get(field))
     for group in ("chapters", "volumes", "parts"):
-        for item in book.get(group) or []:
+        for item in _listener_objects(book.get(group)):
             if not isinstance(item, dict):
                 continue
             for field in LISTENER_CHAPTER_FIELDS:
-                check(f"{group}[{item.get('id', item.get('number'))}].{field}", item.get(field))
-            for chapter in item.get("chapters") or []:
+                identity = next((item[key] for key in ("id", "number", "part") if item.get(key) is not None), "")
+                check(f"{group}[{identity}].{field}", item.get(field))
+            for chapter in _listener_objects(item.get("chapters")):
                 if isinstance(chapter, dict):
                     for field in LISTENER_CHAPTER_FIELDS:
                         check(f"chapters[{chapter.get('id')}].{field}", chapter.get(field))
     if isinstance(cast, dict):
         narrator = cast.get("narrator") if isinstance(cast.get("narrator"), dict) else {}
         check("cast.narrator.voice", narrator.get("voice"))
-        for voice in narrator.get("chapterVoices") or []:
+        for voice in _listener_objects(narrator.get("chapterVoices")):
             if isinstance(voice, dict):
                 check("cast.narrator.chapterVoices.voice", voice.get("voice"))
-                for chapter in voice.get("chapters") or []:
+                for chapter in _listener_objects(voice.get("chapters")):
                     check("cast.narrator.chapterVoices.chapters", chapter.get("title") if isinstance(chapter, dict) else None)
-        for chapter in narrator.get("exceptChapters") or []:
+        for chapter in _listener_objects(narrator.get("exceptChapters")):
             check("cast.narrator.exceptChapters", chapter.get("title") if isinstance(chapter, dict) else None)
         for group in ("characters", "extras", "carried"):
-            for person in cast.get(group) or []:
+            for person in _listener_objects(cast.get(group)):
                 if isinstance(person, dict):
                     for field in LISTENER_PERSON_FIELDS:
                         check(f"cast.{group}.{field}", person.get(field))
@@ -227,6 +233,65 @@ def listener_package_problems(book: dict[str, Any], names: Collection[str], read
         if name.startswith("scripts/") and name.endswith(".json") and not leaked:
             leaked += script_speaker_problems(name, read(name))
     return leaked, package_field_problems({key: value for key, value in book.items() if key != "package"})
+
+
+def clean_listener_layer(book: dict[str, Any], files: dict[str, Path | bytes], known: dict[str, dict[str, Any]]) -> None:
+    """Clean an imported listening layer for saving; story text, audio and the listener's edit layer stay byte-for-byte."""
+    listener_book(book)
+
+    def clean(value: str, person: bool = False) -> str:
+        changed = INTERNAL_MARKER.sub("", value)
+        if person and NPC_SHOWN.search(changed):
+            changed = re.sub(r"^\s*npc\b[\s_:：-]*", "", changed, flags=re.IGNORECASE)
+        return changed.strip(" ·|;:") if changed != value else value
+
+    def fields(item: Any, names: tuple[str, ...], person: bool = False) -> None:
+        if isinstance(item, dict):
+            for name in names:
+                if isinstance(item.get(name), str):
+                    item[name] = "" if name == "subtitle" and STATUS_LABEL.fullmatch(item[name]) else clean(item[name], person and name in LISTENER_NAME_FIELDS)
+
+    fields(book, LISTENER_BOOK_FIELDS)
+    for group in ("chapters", "volumes", "parts"):
+        for item in _listener_objects(book.get(group)):
+            fields(item, LISTENER_CHAPTER_FIELDS)
+            if isinstance(item, dict):
+                for chapter in _listener_objects(item.get("chapters")):
+                    fields(chapter, LISTENER_CHAPTER_FIELDS)
+    if "cast.json" in files:
+        original = files["cast.json"].read_bytes() if isinstance(files["cast.json"], Path) else files["cast.json"]
+        try:
+            parsed_cast = json.loads(original)
+        except ValueError:
+            parsed_cast = None
+        cast = parsed_cast if isinstance(parsed_cast, dict) else {}
+        before = json.dumps(cast, ensure_ascii=False)
+        narrator = cast.get("narrator") if isinstance(cast.get("narrator"), dict) else {}
+        fields(narrator, ("voice",))
+        for voice in _listener_objects(narrator.get("chapterVoices")):
+            fields(voice, ("voice",))
+            for chapter in _listener_objects(voice.get("chapters")):
+                fields(chapter, ("title",))
+        for chapter in _listener_objects(narrator.get("exceptChapters")):
+            fields(chapter, ("title",))
+        for group in ("characters", "extras", "carried"):
+            for person in _listener_objects(cast.get(group)):
+                fields(person, LISTENER_PERSON_FIELDS, person=True)
+        if isinstance(parsed_cast, dict) and json.dumps(cast, ensure_ascii=False) != before:
+            files["cast.json"] = json_bytes(cast)
+            known.pop("cast.json", None)
+    for name in list(files):
+        if name.startswith("scripts/") and name.endswith(".json"):
+            original = files[name].read_bytes() if isinstance(files[name], Path) else files[name]
+            def clean_speaker(match: re.Match[bytes]) -> bytes:
+                speaker = json.loads(b'"' + match[1] + b'"')
+                shown = clean(speaker, True)
+                return match[0] if shown == speaker else b'"speaker": ' + json.dumps(shown, ensure_ascii=False).encode("utf-8")
+            changed = SCRIPT_SPEAKER.sub(clean_speaker, original)
+            # Preserve already-clean script bytes and their verified hash.
+            if script_speaker_problems(name, original) and changed != original:
+                files[name] = changed
+                known.pop(name, None)
 
 
 # Every book.json stores the volume tree. Chapter arrays are runtime projections only.
@@ -450,12 +515,13 @@ def book_layer(folder: Path) -> tuple[dict[str, Any], dict[str, Path | bytes], d
         raise BookFileError(str(exc)) from exc
     for name, item in layer.items():  # bài nhạc của người nghe đã ghim đi theo file như bài của người làm sách (đã có thì giữ)
         files.setdefault(name, item)
+    clean_listener_layer(book, files, known)
     return book, files, known, edits
 
 
 def repack(folder: Path, out: Path, *, producer: str = "ABook") -> Path:
-    """Đóng lại một cuốn ĐÃ NHẬP (thư mục trong thư viện, giải nén từ file `.abook`) thành một file: lớp sách y nguyên (file,
-    mã băm đã biết không băm lại), cộng lớp sửa của người nghe nếu có - khi ấy phiên bản 4 (`edits.json`, `edits/cover.jpg`).
+    """Đóng lại một cuốn ĐÃ NHẬP thành một file, giữ lớp sửa người nghe. Chỉ bỏ trường QA và dấu kiểm tra của app khỏi phần nghe;
+    chữ truyện, audio và mọi file sạch giữ nguyên byte và mã băm đã kiểm.
     Không có lớp sửa thì ra file như người làm sách đã đóng, ở phiên bản thấp nhất đủ chứa nó. Thư mục dự án (Studio) thì
     dùng `pack`, không phải hàm này. Cuốn nhập từ `.abookproj` cũng ra `.abook` (phần xưởng - `project/`, `sources/`,
     `views/` - không nằm trong `package.files` nên không đi theo)."""
@@ -512,7 +578,8 @@ def pack_series(parts: Sequence[tuple[int, Path] | Path], out: Path, *, producer
     cover = covers.cover_file(first_root)
     if cover is not None:
         files[covers.COVER_FILE] = cover
-    cast, samples = _merge_cast([(number, root) for number, root, _ in books], files)
+    cast, samples = _merge_cast([(number, root) for number, root, _ in books], files,
+                                chapters={number: book["chapters"] for number, _, book in books})
     for _, root, _ in books:
         files.update(avatars.image_files(root, cast))
     files["cast.json"] = json_bytes(book_edits.shared_cast(cast))
@@ -567,7 +634,8 @@ def _numbered(parts: Sequence[tuple[int, Path] | Path]) -> list[tuple[int, Path]
     return [(number, Path(root)) for number, root in numbered]
 
 
-def _merge_cast(parts: list[tuple[int, Path]], files: dict[str, Path | bytes]) -> tuple[dict[str, Any], list[str]]:
+def _merge_cast(parts: list[tuple[int, Path]], files: dict[str, Path | bytes], *,
+                chapters: dict[int, list[dict[str, Any]]]) -> tuple[dict[str, Any], list[str]]:
     """Dàn nhân vật của cả bộ: gộp theo tên chuẩn (`name`), cộng số câu, `parts` = phần nào người ấy lên tiếng. Câu mẫu
     đánh số lại 1..K theo thứ tự gặp (mã câu của hai dự án có thể trùng nhau) và `sampleId` trỏ theo số mới; file mẫu vào
     `files`. Người là nhân vật chính ở phần này, vai phụ ở phần kia: tính là nhân vật chính."""
@@ -575,10 +643,37 @@ def _merge_cast(parts: list[tuple[int, Path]], files: dict[str, Path | bytes]) -
     section: dict[str, str] = {}
     carried: dict[str, dict[str, Any]] = {}
     narrator: dict[str, Any] | None = None
+    narrator_voices: dict[str, dict[str, Any]] = {}
+    all_chapters: dict[int, dict[str, Any]] = {}
     samples: list[str] = []
     for number, root in parts:
         cast = avatars.recorded_cast(root)
-        narrator = narrator or cast["narrator"]
+        part_narrator = cast["narrator"]
+        if narrator is None:
+            narrator = {**part_narrator, "lines": 0, "seconds": 0.0, "voiceLines": 0, "voiceSeconds": 0.0,
+                        "chapterVoices": [], "exceptChapters": [], "redo": 0}
+        # Use the already-packaged names and global ids, including chapters without audio.
+        chapter_refs = {chapter["id"]: {"id": chapter["id"], "title": chapter["title"]}
+                        for chapter in chapters[number]}
+        all_chapters.update(chapter_refs)
+        excluded = {number * PART_SPAN + item["id"] for item in part_narrator["exceptChapters"]}
+        main = {"voice": part_narrator["voice"], "profile": part_narrator["profile"],
+                "lines": part_narrator["voiceLines"], "seconds": part_narrator["voiceSeconds"],
+                "chapters": [item for key, item in chapter_refs.items() if key not in excluded]}
+        alternates = [{**entry, "chapters": [chapter_refs[number * PART_SPAN + item["id"]]
+                                            for item in entry["chapters"]]}
+                      for entry in part_narrator["chapterVoices"]]
+        # A later part's main narrator may be an earlier part's alternate (or vice versa).
+        for entry in [main, *alternates]:
+            merged_voice = narrator_voices.setdefault(entry["voice"], {
+                "voice": entry["voice"], "profile": entry["profile"], "chapters": [], "lines": 0, "seconds": 0.0})
+            merged_voice["lines"] += entry["lines"]
+            merged_voice["seconds"] = round(merged_voice["seconds"] + entry["seconds"], 1)
+            seen = {item["id"] for item in merged_voice["chapters"]}
+            merged_voice["chapters"].extend(item for item in entry["chapters"] if item["id"] not in seen)
+        narrator["lines"] += part_narrator["lines"]
+        narrator["seconds"] = round(narrator["seconds"] + part_narrator["seconds"], 1)
+        narrator["redo"] += part_narrator["redo"]
         for kind in ("characters", "extras"):
             for person in cast[kind]:
                 name = person["name"]
@@ -606,6 +701,14 @@ def _merge_cast(parts: list[tuple[int, Path]], files: dict[str, Path | bytes]) -
     def ordered(kind: str) -> list[dict[str, Any]]:
         return sorted((entry for name, entry in people.items() if section[name] == kind),
                       key=lambda entry: (-entry["lines"], entry["displayName"]))
+
+    if narrator is not None:
+        main = narrator_voices[narrator["voice"]]
+        narrator["voiceLines"], narrator["voiceSeconds"] = main["lines"], main["seconds"]
+        narrator["chapterVoices"] = [entry for voice, entry in narrator_voices.items()
+                                    if voice != narrator["voice"] and entry["lines"]]
+        main_chapters = {item["id"] for item in main["chapters"]}
+        narrator["exceptChapters"] = [item for key, item in all_chapters.items() if key not in main_chapters]
 
     return ({"narrator": narrator or {}, "characters": ordered("characters"), "extras": ordered("extras"),
              "carried": sorted((entry for name, entry in carried.items() if name not in people),
@@ -645,10 +748,8 @@ def seal(book: dict[str, Any], files: dict[str, Path | bytes], out: Path, *, pro
         warnings.warn(message, MissingCoverWarning, stacklevel=2)
     leaked, internal = listener_package_problems(
         book, files, lambda name: files[name].read_bytes() if isinstance(files[name], Path) else files[name])
-    if leaked:
-        raise BookFileError("Chữ người nghe thấy có dấu nội bộ (QA, mã máy) - không đóng gói: " + "; ".join(leaked[:3]))
-    if internal:
-        raise BookFileError("book.json có trường QA / nội bộ chỉ thuộc dự án - không đóng gói: " + "; ".join(internal[:3]))
+    if leaked or internal:
+        raise BookFileError(_RULES["refusal"])
     described_files = {}
     total_hash = sum(source.stat().st_size if isinstance(source, Path) else len(source) for source in files.values())
     hashed = 0

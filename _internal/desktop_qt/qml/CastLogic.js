@@ -9,6 +9,21 @@
 // chữ cái đầu và màu ô tròn, dòng giọng / chờ áp dụng / số câu, người của các chương sau, cuộc gọi chọn giọng. Chữ giữ đúng từng chữ của bản web.
 
 // ---- Tên ------------------------------------------------------------------------------------------------------------------
+// Reject any input outside the current cast.json schema before a QML binding reads it.
+function validCast(value) {
+    const object = item => Boolean(item) && typeof item === "object" && !Array.isArray(item)
+    const number = item => typeof item === "number" && isFinite(item) && item >= 0
+    const counts = item => object(item) && number(item.lines) && Number.isInteger(item.lines) && number(item.seconds)
+    const chapters = items => Array.isArray(items) && items.every(item => object(item) && Number.isInteger(item.id) && typeof item.title === "string")
+    const people = items => Array.isArray(items) && items.every(item => counts(item) && ["name", "displayName", "gender"].every(key => typeof item[key] === "string"))
+    if (!object(value) || !people(value.characters) || !people(value.extras)) return false
+    const narrator = value.narrator
+    return Boolean(counts(narrator) && typeof narrator.voice === "string" && number(narrator.voiceLines) && Number.isInteger(narrator.voiceLines) && number(narrator.voiceSeconds)
+        && chapters(narrator.exceptChapters) && Array.isArray(narrator.chapterVoices)
+        && narrator.chapterVoices.every(item => counts(item) && typeof item.voice === "string" && chapters(item.chapters))
+        && (value.carried === undefined || people(value.carried)))
+}
+
 // Tên hiển thị không lộ dữ liệu thô: gạch dưới thành dấu cách (cleanName)
 function cleanName(name) { return String(name || "").replace(/_/g, " ").replace(/\s+/g, " ").trim() }
 
@@ -101,8 +116,8 @@ function narratorRows(narrator) {
         main: false, scope: chapterList(entry.chapters, false), lines: entry.lines || 0, seconds: entry.seconds || 0 })))
 }
 function narratorRowLine(row, redo) {
-    return formatNumber(row.lines) + S.s_cau_dan_truyen_f0d4156b + (row.seconds > 0 ? "\u00a0·\u00a0" + formatLength(row.seconds) : "")
-        + (row.main && redo ? "\u00a0·\u00a0" + formatNumber(redo) + S.s_cau_cho_thu_lai_98956e55 : "")
+    return (formatNumber(row.lines) + S.s_cau_dan_truyen_f0d4156b + (row.seconds > 0 ? "\u00a0·\u00a0" + formatLength(row.seconds) : "")
+        + (row.main && redo ? "\u00a0·\u00a0" + formatNumber(redo) + S.s_cau_cho_thu_lai_98956e55 : "")).replace(/(\d) (?=\S)/g, "$1\u00a0")
 }
 function extrasSummary(extras) {
     return S.s_0_nguoi_1_cau_0a0bbce4(extras.length, formatNumber(extras.reduce((sum, person) => sum + (person.lines || 0), 0)))

@@ -22,13 +22,15 @@ Item {
     property var cast: null
     property string status: "idle"          // idle | loading | ready | failed
     property bool later: false              // "Hiện chương sau"
-    readonly property var characters: cast && cast.characters ? cast.characters : []
-    readonly property var extras: cast && cast.extras ? cast.extras : []
-    readonly property var carried: caps.voice && cast && cast.carried ? cast.carried : []
+    readonly property var characters: valid ? cast.characters : []
+    readonly property var extras: valid ? cast.extras : []
+    readonly property var carried: valid && caps.voice && cast.carried ? cast.carried : []
     readonly property bool hasPeople: characters.length > 0 || extras.length > 0 || carried.length > 0
-    readonly property bool isEmpty: status === "failed" || (status === "ready" && !hasPeople)
-    readonly property var narrator: cast && cast.narrator ? cast.narrator : ({})
-    readonly property var narratorRows: cast && cast.narrator ? Logic.narratorRows(cast.narrator) : []
+    readonly property bool valid: Logic.validCast(cast)
+    readonly property bool failed: status === "failed" || (cast !== null && !valid)
+    readonly property bool isEmpty: status === "ready" && valid && !hasPeople
+    readonly property var narrator: valid ? cast.narrator : ({})
+    readonly property var narratorRows: valid ? Logic.narratorRows(cast.narrator) : []
     property int generation: 0
     implicitHeight: embedded ? flick.contentHeight : 0
     signal request(string kind, var person)
@@ -74,7 +76,7 @@ Item {
             width: flick.width
             Collapse {
                 width: parent.width
-                open: root.status === "ready" && Boolean(root.hasPeople || (root.cast && root.cast.castHistory && (root.cast.castHistory.items || []).length > 0))
+                open: root.status === "ready" && root.valid && Boolean(root.hasPeople || (root.cast && root.cast.castHistory && (root.cast.castHistory.items || []).length > 0))
                 CastHistory {
                     width: parent.width
                     bookId: root.bookId
@@ -117,18 +119,18 @@ Item {
             // Chưa phân vai (hay không hỏi được): cùng một câu như web
             Collapse {
                 width: parent.width
-                open: root.isEmpty
+                open: root.isEmpty || root.failed
                 EmptyState {
                     objectName: "castEmpty"
                     width: parent.width
                     icon: "audio-lines"
-                    title: S.s_chua_co_dan_nhan_vat_6f7729cd
-                    text: S.s_dan_nhan_vat_hien_ra_khi_truyen_da_duoc_ph_dacb7364
+                    title: root.failed ? S.s_cast_invalid_title : S.s_chua_co_dan_nhan_vat_6f7729cd
+                    text: root.failed ? S.s_cast_invalid_description : S.s_dan_nhan_vat_hien_ra_khi_truyen_da_duoc_ph_dacb7364
                 }
             }
             Collapse {
                 width: parent.width
-                open: root.status === "ready" && root.hasPeople
+                open: root.status === "ready" && root.valid && root.hasPeople
                 Column {
                     id: content
                     objectName: "castContent"
@@ -142,7 +144,7 @@ Item {
                             width: parent.width
                             storageKey: root.fold("narrator")
                             title: S.s_nguoi_ke_chuyen_c0c2c504
-                            summary: S.s_0_giong_7be1af23(root.narratorRows.length)
+                            summary: S.s_cast_voice_count(root.narratorRows.length)
                             defaultOpen: true
                             Column {
                                 id: columnOfNarrators

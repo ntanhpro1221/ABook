@@ -274,7 +274,7 @@ class StudioWorkScreenTest {
     private fun textIn(rowTag: String): String =
         rule.onAllNodes(androidx.compose.ui.test.hasAnyAncestor(hasTestTag(rowTag)) or hasTestTag(rowTag), useUnmergedTree = true).fetchSemanticsNodes()
             .flatMap { it.config.getOrElse(androidx.compose.ui.semantics.SemanticsProperties.Text) { emptyList() } }
-            .joinToString("\n") { it.text }.replace('\u00a0', ' ')
+            .joinToString("\n") { it.text }
 
     @Test fun anEmptyCastSaysWhenCharactersAppear() {
         project(StudioTab.Cast)

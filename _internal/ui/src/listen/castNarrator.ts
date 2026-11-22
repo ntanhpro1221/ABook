@@ -1,6 +1,21 @@
 import { formatLength, formatNumber } from "../shared/format";
 import { S } from "../shared/strings.generated";
-import { voiceName, type CastChapter, type CastNarrator, type NarratorRowView } from "./model";
+import { voiceName, type Cast, type CastChapter, type CastNarrator, type NarratorRowView } from "./model";
+
+/** Only the current server shape can enter the Characters view. */
+export function validCast(value: unknown): value is Cast {
+  const object = (item: unknown): item is Record<string, unknown> => !!item && typeof item === "object" && !Array.isArray(item);
+  const number = (item: unknown) => typeof item === "number" && Number.isFinite(item) && item >= 0;
+  const counts = (item: unknown): item is Record<string, unknown> => object(item) && number(item.lines) && Number.isInteger(item.lines) && number(item.seconds);
+  const chapters = (items: unknown) => Array.isArray(items) && items.every(item => object(item) && Number.isInteger(item.id) && typeof item.title === "string");
+  const people = (items: unknown) => Array.isArray(items) && items.every(item => counts(item) && ["name", "displayName", "gender"].every(key => typeof item[key] === "string"));
+  if (!object(value) || !people(value.characters) || !people(value.extras)) return false;
+  const narrator = value.narrator;
+  return counts(narrator) && typeof narrator.voice === "string" && number(narrator.voiceLines) && Number.isInteger(narrator.voiceLines) && number(narrator.voiceSeconds)
+    && chapters(narrator.exceptChapters) && Array.isArray(narrator.chapterVoices)
+    && narrator.chapterVoices.every(item => counts(item) && typeof item.voice === "string" && chapters(item.chapters))
+    && (value.carried === undefined || people(value.carried));
+}
 
 // Danh sách "Người kể chuyện" của tab Nhân vật (CastList), chung trang nghe và Studio. Android: data/ListenExtras.kt (Cast.narratorRows),
 // Qt: CastLogic.js - cùng luật, cùng chữ.
@@ -30,8 +45,8 @@ export function narratorRows(narrator: CastNarrator): NarratorRowView[] {
 /** Dòng phụ của một hàng người kể: "597 câu dẫn truyện · 1 giờ", hàng giọng chính thêm " · N câu chờ thu lại". Qt: CastLogic.narratorRowLine,
  *  Android: Cast.narratorLine - cùng chữ. */
 export function narratorRowLine(row: NarratorRowView, redo = 0): string {
-  return `${formatNumber(row.lines)}${S.s_cau_dan_truyen_f0d4156b}${row.seconds > 0 ? ` · ${formatLength(row.seconds)}` : ""}`
-    + (row.main && redo ? S.s_0_cau_cho_thu_lai_e42ce3ef(formatNumber(redo)) : "");
+  return (`${formatNumber(row.lines)}${S.s_cau_dan_truyen_f0d4156b}${row.seconds > 0 ? `\u00a0·\u00a0${formatLength(row.seconds)}` : ""}`
+    + (row.main && redo ? `\u00a0·\u00a0${formatNumber(redo)}${S.s_cau_cho_thu_lai_98956e55}` : "")).replace(/(\d) (?=\S)/g, "$1\u00a0");
 }
 
 /** Ô giới của một người trong tab Nhân vật: giới cast.json ghi; trống thì lý do (store.cast_gender_note) - "Nhóm", "Trẻ em" hay

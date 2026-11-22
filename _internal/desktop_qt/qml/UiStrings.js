@@ -7,6 +7,9 @@ var s_bookmeta_source_site = "Tên nguồn";
 var s_bookmeta_save = "Lưu thông tin";
 var s_bookmeta_saved = "Đã lưu thông tin";
 var s_bookmeta_save_error = "Chưa lưu được thông tin";
+var s_cast_invalid_title = "Dàn nhân vật lỗi";
+function s_cast_voice_count(p0) { return String(p0) + " giọng"; }
+var s_cast_invalid_description = "Dàn nhân vật không đúng định dạng. Hãy xin lại file từ người làm sách.";
 var s_device_voice_group_detail = "Theo bộ đọc hệ thống";
 var s_player_line_waiting_audio = "Chỉ ghi yêu cầu; giọng đọc đổi sau khi Studio thu lại.";
 var s_pair_fingerprint_label = "Mã nhận máy: ";
@@ -21,7 +24,6 @@ function s_0_chu_de_nghe_tu_do_f3859cf4(p0) { return String(p0) + " chữ để 
 function s_0_chuong_04093412(p0) { return String(p0) + " chương"; }
 function s_0_doan_c2eb5200(p0) { return String(p0) + " đoạn"; }
 function s_0_giay_daac30d3(p0) { return String(p0) + " giây"; }
-function s_0_giong_7be1af23(p0) { return String(p0) + " giọng"; }
 function s_0_nguoi_1_cau_0a0bbce4(p0, p1) { return String(p0) + " người · " + String(p1) + " câu"; }
 function s_0_nhip_phut_3c154e09(p0) { return String(p0) + " nhịp/phút"; }
 function s_0_phut_2596d212(p0) { return String(p0) + " phút"; }

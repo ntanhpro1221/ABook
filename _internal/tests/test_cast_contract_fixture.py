@@ -13,8 +13,11 @@ from __future__ import annotations
 import json
 import os
 from pathlib import Path
+import pytest
 
 from abook import avatars
+from abook.cast_contract import valid_cast
+from abook.webui import packages
 from abook.database import ProjectDB
 from abook.models import ProjectPaths
 from abook.voice_catalog import GENDER_FEMALE, GENDER_MALE, VIENEU_PRESETS
@@ -89,3 +92,19 @@ def test_the_fixture_covers_what_the_clients_must_show() -> None:
     shown = {person["displayName"] for person in cast["characters"] + cast["extras"]}
     assert set(expected["genders"]) == shown
     assert len(expected["narratorRows"]) == 1 + len(narrator["chapterVoices"])
+    assert valid_cast(cast)
+
+
+@pytest.mark.parametrize("case", json.loads((FIXTURE / "invalid.json").read_text(encoding="utf-8")), ids=lambda case: case["name"])
+def test_malformed_cast_has_one_error_before_applying_edits(case: dict, monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    assert not valid_cast(case["cast"])
+    monkeypatch.setattr(packages, "raw_cast", lambda path: case["cast"])
+    monkeypatch.setattr(packages.book_edits, "load", lambda path: pytest.fail("invalid cast must fail before edits"))
+    assert packages.cast(tmp_path) == {"error": "cast_invalid"}
+
+
+def test_unreadable_cast_has_the_same_error(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    def unreadable(path: Path) -> None:
+        raise ValueError("bad JSON")
+    monkeypatch.setattr(packages, "raw_cast", unreadable)
+    assert packages.cast(tmp_path) == {"error": "cast_invalid"}

@@ -102,6 +102,10 @@
    "response": {
     "narrator": {
      "voice": "Đức Trí",
+     "chapterVoices": [],
+     "exceptChapters": [],
+     "voiceLines": 4,
+     "voiceSeconds": 7.0,
      "lines": 4,
      "seconds": 7.0,
      "profile": {

@@ -88,6 +88,15 @@ internal fun openVoiceSheet(state: StudioProjectState, sheets: SheetHost, charac
  */
 internal fun LazyListScope.castTab(cast: StudioCastState, data: CastData, state: StudioProjectState, sheets: SheetHost, slide: Modifier, folds: LazyFoldState) {
     val loaded = data.poll.data
+    if (loaded?.invalid == true) {
+        item("cast_invalid", "status") {
+            Column(Modifier.fillMaxWidth().then(slide).padding(top = Dim.s24).testTag("studio_cast_invalid")) {
+                BasicText(S.s_cast_invalid_title, style = Abook.type.sectionTitle)
+                RowHint(S.s_cast_invalid_description, Modifier.padding(top = Dim.s8))
+            }
+        }
+        return
+    }
     item("cast_notice", "cast_notice") {
         Column(Modifier.fillMaxWidth().then(slide)) {
             InlineProblem(data.poll.error?.let { StudioText.failure(it) }.orEmpty(), cast::refreshSoon, "studio_cast_problem")
@@ -117,7 +126,7 @@ internal fun LazyListScope.castTab(cast: StudioCastState, data: CastData, state:
     val narrator = loaded.narrator
     val narrators = vn.abook.player.ui.data.Cast.narratorRows(narrator.voice, narrator.chapterVoices, narrator.exceptChapters, narrator.voiceLines, narrator.voiceSeconds)
     foldItems(folds, S.s_nguoi_ke_chuyen_c0c2c504, "studio_cast_narrators", narrators, { "cast_narrator_${it.key}" }, Modifier.then(slide),
-        summary = S.s_0_giong_7be1af23(narrators.size), defaultOpen = true, contentType = "member") { _, row ->
+        summary = S.s_cast_voice_count(narrators.size), defaultOpen = true, contentType = "member") { _, row ->
         Column(Modifier.fillMaxWidth().then(slide)) {
             ListItem(
                 row.voice,
@@ -133,7 +142,7 @@ internal fun LazyListScope.castTab(cast: StudioCastState, data: CastData, state:
                     ClipButton(StudioCastState.voiceClip(row.preset), data.clip, { cast.playVoice(row.preset) },
                         if (row.main) "studio_cast_narrator_play" else "studio_cast_narrator_play_${row.key}")
                 }) else null,
-                chevron = row.main && row.preset.isEmpty(), titleOneLine = true,
+                chevron = row.main, titleOneLine = true,
             )
             RowLine()
         }

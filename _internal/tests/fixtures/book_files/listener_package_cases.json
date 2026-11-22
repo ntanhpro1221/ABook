@@ -6,7 +6,18 @@
   "volumes": [{"id": 1, "number": 1, "title": "Quyển 1", "cover": null, "chapters": [{"id": 1, "index": 1, "title": "Chương 1", "subtitle": "", "fullTitle": "Chương 1"}]}],
   "audioCoverage": {"expected": [{"id": 1, "title": "Chương 1", "audioSha256": null, "segments": []}], "missing": [], "partial": false}
  },
+ "targets": ["book", "project"],
  "cases": [
+  {"name": "full app stable id is internal", "patch": {"chapters.0.title": "Chương c00001_s0000002_012345abcdef"}, "leaked": ["chapters[1].title: Chương c00001_s0000002_012345abcdef"], "internal": []},
+  {"name": "app id lookalikes remain text", "patch": {"chapters.0.title": "c00001_s0000002_invalid c00001_s0002_extra"}, "leaked": [], "internal": []},
+  {"name": "game codes are story titles", "patch": {"chapters.0.title": "GAME_OVER_01", "chapters.0.subtitle": "SYSTEM_ERROR_404"}, "leaked": [], "internal": []},
+  {"name": "real words in a title and sentence", "patch": {"title": "Cần nghe lại", "chapters.0.title": "Tôi thấy cần thu lại lời nói.", "chapters.0.subtitle": "Cần nghe lại lời bà dặn."}, "leaked": [], "internal": []},
+  {"name": "marker lookalikes are ordinary text", "patch": {"chapters.0.title": "NPC_LOCALITY c0001_s0002 listener_redoing"}, "leaked": [], "internal": []},
+  {"name": "descriptive metadata survives", "patch": {"illustrator": "Người Vẽ", "altTitles": ["Paper Lake"], "genres": ["Fantasy"], "summary": "Cần nghe lại lời bà dặn.", "source": {"url": "https://example.org/book", "site": "Ví dụ"}}, "leaked": [], "internal": []},
+  {"name": "a part uses its part number", "patch": {"parts": [{"part": 2, "title": "Phần 2 c00001_s0002", "chapters": 1}]}, "leaked": ["parts[2].title: Phần 2 c00001_s0002"], "internal": []},
+  {"name": "an item without identity uses an empty label", "patch": {"parts": [{"title": "Phần c00001_s0002"}]}, "leaked": ["parts[].title: Phần c00001_s0002"], "internal": []},
+  {"name": "a null identity falls back to part", "patch": {"parts": [{"id": null, "part": 4, "title": "Phần c00001_s0002"}]}, "leaked": ["parts[4].title: Phần c00001_s0002"], "internal": ["parts.id"]},
+  {"name": "only the real role prefix is internal", "patch": {"chapters.0.subtitle": "NPC_LOCAL::c00001::bác gác"}, "leaked": ["chapters[1].subtitle: NPC_LOCAL::c00001::bác gác"], "internal": []},
   {"name": "clean", "leaked": [], "internal": [],
    "cast": {"narrator": {"voice": "Giọng A", "chapterVoices": [{"voice": "Giọng B", "chapters": [{"id": 1, "title": "Chương 1"}], "lines": 1, "seconds": 1.0}],
                          "exceptChapters": [{"id": 1, "title": "Chương 1"}], "voiceLines": 0, "voiceSeconds": 0, "lines": 1, "seconds": 1.0},

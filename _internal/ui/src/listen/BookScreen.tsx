@@ -36,7 +36,8 @@ import { FindInBook } from "./FindInBook";
 import { canEditBook, EditBlockedItem, EditBookDialog, refreshAfterEdit, RenameChapterDialog, SaveAsDialog, StudioOnlyItem, useSaveBook, useShareBook } from "./EditBook";
 import { bookStatusText, remoteUnfinishedLine, usePlayListenBook, useResumeTarget } from "./LibraryScreen";
 import { canPlay, chapterHeard, chapterResumeAt, chaptersByPart, type CastMember, type CastNarrator, type ListenBook, type ListenChapter, type NarratorRowView, voiceName } from "./model";
-import { genderText, narratorRowLine, narratorRows } from "./castNarrator";
+import { genderText, narratorRowLine, narratorRows, validCast } from "./castNarrator";
+import { RowBoundary } from "@/shared/RowBoundary";
 import { chapterSubline, displayTitle, keepTogether, partialBookLine, primaryListenLabel, textBookLine } from "./labels";
 import { useNowPlaying, usePlayer } from "./player";
 import { usePreparedChapters } from "./PlayerViews";
@@ -568,7 +569,15 @@ function NarratorRow({ row, narrator, onPickNarrator }: { row: NarratorRowView; 
 
 /** `reached`: tên các chương tới chỗ đang nghe (trang nghe) - người chỉ xuất hiện SAU đó bị ẩn tới khi bấm hiện, để dàn nhân
  *  vật không lộ nội dung ("Douglas · từ Chương 738" khi đang nghe Chương 725 - soát UX 29-09). Studio không truyền: hiện hết. */
-export function CastList({ bookId, onPickVoice, onPickNarrator, onMerge, onUnmerge, onRename, onGender, reached, waiting, narratorNote }: {
+export function CastList(props: Parameters<typeof CastListContent>[0]) {
+  return <RowBoundary key={props.bookId} fallback={<CastProblem />}><CastListContent {...props} /></RowBoundary>;
+}
+
+function CastProblem() {
+  return <EmptyState icon={AudioLines} title={S.s_cast_invalid_title}>{S.s_cast_invalid_description}</EmptyState>;
+}
+
+function CastListContent({ bookId, onPickVoice, onPickNarrator, onMerge, onUnmerge, onRename, onGender, reached, waiting, narratorNote }: {
   bookId: string;
   /** Dưới hàng "Người kể chuyện": đổi giọng kể ở đâu, hay vì sao chưa đổi được. */
   narratorNote?: ReactNode;
@@ -583,10 +592,11 @@ export function CastList({ bookId, onPickVoice, onPickNarrator, onMerge, onUnmer
   /** Cuốn không có xưởng: đổi giới tính, gộp người ghi thành ý muốn chờ Studio (docs/EDITING.md, P2a). */
   waiting?: boolean;
 }) {
-  const { data: cast, isLoading } = useCast(bookId);
+  const { data: cast, isLoading, error } = useCast(bookId);
   const [later, setLater] = useState(false);
   const carriedPeople = onPickVoice ? (cast?.carried ?? []) : [];
   if (isLoading) return <MotionRegion as="div" className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">{Array.from({ length: 6 }, (_, index) => <Skeleton key={index} className="h-[84px] rounded-cover" />)}</MotionRegion>;
+  if (error || (cast !== undefined && !validCast(cast))) return <CastProblem />;
   if (!cast || (!cast.characters.length && !cast.extras.length && !carriedPeople.length && !cast.castHistory?.items.length)) {
     return (
       <MotionRegion><EmptyState icon={AudioLines} title={S.s_chua_co_dan_nhan_vat_6f7729cd} className="mt-2">{S.s_dan_nhan_vat_hien_ra_khi_truyen_da_duoc_ph_dacb7364}</EmptyState></MotionRegion>
@@ -595,7 +605,7 @@ export function CastList({ bookId, onPickVoice, onPickNarrator, onMerge, onUnmer
   return (
     <MotionRegion as="div" className="motion-reveal mt-4">
       {/* Người kể chuyện là một danh sách như Vai chính: mỗi giọng kể một hàng (giọng chính, rồi giọng kể riêng vài chương). */}
-      <Fold storageKey={`book.${bookId}.narrator`} title={S.s_nguoi_ke_chuyen_c0c2c504} summary={S.s_0_giong_7be1af23(narratorRows(cast.narrator).length)} defaultOpen>
+      <Fold storageKey={`book.${bookId}.narrator`} title={S.s_nguoi_ke_chuyen_c0c2c504} summary={S.s_cast_voice_count(narratorRows(cast.narrator).length)} defaultOpen>
         <FoldRows items={narratorRows(cast.narrator)} keyOf={(row) => row.key} className="grid gap-x-8 sm:grid-cols-2 xl:grid-cols-3">
           {(row) => <NarratorRow row={row} narrator={cast.narrator} onPickNarrator={onPickNarrator} />}
         </FoldRows>
@@ -955,7 +965,7 @@ type BookScreenProps = {
  *  tìm, sửa sách) không mang sang B - đổi tên chương của A từng gửi lên B theo số chương. */
 export function BookScreen(props: BookScreenProps) {
   const { id } = useParams();
-  return <BookPage key={id} {...props} />;
+  return <RowBoundary key={id} fallback={<CastProblem />}><BookPage {...props} /></RowBoundary>;
 }
 
 function BookPage({ extraActions, dangerActions, studioLink, notice, editing = {} }: BookScreenProps) {

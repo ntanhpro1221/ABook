@@ -1,0 +1,191 @@
+[
+ {
+  "name": "chapter voices string",
+  "cast": {
+   "narrator": {
+    "voice": "",
+    "lines": 0,
+    "seconds": 0,
+    "chapterVoices": "Ngoc Linh",
+    "exceptChapters": [],
+    "voiceLines": 0,
+    "voiceSeconds": 0
+   },
+   "characters": [],
+   "extras": []
+  }
+ },
+ {
+  "name": "missing except chapters",
+  "cast": {
+   "narrator": {
+    "voice": "",
+    "lines": 0,
+    "seconds": 0,
+    "chapterVoices": [],
+    "voiceLines": 0,
+    "voiceSeconds": 0
+   },
+   "characters": [],
+   "extras": []
+  }
+ },
+ {
+  "name": "missing voice lines",
+  "cast": {
+   "narrator": {
+    "voice": "",
+    "lines": 0,
+    "seconds": 0,
+    "chapterVoices": [],
+    "exceptChapters": [],
+    "voiceSeconds": 0
+   },
+   "characters": [],
+   "extras": []
+  }
+ },
+ {
+  "name": "missing voice seconds",
+  "cast": {
+   "narrator": {
+    "voice": "",
+    "lines": 0,
+    "seconds": 0,
+    "chapterVoices": [],
+    "exceptChapters": [],
+    "voiceLines": 0
+   },
+   "characters": [],
+   "extras": []
+  }
+ },
+ {
+  "name": "bad chapter entry",
+  "cast": {
+   "narrator": {
+    "voice": "",
+    "lines": 0,
+    "seconds": 0,
+    "chapterVoices": [
+     {
+      "voice": "A",
+      "chapters": [
+       "Chapter 1"
+      ],
+      "lines": 1,
+      "seconds": 1
+     }
+    ],
+    "exceptChapters": [],
+    "voiceLines": 0,
+    "voiceSeconds": 0
+   },
+   "characters": [],
+   "extras": []
+  }
+ },
+ {
+  "name": "bad chapter id",
+  "cast": {
+   "narrator": {
+    "voice": "",
+    "lines": 0,
+    "seconds": 0,
+    "chapterVoices": [],
+    "exceptChapters": [
+     {
+      "id": "2",
+      "title": "Chương 2"
+     }
+    ],
+    "voiceLines": 0,
+    "voiceSeconds": 0
+   },
+   "characters": [],
+   "extras": []
+  }
+ },
+ {
+  "name": "characters object",
+  "cast": {
+   "narrator": {
+    "voice": "",
+    "lines": 0,
+    "seconds": 0,
+    "chapterVoices": [],
+    "exceptChapters": [],
+    "voiceLines": 0,
+    "voiceSeconds": 0
+   },
+   "characters": {},
+   "extras": []
+  }
+ },
+ {
+  "name": "bad person",
+  "cast": {
+   "narrator": {
+    "voice": "",
+    "lines": 0,
+    "seconds": 0,
+    "chapterVoices": [],
+    "exceptChapters": [],
+    "voiceLines": 0,
+    "voiceSeconds": 0
+   },
+   "characters": [
+    {
+     "name": "A"
+    }
+   ],
+   "extras": []
+  }
+ },
+ {
+  "name": "bad carried",
+  "cast": {
+   "narrator": {
+    "voice": "",
+    "lines": 0,
+    "seconds": 0,
+    "chapterVoices": [],
+    "exceptChapters": [],
+    "voiceLines": 0,
+    "voiceSeconds": 0
+   },
+   "characters": [],
+   "extras": [],
+   "carried": "A"
+  }
+ },
+ {
+  "name": "negative count",
+  "cast": {
+   "narrator": {
+    "voice": "",
+    "lines": 0,
+    "seconds": 0,
+    "chapterVoices": [],
+    "exceptChapters": [],
+    "voiceLines": -1,
+    "voiceSeconds": 0
+   },
+   "characters": [],
+   "extras": []
+  }
+ },
+ {
+  "name": "missing narrator",
+  "cast": {
+   "characters": [],
+   "extras": []
+  }
+ },
+ {
+  "name": "error envelope",
+  "cast": {
+   "error": "cast_invalid"
+  }
+ }
+]

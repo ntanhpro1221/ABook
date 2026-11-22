@@ -48,7 +48,7 @@ data class CastNarrator(
 
 /** Lời đáp của `GET /api/books/<id>/cast`: người kể, nhân vật chính, vai phụ, và dàn mang từ phần trước. */
 @Immutable
-data class Cast(val narrator: CastNarrator, val characters: List<CastMember>, val extras: List<CastMember>, val carried: List<CastMember>, val history: List<CastHistoryItem> = emptyList())
+data class Cast(val narrator: CastNarrator, val characters: List<CastMember>, val extras: List<CastMember>, val carried: List<CastMember>, val history: List<CastHistoryItem> = emptyList(), val invalid: Boolean = false)
 
 @Immutable
 data class CastHistoryItem(val operationId: String, val source: String, val target: String, val lines: Int, val conflicts: Int, val state: String, val aliasConflicts: Int = 0)
@@ -141,6 +141,7 @@ internal object StudioCastJson {
     )
 
     fun cast(json: JSONObject): Cast {
+        if (!vn.abook.player.ui.data.Cast.valid(json)) return Cast(CastNarrator("", 0, 0.0, null, null, 0), emptyList(), emptyList(), emptyList(), invalid = true)
         val narrator = json.optJSONObject("narrator") ?: JSONObject()
         return Cast(
             narrator = CastNarrator(

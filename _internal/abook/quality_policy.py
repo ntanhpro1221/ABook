@@ -87,6 +87,7 @@ QUALITY_IMPLEMENTATION_FILES = (
     "english_vi.py",
     "listener_overrides.py",
     "cast_operations.py",
+    "cast_contract.py",
     "aliases.py",
     "models.py",
     "name_snap.py",

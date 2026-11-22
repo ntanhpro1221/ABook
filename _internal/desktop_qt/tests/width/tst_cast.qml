@@ -165,9 +165,8 @@ Item {
             const expected = contractFile("expected.json")
             castReply = contractFile("cast.json")
             openCast()
-            const plain = text => String(text).replace(/ /g, " ")
             const rows = findChild(page, "castList").narratorRows
-            compare(rows.map(row => ({voice: row.voice, preset: row.preset, scope: row.scope, line: plain(Logic.narratorRowLine(row, 0))})),
+            compare(rows.map(row => ({voice: row.voice, preset: row.preset, scope: row.scope, line: Logic.narratorRowLine(row, 0)})),
                     expected.narratorRows)
             const shown = all(page, "castNarrator").concat(all(page, "castNarratorChapter"))
             compare(shown.length, expected.narratorRows.length)
@@ -175,11 +174,25 @@ Item {
                 const row = shown[index]
                 compare(child(row, index === 0 ? "castNarratorVoice" : "castNarratorChapterVoice").text, want.voice)
                 compare(child(row, "castNarratorScope").text, want.scope)
-                compare(plain(child(row, "castNarratorCount").text), want.line)
+                compare(child(row, "castNarratorCount").text, want.line)
                 verify(child(row, index === 0 ? "castNarratorSample" : "castNarratorChapterSample").visible, "nút nghe thử giọng")
             })
             for (const name of Object.keys(expected.genders))
                 compare(child(rowOf(name), "castGender").text, expected.genders[name], name)
+        }
+
+        function test_invalidCastContract_data() { return contractFile("invalid.json").map(item => ({tag: item.name, cast: item.cast})) }
+        function test_invalidCastContract(data) {
+            verify(!Logic.validCast(data.cast))
+            castReply = data.cast
+            openCast()
+            const list = findChild(page, "castList")
+            verify(list.failed)
+            compare(list.narratorRows.length, 0)
+            const state = findChild(page, "castEmpty")
+            const expected = contractFile("expected.json").error
+            compare(state.title, expected.title)
+            compare(state.text, expected.description)
         }
 
         function test_chapterNarratorsKeepTheirScopeAndCounts_data() {

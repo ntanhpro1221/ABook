@@ -17,7 +17,7 @@ from pathlib import Path
 
 import pytest
 
-from abook.webui import bookfile, packages
+from abook.webui import bookfile, projectfile, book_edits, packages
 from tests.test_the_book_file_is_the_production_output import _finished_project, _output, _Pipeline
 
 HELLO = json.loads((Path(__file__).parent / "fixtures" / "book_files" / "hello_published_book.json").read_text(encoding="utf-8"))["book"]
@@ -50,7 +50,7 @@ def test_the_shipped_hello_book_carries_marks_the_packer_refuses(tmp_path: Path)
     leaked, internal = bookfile.listener_package_problems(HELLO, [], lambda name: b"")
     assert [problem.split(":")[0] for problem in leaked] == [f"chapters[{n}].subtitle" for n in (2, 3, 5, 6, 7, 9)]
     assert {problem.rsplit(".", 1)[1] for problem in internal} == {"qualityPassed", "qualityWarning", "failedLines"}
-    with pytest.raises(bookfile.BookFileError, match="dấu nội bộ"):
+    with pytest.raises(bookfile.BookFileError, match="dấu kiểm tra nội bộ"):
         bookfile.seal(copy.deepcopy(HELLO), {"chapters/00002_001.mp3": b"audio"}, tmp_path / "x.abook", producer="test", version=1)
     assert not (tmp_path / "x.abook").exists()
 
@@ -77,19 +77,29 @@ def test_the_pipeline_repacks_a_shipped_hello_package_clean_from_the_project(tmp
     assert target.stat().st_mtime_ns == stamp, "a clean package is current: no repack on every resume"
 
 
-def test_repacking_an_imported_hello_copy_refuses_instead_of_stripping(tmp_path: Path) -> None:
+@pytest.mark.parametrize("target", ["book", "project"])
+def test_repacking_an_imported_hello_copy_cleans_it_and_keeps_listener_edits(tmp_path: Path, target: str) -> None:
     project = _finished_project(tmp_path)
     clean = bookfile.pack(project, tmp_path / "clean.abook")
     with bookfile.BookFile(clean) as opened:
         folder = opened.extract(tmp_path / "library")
     manifest = folder / bookfile.MANIFEST
     book = json.loads(manifest.read_text(encoding="utf-8"))
-    _graft_hello(book, ("qualityPassed", "qualityWarning", "failedLines"))  # QA fields only: no visible mark to catch
+    _graft_hello(book)
     manifest.write_text(json.dumps(book, ensure_ascii=False), encoding="utf-8")
-
-    with pytest.raises(bookfile.BookFileError, match="QA / nội bộ"):
-        bookfile.repack(folder, tmp_path / "again.abook")
-    assert not (tmp_path / "again.abook").exists()
+    original = manifest.read_bytes()
+    edits = {"format": book_edits.FORMAT, "title": "Tên người nghe đặt"}
+    edit_bytes = book_edits.dump(edits)
+    (folder / book_edits.EDITS_FILE).write_bytes(edit_bytes)
+    expected_edits = book_edits.load(folder)
+    out = tmp_path / ("again.abookproj" if target == "project" else "again.abook")
+    (projectfile.repack if target == "project" else bookfile.repack)(folder, out)
+    with zipfile.ZipFile(out) as archive:
+        packed = json.loads(archive.read("book.json"))
+        assert bookfile.listener_package_problems(packed, archive.namelist(), archive.read) == ([], [])
+        assert json.loads(archive.read("edits.json")) == expected_edits
+    assert manifest.read_bytes() == original, "saving never rewrites the imported source"
+    assert (folder / book_edits.EDITS_FILE).read_bytes() == edit_bytes
 
 
 def test_a_reader_shows_the_same_book_whether_or_not_a_package_carries_qa_fields(tmp_path: Path) -> None:

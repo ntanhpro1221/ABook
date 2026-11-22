@@ -28,7 +28,7 @@
     "speaker": "HEIDI",
     "new": false,
     "alias": false,
-    "requestedAt": 1790957770.1138718
+    "requestedAt": 1795301884.6337655
    }
   },
   {
@@ -46,7 +46,7 @@
     "speaker": "Tiểu Mai",
     "new": true,
     "alias": false,
-    "requestedAt": 1790957770.1543303
+    "requestedAt": 1795301884.670412
    }
   },
   {
@@ -65,7 +65,8 @@
     "kind": "",
     "emotion": "tender",
     "intensity": 1,
-    "spoken": "Chào anh nhé."
+    "spoken": "Chào anh nhé.",
+    "requestedAt": 1795301884.7106698
    }
   },
   {
@@ -83,7 +84,8 @@
     "kind": "dialogue",
     "emotion": "",
     "intensity": null,
-    "spoken": null
+    "spoken": null,
+    "requestedAt": 1795301884.7441423
    }
   },
   {
@@ -111,7 +113,7 @@
    "response": {
     "surface": "Hailkes",
     "spokenForm": "Hên-khơ",
-    "requestedAt": 1790957770.340496
+    "requestedAt": 1795301884.8129377
    }
   },
   {
@@ -125,7 +127,7 @@
    "response": {
     "surface": "Lucien",
     "spokenForm": "Lu-xi-en",
-    "requestedAt": 1790957770.381608
+    "requestedAt": 1795301884.8577778
    }
   },
   {
@@ -141,7 +143,7 @@
     "preset": "",
     "gender": "male",
     "avoid": "",
-    "requestedAt": 1790957770.43563
+    "requestedAt": 1795301884.8872228
    }
   },
   {
@@ -154,13 +156,13 @@
       "key": "hailkes",
       "surface": "Hailkes",
       "spokenForm": "Hên-khơ",
-      "requestedAt": 1790957770.340496
+      "requestedAt": 1795301884.8129377
      },
      {
       "key": "lucien",
       "surface": "Lucien",
       "spokenForm": "Lu-xi-en",
-      "requestedAt": 1790957770.381608
+      "requestedAt": 1795301884.8577778
      }
     ],
     "lines": {
@@ -168,37 +170,37 @@
       "speaker": {
        "name": "LUCIEN",
        "shown": "Lucien",
-       "requestedAt": 1790957770.2458115
+       "requestedAt": 1795301884.7441423
       },
       "delivery": {
        "kind": "dialogue",
        "emotion": "",
        "intensity": null,
-       "requestedAt": 1790957770.2458115
+       "requestedAt": 1795301884.7441423
       },
       "retake": {
-       "requestedAt": 1790957770.3063605
+       "requestedAt": 1795301884.7687237
       }
      },
      "c1_s0003_fa1fe2": {
       "speaker": {
        "name": "HEIDI",
        "shown": "Hây-đi",
-       "requestedAt": 1790957770.1138718
+       "requestedAt": 1795301884.6337655
       }
      },
      "c1_s0006_34534a": {
       "speaker": {
        "name": "Tiểu Mai",
        "shown": "Tiểu Mai",
-       "requestedAt": 1790957770.1543303,
+       "requestedAt": 1795301884.670412,
        "newGender": "female"
       },
       "delivery": {
        "kind": "",
        "emotion": "tender",
        "intensity": 1,
-       "requestedAt": 1790957770.1954312,
+       "requestedAt": 1795301884.7106698,
        "spoken": "Chào anh nhé."
       }
      }
@@ -244,13 +246,13 @@
       "key": "hailkes",
       "surface": "Hailkes",
       "spokenForm": "Hên-khơ",
-      "requestedAt": 1790957770.340496
+      "requestedAt": 1795301884.8129377
      },
      {
       "key": "lucien",
       "surface": "Lucien",
       "spokenForm": "Lu-xi-en",
-      "requestedAt": 1790957770.381608
+      "requestedAt": 1795301884.8577778
      }
     ],
     "lines": {
@@ -258,27 +260,27 @@
       "speaker": {
        "name": "LUCIEN",
        "shown": "Lucien",
-       "requestedAt": 1790957770.2458115
+       "requestedAt": 1795301884.7441423
       },
       "delivery": {
        "kind": "dialogue",
        "emotion": "",
        "intensity": null,
-       "requestedAt": 1790957770.2458115
+       "requestedAt": 1795301884.7441423
       }
      },
      "c1_s0006_34534a": {
       "speaker": {
        "name": "Tiểu Mai",
        "shown": "Tiểu Mai",
-       "requestedAt": 1790957770.1543303,
+       "requestedAt": 1795301884.670412,
        "newGender": "female"
       },
       "delivery": {
        "kind": "",
        "emotion": "tender",
        "intensity": 1,
-       "requestedAt": 1790957770.1954312,
+       "requestedAt": 1795301884.7106698,
        "spoken": "Chào anh nhé."
       }
      }
