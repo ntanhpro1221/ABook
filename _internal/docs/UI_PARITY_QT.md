@@ -174,7 +174,7 @@ Nhãn ngắn (<= 6 chữ). **Chỉ Qt**: không có ở web cùng màn; `*` = we
 ### Thư viện
 
 - chỉ Qt (11): Dự án* (`qt/BookCell.qml:34`); Đã nhập* (`qt/BookCell.qml:34`); Tạm dừng* (`qt/LibraryContinue.qml:44`); Mới thêm* (`qt/LibraryScreen.qml:48`); Tác giả* (`qt/LibraryScreen.qml:48`); Tên sách* (`qt/LibraryScreen.qml:48`); Đang mở ABook* (`qt/LibraryScreen.qml:398`); Chưa mở được ABook (`qt/LibraryScreen.qml:447`); Chưa tải được thư viện (`qt/LibraryScreen.qml:447`); Thử lại* (`qt/LibraryScreen.qml:465`); Không thấy “{}”* (`qt/LibraryScreen.qml:502`)
-- chỉ web (7): Đang tạm dừng {} (`335`); Đang làm {} (`336`); Đang tạm dừng{} (`340`); Chưa có chương nghe được{} (`342`); Đang làm · {} (`342`); Thư viện chưa có sách nào. (`463`); Chữ bìa trên hoạ tiết sóng (`87`)
+- chỉ web (7): Đang tạm dừng {} (`336`); Đang làm {} (`337`); Đang tạm dừng{} (`341`); Chưa có chương nghe được{} (`343`); Đang làm · {} (`343`); Thư viện chưa có sách nào. (`466`); Chữ bìa trên hoạ tiết sóng (`87`)
 
 ### Thanh phát
 

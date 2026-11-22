@@ -240,7 +240,8 @@ const BookTile = memo(function BookTile({ book, badge, twin, current, playingHer
             Tên 2 dòng dành sẵn, dòng phụ 1 dòng cắt "…": mọi ô một hàng cao bằng nhau (DESIGN.md §6, soát 10-11 việc 4, như điện thoại và Qt).
             Bìa vẽ hay ảnh đều có tên dưới bìa (chủ sách 15-11: hàng ô phải đồng nhất). */}
         <TileName className={cn(current && "text-accent-text")}>{displayTitle(book.title)}</TileName>
-        {book.author && <OneLineFit className="text-xs text-fg-2">{book.author}</OneLineFit>}
+        {/* Ô không có tác giả vẫn chừa đúng một dòng tác giả (text-xs, 16 px): dòng phụ của mọi ô trong một hàng thẳng nhau (luật BASELINE). */}
+        {book.author ? <OneLineFit className="text-xs text-fg-2">{book.author}</OneLineFit> : <span aria-hidden data-tile-author-slot="" className="block h-4" />}
         {/* Cuốn ở máy khác: dấu máy tính đầu dòng trạng thái, không đè lên bìa - nhãn góc trên từng che tên sách của bìa vẽ (audit140 V8).
             Hai cuốn cùng tên: nhãn "Dự án" / "Đã nhập" và ngày vào thư viện nối vào cùng dòng để biết cuốn nào là cuốn nào. */}
         <div data-tile-sub="" className="mt-1 flex h-[1rem] items-center gap-1 text-xs leading-4 text-fg-2">
@@ -426,6 +427,8 @@ const SeriesTile = memo(function SeriesTile({ item, twins, phone }: { item: Retu
     </div>
     <span className="mt-3 flex flex-col">
       <TileName>{item.label}</TileName>
+      {/* Bộ sách không có một tác giả: chừa dòng tác giả như ô sách, để "N tập" thẳng dòng phụ của ô bên cạnh. */}
+      <span aria-hidden data-tile-author-slot="" className="block h-4" />
       <span data-tile-sub="" className="mt-1 flex h-[1rem] items-center gap-1 text-xs leading-4 text-fg-2">
         <Reveal when={item.items.some(book => book.remote)}><Laptop role="img" aria-label={S.s_co_sach_tren_may_khac_3b7cdd88} className="size-3 shrink-0" /></Reveal>
         <span className="min-w-0 truncate">{item.items.length}{S.s_tap_269b0b3d}</span></span>
