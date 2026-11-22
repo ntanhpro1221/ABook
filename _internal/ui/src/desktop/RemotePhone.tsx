@@ -19,6 +19,7 @@ import { cn } from "@/shared/cn";
 import type { CoverImage } from "@/shared/cover";
 import { formatClock } from "@/shared/format";
 import { ShortName } from "@/shared/ShortName";
+import { DotJoin } from "@/shared/DotJoin";
 import { FIRST_LINE_ICON, FIRST_LINE_ROW, FIRST_LINE_TEXT, OneLineFit } from "@/shared/OneLineFit";
 import { announce, Dialog, IconButton, Tooltip } from "@/shared/ui";
 import { api } from "@/studio/api";
@@ -231,7 +232,8 @@ function RemoteBar({ phone, receivedAt, onDismiss }: { phone: RemotePhone; recei
         style={{ transform: `scaleX(${share / 100})` }}
         aria-hidden
       />
-      <div className="flex h-14 items-center gap-3 px-4 max-md:h-12 max-md:gap-2 max-md:px-3">
+      {/* Cao tối thiểu 48 / 56 px; tên chương · tên sách dài xuống dòng thì hàng cao thêm, không đè lên chữ (gallery desktop/remote-cast). */}
+      <div className="flex min-h-14 items-center gap-3 px-4 py-1 max-md:min-h-12 max-md:gap-2 max-md:px-3">
         <div className="flex min-w-0 flex-1 items-center gap-3">
           <BookCover title={phone.bookTitle} image={phone.cover} size="xs" className="size-9 shrink-0 rounded-control" />
           <div className="min-w-0">
@@ -243,10 +245,8 @@ function RemoteBar({ phone, receivedAt, onDismiss }: { phone: RemotePhone; recei
               {protocolLabel(phone) && <span className="hidden shrink-0 font-normal text-fg-3 lg:inline"> · {protocolLabel(phone)}</span>}
             </div>
             {/* Tên chương · tên sách: chữ sách, xuống dòng chứ không cắt (luật chủ sách; Qt / Android cũng xuống dòng). */}
-            <div className="min-w-0 break-words text-sm">
-              <span className="font-medium">{phone.chapterTitle}</span>
-              <span className="text-fg-2"> · {phone.bookTitle}</span>
-            </div>
+            {/* DotJoin: dấu "·" không bao giờ treo cuối dòng hay đứng đầu dòng (DESIGN, luật LINE BREAK). */}
+            <DotJoin className="block min-w-0 break-words text-sm" parts={[<span className="font-medium">{phone.chapterTitle}</span>, <span className="text-fg-2">{phone.bookTitle}</span>]} />
           </div>
         </div>
         <div className="flex items-center gap-1">

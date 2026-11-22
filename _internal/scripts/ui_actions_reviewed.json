@@ -726,10 +726,10 @@
     "line": 94,
     "statement": "queryFn: async (): Promise<RemoteView> => ({ ...(await api<{ phones: RemotePhone[] }>(\"/api/remote\")), receivedAt: Date.now() }),",
     "occurrence": 1,
-    "source_sha256": "95f9c937f7585b04bcab77dbd16c873c099a1606c01a55f059b204220b778779",
+    "source_sha256": "47bc284c75074e90f350954a15264eaf42c8a043bab67580e15e98e0c18d1c81",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; loading, progress",
-    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Tapfix5b source review: opener focus, text-only status or startup theme changed; this exact action and its guard are unchanged."
+    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Tapfix5b source review: opener focus, text-only status or startup theme changed; this exact action and its guard are unchanged. rel174: source re-pinned after an edit outside this statement (statement, guard and consequence unchanged)."
   },
   {
     "id": "1c45f366f8a345de4389",
@@ -738,10 +738,10 @@
     "line": 205,
     "statement": "const listenHere = async () => {",
     "occurrence": 1,
-    "source_sha256": "95f9c937f7585b04bcab77dbd16c873c099a1606c01a55f059b204220b778779",
+    "source_sha256": "47bc284c75074e90f350954a15264eaf42c8a043bab67580e15e98e0c18d1c81",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; loading, progress",
-    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Tapfix5b source review: opener focus, text-only status or startup theme changed; this exact action and its guard are unchanged."
+    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Tapfix5b source review: opener focus, text-only status or startup theme changed; this exact action and its guard are unchanged. rel174: source re-pinned after an edit outside this statement (statement, guard and consequence unchanged)."
   },
   {
     "id": "8079fdc60f2680f965df",
@@ -750,10 +750,10 @@
     "line": 526,
     "statement": "for (const [id, at] of handled) if (now - at > 60_000) handled.delete(id);",
     "occurrence": 1,
-    "source_sha256": "95f9c937f7585b04bcab77dbd16c873c099a1606c01a55f059b204220b778779",
+    "source_sha256": "47bc284c75074e90f350954a15264eaf42c8a043bab67580e15e98e0c18d1c81",
     "disposition": "internal",
     "guard": "In-memory collection entry lifecycle",
-    "reason": "The statement releases a listener, request, UI row, selection or cache entry; it does not delete its persisted source. Tapfix5b source review: opener focus, text-only status or startup theme changed; this exact action and its guard are unchanged."
+    "reason": "The statement releases a listener, request, UI row, selection or cache entry; it does not delete its persisted source. Tapfix5b source review: opener focus, text-only status or startup theme changed; this exact action and its guard are unchanged. rel174: source re-pinned after an edit outside this statement (statement, guard and consequence unchanged)."
   },
   {
     "id": "e25cc07f5037ce9d5e74",
@@ -762,10 +762,10 @@
     "line": 529,
     "statement": "const done = queue.then(async () => {",
     "occurrence": 1,
-    "source_sha256": "95f9c937f7585b04bcab77dbd16c873c099a1606c01a55f059b204220b778779",
+    "source_sha256": "47bc284c75074e90f350954a15264eaf42c8a043bab67580e15e98e0c18d1c81",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; loading, progress",
-    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Tapfix5b source review: opener focus, text-only status or startup theme changed; this exact action and its guard are unchanged."
+    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Tapfix5b source review: opener focus, text-only status or startup theme changed; this exact action and its guard are unchanged. rel174: source re-pinned after an edit outside this statement (statement, guard and consequence unchanged)."
   },
   {
     "id": "b042eba94c2b5cdf68c3",
@@ -774,10 +774,10 @@
     "line": 556,
     "statement": "const reportRef = useRef<(wait: number) => Promise<unknown>>(async () => undefined);",
     "occurrence": 1,
-    "source_sha256": "95f9c937f7585b04bcab77dbd16c873c099a1606c01a55f059b204220b778779",
+    "source_sha256": "47bc284c75074e90f350954a15264eaf42c8a043bab67580e15e98e0c18d1c81",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; loading, progress",
-    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Tapfix5b source review: opener focus, text-only status or startup theme changed; this exact action and its guard are unchanged."
+    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Tapfix5b source review: opener focus, text-only status or startup theme changed; this exact action and its guard are unchanged. rel174: source re-pinned after an edit outside this statement (statement, guard and consequence unchanged)."
   },
   {
     "id": "55c7987a8d6a735a4b3d",
@@ -786,10 +786,10 @@
     "line": 583,
     "statement": "const report = async (wait: number) => {",
     "occurrence": 1,
-    "source_sha256": "95f9c937f7585b04bcab77dbd16c873c099a1606c01a55f059b204220b778779",
+    "source_sha256": "47bc284c75074e90f350954a15264eaf42c8a043bab67580e15e98e0c18d1c81",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; loading, progress",
-    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Tapfix5b source review: opener focus, text-only status or startup theme changed; this exact action and its guard are unchanged."
+    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Tapfix5b source review: opener focus, text-only status or startup theme changed; this exact action and its guard are unchanged. rel174: source re-pinned after an edit outside this statement (statement, guard and consequence unchanged)."
   },
   {
     "id": "528373c50a0d3b61b73b",
@@ -798,10 +798,10 @@
     "line": 589,
     "statement": "const apply = async (command: RemoteCommand): Promise<string | null> => {",
     "occurrence": 1,
-    "source_sha256": "95f9c937f7585b04bcab77dbd16c873c099a1606c01a55f059b204220b778779",
+    "source_sha256": "47bc284c75074e90f350954a15264eaf42c8a043bab67580e15e98e0c18d1c81",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; loading, progress",
-    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Tapfix5b source review: opener focus, text-only status or startup theme changed; this exact action and its guard are unchanged."
+    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Tapfix5b source review: opener focus, text-only status or startup theme changed; this exact action and its guard are unchanged. rel174: source re-pinned after an edit outside this statement (statement, guard and consequence unchanged)."
   },
   {
     "id": "46db76cf80a9c99f6a4c",
@@ -810,10 +810,10 @@
     "line": 633,
     "statement": "const handle = async (commands: (RemoteCommand & { id: string })[]) => {",
     "occurrence": 1,
-    "source_sha256": "95f9c937f7585b04bcab77dbd16c873c099a1606c01a55f059b204220b778779",
+    "source_sha256": "47bc284c75074e90f350954a15264eaf42c8a043bab67580e15e98e0c18d1c81",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; loading, progress",
-    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Tapfix5b source review: opener focus, text-only status or startup theme changed; this exact action and its guard are unchanged."
+    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Tapfix5b source review: opener focus, text-only status or startup theme changed; this exact action and its guard are unchanged. rel174: source re-pinned after an edit outside this statement (statement, guard and consequence unchanged)."
   },
   {
     "id": "1c9e91c4fab81006d93a",
@@ -822,10 +822,10 @@
     "line": 637,
     "statement": "void (async () => {",
     "occurrence": 1,
-    "source_sha256": "95f9c937f7585b04bcab77dbd16c873c099a1606c01a55f059b204220b778779",
+    "source_sha256": "47bc284c75074e90f350954a15264eaf42c8a043bab67580e15e98e0c18d1c81",
     "disposition": "pending",
     "guard": "Button/IconButton usePendingAction or query/mutation owner; loading, progress",
-    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Tapfix5b source review: opener focus, text-only status or startup theme changed; this exact action and its guard are unchanged."
+    "reason": "Returned promises are retained by common controls. Existing query/mutation state owns fire-and-forget loads and content skeleton/error/retry rendering. Tapfix5b source review: opener focus, text-only status or startup theme changed; this exact action and its guard are unchanged. rel174: source re-pinned after an edit outside this statement (statement, guard and consequence unchanged)."
   },
   {
     "id": "39f812e312b64e5e45e3",
