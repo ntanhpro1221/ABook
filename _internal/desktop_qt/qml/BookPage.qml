@@ -482,7 +482,8 @@ Item {
                     rowSpacing: Theme.s12
                     columnSpacing: Theme.s16
                     verticalItemAlignment: Grid.AlignVCenter
-                    readonly property real rowWidth: Math.min(width, Math.max(256, primaryButton.implicitWidth))
+                    // Ít nhất 256, không hẹp hơn nút chính, và đủ cho mọi nút phụ ở bề rộng tự nhiên (năm nút có tim không được tràn khung hàng).
+                    readonly property real rowWidth: Math.min(width, Math.max(256, primaryButton.implicitWidth, secondary.used))
                     Text {
                         objectName: "bookCaughtUp"
                         Reveal { shown: bookDetail.caughtUp }

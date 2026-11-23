@@ -15198,7 +15198,7 @@
     "line": 64,
     "statement": "Api.call(\"GET\", \"/api/listen/books/\" + id, null, function(data, error) { if (!error && id === root.book.bookId) root.fullBook = data })",
     "occurrence": 1,
-    "source_sha256": "5b24be6e7c507d1ce24f6f244dd24b4494e4b2eb4e8b20cee3b7a9ed53126ed3",
+    "source_sha256": "d86e3a908d9fb86d7fd4679d983bf2cfec2558747ed41d43794e25f622f5b5f6",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; ProgressBar, bookProgress, bookProgressLine, progress, progressLine, progressOf",
     "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Combined-source review (merge174 lintfix): both sides' changes to this file keep this statement and its guard unchanged. Combined-source review (merge174 integ173): both sides' changes to this file keep this statement and its guard unchanged. Re-pinned for left174: the edit only restyles the volume rows (initials cover, medium title, heard bar); this statement and its guard are unchanged. Combined-source review (merge174 left174): both sides' changes to this file keep this statement and its guard unchanged. Combined-source review (fix174b): both sides' changes to this file keep this statement and its guard unchanged. Combined-source review (heart): adding the favorite toggle keeps this statement and its guard unchanged."
@@ -15210,7 +15210,7 @@
     "line": 72,
     "statement": "Api.call(\"GET\", \"/api/listen/books/\" + bookId, null, function(data, error) {",
     "occurrence": 1,
-    "source_sha256": "5b24be6e7c507d1ce24f6f244dd24b4494e4b2eb4e8b20cee3b7a9ed53126ed3",
+    "source_sha256": "d86e3a908d9fb86d7fd4679d983bf2cfec2558747ed41d43794e25f622f5b5f6",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; ProgressBar, bookProgress, bookProgressLine, progress, progressLine, progressOf",
     "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Combined-source review (merge174 lintfix): both sides' changes to this file keep this statement and its guard unchanged. Combined-source review (merge174 integ173): both sides' changes to this file keep this statement and its guard unchanged. Re-pinned for left174: the edit only restyles the volume rows (initials cover, medium title, heard bar); this statement and its guard are unchanged. Combined-source review (merge174 left174): both sides' changes to this file keep this statement and its guard unchanged. Combined-source review (fix174b): both sides' changes to this file keep this statement and its guard unchanged. Combined-source review (heart): adding the favorite toggle keeps this statement and its guard unchanged."
@@ -15222,7 +15222,7 @@
     "line": 140,
     "statement": "Api.call(\"POST\", \"/api/listen/books/\" + id + \"/finished\", active ? {finished: finished, record: active.id} : {finished: finished}, function(data, error) {",
     "occurrence": 1,
-    "source_sha256": "5b24be6e7c507d1ce24f6f244dd24b4494e4b2eb4e8b20cee3b7a9ed53126ed3",
+    "source_sha256": "d86e3a908d9fb86d7fd4679d983bf2cfec2558747ed41d43794e25f622f5b5f6",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; ProgressBar, bookProgress, bookProgressLine, progress, progressLine, progressOf",
     "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Combined-source review (merge174 lintfix): both sides' changes to this file keep this statement and its guard unchanged. Combined-source review (merge174 integ173): both sides' changes to this file keep this statement and its guard unchanged. Re-pinned for left174: the edit only restyles the volume rows (initials cover, medium title, heard bar); this statement and its guard are unchanged. Combined-source review (merge174 left174): both sides' changes to this file keep this statement and its guard unchanged. Combined-source review (fix174b): both sides' changes to this file keep this statement and its guard unchanged. Combined-source review (heart): adding the favorite toggle keeps this statement and its guard unchanged."
@@ -15234,7 +15234,7 @@
     "line": 287,
     "statement": "Api.call(\"POST\", \"/api/listen/books/\" + id + \"/chapters/\" + chapterId + \"/done\", body, function(data, error) {",
     "occurrence": 1,
-    "source_sha256": "5b24be6e7c507d1ce24f6f244dd24b4494e4b2eb4e8b20cee3b7a9ed53126ed3",
+    "source_sha256": "d86e3a908d9fb86d7fd4679d983bf2cfec2558747ed41d43794e25f622f5b5f6",
     "disposition": "pending",
     "guard": "Button/IconButton ownedRequest + Api requestStarted/requestFinished; ProgressBar, bookProgress, bookProgressLine, progress, progressLine, progressOf",
     "reason": "Activation retains its request synchronously. The shared indicator appears after 180 ms; existing models own multi-step/background loads. Combined-source review: volume/avatar additions and layout/scroll changes preserve this action and its existing guard. Combined-source review (merge174 lintfix): both sides' changes to this file keep this statement and its guard unchanged. Combined-source review (merge174 integ173): both sides' changes to this file keep this statement and its guard unchanged. Re-pinned for left174: the edit only restyles the volume rows (initials cover, medium title, heard bar); this statement and its guard are unchanged. Combined-source review (merge174 left174): both sides' changes to this file keep this statement and its guard unchanged. Combined-source review (fix174b): both sides' changes to this file keep this statement and its guard unchanged. Combined-source review (heart): adding the favorite toggle keeps this statement and its guard unchanged."
@@ -17514,7 +17514,7 @@
     "line": 155,
     "statement": "Api.call(\"POST\", \"/api/listen/books/\" + id + \"/favorite\", active ? {favorite: favorite, record: active.id} : {favorite: favorite}, function(data, error) {",
     "occurrence": 1,
-    "source_sha256": "5b24be6e7c507d1ce24f6f244dd24b4494e4b2eb4e8b20cee3b7a9ed53126ed3",
+    "source_sha256": "d86e3a908d9fb86d7fd4679d983bf2cfec2558747ed41d43794e25f622f5b5f6",
     "disposition": "pending",
     "guard": "root.hearting blocks repeated taps until the reply; loadFull/refreshLibrary render the stored state; record-gone reloads",
     "reason": "Book page heart (Qt): writes the shown listening record, the heart follows the server state after the reply."

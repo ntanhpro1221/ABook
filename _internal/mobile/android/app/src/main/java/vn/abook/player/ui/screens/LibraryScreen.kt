@@ -353,13 +353,14 @@ private fun BookTile(
             BasicText(title, Modifier.fillMaxWidth().semantics { if (active()) testTag = "tile_title" }, style = Abook.type.label, minLines = 2, maxLines = 2, overflow = TextOverflow.Ellipsis)
         }
         val line: @Composable () -> Unit = {
-            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(Dim.s4)) {
+            // Mỗi dấu tự mang lề phải 4 dp: dấu vắng mặt không để lại khe (spacedBy từng đẩy chữ của mọi ô sang phải dù không có dấu nào).
+            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                 // Đã thả tim: dấu tim nhỏ hổ phách đầu dòng phụ (không đè bìa, không che tên), như web / Qt.
                 SwapContent(favorite, contentKey = { favorite -> favorite }, layout = ContentLayout.Row, inPlace = true) { favorite ->
-                    if (favorite) HeartIcon(true, Abook.colors.accentText, Modifier.semantics { contentDescription = S.s_heart_favorite; if (active()) testTag = "tile_favorite" }, size = 12.dp)
+                    if (favorite) HeartIcon(true, Abook.colors.accentText, Modifier.padding(end = Dim.s4).semantics { contentDescription = S.s_heart_favorite; if (active()) testTag = "tile_favorite" }, size = 12.dp)
                 }
                 SwapContent(remote, contentKey = { remote -> remote }, layout = ContentLayout.Row, inPlace = true) { remote ->
-                    if (remote) RemoteIcon(Abook.colors.text3, Modifier.semantics {
+                    if (remote) RemoteIcon(Abook.colors.text3, Modifier.padding(end = Dim.s4).semantics {
                         contentDescription = if (series != null) S.s_co_sach_tren_may_khac_3b7cdd88 else ListenLogic.remotePlace(lead)
                     }, size = 12.dp)
                 }
