@@ -30,7 +30,8 @@ class VisualReady : public QObject {
     }
     TestAnimationClock *m_clock;
 public:
-    VisualReady(TestAnimationClock *clock, QObject *parent) : QObject(parent), m_clock(clock) {}
+    // Without a clock (UiTree only reads text lines) finishTransitions cannot step animations and reports settled().
+    explicit VisualReady(TestAnimationClock *clock = nullptr, QObject *parent = nullptr) : QObject(parent), m_clock(clock) {}
     Q_INVOKABLE bool settled(QObject *root) const {
         QSet<QObject *> seen;
         return root && inspect(root, seen);
@@ -41,7 +42,7 @@ public:
     // a transition that never ends (a binding loop restarting a Behavior) still fails. A motion test that already began
     // the clock keeps it; otherwise it is installed only for this wait.
     Q_INVOKABLE bool finishTransitions(QObject *root, int animationMs) {
-        if (settled(root)) return true;
+        if (settled(root) || !m_clock) return settled(root);
         const bool own = !m_clock->installed();
         if (own) m_clock->begin();
         const bool done = m_clock->advanceUntil([this, root] { return settled(root); }, animationMs);
