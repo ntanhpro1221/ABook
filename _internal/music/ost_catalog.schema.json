@@ -15,7 +15,7 @@
                  "description", "quality_score", "quality_note", "sources_reviewed", "audio_source", "vocals"],
     "additionalProperties": false,
     "properties": {
-     "id": {"type": "string", "pattern": "^[a-z0-9_]+-[0-9]+-x?[0-9]+$"},
+     "id": {"type": "string", "pattern": "^[a-z0-9_]+-[0-9]+-[xr]?[0-9]+$", "description": "<work>-<disc>-<track>; x = no track number, r = replacement of an earlier upload by the official release"},
      "work": {"type": "string"}, "work_original": {"type": "string"},
      "type": {"enum": ["anime", "anime film", "visual novel", "game"]},
      "title": {"type": "string"}, "composer": {"type": "string"}, "album": {"type": "string"},
@@ -28,6 +28,7 @@
      "emotions_model": {"type": ["object", "null"]}, "family_model": {"type": ["string", "null"]},
      "fits_under_narration": {"type": ["number", "null"]},
      "vocals": {"type": "boolean"}, "vocals_score": {"type": ["number", "null"]},
+     "superseded_by": {"type": "string", "description": "Set when this upload (a cover or someone else's re-upload) was replaced by the official release with that id; the entry stays as a record and is excluded."},
      "excluded_reason": {"type": "string", "description": "Set when the track was reviewed but cannot sit under narration (sung lyrics, wrong length...)."},
      "description": {"type": "string", "description": "2-4 Vietnamese sentences in our own words: sound, feeling, fitting scenes, why it is liked."},
      "quality_score": {"type": "number", "minimum": 0, "maximum": 1},

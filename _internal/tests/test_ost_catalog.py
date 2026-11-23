@@ -96,3 +96,15 @@ def test_tracks_kept_for_narration_have_no_vocals():
     for track in CATALOG["tracks"].values():
         if "excluded_reason" not in track:
             assert track["vocals"] is False, track["id"]
+
+
+def test_superseded_uploads_point_at_a_kept_official_release():
+    tracks = CATALOG["tracks"]
+    for track in tracks.values():
+        new_id = track.get("superseded_by")
+        if new_id is None:
+            continue
+        assert "excluded_reason" in track, track["id"]
+        new = tracks[new_id]
+        assert "excluded_reason" not in new and new["audio_source"]["version"] == "official", track["id"]
+        assert new["labels"] == track["labels"], track["id"]
