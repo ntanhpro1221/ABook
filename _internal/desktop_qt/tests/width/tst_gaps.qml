@@ -392,6 +392,7 @@ Item {
             const b = row.mapToItem(page, 0, row.height / 2)
             fuzzyCompare(a.y, b.y, 1)
             verify(b.x >= a.x + primary.width)
+            verify(primary.width >= 240)
             compare(one(page, "bookSummary").height, one(page, "bookCover").height)
             shootBoth("book_792")
         }
