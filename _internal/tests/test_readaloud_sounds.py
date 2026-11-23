@@ -227,12 +227,12 @@ def test_a_word_stretched_in_several_places_is_collected_when_it_makes_one_sylla
 
 
 @pytest.mark.parametrize("text, said", [
-    ("T-tôi không biết.", "tờ… tôi không biết."),
-    ("“C-Chuyện đó", "“chờ… Chuyện đó"),
-    ("Ng-ngài và K-Không và Đ-Điều", "ngờ… ngài và khờ… Không và đờ… Điều"),
-    ("E-em muốn A-anh", "e… em muốn a… anh"),
-    ("[Kh- Không phải", "[khờ… Không phải"),
-    ("“……T-, tức là", "“tờ, tức là"),  # "……" mở đầu đoạn: không có gì để ngừng trước nó, bỏ (`vieneu._ellipses`)
+    ("T-tôi không biết.", "tôi… tôi không biết."),  # lặp âm tiết đầu của chữ (nghe máy 24-11, `vieneu._stutters`)
+    ("“C-Chuyện đó", "“chuyện… Chuyện đó"),
+    ("Ng-ngài và K-Không và Đ-Điều", "ngài… ngài và không… Không và điều… Điều"),
+    ("E-em muốn A-anh", "em… em muốn anh… anh"),
+    ("[Kh- Không phải", "[không… Không phải"),
+    ("“……T-, tức là", "“tức, tức là"),  # "……" mở đầu đoạn: không có gì để ngừng trước nó, bỏ (`vieneu._ellipses`)
     ("Hà-Hà đến, X-quang, E-mail", "Hà-Hà đến, X-quang, E-mail"),  # âm tiết đầy đủ hay không phải phần đầu của chữ sau: không phải nói lắp
 ])
 def test_a_stutter_is_read_as_the_sound_it_starts(text: str, said: str) -> None:
@@ -240,7 +240,7 @@ def test_a_stutter_is_read_as_the_sound_it_starts(text: str, said: str) -> None:
 
 
 def test_the_word_after_a_stutter_still_goes_through_the_name_rules() -> None:
-    assert " ".join(_said("“T-Tsukinoki-senpai cho", "ja")) == "“xờ… Xu-ki-nô-ki-xen-pai cho"
+    assert " ".join(_said("“T-Tsukinoki-senpai cho", "ja")) == "“xu… Xu-ki-nô-ki-xen-pai cho"
     assert " ".join(_said("A-anime")) == "a… a-ni-me"
 
 

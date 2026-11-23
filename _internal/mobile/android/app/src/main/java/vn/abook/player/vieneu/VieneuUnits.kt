@@ -59,6 +59,11 @@ object VieneuUnits {
     private val STUTTER_SOUND = mapOf("k" to "c", "w" to "v", "z" to "d", "j" to "gi", "f" to "ph", "sh" to "s", "ts" to "x", "gh" to "g")
     private val STUTTER = Regex("""((?:[^$W]|_)*)(\p{L}{1,3})[-–—]+(\p{L}.*)""", RegexOption.DOT_MATCHES_ALL)
     private val STUTTER_ALONE = Regex("""((?:[^$W]|_)*)(\p{L}{1,3})[-–—]+([^$W]*)""")
+    private val STUTTER_PARTS = Regex("""((?:\p{L}{1,3}[-–—]+)+)(\p{L}.*)""", RegexOption.DOT_MATCHES_ALL)
+    private val STUTTER_PREFIX = Regex("""\p{L}{1,3}""")
+    private val LETTER_RUN = Regex("""\p{L}+""")
+    /** Initial + an honorific never said alone ("S-san", "K-kun") is a nickname, not a stutter - `stutter.BOUND_HONORIFICS`. */
+    private val BOUND_HONORIFICS = setOf("san", "kun", "chan", "sama", "dono", "ssi")
     private val CENSORED = Regex("""([^$W]*)(\p{L})\*+([^$W]*)""")
     /** "hent*i", "E**alibur": dấu che giữa hai chữ cái; "*boing**boing*": chữ đầu chữ là dấu nhấn. */
     private val INSIDE_STAR = Regex("""(?<=\p{L})\*+(?=\p{L})""")
@@ -532,9 +537,20 @@ object VieneuUnits {
         }
     }
 
+    /** The word after every stutter ("K-K-khoan" is "khoan"); a word that is no stutter comes back as it is - `stutter.word`. */
+    private fun stutterWord(token: String): String {
+        val nfc = Normalizer.normalize(token, Normalizer.Form.NFC)
+        val match = STUTTER_PARTS.matchEntire(nfc) ?: return token
+        val rest = match.groupValues[2]
+        val head = LETTER_RUN.find(rest)!!.value.lowercase(Locale.ROOT)
+        if (head in BOUND_HONORIFICS) return token
+        val stutter = STUTTER_PREFIX.findAll(match.groupValues[1]).all { val p = it.value.lowercase(Locale.ROOT); head.startsWith(p) && head.length > p.length }
+        return if (stutter) rest else token
+    }
+
     private fun stutterSound(frag: String, rest: String): String {
         val lowered = frag.lowercase(Locale.ROOT)
-        val word = Normalizer.normalize(rest, Normalizer.Form.NFC).lowercase(Locale.ROOT)
+        val word = stutterWord(Normalizer.normalize(rest, Normalizer.Form.NFC)).lowercase(Locale.ROOT)
         if (Normalizer.normalize(lowered, Normalizer.Form.NFD)[0] in "aeiouy") return lowered
         val onset = STUTTER_ONSETS.firstOrNull { it.startsWith(lowered) && word.startsWith(it) } ?: lowered
         return (STUTTER_SOUND[onset] ?: onset) + "ờ"
@@ -549,6 +565,15 @@ object VieneuUnits {
         val onset = STUTTER_ONSETS.firstOrNull { first.startsWith(it) } ?: first.take(1)
         if (Normalizer.normalize(onset, Normalizer.Form.NFD)[0] in "aeiouy") return first
         return (STUTTER_SOUND[onset] ?: onset) + "ờ"
+    }
+
+    /** The first syllable of the reading after a stutter, to repeat ("khoan đã" is "khoan", "Hi-nô-ha-ra" is "hi"); null when it is no Vietnamese syllable (a foreign word
+     *  written in one piece, "Hinohara", keeps the consonant + "ờ") - `_repeated_syllable`. */
+    private fun repeatedSyllable(said: String): String? {
+        val stripped = said.trim { it in OPENERS || it in CLOSERS || it in PUNCT_MARKS }
+        val first = Normalizer.normalize(stripped.split(Regex("[-\\s…]"), 2)[0].replace("_", "").trim { it in OPENERS || it in CLOSERS || it in PUNCT_MARKS }, Normalizer.Form.NFC)
+            .lowercase(Locale.ROOT)
+        return if (first.isNotEmpty() && first.all(Char::isLetter) && vn.abook.player.VietnameseReading.isSyllable(first)) first else null
     }
 
     /** The reading of the word after a stutter: lowercase after the dash is still that word ("B-baka" like "Baka"); capitals still keep English and Vietnamese out - `_stutter_rest`. */
@@ -612,7 +637,8 @@ object VieneuUnits {
         }
     }
 
-    /** Stuttering "T-tôi", "C-Chuyện", "E-em", "[Kh- Không": the stutter is read as a sound ("tờ… tôi", "chờ… chuyện", "e… em"), the rest of the word as usual - `_stutters`. */
+    /** Stuttering "T-tôi", "C-Chuyện", "E-em", "[Kh- Không": the stutter repeats the first syllable of the word ("tôi… tôi", "chuyện… Chuyện", "em… em"), the rest of the
+     *  word as usual; an initial + honorific ("S-san") is a nickname - `_stutters`. */
     private fun stutters(toks: List<String>, out: MutableList<String>, origin: String?, readings: Map<String, String>? = null, directEnglish: Boolean = false) {
         for ((index, token) in toks.withIndex()) {
             var match = STUTTER.matchEntire(token)
@@ -630,6 +656,7 @@ object VieneuUnits {
             val before = match.groupValues[1]
             val frag = match.groupValues[2]
             if (!Normalizer.normalize(rest, Normalizer.Form.NFC).lowercase(Locale.ROOT).startsWith(frag.lowercase(Locale.ROOT))) continue
+            if (Names.splitToken(rest).second.lowercase(Locale.ROOT) in BOUND_HONORIFICS) continue
             val said = stutterRest(rest, origin, readings, directEnglish)
             // Only a romaji reading of the rest may decide; a word left as written keeps the written rule.
             val fragLetters = Normalizer.normalize(frag.lowercase(Locale.ROOT), Normalizer.Form.NFD)
@@ -639,7 +666,7 @@ object VieneuUnits {
                 val restCore = Names.splitToken(rest).second
                 if (restCore.equals(frag, ignoreCase = true) || !vn.abook.player.VietnameseReading.isSyllable(frag) || !vn.abook.player.VietnameseReading.isSyllable(restCore)) continue
             }
-            val sound = heard ?: if (syllable) frag.lowercase(Locale.ROOT) else stutterSound(frag, rest)
+            val sound = repeatedSyllable(said) ?: heard ?: if (syllable) frag.lowercase(Locale.ROOT) else stutterSound(frag, rest)
             out[index] = if (alone) {
                 val next = tail.trimStart { it in CLOSERS }.firstOrNull()
                 before + sound + (if (next != null && next in PUNCT_MARKS) "" else "…") + tail
