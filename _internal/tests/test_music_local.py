@@ -609,3 +609,35 @@ def test_the_keys_that_explain_why_the_machine_skips_a_track_reach_the_swap_list
     assert music_local.auto_keys({"title": "x", "vocalsLikely": True, "auto": "off", "valence": 0.1}) == {"vocalsLikely": True, "auto": "off"}
     assert music_local.auto_keys({"title": "x", "vocalsLikely": False}) == {"vocalsLikely": False}
     assert music_local.auto_keys({"title": "x"}) == {}, "bài bình thường: không thêm khoá nào"
+
+
+# ---- kho riêng của người làm sách (ABOOK_PRIVATE_MUSIC_DIR) ---------------------------------------------------------------
+def test_the_private_library_variable_points_my_music_at_a_prebuilt_store_and_is_off_by_default(tmp_path: Path, songs,
+                                                                                                  monkeypatch) -> None:
+    from abook.webui.actions import FakeRunner
+    from abook.webui.library import Preferences
+    from abook.webui.server import App
+
+    monkeypatch.delenv(music_local.PRIVATE_LIBRARY_ENV, raising=False)
+    assert music_local.library_root(tmp_path / "mine") == tmp_path / "mine"
+    monkeypatch.setenv(music_local.PRIVATE_LIBRARY_ENV, "  ")
+    assert music_local.library_root(tmp_path / "mine") == tmp_path / "mine"
+
+    private = tmp_path / "private"
+    music_local.set_analyzer(lambda path: dict(CALM_ANALYSIS))
+    link = LocalMusic(private).import_file(songs["flac"])[0]["link"]  # kho dựng sẵn ở một chỗ khác
+    music_local.set_analyzer(None)
+
+    def my_music_of(name: str) -> LocalMusic:
+        app = App(preferences=Preferences(tmp_path / name / "preferences.json"), runner=FakeRunner(), token="t")
+        return app.my_music
+
+    monkeypatch.delenv(music_local.PRIVATE_LIBRARY_ENV)
+    plain = my_music_of("plain")
+    assert plain.root == tmp_path / "plain" / "music" / "mine" and plain.entries() == []
+
+    monkeypatch.setenv(music_local.PRIVATE_LIBRARY_ENV, str(private))
+    mine = my_music_of("owner")
+    assert mine.root == private
+    assert [track["link"] for track in mine.entries()] == [link] and mine.file(link) is not None
+    assert [track["link"] for track in mine.near(CALM_ANALYSIS["valence"], CALM_ANALYSIS["arousal"])] == [link]

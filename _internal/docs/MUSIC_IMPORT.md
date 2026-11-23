@@ -21,6 +21,11 @@ bộ. Giai đoạn B (cuối file): nhập nhạc ngay trên điện thoại, gh
   Foundation và điện thoại thì không, điện thoại vốn đã từ chối nó ở MediaMetadataRetriever. Đuôi nhận giống hệt ở Python, Android, hộp
   chọn file Qt và Tauri; exe ffmpeg ghim phải có bộ tách + bộ giải cho từng đuôi (`tests/test_music_local.py`, chạy với
   `ABOOK_TEST_FFMPEG` trỏ tới exe mới mỗi lần đổi bản ffmpeg).
+- **Kho riêng của người làm sách** (`ABOOK_PRIVATE_MUSIC_DIR`, `music_local.library_root`): biến môi trường trỏ kho "Nhạc của tôi" của
+  phiên app tới một thư mục kho dựng sẵn cùng hình (`library.json` + `files/`) thay cho `<dữ liệu app>/music/mine/`. Dùng khi làm sách cho
+  CHÍNH MÌNH nghe với nhạc không phát hành được: bài trong kho ấy vào ứng viên tự động, ghim và đóng gói y như bài tự nhập. Vắng hay rỗng =
+  kho của máy như thường; bản phát hành và máy người dùng không bao giờ đặt nó, và kho ấy không bao giờ nằm trong repo hay danh mục chung.
+  Đặt biến rồi thì bài nhập trong phiên ấy cũng vào kho riêng.
 
 ## Link `local:<sha1>`
 
